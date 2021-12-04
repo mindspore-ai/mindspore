@@ -7,9 +7,9 @@ mindspore.dataset.WeightedRandomSampler
 
     **参数：**
 
-    - **weights** (list[float, int])：权重序列，总和不一定为1。
-    - **num_samples** (int, optional)：待采样的元素数量（默认值为None，代表采样所有元素）。
-    - **replacement** (bool)：如果值为True，则将样本ID放回下一次采样（默认值为True）。
+    - **weights** (list[float, int]) - 权重序列，总和不一定为1。
+    - **num_samples** (int, optional) - 待采样的元素数量（默认值为None，代表采样所有元素）。
+    - **replacement** (bool) - 如果值为True，则将样本ID放回下一次采样（默认值为True）。
 
     **样例：**
 

@@ -4,7 +4,7 @@
     
     **参数：**
 
-    **sampler** (Sampler)：用于从数据集中选择样本的对象。仅支持内置采样器（DistributedSampler、PKSampler、RandomSampler、SequentialSampler、SubsetRandomSampler、WeightedRandomSampler）。
+    - **sampler** (Sampler) - 用于从数据集中选择样本的对象。仅支持内置采样器（DistributedSampler、PKSampler、RandomSampler、SequentialSampler、SubsetRandomSampler、WeightedRandomSampler）。
 
     **样例：**
 

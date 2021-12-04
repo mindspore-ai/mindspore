@@ -25,7 +25,7 @@ mindspore.nn.Optimizer
       .. include:: mindspore.nn.optim_group_order.rst
 
     - **weight_decay** (Union[float, int]) - 权重衰减的整数或浮点值。必须等于或大于0。如果 `weight_decay` 是整数，它将被转换为浮点数。默认值：0.0。
- 
+
       .. include:: mindspore.nn.optim_arg_loss_scale.rst
 
     **异常：**
@@ -48,7 +48,7 @@ mindspore.nn.Optimizer
 
         **参数：**
 
-        **optim_result** (bool) - 参数更新结果。该输入用来保证参数更新完成后才执行参数广播。
+        - **optim_result** (bool) - 参数更新结果。该输入用来保证参数更新完成后才执行参数广播。
 
         **返回：**
 
@@ -62,7 +62,7 @@ mindspore.nn.Optimizer
 
         **参数：**
 
-        **gradients** (tuple[Tensor]) - 网络参数的梯度，形状（shape）与网络参数相同。
+        - **gradients** (tuple[Tensor]) - 网络参数的梯度，形状（shape）与网络参数相同。
 
         **返回：**
 
@@ -82,7 +82,7 @@ mindspore.nn.Optimizer
 
         **参数：**
 
-        **param** (Union[Parameter, list[Parameter]]) - `Parameter` 或 `Parameter` 列表。
+        - **param** (Union[Parameter, list[Parameter]]) - `Parameter` 或 `Parameter` 列表。
 
         **返回：**
 
@@ -109,7 +109,7 @@ mindspore.nn.Optimizer
 
         **参数：**
 
-        **gradients** (tuple[Tensor]) - 网络参数的梯度，形状（shape）与网络参数相同。
+        - **gradients** (tuple[Tensor]) - 网络参数的梯度，形状（shape）与网络参数相同。
 
         **返回：**
 
@@ -123,7 +123,7 @@ mindspore.nn.Optimizer
 
         **参数：**
 
-        **gradients** (tuple[Tensor]) - 网络参数的梯度，形状（shape）与网络参数相同。
+        - **gradients** (tuple[Tensor]) - 网络参数的梯度，形状（shape）与网络参数相同。
 
         **返回：**
 

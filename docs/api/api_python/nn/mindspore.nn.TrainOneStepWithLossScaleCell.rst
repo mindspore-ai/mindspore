@@ -10,9 +10,9 @@ mindspore.nn.TrainOneStepWithLossScaleCell
 
     **参数：**
 
-    - **network** (Cell)：训练网络。仅支持单输出网络。
-    - **optimizer** (Cell)：用于更新网络参数的优化器。
-    - **scale_sense** (Union[Tensor, Cell])：如果此值为Cell类型，`TrainOneStepWithLossScaleCell` 会调用它来更新梯度放大系数。如果此值为Tensor类型，可调用 `set_sense_scale` 来更新梯度放大系数，shape为 :math:`()` 或 :math:`(1,)` 。
+    - **network** (Cell) - 训练网络。仅支持单输出网络。
+    - **optimizer** (Cell) - 用于更新网络参数的优化器。
+    - **scale_sense** (Union[Tensor, Cell]) - 如果此值为Cell类型，`TrainOneStepWithLossScaleCell` 会调用它来更新梯度放大系数。如果此值为Tensor类型，可调用 `set_sense_scale` 来更新梯度放大系数，shape为 :math:`()` 或 :math:`(1,)` 。
 
     **输入：**
 
@@ -28,8 +28,8 @@ mindspore.nn.TrainOneStepWithLossScaleCell
 
     **异常：**
 
-    - **TypeError**：`scale_sense` 既不是Cell，也不是Tensor。
-    - **ValueError**：`scale_sense` 的shape既不是(1,)也不是()。
+    - **TypeError** - `scale_sense` 既不是Cell，也不是Tensor。
+    - **ValueError** - `scale_sense` 的shape既不是(1,)也不是()。
 
     **支持平台：**
 
@@ -89,7 +89,7 @@ mindspore.nn.TrainOneStepWithLossScaleCell
         **输出：**
 
         bool，是否发生溢出。
-        
+
 
     .. py:method:: process_loss_scale(overflow)
 
@@ -97,12 +97,12 @@ mindspore.nn.TrainOneStepWithLossScaleCell
 
        **输入：**
 
-       **overflow** (bool) - 是否发生溢出。
+       - **overflow** (bool) - 是否发生溢出。
 
        **输出：**
 
        bool，溢出状态，即输入。
-        
+
 
     .. py:method:: set_sense_scale(sens)
 
@@ -110,14 +110,14 @@ mindspore.nn.TrainOneStepWithLossScaleCell
 
         **输入：**
 
-        **sens** （Tensor）- 新的梯度放大系数，其shape和类型需要与原始 `scale_sense` 相同。
-        
+        - **sens** （Tensor）- 新的梯度放大系数，其shape和类型需要与原始 `scale_sense` 相同。
+
     .. py:method:: start_overflow_check(pre_cond, compute_input)
 
         启动浮点溢出检测。创建并清除溢出检测状态。
 
         指定参数 `pre_cond` 和 `compute_input` ，以确保在正确的时间清除溢出状态。以当前接口为例，我们需要在损失函数计算后进行清除状态，在梯度计算过程中检测溢出。在这种情况下，`pre_cond` 应为损失函数的输出，而 `compute_input` 应为梯度计算函数的输入。继承该类自定义训练网络时，可复用该接口。
-       
+
         **输入：**
 
         - **pre_cond** (Tensor) -启动溢出检测的先决条件。它决定溢出状态清除和先前处理的执行顺序。它确保函数 `start_overflow` 在执行完先决条件后清除状态。
@@ -125,5 +125,4 @@ mindspore.nn.TrainOneStepWithLossScaleCell
 
         **输出：**
 
-        **Tuple** [object, object]，GPU后端的第一个值为False，而其他后端的第一个值是NPUAllocFloatStatus的实例。该值用于在 `get_overflow_status` 期间检测溢出。第二个值与 `compute_input` 的输入相同，用于控制执行序。
-        
+        - **Tuple** [object, object]，GPU后端的第一个值为False，而其他后端的第一个值是NPUAllocFloatStatus的实例。该值用于在 `get_overflow_status` 期间检测溢出。第二个值与 `compute_input` 的输入相同，用于控制执行序。

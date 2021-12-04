@@ -15,11 +15,11 @@ mindspore.nn.cosine_decay_lr
 
    **参数：**
 
-    - **min_lr** (float)：学习率的最小值。
-    - **max_lr** (float)：学习率的最大值。
-    - **total_step** (int)：step总数。
-    - **step_per_epoch** (int)：每个epoch的step数。
-    - **decay_epoch** (int)：用于计算衰减学习率的值。
+    - **min_lr** (float) - 学习率的最小值。
+    - **max_lr** (float) - 学习率的最大值。
+    - **total_step** (int) - step总数。
+    - **step_per_epoch** (int) - 每个epoch的step数。
+    - **decay_epoch** (int) - 用于计算衰减学习率的值。
 
    **返回：**
 
@@ -35,4 +35,3 @@ mindspore.nn.cosine_decay_lr
     >>> output = cosine_decay_lr(min_lr, max_lr, total_step, step_per_epoch, decay_epoch)
     >>> print(output)
     [0.1, 0.1, 0.05500000000000001, 0.05500000000000001, 0.01, 0.01]
-    

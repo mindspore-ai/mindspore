@@ -24,7 +24,7 @@ Distributions
 
 .. cnmsplatformautosummary::
     :toctree: nn_probability
-    
+
     mindspore.nn.probability.distribution.Bernoulli
     mindspore.nn.probability.distribution.Beta
     mindspore.nn.probability.distribution.Categorical

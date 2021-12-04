@@ -14,7 +14,7 @@ mindspore.ops.Log
 
     **输入：**
 
-    **x** (Tensor) - 输入Tensor。该值必须大于0。shape为 :math:`(N,*)`，其中 :math:`*` 表示任意的附加维度数，它的秩应小于8。
+    - **x** (Tensor) - 输入Tensor。该值必须大于0。shape为 :math:`(N,*)`，其中 :math:`*` 表示任意的附加维度数，它的秩应小于8。
 
     **输出：**
 
@@ -36,4 +36,3 @@ mindspore.ops.Log
     >>> output = log(x)
     >>> print(output)
     [0.        0.6931472 1.3862944]
-    

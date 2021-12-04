@@ -31,45 +31,44 @@
 
         **参数：**
 
-        **run_context** (RunContext) - 包含模型的一些基本信息。
-        
+        - **run_context** (RunContext) - 包含模型的一些基本信息。
+
     .. py:method:: end(run_context)
 
         网络执行后被调用一次。
 
         **参数：**
 
-        **run_context** (RunContext) - 包含模型的一些基本信息。
-        
+        - **run_context** (RunContext) - 包含模型的一些基本信息。
+
     .. py:method:: epoch_begin(run_context)
 
         在每个epoch开始之前被调用。
 
         **参数：**
 
-        **run_context** (RunContext) - 包含模型的一些基本信息。
-        
+        - **run_context** (RunContext) - 包含模型的一些基本信息。
+
     .. py:method:: epoch_end(run_context)
 
         在每个epoch结束后被调用。
 
         **参数：**
 
-        **run_context** (RunContext) - 包含模型的一些基本信息。
-        
+        - **run_context** (RunContext) - 包含模型的一些基本信息。
+
     .. py:method:: step_begin(run_context)
 
         在每个step开始之前被调用。
 
         **参数：**
 
-        **run_context** (RunContext) - 包含模型的一些基本信息。
-        
+        - **run_context** (RunContext) - 包含模型的一些基本信息。
+
     .. py:method:: step_end(run_context)
 
         在每个step完成后被调用。
 
         **参数：**
 
-        **run_context** (RunContext) - 包含模型的一些基本信息。
-        
+        - **run_context** (RunContext) - 包含模型的一些基本信息。

@@ -28,19 +28,19 @@ mindspore.dataset.VOCDataset
 
     **异常：**
 
-    - **RuntimeError**: `dataset_dir` 不包含任何数据文件。
-    - **RuntimeError**: `num_parallel_workers` 超过系统最大线程数。
-    - **RuntimeError**: 标注的xml文件格式异常或无效。
-    - **RuntimeError**: 标注的xml文件缺失 `object` 属性。
-    - **RuntimeError**: 标注的xml文件缺失 `bndbox` 属性。
-    - **RuntimeError**: 同时指定了 `sampler` 和 `shuffle` 。
-    - **RuntimeError**: 同时指定了 `sampler` 和 `num_shards` 。
-    - **RuntimeError**: 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
-    - **RuntimeError**: 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
-    - **ValueError**： 指定的任务不为'Segmentation'或'Detection'。
-    - **ValueError**： 指定任务为'Segmentation'时，class_indexing不为None。
-    - **ValueError**： 与usage相关的txt文件不存在。
-    - **ValueError**:  `shard_id` 参数错误（小于0或者大于等于 `num_shards` ）。
+    - **RuntimeError** - `dataset_dir` 不包含任何数据文件。
+    - **RuntimeError** - `num_parallel_workers` 超过系统最大线程数。
+    - **RuntimeError** - 标注的xml文件格式异常或无效。
+    - **RuntimeError** - 标注的xml文件缺失 `object` 属性。
+    - **RuntimeError** - 标注的xml文件缺失 `bndbox` 属性。
+    - **RuntimeError** - 同时指定了 `sampler` 和 `shuffle` 。
+    - **RuntimeError** - 同时指定了 `sampler` 和 `num_shards` 。
+    - **RuntimeError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
+    - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
+    - **ValueError** - 指定的任务不为'Segmentation'或'Detection'。
+    - **ValueError** - 指定任务为'Segmentation'时，class_indexing不为None。
+    - **ValueError** - 与usage相关的txt文件不存在。
+    - **ValueError** -  `shard_id` 参数错误（小于0或者大于等于 `num_shards` ）。
 
     .. note::
         - 当指定 `extra_metadata` 为True时，除非显式使用rename算子以删除元信息列明的前缀('_meta-')，否则迭代的数据行中不会出现'[_meta-filename, dtype=string]'列。

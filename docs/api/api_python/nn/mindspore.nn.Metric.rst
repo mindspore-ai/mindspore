@@ -9,7 +9,7 @@ mindspore.nn.Metric
     请勿直接使用该类，需使用子类如 :class:`mindspore.nn.MAE` 、 :class:`mindspore.nn.Recall` 等。
 
     .. py:method:: clear()
-        :abstract:
+        :abstractmethod:
 
         描述了清除内部评估结果的行为。
 
@@ -17,13 +17,13 @@ mindspore.nn.Metric
             所有子类都必须重写此接口。
 
     .. py:method:: eval()
-        :abstract:
+        :abstractmethod:
 
         描述了计算最终评估结果的行为。
 
         .. note::
             所有子类都必须重写此接口。
-        
+
     .. py:method:: indexes
         :property:
 
@@ -37,11 +37,11 @@ mindspore.nn.Metric
 
         .. note::
             在继承该类自定义评估函数时，需要用装饰器 `mindspore.nn.rearrange_inputs` 修饰 `update` 方法，否则配置的 `indexes` 值不生效。
-            
+
 
         **参数：**
 
-        **indexes** (List(int)) - logits和标签的目标顺序。
+        - **indexes** (List(int)) - logits和标签的目标顺序。
 
         **输出：**
 
@@ -62,9 +62,9 @@ mindspore.nn.Metric
         >>> accuracy = metric.eval()
         >>> print(accuracy)
         0.3333333333333333
-        
+
     .. py:method:: update(*inputs)
-        :abstract:
+        :abstractmethod:
 
         描述了更新内部评估结果的行为。
 
@@ -73,4 +73,4 @@ mindspore.nn.Metric
 
         **参数：**
 
-        **inputs** - 可变长度输入参数列表。通常是预测值和对应的真实标签。
+        - **inputs** - 可变长度输入参数列表。通常是预测值和对应的真实标签。

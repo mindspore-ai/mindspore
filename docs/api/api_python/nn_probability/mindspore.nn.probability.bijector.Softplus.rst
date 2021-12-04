@@ -20,12 +20,12 @@ mindspore.nn.probability.bijector.Softplus
 
     ``Ascend`` ``GPU``
 
-    .. note:: 
+    .. note::
         `sharpness` 的数据类型必须为float。
 
     **异常：**
-    
-    **TypeError** - sharpness的数据类型不为float。
+
+    - **TypeError** - sharpness的数据类型不为float。
 
     **样例：**
 

@@ -12,19 +12,20 @@ mindspore.nn.MSE
 
     其中， :math:`n` 为batch size。
 
-   **样例：**
-        >>> import numpy as np
-        >>> from mindspore import nn, Tensor
-        >>>
-        >>> x = Tensor(np.array([0.1, 0.2, 0.6, 0.9]), mindspore.float32)
-        >>> y = Tensor(np.array([0.1, 0.25, 0.5, 0.9]), mindspore.float32)
-        >>> error = nn.MSE()
-        >>> error.clear()
-        >>> error.update(x, y)
-        >>> result = error.eval()
+    **样例：**
+
+    >>> import numpy as np
+    >>> from mindspore import nn, Tensor
+    >>>
+    >>> x = Tensor(np.array([0.1, 0.2, 0.6, 0.9]), mindspore.float32)
+    >>> y = Tensor(np.array([0.1, 0.25, 0.5, 0.9]), mindspore.float32)
+    >>> error = nn.MSE()
+    >>> error.clear()
+    >>> error.update(x, y)
+    >>> result = error.eval()
 
     .. py:method:: clear()
-        
+
         清除内部评估结果。
 
     .. py:method:: eval()
@@ -32,11 +33,11 @@ mindspore.nn.MSE
         计算均方差（MSE）。
 
         **返回：**
-        
+
         numpy.float64，计算结果。
 
         **异常：**
-        
+
         - **RuntimeError** - 样本数为0。
 
     .. py:method:: update(*inputs)

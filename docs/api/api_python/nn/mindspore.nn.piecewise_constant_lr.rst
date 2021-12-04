@@ -13,8 +13,8 @@ mindspore.nn.piecewise_constant_lr
 
     **参数：**
 
-    - **milestone** (Union[list[int], tuple[int]])：milestone列表。此列表是一个单调递增的列表。类表中的元素必须大于0。
-    - **learning_rates** (Union[list[float], tuple[float]])：学习率列表。
+    - **milestone** (Union[list[int], tuple[int]]) - milestone列表。此列表是一个单调递增的列表。类表中的元素必须大于0。
+    - **learning_rates** (Union[list[float], tuple[float]]) - 学习率列表。
 
     **返回：**
 

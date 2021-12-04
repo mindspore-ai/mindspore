@@ -9,10 +9,10 @@ mindspore.nn.DistributedGradReducer
 
     **参数：**
 
-        - **parameters** (list)：需要更新的参数。
-        - **mean** (bool)：当mean为True时，对AllReduce之后的梯度求均值。默认值：False。
-        - **degree** (int)：平均系数，通常等于设备编号。默认值：None。
-        - **fusion_type** (int)：AllReduce算子的融合类型。默认值：1。
+        - **parameters** (list) - 需要更新的参数。
+        - **mean** (bool) - 当mean为True时，对AllReduce之后的梯度求均值。默认值：False。
+        - **degree** (int) - 平均系数，通常等于设备编号。默认值：None。
+        - **fusion_type** (int) - AllReduce算子的融合类型。默认值：1。
 
     **异常：**
 
@@ -97,9 +97,8 @@ mindspore.nn.DistributedGradReducer
 
     **参数：**
 
-    **grads** (Union[Tensor, tuple[Tensor]])：操作前的梯度Tensor或tuple。
+    - **grads** (Union[Tensor, tuple[Tensor]]) - 操作前的梯度Tensor或tuple。
 
     **返回：**
 
-    **new_grads** (Union[Tensor, tuple[Tensor]])，操作后的梯度Tensor或tuple。
-        
+    - **new_grads** (Union[Tensor, tuple[Tensor]])，操作后的梯度Tensor或tuple。

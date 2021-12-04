@@ -7,24 +7,24 @@
 
     **参数：**
 
-    - **source** (Union[Callable, Iterable, Random Accessible])：
+    - **source** (Union[Callable, Iterable, Random Accessible]) -
       一个Python的可调用对象，可以是一个可迭代的Python对象，或支持随机访问的Python对象。
       要求传入的可调用对象，可以通过 `source().next()` 的方式返回一个由NumPy数组构成的元组。
       要求传入的可迭代对象，可以通过 `iter(source).next()` 的方式返回一个由NumPy数组构成的元组。
       要求传入的支持随机访问对象，可以通过 `source[idx]` 的方式返回一个由NumPy数组构成的元组。
-    - **column_names** (Union[str, list[str]]，可选)：指定数据集生成的列名（默认值为None），用户必须提供此参数或通过参数 `schema` 指定列名。
-    - **column_types** ((list[mindspore.dtype]，可选)：指定生成数据集各个数据列的数据类型（默认为None）。
+    - **column_names** (Union[str, list[str]]，可选) - 指定数据集生成的列名（默认值为None），用户必须提供此参数或通过参数 `schema` 指定列名。
+    - **column_types** ((list[mindspore.dtype]，可选) - 指定生成数据集各个数据列的数据类型（默认为None）。
       如果未指定该参数，则自动推断类型；如果指定了该参数，将在数据输出时做类型匹配检查。
-    - **schema** (Union[Schema, str]，可选)：读取模式策略，用于指定读取数据列的数据类型、数据维度等信息，支持传入JSON文件或 `schema` 对象的路径。
+    - **schema** (Union[Schema, str]，可选) - 读取模式策略，用于指定读取数据列的数据类型、数据维度等信息，支持传入JSON文件或 `schema` 对象的路径。
       对于数据集生成的列名，用户需要提供 `column_names` 或 `schema` 进行指定，如果同时指定两者，则将优先从 `schema` 获取列名信息。
-    - **num_samples** (int，可选)：指定从数据集中读取的样本数（默认为None）。
-    - **num_parallel_workers** (int，可选)：指定读取数据的工作线程数（默认值为1）。
-    - **shuffle** (bool，可选)：是否混洗数据集。只有输入的 `source` 参数带有可随机访问属性（__getitem__）时，才可以指定该参数。（默认值为None，下表中会展示不同配置的预期行为）。
-    - **sampler** (Union[Sampler, Iterable]，可选)：指定从数据集中选取样本的采样器。只有输入的 `source` 参数带有可随机访问属性（__getitem__）时，才可以指定该参数（默认值为None，下表中会展示不同配置的预期行为）。
+    - **num_samples** (int，可选) - 指定从数据集中读取的样本数（默认为None）。
+    - **num_parallel_workers** (int，可选) - 指定读取数据的工作线程数（默认值为1）。
+    - **shuffle** (bool，可选) - 是否混洗数据集。只有输入的 `source` 参数带有可随机访问属性（__getitem__）时，才可以指定该参数。（默认值为None，下表中会展示不同配置的预期行为）。
+    - **sampler** (Union[Sampler, Iterable]，可选) - 指定从数据集中选取样本的采样器。只有输入的 `source` 参数带有可随机访问属性（__getitem__）时，才可以指定该参数（默认值为None，下表中会展示不同配置的预期行为）。
     - **num_shards** (int, 可选): 分布式训练时，将数据集划分成指定的分片数（默认值None）。指定此参数后，`num_samples` 表示每个分片的最大样本数。需要输入 `data` 支持可随机访问才能指定该参数。
     - **shard_id** (int, 可选): 分布式训练时，指定使用的分片ID号（默认值None）。只有当指定了 `num_shards` 时才能指定此参数。
-    - **python_multiprocessing** (bool，可选)：启用Python多进程模式加速运算（默认为True）。当传入Python对象的计算量很大时，开启此选项可能会有较好效果。
-    - **max_rowsize** (int，可选)：指定在多进程之间复制数据时，共享内存分配的最大空间（数量级为MB，默认为6MB），仅当参数 `python_multiprocessing` 设为True时，此参数才会生效。
+    - **python_multiprocessing** (bool，可选) - 启用Python多进程模式加速运算（默认为True）。当传入Python对象的计算量很大时，开启此选项可能会有较好效果。
+    - **max_rowsize** (int，可选) - 指定在多进程之间复制数据时，共享内存分配的最大空间（数量级为MB，默认为6MB），仅当参数 `python_multiprocessing` 设为True时，此参数才会生效。
 
     **异常：**
 

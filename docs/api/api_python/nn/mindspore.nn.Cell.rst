@@ -7,7 +7,7 @@
 
     一个 `Cell` 可以是单一的神经网络单元，如 :class:`mindspore.nn.Conv2d`, :class:`mindspore.nn.ReLU`,  :class:`mindspore.nn.BatchNorm` 等，也可以是组成网络的 `Cell` 的结合体。
 
-    .. note:: 
+    .. note::
        一般情况下，自动微分 (AutoDiff) 算法会自动调用梯度函数，但是如果使用反向传播方法 (bprop method)，梯度函数将会被反向传播方法代替。反向传播函数会接收一个包含损失对输出的梯度张量 `dout` 和一个包含前向传播结果的张量 `out` 。反向传播过程需要计算损失对输入的梯度，损失对参数变量的梯度目前暂不支持。反向传播函数必须包含自身参数。
 
     **参数：**
@@ -36,10 +36,10 @@
         为Cell添加自定义属性。
 
         在实例化Cell类时，如果入参flags不为空，会调用此方法。
- 
+
         **参数：**
- 
-        **flags** (dict) - Cell的配置信息，目前用于绑定Cell和数据集。用户也通过该参数自定义Cell属性。默认值：None。
+
+        - **flags** (dict) - Cell的配置信息，目前用于绑定Cell和数据集。用户也通过该参数自定义Cell属性。默认值：None。
 
     .. py:method:: add_flags_recursive(**flags)
 
@@ -47,7 +47,7 @@
 
         **参数：**
 
-        **flags** (dict) - Cell的配置信息，目前用于绑定Cell和数据集。用户也通过该参数自定义Cell属性。默认值：None。
+        - **flags** (dict) - Cell的配置信息，目前用于绑定Cell和数据集。用户也通过该参数自定义Cell属性。默认值：None。
 
     .. py:method:: auto_parallel_compile_and_run()
 
@@ -83,7 +83,7 @@
 
         **参数：**
 
-        **param** (Parameter) – Parameter类型，需要被转换类型的输入参数。
+        - **param** (Parameter) – Parameter类型，需要被转换类型的输入参数。
 
         **返回：**
 
@@ -117,7 +117,7 @@
         >>> for m in n.cells_and_names():
         ...    if m[0]:
         ...       names.append(m[0])
- 
+
     .. py:method:: check_names()
 
         检查Cell中的网络参数名称是否重复。
@@ -128,7 +128,7 @@
 
         **参数：**
 
-        **inputs** (tuple) – Cell的输入。
+        - **inputs** (tuple) – Cell的输入。
 
     .. py:method:: compile_and_run(*inputs)
 
@@ -136,7 +136,7 @@
 
         **参数：**
 
-        **inputs** (tuple) – Cell的输入。
+        - **inputs** (tuple) – Cell的输入。
 
         **返回：**
 
@@ -155,7 +155,7 @@
         保存checkpoint图。
 
     .. py:method:: extend_repr()
- 
+
         设置Cell的扩展表示形式。
 
         若需要在print时输出个性化的扩展信息，请在您的网络中重新实现此方法。
@@ -178,7 +178,7 @@
 
         **参数：**
 
-        **expand** (bool) – 如果为True，则递归地获取当前Cell和所有子Cell的parameter。否则，只生成当前Cell的子Cell的parameter。默认值：True。
+        - **expand** (bool) – 如果为True，则递归地获取当前Cell和所有子Cell的parameter。否则，只生成当前Cell的子Cell的parameter。默认值：True。
 
         **返回：**
 
@@ -199,21 +199,21 @@
 
         String类型，网络的作用域。
 
-.. py:method:: infer_param_pipeline_stage()
+    .. py:method:: infer_param_pipeline_stage()
 
-    推导Cell中当前 `pipeline_stage` 的参数。
+        推导Cell中当前 `pipeline_stage` 的参数。
 
-    .. note:: 
-        - 如果某参数不属于任何已被设置 `pipeline_stage` 的Cell，此参数应使用 `add_pipeline_stage` 方法来添加它的 `pipeline_stage` 信息。
-        - 如果某参数P被stageA和stageB两个不同stage的算子使用，那么参数P在使用 `infer_param_pipeline_stage` 之前，应使用 `P.add_pipeline_stage(stageA)` 和 `P.add_pipeline_stage(stageB)` 添加它的stage信息。
+        .. note::
+            - 如果某参数不属于任何已被设置 `pipeline_stage` 的Cell，此参数应使用 `add_pipeline_stage` 方法来添加它的 `pipeline_stage` 信息。
+            - 如果某参数P被stageA和stageB两个不同stage的算子使用，那么参数P在使用 `infer_param_pipeline_stage` 之前，应使用 `P.add_pipeline_stage(stageA)` 和 `P.add_pipeline_stage(stageB)` 添加它的stage信息。
 
-    **返回：**
+        **返回：**
 
-    属于当前 `pipeline_stage` 的参数。
-      
-    **异常：**
+        属于当前 `pipeline_stage` 的参数。
 
-    **RuntimeError** – 如果参数不属于任何stage。
+        **异常：**
+
+        - **RuntimeError** – 如果参数不属于任何stage。
 
 
     .. py:method:: insert_child_to_cell(child_name, child_cell)
@@ -255,7 +255,7 @@
 
         **参数：**
 
-        **params** (dict) – 用于初始化数据图的参数字典。
+        - **params** (dict) – 用于初始化数据图的参数字典。
 
 
     .. py:method:: name_cells()
@@ -307,7 +307,7 @@
 
         **参数：**
 
-        **recurse** (bool): 是否包含子Cell的参数。 默认: True。
+        - **recurse** (bool): 是否包含子Cell的参数。 默认: True。
 
         **返回：**
 
@@ -319,7 +319,7 @@
 
         **参数：**
 
-        **recurse** (bool) – 是否递归得包含所有子Cell的parameter。默认值：True。
+        - **recurse** (bool) – 是否递归得包含所有子Cell的parameter。默认值：True。
 
         **返回：**
 
@@ -329,7 +329,7 @@
 
         设置Cell重计算。Cell中的所有算子将被设置为重计算。如果一个算子的计算结果被输出到一些反向节点来进行梯度计算，且被设置成重计算，那么我们会在反向传播中重新计算它，而不去存储在前向传播中的中间激活层的计算结果。
 
-        .. note:: 
+        .. note::
             - 如果计算涉及到诸如随机化或全局变量之类的操作，那么目前还不能保证等价。
             - 如果该Cell中算子的重计算API也被调用，则该算子的重计算模式以算子的重计算API的设置为准。
             - 该接口仅配置一次，即当父Cell配置了，子Cell不需再配置。
@@ -349,7 +349,7 @@
 
         **参数：**
 
-        **fn** (function) – 以梯度作为输入的hook函数。
+        - **fn** (function) – 以梯度作为输入的hook函数。
 
     .. py:method:: remove_redundant_parameters()
 
@@ -380,7 +380,7 @@
 
         **参数：**
 
-        **requires_grad** (bool) – 指定网络是否需要梯度，如果为True，PyNative模式下Cell将构建反向网络。默认值：True。
+        - **requires_grad** (bool) – 指定网络是否需要梯度，如果为True，PyNative模式下Cell将构建反向网络。默认值：True。
 
         **返回：**
 
@@ -389,15 +389,15 @@
     .. py:method:: set_parallel_input_with_inputs(*inputs)
 
         通过并行策略对输入张量进行切分。
-      
+
         **参数**：
 
-        **inputs** (tuple) – construct方法的输入。
+        - **inputs** (tuple) – construct方法的输入。
 
     .. py:method:: set_param_fl(push_to_server=False, pull_from_server=False, requires_aggr=True)
 
         设置参数与服务器交互的方式。
-      
+
         **参数**：
 
         - **push_to_server** (bool) – 是否将参数推送到服务器。默认值：False。
@@ -423,7 +423,7 @@
 
         **参数：**
 
-        **mode** (bool) – 指定模型是否为训练模式。默认值：True。
+        - **mode** (bool) – 指定模型是否为训练模式。默认值：True。
 
         **返回：**
 
@@ -439,7 +439,7 @@
 
         **参数：**
 
-        **dst_type** (mindspore.dtype) – Cell转换为 `dst_type` 类型运行。 `dst_type` 可以是 `mindspore.dtype.float16` 或者  `mindspore.dtype.float32` 。
+        - **dst_type** (mindspore.dtype) – Cell转换为 `dst_type` 类型运行。 `dst_type` 可以是 `mindspore.dtype.float16` 或者  `mindspore.dtype.float32` 。
 
         **返回：**
 
@@ -447,7 +447,7 @@
 
         **异常：**
 
-        **ValueError** – 如果 `dst_type` 不是 `mindspore.dtype.float32` ，也不是 `mindspore.dtype.float16`。
+        - **ValueError** – 如果 `dst_type` 不是 `mindspore.dtype.float32` ，也不是 `mindspore.dtype.float16`。
 
     .. py:method:: trainable_params(recurse=True)
 
@@ -457,7 +457,7 @@
 
         **参数：**
 
-        **recurse** (bool) – 是否递归地包含当前Cell的所有子Cell的可训练参数。默认值：True。
+        - **recurse** (bool) – 是否递归地包含当前Cell的所有子Cell的可训练参数。默认值：True。
 
         **返回：**
 
@@ -471,7 +471,7 @@
 
         **参数：**
 
-        **recurse** (bool) – 是否递归地包含当前Cell的所有子Cell的不可训练参数。默认值：True。
+        - **recurse** (bool) – 是否递归地包含当前Cell的所有子Cell的不可训练参数。默认值：True。
 
         **返回：**
 
@@ -491,7 +491,7 @@
 
         **参数：**
 
-        **cell_type** (str) – 被更新的类型，`cell_type` 可以是"quant"或"second-order"。
+        - **cell_type** (str) – 被更新的类型，`cell_type` 可以是"quant"或"second-order"。
 
     .. py:method:: update_parameters_name(prefix="", recurse=True)
 

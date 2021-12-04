@@ -7,7 +7,7 @@ mindspore.dataset.Schema
 
     **参数：**
 
-    **schema_file** (str): schema文件的路径（默认值为None）。
+    - **schema_file** (str): schema文件的路径（默认值为None）。
 
     **返回：**
 
@@ -45,7 +45,7 @@ mindspore.dataset.Schema
 
         **参数：**
 
-        **json_obj** (dictionary): 解析的JSON对象。
+        - **json_obj** (dictionary): 解析的JSON对象。
 
         **异常：**
 

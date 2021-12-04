@@ -9,12 +9,12 @@ mindspore.nn.FixedLossScaleUpdateCell
 
    **参数：**
 
-    **loss_scale_value** (float)：初始梯度放大系数。
+    - **loss_scale_value** (float) - 初始梯度放大系数。
 
     **输入：**
 
-    - **loss_scale** (Tensor)：训练期间的梯度放大系数，shape为 :math:`()`，在当前类中，该值被忽略。
-    - **overflow** (bool)：是否发生溢出。
+    - **loss_scale** (Tensor) - 训练期间的梯度放大系数，shape为 :math:`()`，在当前类中，该值被忽略。
+    - **overflow** (bool) - 是否发生溢出。
 
     **输出：**
 
@@ -50,9 +50,8 @@ mindspore.nn.FixedLossScaleUpdateCell
     >>> input = Tensor(np.ones([out_features, in_features]), mindspore.float32)
     >>> labels = Tensor(np.ones([out_features,]), mindspore.float32)
     >>> output = train_network(input, labels)
-    
+
 
     .. py:method:: get_loss_scale()
 
         获取当前梯度放大系数。
-        

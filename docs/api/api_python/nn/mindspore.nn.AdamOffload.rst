@@ -4,7 +4,7 @@ mindspore.nn.AdamOffload
 .. py:class:: mindspore.nn.AdamOffload(params, learning_rate=1e-3, beta1=0.9, beta2=0.999, eps=1e-08, use_locking=False, use_nesterov=False, weight_decay=0.0, loss_scale=1.0)
 
     此优化器在主机CPU上运行Adam优化算法，设备上仅执行网络参数的更新，最大限度地降低内存成本。虽然会增加性能开销，但优化器可以运行更大的模型。
-    
+
     Adam算法参见 `Adam: A Method for Stochastic Optimization <https://arxiv.org/abs/1412.6980>`_。
 
     更新公式如下：
@@ -17,7 +17,7 @@ mindspore.nn.AdamOffload
             w_{t+1} = w_{t} - l * \frac{m_{t+1}}{\sqrt{v_{t+1}} + \epsilon}
         \end{array}
 
-    :math:`m` 代表第一个矩向量 `moment1` ，:math:`v` 代表第二个矩向量 `moment2`，:math:`g` 代表 `gradients`，:math:`l` 代表缩放因子，:math:`\beta_1,\beta_2` 代表 `beta1` 和 `beta2`，:math:`t` 代表当前step，:math:`beta_1^t` 和 :math:`beta_2^t` 代表 `beta1_power` 和 `beta2_power`，:math:`\alpha` 代表 `learning_rate`，:math:`w` 代表 `params`，:math:`\epsilon` 代表 `eps` 。
+    :math:`m` 代表第一个矩向量 `moment1` ， :math:`v` 代表第二个矩向量 `moment2`，:math:`g` 代表 `gradients`，:math:`l` 代表缩放因子，:math:`\beta_1,\beta_2` 代表 `beta1` 和 `beta2`，:math:`t` 代表当前step，:math:`beta_1^t` 和 :math:`beta_2^t` 代表 `beta1_power` 和 `beta2_power`，:math:`\alpha` 代表 `learning_rate`，:math:`w` 代表 `params`，:math:`\epsilon` 代表 `eps` 。
 
     .. note::此优化器目前仅支持图模式。
 
@@ -34,7 +34,7 @@ mindspore.nn.AdamOffload
       .. include:: mindspore.nn.optim_group_weight_decay.rst
 
       .. include:: mindspore.nn.optim_group_order.rst
-              
+
 
     - **learning_rate** (Union[float, Tensor, Iterable, LearningRateSchedule]): 默认值：1e-3。
 
@@ -51,7 +51,7 @@ mindspore.nn.AdamOffload
 
     **输入：**
 
-    **gradients** (tuple[Tensor])：`params` 的梯度，shape与 `params` 相同。
+    - **gradients** (tuple[Tensor]) - `params` 的梯度，shape与 `params` 相同。
 
     **输出：**
 
@@ -59,14 +59,14 @@ mindspore.nn.AdamOffload
 
     **异常：**
 
-    - **TypeError**：`learning_rate` 不是int、float、Tensor、Iterable或LearningRateSchedule。
-    - **TypeError**：`parameters` 的元素不是Parameter或字典。
-    - **TypeError**：`beta1` 、 `beta2` 、 `eps `或 `loss_scale` 不是float。
-    - **TypeError**：`weight_decay` 不是float或int。
-    - **TypeError**：`use_locking` 或 `use_nesterov` 不是bool。
-    - **ValueError**：`loss_scale` 或 `eps` 不大于0。
-    - **ValueError**：`beta1` 、 `beta2` 不在（0.0,1.0）范围内。
-    - **ValueError**：`weight_decay` 小于0。
+    - **TypeError** - `learning_rate` 不是int、float、Tensor、Iterable或LearningRateSchedule。
+    - **TypeError** - `parameters` 的元素不是Parameter或字典。
+    - **TypeError** - `beta1` 、 `beta2` 、 `eps` 或 `loss_scale` 不是float。
+    - **TypeError** - `weight_decay` 不是float或int。
+    - **TypeError** - `use_locking` 或 `use_nesterov` 不是bool。
+    - **ValueError** - `loss_scale` 或 `eps` 不大于0。
+    - **ValueError** - `beta1` 、 `beta2` 不在（0.0,1.0）范围内。
+    - **ValueError** - `weight_decay` 小于0。
 
     **支持平台：**
 
@@ -91,4 +91,3 @@ mindspore.nn.AdamOffload
     >>>
     >>> loss = nn.SoftmaxCrossEntropyWithLogits()
     >>> model = Model(net, loss_fn=loss, optimizer=optim)
-    

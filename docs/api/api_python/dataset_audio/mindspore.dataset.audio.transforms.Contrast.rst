@@ -7,7 +7,7 @@ mindspore.dataset.audio.transforms.Contrast
 
     **参数：**
 
-    **enhancement_amount** (float)：控制音频增益的量。取值范围为[0,100]（默认为75.0）。注意当 `enhancement_amount` 等于0时，对比度增强效果仍然会很显著。
+    - **enhancement_amount** (float) - 控制音频增益的量。取值范围为[0,100]（默认为75.0）。注意当 `enhancement_amount` 等于0时，对比度增强效果仍然会很显著。
 
     **样例：**
 

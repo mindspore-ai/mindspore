@@ -18,15 +18,15 @@ mindspore.nn.probability.bijector.ScalarAffine
     - **name** (str) - Bijector名称。默认值：'ScalarAffine'。
 
     **支持平台：**
-    
+
     ``Ascend`` ``GPU``
 
-    .. note:: 
+    .. note::
         `shift` 和 `scale` 的数据类型必须为float。如果 `shift` 、 `scale` 作为numpy.ndarray或Tensor传入，则它们必须具有相同的数据类型，否则将引发错误。
 
     **异常：**
-    
-    **TypeError** - `shift` 或 `scale` 的数据类型不为float，或 `shift` 和 `scale` 的数据类型不相同。
+
+    - **TypeError** - `shift` 或 `scale` 的数据类型不为float，或 `shift` 和 `scale` 的数据类型不相同。
 
     **样例：**
 

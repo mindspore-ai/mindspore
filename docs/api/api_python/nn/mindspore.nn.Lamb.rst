@@ -8,7 +8,7 @@ mindspore.nn.Lamb
     LAMB是一种采用分层自适应批优化技术的优化算法。详见论文 `LARGE BATCH OPTIMIZATION FOR DEEP LEARNING: TRAINING BERT IN 76 MINUTES <https://arxiv.org/abs/1904.00962>`_。
 
     LAMB优化器旨在不降低精度的情况下增加训练batch size，支持自适应逐元素更新和精确的分层校正。
-    
+
 
     参数更新如下：
 
@@ -45,12 +45,12 @@ mindspore.nn.Lamb
 
     - **beta1** (float)：第一矩的指数衰减率。参数范围（0.0,1.0）。默认值：0.9。
     - **beta2** (float)：第二矩的指数衰减率。参数范围（0.0,1.0）。默认值：0.999。
-    - **eps** (float)：将添加到分母中，以提高数值稳定性。必须大于0。默认值：1e-6。
-    - **weight_decay** (float)：权重衰减（L2 penalty）。必须大于等于0。默认值：0.0。
+    - **eps** (float) - 将添加到分母中，以提高数值稳定性。必须大于0。默认值：1e-6。
+    - **weight_decay** (float) - 权重衰减（L2 penalty）。必须大于等于0。默认值：0.0。
 
     **输入：**
 
-    **gradients** (tuple[Tensor])：`params` 的梯度，shape与 `params` 相同。
+    - **gradients** (tuple[Tensor]) - `params` 的梯度，shape与 `params` 相同。
 
     **输出：**
 
@@ -58,13 +58,13 @@ mindspore.nn.Lamb
 
     **异常：**
 
-    - **TypeError**：`learning_rate` 不是int、float、Tensor、Iterable或LearningRateSchedule。
-    - **TypeError**：`parameters` 的元素不是Parameter或dict。
-    - **TypeError**：`beta1`、`beta2` 或 `eps` 不是float。
-    - **TypeError**：`weight_decay` 不是float或int。
-    - **ValueError**：`eps` 小于等于0。
-    - **ValueError**：`beta1`、`beta2` 不在（0.0,1.0）范围内。
-    - **ValueError**：`weight_decay` 小于0。
+    - **TypeError** - `learning_rate` 不是int、float、Tensor、Iterable或LearningRateSchedule。
+    - **TypeError** - `parameters` 的元素不是Parameter或dict。
+    - **TypeError** - `beta1`、`beta2` 或 `eps` 不是float。
+    - **TypeError** - `weight_decay` 不是float或int。
+    - **ValueError** - `eps` 小于等于0。
+    - **ValueError** - `beta1`、`beta2` 不在（0.0,1.0）范围内。
+    - **ValueError** - `weight_decay` 小于0。
 
     **支持平台：**
 
@@ -91,4 +91,3 @@ mindspore.nn.Lamb
     >>>
     >>> loss = nn.SoftmaxCrossEntropyWithLogits()
     >>> model = Model(net, loss_fn=loss, optimizer=optim)
-    

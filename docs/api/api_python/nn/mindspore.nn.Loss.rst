@@ -28,7 +28,7 @@ mindspore.nn.Loss
         计算loss的平均值。
 
         **返回：**
-        
+
         Float，loss的平均值。
 
         **异常：**
@@ -41,9 +41,9 @@ mindspore.nn.Loss
 
         **参数：**
 
-        inputs：输入只包含一个元素，且该元素为loss。loss的维度必须为0或1。
+        - **inputs** - 输入只包含一个元素，且该元素为loss。loss的维度必须为0或1。
 
         **异常：**
 
-        **ValueError**：`inputs` 的长度不为1。
-        **ValueError**：`inputs` 的维度不为0或1。
+        - **ValueError** - `inputs` 的长度不为1。
+        - **ValueError** - `inputs` 的维度不为0或1。

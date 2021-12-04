@@ -28,7 +28,7 @@ mindspore.ops.Add
     - **TypeError** - `x` 和 `y` 不是Tensor、Number或bool。
 
     **支持平台：**
-    
+
     ``Ascend`` ``GPU`` ``CPU``
 
     **样例：**
@@ -51,4 +51,3 @@ mindspore.ops.Add
     >>> # 输出的数据类型为高精度float32。
     >>> print(output.dtype)
     Float32
-    

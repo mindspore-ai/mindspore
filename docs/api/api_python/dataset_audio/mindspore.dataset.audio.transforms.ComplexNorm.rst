@@ -7,7 +7,7 @@ mindspore.dataset.audio.transforms.ComplexNorm
 
     **参数：**
 
-    **power** (float, optional)：范数的幂，取值非负（默认为1.0）。
+    - **power** (float, optional) - 范数的幂，取值非负（默认为1.0）。
 
     **样例：**
 

@@ -15,7 +15,7 @@ mindspore.nn.ReLU
 
     **输入：**
 
-    - **x** (Tensor)：用于计算ReLU的Tensor。数据类型为Number。shape为 :math:`(N,*)` ，其中 :math:`*` 表示任意的附加维度数。
+    - **x** (Tensor) - 用于计算ReLU的Tensor。数据类型为Number。shape为 :math:`(N,*)` ，其中 :math:`*` 表示任意的附加维度数。
 
     **输出：**
 
@@ -36,4 +36,3 @@ mindspore.nn.ReLU
     >>> output = relu(x)
     >>> print(output)
     [0. 2. 0. 2. 0.]
-    

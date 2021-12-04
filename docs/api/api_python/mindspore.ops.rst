@@ -17,18 +17,6 @@ Neural Network Operators
     mindspore.ops.SeLU
     mindspore.ops.Sigmoid
 
-Array Operators
-----------------
-
-.. cnmsplatformautosummary::
-    :toctree: ops
-
-    mindspore.ops.OnesLike
-    mindspore.ops.Reshape
-    mindspore.ops.Size
-    mindspore.ops.Tile
-    mindspore.ops.ZerosLike
-
 Math Operators
 --------------
 
@@ -47,12 +35,24 @@ Math Operators
     mindspore.ops.Pow
     mindspore.ops.Sub
 
+Array Operators
+----------------
+
+.. cnmsplatformautosummary::
+    :toctree: ops
+
+    mindspore.ops.OnesLike
+    mindspore.ops.Reshape
+    mindspore.ops.Size
+    mindspore.ops.Tile
+    mindspore.ops.ZerosLike
+
 
 Random Operators
 ----------------
 
 .. cnmsplatformautosummary::
     :toctree: ops
-    
+
     mindspore.ops.Gamma
     mindspore.ops.UniformReal

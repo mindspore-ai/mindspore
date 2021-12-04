@@ -2,7 +2,7 @@
 
     保存checkpoint时的配置策略。
 
-    .. note:: 
+    .. note::
         在训练过程中，如果数据集是通过数据通道传输的，建议将 `save_checkpoint_steps` 设为循环下沉step数量的整数倍数，否则，保存checkpoint的时机可能会有偏差。建议同时只设置一种触发保存checkpoint策略和一种保留checkpoint文件总数策略。如果同时设置了 `save_checkpoint_steps` 和 `save_checkpoint_seconds` ，则 `save_checkpoint_seconds` 无效。如果同时设置了 `keep_checkpoint_max` 和 `keep_checkpoint_per_n_minutes` ，则 `keep_checkpoint_per_n_minutes` 无效。
 
     **参数：**
@@ -20,7 +20,7 @@
 
     **异常：**
 
-    **ValueError** - 输入参数的类型不正确。
+    - **ValueError** - 输入参数的类型不正确。
 
     **样例：**
 
@@ -57,7 +57,7 @@
     >>> config = CheckpointConfig(saved_network=net)
     >>> ckpoint_cb = ModelCheckpoint(prefix='LeNet5', directory='./checkpoint', config=config)
     >>> model.train(10, dataset, callbacks=ckpoint_cb)
-    
+
 
     .. py:method:: append_dict
         :property:
@@ -100,7 +100,7 @@
 
     .. py:method:: saved_network
         :property:
-        
+
         获取_保存的网络。
 
     .. py:method:: save_checkpoint_seconds

@@ -14,12 +14,12 @@ mindspore.nn.exponential_decay_lr
 
     **参数：**
 
-    - **learning_rate** (float)：学习率的初始值。
-    - **decay_rate** (float)：衰减率。
-    - **total_step** (int)：step总数。
-    - **step_per_epoch** (int)：每个 epoch的step数。
-    - **decay_epoch** (int)：用于计算衰减学习率的值。
-    - **is_stair** (bool)：如果为True，则学习率每 `decay_epoch` 次衰减一次。默认值：False。
+    - **learning_rate** (float) - 学习率的初始值。
+    - **decay_rate** (float) - 衰减率。
+    - **total_step** (int) - step总数。
+    - **step_per_epoch** (int) - 每个 epoch的step数。
+    - **decay_epoch** (int) - 用于计算衰减学习率的值。
+    - **is_stair** (bool) - 如果为True，则学习率每 `decay_epoch` 次衰减一次。默认值：False。
 
     **返回：**
 
@@ -35,4 +35,3 @@ mindspore.nn.exponential_decay_lr
     >>> output = exponential_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch)
     >>> print(output)
     [0.1, 0.1, 0.09000000000000001, 0.09000000000000001, 0.08100000000000002, 0.08100000000000002]
-    

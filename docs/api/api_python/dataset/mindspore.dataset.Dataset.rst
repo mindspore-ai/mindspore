@@ -38,14 +38,14 @@
 
         **参数：**
 
-        - **batch_size** (int or function)：每个批处理数据包含的条数。参数需要是int或可调用对象，该对象接收1个参数，即BatchInfo。
-        - **drop_remainder** (bool, optional)：是否删除最后一个数据条数小于批处理大小的batch（默认值为False）。如果为True，并且最后一个批次中数据行数少于 `batch_size`，则这些数据将被丢弃，不会传递给后续的操作。
-        - **num_parallel_workers** (int, optional)：用于进行batch操作的的线程数（threads），默认值为None。
-        - **per_batch_map** (callable, optional)：是一个以(list[Tensor], list[Tensor], ..., BatchInfo)作为输入参数的可调用对象。每个list[Tensor]代表给定列上的一批Tensor。入参中list[Tensor]的个数应与 `input_columns` 中传入列名的数量相匹配。该可调用对象的最后一个参数始终是BatchInfo对象。`per_batch_map`应返回(list[Tensor], list[Tensor], ...)。其出中list[Tensor]的个数应与输入相同。如果输出列数与输入列数不一致，则需要指定 `output_columns`。        - **input_columns** (Union[str, list[str]], optional)：由输入列名组成的列表。如果 `per_batch_map` 不为None，列表中列名的个数应与 `per_batch_map` 中包含的列数匹配（默认为None）。
-        - **output_columns** (Union[str, list[str]], optional)：当前操作所有输出列的列名列表。如果len(input_columns) != len(output_columns)，则此参数必须指定。此列表中列名的数量必须与给定操作的输出列数相匹配（默认为None，输出列将与输入列具有相同的名称）。
-        - **column_order** (Union[str, list[str]], optional)：指定整个数据集对象中包含的所有列名的顺序。如果len(input_column) != len(output_column)，则此参数必须指定。 注意：这里的列名不仅仅是在 `input_columns` 和 `output_columns` 中指定的列。
-        - **pad_info** (dict, optional)：用于对给定列进行填充。例如 `pad_info={"col1":([224,224],0)}` ，则将列名为"col1"的列填充到大小为[224,224]的张量，并用0填充缺失的值（默认为None)。
-        - **python_multiprocessing** (bool, optional)：针对 `per_batch_map` 函数，使用Python多进执行的方式进行调用。如果函数计算量大，开启这个选项可能会很有帮助（默认值为False）。
+        - **batch_size** (int or function) - 每个批处理数据包含的条数。参数需要是int或可调用对象，该对象接收1个参数，即BatchInfo。
+        - **drop_remainder** (bool, optional) - 是否删除最后一个数据条数小于批处理大小的batch（默认值为False）。如果为True，并且最后一个批次中数据行数少于 `batch_size`，则这些数据将被丢弃，不会传递给后续的操作。
+        - **num_parallel_workers** (int, optional) - 用于进行batch操作的的线程数（threads），默认值为None。
+        - **per_batch_map** (callable, optional) - 是一个以(list[Tensor], list[Tensor], ..., BatchInfo)作为输入参数的可调用对象。每个list[Tensor]代表给定列上的一批Tensor。入参中list[Tensor]的个数应与 `input_columns` 中传入列名的数量相匹配。该可调用对象的最后一个参数始终是BatchInfo对象。`per_batch_map` 应返回(list[Tensor], list[Tensor], ...)。其出中list[Tensor]的个数应与输入相同。如果输出列数与输入列数不一致，则需要指定 `output_columns`。        - **input_columns** (Union[str, list[str]], optional)：由输入列名组成的列表。如果 `per_batch_map` 不为None，列表中列名的个数应与 `per_batch_map` 中包含的列数匹配（默认为None）。
+        - **output_columns** (Union[str, list[str]], optional) - 当前操作所有输出列的列名列表。如果len(input_columns) != len(output_columns)，则此参数必须指定。此列表中列名的数量必须与给定操作的输出列数相匹配（默认为None，输出列将与输入列具有相同的名称）。
+        - **column_order** (Union[str, list[str]], optional) - 指定整个数据集对象中包含的所有列名的顺序。如果len(input_column) != len(output_column)，则此参数必须指定。 注意：这里的列名不仅仅是在 `input_columns` 和 `output_columns` 中指定的列。
+        - **pad_info** (dict, optional) - 用于对给定列进行填充。例如 `pad_info={"col1":([224,224],0)}` ，则将列名为"col1"的列填充到大小为[224,224]的张量，并用0填充缺失的值（默认为None)。
+        - **python_multiprocessing** (bool, optional) - 针对 `per_batch_map` 函数，使用Python多进执行的方式进行调用。如果函数计算量大，开启这个选项可能会很有帮助（默认值为False）。
 
         **返回：**
 
@@ -68,7 +68,7 @@
         ...         index += 1
         ...     return (output,)
         >>> dataset = dataset.batch(batch_size=8, input_columns=["image"], per_batch_map=np_resize)
-    
+
     .. py:method:: bucket_batch_by_length(column_names, bucket_boundaries, bucket_batch_sizes, element_length_function=None, pad_info=None, pad_to_bucket_boundary=False, drop_remainder=False)
 
         依据数据中元素长度进行分桶。每个桶将在满了的时候进行元素填充和批处理操作。
@@ -77,20 +77,20 @@
 
         **参数：**
 
-        - **column_names** (list[str])：传递给长度计算函数的所有列名。
-        - **bucket_boundaries** (list[int])：由各个桶的上边界值组成的列表，必须严格递增。如果有n个边界，则创建n+1个桶，分配后桶的边界如下：[0, bucket_boundaries[0])，[bucket_boundaries[i], bucket_boundaries[i+1])（其中，0<i<n-1），[bucket_boundaries[n-1], inf)。
-        - **bucket_batch_sizes** (list[int])：由每个桶的批次大小组成的列表，必须包含 `len(bucket_boundaries)+1` 个元素。
-        - **element_length_function** (Callable, optional)：输入包含M个参数的函数，其中M等于 `len(column_names)` ，并返回一个整数。如果未指定该参数，则 `len(column_names)` 必须为1，并且该列数据第一维的shape值将用作长度（默认为None）。
-        - **pad_info** (dict, optional)：有关如何对指定列进行填充的字典对象。字典中键对应要填充的列名，值必须是包含2个元素的元组。元组中第一个元素对应要填充成的shape，第二个元素对应要填充的值。如果某一列未指定将要填充后的shape和填充值，则当前批次中该列上的每条数据都将填充至该批次中最长数据的长度，填充值为0。除非 `pad_to_bucket_boundary` 为True，否则 `pad_info` 中任何填充shape为None的列，其每条数据长度都将被填充为当前批处理中最数据的长度。如果不需要填充，请将 `pad_info` 设置为None（默认为None）。
-        - **pad_to_bucket_boundary** (bool, optional)：如果为True，则 `pad_info` 中填充shape为None的列，其长度都会被填充至 `bucket_boundary-1` 长度。如果有任何元素落入最后一个桶中，则将报错（默认为False）。
-        - **drop_remainder** (bool, optional)：如果为True，则丢弃每个桶中最后不足一个批次数据（默认为False）。
+        - **column_names** (list[str]) - 传递给长度计算函数的所有列名。
+        - **bucket_boundaries** (list[int]) - 由各个桶的上边界值组成的列表，必须严格递增。如果有n个边界，则创建n+1个桶，分配后桶的边界如下：[0, bucket_boundaries[0])，[bucket_boundaries[i], bucket_boundaries[i+1])（其中，0<i<n-1），[bucket_boundaries[n-1], inf)。
+        - **bucket_batch_sizes** (list[int]) - 由每个桶的批次大小组成的列表，必须包含 `len(bucket_boundaries)+1` 个元素。
+        - **element_length_function** (Callable, optional) - 输入包含M个参数的函数，其中M等于 `len(column_names)` ，并返回一个整数。如果未指定该参数，则 `len(column_names)` 必须为1，并且该列数据第一维的shape值将用作长度（默认为None）。
+        - **pad_info** (dict, optional) - 有关如何对指定列进行填充的字典对象。字典中键对应要填充的列名，值必须是包含2个元素的元组。元组中第一个元素对应要填充成的shape，第二个元素对应要填充的值。如果某一列未指定将要填充后的shape和填充值，则当前批次中该列上的每条数据都将填充至该批次中最长数据的长度，填充值为0。除非 `pad_to_bucket_boundary` 为True，否则 `pad_info` 中任何填充shape为None的列，其每条数据长度都将被填充为当前批处理中最数据的长度。如果不需要填充，请将 `pad_info` 设置为None（默认为None）。
+        - **pad_to_bucket_boundary** (bool, optional) - 如果为True，则 `pad_info` 中填充shape为None的列，其长度都会被填充至 `bucket_boundary-1` 长度。如果有任何元素落入最后一个桶中，则将报错（默认为False）。
+        - **drop_remainder** (bool, optional) - 如果为True，则丢弃每个桶中最后不足一个批次数据（默认为False）。
 
         **返回：**
 
         BucketBatchByLengthDataset，按长度进行分桶和批处理操作后的数据集对象。
 
         **样例：**
-        
+
         >>> # 创建一个数据集对象，其中给定条数的数据会被组成一个批次数据
         >>> # 如果最后一个批次数据小于给定的批次大小（batch_size)，则丢弃这个批次
         >>> import numpy as np
@@ -117,11 +117,11 @@
 
         **参数：**
 
-        - **columns** (list[str])：指定从哪一列中获取单词。
-        - **vocab_size** (int)：词汇表大小。
-        - **character_coverage** (int)：模型涵盖的字符百分比，必须介于0.98和1.0之间。默认值如0.9995，适用于具有丰富字符集的语言，如日语或中文字符集；1.0适用于其他字符集较小的语言，比如英语或拉丁文。
-        - **model_type** (SentencePieceModel)：模型类型，枚举值包括unigram（默认值）、bpe、char及word。当类型为word时，输入句子必须预先标记。
-        - **params** (dict)：依据原始数据内容构建祠表的附加参数，无附加参数时取值可以是空字典。
+        - **columns** (list[str]) - 指定从哪一列中获取单词。
+        - **vocab_size** (int) - 词汇表大小。
+        - **character_coverage** (int) - 模型涵盖的字符百分比，必须介于0.98和1.0之间。默认值如0.9995，适用于具有丰富字符集的语言，如日语或中文字符集；1.0适用于其他字符集较小的语言，比如英语或拉丁文。
+        - **model_type** (SentencePieceModel) - 模型类型，枚举值包括unigram（默认值）、bpe、char及word。当类型为word时，输入句子必须预先标记。
+        - **params** (dict) - 依据原始数据内容构建祠表的附加参数，无附加参数时取值可以是空字典。
 
         **返回：**
 
@@ -146,29 +146,30 @@
 
         **参数：**
 
-        **columns** (Union[str, list[str]]) ：指定从数据集对象中哪一列中获取单词。
-        **freq_range** (tuple[int])：由(min_frequency, max_frequency)组成的整数元组，在这个频率范围的词汇会被保存下来。
-        取值范围需满足：0 <= min_frequency <= max_frequency <= total_words，其中min_frequency、max_frequency的默认值分别设置为0、total_words。
-        **top_k** (int)：词汇表中包含的单词数，取`top_k`个最常见的单词。`top_k`优先级低于`freq_range`。如果`top_k`的值大于单词总数，则取所有单词。
-        **special_tokens** (list[str])：字符串列表，每个字符串都是一个特殊的标记。
-        **special_first** (bool)：是否将 `special_tokens` 添加到词汇表首尾。如果指定了 `special_tokens` 且
-        `special_first` 设置为默认值，则将`special_tokens`添加到词汇表最前面。
+        - **columns** (Union[str, list[str]]) ：指定从数据集对象中哪一列中获取单词。
+        - **freq_range** (tuple[int]) - 由(min_frequency, max_frequency)组成的整数元组，在这个频率范围的词汇会被保存下来。
+          取值范围需满足：0 <= min_frequency <= max_frequency <= total_words，其中min_frequency、max_frequency的默认值分别设置为0、total_words。
+        - **top_k** (int) - 词汇表中包含的单词数，取 `top_k` 个最常见的单词。`top_k` 优先级低于 `freq_range`。如果 `top_k` 的值大于单词总数，则取所有单词。
+        - **special_tokens** (list[str]) - 字符串列表，每个字符串都是一个特殊的标记。
+        - **special_first** (bool) - 是否将 `special_tokens` 添加到词汇表首尾。如果指定了 `special_tokens` 且
+          `special_first` 设置为默认值，则将 `special_tokens` 添加到词汇表最前面。
 
         **返回：**
             从数据集对象中构建出的词汇表对象。
 
         **样例：**
-            >>> def gen_corpus():
-            ...     # 键：单词，值：出现次数，键的取值采用字母表示有利于排序和显示。
-            ...     corpus = {"Z": 4, "Y": 4, "X": 4, "W": 3, "U": 3, "V": 2, "T": 1}
-            ...     for k, v in corpus.items():
-            ...         yield (np.array([k] * v, dtype='S'),)
-            >>> column_names = ["column1", "column2", "column3"]
-            >>> dataset = ds.GeneratorDataset(gen_corpus, column_names)
-            >>> dataset = dataset.build_vocab(columns=["column3", "column1", "column2"],
-            ...                               freq_range=(1, 10), top_k=5,
-            ...                               special_tokens=["<pad>", "<unk>"],
-            ...                               special_first=True,vocab='vocab')
+
+        >>> def gen_corpus():
+        ...     # 键：单词，值：出现次数，键的取值采用字母表示有利于排序和显示。
+        ...     corpus = {"Z": 4, "Y": 4, "X": 4, "W": 3, "U": 3, "V": 2, "T": 1}
+        ...     for k, v in corpus.items():
+        ...         yield (np.array([k] * v, dtype='S'),)
+        >>> column_names = ["column1", "column2", "column3"]
+        >>> dataset = ds.GeneratorDataset(gen_corpus, column_names)
+        >>> dataset = dataset.build_vocab(columns=["column3", "column1", "column2"],
+        ...                               freq_range=(1, 10), top_k=5,
+        ...                               special_tokens=["<pad>", "<unk>"],
+        ...                               special_first=True,vocab='vocab')
 
     .. py:method:: close_pool()
 
@@ -182,7 +183,7 @@
 
         **参数：**
 
-        **datasets** (Union[list, class Dataset])：与当前数据集对象拼接的数据集对象列表或单个数据集对象。
+        - **datasets** (Union[list, class Dataset]) - 与当前数据集对象拼接的数据集对象列表或单个数据集对象。
 
 
         **返回：**
@@ -204,8 +205,8 @@
 
         **参数：**
 
-        - **num_epochs** (int, optional)：迭代器可以迭代的最多轮次数（默认为-1，迭代器可以迭代无限次）。
-        -  **output_numpy** (bool, optional)：是否输出NumPy数据类型，如果 `output_numpy` 为False，迭代器输出的每列数据类型为MindSpore.Tensor（默认为False）。
+        - **num_epochs** (int, optional) - 迭代器可以迭代的最多轮次数（默认为-1，迭代器可以迭代无限次）。
+        - **output_numpy** (bool, optional) - 是否输出NumPy数据类型，如果 `output_numpy` 为False，迭代器输出的每列数据类型为MindSpore.Tensor（默认为False）。
 
         **返回：**
 
@@ -229,10 +230,10 @@
 
         **参数：**
 
-        - **columns** (list[str], optional)：用于指定列顺序的列名列表（默认为None，表示所有列）。
-        - **num_epochs** (int, optional)：迭代器可以迭代的最多轮次数（默认为-1，迭代器可以迭代无限次）。
-        - **output_numpy** (bool, optional)：是否输出NumPy数据类型，如果output_numpy为False，迭代器输出的每列数据类型为MindSpore.Tensor（默认为False）。
-        - **do_copy** (bool, optional)：当输出数据类型为mindspore.Tensor时，通过此参数指定转换方法，采用False主要考虑以获得更好的性能（默认为True）。
+        - **columns** (list[str], optional) - 用于指定列顺序的列名列表（默认为None，表示所有列）。
+        - **num_epochs** (int, optional) - 迭代器可以迭代的最多轮次数（默认为-1，迭代器可以迭代无限次）。
+        - **output_numpy** (bool, optional) - 是否输出NumPy数据类型，如果output_numpy为False，迭代器输出的每列数据类型为MindSpore.Tensor（默认为False）。
+        - **do_copy** (bool, optional) - 当输出数据类型为mindspore.Tensor时，通过此参数指定转换方法，采用False主要考虑以获得更好的性能（默认为True）。
 
         **返回：**
 
@@ -254,8 +255,8 @@
 
         **参数：**
 
-         **send_epoch_end** (bool, optional)：数据发送完成后是否发送结束标识到设备上（默认值为True）。
-         **create_data_info_queue** (bool, optional)：是否创建一个队列，用于存储每条数据的type和shape（默认值为False）。
+        - **send_epoch_end** (bool, optional) - 数据发送完成后是否发送结束标识到设备上（默认值为True）。
+        - **create_data_info_queue** (bool, optional) - 是否创建一个队列，用于存储每条数据的type和shape（默认值为False）。
 
 
         .. note::
@@ -263,7 +264,8 @@
 
 
         **返回：**
-            TransferDataset，用于帮助发送数据到设备上的数据集对象。
+
+        TransferDataset，用于帮助发送数据到设备上的数据集对象。
 
 
     .. py:method:: dynamic_min_max_shapes()
@@ -271,18 +273,20 @@
         获取数据集对象中单条数据的最小和最大shape，用于图编译过程。
 
         **返回：**
-            列表，原始数据集对象中单条数据的最小和最大shape分别以list形式返回。
+
+        列表，原始数据集对象中单条数据的最小和最大shape分别以list形式返回。
 
         **样例：**
-            >>> import numpy as np
-            >>>
-            >>> def generator1():
-            >>>     for i in range(1, 100):
-            >>>         yield np.ones((16, i, 83)), np.array(i)
-            >>>
-            >>> dataset = ds.GeneratorDataset(generator1, ["data1", "data2"])
-            >>> dataset.set_dynamic_columns(columns={"data1": [16, None, 83], "data2": []})
-            >>> min_shapes, max_shapes = dataset.dynamic_min_max_shapes()
+
+        >>> import numpy as np
+        >>>
+        >>> def generator1():
+        >>>     for i in range(1, 100):
+        >>>         yield np.ones((16, i, 83)), np.array(i)
+        >>>
+        >>> dataset = ds.GeneratorDataset(generator1, ["data1", "data2"])
+        >>> dataset.set_dynamic_columns(columns={"data1": [16, None, 83], "data2": []})
+        >>> min_shapes, max_shapes = dataset.dynamic_min_max_shapes()
 
 
     .. py:method:: filter(predicate, input_columns=None, num_parallel_workers=None)
@@ -290,76 +294,83 @@
         通过判断条件对数据集对象中的数据进行过滤。
 
         .. note::
-             如果`input_columns`未指定或为空，则将使用所有列。
+             如果 `input_columns` 未指定或为空，则将使用所有列。
 
         **参数：**
 
-        **predicate** (callable)：Python可调用对象，返回值为Bool类型。如果为False，则过滤掉该条数据。
-        **input_columns** (Union[str, list[str]], optional)：输入列名组成的列表，当取默认值None时，`predicate` 将应用于数据集中的所有列。
-        **num_parallel_workers** (int, optional)：用于并行处理数据集的线程数（默认为None，将使用配置文件中的值）。
+        - **predicate** (callable) - Python可调用对象，返回值为Bool类型。如果为False，则过滤掉该条数据。
+        - **input_columns** (Union[str, list[str]], optional) - 输入列名组成的列表，当取默认值None时，`predicate` 将应用于数据集中的所有列。
+        - **num_parallel_workers** (int, optional) - 用于并行处理数据集的线程数（默认为None，将使用配置文件中的值）。
 
         **返回：**
-            FilterDataset，执行给定筛选过滤操作的数据集对象。
+
+        FilterDataset，执行给定筛选过滤操作的数据集对象。
 
         **样例：**
-            >>> # 生成一个list，其取值范围为（0，63）
-            >>> # 过滤掉数值大于或等于11的数据
-            >>> dataset = dataset.filter(predicate=lambda data: data < 11, input_columns = ["data"])
+
+        >>> # 生成一个list，其取值范围为（0，63）
+        >>> # 过滤掉数值大于或等于11的数据
+        >>> dataset = dataset.filter(predicate=lambda data: data < 11, input_columns = ["data"])
 
 
     .. py:method:: flat_map(func)
 
-        对数据集对象中每一条数据执行给定的`func`操作，并将结果展平。
+        对数据集对象中每一条数据执行给定的 `func` 操作，并将结果展平。
 
-        指定的`func`是一个函数，输入必须为一个'ndarray'，返回值是一个'Dataset'对象。
+        指定的 `func` 是一个函数，输入必须为一个'ndarray'，返回值是一个'Dataset'对象。
 
         **参数：**
 
-        **func** (function)：输入'ndarray'并返回一个'Dataset'对象的函数。
+        - **func** (function) - 输入'ndarray'并返回一个'Dataset'对象的函数。
 
         **返回：**
             执行给定操作的数据集对象。
 
         **样例：**
-            >>> # 以NumpySlicesDataset为例
-            >>> dataset = ds.NumpySlicesDataset([[0, 1], [2, 3]])
-            >>>
-            >>> def flat_map_func(array):
-            ...     # 使用数组创建NumpySlicesDataset
-            ...     dataset = ds.NumpySlicesDataset(array)
-            ...     # 将数据集对象中的数据重复两次
-            ...     dataset = dataset.repeat(2)
-            ...     return dataset
-            >>>
-            >>> dataset = dataset.flat_map(flat_map_func)
+
+        >>> # 以NumpySlicesDataset为例
+        >>> dataset = ds.NumpySlicesDataset([[0, 1], [2, 3]])
+        >>>
+        >>> def flat_map_func(array):
+        ...     # 使用数组创建NumpySlicesDataset
+        ...     dataset = ds.NumpySlicesDataset(array)
+        ...     # 将数据集对象中的数据重复两次
+        ...     dataset = dataset.repeat(2)
+        ...     return dataset
+        >>>
+        >>> dataset = dataset.flat_map(flat_map_func)
             >>> # [[0, 1], [0, 1], [2, 3], [2, 3]]
 
         **异常：**
 
-        **TypeError** - `func` 不是函数。
-        **TypeError** - `func` 的返回值不是数据集对象。
+        - **TypeError** - `func` 不是函数。
+        - **TypeError** - `func` 的返回值不是数据集对象。
 
     .. py:method:: get_batch_size()
 
         获得批处理的大小，即一个批次中包含的数据条数。
 
         **返回：**
-            int，一个批次中包含的数据条数。
+
+        int，一个批次中包含的数据条数。
 
         **样例：**
-            >> # dataset是数据集类的实例化对象
-            >> batch_size = dataset.get_batch_size()
+
+        >> # dataset是数据集类的实例化对象
+        >> batch_size = dataset.get_batch_size()
 
     .. py:method:: get_class_indexing()
 
         返回类别索引。
 
         **返回：**
-            dict，描述类别名称到索引的键值对映射关系，通常为str-to-int格式。针对COCO数据集，类别名称到索引映射关系描述形式为str-to-list<int>格式，列表中的第二个数字表示超级类别。
+
+        dict，描述类别名称到索引的键值对映射关系，通常为str-to-int格式。针对COCO数据集，类别名称到索引映射关系描述形式为str-to-list<int>格式，列表中的第二个数字表示超级类别。
 
         **样例：**
-            >> # dataset是数据集类的实例化对象
-            >> class_indexing = dataset.get_class_indexing()
+
+        >> # dataset是数据集类的实例化对象
+        >> class_indexing = dataset.get_class_indexing()
 
 
     .. py:method:: get_col_names()
@@ -367,35 +378,37 @@
         返回数据集对象中包含的列名。
 
         **返回：**
-            list，数据集中所有列名组成列表。
+
+        list，数据集中所有列名组成列表。
 
         **样例：**
-            >> # dataset是数据集类的实例化对象
-            >> col_names = dataset.get_col_names()
+
+        >> # dataset是数据集类的实例化对象
+        >> col_names = dataset.get_col_names()
 
     .. py:method:: get_dataset_size()
 
         返回一个epoch中的batch数。
 
         **返回：**
-        
+
         int，batch的数目。
-        
+
     .. py:method:: get_repeat_count()
 
         获取 `RepeatDataset` 中的repeat次数（默认为1）。
 
         **返回：**
-        
+
         int，repeat次数。
-        
+
     .. py:method:: input_indexs
         :property:
 
         获取input index信息。
 
         **返回：**
-        
+
         input index信息的元组。
 
         **样例：**
@@ -405,7 +418,7 @@
         >>> dataset.input_indexs = 10
         >>> print(dataset.input_indexs)
         10
-   
+
     .. py:method:: map(operations, input_columns=None, output_columns=None, column_order=None, num_parallel_workers=None, python_multiprocessing=False, cache=None, callbacks=None)
 
         将operations列表中的每个operation作用于数据集。
@@ -416,11 +429,11 @@
         每个operation将数据集中的一列或多列作为输入，并将输出零列或多列。
         第一个operation将 `input_columns` 中指定的列作为输入。
         如果operations列表中存在多个operation，则上一个operation的输出列将用作下一个operation的输入列。
-        
+
         最后一个operation输出列的列名由 `output_columns` 指定。
-        
+
         只有在 `column_order` 中指定的列才会传播到子节点，并且列的顺序将与 `column_order` 中指定的顺序相同。
-        
+
         **参数：**
 
         - **operations** (Union[list[TensorOp], list[functions]]) - 要作用于数据集的operations列表。将按operations列表中显示的顺序作用在数据集。
@@ -433,7 +446,7 @@
         - **callbacks** (DSCallback, list[DSCallback], optional) - 要调用的Dataset回调函数列表（默认为None）。
 
         **返回：**
-        
+
         MapDataset，map操作后的数据集。
 
         **样例：**
@@ -522,29 +535,29 @@
         >>> dataset = dataset.map(operations, input_columns=["x", "y"],
         ...                       output_columns=["mod2", "mod3", "mod5", "mod7"],
         ...                       column_order=["mod7", "mod3", "col2"])
-        
+
     .. py:method:: num_classes()
 
         获取数据集中的样本的class数目。
 
         **返回：**
-        
+
         int，class数目。
-        
+
     .. py:method:: output_shapes()
 
         获取输出数据的shape。
 
         **返回：**
-        
+
         list，每列shape的列表。
-        
+
     .. py:method:: output_types()
 
         获取输出数据类型。
 
         **返回：**
-        
+
         list，每列类型的列表。
 
     .. py:method:: project(columns)
@@ -555,36 +568,36 @@
         其他列将被丢弃。
 
         **参数：**
-        
-        **columns** (Union[str, list[str]]) - 要投影列的列名列表。
+
+        - **columns** (Union[str, list[str]]) - 要投影列的列名列表。
 
         **返回：**
-        
+
         ProjectDataset，投影后的数据集对象。
 
         **样例：**
-        
+
         >>> # dataset是Dataset对象的实例
         >>> columns_to_project = ["column3", "column1", "column2"]
         >>>
         >>> # 创建一个数据集，无论列的原始顺序如何，依次包含column3, column1, column2。
         >>> dataset = dataset.project(columns=columns_to_project)
-        
+
     .. py:method:: rename(input_columns, output_columns)
 
         重命名输入数据集中的列。
 
         **参数：**
-        
+
         - **input_columns** (Union[str, list[str]]) - 输入列的列名列表。
         - **output_columns** (Union[str, list[str]]) - 输出列的列名列表。
 
         **返回：**
-        
+
         RenameDataset，重命名后数据集对象。
 
         **样例：**
-        
+
         >>> # dataset是Dataset对象的实例
         >>> input_columns = ["input_col1", "input_col2", "input_col3"]
         >>> output_columns = ["output_col1", "output_col2", "output_col3"]
@@ -593,7 +606,7 @@
         >>> # input_col2重命名为output_col2，input_col3重命名
         >>> # 为output_col3。
         >>> dataset = dataset.rename(input_columns=input_columns, output_columns=output_columns)
-        
+
     .. py:method:: repeat(count=None)
 
         重复此数据集 `count` 次。如果count为None或-1，则无限重复。
@@ -603,10 +616,10 @@
 
         **参数：**
 
-        **count** (int) - 数据集重复的次数（默认为None）。
+        - **count** (int) - 数据集重复的次数（默认为None）。
 
         **返回：**
-        
+
         RepeatDataset，重复操作后的数据集对象。
 
         **样例：**
@@ -625,9 +638,9 @@
         >>> # 整个50个epoch视作一个大数据集。
         >>> dataset = dataset.repeat(50)
         >>> dataset = dataset.shuffle(10)
-        
+
     .. py:method:: reset()
-        
+
         重置下一个epoch的数据集。
 
     .. py:method:: save(file_name, num_files=1, file_type='mindrecord')
@@ -688,7 +701,7 @@
             2. 在调用函数之前，不要使用batch算子、repeat算子或具有随机属性的数据增强的map算子。
             3. 当数据的维度可变时，只支持1维数组或者在0维变化的多维数组。
             4. 不支持DE_UINT64类型、多维的DE_UINT8类型、多维DE_STRING类型。
-               
+
         **参数：**
 
         - **file_name** (str) - 数据集文件的路径。
@@ -700,34 +713,34 @@
         设置源数据的动态shape信息，需要在定义数据处理流水线后设置。
 
         **参数：**
-        
-        **columns** (dict) - 包含数据集中每列shape信息的字典。shape[i]为 `None` 表示shape[i]的数据长度是动态的。
-        
+
+        - **columns** (dict) - 包含数据集中每列shape信息的字典。shape[i]为 `None` 表示shape[i]的数据长度是动态的。
+
     .. py:method:: shuffle(buffer_size)
 
         使用以下策略随机打乱此数据集的行：
 
         1. 生成一个shuffle缓冲区包含buffer_size条数据行。
 
-        2. 从shuffle缓冲区中随机选择一个元素，作为下一行传播到子节点。 
+        2. 从shuffle缓冲区中随机选择一个元素，作为下一行传播到子节点。
 
         3. 从父节点获取下一行（如果有的话），并将其放入shuffle缓冲区中。
 
         4. 重复步骤2和3，直到打乱缓冲区中没有数据行为止。
 
         可以提供随机种子，在第一个epoch中使用。在随后的每个epoch，种子都会被设置成一个新产生的随机值。
-        
+
         **参数：**
-        
-        **buffer_size** (int) - 用于shuffle的缓冲区大小（必须大于1）。将buffer_size设置为等于数据集大小将导致在全局shuffle。
-                
+
+        - **buffer_size** (int) - 用于shuffle的缓冲区大小（必须大于1）。将buffer_size设置为等于数据集大小将导致在全局shuffle。
+
         **返回：**
-        
+
         ShuffleDataset，打乱后的数据集对象。
 
         **异常：**
-        
-        **RuntimeError** - 打乱前存在同步操作。
+
+        - **RuntimeError** - 打乱前存在同步操作。
 
         **样例：**
 
@@ -736,14 +749,14 @@
         >>> ds.config.set_seed(58)
         >>> # 使用大小为4的shuffle缓冲区创建打乱后的数据集。
         >>> dataset = dataset.shuffle(4)
-        
+
     .. py:method:: skip(count)
 
         跳过此数据集的前N个元素。
 
         **参数：**
 
-        **count** (int) - 要跳过的数据集中的元素个数。
+        - **count** (int) - 要跳过的数据集中的元素个数。
 
         **返回：**
 
@@ -754,49 +767,49 @@
         >>> # dataset是Dataset对象的实例
         >>> # 创建一个数据集，跳过前3个元素
         >>> dataset = dataset.skip(3)
-        
+
     .. py:method:: split(sizes, randomize=True)
 
         将数据集拆分为多个不重叠的数据集。
 
         这是一个通用拆分函数，可以被数据处理流水线中的任何算子调用。
-        还有如果直接调用ds.split，其中 ds 是一个 MappableDataset，它将被自动调用。  
+        还有如果直接调用ds.split，其中 ds 是一个 MappableDataset，它将被自动调用。
 
         **参数：**
-        
+
         - **sizes** (Union[list[int], list[float]]) - 如果指定了一列整数[s1, s2, …, sn]，数据集将被拆分为n个大小为s1、s2、...、sn的数据集。如果所有输入大小的总和不等于原始数据集大小，则报错。如果指定了一列浮点数[f1, f2, …, fn]，则所有浮点数必须介于0和1之间，并且总和必须为1，否则报错。数据集将被拆分为n个大小为round(f1*K)、round(f2*K)、...、round(fn*K)的数据集，其中K是原始数据集的大小。
-                    
+
             如果舍入后：
 
                 - 任何大小等于0，都将发生错误。
-                - 如果拆分大小的总和<K，K - sigma(round(fi * k))的差值将添加到第一个子数据集。  
+                - 如果拆分大小的总和<K，K - sigma(round(fi * k))的差值将添加到第一个子数据集。
                 - 如果拆分大小的总和>K，sigma(round(fi * K)) - K的差值将从第一个足够大的拆分子集中删除，删除差值后至少有1行。
-                  
-        - **randomize** (bool, optional)：确定是否随机拆分数据（默认为True）。如果为True，则数据集将被随机拆分。否则，将使用数据集中的连续行创建每个拆分子集。
-                
+
+        - **randomize** (bool, optional) - 确定是否随机拆分数据（默认为True）。如果为True，则数据集将被随机拆分。否则，将使用数据集中的连续行创建每个拆分子集。
+
         .. note::
             1. 如果要调用 split，则无法对数据集进行分片。
             2. 强烈建议不要对数据集进行打乱，而是使用随机化（randomize=True）。对数据集进行打乱的结果具有不确定性，每个拆分子集中的数据在每个epoch可能都不同。
-               
+
         **异常：**
 
         - **RuntimeError** - get_dataset_size返回None或此数据集不支持。
-        - **RuntimeError** - sizes是整数列表，并且size中所有元素的总和不等于数据集大小。    
+        - **RuntimeError** - sizes是整数列表，并且size中所有元素的总和不等于数据集大小。
         - **RuntimeError** - sizes是float列表，并且计算后存在大小为0的拆分子数据集。
         - **RuntimeError** - 数据集在调用拆分之前已进行分片。
         - **ValueError** - sizes是float列表，且并非所有float数都在0和1之间，或者float数的总和不等于1。
 
         **返回：**
-        
+
         tuple(Dataset)，拆分后子数据集对象的元组。
 
         **样例：**
-        
+
         >>> # TextFileDataset不是可映射dataset，因此将调用通用拆分函数。
         >>> # 由于许多数据集默认都打开了shuffle，如需调用拆分函数，请将shuffle设置为False。
         >>> dataset = ds.TextFileDataset(text_file_dataset_dir, shuffle=False)
         >>> train_dataset, test_dataset = dataset.split([0.9, 0.1])
-        
+
     .. py:method:: sync_update(condition_name, num_batch=None, data=None)
 
         释放阻塞条件并使用给定数据触发回调函数。
@@ -804,26 +817,26 @@
         **参数：**
 
         - **condition_name** (str) - 用于切换发送下一行数据的条件名称。
-        - **num_batch** (Union[int, None]) - 释放的batch（row）数。当 `num_batch` 为None时，将默认为 `sync_wait` 算子指定的值（默认为None）。        
+        - **num_batch** (Union[int, None]) - 释放的batch（row）数。当 `num_batch` 为None时，将默认为 `sync_wait` 算子指定的值（默认为None）。
         - **data** (Any) - 用户自定义传递给回调函数的数据（默认为None）。
-        
+
     .. py:method:: sync_wait(condition_name, num_batch=1, callback=None)
 
         向输入数据集添加阻塞条件。 将应用同步操作。
 
         **参数：**
-        
+
         - **condition_name** (str) - 用于切换发送下一行的条件名称。
         - **num_batch** (int) - 每个epoch开始时无阻塞的batch数。
         - **callback** (function) -  `sync_update` 中将调用的回调函数。
 
         **返回：**
-        
+
         SyncWaitDataset，添加了阻塞条件的数据集对象。
 
         **异常：**
-        
-        **RuntimeError** - 条件名称已存在。
+
+        - **RuntimeError** - 条件名称已存在。
 
         **样例：**
 
@@ -855,21 +868,21 @@
         ...     count += batch_size
         ...     data = {"loss": count}
         ...     dataset.sync_update(condition_name="policy", data=data)
-        
+
     .. py:method:: take(count=-1)
 
         从数据集中获取最多给定数量的元素。
 
         .. note::
-            1. 如果count大于数据集中的元素数或等于-1，则取数据集中的所有元素。     
+            1. 如果count大于数据集中的元素数或等于-1，则取数据集中的所有元素。
             2. take和batch操作顺序很重要，如果take在batch操作之前，则取给定行数；否则取给定batch数。
-               
+
         **参数：**
-        
-        **count** (int, optional) - 要从数据集中获取的元素数（默认为-1）。
+
+        - **count** (int, optional) - 要从数据集中获取的元素数（默认为-1）。
 
         **返回：**
-        
+
         TakeDataset，取出指定数目的数据集对象。
 
         **样例：**
@@ -877,35 +890,35 @@
         >>> # dataset是Dataset对象的实例。
         >>> # 创建一个数据集，包含50个元素。
         >>> dataset = dataset.take(50)
-        
+
     .. py:method:: to_device(send_epoch_end=True, create_data_info_queue=False)
 
         将数据从CPU传输到GPU、Ascend或其他设备。
 
         **参数：**
-        
+
         - **send_epoch_end** (bool, optional) - 是否将end of sequence发送到设备（默认为True）。
         - **create_data_info_queue** (bool, optional) - 是否创建存储数据类型和shape的队列（默认值为False）。
-                
+
         .. note::
             如果设备为Ascend，则逐个传输数据。每次传输的数据最大限制为256M。
-            
+
         **返回：**
-        
+
         TransferDataset，用于传输的数据集对象。
 
         **异常：**
-        
-        **RuntimeError** - 如果提供了分布式训练的文件路径但读取失败。
-        
+
+        - **RuntimeError** - 如果提供了分布式训练的文件路径但读取失败。
+
     .. py:method:: to_json(filename='')
 
         将数据处理流水线序列化为JSON字符串，如果提供了文件名，则转储到文件中。
 
         **参数：**
 
-        **filename** (str) - 另存为JSON格式的文件名。
+        - **filename** (str) - 另存为JSON格式的文件名。
 
         **返回：**
-        
+
         str，流水线的JSON字符串。

@@ -15,7 +15,7 @@ mindspore.nn.probability.bijector.Invert
     ``Ascend`` ``GPU``
 
     **样例：**
-    
+
     >>> import numpy as np
     >>> import mindspore
     >>> import mindspore.nn as nn
@@ -34,7 +34,7 @@ mindspore.nn.probability.bijector.Invert
     >>> ans = forward(Tensor(x, dtype=mindspore.float32))
     >>> print(ans.shape)
     (4,)
-    
+
     .. py:method:: bijector
         :property:
 
@@ -43,32 +43,32 @@ mindspore.nn.probability.bijector.Invert
     .. py:method:: forward(x)
 
         逆变换：将输入值转换回原始分布。
-        
+
         **参数：**
 
-        **x** (Tensor) - 输入。
-        
+        - **x** (Tensor) - 输入。
+
     .. py:method:: forward_log_jacobian(x)
 
         逆变换导数的对数。
-        
+
         **参数：**
 
-        **x** (Tensor) - 输入。
-        
+        - **x** (Tensor) - 输入。
+
     .. py:method:: inverse(y)
 
         正变换：将输入值转换为另一个分布。
-        
+
         **参数：**
 
-        **y** (Tensor) - 输入。
-        
+        - **y** (Tensor) - 输入。
+
     .. py:method:: inverse_log_jacobian(y)
 
         正变换导数的对数。
-        
+
         **参数：**
-        
-        **y** (Tensor) - 输入。
-        
+
+        - **y** (Tensor) - 输入。
+

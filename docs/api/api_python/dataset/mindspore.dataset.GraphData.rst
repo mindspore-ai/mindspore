@@ -7,18 +7,18 @@ mindspore.dataset.GraphData
 
     **参数：**
 
-    - **dataset_file** (str)：数据集文件路径。
-    - **num_parallel_workers** (int, 可选)：读取数据的工作线程数（默认为None）。
-    - **working_mode** (str, 可选)：设置工作模式，目前支持'local'/'client'/'server'（默认为'local'）。
+    - **dataset_file** (str) - 数据集文件路径。
+    - **num_parallel_workers** (int, 可选) - 读取数据的工作线程数（默认为None）。
+    - **working_mode** (str, 可选) - 设置工作模式，目前支持'local'/'client'/'server'（默认为'local'）。
 
       - **local**：用于非分布式训练场景。
       - **client**：用于分布式训练场景。客户端不加载数据，而是从服务器获取数据。
       - **server**：用于分布式训练场景。服务器加载数据并可供客户端使用。
 
-    - **hostname** (str, 可选)：图数据集服务器的主机名。该参数仅在工作模式设置为 'client' 或 'server' 时有效（默认为'127.0.0.1'）。
-    - **port** (int, 可选)：图数据服务器的端口，取值范围为1024-65535。此参数仅当工作模式设置为 'client' 或 'server' （默认为50051）时有效。
-    - **num_client** (int, 可选)：期望连接到服务器的最大客户端数。服务器将根据该参数分配资源。该参数仅在工作模式设置为 'server' 时有效（默认为1）。
-    - **auto_shutdown** (bool, 可选)：当工作模式设置为 'server' 时有效。当连接的客户端数量达到 `num_client` ，且没有客户端正在连接时，服务器将自动退出（默认为True）。
+    - **hostname** (str, 可选) - 图数据集服务器的主机名。该参数仅在工作模式设置为 'client' 或 'server' 时有效（默认为'127.0.0.1'）。
+    - **port** (int, 可选) - 图数据服务器的端口，取值范围为1024-65535。此参数仅当工作模式设置为 'client' 或 'server' （默认为50051）时有效。
+    - **num_client** (int, 可选) - 期望连接到服务器的最大客户端数。服务器将根据该参数分配资源。该参数仅在工作模式设置为 'server' 时有效（默认为1）。
+    - **auto_shutdown** (bool, 可选) - 当工作模式设置为 'server' 时有效。当连接的客户端数量达到 `num_client` ，且没有客户端正在连接时，服务器将自动退出（默认为True）。
 
     **样例：**
 
@@ -34,7 +34,7 @@ mindspore.dataset.GraphData
 
         **参数：**
 
-        **edge_type** (int)：指定边的类型。
+        - **edge_type** (int) - 指定边的类型。
 
         **返回：**
 
@@ -138,9 +138,9 @@ mindspore.dataset.GraphData
 
         **参数：**
 
-        - **node_list** (Union[list, numpy.ndarray])：给定的节点列表。
-        - **neighbor_type** (int)：指定邻居节点的类型。
-        - **output_format** (OutputFormat, 可选)：输出存储格式（默认为mindspore.dataset.engine.OutputFormat.NORMAL）取值范围：[OutputFormat.NORMAL, OutputFormat.COO, OutputFormat.CSR]。
+        - **node_list** (Union[list, numpy.ndarray]) - 给定的节点列表。
+        - **neighbor_type** (int) - 指定邻居节点的类型。
+        - **output_format** (OutputFormat, 可选) - 输出存储格式（默认为mindspore.dataset.engine.OutputFormat.NORMAL）取值范围：[OutputFormat.NORMAL, OutputFormat.COO, OutputFormat.CSR]。
 
         **返回：**
 
@@ -158,8 +158,8 @@ mindspore.dataset.GraphData
 
         **异常：**
 
-        - **TypeError**：参数 `node_list` 的类型不为列表或numpy.ndarray。
-        - **TypeError**：参数 `neighbor_type` 的类型不为整型。
+        - **TypeError** - 参数 `node_list` 的类型不为列表或numpy.ndarray。
+        - **TypeError** - 参数 `neighbor_type` 的类型不为整型。
 
     .. py:method:: get_all_nodes(node_type)
 
@@ -167,7 +167,7 @@ mindspore.dataset.GraphData
 
         **参数：**
 
-        **node_type** (int)：指定节点的类型。
+        - **node_type** (int) - 指定节点的类型。
 
         **返回：**
 
@@ -187,7 +187,7 @@ mindspore.dataset.GraphData
 
         **参数：**
 
-        **node_list** (Union[list[tuple], numpy.ndarray])：含一个或多个图节点ID对的列表。
+        - **node_list** (Union[list[tuple], numpy.ndarray]) - 含一个或多个图节点ID对的列表。
 
         **返回：**
 
@@ -207,8 +207,8 @@ mindspore.dataset.GraphData
 
         **参数：**
 
-        - **edge_list** (Union[list, numpy.ndarray])：包含边的列表。
-        - **feature_types** (Union[list, numpy.ndarray])：包含给定特征类型的列表。
+        - **edge_list** (Union[list, numpy.ndarray]) - 包含边的列表。
+        - **feature_types** (Union[list, numpy.ndarray]) - 包含给定特征类型的列表。
 
         **返回：**
 
@@ -221,8 +221,8 @@ mindspore.dataset.GraphData
 
         **异常：**
 
-        - **TypeError**：参数 `edge_list` 的类型不为列表或numpy.ndarray。
-        - **TypeError**：参数 `feature_types` 的类型不为列表或numpy.ndarray。
+        - **TypeError** - 参数 `edge_list` 的类型不为列表或numpy.ndarray。
+        - **TypeError** - 参数 `feature_types` 的类型不为列表或numpy.ndarray。
 
 
     .. py:method:: get_neg_sampled_neighbors(node_list, neg_neighbor_num, neg_neighbor_type)
@@ -231,9 +231,9 @@ mindspore.dataset.GraphData
 
         **参数：**
 
-        - **node_list** (Union[list, numpy.ndarray])：包含节点的列表。
-        - **neg_neighbor_num** (int)：采样的邻居数量。
-        - **neg_neighbor_type** (int)：指定负样本邻居的类型。
+        - **node_list** (Union[list, numpy.ndarray]) - 包含节点的列表。
+        - **neg_neighbor_num** (int) - 采样的邻居数量。
+        - **neg_neighbor_type** (int) - 指定负样本邻居的类型。
 
         **返回：**
 
@@ -247,9 +247,9 @@ mindspore.dataset.GraphData
 
         **异常：**
 
-        - **TypeError**：参数 `node_list` 的类型不为列表或numpy.ndarray。
-        - **TypeError**：参数 `neg_neighbor_num` 的类型不为整型。
-        - **TypeError**：参数 `neg_neighbor_type` 的类型不为整型。
+        - **TypeError** - 参数 `node_list` 的类型不为列表或numpy.ndarray。
+        - **TypeError** - 参数 `neg_neighbor_num` 的类型不为整型。
+        - **TypeError** - 参数 `neg_neighbor_type` 的类型不为整型。
 
     .. py:method:: get_nodes_from_edges(edge_list)
 
@@ -257,7 +257,7 @@ mindspore.dataset.GraphData
 
         **参数：**
 
-        **edge_list** (Union[list, numpy.ndarray])：包含边的列表。
+        - **edge_list** (Union[list, numpy.ndarray]) - 包含边的列表。
 
         **返回：**
 
@@ -273,8 +273,8 @@ mindspore.dataset.GraphData
 
         **参数：**
 
-        - **node_list** (Union[list, numpy.ndarray])：包含节点的列表。
-        - **feature_types** (Union[list, numpy.ndarray])：指定特征的类型。
+        - **node_list** (Union[list, numpy.ndarray]) - 包含节点的列表。
+        - **feature_types** (Union[list, numpy.ndarray]) - 指定特征的类型。
 
         **返回：**
 
@@ -287,8 +287,8 @@ mindspore.dataset.GraphData
 
         **异常：**
 
-        - **TypeError**：参数 `node_list` 的类型不为列表或numpy.ndarray。
-        - **TypeError**：参数 `feature_types` 的类型不为列表或numpy.ndarray。
+        - **TypeError** - 参数 `node_list` 的类型不为列表或numpy.ndarray。
+        - **TypeError** - 参数 `feature_types` 的类型不为列表或numpy.ndarray。
 
     .. py:method:: get_sampled_neighbors(node_list, neighbor_nums, neighbor_types, strategy=<SamplingStrategy.RANDOM: 0>)
 
@@ -296,11 +296,11 @@ mindspore.dataset.GraphData
 
         **参数：**
 
-        - **node_list** (Union[list, numpy.ndarray])：包含节点的列表。
-        - **neighbor_nums** (Union[list, numpy.ndarray])：每跳采样的邻居数。
-        - **neighbor_types** (Union[list, numpy.ndarray])：每跳采样的邻居类型。
-        - **strategy** (SamplingStrategy, 可选)：采样策略（默认为mindspore.dataset.engine.SamplingStrategy.RANDOM）。取值范围：[SamplingStrategy.RANDOM, SamplingStrategy.EDGE_WEIGHT]。
-            
+        - **node_list** (Union[list, numpy.ndarray]) - 包含节点的列表。
+        - **neighbor_nums** (Union[list, numpy.ndarray]) - 每跳采样的邻居数。
+        - **neighbor_types** (Union[list, numpy.ndarray]) - 每跳采样的邻居类型。
+        - **strategy** (SamplingStrategy, 可选) - 采样策略（默认为mindspore.dataset.engine.SamplingStrategy.RANDOM）。取值范围：[SamplingStrategy.RANDOM, SamplingStrategy.EDGE_WEIGHT]。
+
         - **SamplingStrategy.RANDOM**：随机抽样，带放回采样。
         - **SamplingStrategy.EDGE_WEIGHT**：以边缘权重为概率进行采样。
 
@@ -316,9 +316,9 @@ mindspore.dataset.GraphData
 
         **异常：**
 
-        - **TypeError**：参数 `node_list` 的类型不为列表或numpy.ndarray。
-        - **TypeError**：参数 `neighbor_nums` 的类型不为列表或numpy.ndarray。
-        - **TypeError**：参数 `neighbor_types`  的类型不为列表或numpy.ndarray。
+        - **TypeError** - 参数 `node_list` 的类型不为列表或numpy.ndarray。
+        - **TypeError** - 参数 `neighbor_nums` 的类型不为列表或numpy.ndarray。
+        - **TypeError** - 参数 `neighbor_types`  的类型不为列表或numpy.ndarray。
 
 
     .. py:method:: graph_info()
@@ -336,11 +336,11 @@ mindspore.dataset.GraphData
 
         **参数：**
 
-        - **target_nodes** (list[int])：随机游走中的起始节点列表。
-        - **meta_path** (list[int])：每个步长的节点类型。
-        - **step_home_param** (float, 可选)：返回node2vec算法中的超参（默认为1.0）。
-        - **step_away_param** (float, 可选)：node2vec算法中的in和out超参（默认为1.0）。
-        - **default_node** (int, 可选)：如果找不到更多邻居，则为默认节点（默认值为-1，表示不给定节点）。
+        - **target_nodes** (list[int]) - 随机游走中的起始节点列表。
+        - **meta_path** (list[int]) - 每个步长的节点类型。
+        - **step_home_param** (float, 可选) - 返回node2vec算法中的超参（默认为1.0）。
+        - **step_away_param** (float, 可选) - node2vec算法中的in和out超参（默认为1.0）。
+        - **default_node** (int, 可选) - 如果找不到更多邻居，则为默认节点（默认值为-1，表示不给定节点）。
 
         **返回：**
 
@@ -353,5 +353,5 @@ mindspore.dataset.GraphData
 
         **异常：**
 
-        - **TypeError**：参数 `target_nodes` 的类型不为列表或numpy.ndarray。
-        - **TypeError**：参数 `meta_path` 的类型不为列表或numpy.ndarray。
+        - **TypeError** - 参数 `target_nodes` 的类型不为列表或numpy.ndarray。
+        - **TypeError** - 参数 `meta_path` 的类型不为列表或numpy.ndarray。

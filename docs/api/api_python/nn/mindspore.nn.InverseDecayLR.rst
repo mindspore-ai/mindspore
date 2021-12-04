@@ -22,14 +22,14 @@ mindspore.nn.InverseDecayLR
 
     **参数：**
 
-    - **learning_rate** (float)：学习率的初始值。
-    - **decay_rate** (float)：衰减率。
-    - **decay_steps** (int)：用于计算衰减学习率的值。
-    - **is_stair** (bool)：如果为True，则学习率每 `decay_steps` 次衰减一次。默认值：False。
+    - **learning_rate** (float) - 学习率的初始值。
+    - **decay_rate** (float) - 衰减率。
+    - **decay_steps** (int) - 用于计算衰减学习率的值。
+    - **is_stair** (bool) - 如果为True，则学习率每 `decay_steps` 次衰减一次。默认值：False。
 
     **输入：**
 
-    **global_step** (Tensor)：当前step数。
+    - **global_step** (Tensor) - 当前step数。
 
     **输出：**
 
@@ -37,10 +37,10 @@ mindspore.nn.InverseDecayLR
 
     **异常：**
 
-    - **TypeError**：`learning_rate` 或 `decay_rate` 不是float。
-    - **TypeError**：`decay_steps` 不是int或 `is_stair` 不是bool。
-    - **ValueError**：`decay_steps` 小于1。
-    - **ValueError**：`learning_rate` 或 `decay_rate` 小于或等于0。
+    - **TypeError** - `learning_rate` 或 `decay_rate` 不是float。
+    - **TypeError** - `decay_steps` 不是int或 `is_stair` 不是bool。
+    - **ValueError** - `decay_steps` 小于1。
+    - **ValueError** - `learning_rate` 或 `decay_rate` 小于或等于0。
 
     **支持平台：**
 
@@ -56,4 +56,3 @@ mindspore.nn.InverseDecayLR
     >>> result = inverse_decay_lr(global_step)
     >>> print(result)
     0.1
-    

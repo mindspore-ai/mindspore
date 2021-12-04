@@ -7,8 +7,8 @@ mindspore.nn.WithEvalCell
 
     **参数：**
 
-    - **network** (Cell)：前向网络。
-    - **loss_fn** (Cell)：损失函数。
+    - **network** (Cell) - 前向网络。
+    - **loss_fn** (Cell) - 损失函数。
     - **add_cast_fp32** (bool)：是否将数据类型调整为float32。默认值：False。
 
     **输入：**

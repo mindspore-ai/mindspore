@@ -7,10 +7,10 @@ mindspore.dataset.audio.transforms.FrequencyMasking
 
     **参数：**
 
-    - **iid_masks** (bool, optional)：是否添加随机掩码（默认为False）。
-    - **frequency_mask_param** (int)：当 `iid_masks` 为True时，掩码长度将从[0, frequency_mask_param]中均匀采样；当 `iid_masks` 为False时，使用该值作为掩码的长度。取值范围为[0, freq_length]，其中 `freq_length` 为波形在频域的长度（默认为0）。
-    - **mask_start** (int)：添加掩码的起始位置，只有当 `iid_masks` 为True时，该值才会生效。取值范围为[0, freq_length - frequency_mask_param]，其中 `freq_length` 为波形在频域的长度（默认为0）。
-    - **mask_value** (double)：添加掩码的取值（默认为0.0）。
+    - **iid_masks** (bool, optional) - 是否添加随机掩码（默认为False）。
+    - **frequency_mask_param** (int) - 当 `iid_masks` 为True时，掩码长度将从[0, frequency_mask_param]中均匀采样；当 `iid_masks` 为False时，使用该值作为掩码的长度。取值范围为[0, freq_length]，其中 `freq_length` 为波形在频域的长度（默认为0）。
+    - **mask_start** (int) - 添加掩码的起始位置，只有当 `iid_masks` 为True时，该值才会生效。取值范围为[0, freq_length - frequency_mask_param]，其中 `freq_length` 为波形在频域的长度（默认为0）。
+    - **mask_value** (double) - 添加掩码的取值（默认为0.0）。
 
     **样例：**
 

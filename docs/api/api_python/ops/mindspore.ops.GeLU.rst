@@ -17,7 +17,7 @@ mindspore.ops.GeLU
 
     **输入：**
 
-    **x** (Tensor) - 用于计算GeLU函数的Tensor，数据类型为float16或float32。
+    - **x** (Tensor) - 用于计算GeLU函数的Tensor，数据类型为float16或float32。
 
     **输出：**
 
@@ -39,4 +39,3 @@ mindspore.ops.GeLU
     >>> result = gelu(x)
     >>> print(result)
     [0.841192  1.9545976  2.9963627]
-    
