@@ -40,6 +40,7 @@ class MS_CORE_API ScatterNdUpdate : public PrimitiveC {
 };
 AbstractBasePtr ScatterNdUpdateInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                      const std::vector<AbstractBasePtr> &input_args);
+using kPrimScatterNdUpdatePtr = std::shared_ptr<ScatterNdUpdate>;
 }  // namespace ops
 }  // namespace mindspore
 
