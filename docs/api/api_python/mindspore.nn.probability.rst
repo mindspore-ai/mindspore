@@ -11,7 +11,6 @@ Bijectors
 .. cnmsplatformautosummary::
     :toctree: nn_probability
 
-    mindspore.nn.Metric
     mindspore.nn.probability.bijector.Bijector
     mindspore.nn.probability.bijector.Exp
     mindspore.nn.probability.bijector.GumbelCDF
