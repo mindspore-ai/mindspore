@@ -5,7 +5,7 @@
 
     所有神经网络的基类。
 
-    一个 `Cell` 可以是单一的神经网络单元，如 :class:`mindspore.nn.Conv2d`,  :class:`mindspore.nn.ReLU,  :class:`mindspore.nn.BatchNorm`等，也可以是组成网络的 `Cell` 的结合体。
+    一个 `Cell` 可以是单一的神经网络单元，如 :class:`mindspore.nn.Conv2d`, :class:`mindspore.nn.ReLU`,  :class:`mindspore.nn.BatchNorm` 等，也可以是组成网络的 `Cell` 的结合体。
 
     .. note:: 
        一般情况下，自动微分 (AutoDiff) 算法会自动调用梯度函数，但是如果使用反向传播方法 (bprop method)，梯度函数将会被反向传播方法代替。反向传播函数会接收一个包含损失对输出的梯度张量 `dout` 和一个包含前向传播结果的张量 `out` 。反向传播过程需要计算损失对输入的梯度，损失对参数变量的梯度目前暂不支持。反向传播函数必须包含自身参数。
@@ -49,7 +49,7 @@
 
         **flags** (dict) - Cell的配置信息，目前用于绑定Cell和数据集。用户也通过该参数自定义Cell属性。默认值：None。
 
-   .. py:method:: auto_parallel_compile_and_run()
+    .. py:method:: auto_parallel_compile_and_run()
 
         是否在‘AUTO_PARALLEL’或‘SEMI_AUTO_PARALLEL’模式下执行编译流程。
 
@@ -57,10 +57,10 @@
 
         bool, `_auto_parallel_compile_and_run` 的值。
 
-   .. py:method:: bprop_debug
+    .. py:method:: bprop_debug
         :property:
 
-      获取自定义反向传播调试功能是否已启用。
+        获取自定义反向传播调试功能是否已启用。
 
     .. py:method:: cast_inputs(inputs, dst_type)
 
@@ -276,7 +276,7 @@
     .. py:method:: parameter_layout_dict
         :property:
 
-      `parameter_layout_dict` 表示一个参数的张量layout，这种张量layout是由分片策略和分布式算子信息推断出来的。
+        `parameter_layout_dict` 表示一个参数的张量layout，这种张量layout是由分片策略和分布式算子信息推断出来的。
 
     .. py:method:: parameters_and_names(name_prefix='', expand=True)
 

@@ -53,7 +53,7 @@ mindspore.dtype
       ``type_type``                   类型的类型定义。
       ``type_none``                   没有匹配的返回类型，对应 Python 中的 ``type(None)``。
       ``symbolic_key``                在 ``env_type`` 中用作变量的键的变量的值。
-      ``env_type``                    用于存储函数的自由变量的梯度，其中键是自由变量节点的``symbolic_key``，值是梯度。
+      ``env_type``                    用于存储函数的自由变量的梯度，其中键是自由变量节点的 `symbolic_key` ，值是梯度。
       ============================   =================
   
     - **树形拓扑**

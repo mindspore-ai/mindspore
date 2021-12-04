@@ -20,7 +20,7 @@ mindspore.nn.Momentum
     .. math::
             p_{t+1} = p_{t} - lr \ast v_{t+1}
 
-    其中，:math:`grad` 、:math:`lr` 、:math:`p` 、:math:`v` 和:math:`u` 分别表示梯度、学习率、参数、矩（Moment）和动量（Momentum）。
+    其中，:math:`grad` 、:math:`lr` 、:math:`p` 、:math:`v` 和 :math:`u` 分别表示梯度、学习率、参数、矩（Moment）和动量（Momentum）。
 
     .. note::
         .. include:: mindspore.nn.optim_note_weight_decay.rst

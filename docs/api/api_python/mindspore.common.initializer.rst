@@ -110,9 +110,9 @@ mindspore.common.initializer
     .. math::
         boundary = gain * \sqrt{\frac{6}{n_{in} + n_{out}}}
 	
-    - `gain` 是一个可选的缩放因子。
-    - `n_{in}` 为权重Tensor中输入单元的数量。
-    - `n_{out}` 为权重Tensor中输出单元的数量。
+    - :math:`gain` 是一个可选的缩放因子。
+    - :math:`n_{in}` 为权重Tensor中输入单元的数量。
+    - :math:`n_{out}` 为权重Tensor中输出单元的数量。
 
     有关 XavierUniform 算法的详细信息，请查看 http://proceedings.mlr.press/v9/glorot10a.html。
     

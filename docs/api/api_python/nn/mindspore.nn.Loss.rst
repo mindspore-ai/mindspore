@@ -31,16 +31,19 @@ mindspore.nn.Loss
         
         Float，loss的平均值。
 
-       **异常：**
-            RuntimeError：样本总数为0。
+        **异常：**
+
+        RuntimeError：样本总数为0。
 
     .. py:method:: update(*inputs)
 
         更新内部评估结果。
 
-       **参数：**
-            inputs：输入只包含一个元素，且该元素为loss。loss的维度必须为0或1。
+        **参数：**
 
-       **异常：**
-            ValueError：`inputs` 的长度不为1。
-            ValueError：`inputs` 的维度不为0或1。
+        inputs：输入只包含一个元素，且该元素为loss。loss的维度必须为0或1。
+
+        **异常：**
+
+        **ValueError**：`inputs` 的长度不为1。
+        **ValueError**：`inputs` 的维度不为0或1。

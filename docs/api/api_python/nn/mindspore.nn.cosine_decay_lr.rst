@@ -23,7 +23,7 @@ mindspore.nn.cosine_decay_lr
 
    **返回：**
 
-    list[float]。列表大小为`total_step`。
+    list[float]。列表大小为 `total_step`。
 
    **样例：**
 

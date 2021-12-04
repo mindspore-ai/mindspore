@@ -1,4 +1,4 @@
-Class mindspore.nn.F1
+mindspore.nn.F1
 =====================
 
 .. py:class:: mindspore.nn.F1

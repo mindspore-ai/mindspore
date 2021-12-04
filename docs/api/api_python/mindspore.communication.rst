@@ -57,9 +57,9 @@ mindspore.communication
         
     **异常：**
 
-    **TypeError** – 在参数 `group` 不是字符串时抛出。
-    **ValueError** – 在后台不可用时抛出。
-    **RuntimeError** – 在‘HCCL’或‘NCCL’服务不可用时抛出。
+    - **TypeError** – 在参数 `group` 不是字符串时抛出。
+    - **ValueError** – 在后台不可用时抛出。
+    - **RuntimeError** – 在‘HCCL’或‘NCCL’服务不可用时抛出。
         
 .. py:class:: mindspore.communication.get_group_size(group=GlobalComm.WORLD_COMM_GROUP)
 

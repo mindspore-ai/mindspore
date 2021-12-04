@@ -30,8 +30,8 @@ mindspore.nn.WarmUpLR
 
     **异常：**
 
-    - **- **TypeError**：** `learning_rate` 不是float。
-    - **- **TypeError**：** `warmup_steps` 不是int。
+    - **TypeError**：** `learning_rate` 不是float。
+    - **TypeError**：** `warmup_steps` 不是int。
     - **ValueError：** `warmup_steps` 小于1。
     - **ValueError：** `learning_rate` 小于或等于0。
 

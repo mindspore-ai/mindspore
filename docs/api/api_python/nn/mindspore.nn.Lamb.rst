@@ -22,7 +22,7 @@ mindspore.nn.Lamb
         w_t = w_{t-1} -\eta_t \frac{\| w_{t-1} \|}{\| r_t + \lambda w_{t-1} \|} (r_t + \lambda w_{t-1})
         \end{gather*}
 
-    其中，math:`m` 代表第一个矩向量，:math:`v` 代表第二个矩向量，:math:`\eta` 表示学习率，:math:`\lambda` 表示LAMB权重衰减率。
+    其中， :math:`m` 代表第一个矩向量，:math:`v` 代表第二个矩向量，:math:`\eta` 表示学习率，:math:`\lambda` 表示LAMB权重衰减率。
 
     .. note::
         .. include:: mindspore.nn.optim_note_weight_decay.rst

@@ -1,6 +1,5 @@
-mindspore.nn. mindspore.nn.FTRL
-================================
-
+mindspore.nn.FTRL
+=================
 .. py:class:: mindspore.nn.FTRL(*args, **kwargs)
 
     使用ApplyFtrl算子实现FTRL算法。
@@ -24,7 +23,7 @@ mindspore.nn. mindspore.nn.FTRL
             \end{cases}\\
         \end{array}
 
-    :math:`m` 表示累加器，:math:`g` 表示 `grads`， :math:`t` 表示当前step，:math:`u` 表示需要更新的线性系数，:math:`p` 表示` lr_power`，:math:`\alpha` 表示 `learning_rate` ，:math:`\omega` 表示 `params` 。
+    :math:`m` 表示累加器，:math:`g` 表示 `grads`， :math:`t` 表示当前step，:math:`u` 表示需要更新的线性系数，:math:`p` 表示 `lr_power`，:math:`\alpha` 表示 `learning_rate` ，:math:`\omega` 表示 `params` 。
 
     .. note::
         .. include:: mindspore.nn.optim_note_sparse.rst
