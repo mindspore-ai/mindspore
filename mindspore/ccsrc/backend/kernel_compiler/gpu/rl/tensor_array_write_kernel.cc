@@ -56,14 +56,21 @@ bool TensorArrayWriteKernel::Launch(const std::vector<AddressPtr> &inputs, const
   auto handle_addr = GetDeviceAddress<int64_t>(inputs, 0);
   auto index = GetDeviceAddress<int64_t>(inputs, 1);
   auto value = GetDeviceAddress<unsigned char>(inputs, 2);
-
+  MS_ERROR_IF_NULL(handle_addr);
+  MS_ERROR_IF_NULL(index);
+  MS_ERROR_IF_NULL(value);
   int64_t index_host = 0;
   CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
                              cudaMemcpyAsync(&index_host, index, sizeof(int64_t), cudaMemcpyDeviceToHost,
                                              reinterpret_cast<cudaStream_t>(stream)),
                              "Get indexd failed");
+  int64_t handle = 0;
+  CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
+                             cudaMemcpyAsync(&handle, handle_addr, sizeof(int64_t), cudaMemcpyDeviceToHost,
+                                             reinterpret_cast<cudaStream_t>(stream)),
+                             "Get handle to host failed");
   GPUTensorArrayPtr tensors_ =
-    std::dynamic_pointer_cast<GPUTensorArray>(TensorArrayMgr::GetInstance().GetTensorArray(handle_addr));
+    std::dynamic_pointer_cast<GPUTensorArray>(TensorArrayMgr::GetInstance().GetTensorArray(handle));
   MS_EXCEPTION_IF_NULL(tensors_);
   if (!tensors_->CheckValue(type_, shapes_)) {
     MS_LOG(EXCEPTION) << "Invalid input data for tensor array write op.";

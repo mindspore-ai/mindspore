@@ -42,7 +42,7 @@ bool TensorArrayCPUSizeKernel::Launch(const std::vector<AddressPtr> &inputs, con
   auto out_addr = GetDeviceAddress<int64_t>(outputs, 0);
   MS_EXCEPTION_IF_NULL(handle_addr);
   MS_EXCEPTION_IF_NULL(out_addr);
-  auto tensors_ = TensorArrayMgr::GetInstance().GetTensorArray(handle_addr);
+  auto tensors_ = TensorArrayMgr::GetInstance().GetTensorArray(handle_addr[0]);
   MS_ERROR_IF_NULL(tensors_);
   int64_t valid_size = SizeToLong(tensors_->GetValidSize());
   out_addr[0] = valid_size;

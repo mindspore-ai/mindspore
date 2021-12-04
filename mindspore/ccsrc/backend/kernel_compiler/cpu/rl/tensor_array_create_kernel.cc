@@ -59,9 +59,7 @@ bool TensorArrayCPUCreateKernel::Launch(const std::vector<AddressPtr> &, const s
   out_addr[0] = tensor_array_handle;
   MS_LOG(DEBUG) << "Create handle id " << tensor_array_handle;
   // Put tensorarray to a saved map : map<handle, tensorarray> in tensorarray manager.
-  // Only put the device addr as the key to avoid a copy from device to host.
-  // The output handle address will kept and won't be reused.
-  TensorArrayMgr::GetInstance().AddTensorArray(out_addr, tensor_array);
+  TensorArrayMgr::GetInstance().AddTensorArray(tensor_array_handle, tensor_array);
   return true;
 }
 }  // namespace kernel

@@ -24,8 +24,7 @@ namespace mindspore {
 namespace kernel {
 using mindspore::device::TensorArrayMgr;
 using mindspore::device::TensorArrayPtr;
-TensorArrayCPUStackKernel::TensorArrayCPUStackKernel()
-    : handle_(nullptr), value_size_(0), ele_size_(0), type_(nullptr) {
+TensorArrayCPUStackKernel::TensorArrayCPUStackKernel() : handle_(0), value_size_(0), ele_size_(0), type_(nullptr) {
   ResetResource();
 }
 
@@ -64,7 +63,7 @@ void TensorArrayCPUStackKernel::PostExecute() {
 }
 
 void TensorArrayCPUStackKernel::ResetResource() noexcept {
-  handle_ = nullptr;
+  handle_ = 0;
   value_size_ = 0;
   ele_size_ = 0;
   shapes_.clear();
@@ -75,10 +74,11 @@ void TensorArrayCPUStackKernel::ResetResource() noexcept {
 
 bool TensorArrayCPUStackKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                        const std::vector<AddressPtr> &outputs) {
-  handle_ = GetDeviceAddress<int64_t>(inputs, 0);
+  auto handle_addr = GetDeviceAddress<int64_t>(inputs, 0);
   auto out_value = GetDeviceAddress<unsigned char>(outputs, 0);
   MS_EXCEPTION_IF_NULL(out_value);
-  MS_EXCEPTION_IF_NULL(handle_);
+  MS_EXCEPTION_IF_NULL(handle_addr);
+  handle_ = handle_addr[0];
   TensorArrayPtr tensors_ = TensorArrayMgr::GetInstance().GetTensorArray(handle_);
   MS_EXCEPTION_IF_NULL(tensors_);
   if (tensors_->GetValidSize() > tensors_->GetRealSize()) {

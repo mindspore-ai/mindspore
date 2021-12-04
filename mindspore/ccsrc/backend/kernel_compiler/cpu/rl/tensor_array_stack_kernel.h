@@ -43,7 +43,7 @@ class TensorArrayCPUStackKernel : public CPUKernel {
 
  private:
   CNodeWeakPtr kernel_node_;
-  int64_t *handle_;
+  int64_t handle_;
   int64_t value_size_;
   int64_t ele_size_;
   std::vector<size_t> shapes_;
