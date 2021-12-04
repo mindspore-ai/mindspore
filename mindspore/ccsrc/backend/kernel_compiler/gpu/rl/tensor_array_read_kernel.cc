@@ -52,15 +52,22 @@ void TensorArrayReadKernel::InitSizeLists() {
 bool TensorArrayReadKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                    const std::vector<AddressPtr> &outputs, void *stream) {
   auto handle_addr = GetDeviceAddress<int64_t>(inputs, 0);
+  MS_ERROR_IF_NULL(handle_addr);
   auto index = GetDeviceAddress<int64_t>(inputs, 1);
+  MS_ERROR_IF_NULL(index);
   auto out_value = GetDeviceAddress<unsigned char>(outputs, 0);
   MS_ERROR_IF_NULL(out_value);
   int64_t index_host = 0;
   CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
                              cudaMemcpyAsync(&index_host, index, sizeof(int64_t), cudaMemcpyDeviceToHost,
                                              reinterpret_cast<cudaStream_t>(stream)),
-                             "Get index failed");
-  TensorArrayPtr tensors_ = TensorArrayMgr::GetInstance().GetTensorArray(handle_addr);
+                             "Get index to host failed");
+  int64_t handle = 0;
+  CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
+                             cudaMemcpyAsync(&handle, handle_addr, sizeof(int64_t), cudaMemcpyDeviceToHost,
+                                             reinterpret_cast<cudaStream_t>(stream)),
+                             "Get handle to host failed");
+  TensorArrayPtr tensors_ = TensorArrayMgr::GetInstance().GetTensorArray(handle);
   MS_ERROR_IF_NULL(tensors_);
   if (!tensors_->CheckReadIndexLogical(index_host)) {
     MS_LOG(EXCEPTION) << "Invalid index " << index_host << " for read.";

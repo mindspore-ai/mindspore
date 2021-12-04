@@ -41,7 +41,7 @@ bool TensorArrayCPUClearKernel::Launch(const std::vector<AddressPtr> &inputs, co
                                        const std::vector<AddressPtr> &) {
   auto handle_addr = GetDeviceAddress<int64_t>(inputs, 0);
   MS_EXCEPTION_IF_NULL(handle_addr);
-  TensorArrayPtr tensors_ = TensorArrayMgr::GetInstance().GetTensorArray(handle_addr);
+  TensorArrayPtr tensors_ = TensorArrayMgr::GetInstance().GetTensorArray(handle_addr[0]);
   MS_ERROR_IF_NULL(tensors_);
   // Clear TensorArray valid size, but keep the memory.
   tensors_->Clear();

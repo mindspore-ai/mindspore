@@ -43,12 +43,12 @@ bool TensorArrayCPUCloseKernel::Launch(const std::vector<AddressPtr> &inputs, co
   auto handle_addr = GetDeviceAddress<int64_t>(inputs, 0);
   MS_EXCEPTION_IF_NULL(handle_addr);
   CPUTensorArrayPtr tensors_ =
-    std::dynamic_pointer_cast<CPUTensorArray>(TensorArrayMgr::GetInstance().GetTensorArray(handle_addr));
+    std::dynamic_pointer_cast<CPUTensorArray>(TensorArrayMgr::GetInstance().GetTensorArray(handle_addr[0]));
   MS_ERROR_IF_NULL(tensors_);
   // Free device mem
   tensors_->Free();
   // Erase tensorarray
-  if (!TensorArrayMgr::GetInstance().EraseTensorArray(handle_addr)) {
+  if (!TensorArrayMgr::GetInstance().EraseTensorArray(handle_addr[0])) {
     MS_LOG(EXCEPTION) << "Free tensorarray failed";
   }
   return true;

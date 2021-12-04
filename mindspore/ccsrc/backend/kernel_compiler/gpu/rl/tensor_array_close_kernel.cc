@@ -44,15 +44,21 @@ void TensorArrayCloseKernel::InitSizeLists() {
 }
 
 bool TensorArrayCloseKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                    const std::vector<AddressPtr> &, void *) {
+                                    const std::vector<AddressPtr> &, void *stream) {
   auto handle_addr = GetDeviceAddress<int64_t>(inputs, 0);
+  MS_ERROR_IF_NULL(handle_addr);
+  int64_t handle = 0;
+  CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
+                             cudaMemcpyAsync(&handle, handle_addr, sizeof(int64_t), cudaMemcpyDeviceToHost,
+                                             reinterpret_cast<cudaStream_t>(stream)),
+                             "Get handle to host failed");
   GPUTensorArrayPtr tensors_ =
-    std::dynamic_pointer_cast<GPUTensorArray>(TensorArrayMgr::GetInstance().GetTensorArray(handle_addr));
+    std::dynamic_pointer_cast<GPUTensorArray>(TensorArrayMgr::GetInstance().GetTensorArray(handle));
   MS_ERROR_IF_NULL(tensors_);
   // Free device mem
   tensors_->Free();
   // Erase tensorarray
-  if (!TensorArrayMgr::GetInstance().EraseTensorArray(handle_addr)) {
+  if (!TensorArrayMgr::GetInstance().EraseTensorArray(handle)) {
     MS_LOG(EXCEPTION) << "Free tensorarray failed";
   }
   return true;

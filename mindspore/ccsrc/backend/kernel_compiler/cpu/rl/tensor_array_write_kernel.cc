@@ -56,7 +56,7 @@ bool TensorArrayCPUWriteKernel::Launch(const std::vector<AddressPtr> &inputs, co
   MS_EXCEPTION_IF_NULL(value);
   int64_t index_host = index[0];
   CPUTensorArrayPtr tensors_ =
-    std::dynamic_pointer_cast<CPUTensorArray>(TensorArrayMgr::GetInstance().GetTensorArray(handle_addr));
+    std::dynamic_pointer_cast<CPUTensorArray>(TensorArrayMgr::GetInstance().GetTensorArray(handle_addr[0]));
   MS_EXCEPTION_IF_NULL(tensors_);
   if (!tensors_->CheckValue(type_, shapes_)) {
     MS_LOG(EXCEPTION) << "Invalid input data for tensor array write op.";

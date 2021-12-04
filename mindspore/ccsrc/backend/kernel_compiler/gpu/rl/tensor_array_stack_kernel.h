@@ -43,7 +43,7 @@ class TensorArrayStackKernel : public GpuKernel {
   void InitSizeLists() override;
 
  private:
-  int64_t *handle_;
+  int64_t handle_;
   int64_t value_size_;
   int64_t ele_size_;
   void *stream_ptr_;
