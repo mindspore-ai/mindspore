@@ -411,7 +411,7 @@ class Tensor(Tensor_):
             ValueError: If the length of the `index` is not equal to self.ndim.
 
         Supported Platforms:
-            ``Ascend`` ``GPU``
+            ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
             >>> import numpy as np
