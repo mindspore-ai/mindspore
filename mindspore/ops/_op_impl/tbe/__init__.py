@@ -44,6 +44,7 @@ from .apply_ada_max import _apply_ada_max_tbe
 from .apply_adadelta import _apply_adadelta_tbe
 from .apply_adagrad import _apply_adagrad_tbe
 from .apply_adagrad_v2 import _apply_adagrad_v2_tbe
+from .apply_adagrad_v2_ds import _apply_adagrad_v2_ds_tbe
 from .apply_adagrad_d_a import _apply_adagrad_d_a_tbe
 from .apply_add_sign import _apply_add_sign_tbe
 from .apply_power_sign import _apply_power_sign_tbe
