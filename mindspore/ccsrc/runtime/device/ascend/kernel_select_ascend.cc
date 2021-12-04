@@ -739,11 +739,11 @@ bool ConvertAttrToInput(const CNodePtr &kernel_node) {
     } else if (orig_tmp_idx < orig_input_num) {
       new_inputs.push_back(orig_inputs[orig_tmp_idx + 1]);
       ++orig_tmp_idx;
-    } else {
-      continue;
     }
   }
   kernel_node->set_inputs(new_inputs);
+  primitive->EraseAttr(kAttrInputToAttrIdx);
+  primitive->EraseAttr(kAttrInputToAttrName);
   return true;
 }
 
