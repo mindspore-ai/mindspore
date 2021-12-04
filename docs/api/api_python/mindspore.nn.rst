@@ -51,6 +51,8 @@ Metrics
 .. cnmsplatformautosummary::
     :toctree: nn
 
+    mindspore.nn.Accuracy
+    mindspore.nn.F1
     mindspore.nn.Fbeta
     mindspore.nn.Loss
     mindspore.nn.MAE
@@ -103,9 +105,11 @@ Wrapper Functions
 .. cnmsplatformautosummary::
     :toctree: nn
 
+    mindspore.nn.DistributedGradReducer
     mindspore.nn.DynamicLossScaleUpdateCell
     mindspore.nn.FixedLossScaleUpdateCell
     mindspore.nn.ForwardValueAndGrad
+    mindspore.nn.PipelineCell
     mindspore.nn.TrainOneStepCell
     mindspore.nn.TrainOneStepWithLossScaleCell
     mindspore.nn.WithEvalCell

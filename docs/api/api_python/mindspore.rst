@@ -75,6 +75,7 @@ Serialization
     mindspore.build_searched_strategy
     mindspore.export
     mindspore.load_checkpoint
+    mindspore.load_distributed_checkpoint
     mindspore.load_param_into_net
     mindspore.merge_sliced_parameter
     mindspore.save_checkpoint
