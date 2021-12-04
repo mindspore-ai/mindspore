@@ -1,6 +1,3 @@
-mindspore.train.callback.TimeMonitor
-=====================================
-
 .. py:class:: mindspore.train.callback.TimeMonitor(data_size=None)
 
     监控训练时间。

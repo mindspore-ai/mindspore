@@ -29,7 +29,7 @@ Installation Verification
 .. cnmsautosummary::
     :toctree: mindspore
     
-    indspore.run_check
+    mindspore.run_check
 
 Parameter
 ---------

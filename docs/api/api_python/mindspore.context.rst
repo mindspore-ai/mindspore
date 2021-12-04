@@ -16,6 +16,62 @@
 
     某些配置适用于特定的设备，有关详细信息，请参见下表：
 
+    +-------------------------+------------------------------+----------------------------+ 
+    | Function Classification |   Configuration Parameters   |   Hardware Platform Support|
+    +=========================+==============================+============================+
+    | System Configuration    |   device_id                  |   CPU/GPU/Ascend           |
+    |                         +------------------------------+----------------------------+
+    |                         |   device_target              |   CPU/GPU/Ascend           |
+    |                         +------------------------------+----------------------------+
+    |                         |  max_device_memory           |  GPU                       |
+    |                         +------------------------------+----------------------------+
+    |                         |  variable_memory_max_size    |  Ascend                    |
+    +-------------------------+------------------------------+----------------------------+
+    | Debug Configuration     |  save_graphs                 |  CPU/GPU/Ascend            |
+    |                         +------------------------------+----------------------------+
+    |                         |  save_graphs_path            |  CPU/GPU/Ascend            |
+    |                         +------------------------------+----------------------------+
+    |                         |  enable_dump                 |  Ascend                    |
+    |                         +------------------------------+----------------------------+
+    |                         |  save_dump_path              |  Ascend                    |
+    |                         +------------------------------+----------------------------+
+    |                         |  enable_profiling            |  Ascend                    |
+    |                         +------------------------------+----------------------------+
+    |                         |  profiling_options           |  Ascend                    |
+    |                         +------------------------------+----------------------------+
+    |                         |  print_file_path             |  Ascend                    |
+    |                         +------------------------------+----------------------------+
+    |                         |  env_config_path             |  CPU/GPU/Ascend            |
+    |                         +------------------------------+----------------------------+
+    |                         |  precompile_only             |  CPU/GPU/Ascend            |
+    |                         +------------------------------+----------------------------+
+    |                         |  reserve_class_name_in_scope |  CPU/GPU/Ascend            |
+    |                         +------------------------------+----------------------------+
+    |                         |  pynative_synchronize        |  GPU/Ascend                |
+    +-------------------------+------------------------------+----------------------------+
+    | Executive Control       |   mode                       |   CPU/GPU/Ascend           |
+    |                         +------------------------------+----------------------------+
+    |                         |  enable_graph_kernel         |  Ascend/GPU                |
+    |                         +------------------------------+----------------------------+
+    |                         |  graph_kernel_flags          |  Ascend/GPU                |
+    |                         +------------------------------+----------------------------+
+    |                         |  enable_reduce_precision     |  Ascend                    |
+    |                         +------------------------------+----------------------------+
+    |                         |  auto_tune_mode              |  Ascend                    |
+    |                         +------------------------------+----------------------------+
+    |                         |  check_bprop                 |  CPU/GPU/Ascend            |
+    |                         +------------------------------+----------------------------+
+    |                         |  max_call_depth              |  CPU/GPU/Ascend            |
+    |                         +------------------------------+----------------------------+
+    |                         |  enable_sparse               |  CPU/GPU/Ascend            |
+    |                         +------------------------------+----------------------------+
+    |                         |  grad_for_scalar             |  CPU/GPU/Ascend            |
+    |                         +------------------------------+----------------------------+
+    |                         |  enable_compile_cache        |  CPU/GPU/Ascend            |
+    |                         +------------------------------+----------------------------+
+    |                         |  compile_cache_path          |  CPU/GPU/Ascend            |
+    +-------------------------+------------------------------+----------------------------+
+
     **参数：**
     
     - **device_id** (int)：表示目标设备的ID，其值必须在[0, device_num_per_host-1]范围中，且 `device_num_per_host` 的值不应超过4096。默认值：0。
@@ -49,7 +105,7 @@
 
     - **pynative_synchronize** (bool)：表示是否在PyNative模式下启动设备同步执行。默认值：False。设置为False时，将在设备上异步执行算子。当算子执行出错时，将无法定位特定错误脚本代码的位置。当设置为True时，将在设备上同步执行算子。这将降低程序的执行性能。此时，当算子执行出错时，可以根据错误的调用栈来定位错误脚本代码的位置。
     - **mode** (int)：表示在GRAPH_MODE(0)或PYNATIVE_MODE(1)模式中的运行。默认值：GRAPH_MODE(0)。GRAPH_MODE或PYNATIVE_MODE可以通过 `mode` 属性设置，两种模式都支持所有后端。默认模式为GRAPH_MODE。
-    - **enable_graph_kernel** (bool)：表示是否启用图算融合去优化网络执行性能。默认值：False。表示是否启用图算融合去优化网络执行性能。如果 `enable_graph_kernel` 设置为True，则可以启用加速。有关图算融合的详细信息，请查看`使能图算融合`（https://www.mindspore.cn/docs/programming_guide/zh-CN/master/enable_graph_kernel_fusion.html）。
+    - **enable_graph_kernel** (bool)：表示是否启用图算融合去优化网络执行性能。默认值：False。表示是否启用图算融合去优化网络执行性能。如果 `enable_graph_kernel` 设置为True，则可以启用加速。有关图算融合的详细信息，请查看 `使能图算融合 <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/enable_graph_kernel_fusion.html>`_ 。
     - **graph_kernel_flags** (str)：图算融合的优化选项，当与enable_graph_kernel冲突时，它的优先级更高。其仅适用于有经验的用户。例如，context.set_context(graph_kernel_flags="--opt_level=2 --dump_as_text")。一些常用选项：
 
       - **opt_level**：设置优化级别。默认值：2。当opt_level的值大于0时，启动图算融合。可选值包括：
@@ -78,7 +134,7 @@
     - **enable_sparse** (bool)：表示是否启用稀疏特征。默认值：False。有关稀疏特征和稀疏张量的详细信息，请查看 `稀疏张量 <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/tensor.html#sparse-tensor>`_。
     - **grad_for_scalar** (bool)：  表示是否获取标量梯度。默认值：False。当 `grad_for_scalar` 设置为True时，则衍生函数的标量输入。默认值为False。由于后端目前不支持伸缩操作，所以该接口只支持在前端可推演的简单操作。
     - **enable_compile_cache** (bool)：表示是否加载或者保存前端编译的图。当 `enable_compile_cache` 被设置为True时，在第一次执行的过程中，一个硬件无关的编译缓存会被生成并且导出为一个MINDIR文件。当该网络被再次执行时，如果 `enable_compile_cache` 仍然为True并且网络脚本没有被更改，那么这个编译缓存会被加载。注意目前只支持有限的Python脚本更改的自动检测，这意味着可能有正确性风险。默认值：False。这是一个实验原型，可能会被更改或者删除。
-    - **compile_cache_path** (str)：保存前端图编译缓存的路径。默认值："."。如果目录不存在，系统会自动创建这个目录。缓存会被保存到如下目录：`compile_cache_path/rank_${rank_id}/`。`rank_id` 是集群上当前设备的ID。
+    - **compile_cache_path** (str)：保存前端图编译缓存的路径。默认值："."。如果目录不存在，系统会自动创建这个目录。缓存会被保存到如下目录：`compile_cache_path/rank_${rank_id}/` 。 `rank_id` 是集群上当前设备的ID。
 
     **异常：**
 
@@ -143,18 +199,18 @@
 
     某些配置适用于特定的并行模式，有关详细信息，请参见下表：
 
-    ===========================  ===========================
-    Common                       AUTO_PARALLEL
-    ===========================  ===========================
-    device_num                   gradient_fp32_sync
-    global_rank                  loss_repeated_mean
-    gradients_mean               auto_parallel_search_mode
-    parallel_mode                strategy_ckpt_load_file
-    all_reduce_fusion_config     strategy_ckpt_save_file
-    enable_parallel_optimizer    dataset_strategy
-               \                 pipeline_stages
-               \                 grad_accumulation_step
-    ===========================  ===========================
+    =========================  =========================
+             Common                  AUTO_PARALLEL
+    =========================  =========================
+    device_num                 gradient_fp32_sync
+    global_rank                loss_repeated_mean
+    gradients_mean             auto_parallel_search_mode
+    parallel_mode              strategy_ckpt_load_file
+    all_reduce_fusion_config   strategy_ckpt_save_file
+    enable_parallel_optimizer  dataset_strategy
+    \                          pipeline_stages
+    \                          grad_accumulation_step
+    =========================  =========================
 
     **参数：**
 
@@ -180,7 +236,7 @@
     - **strategy_ckpt_save_file** (str)：表示用于保存并行策略checkpoint的路径。默认值：''。
     - **full_batch** (bool)：如果在auto_parallel模式下加载整个batch数据集，则此参数应设置为True。默认值：False。目前不建议使用该接口，建议使用dataset_strategy来替换它。
     - **dataset_strategy** (Union[str, tuple])：表示数据集分片策略。默认值：data_parallel。dataset_strategy="data_parallel"等于full_batch=False，dataset_strategy="full_batch"等于full_batch=True。对于通过模型并列策略加载到网络的数据集，如ds_stra ((1, 8)、(1, 8))，需要使用set_auto_parallel_context(dataset_strategy=ds_stra)。
-    - **enable_parallel_optimizer** (bool)：这是一个开发中的特性，它可以为数据并行训练对权重更新计算进行分片，以节省时间和内存。目前，自动和半自动并行模式支持Ascend和GPU中的所有优化器。数据并行模式仅支持Ascend中的`Lamb`和`AdamWeightDecay`。默认值：False。
+    - **enable_parallel_optimizer** (bool)：这是一个开发中的特性，它可以为数据并行训练对权重更新计算进行分片，以节省时间和内存。目前，自动和半自动并行模式支持Ascend和GPU中的所有优化器。数据并行模式仅支持Ascend中的 `Lamb` 和 `AdamWeightDecay` 。默认值：False。
     - **all_reduce_fusion_config** (list)：通过参数索引设置 AllReduce 融合策略。仅支持ReduceOp.SUM和HCCL_WORLD_GROUP/NCCL_WORLD_GROUP。没有默认值。如果不设置，则关闭算子融合。
     - **pipeline_stages** (int)：设置pipeline并行的阶段信息。这表明了设备如何单独分布在pipeline上。所有的设备将被划分为pipeline_stags个阶段。目前，这只能在启动semi_auto_parallel模式的情况下使用。默认值：1。
     - **grad_accumulation_step** (int)：在自动和半自动并行模式下设置梯度的累积step。其值应为正整数。默认值：1。

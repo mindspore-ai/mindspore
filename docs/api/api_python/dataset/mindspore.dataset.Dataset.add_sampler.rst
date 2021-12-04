@@ -1,4 +1,4 @@
-    ..py:method:: add_sampler(new_sampler)
+    .. py:method:: add_sampler(new_sampler)
 
        为当前数据集添加采样器。
 

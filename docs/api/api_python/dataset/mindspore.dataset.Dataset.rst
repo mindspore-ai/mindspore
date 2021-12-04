@@ -138,7 +138,7 @@
         ...                                             DE_C_INTER_SENTENCEPIECE_MODE[SentencePieceModel.UNIGRAM],
         ...                                             {})
 
-    ..py:method:: build_vocab(columns, freq_range, top_k, special_tokens, special_first)
+    .. py:method:: build_vocab(columns, freq_range, top_k, special_tokens, special_first)
 
         基于数据集对象创建词汇表。
 
@@ -248,7 +248,7 @@
         ...     break
         <class 'list'>
 
-    ..py:method:: device_que(send_epoch_end=True, create_data_info_queue=False)
+    .. py:method:: device_que(send_epoch_end=True, create_data_info_queue=False)
 
         返回一个能将数据传输到设备上的数据集对象。
 
@@ -266,7 +266,7 @@
             TransferDataset，用于帮助发送数据到设备上的数据集对象。
 
 
-    ..py:method:: dynamic_min_max_shapes()
+    .. py:method:: dynamic_min_max_shapes()
 
         获取数据集对象中单条数据的最小和最大shape，用于图编译过程。
 
@@ -285,7 +285,7 @@
             >>> min_shapes, max_shapes = dataset.dynamic_min_max_shapes()
 
 
-    ..py:method:: filter(predicate, input_columns=None, num_parallel_workers=None)
+    .. py:method:: filter(predicate, input_columns=None, num_parallel_workers=None)
 
         通过判断条件对数据集对象中的数据进行过滤。
 
@@ -307,7 +307,7 @@
             >>> dataset = dataset.filter(predicate=lambda data: data < 11, input_columns = ["data"])
 
 
-    ..py:method:: flat_map(func)
+    .. py:method:: flat_map(func)
 
         对数据集对象中每一条数据执行给定的`func`操作，并将结果展平。
 
@@ -339,7 +339,7 @@
         **TypeError** - `func` 不是函数。
         **TypeError** - `func` 的返回值不是数据集对象。
 
-    ..py:method:: get_batch_size()
+    .. py:method:: get_batch_size()
 
         获得批处理的大小，即一个批次中包含的数据条数。
 
@@ -350,7 +350,7 @@
             >> # dataset是数据集类的实例化对象
             >> batch_size = dataset.get_batch_size()
 
-    ..py:method:: get_class_indexing()
+    .. py:method:: get_class_indexing()
 
         返回类别索引。
 
@@ -362,7 +362,7 @@
             >> class_indexing = dataset.get_class_indexing()
 
 
-    ..py:method:: get_col_names()
+    .. py:method:: get_col_names()
 
         返回数据集对象中包含的列名。
 
@@ -626,11 +626,11 @@
         >>> dataset = dataset.repeat(50)
         >>> dataset = dataset.shuffle(10)
         
-    ..py:method:: reset()
+    .. py:method:: reset()
         
         重置下一个epoch的数据集。
 
-    ..py:method:: save(file_name, num_files=1, file_type='mindrecord')
+    .. py:method:: save(file_name, num_files=1, file_type='mindrecord')
 
         将流水线正在处理的数据保存为通用的数据集格式。支持的数据集格式：'mindrecord'。
 
@@ -695,7 +695,7 @@
         - **num_files** (int, optional) - 数据集文件的数量（默认为1）。
         - **file_type** (str, optional) - 数据集格式（默认为'mindrecord'）。
 
-    ..py:method:: set_dynamic_columns(columns=None)
+    .. py:method:: set_dynamic_columns(columns=None)
 
         设置源数据的动态shape信息，需要在定义数据处理流水线后设置。
 
@@ -703,7 +703,7 @@
         
         **columns** (dict) - 包含数据集中每列shape信息的字典。shape[i]为 `None` 表示shape[i]的数据长度是动态的。
         
-    ..py:method:: shuffle(buffer_size)
+    .. py:method:: shuffle(buffer_size)
 
         使用以下策略随机打乱此数据集的行：
 
@@ -737,7 +737,7 @@
         >>> # 使用大小为4的shuffle缓冲区创建打乱后的数据集。
         >>> dataset = dataset.shuffle(4)
         
-    ..py:method:: skip(count)
+    .. py:method:: skip(count)
 
         跳过此数据集的前N个元素。
 
@@ -755,7 +755,7 @@
         >>> # 创建一个数据集，跳过前3个元素
         >>> dataset = dataset.skip(3)
         
-    ..py:method:: split(sizes, randomize=True)
+    .. py:method:: split(sizes, randomize=True)
 
         将数据集拆分为多个不重叠的数据集。
 
@@ -797,7 +797,7 @@
         >>> dataset = ds.TextFileDataset(text_file_dataset_dir, shuffle=False)
         >>> train_dataset, test_dataset = dataset.split([0.9, 0.1])
         
-    ..py:method:: sync_update(condition_name, num_batch=None, data=None)
+    .. py:method:: sync_update(condition_name, num_batch=None, data=None)
 
         释放阻塞条件并使用给定数据触发回调函数。
 
@@ -807,7 +807,7 @@
         - **num_batch** (Union[int, None]) - 释放的batch（row）数。当 `num_batch` 为None时，将默认为 `sync_wait` 算子指定的值（默认为None）。        
         - **data** (Any) - 用户自定义传递给回调函数的数据（默认为None）。
         
-    ..py:method:: sync_wait(condition_name, num_batch=1, callback=None)
+    .. py:method:: sync_wait(condition_name, num_batch=1, callback=None)
 
         向输入数据集添加阻塞条件。 将应用同步操作。
 
@@ -856,7 +856,7 @@
         ...     data = {"loss": count}
         ...     dataset.sync_update(condition_name="policy", data=data)
         
-    ..py:method:: take(count=-1)
+    .. py:method:: take(count=-1)
 
         从数据集中获取最多给定数量的元素。
 
@@ -878,7 +878,7 @@
         >>> # 创建一个数据集，包含50个元素。
         >>> dataset = dataset.take(50)
         
-    ..py:method:: to_device(send_epoch_end=True, create_data_info_queue=False)
+    .. py:method:: to_device(send_epoch_end=True, create_data_info_queue=False)
 
         将数据从CPU传输到GPU、Ascend或其他设备。
 
@@ -898,7 +898,7 @@
         
         **RuntimeError** - 如果提供了分布式训练的文件路径但读取失败。
         
-    ..py:method:: to_json(filename='')
+    .. py:method:: to_json(filename='')
 
         将数据处理流水线序列化为JSON字符串，如果提供了文件名，则转储到文件中。
 
