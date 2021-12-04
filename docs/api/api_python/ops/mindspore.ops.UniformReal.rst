@@ -20,9 +20,9 @@ mindspore.ops.UniformReal
 
     **异常：**
 
-    - **TypeError** - - `seed` 和 `seed2` 都不是int。
-    - **TypeError：**  `shape` 不是tuple。
-    - **ValueError** - `shape` 不是常量值。
+    - **TypeError:** - `seed` 和 `seed2` 都不是int。
+    - **TypeError：** - `shape` 不是tuple。
+    - **ValueError:** - `shape` 不是常量值。
 
     **支持平台：**
 

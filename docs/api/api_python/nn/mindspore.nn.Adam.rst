@@ -5,7 +5,7 @@ mindspore.nn.Adam
 
     通过Adaptive Moment Estimation (Adam)算法更新梯度。
 
-    请参阅论文`Adam: A Method for Stochastic Optimization <https://arxiv.org/abs/1412.6980>`_。
+    请参阅论文 `Adam: A Method for Stochastic Optimization <https://arxiv.org/abs/1412.6980>`_。
 
     公式如下：
 
@@ -17,7 +17,7 @@ mindspore.nn.Adam
             w_{t+1} = w_{t} - l * \frac{m_{t+1}}{\sqrt{v_{t+1}} + \epsilon}
         \end{array}
 
-    :math:`m` 代表第一个动量矩阵 `moment1` ，:math:`v` 代表第二个动量矩阵 `moment2` ，:math:`g` 代表 `gradients` ，:math:`l` 代表缩放因子，:math:`\beta_1,\beta_2` 代表 `beta1` 和 `beta2` ，:math:`t` 代表当前step，:math:`beta_1^t` 和:math:`beta_2^t` 代表 `beta1_power` 和 `beta2_power` ，:math:`\alpha` 代表 `learning_rate` ，:math:`w` 代表 `params` ，:math:`\epsilon` 代表 `eps` 。
+    :math:`m` 代表第一个动量矩阵 `moment1` ，:math:`v` 代表第二个动量矩阵 `moment2` ，:math:`g` 代表 `gradients` ，:math:`l` 代表缩放因子，:math:`\beta_1,\beta_2` 代表 `beta1` 和 `beta2` ，:math:`t` 代表当前step，:math:`beta_1^t` 和 :math:`beta_2^t` 代表 `beta1_power` 和 `beta2_power` ，:math:`\alpha` 代表 `learning_rate` ，:math:`w` 代表 `params` ，:math:`\epsilon` 代表 `eps` 。
 
     .. note::
         .. include:: mindspore.nn.optim_note_sparse.rst

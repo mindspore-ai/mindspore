@@ -17,7 +17,7 @@ mindspore.ops.OnesLike
 
     **异常：**
 
-    - **TypeError** - - `input_x` 不是Tensor。
+    - **TypeError** - `input_x` 不是Tensor。
 
     **支持平台：**
 

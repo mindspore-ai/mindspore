@@ -23,7 +23,7 @@ mindspore.nn.exponential_decay_lr
 
     **返回：**
 
-    list[float]。列表的大小为`total_step`。
+    list[float]。列表的大小为 `total_step`。
 
     **样例：**
 

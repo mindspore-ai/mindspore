@@ -33,7 +33,7 @@ mindspore.nn.InverseDecayLR
 
     **输出：**
 
-    Tensor。当前step的学习率值，shape为:math:`()`。
+    Tensor。当前step的学习率值，shape为 :math:`()`。
 
     **异常：**
 

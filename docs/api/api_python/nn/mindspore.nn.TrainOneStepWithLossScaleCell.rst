@@ -106,7 +106,7 @@ mindspore.nn.TrainOneStepWithLossScaleCell
 
     .. py:method:: set_sense_scale(sens)
 
-        如果使用了Tensor类型的`scale_sense`，可调用此函数修改它的值。
+        如果使用了Tensor类型的 `scale_sense` ，可调用此函数修改它的值。
 
         **输入：**
 

@@ -26,8 +26,8 @@ mindspore.ops.ReLUV2
 
     **异常：**
 
-    - **TypeError** - - `input_x` 不是Tensor。
-    - **ValueError** - -`input_x` 的shape不是4-D。
+    - **TypeError** - `input_x` 不是Tensor。
+    - **ValueError** - `input_x` 的shape不是4-D。
 
     **支持平台：**
 
