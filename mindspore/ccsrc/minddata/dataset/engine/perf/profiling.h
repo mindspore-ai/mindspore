@@ -421,7 +421,7 @@ class ProfilingManager {
   // Register profile node to tree
   // @param node - Profiling node
   // @return Status The status code returned
-  Status RegisterTracingNode(std::shared_ptr<Tracing> node);
+  Status RegisterTracingNode(const std::shared_ptr<Tracing> &node);
 
   /// \brief API to initialize profiling manager
   /// \param for_autotune flag to indicate if Profiler is initialized for autotuning or profiling purposes
@@ -490,7 +490,7 @@ class ProfilingManager {
   // Register profile node to tree
   // @param node - Profiling node
   // @return Status The status code returned
-  Status RegisterSamplingNode(std::shared_ptr<Sampling> node);
+  Status RegisterSamplingNode(const std::shared_ptr<Sampling> &node);
 
   /// \brief Helper to convert a given epoch number to a step interval
   /// \param [in] epoch_num The epoch number to be converted
