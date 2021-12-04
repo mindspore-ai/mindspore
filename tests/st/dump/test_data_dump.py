@@ -79,25 +79,10 @@ def run_async_dump(test_name):
 def test_async_dump():
     """
     Feature: async dump on Ascend
-    Description: test async dump with default file_format value
+    Description: test async dump with default file_format value ("bin")
     Expectation: dump data are generated as protobuf file format (suffix with timestamp)
     """
     run_async_dump("test_async_dump")
-
-
-@pytest.mark.skip(reason="wait for run package updates in Dec 01")
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-@security_off_wrap
-def test_async_dump_file_format():
-    """
-    Feature: async dump on Ascend in npy format
-    Description: test async dump with file_format is configured as npy
-    Expectation: dump data are generated as npy file format
-    """
-    run_async_dump("test_async_dump_file_format")
 
 
 def run_e2e_dump():
