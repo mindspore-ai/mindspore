@@ -6343,40 +6343,6 @@ class ApplyAddSign(PrimitiveWithInfer):
         """Initialize ApplyAddSign."""
         self.add_prim_attr('side_effect_mem', True)
 
-    def infer_shape(self, var_shape, m_shape, lr_shape, alpha_shape, sign_decay_shape,
-                    beta_shape, grad_shape):
-        validator.check('m_shape', m_shape, 'var_shape', var_shape, Rel.EQ, self.name)
-        validator.check('grad_shape', grad_shape, 'var_shape', var_shape, Rel.EQ, self.name)
-        lr_shape_len = len(lr_shape)
-        validator.check_int(lr_shape_len, 1, Rel.LE, "lr's rank", self.name)
-        if lr_shape_len == 1:
-            validator.check_int(lr_shape[0], 1, Rel.EQ, "lr_shape[0]", self.name)
-        alpha_shape_len = len(alpha_shape)
-        validator.check_int(alpha_shape_len, 1, Rel.LE, "alpha's rank", self.name)
-        if alpha_shape_len == 1:
-            validator.check_int(alpha_shape[0], 1, Rel.EQ, "alpha_shape[0]", self.name)
-        sign_decay_shape_len = len(sign_decay_shape)
-        validator.check_int(sign_decay_shape_len, 1, Rel.LE, "sign_decay's rank", self.name)
-        if sign_decay_shape_len == 1:
-            validator.check_int(sign_decay_shape[0], 1, Rel.EQ, "sign_decay_shape[0]", self.name)
-        beta_shape_len = len(beta_shape)
-        validator.check_int(beta_shape_len, 1, Rel.LE, "beta's rank", self.name)
-        if beta_shape_len == 1:
-            validator.check_int(beta_shape[0], 1, Rel.EQ, "beta_shape[0]", self.name)
-        return var_shape, m_shape
-
-    def infer_dtype(self, var_dtype, m_dtype, lr_dtype, alpha_dtype, sign_decay_dtype,
-                    beta_dtype, grad_dtype):
-        valid_dtypes = [mstype.float16, mstype.float32]
-        args = {'var': var_dtype, 'm': m_dtype, 'grad': grad_dtype}
-        validator.check_tensors_dtypes_same_and_valid(args, valid_dtypes, self.name)
-        validator.check_scalar_or_tensor_types_same({"lr": lr_dtype}, valid_dtypes, self.name)
-        validator.check_scalar_or_tensor_types_same({"alpha": alpha_dtype}, valid_dtypes, self.name)
-        validator.check_scalar_or_tensor_types_same({"sign_decay": sign_decay_dtype}, valid_dtypes, self.name)
-        validator.check_scalar_or_tensor_types_same({"beta": beta_dtype}, valid_dtypes, self.name)
-        return var_dtype, m_dtype
-
-
 class ApplyPowerSign(PrimitiveWithInfer):
     r"""
     Updates relevant entries according to the AddSign algorithm.
