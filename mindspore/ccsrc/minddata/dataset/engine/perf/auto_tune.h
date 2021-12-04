@@ -56,13 +56,29 @@ class AutoTune {
   /// \return Status code
   Status CollectOpsInfo();
 
-  /// The AutoTune logic that executes every iteration
+  /// Function to check for current step and execute logic
   /// \return status code
-  Status RunIteration();
+  Status RunIterationStep();
+
+  /// Function to check for current epoch and execute logic
+  /// \return status code
+  Status RunIterationEpoch();
 
   /// The AutoTune logic for pipelines that executes every epoch
   /// \return status code
-  Status RunIterationEpoch();
+  Status RunIteration();
+
+  /// Fetches connector size for steps or epoch based on mode
+  /// \return status code
+  Status GetConnectorSize(std::vector<int32_t> *sizes);
+
+  /// Fetches connector capacity for steps or epoch based on mode
+  /// \return status code
+  Status GetConnectorCapacity(std::vector<int32_t> *capacities);
+
+  /// Fetches Connector Queue empty frequency for steps or epoch based on mode
+  /// \return status code
+  Status GetEmptyQueueFrequency(float *empty_freq);
 
   /// Check if the dataset pipeline is the bottleneck
   /// \param[out] isBottleneck bool
@@ -79,7 +95,6 @@ class AutoTune {
   const int32_t MIN_NUM_WORKERS = 1;
   const int32_t MAX_QUEUE_SIZE = 128;
   const int32_t MIN_QUEUE_SIZE = 1;
-
   // Worker specifics
   const int32_t INCREMENT_WORKER = 2;
   const int32_t DECREMENT_WORKER = -1;
@@ -92,6 +107,8 @@ class AutoTune {
   // CPU Specifics
   const float_t MAP_OP_WORKER_HIGH_THRESHOLD = 75;
   const float_t MAP_OP_WORKER_LOW_THRESHOLD = 35;
+  // Running mode specifics
+  enum AutoTuneMode { kAutoTuneModeEpoch, kAutoTuneModeStep };
 
   /// Get the out connector capacity of the operator
   /// \param[in] op_id operator id
@@ -166,8 +183,14 @@ class AutoTune {
   /// vector of pipeline time per epoch
   std::vector<double> avg_pipeline_times_;
 
-  /// the current epoch index (starts from 1)
+  /// the current epoch and step indices (starts from 1)
   int32_t cur_epoch_;
+  // step based auto-tuning specifics
+  int32_t cur_step_;
+  int32_t mode_;
+  int64_t step_gap_;
+  int32_t last_step_profiled_;
+  bool skip_bool_;
 };
 }  // namespace dataset
 }  // namespace mindspore

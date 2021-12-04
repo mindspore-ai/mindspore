@@ -239,11 +239,11 @@ class ConfigManager {
   bool enable_autotune() { return enable_autotune_; }
 
   // getter function
-  // @return - autotune interval in millisecods
+  // @return - autotune interval in steps
   int64_t autotune_interval() { return autotune_interval_; }
 
   // setter function
-  // @param interval - autotune interval in millisecods
+  // @param interval - autotune interval in steps
   void set_autotune_interval(int64_t interval) { autotune_interval_ = interval; }
 
  private:

@@ -447,35 +447,37 @@ def get_enable_autotune():
 
 def set_autotune_interval(interval):
     """
-    Set the default interval (in milliseconds) for data pipeline autotuning.
+    Set the interval (in steps) for data pipeline autotuning. Setting interval to 0
+    configures autotune to run after every epoch instead of after a certain number of steps.
+    Default value is set to 0, meaning epoch based autotuning.
 
     Args:
-        interval (int): Interval (in milliseconds) to be used for data pipeline autotuning.
+        interval (int): Interval (in steps) to to serve as gap for consecutive AutoTune runs.
 
     Raises:
-        ValueError: If interval is invalid when interval <= 0 or interval > MAX_INT_32.
+        ValueError: If interval is invalid when interval < 0 or interval > MAX_INT_32.
 
     Examples:
         >>> # Set a new global configuration value for the autotuning interval.
-        >>> ds.config.set_autotune_interval(100)
+        >>> ds.config.set_autotune_interval(30)
     """
     if not isinstance(interval, int):
         raise TypeError("interval must be of type int.")
-    if interval <= 0 or interval > INT32_MAX:
+    if interval < 0 or interval > INT32_MAX:
         raise ValueError("Interval given is not within the required range.")
     _config.set_autotune_interval(interval)
 
 
 def get_autotune_interval():
     """
-    Get the global configuration of sampling interval of pipeline autotuning.
+    Get the global configuration of pipeline autotuning step interval.
 
     Returns:
-        int, interval (in milliseconds) for data pipeline autotuning.
+        int, interval (in steps) for data pipeline autotuning.
 
     Examples:
         >>> # Get the global configuration of the autotuning interval.
-        >>> # If set_autotune_interval() is never called before, the default value(100) will be returned.
+        >>> # If set_autotune_interval() is never called before, the default value(30) will be returned.
         >>> autotune_interval = ds.config.get_autotune_interval()
     """
     return _config.get_autotune_interval()

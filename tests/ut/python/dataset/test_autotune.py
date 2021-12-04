@@ -221,7 +221,7 @@ class TestAutotuneWithProfiler:
             ds.config.set_enable_autotune(1)
 
         autotune_interval = ds.config.get_autotune_interval()
-        assert autotune_interval == 100
+        assert autotune_interval == 0
 
         ds.config.set_autotune_interval(200)
         autotune_interval = ds.config.get_autotune_interval()

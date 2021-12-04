@@ -220,6 +220,8 @@ Status Tracing::Init() {
   return Status::OK();
 }
 
+size_t Tracing::GetNumberSteps() { return ts_.size(); }
+
 // Constructor
 ProfilingManager::ProfilingManager()
     : profiling_state_(ProfilingState::kProfilingStateUnBegun), tree_(nullptr), autotuning_(false), profiling_(false) {}
@@ -465,7 +467,7 @@ Status ProfilingManager::TimeToStepInterval(uint64_t start_ts, uint64_t end_ts, 
     return node->StepIntervalForTimeRange(start_ts, end_ts, start_step, end_step);
   } else {
     return {StatusCode::kMDUnexpectedError,
-            "Cannot find appropriate tracing node to convert step range to time interval."};
+            "Cannot find appropriate tracing node to convert time interval to step range."};
   }
 }
 
@@ -621,6 +623,17 @@ Status ProfilingManager::GetConnectorCapacityByTime(uint64_t start_ts, uint64_t 
   int32_t start_step, end_step;
   RETURN_IF_NOT_OK(TimeToStepInterval(start_ts, end_ts, &start_step, &end_step));
   return GetConnectorCapacityByStep(start_step, end_step, result);
+}
+
+Status ProfilingManager::GetNumberOfProfiledSteps(int32_t *steps) {
+  std::shared_ptr<Tracing> node;
+  if (GetTracingNode(kDeviceQueueTracingName, &node).IsOk() ||
+      GetTracingNode(kDatasetIteratorTracingName, &node).IsOk()) {
+    *steps = node->GetNumberSteps();
+    return Status::OK();
+  } else {
+    return {StatusCode::kMDUnexpectedError, "Cannot find appropriate tracing node"};
+  }
 }
 
 void ProfilingManager::RecordEndOfEpoch(uint32_t step_num) {
