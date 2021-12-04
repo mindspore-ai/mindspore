@@ -82,11 +82,11 @@ class Backend:
     def __new__(cls, name):
         """Create instance object of Backend."""
         if not isinstance(name, str):
-            raise TypeError("The context configuration parameter 'name' must be a string, "
+            raise TypeError("For 'Backend', the class variable 'name' must be a string, "
                             "but got the type : {}".format(type(name)))
         value = getattr(Backend, name.upper(), Backend.UNDEFINED)
         if value == Backend.UNDEFINED:
-            raise ValueError("The context configuration parameter 'name' {} is not supported, "
+            raise ValueError("For 'Backend', the class variable 'name' {} is not supported, "
                              "please use hccl or nccl.".format(name))
         return value
 
@@ -212,7 +212,7 @@ def _get_rank_helper(group, backend):
     elif backend == Backend.NCCL:
         rank_id = mpi.get_rank_id(group)
     else:
-        raise ValueError("The context configuration parameter 'backend' {} is not supported, "
+        raise ValueError("For '_get_rank_helper', the argument 'backend' {} is not supported, "
                          "please use hccl_mpi, hccl or nccl.".format(backend))
     return rank_id
 
@@ -243,7 +243,7 @@ def _get_local_rank_helper(group, backend):
     elif backend == Backend.NCCL:
         raise RuntimeError("Nccl doesn't support get_local_rank_id now.")
     else:
-        raise ValueError("The context configuration parameter 'backend' {} is not supported, "
+        raise ValueError("For '_get_local_rank_helper', the argument 'backend' {} is not supported, "
                          "please use hccl_mpi or hccl.".format(backend))
     return rank_id
 
@@ -277,7 +277,7 @@ def _get_size_helper(group, backend):
     elif backend == Backend.NCCL:
         size = mpi.get_rank_size(group)
     else:
-        raise ValueError("The context configuration parameter 'backend' {} is not supported, "
+        raise ValueError("For '_get_size_helper', the argument 'backend' {} is not supported, "
                          "please use hccl or nccl.".format(backend))
     return size
 
@@ -306,7 +306,7 @@ def _get_local_size_helper(group, backend):
     elif backend == Backend.NCCL:
         raise RuntimeError("Nccl doesn't support get_local_rank_size now.")
     else:
-        raise ValueError("The context configuration parameter 'backend' {} is not supported, "
+        raise ValueError("For '_get_local_size_helper', the argument 'backend' {} is not supported, "
                          "please use hccl.".format(backend))
     return size
 
@@ -330,16 +330,17 @@ def _get_world_rank_from_group_rank_helper(group, group_rank_id, backend):
     """
     world_rank_id = None
     if not isinstance(group_rank_id, int):
-        raise TypeError("The parameter 'group_rank_id' must be int, but got type {}".format(type(group_rank_id)))
+        raise TypeError("For 'get_world_rank_from_group_rank', the argument 'group_rank_id' must be"
+                        " type of int, but got 'group_rank_id' type : {}.".format(type(group_rank_id)))
     if backend == Backend.HCCL:
         if group == HCCL_WORLD_COMM_GROUP:
-            raise ValueError("The parameter 'group' cannot be 'hccl_world_group'. ")
+            raise ValueError("For 'get_world_rank_from_group_rank' on GPU, the argument 'group' "
+                             "should be 'NCCL_WORLD_COMM_GROUP', but got 'HCCL_WORLD_COMM_GROUP'.")
         world_rank_id = hccl.get_world_rank_from_group_rank(group, group_rank_id)
     elif backend == Backend.NCCL:
         raise RuntimeError("Nccl doesn't support get_world_rank_from_group_rank now.")
     else:
-        raise ValueError("The context configuration parameter 'backend' {} is not supported, "
-                         "please use hccl.".format(backend))
+        raise ValueError("The argument 'backend' {} is not supported, please use hccl.".format(backend))
     return world_rank_id
 
 
@@ -362,16 +363,17 @@ def _get_group_rank_from_world_rank_helper(world_rank_id, group, backend):
     """
     group_rank_id = None
     if not isinstance(world_rank_id, int):
-        raise TypeError("The parameter 'world_rank_id' should be int, but got type {}".format(type(world_rank_id)))
+        raise TypeError("For 'get_group_rank_from_world_rank', the argument 'world_rank_id' must be type of int, "
+                        "but got 'world_rank_id' type : {}.".format(type(world_rank_id)))
     if backend == Backend.HCCL:
         if group == HCCL_WORLD_COMM_GROUP:
-            raise ValueError("The parameter group cannot be 'hccl_world_group'. ")
+            raise ValueError("For 'get_group_rank_from_world_rank' on GPU, the argument 'group' "
+                             "should be 'NCCL_WORLD_COMM_GROUP', but got 'HCCL_WORLD_COMM_GROUP'.")
         group_rank_id = hccl.get_group_rank_from_world_rank(world_rank_id, group)
     elif backend == Backend.NCCL:
         raise RuntimeError("Nccl doesn't support get_group_rank_from_world_rank now.")
     else:
-        raise ValueError("The context configuration parameter 'backend' {} is not supported, "
-                         "please use hccl.".format(backend))
+        raise ValueError("The argument 'backend' {} is not supported, please use hccl.".format(backend))
     return group_rank_id
 
 
@@ -398,12 +400,12 @@ def _create_group_helper(group, rank_ids, backend):
         return
     if backend == Backend.HCCL:
         if not isinstance(rank_ids, list):
-            raise TypeError("The type of parameter 'rank_ids' should be list, but got the type : {}."
-                            .format(type(rank_ids)))
+            raise TypeError("For 'create_group', the argument 'rank_ids' must be type of list, "
+                            "but got 'rank_ids' type : {}.".format(type(rank_ids)))
         rank_size = len(rank_ids)
         if rank_size < 1:
-            raise ValueError("The parameter 'rank_ids' size should be large than 0, "
-                             "but got the value : {}.".format(rank_size))
+            raise ValueError("For 'create_group', the argument 'rank_ids' size should be greater than 1, "
+                             "but got 'rank_ids' size : {}.".format(len(rank_ids)))
         if len(rank_ids) - len(list(set(rank_ids))) > 0:
             raise ValueError("List rank_ids in Group {} has duplicate data!".format(group))
         hccl.create_group(group, rank_size, rank_ids)

@@ -522,14 +522,16 @@ class FixedSparseAttention(nn.Cell):
         self.parallel_config = parallel_config
         size_per_head_list = [64, 128]
         if self.seq_length != 1024:
-            raise ValueError("The parameter of 'seq_length' must be 1024, but got the value : {}.".format(seq_length))
+            raise ValueError("For 'FixedSparseAttention', the class variable 'seq_length' must be 1024, "
+                             "but got the value : {}.".format(seq_length))
         if self.block_size != 64:
-            raise ValueError("The parameter of 'block_size' must be 64, but got the value : {}.".format(block_size))
+            raise ValueError("For 'FixedSparseAttention', the class variable 'block_size' must be 64, "
+                             "but got the value : {}.".format(block_size))
         if num_different_global_patterns != 4:
-            raise ValueError("The parameter of 'num_different_global_patterns' must be 4, "
-                             "but got the value : {}".format(num_different_global_patterns))
+            raise ValueError("For 'FixedSparseAttention', the class variable 'num_different_global_patterns' "
+                             "must be 4, but got the value : {}".format(num_different_global_patterns))
         if self.size_per_head not in size_per_head_list:
-            raise ValueError("The parameter of 'size_per_head' only supports {}, "
+            raise ValueError("For 'FixedSparseAttention', the class variable 'size_per_head' only supports {}, "
                              "but got the value : {}.".format(size_per_head_list, self.size_per_head))
         local_ones = np.ones((self.block_size, self.block_size),
                              dtype=np.float16)
