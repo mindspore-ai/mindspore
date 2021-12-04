@@ -45,7 +45,7 @@ class ModelC {
   MSTensor::Impl *GetOutputByTensorName(const std::string &name);
 
  private:
-  std::shared_ptr<session::LiteSession> session_ = nullptr;
+  std::shared_ptr<lite::LiteSession> session_ = nullptr;
   std::shared_ptr<const ContextC> context_ = nullptr;
   std::map<mindspore::tensor::MSTensor *, MSTensor::Impl *> tensor_map_;
   std::vector<MSTensor::Impl *> inputs_;
@@ -57,33 +57,40 @@ class ModelC {
 
 Status ModelC::Build(const void *model_data, size_t data_size, ModelType model_type, const ContextC *model_context) {
   context_.reset(model_context);
-  lite::Context lite_context;
-  auto status = A2L_ConvertContext(model_context, &lite_context);
-  if (status != kSuccess) {
-    return status;
-  }
-  session_ = std::shared_ptr<session::LiteSession>(
-    session::LiteSession::CreateSession(static_cast<const char *>(model_data), data_size, &lite_context));
+  session_ = std::make_shared<lite::LiteSession>();
   if (session_ == nullptr) {
-    MS_LOG(ERROR) << "Allocate session failed.";
+    MS_LOG(ERROR) << "create session failed";
     return kLiteNullptr;
   }
-  return kSuccess;
+  auto ret = session_->Init(ContextUtils::Convert(model_context));
+  if (ret != mindspore::lite::RET_OK) {
+    MS_LOG(ERROR) << "init session failed";
+    return static_cast<StatusCode>(ret);
+  }
+  ret = session_->LoadModelAndCompileByBuf(static_cast<const char *>(model_data), model_type, data_size);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Load and compile failed";
+  }
+  return static_cast<StatusCode>(ret);
 }
 
 Status ModelC::Build(const std::string &model_path, ModelType model_type, const ContextC *model_context) {
   context_.reset(model_context);
-  lite::Context lite_context;
-  auto status = A2L_ConvertContext(model_context, &lite_context);
-  if (status != kSuccess) {
-    return status;
-  }
-  session_ = std::shared_ptr<session::LiteSession>(lite::LiteSession::CreateSession(model_path, &lite_context));
+  session_ = std::make_shared<lite::LiteSession>();
   if (session_ == nullptr) {
-    MS_LOG(ERROR) << "Allocate session failed.";
-    return kLiteError;
+    MS_LOG(ERROR) << "create session failed";
+    return kLiteNullptr;
   }
-  return kSuccess;
+  auto ret = session_->Init(ContextUtils::Convert(model_context));
+  if (ret != mindspore::lite::RET_OK) {
+    MS_LOG(ERROR) << "init session failed";
+    return static_cast<StatusCode>(ret);
+  }
+  ret = session_->LoadModelAndCompileByPath(model_path, model_type);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Load and compile failed";
+  }
+  return static_cast<StatusCode>(ret);
 }
 
 Status ModelC::Resize(const std::vector<MSTensor::Impl *> &inputs, const std::vector<std::vector<int64_t>> &shapes) {

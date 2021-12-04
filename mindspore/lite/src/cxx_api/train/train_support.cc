@@ -40,8 +40,8 @@
 #include "src/train/train_session.h"
 
 namespace mindspore {
-std::shared_ptr<session::LiteSession> CreateTrainSession(std::shared_ptr<Graph::GraphData> graph_data,
-                                                         std::shared_ptr<TrainCfg> cfg, lite::InnerContext *context) {
+std::shared_ptr<lite::LiteSession> CreateTrainSession(std::shared_ptr<Graph::GraphData> graph_data,
+                                                      std::shared_ptr<TrainCfg> cfg, lite::InnerContext *context) {
   MS_CHECK_TRUE_MSG(graph_data != nullptr, nullptr, "graph data cannot be nullptr");
   bool is_train_session = graph_data->IsTrainModel();
   if (is_train_session) {
@@ -50,7 +50,7 @@ std::shared_ptr<session::LiteSession> CreateTrainSession(std::shared_ptr<Graph::
       MS_LOG(ERROR) << "Lite model has been freed.";
       return nullptr;
     }
-    std::shared_ptr<session::LiteSession> shared_session;
+    std::shared_ptr<lite::LiteSession> shared_session;
     auto session = new (std::nothrow) lite::TrainSession();
     if (session == nullptr) {
       MS_LOG(ERROR) << "create session failed";

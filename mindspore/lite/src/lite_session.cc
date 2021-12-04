@@ -1441,7 +1441,8 @@ session::LiteSession *session::LiteSession::CreateSession(const char *model_buf,
     MS_LOG(ERROR) << "Create session failed";
     return nullptr;
   }
-  auto ret = lite::LiteSession::CreateSessionByBuf(model_buf, mindspore::ModelType::kMindIR_Opt, size, session);
+  auto ret = reinterpret_cast<lite::LiteSession *>(session)->LoadModelAndCompileByBuf(
+    model_buf, mindspore::ModelType::kMindIR_Opt, size);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init session failed";
     delete session;
@@ -1456,7 +1457,8 @@ session::LiteSession *lite::LiteSession::CreateSession(const std::string &model_
     MS_LOG(ERROR) << "Create session failed";
     return nullptr;
   }
-  auto ret = lite::LiteSession::CreateSessionByPath(model_path, mindspore::ModelType::kMindIR_Opt, session);
+  auto ret = reinterpret_cast<lite::LiteSession *>(session)->LoadModelAndCompileByPath(
+    model_path, mindspore::ModelType::kMindIR_Opt);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init session failed";
     delete session;
@@ -1514,8 +1516,8 @@ const char *lite::LiteSession::LoadModelByPath(const std::string &file, mindspor
   return lite_buf;
 }
 
-int lite::LiteSession::CreateSessionByBuf(const char *model_buf, mindspore::ModelType model_type,
-                                          const size_t &buf_size, session::LiteSession *session) {
+int lite::LiteSession::LoadModelAndCompileByBuf(const char *model_buf, mindspore::ModelType model_type,
+                                                const size_t &buf_size) {
   size_t lite_buf_size = 0;
   char *lite_buf = nullptr;
   auto buf_model_type = LoadModelByBuff(model_buf, buf_size, &lite_buf, &lite_buf_size, model_type);
@@ -1529,7 +1531,7 @@ int lite::LiteSession::CreateSessionByBuf(const char *model_buf, mindspore::Mode
     MS_LOG(ERROR) << "Import model failed";
     return RET_ERROR;
   }
-  auto ret = session->CompileGraph(model);
+  auto ret = CompileGraph(model);
   model->buf = nullptr;
   if (buf_model_type == mindspore::ModelType::kMindIR) {
     free(lite_buf);
@@ -1540,12 +1542,11 @@ int lite::LiteSession::CreateSessionByBuf(const char *model_buf, mindspore::Mode
     delete model;
     return RET_ERROR;
   }
-  (reinterpret_cast<lite::LiteSession *>(session))->set_model(model);
+  set_model(model);
   return RET_OK;
 }
 
-int lite::LiteSession::CreateSessionByPath(const std::string &model_path, mindspore::ModelType model_type,
-                                           session::LiteSession *session) {
+int lite::LiteSession::LoadModelAndCompileByPath(const std::string &model_path, mindspore::ModelType model_type) {
   size_t model_size;
   auto model_buf = LoadModelByPath(model_path, model_type, &model_size);
   if (model_buf == nullptr) {
@@ -1559,12 +1560,12 @@ int lite::LiteSession::CreateSessionByPath(const std::string &model_path, mindsp
   }
 
   (reinterpret_cast<lite::LiteModel *>(model))->set_keep_model_buf(true);
-  auto ret = session->CompileGraph(model);
+  auto ret = CompileGraph(model);
   if (ret != lite::RET_OK) {
     MS_LOG(ERROR) << "Compile model failed";
     return RET_ERROR;
   }
-  (reinterpret_cast<lite::LiteSession *>(session))->set_model(model);
+  set_model(model);
   return RET_OK;
 }
 }  // namespace mindspore

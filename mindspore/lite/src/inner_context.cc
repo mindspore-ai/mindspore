@@ -175,7 +175,7 @@ int InnerContext::IsValid() const {
     return RET_NOT_SUPPORT;
   }
   if (this->device_list_.size() > kMaxInnerContextDeviceNums) {
-    MS_LOG(ERROR) << "Not support device list more than 2.";
+    MS_LOG(ERROR) << "Not support device list more than " << kMaxInnerContextDeviceNums;
     return RET_NOT_SUPPORT;
   }
   if (thread_num_ < 1) {
