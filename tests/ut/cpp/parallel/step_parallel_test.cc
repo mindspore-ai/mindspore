@@ -273,7 +273,10 @@ TEST_F(TestStepParallel, ExtractShape3) {
   ASSERT_EQ(shape_test, shape_expect);
 }
 
-TEST_F(TestStepParallel, CreatOpInstance) {
+/// Feature: test CreateOpInstance in auto parallel.
+/// Description: net with MicroBatchInterleaved in semi auto parallel.
+/// Expectation: success.
+TEST_F(TestStepParallel, CreateOpInstance) {
   ValuePtr attr0_value = MakeValue(REDUCE_OP_SUM);
   ValuePtr attr1_value = MakeValue("0-1-2");
   Attr attr0 = std::make_pair("op", attr0_value);
@@ -282,7 +285,7 @@ TEST_F(TestStepParallel, CreatOpInstance) {
   OperatorName op_name = "AllReduce";
   OperatorParams operator_param;
   OperatorArgs args = std::make_pair(attrs, operator_param);
-  auto op_instance = CreatOpInstance(args.first, op_name, "test");
+  auto op_instance = CreateOpInstance(args.first, op_name, "test");
   ASSERT_TRUE(op_instance);
   PrimitivePyPtr allreduce_ptr = dyn_cast<PrimitivePy>(op_instance);
   ASSERT_TRUE(allreduce_ptr);
@@ -332,12 +335,15 @@ TEST_F(TestStepParallel, CreatOpInstance) {
   }
 }
 
-TEST_F(TestStepParallel, CreatOpInstance1) {
+/// Feature: test CreateOpInstance in auto parallel.
+/// Description: net with MicroBatchInterleaved in semi auto parallel.
+/// Expectation: success.
+TEST_F(TestStepParallel, CreateOpInstance1) {
   OperatorAttrs attrs;
   OperatorName op_name = "ABC";
   OperatorParams operator_param;
   OperatorArgs args = std::make_pair(attrs, operator_param);
-  EXPECT_THROW({ CreatOpInstance(args.first, op_name, "test"); }, std::runtime_error);
+  EXPECT_THROW({ CreateOpInstance(args.first, op_name, "test"); }, std::runtime_error);
 }
 
 TEST_F(TestStepParallel, OperatorInstance) {

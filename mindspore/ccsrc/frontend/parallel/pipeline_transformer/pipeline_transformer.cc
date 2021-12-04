@@ -578,7 +578,7 @@ SendAttr PipelineTransformer::InsertSend(const AnfNodePtr &parameter, int64_t us
   Attr attr_group = std::make_pair(GROUP, MakeValue(group_[0]));
   Attr attr_group_back = std::make_pair(GROUP_BACK, MakeValue(group_[1]));
   OperatorAttrs attrs = {attr_tag, attr_rank, attr_group, attr_group_back};
-  auto send_op = CreatOpInstance(attrs, SEND, SEND);
+  auto send_op = CreateOpInstance(attrs, SEND, SEND);
   auto send_node = NewValueNode(send_op);
   auto prim = GetValueNode<PrimitivePtr>(send_node);
   std::pair<OperatorInfoPtr, int> op_info_pair;
@@ -614,7 +614,7 @@ SendAttr PipelineTransformer::InsertSend(const AnfNodePtr &parameter, int64_t us
   }
   send->AddPrimalAttr(MICRO, value);
   OperatorAttrs depend_attrs;
-  auto depend_op = CreatOpInstance(depend_attrs, DEPEND, DEPEND);
+  auto depend_op = CreateOpInstance(depend_attrs, DEPEND, DEPEND);
   std::vector<AnfNodePtr> depend_input = {NewValueNode(depend_op), parameter, send};
   auto depend = main_graph_->NewCNode(depend_input);
   auto abstract = parameter->abstract();
@@ -662,7 +662,7 @@ AnfNodePtr PipelineTransformer::InsertReceive(const FuncGraphPtr &graph, const A
   Attr attr_group = std::make_pair(GROUP, MakeValue(group_[0]));
   Attr attr_group_back = std::make_pair(GROUP_BACK, MakeValue(group_[1]));
   OperatorAttrs attrs = {attr_tag, attr_rank, attr_shape, attr_dtype, attr_group, attr_group_back};
-  auto recv_op = CreatOpInstance(attrs, RECEIVE, RECEIVE);
+  auto recv_op = CreateOpInstance(attrs, RECEIVE, RECEIVE);
   std::vector<AnfNodePtr> recv_input;
   if (node->isa<Parameter>()) {
     recv_input = {NewValueNode(recv_op), node};
@@ -990,7 +990,7 @@ void PipelineTransformer::CoverSensShape() {
   auto sens_cnode = sens_graph_pair.first;
   MS_EXCEPTION_IF_NULL(sens_cnode);
   OperatorAttrs attrs;
-  auto fill_op = CreatOpInstance(attrs, "Fill", "");
+  auto fill_op = CreateOpInstance(attrs, "Fill", "");
   MS_EXCEPTION_IF_NULL(type_ptr_);
   MS_EXCEPTION_IF_NULL(shape_);
   std::vector<AnfNodePtr> fill_input = {NewValueNode(fill_op), NewValueNode(type_ptr_),

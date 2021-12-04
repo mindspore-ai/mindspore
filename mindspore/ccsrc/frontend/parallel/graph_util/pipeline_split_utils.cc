@@ -167,7 +167,7 @@ void InsertVirtualAssignAdd(const std::pair<AnfNodePtr, int> &node_user, const F
   args1 = MakeValue(param_ptr->user_data<TensorLayout>()->opt_shard_group());
   args2 = MakeValue(param_ptr->param_info()->comm_fusion() + step * PIPELINE_FUSTION_OFFSET);
   OperatorAttrs attrs = {};
-  auto py_instance = CreatOpInstance(attrs, VIRTUAL_ASSIGN_ADD, VIRTUAL_ASSIGN_ADD);
+  auto py_instance = CreateOpInstance(attrs, VIRTUAL_ASSIGN_ADD, VIRTUAL_ASSIGN_ADD);
   auto value_node = NewValueNode(py_instance);
   // Set the attribute of the reduce scatter
   auto new_prim = GetValueNode<PrimitivePtr>(value_node);
@@ -187,7 +187,7 @@ void InsertVirtualAccuGrad(const AnfNodePtr &recv, const FuncGraphManagerPtr &ma
   auto cnode = recv->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   OperatorAttrs attrs;
-  auto py_instance = CreatOpInstance(attrs, VIRTUAL_ACCU_GRAD, VIRTUAL_ACCU_GRAD);
+  auto py_instance = CreateOpInstance(attrs, VIRTUAL_ACCU_GRAD, VIRTUAL_ACCU_GRAD);
   auto value_node = NewValueNode(py_instance);
   std::vector<AnfNodePtr> virtual_node_input = {value_node, recv, param};
   auto graph = cnode->func_graph();
@@ -584,7 +584,7 @@ void LastStageEndNode(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphM
         MS_EXCEPTION_IF_NULL(end_cnode);
         auto end_prim = GetCNodePrimitive(end_node);
         OperatorAttrs attrs_;
-        auto op = CreatOpInstance(attrs_, end_prim->name(), "");
+        auto op = CreateOpInstance(attrs_, end_prim->name(), "");
         auto value_node = NewValueNode(op);
         auto new_prim = GetValueNode(value_node)->cast<PrimitivePtr>();
         (void)new_prim->SetAttrs(end_prim->attrs());

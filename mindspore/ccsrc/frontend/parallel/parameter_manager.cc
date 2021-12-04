@@ -407,7 +407,7 @@ static void InsertFullySplitParamGradAccu(const std::pair<AnfNodePtr, int> &node
     return;
   }
   OperatorAttrs attrs;
-  auto py_instance = CreatOpInstance(attrs, "_VirtualAdd", "grad_accu");
+  auto py_instance = CreateOpInstance(attrs, "_VirtualAdd", "grad_accu");
   auto value_node = NewValueNode(py_instance);
   std::vector<AnfNodePtr> virtual_node_input = {value_node, cnode->input(IntToSize(node_user.second)), accu_parameter};
   auto graph = cnode->func_graph();

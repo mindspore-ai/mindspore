@@ -66,7 +66,7 @@ def test_four_matmul_linear():
             return out
 
     size = 64
-    context.set_auto_parallel_context(device_num=size, global_rank=0)
+    context.set_auto_parallel_context(dataset_strategy="full_batch", device_num=size, global_rank=0)
     strategy1 = ((2, 4), (4, 8))
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)

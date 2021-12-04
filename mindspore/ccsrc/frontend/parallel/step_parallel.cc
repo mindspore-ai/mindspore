@@ -102,7 +102,7 @@ void SetAllReduceRecomputeFlag(const std::vector<AnfNodePtr> &new_node_input, co
 std::vector<AnfNodePtr> CreateInput(const Operator &op, const AnfNodePtr &node, const std::string &instance_name) {
   MS_EXCEPTION_IF_NULL(node);
   OperatorArgs arg_forward = op.second;
-  ValuePtr pyop_instance = CreatOpInstance(arg_forward.first, op.first, instance_name);
+  ValuePtr pyop_instance = CreateOpInstance(arg_forward.first, op.first, instance_name);
   MS_EXCEPTION_IF_NULL(pyop_instance);
   OperatorParams params = arg_forward.second;
 
@@ -165,7 +165,7 @@ std::vector<AnfNodePtr> CreateMirrorInput(const FuncGraphPtr &root, const Operat
     }
   }
 
-  ValuePtr pyop_instance = CreatOpInstance(arg_forward.first, op_name, instance_name);
+  ValuePtr pyop_instance = CreateOpInstance(arg_forward.first, op_name, instance_name);
   MS_EXCEPTION_IF_NULL(pyop_instance);
   OperatorParams params = arg_forward.second;
 

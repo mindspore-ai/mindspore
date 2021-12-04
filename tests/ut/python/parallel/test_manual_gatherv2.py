@@ -87,6 +87,7 @@ def test_normal_split2():
 
 
 def test_normal_split3():
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=32, global_rank=17)
     strategy1 = ((4, 8), (1, 4))
     strategy2 = ((1, 4, 8), (1, 4, 8))
@@ -96,6 +97,7 @@ def test_normal_split3():
 
 
 def test_normal_split_with_offset():
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=2, global_rank=0)
     strategy1 = ((2, 1), (1, 2))
     strategy2 = ((1, 2, 1), (1, 2, 1))
