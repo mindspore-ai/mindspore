@@ -725,6 +725,7 @@ void PushTupleTensor(const VectorRef &args, const std::vector<AnfNodePtr> &param
   if (position >= args.size()) {
     MS_LOG(INFO) << "Position out of args range, position value is " << position << " and args size is " << args.size()
                  << ".";
+    input_tensor->push_back(nullptr);
     return;
   }
   auto value_tuple = utils::cast<ValueTuplePtr>(args[position]);
@@ -886,6 +887,34 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &args,
   MS_LOG(INFO) << "Status record: end run actor: " << actor_info;
 }
 
+BaseRef MindRTBackend::ConstructOutputByAbstract(const abstract::AbstractBasePtr &abstract,
+                                                 const std::vector<tensor::TensorPtr> &output_tensors,
+                                                 size_t *output_position) {
+  MS_EXCEPTION_IF_NULL(abstract);
+  MS_EXCEPTION_IF_NULL(output_position);
+
+  size_t outputs_num = AnfAlgo::GetOutputNumByAbstract(abstract);
+  if (*output_position + outputs_num > output_tensors.size()) {
+    MS_LOG(EXCEPTION) << "The output position is out of range: " << *output_position << " need:" << outputs_num
+                      << " total:" << output_tensors.size();
+  }
+
+  if (!abstract->isa<abstract::AbstractTuple>()) {
+    (*output_position)++;
+    return output_tensors[(*output_position) - 1];
+  }
+
+  VectorRef outputs;
+  auto tuple_abstract = abstract->cast<abstract::AbstractTuplePtr>();
+  MS_EXCEPTION_IF_NULL(tuple_abstract);
+  const auto &sub_abstracts = tuple_abstract->elements();
+  for (const auto &sub_abstract : sub_abstracts) {
+    MS_EXCEPTION_IF_NULL(sub_abstract);
+    outputs.emplace_back(ConstructOutputByAbstract(sub_abstract, output_tensors, output_position));
+  }
+  return outputs;
+}
+
 void MindRTBackend::ConstructOutputs(const AnfNodePtr &output_node,
                                      const std::vector<tensor::TensorPtr> &output_tensors, size_t *output_position,
                                      VectorRef *outputs) {
@@ -931,6 +960,13 @@ void MindRTBackend::ConstructOutputs(const AnfNodePtr &output_node,
       (*output_position) += outputs_num;
     }
     // The empty value node return the empty VectorRef.
+    return;
+  }
+
+  if (AnfAlgo::IsCallNode(output_node)) {
+    auto abstract = output_node->abstract();
+    MS_EXCEPTION_IF_NULL(abstract);
+    outputs->emplace_back(ConstructOutputByAbstract(abstract, output_tensors, output_position));
     return;
   }
 

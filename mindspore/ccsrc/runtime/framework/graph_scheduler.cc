@@ -568,13 +568,21 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Graph
     MS_EXCEPTION_IF_NULL(graph);
     // Build host queue data source actor.
     const std::vector<AnfNodePtr> &input_nodes = graph->input_nodes();
+    const auto &root_parameters = graph_compiler_info.origin_parameters_order_;
 
     for (size_t j = 0; j < input_nodes.size(); j++) {
       const auto &input_node = input_nodes[j];
       MS_EXCEPTION_IF_NULL(input_node);
 
-      if (IsHostQueueDSActor(input_node, graph, graph_compiler_info.origin_parameters_order_,
-                             graph_compiler_info.strategy_)) {
+      if (IsHostQueueDSActor(input_node, graph, root_parameters, graph_compiler_info.strategy_)) {
+        // In control flow, parameters from subgraph need not init in data source actor.
+        if (graph_compiler_info.control_node_parser_->IsInited()) {
+          auto node_with_index = graph->GetElementInTupleBackendFrontIndexMap(input_node);
+          if (node_with_index.first != nullptr && node_with_index.first->isa<Parameter>() &&
+              find(root_parameters.begin(), root_parameters.end(), node_with_index.first) == root_parameters.end())
+            continue;
+        }
+
         if (host_queue_ds_actor == nullptr) {
           auto actor_name = graph_compiler_info.name_ + "_HostDSActor";
           MS_LOG(INFO) << "Create host queue data source actor: " << actor_name;
@@ -649,20 +657,17 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Graph
       (void)data_source_actors.emplace_back(host_queue_ds_actor);
     }
 
-    if (host_queue_ds_actor->data_node_position_map_.find(parameter) !=
-        host_queue_ds_actor->data_node_position_map_.end()) {
+    auto &node_map = host_queue_ds_actor->data_node_position_map_;
+    if (node_map.find(parameter) != node_map.end()) {
       continue;
     }
-
     const auto &backend_node = backend_iter->second.begin()->first;
     auto iter = find(host_queue_ds_actor->data_nodes_.begin(), host_queue_ds_actor->data_nodes_.end(), backend_node);
     if (iter != host_queue_ds_actor->data_nodes_.end()) {
-      (void)host_queue_ds_actor->data_node_position_map_.emplace(parameter,
-                                                                 iter - host_queue_ds_actor->data_nodes_.begin());
+      (void)node_map.emplace(parameter, iter - host_queue_ds_actor->data_nodes_.begin());
     } else {
-      (void)host_queue_ds_actor->data_node_position_map_.emplace(parameter, host_queue_ds_actor->data_nodes_.size());
-      (void)host_queue_ds_actor->data_node_position_map_.emplace(backend_iter->second.begin()->first,
-                                                                 host_queue_ds_actor->data_nodes_.size());
+      (void)node_map.emplace(parameter, host_queue_ds_actor->data_nodes_.size());
+      (void)node_map.emplace(backend_iter->second.begin()->first, host_queue_ds_actor->data_nodes_.size());
       (void)host_queue_ds_actor->data_nodes_.emplace_back(backend_iter->second.begin()->first);
       (void)host_queue_ds_actor->device_contexts_.emplace_back(backend_iter->second.begin()->second);
     }
