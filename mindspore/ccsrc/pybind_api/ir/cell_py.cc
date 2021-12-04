@@ -26,8 +26,9 @@ void CellPy::AddAttr(CellPtr cell, const std::string &name, const py::object &ob
   ValuePtr converted_ret = nullptr;
   MS_EXCEPTION_IF_NULL(cell);
   if (py::isinstance<py::module>(obj)) {
-    MS_LOG(EXCEPTION) << "Cell set_attr failed, attr '" << name << "' should not be py::module '" << py::str(obj)
-                      << "'.";
+    MS_LOG(EXCEPTION) << "Call '_add_attr' to add attribute to Cell failed,"
+                      << " not support py::module to be attribute value; Cell name: " << cell->name()
+                      << ", attribute name: " << name << ", attribute value: " << py::str(obj) << "'.";
   }
   bool converted = parse::ConvertData(obj, &converted_ret, true);
   if (!converted) {
