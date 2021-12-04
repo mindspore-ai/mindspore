@@ -20,7 +20,7 @@ import json
 from enum import Enum
 
 from mindspore import log as logger, context
-from mindspore.communication.management import GlobalComm, release, get_rank, get_group_size
+from mindspore.communication.management import GlobalComm, get_rank, get_group_size
 import mindspore._c_expression as c_expression
 import mindspore._c_dataengine as cde
 from mindspore.profiler.common.exceptions.exceptions import ProfilerFileNotFoundException, \
@@ -284,8 +284,6 @@ class Profiler:
 
         if GlobalComm.INITED:
             self._rank_size = get_group_size()
-
-        release()
 
         if self._has_started:
             self.stop()
