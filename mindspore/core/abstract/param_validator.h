@@ -45,7 +45,7 @@ void CheckShapeSame(const std::string &op, const AbstractTensorPtr &tensor_base,
 
 TypePtr CheckDtypeSame(const std::string &op, const AbstractTensorPtr &tensor_base, const AbstractTensorPtr &tensor);
 
-int64_t CheckAxis(const std::string &op, const ValuePtr &axis, int64_t min, int64_t max);
+int64_t CheckAxis(const std::string &op, const std::string &arg_name, const ValuePtr &axis, int64_t min, int64_t max);
 
 void CheckArgsSize(const std::string &op, const AbstractBasePtrList &args_spec_list, size_t size_expect);
 
@@ -92,7 +92,7 @@ std::shared_ptr<T> CheckArg(const std::string &op, const AbstractBasePtrList &ar
   }
   auto arg = dyn_cast<T>(args_spec_list[index]);
   if (arg == nullptr) {
-    MS_EXCEPTION(TypeError) << "Operator " << op << " input[" << index << "] should be " << ReportNameTraits<T>::name
+    MS_EXCEPTION(TypeError) << "For \'" << op << "\', input[" << index << "] should be " << ReportNameTraits<T>::name
                             << ", but got " << args_spec_list[index]->BuildType()->ToString() << ".";
   }
   return arg;

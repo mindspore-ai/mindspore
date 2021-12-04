@@ -139,14 +139,14 @@ AbstractBasePtr InferImplBatchNorm(const AnalysisEnginePtr &, const PrimitivePtr
   CheckMinMaxShape(x_shape, &x_min_shape, &x_max_shape);
 
   auto input_tensor = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
-  (void)CheckTensorDType(input_tensor, {kFloat16, kFloat32}, "Input argument[x] of BatchNorm");
+  (void)CheckTensorDType(input_tensor, {kFloat16, kFloat32}, "For 'BatchNorm', input argument \'input_x\'");
   AbstractTensorPtrList tensorPtrList = std::vector<AbstractTensorPtr>();
   for (size_t i = 1; i < args_spec_list.size(); ++i) {
     auto param = CheckArg<AbstractTensor>(op_name, args_spec_list, i);
     tensorPtrList.push_back(param);
   }
   (void)CheckTensorsDTypeSame(tensorPtrList, {kFloat16, kFloat32},
-                              "Input arguments[gamma, beta, mean, variance] of BatchNorm");
+                              "For 'BatchNorm',the type of arguments['gamma', 'beta', 'mean', 'variance']");
 
   auto data_format_ptr = primitive->GetAttr("format");
   MS_EXCEPTION_IF_NULL(data_format_ptr);
