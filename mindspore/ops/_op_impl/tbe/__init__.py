@@ -245,6 +245,7 @@ from .fused_mul_apply_momentum import _fused_mul_apply_momentum_tbe
 from .fill import _fill_op_tbe
 from .fill_ds import _fill_ds_op_tbe
 from .erf import _erf_op_tbe
+from .erf_ds import _erf_ds_op_tbe
 from .erfc import _erfc_op_tbe
 from .depthwise_conv2d import _depthwise_conv2d_tbe
 from .depthwise_conv2d_backprop_filter import _depthwise_conv2d_backprop_filter_tbe
