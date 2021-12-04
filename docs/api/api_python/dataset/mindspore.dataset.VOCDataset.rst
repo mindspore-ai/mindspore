@@ -15,8 +15,7 @@ mindspore.dataset.VOCDataset
     - **dataset_dir** (str): 包含数据集文件的根目录的路径。
     - **task** (str, 可选): 指定读取VOC数据的任务类型，现在只支持 `Segmentation` 或 `Detection` （默认值 `Segmentation` ）。
     - **usage** (str, 可选): 指定数据集的子集（默认值 `train` ）。如果 `task` 参数为 `Segmentation` ，则将在./ImageSets/Segmentation/usage + ".txt"中加载数据集图像和标注信息；如果 `task` 参数为 `Detection` ，则将在./ImageSets/Main/usage + ".txt"中加载数据集图像和标注信息；如果未设置任务和用法，默认将加载./ImageSets/Segmentation/train.txt中的数据集图像和标注信息。
-    - **class_indexing** (dict, 可选): 指定标签名称到类标签的映射，要求映射规则为str到int，
-      仅在 `Detection` 任务中有效（默认值None，文件夹名称将按字母顺序排列，每类都有一个唯一的索引，从0开始)。
+    - **class_indexing** (dict, 可选): 指定标签名称到类标签的映射，要求映射规则为str到int，仅在 `Detection` 任务中有效（默认值None，文件夹名称将按字母顺序排列，每类都有一个唯一的索引，从0开始)。
     - **num_samples** (int, 可选): 指定从数据集中读取的样本数（默认值为None，所有图像样本）。
     - **num_parallel_workers** (int, 可选): 指定读取数据的工作线程数（默认值None，即使用mindspore.dataset.config中配置的线程数）。
     - **shuffle** (bool, 可选): 是否混洗数据集（默认为None，下表中会展示不同配置的预期行为）。
@@ -44,8 +43,7 @@ mindspore.dataset.VOCDataset
     - **ValueError**:  `shard_id` 参数错误（小于0或者大于等于 `num_shards` ）。
 
     .. note::
-        - 当指定 `extra_metadata` 为True时，除非显式使用rename算子以删除元信息列明的前缀('_meta-')，
-          否则迭代的数据行中不会出现'[_meta-filename, dtype=string]'列。
+        - 当指定 `extra_metadata` 为True时，除非显式使用rename算子以删除元信息列明的前缀('_meta-')，否则迭代的数据行中不会出现'[_meta-filename, dtype=string]'列。
         - 此数据集可以指定 `sampler` 参数，但 `sampler` 和 `shuffle` 是互斥的。下表展示了几种合法的输入参数及预期的行为。
 
     .. list-table:: 配置 `sampler` 和 `shuffle` 的不同组合得到的预期排序结果
@@ -144,4 +142,10 @@ mindspore.dataset.VOCDataset
         howpublished = {http://host.robots.ox.ac.uk/pascal/VOC/voc2012/index.html}
         }
 
+    .. include:: mindspore.dataset.Dataset.add_sampler.rst
+
     .. include:: mindspore.dataset.Dataset.rst
+
+    .. include:: mindspore.dataset.Dataset.use_sampler.rst
+
+    .. include:: mindspore.dataset.Dataset.zip.rst

@@ -94,4 +94,10 @@ mindspore.dataset.MnistDataset
         howpublished = {http://yann.lecun.com/exdb/mnist}
         }
 
+    .. include:: mindspore.dataset.Dataset.add_sampler.rst
+
     .. include:: mindspore.dataset.Dataset.rst
+
+    .. include:: mindspore.dataset.Dataset.use_sampler.rst
+
+    .. include:: mindspore.dataset.Dataset.zip.rst

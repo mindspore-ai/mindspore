@@ -21,4 +21,10 @@ mindspore.dataset.PaddedDataset
     >>> data = [{'image': np.zeros(1, np.uint8)}, {'image': np.zeros(2, np.uint8)}]
     >>> dataset = ds.PaddedDataset(padded_samples=data)
 
+    .. include:: mindspore.dataset.Dataset.add_sampler.rst
+
     .. include:: mindspore.dataset.Dataset.rst
+
+    .. include:: mindspore.dataset.Dataset.use_sampler.rst
+
+    .. include:: mindspore.dataset.Dataset.zip.rst
