@@ -188,7 +188,7 @@
         >>> init()
         >>> context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
         >>>
-        >>> # 如何构建数据集，请参考官方网站上关于【数据集】的章节。
+        >>> # 如何构建数据集，请参考官方网站上关于[数据集]的章节。
         >>> dataset = create_custom_dataset()
         >>> net = Net()
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()

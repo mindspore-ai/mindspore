@@ -111,6 +111,33 @@
         ...                                          element_length_function, pad_info,
         ...                                          pad_to_bucket_boundary)
 
+    .. py:method:: build_sentencepiece_vocab(columns, vocab_size, character_coverage, model_type, params)
+
+        用于从源数据集对象创建句子词表的函数。
+
+        **参数：**
+
+        - **columns** (list[str])：指定从哪一列中获取单词。
+        - **vocab_size** (int)：词汇表大小。
+        - **character_coverage** (int)：模型涵盖的字符百分比，必须介于0.98和1.0之间。默认值如0.9995，适用于具有丰富字符集的语言，如日语或中文字符集；1.0适用于其他字符集较小的语言，比如英语或拉丁文。
+        - **model_type** (SentencePieceModel)：模型类型，枚举值包括unigram（默认值）、bpe、char及word。当类型为word时，输入句子必须预先标记。
+        - **params** (dict)：依据原始数据内容构建祠表的附加参数，无附加参数时取值可以是空字典。
+
+        **返回：**
+
+        SentencePieceVocab，从数据集构建的词汇表。
+
+        **样例：**
+
+        >>> from mindspore.dataset.text import SentencePieceModel
+        >>>
+        >>> # DE_C_INTER_SENTENCEPIECE_MODE 是一个映射字典
+        >>> from mindspore.dataset.text.utils import DE_C_INTER_SENTENCEPIECE_MODE
+        >>> dataset = ds.TextFileDataset("/path/to/sentence/piece/vocab/file", shuffle=False)
+        >>> dataset = dataset.build_sentencepiece_vocab(["text"], 5000, 0.9995,
+        ...                                             DE_C_INTER_SENTENCEPIECE_MODE[SentencePieceModel.UNIGRAM],
+        ...                                             {})
+
     ..py:method:: build_vocab(columns, freq_range, top_k, special_tokens, special_first)
 
         基于数据集对象创建词汇表。
@@ -882,20 +909,3 @@
         **返回：**
         
         str，流水线的JSON字符串。
-        
-    ..py:method:: zip(datasets)
-
-        将数据集和输入的数据集或者数据集元组按列进行合并压缩。输入数据集中的列名必须不同。
-
-        **参数：**
-        
-        **datasets** (Union[tuple, class Dataset]) - 数据集对象的元组或单个数据集对象与当前数据集一起合并压缩。
-
-        **返回：**
-            
-        ZipDataset，合并压缩后的数据集对象。
-
-        **样例：**
-        
-        >>> # 创建一个数据集，它将dataset和dataset_1进行合并
-        >>> dataset = dataset.zip(dataset_1)

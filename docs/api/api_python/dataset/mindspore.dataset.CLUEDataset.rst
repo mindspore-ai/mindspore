@@ -95,3 +95,5 @@ mindspore.dataset.CLUEDataset
         }
 
     .. include:: mindspore.dataset.Dataset.rst
+
+    .. include:: mindspore.dataset.Dataset.zip.rst

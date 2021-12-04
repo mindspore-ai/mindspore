@@ -41,8 +41,7 @@ mindspore.dataset.WaitedDSCallback
 
     .. py:method:: ds_epoch_begin(ds_run_context)
 
-        内部方法，不能被调用或者重写。通过重写mindspore.dataset.DSCallback.ds_epoch_begin
-        实现与mindspore.train.callback.Callback.epoch_end回调同步。
+        内部方法，不能被调用或者重写。通过重写mindspore.dataset.DSCallback.ds_epoch_begin 实现与mindspore.train.callback.Callback.epoch_end回调同步。
 
         **参数：**
 

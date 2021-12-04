@@ -96,4 +96,10 @@ mindspore.dataset.Cifar100Dataset
         howpublished = {http://www.cs.toronto.edu/~kriz/cifar.html}
         }
 
+    .. include:: mindspore.dataset.Dataset.add_sampler.rst
+
     .. include:: mindspore.dataset.Dataset.rst
+
+    .. include:: mindspore.dataset.Dataset.use_sampler.rst
+
+    .. include:: mindspore.dataset.Dataset.zip.rst

@@ -101,4 +101,10 @@ mindspore.dataset.ImageFolderDataset
              ├── classN
              ├── ...
 
+    .. include:: mindspore.dataset.Dataset.add_sampler.rst
+
     .. include:: mindspore.dataset.Dataset.rst
+
+    .. include:: mindspore.dataset.Dataset.use_sampler.rst
+
+    .. include:: mindspore.dataset.Dataset.zip.rst

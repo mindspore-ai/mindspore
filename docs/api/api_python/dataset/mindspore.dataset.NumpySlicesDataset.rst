@@ -73,4 +73,10 @@ mindspore.dataset.NumpySlicesDataset
     >>> df = pd.read_csv(filepath_or_buffer=csv_dataset_dir[0])
     >>> dataset = ds.NumpySlicesDataset(data=dict(df), shuffle=False)
 
+    .. include:: mindspore.dataset.Dataset.add_sampler.rst
+
     .. include:: mindspore.dataset.Dataset.rst
+
+    .. include:: mindspore.dataset.Dataset.use_sampler.rst
+
+    .. include:: mindspore.dataset.Dataset.zip.rst
