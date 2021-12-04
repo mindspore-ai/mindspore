@@ -126,7 +126,6 @@ class TransformerRecomputeConfig(_Config):
 
         Args:
             recompute (bool): Enable recomputation of the transformer block or not. Default: False.
-                parallel_optimizer_comm_recompute (bool): The model parallel way. Default: 1
             parallel_optimizer_comm_recompute (bool): Specifies whether the communication operator allgathers
                 introduced by optimizer shard are recomputed in auto parallel or semi auto parallel mode.
                 Default: False.

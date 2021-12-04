@@ -1603,9 +1603,10 @@ class Cell(Cell_):
             self._mp_comm_recompute(kwargs['mp_comm_recompute'])
         if 'parallel_optimizer_comm_recompute' in kwargs.keys():
             if kwargs['parallel_optimizer_comm_recompute'] and context.get_auto_parallel_context("pipeline_stages") > 1:
-                raise ValueError("Currently, the communication operator allgathers introduced by optimizer shard "
-                                 "are not support recomputation in pipeline parallel.")
-            self._parallel_optimizer_comm_recompute(kwargs['parallel_optimizer_comm_recompute'])
+                logger.warning("Currently, the communication operator allgathers introduced by optimizer shard "
+                               "are not support recomputation in pipeline parallel.")
+            elif context.get_auto_parallel_context("pipeline_stages") == 1:
+                self._parallel_optimizer_comm_recompute(kwargs['parallel_optimizer_comm_recompute'])
         if 'recompute_slice_activation' in kwargs.keys():
             self._recompute_slice_activation(kwargs['recompute_slice_activation'])
 
