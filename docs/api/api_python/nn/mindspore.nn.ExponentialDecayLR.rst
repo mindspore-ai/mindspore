@@ -29,7 +29,7 @@ mindspore.nn.ExponentialDecayLR
 
     **输入：**
 
-    **global_step** (Tensor) - 当前step数。
+    - **global_step** (Tensor) - 当前step数。
 
     **输出：**
 
@@ -56,4 +56,3 @@ mindspore.nn.ExponentialDecayLR
     >>> result = exponential_decay_lr(global_step)
     >>> print(result)
     0.09486833
-    

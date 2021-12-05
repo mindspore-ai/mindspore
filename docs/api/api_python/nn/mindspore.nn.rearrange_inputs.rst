@@ -31,9 +31,9 @@ mindspore.nn.rearrange_inputs
     (9, 5)
 
     **参数：**
-    
-    **func** (Callable) - 要装饰的候选函数，其输入将被重新排列。
+
+    - **func** (Callable) - 要装饰的候选函数，其输入将被重新排列。
 
     **返回：**
-    
+
     Callable，用于在函数之间调换输入。

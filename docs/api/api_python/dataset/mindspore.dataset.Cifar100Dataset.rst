@@ -1,7 +1,7 @@
 mindspore.dataset.Cifar100Dataset
 =================================
 
-.. py:class:: Cifar100Dataset(dataset_dir, usage=None, num_samples=None, num_parallel_workers=None, shuffle=None, sampler=None, num_shards=None, shard_id=None, cache=None)
+.. py:class:: mindspore.dataset.Cifar100Dataset(dataset_dir, usage=None, num_samples=None, num_parallel_workers=None, shuffle=None, sampler=None, num_shards=None, shard_id=None, cache=None)
 
     用于读取和解析CIFAR-100数据集的源数据文件。
 
@@ -72,12 +72,12 @@ mindspore.dataset.Cifar100Dataset
     **关于CIFAR-100数据集:**
 
     CIFAR-100数据集和CIFAR-10数据集非常相似，CIFAR-100有100个类别，每类包含600张图片，其中500张训练图片和100张测试图片。这100个类别又被分成20个超类。每个图片都有一个"fine"标签（所属子类）和一个"coarse"标签(所属超类)。
-    
+
     以下为原始CIFAR-100数据集结构。您可以将数据集解压成如下的文件结构，并通过MindSpore的API进行读取。
 
     .. code-block::
 
-        . 
+        .
         └── cifar-100-binary
             ├── train.bin
             ├── test.bin

@@ -1,7 +1,7 @@
 mindspore.dataset.Cifar10Dataset
 ================================
 
-.. py:class:: Cifar10Dataset(dataset_dir, usage=None, num_samples=None, num_parallel_workers=None, shuffle=None, sampler=None, num_shards=None, shard_id=None, cache=None)
+.. py:class:: mindspore.dataset.Cifar10Dataset(dataset_dir, usage=None, num_samples=None, num_parallel_workers=None, shuffle=None, sampler=None, num_shards=None, shard_id=None, cache=None)
 
     用于读取和解析CIFAR-10数据集的源数据集文件。该API目前仅支持解析二进制版本的CIFAR-10文件（CIFAR-10 binary version）。
 
@@ -10,7 +10,7 @@ mindspore.dataset.Cifar10Dataset
     **参数：**
 
     - **dataset_dir** (str): 包含数据集文件的根目录路径。
-    - **usage** (str, 可选): 指定数据集的子集，可取值为 `train`，`test 或`all`。使用 `train` 参数将会读取50,000个训练样本，`test` 将会读取10,000个测试样本， `all` 将会读取全部60,000个样本（默认值为None，即全部样本图片）。
+    - **usage** (str, 可选): 指定数据集的子集，可取值为 `train` ， `test` 或 `all` 。使用 `train` 参数将会读取50,000个训练样本，`test` 将会读取10,000个测试样本， `all` 将会读取全部60,000个样本（默认值为None，即全部样本图片）。
     - **num_samples** (int, 可选): 指定从数据集中读取的样本数（可以小于数据集总数，默认值为None，即全部样本图片)。
     - **num_parallel_workers** (int, 可选): 指定读取数据的工作线程数（默认值None，即使用mindspore.dataset.config中配置的线程数）。
     - **shuffle** (bool, 可选): 是否混洗数据集（默认为None，下表中会展示不同配置的预期行为）。

@@ -18,7 +18,7 @@ mindspore.nn.LazyAdam
         \end{array}
 
     :math:`m` 代表第一个矩向量 `moment1` ，:math:`v` 代表第二个矩向量 `moment2` ，:math:`g` 代表 `gradients` ，:math:`l` 代表缩放因子，:math:`\beta_1,\beta_2` 代表 `beta1` 和 `beta2` ，:math:`t` 代表当前step，:math:`beta_1^t` 和 :math:`beta_2^t` 代表 `beta1_power` 和 `beta2_power` ， :math:`\alpha` 代表 `learning_rate` ， :math:`w` 代表 `params` ， :math:`\epsilon` 代表 `eps`。
-    
+
 
     .. note::
        .. include:: mindspore.nn.optim_note_sparse.rst
@@ -43,16 +43,16 @@ mindspore.nn.LazyAdam
 
     - **beta1** (float)：`moment1` 的指数衰减率。参数范围（0.0,1.0）。默认值：0.9。
     - **beta2** (float)：`moment2` 的指数衰减率。参数范围（0.0,1.0）。默认值：0.999。
-    - **eps** (float)：将添加到分母中，以提高数值稳定性。必须大于0。默认值：1e-8。
-    - **use_locking** (bool)：是否对参数更新加锁保护。如果为True，则 `w` 、`m` 和 `v` 的Tensor更新将受到锁的保护。如果为False，则结果不可预测。默认值：False。
-    - **use_nesterov** (bool)：是否使用Nesterov Accelerated Gradient (NAG)算法更新梯度。如果为True，使用NAG更新梯度。如果为False，则在不使用NAG的情况下更新梯度。默认值：False。
-    - **weight_decay** (Union[float, int])：权重衰减（L2 penalty）。必须大于等于0。默认值：0.0。
+    - **eps** (float) - 将添加到分母中，以提高数值稳定性。必须大于0。默认值：1e-8。
+    - **use_locking** (bool) - 是否对参数更新加锁保护。如果为True，则 `w` 、`m` 和 `v` 的Tensor更新将受到锁的保护。如果为False，则结果不可预测。默认值：False。
+    - **use_nesterov** (bool) - 是否使用Nesterov Accelerated Gradient (NAG)算法更新梯度。如果为True，使用NAG更新梯度。如果为False，则在不使用NAG的情况下更新梯度。默认值：False。
+    - **weight_decay** (Union[float, int]) - 权重衰减（L2 penalty）。必须大于等于0。默认值：0.0。
 
       .. include:: mindspore.nn.optim_arg_loss_scale.rst
 
     **输入：**
 
-    **gradients** (tuple[Tensor])：`params` 的梯度，shape与 `params` 相同。
+    - **gradients** (tuple[Tensor]) - `params` 的梯度，shape与 `params` 相同。
 
     **输出：**
 
@@ -60,14 +60,14 @@ mindspore.nn.LazyAdam
 
     **异常：**
 
-    - **TypeError**：`learning_rate` 不是int、float、Tensor、Iterable或LearningRateSchedule。
-    - **TypeError**：`parameters` 的元素不是Parameter或字典。
-    - **TypeError**：`beta1`、`beta2`、`eps` 或 `loss_scale` 不是float。
-    - **TypeError**：`weight_decay` 不是float或int。
-    - **TypeError**：`use_locking` 或 `use_nesterov` 不是bool。
-    - **ValueError**：`loss_scale` 或 `eps` 小于或等于0。
-    - **ValueError**：`beta1`、`beta2` 不在（0.0,1.0）范围内。
-    - **ValueError**：`weight_decay` 小于0。
+    - **TypeError** - `learning_rate` 不是int、float、Tensor、Iterable或LearningRateSchedule。
+    - **TypeError** - `parameters` 的元素不是Parameter或字典。
+    - **TypeError** - `beta1`、`beta2`、`eps` 或 `loss_scale` 不是float。
+    - **TypeError** - `weight_decay` 不是float或int。
+    - **TypeError** - `use_locking` 或 `use_nesterov` 不是bool。
+    - **ValueError** - `loss_scale` 或 `eps` 小于或等于0。
+    - **ValueError** - `beta1`、`beta2` 不在（0.0,1.0）范围内。
+    - **ValueError** - `weight_decay` 小于0。
 
     **支持平台：**
 
@@ -94,4 +94,3 @@ mindspore.nn.LazyAdam
     >>> model = Model(net, loss_fn=loss, optimizer=optim)
 
 .. include:: mindspore.nn.optim_target_unique_for_sparse.rst
-            

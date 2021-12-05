@@ -11,14 +11,14 @@ mindspore.nn.DynamicLossScaleUpdateCell
 
    **参数：**
 
-    - **loss_scale_value** (float)：初始的梯度放大系数。
-    - **scale_factor** (int)：增减系数。
-    - **scale_window** (int)：未溢出时，增大梯度放大系数的最大连续训练步数。
+    - **loss_scale_value** (float) - 初始的梯度放大系数。
+    - **scale_factor** (int) - 增减系数。
+    - **scale_window** (int) - 未溢出时，增大梯度放大系数的最大连续训练步数。
 
     **输入：**
 
-    - **loss_scale** (Tensor)：训练期间的梯度放大系数，shape为 :math:`()`。
-    - **overflow** (bool)：是否发生溢出。
+    - **loss_scale** (Tensor) - 训练期间的梯度放大系数，shape为 :math:`()`。
+    - **overflow** (bool) - 是否发生溢出。
 
     **输出：**
 
@@ -55,9 +55,8 @@ mindspore.nn.DynamicLossScaleUpdateCell
     >>> input = Tensor(np.ones([out_features, in_features]), mindspore.float32)
     >>> labels = Tensor(np.ones([out_features,]), mindspore.float32)
     >>> output = train_network(input, labels)
-    
+
 
     .. py:method:: get_loss_scale()
 
         获取当前梯度放大系数。
-        

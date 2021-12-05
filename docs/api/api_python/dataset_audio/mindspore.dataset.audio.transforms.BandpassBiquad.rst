@@ -7,10 +7,10 @@ mindspore.dataset.audio.transforms.BandpassBiquad
 
     **参数：**
 
-    - **sample_rate** (int)：采样率，例如44100 (Hz)，不能为零。
-    - **central_freq** (float)：中心频率（单位：Hz）。
-    - **Q** (float, optional)：品质因子，参考 https://en.wikipedia.org/wiki/Q_factor，取值范围(0, 1]（默认值为0.707）。
-    - **const_skirt_gain** (bool, optional)：若为True，则使用恒定裙边增益（峰值增益为Q）。若为False，则使用恒定的0dB峰值增益（默认为False）。
+    - **sample_rate** (int) - 采样率，例如44100 (Hz)，不能为零。
+    - **central_freq** (float) - 中心频率（单位：Hz）。
+    - **Q** (float, optional) - 品质因子，参考 https://en.wikipedia.org/wiki/Q_factor，取值范围(0, 1]（默认值为0.707）。
+    - **const_skirt_gain** (bool, optional) - 若为True，则使用恒定裙边增益（峰值增益为Q）。若为False，则使用恒定的0dB峰值增益（默认为False）。
 
     **样例：**
 

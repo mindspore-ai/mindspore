@@ -1,7 +1,7 @@
 mindspore.nn.Accuracy
 =====================
 
-.. py:class:: Class mindspore.nn.Accuracy(eval_type='classification')
+.. py:class:: mindspore.nn.Accuracy(eval_type='classification')
 
     计算'classification'单标签数据分类和'multilabel'多标签数据分类的正确率。
 
@@ -13,7 +13,7 @@ mindspore.nn.Accuracy
         {\text{true_positive} + \text{true_negative} + \text{false_positive} + \text{false_negative}}
 
     **参数：**
-    
+
     - **eval_type** (str) - 评估的数据集的类型，支持'classification'和'multilabel'。'classification'为单标签分类场景，'multilabel'为多标签分类场景。
       默认值：'classification'。
 
@@ -59,8 +59,8 @@ mindspore.nn.Accuracy
           对于'classification'情况，`y_pred` 在大多数情况下由范围 :math:`[0, 1]` 中的浮点数组成，shape为 :math:`(N, C)` ，其中 :math:`N` 是样本数， :math:`C` 是类别数。
           `y` 由整数值组成，如果是one_hot编码格式，shape是 :math:`(N,C)` ；如果是类别索引，shape是 :math:`(N,)` 。
 
-          对于'multilabel'情况，`y_pred 和 `y` 只能是值为0或1的one-hot编码格式，其中值为1的索引表示正类别。 `y_pred` 和 `y` 的shape都是 :math:`(N,C)` 。
+          对于'multilabel'情况，`y_pred` 和 `y` 只能是值为0或1的one-hot编码格式，其中值为1的索引表示正类别。 `y_pred` 和 `y` 的shape都是 :math:`(N,C)` 。
 
         **异常：**
-        
+
         - **ValueError** - inputs的数量不等于2。

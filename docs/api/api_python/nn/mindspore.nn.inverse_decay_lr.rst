@@ -1,4 +1,4 @@
-mindspore.nn.inverse_decay_l
+mindspore.nn.inverse_decay_lr
 =============================
 
 .. py:class:: mindspore.nn.inverse_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch, is_stair=False)
@@ -14,12 +14,12 @@ mindspore.nn.inverse_decay_l
 
     **参数：**
 
-    - **learning_rate** (float)：学习率的初始值。
-    - **decay_rate** (float)：衰减率。
-    - **total_step** (int)：step总数。
-    - **step_per_epoch** (int)：每个epoch的step数。
-    - **decay_epoch** (int)：用于计算衰减学习率的值。
-    - **is_stair** (bool)：如果为True，则学习率每 `decay_epoch` 次衰减一次。默认值：False。
+    - **learning_rate** (float) - 学习率的初始值。
+    - **decay_rate** (float) - 衰减率。
+    - **total_step** (int) - step总数。
+    - **step_per_epoch** (int) - 每个epoch的step数。
+    - **decay_epoch** (int) - 用于计算衰减学习率的值。
+    - **is_stair** (bool) - 如果为True，则学习率每 `decay_epoch` 次衰减一次。默认值：False。
 
     **返回：**
 
@@ -35,4 +35,3 @@ mindspore.nn.inverse_decay_l
     >>> output = inverse_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch, True)
     >>> print(output)
     [0.1, 0.06666666666666667, 0.05, 0.04, 0.03333333333333333, 0.028571428571428574]
-    

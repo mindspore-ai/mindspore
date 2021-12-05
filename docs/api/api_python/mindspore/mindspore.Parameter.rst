@@ -40,9 +40,9 @@
     >>> net.weight.set_data(Tensor(np.zeros((1, 2)), mindspore.float32))
     >>> print(net(x))
     [[0.]]
-    
+
     .. py:method:: cache_enable
-        :property: 
+        :property:
 
         表示该参数是否开启缓存功能。
 
@@ -56,20 +56,20 @@
         克隆参数。
 
         **参数：**
-                
-        **init** (Union[Tensor, str, numbers.Number]) - 初始化参数的形状和数据类型。如果 `init` 是 `Tensor` 或 `numbers.Number` ，则克隆一个具有相同数值、形状和数据类型的新参数。 如果 `init` 是 `str` ，则 `init` 将继承 `Initializer` 模块中对应的同名的类。例如，如果 `init` 是'same'，则克隆一个具有相同数据、形状和数据类型的新参数。默认值：'same'。
+
+        - **init** (Union[Tensor, str, numbers.Number]) - 初始化参数的形状和数据类型。如果 `init` 是 `Tensor` 或 `numbers.Number` ，则克隆一个具有相同数值、形状和数据类型的新参数。 如果 `init` 是 `str` ，则 `init` 将继承 `Initializer` 模块中对应的同名的类。例如，如果 `init` 是'same'，则克隆一个具有相同数据、形状和数据类型的新参数。默认值：'same'。
 
         **返回：**
 
         Parameter，返回克隆的新参数。
-        
+
     .. py:method:: comm_fusion
         :property:
 
         获取此参数的通信算子的融合类型（int）。
 
         在 `AUTO_PARALLEL` 和 `SEMI_AUTO_PARALLEL` 模式下，一些用于参数或梯度聚合的通信算子将自动插入。fusion的值必须大于等于0。当fusion的值为0时，算子不会融合在一起。
-        
+
     .. py:method:: data
         :property:
 
@@ -101,21 +101,21 @@
         **返回：**
 
         初始化数据后的 `Parameter` 。如果当前 `Parameter` 已初始化，则更新 `Parameter` 数据。
-        
+
     .. py:method:: is_init
         :property:
 
         获取参数的初始化状态。
 
         此属性仅在GE（Graph Engine）中有效，在其他后端将设为False。
-        
+
     .. py:method:: layerwise_parallel
         :property:
 
         获取此参数的逐层并行状态（bool）。
 
         在 `DATA_PARALLEL` 和 `HYBRID_PARALLEL` 模式下，如果 `layerwise_parallel` 为True，则广播和gradients通信将不会应用到参数。
-        
+
     .. py:method:: name
         :property:
 
@@ -127,7 +127,7 @@
         获取此参数的优化器并行状态（bool）。
 
         用于在 `AUTO_PARALLEL` 和 `SEMI_AUTO_PARALLEL` 模式下过滤权重切分操作。当在 `mindspore.context.set_auto_parallel_context()` 中启用优化器并行时，它才有效。
-        
+
     .. py:method:: parallel_optimizer_comm_recompute
         :property:
 
@@ -138,7 +138,7 @@
         .. note::
             - 仅支持 `Graph` 模式。
             - 建议使用(cell.recompute(parallel_optimizer_comm_recompute=True/False)去配置由优化器并行生成的 :class:`mindspore.ops.AllGather` 算子，而不是直接使用该接口。
-        
+
     .. py:method:: requires_grad
         :property:
 
@@ -154,9 +154,9 @@
         - **slice_shape** (bool) - 如果 `slice_shape` 设为True，则不检查 `data` 和当前参数shape的一致性。默认值：False。
 
         **返回：**
-    
+
         完成数据设置的新参数。
-        
+
     .. py:method:: set_param_fl(push_to_server=False, pull_from_server=False, requires_aggr=True)
 
         设置参数和服务器的互动方式。
@@ -166,7 +166,7 @@
         - **push_to_server** (bool) - 表示是否将参数推送到服务器。默认值：False。
         - **pull_from_server** (bool) - 表示是否应从服务器中拉取参数。默认值：False。
         - **requires_aggr** (bool) - 表示是否应在服务器中聚合参数。默认值：True。
-        
+
     .. py:method:: set_param_ps(init_in_server=False)
 
         表示可训练参数是否由参数服务器更新，以及可训练参数是否在服务器上初始化。
@@ -175,7 +175,7 @@
 
         **参数：**
 
-        **init_in_server** (bool) - 表示参数服务器更新的可训练参数是否在服务器上初始化。默认值：False。
+        - **init_in_server** (bool) - 表示参数服务器更新的可训练参数是否在服务器上初始化。默认值：False。
 
     .. py:method:: sliced
         :property:
@@ -184,5 +184,5 @@
 
     .. py:method:: unique
         :property:
-        
+
         表示参数是否唯一。

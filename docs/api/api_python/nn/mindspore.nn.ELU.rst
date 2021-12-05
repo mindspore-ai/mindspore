@@ -6,7 +6,7 @@ mindspore.nn.ELU
     指数线性单元激活函数（Exponential Linear Uint activation function）。
 
     对输入的每个元素计算ELU。该激活函数定义如下：
-    
+
     .. math::
             E_{i} =
             \begin{cases}

@@ -31,7 +31,7 @@ mindspore.nn.SGD
     **参数：**
 
     - **params** (Union[list[Parameter], list[dict]]): 当 `params` 为会更新的 `Parameter` 列表时，`params` 中的元素必须为类 `Parameter`。当 `params` 为 `dict` 列表时，"params"、"lr"、"weight_decay"、"grad_centralization"和"order_params"为可以解析的键。
-        
+
       .. include:: mindspore.nn.optim_group_param.rst
       .. include:: mindspore.nn.optim_group_lr.rst
       .. include:: mindspore.nn.optim_group_weight_decay.rst
@@ -51,7 +51,7 @@ mindspore.nn.SGD
 
     **输入：**
 
-    **gradients** (tuple[Tensor])：`params` 的梯度，shape与 `params` 相同。
+    - **gradients** (tuple[Tensor]) - `params` 的梯度，shape与 `params` 相同。
 
     **输出：**
 
@@ -79,11 +79,10 @@ mindspore.nn.SGD
     ...                 {'order_params': net.trainable_params()}]
     >>> optim = nn.SGD(group_params, learning_rate=0.1, weight_decay=0.0)
     >>> # con_params的参数将使用默认学习率0.1、默认权重衰减0.0、梯度集中度为True。
-    >>> # 
+    >>> #
     >>> # no_con_params的参数将使用学习率0.01、默认权重衰减0.0、梯度集中度为False。
     >>> #
     >>> # 优化器的最终参数顺序采用'order_params'的值。
     >>>
     >>> loss = nn.SoftmaxCrossEntropyWithLogits()
     >>> model = Model(net, loss_fn=loss, optimizer=optim)
-    

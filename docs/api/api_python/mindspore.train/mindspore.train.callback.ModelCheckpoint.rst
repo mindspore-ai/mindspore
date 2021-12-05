@@ -4,7 +4,7 @@
 
     在训练过程中调用该方法可以保存训练后的网络参数。
 
-    .. note:: 
+    .. note::
         在分布式训练场景下，请为每个训练进程指定不同的目录来保存checkpoint文件。否则，可能会训练失败。
 
     **参数：**
@@ -17,14 +17,14 @@
 
     - **ValueError** - 如果前缀无效。
     - **TypeError** - config不是CheckpointConfig类型。
-    
+
     .. py:method:: end(run_context)
 
         在训练结束后，会保存最后一个step的checkpoint。
 
         **参数：**
 
-        **run_context** (RunContext) - 包含模型的一些基本信息。
+        - **run_context** (RunContext) - 包含模型的一些基本信息。
 
     .. py:method:: latest_ckpt_file_name
         :property:
@@ -36,6 +36,5 @@
         在step结束时保存checkpoint。
 
         **参数：**
-        
-        **run_context** (RunContext) - 包含模型的一些基本信息。
-        
+
+        - **run_context** (RunContext) - 包含模型的一些基本信息。

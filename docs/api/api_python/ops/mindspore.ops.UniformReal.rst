@@ -7,7 +7,7 @@ mindspore.ops.UniformReal
 
     **参数：**
 
-    - **seed** (int)：算子层的随机种子，用于生成随机数。必须是非负的。默认值：0。
+    - **seed** (int) - 算子层的随机种子，用于生成随机数。必须是非负的。默认值：0。
     - **seed2** (int)：全局的随机种子，和算子层的随机种子共同决定最终生成的随机数。必须是非负的。默认值：0。
 
     **输入：**
@@ -20,9 +20,9 @@ mindspore.ops.UniformReal
 
     **异常：**
 
-    - **TypeError:** - `seed` 和 `seed2` 都不是int。
-    - **TypeError：** - `shape` 不是tuple。
-    - **ValueError:** - `shape` 不是常量值。
+    - **TypeError** - `seed` 和 `seed2` 都不是int。
+    - **TypeError** - `shape` 不是tuple。
+    - **ValueError** - `shape` 不是常量值。
 
     **支持平台：**
 

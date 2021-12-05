@@ -9,27 +9,27 @@ mindspore.dataset.CelebADataset
 
     **参数：**
 
-    - **dataset_dir** (str)：包含数据集文件的根目录路径。
-    - **num_parallel_workers** (int，可选)：指定读取数据的工作线程数（默认值None，即使用mindspore.dataset.config中配置的线程数）。
-    - **shuffle** (bool，可选)：是否混洗数据集（默认为None，下表中会展示不同配置的预期行为）。
-    - **usage** (str，可选)：指定数据集的子集，可取值为'train'，'valid'，'test'或'all'。（默认值为'all'，即全部样本图片）。
-    - **sampler** (Sampler，可选)：指定从数据集中选取样本的采样器（默认为None，下表中会展示不同配置的预期行为）。
-    - **decode** (bool，可选)：是否对读取的图像进行解码操作（默认为False）。
-    - **extensions** (list[str]，可选)：指定文件扩展后缀，仅读取这些后缀的文件到数据集中（默认为None）。
-    - **num_samples** (int，可选)：指定从数据集中读取的样本数（可以小于数据集总数，默认值为None，即全部样本图片)。
-    - **num_shards** (int, 可选)：指定分布式训练时将数据集进行划分的分片数（默认值None）。指定此参数后, `num_samples` 表示每个分片的最大样本数。
-    - **shard_id** (int, 可选)：指定分布式训练时使用的分片ID号（默认值None）。只有当指定了 `num_shards` 时才能指定此参数。
-    - **cache** (DatasetCache, 可选)：数据缓存客户端实例，用于加快数据集处理速度（默认为None，不使用缓存）。
+    - **dataset_dir** (str) - 包含数据集文件的根目录路径。
+    - **num_parallel_workers** (int，可选) - 指定读取数据的工作线程数（默认值None，即使用mindspore.dataset.config中配置的线程数）。
+    - **shuffle** (bool，可选) - 是否混洗数据集（默认为None，下表中会展示不同配置的预期行为）。
+    - **usage** (str，可选) - 指定数据集的子集，可取值为'train'，'valid'，'test'或'all'。（默认值为'all'，即全部样本图片）。
+    - **sampler** (Sampler，可选) - 指定从数据集中选取样本的采样器（默认为None，下表中会展示不同配置的预期行为）。
+    - **decode** (bool，可选) - 是否对读取的图像进行解码操作（默认为False）。
+    - **extensions** (list[str]，可选) - 指定文件扩展后缀，仅读取这些后缀的文件到数据集中（默认为None）。
+    - **num_samples** (int，可选) - 指定从数据集中读取的样本数（可以小于数据集总数，默认值为None，即全部样本图片)。
+    - **num_shards** (int, 可选) - 指定分布式训练时将数据集进行划分的分片数（默认值None）。指定此参数后, `num_samples` 表示每个分片的最大样本数。
+    - **shard_id** (int, 可选) - 指定分布式训练时使用的分片ID号（默认值None）。只有当指定了 `num_shards` 时才能指定此参数。
+    - **cache** (DatasetCache, 可选) - 数据缓存客户端实例，用于加快数据集处理速度（默认为None，不使用缓存）。
 
     **异常：**
 
-    - **RuntimeError**：参数 `dataset_dir` 不包含任何数据文件。
-    - **RuntimeError**：参数 `num_parallel_workers` 超过系统最大线程数。
-    - **RuntimeError**: 同时指定了 `sampler` 和 `shuffle` 。
-    - **RuntimeError**: 同时指定了 `sampler` 和 `num_shards` 。
-    - **RuntimeError**: 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
-    - **RuntimeError**: 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
-    - **ValueError**: `shard_id` 参数错误（小于0或者大于等于 `num_shards` ）。
+    - **RuntimeError** - 参数 `dataset_dir` 不包含任何数据文件。
+    - **RuntimeError** - 参数 `num_parallel_workers` 超过系统最大线程数。
+    - **RuntimeError** - 同时指定了 `sampler` 和 `shuffle` 。
+    - **RuntimeError** - 同时指定了 `sampler` 和 `num_shards` 。
+    - **RuntimeError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
+    - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
+    - **ValueError** - `shard_id` 参数错误（小于0或者大于等于 `num_shards` ）。
 
     .. note:: 此数据集可以指定 `sampler` 参数，但 `sampler` 和 `shuffle` 是互斥的。下表展示了几种合法的输入参数及预期的行为。
 
@@ -71,11 +71,11 @@ mindspore.dataset.CelebADataset
     **关于CelebA数据集：**
 
     CelebFaces Attributes Dataset（CelebA）数据集是一个大规模的人脸属性数据集，拥有超过20万名人图像，每个图像都有40个属性标注。此数据集包含了大量不同姿态、各种背景的人脸图像，种类丰富、数量庞大、标注充分。数据集总体包含：
-    
+
     - 10177个不同的身份
     - 202599张人脸图像
     - 每张图像拥有5个五官位置标注，40个属性标签。
-    
+
     此数据集可用于各种计算机视觉任务的训练和测试，包括人脸识别、人脸检测、五官定位、人脸编辑和合成等。
 
     原始CelebA数据集结构：

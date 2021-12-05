@@ -49,7 +49,7 @@ mindspore.nn.Adam
 
     **输入：**
 
-    **gradients** (tuple[Tensor]) - `params` 的梯度，形状（shape）与 `params` 相同。
+    - **gradients** (tuple[Tensor]) - `params` 的梯度，形状（shape）与 `params` 相同。
 
     **输出：**
 

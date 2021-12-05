@@ -28,7 +28,7 @@ mindspore.ops.LessEqual
 
     **异常：**
 
-    **TypeError** - `x` 和 `y` 都不是Tensor。
+    - **TypeError** - `x` 和 `y` 都不是Tensor。
 
     **支持平台：**
 
@@ -42,4 +42,3 @@ mindspore.ops.LessEqual
     >>> output = less_equal(x, y)
     >>> print(output)
     [ True False  True]
-    

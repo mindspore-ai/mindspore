@@ -129,20 +129,20 @@ mindspore.Tensor
 
         **参数：**
 
-        **x** (Tensor) - 输入的张量。该张量的形状必须遵守广播规则。
+        - **x** (Tensor) - 输入的张量。该张量的形状必须遵守广播规则。
 
         **返回：**
 
         Tensor，维度与输入张量的相同。
 
     .. py:method:: from_numpy(array)
-        :static:
+        :staticmethod:
 
         将NumPy数组转换为张量，且不需要复制数据。
 
         **参数：**
 
-        **array** (numpy.array) - 输入数组。
+        - **array** (numpy.array) - 输入数组。
 
         **返回：**
 
@@ -180,7 +180,7 @@ mindspore.Tensor
 
         **参数：**
 
-        **axis** (int, optional) - 默认情况下，返回扁平化Tensor的最大值序号，否则返回指定轴方向上。
+        - **axis** (int, optional) - 默认情况下，返回扁平化Tensor的最大值序号，否则返回指定轴方向上。
 
         **返回：**
 
@@ -188,7 +188,7 @@ mindspore.Tensor
 
         **异常：**
 
-        **ValueError** - 轴超出了范围。
+        - **ValueError** - 轴超出了范围。
 
         **支持平台：**
 
@@ -201,14 +201,14 @@ mindspore.Tensor
         >>> a = Tensor(np.arange(10, 16).reshape(2, 3).astype("float32"))
         >>> print(a.argmax())
         5
-        
+
     .. py:method:: argmin(axis=None)
 
         返回指定轴上最小值的索引。
 
         **参数：**
 
-        **axis** (int, optional) - 返回扁平化Tensor的最小值序号，否则返回指定轴方向上的最小值序号。默认值: None。
+        - **axis** (int, optional) - 返回扁平化Tensor的最小值序号，否则返回指定轴方向上的最小值序号。默认值: None。
 
         **返回：**
 
@@ -216,7 +216,7 @@ mindspore.Tensor
 
         **异常：**
 
-        **ValueError** - 轴超出了范围。
+        - **ValueError** - 轴超出了范围。
 
         **支持平台：**
 
@@ -245,7 +245,7 @@ mindspore.Tensor
 
         **异常：**
 
-        **TypeError** - 指定了无法解析的类型。
+        - **TypeError** - 指定了无法解析的类型。
 
         **支持平台：**
 
@@ -283,7 +283,7 @@ mindspore.Tensor
 
         **异常：**
 
-        **ValueError** - 输入Tensor和任一 `choices` 无法广播。
+        - **ValueError** - 输入Tensor和任一 `choices` 无法广播。
 
         **样例：**
 
@@ -301,7 +301,7 @@ mindspore.Tensor
         给定一个区间，区间外的值将被裁剪到区间边缘。
         例如，如果指定的间隔为 :math:`[0, 1]` ，则小于0的值将变为0，大于1的值将变为1。
 
-        .. note:: 
+        .. note::
             目前不支持裁剪 `xmin=nan` 或 `xmax=nan` 。
 
         **参数：**
@@ -335,7 +335,7 @@ mindspore.Tensor
 
         返回复制的Tensor。
 
-        .. note:: 
+        .. note::
             当前实现不支持类似NumPy的 `order` 参数。
 
         **返回：**
@@ -361,7 +361,7 @@ mindspore.Tensor
 
         返回指定轴方向上元素的累加值。
 
-        .. note:: 
+        .. note::
             如果 `dtype` 为 `int8` , `int16` 或 `bool` ，则结果 `dtype` 将提升为 `int32` ，不支持 `int64` 。
 
         **参数：**
@@ -371,7 +371,7 @@ mindspore.Tensor
 
         **异常：**
 
-        **ValueError** - 轴超出范围。
+        - **ValueError** - 轴超出范围。
 
         **返回：**
 
@@ -408,7 +408,7 @@ mindspore.Tensor
 
         **异常：**
 
-        **ValueError** - 输入Tensor的维度少于2。
+        - **ValueError** - 输入Tensor的维度少于2。
 
         **支持平台：**
 
@@ -430,12 +430,12 @@ mindspore.Tensor
 
         用标量值填充数组。
 
-        .. note:: 
+        .. note::
             与NumPy不同，Tensor.fill()将始终返回一个新的Tensor，而不是填充原来的Tensor。
 
         **参数：**
 
-        **value** (Union[None, int, float, bool]) - 所有元素都被赋予这个值。
+        - **value** (Union[None, int, float, bool]) - 所有元素都被赋予这个值。
 
         **返回：**
 
@@ -443,7 +443,7 @@ mindspore.Tensor
 
         **异常：**
 
-        **TypeError** - 输入参数具有前面未指定的类型。
+        - **TypeError** - 输入参数具有前面未指定的类型。
 
         **支持平台：**
 
@@ -464,7 +464,7 @@ mindspore.Tensor
 
         **参数：**
 
-        **order** (str, optional) - 可以在'C'和'F'之间进行选择。'C'表示按行优先（C风格）顺序展开。'F'表示按列优先顺序（Fortran风格）进行扁平化。仅支持'C'和'F'。默认值：C。
+        - **order** (str, optional) - 可以在'C'和'F'之间进行选择。'C'表示按行优先（C风格）顺序展开。'F'表示按列优先顺序（Fortran风格）进行扁平化。仅支持'C'和'F'。默认值：C。
 
         **返回：**
 
@@ -530,12 +530,12 @@ mindspore.Tensor
 
         使用索引从Tensor中获取值。
 
-        .. note:: 
+        .. note::
             Tensor.item返回的是Tensor标量，而不是Python标量。
 
         **参数：**
 
-        **index** (Union[None, int, tuple(int)]) - Tensor的索引。默认值：None。
+        - **index** (Union[None, int, tuple(int)]) - Tensor的索引。默认值：None。
 
         **返回：**
 
@@ -543,7 +543,7 @@ mindspore.Tensor
 
         **异常：**
 
-        **ValueError** - `index` 的长度不等于Tensor的ndim。
+        - **ValueError** - `index` 的长度不等于Tensor的ndim。
 
         **支持平台：**
 
@@ -567,7 +567,7 @@ mindspore.Tensor
 
         **参数：**
 
-        **args** (Union[(numbers.Number), (int/tuple(int), numbers.Number)]) - 指定索引和值的参数。如果 `args` 包含一个参数（标量），则其仅在Tensor大小为1的情况下使用。如果 `args` 包含两个参数，则最后一个参数是要设置的值且必须是标量，而第一个参数指定单个Tensor元素的位置。参数值是整数或者元组。
+        - **args** (Union[(numbers.Number), (int/tuple(int), numbers.Number)]) - 指定索引和值的参数。如果 `args` 包含一个参数（标量），则其仅在Tensor大小为1的情况下使用。如果 `args` 包含两个参数，则最后一个参数是要设置的值且必须是标量，而第一个参数指定单个Tensor元素的位置。参数值是整数或者元组。
 
         **返回：**
 
@@ -614,7 +614,7 @@ mindspore.Tensor
 
         **异常：**
 
-        **TypeError** - 参数具有前面未指定的类型。
+        - **TypeError** - 参数具有前面未指定的类型。
 
         **支持平台：**
 
@@ -646,7 +646,7 @@ mindspore.Tensor
 
         **异常：**
 
-        **TypeError** - 参数具有前面未指定的类型。
+        - **TypeError** - 参数具有前面未指定的类型。
 
         **支持平台：**
 
@@ -676,7 +676,7 @@ mindspore.Tensor
 
         该函数名称是"peak to peak"的缩写。
 
-        .. note:: 
+        .. note::
             不支持NumPy参数 `dtype` 和 `out` 。
 
         **参数：**
@@ -690,7 +690,7 @@ mindspore.Tensor
 
         **异常：**
 
-        **TypeError** - `self` 不是Tensor，或者 `axis` 和 `keepdims` 具有前面未指定的类型。
+        - **TypeError** - `self` 不是Tensor，或者 `axis` 和 `keepdims` 具有前面未指定的类型。
 
         **支持平台：**
 
@@ -772,7 +772,7 @@ mindspore.Tensor
 
         **参数：**
 
-        **shape** (Union[int, tuple(int), list(int)]) - 新的shape应与原来的shape兼容。如果参数值为整数，则结果是该长度的一维数组。shape的维度可以为-1。在这种情况下，将根据数组的长度和剩下的维度计算出该值。
+        - **shape** (Union[int, tuple(int), list(int)]) - 新的shape应与原来的shape兼容。如果参数值为整数，则结果是该长度的一维数组。shape的维度可以为-1。在这种情况下，将根据数组的长度和剩下的维度计算出该值。
 
         **返回：**
 
@@ -802,12 +802,12 @@ mindspore.Tensor
 
         更改Tensor的shape。
 
-        .. note:: 
+        .. note::
             此方法不更改输入数组的大小，也不返回NumPy中的任何内容，而是返回一个具有输入大小的新Tensor。不支持Numpy参数 `refcheck` 。
 
         **参数：**
 
-        **new_shape** (Union[ints, tuple of ints]) - 指定Tensor的新shape。
+        - **new_shape** (Union[ints, tuple of ints]) - 指定Tensor的新shape。
 
         **返回：**
 
@@ -843,7 +843,7 @@ mindspore.Tensor
 
         **异常：**
 
-        **ValueError** - `side` 或 `sorter` 的参数无效。
+        - **ValueError** - `side` 或 `sorter` 的参数无效。
 
         **支持平台：**
 
@@ -873,7 +873,7 @@ mindspore.Tensor
 
         **参数：**
 
-        **axis** (Union[None, int, list(int), tuple(int)], optional) - 选择shape中长度为1的条目的子集。如果选择shape条目长度大于1的轴，则报错。默认值为None。
+        - **axis** (Union[None, int, list(int), tuple(int)], optional) - 选择shape中长度为1的条目的子集。如果选择shape条目长度大于1的轴，则报错。默认值为None。
 
         **返回：**
 
@@ -904,7 +904,7 @@ mindspore.Tensor
 
         返回标准差。默认情况下计算展开数组的标准差，否则在指定维度上计算。
 
-        .. note:: 
+        .. note::
             不支持NumPy参数 `dtype` 、 `out` 和 `where` 。
 
         **参数：**
@@ -939,7 +939,7 @@ mindspore.Tensor
 
         返回指定维度上数组元素的总和。
 
-        .. note:: 
+        .. note::
             不支持NumPy参数 `out` 、 `where` 、 `casting` 、 `order` 、 `subok` 、 `signature` 和 `extobj` 。
 
         **参数：**
@@ -1029,7 +1029,7 @@ mindspore.Tensor
 
         **异常：**
 
-        **ValueError** - `axis` 超出范围，或 `mode` 被设置为'raise'、'wrap'和'clip'以外的值。
+        - **ValueError** - `axis` 超出范围，或 `mode` 被设置为'raise'、'wrap'和'clip'以外的值。
 
         **支持平台：**
 
@@ -1049,7 +1049,7 @@ mindspore.Tensor
 
         返回init_data()的结果，并获取此Tensor的数据。
 
-        .. note:: 
+        .. note::
             不建议使用 `to_tensor`。请使用 `init_data` 。
 
         **参数：**
@@ -1093,7 +1093,7 @@ mindspore.Tensor
 
         **异常：**
 
-        **ValueError** - 输入Tensor的维度少于2。
+        - **ValueError** - 输入Tensor的维度少于2。
 
         **支持平台：**
 
@@ -1119,7 +1119,7 @@ mindspore.Tensor
 
         **参数：**
 
-        **axes** (Union[None, tuple(int), list(int), int], optional) - 如果 `axes` 为None或未设置，则该方法将反转维度。如果 `axes` 为tuple(int)或list(int)，则Tensor.transpose()把Tensor转置为新的维度。如果 `axes` 为整数，则此表单仅作为元组/列表表单的备选。
+        - **axes** (Union[None, tuple(int), list(int), int], optional) - 如果 `axes` 为None或未设置，则该方法将反转维度。如果 `axes` 为tuple(int)或list(int)，则Tensor.transpose()把Tensor转置为新的维度。如果 `axes` 为整数，则此表单仅作为元组/列表表单的备选。
 
         **返回：**
 
@@ -1151,7 +1151,7 @@ mindspore.Tensor
 
         返回方差值。默认情况下计算展开Tensor的方差，否则在指定维度上计算。
 
-        .. note:: 
+        .. note::
             不支持NumPy参数 `dtype` 、 `out` 和 `where` 。
 
         **参数：**
@@ -1183,7 +1183,7 @@ mindspore.Tensor
 
         **参数：**
 
-        **shape** (Union[tuple(int), int]) - 输出Tensor的维度。
+        - **shape** (Union[tuple(int), int]) - 输出Tensor的维度。
 
         **返回：**
 

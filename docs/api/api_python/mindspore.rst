@@ -7,29 +7,9 @@ Tensor
 .. cnmsautosummary::
     :toctree: mindspore
 
+    mindspore.Tensor
     mindspore.RowTensor
     mindspore.SparseTensor
-    mindspore.Tensor
-
-DataType
---------
-
-.. cnmsautosummary::
-    :toctree: mindspore
-
-    mindspore.dtype_to_nptype
-    mindspore.dtype_to_pytype
-    mindspore.get_py_obj_dtype
-    mindspore.issubclass\_
-    mindspore.pytype_to_dtype
-
-Installation Verification
---------------------------
-
-.. cnmsautosummary::
-    :toctree: mindspore
-    
-    mindspore.run_check
 
 Parameter
 ---------
@@ -40,22 +20,18 @@ Parameter
     mindspore.Parameter
     mindspore.ParameterTuple
 
-Log
----
+DataType
+--------
 
 .. cnmsautosummary::
     :toctree: mindspore
 
-    mindspore.get_level
-    mindspore.get_log_config
-
-Model
------
-
-.. cnmsautosummary::
-    :toctree: mindspore
-
-    mindspore.Model
+    mindspore.dtype
+    mindspore.dtype_to_nptype
+    mindspore.dtype_to_pytype
+    mindspore.get_py_obj_dtype
+    mindspore.issubclass_
+    mindspore.pytype_to_dtype
 
 Seed
 ----
@@ -65,6 +41,33 @@ Seed
 
     mindspore.get_seed
     mindspore.set_seed
+
+Model
+-----
+
+.. cnmsautosummary::
+    :toctree: mindspore
+
+    mindspore.Model
+
+Dataset Helper
+---------------
+
+.. cnmsautosummary::
+    :toctree: mindspore
+
+    mindspore.DatasetHelper
+    mindspore.connect_network_with_dataset
+
+Loss Scale Manager
+------------------
+
+.. cnmsautosummary::
+    :toctree: mindspore
+
+    mindspore.DynamicLossScaleManager
+    mindspore.FixedLossScaleManager
+    mindspore.LossScaleManager
 
 Serialization
 --------------
@@ -88,21 +91,19 @@ JIT
 
     mindspore.ms_function
 
-Dataset Helper
----------------
+Log
+---
 
 .. cnmsautosummary::
     :toctree: mindspore
 
-    mindspore.DatasetHelper
-    mindspore.connect_network_with_dataset
+    mindspore.get_level
+    mindspore.get_log_config
 
-Loss Scale Manager
-------------------
+Installation Verification
+--------------------------
 
 .. cnmsautosummary::
     :toctree: mindspore
 
-    mindspore.DynamicLossScaleManager
-    mindspore.FixedLossScaleManager
-    mindspore.LossScaleManager
+    mindspore.run_check

@@ -20,7 +20,7 @@ mindspore.ops.AddN
     - **TypeError** - `x` 既不是tuple，也不是list。
 
     **支持平台：**
-    
+
     ``Ascend`` ``GPU`` ``CPU``
 
     **样例：**
@@ -39,4 +39,3 @@ mindspore.ops.AddN
     >>> output = net(x, y, x, y)
     >>> print(output)
     [10. 14. 18.]
-    

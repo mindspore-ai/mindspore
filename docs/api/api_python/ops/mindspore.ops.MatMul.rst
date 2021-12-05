@@ -13,8 +13,8 @@ mindspore.ops.matmul
 
     **参数：**
 
-    - **transpose_a** (bool)：如果为True，则在相乘之前转置 `a`。默认值：False。
-    - **transpose_b** (bool)：如果为True，则在相乘之前转置 `b`。默认值：False。
+    - **transpose_a** (bool) - 如果为True，则在相乘之前转置 `a`。默认值：False。
+    - **transpose_b** (bool) - 如果为True，则在相乘之前转置 `b`。默认值：False。
 
     **输入：**
 
@@ -43,4 +43,3 @@ mindspore.ops.matmul
     >>> output = matmul(a, b)
     >>> print(output)
     [[3. 3. 3. 3.]]
-    

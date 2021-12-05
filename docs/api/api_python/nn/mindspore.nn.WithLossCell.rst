@@ -9,8 +9,8 @@ mindspore.nn.WithLossCell
 
     **参数：**
 
-    - **backbone** (Cell)：要封装的目标网络。
-    - **loss_fn** (Cell)：用于计算损失函数。
+    - **backbone** (Cell) - 要封装的目标网络。
+    - **loss_fn** (Cell) - 用于计算损失函数。
 
     **输入：**
 
@@ -40,7 +40,7 @@ mindspore.nn.WithLossCell
     >>> label = Tensor(np.ones([batch_size, 10]).astype(np.float32))
     >>>
     >>> output_data = net_with_criterion(data, label)
-    
+
 
 .. py:method:: backbone_network
     :property:
@@ -50,4 +50,3 @@ mindspore.nn.WithLossCell
     **返回：**
 
     Cell，骨干网络。
-        

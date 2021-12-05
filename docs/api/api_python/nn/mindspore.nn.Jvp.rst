@@ -7,7 +7,7 @@ mindspore.nn.Jvp
 
     **参数：**
 
-    **fn** (Cell) - 基于Cell的网络，用于接收张量输入并返回张量或者张量元组。
+    - **fn** (Cell) - 基于Cell的网络，用于接收张量输入并返回张量或者张量元组。
 
     **输入：**
 
@@ -20,6 +20,10 @@ mindspore.nn.Jvp
 
     - **net_output** (Tensor or Tuple of Tensor) - 输入网络的正向计算结果。
     - **jvp** (Tensor or Tuple of Tensor) - 雅可比向量积的结果。
+
+    **支持平台：**
+
+    ``Ascend`` ``GPU`` ``CPU``
 
     **样例：**
 

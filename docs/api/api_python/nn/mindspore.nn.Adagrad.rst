@@ -7,7 +7,7 @@ mindspore.nn.Adagrad
 
     Adagrad用于在线学习和随机优化。
     请参阅论文 `Efficient Learning using Forward-Backward Splitting <https://proceedings.neurips.cc/paper/2009/file/621bf66ddb7c962aa0d22ac97d69b793-Paper.pdf>`_。
-    
+
     公式如下：
 
     .. math::
@@ -34,7 +34,7 @@ mindspore.nn.Adagrad
 
     - **accum** (float) - 累加器 :math:`h` 的初始值，必须大于等于零。默认值：0.1。
     - **learning_rate** (Union[float, Tensor, Iterable, LearningRateSchedule]) - 默认值：0.001。
-    
+
       .. include:: mindspore.nn.optim_arg_dynamic_lr.rst
 
     - **update_slots** (bool) - 如果为True，则更新累加器 :math:`h` 。默认值：True。
@@ -45,7 +45,7 @@ mindspore.nn.Adagrad
 
     **输入：**
 
-    **grads** (tuple[Tensor]) - 优化器中 `params` 的梯度，形状（shape）与 `params` 相同。
+    - **grads** (tuple[Tensor]) - 优化器中 `params` 的梯度，形状（shape）与 `params` 相同。
 
     **输出：**
 

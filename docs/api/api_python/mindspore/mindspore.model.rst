@@ -90,7 +90,7 @@
 
         使用PyNative模式或CPU处理器时，模型评估流程将以非下沉模式执行。
 
-        .. note::    
+        .. note::
             如果 `dataset_sink_mode` 配置为True，数据将被送到处理器中。如果处理器是Ascend，数据特征将被逐一传输，每次数据传输的限制是256M。如果 `dataset_sink_mode` 配置为True，数据集仅能在当前模型中使用，而不能被其他模型使用。该接口会构建并执行计算图，如果使用前先执行了 `Model.build` ，那么它会直接执行计算图而不构建。
 
         **参数：**
@@ -98,7 +98,7 @@
         - **valid_dataset** (Dataset) – 评估模型的数据集。
         - **callbacks** (Optional[list(Callback), Callback]) - 评估过程中需要执行的回调对象或回调对象列表。默认值：None。
         - **dataset_sink_mode** (bool) - 是否通过数据通道获取数据。默认值：True。
-   
+
         **返回：**
 
         Dict，键是用户定义的评价指标名称，值是以推理模式运行的评估结果。
@@ -124,25 +124,25 @@
         评估网络实例。
 
     .. py:method:: infer_predict_layout(*predict_data)
- 
+
         在 `AUTO_PARALLEL` 或 `SEMI_AUTO_PARALLEL` 模式下为预测网络生成参数layout，数据可以是单个或多个张量。
- 
+
         .. note:: 同一批次数据应放在一个张量中。
- 
+
         **参数：**
- 
-        **predict_data** (Tensor) – 单个或多个张量的预测数据。
- 
+
+        - **predict_data** (Tensor) – 单个或多个张量的预测数据。
+
         **返回：**
- 
+
         Dict，用于加载分布式checkpoint的参数layout字典。它总是作为 `load_distributed_checkpoint()` 函数的一个入参。
- 
+
         **异常：**
- 
-        **RuntimeError** – 如果不是图模式（GRAPH_MODE）。
- 
+
+        - **RuntimeError** – 如果不是图模式（GRAPH_MODE）。
+
         **样例：**
- 
+
         >>> # 该例子需要在多设备上运行。请参考mindpore.cn上的教程 > 分布式训练。
         >>> import numpy as np
         >>> import mindspore as ms
@@ -156,27 +156,27 @@
         >>> input_data = Tensor(np.random.randint(0, 255, [1, 1, 32, 32]), ms.float32)
         >>> model = Model(Net())
         >>> model.infer_predict_layout(input_data)
- 
+
     .. py:method:: infer_train_layout(train_dataset, dataset_sink_mode=True, sink_size=-1)
 
         在 `AUTO_PARALLEL` 或 `SEMI_AUTO_PARALLEL` 模式下为训练网络生成参数layout，当前只有数据下沉模式可支持使用。
- 
+
         .. warning:: 这是一个实验性的原型，可能会被改变和/或删除。
- 
+
         .. note:: 这是一个预编译函数。参数必须与Model.train()函数相同。
- 
+
         **参数：**
- 
+
         - **train_dataset** (Dataset) – 一个训练数据集迭代器。如果没有损失函数（loss_fn），返回一个包含多个数据的元组（data1, data2, data3, ...）并传递给网络。否则，返回一个元组（data, label），数据和标签将被分别传递给网络和损失函数。
         - **dataset_sink_mode** (bool) – 决定是否以数据集下沉模式进行训练。默认值：True。配置项是PyNative模式或CPU时，训练模型流程使用的是数据不下沉（non-sink）模式。默认值：True。
         - **sink_size** (int) – 控制每次数据下沉的数据量，如果 `sink_size` =-1，则每一次epoch下沉完整数据集。如果 `sink_size` >0，则每一次epoch下沉数据量为 `sink_size` 的数据集。如果 `dataset_sink_mode` 为False，则设置 `sink_size` 为无效。默认值：-1。
- 
+
         **返回：**
- 
+
         Dict，用于加载分布式checkpoint的参数layout字典。
- 
+
         **样例：**
- 
+
         >>> # 该例子需要在多设备上运行。请参考mindpore.cn上的教程 > 分布式训练。
         >>> import numpy as np
         >>> import mindspore as ms
@@ -203,12 +203,12 @@
 
         **参数：**
 
-        **predict_data** (Tensor) – 预测样本，数据可以是单个张量、张量列表或张量元组。
-        
+        - **predict_data** (Tensor) – 预测样本，数据可以是单个张量、张量列表或张量元组。
+
         **返回：**
 
         返回预测结果，类型是张量或数组。
-         
+
         **样例:**
 
         >>> import mindspore as ms
@@ -233,7 +233,7 @@
 
         使用PYNATIVE_MODE模式或CPU处理器时，模型训练流程将以非下沉模式执行。
 
-        .. note::    
+        .. note::
             如果 `dataset_sink_mode` 配置为True，数据将被送到处理器中。如果处理器是Ascend，数据特征将被逐一传输，每次数据传输的限制是256M。如果 `dataset_sink_mode` 配置为True，仅在每个epoch结束时调用Callback实例的step_end方法。如果 `dataset_sink_mode` 配置为True，数据集仅能在当前模型中使用，而不能被其他模型使用。如果 `sink_size` 大于零，每次epoch可以无限次遍历数据集，直到遍历数据量等于 `sink_size` 为止。然后下次epoch是从上一次遍历的最后位置继续开始遍历。该接口会构建并执行计算图，如果使用前先执行了 `Model.build` ，那么它会直接执行计算图而不构建。
 
         **参数：**
@@ -263,5 +263,5 @@
         获得该模型的训练网络。
 
         **返回：**
-       
+
         预测网络实例。

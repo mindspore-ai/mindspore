@@ -34,7 +34,7 @@ mindspore.nn.ProximalAdagrad
       .. include:: mindspore.nn.optim_group_gc.rst
       .. include:: mindspore.nn.optim_group_order.rst
 
-    - **accum** (float)：累加器 `accum` 的初始值，起始值必须为零或正值。默认值：0.1。
+    - **accum** (float) - 累加器 `accum` 的初始值，起始值必须为零或正值。默认值：0.1。
 
     - **learning_rate** (Union[float, Tensor, Iterable, LearningRateSchedule]): 默认值：1e-3。
 
@@ -42,28 +42,28 @@ mindspore.nn.ProximalAdagrad
 
     - **l1** (float):l1正则化强度，必须大于或等于零。默认值：0.0。
     - **l2** (float):l2正则化强度，必须大于或等于零。默认值：0.0。
-    - **use_locking** (bool)：如果为True，则更新操作使用锁保护。默认值：False。
+    - **use_locking** (bool) - 如果为True，则更新操作使用锁保护。默认值：False。
 
       .. include:: mindspore.nn.optim_arg_loss_scale.rst
 
-    - **weight_decay** (Union[float, int])：要乘以权重的权重衰减值，必须为零或正值。默认值：0.0。
+    - **weight_decay** (Union[float, int]) - 要乘以权重的权重衰减值，必须为零或正值。默认值：0.0。
 
     **输入：**
 
-    **grads** (tuple[Tensor]) - 优化器中 `params` 的梯度，shape与优化器中的 `params` 相同。
+    - **grads** (tuple[Tensor]) - 优化器中 `params` 的梯度，shape与优化器中的 `params` 相同。
 
     **输出：**
 
     Tensor[bool]，值为True。
 
-   **异常：**
+    **异常：**
 
-    - **TypeError**：`learning_rate` 不是int、float、Tensor、Iterable或LearningRateSchedule。
-    - **TypeError**：`parameters` 的元素不是Parameter或字典。
-    - **TypeError**：`accum`、`l1`、`l2` 或 `loss_scale` 不是float。
-    - **TypeError**：`weight_decay` 不是float或int。
-    - **ValueError**：`loss_scale` 小于或等于0。
-    - **ValueError**：`accum`、`l1`、`l2` 或 `weight_decay` 小于0。
+    - **TypeError** - `learning_rate` 不是int、float、Tensor、Iterable或LearningRateSchedule。
+    - **TypeError** - `parameters` 的元素不是Parameter或字典。
+    - **TypeError** - `accum`、`l1`、`l2` 或 `loss_scale` 不是float。
+    - **TypeError** - `weight_decay` 不是float或int。
+    - **ValueError** - `loss_scale` 小于或等于0。
+    - **ValueError** - `accum`、`l1`、`l2` 或 `weight_decay` 小于0。
 
     **支持平台：**
 
@@ -91,4 +91,3 @@ mindspore.nn.ProximalAdagrad
 
 
 .. include:: mindspore.nn.optim_target_unique_for_sparse.rst
-        

@@ -14,14 +14,14 @@ mindspore.nn.warmup_lr
 
     **参数：**
 
-    - **learning_rate** (float)：学习率的初始值。
-    - **total_step** (int)：step总数。
-    - **step_per_epoch** (int)：每个epoch的step数。
-    - **warmup_epoch** (int)：预热学习率的epoch数。
+    - **learning_rate** (float) - 学习率的初始值。
+    - **total_step** (int) - step总数。
+    - **step_per_epoch** (int) - 每个epoch的step数。
+    - **warmup_epoch** (int) - 预热学习率的epoch数。
 
     **返回：**
 
-    list[float] - `total_step` 表示列表的大小。
+    list[float]。 `total_step` 表示列表的大小。
 
     **样例：**
 
@@ -32,4 +32,3 @@ mindspore.nn.warmup_lr
     >>> output = warmup_lr(learning_rate, total_step, step_per_epoch, warmup_epoch)
     >>> print(output)
     [0.0, 0.0, 0.05, 0.05, 0.1, 0.1]
-    

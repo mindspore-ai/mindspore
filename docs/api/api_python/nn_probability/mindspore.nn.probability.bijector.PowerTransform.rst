@@ -16,19 +16,19 @@ mindspore.nn.probability.bijector.PowerTransform
     当 `c=0` 时，此Bijector等于Exp Bijector。
 
     **参数：**
-    
+
     - **power** (float, list, numpy.ndarray, Tensor) - 比例因子。默认值：0。
     - **name** (str) - Bijector名称。默认值：'PowerTransform'。
 
     **支持平台：**
-    
+
     ``Ascend`` ``GPU``
 
     .. note::
         `power` 的数据类型必须为float。
 
     **异常：**
-        
+
     - **ValueError** - `power` 小于0或静态未知。
     - **TypeError** - `power` 的数据类型不是float。
 

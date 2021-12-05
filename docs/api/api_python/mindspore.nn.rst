@@ -9,33 +9,6 @@ Cell
 
     mindspore.nn.Cell
 
-Dynamic Learning Rate
----------------------
-
-.. cnmsplatformautosummary::
-    :toctree: nn
-
-    mindspore.nn.cosine_decay_lr
-    mindspore.nn.exponential_decay_lr
-    mindspore.nn.inverse_decay_lr
-    mindspore.nn.natural_exp_decay_lr
-    mindspore.nn.piecewise_constant_lr
-    mindspore.nn.polynomial_decay_lr
-    mindspore.nn.warmup_lr
-
-Dynamic Learning Rate
----------------------
-
-.. cnmsplatformautosummary::
-    :toctree: nn
-
-    mindspore.nn.CosineDecayLR
-    mindspore.nn.ExponentialDecayLR
-    mindspore.nn.InverseDecayLR
-    mindspore.nn.NaturalExpDecayLR
-    mindspore.nn.PolynomialDecayLR
-    mindspore.nn.WarmUpLR
-
 Gradient
 ---------
 
@@ -44,28 +17,6 @@ Gradient
 
     mindspore.nn.Jvp
     mindspore.nn.Vjp
-
-Metrics
---------
-
-.. cnmsplatformautosummary::
-    :toctree: nn
-
-    mindspore.nn.Accuracy
-    mindspore.nn.F1
-    mindspore.nn.Fbeta
-    mindspore.nn.Loss
-    mindspore.nn.MAE
-    mindspore.nn.MSE
-    mindspore.nn.Metric
-    mindspore.nn.Precision
-    mindspore.nn.Recall
-    mindspore.nn.Top1CategoricalAccuracy
-    mindspore.nn.Top5CategoricalAccuracy
-    mindspore.nn.TopKCategoricalAccuracy
-    mindspore.nn.get_metric_fn
-    mindspore.nn.names
-    mindspore.nn.rearrange_inputs
 
 Non-linear Activations
 ----------------------
@@ -76,8 +27,8 @@ Non-linear Activations
     mindspore.nn.FastGelu
     mindspore.nn.HSwish
     mindspore.nn.ReLU
-    mindspore.nn.elu
-    mindspore.nn.gelu
+    mindspore.nn.ELU
+    mindspore.nn.GELU
 
 Optimizer Functions
 -------------------
@@ -114,3 +65,55 @@ Wrapper Functions
     mindspore.nn.TrainOneStepWithLossScaleCell
     mindspore.nn.WithEvalCell
     mindspore.nn.WithLossCell
+
+Metrics
+--------
+
+.. cnmsautosummary::
+    :toctree: nn
+
+    mindspore.nn.Accuracy
+    mindspore.nn.F1
+    mindspore.nn.Fbeta
+    mindspore.nn.Loss
+    mindspore.nn.MAE
+    mindspore.nn.MSE
+    mindspore.nn.Metric
+    mindspore.nn.Precision
+    mindspore.nn.Recall
+    mindspore.nn.Top1CategoricalAccuracy
+    mindspore.nn.Top5CategoricalAccuracy
+    mindspore.nn.TopKCategoricalAccuracy
+    mindspore.nn.get_metric_fn
+    mindspore.nn.names
+    mindspore.nn.rearrange_inputs
+
+Dynamic Learning Rate
+---------------------
+
+LearningRateSchedule
+^^^^^^^^^^^^^^^^^^^^^
+
+.. cnmsplatformautosummary::
+    :toctree: nn
+
+    mindspore.nn.CosineDecayLR
+    mindspore.nn.ExponentialDecayLR
+    mindspore.nn.InverseDecayLR
+    mindspore.nn.NaturalExpDecayLR
+    mindspore.nn.PolynomialDecayLR
+    mindspore.nn.WarmUpLR
+
+Dynamic LR
+^^^^^^^^^^
+
+.. cnmsautosummary::
+    :toctree: nn
+
+    mindspore.nn.cosine_decay_lr
+    mindspore.nn.exponential_decay_lr
+    mindspore.nn.inverse_decay_lr
+    mindspore.nn.natural_exp_decay_lr
+    mindspore.nn.piecewise_constant_lr
+    mindspore.nn.polynomial_decay_lr
+    mindspore.nn.warmup_lr

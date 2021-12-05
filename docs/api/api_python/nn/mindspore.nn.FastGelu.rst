@@ -17,7 +17,7 @@ mindspore.nn.FastGelu
 
     **输入：**
 
-    - **x** (Tensor)：用于计算FastGelu的Tensor。数据类型为float16或float32。shape为 :math:`(N,*)` ，其中 :math:`*` 表示任意的附加维度数。
+    - **x** (Tensor) - 用于计算FastGelu的Tensor。数据类型为float16或float32。shape为 :math:`(N,*)` ，其中 :math:`*` 表示任意的附加维度数。
 
     **输出：**
 
@@ -39,4 +39,3 @@ mindspore.nn.FastGelu
     >>> print(output)
     [[-1.5418735e-01  3.9921875e+00 -9.7473649e-06]
      [ 1.9375000e+00 -1.0052517e-03  8.9824219e+00]]
-    

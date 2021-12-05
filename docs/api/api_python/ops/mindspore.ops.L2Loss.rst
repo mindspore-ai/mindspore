@@ -12,7 +12,7 @@ mindspore.ops.L2Loss
 
     **输入：**
 
-    **input_x** (Tensor) - 用于计算L2范数的Tensor。数据类型必须为float16或float32。
+    - **input_x** (Tensor) - 用于计算L2范数的Tensor。数据类型必须为float16或float32。
 
     **输出：**
 
@@ -34,4 +34,3 @@ mindspore.ops.L2Loss
     >>> output = l2_loss(input_x)
     >>> print(output)
     7.0
-    

@@ -24,7 +24,7 @@ mindspore.nn.probability.bijector.GumbelCDF
 
     **异常：**
 
-    **TypeError** - `loc` 或 `scale` 的数据类型不为float，或 `loc` 和 `scale` 的数据类型不相同。
+    - **TypeError** - `loc` 或 `scale` 的数据类型不为float，或 `loc` 和 `scale` 的数据类型不相同。
 
     **样例：**
 

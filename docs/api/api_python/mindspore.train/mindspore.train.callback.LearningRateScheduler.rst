@@ -4,7 +4,7 @@
 
     **参数：**
 
-    **learning_rate_function** (Function) - 在训练期间更改学习率的函数。
+    - **learning_rate_function** (Function) - 在训练期间更改学习率的函数。
 
     **样例：**
 
@@ -27,12 +27,11 @@
     >>> dataset = create_custom_dataset("custom_dataset_path")
     >>> model.train(1, dataset, callbacks=[LearningRateScheduler(learning_rate_function)],
     ...             dataset_sink_mode=False)
-    
+
     .. py:method:: step_end(run_context)
 
         在step结束时更改学习率。
 
         **参数：**
-        
-        **run_context** (RunContext) - 包含模型的一些基本信息。
-        
+
+        - **run_context** (RunContext) - 包含模型的一些基本信息。

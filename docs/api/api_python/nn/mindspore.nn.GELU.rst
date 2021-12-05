@@ -8,7 +8,7 @@ mindspore.nn.GELU
     对输入的每个元素计算GELU。
 
     GELU的定义如下：
-    
+
     .. math::
         GELU(x_i) = x_i*P(X < x_i),
 

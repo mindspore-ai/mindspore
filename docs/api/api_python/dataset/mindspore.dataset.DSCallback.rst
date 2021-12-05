@@ -7,7 +7,7 @@ mindspore.dataset.DSCallback
 
     **参数：**
 
-    **step_size** (int, optional)：调用 `ds_step_begin` 和 `ds_step_end` 之间间隔的step数（默认为1）。
+    - **step_size** (int, optional) - 调用 `ds_step_begin` 和 `ds_step_end` 之间间隔的step数（默认为1）。
 
     **样例：**
 
@@ -27,7 +27,7 @@ mindspore.dataset.DSCallback
 
         **参数：**
 
-        **ds_run_context** (RunContext)：数据处理管道运行信息。
+        - **ds_run_context** (RunContext) - 数据处理管道运行信息。
 
     .. py:method:: ds_epoch_begin(ds_run_context)
 
@@ -35,7 +35,7 @@ mindspore.dataset.DSCallback
 
         **参数：**
 
-        **ds_run_context** (RunContext)：数据处理管道运行信息。
+        - **ds_run_context** (RunContext) - 数据处理管道运行信息。
 
     .. py:method:: ds_epoch_end(ds_run_context)
 
@@ -43,7 +43,7 @@ mindspore.dataset.DSCallback
 
         **参数：**
 
-        **ds_run_context** (RunContext)：数据处理管道运行信息。
+        - **ds_run_context** (RunContext) - 数据处理管道运行信息。
 
     .. py:method:: ds_step_begin(ds_run_context)
 
@@ -51,7 +51,7 @@ mindspore.dataset.DSCallback
 
         **参数：**
 
-        **ds_run_context** (RunContext)：数据处理管道运行信息。
+        - **ds_run_context** (RunContext) - 数据处理管道运行信息。
 
     .. py:method:: ds_step_end(ds_run_context)
 
@@ -59,4 +59,4 @@ mindspore.dataset.DSCallback
 
         **参数：**
 
-        **ds_run_context** (RunContext)：数据处理管道运行信息。
+        - **ds_run_context** (RunContext) - 数据处理管道运行信息。

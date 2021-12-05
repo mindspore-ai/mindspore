@@ -20,7 +20,7 @@ mindspore.nn.CosineDecayLR
 
     **输入：**
 
-    **global_step** (Tensor) - 当前step数。
+    - **global_step** (Tensor) - 当前step数。
 
     **输出：**
 
@@ -38,7 +38,7 @@ mindspore.nn.CosineDecayLR
     ``Ascend`` ``GPU``
 
     **样例：**
-    
+
     >>> min_lr = 0.01
     >>> max_lr = 0.1
     >>> decay_steps = 4
@@ -47,4 +47,3 @@ mindspore.nn.CosineDecayLR
     >>> result = cosine_decay_lr(global_steps)
     >>> print(result)
     0.055
-    

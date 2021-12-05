@@ -7,7 +7,7 @@ mindspore.build_searched_strategy
 
     **参数：**
 
-    **strategy_filename** (str) - 策略文件的名称。
+    - **strategy_filename** (str) - 策略文件的名称。
 
     **返回：**
 
@@ -17,4 +17,3 @@ mindspore.build_searched_strategy
 
     - **ValueError** - 策略文件不正确。
     - **TypeError** - `strategy_filename` 不是str。
-    
