@@ -5,7 +5,7 @@ mindspore.nn.get_metric_fn
 
     根据输入的 `name` 获取metric的方法。
 
-   **参数：**
+    **参数：**
 
     - **name** (str) - metric的方法名，可以通过 :class:`mindspore.nn.names` 接口获取。
     - **args** - metric函数的参数。

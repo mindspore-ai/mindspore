@@ -11,37 +11,37 @@ mindspore.common.initializer
 
     - **kwargs** (dict) – `Initializer` 的关键字参数。
 
-    .. py:method:: mindspore.common.initializer.initializer(init, shape=None, dtype=mstype.float32)
+.. py:function:: mindspore.common.initializer.initializer(init, shape=None, dtype=mstype.float32)
 
-        创建并初始化一个Tensor。
+    创建并初始化一个Tensor。
 
-        **参数：**
+    **参数：**
 
-        - **init** (Union[Tensor, str, Initializer, numbers.Number]) – 初始化方式。
+    - **init** (Union[Tensor, str, Initializer, numbers.Number]) – 初始化方式。
 
-          - **str** - `init` 是继承自 `Initializer` 的类的别名，实际使用时会调用相应的类。`init` 的值可以是"normal"、"ones"或"zeros"等。
-          - **Initializer** - `init` 是继承自 `Initializer` ，用于初始化Tensor的类。
-          - **numbers.Number** - 调用常量来初始化张量。
+      - **str** - `init` 是继承自 `Initializer` 的类的别名，实际使用时会调用相应的类。`init` 的值可以是"normal"、"ones"或"zeros"等。
+      - **Initializer** - `init` 是继承自 `Initializer` ，用于初始化Tensor的类。
+      - **numbers.Number** - 调用常量来初始化张量。
 
-        - **shape** (Union[[tuple, list, int]) - 被初始化的Tensor的shape，默认值为None。
-        - **dtype** (mindspore.dtype) – 被初始化的Tensor的数据类型，默认值为 `mindspore.float32` 。
+    - **shape** (Union[[tuple, list, int]) - 被初始化的Tensor的shape，默认值为None。
+    - **dtype** (mindspore.dtype) – 被初始化的Tensor的数据类型，默认值为 `mindspore.float32` 。
 
-        **返回：**
+    **返回：**
 
-        Tensor，返回一个张量对象。
+    Tensor，返回一个张量对象。
 
-        **异常：**
+    **异常：**
 
-        - **TypeError** - 参数 `init` 的类型不正确。
-        - **ValueError** - 通过 `init` 传入的Tensor的shape和作为参数传入的shape不一致。
+    - **TypeError** - 参数 `init` 的类型不正确。
+    - **ValueError** - 通过 `init` 传入的Tensor的shape和作为参数传入的shape不一致。
 
-        **样例：**
+    **样例：**
 
-        >>> import mindspore
-        >>> from mindspore.common.initializer import initializer, One
-        >>> tensor = initializer('ones', [1, 2, 3], mindspore.float32)
-        >>> tensor = initializer(One(), [1, 2, 3], mindspore.float32)
-        >>> tensor = initializer(0, [1, 2, 3], mindspore.float32)
+    >>> import mindspore
+    >>> from mindspore.common.initializer import initializer, One
+    >>> tensor = initializer('ones', [1, 2, 3], mindspore.float32)
+    >>> tensor = initializer(One(), [1, 2, 3], mindspore.float32)
+    >>> tensor = initializer(0, [1, 2, 3], mindspore.float32)
 
 .. py:class:: mindspore.common.initializer.TruncatedNormal(sigma=0.01)
 
