@@ -60,11 +60,11 @@ mindspore.nn.FTRL
     - **grads** (tuple[Tensor]) - 优化器中 `params` 的梯度，shape与优化器中的 `params` 相同。
 
 
-   **输出：**
+    **输出：**
 
     tuple[Parameter]，更新的参数，shape与 `params` 相同。
 
-   **异常：**
+    **异常：**
 
     - **TypeError** - `initial_accum`、`learning_rate`、`lr_power`、`l1`、`l2` 或 `loss_scale` 不是float。
     - **TypeError** - `parameters` 的元素不是Parameter或dict。
@@ -74,11 +74,11 @@ mindspore.nn.FTRL
     - **ValueError** - `loss_scale` 小于等于0。
     - **ValueError** - `initial_accum`、`l1` 或 `l2` 小于0。
 
-   **支持平台：**
+    **支持平台：**
 
     ``Ascend`` ``GPU`` ``CPU``
 
-   **样例：**
+    **样例：**
 
     >>> net = Net()
     >>> #1) 所有参数使用相同的学习率和权重衰减
@@ -100,4 +100,4 @@ mindspore.nn.FTRL
     >>> model = Model(net, loss_fn=loss, optimizer=optim)
 
 
-.. include::mindspore.nn.optim_target_unique_for_sparse.rst
+.. include:: mindspore.nn.optim_target_unique_for_sparse.rst

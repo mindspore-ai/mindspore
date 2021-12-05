@@ -3,11 +3,11 @@ mindspore.LossScaleManager
 
 .. py:class:: mindspore.LossScaleManager
 
-   混合精度梯度放大系数（loss scale）管理器的抽象类。
+    混合精度梯度放大系数（loss scale）管理器的抽象类。
 
-   派生类需要实现该类的所有方法。 `get_loss_scale` 用于获取当前的梯度放大系数。 `update_loss_scale` 用于更新梯度放大系数，该方法将在训练过程中被调用。 `get_update_cell` 用于获取更新梯度放大系数的 `Cell` 实例，该实例将在训练过程中被调用。当前多使用 `get_update_cell` 方式。
+    派生类需要实现该类的所有方法。 `get_loss_scale` 用于获取当前的梯度放大系数。 `update_loss_scale` 用于更新梯度放大系数，该方法将在训练过程中被调用。 `get_update_cell` 用于获取更新梯度放大系数的 `Cell` 实例，该实例将在训练过程中被调用。当前多使用 `get_update_cell` 方式。
 
-   例如：:class:`mindspore.FixedLossScaleManager` 和 :class:`mindspore.DynamicLossScaleManager` 。
+    例如：:class:`mindspore.FixedLossScaleManager` 和 :class:`mindspore.DynamicLossScaleManager` 。
 
     .. py:method:: get_loss_scale()
 

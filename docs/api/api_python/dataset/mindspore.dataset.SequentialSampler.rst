@@ -10,7 +10,7 @@ mindspore.dataset.SequentialSampler
     - **start_index** (int, optional): 开始采样的索引。（默认值为None，从第一个ID开始）
     - **num_samples** (int, optional): 要采样的元素数量。（默认值为None，采样所有元素）
 
-    *样例：**
+    **样例：**
 
     >>> # 创建SequentialSampler
     >>> sampler = ds.SequentialSampler()

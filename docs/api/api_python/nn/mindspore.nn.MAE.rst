@@ -12,7 +12,7 @@ mindspore.nn.MAE
 
     这里， :math:`n` 是bach size。
 
-   **样例：**
+    **样例：**
 
     >>> import numpy as np
     >>> from mindspore import nn, Tensor
@@ -35,11 +35,11 @@ mindspore.nn.MAE
         计算平均绝对差（MAE）。
 
         **返回：**
-        
+
         numpy.float64，计算结果。
 
         **异常：**
-        
+
         - **RuntimeError** - 样本总数为0。
 
     .. py:method:: update(*inputs)
@@ -51,5 +51,5 @@ mindspore.nn.MAE
         - **inputs** - 输入 `y_pred` 和 `y` 来计算MAE，其中 `y_pred` 和 `y` 的shape都是N-D，它们的shape相同。
 
         **异常：**
-            
+
         - **ValueError** - `inputs` 的数量不等于2。

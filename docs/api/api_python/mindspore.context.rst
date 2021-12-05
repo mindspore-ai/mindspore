@@ -1,11 +1,9 @@
 ﻿mindspore.context
 ===================
 
-.. py:class:: mindspore.context
+MindSpore上下文，用于配置当前执行环境，包括执行模式、执行后端和其他特性开关。
 
-    MindSpore上下文，用于配置当前执行环境，包括执行模式、执行后端和其他特性开关。
-
-.. py:function:: set_context(**kwargs)
+.. py:function:: mindspore.context.set_context(**kwargs)
 
     设置运行环境的上下文。
 
@@ -167,7 +165,7 @@
     >>> context.set_context(load_compile_cache=True)
     >>> context.set_context(pynative_synchronize=True)
 
-.. py:function:: get_context(attr_key)
+.. py:function:: mindspore.context.get_context(attr_key)
 
     根据输入key获取上下文中的属性值。如果某些属性没有设置，则会自动获取这些属性。
 
@@ -188,7 +186,7 @@
     >>> context.get_context("device_target")
     >>> context.get_context("device_id")
 
-.. py:function:: set_auto_parallel_context(**kwargs)
+.. py:function:: mindspore.context.set_auto_parallel_context(**kwargs)
 
     配置自动并行，仅在Ascend和GPU上有效。
 
@@ -261,7 +259,7 @@
     >>> context.set_auto_parallel_context(all_reduce_fusion_config=[8, 160])
     >>> context.set_auto_parallel_context(pipeline_stages=2)
 
-.. py:function:: get_auto_parallel_context(attr_key)
+.. py:function:: mindspore.context.get_auto_parallel_context(attr_key)
 
     根据key获取自动并行的配置。
 
@@ -277,7 +275,7 @@
 
     **ValueError**：输入key不在自动并行的配置列表中。
 
-.. py:function:: reset_auto_parallel_context()
+.. py:function:: mindspore.context.reset_auto_parallel_context()
 
     重置自动并行的配置为默认值。
 
@@ -308,7 +306,7 @@
 
     MODE_LIST：表示所有支持的并行模式的列表。
 
-.. py:function:: set_ps_context(**kwargs)
+.. py:function:: mindspore.context.set_ps_context(**kwargs)
 
     设置参数服务器训练模式的上下文。
 
@@ -343,7 +341,7 @@
 
     >>> context.set_ps_context(enable_ps=True, enable_ssl=True, client_password='123456', server_password='123456')
 
-.. py:function:: get_ps_context(attr_key)
+.. py:function:: mindspore.context.get_ps_context(attr_key)
 
     根据key获取参数服务器训练模式上下文中的属性值。
 
@@ -370,8 +368,7 @@
 
     >>> context.get_ps_context(enable_ps)
 
-
-.. py:function:: reset_ps_context()
+.. py:function:: mindspore.context.reset_ps_context()
 
     将参数服务器训练模式上下文中的属性重置为默认值。各字段的含义及其默认值见'set_ps_context'接口。
 

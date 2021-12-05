@@ -1,4 +1,4 @@
-mindspore.nn.polynomial_decay_lr
+mindspore.nn.PolynomialDecayLR
 ====================================
 
 .. py:class:: mindspore.nn.PolynomialDecayLR(learning_rate, end_learning_rate, decay_steps, power, update_decay_steps=False)

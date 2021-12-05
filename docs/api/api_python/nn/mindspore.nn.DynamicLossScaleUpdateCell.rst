@@ -9,7 +9,7 @@ mindspore.nn.DynamicLossScaleUpdateCell
 
     该类是 :class:`mindspore.nn.DynamicLossScaleManager` 的 `get_update_cell` 方法的返回值。训练过程中，类 :class:`mindspore.TrainOneStepWithLossScaleCell` 会调用该Cell来更新梯度放大系数。
 
-   **参数：**
+    **参数：**
 
     - **loss_scale_value** (float) - 初始的梯度放大系数。
     - **scale_factor** (int) - 增减系数。
@@ -28,7 +28,7 @@ mindspore.nn.DynamicLossScaleUpdateCell
 
     ``Ascend`` ``GPU``
 
-   **样例：**
+    **样例：**
 
     >>> import numpy as np
     >>> from mindspore import Tensor, Parameter, nn
