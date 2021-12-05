@@ -4937,7 +4937,7 @@ class ScatterNdSub(_ScatterNdOp):
     """
 
 
-class ScatterNonAliasingAdd(_ScatterNdOp):
+class ScatterNonAliasingAdd(Primitive):
     """
     Applies sparse addition to the input using individual values or slices.
 
@@ -4977,17 +4977,17 @@ class ScatterNonAliasingAdd(_ScatterNdOp):
         [ 1. 10.  9.  4. 12.  6.  7. 17.]
     """
 
+    __mindspore_signature__ = (
+        sig.make_sig('input_x', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('indices', dtype=sig.sig_dtype.T1),
+        sig.make_sig('updates', dtype=sig.sig_dtype.T)
+    )
+
     @prim_attr_register
     def __init__(self):
         """Initialize ScatterNonAliasingAdd"""
-        self.init_prim_io_names(inputs=['x', 'indices', 'updates'], outputs=['y'])
+        self.init_prim_io_names(inputs=['input_x', 'indices', 'updates'], outputs=['y'])
         self.add_prim_attr('side_effect_mem', True)
-
-    def infer_dtype(self, x_dtype, indices_dtype, updates_dtype):
-        validator.check_tensor_dtype_valid('indices', indices_dtype, [mstype.int32], self.name)
-        args = {"x": x_dtype, "updates": updates_dtype}
-        validator.check_tensors_dtypes_same_and_valid(args, [mstype.float16, mstype.float32, mstype.int32], self.name)
-        return x_dtype
 
 
 class SpaceToDepth(PrimitiveWithInfer):
