@@ -23,6 +23,7 @@
 #include <memory>
 #include <sstream>
 #include <algorithm>
+#include "utils/log_adapter.h"
 #include "pybind11/pybind11.h"
 
 namespace mindspore {
@@ -31,7 +32,7 @@ namespace device {
 // communication group. MindSpore uses 'hccl_world_group' or 'nccl_world_group' as the default group.
 class CommunicationGroup {
  public:
-  explicit CommunicationGroup(const std::string name, const std::vector<uint32_t> &group_ranks, uint32_t global_rank);
+  explicit CommunicationGroup(const std::string &name, const std::vector<uint32_t> &group_ranks, uint32_t global_rank);
   virtual ~CommunicationGroup() {
     group_ranks_.clear();
     global_to_group_ranks_.clear();

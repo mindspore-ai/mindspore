@@ -48,11 +48,17 @@ bool MPICollectiveCommLib::Initialize(uint32_t, uint32_t) {
 
 bool MPICollectiveCommLib::CreateCommunicationGroup(const std::string &group_name,
                                                     const std::vector<uint32_t> &group_ranks) {
-  CHECK_RET((groups_.count(group_name) == 0), true, "The MPI group " + group_name + " has already existed.");
+  if (groups_.count(group_name) != 0) {
+    MS_LOG(ERROR) << "The MPI group " << group_name << " has already existed.";
+    return false;
+  }
 
   MPICommunicationGroupPtr group = std::make_shared<MPICommunicationGroup>(group_name, group_ranks, global_rank_id_);
   CHECK_IF_NULL(group);
-  CHECK_RET(group->Initialize(world_group_), true, "Initializing group failed.");
+  if (!group->Initialize(world_group_)) {
+    MS_LOG(ERROR) << "Failed to Initialize group " << group_name;
+    return false;
+  }
   groups_[group_name] = group;
   return true;
 }
