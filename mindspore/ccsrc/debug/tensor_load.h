@@ -97,10 +97,6 @@ class TensorLoader {
         tensor->GetIteration() == tensor_list_map_[key_name]->GetPrevIteration()) {
       key_name += ":prev";
     }
-    auto iter = tensor_list_map_.find(key_name);
-    if (iter != tensor_list_map_.end()) {
-      iter->second->DeleteDataPtr();
-    }
 #endif
     tensor_list_map_[key_name] = tensor;  // use [] instead of insert to ensure latest value
     lock_.unlock();
@@ -183,7 +179,6 @@ class TensorLoader {
       candidates_size = tensor_list_map_[candidate_name]->GetByteSize();
       // evict candidate tensor
       lock_.lock();
-      tensor_list_map_[candidate_name]->DeleteDataPtr();
       tensor_list_map_.erase(candidate_name);
       lock_.unlock();
       cache_evict_queue_.pop_front();
