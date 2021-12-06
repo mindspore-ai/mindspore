@@ -83,7 +83,7 @@ class SummaryCollector(Callback):
     Args:
         summary_dir (str): The collected data will be persisted to this directory.
             If the directory does not exist, it will be created automatically.
-        collect_freq (int): Set the frequency of data collection, it should be greater then zero,
+        collect_freq (int): Set the frequency of data collection, it should be greater than zero,
             and the unit is `step`. If a frequency is set, we will collect data
             when (current steps % freq) equals to 0, and the first step will be collected at any time.
             It is important to note that if the data sink mode is used, the unit will become the `epoch`.
@@ -122,7 +122,7 @@ class SummaryCollector(Callback):
                 Default: 40. Optional values: between 3 and 256.
               - unit (str): Specify the interval strength of the training process. Optional: epoch/step.
               - create_landscape (dict): Select how to create loss landscape.
-                Training process loss landscape(train) and Training result loss landscape(result).
+                Training process loss landscape(train) and training result loss landscape(result).
                 Default: {"train": True, "result": True}. Optional: True/False.
               - num_samples (int): The size of the dataset used to create the loss landscape.
                 For example, in image dataset, You can set num_samples is 128,
@@ -260,7 +260,6 @@ class SummaryCollector(Callback):
             self._ckpt_dir = os.path.join(self._summary_dir, 'ckpt_dir')
             _make_directory(self._ckpt_dir)
             self._model_params_file_map = {}
-            self._loss_map = {}
             self._epoch_group = defaultdict(list)
             intervals = landscape.get('intervals')
             self._create_epoch_group(intervals)
@@ -588,16 +587,18 @@ class SummaryCollector(Callback):
             "unit": unit,
             "num_samples": num_samples,
             "landscape_size": landscape_size,
-            "create_landscape": create_landscape,
-            "loss_map": self._loss_map
+            "create_landscape": create_landscape
         }
         meta_path = os.path.join(self._ckpt_dir, 'train_metadata.json')
-        with open(meta_path, 'w') as file:
-            json.dump(data, file)
-        os.chmod(meta_path, stat.S_IRUSR)
+        try:
+            with open(meta_path, 'w') as file:
+                json.dump(data, file)
+            os.chmod(meta_path, stat.S_IRUSR)
+        except OSError as e:
+            logger.error(str(e))
 
-    def _save_loss_and_model_params(self, cur_num, unit, backbone, loss):
-        """Save model params and loss."""
+    def _save_model_params(self, cur_num, unit, backbone):
+        """Save model params."""
         param_list = []
 
         for param in backbone.get_parameters():
@@ -611,13 +612,15 @@ class SummaryCollector(Callback):
 
         ckpt_file_name = f"{type(backbone).__name__}_{cur_num}_{unit}.ckpt"
         file_path = os.path.join(self._ckpt_dir, ckpt_file_name)
-        save_checkpoint(param_list, file_path)
+        try:
+            save_checkpoint(param_list, file_path)
+        except OSError as e:
+            logger.error(str(e))
 
         self._model_params_file_map[str(cur_num)] = file_path
-        self._loss_map[str(cur_num)] = loss
 
     def _save_model_params_for_landscape(self, cb_params):
-        """Save model params and loss for landscape."""
+        """Save model params for landscape."""
         if cb_params.mode == ModeEnum.TRAIN.value:
             backbone = self._get_backbone(cb_params.train_network)
             while True:
@@ -629,13 +632,10 @@ class SummaryCollector(Callback):
                 else:
                     break
             collect_landscape = self._collect_specified_data.get('collect_landscape')
-            precision = 4
-            loss = round(np.mean(self._get_loss(cb_params).asnumpy()), precision)
-            loss = loss.item()
             unit = collect_landscape.get('unit', 'step')
             cur_num = cb_params.cur_epoch_num if collect_landscape and unit == 'epoch' else cb_params.cur_step_num
-            logger.info("Save loss and model params, %s: %s." % (unit, cur_num))
-            self._save_loss_and_model_params(cur_num, unit, backbone, loss)
+            logger.info("Save model params, %s: %s." % (unit, cur_num))
+            self._save_model_params(cur_num, unit, backbone)
 
     def _check_callbacks(self, cb_params):
         """Check there if there are duplicate instances of SummaryCollector."""
