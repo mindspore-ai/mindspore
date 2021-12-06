@@ -422,15 +422,15 @@ class FeedForward(Cell):
         dp = parallel_config.data_parallel
         mp = parallel_config.model_parallel
         if ffn_hidden_size % mp != 0:
-            raise ValueError("The parameter of 'ffn_hidden_size' must be a multiple of the model parallel way, "
-                             "but got the ffn_hidden_size is {} and the num of model parallel  is {}."
+            raise ValueError("For 'FeedForward', the class variable 'ffn_hidden_size' must be a multiple of the num of "
+                             "model parallel, but got the ffn_hidden_size is {} and the num of model parallel is {}."
                              .format(ffn_hidden_size, mp))
         if hidden_size % mp != 0:
-            raise ValueError("The parameter of 'hidden_size' must be a multiple of the model parallel way, "
-                             "but got the hidden_size is {} and the num of model parallel  is {}."
+            raise ValueError("For 'FeedForward', the class variable 'hidden_size' must be a multiple of the num of "
+                             "model parallel, but got the hidden_size is {} and the num of model parallel is {}."
                              .format(hidden_size, mp))
         if dropout_rate < 0 or dropout_rate >= 1:
-            raise ValueError("The parameter of 'dropout_rate' must be in the range [0, 1.0), "
+            raise ValueError("For 'FeedForward', the class variable 'dropout_rate' must be in the range [0, 1.0), "
                              "but got the value : {}.".format(dropout_rate))
         input_size = hidden_size
         output_size = ffn_hidden_size
@@ -803,21 +803,24 @@ class MultiHeadAttention(Cell):
         self.hidden_size = hidden_size
         self.batch_size = batch_size
         if hidden_dropout_rate < 0 or hidden_dropout_rate >= 1:
-            raise ValueError("The parameter 'hidden_dropout_rate' must be in range [0, 1.0), "
-                             "but got the value : {}.".format(hidden_dropout_rate))
+            raise ValueError("For 'MultiHeadAttention', the class variable 'hidden_dropout_rate' must be "
+                             "in range [0, 1.0), but got the value : {}.".format(hidden_dropout_rate))
         if attention_dropout_rate < 0 or attention_dropout_rate >= 1:
-            raise ValueError("The parameter 'attention_dropout_rate' must be in range [0, 1.0), "
-                             "but got the value : {}.".format(attention_dropout_rate))
+            raise ValueError("For 'MultiHeadAttention', the class variable 'attention_dropout_rate' must be "
+                             "in range [0, 1.0), but got the value : {}.".format(attention_dropout_rate))
         if hidden_size % num_heads != 0:
-            raise ValueError("The parameter 'hidden_size' should be a multiple of 'num_heads', "
-                             "but got the hidden_size is {} and the num_heads is {}.".format(hidden_size, num_heads))
+            raise ValueError("For 'MultiHeadAttention', the class variable 'hidden_size' should be a multiple "
+                             "of 'num_heads', but got the hidden_size is {} and the num_heads is {}."
+                             .format(hidden_size, num_heads))
         if num_heads % parallel_config.model_parallel != 0:
-            raise ValueError("The parameter 'num_heads' must be a multiple of 'parallel_config.model_parallel', "
-                             "but got the num_heads is {} and the parallel_config.model_parallel  is {}."
+            raise ValueError("For 'MultiHeadAttention', the class variable 'num_heads' must be a multiple of "
+                             "'parallel_config.model_parallel', but got the num_heads is {} "
+                             "and the parallel_config.model_parallel  is {}."
                              .format(num_heads, parallel_config.model_parallel))
         if self.is_parallel_mode and batch_size % parallel_config.data_parallel != 0:
-            raise ValueError("The parameter 'batch_size' must be a multiple of 'parallel_config.data_parallel', "
-                             "but got the batch_size is {} and the parallel_config.data_parallel is {}."
+            raise ValueError("For 'MultiHeadAttention', the class variable 'batch_size' must be a multiple of "
+                             "'parallel_config.data_parallel', but got the batch_size is {} "
+                             "and the parallel_config.data_parallel is {}."
                              .format(batch_size, parallel_config.data_parallel))
         self.is_first_iteration = True
         # Output layer
@@ -1272,17 +1275,18 @@ class TransformerEncoderLayer(Cell):
         super(TransformerEncoderLayer, self).__init__()
         _check_config(parallel_config)
         if num_heads % parallel_config.model_parallel != 0:
-            raise ValueError("The parameter of 'num_heads' must be divisibled by the "
+            raise ValueError("For 'TransformerEncoderLayer', the class variable 'num_heads' must be divisibled by the "
                              "'parallel_config.model_parallel', but got the num_heads is {} and "
                              "parallel_config.model_parallel is {}.".format(num_heads, parallel_config.model_parallel))
         if hidden_size % parallel_config.model_parallel != 0:
-            raise ValueError("The parameter of 'hidden_size' must be divisibled by the "
-                             "'parallel_config.model_parallel', but got the hidden_size is {} and parallel_config. "
+            raise ValueError("For 'TransformerEncoderLayer', the class variable 'hidden_size' must be divisibled by "
+                             "the 'parallel_config.model_parallel', but got the hidden_size is {} and parallel_config. "
                              "model_parallel is {}.".format(hidden_size, parallel_config.model_parallel))
         if ffn_hidden_size % parallel_config.model_parallel != 0:
-            raise ValueError("The parameter of 'ffn_hidden_size' must be divisibled by the "
-                             "'parallel_config.model_parallel', but got the ffn_hidden_size is {} and parallel_config. "
-                             "model_parallel is {}.".format(ffn_hidden_size, parallel_config.model_parallel))
+            raise ValueError("For 'TransformerEncoderLayer', the class variable 'ffn_hidden_size' must be divisibled "
+                             "by the 'parallel_config.model_parallel', but got the ffn_hidden_size is {} "
+                             "and parallel_config. model_parallel is {}."
+                             .format(ffn_hidden_size, parallel_config.model_parallel))
         self.use_past = use_past
         self.seq_length = seq_length
         self.hidden_size = hidden_size
@@ -1571,16 +1575,17 @@ class TransformerDecoderLayer(Cell):
         super(TransformerDecoderLayer, self).__init__()
         _check_config(parallel_config)
         if num_heads % parallel_config.model_parallel != 0:
-            raise ValueError("The parameter of 'num_heads' must be divisibled by 'parallel_config.model_parallel', "
-                             "but got the num_heads is {} and parallel_config.model_parallel is {}."
-                             .format(num_heads, parallel_config.model_parallel))
+            raise ValueError("For 'TransformerDecoderLayer', the class variable 'num_heads' must be divisibled by "
+                             "'parallel_config.model_parallel', but got the num_heads is {} and "
+                             "parallel_config.model_parallel is {}.".format(num_heads, parallel_config.model_parallel))
         if hidden_size % parallel_config.model_parallel != 0:
-            raise ValueError("The parameter of 'hidden_size' must be divisibled by 'parallel_config.model_parallel', "
-                             "but got the hidden_size is {} and parallel_config.model_parallel is {}."
+            raise ValueError("For 'TransformerDecoderLayer', the class variable 'hidden_size' must be divisibled by "
+                             "'parallel_config.model_parallel', but got the hidden_size is {} and "
+                             "parallel_config.model_parallel is {}."
                              .format(hidden_size, parallel_config.model_parallel))
         if ffn_hidden_size % parallel_config.model_parallel != 0:
-            raise ValueError("The parameter of 'ffn_hidden_size' must be divisibled by "
-                             "'parallel_config.model_parallel', but got the ffn_hidden_size is {} "
+            raise ValueError("For 'TransformerDecoderLayer', the class variable 'ffn_hidden_size' must be "
+                             "divisibled by 'parallel_config.model_parallel', but got the ffn_hidden_size is {} "
                              "and parallel_config.model_parallel is {}."
                              .format(ffn_hidden_size, parallel_config.model_parallel))
         if use_past is True:

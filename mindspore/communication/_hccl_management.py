@@ -35,10 +35,11 @@ def check_group(group):
     if isinstance(group, (str)):
         group_len = len(group)
         if group_len > MAX_GROUP_NAME_LEN or group_len == 0:
-            raise ValueError("The length of parameter 'group' should in range [1, {}], but got the value : {}"
-                             .format(MAX_GROUP_NAME_LEN, group_len))
+            raise ValueError("The length of communication group name must be in range [1, 127), "
+                             "but got the value : {} ".format(group_len))
     else:
-        raise TypeError("The context configuration parameter 'group' must be a string, but got {}".format(type(group)))
+        raise TypeError("The type of communication group name must be type of string, "
+                        "but got 'group' type : {}.".format(type(group)))
 
 
 def check_rank_num(rank_num):
@@ -50,10 +51,11 @@ def check_rank_num(rank_num):
     """
     if isinstance(rank_num, (int)):
         if rank_num > MAX_RANK_NUM or rank_num <= 0:
-            raise ValueError("The parameter 'rank_num' should in range [1, {}], but got the value : {}"
-                             .format(MAX_RANK_NUM, rank_num))
+            raise ValueError("For 'create_group', the argument 'rank_num' should be greater than 0 and less than {}, "
+                             "but got 'rank_num' value : {}.".format(MAX_RANK_NUM, rank_num))
     else:
-        raise TypeError("The parameter 'rank_num' must be a python int, but got {}".format(type(rank_num)))
+        raise TypeError("For 'create_group', the argument 'rank_num' must be type of int, "
+                        "but got 'rank_num' type : {}.".format(type(rank_num)))
 
 
 def check_rank_id(rank_id):
@@ -65,10 +67,11 @@ def check_rank_id(rank_id):
     """
     if isinstance(rank_id, (int)):
         if rank_id >= MAX_RANK_NUM or rank_id < 0:
-            raise ValueError("The parameter 'rank_id' should in range [1, {}], but got the value : {}"
-                             .format(MAX_RANK_NUM, rank_id))
+            raise ValueError("The rand id in the communication group must be greater or equal 0 and "
+                             "less than {}, but got type value : {}.".format(MAX_RANK_NUM, rank_id))
     else:
-        raise TypeError("The parameter 'rank_id' must be a python int, but got {}".format(type(rank_id)))
+        raise TypeError("The rand id in the communication group must be must be type of int, "
+                        "but got type value : {}.".format(type(rank_id)))
 
 
 def load_lib():
@@ -113,11 +116,13 @@ def create_group(group, rank_num, rank_ids):
     check_rank_num(rank_num)
     if isinstance(rank_ids, (list)):
         if rank_num != len(rank_ids):
-            raise ValueError("The parameter 'rank_num' number is not equal to the length of rank_ids, "
-                             "but got 'rank_num' : {} and 'rank_ids' : {}.".format(rank_num, rank_ids))
+            raise ValueError("For 'create_group', the argument 'rank_num' number should be equal to the length "
+                             "of rank_ids, but got 'rank_num' value : {} and 'rank_ids' value : {}."
+                             .format(rank_num, rank_ids))
         for rank_id in rank_ids:
             if not isinstance(rank_id, (int)) or rank_id < 0:
-                raise ValueError("The parameter 'rank_id' must be unsigned integer, but got {}".format(type(rank_id)))
+                raise ValueError("For 'create_group', the elements of argument 'rank_ids' must be "
+                                 "unsigned integer, but got the type : {}".format(type(rank_id)))
         c_array_rank_ids = c_array(ctypes.c_uint, rank_ids)
         c_rank_num = ctypes.c_uint(rank_num)
         c_group = c_str(group)
@@ -125,7 +130,8 @@ def create_group(group, rank_num, rank_ids):
         if ret != 0:
             raise RuntimeError('Create group error, the error code is ' + str(ret))
     else:
-        raise TypeError("The parameter 'rank_id' must be a python list, but got {}".format(type(rank_ids)))
+        raise TypeError("For 'create_group', the argument 'rank_ids' must be type of list, "
+                        "but got 'rank_ids' type : {}.".format(type(rank_ids)))
 
 
 def destroy_group(group):

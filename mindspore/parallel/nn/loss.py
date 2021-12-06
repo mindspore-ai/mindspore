@@ -66,7 +66,7 @@ class CrossEntropyLoss(Cell):
     def __init__(self, parallel_config=default_dpmp_config):
         super(CrossEntropyLoss, self).__init__()
         if not isinstance(parallel_config, OpParallelConfig):
-            raise TypeError("The type of parameter 'parallel_config' must be OpParallelConfig, "
+            raise TypeError("For 'CrossEntropyLoss', the class variable 'parallel_config' must be OpParallelConfig, "
                             "but got the type: {}.".format(type(parallel_config)))
         dp = parallel_config.data_parallel
         mp = parallel_config.model_parallel

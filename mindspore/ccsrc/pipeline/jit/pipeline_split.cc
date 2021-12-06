@@ -96,12 +96,12 @@ bool PipelineSplit(const ResourcePtr &res) {
     device_num = parallel::ParallelContext::GetInstance()->device_num();
   }
   if (device_num < 1) {
-    MS_LOG(ERROR) << "The context configuration parameter 'device_num' must be positive, "
+    MS_LOG(ERROR) << "For 'PipelineSplit', the argument 'device_num' must be positive, "
                      "but got the value of device_num: "
                   << device_num;
   }
   if (global_rank < 0) {
-    MS_LOG(ERROR) << "The context configuration parameter 'global_rank' must be nonnegative, "
+    MS_LOG(ERROR) << "For 'PipelineSplit', the argument 'global_rank' must be nonnegative, "
                      "but got the value of global_rank: "
                   << global_rank;
   }

@@ -60,7 +60,7 @@ bool InitDevice(int64_t device_num, int64_t global_rank, const std::string &back
     return false;
   }
   if ((backend != HCCL_BACKEND) && (backend != NCCL_BACKEND) && (backend != UNDEFINED_BACKEND)) {
-    MS_LOG(ERROR) << "The context configuration parameter 'backend' must be hccl, nccl "
+    MS_LOG(ERROR) << "For 'InitDevice', the argument 'backend' must be hccl, nccl "
                      "or undefined_backend, but got invalid backend: "
                   << backend;
     return false;
@@ -156,7 +156,7 @@ std::shared_ptr<Device> GetListMemberByIndex(size_t index, const std::vector<std
 Status DeviceManager::Init(const RankList &devices, int64_t global_device_rank, const RankList &stage_map,
                            const std::string &backend) {
   if ((backend != HCCL_BACKEND) && (backend != NCCL_BACKEND) && (backend != UNDEFINED_BACKEND)) {
-    MS_LOG(ERROR) << "The context configuration parameter 'backend' must be hccl, nccl "
+    MS_LOG(ERROR) << "For 'Init', the argument 'backend' must be hccl, nccl "
                      "or undefined_backend, but got invalid backend: "
                   << backend;
     return FAILED;

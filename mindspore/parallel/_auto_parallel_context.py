@@ -203,10 +203,11 @@ class _AutoParallelContext:
     def set_pipeline_stages(self, stages):
         """Set the stages of the pipeline"""
         if isinstance(stages, bool) or not isinstance(stages, int):
-            raise TypeError("The type of pipeline_stage_num must be int, but got the type : {}.".format(type(stages)))
+            raise TypeError("For 'set_auto_parallel_context().set_pipeline_stages', the argument 'pipeline_stages' "
+                            "must be int, but got the type : {}.".format(type(stages)))
         if stages < 1:
-            raise ValueError("The parameter pipeline_stage_num be greater or equal 1, "
-                             "but got the value of stages : {}.".format(stages))
+            raise ValueError("For 'set_auto_parallel_context().set_pipeline_stages', the argument 'pipeline_stages' "
+                             "should be greater or equal 1, but got the value of stages : {}.".format(stages))
         self.check_context_handle()
         self._context_handle.set_pipeline_stage_split_num(stages)
 
@@ -265,8 +266,8 @@ class _AutoParallelContext:
             loss_repeated_mean (bool): The loss_repeated_mean flag.
         """
         if not isinstance(loss_repeated_mean, bool):
-            raise TypeError("The type of context configuration parameter 'loss_repeated_mean' must be bool, "
-                            "but got the type : {}.".format(type(loss_repeated_mean)))
+            raise TypeError("For 'auto_parallel_context().set_loss_repeated_mean', the argument 'loss_repeated_mean' "
+                            "must be bool, but got the type : {}.".format(type(loss_repeated_mean)))
         self.check_context_handle()
         self._context_handle.set_loss_repeated_mean(loss_repeated_mean)
 
@@ -314,7 +315,7 @@ class _AutoParallelContext:
         self.check_context_handle()
         ret = self._context_handle.set_strategy_search_mode(search_mode)
         if ret is False:
-            raise ValueError("The context configuration parameter 'search_mode' only support "
+            raise ValueError("The context configuration parameter 'auto_parallel_search_mode' only support "
                              "'recursive_programming' and 'dynamic_programming', but got the value : {}."
                              .format(search_mode))
 
@@ -363,8 +364,9 @@ class _AutoParallelContext:
                        "and this attribute will be deleted in a future MindSpore version.")
         self.check_context_handle()
         if not isinstance(sharding_propagation, bool):
-            raise TypeError("The type of parameter 'sharding_propagation' must be bool, "
-                            "but got the type : {}.".format(type(sharding_propagation)))
+            raise TypeError("For 'set_auto_parallel_context().set_sharding_propagation', "
+                            "the argument 'sharding_propagation' must be bool, but got the type : {}."
+                            .format(type(sharding_propagation)))
         self._context_handle.set_sharding_propagation(sharding_propagation)
 
     def get_sharding_propagation(self):
@@ -429,21 +431,23 @@ class _AutoParallelContext:
         self.check_context_handle()
         if isinstance(dataset_strategy, str):
             if dataset_strategy not in ("full_batch", "data_parallel"):
-                raise ValueError("The context configuration parameter 'dataset_strategy' must be "
-                                 "'full_batch' or 'data_parallel', but got the value : {}.".format(dataset_strategy))
+                raise ValueError("For 'set_auto_parallel_context().set_dataset_strategy', the argument "
+                                 "'dataset_strategy' must be 'full_batch' or 'data_parallel', but got the value : {}."
+                                 .format(dataset_strategy))
             self._context_handle.set_full_batch(dataset_strategy == "full_batch")
             self._dataset_strategy_using_str = True
             return
         if not isinstance(dataset_strategy, tuple):
-            raise TypeError("The type of context configuration parameter 'strategy' must be str or tuple type, "
-                            "but got the type : {}.".format(type(dataset_strategy)))
+            raise TypeError("For 'set_auto_parallel_context().set_dataset_strategy', the argument 'dataset_strategy' "
+                            "must be str or tuple type, but got the type : {}.".format(type(dataset_strategy)))
         for ele in dataset_strategy:
             if not isinstance(ele, tuple):
-                raise TypeError("The element of strategy must be tuple, but got the type : {} .".format(type(ele)))
+                raise TypeError("For 'set_auto_parallel_context().set_dataset_strategy', the element of argument "
+                                "'dataset_strategy' must be tuple, but got the type : {} .".format(type(ele)))
             for dim in ele:
                 if not isinstance(dim, int):
-                    raise TypeError("The dim of each strategy value must be int type, "
-                                    "but got the type : {} .".format(type(dim)))
+                    raise TypeError("For 'set_auto_parallel_context().set_dataset_strategy', the element of argument "
+                                    "'dataset_strategy' must be int type, but got the type : {} .".format(type(dim)))
         self._dataset_strategy_using_str = False
         self._context_handle.set_dataset_strategy(dataset_strategy)
 
@@ -517,22 +521,24 @@ class _AutoParallelContext:
         """
         self.check_context_handle()
         if not indices:
-            raise ValueError("The parameter 'indices' can not be empty")
+            raise ValueError("For 'set_auto_parallel_context().set_all_reduce_fusion_split_indices', "
+                             "the argument 'indices' can not be empty")
 
         if isinstance(indices, (list)):
             for index in indices:
                 if not isinstance(index, int) or isinstance(index, bool):
-                    raise TypeError("The type of parameter 'index' must be int, but got the type : {} ."
-                                    .format(type(index)))
+                    raise TypeError("For 'set_auto_parallel_context().set_all_reduce_fusion_split_indices', "
+                                    "the argument 'index' must be int, but got the type : {} .".format(type(index)))
         else:
-            raise TypeError("The type of parameter 'indices' must be a python list, but got the type : {} ."
-                            .format(type(indices)))
+            raise TypeError("For 'set_auto_parallel_context().set_all_reduce_fusion_split_indices', "
+                            "the argument 'indices' must be list, but got the type : {} .".format(type(indices)))
 
         if len(set(indices)) != len(indices):
             raise ValueError("The indices has duplicate elements")
 
         if sorted(indices) != indices:
-            raise ValueError("The elements in indices must be sorted in ascending order")
+            raise ValueError("For 'set_auto_parallel_context().set_all_reduce_fusion_split_indices', "
+                             "the elements in argument 'indices' must be sorted in ascending order")
 
         new_group = self._check_and_default_group(group)
 
@@ -573,10 +579,11 @@ class _AutoParallelContext:
         if isinstance(sizes, (list)):
             for size in sizes:
                 if not isinstance(size, int) or isinstance(size, bool):
-                    raise TypeError("The type of size must be int, but got the type : {}.".format(type(size)))
+                    raise TypeError("For 'set_auto_parallel_context().set_all_reduce_fusion_split_sizes', "
+                                    "the argument 'sizes' must be int, but got the type : {}.".format(type(size)))
         else:
-            raise TypeError("The type of parameter 'sizes' must be a python list, but got the type : {}."
-                            .format(type(sizes)))
+            raise TypeError("For 'set_auto_parallel_context().set_all_reduce_fusion_split_sizes', "
+                            "the argument 'sizes' must be list, but got the type : {}.".format(type(sizes)))
 
         new_group = self._check_and_default_group(group)
         self._context_handle.set_all_reduce_fusion_split_sizes(sizes, new_group)
@@ -609,8 +616,9 @@ class _AutoParallelContext:
         """
         self.check_context_handle()
         if not isinstance(enable_all_reduce_fusion, bool):
-            raise TypeError("The type of parameter 'enable_all_reduce_fusion' must be bool, "
-                            "but got the type : {}.".format(type(enable_all_reduce_fusion)))
+            raise TypeError("For 'set_auto_parallel_context().set_enable_all_reduce_fusion', "
+                            "the argument 'enable_all_reduce_fusion' must be bool, but got the type : {}."
+                            .format(type(enable_all_reduce_fusion)))
         self._context_handle.set_enable_all_reduce_fusion(enable_all_reduce_fusion)
 
     def get_enable_all_reduce_fusion(self):
@@ -637,8 +645,9 @@ class _AutoParallelContext:
         """
         self.check_context_handle()
         if not isinstance(enable_parallel_optimizer, bool):
-            raise TypeError("The type of parameter 'enable_parallel_optimizer' must be bool, "
-                            "but got the type : {}.".format(type(enable_parallel_optimizer)))
+            raise TypeError("For 'set_auto_parallel_context().set_enable_parallel_optimizer', "
+                            "the argument 'enable_parallel_optimizer' must be bool, but got the type : {}."
+                            .format(type(enable_parallel_optimizer)))
         self._context_handle.set_enable_parallel_optimizer(enable_parallel_optimizer)
 
     def get_enable_parallel_optimizer(self):
@@ -691,8 +700,8 @@ class _AutoParallelContext:
         """
         self.check_context_handle()
         if not isinstance(enable_a2a, bool):
-            raise TypeError("The type of parameter 'enable_a2a' must be bool, "
-                            "but got the type : {}.".format(type(enable_a2a)))
+            raise TypeError("For 'set_auto_parallel_context().set_enable_alltoall', the argument 'enable_a2a' "
+                            "must be bool, but got the type : {}.".format(type(enable_a2a)))
         self._context_handle.set_enable_alltoall(enable_a2a)
 
     def get_enable_alltoall(self):
@@ -711,14 +720,16 @@ class _AutoParallelContext:
             ValueError: If parallel mode is not supported.
         """
         if not isinstance(communi_parallel_mode, str):
-            raise TypeError("The type of parameter 'communi_parallel_mode' must be str, "
-                            "but got the type : {}.".format(type(communi_parallel_mode)))
+            raise TypeError("For 'set_auto_parallel_context().set_communi_parallel_mode', "
+                            "the argument 'communi_parallel_mode' must be str, but got the type : {}."
+                            .format(type(communi_parallel_mode)))
         self.check_context_handle()
         ret = self._context_handle.set_communi_parallel_mode(communi_parallel_mode)
         if ret is False:
-            raise ValueError("The parameter 'communi_parallel_mode' only support 'ALL_GROUP_PARALLEL', "
-                             "'SAME_SEVER_GROUP_PARALLEL' and 'NO_GROUP_PARALLEL', but got the value : {}."
-                             .format(communi_parallel_mode))
+            raise ValueError("For 'set_auto_parallel_context().set_communi_parallel_mode', "
+                             "the argument 'communi_parallel_mode' only support 'ALL_GROUP_PARALLEL', "
+                             "'SAME_SEVER_GROUP_PARALLEL' and 'NO_GROUP_PARALLEL', "
+                             "but got the value : {}.".format(communi_parallel_mode))
 
     def get_communi_parallel_mode(self):
         """Get communication parallel mode."""
