@@ -5802,7 +5802,7 @@ class Schema:
             >>> from mindspore.dataset import Schema
             >>> schema = Schema()
             >>> columns1 = [{'name': 'image', 'type': 'int8', 'shape': [3, 3]},
-            >>>             {'name': 'label', 'type': 'int8', 'shape': [1]}]
+            ...             {'name': 'label', 'type': 'int8', 'shape': [1]}]
             >>> schema.parse_columns(columns1)
             >>> columns2 = {'image': {'shape': [3, 3], 'type': 'int8'}, 'label': {'shape': [1], 'type': 'int8'}}
             >>> schema.parse_columns(columns2)
