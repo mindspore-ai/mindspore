@@ -101,7 +101,6 @@ def test_vectors_from_file_all_buildfromfile_params():
            [0.68047, -0.039263, 0.30186, -0.17792, 0.42962, 0.032246],
            [0.26818, 0.14346, -0.27877, 0.016257, 0.11384, 0.69923],
            [0, 0, 0, 0, 0, 0]]
-    print(data)
     for d in data.create_dict_iterator(num_epochs=1, output_numpy=True):
         res_array = np.array(res[ind], dtype=np.float32)
         assert np.array_equal(res_array, d["text"]), ind

@@ -23,6 +23,7 @@
 #include "minddata/dataset/include/dataset/vision.h"
 #include "minddata/dataset/include/dataset/audio.h"
 #include "minddata/dataset/include/dataset/text.h"
+#include "minddata/dataset/text/char_n_gram.h"
 #include "minddata/dataset/text/fast_text.h"
 #include "minddata/dataset/text/glove.h"
 #include "minddata/dataset/text/vectors.h"
@@ -30,6 +31,7 @@
 
 using namespace mindspore::dataset;
 using mindspore::LogStream;
+using mindspore::dataset::CharNGram;
 using mindspore::dataset::FastText;
 using mindspore::dataset::GloVe;
 using mindspore::dataset::Vectors;
@@ -1932,6 +1934,142 @@ TEST_F(MindDataTestExecute, TestToVectorsWithInvalidParamForGloVe) {
   EXPECT_FALSE(status01.IsOk());
   std::shared_ptr<GloVe> glove02 = nullptr;
   std::shared_ptr<TensorTransform> to_vectors02 = std::make_shared<text::ToVectors>(glove02);
+  auto transform02 = Execute({to_vectors02});
+  Status status02 = transform02(token, &lookup_result);
+  EXPECT_FALSE(status02.IsOk());
+}
+
+/// Feature: CharNGram
+/// Description: test basic usage of CharNGram and the ToVectors with default parameter
+/// Expectation: get correct MSTensor
+TEST_F(MindDataTestExecute, TestCharNGramParam) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestCharNGramParam.";
+  std::shared_ptr<Tensor> de_tensor;
+  Tensor::CreateScalar<std::string>("the", &de_tensor);
+  auto token = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_tensor));
+  mindspore::MSTensor lookup_result;
+
+  // Create expected output.
+  std::shared_ptr<Tensor> de_expected01;
+  std::vector<float> expected01 = {-0.840079,-0.0270003,-0.833472,0.588367,-0.210012};
+  ASSERT_OK(Tensor::CreateFromVector(expected01, &de_expected01));
+  auto ms_expected01 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected01));
+  std::shared_ptr<Tensor> de_expected02;
+  std::vector<float> expected02 = {-1.34122,0.0442693,-0.48697,0.662939,-0.367669};
+  ASSERT_OK(Tensor::CreateFromVector(expected02, &de_expected02));
+  auto ms_expected02 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected02));
+
+  // Transform params.
+  std::string vectors_dir = "data/dataset/testVectors/char_n_gram_20.txt";
+  std::shared_ptr<CharNGram> char_n_gram01;
+  Status s01 = CharNGram::BuildFromFile(&char_n_gram01, vectors_dir);
+  EXPECT_EQ(s01, Status::OK());
+  std::shared_ptr<TensorTransform> to_vectors01 = std::make_shared<text::ToVectors>(char_n_gram01);
+  auto transform01 = Execute({to_vectors01});
+  Status status01 = transform01(token, &lookup_result);
+  EXPECT_EQ(lookup_result.Shape(), ms_expected01.Shape());
+  EXPECT_TRUE(status01.IsOk());
+
+  std::shared_ptr<CharNGram> char_n_gram02;
+  Status s02 = CharNGram::BuildFromFile(&char_n_gram02, vectors_dir, 100);
+  EXPECT_EQ(s02, Status::OK());
+  std::shared_ptr<TensorTransform> to_vectors02 = std::make_shared<text::ToVectors>(char_n_gram02);
+  auto transform02 = Execute({to_vectors02});
+  Status status02 = transform02(token, &lookup_result);
+  EXPECT_EQ(lookup_result.Shape(), ms_expected01.Shape());
+  EXPECT_TRUE(status02.IsOk());
+
+  std::shared_ptr<CharNGram> char_n_gram03;
+  Status s03 = CharNGram::BuildFromFile(&char_n_gram03, vectors_dir, 18);
+  EXPECT_EQ(s03, Status::OK());
+  std::shared_ptr<TensorTransform> to_vectors03 = std::make_shared<text::ToVectors>(char_n_gram03);
+  auto transform03 = Execute({to_vectors03});
+  Status status03 = transform03(token, &lookup_result);
+  EXPECT_EQ(lookup_result.Shape(), ms_expected02.Shape());
+  EXPECT_TRUE(status03.IsOk());
+}
+
+/// Feature: CharNGram
+/// Description: test basic usage of ToVectors and the CharNGram with default parameter
+/// Expectation: get correct MSTensor
+TEST_F(MindDataTestExecute, TestToVectorsParamForCharNGram) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestToVectorsParamForCharNGram.";
+  std::shared_ptr<Tensor> de_tensor01;
+  Tensor::CreateScalar<std::string>("none", &de_tensor01);
+  auto token01 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_tensor01));
+  std::shared_ptr<Tensor> de_tensor02;
+  Tensor::CreateScalar<std::string>("the", &de_tensor02);
+  auto token02 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_tensor02));
+  std::shared_ptr<Tensor> de_tensor03;
+  Tensor::CreateScalar<std::string>("The", &de_tensor03);
+  auto token03 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_tensor03));
+  mindspore::MSTensor lookup_result;
+
+  // Create expected output.
+  std::shared_ptr<Tensor> de_expected01;
+  std::vector<float> expected01(5, 0);
+  ASSERT_OK(Tensor::CreateFromVector(expected01, &de_expected01));
+  auto ms_expected01 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected01));
+  std::shared_ptr<Tensor> de_expected02;
+  std::vector<float> expected02(5, -1);
+  ASSERT_OK(Tensor::CreateFromVector(expected02, &de_expected02));
+  auto ms_expected02 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected02));
+  std::shared_ptr<Tensor> de_expected03;
+  std::vector<float> expected03 = {-0.840079,-0.0270003,-0.833472,0.588367,-0.210012};
+  ASSERT_OK(Tensor::CreateFromVector(expected03, &de_expected03));
+  auto ms_expected03 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected03));
+
+  // Transform params.
+  std::string vectors_dir = "data/dataset/testVectors/char_n_gram_20.txt";
+  std::shared_ptr<CharNGram> char_n_gram;
+  Status s = CharNGram::BuildFromFile(&char_n_gram, vectors_dir);
+  EXPECT_EQ(s, Status::OK());
+
+  std::shared_ptr<TensorTransform> to_vectors01 = std::make_shared<text::ToVectors>(char_n_gram);
+  auto transform01 = Execute({to_vectors01});
+  Status status01 = transform01(token01, &lookup_result);
+  EXPECT_EQ(lookup_result.Shape(), ms_expected01.Shape());
+  EXPECT_TRUE(status01.IsOk());
+  std::vector<float> unknown_init(5, -1);
+  std::shared_ptr<TensorTransform> to_vectors02 = std::make_shared<text::ToVectors>(char_n_gram, unknown_init);
+  auto transform02 = Execute({to_vectors02});
+  Status status02 = transform02(token01, &lookup_result);
+  EXPECT_EQ(lookup_result.Shape(), ms_expected02.Shape());
+  EXPECT_TRUE(status02.IsOk());
+  std::shared_ptr<TensorTransform> to_vectors03 = std::make_shared<text::ToVectors>(char_n_gram, unknown_init);
+  auto transform03 = Execute({to_vectors03});
+  Status status03 = transform03(token02, &lookup_result);
+  EXPECT_EQ(lookup_result.Shape(), ms_expected03.Shape());
+  EXPECT_TRUE(status03.IsOk());
+  std::shared_ptr<TensorTransform> to_vectors04 = std::make_shared<text::ToVectors>(char_n_gram, unknown_init, true);
+  auto transform04 = Execute({to_vectors04});
+  Status status04 = transform04(token03, &lookup_result);
+  EXPECT_EQ(lookup_result.Shape(), ms_expected03.Shape());
+  EXPECT_TRUE(status04.IsOk());
+}
+
+/// Feature: CharNGram
+/// Description: test invalid parameter of ToVectors
+/// Expectation: throw exception correctly
+TEST_F(MindDataTestExecute, TestToVectorsWithInvalidParamForCharNGram) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestToVectorsWithInvalidParamForCharNGram.";
+  std::shared_ptr<Tensor> de_tensor;
+  Tensor::CreateScalar<std::string>("none", &de_tensor);
+  auto token = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_tensor));
+  mindspore::MSTensor lookup_result;
+
+  // Transform params.
+  std::string vectors_dir = "data/dataset/testVectors/char_n_gram_20.txt";
+  std::shared_ptr<CharNGram> char_n_gram01;
+  Status s = CharNGram::BuildFromFile(&char_n_gram01, vectors_dir);
+  EXPECT_EQ(s, Status::OK());
+  std::vector<float> unknown_init(4, -1);
+  std::shared_ptr<TensorTransform> to_vectors01 = std::make_shared<text::ToVectors>(char_n_gram01, unknown_init);
+  auto transform01 = Execute({to_vectors01});
+  Status status01 = transform01(token, &lookup_result);
+  EXPECT_FALSE(status01.IsOk());
+  std::shared_ptr<CharNGram> char_n_gram02 = nullptr;
+  std::shared_ptr<TensorTransform> to_vectors02 = std::make_shared<text::ToVectors>(char_n_gram02);
   auto transform02 = Execute({to_vectors02});
   Status status02 = transform02(token, &lookup_result);
   EXPECT_FALSE(status02.IsOk());

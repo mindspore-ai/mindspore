@@ -19,6 +19,7 @@
 
 #include "minddata/dataset/api/python/pybind_register.h"
 #include "minddata/dataset/include/dataset/constants.h"
+#include "minddata/dataset/text/char_n_gram.h"
 #include "minddata/dataset/text/fast_text.h"
 #include "minddata/dataset/text/glove.h"
 #include "minddata/dataset/text/sentence_piece_vocab.h"
@@ -88,6 +89,16 @@ PYBIND_REGISTER(SentencePieceModel, 0, ([](const py::module *m) {
                     .value("DE_SENTENCE_PIECE_CHAR", SentencePieceModel::kChar)
                     .value("DE_SENTENCE_PIECE_WORD", SentencePieceModel::kWord)
                     .export_values();
+                }));
+
+PYBIND_REGISTER(CharNGram, 1, ([](const py::module *m) {
+                  (void)py::class_<CharNGram, Vectors, std::shared_ptr<CharNGram>>(*m, "CharNGram")
+                    .def(py::init<>())
+                    .def_static("from_file", [](const std::string &path, int32_t max_vectors) {
+                      std::shared_ptr<CharNGram> char_n_gram;
+                      THROW_IF_ERROR(CharNGram::BuildFromFile(&char_n_gram, path, max_vectors));
+                      return char_n_gram;
+                    });
                 }));
 
 PYBIND_REGISTER(FastText, 1, ([](const py::module *m) {

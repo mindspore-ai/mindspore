@@ -40,7 +40,7 @@ class Vectors {
   /// Constructor.
   /// \param[in] map A map between string and vector.
   /// \param[in] dim Dimension of the vectors.
-  Vectors(const std::unordered_map<std::string, std::vector<float>> &map, int dim);
+  Vectors(const std::unordered_map<std::string, std::vector<float>> &map, int32_t dim);
 
   /// Destructor.
   virtual ~Vectors() = default;
@@ -61,7 +61,7 @@ class Vectors {
                                     bool lower_case_backup = false);
 
   /// \brief Getter of dimension.
-  const int &Dim() const { return dim_; }
+  const int32_t &Dim() const { return dim_; }
 
  protected:
   /// \brief Infer the shape of the pre-trained word vector file.
@@ -79,9 +79,9 @@ class Vectors {
   /// \param[out] map The map between words and vectors.
   /// \param[out] vector_dim The dimension of the vectors in the file.
   static Status Load(const std::string &path, int32_t max_vectors,
-                     std::unordered_map<std::string, std::vector<float>> *map, int *vector_dim);
+                     std::unordered_map<std::string, std::vector<float>> *map, int32_t *vector_dim);
 
-  int dim_;
+  int32_t dim_;
   std::unordered_map<std::string, std::vector<float>> map_;
 };
 }  // namespace dataset

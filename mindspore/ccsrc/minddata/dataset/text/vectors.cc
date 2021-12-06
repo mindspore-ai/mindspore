@@ -60,7 +60,7 @@ Status Vectors::InferShape(const std::string &path, int32_t max_vectors, int32_t
 }
 
 Status Vectors::Load(const std::string &path, int32_t max_vectors,
-                     std::unordered_map<std::string, std::vector<float>> *map, int *vector_dim) {
+                     std::unordered_map<std::string, std::vector<float>> *map, int32_t *vector_dim) {
   RETURN_UNEXPECTED_IF_NULL(map);
   RETURN_UNEXPECTED_IF_NULL(vector_dim);
   auto realpath = FileUtils::GetRealPath(common::SafeCStr(path));
@@ -107,7 +107,7 @@ Status Vectors::Load(const std::string &path, int32_t max_vectors,
   return Status::OK();
 }
 
-Vectors::Vectors(const std::unordered_map<std::string, std::vector<float>> &map, int dim) {
+Vectors::Vectors(const std::unordered_map<std::string, std::vector<float>> &map, int32_t dim) {
   map_ = std::move(map);
   dim_ = dim;
 }
