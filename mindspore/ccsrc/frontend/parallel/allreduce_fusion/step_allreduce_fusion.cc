@@ -22,6 +22,7 @@
 #include "frontend/parallel/context.h"
 #include "frontend/parallel/graph_util/graph_info.h"
 #include "frontend/parallel/status.h"
+#include "frontend/parallel/step_parallel.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {
@@ -32,13 +33,15 @@ bool StepAllreduceFusion(const FuncGraphPtr &root, const opt::OptimizerPtr &opti
   MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
   std::string parallel_mode = ParallelContext::GetInstance()->parallel_mode();
   bool enable_all_reduce_fusion = ParallelContext::GetInstance()->enable_all_reduce_fusion();
+  auto graph_set = ForwardGraph(root);
   // assume no change to graph
   bool changes = false;
   // control whether use model_parallel mode
   if (!root->has_flag(AUTO_PARALLEL) || ((parallel_mode != AUTO_PARALLEL) && (parallel_mode != SEMI_AUTO_PARALLEL)) ||
-      (!enable_all_reduce_fusion) || (root->has_flag(ALLREDUCE_FUSION_RUN_ONCE_ONLY))) {
+      (!enable_all_reduce_fusion) || (root->has_flag(ALLREDUCE_FUSION_RUN_ONCE_ONLY)) || graph_set.size() < 1) {
     return changes;
   }
+
 #if defined(_WIN32) || defined(_WIN64)
   auto start_time = std::chrono::steady_clock::now();
 #else
@@ -47,7 +50,7 @@ bool StepAllreduceFusion(const FuncGraphPtr &root, const opt::OptimizerPtr &opti
   }, end_time{0};
   (void)gettimeofday(&start_time, nullptr);
 #endif
-  MS_LOG(INFO) << "Now entering allreduce fusion";
+  MS_LOG(INFO) << "Now entering allreduce fusion by size, and allreduce fusion before will be overlapped!";
   DumpGraph(root, std::string(ALLREDUCE_FUSION_BEGIN));
 
   pipeline::ResourceBasePtr res = optimizer->resource();

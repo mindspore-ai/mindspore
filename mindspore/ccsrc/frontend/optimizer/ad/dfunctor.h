@@ -24,6 +24,7 @@
 #include <vector>
 #include <iostream>
 #include <utility>
+#include <unordered_map>
 
 #include "utils/hash_map.h"
 #include "ir/anf.h"
@@ -38,7 +39,7 @@
 
 namespace mindspore {
 namespace ad {
-using Registry = mindspore::HashMap<PrimitivePtr, FuncGraphPtr, PrimitiveHasher, PrimitiveTotalEqual>;
+using Registry = std::unordered_map<PrimitivePtr, FuncGraphPtr, PrimitiveHasher, PrimitiveTotalEqual>;
 class KPrim;
 extern KPrim g_k_prims;
 class DFunctor;

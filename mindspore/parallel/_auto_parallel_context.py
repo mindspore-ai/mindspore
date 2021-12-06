@@ -26,6 +26,16 @@ _MAX_GROUP_NAME_LEN = 127
 _DEFAULT_HCCL_FUSION_GROUP_NAME = "hccl_world_groupsum1"
 _DEFAULT_NCCL_FUSION_GROUP_NAME = "nccl_world_groupsum1"
 
+class _ParallelFusionConfig:
+    """
+    The key of the Parallel fusion method configuration.
+    """
+    ALLREDUCE = "allreduce"
+    MODE = "mode"
+    FUSION_CONFIG = "config"
+    AUTO = "auto"
+    INDEX = "index"
+    SIZE = "size"
 
 class _ParallelOptimizerConfig:
     """
@@ -88,6 +98,86 @@ class _AutoParallelContext:
         """Get device num."""
         self.check_context_handle()
         return self._context_handle.get_device_num()
+
+    def set_comm_fusion(self, config):
+        """
+        Set fusion method for auto parallel.
+
+        Args:
+            config (dict): A dict contains the methods and values for setting the communication fusion. Currently it
+            supports: `allreduce`.
+
+        Raises:
+            KeyError: When key of comm_fusion is not 'allreduce'.
+        """
+        self.check_context_handle()
+        for key in list(config.keys()):
+            if key == _ParallelFusionConfig.ALLREDUCE:
+                self._set_allreduce_comm_fusion(config[key])
+            else:
+                raise KeyError("comm fusion type must be allreduce, but got {}".format(key))
+
+    def _set_allreduce_comm_fusion(self, comm_fusion):
+        """
+        Set fusion method for auto parallel.
+
+        Args:
+            comm_fusion (dict): A dict contains the methods and values for setting the fusion method. Currently it
+                                  supports four fusion methods: `auto`, `size` and `index`.
+
+        Raises:
+            KeyError: When key of comm_fusion is not 'mode' or 'config'.
+            KeyError: When `mode` is not 'auto', 'size' or 'index'.
+        """
+        self.check_context_handle()
+        if _ParallelFusionConfig.MODE not in comm_fusion:
+            raise KeyError("For 'comm_fusion', the key 'mode' should be contained.")
+        if _ParallelFusionConfig.FUSION_CONFIG not in comm_fusion:
+            raise KeyError("For 'comm_fusion', the key 'config' should be contained.")
+        check_mode = [_ParallelFusionConfig.AUTO, _ParallelFusionConfig.INDEX, _ParallelFusionConfig.SIZE]
+        if comm_fusion[_ParallelFusionConfig.MODE] in check_mode:
+            self._context_handle.set_fusion_mode(comm_fusion[_ParallelFusionConfig.MODE])
+        else:
+            raise KeyError("fusion method mode must be auto, index or size, but got {}".format(
+                comm_fusion[_ParallelFusionConfig.MODE]))
+        if comm_fusion[_ParallelFusionConfig.MODE] == _ParallelFusionConfig.AUTO:
+            self.set_fusion_threshold_mb(fusion_threshold=64)
+        if comm_fusion[_ParallelFusionConfig.MODE] == _ParallelFusionConfig.SIZE:
+            self.set_fusion_threshold_mb(comm_fusion[_ParallelFusionConfig.FUSION_CONFIG])
+        if comm_fusion[_ParallelFusionConfig.MODE] == _ParallelFusionConfig.INDEX:
+            self.set_all_reduce_fusion_split_indices(comm_fusion[_ParallelFusionConfig.FUSION_CONFIG])
+
+    def get_comm_fusion(self):
+        """Get comm fusion config."""
+        self.check_context_handle()
+        mode = self._context_handle.get_fusion_mode()
+        if mode in (_ParallelFusionConfig.AUTO, _ParallelFusionConfig.SIZE):
+            config = self.fusion_threshold_mb()
+        if mode == _ParallelFusionConfig.INDEX:
+            config = self.get_all_reduce_fusion_split_indices()
+        return {_ParallelFusionConfig.ALLREDUCE: {_ParallelFusionConfig.MODE: mode,
+                                                  _ParallelFusionConfig.FUSION_CONFIG: config}}
+
+
+    def set_fusion_threshold_mb(self, fusion_threshold=64):
+        """
+        Set fusion threshold (MB) for auto parallel.
+
+        Args:
+            fusion_threshold (int): The fusion threshold (unit: MB). Default: 64.
+
+        Raises:
+            ValueError: If the fusion threshold is not in [0, +inf].
+        """
+        self.check_context_handle()
+        if fusion_threshold < 0:
+            raise ValueError("fusion threshold must be larger than 0, but got {}".format(fusion_threshold))
+        self._context_handle.set_fusion_threshold_mb(fusion_threshold)
+
+    def fusion_threshold_mb(self):
+        """Get device num."""
+        self.check_context_handle()
+        return self._context_handle.fusion_threshold_mb()
 
     def set_global_rank(self, global_rank):
         """
@@ -741,7 +831,8 @@ _set_auto_parallel_context_func_map = {
     "optimizer_weight_shard_size": auto_parallel_context().set_optimizer_weight_shard_size,
     "optimizer_weight_shard_aggregated_save": auto_parallel_context().set_optimizer_weight_shard_aggregated_save,
     "sharding_propagation": auto_parallel_context().set_sharding_propagation,
-    "enable_alltoall": auto_parallel_context().set_enable_alltoall}
+    "enable_alltoall": auto_parallel_context().set_enable_alltoall,
+    "comm_fusion": auto_parallel_context().set_comm_fusion}
 
 
 _get_auto_parallel_context_func_map = {
@@ -766,7 +857,8 @@ _get_auto_parallel_context_func_map = {
     "optimizer_weight_shard_size": auto_parallel_context().get_optimizer_weight_shard_size,
     "optimizer_weight_shard_aggregated_save": auto_parallel_context().get_optimizer_weight_shard_aggregated_save,
     "sharding_propagation": auto_parallel_context().get_sharding_propagation,
-    "enable_alltoall": auto_parallel_context().get_enable_alltoall}
+    "enable_alltoall": auto_parallel_context().get_enable_alltoall,
+    "comm_fusion": auto_parallel_context().get_comm_fusion}
 
 
 @args_type_check(device_num=int, global_rank=int, gradients_mean=bool, gradient_fp32_sync=bool,
@@ -775,7 +867,7 @@ _get_auto_parallel_context_func_map = {
                  strategy_ckpt_save_file=str, full_batch=bool, enable_parallel_optimizer=bool,
                  grad_accumulation_step=int, all_reduce_fusion_config=list, group_ckpt_save_file=str,
                  communi_parallel_mode=str, optimizer_weight_shard_size=int, sharding_propagation=bool,
-                 optimizer_weight_shard_aggregated_save=bool, enable_alltoall=bool)
+                 optimizer_weight_shard_aggregated_save=bool, enable_alltoall=bool, comm_fusion=dict)
 
 def _set_auto_parallel_context(**kwargs):
     """
@@ -848,6 +940,16 @@ def _set_auto_parallel_context(**kwargs):
                                     search the desired strategies. Default: False.
         enable_alltoall (bool): Set the value of enabling AllToAll. If False, AllGather and Split are used to
                                 circumvent AllToAll. Default: False.
+        comm_fusion (dict): A dict contains the types and configurations for setting the communication fusion. each
+                    communication fusion config has two keys: "mode" and "config".
+                    It supports following communication fusion types and configurations:
+
+                    - allreduce: if communication fusion type is `allreduce`. The `mode` contains: `auto`, `size`
+                        and `index`. In `auto` mode, allreduce fusion is configured by gradients size, and the default
+                        fusion threshold is `64` MB. In 'size' mode, allreduce fusion is configured by gradients size
+                        manually, and the fusion threshold must be larger than `0` MB. In `index` mode, it is same as
+                        `all_reduce_fusion_config`.
+
 
     Raises:
         ValueError: If input key is not attribute in auto parallel context.
@@ -896,5 +998,6 @@ def _reset_auto_parallel_context():
     - sharding_propagation: False
     - pipeline_stages: 0
     - gradient_accumulation_shard: True
+    - fusion_threshold: 64
     """
     auto_parallel_context().reset()

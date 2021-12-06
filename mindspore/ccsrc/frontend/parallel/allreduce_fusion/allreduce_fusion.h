@@ -27,8 +27,6 @@
 
 namespace mindspore {
 namespace parallel {
-using CNodeCostMap = mindspore::HashMap<CNodePtr, double>;
-
 constexpr int64_t DEFAULT_COST_MODEL_ALLREDUCE_FUSION_ALGORITHM = 0;
 constexpr int64_t DEFAULT_COST_MODEL_ALLREDUCE_FUSION_TIMES = 0;
 constexpr double DEFAULT_COST_MODEL_ALLREDUCE_FUSION_TAIL_PERCENT = 0.1;
@@ -46,31 +44,17 @@ class AllreduceFusion {
         forward_ret_(nullptr),
         root_graph_(nullptr),
         tail_time_(0),
-        allreduce_inherent_time_(0),
-        allreduce_bandwidth_(0),
         computation_time_parameter_(0) {}
   virtual ~AllreduceFusion() = default;
   Status ProcessAllreduceFusion(const CNodePtr &ret);
 
  private:
-  Status AddNodeToGraph();
-  CNodeCostMap FindCNode(const AnfNodePtr &from, uint64_t recursive_times = 0) const;
-  CNodeCostMap FindNextCNodes(const CNodePtr &from, uint64_t recursive_times = 0) const;
-  Status AddEdgeToGraph();
-  std::vector<double> GenerateCostMap(int64_t fusion_times, double tail_percent) const;
-  Status SetFusion(const std::vector<double> &cost_map);
-  Status SetFusionByAlgorithm(int64_t algorithm);
-  Status SetFusionByBackwardCompTime();
-  Status SetFusionByBackwardCompAndAllreduceTime();
-  Status GetSetFusionByBackwardCompAndAllreduceTimeParams();
-
+  Status SetFusionBySize(const CNodePtr &ret, int64_t threshold);
   AllreduceGraph allreduce_graph_;
   CNodePtr ret_;
   CNodePtr forward_ret_;
   FuncGraphPtr root_graph_;
   double tail_time_;
-  double allreduce_inherent_time_;
-  double allreduce_bandwidth_;
   double computation_time_parameter_;
 };
 }  // namespace parallel

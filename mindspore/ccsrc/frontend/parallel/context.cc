@@ -36,6 +36,8 @@ std::vector<std::string> STRATEGY_SEARCH_MODE_LIST = {DYNAMIC_PROGRAMMING, RECUR
 std::vector<std::string> COMMUNI_PARALLEL_MODE_LIST = {ALL_GROUP_PARALLEL, SAME_SERVER_GROUP_PARALLEL,
                                                        NO_GROUP_PARALLEL};
 
+std::vector<std::string> FUSION_MODE_LIST = {FUSION_AUTO, FUSION_SIZE, FUSION_INDEX};
+
 std::shared_ptr<ParallelContext> ParallelContext::inst_context_ = nullptr;
 
 std::shared_ptr<ParallelContext> ParallelContext::GetInstance() {
@@ -60,7 +62,7 @@ void ParallelContext::Reset() {
   parallel_mode_ = STAND_ALONE;
   parameter_broadcast_ = false;
   parameter_broadcast_is_set_ = false;
-  enable_all_reduce_fusion_ = false;
+  enable_all_reduce_fusion_ = true;
   strategy_ckpt_load_file_ = "";
   strategy_ckpt_save_file_ = "";
   enable_parallel_optimizer_ = false;
@@ -76,11 +78,30 @@ void ParallelContext::Reset() {
   grad_accumulation_shard_ = true;
   sharding_propagation_ = false;
   dataset_strategy_.clear();
+  fusion_threshold_mb_ = FUSUION_THRESHOLD;
+  fusion_threshold_is_set_ = true;
+  fusion_mode_ = FUSION_AUTO;
 }
 
 void ParallelContext::set_device_num(int64_t device_num) {
   device_num_ = device_num;
   device_num_is_set_ = true;
+}
+
+void ParallelContext::set_fusion_threshold_mb(int64_t fusion_threshold) {
+  fusion_threshold_mb_ = fusion_threshold;
+  fusion_threshold_is_set_ = true;
+  enable_all_reduce_fusion_ = true;
+}
+
+bool ParallelContext::set_fusion_mode(const std::string &fusion_mode) {
+  auto iter = std::find(FUSION_MODE_LIST.begin(), FUSION_MODE_LIST.end(), fusion_mode);
+  if (iter == FUSION_MODE_LIST.end()) {
+    MS_LOG(INFO) << "Invalid fusion mode:" << fusion_mode;
+    return false;
+  }
+  fusion_mode_ = fusion_mode;
+  return true;
 }
 
 void ParallelContext::set_global_rank(int64_t global_rank) {
