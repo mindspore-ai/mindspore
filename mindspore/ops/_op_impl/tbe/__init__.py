@@ -84,7 +84,9 @@ from .confusion_mul_grad import _confusion_mul_grad_tbe
 from .dropout_do_mask import _dropout_do_mask_tbe
 from .dropout_do_mask_ds import _dropout_do_mask_ds_tbe
 from .gelu import _gelu_tbe
+from .gelu_ds import _gelu_ds_tbe
 from .gelu_grad import _gelu_grad_tbe
+from .gelu_grad_ds import _gelu_grad_ds_tbe
 from .ger import _ger_tbe
 from .fast_gelu import _fast_gelu_tbe
 from .fast_gelu_grad import _fast_gelu_grad_tbe
