@@ -4,13 +4,14 @@
 function Convert() {
   # $1:cfgFileList; $2:inModelPath; $3:outModelPath; $4:logFile; $5:resultFile; $6:failNotReturn;
   local cfg_file_list model_info model_name extra_info model_type cfg_file_name model_file weight_file output_file \
-        quant_type bit_num config_file train_model in_dtype out_dtype converter_result cfg_file
+        quant_type config_file train_model in_dtype out_dtype converter_result cfg_file calib_size
   cfg_file_list=$1
   for cfg_file in ${cfg_file_list[*]}; do
     while read line; do
       if [[ $line == \#* || $line == "" ]]; then
         continue
       fi
+      calib_size=`echo ${line} | awk -F ' ' '{print $3}'`
       model_info=${line%% *}
       model_name=${model_info%%;*}
       extra_info=${model_info##*;}
@@ -44,17 +45,16 @@ function Convert() {
       fi
       output_file=$3"/"${model_name}
       quant_type=""
-      bit_num=8
       config_file=""
       train_model="false"
       in_dtype="DEFAULT"
       out_dtype="DEFAULT"
       if [[ ${cfg_file_name} =~ "weightquant" ]]; then
-        postfix=${cfg_file##*_}
-        bit_num=${postfix:0:1}
+        # models_weightquant_${suffix}.cfg
+        suffix=${cfg_file_name: 19: -4}
         quant_type="WeightQuant"
-        output_file=${output_file}"_${bit_num}bit"
-        config_file="${quant_config_path}/weight_quant_${bit_num}bit.cfg"
+        output_file=${output_file}"_${suffix}"
+        config_file="${quant_config_path}/weight_quant_${suffix}.cfg"
       elif [[ ${cfg_file_name} =~ "_train" ]]; then
         train_model="true"
       elif [[ ${cfg_file_name} =~ "posttraining" ]]; then
@@ -75,6 +75,15 @@ function Convert() {
         --configFile=${config_file} --trainModel=${train_model} >> "$4"
       if [ $? = 0 ]; then
           converter_result='converter '${model_type}''${quant_type}' '${model_name}' pass';echo ${converter_result} >> $5
+          model_size=`ls ${output_file}.ms  -l|awk -F ' ' '{print $5}'`
+          if [[ -n ${calib_size} ]];then
+            if [[ ${model_size} -gt ${calib_size} ]]; then
+              echo "${output_file}.ms " model size is " ${model_size} " and calib size is " ${calib_size}"
+              converter_result='compare_size '${model_type}''${quant_type}' '${output_file##*/}.ms' failed';echo ${converter_result} >> $5
+            else
+              converter_result='compare_size '${model_type}''${quant_type}' '${output_file##*/}.ms' pass';echo ${converter_result} >> $5
+            fi
+          fi
       else
           converter_result='converter '${model_type}''${quant_type}' '${model_name}' failed';echo ${converter_result} >> $5
           if [[ $6 != "ON" ]]; then
@@ -159,8 +168,7 @@ function Run_Benchmark() {
       # adjust file name
       infix=""
       if [[ ${cfg_file_name} =~ "weightquant" ]]; then
-        infix="_${cfg_file##*_}"
-        infix=${infix%.*}
+        infix="_${cfg_file_name: 19: -4}"
       elif [[ ${cfg_file_name} =~ "_train" ]]; then
         infix="_train"
       elif [[ ${cfg_file_name} =~ "_posttraining" ]]; then

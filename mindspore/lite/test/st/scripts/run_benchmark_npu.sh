@@ -72,7 +72,7 @@ version=${file_name_array[2]}
 # Set models config filepath
 models_npu_config=${basepath}/../config/models_npu.cfg
 models_npu_fp16_config=${basepath}/../config/models_npu_fp16.cfg
-models_npu_weightquant_config=${basepath}/../config/models_npu_weightquant_8bit.cfg
+models_npu_weightquant_config=${basepath}/../config/models_weightquant_8bit_npu.cfg
 
 ms_models_path=${basepath}/ms_models
 
