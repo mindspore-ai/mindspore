@@ -679,7 +679,25 @@ bool ControlNodeParser::IsControlFlowDataArrow(const KernelGraphPtr &graph, cons
   }
 
   MS_EXCEPTION_IF_NULL(node);
-  if ((!node->isa<Parameter>()) || (AnfAlgo::IsParameterWeight(node->cast<ParameterPtr>()))) {
+  if (!node->isa<Parameter>()) {
+    return false;
+  }
+  auto parameter_node = node->cast<ParameterPtr>();
+  MS_EXCEPTION_IF_NULL(parameter_node);
+
+  // Parameter input should be linked to its entrance actor.
+  auto front_node = graph->GetFrontAnfByBackendAnf(node);
+  auto internal_node_with_index = graph->GetFrontNodeByInternalParameter(node);
+  front_node = (front_node != nullptr ? front_node : internal_node_with_index.first);
+  if (front_node == nullptr) {
+    auto front_node_with_index = graph->GetElementInTupleBackendFrontIndexMap(node);
+    front_node = front_node_with_index.first;
+  }
+
+  // If parameter is a weight node, it should be set to kernel actor directly.
+  if (AnfAlgo::IsParameterWeight(node->cast<ParameterPtr>()) ||
+      (front_node != nullptr && front_node->isa<Parameter>() &&
+       AnfAlgo::IsParameterWeight(front_node->cast<ParameterPtr>()))) {
     return false;
   }
 
@@ -688,12 +706,6 @@ bool ControlNodeParser::IsControlFlowDataArrow(const KernelGraphPtr &graph, cons
     return true;
   }
 
-  // Parameter input should be linked to its entrance actor.
-  auto front_node = graph->GetFrontAnfByBackendAnf(node);
-  if (front_node == nullptr) {
-    auto front_node_with_index = graph->GetElementInTupleBackendFrontIndexMap(node);
-    front_node = front_node_with_index.first;
-  }
   return (front_node != nullptr && front_node->isa<Parameter>());
 }
 
@@ -1454,6 +1466,31 @@ void ControlNodeParser::FetchNeedStackControlNode(const std::vector<AnfNodePtr> 
       auto input_with_indexs = FetchInputNodeByCNode(control_node);
       if (std::any_of(input_with_indexs.begin(), input_with_indexs.end(),
                       [](const auto &input_with_index) { return AnfAlgo::IsCallNode(input_with_index.first); })) {
+        need_stack_control_nodes_.emplace(control_node);
+        MS_LOG(DEBUG) << "Add need stack control node:" << control_node->DebugString();
+      }
+    }
+  }
+
+  for (const auto &control_node : control_nodes) {
+    MS_EXCEPTION_IF_NULL(control_node);
+    if (AnfAlgo::CheckPrimitiveType(control_node, prim::kPrimReturn)) {
+      auto input_with_indexs = FetchInputNodeByCNode(control_node);
+      size_t call_input_num = 0;
+      for (auto input_with_index : input_with_indexs) {
+        if (AnfAlgo::IsCallNode(input_with_index.first)) {
+          ++call_input_num;
+        }
+      }
+
+      const auto &cnode = control_node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(cnode);
+      const auto &inputs = cnode->inputs();
+      if (inputs.size() <= kReturnInputPos) {
+        MS_LOG(EXCEPTION) << "Invalid return node:" << control_node->DebugString();
+      }
+
+      if (call_input_num != 0 && (AnfAlgo::CheckPrimitiveType(inputs[kReturnInputPos], prim::kPrimDepend))) {
         need_stack_control_nodes_.emplace(control_node);
       }
     }

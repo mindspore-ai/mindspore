@@ -21,6 +21,7 @@
 #include <string>
 #include <memory>
 #include <stack>
+#include <set>
 #include "utils/hash_map.h"
 #include "runtime/framework/actor/actor_common.h"
 #include "runtime/framework/actor/control_flow/control_actor.h"
@@ -43,6 +44,7 @@ class StackActor : public ControlActor {
   // so it is implemented separately.
   void RunOpData(OpData<DeviceTensor> *const input_data, OpContext<DeviceTensor> *const context) override;
   void RunOpPartial(OpPartialPtr partial, size_t position, OpContext<DeviceTensor> *const context) override;
+  void RunOpControl(AID *const input_control, OpContext<DeviceTensor> *const context) override;
 
  protected:
   void FetchInput(OpContext<DeviceTensor> *const context) override;
@@ -59,13 +61,16 @@ class StackActor : public ControlActor {
 
   // The input data and partials records that the stack actor is copied from the input nodes and needs to be
   // stored in the device tensor in the stack.
-  mindspore::HashMap<int, mindspore::HashMap<size_t, std::stack<DeviceTensor *>>> input_parameter_data_;
-  mindspore::HashMap<int, mindspore::HashMap<size_t, std::stack<OpPartialPtr>>> input_parameter_partial_;
+  mindspore::HashMap<int, mindspore::HashMap<size_t, std::stack<DeviceTensor *>>> input_stack_data_;
+  mindspore::HashMap<int, mindspore::HashMap<size_t, std::stack<OpPartialPtr>>> input_stack_partials_;
+  mindspore::HashMap<int, mindspore::HashMap<AID, size_t>> input_stack_controls_;
 
+  std::set<AID> stack_control_aids_;
   // Input parameter num represents the number of actor's input come from funcgraph itself, these inputs will
   // be ranked at the front of input.
-  size_t input_parameter_data_num_{0};
-  size_t input_parameter_partial_num_{0};
+  size_t input_stack_data_num_{0};
+  size_t input_stack_partials_num_{0};
+  size_t input_stack_controls_num_{0};
   // The backend parameter is used to save the backend node corresponding to the device tensor in the stack.
   // When these device tensors are used as output, they need to be placed in the node of the result arrow,
   // so these nodes need to be saved.
