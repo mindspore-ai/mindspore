@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,12 +54,24 @@ struct TaskUtil_s {
   float sys_utilization;
 };
 
+typedef struct MemoryInfo_s {
+  float vss;
+  float rss;
+  float pss;
+} MemoryInfo;
+
+typedef struct SystemMemInfo_s {
+  float total_mem;
+  float available_mem;
+  float used_mem;
+} SystemMemInfo;
+
 typedef struct TaskUtil_s TaskUtil;
 typedef struct TaskUtil_s OpUtil;
 
-class SystemCpuInfo {
+class SystemInfo {
  public:
-  SystemCpuInfo() : first_sample_(true), prev_context_switch_count_(0) {}
+  SystemInfo() : first_sample_(true), prev_context_switch_count_(0), last_mem_sampling_failed_(false) {}
   // Read in current stats and return previous and currently read stats
   Status SampleAndGetCurrPrevStat(SystemStat *current_stat, SystemStat *previous_stat);
   static int32_t num_cpu_;
@@ -69,17 +81,23 @@ class SystemCpuInfo {
   Status GetSysCpuUtil(uint64_t start_index, uint64_t end_index, std::vector<uint8_t> *result) const;
   std::vector<uint8_t> GetIOCpuUtil() const;
   std::vector<uint8_t> GetIdleCpuUtil() const;
+  Status GetSystemMemInfo(SystemMemoryMetric metric, uint64_t start_index, uint64_t end_index,
+                          std::vector<float> *result) const;
 
  private:
   Status ParseCpuInfo(const std::string &str);
   Status ParseCtxt(const std::string &str);
   Status ParseRunningProcess(const std::string &str);
+  Status SampleSystemMemInfo();
   SystemStat prev_sys_stat_{};                  // last read data /proc/stat file
   std::vector<SystemUtil> sys_cpu_util_;        // vector of system cpu utilization
   std::vector<uint32_t> running_process_;       // vector of running processes in system
   std::vector<uint64_t> context_switch_count_;  // vector of number of context switches between two sampling points
   bool first_sample_;                           // flag to indicate first time sampling
   uint64_t prev_context_switch_count_;          // last read context switch count from /proc/stat file
+  std::vector<SystemMemInfo> system_memory_info_;
+  SystemMemInfo prev_system_memory_info_;
+  bool last_mem_sampling_failed_;
 };
 
 class TaskCpuInfo {
@@ -100,12 +118,26 @@ class TaskCpuInfo {
   bool last_sampling_failed_;
 };
 
-class ProcessCpuInfo : public TaskCpuInfo {
+class ProcessInfo : public TaskCpuInfo {
  public:
-  explicit ProcessCpuInfo(pid_t pid) : TaskCpuInfo(pid) {}
-  ~ProcessCpuInfo() override = default;
+  explicit ProcessInfo(pid_t pid, bool track_history = false)
+      : TaskCpuInfo(pid), last_mem_sampling_failed_(false), track_sampled_history_(track_history) {}
+  ~ProcessInfo() override = default;
   Status Sample(uint64_t total_time_elapsed) override;
   pid_t GetId() override { return pid_; }
+  Status GetMemoryInfo(ProcessMemoryMetric metric, uint64_t start_index, uint64_t end_index,
+                       std::vector<float> *result) const;
+  void AddChildProcess(const std::shared_ptr<ProcessInfo> &child_ptr);
+
+ private:
+  Status SampleMemInfo();
+  MemoryInfo GetLatestMemoryInfo() const;
+  MemoryInfo prev_memory_info_;
+  std::vector<MemoryInfo> process_memory_info_;
+  std::vector<std::shared_ptr<ProcessInfo>> child_processes_;
+  bool IsParent();
+  bool last_mem_sampling_failed_;
+  bool track_sampled_history_;
 };
 
 class ThreadCpuInfo : public TaskCpuInfo {
@@ -150,6 +182,10 @@ class CpuSampler : public Sampling {
   Status GetSystemSysCpuUtil(uint64_t start_ts, uint64_t end_ts, std::vector<uint8_t> *result);
   Status GetOpUserCpuUtil(int32_t op_id, uint64_t start_ts, uint64_t end_ts, std::vector<uint16_t> *result);
   Status GetOpSysCpuUtil(int32_t op_id, uint64_t start_ts, uint64_t end_ts, std::vector<uint16_t> *result);
+  Status GetProcessMemoryInfo(ProcessMemoryMetric metric, uint64_t start_index, uint64_t end_index,
+                              std::vector<float> *result);
+  Status GetSystemMemoryInfo(SystemMemoryMetric metric, uint64_t start_index, uint64_t end_index,
+                             std::vector<float> *result);
 
   // Clear all collected data
   void Clear() override;
@@ -160,10 +196,10 @@ class CpuSampler : public Sampling {
   ExecutionTree *tree = nullptr;
   pid_t main_pid_{};
   Timestamps ts_;
-  SystemCpuInfo sys_cpu_info_;                       // store the system cpu utilization
+  SystemInfo sys_info_;                              // stores the system cpu utilization
   std::vector<std::shared_ptr<TaskCpuInfo>> tasks_;  // vector of all process and thread tasks
   std::shared_ptr<ThreadCpuInfo> main_thread_cpu_info_;
-  std::shared_ptr<ProcessCpuInfo> main_process_cpu_info_;
+  std::shared_ptr<ProcessInfo> main_process_info_;
   std::unordered_map<int32_t, MDOperatorCpuInfo> op_info_by_id_;
   Path GetFileName(const std::string &dir_path, const std::string &rank_id) override;
 };

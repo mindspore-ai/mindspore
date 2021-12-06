@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -427,6 +427,50 @@ Status ProfilingManager::GetSysCpuUtilByTime(int32_t op_id, uint64_t start_ts, u
   RETURN_IF_NOT_OK(GetSamplingNode(kCpuSamplerName, &sampling_node));
   auto node = std::dynamic_pointer_cast<CpuSampler>(sampling_node);
   return node->GetOpSysCpuUtil(op_id, start_ts, end_ts, result);
+}
+
+Status ProfilingManager::GetMainProcessMemoryInfoByEpoch(ProcessMemoryMetric metric, int32_t epoch_num,
+                                                         std::vector<float> *result) {
+  uint64_t start_ts = 0, end_ts = 0;
+  RETURN_IF_NOT_OK(EpochToTimeInterval(epoch_num, &start_ts, &end_ts));
+  return GetMainProcessMemoryInfoByTime(metric, start_ts, end_ts, result);
+}
+
+Status ProfilingManager::GetMainProcessMemoryInfoByStep(ProcessMemoryMetric metric, int32_t start_step,
+                                                        int32_t end_step, std::vector<float> *result) {
+  uint64_t start_ts = 0, end_ts = 0;
+  RETURN_IF_NOT_OK(StepToTimeInterval(start_step, end_step, &start_ts, &end_ts));
+  return GetMainProcessMemoryInfoByTime(metric, start_ts, end_ts, result);
+}
+
+Status ProfilingManager::GetMainProcessMemoryInfoByTime(ProcessMemoryMetric metric, uint64_t start_ts, uint64_t end_ts,
+                                                        std::vector<float> *result) {
+  std::shared_ptr<Sampling> sampling_node;
+  RETURN_IF_NOT_OK(GetSamplingNode(kCpuSamplerName, &sampling_node));
+  auto node = std::dynamic_pointer_cast<CpuSampler>(sampling_node);
+  return node->GetProcessMemoryInfo(metric, start_ts, end_ts, result);
+}
+
+Status ProfilingManager::GetSystemMemoryInfoByEpoch(SystemMemoryMetric metric, int32_t epoch_num,
+                                                    std::vector<float> *result) {
+  uint64_t start_ts = 0, end_ts = 0;
+  RETURN_IF_NOT_OK(EpochToTimeInterval(epoch_num, &start_ts, &end_ts));
+  return GetSystemMemoryInfoByTime(metric, start_ts, end_ts, result);
+}
+
+Status ProfilingManager::GetSystemMemoryInfoByStep(SystemMemoryMetric metric, int32_t start_step, int32_t end_step,
+                                                   std::vector<float> *result) {
+  uint64_t start_ts = 0, end_ts = 0;
+  RETURN_IF_NOT_OK(StepToTimeInterval(start_step, end_step, &start_ts, &end_ts));
+  return GetSystemMemoryInfoByTime(metric, start_ts, end_ts, result);
+}
+
+Status ProfilingManager::GetSystemMemoryInfoByTime(SystemMemoryMetric metric, uint64_t start_ts, uint64_t end_ts,
+                                                   std::vector<float> *result) {
+  std::shared_ptr<Sampling> sampling_node;
+  RETURN_IF_NOT_OK(GetSamplingNode(kCpuSamplerName, &sampling_node));
+  auto node = std::dynamic_pointer_cast<CpuSampler>(sampling_node);
+  return node->GetSystemMemoryInfo(metric, start_ts, end_ts, result);
 }
 #endif
 
