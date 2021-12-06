@@ -57,6 +57,9 @@ class LiteSession : public session::LiteSession {
                                 session::LiteSession *session);
   static int CreateSessionByPath(const std::string &model_path, mindspore::ModelType model_type,
                                  session::LiteSession *session);
+  static mindspore::ModelType LoadModelByBuff(const char *model_buf, const size_t &buf_size, char **lite_buf,
+                                              size_t *size, mindspore::ModelType model_type);
+  static const char *LoadModelByPath(const std::string &file, mindspore::ModelType model_type, size_t *size);
 
   virtual int Init(InnerContext *context);
 
@@ -133,10 +136,6 @@ class LiteSession : public session::LiteSession {
   static int ReSizeKernels(const std::vector<kernel::LiteKernel *> &kernels);
 
   static void FreePackOpWeight(const std::vector<kernel::LiteKernel *> &kernels);
-
-  static mindspore::ModelType LoadModelByBuff(const char *model_buf, const size_t &buf_size, char **lite_buf,
-                                              size_t *size, mindspore::ModelType model_type);
-  static const char *LoadModelByPath(const std::string &file, mindspore::ModelType model_type, size_t *size);
 
  private:
   int PreCheck(Model *model);

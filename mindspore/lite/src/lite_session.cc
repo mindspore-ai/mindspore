@@ -1530,13 +1530,16 @@ int lite::LiteSession::CreateSessionByBuf(const char *model_buf, mindspore::Mode
     return RET_ERROR;
   }
   auto ret = session->CompileGraph(model);
+  model->buf = nullptr;
+  if (buf_model_type == mindspore::ModelType::kMindIR) {
+    free(lite_buf);
+    lite_buf = nullptr;
+  }
   if (ret != lite::RET_OK) {
     MS_LOG(ERROR) << "Compile model failed";
-    model->buf = nullptr;
     delete model;
     return RET_ERROR;
   }
-  model->buf = nullptr;
   (reinterpret_cast<lite::LiteSession *>(session))->set_model(model);
   return RET_OK;
 }
