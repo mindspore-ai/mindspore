@@ -188,7 +188,7 @@ bool StackActor::CheckRunningCondition(const OpContext<DeviceTensor> *context) c
       return false;
     }
 
-    if (!is_branch_id_available) {
+    if (is_branch_id_available) {
       MS_LOG(ERROR) << "There is no branch id for actor:" << GetAID().Name();
       return false;
     }
@@ -208,7 +208,7 @@ bool StackActor::CheckRunningCondition(const OpContext<DeviceTensor> *context) c
       return false;
     }
 
-    if (!is_branch_id_available) {
+    if (is_branch_id_available) {
       MS_LOG(ERROR) << "There is no branch id for actor:" << GetAID().Name();
       return false;
     }
@@ -228,7 +228,7 @@ bool StackActor::CheckRunningCondition(const OpContext<DeviceTensor> *context) c
       return false;
     }
 
-    if (!is_branch_id_available) {
+    if (is_branch_id_available) {
       MS_LOG(ERROR) << "There is no branch id for actor:" << GetAID().Name();
       return false;
     }
