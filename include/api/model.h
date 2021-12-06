@@ -181,6 +181,16 @@ class MS_API Model {
   /// \return The vector of output MSTensor.
   inline std::vector<MSTensor> GetOutputsByNodeName(const std::string &node_name);
 
+  /// \brief Bind GLTexture2D object to cl Memory.
+  ///
+  /// \param[in] inputGlTexture The input GLTexture id for Model.
+  /// \param[in] outputGLTexture The output GLTexture id for Model.
+  ///
+  /// \return Status of operation.
+
+  Status BindGLTexture2DMemory(const std::map<std::string, unsigned int> &inputGLTexture,
+                               std::map<std::string, unsigned int> *outputGLTexture);
+
   /// \brief Inference model.
   ///
   /// \param[in] device_type Device type，options are kGPU, kAscend910, etc.
@@ -254,9 +264,7 @@ std::vector<MSTensor> Model::GetOutputsByNodeName(const std::string &node_name) 
   return GetOutputsByNodeName(StringToChar(node_name));
 }
 
-Status Model::LoadConfig(const std::string &config_path) {
-  return LoadConfig(StringToChar(config_path));
-}
+Status Model::LoadConfig(const std::string &config_path) { return LoadConfig(StringToChar(config_path)); }
 
 Status Model::UpdateConfig(const std::string &section, const std::pair<std::string, std::string> &config) {
   std::pair<std::vector<char>, std::vector<char>> config_pair = {StringToChar(config.first),

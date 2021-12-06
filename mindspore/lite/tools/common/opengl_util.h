@@ -46,6 +46,12 @@
 
 namespace mindspore {
 namespace OpenGL {
+#define BIND_INDEX_0 0
+#define BIND_INDEX_1 1
+#define BIND_INDEX_2 2
+#define BIND_INDEX_3 3
+#define BIND_INDEX_4 4
+
 class OpenGLRuntime {
  public:
   OpenGLRuntime();

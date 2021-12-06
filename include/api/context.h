@@ -257,6 +257,16 @@ class MS_API GPUDeviceInfo : public DeviceInfoContext {
   /// \return Whether enable float16 inference.
   bool GetEnableFP16() const;
 
+  /// \brief Set enables to sharing mem with OpenGL
+  ///
+  /// \param[in] is_enable_sharing_mem_with_gl Enable sharing OpenCL Memory with OpenGL or not.
+  void SetEnableGLTexture(bool is_enable_gl_texture);
+
+  /// \brief Get enables to sharing mem with OpenGL
+  ///
+  /// \return Whether enable sharing mem with OpenGL.
+  bool GetEnableGLTexture() const;
+
  private:
   void SetPrecisionMode(const std::vector<char> &precision_mode);
   std::vector<char> GetPrecisionModeChar() const;

@@ -100,7 +100,7 @@ int Benchmark::GenerateGLTexture(std::map<std::string, GLuint> *input_gl_texture
                                  std::map<std::string, GLuint> *output_gl_texture) {
   for (auto tensor : ms_inputs_) {
     MS_ASSERT(tensor != nullptr);
-    float *input_data = malloc(tensor->Size());
+    float *input_data = reinterpret_cast<float *>(malloc(tensor->Size()));
     if (input_data == nullptr) {
       MS_LOG(ERROR) << "new input_data failed";
       return RET_ERROR;
@@ -134,8 +134,8 @@ int Benchmark::GenerateGLTexture(std::map<std::string, GLuint> *input_gl_texture
 int Benchmark::FillGLTextureToTensor(std::map<std::string, GLuint> *gl_texture, mindspore::tensor::MSTensor *tensor,
                                      std::string name, float *data) {
   if (data == nullptr) {
-    data = malloc(tensor->Size());
-    if (data = nullpter) {
+    data = reinterpret_cast<float *>(malloc(tensor->Size()));
+    if (data == nullptr) {
       MS_LOG(ERROR) << "new output_data failed";
       return RET_ERROR;
     }
@@ -211,7 +211,7 @@ int Benchmark::ReadGLTextureFile(std::map<std::string, GLuint> *input_gl_texture
         delete[] bin_buf;
         return RET_ERROR;
       }
-      float *input_data = malloc(tensor->Size());
+      float *input_data = reinterpret_cast<float *>(malloc(tensor->Size()));
       if (input_data == nullptr) {
         MS_LOG(ERROR) << "new input_data failed";
         return RET_ERROR;

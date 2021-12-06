@@ -377,19 +377,19 @@ bool OpenGLRuntime::CopyDeviceTextureToSSBO(GLuint textureID, GLuint ssboBufferI
   glUseProgram(computeProgram);
 
   // bind the src image texture
-  glBindImageTexture(0, textureID, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32F);
+  glBindImageTexture(BIND_INDEX_0, textureID, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32F);
 
   // bind the dest output data
-  glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssboBufferID);
+  glBindBufferBase(GL_SHADER_STORAGE_BUFFER, BIND_INDEX_1, ssboBufferID);
 
   // set uniform values
   int width = m_texture_pool_[textureID].first[0];
   int height = m_texture_pool_[textureID].first[1];
   int channel = m_texture_pool_[textureID].first[2];
 
-  glUniform1i(kNHWC_H, width);
-  glUniform1i(kNHWC_W, height);
-  glUniform1i(kNHWC_C, channel);
+  glUniform1i(BIND_INDEX_2, width);
+  glUniform1i(BIND_INDEX_3, height);
+  glUniform1i(BIND_INDEX_4, channel);
 
   int c_4 = UP_DIV(channel, 4);
   int gLocalSize[3] = {4, 4, 1};
@@ -415,19 +415,19 @@ bool OpenGLRuntime::CopyDeviceSSBOToTexture(GLuint ssboBufferID, GLuint textureI
   glUseProgram(computeProgram);
 
   // bind the src image texture
-  glBindImageTexture(0, textureID, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+  glBindImageTexture(BIND_INDEX_0, textureID, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA32F);
 
   // bind the dest output data
-  glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssboBufferID);
+  glBindBufferBase(GL_SHADER_STORAGE_BUFFER, BIND_INDEX_1, ssboBufferID);
 
   // set uniform values
   int width = m_texture_pool_[textureID].first[0];
   int height = m_texture_pool_[textureID].first[1];
   int channel = m_texture_pool_[textureID].first[2];
 
-  glUniform1i(kNHWC_H, width);
-  glUniform1i(kNHWC_W, height);
-  glUniform1i(kNHWC_C, channel);
+  glUniform1i(BIND_INDEX_2, width);
+  glUniform1i(BIND_INDEX_3, height);
+  glUniform1i(BIND_INDEX_4, channel);
 
   int c_4 = UP_DIV(channel, 4);
   int gLocalSize[3] = {4, 4, 1};
