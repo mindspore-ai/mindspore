@@ -5636,7 +5636,7 @@ class ApplyAdadelta(PrimitiveWithInfer):
         return var_dtype, accum_dtype, accum_update_dtype
 
 
-class ApplyAdagrad(PrimitiveWithInfer):
+class ApplyAdagrad(Primitive):
     r"""
     Updates relevant entries according to the adagrad scheme.
     It has been proposed in Adaptive Subgradient Methods for Online Learning and Stochastic Optimization.
@@ -5715,23 +5715,6 @@ class ApplyAdagrad(PrimitiveWithInfer):
         """Initialize ApplyAdagrad."""
         validator.check_value_type("update_slots", update_slots, [bool], self.name)
         self.add_prim_attr('side_effect_mem', True)
-
-    def infer_shape(self, var_shape, accum_shape, lr_shape, grad_shape):
-        validator.check('accum shape', accum_shape, 'var shape', var_shape, Rel.EQ, self.name)
-        validator.check('grad shape', grad_shape, 'var shape', var_shape, Rel.EQ, self.name)
-        lr_shp_len = len(lr_shape)
-        validator.check_int(lr_shp_len, 1, Rel.LE, "lr's rank", self.name)
-        if lr_shp_len == 1:
-            validator.check_int(lr_shape[0], 1, Rel.EQ, "lr_shape[0]", self.name)
-        return var_shape, accum_shape
-
-    def infer_dtype(self, var_dtype, accum_dtype, lr_dtype, grad_dtype):
-        args = {'var': var_dtype, 'accum': accum_dtype, 'grad': grad_dtype}
-        valid_dtypes = [mstype.float16, mstype.float32]
-        validator.check_tensors_dtypes_same_and_valid(args, valid_dtypes, self.name)
-        validator.check_scalar_or_tensor_types_same({'lr': lr_dtype}, valid_dtypes, self.name)
-        return var_dtype, accum_dtype
-
 
 class ApplyAdagradV2(Primitive):
     r"""
