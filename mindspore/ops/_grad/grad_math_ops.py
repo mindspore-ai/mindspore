@@ -374,7 +374,6 @@ def get_bprop_ceil(self):
 
 
 @bprop_getters.register(P.FloorDiv)
-@bprop_getters.register(P.FloorDiv.__name__)
 def get_bprop_floordiv(self):
     """Grad definition for `FloorDiv` operation."""
 
@@ -397,7 +396,6 @@ def get_bprop_floormod(self):
 
 
 @bprop_getters.register(P.TruncateDiv)
-@bprop_getters.register(P.TruncateDiv.__name__)
 def get_bprop_truncate_div(self):
     """Grad definition for `TruncateDiv` operation."""
 
@@ -649,7 +647,6 @@ def get_bprop_expm1(self):
 
 
 @bprop_getters.register(P.Minimum)
-@bprop_getters.register(P.Minimum.__name__)
 def get_bprop_minimum(self):
     """Grad definition for `Minimum` operation."""
     input_grad = G.MinimumGrad()
@@ -662,7 +659,6 @@ def get_bprop_minimum(self):
 
 
 @bprop_getters.register(P.Maximum)
-@bprop_getters.register(P.Maximum.__name__)
 def get_bprop_maximum(self):
     """Grad definition for `Maximum` operation."""
     input_grad = G.MaximumGrad()
@@ -772,7 +768,6 @@ def get_bprop_cumprod(self):
 
 
 @bprop_getters.register(P.ReduceAll)
-@bprop_getters.register(P.ReduceAll.__name__)
 def get_bprop_reduceall(self):
     """Grad definition for `ReduceAll` operation."""
 
@@ -783,7 +778,6 @@ def get_bprop_reduceall(self):
 
 
 @bprop_getters.register(P.ReduceAny)
-@bprop_getters.register(P.ReduceAny.__name__)
 def get_bprop_reduceany(self):
     """Grad definition for `ReduceAny` operation."""
 
@@ -868,7 +862,6 @@ def get_bprop_reduce_mean(self):
 
 
 @bprop_getters.register(P.IsFinite)
-@bprop_getters.register(P.IsFinite.__name__)
 def get_bprop_isfinite(self):
     """Grad definition for `IsFinite` operation."""
 
@@ -879,7 +872,6 @@ def get_bprop_isfinite(self):
 
 
 @bprop_getters.register(P.IsNan)
-@bprop_getters.register(P.IsNan.__name__)
 def get_bprop_isnan(self):
     """Grad definition for `IsNan` operation."""
 
@@ -890,7 +882,6 @@ def get_bprop_isnan(self):
 
 
 @bprop_getters.register(P.IsInf)
-@bprop_getters.register(P.IsInf.__name__)
 def get_bprop_isinf(self):
     """Grad definition for `IsInf` operation."""
 
@@ -901,7 +892,6 @@ def get_bprop_isinf(self):
 
 
 @bprop_getters.register(P.Equal)
-@bprop_getters.register(P.Equal.__name__)
 def get_bprop_equal(self):
     """Grad definition for `Equal` operation."""
 
@@ -912,7 +902,6 @@ def get_bprop_equal(self):
 
 
 @bprop_getters.register(P.NotEqual)
-@bprop_getters.register(P.NotEqual.__name__)
 def get_bprop_not_equal(self):
     """Grad definition for `NotEqual` operation."""
 
@@ -923,7 +912,6 @@ def get_bprop_not_equal(self):
 
 
 @bprop_getters.register(P.ApproximateEqual)
-@bprop_getters.register(P.ApproximateEqual.__name__)
 def get_bprop_approximate_equal(self):
     """Grad definition for `ApproximateEqual` operation."""
 
@@ -934,7 +922,6 @@ def get_bprop_approximate_equal(self):
 
 
 @bprop_getters.register(P.Greater)
-@bprop_getters.register(P.Greater.__name__)
 def get_bprop_greater(self):
     """Grad definition for `Greater` operation."""
 
@@ -945,7 +932,6 @@ def get_bprop_greater(self):
 
 
 @bprop_getters.register(P.GreaterEqual)
-@bprop_getters.register(P.GreaterEqual.__name__)
 def get_bprop_greater_equal(self):
     """Grad definition for `GreaterEqual` operation."""
 
@@ -956,7 +942,6 @@ def get_bprop_greater_equal(self):
 
 
 @bprop_getters.register(P.Less)
-@bprop_getters.register(P.Less.__name__)
 def get_bprop_less(self):
     """Grad definition for `Less` operation."""
 
@@ -967,7 +952,6 @@ def get_bprop_less(self):
 
 
 @bprop_getters.register(P.LessEqual)
-@bprop_getters.register(P.LessEqual.__name__)
 def get_bprop_less_equal(self):
     """Grad definition for `LessEqual` operation."""
 
@@ -978,7 +962,6 @@ def get_bprop_less_equal(self):
 
 
 @bprop_getters.register(P.LogicalNot)
-@bprop_getters.register(P.LogicalNot.__name__)
 def get_bprop_logical_not(self):
     """Grad definition for `LogicalNot` operation."""
 
@@ -989,7 +972,6 @@ def get_bprop_logical_not(self):
 
 
 @bprop_getters.register(P.LogicalAnd)
-@bprop_getters.register(P.LogicalAnd.__name__)
 def get_bprop_logical_and(self):
     """Grad definition for `LogicalAnd` operation."""
 
@@ -1000,7 +982,6 @@ def get_bprop_logical_and(self):
 
 
 @bprop_getters.register(P.LogicalOr)
-@bprop_getters.register(P.LogicalOr.__name__)
 def get_bprop_logical_or(self):
     """Grad definition for `LogicalOr` operation."""
 
@@ -1041,7 +1022,6 @@ def get_bprop_npu_clear_float_status(self):
 
 
 @bprop_getters.register(P.AssignAdd)
-@bprop_getters.register(P.AssignAdd.__name__)
 def get_bprop_assign_add(self):
     """Grad definition for `AssignAdd` operation."""
 
@@ -1052,7 +1032,6 @@ def get_bprop_assign_add(self):
 
 
 @bprop_getters.register(P.AssignSub)
-@bprop_getters.register(P.AssignSub.__name__)
 def get_bprop_assign_sub(self):
     """Grad definition for `AssignSub` operation."""
 
@@ -1303,7 +1282,6 @@ def get_bprop_scalar_addn(self):
 
 
 @bprop_getters.register(P.Sign)
-@bprop_getters.register(P.Sign.__name__)
 def get_bprop_sign(self):
     """Generate bprop for Sign"""
 
@@ -1314,7 +1292,6 @@ def get_bprop_sign(self):
 
 
 @bprop_getters.register(P.Round)
-@bprop_getters.register(P.Round.__name__)
 def get_bprop_round(self):
     """Generate bprop for Round"""
 
@@ -1440,7 +1417,6 @@ def get_bprop_inv(self):
 
 
 @bprop_getters.register(P.LinSpace)
-@bprop_getters.register(P.LinSpace.__name__)
 def get_bprop_lin_space(self):
     """Grad definition for `LinSpace` operation."""
 

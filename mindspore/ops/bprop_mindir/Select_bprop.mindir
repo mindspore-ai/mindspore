@@ -28,4 +28,4 @@
 bprop.128:y*
 bprop.128:out*
 bprop.128:dout2
-bprop.128:[CNode]134:6:@c8a644cc520f380808ab8a19d3b5f795ef28e37966296c6941e187e7de28f9d7P
+bprop.128:[CNode]134:6:@03ba727554b68f632a7320602b4ab4649b05556a1aac96ba69a106bd541d09bbP

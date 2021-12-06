@@ -352,7 +352,6 @@ def get_bprop_avg_pool_3d_grad(self):
 
 
 @bprop_getters.register(P.DropoutGenMask)
-@bprop_getters.register(P.DropoutGenMask.__name__)
 def get_bprop_dropout_gen_mask(self):
     """Grad definition for `DropoutGenMask` operation."""
 
@@ -363,7 +362,6 @@ def get_bprop_dropout_gen_mask(self):
 
 
 @bprop_getters.register(P.DropoutDoMask)
-@bprop_getters.register(P.DropoutDoMask.__name__)
 def get_bprop_dropout_do_mask(self):
     """Grad definition for `DropoutDoMask` operation."""
     do_mask = P.DropoutDoMask()
@@ -427,7 +425,6 @@ def get_bprop_mul_no_nan(self):
 
 
 @bprop_getters.register(P.ReLU)
-@bprop_getters.register(P.ReLU.__name__)
 def get_bprop_relu(self):
     """Grad definition for `ReLU` operation."""
     input_grad = G.ReluGrad()
@@ -440,7 +437,6 @@ def get_bprop_relu(self):
 
 
 @bprop_getters.register(G.ReluGrad)
-@bprop_getters.register(G.ReluGrad.__name__)
 def get_bprop_relu_grad(self):
     """Grad definition for `ReLUGrad` operation."""
     input_grad = G.ReluGrad()
@@ -465,7 +461,6 @@ def get_bprop_relu6(self):
 
 
 @bprop_getters.register(P.ReLUV2)
-@bprop_getters.register(P.ReLUV2.__name__)
 def get_bprop_relu_v2(self):
     """Grad definition for `ReLUV2` operation."""
     input_grad = G.ReluGradV2()
@@ -816,7 +811,6 @@ def get_bprop_resize_bilinear(self):
 
 
 @bprop_getters.register(P.OneHot)
-@bprop_getters.register(P.OneHot.__name__)
 def get_bprop_onehot(self):
     """Grad definition for `OneHot` operation."""
 

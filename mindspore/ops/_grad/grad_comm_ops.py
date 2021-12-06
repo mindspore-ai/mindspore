@@ -217,7 +217,6 @@ def get_bprop_mirror_micro_step_operator(self):
 
 
 @bprop_getters.register(Broadcast)
-@bprop_getters.register(Broadcast.__name__)
 def get_bprop_broad_cast(self):
     """Generate bprop for Broadcast."""
 

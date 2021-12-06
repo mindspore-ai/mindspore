@@ -25,7 +25,6 @@ from .grad_base import bprop_getters
 
 
 @bprop_getters.register(P.Assign)
-@bprop_getters.register(P.Assign.__name__)
 def get_bprop_assign(self):
     """Generate bprop for Assign"""
 
@@ -44,7 +43,6 @@ def get_bprop_invert_permutation(self):
 
 
 @bprop_getters.register(P.IOU)
-@bprop_getters.register(P.IOU.__name__)
 def get_bprop_iou(self):
     """Generate bprop for IOU"""
 
