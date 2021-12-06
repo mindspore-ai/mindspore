@@ -57,6 +57,7 @@ class CopyActor : public MemoryAwareActor {
 
  private:
   friend class GraphScheduler;
+  friend class ControlNodeScheduler;
 
   // Fetch the device tensor for copy.
   void FetchDeviceTensor(OpContext<DeviceTensor> *const context);

@@ -314,8 +314,6 @@ ActorSet *GraphScheduler::Transform(const GraphCompilerInfo &graph_compiler_info
   MS_EXCEPTION_IF_NULL(actor_set);
   CacheGraphOutputToActor(graph_compiler_info);
   Link(actor_set.get(), graph_compiler_info);
-  // The copy actors are built in the link, so need push into the actor set after link.
-  actor_set->copy_actors_ = copy_actors_;
 
   DumpActor(actor_set.get(), graph_compiler_info);
   if (graph_compiler_info.strategy_ == GraphExecutionStrategy::kPipeline) {
@@ -548,6 +546,8 @@ void GraphScheduler::Link(ActorSet *actor_set, const GraphCompilerInfo &graph_co
   LinkGlobalControlArrow(actor_set, communication_nodes, auto_monad_actors, graph_compiler_info);
   LinkOutputResultArrowForOutputActor(actor_set->output_actor_.get(), graph_compiler_info);
 
+  // The copy actors are built in the link, so need push into the actor set after link.
+  actor_set->copy_actors_ = copy_actors_;
   // Link the arrow in the control flow scene.
   if (graph_compiler_info.strategy_ == GraphExecutionStrategy::kPipeline &&
       graph_compiler_info.control_node_parser_ != nullptr && graph_compiler_info.control_node_parser_->IsInited()) {

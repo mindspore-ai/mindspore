@@ -43,7 +43,7 @@ using ActorInfo = runtime::ActorInfo;
 using GraphCompiler = runtime::GraphCompiler;
 using GraphCompilerInfo = runtime::GraphCompilerInfo;
 using ControlNodeParser = runtime::ControlNodeParser;
-using FuncGraphToKernelGraph = runtime::FuncGraphToKernelGraph;
+using FuncGraphToKernelGraphGroup = runtime::FuncGraphToKernelGraphGroup;
 using ControlNodeParserPtr = runtime::ControlNodeParserPtr;
 using KernelWithIndex = session::KernelWithIndex;
 
@@ -183,7 +183,8 @@ class MindRTBackend : public Backend {
   // the corresponding device_context.
   std::map<GraphId, DeviceContext *> graph_id_to_device_context_;
   // Funcgraph will be cut into multiple kernel graphs, and the map is used to save the correspondence.
-  std::map<FuncGraphPtr, std::vector<GraphId>> func_graph_to_kernel_graph_ids_;
+  // The kernel graphs which not cut by control flow are placed in the same group.
+  std::map<FuncGraphPtr, std::vector<std::vector<GraphId>>> func_graph_to_kernel_graph_ids_;
   std::map<GraphInfo, DeviceContext *> graph_info_to_device_context_;
   std::vector<AnfNodePtr> control_nodes_;
 

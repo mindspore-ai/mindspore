@@ -136,11 +136,11 @@ void ControlActor::FetchInput(OpContext<DeviceTensor> *const context) {
   for (auto &device_tensor_store_key : device_tensor_store_keys_) {
     auto device_context = device_contexts_[device_tensor_store_key.first];
     MS_EXCEPTION_IF_NULL(device_context);
-    auto device_tensor = DeviceTensorStore::GetInstance().Fetch(device_tensor_store_key.second.get(),
-                                                                device_context->GetDeviceAddressType());
-    if (device_tensor == nullptr) {
+    auto device_tensors = DeviceTensorStore::GetInstance().Fetch(device_tensor_store_key.second.get());
+    if (device_tensors.empty()) {
       std::string error_info =
-        GetAID().Name() + " get device tensor store failed: " + device_tensor_store_key.second->DebugString();
+        GetAID().Name() + " get device tensor store failed: " + device_tensor_store_key.second->DebugString() +
+        ", device type:" + std::to_string(static_cast<int>(device_context->GetDeviceAddressType()));
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
     }
 
@@ -150,7 +150,7 @@ void ControlActor::FetchInput(OpContext<DeviceTensor> *const context) {
         " current:" + std::to_string(input_device_tensors_.size()) + " for actor:" + GetAID().Name();
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
     }
-    input_device_tensors_[device_tensor_store_key.first] = device_tensor;
+    input_device_tensors_[device_tensor_store_key.first] = device_tensors[0].get();
   }
 
   for (size_t i = 0; i < output_data_by_output_index_.size(); ++i) {

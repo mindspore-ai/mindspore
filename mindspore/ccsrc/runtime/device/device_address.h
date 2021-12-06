@@ -105,6 +105,8 @@ class DeviceAddress : public mindspore::DeviceSync {
   virtual DeviceAddressStatus status() const { return DeviceAddressStatus::kInDevice; }
   virtual DeviceAddressType DeviceType() const { return DeviceAddressType::kUnknown; }
   void *GetMutablePtr() const override { return ptr_; }
+  std::string DeviceName() const { return device_name_; }
+  uint32_t DeviceID() const { return device_id_; }
 
   virtual void SetNodeIndex(const AnfNodePtr &node, size_t out_index) { node_index_ = {node, out_index}; }
   KernelWithIndex GetNodeIndex() const {
