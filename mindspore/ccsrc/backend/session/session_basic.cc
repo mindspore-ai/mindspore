@@ -2190,7 +2190,6 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructSingleOpGraph(const OpRunInf
   // set execution order
   std::vector<CNodePtr> exe_order = {cnode};
   graph->set_execution_order(exe_order);
-  // set output
   if (is_ascend) {
     graph->set_output(cnode);
   } else {

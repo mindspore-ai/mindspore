@@ -96,7 +96,8 @@ void ResetMindRTEnable(const ResourcePtr &res) {
     auto manager = func_graph->manager();
     size_t graph_nums = manager->func_graphs().size();
     // Heterogeneous scenario
-    if (graph_nums == 1 && context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) != kAscendDevice) {
+    if (graph_nums == 1 && (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) != kAscendDevice ||
+                            context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode)) {
       return;
     }
     if (common::GetEnv("ENABLE_ASCEND_MINDRT") == "1" || common::kEnableAscendMindRT) {

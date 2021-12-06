@@ -56,6 +56,20 @@ void AscendGraphOptimization::OptimizeGraph(const KernelGraphPtr &graph) {
   MS_LOG(INFO) << "Status record: end optimize graph. graph id: " << graph->graph_id();
 }
 
+void AscendGraphOptimization::OptimizeSingleOpGraph(const KernelGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  opt::RunOpAscendBackendIRFusionOptimization(graph);
+  SelectKernel(graph);
+  opt::RunOpAscendBackendOptimization(graph);
+
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  // Cannot Hide nop node in PyNative mode.
+  // If there is more than one node in the graph,
+  // and one of the nodes is a nop node, the node will be hidden.
+  // The DAG of Actors will be invalid(lack an input edge).
+}
+
 void AscendGraphOptimization::OptimizeGraphWithoutDeviceInfo(const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   auto context_ptr = MsContext::GetInstance();
@@ -97,6 +111,7 @@ void AscendGraphOptimization::OptimizeExecutionOrder(const KernelGraphPtr &graph
     DumpIRProto(graph, "before_removeNop_" + std::to_string(graph->graph_id()));
   }
 #endif
+
   // TODO(sida): do not hide nop op in kernel_by_kernel mode
   if (graph->is_executing_sink()) {
     opt::HideNopNode(graph.get());

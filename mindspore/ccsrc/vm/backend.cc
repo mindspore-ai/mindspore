@@ -234,28 +234,25 @@ void UpdateOutput(const std::vector<session::KernelWithIndex> &output_nodes, Vec
   }
 }
 
-void UpdateOutputDeviceAddress(const std::vector<session::KernelWithIndex> &output_nodes,
-                               const DeviceContext *device_context) {
-  for (auto &item_with_index : output_nodes) {
-    auto &output_node = item_with_index.first;
-    auto output_index = item_with_index.second;
-    if (output_node != nullptr) {
-      if (!AnfAlgo::OutputAddrExist(output_node, output_index, false)) {
+void ClearGraphDeviceAddress(const KernelGraphPtr &graph, const DeviceContext *device_context) {
+  MS_EXCEPTION_IF_NULL(graph);
+  for (const auto &node : graph->execution_order()) {
+    auto output_address_num = AnfAlgo::GetOutputAddressNum(node);
+    for (size_t i = 0; i < output_address_num; ++i) {
+      if (!AnfAlgo::OutputAddrExist(node, i, false)) {
         continue;
       }
-      const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(output_node, output_index, false);
-
-      if ((device_tensor == nullptr) || (device_tensor->GetPtr() == nullptr)) {
+      const auto &device_address = AnfAlgo::GetMutableOutputAddr(node, i, false);
+      if (device_address == nullptr) {
         continue;
       }
-
       MS_EXCEPTION_IF_NULL(device_context);
-      auto new_device_tensor = device_context->CreateDeviceAddress(nullptr, device_tensor->GetSize(),
-                                                                   device_tensor->format(), device_tensor->type_id());
-      MS_EXCEPTION_IF_NULL(new_device_tensor);
-      new_device_tensor->set_original_ref_count(device_tensor->original_ref_count());
-      new_device_tensor->ResetRefCount();
-      AnfAlgo::SetOutputAddr(new_device_tensor, output_index, output_node.get());
+      auto new_device_address = device_context->CreateDeviceAddress(
+        nullptr, device_address->GetSize(), device_address->format(), device_address->type_id());
+      MS_EXCEPTION_IF_NULL(new_device_address);
+      new_device_address->set_original_ref_count(device_address->original_ref_count());
+      new_device_address->ResetRefCount();
+      AnfAlgo::SetOutputAddr(new_device_address, i, node.get());
     }
   }
 }
@@ -268,6 +265,51 @@ void UpdateInputDeviceAddress(const KernelGraphPtr &graph) {
       AnfAlgo::SetOutputAddr(nullptr, 0, node.get());
     }
   }
+}
+
+std::vector<tensor::TensorPtr> GetRealValueNodeTensorFromGraph(
+  const KernelGraphPtr &graph, size_t input_tensors_size,
+  const std::vector<tensor::TensorPtr> &tensors_without_value_node) {
+  std::vector<tensor::TensorPtr> new_input_tensors;
+  if (graph->execution_order().size() != 1) {
+    return new_input_tensors;
+  }
+
+  const auto &node = graph->execution_order().back();
+  auto input_num = AnfAlgo::GetInputTensorNum(node);
+  // In most scenarios, input_num and input_tensors_size are equal.
+  // Except for special procedures, new ValueNode will be added to Graph in GraphOptimize.
+  if (input_num == input_tensors_size) {
+    return new_input_tensors;
+  }
+  MS_LOG(INFO) << "CNode input num:" << input_num << " input_tensors size:" << input_tensors_size;
+
+  std::map<size_t, tensor::TensorPtr> value_node_pos;
+  for (size_t i = 0; i < input_num; ++i) {
+    auto input = AnfAlgo::GetInputNode(node, i);
+    MS_EXCEPTION_IF_NULL(input);
+    if (input->isa<ValueNode>()) {
+      auto value_node = input->cast<ValueNodePtr>();
+      MS_EXCEPTION_IF_NULL(value_node);
+      auto value = value_node->value();
+      MS_EXCEPTION_IF_NULL(value);
+      auto tensor = value->cast<tensor::TensorPtr>();
+      value_node_pos.emplace(i, tensor);
+    }
+  }
+
+  size_t cur_input_tensor_index = 0;
+  for (size_t i = 0; i < input_num; ++i) {
+    auto iter = value_node_pos.find(i);
+    if (iter == value_node_pos.end()) {
+      new_input_tensors.emplace_back(tensors_without_value_node[cur_input_tensor_index]);
+      cur_input_tensor_index++;
+    } else {
+      new_input_tensors.emplace_back(iter->second);
+    }
+  }
+  MS_LOG(INFO) << "new input tensor size:" << new_input_tensors.size();
+  return new_input_tensors;
 }
 }  // namespace
 
@@ -1125,6 +1167,9 @@ void MindRTBackend::RunSingleOpGraph(const KernelGraphPtr &graph,
     }
   }
 
+  std::vector<tensor::TensorPtr> new_input_tensors =
+    GetRealValueNodeTensorFromGraph(graph, input_tensors.size(), tensors_without_value_node);
+
   for (auto &tensor : tensors_without_value_node) {
     MS_EXCEPTION_IF_NULL(tensor);
     if (tensor->NeedWaitDevice()) {
@@ -1135,7 +1180,8 @@ void MindRTBackend::RunSingleOpGraph(const KernelGraphPtr &graph,
   // Run actor DAG.
   const auto &actor_set = runtime::GraphScheduler::GetInstance().Fetch(graph_compiler_info->name_);
   MS_EXCEPTION_IF_NULL(actor_set);
-  runtime::GraphScheduler::GetInstance().Run(actor_set, {}, {tensors_without_value_node}, input_tensors,
+  runtime::GraphScheduler::GetInstance().Run(actor_set, {}, {tensors_without_value_node},
+                                             new_input_tensors.empty() ? input_tensors : new_input_tensors,
                                              runtime::GraphExecutionStrategy::kStep);
 
   // Release the kernel resource.
@@ -1200,7 +1246,7 @@ void MindRTBackend::LazyExecuteTaskCallback() {
       const auto &context = op_run_task->context();
       RunSingleOpGraph(context->graph(), context->output_nodes(), context->op_run_info(),
                        context->graph_compiler_info(), context->device_context());
-      UpdateOutputDeviceAddress(context->output_nodes(), context->device_context());
+      ClearGraphDeviceAddress(context->graph(), context->device_context());
       UpdateInputDeviceAddress(context->graph());
 
       op_lazy_builder.PopOpRunTask();
@@ -1258,7 +1304,7 @@ void MindRTBackend::RunOpInternal(bool single_op_cache_hit, GraphCompilerInfo *g
     }
     RunSingleOpGraph(graph, output_nodes, *op_run_info, graph_compiler_info, device_context);
     UpdateOutput(output_nodes, outputs);
-    UpdateOutputDeviceAddress(output_nodes, device_context);
+    ClearGraphDeviceAddress(graph, device_context);
     UpdateInputDeviceAddress(graph);
     if (op_run_info->is_dynamic_shape) {
       UpdateOutputAbstract(graph, op_run_info);

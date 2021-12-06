@@ -402,6 +402,10 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
   MS_EXCEPTION_IF_NULL(device_context);
   const auto &ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
+    return graph->graph_id();
+  }
+
 #ifdef ENABLE_DUMP_IR
   bool save_graphs = ms_context->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
   // Dump .pb graph before graph optimization.
@@ -426,10 +430,8 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
   // Adjust kernel graph before run graph.
   device_context->PreprocessBeforeRunGraph(graph);
 
-  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
-    // Create device address for all anf nodes of graph.
-    CreateDeviceAddress(graph, device_context);
-  }
+  // Create device address for all anf nodes of graph.
+  CreateDeviceAddress(graph, device_context);
 
   graph->set_is_all_nop_node(opt::IsAllNopNode(graph.get()));
 
@@ -482,13 +484,15 @@ GraphId GraphCompiler::CompileGraph(const session::OpRunInfo &op_run_info, bool 
   // Generate kernel graph.
   MS_EXCEPTION_IF_NULL(session_);
   KernelGraphPtr graph =
-    session_->ConstructSingleOpGraph(op_run_info, op_run_info.input_tensors, op_run_info.tensor_mask);
+    session_->ConstructSingleOpGraph(op_run_info, op_run_info.input_tensors, op_run_info.tensor_mask,
+                                     device_context->GetDeviceAddressType() == device::DeviceAddressType::kAscend);
   MS_EXCEPTION_IF_NULL(graph);
+
+  // session_ is SessionBasic, AscendUnifyMindIR has not been executed.
+  device_context->UnifyMindIR(graph);
 
   MS_EXCEPTION_IF_NULL(device_context);
   device_context->OptimizeSingleOpGraph(graph);
-
-  device_context->PreprocessBeforeRunSingleOpGraph(graph);
 
   // Create device address for all anf nodes of graph.
   CreateDeviceAddressWithoutWorkspace(graph, device_context);
@@ -520,6 +524,7 @@ void GraphCompiler::BuildSingleOpGraphs(const std::vector<KernelGraphPtr> &graph
   device_context->CreateKernel(node_to_build);
 
   for (const auto &graph : graphs) {
+    device_context->PreprocessBeforeRunSingleOpGraph(graph);
     CreateKernelWorkspaceDeviceAddress(device_context, graph);
   }
 }
@@ -553,6 +558,7 @@ void GraphCompiler::CreateDeviceAddressWithoutWorkspace(const KernelGraphPtr &gr
   CreateValueNodeDeviceAddress(device_context, graph);
   CreateKernelOutputDeviceAddress(device_context, graph);
   UpdateDeviceAddressForInplaceNode(graph);
+  UpdateDeviceAddressForRefNode(graph);
 }
 
 void GraphCompiler::GetParamAndOutputIndex(

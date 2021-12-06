@@ -43,6 +43,7 @@ class AscendGraphOptimization {
   AscendGraphOptimization &operator=(const AscendGraphOptimization &) = delete;
 
   void OptimizeGraph(const KernelGraphPtr &graph);
+  void OptimizeSingleOpGraph(const KernelGraphPtr &graph);
   void SetOperatorInfo(const std::vector<CNodePtr> &nodes);
   void UnifyMindIR(const KernelGraphPtr &graph);
 

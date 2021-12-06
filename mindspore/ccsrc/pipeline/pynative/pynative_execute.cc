@@ -2116,7 +2116,7 @@ py::object ForwardExecutor::RunOpInMs(const OpExecInfoPtr &op_exec_info, Pynativ
 #endif
 
   VectorRef outputs;
-  if (!enable_mind_rt || cur_target == "Ascend") {
+  if (!enable_mind_rt) {
     auto cur_session = GetCurrentSession(cur_target, device_id);
     MS_EXCEPTION_IF_NULL(cur_session);
     cur_session->RunOp(&op_run_info, &outputs);

@@ -26,6 +26,8 @@
 #include "runtime/device/ascend/ascend_stream_assign.h"
 #include "runtime/device/ascend/kernel_build_ascend.h"
 #include "runtime/hardware/ascend/ascend_graph_optimization.h"
+#include "backend/kernel_compiler/ascend_kernel_mod.h"
+#include "runtime/device/ascend/ascend_bucket.h"
 
 #ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
@@ -284,8 +286,16 @@ void AscendDeviceContext::Initialize() {
   DumpInit(rank_id_);
 #endif
   compute_stream_ = runtime_instance_->compute_stream();
+  communication_stream_ = runtime_instance_->communication_stream();
+
   initialized_ = true;
   MS_LOG(INFO) << "Status record: Initialize success.";
+}
+
+bool AscendDeviceContext::IsGraphMode() {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  return context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode;
 }
 
 void AscendDeviceContext::Destroy() {
@@ -306,7 +316,7 @@ void AscendDeviceContext::Destroy() {
 
 std::vector<GraphSegmentPtr> AscendDeviceContext::PartitionGraph(
   const FuncGraphPtr &func_graph, const std::vector<GraphSegmentPtr> &default_partition_segments) {
-  return std::vector<GraphSegmentPtr>();
+  return IsGraphMode() ? std::vector<GraphSegmentPtr>() : default_partition_segments;
 }
 
 void AscendDeviceContext::UnifyMindIR(const KernelGraphPtr &graph) const {
@@ -544,27 +554,71 @@ bool AscendDeviceContext::SyncStream(size_t stream_id) const {
 bool AscendDeviceContext::IsExecutingSink(const KernelGraphPtr &graph) const {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  return ms_context->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
+  return ms_context->get_param<bool>(MS_CTX_ENABLE_TASK_SINK) && IsGraphMode();
 }
 
-bool AscendDeviceContext::IsLoopCountSink(const KernelGraphPtr &graph) const { return true; }
+bool AscendDeviceContext::IsLoopCountSink(const KernelGraphPtr &graph) const { return IsGraphMode(); }
 
 // kernel by kernel mode interface
 void AscendDeviceContext::OptimizeSingleOpGraph(const KernelGraphPtr &graph) const {
-  MS_LOG(ERROR) << "!!! Ascend with MindRT not support kernel by kernel mode. !!! ";
+  AscendGraphOptimization::GetInstance().OptimizeSingleOpGraph(graph);
 }
 
 void AscendDeviceContext::PreprocessBeforeRunSingleOpGraph(const KernelGraphPtr &graph) const {
-  MS_LOG(ERROR) << "!!! Ascend with MindRT not support kernel by kernel mode. !!! ";
+  MS_EXCEPTION_IF_NULL(graph);
+  const auto &nodes = graph->execution_order();
+  // Remove placeholder
+  for (const auto &node : nodes) {
+    auto op_name = AnfAlgo::GetCNodeName(node);
+    static const std::set<std::string> place_holder_nodes = {kDynamicRNNOpName, kDynamicGRUV2OpName};
+    auto iter = place_holder_nodes.find(op_name);
+    if (iter != place_holder_nodes.end()) {
+      auto none_index = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, "placeholder_index");
+      // Remove seq_length
+      auto input_num = AnfAlgo::GetInputTensorNum(node);
+      std::vector<AnfNodePtr> new_inputs = {AnfAlgo::GetCNodePrimitiveNode(node)};
+      for (size_t i = 0; i < input_num; ++i) {
+        auto item = std::find(none_index.begin(), none_index.end(), i);
+        if (item == none_index.end()) {
+          auto input_node = AnfAlgo::GetInputNode(node, i);
+          new_inputs.emplace_back(input_node);
+        }
+      }
+      node->set_inputs(new_inputs);
+    }
+  }
+
+  device::ascend::InsertAtomicCleanOps(nodes, &node_atomics_);
+  std::vector<CNodePtr> atomic_nodes;
+  for (const auto &node : nodes) {
+    auto iter = node_atomics_.find(node);
+    if (iter != node_atomics_.end()) {
+      const auto &atomics = iter->second;
+      std::copy(atomics.begin(), atomics.end(), std::back_inserter(atomic_nodes));
+    }
+  }
+
+  CreateKernel(atomic_nodes);
 }
 
-void AscendDeviceContext::UpdateDynamicShape(const CNodePtr &kernel) const {
-  MS_LOG(ERROR) << "!!! Ascend with MindRT not support function UpdateDynamicShape. !!! ";
-}
+void AscendDeviceContext::UpdateDynamicShape(const CNodePtr &kernel) const {}
 
 std::shared_ptr<Bucket> AscendDeviceContext::CreateBucket(uint32_t bucket_id, uint32_t bucket_size) const {
-  MS_LOG(ERROR) << "!!! Ascend with MindRT not support function CreateBucket. !!! ";
-  return DeviceContext::CreateBucket(bucket_id, bucket_size);
+  auto bucket = std::make_shared<AscendBucket>(bucket_id, bucket_size);
+  MS_EXCEPTION_IF_NULL(bucket);
+
+  bucket->Init({compute_stream_}, {communication_stream_});
+  return bucket;
+}
+
+bool AscendDeviceContext::SyncRuning() const {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if ((ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) &&
+      ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE) && !SyncStream()) {
+    return false;
+  }
+  return true;
 }
 
 bool AscendDeviceContext::LaunchKernel(const CNodePtr &kernel, const vector<AddressPtr> &inputs,
@@ -581,6 +635,19 @@ bool AscendDeviceContext::LaunchKernel(const CNodePtr &kernel, const vector<Addr
 
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
   MS_EXCEPTION_IF_NULL(kernel_mod);
+
+  if (is_dynamic_shape) {
+    kernel::AscendKernelMod *ascend_kernel = dynamic_cast<kernel::AscendKernelMod *>(kernel_mod);
+    MS_EXCEPTION_IF_NULL(ascend_kernel);
+    ascend_kernel->InitDynamicKernel(kernel, compute_stream_);
+    auto dynamic_kernel = ascend_kernel->DynamicKernel();
+    MS_EXCEPTION_IF_NULL(dynamic_kernel);
+    dynamic_kernel->InferShape();
+    dynamic_kernel->UpdateArgs();
+    dynamic_kernel->Execute();
+    dynamic_kernel->PostExecute();
+    return SyncRuning();
+  }
 
   std::vector<AddressPtr> real_inputs;
   auto input_num = AnfAlgo::GetInputTensorNum(kernel);
@@ -605,21 +672,13 @@ bool AscendDeviceContext::LaunchKernel(const CNodePtr &kernel, const vector<Addr
     return false;
   }
 
-  // Sync running.
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  if ((ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) &&
-      ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE) && !SyncStream()) {
-    return false;
-  }
-  return true;
+  return SyncRuning();
 }
 
-bool AscendDeviceContext::BindDeviceToCurrentThread() const {
+void AscendDeviceContext::BindDeviceToCurrentThread() const {
   if (initialized_) {
     runtime_instance_->SetContext();
   }
-  return true;
 }
 
 bool AscendDeviceContext::LaunchAtomicClean(const CNodePtr &node, const std::vector<AddressPtr> &workspace,
