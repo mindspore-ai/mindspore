@@ -56,7 +56,7 @@ void CheckAttr(const PrimitivePtr &primitive, const std::string &shape_attr_name
     MS_EXCEPTION(TypeError) << "Attr " << shape_attr_name << " must be a tuple(list, list, ...).";
   }
   if (!attr_shapes.empty()) {
-    auto ele = attr_shapes[0]->cast<ValueSequeuePtr>();
+    auto ele = attr_shapes[0]->cast<ValueSequencePtr>();
     if (ele == nullptr) {
       MS_EXCEPTION(TypeError) << "Attr " << shape_attr_name << " must be a tuple(list, list, ...).";
     }
@@ -121,7 +121,7 @@ void Check(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &in
   for (size_t i = 0; i < abstract_element.size(); ++i) {
     // get attr shape
     MS_EXCEPTION_IF_NULL(send_shapes[i]);
-    auto send_shape_value = send_shapes[i]->cast<ValueSequeuePtr>();
+    auto send_shape_value = send_shapes[i]->cast<ValueSequencePtr>();
     MS_EXCEPTION_IF_NULL(send_shape_value);
     std::vector<int64_t> send_shape = GetValue<std::vector<int64_t>>(send_shape_value);
     // get input tensor shape
@@ -145,12 +145,12 @@ abstract::BaseShapePtr InferShape(const PrimitivePtr &primitive) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto recv_shapes = primitive->GetAttr(kRecvShapes);
   MS_EXCEPTION_IF_NULL(recv_shapes);
-  auto shapes_seq = recv_shapes->cast<ValueSequeuePtr>();
+  auto shapes_seq = recv_shapes->cast<ValueSequencePtr>();
   MS_EXCEPTION_IF_NULL(shapes_seq);
   auto shapes_value = shapes_seq->value();
   abstract::BaseShapePtrList base_shape_list;
   for (auto &value : shapes_value) {
-    auto each_shape_value = value->cast<ValueSequeuePtr>();
+    auto each_shape_value = value->cast<ValueSequencePtr>();
     MS_EXCEPTION_IF_NULL(each_shape_value);
     std::vector<int64_t> each_shape = GetValue<std::vector<int64_t>>(each_shape_value);
     BaseShapePtr base_shape = std::make_shared<abstract::Shape>(each_shape);
@@ -167,7 +167,7 @@ TypePtr InferType(const PrimitivePtr &primitive) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto recv_shapes = primitive->GetAttr(kRecvShapes);
   MS_EXCEPTION_IF_NULL(recv_shapes);
-  auto shapes_seq = recv_shapes->cast<ValueSequeuePtr>();
+  auto shapes_seq = recv_shapes->cast<ValueSequencePtr>();
   MS_EXCEPTION_IF_NULL(shapes_seq);
   auto shapes_value = shapes_seq->value();
   auto out_num = shapes_value.size();

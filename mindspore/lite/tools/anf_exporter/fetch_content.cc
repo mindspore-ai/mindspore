@@ -213,7 +213,7 @@ int FetchFromSequenceValue(const ValueNodePtr &value_node, const PrimitivePtr &p
   auto value = value_node->value();
   MS_CHECK_TRUE_MSG(value != nullptr, RET_ERROR, "value is nullptr");
   std::vector<int32_t> shape;
-  auto value_seq = value->cast<ValueSequeuePtr>();
+  auto value_seq = value->cast<ValueSequencePtr>();
   MS_CHECK_TRUE_MSG(value_seq != nullptr, RET_ERROR, "value_seq is nullptr");
   if (!value_seq->value().empty()) {
     if (value_seq->value().front()->type()->number_type() == kNumberTypeInt32 ||
@@ -342,7 +342,7 @@ int FetchDataFromValueNode(const CNodePtr &cnode, size_t index, converter::FmkTy
     ret = FetchFromInt32OrInt64ImmValue(value_node, prim, data_info);
   } else if (value->isa<mindspore::BoolImm>()) {
     ret = FetchFromBoolImmValue(value_node, prim, data_info);
-  } else if (value->isa<mindspore::ValueSequeue>()) {
+  } else if (value->isa<mindspore::ValueSequence>()) {
     ret = FetchFromSequenceValue(value_node, prim, data_info);
   } else if (value->isa<Number>()) {
     ret = FetchFromNumberValue(value_node, prim, data_info);

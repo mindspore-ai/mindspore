@@ -154,10 +154,10 @@ static ValueNameToConverterVector value_name_to_converter = {
      py::str res = value->cast<StringImmPtr>()->value();
      return res;
    }},
-  // ValueSequeue
-  {ValueSequeue::kTypeId,
+  // ValueSequence
+  {ValueSequence::kTypeId,
    [](const ValuePtr &value) -> py::object {
-     auto value_sequeue = value->cast<ValueSequeuePtr>()->value();
+     auto value_sequeue = value->cast<ValueSequencePtr>()->value();
      py::tuple res_sequeue(value_sequeue.size());
      for (size_t i = 0; i < value_sequeue.size(); i++) {
        res_sequeue[i] = ValueToPyData(value_sequeue[i]);

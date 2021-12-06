@@ -123,7 +123,7 @@ const AnfNodePtr ReduceMinFission::Process(const FuncGraphPtr &graph, const AnfN
   }
   auto axis_value = prim->GetAttr(kAttrAxis);
   MS_EXCEPTION_IF_NULL(axis_value);
-  if (!axis_value->isa<ValueSequeue>()) {
+  if (!axis_value->isa<ValueSequence>()) {
     return nullptr;
   }
   auto axis = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrAxis);

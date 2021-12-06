@@ -36,7 +36,7 @@ Status BroadcastToInfo::GetAttrs() {
     MS_EXCEPTION_IF_NULL(shape_iter->second);
     auto var = shape_iter->second->cast<ValueTuplePtr>();
     if (var == nullptr) {
-      MS_LOG(ERROR) << name_ << ": shape format is wrong! Need ValueSequeue";
+      MS_LOG(ERROR) << name_ << ": shape format is wrong! Need ValueSequence";
       return FAILED;
     }
     for (auto &ele : var->value()) {

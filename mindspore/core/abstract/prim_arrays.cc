@@ -1299,7 +1299,7 @@ AbstractBasePtr InferImplDynamicStitch(const AnalysisEnginePtr &, const Primitiv
   }
 
   // input0: indices
-  auto input_tuple = args_spec_list[0]->cast<abstract::AbstractSequeuePtr>();
+  auto input_tuple = args_spec_list[0]->cast<abstract::AbstractSequencePtr>();
   MS_EXCEPTION_IF_NULL(input_tuple);
   auto indices = input_tuple->elements();
   auto input_indice_size = input_tuple->size();
@@ -1323,7 +1323,7 @@ AbstractBasePtr InferImplDynamicStitch(const AnalysisEnginePtr &, const Primitiv
   auto indices0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(indices0->BuildShape())[kShape];
 
   // input1: data
-  auto input_tuple_1 = args_spec_list[1]->cast<abstract::AbstractSequeuePtr>();
+  auto input_tuple_1 = args_spec_list[1]->cast<abstract::AbstractSequencePtr>();
   MS_EXCEPTION_IF_NULL(input_tuple_1);
   auto data = input_tuple_1->elements();
   auto data0 = data[0]->cast<abstract::AbstractTensorPtr>();

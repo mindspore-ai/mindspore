@@ -82,7 +82,7 @@ ABSTRACT_REPORT_NAME_TRAITS(Class)
 ABSTRACT_REPORT_NAME_TRAITS(RowTensor)
 ABSTRACT_REPORT_NAME_TRAITS(SparseTensor)
 ABSTRACT_REPORT_NAME_TRAITS(CSRTensor)
-ABSTRACT_REPORT_NAME_TRAITS(Sequeue)
+ABSTRACT_REPORT_NAME_TRAITS(Sequence)
 
 template <typename T>
 std::shared_ptr<T> CheckArg(const std::string &op, const AbstractBasePtrList &args_spec_list, size_t index) {

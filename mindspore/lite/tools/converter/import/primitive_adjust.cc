@@ -179,9 +179,9 @@ int AttrAdjust(const PrimitivePtr &prim, const std::string &name, const std::vec
     return lite::RET_OK;
   }
   auto value_ptr = prim->GetAttr(name);
-  if (utils::isa<ValueSequeuePtr>(value_ptr)) {
-    MS_CHECK_TRUE_MSG(value_ptr->cast<ValueSequeuePtr>()->value().size() > 0, RET_ERROR, "value is empty.");
-    if (value_ptr->cast<ValueSequeuePtr>()->value().front()->type()->number_type() != kNumberTypeInt64) {
+  if (utils::isa<ValueSequencePtr>(value_ptr)) {
+    MS_CHECK_TRUE_MSG(value_ptr->cast<ValueSequencePtr>()->value().size() > 0, RET_ERROR, "value is empty.");
+    if (value_ptr->cast<ValueSequencePtr>()->value().front()->type()->number_type() != kNumberTypeInt64) {
       MS_LOG(ERROR) << "the func is to adjust attr which is array, please check the attr.";
       return lite::RET_ERROR;
     }

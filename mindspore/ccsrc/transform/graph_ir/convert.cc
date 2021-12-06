@@ -1525,8 +1525,8 @@ std::vector<int64_t> DfGraphConvertor::CastToInt(const ValuePtr &value) {
     return {};
   }
   std::vector<int64_t> cur_value = {};
-  if (utils::isa<ValueSequeuePtr>(value)) {
-    auto val_seq_ptr = value->cast<ValueSequeuePtr>();
+  if (utils::isa<ValueSequencePtr>(value)) {
+    auto val_seq_ptr = value->cast<ValueSequencePtr>();
     MS_EXCEPTION_IF_NULL(val_seq_ptr);
     if (!val_seq_ptr->value().empty()) {
       auto first_val = val_seq_ptr->value().front();

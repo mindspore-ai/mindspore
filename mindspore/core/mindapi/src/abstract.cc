@@ -69,7 +69,7 @@ ShapePtr AbstractTensor::shape() const {
   return ToWrapper<Shape>(s);
 }
 
-using AbstractSequenceImpl = mindspore::abstract::AbstractSequeue;
+using AbstractSequenceImpl = mindspore::abstract::AbstractSequence;
 
 MIND_API_BASE_IMPL(AbstractSequence, AbstractSequenceImpl, AbstractBase);
 

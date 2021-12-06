@@ -46,7 +46,7 @@ class DebuggerProtoExporter {
                                std::map<AnfNodePtr, size_t> *const_map_ptr);
   void SetValueToProto(const ValuePtr &attr_value, debugger::ValueProto *value_proto);
   void SetScalarToProto(const ScalarPtr &val, debugger::ValueProto *value_proto);
-  void SetSequenceToProto(const ValueSequeuePtr &val, debugger::ValueProto *value_proto);
+  void SetSequenceToProto(const ValueSequencePtr &val, debugger::ValueProto *value_proto);
   void SetDictionaryToProto(const ValueDictionaryPtr &val, debugger::ValueProto *value_proto);
   void SetNodeOutputType(const AnfNodePtr &node, debugger::TypeProto *type_proto);
   void ExportFuncGraph(const FuncGraphPtr &func_graph, debugger::GraphProto *const graph_proto,

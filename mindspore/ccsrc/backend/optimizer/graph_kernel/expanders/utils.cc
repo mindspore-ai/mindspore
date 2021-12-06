@@ -89,8 +89,8 @@ std::vector<int64_t> GetAxisList(const ValuePtr &value) {
   auto get_int_value = [](const ValuePtr &value) -> int64_t {
     return value->isa<Int64Imm>() ? GetValue<int64_t>(value) : static_cast<int64_t>(GetValue<int>(value));
   };
-  if (value->isa<ValueSequeue>()) {
-    const auto &vals = value->cast<ValueSequeuePtr>()->value();
+  if (value->isa<ValueSequence>()) {
+    const auto &vals = value->cast<ValueSequencePtr>()->value();
     (void)std::transform(vals.begin(), vals.end(), std::back_inserter(result), get_int_value);
   } else {
     result.push_back(get_int_value(value));

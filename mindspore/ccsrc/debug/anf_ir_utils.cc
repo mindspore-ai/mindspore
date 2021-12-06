@@ -294,7 +294,7 @@ std::string AnfExporter::GetSymbolicKeyInstanceText(const FuncGraphPtr &func_gra
 std::string AnfExporter::GetSequenceText(const FuncGraphPtr &func_graph, const ValuePtr &value) {
   std::ostringstream oss;
   // Output ValueList, ValueTuple
-  ValueSequeuePtr seq = dyn_cast<ValueSequeue>(value);
+  ValueSequencePtr seq = dyn_cast<ValueSequence>(value);
   MS_EXCEPTION_IF_NULL(seq);
   MS_EXCEPTION_IF_NULL(value);
   bool is_tuple = value->isa<ValueTuple>();
@@ -360,7 +360,7 @@ std::string AnfExporter::GetValueText(const FuncGraphPtr &func_graph, const Valu
   if (value->isa<SymbolicKeyInstance>()) {
     return GetSymbolicKeyInstanceText(func_graph, value->cast<SymbolicKeyInstancePtr>());
   }
-  if (value->isa<ValueSequeue>()) {
+  if (value->isa<ValueSequence>()) {
     return GetSequenceText(func_graph, value);
   }
   if (value->isa<ValueDictionary>()) {

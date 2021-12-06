@@ -170,8 +170,8 @@ AbstractFunctionPtr AsyncAbstractFuncAtom::GetUnique() {
   const auto &result = async_abstract_->GetResult();
   if (result->isa<AbstractFuncAtom>()) {
     resolved_ = result->cast<AbstractFuncAtomPtr>();
-  } else if (result->isa<AbstractSequeue>()) {
-    const auto &abs_seq = result->cast<AbstractSequeuePtr>();
+  } else if (result->isa<AbstractSequence>()) {
+    const auto &abs_seq = result->cast<AbstractSequencePtr>();
     MS_EXCEPTION_IF_NULL(abs_seq);
     const auto &elements = abs_seq->elements();
     if (elements.size() < index_) {

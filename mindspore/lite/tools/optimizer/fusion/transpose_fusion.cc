@@ -265,12 +265,12 @@ int TransposeFusion::AdjustAxis(const mindspore::AnfNodePtr &node) const {
   MS_CHECK_TRUE_RET(prim != nullptr, lite::RET_ERROR);
   auto axis_value_ptr = prim->GetAttr(ops::kAxis);
   MS_CHECK_TRUE_RET(axis_value_ptr != nullptr, lite::RET_ERROR);
-  int64_t axis = !utils::isa<ValueSequeuePtr>(axis_value_ptr) ? GetValue<int64_t>(axis_value_ptr)
-                                                              : GetValue<std::vector<int64_t>>(axis_value_ptr).front();
+  int64_t axis = !utils::isa<ValueSequencePtr>(axis_value_ptr) ? GetValue<int64_t>(axis_value_ptr)
+                                                               : GetValue<std::vector<int64_t>>(axis_value_ptr).front();
   axis = axis < 0 ? axis + perm.size() : axis;
   MS_CHECK_TRUE_RET(axis >= 0 && static_cast<size_t>(axis) < perm.size(), lite::RET_ERROR);
-  auto axis_attr = !utils::isa<ValueSequeuePtr>(axis_value_ptr) ? MakeValue<int64_t>(perm.at(axis))
-                                                                : MakeValue<std::vector<int64_t>>({perm.at(axis)});
+  auto axis_attr = !utils::isa<ValueSequencePtr>(axis_value_ptr) ? MakeValue<int64_t>(perm.at(axis))
+                                                                 : MakeValue<std::vector<int64_t>>({perm.at(axis)});
   prim->AddAttr(ops::kAxis, axis_attr);
   if (perm == kNC2NH) {
     prim->AddAttr(ops::kFormat, MakeValue<int64_t>(NCHW));

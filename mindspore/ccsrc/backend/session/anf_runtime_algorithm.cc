@@ -1942,8 +1942,8 @@ void AnfRuntimeAlgorithm::GetRealDynamicShape(const std::vector<size_t> &shape,
   }
 }
 
-std::vector<int64_t> GetShapeFromSequeueShape(const abstract::SequeueShapePtr &sequeue_shape_ptr, size_t index,
-                                              ShapeType type) {
+std::vector<int64_t> GetShapeFromSequenceShape(const abstract::SequenceShapePtr &sequeue_shape_ptr, size_t index,
+                                               ShapeType type) {
   MS_EXCEPTION_IF_NULL(sequeue_shape_ptr);
   auto shape_list = sequeue_shape_ptr->shape();
   if (index >= shape_list.size()) {
@@ -1981,9 +1981,9 @@ std::vector<int64_t> AnfRuntimeAlgorithm::GetOutputMaxShape(const AnfNodePtr &an
   if (shape->isa<abstract::Shape>()) {
     auto shape_ptr = shape->cast<abstract::ShapePtr>();
     return shape_ptr->max_shape().empty() ? shape_ptr->shape() : shape_ptr->max_shape();
-  } else if (shape->isa<abstract::SequeueShape>()) {
-    auto sequeue_shape_ptr = shape->cast<abstract::SequeueShapePtr>();
-    return GetShapeFromSequeueShape(sequeue_shape_ptr, index, ShapeType::kMaxShape);
+  } else if (shape->isa<abstract::SequenceShape>()) {
+    auto sequeue_shape_ptr = shape->cast<abstract::SequenceShapePtr>();
+    return GetShapeFromSequenceShape(sequeue_shape_ptr, index, ShapeType::kMaxShape);
   } else if (shape->isa<abstract::NoShape>()) {
     return {};
   } else {
@@ -1999,9 +1999,9 @@ std::vector<int64_t> AnfRuntimeAlgorithm::GetOutputMinShape(const AnfNodePtr &an
   if (shape->isa<abstract::Shape>()) {
     auto shape_ptr = shape->cast<abstract::ShapePtr>();
     return shape_ptr->min_shape().empty() ? shape_ptr->shape() : shape_ptr->min_shape();
-  } else if (shape->isa<abstract::SequeueShape>()) {
-    auto sequeue_shape_ptr = shape->cast<abstract::SequeueShapePtr>();
-    return GetShapeFromSequeueShape(sequeue_shape_ptr, index, ShapeType::kMinShape);
+  } else if (shape->isa<abstract::SequenceShape>()) {
+    auto sequeue_shape_ptr = shape->cast<abstract::SequenceShapePtr>();
+    return GetShapeFromSequenceShape(sequeue_shape_ptr, index, ShapeType::kMinShape);
   } else if (shape->isa<abstract::NoShape>()) {
     return {};
   } else {

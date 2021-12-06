@@ -311,7 +311,7 @@ Strategys PrepareL2Normalize(const std::vector<std::shared_ptr<OperatorInfo>> &o
   auto iter = ops[iter_ops]->attrs().find(AXIS);
   if (iter != ops[iter_ops]->attrs().end()) {
     MS_EXCEPTION_IF_NULL(iter->second);
-    if (iter->second->isa<ValueSequeue>()) {
+    if (iter->second->isa<ValueSequence>()) {
       axis = GetValue<std::vector<int64_t>>(iter->second)[0];
     } else {
       MS_LOG(EXCEPTION) << ops[iter_ops]->name() << " : The value of axis is not int64_t.";

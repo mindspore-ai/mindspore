@@ -40,10 +40,10 @@ std::vector<int64_t> ConvertAnyUtil(const ValuePtr &value, const std::string &na
   MS_EXCEPTION_IF_NULL(value);
   std::vector<int64_t> list;
   if (name == "pad") {
-    if (!value->isa<ValueSequeue>()) {
+    if (!value->isa<ValueSequence>()) {
       MS_LOG(EXCEPTION) << "Value should be ValueTuple, but got" << value->type_name();
     }
-    auto vec = value->cast<ValueSequeuePtr>();
+    auto vec = value->cast<ValueSequencePtr>();
     list.resize(vec->value().size() + 2);
     list[0] = 1;
     list[1] = 1;

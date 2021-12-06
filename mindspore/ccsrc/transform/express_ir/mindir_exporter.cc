@@ -125,7 +125,7 @@ class IrExportBuilder {
   bool SetScalarToAttributeProtoForInt_irs(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto);
   bool SetTypeToAttributeProto_irs(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto);
   bool SetTensorToAttributeProto(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto);
-  bool SetSequenceToAttributeProto(const ValueSequeuePtr &value, mind_ir::AttributeProto *const attr_proto,
+  bool SetSequenceToAttributeProto(const ValueSequencePtr &value, mind_ir::AttributeProto *const attr_proto,
                                    std::string *const seq_string);
   bool SetSeqElemToAttributeProto(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto,
                                   std::string *const seq_string);
@@ -865,11 +865,11 @@ bool IrExportBuilder::SetValueToAttributeProto(const ValuePtr &value, mind_ir::A
     return SetScalarToAttributeProto_ir(value, attr_proto);
   } else if (value->isa<Number>() || value->isa<TensorType>()) {
     return SetTypeToAttributeProto(value, attr_proto);
-  } else if (value->isa<ValueSequeue>()) {
+  } else if (value->isa<ValueSequence>()) {
     ResetTupleIndex();
     std::string seq_string = "scalar:";
     attr_proto->set_type(mind_ir::AttributeProto_AttributeType_TENSORS);
-    if (!SetSequenceToAttributeProto(value->cast<ValueSequeuePtr>(), attr_proto, &seq_string)) {
+    if (!SetSequenceToAttributeProto(value->cast<ValueSequencePtr>(), attr_proto, &seq_string)) {
       MS_LOG(ERROR) << "Set sequence to AttributeProto failed.";
       return false;
     }
@@ -1076,11 +1076,11 @@ bool IrExportBuilder::SetSeqElemToAttributeProto(const ValuePtr &value, mind_ir:
   return SetTypeToAttributeProto_irs(value, attr_proto);
 }
 
-bool IrExportBuilder::SetSequenceToAttributeProto(const ValueSequeuePtr &value,
+bool IrExportBuilder::SetSequenceToAttributeProto(const ValueSequencePtr &value,
                                                   mind_ir::AttributeProto *const attr_proto,
                                                   std::string *const seq_string) {
   if (value == nullptr || attr_proto == nullptr) {
-    MS_LOG(EXCEPTION) << "ValueSequeuePtr or AttributeProto is null!";
+    MS_LOG(EXCEPTION) << "ValueSequencePtr or AttributeProto is null!";
   }
   if (value->isa<ValueTuple>() && seq_string != nullptr) {
     *seq_string += "Tuple[";

@@ -737,8 +737,8 @@ bool NeedWaitForBranches(const AbstractBasePtr &abstract) {
   if (abstract->isa<AbstractFunction>()) {
     return true;
   }
-  if (abstract->isa<AbstractSequeue>()) {
-    auto elements = abstract->cast<AbstractSequeuePtr>()->elements();
+  if (abstract->isa<AbstractSequence>()) {
+    auto elements = abstract->cast<AbstractSequencePtr>()->elements();
     if (std::any_of(elements.begin(), elements.end(),
                     [](const AbstractBasePtr &item) { return item->isa<AbstractFunction>(); })) {
       return true;
@@ -809,8 +809,8 @@ void BuildPossibleSpecs(const AbstractBasePtr &first_result,
       auto async_func = AsyncAbstractFuncAtom::MakeShared(pending_async_abstract_list[j], 0);
       out_specs->push_back(async_func);
     }
-  } else if (first_result->isa<AbstractSequeue>()) {
-    const auto &orig_abstract_seq = first_result->cast<AbstractSequeuePtr>();
+  } else if (first_result->isa<AbstractSequence>()) {
+    const auto &orig_abstract_seq = first_result->cast<AbstractSequencePtr>();
     MS_EXCEPTION_IF_NULL(orig_abstract_seq);
     const auto &orig_elements = orig_abstract_seq->elements();
     AbstractBasePtrList new_elements;

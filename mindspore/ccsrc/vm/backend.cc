@@ -570,8 +570,8 @@ void GetControlOpInput(const std::shared_ptr<GraphCompiler> &graph_compiler, con
     const auto &value = value_node->value();
     MS_EXCEPTION_IF_NULL(value);
 
-    if (value->isa<ValueSequeue>()) {
-      const auto &value_sequeue = value->cast<ValueSequeuePtr>();
+    if (value->isa<ValueSequence>()) {
+      const auto &value_sequeue = value->cast<ValueSequencePtr>();
       MS_EXCEPTION_IF_NULL(value_sequeue);
       input_index += value_sequeue->size();
     } else {

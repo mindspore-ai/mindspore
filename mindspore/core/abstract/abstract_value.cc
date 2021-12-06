@@ -263,14 +263,14 @@ bool AbstractFunction::operator==(const AbstractBase &other) const {
   return value_equal;
 }
 
-const AbstractBasePtr AbstractSequeue::operator[](const std::size_t &dim) const {
+const AbstractBasePtr AbstractSequence::operator[](const std::size_t &dim) const {
   if (dim >= size()) {
     MS_LOG(EXCEPTION) << "Index [" << dim << "] Out of the size [" << size() << "] of the list.";
   }
   return elements_[dim];
 }
 
-std::string AbstractSequeue::ToString() const {
+std::string AbstractSequence::ToString() const {
   std::ostringstream buffer;
   size_t i = 0;
   size_t size = elements_.size();
@@ -285,7 +285,7 @@ std::string AbstractSequeue::ToString() const {
   return buffer.str();
 }
 
-TypePtrList AbstractSequeue::ElementsType() const {
+TypePtrList AbstractSequence::ElementsType() const {
   TypePtrList element_type_list;
   for (const auto &ele : elements_) {
     MS_EXCEPTION_IF_NULL(ele);
@@ -295,7 +295,7 @@ TypePtrList AbstractSequeue::ElementsType() const {
   return element_type_list;
 }
 
-BaseShapePtrList AbstractSequeue::ElementsShape() const {
+BaseShapePtrList AbstractSequence::ElementsShape() const {
   BaseShapePtrList element_shape_list;
   for (const auto &ele : elements_) {
     MS_EXCEPTION_IF_NULL(ele);
@@ -305,7 +305,7 @@ BaseShapePtrList AbstractSequeue::ElementsShape() const {
   return element_shape_list;
 }
 
-AbstractBasePtrList AbstractSequeue::ElementsClone() const {
+AbstractBasePtrList AbstractSequence::ElementsClone() const {
   AbstractBasePtrList ele_list;
   for (const auto &ele : elements_) {
     MS_EXCEPTION_IF_NULL(ele);
@@ -315,7 +315,7 @@ AbstractBasePtrList AbstractSequeue::ElementsClone() const {
   return ele_list;
 }
 
-AbstractBasePtrList AbstractSequeue::ElementsBroaden() const {
+AbstractBasePtrList AbstractSequence::ElementsBroaden() const {
   AbstractBasePtrList ele_list;
   for (const auto &ele : elements_) {
     MS_EXCEPTION_IF_NULL(ele);
@@ -325,7 +325,7 @@ AbstractBasePtrList AbstractSequeue::ElementsBroaden() const {
   return ele_list;
 }
 
-AbstractBasePtrList AbstractSequeue::ElementsPartialBroaden() const {
+AbstractBasePtrList AbstractSequence::ElementsPartialBroaden() const {
   AbstractBasePtrList ele_list;
   for (const auto &ele : elements_) {
     MS_EXCEPTION_IF_NULL(ele);
@@ -336,7 +336,7 @@ AbstractBasePtrList AbstractSequeue::ElementsPartialBroaden() const {
 }
 
 template <typename T>
-ValuePtr AbstractSequeue::ElementsBuildValue() const {
+ValuePtr AbstractSequence::ElementsBuildValue() const {
   std::vector<ValuePtr> element_value_list;
   for (const auto &ele : elements_) {
     MS_EXCEPTION_IF_NULL(ele);
@@ -349,11 +349,11 @@ ValuePtr AbstractSequeue::ElementsBuildValue() const {
   }
   return std::make_shared<T>(element_value_list);
 }
-template ValuePtr AbstractSequeue::ElementsBuildValue<ValueTuple>() const;
-template ValuePtr AbstractSequeue::ElementsBuildValue<ValueList>() const;
+template ValuePtr AbstractSequence::ElementsBuildValue<ValueTuple>() const;
+template ValuePtr AbstractSequence::ElementsBuildValue<ValueList>() const;
 
 template <typename T>
-AbstractBasePtr AbstractSequeue::ElementsJoin(const AbstractBasePtr &other) {
+AbstractBasePtr AbstractSequence::ElementsJoin(const AbstractBasePtr &other) {
   MS_EXCEPTION_IF_NULL(other);
   auto other_sequeue = dyn_cast<T>(other);
   if (other_sequeue == nullptr) {
@@ -372,10 +372,10 @@ AbstractBasePtr AbstractSequeue::ElementsJoin(const AbstractBasePtr &other) {
   }
   return std::make_shared<T>(joined_list);
 }
-template AbstractBasePtr AbstractSequeue::ElementsJoin<AbstractList>(const AbstractBasePtr &);
-template AbstractBasePtr AbstractSequeue::ElementsJoin<AbstractTuple>(const AbstractBasePtr &);
+template AbstractBasePtr AbstractSequence::ElementsJoin<AbstractList>(const AbstractBasePtr &);
+template AbstractBasePtr AbstractSequence::ElementsJoin<AbstractTuple>(const AbstractBasePtr &);
 
-std::size_t AbstractSequeue::hash() const {
+std::size_t AbstractSequence::hash() const {
   std::size_t hash_sum = hash_combine(tid(), std::hash<size_t>{}(elements_.size()));
   // Hashing all elements is costly, so only take at most 4 elements into account based on
   // some experiments.
@@ -386,7 +386,7 @@ std::size_t AbstractSequeue::hash() const {
   return hash_sum;
 }
 
-bool AbstractSequeue::operator==(const AbstractSequeue &other) const {
+bool AbstractSequence::operator==(const AbstractSequence &other) const {
   if (&other == this) {
     return true;
   }
@@ -404,7 +404,7 @@ bool AbstractSequeue::operator==(const AbstractSequeue &other) const {
   return true;
 }
 
-bool AbstractTuple::operator==(const AbstractTuple &other) const { return AbstractSequeue::operator==(other); }
+bool AbstractTuple::operator==(const AbstractTuple &other) const { return AbstractSequence::operator==(other); }
 
 bool AbstractTuple::operator==(const AbstractBase &other) const {
   if (&other == this) {
@@ -430,7 +430,7 @@ bool AbstractTuple::ContainsAllBroadenTensors() const {
   return true;
 }
 
-bool AbstractList::operator==(const AbstractList &other) const { return AbstractSequeue::operator==(other); }
+bool AbstractList::operator==(const AbstractList &other) const { return AbstractSequence::operator==(other); }
 
 bool AbstractList::operator==(const AbstractBase &other) const {
   if (&other == this) {

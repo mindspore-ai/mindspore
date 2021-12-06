@@ -526,9 +526,9 @@ int OpAdapterImpl::SetCustomOpAttr(const CusOperatorPtr &op, const PrimitivePtr 
       (void)op->SetAttr(item.first, GetValue<bool>(item.second));
     } else if (item.second->isa<FP32Imm>()) {
       (void)op->SetAttr(item.first, GetValue<float>(item.second));
-    } else if (item.second->isa<ValueSequeue>()) {
+    } else if (item.second->isa<ValueSequence>()) {
       value_type = SEQUEUE_VALUE;
-      auto val_seq = item.second->cast<ValueSequeuePtr>();
+      auto val_seq = item.second->cast<ValueSequencePtr>();
       if ((*val_seq)[0]->isa<StringImm>()) {
         (void)op->SetAttr(item.first, GetValue<const std::vector<std::string>>(item.second));
       } else if ((*val_seq)[0]->isa<FP32Imm>()) {

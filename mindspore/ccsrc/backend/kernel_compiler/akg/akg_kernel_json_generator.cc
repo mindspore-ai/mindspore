@@ -204,8 +204,8 @@ class OpInfoExtractor {
       } else if (v->isa<Type>()) {
         // convert the TypeId to string
         op_attr->set_type("str");
-      } else if (v->isa<ValueSequeue>()) {
-        const auto &vec = v->cast<ValueSequeuePtr>()->value();
+      } else if (v->isa<ValueSequence>()) {
+        const auto &vec = v->cast<ValueSequencePtr>()->value();
         if (vec.empty()) {
           op_attr->set_type("listInt");
         } else if (vec[0]->isa<Int32Imm>() || vec[0]->isa<Int64Imm>()) {
@@ -398,7 +398,7 @@ void AkgKernelJsonGenerator::GetAttrJson(const AnfNodePtr &anf_node, const std::
     (*attr_json)[kJsonKeyValue] = GetValue<float>(attr_value);
   } else if (type == "listInt") {
     std::vector<int> list_int;
-    const auto &vals = attr_value->cast<ValueSequeuePtr>()->value();
+    const auto &vals = attr_value->cast<ValueSequencePtr>()->value();
     (void)std::transform(vals.begin(), vals.end(), std::back_inserter(list_int), get_int_value);
     (*attr_json)[kJsonKeyValue] = list_int;
   } else if (type == "listStr") {

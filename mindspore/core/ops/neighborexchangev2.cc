@@ -171,12 +171,12 @@ abstract::BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vect
   MS_EXCEPTION_IF_NULL(primitive);
   auto recv_rank_ids = primitive->GetAttr(kRecvRankIds);
   MS_EXCEPTION_IF_NULL(recv_rank_ids);
-  auto recv_rank_ids_value = recv_rank_ids->cast<ValueSequeuePtr>();
+  auto recv_rank_ids_value = recv_rank_ids->cast<ValueSequencePtr>();
   MS_EXCEPTION_IF_NULL(recv_rank_ids_value);
   std::vector<int64_t> recv_rank_ids_v = GetValue<std::vector<int64_t>>(recv_rank_ids_value);
   auto recv_lens = primitive->GetAttr(kRecvLens);
   MS_EXCEPTION_IF_NULL(recv_lens);
-  auto recv_lens_value = recv_lens->cast<ValueSequeuePtr>();
+  auto recv_lens_value = recv_lens->cast<ValueSequencePtr>();
   MS_EXCEPTION_IF_NULL(recv_lens_value);
   std::vector<int64_t> recv_lens_v = GetValue<std::vector<int64_t>>(recv_lens_value);
 

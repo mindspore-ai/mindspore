@@ -219,7 +219,7 @@ bool CompareShape(const std::vector<ValuePtr> &x_shape, const std::vector<ValueP
 }
 
 AbstractBasePtr DoInferReduceShape(const AbstractTuplePtr &x_shape, const ValuePtr &x_shp_value,
-                                   const ValueSequeuePtr &axis_value_ptr, const PrimitivePtr &primitive) {
+                                   const ValueSequencePtr &axis_value_ptr, const PrimitivePtr &primitive) {
   size_t x_rank = x_shape->size();
   std::set<int64_t> axis_set;
   auto axis_data = axis_value_ptr->value();
@@ -376,14 +376,14 @@ AbstractBasePtr InferImplReduceShape(const AnalysisEnginePtr &, const PrimitiveP
   }
 
   // Axis can be scalar, tuple or list
-  AbstractSequeuePtr axis = nullptr;
+  AbstractSequencePtr axis = nullptr;
   if (args_spec_list[1]->isa<AbstractScalar>()) {
     MS_LOG(DEBUG) << op_name << " evaluator second parameter is scalar";
     AbstractBasePtrList axis_list = {dyn_cast<AbstractScalar>(args_spec_list[1])};
     axis = std::make_shared<AbstractTuple>(axis_list);
-  } else if (args_spec_list[1]->isa<AbstractSequeue>()) {
-    MS_LOG(DEBUG) << "The type of second argument of ReduceShape operator is sequeue.";
-    axis = args_spec_list[1]->cast<AbstractSequeuePtr>();
+  } else if (args_spec_list[1]->isa<AbstractSequence>()) {
+    MS_LOG(DEBUG) << "The type of second argument of ReduceShape operator is sequence.";
+    axis = args_spec_list[1]->cast<AbstractSequencePtr>();
   } else {
     MS_LOG(EXCEPTION) << op_name << "The second argument of ReduceShape operator should be a scalar or tuple or list, "
                       << "but got " << args_spec_list[1]->ToString();
@@ -393,7 +393,7 @@ AbstractBasePtr InferImplReduceShape(const AnalysisEnginePtr &, const PrimitiveP
   if (axis_value->isa<AnyValue>()) {
     MS_LOG(EXCEPTION) << "The ReduceShape operator's data field can't be anything: " << args_spec_list[1]->ToString();
   }
-  auto axis_value_ptr = axis_value->cast<ValueSequeuePtr>();
+  auto axis_value_ptr = axis_value->cast<ValueSequencePtr>();
   MS_EXCEPTION_IF_NULL(axis_value_ptr);
 
   return DoInferReduceShape(shape_x, x_shp_value, axis_value_ptr, primitive);
@@ -535,7 +535,7 @@ AbstractBasePtr InferImplMakeSlice(const AnalysisEnginePtr &, const PrimitivePtr
     } else if (args_spec_list[index]->isa<AbstractScalar>()) {
       ValuePtr scalar_value = args_spec_list[index]->cast<AbstractScalarPtr>()->BuildValue();
       MS_EXCEPTION_IF_NULL(scalar_value);
-      if (scalar_value->isa<IntergerImm>()) {
+      if (scalar_value->isa<IntegerImm>()) {
         slice_args.push_back(args_spec_list[index]);
       } else if (scalar_value->isa<BoolImm>()) {
         ValuePtr scalar_index = MakeValue(static_cast<int64_t>(scalar_value->cast<BoolImmPtr>()->value()));

@@ -106,31 +106,31 @@ using BoolImmPtr = std::shared_ptr<BoolImm>;
 IMM_TRAITS(BoolImmPtr, bool)
 
 /// \beief IntegerImm defines interface for integer data.
-class MS_CORE_API IntergerImm : public Scalar {
+class MS_CORE_API IntegerImm : public Scalar {
  public:
   /// \beief The default constructor for IntegerImm.
-  IntergerImm() = default;
+  IntegerImm() = default;
   /// \brief The constructor for IntegerImm.
   ///
   /// \param[in] t The type of IntegerImm.
-  explicit IntergerImm(const TypePtr &t) : Scalar(t) {}
+  explicit IntegerImm(const TypePtr &t) : Scalar(t) {}
   /// \brief The destructor of Scalar.
-  ~IntergerImm() override = default;
-  MS_DECLARE_PARENT(IntergerImm, Scalar)
+  ~IntegerImm() override = default;
+  MS_DECLARE_PARENT(IntegerImm, Scalar)
 };
 
 /// \beief Int8Imm defines interface for int8 data.
-class MS_CORE_API Int8Imm final : public IntergerImm {
+class MS_CORE_API Int8Imm final : public IntegerImm {
  public:
   /// \beief The default constructor for Int8Imm.
-  Int8Imm() : IntergerImm(kInt8), v_(0) {}
+  Int8Imm() : IntegerImm(kInt8), v_(0) {}
   /// \brief The constructor for Int8Imm.
   ///
   /// \param[in] v The value of Int8Imm.
-  explicit Int8Imm(int8_t v) : IntergerImm(kInt8), v_(v) { hash_ = hash_combine({tid(), std::hash<int>{}(v_)}); }
+  explicit Int8Imm(int8_t v) : IntegerImm(kInt8), v_(v) { hash_ = hash_combine({tid(), std::hash<int>{}(v_)}); }
   /// \brief The destructor of Int8Imm.
   ~Int8Imm() override = default;
-  MS_DECLARE_PARENT(Int8Imm, IntergerImm)
+  MS_DECLARE_PARENT(Int8Imm, IntegerImm)
   std::size_t hash() const override { return hash_; }
   bool IsZero() override { return v_ == 0; }
   bool IsOne() override { return v_ == 1; }
@@ -158,17 +158,17 @@ class MS_CORE_API Int8Imm final : public IntergerImm {
 using Int8ImmPtr = std::shared_ptr<Int8Imm>;
 IMM_TRAITS(Int8ImmPtr, int8_t)
 /// \beief Int16Imm defines interface for int16 data.
-class MS_CORE_API Int16Imm final : public IntergerImm {
+class MS_CORE_API Int16Imm final : public IntegerImm {
  public:
   /// \beief The default constructor for Int16Imm.
-  Int16Imm() : IntergerImm(kInt16), v_(0) {}
+  Int16Imm() : IntegerImm(kInt16), v_(0) {}
   /// \brief The constructor for Int16Imm.
   ///
   /// \param[in] v The value of Int16Imm.
-  explicit Int16Imm(int16_t v) : IntergerImm(kInt16), v_(v) { hash_ = hash_combine({tid(), std::hash<int>{}(v_)}); }
+  explicit Int16Imm(int16_t v) : IntegerImm(kInt16), v_(v) { hash_ = hash_combine({tid(), std::hash<int>{}(v_)}); }
   /// \brief The destructor of Int16Imm.
   ~Int16Imm() override = default;
-  MS_DECLARE_PARENT(Int16Imm, IntergerImm)
+  MS_DECLARE_PARENT(Int16Imm, IntegerImm)
   std::size_t hash() const override { return hash_; }
   bool IsZero() override { return v_ == 0; }
   bool IsOne() override { return v_ == 1; }
@@ -197,17 +197,17 @@ using Int16ImmPtr = std::shared_ptr<Int16Imm>;
 IMM_TRAITS(Int16ImmPtr, int16_t)
 
 /// \beief Int32Imm defines interface for int32 data.
-class MS_CORE_API Int32Imm final : public IntergerImm {
+class MS_CORE_API Int32Imm final : public IntegerImm {
  public:
   /// \beief The default constructor for Int32Imm.
-  Int32Imm() : IntergerImm(kInt32), v_(0) {}
+  Int32Imm() : IntegerImm(kInt32), v_(0) {}
   /// \brief The constructor for Int32Imm.
   ///
   /// \param[in] v The value of Int32Imm.
-  explicit Int32Imm(int v) : IntergerImm(kInt32), v_(v) { hash_ = hash_combine({tid(), std::hash<int>{}(v_)}); }
+  explicit Int32Imm(int v) : IntegerImm(kInt32), v_(v) { hash_ = hash_combine({tid(), std::hash<int>{}(v_)}); }
   /// \brief The destructor of Int32Imm.
   ~Int32Imm() override = default;
-  MS_DECLARE_PARENT(Int32Imm, IntergerImm)
+  MS_DECLARE_PARENT(Int32Imm, IntegerImm)
   std::size_t hash() const override { return hash_; }
   bool IsZero() override { return v_ == 0; }
   bool IsOne() override { return v_ == 1; }
@@ -236,17 +236,17 @@ using Int32ImmPtr = std::shared_ptr<Int32Imm>;
 IMM_TRAITS(Int32ImmPtr, int32_t)
 
 /// \beief Int64Imm defines interface for int64 data.
-class MS_CORE_API Int64Imm final : public IntergerImm {
+class MS_CORE_API Int64Imm final : public IntegerImm {
  public:
   /// \beief The default constructor for Int64Imm.
-  Int64Imm() : IntergerImm(kInt64), v_(0) {}
+  Int64Imm() : IntegerImm(kInt64), v_(0) {}
   /// \brief The constructor for Int64Imm.
   ///
   /// \param[in] v The value of Int64Imm.
-  explicit Int64Imm(int64_t v) : IntergerImm(kInt64), v_(v) { hash_ = hash_combine({tid(), std::hash<int64_t>{}(v_)}); }
+  explicit Int64Imm(int64_t v) : IntegerImm(kInt64), v_(v) { hash_ = hash_combine({tid(), std::hash<int64_t>{}(v_)}); }
   /// \brief The destructor of Int64Imm.
   ~Int64Imm() override = default;
-  MS_DECLARE_PARENT(Int64Imm, IntergerImm)
+  MS_DECLARE_PARENT(Int64Imm, IntegerImm)
   std::size_t hash() const override { return hash_; }
   bool IsZero() override { return v_ == 0; }
   bool IsOne() override { return v_ == 1; }
@@ -274,19 +274,19 @@ class MS_CORE_API Int64Imm final : public IntergerImm {
 using Int64ImmPtr = std::shared_ptr<Int64Imm>;
 IMM_TRAITS(Int64ImmPtr, int64_t)
 /// \beief UInt8Imm defines interface for uint8 data.
-class MS_CORE_API UInt8Imm final : public IntergerImm {
+class MS_CORE_API UInt8Imm final : public IntegerImm {
  public:
   /// \beief The default constructor for UInt8Imm.
-  UInt8Imm() : IntergerImm(kUInt8), v_(0) {}
+  UInt8Imm() : IntegerImm(kUInt8), v_(0) {}
   /// \brief The constructor for UInt8Imm.
   ///
   /// \param[in] v The value of UInt8Imm.
-  explicit UInt8Imm(uint8_t v) : IntergerImm(kUInt8), v_(v) {
+  explicit UInt8Imm(uint8_t v) : IntegerImm(kUInt8), v_(v) {
     hash_ = hash_combine({tid(), std::hash<unsigned int>{}(v_)});
   }
   /// \brief The destructor of UInt8Imm.
   ~UInt8Imm() override = default;
-  MS_DECLARE_PARENT(UInt8Imm, IntergerImm)
+  MS_DECLARE_PARENT(UInt8Imm, IntegerImm)
   std::size_t hash() const override { return hash_; }
   bool IsZero() override { return v_ == 0; }
   bool IsOne() override { return v_ == 1; }
@@ -315,19 +315,19 @@ using UInt8ImmPtr = std::shared_ptr<UInt8Imm>;
 IMM_TRAITS(UInt8ImmPtr, uint8_t);
 
 /// \beief UInt16Imm defines interface for uint16 data.
-class MS_CORE_API UInt16Imm final : public IntergerImm {
+class MS_CORE_API UInt16Imm final : public IntegerImm {
  public:
   /// \beief The default constructor for UInt16Imm.
-  UInt16Imm() : IntergerImm(kUInt16), v_(0) {}
+  UInt16Imm() : IntegerImm(kUInt16), v_(0) {}
   /// \brief The constructor for UInt16Imm.
   ///
   /// \param[in] v The value of UInt16Imm.
-  explicit UInt16Imm(uint16_t v) : IntergerImm(kUInt16), v_(v) {
+  explicit UInt16Imm(uint16_t v) : IntegerImm(kUInt16), v_(v) {
     hash_ = hash_combine({tid(), std::hash<unsigned int>{}(v_)});
   }
   /// \brief The destructor of UInt16Imm.
   ~UInt16Imm() override = default;
-  MS_DECLARE_PARENT(UInt16Imm, IntergerImm)
+  MS_DECLARE_PARENT(UInt16Imm, IntegerImm)
   std::size_t hash() const override { return hash_; }
   bool IsZero() override { return v_ == 0; }
   bool IsOne() override { return v_ == 1; }
@@ -356,19 +356,19 @@ using UInt16ImmPtr = std::shared_ptr<UInt16Imm>;
 IMM_TRAITS(UInt16ImmPtr, uint16_t);
 
 /// \beief UInt32Imm defines interface for uint32 data.
-class MS_CORE_API UInt32Imm final : public IntergerImm {
+class MS_CORE_API UInt32Imm final : public IntegerImm {
  public:
   /// \beief The default constructor for UInt32Imm.
-  UInt32Imm() : IntergerImm(kUInt32), v_(0) {}
+  UInt32Imm() : IntegerImm(kUInt32), v_(0) {}
   /// \brief The constructor for UInt32Imm.
   ///
   /// \param[in] v The value of UInt32Imm.
-  explicit UInt32Imm(uint32_t v) : IntergerImm(kUInt32), v_(v) {
+  explicit UInt32Imm(uint32_t v) : IntegerImm(kUInt32), v_(v) {
     hash_ = hash_combine({tid(), std::hash<unsigned int>{}(v_)});
   }
   /// \brief The destructor of UInt32Imm.
   ~UInt32Imm() override = default;
-  MS_DECLARE_PARENT(UInt32Imm, IntergerImm)
+  MS_DECLARE_PARENT(UInt32Imm, IntegerImm)
   std::size_t hash() const override { return hash_; }
   bool IsZero() override { return v_ == 0; }
   bool IsOne() override { return v_ == 1; }
@@ -396,19 +396,19 @@ class MS_CORE_API UInt32Imm final : public IntergerImm {
 using UInt32ImmPtr = std::shared_ptr<UInt32Imm>;
 IMM_TRAITS(UInt32ImmPtr, uint32_t);
 /// \beief UInt64Imm defines interface for uint64 data.
-class MS_CORE_API UInt64Imm final : public IntergerImm {
+class MS_CORE_API UInt64Imm final : public IntegerImm {
  public:
   /// \beief The default constructor for UInt64Imm.
-  UInt64Imm() : IntergerImm(kUInt64), v_(0) {}
+  UInt64Imm() : IntegerImm(kUInt64), v_(0) {}
   /// \brief The constructor for UInt64Imm.
   ///
   /// \param[in] v The value of UInt64Imm.
-  explicit UInt64Imm(uint64_t v) : IntergerImm(kUInt64), v_(v) {
+  explicit UInt64Imm(uint64_t v) : IntegerImm(kUInt64), v_(v) {
     hash_ = hash_combine({tid(), std::hash<uint64_t>{}(v)});
   }
   /// \brief The destructor of UInt64Imm.
   ~UInt64Imm() override = default;
-  MS_DECLARE_PARENT(UInt64Imm, IntergerImm)
+  MS_DECLARE_PARENT(UInt64Imm, IntegerImm)
   std::size_t hash() const override { return hash_; }
   bool IsZero() override { return v_ == 0; }
   bool IsOne() override { return v_ == 1; }

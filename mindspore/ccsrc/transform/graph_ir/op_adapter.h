@@ -366,8 +366,8 @@ class OpAdapter : public BaseOpAdapter {
     MS_EXCEPTION_IF_NULL(value);
     MS_LOG(INFO) << "Value: " << value->type_name();
     std::vector<int64_t> list;
-    if (value->isa<ValueSequeue>()) {
-      auto vec = value->cast<ValueSequeuePtr>();
+    if (value->isa<ValueSequence>()) {
+      auto vec = value->cast<ValueSequencePtr>();
       MS_EXCEPTION_IF_NULL(vec);
       for (auto &it : vec->value()) {
         list.push_back(static_cast<int64_t>(GetValue<int64_t>(it)));

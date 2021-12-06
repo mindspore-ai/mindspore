@@ -66,8 +66,8 @@ STATUS PrimitiveMapper::AttrAdjust(const PrimitivePtr &prim, const std::string &
     MS_LOG(WARNING) << prim->name() << " has no attr " << name;
     return lite::RET_OK;
   }
-  if (utils::isa<ValueSequeuePtr>(value_ptr)) {
-    auto val_seq_ptr = value_ptr->cast<ValueSequeuePtr>();
+  if (utils::isa<ValueSequencePtr>(value_ptr)) {
+    auto val_seq_ptr = value_ptr->cast<ValueSequencePtr>();
     CHECK_NULL_RETURN(val_seq_ptr);
     ValuePtr first_val = nullptr;
     if (!val_seq_ptr->value().empty()) {

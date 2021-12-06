@@ -31,8 +31,8 @@ namespace mindspore {
 namespace prim {
 using mindspore::abstract::AbstractBase;
 using mindspore::abstract::AbstractList;
-using mindspore::abstract::AbstractSequeue;
-using mindspore::abstract::AbstractSequeuePtr;
+using mindspore::abstract::AbstractSequence;
+using mindspore::abstract::AbstractSequencePtr;
 using mindspore::abstract::AbstractTuple;
 
 FuncGraphPtr ZipOperation::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
@@ -46,7 +46,7 @@ FuncGraphPtr ZipOperation::GenerateFuncGraph(const AbstractBasePtrList &args_spe
   auto all_is_sequence =
     std::all_of(args_spec_list.begin(), args_spec_list.end(), [](const AbstractBasePtr &abs) -> bool {
       MS_EXCEPTION_IF_NULL(abs);
-      return abs->isa<AbstractSequeue>();
+      return abs->isa<AbstractSequence>();
     });
   if (!all_is_sequence) {
     std::ostringstream oss;
@@ -59,7 +59,7 @@ FuncGraphPtr ZipOperation::GenerateFuncGraph(const AbstractBasePtrList &args_spe
 
   auto min_abs = std::min_element(
     args_spec_list.begin(), args_spec_list.end(), [](const AbstractBasePtr &x, const AbstractBasePtr &y) {
-      return (x->cast<AbstractSequeuePtr>()->size() < y->cast<AbstractSequeuePtr>()->size());
+      return (x->cast<AbstractSequencePtr>()->size() < y->cast<AbstractSequencePtr>()->size());
     });
   FuncGraphPtr ret_graph = std::make_shared<FuncGraph>();
   ret_graph->set_flag(FUNC_GRAPH_FLAG_CORE, true);
@@ -70,7 +70,7 @@ FuncGraphPtr ZipOperation::GenerateFuncGraph(const AbstractBasePtrList &args_spe
   // generate tuple output of zipped arguments input
   std::vector<AnfNodePtr> make_tuple_nodes;
   make_tuple_nodes.push_back(NewValueNode(prim::kPrimMakeTuple));
-  for (size_t idx = 0; idx < (*min_abs)->cast<AbstractSequeuePtr>()->size(); idx++) {
+  for (size_t idx = 0; idx < (*min_abs)->cast<AbstractSequencePtr>()->size(); idx++) {
     std::vector<AnfNodePtr> make_tuple_zip_nodes;
     make_tuple_zip_nodes.push_back(NewValueNode(prim::kPrimMakeTuple));
     std::string module_name = "mindspore.ops.composite.multitype_ops.getitem_impl";

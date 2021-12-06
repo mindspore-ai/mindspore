@@ -185,23 +185,23 @@ using ShapePtr = std::shared_ptr<Shape>;
 using ShapePtrList = std::vector<ShapePtr>;
 
 /// \brief SequequeShape defines base class of multiple-shape classes.
-class MS_CORE_API SequeueShape : public BaseShape {
+class MS_CORE_API SequenceShape : public BaseShape {
  public:
-  /// \brief Constructor of SequeueShape.
-  SequeueShape() : p_shapes_() {}
+  /// \brief Constructor of SequenceShape.
+  SequenceShape() : p_shapes_() {}
 
-  /// \brief Constructor of SequeueShape.
+  /// \brief Constructor of SequenceShape.
   ///
   /// \param[in]  shapes All element-shapes.
-  explicit SequeueShape(const BaseShapePtrList &shapes) : p_shapes_(shapes) {}
+  explicit SequenceShape(const BaseShapePtrList &shapes) : p_shapes_(shapes) {}
 
-  /// \brief Destructor of SequeueShape.
-  ~SequeueShape() override = default;
-  MS_DECLARE_PARENT(SequeueShape, BaseShape)
+  /// \brief Destructor of SequenceShape.
+  ~SequenceShape() override = default;
+  MS_DECLARE_PARENT(SequenceShape, BaseShape)
 
-  /// \brief Get the description string about the SequeueShape object.
+  /// \brief Get the description string about the SequenceShape object.
   ///
-  /// \return The description string about the SequeueShape object.
+  /// \return The description string about the SequenceShape object.
   std::string ToString() const override;
 
   /// \brief Clone all element-shapes.
@@ -209,12 +209,12 @@ class MS_CORE_API SequeueShape : public BaseShape {
   /// \return New cloned element-shapes.
   BaseShapePtrList ElementsClone() const;
 
-  /// \brief Check whether SequeueShape object is equal to a BaseShape object.
+  /// \brief Check whether SequenceShape object is equal to a BaseShape object.
   ///
-  /// \param[in] other Another SequeueShape object.
-  /// \return True if current SequeueShape object is equal to another BaseShape object, otherwise false.
+  /// \param[in] other Another SequenceShape object.
+  /// \return True if current SequenceShape object is equal to another BaseShape object, otherwise false.
   template <typename T>
-  bool SequeueEqual(const BaseShape &other) const;
+  bool SequenceEqual(const BaseShape &other) const;
 
   /// \brief Get all element-shapes.
   ///
@@ -243,50 +243,50 @@ class MS_CORE_API SequeueShape : public BaseShape {
  protected:
   BaseShapePtrList p_shapes_;  // shape list of each elements
 };
-using SequeueShapePtr = std::shared_ptr<SequeueShape>;
+using SequenceShapePtr = std::shared_ptr<SequenceShape>;
 
 /// \brief TupleShape defines shape used by tuple with tensor inside.
-class MS_CORE_API TupleShape final : public SequeueShape {
+class MS_CORE_API TupleShape final : public SequenceShape {
  public:
   /// \brief Constructor of TupleShape.
-  TupleShape() : SequeueShape() {}
+  TupleShape() : SequenceShape() {}
 
   /// \brief Constructor of TupleShape.
   ///
   /// \param[in] shapes Element-shapes of TupleShape.
-  explicit TupleShape(const BaseShapePtrList &shapes) : SequeueShape(shapes) {}
+  explicit TupleShape(const BaseShapePtrList &shapes) : SequenceShape(shapes) {}
 
   /// \brief Destructor of TupleShape.
   ~TupleShape() override = default;
-  MS_DECLARE_PARENT(TupleShape, SequeueShape)
+  MS_DECLARE_PARENT(TupleShape, SequenceShape)
 
-  std::string ToString() const override { return type_name() + "(" + SequeueShape::ToString() + ")"; }
+  std::string ToString() const override { return type_name() + "(" + SequenceShape::ToString() + ")"; }
 
   BaseShapePtr Clone() const override { return std::make_shared<TupleShape>(ElementsClone()); }
 
-  bool operator==(const BaseShape &other) const override { return SequeueEqual<TupleShape>(other); }
+  bool operator==(const BaseShape &other) const override { return SequenceEqual<TupleShape>(other); }
 };
 using TupleShapePtr = std::shared_ptr<TupleShape>;
 
 /// \brief ListShape defines shape used by list with tensor inside.
-class MS_CORE_API ListShape final : public SequeueShape {
+class MS_CORE_API ListShape final : public SequenceShape {
  public:
   /// \brief Constructor of ListShape.
-  ListShape() : SequeueShape() {}
+  ListShape() : SequenceShape() {}
   /// \brief Constructor of ListShape.
   ///
   /// \param[in] shapes Element-shapes of ListShape.
-  explicit ListShape(const BaseShapePtrList &shapes) : SequeueShape(shapes) {}
+  explicit ListShape(const BaseShapePtrList &shapes) : SequenceShape(shapes) {}
 
   /// \brief Destructor of ListShape.
   ~ListShape() override = default;
-  MS_DECLARE_PARENT(ListShape, SequeueShape)
+  MS_DECLARE_PARENT(ListShape, SequenceShape)
 
-  std::string ToString() const override { return type_name() + "[" + SequeueShape::ToString() + "]"; }
+  std::string ToString() const override { return type_name() + "[" + SequenceShape::ToString() + "]"; }
 
-  BaseShapePtr Clone() const override { return std::make_shared<ListShape>(SequeueShape::ElementsClone()); }
+  BaseShapePtr Clone() const override { return std::make_shared<ListShape>(SequenceShape::ElementsClone()); }
 
-  bool operator==(const BaseShape &other) const override { return SequeueEqual<ListShape>(other); }
+  bool operator==(const BaseShape &other) const override { return SequenceEqual<ListShape>(other); }
 };
 using ListShapePtr = std::shared_ptr<ListShape>;
 }  // namespace abstract

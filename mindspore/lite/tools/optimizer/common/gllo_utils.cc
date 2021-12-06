@@ -308,9 +308,9 @@ std::vector<int> CastToInt(const ValuePtr &value) {
     return {};
   }
   std::vector<int> cur_value = {};
-  if (utils::isa<ValueSequeuePtr>(value)) {
-    if (!value->cast<ValueSequeuePtr>()->value().empty()) {
-      auto data_type = value->cast<ValueSequeuePtr>()->value().front()->type()->number_type();
+  if (utils::isa<ValueSequencePtr>(value)) {
+    if (!value->cast<ValueSequencePtr>()->value().empty()) {
+      auto data_type = value->cast<ValueSequencePtr>()->value().front()->type()->number_type();
       if (data_type == kNumberTypeInt64) {
         auto origin_value = GetValue<std::vector<int64_t>>(value);
         std::transform(origin_value.begin(), origin_value.end(), std::back_inserter(cur_value),
@@ -343,9 +343,15 @@ std::vector<std::vector<int>> CastToVec2DInt(const ValuePtr &value) {
   }
 
   std::vector<std::vector<int>> result_value;
-  if (utils::isa<ValueSequeuePtr>(value)) {
-    auto data_type =
-      value->cast<ValueSequeuePtr>()->value().front()->cast<ValueSequeuePtr>()->value().front()->type()->number_type();
+  if (utils::isa<ValueSequencePtr>(value)) {
+    auto data_type = value->cast<ValueSequencePtr>()
+                       ->value()
+                       .front()
+                       ->cast<ValueSequencePtr>()
+                       ->value()
+                       .front()
+                       ->type()
+                       ->number_type();
     if (data_type == kNumberTypeInt64) {
       auto origin_value = GetValue<std::vector<std::vector<int64_t>>>(value);
       for (auto &i : origin_value) {
@@ -370,9 +376,9 @@ std::vector<float> CastToFloat(const ValuePtr &value) {
     return {};
   }
   std::vector<float> cur_value = {};
-  if (utils::isa<ValueSequeuePtr>(value)) {
-    if (!value->cast<ValueSequeuePtr>()->value().empty()) {
-      auto data_type = value->cast<ValueSequeuePtr>()->value().front()->type()->number_type();
+  if (utils::isa<ValueSequencePtr>(value)) {
+    if (!value->cast<ValueSequencePtr>()->value().empty()) {
+      auto data_type = value->cast<ValueSequencePtr>()->value().front()->type()->number_type();
       if (data_type == kNumberTypeFloat || data_type == kNumberTypeFloat32) {
         cur_value = GetValue<std::vector<float>>(value);
       } else {
