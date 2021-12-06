@@ -63,6 +63,7 @@ from .assign_ds import _assign_ds_tbe
 from .assign_add import _assign_add_tbe
 from .assign_add_ds import _assign_add_ds_tbe
 from .assign_sub import _assign_sub_tbe
+from .assign_sub_ds import _assign_sub_ds_tbe
 from .batch_matmul import _batch_matmul_tbe
 from .batch_matmul_ds import _batch_matmul_ds_tbe
 from .batch_matmul_v2 import _batch_matmul_v2_tbe

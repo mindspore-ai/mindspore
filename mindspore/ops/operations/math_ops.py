@@ -325,7 +325,7 @@ class AssignAdd(Primitive):
         self.add_prim_attr('side_effect_mem', True)
 
 
-class AssignSub(PrimitiveWithInfer):
+class AssignSub(Primitive):
     """
     Updates a `Parameter` by subtracting a value from it.
 
@@ -378,23 +378,15 @@ class AssignSub(PrimitiveWithInfer):
     """
 
     __mindspore_signature__ = (
-        sig.make_sig('variable', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('val', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
         sig.make_sig('value', dtype=sig.sig_dtype.T)
     )
 
     @prim_attr_register
     def __init__(self):
         """Initialize AssignSub"""
-        self.init_prim_io_names(inputs=['ref', 'value'], outputs=['output'])
+        self.init_prim_io_names(inputs=['val', 'value'], outputs=['val'])
         self.add_prim_attr('side_effect_mem', True)
-
-    def infer_shape(self, variable, value):
-        return value
-
-    def infer_dtype(self, variable, value):
-        args = {"variable": variable, "value": value}
-        validator.check_scalar_or_tensor_types_same(args, mstype.number_type, self.name)
-        return value
 
 
 class _Reduce(PrimitiveWithInfer):
