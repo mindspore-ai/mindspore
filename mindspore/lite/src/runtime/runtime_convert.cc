@@ -33,6 +33,9 @@ char *RuntimeConvert(const char *model_buf, const size_t &buf_size, size_t *size
   flag->outputDataType = kTypeUnknown;
   flag->saveFP16 = false;
   flag->trainModel = false;
+#ifdef ENABLE_LITE_ACL
+  flag->device = "Ascend310";
+#endif
 
   Converter cvt;
   auto meta_graph = cvt.Convert(flag, model_buf, buf_size);

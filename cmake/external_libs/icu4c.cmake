@@ -38,7 +38,7 @@ else()
                 LIBS ${LIB_ICU_COMMON} ${LIB_ICU_DATA} ${LIB_ICU_I18N}
                 URL ${REQ_URL}
                 MD5 ${MD5}
-                PATCHES ${CMAKE_SOURCE_DIR}/third_party/patch/icu4c/icu4c.patch01
+                PATCHES ${TOP_DIR}/third_party/patch/icu4c/icu4c.patch01
                 CONFIGURE_COMMAND ./icu4c/source/runConfigureICU Linux --enable-rpath --disable-tests --disable-samples
                                   --disable-icuio --disable-extras
                                   ICU_DATA_FILTER_FILE=${CMAKE_BINARY_DIR}/icu4c_filter.json

@@ -9,3 +9,6 @@ add_library(dvpp-utils OBJECT
         ErrorCode.cpp
         ResourceManager.cc
         )
+if(MSLITE_ENABLE_CLOUD_MIND_DATA)
+    add_dependencies(dvpp-utils fbs_src)
+endif()

@@ -14,7 +14,7 @@ mindspore_add_pkg(cppjieba
         HEAD_ONLY ./
         URL ${REQ_URL}
         MD5 ${MD5}
-        PATCHES ${CMAKE_SOURCE_DIR}/third_party/patch/cppjieba/cppjieba.patch001)
+        PATCHES ${TOP_DIR}/third_party/patch/cppjieba/cppjieba.patch001)
 include_directories(${cppjieba_INC}include)
 include_directories(${cppjieba_INC}deps)
 add_library(mindspore::cppjieba ALIAS cppjieba)

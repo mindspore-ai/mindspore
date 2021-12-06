@@ -69,12 +69,10 @@ file(GLOB CXX_API_SRCS
 file(GLOB C_API_SRCS
         ${CMAKE_CURRENT_SOURCE_DIR}/c_api/*.cc
         )
-
-set(API_SRC
-        ${CORE_DIR}/utils/status.cc
-        ${CXX_API_SRCS}
-        ${C_API_SRCS}
-        )
+set(API_SRC ${CXX_API_SRCS} ${C_API_SRCS})
+if(NOT MSLITE_ENABLE_RUNTIME_CONVERT)
+    set(API_SRC ${API_SRC} ${CORE_DIR}/utils/status.cc)
+endif()
 
 file(GLOB CXX_API_TRAIN_SRCS
         ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/train/*.cc
@@ -388,7 +386,7 @@ if(PLATFORM_ARM32 OR PLATFORM_ARM64 AND NOT TARGET_HIMIX
     target_link_libraries(mindspore-lite log)
     target_link_libraries(mindspore-lite_static log)
 endif()
-if(BUILD_MINDDATA STREQUAL "lite")
+if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "lite")
     target_link_libraries(mindspore-lite minddata_eager_mid minddata-lite)
     target_link_libraries(mindspore-lite_static minddata_eager_mid)
 endif()
@@ -424,13 +422,21 @@ if(MSLITE_ENABLE_RUNTIME_CONVERT)
     target_link_libraries(mindspore-lite
             quantizer_mid fusion_mid proto_mid graph_pass_mid preprocess_mid
             cpu_kernel_mid ccsrc_src_mid converter_src_mid anf_exporter_mid
-            config_parser_mid mslite_converter_plugin mindspore_core
+            config_parser_mid mslite_converter_plugin
+            -Wl,--whole-archive mindspore_core -Wl,--no-whole-archive
             mindspore::protobuf ${SECUREC_LIBRARY})
     target_link_libraries(mindspore-lite_static
             quantizer_mid fusion_mid proto_mid graph_pass_mid preprocess_mid
             cpu_kernel_mid ccsrc_src_mid converter_src_mid anf_exporter_mid
-            config_parser_mid mslite_converter_plugin mindspore_core
+            config_parser_mid mslite_converter_plugin
+            -Wl,--whole-archive mindspore_core -Wl,--no-whole-archive
             mindspore::protobuf ${SECUREC_LIBRARY})
+    if(MSLITE_ENABLE_ACL)
+        target_link_libraries(mindspore-lite lite_acl_mid
+                mindspore_shared_lib)
+        target_link_libraries(mindspore-lite_static lite_acl_mid
+                mindspore_shared_lib)
+    endif()
 endif()
 
 if(MSLITE_ENABLE_RUNTIME_GLOG)

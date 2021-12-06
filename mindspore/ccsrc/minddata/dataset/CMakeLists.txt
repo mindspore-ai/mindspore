@@ -210,7 +210,11 @@ endif()
 ######################################################################
 
 ################# Link with external libraries ########################
-target_link_libraries(_c_dataengine PRIVATE mindspore mindspore_gvar)
+if(MSLITE_ENABLE_CLOUD_MIND_DATA)
+    target_link_libraries(_c_dataengine PRIVATE mindspore_gvar)
+else()
+    target_link_libraries(_c_dataengine PRIVATE mindspore mindspore_gvar)
+endif()
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     if(ENABLE_PYTHON)
@@ -258,7 +262,12 @@ else()
     endif()
 endif()
 
-target_link_libraries(_c_dataengine PRIVATE mindspore_core mindspore_shared_lib)
+if(MSLITE_ENABLE_CLOUD_MIND_DATA)
+    target_link_libraries(_c_dataengine PRIVATE mindspore_shared_lib mindspore::grpc++)
+    target_link_libraries(_c_dataengine PUBLIC mindspore::protobuf)
+else()
+    target_link_libraries(_c_dataengine PRIVATE mindspore_core mindspore_shared_lib)
+endif()
 
 if(USE_GLOG)
     target_link_libraries(_c_dataengine PRIVATE mindspore::glog)
@@ -278,7 +287,7 @@ if(MS_BUILD_GRPC)
     endif()
 endif()
 
-if(NOT CMAKE_SYSTEM_NAME MATCHES "Darwin")
+if(NOT CMAKE_SYSTEM_NAME MATCHES "Darwin" AND NOT MSLITE_ENABLE_CLOUD_MIND_DATA)
     set_target_properties(_c_dataengine PROPERTIES INSTALL_RPATH ${MINDSPORE_RPATH})
 endif()
 
