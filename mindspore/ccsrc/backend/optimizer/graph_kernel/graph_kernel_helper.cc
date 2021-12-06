@@ -564,29 +564,6 @@ FuncGraphPtr LiteGraph2AnfGraph(const inner::LiteGraphPtr &lite_graph, AnfNodePt
   return func_graph;
 }
 
-void EliminateRedundantParameters(const FuncGraphPtr &func_graph, AnfNodePtrList *inputs) {
-  const auto &ori_parameter = func_graph->parameters();
-  auto todos = TopoSort(func_graph->get_return());
-  std::set<AnfNodePtr> used_param;
-  for (auto node : todos) {
-    if (node->isa<Parameter>()) {
-      (void)used_param.insert(node);
-    }
-  }
-  if (used_param.size() == ori_parameter.size()) {
-    return;
-  }
-  AnfNodePtrList new_parameter, new_inputs;
-  for (size_t i = 0; i < ori_parameter.size(); ++i) {
-    if (used_param.count(ori_parameter[i])) {
-      new_parameter.push_back(ori_parameter[i]);
-      new_inputs.push_back((*inputs)[i]);
-    }
-  }
-  func_graph->set_parameters(new_parameter);
-  *inputs = std::move(new_inputs);
-}
-
 FuncGraphManagerPtr GetFuncGraphManager(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   FuncGraphManagerPtr manager = func_graph->manager();

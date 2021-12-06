@@ -650,7 +650,6 @@ bool ArithmeticSimplify::Run(const FuncGraphPtr &func_graph) {
       new_funcgraph->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, sub_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL));
       auto cnode = node->cast<CNodePtr>();
       AnfNodePtrList inputs(cnode->inputs().begin() + 1, cnode->inputs().end());
-      EliminateRedundantParameters(new_funcgraph, &inputs);
       auto new_node = CreateNewFuseCNode(func_graph, new_funcgraph, inputs);
       mng->Replace(node, new_node);
       mng->AddFuncGraph(new_funcgraph);

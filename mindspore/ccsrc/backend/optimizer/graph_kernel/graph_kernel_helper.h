@@ -119,9 +119,6 @@ AbstractBasePtr GetOutputAbstract(const AnfNodePtr &node, size_t output_idx);
 inner::LiteGraphPtr AnfGraph2LiteGraph(const FuncGraphPtr &func_graph);
 FuncGraphPtr LiteGraph2AnfGraph(const inner::LiteGraphPtr &lite_graph, AnfNodePtrList *outputs = nullptr);
 
-// remove parameter which is not used
-void EliminateRedundantParameters(const FuncGraphPtr &func_graph, AnfNodePtrList *inputs);
-
 // return a func_graph's manager
 FuncGraphManagerPtr GetFuncGraphManager(const FuncGraphPtr &func_graph);
 
