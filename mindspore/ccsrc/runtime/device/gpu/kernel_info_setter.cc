@@ -96,17 +96,19 @@ std::string SupportedTypeList(const CNodePtr &kernel_node, KernelType kernel_typ
   kernel::OpImplyType imply_type = GetImplyType(kernel_type);
   auto op_info_ptr = mindspore::kernel::OpLib::FindOp(op_name, imply_type);
   if (op_info_ptr == nullptr) {
-    MS_LOG(EXCEPTION) << "Unsupported op [" << op_name << "] on GPU";
+    MS_LOG(EXCEPTION) << "Unsupported op [" << op_name
+                      << "] on GPU, Please confirm whether the device target setting is correct, or refer to the "
+                         "official website https://mindspore.cn/ to query the operator support list.";
   }
   (void)ParseMetadata(kernel_node, op_info_ptr, kernel::Processor::CUDA, &kernel_info_list);
   for (size_t i = 0; i < kernel_info_list.size(); i++) {
     auto supported_akg_type = kernel_info_list[i]->GetAllInputDeviceTypes();
     auto supported_akg_type_out = kernel_info_list[i]->GetAllOutputDeviceTypes();
-    std::string supported_akg_type_list = "in[";
+    std::string supported_akg_type_list = "input[";
     for (auto type : supported_akg_type) {
       supported_akg_type_list = supported_akg_type_list + TypeIdToString(type) + " ";
     }
-    supported_type_lists = supported_type_lists + supported_akg_type_list + "], out[";
+    supported_type_lists = supported_type_lists + supported_akg_type_list + "], output[";
     supported_akg_type_list.clear();
     for (auto type : supported_akg_type_out) {
       supported_akg_type_list = supported_akg_type_list + TypeIdToString(type) + " ";
@@ -399,10 +401,10 @@ void SetGraphKernelInfo(const CNodePtr &kernel_node, const FuncGraphPtr &func_gr
 void PrintUnsupportedTypeException(const CNodePtr &kernel_node, const std::vector<TypeId> &inputs_type,
                                    const std::vector<TypeId> &outputs_type, KernelType kernel_type) {
   auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
-  std::string build_type = "in [";
+  std::string build_type = "input[";
   std::for_each(std::begin(inputs_type), std::end(inputs_type),
                 [&build_type](auto i) { build_type += TypeIdToString(i) + " "; });
-  build_type += "] out [";
+  build_type += "] output[";
   std::for_each(std::begin(outputs_type), std::end(outputs_type),
                 [&build_type](auto i) { build_type += TypeIdToString(i) + " "; });
   build_type += "]";
