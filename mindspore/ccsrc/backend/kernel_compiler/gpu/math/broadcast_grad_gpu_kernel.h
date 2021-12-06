@@ -98,7 +98,8 @@ class BroadcastOpGradGpuKernel : public GpuKernel {
           x1_shape_[i + x1_offset] = shape1[i];
         } else {
           auto index = i + x1_offset;
-          MS_LOG(EXCEPTION) << "Invalid input1 index: " << index;
+          MS_LOG(EXCEPTION) << "For 'BroadcastOpGrad', the dimension of input cannot be greater than " << kMaxShapeSize
+                            << ", but got " << (index + 1);
         }
       }
       input1_num_ *= shape1[i];
