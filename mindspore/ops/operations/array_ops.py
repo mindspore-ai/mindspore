@@ -5399,7 +5399,7 @@ class SpaceToBatchND(PrimitiveWithInfer):
         return out_shape
 
 
-class BatchToSpaceND(PrimitiveWithInfer):
+class BatchToSpaceND(Primitive):
     r"""
     Divides batch dimension with blocks and interleaves these blocks back into spatial dimensions.
 
@@ -5475,33 +5475,6 @@ class BatchToSpaceND(PrimitiveWithInfer):
             validator.check_non_negative_int(elem, 'crops element', self.name)
             validator.check_value_type('crops element', elem, [int], self.name)
         self.crops = crops
-
-    def infer_dtype(self, x_dtype):
-        validator.check_tensor_dtype_valid('input_x', x_dtype, mstype.number_type, self.name)
-        return x_dtype
-
-    def infer_shape(self, x_shape):
-        x_rank = len(x_shape)
-        validator.check_int(x_rank, 4, Rel.EQ, 'x_shape rank', self.name)
-        out_shape = copy.deepcopy(x_shape)
-
-        block_shape_prod = 1
-        offset = 2
-        for i in range(len(self.block_shape)):
-            block_shape_prod = block_shape_prod * self.block_shape[i]
-            x_block_prod = out_shape[i + offset] * self.block_shape[i]
-            crops_sum = self.crops[i][0] + self.crops[i][1]
-            validator.check("x block shape prod", x_block_prod, 'crops sum', crops_sum, Rel.GT, self.name)
-            out_shape[i + offset] = x_block_prod - crops_sum
-
-        if out_shape[0] % block_shape_prod != 0:
-            raise ValueError(f"For '{self.name}', the 0th dimension of the 'input_x' should be "
-                             f"divisible by block_shape_prod, where block_shape_prod = "
-                             f"'block_shape[0]' * 'block_shape[1]', "
-                             f"but got 0th dimension of the 'input_x': "
-                             f"{out_shape[0]} and the block_shape_prod: {block_shape_prod}.")
-        out_shape[0] = out_shape[0] // block_shape_prod
-        return out_shape
 
 
 class BroadcastTo(Primitive):
