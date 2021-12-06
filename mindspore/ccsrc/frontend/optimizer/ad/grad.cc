@@ -80,8 +80,7 @@ FuncGraphPtr Grad(const FuncGraphPtr &func_graph, const pipeline::ResourceBasePt
   manager_ptr->AddFuncGraph(func_graph);
 
   FuncGraphPtr grad_fg = func_graph;
-  lift_fv_before_grad = (common::GetEnv("ENV_DONT_LIFT_FV_BEFORE_GRAD") != "1");
-  if (lift_fv_before_grad && func_graph->func_graphs_used().size() != 0) {
+  if (func_graph->func_graphs_used().size() != 0) {
     grad_fg = LiftFv(resources, func_graph);
   }
   auto multi_graph_sink = [&func_graph](const FuncGraphPtr &f) {

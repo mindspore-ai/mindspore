@@ -573,7 +573,7 @@ EvalResultPtr AnalysisEngine::ExecuteEvaluators(const std::vector<EvaluatorPtr> 
     MS_EXCEPTION_IF_NULL(eval);
     return eval->Run(shared_from_this(), args_conf_list, out_conf);
   }
-  static bool enable_singleThread = (common::GetEnv("ENV_SINGLE_EVAL") == "1");
+  static bool enable_singleThread = (common::GetEnv("DEV_ENV_SINGLE_EVAL") == "1");
   if (enable_singleThread) {
     return ExecuteMultipleEvaluators(evaluators, out_conf, args_conf_list);
   } else {

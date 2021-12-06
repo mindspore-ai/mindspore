@@ -92,8 +92,8 @@ AnfNodePtr GetMixedPrecisionCastHelp(const FuncGraphPtr &func_graph, const AnfNo
 FuncGraphWeakPtr Parser::top_func_graph_ = FuncGraphWeakPtr();
 
 Parser::Parser(const std::shared_ptr<ParseFunctionAst> &ast) : ast_(ast) {
-  max_for_loop_count_str_ = common::GetEnv("ENV_FOR_TO_WHILE_LOOP");
-  support_fallback_ = common::GetEnv("ENV_SUPPORT_FALLBACK");
+  max_for_loop_count_str_ = common::GetEnv("DEV_ENV_FOR_TO_WHILE_LOOP");
+  support_fallback_ = common::GetEnv("DEV_ENV_ENABLE_FALLBACK");
   errcode_ = PARSE_SUCCESS;
   BuildMethodMap();
 }
