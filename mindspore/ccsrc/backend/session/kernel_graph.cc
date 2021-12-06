@@ -1371,14 +1371,8 @@ bool KernelGraph::IsChildGraphResult(const AnfNodePtr &node) {
   std::vector<AnfNodePtr> child_graph_results;
   for (const auto &child_graph_result : child_graph_result_) {
     MS_EXCEPTION_IF_NULL(child_graph_result);
-    if (AnfAlgo::CheckPrimitiveType(child_graph_result, prim::kPrimMakeTuple)) {
-      const auto cnode = child_graph_result->cast<CNodePtr>();
-      MS_EXCEPTION_IF_NULL(cnode);
-      const auto &inputs = cnode->inputs();
-      child_graph_results.insert(child_graph_results.end(), inputs.begin(), inputs.end());
-    } else {
-      child_graph_results.emplace_back(child_graph_result);
-    }
+    auto outputs = AnfAlgo::GetAllOutput(child_graph_result);
+    child_graph_results.insert(child_graph_results.end(), outputs.begin(), outputs.end());
   }
 
   return find(child_graph_results.begin(), child_graph_results.end(), node) != child_graph_results.end();
