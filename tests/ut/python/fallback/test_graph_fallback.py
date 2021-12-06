@@ -84,6 +84,21 @@ def test_tuple_of_tensor():
     print(use_tuple_of_tensor())
 
 
+@ms_function
+def use_list_of_tensor():
+    me_x = [Tensor(1), Tensor(1)]
+    return me_x
+
+
+def test_list_of_tensor():
+    """
+    Feature: JIT Fallback
+    Description: Test list of tensor in graph mode.
+    Expectation: No exception.
+    """
+    print(use_list_of_tensor())
+
+
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()

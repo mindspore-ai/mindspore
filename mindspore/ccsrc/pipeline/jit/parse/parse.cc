@@ -1038,6 +1038,7 @@ AnfNodePtr Parser::ParseList(const FunctionBlockPtr &block, const py::object &no
   list_vec.emplace_back(make_list_op);
   for (size_t i = 0; i < elts.size(); i++) {
     AnfNodePtr node_ptr = ParseExprNode(block, elts[i]);
+    node_ptr = HandleInterpret(block, node_ptr, elts[i]);
     list_vec.emplace_back(node_ptr);
   }
   CNodePtr list_app = block->func_graph()->NewCNodeInOrder(std::move(list_vec));
