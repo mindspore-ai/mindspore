@@ -42,9 +42,9 @@ class EmbeddingCache {
         rank_id_(rank_id),
         rank_group_size_(rank_group_size) {
     auto local_shard_size = static_cast<int>(std::ceil(static_cast<float>(vocab_size_) / rank_group_size_));
-    mix_host_index_ = local_shard_size * rank_id_;
-    max_host_index_ = std::min(mix_host_index_ + local_shard_size, static_cast<int>(vocab_size_));
-    host_cache_size_ = max_host_index_ - mix_host_index_;
+    min_host_index_ = local_shard_size * rank_id_;
+    max_host_index_ = std::min(min_host_index_ + local_shard_size, static_cast<int>(vocab_size_));
+    host_cache_size_ = max_host_index_ - min_host_index_;
     switch (data_type_) {
       case DataType::kNumberTypeFloat16:
         sizeof_data_type_ = sizeof(int16_t);
@@ -52,18 +52,19 @@ class EmbeddingCache {
       default:
         sizeof_data_type_ = sizeof(float);
     }
-    host_addr_ = static_cast<char *>(host_addr) + mix_host_index_ * embedding_size_ * sizeof_data_type_;
+    device_start_index_ = device_cache_size_ * rank_id_;
     MS_LOG(INFO) << "rank_group_size_ num:" << rank_group_size_ << ", rank id:" << rank_id_
                  << ", vocab_size_:" << vocab_size_ << ", host_cache_size_:" << host_cache_size_
                  << ", device_cache_size_:" << device_cache_size_ << ", embedding_size_:" << embedding_size_
-                 << ", batch_elements_:" << batch_elements_ << ", index begin:" << mix_host_index_
+                 << ", batch_elements_:" << batch_elements_ << ", index begin:" << min_host_index_
                  << ", index end:" << max_host_index_;
   }
   ~EmbeddingCache();
-  Status Init();
+  Status Init(uint32_t device_id, const void *context);
   Status SetHostCacheAddr(void *addr, size_t size);
   Status SetDeviceCacheAddr(void *host_mem_addr, size_t size);
   Status CheckCacheHit(const int *batch_ids, const size_t batch_ids_len, int *hash_index);
+  size_t GetDeviceStartIndex() { return device_start_index_; }
 
  private:
   std::shared_ptr<ps::PsCacheBasic> device_cache_{nullptr};
@@ -72,6 +73,7 @@ class EmbeddingCache {
   size_t vocab_size_{0};         // total size
   size_t host_cache_size_{0};    // local host size
   size_t device_cache_size_{0};  // local device cache size
+  size_t device_start_index_{0};
   size_t embedding_size_{0};
   size_t batch_elements_{0};
 
@@ -87,7 +89,7 @@ class EmbeddingCache {
 
   int rank_id_;
   int rank_group_size_;
-  int mix_host_index_{0};
+  int min_host_index_{0};
   int max_host_index_{0};
 };
 }  // namespace cache

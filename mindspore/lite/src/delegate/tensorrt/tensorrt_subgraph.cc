@@ -49,7 +49,7 @@ TensorRTSubGraph::~TensorRTSubGraph() {
   }
 }
 
-int TensorRTSubGraph::Init() {
+int TensorRTSubGraph::Init(cudaStream_t stream) {
   auto ret = GetGraphInOutOps(inputs_, outputs_, &in_ops_, &out_ops_, all_ops_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Get NPU subgraph input and output ops failed.";
@@ -66,7 +66,7 @@ int TensorRTSubGraph::Init() {
       input_hw_index_ = -1;
     }
   }
-  if (SetDeviceConfig() != RET_OK) {
+  if (SetDeviceConfig(stream) != RET_OK) {
     MS_LOG(WARNING) << "set tensorrt config failed.";
   }
   profile_ = runtime_->GetBuilder()->createOptimizationProfile();
@@ -93,7 +93,7 @@ int TensorRTSubGraph::BuildEngine() {
   return RET_OK;
 }
 
-int TensorRTSubGraph::SetDeviceConfig() {
+int TensorRTSubGraph::SetDeviceConfig(cudaStream_t stream) {
   this->config_ = runtime_->GetBuilder()->createBuilderConfig();
   if (this->config_ == nullptr) {
     MS_LOG(ERROR) << "create builder config failed.";
@@ -105,6 +105,8 @@ int TensorRTSubGraph::SetDeviceConfig() {
     config_->setFlag(nvinfer1::BuilderFlag::kFP16);
     input_hw_index_ = -1;
   }
+
+  config_->setProfileStream(stream);
 
   // config setMaxWorkspaceSize to 1024 MB for max limit
   config_->setMaxWorkspaceSize(1024 * (1 << 20));

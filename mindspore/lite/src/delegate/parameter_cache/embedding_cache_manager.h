@@ -39,7 +39,7 @@ class EmbeddingCacheManager {
   }
   Status Init(const std::string &cache_model_path, size_t vocab_size);
   bool CheckIsCacheKernel(kernel::Kernel *kernel);
-  Status InitCacheKernel(kernel::Kernel *kernel);
+  Status InitCacheKernel(kernel::Kernel *kernel, uint32_t device_id, const void *context);
   bool IsCacheTensor(mindspore::MSTensor tensor);
   int CacheHandle(const std::string &tensor_name, mindspore::MSTensor model_input_tensor, void *device_addr);
   Status SetDeviceCacheAddr(const std::string &tensor_name, void *device_mem_addr, size_t size);

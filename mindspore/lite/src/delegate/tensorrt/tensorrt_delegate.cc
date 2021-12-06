@@ -133,6 +133,12 @@ Status TensorRTDelegate::Init() {
     return mindspore::kLiteError;
   }
 
+  auto cuda_ret = cudaStreamCreate(&stream_);
+  if (cuda_ret != cudaSuccess) {
+    MS_LOG(ERROR) << "Cuda create stream failed";
+    return mindspore::kLiteError;
+  }
+
   cache_mgr_ = std::make_shared<cache::EmbeddingCacheManager>();
   if (cache_mgr_ == nullptr) {
     MS_LOG(ERROR) << "malloc EmbeddingCacheManager failed.";
@@ -178,7 +184,7 @@ Status TensorRTDelegate::Build(DelegateModel<schema::Primitive> *model) {
     auto tensorrt_op = FindTensorRTOp(kernel, model->GetPrimitive(kernel));
     if (tensorrt_op != nullptr) {
       if (cache_mgr_->CheckIsCacheKernel(kernel)) {
-        auto cache_ret = cache_mgr_->InitCacheKernel(kernel);
+        auto cache_ret = cache_mgr_->InitCacheKernel(kernel, device_info_->GetDeviceID(), &stream_);
         if (cache_ret != kSuccess) {
           MS_LOG(INFO) << "InitCacheKernel failed " << kernel->name();
           return cache_ret;
@@ -246,7 +252,7 @@ TensorRTSubGraph *TensorRTDelegate::CreateTensorRTGraph(const std::vector<Tensor
   FindPreNextOps<TensorRTOp>(ops);
 
   // 2. Init TensorRT SubGraph.
-  auto ret = tensorrt_graph->Init();
+  auto ret = tensorrt_graph->Init(stream_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "TensorRTGraph init failed.";
     return nullptr;

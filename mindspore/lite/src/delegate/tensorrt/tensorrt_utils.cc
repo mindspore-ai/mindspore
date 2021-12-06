@@ -306,7 +306,7 @@ int SetCudaDevice(int device_id) {
     MS_LOG(ERROR) << "cudaGetDevice failed, device is untrustable. error code: " << ret;
     return RET_ERROR;
   }
-  int set_device_id = device_id + GetRankID();
+  int set_device_id = device_id;
   int deviceCnt = 0;
 
   ret = cudaGetDeviceCount(&deviceCnt);

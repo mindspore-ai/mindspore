@@ -73,14 +73,14 @@ class TensorRTSubGraph : public kernel::Kernel {
 
   int BuildTensorRTGraph();
 
-  int Init();
+  int Init(cudaStream_t stream);
 
   void SetCacheManager(const std::shared_ptr<cache::EmbeddingCacheManager> &cache_mgr) { cache_mgr_ = cache_mgr; }
 
  private:
   int BuildEngine();
 
-  int SetDeviceConfig();
+  int SetDeviceConfig(cudaStream_t stream);
 
   bool SupportFP16();
 
