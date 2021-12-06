@@ -26,38 +26,36 @@ import numpy as np
 def build_dump_structure(tensor_name_list, tensor_list, net_name, tensor_info_list):
     """Build dump file structure from tensor_list."""
     ranks_run_history = {}
-    temp_dir = tempfile.mkdtemp(prefix=net_name, dir="./")
-    for x, _ in enumerate(tensor_info_list):
-        slot = str(tensor_info_list[x].slot)
-        iteration = str(tensor_info_list[x].iteration)
-        rank_id = str(tensor_info_list[x].rank_id)
-        root_graph_id = str(tensor_info_list[x].root_graph_id)
-        is_output = str(tensor_info_list[x].is_output)
-        if rank_id not in ranks_run_history:
+    temp_dir = tempfile.mkdtemp(prefix=net_name, dir="/tmp")
+    for tensor_name, tensor, tensor_info in zip(tensor_name_list, tensor_list, tensor_info_list):
+        slot = str(tensor_info.slot)
+        iteration = str(tensor_info.iteration)
+        rank_id = str(tensor_info.rank_id)
+        root_graph_id = str(tensor_info.root_graph_id)
+        is_output = str(tensor_info.is_output)
+        graphs_run_history = ranks_run_history.get(rank_id)
+        if graphs_run_history is None:
             graphs_run_history = {}
             ranks_run_history[rank_id] = graphs_run_history
-        if root_graph_id not in ranks_run_history[rank_id]:
-            iter_list = []
-            iter_list.append(iteration)
-            graphs_run_history[root_graph_id] = iter_list
-        elif iteration not in graphs_run_history[root_graph_id]:
+        if root_graph_id not in graphs_run_history:
+            graphs_run_history[root_graph_id] = [iteration]
+        if iteration not in graphs_run_history[root_graph_id]:
             bisect.insort(graphs_run_history[root_graph_id], iteration)
 
         path = os.path.join(temp_dir, "rank_" + rank_id, net_name, root_graph_id, iteration)
         os.makedirs(path, exist_ok=True)
         if is_output == "True":
-            file = tempfile.mkstemp(prefix=tensor_name_list[x], suffix=".output." + slot +
-                                    ".DefaultFormat.npy", dir=path)
+            file_name = f'{tensor_name}.output.{slot}.DefaultFormat.npy'
         else:
-            file = tempfile.mkstemp(prefix=tensor_name_list[x], suffix=".input." + slot +
-                                    ".DefaultFormat.npy", dir=path)
-        full_path = file[1]
-        np.save(full_path, tensor_list[x])
+            file_name = f'{tensor_name}.input.{slot}.DefaultFormat.npy'
+        full_path = os.path.join(path, file_name)
+        np.save(full_path, tensor)
     build_global_execution_order(temp_dir, ranks_run_history)
     return temp_dir
 
 
 def build_global_execution_order(path, ranks_run_history):
+    """Build global execution order."""
     for rank_id in ranks_run_history.keys():
         exec_order_path = path + "/rank_" + rank_id + "/" + "execution_order"
         os.makedirs(exec_order_path, exist_ok=True)
