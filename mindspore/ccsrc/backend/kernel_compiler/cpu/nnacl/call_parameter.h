@@ -22,7 +22,7 @@
 
 typedef struct CallParameter {
   OpParameter op_parameter_;
-  bool is_tail_call = true;
+  bool is_tail_call;
 } CallParameter;
 
 #endif  // MINDSPORE_NNACL_CALL_PARAMETER_H_
