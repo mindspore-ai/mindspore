@@ -89,7 +89,9 @@ from .gelu_grad import _gelu_grad_tbe
 from .gelu_grad_ds import _gelu_grad_ds_tbe
 from .ger import _ger_tbe
 from .fast_gelu import _fast_gelu_tbe
+from .fast_gelu_ds import _fast_gelu_ds_tbe
 from .fast_gelu_grad import _fast_gelu_grad_tbe
+from .fast_gelu_grad_ds import _fast_gelu_grad_ds_tbe
 from .max_pool import _max_pool_tbe
 from .max_pool_grad import _max_pool_grad_tbe
 from .max_pool_grad_with_argmax import _max_pool_grad_with_argmax_tbe
