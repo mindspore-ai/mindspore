@@ -52,6 +52,10 @@ if(NOT ENABLE_CPU OR WIN32)
     list(REMOVE_ITEM _FL_SRC_FILES "armour/cipher/cipher_unmask.cc")
 endif()
 
+if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-tautological-pointer-compare")
+endif()
+
 list(LENGTH _FL_SRC_FILES fl_file_num)
 if(NOT fl_file_num EQUAL 0)
     set_property(SOURCE ${_FL_SRC_FILES} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_FL)
