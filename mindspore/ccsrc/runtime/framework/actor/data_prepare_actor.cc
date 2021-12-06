@@ -679,7 +679,9 @@ void DataPrepareActor::PrepareDataForControlWeightNode(const AnfNodePtr &node, c
   bool need_update_device_tensor_store = (device_tensors.size() == 0) ? true : false;
   for (auto &device_tensor : device_tensors) {
     MS_EXCEPTION_IF_NULL(device_tensor);
-    if (device_tensor->GetPtr() == nullptr) {
+    // Different from CPU、GPU platform, the subgraph weight params device addr of Ascend platform
+    // has already been allocated during the compilation, so these weight params still need to be updated.
+    if (device_tensor->GetPtr() == nullptr || device_tensor->is_ptr_persisted()) {
       need_update_device_tensor_store = true;
       break;
     }
@@ -767,7 +769,8 @@ void DataPrepareActor::PrepareHostTensorQueueForControlNode(const std::vector<Te
     auto tensor_address = std::dynamic_pointer_cast<DeviceTensor>(input_tensor->device_address());
     auto device_address = AnfAlgo::GetMutableOutputAddr(backend_node, 0, false);
     MS_EXCEPTION_IF_NULL(device_address);
-    if ((tensor_address != nullptr) && (tensor_address->DeviceType() == device_address->DeviceType())) {
+    if ((tensor_address != nullptr) && (tensor_address->DeviceType() == device_address->DeviceType()) &&
+        !device_address->is_ptr_persisted()) {
       AnfAlgo::SetOutputAddr(tensor_address, 0, backend_node.get());
       tensor_address->SetNodeIndex(backend_node, 0);
     }
