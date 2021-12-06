@@ -34,6 +34,7 @@
 constexpr double PI = 3.141592653589793;
 constexpr int kMinAudioDim = 1;
 constexpr int kDefaultAudioDim = 2;
+constexpr int TWO = 2;
 
 namespace mindspore {
 namespace dataset {
@@ -147,7 +148,7 @@ Status Contrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
   for (auto itr_in = input->begin<T>(); itr_in != input->end<T>(); itr_in++) {
     T temp1, temp2 = 0;
     // PI / 2 is half of the constant PI
-    temp1 = static_cast<T>(*itr_in) * (PI / 2);
+    temp1 = static_cast<T>(*itr_in) * (PI / TWO);
     temp2 = enhancement_amount_value * std::sin(temp1 * 4);
     *itr_out = std::sin(temp1 + temp2);
     itr_out++;
@@ -294,6 +295,23 @@ Status LFilter(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *ou
   delete[] m_py;
   return Status::OK();
 }
+
+/// \brief Transform audio signal into spectrogram.
+/// \param[in] n_fft Size of FFT, creates n_fft / 2 + 1 bins.
+/// \param[in] win_length Window size.
+/// \param[in] hop_length Length of hop between STFT windows.
+/// \param[in] pad Two sided padding of signal.
+/// \param[in] window A function to create a window tensor
+///     that is applied/multiplied to each frame/window.
+/// \param[in] power Exponent for the magnitude spectrogram.
+/// \param[in] normalized Whether to normalize by magnitude after stft.
+/// \param[in] center Whether to pad waveform on both sides.
+/// \param[in] pad_mode Controls the padding method used when center is true.
+/// \param[in] onesided Controls whether to return half of results to avoid redundancy.
+/// \return Status code.
+Status Spectrogram(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int pad, WindowType window,
+                   int n_fft, int hop_length, int win_length, float power, bool normalized, bool center,
+                   BorderType pad_mode, bool onesided);
 
 /// \brief Stretch STFT in time at a given rate, without changing the pitch.
 /// \param input: Tensor of shape <..., freq, time>.

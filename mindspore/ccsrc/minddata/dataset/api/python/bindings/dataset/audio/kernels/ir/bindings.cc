@@ -49,6 +49,7 @@
 #include "minddata/dataset/audio/ir/kernels/phaser_ir.h"
 #include "minddata/dataset/audio/ir/kernels/riaa_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/sliding_window_cmn_ir.h"
+#include "minddata/dataset/audio/ir/kernels/spectrogram_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_masking_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_stretch_ir.h"
 #include "minddata/dataset/audio/ir/kernels/treble_biquad_ir.h"
@@ -408,6 +409,29 @@ PYBIND_REGISTER(SlidingWindowCmnOperation, 1, ([](const py::module *m) {
                       return sliding_window_cmn;
                     }));
                 }));
+
+PYBIND_REGISTER(WindowType, 0, ([](const py::module *m) {
+                  (void)py::enum_<WindowType>(*m, "WindowType", py::arithmetic())
+                    .value("DE_BARTLETT", WindowType::kBartlett)
+                    .value("DE_BLACKMAN", WindowType::kBlackman)
+                    .value("DE_HAMMING", WindowType::kHamming)
+                    .value("DE_HANN", WindowType::kHann)
+                    .value("DE_KAISER", WindowType::kKaiser)
+                    .export_values();
+                }));
+
+PYBIND_REGISTER(
+  SpectrogramOperation, 1, ([](const py::module *m) {
+    (void)py::class_<audio::SpectrogramOperation, TensorOperation, std::shared_ptr<audio::SpectrogramOperation>>(
+      *m, "SpectrogramOperation")
+      .def(py::init([](int32_t n_fft, int32_t win_length, int32_t hop_length, int32_t pad, WindowType window,
+                       float power, bool normalized, bool center, BorderType pad_mode, bool onesided) {
+        auto spectrogram = std::make_shared<audio::SpectrogramOperation>(n_fft, win_length, hop_length, pad, window,
+                                                                         power, normalized, center, pad_mode, onesided);
+        THROW_IF_ERROR(spectrogram->ValidateParams());
+        return spectrogram;
+      }));
+  }));
 
 PYBIND_REGISTER(
   TimeMaskingOperation, 1, ([](const py::module *m) {

@@ -1156,6 +1156,355 @@ Status ComputeDeltasImpl(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
   return Status::OK();
 }
 
+Status Bartlett(std::shared_ptr<Tensor> *output, int len) {
+  CHECK_FAIL_RETURN_UNEXPECTED(len != 0, "Bartlett: len can not be zero.");
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({len}), DataType(DataType::DE_FLOAT32), output));
+  // Bartlett window function.
+  auto iter = (*output)->begin<float>();
+  float twice = 2.0;
+  for (ptrdiff_t i = 0; i < len; ++i) {
+    *(iter + i) = 1.0 - std::abs(twice * i / len - 1.0);
+  }
+  return Status::OK();
+}
+
+Status Blackman(std::shared_ptr<Tensor> *output, int len) {
+  CHECK_FAIL_RETURN_UNEXPECTED(len != 0, "Blackman: len can not be zero.");
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({len}), DataType(DataType::DE_FLOAT32), output));
+  // Blackman window function.
+  auto iter = (*output)->begin<float>();
+  float alpha = 0.42;
+  float half = 0.5;
+  float delta = 0.08;
+  for (ptrdiff_t i = 0; i < len; ++i) {
+    *(iter + i) = alpha - half * std::cos(TWO * PI * i / len) + delta * std::cos(TWO * TWO * PI * i / len);
+  }
+  return Status::OK();
+}
+
+Status Hamming(std::shared_ptr<Tensor> *output, int len, float alpha = 0.54, float beta = 0.46) {
+  CHECK_FAIL_RETURN_UNEXPECTED(len != 0, "Hamming: len can not be zero.");
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({len}), DataType(DataType::DE_FLOAT32), output));
+  // Hamming window function.
+  auto iter = (*output)->begin<float>();
+  for (ptrdiff_t i = 0; i < len; ++i) {
+    *(iter + i) = alpha - beta * std::cos(TWO * PI * i / len);
+  }
+  return Status::OK();
+}
+
+Status Hann(std::shared_ptr<Tensor> *output, int len) {
+  CHECK_FAIL_RETURN_UNEXPECTED(len != 0, "Hann: len can not be zero.");
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({len}), DataType(DataType::DE_FLOAT32), output));
+  // Hann window function.
+  auto iter = (*output)->begin<float>();
+  float half = 0.5;
+  for (ptrdiff_t i = 0; i < len; ++i) {
+    *(iter + i) = half - half * std::cos(TWO * PI * i / len);
+  }
+  return Status::OK();
+}
+
+Status Kaiser(std::shared_ptr<Tensor> *output, int len, float beta = 12.0) {
+  CHECK_FAIL_RETURN_UNEXPECTED(len != 0, "Kaiser: len can not be zero.");
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({len}), DataType(DataType::DE_FLOAT32), output));
+  // Kaiser window function.
+  auto iter = (*output)->begin<float>();
+  float twice = 2.0;
+  for (ptrdiff_t i = 0; i < len; ++i) {
+    *(iter + i) =
+      std::cyl_bessel_i(0, beta * std::sqrt(1 - std::pow(i * twice / (len)-1.0, TWO))) / std::cyl_bessel_i(0, beta);
+  }
+  return Status::OK();
+}
+
+Status Window(std::shared_ptr<Tensor> *output, WindowType window_type, int len) {
+  switch (window_type) {
+    case WindowType::kBartlett:
+      return Bartlett(output, len);
+    case WindowType::kBlackman:
+      return Blackman(output, len);
+    case WindowType::kHamming:
+      return Hamming(output, len);
+    case WindowType::kHann:
+      return Hann(output, len);
+    case WindowType::kKaiser:
+      return Kaiser(output, len);
+    default:
+      return Hann(output, len);
+  }
+}
+
+// control whether return half of results after stft.
+template <typename T>
+Status Onesided(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int n_fft, int n_columns) {
+  std::shared_ptr<Tensor> output_onsided;
+  RETURN_IF_NOT_OK(
+    Tensor::CreateEmpty(TensorShape({input->shape()[0], n_fft, n_columns, 2}), input->type(), &output_onsided));
+  auto onside_begin = output_onsided->begin<T>();
+  auto spec_f_begin = input->begin<T>();
+  std::vector<int> spec_f_slice = {(n_fft / 2 + 1) * n_columns * 2, n_columns * 2, 2};
+  for (int r = 0; r < input->shape()[0]; r++) {
+    for (int i = 0; i < (n_fft / TWO + 1); i++) {
+      for (int j = 0; j < n_columns; j++) {
+        ptrdiff_t onside_offset_0 = r * n_fft * n_columns * 2 + i * spec_f_slice[1] + j * spec_f_slice[2];
+        ptrdiff_t spec_f_offset_0 = r * spec_f_slice[0] + i * spec_f_slice[1] + j * spec_f_slice[2];
+        ptrdiff_t onside_offset_1 = onside_offset_0 + 1;
+        ptrdiff_t spec_f_offset_1 = spec_f_offset_0 + 1;
+        *(onside_begin + onside_offset_0) = *(spec_f_begin + spec_f_offset_0);
+        *(onside_begin + onside_offset_1) = *(spec_f_begin + spec_f_offset_1);
+      }
+    }
+    for (int i = n_fft / 2 + 1; i < n_fft; i++) {
+      for (int j = 0; j < n_columns; j++) {
+        ptrdiff_t onside_offset_0 = r * n_fft * n_columns * 2 + i * spec_f_slice[1] + j * spec_f_slice[2];
+        ptrdiff_t spec_f_offset_0 = r * spec_f_slice[0] + (n_fft - i) * spec_f_slice[1] + j * spec_f_slice[2];
+        ptrdiff_t onside_offset_1 = onside_offset_0 + 1;
+        ptrdiff_t spec_f_offset_1 = spec_f_offset_0 + 1;
+        *(onside_begin + onside_offset_0) = *(spec_f_begin + spec_f_offset_0);
+        *(onside_begin + onside_offset_1) = *(spec_f_begin + spec_f_offset_1);
+      }
+    }
+  }
+  *output = output_onsided;
+  return Status::OK();
+}
+
+template <typename T>
+Status PowerStft(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float power, int n_fft,
+                 int n_columns, int n_length) {
+  auto spec_f_begin = input->begin<T>();
+  std::vector<int> spec_f_slice = {n_length * n_columns * 2, n_columns * 2, 2};
+  std::vector<int> spec_p_slice = {n_length * n_columns, n_columns};
+  std::shared_ptr<Tensor> spec_p;
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({input->shape()[0], n_length, n_columns}), input->type(), &spec_p));
+  auto spec_p_begin = spec_p->begin<T>();
+  for (int r = 0; r < input->shape()[0]; r++) {
+    for (int i = 0; i < n_length; i++) {
+      for (int j = 0; j < n_columns; j++) {
+        ptrdiff_t spec_f_offset_0 = r * spec_f_slice[0] + i * spec_f_slice[1] + j * spec_f_slice[2];
+        ptrdiff_t spec_f_offset_1 = spec_f_offset_0 + 1;
+        ptrdiff_t spec_p_offset = r * spec_p_slice[0] + i * spec_p_slice[1] + j;
+        T spec_power_0 = *(spec_f_begin + spec_f_offset_0);
+        T spec_power_1 = *(spec_f_begin + spec_f_offset_1);
+        *(spec_p_begin + spec_p_offset) =
+          std::pow(std::sqrt(std::pow(spec_power_0, TWO) + std::pow(spec_power_1, TWO)), power);
+      }
+    }
+  }
+  *output = spec_p;
+  return Status::OK();
+}
+
+template <typename T>
+Status Stft(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int n_fft,
+            const std::shared_ptr<Tensor> &win, int win_length, int hop_length, int n_columns, bool normalized,
+            float power, bool onesided) {
+  CHECK_FAIL_RETURN_UNEXPECTED(win_length != 0, "Spectrogram: win_length can not be zero.");
+  double win_sum = 0.;
+  float twice = 2.0;
+  for (auto iter_win = win->begin<float>(); iter_win != win->end<float>(); iter_win++) {
+    win_sum += (*iter_win) * (*iter_win);
+  }
+  win_sum = std::sqrt(win_sum);
+  std::shared_ptr<Tensor> spec_f;
+
+  RETURN_IF_NOT_OK(
+    Tensor::CreateEmpty(TensorShape({input->shape()[0], n_fft / 2 + 1, n_columns, 2}), input->type(), &spec_f));
+
+  auto spec_f_begin = spec_f->begin<T>();
+  auto input_win_begin = input->begin<T>();
+  std::vector<int> spec_f_slice = {(n_fft / 2 + 1) * n_columns * 2, n_columns * 2, 2};
+  std::vector<int> input_win_slice = {n_columns * win_length, win_length};
+  std::shared_ptr<Tensor> spec_p;
+  RETURN_IF_NOT_OK(
+    Tensor::CreateEmpty(TensorShape({input->shape()[0], n_fft / 2 + 1, n_columns}), input->type(), &spec_p));
+  std::shared_ptr<Tensor> exp_complex;
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({n_fft / 2 + 1, win_length, 2}), input->type(), &exp_complex));
+  auto exp_complex_begin = exp_complex->begin<T>();
+  std::vector<int> exp_complex_slice = {win_length * 2, 2};
+  for (int i = 0; i < (n_fft / TWO + 1); i++) {
+    for (int k = 0; k <= win_length - 1; k++) {
+      ptrdiff_t exp_complex_offset_0 = i * exp_complex_slice[0] + k * exp_complex_slice[1];
+      ptrdiff_t exp_complex_offset_1 = exp_complex_offset_0 + 1;
+      *(exp_complex_begin + exp_complex_offset_0) = std::cos(twice * PI * i * k / win_length);
+      *(exp_complex_begin + exp_complex_offset_1) = std::sin(twice * PI * i * k / win_length);
+    }
+  }
+  for (int r = 0; r < input->shape()[0]; r++) {
+    for (int i = 0; i < (n_fft / TWO + 1); i++) {
+      for (int j = 0; j < n_columns; j++) {
+        T spec_f_0 = 0.;
+        T spec_f_1 = 0.;
+        ptrdiff_t exp_complex_offset_0 = i * exp_complex_slice[0];
+        for (int k = 0; k < win_length; k++) {
+          ptrdiff_t exp_complex_offset_1 = exp_complex_offset_0 + 1;
+          T exp_complex_a = *(exp_complex_begin + exp_complex_offset_0);
+          T exp_complex_b = *(exp_complex_begin + exp_complex_offset_1);
+          ptrdiff_t input_win_offset = r * input_win_slice[0] + j * input_win_slice[1] + k;
+          T input_value = *(input_win_begin + input_win_offset);
+          spec_f_0 += input_value * exp_complex_a;
+          spec_f_1 += -input_value * exp_complex_b;
+          exp_complex_offset_0 = exp_complex_offset_1 + 1;
+        }
+        ptrdiff_t spec_f_offset_0 = r * spec_f_slice[0] + i * spec_f_slice[1] + j * spec_f_slice[2];
+        ptrdiff_t spec_f_offset_1 = spec_f_offset_0 + 1;
+        *(spec_f_begin + spec_f_offset_0) = spec_f_0;
+        *(spec_f_begin + spec_f_offset_1) = spec_f_1;
+      }
+    }
+  }
+  CHECK_FAIL_RETURN_UNEXPECTED(win_sum != 0, "Window: the total value of window function can not be zero.");
+  if (normalized) {
+    for (int r = 0; r < input->shape()[0]; r++) {
+      for (int i = 0; i < (n_fft / TWO + 1); i++) {
+        for (int j = 0; j < n_columns; j++) {
+          ptrdiff_t spec_f_offset_0 = r * spec_f_slice[0] + i * spec_f_slice[1] + j * spec_f_slice[2];
+          ptrdiff_t spec_f_offset_1 = spec_f_offset_0 + 1;
+          T spec_norm_a = *(spec_f_begin + spec_f_offset_0);
+          T spec_norm_b = *(spec_f_begin + spec_f_offset_1);
+          *(spec_f_begin + spec_f_offset_0) = spec_norm_a / win_sum;
+          *(spec_f_begin + spec_f_offset_1) = spec_norm_b / win_sum;
+        }
+      }
+    }
+  }
+  std::shared_ptr<Tensor> output_onsided;
+  if (!onesided) {
+    RETURN_IF_NOT_OK(Onesided<T>(spec_f, &output_onsided, n_fft, n_columns));
+    if (power == 0) {
+      *output = output_onsided;
+      return Status::OK();
+    }
+    RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({input->shape()[0], n_fft, n_columns}), input->type(), &spec_p));
+    RETURN_IF_NOT_OK(PowerStft<T>(output_onsided, &spec_p, power, n_fft, n_columns, n_fft));
+    *output = spec_p;
+    return Status::OK();
+  }
+  if (power == 0) {
+    *output = spec_f;
+    return Status::OK();
+  }
+  RETURN_IF_NOT_OK(PowerStft<T>(spec_f, &spec_p, power, n_fft, n_columns, n_fft / TWO + 1));
+  *output = spec_p;
+  return Status::OK();
+}
+
+template <typename T>
+Status SpectrogramImpl(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int pad,
+                       WindowType window, int n_fft, int hop_length, int win_length, float power, bool normalized,
+                       bool center, BorderType pad_mode, bool onesided) {
+  std::shared_ptr<Tensor> fft_window_tensor;
+  std::shared_ptr<Tensor> fft_window_later;
+  TensorShape shape = input->shape();
+  std::vector output_shape = shape.AsVector();
+  output_shape.pop_back();
+  int input_len = input->shape()[-1];
+
+  RETURN_IF_NOT_OK(input->Reshape(TensorShape({input->Size() / input_len, input_len})));
+
+  DataType data_type = input->type();
+  // get the windows
+  RETURN_IF_NOT_OK(Window(&fft_window_tensor, window, win_length));
+  if (win_length == 1) {
+    RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({1}), DataType(DataType::DE_FLOAT32), &fft_window_tensor));
+    auto win = fft_window_tensor->begin<float>();
+    *(win) = 1;
+  }
+
+  // Pad window length
+  int pad_left = (n_fft - win_length) / 2;
+  int pad_right = n_fft - win_length - pad_left;
+  RETURN_IF_NOT_OK(fft_window_tensor->Reshape(TensorShape({1, win_length})));
+  RETURN_IF_NOT_OK(Pad<float>(fft_window_tensor, &fft_window_later, pad_left, pad_right, BorderType::kConstant));
+  RETURN_IF_NOT_OK(fft_window_later->Reshape(TensorShape({n_fft})));
+
+  int length = input_len + pad * 2 + n_fft;
+
+  std::shared_ptr<Tensor> input_data_tensor;
+  std::shared_ptr<Tensor> input_data_tensor_pad;
+  RETURN_IF_NOT_OK(
+    Tensor::CreateEmpty(TensorShape({input->shape()[0], input_len + pad * 2}), data_type, &input_data_tensor_pad));
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({input->shape()[0], length}), data_type, &input_data_tensor));
+
+  RETURN_IF_NOT_OK(Pad<T>(input, &input_data_tensor_pad, pad, pad, BorderType::kConstant));
+
+  if (center) {
+    RETURN_IF_NOT_OK(Pad<T>(input_data_tensor_pad, &input_data_tensor, n_fft / TWO, n_fft / TWO, pad_mode));
+  } else {
+    input_data_tensor = input_data_tensor_pad;
+  }
+
+  CHECK_FAIL_RETURN_UNEXPECTED(n_fft <= input_data_tensor->shape()[-1],
+                               "Spectrogram: n_fft should be more than 0 and less than " +
+                                 std::to_string(input_data_tensor->shape()[-1]) +
+                                 ", but got n_fft: " + std::to_string(n_fft) + ".");
+
+  // calculate the sliding times of the window function
+  int n_columns = 0;
+  while ((1 + n_columns++) * hop_length + n_fft <= input_data_tensor->shape()[-1]) {
+  }
+  std::shared_ptr<Tensor> stft_compute;
+
+  auto input_begin = input_data_tensor->begin<T>();
+  std::vector<int> input_win_slice = {n_columns * n_fft, n_fft};
+  auto iter_win = fft_window_later->begin<float>();
+  std::shared_ptr<Tensor> input_win;
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({input_data_tensor->shape()[0], n_columns, n_fft}),
+                                       input_data_tensor->type(), &input_win));
+  auto input_win_begin = input_win->begin<T>();
+  for (int r = 0; r < input_data_tensor->shape()[0]; r++) {
+    for (int j = 0; j < n_columns; j++) {
+      for (int k = 0; k < n_fft; k++) {
+        ptrdiff_t win_offset = k;
+        float win_value = *(iter_win + win_offset);
+        ptrdiff_t input_stft_offset = r * input_data_tensor->shape()[-1] + j * hop_length + k;
+        T input_value = *(input_begin + input_stft_offset);
+        ptrdiff_t input_win_offset = r * input_win_slice[0] + j * input_win_slice[1] + k;
+        *(input_win_begin + input_win_offset) = win_value * input_value;
+      }
+    }
+  }
+  RETURN_IF_NOT_OK(Stft<T>(input_win, &stft_compute, n_fft, fft_window_later, n_fft, hop_length, n_columns, normalized,
+                           power, onesided));
+  if (onesided) {
+    output_shape.push_back(n_fft / TWO + 1);
+  } else {
+    output_shape.push_back(n_fft);
+  }
+  output_shape.push_back(n_columns);
+  if (power == 0) {
+    output_shape.push_back(TWO);
+  }
+  // reshape the output
+  RETURN_IF_NOT_OK(stft_compute->Reshape(TensorShape({output_shape})));
+  *output = stft_compute;
+  return Status::OK();
+}
+
+Status Spectrogram(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int pad, WindowType window,
+                   int n_fft, int hop_length, int win_length, float power, bool normalized, bool center,
+                   BorderType pad_mode, bool onesided) {
+  TensorShape input_shape = input->shape();
+
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    input->type().IsNumeric(),
+    "Spectrogram: input tensor type should be int, float or double, but got: " + input->type().ToString());
+
+  CHECK_FAIL_RETURN_UNEXPECTED(input_shape.Size() > 0, "Spectrogram: input tensor is not in shape of <..., time>.");
+
+  std::shared_ptr<Tensor> input_tensor;
+  if (input->type() != DataType::DE_FLOAT64) {
+    RETURN_IF_NOT_OK(TypeCast(input, &input_tensor, DataType(DataType::DE_FLOAT32)));
+    return SpectrogramImpl<float>(input_tensor, output, pad, window, n_fft, hop_length, win_length, power, normalized,
+                                  center, pad_mode, onesided);
+  } else {
+    input_tensor = input;
+    return SpectrogramImpl<double>(input_tensor, output, pad, window, n_fft, hop_length, win_length, power, normalized,
+                                   center, pad_mode, onesided);
+  }
+}
+
 Status ComputeDeltas(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t win_length,
                      const BorderType &mode) {
   RETURN_IF_NOT_OK(ValidateLowRank("ComputeDeltas", input, kDefaultAudioDim, "<..., freq, time>"));

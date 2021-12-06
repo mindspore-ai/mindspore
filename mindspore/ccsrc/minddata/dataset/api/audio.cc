@@ -45,6 +45,7 @@
 #include "minddata/dataset/audio/ir/kernels/phaser_ir.h"
 #include "minddata/dataset/audio/ir/kernels/riaa_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/sliding_window_cmn_ir.h"
+#include "minddata/dataset/audio/ir/kernels/spectrogram_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_masking_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_stretch_ir.h"
 #include "minddata/dataset/audio/ir/kernels/treble_biquad_ir.h"
@@ -528,6 +529,43 @@ SlidingWindowCmn::SlidingWindowCmn(int32_t cmn_window, int32_t min_cmn_window, b
 std::shared_ptr<TensorOperation> SlidingWindowCmn::Parse() {
   return std::make_shared<SlidingWindowCmnOperation>(data_->cmn_window_, data_->min_cmn_window_, data_->center_,
                                                      data_->norm_vars_);
+}
+
+// Spectrogram Transform Operation.
+struct Spectrogram::Data {
+  Data(int32_t n_fft, int32_t win_length, int32_t hop_length, int32_t pad, WindowType window, float power,
+       bool normalized, bool center, BorderType pad_mode, bool onesided)
+      : n_fft_(n_fft),
+        win_length_(win_length),
+        hop_length_(hop_length),
+        pad_(pad),
+        window_(window),
+        power_(power),
+        normalized_(normalized),
+        center_(center),
+        pad_mode_(pad_mode),
+        onesided_(onesided) {}
+  int32_t n_fft_;
+  int32_t win_length_;
+  int32_t hop_length_;
+  int32_t pad_;
+  WindowType window_;
+  float power_;
+  bool normalized_;
+  bool center_;
+  BorderType pad_mode_;
+  bool onesided_;
+};
+
+Spectrogram::Spectrogram(int32_t n_fft, int32_t win_length, int32_t hop_length, int32_t pad, WindowType window,
+                         float power, bool normalized, bool center, BorderType pad_mode, bool onesided)
+    : data_(std::make_shared<Data>(n_fft, win_length, hop_length, pad, window, power, normalized, center, pad_mode,
+                                   onesided)) {}
+
+std::shared_ptr<TensorOperation> Spectrogram::Parse() {
+  return std::make_shared<SpectrogramOperation>(data_->n_fft_, data_->win_length_, data_->hop_length_, data_->pad_,
+                                                data_->window_, data_->power_, data_->normalized_, data_->center_,
+                                                data_->pad_mode_, data_->onesided_);
 }
 
 // TimeMasking Transform Operation.

@@ -255,6 +255,437 @@ TEST_F(MindDataTestPipeline, TestSlidingWindowCmnWrongArgs) {
   EXPECT_EQ(iter_2, nullptr);
 }
 
+/// Feature: Spectrogram.
+/// Description: test pipeline.
+/// Expectation: success.
+TEST_F(MindDataTestPipeline, TestSpectrogramDefault) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSpectrogramDefault.";
+
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("waveform", mindspore::DataType::kNumberTypeFloat32, {1, 60}));
+  std::shared_ptr<Dataset> ds = RandomData(8, schema);
+  EXPECT_NE(ds, nullptr);
+
+  auto spectrogram = audio::Spectrogram({40, 40, 20, 0, WindowType::kHann, 2.0, false, true, BorderType::kReflect,
+                                         true});
+
+  auto ds1 = ds->Map({spectrogram}, {"waveform"});
+  EXPECT_NE(ds1, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds1->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+  EXPECT_EQ(i, 8);
+  iter->Stop();
+}
+
+/// Feature: Spectrogram.
+/// Description: test parameter: onesided.
+/// Expectation: success.
+TEST_F(MindDataTestPipeline, TestSpectrogramOnesidedFalse) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSpectrogramOnesidedFalse.";
+
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("waveform", mindspore::DataType::kNumberTypeFloat32, {3, 50}));
+  std::shared_ptr<Dataset> ds = RandomData(8, schema);
+  EXPECT_NE(ds, nullptr);
+
+  auto spectrogram = audio::Spectrogram({40, 40, 20, 0, WindowType::kHann, 2.0, false, true, BorderType::kReflect,
+                                         false});
+
+  auto ds1 = ds->Map({spectrogram}, {"waveform"});
+  EXPECT_NE(ds1, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds1->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+  EXPECT_EQ(i, 8);
+  iter->Stop();
+}
+
+/// Feature: Spectrogram.
+/// Description: test parameter: center.
+/// Expectation: success.
+TEST_F(MindDataTestPipeline, TestSpectrogramCenterFalse) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSpectrogramCenterFalse.";
+
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("waveform", mindspore::DataType::kNumberTypeInt32, {2, 3, 50}));
+  std::shared_ptr<Dataset> ds = RandomData(8, schema);
+  EXPECT_NE(ds, nullptr);
+
+  auto spectrogram = audio::Spectrogram({40, 40, 20, 0, WindowType::kHann, 2.0, false, false, BorderType::kReflect,
+                                         true});
+
+  auto ds1 = ds->Map({spectrogram}, {"waveform"});
+  EXPECT_NE(ds1, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds1->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+  EXPECT_EQ(i, 8);
+  iter->Stop();
+}
+
+/// Feature: Spectrogram.
+/// Description: test parameter: normaliezd.
+/// Expectation: success.
+TEST_F(MindDataTestPipeline, TestSpectrogramNormalizedTrue) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSpectrogramNormalizedTrue.";
+
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("waveform", mindspore::DataType::kNumberTypeInt32, {5, 40}));
+  std::shared_ptr<Dataset> ds = RandomData(8, schema);
+  EXPECT_NE(ds, nullptr);
+
+  auto spectrogram = audio::Spectrogram({40, 40, 20, 0, WindowType::kHann, 2.0, true, true, BorderType::kReflect,
+                                         true});
+
+  auto ds1 = ds->Map({spectrogram}, {"waveform"});
+  EXPECT_NE(ds1, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds1->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+  EXPECT_EQ(i, 8);
+  iter->Stop();
+}
+
+/// Feature: Spectrogram.
+/// Description: test parameter: window.
+/// Expectation: success.
+TEST_F(MindDataTestPipeline, TestSpectrogramWindowHamming) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSpectrogramWindowHamming.";
+
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("waveform", mindspore::DataType::kNumberTypeFloat64, {3, 50}));
+  std::shared_ptr<Dataset> ds = RandomData(8, schema);
+  EXPECT_NE(ds, nullptr);
+
+  auto spectrogram = audio::Spectrogram({40, 40, 20, 0, WindowType::kHamming, 2.0, false, true,
+                                         BorderType::kReflect, true});
+
+  auto ds1 = ds->Map({spectrogram}, {"waveform"});
+  EXPECT_NE(ds1, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds1->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+  EXPECT_EQ(i, 8);
+  iter->Stop();
+}
+
+/// Feature: Spectrogram.
+/// Description: test parameter: pad_mode.
+/// Expectation: success.
+TEST_F(MindDataTestPipeline, TestSpectrogramPadmodeEdge) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSpectrogramPadmodeEdge.";
+
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("waveform", mindspore::DataType::kNumberTypeInt32, {3, 4, 50}));
+  std::shared_ptr<Dataset> ds = RandomData(8, schema);
+  EXPECT_NE(ds, nullptr);
+
+  auto spectrogram = audio::Spectrogram({40, 40, 20, 0, WindowType::kHamming, 2.0, false, true,
+                                         BorderType::kEdge, true});
+
+  auto ds1 = ds->Map({spectrogram}, {"waveform"});
+  EXPECT_NE(ds1, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds1->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+  EXPECT_EQ(i, 8);
+  iter->Stop();
+}
+
+/// Feature: Spectrogram.
+/// Description: test parameter: power.
+/// Expectation: success.
+TEST_F(MindDataTestPipeline, TestSpectrogramPower0) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSpectrogramPower0.";
+
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("waveform", mindspore::DataType::kNumberTypeInt32, {3, 50}));
+  std::shared_ptr<Dataset> ds = RandomData(8, schema);
+  EXPECT_NE(ds, nullptr);
+
+  auto spectrogram = audio::Spectrogram({40, 40, 20, 0, WindowType::kHamming, 0, false, true, BorderType::kReflect,
+                                         true});
+
+  auto ds1 = ds->Map({spectrogram}, {"waveform"});
+  EXPECT_NE(ds1, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds1->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+  EXPECT_EQ(i, 8);
+  iter->Stop();
+}
+
+/// Feature: Spectrogram.
+/// Description: test parameter: n_fft.
+/// Expectation: success.
+TEST_F(MindDataTestPipeline, TestSpectrogramNfft50) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSpectrogramNfft600.";
+
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("waveform", mindspore::DataType::kNumberTypeFloat32, {1, 60}));
+  std::shared_ptr<Dataset> ds = RandomData(8, schema);
+  EXPECT_NE(ds, nullptr);
+
+  auto spectrogram = audio::Spectrogram({50, 40, 20, 0, WindowType::kHann, 2.0, false, true, BorderType::kReflect,
+                                         true});
+
+  auto ds1 = ds->Map({spectrogram}, {"waveform"});
+  EXPECT_NE(ds1, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds1->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+  EXPECT_EQ(i, 8);
+  iter->Stop();
+}
+
+/// Feature: Spectrogram.
+/// Description: test parameter: pad.
+/// Expectation: success.
+TEST_F(MindDataTestPipeline, TestSpectrogramPad10) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSpectrogramPad50.";
+
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("waveform", mindspore::DataType::kNumberTypeFloat32, {3, 50}));
+  std::shared_ptr<Dataset> ds = RandomData(8, schema);
+  EXPECT_NE(ds, nullptr);
+
+  auto spectrogram = audio::Spectrogram({40, 40, 20, 10, WindowType::kHann, 2.0, false, true, BorderType::kReflect,
+                                         true});
+
+  auto ds1 = ds->Map({spectrogram}, {"waveform"});
+  EXPECT_NE(ds1, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds1->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+  EXPECT_EQ(i, 8);
+  iter->Stop();
+}
+
+/// Feature: Spectrogram.
+/// Description: test parameter: win_length.
+/// Expectation: success.
+TEST_F(MindDataTestPipeline, TestSpectrogramWinlength30) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSpectrogramWinlength300.";
+
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("waveform", mindspore::DataType::kNumberTypeFloat32, {2, 2, 50}));
+  std::shared_ptr<Dataset> ds = RandomData(8, schema);
+  EXPECT_NE(ds, nullptr);
+
+  auto spectrogram = audio::Spectrogram({40, 30, 20, 0, WindowType::kHann, 2.0, false, true, BorderType::kReflect,
+                                         true});
+
+  auto ds1 = ds->Map({spectrogram}, {"waveform"});
+  EXPECT_NE(ds1, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds1->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+  EXPECT_EQ(i, 8);
+  iter->Stop();
+}
+
+/// Feature: Spectrogram.
+/// Description: test parameters.
+/// Expectation: success.
+TEST_F(MindDataTestPipeline, TestSpectrogramHoplength30) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSpectrogramHoplength300.";
+
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("waveform", mindspore::DataType::kNumberTypeFloat32, {2, 50}));
+  std::shared_ptr<Dataset> ds = RandomData(8, schema);
+  EXPECT_NE(ds, nullptr);
+
+  auto spectrogram = audio::Spectrogram({40, 40, 30, 0, WindowType::kHann, 2.0, false, true, BorderType::kReflect,
+                                         true});
+
+  auto ds1 = ds->Map({spectrogram}, {"waveform"});
+  EXPECT_NE(ds1, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds1->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+  EXPECT_EQ(i, 8);
+  iter->Stop();
+}
+
+/// Feature: Spectrogram.
+/// Description: test some invalid parameters.
+/// Expectation: success.
+TEST_F(MindDataTestPipeline, TestSpectrogramWrongArgs) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSpectrogramWrongArgs.";
+
+  std::shared_ptr<SchemaObj> schema = Schema();
+  // Original waveform
+  ASSERT_OK(schema->add_column("col", mindspore::DataType::kNumberTypeFloat32, {1, 50}));
+  std::shared_ptr<Dataset> ds = RandomData(50, schema);
+  std::shared_ptr<Dataset> ds01;
+  std::shared_ptr<Dataset> ds02;
+  std::shared_ptr<Dataset> ds03;
+  std::shared_ptr<Dataset> ds04;
+  std::shared_ptr<Dataset> ds05;
+  std::shared_ptr<Dataset> ds06;
+  EXPECT_NE(ds, nullptr);
+
+  // Check n_fft
+  MS_LOG(INFO) << "n_fft is zero.";
+  auto spectrogram_op_01 = audio::Spectrogram({0, 40, 20, 0, WindowType::kHann, 2.0, false, true,
+                                               BorderType::kReflect, true});
+  ds01 = ds->Map({spectrogram_op_01});
+  EXPECT_NE(ds01, nullptr);
+
+  std::shared_ptr<Iterator> iter01 = ds01->CreateIterator();
+  EXPECT_EQ(iter01, nullptr);
+
+  // Check win_length
+  MS_LOG(INFO) << "win_length is -1.";
+  auto spectrogram_op_02 = audio::Spectrogram({40, -1, 20, 0, WindowType::kHann, 2.0, false, true,
+                                               BorderType::kReflect, true});
+  ds02 = ds->Map({spectrogram_op_02});
+  EXPECT_NE(ds02, nullptr);
+
+  std::shared_ptr<Iterator> iter02 = ds02->CreateIterator();
+  EXPECT_EQ(iter02, nullptr);
+
+  // Check hop_length
+  MS_LOG(INFO) << "hop_length is -1.";
+  auto spectrogram_op_03 = audio::Spectrogram({40, 40, -1, 0, WindowType::kHann, 2.0, false, true,
+                                               BorderType::kReflect, true});
+  ds03 = ds->Map({spectrogram_op_03});
+  EXPECT_NE(ds03, nullptr);
+
+  std::shared_ptr<Iterator> iter03 = ds03->CreateIterator();
+  EXPECT_EQ(iter03, nullptr);
+
+  // Check power
+  MS_LOG(INFO) << "power is -1.";
+  auto spectrogram_op_04 = audio::Spectrogram({40, 40, 20, 0, WindowType::kHann, -1, false, true,
+                                               BorderType::kReflect, true});
+  ds04 = ds->Map({spectrogram_op_04});
+  EXPECT_NE(ds04, nullptr);
+
+  std::shared_ptr<Iterator> iter04 = ds04->CreateIterator();
+  EXPECT_EQ(iter04, nullptr);
+
+  // Check pad
+  MS_LOG(INFO) << "pad is -1.";
+  auto spectrogram_op_05 = audio::Spectrogram({40, 40, 20, -1, WindowType::kHann, 2.0, false, true,
+                                               BorderType::kReflect, true});
+  ds05 = ds->Map({spectrogram_op_05});
+  EXPECT_NE(ds05, nullptr);
+
+  std::shared_ptr<Iterator> iter05 = ds05->CreateIterator();
+  EXPECT_EQ(iter05, nullptr);
+
+  // Check n_fft and win)length
+  MS_LOG(INFO) << "n_fft is 40, win_length is 50.";
+  auto spectrogram_op_06 = audio::Spectrogram({40, 50, 20, -1, WindowType::kHann, 2.0, false, true,
+                                               BorderType::kReflect, true});
+  ds06 = ds->Map({spectrogram_op_06});
+  EXPECT_NE(ds06, nullptr);
+
+  std::shared_ptr<Iterator> iter06 = ds06->CreateIterator();
+  EXPECT_EQ(iter06, nullptr);
+}
+
 TEST_F(MindDataTestPipeline, TestTimeMaskingPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTimeMaskingPipeline.";
   // Original waveform

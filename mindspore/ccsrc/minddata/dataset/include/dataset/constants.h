@@ -133,6 +133,15 @@ enum class MS_API FixRotationAngle {
   k270Degree = 8,           ///< Rotate 270 degree.
 };
 
+/// \brief Possible types for windows function.
+enum class MS_API WindowType {
+  kBartlett = 0,  ///< Bartlett window function.
+  kBlackman = 1,  ///< Blackman window function.
+  kHamming = 2,   ///< Hamming window function.
+  kHann = 3,      ///< Hann window function.
+  kKaiser = 4     ///< Kaiser window function.
+};
+
 /// \brief Possible options for Image format types in a batch.
 enum class MS_API ImageBatchFormat {
   kNHWC = 0,  ///< Indicate the input batch is of NHWC format.

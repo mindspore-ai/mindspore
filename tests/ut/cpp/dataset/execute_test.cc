@@ -2175,3 +2175,20 @@ TEST_F(MindDataTestExecute, TestAutoAugmentEager) {
   Status rc = transform(image, &image);
   EXPECT_EQ(rc, Status::OK());
 }
+
+/// Feature: Spectrogram.
+/// Description: test Spectrogram in eager mode.
+/// Expectation: the data is processed successfully.
+TEST_F(MindDataTestExecute, TestSpectrogramEager) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-SpectrogramEager.";
+  std::shared_ptr<Tensor> test_input_tensor;
+  std::vector<double> waveform = {1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1};
+  ASSERT_OK(Tensor::CreateFromVector(waveform, TensorShape({1, (long)waveform.size()}), &test_input_tensor));
+  auto input_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(test_input_tensor));
+  std::shared_ptr<TensorTransform> spectrogram = std::make_shared<audio::Spectrogram>(8, 8, 4, 0, WindowType::kHann,
+                                                                                      2., false, true,
+                                                                                      BorderType::kReflect, true);
+  auto transform = Execute({spectrogram});
+  Status rc = transform({input_tensor}, &input_tensor);
+  ASSERT_TRUE(rc.IsOk());
+}

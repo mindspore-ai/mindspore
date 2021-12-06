@@ -21,7 +21,7 @@ from functools import wraps
 from mindspore.dataset.core.validator_helpers import check_float32, check_float32_not_zero, check_int32, \
     check_int32_not_zero, check_list_same_size, check_non_negative_float32, check_non_negative_int32, \
     check_pos_float32, check_pos_int32, check_value, INT32_MAX, parse_user_args, type_check
-from .utils import BorderType, FadeShape, GainType, Interpolation, Modulation, ScaleType
+from .utils import BorderType, FadeShape, GainType, Interpolation, Modulation, ScaleType, WindowType
 
 
 def check_amplitude_to_db(method):
@@ -351,6 +351,40 @@ def check_riaa_biquad(method):
         if sample_rate not in (44100, 48000, 88200, 96000):
             raise ValueError("sample_rate should be one of [44100, 48000, 88200, 96000], but got {0}.".format(
                 sample_rate))
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_spectrogram(method):
+    """Wrapper method to check the parameters of Spectrogram."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [n_fft, win_length, hop_length, pad, window, power,
+         normalized, center, pad_mode, onesided], _ = parse_user_args(method, *args, **kwargs)
+        type_check(n_fft, (int,), "n_fft")
+        check_pos_int32(n_fft, "n_fft")
+        if win_length is not None:
+            type_check(win_length, (int,), "win_length")
+            check_pos_int32(win_length, "win_length")
+            if win_length > n_fft:
+                raise ValueError(
+                    "Input win_length should be no more than n_fft, but got win_length: {0} and n_fft: {1}.".format(
+                        win_length, n_fft))
+        if hop_length is not None:
+            type_check(hop_length, (int,), "hop_length")
+            check_pos_int32(hop_length, "hop_length")
+
+        type_check(pad, (int,), "pad")
+        check_non_negative_int32(pad, "pad")
+        type_check(window, (WindowType,), "window")
+        type_check(power, (int, float), "power")
+        check_non_negative_float32(power, "power")
+        type_check(normalized, (bool,), "normalized")
+        type_check(center, (bool,), "center")
+        type_check(onesided, (bool,), "onesided")
+        type_check(pad_mode, (BorderType,), "pad_mode")
         return method(self, *args, **kwargs)
 
     return new_method
