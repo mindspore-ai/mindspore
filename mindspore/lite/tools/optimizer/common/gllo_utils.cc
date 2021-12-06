@@ -1234,5 +1234,22 @@ CNodePtr NewCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &fg,
 CNodePtr NewCNode(const CNodePtr &cnode, const KernelGraphPtr &fg, const std::vector<AnfNodePtr> &orig_nodes) {
   return nullptr;
 }
+
+bool IsQuantParameterNode(const PrimitiveCPtr &prim) {
+  MS_CHECK_TRUE_RET(prim != nullptr, false);
+  auto quant_attr = prim->GetAttr("quant_params");
+  if (quant_attr != nullptr) {
+    auto quant_param_holder = quant_attr->cast<lite::QuantParamHolderPtr>();
+    MS_CHECK_TRUE_RET(quant_param_holder != nullptr, false);
+    auto quant_params = quant_param_holder->get_input_quant_params();
+    bool is_quant = std::any_of(quant_params.begin(), quant_params.end(), [](std::vector<schema::QuantParamT> &params) {
+      return !params.empty() && params.front().inited;
+    });
+    if (is_quant) {
+      return true;
+    }
+  }
+  return false;
+}
 }  // namespace opt
 }  // namespace mindspore

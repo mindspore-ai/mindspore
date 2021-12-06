@@ -55,6 +55,7 @@
 #include "tools/optimizer/fusion/transpose_matmul_fusion.h"
 #include "tools/optimizer/fusion/scale_activation_fusion.h"
 #include "tools/optimizer/fusion/scale_scale_fusion.h"
+#include "tools/optimizer/fusion/fullconnected_fusion.h"
 #include "tools/optimizer/graph/add_tensor_array.h"
 #include "tools/optimizer/graph/redundant_op_remove_pass.h"
 #include "tools/optimizer/graph/clip_convert_activation_pass.h"
@@ -209,6 +210,7 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const converter::
   fusion_pm->AddPass(std::make_shared<opt::MulAddFusion>());
   fusion_pm->AddPass(std::make_shared<opt::ScaleActivationFusion>());
   fusion_pm->AddPass(std::make_shared<opt::ScaleScaleFusion>());
+  fusion_pm->AddPass(std::make_shared<opt::FullConnectedFusion>());
   optimizer->AddPassManager(fusion_pm);
   if (optimizer->Optimize(old_graph) == nullptr) {
     MS_LOG(ERROR) << "run op fusion failed.";

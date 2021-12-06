@@ -120,6 +120,14 @@ STATUS FetchShapeFromAbstract(const abstract::AbstractBasePtr &abstract, ShapeVe
 
 STATUS GetTensorInfoFromAbstract(tensor::TensorPtr *tensor_info, const CNodePtr &cnode, size_t index);
 
+bool IsTrainOp(const CNodePtr &cnode);
+
+bool IsMarkedTrainOp(const CNodePtr &cnode);
+
+int GetDataTypeFromAnfNode(const AnfNodePtr &anf_node, TypeId *type_id);
+
+bool IsQuantParameterNode(const PrimitiveCPtr &prim);
+
 template <const PrimitivePtr *prim = nullptr>
 inline bool IsSpecifiedNode(const BaseRef &n) {
   if (utils::isa<AnfNodePtr>(n)) {
@@ -128,12 +136,6 @@ inline bool IsSpecifiedNode(const BaseRef &n) {
   }
   return false;
 }
-
-bool IsTrainOp(const CNodePtr &cnode);
-
-bool IsMarkedTrainOp(const CNodePtr &cnode);
-
-int GetDataTypeFromAnfNode(const AnfNodePtr &anf_node, TypeId *type_id);
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_COMMON_GLLO_UTILS_H_
