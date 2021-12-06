@@ -15,7 +15,6 @@
 """__init__"""
 from .equal import _equal_akg
 from .greater_equal import _greater_equal_akg
-from .inplace_assign import _inplace_assign_akg
 from .lessequal import _lessequal_akg
 from .logical_and import _logical_and_akg
 from .logical_not import _logical_not_akg

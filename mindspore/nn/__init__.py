@@ -21,7 +21,7 @@ from . import layer, loss, optim, metrics, wrap, grad, probability, sparse, dyna
               reinforcement
 from .learning_rate_schedule import *
 from .dynamic_lr import *
-from .cell import Cell, GraphKernel, GraphCell
+from .cell import Cell, GraphCell
 from .layer import *
 from .loss import *
 from .optim import *
@@ -31,7 +31,7 @@ from .grad import Jvp, Vjp
 from .sparse import *
 from .reinforcement import *
 
-__all__ = ["Cell", "GraphKernel", "GraphCell"]
+__all__ = ["Cell", "GraphCell"]
 __all__.extend(layer.__all__)
 __all__.extend(loss.__all__)
 __all__.extend(optim.__all__)

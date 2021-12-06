@@ -24,7 +24,6 @@ import numpy
 from mindspore._checkparam import args_type_check
 from mindspore import log as logger
 from mindspore.common.parameter import PARAMETER_NAME_DEFAULT
-from mindspore.common._decorator import deprecated
 from mindspore.context import ParallelMode
 from .. import context
 from .._c_expression import init_pipeline, Cell_, FuncGraph, MixedPrecisionType
@@ -1648,43 +1647,6 @@ class Cell(Cell_):
             if current_stage in param._pipeline_stage_list:
                 params.append(param)
         return params
-
-
-class GraphKernel(Cell):
-    """
-    Base class for GraphKernel.
-
-    A `GraphKernel` a composite of basic primitives and can be compiled into a fused kernel automatically when
-    enable_graph_kernel in context is set to True.
-
-    This class is deprecated from version 1.3 and will be removed in a future version, use Cell instead.
-
-    GraphKernel is not supported user-defined cells anymore, the `GraphKernel` objects will be treated as
-    normal `Cell` objects.
-
-    Args:
-        auto_prefix (bool): Recursively generate namespaces. Default: True.
-        flags (dict) : Set graph flags. Default: None.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> class Relu(nn.GraphKernel):
-        ...    def __init__(self):
-        ...        super(Relu, self).__init__()
-        ...        self.max = P.Maximum()
-        ...
-        ...    def construct(self, x):
-        ...        return self.max(P.Fill()(P.DType()(x), P.Shape()(x), 0.0), x)
-    """
-
-    @deprecated("1.3", "Cell", True)
-    def __init__(self, auto_prefix=True, flags=None):
-        super(GraphKernel, self).__init__(auto_prefix, flags)
-
-    def construct(self):
-        raise NotImplementedError
 
 
 class GraphCell(Cell):
