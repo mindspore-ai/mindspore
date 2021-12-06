@@ -25,10 +25,8 @@
 #include "minddata/dataset/core/global_context.h"
 #endif
 #include "minddata/dataset/engine/perf/monitor.h"
-#include "minddata/dataset/engine/perf/device_queue_tracing.h"
 #include "minddata/dataset/engine/perf/connector_size.h"
 #include "minddata/dataset/engine/perf/cpu_sampler.h"
-#include "minddata/dataset/engine/perf/dataset_iterator_tracing.h"
 #include "minddata/dataset/engine/execution_tree.h"
 #include "minddata/dataset/engine/tree_adapter.h"
 #include "minddata/dataset/util/log_adapter.h"
@@ -68,7 +66,7 @@ Status Tracing::SaveToFile(const std::string &dir_path, const std::string &rank_
   if (!handle.is_open()) {
     RETURN_STATUS_UNEXPECTED("Profiling file can not be opened.");
   }
-  for (auto value : value_) {
+  for (const auto &value : value_) {
     handle << value << "\n";
   }
   handle.close();
@@ -103,7 +101,7 @@ void Tracing::Record(const int32_t type, const int32_t extra_info, const int32_t
   // Examples:
   // 0 0 20 10 xxx- The 20th batch took 10ms to get data from pipeline.
   // 1 64 20 5 xxx- Connector size is 5 when get the 20th batch.Connector capacity is 64.
-  if (active_ == false) {
+  if (!active_) {
     return;
   }
   TracingRecord record = {type, extra_info, batch_num, value, time_stamp};
@@ -267,7 +265,7 @@ Status ProfilingManager::LaunchMonitor() {
 }
 
 // Profiling node registration
-Status ProfilingManager::RegisterTracingNode(std::shared_ptr<Tracing> node) {
+Status ProfilingManager::RegisterTracingNode(const std::shared_ptr<Tracing> &node) {
   // Check if node with the same name has already been registered.
   auto exist = tracing_nodes_.find(node->Name());
   if (exist != tracing_nodes_.end()) {
@@ -297,7 +295,7 @@ Status ProfilingManager::GetTracingNode(const std::string &name, std::shared_ptr
 }
 
 // Profiling node registration
-Status ProfilingManager::RegisterSamplingNode(std::shared_ptr<Sampling> node) {
+Status ProfilingManager::RegisterSamplingNode(const std::shared_ptr<Sampling> &node) {
   // Check if node with the same name has already been registered.
   auto exist = sampling_nodes_.find(node->Name());
   if (exist != sampling_nodes_.end()) {
@@ -328,10 +326,10 @@ Status ProfilingManager::GetSamplingNode(const std::string &name, std::shared_pt
 
 Status ProfilingManager::SaveProfilingData(const std::string &dir_path, const std::string &rank_id) {
   MS_LOG(INFO) << "Start to save profiling data.";
-  for (auto node : tracing_nodes_) {
+  for (const auto &node : tracing_nodes_) {
     RETURN_IF_NOT_OK(node.second->SaveToFile(dir_path, rank_id));
   }
-  for (auto node : sampling_nodes_) {
+  for (const auto &node : sampling_nodes_) {
     RETURN_IF_NOT_OK(node.second->SaveToFile(dir_path, rank_id));
   }
   MS_LOG(INFO) << "Save profiling data end.";
@@ -340,10 +338,10 @@ Status ProfilingManager::SaveProfilingData(const std::string &dir_path, const st
 
 Status ProfilingManager::ChangeFileMode(const std::string &dir_path, const std::string &rank_id) {
   MS_LOG(INFO) << "Start to change file mode.";
-  for (auto node : tracing_nodes_) {
+  for (const auto &node : tracing_nodes_) {
     RETURN_IF_NOT_OK(node.second->ChangeFileMode(dir_path, rank_id));
   }
-  for (auto node : sampling_nodes_) {
+  for (const auto &node : sampling_nodes_) {
     RETURN_IF_NOT_OK(node.second->ChangeFileMode(dir_path, rank_id));
   }
   MS_LOG(INFO) << "Change file mode end.";
@@ -352,13 +350,13 @@ Status ProfilingManager::ChangeFileMode(const std::string &dir_path, const std::
 
 #ifndef ENABLE_ANDROID
 Status ProfilingManager::GetUserCpuUtilByEpoch(int32_t epoch_num, std::vector<uint8_t> *result) {
-  uint64_t start_ts, end_ts;
+  uint64_t start_ts = 0, end_ts = 0;
   RETURN_IF_NOT_OK(EpochToTimeInterval(epoch_num, &start_ts, &end_ts));
   return GetUserCpuUtilByTime(start_ts, end_ts, result);
 }
 
 Status ProfilingManager::GetUserCpuUtilByStep(int32_t start_step, int32_t end_step, std::vector<uint8_t> *result) {
-  uint64_t start_ts, end_ts;
+  uint64_t start_ts = 0, end_ts = 0;
   RETURN_IF_NOT_OK(StepToTimeInterval(start_step, end_step, &start_ts, &end_ts));
   return GetUserCpuUtilByTime(start_ts, end_ts, result);
 }
@@ -371,13 +369,13 @@ Status ProfilingManager::GetUserCpuUtilByTime(uint64_t start_ts, uint64_t end_ts
 }
 
 Status ProfilingManager::GetSysCpuUtilByEpoch(int32_t epoch_num, std::vector<uint8_t> *result) {
-  uint64_t start_ts, end_ts;
+  uint64_t start_ts = 0, end_ts = 0;
   RETURN_IF_NOT_OK(EpochToTimeInterval(epoch_num, &start_ts, &end_ts));
   return GetSysCpuUtilByTime(start_ts, end_ts, result);
 }
 
 Status ProfilingManager::GetSysCpuUtilByStep(int32_t start_step, int32_t end_step, std::vector<uint8_t> *result) {
-  uint64_t start_ts, end_ts;
+  uint64_t start_ts = 0, end_ts = 0;
   RETURN_IF_NOT_OK(StepToTimeInterval(start_step, end_step, &start_ts, &end_ts));
   return GetSysCpuUtilByTime(start_ts, end_ts, result);
 }
@@ -390,14 +388,14 @@ Status ProfilingManager::GetSysCpuUtilByTime(uint64_t start_ts, uint64_t end_ts,
 }
 
 Status ProfilingManager::GetUserCpuUtilByEpoch(int32_t op_id, int32_t epoch_num, std::vector<uint16_t> *result) {
-  uint64_t start_ts, end_ts;
+  uint64_t start_ts = 0, end_ts = 0;
   RETURN_IF_NOT_OK(EpochToTimeInterval(epoch_num, &start_ts, &end_ts));
   return GetUserCpuUtilByTime(op_id, start_ts, end_ts, result);
 }
 
 Status ProfilingManager::GetUserCpuUtilByStep(int32_t op_id, int32_t start_step, int32_t end_step,
                                               std::vector<uint16_t> *result) {
-  uint64_t start_ts, end_ts;
+  uint64_t start_ts = 0, end_ts = 0;
   RETURN_IF_NOT_OK(StepToTimeInterval(start_step, end_step, &start_ts, &end_ts));
   return GetUserCpuUtilByTime(op_id, start_ts, end_ts, result);
 }
@@ -411,14 +409,14 @@ Status ProfilingManager::GetUserCpuUtilByTime(int32_t op_id, uint64_t start_ts, 
 }
 
 Status ProfilingManager::GetSysCpuUtilByEpoch(int32_t op_id, int32_t epoch_num, std::vector<uint16_t> *result) {
-  uint64_t start_ts, end_ts;
+  uint64_t start_ts = 0, end_ts = 0;
   RETURN_IF_NOT_OK(EpochToTimeInterval(epoch_num, &start_ts, &end_ts));
   return GetSysCpuUtilByTime(op_id, start_ts, end_ts, result);
 }
 
 Status ProfilingManager::GetSysCpuUtilByStep(int32_t op_id, int32_t start_step, int32_t end_step,
                                              std::vector<uint16_t> *result) {
-  uint64_t start_ts, end_ts;
+  uint64_t start_ts = 0, end_ts = 0;
   RETURN_IF_NOT_OK(StepToTimeInterval(start_step, end_step, &start_ts, &end_ts));
   return GetSysCpuUtilByTime(op_id, start_ts, end_ts, result);
 }
@@ -478,14 +476,14 @@ Status ProfilingManager::TimeToStepInterval(uint64_t start_ts, uint64_t end_ts, 
 }
 
 Status ProfilingManager::GetConnectorSizeByEpoch(int32_t op_id, int32_t epoch_num, std::vector<int32_t> *result) {
-  uint64_t start_ts, end_ts;
+  uint64_t start_ts = 0, end_ts = 0;
   RETURN_IF_NOT_OK(EpochToTimeInterval(epoch_num, &start_ts, &end_ts));
   return GetConnectorSizeByTime(op_id, start_ts, end_ts, result);
 }
 
 Status ProfilingManager::GetConnectorSizeByStep(int32_t op_id, int32_t start_step, int32_t end_step,
                                                 std::vector<int32_t> *result) {
-  uint64_t start_ts, end_ts;
+  uint64_t start_ts = 0, end_ts = 0;
   RETURN_IF_NOT_OK(StepToTimeInterval(start_step, end_step, &start_ts, &end_ts));
   return GetConnectorSizeByTime(op_id, start_ts, end_ts, result);
 }
@@ -499,7 +497,7 @@ Status ProfilingManager::GetConnectorSizeByTime(int32_t op_id, uint64_t start_ts
 }
 
 Status ProfilingManager::GetPipelineTimeByEpoch(int32_t epoch_num, std::vector<int32_t> *result) {
-  uint32_t start_step, end_step;
+  uint32_t start_step = 0, end_step = 0;
   RETURN_IF_NOT_OK(EpochToStepInterval(epoch_num, &start_step, &end_step));
   return GetPipelineTimeByStep(start_step, end_step, result);
 }
@@ -515,13 +513,13 @@ Status ProfilingManager::GetPipelineTimeByStep(int32_t start_step, int32_t end_s
 }
 
 Status ProfilingManager::GetPipelineTimeByTime(uint64_t start_ts, uint64_t end_ts, std::vector<int32_t> *result) {
-  int32_t start_step, end_step;
+  int32_t start_step = 0, end_step = 0;
   RETURN_IF_NOT_OK(TimeToStepInterval(start_ts, end_ts, &start_step, &end_step));
   return GetPipelineTimeByStep(start_step, end_step, result);
 }
 
 Status ProfilingManager::GetPushTimeByEpoch(int32_t epoch_num, std::vector<int32_t> *result) {
-  uint32_t start_step, end_step;
+  uint32_t start_step = 0, end_step = 0;
   RETURN_IF_NOT_OK(EpochToStepInterval(epoch_num, &start_step, &end_step));
   return GetPushTimeByStep(start_step, end_step, result);
 }
@@ -537,13 +535,13 @@ Status ProfilingManager::GetPushTimeByStep(int32_t start_step, int32_t end_step,
 }
 
 Status ProfilingManager::GetPushTimeByTime(uint64_t start_ts, uint64_t end_ts, std::vector<int32_t> *result) {
-  int32_t start_step, end_step;
+  int32_t start_step = 0, end_step = 0;
   RETURN_IF_NOT_OK(TimeToStepInterval(start_ts, end_ts, &start_step, &end_step));
   return GetPushTimeByStep(start_step, end_step, result);
 }
 
 Status ProfilingManager::GetBatchTimeByEpoch(int32_t epoch_num, std::vector<int32_t> *result) {
-  uint32_t start_step, end_step;
+  uint32_t start_step = 0, end_step = 0;
   RETURN_IF_NOT_OK(EpochToStepInterval(epoch_num, &start_step, &end_step));
   return GetBatchTimeByStep(start_step, end_step, result);
 }
@@ -559,13 +557,13 @@ Status ProfilingManager::GetBatchTimeByStep(int32_t start_step, int32_t end_step
 }
 
 Status ProfilingManager::GetBatchTimeByTime(uint64_t start_ts, uint64_t end_ts, std::vector<int32_t> *result) {
-  int32_t start_step, end_step;
+  int32_t start_step = 0, end_step = 0;
   RETURN_IF_NOT_OK(TimeToStepInterval(start_ts, end_ts, &start_step, &end_step));
   return GetBatchTimeByStep(start_step, end_step, result);
 }
 
 Status ProfilingManager::GetConnectorSizeByEpoch(int32_t epoch_num, std::vector<int32_t> *result) {
-  uint32_t start_step, end_step;
+  uint32_t start_step = 0, end_step = 0;
   RETURN_IF_NOT_OK(EpochToStepInterval(epoch_num, &start_step, &end_step));
   return GetConnectorSizeByStep(start_step, end_step, result);
 }
@@ -581,13 +579,13 @@ Status ProfilingManager::GetConnectorSizeByStep(int32_t start_step, int32_t end_
 }
 
 Status ProfilingManager::GetConnectorSizeByTime(uint64_t start_ts, uint64_t end_ts, std::vector<int32_t> *result) {
-  int32_t start_step, end_step;
+  int32_t start_step = 0, end_step = 0;
   RETURN_IF_NOT_OK(TimeToStepInterval(start_ts, end_ts, &start_step, &end_step));
   return GetConnectorSizeByStep(start_step, end_step, result);
 }
 
 Status ProfilingManager::GetEmptyQueueFrequencyByEpoch(int32_t epoch_num, float_t *result) {
-  uint32_t start_step, end_step;
+  uint32_t start_step = 0, end_step = 0;
   RETURN_IF_NOT_OK(EpochToStepInterval(epoch_num, &start_step, &end_step));
   return GetEmptyQueueFrequencyByStep(start_step, end_step, result);
 }
@@ -603,13 +601,13 @@ Status ProfilingManager::GetEmptyQueueFrequencyByStep(int32_t start_step, int32_
 }
 
 Status ProfilingManager::GetEmptyQueueFrequencyByTime(uint64_t start_ts, uint64_t end_ts, float_t *result) {
-  int32_t start_step, end_step;
+  int32_t start_step = 0, end_step = 0;
   RETURN_IF_NOT_OK(TimeToStepInterval(start_ts, end_ts, &start_step, &end_step));
   return GetEmptyQueueFrequencyByStep(start_step, end_step, result);
 }
 
 Status ProfilingManager::GetConnectorCapacityByEpoch(int32_t epoch_num, std::vector<int32_t> *result) {
-  uint32_t start_step, end_step;
+  uint32_t start_step = 0, end_step = 0;
   RETURN_IF_NOT_OK(EpochToStepInterval(epoch_num, &start_step, &end_step));
   return GetConnectorCapacityByStep(start_step, end_step, result);
 }
@@ -626,7 +624,7 @@ Status ProfilingManager::GetConnectorCapacityByStep(int32_t start_step, int32_t 
 }
 
 Status ProfilingManager::GetConnectorCapacityByTime(uint64_t start_ts, uint64_t end_ts, std::vector<int32_t> *result) {
-  int32_t start_step, end_step;
+  int32_t start_step = 0, end_step = 0;
   RETURN_IF_NOT_OK(TimeToStepInterval(start_ts, end_ts, &start_step, &end_step));
   return GetConnectorCapacityByStep(start_step, end_step, result);
 }
@@ -652,10 +650,10 @@ void ProfilingManager::RecordEndOfEpoch(uint32_t step_num) {
 }
 
 Status ProfilingManager::Reset() {
-  for (auto node : tracing_nodes_) {
+  for (const auto &node : tracing_nodes_) {
     node.second->Clear();
   }
-  for (auto node : sampling_nodes_) {
+  for (const auto &node : sampling_nodes_) {
     node.second->Clear();
   }
   epoch_end_ts_.clear();
