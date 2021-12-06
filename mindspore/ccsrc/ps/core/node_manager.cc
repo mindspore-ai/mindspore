@@ -352,17 +352,6 @@ bool NodeManager::IsWorker() const {
   return res;
 }
 
-bool NodeManager::IsServer0() const {
-  bool res = std::any_of(registered_nodes_info_.begin(), registered_nodes_info_.end(), [](auto item) {
-    if (item.second.node_role_ == NodeRole::SERVER && item.second.is_alive == false && item.second.rank_id_ == 0) {
-      return true;
-    }
-    return false;
-  });
-
-  return res;
-}
-
 bool NodeManager::IsNodeRegistered(const std::string &node_id) {
   if (registered_nodes_info_.find(node_id) != registered_nodes_info_.end()) {
     return true;

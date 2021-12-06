@@ -608,11 +608,9 @@ void AbstractNode::ProcessHeartbeatResp(const std::shared_ptr<MessageMeta> &meta
   }
 
   bool is_worker = heartbeat_resp_message.is_worker();
-  bool is_server0 = heartbeat_resp_message.is_server0();
-
   bool is_fl_mode = PSContext::instance()->server_mode() == ps::kServerModeFL ||
                     PSContext::instance()->server_mode() == ps::kServerModeHybrid;
-  bool not_enable_recover_node_timeout = ((is_worker || is_server0) && is_fl_mode) || (is_worker && !is_fl_mode);
+  bool not_enable_recover_node_timeout = (is_worker && !is_fl_mode);
 
   if (current_cluster_state_ == ClusterState::NODE_TIMEOUT) {
     if (node_recovery_ == nullptr || not_enable_recover_node_timeout) {
@@ -1052,6 +1050,9 @@ void AbstractNode::ProcessSendData(const std::shared_ptr<TcpConnection> &conn, c
 #ifdef __APPLE__
   std::shared_ptr<unsigned char> res(new unsigned char[size], std::default_delete<unsigned char[]>());
 #else
+  if (size < 0) {
+    MS_LOG(EXCEPTION) << "size < 0";
+  }
   std::shared_ptr<unsigned char[]> res(new unsigned char[size]);
 #endif
   if (size > 0) {

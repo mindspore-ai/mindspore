@@ -420,11 +420,12 @@ bool Iteration::NotifyLeaderMoveToNextIteration(bool is_last_iter_valid, const s
   notify_leader_to_next_iter_req.set_is_last_iter_valid(is_last_iter_valid);
   notify_leader_to_next_iter_req.set_iter_num(iteration_num_);
   notify_leader_to_next_iter_req.set_reason(reason);
-  if (!communicator_->SendPbRequest(notify_leader_to_next_iter_req, kLeaderServerRank,
-                                    ps::core::TcpUserCommand::kNotifyLeaderToNextIter)) {
+  while (communicator_->running() && !communicator_->SendPbRequest(notify_leader_to_next_iter_req, kLeaderServerRank,
+                                                                   ps::core::TcpUserCommand::kNotifyLeaderToNextIter)) {
     MS_LOG(WARNING) << "Sending notify leader server to proceed next iteration request to leader server 0 failed.";
-    return false;
+    std::this_thread::sleep_for(std::chrono::milliseconds(kRetryDurationForPrepareForNextIter));
   }
+  MS_LOG(INFO) << "Notify leader server to control the cluster to proceed to next iteration success";
   return true;
 }
 

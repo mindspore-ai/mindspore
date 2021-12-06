@@ -114,7 +114,6 @@ class NodeManager {
   void SaveRecoveryRankId(const NodeInfo &info);
 
   bool IsWorker() const;
-  bool IsServer0() const;
 
   // Determine whether the node id has been registered.
   bool IsNodeRegistered(const std::string &node_id);
