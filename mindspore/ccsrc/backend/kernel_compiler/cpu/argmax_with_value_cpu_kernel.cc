@@ -45,15 +45,15 @@ bool check_validation(const std::vector<size_t> &shape, const size_t num_before_
   size_t out0_size = output_num * sizeof(int);
   size_t out1_size = output_num * data_size;
   if (inputs[0]->size != input_size) {
-    MS_LOG(EXCEPTION) << "For '" << kKernelName << "', the type of 'input_x' should be equal to " << input_size
+    MS_LOG(EXCEPTION) << "For '" << kKernelName << "', the memory size of 'input_x' should be " << input_size
                       << ", but got the memory size is " << inputs[0]->size;
   }
   if (outputs[0]->size != out0_size) {
-    MS_LOG(EXCEPTION) << "For '" << kKernelName << "', the type of the 1st output should be equal to " << out0_size
+    MS_LOG(EXCEPTION) << "For '" << kKernelName << "', the memory size of the 1st output should be " << out0_size
                       << ", but got the memory size is " << outputs[0]->size;
   }
   if (outputs[1]->size != out1_size) {
-    MS_LOG(EXCEPTION) << "For '" << kKernelName << "', the type of the 2nd output should be equal to " << out1_size
+    MS_LOG(EXCEPTION) << "For '" << kKernelName << "', the memory size of the 2nd output should be " << out1_size
                       << ", but got the memory size is " << outputs[1]->size;
   }
   return true;

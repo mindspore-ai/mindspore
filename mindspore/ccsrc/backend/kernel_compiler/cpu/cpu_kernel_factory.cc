@@ -62,7 +62,7 @@ void CPUKernelFactory::SetKernelAttrs(const std::shared_ptr<kernel::OpInfo> op_i
   auto inputs_ptr = op_info->inputs_ptr();
   auto outputs_ptr = op_info->outputs_ptr();
   if (outputs_ptr.empty()) {
-    MS_LOG(EXCEPTION) << "op " << op_info->op_name() << " output size is zero.";
+    MS_LOG(EXCEPTION) << "The output dimension of operator '" << op_info->op_name() << "' should not be zero.";
   }
   auto first_output_dtypes = outputs_ptr[0]->dtypes();
 

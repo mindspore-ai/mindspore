@@ -76,7 +76,7 @@ void MapCacheIdxCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   node_wpt_ = kernel_node;
   auto hashmap_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   if (hashmap_shape.size() != 2) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'HashMap' should be 2-D(n, 4), but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'HashMap' should be 2-D, but got "
                       << hashmap_shape.size() << "-D.";
   }
   hashmap_length_ = hashmap_shape[0];

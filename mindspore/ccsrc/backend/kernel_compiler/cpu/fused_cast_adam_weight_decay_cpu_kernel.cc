@@ -106,52 +106,85 @@ void FusedCastAdamWeightDecayCPUKernel::LaunchFusedCastAdamFp16(const std::vecto
 
 void FusedCastAdamWeightDecayCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   std::vector<size_t> var_shape = AnfAlgo::GetInputDeviceShape(kernel_node, VAR);
   var_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, VAR);
   gradient_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, GRAD);
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_num != kFusedCastAdamWeightDecayInputNum) {
-    MS_LOG(EXCEPTION) << "Input number is " << input_num << ", but AdamWeightDecay needs 9 inputs.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be "
+                      << kFusedCastAdamWeightDecayInputNum << ", but got: " << input_num;
   }
   size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
   if (output_num != kFusedCastAdamWeightDecayOutputNum) {
-    MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but AdamWeightDecay needs 3 outputs.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be "
+                      << kFusedCastAdamWeightDecayOutputNum << ", but got: " << output_num;
   }
   elem_num_ = 1;
   for (size_t i : var_shape) {
     elem_num_ *= i;
   }
   if (elem_num_ < 1) {
-    MS_LOG(EXCEPTION) << "Invalid parameter shape";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'var' should not be zero.";
   }
   if (gradient_dtype_ != kNumberTypeFloat16) {
-    MS_LOG(EXCEPTION) << "The dtype of gradient must be float16!";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of 'gradient' should be float16, but got "
+                      << TypeIdToType(gradient_dtype_)->ToString();
   }
   if (var_dtype_ != kNumberTypeFloat32 && var_dtype_ != kNumberTypeFloat16) {
-    MS_LOG(EXCEPTION) << "The dtype of parameter must be float32 or float16!";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of 'var' should be float16 or float32, but got "
+                      << TypeIdToType(var_dtype_)->ToString();
   }
 }
 
 void FusedCastAdamWeightDecayCPUKernel::CheckParam(const std::vector<kernel::AddressPtr> &inputs,
                                                    const std::vector<kernel::AddressPtr> &outputs) const {
   if (inputs.size() != kFusedCastAdamWeightDecayInputNum) {
-    MS_LOG(EXCEPTION) << "Input number is " << inputs.size() << ", but AdamWeightDecay needs "
-                      << kFusedCastAdamWeightDecayInputNum << " inputs.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be "
+                      << kFusedCastAdamWeightDecayInputNum << ", but got: " << inputs.size();
   }
   if (outputs.size() != kFusedCastAdamWeightDecayOutputNum) {
-    MS_LOG(EXCEPTION) << "Output number is " << outputs.size() << ", but AdamWeightDecay needs "
-                      << kFusedCastAdamWeightDecayOutputNum << " outputs.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be "
+                      << kFusedCastAdamWeightDecayOutputNum << ", but got: " << outputs.size();
   }
   size_t elem_size_fp32 = elem_num_ * kSizeFloat32;
   size_t elem_size_fp16 = elem_num_ * kSizeFloat16;
   size_t var_size = var_dtype_ == kNumberTypeFloat16 ? elem_size_fp16 : elem_size_fp32;
-  if (inputs[VAR]->size != var_size || inputs[M]->size != elem_size_fp32 || inputs[V]->size != elem_size_fp32 ||
-      inputs[GRAD]->size != elem_size_fp16) {
-    MS_LOG(EXCEPTION) << "Error input data size!";
+  if (inputs[VAR]->size != var_size) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'var' should be " << var_size
+                      << ", but got " << inputs[VAR]->size;
   }
-  if (inputs[LR]->size != kSizeFloat32 || inputs[BETA1]->size != kSizeFloat32 || inputs[BETA2]->size != kSizeFloat32 ||
-      inputs[EPSILON]->size != kSizeFloat32 || inputs[DECAY]->size != kSizeFloat32) {
-    MS_LOG(EXCEPTION) << "The attribute beta, lr, epsilon and weight decay must be float!";
+  if (inputs[M]->size != elem_size_fp32) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'm' should be " << elem_size_fp32
+                      << ", but got " << inputs[M]->size;
+  }
+  if (inputs[V]->size != elem_size_fp32) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'v' should be " << elem_size_fp32
+                      << ", but got " << inputs[V]->size;
+  }
+  if (inputs[GRAD]->size != elem_size_fp16) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'gradient' should be " << elem_size_fp16
+                      << ", but got " << inputs[GRAD]->size;
+  }
+  if (inputs[LR]->size != kSizeFloat32) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'lr' should be " << kSizeFloat32
+                      << ", but got " << inputs[LR]->size;
+  }
+  if (inputs[BETA1]->size != kSizeFloat32) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'beta1' should be " << kSizeFloat32
+                      << ", but got " << inputs[BETA1]->size;
+  }
+  if (inputs[BETA2]->size != kSizeFloat32) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'beta2' should be " << kSizeFloat32
+                      << ", but got " << inputs[BETA2]->size;
+  }
+  if (inputs[EPSILON]->size != kSizeFloat32) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'epsilon' should be " << kSizeFloat32
+                      << ", but got " << inputs[EPSILON]->size;
+  }
+  if (inputs[DECAY]->size != kSizeFloat32) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'decay' should be " << kSizeFloat32
+                      << ", but got " << inputs[DECAY]->size;
   }
 }
 

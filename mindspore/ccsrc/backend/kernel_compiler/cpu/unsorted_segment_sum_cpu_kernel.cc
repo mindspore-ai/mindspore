@@ -35,7 +35,7 @@ void UnsortedSegmentSumCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
   if (output_shape.empty()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dimension of output should be at least 1, but got empty tensor.";
+                      << "', the dimension of output should be at least 1, but got shape: " << output_shape;
   }
   for (size_t i = 0; i < input_shape.size(); ++i) {
     unit_num_ *= input_shape[i];

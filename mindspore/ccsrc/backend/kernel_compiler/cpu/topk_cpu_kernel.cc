@@ -30,7 +30,7 @@ template <typename T>
 void TopKCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
                                  const std::vector<AddressPtr> &outputs) {
   if (inputs.size() != 2 || outputs.size() != 2) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the op should have 2 inputs and 2 outputs, but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the operator should have 2 inputs and 2 outputs, but got "
                       << inputs.size() << "input(s) and " << outputs.size() << "output(s)";
   }
   if (inputs[0]->size != outer_size_ * inner_size_ * sizeof(T)) {
@@ -45,7 +45,7 @@ void TopKCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const st
   auto output = reinterpret_cast<T *>(outputs[0]->addr);
   auto indices = reinterpret_cast<int *>(outputs[1]->addr);
   if (k < 1) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'k' should be greater than 0, but got " << k << ".";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'k' should be greater than 0, but got " << k;
   }
   size_t k_num = IntToSize(std::min<int>(inner_size_, k));
   if (outputs[0]->size != outer_size_ * k_num * sizeof(T)) {

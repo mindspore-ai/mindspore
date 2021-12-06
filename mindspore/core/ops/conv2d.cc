@@ -182,8 +182,11 @@ abstract::ShapePtr Conv2dInferShape(const PrimitivePtr &primitive, const std::ve
   int64_t group = CheckAttrPositiveInt64(prim_name, primitive->GetAttr("group"), "group");
   if ((x_shape[c_axis] != Shape::SHP_ANY) && (w_shape[c_axis] != Shape::SHP_ANY) &&
       ((x_shape[c_axis] / group) != w_shape[c_axis])) {
-    MS_LOG(EXCEPTION) << "x_shape[C_in] / group must be equal to w_shape[C_in]: " << w_shape[c_axis] << ", but got "
-                      << (x_shape[c_axis] / group);
+    MS_LOG(EXCEPTION) << "For '" << prim_name
+                      << "', 'C_in' of input 'x' shape divide by parameter 'group' should be "
+                         "equal to 'C_in' of input 'weight' shape: "
+                      << w_shape[c_axis] << ", but got 'C_in' of input 'x' shape: " << x_shape[c_axis]
+                      << ", and 'group': " << group;
   }
   int64_t out_channel = CheckAttrPositiveInt64(prim_name, primitive->GetAttr("out_channel"), "out_channel");
   if ((w_shape[n_axis] != Shape::SHP_ANY) && (w_shape[n_axis] != out_channel)) {

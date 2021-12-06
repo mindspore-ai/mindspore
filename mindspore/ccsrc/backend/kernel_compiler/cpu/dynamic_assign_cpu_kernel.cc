@@ -108,7 +108,7 @@ void DynamicAssignCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
     (void)std::transform(input_x_shape.begin(), input_x_shape.end(), std::back_inserter(shape_tmp), SizeToLong);
     tensor->set_shape(shape_tmp);
   } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', input x should be a Parameter.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', output should be a Parameter.";
   }
 }
 }  // namespace kernel
