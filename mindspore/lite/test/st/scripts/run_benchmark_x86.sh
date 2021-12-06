@@ -238,6 +238,8 @@ models_weightquant_0bit_config=${basepath}/../config/models_weightquant_0bit.cfg
 models_weightquant_7bit_config=${basepath}/../config/models_weightquant_7bit.cfg
 models_weightquant_9bit_config=${basepath}/../config/models_weightquant_9bit.cfg
 models_weightquant_8bit_config=${basepath}/../config/models_weightquant_8bit.cfg
+models_weightquant_0bit_auto_tune_config=${basepath}/../config/models_weightquant_0bit_auto_tune.cfg
+models_weightquant_8bit_debug_config=${basepath}/../config/models_weightquant_8bit_debug.cfg
 models_process_only_config=${basepath}/../config/models_process_only.cfg
 
 # Prepare the config file list
@@ -253,6 +255,7 @@ elif [[ $backend == "x86_onnx" ]]; then
 elif [[ $backend == "x86_mindir" ]]; then
   x86_cfg_file_list=("$models_mindspore_train_config" "$models_posttraining_config" "$models_tflite_awaretraining_config" \
                      "$models_weightquant_0bit_config" "$models_weightquant_8bit_config" "$models_weightquant_7bit_config" \
+                     "$models_weightquant_0bit_auto_tune_config" "$models_weightquant_8bit_debug_config"\
                      "$models_weightquant_9bit_config" "$models_process_only_config" "$models_mindspore_config")
 else
   x86_cfg_file_list=("$models_tf_config" "$models_tflite_config" "$models_caffe_config" "$models_onnx_config" "$models_mindspore_config" \

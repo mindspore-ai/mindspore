@@ -65,7 +65,7 @@ int CalQuantizationParams(schema::QuantParamT *quant_param, double real_min, dou
       MS_LOG(ERROR) << "min and max should both be zero if they are equal to each other";
       return RET_ERROR;
     }
-    MS_LOG(WARNING) << "The maximum and minimum values are equal to 0.";
+    MS_LOG(INFO) << "The maximum and minimum values are equal to 0.";
     quant_param->inited = true;
     quant_param->min = real_min;
     quant_param->max = real_max;
