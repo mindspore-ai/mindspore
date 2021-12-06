@@ -2413,7 +2413,7 @@ class NLLLoss(PrimitiveWithInfer):
         return x_dtype, w_dtype
 
 
-class SoftmaxCrossEntropyWithLogits(PrimitiveWithInfer):
+class SoftmaxCrossEntropyWithLogits(Primitive):
     r"""
     Gets the softmax cross-entropy value between logits and labels with one-hot encoding.
 
@@ -2460,17 +2460,6 @@ class SoftmaxCrossEntropyWithLogits(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         pass
-
-    def infer_shape(self, logits_shape, labels_shape):
-        validator.check("logits_shape", logits_shape, "labels_shape", labels_shape, Rel.EQ, self.name)
-        loss_shape = [logits_shape[0]]
-        dlogits_shape = logits_shape
-        return loss_shape, dlogits_shape
-
-    def infer_dtype(self, logits_type, labels_type):
-        args = {"logits": logits_type, "labels": labels_type}
-        validator.check_tensors_dtypes_same_and_valid(args, (mstype.float16, mstype.float32), self.name)
-        return logits_type, logits_type
 
 
 class SparseSoftmaxCrossEntropyWithLogits(PrimitiveWithInfer):
