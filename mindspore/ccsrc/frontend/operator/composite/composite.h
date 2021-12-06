@@ -153,11 +153,14 @@ class GradOperation : public MetaFuncGraph {
                        const std::vector<AnfNodePtr> &weight_args = {});
 
   FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
+
+  void set_grad_position(const std::string &grad_position) { grad_position_ = grad_position; }
   bool sens_param() const { return sens_param_; }
   bool get_all_;
   bool get_by_list_;
   bool sens_param_;
   bool get_by_position_;
+  std::string grad_position_;
 
  private:
   void GradByParameter(const FuncGraphPtr &k_child, const AnfNodePtr &f_app, const AnfNodePtr &bprop,

@@ -424,7 +424,7 @@ class _Grad(GradOperation_):
         self.pynative_ = False
         self.grad_position = None
 
-    def _pynative_forward_run(self, grad, args, kwargs, fn):
+    def _pynative_forward_run(self, grad, args, kwargs, fn, grad_position):
         """ Pynative forward run to build grad graph. """
         new_kwargs = kwargs
         if self.sens_param:
@@ -469,11 +469,12 @@ class _Grad(GradOperation_):
                     def after_grad(*args):
                         return grad_(fn)(*args)
         elif self.pynative_:
+            _pynative_executor.set_grad_position(grad_, grad_position)
             @_wrap_func
             def after_grad(*args, **kwargs):
                 if _pynative_executor.check_graph(fn, *args, **kwargs):
                     print("Another grad step is running")
-                self._pynative_forward_run(grad_, args, kwargs, fn)
+                self._pynative_forward_run(grad_, args, kwargs, fn, grad_position)
                 _pynative_executor.grad(grad_, fn, weights, grad_position, *args, **kwargs)
                 out = _pynative_executor(fn, *args, **kwargs)
                 _pynative_executor.clear_grad(fn, *args, **kwargs)

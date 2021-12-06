@@ -184,3 +184,21 @@ def test_grad_warp_with_msfunction_pynative():
     expect_grad = Tensor(np.array([[2, 13], [1, 6]]).astype(np.float32))
     real_grad = grad_warp_with_msfunction(x, y, z)
     assert np.allclose(real_grad.asnumpy(), expect_grad.asnumpy())
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_grad_with_grad_position_twice_pynative():
+    """
+    Features: Function grad.
+    Description: Test F.grad with function setting grad_position twice in pynative mode.
+    Expectation: No exception.
+    """
+    x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
+    y = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
+    z = Tensor(np.array([[1, 1], [1, 1]]).astype(np.float32))
+    net = MultipleInputsSingleOutputNet()
+    out1 = grad(net, grad_position=0)(x, y, z)
+    out2 = grad(net, grad_position=(0, 1))(x, y, z)
+    assert isinstance(out1, Tensor)
+    assert isinstance(out2, tuple)
