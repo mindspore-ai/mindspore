@@ -25,7 +25,10 @@ bool CollectiveCommunicationLib::Finalize() {
 
   for (const auto &group : groups_) {
     CHECK_IF_NULL(group.second);
-    CHECK_RET(group.second->Finalize(), true, "Finalizing group failed.");
+    if (!group.second->Finalize()) {
+      MS_LOG(ERROR) << "Failed to finalize group " << group.first;
+      return false;
+    }
   }
   groups_.clear();
   initialized_ = false;
@@ -33,10 +36,16 @@ bool CollectiveCommunicationLib::Finalize() {
 }
 
 bool CollectiveCommunicationLib::DestroyCommunicationGroup(const std::string &group_name) {
-  CHECK_RET(groups_.count(group_name) != 0, true, "The group " + group_name + " is not created.");
+  if (groups_.count(group_name) == 0) {
+    MS_LOG(ERROR) << "The group " << group_name << " does not exist.";
+    return false;
+  }
   auto group = groups_[group_name];
   CHECK_IF_NULL(group);
-  CHECK_RET(group->Finalize(), true, "Finalizing group failed.");
+  if (!group->Finalize()) {
+    MS_LOG(ERROR) << "Failed to finalize group " << group_name;
+    return false;
+  }
   (void)groups_.erase(group_name);
   return true;
 }
@@ -56,7 +65,10 @@ uint32_t CollectiveCommunicationLib::GetGroupSize(const std::string &group_name)
 }
 
 CommunicationGroupPtr CollectiveCommunicationLib::GetGroup(const std::string &group_name) {
-  CHECK_RET(groups_.count(group_name) != 0, true, "The group " + group_name + " does not exist.");
+  if (groups_.count(group_name) == 0) {
+    MS_LOG(ERROR) << "The group " << group_name << " does not exist.";
+    return nullptr;
+  }
   return groups_[group_name];
 }
 

@@ -37,7 +37,10 @@ bool MsCollectiveCommLib::Initialize(uint32_t global_rank, uint32_t global_rank_
 
 bool MsCollectiveCommLib::CreateCommunicationGroup(const std::string &group_name,
                                                    const std::vector<uint32_t> &group_ranks) {
-  CHECK_RET((groups_.count(group_name) == 0), true, "The group " + group_name + " has already existed.");
+  if (groups_.count(group_name) != 0) {
+    MS_LOG(ERROR) << "The group " << group_name << " has already existed.";
+    return false;
+  }
 
   MsCommunicationGroupPtr group = std::make_shared<MsCommunicationGroup>(group_name, group_ranks, global_rank_id_);
   CHECK_IF_NULL(group);
@@ -74,7 +77,11 @@ bool MsCollectiveCommLib::Broadcast(const void *send_buff, void *recv_buff, size
   CHECK_IF_NULL(recv_buff);
   CHECK_IF_NULL(node_);
 
-  CHECK_RET((groups_.count(group_name) != 0), true, "The group " + group_name + " does not exist.");
+  if (groups_.count(group_name) == 0) {
+    MS_LOG(ERROR) << "The group " << group_name << " does not exist.";
+    return false;
+  }
+
   auto group = groups_[group_name];
   CommunicationGroupInfo group_info = {};
   group_info.size = group->group_size();

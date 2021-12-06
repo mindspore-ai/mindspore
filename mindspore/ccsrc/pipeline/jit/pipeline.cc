@@ -1756,30 +1756,64 @@ void ClearResAtexit() {
   pipeline::GetAttrMap().clear();
   pipeline::GraphExecutorPy::ClearRes();
   pipeline::ReclaimOptimizer();
+
+  MS_LOG(INFO) << "Start clear PynativeExecutor...";
   pynative::PynativeExecutor::GetInstance()->ClearRes();
+  MS_LOG(INFO) << "End clear PynativeExecutor.";
+
+  MS_LOG(INFO) << "Start clear PyPassManager...";
   opt::python_pass::PyPassManager::GetInstance()->ClearRes();
+  MS_LOG(INFO) << "End clear PyPassManager.";
+
 #ifdef ENABLE_GE
   transform::DfGraphManager::GetInstance().ClearGraph();
   transform::OpAdapterMap::get().clear();
 #else
+  MS_LOG(INFO) << "Start clear ConfigManager...";
   ConfigManager::GetInstance().ResetIterNum();
+  MS_LOG(INFO) << "End clear ConfigManager.";
 #endif
   ReleaseGeTsd();
+  MS_LOG(INFO) << "Start clear python_adapter...";
   parse::python_adapter::ResetPythonScope();
+  MS_LOG(INFO) << "End clear python_adapter.";
+
+  MS_LOG(INFO) << "Start clear AnalysisResultCacheMgr...";
   abstract::AnalysisResultCacheMgr::GetInstance().Clear();
+  MS_LOG(INFO) << "End clear AnalysisResultCacheMgr.";
+
+  MS_LOG(INFO) << "Start clear AnalysisContext...";
   abstract::AnalysisContext::ClearContext();
+  MS_LOG(INFO) << "End clear AnalysisContext...";
+
+  MS_LOG(INFO) << "Start clear AnalysisSchedule...";
   abstract::AnalysisSchedule::GetInstance().Stop();
+  MS_LOG(INFO) << "End clear AnalysisSchedule...";
 #ifdef ENABLE_DEBUGGER
   Debugger::GetInstance()->Reset();
 #endif
   g_args_cache.clear();
   // clean static variable to prevent from crash. As static variable is released after
   // Python threads is released.
+  MS_LOG(INFO) << "Start clear data_converter...";
   parse::data_converter::ClearObjectCache();
+  MS_LOG(INFO) << "End clear data_converter...";
+
+  MS_LOG(INFO) << "Start clear Parser...";
   parse::Parser::CleanParserResource();
+  MS_LOG(INFO) << "End clear Parser...";
+
+  MS_LOG(INFO) << "Start CleanDataClassToClassMap...";
   parse::CleanDataClassToClassMap();
+  MS_LOG(INFO) << "End CleanDataClassToClassMap...";
+
+  MS_LOG(INFO) << "Start ClearTraceStack...";
   trace::ClearTraceStack();
+  MS_LOG(INFO) << "End ClearTraceStack...";
+
+  MS_LOG(INFO) << "Start clear InterpretNodeRecorder...";
   InterpretNodeRecorder::GetInstance().Clear();
+  MS_LOG(INFO) << "End clear InterpretNodeRecorder...";
 }
 
 py::bytes PyEncrypt(char *plain_data, size_t plain_len, char *key, size_t key_len, const std::string &enc_mode) {

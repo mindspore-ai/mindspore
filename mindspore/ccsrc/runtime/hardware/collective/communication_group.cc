@@ -18,7 +18,7 @@
 
 namespace mindspore {
 namespace device {
-CommunicationGroup::CommunicationGroup(const std::string name, const std::vector<uint32_t> &group_ranks,
+CommunicationGroup::CommunicationGroup(const std::string &name, const std::vector<uint32_t> &group_ranks,
                                        uint32_t global_rank)
     : initialized_(false),
       global_rank_(global_rank),

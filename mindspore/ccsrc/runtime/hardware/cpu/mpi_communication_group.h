@@ -29,7 +29,7 @@ namespace device {
 namespace cpu {
 class MPICommunicationGroup : public CommunicationGroup {
  public:
-  explicit MPICommunicationGroup(const std::string name, const std::vector<uint32_t> &group_ranks,
+  explicit MPICommunicationGroup(const std::string &name, const std::vector<uint32_t> &group_ranks,
                                  uint32_t global_rank);
 
   ~MPICommunicationGroup() override = default;

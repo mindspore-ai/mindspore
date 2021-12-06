@@ -27,7 +27,7 @@ namespace device {
 namespace cpu {
 class MsCommunicationGroup : public CommunicationGroup {
  public:
-  explicit MsCommunicationGroup(const std::string name, const std::vector<uint32_t> &group_ranks, uint32_t global_rank)
+  explicit MsCommunicationGroup(const std::string &name, const std::vector<uint32_t> &group_ranks, uint32_t global_rank)
       : CommunicationGroup(name, group_ranks, global_rank) {}
 
   ~MsCommunicationGroup() override = default;
