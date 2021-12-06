@@ -213,28 +213,30 @@ std::string GetParaDebugPath() {
 }
 
 std::string GetTbePath() {
-  auto save_path = common::GetEnv(kTBE_IMPL_PATH);
+  auto tbe_path = common::GetEnv(kTBE_IMPL_PATH);
   char real_path[PATH_MAX] = {0};
-  if (!save_path.empty()) {
-    if (realpath(save_path.c_str(), real_path)) {
-      save_path = real_path;
+  if (!tbe_path.empty()) {
+    if (realpath(tbe_path.c_str(), real_path)) {
+      tbe_path = real_path;
     } else {
-      MS_LOG(EXCEPTION) << "Invalid environment variable '" << kTBE_IMPL_PATH << "', the path is " << save_path
+      MS_LOG(EXCEPTION) << "Invalid environment variable '" << kTBE_IMPL_PATH << "', the path is " << tbe_path
                         << ". Please check (1) whether the path exists, (2) whether the path has the access "
                            "permission, (3) whether the path is too long. ";
     }
   } else {
     if (realpath(kDefPath, real_path)) {
-      save_path = real_path;
+      tbe_path = real_path;
     } else if (realpath(kBkPath, real_path)) {
-      save_path = real_path;
+      tbe_path = real_path;
     } else {
       MS_LOG(WARNING) << "Invalid path is [" << kDefPath << "] or [" << kBkPath << "]. "
                       << "Please check (1) whether the path exists, (2) whether the path has the access "
                       << "permission, (3) whether the path is too long. ";
+      // unknown TBE_IMPL_PATH
+      tbe_path = "";
     }
   }
-  return save_path;
+  return tbe_path;
 }
 
 std::vector<std::string> GetTuneOpsList(const std::string &d) {
