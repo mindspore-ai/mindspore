@@ -15,6 +15,8 @@
  */
 
 #include "src/delegate/tensorrt/op/activation_tensorrt.h"
+#include <cfloat>
+#include <memory>
 #include "src/delegate/tensorrt/op/cast_tensorrt.h"
 
 namespace mindspore::lite {
@@ -71,8 +73,10 @@ int ActivationTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     activation_input = cast_layer->getOutput(0);
   }
 
-  nvinfer1::IActivationLayer *activation_layer =
-    ActivationTensorRT::AddActivation(network, activation_op->activation_type(), alpha, activation_input);
+  nvinfer1::IActivationLayer *activation_layer = ActivationTensorRT::AddActivation(
+    network, activation_op->activation_type(), alpha,
+    std::isfinite(activation_op->min_val()) ? FLT_MIN + 1 : activation_op->min_val(),
+    std::isfinite(activation_op->max_val()) ? FLT_MAX - 1 : activation_op->max_val(), activation_input);
   if (activation_layer == nullptr) {
     MS_LOG(ERROR) << "add activation op failed for TensorRT.";
     return RET_ERROR;
@@ -100,6 +104,7 @@ int ActivationTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
 }
 nvinfer1::IActivationLayer *ActivationTensorRT::AddActivation(nvinfer1::INetworkDefinition *network,
                                                               schema::ActivationType activation_type, float alpha,
+                                                              float min_value, float max_value,
                                                               nvinfer1::ITensor *trt_in_tensor) {
   // Just some action_code correct, unfind code is set to default relu. need double check.
   lite::ActivationParams action_param = ConvertActivationType(activation_type);
@@ -112,6 +117,12 @@ nvinfer1::IActivationLayer *ActivationTensorRT::AddActivation(nvinfer1::INetwork
   if (activation_layer == nullptr) {
     MS_LOG(ERROR) << "add activation op failed for TensorRT.";
     return nullptr;
+  }
+
+  if (activation_type == schema::ActivationType_HARD_TANH) {
+    activation_layer->setAlpha(min_value);
+    activation_layer->setBeta(max_value);
+    return activation_layer;
   }
 
   if (action_param.has_alpha) {

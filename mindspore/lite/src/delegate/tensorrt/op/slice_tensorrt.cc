@@ -50,17 +50,10 @@ int SliceTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   strides_index_ = in_tensors_.size() - 1;
   axis_index_ = in_tensors_.size() == HAS_AXIS ? AXIS_INDEX : -1;
 
-  nvinfer1::ITensor *slice_input = tensorrt_in_tensors_[0].trt_tensor_;
-  if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
-      tensorrt_in_tensors_[0].format_ == Format::NCHW) {
-    // transpose: NCHW->NHWC
-    nvinfer1::IShuffleLayer *transpose_layer_in = NCHW2NHWC(network, *tensorrt_in_tensors_[0].trt_tensor_);
-    if (transpose_layer_in == nullptr) {
-      MS_LOG(ERROR) << "op action convert failed";
-      return RET_ERROR;
-    }
-    transpose_layer_in->setName((op_name_ + "_transpose2NHWC").c_str());
-    slice_input = transpose_layer_in->getOutput(0);
+  nvinfer1::ITensor *slice_input = PreprocessInputs2SameDim(network, tensorrt_in_tensors_[0]);
+  if (slice_input == nullptr) {
+    MS_LOG(ERROR) << "PreprocessInputs2SameDim input tensor failed for " << op_name_;
+    return RET_ERROR;
   }
   int ret = ConvertParamsDims();
   if (ret != RET_OK) {
@@ -104,8 +97,9 @@ int SliceTensorRT::ConvertParamsDims() {
     }
 
     size_dims_ = lite::ConvertCudaDims(out_tensors_[0].Shape());
-
-    stride_dims_ = lite::ConvertCudaDims(stride.Data().get(), out_tensors_[0].Shape().size());
+    int stride_value = *(static_cast<const int *>(stride.Data().get()));
+    stride_dims_ = nvinfer1::Dims{size_dims_.nbDims, {}};
+    std::fill(stride_dims_.d, stride_dims_.d + stride_dims_.nbDims, stride_value);
   }
   if (start_dims_.nbDims == -1 || size_dims_.nbDims == -1 || stride_dims_.nbDims == -1) {
     MS_LOG(ERROR) << "ConvertCudaDims failed for " << op_name_;

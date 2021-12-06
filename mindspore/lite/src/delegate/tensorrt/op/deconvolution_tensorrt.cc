@@ -112,7 +112,7 @@ int DeconvolutionTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     activation_layer = deconv_layer;
   } else {
     activation_layer =
-      ActivationTensorRT::AddActivation(network, deconv_op->activation_type(), 0, deconv_layer->getOutput(0));
+      ActivationTensorRT::AddActivation(network, deconv_op->activation_type(), 0, 0, 0, deconv_layer->getOutput(0));
     if (activation_layer == nullptr) {
       MS_LOG(ERROR) << "addActivation for conv failed";
       return RET_ERROR;

@@ -184,7 +184,8 @@ ActivationParams ConvertActivationType(schema::ActivationType activation_type) {
     {schema::ActivationType_THRESHOLDRELU,
      ActivationParams{nvinfer1::ActivationType::kTHRESHOLDED_RELU, true, 0, false, 0}},
     {schema::ActivationType_RELU6, ActivationParams{nvinfer1::ActivationType::kCLIP, true, 0, true, 6}},
-    {schema::ActivationType_RELU1, ActivationParams{nvinfer1::ActivationType::kCLIP, true, 0, true, 1}}};
+    {schema::ActivationType_RELU1, ActivationParams{nvinfer1::ActivationType::kCLIP, true, 0, true, 1}},
+    {schema::ActivationType_HARD_TANH, ActivationParams{nvinfer1::ActivationType::kCLIP, true, -1, true, 1}}};
   auto iter = action_map.find(activation_type);
   ActivationParams action_param = ActivationParams{nvinfer1::ActivationType::kRELU, false, 0, false, 0};
   if (iter != action_map.end()) {
@@ -449,5 +450,31 @@ nvinfer1::ReduceOperation ConvertTRTReduceMode(schema::ReduceMode mode) {
     MS_LOG(WARNING) << "invalid reduce for TensorRT, need check: " << static_cast<int>(mode);
   }
   return trt_mode;
+}
+nvinfer1::ITensor *PreprocessInputs2SameDim(nvinfer1::INetworkDefinition *network,
+                                            const ITensorHelper &input_tensor_helper) {
+  nvinfer1::ITensor *output = input_tensor_helper.trt_tensor_;
+  if (input_tensor_helper.trt_tensor_->getDimensions().nbDims == DIMENSION_4D && !input_tensor_helper.same_format_) {
+    if (input_tensor_helper.format_ == Format::NCHW) {
+      // transpose: NCHW->NHWC
+      nvinfer1::IShuffleLayer *transpose_layer_in = NCHW2NHWC(network, *input_tensor_helper.trt_tensor_);
+      if (transpose_layer_in == nullptr) {
+        MS_LOG(ERROR) << "op action convert failed";
+        return nullptr;
+      }
+      transpose_layer_in->setName((std::string(output->getName()) + "_input_transpose2NHWC").c_str());
+      output = transpose_layer_in->getOutput(0);
+    } else {
+      // transpose: NHWC->NCHW
+      nvinfer1::IShuffleLayer *transpose_layer_in = NHWC2NCHW(network, *input_tensor_helper.trt_tensor_);
+      if (transpose_layer_in == nullptr) {
+        MS_LOG(ERROR) << "op action convert failed";
+        return nullptr;
+      }
+      transpose_layer_in->setName((std::string(output->getName()) + "_input_transpose2NCHW").c_str());
+      output = transpose_layer_in->getOutput(0);
+    }
+  }
+  return output;
 }
 }  // namespace mindspore::lite

@@ -114,7 +114,8 @@ int ScaleTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   // add activation
   nvinfer1::ITensor *activation_tensor = cal_layer->getOutput(0);
   if (activation_type != schema::ActivationType::ActivationType_NO_ACTIVATION) {
-    auto activation_layer = ActivationTensorRT::AddActivation(network, activation_type, 0, cal_layer->getOutput(0));
+    auto activation_layer =
+      ActivationTensorRT::AddActivation(network, activation_type, 0, 0, 0, cal_layer->getOutput(0));
     if (activation_layer == nullptr) {
       MS_LOG(ERROR) << "addActivation for scale failed";
       return RET_ERROR;
