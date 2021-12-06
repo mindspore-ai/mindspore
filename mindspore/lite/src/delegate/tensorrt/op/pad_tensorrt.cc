@@ -107,7 +107,9 @@ int PadTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   }
   padding_layer->setName(op_name_.c_str());
   padding_layer->getOutput(0)->setName((op_name_ + "_output").c_str());
-  this->AddInnerOutTensors(ITensorHelper{padding_layer->getOutput(0), Format::NCHW});
+  bool same_format = SameDims(padding_layer->getOutput(0)->getDimensions(), out_tensors_[0].Shape()) &&
+                     SameDims(tensorrt_in_tensors_[0].trt_tensor_->getDimensions(), in_tensors_[0].Shape());
+  this->AddInnerOutTensors(ITensorHelper{padding_layer->getOutput(0), Format::NCHW, same_format});
   return RET_OK;
 }
 }  // namespace mindspore::lite

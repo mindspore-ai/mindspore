@@ -84,7 +84,6 @@ int ConcateTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
       trt_input_tensors[i] = tensorrt_in_tensors_[i].trt_tensor_;
     }
   }
-
   int axis = RET_INVALID_OP_ATTR;
   axis = concate_op->axis();
   if (axis == -1) {
@@ -108,7 +107,9 @@ int ConcateTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   }
   concate_layer->setName(op_name_.c_str());
   concate_layer->getOutput(0)->setName((op_name_ + "_output").c_str());
-  this->AddInnerOutTensors(ITensorHelper{concate_layer->getOutput(0), out_format});
+  bool same_format = SameDims(trt_input_tensors[0]->getDimensions(), in_tensors_[0].Shape()) &&
+                     SameDims(concate_layer->getOutput(0)->getDimensions(), out_tensors_[0].Shape());
+  this->AddInnerOutTensors(ITensorHelper{concate_layer->getOutput(0), out_format, same_format});
   return RET_OK;
 }
 }  // namespace mindspore::lite

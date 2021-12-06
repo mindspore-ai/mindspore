@@ -57,7 +57,8 @@ int SoftMaxTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     return RET_ERROR;
   }
   out_tensor->setName((op_name_ + "_output").c_str());
-  this->AddInnerOutTensors(ITensorHelper{out_tensor, tensorrt_in_tensors_[0].format_});
+  this->AddInnerOutTensors(
+    ITensorHelper{out_tensor, tensorrt_in_tensors_[0].format_, tensorrt_in_tensors_[0].same_format_});
   return RET_OK;
 }
 

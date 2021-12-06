@@ -33,6 +33,7 @@ constexpr int INPUT_SIZE4 = 4;
 struct ITensorHelper {
   nvinfer1::ITensor *trt_tensor_{nullptr};
   mindspore::Format format_;
+  bool same_format_;
 };
 
 class TensorRTOp {

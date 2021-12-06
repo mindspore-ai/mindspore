@@ -58,7 +58,7 @@ int ShapeTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   }
   shape_layer->setName(op_name_.c_str());
   shape_layer->getOutput(0)->setName((op_name_ + "_output").c_str());
-  this->AddInnerOutTensors(ITensorHelper{shape_layer->getOutput(0), Format::NHWC});
+  this->AddInnerOutTensors(ITensorHelper{shape_layer->getOutput(0), Format::NHWC, true});
   return RET_OK;
 }
 }  // namespace mindspore::lite
