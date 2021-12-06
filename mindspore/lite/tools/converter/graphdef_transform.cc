@@ -25,7 +25,6 @@
 #include "tools/converter/legacy_optimizer/fusion/quant_cast_fusion_pass.h"
 #include "tools/converter/legacy_optimizer/fusion/mul_add_fusion_pass.h"
 #include "tools/converter/legacy_optimizer/graph/infershape_pass.h"
-#include "tools/converter/legacy_optimizer/graph/batchnorm_convert_scale_pass.h"
 #include "tools/converter/legacy_optimizer/graph/isolated_node_remove_pass.h"
 #include "tools/converter/legacy_optimizer/graph/dropout_node_remove_pass.h"
 #include "tools/converter/legacy_optimizer/graph/topological_sort_pass.h"
@@ -86,27 +85,12 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
     }
   }
 
-  // node replace
-  if (!ctx.trainModel) {
-    // init old node indices
-    auto old_nodes = GetGraphNodes();
-    Optimizer replace_optimizer;
-    replace_optimizer.AddPass(new (std::nothrow) InferShapePass(ctx.fmk));
-    replace_optimizer.AddPass(new (std::nothrow) BatchNormConvertScalePass(ctx.fmk));
-    replace_optimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());
-    replace_optimizer.AddPass(new SubgraphNodePass(old_nodes));
-    status = replace_optimizer.Run(graph_defT_);
-    if (status != RET_OK && status != RET_NO_CHANGE) {
-      MS_LOG(ERROR) << "Run replace_optimizer BatchNormConvertScalePass Failed";
-      return status;
-    }
-  }
-
   // node fusion
   {
     // init old node indices
     auto old_nodes = GetGraphNodes();
     Optimizer fusion_optimizer;
+    fusion_optimizer.AddPass(new (std::nothrow) InferShapePass(ctx.fmk));
     fusion_optimizer.AddPass(new (std::nothrow) MulAddFusionPass());
     fusion_optimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());
     fusion_optimizer.AddPass(new (std::nothrow) SubgraphNodePass(old_nodes));

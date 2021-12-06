@@ -167,7 +167,7 @@ STATUS NodeInferShape::InferShape(const CNodePtr &cnode) {
       return set_status;
     }
   } else {
-    MS_LOG(ERROR) << "infer shape failed.";
+    MS_LOG(WARNING) << "infer shape failed.";
   }
   FreeTensors(&inputs);
   FreeTensors(&outputs);
