@@ -72,6 +72,7 @@ void AscendGraphOptimization::OptimizeSingleOpGraph(const KernelGraphPtr &graph)
 
 void AscendGraphOptimization::OptimizeGraphWithoutDeviceInfo(const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
+  CheckControlFlowDynamicShape(graph);
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   if (context_ptr->get_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK)) {
@@ -304,6 +305,42 @@ void AscendGraphOptimization::SetOperatorInfo(const std::vector<CNodePtr> &nodes
     }
     MS_LOG(DEBUG) << "Select ApplyKernel: " << node->DebugString();
   }
+}
+
+void AscendGraphOptimization::GetAllGraphs(const KernelGraphPtr &root_graph) {
+  if (memo_.find(root_graph) != memo_.end()) {
+    return;
+  }
+  memo_.insert(root_graph);
+  auto node_list = TopoSort(root_graph->get_return());
+  for (auto node : node_list) {
+    if (!IsValueNode<FuncGraph>(node)) {
+      continue;
+    }
+    auto child_graph = GetValueNode<FuncGraphPtr>(node);
+    MS_EXCEPTION_IF_NULL(child_graph);
+    auto child_kernel_graph = child_graph->cast<KernelGraphPtr>();
+    MS_EXCEPT_CHECK_NULL(child_kernel_graph);
+    GetAllGraphs(child_kernel_graph);
+  }
+}
+
+void AscendGraphOptimization::CheckControlFlowDynamicShape(const KernelGraphPtr &root_graph) {
+  MS_EXCEPT_CHECK_NULL(root_graph);
+  memo_.clear();
+  GetAllGraphs(root_graph);
+  if (memo_.size() <= 1) {
+    memo_.clear();
+    return;
+  }
+
+  for (auto &graph : memo_) {
+    if (graph->is_dynamic_shape()) {
+      MS_LOG(EXCEPTION) << "Dynamic shape is not supported with control flow(loop control statements and conditions "
+                           "control statements).";
+    }
+  }
+  memo_.clear();
 }
 
 }  // namespace ascend

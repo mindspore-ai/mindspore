@@ -614,8 +614,15 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
     }
     MS_EXCEPTION_IF_NULL(host_tensor_address);
     if (host_tensor_address->DeviceType() == device_tensor->DeviceType()) {
-      AnfAlgo::SetOutputAddr(host_tensor_address, 0, backend_node.get());
-      host_tensor_address->SetNodeIndex(backend_node, 0);
+      if (device_tensor->is_ptr_persisted()) {
+        if (!Copy(device_tensor.get(), host_tensor_address.get())) {
+          std::string error_info = "Sync data error.";
+          SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), error_info);
+        }
+      } else {
+        AnfAlgo::SetOutputAddr(host_tensor_address, 0, backend_node.get());
+        host_tensor_address->SetNodeIndex(backend_node, 0);
+      }
     } else {
       MS_LOG(INFO) << "The device type is not equal, host tensor type:" << host_tensor_address->DeviceType()
                    << ", device tensor type:" << device_tensor->DeviceType();

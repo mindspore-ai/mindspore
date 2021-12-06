@@ -64,6 +64,9 @@ class AscendGraphOptimization {
   void HandleControlFlow(const NotNull<KernelGraphPtr> graph);
   void RootGraphExecutorValidate(NotNull<KernelGraphPtr> graph);
 
+  void GetAllGraphs(const KernelGraphPtr &root_graph);
+  void CheckControlFlowDynamicShape(const KernelGraphPtr &root_graph);
+
   // Number of operators whose precision changes after select kernel
   size_t raise_precision_count_{0};
   size_t reduce_precision_count_{0};
