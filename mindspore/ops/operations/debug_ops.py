@@ -344,6 +344,9 @@ class HookBackward(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore import Tensor
+        >>> from mindspore import ops
+        >>> from mindspore.ops import GradOperation
         >>> def hook_fn(grad_out):
         ...     print(grad_out)
         ...

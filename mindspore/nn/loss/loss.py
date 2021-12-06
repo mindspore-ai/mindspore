@@ -75,14 +75,14 @@ class LossBase(Cell):
 
         Examples:
             >>> class Net(nn.LossBase):
-            >>>     def __init__(self, reduction='mean'):
-            >>>         super(Net, self).__init__(reduction)
-            >>>         self.abs = ops.Abs()
-            >>>
-            >>>     def construct(self, logits, labels):
-            >>>         x = self.abs(logits - labels)
-            >>>         axis = self.get_axis(x)
-            >>>         return axis
+            ...     def __init__(self, reduction='mean'):
+            ...         super(Net, self).__init__(reduction)
+            ...         self.abs = ops.Abs()
+            ...
+            ...     def construct(self, logits, labels):
+            ...         x = self.abs(logits - labels)
+            ...         axis = self.get_axis(x)
+            ...         return axis
             >>> net = Net()
             >>> # Case 1: logits.shape = labels.shape = (3,)
             >>> logits = Tensor(np.array([1, 2, 3]), mindspore.float32)
@@ -115,14 +115,14 @@ class LossBase(Cell):
 
         Examples:
             >>> class Net(nn.LossBase):
-            >>>     def __init__(self, reduction='mean'):
-            >>>         super(Net, self).__init__(reduction)
-            >>>         self.abs = ops.Abs()
-            >>>
-            >>>     def construct(self, logits, labels):
-            >>>         x = self.abs(logits - labels)
-            >>>         output = self.get_loss(x)
-            >>>         return output
+            ...     def __init__(self, reduction='mean'):
+            ...         super(Net, self).__init__(reduction)
+            ...         self.abs = ops.Abs()
+            ...
+            ...     def construct(self, logits, labels):
+            ...         x = self.abs(logits - labels)
+            ...         output = self.get_loss(x)
+            ...         return output
             >>> net = Net()
             >>> # Case 1: logits.shape = labels.shape = (3,)
             >>> logits = Tensor(np.array([1, 2, 3]), mindspore.float32)
