@@ -2301,6 +2301,9 @@ class UnsortedSegmentMax(PrimitiveWithCheck):
         >>> # the third number '1' in [0, 1, 1] indicates input_x[2],
         >>> # input_x[0], which is [1, 2, 3] will not be compared to other segment_id.
         >>> # Only the same segment_id will be compared.
+        >>> from mindspore import Tensor
+        >>> from mindspore import ops
+        >>> import numpy as np
         >>> input_x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [4, 2, 1]]).astype(np.float32))
         >>> segment_ids = Tensor(np.array([0, 1, 1]).astype(np.int32))
         >>> num_segments = 2
@@ -2328,7 +2331,7 @@ class UnsortedSegmentMax(PrimitiveWithCheck):
         >>> # and the length of segment_ids should be the same as the first dimension of input_x.
         >>> # Because the segment_ids are different, input_x[0] will not be compared to input_x[1].
         >>> input_x = Tensor(np.array([[[1, 2, 3], [4, 2, 0], [4, 5, 6], [4, 2, 1]],
-        >>>                            [[1, 2, 3], [4, 2, 0], [4, 5, 6], [4, 2, 1]]]).astype(np.float32))
+        ...                            [[1, 2, 3], [4, 2, 0], [4, 5, 6], [4, 2, 1]]]).astype(np.float32))
         >>> segment_ids = Tensor(np.array([0, 1]).astype(np.int32))
         >>> num_segments = 2
         >>> unsorted_segment_max = ops.UnsortedSegmentMax()
