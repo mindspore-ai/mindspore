@@ -261,6 +261,20 @@ int LiteModel::SubGraphVerify() const {
       MS_LOG(ERROR) << "Index of graph->node_indices_ is beyond node_size.";
       return RET_ERROR;
     }
+    // Check the graph valid
+    for (auto output : graph->output_indices_) {
+      bool found_output = std::any_of(graph->node_indices_.begin(), graph->node_indices_.end(), [&](uint32_t node_idx) {
+        auto node = this->all_nodes_.at(node_idx);
+        return std::any_of(node->output_indices_.begin(), node->output_indices_.end(),
+                           [&output](uint32_t idx) { return output == idx; });
+      });
+      bool is_input = std::any_of(graph->input_indices_.begin(), graph->input_indices_.end(),
+                                  [&output](uint32_t idx) { return output == idx; });
+      if (!found_output && !is_input) {
+        MS_LOG(ERROR) << "The output is not valid.";
+        return RET_ERROR;
+      }
+    }
   }
   return RET_OK;
 }

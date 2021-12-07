@@ -173,6 +173,7 @@ int GenerateOutTensorC(const OpParameter *const parameter, const std::vector<lit
       parameter->type_ == mindspore::schema::PrimitiveType_TensorListSetItem) {
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
     // TensorListC ->TensorC
+    MS_CHECK_TRUE_RET(!outputs.empty() && outputs.front()->data_type() == TypeId::kObjectTypeTensorType, RET_ERROR);
     auto *tensor_list_c = reinterpret_cast<TensorListC *>(malloc(sizeof(TensorListC)));
     if (tensor_list_c == nullptr) {
       return RET_ERROR;
