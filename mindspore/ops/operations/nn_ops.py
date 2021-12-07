@@ -4167,6 +4167,9 @@ class MirrorPad(PrimitiveWithInfer):
         validator.check_subclass("input_x", input_x['dtype'], mstype.tensor, self.name)
         validator.check_subclass("paddings", paddings['dtype'], mstype.tensor, self.name)
         x_shape = list(input_x['shape'])
+        if paddings['value'] is None:
+            raise ValueError(f"For '{self.name}', paddings should be a Tensor with type of int64, "
+                             f"but got {paddings['value']}.")
         paddings_value = paddings['value'].asnumpy()
         paddings_size = paddings_value.size
         validator.check_int(paddings_size, len(x_shape) * 2, Rel.EQ, 'paddings.shape', self.name)
