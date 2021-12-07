@@ -701,6 +701,131 @@ Dimensions CopyIncomingOperatorOutputStrategy(const std::shared_ptr<Graph> &grap
   return s;
 }
 
+Dimensions PrepareReshapeOutputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                                        const size_t incoming_op_index) {
+  Dimensions s;
+
+  auto output_shape = ops[incoming_op_index]->outputs_tensor_info()[0].shape();
+  auto input_shape = ops[incoming_op_index]->inputs_tensor_info()[0].shape();
+  auto strategy = ops[incoming_op_index]->selected_strategy();
+
+  std::vector<int64_t> mapping;
+  int64_t tmp_prod = 1;
+  int64_t tmp_index = 0;
+
+  // mapping is using to store the correspondence between the input dims and output dims.
+  // mapping stores the output's corresponded input's position.
+  // If the length of the output shape is bigger than that of input,
+  // e.g. input_shape [2,4,2] output_shape [2,2,2,2], the mapping is [0,1,1,2,-1].
+  // If the length of the output shape is smaller than that of input,
+  // e.g. input_shape [2,2,2,2] output_shape [2,4,2], the mapping is [0,2,3,-1].
+  if (output_shape.size() >= input_shape.size()) {
+    for (size_t i = 0; i < input_shape.size(); i++) {
+      if (input_shape[i] < output_shape[tmp_index]) {
+        break;
+      } else {
+        for (size_t j = tmp_index; j < output_shape.size(); j++) {
+          tmp_prod *= output_shape[j];
+          tmp_index++;
+          if (input_shape[i] == tmp_prod) {
+            tmp_prod = 1;
+            mapping.push_back(i);
+            break;
+          } else {
+            mapping.push_back(i);
+          }
+        }
+      }
+    }
+    mapping.push_back(-1);
+  } else {
+    for (size_t i = 0; i < output_shape.size(); i++) {
+      if (output_shape[i] < input_shape[tmp_index]) {
+        break;
+      } else {
+        for (size_t j = tmp_index; j < input_shape.size(); j++) {
+          tmp_prod *= input_shape[j];
+          if (output_shape[i] == tmp_prod) {
+            tmp_prod = 1;
+            mapping.push_back(tmp_index);
+            tmp_index++;
+            break;
+          }
+          tmp_index++;
+        }
+      }
+    }
+    mapping.push_back(-1);
+  }
+  tmp_index = 0;
+  tmp_prod = 1;
+  if (output_shape.size() >= input_shape.size()) {
+    for (size_t i = 0; i < output_shape.size(); i++) {
+      if ((int64_t)mapping[i] == tmp_index) {
+        s.push_back(strategy->GetInputDim()[0][mapping[i]]);
+        tmp_index++;
+      } else {
+        s.push_back(1);
+      }
+    }
+  } else {
+    for (size_t i = 0; i < output_shape.size(); i++) {
+      if (mapping[i] == -1) {
+        mapping.push_back(-1);
+        s.push_back(1);
+      } else {
+        for (size_t j = tmp_index; j < input_shape.size(); j++) {
+          tmp_prod *= strategy->GetInputDim()[0][j];
+          tmp_index++;
+          if (mapping[i] == (int64_t)j) {
+            s.push_back(tmp_prod);
+            tmp_prod = 1;
+            break;
+          }
+        }
+      }
+    }
+  }
+  return s;
+}
+
+Dimensions PrepareTransposeOutputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                                          const size_t incoming_op_index) {
+  Dimensions s;
+
+  auto permutation = GetValue<std::vector<int64_t>>(ops[incoming_op_index]->input_value().at(1));
+  auto strategy = ops[incoming_op_index]->selected_strategy();
+  // The strategies are assigned according to the order in permutation (user defined).
+  for (size_t i = 0; i < permutation.size(); i++) {
+    s.push_back(strategy->GetInputDim()[0][permutation[i]]);
+  }
+  return s;
+}
+
+Dimensions PrepareExpandDimsOutputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                                           const size_t incoming_op_index) {
+  Dimensions s;
+
+  auto axis_input = GetValue<int64_t>(ops[incoming_op_index]->input_value().at(1));
+  auto strategy = ops[incoming_op_index]->selected_strategy();
+  bool already_expand = false;
+
+  // The strategy of the expanded dimesion will be assigned 1, the others take the strategies of corresponding
+  // dimensions.
+  for (size_t i = 0; i < ops[incoming_op_index]->inputs_tensor_info()[0].shape().size() + 1; i++) {
+    if ((int64_t)i == axis_input) {
+      s.push_back(1);
+      already_expand = true;
+    } else if ((int64_t)i != axis_input && !already_expand) {
+      s.push_back(strategy->GetInputDim()[0][i]);
+    } else {
+      s.push_back(strategy->GetInputDim()[0][i - 1]);
+    }
+  }
+
+  return s;
+}
+
 Dimensions PrepareIncomingOperatorInputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                                                 const size_t incoming_op_index) {
   Dimensions s;
@@ -724,6 +849,13 @@ Dimensions PrepareIncomingOperatorInputStrategy(const std::vector<std::shared_pt
     return s;
   }
 
+  if (ops[incoming_op_index]->type() == RESHAPE) {
+    return PrepareReshapeOutputStrategy(ops, incoming_op_index);
+  } else if (ops[incoming_op_index]->type() == TRANSPOSE) {
+    return PrepareTransposeOutputStrategy(ops, incoming_op_index);
+  } else if (ops[incoming_op_index]->type() == EXPAND_DIMS) {
+    return PrepareExpandDimsOutputStrategy(ops, incoming_op_index);
+  }
   for (size_t i = 0; i < (size_t)ops[incoming_op_index]->inputs_tensor_info().size(); i++) {
     if (ops[incoming_op_index]->inputs_tensor_info()[i].shape().size() == 0) {
       continue;
@@ -1173,9 +1305,10 @@ Dimensions CopyOutgoingOperatorInputStrategy(const std::vector<std::shared_ptr<O
                                              const size_t iter_ops) {
   Dimensions s;
   if (ops[iter_ops]->type() == REDUCE_MAX || ops[iter_ops]->type() == REDUCE_MIN ||
-      ops[iter_ops]->type() == REDUCE_SUM || ops[iter_ops]->type() == REDUCE_MEAN || ops[iter_ops]->type() == RESHAPE ||
-      ops[iter_ops]->type() == GATHERV2 || ops[iter_ops]->type() == TRANSPOSE ||
-      ops[iter_ops]->type() == ARGMAXWITHVALUE || ops[iter_ops]->type() == ARGMINWITHVALUE) {
+      ops[iter_ops]->type() == EXPAND_DIMS || ops[iter_ops]->type() == REDUCE_SUM ||
+      ops[iter_ops]->type() == REDUCE_MEAN || ops[iter_ops]->type() == RESHAPE || ops[iter_ops]->type() == GATHERV2 ||
+      ops[iter_ops]->type() == TRANSPOSE || ops[iter_ops]->type() == ARGMAXWITHVALUE ||
+      ops[iter_ops]->type() == ARGMINWITHVALUE) {
     return s;
   }
 
