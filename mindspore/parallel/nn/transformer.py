@@ -208,7 +208,8 @@ class TransformerOpParallelConfig(_Config):
         device.
 
     Args:
-        data_parallel (int): The data parallel way. The input data will be sliced for each layer. Default: 1.
+        data_parallel (int): The data parallel way. The input data will be sliced into n parts for each layer
+            according to the data parallel way. Default: 1.
         model_parallel (int): The model parallel way. The parameters of dense layers in MultiheadAttention and
             FeedForward layer will be sliced according to the model parallel way. Default: 1.
         pipeline_stage (int): The number of the pipeline stage. Should be a positive value. Default: 1.
@@ -2304,7 +2305,7 @@ class Transformer(Cell):
             represents the transformer block, `layer_id(int)` means the layer index for the current module, counts from
             zero, `offset(int)` means the layer_index needs an offset, if there are other modules in the net. The
             default setting for the pipeline is: `(layer_id + offset) // ((encoder_layers + decoder_layers)
-            / pipeline_stage)`.
+            / pipeline_stage)`. Default None.
         use_past(bool): Use the past state to compute, used for incremental prediction. Default False.
         moe_config(MoEConfig): The configuration of MoE (Mixture of Expert). Default is an instance of MoEConfig with
             default values. Please see `MoEConfig`.
