@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Sparse linear algebra submodule"""
-from ... import nn, Tensor, ms_function
+from ... import nn, ms_function
 from ... import numpy as mnp
 from ...ops import functional as F
 from ..linalg import solve_triangular
@@ -179,7 +179,7 @@ class IterativeGmres(nn.Cell):
 
 
 def gmres(A, b, x0=None, *, tol=1e-5, atol=0.0, restart=20, maxiter=None,
-          M=None, solve_method='batched') -> (Tensor, int):
+          M=None, solve_method='batched'):
     """
     GMRES solves the linear system A x = b for x, given A and b.
 
@@ -319,7 +319,7 @@ class CG(nn.Cell):
         return x
 
 
-def cg(A, b, x0=None, *, tol=1e-5, atol=0.0, maxiter=None, M=None) -> (Tensor, None):
+def cg(A, b, x0=None, *, tol=1e-5, atol=0.0, maxiter=None, M=None):
     """Use Conjugate Gradient iteration to solve ``Ax = b``.
 
     The numerics of MindSpore's ``cg`` should exact match SciPy's ``cg`` (up to

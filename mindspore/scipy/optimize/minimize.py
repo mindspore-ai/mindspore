@@ -48,7 +48,7 @@ class OptimizeResults(NamedTuple):
     nit: int
 
 
-def minimize(func, x0, args=(), *, method, tol=None, options=None) -> OptimizeResults:
+def minimize(func, x0, args=(), *, method, tol=None, options=None):
     """Minimization of scalar function of one or more variables.
 
     This API for this function matches SciPy with some minor deviations:
