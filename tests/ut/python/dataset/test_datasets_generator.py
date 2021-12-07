@@ -16,11 +16,13 @@ import copy
 import numpy as np
 import pytest
 
+import mindspore
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
 import mindspore.dataset.engine.iterators as it
 from mindspore import log as logger
 from mindspore import Tensor
+import mindspore.ops as ops
 
 
 # Generate 1d int numpy array from 0 - 63
@@ -46,6 +48,20 @@ class DatasetGeneratorLarge:
 
     def __getitem__(self, item):
         return (self.data + item, self.data *10)
+
+    def __len__(self):
+        return 10
+
+
+class DatasetGeneratorMixed:
+    def __init__(self):
+        pass
+
+    def __getitem__(self, item):
+        flatten = ops.Flatten()
+        x = Tensor(np.ones(shape=[2, 3]), mindspore.float32)
+        output = flatten(x)
+        return (output.asnumpy(),)
 
     def __len__(self):
         return 10
@@ -957,6 +973,23 @@ def test_func_generator_dataset_with_zip_source():
             count += 1
     assert count == 50
 
+
+def test_generator_mixed_operator():
+    """
+    Feature: Test adding computing operator into user defined dataset
+    Description: will decrease num_parallel_worker into 1
+    Expectation: success
+    """
+    logger.info("Test adding computing operator into user defined dataset.")
+
+    # create dataset
+    data1 = ds.GeneratorDataset(DatasetGeneratorMixed(), ["col0"], shuffle=False, python_multiprocessing=False)
+    assert data1.num_parallel_workers == 1
+
+    for _ in data1.create_tuple_iterator(num_epochs=1):
+        pass
+
+
 if __name__ == "__main__":
     test_generator_0()
     test_generator_1()
@@ -997,3 +1030,4 @@ if __name__ == "__main__":
     test_explicit_deepcopy()
     test_func_generator_dataset_005()
     test_func_generator_dataset_with_zip_source()
+    test_generator_mixed_operator()

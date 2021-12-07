@@ -698,6 +698,33 @@ def check_minddataset(method):
     return new_method
 
 
+def check_source_function(source):
+    """Get used variable and source document in given function."""
+    # check whether source is an instanced object of user defined class
+    from types import FunctionType
+    var = tuple()
+    source_doc = ""
+    if isinstance(source, FunctionType):
+        var = ins.getclosurevars(source)
+        source_doc = ins.getsource(source)
+    else:
+        try:
+            source_attr = source.__class__.__dict__.keys()
+            if '__init__' in source_attr:
+                var = var + ins.getclosurevars(source.__class__.__init__)
+                source_doc = source_doc + ins.getsource(source.__class__.__init__)
+            if '__getitem__' in source_attr:
+                var = var + ins.getclosurevars(source.__class__.__getitem__)
+                source_doc = source_doc + ins.getsource(source.__class__.__getitem__)
+            elif '__next__' in source_attr:
+                var = var + ins.getclosurevars(source.__class__.__next__)
+                source_doc = source_doc + ins.getsource(source.__class__.__next__)
+        except TypeError:
+            # case: like input is LambdaType or GeneratorType, it will go to else branch, and unable to run normally
+            pass
+    return str(var) + source_doc
+
+
 def check_generatordataset(method):
     """A wrapper that wraps a parameter checker around the original Dataset(GeneratorDataset)."""
 
@@ -714,6 +741,14 @@ def check_generatordataset(method):
                 raise TypeError("Input `source` function of GeneratorDataset should be callable, iterable or random"
                                 " accessible, commonly it should implement one of the method like yield, __getitem__ or"
                                 " __next__(__iter__).")
+
+        # check used variable and function document whether contain computing operator
+        check_doc = check_source_function(source)
+        check_list = ['mindspore.nn', 'mindspore.ops', 'mindspore.numpy', 'mindspore.compression']
+        for item in check_list:
+            if item in check_doc:
+                setattr(self, 'operator_mixed', True)
+                break
 
         column_names = param_dict.get('column_names')
         if column_names is not None:
@@ -957,9 +992,22 @@ def check_map(method):
     @wraps(method)
     def new_method(self, *args, **kwargs):
         from mindspore.dataset.callback import DSCallback
-        [_, input_columns, output_columns, column_order, num_parallel_workers, python_multiprocessing, cache,
+        [operations, input_columns, output_columns, column_order, num_parallel_workers, python_multiprocessing, cache,
          callbacks, max_rowsize, offload], _ = \
             parse_user_args(method, *args, **kwargs)
+
+        # check whether network computing operator exist in input operations(python function)
+        # check used variable and function document whether contain computing operator
+        from types import FunctionType
+        if isinstance(operations, FunctionType):
+            var = ins.getclosurevars(operations)
+            operations_doc = ins.getsource(operations)
+            check_list = ['mindspore.nn', 'mindspore.ops', 'mindspore.numpy', 'mindspore.compression']
+            check_doc = str(var) + operations_doc
+            for item in check_list:
+                if item in check_doc:
+                    setattr(self, 'operator_mixed', True)
+                    break
 
         nreq_param_columns = ['input_columns', 'output_columns', 'column_order']
 

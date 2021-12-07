@@ -339,7 +339,7 @@ def test_pyfunc_exception():
         assert "Pyfunc Throw" in str(info.value)
 
 
-def skip_test_pyfunc_Exception_multiprocess():
+def skip_test_pyfunc_exception_multiprocess():
     logger.info("Test Multiprocess PyFunc Exception Throw: lambda x : raise Exception()")
 
     def pyfunc(x):
@@ -376,6 +376,33 @@ def test_func_with_yield_manifest_dataset_01():
         assert "Can not pickle <class 'generator'> object, " in str(e)
 
 
+def test_func_mixed_with_ops():
+    """
+    Feature: Test adding computing operator into user defined python function
+    Description: will decrease num_parallel_worker into 1
+    Expectation: success
+    """
+    def generator_func():
+        for i in range(1, 5):
+            yield (np.ones(shape=[2, i]),)
+
+    def func(x):
+        import mindspore.ops as ops
+        import mindspore
+        from mindspore import Tensor
+
+        flatten = ops.Flatten()
+        output = flatten(Tensor(x, dtype=mindspore.float32))
+        return output.asnumpy()
+
+    dataset = ds.GeneratorDataset(generator_func, ["data"])
+
+    dataset = dataset.map(operations=func, input_columns=["data"])
+    assert dataset.num_parallel_workers == 1
+    for _ in dataset.create_dict_iterator(num_epochs=1):
+        pass
+
+
 if __name__ == "__main__":
     test_case_0()
     test_case_1()
@@ -392,3 +419,4 @@ if __name__ == "__main__":
     test_pyfunc_exception()
     skip_test_pyfunc_exception_multiprocess()
     test_func_with_yield_manifest_dataset_01()
+    test_func_mixed_with_ops()
