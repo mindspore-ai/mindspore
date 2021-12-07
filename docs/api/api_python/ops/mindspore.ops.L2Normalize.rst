@@ -1,0 +1,47 @@
+mindspore.ops.L2Normalize
+==========================
+
+.. py:class:: mindspore.ops.L2Normalize(*args, **kwargs)
+
+    L2范数归一化算子。
+
+    该算子将对输入 `x` 在给定 `axis` 上的元素进行归一化。函数定义如下：
+
+    .. math::
+        \displaylines{{\text{output} = \frac{x}{\sqrt{\text{max}(\parallel x_i \parallel^2 , \epsilon)} } } \\
+        {\parallel x_i \parallel^2 = (\sum_{i}^{}\left | x_i  \right | ^2  )^{1/2}} }
+
+    其中 :math:`\epsilon` 表示 `epsilon` ， :math:`\sum_{i}^{}\left | x_i  \right | ^2` 表示计算输入 `x` 在给定 `axis` 上元素的平方和。
+
+    **参数：**
+
+    - **axis** (Union[list(int), tuple(int), int])：输入的起始 `axis`，用于L2范数归一化。默认值：0。
+    - **epsilon** (float)：为了数值稳定性而引入的很小的浮点数。默认值：1e-4。
+
+    **输入：**
+
+    **x** (Tensor) - 计算归一化的输入。shape为 :math:`(N, *)` ，其中 :math:`*` 表示任意的附加维度数。数据类型必须为float16或float32。
+
+    **输出：**
+
+    Tensor，shape和数据类型与 `x` 的相同。
+
+    **异常：**
+
+    - **TypeError** - `axis` 不是list、tuple或int。
+    - **TypeError** - `epsilon` 不是float。
+    - **TypeError** - `x` 不是Tensor。
+    - **TypeError** - `x` 的数据类型既不是float16也不是float32。
+
+    **支持平台：**
+
+    ``Ascend`` ``GPU`` ``CPU``
+
+    **样例：**
+
+    >>> l2_normalize = ops.L2Normalize()
+    >>> x = Tensor(np.random.randint(-256, 256, (2, 3, 4)), mindspore.float32)
+    >>> output = l2_normalize(x)
+    >>> print(output.shape)
+    (2, 3, 4)
+    
