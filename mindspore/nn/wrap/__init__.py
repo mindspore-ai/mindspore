@@ -18,7 +18,7 @@ Wrap cells for networks.
 Use the Wrapper to combine the loss or build the training steps.
 """
 from .cell_wrapper import ForwardValueAndGrad, TrainOneStepCell, WithLossCell, WithGradCell, WithEvalCell, \
-     ParameterUpdate, GetNextSingleOp, VirtualDatasetCellTriple, PipelineCell
+     ParameterUpdate, GetNextSingleOp, VirtualDatasetCellTriple, MicroBatchInterleaved, PipelineCell
 from .loss_scale import TrainOneStepWithLossScaleCell, DynamicLossScaleUpdateCell, FixedLossScaleUpdateCell
 from .grad_reducer import DistributedGradReducer
 from ..layer.timedistributed import TimeDistributed
@@ -30,6 +30,7 @@ __all__ = [
     "TrainOneStepCell",
     "WithLossCell",
     "WithGradCell",
+    "MicroBatchInterleaved",
     "PipelineCell",
     "WithEvalCell",
     "GetNextSingleOp",

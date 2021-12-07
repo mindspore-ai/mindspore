@@ -480,6 +480,7 @@ class MicroBatchInterleaved(Cell):
         self.network = network
         self.interleave_num = interleave_num
         self.interleave_inputs = nn.CellList()
+        self.realdiv = P.RealDiv().add_prim_attr("realdiv_flag", True)
         for _ in range(interleave_num):
             interleave_data = _MicroBatch(interleave_num)
             interleave_data.strided_slice.add_prim_attr("strided_slice_flag", True)
@@ -490,7 +491,7 @@ class MicroBatchInterleaved(Cell):
         for i in range(self.interleave_num):
             interleave_input = self.interleave_inputs[i](i, *inputs)
             output += self.network(*interleave_input)
-        return output / self.interleave_num
+        return self.realdiv(output, self.interleave_num)
 
 
 class PipelineCell(Cell):
