@@ -2357,7 +2357,7 @@ class Log1p(Primitive):
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
 
 
-class Erf(PrimitiveWithInfer):
+class Erf(Primitive):
     r"""
     Computes the Gauss error function of `x` element-wise.
 
@@ -2373,6 +2373,7 @@ class Erf(PrimitiveWithInfer):
         Tensor, has the same shape and dtype as the `x`.
 
     Raises:
+        TypeError: If `x` is not a Tensor.
         TypeError: If dtype of `x` is neither float16 nor float32.
 
     Supported Platforms:
@@ -2390,13 +2391,6 @@ class Erf(PrimitiveWithInfer):
     def __init__(self):
         """Initialize Erf"""
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
-
-    def infer_shape(self, x_shape):
-        return x_shape
-
-    def infer_dtype(self, x_dtype):
-        validator.check_tensor_dtype_valid("x", x_dtype, [mstype.float16, mstype.float32], self.name)
-        return x_dtype
 
 
 class Erfc(Primitive):

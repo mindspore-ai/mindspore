@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,18 +25,16 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameErf = "Erf";
-/// \brief Computes the Gauss error function of x element-wise.
-/// Refer to Python API @ref mindspore.ops.Erf for more details.
 class MS_CORE_API Erf : public PrimitiveC {
  public:
-  /// \brief Constructor.
   Erf() : PrimitiveC(kNameErf) { InitIOName({"x"}, {"y"}); }
-  /// \brief Destructor.
   ~Erf() = default;
   MS_DECLARE_PARENT(Erf, PrimitiveC);
 };
 
+AbstractBasePtr ErfInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                         const std::vector<AbstractBasePtr> &input_args);
+using PrimErf = std::shared_ptr<Erf>;
 }  // namespace ops
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CORE_OPS_ERF_H_
