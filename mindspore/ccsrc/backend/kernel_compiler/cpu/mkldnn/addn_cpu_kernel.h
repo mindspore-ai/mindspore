@@ -22,6 +22,7 @@
 
 namespace mindspore {
 namespace kernel {
+template <typename T>
 class AddNCpuKernelMod : public MKLCpuKernelMod {
  public:
   AddNCpuKernelMod() = default;
@@ -33,23 +34,45 @@ class AddNCpuKernelMod : public MKLCpuKernelMod {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  template <typename T>
-  void LaunchNnacl(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
   void CheckParam(const CNodePtr &kernel_node);
   size_t input_num_{0};
   std::vector<size_t> output_shape_;
   TypeId dtype_{kNumberTypeFloat32};
 };
 
-MS_REG_CPU_KERNEL(AddN,
-                  KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  AddNCpuKernelMod);
-MS_REG_CPU_KERNEL(AddN,
-                  KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                  AddNCpuKernelMod);
-MS_REG_CPU_KERNEL(AddN,
-                  KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-                  AddNCpuKernelMod);
+MS_REG_CPU_KERNEL_T(AddN,
+                    KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+                    AddNCpuKernelMod, int8_t);
+MS_REG_CPU_KERNEL_T(AddN,
+                    KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+                    AddNCpuKernelMod, int16_t);
+MS_REG_CPU_KERNEL_T(AddN,
+                    KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+                    AddNCpuKernelMod, int32_t);
+MS_REG_CPU_KERNEL_T(AddN,
+                    KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+                    AddNCpuKernelMod, int64_t);
+MS_REG_CPU_KERNEL_T(AddN,
+                    KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+                    AddNCpuKernelMod, uint8_t);
+MS_REG_CPU_KERNEL_T(AddN,
+                    KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
+                    AddNCpuKernelMod, uint16_t);
+MS_REG_CPU_KERNEL_T(AddN,
+                    KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+                    AddNCpuKernelMod, uint32_t);
+MS_REG_CPU_KERNEL_T(AddN,
+                    KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
+                    AddNCpuKernelMod, uint64_t);
+MS_REG_CPU_KERNEL_T(
+  AddN, KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+  AddNCpuKernelMod, float16);
+MS_REG_CPU_KERNEL_T(
+  AddN, KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  AddNCpuKernelMod, float);
+MS_REG_CPU_KERNEL_T(
+  AddN, KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+  AddNCpuKernelMod, double);
 }  // namespace kernel
 }  // namespace mindspore
 
