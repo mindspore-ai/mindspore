@@ -2290,7 +2290,7 @@ class CSRTensor(CSRTensor_):
         >>> csr_tensor_2 = CSRTensor(csr_tensor=csr_tensor)
         >>> # access a data member of CSRTensor
         >>> print(indptr == csr_tensor.indptr)
-        >>> [ True  True  True]
+        [ True  True  True]
     """
     def __init__(self, indptr=None, indices=None, values=None, shape=None, csr_tensor=None):
         self.init_finished = False

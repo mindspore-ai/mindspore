@@ -420,7 +420,6 @@ def arange(start, stop=None, step=None, dtype=None):
         [0 1 2]
         >>> print(np.arange(0, stop=3, step=0.5))
         [0.  0.5 1.  1.5 2.  2.5]
-        >>> print(np.arange(stop=3)) # This will lead to TypeError
     """
     # This implementation was inspired by jax.numpy.arange
     # infer the dtype
@@ -663,7 +662,7 @@ def eye(N, M=None, k=0, dtype=mstype.float32):
     Args:
         N (int): Number of rows in the output, must be larger than 0.
         M (int, optional): Number of columns in the output. If is :class:`None`, defaults to `N`,
-            if defined, must be larger than 0. Deault is :class:`None`.
+            if defined, must be larger than 0. Default is :class:`None`.
         k (int, optional): Index of the diagonal: 0 (the default) refers to the main
             diagonal, a positive value refers to an upper diagonal, and a negative value
             to a lower diagonal. Default is 0.
@@ -779,7 +778,6 @@ def empty(shape, dtype=mstype.float32):
         >>> import mindspore.numpy as np
         >>> output = np.empty((2, 3))
         >>> print(output)
-        # result may vary
         Tensor(shape=[2, 3], dtype=Float32, value=
         <uninitialized>)
     """
@@ -851,7 +849,6 @@ def empty_like(prototype, dtype=None, shape=None):
         >>> a = np.ones((4,1,2))
         >>> output = np.empty_like(a)
         >>> print(output)
-        # result may vary
         Tensor(shape=[4, 1, 2], dtype=Float32, value=
         <uninitialized>)
     """
