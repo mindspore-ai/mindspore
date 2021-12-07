@@ -278,6 +278,7 @@ inline const PrimitivePtr kPrimExtractVolumePatches = std::make_shared<Primitive
 // NN
 inline const PrimitivePtr kPrimCeLU = std::make_shared<Primitive>("CeLU");
 inline const PrimitivePtr kPrimAdam = std::make_shared<Primitive>("Adam");
+inline const PrimitivePtr kPrimApplyAdaMax = std::make_shared<Primitive>("ApplyAdaMax");
 inline const PrimitivePtr kPrimAudioSpectrogram = std::make_shared<Primitive>("AudioSpectrogram");
 inline const PrimitivePtr kPrimFlatten = std::make_shared<Primitive>("Flatten");
 inline const PrimitivePtr kPrimCrop = std::make_shared<Primitive>("Crop");

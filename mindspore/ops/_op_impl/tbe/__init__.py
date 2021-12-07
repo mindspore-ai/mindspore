@@ -42,6 +42,7 @@ from .apply_momentum_ds import _apply_momentum_ds_tbe
 from .apply_adam import _apply_adam_tbe
 from .apply_adam_ds import _apply_adam_ds_tbe
 from .apply_ada_max import _apply_ada_max_tbe
+from .apply_ada_max_ds import _apply_ada_max_ds_tbe
 from .apply_adadelta import _apply_adadelta_tbe
 from .apply_adagrad import _apply_adagrad_tbe
 from .apply_adagrad_ds import _apply_adagrad_ds_tbe
