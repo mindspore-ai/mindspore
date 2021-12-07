@@ -604,8 +604,8 @@ class RNNCell(_RNNCellBase):
         >>> hx = Tensor(np.ones([3, 16]).astype(np.float32))
         >>> output = []
         >>> for i in range(5):
-        >>>     hx = net(x[i], hx)
-        >>>     output.append(hx)
+        ...     hx = net(x[i], hx)
+        ...     output.append(hx)
         >>> print(output[0].shape)
         (3, 16)
     """
@@ -676,8 +676,8 @@ class GRUCell(_RNNCellBase):
         >>> hx = Tensor(np.ones([3, 16]).astype(np.float32))
         >>> output = []
         >>> for i in range(5):
-        >>>     hx = net(x[i], hx)
-        >>>     output.append(hx)
+        ...     hx = net(x[i], hx)
+        ...     output.append(hx)
         >>> print(output[0].shape)
         (3, 16)
     """
