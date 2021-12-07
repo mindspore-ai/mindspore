@@ -47,8 +47,8 @@ int GetCNodeCertainInputFormat(const CNodePtr cnode, int index, mindspore::Forma
   auto primitive = GetValueNode<PrimitivePtr>(real_cnode->input(0));
   MS_CHECK_TRUE_MSG(primitive != nullptr, lite::RET_NULL_PTR, "GetValueNode Failed");
   if (primitive->GetAttr(ops::kFormat) == nullptr) {
-    MS_LOG(ERROR) << "cnode has no format attr. " << real_cnode->fullname_with_scope();
-    return lite::RET_ERROR;
+    MS_LOG(DEBUG) << "cnode has no format attr. " << real_cnode->fullname_with_scope();
+    return lite::RET_NO_CHANGE;
   }
   auto format_attr = primitive->GetAttr(ops::kFormat);
   MS_CHECK_TRUE_MSG(format_attr != nullptr, lite::RET_NULL_PTR, "GetAttr Failed");
