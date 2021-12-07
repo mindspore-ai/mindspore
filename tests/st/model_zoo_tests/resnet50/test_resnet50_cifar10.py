@@ -51,7 +51,7 @@ def test_resnet50_cifar10_ascend():
     assert sum(loss_list) / len(loss_list) < 0.70
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_single
 def test_resnet50_cifar10_gpu():
