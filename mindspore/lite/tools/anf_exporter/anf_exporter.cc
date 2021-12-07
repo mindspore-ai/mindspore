@@ -395,7 +395,10 @@ void AnfExporter::SetNonTailCall(const CNodePtr &cnode, schema::CNodeT *node) {
 int AnfExporter::SetTailCall(const CNodePtr &return_cnode) {
   auto return_cnode_input_size = return_cnode->inputs().size();
   for (size_t i = 1; i < return_cnode_input_size; ++i) {
-    if (!IsCall(return_cnode->input(i))) {
+    if (!utils::isa<CNodePtr>(return_cnode->input(i))) {
+      continue;
+    }
+    if (!opt::CheckPrimitiveType(return_cnode->input(i), prim::kPrimCall)) {
       continue;
     }
     auto call_cnode = return_cnode->input(i)->cast<CNodePtr>();
