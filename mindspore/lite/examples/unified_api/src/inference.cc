@@ -80,6 +80,7 @@ int main(int argc, char **argv) {
     std::cout << "]" << std::endl;
   }
 
+  inputs.at(0).MutableData();
   mindspore::MSTensor *input_tensor = inputs.at(0).Clone();
   auto *input_data = reinterpret_cast<float *>(input_tensor->MutableData());
   std::ifstream in;

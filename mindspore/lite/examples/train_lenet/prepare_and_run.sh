@@ -199,10 +199,17 @@ else
   cd ${PACKAGE} || exit 1
   echo "======Training Locally========="
   ./train.sh ${EPOCHS}
+  if [ "$?" != "0" ]; then
+    echo "Training Model failed"
+    exit 1
+  fi
 
   echo "===Evaluating trained Model====="
   ./eval.sh
-  
+  if [ "$?" != "0" ]; then
+    echo "Eval Model failed"
+    exit 1
+  fi
   cd ..
 fi
 END=$(date +%s.%N)
