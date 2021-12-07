@@ -97,7 +97,8 @@ class GraphCompiler {
 
   // Construct kernel graph from anf nodes list and compile kernel graph in Graph mode,
   // the detailed implementation of compiling graph is in 'CompileGraphImpl'.
-  GraphId CompileGraph(const AnfNodePtrList &nodes, const AnfNodePtrList &outputs, const DeviceContext *device_context);
+  GraphId CompileGraph(const GraphSegmentPtr &segment, const AnfNodePtrList &outputs,
+                       const DeviceContext *device_context);
 
   // Construct kernel graph from function graph and compile kernel graph in Graph mode,
   // the detailed implementation of compiling graph is in 'CompileGraphImpl'.
@@ -185,6 +186,9 @@ class GraphCompiler {
 
   // Create device address for input and output of ops.
   void CreateDeviceAddressWithoutWorkspace(const KernelGraphPtr &graph, const DeviceContext *device_context) const;
+
+  // Set Graph's dependencies for pre_graph and post_graph.
+  void SetGraphDependency(const KernelGraphPtr &graph, const GraphSegmentPtr &segment) const;
 
   // Single op kernel graph cache for PyNative mode.
   mindspore::HashMap<GraphInfo, KernelGraphPtr> run_op_graphs_;

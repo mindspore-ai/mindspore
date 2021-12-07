@@ -90,6 +90,7 @@ class KernelGraph : public FuncGraph {
     end_goto_ = graph.end_goto_;
     internal_parameter_to_front_node_map_ = graph.internal_parameter_to_front_node_map_;
     graph_output_to_front_node_map_ = graph.graph_output_to_front_node_map_;
+    front_node_to_graph_output_map_ = graph.front_node_to_graph_output_map_;
     front_to_internal_outputs_map_ = graph.front_to_internal_outputs_map_;
     internal_outputs_to_front_map_ = graph.internal_outputs_to_front_map_;
     internal_outputs_tensor_map_ = graph.internal_outputs_tensor_map_;
@@ -242,6 +243,7 @@ class KernelGraph : public FuncGraph {
   bool IsUniqueTargetInternalOutput(const AnfNodePtr &node, size_t output_idx) const;
   void AddInternalOutputTensor(const AnfNodePtr &node, size_t output_idx, const tensor::TensorPtr &tensor);
   tensor::TensorPtr GetInternalOutputTensor(const AnfNodePtr &node, size_t output_idx);
+  AnfWithOutIndex GetGraphOutputByFrontNode(const AnfWithOutIndex &front_node) const;
 
   // Cache the internal parameter and corresponding to front node into internal_parameter_to_front_node_map_.
   void CacheInternalParameterToFrontNode(const AnfNodePtr &parameter, const AnfWithOutIndex &front_node_with_index);
@@ -312,6 +314,8 @@ class KernelGraph : public FuncGraph {
       pre_graphs_[graph->graph_id()] = graph;
     }
   }
+
+  mindspore::HashMap<uint32_t, std::weak_ptr<session::KernelGraph>> get_pre_graphs() const { return pre_graphs_; }
   void AddPostGraph(const std::shared_ptr<session::KernelGraph> &graph) {
     if (graph != nullptr) {
       post_graphs_[graph->graph_id()] = graph;
@@ -379,6 +383,9 @@ class KernelGraph : public FuncGraph {
   bool is_all_nop_node() const { return is_all_nop_node_; }
   void set_is_all_nop_node(bool is_all_nop_node) { is_all_nop_node_ = is_all_nop_node; }
   std::map<AnfWithOutIndex, AnfWithOutIndex> graph_output_map() { return graph_output_to_front_node_map_; }
+  std::map<AnfWithOutIndex, AnfWithOutIndex> front_node_to_graph_output_map() {
+    return front_node_to_graph_output_map_;
+  }
 
   // The interface to set/get the graph GIL flag.
   void set_is_need_gil(bool flag) { is_need_gil_ = flag; }
@@ -476,6 +483,7 @@ class KernelGraph : public FuncGraph {
   // The first of map is the backend graph output of this kernel graph, the second of map is front node corresponding to
   // the backend node with index.
   std::map<AnfWithOutIndex, AnfWithOutIndex> graph_output_to_front_node_map_;
+  std::map<AnfWithOutIndex, AnfWithOutIndex> front_node_to_graph_output_map_;
 
   mindspore::HashMap<AnfNodePtr, AnfNodePtr> front_to_internal_outputs_map_;
   mindspore::HashMap<AnfNodePtr, mindspore::HashMap<size_t, std::pair<AnfNodePtr, bool>>>

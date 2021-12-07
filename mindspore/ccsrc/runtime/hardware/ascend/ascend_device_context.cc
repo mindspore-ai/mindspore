@@ -60,6 +60,7 @@ namespace mindspore {
 namespace device {
 namespace ascend {
 using KernelGraph = mindspore::session::KernelGraph;
+const char kMsVm[] = "vm";
 constexpr size_t kAtomicCleanInputSize = 2;
 namespace {
 CNodePtr GetNextLabelSet(const std::vector<CNodePtr> &kernel_nodes, uint32_t index) {
@@ -316,7 +317,36 @@ void AscendDeviceContext::Destroy() {
 
 std::vector<GraphSegmentPtr> AscendDeviceContext::PartitionGraph(
   const FuncGraphPtr &func_graph, const std::vector<GraphSegmentPtr> &default_partition_segments) {
-  return IsGraphMode() ? std::vector<GraphSegmentPtr>() : default_partition_segments;
+  MS_EXCEPTION_IF_NULL(func_graph);
+  bool is_multi_graphs_sink = false;
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  std::string backend = context_ptr->backend_policy();
+  auto task_sink = context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
+  if (func_graph->ContainMultiTarget() || !task_sink) {
+    context_ptr->set_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK, false);
+    context_ptr->set_param<bool>(MS_CTX_ENABLE_LOOP_SINK, false);
+  } else if (context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
+    std::string device_target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+    auto manager = func_graph->manager();
+    MS_EXCEPTION_IF_NULL(manager);
+    auto graphs = manager->func_graphs();
+    bool exist_while =
+      std::any_of(graphs.cbegin(), graphs.cend(), [](const FuncGraphPtr &fg) { return fg->recursive(); });
+    if (device_target == kAscendDevice && backend != kMsVm && !exist_while) {
+      MS_LOG(INFO) << "Run graph mode with multigraph sink.";
+      is_multi_graphs_sink = true;
+      context_ptr->set_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK, true);
+    } else {
+      MS_LOG(INFO) << "Run graph mode with vm.";
+      context_ptr->set_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK, false);
+      context_ptr->set_param<bool>(MS_CTX_ENABLE_LOOP_SINK, false);
+    }
+  }
+  if (is_multi_graphs_sink) {
+    return std::vector<GraphSegmentPtr>();
+  }
+  return default_partition_segments;
 }
 
 void AscendDeviceContext::UnifyMindIR(const KernelGraphPtr &graph) const {

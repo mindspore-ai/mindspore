@@ -589,8 +589,8 @@ void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph &graph) {
         MS_LOG(WARNING) << "It is not suggested to use a lonely weight parameter as the output of graph";
         continue;
       }
-      DeviceAddressPtr device_address = nullptr;
-#if ((defined ENABLE_CPU) && (!defined _WIN32))
+      DeviceAddressPtr device_address = GetInternalDeviceAddress(graph, item);
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
       const std::string &param_name = item->fullname_with_scope();
       if (ps::ps_cache_instance.IsHashTable(param_name)) {
         MS_LOG(INFO) << "Parameter(" << param_name << ")"
@@ -608,13 +608,16 @@ void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph &graph) {
         continue;
       }
 #endif
-      auto tensor_size = AnfAlgo::GetOutputTensorMemSize(item, index);
-      device_address =
-        CreateDeviceAddress(nullptr, tensor_size, AnfAlgo::GetOutputFormat(item, index), output_type_id, {item, index});
-      MS_LOG(INFO) << "Assign Static Memory for Input node, size:" << tensor_size
-                   << " node:" << item->fullname_with_scope() << " index: " << index;
-      if (mem_manager_->MallocMem(kStaticMem, tensor_size, device_address, graph.graph_id()) == nullptr) {
-        MS_LOG(EXCEPTION) << "Cannot alloc address when flag is: " << kStaticMem << ", tensor size is: " << tensor_size;
+      if (device_address == nullptr) {
+        auto tensor_size = AnfAlgo::GetOutputTensorMemSize(item, index);
+        device_address = CreateDeviceAddress(nullptr, tensor_size, AnfAlgo::GetOutputFormat(item, index),
+                                             output_type_id, {item, index});
+        MS_LOG(INFO) << "Assign Static Memory for Input node, size:" << tensor_size
+                     << " node:" << item->fullname_with_scope() << " index: " << index;
+        if (mem_manager_->MallocMem(kStaticMem, tensor_size, device_address, graph.graph_id()) == nullptr) {
+          MS_LOG(EXCEPTION) << "Cannot alloc address when flag is: " << kStaticMem
+                            << ", tensor size is: " << tensor_size;
+        }
       }
       AnfAlgo::SetOutputAddr(device_address, index, item.get());
     }

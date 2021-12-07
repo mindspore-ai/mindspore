@@ -40,6 +40,8 @@ namespace mindspore {
 namespace common {
 // TODO(jiaorui): delete
 constexpr auto kEnableAscendMindRT = false;
+// TODO(liangzelang): delete
+constexpr auto kEnableAscendSubGraphMindRT = false;
 
 inline const char *SafeCStr(const std::string &str) { return str.c_str(); }
 const char *SafeCStr(const std::string &&str);

@@ -61,6 +61,7 @@ class AscendKernelRuntime : public KernelRuntime {
   void SetContext() override;
   void CreateContext() override;
   const void *context() const override { return rt_context_; }
+  DeviceAddressPtr GetInternalDeviceAddress(const session::KernelGraph &graph, const AnfNodePtr &node) override;
 #ifndef ENABLE_SECURITY
   void PreInit() override;
 #endif

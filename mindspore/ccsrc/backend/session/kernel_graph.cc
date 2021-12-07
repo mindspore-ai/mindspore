@@ -1194,6 +1194,7 @@ void KernelGraph::CacheGraphOutputToFrontNodeWithIndex(const std::vector<AnfNode
     auto backend_output_node = backend_output_nodes[i];
     auto front_output_node = front_output_nodes[i];
     graph_output_to_front_node_map_[backend_output_node] = front_output_node;
+    front_node_to_graph_output_map_[front_output_node] = backend_output_node;
     MS_LOG(INFO) << "Backend output: " << backend_output_node.first->fullname_with_scope()
                  << " with index: " << backend_output_node.second
                  << " map to front node: " << front_output_node.first->fullname_with_scope()
@@ -1216,6 +1217,14 @@ AnfNodePtr KernelGraph::GetInternalOutputByFrontNode(const AnfNodePtr &front_nod
     return iter->second;
   }
   return nullptr;
+}
+
+AnfWithOutIndex KernelGraph::GetGraphOutputByFrontNode(const AnfWithOutIndex &front_node) const {
+  auto iter = front_node_to_graph_output_map_.find(front_node);
+  if (iter != front_node_to_graph_output_map_.end()) {
+    return iter->second;
+  }
+  return AnfWithOutIndex(nullptr, 0);
 }
 
 bool KernelGraph::IsInternalOutput(const AnfNodePtr &node) const {
