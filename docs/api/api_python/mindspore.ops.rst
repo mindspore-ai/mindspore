@@ -10,8 +10,11 @@ Neural Network Operators
 .. cnmsplatformautosummary::
     :toctree: ops
 
+    mindspore.ops.BiasAdd
+    mindspore.ops.Elu
     mindspore.ops.GeLU
     mindspore.ops.L2Loss
+    mindspore.ops.L2Normalize
     mindspore.ops.PReLU
     mindspore.ops.ReLUV2
     mindspore.ops.SeLU
@@ -28,6 +31,8 @@ Math Operators
     mindspore.ops.Div
     mindspore.ops.Eps
     mindspore.ops.Erf
+    mindspore.ops.Greater
+    mindspore.ops.Inv
     mindspore.ops.LessEqual
     mindspore.ops.Log
     mindspore.ops.MatMul
@@ -41,9 +46,13 @@ Array Operators
 .. cnmsplatformautosummary::
     :toctree: ops
 
+    mindspore.ops.Eye
+    mindspore.ops.Fill
+    mindspore.ops.Gather
     mindspore.ops.OnesLike
     mindspore.ops.Reshape
     mindspore.ops.Size
+    mindspore.ops.Squeeze
     mindspore.ops.Tile
     mindspore.ops.ZerosLike
 
