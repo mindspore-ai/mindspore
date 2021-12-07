@@ -27,7 +27,3 @@ def test_hccl_init_fail():
     assert ret == 0
     grep_ret = os.system(f"grep 'Ascend error occurred, error message:' {sh_path}/test_hccl_init_fail.log -c")
     assert grep_ret == 0
-    grep_ret = os.system(f"grep 'EI0004:' {sh_path}/test_hccl_init_fail.log -c")
-    assert grep_ret == 0
-    grep_ret = os.system(f"grep 'Invalid ranktable, with rankID' {sh_path}/test_hccl_init_fail.log -c")
-    assert grep_ret == 0
