@@ -435,8 +435,7 @@ def run_saved_data_dump_test(scenario, saved_data):
     """Run e2e dump on scenario, testing statistic dump"""
     if sys.platform != 'linux':
         return
-    pwd = os.getcwd()
-    with tempfile.TemporaryDirectory(dir=pwd) as tmp_dir:
+    with tempfile.TemporaryDirectory(dir='/tmp') as tmp_dir:
         dump_path = os.path.join(tmp_dir, 'test_saved_data')
         dump_config_path = os.path.join(tmp_dir, 'test_saved_data.json')
         generate_statistic_dump_json(dump_path, dump_config_path, scenario, saved_data)
@@ -501,6 +500,44 @@ def test_gpu_e2e_full_dump():
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     run_saved_data_dump_test('test_gpu_e2e_dump', 'full')
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_stat_dump_nulls():
+    """
+    Feature: GPU Statistics Dump
+    Description: Test GPU statistics dump when printing tensors full with NaNs and Infs
+    Expectation: Min, Max, Avg Values stored in statistic.csv show null for such tensors
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    if sys.platform != 'linux':
+        return
+    empty_x = np.array([]).astype(np.float16)
+    with tempfile.TemporaryDirectory(dir='/tmp') as tmp_dir:
+        dump_path = os.path.join(tmp_dir, 'test_saved_data')
+        dump_config_path = os.path.join(tmp_dir, 'test_saved_data.json')
+        generate_statistic_dump_json(dump_path, dump_config_path, 'test_gpu_e2e_dump', 'statistic')
+        os.environ['MINDSPORE_DUMP_CONFIG'] = dump_config_path
+        dump_file_path = os.path.join(dump_path, 'rank_0', 'Net', '0', '0')
+        if os.path.isdir(dump_path):
+            shutil.rmtree(dump_path)
+        add = Net()
+        add(Tensor(empty_x), Tensor(empty_x))
+        for _ in range(3):
+            if not os.path.exists(dump_file_path):
+                time.sleep(2)
+        # check dumped data
+        output_path = glob.glob(os.path.join(dump_file_path, 'statistic.csv'))[0]
+        real_path = os.path.realpath(output_path)
+        with open(real_path) as f:
+            reader = csv.DictReader(f)
+            [output] = list(reader)
+            assert output['IO'] == 'output'
+            assert output['Min Value'] == 'null'
+            assert output['Max Value'] == 'null'
+            assert output['Avg Value'] == 'null'
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training

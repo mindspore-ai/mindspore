@@ -268,7 +268,6 @@ void DumpJsonParser::ParseCommonDumpSetting(const nlohmann::json &content) {
   ParseDumpMode(*dump_mode);
   ParseDumpPath(*common_dump_settings);  // Pass in the whole json string to parse because the path field is optional.
   ParseNetName(*net_name);
-  ParseSavedData(*common_dump_settings);  // saved data optional
   ParseIteration(*iteration);
   ParseInputOutput(*input_output);
   ParseKernels(*kernels);
@@ -278,6 +277,7 @@ void DumpJsonParser::ParseCommonDumpSetting(const nlohmann::json &content) {
     ParseFileFormat(
       *common_dump_settings);  // Pass in the whole json string to parse because file_format field is optional.
   }
+  ParseSavedData(*common_dump_settings);  // saved data optional
 }
 
 void DumpJsonParser::ParseE2eDumpSetting(const nlohmann::json &content) {
@@ -385,6 +385,16 @@ void DumpJsonParser::ParseSavedData(const nlohmann::json &content) {
   if (IsStatisticDump() && context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice) {
     MS_LOG(EXCEPTION) << "Dump Json parse failed, storing statistic dump is only supported on GPU and Ascend, please "
                          "set saved_data to tensor or use a GPU or Ascend device";
+  }
+  if (IsStatisticDump() && context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice) {
+    if (file_format_ != JsonFileFormat::FORMAT_NPY) {
+      MS_LOG(EXCEPTION) << "Dump Json parse failed, storing statistic dump is only supported on Ascend when "
+                           "file_format is set to 'npy'.";
+    }
+    if (e2e_dump_enabled_) {
+      MS_LOG(EXCEPTION)
+        << "Dump Json parse failed, storing statistic dump is only supported on Ascend asynchronous mode.";
+    }
   }
 }
 

@@ -145,7 +145,7 @@ bool TensorStatDump::DumpTensorStatsToFile(const std::string &original_kernel_na
   std::string tensor_loader_name = original_kernel_name + ":" + std::to_string(tensor_loader_slot_);
   std::shared_ptr<TensorData> data = debugger->GetTensor(tensor_loader_name);
   if (data == nullptr) {
-    MS_LOG(WARNING) << "Failed to find " << tensor_loader_name << " in tensor loader, skipping current statistics";
+    MS_LOG(INFO) << "Failed to find " << tensor_loader_name << " in tensor loader, skipping current statistics";
     return false;
   }
   return DumpTensorStatsToFile(dump_path, data);
@@ -153,7 +153,7 @@ bool TensorStatDump::DumpTensorStatsToFile(const std::string &original_kernel_na
 
 bool TensorStatDump::DumpTensorStatsToFile(const std::string &dump_path, std::shared_ptr<TensorData> data) {
   if (data == nullptr) {
-    MS_LOG(WARNING) << "Tensor data is empty, skipping current statistics";
+    MS_LOG(INFO) << "Tensor data is empty, skipping current statistics";
     return false;
   }
   if (!OpenStatisticsFile(dump_path)) {
@@ -178,9 +178,15 @@ bool TensorStatDump::DumpTensorStatsToFile(const std::string &dump_path, std::sh
   csv.WriteToCsv(stat.data_size);
   csv.WriteToCsv(stat.dtype);
   csv.WriteToCsv(shape.str());
-  csv.WriteToCsv(stat.max_value);
-  csv.WriteToCsv(stat.min_value);
-  csv.WriteToCsv(stat.avg_value);
+  if (stat.count == stat.nan_count + stat.neg_inf_count + stat.pos_inf_count) {
+    csv.WriteToCsv("null");
+    csv.WriteToCsv("null");
+    csv.WriteToCsv("null");
+  } else {
+    csv.WriteToCsv(stat.max_value);
+    csv.WriteToCsv(stat.min_value);
+    csv.WriteToCsv(stat.avg_value);
+  }
   csv.WriteToCsv(stat.count);
   csv.WriteToCsv(stat.neg_zero_count);
   csv.WriteToCsv(stat.pos_zero_count);
