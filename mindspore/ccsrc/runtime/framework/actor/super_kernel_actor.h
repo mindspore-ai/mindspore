@@ -19,6 +19,7 @@
 
 #include <string>
 #include <memory>
+#include <map>
 #include <utility>
 #include "runtime/framework/actor/debug_aware_actor.h"
 #include "runtime/framework/actor/actor_common.h"
@@ -27,6 +28,7 @@
 
 namespace mindspore {
 namespace runtime {
+using mindspore::device::DeviceAddress;
 using mindspore::device::DeviceContext;
 
 // The Super kernel actor is used to represent the sink executing of graph which is the combination of kernels.
@@ -55,6 +57,8 @@ class SuperKernelActor : public DebugAwareActor {
   bool CopyInputData(const OpContext<DeviceTensor> *context);
 
   KernelGraphPtr graph_;
+
+  std::map<AnfNodePtr, DeviceAddress *> ref_node_addr_map_;
 };
 
 using SuperKernelActorPtr = std::shared_ptr<SuperKernelActor>;
