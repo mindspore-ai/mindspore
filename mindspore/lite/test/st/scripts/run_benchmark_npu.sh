@@ -15,7 +15,7 @@ function Run_Converter() {
     mkdir -p ${ms_models_path}
 
     # Prepare the config file list
-    local npu_cfg_file_list=("$models_npu_config" "$models_npu_weightquant_config")
+    local npu_cfg_file_list=("$models_npu_config" "$models_npu_weightquant_config" "$models_kirin_posttraining_config")
     # Convert models:
     # $1:cfgFileList; $2:inModelPath; $3:outModelPath; $4:logFile; $5:resultFile;
     Convert "${npu_cfg_file_list[*]}" $models_path $ms_models_path $run_converter_log_file $run_converter_result_file $npu_fail_not_return
@@ -24,7 +24,7 @@ function Run_Converter() {
 # Run on npu platform:
 function Run_npu() {
     # Prepare the config file list
-    local npu_cfg_file_list=("$models_npu_config" "$models_npu_fp16_config" "$models_npu_weightquant_config")
+    local npu_cfg_file_list=("$models_npu_config" "$models_npu_fp16_config" "$models_npu_weightquant_config" "$models_kirin_posttraining_config")
     # Run converted models:
     # $1:cfgFileList; $2:modelPath; $3:dataPath; $4:logFile; $5:resultFile; $6:platform; $7:processor; $8:phoneId;
     Run_Benchmark "${npu_cfg_file_list[*]}" . '/data/local/tmp' $run_npu_log_file $run_benchmark_result_file 'arm64' 'NPU' $device_id $npu_fail_not_return
@@ -73,6 +73,7 @@ version=${file_name_array[2]}
 models_npu_config=${basepath}/../config/models_npu.cfg
 models_npu_fp16_config=${basepath}/../config/models_npu_fp16.cfg
 models_npu_weightquant_config=${basepath}/../config/models_weightquant_8bit_npu.cfg
+models_kirin_posttraining_config=${basepath}/../config/models_kirin_posttraining.cfg
 
 ms_models_path=${basepath}/ms_models
 

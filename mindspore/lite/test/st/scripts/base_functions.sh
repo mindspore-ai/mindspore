@@ -60,7 +60,7 @@ function Convert() {
       elif [[ ${cfg_file_name} =~ "posttraining" ]]; then
         quant_type="PostTraining"
         output_file=${output_file}"_posttraining"
-        config_file="${quant_config_path}/${model_name}_posttraining.config"
+        config_file="${quant_config_path}/${model_name}_${cfg_file_name:7:-4}.config"
       elif [[ ${cfg_file_name} =~ "awaretraining" || ${extra_info} =~ "aware_training" ]]; then
         in_dtype="FLOAT"
         out_dtype="FLOAT"
