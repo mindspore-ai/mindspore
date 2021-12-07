@@ -853,7 +853,7 @@ bool StartFLWorkerAction(const ResourcePtr &) {
 bool StartPSServerAction(const ResourcePtr &res) {
   if (distributed::cluster::ClusterContext::instance()->initialized()) {
     MS_LOG(INFO) << "This node is server. Start wait for finalizing.";
-    if (!distributed::cluster::ClusterContext::instance()->Finalize()) {
+    if (!distributed::cluster::ClusterContext::instance()->Finalize(UINT32_MAX)) {
       MS_LOG(ERROR) << "Failed to finalize server.";
       return false;
     }
@@ -955,7 +955,7 @@ bool StartServerAction(const ResourcePtr &res) {
 bool StartPSSchedulerAction(const ResourcePtr &) {
   if (distributed::cluster::ClusterContext::instance()->initialized()) {
     MS_LOG(INFO) << "This node is scheduler. Start wait for finalizing.";
-    if (!distributed::cluster::ClusterContext::instance()->Finalize()) {
+    if (!distributed::cluster::ClusterContext::instance()->Finalize(UINT32_MAX)) {
       MS_LOG(ERROR) << "Failed to finalize server.";
       return false;
     }

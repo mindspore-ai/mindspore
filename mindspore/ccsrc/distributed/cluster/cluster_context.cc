@@ -84,12 +84,12 @@ bool ClusterContext::Initialize() {
   return true;
 }
 
-bool ClusterContext::Finalize() {
+bool ClusterContext::Finalize(uint32_t timeout) {
   if (finalized_) {
     return true;
   }
   // In some cases, one node calls the Finish function while other nodes don't. So timeout is acceptable.
-  if (!node_->Finish()) {
+  if (!node_->Finish(timeout)) {
     MS_LOG(WARNING) << "Finishing node " << node_role_ << " timeout.";
   }
   if (!node_->Stop()) {

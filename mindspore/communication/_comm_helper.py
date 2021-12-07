@@ -17,6 +17,7 @@
 from mindspore.parallel._ps_context import _is_role_pserver, _is_role_sched
 from mindspore import log as logger
 from ._hccl_management import load_lib as hccl_load_lib
+from .._c_expression import get_rank_id, get_rank_size
 
 _HCCL_AVAILABLE = False
 _HCCL_TEST_AVAILABLE = False
@@ -210,7 +211,7 @@ def _get_rank_helper(group, backend):
         else:
             rank_id = hccl.get_rank_id(group)
     elif backend == Backend.NCCL:
-        rank_id = mpi.get_rank_id(group)
+        rank_id = get_rank_id(group)
     else:
         raise ValueError("For '_get_rank_helper', the argument 'backend' {} is not supported, "
                          "please use hccl_mpi, hccl or nccl.".format(backend))
@@ -275,7 +276,7 @@ def _get_size_helper(group, backend):
         else:
             size = hccl.get_rank_size(group)
     elif backend == Backend.NCCL:
-        size = mpi.get_rank_size(group)
+        size = get_rank_size(group)
     else:
         raise ValueError("For '_get_size_helper', the argument 'backend' {} is not supported, "
                          "please use hccl or nccl.".format(backend))

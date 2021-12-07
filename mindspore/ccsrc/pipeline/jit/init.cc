@@ -351,10 +351,18 @@ PYBIND11_MODULE(_c_expression, m) {
               "Init gpu collective communication mode.");
   (void)m.def("finalize_gpu_collective", &mindspore::device::gpu::CollectiveInitializer::FinalizeCollective,
               "Finalize gpu collective communication mode.");
+  (void)m.def("get_rank_id", &mindspore::device::gpu::CollectiveInitializer::GetRankID,
+              "Finalize gpu collective communication mode.");
+  (void)m.def("get_rank_size", &mindspore::device::gpu::CollectiveInitializer::GetRankSize,
+              "Finalize gpu collective communication mode.");
 #else
   (void)m.def("init_gpu_collective", &mindspore::device::gpu::CollectiveFakeInitializer::InitCollective,
               "Init gpu collective communication mode.");
   (void)m.def("finalize_gpu_collective", &mindspore::device::gpu::CollectiveFakeInitializer::FinalizeCollective,
+              "Finalize gpu collective communication mode.");
+  (void)m.def("get_rank_id", &mindspore::device::gpu::CollectiveFakeInitializer::GetRankID,
+              "Finalize gpu collective communication mode.");
+  (void)m.def("get_rank_size", &mindspore::device::gpu::CollectiveFakeInitializer::GetRankSize,
               "Finalize gpu collective communication mode.");
 #endif
 

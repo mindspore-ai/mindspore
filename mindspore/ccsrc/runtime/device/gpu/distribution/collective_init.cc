@@ -68,6 +68,14 @@ void CollectiveInitializer::FinalizeCollective() {
   }
 }
 
+uint32_t CollectiveInitializer::GetRankID(const std::string &group_name) {
+  return CollectiveInitializer::instance().GetRankIDByGroup(group_name);
+}
+
+uint32_t CollectiveInitializer::GetRankSize(const std::string &group_name) {
+  return CollectiveInitializer::instance().GetGroupSize(group_name);
+}
+
 uint32_t CollectiveInitializer::local_rank_id() {
   uint32_t local_rank_id;
   if (common::CheckUseMPI()) {

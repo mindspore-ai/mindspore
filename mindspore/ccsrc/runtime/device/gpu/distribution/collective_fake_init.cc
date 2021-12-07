@@ -29,6 +29,16 @@ void CollectiveFakeInitializer::FinalizeCollective() {
   MS_LOG(EXCEPTION) << "You are trying to call 'init('nccl')', Please check "
                        "this MindSpore package is GPU version and built with NCCL.";
 }
+
+uint32_t CollectiveFakeInitializer::GetRankID(const std::string &group_name) {
+  MS_LOG(EXCEPTION) << "You are trying to call 'GetRankID', Please check "
+                       "this MindSpore package is GPU version and built with NCCL.";
+}
+
+uint32_t CollectiveFakeInitializer::GetRankSize(const std::string &group_name) {
+  MS_LOG(EXCEPTION) << "You are trying to call 'GetRankSize', Please check "
+                       "this MindSpore package is GPU version and built with NCCL.";
+}
 }  // namespace gpu
 }  // namespace device
 }  // namespace mindspore
