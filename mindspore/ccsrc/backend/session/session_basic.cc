@@ -1260,14 +1260,14 @@ void SessionBasic::GetParameterIndex(const KernelGraph *graph, const std::vector
       const auto &input_shape = input->shape();
       const auto &param_shape = AnfAlgo::GetOutputInferShape(param, 0);
       if (input_shape.size() != param_shape.size()) {
-        MS_LOG(EXCEPTION) << "Shapes of input and parameter are different, input index: " << index
-                          << ", parameter: " << param->fullname_with_scope();
+        MS_LOG(EXCEPTION) << "Shape size of input tensor(" << input_shape << ") and parameter(" << param_shape
+                          << ") are different, input index: " << index << ", parameter: " << param->DebugString();
       }
       bool is_dynamic = param->Shape()->IsDynamic();
       for (size_t i = 0; i < input_shape.size(); i += 1) {
         if (input_shape[i] < 0 || (static_cast<size_t>(input_shape[i]) != param_shape[i] && !is_dynamic)) {
-          MS_LOG(EXCEPTION) << "Shapes of input and parameter are different, input index: " << index
-                            << ", parameter: " << param->fullname_with_scope();
+          MS_LOG(EXCEPTION) << "Input tensor shape(" << input_shape << ") and parameter shape(" << param_shape
+                            << ") are different, input index: " << index << ", parameter: " << param->DebugString();
         }
       }
       parameter_index->emplace(param, index++);
