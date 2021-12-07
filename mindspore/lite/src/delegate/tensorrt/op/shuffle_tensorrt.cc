@@ -178,15 +178,15 @@ int ShuffleTensorRT::AddSqueezeOp(nvinfer1::IShuffleLayer *shuffle_layer) {
   std::vector<int64_t> new_shape(squeeze_shape.d, squeeze_shape.d + squeeze_shape.nbDims);
   auto axis = squeeze_op->axis();
   if (axis == nullptr) {
-    MS_LOG(ERROR) << "AddSqueezeOp has invalid axis";
-    return RET_ERROR;
-  }
-
-  for (int i = axis->size() - 1; i >= 0; i--) {
-    if (new_shape[axis->Get(i)] != 1) {
-      MS_LOG(WARNING) << "squeeze_shape value at " << i << " is " << axis->Get(i) << ", need check " << op_name_;
+    MS_LOG(WARNING) << op_name_ << " has invalid axis, output shape is totally depends on ms tensor.";
+    new_shape = out_tensors_[0].Shape();
+  } else {
+    for (int i = axis->size() - 1; i >= 0; i--) {
+      if (new_shape[axis->Get(i)] != 1) {
+        MS_LOG(WARNING) << "squeeze_shape value at " << i << " is " << axis->Get(i) << ", need check " << op_name_;
+      }
+      new_shape.erase(new_shape.begin() + axis->Get(i));
     }
-    new_shape.erase(new_shape.begin() + axis->Get(i));
   }
 
   nvinfer1::Dims squeeze_dims = lite::ConvertCudaDims(new_shape);
