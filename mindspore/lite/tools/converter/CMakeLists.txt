@@ -93,6 +93,7 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ../optimizer/fusion/onnx_gelu_fusion.cc
         ../optimizer/fusion/squeeze_fusion.cc
         ../optimizer/fusion/transpose_fusion.cc
+        ../optimizer/fusion/batchnorm_to_scale_fusion.cc
         ../optimizer/fisson/eliminate_concat_split.cc
         ../optimizer/fisson/fisson_util.cc
         ../optimizer/fisson/iter_node_outputs.cc

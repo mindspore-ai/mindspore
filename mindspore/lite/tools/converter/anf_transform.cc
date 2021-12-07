@@ -35,6 +35,7 @@
 #include "tools/optimizer/fusion/constant_folding_fusion.h"
 #include "tools/optimizer/fusion/norm_fusion.h"
 #include "tools/optimizer/fusion/batchmatmul_fusion.h"
+#include "tools/optimizer/fusion/batchnorm_to_scale_fusion.h"
 #include "tools/optimizer/fusion/sigmoid_mul_fusion.h"
 #include "tools/optimizer/fusion/conv_conv_fusion.h"
 #include "tools/optimizer/fusion/conv_pad_fusion.h"
@@ -177,6 +178,7 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const converter::
   fusion_pm->AddPass(std::make_shared<opt::TfNormFusion>());
   fusion_pm->AddPass(std::make_shared<opt::OnnxLayerNormFusion>());
   fusion_pm->AddPass(std::make_shared<opt::BatchMatMulFusion>());
+  fusion_pm->AddPass(std::make_shared<opt::BatchNormToScaleFusion>());
   fusion_pm->AddPass(std::make_shared<opt::SigmoidMulFusion>());
   fusion_pm->AddPass(std::make_shared<opt::ConvActivationFusion>());
   fusion_pm->AddPass(std::make_shared<opt::ConvTupleGetItemFusion>());
