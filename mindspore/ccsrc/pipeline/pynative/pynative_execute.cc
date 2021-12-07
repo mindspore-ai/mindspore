@@ -788,15 +788,15 @@ void SaveOpInfo(const TopCellInfoPtr &top_cell, const std::string &op_info,
 
 void UpdateTensorInfo(const tensor::TensorPtr &new_tensor, const std::vector<tensor::TensorPtr> &pre_tensors) {
   MS_EXCEPTION_IF_NULL(new_tensor);
-  if (pre_tensors.empty()) {
-    MS_LOG(EXCEPTION) << "The size of pre tensors is empty.";
+  if (pre_tensors.empty() || new_tensor->device_address() == nullptr) {
+    MS_LOG(DEBUG) << "The number of pre tensors is zero or the device address of new tensor is nullptr.";
+    return;
   }
   const auto &device_target = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   for (auto &pre_tensor : pre_tensors) {
     MS_EXCEPTION_IF_NULL(pre_tensor);
-    MS_LOG(DEBUG) << "Replace Old tensor " << pre_tensor.get() << " id " << pre_tensor->id()
-                  << " device_address: " << pre_tensor->device_address() << " shape and type "
-                  << pre_tensor->GetShapeAndDataTypeInfo() << " with New tensor " << new_tensor.get() << " id "
+    MS_LOG(DEBUG) << "Replace Old tensor id " << pre_tensor->id() << " device_address: " << pre_tensor->device_address()
+                  << " shape and type " << pre_tensor->GetShapeAndDataTypeInfo() << " with New tensor id "
                   << new_tensor->id() << " device_address " << new_tensor->device_address() << " shape and dtype "
                   << new_tensor->GetShapeAndDataTypeInfo();
     pre_tensor->set_shape(new_tensor->shape());
