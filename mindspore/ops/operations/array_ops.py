@@ -4767,7 +4767,7 @@ class ScatterDiv(_ScatterOp):
     """
 
 
-class ScatterNdAdd(_ScatterNdOp):
+class ScatterNdAdd(Primitive):
     r"""
     Applies sparse addition to individual values or slices in a tensor.
 
@@ -4843,6 +4843,19 @@ class ScatterNdAdd(_ScatterNdOp):
           [0 0 0 0]
           [0 0 0 0]]]
     """
+
+    __mindspore_signature__ = (
+        sig.make_sig('input_x', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('indices', dtype=sig.sig_dtype.T1),
+        sig.make_sig('updates', dtype=sig.sig_dtype.T)
+    )
+
+    @prim_attr_register
+    def __init__(self, use_locking=False):
+        """Initialize ScatterNdAdd"""
+        validator.check_value_type('use_locking', use_locking, [bool], self.name)
+        self.init_prim_io_names(inputs=['input_x', 'indices', 'updates'], outputs=['y'])
+        self.add_prim_attr('side_effect_mem', True)
 
 
 class ScatterNdSub(_ScatterNdOp):
