@@ -758,7 +758,7 @@ void DebugServices::ProcessConvertToHostFormat(const std::vector<std::string> &f
   std::string real_dump_iter_dir = RealPath(dump_key);
   DIR *d_handle = opendir(real_dump_iter_dir.c_str());
   if (d_handle == nullptr) {
-    MS_LOG(ERROR) << "Directory does not exist in ConvertToHostFormat.";
+    MS_LOG(INFO) << "Directory does not exist in ConvertToHostFormat.";
     return;
   }
   struct dirent *dir = nullptr;
@@ -839,7 +839,7 @@ void DebugServices::ConvertReadTensors(std::vector<std::string> backend_name, st
     std::string abspath = RealPath(specific_dump_dir);
     DIR *d = opendir(abspath.c_str());
     if (d == nullptr) {
-      MS_LOG(ERROR) << "Directory does not exist in ConvertReadTensors.";
+      MS_LOG(INFO) << "Directory does not exist in ConvertReadTensors.";
       return;
     }
     ProcessConvertList(prefix_dump_file_name, file_format, specific_dump_dir, &dir_to_files_map, result_list);
@@ -860,7 +860,7 @@ void DebugServices::ConvertWatchPointNodes(const std::vector<std::tuple<std::str
     std::string abspath = RealPath(specific_dump_dir);
     DIR *d = opendir(abspath.c_str());
     if (d == nullptr) {
-      MS_LOG(ERROR) << "Directory " << specific_dump_dir.c_str() << " does not exist in ConvertWatchPointNodes.";
+      MS_LOG(INFO) << "Directory " << specific_dump_dir.c_str() << " does not exist in ConvertWatchPointNodes.";
       return;
     }
     ProcessConvertList(dump_name, file_format, specific_dump_dir, &dir_to_files_map, result_list);
@@ -1039,7 +1039,7 @@ void DebugServices::ReadGraphsHistory(uint32_t rank_id, uint32_t root_graph_id) 
   std::string file_to_check = "ms_global_execution_order_graph_" + std::to_string(root_graph_id) + ".csv";
   DIR *d_handle = opendir(exec_order_path.c_str());
   if (d_handle == nullptr) {
-    MS_LOG(ERROR) << "Directory does not exist.";
+    MS_LOG(ERROR) << "Execution order directory does not exist.";
     return;
   }
   // read file and store the info
@@ -1327,11 +1327,15 @@ std::vector<std::shared_ptr<TensorData>> DebugServices::ReadNeededDumpedTensors(
     std::tuple<uint32_t, uint32_t> rank_and_graph = rank_and_graph_item.first;
     uint32_t rank_id = std::get<0>(rank_and_graph);
     uint32_t root_graph_id = std::get<1>(rank_and_graph);
-    std::vector<std::tuple<std::string, bool>> wp_nodes = rank_and_graph_item.second;
-    std::vector<std::tuple<std::string, std::string>> proto_to_dump;
-
     std::string specific_dump_dir = dump_dir_ + "/rank_" + std::to_string(rank_id) + "/" + net_name_ + "/" +
                                     std::to_string(root_graph_id) + "/" + IterationString(iteration);
+    std::string real_dump_dir = RealPath(specific_dump_dir);
+    if (real_dump_dir.empty()) {
+      MS_LOG(INFO) << "Dump dir " << specific_dump_dir << " doesn't exist. Skit it.";
+      continue;
+    }
+    std::vector<std::tuple<std::string, bool>> wp_nodes = rank_and_graph_item.second;
+    std::vector<std::tuple<std::string, std::string>> proto_to_dump;
 
     // convert node names to dump style
     for (auto node : wp_nodes) {
@@ -1353,13 +1357,12 @@ std::vector<std::shared_ptr<TensorData>> DebugServices::ReadNeededDumpedTensors(
 
     if (is_sync_mode_) {
       // search files in dir for the one that meets the filename prefix and read the file into memory
-      std::string abspath = RealPath(specific_dump_dir);
-      ProcessTensorDataSync(proto_to_dump, abspath, specific_dump_dir, iteration, rank_id, root_graph_id, &tensor_list,
+      ProcessTensorDataSync(proto_to_dump, real_dump_dir, iteration, rank_id, root_graph_id, &tensor_list,
                             error_on_no_value);
     } else {
       // convert all files in proto_to_dump to npy and add to pool of async file names
-      ConvertWatchPointNodes(proto_to_dump, specific_dump_dir, async_file_pool);
-      GetTensorDataInfoAsync(proto_to_dump, specific_dump_dir, iteration, rank_id, root_graph_id, *async_file_pool,
+      ConvertWatchPointNodes(proto_to_dump, real_dump_dir, async_file_pool);
+      GetTensorDataInfoAsync(proto_to_dump, real_dump_dir, iteration, rank_id, root_graph_id, *async_file_pool,
                              &tensor_list);
     }
   }
@@ -1368,24 +1371,23 @@ std::vector<std::shared_ptr<TensorData>> DebugServices::ReadNeededDumpedTensors(
 }
 
 void DebugServices::ProcessTensorDataSync(const std::vector<std::tuple<std::string, std::string>> &proto_to_dump,
-                                          const std::string &abspath, const std::string &specific_dump_dir,
-                                          unsigned int iteration, unsigned int device_id, unsigned int root_graph_id,
+                                          const std::string &specific_dump_dir, unsigned int iteration,
+                                          unsigned int device_id, unsigned int root_graph_id,
                                           std::vector<std::shared_ptr<TensorData>> *const tensor_list,
                                           bool error_on_no_value) {
-  DIR *d = opendir(abspath.c_str());
+  DIR *d = opendir(specific_dump_dir.c_str());
   if (d == nullptr) {
-    MS_LOG(INFO) << "Directory " << specific_dump_dir.c_str() << " does not exist in ReadNeededDumpedTensors.";
+    MS_LOG(INFO) << "Directory " << specific_dump_dir.c_str() << " does not exist in ProcessTensorDataSync.";
   } else {
     struct dirent *dir = nullptr;
     while ((dir = readdir(d)) != nullptr) {
       struct stat st;
-      std::string name = abspath + std::string("/") + std::string(dir->d_name);
+      std::string name = specific_dump_dir + std::string("/") + std::string(dir->d_name);
       int ret = stat(name.c_str(), &st);
       if (ret == 0 && S_ISREG(st.st_mode)) {
         std::string file_name = dir->d_name;
         for (auto &node : proto_to_dump) {
           std::string dump_name = std::get<1>(node);
-
           std::string stripped_file_name = GetStrippedFilename(file_name);
           if (stripped_file_name.empty() || stripped_file_name.length() <= dump_name.length()) {
             continue;
@@ -1568,8 +1570,109 @@ std::vector<std::shared_ptr<TensorData>> DebugServices::GetNodeTensor(const CNod
 }
 #endif
 
+std::string GetOnlineOpOverflowDir() {
+  // only called for online debugger mode
+  // get operator overflow directory for current iteration
+  std::string overflow_bin_path = "";
+#ifdef ONLINE_DBG_MODE
+  if (DumpJsonParser::GetInstance().path().empty()) {
+    MS_LOG(INFO) << "Dump config is not set.";
+    return "";
+  }
+  auto debugger = Debugger::GetInstance();
+  MS_EXCEPTION_IF_NULL(debugger);
+  auto cur_graph = debugger->GetGraphPtr();
+  if (cur_graph == nullptr) {
+    return "";
+  }
+  overflow_bin_path = DumpJsonParser::GetInstance().GetOpOverflowBinPath(cur_graph->root_graph_id());
+  auto realpath = FileUtils::GetRealPath(overflow_bin_path.c_str());
+  if (!realpath.has_value()) {
+    MS_LOG(INFO) << "Get real path failed for overflow_bin_path.";
+    return "";
+  }
+  overflow_bin_path = realpath.value() + '/';
+#endif
+  return overflow_bin_path;
+}
+
+void DebugServices::AddOpOverflowOpNames(const std::string overflow_bin_path, std::vector<std::string> *op_names) {
+  MS_EXCEPTION_IF_NULL(op_names);
+  std::map<std::pair<uint64_t, uint64_t>, std::string> task_stream_to_opname;
+  std::vector<std::pair<uint64_t, uint64_t>> task_stream_hit;
+  const std::string overflow_file_prefix = "Opdebug.Node_OpDebug.";
+
+  MS_LOG(INFO) << "Processing bin file path " << overflow_bin_path;
+
+  DIR *d = opendir(overflow_bin_path.c_str());
+  if (d == nullptr) {
+    MS_LOG(INFO) << "OverFlow bin directory does not exist!";
+  } else {
+    struct dirent *dir = nullptr;
+    while ((dir = readdir(d)) != nullptr) {
+      struct stat st;
+      std::string name = overflow_bin_path + std::string("/") + std::string(dir->d_name);
+      int ret = stat(name.c_str(), &st);
+      if (ret == 0 && S_ISREG(st.st_mode)) {
+        // form fully qualified filename
+        std::string file_path = name;
+        std::string file_name = dir->d_name;
+        // attempt to read the file
+        std::ifstream infile;
+        infile.open(file_path.c_str(), std::ios::ate | std::ios::binary | std::ios::in);
+        if (!infile.is_open()) {
+          MS_LOG(ERROR) << "Failed to open overflow bin file " << file_name << " Errno:" << errno;
+          continue;
+        }
+
+        std::string node_name;
+        uint64_t task_id = 0;
+        uint64_t stream_id = 0;
+        // detect overflow bin file
+        if (file_name.rfind(overflow_file_prefix, 0) == 0) {
+          if (!GetTaskIdStreamId(file_name, overflow_file_prefix, &task_id, &stream_id)) {
+            continue;
+          }
+          MS_LOG(INFO) << "Overflow bin file " << file_name << ", task_id " << task_id << ", stream_id " << stream_id
+                       << ".";
+          task_stream_hit.push_back(std::make_pair(task_id, stream_id));
+        } else {
+          // regular bin file
+          bool success_parse = GetAttrsFromFilename(file_name, &node_name, &task_id, &stream_id);
+          if (success_parse) {
+            task_stream_to_opname[std::make_pair(task_id, stream_id)] = node_name;
+          }
+        }
+        infile.close();
+      }
+    }
+    (void)closedir(d);
+  }
+
+  // find the op_names with an overflow hit
+  for (auto &task_stream : task_stream_hit) {
+    auto op_name = task_stream_to_opname[task_stream];
+    if (!op_name.empty()) {
+      MS_LOG(INFO) << "Operation overflow detected in " << op_name;
+      op_names->push_back(op_name);
+    }
+  }
+}
+
 bool DebugServices::CheckOpOverflow(std::string node_name_to_find, unsigned int device_id, unsigned int root_graph_id,
                                     unsigned int iteration) {
+  std::string overflow_bin_path = "";
+#ifdef ONLINE_DBG_MODE
+  overflow_bin_path = GetOnlineOpOverflowDir();
+#else
+  overflow_bin_path = dump_dir_ + "/rank_" + std::to_string(device_id) + "/" + net_name_ + "/" +
+                      std::to_string(root_graph_id) + "/" + IterationString(iteration) + "/";
+  overflow_bin_path = RealPath(overflow_bin_path);
+#endif
+  if (overflow_bin_path.empty()) {
+    MS_LOG(INFO) << "Get real path failed for overflow_bin_path.";
+    return false;
+  }
   // remove kernel_graph_#
   std::string op_name_find_with_path = RemoveKernelGraphPrefix(node_name_to_find);
   std::replace(op_name_find_with_path.begin(), op_name_find_with_path.end(), '/', '_');
@@ -1583,26 +1686,6 @@ bool DebugServices::CheckOpOverflow(std::string node_name_to_find, unsigned int 
 
   std::replace(node_name_to_find.begin(), node_name_to_find.end(), '/', '_');
   std::vector<std::string> op_names;
-  std::string overflow_bin_path;
-
-#ifdef ONLINE_DBG_MODE
-  if (DumpJsonParser::GetInstance().path().empty()) {
-    // Dump config is not set.
-    return false;
-  }
-  auto debugger = Debugger::GetInstance();
-  overflow_bin_path = DumpJsonParser::GetInstance().GetOpOverflowBinPath(debugger->GetGraphPtr()->root_graph_id());
-  auto realpath = FileUtils::GetRealPath(overflow_bin_path.c_str());
-  if (!realpath.has_value()) {
-    MS_LOG(INFO) << "Get real path failed for overflow_bin_path.";
-    return false;
-  }
-  overflow_bin_path = realpath.value() + '/';
-#else
-  overflow_bin_path = dump_dir_ + "/rank_" + std::to_string(device_id) + "/" + net_name_ + "/" +
-                      std::to_string(root_graph_id) + "/" + IterationString(iteration) + "/";
-  overflow_bin_path = RealPath(overflow_bin_path);
-#endif
 
   overflow_wp_lock_.lock();
 
@@ -1612,68 +1695,7 @@ bool DebugServices::CheckOpOverflow(std::string node_name_to_find, unsigned int 
     MS_LOG(INFO) << "Found already computed overflows for " << overflow_bin_path;
     op_names = overflow_ops_[overflow_bin_path];
   } else {
-    std::map<std::pair<uint64_t, uint64_t>, std::string> task_stream_to_opname;
-    std::vector<std::pair<uint64_t, uint64_t>> task_stream_hit;
-    const std::string overflow_file_prefix = "Opdebug.Node_OpDebug.";
-
-    MS_LOG(INFO) << "Processing bin file path " << overflow_bin_path;
-
-    std::string abspath = RealPath(overflow_bin_path);
-    DIR *d = opendir(abspath.c_str());
-    if (d == nullptr) {
-      MS_LOG(ERROR) << "OverFlow bin directory does not exist!";
-    } else {
-      struct dirent *dir = nullptr;
-      while ((dir = readdir(d)) != nullptr) {
-        struct stat st;
-        std::string name = abspath + std::string("/") + std::string(dir->d_name);
-        int ret = stat(name.c_str(), &st);
-        if (ret == 0 && S_ISREG(st.st_mode)) {
-          // form fully qualified  filename
-          std::string file_path = overflow_bin_path;
-          std::string file_name = dir->d_name;
-          (void)file_path.append(file_name);
-          // attempt to read the file
-          std::ifstream infile;
-          infile.open(file_path.c_str(), std::ios::ate | std::ios::binary | std::ios::in);
-          if (!infile.is_open()) {
-            MS_LOG(ERROR) << "Failed to open overflow bin file " << file_name << " Errno:" << errno;
-            continue;
-          }
-
-          std::string node_name;
-          uint64_t task_id = 0;
-          uint64_t stream_id = 0;
-          // detect overflow bin file
-          if (file_name.rfind(overflow_file_prefix, 0) == 0) {
-            if (!GetTaskIdStreamId(file_name, overflow_file_prefix, &task_id, &stream_id)) {
-              continue;
-            }
-            MS_LOG(INFO) << "Overflow bin file " << file_name << ", task_id " << task_id << ", stream_id " << stream_id
-                         << ".";
-            task_stream_hit.push_back(std::make_pair(task_id, stream_id));
-          } else {
-            // regular bin file
-            bool success_parse = GetAttrsFromFilename(file_name, &node_name, &task_id, &stream_id);
-            if (success_parse) {
-              task_stream_to_opname[std::make_pair(task_id, stream_id)] = node_name;
-            }
-          }
-          infile.close();
-        }
-      }
-      (void)closedir(d);
-    }
-
-    // find the op_names with an overflow hit
-    for (auto &task_stream : task_stream_hit) {
-      auto op_name = task_stream_to_opname[task_stream];
-      if (!op_name.empty()) {
-        MS_LOG(INFO) << "Operation overflow detected in " << op_name;
-        op_names.push_back(op_name);
-      }
-    }
-
+    AddOpOverflowOpNames(overflow_bin_path, &op_names);
     overflow_ops_[overflow_bin_path] = op_names;
   }
 

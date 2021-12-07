@@ -33,31 +33,29 @@ def build_dump_structure(path, tensor_name_list, tensor_list, net_name, tensor_i
         rank_id = str(tensor_info.rank_id)
         root_graph_id = str(tensor_info.root_graph_id)
         is_output = str(tensor_info.is_output)
-        if rank_id not in ranks_run_history:
+        graphs_run_history = ranks_run_history.get(rank_id)
+        if graphs_run_history is None:
             graphs_run_history = {}
             ranks_run_history[rank_id] = graphs_run_history
-        if root_graph_id not in ranks_run_history[rank_id]:
-            iter_list = []
-            iter_list.append(iteration)
-            graphs_run_history[root_graph_id] = iter_list
-        elif iteration not in graphs_run_history[root_graph_id]:
+        if root_graph_id not in graphs_run_history:
+            graphs_run_history[root_graph_id] = [iteration]
+        if iteration not in graphs_run_history[root_graph_id]:
             bisect.insort(graphs_run_history[root_graph_id], iteration)
 
         path = os.path.join(temp_dir, "rank_" + rank_id, net_name, root_graph_id, iteration)
         os.makedirs(path, exist_ok=True)
         if is_output == "True":
-            file = tempfile.mkstemp(prefix=tensor_name, suffix=".output." + slot +
-                                    ".DefaultFormat.npy", dir=path)
+            file_name = f'{tensor_name}.output.{slot}.DefaultFormat.npy'
         else:
-            file = tempfile.mkstemp(prefix=tensor_name, suffix=".input." + slot +
-                                    ".DefaultFormat.npy", dir=path)
-        full_path = file[1]
+            file_name = f'{tensor_name}.input.{slot}.DefaultFormat.npy'
+        full_path = os.path.join(path, file_name)
         np.save(full_path, tensor)
     build_global_execution_order(temp_dir, ranks_run_history)
     return temp_dir
 
 
 def build_global_execution_order(path, ranks_run_history):
+    """Build global execution order."""
     for rank_id in ranks_run_history.keys():
         exec_order_path = path + "/rank_" + rank_id + "/" + "execution_order"
         os.makedirs(exec_order_path, exist_ok=True)

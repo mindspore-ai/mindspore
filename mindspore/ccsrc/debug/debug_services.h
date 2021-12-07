@@ -277,6 +277,8 @@ class DebugServices {
                                  std::vector<unsigned int> *device_id, std::vector<unsigned int> *root_graph_id,
                                  bool error_on_no_value = false);
 
+  void AddOpOverflowOpNames(const std::string overflow_bin_path, std::vector<std::string> *op_names);
+
   void CheckWatchpoints(std::vector<std::string> *name, std::vector<std::string> *slot, std::vector<int> *condition,
                         std::vector<unsigned int> *const watchpoint_id,
                         std::vector<std::vector<parameter_t>> *parameters, std::vector<int32_t> *error_code,
@@ -333,9 +335,8 @@ class DebugServices {
                         std::vector<std::shared_ptr<TensorData>> *const result_list, bool *no_mem_to_read = nullptr);
 
   void ProcessTensorDataSync(const std::vector<std::tuple<std::string, std::string>> &proto_to_dump,
-                             const std::string &abspath, const std::string &specific_dump_dir, unsigned int iteration,
-                             unsigned int device_id, unsigned int root_graph_id,
-                             std::vector<std::shared_ptr<TensorData>> *const tensor_list,
+                             const std::string &specific_dump_dir, unsigned int iteration, unsigned int device_id,
+                             unsigned int root_graph_id, std::vector<std::shared_ptr<TensorData>> *const tensor_list,
                              bool error_on_no_value = false);
 
   void ReadFileAndAddToTensor(const bool found, const std::vector<std::string> &matched_paths,
