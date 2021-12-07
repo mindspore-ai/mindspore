@@ -623,7 +623,7 @@ class Parser:
 
     def is_unsupported_builtin_type(self, value_type):
         """To check if not supported builtin type"""
-        unsupported_builtin_type = (list, tuple, set, dict, slice, bool, int, float, str)
+        unsupported_builtin_type = (list, tuple, set, dict, slice, bool, int, float, str, complex, reversed)
         is_unsupported = value_type in unsupported_builtin_type
         logger.debug(f"value_type: {value_type}, unsupported builtin type: {is_unsupported}.")
         return is_unsupported
