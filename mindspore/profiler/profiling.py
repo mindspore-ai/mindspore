@@ -204,6 +204,9 @@ class Profiler:
         profile_memory = "off"
         if self._profile_memory:
             profile_memory = "on"
+        profiler_communication = "off"
+        if self._profile_communication:
+            profiler_communication = "on"
 
         fp_point = os.environ.get("PROFILING_FP_START", "")
         bp_point = os.environ.get("PROFILING_BP_END", "")
@@ -216,7 +219,8 @@ class Profiler:
             "task_trace": "on",
             "aic_metrics": "ArithmeticUtilization",
             "aicpu": "on",
-            "profile_memory": profile_memory
+            "profile_memory": profile_memory,
+            "hccl": profiler_communication
         }
 
         return profiling_options

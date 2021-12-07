@@ -80,6 +80,9 @@ uint64_t AscendProfiler::GetOptionsMask() const {
   if (options_json["aicpu"] == "on") {
     mask |= ACL_PROF_AICPU;
   }
+  if (options_json["hccl"] == "on") {
+    mask |= ACL_PROF_HCCL_TRACE;
+  }
 
   return mask;
 }
