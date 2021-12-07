@@ -55,6 +55,8 @@ int TransposeInt8CPUKernel::ReSize() {
 
   // get perm data
   auto perm_tensor = in_tensors_.at(1);
+  MS_CHECK_TRUE_RET(perm_tensor->data_type() == kNumberTypeInt32 || perm_tensor->data_type() == kNumberTypeInt,
+                    RET_ERROR);
   int *perm_data = reinterpret_cast<int *>(perm_tensor->data());
   CHECK_NULL_RETURN(perm_data);
   transpose_param_->num_axes_ = perm_tensor->ElementsNum();
@@ -64,6 +66,7 @@ int TransposeInt8CPUKernel::ReSize() {
   }
 
   for (int i = 0; i < transpose_param_->num_axes_; ++i) {
+    MS_CHECK_LT(perm_data[i], static_cast<int>(in_shape.size()), RET_ERROR);
     transpose_param_->perm_[i] = perm_data[i];
   }
 

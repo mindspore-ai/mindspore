@@ -19,6 +19,7 @@
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
 #include "src/common/file_utils.h"
+#include "src/common/log_util.h"
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
@@ -48,6 +49,12 @@ int QuantizedAddCPUKernel::Prepare() {
   auto *input1 = in_tensors_.at(1);
   auto *output = out_tensors_.at(0);
 
+  CHECK_NULL_RETURN(input0);
+  CHECK_NULL_RETURN(input1);
+  CHECK_NULL_RETURN(output);
+  MS_CHECK_TRUE_RET(!input0->quant_params().empty(), RET_ERROR);
+  MS_CHECK_TRUE_RET(!input1->quant_params().empty(), RET_ERROR);
+  MS_CHECK_TRUE_RET(!output->quant_params().empty(), RET_ERROR);
   para_->in0_args_.zp_ = input0->quant_params().front().zeroPoint * -1;
   para_->in1_args_.zp_ = input1->quant_params().front().zeroPoint * -1;
   para_->out_zp_ = output->quant_params().front().zeroPoint;
