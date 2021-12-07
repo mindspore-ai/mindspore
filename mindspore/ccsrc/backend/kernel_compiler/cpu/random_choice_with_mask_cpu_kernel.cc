@@ -118,7 +118,7 @@ void RandomChoiceWithMaskCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   input_dim_size = SizeToInt(dims.size());
   if (input_dim_size < 1 || input_dim_size > MAX_INPUT_DIMS) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dimension of 'input_x ' should be in range [1-D, 5-D], but got " << input_dim_size
+                      << "', the dimension of 'input_x' should be in range [1-D, 5-D], but got " << input_dim_size
                       << "-D.";
   }
 }

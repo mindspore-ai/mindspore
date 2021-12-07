@@ -75,13 +75,13 @@ void CheckValidCPUKernel<T>::CheckParams(const std::vector<AddressPtr> &inputs,
                                          const std::vector<AddressPtr> &outputs) {
   //  inputs: anchor_box, img_metas
   if (inputs.size() != kInputSize) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of input should be " << kInputSize << ", but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be " << kInputSize << ", but got "
                       << inputs.size();
   }
 
   //  outputs: valid
   if (outputs.size() != kOutputSize) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of output should be " << kOutputSize << ", but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be " << kOutputSize << ", but got "
                       << outputs.size();
   }
   if (outputs[0]->size / sizeof(bool) != inputs[0]->size / sizeof(T) / COORDINATE) {

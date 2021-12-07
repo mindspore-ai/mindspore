@@ -82,15 +82,15 @@ void UniqueCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const 
   }
   if (inputs.size() < 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the number of input should be greater than 0, but got: " << inputs.size();
+                      << "', the number of inputs should be greater than 0, but got: " << inputs.size();
   }
   if (workspace.size() < 3) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the number of workspace should be greater than 2, but got: " << workspace.size();
+                      << "', the number of workspaces should be greater than 2, but got: " << workspace.size();
   }
   if (outputs.size() < 2) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the number of output should be greater than 1, but got: " << outputs.size();
+                      << "', the number of outputs should be greater than 1, but got: " << outputs.size();
   }
   auto params = std::make_shared<UniqueParam<DataType, IndexType>>();
   params->input_ = reinterpret_cast<DataType *>(inputs[0]->addr);

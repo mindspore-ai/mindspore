@@ -39,8 +39,8 @@ void ConcatOffsetCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   }
   if (axis_ >= input_1_shape.size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the 'axis' should be less than the dimension of input, but got 'axis': " << axis_
-                      << ", and the dimension of the first input: " << input_1_shape.size();
+                      << "', the 'axis' should be less than the dimension of 'input_x', but got 'axis': " << axis_
+                      << ", and the dimension of 'input_x': " << input_1_shape.size();
   }
 }
 

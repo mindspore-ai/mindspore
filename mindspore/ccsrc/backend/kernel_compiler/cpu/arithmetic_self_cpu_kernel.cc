@@ -311,8 +311,8 @@ bool ArithmeticSelfCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inpu
     LaunchLogicalNot(inputs, outputs);
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the type of the first input should be float16, float32, "
-                         "float64, int16, int32, int64, or bool, but got "
+                      << "', the type of 'x' should be float16, float32, float64, int16, int32, int64, or bool, "
+                         "but got "
                       << TypeIdLabel(dtype_);
   }
   return true;

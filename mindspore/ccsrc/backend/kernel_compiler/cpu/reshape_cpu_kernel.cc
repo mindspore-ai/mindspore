@@ -36,7 +36,7 @@ bool ReshapeCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, con
   }
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kReshapeOutputsNum, kernel_name_);
   if (inputs[0]->size != outputs[0]->size) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the size of the first input : {" << inputs[0]->size
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the size of 'input_x': {" << inputs[0]->size
                       << "} is not equal to the size of the first output: {" << outputs[0]->size << "}";
   }
   if (inputs[0]->addr == outputs[0]->addr) {

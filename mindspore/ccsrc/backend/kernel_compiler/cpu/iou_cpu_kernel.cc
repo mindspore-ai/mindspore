@@ -37,14 +37,14 @@ void IOUCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   constexpr size_t BOX_COORDINATE_INDEX = 1;
 
   if (anchor_boxes_shape.size() != BOX_SHAPE_SIZE || anchor_boxes_shape[BOX_COORDINATE_INDEX] != kBoxCoordinateLen) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'anchor_boxes' should be [N, 4], but got: "
-                      << Vector2Str(anchor_boxes_shape);
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the shape of 'anchor_boxes' should be [N, 4], but got: " << Vector2Str(anchor_boxes_shape);
   }
   anchor_boxes_size_ = anchor_boxes_shape[BOX_SIZE_INDEX];
   auto gt_boxes_shape = AnfAlgo::GetInputDeviceShape(kernel_node, GT_BOXES);
   if (gt_boxes_shape.size() != BOX_SHAPE_SIZE || gt_boxes_shape[BOX_COORDINATE_INDEX] != kBoxCoordinateLen) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dimension of 'gt_boxes' should be [N, 4], but got: " << Vector2Str(gt_boxes_shape);
+                      << "', the shape of 'gt_boxes' should be [N, 4], but got: " << Vector2Str(gt_boxes_shape);
   }
   gt_boxes_size_ = gt_boxes_shape[BOX_SIZE_INDEX];
   iou_size_ = anchor_boxes_size_ * gt_boxes_size_;
