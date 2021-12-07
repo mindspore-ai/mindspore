@@ -307,13 +307,13 @@ int FullQuantQuantizer::DoParameterNodeQuant(const CNodePtr &cnode, const AnfNod
   }
   // support for share weight.
   if (type_id == kNumberTypeInt8) {
-    return RET_CONTINUE;
+    return RET_NO_CHANGE;
   }
   // Only data the data type is fp32 can be quant.
   if (type_id != kNumberTypeFloat32) {
     ret = SetInOutQuantParam(input_node, nullptr, primitive, true, input_index - 1);
     if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Set In/Out quant param failed.";
+      MS_LOG(ERROR) << op_name << " Set In/Out quant param failed.";
       return ret;
     }
     return RET_NO_CHANGE;
@@ -321,19 +321,19 @@ int FullQuantQuantizer::DoParameterNodeQuant(const CNodePtr &cnode, const AnfNod
   if (input_index == THIRD_INPUT + 1 && CheckNodeInSet(cnode, has_bias_operator)) {
     ret = DoBiasQuant(input_node, primitive);
     if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Do bias quant failed.";
+      MS_LOG(ERROR) << op_name << " Do bias quant failed.";
       return ret;
     }
   } else if (CheckNodeInSet(cnode, per_channel_ops_)) {
     ret = DoWeightQuant(op_name, input_node, primitive, true, input_index);
     if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Do bias quant failed.";
+      MS_LOG(ERROR) << op_name << " Do bias quant failed.";
       return ret;
     }
   } else {
     ret = DoWeightQuant(op_name, input_node, primitive, false, input_index);
     if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Do bias quant failed.";
+      MS_LOG(ERROR) << op_name << " Do bias quant failed.";
       return ret;
     }
   }
@@ -361,7 +361,7 @@ int FullQuantQuantizer::QuantNodeSimpleOp(const CNodePtr &cnode) {
       auto &info = (*inputs_diverg_info)[op_name][activation_input_index++];
       ret = SetInOutQuantParam(input_node, info, primitive, true, i - 1);
       if (ret != RET_OK) {
-        MS_LOG(ERROR) << "Set activation quant failed.";
+        MS_LOG(ERROR) << input_node->fullname_with_scope() << " Set activation quant failed.";
         return ret;
       }
     } else if (input_node->isa<mindspore::CNode>()) {
@@ -384,7 +384,7 @@ int FullQuantQuantizer::QuantNodeSimpleOp(const CNodePtr &cnode) {
         auto &info = (*inputs_diverg_info)[op_name][activation_input_index++];
         ret = SetInOutQuantParam(input_node, info, primitive, true, i - 1);
         if (ret != RET_OK) {
-          MS_LOG(ERROR) << "Set activation quant failed.";
+          MS_LOG(ERROR) << input_node->fullname_with_scope() << " Set activation quant failed.";
           return ret;
         }
       }
@@ -393,7 +393,7 @@ int FullQuantQuantizer::QuantNodeSimpleOp(const CNodePtr &cnode) {
       if (ret == RET_NO_CHANGE) {
         continue;
       } else if (ret != RET_OK) {
-        MS_LOG(ERROR) << "Do parameter node quant failed.";
+        MS_LOG(ERROR) << input_node->fullname_with_scope() << " Do parameter node quant failed.";
         return ret;
       }
     } else {
@@ -757,7 +757,7 @@ int FullQuantQuantizer::BiasCorrection(const FuncGraphPtr &func_graph, const CNo
   const auto &bias_diff = op_bias_diff_map_[op_name];
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
   if (primitive == nullptr) {
-    MS_LOG(ERROR) << "primitive is nullptr";
+    MS_LOG(ERROR) << op_name << " primitive is nullptr";
     return RET_NULL_PTR;
   }
   auto quant_param_holder = GetCNodeQuantHolder(primitive);
@@ -773,19 +773,19 @@ int FullQuantQuantizer::BiasCorrection(const FuncGraphPtr &func_graph, const CNo
     int *bias_datas = static_cast<int *>(bias_param->data_c());
 
     if (static_cast<size_t>(bias_param->DataSize()) != bias_diff.size()) {
-      MS_LOG(DEBUG) << "unexpected bias data count: " << bias_param->DataSize()
+      MS_LOG(DEBUG) << op_name << " unexpected bias data count: " << bias_param->DataSize()
                     << " not the same as bias_diff: " << bias_diff.size();
       return RET_ERROR;
     }
     if (bias_quant_params.size() != bias_diff.size()) {
-      MS_LOG(ERROR) << "unexpected bias quant params size: " << bias_quant_params.size()
+      MS_LOG(ERROR) << op_name << " unexpected bias quant params size: " << bias_quant_params.size()
                     << " not the same as bias_diff: " << bias_diff.size();
       return RET_ERROR;
     }
     for (size_t i = 0; i < bias_param->DataSize(); i++) {
       auto scale = bias_quant_params[i].scale;
       if (fabs(scale) <= 0.0f) {
-        MS_LOG(ERROR) << "divisor 'scale' cannot be 0.";
+        MS_LOG(ERROR) << op_name << " divisor 'scale' cannot be 0.";
         return RET_ERROR;
       }
       double after_correct = std::round(bias_diff[i] / scale) + bias_datas[i];
@@ -816,23 +816,24 @@ int FullQuantQuantizer::BiasCorrection(const FuncGraphPtr &func_graph, const CNo
 
     auto tensor_info = CreateTensorInfo(bias_diff.data(), sizeof(float) * bias_diff.size(), shape, kNumberTypeFloat32);
     if (tensor_info == nullptr) {
-      MS_LOG(ERROR) << "create tensor info failed.";
+      MS_LOG(ERROR) << op_name << " create tensor info failed.";
       return RET_ERROR;
     }
     auto status = InitParameterFromTensorInfo(parameter, tensor_info);
     if (status != RET_OK) {
-      MS_LOG(ERROR) << "init parameter from tensor info failed";
+      MS_LOG(ERROR) << op_name << " init parameter from tensor info failed";
       return RET_ERROR;
     }
     parameter->set_name("added_" + op_name + "_bias");
     cnode->add_input(parameter);
     status = DoBiasQuant(parameter, primitive);
     if (status != RET_OK) {
-      MS_LOG(ERROR) << "Do bias quant failed.";
+      MS_LOG(ERROR) << op_name << " Do bias quant failed.";
       return RET_ERROR;
     }
   } else {
-    MS_LOG(ERROR) << "unexpected get_input_quant_params size: " << input_quant_params.size();
+    MS_LOG(WARNING) << op_name << " unexpected size: " << input_quant_params.size()
+                    << ", and shared weight tensor does not support bias correction temporarily.";
   }
   return RET_OK;
 }
@@ -868,24 +869,28 @@ int FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
     MS_LOG(ERROR) << "Do inference failed.";
     return status;
   }
-  MS_LOG(INFO) << "start to update divergence's interval";
-  status = UpdateDivergeInterval();
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "Update diverge interval failed.";
-    return status;
+
+  if (flags_.fullQuantParam.activation_quant_method == KL) {
+    MS_LOG(INFO) << "start to update divergence's interval";
+    status = UpdateDivergeInterval();
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Update diverge interval failed.";
+      return status;
+    }
+    MS_LOG(INFO) << "start to collect data's distribution";
+    status = DoInference(KL_BIN);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Collect data frequency failed.";
+      return status;
+    }
+    MS_LOG(INFO) << "compute the best threshold";
+    status = ComputeThreshold();
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "compute threshold failed.";
+      return status;
+    }
   }
-  MS_LOG(INFO) << "start to collect data's distribution";
-  status = DoInference(KL_BIN);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "Collect data frequency failed.";
-    return status;
-  }
-  MS_LOG(INFO) << "compute the best threshold";
-  status = ComputeThreshold();
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "compute threshold failed.";
-    return status;
-  }
+
   MS_LOG(INFO) << "start to generate quant param and quantize tensor's data";
   status = QuantNode(func_graph);
   if (status != RET_OK) {
