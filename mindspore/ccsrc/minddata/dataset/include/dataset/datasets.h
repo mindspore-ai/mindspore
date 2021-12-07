@@ -3691,6 +3691,83 @@ SpeechCommands(const std::string &dataset_dir, const std::string &usage, const s
   return std::make_shared<SpeechCommandsDataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, cache);
 }
 
+/// \class STL10Dataset
+/// \brief A source dataset that reads and parses STL10 dataset.
+class MS_API STL10Dataset : public Dataset {
+ public:
+  /// \brief Constructor of STL10Dataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] usage Part of dataset of STL10, can be "train", "test", "unlabeled", "train+unlabeled"
+  ///     or "all".
+  /// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
+  ///     given, a `RandomSampler` will be used to randomly iterate the entire dataset.
+  /// \param[in] cache Tensor cache to use.
+  STL10Dataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+               const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Constructor of STL10Dataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] usage Part of dataset of STL10, can be "train", "test", "unlabeled", "train+unlabeled"
+  ///     or "all".
+  /// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  STL10Dataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, const Sampler *sampler,
+               const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Constructor of STL10Dataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] usage Part of dataset of STL10, can be "train", "test", "unlabeled", "train+unlabeled"
+  ///     or "all".
+  /// \param[in] sampler Sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  STL10Dataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+               const std::reference_wrapper<Sampler> sampler, const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Destructor of STL10Dataset.
+  ~STL10Dataset() = default;
+};
+
+/// \brief Function to create a STL10 Dataset.
+/// \notes The generated dataset has two columns ["image", "label"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage Usage of STL10, can be "train", "test", "unlabeled", "train+unlabeled" or "all" (default = "all").
+/// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
+///     given, a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler()).
+/// \param[in] cache Tensor cache to use. (default=nullptr, which means no cache is used).
+/// \return Shared pointer to the current Dataset.
+inline std::shared_ptr<STL10Dataset> MS_API
+STL10(const std::string &dataset_dir, const std::string &usage = "all",
+      const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
+      const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<STL10Dataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, cache);
+}
+
+/// \brief Function to create a STL10 Dataset.
+/// \notes The generated dataset has two columns ["image", "label"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage Usage of STL10, can be "train", "test", "unlabeled" or "train+unlabeled" or "all"
+/// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use. (default=nullptr, which means no cache is used).
+/// \return Shared pointer to the current Dataset.
+inline std::shared_ptr<STL10Dataset> MS_API STL10(const std::string &dataset_dir, const std::string &usage,
+                                                  const Sampler *sampler,
+                                                  const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<STL10Dataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, cache);
+}
+
+/// \brief Function to create a STL10 Dataset.
+/// \notes The generated dataset has two columns ["image", "label"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage Usage of STL10, can be "train", "test", "unlabeled", "train+unlabeled" or "all"
+/// \param[in] sampler Sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use. (default=nullptr, which means no cache is used).
+/// \return Shared pointer to the current Dataset.
+inline std::shared_ptr<STL10Dataset> MS_API STL10(const std::string &dataset_dir, const std::string &usage,
+                                                  const std::reference_wrapper<Sampler> sampler,
+                                                  const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<STL10Dataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, cache);
+}
+
 /// \class TedliumDataset
 /// \brief A source dataset for reading and parsing tedlium dataset.
 class MS_API TedliumDataset : public Dataset {

@@ -104,6 +104,7 @@ constexpr char kQMnistNode[] = "QMnistDataset";
 constexpr char kRandomNode[] = "RandomDataset";
 constexpr char kSBUNode[] = "SBUDataset";
 constexpr char kSpeechCommandsNode[] = "SpeechCommandsDataset";
+constexpr char kSTL10Node[] = "STL10Dataset";
 constexpr char kTedliumNode[] = "TedliumDataset";
 constexpr char kTextFileNode[] = "TextFileDataset";
 constexpr char kTFRecordNode[] = "TFRecordDataset";
