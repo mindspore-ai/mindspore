@@ -16,8 +16,7 @@
 """Operators for nn."""
 
 import math
-import operator
-from functools import reduce, partial
+from functools import partial
 import numpy as np
 from mindspore import log as logger
 from mindspore._checkparam import _check_3d_int_or_tuple
@@ -140,7 +139,7 @@ class CeLU(Primitive):
         self.add_prim_attr('alpha2', self.alpha2)
 
 
-class Flatten(PrimitiveWithInfer):
+class Flatten(Primitive):
     r"""
     Flattens a tensor without changing its batch size on the 0-th axis.
 
@@ -169,15 +168,6 @@ class Flatten(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         pass
-
-    def infer_shape(self, input_x):
-        validator.check_int(len(input_x), 1, Rel.GE, 'input_x rank', self.name)
-        prod = 1 if len(input_x) == 1 else reduce(operator.mul, input_x[1:])
-        return input_x[0], prod
-
-    def infer_dtype(self, input_x):
-        validator.check_subclass("input_x", input_x, mstype.tensor, self.name)
-        return input_x
 
 
 class AdaptiveAvgPool2D(PrimitiveWithInfer):
