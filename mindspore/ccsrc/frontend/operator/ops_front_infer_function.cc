@@ -560,8 +560,11 @@ AbstractBasePtr InferImplMakeSlice(const AnalysisEnginePtr &, const PrimitivePtr
         if (tensor_dtype->isa<Bool>()) {
           auto *bool_value = static_cast<bool *>(value->data_c());
           slice_args.push_back(MakeValue((static_cast<int64_t>(*bool_value)))->ToAbstract());
-        } else if (tensor_dtype->isa<Int>()) {
+        } else if (tensor_dtype == kInt64) {
           auto *int_value = static_cast<int64_t *>(value->data_c());
+          slice_args.push_back(MakeValue((*int_value))->ToAbstract());
+        } else if (tensor_dtype == kInt32) {
+          auto *int_value = static_cast<int32_t *>(value->data_c());
           slice_args.push_back(MakeValue((*int_value))->ToAbstract());
         } else {
           MS_EXCEPTION(TypeError) << "The input tensor type of the MakeSlice operator must be int or bool, but got "
