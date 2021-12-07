@@ -62,7 +62,7 @@ def test_inner_scalar_mod():
 
     x = Tensor(2, dtype=ms.int32)
     net = Net()
-    with pytest.raises(Exception, match="Could not mod to zero."):
+    with pytest.raises(Exception, match="The second input of ScalarMod operator could not be zero."):
         ret = net(x)
         print("ret:", ret)
 
@@ -84,7 +84,8 @@ def test_inner_scalar_mod_args_length():
 
     x = Tensor(2, dtype=ms.int32)
     net = Net()
-    with pytest.raises(Exception, match="Function S-Prim-Mod's input length is not equal to Signature length."):
+    with pytest.raises(Exception, match="The size of input in the operator should be equal to the size of the "
+                                        "operator's signature."):
         ret = net(x)
         print("ret:", ret)
 
@@ -104,7 +105,67 @@ def test_make_range_input_is_empty():
     x = Tensor(2, dtype=ms.int32)
     y = Tensor(4, dtype=ms.int32)
     net = Net()
-    with pytest.raises(Exception, match="The inputs of make_range operator could not be empty."):
+    with pytest.raises(Exception, match="The inputs of MakeRange operator could not be empty."):
+        ret = net(x, y)
+        print("ret:", ret)
+
+
+def test_make_range_step_zero():
+    """
+    Feature: Check the length of inputs of make_range operator.
+    Description: The step value of MakeRange operator could not be 0.
+    Expectation: The step value of MakeRange operator could not be 0.
+    """
+    class Net(Cell):
+        def construct(self, x, y):
+            for _ in F.make_range(1, 2, 0):
+                x += y
+            return x
+
+    x = Tensor(2, dtype=ms.int32)
+    y = Tensor(4, dtype=ms.int32)
+    net = Net()
+    with pytest.raises(Exception, match="The step value of MakeRange operator could not be 0."):
+        ret = net(x, y)
+        print("ret:", ret)
+
+
+def test_make_range_error_input_1():
+    """
+    Feature: Check the inputs of make_range operator.
+    Description: If start > stop, the step need smaller than zero.
+    Expectation: If start > stop, the step need smaller than zero.
+    """
+    class Net(Cell):
+        def construct(self, x, y):
+            for _ in F.make_range(1, -1, 3):
+                x += y
+            return x
+
+    x = Tensor(2, dtype=ms.int32)
+    y = Tensor(4, dtype=ms.int32)
+    net = Net()
+    with pytest.raises(Exception, match="Error slice"):
+        ret = net(x, y)
+        print("ret:", ret)
+
+
+def test_make_range_error_input_2():
+    """
+    Feature: Check the length of inputs of make_range operator.
+    Description: If start < stop, the step need greater than zero.
+    Expectation: If start < stop, the step need greater than zero.
+    """
+    class Net(Cell):
+        def construct(self, x, y):
+            for _ in F.make_range(-1, 1, -3):
+                x += y
+            return x
+
+    x = Tensor(2, dtype=ms.int32)
+    y = Tensor(4, dtype=ms.int32)
+    net = Net()
+    with pytest.raises(Exception, match="Error slice"):
         ret = net(x, y)
         print("ret:", ret)
 
@@ -124,7 +185,7 @@ def test_make_range_input_type():
     x = Tensor(2, dtype=ms.int32)
     y = Tensor(4, dtype=ms.int32)
     net = Net()
-    with pytest.raises(Exception, match="The type of inputs of make_range operator only support int64 number."):
+    with pytest.raises(Exception, match="The type of inputs in MakeRange operator only support int64 number."):
         ret = net(x, y)
         print("ret:", ret)
 
@@ -144,7 +205,7 @@ def test_make_range_input_size():
     x = Tensor(2, dtype=ms.int32)
     y = Tensor(4, dtype=ms.int32)
     net = Net()
-    with pytest.raises(Exception, match="The size of inputs of make_range operator could not exceed 3."):
+    with pytest.raises(Exception, match="The size of inputs of MakeRange operator could not exceed 3."):
         ret = net(x, y)
         print("ret:", ret)
 
@@ -165,7 +226,8 @@ def test_make_range_overflow():
     x = Tensor(2, dtype=ms.int32)
     y = Tensor(4, dtype=ms.int32)
     net = Net()
-    with pytest.raises(Exception, match="For make range, the required cycles number is greater than max cycles number"):
+    with pytest.raises(Exception, match="For MakeRange operator, the required cycles number is greater than max cycles"
+                                        "number"):
         ret = net(x, y)
         print("ret:", ret)
 
@@ -182,7 +244,8 @@ def test_typeof():
 
     x = Tensor([2, 3, 4, 5], dtype=ms.int32)
     net = Net()
-    with pytest.raises(Exception, match="Typeof evaluator requires 1 parameter, while the input size is 2."):
+    with pytest.raises(Exception, match="The Typeof operator must requires 1 argument, "
+                                        "but the size of arguments is 2."):
         ret = net(x)
         print("ret:", ret)
 
@@ -200,7 +263,43 @@ def test_tuple_div():
     x = (8, 14, 20)
     y = (2, 2)
     net = Net()
-    with pytest.raises(Exception, match="The size of inputs of tuple_div operator must be same"):
+    with pytest.raises(Exception, match="The size of inputs of TupleDiv operator must be the same"):
+        ret = net(x, y)
+        print("ret:", ret)
+
+
+def test_tuple_div_type():
+    """
+    Feature: Check the size of inputs of tuple_div operator.
+    Description: The type of inputs of tuple_div operator must be int64 number.
+    Expectation: The type of inputs of tuple_div operator must be int64 number.
+    """
+    class Net(Cell):
+        def construct(self, x, y):
+            return F.tuple_div(x, y)
+
+    x = (8, 14, 20)
+    y = (2, 2, 2.0)
+    net = Net()
+    with pytest.raises(Exception, match="The data type of inputs of TupleDiv operator should be an int64 number"):
+        ret = net(x, y)
+        print("ret:", ret)
+
+
+def test_tuple_div_zero():
+    """
+    Feature: Check the size of inputs of tuple_div operator.
+    Description: The divisor value should not be 0.
+    Expectation: The divisor value should not be 0.
+    """
+    class Net(Cell):
+        def construct(self, x, y):
+            return F.tuple_div(x, y)
+
+    x = (8, 14, 20)
+    y = (2, 2, 0)
+    net = Net()
+    with pytest.raises(Exception, match="The divisor value should not be 0"):
         ret = net(x, y)
         print("ret:", ret)
 
@@ -218,7 +317,7 @@ def test_tuple_div_input_is_not_divisible():
     x = (8, 14)
     y = (2, 3)
     net = Net()
-    with pytest.raises(Exception, match="The inputs of tuple_div is not divisible"):
+    with pytest.raises(Exception, match="The inputs of TupleDiv is not divisible"):
         ret = net(x, y)
         print("ret:", ret)
 

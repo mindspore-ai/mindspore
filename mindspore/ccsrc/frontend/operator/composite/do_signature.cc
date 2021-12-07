@@ -55,7 +55,10 @@ void ProcessDefault(const std::string &func_name, size_t actual_param_number, co
     for (size_t i = actual_param_number; i < sig_size; ++i) {
       auto default_value = signature[i].default_value;
       if (default_value == nullptr) {
-        MS_LOG(EXCEPTION) << "Function " << func_name << "'s input length is not equal to Signature length.";
+        MS_LOG(EXCEPTION) << "The size of input in the operator should be equal to the size of the operator's "
+                          << "signature. But the size of input in the operator is:" << actual_param_number
+                          << ", the length of the operator's signature is:" << sig_size
+                          << ". Please check the size of inputs of the operator.";
       } else {
         (*op_inputs).push_back(NewValueNode(default_value));
       }
@@ -346,7 +349,7 @@ FuncGraphPtr DoSignatureMetaFuncGraph::GenerateFuncGraph(const AbstractBasePtrLi
 
 void RaiseExceptionForConvertRefDtype(const std::string &func_name, const std::string &ref_type,
                                       const std::string &target_type) {
-  MS_LOG(EXCEPTION) << "In op '" << func_name << "', \n"
+  MS_LOG(EXCEPTION) << "For '" << func_name << "' operator, "
                     << "the type of writable argument is '" << ref_type << "', "
                     << "but the largest type in the same SignatureEnumDType is '" << target_type
                     << "'. The writable arg type is not equal to the largest type, "

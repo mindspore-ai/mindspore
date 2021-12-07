@@ -40,7 +40,7 @@ FuncGraphPtr ZipOperation::GenerateFuncGraph(const AbstractBasePtrList &args_spe
   // input: tuple arguments
   // output: tuple of items of input iterated on every input
   if (args_spec_list.empty()) {
-    MS_LOG(EXCEPTION) << "For 'zip', there is at least one input.";
+    MS_LOG(EXCEPTION) << "The zip operator must have at least 1 argument, but the size of arguments is 0.";
   }
 
   auto all_is_sequence =
@@ -49,7 +49,12 @@ FuncGraphPtr ZipOperation::GenerateFuncGraph(const AbstractBasePtrList &args_spe
       return abs->isa<AbstractSequeue>();
     });
   if (!all_is_sequence) {
-    MS_LOG(EXCEPTION) << "For 'zip', all inputs must be sequence.";
+    std::ostringstream oss;
+    int64_t idx = 0;
+    for (auto &item : args_spec_list) {
+      oss << "the " << ++idx << " argument is: " << item->ToString() << "\n";
+    }
+    MS_LOG(EXCEPTION) << "The all inputs of zip operator must be sequence. But " << oss.str();
   }
 
   auto min_abs = std::min_element(

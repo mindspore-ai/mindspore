@@ -90,7 +90,7 @@ T InnerScalarMul(T x, T y) {
 template <typename T>
 float InnerScalarDiv(T x, T y) {
   if (y == 0) {
-    MS_EXCEPTION(ValueError) << "The divisor could not be zero.";
+    MS_EXCEPTION(ValueError) << "The divisor could not be zero. But the divisor is zero now.";
   }
   if constexpr (std::is_integral<T>::value && std::is_signed<T>::value) {
     if (x == std::numeric_limits<T>::min() && static_cast<int64_t>(y) == -1) {
@@ -110,7 +110,8 @@ T InnerScalarFloordiv(T x, T y) {
 template <typename T>
 T InnerScalarMod(T x, T y) {
   if (y == 0) {
-    MS_EXCEPTION(ValueError) << "Could not mod to zero.";
+    MS_EXCEPTION(ValueError) << "The second input of ScalarMod operator could not be zero."
+                             << "But the second input is zero now.";
   }
   if constexpr (!std::is_integral<T>::value) {
     return x - y * std::floor(x / y);

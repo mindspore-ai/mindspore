@@ -38,7 +38,7 @@ def test_hypermap_noleaf_tuple_list_mix():
     """
     tensor1 = Tensor(np.array([[1.2, 2.1], [2.2, 3.2]]).astype('float32'))
     tensor2 = Tensor(np.array([[1.2, 2.1], [2.2, 3.2]]).astype('float32'))
-    with pytest.raises(Exception, match="HyperMap cannot match up all input types of arguments."):
+    with pytest.raises(Exception, match="The types of arguments in HyperMap must be consistent"):
         main_noleaf((tensor1, 1), [tensor2, 2])
 
 
@@ -50,7 +50,7 @@ def test_hypermap_noleaf_tuple_length():
     """
     tensor1 = Tensor(np.array([[1.2, 2.1], [2.2, 3.2]]).astype('float32'))
     tensor2 = Tensor(np.array([[1.2, 2.1], [2.2, 3.2]]).astype('float32'))
-    with pytest.raises(Exception, match="Tuple in HyperMap should have same length."):
+    with pytest.raises(Exception, match="The length of tuples in HyperMap must be the same"):
         main_noleaf((tensor1, 1), (tensor2, 2, 2))
 
 
@@ -62,7 +62,7 @@ def test_hypermap_noleaf_list_length():
     """
     tensor1 = Tensor(np.array([[1.2, 2.1], [2.2, 3.2]]).astype('float32'))
     tensor2 = Tensor(np.array([[1.2, 2.1], [2.2, 3.2]]).astype('float32'))
-    with pytest.raises(Exception, match="List in HyperMap should have same length."):
+    with pytest.raises(Exception, match="The lists in HyperMap should have the same length"):
         main_noleaf([tensor1], [tensor2, tensor2])
 
 
@@ -74,7 +74,7 @@ def test_hypermap_noleaf_list_tuple():
     """
     tensor1 = Tensor(np.array([[1.2, 2.1], [2.2, 3.2]]).astype('float32'))
     tensor2 = Tensor(np.array([[1.2, 2.1], [2.2, 3.2]]).astype('float32'))
-    with pytest.raises(Exception, match="HyperMap cannot match up all input types of arguments."):
+    with pytest.raises(Exception, match="The types of arguments in HyperMap must be consistent"):
         main_noleaf([tensor1], (tensor2, tensor2))
 
 
@@ -106,7 +106,7 @@ def test_tuple_slice_stop_index():
             Tensor(np.ones([2, 3, 4], np.int32)))
 
     net = TupleSliceNet()
-    with pytest.raises(Exception, match="The 1th input of MakeSlice should be scalar, none or tensor, but got str"):
+    with pytest.raises(Exception, match="The 1th input of scalar should be int or bool"):
         output = net(data)
         print("output:", output)
 
@@ -145,7 +145,7 @@ def test_tuple_slice_start_index():
             Tensor(np.ones([2, 3, 4], np.int32)))
 
     net = TupleSliceNet()
-    with pytest.raises(Exception, match="The 0th input of MakeSlice should be scalar, none or tensor, but got str"):
+    with pytest.raises(Exception, match="The 0th input of scalar should be int or bool"):
         output = net(data)
         print("output:", output)
 

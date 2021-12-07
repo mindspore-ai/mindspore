@@ -64,7 +64,8 @@ void CalcSlidePara(const AbstractBasePtrList &args_spec_list, SlideInfo *slide) 
     MS_EXCEPTION_IF_NULL(args_spec_list[0]);
     auto arg_value = args_spec_list[0]->BuildValue();
     if (!arg_value->isa<Int64Imm>()) {
-      MS_LOG(EXCEPTION) << "The type of inputs of make_range operator only support int64 number.";
+      MS_LOG(EXCEPTION) << "The type of inputs in MakeRange operator only support int64 number."
+                        << "But get " << arg_value->ToString();
     }
     arg1 = GetValue<int64_t>(arg_value);
   }
@@ -73,7 +74,8 @@ void CalcSlidePara(const AbstractBasePtrList &args_spec_list, SlideInfo *slide) 
     MS_EXCEPTION_IF_NULL(args_spec_list[1]);
     auto arg_value = args_spec_list[1]->BuildValue();
     if (!arg_value->isa<Int64Imm>()) {
-      MS_LOG(EXCEPTION) << "The type of inputs of make_range operator only support int64 number.";
+      MS_LOG(EXCEPTION) << "The type of inputs in MakeRange operator only support int64 number."
+                        << "But get " << arg_value->ToString();
     }
     arg2 = GetValue<int64_t>(arg_value);
   }
@@ -82,7 +84,8 @@ void CalcSlidePara(const AbstractBasePtrList &args_spec_list, SlideInfo *slide) 
     MS_EXCEPTION_IF_NULL(args_spec_list[2]);
     auto arg_value = args_spec_list[2]->BuildValue();
     if (!arg_value->isa<Int64Imm>()) {
-      MS_LOG(EXCEPTION) << "The type of inputs of make_range operator only support int64 number.";
+      MS_LOG(EXCEPTION) << "The type of inputs in MakeRange operator only support int64 number."
+                        << "But get " << arg_value->ToString();
     }
     slide->step = GetValue<int64_t>(arg_value);
     slide->start = arg1;
@@ -172,8 +175,8 @@ AbstractBasePtr InferImplTypeof(const AnalysisEnginePtr &, const PrimitivePtr &,
                                 const AbstractBasePtrList &args_spec_list) {
   // Inputs: a pointer to an AbstractBase object
   if (args_spec_list.size() != 1) {
-    MS_LOG(EXCEPTION) << "Typeof evaluator requires 1 parameter, while the input size is " << args_spec_list.size()
-                      << ".";
+    MS_LOG(EXCEPTION) << "The Typeof operator must requires 1 argument, but the size of arguments is "
+                      << args_spec_list.size() << ".";
   }
   AbstractBasePtr abs_base = args_spec_list[0];
   MS_EXCEPTION_IF_NULL(abs_base);
@@ -293,7 +296,8 @@ AbstractBasePtr InferImplListMap(const AnalysisEnginePtr &engine, const Primitiv
   MS_EXCEPTION_IF_NULL(engine);
   MS_EXCEPTION_IF_NULL(primitive);
   if (args_spec_list.size() <= 1) {
-    MS_LOG(EXCEPTION) << "List_map requires at least 1 list. while the input size is  " << args_spec_list.size() << ".";
+    MS_LOG(EXCEPTION) << "The ListMap operator requires at least 1 list. But the input size is "
+                      << args_spec_list.size() << ".";
   }
   AbstractFunctionPtr fn = CheckArg<AbstractFunction>(primitive->name(), args_spec_list, 0);
   // check args from 1.
@@ -303,7 +307,8 @@ AbstractBasePtr InferImplListMap(const AnalysisEnginePtr &engine, const Primitiv
   for (std::size_t i = 1; i < args_spec_list.size(); i++) {
     AbstractListPtr l_ptr = dyn_cast<AbstractList>(args_spec_list[i]);
     if (l_ptr == nullptr) {
-      MS_LOG(EXCEPTION) << "Argument[" << i << "] of list_map should be a list.";
+      MS_LOG(EXCEPTION) << "The " << i << "th argument of ListMap should be a list, but got "
+                        << args_spec_list[i]->ToString() << ".";
     }
     subargs.push_back(AbstractJoin(l_ptr->elements()));
   }
@@ -367,8 +372,7 @@ AbstractBasePtr InferImplReduceShape(const AnalysisEnginePtr &, const PrimitiveP
 
   auto x_shp_value = shape_x->BuildValue();
   if (x_shp_value->isa<AnyValue>()) {
-    MS_LOG(EXCEPTION) << op_name
-                      << " evaluator shape's data field can't be anything: " << args_spec_list[1]->ToString();
+    MS_LOG(EXCEPTION) << "The ReduceShape operator's data field can't be anything: " << args_spec_list[1]->ToString();
   }
 
   // Axis can be scalar, tuple or list
@@ -378,17 +382,16 @@ AbstractBasePtr InferImplReduceShape(const AnalysisEnginePtr &, const PrimitiveP
     AbstractBasePtrList axis_list = {dyn_cast<AbstractScalar>(args_spec_list[1])};
     axis = std::make_shared<AbstractTuple>(axis_list);
   } else if (args_spec_list[1]->isa<AbstractSequeue>()) {
-    MS_LOG(DEBUG) << op_name << " evaluator second parameter is sequeue";
+    MS_LOG(DEBUG) << "The type of second argument of ReduceShape operator is sequeue.";
     axis = args_spec_list[1]->cast<AbstractSequeuePtr>();
   } else {
-    MS_LOG(EXCEPTION) << op_name << " evaluator second parameter should be a scalar or tuple or list, but got "
-                      << args_spec_list[1]->ToString();
+    MS_LOG(EXCEPTION) << op_name << "The second argument of ReduceShape operator should be a scalar or tuple or list, "
+                      << "but got " << args_spec_list[1]->ToString();
   }
 
   auto axis_value = axis->BuildValue();
   if (axis_value->isa<AnyValue>()) {
-    MS_LOG(EXCEPTION) << op_name
-                      << " evaluator shape's data field can't be anything: " << args_spec_list[1]->ToString();
+    MS_LOG(EXCEPTION) << "The ReduceShape operator's data field can't be anything: " << args_spec_list[1]->ToString();
   }
   auto axis_value_ptr = axis_value->cast<ValueSequeuePtr>();
   MS_EXCEPTION_IF_NULL(axis_value_ptr);
@@ -411,16 +414,18 @@ AbstractBasePtr InferImplTupleDiv(const AnalysisEnginePtr &, const PrimitivePtr 
 
   auto div_shp_value = div_shp->BuildValue();
   if (div_shp_value->isa<AnyValue>()) {
-    MS_LOG(EXCEPTION) << "The shape's data field can't be anything: " << args_spec_list[0]->ToString();
+    MS_LOG(EXCEPTION) << "The TupleDiv operator shape's data field can't be anything: "
+                      << args_spec_list[0]->ToString();
   }
 
   auto shape_x_value = shape_x->BuildValue();
   if (shape_x_value->isa<AnyValue>()) {
-    MS_LOG(EXCEPTION) << "The shape's data field can't be anything: " << args_spec_list[1]->ToString();
+    MS_LOG(EXCEPTION) << "The TupleDiv operator shape's data field can't be anything: "
+                      << args_spec_list[1]->ToString();
   }
 
   if (div_shp->size() != shape_x->size()) {
-    MS_LOG(EXCEPTION) << "The size of inputs of tuple_div operator must be same, but the size of divisor tuple is"
+    MS_LOG(EXCEPTION) << "The size of inputs of TupleDiv operator must be the same, but the size of divisor tuple is "
                       << div_shp->size() << ", the size of dividend tuple is " << shape_x->size() << ".";
   }
 
@@ -430,7 +435,8 @@ AbstractBasePtr InferImplTupleDiv(const AnalysisEnginePtr &, const PrimitivePtr 
 
   for (size_t i = 0; i < div_shape_data.size(); i++) {
     if (div_shape_data[i]->cast<Int64ImmPtr>() == nullptr) {
-      MS_LOG(EXCEPTION) << "div_shp_shape data should be an int64 number, but it's " << args_spec_list[1]->ToString();
+      MS_LOG(EXCEPTION) << "The data type of inputs of TupleDiv operator should be an int64 number, but got "
+                        << args_spec_list[1]->ToString();
     }
     int64_t shapex_value = GetValue<int64_t>(shape_x_data[i]);
     int64_t div_value = GetValue<int64_t>(div_shape_data[i]);
@@ -439,7 +445,7 @@ AbstractBasePtr InferImplTupleDiv(const AnalysisEnginePtr &, const PrimitivePtr 
       MS_LOG(EXCEPTION) << "The divisor value should not be 0!";
     }
     if ((shapex_value % div_value) != 0) {
-      MS_LOG(EXCEPTION) << "The inputs of tuple_div is not divisible, the dividend is :" << shapex_value
+      MS_LOG(EXCEPTION) << "The inputs of TupleDiv is not divisible, the dividend is :" << shapex_value
                         << ", the divisor is: " << div_value << ".";
     }
 
@@ -463,7 +469,7 @@ AbstractBasePtr InferImplTuple2Array(const AnalysisEnginePtr &, const PrimitiveP
   auto tensor = tensor::TensorPy::MakeTensor(data);
   auto ret = tensor->ToAbstract();
   ret->set_value(tensor);
-  MS_LOG(DEBUG) << "Tuple2array result AbstractTensor: " << ret->ToString();
+  MS_LOG(DEBUG) << "The infer result of Tuple2Array operator is tensor: " << ret->ToString();
   return ret;
 }
 
@@ -477,7 +483,7 @@ AbstractBasePtr InferImplShapeMul(const AnalysisEnginePtr &, const PrimitivePtr 
 
   auto shpx_value = shape_x->BuildValue();
   if (shpx_value->isa<AnyValue>()) {
-    MS_LOG(EXCEPTION) << "The shape's data field can't be anything: " << shape_x->ToString();
+    MS_LOG(EXCEPTION) << "The ShapeMul operator shape's data field can't be anything: " << shape_x->ToString();
   }
 
   auto shpx_data = shpx_value->cast<ValueTuplePtr>()->value();
@@ -489,7 +495,7 @@ AbstractBasePtr InferImplShapeMul(const AnalysisEnginePtr &, const PrimitivePtr 
   }
 
   auto result_v = MakeValue(result);
-  MS_LOG(DEBUG) << "The result of shape_mul:" << result_v->ToString();
+  MS_LOG(DEBUG) << "The infer result of ShapeMul is :" << result_v->ToString();
   return std::make_shared<AbstractScalar>(result_v, result_v->type());
 }
 
@@ -504,13 +510,13 @@ AbstractBasePtr InferImplSliceGetItem(const AnalysisEnginePtr &, const Primitive
   auto slice_attr = args_spec_list[1]->BuildValue();
   MS_EXCEPTION_IF_NULL(slice_attr);
   if (!slice_attr->isa<StringImm>()) {
-    MS_LOG(EXCEPTION) << "The node of " << op_name << "'s input 2 should be converted to a string but got "
+    MS_LOG(EXCEPTION) << "The second argument of SliceGetItem operator should be a string, but got "
                       << slice_attr->ToString();
   }
   auto slice_str = GetValue<std::string>(slice_attr);
   auto iter = result_map.find(slice_str);
   if (iter == result_map.end()) {
-    MS_EXCEPTION(AttributeError) << "'slice' object has no attribute " << iter->second;
+    MS_EXCEPTION(AttributeError) << "The 'slice' object has no attribute:" << iter->second;
   }
   return iter->second;
 }
@@ -547,8 +553,8 @@ AbstractBasePtr InferImplMakeSlice(const AnalysisEnginePtr &, const PrimitivePtr
       auto value = build_value->cast<tensor::TensorPtr>();
       if (value != nullptr) {
         if (value->DataSize() != 1) {
-          MS_EXCEPTION(TypeError) << "MakeSlice eval the input tensor must contain only one element, but got "
-                                  << value->ToString() << " has " << value->DataSize() << " elements.";
+          MS_EXCEPTION(TypeError) << "The input tensor of the MakeSlice operator must contain only one element,"
+                                  << "but " << value->ToString() << " has " << value->DataSize() << " elements.";
         }
 
         if (tensor_dtype->isa<Bool>()) {
@@ -558,15 +564,15 @@ AbstractBasePtr InferImplMakeSlice(const AnalysisEnginePtr &, const PrimitivePtr
           auto *int_value = static_cast<int64_t *>(value->data_c());
           slice_args.push_back(MakeValue((*int_value))->ToAbstract());
         } else {
-          MS_EXCEPTION(TypeError) << "MakeSlice eval the input tensor type must be int or bool, but got "
+          MS_EXCEPTION(TypeError) << "The input tensor type of the MakeSlice operator must be int or bool, but got "
                                   << tensor_dtype->ToString();
         }
       } else {
         slice_args.push_back(args_spec_list[index]);
       }
     } else {
-      MS_EXCEPTION(TypeError) << "The " << index << "th input of MakeSlice should be scalar, none or tensor, but got"
-                              << args_spec_list[index]->ToString();
+      MS_EXCEPTION(TypeError) << "The " << index << "th input of MakeSlice operator should be scalar, none or tensor,"
+                              << "but got " << args_spec_list[index]->ToString();
     }
   }
   // Slice: start, end, step
@@ -576,44 +582,47 @@ AbstractBasePtr InferImplMakeSlice(const AnalysisEnginePtr &, const PrimitivePtr
 AbstractBasePtr InferImplMakeRange(const AnalysisEnginePtr &, const PrimitivePtr &,
                                    const AbstractBasePtrList &args_spec_list) {
   if (args_spec_list.empty()) {
-    MS_LOG(EXCEPTION) << "The inputs of make_range operator could not be empty.";
+    MS_LOG(EXCEPTION) << "The inputs of MakeRange operator could not be empty.";
   }
 
   constexpr size_t max_args_size = 3;
   if (args_spec_list.size() > max_args_size) {
-    MS_LOG(EXCEPTION) << "The size of inputs of make_range operator could not exceed 3.";
+    MS_LOG(EXCEPTION) << "The size of inputs of MakeRange operator could not exceed 3. But the size of inputs is "
+                      << args_spec_list.size() << ".";
   }
 
   SlideInfo slide = {0, 1, 0};
   CalcSlidePara(args_spec_list, &slide);
 
   if (slide.step == 0) {
-    MS_LOG(EXCEPTION) << "The step value of make_range operator could not be 0.";
+    MS_LOG(EXCEPTION) << "The step value of MakeRange operator could not be 0.";
   }
 
   AbstractBasePtrList args;
   if (slide.start <= slide.stop) {
     if (slide.step <= 0) {
-      MS_LOG(EXCEPTION) << "Error slice[" << slide.start << ", " << slide.stop << ", " << slide.step << "]";
+      MS_LOG(EXCEPTION) << "Error slice[" << slide.start << ", " << slide.stop << ", " << slide.step
+                        << "], the slide.step should greater than zero, but got " << slide.step << ".";
     }
 
     for (int64_t i = slide.start; i < slide.stop; i += slide.step) {
       args.push_back(abstract::FromValue(i));
       if (i > 0 && INT_MAX - i < slide.step) {
-        MS_EXCEPTION(ValueError) << "For make range, the required cycles number is greater than max cycles number, "
-                                    "will cause integer overflow.";
+        MS_EXCEPTION(ValueError) << "For MakeRange operator, the required cycles number is greater than max cycles"
+                                 << "number, will cause integer overflow.";
       }
     }
   } else {
     if (slide.step >= 0) {
-      MS_LOG(EXCEPTION) << "Error slice[" << slide.start << ", " << slide.stop << ", " << slide.step << "]";
+      MS_LOG(EXCEPTION) << "Error slice[" << slide.start << ", " << slide.stop << ", " << slide.step
+                        << "], the slide.step should smaller than zero, but got " << slide.step << ".";
     }
 
     for (int64_t i = slide.start; i > slide.stop; i += slide.step) {
       args.push_back(abstract::FromValue(i));
       if (i < 0 && INT_MIN - i > slide.step) {
-        MS_EXCEPTION(ValueError) << "For make range, the required cycles number is greater than max cycles number, "
-                                    "will cause integer overflow.";
+        MS_EXCEPTION(ValueError) << "For MakeRange operator, the required cycles number is greater than max cycles "
+                                 << "number, will cause integer overflow.";
       }
     }
   }
@@ -649,8 +658,8 @@ AbstractBasePtr InferImplStringEqual(const AnalysisEnginePtr &, const PrimitiveP
   ValuePtr value_x = scalar_x->BuildValue();
   ValuePtr value_y = scalar_y->BuildValue();
   if (!value_x->isa<StringImm>() || !value_y->isa<StringImm>()) {
-    MS_LOG(EXCEPTION) << op_name << " requires 2 parameters are string, but got param0: " << value_x->ToString()
-                      << ", param1: " << value_y->ToString();
+    MS_LOG(EXCEPTION) << "The type of two arguments of StringEqual operator requires string, but got param0: "
+                      << value_x->ToString() << ", param1: " << value_y->ToString();
   }
 
   bool ret = (value_x->cast<StringImmPtr>()->value() == value_y->cast<StringImmPtr>()->value());
@@ -668,8 +677,8 @@ AbstractBasePtr InferImplStringConcat(const AnalysisEnginePtr &, const Primitive
   ValuePtr value_x = scalar_x->BuildValue();
   ValuePtr value_y = scalar_y->BuildValue();
   if (!value_x->isa<StringImm>() || !value_y->isa<StringImm>()) {
-    MS_LOG(EXCEPTION) << op_name << " requires 2 parameters are string, but got param0: " << value_x->ToString()
-                      << ", param1: " << value_y->ToString();
+    MS_LOG(EXCEPTION) << "The type of two arguments of StringConcat operator requires string, but got param0: "
+                      << value_x->ToString() << ", param1: " << value_y->ToString();
   }
 
   std::string ret = (value_x->cast<StringImmPtr>()->value() + value_y->cast<StringImmPtr>()->value());
@@ -714,7 +723,7 @@ AbstractBasePtr InferImplMakeRecord(const AnalysisEnginePtr &, const PrimitivePt
                                     const AbstractBasePtrList &args_spec_list) {
   // Inputs: at lease two objects of a subclass of AbstractBase.
   if (args_spec_list.size() < 2) {
-    MS_LOG(EXCEPTION) << "Typeof evaluator requires more than 1 parameter, while the input size is "
+    MS_LOG(EXCEPTION) << "The size of arguments of MakeRecord operator must more than 1, but the input size is "
                       << args_spec_list.size() << ".";
   }
 
@@ -723,14 +732,14 @@ AbstractBasePtr InferImplMakeRecord(const AnalysisEnginePtr &, const PrimitivePt
   TypePtr type = args_spec_list[0]->GetTypeTrack();
   MS_EXCEPTION_IF_NULL(type);
   if (type->type_id() != kMetaTypeTypeType) {
-    MS_LOG(EXCEPTION) << "Can not make type(" << type->ToString() << ")not TypeType";
+    MS_LOG(EXCEPTION) << "The type of first argument of MakeRecord must be TypeType, but got " << type->ToString();
   }
 
   auto value_track = args_spec_list[0]->GetValueTrack();
   MS_EXCEPTION_IF_NULL(value_track);
   auto type_ptr = value_track->cast<TypePtr>();
   if (type_ptr == nullptr) {
-    MS_LOG(EXCEPTION) << "Value type error, not Me type:" << value_track->ToString();
+    MS_LOG(EXCEPTION) << "The value type of first argument of MakeRecord is wrong:" << value_track->ToString();
   }
 
   auto cls = dyn_cast<Class>(type_ptr);

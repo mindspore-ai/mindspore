@@ -115,8 +115,9 @@ AnfNodePtr HyperMap::FullMake(const std::shared_ptr<List> &type, const FuncGraph
 
   size_t size = type->elements().size();
   size_t num = 0;
+  std::ostringstream oss;
   bool is_not_same =
-    std::any_of(arg_map.begin(), arg_map.end(), [&num, size](const std::pair<AnfNodePtr, TypePtr> &item) {
+    std::any_of(arg_map.begin(), arg_map.end(), [&num, size, &oss](const std::pair<AnfNodePtr, TypePtr> &item) {
       num++;
       auto lhs = std::static_pointer_cast<List>(item.second);
       if (lhs == nullptr) {
@@ -124,14 +125,14 @@ AnfNodePtr HyperMap::FullMake(const std::shared_ptr<List> &type, const FuncGraph
                           << item.second->ToString();
       }
       if (lhs->elements().size() != size) {
-        MS_LOG(ERROR) << "The elements[" << (num - 1) << "] has different length, expected " << size << ", but got "
-                      << lhs->elements().size();
+        oss << "the length of elements[" << (num - 1) << "] is " << size << ", but got " << lhs->elements().size()
+            << "\n";
         return true;
       }
       return false;
     });
   if (is_not_same) {
-    MS_LOG(EXCEPTION) << "List in HyperMap should have same length.";
+    MS_LOG(EXCEPTION) << "The lists in HyperMap should have the same length, " << oss.str();
   }
 
   // cannot use shared_from_base() also known as this, as it will make a reference cycle on
@@ -173,8 +174,9 @@ AnfNodePtr HyperMap::FullMake(const std::shared_ptr<Tuple> &type, const FuncGrap
 
   size_t size = type->elements().size();
   size_t num = 0;
+  std::ostringstream oss;
   bool is_not_same =
-    std::any_of(arg_map.begin(), arg_map.end(), [&num, size](const std::pair<AnfNodePtr, TypePtr> &item) {
+    std::any_of(arg_map.begin(), arg_map.end(), [&num, size, &oss](const std::pair<AnfNodePtr, TypePtr> &item) {
       num++;
       auto lhs = std::static_pointer_cast<Tuple>(item.second);
       if (lhs == nullptr) {
@@ -182,14 +184,14 @@ AnfNodePtr HyperMap::FullMake(const std::shared_ptr<Tuple> &type, const FuncGrap
                           << item.second->ToString();
       }
       if (lhs->elements().size() != size) {
-        MS_LOG(ERROR) << "The elements[" << (num - 1) << "] has different length, expected " << size << ", but got "
-                      << lhs->elements().size();
+        oss << "the length of elements[" << (num - 1) << "] is " << size << ", but got " << lhs->elements().size()
+            << "\n";
         return true;
       }
       return false;
     });
   if (is_not_same) {
-    MS_LOG(EXCEPTION) << "Tuple in HyperMap should have same length.";
+    MS_LOG(EXCEPTION) << "The length of tuples in HyperMap must be the same, " << oss.str();
   }
 
   // cannot use shared_from_base() also known as this, as it will make a reference cycle on
@@ -292,9 +294,11 @@ AnfNodePtr HyperMap::Make(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_a
           << trace::GetDebugInfo(func_graph->debug_info()) << "\n";
       int64_t idx = 0;
       for (auto &item : arg_map) {
-        oss << ++idx << ": " << item.second->ToString() << "\n";
+        oss << "The type of " << ++idx << " argument is: " << item.second->ToString() << "\n";
       }
-      MS_LOG(EXCEPTION) << "HyperMap cannot match up all input types of arguments.\n" << oss.str();
+      MS_LOG(EXCEPTION) << "The types of arguments in HyperMap must be consistent, "
+                        << "but the types of arguments are inconsistent:\n"
+                        << oss.str();
     }
   }
 
@@ -365,7 +369,7 @@ FuncGraphPtr HyperMap::GenerateFromTypes(const TypePtrList &args_spec_list) {
 abstract::AbstractBasePtrList HyperMap::NormalizeArgs(const AbstractBasePtrList &args_spec_list) const {
   if (fn_leaf_ == nullptr) {
     if (args_spec_list.empty()) {
-      MS_LOG(EXCEPTION) << "The args spec list is empty.";
+      MS_LOG(EXCEPTION) << "The size of arguments in list should not be empty. But the size of arguments is 0.";
     }
     MS_EXCEPTION_IF_NULL(args_spec_list[0]);
     // Assert that hypermap's function param does not contain free variables
@@ -792,13 +796,15 @@ FuncGraphPtr ListMap::GenerateFuncGraph(const AbstractBasePtrList &args_spec_lis
   size_t args_num = args_spec_list.size();
   // args: fn, list1, list2, ...
   if (args_num < 2) {
-    MS_LOG(EXCEPTION) << "list_map takes at least two arguments";
+    MS_LOG(EXCEPTION) << "The list_map operator must need at least two arguments, but the size of arguments is "
+                      << args_num << ".";
   }
 
   for (size_t i = 1; i < args_num; ++i) {
     if (typeid(args_spec_list[i]) != typeid(AbstractBase)) {
       // The function currently not be use
-      MS_LOG(EXCEPTION) << "list_map requires lists, not {t}'";
+      MS_LOG(EXCEPTION) << "The type of arguments of list_map operator must be lists. But got "
+                        << args_spec_list[i]->ToString();
     }
   }
 
@@ -949,8 +955,8 @@ FuncGraphPtr TupleAdd::GenerateFuncGraph(const AbstractBasePtrList &args_spec_li
                     << ", function: " << stub->ToString();
       return stub;
     }
-    MS_LOG(EXCEPTION) << "TupleAdd argument should be tuple, but " << args_spec_list[0]->ToString() << ", "
-                      << args_spec_list[1]->ToString();
+    MS_LOG(EXCEPTION) << "The type of argument in TupleAdd operator should be tuple, but the first argument is "
+                      << args_spec_list[0]->ToString() << ", the second argument is" << args_spec_list[1]->ToString();
   }
 
   FuncGraphPtr ret = std::make_shared<FuncGraph>();
@@ -998,7 +1004,7 @@ int64_t CheckSliceMember(const AbstractBasePtr &member, int64_t default_value, c
     return default_value;
   }
 
-  MS_LOG(EXCEPTION) << member_name << " should be a AbstractScalar or AbstractNone, but got " << member->ToString();
+  MS_LOG(EXCEPTION) << "The argument of SliceMember operator must be a Scalar or None, but got " << member->ToString();
 }
 
 void GenerateTupleSliceParameter(const AbstractTuplePtr &tuple, const AbstractSlicePtr &slice, int64_t *start_index,

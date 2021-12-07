@@ -72,8 +72,9 @@ AnfNodePtr Map::FullMakeList(const std::shared_ptr<List> &type, const FuncGraphP
 
   std::size_t size = type->elements().size();
   size_t num = 0;
+  std::ostringstream oss;
   bool is_not_same =
-    std::any_of(arg_pairs.begin(), arg_pairs.end(), [&num, size](const std::pair<AnfNodePtr, TypePtr> &item) {
+    std::any_of(arg_pairs.begin(), arg_pairs.end(), [&num, size, &oss](const std::pair<AnfNodePtr, TypePtr> &item) {
       num++;
       auto lhs = std::dynamic_pointer_cast<List>(item.second);
       if (lhs == nullptr) {
@@ -81,14 +82,14 @@ AnfNodePtr Map::FullMakeList(const std::shared_ptr<List> &type, const FuncGraphP
                           << item.second->ToString();
       }
       if (lhs->elements().size() != size) {
-        MS_LOG(ERROR) << "The elements[" << (num - 1) << "] has different length, expected " << size << ", but got "
-                      << lhs->elements().size();
+        oss << "the length of elements[" << (num - 1) << "] is " << size << ", but got " << lhs->elements().size()
+            << "\n";
         return true;
       }
       return false;
     });
   if (is_not_same) {
-    MS_LOG(EXCEPTION) << "List in Map should have same length.";
+    MS_LOG(EXCEPTION) << "The length of lists in Map must be the same. But " << oss.str();
   }
 
   constexpr size_t kPrimHoldLen = 1;
@@ -131,8 +132,9 @@ AnfNodePtr Map::FullMakeTuple(const std::shared_ptr<Tuple> &type, const FuncGrap
 
   size_t size = type->elements().size();
   size_t num = 0;
+  std::ostringstream oss;
   bool is_not_same =
-    std::any_of(arg_pairs.begin(), arg_pairs.end(), [&num, size](const std::pair<AnfNodePtr, TypePtr> &item) {
+    std::any_of(arg_pairs.begin(), arg_pairs.end(), [&num, size, &oss](const std::pair<AnfNodePtr, TypePtr> &item) {
       num++;
       auto lhs = std::dynamic_pointer_cast<Tuple>(item.second);
       if (lhs == nullptr) {
@@ -140,14 +142,14 @@ AnfNodePtr Map::FullMakeTuple(const std::shared_ptr<Tuple> &type, const FuncGrap
                           << item.second->ToString();
       }
       if (lhs->elements().size() != size) {
-        MS_LOG(ERROR) << "The elements[" << (num - 1) << "] has different length, expected " << size << ", but got "
-                      << lhs->elements().size();
+        oss << "the length of elements[" << (num - 1) << "] is " << size << ", but got " << lhs->elements().size()
+            << "\n";
         return true;
       }
       return false;
     });
   if (is_not_same) {
-    MS_LOG(EXCEPTION) << "Tuple in Map should have same length.";
+    MS_LOG(EXCEPTION) << "The length of tuples in Map must the same. But " << oss.str();
   }
 
   constexpr size_t kPrimHoldLen = 1;
@@ -227,7 +229,8 @@ AnfNodePtr Map::FullMakeClass(const std::shared_ptr<Class> &type, const FuncGrap
 
 AnfNodePtr Map::Make(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg, const ArgsPairList &arg_pairs) {
   if (arg_pairs.empty()) {
-    MS_EXCEPTION(TypeError) << "The map operator must have at least two arguments.";
+    MS_EXCEPTION(TypeError) << "The Map operator must have at least one argument. But the size of arguments is:"
+                            << arg_pairs.size() << ".";
   }
   bool found = false;
   TypeId id = kObjectTypeEnd;
@@ -257,10 +260,11 @@ AnfNodePtr Map::Make(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg, c
           << trace::GetDebugInfo(func_graph->debug_info()) << "\n";
       int64_t idx = 0;
       for (auto &item : arg_pairs) {
-        oss << ++idx << ": " << item.second->ToString() << "\n";
+        oss << "The type of " << ++idx << " argument is: " << item.second->ToString() << "\n";
       }
-      MS_LOG(EXCEPTION) << "Map cannot match up all input types of arguments.\n"
-                        << oss.str() << pair.second->ToString() << "\n";
+      MS_LOG(EXCEPTION) << "The types of arguments in Map must be consistent, "
+                        << "but the types of arguments are inconsistent:\n"
+                        << oss.str();
     }
   }
 
@@ -278,8 +282,7 @@ AnfNodePtr Map::Make(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg, c
       return FullMakeClass(type, func_graph, fn_arg, arg_pairs);
     }
     default:
-      MS_LOG(EXCEPTION) << "Map can only be applied to list, tuple and class "
-                        << ", but got " << pair.second->ToString();
+      MS_LOG(EXCEPTION) << "Map can only be applied to list, tuple and class, but got " << pair.second->ToString();
   }
 }
 
@@ -309,7 +312,7 @@ FuncGraphPtr Map::GenerateFromTypes(const TypePtrList &args_spec_list) {
 abstract::AbstractBasePtrList Map::NormalizeArgs(const AbstractBasePtrList &args_spec_list) const {
   if (fn_leaf_ == nullptr) {
     if (args_spec_list.empty()) {
-      MS_LOG(EXCEPTION) << "The args spec list should not be empty.";
+      MS_LOG(EXCEPTION) << "The arguments of Map operator should not be empty.";
     }
     MS_EXCEPTION_IF_NULL(args_spec_list[0]);
     // Assert that map's function param does not contain free variables
@@ -317,7 +320,7 @@ abstract::AbstractBasePtrList Map::NormalizeArgs(const AbstractBasePtrList &args
       auto graph_func = dyn_cast<FuncGraphAbstractClosure>(args_spec_list[0]);
       auto func_graph = graph_func->func_graph();
       if (func_graph->parent() != nullptr) {
-        MS_LOG(EXCEPTION) << "Map don't support Closure with free variable yet.";
+        MS_LOG(EXCEPTION) << "The Map operator don't support Closure with free variable yet.";
       }
     }
   }

@@ -43,7 +43,7 @@ def test_map_args_size():
     input_me_x = Tensor(input_np_x)
 
     net = MapNet()
-    with pytest.raises(Exception, match="The map operator must have at least two arguments."):
+    with pytest.raises(Exception, match="The Map operator must have at least one argument."):
         ret = net(input_me_x)
         print("ret:", ret)
 
@@ -94,7 +94,7 @@ def test_map_args_full_make_list():
     input_me_y = Tensor(np.random.randn(2, 3, 4, 5).astype(np.float32))
 
     net = MapNet()
-    with pytest.raises(Exception, match="Map cannot match up all input types of arguments."):
+    with pytest.raises(Exception, match="The types of arguments in Map must be consistent"):
         ret = net([input_me_x], (input_me_y))
         print("ret:", ret)
 
@@ -118,7 +118,7 @@ def test_map_args_full_make_list_same_length():
     input_me_y = Tensor(np.random.randn(2, 3, 4, 5).astype(np.float32))
 
     net = MapNet()
-    with pytest.raises(Exception, match="List in Map should have same length."):
+    with pytest.raises(Exception, match="The length of lists in Map must be the same"):
         ret = net([input_me_x], [input_me_y, input_me_y])
         print("ret:", ret)
 
@@ -142,7 +142,7 @@ def test_map_args_full_make_tuple_same_length():
     input_me_y = Tensor(np.random.randn(2, 3, 4, 5).astype(np.float32))
 
     net = MapNet()
-    with pytest.raises(Exception, match="Tuple in Map should have same length."):
+    with pytest.raises(Exception, match="The length of tuples in Map must the same"):
         ret = net((input_me_x, input_me_x), (input_me_y, input_me_y, input_me_y))
         print("ret:", ret)
 
@@ -165,6 +165,7 @@ def test_map_param_cast():
     input_me_x = Tensor(np.random.randn(2, 3, 4, 5).astype(np.float64))
 
     net = MapNet()
-    with pytest.raises(Exception, match="In op 'S-Prim-Assign', the type of writable argument is 'float32'"):
+    with pytest.raises(Exception, match="For 'S-Prim-Assign' operator, "
+                                        "the type of writable argument is 'float32'"):
         ret = net(input_me_x)
         print("ret:", ret)
