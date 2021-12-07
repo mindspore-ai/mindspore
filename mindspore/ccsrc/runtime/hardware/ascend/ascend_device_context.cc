@@ -32,9 +32,11 @@
 #ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
 #include "toolchain/adx_datadump_server.h"
+#include "toolchain/adx_datadump_callback.h"
 #include "debug/anf_ir_dump.h"
 #include "debug/dump_proto.h"
 #include "debug/data_dump/e2e_dump.h"
+#include "debug/debugger/debugger_utils.h"
 #endif
 #ifdef ENABLE_DEBUGGER
 #include "debug/tensor_load.h"
@@ -52,6 +54,7 @@
 #include "profiler/device/ascend/memory_profiling.h"
 #include "runtime/device/ascend/profiling/profiling_manager.h"
 
+using Adx::AdxRegDumpProcessCallBack;
 using mindspore::device::ascend::ProfilingManager;
 using mindspore::profiler::ascend::MemoryProfiling;
 #endif
@@ -199,6 +202,12 @@ void DumpInit(uint32_t device_id) {
   json_parser.CopyHcclJsonToDir(device_id);
   json_parser.CopyMSCfgJsonToDir(device_id);
   if (json_parser.async_dump_enabled()) {
+#ifdef ENABLE_D
+    // register callback to adx
+    if (json_parser.FileFormatIsNpy()) {
+      AdxRegDumpProcessCallBack(DumpDataCallBack);
+    }
+#endif
     if (AdxDataDumpServerInit() != 0) {
       MS_LOG(EXCEPTION) << "Adx data dump server init failed";
     }

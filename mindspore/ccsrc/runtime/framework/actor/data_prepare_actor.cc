@@ -320,7 +320,9 @@ void DataPrepareActor::PrepareDataForDeviceTensorStore(const std::vector<std::ve
     }
     // The DeviceAddress of the graph parameter has been updated.
     // The output address of RefNode needs to be consistent with the address of parameter.
-    UpdateRefNodeOutputDeviceAddress(graph);
+    if (!graph->is_executing_sink()) {
+      UpdateRefNodeOutputDeviceAddress(graph);
+    }
   }
 
   PrepareDeviceTensorStoreForControlNode(graph_compiler_info_->control_node_parser_, input_tensors.back(), context);
