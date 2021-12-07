@@ -26,9 +26,28 @@ Non-linear Activations
 
     mindspore.nn.FastGelu
     mindspore.nn.HSwish
+    mindspore.nn.LeakyReLU
     mindspore.nn.ReLU
     mindspore.nn.ELU
     mindspore.nn.GELU
+    mindspore.nn.Softmax
+
+Utilities
+---------
+
+.. cnmsplatformautosummary::
+    :toctree: nn
+
+    mindspore.nn.Flatten
+    mindspore.nn.Tril
+
+Loss Functions
+--------------
+
+.. cnmsplatformautosummary::
+    :toctree: nn
+
+    mindspore.nn.SmoothL1Loss
 
 Optimizer Functions
 -------------------
@@ -65,6 +84,14 @@ Wrapper Functions
     mindspore.nn.TrainOneStepWithLossScaleCell
     mindspore.nn.WithEvalCell
     mindspore.nn.WithLossCell
+
+Math Functions
+-----------------
+
+.. cnmsplatformautosummary::
+    :toctree: nn
+
+    mindspore.nn.Moments
 
 Metrics
 --------
