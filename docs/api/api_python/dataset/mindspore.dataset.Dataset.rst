@@ -447,6 +447,10 @@
         - **cache** (DatasetCache, optional) - 使用Tensor缓存服务加快数据集处理速度（默认为None，即不使用缓存）。
         - **callbacks** (DSCallback, list[DSCallback], optional) - 要调用的Dataset回调函数列表（默认为None）。
 
+        .. note::
+            - `operations` 参数主要接收 `mindspore.dataset` 模块中c_transforms、py_transforms算子，以及用户定义的Python函数(PyFuncs)。
+            - 不要将 `mindspore.nn` 和 `mindspore.ops` 或其他的网络计算算子添加到 `operations` 中。
+
         **返回：**
 
         MapDataset，map操作后的数据集。

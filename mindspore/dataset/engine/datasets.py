@@ -712,6 +712,11 @@ class Dataset:
                data between processes.  This is only used if python_multiprocessing is set to True (Default=16).
             offload (bool, optional): Flag to indicate whether offload is used (Default=None).
 
+        Note:
+            - Input `operations` mainly accept c_transforms, py_transforms operator in mindspore.dataset part, plus user
+              defined Python function(PyFuncs).
+            - Do not add network computing operators from mindspore.nn and mindspore.ops or others into this
+              `operations`.
 
         Returns:
             MapDataset, dataset after mapping operation.
@@ -4832,6 +4837,8 @@ class GeneratorDataset(MappableDataset):
         ValueError: If shard_id is invalid (< 0 or >= num_shards).
 
     Note:
+        - Input `source` accept user defined Python function(PyFuncs), Do not add network computing operators from
+          mindspore.nn and mindspore.ops or others into this `source`.
         - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
 

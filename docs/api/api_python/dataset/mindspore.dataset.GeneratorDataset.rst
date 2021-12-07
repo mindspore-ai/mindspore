@@ -37,7 +37,10 @@
     - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
     - **ValueError** - `shard_id` 参数错误（小于0或者大于等于 `num_shards` ）。
 
-    .. note:: 此数据集可以指定 `sampler` 参数，但 `sampler` 和 `shuffle` 是互斥的。下表展示了几种合法的输入参数及预期的行为。
+    .. note::
+        - `source` 参数接收用户自定义的Python函数（PyFuncs），不要将 `mindspore.nn` 和 `mindspore.ops` 目录下或其他的网络计算算子添加
+          到 `source` 中。
+        - 此数据集可以指定 `sampler` 参数，但 `sampler` 和 `shuffle` 是互斥的。下表展示了几种合法的输入参数及预期的行为。
 
     .. list-table:: 配置 `sampler` 和 `shuffle` 的不同组合得到的预期排序结果
        :widths: 25 25 50
