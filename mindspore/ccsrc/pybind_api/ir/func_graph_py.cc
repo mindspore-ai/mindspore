@@ -39,12 +39,12 @@ py::dict UpdateFuncGraphHyperParams(const FuncGraphPtr &func_graph, const py::di
         const auto &new_value = params_init[param_name].cast<tensor::TensorPtr>();
         MS_EXCEPTION_IF_NULL(new_value);
         if (new_value->shape() != old_value->shape() || new_value->data_type() != old_value->data_type()) {
-          MS_EXCEPTION(ValueError) << "Only support update parameter by Tensor with same shape and dtype as it. "
-                                      "The parameter '"
-                                   << param_name.cast<std::string>() << "' has shape " << old_value->shape()
-                                   << " and dtype " << TypeIdLabel(old_value->data_type())
-                                   << ", but got the update Tensor with shape " << new_value->shape() << " and dtype "
-                                   << TypeIdLabel(new_value->data_type()) << ".";
+          MS_EXCEPTION(ValueError)
+            << "Only support update parameter by Tensor or Parameter with same shape and dtype as it. "
+               "The parameter '"
+            << param_name.cast<std::string>() << "' has shape " << old_value->shape() << " and dtype "
+            << TypeIdLabel(old_value->data_type()) << ", but got the update value with shape " << new_value->shape()
+            << " and dtype " << TypeIdLabel(new_value->data_type()) << ".";
         }
         new_param = fn(*new_value);
       } else {

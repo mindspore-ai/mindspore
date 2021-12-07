@@ -14,7 +14,9 @@
 # ============================================================================
 
 """test get and init GraphCell parameters"""
+
 import os
+import stat
 
 import numpy as np
 import pytest
@@ -72,8 +74,10 @@ def get_and_init_graph_cell_parameters():
     assert np.array_equal(load_net.trainable_params()[0].asnumpy(), np_param + 2.0)
 
     if os.path.isfile(mindir_name):
+        os.chmod(mindir_name, stat.S_IWUSR)
         os.remove(mindir_name)
     if os.path.isfile(ckpt_name):
+        os.chmod(ckpt_name, stat.S_IWUSR)
         os.remove(ckpt_name)
 
 
