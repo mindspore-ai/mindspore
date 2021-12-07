@@ -70,7 +70,8 @@ from .validators import check_batch, check_shuffle, check_map, check_filter, che
     check_sb_dataset, check_flowers102dataset, check_cityscapes_dataset, check_usps_dataset, check_div2k_dataset, \
     check_sbu_dataset, check_qmnist_dataset, check_emnist_dataset, check_fake_image_dataset, check_places365_dataset, \
     check_photo_tour_dataset, check_ag_news_dataset, check_dbpedia_dataset, check_lj_speech_dataset, \
-    check_yes_no_dataset, check_speech_commands_dataset, check_tedlium_dataset, check_svhn_dataset
+    check_yes_no_dataset, check_speech_commands_dataset, check_tedlium_dataset, check_svhn_dataset, \
+    check_stl10_dataset
 from ..core.config import get_callback_timeout, _init_device_info, get_enable_shared_mem, get_num_parallel_workers, \
     get_prefetch_size, get_auto_offload
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
@@ -9108,3 +9109,138 @@ class SVHNDataset(GeneratorDataset):
         super().__init__(dataset, column_names=dataset.column_names, num_samples=num_samples,
                          num_parallel_workers=num_parallel_workers, shuffle=shuffle, sampler=sampler,
                          num_shards=num_shards, shard_id=shard_id)
+
+
+class STL10Dataset(MappableDataset):
+    """
+    A source dataset for reading and parsing STL10 dataset.
+
+    The generated dataset has two columns: :py:obj:`[image, label]`.
+    The tensor of column :py:obj:`image` is of the uint8 type.
+    The tensor of column :py:obj:`label` is of a scalar of int32 type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        usage (str, optional): Usage of this dataset, can be "train", "test",
+            "unlabeled", "train+unlabeled" or "all" . "train" will read from 5,000
+            train samples, "test" will read from 8,000 test samples,
+            "unlabeled" will read from all 100,000 samples, and "train+unlabeled"
+            will read from 105000 samples, "all" will read all the samples
+            (default=None, all samples).
+        num_samples (int, optional): The number of images to be included in the dataset.
+            (default=None, all images).
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, number set in the config).
+        shuffle (bool, optional): Whether to perform shuffle on the dataset (default=None, expected
+            order behavior shown in the table).
+        sampler (Sampler, optional): Object used to choose samples from the
+            dataset (default=None, expected order behavior shown in the table).
+        num_shards (int, optional): Number of shards that the dataset will be divided
+            into (default=None). When this argument is specified, 'num_samples' reflects
+            the max sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument can only be specified when num_shards is also specified.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
+            (default=None, which means no cache is used).
+
+    Raises:
+        RuntimeError: If dataset_dir is not valid or does not exist or does not contain data files.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If sampler and shuffle are specified at the same time.
+        RuntimeError: If sampler and sharding are specified at the same time.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If usage is invalid.
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+
+    Note:
+        - This dataset can take in a sampler. 'sampler' and 'shuffle' are mutually exclusive.
+          The table below shows what input arguments are allowed and their expected behavior.
+
+    .. list-table:: Expected Order Behavior of Using 'sampler' and 'shuffle'
+       :widths: 25 25 50
+       :header-rows: 1
+
+       * - Parameter 'sampler'
+         - Parameter 'shuffle'
+         - Expected Order Behavior
+       * - None
+         - None
+         - random order
+       * - None
+         - True
+         - random order
+       * - None
+         - False
+         - sequential order
+       * - Sampler object
+         - None
+         - order defined by sampler
+       * - Sampler object
+         - True
+         - not allowed
+       * - Sampler object
+         - False
+         - not allowed
+
+    Examples:
+        >>> stl10_dataset_dir = "/path/to/stl10_dataset_directory"
+        >>>
+        >>> # 1) Get all samples from STL10 dataset in sequence
+        >>> dataset = ds.STL10Dataset(dataset_dir=stl10_dataset_dir, shuffle=False)
+        >>>
+        >>> # 2) Randomly select 350 samples from STL10 dataset
+        >>> dataset = ds.STL10Dataset(dataset_dir=stl10_dataset_dir, num_samples=350, shuffle=True)
+        >>>
+        >>> # 3) Get samples from STL10 dataset for shard 0 in a 2-way distributed training
+        >>> dataset = ds.STL10Dataset(dataset_dir=stl10_dataset_dir, num_shards=2, shard_id=0)
+
+    About STL10 dataset:
+
+    STL10 dataset consists of 10 classes: airplane, bird, car, cat, deer, dog, horse, monkey, ship, truck.
+    STL10 is is inspired by the CIFAR-10 dataset.
+    Images are 96x96 pixels, color.
+    500 training images, 800 test images per class and 100000 unlabeled images.
+    Labels are 0-indexed, and unlabeled images have -1 as their labels.
+
+    Here is the original STL10 dataset structure.
+    You can unzip the dataset files into this directory structure and read by MindSpore's API.
+
+    .. code-block::
+        .
+        └── stl10_dataset_dir
+             ├── train_X.bin
+             ├── train_y.bin
+             ├── test_X.bin
+             ├── test_y.bin
+             └── unlabeled_X.bin
+
+    Citation of STL10 dataset.
+
+    .. code-block::
+
+        @techreport{Coates10,
+        author       = {Adam Coates},
+        title        = {Learning multiple layers of features from tiny images},
+        year         = {20010},
+        howpublished = {https://cs.stanford.edu/~acoates/stl10/},
+        description  = {The STL-10 dataset consists of 96x96 RGB images in 10 classes,
+                        with 500 training images and 800 testing images per class.
+                        There are 5000 training images and 8000 test images.
+                        It also has 100000 unlabeled images for unsupervised learning.
+                        These examples are extracted from a similar but broader distribution of images.
+                        }
+        }
+    """
+
+    @check_stl10_dataset
+    def __init__(self, dataset_dir, usage=None, num_samples=None, num_parallel_workers=None, shuffle=None,
+                 sampler=None, num_shards=None, shard_id=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, sampler=sampler, num_samples=num_samples,
+                         shuffle=shuffle, num_shards=num_shards, shard_id=shard_id, cache=cache)
+
+        self.dataset_dir = dataset_dir
+        self.usage = replace_none(usage, "all")
+
+    def parse(self, children=None):
+        return cde.STL10Node(self.dataset_dir, self.usage, self.sampler)

@@ -45,6 +45,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/mnist_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/random_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/speech_commands_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/stl10_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/tedlium_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/text_file_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/yes_no_node.h"
@@ -409,6 +410,16 @@ PYBIND_REGISTER(SpeechCommandsNode, 2, ([](const py::module *m) {
                         std::make_shared<SpeechCommandsNode>(dataset_dir, usage, toSamplerObj(sampler), nullptr);
                       THROW_IF_ERROR(speech_commands->ValidateParams());
                       return speech_commands;
+                    }));
+                }));
+
+PYBIND_REGISTER(STL10Node, 2, ([](const py::module *m) {
+                  (void)py::class_<STL10Node, DatasetNode, std::shared_ptr<STL10Node>>(*m, "STL10Node",
+                                                                                       "to create a STL10Node")
+                    .def(py::init([](std::string dataset_dir, std::string usage, py::handle sampler) {
+                      auto stl10 = std::make_shared<STL10Node>(dataset_dir, usage, toSamplerObj(sampler), nullptr);
+                      THROW_IF_ERROR(stl10->ValidateParams());
+                      return stl10;
                     }));
                 }));
 

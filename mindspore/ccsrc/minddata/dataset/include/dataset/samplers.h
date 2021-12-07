@@ -57,6 +57,7 @@ class MS_API Sampler : std::enable_shared_from_this<Sampler> {
   friend class RandomDataDataset;
   friend class SBUDataset;
   friend class SpeechCommandsDataset;
+  friend class STL10Dataset;
   friend class TedliumDataset;
   friend class TextFileDataset;
   friend class TFRecordDataset;
