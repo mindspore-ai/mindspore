@@ -15,6 +15,9 @@
  */
 
 #include "include/api/model.h"
+#ifdef GPU_TENSORRT
+#include <cuda_runtime.h>
+#endif
 #include <mutex>
 #include "include/api/types.h"
 #include "include/api/context.h"
@@ -140,8 +143,27 @@ Model::Model() : impl_(nullptr) {}
 Model::~Model() {}
 
 bool Model::CheckModelSupport(enum DeviceType device_type, ModelType model_type) {
-  MS_LOG(ERROR) << "Unsupported feature.";
-  return false;
+  if (device_type == kGPU) {
+#ifdef GPU_TENSORRT
+    int driver_version = 0;
+    int ret = cudaDriverGetVersion(&driver_version);
+    if (ret != cudaSuccess || driver_version == 0) {
+      MS_LOG(WARNING) << "No nvidia GPU driver.";
+      return false;
+    }
+    return true;
+#else
+    return false;
+#endif
+  } else if (device_type == kCPU) {
+#ifdef ENABLE_LITE_ACL
+    return false;
+#else
+    return true;
+#endif
+  } else {
+    return false;
+  }
 }
 
 std::vector<MSTensor> Model::GetInputs() {
