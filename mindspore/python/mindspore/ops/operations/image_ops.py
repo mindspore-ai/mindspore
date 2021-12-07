@@ -18,7 +18,7 @@ from ... import context
 from ..._checkparam import Validator as validator
 from ..._checkparam import Rel
 from ...common import dtype as mstype
-from ..primitive import PrimitiveWithInfer, prim_attr_register
+from ..primitive import PrimitiveWithInfer, prim_attr_register, Primitive
 
 
 class CropAndResize(PrimitiveWithInfer):
@@ -144,3 +144,65 @@ class CropAndResize(PrimitiveWithInfer):
         return {'shape': out_shape,
                 'dtype': mstype.float32,
                 'value': None}
+
+class NonMaxSuppressionV3(Primitive):
+    r"""
+        Greedily selects a subset of bounding boxes in descending order of score.
+
+    .. warning::
+        When input "max_output_size" is negative, it will be treated as 0.
+
+    Note:
+        This algorithm is agnostic to where the origin is in the coordinate system.
+        This algorithm is invariant to orthogonal transformations and translations of the coordinate system;
+        thus translating or reflections of the coordinate system result in the same boxes being
+        selected by the algorithm.
+
+    Inputs:
+        - **boxes** (Tensor) - A 2-D Tensor of shape [num_boxes, 4].
+        - **scores** (Tensor) - A 1-D Tensor of shape [num_boxes] representing a single score
+          corresponding to each box (each row of boxes), the num_boxes of "scores" must be equal to
+          the num_boxes of "boxes".
+        - **max_output_size** (Union[Tensor, Number.Int]) - A scalar integer Tensor representing the maximum
+          number of boxes to be selected by non max suppression.
+        - **iou_threshold** (Union[Tensor, Number.Float]) - A 0-D float tensor representing the threshold for
+          deciding whether boxes overlap too much with respect to IOU, and iou_threshold must be equal or greater
+          than 0 and be equal or smaller than 1.
+        - **score_threshold** (Union[Tensor, Number.Float]) - A 0-D float tensor representing the threshold for
+          deciding when to remove boxes based on score.
+
+    Outputs:
+        A 1-D integer Tensor of shape [M] representing the selected indices from the boxes tensor,
+        where M <= max_output_size.
+
+    Raises:
+        TypeError: If the dtype of `boxes` and `scores` is different.
+        TypeError: If the dtype of `iou_threshold` and `score_threshold` is different.
+        TypeError: If `boxes` is not tensor or its dtype is not float16 or float32.
+        TypeEroor: If `scores` is not tensor or its dtype is not float16 or float32.
+        TypeError: If `max_output_size` is not tensor or scalar.If `max_output_size` is not int32 or int64.
+        TypeError: If `iou_threshold` is not tensor or scalar. If its type is not float16 or float32.
+        TypeError: If `score_threshold` is not tensor or scalar. If its type is not float16 or float32.
+        ValueError: If the size of shape of `boxes` is not 2 or the second value of its shape is not 4.
+        ValueError: If the size of shape of `scores` is not 1.
+        ValueError: If each of the size of shape of `max_output_size`, `iou_threshold`, `score_threshold` is not 0.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> boxes = Tensor(np.array([[1, 2, 3, 4], [1, 3, 3, 4], [1, 3, 4, 4],
+        ...                          [1, 1, 4, 4], [1, 1, 3, 4]]), mstype.float32)
+        >>> scores = Tensor(np.array([0.4, 0.5, 0.72, 0.9, 0.45]), mstype.float32)
+        >>> max_output_size = Tensor(5, mstype.int32)
+        >>> iou_threshold = Tensor(0.5, mstype.float32)
+        >>> score_threshold = Tensor(0, mstype.float32)
+        >>> nonmaxsuppression = ops.NonMaxSuppressionV3()
+        >>> output = nonmaxsuppression(boxes, scores, max_output_size, iou_threshold, score_threshold)
+        >>> print(output)
+        [3 2 0]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize NonMaxSuppressionV3"""

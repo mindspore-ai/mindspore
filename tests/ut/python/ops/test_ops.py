@@ -2660,6 +2660,22 @@ test_case_array_ops = [
     }),
 ]
 
+test_case_image_ops = [
+    ('NonMaxSuppressionV3', {
+        'block': P.NonMaxSuppressionV3(),
+        'desc_inputs': [Tensor(np.array([[20, 5, 200, 100],
+                                         [50, 50, 200, 200],
+                                         [20, 120, 150, 150],
+                                         [250, 250, 400, 350],
+                                         [90, 10, 300, 300],
+                                         [40, 220, 280, 380]]).astype(np.float32)),
+                        Tensor(np.array([0.353, 0.624, 0.667, 0.5, 0.3, 0.46]).astype(np.float32)),
+                        Tensor(4, mstype.int32),
+                        Tensor(0.1, mstype.float32),
+                        Tensor(0, mstype.float32)],
+        'skip': ['backward']}),
+]
+
 test_case_other_ops = [
     ('ScalarLog', {
         'block': F.scalar_log,
@@ -2983,7 +2999,7 @@ test_case_quant_ops = [
 ]
 
 test_case_lists = [test_case_nn_ops, test_case_math_ops, test_case_array_ops,
-                   test_case_other_ops, test_case_quant_ops]
+                   test_case_other_ops, test_case_quant_ops, test_case_image_ops]
 test_case = functools.reduce(lambda x, y: x + y, test_case_lists)
 # use -k to select certain testcast
 # pytest tests/python/ops/test_ops.py::test_backward -k LayerNorm

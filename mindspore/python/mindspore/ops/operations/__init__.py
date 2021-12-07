@@ -19,7 +19,7 @@ Primitive operator classes.
 A collection of operators to build neural networks or to compute functions.
 """
 
-from .image_ops import (CropAndResize)
+from .image_ops import (CropAndResize, NonMaxSuppressionV3)
 from .array_ops import (Argmax, Argmin, Cast, Concat, Pack, Stack, Unpack, Unstack,
                         Diag, DiagPart, DType, ExpandDims, Eye,
                         Fill, Ones, Zeros, GatherNd, GatherV2, Gather, SparseGatherV2, InvertPermutation,
@@ -207,6 +207,7 @@ __all__ = [
     'UniqueWithPad',
     'Concat',
     'Pack',
+    'NonMaxSuppressionV3',
     'Stack',
     'Unpack',
     'Unstack',
