@@ -160,3 +160,23 @@ class BorderType(str, Enum):
     EDGE: str = "edge"
     REFLECT: str = "reflect"
     SYMMETRIC: str = "symmetric"
+
+
+class WindowType(str, Enum):
+    """
+    Window Function types,
+
+    Possible enumeration values are: WindowType.BARTLETT, WindowType.BLACKMAN, WindowType.HAMMING, WindowType.HANN,
+    WindowType.KAISER.
+
+    - WindowType.BARTLETT: means the type of window function is bartlett.
+    - WindowType.BLACKMAN: means the type of window function is blackman.
+    - WindowType.HAMMING: means the type of window function is hamming.
+    - WindowType.HANN: means the type of window function is hann.
+    - WindowType.KAISER: means the type of window function is kaiser.
+    """
+    BARTLETT: str = "bartlett"
+    BLACKMAN: str = "blackman"
+    HAMMING: str = "hamming"
+    HANN: str = "hann"
+    KAISER: str = "kaiser"

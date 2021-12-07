@@ -712,6 +712,49 @@ class MS_API SlidingWindowCmn final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief Create a spectrogram from an audio signal.
+class MS_API Spectrogram : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] n_fft Size of FFT, creates n_fft / 2 + 1 bins (Default: 400).
+  /// \param[in] win_length Window size (Default: 0, will use n_fft).
+  /// \param[in] hop_length Length of hop between STFT windows (Default: 0, will use win_length / 2).
+  /// \param[in] pad Two sided padding of signal (Default: 0).
+  /// \param[in] window Window function that is applied/multiplied to each frame/window,
+  ///     which can be WindowType::kBartlett, WindowType::kBlackman, WindowType::kHamming,
+  ///     WindowType::kHann or WindowType::kKaiser (Default: WindowType::kHann).
+  /// \param[in] power Exponent for the magnitude spectrogram, which must be greater than or equal to 0 (Default: 2.0).
+  /// \param[in] normalized Whether to normalize by magnitude after stft (Default: false).
+  /// \param[in] center Whether to pad waveform on both sides (Default: true).
+  /// \param[in] pad_mode Controls the padding method used when center is true (Default: BorderType::kReflect).
+  /// \param[in] onesided Controls whether to return half of results to avoid redundancy (Default: true).
+  Spectrogram(int32_t n_fft = 400, int32_t win_length = 0, int32_t hop_length = 0, int32_t pad = 0,
+              WindowType window = WindowType::kHann, float power = 2.0, bool normalized = false, bool center = true,
+              BorderType pad_mode = BorderType::kReflect, bool onesided = true);
+
+  /// \brief Destructor.
+  ~Spectrogram() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  int32_t n_fft_;
+  int32_t win_length_;
+  int32_t hop_length_;
+  int32_t pad_;
+  WindowType window_;
+  float power_;
+  bool normalized_;
+  bool center_;
+  BorderType pad_mode_;
+  bool onesided_;
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief TimeMasking TensorTransform.
 /// \notes Apply masking to a spectrogram in the time domain.
 class MS_API TimeMasking final : public TensorTransform {

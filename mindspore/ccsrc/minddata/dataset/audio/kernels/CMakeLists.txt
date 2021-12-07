@@ -32,6 +32,7 @@ add_library(audio-kernels OBJECT
         phaser_op.cc
         riaa_biquad_op.cc
         sliding_window_cmn_op.cc
+        spectrogram_op.cc
         time_masking_op.cc
         time_stretch_op.cc
         treble_biquad_op.cc

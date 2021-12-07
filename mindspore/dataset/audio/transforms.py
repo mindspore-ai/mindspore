@@ -23,13 +23,13 @@ import numpy as np
 
 import mindspore._c_dataengine as cde
 from ..transforms.c_transforms import TensorOperation
-from .utils import BorderType, FadeShape, GainType, Interpolation, Modulation, ScaleType
+from .utils import BorderType, FadeShape, GainType, Interpolation, Modulation, ScaleType, WindowType
 from .validators import check_allpass_biquad, check_amplitude_to_db, check_band_biquad, check_bandpass_biquad, \
     check_bandreject_biquad, check_bass_biquad, check_biquad, check_complex_norm, check_compute_deltas, \
     check_contrast, check_db_to_amplitude, check_dc_shift, check_deemph_biquad, check_detect_pitch_frequency, \
     check_equalizer_biquad, check_fade, check_flanger, check_highpass_biquad, check_lfilter, check_lowpass_biquad, \
     check_magphase, check_masking, check_mu_law_coding, check_overdrive, check_phaser, check_riaa_biquad, \
-    check_sliding_window_cmn, check_time_stretch, check_treble_biquad, check_vol
+    check_sliding_window_cmn, check_spectrogram, check_time_stretch, check_treble_biquad, check_vol
 
 
 class AudioTensorOperation(TensorOperation):
@@ -945,6 +945,61 @@ class SlidingWindowCmn(AudioTensorOperation):
 
     def parse(self):
         return cde.SlidingWindowCmnOperation(self.cmn_window, self.min_cmn_window, self.center, self.norm_vars)
+
+
+DE_C_WINDOW_TYPE = {WindowType.BARTLETT: cde.WindowType.DE_BARTLETT,
+                    WindowType.BLACKMAN: cde.WindowType.DE_BLACKMAN,
+                    WindowType.HAMMING: cde.WindowType.DE_HAMMING,
+                    WindowType.HANN: cde.WindowType.DE_HANN,
+                    WindowType.KAISER: cde.WindowType.DE_KAISER}
+
+
+class Spectrogram(TensorOperation):
+    """
+    Create a spectrogram from an audio signal.
+
+    Args:
+        n_fft (int, optional): Size of FFT, creates n_fft // 2 + 1 bins (default=400).
+        win_length (int, optional): Window size (default=None, will use n_fft).
+        hop_length (int, optional): Length of hop between STFT windows (default=None, will use win_length // 2).
+        pad (int): Two sided padding of signal (default=0).
+        window (WindowType, optional): Window function that is applied/multiplied to each frame/window,
+            which can be WindowType.BARTLETT, WindowType.BLACKMAN, WindowType.HAMMING, WindowType.HANN
+            or WindowType.KAISER (default=WindowType.HANN).
+        power (float, optional): Exponent for the magnitude spectrogram, which must be greater
+            than or equal to 0, e.g., 1 for energy, 2 for power, etc. (default=2.0).
+        normalized (bool, optional): Whether to normalize by magnitude after stft (default=False).
+        center (bool, optional): Whether to pad waveform on both sides (default=True).
+        pad_mode (BorderType, optional): Controls the padding method used when center is True,
+            which can be BorderType.REFLECT, BorderType.CONSTANT, BorderType.EDGE, BorderType.SYMMETRIC
+            (default=BorderType.REFLECT).
+        onesided (bool, optional): Controls whether to return half of results to avoid redundancy (default=True).
+
+    Examples:
+        >>> waveform = np.random.random([5, 10, 20])
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
+        >>> transforms = [audio.Spectrogram()]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+    """
+
+    @check_spectrogram
+    def __init__(self, n_fft=400, win_length=None, hop_length=None, pad=0, window=WindowType.HANN, power=2.0,
+                 normalized=False, center=True, pad_mode=BorderType.REFLECT, onesided=True):
+        self.n_fft = n_fft
+        self.win_length = win_length if win_length else n_fft
+        self.hop_length = hop_length if hop_length else self.win_length // 2
+        self.pad = pad
+        self.window = window
+        self.power = power
+        self.normalized = normalized
+        self.center = center
+        self.pad_mode = pad_mode
+        self.onesided = onesided
+
+    def parse(self):
+        return cde.SpectrogramOperation(self.n_fft, self.win_length, self.hop_length, self.pad,
+                                        DE_C_WINDOW_TYPE[self.window], self.power, self.normalized,
+                                        self.center, DE_C_BORDER_TYPE[self.pad_mode], self.onesided)
 
 
 class TimeMasking(AudioTensorOperation):
