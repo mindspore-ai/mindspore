@@ -666,7 +666,7 @@ class _AutoParallelContext:
             parallel_optimizer_config(dict): A dict contains the keys and values for setting the parallel optimizer
             configure. It supports the following keys:
 
-            - gradient_accumulation_shard: If ture, the accumulation gradient parameters will be sharded
+            - gradient_accumulation_shard: If true, the accumulation gradient parameters will be sharded
                                            across the data parallel devices. This will introduce additional
                                            communication(ReduceScatter) at each step when accumulate the
                                            gradients, but saves a lot of device memories,
@@ -676,14 +676,21 @@ class _AutoParallelContext:
         """
         self.check_context_handle()
         grad_shard_name = _ParallelOptimizerConfig.GRADIENT_ACCUMULATION_SHARD
-        if grad_shard_name in parallel_optimizer_config:
-            Validator.check_bool(
-                parallel_optimizer_config[grad_shard_name], grad_shard_name, grad_shard_name)
-            self._context_handle.set_grad_accumulation_shard(
-                parallel_optimizer_config[grad_shard_name])
-        else:
-            raise ValueError(f"The parallel_optimizer_config doest not contains {grad_shard_name}, please check your "
-                             f"parallel_optimizer_config")
+        if len(parallel_optimizer_config) > 1 and grad_shard_name in parallel_optimizer_config:
+            other_keys = list(parallel_optimizer_config.keys())
+            other_keys.remove(grad_shard_name)
+            raise ValueError(f"Except {grad_shard_name}, there are useless keys in parallel_optimizer_config "
+                             f"{other_keys}, please check your "
+                             f"parallel_optimizer_config to remove the useless keys.")
+        if grad_shard_name not in parallel_optimizer_config:
+            raise ValueError(f"The parallel_optimizer_config does not support the keys "
+                             f"{list(parallel_optimizer_config.keys())}, "
+                             f"you should input the key {grad_shard_name} only, please check your "
+                             f"parallel_optimizer_config.")
+        Validator.check_bool(
+            parallel_optimizer_config[grad_shard_name], grad_shard_name, grad_shard_name)
+        self._context_handle.set_grad_accumulation_shard(
+            parallel_optimizer_config[grad_shard_name])
 
 
     def get_grad_accumulation_shard(self):

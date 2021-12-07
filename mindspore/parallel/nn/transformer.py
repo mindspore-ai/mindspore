@@ -54,24 +54,24 @@ __all__ = [
 
 class EmbeddingOpParallelConfig(_Config):
     r"""
-        EmbeddingOpParallelConfig for the setting data parallel or row slice for the embedding table.
+    EmbeddingOpParallelConfig for the setting data parallel or row slice for the embedding table.
 
-        Args:
-            data_parallel(int): The data parallel way. The input data will be sliced into n parts for embedding layer
-                according to this value. Default 1.
-            model_parallel(int): The model parallel way. The embedding table parameters
-                will be sliced according to the model parallel way. Default: 1.
-            vocab_emb_dp(bool): Shard embedding in model parallel or data parallel. If true, the embedding lookup
-                will be a data parallel style training and model_parallel value will be ignored.  If false, the
-                embedding table will be sharded into n parts at the 0-th dimension row slice of the embedding table,
-                where the n is the model parallel way determinined by this parameter. Default: True
+    Args:
+        data_parallel(int): The data parallel way. The input data will be sliced into n parts for embedding layer
+            according to this value. Default 1.
+        model_parallel(int): The model parallel way. The embedding table parameters
+            will be sliced according to the model parallel way. Default: 1.
+        vocab_emb_dp(bool): Shard embedding in model parallel or data parallel. If true, the embedding lookup
+            will be a data parallel style training and model_parallel value will be ignored.  If false, the
+            embedding table will be sharded into n parts at the 0-th dimension row slice of the embedding table,
+            where the n is the model parallel way determined by this parameter. Default: True
 
-        Supported Platforms:
-            ``Ascend`` ``GPU``
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
-        Examples:
-            >>> from mindspore.parallel.nn import EmbeddingOpParallelConfig
-            >>> config=EmbeddingOpParallelConfig(data_parallel=1, model_parallel=1, vocab_emb_dp=True)
+    Examples:
+        >>> from mindspore.parallel.nn import EmbeddingOpParallelConfig
+        >>> config=EmbeddingOpParallelConfig(data_parallel=1, model_parallel=1, vocab_emb_dp=True)
     """
 
     def __init__(self, data_parallel=1, model_parallel=1, vocab_emb_dp=True):
@@ -122,24 +122,24 @@ class EmbeddingOpParallelConfig(_Config):
 
 class TransformerRecomputeConfig(_Config):
     r"""
-        TransformerRecomputeConfig for the setting recompute attributes for encoder/decoder layers.
+    TransformerRecomputeConfig for the setting recompute attributes for encoder/decoder layers.
 
-        Args:
-            recompute (bool): Enable recomputation of the transformer block or not. Default: False.
-            parallel_optimizer_comm_recompute (bool): Specifies whether the communication operator allgathers
-                introduced by optimizer shard are recomputed in auto parallel or semi auto parallel mode.
-                Default: False.
-            mp_comm_recompute (bool): Specifies whether the model parallel communication operators
-                in the cell are recomputed in auto parallel or semi auto parallel mode. Default: True.
-            recompute_slice_activation (bool): Slice the cell output which would remains in memory. Default: False.
+    Args:
+        recompute (bool): Enable recomputation of the transformer block or not. Default: False.
+        parallel_optimizer_comm_recompute (bool): Specifies whether the communication operator allgathers
+            introduced by optimizer shard are recomputed in auto parallel or semi auto parallel mode.
+            Default: False.
+        mp_comm_recompute (bool): Specifies whether the model parallel communication operators
+            in the cell are recomputed in auto parallel or semi auto parallel mode. Default: True.
+        recompute_slice_activation (bool): Slice the cell output which would remains in memory. Default: False.
 
-        Supported Platforms:
-            ``Ascend`` ``GPU``
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
-        Examples:
-            >>> from mindspore.parallel.nn import TransformerRecomputeConfig
-            >>> config=TransformerRecomputeConfig(recompute=True, parallel_optimizer_comm_recompute=True,
-            >>> mp_comm_recompute=True, recompute_slice_activation=True)
+    Examples:
+        >>> from mindspore.parallel.nn import TransformerRecomputeConfig
+        >>> config=TransformerRecomputeConfig(recompute=True, parallel_optimizer_comm_recompute=True,
+        >>> mp_comm_recompute=True, recompute_slice_activation=True)
     """
 
     def __init__(self, recompute=False, parallel_optimizer_comm_recompute=False,
@@ -195,38 +195,38 @@ _DEFALUT_TRANSFORMER_RECOMPUTE_CONFIG = TransformerRecomputeConfig()
 
 class TransformerOpParallelConfig(_Config):
     r"""
-        TransformerOpParallelConfig for the setting global data parallel, model parallel and fusion group.
-        The parallel configure setting.
+    TransformerOpParallelConfig for the setting global data parallel, model parallel and fusion group.
+    The parallel configure setting.
 
-        Note:
-            Except the recompute argument, other arguments will **not** be effective when the user doesn't set
-            auto_parallel_context to `SEMI_AUTO_PARALLEL` or `AUTO_PARALLEL`.
-            The micro_batch_num must be greater than or equal to pipeline_stage when training.
-            The data_parallel\*model_parallel \*pipeline_stage must be equal or less equal to the device. When setting
-            the pipeline stage and optimizer_shard, the config will overwrite the auto_parallel_context. When given the
-            8 devices and the data_parallel is 1 and model_parallel is 1, the calculation will be repeated on each
-            device.
+    Note:
+        Except the recompute argument, other arguments will **not** be effective when the user doesn't set
+        auto_parallel_context to `SEMI_AUTO_PARALLEL` or `AUTO_PARALLEL`.
+        The micro_batch_num must be greater than or equal to pipeline_stage when training.
+        The data_parallel\*model_parallel \*pipeline_stage must be equal or less equal to the device. When setting
+        the pipeline stage and optimizer_shard, the config will overwrite the auto_parallel_context. When given the
+        8 devices and the data_parallel is 1 and model_parallel is 1, the calculation will be repeated on each
+        device.
 
-       Args:
-            data_parallel (int): The data parallel way. The input data will be sliced for each layer. Default: 1.
-            model_parallel (int): The model parallel way. The parameters of dense layers in MultiheadAttention and
-                FeedForward layer will be sliced according to the model parallel way. Default: 1.
-            pipeline_stage (int): The number of the pipeline stage. Should be a positive value. Default: 1.
-            micro_batch_num (int): The micro size of the batches for the pipeline training. Default: 1.
-            optimizer_shard (bool): Whether to enable optimizer shard. Default False.
-            gradient_aggregation_group (int): The fusion group size of the optimizer state sharding. Default: 4.
-            recompute (Union[TransformerRecomputeConfig, bool]): The configuration of recomputation for
-                the transformer block. Default: The default configuration of TransformerRecomputeConfig.
-            vocab_emb_dp (bool): Shard embedding in model parallel or data parallel. Default: True.
+    Args:
+        data_parallel (int): The data parallel way. The input data will be sliced for each layer. Default: 1.
+        model_parallel (int): The model parallel way. The parameters of dense layers in MultiheadAttention and
+            FeedForward layer will be sliced according to the model parallel way. Default: 1.
+        pipeline_stage (int): The number of the pipeline stage. Should be a positive value. Default: 1.
+        micro_batch_num (int): The micro size of the batches for the pipeline training. Default: 1.
+        optimizer_shard (bool): Whether to enable optimizer shard. Default False.
+        gradient_aggregation_group (int): The fusion group size of the optimizer state sharding. Default: 4.
+        recompute (Union[TransformerRecomputeConfig, bool]): The configuration of recomputation for
+            the transformer block. Default: The default configuration of TransformerRecomputeConfig.
+        vocab_emb_dp (bool): Shard embedding in model parallel or data parallel. Default: True.
 
-        Supported Platforms:
-            ``Ascend`` ``GPU``
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
-        Examples:
-            >>> from mindspore.parallel.nn import TransformerRecomputeConfig
-            >>> recompute_config=TransformerRecomputeConfig(recompute=True, parallel_optimizer_comm_recompute=True,
-            >>> mp_comm_recompute=True, recompute_slice_activation=True)
-            >>> config=TransformerOpParallelConfig(data_parallel=1, model_parallel=1, recompute=recompute_config)
+    Examples:
+        >>> from mindspore.parallel.nn import TransformerRecomputeConfig
+        >>> recompute_config=TransformerRecomputeConfig(recompute=True, parallel_optimizer_comm_recompute=True,
+        >>> mp_comm_recompute=True, recompute_slice_activation=True)
+        >>> config=TransformerOpParallelConfig(data_parallel=1, model_parallel=1, recompute=recompute_config)
     """
 
     def __init__(self, data_parallel=1, model_parallel=1, pipeline_stage=1, micro_batch_num=1,
@@ -565,7 +565,7 @@ class VocabEmbedding(Cell):
     The embedding lookup table from the 0-th dim of the parameter table. When the parallel_config.vocab_emb_dp is
     True and in the `AUTO_PARALLEL` mode, the embedding lookup will be trained by the data parallel way, as the
     parameters will be repeated on each device. If false, the embedding table will be sharded into n parts at the 0-th
-    dimension of the embedding table, where the n is the model parallel way determinined by the
+    dimension of the embedding table, where the n is the model parallel way determined by the
     parallel_config(EmbeddingOpParallelConfig).
 
     Note:
@@ -671,9 +671,9 @@ class MultiHeadAttention(Cell):
         param_init_type(dtype.Number): The parameter initialization type of the module. Default dtype.float32.
             Should be dtype.float32 or dtype.float16.
         use_past(bool): Use the past state to compute, used for incremental prediction. For example, if we have two
-            words and want to generate the ten more words. We just need to compute the two words's state only once,
+            words and want to generate the ten more words. We just need to compute the two words' state only once,
             and generate the next word one by one. When use_past is True, there are two steps to run the prediction.
-            The first step, set the is_first_iteration to be True by
+            In the first step, set the is_first_iteration to be True by
             `model.add_flags_recursive(is_first_iteration=True)`, and pass the full inputs. Then, set the
             is_first_iteration to be False by `model.add_flags_recursive(is_first_iteration=False)`. At this moment,
             pass the single step's input tensor, and loop it. Default False.
@@ -681,16 +681,16 @@ class MultiHeadAttention(Cell):
             an instance of `OpParallelConfig` with default args.
 
     Inputs:
-        - **query_tensor** (Tensor) - the query vector with shape (batch_size, src_seq_length, hidden_size) or
+        - **query_tensor** (Tensor) - The query vector with shape (batch_size, src_seq_length, hidden_size) or
           (batch_size * src_seq_length, hidden_size), if the use_past is False or is_first_iteration=True. Otherwise,
           must be (batch_size, 1, hidden_size)
-        - **key_tensor** (Tensor) - the key vector with shape (batch_size, tgt_seq_length, hidden_size) or
+        - **key_tensor** (Tensor) - The key vector with shape (batch_size, tgt_seq_length, hidden_size) or
           (batch_size * tgt_seq_length, hidden_size), if the use_past is False or is_first_iteration=True. Otherwise,
           must be (batch_size, 1, hidden_size)
-        - **value_tensor** (Tensor) - the value vector with shape (batch_size, tgt_seq_length, hidden_size) or
+        - **value_tensor** (Tensor) - The value vector with shape (batch_size, tgt_seq_length, hidden_size) or
           (batch_size * tgt_seq_length, hidden_size), if the use_past is False or is_first_iteration=True. Otherwise,
           must be (batch_size, 1, hidden_size)
-        - **attention_mask** (Tensor) - the attention mask matrix with shape (batch_size, src_seq_length,
+        - **attention_mask** (Tensor) - The attention mask matrix with shape (batch_size, src_seq_length,
           tgt_seq_length), if the use_past is False or is_first_iteration=True. Otherwise,
           must be (batch_size, 1, tgt_seq_length)
         - **key_past** (Tensor) - Float16 tensor with shape (batch_size, num_heads, size_per_head, tgt_seq_length).
@@ -1156,9 +1156,9 @@ class TransformerEncoderLayer(Cell):
             'relu6', 'tanh', 'gelu', 'fast_gelu', 'elu', 'sigmoid', 'prelu', 'leakyrelu', 'hswish',
             'hsigmoid', 'logsigmoid' and so on. Default: gelu.
         use_past(bool): Use the past state to compute, used for incremental prediction. For example, if we have two
-            words and want to generate the ten more words. We just need to compute the two words's state only once,
+            words and want to generate the ten more words. We just need to compute the two words' state only once,
             and generate the next word one by one. When use_past is True, there are two steps to run the prediction.
-            The first step, set the is_first_iteration to be True by
+            In the first step, set the is_first_iteration to be True by
             `model.add_flags_recursive(is_first_iteration=True)`, and pass the full inputs. Then, set the
             is_first_iteration to be False by `model.add_flags_recursive(is_first_iteration=False)`. At this moment,
             pass the single step's input tensor, and loop it. Default False.
@@ -1484,14 +1484,14 @@ class TransformerDecoderLayer(Cell):
             an instance of `OpParallelConfig` with default args.
 
     Inputs:
-        - **hidden_stats** (Tensor) - the input tensor with shape [batch_size, tgt_seq_length, hidden_size] or
+        - **hidden_stats** (Tensor) - The input tensor with shape [batch_size, tgt_seq_length, hidden_size] or
           [batch_size * tgt_seq_length, hidden_size].
-        - **decoder_mask** (Tensor) - the attention mask for decoder with shape [batch_size, src_seq_length,
+        - **decoder_mask** (Tensor) - The attention mask for decoder with shape [batch_size, src_seq_length,
           seq_length].
-        - **encoder_output** (Tensor) - the output of the encoder with shape [batch_size, seq_length, hidden_size] or
+        - **encoder_output** (Tensor) - The output of the encoder with shape [batch_size, seq_length, hidden_size] or
           [batch_size * seq_length, hidden_size]. Note this args can not be passed by None when the net is in outermost
           layer. Default None.
-        - **memory_mask** (Tensor) - the memory mask of the cross attention with shape [batch, tgt_seq_length,
+        - **memory_mask** (Tensor) - The memory mask of the cross attention with shape [batch, tgt_seq_length,
           src_seq_length] where tgt_seq_length is the length of the decoder. Note this args can not be passed by
           None when the net is in outermost layer. Default None.
         - **init_reset** (Tensor) - A bool tensor with shape [1], used to clear the past key parameter and
@@ -1502,7 +1502,7 @@ class TransformerDecoderLayer(Cell):
     Outputs:
         Tuple, a tuple contains(`output`, `layer_present`)
 
-        - **output** (Tensor) - the output logit of this layer. The shape is [batch, seq_length, hidden_size] or
+        - **output** (Tensor) - The output logit of this layer. The shape is [batch, seq_length, hidden_size] or
           [batch * seq_length, hidden_size].
         - **layer_present** (Tensor) - A tuple, where each tuple is the tensor of the projected key and value
           vector in self attention with shape ((batch_size, num_heads, size_per_head, tgt_seq_length),
@@ -1883,13 +1883,13 @@ class TransformerEncoder(Cell):
             that accepts `network`, `layer_id`, `offset`, `parallel_config`, `layers`. The `network(Cell)`
             represents the transformer block, `layer_id(int)` means the layer index for the current module, counts from
             zero, `offset(int)` means the layer_index needs an offset, if there are other modules in the net. The
-            default setting for the pipeline is: `(layer_id + offset) // (layers / pipeline_stage)`.
+            default setting for the pipeline is: `(layer_id + offset) // (layers / pipeline_stage)`. Default None.
         offset(int): The initial layer index for the `decoder`. Used for setting the fusion id and stage id, to not
-            overlap with the encoder layer.
+            overlap with the encoder layer. Default 0.
         use_past(bool): Use the past state to compute, used for incremental prediction. For example, if we have two
-            words and want to generate the ten more words. We just need to compute the two words's state only once,
+            words and want to generate the ten more words. We just need to compute the two words' state only once,
             and generate the next word one by one. When use_past is True, there are two steps to run the prediction.
-            The first step, set the is_first_iteration to be True by
+            In the first step, set the is_first_iteration to be True by
             `model.add_flags_recursive(is_first_iteration=True)`, and pass the full inputs. Then, set the
             is_first_iteration to be False by `model.add_flags_recursive(is_first_iteration=False)`. At this moment,
             pass the single step's input tensor, and loop it. Default False.
@@ -1950,9 +1950,9 @@ class TransformerEncoder(Cell):
         >>> hidden, past = model(encoder_input_value, encoder_input_mask, init_reset, batch_valid_length)
         >>> print(hidden.shape)
         (2, 16, 8)
-        >>> print(past[0].shape)
+        >>> print(past[0][0].shape)
         (2, 2, 4, 16)
-        >>> print(past[1].shape)
+        >>> print(past[0][1].shape)
         (2, 2, 16, 4)
         >>> encoder_input_value = Tensor(np.ones((2, 1, 8)), mstype.float32)
         >>> encoder_input_mask = Tensor(np.ones((2, 1, 16)), mstype.float16)
@@ -1963,9 +1963,9 @@ class TransformerEncoder(Cell):
         >>> hidden, past = model(encoder_input_value, encoder_input_mask, init_reset, batch_valid_length)
         >>> print(hidden.shape)
         (2, 1, 8)
-        >>> print(past[0].shape)
+        >>> print(past[0][0].shape)
         (2, 2, 4, 16)
-        >>> print(past[1].shape)
+        >>> print(past[0][1].shape)
         (2, 2, 16, 4)
     """
 
@@ -2099,20 +2099,20 @@ class TransformerDecoder(Cell):
             Default: None.
         use_past(bool): Use the past state to compute, used for incremental prediction. Default False.
         offset(int): The initial layer index for the `decoder`. Used for setting the fusion id and stage id, to not
-            overlap with the encoder layer.
+            overlap with the encoder layer. Default 0.
         moe_config(MoEConfig): The configuration of MoE (Mixture of Expert). Default is an instance of MoEConfig with
             default values. Please see `MoEConfig`.
         parallel_config(TransformerOpParallelConfig): The parallel configure. Default `default_transformer_config`,
             an instance of `TransformerOpParallelConfig` with default args.
 
     Inputs:
-        - **hidden_stats** (Tensor) - the input tensor with shape [batch_size, seq_length, hidden_size] or
+        - **hidden_stats** (Tensor) - The input tensor with shape [batch_size, seq_length, hidden_size] or
           [batch_size * seq_length, hidden_size]
-        - **attention_mask** (Tensor) - the attention mask for decoder with shape [batch_size, seq_length, seq_length]
-        - **encoder_output** (Tensor) - the output of the encoder with shape [batch_size, seq_length, hidden_size] or
+        - **attention_mask** (Tensor) - The attention mask for decoder with shape [batch_size, seq_length, seq_length]
+        - **encoder_output** (Tensor) - The output of the encoder with shape [batch_size, seq_length, hidden_size] or
           [batch_size * seq_length, hidden_size]. Note this args can not be passed by None when the net is in outermost
           layer. Default None.
-        - **memory_mask** (Tensor) - the memory mask of the cross attention with shape [batch, tgt_seq_length,
+        - **memory_mask** (Tensor) - The memory mask of the cross attention with shape [batch, tgt_seq_length,
           src_seq_length] where tgt_seq_length is the length of the decoder. Note this args can not be passed by
           None when the net is in outermost layer. Default None.
         - **init_reset** (Tensor) - A bool tensor with shape [1], used to clear the past key parameter and
@@ -2312,16 +2312,16 @@ class Transformer(Cell):
             an instance of `TransformerOpParallelConfig` with default args.
 
     Inputs:
-        - **encoder_inputs** (Tensor) - the input tensor with shape [batch_size, seq_length, hidden_size] or
+        - **encoder_inputs** (Tensor) - The input tensor with shape [batch_size, seq_length, hidden_size] or
           [batch_size * seq_length, hidden_size].
-        - **encoder_masks** (Tensor) - the attention mask for decoder with shape [batch_size, seq_length, seq_length].
-        - **decoder_inputs** (Tensor) - the output of the encoder with shape [batch_size, seq_length, hidden_size] or
+        - **encoder_masks** (Tensor) - The attention mask for decoder with shape [batch_size, seq_length, seq_length].
+        - **decoder_inputs** (Tensor) - The output of the encoder with shape [batch_size, seq_length, hidden_size] or
           [batch_size * seq_length, hidden_size],
           this should be none if the decoder layer is 0.
-        - **decoder_masks** (Tensor) - the attention mask for decoder with shape [batch_size, seq_length, seq_length]
-        - **memory_mask** (Tensor) - the memory mask of the cross attention with shape [batch, tgt_seq_length,
+        - **decoder_masks** (Tensor) - The attention mask for decoder with shape [batch_size, seq_length, seq_length]
+        - **memory_mask** (Tensor) - The memory mask of the cross attention with shape [batch, tgt_seq_length,
           src_seq_length]
-          where tgt_seq_length is the length of the decoder. the output of the encoder with shape [batch_size,
+          where tgt_seq_length is the length of the decoder. The output of the encoder with shape [batch_size,
           seq_length, hidden_size], this should be none if the decoder layer is 0.
         - **init_reset** (Tensor) - A bool tensor with shape [1], used to clear the past key parameter and
           past value parameter used in the incremental prediction. Only valid when use_past is True. Default True.
