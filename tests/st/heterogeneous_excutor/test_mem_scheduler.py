@@ -123,3 +123,32 @@ def test_lenet():
     diff = res.asnumpy()[0] - 2.3025851
     assert np.all(diff < 1.e-6)
     os.environ['ENABLE_MEM_SCHEDULER'] = '0'
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_lenet_manual_offload():
+    '''
+    Feature: MemScheduler
+    Description: Test set offload strategy
+    Expectation: Run lenet success
+    '''
+    os.environ['ENABLE_MEM_SCHEDULER'] = '1'
+    data = Tensor(np.ones([32, 1, 32, 32]).astype(np.float32) * 0.01)
+    label = Tensor(np.ones([32]).astype(np.int32))
+    net = LeNet()
+    net.relu.add_prim_attr("Offload", True)
+    learning_rate = 0.01
+    momentum = 0.9
+
+    optimizer = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), learning_rate, momentum)
+    criterion = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
+    net_with_criterion = WithLossCell(net, criterion)
+    train_network = TrainOneStepCell(net_with_criterion, optimizer)  # optimizer
+    train_network.set_train()
+    res = train_network(data, label)
+    diff = res.asnumpy()[0] - 2.3025851
+    assert np.all(diff < 1.e-6)
+    os.environ['ENABLE_MEM_SCHEDULER'] = '0'

@@ -16,12 +16,12 @@
 
 #include "runtime/device/memory_scheduler.h"
 #include <algorithm>
-#include "utils/log_adapter.h"
 #ifdef _MSC_VER
 #include <time.h>
 #else
 #include <sys/time.h>
 #endif
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace device {
@@ -51,7 +51,7 @@ void MemScheduler::Clear() {
   high_priority_device_ptr_.clear();
 }
 
-void MemScheduler::ClearTempMem() {
+void MemScheduler::ClearAllocatedMem() {
   if (mem_handler_ == nullptr) {
     return;
   }
@@ -71,8 +71,6 @@ void MemScheduler::ClearTempMem() {
   }
   swap_host_ptr_.clear();
 }
-
-void MemScheduler::SetMemPriority(const void *key, MemPriority priority) { mem_priority_[key] = priority; }
 
 void MemScheduler::Record(const void *key, const MemEventType &event_type, size_t mem_size) {
   if (key == nullptr) {
@@ -184,7 +182,7 @@ bool MemScheduler::PostCompute(void *stream) {
     return true;
   }
 
-  if (record_compute_time_ && !updated_) {
+  if (record_compute_time_ && !updated_ && current_step_ < compute_time_.size()) {
     compute_time_[current_step_] = GetCurrentTime() - compute_start_time_;
   }
 
@@ -227,8 +225,12 @@ void MemScheduler::OptMemUsage(float mem_used_factor) {
   MS_EXCEPTION_IF_NULL(mem_handler_);
 
   if (strategy_ == nullptr) {
-    strategy_ = std::make_shared<MemOffloadStrategy>(mem_priority_, mem_events_, total_step_);
-    compute_time_.resize(total_step_);
+    strategy_ = std::make_shared<MemOffloadStrategy>(mem_priority_, mem_events_, manual_offload_keys_, total_step_);
+    if (manual_offload_keys_.empty()) {
+      compute_time_.resize(total_step_);
+    } else {
+      updated_ = true;
+    }
   }
 
   auto available_mem_size = mem_handler_->GetAvailableMemSize();
@@ -237,7 +239,7 @@ void MemScheduler::OptMemUsage(float mem_used_factor) {
   strategy_->Execute();
 }
 
-void MemScheduler::Optimize() {
+bool MemScheduler::Optimize() {
   AdjustFirstEventIndex();
   float mem_used_factor = kMaxMemReuseFactor;
   while (!optimized_ && mem_used_factor >= kMinMemReuseFactor) {
@@ -265,10 +267,11 @@ void MemScheduler::Optimize() {
     if (ret) {
       optimized_ = true;
     } else {
-      ClearTempMem();
+      ClearAllocatedMem();
       mem_used_factor -= kRetryFactor;
     }
   }
+  return optimized_;
 }
 
 void MemScheduler::AdjustFirstEventIndex() {

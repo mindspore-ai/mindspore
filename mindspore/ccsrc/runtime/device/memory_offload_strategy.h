@@ -41,8 +41,11 @@ class MemOffloadStrategy {
  public:
   MemOffloadStrategy(const std::map<const void *, MemPriority> &mem_priority,
                      const std::map<const void *, std::vector<std::shared_ptr<MemEvent>>> &mem_events,
-                     size_t total_step)
-      : mem_priority_(mem_priority), mem_events_(mem_events), total_step_(total_step) {}
+                     const std::set<const void *> &manual_offload_keys, size_t total_step)
+      : mem_priority_(mem_priority),
+        mem_events_(mem_events),
+        manual_offload_keys_(manual_offload_keys),
+        total_step_(total_step) {}
 
   virtual ~MemOffloadStrategy() = default;
 
@@ -58,18 +61,24 @@ class MemOffloadStrategy {
 
   bool need_swap() const { return need_swap_; }
 
+ private:
   bool IsHighPriorityMem(const void *key);
 
- private:
   void CountMemUsage();
+
   void CheckMemSize();
+
   void GenEventSpan();
+
   void GenSwapEventSet();
+
   void GenComputeMemEvents();
+
   void GenFreeEvent(const std::shared_ptr<MemEvent> &last_event);
 
   const std::map<const void *, MemPriority> &mem_priority_;
   const std::map<const void *, std::vector<std::shared_ptr<MemEvent>>> &mem_events_;
+  const std::set<const void *> &manual_offload_keys_;
   const size_t total_step_;
   std::vector<std::vector<std::shared_ptr<MemEvent>>> pre_compute_events_;
   std::vector<std::vector<std::shared_ptr<MemEvent>>> post_compute_events_;

@@ -45,8 +45,6 @@ class MemScheduler {
 
   void set_need_record_event(bool flag) { need_record_event_ = flag; }
 
-  bool optimized() const { return optimized_; }
-
   void Update();
 
   void SetMemHandler(const std::shared_ptr<MemHandler> &handler) { mem_handler_ = handler; }
@@ -60,19 +58,19 @@ class MemScheduler {
     step_events_.resize(total_step_);
   }
 
-  void ResetCurrentStep() { current_step_ = 0; }
+  void Reset() { current_step_ = 0; }
 
   bool PreCompute(void *stream);
 
   bool PostCompute(void *stream);
 
-  void Optimize();
+  bool Optimize();
 
   void Clear();
 
-  void ClearTempMem();
+  void ClearAllocatedMem();
 
-  void SetMemPriority(const void *key, MemPriority priority);
+  void SetOffload(const void *key) { (void)manual_offload_keys_.insert(key); }
 
  private:
   void Record(const void *key, const MemEventType &event_type, size_t mem_size = 0);
@@ -83,6 +81,7 @@ class MemScheduler {
 
   std::map<const void *, MemPriority> mem_priority_;
   std::map<const void *, std::vector<std::shared_ptr<MemEvent>>> mem_events_;
+  std::set<const void *> manual_offload_keys_;
   std::vector<std::vector<std::shared_ptr<MemEvent>>> step_events_;
   std::map<const void *, void *> mem_result_;
   std::map<const void *, void *> init_host_ptr_;
