@@ -215,8 +215,6 @@ class FuncGraph : public deprecated::api::FuncGraph, public FuncGraphBase, publi
   void SetDefaultValues(const std::vector<std::string> &name_list, const std::vector<AnfNodePtr> &value_list);
   void ClearDefaultValues();
   size_t GetDefaultValueCount();
-  std::map<std::string, ValuePtr> UpdateHyperParams(
-    const std::unordered_map<std::string, tensor::TensorPtr> &params_init);
   std::map<std::string, AnfNodePtr> &parameter_default_value() { return parameter_default_value_; }
   void set_has_vararg(bool has_) { has_vararg_ = has_; }
   bool has_vararg() const { return has_vararg_; }

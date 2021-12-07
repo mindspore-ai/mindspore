@@ -26,7 +26,7 @@ from mindspore import log as logger
 from mindspore.common.parameter import PARAMETER_NAME_DEFAULT
 from mindspore.context import ParallelMode
 from .. import context
-from .._c_expression import init_pipeline, Cell_, FuncGraph, MixedPrecisionType
+from .._c_expression import init_pipeline, update_func_graph_hyper_params, Cell_, FuncGraph, MixedPrecisionType
 from .._checkparam import Validator
 from ..common import dtype as mstype
 from ..common.api import _cell_graph_executor, _pynative_executor, _check_all_tensor
@@ -1703,10 +1703,8 @@ class GraphCell(Cell):
                 raise TypeError("The key of the 'params_init' must be str, and the value must be Tensor or Parameter, "
                                 f"but got the key type: {type(name)}, and the value type: {type(value)}")
 
-        params_dict = self.graph.update_hyper_params(params_init)
-        for name, value in params_dict.items():
-            param = Parameter(value)
-            param.param_info = value.param_info
+        params_dict = update_func_graph_hyper_params(self.graph, params_init)
+        for name, param in params_dict.items():
             self._params[name] = param
 
     def construct(self, *inputs):
