@@ -1509,6 +1509,8 @@ void GraphScheduler::LinkOutputResultArrowForOutputActor(OutputActor *to_actor,
         // The graph output is from device tensor store.
         if (IsPersistentDeviceTensor(output_with_index.first)) {
           (void)to_actor->device_tensor_store_keys_.emplace_back(output_position, output_with_index.first);
+          // In the scenario where the ValueTuple is expanded, the output_with_index.second may be incorrect, so use 0
+          // as output_idx directly.
           auto device_tensor = AnfAlgo::GetMutableOutputAddr(output_with_index.first, 0, false);
           MS_EXCEPTION_IF_NULL(device_tensor);
           // The output actor need use the relevant information of node to create output tensor.

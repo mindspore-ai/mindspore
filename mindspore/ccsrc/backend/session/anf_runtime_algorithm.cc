@@ -150,6 +150,91 @@ static std::map<std::string, std::pair<std::map<size_t, size_t>, std::map<size_t
   {prim::kPrimApplyCenteredRMSProp->name(),
    {{{0, 0}, {1, 1}, {2, 2}, {3, 3}, {4, 5}, {5, 6}, {6, 7}, {7, 8}, {8, 4}},
     {{0, 0}, {1, 1}, {2, 2}, {3, 3}, {5, 4}, {6, 5}, {7, 6}, {8, 7}, {4, 8}}}}};
+
+std::vector<KernelWithIndex> GetAllOutputWithIndexInner(const AnfNodePtr &node) {
+  std::vector<KernelWithIndex> ret;
+  std::vector<KernelWithIndex> ret_empty;
+  const PrimitiveSet expand_prims{
+    prim::kPrimMakeTuple,
+    prim::kPrimMakeCSRTensor,
+    prim::kPrimMakeSparseTensor,
+    prim::kPrimMakeRowTensor,
+  };
+  // The MakeTuple/MakeSparse node need expand and recurse.
+  if (IsOneOfPrimitiveCNode(node, expand_prims)) {
+    auto make_tuple = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(make_tuple);
+    for (size_t i = 1; i < make_tuple->inputs().size(); i++) {
+      auto make_tuple_output = GetAllOutputWithIndexInner(make_tuple->input(i));
+      (void)std::copy(make_tuple_output.begin(), make_tuple_output.end(), std::back_inserter(ret));
+    }
+    return ret;
+  }
+
+  // The depend node need get the real node.
+  if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimDepend)) {
+    auto depend_node = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(depend_node);
+    auto real_output = GetAllOutputWithIndexInner(depend_node->input(kRealInputIndexInDepend));
+    (void)std::copy(real_output.begin(), real_output.end(), std::back_inserter(ret));
+    return ret;
+  }
+
+  // Value node need get all the elements.
+  if (node->isa<ValueNode>()) {
+    auto value = node->cast<ValueNodePtr>()->value();
+    MS_EXCEPTION_IF_NULL(value);
+    if (value->isa<None>()) {
+      return ret;
+    } else if (value->isa<ValueTuple>()) {
+      auto value_tuple = value->cast<ValueTuplePtr>();
+      auto value_tuple_size = CountValueNum(value_tuple);
+      for (size_t i = 0; i < value_tuple_size; ++i) {
+        (void)ret.emplace_back(node, i);
+      }
+    } else {
+      (void)ret.emplace_back(node, 0);
+    }
+    return ret;
+  }
+
+  size_t outputs_num = 1;
+  if (AnfUtils::IsRealCNodeKernel(node)) {
+    outputs_num = AnfAlgo::GetOutputTensorNum(node);
+  }
+  // The output may be the tuple of node, so need visit all the outputs of node.
+  for (size_t i = 0; i < outputs_num; ++i) {
+    // Maybe this scene: tupleGetItem + depend + makeTuple, can be done correctly in VisitKernelWithReturnType.
+    // The output may be updataState node for connecting dependencies between subgraphs.
+    auto output_with_index =
+      AnfAlgo::VisitKernelWithReturnType(node, i, false, {prim::kPrimMakeTuple, prim::kPrimUpdateState});
+    MS_EXCEPTION_IF_NULL(output_with_index.first);
+
+    // The MakeTuple/MakeSparse node need recurse.
+    if (IsOneOfPrimitiveCNode(output_with_index.first, expand_prims)) {
+      auto output_vector = GetAllOutputWithIndexInner(output_with_index.first);
+      (void)std::copy(output_vector.begin(), output_vector.end(), std::back_inserter(ret));
+      continue;
+    }
+
+    // Fetch outputs by control nodes.
+    if (AnfAlgo::IsCallNode(node)) {
+      const auto &control_node_output = AnfAlgo::GetAllOutputByCallNode(output_with_index);
+      (void)std::copy(control_node_output.begin(), control_node_output.end(), std::back_inserter(ret));
+      continue;
+    }
+
+    // The InitDataSetQueue node has no output.
+    if (AnfAlgo::CheckPrimitiveType(output_with_index.first, prim::kPrimInitDataSetQueue)) {
+      return ret_empty;
+    }
+
+    MS_LOG(INFO) << "Output node: " << output_with_index.first->fullname_with_scope()
+                 << " with output index: " << output_with_index.second;
+    ret.push_back(output_with_index);
+  }
+  return ret;
+}
 }  // namespace
 
 AnfNodePtr AnfRuntimeAlgorithm::MakeMonadValueNode(const KernelGraphPtr &kg) {
@@ -331,90 +416,6 @@ std::vector<KernelWithIndex> AnfRuntimeAlgorithm::GetAllOutputByCallNode(const K
   return results;
 }
 
-std::vector<KernelWithIndex> AnfRuntimeAlgorithm::GetAllOutputWithIndexInner(const AnfNodePtr &node) {
-  std::vector<KernelWithIndex> ret;
-  std::vector<KernelWithIndex> ret_empty;
-  const PrimitiveSet expand_prims{
-    prim::kPrimMakeTuple,
-    prim::kPrimMakeCSRTensor,
-    prim::kPrimMakeSparseTensor,
-    prim::kPrimMakeRowTensor,
-  };
-  // The MakeTuple/MakeSparse node need expand and recurse.
-  if (IsOneOfPrimitiveCNode(node, expand_prims)) {
-    auto make_tuple = node->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(make_tuple);
-    for (size_t i = 1; i < make_tuple->inputs().size(); i++) {
-      auto make_tuple_output = GetAllOutputWithIndexInner(make_tuple->input(i));
-      (void)std::copy(make_tuple_output.begin(), make_tuple_output.end(), std::back_inserter(ret));
-    }
-    return ret;
-  }
-
-  // The depend node need get the real node.
-  if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimDepend)) {
-    auto depend_node = node->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(depend_node);
-    auto real_output = GetAllOutputWithIndexInner(depend_node->input(kRealInputIndexInDepend));
-    (void)std::copy(real_output.begin(), real_output.end(), std::back_inserter(ret));
-    return ret;
-  }
-
-  // Value node need get all the elements.
-  if (node->isa<ValueNode>()) {
-    auto value = node->cast<ValueNodePtr>()->value();
-    MS_EXCEPTION_IF_NULL(value);
-    if (value->isa<None>()) {
-      return ret;
-    } else if (value->isa<ValueTuple>()) {
-      auto value_tuple = value->cast<ValueTuplePtr>();
-      auto value_tuple_size = CountValueNum(value_tuple);
-      for (size_t i = 0; i < value_tuple_size; ++i) {
-        (void)ret.emplace_back(node, i);
-      }
-    } else {
-      (void)ret.emplace_back(node, 0);
-    }
-    return ret;
-  }
-
-  size_t outputs_num = 1;
-  if (AnfUtils::IsRealCNodeKernel(node)) {
-    outputs_num = AnfAlgo::GetOutputTensorNum(node);
-  }
-  // The output may be the tuple of node, so need visit all the outputs of node.
-  for (size_t i = 0; i < outputs_num; ++i) {
-    // Maybe this scene: tupleGetItem + depend + makeTuple, can be done correctly in VisitKernelWithReturnType.
-    // The output may be updataState node for connecting dependencies between subgraphs.
-    auto output_with_index =
-      AnfAlgo::VisitKernelWithReturnType(node, i, false, {prim::kPrimMakeTuple, prim::kPrimUpdateState});
-    MS_EXCEPTION_IF_NULL(output_with_index.first);
-
-    // The MakeTuple/MakeSparse node need recurse.
-    if (IsOneOfPrimitiveCNode(output_with_index.first, expand_prims)) {
-      auto output_vector = GetAllOutputWithIndexInner(output_with_index.first);
-      (void)std::copy(output_vector.begin(), output_vector.end(), std::back_inserter(ret));
-      continue;
-    }
-
-    // Fetch outputs by control nodes.
-    if (AnfAlgo::IsCallNode(node)) {
-      const auto &control_node_output = GetAllOutputByCallNode(output_with_index);
-      (void)std::copy(control_node_output.begin(), control_node_output.end(), std::back_inserter(ret));
-      continue;
-    }
-
-    // The InitDataSetQueue node has no output.
-    if (AnfAlgo::CheckPrimitiveType(output_with_index.first, prim::kPrimInitDataSetQueue)) {
-      return ret_empty;
-    }
-
-    MS_LOG(INFO) << "Output node: " << output_with_index.first->fullname_with_scope()
-                 << " with output index: " << output_with_index.second;
-    ret.push_back(output_with_index);
-  }
-  return ret;
-}
 std::vector<KernelWithIndex> AnfRuntimeAlgorithm::GetAllOutputWithIndex(const AnfNodePtr &node) {
   auto ret = GetAllOutputWithIndexInner(node);
   std::map<AnfNodePtr, size_t> value_node_index;
