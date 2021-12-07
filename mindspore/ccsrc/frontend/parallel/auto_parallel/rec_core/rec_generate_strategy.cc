@@ -32,7 +32,8 @@ namespace parallel {
 void GenerateStrategy(const std::shared_ptr<Graph> &graph, const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                       const std::shared_ptr<std::vector<std::vector<size_t>>> &eli_list,
                       const std::vector<std::vector<std::string>> &input_tensor_names,
-                      const std::shared_ptr<std::vector<size_t>> &index_list, bool is_training) {
+                      const std::shared_ptr<std::vector<size_t>> &index_list, bool is_training,
+                      const std::vector<std::vector<size_t>> &shared_tensors_ops) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(eli_list);
   MS_EXCEPTION_IF_NULL(index_list);
@@ -45,6 +46,7 @@ void GenerateStrategy(const std::shared_ptr<Graph> &graph, const std::vector<std
   GenerateEliminatedOperatorStrategyForward(graph, ops, input_tensor_names, index_list, no_stra_op_list);
   GenerateEliminatedOperatorStrategyBackward(ops, input_tensor_names, no_stra_op_list);
   GenerateRemainingOperatorStrategy(graph, ops, input_tensor_names, index_list, no_stra_op_list);
+  ModifySharingTensorOps(ops, shared_tensors_ops);
 
   for (auto &op : ops) {
     // Set user-defined strategy
@@ -167,6 +169,7 @@ Strategys PrepareSoftMax(const std::vector<std::shared_ptr<OperatorInfo>> &ops, 
       MS_LOG(INFO) << ops[iter_ops]->name() << ": adjust strategy to 1 on axis " << axis;
     }
   }
+
   return strategies;
 }
 
@@ -187,15 +190,9 @@ Strategys PrepareOneHot(const std::vector<std::shared_ptr<OperatorInfo>> &ops, c
   }
 
   // Partition number should not exceed the number of devices
-  size_t n_parts = 1;
   for (size_t i = 0; i < ops[iter_ops]->outputs_tensor_info()[0].shape().size(); i++) {
-    n_parts *= ops[iter_ops]->outputs_tensor_info()[0].shape()[i];
-  }
-
-  if (n_parts > s_second) {
-    s.clear();
-    for (size_t i = 0; i < ops[iter_ops]->outputs_tensor_info()[0].shape().size(); i++) {
-      s.push_back(1);
+    if (s[i] > ops[iter_ops]->outputs_tensor_info()[0].shape()[i]) {
+      s[i] = 1;
     }
   }
 
@@ -231,7 +228,7 @@ Strategys PrepareGatherV2(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
     while (output_shape[index_i] % 2 == 0 && output_shape[index_i] > 0 && cut < num_device) {
       output_shape[index_i] /= 2;
       cut *= 2;
-      strategie[index_i] *= 2;
+      strategie[index_i] *= 2;  // We apply 2-parts partitioning for Gather.
     }
     if (cut == num_device) {
       break;
@@ -295,7 +292,7 @@ Dimensions PrepareGatherV2OutputStrategy(const std::vector<std::shared_ptr<Opera
     while (output_shape[index_i] % 2 == 0 && output_shape[index_i] > 0 && cut < num_device) {
       output_shape[index_i] /= 2;
       cut *= 2;
-      strategie[index_i] *= 2;
+      strategie[index_i] *= 2;  // We apply 2-parts partitioning for Gather.
     }
     if (cut == num_device) {
       break;
@@ -494,7 +491,7 @@ Strategys MakeDataParallelStrategy(const std::shared_ptr<Graph> &graph,
   } else if (ops[iter_ops]->outputs_tensor_info()[0].shape().size() == 3) {
     // Experimental support for 3D data.
     graph->nodes[iter_graph].tensor_parm.tensor_str.str_c = 1.0 / std::min(max_device_num, target_tensor_batch);
-  } else if (ops[iter_ops]->outputs_tensor_info()[0].shape().size() == 4) {
+  } else if (ops[iter_ops]->outputs_tensor_info()[0].shape().size() == 4) {  // Experimental support for 4D data.
     graph->nodes[iter_graph].tensor_parm.tensor_str.str_n = 1.0 / std::min(max_device_num, target_tensor_batch);
   } else {
     MS_LOG(INFO) << ops[iter_ops]->name() << " output tensor shape is unexpected, using default value instead.";
@@ -603,6 +600,28 @@ void GeneratePartitionedOperatorStrategy(const std::shared_ptr<Graph> &graph,
     }
     StrategyPtr sp = std::make_shared<Strategy>(0, strategies);
     ops[iter_ops]->SetSelectedStrategyAndCost(sp, ops[iter_ops]->selected_cost());
+  }
+}
+
+void ModifySharingTensorOps(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                            const std::vector<std::vector<size_t>> &shared_tensors_ops) {
+  for (auto tensor : shared_tensors_ops) {
+    for (auto op_i : tensor) {
+      Dimensions str_gather_a;
+      if (ops[op_i]->type() == GATHERV2) {  // It should be the operator to copy | main op > elemwise op
+        str_gather_a = ops[op_i]
+                         ->selected_strategy()
+                         ->GetInputDim()[0];  // Instead of 0 we should put the index of input sharing the tensor
+        for (auto op_j : tensor) {
+          if (op_i != op_j && IsStrictElementWise(ops, op_j)) {
+            Strategys stra = GenerateStrategiesFromStrategy(ops, op_j, str_gather_a);
+            StrategyPtr sp = std::make_shared<Strategy>(0, stra);
+            MS_LOG(INFO) << "Changing strategy of " << ops[op_j]->name() << " with " << ops[op_i]->name();
+            ops[op_j]->SetSelectedStrategyAndCost(sp, ops[op_j]->selected_cost());
+          }
+        }
+      }
+    }
   }
 }
 
@@ -826,6 +845,24 @@ Dimensions PrepareExpandDimsOutputStrategy(const std::vector<std::shared_ptr<Ope
   return s;
 }
 
+Dimensions PrepareIncompingArithmeticOpeartorInputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                                                           const size_t incoming_op_index) {
+  Dimensions s;
+  size_t max = 0;
+  for (size_t i = 1; i < ops[incoming_op_index]->inputs_tensor_info().size(); i++) {
+    if (ops[incoming_op_index]->inputs_tensor_info()[i].shape().size() >
+        ops[incoming_op_index]->inputs_tensor_info()[max].shape().size()) {
+      max = i;
+    }
+  }
+
+  for (size_t j = 0; j < ops[incoming_op_index]->inputs_tensor_info()[max].shape().size(); j++) {
+    s.push_back(ops[incoming_op_index]->selected_strategy()->GetInputDim()[max][j]);
+  }
+
+  return s;
+}
+
 Dimensions PrepareIncomingOperatorInputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                                                 const size_t incoming_op_index) {
   Dimensions s;
@@ -846,6 +883,12 @@ Dimensions PrepareIncomingOperatorInputStrategy(const std::vector<std::shared_pt
   }
   auto strategy = ops[incoming_op_index]->selected_strategy();
   if (strategy->GetInputNumber() == 0) {
+    return s;
+  }
+
+  if (ops[incoming_op_index]->type() == MUL || ops[incoming_op_index]->type() == SUB ||
+      ops[incoming_op_index]->type() == ADD || ops[incoming_op_index]->type() == BIAS_ADD) {
+    s = PrepareIncompingArithmeticOpeartorInputStrategy(ops, incoming_op_index);
     return s;
   }
 
@@ -1102,7 +1145,7 @@ Strategys GenerateStrategiesFromStrategy(const std::vector<std::shared_ptr<Opera
       ops[iter_ops]->type() == DIV) {
     return CheckBroadcast(ops, iter_ops, basic_stra);
   }
-  if (ops[iter_ops]->type() == SOFTMAX) {
+  if (ops[iter_ops]->type() == SOFTMAX || ops[iter_ops]->type() == LOG_SOFTMAX) {
     return PrepareSoftMax(ops, iter_ops, basic_stra);
   }
   return CheckDivisible(ops, iter_ops, basic_stra);
