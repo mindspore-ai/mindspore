@@ -35,7 +35,7 @@ namespace parallel {
 std::string GetOpPythonPath(const OperatorName &op_name);
 
 // Init python operator Instance
-ValuePtr CreatOpInstance(const OperatorAttrs &attrs, const OperatorName &op_name, const std::string &instance_name);
+ValuePtr CreateOpInstance(const OperatorAttrs &attrs, const OperatorName &op_name, const std::string &instance_name);
 
 AnfNodePtr CreatTypeInt(int64_t value);
 AnfNodePtr CreatInt64Imm(int64_t value);

@@ -50,7 +50,7 @@ std::string GetOpPythonPath(const OperatorName &op_name) {
   return functional_op_module;
 }
 
-ValuePtr CreatOpInstance(const OperatorAttrs &attrs, const OperatorName &op_name, const std::string &instance_name) {
+ValuePtr CreateOpInstance(const OperatorAttrs &attrs, const OperatorName &op_name, const std::string &instance_name) {
   std::string op_path = GetOpPythonPath(op_name);
   py::module mod = py::module::import(common::SafeCStr(op_path));
   if (!py::hasattr(mod, common::SafeCStr(op_name))) {
@@ -173,9 +173,9 @@ AnfNodePtr GenerateGraph::PushBack(const std::vector<AnfNodePtr> &inputs) {
 
 AnfNodePtr GenerateGraph::NewOpInst(const OperatorName &op_name, const OperatorAttrs &attrs) {
   name_idx_++;
-  ValuePtr pyop_instance = CreatOpInstance(attrs, op_name, instance_name_base_ + op_name + std::to_string(name_idx_));
+  ValuePtr pyop_instance = CreateOpInstance(attrs, op_name, instance_name_base_ + op_name + std::to_string(name_idx_));
   if (pyop_instance == nullptr) {
-    MS_LOG(EXCEPTION) << "Failure:" << op_name << " CreatOpInstance failed";
+    MS_LOG(EXCEPTION) << "Failure:" << op_name << " CreateOpInstance failed";
   }
   auto value_node = NewValueNode(pyop_instance);
   return value_node->cast<AnfNodePtr>();
@@ -184,9 +184,9 @@ AnfNodePtr GenerateGraph::NewOpInst(const OperatorName &op_name, const OperatorA
 AnfNodePtr GenerateGraph::NewOpInst(const OperatorName &op_name) {
   name_idx_++;
   OperatorAttrs attrs;
-  ValuePtr pyop_instance = CreatOpInstance(attrs, op_name, instance_name_base_ + std::to_string(name_idx_));
+  ValuePtr pyop_instance = CreateOpInstance(attrs, op_name, instance_name_base_ + std::to_string(name_idx_));
   if (pyop_instance == nullptr) {
-    MS_LOG(EXCEPTION) << "Failure:" << op_name << " CreatOpInstance failed";
+    MS_LOG(EXCEPTION) << "Failure:" << op_name << " CreateOpInstance failed";
   }
   auto value_node = NewValueNode(pyop_instance);
   return value_node->cast<AnfNodePtr>();

@@ -73,12 +73,6 @@ def test_gathernd_dim2_default_batch_parallel():
     compile_net(net)
 
 
-def test_gathernd_auto_parallel():
-    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=16, global_rank=0)
-    net = Net(1, _w1)
-    compile_net(net)
-
-
 def test_gathernd_repeat_calc():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
     strategy1 = ((1, 2, 4), (1, 2, 4))

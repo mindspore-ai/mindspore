@@ -99,15 +99,6 @@ def test_input_same_split():
     compile_net(net)
 
 
-def test_input_different_split():
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
-    strategy1 = ((16, 1), (16, 1))
-    strategy2 = ((4, 4), (4, 4))
-    net = Net2(_w, strategy1, strategy2)
-    with pytest.raises(RuntimeError):
-        compile_net(net)
-
-
 def test_parameter_different_group():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
     strategy1 = ((1, 2), (2, 1))

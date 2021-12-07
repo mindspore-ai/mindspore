@@ -65,7 +65,7 @@ class Net(nn.Cell):
 
 def test_gatherv2_semi_auto0():
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
-    strategy1 = ((1, 8), (1, 1))
+    strategy1 = ((8, 1), (1, 1))
     strategy2 = ((4, 2, 1), (4, 2, 1))
     net = GradWrap(NetWithLoss(Net(0, strategy1, strategy2)))
     net.set_auto_parallel()
@@ -77,32 +77,11 @@ def test_gatherv2_semi_auto0():
 
 
 def test_gatherv2_semi_auto1():
-    context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
-    strategy1 = ((8, 1), (1, 1))
-    strategy2 = ((4, 2, 1), (4, 2, 1))
-    net = GradWrap(NetWithLoss(Net(0, strategy1, strategy2)))
-    net.set_auto_parallel()
-
-    x = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
-    net.set_train()
-    _cell_graph_executor.compile(net, x, y)
-
-
-def test_gatherv2_semi_auto2():
-    context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
-    strategy1 = ((2, 4), (1, 1))
-    strategy2 = ((4, 2, 1), (4, 2, 1))
-    net = GradWrap(NetWithLoss(Net(0, strategy1, strategy2)))
-    net.set_auto_parallel()
-
-    x = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
-    net.set_train()
-    _cell_graph_executor.compile(net, x, y)
-
-
-def test_gatherv2_semi_auto3():
+    """
+    Feature: distribute operator SparseGatherV2 in auto parallel.
+    Description: gather net with strategy in semi auto parallel, gather axis is 1.
+    Expectation: compile done without error.
+    """
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
     strategy1 = ((1, 8), (1, 1))
     strategy2 = ((4, 2, 1), (4, 2, 1))
@@ -115,7 +94,12 @@ def test_gatherv2_semi_auto3():
     _cell_graph_executor.compile(net, x, y)
 
 
-def test_gatherv2_semi_auto4():
+def test_gatherv2_semi_auto2():
+    """
+    Feature: distribute operator SparseGatherV2 in auto parallel.
+    Description: gather net with strategy in semi auto parallel, gather axis is 1.
+    Expectation: compile done without error.
+    """
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
     strategy1 = ((8, 1), (1, 1))
     strategy2 = ((4, 2, 1), (4, 2, 1))
@@ -128,7 +112,12 @@ def test_gatherv2_semi_auto4():
     _cell_graph_executor.compile(net, x, y)
 
 
-def test_gatherv2_semi_auto5():
+def test_gatherv2_semi_auto3():
+    """
+    Feature: distribute operator SparseGatherV2 in auto parallel.
+    Description: gather net with strategy in semi auto parallel, gather axis is 1.
+    Expectation: compile done without error.
+    """
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
     strategy1 = ((2, 4), (1, 1))
     strategy2 = ((4, 2, 1), (4, 2, 1))
@@ -141,7 +130,13 @@ def test_gatherv2_semi_auto5():
     _cell_graph_executor.compile(net, x, y)
 
 
-def test_gatherv2_semi_auto6():
+def test_gatherv2_semi_auto4():
+    """
+    Feature: distribute operator SparseGatherV2 in auto parallel.
+    Description: gather net with strategy in semi auto parallel, gather axis is 0.
+    Expectation: compile done without error.
+    """
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
     strategy2 = ((4, 2, 1), (4, 2, 1))
     net = GradWrap(NetWithLoss(Net(0, None, strategy2)))
@@ -153,7 +148,12 @@ def test_gatherv2_semi_auto6():
     _cell_graph_executor.compile(net, x, y)
 
 
-def test_gatherv2_semi_auto7():
+def test_gatherv2_semi_auto5():
+    """
+    Feature: distribute operator SparseGatherV2 in auto parallel.
+    Description: gather net with strategy in semi auto parallel, gather axis is 1.
+    Expectation: compile done without error.
+    """
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
     strategy2 = ((4, 2, 1), (4, 2, 1))
     net = GradWrap(NetWithLoss(Net(1, None, strategy2)))
@@ -166,6 +166,7 @@ def test_gatherv2_semi_auto7():
 
 
 def test_gatherv2_auto0():
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="auto_parallel")
     net = GradWrap(NetWithLoss(Net(0)))
     net.set_auto_parallel()

@@ -119,18 +119,3 @@ def test_embeddinglookup_semi_auto1():
     y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
     net.set_train()
     _cell_graph_executor.compile(net, x, y)
-
-
-def test_embeddinglookup_semi_auto2():
-    context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
-    shape = [64, 32]
-    offset = 0
-    strategy1 = ((1, 8), (1, 1))
-    strategy2 = ((4, 1, 2), (4, 2, 1))
-    net = GradWrap(NetWithLoss(Net(shape, offset, strategy1, strategy2, "CPU")))
-
-    net.set_auto_parallel()
-    x = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
-    net.set_train()
-    _cell_graph_executor.compile(net, x, y)

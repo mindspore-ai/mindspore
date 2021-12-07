@@ -243,9 +243,9 @@ void SetCommunicationOpGroupLabel(std::vector<AnfNodePtr> new_node_input) {
 std::vector<AnfNodePtr> ReplaceOpInput(const Operator &replace_op, const std::string &instance_name,
                                        const CNodePtr &node) {
   OperatorArgs arg_replace_op = replace_op.second;
-  ValuePtr pyop_instance = CreatOpInstance(arg_replace_op.first, replace_op.first, instance_name);
+  ValuePtr pyop_instance = CreateOpInstance(arg_replace_op.first, replace_op.first, instance_name);
   if (pyop_instance == nullptr) {
-    MS_LOG(EXCEPTION) << "Failure: " << replace_op.first << " CreatOpInstance failed";
+    MS_LOG(EXCEPTION) << "Failure: " << replace_op.first << " CreateOpInstance failed";
   }
   OperatorParams params = arg_replace_op.second;
   if (node->inputs().size() < 2) {
