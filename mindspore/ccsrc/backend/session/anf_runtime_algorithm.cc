@@ -1908,7 +1908,7 @@ std::optional<string> AnfRuntimeAlgorithm::GetDumpFlag(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
   if (cnode == nullptr || !AnfAlgo::HasNodeAttr(kAttrDump, cnode)) {
-    return std::optional<string>{};
+    return {};
   }
   return std::optional<string>{AnfAlgo::GetNodeAttr<string>(node, kAttrDump)};
 }

@@ -23,6 +23,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <optional>
 #include "ir/dtype.h"
 #include "backend/kernel_compiler/kernel.h"
 #include "ir/dtype/type.h"
@@ -81,9 +82,19 @@ std::vector<size_t> TransShapeToDevice(const std::vector<size_t> &shape, const s
 std::vector<int64_t> TransShapeToDevice(const std::vector<int64_t> &shape, const std::string &format,
                                         const int64_t groups = 1,
                                         const std::vector<int64_t> &input_hidden_size = {kAlign16, kAlign16});
+std::optional<std::vector<int64_t>> GetFixedDeviceShape(const std::vector<int64_t> &, const AnfNodePtr &node,
+                                                        const size_t index, bool is_output = true);
+std::optional<std::vector<size_t>> GetFixedDeviceShape(const std::vector<size_t> &, const AnfNodePtr &node,
+                                                       const size_t index, bool is_output = true);
+
 template <typename T>
 std::vector<T> TransShapeToDevice(const std::vector<T> &shape, const std::string &format, const AnfNodePtr &node,
                                   const size_t index, bool is_output = true) {
+  auto dev_shape = GetFixedDeviceShape(shape, node, index, is_output);
+  if (dev_shape.has_value()) {
+    return dev_shape.value();
+  }
+
   int64_t groups = 1;
   if (format == kOpFormat_FRAC_Z) {
     groups = GetAttrGroups(node, index);

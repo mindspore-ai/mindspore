@@ -30,6 +30,7 @@
 using mindspore::abstract::Shape;
 namespace mindspore {
 namespace trans {
+namespace {
 const int b1 = 1;
 const int b2 = 2;
 const int b4 = 4;
@@ -217,7 +218,6 @@ bool CastKernel(const TypeIdArgs &args, void *dst, const size_t data_size, const
   }
 }
 
-namespace {
 bool HasShapeDynamic(const std::vector<int64_t> &shape_list) {
   return std::any_of(shape_list.begin(), shape_list.end(), [](int64_t shape) { return shape == Shape::SHP_ANY; });
 }
@@ -829,6 +829,25 @@ std::vector<int64_t> NDRNNBiasDeviceDynamicShape(const std::vector<int64_t> &sha
   }
   return device_shape;
 }
+
+std::optional<std::vector<int64_t>> GetFixedDeviceShape(const AnfNodePtr &node, const size_t index,
+                                                        bool is_output = true) {
+  if (node == nullptr || !node->isa<CNode>()) {
+    return {};
+  }
+  auto attr_name = is_output ? kAttrFixedOutputDeviceShape : kAttrFixedInputDeviceShape;
+  auto cnode = node->cast<CNodePtr>();
+  if (!AnfAlgo::HasNodeAttr(attr_name, cnode)) {
+    return {};
+  }
+
+  auto shapes = AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(cnode, attr_name);
+  if (index >= shapes.size()) {
+    MS_LOG(INFO) << "Index is out of range, got index: " << index << ", shape size: " << shapes.size();
+    return {};
+  }
+  return std::optional<std::vector<int64_t>>(std::move(shapes[index]));
+}
 }  // namespace
 
 int64_t GetAttrGroups(const AnfNodePtr &node, const size_t index) {
@@ -1070,6 +1089,22 @@ std::vector<int64_t> TransShapeToDevice(const std::vector<int64_t> &shape, const
     MS_LOG(EXCEPTION) << "Unexpected format[" << format << "]";
   }
   return iter->second(temp_shape);
+}
+
+std::optional<std::vector<int64_t>> GetFixedDeviceShape(const std::vector<int64_t> &, const AnfNodePtr &node,
+                                                        const size_t index, bool is_output) {
+  return GetFixedDeviceShape(node, index, is_output);
+}
+
+std::optional<std::vector<size_t>> GetFixedDeviceShape(const std::vector<size_t> &, const AnfNodePtr &node,
+                                                       const size_t index, bool is_output) {
+  auto shape_opt = GetFixedDeviceShape(node, index, is_output);
+  if (!shape_opt.has_value()) {
+    return {};
+  }
+  std::vector<size_t> shape;
+  (void)std::transform(shape_opt->begin(), shape_opt->end(), std::back_inserter(shape), LongToSize);
+  return std::optional<std::vector<size_t>>(std::move(shape));
 }
 
 bool CheckArgs(const FormatArgs &args, size_t *size, size_t *total_size) {
