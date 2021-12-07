@@ -85,6 +85,7 @@ class ParameterServer {
         sess_(nullptr),
         running_(true),
         thread_(nullptr),
+        persist_thread_(nullptr),
         server_node_(nullptr) {}
   ~ParameterServer() = default;
   ParameterServer(const ParameterServer &) = delete;
