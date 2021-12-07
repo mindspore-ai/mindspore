@@ -1197,7 +1197,7 @@ class LpNorm(Primitive):
 
 class MatMul(PrimitiveWithCheck):
     r"""
-    Multiplies matrix `x` and matrix `y`.
+    Multiplies matrix `a` and matrix `b`.
 
     .. math::
 
@@ -1206,32 +1206,32 @@ class MatMul(PrimitiveWithCheck):
     where the :math:`i,j` indicates the output of the i-th row and j-th column element.
 
     Args:
-        transpose_x (bool): If true, `x` is transposed before multiplication. Default: False.
-        transpose_y (bool): If true, `y` is transposed before multiplication. Default: False.
+        transpose_a (bool): If true, `a` is transposed before multiplication. Default: False.
+        transpose_b (bool): If true, `b` is transposed before multiplication. Default: False.
 
     Inputs:
-        - **x** (Tensor) - The first tensor to be multiplied. The shape of the tensor is :math:`(N, C)`. If
-          `transpose_x` is True, its shape must be :math:`(N, C)` after transpose.
-        - **y** (Tensor) - The second tensor to be multiplied. The shape of the tensor is :math:`(C, M)`. If
-          `transpose_y` is True, its shape must be :math:`(C, M)` after transpose.
+        - **a** (Tensor) - The first tensor to be multiplied. The shape of the tensor is :math:`(N, C)`. If
+          `transpose_a` is True, its shape must be :math:`(N, C)` after transpose.
+        - **b** (Tensor) - The second tensor to be multiplied. The shape of the tensor is :math:`(C, M)`. If
+          `transpose_b` is True, its shape must be :math:`(C, M)` after transpose.
 
     Outputs:
         Tensor, the shape of the output tensor is :math:`(N, M)`.
 
     Raises:
         TypeError: If `transpose_a` or `transpose_b` is not a bool.
-        ValueError: If the column of matrix dimensions of `x` is not equal to
-                    the row of matrix dimensions of `y`.
-        ValueError: If length of shape of `x` or `y` is not equal to 2.
+        ValueError: If the column of matrix dimensions of `a` is not equal to
+                    the row of matrix dimensions of `b`.
+        ValueError: If length of shape of `a` or `b` is not equal to 2.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.ones(shape=[1, 3]), mindspore.float32)
-        >>> y = Tensor(np.ones(shape=[3, 4]), mindspore.float32)
+        >>> a = Tensor(np.ones(shape=[1, 3]), mindspore.float32)
+        >>> b = Tensor(np.ones(shape=[3, 4]), mindspore.float32)
         >>> matmul = ops.MatMul()
-        >>> output = matmul(x, y)
+        >>> output = matmul(a, b)
         >>> print(output)
         [[3. 3. 3. 3.]]
     """
