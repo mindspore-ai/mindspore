@@ -3001,7 +3001,7 @@ class ReverseV2(PrimitiveWithInfer):
         return x_dtype
 
 
-class Rint(PrimitiveWithInfer):
+class Rint(Primitive):
     """
     Returns an integer that is closest to x element-wise.
 
@@ -3037,12 +3037,6 @@ class Rint(PrimitiveWithInfer):
         """Initialize Rint."""
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
 
-    def infer_shape(self, x_shape):
-        return x_shape
-
-    def infer_dtype(self, x_dtype):
-        validator.check_tensor_dtype_valid('x', x_dtype, [mstype.float16, mstype.float32, mstype.float64], self.name)
-        return x_dtype
 
 
 class Select(Primitive):

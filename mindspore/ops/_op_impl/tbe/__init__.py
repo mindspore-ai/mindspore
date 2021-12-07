@@ -153,6 +153,7 @@ from .fused_dbn_dw import _fused_dbn_dw_tbe
 from .reciprocal import _reciprocal_tbe
 from .reverse_v2_d import _reverse_v2_d_tbe
 from .rint import _rint_tbe
+from .rint_ds import _rint_ds_tbe
 from .strided_slice_d import _strided_slice_d_tbe
 from .strided_slice_ds import _strided_slice_ds_tbe
 from .strided_slice_grad_d import _strided_slice_grad_d_tbe
