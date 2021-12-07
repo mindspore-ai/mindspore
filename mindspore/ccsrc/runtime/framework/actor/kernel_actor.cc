@@ -88,7 +88,9 @@ void KernelActor::Run(OpContext<DeviceTensor> *const context) {
     try {
       device_contexts_[0]->UpdateDynamicShape(kernel_);
     } catch (const std::exception &e) {
-      MsException::Instance().SetException();
+      if (strategy_ == GraphExecutionStrategy::kPipeline) {
+        MsException::Instance().SetException();
+      }
       std::string error_info = "Update Dynamic shape exception: " + kernel_->fullname_with_scope();
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), error_info);
     }
@@ -197,7 +199,9 @@ void KernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), error_info);
     }
   } catch (const std::exception &e) {
-    MsException::Instance().SetException();
+    if (strategy_ == GraphExecutionStrategy::kPipeline) {
+      MsException::Instance().SetException();
+    }
     std::string error_info = "Launch kernel exception: " + kernel_->fullname_with_scope();
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), error_info);
   }
