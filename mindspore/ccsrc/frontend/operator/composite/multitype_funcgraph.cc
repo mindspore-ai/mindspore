@@ -132,18 +132,18 @@ FuncGraphPtr MultitypeFuncGraph::GenerateFromTypes(const TypePtrList &types) {
   if (!py_fn.is_none()) {
     FuncGraphPtr func_graph = parse::ParsePythonCode(py_fn);
     if (func_graph == nullptr) {
-      MS_LOG(EXCEPTION) << "Fail to parse overload function " << buffer.str();
+      MS_LOG(EXCEPTION) << "Fail to parse overload function " << buffer.str() << ".";
     }
-    MS_LOG(DEBUG) << "Find overload function " << buffer.str() << ", function: " << func_graph->ToString();
+    MS_LOG(DEBUG) << "Find overload function " << buffer.str() << ", function: " << func_graph->ToString() << ".";
     if (py_fn_pair.second) {
-      MS_LOG(DEBUG) << "Add extra UMoand type for func_graph: " << func_graph->ToString();
+      MS_LOG(DEBUG) << "Add extra UMoand type for func_graph: " << func_graph->ToString() << ".";
       func_graph->add_parameter();
     }
     return func_graph;
   }
   auto stub = GenerateStubFunc(types);
   if (stub != nullptr) {
-    MS_LOG(DEBUG) << "GenerateStubFunc " << buffer.str() << ", function: " << stub->ToString();
+    MS_LOG(DEBUG) << "GenerateStubFunc " << buffer.str() << ", function: " << stub->ToString() << ".";
     return stub;
   }
   std::ostringstream oss;

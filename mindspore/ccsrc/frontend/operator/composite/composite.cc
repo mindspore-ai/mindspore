@@ -125,14 +125,14 @@ AnfNodePtr HyperMap::FullMake(const std::shared_ptr<List> &type, const FuncGraph
                           << item.second->ToString();
       }
       if (lhs->elements().size() != size) {
-        oss << "the length of elements[" << (num - 1) << "] is " << size << ", but got " << lhs->elements().size()
+        oss << "The length of elements[" << (num - 1) << "] is " << size << ", but got " << lhs->elements().size()
             << "\n";
         return true;
       }
       return false;
     });
   if (is_not_same) {
-    MS_LOG(EXCEPTION) << "The lists in HyperMap should have the same length, " << oss.str();
+    MS_LOG(EXCEPTION) << "The lists in HyperMap should have the same length. " << oss.str();
   }
 
   // cannot use shared_from_base() also known as this, as it will make a reference cycle on
@@ -184,14 +184,14 @@ AnfNodePtr HyperMap::FullMake(const std::shared_ptr<Tuple> &type, const FuncGrap
                           << item.second->ToString();
       }
       if (lhs->elements().size() != size) {
-        oss << "the length of elements[" << (num - 1) << "] is " << size << ", but got " << lhs->elements().size()
+        oss << "The length of elements[" << (num - 1) << "] is " << size << ", but got " << lhs->elements().size()
             << "\n";
         return true;
       }
       return false;
     });
   if (is_not_same) {
-    MS_LOG(EXCEPTION) << "The length of tuples in HyperMap must be the same, " << oss.str();
+    MS_LOG(EXCEPTION) << "The length of tuples in HyperMap must be the same. " << oss.str();
   }
 
   // cannot use shared_from_base() also known as this, as it will make a reference cycle on
@@ -294,10 +294,10 @@ AnfNodePtr HyperMap::Make(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_a
           << trace::GetDebugInfo(func_graph->debug_info()) << "\n";
       int64_t idx = 0;
       for (auto &item : arg_map) {
-        oss << "The type of " << ++idx << " argument is: " << item.second->ToString() << "\n";
+        oss << "The type of " << ++idx << " argument is " << item.second->ToString() << "\n";
       }
       MS_LOG(EXCEPTION) << "The types of arguments in HyperMap must be consistent, "
-                        << "but the types of arguments are inconsistent:\n"
+                        << "but the types of arguments are inconsistent.\n"
                         << oss.str();
     }
   }
@@ -513,12 +513,12 @@ FuncGraphPtr Tail::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) 
         return GenerateSequeueFuncGraph(a->cast<abstract::AbstractSequeuePtr>(),
                                         pos->cast<abstract::AbstractSequeuePtr>());
       }
-      MS_LOG(EXCEPTION) << "'Tail' arg1 must be AbstractTuple or AbstractList, but: " << pos->ToString();
+      MS_LOG(EXCEPTION) << "'Tail' arg1 must be AbstractTuple or AbstractList, but got " << pos->ToString();
     }
     return GenerateSequeueFuncGraph(a->cast<abstract::AbstractSequeuePtr>());
   }
 
-  MS_LOG(EXCEPTION) << "'Tail' arg0 must be AbstractTuple or AbstractList, but: " << a->ToString();
+  MS_LOG(EXCEPTION) << "'Tail' arg0 must be AbstractTuple or AbstractList, but got " << a->ToString();
 }
 
 REGISTER_PYBIND_DEFINE(
