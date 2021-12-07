@@ -215,7 +215,7 @@ class OpInfoExtractor {
         }
       }
       if (op_attr->type().empty()) {
-        MS_LOG(WARNING) << "Unknown type, ignore attr: " << name;
+        MS_LOG(DEBUG) << "Unknown type, ignore attr: " << name;
         continue;
       }
       op_info->add_attrs_ptr(op_attr);

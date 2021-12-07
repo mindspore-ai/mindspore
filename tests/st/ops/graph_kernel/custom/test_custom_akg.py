@@ -15,16 +15,14 @@
 
 import pytest
 import numpy as np
-import mindspore as ms
 from mindspore import context, Tensor
-from mindspore.common import dtype as mstype
 from mindspore.nn import Cell
 import mindspore.ops as ops
 from mindspore.ops import DataType, CustomRegOp, custom_info_register
 
 
 def outer_product(a, b):
-    c = output_tensor((a.shape[0], b.shape[1]), 'float32')
+    c = output_tensor(a.shape, a.dtype)
 
     for i0 in range(a.shape[0]):
         for i1 in range(b.shape[1]):
@@ -35,8 +33,8 @@ def outer_product(a, b):
 
 
 def cube(a):
-    c = output_tensor((a.shape[0], a.shape[1]), 'float32')
-    b = allocate((a.shape[0], a.shape[1]), 'float32', 'local')
+    c = output_tensor(a.shape, a.dtype)
+    b = allocate(a.shape, a.dtype, 'local')
 
     for i0 in range(a.shape[0]):
         for i1 in range(a.shape[1]):
@@ -49,10 +47,10 @@ def cube(a):
 class TestHybridTwoInputs(Cell):
     """Net definition"""
 
-    def __init__(self, func, shapes, types):
+    def __init__(self, func, out_shape, out_dtype):
         super(TestHybridTwoInputs, self).__init__()
 
-        self.program = ops.Custom(func, out_shape=shapes, out_dtype=types, func_type="akg")
+        self.program = ops.Custom(func, out_shape=out_shape, out_dtype=out_dtype, func_type="akg")
 
     def construct(self, x, y):
         return self.program(x, y)
@@ -61,10 +59,10 @@ class TestHybridTwoInputs(Cell):
 class TestHybridOneInput(Cell):
     """Net definition"""
 
-    def __init__(self, func, shapes, types):
+    def __init__(self, func, out_shape, out_dtype):
         super(TestHybridOneInput, self).__init__()
 
-        self.program = ops.Custom(func, out_shape=shapes, out_dtype=types, func_type="akg")
+        self.program = ops.Custom(func, out_shape=out_shape, out_dtype=out_dtype, func_type="akg")
 
     def construct(self, x):
         return self.program(x)
@@ -96,7 +94,7 @@ def hybrid_outer_product():
     input_x = np.random.normal(0, 1, [4, 4]).astype(np.float32)
     input_y = np.random.normal(0, 1, [4, 4]).astype(np.float32)
 
-    test = TestHybridTwoInputs(outer_product, (4, 4), (ms.float32))
+    test = TestHybridTwoInputs(outer_product, lambda x, _: x, lambda x, _: x)
     output = test(Tensor(input_x), Tensor(input_y))
     expect = np.matmul(input_x, input_y)
     compare_res = np.allclose(expect, output.asnumpy(), 0.001, 0.001)
@@ -109,7 +107,7 @@ def hybrid_outer_product_autodiff():
     input_y = np.random.normal(0, 1, [4, 4]).astype(np.float32)
     sens = np.random.normal(0, 1, [4, 4]).astype(np.float32)
 
-    test = TestHybridTwoInputs(outer_product, (4, 4), (ms.float32))
+    test = TestHybridTwoInputs(outer_product, lambda x, _: x, lambda x, _: x)
     net = MatMulNN()
     dx, dy = ops.GradOperation(sens_param=True, get_all=True)(test)(Tensor(input_x), Tensor(input_y), Tensor(sens))
     edx, edy = ops.GradOperation(sens_param=True, get_all=True)(net)(Tensor(input_x), Tensor(input_y), Tensor(sens))
@@ -123,7 +121,7 @@ def hybrid_pow_autodiff():
     input_x = np.random.normal(0, 1, [4, 4]).astype(np.float32)
     sens = np.random.normal(0, 1, [4, 4]).astype(np.float32)
 
-    test = TestHybridOneInput(cube, (4, 4), (ms.float32))
+    test = TestHybridOneInput(cube, lambda x: x, lambda x: x)
     net = PowNN()
     dx = ops.GradOperation(sens_param=True)(test)(Tensor(input_x), Tensor(sens))
     edx = ops.GradOperation(sens_param=True)(net)(Tensor(input_x), Tensor(sens))
@@ -222,9 +220,9 @@ def v_add(inputs, attrs):
 class TestIRbuilder(Cell):
     """Net definition"""
 
-    def __init__(self, shape):
+    def __init__(self):
         super(TestIRbuilder, self).__init__()
-        self.program = ops.Custom(v_add, out_shape=shape, out_dtype=mstype.float16, func_type="akg")
+        self.program = ops.Custom(v_add, out_shape=lambda x: x[0], out_dtype=lambda x: x[0], func_type="akg")
 
     def construct(self, x, y):
         return self.program([x, y])
@@ -235,7 +233,7 @@ def irbuilder_case():
     input_x = np.random.normal(0, 1, shape).astype(np.float16)
     input_y = np.random.normal(0, 1, shape).astype(np.float16)
 
-    test = TestIRbuilder(shape)
+    test = TestIRbuilder()
     output = test(Tensor(input_x), Tensor(input_y))
     compare_res = np.allclose(input_x + input_y, output.asnumpy(), 0.001, 0.001)
     if not compare_res:

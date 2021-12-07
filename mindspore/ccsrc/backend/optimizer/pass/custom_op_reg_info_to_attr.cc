@@ -97,10 +97,15 @@ void AddMissingAttrs(const CNodePtr &cnode, kernel::OpImplyType imply_type,
   bool need_update = false;
   for (const auto &attr : all_attrs) {
     auto attr_name = attr->name();
-    if (missing_attrs.find(attr_name) == missing_attrs.end() || attr->param_type() != "required") {
+    if (missing_attrs.find(attr_name) == missing_attrs.end()) {
       continue;
     }
+    // If attr's param_type is required, it should have default value.
+    // If attr have default value, we should parse it no matter whether its param_type is required or not.
     auto default_value = attr->default_value();
+    if (default_value.empty() && attr->param_type() != "required") {
+      continue;
+    }
     if (default_value.empty()) {
       MS_LOG(EXCEPTION) << "attr [" << attr_name << "] in the registration information of op [" << op_name
                         << "] does not have a value." << trace::DumpSourceLines(cnode);
@@ -129,8 +134,8 @@ const AnfNodePtr CustomOpRegInfoToAttr::Process(const FuncGraphPtr &, const AnfN
   auto primitive = AnfAlgo::GetCNodePrimitive(cnode);
   MS_EXCEPTION_IF_NULL(primitive);
   auto func_type = AnfAlgo::GetNodeAttr<std::string>(cnode, kAttrFuncType);
-  // Only AKG needs to process attr, TBE will process later in the json creating phase.
-  if (kCustomTypeAkg.find(func_type) == kCustomTypeAkg.end()) {
+  // AKG/AICPU need to process attr, TBE will process later in the json creating phase.
+  if (kCustomTypeAkg.find(func_type) == kCustomTypeAkg.end() || func_type == kCustomTypeAICPU) {
     return nullptr;
   }
   // Early return if current node does not have attr
@@ -149,7 +154,9 @@ const AnfNodePtr CustomOpRegInfoToAttr::Process(const FuncGraphPtr &, const AnfN
   if (missing_attrs.empty()) {
     return nullptr;
   }
-  AddMissingAttrs(cnode, kernel::OpImplyType::kAKG, missing_attrs);
+  kernel::OpImplyType imply_type =
+    func_type == kCustomTypeAICPU ? kernel::OpImplyType::kAICPU : kernel::OpImplyType::kAKG;
+  AddMissingAttrs(cnode, imply_type, missing_attrs);
 
   return node;
 }

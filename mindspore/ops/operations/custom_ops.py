@@ -136,7 +136,7 @@ class Custom(ops.PrimitiveWithInfer):
             represents the registration information of `func` in a specific target. You need to invoke `CustomRegOp`
             or the subclass of `RegOp` to generate the reg info for `func`. Then you can invoke
             `custom_info_register` to bind the reg info to `func` or just pass the reg info to `reg_info` parameter.
-            The `reg_info` parameter takes higher priority then `custom_info_register` and the reg info in a
+            The `reg_info` parameter takes higher priority than `custom_info_register` and the reg info in a
             specific target will be registered only once.
 
             If reg info is not set, then we will infer the data types and formats from the inputs of `Custom` operator.
@@ -161,7 +161,6 @@ class Custom(ops.PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import mindspore as ms
         >>> import mindspore.ops as ops
         >>> from mindspore.ops import CustomRegOp, custom_info_register, DataType
         >>> from mindspore.common import dtype as mstype
@@ -169,7 +168,7 @@ class Custom(ops.PrimitiveWithInfer):
         >>>
         >>> # Example, func_type = "akg"
         >>> def outer_product(a, b):
-        ...     c = output_tensor((a.shape[0], b.shape[1]), 'float32')
+        ...     c = output_tensor(a.shape, a.dtype)
         ...     for i0 in range(a.shape[0]):
         ...         for i1 in range(b.shape[1]):
         ...             c[i0, i1] = 0.0
@@ -202,19 +201,18 @@ class Custom(ops.PrimitiveWithInfer):
         ... def square_with_bias(input_x, output_y, bias=0.0, kernel_name="square_with_bias"):
         ...     import te.lang.cce
         ...     from te import tvm
-        ...     from topi import generic
         ...     from topi.cce import util
         ...
         ...     shape = input_x.get("shape")
         ...     dtype = input_x.get("dtype").lower()
         ...
         ...     shape = util.shape_refine(shape)
-        ...     data = tvm.placeholder(shape, name="data", dtype=dtype.lower())
+        ...     data = tvm.placeholder(shape, name="data", dtype=dtype)
         ...
         ...     with tvm.target.cce():
         ...         res0 = te.lang.cce.vmul(data, data)
         ...         res = te.lang.cce.vadds(res0, bias)
-        ...         sch = generic.auto_schedule(res)
+        ...         sch = te.lang.cce.auto_schedule(res)
         ...
         ...     config = {"print_ir": False,
         ...               "name": kernel_name,
@@ -225,8 +223,8 @@ class Custom(ops.PrimitiveWithInfer):
         >>> class TbeNet(Cell):
         ...     def __init__(self):
         ...         super(TbeNet, self).__init__()
-        ...         self.square_with_bias = ops.Custom(square_with_bias, out_shape=[2, 3], out_dtype=mstype.float32, \
-        ...                                            func_type="tbe")
+        ...         self.square_with_bias = ops.Custom(square_with_bias, out_shape=lambda x, _: x, \
+        ...                                            out_dtype=lambda x, _: x, func_type="tbe")
         ...     def construct(self, x):
         ...         res = self.square_with_bias(x, 1.0)
         ...         return res
@@ -258,9 +256,9 @@ class Custom(ops.PrimitiveWithInfer):
         >>>
         >>> # Example, func_type = "aot"
         >>> class AOTSingleOutputNet(Cell):
-        ...     def __init__(self, func, out_shapes, out_types, reg=None):
+        ...     def __init__(self, out_shapes, out_types):
         ...         super(AOTSingleOutputNet, self).__init__()
-        ...         self.program = ops.Custom("./reorganize.so:CustomReorganize", (2, 3), mstype.float32, "aot")
+        ...         self.program = ops.Custom("./reorganize.so:CustomReorganize", out_shapes, out_types, "aot")
         ...     def construct(self, x, y):
         ...         return self.program(x, y)
         >>>
@@ -269,9 +267,9 @@ class Custom(ops.PrimitiveWithInfer):
         ...     return (x1 + x2), (x1 - x2)
         >>>
         >>> class PyFuncNet(Cell):
-        ...     def __init__(self, fn, out_shapes, out_types):
-        ...         super().__init__()
-        ...         self.func = ops.Custom(func_multi_output, ((2, 3), (2, 3)), (ms.float32, ms.float32), "pyfunc")
+        ...     def __init__(self):
+        ...         super(PyFuncNet, self).__init__()
+        ...         self.func = ops.Custom(func_multi_output, lambda x, _: (x, x), lambda x, _: (x, x), "pyfunc")
         ...     def construct(self, x1, x2):
         ...         return self.func(x1, x2)
     """
