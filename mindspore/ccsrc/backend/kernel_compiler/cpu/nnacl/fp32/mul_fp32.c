@@ -24,6 +24,15 @@ int BroadcastMul(const float *in0, const float *in1, float *tile_in0, float *til
 
 int ElementMul(const float *in0, const float *in1, float *out, int size) {
   int index = 0;
+#if defined(ENABLE_AVX512)
+  for (; index <= size - C16NUM; index += C16NUM) {
+    MS_FLOAT32X16 vin0 = MS_LD512_F32(in0 + index);
+    MS_FLOAT32X16 vin1 = MS_LD512_F32(in1 + index);
+    MS_FLOAT32X16 vout = MS_MUL512_F32(vin0, vin1);
+    MS_ST512_F32(out + index, vout);
+  }
+#endif
+
 #if defined(ENABLE_AVX)
   for (; index <= size - C8NUM; index += C8NUM) {
     MS_FLOAT32X8 vin0 = MS_LD256_F32(in0 + index);
@@ -32,6 +41,7 @@ int ElementMul(const float *in0, const float *in1, float *out, int size) {
     MS_ST256_F32(out + index, vout);
   }
 #endif
+
 #if defined(ENABLE_NEON) || defined(ENABLE_SSE)
   for (; index <= size - C4NUM; index += C4NUM) {
     MS_FLOAT32X4 vin0 = MS_LDQ_F32(in0 + index);

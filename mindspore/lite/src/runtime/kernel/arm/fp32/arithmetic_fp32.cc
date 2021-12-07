@@ -200,7 +200,6 @@ void ArithmeticCPUKernel::FreeConstTileBuff() {
     input1_ptr_ = nullptr;
     input1_broadcast_ = false;
   }
-  return;
 }
 
 void ArithmeticCPUKernel::InitRunFunction(int primitive_type) {
