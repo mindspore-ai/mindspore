@@ -92,21 +92,21 @@ def test_scatter_nd_func_input_updated():
 
     # update
     net = TestScatterNdFuncNet("update", lock, inputx, indices, updates)
-    net()
+    output = net()
     expected = np.array([[1.0, 0.3, 3.6], [0.4, 2.2, -3.2]])
-    np.testing.assert_array_almost_equal(net.inputx.asnumpy(), expected)
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
     # add
     net = TestScatterNdFuncNet("add", lock, inputx, indices, updates)
-    net()
+    output = net()
     expected = np.array([[0.9, 0.3, 3.6], [0.4, 2.7, -3.2]])
-    np.testing.assert_array_almost_equal(net.inputx.asnumpy(), expected)
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
     # sub
     net = TestScatterNdFuncNet("sub", lock, inputx, indices, updates)
-    net()
+    output = net()
     expected = np.array([[-1.1, 0.3, 3.6], [0.4, -1.7, -3.2]])
-    np.testing.assert_array_almost_equal(net.inputx.asnumpy(), expected)
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
 @pytest.mark.level0

@@ -141,7 +141,11 @@ bool ScatterNdUpdateCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inp
 template <typename T>
 void ScatterNdUpdateCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                             const std::vector<kernel::AddressPtr> &outputs) {
-  auto x = reinterpret_cast<T *>(inputs[0]->addr);
+  auto x = reinterpret_cast<T *>(outputs[0]->addr);
+  auto ret = memcpy_s(x, outputs[0]->size, inputs[0]->addr, inputs[0]->size);
+  if (ret != 0) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy_s error. Error no: " << ret;
+  }
   ComputeParams<T> params;
   params.x_ = x;
   params.indices_ = reinterpret_cast<int *>(inputs[1]->addr);
@@ -165,11 +169,6 @@ void ScatterNdUpdateCPUKernel::LaunchKernel(const std::vector<AddressPtr> &input
     start += once_compute_size;
   }
   (void)common::ThreadPool::GetInstance().SyncRun(tasks);
-
-  auto ret = memcpy_s(outputs[0]->addr, outputs[0]->size, x, inputs[0]->size);
-  if (ret != 0) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy_s error. Error no: " << ret;
-  }
 }
 }  // namespace kernel
 }  // namespace mindspore

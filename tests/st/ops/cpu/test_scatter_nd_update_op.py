@@ -36,6 +36,7 @@ def test_op1(dtype):
     Description:  test cases for updating float values
     Expectation: the result match scipy
     """
+
     class ScatterNdUpdate(nn.Cell):
         def __init__(self):
             super(ScatterNdUpdate, self).__init__()
@@ -50,10 +51,10 @@ def test_op1(dtype):
     update = Tensor(np.array([1.0, 2.2], dtype=dtype))
 
     scatter_nd_update = ScatterNdUpdate()
-    scatter_nd_update(indices, update)
-    print("x:\n", scatter_nd_update.x.data.asnumpy())
+    output = scatter_nd_update(indices, update)
+    print("x:\n", output.asnumpy())
     expect = [[1.0, 0.3, 3.6], [0.4, 2.2, -3.2]]
-    assert np.allclose(scatter_nd_update.x.data.asnumpy(),
+    assert np.allclose(output.asnumpy(),
                        np.array(expect, dtype=dtype))
 
 
@@ -67,6 +68,7 @@ def test_op2(dtype):
     Description:  test cases for updating int values
     Expectation: the result match scipy
     """
+
     class ScatterNdUpdate(nn.Cell):
         def __init__(self):
             super(ScatterNdUpdate, self).__init__()
@@ -81,10 +83,10 @@ def test_op2(dtype):
     update = Tensor(np.array([9, 10, 11, 12], dtype=dtype))
 
     scatter_nd_update = ScatterNdUpdate()
-    scatter_nd_update(indices, update)
-    print("x:\n", scatter_nd_update.x.data.asnumpy())
+    output = scatter_nd_update(indices, update)
+    print("x:\n", output.asnumpy())
     expect = [1, 11, 3, 10, 9, 6, 7, 12]
-    assert np.allclose(scatter_nd_update.x.data.asnumpy(),
+    assert np.allclose(output.asnumpy(),
                        np.array(expect, dtype=dtype))
 
 
@@ -98,6 +100,7 @@ def test_op3(dtype):
     Description:  test cases for updating int values
     Expectation: the result match scipy
     """
+
     class ScatterNdUpdate(nn.Cell):
         def __init__(self):
             super(ScatterNdUpdate, self).__init__()
@@ -114,13 +117,13 @@ def test_op3(dtype):
                                [7, 7, 7, 7], [8, 8, 8, 8]]], dtype=dtype))
 
     scatter_nd_update = ScatterNdUpdate()
-    scatter_nd_update(indices, update)
-    print("x:\n", scatter_nd_update.x.data.asnumpy())
+    output = scatter_nd_update(indices, update)
+    print("x:\n", output.asnumpy())
     expect = [[[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
               [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
               [[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
               [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]]
-    assert np.allclose(scatter_nd_update.x.data.asnumpy(), np.array(expect, dtype=dtype))
+    assert np.allclose(output.asnumpy(), np.array(expect, dtype=dtype))
 
 
 @pytest.mark.level0
@@ -133,6 +136,7 @@ def test_op4(dtype):
     Description:  test cases for updating single float value
     Expectation: the result match scipy
     """
+
     class ScatterNdUpdate(nn.Cell):
         def __init__(self):
             super(ScatterNdUpdate, self).__init__()
@@ -148,6 +152,5 @@ def test_op4(dtype):
     scatter_nd_update = ScatterNdUpdate()
     out = scatter_nd_update(indices, update)
     print("x:\n", out)
-    assert np.allclose(out.asnumpy(), scatter_nd_update.x.data.asnumpy())
     expect = [[-0.1, 1.0, 3.6], [0.4, 0.5, -3.2]]
     assert np.allclose(out.asnumpy(), np.array(expect, dtype=dtype))
