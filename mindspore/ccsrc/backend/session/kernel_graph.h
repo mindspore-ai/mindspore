@@ -175,6 +175,10 @@ class KernelGraph : public FuncGraph {
   void AddRefCorrespondPairs(const AnfWithOutIndex &final_pair, const AnfWithOutIndex &origin_pair);
   // get map
   std::map<AnfWithOutIndex, AnfWithOutIndex> GetRefMap() const { return ref_out_in_map_; }
+  // update ref map
+  void set_ref_out_in_map(const std::map<AnfWithOutIndex, AnfWithOutIndex> &ref_out_in_map) {
+    ref_out_in_map_ = ref_out_in_map;
+  }
   // check whether graph is executable
   bool executable() const { return executable_; }
   // set executable of graph

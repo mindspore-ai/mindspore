@@ -354,6 +354,8 @@ class AnfRuntimeAlgorithm {
     auto attr_dup = cnode->GetAttr(kAttrDuplicated);
     return attr_dup != nullptr && GetValue<bool>(attr_dup);
   }
+
+  static void UpdateGraphValidRefPair(const KernelGraphPtr &graph);
 };
 }  // namespace session
 using AnfAlgo = session::AnfRuntimeAlgorithm;
