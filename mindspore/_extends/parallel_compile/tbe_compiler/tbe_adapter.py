@@ -20,6 +20,7 @@ import traceback
 from datetime import datetime
 
 from tbe.common.rl_bank.bank_manager import set_current_op_name
+from tbe.common.repository_manager.interface import cann_kb_unload, cann_kb_load
 from te.platform.cce_conf import te_set_version
 from te.platform.cce_policy import set_L1_info
 from te_fusion.compile_task_manager import dispatch_prebuild_task, dispatch_single_op_compile_task, import_py_module, \
@@ -68,6 +69,35 @@ def _tune_init(job: TbeJob):
     if tune_bank_path:
         os.environ["TUNE_BANK_PATH"] = str(tune_bank_path)
     res = _creating_custom_path(job)
+    return res
+
+
+def _cann_kb_load(job: TbeJob):
+    """
+    database load
+    :param job:
+    :return:
+    """
+    soc_version = job.soc_version
+    core_num = job.core_num
+    op_bank_path = job.op_bank_path
+    kb_type = None
+    res = cann_kb_load(soc_version, core_num, op_bank_path, kb_type)
+    return res
+
+
+def _cann_kb_unload(job: TbeJob):
+    """
+    database unload
+    :param job:
+    :return:
+    """
+    if job is None:
+        return 0
+    soc_version = job.soc_version
+    core_num = job.core_num
+    kb_type = None
+    res = cann_kb_unload(soc_version, core_num, kb_type)
     return res
 
 
@@ -211,6 +241,9 @@ def tbe_initialize(job: TbeJob):
     res = _tune_init(job)
     if not res:
         job.error("Tune init failed")
+    res = _cann_kb_load(job)
+    if res == 1:
+        job.error("Cann kb load failed")
     res = _parallel_compilation_init(job)
     if not res:
         job.error("Parallel compilation failed")
@@ -601,16 +634,21 @@ def get_finish_tasks(source_id):
     return get_finished_compilation_task(source_id)
 
 
-def tbe_finalize(auto_tiling_mode, offline_tune):
+def tbe_finalize(auto_tiling_mode, offline_tune, job: TbeJob):
     """
     finalize tbe parallel compilation resource
     :param auto_tiling_mode: RL/GA/RL,GA
     :param offline_tune: True/False
+    :param job: TbeJob
     :return: None
     """
     deinit_multi_process_env()
     if "RL" in auto_tiling_mode or offline_tune:
         from schedule_search.rl_online_tune import rl_tune_deinit
         rl_tune_deinit()
+    res = _cann_kb_unload(job)
+    if res == 1:
+        job.error("Cann kb unload failed")
+        return False
     clear_fusion_params()
     return True

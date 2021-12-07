@@ -94,6 +94,11 @@ class TbeJob:
         self.op_tune_list = sys_info["op_tune_list"]
         self.pass_list = sys_info["pass_list"]
 
+        # soc info
+        self.soc_version = sys_info["socVersion"]
+        self.core_num = sys_info["coreNum"]
+        self.op_bank_path = sys_info["op_bank_path"]
+
     def debug(self, msg, *args, **kwargs):
         """
         log debug level info
