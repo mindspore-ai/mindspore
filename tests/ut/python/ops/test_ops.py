@@ -1195,7 +1195,10 @@ test_case_math_ops = [
     ('IsInf', {
         'block': P.IsInf(),
         'desc_inputs': [Tensor(np.array([np.log(-1), 1, np.log(0)]).astype(np.float32))],
-        'desc_bprop': [],
+        'desc_bprop': []}),
+    ('IsClose', {
+        'block': P.IsClose(rtol=1e-05, atol=1e-08, equal_nan=True),
+        'desc_inputs': [Tensor(1.0, mstype.float32), Tensor(2.0, mstype.float32)],
         'skip': ['backward']}),
     ('ACos', {
         'block': P.ACos(),

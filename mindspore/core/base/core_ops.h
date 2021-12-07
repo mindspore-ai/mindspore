@@ -584,6 +584,7 @@ inline const PrimitivePtr kPrimErfinv = std::make_shared<Primitive>("Erfinv");
 inline const PrimitivePtr kPrimIsNan = std::make_shared<Primitive>("IsNan");
 inline const PrimitivePtr kPrimIsInf = std::make_shared<Primitive>("IsInf");
 inline const PrimitivePtr kPrimIsFinite = std::make_shared<Primitive>("IsFinite");
+inline const PrimitivePtr kPrimIsClose = std::make_shared<Primitive>("IsClose");
 inline const PrimitivePtr kPrimLerp = std::make_shared<Primitive>("Lerp");
 inline const PrimitivePtr kPrimSquareSumAll = std::make_shared<Primitive>("SquareSumAll");
 inline const PrimitivePtr kPrimComplex = std::make_shared<Primitive>("Complex");
