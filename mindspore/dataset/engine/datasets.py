@@ -71,7 +71,7 @@ from .validators import check_batch, check_shuffle, check_map, check_filter, che
     check_sbu_dataset, check_qmnist_dataset, check_emnist_dataset, check_fake_image_dataset, check_places365_dataset, \
     check_photo_tour_dataset, check_ag_news_dataset, check_dbpedia_dataset, check_lj_speech_dataset, \
     check_yes_no_dataset, check_speech_commands_dataset, check_tedlium_dataset, check_svhn_dataset, \
-    check_stl10_dataset
+    check_stl10_dataset, check_yelp_review_dataset
 from ..core.config import get_callback_timeout, _init_device_info, get_enable_shared_mem, get_num_parallel_workers, \
     get_prefetch_size, get_auto_offload
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
@@ -8637,6 +8637,129 @@ class DIV2KDataset(MappableDataset):
         return cde.DIV2KNode(self.dataset_dir, self.usage, self.downgrade, self.scale, self.decode, self.sampler)
 
 
+class YelpReviewDataset(SourceDataset):
+    """
+    A source dataset that reads and parses Yelp Review Polarity and Yelp Review Full dataset.
+
+    The generated dataset has two columns: :py:obj:`[label, text]`.
+    The tensor of column :py:obj:`label` is of the string type.
+    The tensor of column :py:obj:`text` is of the string type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        usage (str, optional): Usage of this dataset, can be `train`, `test` or `all`.
+            For Polarity, `train` will read from 560,000 train samples, `test` will read from 38,000 test samples,
+            `all` will read from all 598,000 samples.
+            For Full, `train` will read from 650,000 train samples, `test` will read from 50,000 test samples,
+            `all` will read from all 700,000 samples (default=None, all samples).
+        num_samples (int, optional): Number of samples (rows) to read (default=None, reads all samples).
+        shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
+            (default=Shuffle.GLOBAL).
+            If shuffle is False, no shuffling will be performed;
+            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
+            Otherwise, there are two levels of shuffling:
+
+            - Shuffle.GLOBAL: Shuffle both the files and samples.
+
+            - Shuffle.FILES: Shuffle files only.
+        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            When this argument is specified, `num_samples` reflects the max sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument can only be specified when num_shards is also specified.
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, number set in the config).
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
+            (default=None, which means no cache is used).
+
+    Raises:
+        RuntimeError: If dataset_dir does not contain data files.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+
+    Examples:
+        >>> yelp_review_dataset_dir = "/path/to/yelp_review_dataset_dir"
+        >>> dataset = ds.YelpReviewDataset(dataset_dir=yelp_review_dataset_dir, usage='all')
+
+    About YelpReview Dataset:
+
+    The Yelp Review Full dataset consists of reviews from Yelp. It is extracted from the Yelp Dataset Challenge 2015
+    data, and it is mainly used for text classification.
+
+    The Yelp Review Polarity dataset is constructed from the above dataset, by considering stars 1 and 2 negative, and 3
+    and 4 positive.
+
+    The directory structures of these two datasets are the same.
+    You can unzip the dataset files into the following structure and read by MindSpore's API:
+
+    .. code-block::
+
+        .
+        └── yelp_review_dir
+             ├── train.csv
+             ├── test.csv
+             └── readme.txt
+
+    Citation:
+
+    For Yelp Review Polarity:
+
+    .. code-block::
+
+        @article{zhangCharacterlevelConvolutionalNetworks2015,
+          archivePrefix = {arXiv},
+          eprinttype = {arxiv},
+          eprint = {1509.01626},
+          primaryClass = {cs},
+          title = {Character-Level {{Convolutional Networks}} for {{Text Classification}}},
+          abstract = {This article offers an empirical exploration on the use of character-level convolutional networks
+                      (ConvNets) for text classification. We constructed several large-scale datasets to show that
+                      character-level convolutional networks could achieve state-of-the-art or competitive results.
+                      Comparisons are offered against traditional models such as bag of words, n-grams and their TFIDF
+                      variants, and deep learning models such as word-based ConvNets and recurrent neural networks.},
+          journal = {arXiv:1509.01626 [cs]},
+          author = {Zhang, Xiang and Zhao, Junbo and LeCun, Yann},
+          month = sep,
+          year = {2015},
+        }
+
+    Citation:
+
+    For Yelp Review Full:
+
+    .. code-block::
+
+        @article{zhangCharacterlevelConvolutionalNetworks2015,
+          archivePrefix = {arXiv},
+          eprinttype = {arxiv},
+          eprint = {1509.01626},
+          primaryClass = {cs},
+          title = {Character-Level {{Convolutional Networks}} for {{Text Classification}}},
+          abstract = {This article offers an empirical exploration on the use of character-level convolutional networks
+                      (ConvNets) for text classification. We constructed several large-scale datasets to show that
+                      character-level convolutional networks could achieve state-of-the-art or competitive results.
+                      Comparisons are offered against traditional models such as bag of words, n-grams and their TFIDF
+                      variants, and deep learning models such as word-based ConvNets and recurrent neural networks.},
+          journal = {arXiv:1509.01626 [cs]},
+          author = {Zhang, Xiang and Zhao, Junbo and LeCun, Yann},
+          month = sep,
+          year = {2015},
+        }
+    """
+
+    @check_yelp_review_dataset
+    def __init__(self, dataset_dir, usage=None, num_samples=None, shuffle=Shuffle.GLOBAL, num_shards=None,
+                 shard_id=None, num_parallel_workers=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, num_samples=num_samples, shuffle=shuffle,
+                         num_shards=num_shards, shard_id=shard_id, cache=cache)
+        self.dataset_dir = dataset_dir
+        self.usage = replace_none(usage, 'all')
+
+    def parse(self, children=None):
+        return cde.YelpReviewNode(self.dataset_dir, self.usage, self.num_samples, self.shuffle_flag,
+                                  self.num_shards, self.shard_id)
+
+
 class YesNoDataset(MappableDataset):
     """
     A source dataset for reading and parsing the YesNo dataset.
@@ -8833,20 +8956,17 @@ class TedliumDataset(MappableDataset):
          - not allowed
 
     Examples:
-        >>> tedlium_dataset_dir = "/path/to/tedlium_dataset_directory"
-        >>> tedlium_dataset_release = ["release1", "release2", "release3"]
-        >>>
         >>> # 1) Get all train samples from TEDLIUM_release1 dataset in sequence.
-        >>> dataset = ds.TedliumDataset(dataset_dir=tedlium_dataset_dir, release=tedlium_dataset_release[0],
-        ...                             shuffle=False)
+        >>> dataset = ds.TedliumDataset(dataset_dir="/path/to/tedlium1_dataset_directory",
+        ...                             release="release1", shuffle=False)
         >>>
         >>> # 2) Randomly select 10 samples from TEDLIUM_release2 dataset.
-        >>> dataset = ds.TedliumDataset(dataset_dir=tedlium_dataset_dir, release=tedlium_dataset_release[1],
-        ...                             num_samples=10, shuffle=True)
+        >>> dataset = ds.TedliumDataset(dataset_dir="/path/to/tedlium2_dataset_directory",
+        ...                             release="release2", num_samples=10, shuffle=True)
         >>>
         >>> # 3) Get samples from TEDLIUM_release-3 dataset for shard 0 in a 2-way distributed training.
-        >>> dataset = ds.TedliumDataset(dataset_dir=tedlium_dataset_dir, release=tedlium_dataset_release[2],
-        ...                             num_shards=2, shard_id=0)
+        >>> dataset = ds.TedliumDataset(dataset_dir="/path/to/tedlium3_dataset_directory",
+        ...                             release="release3", num_shards=2, shard_id=0)
         >>>
         >>> # In TEDLIUM dataset, each dictionary has keys : waveform, sample_rate, transcript, talk_id,
         >>> # speaker_id and identifier.

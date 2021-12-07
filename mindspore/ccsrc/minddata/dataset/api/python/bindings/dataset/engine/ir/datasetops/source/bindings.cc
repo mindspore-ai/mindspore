@@ -48,6 +48,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/stl10_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/tedlium_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/text_file_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/yelp_review_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/yes_no_node.h"
 
 // IR leaf nodes disabled for android
@@ -493,6 +494,18 @@ PYBIND_REGISTER(VOCNode, 2, ([](const py::module *m) {
                                                   toSamplerObj(sampler), nullptr, extra_metadata);
                       THROW_IF_ERROR(voc->ValidateParams());
                       return voc;
+                    }));
+                }));
+
+PYBIND_REGISTER(YelpReviewNode, 2, ([](const py::module *m) {
+                  (void)py::class_<YelpReviewNode, DatasetNode, std::shared_ptr<YelpReviewNode>>(
+                    *m, "YelpReviewNode", "to create a YelpReviewNode")
+                    .def(py::init([](std::string dataset_dir, std::string usage, int64_t num_samples, int32_t shuffle,
+                                     int32_t num_shards, int32_t shard_id) {
+                      std::shared_ptr<YelpReviewNode> yelp_review = std::make_shared<YelpReviewNode>(
+                        dataset_dir, usage, num_samples, toShuffleMode(shuffle), num_shards, shard_id, nullptr);
+                      THROW_IF_ERROR(yelp_review->ValidateParams());
+                      return yelp_review;
                     }));
                 }));
 

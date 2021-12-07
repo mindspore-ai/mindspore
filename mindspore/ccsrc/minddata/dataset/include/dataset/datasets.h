@@ -4261,6 +4261,57 @@ inline std::shared_ptr<VOCDataset> MS_API VOC(const std::string &dataset_dir, co
                                       MapStringToChar(class_indexing), decode, sampler, cache, extra_metadata);
 }
 
+/// \class YelpReviewDataset
+/// \brief A source dataset for reading and parsing Yelp Review dataset.
+class MS_API YelpReviewDataset : public Dataset {
+ public:
+  /// \brief Constructor of YelpReviewDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] usage Part of dataset of YelpReview, can be "train", "test" or "all".
+  /// \param[in] num_samples The number of samples to be included in the dataset.
+  /// \param[in] shuffle The mode for shuffling data every epoch.
+  ///     Can be any of:
+  ///     ShuffleMode.kFalse - No shuffling is performed.
+  ///     ShuffleMode.kFiles - Shuffle files only.
+  ///     ShuffleMode.kGlobal - Shuffle both the files and samples.
+  /// \param[in] num_shards Number of shards that the dataset should be divided into.
+  /// \param[in] shard_id The shard ID within num_shards. This argument should be
+  ///     specified only when num_shards is also specified.
+  /// \param[in] cache Tensor cache to use.
+  YelpReviewDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, int64_t num_samples,
+                    ShuffleMode shuffle, int32_t num_shards, int32_t shard_id,
+                    const std::shared_ptr<DatasetCache> &cache);
+
+  /// Destructor of YelpReviewDataset.
+  ~YelpReviewDataset() = default;
+};
+
+/// \brief Function to create a YelpReviewDataset.
+/// \note This dataset includes polarity and full, which can be read according to your own needs.
+/// \note The generated dataset has two columns ["label", "text"]. Their types are all string.
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage Part of dataset of YelpReview, can be "train", "test" or "all" (default="all").
+/// \param[in] num_samples The number of samples to be included in the dataset
+///     (Default = 0, means all samples).
+/// \param[in] shuffle The mode for shuffling data every epoch (Default=ShuffleMode.kGlobal).
+///     Can be any of:
+///     ShuffleMode::kFalse - No shuffling is performed.
+///     ShuffleMode::kFiles - Shuffle files only.
+///     ShuffleMode::kGlobal - Shuffle both the files and samples.
+/// \param[in] num_shards Number of shards that the dataset should be divided into (Default = 1).
+/// \param[in] shard_id The shard ID within num_shards. This argument should be
+///     specified only when num_shards is also specified (Default = 0).
+/// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
+/// \return Shared pointer to the YelpReviewDataset.
+inline std::shared_ptr<YelpReviewDataset> MS_API YelpReview(const std::string &dataset_dir,
+                                                            const std::string &usage = "all", int64_t num_samples = 0,
+                                                            ShuffleMode shuffle = ShuffleMode::kGlobal,
+                                                            int32_t num_shards = 1, int32_t shard_id = 0,
+                                                            const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<YelpReviewDataset>(StringToChar(dataset_dir), StringToChar(usage), num_samples, shuffle,
+                                             num_shards, shard_id, cache);
+}
+
 /// \class YesNoDataset.
 /// \brief A source dataset for reading and parsing YesNo dataset.
 class MS_API YesNoDataset : public Dataset {

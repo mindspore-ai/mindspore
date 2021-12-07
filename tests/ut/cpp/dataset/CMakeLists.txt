@@ -47,6 +47,7 @@ SET(DE_UT_SRCS
         c_api_dataset_tfrecord_test.cc
         c_api_dataset_usps_test.cc
         c_api_dataset_voc_test.cc
+        c_api_dataset_yelp_review_test.cc
         c_api_dataset_yes_no_test.cc
         c_api_datasets_test.cc
         c_api_epoch_ctrl_test.cc
