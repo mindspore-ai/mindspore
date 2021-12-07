@@ -89,47 +89,47 @@ ValuePtr AbsInferValue(const PrimitivePtr &prim, const std::vector<AbstractBaseP
   auto result_datac = result_tensor->data_c();
   switch (dtype) {
     case kNumberTypeInt8: {
-      ImpleAbs<int8_t>(x_datac, result_datac, IntToSize(data_size));
+      ImpleAbs<int8_t>(x_datac, result_datac, data_size);
       break;
     }
     case kNumberTypeInt16: {
-      ImpleAbs<int16_t>(x_datac, result_datac, IntToSize(data_size));
+      ImpleAbs<int16_t>(x_datac, result_datac, data_size);
       break;
     }
     case kNumberTypeInt32: {
-      ImpleAbs<int32_t>(x_datac, result_datac, IntToSize(data_size));
+      ImpleAbs<int32_t>(x_datac, result_datac, data_size);
       break;
     }
     case kNumberTypeInt64: {
-      ImpleAbs<int64_t>(x_datac, result_datac, IntToSize(data_size));
+      ImpleAbs<int64_t>(x_datac, result_datac, data_size);
       break;
     }
     case kNumberTypeUInt8: {
-      ImpleAbs<uint8_t>(x_datac, result_datac, IntToSize(data_size));
+      ImpleAbs<uint8_t>(x_datac, result_datac, data_size);
       break;
     }
     case kNumberTypeUInt16: {
-      ImpleAbs<uint16_t>(x_datac, result_datac, IntToSize(data_size));
+      ImpleAbs<uint16_t>(x_datac, result_datac, data_size);
       break;
     }
     case kNumberTypeUInt32: {
-      ImpleAbs<uint32_t>(x_datac, result_datac, IntToSize(data_size));
+      ImpleAbs<uint32_t>(x_datac, result_datac, data_size);
       break;
     }
     case kNumberTypeUInt64: {
-      ImpleAbs<uint64_t>(x_datac, result_datac, IntToSize(data_size));
+      ImpleAbs<uint64_t>(x_datac, result_datac, data_size);
       break;
     }
     case kNumberTypeFloat16: {
-      ImpleAbs<float16>(x_datac, result_datac, IntToSize(data_size));
+      ImpleAbs<float16>(x_datac, result_datac, data_size);
       break;
     }
     case kNumberTypeFloat32: {
-      ImpleAbs<float>(x_datac, result_datac, IntToSize(data_size));
+      ImpleAbs<float>(x_datac, result_datac, data_size);
       break;
     }
     case kNumberTypeFloat64: {
-      ImpleAbs<double>(x_datac, result_datac, IntToSize(data_size));
+      ImpleAbs<double>(x_datac, result_datac, data_size);
       break;
     }
     default: {

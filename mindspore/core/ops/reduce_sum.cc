@@ -140,7 +140,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
       MS_EXCEPTION_IF_NULL(axis_type_id);
       auto axis_tensor = axis_ptr->cast<tensor::TensorPtr>();
       MS_EXCEPTION_IF_NULL(axis_tensor);
-      size_t data_size = LongToSize(axis_tensor->DataSize());
+      size_t data_size = axis_tensor->DataSize();
       std::vector<ValuePtr> value_list;
       if (axis_type_id->element()->type_id() == kNumberTypeInt32) {
         auto shape_data = reinterpret_cast<int *>(axis_tensor->data_c());

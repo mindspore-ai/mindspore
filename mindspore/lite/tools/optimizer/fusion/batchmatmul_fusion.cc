@@ -154,7 +154,7 @@ bool IsTensorZero(const tensor::TensorPtr &tensor) {
     return false;
   }
   auto data = reinterpret_cast<float *>(tensor->data_c());
-  for (int i = 0; i < tensor->DataSize(); i++) {
+  for (size_t i = 0; i < tensor->DataSize(); i++) {
     if (data[i] > kFpPrecision) {
       return false;
     }

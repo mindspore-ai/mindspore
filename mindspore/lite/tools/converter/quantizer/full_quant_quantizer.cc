@@ -782,7 +782,7 @@ int FullQuantQuantizer::BiasCorrection(const FuncGraphPtr &func_graph, const CNo
                     << " not the same as bias_diff: " << bias_diff.size();
       return RET_ERROR;
     }
-    for (int i = 0; i < bias_param->DataSize(); i++) {
+    for (size_t i = 0; i < bias_param->DataSize(); i++) {
       auto scale = bias_quant_params[i].scale;
       if (fabs(scale) <= 0.0f) {
         MS_LOG(ERROR) << "divisor 'scale' cannot be 0.";

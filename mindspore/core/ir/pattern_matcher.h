@@ -539,7 +539,7 @@ class PConstant : public PBase<PConstant<T> > {
     if ((tensor_type == TypeId::kNumberTypeFloat32) || (tensor_type == TypeId::kNumberTypeFloat)) {
       float *data2 = reinterpret_cast<float *>(tensor_ptr->data_c());
       auto threshold = FLT_MIN;
-      for (int i = 0; i < tensor_ptr->DataSize(); i++) {
+      for (size_t i = 0; i < tensor_ptr->DataSize(); i++) {
         if (fabs(data2[i] - check_value_) > threshold) {
           return false;
         }
@@ -548,7 +548,7 @@ class PConstant : public PBase<PConstant<T> > {
     } else if (tensor_type == TypeId::kNumberTypeFloat64) {
       double *data2 = reinterpret_cast<double *>(tensor_ptr->data_c());
       auto threshold = DBL_MIN;
-      for (int i = 0; i < tensor_ptr->DataSize(); i++) {
+      for (size_t i = 0; i < tensor_ptr->DataSize(); i++) {
         if (fabs(data2[i] - check_value_) > threshold) {
           return false;
         }
@@ -556,7 +556,7 @@ class PConstant : public PBase<PConstant<T> > {
       return true;
     } else if ((tensor_type == TypeId::kNumberTypeInt32) || (tensor_type == TypeId::kNumberTypeInt)) {
       int *data2 = reinterpret_cast<int *>(tensor_ptr->data_c());
-      for (int i = 0; i < tensor_ptr->DataSize(); i++) {
+      for (size_t i = 0; i < tensor_ptr->DataSize(); i++) {
         if (data2[i] != check_value_) {
           return false;
         }
@@ -603,13 +603,10 @@ class PConstant : public PBase<PConstant<T> > {
     auto tensor_abstract = node->abstract()->cast<abstract::AbstractTensorPtr>();
     TypePtr tensor_type_ptr = tensor_abstract->element()->BuildType();
     ShapeVector tensor_shape = tensor_abstract->shape()->shape();
-
-    auto new_tensor_ptr = std::make_shared<tensor::Tensor>(tensor_type_ptr->type_id(), tensor_shape);
-    size_t mem_size = GetTypeByte(tensor_type_ptr) * IntToSize(new_tensor_ptr->ElementsNum());
-    char *data = reinterpret_cast<char *>(new_tensor_ptr->data_c());
-
     if (x == nullptr) {
-      if (memset_s(data, mem_size, 0, mem_size) != 0) {
+      auto new_tensor_ptr = std::make_shared<tensor::Tensor>(tensor_type_ptr->type_id(), tensor_shape);
+      char *data = reinterpret_cast<char *>(new_tensor_ptr->data_c());
+      if (memset_s(data, new_tensor_ptr->Size(), 0, new_tensor_ptr->Size()) != 0) {
         return nullptr;
       }
       auto new_vnode = NewValueNode(new_tensor_ptr);
@@ -636,7 +633,7 @@ class PConstant : public PBase<PConstant<T> > {
     if (!x_value->isa<tensor::Tensor>()) {
       return nullptr;
     }
-
+    auto new_tensor_ptr = std::make_shared<tensor::Tensor>(tensor_type_ptr->type_id(), tensor_shape);
     auto x_tensor_ptr = dyn_cast<tensor::Tensor>(x_value);
     if ((x_tensor_ptr->DataSize() > 1) && (x_tensor_ptr->DataSize() != new_tensor_ptr->DataSize())) {
       return nullptr;
@@ -646,6 +643,7 @@ class PConstant : public PBase<PConstant<T> > {
     MS_EXCEPTION_IF_NULL(source_data);
     if (x_tensor_ptr->DataSize() == 1) {
       auto tensor_type_byte = GetTypeByte(tensor_type_ptr);
+      char *data = reinterpret_cast<char *>(new_tensor_ptr->data_c());
       for (int i = 0; i < new_tensor_ptr->ElementsNum(); i++) {
         ret = memcpy_s(data + i * tensor_type_byte, tensor_type_byte, source_data, tensor_type_byte);
         if (ret != 0) {
@@ -654,10 +652,11 @@ class PConstant : public PBase<PConstant<T> > {
         }
       }
     } else {
-      ret = memcpy_s(data, mem_size, source_data, mem_size);
+      char *data = reinterpret_cast<char *>(new_tensor_ptr->data_c());
+      ret = memcpy_s(data, new_tensor_ptr->Size(), source_data, new_tensor_ptr->Size());
       if (ret != 0) {
-        MS_LOG(INFO) << "memcpy_s error, error no " << ret << ", source size " << mem_size << ", dest size "
-                     << new_tensor_ptr->DataSize();
+        MS_LOG(INFO) << "memcpy_s error, error no " << ret << ", source size " << new_tensor_ptr->Size()
+                     << ", dest size " << new_tensor_ptr->DataSize();
         return nullptr;
       }
     }
@@ -854,7 +853,8 @@ class PConstant : public PBase<PConstant<T> > {
         return nullptr;
       }
       auto tensor_out_shape = tensor_3_abstract->shape()->shape();
-      int data_out_size = std::accumulate(tensor_out_shape.begin(), tensor_out_shape.end(), 1, std::multiplies<int>());
+      size_t data_out_size =
+        std::accumulate(tensor_out_shape.begin(), tensor_out_shape.end(), 1, std::multiplies<size_t>());
       if ((tensor_ptr_1->DataSize() > 1) && (tensor_ptr_1->DataSize() != data_out_size)) {
         return nullptr;
       }

@@ -132,7 +132,7 @@ int CalEstimatedData(const AnfNodePtr &origin_node, const AnfNodePtr &scale_fact
   }
   auto scale_factor_data = (reinterpret_cast<float *>(scale_factor_tensor->data_c()))[0];
   float scale_factor = scale_factor_data == 0 ? 0 : 1 / scale_factor_data;
-  for (int i = 0; i < origin_tensor->DataSize(); i++) {
+  for (size_t i = 0; i < origin_tensor->DataSize(); i++) {
     origin_data[i] = origin_data[i] * scale_factor;
   }
   return lite::RET_OK;

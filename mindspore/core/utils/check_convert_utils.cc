@@ -550,7 +550,7 @@ ShapeVector CheckAndConvertUtils::CheckTensorIntValue(const std::string &type_na
   }
   auto input_tensor = value->cast<tensor::TensorPtr>();
   MS_EXCEPTION_IF_NULL(input_tensor);
-  size_t data_size = LongToSize(input_tensor->DataSize());
+  size_t data_size = input_tensor->DataSize();
   auto tensor_type = input_tensor->Dtype();
   if (tensor_type->type_id() == kNumberTypeInt32) {
     auto data_c = reinterpret_cast<int *>(input_tensor->data_c());

@@ -29,7 +29,7 @@ namespace mindspore {
 namespace opt {
 namespace irpass {
 // check if node is value tuple and all one. e.g. (1, 1, 1)
-// {PrimTile, X, MultiOne} -> X
+// {PrimTile, X, MultiOne} and x.dim >= len(tuple) -> X
 // {PrimTile, X, Empty} -> X
 class TileEliminater : public AnfVisitor {
  public:
@@ -48,8 +48,20 @@ class TileEliminater : public AnfVisitor {
       return x_;
     }
 
+    auto fn = [this]() -> size_t {
+      auto x_shape_base = x_->Shape();
+      auto x_size = 0;
+      ShapePtr x_shape;
+      if (x_shape_base && (x_shape = x_shape_base->cast<ShapePtr>())) {
+        x_size = x_shape->shape().size();
+      }
+      return x_size;
+    };
+
+    // Return x_ directly when x.dim >= len(tuple) and all elements of tuple are 1.
+    // if len(tuple) > x.dim need expand x.dim
     auto cmp = std::all_of(elements.cbegin(), elements.cend(), [](int64_t i) { return i == 1; });
-    if (cmp) {
+    if (cmp && fn() >= elements.size()) {
       return x_;
     }
 

@@ -670,7 +670,7 @@ class MS_CORE_API AbstractTensor : public AbstractUndetermined {
     if (value != nullptr) {
       auto tensor = value->cast<tensor::TensorPtr>();
       if (tensor != nullptr) {
-        hash_sum = hash_combine(hash_sum, LongToSize(tensor->DataSize()));
+        hash_sum = hash_combine(hash_sum, tensor->DataSize());
       }
     }
     return hash_sum;

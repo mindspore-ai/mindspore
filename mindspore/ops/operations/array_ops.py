@@ -2028,7 +2028,7 @@ class Tile(PrimitiveWithInfer):
         if not isinstance(base_tensor, Tensor):
             raise TypeError(f"For '{self.name}', the type of 'input_x' should be Tensor, "
                             f"but got {type(base_tensor).__name__}.")
-        if all(v == 1 for v in multiplier):
+        if all(v == 1 for v in multiplier) and len(base_tensor.shape) >= len(multiplier):
             return (True, base_tensor)
         return (False, None)
 

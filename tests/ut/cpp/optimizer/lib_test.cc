@@ -265,7 +265,9 @@ TEST_F(TestOptLib, test_elim_tile_multiply_one) {
   FuncGraphPtr after = getPyFun.CallAndParseRet("test_elim_tile_multiply_one", "after");
 
   auto patterns = std::vector<SubstitutionPtr>({irpass.tile_eliminate_});
-  ASSERT_TRUE(CheckOpt(before, after, patterns, true));
+  // Because can't get shape of x, not eliminate tile(x, (1,1,1)) to x.
+  // to get shape of x need re-normalize before tile
+  ASSERT_FALSE(CheckOpt(before, after, patterns, true));
 }
 
 TEST_F(TestOptLib, test_elim_reduce_mean_shape_one) {
