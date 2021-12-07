@@ -33,6 +33,9 @@ constexpr auto kRankSize = "rank_size";
 
 namespace mindspore {
 namespace abstract {
+constexpr auto kCSRDenseShape = "dense_shape";
+constexpr auto kCSRAxis = "axis";
+constexpr auto kCSRAvgRows = "csr_avg_rows";
 AbstractBasePtr InferImplIdentity(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const AbstractBasePtrList &args_spec_list) {
   // An object of a subclass of AbstractBase
@@ -393,6 +396,125 @@ AbstractBasePtr InferImplSparseTensorGetDenseShape(const AnalysisEnginePtr &, co
   auto sparse_tensor = CheckArg<AbstractSparseTensor>(op_name, args_spec_list, 0);
   MS_EXCEPTION_IF_NULL(sparse_tensor->dense_shape());
   return sparse_tensor->dense_shape();
+}
+
+AbstractBasePtr InferImplCSRMul(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                const AbstractBasePtrList &args_spec_list) {
+  // Inputs: a sparse tensor and a dense tensor.
+  constexpr auto kCSRMulInputsNum = 2;
+  constexpr auto kCSRMulShapeSize = 2;
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, kCSRMulInputsNum);
+  auto sparse = CheckArg<AbstractCSRTensor>(op_name, args_spec_list, 0);
+  auto dense = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
+  MS_EXCEPTION_IF_NULL(sparse);
+  MS_EXCEPTION_IF_NULL(sparse->shape());
+  MS_EXCEPTION_IF_NULL(sparse->values());
+  MS_EXCEPTION_IF_NULL(sparse->indices());
+  MS_EXCEPTION_IF_NULL(dense);
+
+  auto sparse_shape = sparse->shape()->shape();
+  auto dense_shape = dense->shape()->shape();
+  if (sparse_shape.size() != kCSRMulShapeSize || dense_shape.size() != kCSRMulShapeSize) {
+    MS_EXCEPTION(ValueError) << "Currently, only support " << kCSRMulShapeSize << "-D inputs!"
+                             << "but sparse tensor has " << sparse_shape.size() << " dimensions, "
+                             << "and dense tensor has " << dense_shape.size() << " dimensions, ";
+  }
+  auto ret = sparse->values()->Broaden();
+
+  MS_EXCEPTION_IF_NULL(sparse->indices()->shape());
+  auto nnz_vec = sparse->indices()->shape()->shape();
+  int csr_avg_rows = nnz_vec[0] / dense_shape[0];
+  primitive->set_attr(kCSRAvgRows, MakeValue(csr_avg_rows));
+  primitive->set_attr(kCSRDenseShape, MakeValue(sparse_shape));
+
+  return ret;
+}
+
+AbstractBasePtr InferImplCSRMV(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                               const AbstractBasePtrList &args_spec_list) {
+  // Inputs: a sparse tensor and a dense tensor.
+  constexpr auto kCSRMVInputsNum = 2;
+  constexpr auto kCSRMVShapeSize = 2;
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, kCSRMVInputsNum);
+  auto sparse = CheckArg<AbstractCSRTensor>(op_name, args_spec_list, 0);
+  auto dense = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
+  MS_EXCEPTION_IF_NULL(sparse);
+  MS_EXCEPTION_IF_NULL(sparse->shape());
+  MS_EXCEPTION_IF_NULL(sparse->values());
+  MS_EXCEPTION_IF_NULL(sparse->indices());
+  MS_EXCEPTION_IF_NULL(dense);
+
+  auto sparse_shape = sparse->shape()->shape();
+  auto dense_shape = dense->shape()->shape();
+  if (sparse_shape.size() != kCSRMVShapeSize || dense_shape.size() != kCSRMVShapeSize) {
+    MS_EXCEPTION(ValueError) << "Currently, only support " << kCSRMVShapeSize << "-D inputs!"
+                             << "but sparse tensor has " << sparse_shape.size() << " dimensions, "
+                             << "and dense tensor has " << dense_shape.size() << " dimensions, ";
+  }
+
+  MS_EXCEPTION_IF_NULL(sparse->values()->element());
+  ShapeVector out_shape = {sparse_shape[0], dense_shape[1]};
+  auto ret = std::make_shared<AbstractTensor>(sparse->values()->element()->BuildType(), out_shape);
+
+  MS_EXCEPTION_IF_NULL(sparse->indices()->shape());
+  auto nnz_vec = sparse->indices()->shape()->shape();
+  int csr_avg_rows = nnz_vec[0] / dense_shape[0];
+  primitive->set_attr(kCSRAvgRows, MakeValue(csr_avg_rows));
+  primitive->set_attr(kCSRDenseShape, MakeValue(sparse_shape));
+
+  return ret;
+}
+
+AbstractBasePtr InferImplCSRReduceSum(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                      const AbstractBasePtrList &args_spec_list) {
+  // Inputs: a sparse tensor and an axis.
+  constexpr auto kCSRReduceSumInputsNum = 2;
+  constexpr auto kCSRReduceSumShapeSize = 2;
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, kCSRReduceSumInputsNum);
+  auto sparse = CheckArg<AbstractCSRTensor>(op_name, args_spec_list, 0);
+  auto axis = CheckArg<AbstractScalar>(op_name, args_spec_list, 1);
+  MS_EXCEPTION_IF_NULL(sparse);
+  MS_EXCEPTION_IF_NULL(sparse->shape());
+  MS_EXCEPTION_IF_NULL(sparse->values());
+  MS_EXCEPTION_IF_NULL(sparse->indices());
+  MS_EXCEPTION_IF_NULL(axis);
+
+  auto sparse_shape = sparse->shape()->shape();
+  if (sparse_shape.size() != kCSRReduceSumShapeSize) {
+    MS_EXCEPTION(ValueError) << "Currently, only support " << kCSRReduceSumShapeSize << "-D inputs!"
+                             << "but sparse tensor has " << sparse_shape.size() << " dimensions.";
+  }
+
+  ShapeVector out_shape = sparse_shape;
+  MS_EXCEPTION_IF_NULL(axis->BuildValue());
+  if (axis->BuildValue()->isa<Int32Imm>() || axis->BuildValue()->isa<Int64Imm>()) {
+    int64_t axis_value = GetValue<int64_t>(axis->BuildValue());
+    int64_t dim = static_cast<int64_t>(sparse_shape.size());
+    if (axis_value < -dim || axis_value >= dim) {
+      MS_LOG(EXCEPTION) << "axis should be in [" << -dim << ", " << dim << "). But got axis = " << axis_value;
+    }
+    if (axis_value >= -dim && axis_value < 0) {
+      axis_value += dim;
+    }
+    out_shape[LongToSize(axis_value)] = 1;
+    primitive->set_attr(kCSRAxis, MakeValue(axis_value));
+  } else {
+    MS_EXCEPTION(ValueError) << "Currently, only support Integer axis.";
+  }
+
+  MS_EXCEPTION_IF_NULL(sparse->values()->element());
+  auto ret = std::make_shared<AbstractTensor>(sparse->values()->element()->BuildType(), out_shape);
+
+  MS_EXCEPTION_IF_NULL(sparse->indices()->shape());
+  auto nnz_vec = sparse->indices()->shape()->shape();
+  int csr_avg_rows = nnz_vec[0] / sparse_shape[0];
+  primitive->set_attr(kCSRAvgRows, MakeValue(csr_avg_rows));
+  primitive->set_attr(kCSRDenseShape, MakeValue(sparse_shape));
+
+  return ret;
 }
 
 AbstractBasePtr InferImplMakeCSRTensor(const AnalysisEnginePtr &, const PrimitivePtr &primitive,

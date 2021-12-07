@@ -25,6 +25,7 @@
 #include "nlohmann/json.hpp"
 #include "backend/kernel_compiler/oplib/opinfo.h"
 #include "backend/optimizer/graph_kernel/core/graph_kernel_callback.h"
+#include "utils/convert_utils.h"
 
 namespace mindspore::graphkernel {
 using kernel::OpAttrPtr;

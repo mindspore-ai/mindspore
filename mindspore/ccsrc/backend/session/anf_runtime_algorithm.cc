@@ -884,6 +884,14 @@ TypeId AnfRuntimeAlgorithm::GetOutputInferDataType(const TypePtr &type, size_t o
     return elem->type_id();
   }
 
+  if (type_ptr->isa<CSRTensorType>()) {
+    auto tensor_ptr = type_ptr->cast<CSRTensorTypePtr>();
+    MS_EXCEPTION_IF_NULL(tensor_ptr);
+    TypePtr elem = tensor_ptr->element();
+    MS_EXCEPTION_IF_NULL(elem);
+    return elem->type_id();
+  }
+
   return type_ptr->type_id();
 }
 

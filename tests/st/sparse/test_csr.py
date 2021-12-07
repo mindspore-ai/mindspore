@@ -17,9 +17,9 @@
 import pytest
 import numpy as np
 
-from mindspore import Tensor, CSRTensor, ms_function
+from mindspore import Tensor, CSRTensor, ms_function, nn, context
+from mindspore.ops.operations import _csr_ops
 from mindspore.common import dtype as mstype
-from mindspore import nn, context
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -200,3 +200,62 @@ def test_csr_tensor_in_while_cpu():
     assert np.allclose(out.indices.asnumpy(), indices.asnumpy(), .0, .0)
     assert np.allclose((values.asnumpy() + 2) * 8, out.values.asnumpy(), .0, .0)
     assert shape == out.shape
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_csr_ops():
+    """
+    Feature: Test CSR-related Ops.
+    Description: Test CSRReduceSum, CSRMul, CSRMV.
+    Expectation: Success.
+    """
+    class CSRReduceSumNet(nn.Cell):
+        def __init__(self):
+            super(CSRReduceSumNet, self).__init__()
+            self.op = _csr_ops.CSRReduceSum()
+
+        def construct(self, indptr, indices, values, dense_shape, axis):
+            csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
+            return self.op(csr_tensor, axis)
+
+    class CSRMulNet(nn.Cell):
+        def __init__(self):
+            super(CSRMulNet, self).__init__()
+            self.op = _csr_ops.CSRMul()
+
+        def construct(self, indptr, indices, values, dense_shape, dense):
+            csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
+            return self.op(csr_tensor, dense)
+
+    class CSRMVNet(nn.Cell):
+        def __init__(self):
+            super(CSRMVNet, self).__init__()
+            self.op = _csr_ops.CSRMV()
+
+        def construct(self, indptr, indices, values, dense_shape, dense):
+            csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
+            return self.op(csr_tensor, dense)
+
+    indptr = Tensor([0, 1, 2])
+    indices = Tensor([0, 1])
+    values = Tensor([2, 1], dtype=mstype.float32)
+    dense_shape = (2, 4)
+    dense_tensor = Tensor([[1., 1, 1, 1], [1, 1, 1, 1]], dtype=mstype.float32)
+    dense_vector = Tensor([[1.], [1], [1], [1]], dtype=mstype.float32)
+
+    net1 = CSRReduceSumNet()
+    out1 = net1(indptr, indices, values, dense_shape, 1)
+    expect1 = np.array([[2.], [1.]], dtype=np.float32)
+    assert np.allclose(out1.asnumpy(), expect1)
+
+    net2 = CSRMulNet()
+    out2 = net2(indptr, indices, values, dense_shape, dense_tensor)
+    expect2 = np.array([2., 1.], dtype=np.float32)
+    assert np.allclose(out2.asnumpy(), expect2)
+
+    net3 = CSRMVNet()
+    out3 = net3(indptr, indices, values, dense_shape, dense_vector)
+    expect3 = np.array([[2.], [1.]], dtype=np.float32)
+    assert np.allclose(out3.asnumpy(), expect3)

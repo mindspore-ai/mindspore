@@ -38,6 +38,8 @@ using Tensor = mindspore::tensor::Tensor;
 using TensorPtr = mindspore::tensor::TensorPtr;
 using MetaTensor = mindspore::tensor::MetaTensor;
 using MetaTensorPtr = mindspore::tensor::MetaTensorPtr;
+using CSRTensor = mindspore::tensor::CSRTensor;
+using CSRTensorPtr = mindspore::tensor::CSRTensorPtr;
 
 using InstanceCheckFunc = std::function<bool(const py::object &)>;
 using InstanceConvertFunc = std::function<ValuePtr(const py::object &, bool, const TypePtr &)>;
@@ -486,6 +488,7 @@ std::vector<DataConverterPtr> GetDataConverters() {
     // Convert data by python object type.
     std::make_shared<ByTypeDataConverter<Tensor>>(ObjCast<TensorPtr>),
     std::make_shared<ByTypeDataConverter<MetaTensor>>(ObjCast<MetaTensorPtr>),
+    std::make_shared<ByTypeDataConverter<CSRTensor>>(ObjCast<CSRTensorPtr>),
     std::make_shared<ByTypeDataConverter<py::tuple>>(ConvertTuple),
     std::make_shared<ByTypeDataConverter<py::list>>(ConvertList),
     std::make_shared<ByTypeDataConverter<py::bool_>>(PyCast<BoolImm, bool>),

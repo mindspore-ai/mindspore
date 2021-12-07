@@ -151,10 +151,15 @@ REGISTER_PYBIND_DEFINE(
           TensorType data(TypeIdToType(TypeId(static_cast<int>(t[0].cast<py::int_>()))));
           return data;
         }));
-    (void)py::class_<RowTensorType, Type, std::shared_ptr<RowTensorType>>(m_sub, "RowTensorType").def(py::init());
+    (void)py::class_<RowTensorType, Type, std::shared_ptr<RowTensorType>>(m_sub, "RowTensorType")
+      .def(py::init())
+      .def_property_readonly("ElementType", &RowTensorType::element, "Get the RowTensorType's element type.");
     (void)py::class_<SparseTensorType, Type, std::shared_ptr<SparseTensorType>>(m_sub, "SparseTensorType")
-      .def(py::init());
-    (void)py::class_<CSRTensorType, Type, std::shared_ptr<CSRTensorType>>(m_sub, "CSRTensorType").def(py::init());
+      .def(py::init())
+      .def_property_readonly("ElementType", &SparseTensorType::element, "Get the SparseTensorType's element type.");
+    (void)py::class_<CSRTensorType, Type, std::shared_ptr<CSRTensorType>>(m_sub, "CSRTensorType")
+      .def(py::init())
+      .def_property_readonly("ElementType", &CSRTensorType::element, "Get the CSRTensorType's element type.");
     (void)py::class_<UndeterminedType, Type, std::shared_ptr<UndeterminedType>>(m_sub, "UndeterminedType")
       .def(py::init());
     (void)py::class_<Function, Type, std::shared_ptr<Function>>(m_sub, "Function")

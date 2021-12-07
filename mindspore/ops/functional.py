@@ -27,6 +27,7 @@ from mindspore.ops.primitive import constexpr
 from .primitive import Primitive
 from . import operations as P
 from .operations import _grad_ops
+from .operations import _csr_ops
 from .composite import _Grad
 from .._c_expression import security
 
@@ -145,6 +146,10 @@ scatter_update = P.ScatterUpdate()
 tensor_scatter_update = P.TensorScatterUpdate()
 scatter_nd_update = P.ScatterNdUpdate()
 stack = P.Stack()
+
+csr_mul = _csr_ops.CSRMul()
+csr_mv = _csr_ops.CSRMV()
+csr_reduce_sum = _csr_ops.CSRReduceSum()
 
 
 def pack(x):

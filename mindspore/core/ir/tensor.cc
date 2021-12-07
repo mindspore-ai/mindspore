@@ -697,6 +697,17 @@ abstract::AbstractBasePtr CSRTensor::ToAbstract() {
     MS_LOG(EXCEPTION) << "Expect tensor type kNumber or kString or kTensor but got: " << dtype->ToString() << ".";
   }
   auto abs_csr_tensor = std::make_shared<abstract::AbstractCSRTensor>(dtype, shape_);
+
+  abs_csr_tensor->set_indptr(indptr_->ToAbstract()->cast<abstract::AbstractTensorPtr>());
+  abs_csr_tensor->set_indices(indices_->ToAbstract()->cast<abstract::AbstractTensorPtr>());
+  abs_csr_tensor->set_values(values_->ToAbstract()->cast<abstract::AbstractTensorPtr>());
+
+  std::vector<abstract::AbstractBasePtr> abstract_shape;
+  std::transform(
+    shape_.begin(), shape_.end(), std::back_inserter(abstract_shape),
+    [](auto shp) -> abstract::AbstractScalarPtr { return std::make_shared<abstract::AbstractScalar>(shp); });
+  abs_csr_tensor->set_dense_shape(std::make_shared<abstract::AbstractTuple>(abstract_shape));
+
   return abs_csr_tensor;
 }
 }  // namespace tensor
