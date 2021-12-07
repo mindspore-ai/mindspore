@@ -38,7 +38,7 @@ int LstmFP32Coder::InitInputWeightBias(CoderContext *const context) {
   init_code.CodeMallocExpression(weight_i_ptr_, weight_i_size);
   init_code.CodeFunction("memset", weight_i_ptr_, 0, weight_i_size);
   init_code.CodeFunction("PackLstmWeight", weight_i_ptr_, weight_i, weight_batch_, lstm_param_->input_size_,
-                         lstm_param_->hidden_size_, lstm_param_->input_col_align_);
+                         lstm_param_->hidden_size_, lstm_param_->input_col_align_, "NULL");
 
   Tensor *bias_i = input_tensors_.at(kInputSize2);
   MS_CHECK_PTR(bias_i);
@@ -48,7 +48,7 @@ int LstmFP32Coder::InitInputWeightBias(CoderContext *const context) {
   init_code.CodeMallocExpression(input_bias_, bias_i_size);
   init_code.CodeFunction("memset", input_bias_, 0, bias_i_size);
   init_code.CodeFunction("PackLstmBias", input_bias_, bias_i, weight_batch_, lstm_param_->hidden_size_,
-                         lstm_param_->input_col_align_, lstm_param_->bidirectional_);
+                         lstm_param_->input_col_align_, lstm_param_->bidirectional_, "NULL");
   context->AppendInitCode(init_code.str());
   return RET_OK;
 }
@@ -64,7 +64,7 @@ int LstmFP32Coder::InitStateWeightBias(CoderContext *const context) {
     init_code.CodeMallocExpression(weight_i_ptr_, weight_h_size);
     init_code.CodeFunction("memset", weight_i_ptr_, 0, weight_h_size);
     init_code.CodeFunction("PackLstmWeight", weight_h_ptr_, weight_h, weight_batch_, lstm_param_->hidden_size_,
-                           lstm_param_->hidden_size_, lstm_param_->state_col_align_);
+                           lstm_param_->hidden_size_, lstm_param_->state_col_align_, "NULL");
   } else {
     size_t weight_h_size = weight_h->Size();
     weight_h_ptr_ =
@@ -84,7 +84,7 @@ int LstmFP32Coder::InitStateWeightBias(CoderContext *const context) {
   std::string state_bias_addr =
     allocator_->GetRuntimeAddr(bias_i) + "+" + std::to_string(4 * lstm_param_->hidden_size_);
   init_code.CodeFunction("PackLstmBias", state_bias_, state_bias_addr, weight_batch_, lstm_param_->hidden_size_,
-                         lstm_param_->state_col_align_, lstm_param_->bidirectional_);
+                         lstm_param_->state_col_align_, lstm_param_->bidirectional_, "NULL");
   context->AppendInitCode(init_code.str());
   return RET_OK;
 }

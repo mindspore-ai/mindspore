@@ -340,12 +340,6 @@ FuncGraphPtr MindsporeImporter::CheckAndUpdateFuncGraph(const converter::Flags &
     return nullptr;
   }
 
-  auto lstm_adjust_pass = std::make_shared<opt::LstmAdjustPass>();
-  MS_CHECK_TRUE_MSG(lstm_adjust_pass != nullptr, nullptr, "lstm_adjust_pass is nullptr.");
-  if (!lstm_adjust_pass->Run(func_graph)) {
-    MS_LOG(ERROR) << "Run mindir lstm adjust failed.";
-    return nullptr;
-  }
   return func_graph;
 }
 }  // namespace mindspore::lite
