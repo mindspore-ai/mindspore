@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-#define THREADS 1024
+constexpr int THREADS = 1024;
+
 __global__ void CustomSquareBpropKernel(float *input1, float *input3, float *output, size_t size) {
   auto idx = blockIdx.x * THREADS + threadIdx.x;
   if (idx < size) {
@@ -25,24 +26,46 @@ __global__ void CustomSquareBpropKernel(float *input1, float *input3, float *out
 extern "C" int CustomSquareBprop(int nparam, void **params, int *ndims, int64_t **shapes, const char **dtypes,
                                  void *stream, void *extra) {
   cudaStream_t custream = static_cast<cudaStream_t>(stream);
-  if (nparam != 4) return 1;
-  void *input1 = params[0];
-  void *input3 = params[2];
-  void *output = params[3];
 
-  size_t size = 1;
+  constexpr int OUTPUT_INDEX = 3;
+  constexpr int TOTAL_PARAM_NUM = 4;
 
-  for (int i = 0; i < ndims[3]; i++) {
-    size *= shapes[3][i];
+  // Users can add any check on their need. If check fails, user can return any value larger than 0 to safely exit.
+  // Return value larger than 0 will cause mindspore to stop computing and safely exit.
+  // Specially, return 1 will show log: "Number of parameters passed is inconsistent with what the user wants".
+  // return 2 will show log: "Type of parameters passed is inconsistent with what the user wants".
+
+  // This is to check if the num of parameters the same as what the user wants.
+  // There are three inputs and one output, so the nparam should be 4.
+  if (nparam != TOTAL_PARAM_NUM) {
+    return 1;
   }
-  int n = size / THREADS;
+
+  // This is to check if the type of parameters the same as what the user wants.
   for (int i = 0; i < nparam; i++) {
     if (strcmp(dtypes[i], "float32") != 0) {
       return 2;
     }
   }
 
+  // input1's index is 0, input2's index is 1, input3's index is 2 and output's index is 3
+  void *input1 = params[0];
+  void *input3 = params[2];
+  void *output = params[3];
+
+  size_t size = 1;
+
+  // Cumprod of output's shape to compute elements'num
+  for (int i = 0; i < ndims[OUTPUT_INDEX]; i++) {
+    size *= shapes[OUTPUT_INDEX][i];
+  }
+
+  int n = size / THREADS;
+
+  // Do the computation
   CustomSquareBpropKernel<<<n + 1, THREADS, 0, custream>>>(static_cast<float *>(input1), static_cast<float *>(input3),
                                                            static_cast<float *>(output), size);
+
+  // When return 0, mindspore will continue to run if this kernel could launch successfully.
   return 0;
 }

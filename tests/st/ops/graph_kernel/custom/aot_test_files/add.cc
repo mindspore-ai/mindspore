@@ -14,27 +14,48 @@
  * limitations under the License.
  */
 #include <string.h>
-using size_t = decltype(sizeof(int));
-using int64_t = decltype(sizeof(long));
+#include <cstdint>
 
 extern "C" int CustomAdd(int nparam, void **params, int *ndims, int64_t **shapes, const char **dtypes, void *stream,
                          void *extra) {
-  if (nparam != 3) return 1;
-  float *input1 = static_cast<float *>(params[0]);
-  float *input2 = static_cast<float *>(params[1]);
-  float *output = static_cast<float *>(params[2]);
-  size_t size = 1;
+  constexpr int OUTPUT_INDEX = 2;
+  constexpr int TOTAL_PARAM_NUM = 3;
 
-  for (int i = 0; i < ndims[2]; i++) {
-    size *= shapes[2][i];
+  // Users can add any check on their need. If check fails, user can return any value larger than 0 to safely exit.
+  // Return value larger than 0 will cause mindspore to stop computing and safely exit.
+  // Specially, return 1 will show log: "Number of parameters passed is inconsistent with what the user wants".
+  // return 2 will show log: "Type of parameters passed is inconsistent with what the user wants".
+
+  // This is to check if the num of parameters the same as what the user wants.
+  // In this case, there are two inputs and one output, so the nparam should be 3.
+  if (nparam != TOTAL_PARAM_NUM) {
+    return 1;
   }
+
+  // This is to check if the type of parameters the same as what the user wants.
   for (int i = 0; i < nparam; i++) {
     if (strcmp(dtypes[i], "float32") != 0) {
       return 2;
     }
   }
+
+  // input1's index is 0, input2's index is 1 and output's index is 2
+  float *input1 = static_cast<float *>(params[0]);
+  float *input2 = static_cast<float *>(params[1]);
+  float *output = static_cast<float *>(params[2]);
+  int size = 1;
+
+  // Cumprod of output's shape to compute elements' num
+  for (int i = 0; i < ndims[OUTPUT_INDEX]; i++) {
+    size *= shapes[OUTPUT_INDEX][i];
+  }
+
+  // Do the computation
+  // Add
   for (int i = 0; i < size; i++) {
     output[i] = input1[i] + input2[i];
   }
+
+  // When return 0, mindspore will continue to run if this kernel could launch successfully.
   return 0;
 }
