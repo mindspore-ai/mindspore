@@ -690,13 +690,13 @@ bool AkgKernelJsonGenerator::CollectJson(const AnfNodePtr &anf_node, nlohmann::j
     return false;
   }
 
+  (*kernel_json)[kJsonKeyProcess] = GetProcessorByTarget();
   size_t hash_id = std::hash<std::string>()(kernel_json->dump());
   kernel_name_ = op_name + "_";
   (void)kernel_name_.append(std::to_string(hash_id));
   (*kernel_json)[kJsonKeyId] = 0;  // unused key
   (*kernel_json)[kJsonKeyOp] = kernel_name_;
   (*kernel_json)[kJsonKeyPlatform] = "AKG";
-  (*kernel_json)[kJsonKeyProcess] = GetProcessorByTarget();
   (*kernel_json)[kJsonKeyComposite] = false;
   if (dump_option_.get_compute_capability) {
     (*kernel_json)[kJsonKeyComputeCapability] = ComputeCapability::Get();
@@ -770,6 +770,7 @@ bool AkgKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &anf
   // Add parallel fusion information.
   GenParallelJson(anf_nodes, input_list, output_list, node_json_map, kernel_json);
 
+  (*kernel_json)[kJsonKeyProcess] = GetProcessorByTarget();
   size_t hash_id = std::hash<std::string>()(kernel_json->dump());
   kernel_name_ = "Fused_";
   auto fg = anf_nodes[0]->func_graph();
@@ -795,7 +796,6 @@ bool AkgKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &anf
   (*kernel_json)[kJsonKeyId] = 0;  // unused key
   (*kernel_json)[kJsonKeyOp] = kernel_name_;
   (*kernel_json)[kJsonKeyPlatform] = "AKG";
-  (*kernel_json)[kJsonKeyProcess] = GetProcessorByTarget();
   (*kernel_json)[kJsonKeyComposite] = true;
   (*kernel_json)[kJsonKeyCompositeGraph] = fg->ToString();
   if (dump_option_.get_compute_capability) {
