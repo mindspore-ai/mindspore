@@ -41,6 +41,8 @@ class CollectiveInitializer {
   const void *collective_handle();
   static void InitCollective();
   static void FinalizeCollective();
+  static uint32_t GetRankID(const std::string &group_name);
+  static uint32_t GetRankSize(const std::string &group_name);
 
   // The capsulation of the collective communication APIs for compatibility.
   uint32_t local_rank_id();

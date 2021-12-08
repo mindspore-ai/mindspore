@@ -883,20 +883,29 @@ bool AbstractNode::Disconnect(const std::shared_ptr<TcpClient> &client, const ui
   return WaitForDisconnect(timeout);
 }
 
-bool AbstractNode::WaitForDisconnect(const uint32_t &) {
+bool AbstractNode::WaitForDisconnect(const uint32_t &timeout) {
   // If the cluster state is NODE_TIMEOUT, this node is already disconnected.
   if (current_cluster_state_ == ClusterState::NODE_TIMEOUT) {
     return true;
   }
   std::unique_lock<std::mutex> lock(wait_finish_mutex_);
-  // Caller should use this method to help block the thread.
-  wait_finish_cond_.wait(lock, [&] {
+  auto condition_func = [&] {
     if (is_finish_.load()) {
       MS_LOG(INFO) << "The node id:" << node_info_.node_id_ << " is success finish!";
     }
     return is_finish_.load();
-  });
-  return true;
+  };
+
+  bool res;
+  if (timeout == UINT32_MAX) {
+    // Caller should use this method to help block the thread.
+    wait_finish_cond_.wait(lock, condition_func);
+    res = true;
+  } else {
+    res = wait_finish_cond_.wait_for(lock, std::chrono::seconds(timeout), condition_func);
+  }
+
+  return res;
 }
 
 void AbstractNode::InitClientToServer() {

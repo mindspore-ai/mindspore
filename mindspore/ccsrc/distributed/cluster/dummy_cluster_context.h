@@ -38,7 +38,7 @@ class ClusterContext {
   static std::shared_ptr<ClusterContext> instance();
 
   bool Initialize() const;
-  bool Finalize() const;
+  bool Finalize(uint32_t timeout = kDefaultFinishTimeout) const;
   bool initialized() const;
 
  private:

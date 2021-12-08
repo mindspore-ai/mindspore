@@ -17,6 +17,8 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_DISTRIBUTION_COLLECTIVE_FAKE_INIT_H_
 #define MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_DISTRIBUTION_COLLECTIVE_FAKE_INIT_H_
 
+#include "string"
+
 namespace mindspore {
 namespace device {
 namespace gpu {
@@ -28,6 +30,8 @@ class CollectiveFakeInitializer {
   CollectiveFakeInitializer &operator=(const CollectiveFakeInitializer &) = delete;
   static void InitCollective();
   static void FinalizeCollective();
+  static uint32_t GetRankID(const std::string &group_name);
+  static uint32_t GetRankSize(const std::string &group_name);
 };
 }  // namespace gpu
 }  // namespace device

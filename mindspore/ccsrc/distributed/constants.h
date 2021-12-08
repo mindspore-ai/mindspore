@@ -38,6 +38,7 @@ constexpr char kLocalHost[] = "127.0.0.1";
 constexpr int MAX_HOSTNAME_LEN = 1024;
 const uint16_t kDefaultSchedPort = 6667;
 const uint16_t kMaxPort = 65535;
+constexpr uint32_t kDefaultFinishTimeout = 30;
 }  // namespace distributed
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_DISTRIBUTED_CONSTANTS_H_

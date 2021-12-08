@@ -1795,9 +1795,9 @@ void ClearResAtexit() {
   g_args_cache.clear();
   // clean static variable to prevent from crash. As static variable is released after
   // Python threads is released.
-  MS_LOG(INFO) << "Start clear data_converter...";
+  MS_LOG(INFO) << "Start clear ClearObjectCache...";
   parse::data_converter::ClearObjectCache();
-  MS_LOG(INFO) << "End clear data_converter...";
+  MS_LOG(INFO) << "End clear ClearObjectCache...";
 
   MS_LOG(INFO) << "Start clear Parser...";
   parse::Parser::CleanParserResource();

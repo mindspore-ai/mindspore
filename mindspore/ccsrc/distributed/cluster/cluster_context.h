@@ -47,8 +47,8 @@ class ClusterContext {
   // Initialize the cluster configuration and build network.
   bool Initialize();
 
-  // Finalize the cluster and process exits.
-  bool Finalize();
+  // Finalize the cluster and process exits. If timeout is set to UINT32_MAX, this method will block without timeout.
+  bool Finalize(uint32_t timeout = kDefaultFinishTimeout);
 
   // Return node object of this process.
   const std::shared_ptr<ps::core::Node> &node() const;
