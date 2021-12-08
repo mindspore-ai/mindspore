@@ -609,6 +609,12 @@ void SetMindRTEnable() {
     return;
   }
 
+#if ((defined ENABLE_CPU) && (!defined _WIN32))
+  if (ps::PSContext::instance()->is_ps_mode()) {
+    return;
+  }
+#endif
+
   std::string target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   if (common::GetEnv("ENABLE_ASCEND_MINDRT") == "1" || common::kEnableAscendMindRT) {
     // exception scenario: still run original process after enable ascend mindrt
@@ -630,12 +636,6 @@ void SetMindRTEnable() {
 
 #if defined(_WIN32) || defined(_WIN64)
   return;
-#endif
-
-#if ((defined ENABLE_CPU) && (!defined _WIN32))
-  if (ps::PSContext::instance()->is_ps_mode()) {
-    return;
-  }
 #endif
 
   MS_LOG(DEBUG) << "Enable mindRT.";
