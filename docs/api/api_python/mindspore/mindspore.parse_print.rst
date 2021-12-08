@@ -5,19 +5,19 @@ mindspore.parse_print
 
     解析由 mindspore.ops.Print 生成的保存数据。
 
-    将数据打印到屏幕上。也可以通过设置`context`中的参数`print_file_path`来关闭，数据会保存在`print_file_path`指定的文件中。 parse_print 用于解析保存的文件。 更多信息请参考:func:`mindspore.context.set_context` 和:class:`mindspore.ops.Print`。
+    将数据打印到屏幕上。也可以通过设置 `context` 中的参数 `print_file_path` 来关闭，数据会保存在 `print_file_path` 指定的文件中。 parse_print 用于解析保存的文件。 更多信息请参考 :func:`mindspore.context.set_context` 和 :class:`mindspore.ops.Print` 。
 
     **参数：**
 
-    - **print_file_name** (str) – 保存打印数据的文件名。
+    **print_file_name** (str) – 保存打印数据的文件名。
 
     **返回：**
 
-        List，由Tensor组成的list。
+    List，由Tensor组成的list。
 
     **异常：**
 
-    - **ValueError** – 指定的文件名可能为空，请确保输入正确的文件名。
+    **ValueError** – 指定的文件名可能为空，请确保输入正确的文件名。
 
     **样例：**
 

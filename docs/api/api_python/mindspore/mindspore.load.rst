@@ -5,7 +5,7 @@ mindspore.load
 
     加载MindIR文件。
 
-    返回的对象可以由`GraphCell`执行，更多细节参见类:class:`mindspore.nn.GraphCell`。
+    返回的对象可以由 `GraphCell` 执行，更多细节参见类 :class:`mindspore.nn.GraphCell` 。
 
     **参数：**
 
@@ -16,7 +16,7 @@ mindspore.load
 
     **返回：**
 
-        Object，一个可以由`GraphCell`构成的可执行的编译图。
+    Object，一个可以由 `GraphCell` 构成的可执行的编译图。
 
     **异常：**
 
