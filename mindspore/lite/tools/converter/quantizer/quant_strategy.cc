@@ -84,11 +84,11 @@ bool QuantStrategy::CanOpFullQuantized(const AnfNodePtr &node, const std::set<Pr
   }
   const auto cnode = node->cast<mindspore::CNodePtr>();
   MS_ASSERT(cnode != nullptr);
-  auto type = NodePrimitiveType(cnode);
   // The return node does not need to be quantified.
   if (opt::CheckPrimitiveType(cnode, prim::kPrimReturn) || opt::CheckPrimitiveType(cnode, prim::kPrimMakeTuple)) {
     return false;
   }
+  auto type = NodePrimitiveType(cnode);
   auto is_support_node = CheckNodeInSet(cnode, support_int8_ops);
   if (!is_support_node) {
     MS_LOG(WARNING) << "node:" << cnode->fullname_with_scope() << " type:" << type << " will not quantify.";

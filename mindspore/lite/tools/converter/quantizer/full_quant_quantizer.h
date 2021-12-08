@@ -75,12 +75,19 @@ class FullQuantQuantizer : public Quantizer {
   int SetInOutQuantParam(const AnfNodePtr &input_node, const std::unique_ptr<DataDistribution> &info,
                          const PrimitivePtr &primitive, bool is_input, size_t index) const;
 
-  int DoWeightQuant(const std::string &op_name, const AnfNodePtr &weight, const PrimitivePtr &primitive,
-                    bool per_channel, int input_index) const;
+  int DoParameterWeightQuant(const ParameterPtr &weight, const PrimitivePtr &primitive, bool per_channel,
+                             int input_index) const;
 
-  int DoParameterNodeQuant(const CNodePtr &cnode, const AnfNodePtr &input_node, size_t input_index);
+  int DoValueNodeWeightQuant(const ValueNodePtr &weight, const PrimitivePtr &primitive, bool per_channel,
+                             int input_index) const;
 
-  int DoBiasQuant(const AnfNodePtr &bias, const PrimitivePtr &primitive);
+  int DoParameterNodeQuant(const CNodePtr &cnode, const ParameterPtr &input_node, size_t input_index);
+
+  int DoValueNodeQuant(const CNodePtr &cnode, const ValueNodePtr &input_node, size_t input_index);
+
+  int IsSupportWeightQuant(const CNodePtr &cnode, const AnfNodePtr &input_node, size_t input_index);
+
+  int DoParameterBiasQuant(const ParameterPtr &bias, const PrimitivePtr &primitive);
   int Int8Inference();
   int BiasCorrection(const FuncGraphPtr &func_graph);
   int BiasCorrection(const FuncGraphPtr &func_graph, const CNodePtr &cnode);

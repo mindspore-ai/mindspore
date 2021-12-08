@@ -344,8 +344,8 @@ void GetLiteParameter(const AnfNodePtr &node, ParameterPtr *param_node, tensor::
   }
 }
 
-int UpdateTensorDataAndSize(const ParameterPtr &parameter, const tensor::TensorPtr &weight, void *quant_datas,
-                            int new_size, TypeId new_data_type) {
+int UpdateTensorDataAndSize(const AnfNodePtr &node, const tensor::TensorPtr &weight, void *quant_datas, int new_size,
+                            TypeId new_data_type) {
   MS_CHECK_TRUE_RET(weight != nullptr, RET_NULL_PTR);
   MS_CHECK_TRUE_RET(new_size > 0, RET_NULL_PTR);
   weight->set_data_type(new_data_type);
@@ -358,13 +358,13 @@ int UpdateTensorDataAndSize(const ParameterPtr &parameter, const tensor::TensorP
     return RET_ERROR;
   }
   // set dtype
-  auto abstract_base = parameter->abstract();
+  auto abstract_base = node->abstract();
   if (abstract_base == nullptr) {
-    MS_LOG(ERROR) << "Abstract of parameter is nullptr, " << parameter->name();
+    MS_LOG(ERROR) << "Abstract of node is nullptr, " << node->fullname_with_scope();
     return RET_NULL_PTR;
   }
   if (!utils::isa<abstract::AbstractTensorPtr>(abstract_base)) {
-    MS_LOG(ERROR) << "Abstract of parameter should be anstract tensor, " << parameter->name();
+    MS_LOG(ERROR) << "Abstract of node should be anstract tensor, " << node->fullname_with_scope();
     return RET_ERROR;
   }
   auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(abstract_base);
@@ -467,7 +467,7 @@ void CalQuantAssitInfo(const schema::PrimitiveT &primitive, const std::vector<in
   }
 }
 
-int MixedBitQuantFilter(const ParameterPtr &parameter, const tensor::TensorPtr &weight, const PrimitivePtr &primitive,
+int MixedBitQuantFilter(const AnfNodePtr &node, const tensor::TensorPtr &weight, const PrimitivePtr &primitive,
                         QuantType quant_type, WeightQuantType weight_quant_type, TypeId quant_data_type,
                         double init_scale, int index) {
   MS_CHECK_TRUE_RET(primitive != nullptr, RET_NULL_PTR);
@@ -499,17 +499,17 @@ int MixedBitQuantFilter(const ParameterPtr &parameter, const tensor::TensorPtr &
     const int quant_min = QuantMin(k8Bit, false, false);  // -128
     const int quant_max = QuantMax(k8Bit);                // 127
     MS_LOG(WARNING)
-      << parameter->fullname_with_scope()
+      << node->fullname_with_scope()
       << " mixed bit quantization search failed, the current layer rolls back to 8 bit fixed quantization.";
-    return FixedBitQuantFilter<int8_t>(parameter, weight, primitive, QuantType_QUANT_WEIGHT, quant_max, quant_min,
-                                       k8Bit, FIXED_BIT_PER_CHANNEL, kNumberTypeInt8, index);
+    return FixedBitQuantFilter<int8_t>(node, weight, primitive, QuantType_QUANT_WEIGHT, quant_max, quant_min, k8Bit,
+                                       FIXED_BIT_PER_CHANNEL, kNumberTypeInt8, index);
   }
   if (ret != RET_OK) {
     return ret;
   }
 
   auto status =
-    UpdateTensorDataAndSize(parameter, weight, quant_data.data(), quant_data.size() * sizeof(int16_t), quant_data_type);
+    UpdateTensorDataAndSize(node, weight, quant_data.data(), quant_data.size() * sizeof(int16_t), quant_data_type);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "UpdateTensorDataAndSize error";
     return RET_ERROR;

@@ -41,17 +41,17 @@ ValueNodePtr NewQuantCastValueNode(int src_type, int dst_type, const std::vector
 }
 
 int InsertCastNode(const FuncGraphPtr &graph, const CNodePtr &cnode, size_t input_index, bool is_graph_input) {
-  auto curr_cnode_primitive_c = GetValueNode<std::shared_ptr<ops::PrimitiveC>>(cnode->input(0));
-  if (curr_cnode_primitive_c == nullptr) {
+  auto primitive = GetValueNode<std::shared_ptr<mindspore::Primitive>>(cnode->input(0));
+  if (primitive == nullptr) {
     MS_LOG(ERROR) << "primitive_c is nullptr: " << cnode->fullname_with_scope();
     return RET_ERROR;
   }
   auto input_node = cnode->input(input_index);
   auto input_cnode_quant_type = schema::QuantType_QUANT_NONE;
-  std::shared_ptr<ops::PrimitiveC> input_cnode_primitive_c = nullptr;
+  std::shared_ptr<mindspore::Primitive> input_cnode_primitive_c = nullptr;
   if (!is_graph_input) {
     auto input_cnode = std::dynamic_pointer_cast<mindspore::CNode>(input_node);
-    input_cnode_primitive_c = GetValueNode<std::shared_ptr<ops::PrimitiveC>>(input_cnode->input(0));
+    input_cnode_primitive_c = GetValueNode<std::shared_ptr<mindspore::Primitive>>(input_cnode->input(0));
     if (input_cnode_primitive_c == nullptr) {
       MS_LOG(DEBUG) << "input: " << input_index << " " << input_cnode->fullname_with_scope() << ": "
                     << " PrimitiveC is null";
@@ -62,7 +62,7 @@ int InsertCastNode(const FuncGraphPtr &graph, const CNodePtr &cnode, size_t inpu
                       "input_primitive_quant_holder is nullptr.");
     input_cnode_quant_type = input_primitive_quant_holder->quant_type();
   }
-  auto primitive_quant_param_holder = GetCNodeQuantHolder(curr_cnode_primitive_c);
+  auto primitive_quant_param_holder = GetCNodeQuantHolder(primitive);
   MS_CHECK_TRUE_MSG(primitive_quant_param_holder != nullptr, RET_NULL_PTR, "primitive_quant_param_holder is nullptr.");
   auto curnode_quant_type = primitive_quant_param_holder->quant_type();
   if (curnode_quant_type == input_cnode_quant_type) {
@@ -82,7 +82,7 @@ int InsertCastNode(const FuncGraphPtr &graph, const CNodePtr &cnode, size_t inpu
   }
   ValueNodePtr value_node;
   if (insert_dequant_node) {
-    auto curr_primitive_quant_param_holder = GetCNodeQuantHolder(curr_cnode_primitive_c);
+    auto curr_primitive_quant_param_holder = GetCNodeQuantHolder(primitive);
     if (curr_primitive_quant_param_holder->get_input_quant_params().size() < input_index) {
       MS_LOG(ERROR) << "quant param is invalid.";
       return RET_ERROR;
