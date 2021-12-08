@@ -166,7 +166,6 @@ def test_gatherv2_semi_auto5():
 
 
 def test_gatherv2_auto0():
-    context.set_auto_parallel_context(dataset_strategy="full_batch")
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="auto_parallel")
     net = GradWrap(NetWithLoss(Net(0)))
     net.set_auto_parallel()
