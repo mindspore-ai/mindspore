@@ -691,7 +691,11 @@ void DebugServices::ProcessConvertToHostFormat(const std::vector<std::string> &f
     struct stat st;
     std::string name = real_dump_iter_dir + std::string("/") + std::string(dir->d_name);
     int ret = stat(name.c_str(), &st);
-    if (ret == 0 && S_ISREG(st.st_mode)) {
+    if (ret != 0) {
+      MS_LOG(ERROR) << "stat error, ret is: " << ret;
+      (void)closedir(d_handle);
+      return;
+    } else if (S_ISREG(st.st_mode)) {
       std::string candidate = dir->d_name;
       for (const std::string &file_to_find : files_after_convert_in_dir) {
         std::string file_n = file_to_find;
@@ -788,7 +792,11 @@ void DebugServices::ProcessConvertList(const std::string &prefix_dump_file_name,
     struct stat st;
     std::string name = specific_dump_dir + std::string("/") + std::string(dir->d_name);
     int ret = stat(name.c_str(), &st);
-    if (!(ret == 0 && S_ISREG(st.st_mode))) {
+    if (ret != 0) {
+      MS_LOG(ERROR) << "stat error, ret is: " << ret;
+      (void)closedir(d);
+      return;
+    } else if (!(S_ISREG(st.st_mode))) {
       continue;
     }
     std::string file_name = dir->d_name;
@@ -1006,7 +1014,11 @@ void DebugServices::ReadDumpedTensorSync(const std::string &prefix_dump_file_nam
       struct stat st;
       std::string name = abspath + std::string("/") + std::string(dir->d_name);
       int ret = stat(name.c_str(), &st);
-      if (ret == 0 && S_ISREG(st.st_mode)) {
+      if (ret != 0) {
+        MS_LOG(ERROR) << "stat error, ret is: " << ret;
+        (void)closedir(d);
+        return;
+      } else if (S_ISREG(st.st_mode)) {
         std::string file_name = dir->d_name;
         std::string stripped_file_name = GetStrippedFilename(file_name);
         if (stripped_file_name.empty()) {
@@ -1155,7 +1167,11 @@ void DebugServices::ProcessTensorDataSync(const std::vector<std::tuple<std::stri
       struct stat st;
       std::string name = abspath + std::string("/") + std::string(dir->d_name);
       int ret = stat(name.c_str(), &st);
-      if (ret == 0 && S_ISREG(st.st_mode)) {
+      if (ret != 0) {
+        MS_LOG(ERROR) << "stat error, ret is: " << ret;
+        (void)closedir(d);
+        return;
+      } else if (S_ISREG(st.st_mode)) {
         std::string file_name = dir->d_name;
         for (auto &node : proto_to_dump) {
           std::string dump_name = std::get<1>(node);
