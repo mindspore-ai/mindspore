@@ -204,6 +204,12 @@ class Compose(PyTensorOperation):
         Returns:
             list, the reduced list of operations.
         """
+        # import nn and ops locally for type check
+        from mindspore import nn, ops
+        for item in operations:
+            if isinstance(item, (nn.Cell, ops.Primitive)):
+                raise ValueError("Input operations should not contain network computing operator like in "
+                                 "mindspore.nn or mindspore.ops, got operation:", str(item))
         if len(operations) == 1:
             if str(operations).find("c_transform") >= 0 or isinstance(operations[0], TensorOperation):
                 return operations
