@@ -172,9 +172,6 @@ FuncGraphPtr DefaultExpander::CreateExpandFuncGraph(const CNodePtr &node) {
 AnfNodePtr PyExpander::CreateExpandGraphKernel(const FuncGraphPtr &new_func_graph, const CNodePtr &old_node) {
   auto func_graph = old_node->func_graph();
   std::vector<AnfNodePtr> inputs(old_node->inputs().begin() + 1, old_node->inputs().end());
-  AnfNodePtrList kernel_nodes;
-  EliminateRedundantParameters(new_func_graph, &inputs);
-  kernel::GetValidKernelNodes(new_func_graph, &kernel_nodes);
   auto graph_kernel_node = CreateNewFuseCNode(func_graph, new_func_graph, inputs);
   MS_LOG(DEBUG) << "Expand node: " << old_node->fullname_with_scope()
                 << " with: " << graph_kernel_node->fullname_with_scope();
