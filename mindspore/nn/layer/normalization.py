@@ -1117,14 +1117,10 @@ class GroupNorm(Cell):
         self.eps = validator.check_value_type('eps', eps, (float,), type(self).__name__)
         self.affine = validator.check_bool(affine, arg_name="affine", prim_name=self.cls_name)
 
-        gamma = initializer(gamma_init, num_channels)
-        beta = initializer(beta_init, num_channels)
-        if self.affine:
-            self.gamma = Parameter(gamma, name='gamma')
-            self.beta = Parameter(beta, name='beta')
-        else:
-            self.gamma = gamma
-            self.beta = beta
+        self.gamma = Parameter(initializer(
+            gamma_init, num_channels), name="gamma", requires_grad=affine)
+        self.beta = Parameter(initializer(
+            beta_init, num_channels), name="beta", requires_grad=affine)
         self.shape = F.shape
         self.reshape = F.reshape
         self.reduce_mean = P.ReduceMean(keep_dims=True)
