@@ -265,6 +265,7 @@ constexpr char SOFTMAX_CROSS_ENTROPY_WITH_LOGITS[] = "SoftmaxCrossEntropyWithLog
 constexpr char SIGMOID_CROSS_ENTROPY_WITH_LOGITS[] = "SigmoidCrossEntropyWithLogits";
 constexpr char MATMUL[] = "MatMul";
 constexpr char GELU[] = "GeLU";
+constexpr char FAST_GELU[] = "FastGeLU";
 constexpr char TANH[] = "Tanh";
 constexpr char RECEIVE[] = "Receive";
 constexpr char SEND[] = "Send";
