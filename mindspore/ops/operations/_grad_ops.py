@@ -34,7 +34,7 @@ class AbsGrad(PrimitiveWithInfer):
         """Initialize AbsGrad"""
 
 
-class ACosGrad(PrimitiveWithInfer):
+class ACosGrad(Primitive):
     """
     Computes ACosGrad of input element-wise.
 
@@ -45,15 +45,6 @@ class ACosGrad(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """Initialize ACosGrad"""
-
-    def infer_shape(self, x, dout):
-        validator.check("x shape", x, "dout shape", dout, Rel.EQ, self.name)
-        return x
-
-    def infer_dtype(self, x, dout):
-        args = {"x": x, "dout": dout}
-        validator.check_tensors_dtypes_same_and_valid(args, mstype.number_type, self.name)
-        return x
 
 
 class AcoshGrad(Primitive):
