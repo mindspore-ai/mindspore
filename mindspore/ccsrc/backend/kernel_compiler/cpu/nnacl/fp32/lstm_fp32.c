@@ -22,10 +22,10 @@
 #include "nnacl/fp32/matmul_fp32.h"
 #include "nnacl/fp32/pack_fp32.h"
 
-void PackLstmWeight(float *dst, const float *src, int batch, int deep, int col, int col_align) {
+void PackLstmWeight(float *dst, const float *src, int batch, int deep, int col, int col_align, const int *order) {
   for (int i = 0; i < batch; i++) {
     const float *src_batch = src + i * col * deep;
-    float *dst_batch = dst + i * col_align * deep;
+    float *dst_batch = dst + ((order == NULL) ? i : order[i]) * col_align * deep;
 #ifdef ENABLE_AVX
     RowMajor2Col16Major(src_batch, dst_batch, col, deep);
 #elif defined(ENABLE_ARM32)
@@ -36,19 +36,20 @@ void PackLstmWeight(float *dst, const float *src, int batch, int deep, int col, 
   }
 }
 
-void PackLstmBias(float *dst, const float *src, int batch, int col, int col_align, bool is_bidirectional) {
+void PackLstmBias(float *dst, const float *src, int batch, int col, int col_align, bool is_bidirectional,
+                  const int *order) {
   int unidirectional_batch = is_bidirectional ? batch / 2 : batch;
   for (int i = 0; i < unidirectional_batch; i++) {
     const float *src_batch = src + i * col;
-    float *dst_batch = dst + i * col_align;
-    memcpy(dst_batch, src_batch, col * (int)sizeof(float));
+    float *dst_batch = dst + ((order == NULL) ? i : order[i]) * col_align;
+    memcpy(dst_batch, src_batch, col * sizeof(float));
   }
   if (is_bidirectional) {
     const float *backward_src = src + batch * col;
     float *backward_dst = dst + unidirectional_batch * col_align;
     for (int i = 0; i < unidirectional_batch; i++) {
       const float *backward_src_batch = backward_src + i * col;
-      float *backward_dst_batch = backward_dst + i * col_align;
+      float *backward_dst_batch = backward_dst + ((order == NULL) ? i : order[i]) * col_align;
       memcpy(backward_dst_batch, backward_src_batch, col * sizeof(float));
     }
   }
@@ -167,7 +168,7 @@ void UpdateLstmGate(float *gate_buffer, const float *input, const float *weight,
       weight_i += deep * col;
     }
 #else
-    weight_i += deep * col;
+    weight_i += deep * col_align;
 #endif
     bias_i += col_align;
     gate_i += row * col;

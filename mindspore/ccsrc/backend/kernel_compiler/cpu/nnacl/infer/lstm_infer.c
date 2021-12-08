@@ -17,6 +17,9 @@
 #include "nnacl/infer/lstm_infer.h"
 #include "nnacl/infer/infer_register.h"
 
+static const int num_of_gates = 4;
+static const int no_of_recorde_values = 7;
+
 int CheckInputShapeValid(const TensorC *const *inputs, const LstmParameter *parameter) {
   const TensorC *input = inputs[FIRST_INPUT];
   const TensorC *weight_i = inputs[SECOND_INPUT];
@@ -50,7 +53,7 @@ int CheckInputShapeValid(const TensorC *const *inputs, const LstmParameter *para
 
 int LstmInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                    OpParameter *parameter) {
-  int check_ret = CheckAugmentNullSize(inputs, inputs_size, outputs, outputs_size, parameter, 6, 3);
+  int check_ret = CheckAugmentWithMinSize(inputs, inputs_size, outputs, outputs_size, parameter, 4, 3);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
@@ -68,34 +71,53 @@ int LstmInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
     return NNACL_INFER_INVALID;
   }
 
-  if (CheckInputShapeValid(inputs, param) != NNACL_OK) {
-    return NNACL_ERR;
-  }
-
-  int hidden_size = weight_i->shape_[1] / 4;
   int out_shape[MAX_SHAPE_SIZE];
   size_t out_shape_size = 0;
+  int hidden_size = 1;
   ShapeSet(out_shape, &out_shape_size, input->shape_, input->shape_size_);
-  out_shape[2] = hidden_size;
-  if (param->bidirectional_) {
-    int ret = ShapeInsert(out_shape, &out_shape_size, 1, 2);
-    if (ret != NNACL_OK) {
+  if (inputs_size == DIMENSION_4D) {  // if input from MINDIR
+    hidden_size = weight_i->shape_[THIRD_INPUT];
+    out_shape[THIRD_INPUT] = hidden_size;
+  } else {
+    if (CheckInputShapeValid(inputs, param) != NNACL_OK) {
       return NNACL_ERR;
     }
-  } else {
-    int ret = ShapeInsert(out_shape, &out_shape_size, 1, 1);
-    if (ret != NNACL_OK) {
-      return NNACL_ERR;
+    hidden_size = weight_i->shape_[1] / num_of_gates;
+    out_shape[2] = hidden_size;
+    if (param->bidirectional_) {
+      int ret = ShapeInsert(out_shape, &out_shape_size, 1, 2);
+      if (ret != NNACL_OK) {
+        return NNACL_ERR;
+      }
+    } else {
+      int ret = ShapeInsert(out_shape, &out_shape_size, 1, 1);
+      if (ret != NNACL_OK) {
+        return NNACL_ERR;
+      }
     }
   }
   SetShapeArray(output, out_shape, out_shape_size);
   int state_shape[MAX_SHAPE_SIZE];
   size_t state_shape_size = 0;
+  int dir_multiplier = param->bidirectional_ ? 2 : 1;
   ShapeSet(state_shape, &state_shape_size, input->shape_, input->shape_size_);
-  state_shape[0] = param->bidirectional_ ? 2 : 1;
-  state_shape[2] = hidden_size;
-  SetShapeArray(outputs[1], state_shape, state_shape_size);
-  SetShapeArray(outputs[2], state_shape, state_shape_size);
+  state_shape[FIRST_INPUT] = dir_multiplier;
+  state_shape[THIRD_INPUT] = hidden_size;
+  SetShapeArray(outputs[SECOND_INPUT], state_shape, state_shape_size);
+  SetShapeArray(outputs[THIRD_INPUT], state_shape, state_shape_size);
+
+  if (outputs_size > DIMENSION_4D) {
+    int intermediate_states_shape[MAX_SHAPE_SIZE];
+    size_t intermediate_states_shape_size = 1;
+    int batch_size = input->shape_[SECOND_INPUT];
+    int seq_len = input->shape_[FIRST_INPUT];
+    intermediate_states_shape[FIRST_INPUT] = no_of_recorde_values * batch_size * hidden_size * seq_len * dir_multiplier;
+    SetDataTypeFormat(outputs[FOURTH_INPUT], inputs[FIRST_INPUT]);
+    SetShapeArray(outputs[FOURTH_INPUT], intermediate_states_shape, intermediate_states_shape_size);
+
+    SetDataTypeFormat(outputs[FIFTH_INPUT], inputs[FIRST_INPUT]);
+    SetShapeArray(outputs[FIFTH_INPUT], state_shape, state_shape_size);
+  }
 
   return NNACL_OK;
 }

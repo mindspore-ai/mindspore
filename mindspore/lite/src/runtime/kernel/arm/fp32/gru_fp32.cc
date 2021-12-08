@@ -113,7 +113,7 @@ int GruCPUKernel::InitInputWeightBias() {
   auto weight_g_data = reinterpret_cast<float *>(weight_g->data());
   CHECK_NULL_RETURN(weight_g_data);
   PackLstmWeight(weight_g_ptr_, weight_g_data, weight_batch_, gru_param_->input_size_, gru_param_->hidden_size_,
-                 gru_param_->input_col_align_);
+                 gru_param_->input_col_align_, nullptr);
 
   // input bias
   input_bias_ = reinterpret_cast<float *>(malloc(weight_batch_ * gru_param_->input_col_align_ * sizeof(float)));
@@ -125,7 +125,7 @@ int GruCPUKernel::InitInputWeightBias() {
   auto bias_g_data = reinterpret_cast<float *>(in_tensors_.at(bias_index)->data());
   CHECK_NULL_RETURN(bias_g_data);
   PackLstmBias(input_bias_, bias_g_data, weight_batch_, gru_param_->hidden_size_, gru_param_->input_col_align_,
-               gru_param_->bidirectional_);
+               gru_param_->bidirectional_, nullptr);
   return RET_OK;
 }
 
@@ -146,7 +146,7 @@ int GruCPUKernel::InitStateWeightBias() {
       return RET_ERROR;
     }
     PackLstmWeight(weight_r_ptr_, weight_r_data, weight_batch_, gru_param_->hidden_size_, gru_param_->hidden_size_,
-                   gru_param_->state_col_align_);
+                   gru_param_->state_col_align_, nullptr);
   } else {
     weight_r_ptr_ = weight_r_data;
   }
@@ -162,7 +162,7 @@ int GruCPUKernel::InitStateWeightBias() {
   CHECK_NULL_RETURN(bias_r_data);
   auto state_bias = bias_r_data + gate_num * gru_param_->hidden_size_;
   PackLstmBias(state_bias_, state_bias, weight_batch_, gru_param_->hidden_size_, gru_param_->state_col_align_,
-               gru_param_->bidirectional_);
+               gru_param_->bidirectional_, nullptr);
   return RET_OK;
 }
 

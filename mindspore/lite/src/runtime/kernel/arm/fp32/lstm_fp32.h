@@ -49,10 +49,12 @@ class LstmCPUKernel : public InnerKernel {
   int LstmUnidirectional(float *output, const float *weight_i, const float *weight_h, const float *input_bias,
                          const float *state_bias, float *hidden_state, float *cell_state, bool is_backward);
   int InnerExecute(float *output, const float *input, float *hidden_state, float *cell_state);
-  void RecordStates(const float *cell_state, int step);
-  const float *weight_loop_ = nullptr;
-  const float *bias_loop_ = nullptr;
-  float *gate_loop_ = nullptr;
+  void RecordStates(float *hidden_state, float *cell_state, float *input_gate, float *output_gate, float *forget_gate,
+                    float *cell_gate, int step);
+  void RecordPreState(float *cell_state_minus1, int step);
+  const float *weight_loop_;
+  const float *bias_loop_;
+  float *gate_loop_;
   int input_thread_count_ = 0;
   int input_thread_stride_ = 0;
 
@@ -60,9 +62,20 @@ class LstmCPUKernel : public InnerKernel {
   float *weight_h_ptr_ = nullptr;
   float *input_bias_ = nullptr;
   float *state_bias_ = nullptr;
-  const int weight_i_index = 1;
-  const int weight_h_index = 2;
-  const int bias_index = 3;
+  // indices of weights when split
+  const size_t mindir_input_tensors = 4;
+  const int onnx_weight_i_index = 1;
+  const int onnx_weight_h_index = 2;
+  const int onnx_bias_index = 3;
+  const int onnx_hidden_state_index = 4;
+  const int onnx_cell_state_index = 5;
+  // index of combined weightes when combined
+  const int combined_weights_index = 3;
+  const int mindir_hidden_state_input_index = 1;
+  const int mindir_cell_state_input_index = 2;
+  const int no_of_recorde_values = 7;
+  int hidden_state_input_index_ = onnx_hidden_state_index;
+  int cell_state_input_index_ = onnx_cell_state_index;
 
   float *buffer_[7] = {nullptr};
   const int gate_num = 4;
@@ -73,6 +86,8 @@ class LstmCPUKernel : public InnerKernel {
   const int cell_state_index = 4;
   const int hidden_state_index = 5;
   const int avx_state_output_index = 6;
+  static const int out_intermediate_states_index = 3;
+  const int weights_order_IFOG[2 * 4] = {0, 2, 3, 1, 4, 6, 7, 4};  // IFGO order to IOFG order
 
   int row_tile_ = 0;
   int col_tile_ = 0;
