@@ -28,11 +28,11 @@ using inner::NodePtrList;
 using BaseInfoList = std::vector<inner::NodeBase>;
 class Validator;
 
-class OpExpander {
+class OpDesc {
  public:
   inner::LiteGraphPtr Run(const BaseInfoList &inputs, const BaseInfoList &outputs, const inner::DAttrs &attrs,
                           const std::string &processor);
-  virtual ~OpExpander() = default;
+  virtual ~OpDesc() = default;
 
  protected:
   virtual bool CheckInputs() { return true; }
@@ -55,12 +55,12 @@ class OpExpander {
 
 class Validator {
  public:
-  virtual bool Check(const OpExpander &e) = 0;
+  virtual bool Check(const OpDesc &e) = 0;
 };
 
 class CheckAllFormatsSame : public Validator {
  public:
-  bool Check(const OpExpander &e) override {
+  bool Check(const OpDesc &e) override {
     if (e.inputs_info_.empty()) return true;
     const auto &fmt_0 = e.inputs_info_[0].format;
     for (size_t i = 1; i < e.inputs_info_.size(); i++) {
@@ -77,7 +77,7 @@ class CheckAttr : public Validator {
  public:
   CheckAttr(std::initializer_list<std::string> l) : attrs_(l) {}
   ~CheckAttr() = default;
-  bool Check(const OpExpander &e) override {
+  bool Check(const OpDesc &e) override {
     for (auto &a : attrs_) {
       if (e.attrs_.count(a) == 0) {
         MS_LOG(INFO) << "attr " << a << " does not exist. op " << e.op_;
@@ -94,7 +94,7 @@ class CheckAttr : public Validator {
 class SupportFormat : public Validator {
  public:
   void AddFormat(std::initializer_list<std::string> l) { formats_.emplace_back(l); }
-  bool Check(const OpExpander &e) override {
+  bool Check(const OpDesc &e) override {
     for (auto &formats : formats_) {
       if (formats.size() != e.inputs_info_.size()) {
         continue;

@@ -77,8 +77,8 @@ AnfNodePtr OpUMonadExpander::Run(const AnfNodePtr &node) {
   // assume the UMonad node is the last input
   if (cnode->size() > 1 && HasAbstractUMonad(cnode->inputs().back())) {
     auto new_node = ProcessNode(node->func_graph(), node, input_idx_);
-    return DefaultExpander::Run(new_node);
+    return PyExpander::Run(new_node);
   }
-  return DefaultExpander::Run(node);
+  return PyExpander::Run(node);
 }
 }  // namespace mindspore::graphkernel

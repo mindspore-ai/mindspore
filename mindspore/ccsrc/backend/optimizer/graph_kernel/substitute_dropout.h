@@ -19,7 +19,7 @@
 #include "backend/optimizer/graph_kernel/graph_kernel_expander.h"
 
 namespace mindspore::graphkernel {
-class DropoutExpander : public DefaultExpander {
+class DropoutExpander : public PyExpander {
  public:
   AnfNodePtr Run(const AnfNodePtr &node) override;
 

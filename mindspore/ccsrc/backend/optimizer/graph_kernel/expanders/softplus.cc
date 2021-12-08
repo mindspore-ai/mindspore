@@ -21,7 +21,7 @@
 #include "ir/dtype.h"
 
 namespace mindspore::graphkernel::expanders {
-class Softplus : public OpExpander {
+class Softplus : public OpDesc {
  public:
   Softplus() {}
   ~Softplus() = default;

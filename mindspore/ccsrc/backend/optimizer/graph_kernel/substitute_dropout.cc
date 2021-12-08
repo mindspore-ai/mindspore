@@ -84,7 +84,7 @@ AnfNodePtr DropoutExpander::PreProcess(const FuncGraphPtr &func_graph, const Anf
 
 AnfNodePtr DropoutExpander::Run(const AnfNodePtr &node) {
   auto gkdropout_node = PreProcess(node->func_graph(), node);
-  return DefaultExpander::Run(gkdropout_node);
+  return PyExpander::Run(gkdropout_node);
 }
 }  // namespace graphkernel
 }  // namespace mindspore

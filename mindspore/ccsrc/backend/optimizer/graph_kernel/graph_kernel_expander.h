@@ -29,25 +29,26 @@ class Expander {
 };
 using ExpanderPtr = std::shared_ptr<Expander>;
 
-class PyExpander : public Expander {
+class DefaultExpander : public Expander {
  public:
   AnfNodePtr Run(const AnfNodePtr &node) override;
 
  protected:
-  virtual bool ExpandJsonInfo(const AnfNodePtr &node, nlohmann::json *kernel_json);
   virtual AnfNodePtr CreateExpandGraphKernel(const FuncGraphPtr &new_func_graph, const CNodePtr &old_node);
   virtual FuncGraphPtr CreateExpandFuncGraph(const CNodePtr &node);
 };
 
-class DefaultExpander : public PyExpander {
+class PyExpander : public DefaultExpander {
  protected:
+  virtual bool ExpandJsonInfo(const AnfNodePtr &node, nlohmann::json *kernel_json);
   FuncGraphPtr CreateExpandFuncGraph(const CNodePtr &node) override;
 };
 
-class ComplexOpExpander : public DefaultExpander {
+class ComplexOpExpander : public PyExpander {
  protected:
   bool ExpandJsonInfo(const AnfNodePtr &node, nlohmann::json *kernel_json);
 };
+
 class GraphKernelExpander : public opt::Pass {
  public:
   GraphKernelExpander() : Pass("graph_kernel_expander") {}
@@ -66,9 +67,20 @@ class GraphKernelExpander : public opt::Pass {
  private:
   std::vector<PrimitivePtr> expand_ops_;
 };
-class GraphKernelComplexExpander : public GraphKernelExpander {
+
+class GraphKernelExpanderWithPy : public GraphKernelExpander {
  public:
-  GraphKernelComplexExpander() : GraphKernelExpander("graph_kernel_complex_expander") {}
+  GraphKernelExpanderWithPy() : GraphKernelExpander() {}
+  explicit GraphKernelExpanderWithPy(const std::string &name) : GraphKernelExpander(name) {}
+  ~GraphKernelExpanderWithPy() override = default;
+
+ protected:
+  ExpanderPtr GetExpander(const AnfNodePtr &node) override;
+};
+
+class GraphKernelComplexExpander : public GraphKernelExpanderWithPy {
+ public:
+  GraphKernelComplexExpander() : GraphKernelExpanderWithPy("graph_kernel_complex_expander") {}
   ~GraphKernelComplexExpander() override = default;
   bool Run(const FuncGraphPtr &func_graph) override;
 
