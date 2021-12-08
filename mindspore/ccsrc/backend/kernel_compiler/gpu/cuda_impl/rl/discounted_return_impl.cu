@@ -42,11 +42,11 @@ template <typename T>
 void DiscountedReturn(const int &timestep, const int &num_env, const int &num_element, const float &gamma,
                       const T *reward, const bool *done, const T *last_value, T *discouted_return,
                       cudaStream_t stream) {
+  // Every block process M element, 256 is a common tile size.
   const int element_per_step = num_env * num_element;
   const int element_per_block = std::min(256, element_per_step);
-  const int grid_dim = (num_element + element_per_block - 1) / element_per_block;
+  const int grid_dim = (element_per_step + element_per_block - 1) / element_per_block;
 
-  // Every block process M element, 256 is a common shared memory tile size.
   DiscountedReturnKernel<<<grid_dim, element_per_block, 0, stream>>>(timestep, num_env, num_element, gamma, reward,
                                                                      done, last_value, discouted_return);
 }
