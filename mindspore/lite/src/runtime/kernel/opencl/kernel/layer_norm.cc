@@ -165,7 +165,7 @@ int LayerNormOpenCLKernel::Initweight() {
       auto origin_gamma_fp16 = reinterpret_cast<float16_t *>(in_tensors_.at(1)->data());
       auto origin_beta_fp16 = reinterpret_cast<float16_t *>(in_tensors_.at(2)->data());
 
-      for (int i = 0; i < img_info.ElementsNum; ++i) {
+      for (size_t i = 0; i < img_info.ElementsNum; ++i) {
         gamma_fp32[i] = static_cast<float>(origin_gamma_fp16[i]);
         beta_fp32[i] = static_cast<float>(origin_beta_fp16[i]);
       }
@@ -177,7 +177,7 @@ int LayerNormOpenCLKernel::Initweight() {
       auto origin_gamma_fp32 = reinterpret_cast<float *>(in_tensors_.at(1)->data());
       auto origin_beta_fp32 = reinterpret_cast<float *>(in_tensors_.at(2)->data());
 
-      for (int i = 0; i < img_info.ElementsNum; ++i) {
+      for (size_t i = 0; i < img_info.ElementsNum; ++i) {
         gamma_fp16[i] = static_cast<float16_t>(origin_gamma_fp32[i]);
         beta_fp16[i] = static_cast<float16_t>(origin_beta_fp32[i]);
       }

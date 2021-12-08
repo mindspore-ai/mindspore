@@ -89,7 +89,7 @@ Write:
   blt WriteMod8
   st1 {v0.8h}, [x2], #16
   sub w6, w6, #8
-  mov v0.8h, v1.8h
+  mov v0.16b, v1.16b
   cmp w6, #8
   blt WriteMod8
   st1 {v1.8h}, [x2], #16

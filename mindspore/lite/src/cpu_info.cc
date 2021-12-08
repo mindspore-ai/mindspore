@@ -19,7 +19,7 @@
 #include <fstream>
 #include "src/common/log_adapter.h"
 #include "nnacl/nnacl_utils.h"
-#ifdef __ANDROID__
+#if (defined ENABLE_ARM64) && (!defined SUPPORT_NNIE)
 #include <sys/auxv.h>
 #include <asm/hwcap.h>
 #endif
@@ -177,6 +177,14 @@ bool CpuInfo::ArmIsSupportFp16() {
     MS_LOG(DEBUG) << "Hw cap NOT support FP16, hwcap: 0x" << hwcap;
   }
 #endif
+#elif defined(ENABLE_ARM64) && defined(MACHINE_LINUX_ARM64)
+  const uint32_t hwcap = getauxval(AT_HWCAP);
+  if (hwcap & HWCAP_FPHP) {
+    MS_LOG(ERROR) << "Hw cap support FP16, hwcap: 0x" << hwcap;
+    fp16_flag_ = true;
+  } else {
+    MS_LOG(ERROR) << "Hw cap NOT support FP16, hwcap: 0x" << hwcap;
+  }
 #endif
   return fp16_flag_;
 #endif

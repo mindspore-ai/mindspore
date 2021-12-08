@@ -15,7 +15,7 @@
  */
 
 #include "wrapper/base/common_wrapper.h"
-#ifdef __ANDROID__
+#if (defined ENABLE_ARM64) && (!defined SUPPORT_NNIE)
 #include <sys/auxv.h>
 #include <asm/hwcap.h>
 #endif
