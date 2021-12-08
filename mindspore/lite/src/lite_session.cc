@@ -1508,7 +1508,7 @@ const char *lite::LiteSession::LoadModelByPath(const std::string &file, mindspor
     return nullptr;
   }
   if (buf_model_type == mindspore::ModelType::kMindIR) {
-    free(model_buf);
+    delete[] model_buf;
     model_buf = nullptr;
   }
   return lite_buf;
@@ -1532,7 +1532,7 @@ int lite::LiteSession::CreateSessionByBuf(const char *model_buf, mindspore::Mode
   auto ret = session->CompileGraph(model);
   model->buf = nullptr;
   if (buf_model_type == mindspore::ModelType::kMindIR) {
-    free(lite_buf);
+    delete[] lite_buf;
     lite_buf = nullptr;
   }
   if (ret != lite::RET_OK) {
