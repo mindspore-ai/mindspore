@@ -31,6 +31,7 @@ set(DATASET_ENGINE_IR_DATASETOPS_SOURCE_SRC_FILES
         kmnist_node.cc
         libri_tts_node.cc
         lj_speech_node.cc
+        lsun_node.cc
         manifest_node.cc
         minddata_node.cc
         mnist_node.cc

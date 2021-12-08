@@ -69,6 +69,7 @@
 // IR leaf nodes disabled for android
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/engine/ir/datasetops/source/lj_speech_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/lsun_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/manifest_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/minddata_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/multi30k_node.h"
@@ -436,6 +437,18 @@ PYBIND_REGISTER(LJSpeechNode, 2, ([](const py::module *m) {
                       auto lj_speech = std::make_shared<LJSpeechNode>(dataset_dir, toSamplerObj(sampler), nullptr);
                       THROW_IF_ERROR(lj_speech->ValidateParams());
                       return lj_speech;
+                    }));
+                }));
+
+PYBIND_REGISTER(LSUNNode, 2, ([](const py::module *m) {
+                  (void)py::class_<LSUNNode, DatasetNode, std::shared_ptr<LSUNNode>>(*m, "LSUNNode",
+                                                                                     "to create a LSUNNode")
+                    .def(py::init([](const std::string &dataset_dir, const std::string &usage,
+                                     const std::vector<std::string> &classes, bool decode, const py::handle &sampler) {
+                      auto lsun =
+                        std::make_shared<LSUNNode>(dataset_dir, usage, classes, decode, toSamplerObj(sampler), nullptr);
+                      THROW_IF_ERROR(lsun->ValidateParams());
+                      return lsun;
                     }));
                 }));
 

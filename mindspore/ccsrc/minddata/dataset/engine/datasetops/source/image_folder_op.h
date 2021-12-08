@@ -108,7 +108,7 @@ class ImageFolderOp : public MappableLeafOp {
   //// \return Status of the function
   Status GetNumClasses(int64_t *num_classes) override;
 
- private:
+ protected:
   // Load a tensor row according to a pair
   // @param row_id_type row_id - id for this tensor row
   // @param ImageLabelPair pair - <imagefile,label>
@@ -119,7 +119,7 @@ class ImageFolderOp : public MappableLeafOp {
   /// @param std::string & dir - dir to walk all images
   /// @param int64_t * cnt - number of non folder files under the current dir
   /// @return
-  Status RecursiveWalkFolder(Path *dir);
+  virtual Status RecursiveWalkFolder(Path *dir);
 
   /// start walking of all dirs
   /// @return

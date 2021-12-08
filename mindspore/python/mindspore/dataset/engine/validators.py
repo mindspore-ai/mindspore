@@ -258,6 +258,47 @@ def check_iwslt2017_dataset(method):
     return new_method
 
 
+def check_lsun_dataset(method):
+    """A wrapper that wraps a parameter checker around the original Dataset(LSUNDataset)."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        _, param_dict = parse_user_args(method, *args, **kwargs)
+
+        nreq_param_int = ['num_samples', 'num_parallel_workers', 'num_shards', 'shard_id']
+        nreq_param_bool = ['shuffle', 'decode']
+        nreq_param_list = ['classes']
+
+        dataset_dir = param_dict.get('dataset_dir')
+        check_dir(dataset_dir)
+
+        usage = param_dict.get('usage')
+        if usage is not None:
+            check_valid_str(usage, ["train", "test", "valid", "all"], "usage")
+
+        validate_dataset_param_value(nreq_param_int, param_dict, int)
+        validate_dataset_param_value(nreq_param_bool, param_dict, bool)
+        validate_dataset_param_value(nreq_param_list, param_dict, list)
+
+        categories = [
+            'bedroom', 'bridge', 'church_outdoor', 'classroom', 'conference_room', 'dining_room', 'kitchen',
+            'living_room', 'restaurant', 'tower'
+        ]
+        classes = param_dict.get('classes')
+        if classes is not None:
+            for class_name in classes:
+                check_valid_str(class_name, categories, "classes")
+
+        check_sampler_shuffle_shard_options(param_dict)
+
+        cache = param_dict.get('cache')
+        check_cache_option(cache)
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
 def check_mnist_cifar_dataset(method):
     """A wrapper that wraps a parameter checker around the original Dataset(ManifestDataset, Cifar10/100Dataset)."""
 

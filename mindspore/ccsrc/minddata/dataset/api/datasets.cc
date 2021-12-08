@@ -101,6 +101,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/kmnist_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/libri_tts_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/lj_speech_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/lsun_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/manifest_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/minddata_node.h"
 #endif
@@ -1435,6 +1436,36 @@ LJSpeechDataset::LJSpeechDataset(const std::vector<char> &dataset_dir, const std
                                  const std::shared_ptr<DatasetCache> &cache) {
   auto sampler_obj = sampler.get().Parse();
   auto ds = std::make_shared<LJSpeechNode>(CharToString(dataset_dir), sampler_obj, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+
+LSUNDataset::LSUNDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                         const std::vector<std::vector<char>> &classes, bool decode,
+                         const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache) {
+  // Create logical representation of LSUNDataset.
+  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
+  auto ds = std::make_shared<LSUNNode>(CharToString(dataset_dir), CharToString(usage), VectorCharToString(classes),
+                                       decode, sampler_obj, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+
+LSUNDataset::LSUNDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                         const std::vector<std::vector<char>> &classes, bool decode, const Sampler *sampler,
+                         const std::shared_ptr<DatasetCache> &cache) {
+  // Create logical representation of LSUNDataset.
+  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
+  auto ds = std::make_shared<LSUNNode>(CharToString(dataset_dir), CharToString(usage), VectorCharToString(classes),
+                                       decode, sampler_obj, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+
+LSUNDataset::LSUNDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                         const std::vector<std::vector<char>> &classes, bool decode,
+                         const std::reference_wrapper<Sampler> sampler, const std::shared_ptr<DatasetCache> &cache) {
+  // Create logical representation of LSUNDataset.
+  auto sampler_obj = sampler.get().Parse();
+  auto ds = std::make_shared<LSUNNode>(CharToString(dataset_dir), CharToString(usage), VectorCharToString(classes),
+                                       decode, sampler_obj, cache);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
 
