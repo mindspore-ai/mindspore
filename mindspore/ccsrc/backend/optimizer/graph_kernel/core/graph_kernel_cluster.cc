@@ -143,10 +143,9 @@ class Graph {
     size_t cluster_size_{1};   // size of cluster, composite node is considered as one node.
     std::set<size_t> inputs_;  // inputs' cluster_id.
     size_t seed_{0};           // visited flag of dfs.
-    size_t max_node_id_;       // largest node id of a cluster
 
     Cluster(size_t node_id, const AnfNodePtr &node, const mindspore::HashMap<AnfNodePtr, size_t> &node_idx_map)
-        : cluster_id_(node_id), max_node_id_(node_id) {
+        : cluster_id_(node_id) {
       auto cnode = node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
       for (const auto &inp : cnode->inputs()) {
@@ -161,7 +160,6 @@ class Graph {
 
     void Merge(Cluster *other_cluster) {
       other_cluster->cluster_id_ = cluster_id_;
-      max_node_id_ = std::max(other_cluster->max_node_id_, max_node_id_);
       cluster_size_ += other_cluster->cluster_size_;
       (void)std::for_each(other_cluster->inputs_.begin(), other_cluster->inputs_.end(),
                           [this](size_t inp) { (void)this->inputs_.insert(inp); });
@@ -172,7 +170,6 @@ class Graph {
     void Clean() {
       inputs_.clear();
       cluster_size_ = 0;
-      max_node_id_ = 0;
     }
   };  // struct Cluster
 
@@ -209,9 +206,6 @@ class Graph {
     }
     return cluster_map;
   }
-
-  // Get cluster's max node id
-  size_t GetClusterMaxNodeId(size_t cluster_id) { return clusters_[Find(cluster_id)].max_node_id_; }
 
   using VisitFunc = std::function<IncludeType(size_t)>;
   void Dfs(size_t node_id, const VisitFunc &visitor) {
@@ -313,12 +307,6 @@ class CircleChecker {
         if (candidates_.count(node_id)) {
           has_circle = true;
           circle_nodes_.push_back(node_id);
-          return EXCLUDE;
-        }
-        // all nodes are indexed by topo order,
-        // so if the current node's cluster's max node id is less than the minimal candidate, a circle cannot be formed
-        // from this node.
-        if (candidates_.empty() || graph_->GetClusterMaxNodeId(node_id) < *candidates_.begin()) {
           return EXCLUDE;
         }
         return FOLLOW;
