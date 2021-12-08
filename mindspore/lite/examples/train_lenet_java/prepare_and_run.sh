@@ -58,6 +58,10 @@ if [ "$MNIST_DATA_PATH" == "" ] || [ ! -d "$MNIST_DATA_PATH" ]; then
 fi
 
 ./build.sh $TARBALL
+if [ "$?" != "0" ]; then
+  echo "build failed on $TARBALL"
+  exit 1
+fi
 
 BASEPATH=$(cd "$(dirname $0)" || exit; pwd)
 

@@ -16,3 +16,7 @@
 
 # an simple tutorial as follows, more parameters can be setting
 LD_LIBRARY_PATH=./lib/ bin/infer -f model/lenet_tod_infer.ms
+if [ "$?" != "0" ]; then
+    echo "Infer failed"
+    exit 1
+fi

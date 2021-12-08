@@ -140,12 +140,24 @@ else
   cd ${PACKAGE} || exit 1
   echo "==Evaluating Untrained Model==="
   ./eval_untrained.sh
+  if [ "$?" != "0" ]; then
+    echo "Evaluating Untrained Model failed"
+    exit 1
+  fi
 
   echo "======Training Locally========="
   ./train.sh
+  if [ "$?" != "0" ]; then
+    echo "Training Model failed"
+    exit 1
+  fi
 
   echo "===Evaluating trained Model====="
   ./eval.sh
+  if [ "$?" != "0" ]; then
+    echo "Eval Model failed"
+    exit 1
+  fi
   cd ..
 fi
 

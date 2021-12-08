@@ -1,6 +1,6 @@
 #!/bin/bash
 source ./scripts/base_functions.sh
-version=1.3.0
+version=1.5.0
 
 # Run Export on x86 platform and create output test files:
 docker_image=mindspore_build:210301
@@ -412,6 +412,10 @@ function Run_CodeExamples() {
       cd ${basepath}/../../examples/train_lenet_java || exit 1
       chmod 777 ./prepare_and_run.sh
       ./prepare_and_run.sh -D ${datasets_path}/mnist -r ${tarball_path} -m ${models_path}/code_example.mindir >> ${run_code_examples_log_file}
+      if [ "$?" != "0" ]; then
+          echo "train_lenet_java prepare_and_run.sh failed"
+          exit 1
+      fi
       accurate=$(tail -10 ${run_code_examples_log_file} | awk -F= 'NF==2 && /accuracy/ { sum += $2} END { print (sum > 0.80) }')
       if [ $accurate -eq 1 ]; then
         echo "Lenet Java Trained  and reached accuracy" >> ${run_code_examples_log_file}
@@ -431,6 +435,10 @@ function Run_CodeExamples() {
         chmod 777 ./prepare_and_run.sh
         chmod 777 ./*/*.sh
         ./prepare_and_run.sh -D ${datasets_path}/mnist -r ${tarball_path} -t ${target} -m ${models_path}/code_example.mindir -e 1 >> ${run_code_examples_log_file}
+        if [ "$?" != "0" ]; then
+          echo "Unified API prepare_and_run.sh failed"
+          exit 1
+        fi
         accurate=$(tail -20 ${run_code_examples_log_file} | awk 'NF==3 && /Accuracy is/ { sum += $3} END { print (sum > 1.6) }')
         if [ $accurate -eq 1 ]; then
           echo "Unified API Trained and reached accuracy" >> ${run_code_examples_log_file}
@@ -451,6 +459,10 @@ function Run_CodeExamples() {
         chmod 777 ./prepare_and_run.sh
         chmod 777 ./*/*.sh
         ./prepare_and_run.sh -D ${datasets_path}/mnist -r ${tarball_path} -t ${target} -m ${models_path}/code_example.mindir -e 1 >> ${run_code_examples_log_file}
+        if [ "$?" != "0" ]; then
+          echo "train_lenet prepare_and_run.sh failed"
+          exit 1
+        fi
         accurate=$(tail -10 ${run_code_examples_log_file} | awk 'NF==3 && /Accuracy is/ { sum += $3} END { print (sum > 1.6) }')
         if [ $accurate -eq 1 ]; then
           echo "Lenet Trained and reached accuracy" >> ${run_code_examples_log_file}
