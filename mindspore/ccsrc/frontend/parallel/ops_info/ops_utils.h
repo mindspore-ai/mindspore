@@ -53,6 +53,7 @@ constexpr size_t SOFTMAX_ATTR_SIZE = 1;
 constexpr size_t ACTIVATION_INPUTS_SIZE = 1;
 constexpr size_t ACTIVATION_OUTPUTS_SIZE = 1;
 constexpr size_t EXPANDDIMS_INPUT_SIZE = 2;
+constexpr size_t CUMSUM_INPUT_SIZE = 2;
 constexpr size_t DROPOUT_DO_MASK_CNODE_INPUT_SIZE = 4;
 constexpr size_t DROPOUT_GEN_MASK_CNODE_INPUT_SIZE = 3;
 constexpr size_t DROPOUT_GEN_MASK_INDEX = 2;
@@ -414,6 +415,7 @@ constexpr char GATHERD[] = "GatherD";
 constexpr char DSD_MATMUL[] = "DSDMatmul";
 constexpr char RESIZE_BILINEAR[] = "ResizeBilinear";
 constexpr char RESIZE_NEAREST_NEIGHBOR[] = "ResizeNearestNeighbor";
+constexpr char CUMSUM[] = "CumSum";
 
 // pipeline
 constexpr size_t PIPELINE_FUSTION_OFFSET = 100;
