@@ -39,7 +39,7 @@ std::vector<int64_t> GetListInt(const ValuePtr &attr_value) {
     return static_cast<int64_t>(GetValue<int>(value));
   };
   std::vector<int64_t> list_int;
-  const auto &vals = attr_value->cast<ValueSequeuePtr>()->value();
+  const auto &vals = attr_value->cast<ValueSequencePtr>()->value();
   (void)std::transform(vals.begin(), vals.end(), std::back_inserter(list_int), get_int_value);
   if (!is_int64) {
     MS_LOG(WARNING) << "Vector type should be 'int64_t' but got 'int'";

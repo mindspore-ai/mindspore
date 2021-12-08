@@ -686,17 +686,17 @@ class MS_CORE_API AbstractTensor : public AbstractUndetermined {
 using AbstractTensorPtr = std::shared_ptr<AbstractTensor>;
 using AbstractTensorPtrList = std::vector<AbstractTensorPtr>;
 
-/// \brief Class AbstractSequeue describes the abstract value of a tuple or list.
-class MS_CORE_API AbstractSequeue : public AbstractBase {
+/// \brief Class AbstractSequence describes the abstract value of a tuple or list.
+class MS_CORE_API AbstractSequence : public AbstractBase {
  public:
-  /// \brief Constructor of AbstractSequeue.
+  /// \brief Constructor of AbstractSequence.
   ///
   /// \param[in] elements A list of abstracts.
-  explicit AbstractSequeue(const AbstractBasePtrList &elements) : elements_(elements) {}
+  explicit AbstractSequence(const AbstractBasePtrList &elements) : elements_(elements) {}
 
-  /// \brief Destructor of AbstractSequeue.
-  ~AbstractSequeue() override = default;
-  MS_DECLARE_PARENT(AbstractSequeue, AbstractBase)
+  /// \brief Destructor of AbstractSequence.
+  ~AbstractSequence() override = default;
+  MS_DECLARE_PARENT(AbstractSequence, AbstractBase)
 
   /// \brief Get the all of types.
   ///
@@ -760,27 +760,27 @@ class MS_CORE_API AbstractSequeue : public AbstractBase {
 
   /// \brief Overwrite the operator '==' to compare other abstract sequence.
   ///
-  /// \param[in] other The other instance of AbstractSequeue.
+  /// \param[in] other The other instance of AbstractSequence.
   ///
   /// \return A boolean, which indicates whether the other abstract is same.
-  virtual bool operator==(const AbstractSequeue &other) const;
+  virtual bool operator==(const AbstractSequence &other) const;
 
  protected:
   AbstractBasePtrList elements_;
 };
-using AbstractSequeuePtr = std::shared_ptr<AbstractSequeue>;
+using AbstractSequencePtr = std::shared_ptr<AbstractSequence>;
 
 /// \brief Class AbstractTuple describes a tuple.
-class MS_CORE_API AbstractTuple final : public AbstractSequeue {
+class MS_CORE_API AbstractTuple final : public AbstractSequence {
  public:
   /// \brief Constructor of AbstractTuple.
   ///
   /// \param[in] elements A list of abstracts.
-  explicit AbstractTuple(const AbstractBasePtrList &elements) : AbstractSequeue(elements) {}
+  explicit AbstractTuple(const AbstractBasePtrList &elements) : AbstractSequence(elements) {}
 
   /// \brief Destructor of AbstractTuple.
   ~AbstractTuple() override = default;
-  MS_DECLARE_PARENT(AbstractTuple, AbstractSequeue)
+  MS_DECLARE_PARENT(AbstractTuple, AbstractSequence)
 
   TypePtr BuildType() const override { return std::make_shared<Tuple>(ElementsType()); }
 
@@ -794,7 +794,7 @@ class MS_CORE_API AbstractTuple final : public AbstractSequeue {
 
   AbstractBasePtr Join(const AbstractBasePtr &other) override { return ElementsJoin<AbstractTuple>(other); }
 
-  std::string ToString() const override { return type_name() + "(" + AbstractSequeue::ToString() + ")"; }
+  std::string ToString() const override { return type_name() + "(" + AbstractSequence::ToString() + ")"; }
 
   /// \brief Check whether all elements of the tuple are tensors.
   ///
@@ -816,16 +816,16 @@ class MS_CORE_API AbstractTuple final : public AbstractSequeue {
 using AbstractTuplePtr = std::shared_ptr<AbstractTuple>;
 
 /// \brief Class AbstractList describes a list.
-class MS_CORE_API AbstractList final : public AbstractSequeue {
+class MS_CORE_API AbstractList final : public AbstractSequence {
  public:
   /// \brief Constructor of AbstractList.
   ///
   /// \param[in] elements A list of abstracts.
-  explicit AbstractList(const AbstractBasePtrList &elements) : AbstractSequeue(elements) {}
+  explicit AbstractList(const AbstractBasePtrList &elements) : AbstractSequence(elements) {}
 
   /// \brief Destructor of AbstractList.
   ~AbstractList() override = default;
-  MS_DECLARE_PARENT(AbstractList, AbstractSequeue)
+  MS_DECLARE_PARENT(AbstractList, AbstractSequence)
 
   TypePtr BuildType() const override { return std::make_shared<List>(ElementsType()); }
 
@@ -839,7 +839,7 @@ class MS_CORE_API AbstractList final : public AbstractSequeue {
 
   AbstractBasePtr Join(const AbstractBasePtr &other) override { return ElementsJoin<AbstractList>(other); }
 
-  std::string ToString() const override { return type_name() + "[" + AbstractSequeue::ToString() + "]"; }
+  std::string ToString() const override { return type_name() + "[" + AbstractSequence::ToString() + "]"; }
 
   /// \brief Overwrite the operator '==' to compare other abstract list.
   ///

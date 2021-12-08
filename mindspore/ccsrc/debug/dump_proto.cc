@@ -48,7 +48,7 @@ class ProtoExporter {
   void SetValueToProtoBasicTypes(const ValuePtr &attr_value, irpb::ValueProto *value_proto);
   void SetValueToProto(const ValuePtr &attr_value, irpb::ValueProto *value_proto);
   void SetScalarToProto(const ScalarPtr &val, irpb::ValueProto *value_proto);
-  void SetSequenceToProto(const ValueSequeuePtr &val, irpb::ValueProto *value_proto);
+  void SetSequenceToProto(const ValueSequencePtr &val, irpb::ValueProto *value_proto);
   void SetDictionaryToProto(const ValueDictionaryPtr &val, irpb::ValueProto *value_proto);
   void SetNodeOutputType(const AnfNodePtr &node, irpb::TypeProto *type_proto);
   void SetNodeOutputType(const TypePtr &node, const BaseShapePtr &shape, irpb::TypeProto *type_proto);
@@ -217,8 +217,8 @@ void ProtoExporter::SetValueToProto(const ValuePtr &val, irpb::ValueProto *value
 
   SetValueToProtoBasicTypes(val, value_proto);
 
-  if (val->isa<ValueSequeue>()) {
-    SetSequenceToProto(dyn_cast<ValueSequeue>(val), value_proto);
+  if (val->isa<ValueSequence>()) {
+    SetSequenceToProto(dyn_cast<ValueSequence>(val), value_proto);
   } else if (val->isa<None>()) {
     value_proto->set_dtype(irpb::DT_NONE);
     value_proto->set_str_val("None");
@@ -308,7 +308,7 @@ void ProtoExporter::SetScalarToProto(const ScalarPtr &val, irpb::ValueProto *val
   }
 }
 
-void ProtoExporter::SetSequenceToProto(const ValueSequeuePtr &val, irpb::ValueProto *value_proto) {
+void ProtoExporter::SetSequenceToProto(const ValueSequencePtr &val, irpb::ValueProto *value_proto) {
   if (val == nullptr || value_proto == nullptr) {
     return;
   }

@@ -409,7 +409,7 @@ bool CheckSequenceAllTensor(const abstract::AbstractTuplePtr &tuple) {
   return true;
 }
 
-bool CheckTailGradFristSequence(const abstract::AbstractSequeuePtr &sequeue, bool enable_tuple_grad) {
+bool CheckTailGradFristSequence(const abstract::AbstractSequencePtr &sequeue, bool enable_tuple_grad) {
   return sequeue->size() > 1 && (*sequeue)[1] != nullptr &&
          ((*sequeue)[1]->isa<abstract::AbstractUndetermined>() ||
           (MsContext::GetInstance()->get_param<bool>(MS_CTX_GRAD_FOR_SCALAR) && (*sequeue)[1]->BuildType() != nullptr &&
@@ -418,8 +418,8 @@ bool CheckTailGradFristSequence(const abstract::AbstractSequeuePtr &sequeue, boo
            CheckSequenceAllTensor((*sequeue)[1]->cast<abstract::AbstractTuplePtr>())));
 }
 
-FuncGraphPtr Tail::GenerateSequeueFuncGraph(const abstract::AbstractSequeuePtr &sequeue,
-                                            const abstract::AbstractSequeuePtr &pos) const {
+FuncGraphPtr Tail::GenerateSequenceFuncGraph(const abstract::AbstractSequencePtr &sequeue,
+                                             const abstract::AbstractSequencePtr &pos) const {
   MS_EXCEPTION_IF_NULL(sequeue);
 
   FuncGraphPtr ret = std::make_shared<FuncGraph>();
@@ -510,12 +510,12 @@ FuncGraphPtr Tail::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) 
     if (args_spec_list.size() > 1) {
       AbstractBasePtr pos = args_spec_list[1];
       if (pos->isa<AbstractTuple>() || pos->isa<AbstractList>()) {
-        return GenerateSequeueFuncGraph(a->cast<abstract::AbstractSequeuePtr>(),
-                                        pos->cast<abstract::AbstractSequeuePtr>());
+        return GenerateSequenceFuncGraph(a->cast<abstract::AbstractSequencePtr>(),
+                                         pos->cast<abstract::AbstractSequencePtr>());
       }
       MS_LOG(EXCEPTION) << "'Tail' arg1 must be AbstractTuple or AbstractList, but got " << pos->ToString();
     }
-    return GenerateSequeueFuncGraph(a->cast<abstract::AbstractSequeuePtr>());
+    return GenerateSequenceFuncGraph(a->cast<abstract::AbstractSequencePtr>());
   }
 
   MS_LOG(EXCEPTION) << "'Tail' arg0 must be AbstractTuple or AbstractList, but got " << a->ToString();

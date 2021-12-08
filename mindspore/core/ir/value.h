@@ -34,13 +34,13 @@
 #include "utils/ms_utils.h"
 
 namespace mindspore {
-/// \brief ValueSequeue defines a Value class whose type is Sequeue.
-class MS_CORE_API ValueSequeue : public Value {
+/// \brief ValueSequence defines a Value class whose type is Sequence.
+class MS_CORE_API ValueSequence : public Value {
  public:
-  /// \brief ValueSequeue display defines a Value class whose type is Sequeue, such as Tuple.
+  /// \brief ValueSequence display defines a Value class whose type is Sequence, such as Tuple.
   ///
   /// \param[in] elements Define the vector of elements of value.
-  explicit ValueSequeue(const ValuePtrList &elements) : elements_(elements) {
+  explicit ValueSequence(const ValuePtrList &elements) : elements_(elements) {
     TypePtrList t_list;
     (void)std::transform(elements.begin(), elements.end(), std::back_inserter(t_list), [](const ValuePtr &ele) {
       MS_EXCEPTION_IF_NULL(ele);
@@ -50,10 +50,10 @@ class MS_CORE_API ValueSequeue : public Value {
     type_ = t;
   }
 
-  /// \brief ValueSequeue defines a ValueNode whose type is Sequeue.
+  /// \brief ValueSequence defines a ValueNode whose type is Sequence.
   ///
   /// \param[in] elements Define the elements of value.
-  ValueSequeue(const std::initializer_list<ValuePtr> &elements) : elements_(elements.begin(), elements.end()) {
+  ValueSequence(const std::initializer_list<ValuePtr> &elements) : elements_(elements.begin(), elements.end()) {
     TypePtrList t_list;
     (void)std::transform(elements_.begin(), elements_.end(), std::back_inserter(t_list), [](const ValuePtr &ele) {
       MS_EXCEPTION_IF_NULL(ele);
@@ -62,14 +62,14 @@ class MS_CORE_API ValueSequeue : public Value {
     TypePtr t = std::make_shared<Tuple>(t_list);
     type_ = t;
   }
-  /// \brief Destructor of ValueSequeue.
-  ~ValueSequeue() override = default;
-  MS_DECLARE_PARENT(ValueSequeue, Value)
-  /// \brief Get the Hash value of ValueSequeue object.
+  /// \brief Destructor of ValueSequence.
+  ~ValueSequence() override = default;
+  MS_DECLARE_PARENT(ValueSequence, Value)
+  /// \brief Get the Hash value of ValueSequence object.
   ///
   /// \return The hash value.
   std::size_t hash() const override { return hash_combine(tid(), std::hash<std::size_t>{}(elements_.size())); }
-  /// \brief Get the element size of ValueSequeue.
+  /// \brief Get the element size of ValueSequence.
   ///
   /// \return The size of elements_.
   std::size_t size() const { return elements_.size(); }
@@ -83,48 +83,52 @@ class MS_CORE_API ValueSequeue : public Value {
   /// \param[in] dim Define the subscript of vector.
   /// \return The element whose subscript is dim.
   const ValuePtr operator[](const std::size_t &dim) const;
-  /// \brief The value of ValueSequeue object.
+  /// \brief The value of ValueSequence object.
   ///
   /// \return The set of ValuePtr objects.
   const ValuePtrList &value() const { return elements_; }
-  /// \brief Check whether the input is the current ValueSequeue object.
+  /// \brief Check whether the input is the current ValueSequence object.
   ///
   /// \param[in] other Define a Value object.
-  /// \return Whether the input is the current ValueSequeue object.
+  /// \return Whether the input is the current ValueSequence object.
   bool operator==(const Value &other) const override;
-  /// \brief Compares two ValueSequeue objects.
+  /// \brief Compares two ValueSequence objects.
   ///
-  /// \param[in] other Define a ValueSequeue object.
+  /// \param[in] other Define a ValueSequence object.
   /// \return Check whether the elements of the current object and the other object are the same.
-  bool operator==(const ValueSequeue &other) const;
+  bool operator==(const ValueSequence &other) const;
   /// \brief Show each element ToString.
   ///
-  /// \return The description of the ValueSequeue object.
+  /// \return The description of the ValueSequence object.
   std::string ToString() const override;
   /// \brief Show each element DumpText.
   ///
-  /// \return The description of the ValueSequeue object.
+  /// \return The description of the ValueSequence object.
   std::string DumpText() const override;
 
  protected:
   ValuePtrList elements_;
 };
-using ValueSequeuePtr = std::shared_ptr<ValueSequeue>;
+using ValueSequencePtr = std::shared_ptr<ValueSequence>;
+
+// For some old code in lite, still using typo names.
+using ValueSequeue = ValueSequence;
+using ValueSequeuePtr = ValueSequencePtr;
 
 /// \brief ValueTuple defines a Value class whose type is Tuple.
-class MS_CORE_API ValueTuple : public ValueSequeue {
+class MS_CORE_API ValueTuple : public ValueSequence {
  public:
   /// \brief Constructor of ValueTuple.
   ///
   /// \param[in] elements Define the elements of the object.
-  explicit ValueTuple(const std::vector<ValuePtr> &elements) : ValueSequeue(elements) {}
+  explicit ValueTuple(const std::vector<ValuePtr> &elements) : ValueSequence(elements) {}
   /// \brief Constructor of ValueTuple.
   ///
   /// \param[in] elements Define the elements of the object.
-  ValueTuple(const std::initializer_list<ValuePtr> &elements) : ValueSequeue(elements) {}
+  ValueTuple(const std::initializer_list<ValuePtr> &elements) : ValueSequence(elements) {}
   /// \brief Destructor of ValueTuple.
   ~ValueTuple() override = default;
-  MS_DECLARE_PARENT(ValueTuple, ValueSequeue)
+  MS_DECLARE_PARENT(ValueTuple, ValueSequence)
   /// \brief Get abstract of the ValueTuple object.
   ///
   /// \return The abstract of the ValueTuple object.
@@ -132,28 +136,28 @@ class MS_CORE_API ValueTuple : public ValueSequeue {
   /// \brief Show each element DumpText.
   ///
   /// \return The description of the ValueTuple object.
-  std::string DumpText() const override { return "(" + ValueSequeue::DumpText() + ")"; }
+  std::string DumpText() const override { return "(" + ValueSequence::DumpText() + ")"; }
   /// \brief Show each element ToString.
   ///
   /// \return The description of the ValueTuple object.
-  std::string ToString() const override { return "(" + ValueSequeue::ToString() + ")"; }
+  std::string ToString() const override { return "(" + ValueSequence::ToString() + ")"; }
 };
 using ValueTuplePtr = std::shared_ptr<ValueTuple>;
 
 /// \brief ValueList defines a Value class whose type is List.
-class MS_CORE_API ValueList : public ValueSequeue {
+class MS_CORE_API ValueList : public ValueSequence {
  public:
   /// \brief Constructor of ValueList.
   ///
   /// \param[in] elements Define the elements of the object.
-  explicit ValueList(const std::vector<ValuePtr> &elements) : ValueSequeue(elements) {}
+  explicit ValueList(const std::vector<ValuePtr> &elements) : ValueSequence(elements) {}
   /// \brief Constructor of ValueList.
   ///
   /// \param[in] elements Define the elements of the object.
-  ValueList(const std::initializer_list<ValuePtr> &elements) : ValueSequeue(elements) {}
+  ValueList(const std::initializer_list<ValuePtr> &elements) : ValueSequence(elements) {}
   /// \brief Destructor of ValueList.
   ~ValueList() override = default;
-  MS_DECLARE_PARENT(ValueList, ValueSequeue)
+  MS_DECLARE_PARENT(ValueList, ValueSequence)
   /// \brief Get abstract of the ValueList object.
   ///
   /// \return The abstract of the ValueList object.
@@ -161,11 +165,11 @@ class MS_CORE_API ValueList : public ValueSequeue {
   /// \brief Show each element DumpText.
   ///
   /// \return The description of the ValueList object.
-  std::string DumpText() const override { return "[" + ValueSequeue::DumpText() + "]"; }
+  std::string DumpText() const override { return "[" + ValueSequence::DumpText() + "]"; }
   /// \brief Show each element ToString.
   ///
   /// \return The description of the ValueList object.
-  std::string ToString() const override { return "[" + ValueSequeue::ToString() + "]"; }
+  std::string ToString() const override { return "[" + ValueSequence::ToString() + "]"; }
 };
 using ValueListPtr = std::shared_ptr<ValueList>;
 inline ValuePtr MakeValue(const std::vector<ValuePtr> &v) { return std::make_shared<ValueTuple>(v); }
@@ -581,12 +585,12 @@ std::vector<U> GetValue(const ValuePtr &value) {
     MS_LOG(EXCEPTION) << "Value is nullptr";
   }
 
-  if (!value->isa<ValueSequeue>()) {
+  if (!value->isa<ValueSequence>()) {
     MS_LOG(EXCEPTION) << "Error GetValue for value: " << value->ToString() << ", type: vector<" << typeid(U).name()
                       << ">";
   }
   std::vector<U> rets;
-  const std::vector<ValuePtr> &vals = value->cast<ValueSequeuePtr>()->value();
+  const std::vector<ValuePtr> &vals = value->cast<ValueSequencePtr>()->value();
   (void)std::transform(vals.begin(), vals.end(), std::back_inserter(rets),
                        [](const ValuePtr &v) { return GetValue<U>(v); });
   return rets;

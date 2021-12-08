@@ -138,8 +138,8 @@ void DebuggerProtoExporter::SetValueToProto(const ValuePtr &val, debugger::Value
   } else if (val->isa<Float>()) {
     value_proto->set_dtype(debugger::DT_TYPE);
     value_proto->mutable_type_val()->set_data_type(debugger::DT_BASE_FLOAT);
-  } else if (val->isa<ValueSequeue>()) {
-    SetSequenceToProto(dyn_cast<ValueSequeue>(val), value_proto);
+  } else if (val->isa<ValueSequence>()) {
+    SetSequenceToProto(dyn_cast<ValueSequence>(val), value_proto);
   } else if (val->isa<None>()) {
     value_proto->set_dtype(debugger::DT_NONE);
     value_proto->set_str_val("None");
@@ -225,7 +225,7 @@ void DebuggerProtoExporter::SetScalarToProto(const ScalarPtr &val, debugger::Val
   }
 }
 
-void DebuggerProtoExporter::SetSequenceToProto(const ValueSequeuePtr &val, debugger::ValueProto *value_proto) {
+void DebuggerProtoExporter::SetSequenceToProto(const ValueSequencePtr &val, debugger::ValueProto *value_proto) {
   if (val == nullptr || value_proto == nullptr) {
     return;
   }

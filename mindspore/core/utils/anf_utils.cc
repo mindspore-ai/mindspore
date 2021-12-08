@@ -76,8 +76,8 @@ bool AnfUtils::IsDimUnknown(const AnfNodePtr &node) {
     auto tuple_shape_ptr = base_shape->cast<abstract::TupleShapePtr>();
     MS_EXCEPTION_IF_NULL(tuple_shape_ptr);
     return tuple_shape_ptr->IsDimUnknown();
-  } else if (base_shape->isa<abstract::SequeueShape>()) {
-    auto seq_shape_ptr = base_shape->cast<abstract::SequeueShapePtr>();
+  } else if (base_shape->isa<abstract::SequenceShape>()) {
+    auto seq_shape_ptr = base_shape->cast<abstract::SequenceShapePtr>();
     MS_EXCEPTION_IF_NULL(seq_shape_ptr);
     return seq_shape_ptr->IsDimUnknown();
   } else if (base_shape->isa<abstract::ListShape>()) {

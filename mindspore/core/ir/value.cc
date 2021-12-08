@@ -24,14 +24,14 @@
 #include "utils/convert_utils_base.h"
 
 namespace mindspore {
-const ValuePtr ValueSequeue::operator[](const std::size_t &dim) const {
+const ValuePtr ValueSequence::operator[](const std::size_t &dim) const {
   if (dim >= size()) {
     MS_LOG(EXCEPTION) << "List index [" << dim << "] is out of range [" << size() << "].";
   }
   return elements_[dim];
 }
 
-bool ValueSequeue::erase(size_t idx) {
+bool ValueSequence::erase(size_t idx) {
   if (idx < size()) {
     (void)elements_.erase(elements_.begin() + SizeToInt(idx));
     return true;
@@ -144,15 +144,15 @@ bool FP64Imm::operator==(const Value &other) const {
     return false;
   }
 }
-bool ValueSequeue::operator==(const Value &other) const {
-  if (other.isa<ValueSequeue>()) {
-    auto other_ = static_cast<const ValueSequeue &>(other);
+bool ValueSequence::operator==(const Value &other) const {
+  if (other.isa<ValueSequence>()) {
+    auto other_ = static_cast<const ValueSequence &>(other);
     return *this == other_;
   } else {
     return false;
   }
 }
-bool ValueSequeue::operator==(const ValueSequeue &other) const {
+bool ValueSequence::operator==(const ValueSequence &other) const {
   if (other.elements_.size() != elements_.size()) {
     return false;
   }
@@ -160,7 +160,7 @@ bool ValueSequeue::operator==(const ValueSequeue &other) const {
                     [](const ValuePtr &lhs, const ValuePtr &rhs) { return *lhs == *rhs; });
 }
 
-std::string ValueSequeue::ToString() const {
+std::string ValueSequence::ToString() const {
   std::ostringstream buffer;
   bool begin = true;
   for (auto &attr : elements_) {
@@ -175,7 +175,7 @@ std::string ValueSequeue::ToString() const {
   return buffer.str();
 }
 
-std::string ValueSequeue::DumpText() const {
+std::string ValueSequence::DumpText() const {
   std::ostringstream oss;
   for (size_t i = 0; i < elements_.size(); ++i) {
     MS_EXCEPTION_IF_NULL(elements_[i]);

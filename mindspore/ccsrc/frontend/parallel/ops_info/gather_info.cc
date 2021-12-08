@@ -38,7 +38,7 @@ Status GatherInfo::GetManualSplitWithoutOffsetAttr() {
     manual_split_ = true;
     MS_EXCEPTION_IF_NULL(manual_split_without_offset_iter->second);
     if (manual_split_without_offset_iter->second->cast<ValueTuplePtr>() == nullptr) {
-      MS_LOG(ERROR) << name_ << ": Manual split without offset strategy's format is wrong! Need ValueSequeue";
+      MS_LOG(ERROR) << name_ << ": Manual split without offset strategy's format is wrong! Need ValueSequence";
       return FAILED;
     }
     std::vector<ValuePtr> value_vector = manual_split_without_offset_iter->second->cast<ValueTuplePtr>()->value();
@@ -74,14 +74,14 @@ Status GatherInfo::GetManualSplitAttr() {
     manual_split_ = true;
     auto var = manual_split_with_offset_iter->second->cast<ValueTuplePtr>();
     if (var == nullptr) {
-      MS_LOG(ERROR) << name_ << ": Manual split with offset strategy's format is wrong! Need ValueSequeue";
+      MS_LOG(ERROR) << name_ << ": Manual split with offset strategy's format is wrong! Need ValueSequence";
       return FAILED;
     }
 
     MS_LOG(INFO) << name_ << ": manual split with offset strategy " << var->ToString();
     for (auto &ele : var->value()) {
-      if (!ele->isa<ValueSequeue>()) {
-        MS_LOG(ERROR) << name_ << ": Manual split with offset strategy's format is wrong! Need ValueSequeue";
+      if (!ele->isa<ValueSequence>()) {
+        MS_LOG(ERROR) << name_ << ": Manual split with offset strategy's format is wrong! Need ValueSequence";
         return FAILED;
       }
       std::vector<ValuePtr> value_vector = ele->cast<ValueTuplePtr>()->value();

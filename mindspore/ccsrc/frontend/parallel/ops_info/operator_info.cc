@@ -1875,7 +1875,7 @@ float OperatorInfo::GetFloatAttr(const std::string &attr_name) {
   return attr_iter->second->cast<FP32ImmPtr>()->value();
 }
 
-std::vector<ValuePtr> GetValueSequeue(const ValuePtr &sequeue) {
+std::vector<ValuePtr> GetValueSequence(const ValuePtr &sequeue) {
   MS_EXCEPTION_IF_NULL(sequeue);
   std::vector<ValuePtr> ret;
   if (!sequeue->isa<ValueTuple>() && !sequeue->isa<ValueList>()) {
@@ -1894,7 +1894,7 @@ std::vector<ValuePtr> GetValueSequeue(const ValuePtr &sequeue) {
 ValuePtr MakeListValue(const std::vector<int64_t> &v) {
   std::vector<ValuePtr> list;
   (void)std::transform(v.begin(), v.end(), std::back_inserter(list), [](int64_t ele) { return MakeValue(ele); });
-  return std::make_shared<ValueSequeue>(list);
+  return std::make_shared<ValueSequence>(list);
 }
 
 ValuePtr MakeTupleListValue(const Shapes &v) {

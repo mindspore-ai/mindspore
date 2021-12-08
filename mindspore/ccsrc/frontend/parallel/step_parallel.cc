@@ -1073,12 +1073,13 @@ static bool CheckInsertMirrorOps(const MirrorOps &mirror_ops, const CNodePtr &no
   if (IsPrimitiveCNode(node, prim::kPrimSend)) {
     return true;
   }
-  if ((node->inputs().size() == 2) && (IsValueNode<ValueSequeue>(node->input(1)))) {
+  constexpr size_t kSingleArgCNodeSize = 2;
+  if ((node->inputs().size() == kSingleArgCNodeSize) && (IsValueNode<ValueSequence>(node->input(1)))) {
     MS_LOG(INFO) << "Input is ValueList, skip it.";
     return false;
   }
 
-  if ((node->inputs().size() == 2) &&
+  if ((node->inputs().size() == kSingleArgCNodeSize) &&
       (AnfNodeIsPrimitive(node->input(1), MAKE_TUPLE) || AnfNodeIsPrimitive(node->input(1), MAKE_LIST))) {
     MS_LOG(INFO) << "The mirror for " << GetPrimName(node) << " has handle by make_tuple node";
     return false;
@@ -1333,7 +1334,7 @@ StrategyPtr ExtractStrategy(const ValuePtr &stra) {
     Strategys strategy;
     for (uint64_t index = 0; index < elements.size(); ++index) {
       Dimensions dim;
-      if (elements[index]->isa<ValueSequeue>()) {
+      if (elements[index]->isa<ValueSequence>()) {
         auto value_tuple = elements[index]->cast<ValueTuplePtr>();
         std::vector<ValuePtr> value_vector = value_tuple->value();
         (void)std::transform(value_vector.begin(), value_vector.end(), std::back_inserter(dim),
@@ -2820,7 +2821,7 @@ void InsertShapeOp(const CNodePtr &node, const AnfNodePtr &pre_node, const FuncG
   // shape op doesn't have params and attrs.
   OperatorParams params;
   OperatorAttrs attrs;
-  auto shape_value = GetValueNode(node->input(2))->cast<ValueSequeuePtr>();
+  auto shape_value = GetValueNode(node->input(2))->cast<ValueSequencePtr>();
   MS_EXCEPTION_IF_NULL(shape_value);
   auto shape = shape_value->value();
   if (shape.empty()) {

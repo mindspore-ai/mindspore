@@ -243,9 +243,9 @@ inline T GetValue(const ValuePtr &value) {
   return imm->value();
 }
 
-/// \brief brief Get primitive element values from a ValueSequeue object.
+/// \brief brief Get primitive element values from a ValueSequence object.
 ///
-/// \param[in] value The pointer to the ValueSequeue object.
+/// \param[in] value The pointer to the ValueSequence object.
 ///
 /// \return The primitive type values as a vector.
 template <typename T, typename S = typename std::decay_t<T>,

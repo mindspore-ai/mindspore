@@ -1039,7 +1039,7 @@ void ForwardExecutor::SetNonCostantValueAbs(const AbstractBasePtr &abs, size_t i
   if (abs->isa<abstract::AbstractTensor>()) {
     abs->set_value(kAnyValue);
   } else if (abs->isa<abstract::AbstractTuple>() || abs->isa<abstract::AbstractList>()) {
-    const auto &abs_seq = abs->cast<abstract::AbstractSequeuePtr>();
+    const auto &abs_seq = abs->cast<abstract::AbstractSequencePtr>();
     MS_EXCEPTION_IF_NULL(abs_seq);
     for (auto &item : abs_seq->elements()) {
       MS_EXCEPTION_IF_NULL(item);
@@ -1198,7 +1198,7 @@ void ForwardExecutor::GetOpOutput(const OpExecInfoPtr &op_exec_info,
   auto result = RunOpWithInitBackendPolicy(op_exec_info);
   py::object out_real = result;
   if (result.size() == 1 && op_exec_info->abstract != nullptr &&
-      !op_exec_info->abstract->isa<abstract::AbstractSequeue>()) {
+      !op_exec_info->abstract->isa<abstract::AbstractSequence>()) {
     out_real = result[0];
   }
   // get output value

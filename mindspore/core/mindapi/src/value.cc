@@ -26,12 +26,12 @@
 
 namespace mindspore::api {
 using ValueImpl = mindspore::Value;
-using ValueSequenceImpl = mindspore::ValueSequeue;  // 'Sequeue' is typo.
+using ValueSequenceImpl = mindspore::ValueSequence;
 using ValueTupleImpl = mindspore::ValueTuple;
 using StringImmImpl = mindspore::StringImm;
 using ScalarImpl = mindspore::Scalar;
 using BoolImmImpl = mindspore::BoolImm;
-using IntegerImmImpl = mindspore::IntergerImm;  // 'Interger' is typo.
+using IntegerImmImpl = mindspore::IntegerImm;
 using Int64ImmImpl = mindspore::Int64Imm;
 using FloatImmImpl = mindspore::FloatImm;
 using FP32ImmImpl = mindspore::FP32Imm;

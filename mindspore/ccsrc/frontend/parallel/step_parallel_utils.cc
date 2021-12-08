@@ -135,7 +135,7 @@ Shapes GetNodeShape(const AnfNodePtr &node) {
     MS_LOG(EXCEPTION) << "GetNodeShape: " << node->ToString() << " shape_ptr is nullptr, full name is "
                       << node->fullname_with_scope();
   }
-  auto tuple_shape_ptr = dyn_cast<abstract::SequeueShape>(base_shape_ptr);
+  auto tuple_shape_ptr = dyn_cast<abstract::SequenceShape>(base_shape_ptr);
   if (tuple_shape_ptr != nullptr) {
     auto tuple_shape = tuple_shape_ptr->shape();
     for (auto &shape : tuple_shape) {

@@ -109,8 +109,8 @@ class Tail : public MetaFuncGraph {
   MS_DECLARE_PARENT(Tail, MetaFuncGraph)
 
   FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
-  FuncGraphPtr GenerateSequeueFuncGraph(const abstract::AbstractSequeuePtr &sequeue,
-                                        const abstract::AbstractSequeuePtr &pos = nullptr) const;
+  FuncGraphPtr GenerateSequenceFuncGraph(const abstract::AbstractSequencePtr &sequeue,
+                                         const abstract::AbstractSequencePtr &pos = nullptr) const;
 
   friend bool operator==(const Tail &lhs, const Tail &rhs) { return lhs.name_ == rhs.name_; }
   void set_enable_tuple_grad(bool enable_tuple_grad) { enable_tuple_grad_ = enable_tuple_grad; }

@@ -507,11 +507,11 @@ PynativeAdjointPtr KPynativeCellImpl::ForgeGetItemAdjoint(const CNodePtr &cnode)
   } else {
     input_1_adjoint = input_1_adjoint_iter->second;
   }
-  if (!input_1_adjoint->out()->isa<ValueSequeue>()) {
+  if (!input_1_adjoint->out()->isa<ValueSequence>()) {
     MS_LOG(EXCEPTION) << "Input of CNode should be evaluated to a ValueSequence. CNode: " << cnode->DebugString()
                       << ", out of input1: " << input_1_adjoint->out()->ToString();
   }
-  auto input_1_out = input_1_adjoint->out()->cast<ValueSequeuePtr>();
+  auto input_1_out = input_1_adjoint->out()->cast<ValueSequencePtr>();
 
   // Input 2 of CNode;
   auto index_value = GetValueNode<Int64ImmPtr>(cnode->input(2));

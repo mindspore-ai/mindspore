@@ -72,7 +72,7 @@ class TupleListConvertItemIndexToPositive : public AnfVisitor {
     if (sequeue_ != nullptr && IsValueNode<Int64Imm>(vnode)) {
       auto idx = GetValue<int64_t>(vnode->value());
       if (idx < 0) {
-        auto sequeue_abstract = sequeue_->abstract()->cast<abstract::AbstractSequeuePtr>();
+        auto sequeue_abstract = sequeue_->abstract()->cast<abstract::AbstractSequencePtr>();
         if (sequeue_abstract == nullptr) {
           return;
         }
@@ -377,7 +377,7 @@ class TupleListGetSetitemEliminator : public AnfVisitor {
       auto key = GetValue<int64_t>(vnode->value());
       if (key < 0) {
         MS_EXCEPTION_IF_NULL(tuple_->abstract());
-        auto sequeue_abstract = tuple_->abstract()->cast<abstract::AbstractSequeuePtr>();
+        auto sequeue_abstract = tuple_->abstract()->cast<abstract::AbstractSequencePtr>();
         if (sequeue_abstract == nullptr) {
           return;
         }

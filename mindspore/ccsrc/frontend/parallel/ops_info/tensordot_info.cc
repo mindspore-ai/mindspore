@@ -69,7 +69,7 @@ Status TensorDotInfo::GetAttrs() {
     }
     axes_type_ = INT_TYPE;
   } else if (axes_iter->second->isa<ValueTuple>() || axes_iter->second->isa<ValueList>()) {
-    std::vector<ValuePtr> var_tuple = GetValueSequeue(axes_iter->second);
+    std::vector<ValuePtr> var_tuple = GetValueSequence(axes_iter->second);
     if (var_tuple.size() != 2) {
       MS_LOG(ERROR) << name_ << ": The length of axes tuple must be 2, bug got " << var_tuple.size();
       return FAILED;
