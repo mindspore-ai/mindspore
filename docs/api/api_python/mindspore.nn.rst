@@ -9,6 +9,15 @@ Cell
 
     mindspore.nn.Cell
 
+Containers
+-----------
+
+.. cnmsplatformautosummary::
+    :toctree: nn
+
+    mindspore.nn.CellList
+    mindspore.nn.SequentialCell
+
 Gradient
 ---------
 
