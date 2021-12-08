@@ -2902,6 +2902,13 @@ test_case_nn_ops = [
         'desc_inputs': [Tensor(np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]]), mstype.float16),
                         Tensor(np.array([[-4, -3, -2], [1, 2, 4]]), mstype.float16)],
         'skip': ['backward']}),
+    ('TripletMarginLoss', {
+        'block': P.TripletMarginLoss(reduction="none"),
+        'desc_inputs': [Tensor(np.array([[0.3, 0.7], [0.5, 0.5]]).astype(np.float32)),
+                        Tensor(np.array([[0.4, 0.6], [0.4, 0.6]]).astype(np.float32)),
+                        Tensor(np.array([[0.2, 0.9], [0.3, 0.7]]).astype(np.float32)),
+                        Tensor(1.0, mstype.float32)],
+        'skip': ['backward']}),
     ('ApplyAdagradDA', {
         'block': ApplyAdagradDANet(),
         'desc_inputs': [Tensor(np.array([[0.3, 0.4], [0.1, 0.2]]).astype(np.float32)),

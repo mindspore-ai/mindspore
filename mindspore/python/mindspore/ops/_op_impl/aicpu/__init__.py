@@ -154,6 +154,7 @@ from .trans_data import _trans_data_aicpu
 from .stack_push_pop import _stack_init_aicpu
 from .stack_push_pop import _stack_push_aicpu
 from .stack_push_pop import _stack_pop_aicpu
+from .triplet_margin_loss import _triplet_margin_loss_aicpu
 from .asinh import _asinh_aicpu
 from .asinh_grad import _asinh_grad_aicpu
 from .stack_push_pop import _stack_destroy_aicpu

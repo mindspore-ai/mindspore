@@ -10002,6 +10002,87 @@ class PSROIPooling(Primitive):
         self.add_prim_attr('output_dim', self.output_dim)
 
 
+class TripletMarginLoss(Primitive):
+    r"""
+    TripletMarginLoss operation.
+
+    Creates a criterion that measures the triplet loss given an input
+    tensors :math:`x1`, :math:`x2`, :math:`x3` and a margin with a value greater than :math:`0`.
+    This is used for measuring a relative similarity between samples. A triplet
+    is composed by `a`, `p` and `n` (i.e., `anchor`, `positive examples` and `negative
+    examples` respectively). The shapes of all input tensors should be
+    :math:`(N, D)`.
+
+    The distance swap is described in detail in the paper `Learning shallow
+    convolutional feature descriptors with triplet losses` by
+    V. Balntas, E. Riba et al.
+
+    The loss function for each sample in the mini-batch is:
+
+    .. math::
+        L(a, p, n) = \max \{d(a_i, p_i) - d(a_i, n_i) + {\rm margin}, 0\}
+
+    where
+
+    .. math::
+        d(x_i, y_i) = \left\lVert {\bf x}_i - {\bf y}_i \right\rVert_p
+
+    Args:
+        p (int): The norm degree for pairwise distance. Default: 2.
+        eps (float): Default: 1e-06.
+        swap (bool): The distance swap is described in detail in the paper
+            `Learning shallow convolutional feature descriptors with triplet losses` by
+            V. Balntas, E. Riba et al. Default: "False".
+        reduction (str): Apply specific reduction method to the output: 'none', 'mean', 'sum'. Default: "mean".
+
+    Inputs:
+        - **x** (Tensor) - A sample randomly selected from the training set. Data type must be BasicType.
+        - **positive** (Tensor) - A sample belonging to the same category as x, with the same type and shape as `x`.
+        - **negative** (Tensor) - A sample belonging to the different class from x, with the same type and shape as `x`.
+        - **margin** (Tensor) - Make a margin between the positive pair and the negative pair.
+
+    Outputs:
+        Union[Tensor, Scalar], if `reduction` is "none", its shape is :math:`(N)`.
+        Otherwise, a scalar value will be returned.
+
+    Raises:
+        TypeError: If `x` or `positive` or 'negative' or 'margin' is not a Tensor.
+        TypeError: If dtype of `x` or `positive` or `negative` is not BasicType.
+        TypeError: If dtype of `x`, `positive` and `negative` is not the same.
+        TypeError: If `margin` is not float32.
+        TypeError: If `p` is not an int.
+        TypeError: If `eps` is not a float.
+        TypeError: If `swap` is not a bool.
+        ValueError: If dimensions of input `x`, `positive` and `negative` are less than or equal to 1 at the same time.
+        ValueError: If the dimension of input `x` or `positive` or `negative` is bigger than or equal to 8.
+        ValueError: If length of shape of `margin` is not 0.
+        ValueError: If shape of `x`, `positive` and `negative` cannot broadcast.
+        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> loss = ops.TripletMarginLoss()
+        >>> x = Tensor(np.array([[0.3, 0.7], [0.5, 0.5]]), mindspore.float32)
+        >>> positive = Tensor(np.array([[0.4, 0.6], [0.4, 0.6]]), mindspore.float32)
+        >>> negative = Tensor(np.array([[0.2, 0.9], [0.3, 0.7]]), mindspore.float32)
+        >>> margin = Tensor(1.0, mindspore.float32)
+        >>> output = loss(x, positive, negative, margin)
+        >>> print(output)
+        0.8881968
+    """
+
+    @prim_attr_register
+    def __init__(self, p=2, swap=False, eps=1e-6, reduction="mean"):
+        """Initialize TripletMarginLoss"""
+        self.init_prim_io_names(inputs=['x', 'positive', 'negative', 'margin'], outputs=['y'])
+        validator.check_value_type("p", p, [int], self.name)
+        validator.check_value_type("swap", swap, [bool], self.name)
+        validator.check_value_type("eps", eps, [float], self.name)
+        self.reduction = validator.check_string(reduction, ['none', 'sum', 'mean'], 'reduction', self.name)
+
+
 class DeformableOffsets(Primitive):
     r"""
     Computes the deformed convolution output with the expected input.
