@@ -60,6 +60,35 @@ bool TypeListEqual::operator()(TypePtrList const &lhs, TypePtrList const &rhs) c
   return true;
 }
 
+std::string GetExcptionTypeString(TypeId id) {
+  static mindspore::HashMap<TypeId, std::string> type_id_to_string = {{kMetaTypeType, "MetaType"},
+                                                                      {kMetaTypeObject, "MetaTypeObject"},
+                                                                      {kObjectTypeNumber, "Number"},
+                                                                      {kObjectTypeRowTensorType, "RowTensor"},
+                                                                      {kObjectTypeSparseTensorType, "SparseTensor"},
+                                                                      {kObjectTypeUndeterminedType, "Undetermined"},
+                                                                      {kObjectTypeClass, "Class"},
+                                                                      {kObjectTypeFunction, "Function"},
+                                                                      {kObjectTypeJTagged, "JTagged"},
+                                                                      {kObjectTypeSymbolicKeyType, "SymbolicKey"},
+                                                                      {kNumberTypeUInt, "uint"},
+                                                                      {kNumberTypeComplex, "Complex"},
+                                                                      {kNumberTypeInt4, "Int4"},
+                                                                      {kNumberTypeGLUInt, "GLUInt"},
+                                                                      {kObjectTypeMonad, "Monad"},
+                                                                      {kObjectTypeCSRTensorType, "CSRTensor"}};
+
+  auto it = type_id_to_string.find(id);
+  std::string type = "";
+  if (it != type_id_to_string.end()) {
+    type = it->second;
+  } else {
+    type = std::to_string(id);
+  }
+
+  return type;
+}
+
 TypePtr TypeIdToType(TypeId id) {
   static mindspore::HashMap<TypeId, TypePtr> type_id_to_type = {{kNumberTypeFloat16, kFloat16},
                                                                 {kNumberTypeFloat, kFloat32},
@@ -101,7 +130,7 @@ TypePtr TypeIdToType(TypeId id) {
                                                                 {kObjectTypeCSRTensorType, kCSRTensorType}};
   const auto &it = type_id_to_type.find(id);
   if (it == type_id_to_type.end()) {
-    MS_LOG(EXCEPTION) << "Not support the type: " << id;
+    MS_LOG(EXCEPTION) << "Not support the type: " << GetExcptionTypeString(id);
   }
   return it->second;
 }

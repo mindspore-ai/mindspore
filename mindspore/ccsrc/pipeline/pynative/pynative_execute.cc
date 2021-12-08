@@ -574,11 +574,17 @@ void ConstructInputTensor(const OpExecInfoPtr &op_run_info, std::vector<int64_t>
   MS_EXCEPTION_IF_NULL(ms_context);
   const auto &device_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   if (device_target != kCPUDevice && op_run_info->op_name == prim::kPrimEmbeddingLookup->name()) {
-    reg_exist = false;
+    auto cur_target = GetCurrentDeviceTarget(device_target, op_run_info->py_primitive);
+    if (cur_target != kCPUDevice) {
+      reg_exist = false;
+    }
   }
   // Gather op needs converting const input to attr on GPU device
   if (device_target != kGPUDevice && op_run_info->op_name == prim::kPrimGatherD->name()) {
-    reg_exist = false;
+    auto cur_target = GetCurrentDeviceTarget(device_target, op_run_info->py_primitive);
+    if (cur_target != kGPUDevice) {
+      reg_exist = false;
+    }
   }
   // Get input tensors.
   op_prim->BeginRecordAddAttr();
