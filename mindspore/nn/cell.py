@@ -565,6 +565,8 @@ class Cell(Cell_):
                 continue
             exist_objs.add(item)
             if item.name == PARAMETER_NAME_DEFAULT:
+                logger.warning("The parameter definition is deprecated.\n"
+                               "Please set a unique name for the parameter in ParameterTuple '{}'.". format(value))
                 item.name = item.name + "$" + str(self._id)
                 self._id += 1
             self.insert_param_to_cell(item.name, item, check_name_contain_dot=False)
