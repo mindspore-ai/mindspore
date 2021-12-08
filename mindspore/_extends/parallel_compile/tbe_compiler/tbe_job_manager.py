@@ -46,6 +46,7 @@ class TbeJobManager:
         self._running_jobs = {}
         self._raw_finish_jobs = {}
         self.tbe_initialize = False
+        self.init_cache = None
         self.para_debug_path = ""
         self.auto_tiling_mode = ""
         self.offline_tune = False
@@ -56,6 +57,9 @@ class TbeJobManager:
         self.pre_build_ops = {}
         self.fusion_need_sync = 0
         self.imported_module = {}
+        self.soc_version = ""
+        self.core_num = 0
+        self.op_bank_path = ""
         # license info
         self.rl_tune_switch = ""
         self.rl_tune_list = ""
@@ -86,8 +90,12 @@ class TbeJobManager:
         self.fusion_need_sync = 0
         self.imported_module = {}
         if self.tbe_initialize:
-            tbe_finalize(self.auto_tiling_mode, self.offline_tune)
+            tbe_finalize(self.auto_tiling_mode, self.offline_tune, self.init_cache)
             self.tbe_initialize = False
+            self.init_cache = None
+            self.soc_version = ""
+            self.core_num = 0
+            self.op_bank_path = ""
 
     def job_handler(self, job_str):
         """
@@ -140,13 +148,14 @@ class TbeJobManager:
         if "GA" in self.auto_tiling_mode:
             self.auto_tune_op_list = get_auto_tune_support_op_list(job)
         self.tbe_initialize = True
+        self.init_cache = job
         return self.add_to_finished_jobs(job, JobStatus.JOB_SUCCESS)
 
     def finalize_handler(self, job: TbeJob):
         """ Finalize job handler """
         if not self.tbe_initialize:
             return self.add_to_finished_jobs(job, JobStatus.JOB_SUCCESS)
-        res = tbe_finalize(self.auto_tiling_mode, self.offline_tune)
+        res = tbe_finalize(self.auto_tiling_mode, self.offline_tune, job)
         if not res:
             job.error("Process Finalize Job failed, job json string:{}".format(job.json_string))
             return self.add_to_finished_jobs(job, JobStatus.JOB_FAILED)
@@ -296,6 +305,10 @@ class TbeJobManager:
         sys_info["op_tune_switch"] = self.op_tune_switch
         sys_info["op_tune_list"] = self.op_tune_list
         sys_info["pass_list"] = self.pass_list
+        # soc
+        sys_info["socVersion"] = self.soc_version
+        sys_info["coreNum"] = self.core_num
+        sys_info["op_bank_path"] = self.op_bank_path
         return sys_info
 
     def _init_sys_info(self, initialize_job):
@@ -317,6 +330,11 @@ class TbeJobManager:
         self.op_tune_switch = initialize_job.content["LicInfo"]["op_tune_switch"]
         self.op_tune_list = initialize_job.content["LicInfo"]["op_tune_list"]
         self.pass_list = initialize_job.content["LicInfo"]["pass_list"]
+        # soc
+        self.soc_version = initialize_job.content["SocInfo"]["socVersion"]
+        self.core_num = int(initialize_job.content["SocInfo"]["coreNum"]) if (
+            initialize_job.content["SocInfo"]["coreNum"].isdigit()) else self.core_num
+        self.op_bank_path = initialize_job.content["SocInfo"]["op_bank_path"]
 
     def _update_imported_op_module(self, job):
         """
