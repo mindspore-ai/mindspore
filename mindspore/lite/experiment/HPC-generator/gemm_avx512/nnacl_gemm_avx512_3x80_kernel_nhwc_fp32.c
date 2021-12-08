@@ -22,7 +22,6 @@ void nnacl_gemm_avx512_3x80_kernel_nhwc_fp32(float *dst, const float *src, const
                                              const size_t inc_flag) {
   size_t deep_t = deep >> 3;
   size_t dst_stride_t = dst_stride << 2;
-  size_t src_stride_t = src_stride << 2;
   asm volatile(
     // inc in deep
     "and $0x1, %[inc_flag]\n"
@@ -83,6 +82,7 @@ void nnacl_gemm_avx512_3x80_kernel_nhwc_fp32(float *dst, const float *src, const
     : [ dst_0 ] "r"(dst), [ bias ] "r"(bias), [ dst_stride ] "r"(dst_stride_t), [ inc_flag ] "r"(inc_flag)
     : "%zmm0", "%zmm1", "%zmm2", "%zmm3", "%zmm4", "%zmm5", "%zmm6", "%zmm7", "%zmm8", "%zmm9", "%zmm10", "%zmm11",
       "%zmm12", "%zmm13", "%zmm14");
+  size_t src_stride_t = src_stride << 2;
   asm volatile(
     "0:\n"
     // block 0
@@ -277,7 +277,6 @@ void nnacl_gemm_avx512_3x80_kernel_nhwc_fp32(float *dst, const float *src, const
     "vfmadd231ps %%zmm29, %%zmm24, %%zmm12\n"
     "vfmadd231ps %%zmm28, %%zmm24, %%zmm13\n"
     "vfmadd231ps %%zmm27, %%zmm24, %%zmm14\n"
-
     "dec %[deep]\n"
     "add $2560, %[weight]\n"
     "add $32, %[src_0]\n"
@@ -332,16 +331,16 @@ void nnacl_gemm_avx512_3x80_kernel_nhwc_fp32(float *dst, const float *src, const
     "vmovups %%zmm2, 128(%[dst_0])\n"
     "vmovups %%zmm3, 192(%[dst_0])\n"
     "vmovups %%zmm4, 256(%[dst_0])\n"
-    "vmovups %%zmm5, 0(%[dst_0], %[dst_stride], 1),\n"
-    "vmovups %%zmm6, 64(%[dst_0], %[dst_stride], 1),\n"
-    "vmovups %%zmm7, 128(%[dst_0], %[dst_stride], 1),\n"
-    "vmovups %%zmm8, 192(%[dst_0], %[dst_stride], 1),\n"
-    "vmovups %%zmm9, 256(%[dst_0], %[dst_stride], 1),\n"
-    "vmovups %%zmm10, 0(%[dst_0], %[dst_stride], 2),\n"
-    "vmovups %%zmm11, 64(%[dst_0], %[dst_stride], 2),\n"
-    "vmovups %%zmm12, 128(%[dst_0], %[dst_stride], 2),\n"
-    "vmovups %%zmm13, 192(%[dst_0], %[dst_stride], 2),\n"
-    "vmovups %%zmm14, 256(%[dst_0], %[dst_stride], 2),\n"
+    "vmovups %%zmm5, 0(%[dst_0], %[dst_stride], 1)\n"
+    "vmovups %%zmm6, 64(%[dst_0], %[dst_stride], 1)\n"
+    "vmovups %%zmm7, 128(%[dst_0], %[dst_stride], 1)\n"
+    "vmovups %%zmm8, 192(%[dst_0], %[dst_stride], 1)\n"
+    "vmovups %%zmm9, 256(%[dst_0], %[dst_stride], 1)\n"
+    "vmovups %%zmm10, 0(%[dst_0], %[dst_stride], 2)\n"
+    "vmovups %%zmm11, 64(%[dst_0], %[dst_stride], 2)\n"
+    "vmovups %%zmm12, 128(%[dst_0], %[dst_stride], 2)\n"
+    "vmovups %%zmm13, 192(%[dst_0], %[dst_stride], 2)\n"
+    "vmovups %%zmm14, 256(%[dst_0], %[dst_stride], 2)\n"
     :
     : [ src_0 ] "r"(src), [ src_stride ] "r"(src_stride_t), [ weight ] "r"(weight), [ deep ] "r"(deep_t),
       [ inc_flag ] "r"(inc_flag), [ act_flag ] "r"(act_flag), [ dst_0 ] "r"(dst), [ dst_stride ] "r"(dst_stride_t)

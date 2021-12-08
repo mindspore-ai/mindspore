@@ -26,11 +26,18 @@ def key_value_pair(line):
     :param line:
     :return:
     """
-    key, value = line.split("=", 1)
+    key = None
+    value = None
+    try:
+        key, value = line.split("=", 1)
+    except ValueError:
+        print("line must be format: key=value, but now is:", line)
+        sys.exit(1)
     try:
         value = int(value)
     except ValueError:
-        print("Error: you input value must be integer, but now is ", value)
+        print("Error: you input value must be integer, but now is:", value)
+        sys.exit(1)
     return key, value
 
 def get_indent(line):
@@ -66,7 +73,7 @@ def print_line(line):
                 generate_code_indent = get_indent(line)
             if line.strip().startswith("}") and "{" not in line:
                 generate_code_indent -= 4
-            if (len(line) == 1 and line[0] == "}"):
+            if len(line) == 1 and line[0] == "}":
                 # modify next fun generate_code_indent
                 generate_code_indent = -4
             return "\"".join(result)
@@ -107,7 +114,6 @@ def generate_code(template_file, exec_dict):
             line = line.replace("\n", "")
             if line.strip() and line.strip()[0] != "@":
                 line = line.replace("\"", "\\\"")
-            if line.strip() and line.strip()[0] != "@":
                 line = line.replace("%", "%%")
             if "print" in line:
                 line = line.replace("%%", "%")
@@ -118,11 +124,16 @@ def generate_code(template_file, exec_dict):
                 if "%(" not in str:
                     str = str.replace("%%[", "%[")
                 generate_code_lines.append(str)
-        # print('\n'.join(generate_code_lines))
         c = compile('\n'.join(generate_code_lines), '', 'exec')
         exec_dict["OUT_STREAM"] = output_stream
         exec(c, exec_dict)
     return output_stream.getvalue()
+
+def check_python_version():
+    if sys.version_info < (3, 6):
+        sys.stdout.write("At least python 3.6 is required, but now is " + str(sys.version_info.major) + "." +
+                         str(sys.version_info.minor) + "\n")
+        sys.exit(1)
 
 generate_code_indent = -4
 python_indent = -1
@@ -134,6 +145,7 @@ parser.add_argument("-A", dest="defines", metavar="KEY=VALUE", nargs="*", type=k
 parser.add_argument("-O", dest="Output_File", nargs=1, help="generate code output file path")
 
 if __name__ == "__main__":
+    check_python_version()
     parameters = parser.parse_args(sys.argv[1:])
     exec_globals = dict(chain(*parameters.defines))
 
