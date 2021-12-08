@@ -42,6 +42,9 @@ void AbstractNode::Register(const std::shared_ptr<TcpClient> &client) {
                        register_message.ByteSizeLong())) {
     MS_LOG(EXCEPTION) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
                       << " the node id:" << node_info_.node_id_ << " register timeout!";
+  } else {
+    MS_LOG(INFO) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
+                 << " the node id:" << node_info_.node_id_ << " send register success!";
   }
 }
 
@@ -1170,6 +1173,7 @@ void AbstractNode::InitServerHandler() {
   server_handler_[NodeCommand::SCALE_IN_DONE] = &AbstractNode::ProcessScaleInDone;
   server_handler_[NodeCommand::SEND_EVENT] = &AbstractNode::ProcessEvent;
   server_handler_[NodeCommand::SCHEDULER_RECOVERY] = &AbstractNode::ProcessSchedulerRecovery;
+  server_handler_[NodeCommand::PREPARE_BUILDING_NETWORK] = &AbstractNode::ProcessPrepareBuildingNetwork;
 }
 
 void AbstractNode::InitNodeInfo(const NodeRole &role) {
@@ -1312,6 +1316,19 @@ void AbstractNode::PersistMetaData() {
     clusterConfig.initial_server_num = server_num_;
 
     node_recovery_->Persist(clusterConfig);
+  }
+}
+
+void AbstractNode::ProcessPrepareBuildingNetwork(const std::shared_ptr<TcpConnection> &conn,
+                                                 const std::shared_ptr<MessageMeta> &meta, const Protos &,
+                                                 const void *data, size_t size) {
+  MS_EXCEPTION_IF_NULL(conn);
+  MS_EXCEPTION_IF_NULL(meta);
+  MS_EXCEPTION_IF_NULL(data);
+  if (!server_->SendMessage(conn, meta, Protos::RAW, data, size)) {
+    MS_LOG(ERROR) << "sever response message failed, prepare for building network failed.";
+  } else {
+    MS_LOG(INFO) << "prepare for building network success.";
   }
 }
 }  // namespace core

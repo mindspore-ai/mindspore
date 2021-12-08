@@ -44,6 +44,7 @@ namespace ps {
 namespace core {
 constexpr int kTimeoutInSeconds = 30;
 constexpr int kCommTimeoutInSeconds = 10;
+constexpr int kCommTimeoutInThreeSeconds = 3;
 class Node {
  public:
   Node()

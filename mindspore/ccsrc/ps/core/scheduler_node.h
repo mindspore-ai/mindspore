@@ -170,6 +170,8 @@ class SchedulerNode : public Node {
 
   void SetRegisterConnectionFd(const std::shared_ptr<TcpConnection> &conn, const std::string &node_id);
 
+  bool SendPrepareBuildingNetwork(const std::unordered_map<std::string, NodeInfo> &node_infos);
+
   std::shared_ptr<TcpServer> server_;
   std::unique_ptr<std::thread> scheduler_thread_;
   std::unique_ptr<std::thread> update_state_thread_;
