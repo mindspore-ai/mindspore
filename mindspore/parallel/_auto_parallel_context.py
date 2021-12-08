@@ -130,6 +130,8 @@ class _AutoParallelContext:
             KeyError: When `mode` is not 'auto', 'size' or 'index'.
         """
         self.check_context_handle()
+        if not self.get_enable_all_reduce_fusion():
+            return
         if _ParallelFusionConfig.MODE not in comm_fusion:
             raise KeyError("For 'comm_fusion', the key 'mode' should be contained.")
         if _ParallelFusionConfig.FUSION_CONFIG not in comm_fusion:

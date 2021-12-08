@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import numpy as np
-
+import pytest
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor, context
@@ -74,7 +74,6 @@ class Dataset(MindData):
     def reset(self):
         self.index = 0
 
-
 class DenseNet1(nn.Cell):
     def __init__(self, has_bias=True, activation='relu'):
         super(DenseNet1, self).__init__()
@@ -89,7 +88,6 @@ class DenseNet1(nn.Cell):
         v = self.fc3(k)
         s = self.fc4(v)
         return s
-
 
 class DenseNet2(nn.Cell):
     def __init__(self, has_bias=True, activation='relu'):
@@ -114,6 +112,14 @@ class DenseNet2(nn.Cell):
         z = self.fc8(w)
         return z
 
+class DenseNet3(nn.Cell):
+    def __init__(self, has_bias=True, activation='relu'):
+        super(DenseNet3, self).__init__()
+        self.fc1 = nn.Dense(128, 128, has_bias=has_bias, activation=activation)
+
+    def construct(self, x):
+        q = self.fc1(x)
+        return q
 
 class SimpleDMLNet(nn.Cell):
     def __init__(self, net1, net2):
@@ -125,7 +131,6 @@ class SimpleDMLNet(nn.Cell):
         x1 = self.backbone1(x)
         x2 = self.backbone2(x)
         return x1 + x2
-
 
 def train_common(net):
     batch_size = 32
@@ -172,7 +177,6 @@ def test_allreduce_fusion_auto():
                    'backbone2.fc1.weight': 1,
                    'backbone1.fc1.weight': 1}
     assert allreduce_fusion_dict == expect_dict
-    cost_model_context.reset_cost_model_context()
 
 def test_allreduce_fusion_size():
     """
@@ -221,3 +225,64 @@ def test_lamb_split_fusion_in_index():
     train_network = TrainOneStepCell(net_with_loss, optimizer)
     _cell_graph_executor.compile(train_network, inputs, label)
     context.reset_auto_parallel_context()
+
+def test_allreduce_fusion_size_priority():
+    """
+    Feature: test priority of "enable_all_reduce_fusion" and "comm_fusion"
+    Description: test priority of "enable_all_reduce_fusion" and "comm_fusion"
+    Expectation: success
+    """
+    auto_parallel_context().set_enable_all_reduce_fusion(enable_all_reduce_fusion=False)
+    comm_fusion_dict = {"allreduce": {"mode": "size", "config": 32}}
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, comm_fusion=comm_fusion_dict)
+    net = SimpleDMLNet(DenseNet1(has_bias=False, activation=None), DenseNet2(has_bias=False, activation=None))
+    allreduce_fusion_dict = train_common(net)
+    expect_dict = {}
+    assert allreduce_fusion_dict == expect_dict
+    auto_parallel_context().set_enable_all_reduce_fusion(enable_all_reduce_fusion=True)
+    allreduce_fusion_dict = train_common(net)
+    expect_dict = {'backbone2.fc8.weight': 1,
+                   'backbone2.fc7.weight': 1,
+                   'backbone2.fc6.weight': 1,
+                   'backbone1.fc4.weight': 1,
+                   'backbone1.fc3.weight': 1,
+                   'backbone1.fc2.weight': 1,
+                   'backbone2.fc5.weight': 1,
+                   'backbone2.fc4.weight': 1,
+                   'backbone2.fc3.weight': 1,
+                   'backbone2.fc2.weight': 1,
+                   'backbone2.fc1.weight': 1,
+                   'backbone1.fc1.weight': 1}
+    assert allreduce_fusion_dict == expect_dict
+
+def test_allreduce_fusion_size_one_tensor():
+    """
+    Feature: test_allreduce_fusion in size mode with one tensor
+    Description: test_allreduce_fusion in size mode with one tensor
+    Expectation: success
+    """
+    comm_fusion_dict = {"allreduce": {"mode": "size", "config": 32}}
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, comm_fusion=comm_fusion_dict)
+    net = DenseNet3(has_bias=False, activation=None)
+    allreduce_fusion_dict = train_common(net)
+    expect_dict = {'fc1.weight': 1}
+    assert allreduce_fusion_dict == expect_dict
+
+def test_fusion_invalid_value_failed():
+    """
+    Feature: test_allreduce_fusion with invalid value
+    Description: test_allreduce_fusion with invalid value
+    Expectation: throw TypeError
+    """
+    with pytest.raises(TypeError):
+        comm_fusion_dict = {"allreduce": {"mode": "size", "config": "30.12"}}
+        context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, comm_fusion=comm_fusion_dict)
+
+def test_enable_invalid_value_failed():
+    """
+    Feature: enable_all_reduce_fusion with invalid value
+    Description: enable_all_reduce_fusion with invalid value
+    Expectation: throw TypeError
+    """
+    with pytest.raises(TypeError):
+        auto_parallel_context().set_enable_all_reduce_fusion(enable_all_reduce_fusion="fusion")
