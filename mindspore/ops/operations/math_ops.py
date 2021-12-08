@@ -3100,7 +3100,7 @@ class Ceil(PrimitiveWithInfer):
         return x_dtype
 
 
-class Xdivy(_MathBinaryOp):
+class Xdivy(Primitive):
     """
     Divides the first input tensor by the second input tensor element-wise. Returns zero when `x` is zero.
 
@@ -3136,9 +3136,12 @@ class Xdivy(_MathBinaryOp):
         [ 1.   2.  -0.5]
     """
 
-    def infer_dtype(self, x_dtype, y_dtype):
-        return _MathBinaryOp.do_infer_dtype(x_dtype, y_dtype, [mstype.float16, mstype.float32], self.name)
+    __mindspore_signature__ = (sig.sig_dtype.T, sig.sig_dtype.T)
 
+    @prim_attr_register
+    def __init__(self):
+        """Initialize Xdivy."""
+        self.init_prim_io_names(inputs=['x', 'y'], outputs=['output'])
 
 class Xlogy(_MathBinaryOp):
     r"""

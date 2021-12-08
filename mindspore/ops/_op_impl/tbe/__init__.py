@@ -170,6 +170,7 @@ from .div import _div_tbe
 from .div_ds import _div_ds_tbe
 from .log import _log_tbe
 from .xdivy import _xdivy_tbe
+from .xdivy_ds import _xdivy_ds_tbe
 from .xlogy import _xlogy_tbe
 from .floor_div import _floor_div_tbe
 from .zeros_like import _zeros_like_tbe
