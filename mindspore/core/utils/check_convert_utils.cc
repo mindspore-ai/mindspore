@@ -381,7 +381,7 @@ int64_t CheckAndConvertUtils::CheckInteger(const std::string &arg_name, int64_t 
   if (prim_name.empty()) {
     buffer << "The argument[" << arg_name << "] must ";
   } else {
-    buffer << "The primitive[" << prim_name << "]'s " << arg_name << " must ";
+    buffer << "For primitive[" << prim_name << "], " << arg_name << " must ";
   }
   auto iter_to_string = kCompareToString.find(compare_operator);
   if (iter_to_string == kCompareToString.end()) {
