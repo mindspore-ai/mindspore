@@ -41,7 +41,7 @@ bool CsvWriter::OpenFile(const std::string &path, const std::string &header) {
   }
   auto file_path = Common::CreatePrefixPath(path);
   if (!file_path.has_value()) {
-    MS_LOG(WARNING) << "CreatePrefixPath failed.";
+    MS_LOG(WARNING) << "CreatePrefixPath failed, skipping current statistics";
     return false;
   }
   // try to open file
@@ -55,7 +55,7 @@ bool CsvWriter::OpenFile(const std::string &path, const std::string &header) {
     file_.open(file_path_value, std::ios::out | std::ios::app | std::ios::binary);
   }
   if (!file_.is_open()) {
-    MS_LOG(WARNING) << "Open file " << path << " failed." << ErrnoToString(errno);
+    MS_LOG(WARNING) << "Open file " << file_path_value << " failed." << ErrnoToString(errno);
     return false;
   }
   if (first_time_opening) {
@@ -63,7 +63,7 @@ bool CsvWriter::OpenFile(const std::string &path, const std::string &header) {
     file_.flush();
     file_path_str_ = path;
   }
-  MS_LOG(INFO) << "Opened file: " << path;
+  MS_LOG(INFO) << "Opened file: " << file_path_value;
   return true;
 }
 
@@ -93,15 +93,31 @@ TensorStatDump::TensorStatDump(const std::string &op_type, const std::string &op
                                size_t tensor_loader_slot)
     : op_type_{op_type},
       op_name_{op_name},
-      task_id_{task_id},
-      stream_id_{stream_id},
-      timestamp_{timestamp},
+      task_id_{std::to_string(task_id)},
+      stream_id_{std::to_string(stream_id)},
+      timestamp_{std::to_string(timestamp)},
       slot_{slot},
       tensor_loader_slot_{tensor_loader_slot} {
   if (input) {
     io_ = kInput;
   } else {
     io_ = kOutput;
+  }
+}
+
+TensorStatDump::TensorStatDump(const std::string &op_type, const std::string &op_name, const std::string &task_id,
+                               const std::string &stream_id, const std::string &timestamp, const std::string &io,
+                               size_t slot, size_t tensor_loader_slot)
+    : op_type_{op_type},
+      op_name_{op_name},
+      task_id_{task_id},
+      stream_id_{stream_id},
+      timestamp_{timestamp},
+      io_{io},
+      slot_{slot},
+      tensor_loader_slot_{tensor_loader_slot} {
+  if (io_ != kInput && io_ != kOutput) {
+    MS_LOG(EXCEPTION) << "Cannot instantiate TensorStatDump, io needs to be either " << kInput << " or " << kOutput;
   }
 }
 
@@ -125,14 +141,22 @@ bool TensorStatDump::OpenStatisticsFile(const std::string &dump_path) {
 
 bool TensorStatDump::DumpTensorStatsToFile(const std::string &original_kernel_name, const std::string &dump_path,
                                            const Debugger *debugger) {
-  if (!OpenStatisticsFile(dump_path)) {
-    return false;
-  }
-  // get tensor statistics using debugger
+  // get tensor data using debugger
   std::string tensor_loader_name = original_kernel_name + ":" + std::to_string(tensor_loader_slot_);
   std::shared_ptr<TensorData> data = debugger->GetTensor(tensor_loader_name);
   if (data == nullptr) {
     MS_LOG(WARNING) << "Failed to find " << tensor_loader_name << " in tensor loader, skipping current statistics";
+    return false;
+  }
+  return DumpTensorStatsToFile(dump_path, data);
+}
+
+bool TensorStatDump::DumpTensorStatsToFile(const std::string &dump_path, std::shared_ptr<TensorData> data) {
+  if (data == nullptr) {
+    MS_LOG(WARNING) << "Tensor data is empty, skipping current statistics";
+    return false;
+  }
+  if (!OpenStatisticsFile(dump_path)) {
     return false;
   }
   const DebugServices::TensorStat &stat = DebugServices::GetTensorStatistics(data);

@@ -409,36 +409,37 @@ def check_statistic_dump(dump_file_path):
     real_path = os.path.realpath(output_path)
     with open(real_path) as f:
         reader = csv.DictReader(f)
-        input1 = next(reader)
+        stats = list(reader)
+        input1 = stats[0]
         assert input1['IO'] == 'input'
         assert input1['Min Value'] == '1'
         assert input1['Max Value'] == '6'
-        input2 = next(reader)
+        input2 = stats[1]
         assert input2['IO'] == 'input'
         assert input2['Min Value'] == '7'
         assert input2['Max Value'] == '12'
-        output = next(reader)
+        output = stats[2]
         assert output['IO'] == 'output'
         assert output['Min Value'] == '8'
         assert output['Max Value'] == '18'
 
 def check_data_dump(dump_file_path):
-    output_name = "Add.Add-op*.0.0.*.output.0.DefaultFormat.npy"
+    output_name = "Add.Add-op*.output.0.*.npy"
     output_path = glob.glob(os.path.join(dump_file_path, output_name))[0]
     real_path = os.path.realpath(output_path)
     output = np.load(real_path)
     expect = np.array([[8, 10, 12], [14, 16, 18]], np.float32)
     assert np.array_equal(output, expect)
 
-def run_gpu_e2e_dump(saved_data):
-    """Run gpu e2e dump"""
+def run_saved_data_dump_test(scenario, saved_data):
+    """Run e2e dump on scenario, testing statistic dump"""
     if sys.platform != 'linux':
         return
     pwd = os.getcwd()
     with tempfile.TemporaryDirectory(dir=pwd) as tmp_dir:
-        dump_path = os.path.join(tmp_dir, 'gpu_e2e_dump')
-        dump_config_path = os.path.join(tmp_dir, 'gpu_e2e_dump.json')
-        generate_statistic_dump_json(dump_path, dump_config_path, 'test_gpu_e2e_dump', saved_data)
+        dump_path = os.path.join(tmp_dir, 'test_saved_data')
+        dump_config_path = os.path.join(tmp_dir, 'test_saved_data.json')
+        generate_statistic_dump_json(dump_path, dump_config_path, scenario, saved_data)
         os.environ['MINDSPORE_DUMP_CONFIG'] = dump_config_path
         dump_file_path = os.path.join(dump_path, 'rank_0', 'Net', '0', '0')
         if os.path.isdir(dump_path):
@@ -473,7 +474,7 @@ def test_gpu_e2e_statistic_dump():
     Expectation: Statistics are stored in statistic.csv files
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    run_gpu_e2e_dump('statistic')
+    run_saved_data_dump_test('test_gpu_e2e_dump', 'statistic')
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
@@ -486,7 +487,7 @@ def test_gpu_e2e_tensor_dump():
     Expectation: Tensor data are stored in npy files
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    run_gpu_e2e_dump('tensor')
+    run_saved_data_dump_test('test_gpu_e2e_dump', 'tensor')
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
@@ -499,4 +500,46 @@ def test_gpu_e2e_full_dump():
     Expectation: Tensor are stored in npy files and their statistics stored in statistic.csv
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    run_gpu_e2e_dump('full')
+    run_saved_data_dump_test('test_gpu_e2e_dump', 'full')
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_ascend_statistic_dump():
+    """
+    Feature: Ascend Statistics Dump
+    Description: Test Ascend statistics dump
+    Expectation: Statistics are stored in statistic.csv files
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    run_saved_data_dump_test('test_async_dump', 'statistic')
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_ascend_tensor_dump():
+    """
+    Feature: Ascend Tensor Dump
+    Description: Test Ascend tensor dump
+    Expectation: Tensors are stored in npy files
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    run_saved_data_dump_test('test_async_dump', 'tensor')
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_ascend_full_dump():
+    """
+    Feature: Ascend Full Dump
+    Description: Test Ascend full dump
+    Expectation: Tensors are stored in npy files and their statistics stored in statistic.csv
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    run_saved_data_dump_test('test_async_dump', 'full')

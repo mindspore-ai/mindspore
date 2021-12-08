@@ -19,6 +19,7 @@
 #include <unistd.h>
 #include <algorithm>
 #include <map>
+#include <memory>
 #include <set>
 #include <utility>
 #include <vector>
@@ -511,7 +512,7 @@ void E2eDump::DumpTensorToFile(const std::string &dump_path, const debugger::dum
   for (uint32_t slot = 0; slot < input_tensors.size(); slot++) {
     auto in_tensor = input_tensors[slot];
     std::string in_slot_path = in_path + std::to_string(slot) + ".";
-    auto succ = ConvertFormatForTensorAndDump(in_slot_path, in_tensor, data_ptr + offset);
+    auto succ = ConvertFormatForTensorAndDump(in_slot_path, in_tensor, data_ptr + offset, "input", slot);
     if (!succ) {
       MS_LOG(INFO) << "Failed to convert format for tensor " << in_slot_path;
     }
@@ -524,7 +525,7 @@ void E2eDump::DumpTensorToFile(const std::string &dump_path, const debugger::dum
   for (uint32_t slot = 0; slot < output_tensors.size(); slot++) {
     auto out_tensor = output_tensors[slot];
     std::string out_slot_path = out_path + std::to_string(slot) + ".";
-    auto succ = ConvertFormatForTensorAndDump(out_slot_path, out_tensor, data_ptr + offset);
+    auto succ = ConvertFormatForTensorAndDump(out_slot_path, out_tensor, data_ptr + offset, "output", slot);
     if (!succ) {
       MS_LOG(INFO) << "Failed to convert format for tensor " << out_slot_path;
     }
@@ -533,7 +534,40 @@ void E2eDump::DumpTensorToFile(const std::string &dump_path, const debugger::dum
 }
 
 template <typename T>
-bool E2eDump::ConvertFormatForTensorAndDump(std::string dump_path, const T &tensor, char *data_ptr) {
+bool DumpTensorStatsIfNeeded(const std::string &dump_path, const T &tensor, char *data_ptr, const std::string &io,
+                             uint32_t slot, const ShapeVector &shape, TypeId type) {
+  if (!DumpJsonParser::GetInstance().IsStatisticDump()) {
+    return true;
+  }
+  size_t pos = dump_path.rfind("/");
+  std::string file_name = dump_path.substr(pos + 1);
+  size_t first_dot = file_name.find(".");
+  size_t second_dot = file_name.find(".", first_dot + 1);
+  size_t third_dot = file_name.find(".", second_dot + 1);
+  size_t fourth_dot = file_name.find(".", third_dot + 1);
+  size_t fifth_dot = file_name.find(".", fourth_dot + 1);
+  std::string op_type = file_name.substr(0, first_dot);
+  std::string op_name = file_name.substr(first_dot + 1, second_dot - first_dot - 1);
+  std::string task_id = file_name.substr(second_dot + 1, third_dot - second_dot - 1);
+  std::string stream_id = file_name.substr(third_dot + 1, fourth_dot - third_dot - 1);
+  std::string timestamp = file_name.substr(fourth_dot + 1, fifth_dot - fourth_dot - 1);
+  TensorStatDump stat_dump(op_type, op_name, task_id, stream_id, timestamp, io, slot, slot);
+  std::shared_ptr<TensorData> data = std::make_shared<TensorData>();
+  try {
+    data->ConvertMsToDbgType(type);
+  } catch (...) {
+    MS_LOG(ERROR) << "Data type of operator " << file_name << " is not supported by statistic dump";
+    return false;
+  }
+  data->SetByteSize((size_t)tensor.size());
+  data->SetShape(shape);
+  data->SetDataPtr(data_ptr);
+  return stat_dump.DumpTensorStatsToFile(dump_path.substr(0, pos), data);
+}
+
+template <typename T>
+bool E2eDump::ConvertFormatForTensorAndDump(std::string dump_path, const T &tensor, char *data_ptr,
+                                            const std::string &io, uint32_t slot) {
   // get format
   auto iter_fmt = kFormatToStringMap.find(tensor.format());
   if (iter_fmt == kFormatToStringMap.end()) {
@@ -584,13 +618,21 @@ bool E2eDump::ConvertFormatForTensorAndDump(std::string dump_path, const T &tens
     }
   }
   // dump tensor data into npy file
-  bool dump_success = false;
+  bool dump_success = true;
   if (trans_success) {
-    dump_path += host_format;
-    dump_success = DumpJsonParser::DumpToFile(dump_path, trans_buf.data(), data_size, shape_to, src_type);
+    dump_success = DumpTensorStatsIfNeeded(dump_path, tensor, reinterpret_cast<char *>(trans_buf.data()), io, slot,
+                                           shape_to, src_type);
+    if (DumpJsonParser::GetInstance().IsTensorDump()) {
+      dump_path += host_format;
+      dump_success =
+        DumpJsonParser::DumpToFile(dump_path, trans_buf.data(), data_size, shape_to, src_type) && dump_success;
+    }
   } else {
-    dump_path += device_format;
-    dump_success = DumpJsonParser::DumpToFile(dump_path, data_ptr, data_size, shape_to, src_type);
+    dump_success = DumpTensorStatsIfNeeded(dump_path, tensor, data_ptr, io, slot, shape_to, src_type);
+    if (DumpJsonParser::GetInstance().IsTensorDump()) {
+      dump_path += device_format;
+      dump_success = DumpJsonParser::DumpToFile(dump_path, data_ptr, data_size, shape_to, src_type) && dump_success;
+    }
   }
   return dump_success;
 }

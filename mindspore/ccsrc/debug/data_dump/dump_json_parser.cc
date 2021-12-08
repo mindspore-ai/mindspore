@@ -382,9 +382,9 @@ void DumpJsonParser::ParseSavedData(const nlohmann::json &content) {
                       << saved_data_ << ". Please set saved_data to either statistic, tensor, or full";
   }
   auto context = MsContext::GetInstance();
-  if (IsStatisticDump() && context->get_param<std::string>(MS_CTX_DEVICE_TARGET) != kGPUDevice) {
-    MS_LOG(EXCEPTION) << "Dump Json parse failed, storing statistic dump is only supported on GPU device, please set "
-                         "saved_data to tensor or use a GPU device";
+  if (IsStatisticDump() && context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice) {
+    MS_LOG(EXCEPTION) << "Dump Json parse failed, storing statistic dump is only supported on GPU and Ascend, please "
+                         "set saved_data to tensor or use a GPU or Ascend device";
   }
 }
 
