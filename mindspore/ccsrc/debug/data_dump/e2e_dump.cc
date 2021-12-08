@@ -380,7 +380,12 @@ void E2eDump::DumpSetup(const session::KernelGraph *graph) {
   }
 }
 
-void E2eDump::UpdateIterGPUDump() { DumpJsonParser::GetInstance().UpdateDumpIter(); }
+void E2eDump::UpdateIterGPUDump() {
+  if (!IsDeviceTargetGPU()) {
+    return;
+  }
+  DumpJsonParser::GetInstance().UpdateDumpIter();
+}
 
 void E2eDump::DumpRunIter(const KernelGraphPtr &graph, uint32_t rank_id) {
   auto &json_parser = DumpJsonParser::GetInstance();

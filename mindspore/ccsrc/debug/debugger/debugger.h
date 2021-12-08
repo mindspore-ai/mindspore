@@ -95,7 +95,7 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 
   static uint32_t GetRankID();
 
-  void Dump(const KernelGraphPtr &kernel_graph) const;
+  void DumpGPU(const KernelGraphPtr &kernel_graph) const;
 
   void DumpSingleNode(const CNodePtr &node, uint32_t graph_id);
 
