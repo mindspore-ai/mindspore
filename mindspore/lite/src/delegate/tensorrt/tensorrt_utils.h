@@ -35,6 +35,7 @@
 #define kNHWC_C 3
 
 namespace mindspore::lite {
+struct ITensorHelper;
 struct ActivationParams {
   nvinfer1::ActivationType activation_type;
   bool has_alpha;
@@ -97,6 +98,9 @@ void PackNHWCToNCHWFp16(const void *src, void *dst, size_t batch, size_t plane, 
 std::string GetTensorFormat(nvinfer1::ITensor *trt_tensor, mindspore::Format format);
 
 nvinfer1::ReduceOperation ConvertTRTReduceMode(schema::ReduceMode mode);
+
+nvinfer1::ITensor *PreprocessInputs2SameDim(nvinfer1::INetworkDefinition *network,
+                                            const ITensorHelper &input_tensor_helper);
 
 template <typename T1, typename T2>
 bool SameDims(const std::vector<T1> &shape1, const std::vector<T2> &shape2) {
