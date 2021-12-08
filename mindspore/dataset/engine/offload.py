@@ -325,7 +325,7 @@ class OffloadModel():
 op_to_model = {
     "HWC2CHW": OffloadModel(HwcToChw),
     "HwcToChw": OffloadModel(HwcToChw),
-    "Normalize": OffloadModel(Normalize, ["std", "mean"]),
+    "Normalize": OffloadModel(Normalize, ["mean", "std"]),
     "RandomColorAdjust": OffloadModel(RandomColorAdjust, ["brightness", "saturation"]),
     "RandomHorizontalFlip": OffloadModel(RandomHorizontalFlip, ["prob"]),
     "RandomSharpness": OffloadModel(RandomSharpness, ["degrees"]),
