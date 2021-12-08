@@ -22,4 +22,7 @@ from .logical_or import _logical_or_akg
 from .mean import _simple_mean_akg
 from .mean_grad import _simple_mean_grad_akg
 from .notequal import _notequal_akg
+from .csr_reduce_sum import _csr_reduce_sum_akg
+from .csr_mv import _csr_mv_akg
+from .csr_mul import _csr_mul_akg
 # Please insert op register in lexicographical order of the filename.

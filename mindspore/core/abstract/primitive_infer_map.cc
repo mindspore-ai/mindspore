@@ -228,6 +228,9 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimCSRTensorGetIndptr, R{InferImplCSRTensorGetIndptr, nullptr, true}},
     {prim::kPrimCSRTensorGetIndices, R{InferImplCSRTensorGetIndices, nullptr, true}},
     {prim::kPrimCSRTensorGetDenseShape, R{InferImplCSRTensorGetDenseShape, nullptr, true}},
+    {prim::kPrimCSRMul, R{InferImplCSRMul, nullptr, true}},
+    {prim::kPrimCSRMV, R{InferImplCSRMV, nullptr, true}},
+    {prim::kPrimCSRReduceSum, R{InferImplCSRReduceSum, nullptr, true}},
     // Comm Ops
     {prim::kPrimAllSwap, R{InferImplAllSwap, nullptr, true}},
     {prim::kPrimMemCpyAsync, R{InferImplMemCpyAsync, nullptr, true}},

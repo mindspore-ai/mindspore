@@ -313,4 +313,10 @@ size_t CountValueNum(const ValueTuplePtr &value_tuple) {
   }
   return cnt;
 }
+
+bool IsCustomCSROP(const AnfNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  const PrimitiveSet prims{prim::kPrimCSRReduceSum, prim::kPrimCSRMul, prim::kPrimCSRMV};
+  return IsOneOfPrimitiveCNode(cnode, prims);
+}
 }  // namespace mindspore

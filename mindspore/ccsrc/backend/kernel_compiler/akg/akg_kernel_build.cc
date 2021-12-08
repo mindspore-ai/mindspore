@@ -577,7 +577,7 @@ bool AkgKernelBuilder::AkgKernelParallelBuild(const std::vector<AnfNodePtr> &anf
     AkgKernelJsonGenerator akg_kernel_json_generator(option);
     auto cnode = anf_node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
-    bool is_custom_node = IsPrimitiveCNode(cnode, prim::kPrimCustom);
+    bool is_custom_node = IsPrimitiveCNode(cnode, prim::kPrimCustom) || IsCustomCSROP(cnode);
     // Graph kernel node and Custom node need to generate composite json
     if (AnfAlgo::IsGraphKernel(cnode) || is_custom_node) {
       FuncGraphPtr func_graph = is_custom_node ? cnode->func_graph() : AnfAlgo::GetCNodeFuncGraphPtr(cnode);

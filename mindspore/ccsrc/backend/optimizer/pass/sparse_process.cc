@@ -26,6 +26,9 @@
 
 namespace mindspore {
 namespace opt {
+using CSRTensor = mindspore::tensor::CSRTensor;
+using CSRTensorPtr = mindspore::tensor::CSRTensorPtr;
+
 // Convert CSRTensor Parameter or ValueNode to Tuple by setting its abstract.
 void AbstractCSRToAbstractTuple(const AnfNodePtr &sparse) {
   MS_EXCEPTION_IF_NULL(sparse);
@@ -42,6 +45,45 @@ void AbstractCSRToAbstractTuple(const AnfNodePtr &sparse) {
     abs_tuple->set_type(abs_tuple->BuildType());
     sparse->set_abstract(abs_tuple);
   }
+}
+
+ValueNodePtr NewValueNodeAndSetAbstract(const ValuePtr &val, const AbstractBasePtr &abs) {
+  auto node = NewValueNode(val);
+  node->set_abstract(abs);
+  return node;
+}
+
+bool SplitValueNode(const AnfNodePtr &node, std::vector<AnfNodePtr> *new_inputs) {
+  ValuePtr value = node->cast<ValueNodePtr>()->value();
+  MS_EXCEPTION_IF_NULL(value);
+  if (!value->isa<CSRTensor>()) return false;
+
+  auto csr_tensor = value->cast<CSRTensorPtr>();
+  MS_EXCEPTION_IF_NULL(csr_tensor);
+  auto csr_abs = node->abstract()->cast<abstract::AbstractCSRTensorPtr>();
+  MS_EXCEPTION_IF_NULL(csr_abs);
+  new_inputs->push_back(NewValueNodeAndSetAbstract(csr_tensor->GetIndptr(), csr_abs->indptr()));
+  new_inputs->push_back(NewValueNodeAndSetAbstract(csr_tensor->GetIndices(), csr_abs->indices()));
+  new_inputs->push_back(NewValueNodeAndSetAbstract(csr_tensor->GetValues(), csr_abs->values()));
+  auto shape_node = NewValueNode(csr_tensor->shape());
+  shape_node->set_abstract(csr_abs->dense_shape());
+  new_inputs->push_back(shape_node);
+  return true;
+}
+
+bool SplitCNode(const AnfNodePtr &node, std::vector<AnfNodePtr> *new_inputs) {
+  auto cnode = node->cast<CNodePtr>();
+  auto sparse_prim = AnfAlgo::GetCNodePrimitive(cnode);
+  MS_EXCEPTION_IF_NULL(sparse_prim);
+  // Currently, only MakeCSR and MakeTuple nodes can be split.
+  if (make_sparse_set.count(sparse_prim->name()) <= 0 && sparse_prim->name().compare(prim::kPrimMakeTuple->name()) != 0)
+    return false;
+
+  auto sparse_inputs = cnode->inputs();
+  for (size_t j = 1; j < sparse_inputs.size(); ++j) {
+    new_inputs->push_back(sparse_inputs[j]);
+  }
+  return true;
 }
 
 const AnfNodePtr SparseProcess::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
@@ -90,7 +132,25 @@ const AnfNodePtr SparseProcess::Process(const FuncGraphPtr &func_graph, const An
     auto new_node = NewCNode({NewValueNode(prim::kPrimTupleGetItem), inputs[sparse_index], cons_node}, func_graph);
     new_node->set_abstract(node->abstract());
     return new_node;
+    // ComputeSparse node: SparseTensorDenseMatmul, CSRDenseMul, CSRReduceSum
+  } else if (sparse_op_set.find(prim_name) != sparse_op_set.end()) {
+    const auto &inputs = cnode->inputs();
+    std::vector<AnfNodePtr> new_inputs;
+    new_inputs.push_back(inputs[0]);
+    for (size_t i = 1; i < inputs.size(); ++i) {
+      if (inputs[i]->isa<CNode>()) {
+        if (SplitCNode(inputs[i], &new_inputs)) continue;
+      } else if (inputs[i]->isa<ValueNode>()) {
+        if (SplitValueNode(inputs[i], &new_inputs)) continue;
+      }
+      new_inputs.push_back(inputs[i]);
+    }
+    auto new_node = cnode->func_graph()->NewCNode(new_inputs);
+    new_node->set_abstract(node->abstract());
+    AnfAlgo::SetNodeAttr("is_csr", MakeValue(true), new_node);
+    return new_node;
   }
+
   return nullptr;
 }
 }  // namespace opt

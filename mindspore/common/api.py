@@ -305,7 +305,7 @@ class _MindsporeFunctionExecutor:
             return None
         new_inputs = []
         for i in args_list:
-            if isinstance(i, Tensor):
+            if isinstance(i, (Tensor, CSRTensor)):
                 new_inputs.append(i)
             elif context.get_context("grad_for_scalar") and isinstance(i, (int, float)):
                 new_inputs.append(i)

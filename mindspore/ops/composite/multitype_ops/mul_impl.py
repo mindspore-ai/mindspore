@@ -18,13 +18,37 @@
 from . import _compile_utils as utils
 from ...composite import base
 from ... import functional as F
-
+from ....common import CSRTensor
 
 mul = base.MultitypeFuncGraph("mul", True)
 """
 `mul` is a metafuncgraph object which will multiply two objects according to input type
 using ".register" decorator.
 """
+
+
+@mul.register("CSRTensor", "Tensor")
+def _mul_csrtensor_tensor(x, y):
+    """
+    Returns x * y where x is CSRTensor and y is Tensor.
+
+    Outputs:
+       CSRTensor, equal to x * y.
+    """
+    data = F.csr_mul(x, y)
+    return CSRTensor(x.indptr, x.indices, data, x.shape)
+
+
+@mul.register("Tensor", "CSRTensor")
+def _mul_tensor_csrtensor(x, y):
+    """
+    Returns x * y where x is Tensor and y is CSRTensor.
+
+    Outputs:
+       CSRTensor, equal to x * y.
+    """
+    data = F.csr_mul(y, x)
+    return CSRTensor(y.indptr, y.indices, data, y.shape)
 
 
 @mul.register("Number", "Number")
