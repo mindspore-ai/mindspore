@@ -30,11 +30,34 @@ def check_concat_zip_dataset(dataset):
     """
     while dataset:
         if len(dataset.children) > 1:
-            raise RuntimeError("Offload module currently does not support concatenated or zipped datasets.")
+            return True
         if dataset.children:
             dataset = dataset.children[0]
             continue
         dataset = dataset.children
+    return False
+
+
+def check_map_offload(dataset):
+    """
+    Check if offload flag is set in data pipeline map ops.
+    """
+    offload_check = False
+    concat_zip_check = check_concat_zip_dataset(dataset)
+    while dataset:
+        if hasattr(dataset, 'offload'):
+            if dataset.offload is True:
+                offload_check = True
+                break
+        if dataset.children:
+            dataset = dataset.children[0]
+        else:
+            dataset = []
+
+    if offload_check and concat_zip_check:
+        raise RuntimeError("Offload module currently does not support concatenated or zipped datasets.")
+
+    return offload_check
 
 
 def apply_offload_iterators(data, offload_model):

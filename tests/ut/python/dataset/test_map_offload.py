@@ -53,15 +53,13 @@ def test_auto_offload():
     """
     trans = [C.Decode(), C.HWC2CHW()]
 
-    # Enable automatic offload
-    ds.config.set_auto_offload(True)
-
-    # Dataset with offload deactivated
+    # Dataset with config.auto_offload not activated
     dataset_auto_disabled = ds.ImageFolderDataset(DATA_DIR)
-    dataset_auto_disabled = dataset_auto_disabled.map(operations=trans, input_columns="image", offload=False)
+    dataset_auto_disabled = dataset_auto_disabled.map(operations=trans, input_columns="image")
     dataset_auto_disabled = dataset_auto_disabled.batch(8, drop_remainder=True)
 
     # Dataset with config.auto_offload activated
+    ds.config.set_auto_offload(True)
     dataset_auto_enabled = ds.ImageFolderDataset(DATA_DIR)
     dataset_auto_enabled = dataset_auto_enabled.map(operations=trans, input_columns="image")
     dataset_auto_enabled = dataset_auto_enabled.batch(8, drop_remainder=True)
