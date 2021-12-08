@@ -35,7 +35,7 @@ namespace dataset {
 MapNode::MapNode(std::shared_ptr<DatasetNode> child, std::vector<std::shared_ptr<TensorOperation>> operations,
                  std::vector<std::string> input_columns, std::vector<std::string> output_columns,
                  const std::vector<std::string> &project_columns, std::shared_ptr<DatasetCache> cache,
-                 std::vector<std::shared_ptr<DSCallback>> callbacks, ManualOffloadMode offload)
+                 std::vector<std::shared_ptr<DSCallback>> callbacks, bool offload)
     : operations_(operations),
       input_columns_(input_columns),
       output_columns_(output_columns),
@@ -150,7 +150,7 @@ void MapNode::setOperations(const std::vector<std::shared_ptr<TensorOperation>> 
 }
 std::vector<std::shared_ptr<TensorOperation>> MapNode::operations() { return operations_; }
 
-void MapNode::SetOffload(ManualOffloadMode offload) { offload_ = offload; }
+void MapNode::SetOffload(bool offload) { offload_ = offload; }
 
 Status MapNode::to_json(nlohmann::json *out_json) {
   RETURN_UNEXPECTED_IF_NULL(out_json);
