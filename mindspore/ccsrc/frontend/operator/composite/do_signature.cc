@@ -56,8 +56,8 @@ void ProcessDefault(const std::string &func_name, size_t actual_param_number, co
       auto default_value = signature[i].default_value;
       if (default_value == nullptr) {
         MS_LOG(EXCEPTION) << "The size of input in the operator should be equal to the size of the operator's "
-                          << "signature. But the size of input in the operator is:" << actual_param_number
-                          << ", the length of the operator's signature is:" << sig_size
+                          << "signature. But the size of input in the operator is " << actual_param_number
+                          << ", the length of the operator's signature is " << sig_size
                           << ". Please check the size of inputs of the operator.";
       } else {
         (*op_inputs).push_back(NewValueNode(default_value));
@@ -244,7 +244,7 @@ void DoAutoCast(const std::string &func_name, const std::vector<Signature> &sign
       continue;
     }
     MS_LOG(DEBUG) << "Do cast for inputs " << i << " " << (*op_inputs)[i + 1]->ToString() << " " << arg_type_id
-                  << " to " << it->second;
+                  << " to " << it->second << ".";
     (*op_inputs)[i + 1] = DoCast((*op_inputs)[i + 1], it->second, graph);
   }
 }
@@ -318,7 +318,7 @@ AnfNodePtr BuildNewCNode(const FuncGraphPtr &func_graph, const std::string &func
       RaiseExceptionForCheckParameter(func_name, i, type->ToString());
     }
     MS_LOG(DEBUG) << "Function " << func_name << "'s input " << i << " " << param->DebugString(2) << " abs "
-                  << args_spec_list[i]->ToString() << " type " << type->ToString();
+                  << args_spec_list[i]->ToString() << " type " << type->ToString() << ".";
     input_types.push_back(type);
     op_inputs.push_back(param);
   }

@@ -82,14 +82,14 @@ AnfNodePtr Map::FullMakeList(const std::shared_ptr<List> &type, const FuncGraphP
                           << item.second->ToString();
       }
       if (lhs->elements().size() != size) {
-        oss << "the length of elements[" << (num - 1) << "] is " << size << ", but got " << lhs->elements().size()
+        oss << "The length of elements[" << (num - 1) << "] is " << size << ", but got " << lhs->elements().size()
             << "\n";
         return true;
       }
       return false;
     });
   if (is_not_same) {
-    MS_LOG(EXCEPTION) << "The length of lists in Map must be the same. But " << oss.str();
+    MS_LOG(EXCEPTION) << "The length of lists in Map must be the same. " << oss.str();
   }
 
   constexpr size_t kPrimHoldLen = 1;
@@ -142,14 +142,14 @@ AnfNodePtr Map::FullMakeTuple(const std::shared_ptr<Tuple> &type, const FuncGrap
                           << item.second->ToString();
       }
       if (lhs->elements().size() != size) {
-        oss << "the length of elements[" << (num - 1) << "] is " << size << ", but got " << lhs->elements().size()
+        oss << "The length of elements[" << (num - 1) << "] is " << size << ", but got " << lhs->elements().size()
             << "\n";
         return true;
       }
       return false;
     });
   if (is_not_same) {
-    MS_LOG(EXCEPTION) << "The length of tuples in Map must the same. But " << oss.str();
+    MS_LOG(EXCEPTION) << "The length of tuples in Map must the same. " << oss.str();
   }
 
   constexpr size_t kPrimHoldLen = 1;
@@ -229,7 +229,7 @@ AnfNodePtr Map::FullMakeClass(const std::shared_ptr<Class> &type, const FuncGrap
 
 AnfNodePtr Map::Make(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg, const ArgsPairList &arg_pairs) {
   if (arg_pairs.empty()) {
-    MS_EXCEPTION(TypeError) << "The Map operator must have at least one argument. But the size of arguments is:"
+    MS_EXCEPTION(TypeError) << "The Map operator must have at least one argument. But the size of arguments is "
                             << arg_pairs.size() << ".";
   }
   bool found = false;
@@ -263,7 +263,7 @@ AnfNodePtr Map::Make(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg, c
         oss << "The type of " << ++idx << " argument is: " << item.second->ToString() << "\n";
       }
       MS_LOG(EXCEPTION) << "The types of arguments in Map must be consistent, "
-                        << "but the types of arguments are inconsistent:\n"
+                        << "but the types of arguments are inconsistent.\n"
                         << oss.str();
     }
   }

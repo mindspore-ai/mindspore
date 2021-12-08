@@ -110,7 +110,7 @@ T InnerScalarFloordiv(T x, T y) {
 template <typename T>
 T InnerScalarMod(T x, T y) {
   if (y == 0) {
-    MS_EXCEPTION(ValueError) << "The second input of ScalarMod operator could not be zero."
+    MS_EXCEPTION(ValueError) << "The second input of ScalarMod operator could not be zero. "
                              << "But the second input is zero now.";
   }
   if constexpr (!std::is_integral<T>::value) {
@@ -313,7 +313,7 @@ LOGIC_OP(Ge)
 
 ValuePtr ScalarUAdd(const ValuePtrList &list) {
   if (list.size() != 1) {
-    MS_EXCEPTION(NotSupportError) << "Input number of ScalarUAdd should be 1, but got " << list.size();
+    MS_EXCEPTION(NotSupportError) << "Input number of ScalarUAdd should be 1, but got " << list.size() << ".";
   }
   ValuePtr x = list[0];
   MS_EXCEPTION_IF_NULL(x);
@@ -322,7 +322,7 @@ ValuePtr ScalarUAdd(const ValuePtrList &list) {
 
 ValuePtr ScalarUSub(const ValuePtrList &list) {
   if (list.size() != 1) {
-    MS_EXCEPTION(NotSupportError) << "Input number of ScalarUSub should be 1, but got " << list.size();
+    MS_EXCEPTION(NotSupportError) << "Input number of ScalarUSub should be 1, but got " << list.size() << ".";
   }
   ValuePtr x = list[0];
   MS_EXCEPTION_IF_NULL(x);
@@ -345,7 +345,7 @@ ValuePtr ScalarUSub(const ValuePtrList &list) {
 
 ValuePtr ScalarLog(const ValuePtrList &list) {
   if (list.size() != 1) {
-    MS_EXCEPTION(NotSupportError) << "Input number of ScalarLog must be 1, but got " << list.size();
+    MS_EXCEPTION(NotSupportError) << "Input number of ScalarLog must be 1, but got " << list.size() << ".";
   }
   ValuePtr x = list[0];
   MS_EXCEPTION_IF_NULL(x);
@@ -364,7 +364,7 @@ ValuePtr ScalarLog(const ValuePtrList &list) {
 
 ValuePtr BoolNot(const ValuePtrList &list) {
   if (list.size() != 1) {
-    MS_EXCEPTION(NotSupportError) << "Input number of BoolNot must be 1, but got " << list.size();
+    MS_EXCEPTION(NotSupportError) << "Input number of BoolNot must be 1, but got " << list.size() << ".";
   }
   ValuePtr x = list[0];
   MS_EXCEPTION_IF_NULL(x);
@@ -381,7 +381,7 @@ ValuePtr BoolNot(const ValuePtrList &list) {
 ValuePtr BoolAnd(const ValuePtrList &list) {
   constexpr size_t kListInputSize = 2;
   if (list.size() != kListInputSize) {
-    MS_EXCEPTION(NotSupportError) << "Input number of BoolAnd must be 2, but got " << list.size();
+    MS_EXCEPTION(NotSupportError) << "Input number of BoolAnd must be 2, but got " << list.size() << ".";
   }
   ValuePtr x = list[0];
   ValuePtr y = list[1];
@@ -395,13 +395,13 @@ ValuePtr BoolAnd(const ValuePtrList &list) {
     return MakeValue(res);
   }
 
-  MS_EXCEPTION(NotSupportError) << "Not support [x:" << x->ToString() << "] BoolAnd [y:" << y->ToString();
+  MS_EXCEPTION(NotSupportError) << "Not support [x:" << x->ToString() << "] BoolAnd [y:" << y->ToString() << "].";
 }
 
 ValuePtr BoolOr(const ValuePtrList &list) {
   constexpr size_t kListInputSize = 2;
   if (list.size() != kListInputSize) {
-    MS_EXCEPTION(NotSupportError) << "Input number of BoolOr must be 2, but got " << list.size();
+    MS_EXCEPTION(NotSupportError) << "Input number of BoolOr must be 2, but got " << list.size() << ".";
   }
   ValuePtr x = list[0];
   ValuePtr y = list[1];
@@ -421,7 +421,7 @@ ValuePtr BoolOr(const ValuePtrList &list) {
 ValuePtr BoolEq(const ValuePtrList &list) {
   constexpr size_t kListInputSize = 2;
   if (list.size() != kListInputSize) {
-    MS_EXCEPTION(NotSupportError) << "Input number of BoolEq must be 2, but got " << list.size();
+    MS_EXCEPTION(NotSupportError) << "Input number of BoolEq must be 2, but got " << list.size() << ".";
   }
   ValuePtr x = list[0];
   ValuePtr y = list[1];
