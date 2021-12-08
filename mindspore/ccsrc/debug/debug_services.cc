@@ -926,14 +926,20 @@ void DebugServices::GetTensorDataInfoAsync(const std::vector<std::tuple<std::str
     bool output_flag = (output_str == "output");
 
     for (const std::string &file_name : async_file_pool) {
-      std::size_t found = file_name.find(dump_name);
-      std::size_t found_out = file_name.find(output_str);
-      std::size_t found_dot_start = file_name.find(".", found_out);
-      std::size_t found_dot_end = file_name.find(".", found_dot_start);
+      std::string file_name_to_check = file_name;
+      auto delim = file_name.rfind("/");
+      if (delim != std::string::npos) {
+        file_name_to_check = file_name.substr(delim + 1);
+      }
+      std::size_t found = file_name_to_check.find(dump_name);
+      std::size_t found_out = file_name_to_check.find(output_str);
+      std::size_t found_dot_start = file_name_to_check.find(".", found_out);
+      std::size_t found_dot_end = file_name_to_check.find(".", found_dot_start);
 
       if (file_name.find(specific_dump_dir) != std::string::npos && found != std::string::npos &&
           found_out != std::string::npos) {
-        slot_list.push_back(std::stoul(file_name.substr(found_dot_start + 1, found_dot_end - found_dot_start - 1)));
+        slot_list.push_back(
+          std::stoul(file_name_to_check.substr(found_dot_start + 1, found_dot_end - found_dot_start - 1)));
       }
     }
     for (auto slot : slot_list) {
@@ -1297,9 +1303,14 @@ void DebugServices::ReadDumpedTensorAsync(const std::string &specific_dump_dir, 
   std::vector<std::string> matched_paths;
   // if async mode
   for (const std::string &file_path : async_file_pool) {
+    std::string file_name_to_check = file_path;
+    auto delim = file_path.rfind("/");
+    if (delim != std::string::npos) {
+      file_name_to_check = file_path.substr(delim + 1);
+    }
     if (file_path.find(specific_dump_dir) != std::string::npos &&
-        file_path.find(prefix_dump_to_check) != std::string::npos &&
-        file_path.find(slot_string_to_check) != std::string::npos) {
+        file_name_to_check.find(prefix_dump_to_check) != std::string::npos &&
+        file_name_to_check.find(slot_string_to_check) != std::string::npos) {
       matched_paths.push_back(file_path);
       found = true;
     }
