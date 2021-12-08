@@ -52,5 +52,24 @@ class MIND_API Type : public Value {
   /// \return The data size in bytes for the Type.
   static size_t GetSize(TypeId id);
 };
+
+/// \brief TensorType defines the type of a tensor.
+class MIND_API TensorType : public Type {
+ public:
+  MIND_API_BASE_MEMBER(TensorType);
+
+  /// \brief Construct TensorType from the given element type.
+  ///
+  /// \param[in] element_type The element type of the TensorType.
+  explicit TensorType(const TypePtr &element_type);
+
+  /// \brief Get the element type of this TensorType.
+  ///
+  /// \return The element type of this TensorType.
+  TypePtr element() const;
+};
+
+using TensorTypePtr = SharedPtr<TensorType>;
 }  // namespace mindspore::api
+
 #endif  // MINDSPORE_CORE_MINDAPI_IR_TYPE_H_

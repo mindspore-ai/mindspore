@@ -243,11 +243,11 @@ inline T GetValue(const ValuePtr &value) {
   return imm->value();
 }
 
-/// \brief brief Get primitive element values from a ValueSequence object.
+/// \brief brief Get element values from a ValueSequence object.
 ///
 /// \param[in] value The pointer to the ValueSequence object.
 ///
-/// \return The primitive type values as a vector.
+/// \return The values as a vector, empty if the input is not a ValueSequence.
 template <typename T, typename S = typename std::decay_t<T>,
           typename U = typename std::enable_if_t<is_vector<S>::value, typename S::value_type>>
 inline std::vector<U> GetValue(const ValuePtr &value) {
@@ -258,13 +258,17 @@ inline std::vector<U> GetValue(const ValuePtr &value) {
   if (seq == nullptr) {
     return {};
   }
-  auto elements = seq->value();
-  std::vector<U> result;
-  result.reserve(elements.size());
-  for (auto &e : elements) {
-    result.emplace_back(GetValue<U>(e));
+  if constexpr (std::is_same_v<ValuePtr, U>) {
+    return seq->value();
+  } else {
+    auto elements = seq->value();
+    std::vector<U> result;
+    result.reserve(elements.size());
+    for (auto &e : elements) {
+      result.emplace_back(GetValue<U>(e));
+    }
+    return result;
   }
-  return result;
 }
 }  // namespace mindspore::api
 #endif  // MINDSPORE_CORE_MINDAPI_IR_VALUE_H_

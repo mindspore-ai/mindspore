@@ -27,6 +27,7 @@ using AnfNodePtrList = std::vector<AnfNodePtr>;
 
 class Value;
 using ValuePtr = SharedPtr<Value>;
+using ValuePtrList = std::vector<ValuePtr>;
 
 class Primitive;
 using PrimitivePtr = SharedPtr<Primitive>;
