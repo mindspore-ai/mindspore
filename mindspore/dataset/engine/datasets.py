@@ -71,7 +71,7 @@ from .validators import check_batch, check_shuffle, check_map, check_filter, che
     check_sbu_dataset, check_qmnist_dataset, check_emnist_dataset, check_fake_image_dataset, check_places365_dataset, \
     check_photo_tour_dataset, check_ag_news_dataset, check_dbpedia_dataset, check_lj_speech_dataset, \
     check_yes_no_dataset, check_speech_commands_dataset, check_tedlium_dataset, check_svhn_dataset, \
-    check_stl10_dataset, check_yelp_review_dataset
+    check_stl10_dataset, check_yelp_review_dataset, check_penn_treebank_dataset
 from ..core.config import get_callback_timeout, _init_device_info, get_enable_shared_mem, get_num_parallel_workers, \
     get_prefetch_size
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
@@ -3854,6 +3854,95 @@ class MnistDataset(MappableDataset):
 
     def parse(self, children=None):
         return cde.MnistNode(self.dataset_dir, self.usage, self.sampler)
+
+
+class PennTreebankDataset(SourceDataset):
+    """
+    A source dataset that reads and parses PennTreebank datasets.
+
+    The generated dataset has one column :py:obj:`[text]`.
+    The tensor of column :py:obj:`text` is of the string type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        usage (str, optional): Acceptable usages include `train`, `test`, 'valid' and `all`.
+            'train' will read from 42,068 train samples of string type,
+            'test' will read from 3,370 test samples of string type,
+            'valid' will read from 3,761 test samples of string type,
+            'all' will read from all 49,199 samples of string type (default=None, all samples).
+        num_samples (int, optional): Number of samples (rows) to read (default=None, reads the full dataset).
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, number set in the config).
+        shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
+            (default=Shuffle.GLOBAL).
+            If shuffle is False, no shuffling will be performed;
+            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
+            Otherwise, there are two levels of shuffling:
+
+            - Shuffle.GLOBAL: Shuffle both the files and samples.
+
+            - Shuffle.FILES: Shuffle files only.
+
+        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            When this argument is specified, 'num_samples' reflects the max sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument can only be specified when num_shards is also specified.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
+            (default=None, which means no cache is used).
+
+    Examples:
+        >>> penn_treebank_dataset_dir = "path/to/penn_treebank_dataset_directory"
+        >>> dataset = ds.PennTreebankDataset(dataset_dir=penn_treebank_dataset_dir, usage='all')
+
+    About PennTreebank dataset:
+
+    Penn Treebank (PTB) dataset, is widely used in machine learning for NLP (Natural Language Processing)
+    research. Word-level PTB does not contain capital letters, numbers, and punctuations, and the vocabulary
+    is capped at 10k unique words, which is relatively small in comparison to most modern datasets which
+    can result in a larger number of out of vocabulary tokens.
+
+    Here is the original PennTreebank dataset structure.
+    You can unzip the dataset files into this directory structure and read by MindSpore's API.
+
+    .. code-block::
+        .
+        └── PennTreebank_dataset_dir
+             ├── ptb.test.txt
+             ├── ptb.train.txt
+             └── ptb.valid.txt
+
+    Citation:
+
+    .. code-block::
+
+        @techreport{Santorini1990,
+          added-at = {2014-03-26T23:25:56.000+0100},
+          author = {Santorini, Beatrice},
+          biburl = {https://www.bibsonomy.org/bibtex/234cdf6ddadd89376090e7dada2fc18ec/butonic},
+          file = {:Santorini - Penn Treebank tag definitions.pdf:PDF},
+          institution = {Department of Computer and Information Science, University of Pennsylvania},
+          interhash = {818e72efd9e4b5fae3e51e88848100a0},
+          intrahash = {34cdf6ddadd89376090e7dada2fc18ec},
+          keywords = {dis pos tagging treebank},
+          number = {MS-CIS-90-47},
+          timestamp = {2014-03-26T23:25:56.000+0100},
+          title = {Part-of-speech tagging guidelines for the {P}enn {T}reebank {P}roject},
+          url = {ftp://ftp.cis.upenn.edu/pub/treebank/doc/tagguide.ps.gz},
+          year = 1990
+        }
+    """
+
+    @check_penn_treebank_dataset
+    def __init__(self, dataset_dir, usage=None, num_samples=None, num_parallel_workers=None, shuffle=Shuffle.GLOBAL,
+                 num_shards=None, shard_id=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, num_samples=num_samples, shuffle=shuffle,
+                         num_shards=num_shards, shard_id=shard_id, cache=cache)
+        self.dataset_dir = dataset_dir
+        self.usage = replace_none(usage, "all")
+
+    def parse(self, children=None):
+        return cde.PennTreebankNode(self.dataset_dir, self.usage, self.num_samples, self.shuffle_flag, self.num_shards,
+                                    self.shard_id)
 
 
 class PhotoTourDataset(MappableDataset):

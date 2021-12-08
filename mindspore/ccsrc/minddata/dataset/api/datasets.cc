@@ -107,6 +107,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/lj_speech_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/manifest_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/minddata_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/penn_treebank_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/photo_tour_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/places365_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/qmnist_node.h"
@@ -1398,6 +1399,14 @@ MnistDataset::MnistDataset(const std::vector<char> &dataset_dir, const std::vect
 }
 
 #ifndef ENABLE_ANDROID
+PennTreebankDataset::PennTreebankDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                                         int64_t num_samples, ShuffleMode shuffle, int32_t num_shards, int32_t shard_id,
+                                         const std::shared_ptr<DatasetCache> &cache) {
+  auto ds = std::make_shared<PennTreebankNode>(CharToString(dataset_dir), CharToString(usage), num_samples, shuffle,
+                                               num_shards, shard_id, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+
 PhotoTourDataset::PhotoTourDataset(const std::vector<char> &dataset_dir, const std::vector<char> &name,
                                    const std::vector<char> &usage, const std::shared_ptr<Sampler> &sampler,
                                    const std::shared_ptr<DatasetCache> &cache) {

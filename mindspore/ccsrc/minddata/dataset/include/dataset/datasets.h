@@ -3175,6 +3175,58 @@ inline std::shared_ptr<MnistDataset> MS_API Mnist(const std::string &dataset_dir
   return std::make_shared<MnistDataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, cache);
 }
 
+/// \class PennTreebankDataset
+/// \brief A source dataset for reading and parsing PennTreebank dataset.
+class MS_API PennTreebankDataset : public Dataset {
+ public:
+  /// \brief Constructor of PennTreebank Dataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] usage The type of data list txt file to be read, can be "train", "test", 'valid' or "all".
+  /// \param[in] num_samples The number of samples to be included in the dataset.
+  /// \param[in] shuffle The mode for shuffling data every epoch.
+  ///     Can be any of:
+  ///     ShuffleMode.kFalse - No shuffling is performed.
+  ///     ShuffleMode.kFiles - Shuffle files only.
+  ///     ShuffleMode.kGlobal - Shuffle both the files and samples.
+  /// \param[in] num_shards Number of shards that the dataset should be divided into.
+  /// \param[in] shard_id The shard ID within num_shards. This argument should be
+  ///     specified only when num_shards is also specified.
+  /// \param[in] cache Tensor cache to use.
+  PennTreebankDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, int64_t num_samples,
+                      ShuffleMode shuffle, int32_t num_shards, int32_t shard_id,
+                      const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Destructor of PennTreebankDataset.
+  ~PennTreebankDataset() = default;
+};
+
+/// \brief Function to create a PennTreebank Dataset.
+/// \note The generated dataset has one column ['text'].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage One of "all", "train" , 'valid' or "test" (default = "all").
+/// \param[in] num_samples The number of samples to be included in the dataset
+///     (Default = 0, means all samples).
+/// \param[in] shuffle The mode for shuffling data every epoch (Default=ShuffleMode.kGlobal).
+///     Can be any of:
+///     ShuffleMode.kFalse - No shuffling is performed.
+///     ShuffleMode.kFiles - Shuffle files only.
+///     ShuffleMode.kGlobal - Shuffle both the files and samples.
+/// \param[in] usage One of "all", "train", "valid" or "test" (default = "all").
+/// \param[in] num_shards Number of shards that the dataset should be divided into (Default = 1).
+/// \param[in] shard_id The shard ID within num_shards. This argument should be
+///     specified only when num_shards is also specified (Default = 0).
+/// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
+/// \return Shared pointer to the TextFileDataset.
+inline std::shared_ptr<PennTreebankDataset> MS_API PennTreebank(const std::string &dataset_dir,
+                                                                const std::string &usage = "all",
+                                                                int64_t num_samples = 0,
+                                                                ShuffleMode shuffle = ShuffleMode::kGlobal,
+                                                                int32_t num_shards = 1, int32_t shard_id = 0,
+                                                                const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<PennTreebankDataset>(StringToChar(dataset_dir), StringToChar(usage), num_samples, shuffle,
+                                               num_shards, shard_id, cache);
+}
+
 /// \class PhotoTourDataset
 /// \brief A source dataset for reading and parsing PhotoTour dataset.
 class MS_API PhotoTourDataset : public Dataset {

@@ -43,6 +43,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/image_folder_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/kmnist_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/mnist_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/penn_treebank_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/random_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/speech_commands_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/stl10_node.h"
@@ -339,6 +340,18 @@ PYBIND_REGISTER(MnistNode, 2, ([](const py::module *m) {
                       auto mnist = std::make_shared<MnistNode>(dataset_dir, usage, toSamplerObj(sampler), nullptr);
                       THROW_IF_ERROR(mnist->ValidateParams());
                       return mnist;
+                    }));
+                }));
+
+PYBIND_REGISTER(PennTreebankNode, 2, ([](const py::module *m) {
+                  (void)py::class_<PennTreebankNode, DatasetNode, std::shared_ptr<PennTreebankNode>>(
+                    *m, "PennTreebankNode", "to create a PennTreebankNode")
+                    .def(py::init([](std::string dataset_dir, std::string usage, int32_t num_samples, int32_t shuffle,
+                                     int32_t num_shards, int32_t shard_id) {
+                      auto penn_treebank = std::make_shared<PennTreebankNode>(
+                        dataset_dir, usage, num_samples, toShuffleMode(shuffle), num_shards, shard_id, nullptr);
+                      THROW_IF_ERROR(penn_treebank->ValidateParams());
+                      return penn_treebank;
                     }));
                 }));
 
