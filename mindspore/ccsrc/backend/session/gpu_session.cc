@@ -616,7 +616,13 @@ void GPUSession::UpdateOutputTensors(const VectorRef *outputs,
 #endif
         if (node->isa<CNode>() && !AnfAlgo::IsCommunicationOp(node) && !ps_mode) {
           auto new_address = std::make_shared<device::gpu::GPUDeviceAddress>(nullptr, address->GetSize());
-          AnfAlgo::SetOutputAddr(new_address, output_index, node.get());
+          // If a nop node is output, its previous node should be set.
+          if (opt::IsNopNode(node)) {
+            auto pre_node = AnfAlgo::GetPrevNodeOutput(node, 0, true);
+            AnfAlgo::SetOutputAddr(new_address, pre_node.second, pre_node.first.get());
+          } else {
+            AnfAlgo::SetOutputAddr(new_address, output_index, node.get());
+          }
           (*new_to_old_device_address)[new_address] = address;
           if (graphkernel::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
             auto runtime_instance =
