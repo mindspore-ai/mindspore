@@ -93,14 +93,14 @@ int MatmulFP16CPUKernel::InitBroadcastParams() {
   auto a_shape = in_tensors_[kInputIndex]->shape();
   if (a_shape.size() < kNCHWDimNumber) {
     int add_nums = kNCHWDimNumber - a_shape.size();
-    for (size_t i = 0; i < add_nums; ++i) {
+    for (int i = 0; i < add_nums; ++i) {
       a_shape.insert(a_shape.begin(), 1);
     }
   }
   auto b_shape = in_tensors_[kWeightIndex]->shape();
   if (b_shape.size() < kNCHWDimNumber) {
     int add_nums = kNCHWDimNumber - b_shape.size();
-    for (size_t i = 0; i < add_nums; ++i) {
+    for (int i = 0; i < add_nums; ++i) {
       b_shape.insert(b_shape.begin(), 1);
     }
   }
