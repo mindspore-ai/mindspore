@@ -312,6 +312,7 @@ from .log1p import _log1p_tbe
 from .resize_bilinear import _resize_bilinear_tbe
 from .resize_bilinear_grad import _resize_bilinear_grad_tbe
 from .flatten import _flatten_tbe
+from .flatten_ds import _flatten_ds_tbe
 from .roi_align import _roi_align_tbe
 from .roi_align_grad import _roi_align_grad_tbe
 from .bounding_box_decode import _bounding_box_decode_tbe
