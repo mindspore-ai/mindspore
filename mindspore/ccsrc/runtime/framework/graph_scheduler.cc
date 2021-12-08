@@ -874,7 +874,6 @@ void GraphScheduler::LinkDataArrowInSinkMode(const KernelGraphPtr &graph, const 
       MS_LOG(INFO) << "The graph:" << graph->graph_id()
                    << " has abstract monad input node:" << input_node->DebugString() << ", input index:" << node_index;
       LinkControlArrowByAutoMonad(to_actor, input_node, graph);
-      (void)auto_monad_actors->emplace_back(to_actor);
       continue;  // No data arrow for monad input.
     }
 
@@ -883,6 +882,32 @@ void GraphScheduler::LinkDataArrowInSinkMode(const KernelGraphPtr &graph, const 
     KernelWithIndex to_kernel_with_input_idx = std::make_pair(input_node, node_index);
     // The gather of linking data arrows of kernel by the different from kernel type.
     LinkDataArrow(to_actor, graph_compiler_info, graph, from_kernel_with_output_idx, to_kernel_with_input_idx);
+  }
+
+  std::vector<CNodePtr> auto_monad_kernels;
+  // Foreach the execution order to get the auto monad kernels.
+  auto &execution_order = graph->execution_order();
+  (void)std::for_each(execution_order.begin(), execution_order.end(), [&](const CNodePtr &kernel) {
+    for (size_t i = 0; i < AnfAlgo::GetInputNum(kernel); ++i) {
+      auto input_node = AnfAlgo::GetInputNode(kernel, i);
+      if (HasAbstractMonad(input_node)) {
+        (void)auto_monad_kernels.emplace_back(kernel);
+        continue;
+      }
+    }
+  });
+  // Foreach auto monad kernels to get the auto monad device tensor stores.
+  (void)std::for_each(auto_monad_kernels.begin(), auto_monad_kernels.end(), [&](const CNodePtr &kernel) {
+    for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(kernel); ++i) {
+      KernelWithIndex from_kernel_with_output_idx = AnfAlgo::GetPrevNodeOutput(kernel, i, false);
+      auto front_node = FetchFrontNodeByBackendNode(from_kernel_with_output_idx.first, graph);
+      if (IsPersistentDeviceTensor(front_node)) {
+        (void)to_actor->auto_monad_device_tensor_stores_.insert(front_node);
+      }
+    }
+  });
+  if (to_actor->auto_monad_device_tensor_stores_.size() > 0) {
+    (void)auto_monad_actors->emplace_back(to_actor);
   }
 }
 
@@ -964,13 +989,9 @@ void GraphScheduler::LinkDataArrowForDeviceTensorStore(AbstractActor *const, Abs
                                                        const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(to_actor);
   MS_EXCEPTION_IF_NULL(graph);
-  if (to_actor->type_ == KernelTransformType::kSuperKernelActor) {
-    return;
-  }
 
   auto from_kernel = from_kernel_with_output_idx.first;
   MS_EXCEPTION_IF_NULL(from_kernel);
-
   auto device_tensor_store_key = FetchFrontNodeByBackendNode(from_kernel, graph);
   (void)to_actor->device_tensor_store_keys_.emplace_back(to_kernel_with_input_idx.second, device_tensor_store_key);
 }
@@ -1548,6 +1569,12 @@ void GraphScheduler::LinkDeviceTensorStoreForAutoMonadActor(const std::vector<Ab
     for (auto &device_tensor_store_key : auto_monad_actor->device_tensor_store_keys_) {
       auto device_tensors = DeviceTensorStore::GetInstance().Fetch(device_tensor_store_key.second.get());
       if (device_tensors.size() < kNeedUpdateDeviceTensorStoreNum) {
+        continue;
+      }
+      // Find the device tensor store that needs to be processed accurately.
+      if ((auto_monad_actor->type_ == KernelTransformType::kSuperKernelActor) &&
+          (auto_monad_actor->auto_monad_device_tensor_stores_.find(device_tensor_store_key.second) ==
+           auto_monad_actor->auto_monad_device_tensor_stores_.end())) {
         continue;
       }
 

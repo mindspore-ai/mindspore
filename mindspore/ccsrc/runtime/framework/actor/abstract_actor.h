@@ -21,6 +21,7 @@
 #include <string>
 #include <memory>
 #include <utility>
+#include <set>
 #include "mindrt/include/actor/op_actor.h"
 #include "runtime/framework/actor/actor_common.h"
 #include "runtime/framework/device_tensor_store.h"
@@ -95,9 +96,11 @@ class AbstractActor : public OpActor<DeviceTensor> {
   std::vector<AnfNodePtr> output_data_nodes_;
   std::vector<OpDataUniquePtr<DeviceTensor>> output_data_;
 
-  // The dependent device tensor stores,  the dependent expression is pair<index, AnfNode>.
+  // The dependent device tensor stores, the dependent expression is pair<index, AnfNode>.
   // Index is the input position, AnfNode is the key of the device tensor store.
   std::vector<std::pair<size_t, AnfNodePtr>> device_tensor_store_keys_;
+  // The device tensor stores which have the auto monad attribute.
+  std::set<AnfNodePtr> auto_monad_device_tensor_stores_;
 
   // The dependent input actors.
   std::vector<AID> input_data_arrow_aids_;
