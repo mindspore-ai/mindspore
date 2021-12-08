@@ -910,12 +910,6 @@ bool IsPyObjTypeInvalid(const py::object &obj) {
          !py::isinstance<py::int_>(obj) && !py::isinstance<py::float_>(obj);
 }
 
-inline bool IsNopPrim(const std::string &op_name) {
-  static std::set<std::string> nop_prim = {prim::kPrimReshape->name(), kExpandDimsOpName,  prim::kPrimSqueeze->name(),
-                                           prim::kPrimFlatten->name(), kFlattenGradOpName, prim::kPrimReformat->name()};
-  return nop_prim.find(op_name) != nop_prim.end();
-}
-
 // Shallow Copy Value and change shape
 ValuePtr ShallowCopyValue(const OpExecInfoPtr &op_exec_info, const ValuePtr &value) {
   MS_EXCEPTION_IF_NULL(op_exec_info);
@@ -1053,7 +1047,7 @@ OpExecInfoPtr ForwardExecutor::GenerateOpExecInfo(const py::args &args) {
   const auto &op_exec_info = std::make_shared<OpExecInfo>();
   const auto &op_name = py::cast<std::string>(args[PY_NAME]);
   op_exec_info->op_name = op_name;
-  op_exec_info->is_nop_prim = false;  // IsNopPrim(op_exec_info->op_name);
+  op_exec_info->is_nop_prim = false;
 
   const auto &adapter = py::cast<PrimitivePyAdapterPtr>(args[PY_PRIM]);
   MS_EXCEPTION_IF_NULL(adapter);

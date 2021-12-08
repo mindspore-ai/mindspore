@@ -1206,6 +1206,9 @@ Status Hann(std::shared_ptr<Tensor> *output, int len) {
 }
 
 Status Kaiser(std::shared_ptr<Tensor> *output, int len, float beta = 12.0) {
+#ifdef __APPLE__
+  return Status(StatusCode::kMDNotImplementedYet, "For macOS, Kaiser window is not supported.");
+#else
   CHECK_FAIL_RETURN_UNEXPECTED(len != 0, "Kaiser: len can not be zero.");
   RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({len}), DataType(DataType::DE_FLOAT32), output));
   // Kaiser window function.
@@ -1216,6 +1219,7 @@ Status Kaiser(std::shared_ptr<Tensor> *output, int len, float beta = 12.0) {
       std::cyl_bessel_i(0, beta * std::sqrt(1 - std::pow(i * twice / (len)-1.0, TWO))) / std::cyl_bessel_i(0, beta);
   }
   return Status::OK();
+#endif
 }
 
 Status Window(std::shared_ptr<Tensor> *output, WindowType window_type, int len) {

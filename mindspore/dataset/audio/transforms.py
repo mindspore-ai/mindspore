@@ -991,7 +991,7 @@ class Spectrogram(TensorOperation):
         pad (int): Two sided padding of signal (default=0).
         window (WindowType, optional): Window function that is applied/multiplied to each frame/window,
             which can be WindowType.BARTLETT, WindowType.BLACKMAN, WindowType.HAMMING, WindowType.HANN
-            or WindowType.KAISER (default=WindowType.HANN).
+            or WindowType.KAISER (default=WindowType.HANN). Currently kaiser window is not supported on macOS.
         power (float, optional): Exponent for the magnitude spectrogram, which must be greater
             than or equal to 0, e.g., 1 for energy, 2 for power, etc. (default=2.0).
         normalized (bool, optional): Whether to normalize by magnitude after stft (default=False).
