@@ -371,7 +371,7 @@ def multinomial(inputs, num_sample, replacement=True, seed=None):
         >>> output = ops.multinomial(x, 4)
         >>> print(output)
         [1 1 2 1]
-        >>> # case 3: num_sample == x_length = 4, and replacement is True, Can extract the same elements。
+        >>> # case 3: The output is random, num_sample == x_length = 4, and replacement is True, Can extract the same elements。
         >>> x = Tensor([0, 9, 4, 0], mstype.float32)
         >>> output = ops.multinomial(x, 4, True)
         >>> print(output)
