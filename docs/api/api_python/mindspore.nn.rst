@@ -18,6 +18,19 @@ Containers
     mindspore.nn.CellList
     mindspore.nn.SequentialCell
 
+Convolution Layers
+--------------------
+
+.. cnmsplatformautosummary::
+    :toctree: nn
+
+    mindspore.nn.Conv1d
+    mindspore.nn.Conv1dTranspose
+    mindspore.nn.Conv2d
+    mindspore.nn.Conv2dTranspose
+    mindspore.nn.Conv3d
+    mindspore.nn.Conv3dTranspose
+
 Gradient
 ---------
 
@@ -34,12 +47,18 @@ Non-linear Activations
     :toctree: nn
 
     mindspore.nn.FastGelu
+    mindspore.nn.HShrink
+    mindspore.nn.HSigmoid
     mindspore.nn.HSwish
     mindspore.nn.LeakyReLU
+    mindspore.nn.LogSigmoid
+    mindspore.nn.LogSoftmax
     mindspore.nn.ReLU
     mindspore.nn.ELU
     mindspore.nn.GELU
+    mindspore.nn.Sigmoid
     mindspore.nn.Softmax
+    mindspore.nn.Tanh
 
 Utilities
 ---------
@@ -56,6 +75,9 @@ Loss Functions
 .. cnmsplatformautosummary::
     :toctree: nn
 
+    mindspore.nn.L1Loss
+    mindspore.nn.MAELoss
+    mindspore.nn.MSELoss
     mindspore.nn.SmoothL1Loss
 
 Optimizer Functions
