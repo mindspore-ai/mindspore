@@ -146,7 +146,7 @@ AbstractBasePtr InferImplBatchNorm(const AnalysisEnginePtr &, const PrimitivePtr
     tensorPtrList.push_back(param);
   }
   (void)CheckTensorsDTypeSame(tensorPtrList, {kFloat16, kFloat32},
-                              "For 'BatchNorm',the type of arguments['gamma', 'beta', 'mean', 'variance']");
+                              "For 'BatchNorm',the type of arguments['scale', 'bias', 'mean', 'variance']");
 
   auto data_format_ptr = primitive->GetAttr("format");
   MS_EXCEPTION_IF_NULL(data_format_ptr);
