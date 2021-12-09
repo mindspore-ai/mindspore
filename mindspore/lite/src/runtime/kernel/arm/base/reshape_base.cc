@@ -45,7 +45,7 @@ int ReshapeBaseCPUKernel::Run() {
     CHECK_NULL_RETURN(out_tensor->data());
     CHECK_NULL_RETURN(in_tensor->data());
     MS_CHECK_FALSE(in_tensor->Size() == 0, RET_ERROR);
-    memcpy(out_tensor->data(), in_tensor->data(), in_tensor->Size());
+    if (in_tensor->data() != out_tensor->data()) memcpy(out_tensor->data(), in_tensor->data(), in_tensor->Size());
     return RET_OK;
   }
 

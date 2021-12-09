@@ -24,6 +24,7 @@
 #include <memory>
 #include <queue>
 #include <map>
+#include <set>
 #include "include/errorcode.h"
 #include "src/executor.h"
 #include "src/lite_model.h"
@@ -261,10 +262,23 @@ int TrainSession::AllocTensors(const std::vector<kernel::LiteKernel *> &kernels)
   OptAllocator allocator;
   std::unordered_map<lite::Tensor *, int> ref_count;
   std::unordered_map<lite::Tensor *, size_t> offset_map;
-  for (auto kernel : kernels) {
-    for (auto tensor : kernel->out_tensors()) {
-      size_t size = tensor->Size();
-      size_t offset = allocator.Malloc(size);
+  int counter = 0;
+  uint32_t input_idx = 0;
+  for (auto &kernel : kernels) {
+    for (size_t i = 0; i < kernel->out_tensors().size(); i++) {
+      auto tensor = kernel->out_tensors().at(i);
+      bool in_place = false;
+      if (counter != 0) {
+        in_place = IsInPlaceTensor(kernel, i, ref_count, &input_idx);
+      }
+      counter++;
+      size_t offset;
+      if (in_place) {
+        offset = GetInplaceTensorOffset(kernel, offset_map, &ref_count, input_idx);
+      } else {
+        size_t size = tensor->Size();
+        offset = allocator.Malloc(size);
+      }
       offset_map[tensor] = offset;
       ref_count[tensor] = tensor->init_ref_count();
     }
@@ -1185,6 +1199,61 @@ int TrainSession::UpdateFeatureMaps(const std::vector<tensor::MSTensor *> &featu
     }
   }
   return RET_OK;
+}
+
+std::set<schema::PrimitiveType> inPlaceSupportedKernels = {
+  mindspore::schema::PrimitiveType_Activation, mindspore::schema::PrimitiveType_ActivationGrad,
+  mindspore::schema::PrimitiveType_Reshape,    mindspore::schema::PrimitiveType_DivFusion,
+  mindspore::schema::PrimitiveType_AddFusion,  mindspore::schema::PrimitiveType_SubFusion,
+  mindspore::schema::PrimitiveType_RealDiv,    mindspore::schema::PrimitiveType_Select,
+  mindspore::schema::PrimitiveType_BiasAdd,    mindspore::schema::PrimitiveType_BiasAddGrad,
+  mindspore::schema::PrimitiveType_Sqrt,       mindspore::schema::PrimitiveType_Abs,
+  mindspore::schema::PrimitiveType_Cos,        mindspore::schema::PrimitiveType_Log,
+  mindspore::schema::PrimitiveType_Square,     mindspore::schema::PrimitiveType_Rsqrt,
+  mindspore::schema::PrimitiveType_Sin,        mindspore::schema::PrimitiveType_LogicalNot,
+  mindspore::schema::PrimitiveType_LogicalAnd, mindspore::schema::PrimitiveType_LogicalOr,
+  mindspore::schema::PrimitiveType_Floor,      mindspore::schema::PrimitiveType_Ceil,
+  mindspore::schema::PrimitiveType_Round,      mindspore::schema::PrimitiveType_Neg,
+  mindspore::schema::PrimitiveType_Reciprocal, mindspore::schema::PrimitiveType_Erf,
+  mindspore::schema::PrimitiveType_Maximum,    mindspore::schema::PrimitiveType_Minimum,
+  mindspore::schema::PrimitiveType_FloorDiv,   mindspore::schema::PrimitiveType_FloorMod,
+  mindspore::schema::PrimitiveType_Eltwise,    mindspore::schema::PrimitiveType_SquaredDifference,
+  mindspore::schema::PrimitiveType_ExpandDims, mindspore::schema::PrimitiveType_Cast,
+  mindspore::schema::PrimitiveType_Flatten,    mindspore::schema::PrimitiveType_FlattenGrad,
+  mindspore::schema::PrimitiveType_Squeeze,    mindspore::schema::PrimitiveType_Unsqueeze};
+
+bool TrainSession::IsInPlaceKernel(kernel::LiteKernel *kernel) {
+  if (inPlaceSupportedKernels.find(kernel->type()) != inPlaceSupportedKernels.end() &&
+      !(kernel->type() == mindspore::schema::PrimitiveType_Activation &&
+        kernel->op_parameter()->type_ == schema::ActivationType_SIGMOID)) {
+    return true;
+  }
+  return false;
+}
+
+bool TrainSession::IsInPlaceTensor(kernel::LiteKernel *kernel, uint32_t idx,
+                                   const std::unordered_map<lite::Tensor *, int> &ref_count, uint32_t *input_idx) {
+  if (IsInPlaceKernel(kernel)) {
+    auto out_tensor = kernel->out_tensors().at(idx);
+    for (size_t i = 0; i < kernel->in_tensors().size(); i++) {
+      auto tensor = kernel->in_tensors().at(i);
+      if ((tensor->category() == lite::Category::VAR) &&
+          (tensor->init_ref_count() == 1 || (tensor->init_ref_count() > 1 && ref_count.at(tensor) == 1)) &&
+          (out_tensor->Size() == tensor->Size())) {
+        *input_idx = static_cast<uint32_t>(i);
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+size_t TrainSession::GetInplaceTensorOffset(kernel::LiteKernel *kernel,
+                                            const std::unordered_map<lite::Tensor *, size_t> &offset_map,
+                                            std::unordered_map<lite::Tensor *, int> *ref_count, uint32_t input_idx) {
+  auto tensor = kernel->in_tensors().at(input_idx);
+  ref_count->at(tensor) = ref_count->at(tensor) + 1;
+  return offset_map.at(tensor);
 }
 }  // namespace lite
 
