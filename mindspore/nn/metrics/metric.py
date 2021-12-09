@@ -175,7 +175,7 @@ class Metric(metaclass=ABCMeta):
             >>> y2 = Tensor(np.array([0, 0, 1]))
             >>> metric = nn.Accuracy('classification').set_indexes([0, 2])
             >>> metric.clear()
-            # indexes is [0, 2], using x as logits, y2 as label.
+            >>> # indexes is [0, 2], using x as logits, y2 as label.
             >>> metric.update(x, y, y2)
             >>> accuracy = metric.eval()
             >>> print(accuracy)
