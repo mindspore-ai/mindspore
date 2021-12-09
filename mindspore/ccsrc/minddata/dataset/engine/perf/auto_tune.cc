@@ -110,11 +110,6 @@ Status AutoTune::CollectOpsInfo() {
     if (itr->NumWorkers() > 0) {
       parallel_ops_ids_.push_back(itr->id());
     }
-    CHECK_FAIL_RETURN_UNEXPECTED(itr->Name() != "GeneratorOp",
-                                 "GeneratorDataset is in the pipeline, AutoTune is not supported.");
-    CHECK_FAIL_RETURN_UNEXPECTED(!itr->IsPython(), "Pyfunc is in the pipeline, AutoTune is not supported.");
-    CHECK_FAIL_RETURN_UNEXPECTED(itr->Name() != "GeneratorOp",
-                                 "GeneratorDataset is in the pipeline, AutoTune is not supported.");
   }
   // sort parallel ops in reverse order of IDs (i.e., bottommost op is first)
   std::sort(parallel_ops_ids_.begin(), parallel_ops_ids_.end(), std::greater<>());
@@ -381,6 +376,13 @@ Status AutoTune::Analyse() {
   for (const auto &op_id : parallel_ops_ids_) {
     // MindRecordOp and NonMappableDataset is not supported in AutoTune
     if (ops_[op_id]->Name() == "MindRecordOp") {
+      continue;
+    }
+    // Skip python op
+    if (ops_[op_id]->Name() == "GeneratorOp") {
+      continue;
+    }
+    if (ops_[op_id]->IsPython()) {
       continue;
     }
 #ifndef ENABLE_ANDROID
