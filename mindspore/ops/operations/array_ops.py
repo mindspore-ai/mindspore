@@ -6329,8 +6329,8 @@ class SearchSorted(PrimitiveWithInfer):
         >>> values = Tensor(np.array([[3, 6, 9], [3, 6, 9]]), mindspore.float32)
         >>> output = ops.SearchSorted()(sequence, values)
         >>> print(output)
-        [[2, 4, 5]
-         [1, 2, 4]]
+        [[2 4 5]
+         [1 2 4]]
     """
 
     @prim_attr_register
