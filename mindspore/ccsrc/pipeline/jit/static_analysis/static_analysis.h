@@ -257,7 +257,7 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   AnalysisEngine(const PrimEvaluatorMap &prim_evaluator_map, const FuncGraphManagerPtr &func_graph_manager)
       : prim_constructors_(prim_evaluator_map), func_graph_manager_(func_graph_manager) {
     forward_count_ = 0;
-    enable_recursive_eval_ = (common::GetEnv("ENV_RECURSIVE_EVAL") == "1");
+    enable_recursive_eval_ = (common::GetEnv("MS_DEV_RECURSIVE_EVAL") == "1");
   }
   ~AnalysisEngine() = default;
 

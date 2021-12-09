@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace label_manage {
-static TraceLabelType global_trace_type = (common::GetEnv("ENV_TRACE_LABEL_WITH_UNIQUE_ID") == "1")
+static TraceLabelType global_trace_type = (common::GetEnv("MS_DEV_TRACE_LABEL_WITH_UNIQUE_ID") == "1")
                                             ? TraceLabelType::kWithUniqueId
                                             : TraceLabelType::kShortSymbol;
 TraceLabelType GetGlobalTraceLabelType() { return global_trace_type; }
