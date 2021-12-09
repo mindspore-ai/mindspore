@@ -90,27 +90,23 @@ std::vector<PrimitivePtr> GkUtils::GetValidOps(const std::vector<OpWithLevel> &o
 
 bool GkUtils::IsKeepBasicNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  auto get_bool_attr = [](const PrimitivePtr &primitive, const std::string &attr_name) -> bool {
-    if (!primitive->HasAttr(attr_name)) {
-      return false;
-    }
-    return GetValue<bool>(primitive->GetAttr(attr_name));
-  };
   auto prim = GetCNodePrimitive(node);
   if (prim == nullptr) return false;
 
-  // Dynamic shape is unsupported yet.
-  if (get_bool_attr(prim, kAttrInputIsDynamicShape) || get_bool_attr(prim, kAttrOutputIsDynamicShape) ||
-      get_bool_attr(prim, kAttrIsDynamicShape)) {
-    return true;
-  }
-  if (get_bool_attr(prim, "skip")) {
+  // dynamic shape nodes is not supported yet.
+  // the "skip" is used by inplace node.
+  // the kAttrIsInternalOutput is used by internal output of KernelGraph.
+  const std::vector<std::string> exclude_bool_attrs = {kAttrInputIsDynamicShape, kAttrOutputIsDynamicShape,
+                                                       kAttrIsDynamicShape, "skip", kAttrIsInternalOutput};
+  if (std::any_of(exclude_bool_attrs.cbegin(), exclude_bool_attrs.cend(), [&prim](const std::string &attr_name) {
+        return prim->HasAttr(attr_name) && GetValue<bool>(prim->GetAttr(attr_name));
+      })) {
     return true;
   }
 
   // If node contain attribute in contagious_attrs, it have to keep basic no matter what the value is.
   const std::vector<std::string> contagious_attrs = {"inplace_group", "inplace_algo", "inplace_output_index",
-                                                     "aggregate", "aggregate_input_indexx"};
+                                                     "aggregate", "aggregate_input_index"};
   if (std::any_of(contagious_attrs.cbegin(), contagious_attrs.cend(),
                   [&prim](const std::string &attr_name) -> bool { return prim->HasAttr(attr_name); })) {
     return true;

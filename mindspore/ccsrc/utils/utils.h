@@ -503,6 +503,7 @@ constexpr auto kAttrInputToAttrIdx = "input_to_attr_idx";
 constexpr auto kAttrInputToAttrName = "input_to_attr_name";
 constexpr auto kAttrFuncType = "func_type";
 constexpr auto kAttrCustAicpu = "cust_aicpu";
+constexpr auto kAttrIsInternalOutput = "is_internal_output";
 
 // custom operator func type
 constexpr auto kCustomTypeAOT = "aot";
