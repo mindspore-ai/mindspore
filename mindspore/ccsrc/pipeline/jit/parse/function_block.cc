@@ -473,19 +473,25 @@ void FunctionBlock::Jump(const FunctionBlockPtr &target_block, const std::vector
 
 // Perform a conditional jump using switch operation.
 // The first CNode select graph with condition, and than execute this graph
-void FunctionBlock::ConditionalJump(AnfNodePtr condNode, const FunctionBlockPtr &true_block,
-                                    const FunctionBlockPtr &false_block, bool) {
-  MS_EXCEPTION_IF_NULL(true_block);
-  MS_EXCEPTION_IF_NULL(false_block);
+void FunctionBlock::ConditionalJump(AnfNodePtr cond_node, const AnfNodePtr &true_block_call,
+                                    const AnfNodePtr &false_block_call) {
+  MS_EXCEPTION_IF_NULL(true_block_call);
+  MS_EXCEPTION_IF_NULL(false_block_call);
   if (func_graph_->get_return() != nullptr) {
     MS_LOG(EXCEPTION) << "Failure: have return node! NodeInfo: "
                       << trace::GetDebugInfo(func_graph_->get_return()->debug_info());
   }
   CNodePtr switch_app =
-    func_graph_->NewCNodeInOrder({NewValueNode(prim::kPrimSwitch), condNode, NewValueNode(true_block->func_graph()),
-                                  NewValueNode(false_block->func_graph())});
+    func_graph_->NewCNodeInOrder({NewValueNode(prim::kPrimSwitch), cond_node, true_block_call, false_block_call});
   CNodePtr switch_app_new = func_graph_->NewCNodeInOrder({switch_app});
   func_graph_->set_output(switch_app_new);
+}
+
+void FunctionBlock::ConditionalJump(AnfNodePtr cond_node, const FunctionBlockPtr &true_block,
+                                    const FunctionBlockPtr &false_block) {
+  MS_EXCEPTION_IF_NULL(true_block);
+  MS_EXCEPTION_IF_NULL(false_block);
+  ConditionalJump(cond_node, NewValueNode(true_block->func_graph()), NewValueNode(false_block->func_graph()));
 }
 
 // Create cnode for the assign statement like 'self.target = source'.

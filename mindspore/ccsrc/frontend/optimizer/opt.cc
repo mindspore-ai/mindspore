@@ -307,8 +307,8 @@ bool SubstitutionList::ApplySubstitutionsToIR(const OptimizerPtr &optimizer, con
                        optimizer->CurPass_.name + "_" + substitution->name_;
         DumpIR(fg_name + ".ir", func_graph);
         if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
-          func_graph->DumpFuncGraph(fg_name);
           ExportIR(fg_name + ".dat", func_graph);
+          func_graph->DumpFuncGraph(fg_name);
         }
       }
 #endif

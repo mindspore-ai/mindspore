@@ -568,10 +568,12 @@ AnfNodePtr Parser::ParseBinOp(const FunctionBlockPtr &block, const py::object &n
   if (left_node == nullptr) {
     MS_LOG(EXCEPTION) << "DoBinOp process left node failed: " << errcode();
   }
+  left_node = HandleInterpret(block, left_node, left);
   AnfNodePtr right_node = ParseExprNode(block, right);
   if (right_node == nullptr) {
     MS_LOG(EXCEPTION) << "DoBinOp process right node failed:" << errcode();
   }
+  right_node = HandleInterpret(block, right_node, right);
   // Resolve the op
   MS_EXCEPTION_IF_NULL(block);
   AnfNodePtr op_node = block->MakeResolveAstOp(op);
@@ -1381,10 +1383,10 @@ FunctionBlockPtr Parser::ParseFor(const FunctionBlockPtr &block, const py::objec
   return after_block;
 }
 
-// A for loop will generate 3 functions :the test, the body, and the continuation
+// A for loop will generate 3 functions: the test, the body, and the continuation.
 // for x in xs:
 //    body
-// It is compiled to be following statement
+// It is compiled to be following statement:
 // it = iter(xs)
 // while hastnext(it)
 //    x, it = next(it)
@@ -1458,10 +1460,10 @@ FunctionBlockPtr Parser::ParseForIter(const FunctionBlockPtr &block, const py::o
   return after_block;
 }
 
-// A for loop will generate 3 functions :the test, the body, and the continuation
+// A for loop will generate 3 functions: the test, the body, and the continuation.
 // for x in xs:
 //    body
-// It is compiled to be following statement
+// It is compiled to be following statement:
 // i = 0
 // while i < len(xs)
 //    x = xs[i]
@@ -1531,7 +1533,7 @@ FunctionBlockPtr Parser::ParseForLoop(const FunctionBlockPtr &block, const py::o
   block->Jump(header_block, {zero_tensor});
   body_block->Mature();
 
-  header_block->ConditionalJump(cond_node, body_block, after_block, false);
+  header_block->ConditionalJump(cond_node, body_block, after_block);
 
   // Parse loop body statements with loop context.
   LoopContext loop_context{&loops_, header_block, loop_var_inc};
@@ -1592,7 +1594,6 @@ AnfNodePtr Parser::ParseIfExp(const FunctionBlockPtr &block, const py::object &n
   CNodePtr switch_app = block->func_graph()->NewCNodeInOrder({NewValueNode(prim::kPrimSwitch), bool_node,
                                                               NewValueNode(true_block->func_graph()),
                                                               NewValueNode(false_block->func_graph())});
-
   std::vector<AnfNodePtr> call_graph_nodes{switch_app};
   CNodePtr switch_app_call = block->func_graph()->NewCNodeInOrder(std::move(call_graph_nodes));
   return switch_app_call;
@@ -2297,7 +2298,7 @@ FuncGraphPtr MakeTopGraph(const py::object &cell, const ValuePtr &cell_ptr) {
   }
 
   // cell_obj
-  MS_LOG(DEBUG) << "add Flag for " << std::string(py::str(cell));
+  MS_LOG(DEBUG) << "Add flag for " << std::string(py::str(cell));
   parse::UpdateFuncGraphFlags(cell, func_graph);
   // Top graph's construct flag
   if (py::hasattr(cell, "construct")) {

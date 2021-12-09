@@ -43,7 +43,7 @@ bool CheckIfEmbedJ(const CNodePtr &j_node) {
   }
   auto func_graph = GetValueNode<FuncGraphPtr>(value_node);
   if (func_graph == nullptr) {
-    MS_LOG(EXCEPTION) << "Unexpected j node:" << j_node->DebugString();
+    MS_LOG(EXCEPTION) << "Unexpected J node, input func graph should not be null, node: " << j_node->DebugString();
   }
   auto func_graph_manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(func_graph_manager);

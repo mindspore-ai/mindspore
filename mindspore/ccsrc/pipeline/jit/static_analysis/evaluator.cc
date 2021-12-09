@@ -290,7 +290,7 @@ AbstractBasePtrList FuncGraphEvaluator::NormalizeArgs(const AbstractBasePtrList 
   if (func_graph_->has_flag(FUNC_GRAPH_FLAG_IGNORE_VALUES)) {
     AbstractBasePtrList broaded_list;
     BroadenArgs(args_spec_list, &broaded_list);
-    MS_LOG(DEBUG) << func_graph_->ToString() << " original: " << mindspore::ToString(args_spec_list)
+    MS_LOG(DEBUG) << func_graph_->ToString() << ", original: " << mindspore::ToString(args_spec_list)
                   << ", broaded: " << mindspore::ToString(broaded_list);
     return broaded_list;
   }
@@ -380,19 +380,21 @@ EvalResultPtr Evaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args
   MS_EXCEPTION_IF_NULL(evaluator_cache_mgr_);
   auto eval_result = evaluator_cache_mgr_->GetValue(args_spec_list);
   if (eval_result == nullptr) {
-    MS_LOG(DEBUG) << evaluator_name << " cache miss, call Eval().";
+    MS_LOG(DEBUG) << "[" << this << "/" << evaluator_name << "] cache miss, call Eval(), args: " << args_spec_list;
     eval_result = Eval(engine, args_spec_list, out_conf);
     MS_EXCEPTION_IF_NULL(eval_result);
     if (eval_result->abstract() == nullptr) {
       EvalFailLogging(shared_from_base<Evaluator>(), args_spec_list, out_conf);
       MS_LOG(EXCEPTION) << "Evaluator " << evaluator_name << " result is nullptr.";
     }
-    MS_LOG(DEBUG) << evaluator_name << " set cache. return: " << eval_result->abstract()->ToString() << ".";
+    MS_LOG(DEBUG) << "[" << this << "/" << evaluator_name
+                  << "] set cache. result: " << eval_result->abstract()->ToString();
     evaluator_cache_mgr_->SetValue(args_spec_list, eval_result);
   } else {
     MS_EXCEPTION_IF_NULL(eval_result);
     MS_EXCEPTION_IF_NULL(eval_result->abstract());
-    MS_LOG(DEBUG) << evaluator_name << " cache hit. return: " << eval_result->abstract()->ToString() << ".";
+    MS_LOG(DEBUG) << "[" << this << "/" << evaluator_name
+                  << "] cache hit. result: " << eval_result->abstract()->ToString() << ", args: " << args_spec_list;
   }
   return eval_result;
 }
@@ -406,7 +408,7 @@ EvalResultPtr TrivialPrimEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
                          MS_EXCEPTION_IF_NULL(conf);
                          auto abstract = conf->ObtainEvalResult()->abstract();
                          MS_EXCEPTION_IF_NULL(abstract);
-                         // broaden the ref_key, while infer python prim for cache
+                         // Broaden the ref_key, while infer python prim for cache
                          if (is_py_eval && abstract->isa<AbstractRef>()) {
                            auto abs_ref = abstract->cast<AbstractRefPtr>();
                            abstract = std::make_shared<AbstractRef>(abs_ref->ref_key()->Broaden(), abs_ref);

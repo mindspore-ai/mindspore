@@ -74,6 +74,8 @@ StackFramePtr StackFrame::DoJump(const AnalysisEnginePtr &engine, const CNodePtr
   AbstractBasePtrList args_abs_list = GenerateArgsAbsList(engine, evaluator, current_cnode);
   // Check if already evaluated before.
   if (evaluator->evaluator_cache_mgr()->GetValue(args_abs_list) != nullptr) {
+    MS_LOG(DEBUG) << "Eval before, current_node: " << current_cnode->DebugString()
+                  << ", current_context_: " << current_context_->ToString() << ", args: " << args_abs_list;
     return nullptr;
   }
 
@@ -87,8 +89,8 @@ StackFramePtr StackFrame::DoJump(const AnalysisEnginePtr &engine, const CNodePtr
                             << "FunctionGraph ID : " << fg->ToString()
                             << "\nNodeInfo: " << trace::GetDebugInfo(fg->debug_info());
   }
-  MS_LOG(DEBUG) << "current_node: " << current_cnode->DebugString() << ", fg: " << fg->ToString()
-                << ", current_context_: " << current_context_->ToString();
+  MS_LOG(DEBUG) << "Not eval before, current_node: " << current_cnode->DebugString() << ", fg: " << fg->ToString()
+                << ", current_context_: " << current_context_->ToString() << ", args: " << args_abs_list;
 
   // Find parent context and create new context.
   AnalysisContextPtr parent_context = GetParentContext(fg_evaluator, graph_func);

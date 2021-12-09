@@ -243,3 +243,26 @@ def test_np_tensor_add():
     tensor_list = np_tensor_add()
     print("tensor_list:", tensor_list)
     assert tensor_list[-1] == 11
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_binop_new_tensor():
+    """
+    Feature: Fallback feature
+    Description: support binop's interpreted nodes.
+    Expectation: No exception.
+    """
+    class BinOpNet(nn.Cell):
+        def __init__(self):
+            super(BinOpNet, self).__init__()
+
+        def construct(self):
+            np_array = np.array(9)
+            res = Tensor(np_array) + Tensor(np_array)
+            return res
+
+    net = BinOpNet()
+    print(net())
