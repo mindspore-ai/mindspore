@@ -135,6 +135,7 @@ BuiltInTypeMap &GetMethodMap() {
                                          {"append", std::string("list_append")},     // C.list_next
                                          {"__bool__", std::string("list_bool")},     // C.list_bool
                                          {"__ms_hasnext__", std::string("list_hasnext")},
+                                         {"insert", std::string("list_insert")},
                                        }},
                                       {kObjectTypeDictionary,
                                        {
