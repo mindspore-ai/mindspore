@@ -225,6 +225,42 @@ bool LiteKernelUtil::IsNonTailCall(kernel::LiteKernel *node) {
   return node->type() == schema::PrimitiveType_Call &&
          !(reinterpret_cast<CallParameter *>(node->op_parameter())->is_tail_call);
 }
+
+std::vector<LiteKernel *> LiteKernelUtil::GetCallInputPartails(LiteKernel *call_node) {
+  if (call_node->type() != schema::PrimitiveType_Call) {
+    MS_LOG(ERROR) << "input node is not call node.";
+    return {};
+  }
+  auto call_inputs = call_node->in_kernels();
+  if (call_inputs.size() != 1) {
+    MS_LOG(ERROR) << "call inputs size is: " << call_inputs.size() << ", not is 1.";
+    return {};
+  }
+
+  std::vector<LiteKernel *> partial_nodes{};
+  auto call_input_node = call_inputs.front();
+  switch (call_input_node->type()) {
+    case schema::PrimitiveType_PartialFusion: {
+      partial_nodes.push_back(call_input_node);
+      break;
+    }
+    case schema::PrimitiveType_Switch:
+    case schema::PrimitiveType_SwitchLayer: {
+      auto switch_type_node = call_input_node;
+      for (auto item : switch_type_node->in_kernels()) {
+        if (item->type() == schema::PrimitiveType_PartialFusion) {
+          partial_nodes.push_back(item);
+        }
+      }
+      break;
+    }
+    default: {
+      MS_LOG(ERROR) << "not support call input type is: " << call_input_node->type();
+      return {};
+    }
+  }
+  return partial_nodes;
+}
 #endif
 
 kernel::LiteKernel *LiteKernelUtil::GetInputsSpecificNode(const kernel::LiteKernel *kernel,

@@ -81,7 +81,9 @@ class AnfExporter {
 
  private:
   void SetNonTailCall(const CNodePtr &cnode, schema::CNodeT *node);
-  int SetTailCall(const CNodePtr &return_cnode);
+  int SetTailCallForReturn(const CNodePtr &return_cnode);
+  // To deal witch case which call node has not output.
+  int SetTailCallForNonOutput();
 
  private:
   // Key is a pair of node and its output id. Value is the mapped tensor id of meta_graph.

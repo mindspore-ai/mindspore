@@ -23,6 +23,7 @@
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
 #include "src/tensorlist.h"
 #include "src/runtime/kernel/arm/base/partial_fusion.h"
+#include "src/control_flow/control_flow_scheduler.h"
 #endif
 #include "include/errorcode.h"
 #include "src/common/graph_util.h"
@@ -311,6 +312,11 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
 
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
   SetSubgraphForPartialNode();
+  ret = RecordControlFlowLinkInfo();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Record ControlFlow LinkInfo failed.";
+    return ret;
+  }
 #endif
 
 #ifndef DELEGATE_CLIP
@@ -334,6 +340,13 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
     MS_LOG(ERROR) << "ConstructSubGraphs failed.";
     return ret;
   }
+
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
+  if (*is_control_flow_) {
+    ControlFlowScheduler control_flow_scheduler(context_, ms_context_, src_tensors_);
+    control_flow_scheduler.Schedule(dst_kernels);
+  }
+#endif
 
 #ifndef RUNTIME_PASS_CLIP
   RuntimePass(dst_kernels, src_tensors_);
@@ -1622,11 +1635,23 @@ void Scheduler::SubGraphMarkScheduled(const int &index) { scheduled_subgraph_ind
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
 void Scheduler::SetSubgraphForPartialNode() {
   for (auto &pair : partial_kernel_subgraph_index_map_) {
-    auto &partial_kernel = pair.first;
+    auto partial_kernel = static_cast<kernel::PartialFusionKernel *>((pair.first)->kernel());
     auto &subgraph_index = pair.second;
-    static_cast<kernel::PartialFusionKernel *>(partial_kernel->kernel())
-      ->set_subgraph_kernel(subgraph_index_subgraph_kernel_map_.at(subgraph_index));
+    partial_kernel->set_subgraph_kernel(subgraph_index_subgraph_kernel_map_.at(subgraph_index));
   }
+}
+
+int Scheduler::RecordControlFlowLinkInfo() {
+  for (auto &pair : partial_kernel_subgraph_index_map_) {
+    auto partial_kernel = static_cast<kernel::PartialFusionKernel *>((pair.first)->kernel());
+    auto subgraph_kernel = partial_kernel->subgraph_kernel();
+    MS_CHECK_TRUE_MSG(partial_kernel->in_tensors().size() == subgraph_kernel->in_tensors().size(), RET_ERROR,
+                      "partial inputs and corresponding subgraph inputs size not same.");
+    for (size_t i = 0; i < partial_kernel->in_tensors().size(); ++i) {
+      context_->SetLinkInfo(partial_kernel->in_tensors()[i], subgraph_kernel->in_tensors()[i]);
+    }
+  }
+  return RET_OK;
 }
 #endif
 

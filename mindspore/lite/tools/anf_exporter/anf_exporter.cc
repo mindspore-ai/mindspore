@@ -392,7 +392,7 @@ void AnfExporter::SetNonTailCall(const CNodePtr &cnode, schema::CNodeT *node) {
   return;
 }
 
-int AnfExporter::SetTailCall(const CNodePtr &return_cnode) {
+int AnfExporter::SetTailCallForReturn(const CNodePtr &return_cnode) {
   auto return_cnode_input_size = return_cnode->inputs().size();
   for (size_t i = 1; i < return_cnode_input_size; ++i) {
     if (!utils::isa<CNodePtr>(return_cnode->input(i))) {
@@ -407,6 +407,22 @@ int AnfExporter::SetTailCall(const CNodePtr &return_cnode) {
       return RET_ERROR;
     }
     call_node_map_[call_cnode]->primitive->value.AsCall()->is_tail_call = true;
+  }
+  return RET_OK;
+}
+
+int AnfExporter::SetTailCallForNonOutput() {
+  for (auto item : call_node_map_) {
+    auto call_cnode = item.first;
+    auto mg = call_cnode->func_graph()->manager();
+    if (mg == nullptr) {
+      MS_LOG(ERROR) << "manager is nullptr.";
+      return RET_NULL_PTR;
+    }
+    auto node_user = mg->node_users()[call_cnode];
+    if (node_user.empty()) {
+      (item.second)->primitive->value.AsCall()->is_tail_call = true;
+    }
   }
   return RET_OK;
 }
@@ -454,9 +470,9 @@ int AnfExporter::Anf2Fb(const FuncGraphPtr &func_graph, const std::unique_ptr<sc
         MS_LOG(ERROR) << "SetOpOutputN failed";
         break;
       }
-      ret = SetTailCall(cnode);
+      ret = SetTailCallForReturn(cnode);
       if (ret != RET_OK) {
-        MS_LOG(ERROR) << "SetTailCall failed";
+        MS_LOG(ERROR) << "SetTailCallForReturn failed";
         return ret;
       }
 
@@ -623,6 +639,13 @@ schema::MetaGraphT *AnfExporter::Export(const FuncGraphPtr &func_graph, bool kee
   int ret = ExportSubgraph(func_graph, meta_graphT, keep_graph, copy_primitive);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Export subgraph failed.";
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(ret);
+    return nullptr;
+  }
+
+  ret = SetTailCallForNonOutput();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "SetTailCallForNonOutput failed.";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(ret);
     return nullptr;
   }
