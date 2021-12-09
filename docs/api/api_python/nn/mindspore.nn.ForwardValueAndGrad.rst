@@ -3,7 +3,7 @@ mindspore.nn.ForwardValueAndGrad
 
 .. py:class:: mindspore.nn.ForwardValueAndGrad(network, weights=None, get_all=False, get_by_list=False, sens_param=False)
 
-    网络训练包类。
+    训练网络的封装。
 
     包括正向网络和梯度函数。该类生成的Cell使用'\*inputs'输入来训练。
     通过梯度函数来创建反向图，用以计算梯度。
