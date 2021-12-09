@@ -82,7 +82,8 @@ int64_t Util::LocalShard(int64_t first_dim, int64_t rank_id, int64_t server_num)
 
 std::map<int64_t, int64_t> Util::AllRankLocalShard(int64_t first_dim, int64_t rank_id, int64_t server_num) {
   if (first_dim <= 0 || server_num <= 0 || rank_id < 0) {
-    MS_LOG(EXCEPTION) << "Input values are invalid.";
+    MS_LOG(EXCEPTION) << "Input values are invalid, first_dim: " << first_dim << ", server_num: " << server_num
+                      << ", rank_id: " << rank_id;
   }
   if (rank_id >= server_num) {
     MS_LOG(EXCEPTION) << "The rank ID " << rank_id << " should be less than the number of servers " << server_num;
