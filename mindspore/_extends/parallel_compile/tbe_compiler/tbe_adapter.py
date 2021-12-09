@@ -21,6 +21,7 @@ from datetime import datetime
 
 from tbe.common.rl_bank.bank_manager import set_current_op_name
 from tbe.common.repository_manager.interface import cann_kb_unload, cann_kb_load
+from tbe.common.rl_bank.bank_cfg import LocalLock
 from te.platform.cce_conf import te_set_version
 from te.platform.cce_policy import set_L1_info
 from te_fusion.compile_task_manager import dispatch_prebuild_task, dispatch_single_op_compile_task, import_py_module, \
@@ -241,12 +242,20 @@ def tbe_initialize(job: TbeJob):
     res = _tune_init(job)
     if not res:
         job.error("Tune init failed")
-    res = _cann_kb_load(job)
-    if res == 1:
-        job.error("Cann kb load failed")
-    res = _parallel_compilation_init(job)
-    if not res:
-        job.error("Parallel compilation failed")
+    lock_file = os.path.join(job.content["SocInfo"]["op_debug_dir"], "kernel_meta", "file.lock")
+    local_lock = LocalLock(lock_file)
+    try:
+        local_lock.lock()
+        res = _cann_kb_load(job)
+        if res == 1:
+            job.error("Cann kb load failed")
+        res = _parallel_compilation_init(job)
+        if not res:
+            job.error("Parallel compilation failed")
+    except RuntimeError:
+        job.error("Initialize failed with RuntimeError")
+    finally:
+        local_lock.unlock()
     job.result = "Success"
     return res
 
