@@ -24,8 +24,8 @@ file_identifier "MSL2";
 file_extension "ms";
 
 table QuantParam {
-    scale: double;
-    zeroPoint: int;
+    scale: double = 1;
+    zeroPoint: int = 0;
     min: double = 0;
     max: double = 0;
     narrowRange: bool = true;

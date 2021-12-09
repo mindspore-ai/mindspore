@@ -19,11 +19,11 @@
 #include <cstdint>
 
 namespace mindspore::lite::quant {
-class BitStream {
+class FSEBitStream {
  public:
-  BitStream() = default;
+  FSEBitStream() = default;
 
-  ~BitStream() = default;
+  ~FSEBitStream() = default;
 
  public:
   int Create(int bit_capacity);
@@ -32,6 +32,7 @@ class BitStream {
   int64_t Pop(uint8_t bit_count);
   void Push(int64_t state, uint8_t bit_count);
   void Flush();
+  static int CountBits(int32_t x);
 
   int32_t GetCurrChunkIndex() { return this->curr_chunk_index_; }
   uint64_t GetCurrChunk() { return this->curr_chunk_; }

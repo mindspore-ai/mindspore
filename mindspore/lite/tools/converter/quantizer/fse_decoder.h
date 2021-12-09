@@ -31,7 +31,7 @@ class FSEDecoder {
   static int DeCompress(const SchemaTensorWrapper &src_tensor, Tensor *dst_tensor);
 
  private:
-  static int FSEDecode(BitStream *bs, float *buff, int buff_count, uint32_t *frequency, int frequency_count,
+  static int FSEDecode(FSEBitStream *bs, float *buff, int buff_count, uint32_t *frequency, int frequency_count,
                        const float *centroids, int table_log);
 
   static int FSECreateStatesForDecoding(const uint32_t *symbol_frequency, int symbol_frequency_count, int table_log,

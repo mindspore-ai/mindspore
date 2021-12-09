@@ -23,10 +23,11 @@ namespace mindspore::lite::quant {
 namespace {
 constexpr int8_t kCurrentBitCount = 64;
 constexpr int8_t kTableSize = 6;
+constexpr size_t kInt32Mask = 31;
 }  // namespace
-int BitStream::Create(int bit_capacity) {
+int FSEBitStream::Create(int bit_capacity) {
   chunk_count_ = (bit_capacity >> kTableSize);
-  chunks_ = static_cast<uint64_t *>(calloc(chunk_count_, sizeof(uint64_t)));
+  chunks_ = static_cast<uint64_t *>(malloc(chunk_count_ * sizeof(uint64_t)));
   if (chunks_ == nullptr) {
     MS_LOG(ERROR) << "malloc memory failed.";
     return RET_ERROR;
@@ -35,7 +36,7 @@ int BitStream::Create(int bit_capacity) {
   return RET_OK;
 }
 
-void BitStream::Free() {
+void FSEBitStream::Free() {
   curr_chunk_index_ = -1;
   curr_chunk_ = 0;
   curr_bit_count_ = 0;
@@ -46,7 +47,7 @@ void BitStream::Free() {
   }
 }
 
-void BitStream::Empty() {
+void FSEBitStream::Empty() {
   curr_chunk_index_ = -1;
   curr_chunk_ = 0;
   curr_bit_count_ = 0;
@@ -55,7 +56,7 @@ void BitStream::Empty() {
   }
 }
 
-int64_t BitStream::Pop(uint8_t bit_count) {
+int64_t FSEBitStream::Pop(uint8_t bit_count) {
   MS_ASSERT(curr_bit_count_ <= kCurrentBitCount);
   int64_t right = curr_chunk_ >> (kCurrentBitCount - curr_bit_count_);
   int64_t res = right & ((1 << bit_count) - 1);
@@ -81,7 +82,7 @@ int64_t BitStream::Pop(uint8_t bit_count) {
   return right;
 }
 
-void BitStream::Push(int64_t state, uint8_t bit_count) {
+void FSEBitStream::Push(int64_t state, uint8_t bit_count) {
   curr_bit_count_ += bit_count;
   if (curr_bit_count_ <= kCurrentBitCount) {
     // happy path, no split
@@ -104,5 +105,23 @@ void BitStream::Push(int64_t state, uint8_t bit_count) {
   }
 }
 
-void BitStream::Flush() { curr_chunk_ <<= kCurrentBitCount - curr_bit_count_; }
+void FSEBitStream::Flush() { curr_chunk_ <<= kCurrentBitCount - curr_bit_count_; }
+
+// The function gives the index of most import `1` in the binary representation.
+// e.g. for the number 00100 it gives 2.
+int FSEBitStream::CountBits(int32_t x) {
+#ifdef _MSC_VER
+  int num = 0;
+  uint32_t tmp = x;
+  tmp |= 1;
+  while (!(tmp & INT32_MIN)) {
+    num += 1;
+    tmp <<= 1;
+  }
+  return num ^ kInt32Mask;
+#else
+  return __builtin_clz(x) ^ kInt32Mask;
+#endif
+  return 0;
+}
 }  // namespace mindspore::lite::quant

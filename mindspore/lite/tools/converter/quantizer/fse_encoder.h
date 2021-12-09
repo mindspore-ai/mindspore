@@ -41,17 +41,17 @@ class FSEEncoder {
   int FSECreateStatesForEncoding(uint32_t *frequency, int frequency_count, int table_log, uint32_t *delta_bit_count,
                                  int16_t *delta_state, uint16_t *coding_table, uint16_t *symbol_table);
 
-  uint16_t FSEEncodeSymbolGetNewState(BitStream *bs, uint16_t sym, uint16_t state, const uint32_t *delta_bit_count,
+  uint16_t FSEEncodeSymbolGetNewState(FSEBitStream *bs, uint16_t sym, uint16_t state, const uint32_t *delta_bit_count,
                                       const int16_t *delta_state, uint16_t *coding_table);
 
-  int FSEEncode(BitStream *bs, const uint16_t *data, int data_count, uint32_t *frequency, int frequency_count,
+  int FSEEncode(FSEBitStream *bs, const uint16_t *data, int data_count, uint32_t *frequency, int frequency_count,
                 int table_log);
 
   int NormalizeFrequency(FSEQuant *q, int *table_log);
 
-  int SerializingToOut(schema::TensorT *tensor_input, BitStream *bs, const FSEQuant &fse_quant, int table_log);
+  int SerializingToOut(schema::TensorT *tensor_input, FSEBitStream *bs, const FSEQuant &fse_quant, int table_log);
 
-  int SerializingToTensor(schema::TensorT *tensor_input, BitStream *bs, const FSEQuant &fse_quant, int table_log,
+  int SerializingToTensor(schema::TensorT *tensor_input, FSEBitStream *bs, const FSEQuant &fse_quant, int table_log,
                           uint8_t *out8, size_t max_size, size_t *offset);
 };
 }  // namespace mindspore::lite::quant

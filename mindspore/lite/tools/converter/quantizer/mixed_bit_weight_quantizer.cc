@@ -19,16 +19,69 @@
 #include "tools/common/statistic_utils.h"
 
 namespace mindspore::lite::quant {
+void MixedBitWeightQuantizer::GetBiasCorrection(float *weights, int element_num, float scale,
+                                                float *origin_dequant_datas) {
+  MS_ASSERT(element_num > 0);
+  double average_dequant = 0;
+  double average_raw = 0;
+  for (int i = 0; i < element_num; i++) {
+    float dequant = scale * (floorf(weights[i] / scale + 0.5));
+    origin_dequant_datas[i] = dequant;
+    average_raw += weights[i];
+    average_dequant += dequant;
+  }
+
+  // mean
+  average_dequant = average_dequant / element_num;
+  average_raw = average_raw / element_num;
+  // std
+  double variance_dequant = 0;
+  double variance_raw = 0;
+  const int exponent = 2;
+  for (int i = 0; i < element_num; i++) {
+    variance_dequant += std::pow(origin_dequant_datas[i] - average_dequant, exponent);
+    variance_raw += std::pow(weights[i] - average_raw, exponent);
+  }
+  variance_dequant = std::sqrt(variance_dequant / element_num);
+  variance_raw = std::sqrt(variance_raw / element_num);
+  if (variance_dequant == 0) {
+    var_corr_ = 1;
+  } else {
+    var_corr_ = variance_raw / variance_dequant;
+  }
+  mean_corr_ = average_raw - average_dequant * var_corr_;
+}
+
 // the error is currently measured per channel.
-// it could be measured per layer but it would be less good.
+float MixedBitWeightQuantizer::CalculateMeanError(std::vector<float> norms2, std::vector<float> dnorms2) {
+  int error_count = 0;
+  float mse_error = 1e-10f;
+  const float soft = 1e-7f;
+  const float tolerance_error = 1.0e-10f;
+  for (size_t i = 0; i < norms2.size(); i++) {
+    if (norms2[i] < tolerance_error) {
+      continue;
+    }
+    error_count += 1;
+    mse_error += sqrtf(dnorms2[i] / norms2[i]);
+  }
+  auto meam_error = mse_error / (error_count + soft);
+  return meam_error;
+}
+
 // the `preferred` dim should point to the output channels dimension.
 float MixedBitWeightQuantizer::MeasureQuantizationError(float *weights, const int *shape, int dims, int preferred_dim,
                                                         float scale) {
   MS_ASSERT(weights != nullptr);
   MS_ASSERT(shape != nullptr);
-  int numel = 1;
+  // Init
+  int element_num = 1;
   for (int i = 0; i < dims; i++) {
-    numel *= shape[i];
+    element_num *= shape[i];
+  }
+  if (element_num <= 0) {
+    MS_LOG(ERROR) << "Element is less than or equal to 0.";
+    return FLT_MAX;
   }
   int bucket_count = shape[preferred_dim];
   std::vector<float> norms2(bucket_count);
@@ -37,41 +90,18 @@ float MixedBitWeightQuantizer::MeasureQuantizationError(float *weights, const in
     norms2[i] = 0.0;
     dnorms2[i] = 0.0;
   }
-  double average_dequant = 0;
-  double average_raw = 0;
-  std::vector<float> origin_dequant_datas(numel);
-  std::vector<float> corr_dequant_datas(numel);
+
+  // Bucketing
+  std::vector<float> origin_dequant_datas(element_num);
+  std::vector<float> corr_dequant_datas(element_num);
   int bucket_volume = 1;
   for (int i = preferred_dim; i < dims; i++) {
     bucket_volume *= shape[i];
   }
-  for (int i = 0; i < numel; i++) {
-    float dequant = scale * (floorf(weights[i] / scale + 0.5));
-    origin_dequant_datas[i] = dequant;
-    average_raw += weights[i];
-    average_dequant += dequant;
-  }
-  // mean
-  average_dequant = average_dequant / numel;
-  average_raw = average_raw / numel;
-  // std
-  double variance_dequant = 0;
-  double variance_raw = 0;
-  const int exponent = 2;
-  for (int i = 0; i < numel; i++) {
-    variance_dequant += std::pow(origin_dequant_datas[i] - average_dequant, exponent);
-    variance_raw += std::pow(weights[i] - average_raw, exponent);
-  }
-  variance_dequant = std::sqrt(variance_dequant / numel);
-  variance_raw = std::sqrt(variance_raw / numel);
-  if (variance_dequant == 0) {
-    var_corr_ = 1;
-  } else {
-    var_corr_ = variance_raw / variance_dequant;
-  }
-  mean_corr_ = average_raw - average_dequant * var_corr_;
 
-  for (int i = 0; i < numel; i++) {
+  // Bias Correction
+  GetBiasCorrection(weights, element_num, scale, origin_dequant_datas.data());
+  for (int i = 0; i < element_num; i++) {
     int bucket = (i / bucket_volume) % bucket_count;
     norms2[bucket] += weights[i] * weights[i];
     float dequant = var_corr_ * (scale * (floorf(weights[i] / scale + 0.5))) + mean_corr_;
@@ -79,18 +109,7 @@ float MixedBitWeightQuantizer::MeasureQuantizationError(float *weights, const in
     float d = weights[i] - dequant;
     dnorms2[bucket] += d * d;
   }
-
-  int c = 0;
-  float t = 1e-10;
-  for (int i = 0; i < bucket_count; i++) {
-    if (norms2[i] < 1.0e-10) continue;
-    c += 1;
-    t += sqrtf(dnorms2[i] / norms2[i]);
-  }
-  auto meam_error = t / (c + 1e-7);
-
-  auto cos_sim = mindspore::lite::GetCosSimilarity(weights, corr_dequant_datas.data(), numel);
-  MS_LOG(INFO) << " meam_error:" << meam_error << " cos_sim:" << cos_sim;
+  auto meam_error = CalculateMeanError(norms2, dnorms2);
   return meam_error;
 }
 
@@ -176,8 +195,6 @@ int MixedBitWeightQuantizer::DoQuantization(float *weights, std::vector<int64_t>
     MS_LOG(ERROR) << "quant failed.";
     return RET_ERROR;
   }
-
-  // It is used to calculate the Shannon entropy.
   quant_params->push_back(quant_param);
   return RET_OK;
 }
