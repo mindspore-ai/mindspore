@@ -30,12 +30,29 @@ namespace mindspore::api::utils {
 /// \param[in] ptr The pointer to the given object.
 ///
 /// \return True if the pointer is not null and the object is an instance of the given class, false otherwise.
-template <typename T, typename = typename std::enable_if_t<std::is_base_of_v<Base, T>, T>>
-bool isa(const BasePtr &ptr) {
+template <typename T, typename = typename std::enable_if_t<std::is_base_of_v<Base, T> || is_wrapper_ptr<T>::value>>
+inline bool isa(const BasePtr &ptr) {
   if (ptr == nullptr) {
     return false;
   }
-  return ptr->isa<T>();
+  if constexpr (is_wrapper_ptr<T>::value) {
+    return ptr->isa<typename T::element_type>();
+  } else {
+    return ptr->isa<T>();
+  }
+}
+
+/// \brief Check whether the given object is an value of the given c++ type T.
+///
+/// \param[in] ptr The pointer to the given value object.
+///
+/// \return True if the pointer is not null and it is an value of the given c++ type, false otherwise.
+template <typename T, typename U = typename ImmTrait<T>::type::element_type>
+inline bool isa(const ValuePtr &ptr) {
+  if (ptr == nullptr) {
+    return false;
+  }
+  return ptr->isa<U>();
 }
 
 /// \brief Cast the given object pointer to a pointer with the given class.
@@ -44,11 +61,21 @@ bool isa(const BasePtr &ptr) {
 ///
 /// \return A non-null pointer if the input pointer is not null and cast success, nullptr otherwise.
 template <typename T, typename = typename std::enable_if_t<is_wrapper_ptr<T>::value, T>>
-T cast(const BasePtr &ptr) {
+inline T cast(const BasePtr &ptr) {
   if (ptr == nullptr) {
     return nullptr;
   }
   return ptr->cast<T>();
+}
+
+/// \brief Cast the given value to a C++ value.
+///
+/// \param[in] ptr The pointer to the value to be casted.
+///
+/// \return The C++ value according the input value.
+template <typename T, typename U = typename ImmTrait<T>::type>
+inline T cast(const ValuePtr &ptr) {
+  return GetValue<T>(ptr);
 }
 
 /// \brief Make a copy from the given function graph.

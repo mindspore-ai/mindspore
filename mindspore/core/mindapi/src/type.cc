@@ -17,12 +17,14 @@
 #include "mindapi/ir/type.h"
 #include "mindapi/ir/value.h"
 #include "mindapi/src/helper.h"
-#include "ir/dtype/type.h"
 #include "ir/dtype.h"
+#include "ir/dtype/type.h"
+#include "ir/dtype/tensor_type.h"
 #include "abstract/utils.h"
 
 namespace mindspore::api {
 using TypeImpl = mindspore::Type;
+using TensorTypeImpl = mindspore::TensorType;
 
 MIND_API_BASE_IMPL(Type, TypeImpl, Value);
 
@@ -36,4 +38,14 @@ TypePtr Type::GetType(TypeId id) {
 }
 
 size_t Type::GetSize(TypeId id) { return mindspore::abstract::TypeIdSize(id); }
+
+MIND_API_BASE_IMPL(TensorType, TensorTypeImpl, Type);
+
+TensorType::TensorType(const TypePtr &element_type)
+    : Type(std::make_shared<TensorTypeImpl>(ToImpl<TypeImpl>(element_type))) {}
+
+TypePtr TensorType::element() const {
+  auto element_type_impl = ToRef<TensorTypeImpl>(impl_).element();
+  return ToWrapper<Type>(element_type_impl);
+}
 }  // namespace mindspore::api

@@ -135,6 +135,12 @@ TEST_F(TestMindApi, test_values) {
   ASSERT_EQ(str_values[1], "is");
   ASSERT_EQ(str_values[2], "mindspore");
   ASSERT_EQ(str_values[3], "api");
+
+  auto value_list = GetValue<ValuePtrList>(seq);
+  ASSERT_EQ(value_list.size(), 3);
+  ASSERT_EQ(utils::cast<int64_t>(value_list[0]), 3);
+  ASSERT_EQ(utils::cast<int64_t>(value_list[1]), 4);
+  ASSERT_EQ(utils::cast<int64_t>(value_list[2]), 5);
 }
 
 /// Feature: MindAPI
@@ -325,6 +331,11 @@ TEST_F(TestMindApi, test_tensor_api) {
   tensor->set_shape(shape2);
   ASSERT_EQ(tensor->data_type(), kNumberTypeInt32);
   ASSERT_EQ(tensor->shape(), shape2);
+
+  // TensorType.
+  TypePtr tensor_type = MakeShared<TensorType>(Type::GetType(TypeId::kNumberTypeFloat32));
+  ASSERT_TRUE(tensor_type->isa<TensorType>());
+  ASSERT_EQ(tensor_type->cast<TensorTypePtr>()->element()->type_id(), kNumberTypeFloat32);
 }
 
 /// Feature: MindAPI
@@ -334,12 +345,20 @@ TEST_F(TestMindApi, test_api_utils) {
   // Test utils::isa, utils::cast.
   auto anf_node = NewValueNode("hello");
   ASSERT_TRUE(utils::isa<AnfNode>(anf_node));
+  ASSERT_TRUE(utils::isa<AnfNodePtr>(anf_node));
   ASSERT_FALSE(utils::isa<AbstractBase>(anf_node));
   ASSERT_TRUE(utils::cast<AnfNodePtr>(anf_node) != nullptr);
   ASSERT_TRUE(utils::cast<AbstractBasePtr>(anf_node) == nullptr);
+  ASSERT_TRUE(utils::isa<std::string>(anf_node->value()));
+  ASSERT_EQ(utils::cast<std::string>(anf_node->value()), "hello");
+
+  auto int_value = MakeValue(123);
+  ASSERT_TRUE(utils::isa<int64_t>(int_value));
+  ASSERT_EQ(utils::cast<int64_t>(int_value), 123);
 
   anf_node = nullptr;
   ASSERT_FALSE(utils::isa<AnfNode>(anf_node));
+  ASSERT_FALSE(utils::isa<AnfNodePtr>(anf_node));
   ASSERT_TRUE(utils::cast<AnfNodePtr>(anf_node) == nullptr);
 
   // Test clone graph.
