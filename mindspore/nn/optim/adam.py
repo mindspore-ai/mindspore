@@ -200,7 +200,7 @@ class Adam(Optimizer):
         \begin{gather*}
             m_{t+1} = \beta_1 * m_{t} + (1 - \beta_1) * g \\
             v_{t+1} = \beta_2 * v_{t} + (1 - \beta_2) * g * g \\
-            l_{t+1} = l_{t} * \frac{\sqrt{1-\beta_2^t}}{1-\beta_1^t} \\
+            l = \alpha * \frac{\sqrt{1-\beta_2^t}}{1-\beta_1^t} \\
             w_{t+1} = w_{t} - l * \frac{m_{t+1}}{\sqrt{v_{t+1}} + \epsilon}
         \end{gather*}
 
