@@ -88,7 +88,7 @@ struct DeviceState {
 
 struct MemStatusManager {
   size_t unit_size_{DYNAMIC_MEM_ALLOC_UNIT_SIZE};
-  // Mempool state
+  // Mem pool state
   DeviceState mps_;
   std::vector<DynamicMemBlockPtr> mem_block_list_;
   // The map of all idle memory buf by size.
@@ -123,8 +123,8 @@ class DynamicMemPoolBestFit {
   size_t MemAllocUnitSize(bool from_persistent_mem = false) const;
   // Set the minimum memory unit size using for dynamic extend.
   void SetMemAllocUintSize(size_t size);
-  // Set mempool init percent in pynative mode
-  void SetMempoolBlockSize(size_t device_mem_size);
+  // Set mem pool block size
+  void SetMempoolBlockSize(size_t available_device_mem_size);
   size_t TotalMemStatistics() const {
     return common_mem_->mps_.total_mem_size_ + persistent_mem_->mps_.total_mem_size_;
   }
@@ -141,8 +141,8 @@ class DynamicMemPoolBestFit {
   virtual size_t free_mem_size() = 0;
 
  protected:
-  MemStatusManagerPtr &common_mem() { return common_mem_; }
-  MemStatusManagerPtr &persistent_mem() { return persistent_mem_; }
+  const MemStatusManagerPtr &common_mem() const { return common_mem_; }
+  const MemStatusManagerPtr &persistent_mem() const { return persistent_mem_; }
   // The real size by memory alloc aligned.
   virtual size_t AlignMemorySize(size_t size) const;
   // Calculate memory block required alloc size when adding the memory block.
@@ -161,17 +161,19 @@ class DynamicMemPoolBestFit {
   DynamicMemBlockPtr FindMemBlock(const DeviceMemPtr &device_addr, const MemStatusManagerPtr &mem_mgr);
   // The Comparator of memory block by device address, because memory blocks are arranged in order by device address.
   static bool CmpMemBlock(const DeviceMemPtr &device_addr, const DynamicMemBlockPtr &mem_block);
-
   // Combine the memory buf when memory free, to avoid the memory fragmentation.
   void CombineMemBuf(const DynamicMemBlockPtr &mem_block, const DeviceMemPtr &device_addr,
                      const MemStatusManagerPtr &mem_mng);
   // Erase the idle memory buf by size and device address when idle memory buf is combined.
   void EraseIdleMemBuf(size_t size, const DeviceMemPtr &device_addr, const MemStatusManagerPtr &mem_mng);
 
-  MemStatusManagerPtr persistent_mem_{nullptr};
-  MemStatusManagerPtr common_mem_{nullptr};
   // Support multi-thread.
   std::mutex mutex_;
+  MemStatusManagerPtr persistent_mem_{nullptr};
+  MemStatusManagerPtr common_mem_{nullptr};
+  // In the graph mode, the unit size set in the context will be modified through the FetchMemUnitSize function, so it
+  // needs to be changed back after that
+  size_t config_unit_size_{DYNAMIC_MEM_ALLOC_UNIT_SIZE};
 };
 }  // namespace device
 }  // namespace mindspore

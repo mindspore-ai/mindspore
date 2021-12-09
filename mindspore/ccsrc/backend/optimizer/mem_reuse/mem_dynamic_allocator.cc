@@ -23,15 +23,9 @@
 
 namespace mindspore {
 namespace device {
-static const char kPynativeParamMem[] = "Persistent mem";
+static const char kPersistentParamMem[] = "Persistent mem";
 static const char kCommonMem[] = "Common mem";
 const size_t kGBToByte = 1073741824;
-
-static bool IsPynativeMode() {
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  return ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode;
-}
 
 DynamicMemPoolBestFit::~DynamicMemPoolBestFit() {
   persistent_mem_->clear();
@@ -129,34 +123,36 @@ size_t DynamicMemPoolBestFit::MemAllocUnitSize(bool from_persistent_mem) const {
 }
 
 void DynamicMemPoolBestFit::SetMemAllocUintSize(size_t size) {
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
   persistent_mem_->unit_size_ = DYNAMIC_MEM_ALLOC_UNIT_SIZE;
-  common_mem_->unit_size_ = size - persistent_mem_->unit_size_;
+  common_mem_->unit_size_ = size;
+  config_unit_size_ = size;
   MS_LOG(INFO) << "Set mem alloc unit size " << size;
 }
 
-void DynamicMemPoolBestFit::SetMempoolBlockSize(size_t device_mem_size) {
-  if (!IsPynativeMode()) {
-    return;
-  }
+void DynamicMemPoolBestFit::SetMempoolBlockSize(size_t available_device_mem_size) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   float mem_block_size = ms_context->get_param<float>(MS_CTX_MEMPOOL_BLOCK_SIZE);
   if (mem_block_size == kDefaultMempoolBlockSize) {
     return;
   }
+
   size_t config_size = FloatToSize(mem_block_size * kGBToByte);
-  size_t real_block_size = std::min(config_size, device_mem_size);
-  if (config_size > device_mem_size) {
+  if (config_size > available_device_mem_size) {
     MS_LOG(WARNING) << "Memory pool block size " << config_size << " is bigger than currently available maximum memory "
-                    << device_mem_size << ", and the actual effective value will be " << device_mem_size;
+                    << available_device_mem_size << ", and the actual effective value will be "
+                    << available_device_mem_size;
   }
+  // Reserve 1G for persistent_mem
+  if (available_device_mem_size > kGBToByte) {
+    available_device_mem_size -= kGBToByte;
+  }
+  size_t real_block_size = std::min(config_size, available_device_mem_size);
   SetMemAllocUintSize(real_block_size);
 }
 
 DeviceMemPtr DynamicMemPoolBestFit::AddMemBlockAndMemBuf(size_t size, bool from_persistent_mem) {
-  // Pyantive unique mem is not enough, find from common
+  // Persistent mem is not enough, find from common
   if (from_persistent_mem && !persistent_mem_->mem_block_list_.empty()) {
     auto mem_addr = FindIdleMemBuf(size, false);
     if (mem_addr != nullptr) {
@@ -183,11 +179,9 @@ DeviceMemPtr DynamicMemPoolBestFit::AddMemBlockAndMemBuf(size_t size, bool from_
     DumpDynamicMemPoolInfo();
     return nullptr;
   }
-  // In graph mode, unit_size are set once using an estimated memory value size, and subsequent memory requests use the
-  // default size
-  if (!IsPynativeMode()) {
-    common_mem_->unit_size_ = DYNAMIC_MEM_ALLOC_UNIT_SIZE;
-  }
+  // If unit_size is changed by other function(not context), change unit_size back
+  common_mem_->unit_size_ = config_unit_size_;
+
   auto mem_mng = common_mem_;
   if (from_persistent_mem) {
     mem_mng = persistent_mem_;
@@ -290,7 +284,7 @@ void DynamicMemPoolBestFit::FreeTensorMem(const DeviceMemPtr &device_addr) {
   if (mem_block == nullptr) {
     mem_block = fn(persistent_mem_, device_addr);
     if (mem_block == nullptr) {
-      // May be destroy the memory pool first, then destroy the address, so this is normal case.
+      // Maybe destroy the memory pool first, then destroy the address, so this is normal case.
       MS_LOG(DEBUG) << "Can't find the mem_block of the device address[" << device_addr << "].";
       return;
     }
@@ -389,6 +383,7 @@ void DynamicMemPoolBestFit::ReleaseDeviceRes() {
 }
 
 void DynamicMemPoolBestFit::DumpDynamicMemPoolInfo() {
+  std::lock_guard<std::mutex> locker(mutex_);
   auto fn = [](const MemStatusManagerPtr &mem_mng, const std::string &mem_type) {
     if (mem_mng->mem_block_list_.empty()) {
       return;
@@ -412,7 +407,7 @@ void DynamicMemPoolBestFit::DumpDynamicMemPoolInfo() {
                     << mem_mng->mps_.total_mem_size_ - mem_mng->mps_.total_used_mem_size_;
   };
   fn(common_mem_, std::string(kCommonMem));
-  fn(persistent_mem_, std::string(kPynativeParamMem));
+  fn(persistent_mem_, std::string(kPersistentParamMem));
 }
 }  // namespace device
 }  // namespace mindspore
