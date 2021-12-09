@@ -48,6 +48,7 @@ bool TensorArrayWriteKernel::Init(const CNodePtr &kernel_node) {
 void TensorArrayWriteKernel::InitSizeLists() {
   input_size_list_.push_back(sizeof(int64_t));
   input_size_list_.push_back(sizeof(int64_t));
+  input_size_list_.push_back(sizeof(value_size_));
   output_size_list_.push_back(sizeof(int64_t));
 }
 
