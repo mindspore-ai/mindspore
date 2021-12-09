@@ -375,13 +375,11 @@ TEST_F(MultipleDeviceTest, NewApi2) {
   context.MutableDeviceInfo().push_back(std::make_shared<mindspore::CPUDeviceInfo>());
   context.MutableDeviceInfo().push_back(std::make_shared<mindspore::GPUDeviceInfo>());
 
-  mindspore::lite::InnerContext inner_context;
-  mindspore::A2L_ConvertContext(&context, &inner_context);
-
-  ASSERT_EQ(inner_context.device_list_.size(), 3);
-  ASSERT_EQ(inner_context.device_list_.at(0).device_type_, mindspore::lite::DT_NPU);
-  ASSERT_EQ(inner_context.device_list_.at(1).device_type_, mindspore::lite::DT_CPU);
-  ASSERT_EQ(inner_context.device_list_.at(2).device_type_, mindspore::lite::DT_GPU);
+  auto inner_context = std::shared_ptr<mindspore::lite::InnerContext>(mindspore::ContextUtils::Convert(&context));
+  ASSERT_EQ(inner_context->device_list_.size(), 3);
+  ASSERT_EQ(inner_context->device_list_.at(0).device_type_, mindspore::lite::DT_NPU);
+  ASSERT_EQ(inner_context->device_list_.at(1).device_type_, mindspore::lite::DT_CPU);
+  ASSERT_EQ(inner_context->device_list_.at(2).device_type_, mindspore::lite::DT_GPU);
 }
 
 TEST_F(MultipleDeviceTest, NewApi3) {
@@ -389,12 +387,10 @@ TEST_F(MultipleDeviceTest, NewApi3) {
   context.MutableDeviceInfo().push_back(std::make_shared<mindspore::CPUDeviceInfo>());
   context.MutableDeviceInfo().push_back(std::make_shared<mindspore::KirinNPUDeviceInfo>());
 
-  mindspore::lite::InnerContext inner_context;
-  mindspore::A2L_ConvertContext(&context, &inner_context);
-
-  ASSERT_EQ(inner_context.device_list_.size(), 2);
-  ASSERT_EQ(inner_context.device_list_.at(0).device_type_, mindspore::lite::DT_CPU);
-  ASSERT_EQ(inner_context.device_list_.at(1).device_type_, mindspore::lite::DT_NPU);
+  auto inner_context = std::shared_ptr<mindspore::lite::InnerContext>(mindspore::ContextUtils::Convert(&context));
+  ASSERT_EQ(inner_context->device_list_.size(), 2);
+  ASSERT_EQ(inner_context->device_list_.at(0).device_type_, mindspore::lite::DT_CPU);
+  ASSERT_EQ(inner_context->device_list_.at(1).device_type_, mindspore::lite::DT_NPU);
 }
 
 TEST_F(MultipleDeviceTest, NewApi4) {
@@ -402,12 +398,10 @@ TEST_F(MultipleDeviceTest, NewApi4) {
   context.MutableDeviceInfo().push_back(std::make_shared<mindspore::GPUDeviceInfo>());
   context.MutableDeviceInfo().push_back(std::make_shared<mindspore::CPUDeviceInfo>());
 
-  mindspore::lite::InnerContext inner_context;
-  mindspore::A2L_ConvertContext(&context, &inner_context);
-
-  ASSERT_EQ(inner_context.device_list_.size(), 2);
-  ASSERT_EQ(inner_context.device_list_.at(0).device_type_, mindspore::lite::DT_GPU);
-  ASSERT_EQ(inner_context.device_list_.at(1).device_type_, mindspore::lite::DT_CPU);
+  auto inner_context = std::shared_ptr<mindspore::lite::InnerContext>(mindspore::ContextUtils::Convert(&context));
+  ASSERT_EQ(inner_context->device_list_.size(), 2);
+  ASSERT_EQ(inner_context->device_list_.at(0).device_type_, mindspore::lite::DT_GPU);
+  ASSERT_EQ(inner_context->device_list_.at(1).device_type_, mindspore::lite::DT_CPU);
 }
 
 TEST_F(MultipleDeviceTest, NewApi5) {
