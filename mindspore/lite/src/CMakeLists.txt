@@ -295,6 +295,7 @@ if(APPLE)
     add_library(mindspore-lite_static STATIC
             ${LITE_SRC}
             ${MINDSPORE_LITE_PUB_HDRS}
+            ${MINDSPORE_LITE_PUB_HDRS_MINDAPI_HDRS}
             ${MINDSPORE_LITE_PUB_HDRS_IR_HDRS}
             )
     add_dependencies(mindspore-lite_static fbs_inner_src)
