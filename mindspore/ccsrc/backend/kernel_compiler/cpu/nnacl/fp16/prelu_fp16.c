@@ -131,11 +131,13 @@ void PReluFp16(const float16_t *input, float16_t *output, const float16_t *slope
 void PReluShareChannelFp16(const float16_t *input, float16_t *output, float16_t slope, int start, int end) {
   int i = start;
 #ifdef ENABLE_NEON
+  float16x8_t zero_data = vdupq_n_f16(0);
+  float16x8_t slope_data = vdupq_n_f16(slope);
   for (; i <= end - C8NUM; i += C8NUM) {
     float16x8_t src_tmp = vld1q_f16(input + i);
-    float16x8_t mul_tmp = vmulq_n_f16(src_tmp, slope);
-    uint16x8_t mask = vcgtq_f16(src_tmp, vmovq_n_f16(0.0f));
-    vst1q_f16(output + i, vbslq_f16(mask, src_tmp, mul_tmp));
+    float16x8_t mul_tmp = vmulq_f16(src_tmp, slope_data);
+    uint16x8_t mask = vcleq_f16(src_tmp, zero_data);
+    vst1q_f16(output + i, vbslq_f16(mask, mul_tmp, src_tmp));
   }
 #endif
   for (; i < end; i++) {
