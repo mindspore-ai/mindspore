@@ -382,6 +382,7 @@ int BenchmarkBase::Init() {
   MS_LOG(INFO) << "LoopCount = " << this->flags_->loop_count_;
   MS_LOG(INFO) << "DeviceType = " << this->flags_->device_;
   MS_LOG(INFO) << "AccuracyThreshold = " << this->flags_->accuracy_threshold_;
+  MS_LOG(INFO) << "CosineDistanceThreshold = " << this->flags_->cosine_distance_threshold_;
   MS_LOG(INFO) << "WarmUpLoopCount = " << this->flags_->warm_up_loop_count_;
   MS_LOG(INFO) << "NumThreads = " << this->flags_->num_threads_;
   MS_LOG(INFO) << "Fp16Priority = " << this->flags_->enable_fp16_;
@@ -398,6 +399,7 @@ int BenchmarkBase::Init() {
   std::cout << "LoopCount = " << this->flags_->loop_count_ << std::endl;
   std::cout << "DeviceType = " << this->flags_->device_ << std::endl;
   std::cout << "AccuracyThreshold = " << this->flags_->accuracy_threshold_ << std::endl;
+  std::cout << "CosineDistanceThreshold = " << this->flags_->cosine_distance_threshold_ << std::endl;
   std::cout << "WarmUpLoopCount = " << this->flags_->warm_up_loop_count_ << std::endl;
   std::cout << "NumThreads = " << this->flags_->num_threads_ << std::endl;
   std::cout << "Fp16Priority = " << this->flags_->enable_fp16_ << std::endl;
