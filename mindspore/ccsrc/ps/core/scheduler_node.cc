@@ -648,16 +648,16 @@ bool SchedulerNode::Stop() {
       client_thread_->join();
     }
     is_ready_ = true;
+
+    if (update_persistent_cmd_thread_ && update_persistent_cmd_thread_->joinable()) {
+      persistent_cmd_cv_.notify_one();
+      update_persistent_cmd_thread_->join();
+    }
   }
   if (PSContext::instance()->scheduler_manage_port() != 0) {
     MS_LOG(WARNING) << "Stop the restful scheduler http service, the ip is 127.0.0.1 "
                     << ", the port:" << PSContext::instance()->scheduler_manage_port();
     StopRestfulServer();
-  }
-
-  if (update_persistent_cmd_thread_) {
-    persistent_cmd_cv_.notify_one();
-    update_persistent_cmd_thread_->join();
   }
 
   return true;
