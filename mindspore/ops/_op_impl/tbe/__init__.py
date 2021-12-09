@@ -265,6 +265,7 @@ from .lamb_next_mv_with_decay import _lamb_next_mv_with_decay_tbe
 from .lamb_update_with_lr import _lamb_update_with_lr_tbe
 from .rsqrt import _rsqrt_tbe
 from .sigmoid import _sigmoid_tbe
+from .sigmoid_ds import _sigmoid_ds_tbe
 from .sigmoid_grad import _sigmoid_grad_tbe
 from .resize_nearest_neighbor import _resize_nearest_neighbor_tbe
 from .resize_nearest_neighbor_grad import _resize_nearest_neighbor_grad_tbe
