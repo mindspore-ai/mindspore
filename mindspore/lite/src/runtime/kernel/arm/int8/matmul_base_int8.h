@@ -44,7 +44,7 @@ class MatmulBaseInt8CPUKernel : public InnerKernel {
 
  public:
   int RunImpl(int task_id);
-#ifdef ENABLE_ARM64
+#if defined(ENABLE_ARM64) && !defined(SUPPORT_NNIE)
   int RunArm64Sdot();
   int Arm64SdotImpl(int task_id);
   int Arm64SdotPre(int task_id);
