@@ -50,6 +50,8 @@ class MS_API BenchmarkUnifiedApi : public BenchmarkBase {
  protected:
   int CompareDataGetTotalBiasAndSize(const std::string &name, mindspore::MSTensor *tensor, float *total_bias,
                                      int *total_size);
+  int CompareDataGetTotalCosineDistanceAndSize(const std::string &name, mindspore::MSTensor *tensor,
+                                               float *total_cosine_distance, int *total_size);
   void InitContext(const std::shared_ptr<mindspore::Context> &context);
 
   // call GenerateRandomData to fill inputTensors
@@ -63,6 +65,8 @@ class MS_API BenchmarkUnifiedApi : public BenchmarkBase {
   int GetDataTypeByTensorName(const std::string &tensor_name) override;
 
   int CompareOutput() override;
+
+  int CompareOutputByCosineDistance(float cosine_distance_threshold);
 
   int InitTimeProfilingCallbackParameter() override;
 
@@ -87,11 +91,6 @@ class MS_API BenchmarkUnifiedApi : public BenchmarkBase {
 
   int MarkAccuracy();
 
-  int CompareOutputByCosineDistance(float cosine_distance_threshold);
-
-  int CompareDataGetTotalCosineDistanceAndSize(const std::string &name, mindspore::MSTensor *tensor,
-                                               float *total_cosine_distance, int *total_size);
-
   void UpdateDistributionName(const std::shared_ptr<mindspore::Context> &context, std::string *name);
 
  private:
@@ -100,6 +99,8 @@ class MS_API BenchmarkUnifiedApi : public BenchmarkBase {
 
   MSKernelCallBack ms_before_call_back_ = nullptr;
   MSKernelCallBack ms_after_call_back_ = nullptr;
+
+  float cosine_distance_threshold_ = 0.99;
 };
 
 }  // namespace mindspore::lite
