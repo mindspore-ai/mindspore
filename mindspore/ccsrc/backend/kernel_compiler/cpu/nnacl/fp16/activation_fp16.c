@@ -55,18 +55,19 @@ int Relu6Fp16(const float16_t *data, float16_t *dst, int ele_num) {
 }
 
 int LReluFp16(const float16_t *src, float16_t *dst, int ele_num, float16_t alpha) {
-  int i = 0;
+  int offset = 0;
 #ifdef ENABLE_NEON
-  int ele_c8 = DOWN_ROUND(ele_num, C8NUM);
-  for (; i < ele_c8; i += C8NUM) {
-    float16x8_t src_tmp = vld1q_f16(src + i);
-    float16x8_t mul_tmp = vmulq_n_f16(src_tmp, alpha);
-    uint16x8_t mask = vcgtq_f16(src_tmp, vdupq_n_f16(0.0f));
-    vst1q_f16(dst + i, vbslq_f16(mask, src_tmp, mul_tmp));
+  float16x8_t zero_data = vdupq_n_f16(0);
+  float16x8_t alpha_data = vdupq_n_f16(alpha);
+  for (; offset <= ele_num - C8NUM; offset += C8NUM) {
+    float16x8_t src_tmp = vld1q_f16(src + offset);
+    float16x8_t mul_tmp = vmulq_f16(src_tmp, alpha_data);
+    uint16x8_t mask = vcleq_f16(src_tmp, zero_data);
+    vst1q_f16(dst + offset, vbslq_f16(mask, mul_tmp, src_tmp));
   }
 #endif
-  for (; i < ele_num; ++i) {
-    dst[i] = src[i] > (float16_t)0.0f ? src[i] : (src[i] * alpha);
+  for (; offset < ele_num; ++offset) {
+    dst[offset] = src[offset] > (float16_t)0.0f ? src[offset] : (src[offset] * alpha);
   }
   return NNACL_OK;
 }
