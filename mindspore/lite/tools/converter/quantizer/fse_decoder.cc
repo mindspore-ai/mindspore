@@ -23,6 +23,10 @@
 #include "nnacl/op_base.h"
 
 namespace mindspore::lite::quant {
+namespace {
+constexpr int kTableExtend = 3;
+constexpr int kAlignOffset = 7;
+}  // namespace
 int FSEDecoder::FSECreateStatesForDecoding(const uint32_t *symbol_frequency, int symbol_frequency_count, int table_log,
                                            uint16_t *new_state, uint8_t *bit_count, uint16_t *symbol_table) {
   MS_ASSERT(symbol_frequency != nullptr);
@@ -30,8 +34,8 @@ int FSEDecoder::FSECreateStatesForDecoding(const uint32_t *symbol_frequency, int
   MS_ASSERT(bit_count != nullptr);
   MS_ASSERT(symbol_table != nullptr);
   const int table_size = 1 << table_log;
-  int table_mask = table_size - 1;
-  int step = ((table_size >> 1) + (table_size >> 3) + 3);
+  const int table_mask = table_size - 1;
+  int step = ((table_size >> 1) + (table_size >> kTableExtend) + kTableExtend);
   int pos = 0;
   for (int sym = 0; sym < symbol_frequency_count; sym++) {
     for (uint32_t i = 0; i < symbol_frequency[sym]; i++) {
@@ -52,24 +56,13 @@ int FSEDecoder::FSECreateStatesForDecoding(const uint32_t *symbol_frequency, int
     uint16_t sym = symbol_table[i];
     uint32_t x = frequency[sym];
     frequency[sym] += 1;
-#ifdef _MSC_VER
-    int num = 0;
-    uint32_t tmp = x;
-    tmp |= 1;
-    while (!(tmp & 0x80000000)) {
-      num += 1;
-      tmp <<= 1;
-    }
-    bit_count[i] = table_log - (num ^ 31);
-#else
-    bit_count[i] = table_log - (__builtin_clz(x) ^ 31);
-#endif
+    bit_count[i] = table_log - FSEBitStream::CountBits(x);
     new_state[i] = (x << bit_count[i]) - table_size;
   }
   return RET_OK;
 }
 
-int FSEDecoder::FSEDecode(BitStream *bs, float *buff, int buff_count, uint32_t *frequency, int frequency_count,
+int FSEDecoder::FSEDecode(FSEBitStream *bs, float *buff, int buff_count, uint32_t *frequency, int frequency_count,
                           const float *centroids, int table_log) {
   MS_ASSERT(bs != nullptr);
   MS_ASSERT(buff != nullptr);
@@ -122,10 +115,10 @@ int FSEDecoder::DeCompress(const SchemaTensorWrapper &src_tensor, Tensor *dst_te
   int out_sz = dst_tensor->ElementsNum();
   MS_CHECK_GT(out_sz, 0, RET_ERROR);
   // deserialize from `data`:
-  BitStream bs;
+  FSEBitStream bs;
 
   size_t i = 0;
-  auto data8 = reinterpret_cast<unsigned char *>(const_cast<void *>(src_tensor.data()));
+  auto data8 = reinterpret_cast<int8_t *>(const_cast<void *>(src_tensor.data()));
 
   int frequency_count = *(reinterpret_cast<uint16_t *>(&data8[i]));
   i += sizeof(uint16_t);
@@ -152,7 +145,7 @@ int FSEDecoder::DeCompress(const SchemaTensorWrapper &src_tensor, Tensor *dst_te
   auto *frequency = reinterpret_cast<uint32_t *>(&data8[i]);
   i += frequency_count * sizeof(uint32_t);
   // Used for 8-byte alignment
-  i = ((i + 7) >> 3) << 3;
+  i = ((i + kAlignOffset) >> kTableExtend) << kTableExtend;
   if (i > total_size) {
     MS_LOG(ERROR) << "index over total size"
                   << " index:" << i << " total size:" << total_size;
@@ -162,7 +155,7 @@ int FSEDecoder::DeCompress(const SchemaTensorWrapper &src_tensor, Tensor *dst_te
   auto centroids_float = reinterpret_cast<float *>(centroids);
   i += frequency_count * sizeof(float);
   // Used for 8-byte alignment
-  i = ((i + 7) >> 3) << 3;
+  i = ((i + kAlignOffset) >> kTableExtend) << kTableExtend;
   if (i > total_size) {
     MS_LOG(ERROR) << "index over total size"
                   << " index:" << i << " total size:" << total_size;

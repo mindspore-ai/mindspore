@@ -26,16 +26,12 @@
 
 namespace mindspore::lite::quant {
 namespace {
-constexpr int kInt32Mask = 31;
 constexpr int kInt16 = 16;
 constexpr int kFseTableExtendSize = 3;
 constexpr int kFrenqTableExtendSize = 2;
 constexpr int kAlignSize = 8;
 constexpr float kUpRoundOffSet = 0.5;
 }  // namespace
-// The function gives the index of most import `1` in the binary representation.
-// e.g. for the number 00100 it gives 2.
-int fse_count_bits(int32_t x) { return __builtin_clz(x) ^ kInt32Mask; }
 
 int FSEEncoder::FSECreateStatesForEncoding(uint32_t *frequency, int frequency_count, int table_log,
                                            uint32_t *delta_bit_count, int16_t *delta_state, uint16_t *coding_table,
@@ -76,7 +72,7 @@ int FSEEncoder::FSECreateStatesForEncoding(uint32_t *frequency, int frequency_co
   int total = 0;
   for (int sym = 0; sym < frequency_count; sym++) {
     if (frequency[sym] >= kFrenqTableExtendSize) {
-      int max_bits_out = table_log - fse_count_bits(frequency[sym] - 1);
+      int max_bits_out = table_log - FSEBitStream::CountBits(frequency[sym] - 1);
       int min_state_plus = frequency[sym] << max_bits_out;
       delta_bit_count[sym] = (max_bits_out << kInt16) - min_state_plus;
       delta_state[sym] = total - frequency[sym];
@@ -159,10 +155,10 @@ int FSEEncoder::Compress(schema::TensorT *tensor_input) {
     MS_LOG(ERROR) << "Normalize frequency failed.";
     return ret;
   }
-  BitStream bs;
+  FSEBitStream bs;
   ret = bs.Create(kInt16 * fse_quant.symbol_table_count);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "BitStream Create failed.";
+    MS_LOG(ERROR) << "FSEBitStream Create failed.";
     free(fse_quant.symbol_table);
     return ret;
   }
@@ -186,7 +182,7 @@ int FSEEncoder::Compress(schema::TensorT *tensor_input) {
   return RET_OK;
 }
 
-uint16_t FSEEncoder::FSEEncodeSymbolGetNewState(BitStream *bs, uint16_t sym, uint16_t state,
+uint16_t FSEEncoder::FSEEncodeSymbolGetNewState(FSEBitStream *bs, uint16_t sym, uint16_t state,
                                                 const uint32_t *delta_bit_count, const int16_t *delta_state,
                                                 uint16_t *coding_table) {
   MS_ASSERT(bs != nullptr);
@@ -219,7 +215,7 @@ int FSEEncoder::NormalizeFrequency(FSEQuant *q, int *table_log) {
   CHECK_NULL_RETURN(table_log);
   // The higher the number, the more accurate we'll be to the shannon entropy,
   // but also the larger the table, so `+3` is a good compromise.
-  *table_log = std::min(MAX_TABLE_LOG, (fse_count_bits((uint32_t)q->size) + kFseTableExtendSize));
+  *table_log = std::min(MAX_TABLE_LOG, (FSEBitStream::CountBits((uint32_t)q->size) + kFseTableExtendSize));
   const int new_table_size = 1 << (*table_log);
   int curr_table_size = 0;
   for (int i = 0; i < q->size; i++) {
@@ -270,8 +266,8 @@ int FSEEncoder::NormalizeFrequency(FSEQuant *q, int *table_log) {
 // - determine nbBits, flush them
 // - determine sub-Range Id
 // - look for Symbol position of same Id : you get your next state
-int FSEEncoder::FSEEncode(BitStream *bs, const uint16_t *data, int data_count, uint32_t *frequency, int frequency_count,
-                          int table_log) {
+int FSEEncoder::FSEEncode(FSEBitStream *bs, const uint16_t *data, int data_count, uint32_t *frequency,
+                          int frequency_count, int table_log) {
   MS_ASSERT(bs != nullptr);
   MS_ASSERT(data != nullptr);
   MS_ASSERT(frequency != nullptr);
@@ -305,7 +301,7 @@ int FSEEncoder::FSEEncode(BitStream *bs, const uint16_t *data, int data_count, u
   return ret;
 }
 
-int FSEEncoder::SerializingToTensor(schema::TensorT *tensor_input, BitStream *bs, const FSEQuant &fse_quant,
+int FSEEncoder::SerializingToTensor(schema::TensorT *tensor_input, FSEBitStream *bs, const FSEQuant &fse_quant,
                                     int table_log, uint8_t *out8, size_t max_size, size_t *out_size) {
   MSLITE_CHECK_PTR(tensor_input);
   MSLITE_CHECK_PTR(bs);
@@ -400,7 +396,7 @@ int FSEEncoder::SerializingToTensor(schema::TensorT *tensor_input, BitStream *bs
   return RET_OK;
 }
 
-int FSEEncoder::SerializingToOut(schema::TensorT *tensor_input, BitStream *bs, const FSEQuant &fse_quant,
+int FSEEncoder::SerializingToOut(schema::TensorT *tensor_input, FSEBitStream *bs, const FSEQuant &fse_quant,
                                  int table_log) {
   MSLITE_CHECK_PTR(tensor_input);
   MSLITE_CHECK_PTR(bs);
