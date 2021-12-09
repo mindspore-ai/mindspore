@@ -76,15 +76,15 @@ std::pair<float, float> OutlierMethod(std::vector<float> min_datas, std::vector<
 
 std::vector<int8_t> KMeans(float *data, size_t elem_count, size_t k, size_t epochs, schema::QuantParamT *quantParam);
 
-int UpdateTensorDataAndSize(const ParameterPtr &parameter, const tensor::TensorPtr &weight, void *quant_datas,
-                            int new_size, TypeId new_data_type);
+int UpdateTensorDataAndSize(const AnfNodePtr &node, const tensor::TensorPtr &weight, void *quant_datas, int new_size,
+                            TypeId new_data_type);
 
 void CalQuantAssitInfo(const schema::PrimitiveT &primitive, const std::vector<int> &shapes, int index,
                        bool *channel_at_first, int *channel_cnt);
 
 bool TensorQuantParamsInited(const schema::TensorT &tensor);
 
-int MixedBitQuantFilter(const ParameterPtr &parameter, const tensor::TensorPtr &weight, const PrimitivePtr &primitive,
+int MixedBitQuantFilter(const AnfNodePtr &node, const tensor::TensorPtr &weight, const PrimitivePtr &primitive,
                         QuantType quant_type, WeightQuantType weight_quant_type, TypeId quant_data_type,
                         double init_scale, int index);
 
@@ -95,7 +95,7 @@ int GetPreferredDim(const PrimitivePtr &primitive, int input_index, const std::v
 std::vector<int> ConvertShapeVectorToInt32(const ShapeVector &dims);
 
 template <typename T>
-int FixedBitQuantFilter(const ParameterPtr &parameter, const tensor::TensorPtr &weight, const PrimitivePtr &primitive,
+int FixedBitQuantFilter(const AnfNodePtr &parameter, const tensor::TensorPtr &weight, const PrimitivePtr &primitive,
                         QuantType quant_type, int quant_max, int quant_min, size_t bit_num,
                         WeightQuantType weight_quant_type, TypeId quant_data_type, int index, bool symmetry = false,
                         bool narrow_range = false, bool k_means = false) {

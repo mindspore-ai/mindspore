@@ -18,6 +18,7 @@
 #include <utility>
 #include "tools/converter/preprocess/image_preprocess.h"
 #include "tools/converter/ops/ops_def.h"
+#include "tools/optimizer/common/gllo_utils.h"
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
 
@@ -111,12 +112,23 @@ int Calibrator::AddQuantizedOp(const CNodePtr &cnode) {
     return RET_ERROR;
   }
   auto node_name = cnode->fullname_with_scope();
-  auto size = cnode->inputs().size();
-  for (size_t i = 1; i < size; i++) {
-    std::unique_ptr<DataDistribution> input_diverg = std::make_unique<DataDistribution>(
-      cnode, kDefaultBinNumber, bit_num_, quant_max_, quant_min_, activation_quant_method_, symmetry_);
-    MS_CHECK_TRUE_MSG(input_diverg != nullptr, RET_NULL_PTR, "input_diverg is nullptr.");
-    inputs_diverg_info_[node_name].insert({i - 1, std::move(input_diverg)});
+  auto input_size = cnode->inputs().size();
+  int index = 0;
+  for (size_t i = 1; i < input_size; i++) {
+    if (opt::CheckPrimitiveType(cnode->input(i), prim::kPrimMakeTuple)) {
+      auto make_tuple_size = cnode->input(i)->cast<CNodePtr>()->size() - 1;
+      for (size_t j = 0; j < make_tuple_size; j++) {
+        std::unique_ptr<DataDistribution> input_diverg = std::make_unique<DataDistribution>(
+          cnode, kDefaultBinNumber, bit_num_, quant_max_, quant_min_, activation_quant_method_, symmetry_);
+        MS_CHECK_TRUE_MSG(input_diverg != nullptr, RET_NULL_PTR, "input_diverg is nullptr.");
+        inputs_diverg_info_[node_name].insert({index++, std::move(input_diverg)});
+      }
+    } else {
+      std::unique_ptr<DataDistribution> input_diverg = std::make_unique<DataDistribution>(
+        cnode, kDefaultBinNumber, bit_num_, quant_max_, quant_min_, activation_quant_method_, symmetry_);
+      MS_CHECK_TRUE_MSG(input_diverg != nullptr, RET_NULL_PTR, "input_diverg is nullptr.");
+      inputs_diverg_info_[node_name].insert({index++, std::move(input_diverg)});
+    }
   }
 
   if (utils::isa<abstract::AbstractTuple>(cnode->abstract())) {
@@ -165,12 +177,14 @@ int Calibrator::CollectDataDistribution(
     MS_CHECK_GT(elem_count, 0, RET_ERROR);
     std::vector<float> data(tensor_data, tensor_data + elem_count);
     if (collect_type == MIN_MAX) {
+      MS_CHECK_LT(i, (*diverg_info_map)[node_name].size(), RET_ERROR);
       auto ret = RecordMaxMinValue(data, (*diverg_info_map)[node_name][i]);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << tensor->tensor_name() << " record max min value failed.";
         return RET_ERROR;
       }
     } else if (collect_type == KL_BIN) {
+      MS_CHECK_LT(i, (*diverg_info_map)[node_name].size(), RET_ERROR);
       auto ret = UpdateDataFrequency(data, (*diverg_info_map)[node_name][i]);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << tensor->tensor_name() << " update data frequency failed.";

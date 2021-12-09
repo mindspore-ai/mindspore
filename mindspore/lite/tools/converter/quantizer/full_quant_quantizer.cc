@@ -147,7 +147,8 @@ int FullQuantQuantizer::SetInOutQuantParam(const AnfNodePtr &input_node, const s
   if (type_id == kNumberTypeFloat32 && info != nullptr) {
     auto scale = info->GetScale();
     if (scale == 0) {
-      MS_LOG(WARNING) << "The input or output values are very close to 0, so set the scale to 1.";
+      MS_LOG(WARNING) << input_node->fullname_with_scope() << " input index:" << index
+                      << " values are very close to 0, so set the scale to 1.";
       quant_param.scale = 1;
     } else {
       quant_param.scale = scale;
@@ -172,27 +173,18 @@ int FullQuantQuantizer::SetInOutQuantParam(const AnfNodePtr &input_node, const s
   return RET_OK;
 }
 
-int FullQuantQuantizer::DoWeightQuant(const std::string &op_name, const AnfNodePtr &weight,
-                                      const PrimitivePtr &primitive, bool per_channel, int input_index) const {
-  MS_ASSERT(weight != nullptr);
-  MS_ASSERT(primitive != nullptr);
-  if (!weight->isa<Parameter>()) {
-    MS_LOG(ERROR) << "not a parameter";
-    return RET_PARAM_INVALID;
-  }
-  auto parameter = weight->cast<ParameterPtr>();
-  if (parameter == nullptr) {
-    MS_LOG(ERROR) << weight->fullname_with_scope() << " can not cast to Parameter";
-    return RET_NULL_PTR;
-  }
-  auto tensor_info = parameter->default_param()->cast<tensor::TensorPtr>();
+int FullQuantQuantizer::DoParameterWeightQuant(const ParameterPtr &weight, const PrimitivePtr &primitive,
+                                               bool per_channel, int input_index) const {
+  CHECK_NULL_RETURN(weight);
+  CHECK_NULL_RETURN(primitive);
+  auto tensor_info = weight->default_param()->cast<tensor::TensorPtr>();
   if (tensor_info == nullptr) {
     MS_LOG(ERROR) << weight->fullname_with_scope() << " can not get value";
     return RET_NULL_PTR;
   }
   auto weight_quant_type = per_channel ? WeightQuantType::FIXED_BIT_PER_CHANNEL : WeightQuantType::FIXED_BIT_PER_LAYER;
   auto status =
-    FixedBitQuantFilter<int8_t>(parameter, tensor_info, primitive, QuantType_QUANT_ALL, q_max_, q_min_, bit_num_,
+    FixedBitQuantFilter<int8_t>(weight, tensor_info, primitive, QuantType_QUANT_ALL, q_max_, q_min_, bit_num_,
                                 weight_quant_type, kNumberTypeInt8, input_index - 1, weight_symmetry_, true);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "QuantFilter failed: " << status;
@@ -201,14 +193,30 @@ int FullQuantQuantizer::DoWeightQuant(const std::string &op_name, const AnfNodeP
   return RET_OK;
 }
 
-int FullQuantQuantizer::DoBiasQuant(const AnfNodePtr &bias, const PrimitivePtr &primitive) {
-  if (primitive == nullptr || bias == nullptr) {
-    MS_LOG(ERROR) << "null pointer!";
+int FullQuantQuantizer::DoValueNodeWeightQuant(const ValueNodePtr &weight, const PrimitivePtr &primitive,
+                                               bool per_channel, int input_index) const {
+  CHECK_NULL_RETURN(weight);
+  CHECK_NULL_RETURN(primitive);
+  auto tensor_info = weight->value()->cast<tensor::TensorPtr>();
+  if (tensor_info == nullptr) {
+    MS_LOG(ERROR) << weight->fullname_with_scope() << " can not get value";
     return RET_NULL_PTR;
   }
-  auto bias_parameter_ptr = bias->cast<ParameterPtr>();
-  MS_ASSERT(bias_parameter_ptr != nullptr);
-  auto bias_default_param = bias_parameter_ptr->default_param();
+  auto weight_quant_type = per_channel ? WeightQuantType::FIXED_BIT_PER_CHANNEL : WeightQuantType::FIXED_BIT_PER_LAYER;
+  auto status =
+    FixedBitQuantFilter<int8_t>(weight, tensor_info, primitive, QuantType_QUANT_ALL, q_max_, q_min_, bit_num_,
+                                weight_quant_type, kNumberTypeInt8, input_index - 1, weight_symmetry_, true);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "QuantFilter failed: " << status;
+    return status;
+  }
+  return RET_OK;
+}
+
+int FullQuantQuantizer::DoParameterBiasQuant(const ParameterPtr &bias, const PrimitivePtr &primitive) {
+  CHECK_NULL_RETURN(bias);
+  CHECK_NULL_RETURN(primitive);
+  auto bias_default_param = bias->default_param();
   auto bias_param = bias_default_param->cast<tensor::TensorPtr>();
   MS_ASSERT(bias_parameter != nullptr);
   auto quant_param_holder = GetCNodeQuantHolder(primitive);
@@ -275,31 +283,30 @@ int FullQuantQuantizer::DoBiasQuant(const AnfNodePtr &bias, const PrimitivePtr &
     return RET_ERROR;
   }
   // set dtype
-  auto abstractBase = bias_parameter_ptr->abstract();
+  auto abstractBase = bias->abstract();
   if (abstractBase == nullptr) {
-    MS_LOG(ERROR) << "Abstract of parameter is nullptr, " << bias_parameter_ptr->name();
+    MS_LOG(ERROR) << "Abstract of parameter is nullptr, " << bias->name();
     return RET_ERROR;
   }
   if (!utils::isa<abstract::AbstractTensorPtr>(abstractBase)) {
-    MS_LOG(ERROR) << "Abstract of parameter should be anstract tensor, " << bias_parameter_ptr->name();
+    MS_LOG(ERROR) << "Abstract of parameter should be anstract tensor, " << bias->name();
     return RET_ERROR;
   }
   auto abstractTensor = utils::cast<abstract::AbstractTensorPtr>(abstractBase);
   if (abstractTensor == nullptr || abstractTensor->element() == nullptr) {
-    MS_LOG(ERROR) << "abstractTensor is nullptr" << bias_parameter_ptr->name();
+    MS_LOG(ERROR) << "abstractTensor is nullptr" << bias->name();
     return RET_NULL_PTR;
   }
   abstractTensor->element()->set_type(TypeIdToType(kNumberTypeInt32));
   return RET_OK;
 }
 
-int FullQuantQuantizer::DoParameterNodeQuant(const CNodePtr &cnode, const AnfNodePtr &input_node, size_t input_index) {
+int FullQuantQuantizer::IsSupportWeightQuant(const CNodePtr &cnode, const AnfNodePtr &input_node, size_t input_index) {
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
   if (primitive == nullptr) {
     return RET_ERROR;
   }
   auto op_name = cnode->fullname_with_scope();
-  int ret;
   TypeId type_id = kTypeUnknown;
   if (opt::GetDataTypeFromAnfNode(input_node, &type_id) != RET_OK) {
     MS_LOG(ERROR) << "Get data type failed.";
@@ -311,31 +318,59 @@ int FullQuantQuantizer::DoParameterNodeQuant(const CNodePtr &cnode, const AnfNod
   }
   // Only data the data type is fp32 can be quant.
   if (type_id != kNumberTypeFloat32) {
-    ret = SetInOutQuantParam(input_node, nullptr, primitive, true, input_index - 1);
+    auto ret = SetInOutQuantParam(input_node, nullptr, primitive, true, input_index - 1);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << op_name << " Set In/Out quant param failed.";
       return ret;
     }
     return RET_NO_CHANGE;
   }
+  return RET_OK;
+}
+
+int FullQuantQuantizer::DoParameterNodeQuant(const CNodePtr &cnode, const ParameterPtr &input_node,
+                                             size_t input_index) {
+  auto ret = IsSupportWeightQuant(cnode, input_node, input_index);
+  if (ret != RET_OK) {
+    return ret;
+  }
+  auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
+  CHECK_NULL_RETURN(primitive);
+  auto op_name = cnode->fullname_with_scope();
   if (input_index == THIRD_INPUT + 1 && CheckNodeInSet(cnode, has_bias_operator)) {
-    ret = DoBiasQuant(input_node, primitive);
+    ret = DoParameterBiasQuant(input_node, primitive);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << op_name << " Do bias quant failed.";
       return ret;
     }
   } else if (CheckNodeInSet(cnode, per_channel_ops_)) {
-    ret = DoWeightQuant(op_name, input_node, primitive, true, input_index);
+    ret = DoParameterWeightQuant(input_node, primitive, true, input_index);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << op_name << " Do bias quant failed.";
       return ret;
     }
   } else {
-    ret = DoWeightQuant(op_name, input_node, primitive, false, input_index);
+    ret = DoParameterWeightQuant(input_node, primitive, false, input_index);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << op_name << " Do bias quant failed.";
       return ret;
     }
+  }
+  return RET_OK;
+}
+
+int FullQuantQuantizer::DoValueNodeQuant(const CNodePtr &cnode, const ValueNodePtr &input_node, size_t input_index) {
+  auto ret = IsSupportWeightQuant(cnode, input_node, input_index);
+  if (ret != RET_OK) {
+    return ret;
+  }
+  auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
+  CHECK_NULL_RETURN(primitive);
+  auto op_name = cnode->fullname_with_scope();
+  ret = DoValueNodeWeightQuant(input_node, primitive, false, input_index);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << op_name << " Do value node weight quant failed.";
+    return ret;
   }
   return RET_OK;
 }
@@ -389,11 +424,19 @@ int FullQuantQuantizer::QuantNodeSimpleOp(const CNodePtr &cnode) {
         }
       }
     } else if (input_node->isa<mindspore::Parameter>()) {
-      ret = DoParameterNodeQuant(cnode, input_node, i);
+      ret = DoParameterNodeQuant(cnode, input_node->cast<ParameterPtr>(), i);
       if (ret == RET_NO_CHANGE) {
         continue;
       } else if (ret != RET_OK) {
         MS_LOG(ERROR) << input_node->fullname_with_scope() << " Do parameter node quant failed.";
+        return ret;
+      }
+    } else if (input_node->isa<mindspore::ValueNode>()) {
+      ret = DoValueNodeQuant(cnode, input_node->cast<ValueNodePtr>(), i);
+      if (ret == RET_NO_CHANGE) {
+        continue;
+      } else if (ret != RET_OK) {
+        MS_LOG(ERROR) << input_node->fullname_with_scope() << " Do value node quant failed.";
         return ret;
       }
     } else {
@@ -826,7 +869,7 @@ int FullQuantQuantizer::BiasCorrection(const FuncGraphPtr &func_graph, const CNo
     }
     parameter->set_name("added_" + op_name + "_bias");
     cnode->add_input(parameter);
-    status = DoBiasQuant(parameter, primitive);
+    status = DoParameterBiasQuant(parameter, primitive);
     if (status != RET_OK) {
       MS_LOG(ERROR) << op_name << " Do bias quant failed.";
       return RET_ERROR;
