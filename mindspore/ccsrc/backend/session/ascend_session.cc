@@ -319,7 +319,9 @@ void AscendSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_gra
     auto output_tensor = item.first;
     output_tensor->set_device_address(item.second);
   }
-  SyncStream();
+  if (!tensor_device_addr_map_.empty()) {
+    SyncStream();
+  }
   for (size_t i = 0; i < inputs.size(); ++i) {
     auto tensor = inputs[i];
     MS_EXCEPTION_IF_NULL(tensor);
