@@ -118,8 +118,8 @@ void PReluFp16(const float16_t *input, float16_t *output, const float16_t *slope
       float16x8_t in = vld1q_f16(cur_in + j);
       float16x8_t s = vld1q_f16(slope + j);
       float16x8_t mul = vmulq_f16(in, s);
-      uint16x8_t mask = vcgtq_f16(in, vmovq_n_f16(0.0f));
-      vst1q_f16(cur_out + j, vbslq_f16(mask, in, mul));
+      uint16x8_t mask = vcleq_f16(in, vmovq_n_f16(0.0f));
+      vst1q_f16(cur_out + j, vbslq_f16(mask, mul, in));
     }
 #endif
     for (; j < channel; j++) {

@@ -74,7 +74,7 @@ int ElementMulRelu(const float *in0, const float *in1, float *out, int size) {
     MS_FLOAT32X4 vin0 = MS_LDQ_F32(in0 + index);
     MS_FLOAT32X4 vin1 = MS_LDQ_F32(in1 + index);
     MS_FLOAT32X4 vout = MS_MULQ_F32(vin0, vin1);
-    vout = MS_BLENDQ_F32(zeros, vout, MS_CMPGTQ_F32(vout, zeros));
+    vout = MS_BLENDQ_F32(vout, zeros, MS_CMPLEQ_F32(vout, zeros));
     MS_STQ_F32(out + index, vout);
   }
 #endif
