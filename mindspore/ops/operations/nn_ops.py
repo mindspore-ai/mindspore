@@ -3824,7 +3824,7 @@ class LSTM(PrimitiveWithInfer):
         return x_dtype, x_dtype, x_dtype, x_dtype, x_dtype
 
 
-class SigmoidCrossEntropyWithLogits(PrimitiveWithInfer):
+class SigmoidCrossEntropyWithLogits(Primitive):
     r"""
     Uses the given logits to compute sigmoid cross entropy between the logits and the label.
 
@@ -3868,15 +3868,6 @@ class SigmoidCrossEntropyWithLogits(PrimitiveWithInfer):
     def __init__(self):
         """Initialize SigmoidCrossEntropyWithLogits"""
         self.init_prim_io_names(inputs=['predict', 'target'], outputs=['loss'])
-
-    def infer_shape(self, x_shape, y_shape):
-        validator.check("x_shape", x_shape, "y_shape", y_shape, Rel.EQ, self.name)
-        return x_shape
-
-    def infer_dtype(self, x_dtype, y_dtype):
-        args = {"x_dtype": x_dtype, "y_dtype": y_dtype}
-        validator.check_tensors_dtypes_same_and_valid(args, mstype.number_type, self.name)
-        return x_dtype
 
 
 class BCEWithLogitsLoss(PrimitiveWithInfer):
