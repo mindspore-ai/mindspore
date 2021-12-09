@@ -39,6 +39,11 @@ if(NOT PLATFORM_ARM32 AND NOT TARGET_HIMIX AND NOT MACHINE_LINUX_ARM64)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=armv8.2-a+dotprod+fp16")
 endif()
 
+if(TARGET_MIX210)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=armv8.2-a+fp16")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=armv8.2-a+fp16")
+endif()
+
 if(MSLITE_ENABLE_FP16)
     add_library(nnacl_fp16_mid OBJECT ${FP16_FILES})
     add_dependencies(nnacl_fp16_mid fbs_src)
