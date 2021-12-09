@@ -291,11 +291,12 @@ def reset_algo_parameters():
         This interface works ONLY in AUTO_PARALLEL mode.
 
     After reset, the values of the attributes are:
-    --fully_use_devices: True.
-    --elementwise_op_strategy_follow: False.
-    --enable_algo_approxi: False.
-    --algo_approxi_epsilon: 0.1.
-    --tensor_slice_align_enable: False.
-    --tensor_slice_align_size: 16.
+
+    - fully_use_devices: True.
+    - elementwise_op_strategy_follow: False.
+    - enable_algo_approxi: False.
+    - algo_approxi_epsilon: 0.1.
+    - tensor_slice_align_enable: False.
+    - tensor_slice_align_size: 16.
     """
     _algo_parameter_config().reset_algo_parameters()
