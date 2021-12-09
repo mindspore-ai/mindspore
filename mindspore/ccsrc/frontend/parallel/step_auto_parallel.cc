@@ -368,6 +368,8 @@ OperatorInfoPtr CreateTheOperatorInfo(const PrimitivePtr &prim, const CNodePtr &
     MS_LOG(INFO) << "generating batch parallel strategy...";
     StrategyPtr strategyPtr = parallel::GenerateBatchParallelStrategy(operator_info, prim);
     retGenStra = operator_info->SetCostUnderStrategy(strategyPtr);
+    attrs = prim->attrs();
+    operator_info->addAttr(IN_STRATEGY, attrs[GEN_STRATEGY]);  // for d-rec
   } else {
     MS_LOG(INFO) << "auto-searching strategy...";
     retGenStra = operator_info->GenerateStrategies(0);
