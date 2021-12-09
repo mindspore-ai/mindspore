@@ -122,6 +122,8 @@ int MatmulBaseFP16CPUKernel::ReSize() {
 void MatmulBaseFP16CPUKernel::ResizeParameter() {
   if (params_->row_ == 1) {
     vec_matmul_ = true;
+  } else {
+    vec_matmul_ = false;
   }
 
   if (vec_matmul_) {
@@ -209,7 +211,7 @@ void MatmulBaseFP16CPUKernel::InitMatrixB(const void *src_ptr, TypeId src_data_t
       } else {
 #ifdef ENABLE_ARM64
         for (auto i = 0; i < b_batch_; ++i) {
-          const auto *b_src = reinterpret_cast<const float16_t *>(src_ptr) + i * params_->col_align_ * params_->deep_;
+          const auto *b_src = reinterpret_cast<const float16_t *>(src_ptr) + i * params_->col_ * params_->deep_;
           auto *dst = b_pack_ptr_ + i * params_->col_align_ * params_->deep_;
           RowMajor2Col16MajorFp16Opt(b_src, dst, params_->col_, params_->deep_);
         }
@@ -220,7 +222,7 @@ void MatmulBaseFP16CPUKernel::InitMatrixB(const void *src_ptr, TypeId src_data_t
     } else {
       for (int i = 0; i < b_batch_; i++) {
 #ifdef ENABLE_ARM64
-        const auto *b_src = reinterpret_cast<const float16_t *>(src_ptr) + i * params_->col_align_ * params_->deep_;
+        const auto *b_src = reinterpret_cast<const float16_t *>(src_ptr) + i * params_->col_ * params_->deep_;
         auto *dst = b_pack_ptr_ + i * params_->col_align_ * params_->deep_;
         RowMajor2Row16MajorFp16Opt(b_src, dst, params_->deep_, params_->col_);
 #else
