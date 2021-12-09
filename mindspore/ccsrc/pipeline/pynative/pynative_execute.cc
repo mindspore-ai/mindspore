@@ -2724,6 +2724,8 @@ void GradExecutor::GradNetInner(py::object *ret, const prim::GradOperationPtr &g
   }
   // Get bprop graph of top cell
   auto bprop_graph = GetBpropGraph(grad, cell, w_args, p_args, size, args);
+  MS_EXCEPTION_IF_NULL(bprop_graph);
+  bprop_graph->set_is_bprop(true);
   resource->set_func_graph(bprop_graph);
   auto manager = resource->manager();
   MS_EXCEPTION_IF_NULL(manager);

@@ -517,12 +517,12 @@ bool MindRTBackend::CompileGraph(const FuncGraphPtr &func_graph) {
 
   // Foreach the segments to compile graph.
   for (const auto &segment : new_segments) {
-    CompileGraph(segment, contain_multi_target);
+    CompileGraph(segment, contain_multi_target, func_graph->is_bprop());
   }
   return true;
 }
 
-void MindRTBackend::CompileGraph(const GraphSegmentPtr &segment, bool contain_multi_target) {
+void MindRTBackend::CompileGraph(const GraphSegmentPtr &segment, bool contain_multi_target, bool run_in_pynative) {
   MS_EXCEPTION_IF_NULL(segment);
   // Compile the normal nodes, which doesn't contain the cut node.
   if (segment->nodes_.size() == 0) {
@@ -548,13 +548,14 @@ void MindRTBackend::CompileGraph(const GraphSegmentPtr &segment, bool contain_mu
     auto context_ptr = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context_ptr);
     // There will be more than one kernel graph in heterogeneous scenario in a ms function of PyNative Mode.
-    if (contain_multi_target && ms_execution_mode_ == kPynativeMode) {
+    if ((contain_multi_target || !run_in_pynative) && ms_execution_mode_ == kPynativeMode) {
       real_execution_mode_ = kGraphMode;
       context_ptr->set_param<int>(MS_CTX_EXECUTION_MODE, kGraphMode);
+      MS_LOG(INFO) << "PyNative graph Compile and Run in GRAPH_MODE";
     }
 
     // Compile graph.
-    auto graph_id = graph_compiler_->CompileGraph(segment, outputs, device_context);
+    auto graph_id = graph_compiler_->CompileGraph(segment, outputs, device_context, run_in_pynative);
 
     if (ms_execution_mode_ != real_execution_mode_) {
       context_ptr->set_param<int>(MS_CTX_EXECUTION_MODE, ms_execution_mode_);
@@ -904,6 +905,8 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &args,
   MS_EXCEPTION_IF_NULL(graph_iter->second);
   const auto &graph_compiler_info = *(graph_iter->second);
   const auto &origin_parameters = graph_compiler_info.origin_parameters_order_;
+
+  SyncLazyTasks();
 
   // Transform args to input tensors.
   // Input tensors of the graph.
