@@ -105,7 +105,6 @@ bool QuantStrategy::CanOpFullQuantized(const AnfNodePtr &node) {
   }
   const auto cnode = std::dynamic_pointer_cast<mindspore::CNode>(node);
   MS_ASSERT(cnode != nullptr);
-  auto type = NodePrimitiveType(cnode);
   static const std::set<PrimitivePtr> support_int8_ops = {prim::kPrimAddFusion,      prim::kPrimActivation,
                                                           prim::kPrimAvgPoolFusion,  prim::kPrimConcat,
                                                           prim::kPrimConv2DFusion,   prim::kPrimConv2dTransposeFusion,
@@ -122,6 +121,7 @@ bool QuantStrategy::CanOpFullQuantized(const AnfNodePtr &node) {
   if (opt::CheckPrimitiveType(cnode, prim::kPrimReturn) || opt::CheckPrimitiveType(cnode, prim::kPrimMakeTuple)) {
     return false;
   }
+  auto type = NodePrimitiveType(cnode);
   // These operators do not need to check the data type.
   if (opt::CheckPrimitiveType(cnode, prim::kPrimShape) || opt::CheckPrimitiveType(cnode, prim::kPrimTupleGetItem)) {
     return true;
