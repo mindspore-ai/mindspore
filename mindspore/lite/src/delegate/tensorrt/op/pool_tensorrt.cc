@@ -113,19 +113,28 @@ int PoolTensorRT::ParseParams() {
       }
       pooling_type_ = nvinfer1::PoolingType::kAVERAGE;
 
-      auto kernel_size = pool_primitive->kernel_size();
-      if (kernel_size == nullptr) {
-        MS_LOG(ERROR) << "get kernel size failed: " << op_name_;
-        return RET_ERROR;
-      }
-      kernel_size_ = std::vector<int64_t>(kernel_size->begin(), kernel_size->end());
-
       auto stride = pool_primitive->strides();
       if (stride == nullptr) {
         MS_LOG(ERROR) << "get stride failed: " << op_name_;
         return RET_ERROR;
       }
       stride_ = std::vector<int64_t>(stride->begin(), stride->end());
+
+      auto kernel_size = pool_primitive->kernel_size();
+      if (kernel_size == nullptr) {
+        int in_h = in_tensors_[0].Shape()[kNHWC_H];
+        int in_w = in_tensors_[0].Shape()[kNHWC_W];
+        int out_h = out_tensors_[0].Shape()[kNHWC_H];
+        int out_w = out_tensors_[0].Shape()[kNHWC_W];
+        int kernel_h = in_h - (out_h - 1) * stride_[0];
+        int kernel_w = in_w - (out_w - 1) * stride_[1];
+        kernel_size_.push_back(kernel_h);
+        kernel_size_.push_back(kernel_w);
+        MS_LOG(WARNING) << op_name_ << "don't has kernel size, calculate kernel size on ms tensor, kernel_h is "
+                        << kernel_h << ", kernel_w is " << kernel_w;
+      } else {
+        kernel_size_ = std::vector<int64_t>(kernel_size->begin(), kernel_size->end());
+      }
 
       auto padding = pool_primitive->pad();
       if (padding == nullptr) {
