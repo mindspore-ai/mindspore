@@ -23,9 +23,9 @@
 
 namespace mindspore {
 namespace device {
-static const char kPynativeParamMem[] = "Pynative unique mem";
+static const char kPynativeParamMem[] = "Persistent mem";
 static const char kCommonMem[] = "Common mem";
-const size_t kGBToByte = 1024 << 20;
+const size_t kGBToByte = 1073741824;
 
 static bool IsPynativeMode() {
   auto ms_context = MsContext::GetInstance();
