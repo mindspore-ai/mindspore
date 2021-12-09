@@ -59,7 +59,7 @@ TEST_F(TestZeroCopy, TestMindIR) {
   auto context = ContextAutoSet();
   ASSERT_TRUE(context != nullptr);
   ASSERT_TRUE(context->MutableDeviceInfo().size() == 1);
-  auto ascend310_info = context->MutableDeviceInfo()[0]->Cast<Ascend310DeviceInfo>();
+  auto ascend310_info = context->MutableDeviceInfo()[0]->Cast<AscendDeviceInfo>();
   ASSERT_TRUE(ascend310_info != nullptr);
   ascend310_info->SetInsertOpConfigPath(aipp_path);
   auto device_id = ascend310_info->GetDeviceID();
@@ -107,7 +107,7 @@ TEST_F(TestZeroCopy, TestDeviceTensor) {
   auto context = ContextAutoSet();
   ASSERT_TRUE(context != nullptr);
   ASSERT_TRUE(context->MutableDeviceInfo().size() == 1);
-  auto ascend310_info = context->MutableDeviceInfo()[0]->Cast<Ascend310DeviceInfo>();
+  auto ascend310_info = context->MutableDeviceInfo()[0]->Cast<AscendDeviceInfo>();
   ASSERT_TRUE(ascend310_info != nullptr);
   ascend310_info->SetInsertOpConfigPath(aipp_path);
   auto device_id = ascend310_info->GetDeviceID();

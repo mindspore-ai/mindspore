@@ -104,7 +104,7 @@ lite::InnerContext *ContextUtils::Convert(Context *context) {
     } else if (device->GetDeviceType() == kKirinNPU) {
       auto npu_context = device->Cast<KirinNPUDeviceInfo>();
       ret = AddNpuDevice(npu_context->GetFrequency(), inner_context.get());
-    } else if (device->GetDeviceType() == kAscend310) {
+    } else if (device->GetDeviceType() == kAscend) {
       ret = AddAscend310Device(inner_context.get(), device.get());
     }
     if (ret != kSuccess) {

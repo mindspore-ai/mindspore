@@ -37,6 +37,7 @@ class AclGraphImpl : public GraphCell::GraphImpl {
   Status Load(uint32_t device_id) override;
   std::vector<MSTensor> GetInputs() override;
   std::vector<MSTensor> GetOutputs() override;
+  bool CheckDeviceSupport(mindspore::DeviceType device_type) override;
 
  private:
   Status ConvertToOM();

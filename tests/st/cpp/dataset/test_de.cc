@@ -101,7 +101,7 @@ TEST_F(TestDE, TestDvpp) {
   auto context = ContextAutoSet();
   ASSERT_TRUE(context != nullptr);
   ASSERT_TRUE(context->MutableDeviceInfo().size() == 1);
-  auto ascend310_info = context->MutableDeviceInfo()[0]->Cast<Ascend310DeviceInfo>();
+  auto ascend310_info = context->MutableDeviceInfo()[0]->Cast<AscendDeviceInfo>();
   ASSERT_TRUE(ascend310_info != nullptr);
   auto device_id = ascend310_info->GetDeviceID();
 
@@ -154,7 +154,7 @@ TEST_F(TestDE, TestDvppSinkMode) {
   auto context = ContextAutoSet();
   ASSERT_TRUE(context != nullptr);
   ASSERT_TRUE(context->MutableDeviceInfo().size() == 1);
-  auto ascend310_info = context->MutableDeviceInfo()[0]->Cast<Ascend310DeviceInfo>();
+  auto ascend310_info = context->MutableDeviceInfo()[0]->Cast<AscendDeviceInfo>();
   ASSERT_TRUE(ascend310_info != nullptr);
   auto device_id = ascend310_info->GetDeviceID();
 
@@ -202,7 +202,7 @@ TEST_F(TestDE, TestDvppDecodeResizeCropNormalize) {
   auto context = ContextAutoSet();
   ASSERT_TRUE(context != nullptr);
   ASSERT_TRUE(context->MutableDeviceInfo().size() == 1);
-  auto ascend310_info = context->MutableDeviceInfo()[0]->Cast<Ascend310DeviceInfo>();
+  auto ascend310_info = context->MutableDeviceInfo()[0]->Cast<AscendDeviceInfo>();
   ASSERT_TRUE(ascend310_info != nullptr);
   auto device_id = ascend310_info->GetDeviceID();
 
