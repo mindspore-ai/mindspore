@@ -29,7 +29,7 @@ if(MSLITE_ENABLE_SHARING_MEM_WITH_OPENGL)
     target_link_libraries(benchmark ${opengl_lib})
 endif()
 
-if((PLATFORM_ARM32 OR PLATFORM_ARM64) AND NOT TARGET_HIMIX AND NOT TARGET_OHOS_LITE)
+if((PLATFORM_ARM32 OR PLATFORM_ARM64) AND NOT TARGET_HIMIX AND NOT TARGET_OHOS_LITE AND NOT MACHINE_LINUX_ARM64)
     if(SUPPORT_NPU AND ANDROID_STL STREQUAL "c++_static")
         target_link_libraries(benchmark mindspore-lite mindspore::json c++_shared)
     else()

@@ -15,6 +15,9 @@
  */
 
 #include "src/lite_session.h"
+#if defined(MACHINE_LINUX_ARM64)
+#include <malloc.h>
+#endif
 #include <vector>
 #include <utility>
 #include "include/errorcode.h"
@@ -578,6 +581,9 @@ int LiteSession::CompileGraph(Model *model) {
   }
 
   is_running_.store(false);
+#if defined(MACHINE_LINUX_ARM64)
+  (void)malloc_trim(0);
+#endif
   return RET_OK;
 }
 
@@ -1113,6 +1119,9 @@ int LiteSession::Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs
   }
 
   is_running_.store(false);
+#if defined(MACHINE_LINUX_ARM64)
+  (void)malloc_trim(0);
+#endif
   return RET_OK;
 }
 

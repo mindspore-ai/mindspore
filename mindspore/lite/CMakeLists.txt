@@ -9,7 +9,7 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/compile_link_option.cmake)
 #Options that can be configured through environment variables or manually
 set(MSLITE_GPU_BACKEND "" CACHE STRING "enable gpu backend, \
     opencl only support arm64 and x86_64 , tensorrt only support x86_64, opencl/cuda/tensorrt/off")
-set(MSLITE_REGISTRY_DEVICE "" CACHE STRING "Compile Mindspore Lite that supports specific devices, \
+set(MSLITE_REGISTRY_DEVICE "off" CACHE STRING "Compile Mindspore Lite that supports specific devices, \
     currently supported devices: Hi3516D/Hi3519A/Hi3559A")
 option(MSLITE_ENABLE_NPU "enable npu, only arm64 or arm32 support" off)
 option(MSLITE_ENABLE_TRAIN "enable train" on)
@@ -43,6 +43,10 @@ option(MSLITE_ENABLE_SHARING_MEM_WITH_OPENGL "enable sharing memory with OpenGL"
 option(ENABLE_VERBOSE "" off)
 option(ENABLE_MODEL_OBF "if support model obfuscation" off)
 set(BUILD_MINDDATA "lite_cv" CACHE STRING "off, lite, lite_cv, wrapper or full")
+if(MACHINE_LINUX_ARM64)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=armv8.2-a+fp16")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=armv8.2-a+fp16")
+endif()
 
 if(DEFINED ENV{MSLITE_GPU_BACKEND})
     set(MSLITE_GPU_BACKEND $ENV{MSLITE_GPU_BACKEND})
@@ -134,6 +138,9 @@ if(DEFINED ENV{MSLITE_ENABLE_SHARING_MEM_WITH_OPENGL})
     set(MSLITE_ENABLE_SHARING_MEM_WITH_OPENGL $ENV{MSLITE_ENABLE_SHARING_MEM_WITH_OPENGL})
 endif()
 
+if(MACHINE_LINUX_ARM64)
+    add_compile_definitions(MACHINE_LINUX_ARM64)
+endif()
 if(TOOLCHAIN_NAME STREQUAL "himix200")
     set(TARGET_HIMIX on)
     set(TARGET_HIMIX200 on)
@@ -339,7 +346,7 @@ if(NOT MSVC)
 endif()
 
 if(PLATFORM_ARM64)
-    if(TARGET_HIMIX100)
+    if(TARGET_HIMIX100 OR MACHINE_LINUX_ARM64)
         set(RUNTIME_COMPONENT_NAME "linux-aarch64")
     else()
         set(RUNTIME_COMPONENT_NAME "android-aarch64")

@@ -31,7 +31,7 @@ endif()
 
 string(REPLACE "-fvisibility=hidden" "-fvisibility=default" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
 
-if(NOT PLATFORM_ARM32 AND NOT TARGET_HIMIX)
+if(NOT PLATFORM_ARM32 AND NOT TARGET_HIMIX AND NOT MACHINE_LINUX_ARM64)
     list(APPEND SDOT_FILES ${SDOT_SRC})
     add_library(nnacl_optimize_mid OBJECT ${SDOT_FILES})
     add_dependencies(nnacl_optimize_mid fbs_src)

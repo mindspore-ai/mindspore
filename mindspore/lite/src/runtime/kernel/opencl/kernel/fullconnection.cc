@@ -163,11 +163,11 @@ int FullConnectionOpenCLKernel::InitFilter() {
   // if tranposeB, COHWCI -> (HWCI4)(CO4)(4 from CO)(4 from CI)
   int index = 0;
   for (int nhw = 0; nhw < nhw_remainder; nhw++) {
-    for (int i = 0; i < intensor_shape.Slice; ++i) {
+    for (size_t i = 0; i < intensor_shape.Slice; ++i) {
       for (int j = 0; j < co4; ++j) {
         for (int k = 0; k < C4NUM; ++k) {
           for (int l = 0; l < C4NUM; ++l) {
-            int src_ci = i * C4NUM + l;
+            size_t src_ci = i * C4NUM + l;
             int src_co = j * C4NUM + k;
             if (src_ci < intensor_shape.C && src_co < CO_) {
               int originId = (nhw * intensor_shape.C + src_ci) * CO_ + src_co;

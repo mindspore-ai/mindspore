@@ -140,7 +140,7 @@ void Convolution1x1Int8CPUKernel::CheckSupportOptimize() {
   support_optimize_ = false;
   matmul_func_ = MatMulInt8_4x16_r;
 #if defined(ENABLE_ARM64)
-#if !defined(SUPPORT_NNIE)
+#if !defined(SUPPORT_NNIE) && !defined(MACHINE_LINUX_ARM64)
   if (mindspore::lite::IsSupportSDot()) {
     support_optimize_ = true;
     matmul_func_ = MatMulDpInt8_optimize_handler;
@@ -148,7 +148,7 @@ void Convolution1x1Int8CPUKernel::CheckSupportOptimize() {
 #endif
     support_optimize_ = false;
     matmul_func_ = nullptr;
-#if !defined(SUPPORT_NNIE)
+#if !defined(SUPPORT_NNIE) && !defined(MACHINE_LINUX_ARM64)
   }
 #endif
 #endif

@@ -205,7 +205,7 @@ void CopyNumber(void *dst, void *src, size_t n) {
   } else {
     auto *dst_ = static_cast<DstT *>(dst);
     auto *src_ = static_cast<SrcT *>(src);
-    for (int i = 0; i < n; ++i) {
+    for (size_t i = 0; i < n; ++i) {
       dst_[i] = static_cast<DstT>(src_[i]);
     }
   }

@@ -197,7 +197,7 @@ int BatchNormOpenCLKernel::Initweight() {
       auto origin_mean_fp16 = reinterpret_cast<float16_t *>(in_tensors_.at(3)->data());
       auto origin_variance_fp16 = reinterpret_cast<float16_t *>(in_tensors_.at(4)->data());
 
-      for (int i = 0; i < img_info.ElementsNum; ++i) {
+      for (size_t i = 0; i < img_info.ElementsNum; ++i) {
         scale_fp32[i] = static_cast<float>(origin_scale_fp16[i]);
         offset_fp32[i] = static_cast<float>(origin_offset_fp16[i]);
         mean_fp32[i] = static_cast<float>(origin_mean_fp16[i]);
@@ -216,7 +216,7 @@ int BatchNormOpenCLKernel::Initweight() {
       auto origin_mean_fp32 = reinterpret_cast<float *>(in_tensors_.at(3)->data());
       auto origin_variance_fp32 = reinterpret_cast<float *>(in_tensors_.at(4)->data());
 
-      for (int i = 0; i < img_info.ElementsNum; ++i) {
+      for (size_t i = 0; i < img_info.ElementsNum; ++i) {
         scale_fp16[i] = static_cast<float16_t>(origin_scale_fp32[i]);
         offset_fp16[i] = static_cast<float16_t>(origin_offset_fp32[i]);
         mean_fp16[i] = static_cast<float16_t>(origin_mean_fp32[i]);

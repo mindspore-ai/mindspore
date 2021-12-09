@@ -106,7 +106,7 @@ static inline float16x4_t ms_vcvt_f16_f32(float32x4_t in) {
 #define MS_MULQ_F16 vmulq_f16
 #define MS_FMAQ_F16 vfmaq_f16
 #define MS_MULQ_N_F16(vector, scalar) vmulq_n_f16(vector, scalar)
-#define MS_CMPGTQ_F16(src1, src2) vcgtq_f32(src1, src2)
+#define MS_CMPGTQ_F16(src1, src2) vcgtq_f16(src1, src2)
 
 static inline float16x8_t MS_TANHX8_F16(float16x8_t src) {
   float32x4_t src_low = MS_CVT_F32_F16(vget_low_f16(src));
