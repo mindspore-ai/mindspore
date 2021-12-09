@@ -564,8 +564,17 @@ void ControlNodeScheduler::LinkArrowByValueNode(const AnfNodePtr &value_node, Co
   } else {
     // Link device store value node.
     if (!AnfAlgo::OutputAddrExist(value_node, from_index)) {
-      MS_LOG(EXCEPTION) << "Invalid output address index:" << from_index
-                        << " for value node:" << value_node->DebugString() << " to actor:" << to_actor->GetAID();
+      auto node = value_node->cast<ValueNodePtr>();
+      MS_EXCEPTION_IF_NULL(node);
+      auto value = node->value();
+      MS_EXCEPTION_IF_NULL(value);
+      // If the from index exceeds the size of the value node, we need to change the from index to 0.
+      if (!value->isa<ValueTuple>() && from_index > 0) {
+        from_index = 0;
+      } else {
+        MS_LOG(EXCEPTION) << "Invalid output address index:" << from_index
+                          << " for value node:" << value_node->DebugString() << " to actor:" << to_actor->GetAID();
+      }
     }
     to_actor->local_device_tensors_[to_index] = AnfAlgo::GetMutableOutputAddr(value_node, from_index, false).get();
     to_actor->local_device_tensors_[to_index]->SetNodeIndex(value_node, from_index);

@@ -1767,6 +1767,18 @@ void GraphScheduler::PersistDeviceTensor(const GraphCompilerInfo &graph_compiler
       }
     }
   }
+
+  const auto &parser = graph_compiler_info.control_node_parser_;
+  if (parser == nullptr) {
+    return;
+  }
+  for (const auto &sub_front_node_to_root_front_node : parser->sub_front_node_to_root_front_node_) {
+    auto device_tensors = DeviceTensorStore::GetInstance().Fetch(sub_front_node_to_root_front_node.second.get());
+    for (const auto &device_tensor : device_tensors) {
+      MS_EXCEPTION_IF_NULL(device_tensor);
+      AddDeviceTensorStore(sub_front_node_to_root_front_node.first.get(), device_tensor);
+    }
+  }
 }
 
 void GraphScheduler::DumpActor(const ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info) const {
