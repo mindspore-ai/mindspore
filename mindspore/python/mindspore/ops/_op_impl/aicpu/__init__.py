@@ -153,6 +153,7 @@ from .floor_div import _floor_div_aicpu
 from .non_deterministic_ints import _non_deterministic_ints_aicpu
 from .one_hot import _one_hot_aicpu
 from .mul_no_nan import _mul_no_nan_aicpu
+from .adjust_contrastv2 import _adjust_contrastv2_aicpu
 from .priority_replay_buffer import _prb_create_op_cpu
 from .priority_replay_buffer import _prb_push_op_cpu
 from .priority_replay_buffer import _prb_sample_op_cpu

@@ -26,7 +26,7 @@ from mindspore import ms_function
 from mindspore.common import dtype as mstype
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
-from mindspore.ops.operations.image_ops import CropAndResizeGradBoxes, AdjustHue
+from mindspore.ops.operations.image_ops import CropAndResizeGradBoxes, AdjustHue, AdjustContrastv2
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops.operations import _quant_ops as Q
@@ -3091,6 +3091,14 @@ test_case_image_ops = [
                                          [[13, 14, 15],
                                           [16, 17, 18]]]).astype(np.float32)),
                         Tensor(0.2, mstype.float32)],
+        'skip': ['backward']}),
+    ('AdjustContrastv2', {
+        'block': AdjustContrastv2(),
+        'desc_inputs': [Tensor([[[1.0, 2.0, 3.0],
+                                 [4.0, 5.0, 6.0]],
+                                [[7.0, 8.0, 9.0],
+                                 [10.0, 11.0, 12.0]]]),
+                        Tensor(0.5, mstype.float32)],
         'skip': ['backward']}),
     ('NonMaxSuppressionV3', {
         'block': P.NonMaxSuppressionV3(),

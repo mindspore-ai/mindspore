@@ -21,6 +21,55 @@ from ...common import dtype as mstype
 from ..primitive import PrimitiveWithInfer, prim_attr_register, Primitive
 
 
+class AdjustContrastv2(Primitive):
+    """
+    Adjust contrastv2 of images.
+
+    Note:
+        images is a tensor of at least 3 dimensions.
+        The last 3 dimensions are interpreted as [height, width, channels].
+        The other dimensions only represent a collection of images, such as [batch, height, width, channels].
+        Contrast is adjusted independently for each channel of each image.
+
+    inputs:
+        -**images**(tensor): Images to adjust. Must be one of the following types: float16, float32.
+          At least 3-D.The last dimension is interpreted as channels, and must be three.
+        -**contrast_factor**(tensor): A float multiplier for adjusting contrast. A Tensor of type float32. Must be 0-D.
+
+    Output:
+        Adjusted image(s), same shape and dtype as `images`.
+
+    Raises:
+        TypeError: If any input is not Tensor.
+        TypeError: If the type of `images` is not one of the following dtype: float16, float32.
+        TypeError: If the type of `contrast_factor` is not float32.
+        ValueError: If the dimension of the 'images' is less than 3, or the last dimension of the 'images' is not 3.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+    >>> images = Tensor([[[1.0, 2.0, 3.0],
+    ...       [4.0, 5.0, 6.0]],
+    ...     [[7.0, 8.0, 9.0],
+    ...       [10.0, 11.0, 12.0]]], mstype.float32)
+    >>> contrast_factor = Tensor(2., mstype.float32)
+    >>> adjustcontrastv2 = AdjustContrastv2()
+    >>> output = adjustcontrastv2(images, contrast_factor)
+    >>> print(output)
+    [[[-3.5 -2.5 -1.5]
+      [ 2.5  3.5  4.5]]
+    <BLANKLINE>
+     [[ 8.5  9.5 10.5]
+      [14.5 15.5 16.5]]]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize AdjustContrastv2"""
+        self.init_prim_io_names(inputs=['images', 'contrast_factor'], outputs=['y'])
+
+
 class AdjustHue(Primitive):
     """
     Adjust hue of RGB images.
