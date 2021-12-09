@@ -257,7 +257,7 @@ void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, std::tuple<std
 
   const std::vector<int> &output_shape = std::get<0>(output_info);
   float *expect_data = std::get<1>(output_info);
-  auto output = Tensor(kNumberTypeFloat32, output_shape, mindspore::NHWC, VAR);
+  auto output = Tensor(kNumberTypeFloat32, output_shape, mindspore::NHWC, GRAPH_OUTPUT);
 
   // simulating benchmark:  session_->CompileGraph() -> scheduler.Schedule() -> BuildKernels()
   MS_LOG(DEBUG) << "create OpenCLKernel";
