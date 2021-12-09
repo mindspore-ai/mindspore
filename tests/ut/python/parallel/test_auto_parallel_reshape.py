@@ -261,7 +261,6 @@ def test_reshape_auto_5():
             return out
 
     size = 8
-    context.set_auto_parallel_context(dataset_strategy="full_batch")
     x = Tensor(np.ones([4, 1024 * size, 1]), dtype=ms.float32)
     y = Tensor(np.ones([4, 1024 * size,]), dtype=ms.float32)
     net = GradWrapTwoInput(NetWithLossTwoInput(Net()))
@@ -292,7 +291,6 @@ def test_reshape_auto_6():
             return out
 
     size = 8
-    context.set_auto_parallel_context(dataset_strategy="full_batch")
     x = Tensor(np.ones([4, 1024, 1]), dtype=ms.float32)
     y = Tensor(np.ones([4, 1024,]), dtype=ms.float32)
     net = GradWrapTwoInput(NetWithLossTwoInput(Net()))
