@@ -56,6 +56,7 @@ class KernelRuntime {
   virtual bool Init() = 0;
   virtual void AssignMemory(const session::KernelGraph &graph);
   void RunOpAssignMemory(const std::vector<tensor::TensorPtr> &input_tensors, const session::KernelGraph &graph,
+                         bool is_gradient_out,
                          const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node = {});
   void AssignCommunicationOutputFromMemoryPool(const AnfNodePtr &node) const;
   void AssignCommunicationInputFromMemoryPool(const AnfNodePtr &node) const;
@@ -173,7 +174,8 @@ class KernelRuntime {
                                      const std::shared_ptr<MemScheduler> &mem_schedule = nullptr);
   void RunOpAssignInputMemory(const std::vector<tensor::TensorPtr> &input_tensors, const session::KernelGraph &graph);
   void RunOpAssignOutputMemory(const AnfNodePtr &kernel,
-                               const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node = {});
+                               const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node,
+                               bool is_gradient_out);
   void RunOpAssignWorkSpaceMemory(const AnfNodePtr &kernel);
   void RunOpAssignOutputNodeMemory(const ValuePtr &pre_output_value, const session::KernelGraph &graph);
   void AssignValueNodeTensor(const ValueNodePtr &value_node, const ValuePtr &node_value, size_t output_idx);

@@ -258,6 +258,7 @@ void KernelRuntime::RunOpMallocPre(const session::KernelGraph &graph,
       auto output_format = op_runtime_info->output_format(index);
       auto device_address =
         CreateDeviceAddress(nullptr, output_tensor_size, output_format, output_type_id, {item, index});
+      device_address->set_from_persistent_mem(current_tensor->is_parameter());
       AnfAlgo::SetOutputAddr(device_address, index, item.get());
       current_tensor->set_device_address(device_address);
       current_tensor->set_sync_status(kNeedSyncHostToDevice);
@@ -287,6 +288,7 @@ void KernelRuntime::ResetNodeAddress(const session::KernelGraph &kernel_graph) {
       auto tensor_size = AnfAlgo::GetOutputTensorMemSize(input_node, index);
       auto device_address = CreateDeviceAddress(nullptr, tensor_size, AnfAlgo::GetOutputFormat(input_node, index),
                                                 output_type_id, {input_node, index});
+      device_address->set_from_persistent_mem(input_node->isa<Parameter>());
       AnfAlgo::SetOutputAddr(device_address, index, input_node.get());
     }
 
@@ -306,7 +308,7 @@ void KernelRuntime::ResetNodeAddress(const session::KernelGraph &kernel_graph) {
 }
 
 void KernelRuntime::RunOpAssignMemory(const std::vector<tensor::TensorPtr> &input_tensors,
-                                      const session::KernelGraph &graph,
+                                      const session::KernelGraph &graph, bool is_gradient_out,
                                       const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node) {
   MS_EXCEPTION_IF_NULL(mem_manager_);
   mem_manager_->ResetDynamicMemory();
@@ -319,7 +321,7 @@ void KernelRuntime::RunOpAssignMemory(const std::vector<tensor::TensorPtr> &inpu
   RunOpAssignInputMemory(input_tensors, graph);
   AssignStaticMemoryValueNode(graph);
   for (const auto &node : graph.execution_order()) {
-    RunOpAssignOutputMemory(node, tensor_to_node);
+    RunOpAssignOutputMemory(node, tensor_to_node, is_gradient_out);
     RunOpAssignWorkSpaceMemory(node);
   }
   UpdateRefNodeOutputMem(graph);
@@ -398,6 +400,7 @@ void KernelRuntime::RunOpAssignInputMemory(const std::vector<tensor::TensorPtr> 
       auto current_tensor = input_tensors[input_index];
       MS_EXCEPTION_IF_NULL(current_tensor);
       auto output_address = std::dynamic_pointer_cast<device::DeviceAddress>(current_tensor->device_address());
+      // Device address have already create
       if (output_address != nullptr && output_address->DeviceType() == GetTargetDeviceAddressType()) {
         if (output_address->ptr_ == nullptr) {
           if (!mem_manager_->MallocMemFromMemPool(output_address, output_address->size())) {
@@ -413,10 +416,12 @@ void KernelRuntime::RunOpAssignInputMemory(const std::vector<tensor::TensorPtr> 
         output_type_id = AnfAlgo::GetOutputInferDataType(item, index);
       }
       auto tensor_size = AnfAlgo::GetOutputTensorMemSize(item, index);
+      // Device address new create
       auto device_address =
         CreateDeviceAddress(nullptr, tensor_size, AnfAlgo::GetOutputFormat(item, index), output_type_id, {item, index});
       MS_EXCEPTION_IF_NULL(device_address);
       MS_EXCEPTION_IF_NULL(mem_manager_);
+      device_address->set_from_persistent_mem(true);
       auto ret = mem_manager_->MallocMemFromMemPool(device_address, tensor_size);
       if (!ret) {
         MS_LOG(EXCEPTION) << "Device memory isn't enough and alloc failed, alloc size:" << tensor_size;
@@ -426,8 +431,9 @@ void KernelRuntime::RunOpAssignInputMemory(const std::vector<tensor::TensorPtr> 
   }
 }
 
-void KernelRuntime::RunOpAssignOutputMemory(
-  const AnfNodePtr &kernel, const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node) {
+void KernelRuntime::RunOpAssignOutputMemory(const AnfNodePtr &kernel,
+                                            const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node,
+                                            bool is_gradient_out) {
   MS_EXCEPTION_IF_NULL(kernel);
   MS_EXCEPTION_IF_NULL(mem_manager_);
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
@@ -464,8 +470,11 @@ void KernelRuntime::RunOpAssignOutputMemory(
     std::string output_format = AnfAlgo::GetOutputFormat(kernel, i);
     auto output_type = AnfAlgo::GetOutputDeviceDataType(kernel, i);
     auto device_address = CreateDeviceAddress(nullptr, output_sizes[i], output_format, output_type, {kernel, i});
-    device_address->set_host_shape(trans::GetRuntimePaddingShape(kernel, i));
     MS_EXCEPTION_IF_NULL(device_address);
+    device_address->set_host_shape(trans::GetRuntimePaddingShape(kernel, i));
+    if (is_gradient_out) {
+      device_address->set_from_persistent_mem(true);
+    }
     auto ret = mem_manager_->MallocMemFromMemPool(device_address, output_sizes[i]);
     if (!ret) {
       MS_LOG(EXCEPTION) << "Device memory isn't enough and alloc failed, alloc size:" << output_sizes[i];
@@ -917,6 +926,7 @@ void KernelRuntime::AssignValueNodeTensor(const ValueNodePtr &value_node, const 
     auto output_format = AnfAlgo::GetOutputFormat(value_node, output_idx);
     DeviceAddressPtr address =
       CreateDeviceAddress(nullptr, node_size, output_format, output_type_id, {value_node, output_idx});
+    address->set_from_persistent_mem(true);
     MS_EXCEPTION_IF_NULL(address);
     if (ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER) &&
         !mem_manager_->MallocMemFromMemPool(address, node_size)) {
@@ -979,6 +989,7 @@ void KernelRuntime::AssignStaticMemoryValueNode(const session::KernelGraph &grap
                                             ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode;
       auto address = CreateDeviceAddressForStringValue(node_value, use_mem_from_memory_pool, graph.graph_id());
       MS_EXCEPTION_IF_NULL(address);
+      address->set_from_persistent_mem(true);
       AnfAlgo::SetOutputAddr(address, 0, value_node.get());
     }
   }
@@ -991,6 +1002,7 @@ DeviceAddressPtr KernelRuntime::CreateDeviceAddressForStringValue(const ValuePtr
   size_t tensor_size = value_string.size();
   DeviceAddressPtr address = CreateDeviceAddress(nullptr, tensor_size, kOpFormat_DEFAULT, kNumberTypeUInt8);
   MS_EXCEPTION_IF_NULL(address);
+  address->set_from_persistent_mem(true);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if (use_mem_pool && !mem_manager_->MallocMemFromMemPool(address, tensor_size)) {

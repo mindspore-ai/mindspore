@@ -103,7 +103,8 @@ class AscendSession : public SessionBasic {
   static void BuildKernel(const std::vector<CNodePtr> &kernels);
   void BuildDynamicKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const;
   void MemoryAlloc(KernelGraph *kernel_graph) const;
-  void RunOpMemoryAlloc(const std::vector<tensor::TensorPtr> &input_tensors, KernelGraph *kernel_graph) const;
+  void RunOpMemoryAlloc(const std::vector<tensor::TensorPtr> &input_tensors, KernelGraph *kernel_graph,
+                        bool is_gradient_out) const;
   void RunOpMemoryAllocNew(const std::vector<tensor::TensorPtr> &input_tensors,
                            const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node,
                            const KernelGraph &kernel_graph) const;

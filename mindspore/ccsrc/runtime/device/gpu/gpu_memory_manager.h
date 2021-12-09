@@ -29,7 +29,7 @@ class GPUMemoryManager : public MemoryManager {
   void MallocDeviceMemory() override;
   void FreeDeviceMemory() override;
 
-  void *MallocMemFromMemPool(size_t size) override;
+  void *MallocMemFromMemPool(size_t size, bool from_persistent_mem) override;
   void FreeMemFromMemPool(void *device_ptr) override;
   std::vector<void *> MallocContinuousMemFromMemPool(size_t total_size, std::vector<size_t> size_list) override;
   bool MallocContinuousMemFromMemPool(const DeviceAddressPtrList &addr_list, size_t total_size,

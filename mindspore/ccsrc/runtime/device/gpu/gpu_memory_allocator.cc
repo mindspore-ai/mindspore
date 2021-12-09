@@ -25,6 +25,7 @@ namespace mindspore {
 namespace device {
 namespace gpu {
 const size_t kGBToByte = 1024 << 20;
+constexpr float kReservedMemoryRatio = 0.0625;  // 1/16
 
 bool GPUMemoryAllocator::Init() {
   size_t total_size = CudaDriver::total_mem_size();
@@ -41,6 +42,13 @@ bool GPUMemoryAllocator::Init() {
       << "The total size or free size or max_device_memory size of GPU memory can't be zero, total memory size "
       << total_size << ", current free memory size " << free_size << ", set max available memory size "
       << available_device_memory_ << ".";
+  }
+  // In gpu mode, recommend 1/16 reserved for other cuda functions
+  if (available_device_memory_ > total_size) {
+    size_t recommend_mem_size_for_others = FloatToSize(total_size * kReservedMemoryRatio);
+    SetMempoolBlockSize(std::min(available_device_memory_, total_size - recommend_mem_size_for_others));
+  } else {
+    SetMempoolBlockSize(std::min(available_device_memory_, total_size));
   }
   return true;
 }
@@ -71,7 +79,7 @@ bool GPUMemoryAllocator::AllocBufferQueueMem(size_t size, DeviceMemPtr *addr) {
   auto alloc_size = AllocDeviceMem(size, addr);
   buffer_q_addr_ = *addr;
   // Buffer queue needs to ensure that the alloc_size and size is equal.
-  return (alloc_size == size) ? true : false;
+  return alloc_size == size;
 }
 
 size_t GPUMemoryAllocator::AllocDeviceMem(size_t size, DeviceMemPtr *addr) {
@@ -90,8 +98,9 @@ size_t GPUMemoryAllocator::AllocDeviceMem(size_t size, DeviceMemPtr *addr) {
   }
   total_used_device_memory_ += alloc_size;
   available_device_memory_ -= alloc_size;
-  MS_LOG(INFO) << "Current free memory size[" << free_size - alloc_size << "], current alloc size[" << alloc_size
-               << "], total used size[" << total_used_device_memory_ << "].";
+  MS_LOG(INFO) << "Cuda current free memory size[" << free_size << "], alloc size[" << alloc_size
+               << "], left free memory size[" << free_size - alloc_size << "]"
+               << ".Total used size[" << total_used_device_memory_ << "].";
   return alloc_size;
 }
 

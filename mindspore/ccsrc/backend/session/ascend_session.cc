@@ -864,7 +864,7 @@ void AscendSession::RunOpImplOrigin(const GraphInfo &graph_info, OpRunInfo *op_r
 
   // malloc mem
   RunOpRemoveNopNode(graph);
-  RunOpMemoryAlloc(*input_tensors, graph.get());
+  RunOpMemoryAlloc(*input_tensors, graph.get(), op_run_info->is_gradient_out);
   RunOpGenKernelEvent(graph.get());
   AnfAlgo::CacheAddrForGraph(graph);
   // Build dynamic kernel
@@ -998,7 +998,7 @@ void AscendSession::BuildOpsInGraph(const GraphId &graph_id, const std::map<AnfN
     GetOpInputStubTensors(kernel, parameter_index, graph_inputs, op_output_info, &input_tensor_info);
     // Get OpRunInfo and GraphInfo
     const GraphInfo &graph_info = GetSingleOpGraphInfo(kernel, input_tensor_info.input_tensors);
-    OpRunInfo op_run_info = GetSingleOpRunInfo(kernel, graph_info, input_tensor_info);
+    OpRunInfo op_run_info = GetSingleOpRunInfo(kernel, graph_info, input_tensor_info, nullptr);
     if (op_run_info.is_dynamic_shape) {
       MS_LOG(INFO) << "BuildOpsInGraph stop, op " << op_run_info.op_name << " is dynamic shape.";
       break;
@@ -1318,19 +1318,19 @@ void AscendSession::MemoryAlloc(KernelGraph *kernel_graph) const {
   MS_LOG(INFO) << "Status record: end memory alloc. graph id: " << kernel_graph->graph_id()
                << ", Memory Statistics:" << device::ascend::AscendMemAdapter::GetInstance().DevMemStatistics();
   MS_LOG(INFO) << "The dynamic memory pool total size is "
-               << device::ascend::AscendMemoryPool::GetInstance().total_mem_statistics() / kMBToByte
+               << device::ascend::AscendMemoryPool::GetInstance().TotalMemStatistics() / kMBToByte
                << "M, total used size is "
-               << device::ascend::AscendMemoryPool::GetInstance().used_mem_statistics() / kMBToByte
+               << device::ascend::AscendMemoryPool::GetInstance().TotalUsedMemStatistics() / kMBToByte
                << "M, used peak size is "
-               << device::ascend::AscendMemoryPool::GetInstance().used_mem_peak_statistics() / kMBToByte << "M.";
+               << device::ascend::AscendMemoryPool::GetInstance().UsedMemPeakStatistics() / kMBToByte << "M.";
 }
 
-void AscendSession::RunOpMemoryAlloc(const std::vector<tensor::TensorPtr> &input_tensors,
-                                     KernelGraph *kernel_graph) const {
+void AscendSession::RunOpMemoryAlloc(const std::vector<tensor::TensorPtr> &input_tensors, KernelGraph *kernel_graph,
+                                     bool is_gradient_out) const {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
-  runtime_instance->RunOpAssignMemory(input_tensors, *kernel_graph);
+  runtime_instance->RunOpAssignMemory(input_tensors, *kernel_graph, is_gradient_out);
 }
 
 void AscendSession::RunOpMemoryAllocNew(const std::vector<tensor::TensorPtr> &input_tensors,
@@ -1338,7 +1338,7 @@ void AscendSession::RunOpMemoryAllocNew(const std::vector<tensor::TensorPtr> &in
                                         const KernelGraph &kernel_graph) const {
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
-  runtime_instance->RunOpAssignMemory(input_tensors, kernel_graph, tensor_to_node);
+  runtime_instance->RunOpAssignMemory(input_tensors, kernel_graph, false, tensor_to_node);
 }
 
 void AscendSession::RunOpGenKernelEvent(const KernelGraph *graph) const {

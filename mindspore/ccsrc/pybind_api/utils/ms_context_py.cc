@@ -84,6 +84,7 @@ REGISTER_PYBIND_DEFINE(MsContextPy, ([](const py::module *m) {
                            .value("save_graphs", MsCtxParam::MS_CTX_SAVE_GRAPHS_FLAG)
                            .value("enable_parallel_split", MsCtxParam::MS_CTX_ENABLE_PARALLEL_SPLIT)
                            .value("max_device_memory", MsCtxParam::MS_CTX_MAX_DEVICE_MEMORY)
+                           .value("mempool_block_size", MsCtxParam::MS_CTX_MEMPOOL_BLOCK_SIZE)
                            .value("mode", MsCtxParam::MS_CTX_EXECUTION_MODE)
                            .value("device_target", MsCtxParam::MS_CTX_DEVICE_TARGET)
                            .value("_graph_memory_max_size", MsCtxParam::MS_CTX_GRAPH_MEMORY_MAX_SIZE)

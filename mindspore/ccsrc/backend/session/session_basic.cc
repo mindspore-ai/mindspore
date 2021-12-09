@@ -54,6 +54,7 @@
 #endif
 #include "backend/session/session_factory.h"
 #include "backend/session/pynative_task_manager.h"
+#include "pipeline/pynative/pynative_execute.h"
 
 namespace mindspore {
 namespace session {
@@ -1220,7 +1221,8 @@ GraphInfo SessionBasic::GetSingleOpGraphInfo(const CNodePtr &kernel,
 }
 
 OpRunInfo SessionBasic::GetSingleOpRunInfo(const CNodePtr &cnode, const GraphInfo &graph_info,
-                                           const InputTensorInfo &tensor_info) {
+                                           const InputTensorInfo &tensor_info,
+                                           GraphOutputInfo *const graph_output_info) {
   MS_EXCEPTION_IF_NULL(cnode);
   auto primitive = AnfAlgo::GetCNodePrimitive(cnode);
   const auto &abstract = cnode->abstract();
@@ -1230,7 +1232,14 @@ OpRunInfo SessionBasic::GetSingleOpRunInfo(const CNodePtr &cnode, const GraphInf
   const auto &shape = abstract->BuildShape();
   MS_EXCEPTION_IF_NULL(shape);
 
-  OpRunInfo op_run_info = {.op_name = primitive->name(),
+  bool is_gradient_out =
+    graph_output_info != nullptr &&
+    std::any_of(graph_output_info->output_indexes.begin(), graph_output_info->output_indexes.end(),
+                [cnode](const std::pair<KernelWithIndex, std::vector<std::vector<size_t>>> &output_index) {
+                  return output_index.first.first == cnode;
+                });
+  OpRunInfo op_run_info = {.is_gradient_out = is_gradient_out,
+                           .op_name = primitive->name(),
                            .primitive = primitive.get(),
                            .abstract = abstract,
                            .is_dynamic_shape = shape->IsDynamic(),
@@ -1304,16 +1313,63 @@ void SessionBasic::GetRefCount(const KernelGraph *graph, std::map<KernelWithInde
   }
 }
 
+void SessionBasic::GetForwardOutputRefCount(const KernelGraph *graph,
+                                            std::map<AnfNodePtr, size_t> *forward_output_refcount) {
+  if (!pynative::PynativeExecutor::GetInstance()->grad_flag()) {
+    return;
+  }
+  const auto &forward_value_nodes_id = pynative::PynativeExecutor::GetInstance()->grad_executor()->forward_outputs_id();
+  for (const auto &kernel : graph->execution_order()) {
+    for (size_t i = 1; i < kernel->inputs().size(); i += 1) {
+      const auto &input = kernel->input(i);
+      if (!input->isa<ValueNode>()) {
+        continue;
+      }
+      auto value_node = input->cast<ValueNodePtr>();
+      auto value = GetValueNode(value_node);
+      MS_EXCEPTION_IF_NULL(value);
+      if (value->isa<tensor::Tensor>()) {
+        auto tensor = value->cast<tensor::TensorPtr>();
+        MS_EXCEPTION_IF_NULL(tensor);
+        if (forward_value_nodes_id.find(tensor->id()) != forward_value_nodes_id.end()) {
+          (*forward_output_refcount)[input] += 1;
+        }
+      }
+    }
+  }
+}
+
 void SessionBasic::HandleOpInputs(const std::set<KernelWithIndex> &input_kernel,
                                   std::map<KernelWithIndex, size_t> *ref_count,
+                                  std::map<AnfNodePtr, size_t> *forward_output_refcount,
                                   std::map<KernelWithIndex, tensor::TensorPtr> *op_output_map) {
   MS_EXCEPTION_IF_NULL(ref_count);
+  MS_EXCEPTION_IF_NULL(forward_output_refcount);
   MS_EXCEPTION_IF_NULL(op_output_map);
   for (auto &kernel_with_index : input_kernel) {
-    MS_EXCEPTION_IF_NULL(kernel_with_index.first);
     if (!kernel_with_index.first->isa<CNode>()) {
       continue;
     }
+
+    // Release forward output
+    auto cnode = kernel_with_index.first->cast<CNodePtr>();
+    for (size_t i = 1; i < cnode->inputs().size(); i += 1) {
+      const auto &input = cnode->input(i);
+      auto it = forward_output_refcount->find(input);
+      if (it != forward_output_refcount->end()) {
+        if (--(it->second) == 0) {
+          auto value_node = input->cast<ValueNodePtr>();
+          auto value = GetValueNode(value_node);
+          MS_EXCEPTION_IF_NULL(value);
+          auto tensor = value->cast<tensor::TensorPtr>();
+          MS_EXCEPTION_IF_NULL(tensor);
+          tensor->set_device_address(nullptr);
+          forward_output_refcount->erase(it);
+        }
+      }
+    }
+
+    // Release previous output
     auto ref_iter = ref_count->find(kernel_with_index);
     if (ref_iter == ref_count->end()) {
       MS_LOG(EXCEPTION) << "Can not find input KernelWithIndex in cnode reference count map, input cnode = "
@@ -2329,7 +2385,9 @@ void SessionBasic::RunOpsInGraphImpl(const GraphId &graph_id, const std::vector<
   graph_output_info.graph_outputs = outputs;
   CreateOutputPlaceholder(kernel_graph, inputs, graph_output_info.graph_outputs, &graph_output_info.output_indexes);
   std::map<KernelWithIndex, size_t> cnode_refcount;
+  std::map<AnfNodePtr, size_t> forward_output_refcount;
   GetRefCount(kernel_graph.get(), &cnode_refcount);
+  GetForwardOutputRefCount(kernel_graph.get(), &forward_output_refcount);
   BuildOpsInGraph(graph_id, parameter_index, inputs, cnode_refcount);
 
   // Clear bucket resources every step
@@ -2346,14 +2404,14 @@ void SessionBasic::RunOpsInGraphImpl(const GraphId &graph_id, const std::vector<
     VectorRef op_outputs;
     // Get OpRunInfo and GraphInfo
     GraphInfo graph_info = GetSingleOpGraphInfo(kernel, input_tensor_info.input_tensors);
-    OpRunInfo run_info = GetSingleOpRunInfo(kernel, graph_info, input_tensor_info);
+    OpRunInfo run_info = GetSingleOpRunInfo(kernel, graph_info, input_tensor_info, &graph_output_info);
 
     // Build and run current single op
     RunOpImplOrigin(graph_info, &run_info, &input_tensor_info.input_tensors, &op_outputs,
                     input_tensor_info.input_tensors_mask);
     graph_output_info.graph_output_tensors.clear();
     // Handle inputs and outputs of current op
-    HandleOpInputs(input_tensor_info.input_kernel, &cnode_refcount, &op_output_map);
+    HandleOpInputs(input_tensor_info.input_kernel, &cnode_refcount, &forward_output_refcount, &op_output_map);
     HandleOpOutputs(kernel, op_outputs, cnode_refcount, &op_output_map, &graph_output_info);
     // Save grad node to Bucket
     if (kernel_graph->is_bprop()) {

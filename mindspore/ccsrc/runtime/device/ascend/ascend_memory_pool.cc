@@ -24,37 +24,37 @@
 namespace mindspore {
 namespace device {
 namespace ascend {
-// The minimum unit size (256MB) of memory block used for dynamic extend.
-static const size_t ASCEND_DYNAMIC_MEM_ALLOC_UNIT_SIZE = 256 << 20;
 // The minimum unit size (8MB) of memory block used for dynamic extend in graph mode.
 static const size_t ASCEND_DYNAMIC_MEM_ALLOC_UNIT_SIZE_FOR_GRAPH = 8 << 20;
 
-size_t AscendMemoryPool::CalMemBlockAllocSize(size_t size) {
+size_t AscendMemoryPool::CalMemBlockAllocSize(size_t size, bool from_persistent_mem) {
   auto device_free_mem_size = free_mem_size();
   if (device_free_mem_size < size) {
     MS_LOG(WARNING) << "The dynamic memory pool total size is "
-                    << device::ascend::AscendMemoryPool::GetInstance().total_mem_statistics() / kMBToByte
+                    << device::ascend::AscendMemoryPool::GetInstance().TotalMemStatistics() / kMBToByte
                     << "M, total used size is "
-                    << device::ascend::AscendMemoryPool::GetInstance().used_mem_statistics() / kMBToByte
+                    << device::ascend::AscendMemoryPool::GetInstance().TotalUsedMemStatistics() / kMBToByte
                     << "M, used peak size is "
-                    << device::ascend::AscendMemoryPool::GetInstance().used_mem_peak_statistics() / kMBToByte << "M.";
-    MS_LOG(WARNING) << "Out of Memory. Request memory size: " << size
+                    << device::ascend::AscendMemoryPool::GetInstance().UsedMemPeakStatistics() / kMBToByte << "M.";
+    MS_LOG(WARNING) << "Out of Memory. Request memory size: " << size << ", device free size " << device_free_mem_size
                     << ", Memory Statistic:" << AscendMemAdapter::GetInstance().DevMemStatistics()
                     << "Please try to reduce 'batch_size' or check whether exists extra large shape. More "
                        "details can be found in MindSpore's FAQ with keyword 'Out of Memory'.";
     return 0;
   }
-  auto alloc_mem_size = ASCEND_DYNAMIC_MEM_ALLOC_UNIT_SIZE;
+  size_t alloc_mem_size = MemAllocUnitSize(from_persistent_mem);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   const bool pynative_mode = (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode);
   if (pynative_mode) {
     // Growing at twice of alloc size
+    MS_LOG(DEBUG) << "Get unit block size " << alloc_mem_size;
     constexpr size_t kDouble = 2;
     while (alloc_mem_size < size) {
       alloc_mem_size = alloc_mem_size * kDouble;
     }
   } else {
+    // The graph mode controls itself independently
     alloc_mem_size = ASCEND_DYNAMIC_MEM_ALLOC_UNIT_SIZE_FOR_GRAPH;
     while (alloc_mem_size < size) {
       alloc_mem_size = alloc_mem_size + ASCEND_DYNAMIC_MEM_ALLOC_UNIT_SIZE_FOR_GRAPH;
@@ -69,7 +69,6 @@ size_t AscendMemoryPool::AllocDeviceMem(size_t size, DeviceMemPtr *addr) {
   if (size == 0) {
     MS_LOG(EXCEPTION) << "Failed to alloc memory pool resource, the size is zero!";
   }
-
   *addr = AscendMemAdapter::GetInstance().MallocStaticDevMem(size);
   if (*addr == nullptr) {
     MS_LOG(EXCEPTION) << "Alloc device memory pool address is nullptr, failed to alloc memory pool resource!";
@@ -83,11 +82,17 @@ bool AscendMemoryPool::FreeDeviceMem(const DeviceMemPtr &addr) {
 }
 
 void AscendMemoryPool::ResetIdleMemBuf() {
-  auto idle_mem_buf_map = DynamicMemPoolBestFit::global_idle_mem_buf_map();
-  for (auto &it : idle_mem_buf_map) {
-    MS_EXCEPTION_IF_NULL(it.second);
-    (void)rtMemset(it.second->device_addr_, it.first, 0, it.first);
-  }
+  auto fn = [this](const MemStatusManagerPtr &mem_mng) {
+    if (mem_mng->mem_block_list_.empty()) {
+      return;
+    }
+    for (auto &it : mem_mng->idle_mem_buf_map_) {
+      MS_EXCEPTION_IF_NULL(it.second);
+      (void)rtMemset(it.second->device_addr_, it.first, 0, it.first);
+    }
+  };
+  fn(persistent_mem());
+  fn(common_mem());
 }
 
 size_t AscendMemoryPool::free_mem_size() { return AscendMemAdapter::GetInstance().FreeDevMemSize(); }

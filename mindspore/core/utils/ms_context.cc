@@ -86,6 +86,7 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   set_param<std::string>(MS_CTX_PROFILING_OPTIONS, "training_trace");
   set_param<bool>(MS_CTX_CHECK_BPROP_FLAG, false);
   set_param<float>(MS_CTX_MAX_DEVICE_MEMORY, kDefaultMaxDeviceMemory);
+  set_param<float>(MS_CTX_MEMPOOL_BLOCK_SIZE, kDefaultMempoolBlockSize);
   set_param<std::string>(MS_CTX_PRINT_FILE_PATH, "");
   set_param<bool>(MS_CTX_ENABLE_GRAPH_KERNEL, false);
   set_param<bool>(MS_CTX_ENABLE_SPARSE, false);
@@ -189,5 +190,4 @@ bool MsContext::enable_dump_ir() const {
   return false;
 #endif
 }
-
 }  // namespace mindspore

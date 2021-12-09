@@ -607,6 +607,7 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
           (device_tensor->DeviceType() != device_context->GetDeviceAddressType())) {
         host_tensor_address = device_context->CreateDeviceAddress(nullptr, device_tensor->GetSize(),
                                                                   device_tensor->format(), device_tensor->type_id());
+        host_tensor_address->set_from_persistent_mem(tensor->is_parameter());
       } else {
         host_tensor_address = device_tensor;
       }

@@ -49,8 +49,10 @@ class MemoryManager : public MemHandler {
   virtual uint8_t *MallocMem(MemType type, size_t size, const DeviceAddressPtr &address,
                              uint32_t graph_id = kInvalidGraphId);
 
-  virtual bool MallocMemFromMemPool(const DeviceAddressPtr address, size_t size);
-  virtual void *MallocMemFromMemPool(size_t size);
+  // param address is the address type of each device
+  // param from_persistent_mem shows whether the tensor is a parameter in Pynative mode
+  virtual bool MallocMemFromMemPool(const DeviceAddressPtr &address, size_t size);
+  virtual void *MallocMemFromMemPool(size_t size, bool from_persistent_mem);
   virtual uint8_t *MallocCommunicationMemFromMemPool(size_t size) { return nullptr; }
   virtual void FreeMemFromMemPool(const DeviceAddressPtr address);
   virtual void FreeMemFromMemPool(void *device_ptr);
@@ -62,7 +64,7 @@ class MemoryManager : public MemHandler {
   static size_t GetCommunicationAlignSize(size_t input_size);
 
   // swap manager interface
-  void *MallocDevice(size_t mem_size) override { return MallocMemFromMemPool(mem_size); }
+  void *MallocDevice(size_t mem_size) override { return MallocMemFromMemPool(mem_size, false); }
   void FreeDevice(void *ptr) override {
     MS_EXCEPTION_IF_NULL(ptr);
     FreeMemFromMemPool(ptr);

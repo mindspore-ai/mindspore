@@ -89,7 +89,7 @@ bool CPUDeviceContext::AllocateMemory(DeviceAddress *const &address, size_t size
     MS_LOG(EXCEPTION) << "The device address type is wrong: " << address->DeviceType();
   }
 
-  auto device_ptr = mem_manager_->MallocMemFromMemPool(size);
+  auto device_ptr = mem_manager_->MallocMemFromMemPool(size, 0);
   if (!device_ptr) {
     return false;
   }
