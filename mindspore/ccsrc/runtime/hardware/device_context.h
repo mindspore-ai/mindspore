@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <map>
 #include "runtime/device/device_address.h"
 #include "runtime/device/bucket.h"
 #include "runtime/hardware/collective/collective_communication_lib.h"
