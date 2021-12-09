@@ -535,11 +535,15 @@ KernelWithIndex GetFrontNodeByKernelGraph(const AnfNodePtr &backend_node, Kernel
     return {front_node, 0};
   }
   const auto &front_node_with_index = graph->GetFrontNodeByInternalParameter(backend_node);
-  if (front_node_with_index.first == nullptr) {
+  if (front_node_with_index.first != nullptr) {
+    return front_node_with_index;
+  }
+  const auto &front_tuple_node_with_index = graph->GetElementInTupleBackendFrontIndexMap(backend_node);
+  if (front_tuple_node_with_index.first == nullptr) {
     MS_LOG(EXCEPTION) << "Cannot find front node for backend node:" << backend_node->DebugString()
                       << " in graph:" << graph->ToString();
   }
-  return front_node_with_index;
+  return front_tuple_node_with_index;
 }
 
 std::vector<KernelWithIndex> FetchInputNodeByCNode(const AnfNodePtr &node) {
@@ -610,7 +614,7 @@ abstract::AbstractBasePtr FetchAbstractByIndex(const AbstractBasePtr &abstract, 
 
 void ControlNodeParser::Parse(const std::vector<AnfNodePtr> &control_nodes, const std::vector<KernelGraphPtr> &graphs,
                               const std::vector<DeviceContext *> &device_contexts, const FuncGraphPtr &root_graph,
-                              const FuncGraphToKernelGraph &func_graph_to_kernel_graphs) {
+                              const FuncGraphToKernelGraphGroup &func_graph_to_kernel_graphs) {
   if (graphs.size() != device_contexts.size()) {
     MS_LOG(EXCEPTION) << "Graph num is not equal to device context, graph:" << graphs.size()
                       << " device context num:" << device_contexts.size();
@@ -619,6 +623,10 @@ void ControlNodeParser::Parse(const std::vector<AnfNodePtr> &control_nodes, cons
   if (control_nodes.size() <= 1 || device_contexts.empty()) {
     return;
   }
+  KernelGraphToDeviceContext kernel_graph_to_device_contexts;
+  for (size_t i = 0; i < graphs.size(); ++i) {
+    kernel_graph_to_device_contexts[graphs[i]] = device_contexts[i];
+  }
 
   is_inited_ = true;
 
@@ -626,11 +634,13 @@ void ControlNodeParser::Parse(const std::vector<AnfNodePtr> &control_nodes, cons
 
   root_graph_parameters_ = root_graph->parameters();
 
-  func_graph_to_kernel_graphs_ = func_graph_to_kernel_graphs;
-  for (const auto &func_graph_to_kernel_graph : func_graph_to_kernel_graphs) {
-    for (const auto kernel_graph : func_graph_to_kernel_graph.second) {
-      MS_LOG(DEBUG) << "Funcgraph:" << func_graph_to_kernel_graph.first->ToString()
-                    << " to kernel graph:" << kernel_graph->ToString();
+  func_graph_to_kernel_graph_groups_ = func_graph_to_kernel_graphs;
+  for (const auto &func_graph_to_kernel_graph_groups : func_graph_to_kernel_graph_groups_) {
+    for (const auto &kernel_graph_group : func_graph_to_kernel_graph_groups.second) {
+      for (const auto &kernel_graph : kernel_graph_group) {
+        MS_LOG(DEBUG) << "Funcgraph to kernel graph, func:" << func_graph_to_kernel_graph_groups.first->ToString()
+                      << " kernel_graph:" << kernel_graph->ToString();
+      }
     }
   }
 
@@ -638,7 +648,9 @@ void ControlNodeParser::Parse(const std::vector<AnfNodePtr> &control_nodes, cons
 
   ParseCallNodeToFuncGraph(control_nodes);
 
-  FetchNeedStackControlNode(control_nodes);
+  ParseNeedStackKernelGraph(kernel_graph_to_device_contexts);
+
+  ParseNeedStackControlNode(control_nodes);
 
   ParseUnRecursionCallNode();
 
@@ -654,13 +666,11 @@ void ControlNodeParser::Parse(const std::vector<AnfNodePtr> &control_nodes, cons
 
   FetchHostParameterToWeight();
 
-  FetchCallInputKernelGraph(graphs, device_contexts);
-
   ParseDeviceContext(control_nodes, graphs, device_contexts, func_graph_to_kernel_graphs);
 
   FetchFrontValueNode(control_nodes, device_contexts[0]);
 
-  FetchControlNodeParameter(control_nodes);
+  ParseControlNodeParameter(control_nodes);
 
   FetchAutoMonadNode(control_nodes);
 
@@ -703,6 +713,10 @@ bool ControlNodeParser::IsControlFlowDataArrow(const KernelGraphPtr &graph, cons
 
   // If the graph has a call input, all of its inputs in the graph should be linked to its stack actor.
   if (IsCallInputKernelGraph(graph.get())) {
+    // If the input come from a kernel graph belong the same group, it should be linked by internal parameter.
+    if (front_node != nullptr && IsSameKernelGraphGroup(front_node, graph)) {
+      return false;
+    }
     return true;
   }
 
@@ -719,10 +733,32 @@ bool ControlNodeParser::IsRecursionCallNode(const AnfNodePtr &node) {
   return find(unrecursion_call_nodes_.begin(), unrecursion_call_nodes_.end(), node) == unrecursion_call_nodes_.end();
 }
 
+bool ControlNodeParser::IsSameKernelGraphGroup(const AnfNodePtr &node, const KernelGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(graph);
+  if (!node->isa<CNode>()) {
+    MS_LOG(DEBUG) << "Not a cnode:" << node->DebugString();
+    return false;
+  }
+
+  const auto node_graph = FetchKernelGraphByFrontNode(node);
+  if (node_graph == nullptr) {
+    MS_LOG(DEBUG) << "Fail to get kernel graph for cnode:" << node->DebugString();
+    return false;
+  }
+  MS_LOG(DEBUG) << "Get kernel graph:" << node_graph->ToString() << " for cnode:" << node->DebugString()
+                << " compare to graph:" << graph->ToString();
+  const auto iter1 = kernel_graphs_to_group_info_.find(node_graph);
+  const auto iter2 = kernel_graphs_to_group_info_.find(graph);
+
+  return iter1 != kernel_graphs_to_group_info_.end() && iter2 != kernel_graphs_to_group_info_.end() &&
+         iter1->second == iter2->second;
+}
+
 void ControlNodeParser::ParseDeviceContext(const std::vector<AnfNodePtr> &control_nodes,
                                            const std::vector<KernelGraphPtr> &kernel_graphs,
                                            const std::vector<DeviceContext *> &device_contexts,
-                                           const FuncGraphToKernelGraph &func_graph_to_kernel_graphs) {
+                                           const FuncGraphToKernelGraphGroup &func_graph_to_kernel_graphs) {
   if (device_contexts.empty()) {
     MS_LOG(EXCEPTION) << "Invalid device contexts.";
   }
@@ -736,7 +772,7 @@ void ControlNodeParser::ParseDeviceContext(const std::vector<AnfNodePtr> &contro
 void ControlNodeParser::ParseDeviceContextForFuncGraph(const std::vector<AnfNodePtr> &control_nodes,
                                                        const std::vector<KernelGraphPtr> &kernel_graphs,
                                                        const std::vector<DeviceContext *> &device_contexts,
-                                                       const FuncGraphToKernelGraph &func_graph_to_kernel_graphs) {
+                                                       const FuncGraphToKernelGraphGroup &func_graph_to_kernel_graphs) {
   mindspore::HashMap<KernelGraphPtr, DeviceContext *> kernel_graph_to_device_context;
   for (size_t i = 0; i < kernel_graphs.size(); ++i) {
     kernel_graph_to_device_context[kernel_graphs[i]] = device_contexts[i];
@@ -746,17 +782,30 @@ void ControlNodeParser::ParseDeviceContextForFuncGraph(const std::vector<AnfNode
   // Collect the device context type of the parameter in the kernel graph as the type of the real parameters.
   for (const auto &func_graph_to_kernel_graph : func_graph_to_kernel_graphs) {
     const auto &func_graph = func_graph_to_kernel_graph.first;
-    const auto &front_parameters = func_graph->parameters();
+    MS_EXCEPTION_IF_NULL(func_graph);
+    std::vector<KernelWithIndex> front_parameters;
+    for (const auto &parameter : func_graph->parameters()) {
+      const auto &abstract = parameter->abstract();
+      MS_EXCEPTION_IF_NULL(abstract);
+      for (size_t i = 0; i < AnfAlgo::GetOutputNumByAbstract(abstract); ++i) {
+        front_parameters.emplace_back(parameter, i);
+      }
+    }
     std::vector<const DeviceContext *> parameter_device_contexts(front_parameters.size(), default_context);
-    mindspore::HashMap<AnfNodePtr, DeviceContext *> front_parameter_to_device_context;
+    std::map<KernelWithIndex, DeviceContext *> front_parameter_to_device_context;
 
-    for (const auto &kernel_graph : func_graph_to_kernel_graph.second) {
-      const auto &backend_parameters = kernel_graph->parameters();
+    for (const auto &kernel_graph_group : func_graph_to_kernel_graph.second) {
+      for (const auto &kernel_graph : kernel_graph_group) {
+        const auto &backend_parameters = kernel_graph->parameters();
 
-      for (const auto &backend_parameter : backend_parameters) {
-        const auto &front_parameter = kernel_graph->GetBackendAnfByFrontAnf(backend_parameter);
-        if (front_parameter != nullptr && front_parameter->isa<Parameter>()) {
-          front_parameter_to_device_context[front_parameter] = kernel_graph_to_device_context[kernel_graph];
+        for (const auto &backend_parameter : backend_parameters) {
+          auto front_parameter = KernelWithIndex(kernel_graph->GetFrontAnfByBackendAnf(backend_parameter), 0);
+          if (front_parameter.first == nullptr) {
+            front_parameter = kernel_graph->GetElementInTupleBackendFrontIndexMap(backend_parameter);
+          }
+          if (front_parameter.first != nullptr && front_parameter.first->isa<Parameter>()) {
+            front_parameter_to_device_context[front_parameter] = kernel_graph_to_device_context[kernel_graph];
+          }
         }
       }
     }
@@ -1006,10 +1055,12 @@ KernelWithIndex ControlNodeParser::FetchBackendNodeByFrontNode(const KernelWithI
 }
 
 FuncGraphPtr ControlNodeParser::FetchFuncGraphByKernelGraph(const KernelGraph *const graph) {
-  for (const auto &func_graph_to_kernel_graphs : func_graph_to_kernel_graphs_) {
-    const auto &kernel_graphs = func_graph_to_kernel_graphs.second;
-    if (std::any_of(kernel_graphs.begin(), kernel_graphs.end(),
-                    [graph](const auto &kernel_graph) { return kernel_graph.get() == graph; })) {
+  for (const auto &func_graph_to_kernel_graphs : func_graph_to_kernel_graph_groups_) {
+    const auto &kernel_graph_groups = func_graph_to_kernel_graphs.second;
+    if (std::any_of(kernel_graph_groups.begin(), kernel_graph_groups.end(), [graph](const auto &kernel_graph_group) {
+          return std::any_of(kernel_graph_group.begin(), kernel_graph_group.end(),
+                             [graph](const auto &kernel_graph) { return kernel_graph.get() == graph; });
+        })) {
       return func_graph_to_kernel_graphs.first;
     }
   }
@@ -1177,7 +1228,7 @@ void ControlNodeParser::ParseAllRealParameterByFormalParameter(const KernelWithI
   }
 }
 
-void ControlNodeParser::FetchControlNodeParameter(const std::vector<AnfNodePtr> &control_nodes) {
+void ControlNodeParser::ParseControlNodeParameter(const std::vector<AnfNodePtr> &control_nodes) {
   for (const auto &control_node : control_nodes) {
     CNodePtr cnode = control_node->cast<CNodePtr>();
     const auto &inputs = cnode->inputs();
@@ -1208,22 +1259,6 @@ void ControlNodeParser::FetchControlNodeParameter(const std::vector<AnfNodePtr> 
       }
       if (inputs[kSwitchLayerCondPos]->isa<Parameter>()) {
         (void)control_node_parameters_.emplace_back(inputs[kSwitchLayerCondPos]);
-      }
-    }
-  }
-}
-
-void ControlNodeParser::FetchCallInputKernelGraph(const std::vector<KernelGraphPtr> &graphs,
-                                                  const std::vector<DeviceContext *> &device_contexts) {
-  for (size_t i = 0; i < graphs.size(); ++i) {
-    const auto &graph = graphs[i];
-    const auto &device_context = device_contexts[i];
-
-    const auto inputs = graph->input_nodes();
-    for (const auto &input : inputs) {
-      const auto &internal_parameter_with_index = graph->GetFrontNodeByInternalParameter(input);
-      if (internal_parameter_with_index.first != nullptr && AnfAlgo::IsCallNode(internal_parameter_with_index.first)) {
-        call_input_kernel_graphs_[graph.get()] = device_context;
       }
     }
   }
@@ -1459,7 +1494,7 @@ void ControlNodeParser::ParseUnRecursionCallNode() {
   }
 }
 
-void ControlNodeParser::FetchNeedStackControlNode(const std::vector<AnfNodePtr> &control_nodes) {
+void ControlNodeParser::ParseNeedStackControlNode(const std::vector<AnfNodePtr> &control_nodes) {
   for (const auto &control_node : control_nodes) {
     MS_EXCEPTION_IF_NULL(control_node);
     if (AnfAlgo::IsCallNode(control_node)) {
@@ -1497,6 +1532,71 @@ void ControlNodeParser::FetchNeedStackControlNode(const std::vector<AnfNodePtr> 
   }
 }
 
+void ControlNodeParser::ParseNeedStackKernelGraph(const KernelGraphToDeviceContext &kernel_graph_to_device_contexts) {
+  for (const auto &func_graph_to_kernel_graph_groups : func_graph_to_kernel_graph_groups_) {
+    for (const auto &kernel_graph_group : func_graph_to_kernel_graph_groups.second) {
+      if (kernel_graph_group.empty()) {
+        continue;
+      }
+
+      KernelGraphGroupInfoPtr kernel_graph_group_info = std::make_shared<KernelGraphGroupInfo>();
+      for (const auto &kernel_graph : kernel_graph_group) {
+        MS_EXCEPTION_IF_NULL(kernel_graph);
+        if (kernel_graph->execution_order().empty()) {
+          continue;
+        }
+        auto iter = kernel_graph_to_device_contexts.find(kernel_graph);
+        if (iter == kernel_graph_to_device_contexts.end()) {
+          MS_LOG(EXCEPTION) << "Failed to find device context for kernel graph:" << kernel_graph->ToString();
+        }
+        // Collect kernel graphs in group.
+        kernel_graph_group_info->graphs_.emplace(kernel_graph);
+
+        // Collect inputs in group.
+        const auto &real_parameters = kernel_graph->input_nodes();
+        for (const auto &parameter : real_parameters) {
+          const auto &front_node_with_index = GetFrontNodeByKernelGraph(parameter, kernel_graph.get());
+          MS_EXCEPTION_IF_NULL(front_node_with_index.first);
+          // If input come from the output of kernel graph belong the same group, it should not be collected in
+          // the group inputs.
+          if (HasAbstractMonad(front_node_with_index.first) ||
+              kernel_graph_group_info->front_output_nodes_.find(front_node_with_index) !=
+                kernel_graph_group_info->front_output_nodes_.end()) {
+            continue;
+          }
+          if (AnfAlgo::IsCallNode(front_node_with_index.first)) {
+            kernel_graph_group_info->is_call_input_ = true;
+          }
+          kernel_graph_group_info->front_input_nodes_[front_node_with_index] = iter->second;
+        }
+
+        // Collect outputs in group.
+        for (const auto &backend_to_front : kernel_graph->graph_output_map()) {
+          if (HasAbstractMonad(backend_to_front.second.first)) {
+            continue;
+          }
+          MS_LOG(DEBUG) << "Kernel graph front output node:" << backend_to_front.second.first->DebugString()
+                        << " index:" << backend_to_front.second.second
+                        << " backend node:" << backend_to_front.first.first->DebugString()
+                        << " index:" << backend_to_front.first.second;
+          kernel_graph_group_info->front_output_nodes_[backend_to_front.second] = {backend_to_front.first,
+                                                                                   iter->second};
+        }
+
+        kernel_graphs_to_group_info_[kernel_graph] = kernel_graph_group_info;
+        if (kernel_graph_group_info->is_call_input_) {
+          call_input_kernel_graphs_.emplace(kernel_graph.get());
+        }
+      }
+      kernel_graph_group_info->group_name_ = "kernel_graph";
+      for (const auto &graph : kernel_graph_group_info->graphs_) {
+        kernel_graph_group_info->group_name_ += ("_" + std::to_string(graph->graph_id()));
+      }
+      kernel_graph_group_infos_.emplace(kernel_graph_group_info);
+    }
+  }
+}
+
 void ControlNodeParser::CreateDeviceTensorForRootGraphParameter(DeviceContext *default_context) {
   MS_EXCEPTION_IF_NULL(default_context);
   for (const auto &parameter : root_graph_parameters_) {
@@ -1506,6 +1606,15 @@ void ControlNodeParser::CreateDeviceTensorForRootGraphParameter(DeviceContext *d
       front_to_backend_parameters_[parameter_with_index].emplace(parameter, default_context);
     }
   }
+}
+
+std::string ControlNodeParser::FetchGroupNameByKernelGraph(const KernelGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  auto group_info_iter = kernel_graphs_to_group_info_.find(graph);
+  if (group_info_iter == kernel_graphs_to_group_info_.end()) {
+    MS_LOG(EXCEPTION) << "Failed to get kernel graph group info for graph:" << graph->ToString();
+  }
+  return group_info_iter->second->group_name_;
 }
 }  // namespace runtime
 }  // namespace mindspore

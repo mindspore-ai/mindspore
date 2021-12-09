@@ -78,8 +78,8 @@ class ControlNodeScheduler {
 
   // Link data arrow between control actor and actor in frame, including kernel actor, output actor, data source actor.
   void LinkDataArrowForKernelActor(const GraphCompilerInfo &graph_compiler_info);
-  void LinkDataArrowByKernelGraph(const KernelGraphPtr &graph, bool is_call_input_graph,
-                                  ControlActor *const entrance_actor);
+  void LinkDataArrowByKernelGraph(const KernelGraphPtr &graph, ControlActor *const entrance_actor,
+                                  const ControlNodeParserPtr &parser);
   void LinkArrowForRootGraphEntranceActor(const GraphCompilerInfo &graph_compiler_info);
   void LinkControlArrowForLoopCountActor(const ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info);
   void LinkDataArrowForOutputActor(ActorSet *const actor_set, const GraphCompilerInfo &graph_compiler_info);

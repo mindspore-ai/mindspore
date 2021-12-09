@@ -15,6 +15,7 @@
  */
 
 #include "runtime/framework/actor/output_actor.h"
+#include "runtime/hardware/device_context_manager.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {
@@ -120,8 +121,11 @@ TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t 
   auto device_context = device_contexts_[output_position];
   MS_EXCEPTION_IF_NULL(device_context);
   if (device_context->GetDeviceAddressType() != device_tensor->DeviceType()) {
-    MS_LOG(ERROR) << "The device type is wrong.";
-    return nullptr;
+    auto old_device_context = device_context;
+    device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+      {device_tensor->DeviceName(), device_tensor->DeviceID()});
+    MS_LOG(INFO) << "Update device context from:" << old_device_context->GetDeviceAddressType()
+                 << " to:" << device_context->GetDeviceAddressType();
   }
 
   // Create the device address and put it into host tensor.

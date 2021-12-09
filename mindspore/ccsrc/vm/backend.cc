@@ -529,13 +529,20 @@ void MindRTBackend::CompileGraph(const GraphSegmentPtr &segment, bool contain_mu
 
     const auto &func_graph = segment->nodes_[0]->func_graph();
     MS_EXCEPTION_IF_NULL(func_graph);
-    func_graph_to_kernel_graph_ids_[func_graph].emplace_back(graph_id);
+    if (func_graph_to_kernel_graph_ids_.find(func_graph) == func_graph_to_kernel_graph_ids_.end()) {
+      func_graph_to_kernel_graph_ids_[func_graph].emplace_back(std::vector<GraphId>{graph_id});
+    } else {
+      func_graph_to_kernel_graph_ids_[func_graph].back().emplace_back(graph_id);
+    }
   } else {
     // Compile the cut node.
     auto cut_node = segment->nodes_[0];
     MS_EXCEPTION_IF_NULL(cut_node);
     MS_LOG(INFO) << "Compile cut segment, the cut node: " << cut_node->DebugString();
     control_nodes_.push_back(cut_node);
+    const auto &func_graph = cut_node->func_graph();
+    MS_EXCEPTION_IF_NULL(func_graph);
+    func_graph_to_kernel_graph_ids_[func_graph].emplace_back(std::vector<GraphId>());
   }
 }
 
@@ -1075,13 +1082,17 @@ std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(con
     (void)name.append("_").append(std::to_string(graph_id_to_context.first));
   }
 
-  FuncGraphToKernelGraph func_graph_to_kernel_graphs;
+  FuncGraphToKernelGraphGroup func_graph_to_kernel_graphs;
   for (const auto &func_graph_to_kernel_graph_ids : func_graph_to_kernel_graph_ids_) {
     const auto &func_graph = func_graph_to_kernel_graph_ids.first;
-    for (const auto &graph_id : func_graph_to_kernel_graph_ids.second) {
-      const auto &kernel_graph = graph_compiler_->Fetch(graph_id);
-      MS_EXCEPTION_IF_NULL(kernel_graph);
-      func_graph_to_kernel_graphs[func_graph].emplace_back(kernel_graph);
+    for (const auto &sub_kernel_graphs_ids : func_graph_to_kernel_graph_ids.second) {
+      std::vector<KernelGraphPtr> kernel_graphs;
+      for (const auto &graph_id : sub_kernel_graphs_ids) {
+        const auto &kernel_graph = graph_compiler_->Fetch(graph_id);
+        MS_EXCEPTION_IF_NULL(kernel_graph);
+        kernel_graphs.emplace_back(kernel_graph);
+      }
+      func_graph_to_kernel_graphs[func_graph].emplace_back(kernel_graphs);
     }
   }
 

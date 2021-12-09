@@ -62,7 +62,7 @@ const char kStackActorNameSuffix[] = "_StackActor";
 
 using FrontToBackendNodeWithContext = std::map<KernelWithIndex, std::set<std::pair<AnfNodePtr, DeviceContext *>>>;
 using FrontToBackendKernelWithContext = std::map<KernelWithIndex, std::pair<KernelWithIndex, DeviceContext *>>;
-using FuncGraphToKernelGraph = mindspore::HashMap<FuncGraphPtr, std::vector<KernelGraphPtr>>;
+using FuncGraphToKernelGraphGroup = mindspore::HashMap<FuncGraphPtr, std::vector<std::vector<KernelGraphPtr>>>;
 using HostParameterToWeight = std::map<AnfNodePtr, std::set<AnfNodePtr>>;
 using NodeWithDeviceContext = std::set<std::pair<KernelWithIndex, const DeviceContext *>>;
 using RealToFormalNode = mindspore::HashMap<AnfNodePtr, std::vector<AnfNodePtr>>;
@@ -72,6 +72,18 @@ using KernelBuildInfoBuilder = kernel::KernelBuildInfo::KernelBuildInfoBuilder;
 using FrontNodeToKernelGraph = mindspore::HashMap<AnfNodePtr, KernelGraphPtr>;
 using FuncGraphCallRelation = mindspore::HashMap<FuncGraphPtr, std::vector<std::set<FuncGraphPtr>>>;
 using CallNodeToFuncGraph = mindspore::HashMap<AnfNodePtr, std::set<FuncGraphPtr>>;
+using KernelGraphToDeviceContext = mindspore::HashMap<KernelGraphPtr, DeviceContext *>;
+// In the control flow, heterogeneous kernel graphs need to be reconnected in the same group, and the kernel graph
+// group info is used to store the inputs and outputs of the group.
+struct KernelGraphGroupInfo {
+  bool is_call_input_;
+  std::string group_name_;
+  std::set<KernelGraphPtr> graphs_;
+  std::map<KernelWithIndex, const DeviceContext *> front_input_nodes_;
+  FrontToBackendKernelWithContext front_output_nodes_;
+};
+using KernelGraphGroupInfoPtr = std::shared_ptr<KernelGraphGroupInfo>;
+
 // Check whether the parameter is a weight. In the control flow, weight is passed to the subgraph, and in the subgraph,
 // it is determined whether it is a weight.
 bool HasAbstractRef(const AnfNodePtr &node);
@@ -88,7 +100,7 @@ class ControlNodeParser {
   // Parse the control node and put the results of the parsing into member variables.
   void Parse(const std::vector<AnfNodePtr> &control_nodes, const std::vector<KernelGraphPtr> &graphs,
              const std::vector<DeviceContext *> &device_contexts, const FuncGraphPtr &root_graph,
-             const FuncGraphToKernelGraph &func_graph_to_kernel_graphs);
+             const FuncGraphToKernelGraphGroup &func_graph_to_kernel_graphs);
 
   bool IsInited() { return is_inited_; }
   // Check whether there is a call node in the front input nodes of the kernel graph.
@@ -100,6 +112,7 @@ class ControlNodeParser {
   bool IsControlFlowDataArrow(const KernelGraphPtr &graph, const AnfNodePtr &node);
   bool IsRootGraphParameter(const AnfNodePtr &node);
   bool IsRecursionCallNode(const AnfNodePtr &node);
+  bool IsSameKernelGraphGroup(const AnfNodePtr &node, const KernelGraphPtr &graph);
 
   const std::vector<AnfNodePtr> &control_node_parameters() const { return control_node_parameters_; }
   const FrontToBackendNodeWithContext &front_to_backend_parameters() const { return front_to_backend_parameters_; }
@@ -115,6 +128,7 @@ class ControlNodeParser {
   // Fetch the backend kernel of front node.
   KernelWithIndex FetchBackendNodeByFrontNode(const KernelWithIndex &node_with_index);
   FuncGraphPtr FetchFuncGraphByKernelGraph(const KernelGraph *const graph);
+  std::string FetchGroupNameByKernelGraph(const KernelGraphPtr &graph);
 
  private:
   friend class GraphScheduler;
@@ -155,11 +169,11 @@ class ControlNodeParser {
   void ParseDeviceContext(const std::vector<AnfNodePtr> &control_nodes,
                           const std::vector<KernelGraphPtr> &kernel_graphs,
                           const std::vector<DeviceContext *> &device_contexts,
-                          const FuncGraphToKernelGraph &func_graph_to_kernel_graphs);
+                          const FuncGraphToKernelGraphGroup &func_graph_to_kernel_graphs);
   void ParseDeviceContextForFuncGraph(const std::vector<AnfNodePtr> &control_nodes,
                                       const std::vector<KernelGraphPtr> &kernel_graphs,
                                       const std::vector<DeviceContext *> &device_contexts,
-                                      const FuncGraphToKernelGraph &func_graph_to_kernel_graphs);
+                                      const FuncGraphToKernelGraphGroup &func_graph_to_kernel_graphs);
   void ParseDeviceContextForReturnNode(const DeviceContext *default_context);
   void ParseDeviceContextForCallNode(const std::vector<AnfNodePtr> &control_nodes);
   void ParseDeviceContextForPartialNode(const std::vector<AnfNodePtr> &control_nodes);
@@ -177,25 +191,23 @@ class ControlNodeParser {
                                  const std::vector<DeviceContext *> &device_contexts);
   void FetchFrontNodeToKernelGraph(const std::vector<KernelGraphPtr> &graphs);
   // nodes and call nodes of the root funcgraph.
-  void FetchControlNodeParameter(const std::vector<AnfNodePtr> &control_nodes);
+  void ParseControlNodeParameter(const std::vector<AnfNodePtr> &control_nodes);
   // Get all the front weight parameters related to the weight in the host parameter.
   void FetchHostParameterToWeight();
-  // Get all the kernel graphs where the input node has a call node.
-  void FetchCallInputKernelGraph(const std::vector<KernelGraphPtr> &graphs,
-                                 const std::vector<DeviceContext *> &device_contexts);
   // Get the dependency between kernel and call node in auto monad.
   void FetchAutoMonadNode(const std::vector<AnfNodePtr> &control_nodes);
   // Fetch the formal parameter in root graph by parameters in subgraph.
   AnfNodePtr FetchRootGraphFrontNodeBySubFrontNode(const AnfNodePtr &sub_front_node);
-  // Get the control nodes which need to add a stack actor for them.
-  // When a control node has input that is a call node, you need to add a stack actor for it.
-  void FetchNeedStackControlNode(const std::vector<AnfNodePtr> &control_nodes);
+  // Get the control nodes and kernel graphs which need to add a stack actor for them.
+  // When a control node or kernel graph has input that is a call node, you need to add a stack actor for it.
+  void ParseNeedStackControlNode(const std::vector<AnfNodePtr> &control_nodes);
+  void ParseNeedStackKernelGraph(const KernelGraphToDeviceContext &kernel_graph_to_device_contexts);
   // When the parameter is directly used as the condition of the switch, there will be no back-end node, and a device
   // tensor needs to be created for it.
   void CreateDeviceTensorForRootGraphParameter(DeviceContext *default_context);
   // In control flow, funcgraph will be cut into multiple kernel graphs for execution, and this relationship is recorded
   // in this map.
-  FuncGraphToKernelGraph func_graph_to_kernel_graphs_;
+  FuncGraphToKernelGraphGroup func_graph_to_kernel_graph_groups_;
   // The kernel graph to which the front node belongs after the funcgraph is cut.
   FrontNodeToKernelGraph front_node_to_kernel_graph_;
 
@@ -226,9 +238,10 @@ class ControlNodeParser {
   // Parameters of control node which come from the host actor.
   std::vector<AnfNodePtr> control_node_parameters_;
   // The kernel graph of call exists in the front input node.
-  // In the scene of funcgrarph recursive call, general input and call input are passed recursively, so a gather actor
+  // In the scene of funcgrarph recursive call, general input and call input are passed recursively, so a stack actor
   // is created for kernel graph which has a call input.
-  mindspore::HashMap<KernelGraph *, DeviceContext *> call_input_kernel_graphs_;
+  std::set<KernelGraph *> call_input_kernel_graphs_;
+  std::set<KernelGraphGroupInfoPtr> kernel_graph_group_infos_;
   // The dependency between kernel and call node in auto monad.
   mindspore::HashMap<AnfNodePtr, AnfNodePtr> kernel_to_call_nodes_;
   // Control nodes without a control node input in the topological sorting of funcgraph.
@@ -246,6 +259,9 @@ class ControlNodeParser {
   mindspore::HashMap<FuncGraphPtr, std::vector<const DeviceContext *>> func_graph_to_device_contexts_;
   // 2. The device context type of the control node inputs.
   mindspore::HashMap<AnfNodePtr, std::vector<const DeviceContext *>> control_node_to_device_contexts_;
+
+  // Kernel graph to the group info it belongs.
+  mindspore::HashMap<KernelGraphPtr, KernelGraphGroupInfoPtr> kernel_graphs_to_group_info_;
 
   // Is control flow enable.
   bool is_inited_{false};
