@@ -1098,7 +1098,7 @@ def parse_print(print_file_name):
         >>> import numpy as np
         >>> import mindspore
         >>> import mindspore.ops as ops
-        >>> from mindspore.nn as nn
+        >>> from mindspore import nn
         >>> from mindspore import Tensor, context
         >>> context.set_context(mode=context.GRAPH_MODE, print_file_path='log.data')
         >>> class PrintInputTensor(nn.Cell):
