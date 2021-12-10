@@ -469,7 +469,7 @@ class FusedCastAdamWeightDecay(PrimitiveWithInfer):
         \begin{array}{ll} \\
             m = \beta_1 * m + (1 - \beta_1) * g \\
             v = \beta_2 * v + (1 - \beta_2) * g * g \\
-            update = \frac{m}{\sqrt{v} + eps} \\
+            update = \frac{m}{\sqrt{v} + \epsilon} \\
             update =
             \begin{cases}
                 update + weight\_decay * w
