@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,36 +14,30 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_TANH_H_
-#define MINDSPORE_CORE_OPS_TANH_H_
+#ifndef MINDSPORE_CORE_OPS_TANH_GRAD_H_
+#define MINDSPORE_CORE_OPS_TANH_GRAD_H_
 #include <map>
-#include <memory>
 #include <vector>
 #include <string>
+#include <memory>
 
 #include "ops/primitive_c.h"
-#include "ops/op_utils.h"
 #include "abstract/abstract_value.h"
 #include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameTanh = "Tanh";
-/// \brief Tanh activation function. Refer to Python API @ref mindspore.ops.Tanh for more details.
-class MS_CORE_API Tanh : public PrimitiveC {
+constexpr auto kNameTanhGrad = "TanhGrad";
+class TanhGrad : public PrimitiveC {
  public:
   /// \brief Constructor.
-  Tanh() : PrimitiveC(kNameTanh) { InitIOName({"x"}, {"y"}); }
+  TanhGrad() : PrimitiveC(kNameTanhGrad) { InitIOName({"x"}, {"output"}); }
   /// \brief Destructor.
-  ~Tanh() = default;
-  MS_DECLARE_PARENT(Tanh, PrimitiveC);
+  ~TanhGrad() = default;
   /// \brief Init.
-  void Init() {}
+  MS_DECLARE_PARENT(TanhGrad, PrimitiveC);
 };
-AbstractBasePtr TanhInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args);
-using PrimTanhPtr = std::shared_ptr<Tanh>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_TANH_H_
+#endif  // MINDSPORE_CORE_OPS_TanhGRAD_H_

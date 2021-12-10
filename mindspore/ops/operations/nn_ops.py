@@ -943,7 +943,8 @@ class Tanh(Primitive):
 
     @prim_attr_register
     def __init__(self):
-        pass
+        """Initialize Tanh"""
+        self.init_prim_io_names(inputs=['input_x'], outputs=['output'])
 
 
 class FusedBatchNorm(Primitive):
