@@ -49,6 +49,7 @@ class ScatterArithmeticCPUKernel : public CPUKernel {
   using TypeComputeFunc = std::function<void(ScatterArithmeticCPUKernel *, T *, const int *, const T *)>;
 
   TypeComputeFunc compute_func_;
+  int input_shape_0{0};
   size_t input_size_{0};
   size_t inner_size_{0};
   size_t indices_size_{0};
