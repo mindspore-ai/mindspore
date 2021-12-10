@@ -108,9 +108,24 @@ bool QuantStrategy::CanOpFullQuantized(const AnfNodePtr &node, const std::set<Pr
 
   bool is_data_type_fp32 = type_id == kNumberTypeFloat32;
   if (!is_data_type_fp32) {
-    MS_LOG(WARNING) << " type:" << type << " node name is" << cnode->fullname_with_scope() << ", type_id " << type_id
+    MS_LOG(WARNING) << " type:" << type << " node name is " << cnode->fullname_with_scope() << ", type_id " << type_id
                     << " is not float32 and will not be quantified.";
     return false;
+  }
+
+  // Check Activation
+  if (opt::CheckPrimitiveType(cnode, prim::kPrimActivation)) {
+    auto value_ptr = GetValueNode<PrimitivePtr>(cnode->input(0))->GetAttr(ops::kActivationType);
+    if (value_ptr == nullptr) {
+      return false;
+    }
+    std::set<mindspore::ActivationType> support_activation = {
+      RELU, RELU6, HSWISH, SIGMOID, LEAKY_RELU, TANH,
+    };
+    auto activation = mindspore::ActivationType(GetValue<int64_t>(value_ptr));
+    if (support_activation.find(activation) == support_activation.end()) {
+      return false;
+    }
   }
   return true;
 }

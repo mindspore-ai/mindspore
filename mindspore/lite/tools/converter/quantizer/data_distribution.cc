@@ -163,22 +163,23 @@ int DataDistribution::ComputeThreshold() {
   return RET_OK;
 }
 
-double DataDistribution::CalculateMinMaxScale() { return CalculateScale(this->real_min_, this->real_max_); }
+double DataDistribution::CalculateMinMaxScale() { return CalculateScaleAndZp(this->real_min_, this->real_max_); }
 
 double DataDistribution::CalculateRemovalOutlierScale() {
   this->percent_result_ = OutlierMethod(min_datas_, max_datas_);
-  return CalculateScale(percent_result_.first, percent_result_.second);
+  return CalculateScaleAndZp(percent_result_.first, percent_result_.second);
 }
 
-double DataDistribution::CalculateScale(float min_value, float max_value) {
+double DataDistribution::CalculateScaleAndZp(float min_value, float max_value) {
   if (symmetry_) {
     auto abs_max = std::max(fabs(min_value), fabs(max_value));
-    min_value = -abs_max;
-    max_value = abs_max;
+    encode_min_ = -abs_max;
+    encode_max_ = abs_max;
+  } else {
+    encode_min_ = min_value;
+    encode_max_ = max_value;
   }
 
-  encode_min_ = min_value;
-  encode_max_ = max_value;
   // Handling 0
   // Inputs are strictly positive, set the real min to 0. e.g. input range = [1.0, 5.0] -> [0.0, 5.0]
   if (encode_min_ > 0.0f) {
@@ -193,11 +194,19 @@ double DataDistribution::CalculateScale(float min_value, float max_value) {
   // Inputs are both negative and positive, real_min and real_max are slightly shifted to make the floating point zero
   // exactly representable. e.g. input range = [-5.1, 5.1] -> [-5.12, 5.08]
   MS_ASSERT(quant_max_ - quant_min_ > 0);
-  return (encode_max_ - encode_min_) / (quant_max_ - quant_min_);
+  auto range = encode_max_ - encode_min_;
+  if (max_value <= 0.0f) {
+    MS_LOG(INFO) << "The value is 0, so set to symmetry and the range to 0.01.";
+    const float zero_range = 0.01f;
+    range = zero_range;
+    symmetry_ = true;
+  }
+
+  return range / (quant_max_ - quant_min_);
 }
 
 double DataDistribution::CalculateKLScale() {
-  return CalculateScale(-std::abs(this->best_T_), std::abs(this->best_T_));
+  return CalculateScaleAndZp(-std::abs(this->best_T_), std::abs(this->best_T_));
 }
 
 double DataDistribution::GetScale() {
@@ -213,14 +222,17 @@ double DataDistribution::GetScale() {
       break;
     default:
       MS_LOG(ERROR) << "Unsupported activation quant method " << this->activation_quant_method_;
-      return 0;
+      return FLT_MAX;
   }
   return this->scale_;
 }
 
-// Support for asymmetry in the future
 int32_t DataDistribution::GetZeroPoint() {
-  int zero_point = std::round(quant_min_ - encode_min_ / scale_);
-  return zero_point;
+  if (symmetry_) {
+    zero_point_ = 0;
+  } else {
+    zero_point_ = static_cast<int32_t>(std::round(quant_min_ - encode_min_ / scale_));
+  }
+  return zero_point_;
 }
 }  // namespace mindspore::lite::quant
