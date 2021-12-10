@@ -22,7 +22,7 @@
 #include "backend/optimizer/graph_kernel/expanders/utils.h"
 
 namespace mindspore::graphkernel::expanders {
-class BiasAdd : public OpExpander {
+class BiasAdd : public OpDesc {
  public:
   BiasAdd() {
     auto support_format = std::make_unique<SupportFormat>();

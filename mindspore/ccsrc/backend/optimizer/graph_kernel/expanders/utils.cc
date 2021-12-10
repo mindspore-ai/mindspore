@@ -23,8 +23,8 @@
 #include "backend/optimizer/graph_kernel/model/node.h"
 
 namespace mindspore::graphkernel::expanders {
-inner::LiteGraphPtr OpExpander::Run(const BaseInfoList &inputs, const BaseInfoList &outputs, const inner::DAttrs &attrs,
-                                    const std::string &processor) {
+inner::LiteGraphPtr OpDesc::Run(const BaseInfoList &inputs, const BaseInfoList &outputs, const inner::DAttrs &attrs,
+                                const std::string &processor) {
   this->inputs_info_ = inputs;
   this->outputs_info_ = outputs;
   this->attrs_ = attrs;
@@ -47,7 +47,7 @@ inner::LiteGraphPtr OpExpander::Run(const BaseInfoList &inputs, const BaseInfoLi
   return gb.Get();
 }
 
-bool OpExpander::CheckOutputs() {
+bool OpDesc::CheckOutputs() {
   // check the output shape/type/format are same as the original basic node's output.
   const NodePtrList &outputs = gb.Get()->GetOutputs();
   if (outputs.size() != this->outputs_info_.size()) {

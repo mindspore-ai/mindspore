@@ -30,7 +30,7 @@ class OpExpanderFactory {
     static OpExpanderFactory instance;
     return instance;
   }
-  std::shared_ptr<OpExpander> GetExpander(const std::string &op) {
+  std::shared_ptr<OpDesc> GetExpander(const std::string &op) {
     if (auto iter = creators.find(op); iter != creators.end()) {
       auto expander_ptr = iter->second();
       expander_ptr->op_ = op;
@@ -40,7 +40,7 @@ class OpExpanderFactory {
   }
   ~OpExpanderFactory() = default;
 
-  using RegFunc = std::function<std::shared_ptr<OpExpander>()>;
+  using RegFunc = std::function<std::shared_ptr<OpDesc>()>;
   void Register(const std::string &op, const RegFunc &func) { creators[op] = func; }
 
  private:
@@ -61,6 +61,6 @@ class OpExpanderRegister {
 
 #define OP_EXPANDER_REGISTER(name, cls)                   \
   static const OpExpanderRegister g_##cls##_expander_reg( \
-    name, []() -> std::shared_ptr<OpExpander> { return std::make_shared<cls>(); })
+    name, []() -> std::shared_ptr<OpDesc> { return std::make_shared<cls>(); })
 }  // namespace mindspore::graphkernel::expanders
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_EXPANDERS_EXPANDER_FACTORY_H_

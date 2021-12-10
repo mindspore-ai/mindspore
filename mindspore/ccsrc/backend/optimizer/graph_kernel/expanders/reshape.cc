@@ -19,7 +19,7 @@
 #include "backend/optimizer/graph_kernel/expanders/expander_factory.h"
 
 namespace mindspore::graphkernel::expanders {
-class ExpandDims : public OpExpander {
+class ExpandDims : public OpDesc {
  public:
   ExpandDims() {
     std::initializer_list<std::string> attrs{"axis"};

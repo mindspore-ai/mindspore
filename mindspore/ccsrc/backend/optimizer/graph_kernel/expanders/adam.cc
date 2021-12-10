@@ -21,7 +21,7 @@
 #include "ir/dtype.h"
 
 namespace mindspore::graphkernel::expanders {
-class Adam : public OpExpander {
+class Adam : public OpDesc {
  public:
   Adam() {
     std::initializer_list<std::string> attrs{"use_nesterov"};

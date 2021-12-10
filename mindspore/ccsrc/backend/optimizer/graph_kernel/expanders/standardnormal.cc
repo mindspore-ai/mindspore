@@ -20,7 +20,7 @@
 #include "backend/optimizer/graph_kernel/expanders/expander_factory.h"
 
 namespace mindspore::graphkernel::expanders {
-class StandardNormal : public OpExpander {
+class StandardNormal : public OpDesc {
  public:
   StandardNormal() {
     std::initializer_list<std::string> attrs{"seed", "seed2"};

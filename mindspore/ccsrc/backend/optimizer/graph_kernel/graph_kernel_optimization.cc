@@ -85,7 +85,7 @@ PassManagerPtr GraphKernelOptimizer::Cluster() const {
   pm->AddPass(std::make_shared<GraphKernelComplexExpander>(), OptLevel_1, is_gpu);
 
   // Expand complex basic kernels to composite kernels
-  pm->AddPass(std::make_shared<GraphKernelExpander>(), OptLevel_1);
+  pm->AddPass(std::make_shared<GraphKernelExpanderWithPy>(), OptLevel_1);
 
   // Cluster basic kernels and composite kernels
   pm->AddPass(std::make_shared<GraphKernelCluster>(), OptLevel_1);

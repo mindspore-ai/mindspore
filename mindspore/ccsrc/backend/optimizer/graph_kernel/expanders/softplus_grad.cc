@@ -21,7 +21,7 @@
 #include "ir/dtype.h"
 
 namespace mindspore::graphkernel::expanders {
-class SoftplusGrad : public OpExpander {
+class SoftplusGrad : public OpDesc {
  public:
   SoftplusGrad() {}
   ~SoftplusGrad() = default;
