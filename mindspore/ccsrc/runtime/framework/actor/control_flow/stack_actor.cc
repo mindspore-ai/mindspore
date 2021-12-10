@@ -20,8 +20,9 @@
 
 namespace mindspore {
 namespace runtime {
-StackActor::StackActor(const std::string &name, const std::vector<KernelWithIndex> &parameters)
-    : ControlActor(name, KernelTransformType::kStackActor, parameters, nullptr) {
+StackActor::StackActor(const std::string &name, const AID &memory_manager_aid,
+                       const std::vector<KernelWithIndex> &parameters)
+    : ControlActor(name, KernelTransformType::kStackActor, memory_manager_aid, parameters, nullptr) {
   input_device_tensors_.resize(parameters.size());
 }
 
@@ -77,7 +78,7 @@ void StackActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<Dev
   // The parameters from the inside of the subgraph need to be put into the stack.
   if (IntToSize(input_data->index_) < input_stack_data_num_ + device_tensor_store_keys_.size() +
                                         input_stack_partials_num_ + local_device_tensors_.size()) {
-    FillStack(input_data, context);
+    input_stack_data_[context->sequential_num_][input_data->index_].push(input_data->data_);
   } else {
     // The outputs of call nodes are placed directly in the input data.
     input_op_datas_[context->sequential_num_].emplace_back(input_data);
@@ -126,47 +127,6 @@ void StackActor::RunOpPartial(OpPartialPtr partial, size_t position, OpContext<D
                 << ") receive the input op partial and check running condition:" << is_run;
   if (is_run) {
     Run(context);
-  }
-}
-
-void StackActor::FillStack(OpData<DeviceTensor> *const input_data, OpContext<DeviceTensor> *const context) {
-  MS_EXCEPTION_IF_NULL(context);
-  MS_EXCEPTION_IF_NULL(input_data);
-  auto &input_device_tensor = input_data->data_;
-  MS_EXCEPTION_IF_NULL(input_device_tensor);
-  auto &sequential_num = context->sequential_num_;
-  size_t index = IntToSize(input_data->index_);
-  if (index >= device_contexts_.size()) {
-    SET_OPCONTEXT_FAIL_RET_WITH_ERROR(*context, "The index is out of range.");
-  }
-
-  // 1.If device context is empty, it means that the input is from a parameter and does not need copy new device tensor.
-  // 2.If the address ptr can be changed, it has been copied by exit actor and does not need copy a new device tensor.
-  if ((device_contexts_[index] == nullptr) || (!input_device_tensor->is_ptr_persisted())) {
-    input_stack_data_[sequential_num][input_data->index_].push(input_device_tensor);
-  } else {
-    const KernelWithIndex &node_with_index = input_device_tensor->GetNodeIndex();
-    MS_EXCEPTION_IF_NULL(node_with_index.first);
-    // Create the new device tensor and copy the data from the input data.
-    auto new_device_tensor = device_contexts_[index]->CreateDeviceAddress(
-      nullptr, input_device_tensor->GetSize(), input_device_tensor->format(), input_device_tensor->type_id());
-    MS_EXCEPTION_IF_NULL(new_device_tensor);
-
-    if (!device_contexts_[index]->AllocateMemory(new_device_tensor.get(), new_device_tensor->GetSize())) {
-      SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(GraphExecutionStrategy::kPipeline, *context, *device_contexts_[index],
-                                                  GetAID().Name(), new_device_tensor->GetSize());
-    }
-    if (!new_device_tensor->SyncDeviceToDevice(
-          trans::GetRuntimePaddingShape(node_with_index.first, node_with_index.second), input_device_tensor->GetSize(),
-          input_device_tensor->type_id(), input_device_tensor->GetPtr(), input_device_tensor->format())) {
-      SET_OPCONTEXT_FAIL_RET_WITH_ERROR(*context, "Sync device to device failed.");
-    }
-    new_device_tensor->SetNodeIndex(node_with_index.first, node_with_index.second);
-    new_device_tensor->set_original_ref_count(SIZE_MAX);
-    new_device_tensor->ResetRefCount();
-
-    created_device_tensors_.emplace_back(new_device_tensor);
-    input_stack_data_[sequential_num][input_data->index_].push(new_device_tensor.get());
   }
 }
 
@@ -329,6 +289,53 @@ void StackActor::EraseInput(const OpContext<DeviceTensor> *const context) {
       }
       one_stack.second--;
     }
+  }
+}
+
+void StackActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
+  MS_EXCEPTION_IF_NULL(context);
+  const auto &sequential_num = context->sequential_num_;
+
+  // Collect the input device tensors.
+  std::vector<DeviceTensor *> memory_free_list;
+  if (input_op_datas_.count(sequential_num) > 0) {
+    for (auto &input_data : input_op_datas_[sequential_num]) {
+      MS_EXCEPTION_IF_NULL(input_data);
+      MS_EXCEPTION_IF_NULL(input_data->data_);
+      memory_free_list.emplace_back(input_data->data_);
+    }
+  }
+
+  if (input_op_partials_.count(sequential_num) > 0) {
+    for (auto &input_partial_pair : input_op_partials_[sequential_num]) {
+      auto partial_device_tensors = GetAllDeviceTensors(input_partial_pair.second);
+      (void)std::copy(partial_device_tensors.begin(), partial_device_tensors.end(),
+                      std::back_inserter(memory_free_list));
+    }
+  }
+
+  if ((input_stack_data_num_ != 0) && (input_stack_data_.count(sequential_num) > 0)) {
+    for (auto &stack_data_pair : input_stack_data_[sequential_num]) {
+      if (!stack_data_pair.second.empty()) {
+        memory_free_list.emplace_back(stack_data_pair.second.top());
+      }
+    }
+  }
+
+  if ((input_stack_partials_num_ != 0) && (input_stack_partials_.count(sequential_num) > 0)) {
+    for (auto &stack_partial_pair : input_stack_partials_[sequential_num]) {
+      if (!stack_partial_pair.second.empty()) {
+        auto partial_device_tensors = GetAllDeviceTensors(stack_partial_pair.second.top());
+        (void)std::copy(partial_device_tensors.begin(), partial_device_tensors.end(),
+                        std::back_inserter(memory_free_list));
+      }
+    }
+  }
+
+  if (memory_free_list.size() > 0) {
+    memory_free_lists_.emplace_back(memory_free_list);
+    ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &(memory_free_lists_.back()),
+                          device_contexts_[0], context);
   }
 }
 }  // namespace runtime

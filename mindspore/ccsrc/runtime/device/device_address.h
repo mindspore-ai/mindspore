@@ -107,13 +107,28 @@ class DeviceAddress : public mindspore::DeviceSync {
   virtual DeviceAddressStatus status() const { return DeviceAddressStatus::kInDevice; }
   virtual DeviceAddressType DeviceType() const { return DeviceAddressType::kUnknown; }
   void *GetMutablePtr() const override { return ptr_; }
-  std::string DeviceName() const { return device_name_; }
-  uint32_t DeviceID() const { return device_id_; }
+  std::string device_name() const { return device_name_; }
+  uint32_t device_id() const { return device_id_; }
 
   virtual void SetNodeIndex(const AnfNodePtr &node, size_t out_index) { node_index_ = {node, out_index}; }
   KernelWithIndex GetNodeIndex() const {
     return node_index_.first.expired() ? KernelWithIndex{nullptr, node_index_.second}
                                        : KernelWithIndex{node_index_.first.lock(), node_index_.second};
+  }
+
+  // The related interface of dynamic reference count operation.
+  void set_dynamic_ref_conut(int32_t dynamic_ref_conut) { dynamic_ref_conut_ = dynamic_ref_conut; }
+  int32_t dynamic_ref_conut() const { return dynamic_ref_conut_; }
+  void IncreaseDynamicRefCount() {
+    if (dynamic_ref_conut_ < INT32_MAX) {
+      dynamic_ref_conut_++;
+    }
+  }
+  void DecreaseDynamicRefCount() {
+    if (dynamic_ref_conut_ <= 0) {
+      MS_LOG(EXCEPTION) << "The dynamic reference count is invalid value:" << dynamic_ref_conut_;
+    }
+    dynamic_ref_conut_--;
   }
 
   virtual bool DumpMemToFile(const std::string &filepath, const std::string &host_fmt, const ShapeVector &host_shape,
@@ -142,9 +157,12 @@ class DeviceAddress : public mindspore::DeviceSync {
   // {node, out_index}
   std::pair<AnfNodeWeakPtr, size_t> node_index_{AnfNodePtr(nullptr), 0};
   // The device address of the node that owns the device address cannot be updated and replaced.
-  // application scenario: set to true when the hardware execution mode requires that ptr cannot be changed during
+  // Application scenario: set to true when the hardware execution mode requires that ptr cannot be changed during
   // execution.
   bool is_ptr_persisted_{false};
+
+  // The device address generated in the control flow scene uses dynamic_ref_conut_.
+  std::atomic_int32_t dynamic_ref_conut_{INT32_MAX};
 
   // The key of device context.
   std::string device_name_{""};

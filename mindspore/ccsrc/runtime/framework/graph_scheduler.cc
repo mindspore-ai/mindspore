@@ -217,6 +217,12 @@ void GraphScheduler::Clear() {
 
 void GraphScheduler::ClearActorData(const ActorSet *actor_set) {
   MS_EXCEPTION_IF_NULL(actor_set);
+
+  for (auto &super_kernel_actor : actor_set->super_kernel_actors_) {
+    MS_EXCEPTION_IF_NULL(super_kernel_actor);
+    super_kernel_actor->memory_free_lists_.clear();
+  }
+
   control_node_scheduler_.ClearActorData(actor_set->control_actors_.get());
 }
 
@@ -486,7 +492,7 @@ ActorSetPtr GraphScheduler::Build(const GraphCompilerInfo &graph_compiler_info) 
   actor_set->output_actor_ = BuildOutputActor(graph_compiler_info);
   actor_set->data_prepare_actor_ =
     BuildDataPrepareActor(graph_compiler_info, actor_set->data_source_actors_, host_queue);
-  actor_set->control_actors_ = control_node_scheduler_.Build(graph_compiler_info);
+  actor_set->control_actors_ = control_node_scheduler_.Build(graph_compiler_info, memory_manager_aid_);
   return actor_set;
 }
 

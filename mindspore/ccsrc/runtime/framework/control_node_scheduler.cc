@@ -83,12 +83,14 @@ bool IsControlFlowArrow(const ControlNodeParserPtr &parser, const KernelGraphPtr
 }
 }  // namespace
 
-ControlActorSetPtr ControlNodeScheduler::Build(const GraphCompilerInfo &graph_compiler_info) {
+ControlActorSetPtr ControlNodeScheduler::Build(const GraphCompilerInfo &graph_compiler_info,
+                                               const AID &memory_manager_aid) {
   const auto &control_nodes = graph_compiler_info.control_nodes_;
   if (control_nodes.size() <= kSingleControlNode) {
     return nullptr;
   }
 
+  memory_manager_aid_ = memory_manager_aid;
   ControlActorSetPtr control_actors = std::make_shared<ControlActorSet>();
   control_actors->switch_actors_ = BuildSwitchActor(graph_compiler_info);
   control_actors->gather_actors_ = BuildGatherActor(graph_compiler_info);
@@ -108,7 +110,8 @@ std::vector<SwitchActorPtr> ControlNodeScheduler::BuildSwitchActor(const GraphCo
         AnfAlgo::CheckPrimitiveType(control_node, prim::kPrimSwitchLayer)) {
       const auto &actor_name = GetActorName(control_node);
       const auto &parameters = FetchInputNodeByCNode(control_node);
-      const auto &switch_actor = std::make_shared<SwitchActor>(actor_name, parameters, control_node);
+      const auto &switch_actor =
+        std::make_shared<SwitchActor>(actor_name, memory_manager_aid_, parameters, control_node);
       switch_actors.emplace_back(switch_actor);
       InsertActor(switch_actor.get());
     }
@@ -127,7 +130,8 @@ std::vector<GatherActorPtr> ControlNodeScheduler::BuildGatherActor(const GraphCo
     if (AnfAlgo::CheckPrimitiveType(control_node, prim::kPrimPartial) || AnfAlgo::IsCallNode(control_node)) {
       const auto &actor_name = GetActorName(control_node);
       const auto &parameters = FetchInputNodeByCNode(control_node);
-      const auto &gather_actor = std::make_shared<GatherActor>(actor_name, parameters, control_node);
+      const auto &gather_actor =
+        std::make_shared<GatherActor>(actor_name, memory_manager_aid_, parameters, control_node);
       gather_actors.emplace_back(gather_actor);
       InsertActor(gather_actor.get());
 
@@ -189,7 +193,7 @@ std::vector<EntranceActorPtr> ControlNodeScheduler::BuildEntranceActor(const Gra
         call_nodes = iter->second;
       }
       const auto &entrance_actor =
-        std::make_shared<EntranceActor>(actor_name, formal_parameters, call_nodes, control_node);
+        std::make_shared<EntranceActor>(actor_name, memory_manager_aid_, formal_parameters, call_nodes, control_node);
       auto context_iter = parser->func_graph_to_device_contexts_.find(func_graph);
       if (context_iter == parser->func_graph_to_device_contexts_.end() ||
           context_iter->second.size() < formal_parameters.size()) {
@@ -202,7 +206,6 @@ std::vector<EntranceActorPtr> ControlNodeScheduler::BuildEntranceActor(const Gra
       entrance_actor->device_contexts_.clear();
       entrance_actor->device_contexts_.insert(entrance_actor->device_contexts_.begin(), context_iter->second.begin(),
                                               context_iter->second.begin() + formal_parameters.size());
-
       entrance_actors.emplace_back(entrance_actor);
       InsertActor(entrance_actor.get());
     }
@@ -225,7 +228,7 @@ std::vector<ExitActorPtr> ControlNodeScheduler::BuildExitActor(const GraphCompil
       MS_EXCEPTION_IF_NULL(func_graph);
       const auto &actor_name = func_graph->ToString() + kExitActorNameSuffix;
       const auto &parameters = FetchInputNodeByCNode(control_node);
-      const auto &exit_actor = std::make_shared<ExitActor>(actor_name, parameters, control_node);
+      const auto &exit_actor = std::make_shared<ExitActor>(actor_name, memory_manager_aid_, parameters, control_node);
       auto context_iter = parser->control_node_to_device_contexts_.find(control_node);
       if (context_iter == parser->control_node_to_device_contexts_.end() ||
           context_iter->second.size() != parameters.size()) {
@@ -267,7 +270,7 @@ std::vector<ExitActorPtr> ControlNodeScheduler::BuildExitActor(const GraphCompil
     }
 
     const auto &actor_name = kernel_graph_group_info->group_name_ + kExitActorNameSuffix;
-    const auto &exit_actor = std::make_shared<ExitActor>(actor_name, formal_parameters, nullptr);
+    const auto &exit_actor = std::make_shared<ExitActor>(actor_name, memory_manager_aid_, formal_parameters, nullptr);
     exit_actor->is_need_copy_device_tensors_.swap(is_need_copy_device_tensors);
     exit_actor->device_contexts_.swap(device_contexts);
     exit_actors.emplace_back(exit_actor);
@@ -305,7 +308,7 @@ std::vector<StackActorPtr> ControlNodeScheduler::BuildStackActor(const GraphComp
       }
     }
     const auto &actor_name = kernel_graph_group_info->group_name_ + kStackActorNameSuffix;
-    const auto &stack_actor = std::make_shared<StackActor>(actor_name, formal_parameters);
+    const auto &stack_actor = std::make_shared<StackActor>(actor_name, memory_manager_aid_, formal_parameters);
     stack_actors.emplace_back(stack_actor);
     stack_actor->device_contexts_.swap(device_contexts);
     stack_actor->input_stack_data_num_ = input_parameter_data_num;
@@ -379,7 +382,7 @@ void ControlNodeScheduler::BuildStackActorForControlNode(const GraphCompilerInfo
     }
     // Create stack actor.
     const auto &stack_actor_name = GetActorName(need_stack_control_node) + kStackActorNameSuffix;
-    const auto &stack_actor = std::make_shared<StackActor>(stack_actor_name, formal_parameters);
+    const auto &stack_actor = std::make_shared<StackActor>(stack_actor_name, memory_manager_aid_, formal_parameters);
     stack_actor->device_contexts_ = device_contexts;
     stack_actor->input_stack_data_num_ = input_parameter_data_num;
     stack_actor->input_stack_partials_num_ = input_parameter_partials_num;
@@ -422,8 +425,29 @@ void ControlNodeScheduler::ClearActorData(const ControlActorSet *control_actor_s
     return;
   }
 
+  for (auto &switch_actor : control_actor_set->switch_actors_) {
+    MS_EXCEPTION_IF_NULL(switch_actor);
+    switch_actor->memory_free_lists_.clear();
+  }
+
+  for (auto &gather_actor : control_actor_set->gather_actors_) {
+    MS_EXCEPTION_IF_NULL(gather_actor);
+    gather_actor->memory_free_lists_.clear();
+  }
+
+  for (auto &entrance_actor : control_actor_set->entrance_actors_) {
+    MS_EXCEPTION_IF_NULL(entrance_actor);
+    entrance_actor->memory_free_lists_.clear();
+  }
+
+  for (auto &stack_actor : control_actor_set->stack_actors_) {
+    MS_EXCEPTION_IF_NULL(stack_actor);
+    stack_actor->memory_free_lists_.clear();
+  }
+
   for (auto &exit_actor : control_actor_set->exit_actors_) {
     MS_EXCEPTION_IF_NULL(exit_actor);
+    exit_actor->memory_free_lists_.clear();
     exit_actor->created_device_tensors_.clear();
   }
 }

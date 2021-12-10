@@ -37,7 +37,7 @@ class ControlNodeScheduler {
   DISABLE_COPY_AND_ASSIGN(ControlNodeScheduler);
 
   // Transform the control nodes to control actors.
-  ControlActorSetPtr Build(const GraphCompilerInfo &graph_compiler_info);
+  ControlActorSetPtr Build(const GraphCompilerInfo &graph_compiler_info, const AID &memory_manager_aid);
   // Link control actors.
   void Link(ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info);
 
@@ -106,6 +106,9 @@ class ControlNodeScheduler {
   void LinkPartialArrowForExitActor(ExitActor *const exit_actor, ControlActor *const to_actor, size_t from_index,
                                     size_t to_index, int branch_id);
   bool IsNoInputActor(const ControlActor *control_actor);
+
+  // The id of memory manager actor.
+  AID memory_manager_aid_;
 };
 }  // namespace runtime
 }  // namespace mindspore

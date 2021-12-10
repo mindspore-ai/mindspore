@@ -18,9 +18,9 @@
 
 namespace mindspore {
 namespace runtime {
-ControlActor::ControlActor(const std::string &name, KernelTransformType type,
+ControlActor::ControlActor(const std::string &name, KernelTransformType type, const AID &memory_manager_aid,
                            const std::vector<KernelWithIndex> &parameters, const AnfNodePtr &node)
-    : AbstractActor(name, type, nullptr), formal_parameters_(parameters), node_(node) {
+    : MemoryAwareActor(name, type, nullptr, memory_manager_aid), formal_parameters_(parameters), node_(node) {
   for (size_t i = 0; i < parameters.size(); ++i) {
     input_partials_.emplace_back(std::make_shared<OpPartial>());
   }
@@ -41,6 +41,59 @@ void ControlActor::Init() {
   }
 }
 
+std::vector<DeviceTensor *> ControlActor::GetAllDeviceTensors(const OpPartialPtr &op_partial) {
+  MS_EXCEPTION_IF_NULL(op_partial);
+  std::vector<DeviceTensor *> ret;
+  for (auto &device_tensor : op_partial->device_tensors_) {
+    (void)ret.emplace_back(device_tensor.second);
+  }
+
+  // Foreach the op partial to fetch the device tensors.
+  for (auto &partial : op_partial->partials_) {
+    auto ret_inner = GetAllDeviceTensors(partial.second);
+    (void)std::copy(ret_inner.begin(), ret_inner.end(), std::back_inserter(ret));
+  }
+
+  return ret;
+}
+
+std::vector<DeviceTensor *> ControlActor::GetAllDeviceTensors(const OpRealParameterWithBranchID &op_real_parameter) {
+  std::vector<DeviceTensor *> ret;
+  for (auto &device_tensor : op_real_parameter.device_tensors_) {
+    (void)ret.emplace_back(device_tensor.second);
+  }
+
+  // Foreach the op partial to fetch the device tensors.
+  for (auto &partial : op_real_parameter.partials_) {
+    auto ret_inner = GetAllDeviceTensors(partial.second);
+    (void)std::copy(ret_inner.begin(), ret_inner.end(), std::back_inserter(ret));
+  }
+  return ret;
+}
+
+void ControlActor::IncreaseDynamicRefCount(const OpData<DeviceTensor> *op_data) {
+  MS_EXCEPTION_IF_NULL(op_data);
+  MS_EXCEPTION_IF_NULL(op_data->data_);
+  op_data->data_->IncreaseDynamicRefCount();
+}
+
+void ControlActor::IncreaseDynamicRefCount(const OpPartialPtr &op_partial) {
+  MS_EXCEPTION_IF_NULL(op_partial);
+  auto partial_device_tensors = GetAllDeviceTensors(op_partial);
+  for (auto &partial_device_tensor : partial_device_tensors) {
+    MS_EXCEPTION_IF_NULL(partial_device_tensor);
+    partial_device_tensor->IncreaseDynamicRefCount();
+  }
+}
+
+void ControlActor::IncreaseDynamicRefCount(const OpRealParameterWithBranchID &op_real_parameter) {
+  auto partial_device_tensors = GetAllDeviceTensors(op_real_parameter);
+  for (auto &partial_device_tensor : partial_device_tensors) {
+    MS_EXCEPTION_IF_NULL(partial_device_tensor);
+    partial_device_tensor->IncreaseDynamicRefCount();
+  }
+}
+
 size_t ControlActor::FetchNodePosition(const KernelWithIndex &node) const {
   const auto &iter = find(formal_parameters_.begin(), formal_parameters_.end(), node);
   if (iter == formal_parameters_.end()) {
@@ -52,6 +105,13 @@ size_t ControlActor::FetchNodePosition(const KernelWithIndex &node) const {
 
 void ControlActor::Run(OpContext<DeviceTensor> *const context) {
   FetchInput(context);
+
+  // Note that IncreaseDynamicRefCounts must be in front of SendMemoryFreeReq. SendMemoryFreeReq will decreasing the
+  // dynamic ref count. Avoid the illegal timing problem that the dynamic reference count is decremented and then
+  // incremented.
+  IncreaseDynamicRefCounts(context);
+  SendMemoryFreeReq(context);
+
   EraseInput(context);
   SendOutput(context);
 }
@@ -197,9 +257,61 @@ void ControlActor::FetchInput(OpContext<DeviceTensor> *const context) {
   }
 }
 
-void ControlActor::EraseInput(const OpContext<DeviceTensor> *context) {
-  AbstractActor::EraseInput(context);
+void ControlActor::IncreaseDynamicRefCounts(OpContext<DeviceTensor> *const context) {
+  MS_EXCEPTION_IF_NULL(context);
+  // Increase dynamic ref count by the output data.
+  for (auto &output_data : output_data_) {
+    MS_EXCEPTION_IF_NULL(output_data);
+    IncreaseDynamicRefCount(output_data.get());
+  }
+
+  // Increase dynamic ref count by the output partial.
+  for (const auto &partial_arrow : output_partial_arrows_) {
+    MS_EXCEPTION_IF_NULL(partial_arrow);
+    if (IntToSize(partial_arrow->from_output_index_) >= input_partials_.size()) {
+      std::string error_info = "Invalid partial input:" + std::to_string(partial_arrow->from_output_index_) +
+                               " current:" + std::to_string(input_partials_.size()) + " for actor:" + GetAID().Name();
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+    }
+    auto output_partial = input_partials_[partial_arrow->from_output_index_];
+    IncreaseDynamicRefCount(output_partial);
+  }
+}
+
+void ControlActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
+  MS_EXCEPTION_IF_NULL(context);
   const auto &sequential_num = context->sequential_num_;
+
+  // Collect the input device tensors.
+  std::vector<DeviceTensor *> memory_free_list;
+  if (input_op_datas_.count(sequential_num) > 0) {
+    for (auto &input_data : input_op_datas_[sequential_num]) {
+      MS_EXCEPTION_IF_NULL(input_data);
+      MS_EXCEPTION_IF_NULL(input_data->data_);
+      memory_free_list.emplace_back(input_data->data_);
+    }
+  }
+
+  if (input_op_partials_.count(sequential_num) > 0) {
+    for (auto &input_partial_pair : input_op_partials_[sequential_num]) {
+      auto partial_device_tensors = GetAllDeviceTensors(input_partial_pair.second);
+      (void)std::copy(partial_device_tensors.begin(), partial_device_tensors.end(),
+                      std::back_inserter(memory_free_list));
+    }
+  }
+
+  if (memory_free_list.size() > 0) {
+    memory_free_lists_.emplace_back(memory_free_list);
+    ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &(memory_free_lists_.back()),
+                          device_contexts_[0], context);
+  }
+}
+
+void ControlActor::EraseInput(const OpContext<DeviceTensor> *context) {
+  MS_EXCEPTION_IF_NULL(context);
+  const auto &sequential_num = context->sequential_num_;
+  AbstractActor::EraseInput(context);
+
   if (input_partials_num_ != 0) {
     auto ret = input_op_partials_.erase(sequential_num);
     if (ret == 0) {

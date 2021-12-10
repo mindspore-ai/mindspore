@@ -123,7 +123,7 @@ TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t 
   if (device_context->GetDeviceAddressType() != device_tensor->DeviceType()) {
     auto old_device_context = device_context;
     device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
-      {device_tensor->DeviceName(), device_tensor->DeviceID()});
+      {device_tensor->device_name(), device_tensor->device_id()});
     MS_LOG(INFO) << "Update device context from:" << old_device_context->GetDeviceAddressType()
                  << " to:" << device_context->GetDeviceAddressType();
   }
@@ -169,6 +169,7 @@ void OutputActor::UpdateOutputDeviceAddress() {
     tensor_device_address->ResetRefCount();
     auto node_with_index = device_tensor->GetNodeIndex();
     tensor_device_address->SetNodeIndex(node_with_index.first, node_with_index.second);
+    tensor_device_address->set_from_persistent_mem(device_tensor->from_persistent_mem());
     // The outputs may have the same output node, so need skip when the node has been done.
     if (device_tensor->GetPtr() == nullptr) {
       continue;

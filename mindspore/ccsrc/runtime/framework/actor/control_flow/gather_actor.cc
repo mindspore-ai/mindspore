@@ -19,9 +19,9 @@
 
 namespace mindspore {
 namespace runtime {
-GatherActor::GatherActor(const std::string &name, const std::vector<KernelWithIndex> &parameters,
-                         const AnfNodePtr &node)
-    : ControlActor(name, KernelTransformType::kGatherActor, parameters, node) {
+GatherActor::GatherActor(const std::string &name, const AID &memory_manager_aid,
+                         const std::vector<KernelWithIndex> &parameters, const AnfNodePtr &node)
+    : ControlActor(name, KernelTransformType::kGatherActor, memory_manager_aid, parameters, node) {
   device_contexts_.resize(parameters.size());
 }
 
@@ -50,34 +50,41 @@ void GatherActor::FetchInput(OpContext<DeviceTensor> *const context) {
   }
 }
 
+void GatherActor::FetchOutput(OpRealParameterWithBranchID *const output, OpContext<DeviceTensor> *const context) {
+  MS_EXCEPTION_IF_NULL(output);
+  MS_EXCEPTION_IF_NULL(context);
+  output->branch_id_ = output_branch_id_;
+  output->device_tensors_ = input_partials_[0]->device_tensors_;
+  output->partials_ = input_partials_[0]->partials_;
+
+  // The first input of gather actor is the target funcgraph, which will not be sent to the entrance actor as
+  // an real parameter, so the subsequent index needs to be reduced by one.
+  for (auto &device_tensor : output->device_tensors_) {
+    if (device_tensor.first == 0) {
+      std::string error_info =
+        "Invalid device tensor index:" + std::to_string(device_tensor.first) + " for actor:" + GetAID().Name();
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+    }
+    device_tensor.first--;
+  }
+  for (auto &partial : output->partials_) {
+    if (partial.first == 0) {
+      std::string error_info =
+        "Invalid partial index:" + std::to_string(partial.first) + " for actor:" + GetAID().Name();
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+    }
+    partial.first--;
+  }
+}
+
 void GatherActor::SendOutput(OpContext<DeviceTensor> *const context) {
   // Send data with branch id.
   const auto &iter = output_data_with_branch_id_arrows_.find(input_partials_[0]->func_graph_);
   if (iter != output_data_with_branch_id_arrows_.end()) {
     // Build the output data struct.
     OpRealParameterWithBranchID output;
-    output.branch_id_ = output_branch_id_;
-    output.device_tensors_ = input_partials_[0]->device_tensors_;
-    output.partials_ = input_partials_[0]->partials_;
+    FetchOutput(&output, context);
 
-    // The first input of gather actor is the target funcgraph, which will not be sent to the entrance actor as
-    // an real parameter, so the subsequent index needs to be reduced by one.
-    for (auto &device_tensor : output.device_tensors_) {
-      if (device_tensor.first == 0) {
-        std::string error_info =
-          "Invalid device tensor index:" + std::to_string(device_tensor.first) + " for actor:" + GetAID().Name();
-        SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
-      }
-      device_tensor.first--;
-    }
-    for (auto &partial : output.partials_) {
-      if (partial.first == 0) {
-        std::string error_info =
-          "Invalid partial index:" + std::to_string(partial.first) + " for actor:" + GetAID().Name();
-        SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
-      }
-      partial.first--;
-    }
     for (const auto &data_with_branch_id_arrow : iter->second) {
       ActorDispatcher::Send(data_with_branch_id_arrow, &EntranceActor::RunOpRealParameterWithBranchID, output, context);
     }
@@ -85,6 +92,23 @@ void GatherActor::SendOutput(OpContext<DeviceTensor> *const context) {
 
   // Control arrow needs to be sent after the real parameter data and branch id.
   ControlActor::SendOutput(context);
+}
+
+void GatherActor::IncreaseDynamicRefCounts(OpContext<DeviceTensor> *const context) {
+  MS_EXCEPTION_IF_NULL(context);
+  ControlActor::IncreaseDynamicRefCounts(context);
+
+  // Increase dynamic ref count by the output data with branch id.
+  const auto &iter = output_data_with_branch_id_arrows_.find(input_partials_[0]->func_graph_);
+  if (iter != output_data_with_branch_id_arrows_.end()) {
+    // Build the output data struct.
+    OpRealParameterWithBranchID output;
+    FetchOutput(&output, context);
+
+    for (size_t i = 0; i < iter->second.size(); ++i) {
+      IncreaseDynamicRefCount(output);
+    }
+  }
 }
 }  // namespace runtime
 }  // namespace mindspore

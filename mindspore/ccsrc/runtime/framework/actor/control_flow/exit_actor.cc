@@ -91,6 +91,33 @@ void ExitActor::SendOutput(OpContext<DeviceTensor> *const context) {
   }
 }
 
+void ExitActor::IncreaseDynamicRefCounts(OpContext<DeviceTensor> *const context) {
+  MS_EXCEPTION_IF_NULL(context);
+  ControlActor::IncreaseDynamicRefCounts(context);
+
+  // Increase dynamic ref count by the output data in output branch.
+  if (output_branch_data_.count(output_branch_id_) > 0) {
+    for (auto &output_data : output_branch_data_[output_branch_id_]) {
+      MS_EXCEPTION_IF_NULL(output_data.second);
+      IncreaseDynamicRefCount(output_data.second.get());
+    }
+  }
+
+  // Increase dynamic ref count by the output partial in output branch.
+  if (output_branch_partial_arrows_.count(output_branch_id_) > 0) {
+    for (const auto &partial_arrow : output_branch_partial_arrows_[output_branch_id_]) {
+      MS_EXCEPTION_IF_NULL(partial_arrow);
+      if (IntToSize(partial_arrow->from_output_index_) >= input_partials_.size()) {
+        std::string error_info = "Invalid partial input:" + std::to_string(partial_arrow->from_output_index_) +
+                                 " current:" + std::to_string(input_partials_.size()) + " for actor:" + GetAID().Name();
+        SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+      }
+      auto output_partial = input_partials_[partial_arrow->from_output_index_];
+      IncreaseDynamicRefCount(output_partial);
+    }
+  }
+}
+
 void ExitActor::CopyDeviceAddress(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   // If node is not empty, it is the exit of funcgraph, no need to create device address.
@@ -110,26 +137,45 @@ void ExitActor::CopyDeviceAddress(OpContext<DeviceTensor> *const context) {
     MS_EXCEPTION_IF_NULL(input_device_tensor);
     const KernelWithIndex &node_with_index = input_device_tensor->GetNodeIndex();
     MS_EXCEPTION_IF_NULL(node_with_index.first);
-    // If the address ptr can't be changed, does not need to copy a new device tensor.
-    if ((!is_need_copy_device_tensors_[i]) || input_device_tensor->is_ptr_persisted()) {
+    if (!is_need_copy_device_tensors_[i]) {
       new_device_tensors.emplace_back(input_device_tensor);
       continue;
     }
+
     MS_EXCEPTION_IF_NULL(device_contexts_[i]);
-    auto new_device_tensor =
-      device_contexts_[i]->CreateDeviceAddress(nullptr, input_device_tensors_[i]->GetSize(),
-                                               input_device_tensors_[i]->format(), input_device_tensors_[i]->type_id());
+    // Create the new device tensor to take over the input_device_tensors which are the outputs of kernel graphs.
+    auto new_device_tensor = device_contexts_[i]->CreateDeviceAddress(
+      nullptr, input_device_tensor->GetSize(), input_device_tensor->format(), input_device_tensor->type_id());
     MS_EXCEPTION_IF_NULL(new_device_tensor);
-    new_device_tensor->set_ptr(input_device_tensor->GetMutablePtr());
-    new_device_tensor->set_from_mem_pool(input_device_tensor->from_mem_pool());
+    created_device_tensors_.emplace_back(new_device_tensor);
+    new_device_tensors.emplace_back(new_device_tensor.get());
+
     new_device_tensor->SetNodeIndex(node_with_index.first, node_with_index.second);
+    new_device_tensor->set_from_persistent_mem(input_device_tensor->from_persistent_mem());
+    // The device address which is created by actor uses the dynamic ref count.
+    new_device_tensor->set_dynamic_ref_conut(0);
     new_device_tensor->set_original_ref_count(SIZE_MAX);
     new_device_tensor->ResetRefCount();
-    new_device_tensors.emplace_back(new_device_tensor.get());
-    created_device_tensors_.emplace_back(new_device_tensor);
 
-    input_device_tensor->set_ptr(nullptr);
-    input_device_tensor->set_from_mem_pool(false);
+    // If the address ptr can't be changed, then alloc the new device memory and copy the data.
+    if (input_device_tensor->is_ptr_persisted()) {
+      if (!device_contexts_[i]->AllocateMemory(new_device_tensor.get(), new_device_tensor->GetSize())) {
+        SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(GraphExecutionStrategy::kPipeline, *context, *device_contexts_[i],
+                                                    GetAID().Name(), new_device_tensor->GetSize());
+      }
+      if (!new_device_tensor->SyncDeviceToDevice(
+            trans::GetRuntimePaddingShape(node_with_index.first, node_with_index.second),
+            input_device_tensor->GetSize(), input_device_tensor->type_id(), input_device_tensor->GetPtr(),
+            input_device_tensor->format())) {
+        SET_OPCONTEXT_FAIL_RET_WITH_ERROR(*context, "Sync device to device failed.");
+      }
+    } else {
+      // Move the device ptr from input_device_tensor to new_device_tensor.
+      new_device_tensor->set_ptr(input_device_tensor->GetMutablePtr());
+      new_device_tensor->set_from_mem_pool(input_device_tensor->from_mem_pool());
+      input_device_tensor->set_ptr(nullptr);
+      input_device_tensor->set_from_mem_pool(false);
+    }
   }
   input_device_tensors_.swap(new_device_tensors);
 

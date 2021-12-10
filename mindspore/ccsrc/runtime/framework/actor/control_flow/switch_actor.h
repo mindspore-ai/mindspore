@@ -33,7 +33,8 @@ using mindspore::session::KernelWithIndex;
 // Switch and SwitchLayer node will be converted to switch actor.
 class SwitchActor : public ControlActor {
  public:
-  SwitchActor(const std::string &name, const std::vector<KernelWithIndex> &parameters, const AnfNodePtr &node);
+  SwitchActor(const std::string &name, const AID &memory_manager_aid, const std::vector<KernelWithIndex> &parameters,
+              const AnfNodePtr &node);
   ~SwitchActor() override = default;
 
   void Init() override;
