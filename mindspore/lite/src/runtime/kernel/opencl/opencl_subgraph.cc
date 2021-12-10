@@ -308,7 +308,9 @@ int OpenCLSubGraph::InsertOpsPass() {
 int OpenCLSubGraph::RunPass() {
   // The fp16 operator in heterogeneous scenes needs to be set to fp32
   // to prevent the frame from being converted to fp16 in advance.
-  if (in_tensors()[0]->data_type() == kNumberTypeFloat32 || in_tensors()[0]->data_type() == kNumberTypeFloat16) {
+  auto in_frist_tensor = in_tensors().front();
+  if (in_frist_tensor->IsGraphInput() &&
+      (in_frist_tensor->data_type() == kNumberTypeFloat32 || in_frist_tensor->data_type() == kNumberTypeFloat16)) {
     desc_.data_type = in_tensors()[0]->data_type();
   }
   allocator_ = ocl_runtime_->GetAllocator();
@@ -339,11 +341,8 @@ int OpenCLSubGraph::RunPass() {
 int OpenCLSubGraph::UpdateTensorDataTypePass() {
   bool is_fp16 = ocl_runtime_->GetFp16Enable();
   if (is_fp16 && subgraph_type() == kGpuFp16SubGraph) {
-    std::set<lite::Tensor *> out_set;
     auto in_tensors = this->in_tensors();
     auto out_tensors = this->out_tensors();
-    out_set.insert(in_tensors.begin(), in_tensors.end());
-    out_set.insert(out_tensors.begin(), out_tensors.end());
     for (auto iv : nodes_) {
       MS_ASSERT(iv);
       auto cur_outs = iv->out_tensors();
@@ -360,12 +359,10 @@ int OpenCLSubGraph::UpdateTensorDataTypePass() {
         if (last_kernel) continue;
       }
       for (auto jv : cur_outs) {
-        if (out_set.count(jv) == 0) {
-          MS_ASSERT(jv);
-          // if Fp16Enable, only change fp32 to fp16, other dtype is reserved
-          if (jv->data_type() == kNumberTypeFloat32) {
-            jv->set_data_type(kNumberTypeFloat16);
-          }
+        MS_ASSERT(jv);
+        // if Fp16Enable, only change fp32 to fp16, other dtype is reserved
+        if (jv->data_type() == kNumberTypeFloat32 && !jv->IsGraphOutput()) {
+          jv->set_data_type(kNumberTypeFloat16);
         }
       }
     }
