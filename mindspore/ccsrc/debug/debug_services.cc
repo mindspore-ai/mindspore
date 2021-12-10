@@ -770,7 +770,8 @@ void DebugServices::ProcessConvertToHostFormat(const std::vector<std::string> &f
       MS_LOG(ERROR) << "stat error, ret is: " << ret;
       (void)closedir(d_handle);
       return;
-    } else if (S_ISREG(st.st_mode)) {
+    }
+    if (S_ISREG(st.st_mode)) {
       std::string candidate = dir->d_name;
       for (const std::string &file_to_find : files_after_convert_in_dir) {
         std::string file_n = file_to_find;
@@ -888,7 +889,8 @@ void DebugServices::ProcessConvertList(const std::string &prefix_dump_file_name,
       MS_LOG(ERROR) << "stat error, ret is: " << ret;
       (void)closedir(d);
       return;
-    } else if (!(S_ISREG(st.st_mode))) {
+    }
+    if (!(S_ISREG(st.st_mode))) {
       continue;
     }
     std::string file_name = dir->d_name;
@@ -991,7 +993,8 @@ std::vector<uint32_t> DebugServices::GetDumpRankIdList() {
       MS_LOG(ERROR) << "stat error, ret is: " << ret;
       (void)closedir(d_handle);
       return rank_id_list;
-    } else if (S_ISDIR(st.st_mode)) {
+    }
+    if (S_ISDIR(st.st_mode)) {
       std::string rank_dir_name = dir->d_name;
       if (GetRankOrGraphId("rank", rank_dir_name) != UINT32_MAX) {
         rank_id_list.push_back(GetRankOrGraphId("rank", rank_dir_name));
@@ -1022,7 +1025,8 @@ void DebugServices::CheckDumpGraphIdList(std::vector<uint32_t> rank_id_list) {
         MS_LOG(ERROR) << "stat error, ret is: " << ret;
         (void)closedir(d_handle_rank);
         return;
-      } else if (S_ISDIR(st.st_mode)) {
+      }
+      if (S_ISDIR(st.st_mode)) {
         std::string graph_dir = direc->d_name;
         if (graph_dir == "." || graph_dir == "..") {
           continue;
@@ -1266,7 +1270,8 @@ void DebugServices::ReadDumpedTensorSync(const std::string &prefix_dump_file_nam
         MS_LOG(ERROR) << "stat error, ret is: " << ret;
         (void)closedir(d);
         return;
-      } else if (S_ISREG(st.st_mode)) {
+      }
+      if (S_ISREG(st.st_mode)) {
         std::string file_name = dir->d_name;
         std::string stripped_file_name = GetStrippedFilename(file_name);
         if (stripped_file_name.empty()) {
@@ -1408,7 +1413,8 @@ void DebugServices::ProcessTensorDataSync(const std::vector<std::tuple<std::stri
         MS_LOG(ERROR) << "stat error, ret is: " << ret;
         (void)closedir(d);
         return;
-      } else if (S_ISREG(st.st_mode)) {
+      }
+      if (S_ISREG(st.st_mode)) {
         std::string file_name = dir->d_name;
         for (auto &node : proto_to_dump) {
           std::string dump_name = std::get<1>(node);
@@ -1641,7 +1647,8 @@ void DebugServices::AddOpOverflowOpNames(const std::string overflow_bin_path, st
         MS_LOG(ERROR) << "stat error, ret is: " << ret;
         (void)closedir(d);
         return;
-      } else if (S_ISREG(st.st_mode)) {
+      }
+      if (S_ISREG(st.st_mode)) {
         // form fully qualified filename
         std::string file_path = name;
         std::string file_name = dir->d_name;

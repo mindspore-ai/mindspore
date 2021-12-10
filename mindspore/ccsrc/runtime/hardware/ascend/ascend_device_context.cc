@@ -557,6 +557,7 @@ bool AscendDeviceContext::ExecuteGraph(const KernelGraphPtr &graph) const {
     }
 #ifndef ENABLE_SECURITY
     Dump(graph, GetRankID());
+    DumpSetup(graph);
 #endif
 #if defined(_WIN32) || defined(_WIN64)
     auto end_time = std::chrono::steady_clock::now();
@@ -566,9 +567,6 @@ bool AscendDeviceContext::ExecuteGraph(const KernelGraphPtr &graph) const {
     (void)gettimeofday(&end_time, nullptr);
     uint64_t cost = kUSecondInSecond * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);
     cost += static_cast<uint64_t>(end_time.tv_usec - start_time.tv_usec);
-#ifndef ENABLE_SECURITY
-    DumpSetup(graph);
-#endif
     MS_LOG(INFO) << "Call MS Run Success in " << cost << " us";
 #endif
   } else {

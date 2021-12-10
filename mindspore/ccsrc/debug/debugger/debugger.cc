@@ -199,7 +199,7 @@ void Debugger::EnableDebugger() {
 
 void Debugger::CheckDatasetSinkMode(const KernelGraphPtr &graph_ptr) {
   bool sink_mode = ConfigManager::GetInstance().dataset_mode() || graph_ptr->IsDatasetGraph();
-  if (CheckDebuggerDumpEnabled() && sink_mode) {
+  if (CheckDebuggerDumpEnabled() && sink_mode && device_target_ == kGPUDevice) {
     MS_EXCEPTION(NotSupportError)
       << "e2e_dump is not supported on GPU with dataset_sink_mode=True. Please set dataset_sink_mode=False";
   }
@@ -212,8 +212,11 @@ void Debugger::CheckDatasetSinkMode(const KernelGraphPtr &graph_ptr) {
 
 bool Debugger::CheckDebuggerDumpEnabled() const {
   // see if dump is enabled
+  auto &dump_json_parser = DumpJsonParser::GetInstance();
   if (device_target_ == kGPUDevice) {
-    return device::KernelRuntime::DumpDataEnabled();
+    return dump_json_parser.e2e_dump_enabled();
+  } else if (device_target_ == kAscendDevice) {
+    return dump_json_parser.async_dump_enabled() || dump_json_parser.e2e_dump_enabled();
   }
   return false;
 }
@@ -281,8 +284,8 @@ void Debugger::Reset() {
 }
 
 void Debugger::PreExecuteGraphDebugger(const std::vector<KernelGraphPtr> &graphs) {
-  // Only GPU is supported for MindRTBackend
-  if (device_target_ != kGPUDevice) {
+  // MindRTBackend for GPU and Ascend
+  if (device_target_ == kCPUDevice) {
     return;
   }
   // Store graphs that are run in one step.
@@ -421,7 +424,11 @@ uint32_t Debugger::GetRankID() {
   return rank_id;
 }
 
-void Debugger::Dump(const KernelGraphPtr &kernel_graph) const {
+void Debugger::DumpGPU(const KernelGraphPtr &kernel_graph) const {
+  // only for GPU mindrt
+  if (device_target_ != kGPUDevice) {
+    return;
+  }
   uint32_t rank_id = GetRankID();
   E2eDump::DumpRunIter(kernel_graph, rank_id);
   if (debugger_ && debugger_->DebuggerBackendEnabled()) {
@@ -469,21 +476,26 @@ void Debugger::PostExecuteGraphDebugger() {
     DumpJsonParser::GetInstance().UpdateDumpIter();
     return;
   }
-  // Only GPU is supported for MindRTBackend
-  if (device_target_ != kGPUDevice) {
-    return;
+  for (const auto &graph_ptr : debugger_->GetGraphPtrList()) {
+    if (device_target_ == kAscendDevice) {
+      debugger_->SetGraphPtr(graph_ptr);
+      // load output for Ascend
+      debugger_->LoadGraphOutputs();
+      // load parameters for Ascend
+      debugger_->LoadParametersAndConst();
+    }
   }
   // LoadParametersAndConst for all the graphs that have been run in the current step
-  if (debugger_) {
+  if (debugger_ && device_target_ == kGPUDevice) {
     for (auto graph : graph_ptr_step_vec_) {
       debugger_->LoadParametersAndConst(graph);
     }
   }
   // debug used for dump
-  if (debugger_ && debugger_->CheckDebuggerDumpEnabled()) {
+  if (debugger_ && debugger_->CheckDebuggerDumpEnabled() && device_target_ == kGPUDevice) {
     // Dump Parameters and consts
     for (auto graph : graph_ptr_step_vec_) {
-      debugger_->Dump(graph);
+      debugger_->DumpGPU(graph);
       if (!debugger_->debugger_enabled()) {
         debugger_->ClearCurrentData();
       }
@@ -521,7 +533,11 @@ void Debugger::PostExecute() {
     // GPU ResetLoadedTensors for old runtime happens in preExecute
     if ((device_target_ == kGPUDevice && MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) ||
         device_target_ == kAscendDevice) {
-      debug_services_->ResetLoadedTensors();
+      if (debug_services_ != nullptr) {
+        debug_services_->ResetLoadedTensors();
+      } else {
+        MS_LOG(ERROR) << "debug_services_ is nullptr";
+      }
     }
   }
 }
