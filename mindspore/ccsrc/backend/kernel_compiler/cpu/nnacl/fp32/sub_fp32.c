@@ -212,7 +212,7 @@ int ElementSubRelu(const float *in0, const float *in1, float *out, int size) {
     float32x4_t vin0 = vld1q_f32(in0 + index);
     float32x4_t vin1 = vld1q_f32(in1 + index);
     float32x4_t vout = vsubq_f32(vin0, vin1);
-    vout = vbslq_f32(vcgtq_f32(vout, zeros), vout, zeros);
+    vout = vbslq_f32(vcleq_f32(vout, zeros), zeros, vout);
     vst1q_f32(out + index, vout);
   }
 #endif

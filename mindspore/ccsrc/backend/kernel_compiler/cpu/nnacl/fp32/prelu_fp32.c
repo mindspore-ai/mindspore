@@ -119,7 +119,7 @@ void PRelu(const float *input, float *output, const float *slope, int start, int
       MS_FLOAT32X4 s = MS_LDQ_F32(slope + j);
       MS_FLOAT32X4 mul = MS_MULQ_F32(in, s);
       MS_FLOAT32X4 zero = MS_MOVQ_F32(0.0f);
-      MS_FLOAT32X4 res = MS_BLENDQ_F32(mul, in, MS_CMPGTQ_F32(in, zero));
+      MS_FLOAT32X4 res = MS_BLENDQ_F32(in, mul, MS_CMPLEQ_F32(in, zero));
       MS_STQ_F32(cur_out + j, res);
     }
 #endif
@@ -150,11 +150,11 @@ void PReluShareChannel(const float *input, float *output, float slope, int start
     MS_FLOAT32X4 src_tmp = MS_LDQ_F32(input + i);
     MS_FLOAT32X4 mul_tmp = MS_MULQ_N_F32(src_tmp, slope);
 #ifdef ENABLE_ARM
-    MS_UINT32X4 mask = MS_CMPGTQ_F32(src_tmp, MS_MOVQ_F32(0.0f));
+    MS_UINT32X4 mask = MS_CMPLEQ_F32(src_tmp, MS_MOVQ_F32(0.0f));
 #else
-    MS_FLOAT32X4 mask = MS_CMPGTQ_F32(src_tmp, MS_MOVQ_F32(0.0f));
+    MS_FLOAT32X4 mask = MS_CMPLEQ_F32(src_tmp, MS_MOVQ_F32(0.0f));
 #endif
-    MS_STQ_F32(output + i, MS_BLENDQ_F32(mul_tmp, src_tmp, mask));
+    MS_STQ_F32(output + i, MS_BLENDQ_F32(src_tmp, mul_tmp, mask));
   }
 #endif
   for (; i < end; i++) {

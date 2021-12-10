@@ -28,8 +28,8 @@ int ReluGrad(const float *src0, const float *src1, size_t length, float *dst) {
   for (; i < (int)length - 4; i += 4) {
     float32x4_t src1_4 = vld1q_f32(src1 + i);
     float32x4_t src0_4 = vld1q_f32(src0 + i);
-    uint32x4_t mask_4 = vcgtq_f32(src1_4, zero_4);
-    float32x4_t dst_4 = vbslq_f32(mask_4, src0_4, zero_4);
+    uint32x4_t mask_4 = vcleq_f32(src1_4, zero_4);
+    float32x4_t dst_4 = vbslq_f32(mask_4, zero_4, src0_4);
     vst1q_f32(dst + i, dst_4);
   }
 #endif

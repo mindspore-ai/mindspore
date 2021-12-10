@@ -261,8 +261,8 @@ int EluFp16(const float16_t *src, int length, float16_t *dst, float16_t alpha) {
     float16x8_t exp_tmp = VexpFp16(src_tmp);  // exp(x)
     exp_tmp = MS_SUBQ_F16(exp_tmp, one);      // exp(x) - 1
     float16x8_t elu_tmp = MS_MULQ_N_F16(exp_tmp, alpha);
-    uint16x8_t mask = MS_CMPGTQ_F16(src_tmp, MS_MOVQ_F16(0.0f));
-    MS_STQ_F16(dst + i, vbslq_f16(mask, src_tmp, elu_tmp));
+    uint16x8_t mask = vcleq_f16(src_tmp, MS_MOVQ_F16(0.0f));
+    MS_STQ_F16(dst + i, vbslq_f16(mask, elu_tmp, src_tmp));
   }
 #endif
   for (; i < length; ++i) {
