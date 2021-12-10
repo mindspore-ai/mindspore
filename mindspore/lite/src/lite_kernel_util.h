@@ -26,29 +26,28 @@ namespace mindspore::kernel {
 
 class LiteKernelUtil {
  public:
-  static std::vector<kernel::LiteKernel *> SubgraphInputNodes(const std::vector<kernel::LiteKernel *> &kernels);
-  static std::vector<kernel::LiteKernel *> SubgraphOutputNodes(const std::vector<kernel::LiteKernel *> &kernels);
-  static std::vector<lite::Tensor *> SubgraphInputTensors(const std::vector<kernel::LiteKernel *> &kernels);
-  static std::vector<lite::Tensor *> SubgraphOutputTensors(const std::vector<kernel::LiteKernel *> &kernels);
-  static int TopologicalSortKernels(std::vector<kernel::LiteKernel *> *kernels);
-  static void InitTensorInitRefCount(const std::vector<kernel::LiteKernel *> &kernels);
+  static std::vector<LiteKernel *> SubgraphInputNodes(const std::vector<LiteKernel *> &kernels);
+  static std::vector<LiteKernel *> SubgraphOutputNodes(const std::vector<LiteKernel *> &kernels);
+  static std::vector<lite::Tensor *> SubgraphInputTensors(const std::vector<LiteKernel *> &kernels);
+  static std::vector<lite::Tensor *> SubgraphOutputTensors(const std::vector<LiteKernel *> &kernels);
+  static int TopologicalSortKernels(std::vector<LiteKernel *> *kernels);
+  static void InitTensorInitRefCount(const std::vector<LiteKernel *> &kernels);
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
-  static bool IsSwitchTypeCall(kernel::LiteKernel *kernel);
-  static bool IsNonTailCall(kernel::LiteKernel *node);
+  static bool IsSwitchTypeCall(LiteKernel *kernel);
+  static bool IsNonTailCall(LiteKernel *node);
+  static std::vector<LiteKernel *> GetCallInputPartails(LiteKernel *call_node);
 #endif
-  static kernel::LiteKernel *GetInputsSpecificNode(const kernel::LiteKernel *kernel,
-                                                   const schema::PrimitiveType &primitive_type);
-  static bool InputsContainsSpecificNode(const kernel::LiteKernel *kernel, const schema::PrimitiveType &primitive_type);
+  static LiteKernel *GetInputsSpecificNode(const LiteKernel *kernel, const schema::PrimitiveType &primitive_type);
+  static bool InputsContainsSpecificNode(const LiteKernel *kernel, const schema::PrimitiveType &primitive_type);
   // find in_kernels_ and out_kernels of kernel, sub_graph and nodes_ in sub_graph
-  static void FindAllInoutKernels(const std::vector<kernel::LiteKernel *> &kernels);
-  static kernel::SubGraphKernel *CreateSubGraphKernel(const std::vector<kernel::LiteKernel *> &kernels,
-                                                      const std::vector<lite::Tensor *> *in_tensors,
-                                                      const std::vector<lite::Tensor *> *out_tensors,
-                                                      kernel::SubGraphType type, const lite::InnerContext &context,
-                                                      int schema_version);
+  static void FindAllInoutKernels(const std::vector<LiteKernel *> &kernels);
+  static SubGraphKernel *CreateSubGraphKernel(const std::vector<LiteKernel *> &kernels,
+                                              const std::vector<lite::Tensor *> *in_tensors,
+                                              const std::vector<lite::Tensor *> *out_tensors, SubGraphType type,
+                                              const lite::InnerContext &context, int schema_version);
 
  private:
-  static std::set<lite::Tensor *> AllOutTensor(const std::vector<kernel::LiteKernel *> &kernels);
+  static std::set<lite::Tensor *> AllOutTensor(const std::vector<LiteKernel *> &kernels);
 };
 
 }  // namespace mindspore::kernel

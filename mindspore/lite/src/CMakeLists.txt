@@ -121,6 +121,13 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/cpu_info.cc
         )
 
+if(MSLITE_ENABLE_CONTROLFLOW)
+    file(GLOB CONTROL_FLOW_SRC
+            ${CMAKE_CURRENT_SOURCE_DIR}/control_flow/*.cc
+            )
+    set(LITE_SRC ${LITE_SRC} ${CONTROL_FLOW_SRC})
+endif()
+
 if(MSLITE_ENABLE_RUNTIME_GLOG)
     add_definitions(-DPRIMITIVE_WRITEABLE)
     add_definitions(-DUSE_GLOG)

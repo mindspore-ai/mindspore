@@ -37,10 +37,9 @@ namespace mindspore::lite {
 constexpr int kDefaultDeviceType = -1;
 class Scheduler {
  public:
-  Scheduler(const InnerContext *ctx, const mindspore::Context *ms_ctx, Model *src_model,
-            std::vector<Tensor *> *src_tensors, const std::vector<Tensor *> &input_tensors,
-            const std::vector<Tensor *> &output_tensors, bool is_train_session, int *is_infershape,
-            bool *is_control_flow, std::map<std::string, TypeId> *executions,
+  Scheduler(InnerContext *ctx, const mindspore::Context *ms_ctx, Model *src_model, std::vector<Tensor *> *src_tensors,
+            const std::vector<Tensor *> &input_tensors, const std::vector<Tensor *> &output_tensors,
+            bool is_train_session, int *is_infershape, bool *is_control_flow, std::map<std::string, TypeId> *executions,
             std::shared_ptr<Delegate> delegate = nullptr, int delegate_device_type = -1)
       : context_(ctx),
         ms_context_(ms_ctx),
@@ -131,6 +130,7 @@ class Scheduler {
   void SubGraphMarkScheduled(const int &index);
   void SetSubgraphForPartialNode();
   int ConstructControlFlowMainGraph(std::vector<kernel::LiteKernel *> *kernels);
+  int RecordControlFlowLinkInfo();
 #endif
 
 #ifndef DELEGATE_CLIP
@@ -144,7 +144,7 @@ class Scheduler {
 #endif
 
  protected:
-  const InnerContext *context_ = nullptr;
+  InnerContext *context_ = nullptr;
   const mindspore::Context *ms_context_ = nullptr;
   Model *src_model_ = nullptr;
   std::vector<Tensor *> *src_tensors_;

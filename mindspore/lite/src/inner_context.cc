@@ -353,6 +353,22 @@ ThreadPool *InnerContext::thread_pool() const { return thread_pool_; }
 
 bool InnerContext::device_and_pkg_support_fp16() const { return this->device_and_pkg_support_fp16_; }
 
+std::set<void *> InnerContext::GetLinkInfo(void *pre) const {
+  if (link_info_.find(pre) == link_info_.end()) {
+    MS_LOG(WARNING) << "Not found precursor in link information.";
+    return {};
+  }
+  return link_info_.at(pre);
+}
+
+void InnerContext::SetLinkInfo(void *pre, void *suc) {
+  if (link_info_.find(pre) != link_info_.end()) {
+    link_info_.at(pre).insert(suc);
+  }
+  std::set<void *> suc_set{suc};
+  link_info_[pre] = suc_set;
+}
+
 int ParallelLaunch(const Context *context, const Func &func, Content content, int task_num) {
   ThreadPool *pool = static_cast<const lite::InnerContext *>(context)->thread_pool();
   if (pool == nullptr) {

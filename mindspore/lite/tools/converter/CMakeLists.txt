@@ -119,6 +119,13 @@ set(LITE_SRC ${API_SRC}
         ${SRC_DIR}/delegate/tensorrt/distribution/distribution_base.cc
         )
 
+if(MSLITE_ENABLE_CONTROLFLOW)
+    file(GLOB CONTROL_FLOW_SRC
+            ${SRC_DIR}/control_flow/*.cc
+            )
+    set(LITE_SRC ${LITE_SRC} ${CONTROL_FLOW_SRC})
+endif()
+
 if(MSLITE_ENABLE_MINDRT)
     add_compile_definitions(ENABLE_MINDRT)
     include_directories(${CORE_DIR}/mindrt)
