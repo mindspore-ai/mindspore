@@ -169,7 +169,7 @@ class ResolveIRPassLib {
  public:
   ResolveIRPassLib();
   ~ResolveIRPassLib() = default;
-  SubstitutionPtr resolver_getattr_resolve_;
+  SubstitutionPtr resolver_;
 };
 
 class InferenceOptPrepareLib {

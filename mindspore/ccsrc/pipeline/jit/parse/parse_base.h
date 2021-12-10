@@ -27,12 +27,12 @@
 namespace py = pybind11;
 namespace mindspore {
 namespace parse {
-// define the node type
+// Define the node type.
 enum AstMainType : int64_t {
   AST_MAIN_TYPE_STMT = 0,       // ast.Stmt
   AST_MAIN_TYPE_EXPR = 1,       // ast.Expr
   AST_MAIN_TYPE_SLICE = 2,      // ast.Slice
-  AST_MAIN_TYPE_UNKNOWN = 0xFF  // Error
+  AST_MAIN_TYPE_UNKNOWN = 0xFF  // Unknown type
 };
 
 enum AstSubType : int64_t {
@@ -43,18 +43,18 @@ enum AstSubType : int64_t {
   AST_SUB_TYPE_SUBSCRIPT = 7,  // ast.Subscript
   AST_SUB_TYPE_STARRED = 8,    // ast.Starred
   AST_SUB_TYPE_ATTRIBUTE = 9,  // ast.Attribute
-  AST_SUB_TYPE_UNKNOWN = 0xFF  // Error
+  AST_SUB_TYPE_UNKNOWN = 0xFF  // Unknown type
 };
 
-// define the parse target type
+// Define the parse target type.
 enum ParseTargetTypeDef {
-  PARSE_TARGET_FUNCTION = 0,         // function
-  PARSE_TARGET_METHOD = 1,           // method
-  PARSE_TARGET_OBJECT_INSTANCE = 2,  // object instance
-  PARSE_TARGET_UNKNOW = 0xFF         // ERROR TYPE
+  PARSE_TARGET_FUNCTION = 0,         // Function
+  PARSE_TARGET_METHOD = 1,           // Method
+  PARSE_TARGET_OBJECT_INSTANCE = 2,  // Object instance
+  PARSE_TARGET_UNKNOW = 0xFF         // Unknown type
 };
 
-// define python module name
+// Define python module name.
 const char PYTHON_MOD_PARSE_MODULE[] = "mindspore._extends.parse";
 const char PYTHON_MOD_PARSE_OBJECT_FUNCTION[] = "parse_cb";
 const char PYTHON_MOD_RESOLVE_FUNCTION[] = "resolve_symbol";
@@ -72,6 +72,7 @@ const char PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL[] = "get_class_member_namespac
 const char PYTHON_MOD_GET_PARSE_METHOD[] = "get_parse_method_of_class";
 const char PYTHON_MOD_GET_BPROP_METHOD[] = "get_bprop_method_of_class";
 const char PYTHON_MOD_GET_OBJECT_DESCRIPTION[] = "get_object_description";
+const char PYTHON_MOD_GET_ITEM_FROM_SEQUENCE[] = "get_obj_from_sequence";
 const char PYTHON_MOD_CONVERT_TO_MS_TENSOR[] = "convert_to_ms_tensor";
 const char PYTHON_MOD_EVAL_PY_SCRIPT[] = "eval_script";
 
@@ -92,7 +93,7 @@ const char PYTHON_PARSE_ANALYZE_SUPER[] = "analyze_super";
 const char PYTHON_PARSE_CLASS_SLICE[] = "create_slice_obj";
 const char PYTHON_PARSE_CLASS_ELLIPSIS[] = "create_ellipsis_obj";
 
-// define the common name
+// Define the common name.
 const char NAMED_PRIMITIVE_LEN[] = "len";
 const char NAMED_PRIMITIVE_BODY[] = "body";
 const char NAMED_PRIMITIVE_ASSIGN[] = "Assign";
@@ -127,8 +128,8 @@ const char NAMED_PRIMITIVE_MAKESLICE[] = "make_slice";
 const char NAMED_PRIMITIVE_MAKEDICT[] = "make_dict";
 const char NAMED_METAGRAPH_UNPACKCALL[] = "unpack_call";
 
-// define NAMED_PRIMITIVE_GETATTR "getattr"
-// define python inline attr
+// Define NAMED_PRIMITIVE_GETATTR "getattr".
+// Define python inline attr.
 const char PYTHON_GET_METHOD_LEN[] = "__len__";
 const char PYTHON_GET_METHOD_SELF_CLASS[] = "__self__";
 const char PYTHON_GET_OBJ_DESC[] = "__str__";
@@ -136,46 +137,46 @@ const char PYTHON_GET_OBJ_DESC[] = "__str__";
 const char PYTHON_EXTERN_PARSE_METHOD[] = "__parse_method__";
 const char PYTHON_EXTERN_MINDSPORE_FLAG[] = "_mindspore_flags";
 
-// define the parse constant
+// Define the parse constant.
 const int64_t MAX_COMPARISON_OPS_SUPPORTED = 1;
 const char CUSTOM_BPROP_NAME[] = "bprop";
 const char STAGE_NAME[] = "_pipeline_stage";
 
-// define the Namespace name
-const char RESOLVE_NAMESPACE_NAME_AST[] = "Ast";                   // for ast type namespace
-const char RESOLVE_NAMESPACE_NAME_CLASS_MEMBER[] = "ClassMember";  // for class member namespace
-const char RESOLVE_NAMESPACE_NAME_SYMBOL_STR[] = "SymbolStr";      // for symbol str namespace
-const char RESOLVE_NAMESPACE_NAME_COMMON_OPS[] = "CommonOPS";      // for common ops, eg: hasnext, next
-const char RESOLVE_NAMESPACE_NAME_MODULE[] = "Module";             // fro Module namespace
+// Define the Namespace name.
+const char RESOLVE_NAMESPACE_NAME_AST[] = "Ast";                   // For ast type namespace.
+const char RESOLVE_NAMESPACE_NAME_CLASS_MEMBER[] = "ClassMember";  // For class member namespace.
+const char RESOLVE_NAMESPACE_NAME_SYMBOL_STR[] = "SymbolStr";      // For symbol str namespace.
+const char RESOLVE_NAMESPACE_NAME_COMMON_OPS[] = "CommonOPS";      // For common ops, eg: hasnext, next.
+const char RESOLVE_NAMESPACE_NAME_MODULE[] = "Module";             // For Module namespace.
 
-// define Resolve type
+// Define Resolve type.
 enum ResolveTypeDef : int64_t {
-  RESOLVE_TYPE_NONE = 0,            // resolve None
-  RESOLVE_TYPE_FUNCTION = 1,        // resolve function
-  RESOLVE_TYPE_METHOD = 2,          // resolve class method
-  RESOLVE_TYPE_CLASS_TYPE = 3,      // resolve class type
-  RESOLVE_TYPE_CLASS_INSTANCE = 4,  // resolve the class instance of common class
-  RESOLVE_TYPE_INVALID = 0xFF       // resolve invalid
+  RESOLVE_TYPE_NONE = 0,            // Resolve None
+  RESOLVE_TYPE_FUNCTION = 1,        // Resolve function
+  RESOLVE_TYPE_METHOD = 2,          // Resolve class method
+  RESOLVE_TYPE_CLASS_TYPE = 3,      // Resolve class type
+  RESOLVE_TYPE_CLASS_INSTANCE = 4,  // Resolve the class instance of common class
+  RESOLVE_TYPE_INVALID = 0xFF       // Resolve invalid
 };
 
-// define the class instance detail type When the type is RESOLVE_TYPE_CLASS_INSTANCE
+// Define the class instance detail type When the type is RESOLVE_TYPE_CLASS_INSTANCE.
 enum ClassInstanceTypeDef {
-  CLASS_INSTANCE_TYPE_CELL = 0,       // class instance type is Cell
-  CLASS_INSTANCE_TYPE_PRIMITIVE = 1,  // class instance type is Primitive
+  CLASS_INSTANCE_TYPE_CELL = 0,       // Class instance type is Cell.
+  CLASS_INSTANCE_TYPE_PRIMITIVE = 1,  // Class instance type is Primitive.
   CLASS_INSTANCE_TYPE_INVALID = 0xFF
 };
 
-// Convert python object to ValuePtr
+// Convert python object to ValuePtr.
 bool ConvertData(const py::object &obj, ValuePtr *data, bool use_signature = false, const TypePtr &dtype = nullptr);
 
-// Convert python obj to graph
+// Convert python obj to graph.
 FuncGraphPtr ConvertToFuncGraph(const py::object &obj,
                                 const std::string &python_mod_get_parse_method = PYTHON_MOD_GET_PARSE_METHOD);
 
-// Parse the python object to graph
+// Parse the python object to graph.
 FuncGraphPtr ParsePythonCode(const py::object &obj,
                              const std::string &python_mod_get_parse_method = PYTHON_MOD_GET_PARSE_METHOD);
-// add wrap for cell top graph.
+// Add wrap for cell top graph.
 FuncGraphPtr MakeTopGraph(const py::object &cell, const ValuePtr &cell_ptr);
 }  // namespace parse
 }  // namespace mindspore

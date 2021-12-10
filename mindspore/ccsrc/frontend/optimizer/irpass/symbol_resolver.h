@@ -38,11 +38,12 @@ namespace irpass {
 // pattern. After matching GetAttr pattern, there may be new nodes that can match GetAttr pattern and Resolve pattern.
 // The same is true for matching Resolve pattern.
 //
+// {prim::kPrimGetAttr, {prim::kPrimTupleGetItem, {prim::kPrimResolve, namespace, symbol}, index}, attr}
 // {prim::kPrimGetAttr, {prim::kPrimResolve, namespace, symbol}, attr}
 // {prim::kPrimGetAttr, namespace, attr}
 // {prim::kPrimGetAttr, bool, attr}
 // {prim::kPrimResolve, namespace, symbol}
-class ResolverGetAttrResolve : public OptimizerCaller {
+class Resolver : public OptimizerCaller {
  public:
   AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) override;
 };
