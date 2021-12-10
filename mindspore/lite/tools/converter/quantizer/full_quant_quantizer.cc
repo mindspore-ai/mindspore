@@ -145,15 +145,7 @@ int FullQuantQuantizer::SetInOutQuantParam(const AnfNodePtr &input_node, const s
     return RET_ERROR;
   }
   if (type_id == kNumberTypeFloat32 && info != nullptr) {
-    auto scale = info->GetScale();
-    if (scale == 0) {
-      std::string in_out = is_input ? " input" : " output";
-      MS_LOG(WARNING) << input_node->fullname_with_scope() << in_out << " index:" << index
-                      << " values are very close to 0, so set the scale to 1.";
-      quant_param.scale = 1;
-    } else {
-      quant_param.scale = scale;
-    }
+    quant_param.scale = info->GetScale();
     quant_param.zeroPoint = info->GetZeroPoint();
     quant_param.max = info->GetEncodeMax();
     quant_param.min = info->GetEncodeMin();

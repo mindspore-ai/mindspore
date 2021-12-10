@@ -74,7 +74,7 @@ class DataDistribution {
   double CalculateMinMaxScale();
   double CalculateRemovalOutlierScale();
   double CalculateKLScale();
-  double CalculateScale(float min_value, float max_value);
+  double CalculateScaleAndZp(float min_value, float max_value);
 
  private:
   std::vector<float> histogram_;
@@ -94,6 +94,7 @@ class DataDistribution {
   std::vector<float> max_datas_;
   std::pair<float, float> percent_result_{0.0, 0.0};
   double scale_ = 0;
+  int zero_point_ = 0;
   bool symmetry_ = true;
 };
 }  // namespace mindspore::lite::quant
