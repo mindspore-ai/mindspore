@@ -469,6 +469,10 @@ void Server::Recover() {
       MS_LOG(EXCEPTION) << "Failed to reach consistency of the cluster after recovery.";
       return;
     }
+    if (server_node_->rank_id() == kLeaderServerRank) {
+      MS_EXCEPTION_IF_NULL(iteration_);
+      iteration_->NotifyNext(false, "Move to next iteration after server 0 recovery.");
+    }
   }
 
   // Set the recovery handler to Iteration.

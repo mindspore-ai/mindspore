@@ -121,7 +121,6 @@ message HeartbeatRespMessage {
   ClusterState cluster_state = 1;
   repeated ServersMeta servers_meta = 2;
   bool is_worker = 3;
-  bool is_server0 = 4;
   PersistentCommand persistent_cmd = 5;
 }
 

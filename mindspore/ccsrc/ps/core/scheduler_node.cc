@@ -160,9 +160,7 @@ void SchedulerNode::ProcessHeartbeat(const std::shared_ptr<TcpServer> &server,
   std::vector<ServersMeta> servers_meta_list = node_manager_.FetchAllNodesMeta();
 
   *heartbeat_resp_message.mutable_servers_meta() = {servers_meta_list.begin(), servers_meta_list.end()};
-
   heartbeat_resp_message.set_is_worker(node_manager_.IsWorker());
-  heartbeat_resp_message.set_is_server0(node_manager_.IsServer0());
 
   if (!server->SendMessage(conn, meta, Protos::PROTOBUF, heartbeat_resp_message.SerializeAsString().data(),
                            heartbeat_resp_message.ByteSizeLong())) {

@@ -62,7 +62,7 @@ bool IterationMetrics::Initialize() {
       return false;
     }
 
-    metrics_file_.open(realpath.value(), std::ios::ate | std::ios::out);
+    metrics_file_.open(realpath.value(), std::ios::app | std::ios::out);
     metrics_file_.close();
   }
   return true;
