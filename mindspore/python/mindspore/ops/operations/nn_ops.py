@@ -9276,3 +9276,49 @@ class FractionalAvgPool(Primitive):
         validator.check_value_type("deterministic", deterministic, [bool], self.name)
         validator.check_value_type("seed", seed, [int], self.name)
         validator.check_value_type("seed2", seed2, [int], self.name)
+
+
+class NthElement(Primitive):
+    r"""
+    Finds values of the n-th order statistic for the last dimension.
+    If the input is a vector (rank-1), finds the entries which is the nth-smallest value in
+    the vector and outputs their values as scalar tensor.
+    For matrices (resp. higher rank input), computes the entries which is the nth-smallest value in
+    each row (resp. vector along the last dimension). Thus, values.shape = input.shape[:-1].
+
+    Args:
+        reverse (bool): An optional bool. Defaults to False. When set to True, find the nth-largest value
+          in the vector and vice versa.
+
+    Inputs:
+        - **input** (Tensor) - A Tensor. 1-D or higher with last dimension at least n+1.
+        - **n** (int or Tensor) -  If the n is a tensor, it should be a 0-D tensor, dtype is int32.
+          Valid range of n is [0, input.shape[-1]).
+
+    Outputs:
+        Tensor, values.shape = input.shape[:-1]. The dtype is same to the input.
+
+    Raises:
+        TypeError: If the type  of input is out of the valid list.
+        TypeError: If the n is not int32 or not a Tensor.
+        ValueError: If n is out of [0, input.shape[-1]).
+
+
+    Supported Platforms:
+         ``Ascend`` ``CPU``
+
+    Examples:
+        >>> input = Tensor(np.array([[1,2,3],[4,5,6]]) , mstype.int8)
+        >>> n = 1
+        >>> net = P.NthElement()
+        >>> out = net(input, n)
+        >>> print(out)
+        [2 5]
+    """
+    @prim_attr_register
+    def __init__(self, reverse=False):
+        """Initialize NthElement."""
+        self.reverse = validator.check_value_type("reverse", reverse, [bool], self.name)
+        self.add_prim_attr("reverse", self.reverse)
+        self.init_prim_io_names(inputs=['input', 'n'],
+                                outputs=['output'])
