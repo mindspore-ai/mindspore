@@ -39,7 +39,7 @@ class TimeMonitor(Callback):
 
     def epoch_begin(self, run_context):
         """
-        Record time at the begin of epoch.
+        Record time at the beginning of epoch.
 
         Args:
             run_context (RunContext): Context of the process running.

@@ -171,17 +171,42 @@ class SummaryLandscape:
 
     Args:
         summary_dir (str): The path of summary is used to save the model weight,
-            metadata and other data required for create landscape.
+            metadata and other data required to create landscape.
 
     Examples:
-        >>> from mindspore.train.callback import SummaryLandscape
         >>> import mindspore.nn as nn
+        >>> from mindspore import context
+        >>> from mindspore.train.callback import SummaryCollector, SummaryLandscape
         >>> from mindspore import Model
-        >>> from mindspore.nn import Loss
+        >>> from mindspore.nn import Loss, Accuracy
         >>>
         >>> if __name__ == '__main__':
+        ...     # If the device_target is Ascend, set the device_target to "Ascend"
+        ...     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+        ...     mnist_dataset_dir = '/path/to/mnist_dataset_directory'
+        ...     # The detail of create_dataset method shown in model_zoo.official.cv.lenet.src.dataset.py
+        ...     ds_train = create_dataset(mnist_dataset_dir, 32)
+        ...     # The detail of LeNet5 shown in model_zoo.official.cv.lenet.src.lenet.py
+        ...     network = LeNet5(10)
+        ...     net_loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
+        ...     net_opt = nn.Momentum(network.trainable_params(), 0.01, 0.9)
+        ...     model = Model(network, net_loss, net_opt, metrics={"Accuracy": Accuracy()})
+        ...     # Simple usage for collect landscape information:
+        ...     interval_1 = [1, 2, 3, 4, 5]
+        ...     summary_collector = SummaryCollector(summary_dir='./summary/lenet_interval_1',
+        ...                                          collect_specified_data={'collect_landscape':{"landscape_size": 30,
+        ...                                                                                        "unit": "step",
+        ...                                                                            "create_landscape":{"train":True,
+        ...                                                                                               "result":False
+        ...                                                                                                           },
+        ...                                                                            "num_samples": 2048,
+        ...                                                                            "intervals": [interval_1
+        ...                                                                                          ]}
+        ...                                                                    })
+        ...     model.train(1, ds_train, callbacks=[summary_collector], dataset_sink_mode=False)
+        ...
+        ...     # Simple usage for visualization landscape:
         ...     def callback_fn():
-        ...         # The detail of LeNet5 shown in model_zoo.official.cv.lenet.src.lenet.py
         ...         network = LeNet5(10)
         ...         net_loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
         ...         metrics = {"Loss": Loss()}
@@ -191,7 +216,6 @@ class SummaryLandscape:
         ...         return model, network, ds_eval, metrics
         ...
         ...     summary_landscape = SummaryLandscape('./summary/lenet_interval_1')
-        ...     interval_1 = [1, 2, 3, 4, 5]
         ...     # parameters of collect_landscape can be modified or unchanged
         ...     summary_landscape.gen_landscapes_with_multi_process(callback_fn,
         ...                                                         collect_landscape={"landscape_size": 40,
@@ -211,9 +235,6 @@ class SummaryLandscape:
 
         # save the model params file, key is epoch, value is the ckpt file path
         self._model_params_file_map = {}
-
-        # save the loss, key is epoch, value is loss
-        self._loss_map = {}
         self._epoch_group = defaultdict(list)
 
     def _get_model_params(self, epochs):
@@ -251,7 +272,7 @@ class SummaryLandscape:
                   The calculation time increases with the increase of resolution.
                   Default: 40. Optional values: between 3 and 256.
                 - create_landscape (dict): Select how to create loss landscape.
-                  training process loss landscape(train) and Training result loss landscape(result).
+                  Training process loss landscape(train) and training result loss landscape(result).
                   Default: {"train": True, "result": True}. Optional: True/False.
                 - num_samples (int): The size of the dataset used to create the loss landscape.
                   For example, in image dataset, You can set num_samples is 2048,
@@ -319,7 +340,6 @@ class SummaryLandscape:
 
         self._epoch_group = data['epoch_group']
         self._model_params_file_map = data['model_params_file_map']
-        self._loss_map = data['loss_map']
         create_landscape = data['create_landscape']
         landscape_size = data['landscape_size']
         kwargs = dict(proz=0.2, landscape_size=landscape_size, device_ids=device_ids, callback_fn=callback_fn)
@@ -404,7 +424,7 @@ class SummaryLandscape:
         param_matrixs = param_matrixs[:-1] - param_matrixs[-1]
         # Only 2 are needed, as we have to reduce high dimensions into 2D.And we reserve one for loss value.
         principal_components = self._compute_pca(param_matrixs.T)
-        v_ori, w_ori = np.array(principal_components[:, 0]), np.array(principal_components[:, -1])
+        v_ori, w_ori = -np.array(principal_components[:, 0]), -np.array(principal_components[:, -1])
         final_params = list(multi_parameters[-1])
 
         # Reshape PCA directions(include dimensions of all parameters) into original shape of Model parameters
@@ -444,7 +464,15 @@ class SummaryLandscape:
             test_final_params[param.name] = param.data.asnumpy().copy()
 
         if executor is not None:
-            y_points_parts = []
+            coefs_parts, y_points_parts = [], []
+            count_per_parts = len(coefs) // len(device_ids)
+            start = 0
+            for i in range(len(device_ids)):
+                if i != len(device_ids) - 1:
+                    coefs_parts.append(coefs[start:start + count_per_parts])
+                    start = start + count_per_parts
+                else:
+                    coefs_parts.append(coefs[start:])
             count_per_parts = len(y_points) // len(device_ids)
             start = 0
             logger.info("Use multi process, device_id: %s." % (device_ids))
@@ -458,23 +486,21 @@ class SummaryLandscape:
             futures = []
             for i, _ in enumerate(device_ids):
                 future = executor.submit(self._cont_loss_wrapper, callback_fn, test_final_params, final_params_numpy,
-                                         v_ndarray, w_ndarray, x_points, y_points_parts[i])
+                                         v_ndarray, w_ndarray, x_points, y_points_parts[i], coefs=coefs_parts[i])
                 futures.append(future)
             wait(futures, return_when=ALL_COMPLETED)
 
-            z_points = []
+            z_points, paths = [], []
             for future in futures:
-                z_points += future.result()
+                paths += future.result()[0]
+                z_points += future.result()[1]
         else:
-            z_points = self._cont_loss_wrapper(callback_fn, test_final_params, final_params_numpy, v_ndarray, w_ndarray,
-                                               x_points, y_points)
-        paths = []
-        for epoch in epochs:
-            paths.append(self._loss_map[str(epoch)])
+            paths, z_points = self._cont_loss_wrapper(callback_fn, test_final_params, final_params_numpy,
+                                                      v_ndarray, w_ndarray, x_points, y_points, coefs=coefs)
 
         paths = np.array(paths)
         landscape_points = Points(x_points, y_points, np.vstack(z_points))
-        path_points = Points(coefs_x[0], coefs_y[0], paths)
+        path_points = Points(coefs_x[0], coefs_y[0], paths.T[0])
         zero_index = int(np.argwhere(path_points.x == 0))
         convergence_point = Points(np.array([0]), np.array([0]), np.array([path_points.z[zero_index]]))
         landscape = Landscape(intervals=epochs, decomposition='PCA', landscape_points=landscape_points,
@@ -482,7 +508,7 @@ class SummaryLandscape:
         return landscape
 
     def _cont_loss_wrapper(self, callback_fn, test_final_params, final_params_numpy,
-                           v_ndarray, w_ndarray, x_points, y_points):
+                           v_ndarray, w_ndarray, x_points, y_points, coefs=None):
         """Compute loss wrapper."""
         model, network, valid_dataset, metrics = callback_fn()
         with open(os.path.join(self._ckpt_dir, 'train_metadata.json'), 'r') as file:
@@ -493,23 +519,29 @@ class SummaryLandscape:
         num_batches = num_samples // batch_size
         valid_dataset = valid_dataset.take(num_batches)
 
-        final_params = []
+        paths, final_params = [], []
         for (key, value) in test_final_params.items():
             parameter = Parameter(Tensor(value), name=key, requires_grad=True)
             final_params.append(parameter)
-
+        if coefs is not None:
+            for i, coef in enumerate(coefs):
+                loss_data = self._cont_loss(valid_dataset, network, model, metrics, final_params,
+                                            final_params_numpy, [coef[0]], coef[1], v_ndarray, w_ndarray, path=True)
+                paths.append(loss_data)
+                print("Drawing landscape path total progress is %s/%s, landscape path loss is %s."
+                      % (i+1, len(coefs), loss_data[0]))
         # Start to calc loss landscape
         z_points = list()
 
         # Compute loss landscape
         for i, _ in enumerate(y_points):
-            logger.info("Compute landscape loss value: %s/%s." % (i+1, len(y_points)))
+            print("Drawing landscape total progress: %s/%s." % (i+1, len(y_points)))
             vals = self._cont_loss(valid_dataset, network, model, metrics, final_params,
                                    final_params_numpy, x_points[i], y_points[i][0],
                                    v_ndarray, w_ndarray)
             z_points.append(vals)
 
-        return z_points
+        return paths, z_points
 
     def _create_landscape_by_random(self, epochs, proz, landscape_size, device_ids=None,
                                     callback_fn=None, executor=None):
@@ -553,10 +585,10 @@ class SummaryLandscape:
             wait(futures, return_when=ALL_COMPLETED)
             z_points = []
             for future in futures:
-                z_points += future.result()
+                z_points += future.result()[1]
         else:
-            z_points = self._cont_loss_wrapper(callback_fn, test_final_params, final_params_numpy, v_ndarray, w_ndarray,
-                                               x_points, y_points)
+            _, z_points = self._cont_loss_wrapper(callback_fn, test_final_params, final_params_numpy,
+                                                  v_ndarray, w_ndarray, x_points, y_points)
 
         landscape_points = Points(x_points, y_points, np.vstack(z_points))
         convergence_point = Points(np.array([x_axis[len(x_axis)//2]]), np.array([y_axis[len(y_axis)//2]]),
@@ -658,7 +690,7 @@ class SummaryLandscape:
         return np.array(coefs)
 
     def _cont_loss(self, ds_eval, network, model, metrics, parameters,
-                   final_params_numpy, alph, beta, get_v, get_w):
+                   final_params_numpy, alph, beta, get_v, get_w, path=False):
         """
         Calculates the loss landscape based on vectors v and w (which can be principal components).
         Changes the internal state of model. Executes model.
@@ -682,7 +714,9 @@ class SummaryLandscape:
             load_param_into_net(network, parameters_dict)
             del parameters_dict
             loss = self._loss_compute(model, ds_eval, metrics)
-            logger.info("%s/%s loss: %s." % (i+1, len(alph), loss))
+            if path is False:
+                print("Current local landscape progress is %s/%s, landscape loss is %s."
+                      % (i+1, len(alph), loss['Loss']))
             vals = np.append(vals, loss['Loss'])
 
         return vals
@@ -816,14 +850,13 @@ class SummaryLandscape:
     def _check_json_file_data(self, json_file_data):
         """Check json file data."""
         file_key = ["epoch_group", "model_params_file_map", "step_per_epoch", "unit",
-                    "num_samples", "landscape_size", "create_landscape", "loss_map"]
+                    "num_samples", "landscape_size", "create_landscape"]
         for key in json_file_data.keys():
             if key not in file_key:
                 raise ValueError(f'"train_metadata" json file should be {file_key}, but got the: {key}')
         epoch_group = json_file_data["epoch_group"]
         model_params_file_map = json_file_data["model_params_file_map"]
         step_per_epoch = json_file_data["step_per_epoch"]
-        loss_map = json_file_data["loss_map"]
         unit = json_file_data["unit"]
         num_samples = json_file_data["num_samples"]
         landscape_size = json_file_data["landscape_size"]
@@ -837,8 +870,6 @@ class SummaryLandscape:
             for epoch in epochs:
                 if str(epoch) not in model_params_file_map.keys():
                     raise ValueError(f'The model_params_file_map does not exist {epoch}th epoch.')
-                if str(epoch) not in loss_map.keys():
-                    raise ValueError(f'The loss_map does not exist {epoch}th epoch.')
 
         check_value_type('step_per_epoch', step_per_epoch, int)
         self._check_landscape_size(landscape_size)
@@ -852,5 +883,5 @@ class SummaryLandscape:
         evals, evecs = LA.eigh(cov)
         idx = np.argsort(evals)[::-1]
         evecs = evecs[:, idx]
-        result = np.dot(x, evecs)
+        result = np.dot(x, evecs[:, :2])
         return result
