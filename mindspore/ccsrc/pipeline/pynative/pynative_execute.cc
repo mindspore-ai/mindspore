@@ -483,6 +483,25 @@ void ConvertValueTupleToTensor(const py::object &input_object, std::vector<tenso
   input_tensors->emplace_back(tensor_ptr);
 }
 
+void ConvertCSRTensorToTensorList(const py::object &input_object, const PrimitivePtr &op_prim,
+                                  std::vector<tensor::TensorPtr> *input_tensors) {
+  MS_EXCEPTION_IF_NULL(op_prim);
+  MS_EXCEPTION_IF_NULL(input_tensors);
+  if (!py::isinstance<tensor::CSRTensor>(input_object)) {
+    MS_LOG(EXCEPTION) << "The input should be a csr_tensor! ";
+  }
+  auto input_names = op_prim->GetAttr(kAttrInputNames);
+  if (input_names == nullptr) {
+    MS_LOG(DEBUG) << "input_names are nullptr";
+    return;
+  }
+  auto csr_inputs = py::cast<tensor::CSRTensor>(input_object);
+  input_tensors->emplace_back(csr_inputs.GetIndptr());
+  input_tensors->emplace_back(csr_inputs.GetIndices());
+  input_tensors->emplace_back(csr_inputs.GetValues());
+  op_prim->set_attr("is_csr", MakeValue(true));
+}
+
 void ConvertMultiPyObjectToTensor(const py::object &input_object, const PrimitivePtr &op_prim,
                                   std::vector<tensor::TensorPtr> *input_tensors, int64_t *const tensor_mask) {
   MS_EXCEPTION_IF_NULL(op_prim);
@@ -534,6 +553,9 @@ void ConvertPyObjectToTensor(const py::object &input_object, const PrimitivePtr 
     return;
   } else if (py::isinstance<py::tuple>(input_object)) {
     ConvertMultiPyObjectToTensor(input_object, op_prim, input_tensors, tensor_mask);
+    return;
+  } else if (py::isinstance<tensor::CSRTensor>(input_object)) {
+    ConvertCSRTensorToTensorList(input_object, op_prim, input_tensors);
     return;
   } else if (py::isinstance<py::none>(input_object)) {
     return;
@@ -884,7 +906,8 @@ py::object GetDstType(const TypeId &type_id) {
 }
 
 bool IsPyObjTypeInvalid(const py::object &obj) {
-  return !py::isinstance<tensor::Tensor>(obj) && !py::isinstance<py::int_>(obj) && !py::isinstance<py::float_>(obj);
+  return !py::isinstance<tensor::Tensor>(obj) && !py::isinstance<tensor::CSRTensor>(obj) &&
+         !py::isinstance<py::int_>(obj) && !py::isinstance<py::float_>(obj);
 }
 
 inline bool IsNopPrim(const std::string &op_name) {

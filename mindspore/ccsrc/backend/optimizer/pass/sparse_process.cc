@@ -65,9 +65,6 @@ bool SplitValueNode(const AnfNodePtr &node, std::vector<AnfNodePtr> *new_inputs)
   new_inputs->push_back(NewValueNodeAndSetAbstract(csr_tensor->GetIndptr(), csr_abs->indptr()));
   new_inputs->push_back(NewValueNodeAndSetAbstract(csr_tensor->GetIndices(), csr_abs->indices()));
   new_inputs->push_back(NewValueNodeAndSetAbstract(csr_tensor->GetValues(), csr_abs->values()));
-  auto shape_node = NewValueNode(csr_tensor->shape());
-  shape_node->set_abstract(csr_abs->dense_shape());
-  new_inputs->push_back(shape_node);
   return true;
 }
 
@@ -80,7 +77,9 @@ bool SplitCNode(const AnfNodePtr &node, std::vector<AnfNodePtr> *new_inputs) {
     return false;
 
   auto sparse_inputs = cnode->inputs();
-  for (size_t j = 1; j < sparse_inputs.size(); ++j) {
+  // skip the last input, as it always represents shape, and has already been
+  // registered as primitive attribute.
+  for (size_t j = 1; j < sparse_inputs.size() - 1; ++j) {
     new_inputs->push_back(sparse_inputs[j]);
   }
   return true;
@@ -107,6 +106,7 @@ const AnfNodePtr SparseProcess::Process(const FuncGraphPtr &func_graph, const An
     (void)inputs.insert(inputs.end(), cnode->inputs().begin() + 1, cnode->inputs().end());
     auto new_node = cnode->func_graph()->NewCNode(inputs);
     auto abs_sparse = dyn_cast<abstract::AbstractCSRTensor>(node->abstract());
+    MS_EXCEPTION_IF_NULL(abs_sparse);
     std::vector<AbstractBasePtr> abstract_list{abs_sparse->indptr(), abs_sparse->indices(), abs_sparse->values(),
                                                abs_sparse->dense_shape()};
     auto abs_res = std::make_shared<abstract::AbstractTuple>(abstract_list);
