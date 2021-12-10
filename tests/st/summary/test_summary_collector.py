@@ -34,7 +34,6 @@ from tests.st.summary.dataset import create_mnist_dataset
 from tests.summary_utils import SummaryReader
 from tests.security_utils import security_off_wrap
 
-set_seed(1)
 
 def callback_fn():
     """A python function job"""
@@ -42,7 +41,7 @@ def callback_fn():
     loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
     metrics = {"Loss": Loss()}
     model = Model(network, loss, metrics=metrics)
-    ds_train = create_mnist_dataset("train")
+    ds_train = create_mnist_dataset("train", num_samples=6)
     return model, network, ds_train, metrics
 
 
@@ -242,8 +241,8 @@ class TestSummary:
         """run network."""
         lenet = LeNet5()
         loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
-        optim = Momentum(lenet.trainable_params(), learning_rate=0.1, momentum=0.9)
-        model = Model(lenet, loss_fn=loss, optimizer=optim, metrics={'loss': Loss()})
+        optim = Momentum(lenet.trainable_params(), learning_rate=0.01, momentum=0.9)
+        model = Model(lenet, loss_fn=loss, optimizer=optim)
         summary_dir = tempfile.mkdtemp(dir=self.base_summary_dir)
         summary_collector = SummaryCollector(summary_dir=summary_dir, collect_freq=2, **kwargs)
 
@@ -286,6 +285,8 @@ class TestSummary:
             if re.search("_MS", file):
                 summary_file_path = os.path.join(summary_dir, file)
                 summary_list = summary_list + [summary_file_path]
+            else:
+                continue
 
         assert summary_list
 
@@ -303,16 +304,15 @@ class TestSummary:
                             break
         return tags
 
-    @pytest.mark.level1
-    @pytest.mark.platform_x86_ascend_training
-    @pytest.mark.platform_arm_ascend_training
+    @pytest.mark.level0
     @pytest.mark.platform_x86_gpu_training
     @pytest.mark.env_onecard
     @security_off_wrap
     def test_summary_collector_landscape(self):
         """Test summary collector with landscape."""
+        set_seed(1)
         interval_1 = [1, 2, 3]
-        num_samples = 2
+        num_samples = 6
         summary_dir = self._train_network(epoch=3, num_samples=num_samples,
                                           collect_specified_data={'collect_landscape':
                                                                       {'landscape_size': 4,
@@ -324,19 +324,17 @@ class TestSummary:
 
         tag_list = self._list_summary_collect_landscape_tags(summary_dir)
         expected_tags = {'epoch_group', 'model_params_file_map', 'step_per_epoch', 'unit', 'num_samples',
-                         'landscape_size', 'create_landscape', 'loss_map'}
+                         'landscape_size', 'create_landscape'}
         assert set(expected_tags) == set(tag_list)
-        device_target = context.get_context("device_target")
         device_id = int(os.getenv('DEVICE_ID')) if os.getenv('DEVICE_ID') else 0
         summary_landscape = SummaryLandscape(summary_dir)
-        summary_landscape.gen_landscapes_with_multi_process(callback_fn, device_ids=[device_id],
-                                                            device_target=device_target)
-        expected_pca_value = np.array([2.0876417, 2.0871262, 2.0866107, 2.0860953, 2.0871796, 2.0866641, 2.0861477,
-                                       2.0856318, 2.0867180, 2.0862016, 2.0856854, 2.0851683, 2.0862572, 2.0857398,
-                                       2.0852231, 2.0847058])
-        expected_random_value = np.array([2.0066809, 1.9905004, 1.9798302, 1.9742643, 2.0754160, 2.0571522, 2.0442397,
-                                          2.0365926, 2.1506545, 2.1299571, 2.1143755, 2.1042551, 2.2315959, 2.2083559,
-                                          2.1895625, 2.1762595])
+        summary_landscape.gen_landscapes_with_multi_process(callback_fn, device_ids=[device_id])
+        expected_pca_value = np.array([2.2795506, 2.2795567, 2.2795629, 2.2795689, 2.2795507, 2.2795567, 2.2795629,
+                                       2.2795688, 2.2795505, 2.2795566, 2.2795628, 2.2795689, 2.2795505, 2.2795566,
+                                       2.2795627, 2.2795687])
+        expected_random_value = np.array([2.2732414, 2.2778292, 2.2829423, 2.2885174, 2.2725525, 2.2772029, 2.2822288,
+                                          2.2875323, 2.2726187, 2.2771581, 2.2819989, 2.2875887, 2.2732263, 2.2774866,
+                                          2.2823269, 2.2883627])
         tag_list_landscape = self._list_landscape_tags(summary_dir)
-        assert np.all(expected_pca_value - tag_list_landscape[0] < 1.e-3)
-        assert np.all(expected_random_value - tag_list_landscape[1] < 1.e-3)
+        assert np.all(abs(expected_pca_value - tag_list_landscape[0]) < 1.e-6)
+        assert np.all(abs(expected_random_value - tag_list_landscape[1]) < 1.e-6)
