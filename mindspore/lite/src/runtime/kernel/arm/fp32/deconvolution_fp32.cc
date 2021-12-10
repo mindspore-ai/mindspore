@@ -287,6 +287,39 @@ int DeConvolutionCPUKernel::Run() {
   return RET_OK;
 }
 
+kernel::InnerKernel *CpuNormDeconvFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                    const std::vector<lite::Tensor *> &outputs,
+                                                    OpParameter *op_parameter, const InnerContext *ctx) {
+  auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);
+  kernel::InnerKernel *kernel = nullptr;
+#ifdef ENABLE_AVX
+  if ((conv_param->stride_h_ > 1 || conv_param->stride_w_ > 1) &&
+      (conv_param->dilation_w_ == 1 && conv_param->dilation_h_ == 1) &&
+      (conv_param->kernel_w_ / conv_param->stride_w_ >= C2NUM ||
+       conv_param->kernel_h_ / conv_param->stride_h_ >= C2NUM || conv_param->output_channel_ == 1) &&
+      conv_param->input_w_ * conv_param->input_h_ >= DECONV_WINOGRAD_MAX) {
+    // output_channel_ = 1 is not appropriate in gemm deconv in x86
+    kernel = new (std::nothrow) kernel::DeConvolutionWinogradCPUKernel(op_parameter, inputs, outputs,
+                                                                       static_cast<const lite::InnerContext *>(ctx));
+  } else {
+    kernel = new (std::nothrow)
+      kernel::DeConvolutionCPUKernel(op_parameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
+  }
+#else
+  if ((conv_param->stride_h_ != 1 || conv_param->stride_w_ != 1) &&
+      (conv_param->dilation_w_ == 1 && conv_param->dilation_h_ == 1) &&
+      (conv_param->kernel_h_ / conv_param->stride_h_ > C2NUM ||
+       conv_param->kernel_w_ / conv_param->stride_w_ > C2NUM)) {
+    kernel = new (std::nothrow) kernel::DeConvolutionWinogradCPUKernel(op_parameter, inputs, outputs,
+                                                                       static_cast<const lite::InnerContext *>(ctx));
+  } else {
+    kernel = new (std::nothrow)
+      kernel::DeConvolutionCPUKernel(op_parameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
+  }
+#endif
+  return kernel;
+}
+
 kernel::InnerKernel *CpuDeConvFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                 const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
                                                 const lite::Context *ctx, const kernel::KernelKey &desc) {
@@ -298,29 +331,8 @@ kernel::InnerKernel *CpuDeConvFp32KernelCreator(const std::vector<lite::Tensor *
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);
   kernel::InnerKernel *kernel = nullptr;
   if (conv_param->group_ == 1) {
-#ifdef ENABLE_AVX
-    if ((conv_param->stride_h_ > 1 || conv_param->stride_w_ > 1) &&
-        (conv_param->dilation_w_ == 1 && conv_param->dilation_h_ == 1) &&
-        (conv_param->kernel_w_ / conv_param->stride_w_ >= 2 || conv_param->kernel_h_ / conv_param->stride_h_ >= 2 ||
-         conv_param->output_channel_ == 1) &&
-        conv_param->input_w_ * conv_param->input_h_ >= 2000) {
-      // output_channel_ = 1 is not appropriate in gemm deconv in x86
-      kernel = new (std::nothrow) kernel::DeConvolutionWinogradCPUKernel(op_parameter, inputs, outputs,
-                                                                         static_cast<const lite::InnerContext *>(ctx));
-    } else {
-      kernel = new (std::nothrow)
-        kernel::DeConvolutionCPUKernel(op_parameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
-    }
-#else
-    if ((conv_param->stride_h_ != 1 || conv_param->stride_w_ != 1) &&
-        (conv_param->dilation_w_ == 1 && conv_param->dilation_h_ == 1)) {
-      kernel = new (std::nothrow) kernel::DeConvolutionWinogradCPUKernel(op_parameter, inputs, outputs,
-                                                                         static_cast<const lite::InnerContext *>(ctx));
-    } else {
-      kernel = new (std::nothrow)
-        kernel::DeConvolutionCPUKernel(op_parameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
-    }
-#endif
+    kernel =
+      CpuNormDeconvFp32KernelCreator(inputs, outputs, op_parameter, static_cast<const lite::InnerContext *>(ctx));
   } else if (conv_param->group_ == conv_param->input_channel_ && conv_param->group_ == conv_param->output_channel_) {
     kernel = new (std::nothrow) kernel::DeconvolutionDepthwiseCPUKernel(op_parameter, inputs, outputs,
                                                                         static_cast<const lite::InnerContext *>(ctx));

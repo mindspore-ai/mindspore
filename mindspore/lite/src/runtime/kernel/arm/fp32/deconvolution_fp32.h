@@ -28,6 +28,7 @@
 #include "nnacl/fp32/matmul_fp32.h"
 
 namespace mindspore::kernel {
+#define DECONV_WINOGRAD_MAX 2000
 class DeConvolutionCPUKernel : public ConvolutionBaseCPUKernel {
  public:
   DeConvolutionCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
