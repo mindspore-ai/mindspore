@@ -902,7 +902,9 @@ AnfNodePtr Parser::ParseCompare(const FunctionBlockPtr &block, const py::object 
     MS_LOG(EXCEPTION) << "Comparators can't be empty.";
   }
   AnfNodePtr left_node = ParseExprNode(block, left);
+  left_node = HandleInterpret(block, left_node, left);
   AnfNodePtr right_node = ParseExprNode(block, comparators[0]);
+  right_node = HandleInterpret(block, right_node, comparators[0]);
 
   MS_EXCEPTION_IF_NULL(block);
   AnfNodePtr op_node = block->MakeResolveAstOp(ops[0]);
@@ -1108,6 +1110,7 @@ AnfNodePtr Parser::ParseUnaryOp(const FunctionBlockPtr &block, const py::object 
 
   py::object operand = python_adapter::GetPyObjAttr(node, "operand");
   AnfNodePtr operand_node = ParseExprNode(block, operand);
+  operand_node = HandleInterpret(block, operand_node, operand);
   return block->func_graph()->NewCNodeInOrder({op_node, operand_node});
 }
 
