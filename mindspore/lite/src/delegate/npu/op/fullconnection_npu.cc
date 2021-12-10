@@ -148,10 +148,10 @@ NPUOp *GetNPUFCOp(const schema::Primitive *primitive, const std::vector<mindspor
   }
 
   NPUOp *op = nullptr;
-  if (in_tensors.front().QuantParams().empty()) {
-    op = new (std::nothrow) FullconnectionNPUOp(primitive, in_tensors, out_tensors, name);
-  } else {
+  if (in_tensors[1].DataType() == DataType::kNumberTypeInt8) {
     op = new (std::nothrow) FullconnectionINT8NPUOp(primitive, in_tensors, out_tensors, name);
+  } else {
+    op = new (std::nothrow) FullconnectionNPUOp(primitive, in_tensors, out_tensors, name);
   }
 
   if (op == nullptr) {

@@ -21,6 +21,8 @@
 #include <set>
 #include <string>
 #include "ir/anf.h"
+#include "base/core_ops.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore::lite::quant {
 class QuantStrategy {
@@ -33,7 +35,8 @@ class QuantStrategy {
   ~QuantStrategy() = default;
 
   bool CanOpFullQuantized(const AnfNodePtr &node, const std::set<PrimitivePtr> &support_int8_ops,
-                          const std::set<PrimitivePtr> &skip_check_dtype_ops);
+                          const std::set<PrimitivePtr> &skip_check_dtype_ops,
+                          const std::set<mindspore::ActivationType> &support_activation);
   bool CanTensorQuantized(const CNodePtr &cnode, const AnfNodePtr &input_node, int preferred_dim);
   bool IsSkipOp(const AnfNodePtr &input_node);
 

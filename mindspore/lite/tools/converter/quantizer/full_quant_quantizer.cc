@@ -533,22 +533,42 @@ void FullQuantQuantizer::InitCpuConfig() {
   weight_target_data_type_ = kNumberTypeInt8;
   activation_symmetry_ = false;
   weight_symmetry_ = true;
-  support_int8_ops_ = {prim::kPrimAddFusion,     prim::kPrimActivation,
-                       prim::kPrimAvgPoolFusion, prim::kPrimConcat,
-                       prim::kPrimConv2DFusion,  prim::kPrimConv2dTransposeFusion,
-                       prim::kPrimCrop,          prim::kPrimFullConnection,
-                       prim::kPrimGather,        prim::kPrimLayerNormFusion,
-                       prim::kPrimMatMul,        prim::kPrimMaxPoolFusion,
-                       prim::kPrimMulFusion,     prim::kPrimReshape,
-                       prim::kPrimSplit,         prim::kPrimTupleGetItem,
-                       prim::kPrimTranspose,     prim::kPrimReduceFusion,
-                       prim::kPrimDivFusion,     prim::kPrimSqrt,
-                       prim::kPrimPowFusion,     prim::kPrimUnsqueeze,
-                       prim::kPrimAffine,        prim::kPrimEltwise,
-                       prim::kPrimShape};
+  support_int8_ops_ = {
+    // Compute
+    prim::kPrimConv2DFusion,
+    prim::kPrimFullConnection,
+    prim::kPrimMatMul,
+    prim::kPrimMaxPoolFusion,
+    prim::kPrimAvgPoolFusion,
+    prim::kPrimConv2dTransposeFusion,
+    prim::kPrimLayerNormFusion,
+    // Memory
+    prim::kPrimReshape,
+    prim::kPrimTranspose,
+    prim::kPrimShape,
+    prim::kPrimUnsqueeze,
+    prim::kPrimSplit,
+    prim::kPrimTupleGetItem,
+    prim::kPrimConcat,
+    prim::kPrimCrop,
+    prim::kPrimGather,
+    prim::kPrimReduceFusion,
+    prim::kPrimAffine,
+    // Arithmetic
+    prim::kPrimAddFusion,
+    prim::kPrimActivation,
+    prim::kPrimMulFusion,
+    prim::kPrimDivFusion,
+    prim::kPrimSqrt,
+    prim::kPrimPowFusion,
+    prim::kPrimEltwise,
+  };
   skip_check_dtype_ops_ = {prim::kPrimTupleGetItem, prim::kPrimShape};
   per_channel_ops_ = {prim::kPrimConv2DFusion, prim::kPrimConv2dTransposeFusion, prim::kPrimMatMul,
                       prim::kPrimFullConnection, prim::kPrimLayerNormFusion};
+  support_activation_ = {
+    RELU, RELU6, HSWISH, SIGMOID, LEAKY_RELU, TANH,
+  };
 }
 
 void FullQuantQuantizer::InitKirinConfig() {
@@ -593,7 +613,8 @@ int FullQuantQuantizer::MarkQuantNode(const FuncGraphPtr &func_graph) {
       continue;
     }
     //  Mark quantifiable nodes
-    auto is_support_op = quant_strategy->CanOpFullQuantized(anode, support_int8_ops_, skip_check_dtype_ops_);
+    auto is_support_op =
+      quant_strategy->CanOpFullQuantized(anode, support_int8_ops_, skip_check_dtype_ops_, support_activation_);
     if (is_support_op) {
       auto ret = calibrator_->AddQuantizedOp(cnode);
       if (ret != RET_OK) {
