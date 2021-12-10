@@ -14,34 +14,27 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_ATAN_H_
-#define MINDSPORE_CORE_OPS_ATAN_H_
+#ifndef MINDSPORE_CORE_OPS_ATAN_GRAD_H_
+#define MINDSPORE_CORE_OPS_ATAN_GRAD_H_
 #include <map>
 #include <vector>
 #include <string>
 #include <memory>
 #include "ops/primitive_c.h"
+#include "ops/op_utils.h"
 #include "abstract/abstract_value.h"
 #include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameAtan = "Atan";
-/// \brief Computes the trigonometric inverse tangent of the input element-wise.
-/// Refer to Python API @ref mindspore.ops.Atan for more details.
-class MS_CORE_API Atan : public PrimitiveC {
+constexpr auto kNameAtanGrad = "AtanGrad";
+class MS_CORE_API AtanGrad : public PrimitiveC {
  public:
-  /// \brief Constructor.
-  Atan() : PrimitiveC(kNameAtan) { InitIOName({"x"}, {"output"}); }
-  /// \brief Destructor.
-  ~Atan() = default;
-  MS_DECLARE_PARENT(Atan, PrimitiveC);
-  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Atan for the inputs.
-  void Init() {}
+  AtanGrad() : PrimitiveC(kNameAtanGrad) {}
+  ~AtanGrad() = default;
+  MS_DECLARE_PARENT(AtanGrad, PrimitiveC);
 };
-AbstractBasePtr AtanInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_ATAN_H_
+#endif  // MINDSPORE_CORE_OPS_ATAN_GRAD_H_

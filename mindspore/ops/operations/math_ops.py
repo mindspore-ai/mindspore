@@ -4676,7 +4676,7 @@ class Tan(Primitive):
 
 
 
-class Atan(PrimitiveWithInfer):
+class Atan(Primitive):
     r"""
     Computes the trigonometric inverse tangent of the input element-wise.
 
@@ -4694,6 +4694,7 @@ class Atan(PrimitiveWithInfer):
 
     Raises:
         TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` is not float16 or float32.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4708,14 +4709,8 @@ class Atan(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        pass
-
-    def infer_shape(self, x_shape):
-        return x_shape
-
-    def infer_dtype(self, x_type):
-        validator.check_tensor_dtype_valid('x', x_type, mstype.number_type, self.name)
-        return x_type
+        """Initialize Atan"""
+        self.init_prim_io_names(inputs=['x'], outputs=['output'])
 
 
 class Atanh(PrimitiveWithInfer):
