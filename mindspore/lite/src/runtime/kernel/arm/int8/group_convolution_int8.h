@@ -36,6 +36,15 @@ class GroupConvolutionInt8CPUKernel : public GroupConvolutionBaseCPUKernel {
   int Prepare() override;
   int SeparateInput(int group_id) override;
   int PostConcat(int group_id) override;
+
+  int Separate(int task_id);
+  int Concat(int task_id);
+
+ private:
+  int8_t *sub_in_src_ = nullptr;
+  int8_t *sub_in_dst_ = nullptr;
+  int8_t *sub_out_src_ = nullptr;
+  int8_t *sub_out_dst_ = nullptr;
 };
 }  // namespace mindspore::kernel
 

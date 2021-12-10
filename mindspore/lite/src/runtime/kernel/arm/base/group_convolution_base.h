@@ -46,11 +46,21 @@ class GroupConvolutionBaseCPUKernel : public ConvolutionBaseCPUKernel {
   void FreeSubKernel();
 
  protected:
+  int InitGroupParam();
   GroupConvCreator *group_conv_creator_ = nullptr;
   std::vector<kernel::InnerKernel *> group_convs_;
   const int group_num_;
   void *ori_in_data_ = nullptr;   // do not free
   void *ori_out_data_ = nullptr;  // do not free
+
+  int in_plane_ = 0;
+  int sub_in_channel_ = 0;
+  int ori_in_channel_ = 0;
+  int in_thread_num_ = 0;
+  int out_plane_ = 0;
+  int sub_out_channel_ = 0;
+  int ori_out_channel_ = 0;
+  int out_thread_num_ = 0;
 };
 }  // namespace mindspore::kernel
 
