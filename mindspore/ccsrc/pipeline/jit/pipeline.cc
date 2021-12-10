@@ -189,10 +189,11 @@ void SetLoopCount(const ResourcePtr &resource) {
     size_t graph_nums = manager->func_graphs().size();
     int64_t loop_size = ConfigManager::GetInstance().iter_num();
     const auto context_ptr = MsContext::GetInstance();
+    bool enable_mind_rt = context_ptr->get_param<bool>(MS_CTX_ENABLE_MINDRT);
     if (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice) {
-      resource->set_vm_loop(!context_ptr->get_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK), loop_size);
+      resource->set_vm_loop(!(context_ptr->get_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK) || enable_mind_rt), loop_size);
     } else if (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice) {
-      bool run_with_mind_rt = graph_nums == 1 || context_ptr->get_param<bool>(MS_CTX_ENABLE_MINDRT);
+      bool run_with_mind_rt = graph_nums == 1 || enable_mind_rt;
       resource->set_vm_loop(!run_with_mind_rt, loop_size);
     }
     MS_LOG(INFO) << "Change vm_loop_flag to " << resource->vm_loop_flag() << ", set loop_size to " << loop_size;
