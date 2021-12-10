@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace parallel {
-constexpr char EXP_AVG[] = "exp_avg_";
+constexpr char EXP_AVG[] = "exp_avg";
 constexpr char EXP_AVG_SQ_ROW[] = "exp_avg_sq_row_";
 constexpr char EXP_AVG_SQ_COL[] = "exp_avg_sq_col_";
 constexpr char EXP_AVG_SQ[] = "exp_avg_sq_";

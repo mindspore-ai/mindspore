@@ -23,23 +23,29 @@ from mindspore.ops import operations as P
 
 
 class Net(Cell):
-    def __init__(self, matmul_weight, add_weight, strategy1=None, strategy2=None):
+    def __init__(self, add_weight, matmul_weight, bias, strategy1=None, strategy2=None):
         super().__init__()
+        self.add = P.TensorAdd()
         self.matmul = P.MatMul().shard(strategy1)
-        self.add = P.BiasAdd().shard(strategy2)
+        self.bias_add = P.BiasAdd().shard(strategy2)
+        self.add_weight = Parameter(add_weight, "w1")
         self.mul_weight = Parameter(matmul_weight, "w1")
-        self.bias = Parameter(add_weight, "bias")
+        self.bias = Parameter(bias, "bias")
+        self.reshape = P.Reshape()
 
     def construct(self, x, b):
-        out = self.matmul(x, self.mul_weight)
+        out = self.add(x, self.add_weight)
+        out = self.reshape(out, (64, 32))
+        out = self.matmul(out, self.mul_weight)
         out = self.add(out, self.bias)
         return out
 
 
-_x = Tensor(np.ones([64, 32]), dtype=ms.float32)
+_x = Tensor(np.ones([64, 16, 2]), dtype=ms.float32)
+_w0 = Tensor(np.ones([64, 16, 2]), dtype=ms.float32)
 _w1 = Tensor(np.ones([32, 32]), dtype=ms.float32)
 _w2 = Tensor(np.ones([32]), dtype=ms.float32)
-_b = Tensor(np.ones([64, 32]), dtype=ms.float32)
+_b = Tensor(np.ones([64, 16, 2]), dtype=ms.float32)
 
 
 def compile_net(net):
@@ -58,16 +64,40 @@ def compile_net(net):
 
 
 def test_opt_data_parallel():
+    """
+    Feature: test adafactor data parallel
+    Description:
+    Expectation: compile success
+    """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
     strategy1 = ((16, 1), (1, 1))
     strategy2 = ((16, 1), (1,))
-    net = Net(_w1, _w2, strategy1, strategy2)
+    net = Net(_w0, _w1, _w2, strategy1, strategy2)
     compile_net(net)
 
 
 def test_opt_model_parallel():
+    """
+    Feature: test adafactor model parallel
+    Description:
+    Expectation: compile success
+    """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
     strategy1 = ((4, 2), (2, 2))
     strategy2 = ((4, 2), (2,))
-    net = Net(_w1, _w2, strategy1, strategy2)
+    net = Net(_w0, _w1, _w2, strategy1, strategy2)
+    compile_net(net)
+
+
+def test_opt_shard():
+    """
+    Feature: test adafactor optimizer parallel
+    Description: only shard batch dimension
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0,
+                                      enable_parallel_optimizer=True)
+    strategy1 = ((4, 2), (2, 2))
+    strategy2 = ((4, 2), (2,))
+    net = Net(_w0, _w1, _w2, strategy1, strategy2)
     compile_net(net)
