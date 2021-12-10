@@ -17,6 +17,7 @@
 #include "runtime/framework/actor/super_kernel_actor.h"
 #include "runtime/framework/actor/output_actor.h"
 #include "runtime/framework/actor/memory_manager_actor.h"
+#include "runtime/framework/actor/debug_actor.h"
 #include "mindrt/include/async/async.h"
 #include "utils/log_adapter.h"
 
@@ -98,7 +99,18 @@ void SuperKernelActor::Run(OpContext<DeviceTensor> *const context) {
   }
   ref_node_addr_map_.clear();
 
+  // Debug actor is blocked, must wait debug actor callback message to process continue.
+  if (debug_aid_ != nullptr) {
+    SendDebugReq(context);
+    return;
+  }
+
   PostRun(context);
+}
+
+void SuperKernelActor::SendDebugReq(OpContext<DeviceTensor> *const context) {
+  running_dependent_msg_num_ = 1;
+  ActorDispatcher::Send(*debug_aid_, &DebugActor::DebugForGraph, graph_, device_contexts_[0], context, &GetAID());
 }
 
 bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context) {

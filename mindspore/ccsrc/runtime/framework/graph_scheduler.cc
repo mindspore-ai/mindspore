@@ -733,7 +733,7 @@ std::vector<SuperKernelActorPtr> GraphScheduler::BuildSuperKernelActor(const Gra
 
     auto actor_name = graph->ToString() + "_SuperKernelActor";
     auto super_kernel_actor =
-      std::make_shared<SuperKernelActor>(actor_name, graph, device_context, memory_manager_aid_, nullptr, nullptr);
+      std::make_shared<SuperKernelActor>(actor_name, graph, device_context, memory_manager_aid_, debug_aid_, nullptr);
     MS_EXCEPTION_IF_NULL(super_kernel_actor);
     InsertActor(super_kernel_actor.get());
     (void)super_kernel_actors.emplace_back(super_kernel_actor);
