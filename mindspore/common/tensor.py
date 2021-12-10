@@ -1673,12 +1673,11 @@ class Tensor(Tensor_):
                 the flattened input tensor is used. Default: `None`.
             mode ('raise', 'wrap', 'clip', optional):
 
-                - edge: Pads with the edge values of the tensor.
-                - raise: Raises an error;
-                - wrap: Wraps around;
-                - clip: Clips to the range. 'clip' mode means that all indices that are
-                  too large are replaced by the index that addresses the last element
-                  along that axis. Note that this disables indexing with negative numbers.
+                'raise' – Raises an error;
+                'wrap' – Wraps around;
+                'clip' – Clips to the range. 'clip' mode means that all indices that are
+                too large are replaced by the index that addresses the last element
+                along that axis. Note that this disables indexing with negative numbers.
 
                 Default: 'clip'.
 
@@ -1741,12 +1740,12 @@ class Tensor(Tensor_):
             mode ('raise', 'wrap', 'clip', optional): Specifies how indices outside
                 ``[0, n-1]`` will be treated:
 
-                'raise' – raise an error (default);
-
-                'wrap' – wrap around;
-
-                'clip' – clip to the range. 'clip' mode means that values greater than n-1 are mapped to n-1.
+                'raise' – Raises an error (default);
+                'wrap' – Wraps around;
+                'clip' – Clips to the range. 'clip' mode means that values greater than n-1 are mapped to n-1.
                 Note that this disables indexing with negative numbers.
+
+                Default: 'clip'.
 
         Returns:
             Tensor, the merged result.
@@ -1817,7 +1816,7 @@ class Tensor(Tensor_):
                 Default: 'left'.
             sorter (Union[int, float, bool, list, tuple, Tensor]): 1-D optional tensor of
                 integer indices that sort the tensor into ascending order. They are typically
-                the result of argsort.
+                the result of argsort. Default: None.
 
         Returns:
             Tensor, array of insertion points with the same shape as `v`.
@@ -2048,14 +2047,14 @@ class Tensor(Tensor_):
             repeats (Union[int, tuple, list]): The number of repetitions for each element.
                 `repeats` is broadcasted to fit the shape of the given axis.
             axis (int, optional): The axis along which to repeat values. By default,
-                use the flattened input tensor, and return a flat output tensor.
+                use the flattened input tensor, and return a flat output tensor. Default: None.
 
         Returns:
             Tensor, has the same shape as input tensor except along the given axis.
 
         Raises:
-            ValueError: if the axis is out of range.
-            TypeError: if arguments have types not specified above.
+            ValueError: If the axis is out of range.
+            TypeError: If arguments have types not specified above.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
