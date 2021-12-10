@@ -132,6 +132,9 @@ class _AutoParallelContext:
         self.check_context_handle()
         if not self.get_enable_all_reduce_fusion():
             return
+        if not isinstance(comm_fusion, dict):
+            raise TypeError("For 'comm_fusion', the 'allreduce' config must be dict, but got the type : {}.".format(
+                type(comm_fusion)))
         if _ParallelFusionConfig.MODE not in comm_fusion:
             raise KeyError("For 'comm_fusion', the key 'mode' should be contained.")
         if _ParallelFusionConfig.FUSION_CONFIG not in comm_fusion:
