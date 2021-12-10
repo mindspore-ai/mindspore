@@ -136,7 +136,9 @@ tensor::TensorPtr CalcByOperator(const NodePtrList &inputs, const std::string &o
     {"Rsqrt", [](const std::vector<TM> &n) { return TM(1) / sqrt(n[0]); }},
   };
 
-  if (func_map.find(op) == func_map.end()) return nullptr;
+  if (func_map.find(op) == func_map.end()) {
+    return nullptr;
+  }
   return std::make_shared<tensor::Tensor>(static_cast<TD>(func_map[op](inputs_tm)), TypeIdToType(tid));
 }
 

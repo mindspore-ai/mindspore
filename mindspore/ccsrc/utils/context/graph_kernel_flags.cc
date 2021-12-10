@@ -151,9 +151,8 @@ class FlagRegister {
 
 std::pair<std::string, bool> GraphKernelFlags::GetGraphKernelContext() {
   // This environment variable is deprecated.
-  auto env_flags = std::getenv("MS_GRAPH_KERNEL_FLAGS");
-  bool use_env = (env_flags != nullptr);
-  std::string flags = use_env ? std::string(env_flags) : "";
+  auto flags = common::GetEnv("MS_GRAPH_KERNEL_FLAGS");
+  bool use_env = (!flags.empty());
   bool enable_context{false};
 #ifndef MSLITE_ENABLE_GRAPH_KERNEL
   static bool print_warning = true;
