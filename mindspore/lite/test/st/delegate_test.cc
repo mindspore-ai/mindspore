@@ -21,6 +21,7 @@
 #include "include/api/types.h"
 #include "include/api/delegate.h"
 #include "include/api/model.h"
+#include "src/common/file_utils.h"
 
 namespace mindspore {
 class DelegateTest : public mindspore::CommonTest {

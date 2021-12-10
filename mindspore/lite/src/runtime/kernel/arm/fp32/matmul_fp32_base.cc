@@ -55,14 +55,14 @@ int MatmulFp32BaseCPUKernel::InitBufferA() {
   if (a_pack_ptr_ != nullptr) {
     return RET_OK;
   }
-  if (!op_parameter_->is_train_session_) {
-    if (vec_matmul_) {
-      a_pack_ptr_ = reinterpret_cast<float *>(in_tensors().at(0)->data());
+  if (vec_matmul_) {
+    a_pack_ptr_ = reinterpret_cast<float *>(in_tensors().at(0)->data());
+  } else {
+    if (op_parameter_->is_train_session_) {
+      a_pack_ptr_ = reinterpret_cast<float *>(workspace());
     } else {
       a_pack_ptr_ = reinterpret_cast<float *>(ms_context_->allocator->Malloc(matrix_a_pack_size_ * sizeof(float)));
     }
-  } else {
-    a_pack_ptr_ = reinterpret_cast<float *>(workspace());
   }
   if (a_pack_ptr_ == nullptr) {
     MS_LOG(ERROR) << "malloc a_pack_ptr_ failed";
@@ -185,25 +185,17 @@ void MatmulFp32BaseCPUKernel::FreeBiasBuf() {
 }
 
 void MatmulFp32BaseCPUKernel::FreeResizeBufA() {
-  if (!op_parameter_->is_train_session_ && !vec_matmul_) {
-    if (a_pack_ptr_ != nullptr) {
-      ms_context_->allocator->Free(a_pack_ptr_);
-      a_pack_ptr_ = nullptr;
-    }
-  } else {
-    a_pack_ptr_ = nullptr;
+  if (!vec_matmul_ && !op_parameter_->is_train_session_ && a_pack_ptr_ != nullptr) {
+    ms_context_->allocator->Free(a_pack_ptr_);
   }
+  a_pack_ptr_ = nullptr;
 }
 
 void MatmulFp32BaseCPUKernel::FreeResizeBufB() {
-  if (!op_parameter_->is_train_session_) {
-    if (b_pack_ptr_ != nullptr) {
-      ms_context_->allocator->Free(b_pack_ptr_);
-      b_pack_ptr_ = nullptr;
-    }
-  } else {
-    b_pack_ptr_ = nullptr;
+  if (!op_parameter_->is_train_session_ && b_pack_ptr_ != nullptr) {
+    ms_context_->allocator->Free(b_pack_ptr_);
   }
+  b_pack_ptr_ = nullptr;
 }
 
 int MatmulFp32BaseCPUKernel::ParallelRunByBatch(int task_id) const {

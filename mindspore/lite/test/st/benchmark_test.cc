@@ -17,6 +17,7 @@
 #include <string>
 #include "common/common_test.h"
 #include "tools/benchmark/run_benchmark.h"
+#include "include/errorcode.h"
 
 namespace mindspore {
 namespace lite {

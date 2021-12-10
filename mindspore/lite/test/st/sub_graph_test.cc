@@ -24,6 +24,7 @@
 #include "include/model.h"
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
+#include "src/common/file_utils.h"
 #include "src/lite_session.h"
 #include "tools/common/meta_graph_serializer.h"
 #include "include/version.h"

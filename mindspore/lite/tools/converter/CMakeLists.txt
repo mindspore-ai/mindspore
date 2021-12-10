@@ -100,6 +100,7 @@ set(LITE_SRC ${API_SRC}
         ${SRC_DIR}/runtime/runtime_pass.cc
         ${SRC_DIR}/inner_context.cc
         ${SRC_DIR}/tensor.cc
+        ${SRC_DIR}/tensor_category.cc
         ${SRC_DIR}/schema_tensor_wrapper.cc
         ${SRC_DIR}/ms_tensor.cc
         ${SRC_DIR}/tensorlist.cc

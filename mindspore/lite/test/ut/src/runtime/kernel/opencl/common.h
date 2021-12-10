@@ -29,6 +29,7 @@
 #include "src/tensor_category.h"
 #include "src/common/file_utils.h"
 #include "common/common_test.h"
+#include "schema/ops_generated.h"
 
 using Tensor = mindspore::lite::Tensor;
 using ArgsTuple = std::tuple<std::vector<int>, void *, mindspore::lite::Category>;

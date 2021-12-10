@@ -23,9 +23,13 @@
 #include <algorithm>
 #include <vector>
 #include "gtest/gtest.h"
-#include "src/common/file_utils.h"
+#include "include/api/format.h"
+#include "src/tensor_category.h"
 
 namespace mindspore {
+namespace lite {
+class Tensor;
+}
 class CommonTest : public testing::Test {
  public:
   // TestCase only enter once
@@ -41,6 +45,22 @@ class CommonTest : public testing::Test {
       dst[i] = src[i];
     }
   }
+
+  template <typename T>
+  lite::Tensor *CreateTensor(TypeId dtype, std::vector<int> shape, std::vector<T> data, const Format &format = NHWC,
+                             lite::Category category = lite::Category::VAR) {
+    auto tensor = CreateTensor(dtype, shape, format, category);
+    if (tensor != nullptr) {
+      if (!data.empty()) {
+        memcpy(TensorMutabData(tensor), data.data(), TensorSize(tensor));
+      } else {
+        (void)TensorMallocData(tensor);
+      }
+    }
+    return tensor;
+  }
+
+  void DestroyTensors(std::vector<lite::Tensor *> tensors);
 
   template <typename T>
   void PrintData(const std::string &name, T *output_data, int size) {
@@ -67,87 +87,20 @@ class CommonTest : public testing::Test {
     return 0;
   }
 
-  static void CompareOutputInt8(int8_t *output_data, int8_t *correct_data, int size, float err_percent) {
-    int bias_count = 0;
-    for (int i = 0; i < size; i++) {
-      int8_t diff = abs(output_data[i] - correct_data[i]);
-      ASSERT_LE(diff, 1);
-      if (diff == 1) {
-        bias_count++;
-      }
-    }
-    float bias_percent = static_cast<float>(bias_count) / static_cast<float>(size);
-    ASSERT_LE(bias_percent, err_percent);
-  }
+  void CompareOutputInt8(int8_t *output_data, int8_t *correct_data, int size, float err_percent);
 
-  static int CompareOutput(const float *output_data, size_t output_num, const std::string &file_path) {
-    size_t ground_truth_size = 0;
-    auto ground_truth = reinterpret_cast<float *>(lite::ReadFile(file_path.c_str(), &ground_truth_size));
-    size_t ground_truth_num = ground_truth_size / sizeof(float);
-    printf("ground truth num : %zu\n", ground_truth_num);
-    int res = CompareOutputData(output_data, ground_truth, ground_truth_num);
-    delete[] ground_truth;
-    return res;
-  }
+  int CompareOutput(const float *output_data, size_t output_num, const std::string &file_path);
 
-  static float CompareOutputRelativeData(const float *output_data, const float *correct_data, int data_size) {
-    float error = 0;
+  float CompareOutputRelativeData(const float *output_data, const float *correct_data, int data_size);
 
-    // relative error
-    float diffSum = 0.0f;
-    float sum = 0.0f;
-    for (int i = 0; i < data_size; i++) {
-      sum += std::abs(correct_data[i]);
-    }
-    for (int i = 0; i < data_size; i++) {
-      float diff = std::abs(output_data[i] - correct_data[i]);
-      diffSum += diff;
-    }
-    error = diffSum / sum;
-    return error;
-  }
+  int CompareRelativeOutput(const float *output_data, const std::string &file_path);
 
-  static int CompareRelativeOutput(const float *output_data, const std::string &file_path) {
-    size_t output_size;
-    auto ground_truth = reinterpret_cast<float *>(mindspore::lite::ReadFile(file_path.c_str(), &output_size));
-    if (ground_truth == nullptr) {
-      return 1;
-    }
-    size_t output_num = output_size / sizeof(float);
-    float error = CompareOutputRelativeData(output_data, ground_truth, output_num);
-    delete[] ground_truth;
-    if (error > 1e-4) {
-      return 1;
-    }
-    return 0;
-  }
-
-  static float RelativeOutputError(const float *output_data, const std::string &file_path) {
-    size_t output_size = 0;
-    auto ground_truth = reinterpret_cast<float *>(mindspore::lite::ReadFile(file_path.c_str(), &output_size));
-    size_t output_num = output_size / sizeof(float);
-    float error = CompareOutputRelativeData(output_data, ground_truth, output_num);
-    delete[] ground_truth;
-    return error;
-  }
-
-  static void ReadFile(const char *file, size_t *size, char **buf) {
-    ASSERT_NE(nullptr, file);
-    ASSERT_NE(nullptr, size);
-    ASSERT_NE(nullptr, buf);
-    std::string path = std::string(file);
-    std::ifstream ifs(path);
-    ASSERT_EQ(true, ifs.good());
-    ASSERT_EQ(true, ifs.is_open());
-
-    ifs.seekg(0, std::ios::end);
-    *size = ifs.tellg();
-    *buf = new char[*size];
-
-    ifs.seekg(0, std::ios::beg);
-    ifs.read(*buf, *size);
-    ifs.close();
-  }
+ private:
+  lite::Tensor *CreateTensor(TypeId dtype, std::vector<int> shape, const Format &format = NHWC,
+                             lite::Category category = lite::Category::VAR);
+  void *TensorMutabData(lite::Tensor *tensor);
+  size_t TensorSize(lite::Tensor *tensor);
+  int TensorMallocData(lite::Tensor *tensor);
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_TEST_COMMON_COMMON_TEST_H_
