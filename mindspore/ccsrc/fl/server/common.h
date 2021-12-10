@@ -132,6 +132,7 @@ constexpr auto kAdamEps = "eps";
 constexpr auto kFtrlLinear = "linear";
 constexpr auto kDataSize = "data_size";
 constexpr auto kNewDataSize = "new_data_size";
+constexpr auto kStat = "stat";
 
 // OptimParamNameToIndex represents every inputs/workspace/outputs parameter's offset when an optimizer kernel is
 // launched.
@@ -176,11 +177,14 @@ const OptimParamNameToIndex kAdamWeightDecayNameToIdx = {{"inputs",
                                                            {"weight_decay", 7},
                                                            {"grad", 8}}},
                                                          {"outputs", {}}};
-const std::map<std::string, OptimParamNameToIndex> kNameToIdxMap = {{kApplyMomentumOpName, kMomentumNameToIdx},
-                                                                    {kFusedSparseAdamName, kSparseAdamNameToIdx},
-                                                                    {kSparseApplyFtrlOpName, kSparseFtrlNameToIdx},
-                                                                    {kApplyAdamOpName, kAdamNameToIdx},
-                                                                    {"AdamWeightDecay", kAdamWeightDecayNameToIdx}};
+const OptimParamNameToIndex kSGDNameToIdx = {
+  {"inputs", {{kWeight, 0}, {kGradient, 1}, {kLearningRate, 2}, {kAccumulation, 3}, {kMomentum, 4}, {kStat, 5}}},
+  {"outputs", {}}};
+
+const std::map<std::string, OptimParamNameToIndex> kNameToIdxMap = {
+  {kApplyMomentumOpName, kMomentumNameToIdx},     {kFusedSparseAdamName, kSparseAdamNameToIdx},
+  {kSparseApplyFtrlOpName, kSparseFtrlNameToIdx}, {kApplyAdamOpName, kAdamNameToIdx},
+  {"AdamWeightDecay", kAdamWeightDecayNameToIdx}, {kSGDName, kSGDNameToIdx}};
 
 constexpr uint32_t kLeaderServerRank = 0;
 constexpr size_t kWorkerMgrThreadPoolSize = 32;
@@ -189,6 +193,9 @@ constexpr size_t kCipherMgrThreadPoolSize = 32;
 constexpr size_t kCipherMgrMaxTaskNum = 64;
 constexpr size_t kExecutorThreadPoolSize = 32;
 constexpr size_t kExecutorMaxTaskNum = 32;
+constexpr size_t kNumberTypeFloat16Type = 2;
+constexpr size_t kNumberTypeFloat32Type = 4;
+constexpr size_t kNumberTypeUInt64Type = 8;
 constexpr int kHttpSuccess = 200;
 constexpr uint32_t kThreadSleepTime = 50;
 constexpr auto kPBProtocol = "PB";
@@ -228,12 +235,12 @@ constexpr auto kCurrentIteration = "current_iteration";
 inline size_t GetTypeIdByte(const TypeId &type) {
   switch (type) {
     case kNumberTypeFloat16:
-      return 2;
+      return kNumberTypeFloat16Type;
     case kNumberTypeUInt32:
     case kNumberTypeFloat32:
-      return 4;
+      return kNumberTypeFloat32Type;
     case kNumberTypeUInt64:
-      return 8;
+      return kNumberTypeUInt64Type;
     default:
       MS_LOG(EXCEPTION) << "TypeId " << type << " not supported.";
       return 0;
@@ -290,7 +297,6 @@ bool inline ConvertResultCode(ResultCode result_code) {
 }
 
 // Definitions for Parameter Server.
-
 }  // namespace server
 }  // namespace fl
 }  // namespace mindspore

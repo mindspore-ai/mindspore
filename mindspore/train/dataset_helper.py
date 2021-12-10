@@ -24,6 +24,10 @@ from ..parallel._ps_context import _is_role_worker, _is_role_pserver, _is_role_s
 from ..ops import operations as P
 
 
+def _is_fl_mode():
+    return context.get_fl_context("server_mode") in ("FEDERATED_LEARNING", "HYBRID_TRAINING")
+
+
 def _send_data(dataset, epoch_num):
     """Engine dataset to write data to tdt queue."""
     if not hasattr(dataset, '__has_sent__'):
@@ -54,7 +58,7 @@ def _dynamic_sink_exception_scenario(dataset_iter):
     """The exception scenario for dynamic data is not applicable."""
     _, dataset_shapes = dataset_iter.types_shapes()
 
-    if _has_dynamic_shape(dataset_shapes) or _is_role_worker() or \
+    if _has_dynamic_shape(dataset_shapes) or (_is_role_worker() and not _is_fl_mode()) or \
        context.get_context("mode") != context.GRAPH_MODE:
         return True
     return False
@@ -260,7 +264,7 @@ class DatasetHelper:
                 if context.get_context("mode") == context.GRAPH_MODE:
                     if _is_role_sched() or _is_role_pserver():
                         iterclass = _DatasetIterPSServer
-                    elif _is_role_worker():
+                    elif _is_role_worker() and not _is_fl_mode():
                         iterclass = _DatasetIterPSWork
                     elif (context.get_context("device_target") == "Ascend") or \
                          (context.get_context("device_target") == "GPU"):
@@ -411,7 +415,7 @@ class _DatasetIter:
         sink_size = 1
         if hasattr(self.dataset, '__loop_size__'):
             sink_size = self.dataset.__loop_size__
-        elif _is_role_worker():
+        elif _is_role_worker() and not _is_fl_mode():
             # PS mode does not support loop sink.
             sink_size = 1
         else:
