@@ -153,7 +153,7 @@ class Gamma(PrimitiveWithInfer):
         - **alpha** (Tensor) - The α distribution parameter. It must be greater than 0.
           It is also known as the shape parameter with float32 data type.
         - **beta** (Tensor) - The β distribution parameter. It must be greater than 0.
-          It is also known as the scale parameter with float32 data type.
+          It is also known as the inverse scale parameter with float32 data type.
 
     Outputs:
         Tensor. The shape must be the broadcasted shape of Input "shape" and shapes of alpha and beta.

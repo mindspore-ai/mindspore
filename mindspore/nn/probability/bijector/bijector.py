@@ -226,7 +226,7 @@ class Bijector(Cell):
 
         Args:
             value (Tensor): input value.
-            para (Tensor): parameter(s) of the bijecto.
+            para (Tensor): parameter(s) of the bijector.
         """
         local = self.cast_base(para, self.dtype_base(value))
         return local
