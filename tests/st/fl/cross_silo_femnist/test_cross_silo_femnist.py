@@ -302,6 +302,7 @@ def train():
         network,
         sync_frequency=epoch * num_batches,
         sync_type=sync_type,
+        encrypt_type=encrypt_type,
     )
     # define the optimizer
     net_opt = nn.Momentum(network.trainable_params(), client_learning_rate, 0.9)

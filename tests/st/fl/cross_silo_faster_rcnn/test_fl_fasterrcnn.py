@@ -167,7 +167,8 @@ def train():
     federated_learning_manager = FederatedLearningManager(
         net,
         sync_frequency=config.client_epoch_num * dataset_size,
-        sync_type=sync_type
+        sync_type=sync_type,
+        encrypt_type=encrypt_type,
     )
     opt = SGD(params=net.trainable_params(), learning_rate=lr, momentum=config.momentum,
               weight_decay=config.weight_decay, loss_scale=config.loss_scale)
