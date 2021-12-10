@@ -77,11 +77,14 @@ Serialization
 
     mindspore.build_searched_strategy
     mindspore.export
+    mindspore.load
+    mindspore.parse_print
     mindspore.load_checkpoint
     mindspore.load_distributed_checkpoint
     mindspore.load_param_into_net
     mindspore.merge_sliced_parameter
     mindspore.save_checkpoint
+    mindspore.async_ckpt_thread_status
 
 JIT
 ---
@@ -99,6 +102,14 @@ Log
 
     mindspore.get_level
     mindspore.get_log_config
+
+Automatic Mixed Precision
+---------------------------
+
+.. cnmsautosummary::
+    :toctree: mindspore
+
+    mindspore.build_train_network
 
 Installation Verification
 --------------------------
