@@ -41,6 +41,8 @@ enum NodeCommand {
   SEND_EVENT = 12;
   // This command is used to send scheduler recovery event.
   SCHEDULER_RECOVERY = 13;
+  // This command is used to send prepare building network msg.
+  PREPARE_BUILDING_NETWORK = 14;
 }
 
 enum NodeRole {

@@ -300,6 +300,12 @@ void SchedulerNode::ProcessRegister(const std::shared_ptr<TcpServer> &server,
     }
     node_manager_.UpdateNodesInfo();
     auto node_infos = node_manager_.nodes_info();
+    bool res = SendPrepareBuildingNetwork(node_infos);
+    if (!res) {
+      MS_LOG(ERROR) << "Prepare for building network failed!";
+      return;
+    }
+    MS_LOG(INFO) << "Prepare for building network success.";
     for (const auto &kvs : node_infos) {
       auto client = GetOrCreateClient(kvs.second);
       MS_EXCEPTION_IF_NULL(client);
@@ -448,6 +454,26 @@ void SchedulerNode::ProcessSendEvent(const std::shared_ptr<TcpServer> &server,
     auto client = GetOrCreateClient(kvs.second);
     SendEvent(client, event);
   }
+}
+
+bool SchedulerNode::SendPrepareBuildingNetwork(const std::unordered_map<std::string, NodeInfo> &node_infos) {
+  std::string timeoutNodeId = "";
+  for (const auto &kvs : node_infos) {
+    auto client = GetOrCreateClient(kvs.second);
+    auto message_meta = std::make_shared<MessageMeta>();
+    MS_EXCEPTION_IF_NULL(message_meta);
+    message_meta->set_cmd(NodeCommand::PREPARE_BUILDING_NETWORK);
+
+    SendMetadataMessage send_metadata_message;
+    send_metadata_message.set_rank_id(kvs.second.rank_id_);
+    if (!SendMessageSync(client, message_meta, Protos::PROTOBUF, send_metadata_message.SerializeAsString().data(),
+                         send_metadata_message.ByteSizeLong(), kCommTimeoutInThreeSeconds)) {
+      MS_LOG(ERROR) << "The node role:" << CommUtil::NodeRoleToString(kvs.second.node_role_)
+                    << " the node id:" << kvs.second.node_id_ << " prepare building network timeout!";
+      timeoutNodeId += kvs.second.node_id_ + " ";
+    }
+  }
+  return timeoutNodeId.empty();
 }
 
 void SchedulerNode::SendMetadata(const std::shared_ptr<TcpClient> &client, uint32_t rank_id) {

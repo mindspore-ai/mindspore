@@ -231,6 +231,10 @@ class AbstractNode : public Node {
 
   void PersistMetaData();
 
+  void ProcessPrepareBuildingNetwork(const std::shared_ptr<TcpConnection> &conn,
+                                     const std::shared_ptr<MessageMeta> &meta, const Protos &protos, const void *data,
+                                     size_t size);
+
   std::unique_ptr<std::thread> heart_beat_thread_;
   std::unique_ptr<std::thread> client_to_scheduler_thread_;
   std::shared_ptr<TcpClient> client_to_scheduler_;
