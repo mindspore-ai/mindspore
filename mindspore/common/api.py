@@ -164,8 +164,8 @@ def __get_compile_cache_dep_files(file_path, python_bin_dir, compile_cache_dep_f
             if not dep_file_path.startswith(python_bin_dir) and not dep_file_path in compile_cache_dep_files:
                 logger.debug(f"dependent file path: {dep_file_path}")
                 compile_cache_dep_files.append(dep_file_path)
-                pkg = module.__package__
-                __get_compile_cache_dep_files(dep_file_path, python_bin_dir, compile_cache_dep_files, pkg)
+                __get_compile_cache_dep_files(dep_file_path, python_bin_dir, compile_cache_dep_files,
+                                              module.__package__)
 
 
 def _get_compile_cache_dep_files():
