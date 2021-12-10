@@ -147,12 +147,16 @@ class FullQuantQuantizer : public Quantizer {
   STATUS SetInOutQuantParam(const AnfNodePtr &input_node, const std::unique_ptr<DivergInfo> &info,
                             const PrimitivePtr &primitive, bool is_input, size_t index) const;
 
-  STATUS DoWeightQuant(const std::string &op_name, const AnfNodePtr &weight, const PrimitivePtr &primitive,
-                       bool per_channel, int input_index) const;
+  STATUS DoParameterWeightQuant(const std::string &op_name, const ParameterPtr &weight, const PrimitivePtr &primitive,
+                                bool per_channel, int input_index) const;
 
-  STATUS DoParameterNodeQuant(const CNodePtr &cnode, const AnfNodePtr &input_node, size_t input_index);
+  STATUS DoParameterNodeQuant(const CNodePtr &cnode, const ParameterPtr &input_node, size_t input_index);
 
-  static STATUS DoBiasQuant(const AnfNodePtr &bias, const PrimitivePtr &primitive);
+  static STATUS DoParameterBiasQuant(const ParameterPtr &bias, const PrimitivePtr &primitive);
+  STATUS IsSupportWeightQuant(const CNodePtr &cnode, const AnfNodePtr &input_node, size_t input_index);
+  int DoValueNodeQuant(const CNodePtr &cnode, const ValueNodePtr &input_node, size_t input_index);
+  int DoValueNodeWeightQuant(const ValueNodePtr &weight, const PrimitivePtr &primitive, bool per_channel,
+                             int input_index) const;
   STATUS Int8Inference();
   STATUS BiasCorrection(const FuncGraphPtr &func_graph);
   STATUS BiasCorrection(const FuncGraphPtr &func_graph, const CNodePtr &cnode);

@@ -1194,7 +1194,12 @@ int GetDataTypeFromAnfNode(const AnfNodePtr &anf_node, TypeId *type_id) {
     MS_LOG(ERROR) << "anf_node or type_id is nullptr.";
     return RET_ERROR;
   }
-  auto abstract_base = anf_node->abstract();
+  AbstractBasePtr abstract_base;
+  if (CheckPrimitiveType(anf_node, prim::kPrimTupleGetItem)) {
+    abstract_base = anf_node->cast<CNodePtr>()->input(1)->abstract();
+  } else {
+    abstract_base = anf_node->abstract();
+  }
   // used for multi output e.g. split.
   if (utils::isa<abstract::AbstractTuple>(abstract_base)) {
     auto abstract_tuple = abstract_base->cast<abstract::AbstractTuplePtr>();
@@ -1208,14 +1213,20 @@ int GetDataTypeFromAnfNode(const AnfNodePtr &anf_node, TypeId *type_id) {
     MS_LOG(ERROR) << "Abstract of parameter is nullptr, " << anf_node->fullname_with_scope();
     return RET_ERROR;
   }
-  if (!utils::isa<abstract::AbstractTensorPtr>(abstract_base)) {
-    MS_LOG(ERROR) << "Abstract of parameter should be anstract tensor, " << anf_node->fullname_with_scope();
+  if (utils::isa<abstract::AbstractTensorPtr>(abstract_base)) {
+    auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(abstract_base);
+    auto type_ptr = abstract_tensor->element()->GetTypeTrack();
+    MS_CHECK_TRUE_MSG(type_ptr != nullptr, RET_ERROR, "type_ptr is nullptr");
+    *type_id = type_ptr->type_id();
+  } else if (utils::isa<abstract::AbstractScalarPtr>(abstract_base)) {
+    auto abstract_scalar = utils::cast<abstract::AbstractScalarPtr>(abstract_base);
+    auto type_ptr = abstract_scalar->GetTypeTrack();
+    MS_CHECK_TRUE_MSG(type_ptr != nullptr, RET_ERROR, "type_ptr is nullptr");
+    *type_id = type_ptr->type_id();
+  } else {
+    MS_LOG(ERROR) << anf_node->fullname_with_scope() << " is unsupported type:" << abstract_base->type_name();
     return RET_ERROR;
   }
-  auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(abstract_base);
-  auto type_ptr = abstract_tensor->element()->GetTypeTrack();
-  MS_CHECK_TRUE_MSG(type_ptr != nullptr, RET_ERROR, "type_ptr is nullptr");
-  *type_id = type_ptr->type_id();
   return RET_OK;
 }
 }  // namespace opt
