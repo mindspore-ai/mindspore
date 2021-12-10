@@ -266,3 +266,97 @@ def test_binop_new_tensor():
 
     net = BinOpNet()
     print(net())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_tensor_compare():
+    """
+    Feature: Fallback feature
+    Description: support compare op's interpreted nodes.
+    Expectation: No exception.
+    """
+    class CompareNet(nn.Cell):
+        def __init__(self):
+            super(CompareNet, self).__init__()
+
+        def construct(self):
+            np_array_1 = np.array(1)
+            np_array_2 = np.array(2)
+            res = Tensor(np_array_1) < Tensor(np_array_2)
+            return res
+
+    compare_net = CompareNet()
+    print(compare_net())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_tensor_not():
+    """
+    Feature: Fallback feature
+    Description: support bool op's interpreted nodes.
+    Expectation: No exception.
+    """
+    class NotNet(nn.Cell):
+        def __init__(self):
+            super(NotNet, self).__init__()
+
+        def construct(self):
+            np_array_1 = np.array(True, dtype=np.bool_)
+            res = not Tensor(np_array_1)
+            return res
+
+    net = NotNet()
+    res = net()
+    print("res:", res)
+
+
+@pytest.mark.skip(reason='Not support graph fallback feature yet')
+def test_fallback_tensor_and():
+    """
+    Feature: Fallback feature
+    Description: support bool op's interpreted nodes.
+    Expectation: No exception.
+    """
+    class AndNet(nn.Cell):
+        def __init__(self):
+            super(AndNet, self).__init__()
+
+        def construct(self):
+            np_array_1 = np.array(True, dtype=np.bool_)
+            np_array_2 = np.array(False, dtype=np.bool_)
+            res = Tensor(np_array_1) and Tensor(np_array_2)
+            return res
+
+    net = AndNet()
+    res = net()
+    print("res:", res)
+
+
+@pytest.mark.skip(reason='Not support graph fallback feature yet')
+def test_fallback_tensor_or():
+    """
+    Feature: Fallback feature
+    Description: support bool op's interpreted nodes.
+    Expectation: No exception.
+    """
+    class OrNet(nn.Cell):
+        def __init__(self):
+            super(OrNet, self).__init__()
+
+        def construct(self):
+            np_array_1 = np.array(True, dtype=np.bool_)
+            np_array_2 = np.array(False, dtype=np.bool_)
+            res = Tensor(np_array_1) or Tensor(np_array_2)
+            return res
+
+    net = OrNet()
+    res = net()
+    print("res:", res)

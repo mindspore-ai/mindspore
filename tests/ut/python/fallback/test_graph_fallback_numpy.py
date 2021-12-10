@@ -65,7 +65,6 @@ def test_np_array_3():
     assert np.all(res.asnumpy() == expect_res.asnumpy())
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
 def test_np_array_4():
     """
     Feature: JIT Fallback
@@ -108,37 +107,6 @@ def test_np_dtype_2():
     assert np.all(res.asnumpy() == Tensor(np.array([1, 2, 3], dtype=np.int32)).asnumpy())
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
-def test_np_dtype_3():
-    """
-    Feature: JIT Fallback
-    Description: Test numpy with dtype in graph mode.
-    Expectation: No exception.
-    """
-    @ms_function
-    def np_dtype_3():
-        t = np.dtype([('age', np.int8)])
-        return Tensor(np.array([1, 2, 3], dtype=t))
-    res = np_dtype_3()
-    print("res:", res)
-
-
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
-def test_np_dtype_4():
-    """
-    Feature: JIT Fallback
-    Description: Test numpy with dtype in graph mode.
-    Expectation: No exception.
-    """
-    @ms_function
-    def np_dtype_4():
-        student = np.dtype([('name', 'S20'), ('age', 'i1'), ('marks', 'f4')])
-        a = np.array([('abc', 21, 50), ('xyz', 18, 75)], dtype=student)
-        return Tensor(a)
-    res = np_dtype_4()
-    print("res:", res)
-
-
 def test_np_array_ndim():
     """
     Feature: JIT Fallback
@@ -153,7 +121,6 @@ def test_np_array_ndim():
     assert res == 1
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
 def test_np_array_reshape_1():
     """
     Feature: JIT Fallback
@@ -185,7 +152,6 @@ def test_np_array_reshape_2():
     print("res:", res)
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
 def test_np_array_itemsize():
     """
     Feature: JIT Fallback
@@ -263,22 +229,6 @@ def test_np_asarray_tuple():
     res = np_asarray_tuple()
     except_res = Tensor(np.asarray((1, 2, 3)))
     assert np.all(res.asnumpy() == except_res.asnumpy())
-
-
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
-def test_np_asarray_tuple_list():
-    """
-    Feature: JIT Fallback
-    Description: Test numpy with tuple list to array in graph mode.
-    Expectation: No exception.
-    """
-    @ms_function
-    def np_asarray_tuple_list():
-        x = [(1, 2, 3), (4, 5)]
-        y = np.asarray(x)
-        return Tensor(y)
-    res = np_asarray_tuple_list()
-    print("res:", res)
 
 
 @pytest.mark.skip(reason='Not support graph fallback feature yet')
