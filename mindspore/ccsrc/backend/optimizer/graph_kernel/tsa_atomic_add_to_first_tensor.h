@@ -48,12 +48,17 @@ class TsaAtomicAddToFirstTensor : public AtomicCleanInsertter {
   bool Run(const FuncGraphPtr &func_graph) override;
 
  private:
-  void ProcessOriginCNode(const AnfNodePtr &composite_node, const AnfNodePtr &new_input) override;
-  void CorrectKernelBuildInfo(const AnfNodePtr &composite_node, const AnfNodePtr &new_input,
-                              bool bypass = true) override;
-  void ProcessTsa(const KernelGraphPtr &main_graph, const AnfNodePtr &anf_node, const FuncGraphManagerPtr &mng);
-  AnfNodePtr ProcessTsaFirstNode(const KernelGraphPtr &main_graph, const AnfNodePtr &node);
-  AnfNodePtr FindTsaFirstRealInputInGraph(const KernelGraphPtr &main_graph, const AnfNodePtr &node);
+  void ProcessOriginCNode(const AnfNodePtr &composite_node,
+                          const std::vector<std::tuple<AtomicAddInfo, AnfNodePtr, size_t>> &outer_nodes);
+  void CorrectKernelBuildInfo(const AnfNodePtr &composite_node,
+                              const std::vector<std::tuple<AtomicAddInfo, AnfNodePtr, size_t>> &outer_infos);
+  void ProcessTsa(const KernelGraphPtr &main_graph, const AnfNodePtr &anf_node,
+                  const std::vector<AtomicAddInfo> &atomic_add_infos, const FuncGraphManagerPtr &mng);
+  std::pair<AnfNodePtr, size_t> GetOrCreateNewTsaFirstNode(const KernelGraphPtr &main_graph,
+                                                           const AtomicAddInfo &atomic_add_info,
+                                                           const AnfNodePtr &node);
+  std::pair<AnfNodePtr, size_t> FindTsaFirstRealInputInGraph(const KernelGraphPtr &main_graph, const CNodePtr &tsa_node,
+                                                             const AnfNodePtr &node);
 
   size_t tsa_first_input_index_{0};  // sub-graph parameter index.
 };

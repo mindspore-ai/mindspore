@@ -49,6 +49,8 @@
 #include "backend/optimizer/graph_kernel/graph_kernel_pass_manager.h"
 #include "backend/optimizer/graph_kernel/transform_op_optimizer.h"
 #include "backend/optimizer/graph_kernel/rewrite_output_shape.h"
+#include "backend/optimizer/graph_kernel/graph_kernel_recompute.h"
+#include "backend/optimizer/graph_kernel/reduce_fake_out_mem.h"
 
 namespace mindspore::graphkernel {
 using opt::CommonSubexpressionElimination;
@@ -154,6 +156,14 @@ PassManagerPtr GraphKernelOptimizer::Split() const {
 
 PassManagerPtr GraphKernelOptimizer::HighLevelOpt2() const {
   auto pm = std::make_shared<GraphKernelPassManager>(4, "highlevelopt2");
+
+  auto &flags = GraphKernelFlags::GetInstance();
+  // Auto recompute according to local memory burst.
+  auto recompute_lv = GetPassLevelByFlag(flags.recompute_increment_threshold > 0 || flags.recompute_peak_threshold > 0);
+  pm->AddPass(std::make_shared<GraphKernelRecompute>(), recompute_lv);
+  pm->AddPass(std::make_shared<ExtendOutputForUpdateState>(), recompute_lv);
+  pm->AddPass(std::make_shared<MergeOutputForUpdateState>(), recompute_lv);
+
   // Enable atomic add
   pm->AddPass(std::make_shared<AtomicCleanInsertter>(), OptLevel_2, is_gpu || is_ascend);
 
@@ -196,6 +206,9 @@ PassManagerPtr GraphKernelOptimizer::PostProcess() const {
   // Recover the original output info
   pm->AddPass(std::make_shared<GetitemTuple>(), OptLevel_1);
   pm->AddPass(std::make_shared<RewriteOutputShape>(), OptLevel_1);
+
+  // Reduce fake output memory.
+  pm->AddPass(std::make_shared<ReduceFakeOutMem>(), OptLevel_1);
 
   // Add the new tensors to the kernel_graph
   pm->AddPass(std::make_shared<BindValueToGraph>(), OptLevel_1);

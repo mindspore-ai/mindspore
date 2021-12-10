@@ -30,26 +30,82 @@
 #include "backend/session/kernel_graph.h"
 
 namespace mindspore::graphkernel {
+void StitchAtomicCleanInsertter::CorrectKernelBuildInfo(
+  const AnfNodePtr &composite_node, const std::vector<std::pair<AtomicAddInfo, AnfNodePtr>> &clean_infos) {
+  // Change kernel build info.
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(composite_node->kernel_info());
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  const auto &origin_kernel_build_info = kernel_info->GetMutableSelectKernelBuildInfo();
+  auto origin_inputs_format = origin_kernel_build_info->GetAllInputFormats();
+  auto origin_outputs_format = origin_kernel_build_info->GetAllOutputFormats();
+  auto origin_inputs_type = origin_kernel_build_info->GetAllInputDeviceTypes();
+  auto origin_outputs_type = origin_kernel_build_info->GetAllOutputDeviceTypes();
+  auto origin_processor = origin_kernel_build_info->processor();
+
+  std::vector<std::string> &new_inputs_format = origin_inputs_format;
+  std::vector<TypeId> &new_inputs_type = origin_inputs_type;
+  std::vector<std::string> new_outputs_format;
+  std::vector<TypeId> new_outputs_type;
+  for (size_t i = 0; i < origin_outputs_format.size(); ++i) {
+    new_outputs_format.push_back(origin_outputs_format[i]);
+    new_outputs_type.push_back(origin_outputs_type[i]);
+  }
+
+  auto kernel_with_index = AnfAlgo::VisitKernel(clean_infos[0].second, 0);
+  new_inputs_format.push_back(AnfAlgo::GetOutputFormat(kernel_with_index.first, kernel_with_index.second));
+  new_inputs_type.push_back(AnfAlgo::GetOutputDeviceDataType(kernel_with_index.first, kernel_with_index.second));
+
+  kernel::KernelBuildInfo::KernelBuildInfoBuilder new_info_builder;
+  new_info_builder.SetInputsFormat(new_inputs_format);
+  new_info_builder.SetInputsDeviceType(new_inputs_type);
+  new_info_builder.SetOutputsFormat(new_outputs_format);
+  new_info_builder.SetOutputsDeviceType(new_outputs_type);
+  new_info_builder.SetProcessor(origin_processor);
+  new_info_builder.SetKernelType(KernelType::AKG_KERNEL);
+  new_info_builder.SetFusionType(kernel::FusionType::OPAQUE);
+  auto new_selected_info = new_info_builder.Build();
+  AnfAlgo::SetSelectKernelBuildInfo(new_selected_info, composite_node.get());
+}
+
+void StitchAtomicCleanInsertter::AddDepend(const FuncGraphPtr &main_graph, const AnfNodePtr &clean_node,
+                                           const AnfNodePtr &composite_node, const AnfNodePtr &user_node,
+                                           int index) const {
+  // Create depend node to hold execution order.
+  AnfNodePtrList d_inputs = {NewValueNode(prim::kPrimDepend), clean_node, composite_node};
+  auto depend_cnode = main_graph->NewCNode(d_inputs);
+  depend_cnode->set_abstract(clean_node->abstract());
+  main_graph->AddNode(depend_cnode);
+
+  auto user_cnode = user_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(user_cnode);
+  user_cnode->set_input(IntToSize(index), depend_cnode);
+}
+
 CNodePtr StitchAtomicCleanInsertter::CreateInplaceAssignNode(const FuncGraphPtr &sub_graph,
-                                                             const AnfNodePtr &new_parameter) const {
+                                                             const AnfNodePtr &new_parameter,
+                                                             const AtomicAddInfo &info) const {
   // add inplaceassign
-  AnfNodePtr out_node = atomic_add_node_;  // Use result data itself, and set attr "fake_out" true.
+  AnfNodePtr out_node = info.atomic_add_node;  // Use result data itself, and set attr "fake_out" true.
   auto inplace_assign_node =
-    CreateCNode({NewValueNode(prim::kPrimInplaceAssign), new_parameter, atomic_add_node_, out_node}, sub_graph,
+    CreateCNode({NewValueNode(prim::kPrimInplaceAssign), new_parameter, out_node, out_node}, sub_graph,
                 {.format = GetFormat(out_node), .shape = GetShape(out_node), .type = GetType(out_node)});
   SetNodeAttrSafely("fake_output", MakeValue(true), inplace_assign_node);
-  AnfAlgo::EraseNodeAttr(kAttrStitch, atomic_add_node_);
+  AnfAlgo::EraseNodeAttr(kAttrStitch, out_node);
   SetNodeAttrSafely(kAttrStitch, MakeValue("common"), inplace_assign_node);
   return inplace_assign_node;
 }
 
-void StitchAtomicCleanInsertter::ProcessOriginCNode(const AnfNodePtr &composite_node, const AnfNodePtr &new_input) {
+void StitchAtomicCleanInsertter::ProcessOriginCNode(
+  const AnfNodePtr &composite_node,
+  const std::vector<std::pair<AtomicAddInfo, AnfNodePtr>> &info_and_broadcast_to_nodes) {
   auto sub_graph = AnfAlgo::GetCNodeFuncGraphPtr(composite_node);
   auto mng_sub = sub_graph->manager();
   if (mng_sub == nullptr) {
     mng_sub = Manage(sub_graph, false);
     sub_graph->set_manager(mng_sub);
   }
+
+  auto [atomic_add_info, new_input] = info_and_broadcast_to_nodes[0];
 
   // add input
   auto inputs = composite_node->cast<CNodePtr>()->inputs();
@@ -61,11 +117,12 @@ void StitchAtomicCleanInsertter::ProcessOriginCNode(const AnfNodePtr &composite_
   parameter->set_abstract(new_input->abstract());
   parameter->set_kernel_info(new_input->kernel_info_ptr());
 
-  auto inplace_assign = CreateInplaceAssignNode(sub_graph, parameter);
+  auto inplace_assign = CreateInplaceAssignNode(sub_graph, parameter, atomic_add_info);
 
   // Replace atomic ReduceSum's user with atomic clean output, and add depend op after inplaceassign to avoid
   // elimination.
-  std::vector<std::pair<AnfNodePtr, int>> reduce_user_nodes = FindInnerCNodeUsers(stitch_node_, atomic_add_node_);
+  std::vector<std::pair<AnfNodePtr, int>> reduce_user_nodes =
+    FindInnerCNodeUsers(stitch_node_, atomic_add_info.atomic_add_node);
   bool connected = false;
   for (const auto &[user_node, index] : reduce_user_nodes) {
     auto user_cnode = user_node->cast<CNodePtr>();
@@ -79,7 +136,7 @@ void StitchAtomicCleanInsertter::ProcessOriginCNode(const AnfNodePtr &composite_
       }
       connected = true;
     }
-    CorrectKernelBuildInfo(composite_node, new_input, false);
+    CorrectKernelBuildInfo(composite_node, info_and_broadcast_to_nodes);
   }
 
   auto old_graph_name = GetValue<std::string>(sub_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL));
@@ -105,8 +162,8 @@ std::vector<std::pair<AnfNodePtr, int>> StitchAtomicCleanInsertter::FindInnerCNo
   return inner_user_nodes;
 }
 
-bool StitchAtomicCleanInsertter::IsStitchWithAtomic(const AnfNodePtr &anf_node) {
-  if (!AnfAlgo::IsGraphKernel(anf_node)) return false;
+std::pair<bool, AtomicAddInfo> StitchAtomicCleanInsertter::IsStitchWithAtomic(const AnfNodePtr &anf_node) {
+  if (!AnfAlgo::IsGraphKernel(anf_node)) return {false, AtomicAddInfo()};
   auto node = anf_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(node);
   auto sub_graph = AnfAlgo::GetCNodeFuncGraphPtr(node);
@@ -116,12 +173,13 @@ bool StitchAtomicCleanInsertter::IsStitchWithAtomic(const AnfNodePtr &anf_node) 
     if (AnfAlgo::HasNodeAttr(kAttrStitch, n->cast<CNodePtr>()) &&
         AnfAlgo::GetNodeAttr<std::string>(n, kAttrStitch) == "atomic" && IsPrimitiveCNode(n, prim::kPrimReduceSum)) {
       MS_LOG(INFO) << "GOT STITCH WITH ATOMIC!!!";
-      atomic_add_node_ = n->cast<CNodePtr>();
+      AtomicAddInfo info;
+      info.atomic_add_node = n->cast<CNodePtr>();
       stitch_node_ = anf_node;
-      return true;
+      return {true, info};
     }
   }
-  return false;
+  return {false, AtomicAddInfo()};
 }
 
 bool StitchAtomicCleanInsertter::Run(const FuncGraphPtr &func_graph) {
@@ -137,8 +195,9 @@ bool StitchAtomicCleanInsertter::Run(const FuncGraphPtr &func_graph) {
   auto topo_nodes = TopoSort(kernel_graph->get_return());
   for (const auto &node : topo_nodes) {
     // if stitch attr exists, add atomic clean op depends on the attr
-    if (IsStitchWithAtomic(node)) {
-      InsertAtomicClean(kernel_graph, node, mng);
+    auto [is_stitch, atomic_add_info] = IsStitchWithAtomic(node);
+    if (is_stitch) {
+      InsertAtomicClean(kernel_graph, node, {atomic_add_info}, mng);
       changed = true;
     }
   }

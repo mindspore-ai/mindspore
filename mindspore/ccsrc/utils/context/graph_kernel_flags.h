@@ -128,6 +128,16 @@ class GraphKernelFlags {
   unsigned int online_tuning{0};
 
   /**
+   * Threshold for detection of recopute's memory increment case.
+   */
+  int64_t recompute_increment_threshold{0};
+
+  /**
+   * Threshold for detection of recopute's memory peak case.
+   */
+  int64_t recompute_peak_threshold{0};
+
+  /**
    * AKG's operator repository file path.
    */
   std::string repository_path;

@@ -861,60 +861,114 @@ class GraphSplitGpu(GraphSplitByPattern):
             if not dom.dom_op().prim in gather_prims:
                 return None
 
-            def _count_target_prim(ops, target_list):
-                count = 0
-                for op in ops:
-                    if op.prim in target_list:
-                        count += 1
-                return count
+            def _reduce_exclude(op, axis_list):
+                """ Whether this operator should be excluded.
+                Excluding condition:
+                1. Reduce the last axis.
+                2. There are at least one same axis between reduce axes and axis_list.
 
-            def _bfs_visit(start_op, start_prims, end_prims, total_ops):
+                Args:
+                    op (Operator): Target reduce operator.
+                    axis_list (list): List to check whether it is intersected by reduce axis.
+                Returns:
+                    Boolean. Whether this operator should be excluded.
+                """
+                axis = op.attrs["reduce_axis"]
+                if isinstance(axis, int):
+                    axis = [axis]
+                in_shape_len = len(op.inputs[0].shape)
+                for i, dim in enumerate(axis):
+                    axis[i] = in_shape_len + dim if dim < 0 else dim
+                fix_axis = []
+                for ax in axis:
+                    if op.inputs[0].shape[ax] == 1:
+                        continue
+                    fix_axis.append(ax)
+                return (in_shape_len - 1 in fix_axis) or bool(set(fix_axis) & set(axis_list))
+
+            def _bfs_visit(start_op, start_prims, total_ops, end_ops, gather_axis):
                 consisten_shape = start_op.output.shape
                 visited = []
                 op_queue = [start_op]
+
+                def _early_stop(cur_op):
+                    if cur_op in end_ops:
+                        # If reduce last axis or reduce the gather axis, stop early for not fusion.
+                        if cur_op.prim == "ReduceSum" and _reduce_exclude(cur_op, gather_axis):
+                            return True
+                    else:
+                        if (cur_op.prim in start_prims and cur_op != start_op) or \
+                                consisten_shape != cur_op.output.shape:
+                            return True
+                    return False
+
                 while op_queue:
                     tmp_queue = []
                     for op in op_queue:
-                        if op in visited:
+                        if op in visited or not op in total_ops:
                             continue
-                        if op.prim in end_prims or not op in total_ops:
-                            continue
-                        if (op.prim in start_prims and op != start_op) or consisten_shape != op.output.shape:
+                        if _early_stop(op):
                             return False
+                        if op in end_ops:
+                            continue
                         for to_op in op.output.to_ops:
                             tmp_queue.append(to_op)
                         visited.append(op)
                     op_queue = tmp_queue
-
                 return True
 
             def _shape_consistent(start_prims, end_prims, source, target):
+                """Check whether it is always shape consistent from source nodes to target nodes."""
+                total_ops = source.ops + target.ops
+
                 start_ops = []
                 for op in source.ops:
                     if op.prim in start_prims:
                         start_ops.append(op)
+                end_ops = []
+                for op in total_ops:
+                    if op.prim in end_prims and not any([to_op in total_ops for to_op in op.output.to_ops]):
+                        end_ops.append(op)
 
-                total_ops = source.ops + target.ops
                 for start_op in start_ops:
-                    is_consistent = _bfs_visit(start_op, start_prims, end_prims, total_ops)
+                    gather_axis = start_op.attrs.get("axis", None)
+                    if gather_axis is None:
+                        # For GatherNd
+                        gather_axis = list(range(len(start_op.inputs[1].shape)))
+                    elif isinstance(gather_axis, int):
+                        gather_axis = [gather_axis]
+
+                    is_consistent = _bfs_visit(start_op, start_prims, total_ops, end_ops, gather_axis)
                     if not is_consistent:
                         return False
                 return True
 
-            appected_areas = {"TensorScatterAdd", "UnsortedSegmentSum"}
+            appected_areas = {"TensorScatterAdd", "UnsortedSegmentSum", "ReduceSum"}
             for a, _ in dom.out_relations.items():
-                if _shape_consistent(gather_prims, appected_areas, dom, a) and \
-                        _count_target_prim(a.ops + dom.ops, appected_areas) < 2 and dom.check_acyclic(a):
+                if _shape_consistent(gather_prims, appected_areas, dom, a) and dom.check_acyclic(a):
                     return [a], False
             return None
 
         def _broadcast_opaque(dom):
+            """Fuse rule for TensorScatterAdd and UnsortedSegmentSum."""
+            def _same_input(op1, op2):
+                return bool(set(op1.inputs.copy()) & set(op2.inputs.copy()))
+
+            if len(dom.ops) != 1:
+                return None
+
+            # Only fuse the first input for `TensorScatterAdd`` and the first and second input for `UnsortedSegmentSum`.
             fuse_arg = {"TensorScatterAdd": slice(1, None), "UnsortedSegmentSum": slice(0, 2)}
             arg_idx = fuse_arg.get(dom.dom_op().prim, -1)
-            if arg_idx == -1 or len(dom.ops) != 1:
+            if arg_idx == -1:
                 return None
             fuse_tensor = dom.dom_op().inputs[arg_idx]
+
             for a, _ in dom.in_relations.items():
+                # Rule 1: Same type with at lease one same input.
+                if a.dom_op().prim == dom.dom_op().prim and _same_input(dom.dom_op(), a.dom_op()):
+                    return [a], True
+                # Rule 2: Fuse op(reshape/elementwise/broadcast) in specified position inputs.
                 if a.pattern <= PrimLib.BROADCAST and dom.check_acyclic(a) and \
                         any([op.output in fuse_tensor for op in a.ops]):
                     return [a], True
