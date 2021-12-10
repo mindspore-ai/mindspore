@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
-#define THREADS 1024
+constexpr int THREADS = 1024;
+
 __global__ void CustomReorganizeKernel(float *input1, int64_t *input2, float *output, size_t size) {
   auto idx = blockIdx.x * THREADS + threadIdx.x;
   if (idx < size) {
+    // Reorganize
     output[idx] = input1[input2[idx]];
   }
 }
@@ -25,19 +27,22 @@ __global__ void CustomReorganizeKernel(float *input1, int64_t *input2, float *ou
 extern "C" int CustomReorganize(int nparam, void **params, int *ndims, int64_t **shapes, const char **dtypes,
                                 void *stream, void *extra) {
   cudaStream_t custream = static_cast<cudaStream_t>(stream);
-  if (nparam != 3) return 1;
-  void *input1 = params[0];
-  void *input2 = params[1];
 
-  void *output = params[2];
+  constexpr int OUTPUT_INDEX = 2;
+  constexpr int TOTAL_PARAM_NUM = 3;
 
-  size_t size = 1;
+  // Users can add any check on their need. If check fails, user can return any value larger than 0 to safely exit.
+  // Return value larger than 0 will cause mindspore to stop computing and safely exit.
+  // Specially, return 1 will show log: "Number of parameters passed is inconsistent with what the user wants".
+  // return 2 will show log: "Type of parameters passed is inconsistent with what the user wants".
 
-  for (int i = 0; i < ndims[2]; i++) {
-    size *= shapes[2][i];
+  // This is to check if the num of parameters the same as what the user wants.
+  // There are two inputs and one output, so the nparam should be 3.
+  if (nparam != TOTAL_PARAM_NUM) {
+    return 1;
   }
-  int n = size / THREADS;
-
+ 
+  // This is to check if the type of parameters the same as what the user wants.
   if (strcmp(dtypes[0], "float32") != 0) {
     return 2;
   }
@@ -47,8 +52,25 @@ extern "C" int CustomReorganize(int nparam, void **params, int *ndims, int64_t *
   if (strcmp(dtypes[2], "float32") != 0) {
     return 2;
   }
+
+  // input1's index is 0, input2's index is 1 and output's index is 2
+  void *input1 = params[0];
+  void *input2 = params[1];
+
+  void *output = params[2];
+
+  size_t size = 1;
+
+  // Cumprod of output's shape to compute elements' num
+  for (int i = 0; i < ndims[OUTPUT_INDEX]; i++) {
+    size *= shapes[OUTPUT_INDEX][i];
+  }
+  int n = size / THREADS;
+
+  // Do the computation
   CustomReorganizeKernel<<<n + 1, THREADS, 0, custream>>>(static_cast<float *>(input1), static_cast<int64_t *>(input2),
                                                           static_cast<float *>(output), size);
 
+  // When return 0, mindspore will continue to run if this kernel could launch successfully.
   return 0;
 }
