@@ -242,6 +242,7 @@ from .concat import _concat_tbe
 from .concat_ds import _concat_ds_tbe
 from .slice import _slice_tbe
 from .sign import _sign_tbe
+from .sign_ds import _sign_ds_tbe
 from .greater import _greater_tbe
 from .clip_by_norm_no_div_sum import _clip_by_norm_no_div_sum_tbe
 from .clip_by_value import _clip_by_value_tbe

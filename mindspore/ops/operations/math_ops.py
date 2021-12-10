@@ -4563,7 +4563,7 @@ class Abs(Primitive):
         self.init_prim_io_names(inputs=['input_x'], outputs=['output'])
 
 
-class Sign(PrimitiveWithInfer):
+class Sign(Primitive):
     r"""
     Performs sign on the tensor element-wise.
 
@@ -4596,13 +4596,6 @@ class Sign(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         pass
-
-    def infer_shape(self, x_shape):
-        return x_shape
-
-    def infer_dtype(self, x_dtype):
-        validator.check_tensor_dtype_valid('x', x_dtype, mstype.number_type, self.name)
-        return x_dtype
 
 
 class Round(PrimitiveWithInfer):
