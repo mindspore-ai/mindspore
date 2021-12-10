@@ -136,6 +136,14 @@ std::string GetNodeGroup(const AnfNodePtr &node) {
   }
   return "";
 }
+
+void SetInternalOutputAttr(const AnfNodePtr &node) {
+  auto p = GetCNodePrimitive(node);
+  if (p == nullptr) return;
+  auto prim_node = NewValueNode(p->Clone());
+  node->cast<CNodePtr>()->set_input(kAnfPrimitiveIndex, prim_node);
+  AnfAlgo::SetNodeAttr(kAttrIsInternalOutput, MakeValue(true), node);
+}
 }  // namespace
 
 AnfNodePtr KernelGraph::MakeValueNode(const AnfNodePtr &node) const {
@@ -1037,6 +1045,7 @@ void KernelGraph::AddInternalOutput(const AnfNodePtr &front_node, const AnfNodeP
   }
   MS_LOG(INFO) << "Add internal node " << node->DebugString() << " with front node " << front_node->DebugString();
   front_to_internal_outputs_map_[front_node] = node;
+  SetInternalOutputAttr(node);
   if (AnfAlgo::CheckPrimitiveType(front_node, prim::kPrimTupleGetItem)) {
     output_idx = AnfAlgo::GetTupleGetItemOutIndex(front_node->cast<CNodePtr>());
   }
@@ -1089,6 +1098,7 @@ void KernelGraph::ReplaceInternalOutput(const AnfNodePtr &node, const AnfNodePtr
     front_to_internal_outputs_map_[front_node_iter.second.first] = new_node;
   }
   internal_outputs_to_front_map_[new_node] = std::move(front_nodes);
+  SetInternalOutputAttr(new_node);
 }
 
 void KernelGraph::ReplaceInternalOutput(const AnfNodePtr &node, const AnfNodePtr &new_node, size_t src_output_idx,
@@ -1122,6 +1132,7 @@ void KernelGraph::ReplaceInternalOutput(const AnfNodePtr &node, const AnfNodePtr
   // We should do 'erase' before 'insert', since the 'iter' may be invalidated after new item added.
   front_to_internal_outputs_map_[front_node_pair.first] = new_node;
   internal_outputs_to_front_map_[new_node][dst_output_idx] = std::move(front_node_pair);
+  SetInternalOutputAttr(new_node);
 }
 
 void KernelGraph::CacheInternalParameterToFrontNode(const AnfNodePtr &parameter,
