@@ -4379,7 +4379,7 @@ class MindDataset(MappableDataset):
     The columns of generated dataset depend on the source MindRecord files.
 
     Args:
-        dataset_file (Union[str, list[str]]): If dataset_file is a str, it represents for
+        dataset_files (Union[str, list[str]]): If dataset_file is a str, it represents for
             a file name of one component of a mindrecord source, other files with identical source
             in the same path will be found and loaded automatically. If dataset_file is a list,
             it represents for a list of dataset files to be read directly.
@@ -4453,15 +4453,15 @@ class MindDataset(MappableDataset):
 
     Examples:
         >>> mind_dataset_dir = ["/path/to/mind_dataset_file"] # contains 1 or multiple MindRecord files
-        >>> dataset = ds.MindDataset(dataset_file=mind_dataset_dir)
+        >>> dataset = ds.MindDataset(dataset_files=mind_dataset_dir)
     """
 
     def parse(self, children=None):
-        return cde.MindDataNode(self.dataset_file, self.columns_list, self.sampler, self.new_padded_sample,
+        return cde.MindDataNode(self.dataset_files, self.columns_list, self.sampler, self.new_padded_sample,
                                 self.num_padded, shuffle_to_shuffle_mode(self.shuffle_option))
 
     @check_minddataset
-    def __init__(self, dataset_file, columns_list=None, num_parallel_workers=None, shuffle=None, num_shards=None,
+    def __init__(self, dataset_files, columns_list=None, num_parallel_workers=None, shuffle=None, num_shards=None,
                  shard_id=None, sampler=None, padded_sample=None, num_padded=None, num_samples=None, cache=None):
         super().__init__(num_parallel_workers=num_parallel_workers, sampler=sampler, num_samples=num_samples,
                          shuffle=shuffle_to_bool(shuffle), num_shards=num_shards, shard_id=shard_id, cache=cache)
@@ -4472,11 +4472,11 @@ class MindDataset(MappableDataset):
             raise ValueError("'Shuffle.FILES' or 'Shuffle.INFILE' and 'num_samples' "
                              "cannot be specified at the same time.")
         self.shuffle_option = shuffle
-        if isinstance(dataset_file, list):
+        if isinstance(dataset_files, list):
             self.load_dataset = False
         else:
             self.load_dataset = True
-        self.dataset_file = dataset_file
+        self.dataset_files = dataset_files
         self.columns_list = replace_none(columns_list, [])
 
         if shuffle is False:
