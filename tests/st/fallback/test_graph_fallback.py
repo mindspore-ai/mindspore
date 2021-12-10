@@ -160,3 +160,19 @@ def test_np_fallback_func_tensor_index():
     output = np_fallback_func_tensor_index(x)
     output_expect = Tensor(6, mstype.float32)
     assert output == output_expect
+
+
+@pytest.mark.skip(reason='Not support in graph jit fallback feature yet')
+def test_np_calculate():
+    """
+    Feature: Fallback feature.
+    Description: Support numpy calculation.
+    Expectation: No exception.
+    """
+    @ms_function
+    def np_calculate():
+        x = np.array([3, 1, 2, 4, 5])
+        y = x % 2
+        z = Tensor(y)
+        return z
+    assert np.all(np_calculate().asnumpy() == np.array([1, 1, 0, 0, 1]))
