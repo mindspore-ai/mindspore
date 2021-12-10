@@ -47,6 +47,11 @@ py::object VectorRefToPyData(const VectorRef &value_list);
 py::object VectorRefToPyData(const VectorRef &value_list, const AbstractBasePtr &output);
 // Wrap VectorRef to CSRTensor
 py::object MakeCSRTensor(const VectorRef &value_list);
+py::object CSRTensorToPyData(const tensor::CSRTensorPtr &csr_tensor) {
+  auto ref = py::tuple(1);
+  ref[0] = csr_tensor;
+  return ref[0];
+}
 py::object TensorToPyData(const tensor::TensorPtr &tensor) {
   MS_EXCEPTION_IF_NULL(tensor);
   if (tensor->NeedWait()) {
@@ -133,6 +138,12 @@ static ValueNameToConverterVector value_name_to_converter = {
      py::tuple tuple_container(1);
      tuple_container[0] = value->cast<tensor::MetaTensorPtr>();
      return tuple_container[0];
+   }},
+  // CSRTensor
+  {tensor::CSRTensor::kTypeId,
+   [](const ValuePtr &value) -> py::object {
+     auto csr_tensor_ptr = value->cast<tensor::CSRTensorPtr>();
+     return CSRTensorToPyData(csr_tensor_ptr);
    }},
   // RefKey
   {RefKey::kTypeId,
@@ -629,9 +640,7 @@ py::object MakeCSRTensor(const VectorRef &value_list) {
       shape.push_back(*(static_cast<int64_t *>(tensorptr->data_c())));
     }
   }
-  auto ref = py::tuple(1);
   auto csr_tensor_ptr = std::make_shared<CSRTensor>(indptr, indices, values, shape);
-  ref[0] = csr_tensor_ptr;
-  return ref[0];
+  return CSRTensorToPyData(csr_tensor_ptr);
 }
 }  // namespace mindspore

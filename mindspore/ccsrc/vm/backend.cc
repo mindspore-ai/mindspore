@@ -138,6 +138,13 @@ void PushInputTensor(const BaseRef &arg, std::vector<tensor::TensorPtr> *inputs)
   if (utils::isa<tensor::TensorPtr>(arg)) {
     auto value = utils::cast<tensor::TensorPtr>(arg);
     inputs->push_back(value);
+  } else if (utils::isa<tensor::CSRTensorPtr>(arg)) {
+    auto csr = utils::cast<tensor::CSRTensorPtr>(arg);
+    MS_EXCEPTION_IF_NULL(csr);
+    auto csr_values = csr->GetValues();
+    MS_EXCEPTION_IF_NULL(csr_values);
+    inputs->push_back(csr_values);
+    MS_LOG(INFO) << "For CSRTensor, push its values.";
   } else if (utils::isa<ValuePtr>(arg)) {
     auto value = utils::cast<ValuePtr>(arg);
     MS_EXCEPTION_IF_NULL(value);
