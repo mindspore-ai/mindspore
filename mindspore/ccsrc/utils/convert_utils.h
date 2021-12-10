@@ -90,8 +90,8 @@ const mindspore::HashMap<std::string, int64_t> sparse_attr_map = {{prim::kPrimCS
 // make_sparse_set records all make_sparse primitives, and tries to replace
 // make_sparse to make_tuple, used in backend common optimization pass:
 // sparse_process.cc
-const mindspore::HashSet<std::string> make_sparse_set = {
-  {prim::kPrimMakeCSRTensor->name()}, {prim::kPrimMakeSparseTensor->name()}, {prim::kPrimMakeRowTensor->name()}};
+const mindspore::HashSet<std::string> make_sparse_set = {{prim::kPrimMakeCSRTensor->name()},
+                                                         {prim::kPrimMakeSparseTensor->name()}};
 // sparse_op_set records all sparse_compute operators, which takes sparsetensor
 // and (possibly) dense tensors, used in backend common optimization pass:
 // sparse_process.cc
