@@ -37,10 +37,11 @@ class MirrorPadCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  template <typename T>
+  template <typename T1, typename T2>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const;
 
   TypeId dtype_{kTypeUnknown};
+  TypeId pad_dtype_{kTypeUnknown};
   size_t tensor_size_{1};
   size_t shape_size_{0};
   size_t output_size_{1};
