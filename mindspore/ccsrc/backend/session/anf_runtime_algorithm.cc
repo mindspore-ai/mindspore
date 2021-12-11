@@ -2459,5 +2459,30 @@ bool AnfRuntimeAlgorithm::IsCallNode(const AnfNodePtr &node) {
   }
   return inputs[0]->isa<CNode>() || (inputs[0]->isa<ValueNode>() && IsValueNode<FuncGraph>(inputs[0]));
 }
+
+void AnfRuntimeAlgorithm::UpdateGraphValidRefPair(const KernelGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  const auto &origin_ref_map = graph->GetRefMap();
+  std::map<AnfWithOutIndex, AnfWithOutIndex> new_ref_map;
+  for (const auto &node : graph->execution_order()) {
+    MS_EXCEPTION_IF_NULL(node);
+    auto output_num = AnfAlgo::GetOutputTensorNum(node);
+    if (output_num == 0) {
+      MS_LOG(DEBUG) << "This kernel has no output size.";
+      continue;
+    }
+    for (size_t i = 0; i < output_num; ++i) {
+      session::AnfWithOutIndex out_pair(node, i);
+      auto iter = origin_ref_map.find(out_pair);
+      if (iter != origin_ref_map.end()) {
+        auto ret = new_ref_map.try_emplace(iter->first, iter->second);
+        if (!ret.second) {
+          MS_LOG(WARNING) << "Duplicate ref_map key, node:" << node->fullname_with_scope() << " index:" << i;
+        }
+      }
+    }
+  }
+  graph->set_ref_out_in_map(new_ref_map);
+}
 }  // namespace session
 }  // namespace mindspore

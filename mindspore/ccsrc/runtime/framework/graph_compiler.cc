@@ -370,6 +370,7 @@ GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNod
   MS_EXCEPTION_IF_NULL(backend_node);
   graph->CacheGraphOutputToFrontNodeWithIndex({backend_node}, outputs);
   graph->set_root_graph_id(graph_id);
+  AnfAlgo::UpdateGraphValidRefPair(graph);
 
   return graph_id;
 }
@@ -403,6 +404,7 @@ GraphId GraphCompiler::CompileGraph(const FuncGraphPtr &func_graph, const Device
   auto backend_node = root_graph->output();
   MS_EXCEPTION_IF_NULL(backend_node);
   root_graph->CacheGraphOutputToFrontNodeWithIndex({backend_node}, {output});
+  AnfAlgo::UpdateGraphValidRefPair(root_graph);
 
   return graph_id;
 }
@@ -518,6 +520,7 @@ GraphId GraphCompiler::CompileGraph(const session::OpRunInfo &op_run_info, bool 
   }
 
   UpdateRefCountForGraphOutput(outputs_with_index);
+  AnfAlgo::UpdateGraphValidRefPair(graph);
 
   return graph->graph_id();
 }
