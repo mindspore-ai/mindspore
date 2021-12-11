@@ -716,7 +716,11 @@ def test_np_sort():
     assert np.all(out_where.asnumpy() == np.array([4]))
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_np_extract():
     """
     Feature: JIT Fallback

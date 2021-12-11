@@ -560,6 +560,7 @@ FunctionBlockPtr Parser::ParseReturn(const FunctionBlockPtr &block, const py::ob
 AnfNodePtr Parser::ParseBinOp(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast BinOP";
 
+  MS_EXCEPTION_IF_NULL(block);
   py::object left = python_adapter::GetPyObjAttr(node, "left");
   py::object right = python_adapter::GetPyObjAttr(node, "right");
   py::object op = python_adapter::GetPyObjAttr(node, "op");
@@ -575,11 +576,12 @@ AnfNodePtr Parser::ParseBinOp(const FunctionBlockPtr &block, const py::object &n
   }
   right_node = HandleInterpret(block, right_node, right);
   // Resolve the op
-  MS_EXCEPTION_IF_NULL(block);
   AnfNodePtr op_node = block->MakeResolveAstOp(op);
   // Create apply node
   MS_EXCEPTION_IF_NULL(block->func_graph());
-  return block->func_graph()->NewCNodeInOrder({op_node, left_node, right_node});
+  auto new_node = block->func_graph()->NewCNodeInOrder({op_node, left_node, right_node});
+  UpdateInterpretForUserNode(left_node, new_node);
+  return new_node;
 }
 
 AnfNodePtr Parser::ParseName(const FunctionBlockPtr &block, const py::object &node) {
@@ -733,9 +735,7 @@ AnfNodePtr Parser::ParseCall(const FunctionBlockPtr &block, const py::object &no
   bool need_unpack = need_unpack_args || need_unpack_keywords;
 
   auto call_cnode = GenerateAnfNodeForCall(block, call_function_node, packed_arguments, group_arguments, need_unpack);
-  if (call_function_node->interpret()) {
-    call_cnode->set_interpret(true);
-  }
+  UpdateInterpretForUserNode(call_function_node, call_cnode);
   return call_cnode;
 }
 
@@ -878,9 +878,7 @@ AnfNodePtr Parser::ParseAttribute(const FunctionBlockPtr &block, const py::objec
 
   // Create the apply node
   auto attr_cnode = block->func_graph()->NewCNodeInOrder({op_node, value_node, attr_node});
-  if (value_node->interpret() || IsPrimitiveCNode(value_node, prim::kPrimPyInterpret)) {
-    attr_cnode->set_interpret(true);
-  }
+  UpdateInterpretForUserNode(value_node, attr_cnode);
   return attr_cnode;
 }
 
@@ -908,7 +906,9 @@ AnfNodePtr Parser::ParseCompare(const FunctionBlockPtr &block, const py::object 
 
   MS_EXCEPTION_IF_NULL(block);
   AnfNodePtr op_node = block->MakeResolveAstOp(ops[0]);
-  return block->func_graph()->NewCNodeInOrder({op_node, left_node, right_node});
+  auto new_node = block->func_graph()->NewCNodeInOrder({op_node, left_node, right_node});
+  UpdateInterpretForUserNode(left_node, new_node);
+  return new_node;
 }
 
 AnfNodePtr Parser::ProcessBoolOpValueList(const FunctionBlockPtr &block, const py::list &value_list, AstSubType mode) {
@@ -964,6 +964,7 @@ AnfNodePtr Parser::ProcessBoolOpValueList(const FunctionBlockPtr &block, const p
 
     std::vector<AnfNodePtr> call_graph_nodes{switch_app};
     auto switch_app_call = block_fg->NewCNodeInOrder(std::move(call_graph_nodes));
+    UpdateInterpretForUserNode(test_node, switch_app_call);
     return switch_app_call;
   }
 }
@@ -1101,7 +1102,7 @@ AnfNodePtr Parser::ParseIndex(const FunctionBlockPtr &block, const py::object &n
   return ParseExprNode(block, value_node);
 }
 
-// Process a  UnaryOp, +a, -b
+// Process a UnaryOp, +a, -b
 AnfNodePtr Parser::ParseUnaryOp(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast UnaryOp";
   py::object op = python_adapter::GetPyObjAttr(node, "op");
@@ -1113,7 +1114,9 @@ AnfNodePtr Parser::ParseUnaryOp(const FunctionBlockPtr &block, const py::object 
   py::object operand = python_adapter::GetPyObjAttr(node, "operand");
   AnfNodePtr operand_node = ParseExprNode(block, operand);
   operand_node = HandleInterpret(block, operand_node, operand);
-  return block->func_graph()->NewCNodeInOrder({op_node, operand_node});
+  auto new_node = block->func_graph()->NewCNodeInOrder({op_node, operand_node});
+  UpdateInterpretForUserNode(operand_node, new_node);
+  return new_node;
 }
 
 // Process a dict ast node expression
@@ -1179,6 +1182,7 @@ FunctionBlockPtr Parser::ParseAugAssign(const FunctionBlockPtr &block, const py:
   WriteAssignVars(block, target_object, augassign_app);
   return block;
 }
+
 // Process global declaration such as 'global x';
 FunctionBlockPtr Parser::ParseGlobal(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast Global";
@@ -1888,6 +1892,17 @@ void Parser::WriteAssignVars(const FunctionBlockPtr &block, const py::object &ta
     MS_EXCEPTION(TypeError) << "Only supported augassign to attribute of self, variable and index value, but got "
                             << target_object.get_type()
                             << ".\nMore details please refer to syntax support at https://www.mindspore.cn";
+  }
+}
+
+void Parser::UpdateInterpretForUserNode(const AnfNodePtr &node, const AnfNodePtr &user_node) {
+  // Do not handle user node with internal type such as Tensor.abs().
+  bool interpret_without_internal = IsPrimitiveCNode(node, prim::kPrimPyInterpret) && !node->interpret_internal_type();
+  if (node->interpret() || interpret_without_internal) {
+    user_node->set_interpret(true);
+    if (node->interpret_internal_type()) {
+      user_node->set_interpret_internal_type(true);
+    }
   }
 }
 

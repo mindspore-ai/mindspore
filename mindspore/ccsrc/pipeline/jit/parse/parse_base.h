@@ -166,6 +166,14 @@ enum ClassInstanceTypeDef {
   CLASS_INSTANCE_TYPE_INVALID = 0xFF
 };
 
+// Define syntax support.
+enum SyntaxSupportDef {
+  SYNTAX_SUPPORTED = 0,                  // supported syntax
+  SYNTAX_UNSUPPORTED_INTERNAL_TYPE = 1,  // unsupported internal type
+  SYNTAX_UNSUPPORTED_EXTERNAL_TYPE = 2,  // unsupported external type
+  SYNTAX_UNSUPPORTED_NAMESPACE = 3       // unsupported namespace
+};
+
 // Convert python object to ValuePtr.
 bool ConvertData(const py::object &obj, ValuePtr *data, bool use_signature = false, const TypePtr &dtype = nullptr);
 

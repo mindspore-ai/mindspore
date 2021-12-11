@@ -221,7 +221,11 @@ def test_np_fallback_func_tensor_index():
     assert output == output_expect
 
 
-@pytest.mark.skip(reason='Not support in graph jit fallback feature yet')
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_np_calculate():
     """
     Feature: Fallback feature.
@@ -235,3 +239,21 @@ def test_np_calculate():
         z = Tensor(y)
         return z
     assert np.all(np_calculate().asnumpy() == np.array([1, 1, 0, 0, 1]))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_tensor_array_astype():
+    """
+    Feature: JIT Fallback
+    Description: Test Tensor(array) with astype() in graph mode.
+    Expectation: No exception.
+    """
+    @ms_function
+    def foo():
+        me_x = Tensor([1.1, -2.1]).astype("float32")
+        return me_x
+    print(foo())
