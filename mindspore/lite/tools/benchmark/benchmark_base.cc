@@ -34,6 +34,12 @@
 #include <asm/unistd.h>
 #include <unistd.h>
 #endif
+#ifdef SUPPORT_NNIE
+#include "include/hi_common.h"
+#include "include/hi_comm_vb.h"
+#include "include/mpi_sys.h"
+#include "include/mpi_vb.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -57,6 +63,10 @@ constexpr int16_t kInputDataInt8Min = -127;
 constexpr int16_t kInputDataInt8Max = 127;
 constexpr int16_t kInputDataUint8Min = 0;
 constexpr int16_t kInputDataUint8Max = 254;
+#ifdef SUPPORT_NNIE
+constexpr int kNNIEMaxPoolCnt = 2;
+constexpr int kNNIEBlkSize = 768 * 576 * 2;
+#endif
 
 const std::unordered_map<int, std::string> kTypeIdMap{
   {kNumberTypeFloat16, "Float16"}, {kNumberTypeFloat, "Float32"},    {kNumberTypeFloat32, "Float32"},
@@ -294,6 +304,7 @@ int BenchmarkBase::CheckDeviceTypeValid() {
 }
 
 int BenchmarkBase::InitDumpConfigFromJson(char *path) {
+#ifndef BENCHMARK_CLIP_JSON
   auto real_path = RealPath(path);
   std::ifstream ifs(real_path);
   if (!ifs.good()) {
@@ -354,7 +365,7 @@ int BenchmarkBase::InitDumpConfigFromJson(char *path) {
     MS_LOG(ERROR) << "create data output directory failed.";
     return RET_ERROR;
   }
-
+#endif
   return RET_OK;
 }
 
@@ -623,6 +634,72 @@ int BenchmarkBase::PrintPerfResult(const std::vector<std::string> &title,
 }
 #endif
 
+#ifdef SUPPORT_NNIE
+int SvpSysInit() {
+  HI_S32 ret = HI_SUCCESS;
+  VB_CONFIG_S struVbConf;
+  ret = HI_MPI_SYS_Exit();
+  if (HI_SUCCESS != ret) {
+    MS_LOG(ERROR) << "HI_MPI_SYS_Exit failed!";
+    return RET_ERROR;
+  }
+
+  ret = HI_MPI_VB_Exit();
+  if (HI_SUCCESS != ret) {
+    MS_LOG(WARNING) << "HI_MPI_VB_Exit failed!";
+    ret = HI_MPI_SYS_Init();
+    if (HI_SUCCESS != ret) {
+      MS_LOG(ERROR) << "Error:HI_MPI_SYS_Init failed!";
+      return RET_ERROR;
+    }
+    return RET_OK;
+  }
+
+  memset(&struVbConf, 0, sizeof(VB_CONFIG_S));
+  struVbConf.u32MaxPoolCnt = kNNIEMaxPoolCnt;
+  struVbConf.astCommPool[1].u64BlkSize = kNNIEBlkSize;
+  struVbConf.astCommPool[1].u32BlkCnt = 1;
+
+  ret = HI_MPI_VB_SetConfig((const VB_CONFIG_S *)&struVbConf);
+  if (HI_SUCCESS != ret) {
+    MS_LOG(ERROR) << "Error:HI_MPI_VB_SetConf failed!";
+    return RET_ERROR;
+  }
+
+  ret = HI_MPI_VB_Init();
+  if (HI_SUCCESS != ret) {
+    MS_LOG(ERROR) << "Error:HI_MPI_VB_Init failed!";
+    return RET_ERROR;
+  }
+
+  ret = HI_MPI_SYS_Init();
+  if (HI_SUCCESS != ret) {
+    MS_LOG(ERROR) << "Error:HI_MPI_SYS_Init failed!";
+    return RET_ERROR;
+  }
+
+  return RET_OK;
+}
+
+int SvpSysExit() {
+  HI_S32 ret = HI_SUCCESS;
+
+  ret = HI_MPI_SYS_Exit();
+  if (HI_SUCCESS != ret) {
+    MS_LOG(ERROR) << "HI_MPI_SYS_Exit failed!";
+    return RET_ERROR;
+  }
+
+  ret = HI_MPI_VB_Exit();
+  if (HI_SUCCESS != ret) {
+    MS_LOG(WARNING) << "HI_MPI_VB_Exit failed!";
+    return RET_OK;
+  }
+
+  return RET_OK;
+}
+#endif
+
 BenchmarkBase::~BenchmarkBase() {
   for (auto &iter : this->benchmark_data_) {
     iter.second->shape.clear();
@@ -631,6 +708,9 @@ BenchmarkBase::~BenchmarkBase() {
     iter.second = nullptr;
   }
   this->benchmark_data_.clear();
+#ifdef SUPPORT_NNIE
+  SvpSysExit();
+#endif
 }
 }  // namespace lite
 }  // namespace mindspore

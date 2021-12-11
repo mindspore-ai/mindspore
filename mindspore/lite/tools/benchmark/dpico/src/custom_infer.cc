@@ -27,7 +27,7 @@ using mindspore::schema::PrimitiveType_Custom;
 namespace mindspore {
 namespace dpico {
 namespace {
-constexpr int kBaseValue = 10;
+constexpr int kDecimal = 10;
 constexpr auto kInputShape = "inputs_shape";
 constexpr auto kOutputShape = "outputs_shape";
 constexpr auto kOutputsFormat = "outputs_format";
@@ -66,13 +66,13 @@ Status GetCustomShape(const std::map<std::string, std::string> &attrs, const std
   char *save_ptr = nullptr;
   res = strtok_r(attr.data(), delims, &save_ptr);
   while (res != nullptr) {
-    int64_t ndims = strtol(res, &res, kBaseValue);
+    int64_t ndims = strtol(res, &res, kDecimal);
     int j = 0;
     std::vector<int64_t> shape;
     shape.resize(ndims);
     for (; j < ndims; j++) {
       res = strtok_r(NULL, delims, &save_ptr);
-      shape[j] = static_cast<int64_t>(strtol(res, &res, kBaseValue));
+      shape[j] = static_cast<int64_t>(strtol(res, &res, kDecimal));
     }
     shapes->push_back(shape);
 

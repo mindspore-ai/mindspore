@@ -2,7 +2,7 @@
 
 # Build x86 tar.gz file for dpico
 function Run_Build_x86() {
-  export MSLITE_REGISTRY_DEVICE=sd3403
+  export MSLITE_REGISTRY_DEVICE=SD3403
   unset JAVA_HOME
   bash ${mindspore_top_dir}/build.sh -I x86_64 -j 80
   if [ $? = 0 ]; then
@@ -19,7 +19,7 @@ function Run_Build_x86() {
 
 # Build arm32 tar.gz file for dpico
 function Run_Build_arm64() {
-  export MSLITE_REGISTRY_DEVICE=sd3403
+  export MSLITE_REGISTRY_DEVICE=SD3403
   unset JAVA_HOME
   bash ${mindspore_top_dir}/build.sh -I arm64 -j 80
   if [ $? = 0 ]; then

@@ -36,6 +36,12 @@
 #include <asm/unistd.h>
 #include <unistd.h>
 #endif
+#ifdef SUPPORT_NNIE
+#include "include/hi_common.h"
+#include "include/hi_comm_vb.h"
+#include "include/mpi_sys.h"
+#include "include/mpi_vb.h"
+#endif
 
 namespace mindspore {
 constexpr size_t kDataToStringMaxNum = 40;
@@ -1081,7 +1087,7 @@ std::string DumpMSTensor(mindspore::MSTensor *tensor) {
   }
   return oss.str();
 }
-
+#ifndef BENCHMARK_CLIP_JSON
 std::string GenerateOutputFileName(mindspore::MSTensor *tensor, const std::string &op_name,
                                    const std::string &file_type, const size_t &idx) {
   std::string file_name = op_name;
@@ -1105,6 +1111,7 @@ std::string GenerateOutputFileName(mindspore::MSTensor *tensor, const std::strin
   file_name += +".bin";
   return file_name;
 }
+#endif
 }  // namespace
 
 int BenchmarkUnifiedApi::InitPrintTensorDataCallbackParameter() {
@@ -1132,6 +1139,7 @@ int BenchmarkUnifiedApi::InitPrintTensorDataCallbackParameter() {
   return RET_OK;
 }
 int BenchmarkUnifiedApi::InitDumpTensorDataCallbackParameter() {
+#ifndef BENCHMARK_CLIP_JSON
   // before callback
   ms_before_call_back_ = [&](const std::vector<mindspore::MSTensor> &before_inputs,
                              const std::vector<mindspore::MSTensor> &before_outputs,
@@ -1177,6 +1185,7 @@ int BenchmarkUnifiedApi::InitDumpTensorDataCallbackParameter() {
     }
     return true;
   };
+#endif
   return RET_OK;
 }
 
