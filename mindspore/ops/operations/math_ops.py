@@ -3320,7 +3320,7 @@ class Asinh(PrimitiveWithInfer):
         return x_dtype
 
 
-class Sinh(PrimitiveWithInfer):
+class Sinh(Primitive):
     r"""
     Computes hyperbolic sine of the input element-wise.
 
@@ -3353,12 +3353,6 @@ class Sinh(PrimitiveWithInfer):
     def __init__(self):
         """Initialize Sinh"""
 
-    def infer_shape(self, x_shape):
-        return x_shape
-
-    def infer_dtype(self, x_dtype):
-        validator.check_tensor_dtype_valid('x', x_dtype, mstype.number_type, self.name)
-        return x_dtype
 
 
 class _LogicBinaryOp(_BinaryOp):
