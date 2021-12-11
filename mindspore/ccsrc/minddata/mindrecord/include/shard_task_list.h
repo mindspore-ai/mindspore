@@ -49,54 +49,54 @@ class __attribute__((visibility("default"))) ShardTaskList {
   static void TaskListSwap(ShardTaskList &orig_tasks, ShardTaskList &new_tasks);
 
   // Assigns the task based on task id
-  inline void AssignTask(ShardTaskList &sourceTasks, size_t id);
+  inline void AssignTask(ShardTaskList &sourceTasks, int64_t id);
 
   inline void InsertTask(TaskType task_type, int shard_id, int group_id, const std::vector<uint64_t> &offset,
                          const json &label);
 
-  inline void InsertTask(const uint32_t &i, TaskType task_type, int shard_id, int group_id,
+  inline void InsertTask(const int64_t &i, TaskType task_type, int shard_id, int group_id,
                          const std::vector<uint64_t> &offset, const json &label);
 
   inline void InsertTask(ShardTask task);
 
-  inline void InsertTask(const uint32_t &i, ShardTask task);
+  inline void InsertTask(const int64_t &i, ShardTask task);
 
   void MakePerm();
 
-  inline void InsertSampleId(int id);
+  inline void InsertSampleId(int64_t id);
 
   void PopBack();
 
-  uint32_t Size() const;
+  int64_t Size() const;
 
-  uint32_t SizeOfRows() const;
+  int64_t SizeOfRows() const;
 
-  ShardTask &GetTaskByID(size_t id);
+  ShardTask &GetTaskByID(int64_t id);
 
   ShardTask &GetRandomTask();
 
-  int GetTaskSampleByID(size_t id);
+  int64_t GetTaskSampleByID(int64_t id);
 
-  int GetRandomTaskID();
+  int64_t GetRandomTaskID();
 
   static ShardTaskList Combine(std::vector<ShardTaskList> &category_tasks, bool replacement, int64_t num_elements,
                                int64_t num_samples);
 
-  inline void ResizeTask(const uint32_t &size);
+  inline void ResizeTask(const int64_t &size);
 
   uint32_t categories;
 
-  std::vector<int> permutation_;  // A list of ints used for shuffling sample ids
+  std::vector<int64_t> permutation_;  // A list of ints used for shuffling sample ids
 
-  std::vector<int> sample_ids_;  // The list of actual ids that were sampled
+  std::vector<int64_t> sample_ids_;  // The list of actual ids that were sampled
 
   std::vector<ShardTask> task_list_;  // The full list of tasks
 };
 
-inline void ShardTaskList::AssignTask(ShardTaskList &sourceTasks, size_t id) {
+inline void ShardTaskList::AssignTask(ShardTaskList &sourceTasks, int64_t id) {
   // Insert the sample id from the source into ourself by indexing at id position.
   // Important: The task list itself does not change.
-  int sample_id = sourceTasks.GetTaskSampleByID(id);
+  int64_t sample_id = sourceTasks.GetTaskSampleByID(id);
   MS_LOG(DEBUG) << "Insert sample id (" << sample_id << ") into task list from source task position: " << id;
   sample_ids_.push_back(sample_id);
 }
@@ -108,7 +108,7 @@ inline void ShardTaskList::InsertTask(TaskType task_type, int shard_id, int grou
   task_list_.emplace_back(task_type, std::make_tuple(shard_id, group_id), offset, label);
 }
 
-inline void ShardTaskList::InsertTask(const uint32_t &i, TaskType task_type, int shard_id, int group_id,
+inline void ShardTaskList::InsertTask(const int64_t &i, TaskType task_type, int shard_id, int group_id,
                                       const std::vector<uint64_t> &offset, const json &label) {
   MS_LOG(DEBUG) << "Insert task into task list, shard_id: " << shard_id << ", group_id: " << group_id
                 << ", label: " << label.dump() << ", size of task_list_: " << task_list_.size() << ".";
@@ -123,9 +123,9 @@ inline void ShardTaskList::InsertTask(ShardTask task) {
   task_list_.push_back(std::move(task));
 }
 
-inline void ShardTaskList::InsertTask(const uint32_t &i, ShardTask task) { task_list_[i] = std::move(task); }
+inline void ShardTaskList::InsertTask(const int64_t &i, ShardTask task) { task_list_[i] = std::move(task); }
 
-inline void ShardTaskList::ResizeTask(const uint32_t &size) { task_list_.resize(size); }
+inline void ShardTaskList::ResizeTask(const int64_t &size) { task_list_.resize(size); }
 }  // namespace mindrecord
 }  // namespace mindspore
 

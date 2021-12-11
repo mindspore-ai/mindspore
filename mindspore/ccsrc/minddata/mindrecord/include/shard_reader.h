@@ -81,7 +81,7 @@ class API_PUBLIC ShardReader {
   /// \return MSRStatus the status of MSRStatus
   Status Open(const std::vector<std::string> &file_paths, bool load_dataset, int n_consumer = 4,
               const std::vector<std::string> &selected_columns = {},
-              const std::vector<std::shared_ptr<ShardOperator>> &operators = {}, const int num_padded = 0,
+              const std::vector<std::shared_ptr<ShardOperator>> &operators = {}, const int64_t num_padded = 0,
               bool lazy_load = false);
 
   /// \brief close reader
@@ -120,7 +120,7 @@ class API_PUBLIC ShardReader {
   /// \param[out] count # of rows
   /// \return MSRStatus the status of MSRStatus
   Status CountTotalRows(const std::vector<std::string> &file_paths, bool load_dataset,
-                        const std::shared_ptr<ShardOperator> &op, int64_t *count, const int num_padded);
+                        const std::shared_ptr<ShardOperator> &op, int64_t *count, const int64_t num_padded);
 
   /// \brief shuffle task with incremental seed
   /// \return void
@@ -128,7 +128,7 @@ class API_PUBLIC ShardReader {
 
   /// \brief get the number of rows in database
   /// \return # of rows
-  int GetNumRows() const;
+  int64_t GetNumRows() const;
 
   /// \brief Read the summary of row groups
   /// \return the tuple of 4 elements
@@ -189,7 +189,7 @@ class API_PUBLIC ShardReader {
   Status GetAllClasses(const std::string &category_field, std::shared_ptr<std::set<std::string>> category_ptr);
 
   /// \brief get a read-only ptr to the sampled ids for this epoch
-  const std::vector<int> *GetSampleIds();
+  const std::vector<int64_t> *GetSampleIds();
 
   /// \brief get the size of blob data
   Status GetTotalBlobSize(int64_t *total_blob_size);
@@ -278,7 +278,7 @@ class API_PUBLIC ShardReader {
   void FileStreamsOperator();
 
   /// \brief read one row by one task
-  Status ConsumerOneTask(int task_id, uint32_t consumer_id, std::shared_ptr<TASK_CONTENT> *task_content_pt);
+  Status ConsumerOneTask(int64_t task_id, uint32_t consumer_id, std::shared_ptr<TASK_CONTENT> *task_content_pt);
 
   /// \brief get labels from binary file
   Status GetLabelsFromBinaryFile(int shard_id, const std::vector<std::string> &columns,
@@ -320,12 +320,12 @@ class API_PUBLIC ShardReader {
   bool all_in_index_ = true;  // if all columns are stored in index-table
   bool interrupt_ = false;    // reader interrupted
 
-  int num_padded_;  // number of padding samples
+  int64_t num_padded_;  // number of padding samples
 
   // Delivery/Iterator mode begin
   const std::string kThreadName = "THRD_ITER_";  // prefix of thread name
   std::vector<std::thread> thread_set_;          // thread list
-  int num_rows_;                                 // number of rows
+  int64_t num_rows_;                             // number of rows
   int64_t total_blob_size_;                      // total size of blob data
   std::mutex mtx_delivery_;                      // locker for delivery
   std::condition_variable cv_delivery_;          // conditional variable for delivery
@@ -343,7 +343,7 @@ class API_PUBLIC ShardReader {
   // 0 : 15  -  shard0 has 15 samples
   // 1 : 41  -  shard1 has 26 samples
   // 2 : 58  -  shard2 has 17 samples
-  std::vector<uint32_t> shard_sample_count_;
+  std::vector<int64_t> shard_sample_count_;
 };
 }  // namespace mindrecord
 }  // namespace mindspore

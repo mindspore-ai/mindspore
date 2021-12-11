@@ -43,21 +43,21 @@ int64_t ShardShuffle::GetNumSamples(int64_t dataset_size, int64_t num_classes) {
 }
 
 Status ShardShuffle::CategoryShuffle(ShardTaskList &tasks) {
-  uint32_t individual_size = tasks.sample_ids_.size() / tasks.categories;
-  std::vector<std::vector<int>> new_permutations(tasks.categories, std::vector<int>(individual_size));
-  for (uint32_t i = 0; i < tasks.categories; i++) {
-    for (uint32_t j = 0; j < individual_size; j++) new_permutations[i][j] = static_cast<int>(j);
+  int64_t individual_size = tasks.sample_ids_.size() / tasks.categories;
+  std::vector<std::vector<int64_t>> new_permutations(tasks.categories, std::vector<int64_t>(individual_size));
+  for (int64_t i = 0; i < tasks.categories; i++) {
+    for (int64_t j = 0; j < individual_size; j++) new_permutations[i][j] = j;
     std::shuffle(new_permutations[i].begin(), new_permutations[i].end(), std::default_random_engine(shuffle_seed_));
   }
   tasks.permutation_.clear();
-  for (uint32_t j = 0; j < individual_size; j++) {
-    for (uint32_t i = 0; i < tasks.categories; i++) {
-      tasks.permutation_.push_back(new_permutations[i][j] * static_cast<int>(tasks.categories) + static_cast<int>(i));
+  for (int64_t j = 0; j < individual_size; j++) {
+    for (int64_t i = 0; i < tasks.categories; i++) {
+      tasks.permutation_.push_back(new_permutations[i][j] * tasks.categories + i);
     }
   }
 
   ShardTaskList new_tasks;
-  for (size_t i = 0; i < individual_size; ++i) {
+  for (int64_t i = 0; i < individual_size; ++i) {
     new_tasks.AssignTask(tasks, tasks.permutation_[i]);
   }
   ShardTaskList::TaskListSwap(tasks, new_tasks);
@@ -67,15 +67,15 @@ Status ShardShuffle::CategoryShuffle(ShardTaskList &tasks) {
 
 Status ShardShuffle::ShuffleFiles(ShardTaskList &tasks) {
   if (no_of_samples_ == 0) {
-    no_of_samples_ = static_cast<int>(tasks.Size());
+    no_of_samples_ = tasks.Size();
   }
   CHECK_FAIL_RETURN_UNEXPECTED(
     no_of_samples_ > 0, "Invalid input, 'num_samples' should be positive but got: " + std::to_string(no_of_samples_));
   auto shard_sample_cout = GetShardSampleCount();
 
   // shuffle the files index
-  std::vector<uint32_t> shuffle_files;
-  for (uint32_t i = 0; i < shard_sample_cout.size(); i++) {
+  std::vector<int64_t> shuffle_files;
+  for (int64_t i = 0; i < shard_sample_cout.size(); i++) {
     shuffle_files.push_back(i);
   }
   std::shuffle(shuffle_files.begin(), shuffle_files.end(), std::default_random_engine(shuffle_seed_));
@@ -92,10 +92,10 @@ Status ShardShuffle::ShuffleFiles(ShardTaskList &tasks) {
   // files: [file4, file1, file3, file2]
   // permutation : [9, 10, 0, 1, 2, 7, 8, 3, 4, 5, 6]
   auto original_permutation = tasks.permutation_;
-  uint32_t whole_index = 0;
-  for (uint32_t i = 0; i < shuffle_files.size(); i++) {
-    uint32_t start_index = 0;
-    uint32_t current_size = 0;
+  int64_t whole_index = 0;
+  for (int64_t i = 0; i < shuffle_files.size(); i++) {
+    int64_t start_index = 0;
+    int64_t current_size = 0;
     if (shuffle_files[i] == 0) {
       start_index = 0;
       current_size = shard_sample_cout[shuffle_files[i]];
@@ -108,11 +108,11 @@ Status ShardShuffle::ShuffleFiles(ShardTaskList &tasks) {
     whole_index += current_size;
   }
 
-  auto total_no = static_cast<int64_t>(tasks.Size());
-  size_t samples_to_assign =
+  auto total_no = tasks.Size();
+  int64_t samples_to_assign =
     (no_of_samples_ > 0 && no_of_samples_ < total_no) ? no_of_samples_ : tasks.sample_ids_.size();
   ShardTaskList new_tasks;
-  for (size_t i = 0; i < samples_to_assign; ++i) {
+  for (int64_t i = 0; i < samples_to_assign; ++i) {
     new_tasks.AssignTask(tasks, tasks.permutation_[i]);
   }
   ShardTaskList::TaskListSwap(tasks, new_tasks);
@@ -121,7 +121,7 @@ Status ShardShuffle::ShuffleFiles(ShardTaskList &tasks) {
 
 Status ShardShuffle::ShuffleInfile(ShardTaskList &tasks) {
   if (no_of_samples_ == 0) {
-    no_of_samples_ = static_cast<int>(tasks.Size());
+    no_of_samples_ = tasks.Size();
   }
   CHECK_FAIL_RETURN_UNEXPECTED(
     no_of_samples_ > 0, "Invalid input, 'num_samples' should be positive but got: " + std::to_string(no_of_samples_));
@@ -136,18 +136,18 @@ Status ShardShuffle::ShuffleInfile(ShardTaskList &tasks) {
   // -- after --
   // permutation: [2, 0, 1, 4, 6, 3, 5, 8, 7, 9, 10]
   auto shard_sample_cout = GetShardSampleCount();
-  uint32_t start_index = 0;
-  for (uint32_t i = 0; i < shard_sample_cout.size(); i++) {
+  int64_t start_index = 0;
+  for (int64_t i = 0; i < shard_sample_cout.size(); i++) {
     auto current_size = shard_sample_cout[i] - start_index;
     std::shuffle(tasks.permutation_.begin() + start_index, tasks.permutation_.begin() + start_index + current_size,
                  std::default_random_engine(shuffle_seed_));
     start_index = shard_sample_cout[i];
   }
-  auto total_no = static_cast<int64_t>(tasks.Size());
+  auto total_no = tasks.Size();
   ShardTaskList new_tasks;
-  size_t samples_to_assign =
+  int64_t samples_to_assign =
     (no_of_samples_ > 0 && no_of_samples_ < total_no) ? no_of_samples_ : tasks.sample_ids_.size();
-  for (size_t i = 0; i < samples_to_assign; ++i) {
+  for (int64_t i = 0; i < samples_to_assign; ++i) {
     new_tasks.AssignTask(tasks, tasks.permutation_[i]);
   }
   ShardTaskList::TaskListSwap(tasks, new_tasks);
@@ -169,7 +169,7 @@ Status ShardShuffle::Execute(ShardTaskList &tasks) {
       if (replacement_ == true) {
         ShardTaskList new_tasks;
         if (no_of_samples_ == 0) {
-          no_of_samples_ = static_cast<int>(tasks.sample_ids_.size());
+          no_of_samples_ = tasks.sample_ids_.size();
         }
         CHECK_FAIL_RETURN_UNEXPECTED(no_of_samples_ > 0, "Invalid input, 'num_samples' should be positive but got: " +
                                                            std::to_string(no_of_samples_));
@@ -180,11 +180,11 @@ Status ShardShuffle::Execute(ShardTaskList &tasks) {
         ShardTaskList::TaskListSwap(tasks, new_tasks);
       } else {
         std::shuffle(tasks.permutation_.begin(), tasks.permutation_.end(), std::default_random_engine(shuffle_seed_));
-        auto total_no = static_cast<int64_t>(tasks.Size());
+        auto total_no = tasks.Size();
         ShardTaskList new_tasks;
-        size_t samples_to_assign =
+        int64_t samples_to_assign =
           (no_of_samples_ > 0 && no_of_samples_ < total_no) ? no_of_samples_ : tasks.sample_ids_.size();
-        for (size_t i = 0; i < samples_to_assign; ++i) {
+        for (int64_t i = 0; i < samples_to_assign; ++i) {
           new_tasks.AssignTask(tasks, tasks.permutation_[i]);
         }
         ShardTaskList::TaskListSwap(tasks, new_tasks);

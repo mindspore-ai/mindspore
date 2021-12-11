@@ -22,7 +22,7 @@ using mindspore::MsLogLevel::ERROR;
 
 namespace mindspore {
 namespace mindrecord {
-ShardSample::ShardSample(int n)
+ShardSample::ShardSample(int64_t n)
     : numerator_(0),
       denominator_(0),
       partition_id_(0),
@@ -31,7 +31,7 @@ ShardSample::ShardSample(int n)
       sampler_type_(kCustomTopNSampler),
       offset_(-1) {}
 
-ShardSample::ShardSample(int num, int den)
+ShardSample::ShardSample(int64_t num, int64_t den)
     : numerator_(num),
       denominator_(den),
       partition_id_(0),
@@ -40,7 +40,7 @@ ShardSample::ShardSample(int num, int den)
       sampler_type_(kCustomTopPercentSampler),
       offset_(-1) {}
 
-ShardSample::ShardSample(int num, int den, int par, int no_of_samples, int offset)
+ShardSample::ShardSample(int64_t num, int64_t den, int64_t par, int64_t no_of_samples, int64_t offset)
     : numerator_(num),
       denominator_(den),
       partition_id_(par),
@@ -80,26 +80,28 @@ int64_t ShardSample::GetNumSamples(int64_t dataset_size, int64_t num_classes) {
   return 0;
 }
 
-Status ShardSample::UpdateTasks(ShardTaskList &tasks, int taking) {
+Status ShardSample::UpdateTasks(ShardTaskList &tasks, int64_t taking) {
   if (tasks.permutation_.empty()) {
     ShardTaskList new_tasks;
-    int total_no = static_cast<int>(tasks.sample_ids_.size());
+    auto total_no = tasks.sample_ids_.size();
+    CHECK_FAIL_RETURN_UNEXPECTED(total_no > 0,
+                                 "[Internal ERROR] 'total_no' should be positive but got: " + std::to_string(total_no));
     if (sampler_type_ == kSubsetRandomSampler || sampler_type_ == kSubsetSampler) {
-      for (int i = 0; i < indices_.size(); ++i) {
-        int index = ((indices_[i] % total_no) + total_no) % total_no;
+      for (int64_t i = 0; i < indices_.size(); ++i) {
+        int64_t index = ((indices_[i] % total_no) + total_no) % total_no;
         new_tasks.AssignTask(tasks, index);  // different mod result between c and python
       }
     } else {
-      int count = 0;
+      int64_t count = 0;
       if (nums_per_shard_.empty()) {
-        for (size_t i = partition_id_ * taking; i < (partition_id_ + 1) * taking; i++) {
+        for (int64_t i = partition_id_ * taking; i < (partition_id_ + 1) * taking; i++) {
           if (no_of_samples_ != 0 && count == no_of_samples_) break;
           new_tasks.AssignTask(tasks, i % total_no);  // rounding up. if overflow, go back to start
           count++;
         }
       } else {
         // Get samples within a specific range
-        size_t i = partition_id_ - 1 >= 0 ? nums_per_shard_[partition_id_ - 1] : 0;
+        int64_t i = partition_id_ - 1 >= 0 ? nums_per_shard_[partition_id_ - 1] : 0;
         for (; i < nums_per_shard_[partition_id_]; i++) {
           if (no_of_samples_ != 0 && count == no_of_samples_) break;
           new_tasks.AssignTask(tasks, i % total_no);
@@ -110,9 +112,11 @@ Status ShardSample::UpdateTasks(ShardTaskList &tasks, int taking) {
     ShardTaskList::TaskListSwap(tasks, new_tasks);
   } else {
     ShardTaskList new_tasks;
-    int total_no = static_cast<int>(tasks.permutation_.size());
-    int cnt = 0;
-    for (size_t i = partition_id_ * taking; i < (partition_id_ + 1) * taking; i++) {
+    int64_t total_no = tasks.permutation_.size();
+    CHECK_FAIL_RETURN_UNEXPECTED(total_no > 0,
+                                 "[Internal ERROR] 'total_no' should be positive but got: " + std::to_string(total_no));
+    int64_t cnt = 0;
+    for (int64_t i = partition_id_ * taking; i < (partition_id_ + 1) * taking; i++) {
       if (no_of_samples_ != 0 && cnt == no_of_samples_) break;
       new_tasks.AssignTask(tasks, tasks.permutation_[i % total_no]);
       cnt++;
@@ -125,10 +129,10 @@ Status ShardSample::UpdateTasks(ShardTaskList &tasks, int taking) {
 Status ShardSample::Execute(ShardTaskList &tasks) {
   if (offset_ != -1) {
     int64_t old_v = 0;
-    int num_rows_ = static_cast<int>(tasks.sample_ids_.size());
-    for (int x = 0; x < denominator_; x++) {
-      int samples_per_buffer_ = (num_rows_ + offset_) / denominator_;
-      int remainder = (num_rows_ + offset_) % denominator_;
+    int64_t num_rows_ = tasks.sample_ids_.size();
+    for (int64_t x = 0; x < denominator_; x++) {
+      int64_t samples_per_buffer_ = (num_rows_ + offset_) / denominator_;
+      int64_t remainder = (num_rows_ + offset_) % denominator_;
       if (x < remainder) samples_per_buffer_++;
       if (x < offset_) samples_per_buffer_--;
       old_v += samples_per_buffer_;
@@ -137,13 +141,13 @@ Status ShardSample::Execute(ShardTaskList &tasks) {
     }
   }
   int no_of_categories = static_cast<int>(tasks.categories);
-  int total_no = static_cast<int>(tasks.sample_ids_.size());
-  int taking = 0;
+  int64_t total_no = tasks.sample_ids_.size();
+  int64_t taking = 0;
   if (sampler_type_ == kCustomTopNSampler) {  // non sharding case constructor #1
     no_of_samples_ = std::min(no_of_samples_, total_no);
     taking = no_of_samples_ - no_of_samples_ % no_of_categories;
   } else if (sampler_type_ == kSubsetRandomSampler || sampler_type_ == kSubsetSampler) {
-    CHECK_FAIL_RETURN_UNEXPECTED(static_cast<int>(indices_.size()) <= total_no,
+    CHECK_FAIL_RETURN_UNEXPECTED(static_cast<int64_t>(indices_.size()) <= total_no,
                                  "Invalid input, indices size: " + std::to_string(indices_.size()) +
                                    " should be less than or equal to database size: " + std::to_string(total_no) + ".");
   } else {  // constructor TopPercent

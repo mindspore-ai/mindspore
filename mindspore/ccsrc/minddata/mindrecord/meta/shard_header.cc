@@ -81,7 +81,8 @@ Status ShardHeader::CheckFileStatus(const std::string &path) {
     fin.close();
     RETURN_STATUS_UNEXPECTED("Invalid file, the size of mindrecord file: " + std::to_string(file_size) +
                              " is smaller than the lower limit: " + std::to_string(kMinFileSize) +
-                             ".\n Please use 'FileWriter' to generate valid mindrecord files.");
+                             ".\n Please check file path: " + path +
+                             " and use 'FileWriter' to generate valid mindrecord files.");
   }
   fin.close();
   return Status::OK();
