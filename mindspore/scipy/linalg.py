@@ -23,8 +23,7 @@ from .ops import LUSolver
 from .ops import EighNet
 from ..ops import operations as P
 
-__all__ = ['block_diag', 'solve_triangular', 'inv', 'cho_factor', 'cholesky', 'cho_solve', 'eigh', 'lu_factor', 'lu',
-           'lu_solve']
+__all__ = ['block_diag', 'inv', 'eigh', 'lu_factor', 'lu']
 
 
 def block_diag(*arrs):

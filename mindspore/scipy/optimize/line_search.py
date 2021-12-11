@@ -303,7 +303,7 @@ class LineSearch(nn.Cell):
 
 
 def line_search(f, xk, pk, old_fval=None, old_old_fval=None, gfk=None, c1=1e-4,
-                c2=0.9, maxiter=20) -> _LineSearchResults:
+                c2=0.9, maxiter=20):
     """Inexact line search that satisfies strong Wolfe conditions.
 
     Algorithm 3.5 from Wright and Nocedal, 'Numerical Optimization', 1999, pg. 59-61
