@@ -50,6 +50,7 @@ class GatherActor : public ControlActor {
   friend class ControlNodeScheduler;
 
   void FetchOutput(OpRealParameterWithBranchID *const output, OpContext<DeviceTensor> *const context);
+  void SendMemoryFreeReq(OpContext<DeviceTensor> *const context) override;
 
   // There will be multiple output branches for gather actor according the funcgraph in partial.
   mindspore::HashMap<FuncGraph *, std::vector<AID>> output_data_with_branch_id_arrows_;

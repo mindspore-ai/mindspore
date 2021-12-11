@@ -118,7 +118,7 @@ void EntranceActor::FetchInput(OpContext<DeviceTensor> *const context) {
     if (device_tensors.size() + partials.size() != formal_parameters_.size()) {
       std::string error_info = "Invalid input num, need:" + std::to_string(formal_parameters_.size()) +
                                " device tensor num:" + std::to_string(device_tensors.size()) +
-                               " partial num:" + std::to_string(partials.size());
+                               " partial num:" + std::to_string(partials.size()) + " for actor:" + GetAID().Name();
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
     }
     for (const auto &device_tensor : device_tensors) {
