@@ -60,7 +60,7 @@ const unsigned int MAX_CALL_DEPTH_DEFAULT = 1000;
 const std::set<std::string> kTargetSet = {kCPUDevice, kGPUDevice, kAscendDevice, kDavinciDevice};
 // The default max available device memory is 1024GB.
 const float kDefaultMaxDeviceMemory = 1024;
-// The default memory pool init percent is 1.0.
+// The default memory pool block size is 1.0G.
 const float kDefaultMempoolBlockSize = 1.0;
 
 // enum definition for MindSpore Context Parameter
