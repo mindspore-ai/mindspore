@@ -148,6 +148,8 @@ build_lite() {
       MSLITE_REGISTRY_DEVICE=Hi3516D
     elif [[ "${MSLITE_REGISTRY_DEVICE}" == "Hi3559A" && "${local_lite_platform}" == "arm64" ]]; then
       TOOLCHAIN_NAME="himix100"
+    elif [[ "${MSLITE_REGISTRY_DEVICE}" == "sd3403" && "${local_lite_platform}" == "arm64" ]]; then
+      TOOLCHAIN_NAME="mix210"
     elif [[ "${MSLITE_REGISTRY_DEVICE}" == "Hi3519A" && "${local_lite_platform}" == "arm32" ]]; then
       TOOLCHAIN_NAME="himix200"
     elif [[ ("${MSLITE_ENABLE_NNIE}" == "on" || "${MSLITE_REGISTRY_DEVICE}" == "Hi3516D") && "${local_lite_platform}" == "x86_64" ]]; then
@@ -189,6 +191,12 @@ build_lite() {
         LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DBUILD_MINDDATA=off"
         LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DMSLITE_ENABLE_FP16=off -DMSLITE_ENABLE_TRAIN=off -DMSLITE_GPU_BACKEND=off"
         LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DMSLITE_ENABLE_TOOLS=off"
+      elif [[ "${TOOLCHAIN_NAME}" == "mix210" ]]; then
+        CMAKE_TOOLCHAIN_FILE=${BASEPATH}/mindspore/lite/cmake/mix210.toolchain.cmake
+        LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DTOOLCHAIN_NAME=mix210"
+        LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DBUILD_MINDDATA=off"
+        LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DMSLITE_ENABLE_FP16=off -DMSLITE_ENABLE_TRAIN=off -DMSLITE_GPU_BACKEND=off"
+        LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DMSLITE_ENABLE_TOOLS=off"
       else
         if [[ "${machine}" == "aarch64" ]]; then
           LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DMACHINE_LINUX_ARM64=on"
@@ -220,15 +228,20 @@ build_lite() {
     if [[ "X$CMAKE_TOOLCHAIN_FILE" != "X" ]]; then
       LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}"
     fi
-    if [[ "X$MSLITE_REGISTRY_DEVICE" != "X" ]]; then
+    if [[ "X$MSLITE_REGISTRY_DEVICE" != "X" ]] && [[ "${MSLITE_REGISTRY_DEVICE}" != "sd3403" ]]; then
       LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DMSLITE_REGISTRY_DEVICE=${MSLITE_REGISTRY_DEVICE}"
     fi
-
     if [[ "${local_lite_platform}" == "arm64" || "${local_lite_platform}" == "arm32" ]]; then
       echo "default link libc++_static.a, export MSLITE_ANDROID_STL=c++_shared to link libc++_shared.so"
     fi
     echo "cmake ${LITE_CMAKE_ARGS} ${BASEPATH}/mindspore/lite"
-    cmake ${LITE_CMAKE_ARGS}  "${BASEPATH}/mindspore/lite"
+    if [[ "${MSLITE_REGISTRY_DEVICE}" == "sd3403" ]] && [[ "${local_lite_platform}" == "arm64" ]]; then
+      export MSLITE_REGISTRY_DEVICE=""
+      cmake ${LITE_CMAKE_ARGS}  "${BASEPATH}/mindspore/lite"
+      export MSLITE_REGISTRY_DEVICE=sd3403
+    else
+      cmake ${LITE_CMAKE_ARGS}  "${BASEPATH}/mindspore/lite"
+    fi
 
     if [[ "$(uname)" == "Darwin" && "${local_lite_platform}" != "x86_64" ]]; then
         xcodebuild ONLY_ACTIVE_ARCH=NO -configuration Release -scheme mindspore-lite_static -target mindspore-lite_static -sdk iphoneos -quiet
@@ -275,7 +288,7 @@ build_lite() {
         fi
 
         [ -n "${BASEPATH}" ] && rm -rf ${BASEPATH}/output/tmp/
-        if [[ "X$MSLITE_REGISTRY_DEVICE" != "X" ]]; then
+        if [[ "X$MSLITE_REGISTRY_DEVICE" != "X" ]] && [[ "${MSLITE_REGISTRY_DEVICE}" != "sd3403" ]]; then
           local compile_nnie_script=${BASEPATH}/mindspore/lite/tools/providers/NNIE/Hi3516D/compile_nnie.sh
           cd ${BASEPATH}/../
           if [[ "${local_lite_platform}" == "x86_64" ]]; then
@@ -286,6 +299,25 @@ build_lite() {
           if [[ $? -ne 0 ]]; then
             echo "compile ${local_lite_platform} for nnie failed."
             exit 1
+          fi
+        elif [[ "${MSLITE_REGISTRY_DEVICE}" == "sd3403" ]] && [[ "${local_lite_platform}" == "arm64" ]]; then
+          LITE_CMAKE_ARGS=$(echo ${LITE_CMAKE_ARGS} | sed -e "s/MSLITE_ENABLE_TOOLS=off/MSLITE_ENABLE_TOOLS=on/g")
+          LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DMSLITE_REGISTRY_DEVICE=${MSLITE_REGISTRY_DEVICE}"
+          cmake ${LITE_CMAKE_ARGS}  "${BASEPATH}/mindspore/lite"
+          cd ${BASEPATH}
+          compile_dpico_script=${BASEPATH}/mindspore/lite/tools/providers/dpico/sd3403/compile_3403.sh
+          bash ${compile_dpico_script} -t prepare_third_party
+          if [[ $? -ne 0 ]]; then
+              echo "prepare for dpico failed."
+              exit 1
+          fi
+          cd ${BASEPATH}/mindspore/lite/build
+          make -j$THREAD_NUM
+          cd ${BASEPATH}
+          sh ${compile_dpico_script}
+          if [[ $? -ne 0 ]]; then
+              echo "second compile arm64 for dpico failed."
+              exit 1
           fi
         fi
         echo "---------------- mindspore lite: build success ----------------"

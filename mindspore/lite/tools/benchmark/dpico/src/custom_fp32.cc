@@ -33,18 +33,18 @@ namespace lite {
 namespace {
 constexpr size_t kBitNumOfOneByte = 8;
 
-constexpr size_t TOP_LEFT_X = 0;
-constexpr size_t TOP_LEFT_Y = 1;
-constexpr size_t BOTTOM_RIGHT_X = 2;
-constexpr size_t BOTTOM_RIGHT_Y = 3;
-constexpr size_t SCORE = 4;
-constexpr size_t CLASS_ID = 5;
-constexpr size_t BBOX_SIZE = 6;
+constexpr int TOP_LEFT_X = 0;
+constexpr int TOP_LEFT_Y = 1;
+constexpr int BOTTOM_RIGHT_X = 2;
+constexpr int BOTTOM_RIGHT_Y = 3;
+constexpr int SCORE = 4;
+constexpr int CLASS_ID = 5;
+constexpr int BBOX_SIZE = 6;
 
-constexpr size_t NMS_THR = 0;
-constexpr size_t SCORE_THR = 1;
-constexpr size_t MIN_HEIGHT = 2;
-constexpr size_t MIN_WIDTH = 3;
+constexpr int NMS_THR = 0;
+constexpr int SCORE_THR = 1;
+constexpr int MIN_HEIGHT = 2;
+constexpr int MIN_WIDTH = 3;
 
 int DetermineInputIndexInOm(const svp_acl_mdl_desc *model_desc, const std::string &tensor_name, size_t *input_index) {
   MS_CHECK_FALSE_MSG(model_desc == nullptr || input_index == nullptr, SVP_ACL_ERROR_INVALID_PARAM,

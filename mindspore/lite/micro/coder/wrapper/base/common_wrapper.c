@@ -22,7 +22,7 @@
 
 bool GetSupportOptFlag() {
   bool status = false;
-#if defined(ENABLE_ARM64) && !defined(SUPPORT_NNIE) && !defined(MS_COMPILE_IOS)
+#if defined(ENABLE_ARM64) && !defined(SUPPORT_NNIE) && !defined(MS_COMPILE_IOS) && !defined(SUPPORT_34XX)
   int hwcap_type = 16;
   // getHwCap
   const uint32_t hwcap = getauxval(hwcap_type);
