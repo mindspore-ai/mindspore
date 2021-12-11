@@ -47,6 +47,9 @@ class SuperKernelActor : public DebugAwareActor {
 
   size_t FetchInputNodePosition(const AnfNodePtr &intput_node);
 
+  // The debug related operation interface.
+  void SendDebugReq(OpContext<DeviceTensor> *const context) override;
+
   const KernelGraphPtr &graph() const { return graph_; }
 
  protected:

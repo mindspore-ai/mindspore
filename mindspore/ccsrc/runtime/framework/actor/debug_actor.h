@@ -38,6 +38,10 @@ class DebugActor : public ActorBase {
   void Debug(const AnfNodePtr &node, const KernelLaunchInfo *launch_info_, const DeviceContext *device_context,
              OpContext<DeviceTensor> *const op_context, const AID *from_aid);
 
+  // The debug of kernel graph.
+  void DebugForGraph(const KernelGraphPtr &graph, const DeviceContext *device_context,
+                     OpContext<DeviceTensor> *const op_context, const AID *from_aid);
+
   // The debug on step begin.
   void DebugOnStepBegin(std::vector<KernelGraphPtr> graphs, std::vector<DeviceContext *> device_contexts,
                         OpContext<DeviceTensor> *const op_context, const AID *from_aid);
