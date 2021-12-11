@@ -55,21 +55,6 @@ def test_use_monad():
 
 
 @ms_function
-def use_tensor_with_mstype():
-    me_x = Tensor(1, mstype.int32)
-    return me_x
-
-
-def test_tensor_with_mstype():
-    """
-    Feature: JIT Fallback
-    Description: Test tensor with mstype in graph mode.
-    Expectation: No exception.
-    """
-    print(use_tensor_with_mstype())
-
-
-@ms_function
 def use_tuple_of_tensor():
     me_x = (Tensor(1), Tensor(1))
     return me_x
@@ -244,11 +229,7 @@ def test_np_tensor_add():
     print("tensor_list:", tensor_list)
     assert tensor_list[-1] == 11
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+
 def test_binop_new_tensor():
     """
     Feature: Fallback feature
@@ -268,11 +249,6 @@ def test_binop_new_tensor():
     print(net())
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_fallback_tensor_compare():
     """
     Feature: Fallback feature
@@ -293,11 +269,6 @@ def test_fallback_tensor_compare():
     print(compare_net())
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_fallback_tensor_not():
     """
     Feature: Fallback feature
