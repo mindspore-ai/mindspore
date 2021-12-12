@@ -933,7 +933,7 @@ std::string GenerateOutputFileName(tensor::MSTensor *tensor, const std::string &
   if (kTypeIdMap.find(tensor->data_type()) != kTypeIdMap.end()) {
     file_name += kTypeIdMap.at(tensor->data_type());
   }
-  auto tensor_format = static_cast<schema::Format>(static_cast<lite::Tensor *>(tensor)->format());
+  auto tensor_format = static_cast<lite::Tensor *>(tensor)->format();
   if (kTensorFormatMap.find(tensor_format) != kTensorFormatMap.end()) {
     file_name += "_" + kTensorFormatMap.at(tensor_format) + ".bin";
   }
