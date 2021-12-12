@@ -125,6 +125,7 @@ from .sigmoid_cross_entropy_with_logits import _sigmoid_cross_entropy_with_logit
 from .sigmoid_cross_entropy_with_logits_ds import _sigmoid_cross_entropy_with_logits_ds_tbe
 from .sigmoid_cross_entropy_with_logits_grad import _sigmoid_cross_entropy_with_logits_grad_tbe
 from .sparse_apply_adadelta import _sparse_apply_adadelta_tbe
+from .sigmoid_cross_entropy_with_logits_grad_ds import _sigmoid_cross_entropy_with_logits_grad_ds_tbe
 from .tensor_add import _tensor_add_tbe
 from .tensor_add_ds import _tensor_add_ds_tbe
 from .trans_data import _trans_data_tbe

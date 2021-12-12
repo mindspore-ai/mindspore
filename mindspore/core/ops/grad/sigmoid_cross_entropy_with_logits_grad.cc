@@ -26,32 +26,52 @@
 
 namespace mindspore {
 namespace ops {
-AbstractBasePtr SigmoidCrossEntropyWithLogitsGradInfer(const abstract::AnalysisEnginePtr &,
-                                                       const PrimitivePtr &primitive,
-                                                       const std::vector<AbstractBasePtr> &input_args) {
+namespace {
+abstract::ShapePtr SigmoidCrossEntropyWithLogitsGradInferShape(const PrimitivePtr &primitive,
+                                                               const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  const int64_t input_num = 3;
-  (void)CheckAndConvertUtils::CheckInteger("sigmoid_cross_entropy_with_logits_grad_infer",
-                                           SizeToLong(input_args.size()), kEqual, input_num, prim_name);
+  const int64_t kInputNum = 3;
+  (void)CheckAndConvertUtils::CheckInteger("sigmoid_cross_extropy_with_logits_infer_shape",
+                                           SizeToLong(input_args.size()), kGreaterEqual, kInputNum, prim_name);
+  auto x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
+  auto y = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex1);
+  auto dout = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex2);
+  auto x_ptr = x->BuildShape()->cast<abstract::ShapePtr>();
+  abstract::CheckShapeSame(prim_name, x, y);
+  abstract::CheckShapeSame(prim_name, x, dout);
+  MS_EXCEPTION_IF_NULL(x_ptr);
+  return x_ptr;
+}
 
-  // Infer Shape
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-  auto dout_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
-  CheckAndConvertUtils::Check("x_shape", x_shape, kEqual, "y_shape", y_shape, prim_name, TypeError);
-  CheckAndConvertUtils::Check("x_shape", x_shape, kEqual, "dout_shape", dout_shape, prim_name, TypeError);
-
-  // Infer type
+TypePtr SigmoidCrossEntropyWithLogitsGradInferType(const PrimitivePtr &primitive,
+                                                   const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+  const int64_t kInputNum = 3;
+  (void)CheckAndConvertUtils::CheckInteger("sigmoid_cross_extropy_with_logits_infer_type",
+                                           SizeToLong(input_args.size()), kGreaterEqual, kInputNum, prim_name);
+  auto x_type = input_args[0]->BuildType();
+  auto y_type = input_args[1]->BuildType();
+  auto dout_type = input_args[2]->BuildType();
   const std::set<TypePtr> valid_types = {kBool,   kInt,    kInt8,   kInt16, kInt32,   kInt64,   kUInt,    kUInt8,
                                          kUInt16, kUInt32, kUInt64, kFloat, kFloat16, kFloat32, kFloat64, kComplex64};
   std::map<std::string, TypePtr> args;
-  (void)args.emplace("x_type", input_args[kInputIndex0]->BuildType());
-  (void)args.emplace("y_type", input_args[kInputIndex1]->BuildType());
-  (void)args.emplace("dout_type", input_args[kInputIndex2]->BuildType());
-  auto dout_type = CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, prim_name);
-  return std::make_shared<abstract::AbstractTensor>(dout_type, x_shape);
+  (void)args.emplace("x_type", x_type);
+  (void)args.emplace("y_type", y_type);
+  (void)args.emplace("dout_type", dout_type);
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, primitive->name());
+  return dout_type;
 }
-REGISTER_PRIMITIVE_C(kNameSigmoidCrossEntropyWithLogitsGrad, SigmoidCrossEntropyWithLogitsGrad);
+}  // namespace
+AbstractBasePtr SigmoidCrossEntropyWithLogitsGradInfer(const abstract::AnalysisEnginePtr &,
+                                                       const PrimitivePtr &primitive,
+                                                       const std::vector<AbstractBasePtr> &input_args) {
+  auto infer_type = SigmoidCrossEntropyWithLogitsGradInferType(primitive, input_args);
+  auto infer_shape = SigmoidCrossEntropyWithLogitsGradInferShape(primitive, input_args);
+  return abstract::MakeAbstract(infer_shape, infer_type);
+}
+REGISTER_PRIMITIVE_EVAL_IMPL(SigmoidCrossEntropyWithLogitsGrad, prim::kPrimSigmoidCrossEntropyWithLogitsGrad,
+                             SigmoidCrossEntropyWithLogitsGradInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore
