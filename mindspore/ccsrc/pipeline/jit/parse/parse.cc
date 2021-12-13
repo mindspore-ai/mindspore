@@ -1057,7 +1057,9 @@ AnfNodePtr Parser::ParseSubscript(const FunctionBlockPtr &block, const py::objec
   py::object value_node = python_adapter::GetPyObjAttr(node, "value");
   py::object slice_node = python_adapter::GetPyObjAttr(node, "slice");
   AnfNodePtr value = ParseExprNode(block, value_node);
+  value = HandleInterpret(block, value, value_node);
   AnfNodePtr slice = ParseExprNode(block, slice_node);
+  slice = HandleInterpret(block, slice, slice_node);
   return block->func_graph()->NewCNodeInOrder({op_getitem, value, slice});
 }
 
@@ -1149,6 +1151,7 @@ FunctionBlockPtr Parser::ParseAugAssign(const FunctionBlockPtr &block, const py:
   AnfNodePtr target_node = nullptr;
   AnfNodePtr op_node = block->MakeResolveAstOp(op_object);
   AnfNodePtr value_node = ParseExprNode(block, value_object);
+  value_node = HandleInterpret(block, value_node, value_object);
   auto ast_type = AstSubType(py::cast<int32_t>(ast_->CallParseModFunction(PYTHON_PARSE_GET_AST_TYPE, target_object)));
 
   if (ast_type == AST_SUB_TYPE_NAME) {
@@ -1192,6 +1195,7 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
   MS_LOG(DEBUG) << "Process ast If";
   py::object test_node = python_adapter::GetPyObjAttr(node, "test");
   AnfNodePtr condition_node = ParseExprNode(block, test_node);
+  condition_node = HandleInterpret(block, condition_node, test_node);
   MS_EXCEPTION_IF_NULL(block);
   CNodePtr bool_node = block->ForceToBoolNode(condition_node);
 

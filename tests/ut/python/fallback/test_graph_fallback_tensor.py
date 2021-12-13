@@ -2,10 +2,12 @@ import pytest
 import numpy as np
 from mindspore import Tensor, ms_function, context
 import mindspore.common.dtype as mstype
+import mindspore.nn as nn
 from mindspore.common.initializer import One
 
 
 context.set_context(mode=context.GRAPH_MODE)
+
 
 def test_tensor():
     """
@@ -213,3 +215,197 @@ def test_tensor_astype():
         out = a.astype("int32")
         return out
     print(foo())
+
+
+# EvalCNode: This may be not defined, or it can't be a operator.
+@pytest.mark.skip(reason='Not support graph fallback feature yet')
+def test_np_tensor_add():
+    """
+    Feature: Fallback feature
+    Description: support Tensor add.
+    Expectation: No exception.
+    """
+    @ms_function
+    def np_tensor_add():
+        a = Tensor(np.array(4))
+        b = Tensor(np.array(5))
+        tensor_list = [a, b]
+        for tensor in tensor_list:
+            print(tensor)
+        x = 6
+        np_x = np.array(x)
+        c = Tensor(np_x)
+        d = tensor_list[-1] + c
+        tensor_list.append(d)
+        return tensor_list
+
+    tensor_list = np_tensor_add()
+    print("tensor_list:", tensor_list)
+    assert tensor_list[-1] == 11
+
+
+def test_binop_new_tensor():
+    """
+    Feature: Fallback feature
+    Description: support binop's interpreted nodes.
+    Expectation: No exception.
+    """
+    class BinOpNet(nn.Cell):
+        def __init__(self):
+            super(BinOpNet, self).__init__()
+
+        def construct(self):
+            np_array = np.array(9)
+            res = Tensor(np_array) + Tensor(np_array)
+            return res
+
+    net = BinOpNet()
+    print(net())
+
+
+def test_fallback_tensor_compare():
+    """
+    Feature: Fallback feature
+    Description: support compare op's interpreted nodes.
+    Expectation: No exception.
+    """
+    class CompareNet(nn.Cell):
+        def __init__(self):
+            super(CompareNet, self).__init__()
+
+        def construct(self):
+            np_array_1 = np.array(1)
+            np_array_2 = np.array(2)
+            res = Tensor(np_array_1) < Tensor(np_array_2)
+            return res
+
+    compare_net = CompareNet()
+    print(compare_net())
+
+
+def test_fallback_tensor_not():
+    """
+    Feature: Fallback feature
+    Description: support bool op's interpreted nodes.
+    Expectation: No exception.
+    """
+    class NotNet(nn.Cell):
+        def __init__(self):
+            super(NotNet, self).__init__()
+
+        def construct(self):
+            np_array_1 = np.array(True, dtype=np.bool_)
+            res = not Tensor(np_array_1)
+            return res
+
+    net = NotNet()
+    res = net()
+    print("res:", res)
+
+
+@pytest.mark.skip(reason='Not support graph fallback feature yet')
+def test_fallback_tensor_and():
+    """
+    Feature: Fallback feature
+    Description: support bool op's interpreted nodes.
+    Expectation: No exception.
+    """
+    class AndNet(nn.Cell):
+        def __init__(self):
+            super(AndNet, self).__init__()
+
+        def construct(self):
+            np_array_1 = np.array(True, dtype=np.bool_)
+            np_array_2 = np.array(False, dtype=np.bool_)
+            res = Tensor(np_array_1) and Tensor(np_array_2)
+            return res
+
+    net = AndNet()
+    res = net()
+    print("res:", res)
+
+
+@pytest.mark.skip(reason='Not support graph fallback feature yet')
+def test_fallback_tensor_or():
+    """
+    Feature: Fallback feature
+    Description: support bool op's interpreted nodes.
+    Expectation: No exception.
+    """
+    class OrNet(nn.Cell):
+        def __init__(self):
+            super(OrNet, self).__init__()
+
+        def construct(self):
+            np_array_1 = np.array(True, dtype=np.bool_)
+            np_array_2 = np.array(False, dtype=np.bool_)
+            res = Tensor(np_array_1) or Tensor(np_array_2)
+            return res
+
+    net = OrNet()
+    res = net()
+    print("res:", res)
+
+
+def test_fallback_tensor_augassign():
+    """
+    Feature: Fallback feature
+    Description: support interpreted nodes in augassign.
+    Expectation: No exception.
+    """
+    class OrNet(nn.Cell):
+        def __init__(self):
+            super(OrNet, self).__init__()
+
+        def construct(self):
+            np_array_1 = np.array(1)
+            np_array_2 = np.array(2)
+            res = Tensor(np_array_1)
+            res += Tensor(np_array_2)
+            return res
+
+    net = OrNet()
+    res = net()
+    print("res:", res)
+
+
+def test_fallback_tensor_subscript():
+    """
+    Feature: Fallback feature
+    Description: support interpreted nodes in subscript.
+    Expectation: No exception.
+    """
+    class SubScriptNet(nn.Cell):
+        def __init__(self):
+            super(SubScriptNet, self).__init__()
+
+        def construct(self):
+            np_array_1 = np.array([1, 2, 3, 4, 5])
+            np_array_2 = np.array(2)
+            res = Tensor(np_array_1)[Tensor(np_array_2)]
+            return res
+
+    net = SubScriptNet()
+    res = net()
+    print("res:", res)
+
+
+def test_fallback_tensor_if():
+    """
+    Feature: Fallback feature
+    Description: support interpreted nodes in if statement.
+    Expectation: No exception.
+    """
+    class IfNet(nn.Cell):
+        def __init__(self):
+            super(IfNet, self).__init__()
+
+        def construct(self):
+            np_array_1 = np.array(1)
+            if Tensor(np_array_1):
+                return 1
+            return 0
+
+    net = IfNet()
+    res = net()
+    print("res:", res)
