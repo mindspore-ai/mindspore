@@ -53,7 +53,7 @@ def test_single_for_01():
     y = Tensor([5], mstype.int32)
     z = Tensor([4], mstype.int32)
 
-    os.environ['DEV_ENV_FOR_TO_WHILE_LOOP'] = '1'
+    os.environ['MS_DEV_FOR_TO_WHILE_LOOP'] = '1'
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
     for_net = SingleForNet()
@@ -67,7 +67,7 @@ def test_single_for_01():
     net = GradNet(for_net)
     pynative_forward_res = for_net(x, y, z)
     pynative_backward_res = net(x, y, z)
-    os.environ['DEV_ENV_FOR_TO_WHILE_LOOP'] = ''
+    os.environ['MS_DEV_FOR_TO_WHILE_LOOP'] = ''
 
     assert graph_forward_res == pynative_forward_res
     assert graph_backward_res == pynative_backward_res

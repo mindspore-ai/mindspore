@@ -635,7 +635,7 @@ DumpConfig GetDumpConfig() {
   }
   parsed = true;
   // Start parse config.
-  std::string str(common::GetEnv("DEV_ENV_DUMP_IR_CONFIG"));
+  std::string str(common::GetEnv("MS_DEV_DUMP_IR_CONFIG"));
   std::vector<std::shared_ptr<HashSet<std::string>>> configs = {std::make_shared<HashSet<std::string>>(),
                                                                 std::make_shared<HashSet<std::string>>(),
                                                                 std::make_shared<HashSet<std::string>>()};

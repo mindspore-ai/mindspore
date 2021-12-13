@@ -134,7 +134,7 @@ def get_bprop_method_of_class(obj, parse_method=None):
 
 # The fallback feature is enabled in default.
 # Not support change the flag during the process is alive.
-support_fallback_ = os.getenv('DEV_ENV_ENABLE_FALLBACK')
+support_fallback_ = os.getenv('MS_DEV_ENABLE_FALLBACK')
 
 
 def resolve_symbol(namespace, symbol):
@@ -519,7 +519,7 @@ def eval_script(exp_str, params):
         obj = eval(exp_str, global_params, local_params)
     except Exception as e:
         error_info = f"When eval '{exp_str}' by using Fallback feature, an error occurred: " + str(e) + \
-            ". You can try to turn off the Fallback feature by 'export DEV_ENV_ENABLE_FALLBACK=0'."
+            ". You can try to turn off the Fallback feature by 'export MS_DEV_ENABLE_FALLBACK=0'."
         logger.error(error_info)
         raise e
 
