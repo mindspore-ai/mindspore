@@ -228,7 +228,13 @@ std::string PartialAbstractClosure::ToString() const {
   buffer << "PartialAbstractClosure(" << fn_->ToString() << "(";
   for (const auto &arg : args_spec_list_) {
     MS_EXCEPTION_IF_NULL(arg);
-    buffer << arg->ToString() << ", ";
+    if (arg->isa<AbstractFuncAtom>()) {
+      // If the arg is a subclass of AbstractFuncAtom, a recursive dead loop may occur.
+      // So in this case, we use type_name() instead of ToString().
+      buffer << arg->type_name() << ", ";
+    } else {
+      buffer << arg->ToString() << ", ";
+    }
   }
   buffer << "))";
   return buffer.str();
@@ -275,7 +281,13 @@ std::string VirtualAbstractClosure::ToString() const {
   int64_t i = 0;
   for (const auto &arg : args_spec_list_) {
     MS_EXCEPTION_IF_NULL(arg);
-    buffer << "[" << i << "]: " << arg->ToString() << ", ";
+    if (arg->isa<AbstractFuncAtom>()) {
+      // If the arg is a subclass of AbstractFuncAtom, a recursive dead loop may occur.
+      // So in this case, we use type_name() instead of ToString().
+      buffer << "[" << i << "]: " << arg->type_name() << ", ";
+    } else {
+      buffer << "[" << i << "]: " << arg->ToString() << ", ";
+    }
     i++;
   }
   MS_EXCEPTION_IF_NULL(output_);
@@ -312,7 +324,13 @@ std::string TypedPrimitiveAbstractClosure::ToString() const {
   int64_t i = 0;
   for (const auto &arg : args_spec_list_) {
     MS_EXCEPTION_IF_NULL(arg);
-    buffer << "[" << i << "]: " << arg->ToString() << ", ";
+    if (arg->isa<AbstractFuncAtom>()) {
+      // If the arg is a subclass of AbstractFuncAtom, a recursive dead loop may occur.
+      // So in this case, we use type_name() instead of ToString().
+      buffer << "[" << i << "]: " << arg->type_name() << ", ";
+    } else {
+      buffer << "[" << i << "]: " << arg->ToString() << ", ";
+    }
     i++;
   }
   MS_EXCEPTION_IF_NULL(output_);
