@@ -150,6 +150,7 @@ constexpr auto kOutputChannel = "output_channel";
 constexpr auto kOutputNum = "output_num";
 constexpr auto kOutputPaddings = "output_paddings";
 constexpr auto kOutputType = "output_type";
+constexpr auto kOutIdx = "out_idx";
 constexpr auto kOutQuantized = "out_quantized";
 constexpr auto kP = "p";
 constexpr auto kPad = "pad";
@@ -303,5 +304,6 @@ enum Index : size_t {
   kInputIndex15,
   kInputIndex16,
 };
+enum Dims : size_t { kDim0 = 0, kDim1, kDim2, kDim3, kDim4, kDim5, kDim6, kDim7, kDim8 };
 }  // namespace mindspore::ops
 #endif  // MINDSPORE_CORE_OPS_OP_NAME_H

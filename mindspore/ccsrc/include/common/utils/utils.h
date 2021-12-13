@@ -37,6 +37,7 @@ constexpr auto kSegmentMaxOpName = "SegmentMax";
 constexpr auto kSegmentMinOpName = "SegmentMin";
 constexpr auto kSegmentSumOpName = "SegmentSum";
 constexpr auto kConcatOpName = "Concat";
+constexpr auto kListDiffOpName = "ListDiff";
 constexpr auto kUniqueOpName = "Unique";
 constexpr auto kUniqueConsecutiveOpName = "UniqueConsecutive";
 constexpr auto kMaskedSelectOpName = "MaskedSelect";
@@ -394,6 +395,7 @@ constexpr auto kIsBackendCast = "is_backed_cast";
 constexpr auto kAttrOutputNames = "output_names";
 constexpr auto kAttrAsync = "async";
 constexpr auto kAttrOffload = "offload";
+constexpr auto kAttrOutIdx = "out_idx";
 constexpr auto kAttrVisited = "visited";
 constexpr auto kAttrReshapePaddingAxis = "reshape_padding_axis";
 constexpr auto kAttrShape = "shape";
@@ -820,6 +822,7 @@ const std::set<std::string> kComputeDepend = {kUniqueOpName,
                                               kMaskedSelectOpName,
                                               kDynamicStitchOpName,
                                               kGetNextOpName,
+                                              kListDiffOpName,
                                               kNonMaxSuppressionV3OpName,
                                               kCoalesceOpName,
                                               kTruncatedNormal,

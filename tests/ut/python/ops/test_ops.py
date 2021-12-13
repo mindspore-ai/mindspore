@@ -50,6 +50,7 @@ from mindspore.ops.operations.array_ops import MatrixDiagPartV3
 from mindspore.ops.operations.array_ops import MatrixSetDiagV3
 from mindspore.ops.operations.math_ops import RaggedRange
 from mindspore.ops.operations.array_ops import RangeV2
+from mindspore.ops.operations.array_ops import ListDiff
 from mindspore.ops.operations.nn_ops import FractionalMaxPool, DataFormatVecPermute
 from mindspore.ops.operations._grad_ops import FractionalMaxPoolGrad
 from mindspore.ops.operations.nn_ops import FractionalMaxPool3DWithFixedKsize
@@ -3018,6 +3019,12 @@ test_case_array_ops = [
         'desc_const': [5],
         'desc_inputs': [Tensor(1, mstype.float32),
                         Tensor(10, mstype.float32)],
+        'skip': ['backward'],
+    }),
+    ('ListDiff', {
+        'block': ListDiff(),
+        'desc_inputs': [Tensor(np.array([1, 2, 3, 4, 5, 6]), mstype.int32),
+                        Tensor(np.array([1, 3, 5]), mstype.int32)],
         'skip': ['backward'],
     }),
     ('MaskedFill', {

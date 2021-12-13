@@ -95,6 +95,7 @@ from .rnnt_loss import _rnnt_loss_aicpu
 from .random_categorical import _random_categorical_aicpu
 from .cast import _cast_aicpu
 from .coalesce import _coalesce_aicpu
+from .list_diff import _list_diff_aicpu
 from .mirror_pad import _mirror_pad_aicpu
 from .select import _select_aicpu
 from .masked_select import _masked_select_aicpu
