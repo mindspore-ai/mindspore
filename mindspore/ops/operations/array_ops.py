@@ -3680,7 +3680,7 @@ class Eye(PrimitiveWithInfer):
         Float64
         >>> # if wants a anti-diagonal
         >>> anti_diagonal_input = eye(2, 2, mindspore.int32)
-        >>> # Note that ReverseV2 only supports "Ascend" at this time
+        >>> # Note that ReverseV2 only supports "Ascend" and "GPU" at this time
         >>> reverse = ops.ReverseV2([1])
         >>> anti_diagonal_output = reverse(anti_diagonal_input)
         >>> print(anti_diagonal_output)
@@ -3945,9 +3945,9 @@ class TensorScatterUpdate(PrimitiveWithInfer):
     `indices` must have rank at least 2, the last axis is the depth of each index
     vectors. For each index vector, there must be a corresponding value in `update`. If
     the depth of each index tensor matches the rank of `input_x`, then each index
-    vector corresponds to a scalar in `input_x` and each update updates a scalar. If
+    vector corresponds to a scalar in `input_x` and each `update` updates a scalar. If
     the depth of each index tensor is less than the rank of `input_x`, then each index
-    vector corresponds to a slice in `input_x`, and each update updates a slice.
+    vector corresponds to a slice in `input_x`, and each `update` updates a slice.
 
     The order in which updates are applied is nondeterministic, meaning that if there
     are multiple index vectors in `indices` that correspond to the same position, the
@@ -3959,8 +3959,9 @@ class TensorScatterUpdate(PrimitiveWithInfer):
           The data type is Number.
         - **indices** (Tensor) - The index of input tensor whose data type is int32 or int64.
           The rank must be at least 2.
-        - **update** (Tensor) - The tensor to update the input tensor, has the same type as input,
-          and update.shape = indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
+        - **update** (Tensor) - The tensor to update the input tensor, has the same type as input, and
+
+          :math:`update.shape = indices.shape[:-1]+input_x.shape[indices.shape[-1]:]`
 
     Outputs:
         Tensor, has the same shape and type as `input_x`.
@@ -5227,7 +5228,8 @@ class BatchToSpace(PrimitiveWithInfer):
             Each list contains 2 integers.
             All values must be not less than 0. crops[i] specifies the crop values for the spatial dimension i, which
             corresponds to the input dimension i+2. It is required that
-            input_shape[i+2]*block_size >= crops[i][0]+crops[i][1].
+
+            :math:`input\_shape[i+2]*block\_size >= crops[i][0]+crops[i][1]`
 
     Inputs:
         - **input_x** (Tensor) - The input tensor. It must be a 4-D tensor, dimension 0 must be divisible by
@@ -5425,7 +5427,9 @@ class BatchToSpaceND(Primitive):
         crops (Union[list(int), tuple(int)]): The crop value for H and W dimension, containing 2 subtraction list,
             each containing 2 int value.
             All values must be >= 0. crops[i] specifies the crop values for spatial dimension i, which corresponds to
-            input dimension i+2. It is required that input_shape[i+2]*block_shape[i] > crops[i][0]+crops[i][1].
+            input dimension i+2. It is required that
+
+            :math:`input\_shape[i+2]*block\_shape[i] > crops[i][0]+crops[i][1]`
 
     Inputs:
         - **input_x** (Tensor) - The input tensor. It must be a 4-D tensor, dimension 0 must be divisible by

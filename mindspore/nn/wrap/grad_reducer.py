@@ -291,7 +291,7 @@ class DistributedGradReducer(Cell):
                      otherwise, using the default group. Default: WORLD_COMM_GROUP.
 
     Raises:
-        ValueError: If degree is not a int or less than 0.
+        ValueError: If degree is not an int or less than 0.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
