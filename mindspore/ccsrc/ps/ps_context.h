@@ -80,6 +80,7 @@ class PSContext {
   void InsertAccumuInitInfo(const std::string &param_name, float init_val) const;
   void CloneHashTable(const std::string &dest_param_name, const std::string &src_param_name) const;
   void set_cache_enable(bool cache_enable) const;
+  bool cache_enable() const;
   void set_rank_id(uint32_t rank_id) const;
 
   // In new server framework, process role, worker number, server number, scheduler ip and scheduler port should be set

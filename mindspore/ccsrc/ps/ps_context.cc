@@ -71,6 +71,7 @@ void PSContext::SetPSEnable(bool enabled) {
     if (node_id_.length() > kLength) {
       MS_LOG(EXCEPTION) << "The node id length can not exceed " << kLength;
     }
+    server_mode_ = kServerModePS;
   } else {
     MS_LOG(INFO) << "PS mode is disabled.";
     is_worker_ = false;
@@ -190,6 +191,13 @@ void PSContext::set_cache_enable(bool cache_enable) const {
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
   PsDataPrefetch::GetInstance().set_cache_enable(cache_enable);
 #endif
+}
+
+bool PSContext::cache_enable() const {
+#if ((defined ENABLE_CPU) && (!defined _WIN32))
+  return PsDataPrefetch::GetInstance().cache_enable();
+#endif
+  return false;
 }
 
 void PSContext::set_rank_id(uint32_t rank_id) const {

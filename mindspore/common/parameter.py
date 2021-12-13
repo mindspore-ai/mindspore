@@ -28,7 +28,7 @@ from .._checkparam import Validator
 from .._c_expression import Tensor as Tensor_
 from ..parallel._tensor import _get_slice_index
 from ..parallel._auto_parallel_context import auto_parallel_context
-from ..parallel._ps_context import _is_role_worker, _is_role_pserver, _is_role_sched, _clone_hash_table
+from ..parallel._ps_context import _is_role_worker, _is_role_pserver, _is_role_sched, _clone_hash_table, _is_fl_mode
 from ..parallel._ps_context import _reinsert_hash_table_size
 from ..parallel._ps_context import _insert_weight_init_info, _insert_accumu_init_info
 from .seed import _get_global_and_op_seed
@@ -229,7 +229,7 @@ class Parameter(Tensor_):
         if isinstance(data, bool):
             raise ValueError('Parameter data can not be `bool`')
         if isinstance(data, Tensor) and data.has_init:
-            if context.get_fl_context('server_mode') not in ('FEDERATED_LEARNING', 'HYBRID_TRAINING'):
+            if not _is_fl_mode():
                 if _is_in_parallel_mode() or _is_role_worker() or _is_role_sched() or _is_role_pserver():
                     # do not init data while in auto parallel.
                     return (Tensor, None, data.dtype, data.shape, data.init)
