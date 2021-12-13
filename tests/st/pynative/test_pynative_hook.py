@@ -203,12 +203,13 @@ def test_pynative_custom_bprop_and_Cell_MulAdd():
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_pynative_custom_bprop_and_Cell_Ms_Cell_Change_Shape():
+    context.set_context(check_bprop=True)
     custom_cell = test_custom_cell_base()
     ms_Cell = custom_cell.test_custom_cell_function(Ms_Cell_Change_Shape())
     ms_Cell.bprop_debug = True
-    with pytest.raises(RuntimeError) as ex:
+    with pytest.raises(ValueError) as ex:
         grad_all(ms_Cell)(Tensor(1, mstype.float32))
-    assert "Shapes of input and parameter are different, input index" in str(ex.value)
+    assert "should have the same shape as the 0th arg" in str(ex.value)
 
 
 @pytest.mark.level1
