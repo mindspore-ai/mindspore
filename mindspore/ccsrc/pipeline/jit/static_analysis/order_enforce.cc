@@ -223,7 +223,7 @@ class OrderEnforcer {
     const size_t attach_index = 2;
     const size_t input_size = update_state->inputs().size();
     for (size_t index = attach_index; index < input_size; index++) {
-      auto &attach = update_state->input(attach_index);
+      auto &attach = update_state->input(index);
       if (attach == load_user) {
         return true;
       }
