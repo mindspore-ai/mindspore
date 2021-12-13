@@ -1001,20 +1001,21 @@ void StringToAxisVector5D(const std::string &reshape_type_str, std::vector<Axis5
 std::vector<size_t> TransShapeToDevice(const std::vector<size_t> &shape, const std::string &format,
                                        const int64_t groups, const std::vector<int64_t> &input_hidden_size) {
   using DeviceShapeTransfer = std::function<std::vector<size_t>(const std::vector<size_t> &)>;
-  const std::map<std::string, DeviceShapeTransfer> device_shape_map{{kOpFormat_NCHW, NchwDeviceShape},
-                                                                    {kOpFormat_NHWC, NhwcDeviceShape},
-                                                                    {kOpFormat_HWCN, HwchDeviceShape},
-                                                                    {kOpFormat_FRAC_Z, FracZDeviceShape},
-                                                                    {kOpFormat_NC1HWC0, Nc1hwc0DeviceShape},
-                                                                    {kOpFormat_C1HWNCoC0, C1hwncoc0DeviceShape},
-                                                                    {kOpFormat_FRACTAL_Z_C04, FracZc04DeviceShape},
-                                                                    {kOpFormat_NC1HWC0_C04, Nc1hwc04DeviceShape},
-                                                                    {kOpFormat_NCDHW, NcdhwDeviceShape},
-                                                                    {kOpFormat_ChannelLast, ChannelLastDeviceShape},
-                                                                    {kOpFormat_NDC1HWC0, Ndc1hwc0DeviceShape},
-                                                                    {kOpFormat_FRACTAL_Z_3D, Fracz3DDeviceShape},
-                                                                    {kOpFormat_FRAC_NZ, FracNZDeviceShape},
-                                                                    {kOpFormat_FRACTAL_ZN_LSTM, FracNZLSTMDeviceShape}};
+  static const std::map<std::string, DeviceShapeTransfer> device_shape_map{
+    {kOpFormat_NCHW, NchwDeviceShape},
+    {kOpFormat_NHWC, NhwcDeviceShape},
+    {kOpFormat_HWCN, HwchDeviceShape},
+    {kOpFormat_FRAC_Z, FracZDeviceShape},
+    {kOpFormat_NC1HWC0, Nc1hwc0DeviceShape},
+    {kOpFormat_C1HWNCoC0, C1hwncoc0DeviceShape},
+    {kOpFormat_FRACTAL_Z_C04, FracZc04DeviceShape},
+    {kOpFormat_NC1HWC0_C04, Nc1hwc04DeviceShape},
+    {kOpFormat_NCDHW, NcdhwDeviceShape},
+    {kOpFormat_ChannelLast, ChannelLastDeviceShape},
+    {kOpFormat_NDC1HWC0, Ndc1hwc0DeviceShape},
+    {kOpFormat_FRACTAL_Z_3D, Fracz3DDeviceShape},
+    {kOpFormat_FRAC_NZ, FracNZDeviceShape},
+    {kOpFormat_FRACTAL_ZN_LSTM, FracNZLSTMDeviceShape}};
 
   if (format == kOpFormat_ND || format == kOpFormat_DEFAULT) {
     return shape;

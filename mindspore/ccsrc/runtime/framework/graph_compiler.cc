@@ -477,6 +477,7 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
   (void)mindspore::RDR::RecordGraphExecOrder(SubModuleId::SM_SESSION, exec_order_name, kernels);
 #endif
 
+  device_context->EnableRuntimeCache(graph);
   session_->DumpGraph(graph);
   return graph->graph_id();
 }

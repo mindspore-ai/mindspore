@@ -19,6 +19,7 @@
 #include "abstract/primitive_infer_map.h"
 #include <string>
 #include <vector>
+#include <set>
 #include "ops/exp.h"
 #include "ops/log.h"
 #include "ops/reciprocal.h"
@@ -39,9 +40,9 @@
 #include "ops/grad/slice_grad.h"
 namespace mindspore {
 namespace abstract {
-std::vector<int64_t> GetDependsFormMap(const CNodePtr &cnode) {
-  using ShapeVec = std::vector<int64_t>;
-  using PrimShapeDependMap = mindspore::HashMap<std::string, ShapeVec>;
+std::set<int64_t> GetDependsFormMap(const CNodePtr &cnode) {
+  using ShapeSet = std::set<int64_t>;
+  using PrimShapeDependMap = mindspore::HashMap<std::string, ShapeSet>;
   static const auto &kOneHot = prim::kPrimOneHot->name();
   static const auto &kDropoutGenMask = prim::kPrimDropoutGenMask->name();
   static const auto &kTranspose = prim::kPrimTranspose->name();
@@ -63,24 +64,24 @@ std::vector<int64_t> GetDependsFormMap(const CNodePtr &cnode) {
   static const auto &kReshape = prim::kPrimReshape->name();
   static const auto &kDynamicReshape = prim::kPrimDynamicReshape->name();
   // Common dynamic shape depends.
-  static const PrimShapeDependMap dynamic_shape_depends{{kUnsortedSegmentSum, ShapeVec{2}},
-                                                        {kUnsortedSegmentMin, ShapeVec{2}},
-                                                        {kUnsortedSegmentMax, ShapeVec{2}},
-                                                        {kGather, ShapeVec{2}},
-                                                        {kGatherV2, ShapeVec{2}},
-                                                        {kRange, ShapeVec{0, 1, 2}},
-                                                        {kConv2DBackpropFilter, ShapeVec{2}},
-                                                        {kConv2DBackpropInput, ShapeVec{2}},
-                                                        {kOneHot, ShapeVec{1, 3}},
-                                                        {kDropoutGenMask, ShapeVec{0}},
-                                                        {kStridedSlice, ShapeVec{1, 2, 3}},
-                                                        {kStridedSliceGrad, ShapeVec{1, 2, 3, 4}},
-                                                        {kTile, ShapeVec{1}},
-                                                        {kReshape, ShapeVec{1}},
-                                                        {kDynamicReshape, ShapeVec{1}},
-                                                        {kSlice, ShapeVec{1, 2}},
-                                                        {kSliceGrad, ShapeVec{2, 3}},
-                                                        {kDynamicBroadcastTo, ShapeVec{1}}};
+  static const PrimShapeDependMap dynamic_shape_depends{{kUnsortedSegmentSum, ShapeSet{2}},
+                                                        {kUnsortedSegmentMin, ShapeSet{2}},
+                                                        {kUnsortedSegmentMax, ShapeSet{2}},
+                                                        {kGather, ShapeSet{2}},
+                                                        {kGatherV2, ShapeSet{2}},
+                                                        {kRange, ShapeSet{0, 1, 2}},
+                                                        {kConv2DBackpropFilter, ShapeSet{2}},
+                                                        {kConv2DBackpropInput, ShapeSet{2}},
+                                                        {kOneHot, ShapeSet{1, 3}},
+                                                        {kDropoutGenMask, ShapeSet{0}},
+                                                        {kStridedSlice, ShapeSet{1, 2, 3}},
+                                                        {kStridedSliceGrad, ShapeSet{1, 2, 3, 4}},
+                                                        {kTile, ShapeSet{1}},
+                                                        {kReshape, ShapeSet{1}},
+                                                        {kDynamicReshape, ShapeSet{1}},
+                                                        {kSlice, ShapeSet{1, 2}},
+                                                        {kSliceGrad, ShapeSet{2, 3}},
+                                                        {kDynamicBroadcastTo, ShapeSet{1}}};
 
   MS_EXCEPTION_IF_NULL(cnode);
   if (cnode->inputs().empty()) {
@@ -101,9 +102,9 @@ std::vector<int64_t> GetDependsFormMap(const CNodePtr &cnode) {
   auto iter = dynamic_shape_depends.find(prim_name);
   if (iter != dynamic_shape_depends.end()) {
     int64_t cnode_input_size = SizeToLong(cnode->inputs().size());
-    std::vector<int64_t> res;
+    ShapeSet res;
     auto ori = iter->second;
-    (void)std::copy_if(ori.begin(), ori.end(), std::back_inserter(res),
+    (void)std::copy_if(ori.begin(), ori.end(), std::inserter(res, res.begin()),
                        [&](auto idx) { return idx < cnode_input_size - 1; });
     return res;
   }

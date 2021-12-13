@@ -19,6 +19,7 @@
 #define MINDSPORE_CORE_ABSTRACT_PRIMITIVE_INFER_MAP_H_
 
 #include <vector>
+#include <set>
 #include <memory>
 #include "utils/hash_map.h"
 #include "ir/primitive.h"
@@ -50,7 +51,7 @@ PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap();
 
 StandardPrimitiveImplReg GetPrimitiveInferImpl(const PrimitivePtr &primitive);
 
-std::vector<int64_t> GetDependsFormMap(const CNodePtr &cnode);
+std::set<int64_t> GetDependsFormMap(const CNodePtr &cnode);
 
 void RegisterStandardPrimitiveImpl(const PrimitivePtr &primitive, const StandardPrimitiveImplReg &impl_reg);
 
