@@ -64,7 +64,7 @@ public class AlTrainBert extends AlBert {
             logger.severe(Common.addTag("dataFile,idsFile,vocabFile cannot be empty"));
             return -1;
         }
-        features = DataSet.init(dataFile, vocabFile, idsFile, true, maxSeqLen);
+        features = FileUtil.init(dataFile, vocabFile, idsFile, true, maxSeqLen);
         return features.size();
     }
 }
