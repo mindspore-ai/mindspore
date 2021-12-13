@@ -16,6 +16,7 @@
 
 #include "tools/benchmark/run_benchmark.h"
 #include "include/version.h"
+#include "src/common/log_adapter.h"
 
 int main(int argc, const char **argv) {
   MS_LOG(INFO) << mindspore::lite::Version();

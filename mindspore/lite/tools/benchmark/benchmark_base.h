@@ -32,6 +32,7 @@
 #include <nlohmann/json.hpp>
 #include "include/model.h"
 #include "include/api/types.h"
+#include "include/api/format.h"
 #include "tools/common/flag_parser.h"
 #include "src/common/file_utils.h"
 #include "src/common/utils.h"
@@ -68,7 +69,7 @@ constexpr const char *DELIM_COMMA = ",";
 constexpr const char *DELIM_SLASH = "/";
 
 extern const std::unordered_map<int, std::string> kTypeIdMap;
-extern const std::unordered_map<schema::Format, std::string> kTensorFormatMap;
+extern const std::unordered_map<mindspore::Format, std::string> kTensorFormatMap;
 
 const std::unordered_map<std::string, mindspore::ModelType> ModelTypeMap{
   {"MindIR_Opt", mindspore::ModelType::kMindIR_Opt}, {"MindIR", mindspore::ModelType::kMindIR}};

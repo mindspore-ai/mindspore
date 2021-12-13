@@ -17,6 +17,8 @@
 #include "tools/benchmark/run_benchmark.h"
 #include <string>
 #include <memory>
+#include "tools/benchmark/benchmark.h"
+#include "tools/benchmark/benchmark_unified_api.h"
 #include "tools/benchmark/benchmark_c_api.h"
 
 namespace mindspore {
@@ -41,44 +43,36 @@ int RunBenchmark(int argc, const char **argv) {
     std::cout << "MSLITE_API_TYPE = " << api_type << std::endl;
   }
   BenchmarkBase *benchmark = nullptr;
-  if (flags.config_file_ != "" || IsCharEndWith(flags.model_file_.c_str(), MINDIR_POSTFIX) ||
-      (api_type != nullptr && std::string(api_type) == "NEW")) {
+  if (api_type == nullptr || std::string(api_type) == "NEW") {
     benchmark = new (std::nothrow) BenchmarkUnifiedApi(&flags);
-  } else if (api_type == nullptr || std::string(api_type) == "OLD") {
+  } else if (std::string(api_type) == "OLD") {
     benchmark = new (std::nothrow) Benchmark(&flags);
   } else if (std::string(api_type) == "C") {
     benchmark = new (std::nothrow) tools::BenchmarkCApi(&flags);
   } else {
-    MS_LOG(ERROR) << "Invalid MSLITE_API_TYPE, (OLD/NEW/C, default:OLD)";
-    std::cerr << "Invalid MSLITE_API_TYPE, (OLD/NEW/C, default:OLD)" << std::endl;
+    BENCHMARK_LOG_ERROR("Invalid MSLITE_API_TYPE, (OLD/NEW/C, default:OLD)");
     return RET_ERROR;
   }
   if (benchmark == nullptr) {
-    MS_LOG(ERROR) << "new benchmark failed ";
-    std::cerr << "new benchmark failed" << std::endl;
+    BENCHMARK_LOG_ERROR("new benchmark failed ");
     return RET_ERROR;
   }
+
   auto status = benchmark->Init();
   if (status != 0) {
-    MS_LOG(ERROR) << "Benchmark init Error : " << status;
-    std::cerr << "Benchmark init Error : " << status << std::endl;
+    BENCHMARK_LOG_ERROR("Benchmark init Error : " << status);
     return RET_ERROR;
   }
+  auto model_name = flags.model_file_.substr(flags.model_file_.find_last_of(DELIM_SLASH) + 1);
 
   status = benchmark->RunBenchmark();
   if (status != 0) {
-    MS_LOG(ERROR) << "Run Benchmark "
-                  << flags.model_file_.substr(flags.model_file_.find_last_of(DELIM_SLASH) + 1).c_str()
-                  << " Failed : " << status;
-    std::cerr << "Run Benchmark " << flags.model_file_.substr(flags.model_file_.find_last_of(DELIM_SLASH) + 1).c_str()
-              << " Failed : " << status << std::endl;
+    BENCHMARK_LOG_ERROR("Run Benchmark " << model_name << " Failed : " << status);
     return RET_ERROR;
   }
 
-  MS_LOG(INFO) << "Run Benchmark " << flags.model_file_.substr(flags.model_file_.find_last_of(DELIM_SLASH) + 1).c_str()
-               << " Success.";
-  std::cout << "Run Benchmark " << flags.model_file_.substr(flags.model_file_.find_last_of(DELIM_SLASH) + 1).c_str()
-            << " Success." << std::endl;
+  MS_LOG(INFO) << "Run Benchmark " << model_name << " Success.";
+  std::cout << "Run Benchmark " << model_name << " Success." << std::endl;
   delete benchmark;
   return RET_OK;
 }

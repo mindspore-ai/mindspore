@@ -859,6 +859,10 @@ std::string GenerateOutputFileName(mindspore::MSTensor *tensor, const std::strin
   if (kTypeIdMap.find(static_cast<int>(tensor->DataType())) != kTypeIdMap.end()) {
     file_name += kTypeIdMap.at(static_cast<int>(tensor->DataType()));
   }
+  auto tensor_format = tensor->format();
+  if (kTensorFormatMap.find(tensor_format) != kTensorFormatMap.end()) {
+    file_name += "_" + kTensorFormatMap.at(tensor_format) + ".bin";
+  }
 
   file_name += +".bin";
   return file_name;

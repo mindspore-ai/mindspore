@@ -64,12 +64,12 @@ const std::unordered_map<int, std::string> kTypeIdMap{
   {kNumberTypeInt32, "Int32"},     {kNumberTypeUInt8, "UInt8"},      {kNumberTypeUInt16, "UInt16"},
   {kNumberTypeUInt, "UInt32"},     {kNumberTypeUInt32, "UInt32"},    {kObjectTypeString, "String"},
   {kNumberTypeBool, "Bool"},       {kObjectTypeTensorType, "Tensor"}};
-const std::unordered_map<schema::Format, std::string> kTensorFormatMap{
-  {schema::Format_NCHW, "NCHW"}, {schema::Format_NHWC, "NHWC"},     {schema::Format_NHWC4, "NHWC4"},
-  {schema::Format_HWKC, "HWKC"}, {schema::Format_HWCK, "HWCK"},     {schema::Format_KCHW, "KCHW"},
-  {schema::Format_CKHW, "CKHW"}, {schema::Format_KHWC, "KHWC"},     {schema::Format_CHWK, "CHWK"},
-  {schema::Format_HW, "HW"},     {schema::Format_HW4, "HW4"},       {schema::Format_NC, "NC"},
-  {schema::Format_NC4, "NC4"},   {schema::Format_NC4HW4, "NC4HW4"}, {schema::Format_NCDHW, "NCDHW"}};
+
+const std::unordered_map<mindspore::Format, std::string> kTensorFormatMap{
+  {mindspore::NCHW, "NCHW"}, {mindspore::NHWC, "NHWC"},     {mindspore::NHWC4, "NHWC4"}, {mindspore::HWKC, "HWKC"},
+  {mindspore::HWCK, "HWCK"}, {mindspore::KCHW, "KCHW"},     {mindspore::CKHW, "CKHW"},   {mindspore::KHWC, "KHWC"},
+  {mindspore::CHWK, "CHWK"}, {mindspore::HW, "HW"},         {mindspore::HW4, "HW4"},     {mindspore::NC, "NC"},
+  {mindspore::NC4, "NC4"},   {mindspore::NC4HW4, "NC4HW4"}, {mindspore::NCDHW, "NCDHW"}};
 
 int BenchmarkBase::GenerateRandomData(size_t size, void *data, int data_type) {
   if (data == nullptr && size > 0) {
