@@ -292,5 +292,15 @@ std::string FetchActorName(KernelTransformType kernel_type, const std::string &a
   }
   return actor_name;
 }
+
+bool CheckMemcpyInDevice(const DeviceTensor *dst_device_addr, const DeviceTensor *src_device_addr) {
+  MS_EXCEPTION_IF_NULL(dst_device_addr);
+  if (src_device_addr == nullptr) {
+    return false;
+  }
+  return (src_device_addr->DeviceType() == dst_device_addr->DeviceType() &&
+          src_device_addr->format() == dst_device_addr->format() &&
+          src_device_addr->type_id() == dst_device_addr->type_id());
+}
 }  // namespace runtime
 }  // namespace mindspore

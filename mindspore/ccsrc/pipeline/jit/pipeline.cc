@@ -1642,6 +1642,7 @@ void FinalizeHccl() {
   (void)FinalizeBackend();
 #else
   session::ExecutorManager::Instance().Clear();
+  device::DeviceContextManager::GetInstance().ClearDeviceContexts();
   device::KernelRuntimeManager::Instance().ClearRuntimeResource();
 #endif
 }

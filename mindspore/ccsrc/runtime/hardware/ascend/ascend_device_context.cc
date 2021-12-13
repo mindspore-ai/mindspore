@@ -28,6 +28,7 @@
 #include "runtime/hardware/ascend/ascend_graph_optimization.h"
 #include "backend/kernel_compiler/ascend_kernel_mod.h"
 #include "runtime/device/ascend/ascend_bucket.h"
+#include "common/util/error_manager/error_manager.h"
 
 #ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
@@ -65,6 +66,7 @@ namespace ascend {
 using KernelGraph = mindspore::session::KernelGraph;
 const char kMsVm[] = "vm";
 constexpr size_t kAtomicCleanInputSize = 2;
+constexpr auto kUnknowErrorString = "Unknown error occurred";
 namespace {
 CNodePtr GetNextLabelSet(const std::vector<CNodePtr> &kernel_nodes, uint32_t index) {
   size_t node_sizes = kernel_nodes.size();
@@ -582,8 +584,28 @@ bool AscendDeviceContext::LaunchGraph(const KernelGraphPtr &graph) const {
   runtime_instance_->SetContext();
   device::KernelAdjust::GetInstance().LoadDeviceLoopCtrlParameters(graph);
   auto ret = ExecuteGraph(graph);
+  if (!ret) {
+    MS_LOG(ERROR) << "run task error!";
+    ReportErrorMessage();
+    return ret;
+  }
+  ReportWarningMessage();
   MS_LOG(INFO) << "Status record: end launch graph. graph id: " << graph->graph_id();
   return ret;
+}
+
+void AscendDeviceContext::ReportErrorMessage() const {
+  const string &error_message = ErrorManager::GetInstance().GetErrorMessage();
+  if (!error_message.empty() && error_message.find(kUnknowErrorString) == string::npos) {
+    MS_LOG(ERROR) << "Ascend error occurred, error message:\n" << error_message;
+  }
+}
+
+void AscendDeviceContext::ReportWarningMessage() const {
+  const string &warning_message = ErrorManager::GetInstance().GetWarningMessage();
+  if (!warning_message.empty()) {
+    MS_LOG(WARNING) << "Ascend warning message:\n" << warning_message;
+  }
 }
 
 bool AscendDeviceContext::SyncStream(size_t stream_id) const {
@@ -597,7 +619,9 @@ bool AscendDeviceContext::IsExecutingSink(const KernelGraphPtr &graph) const {
   return ms_context->get_param<bool>(MS_CTX_ENABLE_TASK_SINK) && IsGraphMode();
 }
 
-bool AscendDeviceContext::IsLoopCountSink(const KernelGraphPtr &graph) const { return IsGraphMode(); }
+bool AscendDeviceContext::IsLoopCountSink(const KernelGraphPtr &graph) const {
+  return device::KernelAdjust::NeedLoopSink() && IsGraphMode();
+}
 
 // kernel by kernel mode interface
 void AscendDeviceContext::OptimizeSingleOpGraph(const KernelGraphPtr &graph) const {

@@ -138,6 +138,9 @@ class AscendDeviceContext : public DeviceContext {
   static bool IsGraphMode();
   bool SyncRuning() const;
 
+  void ReportErrorMessage() const;
+  void ReportWarningMessage() const;
+
   // Kernel Runtime  --- only for task sink
   AscendKernelRuntime *runtime_instance_{nullptr};
   std::shared_ptr<MemoryManager> mem_manager_{nullptr};
