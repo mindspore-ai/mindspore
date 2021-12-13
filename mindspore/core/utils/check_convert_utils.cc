@@ -220,7 +220,7 @@ bool CheckAndConvertUtils::ConvertAttrValueToInt(const std::string &op_type, con
     return false;
   }
   auto attr_map_pair = GetAttrConvertPair(op_type, attr_name);
-  if (attr_map_pair.first.size() == 0) {
+  if (attr_map_pair.first.empty()) {
     return false;
   }
 
@@ -257,7 +257,7 @@ bool CheckAndConvertUtils::ConvertAttrValueToString(const std::string &op_type, 
     return false;
   }
   auto attr_map_pair = GetAttrConvertPair(op_type, attr_name);
-  if (attr_map_pair.second.size() == 0) {
+  if (attr_map_pair.second.empty()) {
     return false;
   }
 
@@ -334,7 +334,7 @@ std::vector<int64_t> CheckAndConvertUtils::CheckPositiveVector(const std::string
                                                                const std::vector<int64_t> &arg_value,
                                                                const std::string &prim_name) {
   std::ostringstream buffer;
-  buffer << "The primitive[" << prim_name << "]'s attribute[" << arg_name
+  buffer << "For primitive[" << prim_name << "], the attribute[" << arg_name
          << "] should be a vector with all positive item. but got [";
   if (std::any_of(arg_value.begin(), arg_value.end(), [](int64_t item) { return item < 0; })) {
     for (auto item : arg_value) {
@@ -353,9 +353,9 @@ std::string CheckAndConvertUtils::CheckString(const std::string &arg_name, const
     return arg_value;
   }
   std::ostringstream buffer;
-  buffer << "The primitive[" << prim_name << "]'s attribute[" << arg_name << "]";
+  buffer << "For primitive[" << prim_name << "], the attribute[" << arg_name << "]";
   if (check_list.size() == 1) {
-    buffer << " must be \"" << (*check_list.begin()) << "\",but got \"" << arg_value << "\".";
+    buffer << " must be \"" << (*check_list.begin()) << "\", but got \"" << arg_value << "\".";
     MS_EXCEPTION(ValueError) << buffer.str();
   }
   buffer << " should be a element of {";
@@ -381,7 +381,7 @@ int64_t CheckAndConvertUtils::CheckInteger(const std::string &arg_name, int64_t 
   if (prim_name.empty()) {
     buffer << "The argument[" << arg_name << "] must ";
   } else {
-    buffer << "For primitive[" << prim_name << "], " << arg_name << " must ";
+    buffer << "For primitive[" << prim_name << "], the " << arg_name << " must ";
   }
   auto iter_to_string = kCompareToString.find(compare_operator);
   if (iter_to_string == kCompareToString.end()) {
@@ -466,7 +466,7 @@ void CheckAndConvertUtils::Check(const string &arg_name, int64_t arg_value, Comp
   if (prim_name.empty()) {
     buffer << "The attribute[" << arg_name << "] must ";
   } else {
-    buffer << "The primitive[" << prim_name << "]'s attribute[" << arg_name << "] must ";
+    buffer << "For primitive[" << prim_name << "], the attribute[" << arg_name << "] must ";
   }
   auto iter_to_string = kCompareToString.find(compare_type);
   if (iter_to_string == kCompareToString.end()) {
@@ -520,7 +520,7 @@ TypePtr CheckAndConvertUtils::CheckTensorTypeValid(const std::string &type_name,
                                                    const std::set<TypePtr> &check_list, const std::string &prim_name) {
   MS_EXCEPTION_IF_NULL(type);
   if (!type->isa<TensorType>()) {
-    MS_EXCEPTION(TypeError) << "The Primitive[" << prim_name << "] input argument[" << type_name
+    MS_EXCEPTION(TypeError) << "For Primitive[" << prim_name << "], the input argument[" << type_name
                             << "] must be a Tensor but got " << type->ToString() << ".";
   }
   auto tensor_type = type->cast<TensorTypePtr>();
@@ -540,12 +540,12 @@ TypePtr CheckAndConvertUtils::CheckTensorTypeValid(const std::string &type_name,
 ShapeVector CheckAndConvertUtils::CheckTensorIntValue(const std::string &type_name, const ValuePtr &value,
                                                       const std::string &prim_name) {
   if (value == nullptr) {
-    MS_EXCEPTION(ValueError) << "The primitive[" << prim_name << "] input argument[" << type_name
+    MS_EXCEPTION(ValueError) << "For primitive[" << prim_name << "], the input argument[" << type_name
                              << "] value is nullptr.";
   }
   ShapeVector tensor_value;
   if (!value->isa<tensor::Tensor>()) {
-    MS_EXCEPTION(ValueError) << "The primitive[" << prim_name << "] input argument[" << type_name
+    MS_EXCEPTION(ValueError) << "For primitive[" << prim_name << "], the input argument[" << type_name
                              << "] must be a tensor, but got " << value->ToString();
   }
   auto input_tensor = value->cast<tensor::TensorPtr>();
@@ -564,7 +564,7 @@ ShapeVector CheckAndConvertUtils::CheckTensorIntValue(const std::string &type_na
     MS_EXCEPTION_IF_NULL(tensor_data);
     tensor_value = {tensor_data, tensor_data + data_size};
   } else {
-    MS_EXCEPTION(TypeError) << "The primitive[" << prim_name << "] input argument[" << type_name
+    MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the input argument[" << type_name
                             << "] must be a Tensor[Int64] or Tensor[Int32] type, but got " << value->ToString();
   }
   return tensor_value;
@@ -577,7 +577,7 @@ TypePtr CheckAndConvertUtils::CheckTensorSubClass(const string &type_name, const
     return type;
   }
   std::ostringstream buffer;
-  buffer << "Primitive[" << prim_name << "]'s input argument[" << type_name << "] must be a type of {";
+  buffer << "For primitive[" << prim_name << "], the input argument[" << type_name << "] must be a type of {";
   for (const auto &item : template_types) {
     if (item->isa<TensorType>()) {
       buffer << item->ToString();
@@ -601,7 +601,7 @@ TypePtr CheckAndConvertUtils::CheckSubClass(const std::string &type_name, const 
     return type;
   }
   std::ostringstream buffer;
-  buffer << "Primitive[" << prim_name << "]'s input argument[" << type_name << "] must be a type of {";
+  buffer << "For primitive[" << prim_name << "], the input argument[" << type_name << "] must be a type of {";
   for (const auto &item : template_types) {
     buffer << " " << item->ToString() << ",";
   }
@@ -629,7 +629,7 @@ TypePtr CheckAndConvertUtils::_CheckTypeSame(const std::map<std::string, TypePtr
   }
   std::ostringstream buffer;
   TypePtr return_type = args.begin()->second;
-  buffer << "The primitive[" << prim_name << "]";
+  buffer << "For primitive[" << prim_name << "], the ";
   bool tensor_flag = return_type->isa<TensorType>();
   std::set<TypeId> types_id;
   for (const auto &elem : args) {
@@ -638,8 +638,7 @@ TypePtr CheckAndConvertUtils::_CheckTypeSame(const std::map<std::string, TypePtr
     if (!allow_mix) {
       // input must be all tensor or all other type
       if ((tensor_flag && !type->isa<TensorType>()) || (!tensor_flag && type->isa<TensorType>())) {
-        buffer << "'s "
-               << "input type must be same.\n";
+        buffer << "input type must be same.\n";
         for (const auto &error_elem : args) {
           buffer << "input argument[" << error_elem.first << "]:" << error_elem.second->ToString() << "\n";
         }
@@ -659,7 +658,7 @@ TypePtr CheckAndConvertUtils::_CheckTypeSame(const std::map<std::string, TypePtr
       (void)types_id.emplace(type->type_id());
     }
     if (types_id.size() > 1) {
-      buffer << "'s input type must be same.\n";
+      buffer << "input type must be same.\n";
       for (const auto &item : args) {
         buffer << "name:[" << item.first << "]:" << item.second->ToString() << ".\n";
       }
@@ -711,7 +710,7 @@ void CheckAndConvertUtils::CheckSummaryParam(const AbstractBasePtr &name, const 
   (void)CheckTypeValid("name", name->BuildType(), {kString}, class_name);
   auto s = GetValue<std::string>(name->BuildValue());
   if (s.empty()) {
-    MS_EXCEPTION(ValueError) << "The primitive[" << class_name << "]'s input argument[name] "
+    MS_EXCEPTION(ValueError) << "For primitive[" << class_name << "], the input argument[name]"
                              << " cannot be an empty string.";
   }
   (void)CheckTypeValid("value", value->BuildType(), {kTensorType}, class_name);
@@ -722,7 +721,7 @@ void CheckAndConvertUtils::CheckMode(const std::string &class_name) {
   MS_EXCEPTION_IF_NULL(ms_context);
   if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
     MS_EXCEPTION(NotSupportError) << "The primitive[" << class_name << "] does not support PyNativeMode.\n"
-                                  << "Please convert the mode to GraphMode";
+                                  << "Please convert the mode to GraphMode.";
   }
 }
 
@@ -749,7 +748,7 @@ std::vector<int64_t> CheckAndConvertUtils::CheckIntOrTupleInt(const std::string 
     }
   }
   if (!is_correct) {
-    MS_EXCEPTION(TypeError) << "The primitive[" << prim_name << "]'s " << arg_name
+    MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the " << arg_name
                             << " must be a Int or a tuple with all Int elements, but got " << attr->ToString();
   }
   return result;
@@ -764,13 +763,13 @@ std::vector<int64_t> CheckAndConvertUtils::CheckTupleInt(const std::string &arg_
     (void)std::transform(
       attr_vec.begin(), attr_vec.end(), std::back_inserter(result), [=](const ValuePtr &e) -> int64_t {
         if (!e->isa<Int64Imm>()) {
-          MS_EXCEPTION(TypeError) << "The primitive[" << prim_name << "]'s " << arg_name
+          MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the " << arg_name
                                   << " must be a tuple with all Int elements, but got " << attr->ToString();
         }
         return GetValue<int64_t>(e);
       });
   } else {
-    MS_EXCEPTION(TypeError) << "The primitive[" << prim_name << "]'s " << arg_name
+    MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the " << arg_name
                             << " must be a tuple with all Int elements, but got " << attr->ToString() << ".";
   }
   return result;
