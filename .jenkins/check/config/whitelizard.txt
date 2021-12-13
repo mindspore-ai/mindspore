@@ -60,6 +60,7 @@ mindspore/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/fp16/winograd_utils_
 mindspore/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/fp16/winograd_utils_fp16.c:OutputTransform8x6UnitFp16
 mindspore/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/fp16/winograd_utils_fp16.c:OutputTransform8x6ReluUnitFp16
 mindspore/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/fp16/winograd_utils_fp16.c:OutputTransform8x6Relu6UnitFp16
+mindspore/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/fp16/instance_norm_fp16.c:InstanceNormNC8HW8Fp16
 mindspore/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/int8/pooling_int8.c:AvgPoolingOptInt8
 mindspore/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/int8/conv3x3_int8.c:Conv3x3Int8InputUnit
 mindspore/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/int8/conv3x3_int8.c:Conv3x3Int8FilterTransform
