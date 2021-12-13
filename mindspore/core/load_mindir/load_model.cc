@@ -203,7 +203,21 @@ FuncGraphPtr MindIRLoader::LoadMindIR(const void *buffer, const size_t &size) {
   }
 
   MSANFModelParser model_parser;
-  model_parser.SetLite();
+
+  model_parser.SetMindIRDecKey(dec_key_);
+  model_parser.SetMindIRKeySize(key_len_);
+  model_parser.SetMindIRDecMode(dec_mode_);
+  model_parser.set_need_renormalize(need_renormalize_);
+
+  if (!inc_load_) {
+    MSANFModelParser::LoadTensorMapClear();
+  } else {
+    model_parser.SetIncLoad();
+  }
+  if (is_lite_) {
+    model_parser.SetLite();
+  }
+
   FuncGraphPtr func_graph = model_parser.Parse(model);
 
   return func_graph;

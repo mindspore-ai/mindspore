@@ -54,12 +54,21 @@ class LiteSession : public session::LiteSession {
   static session::LiteSession *CreateSession(const std::string &model_path, const lite::Context *context);
 
   int LoadModelAndCompileByBuf(const char *model_buf, mindspore::ModelType model_type, const size_t &buf_size);
+  int LoadModelAndCompileByBuf(const char *model_buf, mindspore::ModelType model_type, const size_t &buf_size,
+                               const std::shared_ptr<mindspore::Context> &ms_context);
 
   int LoadModelAndCompileByPath(const std::string &model_path, mindspore::ModelType model_type);
+  int LoadModelAndCompileByPath(const std::string &model_path, mindspore::ModelType model_type,
+                                const std::shared_ptr<mindspore::Context> &ms_context);
 
   static mindspore::ModelType LoadModelByBuff(const char *model_buf, const size_t &buf_size, char **lite_buf,
                                               size_t *size, mindspore::ModelType model_type);
+  static mindspore::ModelType LoadModelByBuff(const char *model_buf, const size_t &buf_size, char **lite_buf,
+                                              size_t *size, mindspore::ModelType model_type,
+                                              const std::shared_ptr<mindspore::Context> &ms_context);
   static const char *LoadModelByPath(const std::string &file, mindspore::ModelType model_type, size_t *size);
+  static const char *LoadModelByPath(const std::string &file, mindspore::ModelType model_type, size_t *size,
+                                     const std::shared_ptr<mindspore::Context> &ms_context);
 
   virtual int Init(InnerContext *context);
 
