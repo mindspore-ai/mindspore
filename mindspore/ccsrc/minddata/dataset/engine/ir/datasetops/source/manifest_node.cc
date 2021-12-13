@@ -45,6 +45,8 @@ ManifestNode::ManifestNode(const std::string &dataset_file, const std::string &u
 std::shared_ptr<DatasetNode> ManifestNode::Copy() {
   std::shared_ptr<SamplerObj> sampler = (sampler_ == nullptr) ? nullptr : sampler_->SamplerCopy();
   auto node = std::make_shared<ManifestNode>(dataset_file_, usage_, sampler, class_index_, decode_, cache_);
+  node->SetNumWorkers(num_workers_);
+  node->SetConnectorQueueSize(connector_que_size_);
   return node;
 }
 
@@ -138,6 +140,7 @@ Status ManifestNode::to_json(nlohmann::json *out_json) {
   RETURN_IF_NOT_OK(sampler_->to_json(&sampler_args));
   args["sampler"] = sampler_args;
   args["num_parallel_workers"] = num_workers_;
+  args["connector_queue_size"] = connector_que_size_;
   args["dataset_file"] = dataset_file_;
   args["usage"] = usage_;
   args["class_indexing"] = class_index_;
@@ -155,6 +158,7 @@ Status ManifestNode::to_json(nlohmann::json *out_json) {
 #ifndef ENABLE_ANDROID
 Status ManifestNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds) {
   RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "num_parallel_workers", kManifestNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "connector_queue_size", kManifestNode));
   RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "dataset_file", kManifestNode));
   RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "usage", kManifestNode));
   RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "sampler", kManifestNode));
@@ -175,7 +179,8 @@ Status ManifestNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetN
   std::shared_ptr<DatasetCache> cache = nullptr;
   RETURN_IF_NOT_OK(DatasetCache::from_json(json_obj, &cache));
   *ds = std::make_shared<ManifestNode>(dataset_file, usage, sampler, class_indexing, decode, cache);
-  (*ds)->SetNumWorkers(json_obj["num_parallel_workers"]);
+  (void)(*ds)->SetNumWorkers(json_obj["num_parallel_workers"]);
+  (void)(*ds)->SetConnectorQueueSize(json_obj["connector_queue_size"]);
   return Status::OK();
 }
 #endif

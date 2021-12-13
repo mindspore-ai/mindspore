@@ -48,6 +48,8 @@ std::shared_ptr<DatasetNode> ImageFolderNode::Copy() {
   std::shared_ptr<SamplerObj> sampler = (sampler_ == nullptr) ? nullptr : sampler_->SamplerCopy();
   auto node =
     std::make_shared<ImageFolderNode>(dataset_dir_, decode_, sampler, recursive_, exts_, class_indexing_, cache_);
+  node->SetNumWorkers(num_workers_);
+  node->SetConnectorQueueSize(connector_que_size_);
   return node;
 }
 
@@ -115,6 +117,7 @@ Status ImageFolderNode::to_json(nlohmann::json *out_json) {
   RETURN_IF_NOT_OK(sampler_->to_json(&sampler_args));
   args["sampler"] = sampler_args;
   args["num_parallel_workers"] = num_workers_;
+  args["connector_queue_size"] = connector_que_size_;
   args["dataset_dir"] = dataset_dir_;
   args["recursive"] = recursive_;
   args["decode"] = decode_;
@@ -132,6 +135,7 @@ Status ImageFolderNode::to_json(nlohmann::json *out_json) {
 #ifndef ENABLE_ANDROID
 Status ImageFolderNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds) {
   RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "num_parallel_workers", kImageFolderNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "connector_queue_size", kImageFolderNode));
   RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "dataset_dir", kImageFolderNode));
   RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "decode", kImageFolderNode));
   RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "sampler", kImageFolderNode));
@@ -154,7 +158,8 @@ Status ImageFolderNode::from_json(nlohmann::json json_obj, std::shared_ptr<Datas
   std::shared_ptr<DatasetCache> cache = nullptr;
   RETURN_IF_NOT_OK(DatasetCache::from_json(json_obj, &cache));
   *ds = std::make_shared<ImageFolderNode>(dataset_dir, decode, sampler, recursive, extension, class_indexing, cache);
-  (*ds)->SetNumWorkers(json_obj["num_parallel_workers"]);
+  (void)(*ds)->SetNumWorkers(json_obj["num_parallel_workers"]);
+  (void)(*ds)->SetConnectorQueueSize(json_obj["connector_queue_size"]);
   return Status::OK();
 }
 #endif

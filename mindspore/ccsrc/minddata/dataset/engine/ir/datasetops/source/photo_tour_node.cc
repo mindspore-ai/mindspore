@@ -33,6 +33,8 @@ PhotoTourNode::PhotoTourNode(const std::string &dataset_dir, const std::string &
 std::shared_ptr<DatasetNode> PhotoTourNode::Copy() {
   std::shared_ptr<SamplerObj> sampler = (sampler_ == nullptr) ? nullptr : sampler_->SamplerCopy();
   auto node = std::make_shared<PhotoTourNode>(dataset_dir_, name_, usage_, sampler, cache_);
+  node->SetNumWorkers(num_workers_);
+  node->SetConnectorQueueSize(connector_que_size_);
   return node;
 }
 
@@ -116,6 +118,7 @@ Status PhotoTourNode::to_json(nlohmann::json *out_json) {
   RETURN_IF_NOT_OK(sampler_->to_json(&sampler_args));
   args["sampler"] = sampler_args;
   args["num_parallel_workers"] = num_workers_;
+  args["connector_queue_size"] = connector_que_size_;
   args["dataset_dir"] = dataset_dir_;
   args["name"] = name_;
   args["usage"] = usage_;

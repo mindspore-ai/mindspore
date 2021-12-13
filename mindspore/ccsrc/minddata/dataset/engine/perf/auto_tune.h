@@ -51,7 +51,18 @@ class AutoTune {
   Status Main();
 
   /// \brief Helper to print the tree configuration
-  void PrintTreeConfiguration();
+  void PrintTreeConfiguration() const;
+
+#ifndef ENABLE_ANDROID
+  /// \brief Serialize the dataset and save the AT config (workers and queue size) to a json file
+  /// \param file_name Name of the file
+  /// \return Status object
+  Status SaveAutotuneConfig(const std::string &file_name);
+
+  /// Setter for autotune_config_json_
+  /// \return Status code
+  Status SetAutotuneConfigJson();
+#endif
 
   /// Function to collect info from the tree
   /// \return Status code
@@ -195,8 +206,14 @@ class AutoTune {
   /// True if should save AutoTune configuration
   bool save_autoconfig_;
 
+  /// Flag to enable saving of intermediate autotune config to disk
+  bool save_intermediate_autoconfig_{false};
+
   /// Filepath name of the final AutoTune Configuration JSON file
   std::string autotune_json_filepath_;
+
+  /// Serialized json of the optimized ir tree that holds the updated configuration (workers and queue size)
+  nlohmann::json autotune_config_json_;
 };
 }  // namespace dataset
 }  // namespace mindspore

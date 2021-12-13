@@ -46,6 +46,8 @@ std::shared_ptr<DatasetNode> CocoNode::Copy() {
   std::shared_ptr<SamplerObj> sampler = (sampler_ == nullptr) ? nullptr : sampler_->SamplerCopy();
   auto node =
     std::make_shared<CocoNode>(dataset_dir_, annotation_file_, task_, decode_, sampler, cache_, extra_metadata_);
+  node->SetNumWorkers(num_workers_);
+  node->SetConnectorQueueSize(connector_que_size_);
   return node;
 }
 
@@ -179,6 +181,7 @@ Status CocoNode::to_json(nlohmann::json *out_json) {
   RETURN_IF_NOT_OK(sampler_->to_json(&sampler_args));
   args["sampler"] = sampler_args;
   args["num_parallel_workers"] = num_workers_;
+  args["connector_queue_size"] = connector_que_size_;
   args["dataset_dir"] = dataset_dir_;
   args["annotation_file"] = annotation_file_;
   args["task"] = task_;
@@ -196,6 +199,7 @@ Status CocoNode::to_json(nlohmann::json *out_json) {
 #ifndef ENABLE_ANDROID
 Status CocoNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds) {
   RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "num_parallel_workers", kCocoNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "connector_queue_size", kCocoNode));
   RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "dataset_dir", kCocoNode));
   RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "annotation_file", kCocoNode));
   RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "task", kCocoNode));
@@ -212,7 +216,8 @@ Status CocoNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode>
   RETURN_IF_NOT_OK(DatasetCache::from_json(json_obj, &cache));
   bool extra_metadata = json_obj["extra_metadata"];
   *ds = std::make_shared<CocoNode>(dataset_dir, annotation_file, task, decode, sampler, cache, extra_metadata);
-  (*ds)->SetNumWorkers(json_obj["num_parallel_workers"]);
+  (void)(*ds)->SetNumWorkers(json_obj["num_parallel_workers"]);
+  (void)(*ds)->SetConnectorQueueSize(json_obj["connector_queue_size"]);
   return Status::OK();
 }
 #endif

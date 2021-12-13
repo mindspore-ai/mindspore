@@ -154,6 +154,13 @@ class Serdes {
   /// \return Status The status code returned
   static Status SaveToJSON(std::shared_ptr<DatasetNode> node, const std::string &filename, nlohmann::json *out_json);
 
+  /// \brief Function to update the parameters [num_parallel_workers, connector_queue_size] in the serialized JSON
+  /// object of the optimized IR tree
+  /// \param[in, out] serialized_json The optimized ir tree json node
+  /// \param[in] op_map An ID to DatasetOp mapping
+  static Status UpdateOptimizedIRTreeJSON(nlohmann::json *serialized_json,
+                                          const std::map<int32_t, std::shared_ptr<DatasetOp>> &op_map);
+
   /// \brief function to de-serialize JSON file to IR tree
   /// \param[in] json_filepath input path of json file
   /// \param[out] ds The deserialized dataset
@@ -185,13 +192,13 @@ class Serdes {
   static Status ParseMindIRPreprocess(const std::vector<std::string> &map_json_string,
                                       std::vector<std::shared_ptr<mindspore::dataset::Execute>> *data_graph);
 
- protected:
   /// \brief Helper function to save JSON to a file
   /// \param[in] json_string The JSON string to be saved to the file
   /// \param[in] file_name The file name
   /// \return Status The status code returned
-  static Status SaveJSONToFile(nlohmann::json json_string, const std::string &file_name);
+  static Status SaveJSONToFile(const nlohmann::json &json_string, const std::string &file_name);
 
+ protected:
   /// \brief Function to determine type of the node - dataset node if no dataset exists or operation node
   /// \param[in] child_ds children datasets that is already created
   /// \param[in] json_obj json object to read out type of the node
@@ -220,6 +227,14 @@ class Serdes {
   /// \return map of key to function pointer
   static std::map<std::string, Status (*)(nlohmann::json json_obj, std::shared_ptr<TensorOperation> *operation)>
   InitializeFuncPtr();
+
+  /// \brief Helper function to perform recursive DFS on the optimized IR tree and to match each IR node with its
+  /// corresponding dataset op
+  /// \param [in, out] serialized_json The optimized ir tree json node
+  /// \param [in, out] op_id The id in execution tree from where to continue the IR Node - DatasetOp matching search
+  /// \param [in] op_map An ID to DatasetOp mapping
+  static Status RecurseUpdateOptimizedIRTreeJSON(nlohmann::json *serialized_json, int32_t *op_id,
+                                                 const std::map<int32_t, std::shared_ptr<DatasetOp>> &op_map);
 
  private:
   static std::map<std::string, Status (*)(nlohmann::json json_obj, std::shared_ptr<TensorOperation> *operation)>

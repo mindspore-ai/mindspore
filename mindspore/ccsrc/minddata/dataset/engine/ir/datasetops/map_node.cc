@@ -50,6 +50,8 @@ std::shared_ptr<DatasetNode> MapNode::Copy() {
   std::vector<std::shared_ptr<TensorOperation>> operations = operations_;
   auto node = std::make_shared<MapNode>(nullptr, operations, input_columns_, output_columns_, project_columns_, cache_,
                                         callbacks_, offload_);
+  node->SetNumWorkers(num_workers_);
+  node->SetConnectorQueueSize(connector_que_size_);
   return node;
 }
 
@@ -80,8 +82,6 @@ Status MapNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
       RETURN_STATUS_UNEXPECTED("MapNode containing random operation is not supported as a descendant of cache.");
     }
   }
-  // This parameter will be removed with next rebase
-  std::vector<std::string> col_orders;
   auto map_op = std::make_shared<MapOp>(input_columns_, output_columns_, tensor_ops, num_workers_, connector_que_size_);
 
   if (!callbacks_.empty()) {
@@ -156,6 +156,7 @@ Status MapNode::to_json(nlohmann::json *out_json) {
   RETURN_UNEXPECTED_IF_NULL(out_json);
   nlohmann::json args;
   args["num_parallel_workers"] = num_workers_;
+  args["connector_queue_size"] = connector_que_size_;
   args["input_columns"] = input_columns_;
   args["output_columns"] = output_columns_;
   args["project_columns"] = project_columns_;
@@ -192,6 +193,7 @@ Status MapNode::to_json(nlohmann::json *out_json) {
 Status MapNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> ds,
                           std::shared_ptr<DatasetNode> *result) {
   RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "num_parallel_workers", kMapNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "connector_queue_size", kMapNode));
   RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "input_columns", kMapNode));
   RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "output_columns", kMapNode));
   RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "project_columns", kMapNode));
@@ -203,6 +205,7 @@ Status MapNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> 
   RETURN_IF_NOT_OK(Serdes::ConstructTensorOps(json_obj["operations"], &operations));
   *result = std::make_shared<MapNode>(ds, operations, input_columns, output_columns, project_columns);
   (*result)->SetNumWorkers(json_obj["num_parallel_workers"]);
+  (*result)->SetConnectorQueueSize(json_obj["connector_queue_size"]);
   return Status::OK();
 }
 #endif

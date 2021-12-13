@@ -16,12 +16,15 @@
 Test Dataset AutoTune's Save and Load Configuration support
 """
 import filecmp
+
 import numpy as np
 import pytest
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as c_transforms
+import mindspore.dataset.vision.c_transforms as c_vision
 
 MNIST_DATA_DIR = "../data/dataset/testMnistData"
+DATA_DIR = "../data/dataset/testPK/data"
 
 
 @pytest.mark.forked
@@ -36,6 +39,7 @@ class TestAutotuneSaveLoad:
         Description: Test save final config with GeneratorDataset pipeline: Generator -> Shuffle -> Batch
         Expectation: pipeline runs successfully
         """
+        original_autotune = ds.config.get_enable_autotune()
         ds.config.set_enable_autotune(True, str(tmp_path) + "test_autotune_generator_atfinal.json")
 
         source = [(np.array([x]),) for x in range(1024)]
@@ -50,17 +54,18 @@ class TestAutotuneSaveLoad:
             for _ in itr:
                 pass
 
-        ds.config.set_enable_autotune(False)
+        ds.config.set_enable_autotune(original_autotune)
 
     @staticmethod
-    def skip_test_autotune_mnist_pipeline(tmp_path):
+    def test_autotune_mnist_pipeline(tmp_path):
         """
         Feature: Autotuning
         Description: Test save final config with Mnist pipeline: Mnist -> Batch -> Map
         Expectation: pipeline runs successfully
         """
+        original_autotune = ds.config.get_enable_autotune()
         ds.config.set_enable_autotune(True, str(tmp_path) + "test_autotune_mnist_pipeline_atfinal.json")
-
+        original_seed = ds.config.get_seed()
         ds.config.set_seed(1)
 
         data1 = ds.MnistDataset(MNIST_DATA_DIR, num_samples=100)
@@ -74,7 +79,7 @@ class TestAutotuneSaveLoad:
         for _ in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
             pass
 
-        ds.config.set_enable_autotune(False)
+        ds.config.set_enable_autotune(original_autotune)
 
         # Confirm final AutoTune config file is identical to the serialized file.
         assert filecmp.cmp(str(tmp_path) + "test_autotune_mnist_pipeline_atfinal.json",
@@ -91,6 +96,8 @@ class TestAutotuneSaveLoad:
             num += 1
         assert num == 10
 
+        ds.config.set_seed(original_seed)
+
     @staticmethod
     def test_autotune_save_overwrite_generator(tmp_path):
         """
@@ -102,7 +109,7 @@ class TestAutotuneSaveLoad:
         source = [(np.array([x]),) for x in range(1024)]
 
         at_final_json_filename = "test_autotune_save_overwrite_generator_atfinal.json"
-
+        original_autotune = ds.config.get_enable_autotune()
         ds.config.set_enable_autotune(True, str(tmp_path) + at_final_json_filename)
 
         data1 = ds.GeneratorDataset(source, ["data"])
@@ -120,20 +127,22 @@ class TestAutotuneSaveLoad:
         for _ in data2.create_dict_iterator(num_epochs=1, output_numpy=True):
             pass
 
-        ds.config.set_enable_autotune(False)
+        ds.config.set_enable_autotune(original_autotune)
 
     @staticmethod
-    def skip_test_autotune_save_overwrite_mnist(tmp_path):
+    def test_autotune_save_overwrite_mnist(tmp_path):
         """
         Feature: Autotuning
         Description: Test set_enable_autotune and existing json_filepath is overwritten
         Expectation: set_enable_autotune() executes successfully with file-exist warning produced.
             Execution of 2nd pipeline overwrites AutoTune configuration file of 1st pipeline.
         """
+        original_seed = ds.config.get_seed()
         ds.config.set_seed(1)
         at_final_json_filename = "test_autotune_save_overwrite_mnist_atfinal.json"
 
         # Pipeline#1
+        original_autotune = ds.config.get_enable_autotune()
         ds.config.set_enable_autotune(True, str(tmp_path) + at_final_json_filename)
 
         data1 = ds.MnistDataset(MNIST_DATA_DIR, num_samples=100)
@@ -170,3 +179,41 @@ class TestAutotuneSaveLoad:
         # Confirm the serialized files for the 2 different pipelines are different
         assert not filecmp.cmp(str(tmp_path) + "test_autotune_save_overwrite_mnist_serialized1.json",
                                str(tmp_path) + "test_autotune_save_overwrite_mnist_serialized2.json")
+
+        ds.config.set_seed(original_seed)
+        ds.config.set_enable_autotune(original_autotune)
+
+    @staticmethod
+    def test_autotune_warning_with_offload(tmp_path, capfd):
+        """
+        Feature: Autotuning
+        Description: Test autotune config saving with offload=True
+        Expectation: Autotune should not write the config file and print a log message
+        """
+        original_seed = ds.config.get_seed()
+        ds.config.set_seed(1)
+        at_final_json_filename = "test_autotune_warning_with_offload_config.json"
+        config_path = tmp_path / at_final_json_filename
+        original_autotune = ds.config.get_enable_autotune()
+        ds.config.set_enable_autotune(True, str(config_path))
+
+        # Dataset with offload activated.
+        dataset = ds.ImageFolderDataset(DATA_DIR)
+        dataset = dataset.map(operations=[c_vision.Decode()], input_columns="image")
+        dataset = dataset.map(operations=[c_vision.HWC2CHW()], input_columns="image", offload=True)
+        dataset = dataset.batch(8, drop_remainder=True)
+
+        for _ in dataset.create_tuple_iterator(num_epochs=1, output_numpy=True):
+            pass
+
+        _, err = capfd.readouterr()
+
+        assert "Some nodes have been offloaded. AutoTune is unable to write the autotune configuration to disk. " \
+               "Disable offload to prevent this from happening." in err
+
+        with pytest.raises(FileNotFoundError):
+            with open(config_path) as _:
+                pass
+
+        ds.config.set_enable_autotune(original_autotune)
+        ds.config.set_seed(original_seed)

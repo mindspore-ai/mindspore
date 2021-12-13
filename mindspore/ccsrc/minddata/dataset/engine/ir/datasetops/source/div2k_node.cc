@@ -41,6 +41,8 @@ DIV2KNode::DIV2KNode(const std::string &dataset_dir, const std::string &usage, c
 std::shared_ptr<DatasetNode> DIV2KNode::Copy() {
   std::shared_ptr<SamplerObj> sampler = (sampler_ == nullptr) ? nullptr : sampler_->SamplerCopy();
   auto node = std::make_shared<DIV2KNode>(dataset_dir_, usage_, downgrade_, scale_, decode_, sampler, cache_);
+  node->SetNumWorkers(num_workers_);
+  node->SetConnectorQueueSize(connector_que_size_);
   return node;
 }
 
@@ -136,6 +138,7 @@ Status DIV2KNode::to_json(nlohmann::json *out_json) {
   RETURN_IF_NOT_OK(sampler_->to_json(&sampler_args));
   args["sampler"] = sampler_args;
   args["num_parallel_workers"] = num_workers_;
+  args["connector_queue_size"] = connector_que_size_;
   args["dataset_dir"] = dataset_dir_;
   args["usage"] = usage_;
   args["downgrade"] = downgrade_;

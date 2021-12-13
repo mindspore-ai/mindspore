@@ -30,6 +30,13 @@ std::map<std::string, Status (*)(nlohmann::json json_obj, std::shared_ptr<Tensor
 Status Serdes::SaveToJSON(std::shared_ptr<DatasetNode> node, const std::string &filename, nlohmann::json *out_json) {
   RETURN_UNEXPECTED_IF_NULL(node);
   RETURN_UNEXPECTED_IF_NULL(out_json);
+  // If an optimized IR Tree is sent (use-case for MD AutoTune), ignore Top and EpochCtrl nodes
+  if (node->Name() == "Top" || node->Name() == "EpochCtrl") {
+    CHECK_FAIL_RETURN_UNEXPECTED(
+      node->Children().size() == 1,
+      "Expected " + node->Name() + " to have exactly 1 child but it has " + std::to_string(node->Children().size()));
+    return SaveToJSON(node->Children()[0], filename, out_json);
+  }
   // Dump attributes of current node to json string
   nlohmann::json args;
   RETURN_IF_NOT_OK(node->to_json(&args));
@@ -55,7 +62,7 @@ Status Serdes::SaveToJSON(std::shared_ptr<DatasetNode> node, const std::string &
   return Status::OK();
 }
 
-Status Serdes::SaveJSONToFile(nlohmann::json json_string, const std::string &file_name) {
+Status Serdes::SaveJSONToFile(const nlohmann::json &json_string, const std::string &file_name) {
   try {
     std::optional<std::string> dir = "";
     std::optional<std::string> local_file_name = "";
@@ -116,7 +123,7 @@ Status Serdes::ConstructPipeline(nlohmann::json json_obj, std::shared_ptr<Datase
     RETURN_IF_NOT_OK(CreateNode(child_ds, json_obj, ds));
   } else {
     std::vector<std::shared_ptr<DatasetNode>> datasets;
-    for (auto child_json_obj : json_obj["children"]) {
+    for (const auto &child_json_obj : json_obj["children"]) {
       RETURN_IF_NOT_OK(ConstructPipeline(child_json_obj, &child_ds));
       datasets.push_back(child_ds);
     }
@@ -377,6 +384,64 @@ Status Serdes::ParseMindIRPreprocess(const std::vector<std::string> &map_json_st
     MS_LOG(WARNING) << "Can not find any valid preprocess operation.";
   }
 
+  return Status::OK();
+}
+
+Status Serdes::UpdateOptimizedIRTreeJSON(nlohmann::json *serialized_json,
+                                         const std::map<int32_t, std::shared_ptr<DatasetOp>> &op_map) {
+  RETURN_UNEXPECTED_IF_NULL(serialized_json);
+  int32_t op_id = 0;
+  return RecurseUpdateOptimizedIRTreeJSON(serialized_json, &op_id, op_map);
+}
+
+bool IsDatasetOpMatchIRNode(std::string_view ir_node_name, std::string_view dataset_op_name) {
+  // Helper function to match IR Node name to its dataset op name
+  if (ir_node_name == kSyncWaitNode) {
+    return dataset_op_name == kBarrierOp;
+  } else if (ir_node_name == kCifar10Node || ir_node_name == kCifar100Node) {
+    return dataset_op_name == "CifarOp";
+  } else if (ir_node_name == kMindDataNode) {
+    return dataset_op_name == "MindRecordOp";
+  } else if (ir_node_name == kRandomNode) {
+    return dataset_op_name == "RandomDataOp";
+  } else if (ir_node_name == kTFRecordNode) {
+    return dataset_op_name == "TFReaderOp";
+  } else if (ir_node_name == kIWSLT2016Node || ir_node_name == kIWSLT2017Node) {
+    return dataset_op_name == "IWSLTOp";
+  } else {
+    // Generic way of matching, special cases handled above. Special cases will evolve over time.
+    return ir_node_name.substr(0, ir_node_name.find("Dataset")) ==
+           dataset_op_name.substr(0, dataset_op_name.find("Op"));
+  }
+}
+
+Status Serdes::RecurseUpdateOptimizedIRTreeJSON(nlohmann::json *serialized_json, int32_t *op_id,
+                                                const std::map<int32_t, std::shared_ptr<DatasetOp>> &op_map) {
+  RETURN_UNEXPECTED_IF_NULL(serialized_json);
+  RETURN_UNEXPECTED_IF_NULL(op_id);
+
+  std::string ir_node_name = (*serialized_json)["op_type"];
+  MS_LOG(INFO) << "Visiting IR Node: " << ir_node_name;
+  // Each IR Node should have a corresponding dataset node in the execution tree but the reverse is not necessarily true
+  while (!IsDatasetOpMatchIRNode(ir_node_name, op_map.find(*op_id)->second->Name())) {
+    // During the construction of execution tree, extra dataset nodes may have been inserted
+    // Skip dataset ops unless we get to the expected node
+    MS_LOG(INFO) << "\tSkipping dataset op: " << op_map.find(*op_id)->second->NameWithID();
+    ++(*op_id);
+    CHECK_FAIL_RETURN_UNEXPECTED(*op_id < op_map.size(), "op_id is out of bounds");
+  }
+  MS_LOG(INFO) << "\tMatch found for IR Node: " << ir_node_name
+               << " with dataset op: " << op_map.find(*op_id)->second->NameWithID();
+  if (!op_map.find(*op_id)->second->inlined() && serialized_json->contains("num_parallel_workers") &&
+      serialized_json->contains("connector_queue_size")) {
+    (*serialized_json)["num_parallel_workers"] = op_map.find(*op_id)->second->NumWorkers();
+    (*serialized_json)["connector_queue_size"] = op_map.find(*op_id)->second->ConnectorCapacity();
+  }
+  ++(*op_id);
+  auto num_children = (*serialized_json)["children"].size();
+  for (int i = 0; i < num_children; ++i) {
+    RETURN_IF_NOT_OK(RecurseUpdateOptimizedIRTreeJSON(&(*serialized_json)["children"][i], op_id, op_map));
+  }
   return Status::OK();
 }
 

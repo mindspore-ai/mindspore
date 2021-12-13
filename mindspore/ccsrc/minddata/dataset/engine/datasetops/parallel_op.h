@@ -49,10 +49,8 @@ class ParallelOp : public DatasetOp {
         epoch_sync_flag_(false),
         next_worker_id_(0) {
     // reduce excessive memory usage with high parallelism
-    // when num_workers > 4, reduce op_connector_size to have similar total size if there were only 4 workers
     constexpr int32_t worker_limit = 4;
     if (num_workers_ > worker_limit) {
-      oc_queue_size_ = std::max(1, op_connector_size * worker_limit / num_workers_);
       worker_connector_size_ = std::max(1, op_connector_size * worker_limit / num_workers_);
     }
   }

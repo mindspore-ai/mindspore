@@ -181,7 +181,7 @@ class CsvOp : public NonMappableLeafOp {
 
   /// Op name getter
   /// @return Name of the current Op
-  std::string Name() const override { return "CsvOp"; }
+  std::string Name() const override { return "CSVOp"; }
 
   // DatasetName name getter
   // \return DatasetName of the current Op

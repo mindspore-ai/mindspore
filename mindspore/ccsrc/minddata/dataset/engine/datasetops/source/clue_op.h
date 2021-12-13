@@ -67,7 +67,7 @@ class ClueOp : public NonMappableLeafOp {
 
   // Op name getter
   // @return Name of the current Op
-  std::string Name() const override { return "ClueOp"; }
+  std::string Name() const override { return "CLUEOp"; }
 
  private:
   // Reads a clue file and loads the data into multiple TensorRows.

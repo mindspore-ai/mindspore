@@ -57,6 +57,8 @@ IWSLT2017Node::IWSLT2017Node(const std::string &dataset_dir, const std::string &
 std::shared_ptr<DatasetNode> IWSLT2017Node::Copy() {
   auto node = std::make_shared<IWSLT2017Node>(dataset_dir_, usage_, language_pair_, num_samples_, shuffle_, num_shards_,
                                               shard_id_, cache_);
+  node->SetNumWorkers(num_workers_);
+  node->SetConnectorQueueSize(connector_que_size_);
   return node;
 }
 
@@ -150,6 +152,7 @@ Status IWSLT2017Node::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &s
 Status IWSLT2017Node::to_json(nlohmann::json *out_json) {
   nlohmann::json args;
   args["num_parallel_workers"] = num_workers_;
+  args["connector_queue_size"] = connector_que_size_;
   args["dataset_dir"] = dataset_dir_;
   args["usage"] = usage_;
   args["language_pair"] = language_pair_;

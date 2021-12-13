@@ -62,6 +62,8 @@ class TreeAdapter {
   // Return the root node of the IR after cloned from the parsed IR tree
   std::shared_ptr<DatasetNode> RootIRNode() const { return root_ir_; }
 
+  const ExecutionTree *GetExecutionTree() const { return tree_.get(); }
+
   // This is the main method TreeConsumer uses to interact with TreeAdapter
   // 1. GetNext will Launch() the ExeTree on its first call by iterator (tree is already prepared)
   // 2. GetNext will return empty row when eoe/eof is obtained
@@ -87,7 +89,6 @@ class TreeAdapter {
 
   // Return Offload Json
   nlohmann::json GetOffloadJson();
-
 #ifndef ENABLE_SECURITY
   /// \brief Setter for Profiling Manager
   Status SetProfilingManagerPtr(std::shared_ptr<ProfilingManager> profiling_manager,
@@ -119,8 +120,8 @@ class TreeAdapter {
 
   std::unordered_map<std::string, int32_t> column_name_map_;
   std::shared_ptr<DatasetNode> root_ir_;
-  std::unique_ptr<ExecutionTree> tree_;  // current connector capacity of root op, used for profiling
-  bool optimize_;                        // Flag to enable optional optimization pass
+  std::unique_ptr<ExecutionTree> tree_;
+  bool optimize_;  // Flag to enable optional optimization pass
 #ifndef ENABLE_SECURITY
   std::shared_ptr<ProfilingManager> profiling_manager_;  // Profiling manager
   std::shared_ptr<DatasetIteratorTracing> tracing_;      // trace profiling data

@@ -38,6 +38,8 @@ IMDBNode::IMDBNode(const std::string &dataset_dir, const std::string &usage, std
 std::shared_ptr<DatasetNode> IMDBNode::Copy() {
   std::shared_ptr<SamplerObj> sampler = (sampler_ == nullptr) ? nullptr : sampler_->SamplerCopy();
   auto node = std::make_shared<IMDBNode>(dataset_dir_, usage_, sampler, cache_);
+  node->SetNumWorkers(num_workers_);
+  node->SetConnectorQueueSize(connector_que_size_);
   return node;
 }
 
@@ -106,6 +108,7 @@ Status IMDBNode::to_json(nlohmann::json *out_json) {
   RETURN_IF_NOT_OK(sampler_->to_json(&sampler_args));
   args["sampler"] = sampler_args;
   args["num_parallel_workers"] = num_workers_;
+  args["connector_queue_size"] = connector_que_size_;
   args["dataset_dir"] = dataset_dir_;
   args["usage"] = usage_;
   if (cache_ != nullptr) {
@@ -121,6 +124,7 @@ Status IMDBNode::to_json(nlohmann::json *out_json) {
 Status IMDBNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds) {
   RETURN_UNEXPECTED_IF_NULL(ds);
   RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "num_parallel_workers", kIMDBNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "connector_queue_size", kIMDBNode));
   RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "dataset_dir", kIMDBNode));
   RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "usage", kIMDBNode));
   RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "sampler", kIMDBNode));

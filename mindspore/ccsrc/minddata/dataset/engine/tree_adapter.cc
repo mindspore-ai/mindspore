@@ -168,14 +168,11 @@ Status TreeAdapter::Build(std::shared_ptr<DatasetNode> root_ir) {
   RETURN_IF_NOT_OK(BuildExecutionTreeRecur(root_ir->Children()[0], &root_op));
   RETURN_IF_NOT_OK(tree_->AssignRoot(root_op));
 
-  // Note: We will gradually move the pre pass, optimizer pass, and post pass
-  //       on ExecutionTree to perform on IR tree.
   // Prepare the tree
   RETURN_IF_NOT_OK(tree_->Prepare());
 
   // After the tree is prepared, the col_name_id_map can safely be obtained
   column_name_map_ = tree_->root()->column_name_id_map();
-
   return Status::OK();
 }
 
@@ -219,7 +216,6 @@ Status TreeAdapter::Compile(std::shared_ptr<DatasetNode> input_ir, int32_t num_e
 
   RETURN_IF_NOT_OK(Build(root_ir_));
   tree_state_ = kCompileStateReady;
-
   return Status::OK();
 }
 

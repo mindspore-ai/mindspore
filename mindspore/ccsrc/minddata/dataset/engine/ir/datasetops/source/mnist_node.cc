@@ -37,6 +37,8 @@ MnistNode::MnistNode(std::string dataset_dir, std::string usage, std::shared_ptr
 std::shared_ptr<DatasetNode> MnistNode::Copy() {
   std::shared_ptr<SamplerObj> sampler = (sampler_ == nullptr) ? nullptr : sampler_->SamplerCopy();
   auto node = std::make_shared<MnistNode>(dataset_dir_, usage_, sampler, cache_);
+  node->SetNumWorkers(num_workers_);
+  node->SetConnectorQueueSize(connector_que_size_);
   return node;
 }
 
@@ -62,7 +64,6 @@ Status MnistNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops)
     schema->AddColumn(ColDescriptor("label", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 0, &scalar)));
   std::shared_ptr<SamplerRT> sampler_rt = nullptr;
   RETURN_IF_NOT_OK(sampler_->SamplerBuild(&sampler_rt));
-
   auto op = std::make_shared<MnistOp>(usage_, num_workers_, dataset_dir_, connector_que_size_, std::move(schema),
                                       std::move(sampler_rt));
   op->SetTotalRepeats(GetTotalRepeats());
@@ -104,6 +105,7 @@ Status MnistNode::to_json(nlohmann::json *out_json) {
   RETURN_IF_NOT_OK(sampler_->to_json(&sampler_args));
   args["sampler"] = sampler_args;
   args["num_parallel_workers"] = num_workers_;
+  args["connector_queue_size"] = connector_que_size_;
   args["dataset_dir"] = dataset_dir_;
   args["usage"] = usage_;
   if (cache_ != nullptr) {
@@ -118,6 +120,7 @@ Status MnistNode::to_json(nlohmann::json *out_json) {
 #ifndef ENABLE_ANDROID
 Status MnistNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds) {
   RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "num_parallel_workers", kMnistNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "connector_queue_size", kMnistNode));
   RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "dataset_dir", kMnistNode));
   RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "usage", kMnistNode));
   RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "sampler", kMnistNode));
@@ -129,6 +132,7 @@ Status MnistNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode
   RETURN_IF_NOT_OK(DatasetCache::from_json(json_obj, &cache));
   *ds = std::make_shared<MnistNode>(dataset_dir, usage, sampler, cache);
   (*ds)->SetNumWorkers(json_obj["num_parallel_workers"]);
+  (*ds)->SetConnectorQueueSize(json_obj["connector_queue_size"]);
   return Status::OK();
 }
 #endif

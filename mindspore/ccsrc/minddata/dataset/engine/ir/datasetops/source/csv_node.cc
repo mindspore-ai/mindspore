@@ -49,6 +49,8 @@ CSVNode::CSVNode(const std::vector<std::string> &csv_files, char field_delim,
 std::shared_ptr<DatasetNode> CSVNode::Copy() {
   auto node = std::make_shared<CSVNode>(dataset_files_, field_delim_, column_defaults_, column_names_, num_samples_,
                                         shuffle_, num_shards_, shard_id_, cache_);
+  node->SetNumWorkers(num_workers_);
+  node->SetConnectorQueueSize(connector_que_size_);
   return node;
 }
 
@@ -163,6 +165,7 @@ Status CSVNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_ge
 Status CSVNode::to_json(nlohmann::json *out_json) {
   nlohmann::json args;
   args["num_parallel_workers"] = num_workers_;
+  args["connector_queue_size"] = connector_que_size_;
   args["dataset_files"] = dataset_files_;
   args["field_delim"] = std::string(1, field_delim_);
   args["column_names"] = column_names_;
@@ -181,6 +184,7 @@ Status CSVNode::to_json(nlohmann::json *out_json) {
 
 Status CSVNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds) {
   RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "num_parallel_workers", kCSVNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "connector_queue_size", kCSVNode));
   RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "dataset_files", kCSVNode));
   RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "field_delim", kCSVNode));
   RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "column_names", kCSVNode));
@@ -200,7 +204,8 @@ Status CSVNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> 
   RETURN_IF_NOT_OK(DatasetCache::from_json(json_obj, &cache));
   *ds = std::make_shared<CSVNode>(dataset_files, field_delim.c_str()[0], column_defaults, column_names, num_samples,
                                   shuffle, num_shards, shard_id, cache);
-  (*ds)->SetNumWorkers(json_obj["num_parallel_workers"]);
+  (void)(*ds)->SetNumWorkers(json_obj["num_parallel_workers"]);
+  (void)(*ds)->SetConnectorQueueSize(json_obj["connector_queue_size"]);
   return Status::OK();
 }
 

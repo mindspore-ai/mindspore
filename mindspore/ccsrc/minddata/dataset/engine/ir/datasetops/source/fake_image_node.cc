@@ -39,6 +39,8 @@ FakeImageNode::FakeImageNode(int32_t num_images, const std::vector<int32_t> &ima
 std::shared_ptr<DatasetNode> FakeImageNode::Copy() {
   std::shared_ptr<SamplerObj> sampler = (sampler_ == nullptr) ? nullptr : sampler_->SamplerCopy();
   auto node = std::make_shared<FakeImageNode>(num_images_, image_size_, num_classes_, base_seed_, sampler, cache_);
+  node->SetNumWorkers(num_workers_);
+  node->SetConnectorQueueSize(connector_que_size_);
   return node;
 }
 
@@ -119,7 +121,7 @@ Status FakeImageNode::to_json(nlohmann::json *out_json) {
   RETURN_IF_NOT_OK(sampler_->to_json(&sampler_args));
   args["sampler"] = sampler_args;
   args["num_parallel_workers"] = num_workers_;
-
+  args["connector_queue_size"] = connector_que_size_;
   args["num_images"] = num_images_;
   args["image_size"] = image_size_;
   args["num_classes"] = num_classes_;

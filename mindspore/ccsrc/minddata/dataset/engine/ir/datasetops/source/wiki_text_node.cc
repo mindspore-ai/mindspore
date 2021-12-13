@@ -49,6 +49,8 @@ WikiTextNode::WikiTextNode(const std::string &dataset_dir, const std::string &us
 std::shared_ptr<DatasetNode> WikiTextNode::Copy() {
   auto node =
     std::make_shared<WikiTextNode>(dataset_dir_, usage_, num_samples_, shuffle_, num_shards_, shard_id_, cache_);
+  node->SetNumWorkers(num_workers_);
+  node->SetConnectorQueueSize(connector_que_size_);
   return node;
 }
 
@@ -131,6 +133,7 @@ Status WikiTextNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &si
 Status WikiTextNode::to_json(nlohmann::json *out_json) {
   nlohmann::json args;
   args["num_parallel_workers"] = num_workers_;
+  args["connector_queue_size"] = connector_que_size_;
   args["dataset_dir"] = dataset_dir_;
   args["usage"] = usage_;
   args["num_samples"] = num_samples_;

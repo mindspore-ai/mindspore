@@ -228,6 +228,11 @@ std::shared_ptr<DatasetNode> DatasetNode::SetNumWorkers(int32_t num_workers) {
   return shared_from_this();
 }
 
+std::shared_ptr<DatasetNode> DatasetNode::SetConnectorQueueSize(int32_t connector_queue_size) {
+  connector_que_size_ = connector_queue_size;
+  return shared_from_this();
+}
+
 std::shared_ptr<DatasetNode> DatasetNode::SetDatasetCache(const std::shared_ptr<DatasetCache> &cache) {
   cache_ = cache;
   return shared_from_this();
@@ -657,6 +662,7 @@ Status DatasetNode::ValidateParams() {
 Status DatasetNode::to_json(nlohmann::json *out_json) {
   nlohmann::json args;
   args["num_parallel_workers"] = num_workers_;
+  args["connector_queue_size"] = connector_que_size_;
   *out_json = args;
   return Status::OK();
 }
