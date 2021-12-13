@@ -183,16 +183,16 @@ NPUOp *GetNPUConvOp(const schema::Primitive *primitive, const std::vector<mindsp
   auto input_channel = in_tensors.front().Shape()[NHWC_C];
   auto output_channel = out_tensors.front().Shape()[NHWC_C];
   if (group == input_channel && group == output_channel) {
-    if (in_tensors.front().QuantParams().empty()) {
-      op = new (std::nothrow) ConvolutionDepthwiseNPUOp(primitive, in_tensors, out_tensors, name);
-    } else {
+    if (in_tensors[1].DataType() == DataType::kNumberTypeInt8) {
       op = new (std::nothrow) ConvolutionDepthwiseInt8NPUOp(primitive, in_tensors, out_tensors, name);
+    } else {
+      op = new (std::nothrow) ConvolutionDepthwiseNPUOp(primitive, in_tensors, out_tensors, name);
     }
   } else {
-    if (in_tensors.front().QuantParams().empty()) {
-      op = new (std::nothrow) ConvolutionNPUOp(primitive, in_tensors, out_tensors, name);
-    } else {
+    if (in_tensors[1].DataType() == DataType::kNumberTypeInt8) {
       op = new (std::nothrow) ConvolutionInt8NPUOp(primitive, in_tensors, out_tensors, name);
+    } else {
+      op = new (std::nothrow) ConvolutionNPUOp(primitive, in_tensors, out_tensors, name);
     }
   }
 

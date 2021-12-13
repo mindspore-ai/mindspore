@@ -18,7 +18,6 @@
 #include <set>
 #include "tools/converter/quantizer/quantize_util.h"
 #include "tools/optimizer/common/gllo_utils.h"
-#include "base/core_ops.h"
 #include "src/common/log_adapter.h"
 #include "src/common/log_util.h"
 #include "nnacl/op_base.h"
@@ -77,7 +76,8 @@ bool QuantStrategy::CanTensorQuantized(const CNodePtr &cnode, const AnfNodePtr &
 }
 
 bool QuantStrategy::CanOpFullQuantized(const AnfNodePtr &node, const std::set<PrimitivePtr> &support_int8_ops,
-                                       const std::set<PrimitivePtr> &skip_check_dtype_ops) {
+                                       const std::set<PrimitivePtr> &skip_check_dtype_ops,
+                                       const std::set<mindspore::ActivationType> &support_activation) {
   MS_CHECK_TRUE_RET(node != nullptr, false);
   if (!node->isa<mindspore::CNode>()) {
     return false;
@@ -114,14 +114,11 @@ bool QuantStrategy::CanOpFullQuantized(const AnfNodePtr &node, const std::set<Pr
   }
 
   // Check Activation
-  if (opt::CheckPrimitiveType(cnode, prim::kPrimActivation)) {
+  if (!support_activation.empty() && opt::CheckPrimitiveType(cnode, prim::kPrimActivation)) {
     auto value_ptr = GetValueNode<PrimitivePtr>(cnode->input(0))->GetAttr(ops::kActivationType);
     if (value_ptr == nullptr) {
       return false;
     }
-    std::set<mindspore::ActivationType> support_activation = {
-      RELU, RELU6, HSWISH, SIGMOID, LEAKY_RELU, TANH,
-    };
     auto activation = mindspore::ActivationType(GetValue<int64_t>(value_ptr));
     if (support_activation.find(activation) == support_activation.end()) {
       return false;

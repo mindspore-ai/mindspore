@@ -113,6 +113,7 @@ class FullQuantQuantizer : public Quantizer {
   std::set<PrimitivePtr> support_int8_ops_;
   std::set<PrimitivePtr> skip_check_dtype_ops_;
   std::set<PrimitivePtr> per_channel_ops_;
+  std::set<mindspore::ActivationType> support_activation_;
 
   std::unique_ptr<Calibrator> calibrator_{nullptr};
   session::LiteSession *fp32_session_{nullptr};
