@@ -1406,6 +1406,18 @@ bool AnfRuntimeAlgorithm::IsLabelIndexInNode(const AnfNodePtr &node, size_t labe
   return false;
 }
 
+bool AnfRuntimeAlgorithm::IsUpdateParameterKernel(const CNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto node_name = GetCNodeName(node);
+  if (HasNodeAttr(kAttrAsync, node) && GetNodeAttr<bool>(node, kAttrAsync)) {
+    return false;
+  }
+  if (kOptOperatorSet.find(node_name) == kOptOperatorSet.end() && node_name.find("Assign") == string::npos) {
+    return false;
+  }
+  return true;
+}
+
 void AnfRuntimeAlgorithm::SetStreamId(uint32_t stream_id, AnfNode *node) {
   MS_EXCEPTION_IF_NULL(node);
   auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());

@@ -307,10 +307,7 @@ class KernelGraph : public FuncGraph {
 
   bool has_optimizer() const { return has_optimizer_; }
   bool IsUpdatedParameter(const ParameterPtr &param) const {
-    if (updated_parameters_.find(param) != updated_parameters_.end()) {
-      return true;
-    }
-    return false;
+    return updated_parameters_.find(param) != updated_parameters_.end();
   }
   // handle graph dependency
   void AddPreGraph(const std::shared_ptr<session::KernelGraph> &graph) {

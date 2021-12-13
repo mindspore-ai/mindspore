@@ -22,6 +22,9 @@
 
 namespace mindspore {
 namespace device {
+constexpr size_t kFirstGetMemEventIndex = 1;
+constexpr size_t kInitOrMallocMemEventIndex = 0;
+
 std::vector<std::shared_ptr<MemEvent>> &MemOffloadStrategy::GetPreComputeEvents(size_t step) {
   if (pre_compute_events_.size() <= step) {
     MS_LOG_EXCEPTION << "Index out of pre event range, index:" << step << ", event size:" << pre_compute_events_.size();
@@ -62,7 +65,7 @@ void MemOffloadStrategy::CountMemUsage() {
     if (mem_events.empty()) {
       continue;
     }
-    auto first_event = mem_events[0];
+    auto first_event = mem_events[kInitOrMallocMemEventIndex];
     const bool is_high_priority = IsHighPriorityMem(first_event->key);
     if (is_high_priority) {
       high_priority_mem_size += first_event->mem_size;
@@ -83,6 +86,10 @@ void MemOffloadStrategy::CountMemUsage() {
   }
   min_mem_needed_ = *(std::max_element(min_mem_used_.begin(), min_mem_used_.end()));
   mem_used_without_swap_ = *(std::max_element(total_mem_used.begin(), total_mem_used.end())) + high_priority_mem_size;
+  if (mem_size_ < min_mem_needed_) {
+    MS_LOG(EXCEPTION) << "Out of memory, as available mem size is " << mem_size_ << " while graph needs at least "
+                      << min_mem_needed_;
+  }
 }
 
 bool MemOffloadStrategy::IsHighPriorityMem(const void *key) {
@@ -94,11 +101,6 @@ bool MemOffloadStrategy::IsHighPriorityMem(const void *key) {
 }
 
 void MemOffloadStrategy::CheckMemSize() {
-  if (mem_size_ < min_mem_needed_) {
-    MS_LOG(EXCEPTION) << "Out of memory, as available mem size is " << mem_size_ << " while graph needs at least "
-                      << min_mem_needed_;
-  }
-
   if (mem_size_ < mem_used_without_swap_ || !manual_offload_keys_.empty()) {
     need_swap_ = true;
   }
@@ -116,19 +118,20 @@ void MemOffloadStrategy::GenEventSpan() {
     if (tensor_events.size() <= 1) {
       continue;
     }
-    const bool is_high_priority = IsHighPriorityMem(tensor_events[0]->key);
-    for (size_t event_index = 1; event_index < tensor_events.size(); ++event_index) {
-      auto &event = tensor_events[event_index];
+    const bool is_high_priority = IsHighPriorityMem(tensor_events[kInitOrMallocMemEventIndex]->key);
+    for (size_t i = kFirstGetMemEventIndex; i < tensor_events.size(); ++i) {
+      auto &event = tensor_events[i];
       MS_EXCEPTION_IF_NULL(event);
       if (event->type != kGet) {
         MS_LOG(EXCEPTION) << "Event should be Get except fist event.";
       }
-      size_t span = 0;
-      if (event_index == 1 && is_high_priority) {
-        const auto &last_event = tensor_events[tensor_events.size() - 1];
-        span = event->index + total_step_ - last_event->index;
-      } else {
-        span = event->index - tensor_events[event_index - 1]->index;
+      auto latest_event = tensor_events[i - 1];
+      if (i == kFirstGetMemEventIndex && is_high_priority) {
+        latest_event = tensor_events[tensor_events.size() - 1];
+      }
+      auto span = GetSpanBetweenMemEvents(latest_event->index, event->index);
+      if (is_high_priority && span == 0 && latest_event == event) {
+        span = total_step_;
       }
       if (span > 1) {
         const size_t span_mul_size = (span - 1) * event->mem_size;
@@ -156,7 +159,7 @@ void MemOffloadStrategy::GenSwapEventSet() {
   for (const auto &iter : event_span_) {
     auto span = iter.second.second;
     auto &event = iter.second.first;
-    auto start_index = ((total_step_ + event->index - span) % total_step_) + 1;
+    auto start_index = ((event->index + total_step_ - span + 1) % total_step_);
     bool revert = false;
     size_t cur_index = start_index;
     while (cur_index != event->index) {
@@ -196,12 +199,12 @@ void MemOffloadStrategy::GenComputeMemEvents() {
     }
 
     const bool is_high_priority = IsHighPriorityMem(item.first);
-    auto first_event = mem_events[0];
+    auto first_event = mem_events[kInitOrMallocMemEventIndex];
     MS_EXCEPTION_IF_NULL(first_event);
-    const auto &second_event = mem_events[1];
-    MS_EXCEPTION_IF_NULL(second_event);
-    if (is_high_priority && swap_events_.find(second_event) != swap_events_.end()) {
-      first_event->index = second_event->index;
+    const auto &first_get_event = mem_events[kFirstGetMemEventIndex];
+    MS_EXCEPTION_IF_NULL(first_get_event);
+    if (is_high_priority && swap_events_.find(first_get_event) != swap_events_.end()) {
+      first_event->index = first_get_event->index;
     }
     if ((first_event->type == kInit || first_event->type == kMalloc) && first_event->index < total_step_) {
       pre_compute_events_[first_event->index].emplace_back(first_event);
@@ -211,16 +214,21 @@ void MemOffloadStrategy::GenComputeMemEvents() {
 
     const auto &last_event = mem_events[mem_events.size() - 1];
     size_t pre_index = is_high_priority ? last_event->index : first_event->index;
-    for (size_t i = 1; i < mem_events.size(); ++i) {
+    const auto &swap_out_event_index = GetSwapOutEventIndex(item.first, mem_events);
+    for (size_t i = kFirstGetMemEventIndex; i < mem_events.size(); ++i) {
       auto &event = mem_events[i];
       MS_EXCEPTION_IF_NULL(event);
       if (need_swap_ && swap_events_.find(event) != swap_events_.end()) {
-        auto swap_out_event = std::make_shared<MemEvent>(kSwapOut, pre_index);
-        swap_out_event->key = item.first;
-        swap_out_event->mem_size = first_event->mem_size;
-        post_compute_events_[pre_index].emplace_back(swap_out_event);
+        MemEventType event_type = kSwapOut;
+        if (is_high_priority && swap_out_event_index.count(i) == 0) {
+          event_type = kFree;
+        }
+        auto free_or_swap_out_event = std::make_shared<MemEvent>(event_type, pre_index);
+        free_or_swap_out_event->key = item.first;
+        free_or_swap_out_event->mem_size = first_event->mem_size;
+        post_compute_events_[pre_index].emplace_back(free_or_swap_out_event);
         // avoid swap-in-event follow init-event
-        if (first_event->type != kInit || i != 1) {
+        if (i != kFirstGetMemEventIndex || first_event->type != kInit) {
           auto swap_in_event = std::make_shared<MemEvent>(kSwapIn, event->index);
           swap_in_event->key = item.first;
           swap_in_event->mem_size = first_event->mem_size;
@@ -245,6 +253,40 @@ void MemOffloadStrategy::GenFreeEvent(const std::shared_ptr<MemEvent> &last_even
   if (last_event->index < post_compute_events_.size()) {
     (void)post_compute_events_[last_event->index].emplace_back(free_event);
   }
+}
+
+std::set<size_t> MemOffloadStrategy::GetSwapOutEventIndex(const void *key,
+                                                          const std::vector<std::shared_ptr<MemEvent>> &mem_events) {
+  const auto &update_step_iter = high_priority_updated_step_.find(key);
+  if (update_step_iter == high_priority_updated_step_.end() || update_step_iter->second.empty()) {
+    return std::set<size_t>();
+  }
+  const auto &update_steps = update_step_iter->second;
+  size_t update_steps_index = 0;
+  std::set<size_t> swap_out_event_index;
+  size_t min_swap_index_before_update = SIZE_MAX;
+  size_t max_swap_out_step = 0;
+  for (size_t i = 0; i < mem_events.size(); ++i) {
+    const auto &mem_event = mem_events[i];
+    if (swap_events_.count(mem_event) == 0) {
+      continue;
+    }
+    if (mem_event->index <= update_steps[update_steps_index]) {
+      if (i <= min_swap_index_before_update) {
+        min_swap_index_before_update = i;
+      }
+    } else {
+      swap_out_event_index.insert(i);
+      max_swap_out_step = mem_event->index;
+      while (update_steps_index < update_steps.size() && update_steps[update_steps_index] < mem_event->index) {
+        ++update_steps_index;
+      }
+    }
+  }
+  if (max_swap_out_step <= update_steps[update_steps.size() - 1]) {
+    swap_out_event_index.insert(min_swap_index_before_update);
+  }
+  return swap_out_event_index;
 }
 }  // namespace device
 }  // namespace mindspore
