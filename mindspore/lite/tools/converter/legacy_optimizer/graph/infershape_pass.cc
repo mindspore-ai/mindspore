@@ -349,9 +349,8 @@ int SetDataType(MetaGraphT *graph, const std::vector<Tensor *> &output_tensors,
   return RET_OK;
 }
 
-int CopyOutputShapeToTensorT(MetaGraphT *graph, const std::vector<Tensor *> &output_tensors,
-                             const std::unique_ptr<mindspore::schema::CNodeT> &node,
-                             std::vector<InferTensor> *tensors) {
+int CopyOutputInfoToTensorT(MetaGraphT *graph, const std::vector<Tensor *> &output_tensors,
+                            const std::unique_ptr<mindspore::schema::CNodeT> &node, std::vector<InferTensor> *tensors) {
   for (uint32_t i = 0; i < output_tensors.size(); i++) {
     auto output_dims = output_tensors[i]->shape();
     auto &output_tensorT = graph->allTensors.at(node->outputIndex[i]);
@@ -596,7 +595,7 @@ int InferShapePass::InferSubgraph(const int64_t &subgraph_index, MetaGraphT *gra
 #ifdef Debug
       PrintTensorShape(input_tensors, output_tensors);
 #endif
-      ret = CopyOutputShapeToTensorT(graph, output_tensors, node, &tensors_);
+      ret = CopyOutputInfoToTensorT(graph, output_tensors, node, &tensors_);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "SetDataType failed: " << ret;
         FreeTensors(&input_tensors, &output_tensors);
