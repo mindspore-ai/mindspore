@@ -26,7 +26,7 @@
 #include "runtime/device/gpu/cuda_driver.h"
 
 namespace mindspore {
-API_FACTORY_REG(GraphCell::GraphImpl, GPU, GPUGraphImpl);
+API_FACTORY_REG(GraphCell::GraphImpl, GPUGraphImpl);
 
 GPUGraphImpl::GPUGraphImpl()
     : session_impl_(nullptr),
@@ -291,4 +291,6 @@ std::vector<MSTensor> GPUGraphImpl::GetOutputs() {
   }
   return result;
 }
+
+bool GPUGraphImpl::CheckDeviceSupport(mindspore::DeviceType device_type) { return device_type == kGPU; }
 }  // namespace mindspore

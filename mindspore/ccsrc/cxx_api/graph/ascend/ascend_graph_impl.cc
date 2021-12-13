@@ -18,6 +18,7 @@
 #include "include/api/context.h"
 #include "cxx_api/factory.h"
 #include "cxx_api/akg_kernel_register.h"
+#include "cxx_api/acl_utils.h"
 #include "utils/log_adapter.h"
 #include "utils/context/context_extends.h"
 #include "mindspore/core/base/base_ref_utils.h"
@@ -30,7 +31,7 @@
 #include "pybind11/pybind11.h"
 
 namespace mindspore {
-API_FACTORY_REG(GraphCell::GraphImpl, Ascend910, AscendGraphImpl);
+API_FACTORY_REG(GraphCell::GraphImpl, AscendGraphImpl);
 
 static constexpr const char *kHcclEnable = "MS_ENABLE_HCCL";
 static constexpr const char *kHcclGroupFile = "PARA_GROUP_FILE";
@@ -380,6 +381,14 @@ std::shared_ptr<AscendGraphImpl::MsEnvGuard> AscendGraphImpl::MsEnvGuard::GetEnv
   global_ms_env_.emplace(device_id, acl_env);
   MS_LOG(INFO) << "Env init success";
   return acl_env;
+}
+
+bool AscendGraphImpl::CheckDeviceSupport(mindspore::DeviceType device_type) {
+  // for Ascend, only support kAscend and kAscend910
+  if (device_type != kAscend && device_type != kAscend910) {
+    return false;
+  }
+  return IsAscend910Soc();
 }
 
 std::map<uint32_t, std::weak_ptr<AscendGraphImpl::MsEnvGuard>> AscendGraphImpl::MsEnvGuard::global_ms_env_;

@@ -42,6 +42,8 @@ class GraphCell::GraphImpl {
   virtual std::vector<MSTensor> GetInputs() = 0;
   virtual std::vector<MSTensor> GetOutputs() = 0;
 
+  virtual bool CheckDeviceSupport(mindspore::DeviceType device_type) = 0;
+
  protected:
   std::shared_ptr<Graph> graph_;
   std::shared_ptr<Context> graph_context_;

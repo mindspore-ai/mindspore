@@ -20,14 +20,13 @@
 #include "include/api/context.h"
 #include "utils/ms_context.h"
 #include "cxx_api/factory.h"
+#if ENABLE_D
+#include "cxx_api/acl_utils.h"
+#endif
 
 namespace mindspore {
 // mindspore-serving check current package for version check with ModelImpl factory.
-#if ENABLE_D
-API_FACTORY_REG(ModelImpl, Ascend910, MsModel);
-#elif ENABLE_GPU
-API_FACTORY_REG(ModelImpl, GPU, MsModel);
-#endif
+API_FACTORY_REG(ModelImpl, MsModel);
 
 static std::string GenerateShapeKey(const std::vector<std::vector<int64_t>> &dims) {
   std::string shape_key;
@@ -171,18 +170,23 @@ uint32_t MsModel::GetDeviceID() const {
   return 0;
 }
 
-bool MsModel::CheckModelSupport(enum ModelType model_type) {
+bool MsModel::CheckDeviceSupport(enum DeviceType device_type) {
 #if ENABLE_D
-  const char *soc_name_c = aclrtGetSocName();
-  if (soc_name_c == nullptr) {
+  // for Ascend, only support kAscend or kAscend910
+  if (device_type != kAscend && device_type != kAscend910) {
     return false;
   }
-  std::string soc_name(soc_name_c);
-  if (soc_name.find("910") == std::string::npos) {
+  return IsAscend910Soc();
+#else
+  // otherwise, only support GPU
+  if (device_type != kGPU) {
     return false;
   }
+  return true;
 #endif
+}
 
+bool MsModel::CheckModelSupport(mindspore::ModelType model_type) {
   static const std::set<ModelType> kSupportedModelMap = {kMindIR};
   auto iter = kSupportedModelMap.find(model_type);
   if (iter == kSupportedModelMap.end()) {

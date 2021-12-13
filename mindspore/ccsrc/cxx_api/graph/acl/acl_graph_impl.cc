@@ -18,9 +18,10 @@
 #include "cxx_api/model/acl/model_converter.h"
 #include "utils/log_adapter.h"
 #include "mindspore/core/utils/convert_utils_base.h"
+#include "cxx_api/acl_utils.h"
 
 namespace mindspore {
-API_FACTORY_REG(GraphCell::GraphImpl, Ascend310, AclGraphImpl);
+API_FACTORY_REG(GraphCell::GraphImpl, AclGraphImpl);
 
 AclGraphImpl::AclGraphImpl()
     : init_flag_(false),
@@ -230,5 +231,13 @@ Status AclGraphImpl::ConvertToOM() {
   }
   MS_LOG(ERROR) << "Unsupported ModelType " << graph_->ModelType();
   return kMCFailed;
+}
+
+bool AclGraphImpl::CheckDeviceSupport(mindspore::DeviceType device_type) {
+  // for Ascend, only support kAscend and kAscend310
+  if (device_type != kAscend && device_type != kAscend310) {
+    return false;
+  }
+  return IsAscendNo910Soc();
 }
 }  // namespace mindspore

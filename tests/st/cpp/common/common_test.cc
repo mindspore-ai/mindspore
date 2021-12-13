@@ -71,11 +71,11 @@ std::shared_ptr<mindspore::Context> Common::ContextAutoSet() {
   auto context = std::make_shared<mindspore::Context>();
 
   if (device_target_str == "Ascend310") {
-    auto ascend310_info = std::make_shared<mindspore::Ascend310DeviceInfo>();
+    auto ascend310_info = std::make_shared<mindspore::AscendDeviceInfo>();
     ascend310_info->SetDeviceID(device_id);
     context->MutableDeviceInfo().emplace_back(ascend310_info);
   } else if (device_target_str == "Ascend910") {
-    auto ascend310_info = std::make_shared<mindspore::Ascend310DeviceInfo>();
+    auto ascend310_info = std::make_shared<mindspore::AscendDeviceInfo>();
     ascend310_info->SetDeviceID(device_id);
     context->MutableDeviceInfo().emplace_back(ascend310_info);
   } else {

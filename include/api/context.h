@@ -28,6 +28,7 @@ enum DeviceType {
   kCPU = 0,
   kGPU,
   kKirinNPU,
+  kAscend,
   kAscend910,
   kAscend310,
   // add new type here
@@ -287,34 +288,14 @@ void GPUDeviceInfo::SetPrecisionMode(const std::string &precision_mode) {
 }
 std::string GPUDeviceInfo::GetPrecisionMode() const { return CharToString(GetPrecisionModeChar()); }
 
-/// \brief Derived from DeviceInfoContext, The configuration of the model running on the Ascend910. This option is
-/// invalid for MindSpore Lite.
-class MS_API Ascend910DeviceInfo : public DeviceInfoContext {
- public:
-  /// \brief Get the type of this DeviceInfoContext.
-  ///
-  /// \return Type of this DeviceInfoContext.
-  enum DeviceType GetDeviceType() const override { return DeviceType::kAscend910; };
-
-  /// \brief Set device id.
-  ///
-  /// \param[in] device_id The device id.
-  void SetDeviceID(uint32_t device_id);
-
-  /// \brief Get the device id.
-  ///
-  /// \return The device id.
-  uint32_t GetDeviceID() const;
-};
-
 /// \brief Derived from DeviceInfoContext, The configuration of the model running on the Ascend310. This option is
 /// invalid for MindSpore Lite.
-class MS_API Ascend310DeviceInfo : public DeviceInfoContext {
+class MS_API AscendDeviceInfo : public DeviceInfoContext {
  public:
   /// \brief Get the type of this DeviceInfoContext.
   ///
   /// \return Type of this DeviceInfoContext.
-  enum DeviceType GetDeviceType() const override { return DeviceType::kAscend310; };
+  enum DeviceType GetDeviceType() const override { return DeviceType::kAscend; };
 
   /// \brief Set device id.
   ///
@@ -447,45 +428,48 @@ class MS_API Ascend310DeviceInfo : public DeviceInfoContext {
   std::vector<char> GetBufferOptimizeModeChar() const;
 };
 
-void Ascend310DeviceInfo::SetInsertOpConfigPath(const std::string &cfg_path) {
+using Ascend310DeviceInfo = AscendDeviceInfo;
+using Ascend910DeviceInfo = AscendDeviceInfo;
+
+void AscendDeviceInfo::SetInsertOpConfigPath(const std::string &cfg_path) {
   SetInsertOpConfigPath(StringToChar(cfg_path));
 }
-std::string Ascend310DeviceInfo::GetInsertOpConfigPath() const { return CharToString(GetInsertOpConfigPathChar()); }
+std::string AscendDeviceInfo::GetInsertOpConfigPath() const { return CharToString(GetInsertOpConfigPathChar()); }
 
-void Ascend310DeviceInfo::SetInputFormat(const std::string &format) { SetInputFormat(StringToChar(format)); }
-std::string Ascend310DeviceInfo::GetInputFormat() const { return CharToString(GetInputFormatChar()); }
+void AscendDeviceInfo::SetInputFormat(const std::string &format) { SetInputFormat(StringToChar(format)); }
+std::string AscendDeviceInfo::GetInputFormat() const { return CharToString(GetInputFormatChar()); }
 
-void Ascend310DeviceInfo::SetInputShape(const std::string &shape) { SetInputShape(StringToChar(shape)); }
-std::string Ascend310DeviceInfo::GetInputShape() const { return CharToString(GetInputShapeChar()); }
+void AscendDeviceInfo::SetInputShape(const std::string &shape) { SetInputShape(StringToChar(shape)); }
+std::string AscendDeviceInfo::GetInputShape() const { return CharToString(GetInputShapeChar()); }
 
-std::string Ascend310DeviceInfo::GetDynamicBatchSize() const { return CharToString(GetDynamicBatchSizeChar()); }
+std::string AscendDeviceInfo::GetDynamicBatchSize() const { return CharToString(GetDynamicBatchSizeChar()); }
 
-void Ascend310DeviceInfo::SetDynamicImageSize(const std::string &dynamic_image_size) {
+void AscendDeviceInfo::SetDynamicImageSize(const std::string &dynamic_image_size) {
   SetDynamicImageSize(StringToChar(dynamic_image_size));
 }
 
-std::string Ascend310DeviceInfo::GetDynamicImageSize() const { return CharToString(GetDynamicImageSizeChar()); }
+std::string AscendDeviceInfo::GetDynamicImageSize() const { return CharToString(GetDynamicImageSizeChar()); }
 
-void Ascend310DeviceInfo::SetPrecisionMode(const std::string &precision_mode) {
+void AscendDeviceInfo::SetPrecisionMode(const std::string &precision_mode) {
   SetPrecisionMode(StringToChar(precision_mode));
 }
-std::string Ascend310DeviceInfo::GetPrecisionMode() const { return CharToString(GetPrecisionModeChar()); }
+std::string AscendDeviceInfo::GetPrecisionMode() const { return CharToString(GetPrecisionModeChar()); }
 
-void Ascend310DeviceInfo::SetOpSelectImplMode(const std::string &op_select_impl_mode) {
+void AscendDeviceInfo::SetOpSelectImplMode(const std::string &op_select_impl_mode) {
   SetOpSelectImplMode(StringToChar(op_select_impl_mode));
 }
-std::string Ascend310DeviceInfo::GetOpSelectImplMode() const { return CharToString(GetOpSelectImplModeChar()); }
+std::string AscendDeviceInfo::GetOpSelectImplMode() const { return CharToString(GetOpSelectImplModeChar()); }
 
-void Ascend310DeviceInfo::SetFusionSwitchConfigPath(const std::string &cfg_path) {
+void AscendDeviceInfo::SetFusionSwitchConfigPath(const std::string &cfg_path) {
   SetFusionSwitchConfigPath(StringToChar(cfg_path));
 }
-std::string Ascend310DeviceInfo::GetFusionSwitchConfigPath() const {
+std::string AscendDeviceInfo::GetFusionSwitchConfigPath() const {
   return CharToString(GetFusionSwitchConfigPathChar());
 }
 
-void Ascend310DeviceInfo::SetBufferOptimizeMode(const std::string &buffer_optimize_mode) {
+void AscendDeviceInfo::SetBufferOptimizeMode(const std::string &buffer_optimize_mode) {
   SetBufferOptimizeMode(StringToChar(buffer_optimize_mode));
 }
-std::string Ascend310DeviceInfo::GetBufferOptimizeMode() const { return CharToString(GetBufferOptimizeModeChar()); }
+std::string AscendDeviceInfo::GetBufferOptimizeMode() const { return CharToString(GetBufferOptimizeModeChar()); }
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_CONTEXT_H

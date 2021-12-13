@@ -27,32 +27,27 @@ TEST_F(TestCxxApiContext, test_context_device_info_cast_SUCCESS) {
   std::shared_ptr<DeviceInfoContext> cpu = std::make_shared<CPUDeviceInfo>();
   std::shared_ptr<DeviceInfoContext> gpu = std::make_shared<GPUDeviceInfo>();
   std::shared_ptr<DeviceInfoContext> kirin_npu = std::make_shared<KirinNPUDeviceInfo>();
-  std::shared_ptr<DeviceInfoContext> ascend310 = std::make_shared<Ascend310DeviceInfo>();
-  std::shared_ptr<DeviceInfoContext> ascend910 = std::make_shared<Ascend910DeviceInfo>();
+  std::shared_ptr<DeviceInfoContext> ascend = std::make_shared<AscendDeviceInfo>();
 
   ASSERT_TRUE(cpu->Cast<CPUDeviceInfo>() != nullptr);
   ASSERT_TRUE(gpu->Cast<GPUDeviceInfo>() != nullptr);
   ASSERT_TRUE(kirin_npu->Cast<KirinNPUDeviceInfo>() != nullptr);
-  ASSERT_TRUE(ascend310->Cast<Ascend310DeviceInfo>() != nullptr);
-  ASSERT_TRUE(ascend910->Cast<Ascend910DeviceInfo>() != nullptr);
+  ASSERT_TRUE(ascend->Cast<AscendDeviceInfo>() != nullptr);
 }
 
 TEST_F(TestCxxApiContext, test_context_device_info_cast_FAILED) {
   std::shared_ptr<DeviceInfoContext> cpu = std::make_shared<CPUDeviceInfo>();
   std::shared_ptr<DeviceInfoContext> gpu = std::make_shared<GPUDeviceInfo>();
   std::shared_ptr<DeviceInfoContext> kirin_npu = std::make_shared<KirinNPUDeviceInfo>();
-  std::shared_ptr<DeviceInfoContext> ascend310 = std::make_shared<Ascend310DeviceInfo>();
-  std::shared_ptr<DeviceInfoContext> ascend910 = std::make_shared<Ascend910DeviceInfo>();
+  std::shared_ptr<DeviceInfoContext> ascend = std::make_shared<AscendDeviceInfo>();
 
   ASSERT_TRUE(cpu->Cast<GPUDeviceInfo>() == nullptr);
   ASSERT_TRUE(kirin_npu->Cast<GPUDeviceInfo>() == nullptr);
-  ASSERT_TRUE(ascend310->Cast<GPUDeviceInfo>() == nullptr);
-  ASSERT_TRUE(ascend910->Cast<GPUDeviceInfo>() == nullptr);
+  ASSERT_TRUE(ascend->Cast<GPUDeviceInfo>() == nullptr);
 
   ASSERT_TRUE(gpu->Cast<CPUDeviceInfo>() == nullptr);
   ASSERT_TRUE(kirin_npu->Cast<CPUDeviceInfo>() == nullptr);
-  ASSERT_TRUE(ascend310->Cast<CPUDeviceInfo>() == nullptr);
-  ASSERT_TRUE(ascend910->Cast<CPUDeviceInfo>() == nullptr);
+  ASSERT_TRUE(ascend->Cast<CPUDeviceInfo>() == nullptr);
 }
 
 TEST_F(TestCxxApiContext, test_context_get_set_SUCCESS) {
@@ -86,7 +81,7 @@ TEST_F(TestCxxApiContext, test_context_ascend_context_FAILED) {
   std::string option_9_ans = "1,2,3,4,5";
 
   auto context = std::make_shared<Context>();
-  std::shared_ptr<Ascend310DeviceInfo> ascend310 = std::make_shared<Ascend310DeviceInfo>();
+  std::shared_ptr<AscendDeviceInfo> ascend310 = std::make_shared<AscendDeviceInfo>();
   ascend310->SetInputShape(option_1);
   ascend310->SetInsertOpConfigPath(option_2);
   ascend310->SetOpSelectImplMode(option_3);
@@ -99,7 +94,7 @@ TEST_F(TestCxxApiContext, test_context_ascend_context_FAILED) {
 
   context->MutableDeviceInfo().push_back(ascend310);
   ASSERT_EQ(context->MutableDeviceInfo().size(), 1);
-  auto ctx = context->MutableDeviceInfo()[0]->Cast<Ascend310DeviceInfo>();
+  auto ctx = context->MutableDeviceInfo()[0]->Cast<AscendDeviceInfo>();
   ASSERT_TRUE(ctx != nullptr);
   ASSERT_EQ(ascend310->GetInputShape(), option_1);
   ASSERT_EQ(ascend310->GetInsertOpConfigPath(), option_2);
@@ -113,7 +108,7 @@ TEST_F(TestCxxApiContext, test_context_ascend_context_FAILED) {
 }
 
 TEST_F(TestCxxApiContext, test_context_ascend310_context_default_value_SUCCESS) {
-  auto ctx = std::make_shared<Ascend310DeviceInfo>();
+  auto ctx = std::make_shared<AscendDeviceInfo>();
   ASSERT_EQ(ctx->GetOpSelectImplMode(), "");
 }
 }  // namespace mindspore

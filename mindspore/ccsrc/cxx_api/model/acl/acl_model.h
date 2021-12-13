@@ -43,6 +43,7 @@ class AclModel : public ModelImpl {
   std::vector<MSTensor> GetInputs() override;
   std::vector<MSTensor> GetOutputs() override;
 
+  bool CheckDeviceSupport(mindspore::DeviceType device_type) override;
   bool CheckModelSupport(enum ModelType model_type) override;
 
  private:

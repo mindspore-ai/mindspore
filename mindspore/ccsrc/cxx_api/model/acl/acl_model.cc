@@ -21,7 +21,7 @@
 #include "include/api/context.h"
 #include "cxx_api/factory.h"
 #include "cxx_api/graph/acl/acl_env_guard.h"
-#include "acl/acl_base.h"
+#include "cxx_api/acl_utils.h"
 
 namespace mindspore {
 Status AclModel::Build() {
@@ -112,7 +112,7 @@ Status AclModel::Resize(const std::vector<MSTensor> &inputs, const std::vector<s
 
   if (model_context_ == nullptr) {
     model_context_ = std::make_shared<Context>();
-    model_context_->MutableDeviceInfo().emplace_back(std::make_shared<Ascend310DeviceInfo>());
+    model_context_->MutableDeviceInfo().emplace_back(std::make_shared<AscendDeviceInfo>());
   }
 
   std::string input_shape_option;
@@ -139,7 +139,7 @@ Status AclModel::Resize(const std::vector<MSTensor> &inputs, const std::vector<s
     MS_LOG(ERROR) << "Invalid model context, only single device info is supported.";
     return kMCInvalidArgs;
   }
-  auto ascend310_info = device_infos[0]->Cast<Ascend310DeviceInfo>();
+  auto ascend310_info = device_infos[0]->Cast<AscendDeviceInfo>();
   MS_EXCEPTION_IF_NULL(ascend310_info);
   ascend310_info->SetInputShape(input_shape_option);
   auto graph_cell_bak = std::move(graph_cell_);
@@ -163,16 +163,15 @@ std::vector<MSTensor> AclModel::GetOutputs() {
   return graph_cell_->GetOutputs();
 }
 
-bool AclModel::CheckModelSupport(enum ModelType model_type) {
-  const char *soc_name_c = aclrtGetSocName();
-  if (soc_name_c == nullptr) {
+bool AclModel::CheckDeviceSupport(mindspore::DeviceType device_type) {
+  // for Ascend, only support kAscend and kAscend310
+  if (device_type != kAscend && device_type != kAscend310) {
     return false;
   }
-  std::string soc_name(soc_name_c);
-  if (soc_name.find("910") != std::string::npos) {
-    return false;
-  }
+  return IsAscendNo910Soc();
+}
 
+bool AclModel::CheckModelSupport(enum ModelType model_type) {
   static const std::set<ModelType> kSupportedModelMap = {kMindIR, kOM};
   auto iter = kSupportedModelMap.find(model_type);
   if (iter == kSupportedModelMap.end()) {

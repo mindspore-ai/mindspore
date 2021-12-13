@@ -33,7 +33,7 @@ AclModelOptions::AclModelOptions(const std::shared_ptr<Context> &context) {
   if (device_infos.size() != 1) {
     return;
   }
-  auto ascend310_info = device_infos[0]->Cast<Ascend310DeviceInfo>();
+  auto ascend310_info = device_infos[0]->Cast<AscendDeviceInfo>();
   if (ascend310_info == nullptr) {
     return;
   }

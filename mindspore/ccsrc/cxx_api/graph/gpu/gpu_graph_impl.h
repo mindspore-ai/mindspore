@@ -37,6 +37,8 @@ class GPUGraphImpl : public GraphCell::GraphImpl {
   std::vector<MSTensor> GetInputs() override;
   std::vector<MSTensor> GetOutputs() override;
 
+  bool CheckDeviceSupport(mindspore::DeviceType device_type) override;
+
  private:
   Status InitEnv();
   Status FinalizeEnv();
