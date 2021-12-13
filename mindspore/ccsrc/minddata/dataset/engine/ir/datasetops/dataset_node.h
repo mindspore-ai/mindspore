@@ -93,6 +93,8 @@ constexpr char kFashionMnistNode[] = "FashionMnistDataset";
 constexpr char kFlickrNode[] = "FlickrDataset";
 constexpr char kGeneratorNode[] = "GeneratorDataset";
 constexpr char kImageFolderNode[] = "ImageFolderDataset";
+constexpr char kIWSLT2016Node[] = "IWSLT2016Dataset";
+constexpr char kIWSLT2017Node[] = "IWSLT2017Dataset";
 constexpr char kKMnistNode[] = "KMnistDataset";
 constexpr char kLJSpeechNode[] = "LJSpeechDataset";
 constexpr char kManifestNode[] = "ManifestDataset";
@@ -136,6 +138,12 @@ Status ValidateDatasetColumnParam(const std::string &dataset_name, const std::st
 
 // Helper function to validate dataset directory parameter
 Status ValidateDatasetDirParam(const std::string &dataset_name, std::string dataset_dir);
+
+Status ValidateMapKey(const std::string &dataset_name, const std::string &key,
+                      const std::map<std::string, std::vector<std::string>> &map);
+
+Status ValidateMapValue(const std::string &dataset_name, const std::string &str,
+                        const std::vector<std::string> &valid_strings);
 
 /// \brief Function to create a sampler for non-mappable dataset (to be used by cache op later).
 /// \notes Non-mappable dataset does not directly support a sampler. It has provided sampling arguments (shuffle,

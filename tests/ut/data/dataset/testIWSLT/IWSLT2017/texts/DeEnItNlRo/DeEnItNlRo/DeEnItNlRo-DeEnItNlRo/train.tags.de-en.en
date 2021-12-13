@@ -1,0 +1,12 @@
+<doc docid="1" genre="test">
+<url>https://gitee.com/mindspore/mindspore</url>
+<keywords>test keywords</keywords>
+<speaker>test speaker</speaker>
+<talkid>test number</talkid>
+<title>test title</title>
+<description>test description.</description>
+The weather is nice today.
+I am in a good mood today.
+<reviewer href="https://gitee.com/mindspore/mindspore">test reviewer</reviewer>
+<translator href="https://gitee.com/mindspore/mindspore">test translator</translator>
+</doc> 

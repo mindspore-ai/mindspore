@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mteval>
+<refset setid="iwslt2016-tst2013" srclang="german" trglang="english" refid="ref">
+<doc docid="test" genre="test">
+<url>https://gitee.com/mindspore/mindspore</url>
+<description>test description.</description>
+<keywords>test keywords</keywords>
+<talkid>test talkid</talkid>
+<title>test title</title>
+<seg id="1"> it rained today. </seg>
+<seg id="2"> Lend me a piece of paper. </seg>
+</doc>
+</refset>
+</mteval>

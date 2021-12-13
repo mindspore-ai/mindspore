@@ -395,6 +395,28 @@ def check_valid_str(value, valid_strings, arg_name=""):
         raise ValueError("Input {0} is not within the valid set of {1}.".format(arg_name, str(valid_strings)))
 
 
+def check_valid_list_tuple(value, valid_list_tuple, data_type, arg_name=""):
+    """
+    Validate value in valid_list_tuple.
+
+    Args:
+        value (Union[list, tuple]): the value to be validated.
+        valid_strings (Union[list, tuple]): name of columns.
+        type (tuple): tuple of all valid types for value.
+        arg_name (str): the names of value.
+    Returns:
+        Exception: when the value is not correct, otherwise nothing.
+    """
+    valid_length = len(valid_list_tuple[0])
+    type_check(value, (list, tuple), arg_name)
+    type_check_list(value, data_type, arg_name)
+    if len(value) != valid_length:
+        raise ValueError("Input {0} is a list or tuple of length {1}.".format(arg_name, valid_length))
+    if value not in valid_list_tuple:
+        raise ValueError(
+            "Input {0}{1} is not within the valid set of {2}.".format(arg_name, value, valid_list_tuple))
+
+
 def check_columns(columns, name):
     """
     Validate strings in column_names.
