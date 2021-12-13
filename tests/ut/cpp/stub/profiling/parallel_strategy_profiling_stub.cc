@@ -19,7 +19,8 @@
 namespace mindspore {
 namespace profiler {
 namespace ascend {
-void DumpProfileParallelStrategy(const FuncGraphPtr &func_graph){};
+void DumpProfileParallelStrategy(const FuncGraphPtr &func_graph) {}
+void SaveParallelStrategyToFile() {}
 }  // namespace ascend
 }  // namespace profiler
 }  // namespace mindspore

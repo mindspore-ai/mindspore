@@ -99,6 +99,7 @@ class Profiler {
   OneStepStartEndInfo step_start_end_info_;
   std::vector<OneStepStartEndInfo> all_step_start_end_info_;
   std::mutex record_mutex_;
+  bool init_flag_ = false;
 };
 }  // namespace profiler
 }  // namespace mindspore

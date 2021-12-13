@@ -21,6 +21,7 @@
 #include "utils/utils.h"
 #include "profiler/device/ascend/memory_profiling.h"
 #include "runtime/device/ascend/profiling/profiling_manager.h"
+#include "profiler/device/ascend/parallel_strategy_profiling.h"
 #include <nlohmann/json.hpp>
 
 using mindspore::device::ascend::ProfilingManager;
@@ -60,6 +61,8 @@ void AscendProfiler::InitProfiling(const std::string &profiling_path, uint32_t d
   if (aclRet != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Failed to call aclprofInit function.";
   }
+
+  init_flag_ = true;
 }
 
 uint64_t AscendProfiler::GetOptionsMask() const {
@@ -120,6 +123,8 @@ void AscendProfiler::Start() {
   MS_LOG(INFO) << "Start profiling, options mask is " << mask << " aic_metrics is " << aic_metrics;
 
   MemoryProfiling::GetInstance().StartMemoryProfiling();
+
+  SaveParallelStrategyToFile();
 
   StepProfilingEnable(true);
 }
