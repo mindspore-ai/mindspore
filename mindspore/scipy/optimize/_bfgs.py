@@ -184,7 +184,7 @@ def minimize_bfgs(func, x0, maxiter=None, norm=mnp.inf, gtol=1e-5, line_search_m
         line_search_maxiter (int): maximum number of linesearch iterations.
 
     Returns:
-        Optimization result.
+        BFGSResults
 
     Supported Platforms:
         ``CPU`` ``GPU``

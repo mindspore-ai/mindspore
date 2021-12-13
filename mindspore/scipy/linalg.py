@@ -42,8 +42,7 @@ def block_diag(*arrs):
             Input Tensors.  A 1-D Tensor or a 2-D Tensor with shape ``(1,n)``.
 
     Returns:
-        D (Tesnor): Tensor with `A`, `B`, `C`, ... on the diagonal. `D` has
-            the same dtype as `A`.
+        Tensor with `A`, `B`, `C`, ... on the diagonal which has the same dtype as `A`.
 
     Raises:
         ValueError: If there are tensors with dimensions higher than 2 in all arguments.
@@ -116,7 +115,7 @@ def solve_triangular(A, b, trans=0, lower=False, unit_diagonal=False,
             (crashes, non-termination) if the inputs do contain infinities or NaNs.
 
     Returns:
-        x (Tensor): A tensor of shape :math:`(M,)` or :math:`(M, N)`,
+        Tensor of shape :math:`(M,)` or :math:`(M, N)`,
             which is the solution to the system :math:`A x = b`.
             Shape of :math:`x` matches :math:`b`.
 
@@ -165,11 +164,11 @@ def inv(a, overwrite_a=False, check_finite=True):
             if the inputs do contain infinities or NaNs.
 
     Returns:
-        ainv (Tensor): Inverse of the matrix `a`.
+        Tensor, Inverse of the matrix `a`.
 
     Raises:
-        LinAlgError: If :math:'a' is singular.
-        ValueError: If :math:'a' is not square, or not 2D.
+        LinAlgError: If :math:`a` is singular.
+        ValueError: If :math:`a` is not square, or not 2D.
 
     Supported Platforms:
         ``CPU`` ``GPU``
@@ -214,9 +213,9 @@ def cho_factor(a, lower=False, overwrite_a=False, check_finite=True):
             (crashes, non-termination) if the inputs do contain infinities or NaNs.
 
     Returns:
-        c (Tensor): Matrix whose upper or lower triangle contains the Cholesky factor of `a`.
+        Tensor, Matrix whose upper or lower triangle contains the Cholesky factor of `a`.
          Other parts of the matrix contain random data.
-        lower (bool, optional): Flag indicating whether the factor is in the lower or upper triangle
+        bool, Flag indicating whether the factor is in the lower or upper triangle
 
     Raises:
         LinAlgError: Raised if decomposition fails.
@@ -258,7 +257,7 @@ def cholesky(a, lower=False, overwrite_a=False, check_finite=True):
             (crashes, non-termination) if the inputs do contain infinities or NaNs.
 
     Returns:
-        c (Tensor): Upper- or lower-triangular Cholesky factor of `a`.
+        Tensor, Upper- or lower-triangular Cholesky factor of `a`.
 
     Raises:
         LinAlgError: if decomposition fails.
@@ -293,8 +292,7 @@ def cho_solve(c_and_lower, b, overwrite_b=False, check_finite=True):
             (crashes, non-termination) if the inputs do contain infinities or NaNs.
 
     Returns:
-        x (Tensor):
-            The solution to the system A x = b
+        Tensor, The solution to the system A x = b
 
     Supported Platforms:
         ``CPU`` ``GPU``
@@ -359,9 +357,9 @@ def eigh(a, b=None, lower=True, eigvals_only=False, overwrite_a=False,
             and eigenvectors are returned.
 
     Returns:
-        w (Tensor): (N,) Tensor, The N (1<=N<=M) selected eigenvalues, in ascending order,
+        Tensor with shape (N,), The N (1<=N<=M) selected eigenvalues, in ascending order,
             each repeated according to its multiplicity.
-        v (Tensor): (M, N) Tensor, (if ``eigvals_only == False``)
+        Tensor with shape (M, N), (if ``eigvals_only == False``)
 
     Raises:
         LinAlgError: If eigenvalue computation does not converge, an error occurred, or b matrix is not
@@ -458,9 +456,9 @@ def lu_factor(a, overwrite_a=False, check_finite=True):
             (crashes, non-termination) if the inputs do contain infinities or NaNs.
 
     Returns:
-        lu (Tensor): a square matrix of (N, N) containing U in its upper triangle, and L in its lower triangle.
+        Tensor, a square matrix of (N, N) containing U in its upper triangle, and L in its lower triangle.
             The unit diagonal elements of L are not stored.
-        piv (Tensor): (N,) Pivot indices representing the permutation matrix P:
+        Tensor, (N,) Pivot indices representing the permutation matrix P:
             row i of matrix was interchanged with row piv[i].
 
     Supported Platforms:
@@ -508,16 +506,16 @@ def lu(a, permute_l=False, overwrite_a=False, check_finite=True):
     Returns:
         **(If permute_l == False)**
 
-        p (Tensor): (M, M) Permutation matrix
-        l (Tensor): (M, K) Lower triangular or trapezoidal matrix with unit diagonal.
+        Tensor, (M, M) Permutation matrix
+        Tensor, (M, K) Lower triangular or trapezoidal matrix with unit diagonal.
             K = min(M, N)
-        u (Tensor): (K, N) Upper triangular or trapezoidal matrix
+        Tensor, (K, N) Upper triangular or trapezoidal matrix
 
         **(If permute_l == True)**
 
-        pl (Tensor): (M, K) Permuted L matrix.
+        Tensor, (M, K) Permuted L matrix.
             K = min(M, N)
-        u (Tensor): (K, N) Upper triangular or trapezoidal matrix
+        Tensor, (K, N) Upper triangular or trapezoidal matrix
 
     Supported Platforms:
         ``CPU`` ``GPU``
@@ -579,7 +577,7 @@ def lu_solve(lu_and_piv, b, trans=0, overwrite_b=False, check_finite=True):
             if the inputs do contain infinities or NaNs.
 
     Returns:
-        x (Tesnor): Solution to the system
+        Tesnor, Solution to the system
 
     Supported Platforms:
         ``CPU`` ``GPU``
