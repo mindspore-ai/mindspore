@@ -140,11 +140,12 @@ Status VirtualDatasetInfo::Init(const StrategyPtr &in_strategy, const StrategyPt
 }
 
 Status VirtualDatasetInfo::InitForCostModel(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy) {
+  is_auto_parallel_ = true;
   if (InitForCostModelWithAutoRepeatCalc(in_strategy, out_strategy) != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Init for cost model failed.";
     return FAILED;
   }
-
+  is_auto_parallel_ = false;
   MS_LOG(INFO) << name_ << ": Init for cost model success.";
   return SUCCESS;
 }

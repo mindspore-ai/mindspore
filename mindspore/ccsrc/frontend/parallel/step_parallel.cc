@@ -733,9 +733,21 @@ void StepReplaceOp(OperatorVector replace_op, const CNodePtr &node) {
   if (manager == nullptr) {
     MS_LOG(EXCEPTION) << "Failure:AddNode error since manager is nullptr";
   }
+
+  // When reshape(bool), insert cast in the begin and end of op_list to avoid AllGather(bool).
+  auto reshape_type_str = node->abstract()->BuildType()->ToString();
+  auto replace_op_info = distribute_operator->replace_op_info();
+  if (reshape_type_str.find(BOOL) != std::string::npos) {
+    auto cast_int = CreateCastOp(kInt32);
+    auto cast_bool = CreateCastOp(kBool);
+    replace_op.insert(replace_op.begin(), cast_int);
+    replace_op.insert(replace_op.end(), cast_bool);
+    replace_op_info.insert(replace_op_info.begin(), {false, 1});
+    replace_op_info.insert(replace_op_info.end(), {false, 1});
+  }
+
   // step2:traverse op_list and insert node
   std::reverse(replace_op.begin(), replace_op.end());
-  auto replace_op_info = distribute_operator->replace_op_info();
   std::reverse(replace_op_info.begin(), replace_op_info.end());
   if (!replace_op_info.empty() && replace_op_info.size() != replace_op.size()) {
     MS_LOG(EXCEPTION) << "replace_op_info is not empty and size not equal to replace_op!";
