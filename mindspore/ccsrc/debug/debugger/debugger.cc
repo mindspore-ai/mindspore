@@ -307,6 +307,12 @@ void Debugger::PreExecuteGraphDebugger(const std::vector<KernelGraphPtr> &graphs
   }
 }
 
+void Debugger::UpdateGraphIterMap(uint32_t graph_id, int32_t iter_num) {
+  if (graph_iter_num_map_.find(graph_id) == graph_iter_num_map_.end()) {
+    graph_iter_num_map_[graph_id] = iter_num;
+  }
+}
+
 void Debugger::SetCurrentAndPrevRootGraph(uint32_t root_graph_id) {
   // for GPU root graphs are set in PreExecuteGraphDebugger.
   if (device_target_ != kAscendDevice) {
