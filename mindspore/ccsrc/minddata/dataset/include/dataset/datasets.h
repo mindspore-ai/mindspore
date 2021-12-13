@@ -315,7 +315,7 @@ class MS_API Dataset : public std::enable_shared_from_this<Dataset> {
   /// \code
   ///      /* Build a Vocab from TextFile dataset */
   ///      std::string vocab_file = "/path/to/txtfile";
-  ///      std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  ///      std::shared_ptr<Dataset> ds = TextFile({vocab_file}, 0, ShuffleMode::kFalse);
   ///      std::shared_ptr<Vocab> vocab = ds->BuildVocab();
   /// \endcode
   std::shared_ptr<Vocab> BuildVocab(const std::vector<std::string> &columns = {},
@@ -2451,7 +2451,7 @@ class MS_API ImageFolderDataset : public Dataset {
 /// \code
 ///      /* Define dataset path and MindData object */
 ///      std::string dataset_path = "/path/to/image_directory";
-///      std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
+///      std::shared_ptr<Dataset> ds = ImageFolder(dataset_path, true, std::make_shared<RandomSampler>(false, 10));
 ///
 ///      /* Create iterator to read dataset */
 ///      std::shared_ptr<Iterator> iter = ds->CreateIterator();
@@ -2716,7 +2716,7 @@ class MS_API ManifestDataset : public Dataset {
 /// \par Example
 /// \code
 ///      /* Define dataset path and MindData object */
-///      std::string dataset_path = "/path/to/manifest_file";
+///      std::string file_path = "/path/to/manifest_file";
 ///      std::shared_ptr<Dataset> ds = Manifest(file_path);
 ///
 ///      /* Create iterator to read dataset */
@@ -2923,7 +2923,7 @@ class MS_API MindDataDataset : public Dataset {
 /// \par Example
 /// \code
 ///      /* Define dataset path and MindData object */
-///      std::string dataset_path = "/path/to/mindrecord_file";
+///      std::string file_path = "/path/to/mindrecord_file";
 ///      std::vector<std::string> column_names = {"data", "file_name", "label"};
 ///      std::shared_ptr<Dataset> ds = MindData(file_path, column_names);
 ///
@@ -3016,7 +3016,7 @@ inline std::shared_ptr<MindDataDataset> MS_API MindData(const std::string &datas
 ///      /* Define dataset path and MindData object */
 ///      std::string file_path1 = "/path/to/mindrecord_file1";
 ///      std::string file_path2 = "/path/to/mindrecord_file2";
-///      std::string file_list = {file_path1, file_path2};
+///      std::vector<std::string> file_list = {file_path1, file_path2};
 ///      std::vector<std::string> column_names = {"data", "file_name", "label"};
 ///      std::shared_ptr<Dataset> ds = MindData(file_list, column_names);
 ///
@@ -4192,7 +4192,7 @@ class MS_API VOCDataset : public Dataset {
 /// \code
 ///      /* Define dataset path and MindData object */
 ///      std::string folder_path = "/path/to/voc_dataset_directory";
-///      std::shared_ptr<Dataset> ds = VOC(folder_path, "Detection", "train", class_index, false,
+///      std::shared_ptr<Dataset> ds = VOC(folder_path, "Detection", "train", {}, false,
 ///                                        std::make_shared<SequentialSampler>(0, 6));
 ///
 ///      /* Create iterator to read dataset */

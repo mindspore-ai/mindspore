@@ -201,11 +201,11 @@ class MS_API Concatenate final : public TensorTransform {
   /// \code
   ///     /* Define operations */
   ///     mindspore::MSTensor append_MSTensor;
-  ///     mindspore::MSTensor prepend_MSTensor
+  ///     mindspore::MSTensor prepend_MSTensor;
   ///     auto concatenate_op = transforms::Concatenate(0, append_MSTensor, prepend_MSTensor);
   ///
   ///     /* dataset is an instance of Dataset object */
-  ///     dataset = dataset->Map({concatenate_op},  // operations
+  ///     dataset = dataset->Map({concatenate_op},   // operations
   ///                            {"column"});        // input columns
   /// \endcode
   explicit Concatenate(int8_t axis = 0, const MSTensor &prepend = {}, const MSTensor &append = {});
@@ -296,7 +296,7 @@ class MS_API Mask final : public TensorTransform {
   /// \code
   ///     /* Define operations */
   ///     mindspore::MSTensor constant;
-  ///     auto mask_op = transforms::Mask(RelationalOp::kEqual, tensor);
+  ///     auto mask_op = transforms::Mask(RelationalOp::kEqual, constant);
   ///
   ///     /* dataset is an instance of Dataset object */
   ///     dataset = dataset->Map({mask_op},     // operations

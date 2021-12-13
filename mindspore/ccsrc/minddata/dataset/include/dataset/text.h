@@ -725,9 +725,9 @@ class MS_API WordpieceTokenizer final : public TensorTransform {
   /// \par Example
   /// \code
   ///     /* Define operations */
-  ///     std::vector<std::string> vocab = {"book", "apple", "rabbit"};
+  ///     std::vector<std::string> word_list = {"book", "apple", "rabbit"};
   ///     std::shared_ptr<Vocab> vocab = std::make_shared<Vocab>();
-  ///     Status s = Vocab::BuildFromVector(vocab, {}, true, &vocab);
+  ///     Status s = Vocab::BuildFromVector(word_list, {}, true, &vocab);
   ///     auto tokenizer_op = text::WordpieceTokenizer(vocab);
   ///
   ///     /* dataset is an instance of Dataset object */

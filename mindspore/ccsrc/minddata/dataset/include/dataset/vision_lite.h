@@ -56,7 +56,7 @@ class MS_API Affine final : public TensorTransform {
   /// \code
   ///     /* Define operations */
   ///     auto decode_op = vision::Decode();
-  ///     auto affine_op = vision::Affine({30, 60}, {0.0, 0.0}, 0.8);
+  ///     auto affine_op = vision::Affine(30, {0.0, 0.0}, 0.8);
   ///
   ///     /* dataset is an instance of Dataset object */
   ///     dataset = dataset->Map({decode_op, affine_op},  // operations
