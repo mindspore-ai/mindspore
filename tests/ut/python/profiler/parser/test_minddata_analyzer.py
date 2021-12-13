@@ -26,15 +26,13 @@ import mindspore.dataset.transforms.c_transforms as C
 import mindspore._c_dataengine as cde
 from mindspore.profiler.parser.minddata_analyzer import MinddataProfilingAnalyzer
 
-# add file name to rank id mapping to avoid file writing crash
-file_name_map_rank_id = {"test_analyze_basic": "0",
-                         "test_analyze_sequential_pipelines_invalid": "1"}
-
 
 @pytest.mark.forked
 class TestMinddataProfilingAnalyzer:
     """
     Test the MinddataProfilingAnalyzer class
+    Note: Use pytest fixture tmp_path to create files within this temporary directory,
+    which is automatically created for each test and deleted at the end of the test.
     """
 
     def setup_class(self):
@@ -43,13 +41,6 @@ class TestMinddataProfilingAnalyzer:
         """
         # Get instance pointer for MindData profiling manager
         self.md_profiler = cde.GlobalContext.profiling_manager()
-
-        self._pipeline_file = "./pipeline_profiling"
-        self._cpu_util_file = "./minddata_cpu_utilization"
-        self._dataset_iterator_file = "./dataset_iterator_profiling"
-        self._summary_json_file = "./minddata_pipeline_summary"
-        self._summary_csv_file = "./minddata_pipeline_summary"
-        self._analyze_file_path = "./"
 
         # This is the set of keys for success case
         self._expected_summary_keys_success = \
@@ -61,26 +52,10 @@ class TestMinddataProfilingAnalyzer:
         """
         Run before each test function.
         """
-        file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
-        file_id = file_name_map_rank_id[file_name]
-
-        pipeline_file = self._pipeline_file + "_" + file_id + ".json"
-        cpu_util_file = self._cpu_util_file + "_" + file_id + ".json"
-        dataset_iterator_file = self._dataset_iterator_file + "_" + file_id + ".txt"
-        summary_json_file = self._summary_json_file + "_" + file_id + ".json"
-        summary_csv_file = self._summary_csv_file + "_" + file_id + ".csv"
-
-        # Confirm MindData Profiling files do not yet exist
-        assert os.path.exists(pipeline_file) is False
-        assert os.path.exists(cpu_util_file) is False
-        assert os.path.exists(dataset_iterator_file) is False
-        # Confirm MindData Profiling analyze summary files do not yet exist
-        assert os.path.exists(summary_json_file) is False
-        assert os.path.exists(summary_csv_file) is False
 
         # Set the MindData Profiling related environment variables
-        os.environ['RANK_ID'] = file_id
-        os.environ['DEVICE_ID'] = file_id
+        os.environ['RANK_ID'] = "7"
+        os.environ['DEVICE_ID'] = "7"
 
         # Initialize MindData profiling manager
         self.md_profiler.init()
@@ -92,24 +67,6 @@ class TestMinddataProfilingAnalyzer:
         """
         Run after each test function.
         """
-
-        file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
-        file_id = file_name_map_rank_id[file_name]
-
-        pipeline_file = self._pipeline_file + "_" + file_id + ".json"
-        cpu_util_file = self._cpu_util_file + "_" + file_id + ".json"
-        dataset_iterator_file = self._dataset_iterator_file + "_" + file_id + ".txt"
-        summary_json_file = self._summary_json_file + "_" + file_id + ".json"
-        summary_csv_file = self._summary_csv_file + "_" + file_id + ".csv"
-
-        # Delete MindData profiling files generated from the test.
-        os.remove(pipeline_file)
-        os.remove(cpu_util_file)
-        os.remove(dataset_iterator_file)
-
-        # Delete MindData profiling analyze summary files generated from the test.
-        os.remove(summary_json_file)
-        os.remove(summary_csv_file)
 
         # Disable MindData Profiling related environment variables
         del os.environ['RANK_ID']
@@ -132,16 +89,12 @@ class TestMinddataProfilingAnalyzer:
                 result.append(row)
         return result
 
-    def verify_md_summary(self, md_summary_dict, expected_summary_keys):
+    def verify_md_summary(self, md_summary_dict, expected_summary_keys, output_dir):
         """
         Verify the content of the 3 variations of the MindData Profiling analyze summary output.
         """
-        file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
-        file_id = file_name_map_rank_id[file_name]
-
-        summary_json_file = self._summary_json_file + "_" + file_id + ".json"
-        summary_csv_file = self._summary_csv_file + "_" + file_id + ".csv"
-
+        summary_json_file = output_dir + "/minddata_pipeline_summary_7.json"
+        summary_csv_file = output_dir + "/minddata_pipeline_summary_7.csv"
         # Confirm MindData Profiling analyze summary files are created
         assert os.path.exists(summary_json_file) is True
         assert os.path.exists(summary_csv_file) is True
@@ -188,18 +141,11 @@ class TestMinddataProfilingAnalyzer:
         for i in range(8000):
             yield (np.array([i]),)
 
-    def test_analyze_basic(self):
+    def test_analyze_basic(self, tmp_path):
         """
         Test MindData profiling analyze summary files exist with basic pipeline.
         Also test basic content (subset of keys and values) from the returned summary result.
         """
-
-        file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
-        file_id = file_name_map_rank_id[file_name]
-
-        pipeline_file = self._pipeline_file + "_" + file_id + ".json"
-        cpu_util_file = self._cpu_util_file + "_" + file_id + ".json"
-        dataset_iterator_file = self._dataset_iterator_file + "_" + file_id + ".txt"
 
         # Create this basic and common linear pipeline
         # Generator -> Map -> Batch -> Repeat -> EpochCtrl
@@ -219,7 +165,12 @@ class TestMinddataProfilingAnalyzer:
 
         # Stop MindData Profiling and save output files to current working directory
         self.md_profiler.stop()
-        self.md_profiler.save(os.getcwd())
+        self.md_profiler.save(str(tmp_path))
+
+        pipeline_file = str(tmp_path) + "/pipeline_profiling_7.json"
+        cpu_util_file = str(tmp_path) + "/minddata_cpu_utilization_7.json"
+        dataset_iterator_file = str(tmp_path) + "/dataset_iterator_profiling_7.txt"
+        analyze_file_path = str(tmp_path) + "/"
 
         # Confirm MindData Profiling files are created
         assert os.path.exists(pipeline_file) is True
@@ -227,7 +178,7 @@ class TestMinddataProfilingAnalyzer:
         assert os.path.exists(dataset_iterator_file) is True
 
         # Call MindData Analyzer for generated MindData profiling files to generate MindData pipeline summary result
-        md_analyzer = MinddataProfilingAnalyzer(self._analyze_file_path, file_id, self._analyze_file_path)
+        md_analyzer = MinddataProfilingAnalyzer(analyze_file_path, "7", analyze_file_path)
         md_summary_dict = md_analyzer.analyze()
 
         # Verify MindData Profiling Analyze Summary output
@@ -235,7 +186,7 @@ class TestMinddataProfilingAnalyzer:
         # 1. returned dictionary
         # 2. JSON file
         # 3. CSV file
-        self.verify_md_summary(md_summary_dict, self._expected_summary_keys_success)
+        self.verify_md_summary(md_summary_dict, self._expected_summary_keys_success, str(tmp_path))
 
         # 4. Verify non-variant values or number of values in the tested pipeline for certain keys
         # of the returned dictionary
@@ -253,16 +204,10 @@ class TestMinddataProfilingAnalyzer:
         assert md_summary_dict["parent_id"] == [-1, 0, 1, 2, 3]
         assert len(md_summary_dict["avg_cpu_pct"]) == 5
 
-    def test_analyze_sequential_pipelines_invalid(self):
+    def test_analyze_sequential_pipelines_invalid(self, tmp_path):
         """
         Test invalid scenario in which MinddataProfilingAnalyzer is called for two sequential pipelines.
         """
-        file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
-        file_id = file_name_map_rank_id[file_name]
-
-        pipeline_file = self._pipeline_file + "_" + file_id + ".json"
-        cpu_util_file = self._cpu_util_file + "_" + file_id + ".json"
-        dataset_iterator_file = self._dataset_iterator_file + "_" + file_id + ".txt"
 
         # Create the pipeline
         # Generator -> Map -> Batch -> EpochCtrl
@@ -283,7 +228,12 @@ class TestMinddataProfilingAnalyzer:
 
         # Stop MindData Profiling and save output files to current working directory
         self.md_profiler.stop()
-        self.md_profiler.save(os.getcwd())
+        self.md_profiler.save(str(tmp_path))
+
+        pipeline_file = str(tmp_path) + "/pipeline_profiling_7.json"
+        cpu_util_file = str(tmp_path) + "/minddata_cpu_utilization_7.json"
+        dataset_iterator_file = str(tmp_path) + "/dataset_iterator_profiling_7.txt"
+        analyze_file_path = str(tmp_path) + "/"
 
         # Confirm MindData Profiling files are created
         assert os.path.exists(pipeline_file) is True
@@ -307,7 +257,7 @@ class TestMinddataProfilingAnalyzer:
 
         # Stop MindData Profiling and save output files to current working directory
         self.md_profiler.stop()
-        self.md_profiler.save(os.getcwd())
+        self.md_profiler.save(str(tmp_path))
 
         # Confirm MindData Profiling files are created
         # Note: There is an MD bug in which which the pipeline file is not recreated;
@@ -317,11 +267,11 @@ class TestMinddataProfilingAnalyzer:
         assert os.path.exists(dataset_iterator_file) is True
 
         # Call MindData Analyzer for generated MindData profiling files to generate MindData pipeline summary result
-        md_analyzer = MinddataProfilingAnalyzer(self._analyze_file_path, file_id, self._analyze_file_path)
+        md_analyzer = MinddataProfilingAnalyzer(analyze_file_path, "7", analyze_file_path)
         md_summary_dict = md_analyzer.analyze()
 
         # Verify MindData Profiling Analyze Summary output
-        self.verify_md_summary(md_summary_dict, self._expected_summary_keys_success)
+        self.verify_md_summary(md_summary_dict, self._expected_summary_keys_success, str(tmp_path))
 
         # Confirm pipeline data contains info for 3 ops
         assert md_summary_dict["pipeline_ops"] == ["Batch(id=0)", "Map(id=1)", "Generator(id=2)"]
