@@ -144,7 +144,9 @@ void TraceManager::DebugTrace(const std::string &func_name, const LocationPtr &l
 void TraceManager::DebugTrace(const LocationPtr &location) {
   MS_EXCEPTION_IF_NULL(location);
   (void)TraceManager::trace_context_stack_.emplace_back(location);
-  TraceManager::parse_or_resolve_debug_info_ = std::make_shared<DebugInfo>(location);
+  if (record_debug_info_flag_) {
+    TraceManager::record_debug_info_ = std::make_shared<DebugInfo>(location);
+  }
 }
 
 void TraceManager::DebugTrace(const TraceInfoPtr &trace_info) {
@@ -152,7 +154,9 @@ void TraceManager::DebugTrace(const TraceInfoPtr &trace_info) {
   auto &debug_info = trace_info->debug_info();
   MS_EXCEPTION_IF_NULL(debug_info);
   (void)TraceManager::trace_context_stack_.emplace_back(trace_info);
-  TraceManager::parse_or_resolve_debug_info_ = debug_info;
+  if (record_debug_info_flag_) {
+    TraceManager::record_debug_info_ = debug_info;
+  }
 }
 
 void TraceManager::DebugTrace(const DebugInfoPtr &debug_info, const TraceInfoPtr &trace_info) {
@@ -163,13 +167,21 @@ void TraceManager::DebugTrace(const DebugInfoPtr &debug_info, const TraceInfoPtr
   (void)TraceManager::trace_context_stack_.emplace_back(cloned_info);
 }
 
-DebugInfoPtr TraceManager::GetParseOrResolveDebugInfo() { return TraceManager::parse_or_resolve_debug_info_; }
+DebugInfoPtr TraceManager::GetParseOrResolveDebugInfo() { return TraceManager::record_debug_info_; }
 
-void TraceManager::ClearParseOrResolveDebugInfo() { TraceManager::parse_or_resolve_debug_info_ = nullptr; }
+void TraceManager::ClearParseOrResolveDebugInfo() { TraceManager::record_debug_info_ = nullptr; }
+
+void TraceManager::CloseRecordDebugInfoFlag() { record_debug_info_flag_ = false; }
+
+void TraceManager::OpenRecordDebugInfoFlag() { record_debug_info_flag_ = true; }
+
+bool TraceManager::GetRecordDebugInfoFlag() { return record_debug_info_flag_; }
 
 thread_local std::vector<TraceContext> TraceManager::trace_context_stack_;
 
-thread_local DebugInfoPtr TraceManager::parse_or_resolve_debug_info_ = nullptr;
+thread_local DebugInfoPtr TraceManager::record_debug_info_ = nullptr;
+
+thread_local bool TraceManager::record_debug_info_flag_ = false;
 
 LocationPtr GetFirstLocation(const DebugInfoPtr &debug_info) {
   auto tmp = debug_info;

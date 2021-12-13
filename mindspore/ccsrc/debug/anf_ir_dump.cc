@@ -226,6 +226,7 @@ void DumpOperator(const AnfNodePtr &node, const std::shared_ptr<SubGraphIRInfo> 
     return;
   }
   AnfNodePtr op = cnode->input(0);
+  MS_EXCEPTION_IF_NULL(op);
   if (IsValueNode<FuncGraph>(op)) {
     FuncGraphPtr fg = GetValueNode<FuncGraphPtr>(op);
     if (fg != nullptr) {
@@ -240,14 +241,17 @@ void DumpOperator(const AnfNodePtr &node, const std::shared_ptr<SubGraphIRInfo> 
       gsub->buffer << "$(@" << fg->ToString() << ":" << input->ToString() << ")";
     }
   } else if (op->isa<ValueNode>()) {
-    gsub->buffer << GetValueNode(op)->ToString();
+    auto value = GetValueNode(op);
+    if (value != nullptr) {
+      gsub->buffer << value->ToString();
+    }
   } else {
     // It's Parameter.
-    if (op->func_graph() != node->func_graph()) {
+    if (op->func_graph() != nullptr && op->func_graph() != node->func_graph()) {
       gsub->buffer << "$(@" << op->func_graph()->ToString() << ":";
     }
     gsub->buffer << op->ToString();
-    if (op->func_graph() != node->func_graph()) {
+    if (op->func_graph() != nullptr && op->func_graph() != node->func_graph()) {
       gsub->buffer << ")";
     }
   }
@@ -436,9 +440,16 @@ void DumpPrimalDebugInfos(const CNodePtr &node, const std::shared_ptr<SubGraphIR
   MS_EXCEPTION_IF_NULL(node);
   auto primal_debug_infos = node->primal_debug_infos();
   if (!primal_debug_infos.empty()) {
-    gsub->buffer << "      # Corresponding forward node candidate:\n";
+    std::string lines;
     for (auto &primal_debug_info : primal_debug_infos) {
-      gsub->buffer << trace::GetDebugInfo(primal_debug_info, "      # ", kSourceLineTipDiscard) << "\n";
+      auto debug_info_str = trace::GetDebugInfo(primal_debug_info, "      # ", kSourceLineTipDiscard);
+      if (!debug_info_str.empty()) {
+        lines += debug_info_str + "\n";
+      }
+    }
+    if (!lines.empty()) {
+      gsub->buffer << "      # Corresponding forward node candidate:\n";
+      gsub->buffer << lines;
     }
   }
 }
@@ -449,12 +460,16 @@ void DumpDebugInfo(const CNodePtr &node, const std::shared_ptr<SubGraphIRInfo> &
   if (dump_location == kTopStack) {
     auto fused_debug_infos = node->fused_debug_infos();
     if (!fused_debug_infos.empty()) {
-      gsub->buffer << "      # Corresponding code candidate:\n";
+      std::string lines;
       for (const auto &debug_info : fused_debug_infos) {
         auto debug_info_str = trace::GetDebugInfo(debug_info, "      # ", kSourceLineTipDiscard);
         if (!debug_info_str.empty()) {
-          gsub->buffer << debug_info_str << "\n";
+          lines += debug_info_str + "\n";
         }
+      }
+      if (!lines.empty()) {
+        gsub->buffer << "      # Corresponding code candidate:\n";
+        gsub->buffer << lines;
       }
     } else {
       auto debug_info_str = trace::GetDebugInfo(node->debug_info(), "      # ", kSourceLineTipDiscard);

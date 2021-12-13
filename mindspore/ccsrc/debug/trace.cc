@@ -475,8 +475,11 @@ void GetTraceStackInfo(std::ostringstream &oss) {
   GetEvalStackInfo(trace_info);
   if (trace_info.str().empty()) {
     DebugInfoPtr debug_info = TraceManager::GetParseOrResolveDebugInfo();
-    if (debug_info != nullptr) {
-      oss << "\n\n# " << trace::GetDebugInfo(debug_info);
+    if (debug_info != nullptr && TraceManager::GetRecordDebugInfoFlag() == true) {
+      auto debug_str = trace::GetDebugInfo(debug_info);
+      if (!debug_str.empty()) {
+        oss << "\n\n# " << debug_str;
+      }
     }
   } else {
     oss << trace_info.str();

@@ -378,6 +378,7 @@ void CheckRootInputShapeAndType(const ResourcePtr &res, const FuncGraphPtr &load
 
 bool ParseAction(const ResourcePtr &res) {
   MS_EXCEPTION_IF_NULL(res);
+  TraceManager::OpenRecordDebugInfoFlag();
   if (!res->source_input()) {
     MS_LOG(EXCEPTION) << "Parse error";
   }
@@ -645,7 +646,10 @@ bool VmOptimizeAction(const ResourcePtr &res) {
     kVmPasses.push_back({"server_communication_op_fusion", ps::Util::FuseServerCommOps});
   }
 #endif
-  return OptimizeAction(res, kVmPasses);
+  auto ret = OptimizeAction(res, kVmPasses);
+  TraceManager::ClearParseOrResolveDebugInfo();
+  TraceManager::CloseRecordDebugInfoFlag();
+  return ret;
 }
 
 bool PynativeElimOpt(const ResourcePtr &res) {

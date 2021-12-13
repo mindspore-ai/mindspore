@@ -124,12 +124,26 @@ class MS_CORE_API TraceManager {
   /// \return The debug info for parse or resolve.
   static DebugInfoPtr GetParseOrResolveDebugInfo();
 
+  /// \brief Get the flag of recording a debug info.
+  ///
+  /// \return A bool.
+  static bool GetRecordDebugInfoFlag();
+
+  /// \brief Set the flag to false for not recording a debug info.
+  static void CloseRecordDebugInfoFlag();
+
+  /// \brief Set the flag to true for recording a debug info.
+  static void OpenRecordDebugInfoFlag();
+
  private:
   /// \brief Trace context stack for current thread.
   thread_local static std::vector<TraceContext> trace_context_stack_;
 
-  /// \brief Debug info for parse or resolve for current thread.
-  thread_local static DebugInfoPtr parse_or_resolve_debug_info_;
+  /// \brief Record a debug info for print.
+  thread_local static DebugInfoPtr record_debug_info_;
+
+  /// \brief A flag to decide whether record a debug info or not.
+  thread_local static bool record_debug_info_flag_;
 };
 
 class TraceGuard {
