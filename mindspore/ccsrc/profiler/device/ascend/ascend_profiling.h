@@ -43,6 +43,7 @@ class AscendProfiler : public Profiler {
   uint64_t GetOptionsMask() const;
   aclprofAicoreMetrics GetAicMetrics() const;
   void Finalize() const;
+  bool IsInitialized() { return init_flag_; }
 
  private:
   static std::shared_ptr<AscendProfiler> ascend_profiler_;

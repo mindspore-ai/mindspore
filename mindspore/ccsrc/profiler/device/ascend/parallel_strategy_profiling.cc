@@ -37,10 +37,14 @@
 namespace mindspore {
 namespace profiler {
 namespace ascend {
+bool has_save_parallel_strategy = false;
+bool has_got_parallel_strategy_data = false;
+irpb::ProfilingParallel cache_profiling_parallel_pb;
+
 bool IsProfilingParallelStrategyEnabled() {
   auto ascend_profiler = AscendProfiler::GetInstance();
   MS_EXCEPTION_IF_NULL(ascend_profiler);
-  if (!ascend_profiler->GetProfilingEnableFlag()) {
+  if (!ascend_profiler->IsInitialized()) {
     MS_LOG(INFO) << "Profiling parallel strategy is disabled.";
     return false;
   }
@@ -117,6 +121,8 @@ irpb::ProfilingParallel GetProfilingParallel(const FuncGraphPtr &func_graph) {
     }
     config->set_rank_id(rank_id_int);
   }
+
+  has_got_parallel_strategy_data = true;
   return profiling_parallel;
 }
 
@@ -126,6 +132,24 @@ void DumpProfileParallelStrategy(const FuncGraphPtr &func_graph) {
   }
 
   MS_LOG(INFO) << "Start to DumpProfileParallelStrategy.";
+
+  cache_profiling_parallel_pb = GetProfilingParallel(func_graph);
+
+  auto ascend_profiler = AscendProfiler::GetInstance();
+  MS_EXCEPTION_IF_NULL(ascend_profiler);
+  if (!ascend_profiler->GetProfilingEnableFlag()) {
+    MS_LOG(INFO) << "Profiling parallel strategy has not started.";
+    return;
+  }
+
+  SaveParallelStrategyToFile();
+}
+
+void SaveParallelStrategyToFile() {
+  if (has_save_parallel_strategy || !has_got_parallel_strategy_data) {
+    return;
+  }
+
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   std::string dir_path = GetOutputPath();
@@ -144,13 +168,15 @@ void DumpProfileParallelStrategy(const FuncGraphPtr &func_graph) {
     return;
   }
 
-  irpb::ProfilingParallel profiling_parallel = GetProfilingParallel(func_graph);
   std::string profiling_parallel_str;
-  google::protobuf::util::MessageToJsonString(profiling_parallel, &profiling_parallel_str);
+  google::protobuf::util::MessageToJsonString(cache_profiling_parallel_pb, &profiling_parallel_str);
   ofs << profiling_parallel_str;
   ofs.close();
 
   ChangeFileMode(file_path, S_IRUSR | S_IWUSR);
+
+  has_save_parallel_strategy = true;
+
   MS_LOG(INFO) << "Save profile parallel strategy success.";
 }
 }  // namespace ascend
