@@ -19,6 +19,7 @@
 #include <memory>
 #include <unordered_map>
 #include <vector>
+#include <random>
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
 #include "nnacl/base/tile_base.h"
@@ -39,6 +40,7 @@ class MultinomialCpuKernel : public CPUKernel {
   std::vector<size_t> input_shape_;
   int seed_{0};
   int seed2_{0};
+  std::default_random_engine rng_;
 };
 
 MS_REG_CPU_KERNEL(
