@@ -190,6 +190,13 @@ class CostGraph {
   void set_inputs_tensor_name_list(const std::vector<std::vector<std::string>> &inputs_tensor_name_list) {
     inputs_tensor_name_list_ = inputs_tensor_name_list;
   }
+  // Needed by rec_parser 2
+  void add_shared_tensor(const std::vector<std::string> &shared_tensor_ops_names) {
+    shared_tensors_ops_name_list_.push_back(shared_tensor_ops_names);
+  }
+  const std::vector<std::vector<std::string>> get_shared_tensors_ops_name_list() const {
+    return shared_tensors_ops_name_list_;
+  }
   void add_tuple_getitem(const std::pair<std::string, std::string> &tuple_getitem) {
     auto ret = tuple_getitem_list_.insert(tuple_getitem);
     if (ret.second == false) {
@@ -205,6 +212,8 @@ class CostGraph {
   void MarkCriticalOpsAndEdges(const std::map<OperatorInfoPtr, int64_t> &);
   // Needed by rec_parser
   std::vector<std::vector<std::string>> inputs_tensor_name_list_;
+  // Needed by rec_parser 2
+  std::vector<std::vector<std::string>> shared_tensors_ops_name_list_;
   std::map<std::string, std::string> tuple_getitem_list_;
   std::vector<OperatorInfoPtr> ops_;
   std::map<std::pair<OperatorInfoPtr, OperatorInfoPtr>, std::vector<EdgePtr>> edges_;

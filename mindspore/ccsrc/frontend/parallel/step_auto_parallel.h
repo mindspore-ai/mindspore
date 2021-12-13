@@ -21,10 +21,12 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <utility>
 #include "frontend/optimizer/opt.h"
 #include "frontend/parallel/status.h"
 #include "ir/anf.h"
 #include "pipeline/jit/pipeline.h"
+#include "frontend/parallel/auto_parallel/rec_core/rec_parse_graph.h"
 
 namespace mindspore {
 namespace parallel {
@@ -55,6 +57,17 @@ std::vector<std::vector<std::string>> RecInputTensorNames(const std::map<std::st
 CNodePtr GetInternalOperatorInfo(const CNodePtr &cnode, const ValueNodePtr &prim_anf_node);
 
 void ModifyInputsTensorNameListIfOperatorInfoCreated(const std::string &name, const std::string &uniqueid);
+
+size_t FindOperatorIndexById(const std::string &unique_id,
+                             const std::vector<std::vector<std::string>> &input_tensor_names);
+
+void AddSharedTensorWhenMultiUsers(
+  const std::pair<std::string, std::pair<AnfNodePtr, AnfNodeIndexSet>> &parameter_users_info);
+
+std::vector<std::vector<size_t>> GetSharedTensorsOps(
+  const std::shared_ptr<Graph> &graph, const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+  const std::vector<std::vector<std::string>> &shared_tensors_ops_names,
+  const std::vector<std::vector<std::string>> &input_tensor_names);
 }  // namespace parallel
 }  // namespace mindspore
 #endif  // PARALLEL_STEP_AUTO_PARALLEL_H_
