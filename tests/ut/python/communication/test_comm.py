@@ -26,7 +26,7 @@ from mindspore.nn import Momentum
 from mindspore.nn import ReLU
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.ops.operations.comm_ops import AllReduce, AllGather, AlltoAll, ReduceOp, ReduceScatter
-from mindspore.ops.operations.comm_ops import Broadcast, AllSwap
+from mindspore.ops.operations.comm_ops import Broadcast, _AllSwap
 from mindspore.ops.operations.array_ops import Gather
 import mindspore
 
@@ -128,7 +128,7 @@ class AllSwapNet(nn.Cell):
     def __init__(self, batch_size, input_channel, out_channel):
         super(AllSwapNet, self).__init__()
         self.dense = Dense(input_channel, out_channel)
-        self.allswap = AllSwap()
+        self.allswap = _AllSwap()
         self.relu = ReLU()
         part_slice = batch_size / 2
         self.send_size = Tensor([0, part_slice*out_channel, part_slice*out_channel], mindspore.int64)
