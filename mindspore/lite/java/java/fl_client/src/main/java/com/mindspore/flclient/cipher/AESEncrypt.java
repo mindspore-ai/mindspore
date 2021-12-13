@@ -21,7 +21,6 @@ import static com.mindspore.flclient.LocalFLParameter.KEY_LEN;
 
 import com.mindspore.flclient.Common;
 
-import java.io.UnsupportedEncodingException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;

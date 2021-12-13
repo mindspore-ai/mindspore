@@ -68,7 +68,7 @@ public class SSLSocketFactoryTools {
             String domainName = flParameter.getDomainName();
             if ((domainName == null || domainName.isEmpty() || domainName.split("//").length < 2)) {
                 LOGGER.severe(Common.addTag("[SSLSocketFactoryTools] the <domainName> is null or not valid, it should" +
-                        " be like as https://...... , please check!"));
+                        " be like https://...... , please check!"));
                 throw new IllegalArgumentException();
             }
             if (domainName.split("//")[1].split(":").length < 2) {
@@ -87,7 +87,7 @@ public class SSLSocketFactoryTools {
 
     private void initSslSocketFactory() {
         try {
-            sslContext = SSLContext.getInstance("TLS");
+            sslContext = SSLContext.getInstance(flParameter.getSslProtocol());
             x509Certificate = readCert(flParameter.getCertPath());
             myTrustManager = new MyTrustManager(x509Certificate);
             sslContext.init(null, new TrustManager[]{
@@ -137,9 +137,8 @@ public class SSLSocketFactoryTools {
                         "convert to X509Certificate"));
             }
         } catch (FileNotFoundException | CertificateException ex) {
-            LOGGER.severe(Common.addTag("[SSLSocketFactoryTools] catch FileNotFoundException or CertificateException " +
-                    "when creating " +
-                    "CertificateFactory in readCert: " + ex.getMessage()));
+            LOGGER.severe(Common.addTag("[SSLSocketFactoryTools] catch exception when creating CertificateFactory in " +
+                    "readCert: invalid file or CertificateException"));
         } finally {
             try {
                 if (inputStream != null) {

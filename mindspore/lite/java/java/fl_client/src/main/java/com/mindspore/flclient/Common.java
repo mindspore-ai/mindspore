@@ -16,6 +16,14 @@
 
 package com.mindspore.flclient;
 
+import com.mindspore.flclient.model.AlInferBert;
+import com.mindspore.flclient.model.AlTrainBert;
+import com.mindspore.flclient.model.Client;
+import com.mindspore.flclient.model.ClientManager;
+import com.mindspore.flclient.model.SessionUtil;
+import com.mindspore.flclient.model.Status;
+import com.mindspore.flclient.model.TrainLenet;
+import mindspore.schema.ResponseCode;
 import org.bouncycastle.crypto.BlockCipher;
 import org.bouncycastle.crypto.engines.AESEngine;
 import org.bouncycastle.crypto.prng.SP800SecureRandomBuilder;
@@ -33,6 +41,9 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.mindspore.flclient.LocalFLParameter.ALBERT;
+import static com.mindspore.flclient.LocalFLParameter.LENET;
+
 /**
  * Define basic global methods used in federated learning task.
  *
@@ -44,6 +55,9 @@ public class Common {
      */
     public static final String LOG_TITLE = "<FLClient> ";
 
+    public static final String LOG_DEPRECATED = "This method will be deprecated in the next version, it is " +
+            "recommended to " +
+            "use the latest method according to the use cases in the official website tutorial";
     /**
      * The list of trust flName.
      */
@@ -63,8 +77,16 @@ public class Common {
      * The tag when server is not ready.
      */
     public static final String JOB_NOT_AVAILABLE = "The server's training job is disabled or finished.";
+
+    /**
+     * use to stop job.
+     */
+    private static final Object STOP_OBJECT = new Object();
     private static final Logger LOGGER = Logger.getLogger(Common.class.toString());
+    private static List<String> envTrustList = new ArrayList<>(Arrays.asList("x86", "android"));
     private static SecureRandom secureRandom;
+    private static int iteration;
+    private static boolean isHttps;
 
     /**
      * Generate the URL for device-sever interaction
@@ -107,6 +129,7 @@ public class Common {
                 throw new IllegalArgumentException();
             }
             String tag = domainName.split("//")[0] + "//";
+            setIsHttps(domainName.split("//")[0].split(":")[0]);
             Random rand = new Random();
             int randomNum = rand.nextInt(100000) % serverNum + port;
             url = tag + ip + ":" + String.valueOf(randomNum);
@@ -168,6 +191,17 @@ public class Common {
     }
 
     /**
+     * Check if the deploy environment set by user is in the trust list.
+     *
+     * @param env the deploy environment for federated learning task set by user.
+     * @return boolean value, true indicates the deploy environment set by user is valid, false indicates the deploy
+     * environment set by user is not valid.
+     */
+    public static boolean checkEnv(String env) {
+        return (envTrustList.contains(env));
+    }
+
+    /**
      * Check whether the sslProtocol set by user is in the trust list.
      *
      * @param sslProtocol the ssl protocol set by user.
@@ -184,11 +218,23 @@ public class Common {
      * @param millis the waiting time (ms).
      */
     public static void sleep(long millis) {
-        try {
-            Thread.sleep(millis);                 // 1000 milliseconds is one second.
-        } catch (InterruptedException ex) {
-            LOGGER.severe(addTag("[sleep] catch InterruptedException: " + ex.getMessage()));
-            Thread.currentThread().interrupt();
+        if (millis > 0) {
+            try {
+                synchronized (STOP_OBJECT) {
+                    STOP_OBJECT.wait(millis);  // 1000 milliseconds is one second.
+                }
+            } catch (InterruptedException ex) {
+                LOGGER.severe(addTag("[sleep] catch InterruptedException: " + ex.getMessage()));
+            }
+        }
+    }
+
+    /**
+     * Use to stop the wait method of a Object.
+     */
+    public static void notifyObject() {
+        synchronized (STOP_OBJECT) {
+            STOP_OBJECT.notify();
         }
     }
 
@@ -261,10 +307,20 @@ public class Common {
         String messageStr = new String(message);
         if (messageStr.contains(SAFE_MOD)) {
             LOGGER.info(Common.addTag("[isSeverReady] " + SAFE_MOD + ", need wait some time and request again"));
+            if (messageStr.split(":").length == 2) {
+                iteration = Integer.parseInt(messageStr.split(":")[1]);
+            } else {
+                LOGGER.info(Common.addTag("[isSeverReady] the server does not return the current iteration."));
+            }
             return false;
         } else if (messageStr.contains(JOB_NOT_AVAILABLE)) {
             LOGGER.info(Common.addTag("[isSeverReady] " + JOB_NOT_AVAILABLE + ", need wait some time and request " +
                     "again"));
+            if (messageStr.split(":").length == 2) {
+                iteration = Integer.parseInt(messageStr.split(":")[1]);
+            } else {
+                LOGGER.info(Common.addTag("[isSeverReady] the server does not return the current iteration."));
+            }
             return false;
         } else {
             return true;
@@ -307,7 +363,7 @@ public class Common {
      * Check whether the path set by user exists.
      *
      * @param path the path set by user.
-     * @return boolean value, true indicates the path is exist, false indicates the path is not exist
+     * @return boolean value, true indicates the path is exist, false indicates the path does not exist
      */
     public static boolean checkPath(String path) {
         if (path == null) {
@@ -323,7 +379,7 @@ public class Common {
             LOGGER.info(addTag("[check path " + i + "] " + paths[i]));
             File file = new File(paths[i]);
             if (!file.exists()) {
-                LOGGER.severe(Common.addTag("[checkPath] the path is not exist, please check"));
+                LOGGER.severe(Common.addTag("[checkPath] the path does not exist, please check"));
                 return false;
             }
         }
@@ -413,6 +469,133 @@ public class Common {
         } catch (NoSuchAlgorithmException e) {
             LOGGER.severe(Common.addTag("catch NoSuchAlgorithmException: " + e.getMessage()));
             throw new IllegalArgumentException();
+        }
+    }
+
+    /**
+     * Record the current iteration when server is not ready.
+     *
+     * @return int value, the current iteration when server is not ready.
+     */
+    public static int getIteration() {
+        return iteration;
+    }
+
+    /**
+     * Determine whether to conduct https communication according to the domain name set by user.
+     *
+     * @return boolean value, true means conducting https communication, false  means conducting http communication.
+     */
+    public static boolean isHttps() {
+        return isHttps;
+    }
+
+    public static void setIsHttps(String tag) {
+        if ("https".equals(tag)) {
+            LOGGER.info(Common.addTag("conducting https communication"));
+            Common.isHttps = true;
+        } else if ("http".equals(tag)) {
+            LOGGER.info(Common.addTag("conducting http communication"));
+            Common.isHttps = false;
+        } else {
+            LOGGER.info(Common.addTag("The domain header set by the user is incorrect, please check"));
+            throw new IllegalArgumentException();
+        }
+    }
+
+
+    /**
+     * Initialization session.
+     *
+     * @return the status code in client.
+     */
+    public static FLClientStatus initSession(String modelPath) {
+        FLParameter flParameter = FLParameter.getInstance();
+        LocalFLParameter localFLParameter = LocalFLParameter.getInstance();
+        if (Common.checkFLName(flParameter.getFlName())) {
+            return deprecatedInitSession();
+        }
+        Status tag;
+        LOGGER.info(Common.addTag("==========Loading model, " + modelPath + " Create " +
+                " Session============="));
+        Client client = ClientManager.getClient(flParameter.getFlName());
+        tag = client.initSessionAndInputs(modelPath, localFLParameter.getMsConfig());
+        if (!Status.SUCCESS.equals(tag)) {
+            LOGGER.severe(Common.addTag("[initSession] unsolved error code in <initSessionAndInputs>: the return " +
+                    "is -1"));
+            return FLClientStatus.FAILED;
+        }
+        return FLClientStatus.SUCCESS;
+    }
+
+    /**
+     * Free session.
+     */
+    protected static void freeSession() {
+        FLParameter flParameter = FLParameter.getInstance();
+        if (Common.checkFLName(flParameter.getFlName())) {
+            deprecatedFreeSession();
+        } else {
+            LOGGER.info(Common.addTag("===========free session============="));
+            Client client = ClientManager.getClient(flParameter.getFlName());
+            client.free();
+        }
+    }
+
+    /**
+     * Initialization session.
+     *
+     * @return the status code in client.
+     */
+    private static FLClientStatus deprecatedInitSession() {
+        FLParameter flParameter = FLParameter.getInstance();
+        int tag = 0;
+        if (flParameter.getFlName().equals(ALBERT)) {
+            LOGGER.info(Common.addTag("==========Loading train model, " + flParameter.getTrainModelPath() + " Create " +
+                    "Train Session============="));
+            AlTrainBert alTrainBert = AlTrainBert.getInstance();
+            tag = alTrainBert.initSessionAndInputs(flParameter.getTrainModelPath(), true);
+            if (tag == -1) {
+                LOGGER.severe(Common.addTag("[initSession] unsolved error code in <initSessionAndInputs>: the return " +
+                        "is -1"));
+                return FLClientStatus.FAILED;
+            }
+            LOGGER.info(Common.addTag("==========Loading inference model, " + flParameter.getInferModelPath() + " " +
+                    "Create inference Session============="));
+            AlInferBert alInferBert = AlInferBert.getInstance();
+            tag = alInferBert.initSessionAndInputs(flParameter.getInferModelPath(), false);
+        } else if (flParameter.getFlName().equals(LENET)) {
+            LOGGER.info(Common.addTag("==========Loading train model, " + flParameter.getTrainModelPath() + " Create " +
+                    "Train Session============="));
+            TrainLenet trainLenet = TrainLenet.getInstance();
+            tag = trainLenet.initSessionAndInputs(flParameter.getTrainModelPath(), true);
+        }
+        if (tag == -1) {
+            LOGGER.severe(Common.addTag("[initSession] unsolved error code in <initSessionAndInputs>: the return is " +
+                    "-1"));
+            return FLClientStatus.FAILED;
+        }
+        return FLClientStatus.SUCCESS;
+    }
+
+    /**
+     * Free session.
+     */
+    private static void deprecatedFreeSession() {
+        FLParameter flParameter = FLParameter.getInstance();
+        if (flParameter.getFlName().equals(ALBERT)) {
+            LOGGER.info(Common.addTag("===========free train session============="));
+            AlTrainBert alTrainBert = AlTrainBert.getInstance();
+            SessionUtil.free(alTrainBert.getTrainSession());
+            if (!flParameter.getTestDataset().equals("null")) {
+                LOGGER.info(Common.addTag("===========free inference session============="));
+                AlInferBert alInferBert = AlInferBert.getInstance();
+                SessionUtil.free(alInferBert.getTrainSession());
+            }
+        } else if (flParameter.getFlName().equals(LENET)) {
+            LOGGER.info(Common.addTag("===========free session============="));
+            TrainLenet trainLenet = TrainLenet.getInstance();
+            SessionUtil.free(trainLenet.getTrainSession());
         }
     }
 }

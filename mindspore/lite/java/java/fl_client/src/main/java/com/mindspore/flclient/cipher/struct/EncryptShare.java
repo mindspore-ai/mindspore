@@ -38,7 +38,7 @@ public class EncryptShare {
     public String getFlID() {
         if (flID == null || flID.isEmpty()) {
             LOGGER.severe(Common.addTag("[DecryptShareSecrets] the parameter of <flID> is null, please set it before " +
-                    "use"));
+                    "using"));
             throw new IllegalArgumentException();
         }
         return flID;

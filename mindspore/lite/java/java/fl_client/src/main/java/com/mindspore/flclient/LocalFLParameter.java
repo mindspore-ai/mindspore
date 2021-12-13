@@ -16,6 +16,8 @@
 
 package com.mindspore.flclient;
 
+import com.mindspore.lite.config.MSConfig;
+
 import org.bouncycastle.math.ec.rfc7748.X25519;
 
 import java.util.ArrayList;
@@ -59,6 +61,16 @@ public class LocalFLParameter {
      * The model name supported by federated learning tasks: "albert".
      */
     public static final String ALBERT = "albert";
+
+    /**
+     * The deployment environment supported by federated learning tasks: "android".
+     */
+    public static final String ANDROID = "android";
+
+    /**
+     * The deployment environment supported by federated learning tasks: "x86".
+     */
+    public static final String X86 = "x86";
     private static volatile LocalFLParameter localFLParameter;
 
     private List<String> classifierWeightName = new ArrayList<>();
@@ -67,6 +79,9 @@ public class LocalFLParameter {
     private String encryptLevel = EncryptLevel.NOT_ENCRYPT.toString();
     private String earlyStopMod = EarlyStopMod.NOT_EARLY_STOP.toString();
     private String serverMod = ServerMod.HYBRID_TRAINING.toString();
+    private boolean stopJobFlag = false;
+    private MSConfig msConfig = new MSConfig();
+    private boolean useSSL = true;
 
     private LocalFLParameter() {
         // set classifierWeightName albertWeightName
@@ -143,14 +158,14 @@ public class LocalFLParameter {
     public void setEncryptLevel(String encryptLevel) {
         if (encryptLevel == null || encryptLevel.isEmpty()) {
             LOGGER.severe(Common.addTag("[localFLParameter] the parameter of <encryptLevel> is null, please check it " +
-                    "before set"));
+                    "before setting"));
             throw new IllegalArgumentException();
         }
         if ((!EncryptLevel.DP_ENCRYPT.toString().equals(encryptLevel)) &&
                 (!EncryptLevel.NOT_ENCRYPT.toString().equals(encryptLevel)) &&
                 (!EncryptLevel.PW_ENCRYPT.toString().equals(encryptLevel))) {
             LOGGER.severe(Common.addTag("[localFLParameter] the parameter of <encryptLevel> is " + encryptLevel + " ," +
-                    " it must be DP_ENCRYPT or NOT_ENCRYPT or PW_ENCRYPT, please check it before set"));
+                    " it must be DP_ENCRYPT or NOT_ENCRYPT or PW_ENCRYPT, please check it before setting"));
             throw new IllegalArgumentException();
         }
         this.encryptLevel = encryptLevel;
@@ -163,7 +178,7 @@ public class LocalFLParameter {
     public void setEarlyStopMod(String earlyStopMod) {
         if (earlyStopMod == null || earlyStopMod.isEmpty()) {
             LOGGER.severe(Common.addTag("[localFLParameter] the parameter of <earlyStopMod> is null, please check it " +
-                    "before set"));
+                    "before setting"));
             throw new IllegalArgumentException();
         }
         if ((!EarlyStopMod.NOT_EARLY_STOP.toString().equals(earlyStopMod)) &&
@@ -171,7 +186,8 @@ public class LocalFLParameter {
                 (!EarlyStopMod.LOSS_DIFF.toString().equals(earlyStopMod)) &&
                 (!EarlyStopMod.WEIGHT_DIFF.toString().equals(earlyStopMod))) {
             LOGGER.severe(Common.addTag("[localFLParameter] the parameter of <earlyStopMod> is " + earlyStopMod + " ," +
-                    " it must be NOT_EARLY_STOP or LOSS_ABS or LOSS_DIFF or WEIGHT_DIFF, please check it before set"));
+                    " it must be NOT_EARLY_STOP or LOSS_ABS or LOSS_DIFF or WEIGHT_DIFF, please check it before " +
+                    "setting"));
             throw new IllegalArgumentException();
         }
         this.earlyStopMod = earlyStopMod;
@@ -184,15 +200,44 @@ public class LocalFLParameter {
     public void setServerMod(String serverMod) {
         if (serverMod == null || serverMod.isEmpty()) {
             LOGGER.severe(Common.addTag("[localFLParameter] the parameter of <serverMod> is null, please check it " +
-                    "before set"));
+                    "before setting"));
             throw new IllegalArgumentException();
         }
         if ((!ServerMod.HYBRID_TRAINING.toString().equals(serverMod)) &&
                 (!ServerMod.FEDERATED_LEARNING.toString().equals(serverMod))) {
             LOGGER.severe(Common.addTag("[localFLParameter] the parameter of <serverMod> is " + serverMod + " , it " +
-                    "must be HYBRID_TRAINING or FEDERATED_LEARNING, please check it before set"));
+                    "must be HYBRID_TRAINING or FEDERATED_LEARNING, please check it before setting"));
             throw new IllegalArgumentException();
         }
         this.serverMod = serverMod;
+    }
+
+    public boolean isStopJobFlag() {
+        return stopJobFlag;
+    }
+
+    public void setStopJobFlag(boolean stopJobFlag) {
+        this.stopJobFlag = stopJobFlag;
+    }
+
+    public MSConfig getMsConfig() {
+        return msConfig;
+    }
+
+    public void setMsConfig(int DeviceType, int threadNum, int cpuBindMode, boolean enable_fp16) {
+        // arg 0: DeviceType:DT_CPU -> 0
+        // arg 1: ThreadNum -> 2
+        // arg 2: cpuBindMode:NO_BIND ->  0
+        // arg 3: enable_fp16 -> false
+        msConfig.init(DeviceType, threadNum, cpuBindMode, enable_fp16);
+    }
+
+
+    public boolean isUseSSL() {
+        return useSSL;
+    }
+
+    public void setUseSSL(boolean useSSL) {
+        this.useSSL = useSSL;
     }
 }

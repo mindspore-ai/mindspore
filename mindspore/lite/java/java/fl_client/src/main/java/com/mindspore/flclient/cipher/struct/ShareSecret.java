@@ -38,7 +38,7 @@ public class ShareSecret {
      */
     public String getFlID() {
         if (flID == null || flID.isEmpty()) {
-            LOGGER.severe(Common.addTag("[ShareSecret] the parameter of <flID> is null, please set it before use"));
+            LOGGER.severe(Common.addTag("[ShareSecret] the parameter of <flID> is null, please set it before using"));
             throw new IllegalArgumentException();
         }
         return flID;

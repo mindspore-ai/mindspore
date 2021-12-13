@@ -20,7 +20,6 @@ package com.mindspore.flclient.cipher.struct;
  * class used define new array type
  *
  * @param <T> an array
- *
  * @since 2021-8-27
  */
 public class NewArray<T> {
