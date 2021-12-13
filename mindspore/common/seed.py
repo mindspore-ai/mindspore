@@ -54,7 +54,7 @@ def set_seed(seed):
 
     Raises:
         ValueError: If seed is invalid (< 0).
-        TypeError: If seed isn't a int.
+        TypeError: If seed isn't an int.
 
     Examples:
         >>> import numpy as np
