@@ -491,3 +491,4 @@ from .new_im2col import _new_im2col_tbe
 from .non_zero_ds import _non_zero_ds_tbe
 from .trunc import _trunc_tbe
 from .extract_volume_patches import _extract_volume_patches_tbe
+from .round_ds import _round_ds_tbe

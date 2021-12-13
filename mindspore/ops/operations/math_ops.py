@@ -4594,7 +4594,7 @@ class Sign(Primitive):
         pass
 
 
-class Round(PrimitiveWithInfer):
+class Round(Primitive):
     r"""
     Returns half to even of a tensor element-wise.
 
@@ -4626,13 +4626,6 @@ class Round(PrimitiveWithInfer):
     def __init__(self):
         """Initialize Round"""
         self.init_prim_io_names(inputs=['input_x'], outputs=['output'])
-
-    def infer_shape(self, x_shape):
-        return x_shape
-
-    def infer_dtype(self, x_dtype):
-        validator.check_tensor_dtype_valid('x', x_dtype, mstype.number_type, self.name)
-        return x_dtype
 
 
 class Tan(Primitive):
