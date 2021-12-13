@@ -120,7 +120,7 @@ def __init_tune_env(job, need_ga):
         import auto_tune.auto_tune_main as at_atm
         from schedule_search.rl_online_tune import rl_tune_init  # pylint: disable=unused-import
         if need_ga:
-            res = at_atm.check_soc_version()
+            res = at_atm.ga_tune_init()
             if not res:
                 job.error("check soc version failed in tune init")
                 job.error("GATune run Failed. Run .o Failed, because soc_version doesn't match the device")
