@@ -92,7 +92,7 @@ std::string EnumMicroTensorFormat(mindspore::Format format) {
     case mindspore::NC4HW4:
       return "Format_NC4HW4";
     default:
-      MS_LOG(ERROR) << "unsupported format: " << schema::EnumNameFormat(static_cast<schema::Format>(format));
+      MS_LOG(ERROR) << "unsupported format: " << format;
       return "Format_NUM_OF_FORMAT";
   }
 }

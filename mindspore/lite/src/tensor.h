@@ -28,7 +28,6 @@
 #include "include/api/format.h"
 #include "src/runtime/inner_allocator.h"
 #include "src/common/log_adapter.h"
-#include "schema/model_generated.h"
 #include "src/common/utils.h"
 #include "src/tensor_category.h"
 

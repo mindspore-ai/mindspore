@@ -19,6 +19,7 @@
 #include <string>
 #include <utility>
 #include <algorithm>
+#include "schema/ops_types_generated.h"
 #include "securec/include/securec.h"
 #include "include/errorcode.h"
 

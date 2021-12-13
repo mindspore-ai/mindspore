@@ -28,21 +28,6 @@ namespace mindspore {
 class TestSparseToDenseFp32 : public mindspore::CommonTest {
  public:
   TestSparseToDenseFp32() {}
-  template <typename T>
-  lite::Tensor *CreateTensor(TypeId dtype, std::vector<int> shape, std::vector<T> data) {
-    auto tensor = new (std::nothrow) lite::Tensor(dtype, shape);
-    if (!data.empty()) {
-      memcpy(tensor->MutableData(), data.data(), tensor->Size());
-    } else {
-      (void)tensor->MallocData();
-    }
-    return tensor;
-  }
-  void DestroyTensors(std::vector<lite::Tensor *> tensors) {
-    for (auto &tensor : tensors) {
-      delete tensor;
-    }
-  }
 };
 
 TEST_F(TestSparseToDenseFp32, SparseToDense_test1) {

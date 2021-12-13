@@ -147,6 +147,7 @@ set(LITE_SRC
         ${LITE_DIR}/src/schema_tensor_wrapper.cc
         ${LITE_DIR}/src/tensorlist.cc
         ${LITE_DIR}/src/tensor.cc
+        ${LITE_DIR}/src/tensor_category.cc
         ${LITE_DIR}/src/weight_decoder.cc
         ${LITE_DIR}/src/huffman_decode.cc
         ${LITE_DIR}/src/common/log.cc

@@ -24,6 +24,7 @@
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
 #include "src/lite_session.h"
+#include "src/common/file_utils.h"
 
 namespace mindspore {
 class InferTest : public mindspore::CommonTest {
@@ -68,18 +69,14 @@ TEST_F(InferTest, TestConvNode) {
   weight->dataType = TypeId::kNumberTypeFloat32;
   weight->dims = {32, 3, 3, 3};
 
-  auto buf = new char *[1];
   //================================================================
-  size_t weight_size;
-  std::string weight_path = "./test_data/conv/convfp32_weight_32_3_3_3.bin";
-  ReadFile(weight_path.c_str(), &weight_size, buf);
-  ASSERT_NE(nullptr, buf[0]);
-  auto weight_data_temp = reinterpret_cast<float *>(buf[0]);
-  ASSERT_NE(nullptr, weight_data_temp);
+  size_t weight_size = 0;
+  char *buff = lite::ReadFile("./test_data/conv/convfp32_weight_32_3_3_3.bin", &weight_size);
+  ASSERT_NE(nullptr, buff);
   weight->data.resize(sizeof(float) * 32 * 3 * 3 * 3);
 
   //================================================================
-  memcpy(weight->data.data(), weight_data_temp, weight_size);
+  memcpy(weight->data.data(), buff, weight_size);
   weight->offset = -1;
   meta_graph->allTensors.emplace_back(std::move(weight));
 
@@ -118,14 +115,12 @@ TEST_F(InferTest, TestConvNode) {
   auto data = inTensor->MutableData();
   //===================================================
   size_t input_size;
-  std::string input_path = "./test_data/conv/convfp32_input_1_28_28_3.bin";
-  ReadFile(input_path.c_str(), &input_size, buf);
-  ASSERT_NE(nullptr, buf[0]);
-  auto input_data = reinterpret_cast<float *>(buf[0]);
-  ASSERT_NE(nullptr, input_data);
+  buff = lite::ReadFile("./test_data/conv/convfp32_input_1_28_28_3.bin", &input_size);
+  ASSERT_NE(nullptr, buff);
+
   //===================================================
   ASSERT_EQ(input_size, inTensor->Size());
-  memcpy(data, input_data, input_size);
+  memcpy(data, buff, input_size);
   ret = session->RunGraph();
   ASSERT_EQ(lite::RET_OK, ret);
   auto outputs = session->GetOutputs();
@@ -138,11 +133,9 @@ TEST_F(InferTest, TestConvNode) {
   ASSERT_NE(nullptr, outData);
   //===================================================
   size_t output_size;
-  std::string output_path = "./test_data/conv/convfp32_out_1_28_28_32.bin";
-  ReadFile(output_path.c_str(), &output_size, buf);
-  ASSERT_NE(nullptr, buf[0]);
-  auto output_data = reinterpret_cast<float *>(buf[0]);
-  ASSERT_NE(nullptr, output_data);
+  buff = lite::ReadFile("./test_data/conv/convfp32_out_1_28_28_32.bin", &output_size);
+  ASSERT_NE(nullptr, buff);
+  auto output_data = reinterpret_cast<float *>(buff);
   //===================================================
   ASSERT_EQ(output_size, outTensor->Size());
   for (int i = 0; i < outTensor->ElementsNum(); i++) {
@@ -233,15 +226,12 @@ TEST_F(InferTest, TestAddNode) {
 }
 
 TEST_F(InferTest, TestModel) {
-  auto buf = new char *[1];
   size_t model_size;
-  std::string model_path = "./models/model_hebing_3branch.ms";
-  ReadFile(model_path.c_str(), &model_size, buf);
-  ASSERT_NE(nullptr, buf[0]);
-
-  auto model = lite::Model::Import(buf[0], model_size);
+  char *buff = lite::ReadFile("./models/model_hebing_3branch.ms", &model_size);
+  ASSERT_NE(nullptr, buff);
+  auto model = lite::Model::Import(buff, model_size);
   ASSERT_NE(nullptr, model);
-  delete[] buf[0];
+  delete[] buff;
   auto context = new lite::InnerContext;
   context->device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_ = lite::NO_BIND;
   context->thread_num_ = 4;

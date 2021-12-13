@@ -16,6 +16,7 @@
 
 #include "src/runtime/kernel/arm/base/layout_transform.h"
 #include "src/common/log_adapter.h"
+#include "schema/ops_types_generated.h"
 
 namespace mindspore::kernel {
 LayoutConvertor LayoutTransformFp32(mindspore::Format src_format, mindspore::Format dst_format) {

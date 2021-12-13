@@ -13,14 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #ifndef MINDSPORE_LITE_SRC_TENSOR_CATEGORY_H_
 #define MINDSPORE_LITE_SRC_TENSOR_CATEGORY_H_
 
-#include "src/common/utils.h"
-#include "schema/model_generated.h"
+#include <cstddef>
+#include "ir/dtype/type_id.h"
 
 namespace mindspore {
+namespace schema {
+struct Tensor;
+}
 namespace lite {
 enum Category {
   CONST_TENSOR,  // weight tensor
@@ -30,18 +32,8 @@ enum Category {
   GRAPH_OUTPUT,
 };
 
-inline Category TensorCategory(const int node_type, const size_t shape_num, const TypeId data_type,
-                               const size_t data_size) {
-  return (node_type == NodeType_ValueNode)
-           ? (shape_num == 0 && data_size == DataTypeSize(data_type) ? Category::CONST_SCALAR : Category::CONST_TENSOR)
-           : Category::VAR;
-}
-
-inline Category TensorCategory(const schema::Tensor &tensor) {
-  auto shape_num = tensor.dims() == nullptr ? 0 : tensor.dims()->size();
-  auto data_size = tensor.data() == nullptr ? 0 : tensor.data()->size();
-  return TensorCategory(tensor.nodeType(), shape_num, TypeId(tensor.dataType()), data_size);
-}
+Category TensorCategory(const int node_type, const size_t shape_num, const TypeId data_type, const size_t data_size);
+Category TensorCategory(const schema::Tensor &tensor);
 }  // namespace lite
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_TENSOR_CATEGORY_H_

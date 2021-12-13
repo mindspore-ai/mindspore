@@ -22,6 +22,7 @@
 #include "src/mindrt_executor.h"
 #include "src/lite_session.h"
 #include "src/lite_kernel.h"
+#include "src/common/file_utils.h"
 
 namespace mindspore {
 class MindrtParallelTest : public mindspore::CommonTest {
