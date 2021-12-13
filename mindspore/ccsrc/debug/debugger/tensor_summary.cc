@@ -16,6 +16,7 @@
 
 #include <cmath>
 #include <algorithm>
+#include <future>
 #include <limits>
 #include <memory>
 #include <bitset>
@@ -160,7 +161,59 @@ void TensorSummary<T>::TensorStatistics(DbgDataType dtype_value) {
   if (dtype_value == DT_BOOL) {
     is_bool_ = true;
   }
-  double sum_elements = 0.0;
+  const int default_threads = 32;
+  const int default_elements_per_thread = 10000;
+
+  if (num_elements_ <= default_elements_per_thread) {
+    return TensorStatisticsSingleThread();
+  }
+  int desired_threads = num_elements_ / default_elements_per_thread;
+  int actual_threads = std::min(desired_threads, default_threads);
+  int actual_elements_per_thread = num_elements_ / actual_threads;
+
+  // Use multithread to calculate statistic on chunks of data
+  void *previous_tensor_ptr = nullptr;
+  size_t offset = 0;
+  std::vector<std::unique_ptr<TensorSummary<T>>> summary_vec;
+  std::vector<std::future<void>> summary_future_vec;
+  for (int i = 0; i < actual_threads; i++) {
+    int num_elements_for_thread;
+    if (i == actual_threads - 1) {
+      num_elements_for_thread = num_elements_ - offset;
+    } else {
+      num_elements_for_thread = actual_elements_per_thread;
+    }
+    summary_vec.emplace_back(std::make_unique<TensorSummary<T>>(current_tensor_ptr_ + offset, previous_tensor_ptr,
+                                                                num_elements_for_thread, 0));
+    summary_future_vec.emplace_back(
+      std::async(std::launch::async, &TensorSummary<T>::TensorStatisticsSingleThread, summary_vec[i].get()));
+    offset += num_elements_for_thread;
+  }
+
+  // Aggregate results of all chunks
+  num_elements_ = 0;  // Let current tensor weight 0 in the aggregation
+  for (unsigned int i = 0; i < summary_future_vec.size(); i++) {
+    summary_future_vec[i].wait();
+    summary_future_vec[i].get();
+    auto &cur_summary = *(summary_vec[i]);
+    num_elements_ += cur_summary.num_elements_;
+    min_ = std::min(min_, cur_summary.min_);
+    max_ = std::max(max_, cur_summary.max_);
+    double avg_delta = cur_summary.avg_ - avg_;
+    avg_ += avg_delta * (cur_summary.num_elements_ / num_elements_);
+    neg_zero_count_ += cur_summary.neg_zero_count_;
+    pos_zero_count_ += cur_summary.pos_zero_count_;
+    neg_inf_count_ += cur_summary.neg_inf_count_;
+    pos_inf_count_ += cur_summary.pos_inf_count_;
+    inf_count_ += cur_summary.inf_count_;
+    nan_count_ += cur_summary.nan_count_;
+    zero_count_ += cur_summary.zero_count_;
+  }
+}
+
+template <typename T>
+void TensorSummary<T>::TensorStatisticsSingleThread() {
+  MeanCalculator mean_calc = MeanCalculator();
   for (size_t i = 0; i < num_elements_; ++i) {
     auto current_value = static_cast<double>(current_tensor_ptr_[i]);
     if (std::isinf(current_value)) {
@@ -185,11 +238,10 @@ void TensorSummary<T>::TensorStatistics(DbgDataType dtype_value) {
       }
       max_ = std::max(max_, current_value);
       min_ = std::min(min_, current_value);
-      sum_elements += current_value;
+      mean_calc.ProcessElement(current_value);
     }
   }
-  unsigned int value_count = zero_count_ + neg_zero_count_ + pos_zero_count_;
-  avg_ = sum_elements / value_count;
+  avg_ = mean_calc.GetMean();
 }
 
 template <typename T>
