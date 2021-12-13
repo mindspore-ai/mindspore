@@ -37,6 +37,7 @@ class DeConvolutionFp16CPUKernel : public ConvolutionBaseCPUKernel {
 
  public:
   int DoDeconv(int task_id);
+  int DoDeconvPre(int task_id);
 
  private:
   int InitRunBuf();
