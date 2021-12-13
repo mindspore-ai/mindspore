@@ -628,11 +628,11 @@ void AscendDeviceContext::PreprocessBeforeRunSingleOpGraph(const KernelGraphPtr 
     }
   }
 
-  device::ascend::InsertAtomicCleanOps(nodes, &node_atomics_);
+  device::ascend::InsertAtomicCleanOps(nodes, &node_atomics_persistent_cache_);
   std::vector<CNodePtr> atomic_nodes;
   for (const auto &node : nodes) {
-    auto iter = node_atomics_.find(node);
-    if (iter != node_atomics_.end()) {
+    auto iter = node_atomics_persistent_cache_.find(node);
+    if (iter != node_atomics_persistent_cache_.end()) {
       const auto &atomics = iter->second;
       std::copy(atomics.begin(), atomics.end(), std::back_inserter(atomic_nodes));
     }
@@ -723,8 +723,8 @@ void AscendDeviceContext::BindDeviceToCurrentThread() const {
 
 bool AscendDeviceContext::LaunchAtomicClean(const CNodePtr &node, const std::vector<AddressPtr> &workspace,
                                             const std::vector<AddressPtr> &outputs) const {
-  auto iter = node_atomics_.find(node);
-  if (iter == node_atomics_.end()) {
+  auto iter = node_atomics_persistent_cache_.find(node);
+  if (iter == node_atomics_persistent_cache_.end()) {
     return true;
   }
   auto atomic_node = iter->second.at(0);
