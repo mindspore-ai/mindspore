@@ -254,6 +254,19 @@ def check_equalizer_biquad(method):
     return new_method
 
 
+def check_gain(method):
+    """Wrapper method to check the parameters of Gain."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [gain_db], _ = parse_user_args(method, *args, **kwargs)
+        type_check(gain_db, (float, int), "gain_db")
+        check_float32(gain_db, "gain_db")
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
 def check_lfilter(method):
     """Wrapper method to check the parameters of LFilter."""
 

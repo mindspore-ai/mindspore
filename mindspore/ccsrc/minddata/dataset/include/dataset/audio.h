@@ -483,6 +483,26 @@ class MS_API FrequencyMasking final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief Apply amplification or attenuation to the whole waveform.
+class MS_API Gain final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] gain_db Gain adjustment in decibels (dB) (Default: 1.0).
+  explicit Gain(float gain_db = 1.0);
+
+  /// \brief Destructor.
+  ~Gain() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief HighpassBiquad TensorTransform. Apply highpass biquad filter on audio.
 class MS_API HighpassBiquad final : public TensorTransform {
  public:

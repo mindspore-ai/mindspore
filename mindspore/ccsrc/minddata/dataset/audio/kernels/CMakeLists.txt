@@ -22,6 +22,7 @@ add_library(audio-kernels OBJECT
         fade_op.cc
         flanger_op.cc
         frequency_masking_op.cc
+        gain_op.cc
         highpass_biquad_op.cc
         lfilter_op.cc
         lowpass_biquad_op.cc

@@ -209,6 +209,25 @@ Status DCShift(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *ou
   return Status::OK();
 }
 
+/// \brief Apply amplification or attenuation to the whole waveform.
+/// \param input/output: Tensor of shape <..., time>.
+/// \param gain_db: Gain adjustment in decibels (dB).
+/// \return Status code.
+template <typename T>
+Status Gain(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, T gain_db) {
+  if (gain_db == 0) {
+    *output = input;
+    return Status::OK();
+  }
+
+  T radio = pow(10, gain_db / 20);
+  for (auto itr = input->begin<T>(); itr != input->end<T>(); ++itr) {
+    *itr = (*itr) * radio;
+  }
+  *output = input;
+  return Status::OK();
+}
+
 /// \brief Perform an IIR filter by evaluating difference equation.
 /// \param input/output: Tensor of shape <..., time>
 /// \param a_coeffs: denominator coefficients of difference equation of dimension of (n_order + 1).

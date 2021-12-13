@@ -39,6 +39,7 @@
 #include "minddata/dataset/audio/ir/kernels/fade_ir.h"
 #include "minddata/dataset/audio/ir/kernels/flanger_ir.h"
 #include "minddata/dataset/audio/ir/kernels/frequency_masking_ir.h"
+#include "minddata/dataset/audio/ir/kernels/gain_ir.h"
 #include "minddata/dataset/audio/ir/kernels/highpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/lfilter_ir.h"
 #include "minddata/dataset/audio/ir/kernels/lowpass_biquad_ir.h"
@@ -299,6 +300,16 @@ PYBIND_REGISTER(
           return frequency_masking;
         }));
   }));
+
+PYBIND_REGISTER(GainOperation, 1, ([](const py::module *m) {
+                  (void)py::class_<audio::GainOperation, TensorOperation, std::shared_ptr<audio::GainOperation>>(
+                    *m, "GainOperation")
+                    .def(py::init([](float gain_db) {
+                      auto gain = std::make_shared<audio::GainOperation>(gain_db);
+                      THROW_IF_ERROR(gain->ValidateParams());
+                      return gain;
+                    }));
+                }));
 
 PYBIND_REGISTER(
   HighpassBiquadOperation, 1, ([](const py::module *m) {

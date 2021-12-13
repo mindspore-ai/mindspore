@@ -35,6 +35,7 @@
 #include "minddata/dataset/audio/ir/kernels/fade_ir.h"
 #include "minddata/dataset/audio/ir/kernels/flanger_ir.h"
 #include "minddata/dataset/audio/ir/kernels/frequency_masking_ir.h"
+#include "minddata/dataset/audio/ir/kernels/gain_ir.h"
 #include "minddata/dataset/audio/ir/kernels/highpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/lfilter_ir.h"
 #include "minddata/dataset/audio/ir/kernels/lowpass_biquad_ir.h"
@@ -378,6 +379,16 @@ std::shared_ptr<TensorOperation> FrequencyMasking::Parse() {
   return std::make_shared<FrequencyMaskingOperation>(data_->iid_masks_, data_->frequency_mask_param_,
                                                      data_->mask_start_, data_->mask_value_);
 }
+
+// Gain Transform Operation.
+struct Gain::Data {
+  explicit Data(float gain_db) : gain_db_(gain_db) {}
+  float gain_db_;
+};
+
+Gain::Gain(float gain_db) : data_(std::make_shared<Data>(gain_db)) {}
+
+std::shared_ptr<TensorOperation> Gain::Parse() { return std::make_shared<GainOperation>(data_->gain_db_); }
 
 // HighpassBiquad Transform Operation.
 struct HighpassBiquad::Data {
