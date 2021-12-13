@@ -1417,6 +1417,7 @@ class Conv2D(Primitive):
 
 class DepthwiseConv2dNative(PrimitiveWithInfer):
     r"""
+    DepthwiseConv2dNative will be deprecated in the future. Please use :class:`mindspore.nn.Conv2d` instead.
     Returns the depth-wise convolution value for the input.
 
     Applies depthwise conv2d for the input, which will generate more channels with channel_multiplier.
@@ -1481,7 +1482,7 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
         ValueError: If `pad_mode` it not equal to 'pad' and `pad` is not equal to (0, 0, 0, 0).
 
     Supported Platforms:
-        ``Ascend``
+        Deprecated
 
     Examples:
         >>> x = Tensor(np.ones([10, 32, 32, 32]), mindspore.float32)
@@ -2980,8 +2981,8 @@ class ApplyRMSProp(PrimitiveWithInfer):
         \end{array}
 
     where :math:`w` represents `var`, which will be updated.
-    :math:`s_{t+1}` represents `mean_square`, :math:`s_{t}` is the last momentent of :math:`s_{t+1}`,
-    :math:`m_{t+1}` represents `moment`, :math:`m_{t}` is the last momentent of :math:`m_{t+1}`.
+    :math:`s_{t+1}` represents `mean_square`, :math:`s_{t}` is the last moment of :math:`s_{t+1}`,
+    :math:`m_{t+1}` represents `moment`, :math:`m_{t}` is the last moment of :math:`m_{t+1}`.
     :math:`\rho` represents `decay`. :math:`\beta` is the momentum term, represents `momentum`.
     :math:`\epsilon` is a smoothing term to avoid division by zero, represents `epsilon`.
     :math:`\eta` represents `learning_rate`. :math:`\nabla Q_{i}(w)` represents `grad`.
@@ -2992,7 +2993,7 @@ class ApplyRMSProp(PrimitiveWithInfer):
         in iterations during which "grad" is 0.
 
     Args:
-        use_locking (bool): Whether to enable a lock to protect the variable and accumlation tensors
+        use_locking (bool): Whether to enable a lock to protect the variable and accumulation tensors
                             from being updated. Default: False.
 
     Inputs:
@@ -3090,9 +3091,9 @@ class ApplyCenteredRMSProp(Primitive):
         \end{array}
 
     where :math:`w` represents `var`, which will be updated.
-    :math:`g_{t+1}` represents `mean_gradient`, :math:`g_{t}` is the last momentent of :math:`g_{t+1}`.
-    :math:`s_{t+1}` represents `mean_square`, :math:`s_{t}` is the last momentent of :math:`s_{t+1}`,
-    :math:`m_{t+1}` represents `moment`, :math:`m_{t}` is the last momentent of :math:`m_{t+1}`.
+    :math:`g_{t+1}` represents `mean_gradient`, :math:`g_{t}` is the last moment of :math:`g_{t+1}`.
+    :math:`s_{t+1}` represents `mean_square`, :math:`s_{t}` is the last moment of :math:`s_{t+1}`,
+    :math:`m_{t+1}` represents `moment`, :math:`m_{t}` is the last moment of :math:`m_{t+1}`.
     :math:`\rho` represents `decay`. :math:`\beta` is the momentum term, represents `momentum`.
     :math:`\epsilon` is a smoothing term to avoid division by zero, represents `epsilon`.
     :math:`\eta` represents `learning_rate`. :math:`\nabla Q_{i}(w)` represents `grad`.
@@ -5341,10 +5342,10 @@ class ApplyAdaMax(Primitive):
         \end{array}
 
     :math:`t` represents updating step while :math:`m` represents the 1st moment vector, :math:`m_{t}`
-    is the last momentent of :math:`m_{t+1}`, :math:`v` represents the 2nd moment vector, :math:`v_{t}`
-    is the last momentent of :math:`v_{t+1}`, :math:`l` represents scaling factor `lr`,
+    is the last moment of :math:`m_{t+1}`, :math:`v` represents the 2nd moment vector, :math:`v_{t}`
+    is the last moment of :math:`v_{t+1}`, :math:`l` represents scaling factor `lr`,
     :math:`g` represents `grad`, :math:`\beta_1, \beta_2` represent `beta1` and `beta2`,
-    :math:`beta_1^{t+1}` represents `beta1_power`, :math:`var` represents the variable to be updated,
+    :math:`\beta_1^{t+1}` represents `beta1_power`, :math:`var` represents the variable to be updated,
     :math:`\epsilon` represents `epsilon`.
 
     Inputs of `var`, `m`, `v` and `grad` comply with the implicit type conversion rules
@@ -6147,7 +6148,7 @@ class ApplyAddSign(PrimitiveWithInfer):
         \end{array}
 
     :math:`t` represents updating step while :math:`m` represents the 1st moment vector, :math:`m_{t}`
-    is the last momentent of :math:`m_{t+1}`, :math:`lr` represents scaling factor `lr`, :math:`g` represents `grad`,
+    is the last moment of :math:`m_{t+1}`, :math:`lr` represents scaling factor `lr`, :math:`g` represents `grad`,
     :math:`\alpha` represents `alpha`, :math:`\beta` represents `beta`.
 
     Inputs of `var`, `accum` and `grad`  comply with the implicit type conversion rules
@@ -6237,7 +6238,7 @@ class ApplyPowerSign(PrimitiveWithInfer):
         \end{array}
 
     :math:`t` represents updating step while :math:`m` represents the 1st moment vector, :math:`m_{t}`
-    is the last momentent of :math:`m_{t+1}`, :math:`lr` represents scaling factor `lr`, :math:`g` represents `grad`,
+    is the last moment of :math:`m_{t+1}`, :math:`lr` represents scaling factor `lr`, :math:`g` represents `grad`,
     :math:`\beta` represents `beta`.
 
     All of inputs comply with the implicit type conversion rules to make the data types consistent.
@@ -8678,7 +8679,7 @@ class ApplyAdagradDA(Primitive):
             grad_accum += grad \\
             grad_squared_accum += grad * grad \\
             tmp_val=sign(grad_accum) * max\left \{|grad_accum|-l1*global_step, 0\right \}
-                    if l1>0 else grad_accum \\
+                    \quad if \quad l1>0 \quad else \quad grad_accum \\
             x_value = -1 * lr * tmp_val \\
             y_value = l2 * global_step * lr + \sqrt{grad_squared_accum} \\
             var = x_value / y_value
