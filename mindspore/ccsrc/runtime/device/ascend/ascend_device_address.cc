@@ -438,16 +438,17 @@ bool AscendDeviceAddress::SyncDeviceToDevice(const ShapeVector &shape, size_t si
   if (type_id_ > kMonadTypeBegin && type_id_ < kMonadTypeEnd) {
     return true;
   }
-  BindDevice();
+
+  if (size_ < size) {
+    MS_LOG(ERROR) << "src size is greater than det size, src size is: " << size << ", dst size is: " << size_;
+    return false;
+  }
   if (format_ != format || type_id_ != type) {
     MS_LOG(ERROR) << "format or type is different, src(format:" << format << ", type_id:" << TypeIdLabel(type)
                   << "), dst(format:" << format_ << ", type_id:" << TypeIdLabel(type_id_);
     return false;
   }
-  if (size_ < size) {
-    MS_LOG(ERROR) << "src size is greater than det size, src size is: " << size << ", dst size is: " << size_;
-    return false;
-  }
+  BindDevice();
   auto ret_rt_memcpy = aclrtMemcpy(ptr_, size, src_ptr, size, ACL_MEMCPY_DEVICE_TO_DEVICE);
   if (ret_rt_memcpy != RT_ERROR_NONE) {
     MS_LOG(ERROR) << "SyncDeviceToDevice failed, rtMemcpy mem size [" << size << "], ret [" << ret_rt_memcpy << "]";
