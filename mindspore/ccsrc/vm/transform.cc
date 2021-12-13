@@ -589,11 +589,6 @@ BackendPtr CreateBackend() {
         if (single_op == "1") {
           context_ptr->set_param<bool>(MS_CTX_ENABLE_TASK_SINK, false);
         }
-        auto enable_mem_scheduler = common::GetEnv(kEnableMemScheduler);
-        if (enable_mem_scheduler == "1") {
-          context_ptr->set_param<bool>(MS_CTX_ENABLE_MEM_SCHEDULER, true);
-          context_ptr->set_param<bool>(MS_CTX_ENABLE_TASK_SINK, false);
-        }
       }
     }
     return backend;
@@ -625,7 +620,7 @@ void SetMindRTEnable() {
       return;
     }
 
-    if ((common::GetEnv(kGraphOpRun) == "1" || common::GetEnv(kEnableMemScheduler) == "1") && target == kAscendDevice) {
+    if ((common::GetEnv(kGraphOpRun) == "1" && target == kAscendDevice)) {
       return;
     }
   } else {

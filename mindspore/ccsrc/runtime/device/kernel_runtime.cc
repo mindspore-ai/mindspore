@@ -1137,7 +1137,7 @@ void KernelRuntime::GenLaunchArgs(const mindspore::kernel::KernelMod &kernel_mod
 bool KernelRuntime::UseMemScheduler() {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  if (!context_ptr->get_param<bool>(MS_CTX_ENABLE_MEM_SCHEDULER)) {
+  if (context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK)) {
     return false;
   }
   // Not use MemScheduler when running single op
@@ -1438,6 +1438,7 @@ void KernelRuntime::InitGraphInputTensors(const std::shared_ptr<MemScheduler> &m
       }
       if (mem_scheduler->HasDeviceMem(tensor_address.get())) {
         tensor_address->set_ptr(nullptr);
+        tensor->set_device_address(nullptr);
       }
       continue;
     }
@@ -1589,13 +1590,13 @@ bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph, bool mock
     LaunchKernelEvent(kernel_post_run_events, kernels[i]);
   }
   if (UseMemScheduler() && !mock) {
-    SyncUpdatedParameter(graph, mem_scheduler);
+    SyncParameter(graph, mem_scheduler);
   }
   return true;
 }
 
-void KernelRuntime::SyncUpdatedParameter(const session::KernelGraph &graph,
-                                         const std::shared_ptr<MemScheduler> &mem_scheduler) {
+void KernelRuntime::SyncParameter(const session::KernelGraph &graph,
+                                  const std::shared_ptr<MemScheduler> &mem_scheduler) {
   MS_EXCEPTION_IF_NULL(mem_scheduler);
   auto &input_nodes = graph.input_nodes();
   auto &input_tensors = graph.input_tensors();
@@ -1608,17 +1609,22 @@ void KernelRuntime::SyncUpdatedParameter(const session::KernelGraph &graph,
     if (!input_node->isa<Parameter>() || !AnfAlgo::OutputAddrExist(input_node, 0)) {
       continue;
     }
+    auto device_address = AnfAlgo::GetMutableOutputAddr(input_node, 0);
+    MS_EXCEPTION_IF_NULL(device_address);
     auto parameter = input_node->cast<ParameterPtr>();
     MS_EXCEPTION_IF_NULL(parameter);
-    if (!graph.IsUpdatedParameter(parameter)) {
+    if (!AnfAlgo::IsParameterWeight(parameter) && !graph.IsUpdatedParameter(parameter)) {
       continue;
     }
-    auto device_address = AnfAlgo::GetMutableOutputAddr(input_node, 0);
-    auto tensor = input_tensors[i];
-    MS_EXCEPTION_IF_NULL(tensor);
-    auto device_ptr = mem_scheduler->GetOrMalloc(device_address.get(), device_address->size(), kMemPriorityHigh);
-    if (device_ptr != nullptr) {
+    if (mem_scheduler->HasDeviceMem(device_address.get())) {
+      auto device_ptr = mem_scheduler->GetOrMalloc(device_address.get(), device_address->size(), kMemPriorityHigh);
       device_address->set_ptr(device_ptr);
+      auto tensor = input_tensors[i];
+      MS_EXCEPTION_IF_NULL(tensor);
+      auto origin_tensor_device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
+      if (origin_tensor_device_address != nullptr) {
+        origin_tensor_device_address->set_ptr(nullptr);
+      }
       tensor->set_device_address(device_address);
       tensor->set_sync_status(kNeedSyncDeviceToHost);
     }
