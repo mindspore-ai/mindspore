@@ -40,6 +40,7 @@ class Tensor(Tensor_):
 
     Args:
         input_data (Union[Tensor, float, int, bool, tuple, list, numpy.ndarray]): Input data of the tensor.
+            Default: None.
         dtype (:class:`mindspore.dtype`): Input data should be None, bool or numeric type defined in `mindspore.dtype`.
             The argument is used to define the data type of the output tensor. If it is None, the data type of the
             output tensor will be the same as the `input_data`. Default: None.
@@ -49,6 +50,7 @@ class Tensor(Tensor_):
             'init' is used for delayed initialization in parallel mode. Usually, it is not recommended to use
             'init' interface to initialize parameters in other conditions. If 'init' interface is used to initialize
             parameters, the `Tensor.init_data` API needs to be called to convert `Tensor` to the actual data.
+            Default: None.
 
     Outputs:
         Tensor. If `dtype` and `shape` are not set, return a tensor with the same dtype and shape as `input_data`.
