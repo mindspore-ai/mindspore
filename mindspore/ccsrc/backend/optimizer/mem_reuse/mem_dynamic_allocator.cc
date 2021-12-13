@@ -383,7 +383,6 @@ void DynamicMemPoolBestFit::ReleaseDeviceRes() {
 }
 
 void DynamicMemPoolBestFit::DumpDynamicMemPoolInfo() {
-  std::lock_guard<std::mutex> locker(mutex_);
   auto fn = [](const MemStatusManagerPtr &mem_mng, const std::string &mem_type) {
     if (mem_mng->mem_block_list_.empty()) {
       return;
