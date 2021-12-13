@@ -36,6 +36,8 @@ class NPUExecutor {
   int Run(const std::vector<mindspore::MSTensor> &in_tensors, const std::vector<mindspore::MSTensor> &out_tensors,
           const std::vector<NPUOp *> &in_ops);
 
+  void InitInputMappingRelationShip(const std::vector<size_t> &input_index) { input_relationship_ = input_index; }
+
  private:
   int GetIOTensorVec();
 
@@ -49,6 +51,7 @@ class NPUExecutor {
   std::shared_ptr<hiai::AiModelMngerClient> client_ = nullptr;
   std::vector<std::shared_ptr<hiai::AiTensor>> npu_input_tensors_;
   std::vector<std::shared_ptr<hiai::AiTensor>> npu_output_tensors_;
+  std::vector<size_t> input_relationship_;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_NPU_EXECUTOR_H_

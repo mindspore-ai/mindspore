@@ -258,7 +258,9 @@ kernel::Kernel *NPUGraph::CreateNPUSubgraphKernel(std::vector<NPUOp *> npu_ops) 
     MS_LOG(ERROR) << "New NPU Subgraph failed.";
     return nullptr;
   }
-  subgraph->set_inputs(lite::GetGraphInTensors(npu_ops));
+  std::vector<size_t> input_index;
+  subgraph->set_inputs(lite::GetGraphInTensors(npu_ops, &input_index));
+  subgraph->UpdateInputMappingRelationShip(input_index);
   // The output of NPUGraph should be assigned to the corresponding NPUSubgraph
   auto subgraph_outputs = lite::GetGraphOutTensors(npu_ops);
   for (auto graph_output : this->outputs()) {

@@ -280,6 +280,7 @@ int NPUSubGraph::Init() {
     MS_LOG(ERROR) << "Create NPUExecutor failed.";
     return RET_ERROR;
   }
+  executor_->InitInputMappingRelationShip(input_relationship_);
   return RET_OK;
 }
 

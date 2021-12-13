@@ -300,7 +300,7 @@ std::vector<mindspore::MSTensor> GraphOutTensors(const std::vector<NPUOp *> &ops
 
 kernel::Kernel *NPUDelegate::CreateNPUGraph(const std::vector<NPUOp *> &ops, DelegateModel *model, KernelIter from,
                                             KernelIter end) {
-  auto in_tensors = lite::GetGraphInTensors(ops);
+  auto in_tensors = lite::GetGraphInTensors(ops, nullptr);
   auto out_tensors = GraphOutTensors(ops, model, from, end);
   auto graph_kernel = new (std::nothrow) NPUGraph(ops, npu_manager_, in_tensors, out_tensors);
   if (graph_kernel == nullptr) {
