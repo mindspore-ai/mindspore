@@ -66,7 +66,7 @@ class OpenGLRuntime {
   bool CopyDeviceSSBOToHost(GLuint ssboBufferID, void *hostData, GLsizeiptr size);
   bool CopyHostToDeviceSSBO(void *hostData, GLuint ssboBufferID, GLsizeiptr size);
 
-  GLuint GLCreateTexture(int w, int h, int c, GLenum textrueFormat, GLenum target = GL_TEXTURE_3D);
+  GLuint GLCreateTexture(int w, int h, int c, GLenum textrueFormat = GL_RGBA32F, GLenum target = GL_TEXTURE_2D);
   bool CopyDeviceTextureToSSBO(GLuint textureID, GLuint ssboBufferID);
   bool CopyDeviceSSBOToTexture(GLuint ssboBufferID, GLuint textureID);
 

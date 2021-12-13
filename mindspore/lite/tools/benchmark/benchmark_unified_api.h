@@ -37,6 +37,9 @@
 #include "src/common/utils.h"
 #include "include/api/types.h"
 #include "include/api/model.h"
+#ifdef ENABLE_OPENGL_TEXTURE
+#include "tools/common/opengl_util.h"
+#endif
 
 namespace mindspore::lite {
 class MS_API BenchmarkUnifiedApi : public BenchmarkBase {
@@ -53,6 +56,17 @@ class MS_API BenchmarkUnifiedApi : public BenchmarkBase {
   int CompareDataGetTotalCosineDistanceAndSize(const std::string &name, mindspore::MSTensor *tensor,
                                                float *total_cosine_distance, int *total_size);
   void InitContext(const std::shared_ptr<mindspore::Context> &context);
+
+#ifdef ENABLE_OPENGL_TEXTURE
+  int GenerateGLTexture(std::map<std::string, GLuint> *inputGlTexture);
+
+  int LoadGLTexture();
+
+  int ReadGLTextureFile(std::map<std::string, GLuint> *inputGlTexture, std::map<std::string, GLuint> *outputGLTexture);
+
+  int FillGLTextureToTensor(std::map<std::string, GLuint> *gl_texture, mindspore::MSTensor *tensor, std::string name,
+                            void *data = nullptr);
+#endif
 
   // call GenerateRandomData to fill inputTensors
   int LoadInput() override;
@@ -94,8 +108,12 @@ class MS_API BenchmarkUnifiedApi : public BenchmarkBase {
   void UpdateDistributionName(const std::shared_ptr<mindspore::Context> &context, std::string *name);
 
  private:
+#ifdef ENABLE_OPENGL_TEXTURE
+  mindspore::OpenGL::OpenGLRuntime gl_runtime_;
+#endif
   mindspore::Model ms_model_;
   std::vector<mindspore::MSTensor> ms_inputs_for_api_;
+  std::vector<mindspore::MSTensor> ms_outputs_for_api_;
 
   MSKernelCallBack ms_before_call_back_ = nullptr;
   MSKernelCallBack ms_after_call_back_ = nullptr;

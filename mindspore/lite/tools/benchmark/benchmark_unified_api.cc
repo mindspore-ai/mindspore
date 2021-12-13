@@ -46,17 +46,160 @@ constexpr int kDumpInputsAndOutputs = 0;
 constexpr int kDumpOutputs = 2;
 
 namespace lite {
+#ifdef ENABLE_OPENGL_TEXTURE
+int BenchmarkUnifiedApi::GenerateGLTexture(std::map<std::string, GLuint> *input_gl_texture) {
+  for (auto tensor : ms_inputs_for_api_) {
+    float *input_data = reinterpret_cast<float *>(malloc(tensor.DataSize()));
+    if (input_data == nullptr) {
+      MS_LOG(ERROR) << "new input_data failed";
+      return RET_ERROR;
+    }
+    int status = GenerateRandomData(tensor.DataSize(), input_data, static_cast<int>(tensor.DataType()));
+    if (status != RET_OK) {
+      std::cerr << "GenerateRandomData for inTensor failed: " << status << std::endl;
+      MS_LOG(ERROR) << "GenerateRandomData for inTensor failed:" << status;
+      return status;
+    }
+    status = FillGLTextureToTensor(input_gl_texture, &tensor, tensor.Name(), input_data);
+    free(input_data);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Fill GLTexture to input tensor" << status;
+      return status;
+    }
+  }
+  return RET_OK;
+}
+
+int BenchmarkUnifiedApi::FillGLTextureToTensor(std::map<std::string, GLuint> *gl_texture, mindspore::MSTensor *tensor,
+                                               std::string name, void *data) {
+  auto image_id = 0;
+
+  int width = 1, height = 1, channel = 1;
+  if (tensor->Shape().size() == DIMENSION_2D) {
+    height = tensor->Shape()[kNHWC_N];
+    channel = tensor->Shape()[kNHWC_H];
+  } else if (tensor->Shape().size() == DIMENSION_3D) {
+    width = tensor->Shape()[kNHWC_H];
+    height = tensor->Shape()[kNHWC_N];
+    channel = tensor->Shape()[kNHWC_C];
+  } else if (tensor->Shape().size() == DIMENSION_4D) {
+    width = tensor->Shape()[kNHWC_W];
+    height = tensor->Shape()[kNHWC_H];
+    channel = tensor->Shape()[kNHWC_C];
+  } else {
+    MS_LOG(ERROR) << "the tensor shape is not support";
+    return RET_ERROR;
+  }
+
+  if (data == nullptr) {
+    image_id = gl_runtime_.GLCreateTexture(width, height, channel);
+  } else {
+    image_id = gl_runtime_.CopyHostToDeviceTexture(data, width, height, channel);
+  }
+
+  if (image_id != GL_NONE) {
+    gl_texture->insert(std::pair<std::string, GLuint>(name, image_id));
+  } else {
+    MS_LOG(ERROR) << "glMemPool CopyHostToDeviceTexture failed";
+  }
+  return RET_OK;
+}
+
+int BenchmarkUnifiedApi::LoadGLTexture() {
+  std::map<std::string, GLuint> input_gl_texture;
+  std::map<std::string, GLuint> output_gl_texture;
+
+  if (flags_->in_data_file_.empty()) {
+    auto status = GenerateGLTexture(&input_gl_texture);
+    if (status != RET_OK) {
+      std::cerr << "Generate input GLTexture error " << status << std::endl;
+      MS_LOG(ERROR) << "Generate input GLTexture error " << status;
+      return status;
+    }
+  } else {
+    auto status = ReadGLTextureFile(&input_gl_texture, &output_gl_texture);
+    if (status != RET_OK) {
+      std::cerr << "ReadGLTextureFile error, " << status << std::endl;
+      MS_LOG(ERROR) << "ReadGLTextureFile error, " << status;
+      return status;
+    }
+  }
+  auto status = ms_model_.BindGLTexture2DMemory(input_gl_texture, &output_gl_texture);
+  if (status != kSuccess) {
+    MS_LOG(ERROR) << "BindGLTexture2DMemory failed";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+int BenchmarkUnifiedApi::ReadGLTextureFile(std::map<std::string, GLuint> *input_gl_texture,
+                                           std::map<std::string, GLuint> *output_gl_texture) {
+  if (ms_inputs_for_api_.empty()) {
+    return RET_OK;
+  }
+  if (this->flags_->in_data_type_ == kImage) {
+    MS_LOG(ERROR) << "Not supported image input";
+    return RET_ERROR;
+  } else {
+    for (size_t i = 0; i < flags_->input_data_list_.size(); i++) {
+      auto tensor = ms_inputs_for_api_.at(i);
+      MS_ASSERT(tensor != nullptr);
+      size_t size;
+      char *bin_buf = ReadFile(flags_->input_data_list_[i].c_str(), &size);
+      if (bin_buf == nullptr) {
+        MS_LOG(ERROR) << "ReadFile return nullptr";
+        return RET_ERROR;
+      }
+      auto tensor_data_size = tensor.DataSize();
+      if (size != tensor_data_size) {
+        std::cerr << "Input binary file size error, required: " << tensor_data_size << ", in fact: " << size
+                  << std::endl;
+        MS_LOG(ERROR) << "Input binary file size error, required: " << tensor_data_size << ", in fact: " << size;
+        delete[] bin_buf;
+        return RET_ERROR;
+      }
+
+      auto status = FillGLTextureToTensor(input_gl_texture, &tensor, tensor.Name(), bin_buf);
+      delete[] bin_buf;
+      if (status != RET_OK) {
+        MS_LOG(ERROR) << "Fill GLTexture to input tensor" << status;
+        return status;
+      }
+    }
+  }
+  for (auto &tensor : ms_outputs_for_api_) {
+    MS_ASSERT(tensor != nullptr);
+    auto status = FillGLTextureToTensor(output_gl_texture, &tensor, tensor.Name());
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Fill GLTexture to output tensor" << status;
+      return status;
+    }
+  }
+  return RET_OK;
+}
+#endif
+
 int BenchmarkUnifiedApi::LoadInput() {
+#ifdef ENABLE_OPENGL_TEXTURE
+  if (flags_->enable_gl_texture_ == true) {
+    if (lite::BenchmarkUnifiedApi::LoadGLTexture() != RET_OK) {
+      MS_LOG(ERROR) << "Generate input GLTexture error";
+      return RET_ERROR;
+    }
+    return RET_OK;
+  }
+#endif
+
   if (flags_->in_data_file_.empty()) {
     auto status = GenerateInputData();
-    if (status != 0) {
+    if (status != RET_OK) {
       std::cerr << "Generate input data error " << status << std::endl;
       MS_LOG(ERROR) << "Generate input data error " << status;
       return status;
     }
   } else {
     auto status = ReadInputFile();
-    if (status != 0) {
+    if (status != RET_OK) {
       std::cerr << "ReadInputFile error, " << status << std::endl;
       MS_LOG(ERROR) << "ReadInputFile error, " << status;
       return status;
@@ -175,6 +318,11 @@ void BenchmarkUnifiedApi::InitMSContext(const std::shared_ptr<mindspore::Context
   if (flags_->device_ == "GPU") {
     std::shared_ptr<GPUDeviceInfo> gpu_device_info = std::make_shared<GPUDeviceInfo>();
     gpu_device_info->SetEnableFP16(flags_->enable_fp16_);
+
+#ifdef ENABLE_OPENGL_TEXTURE
+    gpu_device_info->SetEnableGLTexture(flags_->enable_gl_texture_);
+#endif
+
     device_list.push_back(gpu_device_info);
   }
 
@@ -217,7 +365,32 @@ int BenchmarkUnifiedApi::CompareOutput() {
       std::vector<std::string> output_strings = MSTensor::TensorToStrings(tensor);
       ret = CompareStringData(tensor_name, calib_tensor.second->strings_data, output_strings);
     } else {
+#ifdef ENABLE_OPENGL_TEXTURE
+      if (flags_->enable_gl_texture_) {
+        auto *gltexture_id = reinterpret_cast<GLuint *>(tensor.MutableData());
+        float *hostptr = reinterpret_cast<float *>(gl_runtime_.CopyDeviceTextureToHost(*gltexture_id));
+        if (hostptr == nullptr) {
+          MS_LOG(ERROR) << "CopyDeviceTextureToHost failed";
+          return RET_ERROR;
+        }
+
+        auto tensor_shape = tensor.Shape();
+        auto data_len =
+          std::accumulate(tensor_shape.begin(), tensor_shape.end(), sizeof(float), std::multiplies<size_t>());
+        auto *new_tensor = new (std::nothrow)
+          MSTensor(tensor_name, mindspore::DataType::kNumberTypeFloat32, tensor_shape, hostptr, data_len);
+        MS_CHECK_TRUE_MSG(new_tensor != nullptr, RET_ERROR, "new tensor failed");
+        if (new_tensor->MutableData() == nullptr) {
+          MS_LOG(ERROR) << "CopyDeviceTextureToHost failed";
+          return RET_ERROR;
+        }
+        ret = CompareDataGetTotalBiasAndSize(tensor_name, new_tensor, &total_bias, &total_size);
+      } else {
+        ret = CompareDataGetTotalBiasAndSize(tensor_name, &tensor, &total_bias, &total_size);
+      }
+#else
       ret = CompareDataGetTotalBiasAndSize(tensor_name, &tensor, &total_bias, &total_size);
+#endif
     }
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Error in CompareData";
@@ -484,12 +657,28 @@ int BenchmarkUnifiedApi::MarkAccuracy() {
   MS_LOG(INFO) << "MarkAccuracy";
   std::cout << "MarkAccuracy" << std::endl;
 
-  auto status = PrintInputData();
+  int status = 0;
+#ifdef ENABLE_OPENGL_TEXTURE
+  if (flags_->enable_gl_texture_) {
+    for (auto in_tensor : ms_inputs_for_api_) {
+      auto *input = reinterpret_cast<GLuint *>(in_tensor.MutableData());
+      float *hostptr = reinterpret_cast<float *>(gl_runtime_.CopyDeviceTextureToHost(*input));
+      size_t print_num = 20;
+      gl_runtime_.PrintImage2DData(hostptr, 1, 1, print_num);
+    }
+  } else {
+#else
+  status = PrintInputData();
   if (status != RET_OK) {
     MS_LOG(ERROR) << "PrintInputData error " << status;
     std::cerr << "PrintInputData error " << status << std::endl;
     return status;
   }
+#endif
+
+#ifdef ENABLE_OPENGL_TEXTURE
+  }
+#endif
   std::vector<MSTensor> outputs;
   auto ret = ms_model_.Predict(ms_inputs_for_api_, &outputs, ms_before_call_back_, ms_after_call_back_);
   if (ret != kSuccess) {
@@ -526,7 +715,7 @@ int BenchmarkUnifiedApi::PrintInputData() {
     MS_ASSERT(input != nullptr);
     auto tensor_data_type = static_cast<int>(input.DataType());
 
-    std::cout << "InData" << i << ": ";
+    std::cout << "InData " << i << ": ";
     if (tensor_data_type == TypeId::kObjectTypeString) {
       std::vector<std::string> output_strings = MSTensor::TensorToStrings(input);
       size_t print_num = std::min(output_strings.size(), static_cast<size_t>(20));
@@ -567,6 +756,13 @@ int BenchmarkUnifiedApi::PrintInputData() {
 
 int BenchmarkUnifiedApi::RunBenchmark() {
   auto start_prepare_time = GetTimeUs();
+
+#ifdef ENABLE_OPENGL_TEXTURE
+  if (flags_->enable_gl_texture_) {
+    gl_runtime_.Init();
+  }
+#endif
+
   // Load graph
   std::string model_name = flags_->model_file_.substr(flags_->model_file_.find_last_of(DELIM_SLASH) + 1);
   mindspore::ModelType model_type = ModelTypeMap.at(flags_->model_type_);
@@ -616,6 +812,7 @@ int BenchmarkUnifiedApi::RunBenchmark() {
   }
 
   ms_inputs_for_api_ = ms_model_.GetInputs();
+  ms_outputs_for_api_ = ms_model_.GetOutputs();
   auto end_prepare_time = GetTimeUs();
   MS_LOG(INFO) << "PrepareTime = " << ((end_prepare_time - start_prepare_time) / kFloatMSEC) << " ms";
   std::cout << "PrepareTime = " << ((end_prepare_time - start_prepare_time) / kFloatMSEC) << " ms" << std::endl;
@@ -623,20 +820,20 @@ int BenchmarkUnifiedApi::RunBenchmark() {
   // Load input
   MS_LOG(INFO) << "start generate input data";
   auto status = LoadInput();
-  if (status != 0) {
+  if (status != RET_OK) {
     MS_LOG(ERROR) << "Generate input data error";
     return status;
   }
   if (!flags_->benchmark_data_file_.empty()) {
     status = MarkAccuracy();
-    if (status != 0) {
+    if (status != RET_OK) {
       MS_LOG(ERROR) << "Run MarkAccuracy error: " << status;
       std::cout << "Run MarkAccuracy error: " << status << std::endl;
       return status;
     }
   } else {
     status = MarkPerformance();
-    if (status != 0) {
+    if (status != RET_OK) {
       MS_LOG(ERROR) << "Run MarkPerformance error: " << status;
       std::cout << "Run MarkPerformance error: " << status << std::endl;
       return status;

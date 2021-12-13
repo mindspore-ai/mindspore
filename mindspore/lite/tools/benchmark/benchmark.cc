@@ -55,14 +55,14 @@ int Benchmark::LoadInput() {
 #else
   if (flags_->in_data_file_.empty()) {
     auto status = GenerateInputData();
-    if (status != 0) {
+    if (status != RET_OK) {
       std::cerr << "Generate input data error " << status << std::endl;
       MS_LOG(ERROR) << "Generate input data error " << status;
       return status;
     }
   } else {
     auto status = ReadInputFile();
-    if (status != 0) {
+    if (status != RET_OK) {
       std::cerr << "ReadInputFile error, " << status << std::endl;
       MS_LOG(ERROR) << "ReadInputFile error, " << status;
       return status;
@@ -120,9 +120,7 @@ int Benchmark::GenerateGLTexture(std::map<std::string, GLuint> *input_gl_texture
   }
   for (const auto &[name, tensor] : ms_outputs_) {
     MS_ASSERT(tensor != nullptr);
-    float *output_data = nullptr;
-    auto status = FillGLTextureToTensor(output_gl_texture, tensor, name, output_data);
-    free(output_data);
+    auto status = FillGLTextureToTensor(output_gl_texture, tensor, name);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Fill GLTexture to output tensor" << status;
       return status;
@@ -132,25 +130,33 @@ int Benchmark::GenerateGLTexture(std::map<std::string, GLuint> *input_gl_texture
 }
 
 int Benchmark::FillGLTextureToTensor(std::map<std::string, GLuint> *gl_texture, mindspore::tensor::MSTensor *tensor,
-                                     std::string name, float *data) {
-  if (data == nullptr) {
-    data = reinterpret_cast<float *>(malloc(tensor->Size()));
-    if (data == nullptr) {
-      MS_LOG(ERROR) << "new output_data failed";
-      return RET_ERROR;
-    }
-  }
+                                     std::string name, void *data) {
   auto image_id = 0;
-  if (tensor->shape().size() < DIMENSION_2D) {
+
+  int width = 1, height = 1, channel = 1;
+  if (tensor->shape().size() == DIMENSION_2D) {
+    height = tensor->shape()[kNHWC_N];
+    channel = tensor->shape()[kNHWC_H];
+  } else if (tensor->shape().size() == DIMENSION_3D) {
+    width = tensor->shape()[kNHWC_H];
+    height = tensor->shape()[kNHWC_N];
+    channel = tensor->shape()[kNHWC_C];
+  } else if (tensor->shape().size() == DIMENSION_4D) {
+    width = tensor->shape()[kNHWC_W];
+    height = tensor->shape()[kNHWC_H];
+    channel = tensor->shape()[kNHWC_C];
+  } else {
     MS_LOG(ERROR) << "the tensor shape is not support";
     return RET_ERROR;
-  } else if (tensor->shape().size() == DIMENSION_2D) {
-    image_id = gl_runtime_.CopyHostToDeviceTexture(data, tensor->shape()[0], tensor->shape()[1], 1);
-  } else {
-    image_id = gl_runtime_.CopyHostToDeviceTexture(data, tensor->shape()[kNHWC_H], tensor->shape()[kNHWC_W],
-                                                   tensor->shape()[kNHWC_C]);
   }
-  if (image_id != 0) {
+
+  if (data == nullptr) {
+    image_id = gl_runtime_.GLCreateTexture(width, height, channel);
+  } else {
+    image_id = gl_runtime_.CopyHostToDeviceTexture(data, width, height, channel);
+  }
+
+  if (image_id != GL_NONE) {
     gl_texture->insert(std::pair<std::string, GLuint>(name, image_id));
   } else {
     MS_LOG(ERROR) << "glMemPool CopyHostToDeviceTexture failed";
@@ -164,14 +170,14 @@ int Benchmark::LoadGLTexture() {
 
   if (flags_->in_data_file_.empty()) {
     auto status = GenerateGLTexture(&input_gl_texture, &output_gl_texture);
-    if (status != 0) {
+    if (status != RET_OK) {
       std::cerr << "Generate input GLTexture error " << status << std::endl;
       MS_LOG(ERROR) << "Generate input GLTexture error " << status;
       return status;
     }
   } else {
     auto status = ReadGLTextureFile(&input_gl_texture, &output_gl_texture);
-    if (status != 0) {
+    if (status != RET_OK) {
       std::cerr << "ReadGLTextureFile error, " << status << std::endl;
       MS_LOG(ERROR) << "ReadGLTextureFile error, " << status;
       return status;
@@ -211,13 +217,7 @@ int Benchmark::ReadGLTextureFile(std::map<std::string, GLuint> *input_gl_texture
         delete[] bin_buf;
         return RET_ERROR;
       }
-      float *input_data = reinterpret_cast<float *>(malloc(tensor->Size()));
-      if (input_data == nullptr) {
-        MS_LOG(ERROR) << "new input_data failed";
-        return RET_ERROR;
-      }
-      memcpy(input_data, bin_buf, tensor_data_size);
-      auto status = FillGLTextureToTensor(input_gl_texture, tensor, tensor->tensor_name(), input_data);
+      auto status = FillGLTextureToTensor(input_gl_texture, tensor, tensor->tensor_name(), bin_buf);
       delete[] bin_buf;
       if (status != RET_OK) {
         MS_LOG(ERROR) << "Fill GLTexture to input tensor" << status;
@@ -227,9 +227,7 @@ int Benchmark::ReadGLTextureFile(std::map<std::string, GLuint> *input_gl_texture
   }
   for (const auto &[name, tensor] : ms_outputs_) {
     MS_ASSERT(tensor != nullptr);
-    float *output_data = nullptr;
-    auto status = FillGLTextureToTensor(output_gl_texture, tensor, name, output_data);
-    free(output_data);
+    auto status = FillGLTextureToTensor(output_gl_texture, tensor, name);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Fill GLTexture to output tensor" << status;
       return status;
@@ -447,7 +445,7 @@ int Benchmark::MarkPerformance() {
   std::cout << "Running warm up loops..." << std::endl;
   for (int i = 0; i < flags_->warm_up_loop_count_; i++) {
     auto status = session_->RunGraph();
-    if (status != 0) {
+    if (status != RET_OK) {
       MS_LOG(ERROR) << "Inference error " << status;
       std::cerr << "Inference error " << status << std::endl;
       return status;
@@ -468,7 +466,7 @@ int Benchmark::MarkPerformance() {
     session_->BindThread(true);
     auto start = GetTimeUs();
     auto status = session_->RunGraph(before_call_back_, after_call_back_);
-    if (status != 0) {
+    if (status != RET_OK) {
       MS_LOG(ERROR) << "Inference error " << status;
       std::cerr << "Inference error " << status;
       return status;
@@ -701,14 +699,14 @@ int Benchmark::RunBenchmark() {
   }
   if (!flags_->benchmark_data_file_.empty()) {
     auto status = MarkAccuracy();
-    if (status != 0) {
+    if (status != RET_OK) {
       MS_LOG(ERROR) << "Run MarkAccuracy error: " << status;
       std::cout << "Run MarkAccuracy error: " << status << std::endl;
       return status;
     }
   } else {
     auto status = MarkPerformance();
-    if (status != 0) {
+    if (status != RET_OK) {
       MS_LOG(ERROR) << "Run MarkPerformance error: " << status;
       std::cout << "Run MarkPerformance error: " << status << std::endl;
       return status;

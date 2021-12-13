@@ -61,7 +61,7 @@ class MS_API Benchmark : public BenchmarkBase {
   int ReadGLTextureFile(std::map<std::string, GLuint> *inputGlTexture, std::map<std::string, GLuint> *outputGLTexture);
 
   int FillGLTextureToTensor(std::map<std::string, GLuint> *gl_texture, mindspore::tensor::MSTensor *tensor,
-                            std::string name, float *data);
+                            std::string name, void *data = nullptr);
 #endif
   int LoadInput() override;
 
