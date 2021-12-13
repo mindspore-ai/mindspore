@@ -34,6 +34,7 @@ SET(DE_UT_SRCS
         c_api_dataset_manifest_test.cc
         c_api_dataset_minddata_test.cc
         c_api_dataset_ops_test.cc
+        c_api_dataset_penn_treebank_test.cc
         c_api_dataset_photo_tour_test.cc
         c_api_dataset_places365_test.cc
         c_api_dataset_qmnist_test.cc

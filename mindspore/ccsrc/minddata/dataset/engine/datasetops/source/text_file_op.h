@@ -82,7 +82,7 @@ class TextFileOp : public NonMappableLeafOp {
   // @return Vector of the input file names
   std::vector<std::string> FileNames() { return text_files_list_; }
 
- private:
+ protected:
   // Parses a single row and puts the data into a tensor table.
   // @param line - the content of the row.
   // @param tensor_table - the tensor table to put the parsed data in.
@@ -110,6 +110,11 @@ class TextFileOp : public NonMappableLeafOp {
   // Private function for computing the assignment of the column name map.
   // @return - Status
   Status ComputeColMap() override;
+
+  // Count number of rows in each file.
+  // @param file - txt file name.
+  // @return int64_t - the total number of rows in file.
+  int64_t CountTotalRows(const std::string &file);
 
   std::vector<std::string> text_files_list_;
   std::unique_ptr<DataSchema> data_schema_;

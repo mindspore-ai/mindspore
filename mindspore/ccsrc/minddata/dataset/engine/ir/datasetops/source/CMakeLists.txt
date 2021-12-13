@@ -24,6 +24,7 @@ set(DATASET_ENGINE_IR_DATASETOPS_SOURCE_SRC_FILES
         manifest_node.cc
         minddata_node.cc
         mnist_node.cc
+        penn_treebank_node.cc
         photo_tour_node.cc
         places365_node.cc
         qmnist_node.cc
