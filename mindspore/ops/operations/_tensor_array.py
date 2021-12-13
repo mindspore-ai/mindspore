@@ -27,7 +27,7 @@ class TensorArray(PrimitiveWithInfer):
 
     Args:
         dtype (mindspore.dtype): the data type in the TensorArray.
-        element_shape (List[int]): the shape of each tensor in a TensorArray.
+        element_shape (tuple[int]): the shape of each tensor in a TensorArray.
         dynamic_size (bool): If true the TensorArray can increase the size. Default: True.
         size (int): The size of the TensorArray if dynamic_size = False.
         name (string): the name of this TensorArray. Default: "TA".
@@ -39,7 +39,7 @@ class TensorArray(PrimitiveWithInfer):
         - **output** (Tensor[mindspore.int64]) - an unique handle binded to the TensorArray.
 
     Supported Platforms:
-        ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
@@ -51,7 +51,7 @@ class TensorArray(PrimitiveWithInfer):
     """
     @prim_attr_register
     def __init__(self, dtype, element_shape, dynamic_size=True, size=0, name="TA"):
-        validator.check_type_name("dtype", dtype, mstype.number_type, self.name)
+        validator.check_type_name("dtype", dtype, mstype.number_type + (mstype.bool_,), self.name)
         validator.check_int(size, 0, Rel.GE, "size", self.name)
         self.add_prim_attr('dtype', dtype)
         self.add_prim_attr('element_shape', element_shape)
@@ -79,7 +79,7 @@ class TensorArrayWrite(PrimitiveWithInfer):
         None.
 
     Supported Platforms:
-        ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
@@ -99,7 +99,7 @@ class TensorArrayWrite(PrimitiveWithInfer):
     def infer_dtype(self, handle_type, index_type, value_type):
         validator.check_type_name("handle", handle_type, (ms.int64), self.name)
         validator.check_type_name("index", index_type, (int, ms.int64), self.name)
-        validator.check_type_name("value", value_type, mstype.number_type, self.name)
+        validator.check_type_name("value", value_type, mstype.number_type + (mstype.bool_,), self.name)
         return mstype.int64
 
 class TensorArrayRead(PrimitiveWithInfer):
@@ -108,7 +108,7 @@ class TensorArrayRead(PrimitiveWithInfer):
 
     Args:
         dtype (mindspore.dtype): the data type in the TensorArray.
-        element_shape (List[int]): the shape of each tensor in a TensorArray.
+        element_shape (tuple[int]): the shape of each tensor in a TensorArray.
 
     Inputs:
         - **index** (Tensor[int64]) - The position to read.
@@ -118,7 +118,7 @@ class TensorArrayRead(PrimitiveWithInfer):
         - **output** (Tensor) - the value in position index.
 
     Supported Platforms:
-        ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
@@ -134,7 +134,7 @@ class TensorArrayRead(PrimitiveWithInfer):
     """
     @prim_attr_register
     def __init__(self, dtype, element_shape):
-        validator.check_type_name("dtype", dtype, mstype.number_type, self.name)
+        validator.check_type_name("dtype", dtype, mstype.number_type + (mstype.bool_,), self.name)
         self.add_prim_attr('dtype', dtype)
         self.add_prim_attr('element_shape', element_shape)
         self.add_prim_attr('side_effect_mem', True)
@@ -160,7 +160,7 @@ class TensorArrayClose(PrimitiveWithInfer):
         None.
 
     Supported Platforms:
-        ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
@@ -192,7 +192,7 @@ class TensorArrayClear(PrimitiveWithInfer):
         None.
 
     Supported Platforms:
-        ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
@@ -219,7 +219,7 @@ class TensorArrayStack(Primitive):
 
     Args:
         dtype (mindspore.dtype): the data type in the TensorArray.
-        element_shape (List[int]): the shape of each tensor in a TensorArray.
+        element_shape (tuple[int]): the shape of each tensor in a TensorArray.
 
     Inputs:
         - **handle** (mindspore.int64) - The handle pointed to the TensorArray.
@@ -228,7 +228,7 @@ class TensorArrayStack(Primitive):
         - **output** (Tensor) - the stacked value from the TensorArray.
 
     Supported Platforms:
-        ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
@@ -263,7 +263,7 @@ class TensorArraySize(PrimitiveWithInfer):
         - **output** (Tensor[mindspore.int64]) - the logical size of the TensorArray.
 
     Supported Platforms:
-        ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore

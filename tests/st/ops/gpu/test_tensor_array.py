@@ -91,3 +91,11 @@ def test_tensorarray():
     expect_s = [0., 0., 1., 0., 0., 1.]
     assert np.allclose(s.asnumpy(), expect_s)
     ta.close()
+    ta = nn.TensorArray(mindspore.bool_, ())
+    ta.write(1, Tensor(True, mindspore.bool_))
+    s = ta.stack()
+    v = ta.read(1)
+    expect_s = [False, True]
+    assert np.allclose(v.asnumpy(), expect_s[1])
+    assert np.allclose(s.asnumpy(), expect_s)
+    ta.close()
