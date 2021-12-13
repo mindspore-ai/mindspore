@@ -72,10 +72,11 @@ int LiteSwitchOpActor::GetSwitchAndCallNode(kernel::SubGraphKernel *subgraph_ker
       continue;
     }
 
-    if (switch_node) {
+    if (switch_node != nullptr) {
       switch_type_node_ = switch_node;
       return SetSwitchPartialNodes();
-    } else {
+    }
+    if (switch_layer_node != nullptr) {
       switch_type_node_ = switch_layer_node;
       return SetSwitchLayerPartialNodes();
     }

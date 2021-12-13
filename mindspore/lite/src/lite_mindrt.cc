@@ -27,6 +27,8 @@
 #endif
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
 #include "src/control_flow/actor/switch_actor.h"
+#include "src/control_flow/actor/entrance_actor.h"
+#include "src/control_flow/actor/exit_actor.h"
 #endif
 
 namespace mindspore::lite {
@@ -54,9 +56,7 @@ void LiteOpActor::RunOpData(OpData<lite::Tensor> *inputs, OpContext<lite::Tensor
   }
   input_op_datas_.erase(op_uuid);
   AsyncOutput(context);
-
   SetOutputData(context);
-
   return;
 }
 
@@ -76,6 +76,12 @@ bool OfflineIsolated(const std::vector<kernel::LiteKernel *> &kernels, const ker
   }
   return true;
 }
+
+int LiteOpActor::PreInit(std::vector<std::shared_ptr<LiteOpActor>> *actors,
+                         std::unordered_map<Tensor *, Tensor *> *input_map) {
+  return IsolateInputData(actors, input_map);
+}
+int LiteOpActor::PostInit() { return PrepareOutputData(); }
 
 int LiteOpActor::IsolateInputData(std::vector<std::shared_ptr<LiteOpActor>> *actors,
                                   std::unordered_map<Tensor *, Tensor *> *input_map) {
@@ -589,6 +595,20 @@ std::vector<std::shared_ptr<LiteOpActor>> CreateOpActor(const std::vector<kernel
       switch_actor->set_thread_pool(thread_pool);
       subgraph_name_AID_map[kernel] = switch_actor->GetAID();
       actors.push_back(switch_actor);
+    } else if (kernel->subgraph_type() == kernel::kEntranceSubGraph) {
+      auto entrance_actor = std::make_shared<LiteEntranceOpActor>(kernel, ctx);
+      if (entrance_actor == nullptr) {
+        MS_LOG(ERROR) << "create LiteEntranceOpActor failed: " << kernel->name();
+        actors.clear();
+        return actors;
+      }
+    } else if (kernel->subgraph_type() == kernel::kExitSubGraph) {
+      auto exit_actor = std::make_shared<LiteExitOpActor>(kernel, ctx);
+      if (exit_actor == nullptr) {
+        MS_LOG(ERROR) << "create LiteExitOpActor failed: " << kernel->name();
+        actors.clear();
+        return actors;
+      }
     } else {
 #endif
       auto actor = std::make_shared<LiteOpActor>(kernel, ctx);

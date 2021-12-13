@@ -49,11 +49,11 @@ class ExitSubGraphKernel : public SubGraphKernel {
 
   void SetPartial(kernel::LiteKernel *partial_node);
 
+  std::set<kernel::LiteKernel *> GetPartials() const { return partials_; }
+
  protected:
   int schema_version_ = lite::SCHEMA_VERSION::SCHEMA_CUR;
   std::set<kernel::LiteKernel *> partials_;
-  // partial and call pairs
-  std::unordered_map<kernel::LiteKernel *, kernel::LiteKernel *> partial_call_map_;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_EXIT_SUBGRAPH_KERNEL_H_

@@ -95,9 +95,9 @@ int MindrtExecutor::Resize(const std::vector<mindspore::tensor::MSTensor *> &inp
   return RET_OK;
 }
 
-int MindrtExecutor::IsolateActorsInput() {
+int MindrtExecutor::PreInitActors() {
   for (auto actor : op_actors_) {
-    int ret = actor->IsolateInputData(&op_actors_, isolate_input_map_);
+    int ret = actor->PreInit(&op_actors_, isolate_input_map_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "IsolateInputData failed, actor aid: " << actor->GetAID();
       return ret;
@@ -137,9 +137,9 @@ int MindrtExecutor::LinkActors() {
   return RET_OK;
 }
 
-int MindrtExecutor::PrepareActorsOutput() {
+int MindrtExecutor::PostInitActors() {
   for (auto actor : op_actors_) {
-    auto ret = actor->PrepareOutputData();
+    auto ret = actor->PostInit();
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "PrepareGraphOutput failed, actor aid: " << actor->GetAID();
       return ret;
@@ -175,9 +175,9 @@ int MindrtExecutor::Prepare(const std::vector<kernel::LiteKernel *> &kernels, co
     return ret;
   }
 
-  ret = IsolateActorsInput();
+  ret = PreInitActors();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "IsolateActorsInput failed";
+    MS_LOG(ERROR) << "PreInitActors failed";
     return ret;
   }
 
@@ -187,9 +187,9 @@ int MindrtExecutor::Prepare(const std::vector<kernel::LiteKernel *> &kernels, co
     return ret;
   }
 
-  ret = PrepareActorsOutput();
+  ret = PostInitActors();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "PrepareActorsOutput failed";
+    MS_LOG(ERROR) << "PostInitActors failed";
     return ret;
   }
   return RET_OK;

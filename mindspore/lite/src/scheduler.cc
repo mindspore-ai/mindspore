@@ -520,7 +520,7 @@ int Scheduler::InitDelegateKernels(std::vector<kernel::LiteKernel *> *dst_kernel
     }
     auto ret = ReplaceDelegateKernels(&tmp_kernels);
     if (ret != RET_OK) {
-      MS_LOG(ERROR) << "NPU delegate repalce delegate kernels failed.";
+      MS_LOG(ERROR) << "NPU delegate replace delegate kernels failed.";
       return ret;
     }
 
