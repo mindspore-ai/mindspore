@@ -121,8 +121,12 @@ def test_list_append():
     assert np.all(list_append().asnumpy() == np.array([1, 2, 3, 4]))
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
-def test_list_insert():
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_list_insert_1():
     """
     Feature: Fallback feature
     Description: support attr/method of builtin type.
@@ -131,9 +135,64 @@ def test_list_insert():
     @ms_function
     def list_insert():
         x = list([1, 3, 4])
-        x.insert(1, 2)
+        x.insert(0, 2)
         return Tensor(x)
-    assert np.all(list_insert().asnumpy() == np.array([1, 2, 3, 4]))
+    assert np.all(list_insert().asnumpy() == np.array([2, 1, 3, 4]))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_list_insert_2():
+    """
+    Feature: Fallback feature
+    Description: support attr/method of builtin type.
+    Expectation: No exception.
+    """
+    @ms_function
+    def list_insert():
+        x = list([1, 3, 4])
+        x.insert(5, 2)
+        return Tensor(x)
+    assert np.all(list_insert().asnumpy() == np.array([1, 3, 4, 2]))
+
+
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_list_insert_3():
+    """
+    Feature: Fallback feature
+    Description: support attr/method of builtin type.
+    Expectation: No exception.
+    """
+    @ms_function
+    def list_insert():
+        x = list([1, 3, 4])
+        x.insert(-1, 2)
+        return Tensor(x)
+    assert np.all(list_insert().asnumpy() == np.array([1, 3, 2, 4]))
+
+
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_list_insert_4():
+    """
+    Feature: Fallback feature
+    Description: support attr/method of builtin type.
+    Expectation: No exception.
+    """
+    @ms_function
+    def list_insert():
+        x = list([1, 3, 4])
+        x.insert(-5, 2)
+        return Tensor(x)
+    assert np.all(list_insert().asnumpy() == np.array([2, 1, 3, 4]))
 
 
 @ms_function

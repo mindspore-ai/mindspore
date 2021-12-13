@@ -72,7 +72,7 @@ AST_SUB_TYPE_UNKNOWN = 0xFF            # unknown
 # Process expr statement white list
 # add as needed, eg: "clear", "extend", "insert", "remove", "reverse"
 parse_expr_statement_white_list = (
-    "append",
+    "append", "insert",
 )
 
 _builtin_function_or_method_type = type(abs)

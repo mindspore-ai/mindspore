@@ -28,6 +28,7 @@
 #include "utils/hash_map.h"
 #include "frontend/operator/composite/zip_operation.h"
 #include "frontend/operator/composite/list_append_operation.h"
+#include "frontend/operator/composite/list_insert_operation.h"
 #include "frontend/operator/composite/do_signature.h"
 #include "frontend/operator/composite/unpack_call.h"
 #include "frontend/operator/composite/multitype_funcgraph.h"

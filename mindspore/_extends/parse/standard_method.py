@@ -26,7 +26,7 @@ from ...ops import functional as F
 from ...ops import operations as P
 from ...ops.composite import tail, core, MultitypeFuncGraph, env_get, hyper_add, \
     zeros_like, ones_like, repeat_elements
-from ...ops.composite.base import _append
+from ...ops.composite.base import _append, _insert
 from ...ops.composite.multitype_ops import _constexpr_utils as const_utils
 from ...ops.composite.multitype_ops import _compile_utils as compile_utils
 from ...ops.primitive import constexpr
@@ -1786,6 +1786,9 @@ def list_hasnext(xs):
 def list_append(self_, item):
     return _append(self_, item)
 
+
+def list_insert(self_, index, obj):
+    return _insert(self_, index, obj)
 
 #################
 # Array methods #
