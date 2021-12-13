@@ -327,7 +327,7 @@ def line_search(f, xk, pk, old_fval=None, old_old_fval=None, gfk=None, c1=1e-4,
     state = LineSearch(f)(xk, pk, old_fval, old_old_fval, gfk, c1, c2, maxiter)
     # If running in graph mode, the state is a tuple.
     if isinstance(state, tuple):
-        state = _LineSearchResults(failed=_to_scalar(state[0] or not state[1]),
+        state = _LineSearchResults(failed=_to_scalar(state[1] or not state[0]),
                                    nit=_to_scalar(state[2] - 1),
                                    nfev=_to_scalar(state[6]),
                                    ngev=_to_scalar(state[7]),
