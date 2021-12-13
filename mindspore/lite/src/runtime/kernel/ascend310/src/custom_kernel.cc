@@ -34,17 +34,17 @@ constexpr auto kNCHWHeightIdx = 2;
 constexpr auto kNCHWWidthIdx = 3;
 constexpr auto kImageSizeHwNum = 2;
 }  // namespace
-CustomAscend310Kernel::CustomAscend310Kernel(const std::vector<mindspore::MSTensor> &inputs,
-                                             const std::vector<mindspore::MSTensor> &outputs,
-                                             const schema::Primitive *primitive, const mindspore::Context *ctx)
+CustomAscendKernel::CustomAscendKernel(const std::vector<mindspore::MSTensor> &inputs,
+                                       const std::vector<mindspore::MSTensor> &outputs,
+                                       const schema::Primitive *primitive, const mindspore::Context *ctx)
     : Kernel(inputs, outputs, primitive, ctx),
       load_model_(false),
       acl_options_({}),
       model_infer_(nullptr),
       InputDataIndex_(0) {}
 
-CustomAscend310Kernel::~CustomAscend310Kernel() {
-  if (model_infer_ != nullptr) {
+CustomAscendKernel::~CustomAscendKernel() {
+  if (load_model_) {
     int ret = model_infer_->Finalize();
     if (ret != lite::RET_OK) {
       MS_LOG(ERROR) << "Model finalize failed.";
@@ -52,7 +52,7 @@ CustomAscend310Kernel::~CustomAscend310Kernel() {
   }
 }
 
-STATUS CustomAscend310Kernel::PrepareModelInfer() {
+STATUS CustomAscendKernel::PrepareModelInfer() {
   if (inputs_.size() < 1) {
     MS_LOG(ERROR) << "Inputs size should not be less than 1.";
     return lite::RET_ERROR;
@@ -85,7 +85,7 @@ STATUS CustomAscend310Kernel::PrepareModelInfer() {
   return lite::RET_OK;
 }
 
-STATUS CustomAscend310Kernel::Prepare() {
+STATUS CustomAscendKernel::Prepare() {
   if (load_model_) {
     MS_LOG(INFO) << "Custom kernel has been prepared.";
     return lite::RET_OK;
@@ -100,7 +100,7 @@ STATUS CustomAscend310Kernel::Prepare() {
   return lite::RET_OK;
 }
 
-void CustomAscend310Kernel::RecordInputDataIndex() {
+void CustomAscendKernel::RecordInputDataIndex() {
   for (size_t idx = 0; idx < inputs_.size(); ++idx) {
     if (inputs_[idx].Data() == nullptr) {
       InputDataIndex_ = idx;
@@ -109,14 +109,14 @@ void CustomAscend310Kernel::RecordInputDataIndex() {
   }
 }
 
-STATUS CustomAscend310Kernel::ReSize() {
+STATUS CustomAscendKernel::ReSize() {
   if (!load_model_) {
     return Prepare();
   }
   return lite::RET_OK;
 }
 
-STATUS CustomAscend310Kernel::ProcDynamicInput(std::vector<mindspore::MSTensor> *inputs) {
+STATUS CustomAscendKernel::ProcDynamicInput(std::vector<mindspore::MSTensor> *inputs) {
   if (acl_options_.batch_size.empty() && acl_options_.image_size.empty()) {
     MS_LOG(INFO) << "Input is not dynamic mode.";
     return lite::RET_OK;
@@ -154,7 +154,7 @@ STATUS CustomAscend310Kernel::ProcDynamicInput(std::vector<mindspore::MSTensor> 
   return lite::RET_OK;
 }
 
-STATUS CustomAscend310Kernel::GetRealBatchSize(std::vector<mindspore::MSTensor> *inputs, int32_t *batch_size) {
+STATUS CustomAscendKernel::GetRealBatchSize(std::vector<mindspore::MSTensor> *inputs, int32_t *batch_size) {
   CHECK_NULL_RETURN(batch_size);
   if (InputDataIndex_ >= inputs->size()) {
     MS_LOG(ERROR) << " Input data index " << InputDataIndex_ << " is larger than input size " << inputs->size();
@@ -177,8 +177,8 @@ STATUS CustomAscend310Kernel::GetRealBatchSize(std::vector<mindspore::MSTensor> 
   return lite::RET_OK;
 }
 
-STATUS CustomAscend310Kernel::GetRealImageSize(std::vector<mindspore::MSTensor> *inputs, int32_t *image_size,
-                                               int32_t num) {
+STATUS CustomAscendKernel::GetRealImageSize(std::vector<mindspore::MSTensor> *inputs, int32_t *image_size,
+                                            int32_t num) {
   CHECK_NULL_RETURN(image_size);
   if (InputDataIndex_ >= inputs->size()) {
     MS_LOG(ERROR) << "Input data index " << InputDataIndex_ << " is larger than input size " << inputs->size();
@@ -217,7 +217,7 @@ STATUS CustomAscend310Kernel::GetRealImageSize(std::vector<mindspore::MSTensor> 
   return lite::RET_OK;
 }
 
-STATUS CustomAscend310Kernel::Execute() {
+STATUS CustomAscendKernel::Execute() {
   if (!load_model_) {
     MS_LOG(WARNING) << "Custom kernel has not been prepared.";
     return lite::RET_OK;
@@ -246,7 +246,7 @@ std::shared_ptr<kernel::Kernel> CustomCreateKernel(const std::vector<mindspore::
     return nullptr;
   }
 
-  auto kernel = std::make_shared<CustomAscend310Kernel>(inputs, outputs, primitive, ctx);
+  auto kernel = std::make_shared<CustomAscendKernel>(inputs, outputs, primitive, ctx);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "New custom kernel is nullptr";
     return nullptr;
@@ -262,8 +262,8 @@ const auto kFloat32 = DataType::kNumberTypeFloat32;
 const auto kInt8 = DataType::kNumberTypeInt8;
 const auto kUInt8 = DataType::kNumberTypeUInt8;
 }  // namespace
-REGISTER_CUSTOM_KERNEL(ASCEND310, ACL, kFloat32, ACL, kernel::acl::CustomCreateKernel)
-REGISTER_CUSTOM_KERNEL(ASCEND310, ACL, kInt8, ACL, kernel::acl::CustomCreateKernel)
-REGISTER_CUSTOM_KERNEL(ASCEND310, ACL, kUInt8, ACL, kernel::acl::CustomCreateKernel)
+REGISTER_CUSTOM_KERNEL(ASCEND, ACL, kFloat32, ACL, kernel::acl::CustomCreateKernel)
+REGISTER_CUSTOM_KERNEL(ASCEND, ACL, kInt8, ACL, kernel::acl::CustomCreateKernel)
+REGISTER_CUSTOM_KERNEL(ASCEND, ACL, kUInt8, ACL, kernel::acl::CustomCreateKernel)
 }  // namespace registry
 }  // namespace mindspore

@@ -343,42 +343,42 @@ STATUS AclPassImpl::ConvertGraphToOm(const FuncGraphPtr &func_graph, Buffer *om_
   return lite::RET_OK;
 }
 
-void AclPassImpl::SetAclModelInitOptions(const std::shared_ptr<Ascend310DeviceInfo> &ascend310_info) {
+void AclPassImpl::SetAclModelInitOptions(const std::shared_ptr<AscendDeviceInfo> &ascend_info) {
   if (!acl_model_option_cfg_.fusion_switch_config_file_path.empty()) {
-    ascend310_info->SetFusionSwitchConfigPath(acl_model_option_cfg_.fusion_switch_config_file_path);
+    ascend_info->SetFusionSwitchConfigPath(acl_model_option_cfg_.fusion_switch_config_file_path);
   }
   if (!acl_model_option_cfg_.op_select_impl_mode.empty()) {
-    ascend310_info->SetOpSelectImplMode(acl_model_option_cfg_.op_select_impl_mode);
+    ascend_info->SetOpSelectImplMode(acl_model_option_cfg_.op_select_impl_mode);
   }
   if (!acl_model_option_cfg_.buffer_optimize.empty()) {
-    ascend310_info->SetBufferOptimizeMode(acl_model_option_cfg_.buffer_optimize);
+    ascend_info->SetBufferOptimizeMode(acl_model_option_cfg_.buffer_optimize);
   }
 }
 
-void AclPassImpl::SetAclModelBuildOptions(const std::shared_ptr<Ascend310DeviceInfo> &ascend310_info) {
+void AclPassImpl::SetAclModelBuildOptions(const std::shared_ptr<AscendDeviceInfo> &ascend_info) {
   if (acl_model_option_cfg_.output_type != DataType::kInvalidType) {
-    ascend310_info->SetOutputType(acl_model_option_cfg_.output_type);
+    ascend_info->SetOutputType(acl_model_option_cfg_.output_type);
   }
   if (acl_model_option_cfg_.input_shape_map.size() > 0) {
-    ascend310_info->SetInputShapeMap(acl_model_option_cfg_.input_shape_map);
+    ascend_info->SetInputShapeMap(acl_model_option_cfg_.input_shape_map);
   }
   if (acl_model_option_cfg_.dynamic_batch_size.size() > 0) {
-    ascend310_info->SetDynamicBatchSize(acl_model_option_cfg_.dynamic_batch_size);
+    ascend_info->SetDynamicBatchSize(acl_model_option_cfg_.dynamic_batch_size);
   }
   if (!acl_model_option_cfg_.dynamic_image_size.empty()) {
-    ascend310_info->SetDynamicImageSize(acl_model_option_cfg_.dynamic_image_size);
+    ascend_info->SetDynamicImageSize(acl_model_option_cfg_.dynamic_image_size);
   }
   if (!acl_model_option_cfg_.input_format.empty()) {
-    ascend310_info->SetInputFormat(acl_model_option_cfg_.input_format);
+    ascend_info->SetInputFormat(acl_model_option_cfg_.input_format);
   }
   if (!acl_model_option_cfg_.input_shape.empty()) {
-    ascend310_info->SetInputShape(acl_model_option_cfg_.input_shape);
+    ascend_info->SetInputShape(acl_model_option_cfg_.input_shape);
   }
   if (!acl_model_option_cfg_.precision_mode.empty()) {
-    ascend310_info->SetPrecisionMode(acl_model_option_cfg_.precision_mode);
+    ascend_info->SetPrecisionMode(acl_model_option_cfg_.precision_mode);
   }
   if (!acl_model_option_cfg_.insert_op_config_file_path.empty()) {
-    ascend310_info->SetInsertOpConfigPath(acl_model_option_cfg_.insert_op_config_file_path);
+    ascend_info->SetInsertOpConfigPath(acl_model_option_cfg_.insert_op_config_file_path);
   }
 }
 
@@ -387,15 +387,15 @@ std::shared_ptr<mindspore::Context> AclPassImpl::CreateModelContext() {
   if (model_context == nullptr) {
     return nullptr;
   }
-  auto ascend310_info = std::make_shared<Ascend310DeviceInfo>();
-  if (ascend310_info == nullptr) {
+  auto ascend_info = std::make_shared<AscendDeviceInfo>();
+  if (ascend_info == nullptr) {
     return nullptr;
   }
-  ascend310_info->SetDeviceID(acl_model_option_cfg_.device_id);
-  SetAclModelInitOptions(ascend310_info);
-  SetAclModelBuildOptions(ascend310_info);
+  ascend_info->SetDeviceID(acl_model_option_cfg_.device_id);
+  SetAclModelInitOptions(ascend_info);
+  SetAclModelBuildOptions(ascend_info);
 
-  model_context->MutableDeviceInfo().emplace_back(ascend310_info);
+  model_context->MutableDeviceInfo().emplace_back(ascend_info);
   return model_context;
 }
 

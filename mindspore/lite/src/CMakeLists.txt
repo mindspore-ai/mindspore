@@ -275,6 +275,7 @@ add_library(lite_src_mid OBJECT ${LITE_SRC})
 add_dependencies(lite_src_mid fbs_src)
 
 if(MSLITE_ENABLE_ACL)
+    include_directories(${TOP_DIR}/graphengine/inc/external)
     add_subdirectory(runtime/kernel/ascend310)
     link_directories(${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
 endif()

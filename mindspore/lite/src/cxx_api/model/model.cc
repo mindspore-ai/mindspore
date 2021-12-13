@@ -18,6 +18,9 @@
 #ifdef GPU_TENSORRT
 #include <cuda_runtime.h>
 #endif
+#ifdef ENABLE_LITE_ACL
+#include "acl/acl_base.h"
+#endif
 #include <mutex>
 #include "include/api/types.h"
 #include "include/api/context.h"
@@ -143,8 +146,11 @@ Model::Model() : impl_(nullptr) {}
 Model::~Model() {}
 
 bool Model::CheckModelSupport(enum DeviceType device_type, ModelType model_type) {
-  if (device_type == kGPU) {
+  if (device_type == kCPU) {
+    return true;
+  }
 #ifdef GPU_TENSORRT
+  if (device_type == kGPU) {
     int driver_version = 0;
     int ret = cudaDriverGetVersion(&driver_version);
     if (ret != cudaSuccess || driver_version == 0) {
@@ -152,18 +158,24 @@ bool Model::CheckModelSupport(enum DeviceType device_type, ModelType model_type)
       return false;
     }
     return true;
-#else
-    return false;
-#endif
-  } else if (device_type == kCPU) {
-#ifdef ENABLE_LITE_ACL
-    return false;
-#else
-    return true;
-#endif
-  } else {
-    return false;
   }
+#endif
+#ifdef ENABLE_LITE_ACL
+  if (device_type == kAscend || device_type == kAscend310) {
+    const char *soc_name_c = aclrtGetSocName();
+    if (soc_name_c == nullptr) {
+      MS_LOG(WARNING) << "aclrtGetSocName failed.";
+      return false;
+    }
+    std::string soc_name(soc_name_c);
+    if (soc_name.find("910") != std::string::npos) {
+      MS_LOG(WARNING) << "Device not support, aclrtGetSocName: " << soc_name;
+      return false;
+    }
+    return true;
+  }
+#endif
+  return false;
 }
 
 std::vector<MSTensor> Model::GetInputs() {

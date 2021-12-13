@@ -193,7 +193,7 @@ class MS_API Model {
 
   /// \brief Inference model.
   ///
-  /// \param[in] device_type Device type，options are kGPU, kAscend, kAscend910, etc.
+  /// \param[in] device_type Device type，options are kGPU, kAscend etc.
   /// \param[in] model_type The type of model file, options are ModelType::kMindIR, ModelType::kOM.
   ///
   /// \return Is supported or not.

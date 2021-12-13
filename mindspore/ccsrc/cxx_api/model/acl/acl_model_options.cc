@@ -33,15 +33,15 @@ AclModelOptions::AclModelOptions(const std::shared_ptr<Context> &context) {
   if (device_infos.size() != 1) {
     return;
   }
-  auto ascend310_info = device_infos[0]->Cast<AscendDeviceInfo>();
-  if (ascend310_info == nullptr) {
+  auto ascend_info = device_infos[0]->Cast<AscendDeviceInfo>();
+  if (ascend_info == nullptr) {
     return;
   }
 
-  insert_op_cfg_path_ = ascend310_info->GetInsertOpConfigPath();
-  input_format_ = ascend310_info->GetInputFormat();
-  input_shape_map_ = ascend310_info->GetInputShapeMap();
-  auto out_type = ascend310_info->GetOutputType();
+  insert_op_cfg_path_ = ascend_info->GetInsertOpConfigPath();
+  input_format_ = ascend_info->GetInputFormat();
+  input_shape_map_ = ascend_info->GetInputShapeMap();
+  auto out_type = ascend_info->GetOutputType();
   auto iter = kSupportedDtypeOptionMap.find(out_type);
   if (out_type == DataType::kTypeUnknown) {
     // do nothing
@@ -50,13 +50,13 @@ AclModelOptions::AclModelOptions(const std::shared_ptr<Context> &context) {
   } else {
     output_type_ = iter->second;
   }
-  dynamic_batch_size_ = ascend310_info->GetDynamicBatchSize();
-  dynamic_image_size_ = ascend310_info->GetDynamicImageSize();
-  precision_mode_ = ascend310_info->GetPrecisionMode();
-  op_select_impl_mode_ = ascend310_info->GetOpSelectImplMode();
-  fusion_switch_cfg_path_ = ascend310_info->GetFusionSwitchConfigPath();
-  device_id_ = ascend310_info->GetDeviceID();
-  buffer_optimize_mode_ = ascend310_info->GetBufferOptimizeMode();
+  dynamic_batch_size_ = ascend_info->GetDynamicBatchSize();
+  dynamic_image_size_ = ascend_info->GetDynamicImageSize();
+  precision_mode_ = ascend_info->GetPrecisionMode();
+  op_select_impl_mode_ = ascend_info->GetOpSelectImplMode();
+  fusion_switch_cfg_path_ = ascend_info->GetFusionSwitchConfigPath();
+  device_id_ = ascend_info->GetDeviceID();
+  buffer_optimize_mode_ = ascend_info->GetBufferOptimizeMode();
   const char *soc_name = aclrtGetSocName();
   if (soc_name == nullptr) {
     MS_LOG(WARNING) << "Get soc version failed.";

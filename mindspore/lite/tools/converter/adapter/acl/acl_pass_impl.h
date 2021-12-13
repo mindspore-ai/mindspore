@@ -62,8 +62,8 @@ class AclPassImpl {
   STATUS GetFuncGraphOutputInfo(const FuncGraphPtr &func_graph);
   STATUS TraceOutput(const AnfNodePtr &node);
   std::shared_ptr<mindspore::Context> CreateModelContext();
-  void SetAclModelInitOptions(const std::shared_ptr<Ascend310DeviceInfo> &ascend310_info);
-  void SetAclModelBuildOptions(const std::shared_ptr<Ascend310DeviceInfo> &ascend310_info);
+  void SetAclModelInitOptions(const std::shared_ptr<AscendDeviceInfo> &ascend_info);
+  void SetAclModelBuildOptions(const std::shared_ptr<AscendDeviceInfo> &ascend_info);
   std::string AdjustCnodeName(const PrimitivePtr &prim);
   bool IsDynamicInput();
 

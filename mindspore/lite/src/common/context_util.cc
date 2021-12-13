@@ -88,22 +88,22 @@ std::vector<size_t> GetBatchSize(const std::string &batch_size) {
   return res;
 }
 
-std::shared_ptr<mindspore::Ascend310DeviceInfo> Ascend310DeviceInfoFromAscend310DeviceContext(
-  const lite::DeviceContext &ascend310_context) {
-  if (ascend310_context.device_type_ != DT_ASCEND310) {
-    MS_LOG(ERROR) << "Function input parameter is not ascend310 context.";
+std::shared_ptr<mindspore::AscendDeviceInfo> AscendDeviceInfoFromAscendDeviceContext(
+  const lite::DeviceContext &ascend_context) {
+  if (ascend_context.device_type_ != DT_ASCEND) {
+    MS_LOG(ERROR) << "Function input parameter is not ascend context.";
     return nullptr;
   }
-  auto ascend310_info = std::make_shared<mindspore::Ascend310DeviceInfo>();
-  MS_CHECK_TRUE_RET(ascend310_info != nullptr, nullptr);
-  ascend310_info->SetDeviceID(ascend310_context.device_info_.ascend310_device_info_.device_id_);
-  std::string batch_size = ascend310_context.device_info_.ascend310_device_info_.batch_size_;
+  auto ascend_info = std::make_shared<mindspore::AscendDeviceInfo>();
+  MS_CHECK_TRUE_RET(ascend_info != nullptr, nullptr);
+  ascend_info->SetDeviceID(ascend_context.device_info_.ascend_device_info_.device_id_);
+  std::string batch_size = ascend_context.device_info_.ascend_device_info_.batch_size_;
   if (!batch_size.empty()) {
     auto val = GetBatchSize(batch_size);
-    ascend310_info->SetDynamicBatchSize(val);
+    ascend_info->SetDynamicBatchSize(val);
   }
-  ascend310_info->SetDynamicImageSize(ascend310_context.device_info_.ascend310_device_info_.image_size_);
-  return ascend310_info;
+  ascend_info->SetDynamicImageSize(ascend_context.device_info_.ascend_device_info_.image_size_);
+  return ascend_info;
 }
 }  // namespace
 
@@ -126,7 +126,7 @@ mindspore::Context *MSContextFromContext(const lite::Context *context) {
     transfer_funcs = {{DT_CPU, CPUDeviceInfoFromCPUDeviceContext},
                       {DT_GPU, GPUDeviceInfoFromGPUDeviceContext},
                       {DT_NPU, NPUDeviceInfoFromNPUDeviceContext},
-                      {DT_ASCEND310, Ascend310DeviceInfoFromAscend310DeviceContext}};
+                      {DT_ASCEND, AscendDeviceInfoFromAscendDeviceContext}};
   for (auto &device_context : context->device_list_) {
     auto device_type = device_context.device_type_;
     if (transfer_funcs.find(device_type) == transfer_funcs.end()) {
