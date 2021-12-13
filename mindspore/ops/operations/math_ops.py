@@ -5043,7 +5043,7 @@ class BesselI1e(Primitive):
 
 
 
-class Inv(PrimitiveWithInfer):
+class Inv(Primitive):
     r"""
     Computes Inv(Reciprocal) of input tensor element-wise.
 
@@ -5077,13 +5077,6 @@ class Inv(PrimitiveWithInfer):
     def __init__(self):
         pass
 
-    def infer_shape(self, x_shape):
-        return x_shape
-
-    def infer_dtype(self, x_dtype):
-        validator.check_tensor_dtype_valid('x_dtype', x_dtype, [mstype.float16, mstype.float32,
-                                                                mstype.int32], self.name)
-        return x_dtype
 
 
 class Invert(Primitive):
