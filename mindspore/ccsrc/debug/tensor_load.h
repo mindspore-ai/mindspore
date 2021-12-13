@@ -93,10 +93,6 @@ class TensorLoader {
         tensor->GetIteration() == tensor_list_map_[key_name]->GetIteration() - 1) {
       key_name += ":prev";
     }
-    auto iter = tensor_list_map_.find(key_name);
-    if (iter != tensor_list_map_.end()) {
-      iter->second->DeleteDataPtr();
-    }
 #endif
     tensor_list_map_[key_name] = tensor;  // use [] instead of insert to ensure latest value
     lock_.unlock();
@@ -176,13 +172,18 @@ class TensorLoader {
       // wait until there is any not-in-use candidate to be evicted from cache
       evict_cond.wait(lk, [&] { return !cache_evict_queue_.empty(); });
       candidate_name = cache_evict_queue_.front();
-      candidates_size = tensor_list_map_[candidate_name]->GetByteSize();
+      cache_evict_queue_.pop_front();
       // evict candidate tensor
       lock_.lock();
-      tensor_list_map_[candidate_name]->DeleteDataPtr();
+      auto tensor = GetTensor(candidate_name);
+      if (tensor == nullptr) {
+        MS_LOG(INFO) << "Tensor: " << candidate_name << " has already been evicted.";
+        lock_.unlock();
+        continue;
+      }
+      candidates_size = tensor->GetByteSize();
       tensor_list_map_.erase(candidate_name);
       lock_.unlock();
-      cache_evict_queue_.pop_front();
       mem_usage_ = std::max(uint64_t(0), mem_usage_ - candidates_size);
       MS_LOG(INFO) << "Evict tensor: " << candidate_name;
     }
