@@ -167,21 +167,6 @@ def test_np_array_itemsize():
     assert res == 1
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
-def test_np_array_flags():
-    """
-    Feature: JIT Fallback
-    Description: Test numpy with array flags in graph mode.
-    Expectation: No exception.
-    """
-    @ms_function
-    def np_array_flags():
-        a = np.array([1, 2, 3, 4, 5])
-        return a.flags
-    res = np_array_flags()
-    print("res:", res)
-
-
 def test_np_empty_zeros_ones():
     """
     Feature: JIT Fallback
@@ -293,3 +278,59 @@ def test_np_logspace():
     res = np_logspace()
     except_res = Tensor(np.array([1., 2., 4., 8., 16., 32., 64., 128., 256., 512.]))
     assert np.all(res.asnumpy() == except_res.asnumpy())
+
+
+def test_np_array_shape():
+    """
+    Feature: JIT Fallback
+    Description: Test numpy with array shape in graph mode.
+    Expectation: No exception.
+    """
+    @ms_function
+    def np_array_shape():
+        a = np.array([[1, 2, 3], [4, 5, 6]])
+        return Tensor(a.shape)
+    res = np_array_shape()
+    print("res:", res)
+
+
+def test_np_array_size():
+    """
+    Feature: JIT Fallback
+    Description: Test numpy with array size in graph mode.
+    Expectation: No exception.
+    """
+    @ms_function
+    def np_array_size():
+        a = np.array([[1, 2, 3], [4, 5, 6]])
+        return Tensor(a.size)
+    res = np_array_size()
+    print("res:", res)
+
+
+def test_np_array_real():
+    """
+    Feature: JIT Fallback
+    Description: Test numpy with complex in graph mode.
+    Expectation: No exception.
+    """
+    @ms_function
+    def np_array_real():
+        a = np.array([1, 2, 3], dtype=complex)
+        return Tensor(a.real)
+    res = np_array_real()
+    print("res:", res)
+
+
+def test_np_array_imag():
+    """
+    Feature: JIT Fallback
+    Description: Test numpy with complex in graph mode.
+    Expectation: No exception.
+    """
+    @ms_function
+    def np_array_imag():
+        a = np.array([1, 2, 3], dtype=complex)
+        return Tensor(a.imag)
+    res = np_array_imag()
+    print("res:", res)
