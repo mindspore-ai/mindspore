@@ -86,6 +86,7 @@ Optimizer Functions
 .. cnmsplatformautosummary::
     :toctree: nn
 
+    mindspore.nn.Optimizer
     mindspore.nn.Adagrad
     mindspore.nn.Adam
     mindspore.nn.AdamOffload
@@ -95,7 +96,6 @@ Optimizer Functions
     mindspore.nn.Lamb
     mindspore.nn.LazyAdam
     mindspore.nn.Momentum
-    mindspore.nn.Optimizer
     mindspore.nn.ProximalAdagrad
     mindspore.nn.RMSProp
     mindspore.nn.SGD

@@ -234,7 +234,7 @@
 
         向当前Cell添加参数。
 
-        将指定名称的参数插入Cell。目前在 `mindspore.nn.Cell.__setattr__` 中使用。
+        将指定名称的参数添加到Cell中。目前在 `mindspore.nn.Cell.__setattr__` 中使用。
 
         **参数：**
 
@@ -287,7 +287,7 @@
         **参数：**
 
         - **name_prefix** (str): 作用域。默认值： ''。
-        - **expand** (bool):  如果为True，则递归地获取当前Cell和所有子Cell的参数及名称；如果为False，只生成当前Cell的子Cell的参数及名称。默认值：True.
+        - **expand** (bool):  如果为True，则递归地获取当前Cell和所有子Cell的参数及名称；如果为False，只生成当前Cell的子Cell的参数及名称。默认值：True。
 
         **返回：**
 

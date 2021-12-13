@@ -30,7 +30,7 @@ mindspore.nn.Flatten
     [[1.2 1.2 2.1 2.1]
      [2.2 2.2 3.2 3.2]]
     >>> print(f"Before flatten the x shape is {x.shape}.")
-    展平前x的shape为(2, 2, 2).
+    展平前x的shape为(2, 2, 2)
     >>> print(f"After flatten the output shape is {output.shape}.")
-    展平后输出的shape为(2, 4).
+    展平后输出的shape为(2, 4)
     

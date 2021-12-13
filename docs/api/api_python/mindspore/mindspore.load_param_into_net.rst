@@ -17,7 +17,7 @@ mindspore.load_param_into_net
 
     **异常：**
 
-    - **TypeError** – 如果参数不是Cell或者 `parameter_dict` 不是Parameter类型的字典。
+    - **TypeError** – 如果参数不是Cell，或者 `parameter_dict` 不是Parameter类型的字典。
 
     **样例：**
 

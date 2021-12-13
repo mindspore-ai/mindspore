@@ -15,7 +15,7 @@ mindspore.ops.SeLU
         \text{alpha} * (\exp(x_i) - 1), &\text{otherwise.}
         \end{cases}
 
-    其中， :math:`alpha` 和 :math:`scale` 是预定义的常量（ :math:`alpha=1.67326324` and :math:`scale=1.05070098` ）。
+    其中， :math:`alpha` 和 :math:`scale` 是预定义的常量（ :math:`alpha=1.67326324` ， :math:`scale=1.05070098` ）。
 
     更多详细信息，请参见 `Self-Normalizing Neural Networks <https://arxiv.org/abs/1706.02515>`_ 。
 

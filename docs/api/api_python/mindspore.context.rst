@@ -194,7 +194,7 @@ MindSpore上下文，用于配置当前执行环境，包括执行模式、执�
 
     配置自动并行，仅在Ascend和GPU上有效。
 
-    应在init之前配置自动并行。
+    应在mindspore.communication.init之前配置自动并行。
 
     .. note::
         配置时，必须输入配置的名称。如果某个程序具有不同并行模式下的任务，则需要再为下一个任务设置新的并行模式之前，调用reset_auto_parallel_context()接口来重置配置。若要设置或更改并行模式，必须在创建任何Initializer之前调用接口，否则，在编译网络时，可能会出现RuntimeError。

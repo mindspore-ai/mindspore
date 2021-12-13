@@ -9,7 +9,7 @@ mindspore.ops.ReLUV2
 
     .. math::
 
-        \text{ReLU}(x) = (x)^+ = \max(0, x)
+        \text{ReLU}(x) = (x)^+ = \max(0, x)，
 
     .. note::
 
