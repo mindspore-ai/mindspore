@@ -60,6 +60,10 @@ function Run_TensorRT() {
             enableFp16="true"
         fi
 
+        # converter for distribution models
+        if [[ ${run_mode_name} == "CONVERTER" ]]; then
+            continue
+        fi
 
         # different tensorrt run mode use different cuda command
         if [[ ${run_mode_name} == "DIS" ]]; then
@@ -141,7 +145,7 @@ Run_benchmark_status=$?
 echo "Run x86 TensorRT GPU ended on device ${cuda_device_id}"
 
 if [[ ${Run_benchmark_status} != 0 ]];then
-    echo "Run_TensorRT_PID failed"
+    echo "Run_TensorRT failed"
     cat ${run_tensorrt_log_file}
 fi
 
