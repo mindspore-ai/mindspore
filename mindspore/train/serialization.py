@@ -337,8 +337,8 @@ def load(file_name, **kwargs):
 
         kwargs (dict): Configuration options dictionary.
 
-            - dec_key (bytes): Byte type key used for decryption. Tha valid length is 16, 24, or 32.
-            - dec_mode (str): Specifies the decryption mode, take effect when dec_key is set.
+            - dec_key (bytes): Byte type key used for decryption. The valid length is 16, 24, or 32.
+            - dec_mode (str): Specifies the decryption mode, to take effect when dec_key is set.
               Option: 'AES-GCM' | 'AES-CBC'. Default: 'AES-GCM'.
     Returns:
         Object, a compiled graph that can executed by `GraphCell`.
@@ -1572,7 +1572,7 @@ def async_ckpt_thread_status():
     Get the status of asynchronous save checkpoint thread.
 
     When performing asynchronous save checkpoint, you can get the thread state through this function
-    to ensure that write checkpoint file are completed.
+    to ensure that write checkpoint file is completed.
 
     Returns:
         True, Asynchronous save checkpoint thread is running.
