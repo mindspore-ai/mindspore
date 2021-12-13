@@ -88,6 +88,7 @@ except ModuleNotFoundError:
 if platform.system().lower() == "darwin" and multiprocessing.get_start_method() != "fork":
     multiprocessing.set_start_method("fork", True)
 
+
 class Shuffle(str, Enum):
     GLOBAL: str = "global"
     FILES: str = "files"

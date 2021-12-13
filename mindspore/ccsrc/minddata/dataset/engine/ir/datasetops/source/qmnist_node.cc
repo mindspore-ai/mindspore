@@ -29,7 +29,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 QMnistNode::QMnistNode(const std::string &dataset_dir, const std::string &usage, bool compat,
                        std::shared_ptr<SamplerObj> sampler, std::shared_ptr<DatasetCache> cache)
     : MappableSourceNode(std::move(cache)),

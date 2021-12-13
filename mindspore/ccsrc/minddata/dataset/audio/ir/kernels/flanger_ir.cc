@@ -22,7 +22,6 @@
 namespace mindspore {
 namespace dataset {
 namespace audio {
-
 // FlangerOperation
 FlangerOperation::FlangerOperation(int32_t sample_rate, float delay, float depth, float regen, float width, float speed,
                                    float phase, Modulation modulation, Interpolation interpolation)

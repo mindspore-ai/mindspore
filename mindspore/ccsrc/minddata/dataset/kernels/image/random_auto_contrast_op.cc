@@ -20,7 +20,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 const float RandomAutoContrastOp::kCutOff = 0.0;
 const std::vector<uint32_t> RandomAutoContrastOp::kIgnore = {};
 const float RandomAutoContrastOp::kDefProbability = 0.5;

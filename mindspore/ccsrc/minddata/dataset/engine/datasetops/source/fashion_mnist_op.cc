@@ -81,6 +81,5 @@ Status FashionMnistOp::CountTotalRows(const std::string &dir, const std::string 
 
   return Status::OK();
 }
-
 }  // namespace dataset
 }  // namespace mindspore

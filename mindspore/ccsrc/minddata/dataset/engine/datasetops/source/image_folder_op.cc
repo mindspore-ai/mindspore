@@ -313,6 +313,5 @@ Status ImageFolderOp::GetNumClasses(int64_t *num_classes) {
   num_classes_ = *num_classes;
   return Status::OK();
 }
-
 }  // namespace dataset
 }  // namespace mindspore
