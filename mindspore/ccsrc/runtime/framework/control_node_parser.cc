@@ -15,6 +15,7 @@
  */
 
 #include "runtime/framework/control_node_parser.h"
+#include "runtime/framework/actor/actor_common.h"
 #include "abstract/utils.h"
 #include "ir/tensor.h"
 
@@ -411,6 +412,7 @@ void CreateDeviceTensorForValueNode(const KernelWithIndex &front_node_with_index
   MS_EXCEPTION_IF_NULL(address);
   MS_LOG(DEBUG) << "Create addr for node:" << AnfAlgo::GetNodeDebugString(front_node) << " addr:" << address;
   AnfAlgo::SetOutputAddr(address, front_node_with_index.second, front_node.get());
+  UpdateRefCount(address.get(), true);
 }
 
 // Create a device tensor for front node.
@@ -437,6 +439,7 @@ void CreateDeviceTensorForFrontNode(const KernelWithIndex &front_node_with_index
   MS_EXCEPTION_IF_NULL(address);
   MS_LOG(DEBUG) << "Create addr for node:" << AnfAlgo::GetNodeDebugString(node) << " addr:" << address;
   AnfAlgo::SetOutputAddr(address, front_node_with_index.second, node.get());
+  UpdateRefCount(address.get(), true);
 }
 
 // Check if there is a recursive call to funcgraph, if a calls b, b calls c, and c calls a, it is a recursive call.
