@@ -820,7 +820,7 @@ class HSwish(PrimitiveWithInfer):
         return x_dtype
 
 
-class Sigmoid(PrimitiveWithInfer):
+class Sigmoid(Primitive):
     r"""
     Sigmoid activation function.
 
@@ -858,13 +858,6 @@ class Sigmoid(PrimitiveWithInfer):
     def __init__(self):
         """Initialize Sigmoid."""
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
-
-    def infer_shape(self, input_x):
-        return input_x
-
-    def infer_dtype(self, input_x):
-        validator.check_tensor_dtype_valid("input_x", input_x, (mstype.float16, mstype.float32), self.name)
-        return input_x
 
 
 class HSigmoid(Primitive):
