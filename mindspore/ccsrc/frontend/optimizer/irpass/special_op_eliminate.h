@@ -434,7 +434,8 @@ class PynativeEliminater : public OptimizerCaller {
     if (value_node == nullptr) {
       return false;
     }
-    return GetValueNode<parse::NameSpacePtr>(value_node)->module() == str_value;
+    auto module_name = GetValueNode<parse::NameSpacePtr>(value_node)->module();
+    return module_name.find(str_value) != std::string::npos;
   }
 
   bool CheckSymbolVNode(const AnfNodePtr &node, const std::string &str_value) {

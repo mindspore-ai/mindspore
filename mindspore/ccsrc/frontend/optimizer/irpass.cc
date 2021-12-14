@@ -267,9 +267,9 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
 }
 
 ResolveIRPassLib::ResolveIRPassLib() {
-  // In resolver_getattr_resolve_, some patterns have priority over others.
-  resolver_getattr_resolve_ = MakeSubstitution(std::make_shared<ResolverGetAttrResolve>(), "getattr_resolve",
-                                               {prim::kPrimGetAttr, prim::kPrimResolve}, opt::CHECK_RENORM, true);
+  // In resolver_, some patterns have priority over others.
+  resolver_ = MakeSubstitution(std::make_shared<Resolver>(), "getattr_resolve",
+                               {prim::kPrimGetAttr, prim::kPrimResolve}, opt::CHECK_RENORM, true);
 }
 
 InferenceOptPrepareLib::InferenceOptPrepareLib() {

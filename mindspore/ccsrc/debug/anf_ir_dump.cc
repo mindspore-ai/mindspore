@@ -176,7 +176,7 @@ void DumpKernelInfo(const CNodePtr &node, const std::shared_ptr<SubGraphIRInfo> 
 
 int32_t DumpParams(const FuncGraphPtr &graph, std::ostringstream &buffer, OrderedMap<AnfNodePtr, int32_t> *para_map) {
   if (graph == nullptr) {
-    MS_LOG(INFO) << "Param graph is nullptr.";
+    MS_LOG(INFO) << "Parameter \'graph\' should not be null.";
     return 0;
   }
   std::vector<AnfNodePtr> parameters = graph->parameters();
@@ -217,13 +217,12 @@ int32_t DumpParams(const FuncGraphPtr &graph, std::ostringstream &buffer, Ordere
 
 void DumpOperator(const AnfNodePtr &node, const std::shared_ptr<SubGraphIRInfo> &gsub) {
   if (gsub == nullptr) {
-    MS_LOG(INFO) << "Param gsub is nullptr";
+    MS_LOG(INFO) << "Parameter \'gsub\' should not be null.";
     return;
   }
   auto cnode = dyn_cast<CNode>(node);
-  MS_EXCEPTION_IF_NULL(cnode);
   if (cnode == nullptr) {
-    MS_LOG(INFO) << "Param node should be a CNode";
+    MS_LOG(EXCEPTION) << "Parameter \'node\' should be a CNode";
     return;
   }
   AnfNodePtr op = cnode->input(0);
@@ -272,7 +271,11 @@ void DumpOperands(const AnfNodePtr &node, OrderedMap<AnfNodePtr, int32_t> *para_
         gsub->buffer << ", ";
       }
       if (in->isa<Parameter>()) {
-        if (in->func_graph() != node->func_graph()) {
+        MS_EXCEPTION_IF_NULL(node->func_graph());
+        if (in->func_graph() == nullptr) {
+          MS_LOG(ERROR) << "Parameter should belong to a func graph. Check func graph: " << node->func_graph();
+        }
+        if (in->func_graph() != nullptr && in->func_graph() != node->func_graph()) {
           gsub->buffer << "$(@" << in->func_graph()->ToString() << ":";
         } else {
           gsub->buffer << "%";
@@ -283,7 +286,7 @@ void DumpOperands(const AnfNodePtr &node, OrderedMap<AnfNodePtr, int32_t> *para_
         } else {
           gsub->buffer << "para" << iter->second << "_" << in->ToString();
         }
-        if (in->func_graph() != node->func_graph()) {
+        if (in->func_graph() != nullptr && in->func_graph() != node->func_graph()) {
           gsub->buffer << ")";
         }
       } else if (in->isa<CNode>()) {
@@ -325,7 +328,7 @@ void DumpParallelInfo(const CNodePtr &node, const std::shared_ptr<SubGraphIRInfo
   }
 
   ValuePtr in_tmp = MakeValue(in_strategy->GetInputDim());
-  gsub->buffer << " { in_strategy: ";
+  gsub->buffer << " {in_strategy: ";
   gsub->buffer << in_tmp->ToString();
 
   auto out_strategy = operator_info->out_strategy();
@@ -335,7 +338,7 @@ void DumpParallelInfo(const CNodePtr &node, const std::shared_ptr<SubGraphIRInfo
     gsub->buffer << out_tmp->ToString();
   }
 
-  gsub->buffer << " }";
+  gsub->buffer << "}";
 }
 
 void DumpAttrs(const mindspore::HashMap<std::string, ValuePtr> &attrs, const std::shared_ptr<SubGraphIRInfo> &gsub,

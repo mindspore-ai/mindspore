@@ -174,15 +174,15 @@ def resolve_symbol(namespace, symbol):
         # If need trope the obj
         if resolve_ in convert_object_map:
             resolve_ = convert_object_map.get(resolve_)
-            logger.debug("Convert resolve = %r", resolve_)
+            logger.debug("Convert resolve: %r", resolve_)
             if resolve_ == NO_IMPLEMENT:
                 raise NotImplementedError(f"Not support for '{symbol}'.")
     except Exception as e:
         if isinstance(e, NotImplementedError):
             raise e
         resolve_ = None
-        logger.debug("Resolve exception occurred, value = %r", e)
-        logger.debug("Resolve type is invalid, namespace = %s, symbol = %s",
+        logger.debug("Resolve exception occurred, value: %r", e)
+        logger.debug("Resolve type is invalid, namespace: %s, symbol: %s",
                      namespace.__str__(), symbol)
 
     if isinstance(resolve_, _MindsporeFunctionExecutor):
@@ -219,7 +219,7 @@ def get_object_key(obj):
         if hasattr(obj, "cell_init_args"):
             obj_key = "%s_ID" % (tag + obj.cell_init_args)
         obj_id = "%s_ID%d" % (tag, id(obj))
-    logger.debug("obj_key %s obj_id = %s", obj_key, obj_id)
+    logger.debug("obj_key: %s, obj_id: %s", obj_key, obj_id)
 
     # method has same id of different instance
     if isinstance(obj, types.MethodType):
@@ -339,9 +339,17 @@ def create_instance(cls_type, params=None):
     return obj
 
 
+def get_obj_from_sequence(obj, index):
+    """Implement `tuple_getitem`."""
+    if not isinstance(obj, (tuple, list)):
+        raise TypeError(f"Should not get item from a object that not sequence type, obj: {obj}")
+    # Not check index out of range by self.
+    return obj[index]
+
+
 def get_module_namespace(obj):
     """Get the module's namespace."""
-    logger.debug("get module namespace, module = %r", obj)
+    logger.debug("get module namespace, module: %r", obj)
     mod_namespace = None
     if isinstance(obj, types.ModuleType):
         mod_namespace = CellNamespace(obj.__name__)
@@ -352,9 +360,9 @@ def get_module_namespace(obj):
 
 def get_class_member_namespace_symbol(obj):
     """Get obj class member type."""
-    logger.debug("get class instance namespace, object = %r", obj)
+    logger.debug("get class instance namespace, object: %r", obj)
     class_namespace = ClassMemberNamespace(obj)
-    logger.debug("class namesapce = %r", class_namespace)
+    logger.debug("class namespace: %r", class_namespace)
     return class_namespace
 
 
@@ -425,14 +433,14 @@ def get_ast_namespace_symbol(obj):
     """Get obj type and namespace and symbol."""
     # step 1:get symbol from object map
     ops_info = parse_object_map.get(type(obj), SYMBOL_UNDEFINE)
-    logger.debug("ops info = %r", ops_info)
+    logger.debug("ops info: %r", ops_info)
     return ops_info
 
 
 def get_operation_namespace_symbol(var: str):
     """Get operation namespace and symbol."""
     ops_info = (trope_ns, var)
-    logger.debug("get operation ops info = %r", ops_info)
+    logger.debug("get operation ops info: %r", ops_info)
     return ops_info
 
 
@@ -566,7 +574,7 @@ class Parser:
 
     def parse(self):
         """Parse the function or method."""
-        logger.debug("fn = %r", self.fn)
+        logger.debug("fn: %r", self.fn)
         if isinstance(self.fn, (types.FunctionType, types.MethodType)):
             try:
                 lines, self.line_offset = inspect.getsourcelines(self.fn)
@@ -582,7 +590,7 @@ class Parser:
                 src = dedent(original_src)
                 self.col_offset = \
                     len(original_src.split('\n')[0]) - len(src.split('\n')[0])
-                logger.debug("Get source = %s", src)
+                logger.debug("Get source: %s", src)
                 try:
                     ast_tokens = asttokens.ASTTokens(src, parse=True)
                 except IndentationError as idt_err:

@@ -525,7 +525,7 @@ std::vector<DataConverterPtr> GetDataConverters() {
 bool ConvertData(const py::object &obj, ValuePtr *const data, bool use_signature, const TypePtr &dtype) {
   // Check parameter valid
   if (data == nullptr) {
-    MS_LOG(ERROR) << "Data is null pointer";
+    MS_LOG(ERROR) << "The value pointer should not be null.";
     return false;
   }
   ValuePtr converted = nullptr;
@@ -554,7 +554,7 @@ FuncGraphPtr ConvertToFuncGraph(const py::object &obj, const std::string &python
   ValuePtr value = nullptr;
   bool is_cache = data_converter::GetObjectValue(obj_id, &value);
   if (is_cache && value != nullptr && value->isa<FuncGraph>()) {
-    MS_LOG(DEBUG) << "Get the cache data, obj = " << obj_id;
+    MS_LOG(DEBUG) << "Get the cache data, obj: " << obj_id;
     func_graph = value->cast<FuncGraphPtr>();
     if (!func_graph->dropped()) {
       return func_graph;
@@ -570,7 +570,7 @@ FuncGraphPtr ConvertToFuncGraph(const py::object &obj, const std::string &python
   data_converter::MakeProperNameToFuncGraph(func_graph, obj_id);
   data_converter::CacheObjectValue(obj_id, func_graph);
   if (!obj_key.empty()) {
-    MS_LOG(DEBUG) << "Add graph:" << obj_key << ", func_graph:" << func_graph->ToString();
+    MS_LOG(DEBUG) << "Add graph: " << obj_key << ", func_graph: " << func_graph->ToString();
     data_converter::SetObjGraphValue(obj_key, func_graph);
   }
 
@@ -584,11 +584,11 @@ static mindspore::HashMap<std::string, std::vector<FuncGraphPtr>> object_graphs_
 
 void SetObjGraphValue(const std::string &obj_key, const FuncGraphPtr &data) {
   object_graphs_map_[obj_key].push_back(data);
-  MS_LOG(DEBUG) << "Set func graph size:" << object_graphs_map_.size();
+  MS_LOG(DEBUG) << "Set func graph size: " << object_graphs_map_.size();
 }
 
 const mindspore::HashMap<std::string, std::vector<FuncGraphPtr>> &GetObjGraphs() {
-  MS_LOG(DEBUG) << "Obj size:" << object_graphs_map_.size();
+  MS_LOG(DEBUG) << "Obj graphs size: " << object_graphs_map_.size();
   return object_graphs_map_;
 }
 
@@ -606,7 +606,7 @@ std::vector<std::string> GetObjKey(const py::object &obj) {
   py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
   py::tuple obj_tuple = python_adapter::CallPyModFn(mod, PYTHON_MOD_RESOLVE_GET_OBJ_KEY, obj);
   if (obj_tuple.size() != 2) {
-    MS_LOG(EXCEPTION) << "Get_obj_key must return 2 elements";
+    MS_LOG(EXCEPTION) << "The function of \'get_obj_key()\' must return 2 elements";
   }
   return {py::cast<std::string>(obj_tuple[0]), py::cast<std::string>(obj_tuple[1])};
 }
@@ -619,10 +619,10 @@ ResolveTypeDef GetObjType(const py::object &obj) {
       ResolveTypeDef(python_adapter::CallPyModFn(mod, PYTHON_MOD_RESOLVE_GET_OBJ_TYPE, obj).cast<int32_t>());
     return obj_type;
   } catch (const py::error_already_set &ex) {
-    MS_LOG(ERROR) << "Meet a exception from Python when get the type of `" << py::str(obj) << "`.\n" << ex.what();
+    MS_LOG(ERROR) << "Meet a exception from Python when get the type of \'" << py::str(obj) << "\'.\n" << ex.what();
     std::rethrow_exception(std::current_exception());
   } catch (const py::type_error &ex) {
-    MS_LOG(ERROR) << "Meet a exception when get the type of `" << py::str(obj) << "`.\n" << ex.what();
+    MS_LOG(ERROR) << "Meet a exception when get the type of \'" << py::str(obj) << "\'.\n" << ex.what();
     std::rethrow_exception(std::current_exception());
   }
 }
@@ -638,8 +638,8 @@ ClassInstanceTypeDef GetClassInstanceType(const py::object &obj) {
 // Check the object is Cell Instance.
 bool IsCellInstance(const py::object &obj) {
   auto class_type = GetClassInstanceType(obj);
-  bool isCell = (class_type == CLASS_INSTANCE_TYPE_CELL);
-  return isCell;
+  bool is_cell = (class_type == CLASS_INSTANCE_TYPE_CELL);
+  return is_cell;
 }
 
 // Create the python class instance.

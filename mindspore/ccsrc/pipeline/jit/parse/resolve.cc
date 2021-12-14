@@ -16,8 +16,9 @@
 
 #include "pipeline/jit/parse/resolve.h"
 
-#include <string>
+#include <utility>
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "ir/param_info.h"
@@ -310,25 +311,12 @@ AnfNodePtr ResolveObjectAndAddToManager(const FuncGraphManagerPtr &manager, cons
 }
 }  // namespace
 
-AnfNodePtr ResolveSymbol(const FuncGraphManagerPtr &manager, const NameSpacePtr &name_space, const SymbolPtr &symbol,
-                         const AnfNodePtr &node) {
+// Get python object with index from a list.
+py::object GetItemObjectFromSequence(const NameSpacePtr &name_space, const SymbolPtr &symbol, const AnfNodePtr &node,
+                                     const AnfNodePtr &index_node) {
   MS_EXCEPTION_IF_NULL(node);
   TraceGuard trace_guard(std::make_shared<TraceResolve>(node->debug_info()));
-  if (node->func_graph() == nullptr || manager == nullptr) {
-    MS_LOG(EXCEPTION) << "Node " << node->DebugString() << " graph or manager is nullptr";
-  }
-  SymbolResolver symbol_resolver(name_space, symbol, node);
-  symbol_resolver.Resolve();
-  py::object obj = symbol_resolver.result();
-  AnfNodePtr resolved_node = ResolveObjectAndAddToManager(manager, obj, node);
-  return resolved_node;
-}
-
-AnfNodePtr ResolveCellwithAttr(const FuncGraphManagerPtr &manager, const NameSpacePtr &name_space,
-                               const SymbolPtr &symbol, const AnfNodePtr &node, const AnfNodePtr &attr) {
-  MS_EXCEPTION_IF_NULL(node);
-  TraceGuard trace_guard(std::make_shared<TraceResolve>(node->debug_info()));
-  if (node->func_graph() == nullptr || manager == nullptr) {
+  if (node->func_graph() == nullptr) {
     MS_LOG(EXCEPTION) << "Node " << node->DebugString() << " graph or manager is nullptr";
   }
   SymbolResolver symbol_resolver(name_space, symbol, node);
@@ -337,6 +325,75 @@ AnfNodePtr ResolveCellwithAttr(const FuncGraphManagerPtr &manager, const NameSpa
   }
 
   py::object obj = symbol_resolver.result();
+  if (!py::isinstance<py::list>(obj) && !py::isinstance<py::tuple>(obj)) {
+    MS_LOG(EXCEPTION) << "Should not get item from non-sequence type, obj: " << py::str(obj);
+  }
+
+  const std::string fn = PYTHON_MOD_GET_ITEM_FROM_SEQUENCE;
+  const std::string module = "mindspore._extends.parse.parser";
+  int index = GetValueNode<Int64ImmPtr>(index_node)->value();
+  MS_LOG(DEBUG) << "obj: " << py::str(obj) << ", index: " << index;
+  py::object item_obj = parse::python_adapter::GetPyFn(module, fn)(obj, py::int_(index));
+  return item_obj;
+}
+
+std::pair<parse::NameSpacePtr, parse::SymbolPtr> GetNamespaceAndSymbol(const AnfNodePtr &node) {
+  if (IsPrimitiveCNode(node, prim::kPrimResolve)) {
+    auto resolve_cnode = node->cast<CNodePtr>();
+    constexpr size_t namespace_index = 1;
+    auto namespace_node = resolve_cnode->input(namespace_index);
+    constexpr size_t symbol_index = 2;
+    auto symbol_node = resolve_cnode->input(symbol_index);
+    if (!IsValueNode<parse::NameSpace>(namespace_node) || !IsValueNode<parse::Symbol>(symbol_node)) {
+      MS_LOG(EXCEPTION) << "Unexpected type, namespace: " << namespace_node->ToString()
+                        << ", symbol: " << symbol_node->ToString();
+    }
+    // Deal with the case of GetAttr from a class member,
+    // and avoid the case of GetAttr from self (the result of ParseSuper).
+    auto name_space = GetValueNode<parse::NameSpacePtr>(namespace_node);
+    auto symbol = GetValueNode<parse::SymbolPtr>(symbol_node);
+    return {name_space, symbol};
+  }
+  constexpr auto recursive_level = 2;
+  MS_LOG(EXCEPTION) << "It's not prim::Resolve CNode, node: " << node->DebugString(recursive_level);
+}
+
+py::object GetSymbolObject(const NameSpacePtr &name_space, const SymbolPtr &symbol, const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (node->func_graph() == nullptr) {
+    MS_LOG(EXCEPTION) << "Node " << node->DebugString() << " graph is nullptr.";
+  }
+  SymbolResolver symbol_resolver(name_space, symbol, node);
+  symbol_resolver.Resolve();
+  if (!symbol_resolver.Resolve()) {
+    MS_LOG(EXCEPTION) << "Fail to resolve node, NodeInfo.";
+  }
+  py::object obj = symbol_resolver.result();
+  return obj;
+}
+
+AnfNodePtr ResolveSymbol(const FuncGraphManagerPtr &manager, const NameSpacePtr &name_space, const SymbolPtr &symbol,
+                         const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (manager == nullptr) {
+    MS_LOG(EXCEPTION) << "Manager is nullptr.";
+  }
+  TraceGuard trace_guard(std::make_shared<TraceResolve>(node->debug_info()));
+  auto obj = GetSymbolObject(name_space, symbol, node);
+  AnfNodePtr resolved_node = ResolveObjectAndAddToManager(manager, obj, node);
+  return resolved_node;
+}
+
+// Resolve Cell GetAttr operation.
+AnfNodePtr ResolveCellWithAttr(const FuncGraphManagerPtr &manager, const py::object &obj, const AnfNodePtr &node,
+                               const AnfNodePtr &attr) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(attr);
+  if (manager == nullptr) {
+    MS_LOG(EXCEPTION) << "Manager is nullptr.";
+  }
+  MS_LOG(DEBUG) << "obj: " << py::str(obj) << ", attr: " << attr->ToString();
+  TraceGuard trace_guard(std::make_shared<TraceResolve>(node->debug_info()));
   if (!data_converter::IsCellInstance(obj)) {
     AnfNodePtr resolved_node = ResolveObjectAndAddToManager(manager, obj, node);
     AnfNodePtrList inputs = {NewValueNode(prim::kPrimGetAttr), resolved_node, attr};
@@ -365,7 +422,7 @@ opt::OptPassGroupMap GetOptResolvePasses(const opt::irpass::ResolveIRPassLib &ir
   opt::OptPassGroupMap map({
     {"resolve",
      {
-       irpass.resolver_getattr_resolve_,
+       irpass.resolver_,
      }},
   });
   return map;
