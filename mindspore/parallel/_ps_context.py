@@ -252,6 +252,14 @@ def _set_rank_id(rank_id):
     ps_context().set_rank_id(rank_id)
 
 
+def _is_ps_mode():
+    return _get_ps_context("server_mode") == "PARAMETER_SERVER"
+
+
+def _is_fl_mode():
+    return _get_ps_context("server_mode") in ("FEDERATED_LEARNING", "HYBRID_TRAINING")
+
+
 def _check_value(key, value):
     """
     Validate the value for parameter server context keys.
