@@ -415,6 +415,8 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
   const auto &ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
+    MS_EXCEPTION_IF_NULL(session_);
+    session_->InitAllBucket(graph, device_context);
     return graph->graph_id();
   }
 
