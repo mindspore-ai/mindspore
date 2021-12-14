@@ -417,8 +417,12 @@ void E2eDump::DumpRunIter(const KernelGraphPtr &graph, uint32_t rank_id) {
   if (sink_mode && json_parser.async_dump_enabled()) {
     // for async dump when sink_mode = true, cur_dump_iter() = current_epoch
     // dump history for all iterations in the epoch
-    for (int i = 0; i < iter_num; i++) {
-      fout << std::to_string(json_parser.cur_dump_iter() * iter_num + i) + "\n";
+    Debugger::GetInstance()->UpdateGraphIterMap(graph->graph_id(), iter_num);
+    auto graph_iter_map = Debugger::GetInstance()->GetGraphIterMap();
+    auto step_per_epoch = graph_iter_map[graph->graph_id()];
+    for (int i = 0; i < step_per_epoch; i++) {
+      auto step = (json_parser.cur_dump_iter() * step_per_epoch) + i;
+      fout << (std::to_string(step) + "\n");
     }
   } else {
     fout << std::to_string(json_parser.cur_dump_iter()) + "\n";

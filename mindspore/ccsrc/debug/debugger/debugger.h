@@ -174,6 +174,10 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   // check if debugger is enabled
   bool CheckDebuggerEnabled() const;
 
+  std::map<uint32_t, int32_t> GetGraphIterMap() { return graph_iter_num_map_; }
+
+  void UpdateGraphIterMap(uint32_t graph_id, int32_t iter_num);
+
 #ifdef ENABLE_D
   std::shared_ptr<DumpDataBuilder> LoadDumpDataBuilder(const std::string &node_name);
 
@@ -295,6 +299,9 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   std::list<KernelGraphPtr> graph_ptr_list_;
   // The vector of graph pointers that have been run in the current step.
   std::vector<KernelGraphPtr> graph_ptr_step_vec_;
+
+  // map to store iter num in each epoch when dataset_sink_mode is true
+  std::map<uint32_t, int32_t> graph_iter_num_map_;
 
 #ifdef ENABLE_D
   // to construct kernel data for async dump, key is the dump path to the node
