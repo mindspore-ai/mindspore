@@ -116,8 +116,6 @@ class DynamicMemPoolBestFit {
 
   // Release the real device memory.
   void ReleaseDeviceRes();
-  // Display the information of memory block and memory buf.
-  void DumpDynamicMemPoolInfo();
 
   // Get the minimum memory unit size using for dynamic extend.
   size_t MemAllocUnitSize(bool from_persistent_mem = false) const;
@@ -166,6 +164,8 @@ class DynamicMemPoolBestFit {
                      const MemStatusManagerPtr &mem_mng);
   // Erase the idle memory buf by size and device address when idle memory buf is combined.
   void EraseIdleMemBuf(size_t size, const DeviceMemPtr &device_addr, const MemStatusManagerPtr &mem_mng);
+  // Display the information of memory block and memory buf.
+  void DumpDynamicMemPoolInfo();
 
   // Support multi-thread.
   std::mutex mutex_;

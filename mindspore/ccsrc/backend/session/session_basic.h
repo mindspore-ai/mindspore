@@ -195,9 +195,10 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
                                VectorRef *const outputs,
                                std::map<KernelWithIndex, std::vector<std::vector<size_t>>> *output_indexes);
   void GetRefCount(const KernelGraph *graph, std::map<KernelWithIndex, size_t> *ref_count);
-  void GetForwardOutputRefCount(const KernelGraph *graph, std::map<AnfNodePtr, size_t> *forward_output_refcount);
+  void GetForwardOpOutputRefCount(const KernelGraph *graph, std::map<std::string, size_t> *forward_op_output_refcount);
+  void ReleaseForwardOpOutput(const std::vector<tensor::TensorPtr> &input_tensors,
+                              std::map<std::string, size_t> *forward_op_output_refcount);
   void HandleOpInputs(const std::set<KernelWithIndex> &input_kernel, std::map<KernelWithIndex, size_t> *ref_count,
-                      std::map<AnfNodePtr, size_t> *forward_output_refcount,
                       std::map<KernelWithIndex, tensor::TensorPtr> *op_output_map);
 
   void HandleOpOutputs(const AnfNodePtr &kernel, const VectorRef &op_outputs,

@@ -40,6 +40,9 @@ DeviceMemPtr DynamicMemPoolBestFit::AllocTensorMem(size_t size, bool from_persis
   if (!device_addr) {
     device_addr = AddMemBlockAndMemBuf(align_size, from_persistent_mem);
   }
+  if (!device_addr) {
+    DumpDynamicMemPoolInfo();
+  }
   return device_addr;
 }
 
@@ -167,7 +170,6 @@ DeviceMemPtr DynamicMemPoolBestFit::AddMemBlockAndMemBuf(size_t size, bool from_
     if (mem_addr != nullptr) {
       return mem_addr;
     }
-    DumpDynamicMemPoolInfo();
     return nullptr;
   }
   // Add new memory block
@@ -176,7 +178,6 @@ DeviceMemPtr DynamicMemPoolBestFit::AddMemBlockAndMemBuf(size_t size, bool from_
   if (real_alloc_size < size) {
     MS_LOG(WARNING) << "Memory not enough: alloc size[" << real_alloc_size << "] is smaller than required size[" << size
                     << "].";
-    DumpDynamicMemPoolInfo();
     return nullptr;
   }
   // If unit_size is changed by other function(not context), change unit_size back
