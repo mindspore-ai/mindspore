@@ -452,7 +452,7 @@ def set_autotune_interval(interval):
     Default value is set to 0, meaning epoch based autotuning.
 
     Args:
-        interval (int): Interval (in steps) to to serve as gap for consecutive AutoTune runs.
+        interval (int): Interval (in steps) to serve as gap for consecutive AutoTune runs.
 
     Raises:
         ValueError: If interval is invalid when interval < 0 or interval > MAX_INT_32.
