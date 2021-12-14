@@ -152,6 +152,10 @@ void BenchmarkUnifiedApi::UpdateDistributionName(const std::shared_ptr<mindspore
     return;
   }
 
+  if (name->size() == 0) {
+    return;
+  }
+
   auto device_info = context->MutableDeviceInfo().front();
   GPUDeviceInfo *gpu_info = reinterpret_cast<GPUDeviceInfo *>(device_info.get());
   auto rank_id = gpu_info->GetRankID();
@@ -159,7 +163,18 @@ void BenchmarkUnifiedApi::UpdateDistributionName(const std::shared_ptr<mindspore
     return;
   }
 
-  *name = name->replace(name->find("."), sizeof('.'), to_string(rank_id) + ".");
+  /* model file & benchmark data file: include .mindir
+   config file :  include .config */
+  auto replace_pos = name->find(".mindir");
+  if (replace_pos == std::string::npos) {
+    replace_pos = name->find(".config");
+  }
+
+  if (replace_pos == std::string::npos) {
+    return;
+  }
+
+  *name = name->replace(replace_pos, sizeof('.'), to_string(rank_id) + ".");
 
   MS_LOG(INFO) << "Update distribution info: " << *name;
   std::cout << "Update distribution info: " << *name << std::endl;
