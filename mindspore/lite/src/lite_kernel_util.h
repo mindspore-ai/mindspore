@@ -35,7 +35,7 @@ class LiteKernelUtil {
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
   static bool IsSwitchTypeCall(LiteKernel *kernel);
   static bool IsNonTailCall(LiteKernel *node);
-  static std::vector<LiteKernel *> GetCallInputPartails(LiteKernel *call_node);
+  static std::vector<LiteKernel *> GetCallInputPartials(LiteKernel *call_node);
 #endif
   static LiteKernel *GetInputsSpecificNode(const LiteKernel *kernel, const schema::PrimitiveType &primitive_type);
   static bool InputsContainsSpecificNode(const LiteKernel *kernel, const schema::PrimitiveType &primitive_type);
@@ -45,6 +45,10 @@ class LiteKernelUtil {
                                               const std::vector<lite::Tensor *> *in_tensors,
                                               const std::vector<lite::Tensor *> *out_tensors, SubGraphType type,
                                               const lite::InnerContext &context, int schema_version);
+  static int ReplaceSubGraphNodesInTensor(kernel::LiteKernel *kernel, const lite::Tensor *old_tensor,
+                                          lite::Tensor *new_tensor);
+  static int ReplaceSubGraphNodesOutTensor(kernel::LiteKernel *kernel, const lite::Tensor *old_tensor,
+                                           lite::Tensor *new_tensor);
 
  private:
   static std::set<lite::Tensor *> AllOutTensor(const std::vector<LiteKernel *> &kernels);

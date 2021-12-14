@@ -32,6 +32,9 @@
 #ifndef DELEGATE_CLIP
 #include "include/api/delegate.h"
 #endif
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
+#include "src/control_flow/control_flow_scheduler.h"
+#endif
 
 namespace mindspore::lite {
 constexpr int kDefaultDeviceType = -1;
@@ -167,6 +170,7 @@ class Scheduler {
   std::set<int> scheduled_subgraph_index_{};
   std::unordered_map<kernel::LiteKernel *, size_t> partial_kernel_subgraph_index_map_{};
   std::set<lite::Model::Node *> partial_cnode_inferred_{};
+  ControlFlowSchedulerPtr control_flow_scheduler_ = nullptr;
 #endif
   int schema_version_ = SCHEMA_VERSION::SCHEMA_CUR;
   std::map<std::string, TypeId> *execution_plan_ = nullptr;

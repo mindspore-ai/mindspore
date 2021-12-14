@@ -28,7 +28,8 @@
 #include "nnacl/op_base.h"
 #include "src/inner_context.h"
 #include "src/tensor.h"
-#include "src/scheduler.h"
+#include "src/sub_graph_kernel.h"
+#include "include/model.h"
 
 namespace mindspore::lite {
 class ControlFlowScheduler {
@@ -36,12 +37,12 @@ class ControlFlowScheduler {
   ControlFlowScheduler(InnerContext *ctx, const mindspore::Context *ms_ctx, std::vector<Tensor *> *src_tensors)
       : context_(ctx), ms_context_(ms_ctx), src_tensors_(src_tensors) {}
   ~ControlFlowScheduler() = default;
-  int Schedule(std::vector<kernel::LiteKernel *> *dst_kernels);
+  int SplitNonTailCallSubGraphs(std::vector<kernel::LiteKernel *> *dst_kernels);
 
  private:
   bool IsNonTailCallSubGraph(kernel::SubGraphKernel *subgraph_kernel);
-  int SplitNonTailCallSubGraph(kernel::SubGraphKernel *subgraph_kernel,
-                               std::vector<kernel::LiteKernel *> *subgraph_kernels);
+  int SplitSingleNonTailCallSubGraph(kernel::SubGraphKernel *subgraph_kernel,
+                                     std::vector<kernel::LiteKernel *> *subgraph_kernels);
   std::set<kernel::LiteKernel *> GetNonTailCallSubGraphs(std::vector<kernel::LiteKernel *> *dst_kernels);
   void RemoveUselessKernels(std::vector<kernel::LiteKernel *> *dst_kernels,
                             const std::set<kernel::LiteKernel *> &useless_kernels);
@@ -54,9 +55,11 @@ class ControlFlowScheduler {
   InnerContext *context_ = nullptr;
   const mindspore::Context *ms_context_ = nullptr;
   int schema_version_ = SCHEMA_VERSION::SCHEMA_CUR;
-  std::vector<Tensor *> *src_tensors_;
+  std::vector<Tensor *> *src_tensors_ = nullptr;
   std::queue<kernel::LiteKernel *> to_process_q_{};
   std::vector<kernel::LiteKernel *> non_tail_calls_{};
 };
+
+using ControlFlowSchedulerPtr = std::shared_ptr<ControlFlowScheduler>;
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_CONTROL_FLOW_SCHEDULER_H_

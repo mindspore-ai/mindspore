@@ -81,28 +81,6 @@ bool OfflineIsolated(const std::vector<kernel::LiteKernel *> &kernels, const ker
   return true;
 }
 
-void LiteOpActor::ReplaceNodeInTensor(kernel::LiteKernel *kernel, const Tensor *old_tensor, Tensor *new_tensor) {
-  int ref_count = 0;
-#ifndef DELEGATE_CLIP
-  /* set op input for calculate */
-  if (kernel->desc().arch == kernel::kDelegate) {
-    ref_count++;
-  } else {
-#endif
-    for (auto in_node : reinterpret_cast<kernel::SubGraphKernel *>(kernel)->in_nodes()) {
-      for (size_t node_in_index = 0; node_in_index < in_node->in_tensors().size(); node_in_index++) {
-        if (old_tensor == in_node->in_tensors()[node_in_index]) {
-          in_node->set_in_tensor(new_tensor, node_in_index);
-          ref_count++;
-        }
-      }
-    }
-#ifndef DELEGATE_CLIP
-  }
-#endif
-  new_tensor->set_init_ref_count(ref_count);
-}
-
 int LiteOpActor::IsolateInputData(std::vector<std::shared_ptr<LiteOpActor>> *actors) {
   std::vector<kernel::LiteKernel *> kernels{};
   std::transform(actors->begin(), actors->end(), std::back_inserter(kernels),
@@ -149,7 +127,12 @@ int LiteOpActor::IsolateInputData(std::vector<std::shared_ptr<LiteOpActor>> *act
       new_tensor->AddQuantParam(quant);
     }
     isolate_input_map_->insert(std::make_pair(new_tensor, old_tensor));
-    ReplaceNodeInTensor(kernel_, old_tensor, new_tensor);
+    auto ret = kernel::LiteKernelUtil::ReplaceSubGraphNodesInTensor(kernel_, old_tensor, new_tensor);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "ReplaceSubGraphNodesInTensor failed.";
+      return ret;
+    }
+
     /* set subgraph input for copy data */
     kernel_->set_in_tensor(new_tensor, i);
   }

@@ -23,12 +23,15 @@
 
 namespace mindspore::lite {
 bool ControlFlowScheduler::IsNonTailCallSubGraph(kernel::SubGraphKernel *subgraph_kernel) {
+  if (subgraph_kernel == nullptr) {
+    return false;
+  }
   auto nodes = subgraph_kernel->nodes();
   return std::any_of(nodes.begin(), nodes.end(),
                      [](kernel::LiteKernel *node) { return kernel::LiteKernelUtil::IsNonTailCall(node); });
 }
 
-int ControlFlowScheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
+int ControlFlowScheduler::SplitNonTailCallSubGraphs(std::vector<kernel::LiteKernel *> *dst_kernels) {
   std::set<kernel::LiteKernel *> all_non_tail_subgraphs = GetNonTailCallSubGraphs(dst_kernels);
   for (auto item : all_non_tail_subgraphs) {
     to_process_q_.push(item);
@@ -43,10 +46,9 @@ int ControlFlowScheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernel
       return RET_ERROR;
     }
     std::vector<kernel::LiteKernel *> new_subgraphs{};
-    // recoder call and subgraph, make new partial node
-    auto ret = SplitNonTailCallSubGraph(subgraph_kernel, &new_subgraphs);
+    auto ret = SplitSingleNonTailCallSubGraph(subgraph_kernel, &new_subgraphs);
     if (ret != RET_OK) {
-      MS_LOG(ERROR) << "SplitNonTailCallSubGraph failed, ret: " << ret;
+      MS_LOG(ERROR) << "SplitSingleNonTailCallSubGraph failed, ret: " << ret;
       return ret;
     }
 
@@ -84,8 +86,8 @@ std::set<kernel::LiteKernel *> ControlFlowScheduler::GetNonTailCallSubGraphs(
   return non_tail_subgraph_kernels;
 }
 
-int ControlFlowScheduler::SplitNonTailCallSubGraph(kernel::SubGraphKernel *subgraph_kernel,
-                                                   std::vector<kernel::LiteKernel *> *subgraph_kernels) {
+int ControlFlowScheduler::SplitSingleNonTailCallSubGraph(kernel::SubGraphKernel *subgraph_kernel,
+                                                         std::vector<kernel::LiteKernel *> *subgraph_kernels) {
   auto nodes = subgraph_kernel->nodes();
 
   // get the position of the last non-tail call op.
@@ -100,25 +102,24 @@ int ControlFlowScheduler::SplitNonTailCallSubGraph(kernel::SubGraphKernel *subgr
   // recode non-tail call kernels;
   non_tail_calls_.push_back(*last_non_tail_call_iter);
 
-  // create last subgraph
-  std::vector<kernel::LiteKernel *> last_subgraph_nodes{};
-  for (auto iter = nodes.begin() + distance; iter != nodes.end(); ++iter) {
-    last_subgraph_nodes.push_back(*iter);
-  }
-  auto cur_subgraph_type = subgraph_kernel->subgraph_type();
-  auto last_subgraph = kernel::LiteKernelUtil::CreateSubGraphKernel(last_subgraph_nodes, nullptr, nullptr,
-                                                                    cur_subgraph_type, *context_, schema_version_);
-  subgraph_kernels->push_back(last_subgraph);
-
   // create front subgraph
   std::vector<kernel::LiteKernel *> front_subgraph_nodes{};
   for (auto iter = nodes.begin(); iter != nodes.begin() + distance; ++iter) {
     front_subgraph_nodes.push_back(*iter);
   }
-  auto front_subgraph = kernel::LiteKernelUtil::CreateSubGraphKernel(last_subgraph_nodes, nullptr, nullptr,
+  auto cur_subgraph_type = subgraph_kernel->subgraph_type();
+  auto front_subgraph = kernel::LiteKernelUtil::CreateSubGraphKernel(front_subgraph_nodes, nullptr, nullptr,
                                                                      cur_subgraph_type, *context_, schema_version_);
   subgraph_kernels->push_back(front_subgraph);
 
+  // create last subgraph
+  std::vector<kernel::LiteKernel *> last_subgraph_nodes{};
+  for (auto iter = nodes.begin() + distance; iter != nodes.end(); ++iter) {
+    last_subgraph_nodes.push_back(*iter);
+  }
+  auto last_subgraph = kernel::LiteKernelUtil::CreateSubGraphKernel(last_subgraph_nodes, nullptr, nullptr,
+                                                                    cur_subgraph_type, *context_, schema_version_);
+  subgraph_kernels->push_back(last_subgraph);
   return RET_OK;
 }
 
@@ -149,7 +150,7 @@ void ControlFlowScheduler::AppendToProcessQ(std::vector<kernel::LiteKernel *> *n
 int ControlFlowScheduler::RecordNonTailCallLinkInfo() {
   for (auto non_tail_call : non_tail_calls_) {
     size_t non_tail_call_output_size = non_tail_call->out_tensors().size();
-    auto partial_nodes = kernel::LiteKernelUtil::GetCallInputPartails(non_tail_call);
+    auto partial_nodes = kernel::LiteKernelUtil::GetCallInputPartials(non_tail_call);
     for (auto node : partial_nodes) {
       auto partial_node = reinterpret_cast<kernel::PartialFusionKernel *>(node);
       MS_CHECK_TRUE_MSG(partial_node != nullptr, RET_ERROR, "node cast to partial node failed.");
