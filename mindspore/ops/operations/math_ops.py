@@ -310,7 +310,7 @@ class AssignAdd(Primitive):
         >>> net = Net()
         >>> value = Tensor(np.ones([1]).astype(np.int64)*100)
         >>> output = net(value)
-        >>> print(output)
+        >>> print(net.variable.asnumpy())
         [101]
     """
     __mindspore_signature__ = (
@@ -2714,8 +2714,7 @@ class DivNoNan(_MathBinaryOp):
 
 class MulNoNan(_MathBinaryOp):
     r"""
-    Computes `x` * `y` element-wise. If `y` is zero, no matter what `x` is, it will return 0, and also
-    If `x` is zero, no matter what `y` is, it will return 0.
+    Computes `x` * `y` element-wise. If `y` is zero, no matter what `x` is, it will return 0.
 
     Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
@@ -2730,6 +2729,7 @@ class MulNoNan(_MathBinaryOp):
 
     Note:
         The shapes of `x` and `y` should be the same or can be broadcasted.
+        This is noncommutative: if `y` is NaN or infinite and `x` is 0, the result will be NaN.
 
     Inputs:
         - **x** (Union[Tensor]) - The first input is a tensor whose data type is one of
@@ -2762,8 +2762,8 @@ class MulNoNan(_MathBinaryOp):
         >>> y = Tensor(np.array([[-1.0, 4.0, np.inf], [np.nan, 0, 1.0]]), mindspore.float32)
         >>> output = mul_no_nan(x, y)
         >>> print(output)
-        [[ 1. 24. 0.]
-         [ 0.  0. 4.]]
+        [[ 1. 24. nan]
+         [ nan  0. 4.]]
         >>> print(output.dtype)
         Float32
         >>> # case 3 : the y is a scalar.

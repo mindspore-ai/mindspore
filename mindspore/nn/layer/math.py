@@ -822,48 +822,10 @@ def matmul_op_select(x1_shape, x2_shape, transpose_x1, transpose_x2):
 
 class MatMul(Cell):
     r"""
-    Multiplies matrix `x1` by matrix `x2`.
-
-    nn.MatMul will be deprecated in future versions. Please use ops.matmul instead.
-
-    - If both `x1` and `x2` are 1-dimensional, the dot product is returned.
-    - If the dimensions of `x1` and `x2` are all not greater than 2,  the matrix-matrix product will
-      be returned. Note if one of 'x1' and 'x2' is 1-dimensional, the argument will first be
-      expanded to 2 dimension. After the matrix multiply, the expanded dimension will be removed.
-    - If at least one of `x1` and `x2` is N-dimensional (N>2), the none-matrix dimensions(batch) of inputs
-      will be broadcasted and must be broadcastable. Note if one of 'x1' and 'x2' is 1-dimensional,
-      the argument will first be expanded to 2 dimension and then the none-matrix dimensions will be broadcasted.
-      after the matrix multiply, the expanded dimension will be removed. For example,
-      if `x1` is a :math:`(j \times 1 \times n \times m)` tensor and
-      `x2` is b :math:`(k \times m \times p)` tensor, the output will be a :math:`(j \times k \times n \times p)`
-      tensor.
-
-    Args:
-        transpose_x1 (bool): If true, `a` is transposed before multiplication. Default: False.
-        transpose_x2 (bool): If true, `b` is transposed before multiplication. Default: False.
-
-    Inputs:
-        - **x1** (Tensor) - The first tensor to be multiplied.
-        - **x2** (Tensor) - The second tensor to be multiplied.
-
-    Outputs:
-        Tensor, the shape of the output tensor depends on the dimension of input tensors.
-
-    Raises:
-        TypeError: If `transpose_x1` or `transpose_x2` is not a bool.
-        ValueError: If the column of matrix dimensions of `x1` is not equal to
-                    the row of matrix dimensions of `x2`.
+    The nn.MatMul interface is deprecated, please use the :class:`mindspore.ops.matmul` instead.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> net = nn.MatMul()
-        >>> x1 = Tensor(np.ones(shape=[3, 2, 3]), mindspore.float32)
-        >>> x2 = Tensor(np.ones(shape=[3, 4]), mindspore.float32)
-        >>> output = net(x1, x2)
-        >>> print(output.shape)
-        (3, 2, 4)
+        deprecated
     """
 
     @deprecated('1.2', 'ops.matmul', False)
