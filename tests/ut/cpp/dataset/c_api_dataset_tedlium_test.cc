@@ -193,6 +193,63 @@ TEST_F(MindDataTestPipeline, TestTedliumDatasetWithPipeline) {
   iter3->Stop();
 }
 
+/// Feature: TestTedliumDatasetIteratorOneColumn.
+/// Description: test iterator of Tedlium dataset with only the "waveform" column.
+/// Expectation: get correct data.
+TEST_F(MindDataTestPipeline, TestTedliumDatasetIteratorOneColumn) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTedliumDatasetIteratorOneColumn.";
+  // Create a Tedlium Dataset.
+  std::string folder_path12 = datasets_root_path_ + "/testTedliumData/TEDLIUM_release1";
+  std::shared_ptr<Dataset> ds =
+    Tedlium(folder_path12, "release1", "all", ".sph", std::make_shared<RandomSampler>(false, 4), nullptr);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Batch operation on ds
+  int32_t batch_size = 1;
+  ds = ds->Batch(batch_size);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // Only select "waveform" column and drop others
+  std::vector<std::string> columns = {"waveform"};
+  std::shared_ptr<Iterator> iter = ds->CreateIterator(columns, -1);
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto audio = row["waveform"];
+    MS_LOG(INFO) << "Tensor audio shape: " << audio.Shape();
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+
+  EXPECT_EQ(i, 4);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+/// Feature: TestTedliumDatasetIteratorWrongColumn.
+/// Description: test iterator of TedliumDataset with wrong column.
+/// Expectation: get none piece of data.
+TEST_F(MindDataTestPipeline, TestTedliumDatasetIteratorWrongColumn) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTedliumDatasetIteratorWrongColumn.";
+  // Create a Tedlium Dataset.
+  std::string folder_path12 = datasets_root_path_ + "/testTedliumData/TEDLIUM_release1";
+  std::shared_ptr<Dataset> ds =
+    Tedlium(folder_path12, "release1", "all", ".sph", std::make_shared<RandomSampler>(false, 4), nullptr);
+  EXPECT_NE(ds, nullptr);
+
+  // Pass wrong column name
+  std::vector<std::string> columns = {"digital"};
+  std::shared_ptr<Iterator> iter = ds->CreateIterator(columns);
+  EXPECT_EQ(iter, nullptr);
+}
+
 /// Feature: TedliumDataset.
 /// Description: read number of all samples from all files according to different versions.
 /// Expectation: TEDLIUM_release12 : 1 + 2 + 3

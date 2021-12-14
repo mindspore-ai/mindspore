@@ -183,7 +183,6 @@ TEST_F(MindDataTestPipeline, TestSpeechCommandsDatasetIteratorWrongColumn) {
   EXPECT_EQ(iter, nullptr);
 }
 
-
 /// Feature: Test SpeechCommands dataset.
 /// Description: get the size of SpeechCommands dataset.
 /// Expectation: the data is processed successfully.
