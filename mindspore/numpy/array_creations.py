@@ -1435,7 +1435,7 @@ class OGridClass(NdGrid):
         [Tensor(shape=[5, 1], dtype=Int32, value=
         [[0],
         [1],
-        [2]
+        [2],
         [3],
         [4]]), Tensor(shape=[1, 5], dtype=Int32, value=
         [[0, 1, 2, 3, 4]])]
