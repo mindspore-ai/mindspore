@@ -19,7 +19,6 @@ import numpy as np
 from mindspore import context
 from mindspore import nn
 from mindspore import Tensor
-from mindspore.common.initializer import initializer
 from mindspore.common.parameter import ParameterTuple
 from mindspore.common.parameter import Parameter
 from mindspore.ops import composite as c
@@ -48,44 +47,45 @@ class LSTM(nn.Cell):
 
 
 class LSTMWeightBias():
-    def __init__(self, num_layers, has_bias, input_s, num_directions, hidden_s, bidirectional):
+    def __init__(self, num_layers, has_bias, input_size, num_directions, hidden_size, bidirectional):
         self.num_layers = num_layers
         self.has_bias = has_bias
-        self.input_s = input_s
+        self.input_size = input_size
         self.num_directions = num_directions
-        self.hidden_s = hidden_s
+        self.hidden_size = hidden_size
         self.bidirectional = bidirectional
 
     def get_weight_bias(self):
-        stdv = 1 / math.sqrt(self.hidden_s)
-        gate_size = 4 * self.hidden_s
-        w_list_value = []
-        b_list_value = []
+        gate_size = 4 * self.hidden_size
 
-        for i in range(self.num_layers):
-            b0 = np.zeros(gate_size, dtype=np.float16)
-            w_shape = self.input_s if i == 0 else (self.num_directions * self.hidden_s)
-            w_np = np.random.uniform(-stdv, stdv, (w_shape + self.hidden_s, gate_size)).astype(np.float16)
-            w_list_value.append(Parameter(initializer(Tensor(w_np), [w_shape + self.hidden_s, gate_size]),
-                                          name="weight_fw" + str(i)))
+        w_ih_list = []
+        w_hh_list = []
+        b_ih_list = []
+        b_hh_list = []
+        stdv = 1 / math.sqrt(self.hidden_size)
+        for layer in range(self.num_layers):
+            for direction in range(self.num_directions):
+                layer_input_size = self.input_size if layer == 0 else self.hidden_size * self.num_directions
+                suffix = '_reverse' if direction == 1 else ''
 
-            if self.has_bias:
-                b_np = np.random.uniform(-stdv, stdv, gate_size).astype(np.float16)
-                b_list_value.append(Parameter(initializer(Tensor(b_np), [gate_size]), name="bias_fw" + str(i)))
-            else:
-                b_list_value.append(Parameter(initializer(Tensor(b0), [gate_size]), name="bias_fw" + str(i)))
-
-            if self.bidirectional:
-                w_bw_np = np.random.uniform(-stdv, stdv, (w_shape + self.hidden_s, gate_size)).astype(np.float16)
-                b_list_value.append(Parameter(initializer(Tensor(w_bw_np), [w_shape + self.hidden_s, gate_size]),
-                                              name="weight_bw" + str(i)))
-                b_bw_np = np.random.uniform(-stdv, stdv, (4 * self.hidden_s)).astype(
-                    np.float16) if self.has_bias else b0
-                b_list_value.append(Parameter(initializer(Tensor(b_bw_np), [gate_size]), name="bias_bw" + str(i)))
-        w_list_value = ParameterTuple(w_list_value)
-        b_list_value = ParameterTuple(b_list_value)
-        return w_list_value, b_list_value
-
+                w_ih_list.append(Parameter(
+                    Tensor(np.random.uniform(-stdv, stdv, (gate_size, layer_input_size)).astype(np.float32)),
+                    name='weight_ih_l{}{}'.format(layer, suffix)))
+                w_hh_list.append(Parameter(
+                    Tensor(np.random.uniform(-stdv, stdv, (gate_size, self.hidden_size)).astype(np.float32)),
+                    name='weight_hh_l{}{}'.format(layer, suffix)))
+                if self.has_bias:
+                    b_ih_list.append(Parameter(
+                        Tensor(np.random.uniform(-stdv, stdv, (gate_size)).astype(np.float32)),
+                        name='bias_ih_l{}{}'.format(layer, suffix)))
+                    b_hh_list.append(Parameter(
+                        Tensor(np.random.uniform(-stdv, stdv, (gate_size)).astype(np.float32)),
+                        name='bias_hh_l{}{}'.format(layer, suffix)))
+        w_ih_list = ParameterTuple(w_ih_list)
+        w_hh_list = ParameterTuple(w_hh_list)
+        b_ih_list = ParameterTuple(b_ih_list)
+        b_hh_list = ParameterTuple(b_hh_list)
+        return w_ih_list, w_hh_list, b_ih_list, b_hh_list
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
@@ -100,7 +100,7 @@ def test_sit_lstm_forward_input_3_32_32_is_32_hs_16():
     num_directions = 1
 
     fact = LSTMWeightBias(num_layers, has_bias, input_s, num_directions, hidden_s, bidirectional)
-    w_list_value, b_list_value = fact.get_weight_bias()
+    w_ih_list, w_hh_list, b_ih_list, b_hh_list = fact.get_weight_bias()
 
     h0 = Tensor(np.random.randn(num_layers * 1, 32, 16).astype(np.float32))
     c0 = Tensor(np.random.randn(num_layers * 1, 32, 16).astype(np.float32))
@@ -110,22 +110,26 @@ def test_sit_lstm_forward_input_3_32_32_is_32_hs_16():
     context.set_context(mode=context.GRAPH_MODE)
     net = LSTM(input_s=input_s, hidden_s=16, num_layers=num_layers, has_bias=has_bias, batch_first=False,
                bidirectional=bidirectional, dropout=0.0)
-    net.lstm.w_list = w_list_value
-    net.lstm.b_list = b_list_value
+    net.lstm.w_ih_list = w_ih_list
+    net.lstm.w_hh_list = w_hh_list
+    net.lstm.b_ih_list = b_ih_list
+    net.lstm.b_hh_list = b_hh_list
     out, (hy, cy) = net(input_ms, h0, c0)
 
     # pynative mode
     context.set_context(mode=context.PYNATIVE_MODE)
     net_pynative = LSTM(input_s=input_s, hidden_s=16, num_layers=num_layers, has_bias=has_bias, batch_first=False,
                         bidirectional=bidirectional, dropout=0.0)
-    net_pynative.lstm.w_list = w_list_value
-    net_pynative.lstm.b_list = b_list_value
+    net_pynative.lstm.w_ih_list = w_ih_list
+    net_pynative.lstm.w_hh_list = w_hh_list
+    net_pynative.lstm.b_ih_list = b_ih_list
+    net_pynative.lstm.b_hh_list = b_hh_list
     out_pynative, (hy_pynative, cy_pynative) = net_pynative(input_ms, h0, c0)
+    context.set_context(mode=context.GRAPH_MODE)
 
     assert np.allclose(out.asnumpy(), out_pynative.asnumpy(), 0.0001, 0.0001)
     assert np.allclose(hy.asnumpy(), hy_pynative.asnumpy(), 0.0001, 0.0001)
     assert np.allclose(cy.asnumpy(), cy_pynative.asnumpy(), 0.0001, 0.0001)
-
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
@@ -140,7 +144,7 @@ def test_sit_lstm_grad_input_3_32_32_is_32_hs_16():
     num_directions = 1
 
     fact = LSTMWeightBias(num_layers, has_bias, input_s, num_directions, hidden_s, bidirectional)
-    w_list_value, b_list_value = fact.get_weight_bias()
+    w_ih_list, w_hh_list, b_ih_list, b_hh_list = fact.get_weight_bias()
 
     h0 = Tensor(np.random.randn(num_layers * 1, 32, 16).astype(np.float32))
     c0 = Tensor(np.random.randn(num_layers * 1, 32, 16).astype(np.float32))
@@ -150,8 +154,10 @@ def test_sit_lstm_grad_input_3_32_32_is_32_hs_16():
     context.set_context(mode=context.GRAPH_MODE)
     net = LSTM(input_s=input_s, hidden_s=16, num_layers=num_layers, has_bias=has_bias, batch_first=False,
                bidirectional=bidirectional, dropout=0.0)
-    net.lstm.w_list = w_list_value
-    net.lstm.b_list = b_list_value
+    net.lstm.w_ih_list = w_ih_list
+    net.lstm.w_hh_list = w_hh_list
+    net.lstm.b_ih_list = b_ih_list
+    net.lstm.b_hh_list = b_hh_list
 
     grad_net_inp = GradOfAllInputsAndParams(net, sens_param=False)
     grad_net_inp.set_train()
@@ -164,8 +170,10 @@ def test_sit_lstm_grad_input_3_32_32_is_32_hs_16():
     context.set_context(mode=context.PYNATIVE_MODE)
     net_pynative = LSTM(input_s=input_s, hidden_s=16, num_layers=num_layers, has_bias=has_bias, batch_first=False,
                         bidirectional=bidirectional, dropout=0.0)
-    net_pynative.lstm.w_list = w_list_value
-    net_pynative.lstm.b_list = b_list_value
+    net_pynative.lstm.w_ih_list = w_ih_list
+    net_pynative.lstm.w_hh_list = w_hh_list
+    net_pynative.lstm.b_ih_list = b_ih_list
+    net_pynative.lstm.b_hh_list = b_hh_list
 
     grad_net_inp_pynative = GradOfAllInputsAndParams(net_pynative, sens_param=False)
     grad_net_inp_pynative.set_train()
@@ -173,7 +181,8 @@ def test_sit_lstm_grad_input_3_32_32_is_32_hs_16():
     x_grad_pynative = out_grad_pynative[0].asnumpy()
     h_grad_pynative = out_grad_pynative[1].asnumpy()
     c_grad_pynative = out_grad_pynative[2].asnumpy()
+    context.set_context(mode=context.GRAPH_MODE)
 
-    assert np.allclose(x_grad, x_grad_pynative, 0.0001, 0.0001)
-    assert np.allclose(h_grad, h_grad_pynative, 0.0001, 0.0001)
-    assert np.allclose(c_grad, c_grad_pynative, 0.0001, 0.0001)
+    assert np.allclose(x_grad, x_grad_pynative, 0.001, 0.001)
+    assert np.allclose(h_grad, h_grad_pynative, 0.001, 0.001)
+    assert np.allclose(c_grad, c_grad_pynative, 0.001, 0.001)

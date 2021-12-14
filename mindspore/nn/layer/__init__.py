@@ -17,14 +17,14 @@ Layer.
 
 The high-level components(Cells) used to construct the neural network.
 """
-from . import activation, normalization, container, conv, lstm, basic, embedding, pooling, image, quant, math, \
-    combined, timedistributed, thor_layer, rnns
+from . import activation, normalization, container, conv, basic, embedding, pooling, image, quant, math, \
+    combined, timedistributed, thor_layer, rnns, rnn_cells
 from .activation import *
 from .normalization import *
 from .container import *
 from .conv import *
-from .lstm import *
 from .rnns import *
+from .rnn_cells import *
 from .basic import *
 from .embedding import *
 from .pooling import *
@@ -40,7 +40,7 @@ __all__.extend(activation.__all__)
 __all__.extend(normalization.__all__)
 __all__.extend(container.__all__)
 __all__.extend(conv.__all__)
-__all__.extend(lstm.__all__)
+__all__.extend(rnn_cells.__all__)
 __all__.extend(rnns.__all__)
 __all__.extend(basic.__all__)
 __all__.extend(embedding.__all__)
