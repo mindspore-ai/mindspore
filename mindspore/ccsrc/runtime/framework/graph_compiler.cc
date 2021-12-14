@@ -347,6 +347,7 @@ GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNod
   // Generate kernel graph.
   KernelGraphPtr graph = session_->ConstructKernelGraph(nodes, outputs, true, device_context);
   MS_EXCEPTION_IF_NULL(graph);
+  opt::EliminateIllegalDataTypePass(graph);
   SetGraphDependency(graph, segment);
 
   // Unify the MindIR, must be before of the graph optimization.

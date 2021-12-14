@@ -17,6 +17,7 @@
 #include <memory>
 #include <string>
 #include "backend/optimizer/common/optimizer.h"
+#include "backend/optimizer/pass/eliminate_func_data_type.h"
 #include "backend/optimizer/pass/convert_const_input_to_attr.h"
 #include "backend/optimizer/pass/custom_op_const_input_to_attr.h"
 #include "backend/optimizer/pass/custom_op_reg_info_to_attr.h"
@@ -134,5 +135,32 @@ void AddDynamicShapeAttrPass(const std::shared_ptr<session::KernelGraph> &kernel
   (void)opt->Optimize(kernel_graph);
 }
 
+void EliminateIllegalDataTypePass(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  MS_LOG(INFO) << "start eliminate illegal data type for kernel graph id:" << kernel_graph->graph_id();
+#ifdef ENABLE_DUMP_IR
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
+  if (save_graphs) {
+    std::string file_name =
+      "hwopt_common_eliminate_illegal_data_type_before_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
+    DumpIR(file_name, kernel_graph);
+  }
+#endif
+  auto opt = std::make_shared<GraphOptimizer>();
+  auto pm = std::make_shared<PassManager>("common_eliminate_illegal_data_type_pm");
+  pm->AddPass(std::make_shared<EliminateFuncDataType>());
+  opt->AddPassManager(pm);
+  (void)opt->Optimize(kernel_graph);
+  kernel_graph->SetExecOrderByDefault();
+#ifdef ENABLE_DUMP_IR
+  if (save_graphs) {
+    std::string file_name =
+      "hwopt_common_eliminate_illegal_data_type_after_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
+    DumpIR(file_name, kernel_graph);
+  }
+#endif
+}
 }  // namespace opt
 }  // namespace mindspore
