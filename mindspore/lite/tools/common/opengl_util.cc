@@ -311,7 +311,7 @@ bool OpenGLRuntime::CopyHostToDeviceSSBO(void *hostData, GLuint ssboBufferID, GL
 }
 
 GLuint OpenGLRuntime::GLCreateTexture(int w, int h, int c, GLenum TextrueFormat, GLenum target) {
-  GLuint textureID = -0;
+  GLuint textureID = 0;
   if (target == GL_TEXTURE_3D) {
     MS_ASSERT(w > 0 && h > 0 && c > 0);
     glGenTextures(1, &textureID);
