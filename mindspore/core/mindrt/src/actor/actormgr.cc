@@ -136,9 +136,10 @@ void ActorMgr::TerminateAll() {
     (*actorIt)->Terminate();
   }
 
-  // wait actor's thread to finish.
+  // wait actor's thread to finish and remove actor.
   for (auto actorIt = actorsWaiting.begin(); actorIt != actorsWaiting.end(); ++actorIt) {
     (*actorIt)->Await();
+    RemoveActor((*actorIt)->GetAID().Name());
   }
 }
 
