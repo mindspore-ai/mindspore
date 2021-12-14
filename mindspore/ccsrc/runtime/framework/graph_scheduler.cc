@@ -944,7 +944,7 @@ void GraphScheduler::LinkDataArrowInNonSinkMode(const KernelGraphPtr &graph,
       auto input_node = AnfAlgo::GetInputNode(kernel, i);
       // Link the control arrows of kernel actor by the auto monad, the inputs include monad node.
       if (IsOneOfPrimitiveCNode(input_node, auto_monad_prims) || HasAbstractMonad(input_node)) {
-        LinkControlArrowByAutoMonad(kernel_actor, input_node, graph);
+        LinkControlArrowByAutoMonad(kernel_actor, input_node, graph, graph_compiler_info.control_node_parser_);
       }
       if (HasAbstractMonad(input_node)) {
         (void)auto_monad_actors->emplace_back(kernel_actor);
@@ -1181,7 +1181,7 @@ void GraphScheduler::LinkDataArrowForCopyActor(AbstractActor *const from_actor, 
 }
 
 void GraphScheduler::LinkControlArrowByAutoMonad(AbstractActor *to_actor, const AnfNodePtr &from_node,
-                                                 const KernelGraphPtr &graph) {
+                                                 const KernelGraphPtr &graph, const ControlNodeParserPtr &parser) {
   MS_EXCEPTION_IF_NULL(to_actor);
   MS_EXCEPTION_IF_NULL(from_node);
   MS_EXCEPTION_IF_NULL(graph);
@@ -1199,7 +1199,7 @@ void GraphScheduler::LinkControlArrowByAutoMonad(AbstractActor *to_actor, const 
   if (AnfAlgo::CheckPrimitiveType(input_anfnode, prim::kPrimMakeTuple)) {
     MS_EXCEPTION_IF_NULL(input_cnode);
     for (size_t i = 1; i < input_cnode->inputs().size(); ++i) {
-      LinkControlArrowByAutoMonad(to_actor, input_cnode->input(i), graph);
+      LinkControlArrowByAutoMonad(to_actor, input_cnode->input(i), graph, parser);
     }
     return;
   }
@@ -1240,6 +1240,13 @@ void GraphScheduler::LinkControlArrowByAutoMonad(AbstractActor *to_actor, const 
         }
         MS_LOG(EXCEPTION) << "Can't find graph output by front node:" << front_output_with_index.first->DebugString();
       }
+
+      if (parser != nullptr && parser->IsInited() &&
+          (!parser->IsSameKernelGraphGroup(front_output_with_index.first, graph))) {
+        MS_LOG(DEBUG) << "Skip in control flow from node:" << front_output_with_index.first->DebugString()
+                      << " is not in the graph:" << graph->ToString();
+        continue;
+      }
       real_depend_kernel = graph_output_to_actor_[front_output_with_index].second.first;
       MS_EXCEPTION_IF_NULL(real_depend_kernel);
       MS_LOG(INFO) << "The graph " << graph->graph_id() << " link control arrow by auto monad from internal parameter: "
@@ -1257,7 +1264,7 @@ void GraphScheduler::LinkControlArrowByAutoMonad(AbstractActor *to_actor, const 
 
     // The monad node and make tuple node need recursion.
     if (IsOneOfPrimitiveCNode(real_depend_kernel, recursion_prims)) {
-      LinkControlArrowByAutoMonad(to_actor, real_depend_kernel, graph);
+      LinkControlArrowByAutoMonad(to_actor, real_depend_kernel, graph, parser);
       continue;
     }
 
