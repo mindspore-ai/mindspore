@@ -44,7 +44,17 @@ AnfNodePtr DropoutExpander::PreProcess(const FuncGraphPtr &func_graph, const Anf
   auto shape = AnfAlgo::GetInputDeviceShape(cnode, 0);
   ShapeVector shape_i64;
   std::transform(shape.begin(), shape.end(), std::back_inserter(shape_i64), [](size_t x) { return SizeToLong(x); });
-
+  // Get seed from original dropout's attrs, rather than set seed by time.
+  // Only seed0 and seed1 are all equal to 0, then set seed = time.
+  auto node_prim = GetCNodePrimitive(node);
+  MS_EXCEPTION_IF_NULL(node_prim);
+  int64_t seed = GetValue<int64_t>(node_prim->GetAttr("Seed0"));
+  if (seed == 0) {
+    seed = GetValue<int64_t>(node_prim->GetAttr("Seed1"));
+    if (seed == 0) {
+      seed = seed_++;
+    }
+  }
   // Create a uniform_real kernel to generate random value.
   auto tensor = std::make_shared<tensor::Tensor>(kNumberTypeInt64, ShapeVector(1, SizeToLong(shape.size())),
                                                  static_cast<void *>(&shape[0]), kNumberTypeInt64);
@@ -52,8 +62,8 @@ AnfNodePtr DropoutExpander::PreProcess(const FuncGraphPtr &func_graph, const Anf
   uniform_real_input[1]->set_abstract(tensor->ToAbstract());
   uniform_real_input[1]->set_kernel_info(std::make_shared<device::KernelInfo>());
   auto uniform_real_node = func_graph->NewCNode(uniform_real_input);
-  SetNodeAttrSafely("seed", MakeValue(seed_++), uniform_real_node);
-  AnfAlgo::SetNodeAttr("seed2", MakeValue(seed_++), uniform_real_node);
+  SetNodeAttrSafely("seed", MakeValue(seed), uniform_real_node);
+  AnfAlgo::SetNodeAttr("seed2", MakeValue(static_cast<int64_t>(0)), uniform_real_node);
   uniform_real_node->set_abstract(std::make_shared<abstract::AbstractTensor>(kFloat32, shape_i64));
   // Set kernel_info for uniform_real node
   auto uniform_real_kernel_info_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
