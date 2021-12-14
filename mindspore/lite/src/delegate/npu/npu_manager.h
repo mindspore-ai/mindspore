@@ -72,7 +72,7 @@ class NPUManager {
 
   int GetFrequency() { return frequency_; }
 
-  static bool CheckDDKVersion(const std::string &spec_version);
+  static bool CheckDDKVerGreatEqual(const std::string &spec_version);
 
  private:
   bool IsKirinChip();

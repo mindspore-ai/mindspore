@@ -37,6 +37,10 @@ int NPUTransformPass::InsertPreNodes(NPUOp *op, std::vector<NPUOp *> *trans_ops)
     MS_LOG(ERROR) << "NPU Transform pass does not find in op with 4d output";
     return RET_ERROR;
   }
+  if (op->inputs().front().format() == Format::NCHW) {
+    // input format is already NCHW, no need to insert transpose.
+    return RET_OK;
+  }
   if (is_input_op || nchw_nodes.find((*it)->type()) == nchw_nodes.end()) {
     NPUOp *pre_op = nullptr;
     if (!is_input_op) {
