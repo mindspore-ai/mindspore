@@ -190,6 +190,7 @@ class OperatorInfo {
   void set_last_node_flag(const bool &is_last_node) { is_last_node_ = is_last_node; }
   const bool &is_last_node() const { return is_last_node_; }
   const mindspore::HashMap<std::string, ValuePtr> &attrs() const { return attrs_; }
+  void addAttr(const std::string &name, const ValuePtr &val) { attrs_[name] = val; }
   void set_stage_id(int32_t stage_id) { stage_id_ = stage_id; }
   int32_t stage_id() const { return stage_id_; }
   Status CreateGroupByTensorMap(const Shape &tensor_map, std::vector<Group> *group);
