@@ -28,13 +28,13 @@ class TensorArray(Cell):
 
     Args:
         dtype (mindspore.dtype): the data type in the TensorArray.
-        element_shape (List[int]): the shape of each tensor in a TensorArray.
+        element_shape (tuple[int]): the shape of each tensor in a TensorArray.
         dynamic_size (bool): if true, the size of TensorArray can be increased. Default: True.
         size (int): if dynamic_size=False, `size` means the max_size of the TensorArray.
         name (string): the name of this TensorArray. Default: "TA".
 
     Supported Platforms:
-        ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
@@ -58,7 +58,7 @@ class TensorArray(Cell):
     def __init__(self, dtype, element_shape, dynamic_size=True, size=0, name="TA"):
         """Initialize TensorArray"""
         super(TensorArray, self).__init__()
-        Validator.check_subclass("dtype", dtype, mstype.number_type, self.cls_name)
+        Validator.check_subclass("dtype", dtype, mstype.number_type + (mstype.bool_,), self.cls_name)
         Validator.check_int(size, 0, Rel.GE, "size", self.cls_name)
         self.handle_ = ta.TensorArray(dtype, element_shape, dynamic_size, size, name)()
         self.tensor_array_write = ta.TensorArrayWrite()
