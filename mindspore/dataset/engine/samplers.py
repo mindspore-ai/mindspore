@@ -57,7 +57,7 @@ def select_sampler(num_samples, input_sampler, shuffle, num_shards, shard_id):
                 ' shard_id: {}, shuffle: {}.'.format(num_samples, num_shards, shard_id, shuffle))
         if isinstance(input_sampler, BuiltinSampler):
             return input_sampler
-        if not isinstance(input_sampler, str) and isinstance(input_sampler, (np.ndarray, list)):
+        if not isinstance(input_sampler, str) and isinstance(input_sampler, (np.ndarray, list, tuple)):
             return SubsetSampler(input_sampler, num_samples)
         if not isinstance(input_sampler, str) and validator.is_iterable(input_sampler):
             # in this case, the user passed in their own sampler object that's not of type BuiltinSampler
