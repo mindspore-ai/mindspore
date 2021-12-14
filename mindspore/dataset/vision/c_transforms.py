@@ -224,11 +224,11 @@ class AutoAugment(ImageTensorOperation):
 class AutoContrast(ImageTensorOperation):
     """
     Apply automatic contrast on input image. This operator calculates histogram of image, reassign cutoff percent
-    of lightest pixels from histogram to 255, and reassign cutoff percent of darkest pixels from histogram to 0.
+    of the lightest pixels from histogram to 255, and reassign cutoff percent of the darkest pixels from histogram to 0.
 
     Args:
         cutoff (float, optional): Percent of lightest and darkest pixels to cut off from
-            the histogram of input image. the value must be in the range [0.0, 50.0) (default=0.0).
+            the histogram of input image. The value must be in the range [0.0, 50.0) (default=0.0).
         ignore (Union[int, sequence], optional): The background pixel values to ignore (default=None).
 
     Examples:
@@ -805,9 +805,9 @@ class RandomAffine(ImageTensorOperation):
         ValueError: If shear is a number but is not positive.
         TypeError: If `degrees` is not a number or a list or a tuple.
             If `degrees` is a list or tuple, its length is not 2.
-        TypeError: If translate is specified but is not list or a tuple of length 2 or 4.
-        TypeError: If scale is not a list or tuple of length 2.
-        TypeError: If shear is not a list or tuple of length 2 or 4.
+        TypeError: If translate is specified but is not a list or a tuple of length 2 or 4.
+        TypeError: If scale is not a list or a tuple of length 2.
+        TypeError: If shear is not a list or a tuple of length 2 or 4.
         TypeError: If fill_value is not a single integer or a 3-tuple.
 
     Examples:
@@ -1556,7 +1556,7 @@ class RandomSelectSubpolicy(ImageTensorOperation):
     Choose a random sub-policy from a policy list to be applied on the input image.
 
     Args:
-        policy (list(list(tuple(TensorOp, prob (float)))): List of sub-policies to choose from.
+        policy (list(list(tuple(TensorOp, prob (float))))): List of sub-policies to choose from.
             A sub-policy is a list of tuples (op, prob), where op is a TensorOp operation and prob is the probability
             that this op will be applied, and the prob values must be in range [0, 1]. Once a sub-policy is selected,
             each op within the sub-policy with be applied in sequence according to its probability.
@@ -1598,7 +1598,7 @@ class RandomSharpness(ImageTensorOperation):
             (min, max) format. If min=max, then it is a single fixed magnitude operation (default = (0.1, 1.9)).
 
     Raises:
-        TypeError : If `degrees` is not a list or tuple.
+        TypeError : If `degrees` is not a list or a tuple.
         ValueError: If `degrees` is negative.
         ValueError: If `degrees` is in (max, min) format instead of (min, max).
 
