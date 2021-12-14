@@ -476,15 +476,6 @@ void Debugger::PostExecuteGraphDebugger() {
     DumpJsonParser::GetInstance().UpdateDumpIter();
     return;
   }
-  for (const auto &graph_ptr : debugger_->GetGraphPtrList()) {
-    if (device_target_ == kAscendDevice) {
-      debugger_->SetGraphPtr(graph_ptr);
-      // load output for Ascend
-      debugger_->LoadGraphOutputs();
-      // load parameters for Ascend
-      debugger_->LoadParametersAndConst();
-    }
-  }
   // LoadParametersAndConst for all the graphs that have been run in the current step
   if (debugger_ && device_target_ == kGPUDevice) {
     for (auto graph : graph_ptr_step_vec_) {
@@ -536,7 +527,7 @@ void Debugger::PostExecute() {
       if (debug_services_ != nullptr) {
         debug_services_->ResetLoadedTensors();
       } else {
-        MS_LOG(ERROR) << "debug_services_ is nullptr";
+        MS_LOG(DEBUG) << "debug_services_ is nullptr";
       }
     }
   }
