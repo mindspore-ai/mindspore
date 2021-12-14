@@ -119,8 +119,8 @@ class MS_API AutoContrast final : public TensorTransform {
   /// \par Example
   /// \code
   ///     /* Define operations */
-  ///     std::shared_ptr<TensorTransform> decode_op = std::make_shared<vision::Decode>();
-  ///     std::shared_ptr<TensorTransform> autocontrast_op = std::make_shared<vision::AutoContrast>(10.0, {10, 20});
+  ///     auto decode_op = vision::Decode();
+  ///     auto autocontrast_op = vision::AutoContrast(10.0, {10, 20});
   ///
   ///     /* dataset is an instance of Dataset object */
   ///     dataset = dataset->Map({decode_op, autocontrast_op},  // operations
@@ -152,7 +152,7 @@ class MS_API BoundingBoxAugment final : public TensorTransform {
   /// \code
   ///     /* Define operations */
   ///     TensorTransform *rotate_op = new vision::RandomRotation({-180, 180});
-  ///     TensorTransform bbox_aug_op = vision::BoundingBoxAugment(rotate_op, 0.5);
+  ///     auto bbox_aug_op = vision::BoundingBoxAugment(rotate_op, 0.5);
   ///
   ///     /* dataset is an instance of Dataset object */
   ///     dataset = dataset->Map({bbox_aug_op},       // operations
@@ -606,7 +606,7 @@ class MS_API RandomColorAdjust final : public TensorTransform {
   /// \code
   ///     /* Define operations */
   ///     auto decode_op = vision::Decode();
-  ///     auto random_color_adjust_op = vision::RandomColorAdjust({1.0, 5.0}, {10.0, 20.0, {40.0, 40.0}});
+  ///     auto random_color_adjust_op = vision::RandomColorAdjust({1.0, 5.0}, {10.0, 20.0}, {40.0, 40.0});
   ///
   ///     /* dataset is an instance of Dataset object */
   ///     dataset = dataset->Map({decode_op, random_color_adjust_op},  // operations
@@ -657,7 +657,7 @@ class MS_API RandomCrop final : public TensorTransform {
   /// \code
   ///     /* Define operations */
   ///     auto decode_op = vision::Decode();
-  ///     auto random_crop_op = vision::RandomCrop({255, 255}, {10, 10, 10, 10}});
+  ///     auto random_crop_op = vision::RandomCrop({255, 255}, {10, 10, 10, 10});
   ///
   ///     /* dataset is an instance of Dataset object */
   ///     dataset = dataset->Map({decode_op, random_crop_op},  // operations
@@ -702,7 +702,7 @@ class MS_API RandomCropDecodeResize final : public TensorTransform {
   /// \par Example
   /// \code
   ///     /* Define operations */
-  ///     auto random_op = vision::RandomCropDecodeResize({255, 255}, {0.1, 0.5}});
+  ///     auto random_op = vision::RandomCropDecodeResize({255, 255}, {0.1, 0.5});
   ///
   ///     /* dataset is an instance of Dataset object */
   ///     dataset = dataset->Map({random_op},  // operations
@@ -754,7 +754,7 @@ class MS_API RandomCropWithBBox final : public TensorTransform {
   /// \par Example
   /// \code
   ///     /* Define operations */
-  ///     auto random_op = vision::RandomCropWithBBox({224, 224}, {0, 0, 0, 0}});
+  ///     auto random_op = vision::RandomCropWithBBox({224, 224}, {0, 0, 0, 0});
   ///
   ///     /* dataset is an instance of Dataset object */
   ///     dataset = dataset->Map({decode_op, random_op},  // operations
@@ -849,7 +849,7 @@ class MS_API RandomHorizontalFlipWithBBox final : public TensorTransform {
   ///     auto random_op = vision::RandomHorizontalFlipWithBBox(1.0);
   ///
   ///     /* dataset is an instance of Dataset object */
-  ///     dataset = dataset->Map({decode_op, random_op},  // operations
+  ///     dataset = dataset->Map({random_op},             // operations
   ///                            {"image", "bbox"});      // input columns
   /// \endcode
   explicit RandomHorizontalFlipWithBBox(float prob = 0.5);
@@ -1005,7 +1005,7 @@ class MS_API RandomResizeWithBBox final : public TensorTransform {
   ///     auto random_op = vision::RandomResizeWithBBox({50, 50});
   ///
   ///     /* dataset is an instance of Dataset object */
-  ///     dataset = dataset->Map({decode_op, random_op},  // operations
+  ///     dataset = dataset->Map({random_op},             // operations
   ///                            {"image", "bbox"});      // input columns
   /// \endcode
   explicit RandomResizeWithBBox(std::vector<int32_t> size);
@@ -1093,10 +1093,11 @@ class MS_API RandomResizedCropWithBBox final : public TensorTransform {
   /// \par Example
   /// \code
   ///     /* Define operations */
-  ///     auto random_op = vision::RandomResizeWithBBox({50, 50}, {0.05, 0.5}, {0.2, 0.4}, InterpolationMode::kCubic);
+  ///     auto random_op = vision::RandomResizedCropWithBBox({50, 50}, {0.05, 0.5}, {0.2, 0.4},
+  ///                                                        InterpolationMode::kCubic);
   ///
   ///     /* dataset is an instance of Dataset object */
-  ///     dataset = dataset->Map({decode_op, random_op},  // operations
+  ///     dataset = dataset->Map({random_op},             // operations
   ///                            {"image", "bbox"});      // input columns
   /// \endcode
   RandomResizedCropWithBBox(std::vector<int32_t> size, std::vector<float> scale = {0.08, 1.0},
@@ -1191,8 +1192,10 @@ class MS_API RandomSelectSubpolicy final : public TensorTransform {
   ///     std::shared_ptr<TensorTransform> equalize_op(new vision::Equalize());
   ///     std::shared_ptr<TensorTransform> resize_op(new vision::Resize({15, 15}));
   ///
-  ///     auto policy = {{&invert_op, 0.5}, {&equalize_op, 0.4}, {&resize_op, 0.1}};
-  ///     vision::RandomSelectSubpolicy random_select_subpolicy_op = vision::RandomSelectSubpolicy({policy});
+  ///     auto random_select_subpolicy_op = vision::RandomSelectSubpolicy({
+  ///                                          {{invert_op, 0.5}, {equalize_op, 0.4}},
+  ///                                          {{resize_op, 0.1}}
+  ///                                       });
   ///
   ///     /* dataset is an instance of Dataset object */
   ///     dataset = dataset->Map({random_select_subpolicy_op},    // operations
@@ -1210,8 +1213,10 @@ class MS_API RandomSelectSubpolicy final : public TensorTransform {
   ///     vision::Equalize equalize_op = vision::Equalize();
   ///     vision::Resize resize_op = vision::Resize({15, 15});
   ///
-  ///     auto policy = {{invert_op, 0.5}, {equalize_op, 0.4}, {resize_op, 0.1}};
-  ///     vision::RandomSelectSubpolicy random_select_subpolicy_op = vision::RandomSelectSubpolicy({policy});
+  ///     auto random_select_subpolicy_op = vision::RandomSelectSubpolicy({
+  ///                                          {{invert_op, 0.5}, {equalize_op, 0.4}},
+  ///                                          {{resize_op, 0.1}}
+  ///                                       });
   ///
   ///     /* dataset is an instance of Dataset object */
   ///     dataset = dataset->Map({random_select_subpolicy_op},    // operations
@@ -1338,7 +1343,7 @@ class MS_API RandomVerticalFlipWithBBox final : public TensorTransform {
   ///     auto random_op = vision::RandomVerticalFlipWithBBox();
   ///
   ///     /* dataset is an instance of Dataset object */
-  ///     dataset = dataset->Map({decode_op, random_op},  // operations
+  ///     dataset = dataset->Map({random_op},             // operations
   ///                            {"image", "bbox"});      // input columns
   /// \endcode
   explicit RandomVerticalFlipWithBBox(float prob = 0.5);
@@ -1403,10 +1408,10 @@ class MS_API ResizeWithBBox final : public TensorTransform {
   /// \par Example
   /// \code
   ///     /* Define operations */
-  ///     auto random_op = vision::ResizeWithBBox({100, 0100}, InterpolationMode::kNearestNeighbour);
+  ///     auto random_op = vision::ResizeWithBBox({100, 100}, InterpolationMode::kNearestNeighbour);
   ///
   ///     /* dataset is an instance of Dataset object */
-  ///     dataset = dataset->Map({decode_op, random_op},  // operations
+  ///     dataset = dataset->Map({random_op},             // operations
   ///                            {"image", "bbox"});      // input columns
   /// \endcode
   explicit ResizeWithBBox(std::vector<int32_t> size, InterpolationMode interpolation = InterpolationMode::kLinear);
