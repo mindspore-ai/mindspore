@@ -257,10 +257,7 @@ def gmres(A, b, x0=None, *, tol=1e-5, atol=0.0, restart=20, maxiter=None,
         restart = size
 
     if M is None:
-        def identity(x):
-            return x
-
-        M = identity
+        M = lambda x: x
 
     if solve_method == 'incremental':
         x = IterativeGmres(A, M)(b, x0, tol, atol, restart, maxiter)
@@ -312,7 +309,7 @@ class CG(nn.Cell):
             rho_ = mnp.dot(r, z)
             beta = rho_ / rho
             p = z + beta * p
-            rho = rho_.copy()
+            rho = rho_
 
             k += 1
 
@@ -372,10 +369,7 @@ def cg(A, b, x0=None, *, tol=1e-5, atol=0.0, maxiter=None, M=None):
         maxiter = 10 * b.shape[0]
 
     if M is None:
-        def identity(x):
-            return x
-
-        M = identity
+        M = lambda x: x
 
     if x0.shape != b.shape:
         raise ValueError(
