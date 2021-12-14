@@ -471,6 +471,9 @@ class MicroBatchInterleaved(Cell):
         network (Cell): The target network to wrap.
         interleave_num (int): split num of batch size. Default: 2.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> net = Net()
         >>> net = MicroBatchInterleaved(net, 4)
