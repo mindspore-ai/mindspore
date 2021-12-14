@@ -122,10 +122,10 @@ TEST_F(MindDataTestPipeline, TestKMnistTestDatasetWithPipeline) {
   iter->Stop();
 }
 
-/// Feature: KMnistIteratorOneColumn.
+/// Feature: TestKMnistDatasetIteratorOneColumn.
 /// Description: test iterator of KMnistDataset with only the "image" column.
 /// Expectation: get correct data.
-TEST_F(MindDataTestPipeline, TestKMnistIteratorOneColumn) {
+TEST_F(MindDataTestPipeline, TestKMnistDatasetIteratorOneColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestKMnistIteratorOneColumn.";
   // Create a KMnist Dataset
   std::string folder_path = datasets_root_path_ + "/testMnistData/";
@@ -162,6 +162,22 @@ TEST_F(MindDataTestPipeline, TestKMnistIteratorOneColumn) {
 
   // Manually terminate the pipeline
   iter->Stop();
+}
+
+/// Feature: TestKMnistDatasetIteratorWrongColumn.
+/// Description: test iterator of KMnistDataset with wrong column.
+/// Expectation: get none piece of data.
+TEST_F(MindDataTestPipeline, TestKMnistDatasetIteratorWrongColumn) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestKMnistDatasetIteratorWrongColumn.";
+  // Create a KMnist Dataset
+  std::string folder_path = datasets_root_path_ + "/testMnistData/";
+  std::shared_ptr<Dataset> ds = KMnist(folder_path, "all", std::make_shared<RandomSampler>(false, 4));
+  EXPECT_NE(ds, nullptr);
+
+  // Pass wrong column name
+  std::vector<std::string> columns = {"digital"};
+  std::shared_ptr<Iterator> iter = ds->CreateIterator(columns);
+  EXPECT_EQ(iter, nullptr);
 }
 
 /// Feature: KMnistTestDatasetSize.

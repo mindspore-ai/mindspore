@@ -119,6 +119,120 @@ TEST_F(MindDataTestPipeline, TestYelpReviewFullDatasetBasic) {
   iter->Stop();
 }
 
+/// Feature: YelpReviewDatasetWithPipeline.
+/// Description: test usage of YelpReviewDataset with pipeline.
+/// Expectation: get correct number of data.
+TEST_F(MindDataTestPipeline, TestYelpReviewDatasetWithPipeline) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestYelpReviewDatasetWithPipeline.";
+
+  // Create two STL10 Dataset
+  std::string dataset_dir = datasets_root_path_ + "/testYelpReview/polarity";
+  std::shared_ptr<Dataset> ds1 = YelpReview(dataset_dir, "test", 0, ShuffleMode::kFalse);
+  std::shared_ptr<Dataset> ds2 = YelpReview(dataset_dir, "test", 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds1, nullptr);
+  EXPECT_NE(ds2, nullptr);
+
+  // Create two Repeat operation on ds
+  int32_t repeat_num = 1;
+  ds1 = ds1->Repeat(repeat_num);
+  EXPECT_NE(ds1, nullptr);
+  repeat_num = 1;
+  ds2 = ds2->Repeat(repeat_num);
+  EXPECT_NE(ds2, nullptr);
+
+  // Create two Project operation on ds
+  std::vector<std::string> column_project = {"label", "text"};
+  ds1 = ds1->Project(column_project);
+  EXPECT_NE(ds1, nullptr);
+  ds2 = ds2->Project(column_project);
+  EXPECT_NE(ds2, nullptr);
+
+  // Create a Concat operation on the ds
+  ds1 = ds1->Concat({ds2});
+  EXPECT_NE(ds1, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds1->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  EXPECT_NE(row.find("label"), row.end());
+  EXPECT_NE(row.find("text"), row.end());
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    ASSERT_OK(iter->GetNextRow(&row));
+  }
+
+  EXPECT_EQ(i, 4);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+/// Feature: TestYelpReviewDatasetIteratorOneColumn.
+/// Description: test iterator of YelpReviewDataset with only the "text" column.
+/// Expectation: get correct data.
+TEST_F(MindDataTestPipeline, TestYelpReviewDatasetIteratorOneColumn) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestYelpReviewIteratorOneColumn.";
+  // Create a YelpReview dataset
+  std::string dataset_dir = datasets_root_path_ + "/testYelpReview/polarity";
+  std::shared_ptr<Dataset> ds = YelpReview(dataset_dir, "test", 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Batch operation on ds
+  int32_t batch_size = 1;
+  ds = ds->Batch(batch_size);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // Only select "text" column and drop others
+  std::vector<std::string> columns = {"text"};
+  std::shared_ptr<Iterator> iter = ds->CreateIterator(columns, -1);
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+  std::vector<int64_t> expect_shape = {1, 1, 16000};
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+      auto audio = row["text"];
+      MS_LOG(INFO) << "Tensor text shape: " << audio.Shape();
+      ASSERT_OK(iter->GetNextRow(&row));
+      i++;
+  }
+
+  EXPECT_EQ(i, 2);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+/// Feature: TestYelpReviewDatasetIteratorWrongColumn.
+/// Description: test iterator of YelpReviewDataset with wrong column.
+/// Expectation: get none piece of data.
+TEST_F(MindDataTestPipeline, TestYelpReviewDatasetIteratorWrongColumn) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestYelpReviewDatasetIteratorWrongColumn.";
+  // Create a YelpReview dataset
+  std::string dataset_dir = datasets_root_path_ + "/testYelpReview/polarity";
+  std::shared_ptr<Dataset> ds = YelpReview(dataset_dir, "test", 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Pass wrong column name
+  std::vector<std::string> columns = {"digital"};
+  std::shared_ptr<Iterator> iter = ds->CreateIterator(columns);
+  EXPECT_EQ(iter, nullptr);
+}
+
 /// Feature: Test YelpReviewPolarity Dataset(usage=all).
 /// Description: read train data and test data.
 /// Expectation: the data is processed successfully.
