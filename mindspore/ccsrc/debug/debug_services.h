@@ -36,6 +36,7 @@
 #include <map>
 #include <limits>
 #include <sstream>
+#include <utility>
 #include "debug/tensor_load.h"
 #include "debug/tensor_data.h"
 
@@ -117,6 +118,7 @@ class DebugServices {
   typedef std::vector<std::vector<std::vector<parameter_t>>> partitioned_parameters;
   typedef std::vector<std::vector<int32_t>> partitioned_error_code;
   typedef std::vector<std::vector<unsigned int>> partitioned_id;
+  typedef std::map<std::string, std::vector<std::pair<std::string, std::string>>> DirMap;
 
   struct watchpoint_t {
     unsigned int id;
@@ -356,8 +358,7 @@ class DebugServices {
                          std::size_t *const size, std::vector<int64_t> *const shape,
                          std::vector<char> **const data_buffer, bool *no_mem_to_read);
 
-  void ConvertToHostFormat(const std::map<std::string, std::vector<std::string>> &dir_to_files_map,
-                           std::vector<std::string> *const result_list);
+  void ConvertToHostFormat(const DirMap &dir_to_files_map, std::vector<std::string> *const result_list);
 
   void ProcessConvertToHostFormat(const std::vector<std::string> &files_after_convert_in_dir,
                                   const std::string &dump_key, std::vector<std::string> *const result_list,
@@ -371,8 +372,7 @@ class DebugServices {
                               const std::string &specific_dump_dir, std::vector<std::string> *const result_list);
 
   void ProcessConvertList(const std::string &prefix_dump_file_name, const std::string &file_format,
-                          const std::string &specific_dump_dir,
-                          std::map<std::string, std::vector<std::string>> *dir_to_files_map,
+                          const std::string &specific_dump_dir, DirMap *dir_to_files_map,
                           std::vector<std::string> *const result_list);
 
   void GetTensorDataInfoAsync(const std::vector<std::tuple<std::string, std::string>> &proto_dump,

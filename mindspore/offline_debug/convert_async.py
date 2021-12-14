@@ -136,7 +136,7 @@ class AsyncDumpConverter:
     Convert the target async dump data into npy files.
     """
 
-    def __init__(self, file_list, output_path):
+    def __init__(self, file_list, output_path, file_node_map):
         # check input path
         file_list = [os.path.realpath(file_item) for file_item in file_list]
         output_path = os.path.realpath(output_path)
@@ -145,6 +145,7 @@ class AsyncDumpConverter:
         self.args = parse_args(file_list, output_path)
         self.files_to_convert = self.args.file_list
         self.output_path = self.args.output_path
+        self.file_node_map = file_node_map
         self.failed_file_path = os.path.join(
             self.output_path, 'convert_failed_file_list.txt')
         self.clear_failed_list_file()
@@ -295,7 +296,8 @@ class AsyncDumpConverter:
         """
         file_name = os.path.basename(file_path)
         name_splits = file_name.split('.')
-        name_splits[1] = name_splits[1].split('_')[-1]
+        node_name_without_scope = self.file_node_map[file_name]
+        name_splits[1] = node_name_without_scope
         file_name_no_scope = '.'.join(name_splits)
         out_file_name = "%s.%s.%d.%s.npy" % (
             file_name_no_scope,
@@ -315,7 +317,10 @@ class AsyncDumpConverter:
         for target_file in target_file_list:
             old_filename = os.path.basename(target_file)
             name_splits = old_filename.split('.')
-            name_splits[1] = name_splits[1].split('_')[-1]
+            input_output_pos = 5
+            origin_bin_file_name = '.'.join(name_splits[:input_output_pos])
+            node_name_without_scope = self.file_node_map[origin_bin_file_name]
+            name_splits[1] = node_name_without_scope
             name_splits[-2] = self.args.format
             new_file_name = '.'.join(name_splits)
             out_path = os.path.join(self.output_path, new_file_name)

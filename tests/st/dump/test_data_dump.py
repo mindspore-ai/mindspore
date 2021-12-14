@@ -202,8 +202,9 @@ def test_async_dump_net_multi_layer_mode1():
         label = Tensor(np.zeros(shape=(32, 1000)).astype(np.float32))
         net_dict = train_network(inputs, label)
         dump_file_path = os.path.join(dump_path, 'rank_0', 'test', '0', '0')
-        dump_file_name = list(Path(dump_file_path).rglob("*SoftmaxCrossEntropyWithLogits*"))[0]
-        dump_file_full_path = os.path.join(dump_file_path, dump_file_name)
+        expect_op_name = "SoftmaxCrossEntropyWithLogits-op10"
+        dump_file_full_path = list(Path(dump_file_path).rglob(''.join(("*", expect_op_name, "*"))))[0]
+        dump_file_name = os.path.basename(dump_file_full_path)
         npy_path = os.path.join(dump_path, "npy_files")
         if os.path.exists(npy_path):
             shutil.rmtree(npy_path)
@@ -211,7 +212,9 @@ def test_async_dump_net_multi_layer_mode1():
         tool_path_search_list = list(Path('/usr/local/Ascend').rglob('msaccucmp.py*'))
         if tool_path_search_list:
             converter = import_module("mindspore.offline_debug.convert_async")
-            converter.AsyncDumpConverter([dump_file_full_path], npy_path).convert_files()
+            file_node_map = dict()
+            file_node_map[dump_file_name] = expect_op_name
+            converter.AsyncDumpConverter([dump_file_full_path], npy_path, file_node_map).convert_files()
             npy_result_file = list(Path(npy_path).rglob("*output.0.*.npy"))[0]
             dump_result = np.load(os.path.join(npy_path, npy_result_file))
             for index, value in enumerate(net_dict):
