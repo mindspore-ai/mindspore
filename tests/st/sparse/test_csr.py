@@ -211,51 +211,37 @@ def test_csr_ops():
     Description: Test CSRReduceSum, CSRMul, CSRMV.
     Expectation: Success.
     """
-    class CSRReduceSumNet(nn.Cell):
-        def __init__(self):
-            super(CSRReduceSumNet, self).__init__()
-            self.op = _csr_ops.CSRReduceSum()
-
-        def construct(self, indptr, indices, values, dense_shape, axis):
-            csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
-            return self.op(csr_tensor, axis)
-
-    class CSRMulNet(nn.Cell):
-        def __init__(self):
-            super(CSRMulNet, self).__init__()
-            self.op = _csr_ops.CSRMul()
-
-        def construct(self, indptr, indices, values, dense_shape, dense):
-            csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
-            return self.op(csr_tensor, dense)
-
-    class CSRMVNet(nn.Cell):
-        def __init__(self):
-            super(CSRMVNet, self).__init__()
-            self.op = _csr_ops.CSRMV()
-
-        def construct(self, indptr, indices, values, dense_shape, dense):
-            csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
-            return self.op(csr_tensor, dense)
+    csr_reducesum = _csr_ops.CSRReduceSum()
+    csrmv = _csr_ops.CSRMV()
 
     indptr = Tensor([0, 1, 2])
     indices = Tensor([0, 1])
     values = Tensor([2, 1], dtype=mstype.float32)
     dense_shape = (2, 4)
+
     dense_tensor = Tensor([[1., 1, 1, 1], [1, 1, 1, 1]], dtype=mstype.float32)
     dense_vector = Tensor([[1.], [1], [1], [1]], dtype=mstype.float32)
 
-    net1 = CSRReduceSumNet()
-    out1 = net1(indptr, indices, values, dense_shape, 1)
+    def test_ops_pynative(indptr, indices, values, dense_shape):
+        csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
+        dense1 = csr_reducesum(csr_tensor, 1)
+        dense2 = csrmv(csr_tensor, dense_vector)
+        sparse1 = csr_tensor * dense_tensor
+        sparse2 = dense_tensor * csr_tensor
+        return dense1, dense2, sparse1, sparse2
+
+    test_ops_graph = ms_function(test_ops_pynative)
+
+    pynative_res = test_ops_pynative(indptr, indices, values, dense_shape)
+    graph_res = test_ops_graph(indptr, indices, values, dense_shape)
     expect1 = np.array([[2.], [1.]], dtype=np.float32)
-    assert np.allclose(out1.asnumpy(), expect1)
-
-    net2 = CSRMulNet()
-    out2 = net2(indptr, indices, values, dense_shape, dense_tensor)
-    expect2 = np.array([2., 1.], dtype=np.float32)
-    assert np.allclose(out2.asnumpy(), expect2)
-
-    net3 = CSRMVNet()
-    out3 = net3(indptr, indices, values, dense_shape, dense_vector)
-    expect3 = np.array([[2.], [1.]], dtype=np.float32)
-    assert np.allclose(out3.asnumpy(), expect3)
+    expect2 = np.array([[2.], [1.]], dtype=np.float32)
+    expect3 = np.array([2., 1.], dtype=np.float32)
+    assert np.allclose(pynative_res[0].asnumpy(), expect1)
+    assert np.allclose(pynative_res[1].asnumpy(), expect2)
+    assert np.allclose(pynative_res[2].values.asnumpy(), expect3)
+    assert np.allclose(pynative_res[3].values.asnumpy(), expect3)
+    assert np.allclose(graph_res[0].asnumpy(), expect1)
+    assert np.allclose(graph_res[1].asnumpy(), expect2)
+    assert np.allclose(graph_res[2].values.asnumpy(), expect3)
+    assert np.allclose(graph_res[3].values.asnumpy(), expect3)

@@ -2322,6 +2322,10 @@ class CSRTensor(CSRTensor_):
             return CSRTensor_.__repr__(self)
         return ''
 
+    def __mul__(self, other):
+        res = tensor_operator_registry.get('csr_mul')(self, other)
+        return CSRTensor(self.indptr, self.indices, res, self.shape)
+
     @property
     def indptr(self):
         return Tensor(self._indptr)

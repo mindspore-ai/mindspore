@@ -52,11 +52,11 @@ void BackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &kern
 #endif
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto common_pm = std::make_shared<PassManager>("common_pm");
-  common_pm->AddPass(std::make_shared<SparseProcess>());
   common_pm->AddPass(std::make_shared<AddDynamicShapeAttr>());
   common_pm->AddPass(std::make_shared<ReduceSumOptimizer>());
   common_pm->AddPass(std::make_shared<ConvertConstInputToAttr>());
   common_pm->AddPass(std::make_shared<CustomOpConstInputToAttr>());
+  common_pm->AddPass(std::make_shared<SparseProcess>());
   common_pm->AddPass(std::make_shared<ConvertAttrToUnifyMindIR>());
   common_pm->AddPass(std::make_shared<ConstToAttrStridedSliceGradPass>());
   common_pm->AddPass(std::make_shared<ConvertConstInputToTensorInput>());

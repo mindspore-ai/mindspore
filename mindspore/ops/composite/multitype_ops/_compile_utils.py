@@ -21,7 +21,7 @@ from ...composite import base
 from ...operations._inner_ops import TensorCopySlices, SliceGetItem
 from ....common import dtype as mstype
 from ....common._register_for_tensor import tensor_operator_registry
-from ....common.tensor import Tensor
+from ....common.tensor import Tensor, CSRTensor
 
 slice_get_item = SliceGetItem()
 hyper_map = base.HyperMap()
@@ -96,6 +96,8 @@ def _tensor_sub(self, other):
 def _tensor_mul(self, other):
     if isinstance(other, (tuple, list)):
         other = sequence_to_tensor(other, F.dtype(self))
+    elif isinstance(other, CSRTensor):
+        return other * self
     return F.mul(self, other)
 
 

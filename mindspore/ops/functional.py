@@ -478,6 +478,7 @@ tensor_operator_registry.register('gather_nd', gather_nd)
 tensor_operator_registry.register('stack', P.Stack)
 tensor_operator_registry.register('log', log)
 tensor_operator_registry.register('floor', floor)
-
+# support sparse tensor operators
+tensor_operator_registry.register('csr_mul', csr_mul)
 __all__ = [name for name in dir() if name[0] != "_"]
 __all__.remove('Primitive')
