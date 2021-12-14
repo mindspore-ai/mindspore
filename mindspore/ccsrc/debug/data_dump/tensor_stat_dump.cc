@@ -32,6 +32,11 @@ constexpr auto kCsvFileName = "statistic.csv";
 }  // namespace
 
 namespace mindspore {
+const std::map<DbgDataType, std::string> kDbgDataTypeToStringMap = {
+  {DT_BOOL, "bool"},     {DT_INT8, "int8"},       {DT_INT16, "int16"},     {DT_INT32, "int32"},
+  {DT_INT64, "int64"},   {DT_UINT8, "uint8"},     {DT_UINT16, "uint16"},   {DT_UINT32, "uint32"},
+  {DT_UINT64, "uint64"}, {DT_FLOAT16, "float16"}, {DT_FLOAT32, "float32"}, {DT_FLOAT64, "float64"}};
+
 bool CsvWriter::OpenFile(const std::string &path, const std::string &header) {
   if (file_.is_open() && path == file_path_str_) {
     return true;
@@ -156,6 +161,12 @@ bool TensorStatDump::DumpTensorStatsToFile(const std::string &dump_path, std::sh
     MS_LOG(WARNING) << "Tensor data is empty, skipping current statistics";
     return false;
   }
+  auto iter_type = kDbgDataTypeToStringMap.find(data->GetType());
+  if (iter_type == kDbgDataTypeToStringMap.end()) {
+    MS_LOG(INFO) << "Unsupported tensor data_type unsupported(" << data->GetType() << ") for tensor "
+                 << data->GetName();
+    return false;
+  }
   if (!OpenStatisticsFile(dump_path)) {
     return false;
   }
@@ -176,7 +187,7 @@ bool TensorStatDump::DumpTensorStatsToFile(const std::string &dump_path, std::sh
   csv.WriteToCsv(io_);
   csv.WriteToCsv(slot_);
   csv.WriteToCsv(stat.data_size);
-  csv.WriteToCsv(stat.dtype);
+  csv.WriteToCsv(iter_type->second);
   csv.WriteToCsv(shape.str());
   csv.WriteToCsv(stat.max_value);
   csv.WriteToCsv(stat.min_value);
