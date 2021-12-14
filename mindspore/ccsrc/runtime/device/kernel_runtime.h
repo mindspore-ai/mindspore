@@ -96,7 +96,7 @@ class KernelRuntime {
   void set_device_id(uint32_t device_id) { device_id_ = device_id; }
   uint32_t device_id() { return device_id_; }
   static bool UseMemScheduler();
-  void SyncUpdatedParameter(const session::KernelGraph &graph, const std::shared_ptr<MemScheduler> &mem_scheduler);
+  void SyncParameter(const session::KernelGraph &graph, const std::shared_ptr<MemScheduler> &mem_scheduler);
 
 #ifdef ENABLE_DEBUGGER
   // set debugger

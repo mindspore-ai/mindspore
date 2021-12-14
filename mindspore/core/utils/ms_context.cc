@@ -82,7 +82,6 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   set_param<std::string>(MS_CTX_VARIABLE_MEMORY_MAX_SIZE, "0");
   set_param<bool>(MS_CTX_ENABLE_LOOP_SINK, target == kAscendDevice || target == kDavinciDevice);
   set_param<bool>(MS_CTX_ENABLE_PROFILING, false);
-  set_param<bool>(MS_CTX_ENABLE_MEM_SCHEDULER, false);
   set_param<std::string>(MS_CTX_PROFILING_OPTIONS, "training_trace");
   set_param<bool>(MS_CTX_CHECK_BPROP_FLAG, false);
   set_param<float>(MS_CTX_MAX_DEVICE_MEMORY, kDefaultMaxDeviceMemory);
