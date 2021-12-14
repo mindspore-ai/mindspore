@@ -169,4 +169,9 @@ mindspore/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/fp32/matmul_avx512_f
 mindspore/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/fp32/matmul_avx512_fp32.c:nnacl_gemm_avx512_4x64_kernel_nhwc_fp32
 mindspore/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/fp32/matmul_avx512_fp32.c:nnacl_gemm_avx512_5x64_kernel_nhwc_fp32
 mindspore/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/fp32/matmul_avx512_fp32.c:nnacl_gemm_avx512_6x64_kernel_nhwc_fp32
+<<<<<<< HEAD
 mindspore/mindspore/lite/src/runtime/kernel/arm/fp32/matmul_fp32_base.cc:mindspore::kernel::MatmulFp32BaseCPUKernel::Run
+=======
+mindspore/mindspore/ccsrc/frontend/parallel/auto_parallel/rec_core/rec_partition.cc:mindspore::parallel::GetWeights
+mindspore/mindspore/ccsrc/frontend/parallel/auto_parallel/rec_core/rec_partition.cc:mindspore::parallel::PartitionNode
+>>>>>>> Updating the redistribution cost in D-Rec cost model

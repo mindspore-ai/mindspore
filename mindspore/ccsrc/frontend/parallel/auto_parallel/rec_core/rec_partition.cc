@@ -15,7 +15,6 @@
  */
 
 #include "frontend/parallel/auto_parallel/rec_core/rec_partition.h"
-
 #include <algorithm>
 #include <cmath>
 #include <memory>
@@ -85,7 +84,7 @@ double GetWeights(const Graph::NodeType &node) {
 
     return cost_ptr->GetMaxCostIn();
   } else if (op.op_type == OperatorType::kRecUnkownType) {
-    // For Unkown type
+    // For Unknown type
     return 0.0;
   } else {
     MS_LOG(EXCEPTION) << "Failure: GetOperatorWeight failed.";
@@ -183,7 +182,7 @@ StrategyRec PartitionNode(const Graph::NodeType &node,
     auto cost_ptr = std::make_shared<CostSoftmaxCrossEntropyWithLogits>();
     return cost_ptr->GetOptimalStr(node);
   } else if (node.apply.op_type == OperatorType::kRecUnkownType) {
-    // For Unkown type
+    // For Unknown type
     StrategyRec default_strategy;
     return default_strategy;
   } else {
@@ -191,7 +190,21 @@ StrategyRec PartitionNode(const Graph::NodeType &node,
   }
 }
 
-// Parttion graph into all devices.
+StrategyRec GetOneLoopStrategy(size_t op_inputs_num, StrategyRec old_str, StrategyRec new_str) {
+  for (size_t i = 0; i < op_inputs_num; i++) {
+    if (old_str.inputTensor[i].str_n != 0 && old_str.inputTensor[i].str_c != 0 && old_str.inputTensor[i].str_h != 0 &&
+        old_str.inputTensor[i].str_w != 0) {
+      new_str.inputTensor[i].str_n = new_str.inputTensor[i].str_n / old_str.inputTensor[i].str_n;
+      new_str.inputTensor[i].str_c = new_str.inputTensor[i].str_c / old_str.inputTensor[i].str_c;
+      new_str.inputTensor[i].str_h = new_str.inputTensor[i].str_h / old_str.inputTensor[i].str_h;
+      new_str.inputTensor[i].str_w = new_str.inputTensor[i].str_w / old_str.inputTensor[i].str_w;
+    }
+  }
+
+  return new_str;
+}
+
+// Partition graph into all devices.
 Status PartitionForAllDevices(const size_t num_device, const double device_memory,
                               const std::shared_ptr<Graph> &graph) {
   if (num_device < 1) {
@@ -227,15 +240,21 @@ Status PartitionForAllDevices(const size_t num_device, const double device_memor
 
       Graph::NodeType &node_ptr = graph->nodes[index];
 
+      // 2-parts partitioning StrategyRec of the last loop
+      StrategyRec old_str = graph->nodes[index].apply.str;
+
       // Serch optimal strategy to cut this operator. And store the result optimal strategy in graph.
       graph->nodes[index].apply.str = PartitionNode(node_ptr, node_name_to_strategy, graph);
+
+      // Get Current 2-parts partitioning strategy of this loop
+      size_t op_inputs_num = graph->nodes[index].node_in.size();
+      StrategyRec one_loop_strategyrec = GetOneLoopStrategy(op_inputs_num, old_str, graph->nodes[index].apply.str);
 
       // Apply OP Strategy to Tensor Strategy.
       graph->nodes[index] = ApplyStrToTensor(node_ptr);
 
       // Note down the node name and its strategy in this loop.
-      auto node_name_to_str =
-        std::pair<std::string, StrategyRec>(graph->nodes[index].name, graph->nodes[index].apply.str);
+      auto node_name_to_str = std::pair<std::string, StrategyRec>(graph->nodes[index].name, one_loop_strategyrec);
       node_name_to_strategy.push_back(node_name_to_str);
     }
   }
