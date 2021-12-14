@@ -23,7 +23,7 @@
 namespace mindspore {
 std::unordered_map<schema::PrimitiveType, std::set<int>> nodes2const_index{
   {schema::PrimitiveType_Split, {1}},
-  {schema::PrimitiveType_PadFusion, {1}},
+  {schema::PrimitiveType_PadFusion, {1, 2}},
   {schema::PrimitiveType_StridedSlice, {1, 2, 3}}};
 
 NPUOp *NPUPassUtils::CreateNchw2NhwcOp(const std::vector<mindspore::MSTensor> &in_tensors,

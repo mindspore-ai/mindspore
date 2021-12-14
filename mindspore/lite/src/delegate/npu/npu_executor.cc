@@ -76,12 +76,14 @@ int NPUExecutor::Run(const std::vector<mindspore::MSTensor> &in_tensors,
                      const std::vector<mindspore::MSTensor> &out_tensors, const std::vector<NPUOp *> &in_ops) {
   hiai::AiContext context;
   for (size_t i = 0; i < npu_input_tensors_.size(); ++i) {
-    auto data = in_tensors[i].Data();
+    MS_CHECK_TRUE_RET(i < input_relationship_.size() && input_relationship_.at(i) < in_tensors.size(), RET_ERROR);
+    auto inx = input_relationship_.at(i);
+    auto data = in_tensors[inx].Data();
     if (data == nullptr) {
-      MS_LOG(ERROR) << "For " << model_name_ << ", the input tensor " << in_tensors[i].Name() << " data is nullptr";
+      MS_LOG(ERROR) << "For " << model_name_ << ", the input tensor " << in_tensors[inx].Name() << " data is nullptr";
       return RET_ERROR;
     }
-    memcpy(npu_input_tensors_[i]->GetBuffer(), data.get(), in_tensors[i].DataSize());
+    memcpy(npu_input_tensors_[i]->GetBuffer(), data.get(), in_tensors[inx].DataSize());
   }
   context.AddPara("model_name", model_name_);
   if (this->client_ == nullptr) {

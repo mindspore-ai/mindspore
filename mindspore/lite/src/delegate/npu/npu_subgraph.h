@@ -50,6 +50,8 @@ class NPUSubGraph : public kernel::Kernel {
 
   std::vector<NPUOp *> FindPreOps(NPUOp *cur_op);
 
+  void UpdateInputMappingRelationShip(const std::vector<size_t> &input_index) { input_relationship_ = input_index; }
+
  private:
   std::shared_ptr<domi::ModelBufferData> BuildIRModel();
 
@@ -82,6 +84,8 @@ class NPUSubGraph : public kernel::Kernel {
   NPUExecutor *executor_ = nullptr;
 
   NPUManager *npu_manager_ = nullptr;
+
+  std::vector<size_t> input_relationship_;
 };
 
 }  // namespace mindspore

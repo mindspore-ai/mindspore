@@ -25,7 +25,7 @@ namespace mindspore::lite {
 bool IsSubGraphInputTensor(const std::vector<mindspore::MSTensor> &inputs, mindspore::MSTensor input);
 
 template <typename T>
-std::vector<mindspore::MSTensor> GetGraphInTensors(std::vector<T *> ops) {
+std::vector<mindspore::MSTensor> GetGraphInTensors(std::vector<T *> ops, std::vector<size_t> *input_index) {
   std::vector<mindspore::MSTensor> inputs;
   auto is_op_output = [&](mindspore::MSTensor tensor) -> bool {
     for (auto op : ops) {
@@ -40,7 +40,14 @@ std::vector<mindspore::MSTensor> GetGraphInTensors(std::vector<T *> ops) {
   for (auto op : ops) {
     for (auto in_tensor : op->inputs()) {
       if (in_tensor.Data() == nullptr && !is_op_output(in_tensor)) {
-        inputs.push_back(in_tensor);
+        // remove the repeated input.
+        size_t idx = std::find(inputs.begin(), inputs.end(), in_tensor) - inputs.begin();
+        if (idx == inputs.size()) {
+          inputs.push_back(in_tensor);
+        }
+        if (input_index != nullptr) {
+          input_index->push_back(idx);
+        }
       }
     }
   }
@@ -89,7 +96,7 @@ std::vector<mindspore::MSTensor> GetGraphOutTensors(const std::vector<T *> &ops)
 template <typename T>
 std::vector<mindspore::MSTensor> GraphInTensors(const std::vector<T *> &ops, DelegateModel<schema::Primitive> *model,
                                                 KernelIter from, KernelIter end) {
-  auto in_tensors = GetGraphInTensors(ops);
+  auto in_tensors = GetGraphInTensors(ops, nullptr);
   std::vector<mindspore::MSTensor> all_in_tensors;
   for (auto op : ops) {
     for (auto in_tensor : op->inputs()) {
