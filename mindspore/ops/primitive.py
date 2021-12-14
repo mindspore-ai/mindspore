@@ -604,7 +604,7 @@ def prim_attr_register(fn):
 
     Register the decorator of the built-in operator primitive '__init__'.
     The function will add all the parameters of '__init__' as operator attributes ,
-    and init primtive name.
+    and init primitive name.
 
     Args:
         fn (function): __init__ function of primitive.

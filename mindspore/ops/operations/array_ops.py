@@ -5129,6 +5129,7 @@ class DepthToSpace(PrimitiveWithInfer):
 
 class SpaceToBatch(PrimitiveWithInfer):
     r"""
+    SpaceToBatch is deprecated. Please use :class:`mindspore.ops.SpaceToBatchND` instead.
     Divides spatial dimensions into blocks and combines the block size with the original batch.
 
     This operation will divide spatial dimensions (H, W) into blocks with `block_size`, the output tensor's H and W
@@ -5165,7 +5166,7 @@ class SpaceToBatch(PrimitiveWithInfer):
         ValueError: If `block_size` is less than 2.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        Deprecated
 
     Examples:
         >>> block_size = 2
