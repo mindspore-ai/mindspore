@@ -54,12 +54,11 @@ class WeightQuantizer : public Quantizer {
       quant_max_ = QuantMax(bit_num_, false);
       quant_min_ = QuantMin(bit_num_, false, false);
       // parse type_id_
+      MS_ASSERT(bit_num_ > 0 && bit_num_ <= k16Bit);
       if (bit_num_ > 0 && bit_num_ <= k8Bit) {
         type_id_ = kNumberTypeInt8;
       } else if (bit_num_ <= k16Bit) {
         type_id_ = kNumberTypeInt16;
-      } else {
-        MS_LOG(ERROR) << "invalid input bits";
       }
     }
   }

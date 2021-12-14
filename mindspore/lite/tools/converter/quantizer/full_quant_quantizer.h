@@ -102,12 +102,15 @@ class FullQuantQuantizer : public Quantizer {
 
  private:
   // Config
+  TypeId activation_quant_data_type_{kNumberTypeInt8};
   TypeId activation_target_data_type_{kNumberTypeInt8};
-  TypeId quant_data_type_{kNumberTypeInt8};
-  TypeId weight_target_data_type_{kNumberTypeInt8};
+  // quant and export are same data type.
+  TypeId weight_data_type_{kNumberTypeInt8};
   size_t bit_num_{8};
-  int q_max_{INT8_MAX};
-  int q_min_{INT8_MIN};
+  int activation_q_min_{INT8_MIN};
+  int activation_q_max_{INT8_MAX};
+  int weight_q_min_{INT8_MIN};
+  int weight_q_max_{INT8_MAX};
   bool activation_symmetry_{false};
   bool weight_symmetry_{true};
   std::set<PrimitivePtr> support_int8_ops_;
