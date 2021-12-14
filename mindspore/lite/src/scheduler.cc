@@ -23,7 +23,6 @@
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
 #include "src/tensorlist.h"
 #include "src/runtime/kernel/arm/base/partial_fusion.h"
-#include "src/control_flow/control_flow_scheduler.h"
 #endif
 #include "include/errorcode.h"
 #include "src/common/graph_util.h"
@@ -302,6 +301,13 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
     return ret;
   }
 
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
+  if (*is_control_flow_) {
+    control_flow_scheduler_ = std::make_shared<ControlFlowScheduler>(context_, ms_context_, src_tensors_);
+    MS_CHECK_TRUE_MSG(control_flow_scheduler_ != nullptr, RET_ERROR, "new control scheduler failed.");
+  }
+#endif
+
   ret = ScheduleGraphToKernels(dst_kernels);
   FreeOpParameters();
   op_parameters_.clear();
@@ -343,8 +349,7 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
 
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
   if (*is_control_flow_) {
-    ControlFlowScheduler control_flow_scheduler(context_, ms_context_, src_tensors_);
-    control_flow_scheduler.Schedule(dst_kernels);
+    control_flow_scheduler_->SplitNonTailCallSubGraphs(dst_kernels);
   }
 #endif
 
@@ -1364,7 +1369,7 @@ int Scheduler::ScheduleSubGraphToKernels(size_t subgraph_index, std::vector<kern
         auto partial_subgraph_index = GetPartialGraphIndex(primitive, schema_version_);
         if (SubGraphHasScheduled(partial_subgraph_index)) {
           partial_kernel_subgraph_index_map_[kernel] = partial_subgraph_index;
-          MS_LOG(INFO) << "subgraph has scheduled. ";
+          MS_LOG(INFO) << "subgraph has scheduled.";
         } else {
           SubGraphMarkScheduled(partial_subgraph_index);
           partial_kernel_subgraph_index_map_[kernel] = partial_subgraph_index;

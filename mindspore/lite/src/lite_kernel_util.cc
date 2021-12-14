@@ -226,7 +226,7 @@ bool LiteKernelUtil::IsNonTailCall(kernel::LiteKernel *node) {
          !(reinterpret_cast<CallParameter *>(node->op_parameter())->is_tail_call);
 }
 
-std::vector<LiteKernel *> LiteKernelUtil::GetCallInputPartails(LiteKernel *call_node) {
+std::vector<LiteKernel *> LiteKernelUtil::GetCallInputPartials(LiteKernel *call_node) {
   if (call_node->type() != schema::PrimitiveType_Call) {
     MS_LOG(ERROR) << "input node is not call node.";
     return {};
@@ -335,9 +335,6 @@ kernel::SubGraphKernel *LiteKernelUtil::CreateSubGraphKernel(const std::vector<k
                                                              const std::vector<lite::Tensor *> *out_tensors,
                                                              kernel::SubGraphType type,
                                                              const lite::InnerContext &context, int schema_version) {
-  if (type == kernel::kApuSubGraph) {
-    return nullptr;
-  }
   std::vector<lite::Tensor *> input_tensors;
   std::vector<lite::Tensor *> output_tensors;
   if (in_tensors != nullptr) {
@@ -357,55 +354,100 @@ kernel::SubGraphKernel *LiteKernelUtil::CreateSubGraphKernel(const std::vector<k
   std::vector<kernel::LiteKernel *> input_kernels = SubgraphInputNodes(kernels);
   std::vector<kernel::LiteKernel *> output_kernels = SubgraphOutputNodes(kernels);
   kernel::SubGraphKernel *sub_graph = nullptr;
-  if (type == kernel::kCustomSubGraph) {
-    sub_graph = CreateCustomSubGraph(std::move(input_kernels), std::move(output_kernels), kernels, inner_kernel);
-  }
-  if (type == kernel::kGpuFp16SubGraph || type == kernel::kGpuFp32SubGraph) {
-#if GPU_OPENCL
-    sub_graph = new (std::nothrow) kernel::OpenCLSubGraph(input_kernels, output_kernels, kernels, inner_kernel);
-    if (sub_graph == nullptr) {
-      MS_LOG(ERROR) << "Create OpenCLSubGraph failed";
-      delete inner_kernel;
-      return nullptr;
-    }
-#else
-    delete inner_kernel;
-    return nullptr;
-#endif
-  }
-  if (type == kernel::kCpuFP16SubGraph) {
+  switch (type) {
+    case kCpuFP32SubGraph: {
+      sub_graph = new (std::nothrow) kernel::CpuFp32SubGraph(input_kernels, output_kernels, kernels, inner_kernel);
+    } break;
+    case kCpuFP16SubGraph: {
 #ifdef ENABLE_FP16
-    sub_graph = new (std::nothrow) kernel::CpuFp16SubGraph(input_kernels, output_kernels, kernels, inner_kernel);
-    if (sub_graph == nullptr) {
-      MS_LOG(ERROR) << "FP16 subgraph new failed.";
-      delete inner_kernel;
-      return nullptr;
-    }
-    for (auto out_tensor : output_tensors) {
-      if (out_tensor->data_type() == kNumberTypeFloat32) {
-        out_tensor->set_data_type(kNumberTypeFloat16);
+      sub_graph = new (std::nothrow) kernel::CpuFp16SubGraph(input_kernels, output_kernels, kernels, inner_kernel);
+      for (auto out_tensor : output_tensors) {
+        if (out_tensor->data_type() == kNumberTypeFloat32) {
+          out_tensor->set_data_type(kNumberTypeFloat16);
+        }
       }
-    }
-#else
-    delete inner_kernel;
-    MS_LOG(ERROR) << "FP16 subgraph is not supported!";
-    return nullptr;
 #endif
-  }
-  if (type == kernel::kCpuFP32SubGraph) {
-    sub_graph = new (std::nothrow) kernel::CpuFp32SubGraph(input_kernels, output_kernels, kernels, inner_kernel);
-    if (sub_graph == nullptr) {
-      MS_LOG(ERROR) << "FP32 subgraph new failed.";
+    } break;
+    case kGpuFp32SubGraph:
+    case kGpuFp16SubGraph: {
+#if GPU_OPENCL
+      sub_graph = new (std::nothrow) kernel::OpenCLSubGraph(input_kernels, output_kernels, kernels, inner_kernel);
+#endif
+    } break;
+    case kCustomSubGraph: {
+      sub_graph = CreateCustomSubGraph(std::move(input_kernels), std::move(output_kernels), kernels, inner_kernel);
+    } break;
+    default: {
+      MS_LOG(ERROR) << "not support subgraph type: " << type;
       delete inner_kernel;
       return nullptr;
     }
   }
   if (sub_graph == nullptr) {
-    MS_LOG(ERROR) << "create sub graph failed.";
+    delete inner_kernel;
+    MS_LOG(ERROR) << "create subgraph type " << type << "failed.";
     return nullptr;
   }
   sub_graph->set_context(&context);
   sub_graph->SetSchemaVersion(schema_version);
   return sub_graph;
+}
+
+int LiteKernelUtil::ReplaceSubGraphNodesInTensor(kernel::LiteKernel *kernel, const lite::Tensor *old_tensor,
+                                                 lite::Tensor *new_tensor) {
+  int ref_count = 0;
+#ifndef DELEGATE_CLIP
+  /* set op input for calculate */
+  if (kernel->desc().arch == kernel::kDelegate) {
+    ref_count++;
+  } else {
+#endif
+    auto subgraph_kernel = reinterpret_cast<kernel::SubGraphKernel *>(kernel);
+    if (subgraph_kernel == nullptr) {
+      MS_LOG(ERROR) << "cast to subgraph kernel failed.";
+      return RET_ERROR;
+    }
+    for (auto in_node : reinterpret_cast<kernel::SubGraphKernel *>(kernel)->in_nodes()) {
+      for (size_t node_in_index = 0; node_in_index < in_node->in_tensors().size(); node_in_index++) {
+        if (old_tensor == in_node->in_tensors()[node_in_index]) {
+          in_node->set_in_tensor(new_tensor, node_in_index);
+          ref_count++;
+        }
+      }
+    }
+#ifndef DELEGATE_CLIP
+  }
+#endif
+  new_tensor->set_init_ref_count(ref_count);
+  return RET_OK;
+}
+
+int LiteKernelUtil::ReplaceSubGraphNodesOutTensor(kernel::LiteKernel *kernel, const lite::Tensor *old_tensor,
+                                                  lite::Tensor *new_tensor) {
+  int ref_count = 0;
+#ifndef DELEGATE_CLIP
+  /* set op output for calculate */
+  if (kernel->desc().arch == kernel::kDelegate) {
+    ref_count++;
+  } else {
+#endif
+    auto subgraph_kernel = reinterpret_cast<kernel::SubGraphKernel *>(kernel);
+    if (subgraph_kernel == nullptr) {
+      MS_LOG(ERROR) << "cast to subgraph kernel failed.";
+      return RET_ERROR;
+    }
+    for (auto out_node : reinterpret_cast<kernel::SubGraphKernel *>(kernel)->out_nodes()) {
+      for (size_t node_out_index = 0; node_out_index < out_node->out_tensors().size(); node_out_index++) {
+        if (old_tensor == out_node->out_tensors()[node_out_index]) {
+          out_node->set_out_tensor(new_tensor, node_out_index);
+          ref_count++;
+        }
+      }
+    }
+#ifndef DELEGATE_CLIP
+  }
+#endif
+  new_tensor->set_init_ref_count(ref_count);
+  return RET_OK;
 }
 }  // namespace mindspore::kernel
