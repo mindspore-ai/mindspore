@@ -166,7 +166,7 @@ def train():
     lr = Tensor(dynamic_lr(config, dataset_size), mstype.float32)
     federated_learning_manager = FederatedLearningManager(
         net,
-        sync_frequency=config.client_epoch_num * dataset_size,
+        sync_frequency=config.client_epoch_num,
         sync_type=sync_type,
         encrypt_type=encrypt_type,
     )

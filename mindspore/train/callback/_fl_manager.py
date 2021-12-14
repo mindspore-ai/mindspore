@@ -87,9 +87,8 @@ class FederatedLearningManager(Callback):
     Args:
         model (nn.Cell): A training model.
         sync_frequency (int): Synchronization frequency of parameters in Federated Learning.
-                              Note:
-                                   In dataset sink mode, the unit of the frequency is the number of epochs.
-                                   Otherwise, the unit of the frequency is the number of steps.
+                              Note that in dataset sink mode, the unit of the frequency is the number of epochs.
+                              Otherwise, the unit of the frequency is the number of steps.
         sync_type (str): Parameter synchronization type in Federated Learning.
                          Supports ["fixed", "adaptive"]. Default: "fixed".
 
