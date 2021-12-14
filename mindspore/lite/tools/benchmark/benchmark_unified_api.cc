@@ -162,6 +162,7 @@ void BenchmarkUnifiedApi::UpdateDistributionName(const std::shared_ptr<mindspore
   if (rank_id == 0) {
     return;
   }
+  gpu_info->SetDeviceID(rank_id);
 
   /* model file & benchmark data file: include .mindir
    config file :  include .config */

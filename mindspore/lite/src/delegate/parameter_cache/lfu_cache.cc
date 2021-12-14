@@ -203,7 +203,7 @@ Status LFUCacheAlgorithm::CheckCacheHit(const int *batch_ids, const size_t batch
       }
       need_swap_indies->push_back(need_swap_map_iter->first);
       need_swap_indies_cache_index->push_back(node->value);
-      MS_LOG(DEBUG) << "device index " << node->value << ",for host index " << need_swap_map_iter->first;
+      MS_LOG(INFO) << "device index " << node->value << ",for host index " << need_swap_map_iter->first;
       key_table_[(*iter)->key] = iter;
     }
 

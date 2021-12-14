@@ -26,9 +26,9 @@
 namespace mindspore {
 namespace cache {
 void LookUpTableTask(size_t indices_lens, size_t first_dim_size, const char *input_addr, const int *indices_addr,
-                     char *output_addr, size_t embedding_len) {
+                     char *output_addr, size_t embedding_len, int min_host_index) {
   for (size_t i = 0; i < indices_lens; ++i) {
-    int index = indices_addr[i];
+    int index = indices_addr[i] - min_host_index;
     if (index >= 0 && index < static_cast<int>(first_dim_size)) {
       size_t pos = index * embedding_len;
       std::memcpy(output_addr, input_addr + pos, embedding_len);
@@ -54,8 +54,8 @@ EmbeddingCache::~EmbeddingCache() {
   }
 }
 
-Status EmbeddingCache::Init() {
-  cache_ = std::make_shared<LFUCacheAlgorithm>(device_cache_size_, mix_host_index_, max_host_index_);
+Status EmbeddingCache::Init(uint32_t device_id, const void *context) {
+  cache_ = std::make_shared<LFUCacheAlgorithm>(device_cache_size_, min_host_index_, max_host_index_);
   if (cache_ == nullptr) {
     MS_LOG(ERROR) << "malloc LFUCacheAlgorithm failed";
     return kLiteMemoryFailed;
@@ -65,7 +65,10 @@ Status EmbeddingCache::Init() {
     MS_LOG(ERROR) << "get cache failed";
     return kLiteMemoryFailed;
   }
-
+  if (!device_cache_->InitDevice(device_id, context)) {
+    MS_LOG(ERROR) << "init device failed";
+    return kLiteError;
+  }
   auto hash_swap_value_size = embedding_size_ * batch_elements_ * sizeof_data_type_;
   hash_swap_value_device_addr_ = device_cache_->MallocMemory(hash_swap_value_size);
   if (hash_swap_value_device_addr_ == nullptr) {
@@ -87,7 +90,7 @@ Status EmbeddingCache::Init() {
   }
 
   MS_LOG(INFO) << "init succ, rank_group_size_ num:" << rank_group_size_ << ", rank id:" << rank_id_
-               << ", index begin:" << mix_host_index_ << ", index end:" << max_host_index_;
+               << ", index begin:" << min_host_index_ << ", index end:" << max_host_index_;
   return kSuccess;
 }
 
@@ -109,7 +112,7 @@ Status EmbeddingCache::SetHostCacheAddr(void *addr, size_t size) {
   // init cache
   auto index_num = device_cache_size_;
   for (size_t i = 0; i < index_num; i++) {
-    cache_->Put(mix_host_index_ + i, i);
+    cache_->Put(min_host_index_ + i, i);
   }
 
   return kSuccess;
@@ -138,7 +141,7 @@ Status EmbeddingCache::CheckCacheHit(const int *batch_ids, const size_t batch_id
   auto swap_indices_size = need_swap_indies.size();
   if (swap_indices_size > 0) {
     LookUpTableTask(swap_indices_size, host_cache_size_, static_cast<char *>(host_addr_), need_swap_indies.data(),
-                    static_cast<char *>(hash_swap_value_addr_), embedding_size_ * sizeof_data_type_);
+                    static_cast<char *>(hash_swap_value_addr_), embedding_size_ * sizeof_data_type_, min_host_index_);
 
     // copy data
     auto device_cache_ret = device_cache_->CopyHostMemToDevice(hash_swap_value_device_addr_, hash_swap_value_addr_,

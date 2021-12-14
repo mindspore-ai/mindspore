@@ -48,11 +48,15 @@ namespace gpu {
     }                                                            \
   } while (0)
 
-bool GPUCacheMem::InitDevice(uint32_t device_id, const void *) {
+bool GPUCacheMem::InitDevice(uint32_t device_id, const void *context) {
   auto ret = cudaSetDevice(static_cast<int>(device_id));
   if (ret != cudaSuccess) {
     MS_LOG(ERROR) << "Failed to set device id:" << device_id;
     return false;
+  }
+  if (context != nullptr) {
+    stream_ = *(reinterpret_cast<const cudaStream_t *>(context));
+    return true;
   }
   CHECK_CUDA_RET_WITH_RETURN_ERROR_NOTRACE(cudaStreamCreate(reinterpret_cast<CUstream_st **>(&stream_)),
                                            "Cuda create stream failed");

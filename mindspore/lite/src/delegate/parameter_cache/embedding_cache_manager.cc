@@ -46,7 +46,7 @@ bool EmbeddingCacheManager::CheckIsCacheKernel(kernel::Kernel *kernel) {
   return host_cache_model_->CheckIsCacheKernel(kernel);
 }
 
-Status EmbeddingCacheManager::InitCacheKernel(kernel::Kernel *kernel) {
+Status EmbeddingCacheManager::InitCacheKernel(kernel::Kernel *kernel, uint32_t device_id, const void *context) {
   if (host_cache_model_ == nullptr) {
     MS_LOG(ERROR) << "cache model is nullptr, kernel " << kernel->name() << " init cache failed";
     return kLiteError;
@@ -70,7 +70,7 @@ Status EmbeddingCacheManager::InitCacheKernel(kernel::Kernel *kernel) {
     return kLiteError;
   }
   size_t vocab_size = vocab_size_;
-  size_t host_cache_size = vocab_size / rank_group_size_;
+  size_t host_cache_size = host_cache_tensor.ElementNum();
   size_t device_cache_size = tensor.Shape()[0];
   size_t embedding_size_ = tensor.Shape()[1];
   DataType data_type = tensor.DataType();
@@ -83,7 +83,7 @@ Status EmbeddingCacheManager::InitCacheKernel(kernel::Kernel *kernel) {
     return kLiteError;
   }
 
-  auto ret = cache->Init();
+  auto ret = cache->Init(device_id, context);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << kernel->name() << ": EmbeddingCache init failed";
     return kLiteError;
@@ -133,8 +133,15 @@ int EmbeddingCacheManager::CacheHandle(const std::string &tensor_name, mindspore
     MS_LOG(ERROR) << "CheckCacheHit failed, " << model_input_tensor.Name();
     return lite::RET_ERROR;
   }
-  auto cuda_ret = cudaMemcpy(model_input_device_addr, model_input_tensor.MutableData(),
-                             hash_indices_.size() * sizeof(int), cudaMemcpyHostToDevice);
+
+  for (size_t i = 0; i < hash_indices_.size(); i++) {
+    if (hash_indices_[i] != -1) {
+      hash_indices_[i] += cache->GetDeviceStartIndex();
+    }
+  }
+
+  auto cuda_ret = cudaMemcpy(model_input_device_addr, hash_indices_.data(), hash_indices_.size() * sizeof(int),
+                             cudaMemcpyHostToDevice);
   if (cuda_ret != cudaSuccess) {
     MS_LOG(ERROR) << "copy mem failed, " << model_input_tensor.Name();
     return lite::RET_ERROR;
