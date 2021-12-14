@@ -64,11 +64,24 @@ int PoolingCPUKernel::RunImpl(int task_id) const {
     maxf = 6.f;
   }
   int ret = 0;
-  if (pooling_param_->pool_mode_ == PoolMode_MaxPool) {
-    ret = MaxPooling(input_ptr, output_ptr, pooling_param_, task_id, minf, maxf);
+
+  if (in_tensors_[0]->format() == NC4HW4) {
+    if (pooling_param_->pool_mode_ == PoolMode_MaxPool) {
+      ret = MaxPoolingFormNC4HW4ToNHWC(input_ptr, output_ptr, pooling_param_, task_id, minf, maxf);
+    } else {
+      // ret = AvgPoolingFormNC4HW4ToNHWC(input_ptr, output_ptr, pooling_param_, task_id, minf, maxf);
+      MS_LOG(ERROR) << "Do not support NC4HW4 AvgPooling input format.";
+    }
+  } else if (in_tensors_[0]->format() == NHWC) {
+    if (pooling_param_->pool_mode_ == PoolMode_MaxPool) {
+      ret = MaxPooling(input_ptr, output_ptr, pooling_param_, task_id, minf, maxf);
+    } else {
+      ret = AvgPooling(input_ptr, output_ptr, pooling_param_, task_id, minf, maxf);
+    }
   } else {
-    ret = AvgPooling(input_ptr, output_ptr, pooling_param_, task_id, minf, maxf);
+    MS_LOG(ERROR) << "Do not support Pooling input format, only support NC4HW4 and NHWC.";
   }
+
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "AcgPooling run failed.";
     return ret;

@@ -31,6 +31,8 @@ int AvgPooling(const float *input_ptr, float *output_ptr, const PoolingParameter
                float minf, float maxf);
 int MaxPooling(const float *input_ptr, float *output_ptr, const PoolingParameter *pooling_param, int task_id,
                float minf, float maxf);
+int MaxPoolingFormNC4HW4ToNHWC(const float *input_ptr, float *output_ptr, const PoolingParameter *pooling_param,
+                               int task_id, float minf, float maxf);
 #ifdef __cplusplus
 }
 #endif
