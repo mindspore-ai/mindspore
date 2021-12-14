@@ -38,8 +38,6 @@
 
 namespace mindspore {
 namespace common {
-// TODO(jiaorui): delete
-constexpr auto kEnableAscendMindRT = false;
 // TODO(liangzelang): delete
 constexpr auto kEnableAscendSubGraphMindRT = false;
 
