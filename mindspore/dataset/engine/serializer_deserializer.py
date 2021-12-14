@@ -32,7 +32,7 @@ def serialize(dataset, json_filepath=""):
 
     Args:
         dataset (Dataset): The starting node.
-        json_filepath (str): The filepath where a serialized JSON file will be generated.
+        json_filepath (str): The filepath where a serialized JSON file will be generated (default="").
 
     Returns:
        Dict, The dictionary contains the serialized dataset graph.
@@ -60,8 +60,8 @@ def deserialize(input_dict=None, json_filepath=None):
         Currently Python function deserialization of map operator are not supported.
 
     Args:
-        input_dict (dict): A Python dictionary containing a serialized dataset graph.
-        json_filepath (str): A path to the JSON file.
+        input_dict (dict): A Python dictionary containing a serialized dataset graph (default=None).
+        json_filepath (str): A path to the JSON file (default=None).
 
     Returns:
         de.Dataset or None if error occurs.
@@ -106,7 +106,7 @@ def show(dataset, indentation=2):
     Args:
         dataset (Dataset): The starting node.
         indentation (int, optional): The indentation used by the JSON print.
-            Do not indent if indentation is None.
+            Do not indent if indentation is None (default=2).
 
     Examples:
         >>> dataset = ds.MnistDataset(mnist_dataset_dir, 100)

@@ -330,7 +330,7 @@ class DistributedSampler(BuiltinSampler):
         offset(int, optional): The starting shard ID where the elements in the dataset are sent to, which
             should be no more than num_shards. This parameter is only valid when a ConcatDataset takes
             a DistributedSampler as its sampler. It will affect the number of samples of per shard
-            (default=-1, which means each shard has same number of samples).
+            (default=-1, which means each shard has the same number of samples).
 
     Examples:
         >>> # creates a distributed sampler with 10 shards in total. This shard is shard 5.
@@ -426,7 +426,7 @@ class PKSampler(BuiltinSampler):
     Args:
         num_val (int): Number of elements to sample for each class.
         num_class (int, optional): Number of classes to sample (default=None, sample all classes).
-            The parameter does not supported to specify currently.
+            The parameter does not support to specify currently.
         shuffle (bool, optional): If True, the class IDs are shuffled, otherwise it will not be
             shuffled (default=False).
         class_column (str, optional): Name of column with class labels for MindDataset (default='label').
