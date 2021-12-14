@@ -70,7 +70,7 @@ class TensorArray {
   virtual void SetMaxSize(const int64_t size, const bool is_dynamic);
 
   // Return the tensor address in position index.
-  virtual void *GetTensorAddr(const size_t &index) const;
+  virtual const void *GetTensorAddr(const size_t &index) const;
 
  protected:
   std::string name_;

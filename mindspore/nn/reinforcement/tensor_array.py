@@ -20,6 +20,7 @@ from mindspore.ops.operations import _tensor_array as ta
 from mindspore._checkparam import Rel, Validator
 from mindspore.common import dtype as mstype
 
+
 class TensorArray(Cell):
     r"""TensorArray: a dynamic array to store tensors.
 

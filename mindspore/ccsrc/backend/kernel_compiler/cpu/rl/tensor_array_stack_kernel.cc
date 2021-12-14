@@ -45,7 +45,7 @@ void TensorArrayCPUStackKernel::InitKernel(const CNodePtr &kernel_node) {
   type_ = AnfAlgo::GetNodeAttr<TypePtr>(kernel_node, "dtype");
   ele_size_ = GetTypeByte(type_);
   for (auto i : shapes_) {
-    ele_size_ *= i;
+    ele_size_ *= LongToSize(i);
   }
   value_size_ = ele_size_ * LongToSize(max_element);
   output_size_list_.push_back(value_size_);
@@ -57,7 +57,7 @@ void TensorArrayCPUStackKernel::PostExecute() {
   MS_EXCEPTION_IF_NULL(tensors_);
   size_t tensor_size = tensors_->GetValidSize();
   auto shape = shapes_;
-  shape.insert(shape.begin(), tensor_size);
+  (void)shape.insert(shape.begin(), tensor_size);
   MS_LOG(DEBUG) << "After postexecute, the real shape of TensorArrayStack is " << shape;
   AnfAlgo::SetOutputInferTypeAndShape({type_->type_id()}, {shape}, kernel_node_.lock().get());
 }
@@ -85,9 +85,12 @@ bool TensorArrayCPUStackKernel::Launch(const std::vector<AddressPtr> &inputs, co
     MS_LOG(EXCEPTION) << "Invalid TensorArray size, maybe should Clear() TensorArray before next usage.";
   }
   for (size_t i = 0; i < tensors_->GetValidSize(); i++) {
-    auto ret = memcpy_s(out_value + ele_size_ * i, ele_size_, tensors_->GetTensorAddr(i), ele_size_);
+    auto out_ele_size = ele_size_;
+    auto src_addr = tensors_->GetTensorAddr(i);
+    MS_EXCEPTION_IF_NULL(src_addr);
+    auto ret = memcpy_s(out_value + ele_size_ * i, out_ele_size, src_addr, ele_size_);
     if (ret != EOK) {
-      MS_LOG(EXCEPTION) << "Memcpy failed.";
+      MS_LOG(EXCEPTION) << "Memcpy failed, errorno(" << ret << ")";
     }
   }
   PostExecute();

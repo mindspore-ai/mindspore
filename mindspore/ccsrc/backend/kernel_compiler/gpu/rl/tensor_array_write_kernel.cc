@@ -52,7 +52,7 @@ void TensorArrayWriteKernel::InitSizeLists() {
   output_size_list_.push_back(sizeof(int64_t));
 }
 
-bool TensorArrayWriteKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs,
+bool TensorArrayWriteKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                     const std::vector<AddressPtr> &, void *stream) {
   auto handle_addr = GetDeviceAddress<int64_t>(inputs, 0);
   auto index = GetDeviceAddress<int64_t>(inputs, 1);

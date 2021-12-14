@@ -21,6 +21,7 @@ from ..._checkparam import Rel
 from ...common import dtype as mstype
 from ..primitive import prim_attr_register, PrimitiveWithInfer, Primitive
 
+
 class TensorArray(PrimitiveWithInfer):
     r"""
     TensorArrayCreate used to create a TensorArray and return an unique handle.
@@ -66,6 +67,7 @@ class TensorArray(PrimitiveWithInfer):
     def infer_dtype(self):
         return mstype.int64
 
+
 class TensorArrayWrite(PrimitiveWithInfer):
     r"""
     TensorArrayWrite used to write tensor into a created TensorArray.
@@ -101,6 +103,7 @@ class TensorArrayWrite(PrimitiveWithInfer):
         validator.check_type_name("index", index_type, (int, ms.int64), self.name)
         validator.check_type_name("value", value_type, mstype.number_type + (mstype.bool_,), self.name)
         return mstype.int64
+
 
 class TensorArrayRead(PrimitiveWithInfer):
     r"""
@@ -149,6 +152,7 @@ class TensorArrayRead(PrimitiveWithInfer):
         validator.check_type_name("index", index_type, (int, ms.int64), self.name)
         return self.dtype
 
+
 class TensorArrayClose(PrimitiveWithInfer):
     r"""
     TensorArrayClose used to close the created TensorArray. The resources in TensorArray will be deleted.
@@ -181,6 +185,7 @@ class TensorArrayClose(PrimitiveWithInfer):
         validator.check_type_name("handle", handle_type, (ms.int64), self.name)
         return mstype.int64
 
+
 class TensorArrayClear(PrimitiveWithInfer):
     r"""
     TensorArrayClear used to reset the created TensorArray. The instance of TensorArray is still aviliable.
@@ -212,6 +217,7 @@ class TensorArrayClear(PrimitiveWithInfer):
     def infer_dtype(self, handle_type):
         validator.check_type_name("handle", handle_type, (ms.int64), self.name)
         return mstype.int64
+
 
 class TensorArrayStack(Primitive):
     r"""
@@ -251,6 +257,7 @@ class TensorArrayStack(Primitive):
         self.add_prim_attr('element_shape', element_shape)
         self.add_prim_attr('is_dynamic_shape', True)
         self.add_prim_attr('side_effect_mem', True)
+
 
 class TensorArraySize(PrimitiveWithInfer):
     r"""

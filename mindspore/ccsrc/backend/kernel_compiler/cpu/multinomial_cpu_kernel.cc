@@ -43,7 +43,7 @@ void MultinomialCpuKernel::InitKernel(const CNodePtr &kernel_node) {
     std::random_device rd;
     RNG_seed = static_cast<int64_t>(rd());
   }
-  rng_.seed(RNG_seed);
+  rng_.seed(LongToUlong(RNG_seed));
 }
 
 bool MultinomialCpuKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,

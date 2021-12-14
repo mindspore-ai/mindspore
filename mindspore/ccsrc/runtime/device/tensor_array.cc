@@ -107,7 +107,7 @@ void TensorArray::Free() {
 size_t TensorArray::GetValidSize() const { return valid_size_; }
 size_t TensorArray::GetRealSize() const { return tensors_.size(); }
 
-void *TensorArray::GetTensorAddr(const size_t &index) const { return tensors_[index]->addr; }
+const void *TensorArray::GetTensorAddr(const size_t &index) const { return tensors_[index]->addr; }
 
 void TensorArray::SetMaxSize(const int64_t size, const bool is_dynamic) {
   is_dynamic_ = is_dynamic;

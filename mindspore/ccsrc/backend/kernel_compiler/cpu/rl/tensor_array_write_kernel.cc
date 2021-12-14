@@ -25,7 +25,7 @@ constexpr size_t kSecondInputIndex = 2;
 using mindspore::device::TensorArrayMgr;
 using mindspore::device::cpu::CPUTensorArray;
 using mindspore::device::cpu::CPUTensorArrayPtr;
-TensorArrayCPUWriteKernel::TensorArrayCPUWriteKernel() : value_size_(0) {}
+TensorArrayCPUWriteKernel::TensorArrayCPUWriteKernel() : value_size_(0), type_(kTypeUnknown) {}
 
 const std::vector<size_t> &TensorArrayCPUWriteKernel::GetInputSizeList() const { return input_size_list_; }
 
@@ -47,7 +47,7 @@ void TensorArrayCPUWriteKernel::InitKernel(const CNodePtr &kernel_node) {
   output_size_list_.push_back(sizeof(int64_t));
 }
 
-bool TensorArrayCPUWriteKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs,
+bool TensorArrayCPUWriteKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                        const std::vector<AddressPtr> &) {
   auto handle_addr = GetDeviceAddress<int64_t>(inputs, 0);
   auto index = GetDeviceAddress<int64_t>(inputs, 1);
@@ -73,9 +73,9 @@ bool TensorArrayCPUWriteKernel::Launch(const std::vector<AddressPtr> &inputs, co
   }
   MS_EXCEPTION_IF_NULL(dev_addr->addr);
   dev_addr->size = value_size_;
-  auto ret = memcpy_s(dev_addr->addr, value_size_, value, value_size_);
+  auto ret = memcpy_s(dev_addr->addr, dev_addr->size, value, value_size_);
   if (ret != EOK) {
-    MS_LOG(EXCEPTION) << "Memcpy failed.";
+    MS_LOG(EXCEPTION) << "Memcpy failed, errorno(" << ret << ")";
   }
   if (tensors_->Write(index_host, dev_addr)) {
     MS_LOG(DEBUG) << "Write to tensorarry succeed, index " << index_host;
