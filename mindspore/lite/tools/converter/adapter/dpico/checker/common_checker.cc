@@ -30,16 +30,6 @@ bool CommonChecker::Check(CNodePtr op, int32_t output_num, mindspore::Format for
 }
 
 OpCheckerRegistrar g_AbsChecker("Abs", new CommonChecker());
-OpCheckerRegistrar g_AddFusionChecker("AddFusion", new CommonChecker());
-OpCheckerRegistrar g_SubFusionChecker("SubFusion", new CommonChecker());
-OpCheckerRegistrar g_MulFusionChecker("MulFusion", new CommonChecker());
-OpCheckerRegistrar g_DivFusionChecker("DivFusion", new CommonChecker());
-OpCheckerRegistrar g_MaximumChecker("Maximum", new CommonChecker());
-OpCheckerRegistrar g_MinimumChecker("Minimum", new CommonChecker());
-OpCheckerRegistrar g_SquaredDifferenceChecker("SquaredDifference", new CommonChecker());
-OpCheckerRegistrar g_X_DIV_YChecker("X_DIV_Y", new CommonChecker());
-OpCheckerRegistrar g_X_LOG_YChecker("X_LOG_Y", new CommonChecker());
-OpCheckerRegistrar g_BiasAddChecker("BiasAdd", new CommonChecker());
 OpCheckerRegistrar g_NegChecker("Neg", new CommonChecker());
 OpCheckerRegistrar g_EluChecker("Elu", new CommonChecker());
 OpCheckerRegistrar g_NormalizeChecker("Normalize", new CommonChecker());

@@ -29,12 +29,7 @@ constexpr int kMaxReshapeInputW = 65536;
 }  // namespace
 bool ReshapeChecker::Check(CNodePtr op, int32_t output_num, mindspore::Format format) {
   std::vector<int64_t> input_shape;
-  auto abstract = GetCNodeInputAbstract(op, 1);
-  if (abstract == nullptr) {
-    MS_LOG(ERROR) << "get cnode input abstract failed.";
-    return false;
-  }
-  if (FetchShapeFromAbstract(abstract, &input_shape) == RET_OK && !input_shape.empty()) {
+  if (GetInputShapeFromCNode(op, kInputIndex1, &input_shape) == RET_OK && !input_shape.empty()) {
     int64_t input_w;
     if (GetWidth(input_shape, format, &input_w) != RET_OK) {
       MS_LOG(ERROR) << "get input_w failed";

@@ -25,6 +25,7 @@ function Run_Convert_MODELS() {
       echo -e 'disable_fusion=on\n' >> ${ms_config_file}
       echo '[dpico]' >> ${ms_config_file}
       echo 'dpico_config_path='./${model_name}.cfg >> ${ms_config_file}
+      echo 'save_temporary_files=on' >> ${ms_config_file}
       echo -e 'benchmark_path=./tools/benchmark/benchmark' >> ${ms_config_file}
       echo ${model_name} >> "${run_converter_log_file}"
       if [[ ${framework} == 'CAFFE' ]]; then
@@ -46,6 +47,7 @@ function Run_Convert_MODELS() {
       else
         echo "unsupported framework"; return 1
       fi
+      cp ./tmp/custom_0.om ${om_generated_path}/${model_name}_lib_original.om || exit 1
 
       # atc convert model
       if [[ ${framework} == 'CAFFE' ]]; then

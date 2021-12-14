@@ -69,6 +69,6 @@ STATUS InterpMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *ba
   base_operators->push_back(std::move(interp_operator));
   return RET_OK;
 }
-REG_MAPPER(Resize, InterpMapper)
+REG_MAPPER(Interp, InterpMapper)
 }  // namespace dpico
 }  // namespace mindspore

@@ -69,12 +69,7 @@ bool ConcatChecker::Check(CNodePtr op, int32_t output_num, mindspore::Format for
       MS_LOG(WARNING) << "there is offline data in concat, which dpico is unsupported. " << op->fullname_with_scope();
       return false;
     }
-    auto abstract = GetCNodeInputAbstract(op, i);
-    if (abstract == nullptr) {
-      MS_LOG(ERROR) << "get cnode input abstract failed.";
-      return false;
-    }
-    if (FetchShapeFromAbstract(abstract, &input_shape) == RET_OK && !input_shape.empty()) {
+    if (GetInputShapeFromCNode(op, i, &input_shape) == RET_OK && !input_shape.empty()) {
       int64_t input_w;
       if (GetWidth(input_shape, format, &input_w) != RET_OK) {
         MS_LOG(ERROR) << "get input_w failed." << op->fullname_with_scope();
