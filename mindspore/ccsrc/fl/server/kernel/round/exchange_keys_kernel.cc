@@ -47,6 +47,7 @@ bool ExchangeKeysKernel::CountForExchangeKeys(const std::shared_ptr<FBBuilder> &
                                               const schema::RequestExchangeKeys *exchange_keys_req,
                                               const size_t iter_num) {
   MS_ERROR_IF_NULL_W_RET_VAL(exchange_keys_req, false);
+  MS_ERROR_IF_NULL_W_RET_VAL(exchange_keys_req->fl_id(), false);
   if (!DistributedCountService::GetInstance().Count(name_, exchange_keys_req->fl_id()->str())) {
     std::string reason = "Counting for exchange kernel request failed. Please retry later.";
     cipher_key_->BuildExchangeKeysRsp(
@@ -59,6 +60,10 @@ bool ExchangeKeysKernel::CountForExchangeKeys(const std::shared_ptr<FBBuilder> &
 }
 
 sigVerifyResult ExchangeKeysKernel::VerifySignature(const schema::RequestExchangeKeys *exchange_keys_req) {
+  MS_ERROR_IF_NULL_W_RET_VAL(exchange_keys_req, sigVerifyResult::FAILED);
+  MS_ERROR_IF_NULL_W_RET_VAL(exchange_keys_req->fl_id(), sigVerifyResult::FAILED);
+  MS_ERROR_IF_NULL_W_RET_VAL(exchange_keys_req->timestamp(), sigVerifyResult::FAILED);
+
   std::string fl_id = exchange_keys_req->fl_id()->str();
   std::string timestamp = exchange_keys_req->timestamp()->str();
   int iteration = exchange_keys_req->iteration();

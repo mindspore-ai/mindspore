@@ -283,6 +283,10 @@ ResultCode UpdateModelKernel::CountForUpdateModel(const std::shared_ptr<FBBuilde
 }
 
 sigVerifyResult UpdateModelKernel::VerifySignature(const schema::RequestUpdateModel *update_model_req) {
+  MS_ERROR_IF_NULL_W_RET_VAL(update_model_req, sigVerifyResult::FAILED);
+  MS_ERROR_IF_NULL_W_RET_VAL(update_model_req->fl_id(), sigVerifyResult::FAILED);
+  MS_ERROR_IF_NULL_W_RET_VAL(update_model_req->timestamp(), sigVerifyResult::FAILED);
+
   std::string fl_id = update_model_req->fl_id()->str();
   std::string timestamp = update_model_req->timestamp()->str();
   int iteration = update_model_req->iteration();

@@ -46,6 +46,10 @@ void ReconstructSecretsKernel::InitKernel(size_t) {
 }
 
 sigVerifyResult ReconstructSecretsKernel::VerifySignature(const schema::SendReconstructSecret *reconstruct_secret_req) {
+  MS_ERROR_IF_NULL_W_RET_VAL(reconstruct_secret_req, sigVerifyResult::FAILED);
+  MS_ERROR_IF_NULL_W_RET_VAL(reconstruct_secret_req->fl_id(), sigVerifyResult::FAILED);
+  MS_ERROR_IF_NULL_W_RET_VAL(reconstruct_secret_req->timestamp(), sigVerifyResult::FAILED);
+
   std::string fl_id = reconstruct_secret_req->fl_id()->str();
   std::string timestamp = reconstruct_secret_req->timestamp()->str();
   int iteration = reconstruct_secret_req->iteration();

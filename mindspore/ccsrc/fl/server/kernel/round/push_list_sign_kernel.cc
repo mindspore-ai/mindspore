@@ -96,6 +96,7 @@ bool PushListSignKernel::Launch(const std::vector<AddressPtr> &inputs, const std
 bool PushListSignKernel::LaunchForPushListSign(const schema::SendClientListSign *client_list_sign_req,
                                                const size_t &iter_num, const std::shared_ptr<server::FBBuilder> &fbb,
                                                const std::vector<AddressPtr> &outputs) {
+  MS_ERROR_IF_NULL_W_RET_VAL(client_list_sign_req, false);
   size_t iter_client = IntToSize(client_list_sign_req->iteration());
   if (iter_num != iter_client) {
     std::string reason = "push list sign iteration number is invalid";
@@ -113,6 +114,7 @@ bool PushListSignKernel::LaunchForPushListSign(const schema::SendClientListSign 
   for (size_t i = 0; i < IntToSize(update_model_clients_pb.fl_id_size()); ++i) {
     update_model_clients.push_back(update_model_clients_pb.fl_id(i));
   }
+  MS_ERROR_IF_NULL_W_RET_VAL(client_list_sign_req->fl_id(), false);
   std::string fl_id = client_list_sign_req->fl_id()->str();
   if (DistributedCountService::GetInstance().CountReachThreshold(name_)) {
     MS_LOG(ERROR) << "Current amount for PushListSignKernel is enough.";
@@ -147,6 +149,10 @@ bool PushListSignKernel::LaunchForPushListSign(const schema::SendClientListSign 
 }
 
 sigVerifyResult PushListSignKernel::VerifySignature(const schema::SendClientListSign *client_list_sign_req) {
+  MS_ERROR_IF_NULL_W_RET_VAL(client_list_sign_req, sigVerifyResult::FAILED);
+  MS_ERROR_IF_NULL_W_RET_VAL(client_list_sign_req->fl_id(), sigVerifyResult::FAILED);
+  MS_ERROR_IF_NULL_W_RET_VAL(client_list_sign_req->timestamp(), sigVerifyResult::FAILED);
+
   std::string fl_id = client_list_sign_req->fl_id()->str();
   std::string timestamp = client_list_sign_req->timestamp()->str();
   int iteration = client_list_sign_req->iteration();
@@ -195,6 +201,9 @@ bool PushListSignKernel::PushListSign(const size_t cur_iterator, const std::stri
   std::vector<std::string> get_client_list;  // the clients which get update model client list
   cipher_init_->cipher_meta_storage_.GetClientListFromServer(fl::server::kCtxGetUpdateModelClientList,
                                                              &get_client_list);
+  MS_ERROR_IF_NULL_W_RET_VAL(client_list_sign_req, false);
+  MS_ERROR_IF_NULL_W_RET_VAL(client_list_sign_req->fl_id(), false);
+
   std::string fl_id = client_list_sign_req->fl_id()->str();
   if (find(get_client_list.begin(), get_client_list.end(), fl_id) == get_client_list.end()) {
     // client not in get update model client list.

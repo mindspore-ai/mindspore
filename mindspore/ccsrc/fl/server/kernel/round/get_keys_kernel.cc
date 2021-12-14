@@ -46,6 +46,10 @@ bool GetKeysKernel::CountForGetKeys(const std::shared_ptr<FBBuilder> &fbb, const
 }
 
 sigVerifyResult GetKeysKernel::VerifySignature(const schema::GetExchangeKeys *get_keys_req) {
+  MS_ERROR_IF_NULL_W_RET_VAL(get_keys_req, sigVerifyResult::FAILED);
+  MS_ERROR_IF_NULL_W_RET_VAL(get_keys_req->fl_id(), sigVerifyResult::FAILED);
+  MS_ERROR_IF_NULL_W_RET_VAL(get_keys_req->timestamp(), sigVerifyResult::FAILED);
+
   std::string fl_id = get_keys_req->fl_id()->str();
   std::string timestamp = get_keys_req->timestamp()->str();
   int iteration = get_keys_req->iteration();
