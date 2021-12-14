@@ -119,7 +119,9 @@ void ControlActor::Run(OpContext<DeviceTensor> *const context) {
 void ControlActor::RunOpPartial(OpPartialPtr partial, size_t position, OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   auto &sequential_num = context->sequential_num_;
-  input_op_partials_[sequential_num].emplace_back(position, partial);
+  auto self_partial = std::make_shared<OpPartial>();
+  *self_partial = *partial;
+  input_op_partials_[sequential_num].emplace_back(position, self_partial);
 
   auto is_run = CheckRunningCondition(context);
   MS_LOG(DEBUG) << "Actor(" << GetAID().Name()

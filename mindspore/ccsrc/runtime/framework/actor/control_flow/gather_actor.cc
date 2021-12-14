@@ -110,5 +110,31 @@ void GatherActor::IncreaseDynamicRefCounts(OpContext<DeviceTensor> *const contex
     }
   }
 }
+
+void GatherActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
+  MS_EXCEPTION_IF_NULL(context);
+  const auto &sequential_num = context->sequential_num_;
+
+  std::vector<DeviceTensor *> memory_free_list;
+  if (input_op_partials_.count(sequential_num) > 0) {
+    for (auto &input_partial_pair : input_op_partials_[sequential_num]) {
+      // All inputs in gather actor will be gathered to the first input partial. When the ref count is released,
+      // only the device tensor in the first input partial needs to be released.
+      if (input_partial_pair.first != 0) {
+        continue;
+      }
+      auto partial_device_tensors = GetAllDeviceTensors(input_partial_pair.second);
+      (void)std::copy(partial_device_tensors.begin(), partial_device_tensors.end(),
+                      std::back_inserter(memory_free_list));
+      break;
+    }
+  }
+
+  if (memory_free_list.size() > 0) {
+    memory_free_lists_.emplace_back(memory_free_list);
+    ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &(memory_free_lists_.back()),
+                          device_contexts_[0], context);
+  }
+}
 }  // namespace runtime
 }  // namespace mindspore

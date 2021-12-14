@@ -439,26 +439,23 @@ void CreateDeviceTensorForFrontNode(const KernelWithIndex &front_node_with_index
   AnfAlgo::SetOutputAddr(address, front_node_with_index.second, node.get());
 }
 
-// Check if there is a recursive call to funcgraph, if a calls b, b calls c, and c calls a, it is a recursive call.
-bool IsRecursionFunction(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *checked_funcgraphs,
-                         const std::unordered_map<FuncGraphPtr, std::set<FuncGraphPtr>> &func_graph_call_relation) {
+// Fetch all funcgraph by a seed graph, if a calls b, b calls c, and c calls a, return a set of a, b, c.
+void FetchAllExecutionFunction(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *checked_funcgraphs,
+                               const std::unordered_map<FuncGraphPtr, std::set<FuncGraphPtr>> &call_relation) {
   MS_EXCEPTION_IF_NULL(func_graph);
   if (checked_funcgraphs->find(func_graph) != checked_funcgraphs->end()) {
-    return true;
+    return;
   }
   checked_funcgraphs->emplace(func_graph);
-  auto iter = func_graph_call_relation.find(func_graph);
-  if (iter == func_graph_call_relation.end()) {
-    return false;
+  auto iter = call_relation.find(func_graph);
+  if (iter == call_relation.end()) {
+    return;
   }
 
   for (const auto &called_func_graph : iter->second) {
     MS_EXCEPTION_IF_NULL(called_func_graph);
-    if (IsRecursionFunction(called_func_graph, checked_funcgraphs, func_graph_call_relation)) {
-      return true;
-    }
+    FetchAllExecutionFunction(called_func_graph, checked_funcgraphs, call_relation);
   }
-  return false;
 }
 
 // Fetch all inputs of node.
@@ -730,7 +727,9 @@ bool ControlNodeParser::IsRootGraphParameter(const AnfNodePtr &node) {
 
 bool ControlNodeParser::IsRecursionCallNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  return find(unrecursion_call_nodes_.begin(), unrecursion_call_nodes_.end(), node) == unrecursion_call_nodes_.end();
+  return (find(unrecursion_call_nodes_.begin(), unrecursion_call_nodes_.end(), node) ==
+          unrecursion_call_nodes_.end()) ||
+         (need_stack_control_nodes_.find(node) != need_stack_control_nodes_.end());
 }
 
 bool ControlNodeParser::IsSameKernelGraphGroup(const AnfNodePtr &node, const KernelGraphPtr &graph) {
@@ -1434,7 +1433,8 @@ AnfNodePtr ControlNodeParser::FetchRootGraphFrontNodeBySubFrontNode(const AnfNod
   return sub_front_node_to_root_front_node_[sub_front_node];
 }
 
-bool IsFirstControlNode(const AnfNodePtr &node, std::set<AnfNodePtr> *checked_nodes) {
+bool IsFirstControlNode(const AnfNodePtr &node, std::set<AnfNodePtr> *checked_nodes,
+                        std::set<AnfNodePtr> unrecursion_call_nodes) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(checked_nodes);
   if (!node->isa<CNode>() || checked_nodes->find(node) != checked_nodes->end()) {
@@ -1447,7 +1447,8 @@ bool IsFirstControlNode(const AnfNodePtr &node, std::set<AnfNodePtr> *checked_no
   const auto &inputs = cnode->inputs();
   for (const auto &input : inputs) {
     MS_EXCEPTION_IF_NULL(input);
-    if (AnfAlgo::IsCallNode(input) || (!IsFirstControlNode(input, checked_nodes))) {
+    if ((AnfAlgo::IsCallNode(input) && unrecursion_call_nodes.find(input) == unrecursion_call_nodes.end()) ||
+        (!IsFirstControlNode(input, checked_nodes, unrecursion_call_nodes))) {
       return false;
     }
   }
@@ -1457,8 +1458,10 @@ bool IsFirstControlNode(const AnfNodePtr &node, std::set<AnfNodePtr> *checked_no
 void ControlNodeParser::ParseFirstControlNodeForFuncGraph(const std::vector<AnfNodePtr> &control_nodes) {
   for (const auto &control_node : control_nodes) {
     std::set<AnfNodePtr> checked_nodes;
-    if ((AnfAlgo::IsCallNode(control_node) || AnfAlgo::CheckPrimitiveType(control_node, prim::kPrimReturn)) &&
-        IsFirstControlNode(control_node, &checked_nodes)) {
+    if (((AnfAlgo::IsCallNode(control_node) &&
+          unrecursion_call_nodes_.find(control_node) == unrecursion_call_nodes_.end()) ||
+         AnfAlgo::CheckPrimitiveType(control_node, prim::kPrimReturn)) &&
+        IsFirstControlNode(control_node, &checked_nodes, unrecursion_call_nodes_)) {
       const auto &func_graph = control_node->func_graph();
       MS_EXCEPTION_IF_NULL(func_graph);
       func_graph_to_first_control_nodes_[func_graph].emplace(control_node);
@@ -1480,16 +1483,15 @@ void ControlNodeParser::ParseUnRecursionCallNode() {
 
   for (const auto &call_node_to_func_graphs : call_node_to_func_graphs_) {
     const auto &call_node = call_node_to_func_graphs.first;
-    std::set<FuncGraphPtr> checked_func_graphs{call_node->func_graph()};
-    bool is_recursion_call_node = false;
-    if (std::any_of(call_node_to_func_graphs.second.begin(), call_node_to_func_graphs.second.end(),
-                    [&is_recursion_call_node, &checked_func_graphs, &func_graph_call_relation](const auto &func_graph) {
-                      return IsRecursionFunction(func_graph, &checked_func_graphs, func_graph_call_relation);
-                    })) {
-      is_recursion_call_node = true;
+    const auto &dest_func_graph = call_node->func_graph();
+    MS_EXCEPTION_IF_NULL(dest_func_graph);
+    std::set<FuncGraphPtr> exexution_func_graphs;
+    for (const auto &func_graph : call_node_to_func_graphs.second) {
+      FetchAllExecutionFunction(func_graph, &exexution_func_graphs, func_graph_call_relation);
     }
-    if (!is_recursion_call_node && need_stack_control_nodes_.find(call_node) == need_stack_control_nodes_.end()) {
+    if (exexution_func_graphs.find(dest_func_graph) == exexution_func_graphs.end()) {
       unrecursion_call_nodes_.emplace(call_node);
+      MS_LOG(DEBUG) << "Add unrecursion call control node:" << call_node->DebugString();
     }
   }
 }

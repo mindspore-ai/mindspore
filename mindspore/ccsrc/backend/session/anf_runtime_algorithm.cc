@@ -2462,14 +2462,11 @@ bool AnfRuntimeAlgorithm::IsCallNode(const AnfNodePtr &node) {
   if (!node->isa<CNode>()) {
     return false;
   }
-  const auto &cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-
-  const auto &inputs = cnode->inputs();
-  if (inputs.empty() || inputs[0] == nullptr) {
-    MS_LOG(EXCEPTION) << "Invalid call node:" << node->DebugString() << ". trace: " << trace::DumpSourceLines(cnode);
+  auto input0 = node->cast<CNodePtr>()->input(0);
+  if (IsValueNode<Primitive>(input0)) {
+    return false;
   }
-  return inputs[0]->isa<CNode>() || (inputs[0]->isa<ValueNode>() && IsValueNode<FuncGraph>(inputs[0]));
+  return true;
 }
 
 void AnfRuntimeAlgorithm::UpdateGraphValidRefPair(const KernelGraphPtr &graph) {
