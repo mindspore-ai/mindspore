@@ -27,9 +27,11 @@ from .utils import BorderType, FadeShape, GainType, Interpolation, Modulation, S
 from .validators import check_allpass_biquad, check_amplitude_to_db, check_band_biquad, check_bandpass_biquad, \
     check_bandreject_biquad, check_bass_biquad, check_biquad, check_complex_norm, check_compute_deltas, \
     check_contrast, check_db_to_amplitude, check_dc_shift, check_deemph_biquad, check_detect_pitch_frequency, \
-    check_equalizer_biquad, check_fade, check_flanger, check_highpass_biquad, check_lfilter, check_lowpass_biquad, \
-    check_magphase, check_masking, check_mu_law_coding, check_overdrive, check_phaser, check_riaa_biquad, \
-    check_sliding_window_cmn, check_spectrogram, check_time_stretch, check_treble_biquad, check_vol
+    check_equalizer_biquad, check_fade, check_flanger, check_gain, check_highpass_biquad, check_lfilter, \
+    check_lowpass_biquad, check_magphase, check_masking, check_mu_law_coding, check_overdrive, check_phaser, \
+    check_riaa_biquad, check_sliding_window_cmn, check_spectrogram, check_time_stretch, check_treble_biquad, \
+    check_vol
+
 
 
 class AudioTensorOperation(TensorOperation):
@@ -656,6 +658,30 @@ class FrequencyMasking(AudioTensorOperation):
     def parse(self):
         return cde.FrequencyMaskingOperation(self.iid_masks, self.frequency_mask_param, self.mask_start,
                                              self.mask_value)
+
+
+class Gain(AudioTensorOperation):
+    """
+    Apply amplification or attenuation to the whole waveform.
+
+    Args:
+        gain_db (float): Gain adjustment in decibels (dB) (default=1.0).
+
+    Examples:
+        >>> import numpy as np
+        >>>
+        >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03], [9.246826171875e-03, 1.0894775390625e-02]])
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
+        >>> transforms = [audio.Gain(1.2)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+    """
+
+    @check_gain
+    def __init__(self, gain_db=1.0):
+        self.gain_db = gain_db
+
+    def parse(self):
+        return cde.GainOperation(self.gain_db)
 
 
 class HighpassBiquad(AudioTensorOperation):
