@@ -32,7 +32,7 @@ class OpenCLExecutor : public Executor {
   ~OpenCLExecutor() override = default;
 
   int Prepare(const std::vector<kernel::LiteKernel *> &kernels, const std::vector<Tensor *> &inputs,
-              const std::vector<Tensor *> &outputs, const lite::InnerContext *ctx) override {
+              const std::vector<Tensor *> &outputs, lite::InnerContext *ctx) override {
     return RET_OK;
   }
 

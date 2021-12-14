@@ -74,6 +74,8 @@ enum SubGraphType {
   kNpuSubGraph,
   kApuSubGraph,
   kCustomSubGraph,
+  kEntranceSubGraph,
+  kExitSubGraph,
   kStackSubGraph
 };
 

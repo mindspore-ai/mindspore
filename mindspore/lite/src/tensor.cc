@@ -79,6 +79,7 @@ Tensor *Tensor::CopyTensor(const Tensor &src_tensor, bool copy_data, AllocatorPt
   result->category_ = src_tensor.category_;
   result->format_ = src_tensor.format_;
   result->set_allocator(allocator);
+  result->set_tensor_name(src_tensor.tensor_name() + "_duplicate");
   if (copy_data) {
     auto ret = CopyTensorData(src_tensor, result);
     if (ret != RET_OK) {
@@ -88,6 +89,11 @@ Tensor *Tensor::CopyTensor(const Tensor &src_tensor, bool copy_data, AllocatorPt
     }
     result->own_data_ = src_tensor.own_data_;
   }
+
+  for (LiteQuantParam quant : src_tensor.quant_params()) {
+    result->AddQuantParam(quant);
+  }
+
   return result;
 }
 

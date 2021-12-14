@@ -754,7 +754,7 @@ int LiteOpActor::PrepareOutputData() {
 }
 
 std::vector<std::shared_ptr<LiteOpActor>> CreateOpActor(const std::vector<kernel::LiteKernel *> &kernels,
-                                                        const lite::InnerContext *ctx) {
+                                                        lite::InnerContext *ctx) {
   std::vector<std::shared_ptr<LiteOpActor>> actors;
   std::unordered_map<kernel::LiteKernel *, AID> subgraph_name_AID_map{};
   ActorThreadPool *thread_pool = reinterpret_cast<ActorThreadPool *>(ctx->thread_pool());
@@ -767,7 +767,7 @@ std::vector<std::shared_ptr<LiteOpActor>> CreateOpActor(const std::vector<kernel
     kernel->set_name(kernel->name() + "_" + to_string(actor_count++));
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
     if ((kernel::LiteKernelUtil::IsSwitchTypeCall(kernel))) {
-      auto switch_actor = std::make_shared<LiteSwitchOpActor>(kernel);
+      auto switch_actor = std::make_shared<LiteSwitchOpActor>(kernel, ctx);
       if (switch_actor == nullptr) {
         MS_LOG(ERROR) << "create LiteSwitchOpActor failed: " << kernel->name();
         actors.clear();
@@ -778,7 +778,7 @@ std::vector<std::shared_ptr<LiteOpActor>> CreateOpActor(const std::vector<kernel
       actors.push_back(switch_actor);
     } else {
 #endif
-      auto actor = std::make_shared<LiteOpActor>(kernel);
+      auto actor = std::make_shared<LiteOpActor>(kernel, ctx);
       if (actor == nullptr) {
         MS_LOG(ERROR) << "create LiteOpActor failed: " << kernel->name();
         actors.clear();
