@@ -46,7 +46,12 @@ class E2eDump {
 
   static void DumpData(const session::KernelGraph *graph, uint32_t rank_id, const Debugger *debugger = nullptr);
 
-  static bool DumpParametersAndConstData(const session::KernelGraph *graph, uint32_t rank_id, const Debugger *debugger);
+  static void DumpConstantData(const session::KernelGraph *graph, const std::string &cst_dump_path,
+                               const Debugger *debugger = nullptr);
+
+  static void DumpConstantData(const session::KernelGraph *graph, uint32_t rank_id, const Debugger *debugger = nullptr);
+
+  static bool DumpParametersData(const session::KernelGraph *graph, uint32_t rank_id, const Debugger *debugger);
 
   static bool DumpSingleNodeData(const CNodePtr &node, uint32_t graph_id, uint32_t rank_id,
                                  const Debugger *debugger = nullptr);
@@ -78,8 +83,7 @@ class E2eDump {
 
   static void DumpInputSingleNode(const CNodePtr &node, const std::string &dump_path, const Debugger *debugger);
 
-  static void DumpParametersAndConst(const session::KernelGraph *graph, const std::string &dump_path,
-                                     const Debugger *debugger);
+  static void DumpParameters(const session::KernelGraph *graph, const std::string &dump_path, const Debugger *debugger);
 
   static void DumpGPUMemToFile(const std::string &file_path, const std::string &original_kernel_name,
                                const device::DeviceAddress &addr, const ShapeVector &int_shapes,
@@ -87,7 +91,7 @@ class E2eDump {
                                const Debugger *debugger);
   static bool IsDeviceTargetGPU();
   static void DumpSingleAnfNode(const AnfNodePtr &anf_node, const size_t output_index, const std::string &dump_path,
-                                bool trans_flag, std::map<std::string, size_t> *const_map, const Debugger *debugger);
+                                bool trans_flag, const Debugger *debugger);
 
   static void UpdateIterDumpSetup(const session::KernelGraph *graph, bool sink_mode);
 

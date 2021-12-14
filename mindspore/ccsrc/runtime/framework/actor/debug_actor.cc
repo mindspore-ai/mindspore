@@ -126,7 +126,8 @@ void DebugActor::DebugOnStepEnd(OpContext<DeviceTensor> *const op_context, const
 
 #ifndef ENABLE_SECURITY
   if (DumpJsonParser::GetInstance().GetIterDumpFlag()) {
-    CPUE2eDump::DumpParametersAndConst();
+    CPUE2eDump::DumpParametersData();
+    CPUE2eDump::DumpConstantsData();
   }
 #endif
 

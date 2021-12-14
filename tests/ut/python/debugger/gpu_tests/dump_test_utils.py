@@ -64,3 +64,16 @@ def build_global_execution_order(path, ranks_run_history):
             with open(full_path, 'w+', newline='') as csv_file:
                 write = csv.writer(csv_file)
                 write.writerows(ranks_run_history[rank_id][graph])
+
+
+def build_dump_structure_with_constant(tensor_name_list, tensor_list, net_name, tensor_info_list):
+    temp_dir = tempfile.mkdtemp(prefix=net_name, dir="/tmp")
+    for tensor_name, tensor, tensor_info in zip(tensor_name_list, tensor_list, tensor_info_list):
+        slot = str(tensor_info.slot)
+        rank_id = str(tensor_info.rank_id)
+        path = os.path.join(temp_dir, "rank_" + rank_id, net_name, "0", "constants")
+        os.makedirs(path, exist_ok=True)
+        file_name = f'{tensor_name}.output.{slot}.DefaultFormat.npy'
+        full_path = os.path.join(path, file_name)
+        np.save(full_path, tensor)
+    return temp_dir

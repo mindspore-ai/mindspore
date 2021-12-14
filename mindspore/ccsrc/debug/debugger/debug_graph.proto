@@ -136,6 +136,7 @@ message AttributeProto {
 message NamedValueProto {
   optional string key = 1;                  // attribute name
   optional ValueProto value = 2;            // attribute value
+  optional string full_name = 3;             // attribute full name
 }
 
 // Defines a tensor shape.

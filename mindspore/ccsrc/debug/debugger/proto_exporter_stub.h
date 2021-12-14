@@ -25,5 +25,6 @@ void DumpIRProtoWithSrcInfo(const FuncGraphPtr &func_graph, const std::string &s
                             LocDebugDumpMode dump_location = kDebugWholeStack) {
   return;
 }
+void DumpConstantInfo(const KernelGraphPtr &graph, const std::string &target_dir) { return; }
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_DEBUG_DEBUGGER_MINDSPORE_PROTO_EXPORTER_STUB_H_
