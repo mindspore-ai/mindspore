@@ -69,9 +69,9 @@ AnfNodePtr Resolver::operator()(const OptimizerPtr &optimizer, const AnfNodePtr 
       if (is_getattr_getitem) {
         constexpr size_t resolve_index = 1;
         auto resolve_node = getitem_cnode->input(resolve_index);
-        if (IsPrimitiveCNode(resolve_node, prim::kPrimResolve)) {
-          constexpr size_t position_index = 2;
-          auto index_node = getitem_cnode->input(position_index);
+        constexpr size_t position_index = 2;
+        auto index_node = getitem_cnode->input(position_index);
+        if (IsPrimitiveCNode(resolve_node, prim::kPrimResolve) && index_node->isa<ValueNode>()) {
           auto [name_space, symbol] = parse::GetNamespaceAndSymbol(resolve_node);
           auto py_item = parse::GetItemObjectFromSequence(name_space, symbol, resolve_node, index_node);
           return parse::ResolveCellWithAttr(optimizer->manager(), py_item, resolve_node, attr);
