@@ -52,6 +52,7 @@ class GatherInfo : public OperatorInfo {
 
  protected:
   Status CheckStrategy(const StrategyPtr &strategy) override;
+  Status CheckOutputStrategy(const StrategyPtr &out_strategy) override;
   Status InferMirrorOps() override;
   Status InferForwardCommunication() override;
   Status InferTensorInfo() override;
