@@ -347,6 +347,15 @@ Operator CreateReduceScatterOp(const std::string &reduce_op, const std::string &
   return op;
 }
 
+Operator CreateCastOp(TypePtr type) {
+  Param param_type = std::make_pair(std::make_pair(DTYPE, type), 2);
+  OperatorAttrs attrs;
+  OperatorParams params = {param_type};
+  OperatorArgs args = std::make_pair(attrs, params);
+  Operator op_cast = std::make_pair(CAST, args);
+  return op_cast;
+}
+
 void AddCommOpFusionType(const CNodePtr &comm_node, const AnfNodePtr &param_node) {
   MS_EXCEPTION_IF_NULL(comm_node);
   MS_EXCEPTION_IF_NULL(param_node);

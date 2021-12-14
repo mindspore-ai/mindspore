@@ -362,3 +362,43 @@ def test_reshape_depend_reshape():
     compile_graph_two_input(net, "semi_auto_parallel", size, x, y)
     net_auto = GradWrapTwoInput(NetWithLoss1(Net()))
     compile_graph_two_input(net_auto, "auto_parallel", size, x, y)
+
+def test_appeq_reshape():
+    """
+    Feature: distribute operator reshape in auto parallel.
+    Description: app_eq - reshape - cast - relu net in semi auto parallel / auto parallel.
+    Expectation: compile done without error.
+    """
+    class Net(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.app_eq = P.ApproximateEqual(2.)
+            self.reshape = P.Reshape()
+            self.cast = P.Cast()
+            self.relu = P.ReLU().shard(((1, 8),))
+
+        def construct(self, x, y):
+            out1 = self.app_eq(x, y)
+            out2 = self.reshape(out1, (64, 192))
+            out3 = self.cast(out2, ms.int32)
+            out = self.relu(out3)
+            return out
+
+    class NetWithLoss1(nn.Cell):
+        def __init__(self, network):
+            super(NetWithLoss1, self).__init__()
+            self.mean = P.ReduceMean(keep_dims=False)
+            self.network = network
+
+        def construct(self, x, y):
+            predict = self.network(x, y)
+            return self.mean(predict, ())
+
+    size = 8
+    x = Tensor(np.ones([128, 96]), dtype=ms.float32)
+    y = Tensor(np.ones([128, 96]), dtype=ms.float32)
+    net = GradWrapTwoInput(NetWithLoss1(Net()))
+    compile_graph_two_input(net, "semi_auto_parallel", size, x, y)
+    net_auto = GradWrapTwoInput(NetWithLoss1(Net()))
+    context.set_auto_parallel_context(search_mode="recursive_programming")
+    compile_graph_two_input(net_auto, "auto_parallel", size, x, y)
