@@ -302,7 +302,7 @@ void SchedulerNode::ProcessRegister(const std::shared_ptr<TcpServer> &server,
     auto node_infos = node_manager_.nodes_info();
     bool res = SendPrepareBuildingNetwork(node_infos);
     if (!res) {
-      MS_LOG(ERROR) << "Prepare for building network failed!";
+      MS_LOG(WARNING) << "Prepare for building network failed!";
       return;
     }
     MS_LOG(INFO) << "Prepare for building network success.";
