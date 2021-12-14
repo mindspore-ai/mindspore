@@ -21,45 +21,26 @@
 #include "src/common/log_adapter.h"
 
 namespace mindspore {
+namespace cache {
 namespace gpu {
-#define CHECK_CUDA_RET_WITH_RETURN_ERROR_NOTRACE(expression, message)                    \
-  do {                                                                                   \
-    cudaError_t status = (expression);                                                   \
-    if (status != cudaSuccess) {                                                         \
-      MS_LOG(ERROR) << "CUDA Error: " << message << " | Error Number: " << status << " " \
-                    << cudaGetErrorString(status);                                       \
-      return false;                                                                      \
-    }                                                                                    \
-  } while (0)
-
-#define MS_ERROR_IF_NULL_W_RET_VAL(ptr, val)                     \
-  do {                                                           \
-    if ((ptr) == nullptr) {                                      \
-      MS_LOG(ERROR) << ": The pointer[" << #ptr << "] is null."; \
-      return val;                                                \
-    }                                                            \
-  } while (0)
-
-#define MS_ERROR_IF_NULL(ptr)                                    \
-  do {                                                           \
-    if ((ptr) == nullptr) {                                      \
-      MS_LOG(ERROR) << ": The pointer[" << #ptr << "] is null."; \
-      return false;                                              \
-    }                                                            \
-  } while (0)
-
 bool GPUCacheMem::InitDevice(uint32_t device_id, const void *context) {
-  auto ret = cudaSetDevice(static_cast<int>(device_id));
-  if (ret != cudaSuccess) {
-    MS_LOG(ERROR) << "Failed to set device id:" << device_id;
+  auto cuda_ret = cudaSetDevice(static_cast<int>(device_id));
+  if (cuda_ret != cudaSuccess) {
+    MS_LOG(ERROR) << "Failed to set device id " << device_id << ", cuda_ret " << cuda_ret << " "
+                  << cudaGetErrorString(cuda_ret);
     return false;
   }
   if (context != nullptr) {
     stream_ = *(reinterpret_cast<const cudaStream_t *>(context));
     return true;
   }
-  CHECK_CUDA_RET_WITH_RETURN_ERROR_NOTRACE(cudaStreamCreate(reinterpret_cast<CUstream_st **>(&stream_)),
-                                           "Cuda create stream failed");
+
+  cuda_ret = cudaStreamCreate(&stream_);
+  if (cuda_ret != cudaSuccess) {
+    MS_LOG(ERROR) << "Cuda create stream failed, cuda_ret " << cuda_ret << " " << cudaGetErrorString(cuda_ret);
+    return false;
+  }
+
   return true;
 }
 
@@ -67,81 +48,109 @@ void *GPUCacheMem::MallocMemory(size_t size) {
   void *device_ptr = nullptr;
   auto cuda_ret = cudaMalloc(&device_ptr, size);
   if (cuda_ret != cudaSuccess) {
-    MS_LOG(ERROR) << "Cuda Malloc failed for size:" << size;
+    MS_LOG(ERROR) << "Cuda Malloc failed for size:" << size << ", cuda_ret " << cuda_ret << " "
+                  << cudaGetErrorString(cuda_ret);
     return nullptr;
   }
-  MS_LOG(INFO) << "cudaMalloc size: " << size;
+  MS_LOG(DEBUG) << "cudaMalloc size: " << size;
   return device_ptr;
 }
 
 void GPUCacheMem::FreeMemory(void *device_addr) {
   auto cuda_ret = cudaFree(device_addr);
   if (cuda_ret != cudaSuccess && cuda_ret != cudaErrorCudartUnloading) {
-    MS_LOG(WARNING) << "free cuda failed for " << cudaGetErrorName(cuda_ret);
+    MS_LOG(WARNING) << "free cuda memory failed, "
+                    << ", cuda_ret " << cuda_ret << " " << cudaGetErrorString(cuda_ret);
   }
 }
 
-bool GPUCacheMem::RecordEvent() {
-  event_.reset(new cudaEvent_t());
-  MS_ERROR_IF_NULL_W_RET_VAL(event_, false);
-  CHECK_CUDA_RET_WITH_RETURN_ERROR_NOTRACE(cudaEventCreate(&(*event_)), "Cuda create event failed");
-  CHECK_CUDA_RET_WITH_RETURN_ERROR_NOTRACE(cudaEventRecord(*event_, reinterpret_cast<cudaStream_t>(stream_)),
-                                           "Cuda record event failed");
-  return true;
-}
-
-bool GPUCacheMem::SynchronizeEvent() {
-  MS_ERROR_IF_NULL_W_RET_VAL(event_, false);
-  CHECK_CUDA_RET_WITH_RETURN_ERROR_NOTRACE(cudaEventSynchronize(*event_), "Cuda sync event failed");
-  CHECK_CUDA_RET_WITH_RETURN_ERROR_NOTRACE(cudaEventDestroy(*event_), "Cuda destroy event failed");
-  return true;
-}
-
 bool GPUCacheMem::SynchronizeStream() {
-  MS_ERROR_IF_NULL_W_RET_VAL(stream_, false);
-  CHECK_CUDA_RET_WITH_RETURN_ERROR_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_)),
-                                           "Cuda sync stream failed");
+  auto cuda_ret = cudaStreamSynchronize(stream_);
+  if (cuda_ret != cudaSuccess) {
+    MS_LOG(ERROR) << "Cuda sync stream failed, cuda_ret " << cuda_ret << " " << cudaGetErrorString(cuda_ret);
+    return false;
+  }
+
   return true;
 }
 
 bool GPUCacheMem::CopyHostMemToDevice(void *dst, const void *src, size_t size) {
-  MS_ERROR_IF_NULL(dst);
-  MS_ERROR_IF_NULL(src);
-  CHECK_CUDA_RET_WITH_RETURN_ERROR_NOTRACE(
-    cudaMemcpyAsync(dst, src, size, cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_)),
-    "Cuda memcpy failed");
+  if (dst == nullptr) {
+    MS_LOG(ERROR) << "dst is nullptr";
+    return false;
+  }
+  if (src == nullptr) {
+    MS_LOG(ERROR) << "src is nullptr";
+    return false;
+  }
+
+  auto cuda_ret = cudaMemcpyAsync(dst, src, size, cudaMemcpyHostToDevice, stream_);
+  if (cuda_ret != cudaSuccess) {
+    MS_LOG(ERROR) << "Cuda memcpy failed, cuda_ret " << cuda_ret << " " << cudaGetErrorString(cuda_ret);
+    return false;
+  }
+
   return true;
 }
 
 bool GPUCacheMem::CopyDeviceMemToHost(void *dst, const void *src, size_t size) {
-  MS_ERROR_IF_NULL(dst);
-  MS_ERROR_IF_NULL(src);
-  CHECK_CUDA_RET_WITH_RETURN_ERROR_NOTRACE(
-    cudaMemcpyAsync(dst, src, size, cudaMemcpyDeviceToHost, reinterpret_cast<cudaStream_t>(stream_)),
-    "Cuda memcpy failed");
+  if (dst == nullptr) {
+    MS_LOG(ERROR) << "dst is nullptr";
+    return false;
+  }
+  if (src == nullptr) {
+    MS_LOG(ERROR) << "src is nullptr";
+    return false;
+  }
+
+  auto cuda_ret = cudaMemcpyAsync(dst, src, size, cudaMemcpyDeviceToHost, stream_);
+  if (cuda_ret != cudaSuccess) {
+    MS_LOG(ERROR) << "Cuda memcpy failed, cuda_ret " << cuda_ret << " " << cudaGetErrorString(cuda_ret);
+    return false;
+  }
+
   return true;
 }
 
 bool GPUCacheMem::HashSwapOut(void *hash_table_addr, void *swap_out_value_addr, void *swap_out_index_addr, size_t,
                               size_t embedding_size, size_t swap_out_size) {
-  MS_ERROR_IF_NULL(hash_table_addr);
-  MS_ERROR_IF_NULL(swap_out_value_addr);
-  MS_ERROR_IF_NULL(swap_out_index_addr);
+  if (hash_table_addr == nullptr) {
+    MS_LOG(ERROR) << "hash_table_addr is nullptr";
+    return false;
+  }
+  if (swap_out_value_addr == nullptr) {
+    MS_LOG(ERROR) << "swap_out_value_addr is nullptr";
+    return false;
+  }
+  if (swap_out_index_addr == nullptr) {
+    MS_LOG(ERROR) << "swap_out_index_addr is nullptr";
+    return false;
+  }
+
   DoHashSwapOut(reinterpret_cast<float *>(hash_table_addr), reinterpret_cast<float *>(swap_out_value_addr),
-                reinterpret_cast<int *>(swap_out_index_addr), swap_out_size, embedding_size,
-                reinterpret_cast<cudaStream_t>(stream_));
+                reinterpret_cast<int *>(swap_out_index_addr), swap_out_size, embedding_size, stream_);
   return true;
 }
 
 bool GPUCacheMem::HashSwapIn(void *hash_table_addr, void *swap_in_value_addr, void *swap_in_index_addr, size_t,
                              size_t embedding_size, size_t swap_in_size) {
-  MS_ERROR_IF_NULL(hash_table_addr);
-  MS_ERROR_IF_NULL(swap_in_value_addr);
-  MS_ERROR_IF_NULL(swap_in_index_addr);
+  if (hash_table_addr == nullptr) {
+    MS_LOG(ERROR) << "hash_table_addr is nullptr";
+    return false;
+  }
+  if (swap_in_value_addr == nullptr) {
+    MS_LOG(ERROR) << "swap_in_value_addr is nullptr";
+    return false;
+  }
+  if (swap_in_index_addr == nullptr) {
+    MS_LOG(ERROR) << "swap_in_index_addr is nullptr";
+    return false;
+  }
+
   DoHashSwapIn(reinterpret_cast<float *>(hash_table_addr), reinterpret_cast<float *>(swap_in_value_addr),
-               reinterpret_cast<int *>(swap_in_index_addr), swap_in_size, embedding_size,
-               reinterpret_cast<cudaStream_t>(stream_));
+               reinterpret_cast<int *>(swap_in_index_addr), swap_in_size, embedding_size, stream_);
   return true;
 }
 }  // namespace gpu
+}  // namespace cache
 }  // namespace mindspore

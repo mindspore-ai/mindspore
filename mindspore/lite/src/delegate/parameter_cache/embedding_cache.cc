@@ -19,9 +19,10 @@
 #include <vector>
 #include <cmath>
 #include <cstring>
-#include "src/delegate/parameter_cache/gpu/gpu_cache_mem.h"
 #include "src/common/log_adapter.h"
 #include "include/errorcode.h"
+#include "src/delegate/parameter_cache/gpu/gpu_cache_mem.h"
+#include "src/delegate/parameter_cache/lfu_cache.h"
 
 namespace mindspore {
 namespace cache {

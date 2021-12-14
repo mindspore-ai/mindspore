@@ -22,25 +22,9 @@
 #include <list>
 #include <vector>
 #include "include/api/status.h"
-
+#include "src/delegate/parameter_cache/cache_algorithm.h"
 namespace mindspore {
 namespace cache {
-struct CacheNoe {
-  CacheNoe(int _index, int _frequency, int _value) : key(_index), frequency(_frequency), value(_value) {}
-  int key;  // host input index
-  int frequency;
-  int value;  // cache index
-};
-
-class CacheAlgorithm {
- public:
-  virtual ~CacheAlgorithm() {}
-  virtual int Get(int key) = 0;
-  virtual void Put(int key, int value) = 0;
-  virtual Status CheckCacheHit(const int *batch_ids, const size_t batch_ids_len, int *cache_index,
-                               std::vector<int> *need_swap_indies, std::vector<int> *need_swap_indies_cache_index) = 0;
-};
-
 class LFUCacheAlgorithm : public CacheAlgorithm {
  public:
   LFUCacheAlgorithm(size_t cache_size, int min_host_index, int max_host_index)
