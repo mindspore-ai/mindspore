@@ -2061,7 +2061,6 @@ class Conv2DBackpropInput(Primitive):
         sig.make_sig('input_sizes', dtype=sig.sig_dtype.T2)
     )
 
-    @deprecated("1.5", "ops.Conv2dTranspose", False)
     @prim_attr_register
     def __init__(self,
                  out_channel,
