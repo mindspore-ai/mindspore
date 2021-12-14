@@ -15,16 +15,8 @@
  */
 
 #include "backend/optimizer/graph_kernel/tsa_atomic_add_to_first_tensor.h"
-#include <algorithm>
-#include <functional>
-#include <list>
-#include <map>
 #include <memory>
-#include <utility>
-#include <set>
-#include <stack>
 #include <string>
-#include <tuple>
 #include <vector>
 #include "base/core_ops.h"
 #include "ir/tensor.h"

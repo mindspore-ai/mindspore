@@ -15,17 +15,7 @@
  */
 
 #include "backend/optimizer/graph_kernel/uss_atomic_add.h"
-#include <algorithm>
-#include <functional>
-#include <list>
-#include <map>
 #include <memory>
-#include <utility>
-#include <set>
-#include <stack>
-#include <string>
-#include <tuple>
-#include <vector>
 #include "base/core_ops.h"
 #include "ir/tensor.h"
 #include "utils/utils.h"

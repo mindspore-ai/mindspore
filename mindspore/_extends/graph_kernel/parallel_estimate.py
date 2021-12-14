@@ -41,6 +41,8 @@ def estimate_ops(json_str):
     except jd.JSONDecodeError:
         logger.error(traceback.format_exc())
         return None
+    finally:
+        pass
 
 
 def estimate_calculation_amount(json_str):
@@ -54,3 +56,5 @@ def estimate_calculation_amount(json_str):
     except jd.JSONDecodeError:
         logger.error(traceback.format_exc())
         return None
+    finally:
+        pass

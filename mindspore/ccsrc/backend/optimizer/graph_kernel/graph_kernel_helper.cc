@@ -141,13 +141,13 @@ void SetNewKernelInfo(const AnfNodePtr &new_node, const FuncGraphPtr &fg, const 
     if (kernel_with_index.first->isa<ValueNode>()) {
       auto tensor = GetValueNode<tensor::TensorPtr>(kernel_with_index.first);
       MS_EXCEPTION_IF_NULL(tensor);
-      (void)graph_input_format.emplace_back(kOpFormat_DEFAULT);
       (void)graph_input_type.emplace_back(tensor->data_type());
+      (void)graph_input_format.emplace_back(kOpFormat_DEFAULT);
     } else {
-      auto input_format = AnfAlgo::GetOutputFormat(kernel_with_index.first, kernel_with_index.second);
-      (void)graph_input_format.emplace_back(std::move(input_format));
       auto input_type = AnfAlgo::GetOutputDeviceDataType(kernel_with_index.first, kernel_with_index.second);
       (void)graph_input_type.emplace_back(input_type);
+      auto input_format = AnfAlgo::GetOutputFormat(kernel_with_index.first, kernel_with_index.second);
+      (void)graph_input_format.emplace_back(std::move(input_format));
     }
     auto input_abs = GetOutputAbstract(kernel_with_index.first, kernel_with_index.second);
     fg->parameters()[i]->set_abstract(input_abs);
