@@ -13,13 +13,12 @@
 # limitations under the License.
 # ============================================================================
 """ test a list of cell, and getattr by its item """
+import numpy as np
 from mindspore import context, nn, dtype, Tensor
+from mindspore.ops import operations as P
 
 
 class Actor(nn.Cell):
-    def __init__(self):
-        super(Actor, self).__init__()
-
     def act(self, x, y):
         return x + y
 
@@ -44,4 +43,40 @@ def test_list_item_getattr():
     trainer = Trainer(actor_list)
     x = Tensor([3], dtype=dtype.float32)
     y = Tensor([6], dtype=dtype.float32)
-    print(trainer(x, y))
+    res = trainer(x, y)
+    print(f'res: {res}')
+    expect_res = Tensor([9], dtype=dtype.float32)
+    assert np.array_equal(res.asnumpy(), expect_res.asnumpy())
+
+
+class Trainer2(nn.Cell):
+    def __init__(self, net_list):
+        super(Trainer2, self).__init__()
+        self.net_list = net_list
+        self.less = P.Less()
+        self.zero_float = Tensor(0, dtype=dtype.float32)
+
+    def construct(self, x, y):
+        sum_value = self.zero_float
+        num_actor = 0
+        while num_actor < 3:
+            sum_value += self.net_list[num_actor].act(x, y)
+            num_actor += 1
+        return sum_value
+
+
+def test_list_item_getattr2():
+    """
+    Feature: getattr by the item from list of cell with a Tensor variable.
+    Description: Support RL use method in graph mode.
+    Expectation: No exception.
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    actor_list = [Actor(), Actor(), Actor()]
+    trainer = Trainer2(actor_list)
+    x = Tensor([3], dtype=dtype.float32)
+    y = Tensor([6], dtype=dtype.float32)
+    res = trainer(x, y)
+    print(f'res: {res}')
+    expect_res = Tensor([27], dtype=dtype.float32)
+    assert np.array_equal(res.asnumpy(), expect_res.asnumpy())

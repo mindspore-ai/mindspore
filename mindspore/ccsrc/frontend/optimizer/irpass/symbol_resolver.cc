@@ -36,45 +36,41 @@ AnfNodePtr Resolver::operator()(const OptimizerPtr &optimizer, const AnfNodePtr 
     constexpr auto recursive_level = 3;
     MS_LOG(DEBUG) << "getattr_operand_node: " << getattr_operand_node->DebugString(recursive_level);
 
-    // {prim::GetAttr, {{prim::Resolve, ..., 'getitem'}, {prim::Resolve, ...}, ...}}
+    // {prim::GetAttr, {{prim::Resolve, ..., 'getitem'}, {prim::Resolve, ...}, index}, attr}
     auto getitem_cnode = getattr_operand_node->cast<CNodePtr>();
-    if (getitem_cnode != nullptr) {
+    constexpr size_t getitem_inputs_size = 3;
+    if (getitem_cnode != nullptr && getitem_cnode->size() == getitem_inputs_size) {
       constexpr size_t prim_index = 0;
-      auto primitive_node = getitem_cnode->input(prim_index);
-      auto resolved_getitem_node = primitive_node;
-      if (IsPrimitiveCNode(primitive_node, prim::kPrimResolve)) {
-        auto resolve_getitem_cnode = primitive_node->cast<CNodePtr>();
+      auto resolve_getitem_node = getitem_cnode->input(prim_index);
+      constexpr size_t resolve_index = 1;
+      auto resolve_node = getitem_cnode->input(resolve_index);
+      if (IsPrimitiveCNode(resolve_getitem_node, prim::kPrimResolve) &&
+          IsPrimitiveCNode(resolve_node, prim::kPrimResolve)) {
+        auto resolve_getitem_cnode = resolve_getitem_node->cast<CNodePtr>();
         auto resolve_getitem_symbol = GetValueNode<parse::SymbolPtr>(resolve_getitem_cnode->input(2));
         constexpr auto getitem_symbol = "getitem";
         if (resolve_getitem_symbol->symbol() == getitem_symbol) {
-          auto resolve_getitem_name_space = GetValueNode<parse::NameSpacePtr>(resolve_getitem_cnode->input(1));
-          resolved_getitem_node =
-            ResolveSymbol(optimizer->manager(), resolve_getitem_name_space, resolve_getitem_symbol, node);
-        }
-      }
-      bool is_getattr_getitem = false;
-      auto do_signature = dyn_cast<prim::DoSignaturePrimitive>(GetValueNode(resolved_getitem_node));
-      if (do_signature != nullptr) {
-        auto &func_value = do_signature->function();
-        // The function 'func_value' must be the MultitypeFuncGraph of 'getitem'.
-        auto multitype_fg_value = dyn_cast<prim::MultitypeFuncGraph>(func_value);
-        constexpr auto getitem_symbol = "getitem";
-        if (multitype_fg_value != nullptr && multitype_fg_value->name() == getitem_symbol) {
-          is_getattr_getitem = true;
-        }
-      }
-      if (IsPrimitiveCNode(getattr_operand_node, prim::kPrimTupleGetItem)) {
-        is_getattr_getitem = true;
-      }
-      if (is_getattr_getitem) {
-        constexpr size_t resolve_index = 1;
-        auto resolve_node = getitem_cnode->input(resolve_index);
-        constexpr size_t position_index = 2;
-        auto index_node = getitem_cnode->input(position_index);
-        if (IsPrimitiveCNode(resolve_node, prim::kPrimResolve) && index_node->isa<ValueNode>()) {
+          constexpr size_t position_index = 2;
+          auto index_node = getitem_cnode->input(position_index);
           auto [name_space, symbol] = parse::GetNamespaceAndSymbol(resolve_node);
-          auto py_item = parse::GetItemObjectFromSequence(name_space, symbol, resolve_node, index_node);
-          return parse::ResolveCellWithAttr(optimizer->manager(), py_item, resolve_node, attr);
+          auto obj = parse::GetObjectFromSequence(name_space, symbol, resolve_node, index_node);
+          if (py::isinstance<py::tuple>(obj) || py::isinstance<py::list>(obj)) {
+            std::vector<AnfNodePtr> inputs;
+            inputs.push_back(NewValueNode(prim::kPrimMakeTuple));
+            auto sequence = obj.cast<py::sequence>();
+            for (size_t i = 0; i < sequence.size(); ++i) {
+              auto res = parse::ResolveCellWithAttr(optimizer->manager(), sequence[i], resolve_node, attr);
+              inputs.emplace_back(res);
+            }
+            auto make_tuple_node = getitem_cnode->func_graph()->NewCNodeInOrder(inputs);
+            auto resolve_getitem_name_space = GetValueNode<parse::NameSpacePtr>(resolve_getitem_cnode->input(1));
+            auto resolved_getitem_node =
+              ResolveSymbol(optimizer->manager(), resolve_getitem_name_space, resolve_getitem_symbol, node);
+            auto out =
+              getitem_cnode->func_graph()->NewCNodeInOrder({resolved_getitem_node, make_tuple_node, index_node});
+            return out;
+          }
+          return parse::ResolveCellWithAttr(optimizer->manager(), obj, resolve_node, attr);
         }
       }
     }
