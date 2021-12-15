@@ -570,11 +570,11 @@ class Broadcast(PrimitiveWithInfer):
         return x_dtype
 
 
-class AllSwap(PrimitiveWithCheck):
+class _AllSwap(PrimitiveWithCheck):
     """
-    AllSwap is a collective operation.
+    _AllSwap is a collective operation.
 
-    AllSwap sends data from the all processes to the all processes in the specified group. It has two phases:
+    _AllSwap sends data from the all processes to the all processes in the specified group. It has two phases:
 
     - The scatter phase: On each process, the operand is split into the send size of blocks along the
       0-th axis, and the blocks are scattered to all processes, e.g., the ith block is send to the ith process.
@@ -600,7 +600,7 @@ class AllSwap(PrimitiveWithCheck):
 
     @prim_attr_register
     def __init__(self, group=GlobalComm.WORLD_COMM_GROUP):
-        """Initialize AllSwap"""
+        """Initialize _AllSwap"""
         validator.check_value_type('group', _get_group(group), (str,), self.name)
         self.init_prim_io_names(inputs=['tensor_in', 'send_size', 'recv_size'], outputs=['tensor_out'])
         self.add_prim_attr('group', _get_group(group))
