@@ -77,6 +77,7 @@ class TFRecordToMR:
         feature_dict (dict): a dictionary that states the feature type, and
             `VarLenFeature` is not supported.
         bytes_fields (list, optional): the bytes fields which are in `feature_dict` and can be images bytes.
+            Default: None.
 
     Raises:
         ValueError: If parameter is invalid.

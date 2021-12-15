@@ -30,7 +30,7 @@ class FileReader:
 
     Note:
         If `file_name` is a filename string, it tries to load all MindRecord files generated \
-        in a conversion, and throws an exceptions if a MindRecord file is missing.
+        in a conversion, and throws an exception if a MindRecord file is missing.
         If `file_name` is a filename list, only the MindRecord files in the list are loaded.
 
     Args:
@@ -75,5 +75,5 @@ class FileReader:
             iterator = self._reader.get_next()
 
     def close(self):
-        """Stop reader worker and close File."""
+        """Stop reader worker and close file."""
         self._reader.close()
