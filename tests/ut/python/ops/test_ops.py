@@ -2793,6 +2793,11 @@ test_case_array_ops = [
                         Tensor([[3], [6], [7], [8]], mstype.int8)],
         'skip': ['backward'],
     }),
+    ('Cummax', {
+        'block': P.Cummax(dim=-1),
+        'desc_inputs': [Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]])],
+        'skip': ['backward'],
+    }),
 ]
 
 test_case_image_ops = [

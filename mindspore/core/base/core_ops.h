@@ -118,6 +118,7 @@ constexpr auto kReshape = "Reshape";
 constexpr auto kLstsq = "Lstsq";
 constexpr auto kLowerBound = "LowerBound";
 constexpr auto kUpperBound = "UpperBound";
+constexpr auto kCummax = "Cummax";
 
 // NN
 constexpr auto kCTCLoss = "CTCLoss";
@@ -347,6 +348,7 @@ MS_CORE_API inline const PrimitivePtr kPrimExtractVolumePatches = std::make_shar
 MS_CORE_API inline const PrimitivePtr kPrimLstsq = std::make_shared<Primitive>(kLstsq);
 MS_CORE_API inline const PrimitivePtr kPrimLowerBound = std::make_shared<Primitive>(kLowerBound);
 MS_CORE_API inline const PrimitivePtr kPrimUpperBound = std::make_shared<Primitive>(kUpperBound);
+MS_CORE_API inline const PrimitivePtr kPrimCummax = std::make_shared<Primitive>(kCummax);
 
 // NN
 MS_CORE_API inline const PrimitivePtr kPrimCeLU = std::make_shared<Primitive>("CeLU");
