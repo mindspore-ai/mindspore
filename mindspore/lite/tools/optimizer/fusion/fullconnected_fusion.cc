@@ -82,8 +82,12 @@ int CalNewCnodeScale(const AnfNodePtr &curr_weight_node, const AnfNodePtr &prev_
     MS_LOG(ERROR) << "alloc failed";
     return RET_ERROR;
   }
-  memset_s(new_weight_data, curr_tensor_shape[0] * prev_tensor_shape[1] * sizeof(float), 0,
-           curr_tensor_shape[0] * prev_tensor_shape[1] * sizeof(float));
+  auto status = memset_s(new_weight_data, curr_tensor_shape[0] * prev_tensor_shape[1] * sizeof(float), 0,
+                         curr_tensor_shape[0] * prev_tensor_shape[1] * sizeof(float));
+  if (status != EOK) {
+    MS_LOG(ERROR) << "memset_s failed";
+    return RET_ERROR;
+  }
   Segmm<float>(false, curr_weight_data, prev_weight_data, nullptr, new_weight_data, curr_tensor_shape[0],
                prev_tensor_shape[1], curr_tensor_shape[1]);
   auto parameter_node = curr_weight_node->cast<ParameterPtr>();
