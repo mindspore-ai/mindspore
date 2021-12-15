@@ -1261,12 +1261,7 @@ void AbstractNode::CreateTcpServer() {
   MS_EXCEPTION_IF_NULL(config_);
   std::string interface;
   std::string server_ip;
-  if (ps::PSContext::instance()->server_mode().empty()) {
-    // If the server mode is not set, use 127.0.0.1 as server ip address for distributed learning.
-    server_ip = "127.0.0.1";
-  } else {
-    CommUtil::GetAvailableInterfaceAndIP(&interface, &server_ip);
-  }
+  CommUtil::GetAvailableInterfaceAndIP(&interface, &server_ip);
   server_ = std::make_shared<TcpServer>(server_ip, 0, config_.get());
   MS_EXCEPTION_IF_NULL(server_);
   server_->SetMessageCallback([&](const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
