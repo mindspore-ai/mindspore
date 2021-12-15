@@ -33,7 +33,7 @@
 #include "tools/optimizer/fusion/conv_scale_fusion.h"
 #include "tools/optimizer/fusion/conv_bn_fusion.h"
 #include "tools/optimizer/fusion/conv_tuplegetitem_fusion.h"
-#include "tools/optimizer/fusion/constant_folding_fusion.h"
+#include "tools/optimizer/const_fold/constant_folding_fusion.h"
 #include "tools/optimizer/fusion/norm_fusion.h"
 #include "tools/optimizer/fusion/batchmatmul_fusion.h"
 #include "tools/optimizer/fusion/batchnorm_to_scale_fusion.h"

@@ -54,12 +54,7 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ${SRC_DIR}/common/dynamic_library_loader.cc
         ${SRC_DIR}/train/train_populate_parameter.cc
 
-        ../optimizer/common/*.cc
-        ../optimizer/format/*.cc
-        ../optimizer/fusion/*.cc
-        ../optimizer/fisson/*.cc
-        ../optimizer/parallel/*.cc
-        ../optimizer/graph/*.cc
+        ../optimizer/*.cc
         )
 
 add_subdirectory(../anf_exporter anf_exporter)
