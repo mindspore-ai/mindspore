@@ -465,7 +465,7 @@ class Dataset:
         Serialize a pipeline into JSON string and dump into file if filename is provided.
 
         Args:
-            filename (str): filename of JSON file to be saved as.
+            filename (str): filename of JSON file to be saved as (default="").
 
         Returns:
             str, JSON string of the pipeline.
@@ -492,7 +492,7 @@ class Dataset:
                 of the buckets. Must be strictly increasing. If there are n boundaries,
                 n+1 buckets are created: One bucket for [0, bucket_boundaries[0]), one
                 bucket for [bucket_boundaries[i], bucket_boundaries[i+1]) for each
-                0<i<n-1, and last bucket for [bucket_boundaries[n-1], inf).
+                0<i<n-1, and the last bucket for [bucket_boundaries[n-1], inf).
             bucket_batch_sizes (list[int]): A list consisting of the batch sizes for
                 each bucket. Must contain len(bucket_boundaries)+1 elements.
             element_length_function (Callable, optional): A function that takes in
@@ -567,12 +567,12 @@ class Dataset:
                 be dropped and not propagated to the child node.
             num_parallel_workers (int, optional): Number of workers(threads) to process the dataset in parallel
                 (default=None).
-            per_batch_map (callable, optional): Per batch map callable. A callable which takes
+            per_batch_map (callable, optional): Per batch map callable (default=None). A callable which takes
                 (list[Tensor], list[Tensor], ..., BatchInfo) as input parameters. Each list[Tensor] represents a batch
-                of Tensors on a given column. The number of lists should match with number of entries in input_columns.
-                The last parameter of the callable should always be a BatchInfo object. Per_batch_map should return
-                (list[Tensor], list[Tensor], ...). The length of each list in output should be same as the input.
-                output_columns is required if the number of output lists is different from input.
+                of Tensors on a given column. The number of lists should match with the number of entries in
+                input_columns. The last parameter of the callable should always be a BatchInfo object. Per_batch_map
+                should return (list[Tensor], list[Tensor], ...). The length of each list in output should be the same as
+                the input. output_columns is required if the number of output lists is different from input.
             input_columns (Union[str, list[str]], optional): List of names of the input columns. The size of the list
                 should match with signature of per_batch_map callable (default=None).
             output_columns (Union[str, list[str]], optional): List of names assigned to the columns
@@ -581,8 +581,8 @@ class Dataset:
                 columns of the last operation. (default=None, output columns will have the same
                 name as the input columns, i.e., the columns will be replaced).
             column_order (Union[str, list[str]], optional): Specifies the list of all the columns you need in the whole
-                dataset. The parameter is required when len(input_column) != len(output_column). Caution: the list here
-                is not just the columns specified in parameter input_columns and output_columns.
+                dataset (default=None). The parameter is required when len(input_column) != len(output_column).
+                Caution: the list here is not just the columns specified in parameter input_columns and output_columns.
             pad_info (dict, optional): Whether to perform padding on selected columns. pad_info={"col1":([224,224],0)}
                 would pad column with name "col1" to a tensor of size [224,224] and fill the missing with 0
                 (default=None).
@@ -621,8 +621,8 @@ class Dataset:
 
         Args:
             condition_name (str): The condition name that is used to toggle sending next row.
-            num_batch (int): the number of batches without blocking at the start of each epoch.
-            callback (function): The callback function that will be invoked when sync_update is called.
+            num_batch (int): the number of batches without blocking at the start of each epoch (default=1).
+            callback (function): The callback function that will be invoked when sync_update is called (default=None).
 
         Returns:
             SyncWaitDataset, dataset added a blocking condition.
@@ -778,8 +778,8 @@ class Dataset:
                 columns of the last operation. (default=None, output columns will have the same
                 name as the input columns, i.e., the columns will be replaced).
             column_order (list[str], optional): Specifies the list of all the columns you need in the whole
-                dataset. The parameter is required when len(input_column) != len(output_column). Caution: the list here
-                is not just the columns specified in parameter input_columns and output_columns.
+                dataset (default=None). The parameter is required when len(input_column) != len(output_column).
+                Caution: the list here is not just the columns specified in parameter input_columns and output_columns.
             num_parallel_workers (int, optional): Number of threads used to process the dataset in
                 parallel (default=None, the value from the configuration will be used).
             python_multiprocessing (bool, optional): Parallelize Python operations with multiple worker processes. This
@@ -994,7 +994,7 @@ class Dataset:
             1. If count is greater than the number of elements in the dataset or equal to -1,
                all the elements in dataset will be taken.
             2. The order of using take and batch matters. If take is before batch operation,
-               then take given number of rows; otherwise take given number of batches.
+               then take the given number of rows; otherwise take the given number of batches.
 
         Args:
             count (int, optional): Number of elements to be taken from the dataset (default=-1).
@@ -2108,7 +2108,7 @@ class MappableDataset(SourceDataset):
 
     def add_sampler(self, new_sampler):
         """
-        Add a sampler for current dataset,.
+        Add a sampler for current dataset.
 
         Args:
             new_sampler (Sampler): The sampler to be added as the parent sampler for current dataset.
