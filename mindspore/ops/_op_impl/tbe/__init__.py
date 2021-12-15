@@ -394,6 +394,7 @@ from .atanh import _atanh_tbe
 from .atanh_ds import _atanh_ds_tbe
 from .cosh import _cosh_tbe
 from .sinh import _sinh_tbe
+from .sinh_ds import _sinh_ds_tbe
 from .inv import _inv_tbe
 from .inv_ds import _inv_ds_tbe
 from .inv_grad import _inv_grad_tbe
