@@ -1,13 +1,13 @@
 ﻿mindspore.dataset.MindDataset
 ==============================
 
-.. py:class:: mindspore.dataset.MindDataset(dataset_file, columns_list=None, num_parallel_workers=None, shuffle=None, num_shards=None, shard_id=None, sampler=None, padded_sample=None, num_padded=None, num_samples=None, cache=None)
+.. py:class:: mindspore.dataset.MindDataset(dataset_files, columns_list=None, num_parallel_workers=None, shuffle=None, num_shards=None, shard_id=None, sampler=None, padded_sample=None, num_padded=None, num_samples=None, cache=None)
 
     读取和解析MindRecord数据文件作为源数据集。生成的数据集的列名和列类型取决于MindRecord文件中的保存的列名与类型。
 
     **参数：**
 
-    - **dataset_file** (Union[str, list[str]]) - MindRecord文件路径，支持单文件路径字符串、多文件路径字符串列表。如果 `dataset_file` 的类型是字符串，则它代表一组具有相同前缀名的MindRecord文件，同一路径下具有相同前缀名的其他MindRecord文件将会被自动寻找并加载。如果 `dataset_file` 的类型是列表，则它表示所需读取的MindRecord数据文件。
+    - **dataset_files** (Union[str, list[str]]) - MindRecord文件路径，支持单文件路径字符串、多文件路径字符串列表。如果 `dataset_files` 的类型是字符串，则它代表一组具有相同前缀名的MindRecord文件，同一路径下具有相同前缀名的其他MindRecord文件将会被自动寻找并加载。如果 `dataset_files` 的类型是列表，则它表示所需读取的MindRecord数据文件。
     - **columns_list** (list[str]，可选) - 指定从MindRecord文件中读取的数据列（默认为None，读取所有列）。
     - **num_parallel_workers** (int，可选) - 指定读取数据的工作线程数（默认值None，即使用mindspore.dataset.config中配置的线程数）。
     - **shuffle** (Union[bool, Shuffle level], 可选) - 每个epoch中数据混洗的模式（默认为为mindspore.dataset.Shuffle.GLOBAL）。如果为False，则不混洗；如果为True，等同于将 `shuffle` 设置为mindspore.dataset.Shuffle.GLOBAL。另外也可以传入枚举变量设置shuffle级别：
@@ -63,7 +63,7 @@
     **样例：**
 
     >>> mind_dataset_dir = ["/path/to/mind_dataset_file"] # 此列表可以包含1个或多个MindRecord文件
-    >>> dataset = ds.MindDataset(dataset_file=mind_dataset_dir)
+    >>> dataset = ds.MindDataset(dataset_files=mind_dataset_dir)
 
     .. include:: mindspore.dataset.Dataset.add_sampler.rst
 

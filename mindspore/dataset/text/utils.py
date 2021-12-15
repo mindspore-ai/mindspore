@@ -46,8 +46,8 @@ class Vocab(cde.Vocab):
 
         This would collect all unique words in a dataset and return a vocab within
         the frequency range specified by user in freq_range. User would be warned if no words fall into the frequency.
-        Words in vocab are ordered from highest frequency to lowest frequency. Words with the same frequency would be
-        ordered lexicographically.
+        Words in vocab are ordered from the highest frequency to the lowest frequency. Words with the same frequency
+        would be ordered lexicographically.
 
         Args:
             dataset(Dataset): dataset to build vocab from.
@@ -86,7 +86,7 @@ class Vocab(cde.Vocab):
 
         Args:
             word_list(list): A list of string where each element is a word of type string.
-            special_tokens(list, optional):  A list of strings, each one is a special token. for example
+            special_tokens(list, optional):  A list of strings, each one is a special token. For example
                 special_tokens=["<pad>","<unk>"] (default=None, no special tokens will be added).
             special_first(bool, optional): Whether special_tokens is prepended or appended to vocab. If special_tokens
                 is specified and special_first is set to True, special_tokens will be prepended (default=True).
@@ -112,7 +112,7 @@ class Vocab(cde.Vocab):
             delimiter (str, optional): A delimiter to break up each line in file, the first element is taken to be
                 the word (default="").
             vocab_size (int, optional): Number of words to read from file_path (default=None, all words are taken).
-            special_tokens (list, optional):  A list of strings, each one is a special token. for example
+            special_tokens (list, optional):  A list of strings, each one is a special token. For example
                 special_tokens=["<pad>","<unk>"] (default=None, no special tokens will be added).
             special_first (bool, optional): Whether special_tokens will be prepended/appended to vocab,
                 If special_tokens is specified and special_first is set to True,
@@ -262,7 +262,7 @@ def to_str(array, encoding='utf8'):
 
     Args:
         array (numpy.ndarray): Array of `bytes` type representing strings.
-        encoding (str): Indicating the charset for decoding.
+        encoding (str): Indicating the charset for decoding (default='utf8').
 
     Returns:
         numpy.ndarray, NumPy array of `str`.
@@ -286,7 +286,7 @@ def to_bytes(array, encoding='utf8'):
 
     Args:
         array (numpy.ndarray): Array of `str` type representing strings.
-        encoding (str): Indicating the charset for encoding.
+        encoding (str): Indicating the charset for encoding (default='utf8').
 
     Returns:
         numpy.ndarray, NumPy array of `bytes`.
