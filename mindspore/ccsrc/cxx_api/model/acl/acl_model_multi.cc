@@ -164,10 +164,20 @@ void AclModelMulti::SetInputs() {
     for (const auto &in : inputs) {
       auto input_param = std::dynamic_pointer_cast<Parameter>(in);
       MS_EXCEPTION_IF_NULL(input_param);
-      MS_EXCEPTION_IF_NULL(input_param->abstract());
-      auto input_value = input_param->abstract()->GetValueTrack();
-      auto tensor = input_value->cast<tensor::TensorPtr>();
-      MS_EXCEPTION_IF_NULL(tensor);
+      auto input_abs = input_param->abstract();
+      MS_EXCEPTION_IF_NULL(input_abs);
+      auto tensor_abs = input_abs->cast<abstract::AbstractTensorPtr>();
+      if (tensor_abs == nullptr) {
+        MS_LOG(EXCEPTION) << "The graph input type is not a tensor. input args info:" << input_abs->ToString();
+      }
+      auto shape_ptr = tensor_abs->BuildShape();
+      MS_EXCEPTION_IF_NULL(shape_ptr);
+      auto tensor_shape = shape_ptr->cast<abstract::ShapePtr>();
+      MS_EXCEPTION_IF_NULL(tensor_shape);
+      auto elem = tensor_abs->element();
+      MS_EXCEPTION_IF_NULL(elem);
+      auto type_id = elem->BuildType()->type_id();
+      auto tensor = std::make_shared<tensor::Tensor>(type_id, tensor_shape->shape());
 
       std::vector<int64_t> shape = tensor->shape_c();
       auto input_tensor = MSTensor::CreateTensor(input_param->name(), static_cast<DataType>(tensor->data_type_c()),
