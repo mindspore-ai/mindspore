@@ -77,7 +77,7 @@ if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86_onnx" || $b
     fi
 fi
 
-if [[ $backend == "all" || $backend == "codegen_and_train" ]]; then
+if [[ $backend == "all" || $backend == "codegen" ]]; then
     # run codegen
     sh $cur_path/scripts/run_benchmark_codegen.sh -r $release_path -m $models_path -d $device_id -e $backend
     x86_status=$?
@@ -85,6 +85,9 @@ if [[ $backend == "all" || $backend == "codegen_and_train" ]]; then
       echo "Run codegen failed"
       exit 1
     fi
+fi
+
+if [[ $backend == "all" || $backend == "train" ]]; then
     # run train
     sh $cur_path/scripts/run_net_train.sh -r $release_path -m ${models_path}/../../models_train -d $device_id -e $backend
     x86_status=$?

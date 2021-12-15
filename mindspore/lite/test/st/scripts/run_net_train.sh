@@ -642,28 +642,28 @@ run_code_examples_log_file=${logs_path}/run_code_examples_log.txt
 echo 'run code examlpe logs: ' > ${run_code_examples_log_file}
 
 isFailed=0
-if [[ $backend == "all" || $backend == "train" || $backend == "x86_train" || $backend == "codegen_and_train" ]]; then
+if [[ $backend == "all" || $backend == "train" || $backend == "x86_train" ]]; then
     # Run on x86
     echo "Start Run x86 ..."
     Run_x86 &
     Run_x86_PID=$!
     sleep 1
 fi
-if [[ $backend == "all" || $backend == "train" || $backend == "x86_train" || $backend == "x86-java" || $backend == "codegen_and_train" || $backend == "arm64_train" ]]; then
+if [[ $backend == "all" || $backend == "train" || $backend == "x86_train" || $backend == "x86-java" || $backend == "arm64_train" ]]; then
     # Run Code Examples 
     echo "Start Code Examples ..."
     Run_CodeExamples &
     Run_CodeExamples_PID=$!
     sleep 1
 fi
-if [[ $backend == "all" || $backend == "train" || $backend == "arm64_train" || $backend == "codegen_and_train" ]]; then
+if [[ $backend == "all" || $backend == "train" || $backend == "arm64_train" ]]; then
     # Run on arm64
     echo "Start Run arm64 ..."
     Run_arm arm64 &
     Run_arm64_PID=$!
     sleep 1
 fi
-if [[ $backend == "all" || $backend == "train" || $backend == "arm32_train" || $backend == "codegen_and_train" ]]; then
+if [[ $backend == "all" || $backend == "train" || $backend == "arm32_train" ]]; then
     # Run on arm32
     echo "Start Run arm32 ..."
     Run_arm arm32 &
@@ -671,7 +671,7 @@ if [[ $backend == "all" || $backend == "train" || $backend == "arm32_train" || $
     sleep 1
 fi
 
-if [[ $backend == "all" || $backend == "train" || $backend == "x86_train" || $backend == "codegen_and_train" ]]; then
+if [[ $backend == "all" || $backend == "train" || $backend == "x86_train" ]]; then
     wait ${Run_x86_PID}
     Run_x86_status=$?
     if [[ ${Run_x86_status} != 0 ]];then
@@ -680,7 +680,7 @@ if [[ $backend == "all" || $backend == "train" || $backend == "x86_train" || $ba
         isFailed=1
     fi
 fi
-if [[ $backend == "all" || $backend == "train" || $backend == "x86_train" || $backend == "x86-java" || $backend == "codegen_and_train" || $backend == "arm64_train" ]]; then
+if [[ $backend == "all" || $backend == "train" || $backend == "x86_train" || $backend == "x86-java" || $backend == "arm64_train" ]]; then
     wait ${Run_CodeExamples_PID}
     Run_CodeExamples_status=$?
     if [[ ${Run_CodeExamples_status} != 0 ]];then
@@ -689,7 +689,7 @@ if [[ $backend == "all" || $backend == "train" || $backend == "x86_train" || $ba
         isFailed=1
     fi
 fi
-if [[ $backend == "all" || $backend == "train" || $backend == "arm64_train" || $backend == "codegen_and_train" ]]; then
+if [[ $backend == "all" || $backend == "train" || $backend == "arm64_train" ]]; then
     wait ${Run_arm64_PID}
     Run_arm64_status=$?
     if [[ ${Run_arm64_status} != 0 ]];then
@@ -698,7 +698,7 @@ if [[ $backend == "all" || $backend == "train" || $backend == "arm64_train" || $
         isFailed=1
     fi
 fi
-if [[ $backend == "all" || $backend == "train" || $backend == "arm32_train" || $backend == "codegen_and_train" ]]; then
+if [[ $backend == "all" || $backend == "train" || $backend == "arm32_train" ]]; then
     wait ${Run_arm32_PID}
     Run_arm32_status=$?
     if [[ ${Run_arm32_status} != 0 ]];then
