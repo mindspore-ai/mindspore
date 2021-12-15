@@ -74,6 +74,16 @@ class Strategy {
     return true;
   }
 
+  int64_t PartitionNum() {
+    int64_t divergence = 1;
+    for (size_t i = 0; i < inputs_.size(); ++i) {
+      for (size_t j = 0; j < inputs_[i].size(); ++j) {
+        divergence *= inputs_[i][j];
+      }
+    }
+    return divergence;
+  }
+
   // Include 'another_stra' into this strategy
   void CoverStrategy(const StrategyPtr &another_stra) {
     internal_stragies_.push_back(another_stra);

@@ -34,6 +34,10 @@ using CostPtrKey = std::pair<StrategyPtr, StrategyPtr>;
 using OperatorInfoPtr = std::shared_ptr<mindspore::parallel::OperatorInfo>;
 using EdgePtr = std::shared_ptr<mindspore::parallel::Edge>;
 
+struct OpsPtrCompare {
+  bool operator()(const OperatorInfoPtr &a, const OperatorInfoPtr &b) const { return a->name().compare(b->name()) < 0; }
+};
+
 class Edge {
   // An 'Edge' connects two Operators in the CostGraph.
  public:

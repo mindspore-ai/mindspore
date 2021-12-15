@@ -88,7 +88,7 @@ bool CostGraph::IsEdgeInCostGraph(const std::string &test_edge_name, size_t outp
   return false;
 }
 
-void CostGraph::StrategyPropagate(const std::map<OperatorInfoPtr, StrategyPtr> &ops_stras) {
+void CostGraph::StrategyPropagate(const std::map<OperatorInfoPtr, StrategyPtr, OpsPtrCompare> &ops_stras) {
   if (ops_stras.empty()) {
     MS_LOG(EXCEPTION) << "There is no operator that is configured sharding strategy.";
   }
@@ -129,10 +129,11 @@ void CheckVisitedEdgeConsistency(const EdgePtr &edge) {
   }
 }
 
-void CheckConfiguredSuccEdgeConsistency(const EdgePtr edge, std::map<OperatorInfoPtr, StrategyPtr> configured_ops) {
+void CheckConfiguredSuccEdgeConsistency(const EdgePtr &edge,
+                                        const std::map<OperatorInfoPtr, StrategyPtr, OpsPtrCompare> &configured_ops) {
   auto curr_op = edge->prev_operator();
   auto next_op = edge->next_operator();
-  auto next_op_conf_stra = configured_ops[next_op];
+  auto next_op_conf_stra = configured_ops.at(next_op);
   if (curr_op->IsReshape()) {
     const auto &reshape_output_lyt =
       next_op->GetInputLayoutFromSWCByStrategy(next_op_conf_stra, edge->next_op_input_index());
@@ -150,10 +151,11 @@ void CheckConfiguredSuccEdgeConsistency(const EdgePtr edge, std::map<OperatorInf
   }
 }
 
-void CheckConfiguredPrevEdgeConsistency(const EdgePtr edge, std::map<OperatorInfoPtr, StrategyPtr> configured_ops) {
+void CheckConfiguredPrevEdgeConsistency(const EdgePtr &edge,
+                                        const std::map<OperatorInfoPtr, StrategyPtr, OpsPtrCompare> &configured_ops) {
   auto curr_op = edge->next_operator();
   auto prev_op = edge->prev_operator();
-  auto prev_op_conf_stra = configured_ops[prev_op];
+  auto prev_op_conf_stra = configured_ops.at(prev_op);
   if (curr_op->IsReshape()) {
     const auto &reshape_input_lyt =
       prev_op->GetOutputLayoutFromSWCByStrategy(prev_op_conf_stra, edge->prev_op_output_index());
@@ -171,7 +173,8 @@ void CheckConfiguredPrevEdgeConsistency(const EdgePtr edge, std::map<OperatorInf
 }
 
 void CostGraph::BFS(const OperatorInfoPtr &op, const StrategyPtr &op_stra,
-                    std::map<OperatorInfoPtr, StrategyPtr> configured_ops, std::map<OperatorInfoPtr, bool> *visited) {
+                    const std::map<OperatorInfoPtr, StrategyPtr, OpsPtrCompare> configured_ops,
+                    std::map<OperatorInfoPtr, bool> *visited) {
   std::queue<std::pair<std::pair<OperatorInfoPtr, std::pair<StrategyPtr, int64_t>>, int64_t>> next_level;
   (void)next_level.emplace(std::make_pair(op, std::make_pair(op_stra, -1)), 0);
   while (!next_level.empty()) {
@@ -188,6 +191,7 @@ void CostGraph::BFS(const OperatorInfoPtr &op, const StrategyPtr &op_stra,
     }
     for (auto &edge : curr_op->succ_edges()) {
       const auto &next_op = edge->next_operator();
+      MS_LOG(DEBUG) << "forward propagation at " << curr_op->name() << "->" << next_op->name();
       if (visited->at(next_op)) {
         CheckVisitedEdgeConsistency(edge);
         continue;
@@ -215,6 +219,7 @@ void CostGraph::BFS(const OperatorInfoPtr &op, const StrategyPtr &op_stra,
     }
     for (auto &edge : curr_op->prev_edges()) {
       const auto &prev_op = edge->prev_operator();
+      MS_LOG(DEBUG) << "backpropagation at " << curr_op->name() << "->" << prev_op->name();
       if (visited->at(prev_op)) {
         CheckVisitedEdgeConsistency(edge);
         continue;
