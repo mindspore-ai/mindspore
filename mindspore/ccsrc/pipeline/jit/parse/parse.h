@@ -191,10 +191,17 @@ class Parser {
   bool IsScriptInParams(const std::string &script_text, const py::dict &global_dict,
                         const std::vector<AnfNodePtr> &local_keys, const FuncGraphPtr &func_graph);
   // Set the interpret flag for the node calling the interpret node.
-  void UpdateInterpretForUserNode(const AnfNodePtr &node, const AnfNodePtr &user_node);
+  void UpdateInterpretForUserNode(const AnfNodePtr &user_node, const AnfNodePtr &node);
+  void UpdateInterpretForUserNode(const AnfNodePtr &user_node, const std::vector<AnfNodePtr> &nodes);
+  // Make interpret node.
+  AnfNodePtr MakeInterpretNode(const FunctionBlockPtr &block, const AnfNodePtr &value_node, const string &script_text);
   // Check if the node need interpreting.
   AnfNodePtr HandleInterpret(const FunctionBlockPtr &block, const AnfNodePtr &value_node,
                              const py::object &value_object);
+  // Handle interpret for augassign expression.
+  AnfNodePtr HandleInterpretForAugassign(const FunctionBlockPtr &block, const AnfNodePtr &augassign_node,
+                                         const py::object &op_object, const py::object &target_object,
+                                         const py::object &value_object);
 
   // Generate argument nodes for ast function node
   void GenerateArgsNodeForFunction(const FunctionBlockPtr &block, const py::object &function_node);

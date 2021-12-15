@@ -33,7 +33,7 @@ from mindspore import ops
 from mindspore.common.api import _MindsporeFunctionExecutor
 from mindspore.common.dtype import pytype_to_dtype
 from .namespace import CellNamespace, ClosureNamespace, ClassMemberNamespace
-from .resources import parse_object_map, convert_object_map, trope_ns, SYMBOL_UNDEFINE, NO_IMPLEMENT
+from .resources import parse_object_map, ops_symbol_map, convert_object_map, trope_ns, SYMBOL_UNDEFINE, NO_IMPLEMENT
 
 # define return value
 RET_SUCCESS = 0
@@ -456,6 +456,13 @@ def get_ast_namespace_symbol(obj):
     return ops_info
 
 
+def get_operation_symbol(obj):
+    """Get obj operation symbol."""
+    ops_symbol = ops_symbol_map.get(type(obj), SYMBOL_UNDEFINE)
+    logger.debug("ops symbol: %s", ops_symbol)
+    return ops_symbol
+
+
 def get_operation_namespace_symbol(var: str):
     """Get operation namespace and symbol."""
     ops_info = (trope_ns, var)
@@ -684,6 +691,9 @@ class Parser:
             return True
         if name == 'mindspore.numpy':
             logger.debug(f"Found 'mindspore.numpy' namespace.")
+            return True
+        if name == 'mindspore.context':
+            logger.debug(f"Found 'mindspore.context' namespace.")
             return True
 
         # Check `builtins` namespace.

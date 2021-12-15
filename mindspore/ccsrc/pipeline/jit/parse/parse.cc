@@ -580,7 +580,7 @@ AnfNodePtr Parser::ParseBinOp(const FunctionBlockPtr &block, const py::object &n
   // Create apply node
   MS_EXCEPTION_IF_NULL(block->func_graph());
   auto new_node = block->func_graph()->NewCNodeInOrder({op_node, left_node, right_node});
-  UpdateInterpretForUserNode(left_node, new_node);
+  UpdateInterpretForUserNode(new_node, {left_node, right_node});
   return new_node;
 }
 
@@ -735,7 +735,7 @@ AnfNodePtr Parser::ParseCall(const FunctionBlockPtr &block, const py::object &no
   bool need_unpack = need_unpack_args || need_unpack_keywords;
 
   auto call_cnode = GenerateAnfNodeForCall(block, call_function_node, packed_arguments, group_arguments, need_unpack);
-  UpdateInterpretForUserNode(call_function_node, call_cnode);
+  UpdateInterpretForUserNode(call_cnode, call_function_node);
   if (call_cnode->interpret_special_type() && need_fallback) {
     call_cnode = HandleInterpret(block, call_cnode, node);
   }
@@ -883,7 +883,7 @@ AnfNodePtr Parser::ParseAttribute(const FunctionBlockPtr &block, const py::objec
 
   // Create the apply node
   auto attr_cnode = block->func_graph()->NewCNodeInOrder({op_node, value_node, attr_node});
-  UpdateInterpretForUserNode(value_node, attr_cnode);
+  UpdateInterpretForUserNode(attr_cnode, value_node);
   return attr_cnode;
 }
 
@@ -912,7 +912,7 @@ AnfNodePtr Parser::ParseCompare(const FunctionBlockPtr &block, const py::object 
   MS_EXCEPTION_IF_NULL(block);
   AnfNodePtr op_node = block->MakeResolveAstOp(ops[0]);
   auto new_node = block->func_graph()->NewCNodeInOrder({op_node, left_node, right_node});
-  UpdateInterpretForUserNode(left_node, new_node);
+  UpdateInterpretForUserNode(new_node, {left_node, right_node});
   return new_node;
 }
 
@@ -969,7 +969,7 @@ AnfNodePtr Parser::ProcessBoolOpValueList(const FunctionBlockPtr &block, const p
 
     std::vector<AnfNodePtr> call_graph_nodes{switch_app};
     auto switch_app_call = block_fg->NewCNodeInOrder(std::move(call_graph_nodes));
-    UpdateInterpretForUserNode(test_node, switch_app_call);
+    UpdateInterpretForUserNode(switch_app_call, {test_node, rest_node});
     return switch_app_call;
   }
 }
@@ -1066,7 +1066,9 @@ AnfNodePtr Parser::ParseSubscript(const FunctionBlockPtr &block, const py::objec
   value = HandleInterpret(block, value, value_node);
   AnfNodePtr slice = ParseExprNode(block, slice_node);
   slice = HandleInterpret(block, slice, slice_node);
-  return block->func_graph()->NewCNodeInOrder({op_getitem, value, slice});
+  auto new_node = block->func_graph()->NewCNodeInOrder({op_getitem, value, slice});
+  UpdateInterpretForUserNode(new_node, value);
+  return new_node;
 }
 
 // Process a slice, get the slice value
@@ -1120,7 +1122,7 @@ AnfNodePtr Parser::ParseUnaryOp(const FunctionBlockPtr &block, const py::object 
   AnfNodePtr operand_node = ParseExprNode(block, operand);
   operand_node = HandleInterpret(block, operand_node, operand);
   auto new_node = block->func_graph()->NewCNodeInOrder({op_node, operand_node});
-  UpdateInterpretForUserNode(operand_node, new_node);
+  UpdateInterpretForUserNode(new_node, operand_node);
   return new_node;
 }
 
@@ -1145,6 +1147,29 @@ AnfNodePtr Parser::ParseDict(const FunctionBlockPtr &block, const py::object &no
     value_nodes.push_back(ParseExprNode(block, values[i]));
   }
   return ParseDictByKeysAndValues(block, key_nodes, value_nodes);
+}
+
+AnfNodePtr Parser::HandleInterpretForAugassign(const FunctionBlockPtr &block, const AnfNodePtr &augassign_node,
+                                               const py::object &op_object, const py::object &target_object,
+                                               const py::object &value_object) {
+  // The fallback feature is enabled in default.
+  static const auto use_fallback = (support_fallback() != "0");
+  if (!use_fallback || !augassign_node->interpret()) {
+    return augassign_node;
+  }
+
+  std::string op_text =
+    py::cast<std::string>(ast()->CallParseModFunction(PYTHON_PARSE_GET_OPERATION_SYMBOL, op_object));
+  // Check the symbol in the Augasssign expression.
+  if (op_text.empty()) {
+    MS_LOG(EXCEPTION)
+      << "Invalid augasssign operator, only support `+=`, `-=`, `*=`, `/=`, `%=`, `**=`, `//=`, `<<=`, `>>=`, `^=`.";
+  }
+
+  const auto target_text = py::cast<std::string>(ast()->GetAstNodeText(target_object));
+  const auto value_text = py::cast<std::string>(ast()->GetAstNodeText(value_object));
+  std::string script_text = target_text + op_text + value_text;
+  return MakeInterpretNode(block, augassign_node, script_text);
 }
 
 // Process a augment assign such as a += b or mat[stride_slice] += b.
@@ -1183,7 +1208,12 @@ FunctionBlockPtr Parser::ParseAugAssign(const FunctionBlockPtr &block, const py:
   if (target_node == nullptr) {
     MS_LOG(EXCEPTION) << "Can not get target node ";
   }
-  CNodePtr augassign_app = block->func_graph()->NewCNodeInOrder({op_node, target_node, value_node});
+  AnfNodePtr augassign_app = block->func_graph()->NewCNodeInOrder({op_node, target_node, value_node});
+
+  // Check whether the augassign expression needs to be interpreted.
+  UpdateInterpretForUserNode(augassign_app, {target_node, value_node});
+  augassign_app = HandleInterpretForAugassign(block, augassign_app, op_object, target_object, value_object);
+
   WriteAssignVars(block, target_object, augassign_app);
   return block;
 }
@@ -1900,7 +1930,7 @@ void Parser::WriteAssignVars(const FunctionBlockPtr &block, const py::object &ta
   }
 }
 
-void Parser::UpdateInterpretForUserNode(const AnfNodePtr &node, const AnfNodePtr &user_node) {
+void Parser::UpdateInterpretForUserNode(const AnfNodePtr &user_node, const AnfNodePtr &node) {
   // Do not handle user node with internal type such as Tensor.abs().
   bool interpret_without_internal = IsPrimitiveCNode(node, prim::kPrimPyInterpret) && !node->interpret_internal_type();
   if (node->interpret() || interpret_without_internal) {
@@ -1911,6 +1941,12 @@ void Parser::UpdateInterpretForUserNode(const AnfNodePtr &node, const AnfNodePtr
   }
   if (node->interpret_special_type()) {
     user_node->set_interpret_special_type(true);
+  }
+}
+
+void Parser::UpdateInterpretForUserNode(const AnfNodePtr &user_node, const std::vector<AnfNodePtr> &nodes) {
+  for (auto &node : nodes) {
+    UpdateInterpretForUserNode(user_node, node);
   }
 }
 
@@ -1945,8 +1981,12 @@ AnfNodePtr Parser::HandleInterpret(const FunctionBlockPtr &block, const AnfNodeP
   if (!use_fallback || !value_node->interpret()) {
     return value_node;
   }
-
   const auto script_text = py::cast<std::string>(ast()->GetAstNodeText(value_object));
+  return MakeInterpretNode(block, value_node, script_text);
+}
+
+AnfNodePtr Parser::MakeInterpretNode(const FunctionBlockPtr &block, const AnfNodePtr &value_node,
+                                     const string &script_text) {
   // Check if script_text is in global/local params.
   py::dict global_dict = block->global_py_params();
   auto [keys, values] = block->local_py_params();
