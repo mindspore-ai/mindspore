@@ -1249,126 +1249,6 @@ class Dataset:
 
         return ProjectDataset(self, columns)
 
-    def build_vocab(self, columns, freq_range, top_k, special_tokens, special_first):
-        """
-        Function to create a Vocab from source dataset
-
-        Build a vocab from a dataset. This would collect all the unique words in a dataset and return a vocab
-        which contains top_k most frequent words (if top_k is specified)
-
-        Args:
-
-            columns(Union[str, list[str]]): Column names to get words from.
-            freq_range(tuple[int]): A tuple of integers (min_frequency, max_frequency). Words within the frequency
-                range will be stored.
-                Naturally 0 <= min_frequency <= max_frequency <= total_words. min_frequency/max_frequency
-                can be set to default, which corresponds to 0/total_words separately.
-            top_k(int): Number of words to be built into vocab. top_k most frequent words are
-                taken. The top_k is taken after freq_range. If not enough top_k, all words will be taken
-            special_tokens(list[str]): A list of strings, each one is a special token.
-            special_first(bool): Whether special_tokens will be prepended/appended to vocab, If special_tokens
-                is specified and special_first is set to default, special_tokens will be prepended.
-
-        Returns:
-            Vocab, vocab built from the dataset.
-
-        Examples:
-            >>> import numpy as np
-            >>>
-            >>> def gen_corpus():
-            ...     # key: word, value: number of occurrences, reason for using letters is so their order is apparent
-            ...     corpus = {"Z": 4, "Y": 4, "X": 4, "W": 3, "U": 3, "V": 2, "T": 1}
-            ...     for k, v in corpus.items():
-            ...         yield (np.array([k] * v, dtype='S'),)
-            >>> column_names = ["column1"]
-            >>> dataset = ds.GeneratorDataset(gen_corpus, column_names)
-            >>> dataset = dataset.build_vocab(columns=["column1"],
-            ...                               freq_range=(1, 10), top_k=5,
-            ...                               special_tokens=["<pad>", "<unk>"],
-            ...                               special_first=True)
-
-        """
-        vocab = cde.Vocab()
-        columns = replace_none(columns, [])
-        if not isinstance(columns, list):
-            columns = [columns]
-
-        freq_range = replace_none(freq_range, (0, 9223372036854775807))
-        if freq_range[0] is None:
-            freq_range = (0, freq_range[1])
-        if freq_range[1] is None:
-            freq_range = (freq_range[0], 9223372036854775807)
-        special_tokens = replace_none(special_tokens, [])
-        top_k = replace_none(top_k, 9223372036854775807)
-
-        ir_tree, api_tree = self.create_ir_tree()
-
-        # vocab node
-        vocab_node = cde.BuildVocabNode(ir_tree, vocab, columns, freq_range, top_k, special_tokens, special_first)
-
-        runtime_context = cde.PythonRuntimeContext()
-        runtime_context.Init()
-
-        # build vocab
-        consumer = cde.PythonBuildVocabConsumer()
-        consumer.Init(vocab_node)
-        runtime_context.AssignConsumer(consumer)
-
-        consumer.Start()
-        del api_tree
-
-        return vocab
-
-    def build_sentencepiece_vocab(self, columns, vocab_size, character_coverage, model_type, params):
-        """
-        Function to create a SentencePieceVocab from source dataset
-
-        Args:
-
-            columns(list[str]): Column names to get words from.
-            vocab_size(int): Vocabulary size.
-            character_coverage(int): Percentage of characters covered by the model, must be between
-                        0.98 and 1.0 Good defaults are: 0.9995 for languages with rich character sets like
-                        Japanese or Chinese character sets, and 1.0 for other languages with small character sets
-                        like English or Latin.
-            model_type(SentencePieceModel): Model type. Choose from unigram (default), bpe, char, or word.
-                                        The input sentence must be pretokenized when using word type.
-            params(dict): Any extra optional parameters of sentencepiece library according to your raw data
-
-        Returns:
-            SentencePieceVocab, vocab built from the dataset.
-
-        Examples:
-            >>> from mindspore.dataset.text import SentencePieceModel
-            >>>
-            >>> # DE_C_INTER_SENTENCEPIECE_MODE is a mapping dict
-            >>> from mindspore.dataset.text.utils import DE_C_INTER_SENTENCEPIECE_MODE
-            >>> dataset = ds.TextFileDataset("/path/to/sentence/piece/vocab/file", shuffle=False)
-            >>> dataset = dataset.build_sentencepiece_vocab(["text"], 5000, 0.9995,
-            ...                                             DE_C_INTER_SENTENCEPIECE_MODE[SentencePieceModel.UNIGRAM],
-            ...                                             {})
-        """
-        vocab = cde.SentencePieceVocab()
-
-        ir_tree, api_tree = self.create_ir_tree()
-
-        # vocab node
-        vocab_node = cde.BuildSentenceVocabNode(ir_tree, vocab, columns, vocab_size, character_coverage, model_type,
-                                                params)
-
-        runtime_context = cde.PythonRuntimeContext()
-        runtime_context.Init()
-
-        # build vocab
-        consumer = cde.PythonBuildVocabConsumer()
-        consumer.Init(vocab_node)
-        runtime_context.AssignConsumer(consumer)
-
-        consumer.Start()
-        del api_tree
-
-        return vocab
-
     def apply(self, apply_func):
         """
         Apply a function in this dataset.
@@ -2015,6 +1895,138 @@ class Dataset:
             ir_node = ir_node.set_num_workers(self.num_parallel_workers)
 
         return ir_node
+
+
+class TextBaseDataset(Dataset):
+    """
+    Abstract class to represent a text source dataset which produces content to the data pipeline.
+    """
+
+    def __init__(self, children=None, num_parallel_workers=None, cache=None):
+        super().__init__(children=children, num_parallel_workers=num_parallel_workers, cache=cache)
+
+    def parse(self, children=None):
+        raise NotImplementedError("Dataset has to implement parse method.")
+
+    def build_vocab(self, columns, freq_range, top_k, special_tokens, special_first):
+        """
+        Function to create a Vocab from source dataset
+
+        Build a vocab from a dataset. This would collect all the unique words in a dataset and return a vocab
+        which contains top_k most frequent words (if top_k is specified)
+
+        Args:
+
+            columns(Union[str, list[str]]): Column names to get words from.
+            freq_range(tuple[int]): A tuple of integers (min_frequency, max_frequency). Words within the frequency
+                range will be stored.
+                Naturally 0 <= min_frequency <= max_frequency <= total_words. min_frequency/max_frequency
+                can be set to default, which corresponds to 0/total_words separately.
+            top_k(int): Number of words to be built into vocab. top_k most frequent words are
+                taken. The top_k is taken after freq_range. If not enough top_k, all words will be taken
+            special_tokens(list[str]): A list of strings, each one is a special token.
+            special_first(bool): Whether special_tokens will be prepended/appended to vocab, If special_tokens
+                is specified and special_first is set to default, special_tokens will be prepended.
+
+        Returns:
+            Vocab, vocab built from the dataset.
+
+        Examples:
+            >>> import numpy as np
+            >>>
+            >>> def gen_corpus():
+            ...     # key: word, value: number of occurrences, reason for using letters is so their order is apparent
+            ...     corpus = {"Z": 4, "Y": 4, "X": 4, "W": 3, "U": 3, "V": 2, "T": 1}
+            ...     for k, v in corpus.items():
+            ...         yield (np.array([k] * v, dtype='S'),)
+            >>> column_names = ["column1"]
+            >>> dataset = ds.GeneratorDataset(gen_corpus, column_names)
+            >>> dataset = dataset.build_vocab(columns=["column1"],
+            ...                               freq_range=(1, 10), top_k=5,
+            ...                               special_tokens=["<pad>", "<unk>"],
+            ...                               special_first=True)
+
+        """
+        vocab = cde.Vocab()
+        columns = replace_none(columns, [])
+        if not isinstance(columns, list):
+            columns = [columns]
+
+        freq_range = replace_none(freq_range, (0, 9223372036854775807))
+        if freq_range[0] is None:
+            freq_range = (0, freq_range[1])
+        if freq_range[1] is None:
+            freq_range = (freq_range[0], 9223372036854775807)
+        special_tokens = replace_none(special_tokens, [])
+        top_k = replace_none(top_k, 9223372036854775807)
+
+        ir_tree, api_tree = self.create_ir_tree()
+
+        # vocab node
+        vocab_node = cde.BuildVocabNode(ir_tree, vocab, columns, freq_range, top_k, special_tokens, special_first)
+
+        runtime_context = cde.PythonRuntimeContext()
+        runtime_context.Init()
+
+        # build vocab
+        consumer = cde.PythonBuildVocabConsumer()
+        consumer.Init(vocab_node)
+        runtime_context.AssignConsumer(consumer)
+
+        consumer.Start()
+        del api_tree
+
+        return vocab
+
+    def build_sentencepiece_vocab(self, columns, vocab_size, character_coverage, model_type, params):
+        """
+        Function to create a SentencePieceVocab from source dataset
+
+        Args:
+
+            columns(list[str]): Column names to get words from.
+            vocab_size(int): Vocabulary size.
+            character_coverage(int): Percentage of characters covered by the model, must be between
+                        0.98 and 1.0 Good defaults are: 0.9995 for languages with rich character sets like
+                        Japanese or Chinese character sets, and 1.0 for other languages with small character sets
+                        like English or Latin.
+            model_type(SentencePieceModel): Model type. Choose from unigram (default), bpe, char, or word.
+                                        The input sentence must be pretokenized when using word type.
+            params(dict): Any extra optional parameters of sentencepiece library according to your raw data
+
+        Returns:
+            SentencePieceVocab, vocab built from the dataset.
+
+        Examples:
+            >>> from mindspore.dataset.text import SentencePieceModel
+            >>>
+            >>> # DE_C_INTER_SENTENCEPIECE_MODE is a mapping dict
+            >>> from mindspore.dataset.text.utils import DE_C_INTER_SENTENCEPIECE_MODE
+            >>> dataset = ds.TextFileDataset("/path/to/sentence/piece/vocab/file", shuffle=False)
+            >>> dataset = dataset.build_sentencepiece_vocab(["text"], 5000, 0.9995,
+            ...                                             DE_C_INTER_SENTENCEPIECE_MODE[SentencePieceModel.UNIGRAM],
+            ...                                             {})
+        """
+        vocab = cde.SentencePieceVocab()
+
+        ir_tree, api_tree = self.create_ir_tree()
+
+        # vocab node
+        vocab_node = cde.BuildSentenceVocabNode(ir_tree, vocab, columns, vocab_size, character_coverage, model_type,
+                                                params)
+
+        runtime_context = cde.PythonRuntimeContext()
+        runtime_context.Init()
+
+        # build vocab
+        consumer = cde.PythonBuildVocabConsumer()
+        consumer.Init(vocab_node)
+        runtime_context.AssignConsumer(consumer)
+
+        consumer.Start()
+        del api_tree
+
+        return vocab
 
 
 class SourceDataset(Dataset):
@@ -2860,7 +2872,7 @@ class _ExceptHookHandler:
         _mp_pool_exit_preprocess()
 
 
-class MapDataset(Dataset):
+class MapDataset(TextBaseDataset, Dataset):
     """
     The result of applying the Map operator to the input Dataset.
 
@@ -3713,7 +3725,7 @@ class ImageFolderDataset(MappableDataset):
         return cde.ImageFolderNode(self.dataset_dir, self.decode, self.sampler, self.extensions, self.class_indexing)
 
 
-class IWSLT2016Dataset(SourceDataset):
+class IWSLT2016Dataset(SourceDataset, TextBaseDataset):
     """
     A source dataset that reads and parses IWSLT2016 datasets.
 
@@ -3839,7 +3851,7 @@ class IWSLT2016Dataset(SourceDataset):
                                  self.num_samples, self.shuffle_flag, self.num_shards, self.shard_id)
 
 
-class IWSLT2017Dataset(SourceDataset):
+class IWSLT2017Dataset(SourceDataset, TextBaseDataset):
     """
     A source dataset that reads and parses IWSLT2017 datasets.
 
@@ -4176,7 +4188,7 @@ class MnistDataset(MappableDataset):
         return cde.MnistNode(self.dataset_dir, self.usage, self.sampler)
 
 
-class PennTreebankDataset(SourceDataset):
+class PennTreebankDataset(SourceDataset, TextBaseDataset):
     """
     A source dataset that reads and parses PennTreebank datasets.
 
@@ -4684,7 +4696,7 @@ class QMnistDataset(MappableDataset):
         return cde.QMnistNode(self.dataset_dir, self.usage, self.compat, self.sampler)
 
 
-class MindDataset(MappableDataset):
+class MindDataset(MappableDataset, TextBaseDataset):
     """
     A source dataset for reading and parsing MindRecord dataset.
 
@@ -5198,7 +5210,7 @@ class _GeneratorWorkerMp(multiprocessing.Process):
         return True
 
 
-class GeneratorDataset(MappableDataset):
+class GeneratorDataset(MappableDataset, TextBaseDataset):
     """
     A source dataset that generates data from Python by invoking Python data source each epoch.
 
@@ -5463,7 +5475,7 @@ class GeneratorDataset(MappableDataset):
                 logger.warning(info)
 
 
-class TFRecordDataset(SourceDataset):
+class TFRecordDataset(SourceDataset, TextBaseDataset):
     """
     A source dataset for reading and parsing datasets stored on disk in TFData format.
 
@@ -5669,7 +5681,7 @@ class ManifestDataset(MappableDataset):
         return self.class_indexing
 
 
-class AGNewsDataset(SourceDataset):
+class AGNewsDataset(SourceDataset, TextBaseDataset):
     """
     A source dataset that reads and parses AG News datasets.
 
@@ -6836,7 +6848,7 @@ class CelebADataset(MappableDataset):
         return cde.CelebANode(self.dataset_dir, self.usage, self.sampler, self.decode, self.extensions)
 
 
-class CLUEDataset(SourceDataset):
+class CLUEDataset(SourceDataset, TextBaseDataset):
     """
     A source dataset that reads and parses CLUE datasets.
     Supported CLUE classification tasks: `AFQMC`, `TNEWS`, `IFLYTEK`, `CMNLI`, `WSC` and `CSL`.
@@ -6980,7 +6992,7 @@ class CLUEDataset(SourceDataset):
                             self.num_shards, self.shard_id)
 
 
-class CSVDataset(SourceDataset):
+class CSVDataset(SourceDataset, TextBaseDataset):
     """
     A source dataset that reads and parses comma-separated values (CSV) datasets.
     The columns of generated dataset depend on the source CSV files.
@@ -7606,7 +7618,7 @@ class LJSpeechDataset(MappableDataset):
         return cde.LJSpeechNode(self.dataset_dir, self.sampler)
 
 
-class TextFileDataset(SourceDataset):
+class TextFileDataset(SourceDataset, TextBaseDataset):
     """
     A source dataset that reads and parses datasets stored on disk in text format.
     The generated dataset has one column :py:obj:`[text]` with type string.
@@ -8760,7 +8772,7 @@ class CityscapesDataset(MappableDataset):
         return cde.CityscapesNode(self.dataset_dir, self.usage, self.quality_mode, self.task, self.decode, self.sampler)
 
 
-class DBpediaDataset(SourceDataset):
+class DBpediaDataset(SourceDataset, TextBaseDataset):
     """
     A source dataset that reads and parses the DBpedia dataset.
 
@@ -9043,7 +9055,7 @@ class DIV2KDataset(MappableDataset):
         return cde.DIV2KNode(self.dataset_dir, self.usage, self.downgrade, self.scale, self.decode, self.sampler)
 
 
-class YelpReviewDataset(SourceDataset):
+class YelpReviewDataset(SourceDataset, TextBaseDataset):
     """
     A source dataset that reads and parses Yelp Review Polarity and Yelp Review Full dataset.
 
