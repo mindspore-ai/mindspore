@@ -4650,7 +4650,7 @@ class FusedSparseAdam(PrimitiveWithInfer):
 
     :math:`m` represents the 1st moment vector, :math:`v` represents the 2nd moment vector, :math:`g` represents
     `gradient`, :math:`l` represents scaling factor `lr`, :math:`\beta_1, \beta_2` represent `beta1` and `beta2`,
-    :math:`t` represents updating step while :math:`beta_1^t` and :math:`beta_2^t` represent `beta1_power` and
+    :math:`t` represents updating step while :math:`\beta_1^t` and :math:`\beta_2^t` represent `beta1_power` and
     `beta2_power`, :math:`\alpha` represents `learning_rate`, :math:`w` represents `var`, :math:`\epsilon` represents
     `epsilon`.
 
@@ -4800,7 +4800,7 @@ class FusedSparseLazyAdam(PrimitiveWithInfer):
 
     :math:`m` represents the 1st moment vector, :math:`v` represents the 2nd moment vector, :math:`g` represents
     `gradient`, :math:`l` represents scaling factor `lr`, :math:`\beta_1, \beta_2` represent `beta1` and `beta2`,
-    :math:`t` represents updating step while :math:`beta_1^t` and :math:`beta_2^t` represent `beta1_power` and
+    :math:`t` represents updating step while :math:`\beta_1^t` and :math:`\beta_2^t` represent `beta1_power` and
     `beta2_power`, :math:`\alpha` represents `learning_rate`, :math:`w` represents `var`, :math:`\epsilon` represents
     `epsilon`.
 
@@ -7064,7 +7064,7 @@ class CTCLoss(Primitive):
         preprocess_collapse_repeated (bool): If true, repeated labels will be collapsed prior to the CTC calculation.
                                              Default: False.
         ctc_merge_repeated (bool): If false, during CTC calculation, repeated non-blank labels will not be merged
-                                   and these labels will be interpreted as individual ones. This is a simplfied
+                                   and these labels will be interpreted as individual ones. This is a simplified
                                    version of CTC. Default: True.
         ignore_longer_outputs_than_inputs (bool): If true, sequences with longer outputs than inputs will be ignored.
                                                   Default: False.
