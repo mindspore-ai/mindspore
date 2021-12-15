@@ -32,7 +32,7 @@ mindspore.nn.LeakyReLU
 
    **支持平台：**
 
-   `Ascend` `GPU` `CPU`
+   ``Ascend`` ``GPU`` ``CPU``
 
    **样例：**
 

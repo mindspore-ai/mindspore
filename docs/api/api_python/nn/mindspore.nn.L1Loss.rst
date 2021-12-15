@@ -34,7 +34,7 @@ mindspore.nn.L1Loss
         
     **异常：**
 
-    **ValueError** - `reduction` 不为"mean"，"sum"，或"none"。
+    **ValueError** - `reduction` 不为"mean"、"sum"或"none"。
 
     **支持平台：**
 

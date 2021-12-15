@@ -91,16 +91,16 @@
           - **opt_shard_group** (str) - 该参数进行优化器切分时的group。
 
         - **set_sliced** (bool) - 参数初始化时被设定为分片，则为True。默认值：False。
+        
+        **返回：**
+
+        初始化数据后的 `Parameter` 。如果当前 `Parameter` 已初始化，则更新 `Parameter` 数据。
 
         **异常：**
 
         - **RuntimeError** - 参数使用 `Initializer` 模块进行初始化，初始化后并行模式发生更改。
         - **ValueError** - `layout` 长度小于6。
         - **TypeError** - `layout` 不是元组。
-
-        **返回：**
-
-        初始化数据后的 `Parameter` 。如果当前 `Parameter` 已初始化，则更新 `Parameter` 数据。
 
     .. py:method:: is_init
         :property:
@@ -175,7 +175,7 @@
 
         **参数：**
 
-        - **init_in_server** (bool) - 表示参数服务器更新的可训练参数是否在服务器上初始化。默认值：False。
+        **init_in_server** (bool) - 表示参数服务器更新的可训练参数是否在服务器上初始化。默认值：False。
 
     .. py:method:: sliced
         :property:

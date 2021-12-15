@@ -114,66 +114,6 @@ mindspore.Tensor
         >>> print(output)
         True
 
-    .. py:method:: asnumpy()
-
-        将张量转换为NumPy数组。
-
-    .. py:method:: dtype
-        :property:
-
-        返回张量的数据类型（:class:`mindspore.dtype`）。
-
-    .. py:method:: expand_as(x)
-
-        将目标张量的维度扩展为输入张量的维度。
-
-        **参数：**
-
-        - **x** (Tensor) - 输入的张量。该张量的形状必须遵守广播规则。
-
-        **返回：**
-
-        Tensor，维度与输入张量的相同。
-
-    .. py:method:: from_numpy(array)
-        :staticmethod:
-
-        将NumPy数组转换为张量，且不需要复制数据。
-
-        **参数：**
-
-        - **array** (numpy.array) - 输入数组。
-
-        **返回：**
-
-        Tensor，与输入的张量具有相同的数据类型。
-
-    .. py:method:: mean(axis=(), keep_dims=False)
-
-        通过计算出维度中的所有元素的平均值来简化张量的维度。
-
-        **参数：**
-
-        - **axis** (Union[None, int, tuple(int), list(int)]) - 简化的维度。当轴为None或空元组时，简化所有维度。默认值：()。
-        - **keep_dims** (bool) - 表示是否保留简化后的维度。默认值：False。
-
-        **返回：**
-
-        Tensor，与输入的张量具有相同的数据类型。
-
-        **支持平台：**
-
-        ``Ascend`` ``GPU`` ``CPU``
-
-        **样例：**
-
-        >>> import numpy as np
-        >>> from mindspore import Tensor
-        >>> input_x = Tensor(np.array([1, 2, 3], dtype=np.float32))
-        >>> output = input_x.mean()
-        >>> print(output)
-        2.0
-
     .. py:method:: argmax(axis=None)
 
         返回指定轴上最大值的索引。
@@ -229,6 +169,22 @@ mindspore.Tensor
         >>> a = Tensor(np.arange(10, 16).reshape(2, 3).astype("float32"))
         >>> print(a.argmin())
         0
+
+    .. py:method:: asnumpy()
+
+        将张量转换为NumPy数组。
+      
+        **样例：**
+
+        >>> from mindspore import Tensor
+        >>> import numpy as np
+        >>> x = Tensor(np.array([1,2], dtype=np.float32))
+        >>> y = x.asnumpy()
+        >>> y[0] = 11
+        >>> print(x)
+        [11. 2.]
+        >>> print(y)
+        [11. 2.]
 
     .. py:method:: astype(dtype, copy=True)
 
@@ -426,6 +382,35 @@ mindspore.Tensor
         >>> print(output)
         [0 3]
 
+    .. py:method:: dtype
+        :property:
+
+        返回张量的数据类型（:class:`mindspore.dtype`）。
+
+    .. py:method:: expand_as(x)
+
+        将目标张量的维度扩展为输入张量的维度。
+
+        **参数：**
+
+        - **x** (Tensor) - 输入的张量。该张量的形状必须遵守广播规则。
+
+        **返回：**
+
+        Tensor，维度与输入张量的相同。
+
+        **样例：**
+
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> from mindspore import dtype as mstype
+        >>> x = Tensor([1, 2, 3], dtype=mstype.float32)
+        >>> y = Tensor(np.ones((2, 3)), dtype=mstype.float32)
+        >>> output = x.expand_as(y)
+        >>> print(output)
+        [[1. 2. 3.]
+        [1. 2. 3.]]
+
     .. py:method:: fill(value)
 
         用标量值填充数组。
@@ -464,7 +449,7 @@ mindspore.Tensor
 
         **参数：**
 
-        - **order** (str, optional) - 可以在'C'和'F'之间进行选择。'C'表示按行优先（C风格）顺序展开。'F'表示按列优先顺序（Fortran风格）进行扁平化。仅支持'C'和'F'。默认值：C。
+        **order** (str, optional) - 可以在'C'和'F'之间进行选择。'C'表示按行优先（C风格）顺序展开。'F'表示按列优先顺序（Fortran风格）进行扁平化。仅支持'C'和'F'。默认值：'C'。
 
         **返回：**
 
@@ -491,6 +476,37 @@ mindspore.Tensor
     .. py:method:: flush_from_cache()
 
         如果Tensor开启缓存作用，则将缓存数据刷新到host侧。
+
+        **样例：**
+
+        >>> from mindspore import Tensor
+        >>> import numpy as np
+        >>> x = Tensor(np.array([1, 2], dtype=np.float32))
+        >>> y = x.flush_from_cache()
+        >>> print(y)
+        None
+
+    .. py:method:: from_numpy(array)
+        :staticmethod:
+
+        将NumPy数组转换为张量，且不需要复制数据。
+
+        **参数：**
+
+        **array** (numpy.array) - 输入数组。
+
+        **返回：**
+
+        Tensor，与输入的张量具有相同的数据类型。
+
+        **样例：**
+
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> x = Tensor(np.array([1, 2])
+        >>> output = Tensor.from_numpy(x)
+        >>> print(output)
+        [1 2]
 
     .. py:method:: has_init
         :property:
@@ -567,7 +583,7 @@ mindspore.Tensor
 
         **参数：**
 
-        - **args** (Union[(numbers.Number), (int/tuple(int), numbers.Number)]) - 指定索引和值的参数。如果 `args` 包含一个参数（标量），则其仅在Tensor大小为1的情况下使用。如果 `args` 包含两个参数，则最后一个参数是要设置的值且必须是标量，而第一个参数指定单个Tensor元素的位置。参数值是整数或者元组。
+        **args** (Union[(numbers.Number), (int/tuple(int), numbers.Number)]) - 指定索引和值的参数。如果 `args` 包含一个参数（标量），则其仅在Tensor大小为1的情况下使用。如果 `args` 包含两个参数，则最后一个参数是要设置的值且必须是标量，而第一个参数指定单个Tensor元素的位置。参数值是整数或者元组。
 
         **返回：**
 
@@ -628,6 +644,32 @@ mindspore.Tensor
         >>> output = a.max()
         >>> print(output)
         3.0
+
+    .. py:method:: mean(axis=(), keep_dims=False)
+
+        通过计算出维度中的所有元素的平均值来简化张量的维度。
+
+        **参数：**
+
+        - **axis** (Union[None, int, tuple(int), list(int)]) - 简化的维度。当轴为None或空元组时，简化所有维度。默认值：()。
+        - **keep_dims** (bool) - 表示是否保留简化后的维度。默认值：False。
+
+        **返回：**
+
+        Tensor，与输入的张量具有相同的数据类型。
+
+        **支持平台：**
+
+        ``Ascend`` ``GPU`` ``CPU``
+
+        **样例：**
+
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> input_x = Tensor(np.array([1, 2, 3], dtype=np.float32))
+        >>> output = input_x.mean()
+        >>> print(output)
+        2.0
 
     .. py:method:: min(axis=None, keepdims=False, initial=None, where=True)
 
@@ -772,7 +814,7 @@ mindspore.Tensor
 
         **参数：**
 
-        - **shape** (Union[int, tuple(int), list(int)]) - 新的shape应与原来的shape兼容。如果参数值为整数，则结果是该长度的一维数组。shape的维度可以为-1。在这种情况下，将根据数组的长度和剩下的维度计算出该值。
+        **shape** (Union[int, tuple(int), list(int)]) - 新的shape应与原来的shape兼容。如果参数值为整数，则结果是该长度的一维数组。shape的维度可以为-1。在这种情况下，将根据数组的长度和剩下的维度计算出该值。
 
         **返回：**
 
@@ -807,7 +849,7 @@ mindspore.Tensor
 
         **参数：**
 
-        - **new_shape** (Union[ints, tuple of ints]) - 指定Tensor的新shape。
+        **new_shape** (Union[ints, tuple of ints]) - 指定Tensor的新shape。
 
         **返回：**
 
@@ -873,7 +915,7 @@ mindspore.Tensor
 
         **参数：**
 
-        - **axis** (Union[None, int, list(int), tuple(int)], optional) - 选择shape中长度为1的条目的子集。如果选择shape条目长度大于1的轴，则报错。默认值为None。
+        **axis** (Union[None, int, list(int), tuple(int)], optional) - 选择shape中长度为1的条目的子集。如果选择shape条目长度大于1的轴，则报错。默认值为None。
 
         **返回：**
 
@@ -1004,10 +1046,6 @@ mindspore.Tensor
         >>> print(output.shape)
         (4,3,2)
 
-    .. py:method:: T
-
-        返回被转置后的Tensor。
-
     .. py:method:: take(indices, axis=None, mode='clip')
 
         在指定维度上获取Tensor中的元素。
@@ -1093,7 +1131,7 @@ mindspore.Tensor
 
         **异常：**
 
-        - **ValueError** - 输入Tensor的维度少于2。
+        **ValueError** - 输入Tensor的维度少于2。
 
         **支持平台：**
 
@@ -1183,8 +1221,19 @@ mindspore.Tensor
 
         **参数：**
 
-        - **shape** (Union[tuple(int), int]) - 输出Tensor的维度。
+        **shape** (Union[tuple(int), int]) - 输出Tensor的维度。
 
         **返回：**
 
         Tensor，具有与输入shape相同的维度。
+
+        **样例：**
+
+        >>> from mindspore import Tensor
+        >>> import numpy as np
+        >>> a = Tensor(np.array([[1,2,3],[2,3,4]], dtype=np.float32))
+        >>> output = a.view((3,2))
+        >>> print(output)
+        [[1.2.]
+        [3.2.]
+        [3.4.]]

@@ -7,11 +7,11 @@ mindspore.communication
     全局通信信息。GlobalComm 是一个全局类。 成员包含：BACKEND、WORLD_COMM_GROUP。
 
     - BACKEND：使用的通信库，HCCL或者NCCL。
-    - GlobalComm：全局通信域。
+    - WORLD_COMM_GROUP：全局通信域。
 
 .. py:method:: mindspore.communication.init(backend_name=None)
 
-    初始化通信服务需要的分布式后端，例如HCCL或NCCL服务。
+    初始化通信服务需要的分布式后端，例如‘HCCL’或‘NCCL’服务。
 
     .. note::HCCL的全称是华为集合通信库（Huawei Collective Communication Library），NCCL的全称是英伟达集合通信库（NVIDIA Collective Communication Library）。`init` 方法应该在 `set_context` 方法之后使用。
 
@@ -33,9 +33,9 @@ mindspore.communication
 
 .. py:class:: mindspore.communication.release()
 
-    释放分布式资源,例如‘HCCL’或‘NCCL’服务。
+    释放分布式资源，例如‘HCCL’或‘NCCL’服务。
 
-    .. note::`release` 方法应该在 `init` 方法之后使用。
+    .. note:: `release` 方法应该在 `init` 方法之后使用。
 
     **异常：**
 
@@ -49,7 +49,7 @@ mindspore.communication
 
     **参数：**
 
-    - **group** (str) - 通信组名称，通常由 `create_group` 方法创建，否则将使用默认组。默认值：‘WORLD_COMM_GROUP’。
+    - **group** (str) - 通信组名称，通常由 `create_group` 方法创建，否则将使用默认组。默认值：‘GlobalComm.WORLD_COMM_GROUP’。
 
     **返回：**
 
