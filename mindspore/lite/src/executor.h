@@ -29,7 +29,7 @@ class Executor {
   virtual ~Executor() = default;
 
   virtual int Prepare(const std::vector<kernel::LiteKernel *> &kernels, const std::vector<Tensor *> &inputs,
-                      const std::vector<Tensor *> &outputs, const lite::InnerContext *ctx) {
+                      const std::vector<Tensor *> &outputs, lite::InnerContext *ctx) {
     ctx_ = ctx;
     return RET_OK;
   }
@@ -44,7 +44,7 @@ class Executor {
   }
 
  protected:
-  const lite::InnerContext *ctx_ = nullptr;
+  lite::InnerContext *ctx_ = nullptr;
 };
 }  // namespace mindspore::lite
 #endif

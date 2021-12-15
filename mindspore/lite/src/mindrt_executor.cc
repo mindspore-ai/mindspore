@@ -13,13 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "src/mindrt_executor.h"
 #include <queue>
 #include <memory>
-#include "src/mindrt_executor.h"
 #include "src/lite_mindrt.h"
 #include "include/errorcode.h"
 #include "src/common/tensor_util.h"
+#ifdef ENABLE_FP16
 #include "nnacl/base/cast_base.h"
+#endif
+#include "src/lite_kernel_util.h"
 
 namespace mindspore::lite {
 int MindrtExecutor::PrepareInputData(const std::vector<kernel::LiteKernel *> &kernels,
@@ -93,7 +96,7 @@ int MindrtExecutor::Resize(const std::vector<mindspore::tensor::MSTensor *> &inp
 }
 
 int MindrtExecutor::Prepare(const std::vector<kernel::LiteKernel *> &kernels, const std::vector<Tensor *> &inputs,
-                            const std::vector<Tensor *> &outputs, const lite::InnerContext *ctx) {
+                            const std::vector<Tensor *> &outputs, lite::InnerContext *ctx) {
   MS_ASSERT(ctx != nullptr);
   ctx_ = ctx;
   auto ret = MindrtInit();

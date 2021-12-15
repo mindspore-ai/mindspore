@@ -36,6 +36,7 @@ class LiteKernelUtil {
   static bool IsSwitchTypeCall(LiteKernel *kernel);
   static bool IsNonTailCall(LiteKernel *node);
   static std::vector<LiteKernel *> GetCallInputPartials(LiteKernel *call_node);
+  static LiteKernel *GetPartialOutputCall(LiteKernel *partial_node);
 #endif
   static LiteKernel *GetInputsSpecificNode(const LiteKernel *kernel, const schema::PrimitiveType &primitive_type);
   static bool InputsContainsSpecificNode(const LiteKernel *kernel, const schema::PrimitiveType &primitive_type);

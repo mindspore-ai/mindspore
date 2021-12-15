@@ -71,7 +71,7 @@ TEST_F(TensorCTest, common_test) {
 
   MSTensorHandle clone = MSTensorClone(tensor);
   ASSERT_TRUE(clone != nullptr);
-  ASSERT_STREQ(MSTensorGetName(clone), "");
+  ASSERT_STREQ(MSTensorGetName(clone), "name002_duplicate");
   ASSERT_EQ(MSTensorGetDataType(clone), kMSDataTypeNumberTypeFloat32);
   size_t clone_shape_num;
   const int64_t *clone_shape = MSTensorGetShape(clone, &clone_shape_num);

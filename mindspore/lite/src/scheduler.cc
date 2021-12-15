@@ -23,6 +23,7 @@
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
 #include "src/tensorlist.h"
 #include "src/runtime/kernel/arm/base/partial_fusion.h"
+#include "nnacl/partial_fusion_parameter.h"
 #endif
 #include "include/errorcode.h"
 #include "src/common/graph_util.h"
@@ -318,6 +319,9 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
 
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
   SetSubgraphForPartialNode();
+  if (*is_control_flow_) {
+    control_flow_scheduler_->BuildBoundaryForMultipleCalledGraph(dst_kernels);
+  }
   ret = RecordControlFlowLinkInfo();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Record ControlFlow LinkInfo failed.";
@@ -1369,7 +1373,9 @@ int Scheduler::ScheduleSubGraphToKernels(size_t subgraph_index, std::vector<kern
         auto partial_subgraph_index = GetPartialGraphIndex(primitive, schema_version_);
         if (SubGraphHasScheduled(partial_subgraph_index)) {
           partial_kernel_subgraph_index_map_[kernel] = partial_subgraph_index;
-          MS_LOG(INFO) << "subgraph has scheduled.";
+          MS_CHECK_TRUE_MSG(control_flow_scheduler_ != nullptr, RET_ERROR, "control flow scheduler is nullptr.");
+          control_flow_scheduler_->RecordPartialNodeCallMoreThanOnce(kernel);
+          MS_LOG(INFO) << "subgraph has scheduled. ";
         } else {
           SubGraphMarkScheduled(partial_subgraph_index);
           partial_kernel_subgraph_index_map_[kernel] = partial_subgraph_index;

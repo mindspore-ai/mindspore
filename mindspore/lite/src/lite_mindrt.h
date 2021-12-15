@@ -36,7 +36,8 @@ namespace mindspore::lite {
 typedef enum { GRAPH, OP_BY_OP } MindRTMode;
 class LiteOpActor : public OpActor<lite::Tensor> {
  public:
-  explicit LiteOpActor(kernel::LiteKernel *kernel) : OpActor<lite::Tensor>(kernel->name()), kernel_(kernel) {
+  explicit LiteOpActor(kernel::LiteKernel *kernel, lite::InnerContext *ctx)
+      : OpActor<lite::Tensor>(kernel->name()), kernel_(kernel), ctx_(ctx) {
     inputs_data_.resize(kernel_->in_tensors().size());
 #if defined(ENABLE_ARM) && defined(ENABLE_FP16)
     CpuInfo cpu_info;
@@ -83,6 +84,7 @@ class LiteOpActor : public OpActor<lite::Tensor> {
   std::vector<OpDataPtr<Tensor>> outputs_data_{};
   std::vector<Tensor *> inputs_data_{};
   std::unordered_map<Tensor *, Tensor *> *isolate_input_map_ = nullptr; /* real obj in session */
+  lite::InnerContext *ctx_ = nullptr;
 
  private:
   int IsolateInputData(std::vector<std::shared_ptr<LiteOpActor>> *actors);
@@ -108,7 +110,7 @@ class LiteOpActor : public OpActor<lite::Tensor> {
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
 class LiteSwitchOpActor : public LiteOpActor {
  public:
-  explicit LiteSwitchOpActor(kernel::LiteKernel *kernel) : LiteOpActor(kernel) {}
+  explicit LiteSwitchOpActor(kernel::LiteKernel *kernel, lite::InnerContext *ctx) : LiteOpActor(kernel, ctx) {}
   ~LiteSwitchOpActor() override {
     delete call_node_;
     delete switch_type_node_;
@@ -148,6 +150,6 @@ void MindrtTerminate(const std::vector<std::shared_ptr<LiteOpActor>> &);
 
 static std::atomic_int64_t actor_count = 0;
 std::vector<std::shared_ptr<LiteOpActor>> CreateOpActor(const std::vector<kernel::LiteKernel *> &kernels,
-                                                        const lite::InnerContext *ctx);
+                                                        lite::InnerContext *ctx);
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_LITE_MINDRT_H_

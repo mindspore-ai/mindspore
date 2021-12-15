@@ -25,6 +25,10 @@
 #include "src/runtime/kernel/opencl/opencl_subgraph.h"
 #include "src/runtime/gpu/opencl/opencl_runtime.h"
 #endif
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
+#include "src/control_flow/entrance_subgraph_kernel.h"
+#include "src/control_flow/exit_subgraph_kernel.h"
+#endif
 
 namespace mindspore::kernel {
 using mindspore::lite::RET_ERROR;
@@ -261,6 +265,48 @@ std::vector<LiteKernel *> LiteKernelUtil::GetCallInputPartials(LiteKernel *call_
   }
   return partial_nodes;
 }
+
+LiteKernel *LiteKernelUtil::GetPartialOutputCall(LiteKernel *partial_node) {
+  if (partial_node->type() != schema::PrimitiveType_PartialFusion) {
+    MS_LOG(ERROR) << "input node is not partial node.";
+    return nullptr;
+  }
+  auto partial_outputs = partial_node->out_kernels();
+  if (partial_outputs.size() != 1) {
+    MS_LOG(ERROR) << "partial outputs size is: " << partial_outputs.size() << ", not is 1.";
+    return nullptr;
+  }
+
+  LiteKernel *call_node = nullptr;
+  auto partial_output_node = partial_outputs.front();
+  switch (partial_output_node->type()) {
+    case schema::PrimitiveType_Call: {
+      call_node = partial_output_node;
+      break;
+    }
+    case schema::PrimitiveType_Switch:
+    case schema::PrimitiveType_SwitchLayer: {
+      auto switch_type_node = partial_output_node;
+      auto switch_outputs = switch_type_node->out_kernels();
+      if (switch_outputs.size() != 1) {
+        MS_LOG(ERROR) << "switch outputs size is: " << switch_outputs.size() << ", not is 1.";
+        return nullptr;
+      }
+      if (switch_outputs.front()->type() == schema::PrimitiveType_Call) {
+        call_node = switch_outputs.front();
+      } else {
+        MS_LOG(ERROR) << "graph is not right, switch output is not call node.";
+        return nullptr;
+      }
+      break;
+    }
+    default: {
+      MS_LOG(ERROR) << "not support partial output type is: " << partial_output_node->type();
+      return nullptr;
+    }
+  }
+  return call_node;
+}
 #endif
 
 kernel::LiteKernel *LiteKernelUtil::GetInputsSpecificNode(const kernel::LiteKernel *kernel,
@@ -323,7 +369,6 @@ kernel::SubGraphKernel *CreateCustomSubGraph(std::vector<kernel::LiteKernel *> &
   auto sub_kernel = new (std::nothrow) kernel::CustomSubGraph(input_kernels, output_kernels, kernels, kernel);
   if (sub_kernel == nullptr) {
     MS_LOG(ERROR) << "create custom subgraph failed!";
-    delete kernel;
     return nullptr;
   }
   return sub_kernel;
@@ -377,6 +422,14 @@ kernel::SubGraphKernel *LiteKernelUtil::CreateSubGraphKernel(const std::vector<k
     case kCustomSubGraph: {
       sub_graph = CreateCustomSubGraph(std::move(input_kernels), std::move(output_kernels), kernels, inner_kernel);
     } break;
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
+    case kEntranceSubGraph: {
+      sub_graph = EntranceSubGraphKernel::Create(inner_kernel);
+    } break;
+    case kExitSubGraph: {
+      sub_graph = ExitSubGraphKernel::Create(inner_kernel);
+    } break;
+#endif
     default: {
       MS_LOG(ERROR) << "not support subgraph type: " << type;
       delete inner_kernel;

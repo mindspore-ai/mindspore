@@ -20,6 +20,8 @@
 #include "src/lite_kernel_util.h"
 #include "src/runtime/kernel/arm/base/partial_fusion.h"
 #include "nnacl/partial_fusion_parameter.h"
+#include "src/control_flow/entrance_subgraph_kernel.h"
+#include "src/control_flow/exit_subgraph_kernel.h"
 
 namespace mindspore::lite {
 bool ControlFlowScheduler::IsNonTailCallSubGraph(kernel::SubGraphKernel *subgraph_kernel) {
@@ -163,6 +165,112 @@ int ControlFlowScheduler::RecordNonTailCallLinkInfo() {
         context_->SetLinkInfo(subgraph->out_tensors()[i], non_tail_call->out_tensors()[i]);
       }
     }
+  }
+  return RET_OK;
+}
+
+void ControlFlowScheduler::RecordPartialNodeCallMoreThanOnce(kernel::LiteKernel *partial_node) {
+  more_than_once_called_partial_nodes_.insert(partial_node);
+}
+
+kernel::SubGraphKernel *ControlFlowScheduler::CreateEntranceSubGraph(kernel::SubGraphKernel *subgraph,
+                                                                     lite::Tensor *link_tensor) {
+  size_t in_tensor_size = subgraph->in_tensors().size();
+  std::vector<Tensor *> old_input_tensors{};
+  // entrance subgraph kernel first output tensor is the first input of the corresponding exit subgraph kernel.
+  std::vector<Tensor *> new_input_tensors{link_tensor};
+  for (size_t i = 0; i < in_tensor_size; i++) {
+    Tensor *old_tensor = subgraph->in_tensors()[i];
+    old_input_tensors.push_back(old_tensor);
+    auto allocator = old_tensor->allocator();
+    if (allocator == nullptr && subgraph->Context() != nullptr && subgraph->desc().arch != kernel::kDelegate) {
+      allocator = subgraph->Context()->allocator;
+    }
+    auto new_tensor = Tensor::CopyTensor(*old_tensor, false, allocator);
+    if (new_tensor == nullptr) {
+      MS_LOG(ERROR) << "new Tensor failed.";
+      return nullptr;
+    }
+    src_tensors_->push_back(new_tensor);
+    new_input_tensors.push_back(new_tensor);
+    kernel::LiteKernelUtil::ReplaceSubGraphNodesInTensor(subgraph, old_tensor, new_tensor);
+    subgraph->set_in_tensor(new_tensor, i);
+  }
+  auto entrance_subgraph = kernel::LiteKernelUtil::CreateSubGraphKernel(
+    {}, &old_input_tensors, &new_input_tensors, kernel::kEntranceSubGraph, *context_, schema_version_);
+  return entrance_subgraph;
+}
+
+kernel::SubGraphKernel *ControlFlowScheduler::CreateExitSubGraph(kernel::SubGraphKernel *subgraph,
+                                                                 lite::Tensor *link_tensor) {
+  size_t out_tensor_size = subgraph->out_tensors().size();
+  std::vector<Tensor *> old_output_tensors{};
+  // exit subgraph kernel first input tensor is the first output of the corresponding entrance subgraph kernel.
+  std::vector<Tensor *> new_output_tensors{link_tensor};
+  for (size_t i = 0; i < out_tensor_size; i++) {
+    Tensor *old_tensor = subgraph->out_tensors()[i];
+    old_output_tensors.push_back(old_tensor);
+    auto allocator = old_tensor->allocator();
+    if (allocator == nullptr && subgraph->Context() != nullptr && subgraph->desc().arch != kernel::kDelegate) {
+      allocator = subgraph->Context()->allocator;
+    }
+    auto new_tensor = Tensor::CopyTensor(*old_tensor, false, allocator);
+    if (new_tensor == nullptr) {
+      MS_LOG(ERROR) << "new Tensor failed.";
+      return nullptr;
+    }
+
+    src_tensors_->push_back(new_tensor);
+    new_output_tensors.push_back(new_tensor);
+    kernel::LiteKernelUtil::ReplaceSubGraphNodesOutTensor(subgraph, old_tensor, new_tensor);
+    subgraph->set_out_tensor(new_tensor, i);
+  }
+  auto exit_subgraph = kernel::LiteKernelUtil::CreateSubGraphKernel({}, &new_output_tensors, &old_output_tensors,
+                                                                    kernel::kExitSubGraph, *context_, schema_version_);
+  return exit_subgraph;
+}
+
+int ControlFlowScheduler::BuildBoundaryForMultipleCalledGraph(std::vector<kernel::LiteKernel *> *dst_kernels) {
+  for (auto node : more_than_once_called_partial_nodes_) {
+    kernel::PartialFusionKernel *partial = reinterpret_cast<kernel::PartialFusionKernel *>(node->kernel());
+    MS_CHECK_TRUE_MSG(partial != nullptr, RET_ERROR, "cast to partial node failed.");
+    auto aim_kernel = partial->subgraph_kernel();
+    auto subgraph = reinterpret_cast<kernel::SubGraphKernel *>(aim_kernel);
+    MS_CHECK_TRUE_MSG(subgraph != nullptr, RET_ERROR, "subgraph is nullptr");
+    if (!IsNonTailCallSubGraph(subgraph)) {
+      MS_LOG(DEBUG) << "graph not split, no need add entrance and exit subgraph kernel.";
+      continue;
+    }
+
+    if (subgraph_kernel_and_exit_kernel_.find(subgraph) != subgraph_kernel_and_exit_kernel_.end()) {
+      auto exit_kernel = subgraph_kernel_and_exit_kernel_.at(subgraph);
+      auto exit_subgraph = reinterpret_cast<kernel::ExitSubGraphKernel *>(exit_kernel);
+      exit_subgraph->SetPartial(node);
+      continue;
+    }
+
+    // new link tensor
+    auto link_tensor = new Tensor(kNumberTypeFloat32, {1});
+    if (link_tensor == nullptr) {
+      MS_LOG(ERROR) << "";
+      return RET_NULL_PTR;
+    }
+    link_tensor->set_tensor_name(subgraph->name() + "_link_tensor");
+    src_tensors_->push_back(link_tensor);
+
+    auto entrance_subgraph = CreateEntranceSubGraph(subgraph, link_tensor);
+    if (entrance_subgraph == nullptr) {
+      MS_LOG(ERROR) << "create entrance subgraph failed.";
+      return RET_NULL_PTR;
+    }
+
+    auto exit_subgraph = CreateExitSubGraph(subgraph, link_tensor);
+    if (exit_subgraph == nullptr) {
+      MS_LOG(ERROR) << "create exit subgraph failed.";
+      return RET_NULL_PTR;
+    }
+
+    subgraph_kernel_and_exit_kernel_[subgraph] = exit_subgraph;
   }
   return RET_OK;
 }
