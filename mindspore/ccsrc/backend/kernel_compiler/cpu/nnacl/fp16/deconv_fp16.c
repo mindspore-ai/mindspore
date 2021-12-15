@@ -18,6 +18,16 @@
 
 int DeConvPostFp16(const float16_t *src, float16_t *tmp, const float16_t *bias, float16_t *dst, int output_channel,
                    const ConvParameter *conv_param) {
+  float16x8_t min_v = vdupq_n_f16(-FLT_MAX);
+  float16x8_t max_v = vdupq_n_f16(FLT_MAX);
+  if (conv_param->act_type_ == ActType_Relu) {
+    min_v = vdupq_n_f16(0.f);
+  }
+  if (conv_param->act_type_ == ActType_Relu6) {
+    min_v = vdupq_n_f16(0.f);
+    max_v = vdupq_n_f16(6.f);
+  }
+
   /* row8x8-major(ih*iw x oc*kh*kw)  ->  row8-major(oh*ow x oc) */
   size_t input_plane = conv_param->input_w_ * conv_param->input_h_;
   size_t kernel_plane = conv_param->kernel_w_ * conv_param->kernel_h_;
@@ -47,16 +57,21 @@ int DeConvPostFp16(const float16_t *src, float16_t *tmp, const float16_t *bias, 
         int kh_end = MSMIN(conv_param->kernel_h_, UP_DIV(conv_param->output_h_ - oh, conv_param->dilation_h_));
         int kw_start = MSMAX(0, UP_DIV(-ow, conv_param->dilation_w_));
         int kw_end = MSMIN(conv_param->kernel_w_, UP_DIV(conv_param->output_w_ - ow, conv_param->dilation_w_));
+
+        const float16_t *src_in_ptr = src_ptr + ih * src_ih_stride + iw * src_iw_stride;
+        float16_t *dst_in_ptr = dst_ptr + oh * dst_oh_stride + ow * dst_ow_stride;
+
         for (int kh = kh_start; kh < kh_end; kh++) {
+          const float16_t *src_kh_ptr = src_in_ptr + kh * src_kh_stride;
+          float16_t *dst_kh_ptr = dst_in_ptr + kh * dst_kh_stride;
+
           for (int kw = kw_start; kw < kw_end; kw++) {
-            int src_index = ih * src_ih_stride + iw * src_iw_stride + kh * src_kh_stride + kw * src_kw_stride;
-            int dst_index = oh * dst_oh_stride + ow * dst_ow_stride + kh * dst_kh_stride + kw * dst_kw_stride;
-            float16_t *tmp_dst = dst_ptr + dst_index;
-            const float16_t *tmp_src = src_ptr + src_index;
+            const float16_t *src_kw_index = src_kh_ptr + kw * src_kw_stride;
+            float16_t *dst_kw_index = dst_kh_ptr + kw * dst_kw_stride;
 #ifdef ENABLE_ARM64
             asm volatile(
-              "mov x0, %[tmp_src] \n"
-              "mov x1, %[tmp_dst] \n"
+              "mov x0, %[src_kw_index] \n"
+              "mov x1, %[dst_kw_index] \n"
 
               "ld1 {v0.8h}, [x0] \n"
               "ld1 {v1.8h}, [x1] \n"
@@ -66,19 +81,30 @@ int DeConvPostFp16(const float16_t *src, float16_t *tmp, const float16_t *bias, 
               "st1 {v0.8h}, [x1] \n"
 
               :
-              : [ tmp_src ] "r"(tmp_src), [ tmp_dst ] "r"(tmp_dst)
+              : [ src_kw_index ] "r"(src_kw_index), [ dst_kw_index ] "r"(dst_kw_index)
               : "x0", "x1", "v0", "v1");
 #else
             for (int i = 0; i < C8NUM; i++) {
-              tmp_dst[i] += tmp_src[i];
+              dst_kw_index[i] += src_kw_index[i];
             }
 #endif
           } /*kw*/
         }   /*kh*/
       }     /*iw*/
     }       /*ih*/
-  }         /*oc8*/
 
-  PostConvFuncFp16C8(tmp, dst, bias, output_channel, output_plane, conv_param->output_channel_, conv_param->act_type_);
+    /* add bias for current oh*ow*C8
+     * write to output data ptr in nhwc format */
+    float16x8_t bias_v = vld1q_f16(bias + c);
+    float16_t *pack_tmp_data = dst_ptr;
+    for (size_t i = 0; i < output_plane; i++) {
+      float16x8_t data_v = vld1q_f16(pack_tmp_data);
+      data_v = vaddq_f16(data_v, bias_v);
+      data_v = vminq_f16(data_v, max_v);
+      data_v = vmaxq_f16(data_v, min_v);
+      vst1q_f16(pack_tmp_data, data_v);
+      pack_tmp_data += C8NUM;
+    }
+  } /*oc8*/
   return NNACL_OK;
 }
