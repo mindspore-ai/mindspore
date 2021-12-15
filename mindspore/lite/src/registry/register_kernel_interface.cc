@@ -22,30 +22,31 @@
 
 namespace mindspore {
 namespace registry {
-Status RegisterKernelInterface::Reg(const std::string &provider, int op_type, const KernelInterfaceCreator creator) {
+Status RegisterKernelInterface::Reg(const std::vector<char> &provider, int op_type,
+                                    const KernelInterfaceCreator creator) {
 #ifndef CUSTOM_KERNEL_REGISTRY_CLIP
-  return KernelInterfaceRegistry::Instance()->Reg(provider, op_type, creator);
+  return KernelInterfaceRegistry::Instance()->Reg(CharToString(provider), op_type, creator);
 #else
   MS_LOG(ERROR) << unsupport_custom_kernel_register_log;
   return kLiteNotSupport;
 #endif
 }
 
-Status RegisterKernelInterface::CustomReg(const std::string &provider, const std::string &op_type,
+Status RegisterKernelInterface::CustomReg(const std::vector<char> &provider, const std::vector<char> &op_type,
                                           const KernelInterfaceCreator creator) {
 #ifndef CUSTOM_KERNEL_REGISTRY_CLIP
-  return KernelInterfaceRegistry::Instance()->CustomReg(provider, op_type, creator);
+  return KernelInterfaceRegistry::Instance()->CustomReg(CharToString(provider), CharToString(op_type), creator);
 #else
   MS_LOG(ERROR) << unsupport_custom_kernel_register_log;
   return kLiteNotSupport;
 #endif
 }
 
-std::shared_ptr<kernel::KernelInterface> RegisterKernelInterface::GetKernelInterface(const std::string &provider,
+std::shared_ptr<kernel::KernelInterface> RegisterKernelInterface::GetKernelInterface(const std::vector<char> &provider,
                                                                                      const schema::Primitive *primitive,
                                                                                      const kernel::Kernel *kernel) {
 #ifndef CUSTOM_KERNEL_REGISTRY_CLIP
-  return KernelInterfaceRegistry::Instance()->GetKernelInterface(provider, primitive, kernel);
+  return KernelInterfaceRegistry::Instance()->GetKernelInterface(CharToString(provider), primitive, kernel);
 #else
   MS_LOG(ERROR) << unsupport_custom_kernel_register_log;
   return nullptr;

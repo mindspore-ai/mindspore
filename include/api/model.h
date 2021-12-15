@@ -104,7 +104,7 @@ class MS_API Model {
   /// \param[in] config_path config file path.
   ///
   /// \return Status.
-  Status LoadConfig(const std::string &config_path);
+  inline Status LoadConfig(const std::string &config_path);
 
   /// \brief Obtains all input tensors of the model.
   ///
@@ -189,9 +189,9 @@ class MS_API Model {
   /// \param[in] dec_mode Define the decryption mode. Options: AES-GCM, AES-CBC.
   ///
   /// \return Status.
-  Status Build(const void *model_data, size_t data_size, ModelType model_type,
-               const std::shared_ptr<Context> &model_context = nullptr, const Key &dec_key = {},
-               const std::string &dec_mode = kDecModeAesGcm);
+  inline Status Build(const void *model_data, size_t data_size, ModelType model_type,
+                      const std::shared_ptr<Context> &model_context = nullptr, const Key &dec_key = {},
+                      const std::string &dec_mode = kDecModeAesGcm);
 
   /// \brief Load and build a model from model buffer so that it can run on a device. Only valid for Lite.
   ///
@@ -203,9 +203,9 @@ class MS_API Model {
   /// \param[in] dec_mode Define the decryption mode. Options: AES-GCM, AES-CBC.
   ///
   /// \return Status.
-  Status Build(const std::string &model_path, ModelType model_type,
-               const std::shared_ptr<Context> &model_context = nullptr, const Key &dec_key = {},
-               const std::string &dec_mode = kDecModeAesGcm);
+  inline Status Build(const std::string &model_path, ModelType model_type,
+                      const std::shared_ptr<Context> &model_context = nullptr, const Key &dec_key = {},
+                      const std::string &dec_mode = kDecModeAesGcm);
 
  private:
   friend class Serialization;
@@ -214,6 +214,11 @@ class MS_API Model {
   std::vector<std::vector<char>> GetOutputTensorNamesChar();
   MSTensor GetOutputByTensorName(const std::vector<char> &tensor_name);
   std::vector<MSTensor> GetOutputsByNodeName(const std::vector<char> &node_name);
+  Status LoadConfig(const std::vector<char> &config_path);
+  Status Build(const void *model_data, size_t data_size, ModelType model_type,
+               const std::shared_ptr<Context> &model_context, const Key &dec_key, const std::vector<char> &dec_mode);
+  Status Build(const std::vector<char> &model_path, ModelType model_type, const std::shared_ptr<Context> &model_context,
+               const Key &dec_key, const std::vector<char> &dec_mode);
 
   std::shared_ptr<ModelImpl> impl_;
 };
@@ -230,6 +235,20 @@ MSTensor Model::GetOutputByTensorName(const std::string &tensor_name) {
 
 std::vector<MSTensor> Model::GetOutputsByNodeName(const std::string &node_name) {
   return GetOutputsByNodeName(StringToChar(node_name));
+}
+
+Status Model::LoadConfig(const std::string &config_path) {
+  return LoadConfig(StringToChar(config_path));
+}
+
+Status Model::Build(const void *model_data, size_t data_size, ModelType model_type,
+                    const std::shared_ptr<Context> &model_context, const Key &dec_key, const std::string &dec_mode) {
+  return Build(model_data, data_size, model_type, model_context, dec_key, StringToChar(dec_mode));
+}
+
+Status Model::Build(const std::string &model_path, ModelType model_type, const std::shared_ptr<Context> &model_context,
+                    const Key &dec_key, const std::string &dec_mode) {
+  return Build(StringToChar(model_path), model_type, model_context, dec_key, StringToChar(dec_mode));
 }
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_MODEL_H

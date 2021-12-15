@@ -31,24 +31,25 @@
 using mindspore::kernel::CLErrorCode;
 
 namespace mindspore::registry::opencl {
-Status OpenCLRuntimeWrapper::LoadSource(const std::string &program_name, const std::string &source) {
+Status OpenCLRuntimeWrapper::LoadSource(const std::vector<char> &program_name, const std::vector<char> &source) {
   lite::opencl::OpenCLRuntimeInnerWrapper ocl_runtime_wrap;
   lite::opencl::OpenCLRuntime *ocl_runtime = ocl_runtime_wrap.GetInstance();
-  const std::string program_name_ext = "provider_" + program_name;
-  if (ocl_runtime->LoadSource(program_name_ext, source)) {
+  const std::string program_name_ext = "provider_" + CharToString(program_name);
+  if (ocl_runtime->LoadSource(program_name_ext, CharToString(source))) {
     return kSuccess;
   } else {
     return kLiteError;
   }
 }
 
-Status OpenCLRuntimeWrapper::BuildKernel(cl::Kernel *kernel, const std::string &program_name,
-                                         const std::string &kernel_name,
-                                         const std::vector<std::string> &build_options_ext) {
+Status OpenCLRuntimeWrapper::BuildKernel(cl::Kernel *kernel, const std::vector<char> &program_name,
+                                         const std::vector<char> &kernel_name,
+                                         const std::vector<std::vector<char>> &build_options_ext) {
   lite::opencl::OpenCLRuntimeInnerWrapper ocl_runtime_wrap;
   lite::opencl::OpenCLRuntime *ocl_runtime = ocl_runtime_wrap.GetInstance();
-  const std::string program_name_ext = "provider_" + program_name;
-  if (ocl_runtime->BuildKernel(*kernel, program_name_ext, kernel_name, build_options_ext, false) == RET_OK) {
+  const std::string program_name_ext = "provider_" + CharToString(program_name);
+  if (ocl_runtime->BuildKernel(*kernel, program_name_ext, CharToString(kernel_name),
+                               VectorCharToString(build_options_ext), false) == RET_OK) {
     return kSuccess;
   } else {
     return kLiteError;

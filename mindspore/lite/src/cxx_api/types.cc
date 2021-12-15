@@ -333,12 +333,12 @@ void MSTensor::SetDataType(enum DataType data_type) {
   impl_->SetDataType(data_type);
 }
 
-void MSTensor::SetTensorName(const std::string &name) {
+void MSTensor::SetTensorName(const std::vector<char> &name) {
   if (impl_ == nullptr) {
     MS_LOG(ERROR) << "Invalid tensor implement.";
     return;
   }
-  impl_->SetName(name);
+  impl_->SetName(CharToString(name));
 }
 
 void MSTensor::SetAllocator(std::shared_ptr<Allocator> allocator) {

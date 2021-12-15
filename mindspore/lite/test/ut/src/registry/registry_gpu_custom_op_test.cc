@@ -283,7 +283,7 @@ class CustomAddKernel : public kernel::Kernel {
       return lite::RET_OK;
     }
     auto status =
-      registry::RegisterKernelInterface::GetKernelInterface({}, primitive_)->Infer(&inputs_, &outputs_, primitive_);
+      registry::RegisterKernelInterface::GetKernelInterface("", primitive_)->Infer(&inputs_, &outputs_, primitive_);
     if (status != kSuccess) {
       std::cerr << "infer failed." << std::endl;
       return lite::RET_ERROR;
