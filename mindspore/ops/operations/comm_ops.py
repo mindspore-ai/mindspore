@@ -201,7 +201,7 @@ class AllGather(PrimitiveWithInfer):
         >>>
         >>> context.set_context(mode=context.GRAPH_MODE)
         >>> init()
-        ... class Net(nn.Cell):
+        >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
         ...         self.allgather = ops.AllGather()
