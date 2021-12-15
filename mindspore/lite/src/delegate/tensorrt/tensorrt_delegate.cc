@@ -42,6 +42,7 @@
 #include "src/delegate/tensorrt/op/topk_tensorrt.h"
 #include "src/delegate/tensorrt/op/reducescatter_tensorrt.h"
 #include "src/delegate/tensorrt/op/allgather_tensorrt.h"
+#include "src/delegate/tensorrt/op/lstm_tensorrt.h"
 
 namespace mindspore::lite {
 TensorRTDelegate::~TensorRTDelegate() {
@@ -96,6 +97,7 @@ Status TensorRTDelegate::Init() {
     {schema::PrimitiveType_BiasAdd, GetTensorRTOp<ElementWiseTensorRT>},
     {schema::PrimitiveType_Equal, GetTensorRTOp<EqualTensorRT>},
     {schema::PrimitiveType_Gather, GetTensorRTOp<GatherTensorRT>},
+    {schema::PrimitiveType_LSTM, GetTensorRTOp<LSTMTensorRT>},
     {schema::PrimitiveType_MatMul, GetTensorRTOp<MatMulTensorRT>},
     {schema::PrimitiveType_FullConnection, GetTensorRTOp<MatMulTensorRT>},
     {schema::PrimitiveType_AvgPoolFusion, GetTensorRTOp<PoolTensorRT>},
@@ -120,7 +122,7 @@ Status TensorRTDelegate::Init() {
   };
   unsupport_hw_op_lists_ = {schema::PrimitiveType_Reshape, schema::PrimitiveType_ReduceScatter,
                             schema::PrimitiveType_AllGather};
-  unsupport_resize_op_list_ = {schema::PrimitiveType_StridedSlice};
+  unsupport_resize_op_list_ = {schema::PrimitiveType_StridedSlice, schema::PrimitiveType_LSTM};
   int ret = lite::SetCudaDevice(device_info_);
   if (ret != RET_OK) {
     return mindspore::kLiteError;
@@ -195,6 +197,7 @@ Status TensorRTDelegate::Build(DelegateModel<schema::Primitive> *model) {
       if (tensorrt_ops.size() == 0) {
         from = iter;
       }
+      tensorrt_op->SetRuntime(this->runtime_);
       tensorrt_ops.push_back(tensorrt_op);
       end = iter;
     } else {

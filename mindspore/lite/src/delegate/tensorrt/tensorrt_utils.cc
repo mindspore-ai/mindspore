@@ -17,6 +17,8 @@
 #include "src/delegate/tensorrt/tensorrt_utils.h"
 #include <cuda_runtime_api.h>
 #include <map>
+#include <numeric>
+#include <functional>
 
 namespace mindspore::lite {
 nvinfer1::Dims ConvertCudaDims(int data, size_t size) {
@@ -476,5 +478,8 @@ nvinfer1::ITensor *PreprocessInputs2SameDim(nvinfer1::INetworkDefinition *networ
     }
   }
   return output;
+}
+int GetDimsVolume(const nvinfer1::Dims &dims) {
+  return std::accumulate(dims.d, dims.d + dims.nbDims, 1, std::multiplies<int64_t>());
 }
 }  // namespace mindspore::lite
