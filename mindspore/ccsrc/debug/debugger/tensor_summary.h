@@ -161,6 +161,7 @@ class TensorSummary : public ITensorSummary {
   double_t StatLookup(const DebugServices::watchpoint_t &);
   double_t StatLookup(const std::string &, const DebugServices::watchpoint_t &);
   double_t GetZeroValPercent();
+  void TensorStatisticsSingleThread();
   void InitCalculators(const std::vector<DebugServices::watchpoint_t> &);
 };
 #ifdef ONLINE_DBG_MODE
