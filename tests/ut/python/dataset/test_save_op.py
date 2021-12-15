@@ -94,7 +94,7 @@ def test_case_00():
         new_data['image5'] = np.asarray(list(item["image5"]), dtype=np.uint8)
         data_value_to_list.append(new_data)
 
-    d2 = ds.MindDataset(dataset_file=file_name_auto,
+    d2 = ds.MindDataset(dataset_files=file_name_auto,
                         num_parallel_workers=num_readers,
                         shuffle=False)
     assert d2.get_dataset_size() == 5
@@ -143,7 +143,7 @@ def test_case_00():
         new_data['label'] = np.asarray(list([item["label"]]), dtype=np.int32)
         data_value_to_list.append(new_data)
 
-    d2 = ds.MindDataset(dataset_file=file_name_auto,
+    d2 = ds.MindDataset(dataset_files=file_name_auto,
                         num_parallel_workers=num_readers,
                         shuffle=False)
     assert d2.get_dataset_size() == 6
@@ -291,7 +291,7 @@ def test_case_02():  # muti-bytes
         new_data['image5'] = np.asarray(list(item["image5"]), dtype=np.uint8)
         data_value_to_list.append(new_data)
 
-    d2 = ds.MindDataset(dataset_file=file_name_auto,
+    d2 = ds.MindDataset(dataset_files=file_name_auto,
                         num_parallel_workers=num_readers,
                         shuffle=False)
     assert d2.get_dataset_size() == 6
@@ -333,7 +333,7 @@ def test_case_03():
 
     d1.save(file_name_auto)
 
-    d2 = ds.MindDataset(dataset_file=file_name_auto,
+    d2 = ds.MindDataset(dataset_files=file_name_auto,
                         num_parallel_workers=num_readers,
                         shuffle=False)
 
@@ -366,7 +366,7 @@ def type_tester(t):
 
     data1.save(file_name_auto)
 
-    d2 = ds.MindDataset(dataset_file=file_name_auto,
+    d2 = ds.MindDataset(dataset_files=file_name_auto,
                         num_parallel_workers=num_readers,
                         shuffle=False)
 
@@ -446,7 +446,7 @@ def test_case_07():
     for x in d1.create_dict_iterator(num_epochs=1, output_numpy=True):
         tf_data.append(x)
     d1.save(file_name_auto, FILES_NUM)
-    d2 = ds.MindDataset(dataset_file=file_name_auto,
+    d2 = ds.MindDataset(dataset_files=file_name_auto,
                         num_parallel_workers=num_readers,
                         shuffle=False)
     mr_data = []
@@ -503,7 +503,7 @@ def test_case_08():
 
     d1.save(file_name_auto)
 
-    d2 = ds.MindDataset(dataset_file=file_name_auto,
+    d2 = ds.MindDataset(dataset_files=file_name_auto,
                         num_parallel_workers=num_readers,
                         shuffle=False)
 
@@ -532,7 +532,7 @@ def test_case_09():
 
     d1.save(file_name_auto)
 
-    d2 = ds.MindDataset(dataset_file=file_name_auto,
+    d2 = ds.MindDataset(dataset_files=file_name_auto,
                         num_parallel_workers=num_readers,
                         shuffle=False)
 
