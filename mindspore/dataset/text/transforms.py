@@ -261,7 +261,7 @@ class Lookup(TextTensorOperation):
         vocab (Vocab): A vocabulary object.
         unknown_token (str, optional): Word is used for lookup. In case of the word is out of vocabulary (OOV),
             the result of lookup will be replaced with unknown_token. If the unknown_token is not specified or
-            it is OOV, runtime error will be thrown (default={}, means no unknown_token is specified).
+            it is OOV, runtime error will be thrown (default=None, means no unknown_token is specified).
         data_type (mindspore.dtype, optional): The data type that lookup operation maps
             string to(default=mindspore.int32).
 
@@ -296,13 +296,13 @@ class Ngram(TextTensorOperation):
             an empty string produced.
         left_pad (tuple, optional): Padding performed on left side of the sequence shaped like ("pad_token", pad_width).
             `pad_width` will be capped at n-1. For example, specifying left_pad=("_", 2) would pad left side of the
-            sequence with "__" (default=None).
+            sequence with "__" (default=("", 0)).
         right_pad (tuple, optional): Padding performed on right side of the sequence shaped like
             ("pad_token", pad_width). `pad_width` will be capped at n-1. For example, specifying right_pad=("_", 2)
-            would pad right side of the sequence with "__" (default=None).
-        separator (str, optional): Symbol used to join strings together. For example. if 2-gram is
+            would pad right side of the sequence with "__" (default=("", 0)).
+        separator (str, optional): Symbol used to join strings together. For example, if 2-gram is
             ["mindspore", "amazing"] with separator="-", the result would be ["mindspore-amazing"]
-            (default=None, which will use whitespace as separator).
+            (default=" ", which will use whitespace as separator).
 
     Examples:
         >>> ngram_op = text.Ngram(3, separator="-")
