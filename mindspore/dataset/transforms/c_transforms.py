@@ -286,7 +286,7 @@ class PadEnd(TensorOperation):
     Args:
         pad_shape (list(int)): List of integers representing the shape needed. Dimensions that set to `None` will
             not be padded (i.e., original dim will be used). Shorter dimensions will truncate the values.
-        pad_value (Union[str, bytes, int, float, bool]), optional): Value used to pad. Default to 0 or empty
+        pad_value (Union[str, bytes, int, float, bool], optional): Value used to pad. Default to 0 or empty
             string in case of tensors of strings.
 
     Examples:
