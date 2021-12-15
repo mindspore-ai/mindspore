@@ -34,12 +34,7 @@ bool FullConnectionChecker::Check(CNodePtr op, int32_t output_num, mindspore::Fo
     return false;
   }
   std::vector<int64_t> weight_shape;
-  auto abstract = GetCNodeInputAbstract(op, kInputIndex2);
-  if (abstract == nullptr) {
-    MS_LOG(ERROR) << "get cnode input abstract failed.";
-    return false;
-  }
-  if (FetchShapeFromAbstract(abstract, &weight_shape) != RET_OK) {
+  if (GetInputShapeFromCNode(op, kInputIndex2, &weight_shape) != RET_OK) {
     MS_LOG(ERROR) << "get weight shape failed";
     return false;
   }

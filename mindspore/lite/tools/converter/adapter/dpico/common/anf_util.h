@@ -38,6 +38,7 @@ STATUS GetShapeVectorFromParameter(const mindspore::AnfNodePtr &weight, ShapeVec
 std::vector<int> CastToInt(const mindspore::ValuePtr &value);
 size_t GetTupleGetItemOutIndex(const mindspore::CNodePtr &tuple_get_item);
 STATUS GetOutputShapesFromCNode(const mindspore::CNodePtr &cnode, std::vector<ShapeVector> *output_shapes);
+STATUS GetInputShapeFromCNode(const mindspore::CNodePtr &cnode, size_t input_idx, ShapeVector *shape);
 STATUS FetchShapeFromAbstract(const mindspore::abstract::AbstractBasePtr &abstract, ShapeVector *shape);
 STATUS FetchTypeIdFromAbstract(const mindspore::abstract::AbstractBasePtr &abstract, TypeId *type_id);
 int GetAnfNodeOutputShape(const AnfNodePtr &input, ShapeVector *shape_vector);

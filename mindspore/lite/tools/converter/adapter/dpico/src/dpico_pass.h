@@ -21,6 +21,7 @@
 #include <utility>
 #include <memory>
 #include <map>
+#include <string>
 #include "src/custom_creator.h"
 #include "./op_enum_public.h"
 #include "include/registry/pass_base.h"
@@ -39,17 +40,22 @@ class DpicoPass : public registry::PassBase {
   bool Execute(const api::FuncGraphPtr &func_graph) override;
 
  private:
+  STATUS InitDpicoConfigInfo();
   void FetchFuncGraphs(const api::FuncGraphPtr &func_graph);
   STATUS CheckDynamicInputShape(const api::FuncGraphPtr &func_graph);
   STATUS MarkNodes(const api::FuncGraphPtr &func_graph);
   STATUS ParseMapperConfig(const api::FuncGraphPtr &func_graph);
   STATUS DataPrepare(const api::FuncGraphPtr &func_graph, bool *use_origin_config);
   STATUS ReplaceSubgraphWithCustom(const api::FuncGraphPtr &func_graph, bool use_origin_config);
+  STATUS WriteOmBufferToFile(const std::shared_ptr<mapper::ModelCoreInfo> &om_model_info, size_t custom_id);
+  STATUS RemoveTemporaryFiles();
 
  private:
   std::vector<api::FuncGraphPtr> func_graphs_;
   std::shared_ptr<CustomOpCreator> custom_op_creator_{nullptr};
   struct GraphSplitInfo graph_split_info_;
+  bool save_tmp_files_{false};
+  std::string dpico_config_path_{};
 };
 }  // namespace dpico
 }  // namespace mindspore

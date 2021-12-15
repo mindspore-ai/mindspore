@@ -200,6 +200,24 @@ STATUS GetOutputShapesFromCNode(const CNodePtr &cnode, std::vector<ShapeVector> 
   }
   return RET_OK;
 }
+
+STATUS GetInputShapeFromCNode(const mindspore::CNodePtr &cnode, size_t input_idx, ShapeVector *shape) {
+  if (shape == nullptr) {
+    MS_LOG(ERROR) << "shape is nullptr.";
+    return RET_ERROR;
+  }
+  auto input_abstract = GetCNodeInputAbstract(cnode, input_idx);
+  if (input_abstract == nullptr) {
+    MS_LOG(ERROR) << "input_abstract is nullptr.";
+    return RET_ERROR;
+  }
+  if (FetchShapeFromAbstract(input_abstract, shape) != RET_OK) {
+    MS_LOG(ERROR) << "fetch shape from abstract failed.";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
 STATUS FetchShapeFromAbstract(const abstract::AbstractBasePtr &abstract, ShapeVector *shape) {
   if (shape == nullptr) {
     MS_LOG(ERROR) << "shape is nullptr.";

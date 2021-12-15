@@ -109,12 +109,7 @@ bool PoolingChecker::Check(CNodePtr op, int32_t output_num, mindspore::Format fo
     return false;
   }
   std::vector<int64_t> input_shape;
-  auto abstract = GetCNodeInputAbstract(op, kInputIndex1);
-  if (abstract == nullptr) {
-    MS_LOG(ERROR) << "get cnode input abstract failed.";
-    return false;
-  }
-  if (FetchShapeFromAbstract(abstract, &input_shape) == RET_OK && !input_shape.empty()) {
+  if (GetInputShapeFromCNode(op, kInputIndex1, &input_shape) == RET_OK) {
     if (input_shape.size() != kDims4) {
       MS_LOG(ERROR) << "Error Pooling input, which should be 4 dims.";
       return false;

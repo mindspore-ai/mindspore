@@ -48,10 +48,8 @@ STATUS SliceMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *bas
   }
 
   slice_operator->SetOpType(mapper::OpType::SLICE);
-  auto abstract = GetCNodeInputAbstract(cnode, 1);
-  MS_CHECK_TRUE_MSG(abstract != nullptr, RET_ERROR, "abstract is nullptr.");
   ShapeVector shape;
-  if (FetchShapeFromAbstract(abstract, &shape) != RET_OK) {
+  if (GetInputShapeFromCNode(cnode, kInputIndex1, &shape) != RET_OK) {
     MS_LOG(ERROR) << "fetch input shape failed.";
     return RET_ERROR;
   }

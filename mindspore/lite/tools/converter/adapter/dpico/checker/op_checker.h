@@ -44,6 +44,7 @@ class OpChecker {
 STATUS GetWidth(const std::vector<int64_t> &shape, mindspore::Format format, int64_t *width);
 STATUS GetTensorChannel(const std::vector<int64_t> &shape, mindspore::Format format, int64_t *channel);
 STATUS GetVectorChannel(const std::vector<int64_t> &shape, int64_t *channel);
+bool HasOfflineData(const AnfNodePtr &node);
 bool CheckInputW(const CNodePtr &op, size_t index, mindspore::Format format, int limit_w);
 
 class OpCheckerRegistry {

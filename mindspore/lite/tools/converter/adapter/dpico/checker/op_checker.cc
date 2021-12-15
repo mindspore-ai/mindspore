@@ -99,6 +99,11 @@ STATUS GetVectorChannel(const std::vector<int64_t> &shape, int64_t *channel) {
   return RET_OK;
 }
 
+bool HasOfflineData(const AnfNodePtr &node) {
+  auto param = node->cast<ParameterPtr>();
+  return param != nullptr && param->has_default();
+}
+
 bool CheckInputW(const CNodePtr &op, size_t index, mindspore::Format format, int limit_w) {
   if (index >= op->inputs().size()) {
     MS_LOG(ERROR) << "index:" << index << " is greater than " << op->fullname_with_scope()
@@ -106,12 +111,7 @@ bool CheckInputW(const CNodePtr &op, size_t index, mindspore::Format format, int
     return false;
   }
   std::vector<int64_t> input_shape;
-  auto abstract = GetCNodeInputAbstract(op, index);
-  if (abstract == nullptr) {
-    MS_LOG(ERROR) << "get cnode input abstract failed.";
-    return false;
-  }
-  if (FetchShapeFromAbstract(abstract, &input_shape) == RET_OK && !input_shape.empty()) {
+  if (GetInputShapeFromCNode(op, index, &input_shape) == RET_OK && !input_shape.empty()) {
     int64_t input_w;
     if (GetWidth(input_shape, format, &input_w) != RET_OK) {
       MS_LOG(ERROR) << "get input_w failed " << op->fullname_with_scope();

@@ -46,11 +46,8 @@ bool CheckInputDimSize(const CNodePtr &cnode) {
         (input_node->cast<ParameterPtr>() == nullptr || input_node->cast<ParameterPtr>()->has_default())) {
       continue;
     }
-    auto abstract = GetCNodeInputAbstract(cnode, i);
-    MS_CHECK_TRUE_MSG(abstract != nullptr, false,
-                      "get input:" << i << " abstract failed. " << cnode->fullname_with_scope());
     ShapeVector shape_vector;
-    if (FetchShapeFromAbstract(abstract, &shape_vector) == RET_OK) {
+    if (GetInputShapeFromCNode(cnode, i, &shape_vector) == RET_OK) {
       if (shape_vector.size() <= 1 || shape_vector.size() > kDims4) {
         MS_LOG(DEBUG) << cnode->fullname_with_scope() << " input:" << i << " 's input shape size "
                       << shape_vector.size() << " should be in range [2, 4].";
@@ -175,6 +172,41 @@ void PrintUnsupportedOps(const std::map<std::string, std::vector<std::string>> &
 }
 #endif
 }  // namespace
+STATUS DpicoPass::InitDpicoConfigInfo() {
+  auto config_info = converter::ConverterContext::GetConfigInfo("dpico");
+  MS_CHECK_TRUE_MSG(!config_info.empty(), RET_ERROR, "there is no [dpico] in config file.");
+  MS_CHECK_TRUE_MSG(config_info.find("dpico_config_path") != config_info.end(), RET_ERROR,
+                    "there is no dpico_config_path in [dpico] config section.");
+  dpico_config_path_ = config_info.at("dpico_config_path");
+  MS_CHECK_TRUE_MSG(!dpico_config_path_.empty(), RET_ERROR, "dpico_config_path content is empty in [dpico] section.");
+  if (config_info.find("save_temporary_files") != config_info.end()) {
+    auto save_temp_file_str = config_info.at("save_temporary_files");
+    if (save_temp_file_str == "on") {
+      save_tmp_files_ = true;
+    } else if (save_temp_file_str == "off") {
+      save_tmp_files_ = false;
+    } else {
+      MS_LOG(WARNING) << "invalid [save_temporary_files] value, will consider it as off.";
+      save_tmp_files_ = false;
+    }
+  }
+  return RET_OK;
+}
+
+void DpicoPass::FetchFuncGraphs(const api::FuncGraphPtr &func_graph) {
+  if (std::find(func_graphs_.begin(), func_graphs_.end(), func_graph) == func_graphs_.end()) {
+    func_graphs_.push_back(func_graph);
+  } else {
+    return;
+  }
+  auto node_list = api::FuncGraph::TopoSort(func_graph->get_return());
+  for (auto &node : node_list) {
+    auto inner_fg = api::FuncGraph::GetFuncGraphFromAnfNode(node);
+    if (inner_fg != nullptr) {
+      FetchFuncGraphs(inner_fg);
+    }
+  }
+}
 
 STATUS DpicoPass::CheckDynamicInputShape(const api::FuncGraphPtr &func_graph) {
   MS_ASSERT(func_graph != nullptr);
@@ -257,15 +289,8 @@ STATUS DpicoPass::MarkNodes(const api::FuncGraphPtr &func_graph) {
 }
 
 STATUS DpicoPass::ParseMapperConfig(const api::FuncGraphPtr &func_graph) {
-  MS_CHECK_TRUE_MSG(func_graph != nullptr, RET_ERROR, "func_graph is nullptr.");
-  auto config_info = converter::ConverterContext::GetConfigInfo("dpico");
-  MS_CHECK_TRUE_MSG(!config_info.empty(), RET_ERROR, "there is no [dpico] in config file.");
-  MS_CHECK_TRUE_MSG(config_info.find("dpico_config_path") != config_info.end(), RET_ERROR,
-                    "there is no dpico_config_path in [dpico] config section.");
-  auto dpico_config_path = config_info.at("dpico_config_path");
-  MS_CHECK_TRUE_MSG(!dpico_config_path.empty(), RET_ERROR, "dpico_config_path content is empty in [dpico] section.");
   if (graph_split_info_.num_of_segments < kMinimumNumbOfSegments) {  // no segment
-    MapperConfigParser::GetInstance()->SetOriginConfigFilePath(dpico_config_path);
+    MapperConfigParser::GetInstance()->SetOriginConfigFilePath(dpico_config_path_);
     return RET_OK;
   }
 
@@ -274,7 +299,7 @@ STATUS DpicoPass::ParseMapperConfig(const api::FuncGraphPtr &func_graph) {
   (void)std::transform(inputs.begin(), inputs.end(), std::back_inserter(graph_input_names),
                        [](const AnfNodePtr &anode) { return anode->fullname_with_scope(); });
 
-  if (MapperConfigParser::GetInstance()->Parse(dpico_config_path, graph_input_names) != RET_OK) {
+  if (MapperConfigParser::GetInstance()->Parse(dpico_config_path_, graph_input_names) != RET_OK) {
     MS_LOG(ERROR) << "parse mapper config file failed.";
     return RET_ERROR;
   }
@@ -355,6 +380,8 @@ STATUS DpicoPass::ReplaceSubgraphWithCustom(const api::FuncGraphPtr &func_graph,
       MS_LOG(WARNING) << "current subgraph generate om failed, this subgraph will be running on CPU.";
       continue;
     }
+    MS_CHECK_TRUE_MSG(WriteOmBufferToFile(om_model_info, custom_op_creator_->GetCustomId()) == RET_OK, RET_ERROR,
+                      "save om file failed. custom id is " << custom_op_creator_->GetCustomId());
     auto custom_cnode = custom_op_creator_->CreateCustomOp(func_graph, &subgraph, om_model_info);
     MS_CHECK_TRUE_MSG(custom_cnode != nullptr, RET_ERROR, "custom_cnode is nullptr.");
     if (ModifyGraphInputDataType(subgraph, func_graph, om_model_info) != RET_OK) {
@@ -364,20 +391,41 @@ STATUS DpicoPass::ReplaceSubgraphWithCustom(const api::FuncGraphPtr &func_graph,
   }
   return RET_OK;
 }
-
-void DpicoPass::FetchFuncGraphs(const api::FuncGraphPtr &func_graph) {
-  if (std::find(func_graphs_.begin(), func_graphs_.end(), func_graph) == func_graphs_.end()) {
-    func_graphs_.push_back(func_graph);
-  } else {
-    return;
+STATUS DpicoPass::WriteOmBufferToFile(const std::shared_ptr<mapper::ModelCoreInfo> &om_model_info, size_t custom_id) {
+  if (!save_tmp_files_) {
+    MS_LOG(DEBUG) << "om file will not be generated.";
+    return RET_OK;
   }
-  auto node_list = api::FuncGraph::TopoSort(func_graph->get_return());
-  for (auto &node : node_list) {
-    auto inner_fg = api::FuncGraph::GetFuncGraphFromAnfNode(node);
-    if (inner_fg != nullptr) {
-      FetchFuncGraphs(inner_fg);
+  auto tmp_file_path = MapperConfigParser::GetInstance()->GetOutputPath();
+  if (tmp_file_path.empty()) {
+    auto dir_pos = dpico_config_path_.find_last_of('/');
+    tmp_file_path = dpico_config_path_.substr(0, dir_pos + 1) + "tmp/";
+    if (AccessFile(tmp_file_path, F_OK) == 0) {
+      MS_CHECK_TRUE_MSG(RemoveDir(tmp_file_path) == RET_OK, RET_ERROR, "rm dir failed. " << tmp_file_path);
     }
+    MS_CHECK_TRUE_MSG(CreateDir(&tmp_file_path) == RET_OK, RET_ERROR, "create dir failed. " << tmp_file_path);
   }
+  std::string output_om_path = tmp_file_path + "custom_" + std::to_string(custom_id) + ".om";
+  MS_CHECK_TRUE_MSG(WriteToBin(output_om_path, om_model_info->modelBuffer, om_model_info->modelSize) == RET_OK,
+                    RET_ERROR, "write om to file failed.");
+  return RET_OK;
+}
+
+STATUS DpicoPass::RemoveTemporaryFiles() {
+  if (save_tmp_files_) {
+    MS_LOG(DEBUG) << "temporary files will not be removed.";
+    return RET_OK;
+  }
+  auto tmp_file_path = MapperConfigParser::GetInstance()->GetOutputPath();
+  if (tmp_file_path.empty()) {
+    MS_LOG(DEBUG) << "there is no temporary file, no need to remove.";
+    return RET_OK;
+  }
+  if (RemoveDir(tmp_file_path) != RET_OK) {
+    MS_LOG(ERROR) << "remove temp files failed.";
+    return RET_ERROR;
+  }
+  return RET_OK;
 }
 
 bool DpicoPass::Execute(const api::FuncGraphPtr &func_graph) {
@@ -395,6 +443,11 @@ bool DpicoPass::Execute(const api::FuncGraphPtr &func_graph) {
   }
   std::vector<std::string> output_names;
   converter::ConverterContext::SetGraphOutputTensorNames(output_names);
+
+  if (InitDpicoConfigInfo() != RET_OK) {
+    MS_LOG(ERROR) << "get dpico config info from converter context failed.";
+    return false;
+  }
 
   for (auto &graph : func_graphs_) {
     if (MarkNodes(graph) != RET_OK) {
@@ -428,7 +481,10 @@ bool DpicoPass::Execute(const api::FuncGraphPtr &func_graph) {
       return false;
     }
   }
-
+  if (RemoveTemporaryFiles() != RET_OK) {
+    MS_LOG(ERROR) << "remove temporarily generated files failed.";
+    return false;
+  }
   return true;
 }
 REG_PASS(DpicoPass, dpico::DpicoPass)

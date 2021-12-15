@@ -24,51 +24,34 @@
 namespace mindspore {
 namespace dpico {
 namespace {
-bool HasOfflineData(const AnfNodePtr &node) {
-  auto param = node->cast<ParameterPtr>();
-  return param != nullptr && param->has_default();
-}
 bool CheckInputShapeForMatrix(const CNodePtr &cnode, const PrimitivePtr &primitive) {
-  auto input_1_abstract = GetCNodeInputAbstract(cnode, kInputIndex1);
-  if (input_1_abstract == nullptr) {
-    MS_LOG(ERROR) << "input_1_abstract is nullptr.";
-    return false;
-  }
-  auto input_2_abstract = GetCNodeInputAbstract(cnode, kInputIndex2);
-  if (input_2_abstract == nullptr) {
-    MS_LOG(ERROR) << "input_2_abstract is nullptr.";
-    return false;
-  }
   ShapeVector input_1_shape;
   ShapeVector input_2_shape;
-  if (FetchShapeFromAbstract(input_1_abstract, &input_1_shape) == RET_OK &&
-      FetchShapeFromAbstract(input_2_abstract, &input_2_shape) == RET_OK) {
-    if (!input_1_shape.empty() && !input_2_shape.empty()) {
-      if (input_1_shape.size() != input_2_shape.size()) {
-        return false;
-      }
-      if (input_1_shape.size() > kDims2) {
-        for (size_t i = 0; i < input_1_shape.size() - kInputIndex2; i++) {
-          if (input_1_shape.at(i) != 1 || input_2_shape.at(i) != 1) {
-            return false;
-          }
+  if (GetInputShapeFromCNode(cnode, kInputIndex1, &input_1_shape) != RET_OK ||
+      GetInputShapeFromCNode(cnode, kInputIndex2, &input_2_shape) != RET_OK) {
+    MS_LOG(ERROR) << "get input shape failed. " << cnode->fullname_with_scope();
+    return false;
+  }
+  if (!input_1_shape.empty() && !input_2_shape.empty()) {
+    if (input_1_shape.size() != input_2_shape.size()) {
+      return false;
+    }
+    if (input_1_shape.size() > kDims2) {
+      for (size_t i = 0; i < input_1_shape.size() - kInputIndex2; i++) {
+        if (input_1_shape.at(i) != 1 || input_2_shape.at(i) != 1) {
+          return false;
         }
       }
-      primitive->AddAttr(kDim1, MakeValue<uint32_t>(input_1_shape.at(input_1_shape.size() - kInputIndex2)));
-      primitive->AddAttr(kDim2, MakeValue<uint32_t>(input_1_shape.at(input_1_shape.size() - 1)));
-      primitive->AddAttr(kDim3, MakeValue<uint32_t>(input_2_shape.at(input_2_shape.size() - kInputIndex2)));
     }
+    primitive->AddAttr(kDim1, MakeValue<uint32_t>(input_1_shape.at(input_1_shape.size() - kInputIndex2)));
+    primitive->AddAttr(kDim2, MakeValue<uint32_t>(input_1_shape.at(input_1_shape.size() - 1)));
+    primitive->AddAttr(kDim3, MakeValue<uint32_t>(input_2_shape.at(input_2_shape.size() - kInputIndex2)));
   }
   return true;
 }
 bool CheckInputShapeForFc(const CNodePtr &cnode) {
-  auto input_abstract = GetCNodeInputAbstract(cnode, kInputIndex1);
-  if (input_abstract == nullptr) {
-    MS_LOG(ERROR) << "input_abstract is nullptr.";
-    return false;
-  }
   ShapeVector input_shape;
-  if (FetchShapeFromAbstract(input_abstract, &input_shape) == RET_OK) {
+  if (GetInputShapeFromCNode(cnode, kInputIndex1, &input_shape) == RET_OK) {
     return input_shape.size() == dpico::kDims2 && input_shape.at(0) == 1;
   }
   return false;

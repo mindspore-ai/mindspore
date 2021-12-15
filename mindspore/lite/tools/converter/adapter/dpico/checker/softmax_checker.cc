@@ -50,9 +50,7 @@ bool CheckVectorAndTensorChannel(const std::vector<int64_t> &input_shape, mindsp
 }  // namespace
 bool SoftmaxChecker::Check(CNodePtr op, int32_t output_num, mindspore::Format format) {
   std::vector<int64_t> input_shape;
-  auto abstract = GetCNodeInputAbstract(op, 1);
-  MS_CHECK_TRUE_MSG(abstract != nullptr, false, "get cnode input abstract failed.");
-  if (FetchShapeFromAbstract(abstract, &input_shape) == RET_OK && !input_shape.empty()) {
+  if (GetInputShapeFromCNode(op, kInputIndex1, &input_shape) == RET_OK && !input_shape.empty()) {
     auto primitive = GetValueNode<PrimitivePtr>(op->input(0));
     MS_CHECK_TRUE_MSG(primitive != nullptr, false, "primitive is nullptr.");
     auto axis_ptr = primitive->GetAttr(ops::kAxis);

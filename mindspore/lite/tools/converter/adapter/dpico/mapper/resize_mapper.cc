@@ -17,8 +17,8 @@
 #include "mapper/resize_mapper.h"
 #include <memory>
 #include <utility>
-#include <unordered_map>
 #include <vector>
+#include <unordered_map>
 #include "common/anf_util.h"
 #include "include/registry/converter_context.h"
 #include "common/op_enum.h"
@@ -53,7 +53,7 @@ STATUS GetShapeAndFormat(const CNodePtr &cnode, const PrimitivePtr &prim, std::v
     MS_LOG(ERROR) << "get cnode input abstract failed.";
     return RET_ERROR;
   }
-  if (FetchShapeFromAbstract(abstract, input_shape) != RET_OK || input_shape->empty()) {
+  if (FetchShapeFromAbstract(abstract, input_shape) != RET_OK) {
     MS_LOG(ERROR) << "fetch input shape failed. " << cnode->fullname_with_scope();
     return RET_ERROR;
   }
@@ -98,10 +98,8 @@ STATUS SetResizeDataInfo(const CNodePtr &cnode, const PrimitivePtr &prim, mapper
     return RET_ERROR;
   }
   auto elem_cnt = tensor_info->DataSize();
-  if (elem_cnt != kDims2) {
-    MS_LOG(ERROR) << "resize param element size should be 2. " << cnode->fullname_with_scope();
-    return RET_ERROR;
-  }
+  MS_CHECK_TRUE_MSG(elem_cnt == kDims2, RET_ERROR,
+                    "resize param element size should be 2. " << cnode->fullname_with_scope());
   if (tensor_info->data_type() == kNumberTypeInt32 || tensor_info->data_type() == kNumberTypeInt) {
     std::vector<int> size_vec;
     auto data = reinterpret_cast<int32_t *>(tensor_info->data_c());
@@ -193,7 +191,7 @@ STATUS ResizeMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *ba
     resize_operator->SetInterpolationMode(kInterpolationModeMap.at(interpolation_mode));
   }
   if (prim->GetAttr(ops::kNearestMode) != nullptr) {
-    auto nearest_mode = static_cast<NearestMode>(resize_prim->get_nearest_mode());
+    auto nearest_mode = static_cast<mindspore::NearestMode>(resize_prim->get_nearest_mode());
     if (kNearestModeMap.find(nearest_mode) == kNearestModeMap.end()) {
       MS_LOG(ERROR) << "unsupported nearest mode:" << nearest_mode << " " << cnode->fullname_with_scope();
       return RET_ERROR;
