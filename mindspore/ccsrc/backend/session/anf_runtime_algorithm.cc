@@ -202,6 +202,14 @@ std::vector<KernelWithIndex> GetAllOutputWithIndexInner(const AnfNodePtr &node) 
   if (AnfUtils::IsRealCNodeKernel(node)) {
     outputs_num = AnfAlgo::GetOutputTensorNum(node);
   }
+
+  // If the node is a call, the outputs num should get from the abstract.
+  if (AnfAlgo::IsCallNode(node)) {
+    auto abstract = node->abstract();
+    MS_EXCEPTION_IF_NULL(abstract);
+    outputs_num = AnfAlgo::GetOutputNumByAbstract(abstract);
+  }
+
   // The output may be the tuple of node, so need visit all the outputs of node.
   for (size_t i = 0; i < outputs_num; ++i) {
     // Maybe this scene: tupleGetItem + depend + makeTuple, can be done correctly in VisitKernelWithReturnType.
@@ -371,11 +379,21 @@ std::vector<AnfNodePtr> AnfRuntimeAlgorithm::GetAllOutput(const AnfNodePtr &node
 
 size_t AnfRuntimeAlgorithm::GetOutputNumByAbstract(const AbstractBasePtr &node_abstract) {
   MS_EXCEPTION_IF_NULL(node_abstract);
+  size_t result = 0;
+  if (node_abstract->isa<abstract::AbstractCSRTensor>()) {
+    auto csr_tensor_abstract = node_abstract->cast<abstract::AbstractCSRTensorPtr>();
+    MS_EXCEPTION_IF_NULL(csr_tensor_abstract);
+    result += GetOutputNumByAbstract(csr_tensor_abstract->indptr());
+    result += GetOutputNumByAbstract(csr_tensor_abstract->indices());
+    result += GetOutputNumByAbstract(csr_tensor_abstract->values());
+    result += GetOutputNumByAbstract(csr_tensor_abstract->dense_shape());
+    return result;
+  }
+
   if (!node_abstract->isa<abstract::AbstractTuple>()) {
     return 1;
   }
 
-  size_t result = 0;
   auto tuple_abstract = node_abstract->cast<abstract::AbstractTuplePtr>();
   MS_EXCEPTION_IF_NULL(tuple_abstract);
   const auto &sub_abstracts = tuple_abstract->elements();

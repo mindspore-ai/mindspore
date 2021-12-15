@@ -134,14 +134,14 @@ void ExitActor::CopyDeviceAddress(OpContext<DeviceTensor> *const context) {
   std::vector<DeviceTensor *> new_device_tensors;
   for (size_t i = 0; i < input_device_tensors_.size(); ++i) {
     auto input_device_tensor = input_device_tensors_[i];
-    MS_EXCEPTION_IF_NULL(input_device_tensor);
-    const KernelWithIndex &node_with_index = input_device_tensor->GetNodeIndex();
-    MS_EXCEPTION_IF_NULL(node_with_index.first);
     if (!is_need_copy_device_tensors_[i]) {
       new_device_tensors.emplace_back(input_device_tensor);
       continue;
     }
 
+    MS_EXCEPTION_IF_NULL(input_device_tensor);
+    const KernelWithIndex &node_with_index = input_device_tensor->GetNodeIndex();
+    MS_EXCEPTION_IF_NULL(node_with_index.first);
     MS_EXCEPTION_IF_NULL(device_contexts_[i]);
     // Create the new device tensor to take over the input_device_tensors which are the outputs of kernel graphs.
     auto new_device_tensor = device_contexts_[i]->CreateDeviceAddress(

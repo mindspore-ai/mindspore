@@ -257,7 +257,7 @@ std::vector<ExitActorPtr> ControlNodeScheduler::BuildExitActor(const GraphCompil
     std::vector<const DeviceContext *> device_contexts;
 
     for (const auto &node_with_context : kernel_graph_group_info->front_output_nodes_) {
-      if (HasAbstractMonad(node_with_context.first.first)) {
+      if (HasAbstractMonad(node_with_context.first.first) || IsCsrNode(node_with_context.first.first)) {
         continue;
       }
       // Collect inputs of exit actor.
@@ -666,7 +666,7 @@ void ControlNodeScheduler::LinkArrowByCallNode(const AnfNodePtr &call_node, Cont
                                   branch_id);
       }
     }
-    if (abstract->isa<abstract::AbstractFunction>()) {
+    if (real_abstract->isa<abstract::AbstractFunction>()) {
       to_actor->input_partials_num_++;
     } else {
       to_actor->input_datas_num_++;

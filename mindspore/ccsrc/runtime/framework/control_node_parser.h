@@ -56,6 +56,13 @@ constexpr size_t kCNodeInputStartPos = 1;
 constexpr size_t kReturnInputPos = 1;
 constexpr size_t kSingleControlNode = 1;
 
+constexpr size_t kCsrTensorIndPtrIndex = 0;
+constexpr size_t kCsrTensorIndicesIndex = 1;
+constexpr size_t kCsrTensorValuesIndex = 2;
+constexpr size_t kCsrTensorDenseShapeIndex = 3;
+constexpr size_t kMakeCSRTensorInputStartPos = 1;
+constexpr size_t kMakeCSRTensorInputNum = 4;
+
 const char kEntranceActorNameSuffix[] = "_EntranceActor";
 const char kExitActorNameSuffix[] = "_ExitActor";
 const char kStackActorNameSuffix[] = "_StackActor";
@@ -87,6 +94,8 @@ using KernelGraphGroupInfoPtr = std::shared_ptr<KernelGraphGroupInfo>;
 // Check whether the parameter is a weight. In the control flow, weight is passed to the subgraph, and in the subgraph,
 // it is determined whether it is a weight.
 bool HasAbstractRef(const AnfNodePtr &node);
+// Check whether the node is a csr node.
+bool IsCsrNode(const AnfNodePtr &node);
 // Get the front node corresponding to the backend node, if the front node is not a parameter node, return the
 // corresponding cnode.
 KernelWithIndex GetFrontNodeByKernelGraph(const AnfNodePtr &backend_node, KernelGraph *const graph);
