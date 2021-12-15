@@ -106,6 +106,7 @@ constexpr char kPlaces365Node[] = "Places365Dataset";
 constexpr char kQMnistNode[] = "QMnistDataset";
 constexpr char kRandomNode[] = "RandomDataset";
 constexpr char kSBUNode[] = "SBUDataset";
+constexpr char kSogouNewsNode[] = "SogouNewsDataset";
 constexpr char kSpeechCommandsNode[] = "SpeechCommandsDataset";
 constexpr char kSTL10Node[] = "STL10Dataset";
 constexpr char kTedliumNode[] = "TedliumDataset";

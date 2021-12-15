@@ -63,6 +63,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/places365_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/qmnist_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/sbu_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/sogou_news_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/tf_record_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/usps_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/voc_node.h"
@@ -442,6 +443,18 @@ PYBIND_REGISTER(SBUNode, 2, ([](const py::module *m) {
                       auto sbu = std::make_shared<SBUNode>(dataset_dir, decode, toSamplerObj(sampler), nullptr);
                       THROW_IF_ERROR(sbu->ValidateParams());
                       return sbu;
+                    }));
+                }));
+
+PYBIND_REGISTER(SogouNewsNode, 2, ([](const py::module *m) {
+                  (void)py::class_<SogouNewsNode, DatasetNode, std::shared_ptr<SogouNewsNode>>(
+                    *m, "SogouNewsNode", "to create a SogouNewsNode")
+                    .def(py::init([](std::string dataset_dir, std::string usage, int64_t num_samples, int32_t shuffle,
+                                     int32_t num_shards, int32_t shard_id) {
+                      auto sogou_news = std::make_shared<SogouNewsNode>(
+                        dataset_dir, usage, num_samples, toShuffleMode(shuffle), num_shards, shard_id, nullptr);
+                      THROW_IF_ERROR(sogou_news->ValidateParams());
+                      return sogou_news;
                     }));
                 }));
 
