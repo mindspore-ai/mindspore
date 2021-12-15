@@ -29,7 +29,7 @@ namespace kernel {
 template <typename T>
 class KLDivLossGradGpuKernel : public GpuKernel {
  public:
-  KLDivLossGradGpuKernel() : input_size_(1), reduction_(1), is_null_input_(false) {}
+  KLDivLossGradGpuKernel() : input_size_(1), reduction_(ReductionMode::kMean), is_null_input_(false) {}
   ~KLDivLossGradGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
@@ -62,7 +62,7 @@ class KLDivLossGradGpuKernel : public GpuKernel {
       input_size_ *= input_shape[i];
     }
     string reduction = GetAttr<string>(kernel_node, "reduction");
-    reduction_ = GetReductionInt(reduction);
+    reduction_ = kReductionModeMap[reduction];
     InitSizeLists();
     return true;
   }
@@ -73,7 +73,7 @@ class KLDivLossGradGpuKernel : public GpuKernel {
     input_size_list_.push_back(input_size_ * sizeof(T));
     output_size_list_.push_back(input_size_ * sizeof(T));
     output_size_list_.push_back(input_size_ * sizeof(T));
-    if (reduction_ == 0) {
+    if (reduction_ == ReductionMode::kNone) {
       input_size_list_.push_back(input_size_ * sizeof(T));
     } else {
       input_size_list_.push_back(sizeof(T));
@@ -82,7 +82,7 @@ class KLDivLossGradGpuKernel : public GpuKernel {
 
  private:
   size_t input_size_;
-  int reduction_;
+  ReductionMode reduction_;
   bool is_null_input_;
 
   std::vector<size_t> input_size_list_;

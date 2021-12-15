@@ -31,7 +31,7 @@ class BinaryCrossEntropyGradGpuKernel : public GpuKernel {
  public:
   BinaryCrossEntropyGradGpuKernel()
       : input_size_(1),
-        reduction_(1),
+        reduction_(ReductionMode::kMean),
         weight_defined_(false),
         is_null_input_(false),
         kernel_name_("BinaryCrossEntropyGrad") {}
@@ -75,7 +75,7 @@ class BinaryCrossEntropyGradGpuKernel : public GpuKernel {
       input_size_ *= input_shape[i];
     }
     string reduction = GetAttr<string>(kernel_node, "reduction");
-    reduction_ = GetReductionInt(reduction);
+    reduction_ = kReductionModeMap[reduction];
     InitSizeLists();
     return true;
   }
@@ -84,7 +84,7 @@ class BinaryCrossEntropyGradGpuKernel : public GpuKernel {
   void InitSizeLists() override {
     input_size_list_.push_back(input_size_ * sizeof(T));
     input_size_list_.push_back(input_size_ * sizeof(T));
-    if (reduction_ == 0) {
+    if (reduction_ == ReductionMode::kNone) {
       input_size_list_.push_back(input_size_ * sizeof(T));
     } else {
       input_size_list_.push_back(sizeof(T));
@@ -97,7 +97,7 @@ class BinaryCrossEntropyGradGpuKernel : public GpuKernel {
 
  private:
   size_t input_size_;
-  int reduction_;
+  ReductionMode reduction_;
   bool weight_defined_;  // true: there are 4 inputs, false: there are 3 inputs(no [weight])
   bool is_null_input_;
   std::string kernel_name_;
