@@ -500,7 +500,8 @@ bool CPUKernelRuntime::Run(const session::KernelGraph &kernel_graph, bool) {
   }
 #ifndef ENABLE_SECURITY
   if (iter_dump_flag) {
-    CPUE2eDump::DumpParametersAndConst(&kernel_graph, graph_id);
+    CPUE2eDump::DumpParameters(&kernel_graph, graph_id);
+    CPUE2eDump::DumpConstants(&kernel_graph, graph_id);
   }
   if (graph_id == 0) {
     dump_json_parser.UpdateDumpIter();

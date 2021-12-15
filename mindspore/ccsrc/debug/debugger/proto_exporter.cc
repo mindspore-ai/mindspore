@@ -24,6 +24,7 @@
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
 #include "debug/anf_ir_utils.h"
+#include "debug/data_dump/dump_utils.h"
 #include "debug/common.h"
 #include "debug/debugger/debugger.h"
 #include "debug/data_dump/dump_json_parser.h"
@@ -31,6 +32,7 @@
 #include "ir/graph_utils.h"
 #include "utils/symbolic.h"
 #include "utils/trace_base.h"
+#include "debug/data_dump/e2e_dump.h"
 
 namespace mindspore {
 
@@ -500,7 +502,11 @@ void DebuggerProtoExporter::ExportValueNodes(const std::map<AnfNodePtr, size_t> 
     debugger::NamedValueProto *named_value = graph_proto->add_const_vals();
     MS_EXCEPTION_IF_NULL(named_value);
     named_value->set_key(GetConstNodeId(item.second));
-    SetValueToProto(GetValueNode(item.first), named_value->mutable_value());
+
+    // cst full name: Default--data-x
+    std::string node_name = GetKernelNodeName(item.first);
+    GetFileKernelName(NOT_NULL(&node_name));
+    named_value->set_full_name(node_name);
   }
 }
 
@@ -576,6 +582,12 @@ void DumpIRProtoWithSrcInfo(const FuncGraphPtr &func_graph, const std::string &s
   // set file mode to read only by user
   ChangeFileMode(file_path, S_IRUSR);
 }
+
+void DumpConstantInfo(const KernelGraphPtr &graph, const std::string &target_dir) {
+  // Dump constant to npy file
+  MS_LOG(INFO) << "Start e2e dump Const values";
+  E2eDump::DumpConstantData(graph.get(), target_dir);
+}
 #else
 void DumpIRProtoWithSrcInfo(const FuncGraphPtr &, const std::string &, const std::string &, LocDebugDumpMode) {
   static bool already_printed = false;
@@ -585,6 +597,15 @@ void DumpIRProtoWithSrcInfo(const FuncGraphPtr &, const std::string &, const std
   already_printed = true;
   MS_LOG(WARNING) << "The functionality of dumping function graph IR in protobuf format is disabled,"
                   << "because ENABLE_DEBUGGER option is off"
+                  << "please recompile source to enable it. See help of building script.";
+}
+void DumpConstantInfo(const KernelGraphPtr &, const std::string &) {
+  static bool already_printed = false;
+  if (already_printed) {
+    return;
+  }
+  already_printed = true;
+  MS_LOG(WARNING) << "The functionality of dumping function graph constant is disabled, "
                   << "please recompile source to enable it. See help of building script.";
 }
 #endif

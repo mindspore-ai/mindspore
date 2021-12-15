@@ -42,6 +42,8 @@
 namespace mindspore {
 #endif
 
+static constexpr const char *constant_prefix = "Default--data-";
+
 namespace {
 #ifdef __APPLE__
 constexpr int kStrErrorNone = 0;
@@ -840,6 +842,11 @@ void DebugServices::ConvertReadTensors(std::vector<std::string> backend_name, st
     std::string specific_dump_dir = dump_dir_ + "/rank_" + std::to_string(device_id[i]) + "/" + net_name_ + "/" +
                                     std::to_string(root_graph_id[i]) + "/" + IterationString(iteration[i]);
 
+    // if node name is constant, skip
+    if (prefix_dump_file_name.length() > (unsigned)strlen(constant_prefix) &&
+        prefix_dump_file_name.substr(0, (unsigned)strlen(constant_prefix)).compare(constant_prefix) == 0) {
+      continue;
+    }
     // search files in dir for the one that meets the filename prefix and read the file into memory
     std::string abspath = RealPath(specific_dump_dir);
     DIR *d = opendir(abspath.c_str());
@@ -1212,14 +1219,29 @@ void DebugServices::ReadDumpedTensor(std::vector<std::string> backend_name, std:
 
     std::string slot_string_to_check;
     std::string prefix_dump_file_name;
+    std::string specific_dump_dir;
+    bool is_cst = false;
     SetPrefixToCheck(&prefix_dump_file_name, &slot_string_to_check, &dump_style_kernel_name, slot[i], is_output[i]);
+    // prefix_dump_to_check is node name used to find corresponding dump file
     std::string prefix_dump_to_check = GetNodeNameWithoutScope(dump_style_kernel_name);
 
-    std::string specific_dump_dir = dump_dir_ + "/rank_" + std::to_string(device_id[i]) + "/" + net_name_ + "/" +
-                                    std::to_string(root_graph_id[i]) + "/" + IterationString(iteration[i]);
+    // if node name has prefix of "Default--data-", consider as constant, search in cst folder
+    if (prefix_dump_to_check.length() > (unsigned)strlen(constant_prefix) &&
+        prefix_dump_to_check.substr(0, (unsigned)strlen(constant_prefix)).compare(constant_prefix) == 0) {
+      specific_dump_dir = dump_dir_ + "/rank_" + std::to_string(device_id[i]) + "/" + net_name_ + "/" +
+                          std::to_string(root_graph_id[i]) + "/constants";
+      is_cst = true;
+      const std::string prefix = "Default--";
+      prefix_dump_file_name = prefix_dump_file_name.substr(prefix.length());
+      prefix_dump_to_check = prefix_dump_to_check.substr(prefix.length());
+    } else {
+      specific_dump_dir = dump_dir_ + "/rank_" + std::to_string(device_id[i]) + "/" + net_name_ + "/" +
+                          std::to_string(root_graph_id[i]) + "/" + IterationString(iteration[i]);
+    }
+    MS_LOG(INFO) << "specific_dump_dir " << specific_dump_dir;
 
     // search files in dir for the one that meets the filename prefix and read the file into memory
-    if (is_sync_mode_) {
+    if (is_sync_mode_ || is_cst) {
       ReadDumpedTensorSync(prefix_dump_file_name, specific_dump_dir, backend_name[i], slot[i], device_id[i],
                            iteration[i], root_graph_id[i], is_output[i], result_list, no_mem_to_read);
     } else {

@@ -276,28 +276,30 @@ void E2eDump::DumpInputImpl(const CNodePtr &node, bool trans_flag, const std::st
 }
 
 void E2eDump::DumpSingleAnfNode(const AnfNodePtr &anf_node, const size_t output_index, const std::string &dump_path,
-                                bool trans_flag, std::map<std::string, size_t> *const_map, const Debugger *debugger) {
+                                bool trans_flag, const Debugger *debugger) {
   MS_EXCEPTION_IF_NULL(anf_node);
   auto &dump_json_parser = DumpJsonParser::GetInstance();
   if ((!anf_node->isa<Parameter>() && !anf_node->isa<ValueNode>()) || IsValueNode<StringImm>(anf_node)) {
     return;
   }
   std::string node_name = GetKernelNodeName(anf_node);
-  std::string dump_name = node_name;
-  if (anf_node->isa<ValueNode>()) {
-    MS_EXCEPTION_IF_NULL(const_map);
-    auto iter = const_map->find(node_name);
-    if (iter == const_map->end()) {
-      return;
-    }
-    dump_name = std::string("cst") + std::to_string(iter->second);
-  }
-
   if (!dump_json_parser.NeedDump(node_name)) {
     return;
   }
   DumpJsonParser::GetInstance().MatchKernel(node_name);
   GetFileKernelName(NOT_NULL(&node_name));
+
+  std::string dump_name = node_name;
+  const std::string cst_prefix = "Default--";
+  if (anf_node->isa<ValueNode>()) {
+    if (dump_name.find(cst_prefix) == std::string::npos) {
+      MS_LOG(INFO) << "Incorrect constant format: " << dump_name;
+      return;
+    }
+    dump_name = node_name.substr(cst_prefix.length());
+    trans_flag = false;
+  }
+
   // check if output address exists, if not, return;
   if (!AnfAlgo::OutputAddrExist(anf_node, output_index)) {
     return;
@@ -326,27 +328,46 @@ void E2eDump::DumpSingleAnfNode(const AnfNodePtr &anf_node, const size_t output_
   }
 }
 
-void E2eDump::DumpParametersAndConst(const session::KernelGraph *graph, const std::string &dump_path,
-                                     const Debugger *debugger) {
+void E2eDump::DumpParameters(const session::KernelGraph *graph, const std::string &dump_path,
+                             const Debugger *debugger) {
   MS_EXCEPTION_IF_NULL(graph);
   auto &dump_json_parser = DumpJsonParser::GetInstance();
   if (!dump_json_parser.OutputNeedDump()) {
     return;
   }
-  MS_LOG(INFO) << "Start e2e dump parameters and Const values";
+  MS_LOG(INFO) << "Start e2e dump parameters";
   bool trans_flag = dump_json_parser.trans_flag();
-  std::map<std::string, size_t> const_map;
-  GetConstantId(graph, &const_map);
 
   // dump parameters
   const auto &parameters = graph->inputs();
   for (auto &item : parameters) {
-    DumpSingleAnfNode(item, PARAMETER_OUTPUT_INDEX, dump_path, trans_flag, &const_map, debugger);
+    DumpSingleAnfNode(item, PARAMETER_OUTPUT_INDEX, dump_path, trans_flag, debugger);
   }
-  // dump const values
-  auto value_nodes = graph->graph_value_nodes();
-  for (const auto &value_node : value_nodes) {
-    DumpSingleAnfNode(value_node, VALUE_NODE_OUTPUT_INDEX, dump_path, trans_flag, &const_map, debugger);
+}
+
+void E2eDump::DumpConstantData(const session::KernelGraph *graph, uint32_t rank_id, const Debugger *debugger) {
+  MS_EXCEPTION_IF_NULL(graph);
+  auto &dump_json_parser = DumpJsonParser::GetInstance();
+  if (!IsDeviceTargetGPU() || !dump_json_parser.e2e_dump_enabled()) {
+    return;
+  }
+  uint32_t graph_id = graph->graph_id();
+  std::string cst_path = GenerateDumpPath(graph_id, rank_id, true);
+  DumpConstantData(graph, cst_path, debugger);
+}
+
+void E2eDump::DumpConstantData(const session::KernelGraph *graph, const std::string &cst_dump_path,
+                               const Debugger *debugger) {
+  // Dump constant to npy file
+  MS_EXCEPTION_IF_NULL(graph);
+  auto &dump_json_parser = DumpJsonParser::GetInstance();
+  uint32_t cur_iteration = dump_json_parser.cur_dump_iter();
+  if (!dump_json_parser.OutputNeedDump() || cur_iteration != 0) {
+    return;
+  }
+  const auto value_nodes = graph->graph_value_nodes();
+  for (auto &item : value_nodes) {
+    DumpSingleAnfNode(item, VALUE_NODE_OUTPUT_INDEX, cst_dump_path, false, debugger);
   }
 }
 
@@ -442,13 +463,17 @@ void E2eDump::DumpData(const session::KernelGraph *graph, uint32_t rank_id, cons
     MS_LOG(INFO) << "Start e2e dump. Current iteration is " << dump_json_parser.cur_dump_iter();
     MS_LOG(INFO) << "Current graph id is " << graph_id;
     std::string dump_path = GenerateDumpPath(graph_id, rank_id);
+    std::string cst_path = GenerateDumpPath(graph_id, rank_id, true);
 
     if (dump_json_parser.IsStatisticDump()) {
       TensorStatDump::OpenStatisticsFile(dump_path);
     }
     DumpInput(graph, dump_path, debugger);
     DumpOutput(graph, dump_path, debugger);
-    DumpParametersAndConst(graph, dump_path, debugger);
+    DumpParameters(graph, dump_path, debugger);
+    if (IsDeviceTargetGPU() && dump_json_parser.e2e_dump_enabled()) {
+      DumpConstantData(graph, cst_path, debugger);
+    }
     if (dump_json_parser.IsStatisticDump()) {
       CsvWriter::GetInstance().CloseFile();
     }
@@ -474,16 +499,15 @@ bool E2eDump::DumpSingleNodeData(const CNodePtr &node, uint32_t graph_id, uint32
   return success;
 }
 
-bool E2eDump::DumpParametersAndConstData(const session::KernelGraph *graph, uint32_t rank_id,
-                                         const Debugger *debugger) {
+bool E2eDump::DumpParametersData(const session::KernelGraph *graph, uint32_t rank_id, const Debugger *debugger) {
   bool success = false;
   uint32_t graph_id = graph->graph_id();
   auto &dump_json_parser = DumpJsonParser::GetInstance();
   if (dump_json_parser.GetIterDumpFlag()) {
-    MS_LOG(INFO) << "DumpParametersAndConst. Current iteration is " << dump_json_parser.cur_dump_iter();
+    MS_LOG(INFO) << "DumpParameters. Current iteration is " << dump_json_parser.cur_dump_iter();
     MS_LOG(INFO) << "Current graph id is " << graph_id;
     std::string dump_path = GenerateDumpPath(graph_id, rank_id);
-    DumpParametersAndConst(graph, dump_path, debugger);
+    DumpParameters(graph, dump_path, debugger);
     success = true;
   }
   return success;

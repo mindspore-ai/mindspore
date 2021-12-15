@@ -24,9 +24,11 @@ from pathlib import Path
 import numpy as np
 import pytest
 import mindspore.context as context
+
 import mindspore.nn as nn
+import mindspore.ops as ops
 from mindspore import Tensor
-from mindspore.ops import operations as P
+from mindspore.ops import operations as P, constexpr
 from mindspore.nn import Cell
 from mindspore.nn import Dense
 from mindspore.nn import SoftmaxCrossEntropyWithLogits
@@ -580,3 +582,106 @@ def test_ascend_full_dump():
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     run_saved_data_dump_test('test_async_dump', 'full')
+
+
+@constexpr
+def construct_tensor(cst):
+    return Tensor(np.array(cst))
+
+
+class ConstantNet(nn.Cell):
+    def __init__(self):
+        super(ConstantNet, self).__init__()
+        self.relu = ops.ReLU()
+
+    def construct(self, x_):
+        return self.relu(construct_tensor(ops.shape(x_)))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_constant_async_ascend_dump():
+    """
+    Feature: Constant async dump
+    Description: Test async constant dump in Ascend
+    Expectation: constant dump folder is created, dump file has expected tensor info
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    with tempfile.TemporaryDirectory(dir='/tmp') as tmp_dir:
+        dump_path = os.path.join(tmp_dir, 'constant_dump')
+        dump_config_path = os.path.join(tmp_dir, 'constant_dump.json')
+        generate_dump_json(dump_path, dump_config_path, 'test_async_dump')
+        os.environ['MINDSPORE_DUMP_CONFIG'] = dump_config_path
+        if os.path.isdir(dump_path):
+            shutil.rmtree(dump_path)
+        net = ConstantNet()
+        tensor = Tensor(np.random.random([1, 2, 3]))
+        expect = net(tensor)
+        check_dump_structure(dump_path, dump_config_path, 1, 1, 1)
+        constant_path = os.path.join(dump_path, 'rank_0', 'Net', '0', 'constants')
+        assert os.path.exists(constant_path)
+        assert len(os.listdir(constant_path)) == 1
+
+        output_name = "Parameter.data-*.0.0.*.DefaultFormat.npy"
+        output_path = glob.glob(os.path.join(constant_path, output_name))[0]
+        real_path = os.path.realpath(output_path)
+        output = np.load(real_path)
+        assert np.array_equal(output, expect)
+        del os.environ['MINDSPORE_DUMP_CONFIG']
+
+
+def run_constant_e2e_dump():
+    if sys.platform != 'linux':
+        return
+    with tempfile.TemporaryDirectory(dir='/tmp') as tmp_dir:
+        dump_path = os.path.join(tmp_dir, 'constant_dump')
+        dump_config_path = os.path.join(tmp_dir, 'constant_dump.json')
+        generate_dump_json(dump_path, dump_config_path, 'test_e2e_dump')
+        os.environ['MINDSPORE_DUMP_CONFIG'] = dump_config_path
+        if os.path.isdir(dump_path):
+            shutil.rmtree(dump_path)
+        net = ConstantNet()
+        tensor = Tensor(np.random.random([1, 2, 3]))
+        expect = net(tensor)
+        check_dump_structure(dump_path, dump_config_path, 1, 1, 1)
+        constant_path = os.path.join(dump_path, 'rank_0', 'Net', '0', 'constants')
+        assert os.path.exists(constant_path)
+        assert len(os.listdir(constant_path)) == 1
+
+        output_name = "Parameter.data-*.0.0.*.DefaultFormat.npy"
+        output_path = glob.glob(os.path.join(constant_path, output_name))[0]
+        real_path = os.path.realpath(output_path)
+        output = np.load(real_path)
+        assert np.array_equal(output, expect)
+        del os.environ['MINDSPORE_DUMP_CONFIG']
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_constant_gpu_e2e_dump():
+    """
+    Feature: Constant sync dump
+    Description: Test constant sync dump in GPU
+    Expectation: constant dump folder is created, dump file has expected tensor info
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    run_constant_e2e_dump()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_constant_ascend_e2e_dump():
+    """
+    Feature: Constant sync dump
+    Description: Test constant sync dump in Ascend
+    Expectation: constant dump folder is created, dump file has expected tensor info
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    run_constant_e2e_dump()
