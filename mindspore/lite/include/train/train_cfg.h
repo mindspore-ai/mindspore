@@ -64,9 +64,9 @@ class TrainCfg {
     this->accumulate_gradients_ = rhs.accumulate_gradients_;
     return *this;
   }
-  std::vector<std::string> loss_name_; /**< Set part of the name that identify a loss kernel */
-  MixPrecisionCfg mix_precision_cfg_;  /**< Mix precision configuration */
-  bool accumulate_gradients_ = false;  /**< If true gardents are accmulated and can be read by GetGradients */
+  std::vector<std::string> loss_name_ = {"loss_fct"}; /**< Set part of the name that identify a loss kernel */
+  MixPrecisionCfg mix_precision_cfg_;                 /**< Mix precision configuration */
+  bool accumulate_gradients_ = false; /**< If true gardents are accmulated and can be read by GetGradients */
 };
 
 }  // namespace lite
