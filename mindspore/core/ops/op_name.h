@@ -42,6 +42,7 @@ constexpr auto kBeginNormAxis = "begin_norm_axis";
 constexpr auto kBeginParamsAxis = "begin_params_axis";
 constexpr auto kBeta = "beta";
 constexpr auto kBias = "bias";
+constexpr auto kBins = "bins";
 constexpr auto kBidirectional = "bidirectional";
 constexpr auto kBlockSize = "block_size";
 constexpr auto kBlockShape = "block_shape";

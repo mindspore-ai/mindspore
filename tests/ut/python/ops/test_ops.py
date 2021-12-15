@@ -58,6 +58,7 @@ from mindspore.ops.operations.math_ops import AddV2
 from mindspore.ops.operations.math_ops import Lcm
 from mindspore.ops.operations.math_ops import DivNoNan
 from mindspore.ops.operations.math_ops import Gcd
+from mindspore.ops.operations.math_ops import Histogram
 from mindspore.ops.operations.math_ops import RaggedRange
 from mindspore.ops.operations.array_ops import RangeV2
 from mindspore.ops.operations.array_ops import ListDiff
@@ -2004,6 +2005,11 @@ test_case_math_ops = [
     ('Invert', {
         'block': P.Invert(),
         'desc_inputs': [Tensor(np.array([[24, 4, 13, 9], [1, 5, 10, 8]]).astype(np.int16))],
+        'desc_bprop': [],
+        'skip': ['backward']}),
+    ('Histogram', {
+        'block': Histogram(),
+        'desc_inputs': [Tensor([-1.0, 0.0, 1.5, 2.0, 5.0, 15], mstype.float32)],
         'desc_bprop': [],
         'skip': ['backward']}),
     ('HistogramFixedWidth', {

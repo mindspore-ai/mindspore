@@ -392,6 +392,9 @@ constexpr auto kHcomOpTypeReduceScatter = "HcomReduceScatter";
 // attr key name
 constexpr auto kAttrInputNames = "input_names";
 constexpr auto kAttrAttrNames = "attr_names";
+constexpr auto kAttrBins = "bins";
+constexpr auto kAttrMin = "min";
+constexpr auto kAttrMax = "max";
 constexpr auto kAttrIsAiCpuKernel = "is_AICPU_kernel";
 constexpr auto kIsBackendCast = "is_backed_cast";
 constexpr auto kAttrOutputNames = "output_names";
