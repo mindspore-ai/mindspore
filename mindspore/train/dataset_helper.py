@@ -287,7 +287,7 @@ class DatasetHelper:
             >>> from mindspore import DatasetHelper
             >>>
             >>> train_dataset = create_custom_dataset()
-            >>> dataset_helper = DatasetHelper(train_dataset, dataset_sink_mode=False)
+            >>> dataset_helper = DatasetHelper(train_dataset, dataset_sink_mode=True)
             >>>
             >>> types, shapes = dataset_helper.types_shapes()
         """
@@ -324,14 +324,6 @@ class DatasetHelper:
         """
         In sink mode, it returns the types and shapes of the current data.
         Generally, it works in dynamic shape scenarios.
-
-        Examples:
-            >>> from mindspore import DatasetHelper
-            >>>
-            >>> train_dataset = create_custom_dataset()
-            >>> dataset_helper = DatasetHelper(train_dataset, dataset_sink_mode=True)
-            >>>
-            >>> types, shapes = dataset_helper.get_data_info()
         """
         return self.iter.get_data_info()
 
