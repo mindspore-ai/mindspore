@@ -29,7 +29,7 @@ int GatherNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector
   }
   // npu rom version lower than that specified below has compatibility problem. The version threshold is not absolute
   // and may need to be adjusted later.
-  if (in_tensors[1].ElementNum() > 1 && !NPUManager::CheckDDKVersion("100.320.012.043")) {
+  if (in_tensors[1].ElementNum() > 1 && !NPUManager::CheckDDKVerGreatEqual("100.320.012.043")) {
     MS_LOG(WARNING) << "Gather indices number larger than 1 is not supported for current NPU ddk version.";
     return RET_NOT_SUPPORT;
   }
