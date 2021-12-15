@@ -111,6 +111,7 @@ def _exec_init_graph(obj, init_phase):
     if param_dict:
         inst_executor.run_init_graph(param_dict, init_phase)
 
+
 def _check_all_tensor(sequence):
     for element in sequence:
         if not isinstance(element, Tensor) and not (isinstance(element, tuple) and _check_all_tensor(element)):
@@ -380,6 +381,7 @@ def ms_function(fn=None, obj=None, input_signature=None):
 
     def wrap_mindspore(func):
         ms_create_time = int(time.time() * 1e9)
+
         @wraps(func)
         def staging_specialize(*args):
             if obj is not None:

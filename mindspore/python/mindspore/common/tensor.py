@@ -447,7 +447,7 @@ class Tensor(Tensor_):
             IndexError: If only one argument is provided, and the original Tensor is not scalar.
 
         Supported Platforms:
-            ``Ascend`` ``GPU``
+            ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
             >>> import numpy as np
@@ -2253,6 +2253,7 @@ class SparseTensor:
     def dense_shape(self):
         return self.__dense_shape
 
+
 class CSRTensor(CSRTensor_):
     """
     Constructs a sparse tensor in CSR (Compressed Sparse Row) format, with specified
@@ -2348,6 +2349,7 @@ class CSRTensor(CSRTensor_):
 
     def to_tuple(self):
         return self.indptr, self.indices, self.values, self.shape
+
 
 def _vm_compare(*args):
     """Implement `vm_compare` for tensor."""
