@@ -119,6 +119,7 @@ class MS_CORE_API AnfNode : public Base {
         scope_(ScopeManager::GetInstance().GetCurrentScope()),
         kernel_info_(nullptr),
         interpret_(false),
+        interpret_internal_type_(false),
         interpreted_node_(nullptr) {}
 
   /// \brief Constructor.
@@ -345,6 +346,18 @@ class MS_CORE_API AnfNode : public Base {
   /// \param[in] interpret Boolean.
   void set_interpret(const bool &interpret) { interpret_ = interpret; }
 
+  /// \brief Check if there is an interpret node related to the unsupported internal type.
+  ///
+  /// \return True if there is an interpret node related to the unsupported internal type, otherwise false.
+  bool interpret_internal_type() { return interpret_internal_type_; }
+
+  /// \brief Whether there is an interpret node with unsupported internal type.
+  ///
+  /// \param[in] interpret_internal_type Boolean.
+  void set_interpret_internal_type(const bool &interpret_internal_type) {
+    interpret_internal_type_ = interpret_internal_type;
+  }
+
   /// \brief Get interpreted node.
   ///
   /// \return Interpreted node.
@@ -369,6 +382,7 @@ class MS_CORE_API AnfNode : public Base {
   KernelInfoDevicePtr kernel_info_;
   UserData user_data_;
   bool interpret_;
+  bool interpret_internal_type_;
   AnfNodePtr interpreted_node_;
 };
 

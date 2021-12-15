@@ -190,13 +190,15 @@ class Parser {
   // Check if script_text is in global/local params.
   bool IsScriptInParams(const std::string &script_text, const py::dict &global_dict,
                         const std::vector<AnfNodePtr> &local_keys, const FuncGraphPtr &func_graph);
+  // Set the interpret flag for the node calling the interpret node.
+  void UpdateInterpretForUserNode(const AnfNodePtr &node, const AnfNodePtr &user_node);
   // Check if the node need interpreting.
   AnfNodePtr HandleInterpret(const FunctionBlockPtr &block, const AnfNodePtr &value_node,
                              const py::object &value_object);
 
-  // Generate argument nodes for ast  function node
+  // Generate argument nodes for ast function node
   void GenerateArgsNodeForFunction(const FunctionBlockPtr &block, const py::object &function_node);
-  // Generate argument default value for ast  function node
+  // Generate argument default value for ast function node
   void GenerateArgsDefaultValueForFunction(const FunctionBlockPtr &block, const py::object &function_node);
   // Parse ast function node
   FunctionBlockPtr ParseDefFunction(const py::object &function_node, const FunctionBlockPtr &block = nullptr);

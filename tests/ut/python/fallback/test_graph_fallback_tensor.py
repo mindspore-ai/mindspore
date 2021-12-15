@@ -9,7 +9,7 @@ from mindspore.common.initializer import One
 context.set_context(mode=context.GRAPH_MODE)
 
 
-def test_tensor():
+def test_fallback_tensor():
     """
     Feature: JIT Fallback
     Description: Test Tensor() in graph mode.
@@ -22,7 +22,7 @@ def test_tensor():
     print(foo())
 
 
-def test_tensor_bool():
+def test_fallback_tensor_bool():
     """
     Feature: JIT Fallback
     Description: Test Tensor(bool) in graph mode.
@@ -35,7 +35,7 @@ def test_tensor_bool():
     print(foo())
 
 
-def test_tensor_array():
+def test_fallback_tensor_array():
     """
     Feature: JIT Fallback
     Description: Test Tensor(array) in graph mode.
@@ -48,7 +48,7 @@ def test_tensor_array():
     print(foo())
 
 
-def test_tensor_with_mstype():
+def test_fallback_tensor_with_mstype():
     """
     Feature: JIT Fallback
     Description: Test Tensor() with mstype in graph mode.
@@ -61,7 +61,7 @@ def test_tensor_with_mstype():
     print(foo())
 
 
-def test_tensor_array_with_mstype():
+def test_fallback_tensor_array_with_mstype():
     """
     Feature: JIT Fallback
     Description: Test Tensor(array) with mstype in graph mode.
@@ -74,21 +74,7 @@ def test_tensor_array_with_mstype():
     print(foo())
 
 
-@pytest.mark.skip(reason='Not support in graph jit fallback feature yet')
-def test_tensor_array_astype():
-    """
-    Feature: JIT Fallback
-    Description: Test Tensor(array) with astype() in graph mode.
-    Expectation: No exception.
-    """
-    @ms_function
-    def foo():
-        me_x = Tensor([1.1, -2.1]).astype("float32")
-        return me_x
-    print(foo())
-
-
-def test_tensor_with_numpy():
+def test_fallback_tensor_with_numpy():
     """
     Feature: JIT Fallback
     Description: Test Tensor() with numpy in graph mode.
@@ -101,7 +87,7 @@ def test_tensor_with_numpy():
     print(foo())
 
 
-def test_tensor_with_init():
+def test_fallback_tensor_with_init():
     """
     Feature: JIT Fallback
     Description: Test Tensor() with init in graph mode.
@@ -114,7 +100,7 @@ def test_tensor_with_init():
     print(foo())
 
 
-def test_tensor_reshape():
+def test_fallback_tensor_reshape():
     """
     Feature: JIT Fallback
     Description: Test Tensor() with reshape() in graph mode.
@@ -127,8 +113,7 @@ def test_tensor_reshape():
     print(foo())
 
 
-@pytest.mark.skip(reason='Not support in graph jit fallback feature yet')
-def test_tensor_abs():
+def test_fallback_tensor_abs():
     """
     Feature: JIT Fallback
     Description: Test Tensor.abs() in graph mode.
@@ -136,14 +121,13 @@ def test_tensor_abs():
     """
     @ms_function
     def foo():
-        a = Tensor([1.1, -2.1]).astype("float32")
+        a = Tensor([1.1, -2.1])
         out = a.abs()
         return out
     print(foo())
 
 
-@pytest.mark.skip(reason='Not support in graph jit fallback feature yet')
-def test_tensor_all():
+def test_fallback_tensor_all():
     """
     Feature: JIT Fallback
     Description: Test Tensor.all() in graph mode.
@@ -157,8 +141,7 @@ def test_tensor_all():
     print(foo())
 
 
-@pytest.mark.skip(reason='Not support in graph jit fallback feature yet')
-def test_tensor_any():
+def test_fallback_tensor_any():
     """
     Feature: JIT Fallback
     Description: Test Tensor.any() in graph mode.
@@ -172,8 +155,7 @@ def test_tensor_any():
     print(foo())
 
 
-@pytest.mark.skip(reason='Not support in graph jit fallback feature yet')
-def test_tensor_argmax():
+def test_fallback_tensor_argmax():
     """
     Feature: JIT Fallback
     Description: Test Tensor.argmax() in graph mode.
@@ -187,8 +169,7 @@ def test_tensor_argmax():
     print(foo())
 
 
-@pytest.mark.skip(reason='Not support in graph jit fallback feature yet')
-def test_tensor_argmin():
+def test_fallback_tensor_argmin():
     """
     Feature: JIT Fallback
     Description: Test Tensor.argmin() in graph mode.
@@ -202,8 +183,7 @@ def test_tensor_argmin():
     print(foo())
 
 
-@pytest.mark.skip(reason='Not support in graph jit fallback feature yet')
-def test_tensor_astype():
+def test_fallback_tensor_astype():
     """
     Feature: JIT Fallback
     Description: Test Tensor.astype() in graph mode.
@@ -244,7 +224,7 @@ def test_np_tensor_add():
     assert tensor_list[-1] == 11
 
 
-def test_binop_new_tensor():
+def test_fallback_tensor_binop():
     """
     Feature: Fallback feature
     Description: support binop's interpreted nodes.
@@ -303,7 +283,6 @@ def test_fallback_tensor_not():
     print("res:", res)
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
 def test_fallback_tensor_and():
     """
     Feature: Fallback feature
@@ -325,7 +304,6 @@ def test_fallback_tensor_and():
     print("res:", res)
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
 def test_fallback_tensor_or():
     """
     Feature: Fallback feature

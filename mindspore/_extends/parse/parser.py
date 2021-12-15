@@ -69,6 +69,12 @@ AST_SUB_TYPE_STARRED = 8               # ast.Starred
 AST_SUB_TYPE_ATTRIBUTE = 9             # ast.Attribute
 AST_SUB_TYPE_UNKNOWN = 0xFF            # unknown
 
+# Syntax support
+SYNTAX_SUPPORTED = 0                   # supported syntax
+SYNTAX_UNSUPPORTED_INTERNAL_TYPE = 1   # unsupported internal type
+SYNTAX_UNSUPPORTED_EXTERNAL_TYPE = 2   # unsupported external type
+SYNTAX_UNSUPPORTED_NAMESPACE = 3       # unsupported namespace
+
 # Process expr statement white list
 # add as needed, eg: "clear", "extend", "insert", "remove", "reverse"
 parse_expr_statement_white_list = (
@@ -76,6 +82,14 @@ parse_expr_statement_white_list = (
 )
 
 _builtin_function_or_method_type = type(abs)
+
+_unsupported_python_builtin_type = (
+    list, tuple, set, dict, slice, bool, int, float, str, complex, reversed,
+)
+
+_unsupported_internal_type = (
+    Tensor,
+)
 
 
 def create_slice_obj(start, end, step):
@@ -613,6 +627,20 @@ class Parser:
         logger.debug(f"'{value}' unsupported: {unsupported}.")
         return unsupported
 
+    def is_unsupported_python_builtin_type(self, value):
+        """To check if not supported builtin type"""
+        unsupported = value in _unsupported_python_builtin_type
+        logger.debug(f"value: '{value}', unsupported builtin type: {unsupported}.")
+        return unsupported
+
+    def is_unsupported_internal_type(self, value):
+        """To check if not supported internal type, such as Tensor"""
+        for item in _unsupported_internal_type:
+            if value == item:
+                logger.debug(f"Found unsupported internal type: '{value}'.")
+                return True
+        return False
+
     def get_namespace_symbol(self, var: str):
         """Get symbol type and namespace and symbol."""
         if var in self.closure_namespace:
@@ -628,13 +656,6 @@ class Parser:
 
         error_info = f"The name '{var}' is not defined in function '{self.function_name}'."
         return None, error_info
-
-    def is_unsupported_builtin_type(self, value_type):
-        """To check if not supported builtin type"""
-        unsupported_builtin_type = (list, tuple, set, dict, slice, bool, int, float, str, complex, reversed)
-        is_unsupported = value_type in unsupported_builtin_type
-        logger.debug(f"value_type: {value_type}, unsupported builtin type: {is_unsupported}.")
-        return is_unsupported
 
     def is_supported_namespace_module(self, value):
         """To check if the module is allowed to support."""
@@ -655,11 +676,6 @@ class Parser:
         if name == 'mindspore.numpy':
             logger.debug(f"Found 'mindspore.numpy' namespace.")
             return True
-
-        # Check `Tensor` namespace.
-        if value == Tensor:
-            logger.debug(f"Not support '{name}'.")
-            return False
 
         # Check `builtins` namespace.
         if hasattr(value, '__module__'):  # Not types.ModuleType
@@ -713,14 +729,13 @@ class Parser:
             value_str = value.__name__ if hasattr(value, '__name__') else str(value)
             logger.debug(f"value: {type(value)}, '{value_str}', hasattr(__name__): {hasattr(value, '__name__')}.")
             # To check if allowed to support.
-            if self.is_unsupported_namespace(value):
-                return self.global_namespace, var, value
-            if self.is_unsupported_builtin_type(value):
-                return self.global_namespace, var, value
-            if not self.is_supported_namespace_module(value):  # Check if support including instance of types.ModuleType
-                return self.global_namespace, var, value
-            supported = True
-            return self.global_namespace, var, value, supported
+            if self.is_unsupported_internal_type(value):
+                return self.global_namespace, var, value, SYNTAX_UNSUPPORTED_INTERNAL_TYPE
+            if self.is_unsupported_python_builtin_type(value):
+                return self.global_namespace, var, value, SYNTAX_UNSUPPORTED_EXTERNAL_TYPE
+            if self.is_unsupported_namespace(value) or not self.is_supported_namespace_module(value):
+                return self.global_namespace, var, value, SYNTAX_UNSUPPORTED_NAMESPACE
+            return self.global_namespace, var, value, SYNTAX_SUPPORTED
 
         error_info = f"The name '{var}' is not defined, or not supported in graph mode."
         logger.debug(f"error_info: {error_info}")

@@ -220,13 +220,13 @@ AnfNodePtr FunctionBlock::HandleNamespaceInfo(const py::tuple &info) {
 
 AnfNodePtr FunctionBlock::HandleBuiltinNamespaceInfo(const py::tuple &info) {
   constexpr size_t closure_info_size = 2;
-  constexpr size_t unsupported_info_size = 3;
-  constexpr size_t supported_info_size = 4;
+  constexpr size_t namespace_info_size = 4;
   constexpr size_t namespace_index = 0;
   constexpr size_t symbol_index = 1;
   constexpr size_t value_index = 2;
-  if (info.size() < closure_info_size || info.size() > supported_info_size) {
-    MS_EXCEPTION(NameError) << "namespace info size should be 2, 3 or 4, but got " << info.size();
+  constexpr size_t flag_index = 3;
+  if (info.size() != closure_info_size && info.size() != namespace_info_size) {
+    MS_EXCEPTION(NameError) << "namespace info size should be 2 or 4, but got " << info.size();
   }
 
   // Handle closure namespace info.
@@ -240,8 +240,12 @@ AnfNodePtr FunctionBlock::HandleBuiltinNamespaceInfo(const py::tuple &info) {
 
   // Handle global namespace info.
   auto resolved_node = GetResolveNode(info);
-  if (info.size() == unsupported_info_size) {
+  auto syntax_support = info[flag_index].cast<int32_t>();
+  if (syntax_support != SYNTAX_SUPPORTED) {
     resolved_node->set_interpret(true);
+    if (syntax_support == SYNTAX_UNSUPPORTED_INTERNAL_TYPE) {
+      resolved_node->set_interpret_internal_type(true);
+    }
   }
   SymbolPtr symbol = std::make_shared<Symbol>(info[symbol_index].cast<std::string>());
   py::object py_obj = info[value_index];
@@ -309,6 +313,7 @@ AnfNodePtr FunctionBlock::MakeInterpret(const std::string &script_text, const An
   auto node = func_graph_->NewCNodeInOrder(
     {NewValueNode(prim::kPrimPyInterpret), script_node, global_dict_node, local_dict_node});
   node->set_interpreted_node(orig_node);
+  node->set_interpret_internal_type(orig_node->interpret_internal_type());
   return node;
 }
 

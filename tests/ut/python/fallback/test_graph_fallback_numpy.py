@@ -334,3 +334,82 @@ def test_np_array_imag():
         return Tensor(a.imag)
     res = np_array_imag()
     print("res:", res)
+
+
+def test_np_binop():
+    """
+    Feature: JIT Fallback
+    Description: Test numpy's binary operation in graph mode.
+    Expectation: No exception.
+    """
+    @ms_function
+    def np_binop():
+        a = np.array([1, 2, 3])
+        b = np.array([4, 5, 6])
+        c = a + b
+        return Tensor(c)
+    res = np_binop()
+    assert np.all(res.asnumpy() == np.array([5, 7, 9]))
+
+
+def test_np_compare():
+    """
+    Feature: JIT Fallback
+    Description: Test numpy's compare operation in graph mode.
+    Expectation: No exception.
+    """
+    @ms_function
+    def np_compare():
+        a = np.array([1, 2, 3])
+        b = np.array([0, 2, 4])
+        c = a > b
+        return Tensor(c)
+    res = np_compare()
+    assert np.all(res.asnumpy() == np.array([True, False, False]))
+
+
+def test_np_bool_and():
+    """
+    Feature: JIT Fallback
+    Description: Test AND operation in graph mode.
+    Expectation: No exception.
+    """
+    @ms_function
+    def np_bool_and():
+        a = np.bool_(True)
+        b = np.bool_(False)
+        c = a and b
+        return Tensor(c)
+    res = np_bool_and()
+    assert not res.asnumpy()
+
+
+def test_np_bool_or():
+    """
+    Feature: JIT Fallback
+    Description: Test OR operation in graph mode.
+    Expectation: No exception.
+    """
+    @ms_function
+    def np_bool_or():
+        a = np.bool_(True)
+        b = np.bool_(False)
+        c = a or b
+        return Tensor(c)
+    res = np_bool_or()
+    assert res.asnumpy()
+
+
+def test_np_bool_not():
+    """
+    Feature: JIT Fallback
+    Description: Test NOT operation in graph mode.
+    Expectation: No exception.
+    """
+    @ms_function
+    def np_bool_not():
+        a = np.bool_(True)
+        b = not a
+        return Tensor(b)
+    res = np_bool_not()
+    assert not res.asnumpy()
