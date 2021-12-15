@@ -27,7 +27,6 @@
 #include "tools/converter/anf_transform.h"
 #include "tools/converter/converter_context.h"
 #include "tools/common/graph_util.h"
-#include "load_mindir/load_model.h"
 
 namespace mindspore {
 namespace lite {
