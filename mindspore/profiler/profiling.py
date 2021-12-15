@@ -671,13 +671,21 @@ class Profiler:
         """
 
         job_id = ""
-        job_dirs = filter(lambda item: item.startswith('JOB') and os.path.isdir(os.path.join(self._output_path, item)),
+        job_dirs = filter(lambda item: item.startswith('JOB') or item.startswith('PROF') and \
+                                       os.path.isdir(os.path.join(self._output_path, item)),
                           os.listdir(self._output_path))
         sorted_job_dirs = sorted(job_dirs, key=lambda x: os.path.getmtime(os.path.join(self._output_path, x)),
                                  reverse=True)
 
         for dir_name in sorted_job_dirs:
-            job_dir = os.path.join(self._output_path, dir_name)
+            if dir_name.startswith('PROF'):
+                prof_dir = os.path.join(self._output_path, dir_name)
+                device_dir = [dir for dir in os.listdir(prof_dir) \
+                              if dir.startswith('device') and os.path.isdir(os.path.join(prof_dir, dir))]
+                job_dir = os.path.join(self._output_path, dir_name, device_dir[0])
+            else:
+                job_dir = os.path.join(self._output_path, dir_name)
+
             host_start_file_path = get_file_path(job_dir, "host_start.log")
             if host_start_file_path is None:
                 logger.warning("Find profiling job path %s, but host_start.log not exist, "
@@ -703,13 +711,16 @@ class Profiler:
                                job_dir, int(job_start_time), self._start_time)
                 continue
 
-            job_id = dir_name
+            if dir_name.startswith('PROF'):
+                job_id = os.path.join(dir_name, device_dir[0])
+            else:
+                job_id = dir_name
             break
 
         if not job_id:
             msg = "Fail to get profiling job, output path is {}, " \
-                  "please check whether job dir(name startswith JOB) in output path was generated, " \
-                  "or may be the device id from job dir dismatch the " \
+                  "please check whether job dir or prof dir(name startswith JOB or PROF) in output path " \
+                  "was generated, or may be the device id from job dir dismatch the " \
                   "device_id in current process.".format(self._output_path)
             raise RuntimeError(msg)
 
