@@ -20,7 +20,6 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kBroadcastToInputsNum = 1;
 constexpr size_t kBroadcastToOutputsNum = 1;
 }  // namespace
 
@@ -30,6 +29,21 @@ void BroadcastToCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   input_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   output_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+  size_t input_shape_size = input_shape_.size();
+  size_t output_shape_size = output_shape_.size();
+
+  for (size_t i = 0; i < input_shape_size; ++i) {
+    shape_info_.input_shape_[i] = SizeToInt(input_shape_[i]);
+  }
+  for (size_t i = 0; i < output_shape_size; ++i) {
+    shape_info_.output_shape_[i] = SizeToInt(output_shape_[i]);
+  }
+  shape_info_.input_shape_size_ = SizeToInt(input_shape_size);
+  shape_info_.output_shape_size_ = SizeToInt(output_shape_size);
+}
+
+template <typename T>
+void BroadcastToCPUKernel<T>::CheckArgs() {
   size_t input_shape_size = input_shape_.size();
   size_t output_shape_size = output_shape_.size();
   if (output_shape_size < input_shape_size) {
@@ -56,22 +70,13 @@ void BroadcastToCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
         << Vector2Str(input_shape_) << ", and the dimension of target shape 'shape': " << Vector2Str(output_shape_);
     }
   }
-
-  for (size_t i = 0; i < input_shape_size; ++i) {
-    shape_info_.input_shape_[i] = SizeToInt(input_shape_[i]);
-  }
-  for (size_t i = 0; i < output_shape_size; ++i) {
-    shape_info_.output_shape_[i] = SizeToInt(output_shape_[i]);
-  }
-  shape_info_.input_shape_size_ = SizeToInt(input_shape_size);
-  shape_info_.output_shape_size_ = SizeToInt(output_shape_size);
 }
 
 template <typename T>
 bool BroadcastToCPUKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                      const std::vector<AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kBroadcastToInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kBroadcastToOutputsNum, kernel_name_);
+  CheckArgs();
   const auto *input_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
   int status = static_cast<int>(NNACL_OK);
