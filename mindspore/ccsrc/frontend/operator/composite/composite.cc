@@ -121,12 +121,12 @@ AnfNodePtr HyperMap::FullMake(const std::shared_ptr<List> &type, const FuncGraph
       num++;
       auto lhs = std::static_pointer_cast<List>(item.second);
       if (lhs == nullptr) {
-        MS_LOG(EXCEPTION) << "The elements[" << (num - 1) << "] has wrong type, expected a List, but got "
-                          << item.second->ToString();
+        MS_LOG(EXCEPTION) << "The " << (num - 1) << "th element in HyperMap has wrong type, expected a List, but got "
+                          << item.second->ToString() << ".";
       }
       if (lhs->elements().size() != size) {
-        oss << "The length of elements[" << (num - 1) << "] is " << size << ", but got " << lhs->elements().size()
-            << "\n";
+        oss << "The length of " << (num - 1) << "th List in HyperMap is " << size << ", but the length of " << num
+            << "th List in HyperMap is " << lhs->elements().size() << ".\n";
         return true;
       }
       return false;
@@ -180,12 +180,12 @@ AnfNodePtr HyperMap::FullMake(const std::shared_ptr<Tuple> &type, const FuncGrap
       num++;
       auto lhs = std::static_pointer_cast<Tuple>(item.second);
       if (lhs == nullptr) {
-        MS_LOG(EXCEPTION) << "The elements[" << (num - 1) << "] has wrong type, expected a Tuple, but got "
-                          << item.second->ToString();
+        MS_LOG(EXCEPTION) << "The " << (num - 1) << "th element in HyperMap has wrong type, expected a Tuple, but got "
+                          << item.second->ToString() << ".";
       }
       if (lhs->elements().size() != size) {
-        oss << "The length of elements[" << (num - 1) << "] is " << size << ", but got " << lhs->elements().size()
-            << "\n";
+        oss << "The length of " << (num - 1) << "th Tuple in HyperMap is " << size << ", but the length of " << num
+            << "th Tuple in HyperMap is " << lhs->elements().size() << ".\n";
         return true;
       }
       return false;
@@ -294,7 +294,7 @@ AnfNodePtr HyperMap::Make(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_a
           << trace::GetDebugInfo(func_graph->debug_info()) << "\n";
       int64_t idx = 0;
       for (auto &item : arg_map) {
-        oss << "The type of " << ++idx << " argument is " << item.second->ToString() << "\n";
+        oss << "The type of " << (++idx + 1) << "th argument in HyperMap is " << item.second->ToString() << ".\n";
       }
       MS_LOG(EXCEPTION) << "The types of arguments in HyperMap must be consistent, "
                         << "but the types of arguments are inconsistent.\n"
@@ -1026,7 +1026,7 @@ void GenerateTupleSliceParameter(const AbstractTuplePtr &tuple, const AbstractSl
 
   *step_value = CheckSliceMember(slice->step(), step_default, step_name);
   if (*step_value == 0) {
-    MS_EXCEPTION(ValueError) << "TupleSlice require the step value could not be 0, but got 0.";
+    MS_EXCEPTION(ValueError) << "Slice step cannot be zero.";
   }
 
   if (*step_value < 0) {

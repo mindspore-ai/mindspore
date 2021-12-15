@@ -234,7 +234,7 @@ TEST_F(TestImplementations, ScalarModTest) {
     ScalarMod(list);
     FAIL();
   } catch (std::runtime_error const &err) {
-    ASSERT_TRUE(std::string(err.what()).find("The second input of ScalarMod operator could not be zero.")
+    ASSERT_TRUE(std::string(err.what()).find("Cannot perform modulo operation on zero.")
                 != std::string::npos);
   }
   list.clear();

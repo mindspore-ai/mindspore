@@ -78,12 +78,12 @@ AnfNodePtr Map::FullMakeList(const std::shared_ptr<List> &type, const FuncGraphP
       num++;
       auto lhs = std::dynamic_pointer_cast<List>(item.second);
       if (lhs == nullptr) {
-        MS_LOG(EXCEPTION) << "The elements[" << (num - 1) << "] has wrong type, expected a List, but got "
-                          << item.second->ToString();
+        MS_LOG(EXCEPTION) << "The " << (num - 1) << "th element in Map has wrong type, expected a List, but got "
+                          << item.second->ToString() << ".";
       }
       if (lhs->elements().size() != size) {
-        oss << "The length of elements[" << (num - 1) << "] is " << size << ", but got " << lhs->elements().size()
-            << "\n";
+        oss << "The length of " << (num - 1) << "th List in Map is " << size << ", but the length of " << num
+            << "th List in Map is " << lhs->elements().size() << ".\n";
         return true;
       }
       return false;
@@ -98,7 +98,7 @@ AnfNodePtr Map::FullMakeList(const std::shared_ptr<List> &type, const FuncGraphP
   inputs.push_back(NewValueNode(prim::kPrimMakeList));
 
   for (size_t i = 0; i < size; i++) {
-    MS_LOG(DEBUG) << "FullMakeList for the " << i << "th arg of the target, reverse_: " << reverse_;
+    MS_LOG(DEBUG) << "FullMakeList for the " << i << "th arg of the target, reverse_: " << reverse_ << ".";
     auto ptrGraph = GenerateLeafFunc(arg_pairs.size());
     auto fn = NewValueNode(ptrGraph);
 
@@ -138,18 +138,18 @@ AnfNodePtr Map::FullMakeTuple(const std::shared_ptr<Tuple> &type, const FuncGrap
       num++;
       auto lhs = std::dynamic_pointer_cast<Tuple>(item.second);
       if (lhs == nullptr) {
-        MS_LOG(EXCEPTION) << "The elements[" << (num - 1) << "] has wrong type, expected a Tuple, but got "
-                          << item.second->ToString();
+        MS_LOG(EXCEPTION) << "The " << (num - 1) << "th element in Map has wrong type, expected a Tuple, but got "
+                          << item.second->ToString() << ".";
       }
       if (lhs->elements().size() != size) {
-        oss << "The length of elements[" << (num - 1) << "] is " << size << ", but got " << lhs->elements().size()
-            << "\n";
+        oss << "The length of " << (num - 1) << "th Tuple in Map is " << size << ", but the length of " << num
+            << "th Tuple in Map is " << lhs->elements().size() << ".\n";
         return true;
       }
       return false;
     });
   if (is_not_same) {
-    MS_LOG(EXCEPTION) << "The length of tuples in Map must the same. " << oss.str();
+    MS_LOG(EXCEPTION) << "The length of tuples in Map must be the same. " << oss.str();
   }
 
   constexpr size_t kPrimHoldLen = 1;
@@ -158,7 +158,7 @@ AnfNodePtr Map::FullMakeTuple(const std::shared_ptr<Tuple> &type, const FuncGrap
   inputs.push_back(NewValueNode(prim::kPrimMakeTuple));
 
   for (size_t i = 0; i < size; i++) {
-    MS_LOG(DEBUG) << "FullMakeTuple for the " << i << "th arg of the tuple inputs, reverse_: " << reverse_;
+    MS_LOG(DEBUG) << "FullMakeTuple for the " << i << "th arg of the tuple inputs, reverse_: " << reverse_ << ".";
     auto ptrGraph = GenerateLeafFunc(arg_pairs.size());
     auto fn = NewValueNode(ptrGraph);
 
@@ -198,7 +198,7 @@ AnfNodePtr Map::FullMakeClass(const std::shared_ptr<Class> &type, const FuncGrap
   inputs.push_back(NewValueNode(type));
 
   for (size_t i = 0; i < attrSize; i++) {
-    MS_LOG(DEBUG) << "FullMakeClass for the " << i << "th element of the inputs, reverse_: " << reverse_;
+    MS_LOG(DEBUG) << "FullMakeClass for the " << i << "th element of the inputs, reverse_: " << reverse_ << ".";
     auto ptrGraph = GenerateLeafFunc(arg_pairs.size());
     auto fn = NewValueNode(ptrGraph);
 
@@ -229,8 +229,8 @@ AnfNodePtr Map::FullMakeClass(const std::shared_ptr<Class> &type, const FuncGrap
 
 AnfNodePtr Map::Make(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg, const ArgsPairList &arg_pairs) {
   if (arg_pairs.empty()) {
-    MS_EXCEPTION(TypeError) << "The Map operator must have at least one argument. But the size of arguments is "
-                            << arg_pairs.size() << ".";
+    MS_EXCEPTION(TypeError) << "The Map operator must have at least two arguments. But the size of arguments is "
+                            << (arg_pairs.size() + 1) << ".";
   }
   bool found = false;
   TypeId id = kObjectTypeEnd;
@@ -256,11 +256,11 @@ AnfNodePtr Map::Make(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg, c
       });
     if (is_not_same) {
       std::ostringstream oss;
-      oss << "There are " << arg_pairs.size() << " inputs of `" << name_ << "`, corresponding type info:\n"
-          << trace::GetDebugInfo(func_graph->debug_info()) << "\n";
+      oss << "There are " << (arg_pairs.size() + 1) << " inputs of `" << name_ << "`, corresponding type info:\n"
+          << trace::GetDebugInfo(func_graph->debug_info()) << ".\n";
       int64_t idx = 0;
       for (auto &item : arg_pairs) {
-        oss << "The type of " << ++idx << " argument is: " << item.second->ToString() << "\n";
+        oss << "The type of " << (++idx + 1) << "th argument in Map is: " << item.second->ToString() << ".\n";
       }
       MS_LOG(EXCEPTION) << "The types of arguments in Map must be consistent, "
                         << "but the types of arguments are inconsistent.\n"
@@ -282,7 +282,8 @@ AnfNodePtr Map::Make(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg, c
       return FullMakeClass(type, func_graph, fn_arg, arg_pairs);
     }
     default:
-      MS_LOG(EXCEPTION) << "Map can only be applied to list, tuple and class, but got " << pair.second->ToString();
+      MS_LOG(EXCEPTION) << "Map can only be applied to list, tuple and class, but got " << pair.second->ToString()
+                        << ".";
   }
 }
 
@@ -301,7 +302,7 @@ FuncGraphPtr Map::GenerateFromTypes(const TypePtrList &args_spec_list) {
   ArgsPairList arg_pairs;
   std::size_t size = args_spec_list.size();
   for (; i < size; ++i) {
-    MS_LOG(DEBUG) << "GenerateFromTypes for elements from " << args_spec_list[i]->ToString();
+    MS_LOG(DEBUG) << "GenerateFromTypes for elements from " << args_spec_list[i]->ToString() << ".";
     arg_pairs.push_back(std::make_pair(ptrGraph->add_parameter(), args_spec_list[i]));
   }
 
