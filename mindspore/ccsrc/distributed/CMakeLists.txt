@@ -2,6 +2,13 @@ file(GLOB_RECURSE _DISTRIBUTED_SRC_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*
 
 if(NOT ENABLE_CPU OR WIN32)
     list(REMOVE_ITEM _DISTRIBUTED_SRC_FILES "cluster/cluster_context.cc")
+    set(EXCLUDE_DIR "rpc/")
+    foreach(RPC_FILE ${_DISTRIBUTED_SRC_FILES})
+        string(FIND ${RPC_FILE} ${EXCLUDE_DIR} FOUND)
+        if(${FOUND} EQUAL 0)
+            list(REMOVE_ITEM _DISTRIBUTED_SRC_FILES ${RPC_FILE})
+        endif()
+    endforeach()
 else()
     list(REMOVE_ITEM _DISTRIBUTED_SRC_FILES "cluster/dummy_cluster_context.cc")
 endif()
