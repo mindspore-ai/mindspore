@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mteval>
+<srcset setid="iwslt2017-tst2010" srclang="german">
+<doc docid="test" genre="test">
+ <url>https://gitee.com/mindspore/mindspore</url>
+ <description>test description</description>
+ <keywords>test keywords</keywords>
+ <talkid>test number</talkid>
+ <title>test title</title>
+ <reviewer href="https://gitee.com/mindspore/mindspore">test reviewer</reviewer>
+ <translator href="https://gitee.com/mindspore/mindspore">test translator</translator>
+<seg id="1">  Heute gehe ich ins Labor.  </seg>
+<seg id="2">  Ich schlafe jetzt wieder ein.  </seg>
+</doc>
+</srcset>
+</mteval>

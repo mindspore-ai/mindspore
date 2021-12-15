@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mteval>
+<refset setid="iwslt2017-dev2010" srclang="german" trglang="english" refid="ref">
+<doc docid="535" genre="lectures">
+<url>https://gitee.com/mindspore/mindspore</url>
+<description>test description</description>
+<keywords>test keywords</keywords>
+<talkid>test number</talkid>
+<title>test title</title>
+<reviewer></reviewer>
+<translator></translator> 
+<seg id="1"> I can't finish writing my code.    </seg>
+<seg id="2"> I might have to work overtime.    </seg>
+</doc>
+</refset>
+</mteval>

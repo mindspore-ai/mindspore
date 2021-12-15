@@ -41,6 +41,8 @@
 #include "minddata/dataset/engine/ir/datasetops/source/flickr_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/generator_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/image_folder_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/iwslt2016_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/iwslt2017_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/kmnist_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/mnist_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/penn_treebank_node.h"
@@ -269,6 +271,33 @@ PYBIND_REGISTER(ImageFolderNode, 2, ([](const py::module *m) {
                                                                            toStringMap(class_indexing), nullptr);
                       THROW_IF_ERROR(imagefolder->ValidateParams());
                       return imagefolder;
+                    }));
+                }));
+
+PYBIND_REGISTER(IWSLT2016Node, 2, ([](const py::module *m) {
+                  (void)py::class_<IWSLT2016Node, DatasetNode, std::shared_ptr<IWSLT2016Node>>(
+                    *m, "IWSLT2016Node", "to create an IWSLT2016Node")
+                    .def(py::init([](std::string dataset_dir, std::string usage, std::vector<std::string> language_pair,
+                                     std::string valid_set, std::string test_set, int64_t num_samples, int32_t shuffle,
+                                     int32_t num_shards, int32_t shard_id) {
+                      std::shared_ptr<IWSLT2016Node> iwslt2016 = std::make_shared<IWSLT2016Node>(
+                        dataset_dir, usage, language_pair, valid_set, test_set, num_samples, toShuffleMode(shuffle),
+                        num_shards, shard_id, nullptr);
+                      THROW_IF_ERROR(iwslt2016->ValidateParams());
+                      return iwslt2016;
+                    }));
+                }));
+
+PYBIND_REGISTER(IWSLT2017Node, 2, ([](const py::module *m) {
+                  (void)py::class_<IWSLT2017Node, DatasetNode, std::shared_ptr<IWSLT2017Node>>(
+                    *m, "IWSLT2017Node", "to create an IWSLT2017Node")
+                    .def(py::init([](std::string dataset_dir, std::string usage, std::vector<std::string> language_pair,
+                                     int64_t num_samples, int32_t shuffle, int32_t num_shards, int32_t shard_id) {
+                      std::shared_ptr<IWSLT2017Node> iwslt2017 =
+                        std::make_shared<IWSLT2017Node>(dataset_dir, usage, language_pair, num_samples,
+                                                        toShuffleMode(shuffle), num_shards, shard_id, nullptr);
+                      THROW_IF_ERROR(iwslt2017->ValidateParams());
+                      return iwslt2017;
                     }));
                 }));
 

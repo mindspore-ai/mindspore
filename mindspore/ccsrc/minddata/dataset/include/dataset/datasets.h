@@ -2510,6 +2510,122 @@ inline std::shared_ptr<ImageFolderDataset> MS_API ImageFolder(const std::string 
                                               MapStringToChar(class_indexing), cache);
 }
 
+/// \class IWSLT2016Dataset.
+/// \brief A source dataset for reading and parsing IWSLT2016 dataset.
+class MS_API IWSLT2016Dataset : public Dataset {
+ public:
+  /// \brief Constructor of IWSLT2016Dataset.
+  /// \note The generated dataset has two columns ["text", "translation"].
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] usage Part of dataset of IWSLT2016, can be "train", "valid", "test" or "all".
+  /// \param[in] language_pair List containing src and tgt language.
+  /// \param[in] valid_set A string to identify validation set.
+  /// \param[in] test_set A string to identify test set.
+  /// \param[in] num_samples The number of samples to be included in the dataset.
+  /// \param[in] shuffle The mode for shuffling data every epoch.
+  ///    Can be any of:
+  ///    ShuffleMode::kFalse - No shuffling is performed.
+  ///    ShuffleMode::kFiles - Shuffle files only.
+  ///    ShuffleMode::kGlobal - Shuffle both the files and samples.
+  /// \param[in] num_shards Number of shards that the dataset should be divided into.
+  /// \param[in] shard_id The shard ID within num_shards. This argument should be
+  ///    specified only when num_shards is also specified.
+  /// \param[in] cache Tensor cache to use.
+  IWSLT2016Dataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                   const std::vector<std::vector<char>> &language_pair, const std::vector<char> &valid_set,
+                   const std::vector<char> &test_set, int64_t num_samples, ShuffleMode shuffle, int32_t num_shards,
+                   int32_t shard_id, const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Destructor of IWSLT2016Dataset.
+  ~IWSLT2016Dataset() = default;
+};
+
+/// \brief Function to create a IWSLT2016Dataset.
+/// \note The generated dataset has two columns ["text", "translation"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage Part of dataset of IWSLT2016, can be "train", "valid", "test" or "all" (default = "all").
+/// \param[in] language_pair List containing src and tgt language (Default = {"de", "en"}).
+/// \param[in] valid_set A string to identify validation set (Default = "tst2013").
+/// \param[in] test_set A string to identify test set (Default = "tst2014").
+/// \param[in] num_samples The number of samples to be included in the dataset.
+///     (Default = 0, means all samples).
+/// \param[in] shuffle The mode for shuffling data every epoch (Default=ShuffleMode::kGlobal).
+///     Can be any of:
+///     ShuffleMode::kFalse - No shuffling is performed.
+///     ShuffleMode::kFiles - Shuffle files only.
+///     ShuffleMode::kGlobal - Shuffle both the files and samples.
+/// \param[in] num_shards Number of shards that the dataset should be divided into (Default = 1).
+/// \param[in] shard_id The shard ID within num_shards. This argument should be
+///     specified only when num_shards is also specified (Default = 0).
+/// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
+/// \return Shared pointer to the IWSLT2016Dataset.
+inline std::shared_ptr<IWSLT2016Dataset> MS_API
+IWSLT2016(const std::string &dataset_dir, const std::string &usage = "all",
+          const std::vector<std::string> &language_pair = {"de", "en"}, const std::string &valid_set = "tst2013",
+          const std::string &test_set = "tst2014", int64_t num_samples = 0, ShuffleMode shuffle = ShuffleMode::kGlobal,
+          int32_t num_shards = 1, int32_t shard_id = 0, const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<IWSLT2016Dataset>(StringToChar(dataset_dir), StringToChar(usage),
+                                            VectorStringToChar(language_pair), StringToChar(valid_set),
+                                            StringToChar(test_set), num_samples, shuffle, num_shards, shard_id, cache);
+}
+
+/// \class IWSLT2017Dataset.
+/// \brief A source dataset for reading and parsing IWSLT2017 dataset.
+class MS_API IWSLT2017Dataset : public Dataset {
+ public:
+  /// \brief Constructor of IWSLT2017Dataset.
+  /// \note The generated dataset has two columns ["text", "translation"].
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] usage Part of dataset of IWSLT2017, can be "train", "valid", "test" or "all".
+  /// \param[in] language_pair List containing src and tgt language.
+  /// \param[in] num_samples The number of samples to be included in the dataset.
+  /// \param[in] shuffle The mode for shuffling data every epoch.
+  ///     Can be any of:
+  ///     ShuffleMode::kFalse - No shuffling is performed.
+  ///     ShuffleMode::kFiles - Shuffle files only.
+  ///     ShuffleMode::kGlobal - Shuffle both the files and samples.
+  /// \param[in] num_shards Number of shards that the dataset should be divided into.
+  /// \param[in] shard_id The shard ID within num_shards. This argument should be
+  ///     specified only when num_shards is also specified.
+  /// \param[in] cache Tensor cache to use.
+  /// \return Shared pointer to the IWSLT2017Dataset.
+  IWSLT2017Dataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                   const std::vector<std::vector<char>> &language_pair, int64_t num_samples, ShuffleMode shuffle,
+                   int32_t num_shards, int32_t shard_id, const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Destructor of IWSLT2017Dataset.
+  ~IWSLT2017Dataset() = default;
+};
+
+/// \brief Function to create a IWSLT2017Dataset.
+/// \note The generated dataset has two columns ["text", "translation"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage Part of dataset of IWSLT2017, can be "train", "valid", "test" or "all" (default = "all").
+/// \param[in] language_pair List containing src and tgt language (Default = {"de", "en"}).
+/// \param[in] num_samples The number of samples to be included in the dataset.
+///     (Default = 0, means all samples).
+/// \param[in] shuffle The mode for shuffling data every epoch (Default=ShuffleMode::kGlobal).
+///     Can be any of:
+///     ShuffleMode::kFalse - No shuffling is performed.
+///     ShuffleMode::kFiles - Shuffle files only.
+///     ShuffleMode::kGlobal - Shuffle both the files and samples.
+/// \param[in] num_shards Number of shards that the dataset should be divided into (Default = 1).
+/// \param[in] shard_id The shard ID within num_shards. This argument should be
+///     specified only when num_shards is also specified (Default = 0).
+/// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
+/// \return Shared pointer to the IWSLT2017Dataset.
+inline std::shared_ptr<IWSLT2017Dataset> MS_API IWSLT2017(const std::string &dataset_dir,
+                                                          const std::string &usage = "all",
+                                                          const std::vector<std::string> &language_pair = {"de", "en"},
+                                                          int64_t num_samples = 0,
+                                                          ShuffleMode shuffle = ShuffleMode::kGlobal,
+                                                          int32_t num_shards = 1, int32_t shard_id = 0,
+                                                          const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<IWSLT2017Dataset>(StringToChar(dataset_dir), StringToChar(usage),
+                                            VectorStringToChar(language_pair), num_samples, shuffle, num_shards,
+                                            shard_id, cache);
+}
+
 /// \class KMnistDataset.
 /// \brief A source dataset for reading and parsing KMnist dataset.
 class MS_API KMnistDataset : public Dataset {

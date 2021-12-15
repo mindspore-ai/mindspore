@@ -71,7 +71,8 @@ from .validators import check_batch, check_shuffle, check_map, check_filter, che
     check_sbu_dataset, check_qmnist_dataset, check_emnist_dataset, check_fake_image_dataset, check_places365_dataset, \
     check_photo_tour_dataset, check_ag_news_dataset, check_dbpedia_dataset, check_lj_speech_dataset, \
     check_yes_no_dataset, check_speech_commands_dataset, check_tedlium_dataset, check_svhn_dataset, \
-    check_stl10_dataset, check_yelp_review_dataset, check_penn_treebank_dataset
+    check_stl10_dataset, check_yelp_review_dataset, check_penn_treebank_dataset, check_iwslt2016_dataset, \
+    check_iwslt2017_dataset
 from ..core.config import get_callback_timeout, _init_device_info, get_enable_shared_mem, get_num_parallel_workers, \
     get_prefetch_size, get_auto_offload
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
@@ -3710,6 +3711,228 @@ class ImageFolderDataset(MappableDataset):
 
     def parse(self, children=None):
         return cde.ImageFolderNode(self.dataset_dir, self.decode, self.sampler, self.extensions, self.class_indexing)
+
+
+class IWSLT2016Dataset(SourceDataset):
+    """
+    A source dataset that reads and parses IWSLT2016 datasets.
+
+    The generated dataset has two columns: :py:obj:`[text, translation]`.
+    The tensor of column :py:obj: `text` is of the string type.
+    The tensor of column :py:obj: `translation` is of the string type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        usage (str, optional): Acceptable usages include "train", "valid", "test" and "all" (default=None, all samples).
+        language_pair (sequence, optional): Sequence containing source and target language, supported values are
+            (`en`, `fr`), ("en", "de"), ("en", "cs"), ("en", "ar"), ("fr", "en"), ("de", "en"), ("cs", "en"),
+            ("ar", "en") (default=("de", "en")).
+        valid_set (str, optional): A string to identify validation set, when usage is valid or all, the validation set
+            of valid_set type will be read, supported values are "dev2010", "tst2010", "tst2011", "tst2012", "tst2013"
+            and "tst2014" (default="tst2013").
+        test_set (str, optional): A string to identify test set, when usage is test or all, the test set of test_set
+            type will be read, supported values are "dev2010", "tst2010", "tst2011", "tst2012", "tst2013" and "tst2014"
+            (default="tst2014").
+        num_samples (int, optional): Number of samples (rows) to read (default=None, reads the full dataset).
+        shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
+            (default=Shuffle.GLOBAL).
+            If shuffle is False, no shuffling will be performed;
+            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
+            Otherwise, there are two levels of shuffling:
+
+            - Shuffle.GLOBAL: Shuffle both the files and samples.
+
+            - Shuffle.FILES: Shuffle files only.
+        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            When this argument is specified, `num_samples` reflects the max sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument can only be specified when num_shards is also specified.
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, number set in the config).
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
+            (default=None, which means no cache is used).
+
+    Raises:
+        RuntimeError: If dataset_dir does not contain data files.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+
+    Examples:
+        >>> iwslt2016_dataset_dir = "/path/to/iwslt2016_dataset_dir"
+        >>> dataset = ds.IWSLT2016Dataset(dataset_files=iwslt2016_dataset_dir, usage='all',
+        ...                               language_pair=('de', 'en'), valid_set='tst2013', test_set='tst2014')
+
+    About IWSLT2016 dataset:
+
+    IWSLT is an international oral translation conference, a major annual scientific conference dedicated to all aspects
+    of oral translation. The MT task of the IWSLT evaluation activity constitutes a data set, which can be publicly
+    obtained through the WIT3 website wit3.fbk.eu. The IWSLT2016 data set includes translations from English to Arabic,
+    Czech, French, and German, and translations from Arabic, Czech, French, and German to English.
+
+    You can unzip the original IWSLT2016 dataset files into this directory structure and read by MindSpore's API. After
+    decompression, you also need to decompress the data set to be read in the specified folder. For example, if you want
+    to read the data set of de-en, you need to unzip the tgz file in the de/en directory, the data set is in the
+    unzipped folder.
+
+    .. code-block::
+
+        .
+        └── iwslt2016_dataset_directory
+             ├── subeval_files
+             └── texts
+                  ├── ar
+                  │    └── en
+                  │        └── ar-en
+                  ├── cs
+                  │    └── en
+                  │        └── cs-en
+                  ├── de
+                  │    └── en
+                  │        └── de-en
+                  │            ├── IWSLT16.TED.dev2010.de-en.de.xml
+                  │            ├── train.tags.de-en.de
+                  │            ├── ...
+                  ├── en
+                  │    ├── ar
+                  │    │   └── en-ar
+                  │    ├── cs
+                  │    │   └── en-cs
+                  │    ├── de
+                  │    │   └── en-de
+                  │    └── fr
+                  │        └── en-fr
+                  └── fr
+                       └── en
+                           └── fr-en
+
+    Citation:
+
+    .. code-block::
+
+        @inproceedings{cettoloEtAl:EAMT2012,
+        Address = {Trento, Italy},
+        Author = {Mauro Cettolo and Christian Girardi and Marcello Federico},
+        Booktitle = {Proceedings of the 16$^{th}$ Conference of the European Association for Machine Translation
+                     (EAMT)},
+        Date = {28-30},
+        Month = {May},
+        Pages = {261--268},
+        Title = {WIT$^3$: Web Inventory of Transcribed and Translated Talks},
+        Year = {2012}}
+    """
+
+    @check_iwslt2016_dataset
+    def __init__(self, dataset_dir, usage=None, language_pair=None, valid_set=None, test_set=None,
+                 num_samples=None, shuffle=Shuffle.GLOBAL, num_shards=None, shard_id=None, num_parallel_workers=None,
+                 cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, num_samples=num_samples, shuffle=shuffle,
+                         num_shards=num_shards, shard_id=shard_id, cache=cache)
+        self.dataset_dir = dataset_dir
+        self.usage = replace_none(usage, 'all')
+        self.language_pair = replace_none(language_pair, ["de", "en"])
+        self.valid_set = replace_none(valid_set, 'tst2013')
+        self.test_set = replace_none(test_set, 'tst2014')
+
+    def parse(self, children=None):
+        return cde.IWSLT2016Node(self.dataset_dir, self.usage, self.language_pair, self.valid_set, self.test_set,
+                                 self.num_samples, self.shuffle_flag, self.num_shards, self.shard_id)
+
+
+class IWSLT2017Dataset(SourceDataset):
+    """
+    A source dataset that reads and parses IWSLT2017 datasets.
+
+    The generated dataset has two columns: :py:obj:`[text, translation]`.
+    The tensor of column :py:obj:`text` is of the string type.
+    The tensor of column :py:obj:`translation` is of the string type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        usage (str, optional): Acceptable usages include "train", "valid", "test" and "all" (default=None, all samples).
+        language_pair (list, optional): List containing src and tgt language, supported values are ("en", "nl"),
+            ("en", "de"), ("en", "it"), ("en", "ro"), ("nl", "en"), ("nl", "de"), ("nl", "it"), ("nl", "ro"),
+            ("de", "en"), ("de", "nl"), ("de", "it"), ("de", "ro"), ("it", "en"), ("it", "nl"), ("it", "de"),
+            ("it", "ro"), (`ro`, `en`), (`ro`, `nl`), (`ro`, `de`), (`ro`, `it`) (default=(`de`, `en`)).
+        num_samples (int, optional): Number of samples (rows) to read (default=None, reads the full dataset).
+        shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
+            (default=Shuffle.GLOBAL).
+            If shuffle is False, no shuffling will be performed;
+            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
+            Otherwise, there are two levels of shuffling:
+
+            - Shuffle.GLOBAL: Shuffle both the files and samples.
+
+            - Shuffle.FILES: Shuffle files only.
+        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            When this argument is specified, `num_samples` reflects the max sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument can only be specified when num_shards is also specified.
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, number set in the config).
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
+            (default=None, which means no cache is used).
+
+    Raises:
+        RuntimeError: If dataset_dir does not contain data files.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+
+    Examples:
+        >>> iwslt2017_dataset_dir = "/path/to/iwslt207_dataset_dir"
+        >>> dataset = ds.IWSLT2017Dataset(dataset_files=iwslt2017_dataset_dir, usage='all', language_pair=('de', 'en'))
+
+    About IWSLT2017 dataset:
+
+    IWSLT is an international oral translation conference, a major annual scientific conference dedicated to all aspects
+    of oral translation. The MT task of the IWSLT evaluation activity constitutes a data set, which can be publicly
+    obtained through the WIT3 website wit3.fbk.eu. The IWSLT2017 data set involves German, English, Italian, Dutch, and
+    Romanian. The data set includes translations in any two different languages.
+
+    You can unzip the original IWSLT2017 dataset files into this directory structure and read by MindSpore's API. You
+    need to decompress the dataset package in texts/DeEnItNlRo/DeEnItNlRo directory to get the DeEnItNlRo-DeEnItNlRo
+    subdirectory.
+
+    .. code-block::
+
+        .
+        └── iwslt2017_dataset_directory
+            └── DeEnItNlRo
+                └── DeEnItNlRo
+                    └── DeEnItNlRo-DeEnItNlRo
+                        ├── IWSLT17.TED.dev2010.de-en.de.xml
+                        ├── train.tags.de-en.de
+                        ├── ...
+
+    Citation:
+
+    .. code-block::
+
+        @inproceedings{cettoloEtAl:EAMT2012,
+        Address = {Trento, Italy},
+        Author = {Mauro Cettolo and Christian Girardi and Marcello Federico},
+        Booktitle = {Proceedings of the 16$^{th}$ Conference of the European Association for Machine Translation
+                     (EAMT)},
+        Date = {28-30},
+        Month = {May},
+        Pages = {261--268},
+        Title = {WIT$^3$: Web Inventory of Transcribed and Translated Talks},
+        Year = {2012}}
+    """
+
+    @check_iwslt2017_dataset
+    def __init__(self, dataset_dir, usage=None, language_pair=None, num_samples=None, shuffle=Shuffle.GLOBAL,
+                 num_shards=None, shard_id=None, num_parallel_workers=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, num_samples=num_samples, shuffle=shuffle,
+                         num_shards=num_shards, shard_id=shard_id, cache=cache)
+        self.dataset_dir = dataset_dir
+        self.usage = replace_none(usage, 'all')
+        self.language_pair = replace_none(language_pair, ["de", "en"])
+
+    def parse(self, children=None):
+        return cde.IWSLT2017Node(self.dataset_dir, self.usage, self.language_pair, self.num_samples,
+                                 self.shuffle_flag, self.num_shards, self.shard_id)
 
 
 class KMnistDataset(MappableDataset):

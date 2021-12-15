@@ -103,6 +103,8 @@
 #include "minddata/dataset/engine/ir/datasetops/source/fashion_mnist_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/flickr_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/image_folder_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/iwslt2016_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/iwslt2017_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/kmnist_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/lj_speech_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/manifest_node.h"
@@ -1214,6 +1216,27 @@ ImageFolderDataset::ImageFolderDataset(const std::vector<char> &dataset_dir, boo
   auto sampler_obj = sampler.get().Parse();
   auto ds = std::make_shared<ImageFolderNode>(CharToString(dataset_dir), decode, sampler_obj, recursive,
                                               SetCharToString(extensions), MapCharToString(class_indexing), cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+
+IWSLT2016Dataset::IWSLT2016Dataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                                   const std::vector<std::vector<char>> &language_pair,
+                                   const std::vector<char> &valid_set, const std::vector<char> &test_set,
+                                   int64_t num_samples, ShuffleMode shuffle, int32_t num_shards, int32_t shard_id,
+                                   const std::shared_ptr<DatasetCache> &cache) {
+  auto ds = std::make_shared<IWSLT2016Node>(CharToString(dataset_dir), CharToString(usage),
+                                            VectorCharToString(language_pair), CharToString(valid_set),
+                                            CharToString(test_set), num_samples, shuffle, num_shards, shard_id, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+
+IWSLT2017Dataset::IWSLT2017Dataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                                   const std::vector<std::vector<char>> &language_pair, int64_t num_samples,
+                                   ShuffleMode shuffle, int32_t num_shards, int32_t shard_id,
+                                   const std::shared_ptr<DatasetCache> &cache) {
+  auto ds =
+    std::make_shared<IWSLT2017Node>(CharToString(dataset_dir), CharToString(usage), VectorCharToString(language_pair),
+                                    num_samples, shuffle, num_shards, shard_id, cache);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
 

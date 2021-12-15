@@ -26,7 +26,8 @@ from mindspore._c_expression import typing
 from ..core.validator_helpers import parse_user_args, type_check, type_check_list, check_value, \
     INT32_MAX, check_valid_detype, check_dir, check_file, check_sampler_shuffle_shard_options, \
     validate_dataset_param_value, check_padding_options, check_gnn_list_or_ndarray, check_gnn_list_of_pair_or_ndarray, \
-    check_num_parallel_workers, check_columns, check_pos_int32, check_valid_str, check_dataset_num_shards_shard_id
+    check_num_parallel_workers, check_columns, check_pos_int32, check_valid_str, check_dataset_num_shards_shard_id, \
+    check_valid_list_tuple
 
 from . import datasets
 from . import samplers
@@ -52,6 +53,111 @@ def check_imagefolderdataset(method):
         validate_dataset_param_value(nreq_param_bool, param_dict, bool)
         validate_dataset_param_value(nreq_param_list, param_dict, list)
         validate_dataset_param_value(nreq_param_dict, param_dict, dict)
+        check_sampler_shuffle_shard_options(param_dict)
+
+        cache = param_dict.get('cache')
+        check_cache_option(cache)
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_iwslt2016_dataset(method):
+    """A wrapper that wraps a parameter checker around the original Dataset(IWSLT2016dataset)."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        _, param_dict = parse_user_args(method, *args, **kwargs)
+
+        nreq_param_int = ['num_samples', 'num_parallel_workers', 'num_shards', 'shard_id']
+
+        dataset_dir = param_dict.get('dataset_dir')
+        check_dir(dataset_dir)
+
+        # check usage
+        usage = param_dict.get('usage')
+        if usage is not None:
+            check_valid_str(usage, ["train", "test", "valid", "all"], "usage")
+
+        support_language_pair = [
+            ['en', 'ar'], ['en', 'ar'], ['en', 'de'], ['en', 'fr'], ['en', 'cs'], ['ar', 'en'], ['fr', 'en'],
+            ['de', 'en'], ['cs', 'en']
+        ]
+        support_language_pair_tuple = (
+            ('en', 'ar'), ('en', 'ar'), ('en', 'de'), ('en', 'fr'), ('en', 'cs'), ('ar', 'en'), ('fr', 'en'),
+            ('de', 'en'), ('cs', 'en')
+        )
+        support_set_type = ["dev2010", "tst2010", "tst2011", "tst2012", "tst2013", "tst2014"]
+        # check language_pair
+        language_pair = param_dict.get('language_pair')
+        if language_pair is not None:
+            if isinstance(language_pair, (list,)):
+                check_valid_list_tuple(language_pair, support_language_pair, (str,), "language_pair")
+            elif isinstance(language_pair, (tuple,)):
+                check_valid_list_tuple(language_pair, support_language_pair_tuple, (str,), "language_pair")
+            else:
+                raise TypeError("language_pair should be a type list or tuple of length 2.")
+
+        # check valid_set
+        valid_set = param_dict.get('valid_set')
+        if valid_set is not None:
+            check_valid_str(valid_set, support_set_type, "valid_set")
+
+        # check test_set
+        test_set = param_dict.get('test_set')
+        if test_set is not None:
+            check_valid_str(test_set, support_set_type, "test_set")
+
+        validate_dataset_param_value(nreq_param_int, param_dict, int)
+        check_sampler_shuffle_shard_options(param_dict)
+
+        cache = param_dict.get('cache')
+        check_cache_option(cache)
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_iwslt2017_dataset(method):
+    """A wrapper that wraps a parameter checker around the original Dataset(IWSLT2017dataset)."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        _, param_dict = parse_user_args(method, *args, **kwargs)
+
+        nreq_param_int = ['num_samples', 'num_parallel_workers', 'num_shards', 'shard_id']
+
+        dataset_dir = param_dict.get('dataset_dir')
+        check_dir(dataset_dir)
+
+        # check usage
+        usage = param_dict.get('usage')
+        if usage is not None:
+            check_valid_str(usage, ["train", "test", "valid", "all"], "usage")
+
+        support_language_pair = [
+            ['en', 'nl'], ['en', 'de'], ['en', 'it'], ['en', 'ro'], ['ro', 'de'], ['ro', 'en'], ['ro', 'nl'],
+            ['ro', 'it'], ['de', 'ro'], ['de', 'en'], ['de', 'nl'], ['de', 'it'], ['it', 'en'], ['it', 'nl'],
+            ['it', 'de'], ['it', 'ro'], ['nl', 'de'], ['nl', 'en'], ['nl', 'it'], ['nl', 'ro']
+        ]
+        support_language_pair_tuple = (
+            ('en', 'nl'), ('en', 'de'), ('en', 'it'), ('en', 'ro'), ('ro', 'de'), ('ro', 'en'), ('ro', 'nl'),
+            ('ro', 'it'), ('de', 'ro'), ('de', 'en'), ('de', 'nl'), ('de', 'it'), ('it', 'en'), ('it', 'nl'),
+            ('it', 'de'), ('it', 'ro'), ('nl', 'de'), ('nl', 'en'), ('nl', 'it'), ('nl', 'ro')
+        )
+        # check language_pair
+        language_pair = param_dict.get('language_pair')
+        if language_pair is not None:
+            if isinstance(language_pair, (list,)):
+                check_valid_list_tuple(language_pair, support_language_pair, (str,), "language_pair")
+            elif isinstance(language_pair, (tuple,)):
+                check_valid_list_tuple(language_pair, support_language_pair_tuple, (str,), "language_pair")
+            else:
+                raise TypeError("language_pair should be a type list or tuple of length 2.")
+
+        validate_dataset_param_value(nreq_param_int, param_dict, int)
         check_sampler_shuffle_shard_options(param_dict)
 
         cache = param_dict.get('cache')

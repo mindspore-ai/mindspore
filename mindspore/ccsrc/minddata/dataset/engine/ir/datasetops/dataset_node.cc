@@ -180,6 +180,30 @@ Status ValidateDatasetColumnParam(const std::string &dataset_name, const std::st
   return Status::OK();
 }
 
+Status ValidateMapKey(const std::string &dataset_name, const std::string &key,
+                      const std::map<std::string, std::vector<std::string>> &map) {
+  if (map.find(key) == map.end()) {
+    std::string init;
+    std::string mode = std::accumulate(map.begin(), map.end(), init,
+                                       [](std::string a, auto b) { return std::move(a) + " " + std::move(b.first); });
+    std::string err_msg = dataset_name + ": " + key + " does not match any key in [" + mode + " ]";
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  return Status::OK();
+}
+
+Status ValidateMapValue(const std::string &dataset_name, const std::string &str,
+                        const std::vector<std::string> &valid_strings) {
+  if (find(valid_strings.begin(), valid_strings.end(), str) == valid_strings.end()) {
+    std::string init;
+    std::string mode = std::accumulate(valid_strings.begin(), valid_strings.end(), init,
+                                       [](std::string a, std::string b) { return std::move(a) + " " + std::move(b); });
+    std::string err_msg = dataset_name + ": " + str + " does not match any string in [" + mode + " ]";
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  return Status::OK();
+}
+
 std::shared_ptr<SamplerObj> SelectSampler(int64_t num_samples, bool shuffle, int32_t num_shards, int32_t shard_id) {
   if (shuffle) {
     if (num_shards > 1) {

@@ -18,6 +18,7 @@ set(DATASET_ENGINE_DATASETOPS_SOURCE_SRC_FILES
     fashion_mnist_op.cc
     flickr_op.cc
     image_folder_op.cc
+    iwslt_op.cc
     io_block.cc
     kmnist_op.cc
     lj_speech_op.cc
