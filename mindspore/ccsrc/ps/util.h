@@ -59,6 +59,7 @@ class Util {
   static bool FuseServerCommOps(const pipeline::ResourcePtr &res);
   static WeightPtr MakeWeightPtr(const std::shared_ptr<std::vector<float>> &data, bool enable_recovery,
                                  const std::shared_ptr<std::vector<int>> &shape = nullptr);
+  static std::string GetPrimitiveName(const CNodePtr &cnode);
 
  private:
   static void DoFusion(const FuncGraphPtr &func_graph, const std::string &cnode_name,
