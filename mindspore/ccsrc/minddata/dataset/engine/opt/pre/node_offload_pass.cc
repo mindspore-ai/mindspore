@@ -27,7 +27,19 @@ Status NodeOffloadPass::OffloadNodes::Visit(std::shared_ptr<MapNode> node, bool 
   *modified = false;
   // Check if this node is set to offload and add to nodes_to_offload_.
   if (node->GetOffload() == true) {
-    MS_LOG(INFO) << "Pre pass: node offload of map class is true.";
+    if (IS_OUTPUT_ON(mindspore::INFO)) {
+      std::string operations = "operations=[";
+      auto op_list = node->operations();
+      size_t op_size = op_list.size();
+      for (int i = 0; i < op_size; i++) {
+        operations += op_list[i]->Name();
+        if (i < op_size - 1) {
+          operations += std::string(", ");
+        }
+      }
+      operations += "]";
+      MS_LOG(INFO) << "The offload of map(" + operations + ") is true, and heterogeneous acceleration will be enabled.";
+    }
     if (prev_map_offloaded_) {
       nodes_to_offload_.push_back(std::static_pointer_cast<DatasetNode>(node));
     } else {
