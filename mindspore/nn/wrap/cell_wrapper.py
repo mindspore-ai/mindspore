@@ -186,7 +186,7 @@ class WithGradCell(Cell):
 
 class ForwardValueAndGrad(Cell):
     r"""
-    Network training package class.
+    Encapsulate training network.
 
     Including the network and a gradient function. The resulting Cell is trained with input '\*inputs'.
     The backward graph will be created in the gradient function to calculating gradient.

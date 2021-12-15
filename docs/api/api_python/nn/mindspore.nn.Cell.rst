@@ -60,7 +60,7 @@
     .. py:method:: bprop_debug
         :property:
 
-        获取自定义反向传播调试功能是否已启用。
+        在图模式下使用，用于标识是否使用自定义的反向传播函数。
 
     .. py:method:: cast_inputs(inputs, dst_type)
 
@@ -345,7 +345,9 @@
 
         设置网络反向hook函数。此函数仅在PyNative Mode下支持。
 
-        .. note:: fn必须有如下代码定义。 `cell_name` 是已注册网络的名称。 `grad_input` 是传递给网络的梯度。 `grad_output` 是计算或者传递给下一个网络或者算子的梯度，这个梯度可以被修改或者返回。fn的返回值为Tensor或者None。
+        .. note::
+            - fn必须有如下代码定义。 `cell_name` 是已注册网络的名称。 `grad_input` 是传递给网络的梯度。 `grad_output` 是计算或者传递给下一个网络或者算子的梯度，这个梯度可以被修改或者返回。
+            - fn的返回值为Tensor或者None：fn(cell_name, grad_input, grad_output) -> Tensor or None。
 
         **参数：**
 
