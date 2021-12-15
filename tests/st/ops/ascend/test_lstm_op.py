@@ -127,9 +127,9 @@ def test_sit_lstm_forward_input_3_32_32_is_32_hs_16():
     out_pynative, (hy_pynative, cy_pynative) = net_pynative(input_ms, h0, c0)
     context.set_context(mode=context.GRAPH_MODE)
 
-    assert np.allclose(out.asnumpy(), out_pynative.asnumpy(), 0.0001, 0.0001)
-    assert np.allclose(hy.asnumpy(), hy_pynative.asnumpy(), 0.0001, 0.0001)
-    assert np.allclose(cy.asnumpy(), cy_pynative.asnumpy(), 0.0001, 0.0001)
+    assert np.allclose(out.asnumpy(), out_pynative.asnumpy(), 0.002, 0.002)
+    assert np.allclose(hy.asnumpy(), hy_pynative.asnumpy(), 0.002, 0.002)
+    assert np.allclose(cy.asnumpy(), cy_pynative.asnumpy(), 0.002, 0.002)
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training

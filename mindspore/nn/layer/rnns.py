@@ -32,8 +32,8 @@ __all__ = ['LSTM', 'GRU', 'RNN']
 
 
 @constexpr
-def arange(start, stop, step):
-    return Tensor(np.arange(start, stop, step), mstype.int32)
+def arange(start, stop, step, dtype):
+    return Tensor(np.arange(start, stop, step), dtype)
 
 
 @constexpr
@@ -73,7 +73,7 @@ def _check_tuple_length(param_name, input_data, length, cls_name):
 
 def sequence_mask(lengths, maxlen):
     """generate mask matrix by seq_length"""
-    range_vector = arange(0, maxlen, 1)
+    range_vector = arange(0, maxlen, 1, lengths.dtype)
     result = range_vector < lengths.view(lengths.shape + (1,))
     return result.astype(mstype.int32)
 
@@ -84,7 +84,7 @@ def select_by_mask(inputs, mask):
 
 def get_hidden(output, seq_length):
     """get hidden state by seq_length"""
-    batch_index = arange(0, seq_length.shape[0], 1)
+    batch_index = arange(0, seq_length.shape[0], 1, seq_length.dtype)
     indices = P.Concat(1)((seq_length.view(-1, 1) - 1, batch_index.view(-1, 1)))
     return P.GatherNd()(output, indices)
 
