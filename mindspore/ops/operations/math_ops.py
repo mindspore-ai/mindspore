@@ -150,7 +150,7 @@ class Ger(Primitive):
 
     Outputs:
         Tensor, output matrix with the same dtype as inputs.With `x1` shape :math:`(m,)` and
-        `x2` shape of :math:`(n,)`,`output` has shape :math:`(m * n)`.
+        `x2` shape of :math:`(n,)`,the `output` has shape :math:`(m * n)`.
 
     Raises:
         TypeError: If `x1` or `x2` is not a Tensor.
@@ -1149,6 +1149,7 @@ class LpNorm(Primitive):
         axis(int,list,tuple): Specifies which dimension or dimensions of input to calculate the norm across.
         p(int): The order of norm.
         keep_dims(bool): Whether the output tensors have dim retained or not.
+        epsilon(float): A value added to the denominator for numerical stability. Default: 1e-12.
 
     Inputs:
         - **input** (Tensor) - Input tensor.
@@ -1667,7 +1668,7 @@ class InplaceSub(PrimitiveWithInfer):
 
     Args:
         indices (Union[int, tuple]): Indices into the left-most dimension of x, and determines which rows of x
-            to subtract with v. It is a int or tuple, whose value is in [0, the first dimension size of x).
+            to subtract with v. It is an int or tuple, whose value is in [0, the first dimension size of x).
 
     Inputs:
         - **x** (Tensor) - The first input is a tensor whose data type is float16, float32 or int32.

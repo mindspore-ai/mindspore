@@ -227,12 +227,12 @@ class _DepthwiseConv2dNative(nn.Cell):
         self.group = group
         if not (isinstance(in_channels, int) and in_channels > 0):
             raise ValueError('Attr \'in_channels\' of \'DepthwiseConv2D\' Op passed '
-                             + str(in_channels) + ', should be a int and greater than 0.')
+                             + str(in_channels) + ', should be an int and greater than 0.')
         if (not isinstance(kernel_size, tuple)) or len(kernel_size) != 2 or \
             (not isinstance(kernel_size[0], int)) or (not isinstance(kernel_size[1], int)) or \
                 kernel_size[0] < 1 or kernel_size[1] < 1:
             raise ValueError('Attr \'kernel_size\' of \'DepthwiseConv2D\' Op passed '
-                             + str(self.kernel_size) + ', should be a int or tuple and equal to or greater than 1.')
+                             + str(self.kernel_size) + ', should be an int or tuple and equal to or greater than 1.')
         self.weight = Parameter(initializer(weight_init, [1, in_channels // group, *kernel_size]),
                                 name='weight')
 

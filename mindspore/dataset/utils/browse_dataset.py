@@ -81,13 +81,13 @@ def imshow_det_bbox(image, bboxes, labels, segm=None, class_names=None, score_th
         "text_color must be a three tuple, formatted (B, G, R)."
     assert isinstance(mask_color, tuple) and len(mask_color) == 3, \
         "mask_color must be a three tuple, formatted (B, G, R)."
-    assert isinstance(thickness, int), "thickness must be a int."
+    assert isinstance(thickness, int), "thickness must be an int."
     assert thickness >= 0, "thickness must be larger than or equal to zero."
-    assert isinstance(font_size, (int, float)), "font_size must be a int or float."
+    assert isinstance(font_size, (int, float)), "font_size must be an int or float."
     assert font_size >= 0, "font_size must be larger than or equal to zero."
     assert isinstance(show, bool), "show must be a bool."
     assert isinstance(win_name, str), "win_name must be a str."
-    assert isinstance(wait_time, int), "wait_time must be a int."
+    assert isinstance(wait_time, int), "wait_time must be an int."
     assert wait_time >= 0, "wait_time must be larger than or equal to zero."
     if out_file is not None:
         assert isinstance(out_file, str), "out_file must be a str."

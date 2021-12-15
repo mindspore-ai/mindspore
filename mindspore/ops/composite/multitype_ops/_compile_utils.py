@@ -750,7 +750,7 @@ def tensor_setitem_by_ellipsis(self, index, value):
 
 
 def _tensor_setitem_by_int_tensor_with_tensor(data, index, value):
-    """Set a tensor item by a int tensor with a tensor."""
+    """Set a tensor item by an int tensor with a tensor."""
     updates = _generate_updates_from_tensor(data, index, value, const_utils.SET_ITEM_BY_ONE_TENSOR)
     index = F.select(index < 0, index + F.shape(data)[0], index)
     index = F.expand_dims(index, -1)

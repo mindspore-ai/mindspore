@@ -866,7 +866,7 @@ def check_input_format(input_param):
 
 
 def _expand_tuple(n_dimensions):
-    """To expand a int number to tuple."""
+    """To expand an int number to tuple."""
 
     def convert(m):
         if not isinstance(m, tuple):
