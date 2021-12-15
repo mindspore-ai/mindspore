@@ -67,10 +67,9 @@ int PoolingCPUKernel::RunImpl(int task_id) const {
 
   if (in_tensors_[0]->format() == NC4HW4) {
     if (pooling_param_->pool_mode_ == PoolMode_MaxPool) {
-      ret = MaxPoolingFormNC4HW4ToNHWC(input_ptr, output_ptr, pooling_param_, task_id, minf, maxf);
+      ret = MaxPoolingFromNC4HW4ToNHWC(input_ptr, output_ptr, pooling_param_, task_id, minf, maxf);
     } else {
-      // ret = AvgPoolingFormNC4HW4ToNHWC(input_ptr, output_ptr, pooling_param_, task_id, minf, maxf);
-      MS_LOG(ERROR) << "Do not support NC4HW4 AvgPooling input format.";
+      ret = AvgPoolingFromNC4HW4ToNHWC(input_ptr, output_ptr, pooling_param_, task_id, minf, maxf);
     }
   } else if (in_tensors_[0]->format() == NHWC) {
     if (pooling_param_->pool_mode_ == PoolMode_MaxPool) {
