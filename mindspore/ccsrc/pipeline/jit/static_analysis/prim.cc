@@ -304,9 +304,29 @@ py::object BuildValue(const ValuePtr &value_ptr) {
   }
 }
 
-py::dict AbstractTupleToPython(const AbstractBasePtr &abs_base) {
+py::object AbstractTupleValueToPython(const AbstractTuplePtr &tuple_abs) {
+  MS_EXCEPTION_IF_NULL(tuple_abs);
+  auto value = tuple_abs->BuildValue();
+  if (value->isa<AnyValue>()) {
+    return py::none();
+  }
+  const auto &elements = tuple_abs->elements();
+  size_t len = elements.size();
+  py::tuple value_tuple(len);
+  for (size_t i = 0; i < len; ++i) {
+    value_tuple[i] = ConvertAbstractToPython(elements[i], true)[ATTR_VALUE];
+  }
+  return std::move(value_tuple);
+}
+
+py::dict AbstractTupleToPython(const AbstractBasePtr &abs_base, bool only_convert_value) {
   auto arg_tuple = dyn_cast<AbstractTuple>(abs_base);
   MS_EXCEPTION_IF_NULL(arg_tuple);
+  auto dic = py::dict();
+  if (only_convert_value) {
+    dic[ATTR_VALUE] = AbstractTupleValueToPython(arg_tuple);
+    return dic;
+  }
   size_t len = arg_tuple->size();
   py::tuple shape_tuple(len);
   py::tuple dtype_tuple(len);
@@ -319,8 +339,7 @@ py::dict AbstractTupleToPython(const AbstractBasePtr &abs_base) {
   bool dyn_value = false;
 
   for (size_t i = 0; i < len; i++) {
-    auto arg = arg_tuple->elements()[i];
-    py::dict out = ConvertAbstractToPython(arg);
+    py::dict out = ConvertAbstractToPython(arg_tuple->elements()[i]);
     shape_tuple[i] = out[ATTR_SHAPE];
     dtype_tuple[i] = out[ATTR_DTYPE];
     value_tuple[i] = out[ATTR_VALUE];
@@ -339,7 +358,6 @@ py::dict AbstractTupleToPython(const AbstractBasePtr &abs_base) {
       dyn_shape = true;
     }
   }
-  auto dic = py::dict();
   dic[ATTR_SHAPE] = shape_tuple;
   dic[ATTR_DTYPE] = dtype_tuple;
   MS_EXCEPTION_IF_NULL(arg_tuple->BuildValue());
@@ -361,9 +379,29 @@ py::dict AbstractTupleToPython(const AbstractBasePtr &abs_base) {
   return dic;
 }
 
-py::dict AbstractListToPython(const AbstractBasePtr &abs_base) {
+py::object AbstractListValueToPython(const AbstractListPtr &list_abs) {
+  MS_EXCEPTION_IF_NULL(list_abs);
+  auto value = list_abs->BuildValue();
+  if (value->isa<AnyValue>()) {
+    return py::none();
+  }
+  const auto &elements = list_abs->elements();
+  size_t len = elements.size();
+  py::list value_list(len);
+  for (size_t i = 0; i < len; ++i) {
+    value_list[i] = ConvertAbstractToPython(elements[i], true)[ATTR_VALUE];
+  }
+  return std::move(value_list);
+}
+
+py::dict AbstractListToPython(const AbstractBasePtr &abs_base, bool only_convert_value) {
   auto arg_list = dyn_cast<AbstractList>(abs_base);
   MS_EXCEPTION_IF_NULL(arg_list);
+  auto dic = py::dict();
+  if (only_convert_value) {
+    dic[ATTR_VALUE] = AbstractListValueToPython(arg_list);
+    return dic;
+  }
   size_t len = arg_list->size();
   py::list shape_list(len);
   py::list dtype_list(len);
@@ -385,7 +423,7 @@ py::dict AbstractListToPython(const AbstractBasePtr &abs_base) {
       dyn_shape = true;
     }
   }
-  auto dic = py::dict();
+
   dic[ATTR_SHAPE] = shape_list;
   dic[ATTR_DTYPE] = dtype_list;
   MS_EXCEPTION_IF_NULL(arg_list->BuildValue());
@@ -403,10 +441,14 @@ py::dict AbstractListToPython(const AbstractBasePtr &abs_base) {
   return dic;
 }
 
-void ConvertAbstractTensorToPython(const AbstractBasePtr &abs_base, py::dict *dic) {
+void ConvertAbstractTensorToPython(const AbstractBasePtr &abs_base, bool only_convert_value, py::dict *dic) {
   auto arg_tensor = dyn_cast<AbstractTensor>(abs_base);
   MS_EXCEPTION_IF_NULL(dic);
   MS_EXCEPTION_IF_NULL(arg_tensor);
+  if (only_convert_value) {
+    (*dic)[ATTR_VALUE] = BuildValue(arg_tensor->BuildValue());
+    return;
+  }
   MS_EXCEPTION_IF_NULL(arg_tensor->shape());
   (*dic)[ATTR_SHAPE] = arg_tensor->shape()->shape();
   const auto &min_shape = arg_tensor->shape()->min_shape();
@@ -477,11 +519,26 @@ TypePtr CheckTypeList(const TypePtr &predicate, const TypePtrList &args_type_lis
 }
 }  // end anonymous namespace
 
-py::dict ConvertAbstractToPython(const AbstractBasePtr &abs_base) {
+py::dict ConvertAbstractToPython(const AbstractBasePtr &abs_base, bool only_convert_value) {
   MS_EXCEPTION_IF_NULL(abs_base);
   auto dic = py::dict();
   if (abs_base->isa<AbstractTensor>()) {
-    ConvertAbstractTensorToPython(abs_base, &dic);
+    ConvertAbstractTensorToPython(abs_base, only_convert_value, &dic);
+  } else if (abs_base->isa<AbstractScalar>() || abs_base->isa<AbstractType>() || abs_base->isa<AbstractRefKey>()) {
+    ShapeVector shape;
+    dic[ATTR_SHAPE] = shape;
+    dic[ATTR_DTYPE] = abs_base->BuildType();
+    dic[ATTR_VALUE] = BuildValue(abs_base->BuildValue());
+  } else if (abs_base->isa<AbstractTuple>()) {
+    return AbstractTupleToPython(abs_base, only_convert_value);
+  } else if (abs_base->isa<AbstractList>()) {
+    return AbstractListToPython(abs_base, only_convert_value);
+  } else if (abs_base->isa<AbstractSlice>()) {
+    auto arg_slice = dyn_cast<AbstractSlice>(abs_base);
+    ShapeVector shape;
+    dic[ATTR_SHAPE] = shape;
+    dic[ATTR_DTYPE] = arg_slice->BuildType();
+    dic[ATTR_VALUE] = BuildValue(arg_slice->BuildValue());
   } else if (abs_base->isa<AbstractRowTensor>()) {
     auto arg = dyn_cast<AbstractRowTensor>(abs_base);
     dic[ATTR_SHAPE] = arg->shape()->shape();
@@ -497,25 +554,10 @@ py::dict ConvertAbstractToPython(const AbstractBasePtr &abs_base) {
     dic[ATTR_SHAPE] = arg->shape()->shape();
     dic[ATTR_DTYPE] = arg->BuildType();
     dic[ATTR_VALUE] = BuildValue(arg->BuildValue());
-  } else if (abs_base->isa<AbstractScalar>() || abs_base->isa<AbstractType>() || abs_base->isa<AbstractRefKey>()) {
-    ShapeVector shape;
-    dic[ATTR_SHAPE] = shape;
-    dic[ATTR_DTYPE] = abs_base->BuildType();
-    dic[ATTR_VALUE] = BuildValue(abs_base->BuildValue());
-  } else if (abs_base->isa<AbstractSlice>()) {
-    auto arg_slice = dyn_cast<AbstractSlice>(abs_base);
-    ShapeVector shape;
-    dic[ATTR_SHAPE] = shape;
-    dic[ATTR_DTYPE] = arg_slice->BuildType();
-    dic[ATTR_VALUE] = BuildValue(arg_slice->BuildValue());
   } else if (abs_base->isa<AbstractEllipsis>()) {
     dic[ATTR_SHAPE] = py::none();
     dic[ATTR_DTYPE] = py::ellipsis();
     dic[ATTR_VALUE] = py::ellipsis();
-  } else if (abs_base->isa<AbstractTuple>()) {
-    return AbstractTupleToPython(abs_base);
-  } else if (abs_base->isa<AbstractList>()) {
-    return AbstractListToPython(abs_base);
   } else if (abs_base->isa<AbstractNone>()) {
     dic[ATTR_SHAPE] = py::none();
     dic[ATTR_DTYPE] = py::none();

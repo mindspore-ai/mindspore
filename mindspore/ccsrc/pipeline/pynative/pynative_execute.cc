@@ -1242,19 +1242,18 @@ void ForwardExecutor::GetOpOutput(const OpExecInfoPtr &op_exec_info,
                                   const abstract::AbstractBasePtrList &args_spec_list, const CNodePtr &cnode,
                                   bool prim_cache_hit, py::object *ret) {
   MS_EXCEPTION_IF_NULL(op_exec_info);
-  auto prim = op_exec_info->py_primitive;
+  const auto &prim = op_exec_info->py_primitive;
   MS_EXCEPTION_IF_NULL(prim);
   // Infer output value by constant folding
   MS_EXCEPTION_IF_NULL(ret);
-  py::dict output = abstract::ConvertAbstractToPython(op_exec_info->abstract);
-  if (!output["value"].is_none()) {
-    *ret = output["value"];
-    grad()->RecordGradOpInfo(op_exec_info, PyObjToValue(*ret));
+  py::dict output = abstract::ConvertAbstractToPython(op_exec_info->abstract, true);
+  if (!output[ATTR_VALUE].is_none()) {
+    *ret = output[ATTR_VALUE];
+    grad()->RecordGradOpInfo(op_exec_info);
     return;
-  }
-  if (prim->is_const_prim()) {
+  } else if (prim->is_const_prim()) {
     *ret = py::cast("");
-    grad()->RecordGradOpInfo(op_exec_info, PyObjToValue(*ret));
+    grad()->RecordGradOpInfo(op_exec_info);
     return;
   }
 
@@ -1296,7 +1295,7 @@ void ForwardExecutor::GetOpOutput(const OpExecInfoPtr &op_exec_info,
     node_abs_map_.clear();
   }
   // Record op info for judge whether the construct of cell has been changed
-  grad()->RecordGradOpInfo(op_exec_info, out_real_value);
+  grad()->RecordGradOpInfo(op_exec_info);
   grad()->UpdateForwardTensorInfoInBpropGraph(op_exec_info, out_real_value);
 }
 
@@ -1740,13 +1739,12 @@ void GradExecutor::EnableOpGraphCache(bool is_enable) {
   inst->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_OP_GRAPH_CACHE, is_enable);
 }
 
-void GradExecutor::RecordGradOpInfo(const OpExecInfoPtr &op_exec_info, const ValuePtr &op_out) {
+void GradExecutor::RecordGradOpInfo(const OpExecInfoPtr &op_exec_info) {
   if (!grad_flag_) {
     MS_LOG(DEBUG) << "Grad flag is set to false, no need to record op info";
     return;
   }
   MS_EXCEPTION_IF_NULL(op_exec_info);
-  MS_EXCEPTION_IF_NULL(op_out);
   std::string input_args_info;
   // Record input args info (weight or data)
   for (const auto mask : op_exec_info->inputs_mask) {
@@ -1761,11 +1759,12 @@ void GradExecutor::RecordGradOpInfo(const OpExecInfoPtr &op_exec_info, const Val
   const auto &curr_op_num = top_cell()->op_num();
   op_exec_info->op_info += op_exec_info->op_name + "-" + std::to_string(curr_op_num) + "-" + input_args_info;
   // The out shape is added to determine those ops that change the shape
-  auto out_abs = op_out->ToAbstract();
+  const auto &out_abs = op_exec_info->abstract;
   if (out_abs != nullptr) {
-    auto out_shape = out_abs->BuildShape()->ToString();
-    if (out_shape.find("()") == std::string::npos && out_shape.find("NoShape") == std::string::npos) {
-      op_exec_info->op_info += "-" + out_shape;
+    auto shape = out_abs->BuildShape();
+    MS_EXCEPTION_IF_NULL(shape);
+    if (!shape->isa<abstract::NoShape>() && !shape->IsDimZero()) {
+      op_exec_info->op_info += "-" + shape->ToString();
     }
   }
   top_cell()->all_op_info() += "-" + op_exec_info->op_info;
@@ -3230,7 +3229,8 @@ void GradExecutor::GradMsFunctionInner(const std::string &phase, const py::objec
   // Identity op info for current running ms_func graph.
   OpExecInfoPtr op_exec_info = std::make_shared<OpExecInfo>();
   op_exec_info->op_name = phase;
-  RecordGradOpInfo(op_exec_info, actual_out_v);
+  op_exec_info->abstract = actual_out_v->ToAbstract();
+  RecordGradOpInfo(op_exec_info);
   MS_LOG(DEBUG) << "ms_function cnode op info: " << op_exec_info->op_info;
 
   // Step 1: Update actual output tensors used in grad graph.

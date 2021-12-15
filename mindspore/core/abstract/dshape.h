@@ -69,6 +69,11 @@ class MS_CORE_API BaseShape : public Base {
   /// \return True if the object's dimensions are dynamic, otherwise false.
   virtual bool IsDynamic() const = 0;
 
+  /// \brief Whether the object's dimension is zero.
+  ///
+  /// \return True if the object's dimension is zero, otherwise false.
+  virtual bool IsDimZero() const = 0;
+
   /// \brief Whether the object's dimensions are unknown.
   ///
   /// \return True if the object's dimensions are unknown, otherwise false.
@@ -96,6 +101,8 @@ class MS_CORE_API NoShape final : public BaseShape {
   std::string ToString() const override { return type_name(); }
 
   bool IsDynamic() const override { return false; }
+
+  bool IsDimZero() const override { return true; };
 
   bool IsDimUnknown() const override { return false; }
 };
@@ -172,6 +179,8 @@ class MS_CORE_API Shape final : public BaseShape {
     return std::any_of(shape_.begin(), shape_.end(), [](int64_t s) { return s < 0; });
   }
 
+  bool IsDimZero() const override { return shape_.empty(); };
+
   bool IsDimUnknown() const override {
     return std::any_of(shape_.begin(), shape_.end(), [](int64_t s) { return s < -1; });
   }
@@ -235,6 +244,10 @@ class MS_CORE_API SequenceShape : public BaseShape {
   bool IsDynamic() const override {
     return std::any_of(p_shapes_.begin(), p_shapes_.end(), [](const BaseShapePtr &bs) { return bs->IsDynamic(); });
   }
+
+  bool IsDimZero() const override {
+    return std::all_of(p_shapes_.begin(), p_shapes_.end(), [](const BaseShapePtr &bs) { return bs->IsDimZero(); });
+  };
 
   bool IsDimUnknown() const override {
     return std::any_of(p_shapes_.begin(), p_shapes_.end(), [](const BaseShapePtr &bs) { return bs->IsDimUnknown(); });
