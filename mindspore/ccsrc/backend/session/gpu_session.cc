@@ -619,7 +619,9 @@ void GPUSession::UpdateOutputTensors(const VectorRef *outputs,
           // If a nop node is output, its previous node should be set.
           if (opt::IsNopNode(node)) {
             auto pre_node = AnfAlgo::GetPrevNodeOutput(node, 0, true);
-            AnfAlgo::SetOutputAddr(new_address, pre_node.second, pre_node.first.get());
+            if (!pre_node.first->isa<Parameter>()) {
+              AnfAlgo::SetOutputAddr(new_address, pre_node.second, pre_node.first.get());
+            }
           } else {
             AnfAlgo::SetOutputAddr(new_address, output_index, node.get());
           }
