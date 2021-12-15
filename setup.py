@@ -68,7 +68,7 @@ def build_dependencies():
     with open(version_file, 'w') as f:
         _write_version(f)
 
-    version_file = os.path.join(pwd, 'mindspore', 'version.py')
+    version_file = os.path.join(pwd, 'mindspore/python/mindspore', 'version.py')
     with open(version_file, 'w') as f:
         _write_version(f)
 
@@ -76,7 +76,7 @@ def build_dependencies():
     with open(config_file, 'w') as f:
         _write_config(f)
 
-    config_file = os.path.join(pwd, 'mindspore', 'default_config.py')
+    config_file = os.path.join(pwd, 'mindspore/python/mindspore', 'default_config.py')
     with open(config_file, 'w') as f:
         _write_config(f)
 
@@ -84,7 +84,7 @@ def build_dependencies():
     with open(target, 'a') as f:
         _write_device_target(f)
 
-    target = os.path.join(pwd, 'mindspore', 'default_config.py')
+    target = os.path.join(pwd, 'mindspore/python/mindspore', 'default_config.py')
     with open(target, 'a') as f:
         _write_device_target(f)
 
@@ -92,7 +92,7 @@ def build_dependencies():
     with open(package_info, 'a') as f:
         _write_package_name(f)
 
-    package_info = os.path.join(pwd, 'mindspore', 'default_config.py')
+    package_info = os.path.join(pwd, 'mindspore/python/mindspore', 'default_config.py')
     with open(package_info, 'a') as f:
         _write_package_name(f)
 
@@ -100,7 +100,7 @@ def build_dependencies():
     with open(commit_file, 'w') as f:
         _write_commit_file(f)
 
-    commit_file = os.path.join(pwd, 'mindspore', '.commit_id')
+    commit_file = os.path.join(pwd, 'mindspore/python/mindspore', '.commit_id')
     with open(commit_file, 'w') as f:
         _write_commit_file(f)
 

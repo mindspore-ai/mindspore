@@ -26,10 +26,11 @@ fi
 cd ${BUILD_PATH}/mindspore/tests/ut/cpp
 
 
-export LD_LIBRARY_PATH=${BUILD_PATH}/mindspore/googletest/googlemock/gtest:${PROJECT_PATH}/mindspore:\
-${PROJECT_PATH}/mindspore/lib:${PROJECT_PATH}/graphengine/third_party/prebuild/x86_64:\
+export LD_LIBRARY_PATH=${BUILD_PATH}/mindspore/googletest/googlemock/gtest:${PROJECT_PATH}/mindspore/python/mindspore:\
+${PROJECT_PATH}/mindspore/python/mindspore/lib:${PROJECT_PATH}/graphengine/third_party/prebuild/x86_64:\
 ${PROJECT_PATH}/graphengine/third_party/prebuild/aarch64:${LD_LIBRARY_PATH}
-export PYTHONPATH=${PROJECT_PATH}/tests/ut/cpp/python_input:$PYTHONPATH:${PROJECT_PATH}:${PROJECT_PATH}/tests/ut/python
+export PYTHONPATH=${PROJECT_PATH}/tests/ut/cpp/python_input:$PYTHONPATH:${PROJECT_PATH}/mindspore/python:\
+${PROJECT_PATH}/tests/ut/python:${PROJECT_PATH}
 export GLOG_v=2
 export GC_COLLECT_IN_CELL=1
 ## set op info config path

@@ -16,10 +16,10 @@ mindspore/mindspore/ccsrc/backend/optimizer/ascend/ir_fission/dynamic_rnn_grad_f
 mindspore/model_zoo/official/recommend/wide_and_deep/src/wide_and_deep.py:__init__
 mindspore/model_zoo/official/recommend/wide_and_deep_multitable/src/wide_and_deep.py:__init__
 mindspore/mindspore/ccsrc/pipeline/jit/resource.cc:mindspore::pipeline::GetMethodMap
-mindspore/mindspore/ops/operations/array_ops.py:_compute_slicing_shape
-mindspore/mindspore/context.py:set_auto_parallel_context
-mindspore/mindspore/common/tensor.py:__init__
-mindspore/mindspore/common/parameter.py:set_data
+mindspore/mindspore/python/mindspore/ops/operations/array_ops.py:_compute_slicing_shape
+mindspore/mindspore/python/mindspore/context.py:set_auto_parallel_context
+mindspore/mindspore/python/mindspore/common/tensor.py:__init__
+mindspore/mindspore/python/mindspore/common/parameter.py:set_data
 mindspore/mindspore/ccsrc/pybind_api/ir/tensor_py.cc:mindspore::tensor::GetDataType
 mindspore/mindspore/lite/nnacl/fp32/avg_pooling_fp32.c:AvgPooling
 mindspore/mindspore/lite/src/runtime/thread_pool.c:GetArch
@@ -72,8 +72,8 @@ mindspore/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/fp32/pooling_fp32.c:
 mindspore/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/fp32/conv_common_fp32.c:SWConv3x32Kernel, SWConv4x24Kernel, SWConv12x8Kernel, SWConv8x8Kernel, SWConv4x8Kernel, SWConv6x16Kernel, SWConv4x16Kernel
 mindspore/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/fp32/conv_depthwise_fp32.c:DepthwiseSW3x32Kernel, DepthwiseSW4x24Kernel, DepthwiseSW12x8Kernel, DepthwiseSW8x8Kernel, DepthwiseSW4x8Kernel, DepthwiseSW6x16Kernel, DepthwiseSW4x16Kernel
 mindspore/mindspore/core/ir/dtype/type.cc:mindspore::ObjectIdLabel
-mindspore/mindspore/ops/_op_impl/_custom_op/dsd_impl.py:dsd_matmul
-mindspore/mindspore/ops/_op_impl/_custom_op/dsd_back_impl.py:dsdbpropimpl 
+mindspore/mindspore/python/mindspore/ops/_op_impl/_custom_op/dsd_impl.py:dsd_matmul
+mindspore/mindspore/python/mindspore/ops/_op_impl/_custom_op/dsd_back_impl.py:dsdbpropimpl
 mindspore/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/fp32/conv_1x1_x86_fp32.c:Conv1x1SW3x32Kernel, Conv1x1SW4x24Kernel, Conv1x1SW12x8Kernel, Conv1x1SW8x8Kernel, Conv1x1SW4x8Kernel, Conv1x1SW6x16Kernel, Conv1x1SW4x16Kernel, Conv1x1SW1x32Kernel, Conv1x1SW1x24Kernel, Conv1x1SW1x16Kernel, Conv1x1SW1x8Kernel
 mindspore/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/fp32/matmul_fp32.c:MatMul3x32Kernel, MatMul4x24Kernel, MatMul12x8Kernel, MatMul8x8Kernel, MatMul4x8Kernel, MatMul6x16Kernel, MatMul4x16Kernel, MatVecMul1x32Kernel, MatVecMul1x24Kernel, MatVecMul1x16Kernel, MatVecMul1x8Kernel
 mindspore/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/intrinsics/sse/TiledC4MatMulFp32.c:TiledC4MatmulFp32

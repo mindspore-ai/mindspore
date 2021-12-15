@@ -92,8 +92,8 @@ else
       echo "acl mode, skipping deploy phase"
       rm -rf ${BASEPATH}/output/_CPack_Packages/
     else
-      cp -rf ${BUILD_PATH}/package/mindspore/lib ${BASEPATH}/mindspore
-      cp -rf ${BUILD_PATH}/package/mindspore/*.so ${BASEPATH}/mindspore
+      cp -rf ${BUILD_PATH}/package/mindspore/lib ${BASEPATH}/mindspore/python/mindspore
+      cp -rf ${BUILD_PATH}/package/mindspore/*.so ${BASEPATH}/mindspore/python/mindspore
   fi
 fi
 echo "---------------- MindSpore: build end   ----------------"

@@ -15,19 +15,8 @@
 # ============================================================================
 CURRPATH=$(cd "$(dirname $0)" || exit; pwd)
 IGNORE_EXEC="--ignore=$CURRPATH/exec"
-PROJECT_PATH=$(cd ${CURRPATH}/../../.. || exit; pwd)
 
-if [ $BUILD_PATH ];then
-    echo "BUILD_PATH = $BUILD_PATH"
-else
-    BUILD_PATH=${PROJECT_PATH}/build
-    echo "BUILD_PATH = $BUILD_PATH"
-fi
-
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${BUILD_PATH}/third_party/gtest/lib
-export PYTHONPATH=$PYTHONPATH:${PROJECT_PATH}:${PROJECT_PATH}/tests/ut/cpp/python_input:${PROJECT_PATH}/tests/ut/python
-echo "export PYTHONPATH=$PYTHONPATH"
-export GC_COLLECT_IN_CELL=1
+source $CURRPATH/env.sh
 
 if [ $# -eq 1 ]  &&  ([ "$1" == "stage1" ] || [ "$1" == "stage2" ] || [ "$1" == "stage3" ] || [ "$1" == "stage4" ]); then
     if [ $1 == "stage1" ]; then
