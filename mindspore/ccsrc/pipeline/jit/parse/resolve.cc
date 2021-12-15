@@ -331,7 +331,12 @@ py::object GetItemObjectFromSequence(const NameSpacePtr &name_space, const Symbo
 
   const std::string fn = PYTHON_MOD_GET_ITEM_FROM_SEQUENCE;
   const std::string module = "mindspore._extends.parse.parser";
-  int index = GetValueNode<Int64ImmPtr>(index_node)->value();
+  auto imm_value = GetValueNode<Int64ImmPtr>(index_node);
+  if (imm_value == nullptr) {
+    MS_LOG(EXCEPTION) << "Expect a int64 value node, node: " << node->DebugString()
+                      << ", index_node: " << index_node->DebugString();
+  }
+  int index = imm_value->value();
   MS_LOG(DEBUG) << "obj: " << py::str(obj) << ", index: " << index;
   py::object item_obj = parse::python_adapter::GetPyFn(module, fn)(obj, py::int_(index));
   return item_obj;
