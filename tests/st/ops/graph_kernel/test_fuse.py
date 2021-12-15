@@ -33,7 +33,9 @@ class Net(Cell):
     def construct(self, x, y, z):
         sub_res = self.sub(x, y)
         mul_res = self.mul(sub_res, x)
-        sqrt_grad_res = self.sqrt_grad(mul_res, z)
+        mul_square_res = P.Square()(mul_res)
+        add_one_res = self.add(mul_square_res, 1)
+        sqrt_grad_res = self.sqrt_grad(add_one_res, z)
         square_res = P.Square()(sqrt_grad_res)
         add_res = self.add(sqrt_grad_res, square_res)
         add1_res = self.add(add_res, add_res)
