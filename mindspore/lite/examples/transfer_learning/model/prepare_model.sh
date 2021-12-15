@@ -15,20 +15,18 @@ else
   python transfer_learning_export.py
 fi
 
-CONVERTER="../../../build/tools/converter/converter_lite"
-if [ ! -f "$CONVERTER" ]; then
-  if ! command -v converter_lite &> /dev/null
-  then
-    tar -xzf ../../../../../output/mindspore-lite-*-linux-x64.tar.gz --strip-components 4 --wildcards --no-anchored converter_lite libglog.so.0 libmslite_converter_plugin.so
+
+if ! command -v converter_lite &> /dev/null
+then
+    tar -xzf ../../../../../output/mindspore-lite-*-linux-x64.tar.gz --strip-components 4 --wildcards --no-anchored converter_lite *so.* *.so
     if [ -f ./converter_lite ]; then
       CONVERTER=./converter_lite
     else
       echo "converter_lite could not be found in MindSpore build directory nor in system path"
       exit 1
     fi
-  else
+else
     CONVERTER=converter_lite
-  fi
 fi
 
 echo "============Converting========="
