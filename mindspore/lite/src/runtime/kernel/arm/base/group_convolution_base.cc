@@ -139,12 +139,43 @@ int GroupConvolutionBaseCPUKernel::PreProcess() {
   return RET_OK;
 }
 
+int GroupConvolutionBaseCPUKernel::InitGroupParam() {
+  auto in_tensor = in_tensors_.front();
+  CHECK_NULL_RETURN(in_tensor);
+  in_plane_ = in_tensor->Height() * in_tensor->Width() * in_tensor->Batch();
+  if (in_plane_ < 0) {
+    MS_LOG(ERROR) << "get in_plane_ from in_tensor failed.";
+    return RET_ERROR;
+  }
+  sub_in_channel_ = conv_param_->input_channel_;
+  ori_in_channel_ = sub_in_channel_ * group_num_;
+  in_thread_num_ = MSMIN(MSMAX(1, ctx_->thread_num_), in_plane_);
+
+  auto out_tensor = out_tensors_.front();
+  CHECK_NULL_RETURN(out_tensor);
+  out_plane_ = out_tensor->Height() * out_tensor->Width() * out_tensor->Batch();
+  if (out_plane_ < 0) {
+    MS_LOG(ERROR) << "get out_plane_ from out_tensor failed.";
+    return RET_ERROR;
+  }
+  sub_out_channel_ = conv_param_->output_channel_;
+  ori_out_channel_ = sub_out_channel_ * group_num_;
+  out_thread_num_ = MSMIN(MSMAX(1, ctx_->thread_num_), out_plane_);
+  return RET_OK;
+}
+
 int GroupConvolutionBaseCPUKernel::Run() {
+  auto ret = InitGroupParam();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Init group parameter for inference failed.";
+    return ret;
+  }
+
   ori_in_data_ = in_tensors_[0]->data();
   ori_out_data_ = out_tensors_[0]->data();
   for (int i = 0; i < group_num_; ++i) {
     // first, separate group conv input into several parts. This step must be in runtime stage.
-    auto ret = SeparateInput(i);
+    ret = SeparateInput(i);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Separate input failed.";
       return ret;
