@@ -32,18 +32,6 @@ class MatMulCPUKernel : public MKLCPUKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
-
- private:
-  dnnl_dim_t dim_m_{0};
-  dnnl_dim_t dim_n_{0};
-  dnnl_dim_t dim_k_{0};
-  size_t batch_{0};
-  size_t rank_{0};
-  size_t size_mat_a_{0};
-  size_t size_mat_b_{0};
-  size_t size_mat_o_{0};
-  char trans_a_{TRANSPOSE_NO};
-  char trans_b_{TRANSPOSE_NO};
 };
 MS_REG_CPU_KERNEL(
   MatMul,

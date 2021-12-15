@@ -74,46 +74,26 @@ bool AssignCPUKernel::Launch(const std::vector<AddressPtr> &inputs, const std::v
                       << "', memcpy size must be less than or equal to max size, but got memcpy size: " << total_size
                       << ", and max size: " << max_size;
   }
-  constexpr size_t kBlockSize = 10000;
-  size_t thread_num = (total_size + kBlockSize - 1) / kBlockSize;
-  auto max_thread_num = common::ThreadPool::GetInstance().GetSyncRunThreadNum();
-  thread_num = thread_num > max_thread_num ? max_thread_num : thread_num;
-  if (thread_num == 0) {
-    return true;
-  }
-  size_t stride = total_size / thread_num;
-  std::vector<common::Task> tasks;
-  size_t thread_index = 0;
+
   auto input0_addr = reinterpret_cast<int8_t *>(inputs[0]->addr);
   auto input1_addr = reinterpret_cast<int8_t *>(inputs[1]->addr);
   auto output_addr = reinterpret_cast<int8_t *>(outputs[0]->addr);
-  size_t length = stride;
-  while (thread_index < thread_num) {
-    auto thread_stride = stride * thread_index;
-    size_t max_length = total_size - thread_stride;
-    if (thread_index == thread_num - 1) {
-      length = max_length;
+  auto task = [&](size_t start, size_t end) {
+    int8_t *input0 = input0_addr + start;
+    int8_t *input1 = input1_addr + start;
+    int8_t *output = output_addr + start;
+    size_t length = end - start;
+    size_t max_length = total_size - start;
+    int ret = memcpy_s(input0, max_length, input1, length);
+    if (ret != 0) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', memcpy_s error. Error no " << ret;
     }
-    int8_t *input0 = input0_addr + thread_stride;
-    int8_t *input1 = input1_addr + thread_stride;
-    int8_t *output = output_addr + thread_stride;
-    auto block = [input0, input1, output, max_length, length]() {
-      int ret = memcpy_s(input0, max_length, input1, length);
-      if (ret != 0) {
-        MS_LOG(ERROR) << "For '" << kernel_name << "', memcpy_s error. Error no " << ret;
-        return common::FAIL;
-      }
-      ret = memcpy_s(output, max_length, input1, length);
-      if (ret != 0) {
-        MS_LOG(ERROR) << "For '" << kernel_name << "', memcpy_s error. Error no " << ret;
-        return common::FAIL;
-      }
-      return common::SUCCESS;
-    };
-    (void)tasks.emplace_back(block);
-    thread_index++;
-  }
-  (void)common::ThreadPool::GetInstance().SyncRun(tasks);
+    ret = memcpy_s(output, max_length, input1, length);
+    if (ret != 0) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', memcpy_s error. Error no " << ret;
+    }
+  };
+  ParallelLaunchAutoSearch(task, total_size, this, &parallel_search_info_);
   return true;
 }
 }  // namespace kernel

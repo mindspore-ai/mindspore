@@ -19,6 +19,8 @@
 #include "common/thread_pool.h"
 #include "backend/kernel_compiler/cpu/mkldnn/mkl_kernel_engine.h"
 #include "backend/kernel_compiler/cpu/nnacl/op_base.h"
+#include "backend/kernel_compiler/cpu/nnacl/matmul_parameter.h"
+#include "backend/kernel_compiler/cpu/nnacl/fp32/matmul_fp32.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 #include "utils/ms_utils.h"
 
@@ -27,39 +29,64 @@ namespace kernel {
 namespace {
 constexpr size_t kMatMulInputsNum = 2;
 constexpr size_t kMatMulOutputsNum = 1;
-const size_t kIndexOffset = 2;
+constexpr size_t kIndexOffset = 2;
+constexpr size_t kRankMin = 2;
+using dims = dnnl::memory::dims;
 }  // namespace
+
 void MatMulCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   std::vector<size_t> a_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   std::vector<size_t> b_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   std::vector<size_t> o_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-  const size_t rank_min = 2;
-  if (a_shape.size() < rank_min || b_shape.size() < rank_min || o_shape.size() < rank_min) {
-    MS_LOG(EXCEPTION) << "The tensor rank of MatMul should be greater than or equal to 2.";
+  if (a_shape.size() < kRankMin || b_shape.size() < kRankMin || o_shape.size() < kRankMin) {
+    MS_LOG(EXCEPTION) << "The tensor rank of MatMul should be greater than or equal to " << kRankMin;
   }
   bool trans_a = AnfAlgo::GetNodeAttr<bool>(kernel_node, TRANSPOSE_A);
   bool trans_b = AnfAlgo::GetNodeAttr<bool>(kernel_node, TRANSPOSE_B);
-  rank_ = a_shape.size();
-  batch_ = 1;
-  for (size_t i = 0; i < rank_ - kIndexOffset; ++i) {
-    batch_ *= a_shape[i];
+  auto rank = a_shape.size();
+  int64_t batch = 1;
+  for (size_t i = 0; i < rank - kIndexOffset; ++i) {
+    batch *= SizeToLong(a_shape[i]);
   }
-  size_mat_a_ = a_shape[rank_ - kIndexOffset] * a_shape[rank_ - 1];
-  size_mat_b_ = b_shape[rank_ - kIndexOffset] * b_shape[rank_ - 1];
-  size_mat_o_ = o_shape[rank_ - kIndexOffset] * o_shape[rank_ - 1];
+
+  int64_t dim_m = SizeToLong(o_shape[rank - kIndexOffset]);
+  int64_t dim_n = SizeToLong(o_shape[rank - 1]);
+  int64_t dim_k = 1;
   if (trans_a) {
-    trans_a_ = TRANSPOSE_YES;
-    dim_k_ = static_cast<dnnl_dim_t>(a_shape[rank_ - kIndexOffset]);
+    dim_k = SizeToLong(a_shape[rank - kIndexOffset]);
   } else {
-    dim_k_ = static_cast<dnnl_dim_t>(a_shape[rank_ - 1]);
+    dim_k = SizeToLong(a_shape[rank - 1]);
   }
-  if (trans_b) {
-    trans_b_ = TRANSPOSE_YES;
+
+  dims src_dims, weights_dims, dst_dims, a_strides, b_strides, o_strides;
+  if (batch > 1) {
+    src_dims = {batch, dim_m, dim_k};
+    weights_dims = {batch, dim_k, dim_n};
+    dst_dims = {batch, dim_m, dim_n};
+    a_strides = {trans_a ? dims{dim_m * dim_k, 1, dim_m} : dims{dim_m * dim_k, dim_k, 1}};
+    b_strides = {trans_b ? dims{dim_n * dim_k, 1, dim_k} : dims{dim_n * dim_k, dim_n, 1}};
+    o_strides = {dim_n * dim_m, dim_n, 1};
+  } else {
+    src_dims = {dim_m, dim_k};
+    weights_dims = {dim_k, dim_n};
+    dst_dims = {dim_m, dim_n};
+    a_strides = {trans_a ? dims{1, dim_m} : dims{dim_k, 1}};
+    b_strides = {trans_b ? dims{1, dim_k} : dims{dim_n, 1}};
+    o_strides = {dim_n, 1};
   }
-  dim_m_ = static_cast<dnnl_dim_t>(o_shape[rank_ - kIndexOffset]);
-  dim_n_ = static_cast<dnnl_dim_t>(o_shape[rank_ - 1]);
+
+  dnnl::memory::desc src_md(src_dims, dnnl::memory::data_type::f32, a_strides);
+  dnnl::memory::desc weights_md(weights_dims, dnnl::memory::data_type::f32, b_strides);
+  dnnl::memory::desc dst_md(dst_dims, dnnl::memory::data_type::f32, o_strides);
+  dnnl::matmul::desc matmul_desc(src_md, weights_md, dst_md);
+  dnnl::matmul::primitive_desc prim_desc(matmul_desc, MKLKernelEngine::Get().engine());
+  primitive_ = std::make_shared<dnnl::matmul>(prim_desc);
+
+  AddArgument(DNNL_ARG_SRC, src_md);
+  AddArgument(DNNL_ARG_WEIGHTS, weights_md);
+  AddArgument(DNNL_ARG_DST, dst_md);
 }
 
 bool MatMulCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
@@ -70,15 +97,10 @@ bool MatMulCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, cons
   const auto input_b = reinterpret_cast<float *>(inputs[1]->addr);
   auto output = reinterpret_cast<float *>(outputs[0]->addr);
 
-  dnnl_dim_t lda = (trans_a_ == TRANSPOSE_YES ? dim_m_ : dim_k_);
-  dnnl_dim_t ldb = (trans_b_ == TRANSPOSE_YES ? dim_k_ : dim_n_);
-  dnnl_dim_t ldc = dim_n_;
-  float alpha = 1.0;
-  float beta = 0.0;
-  for (size_t i = 0; i < batch_; i++) {
-    (void)dnnl_sgemm(trans_a_, trans_b_, dim_m_, dim_n_, dim_k_, alpha, input_a + i * size_mat_a_, lda,
-                     input_b + i * size_mat_b_, ldb, beta, output + i * size_mat_o_, ldc);
-  }
+  SetArgumentHandle(DNNL_ARG_SRC, input_a);
+  SetArgumentHandle(DNNL_ARG_WEIGHTS, input_b);
+  SetArgumentHandle(DNNL_ARG_DST, output);
+  ExecutePrimitive();
   return true;
 }
 }  // namespace kernel

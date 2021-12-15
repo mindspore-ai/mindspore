@@ -133,13 +133,7 @@ void TransposeCPUFwdKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
 
 template <typename T>
 void TransposeCPUFwdKernel::ParallelRun(const T *input_addr, T *output_addr, const int *output_shape, size_t count) {
-  auto max_thread_num = common::ThreadPool::GetInstance().GetSyncRunThreadNum();
-  const float block_size = 128.0;
-  const size_t thread_num =
-    count < block_size * max_thread_num ? FloatToSize(std::ceil(count / block_size)) : max_thread_num;
-  std::vector<common::Task> tasks;
   std::function<void(const T *, T *, const int *, TransposeParameter *, int, int)> TransposeDims;
-
   if constexpr (std::is_same_v<T, int8_t>) {
     TransposeDims = &TransposeDimsInt8;
   } else if constexpr (std::is_same_v<T, int16_t>) {
@@ -163,14 +157,14 @@ void TransposeCPUFwdKernel::ParallelRun(const T *input_addr, T *output_addr, con
   } else if constexpr (std::is_same_v<T, bool>) {
     TransposeDims = &TransposeDimsBool;
   }
-  for (int task_id = 0; task_id < SizeToInt(thread_num); ++task_id) {
-    auto task = [this, &TransposeDims, &input_addr, &output_addr, &output_shape, task_id, thread_num]() {
-      TransposeDims(input_addr, output_addr, output_shape, &transpose_param_, task_id, SizeToInt(thread_num));
-      return common::SUCCESS;
-    };
-    (void)tasks.emplace_back(task);
-  }
-  (void)common::ThreadPool::GetInstance().SyncRun(tasks);
+  auto thread_pool = GetActorMgrInnerThreadPool();
+  size_t thread_num = thread_pool->GetKernelThreadNum();
+  auto task = [this, &TransposeDims, input_addr, output_addr, output_shape, thread_num](size_t start, size_t end) {
+    for (size_t idx = start; idx < end; idx++) {
+      TransposeDims(input_addr, output_addr, output_shape, &transpose_param_, SizeToInt(idx), SizeToInt(thread_num));
+    }
+  };
+  ParallelLaunchAutoSearch(task, thread_num, this, &parallel_search_info_);
 }
 }  // namespace kernel
 }  // namespace mindspore

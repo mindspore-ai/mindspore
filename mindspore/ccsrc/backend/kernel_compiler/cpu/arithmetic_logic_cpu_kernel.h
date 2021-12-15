@@ -39,6 +39,9 @@ class ArithmeticLogicCPUKernel : public CPUKernel {
 
  private:
   void InitComputeFunc();
+  template <typename Op>
+  void BinaryOp(const T *input1, const T *input2, bool *out, Op op);
+
   void Less(const T *input1, const T *input2, bool *out);
   void Equal(const T *input1, const T *input2, bool *out);
   void NotEqual(const T *input1, const T *input2, bool *out);

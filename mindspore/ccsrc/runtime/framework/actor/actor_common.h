@@ -150,10 +150,10 @@ class ActorDispatcher {
 
   // The first five executions are for warm-up, the next five executions are statistics of multi thread execution time,
   // and the next next five executions are statistics of single thread execution time.
-  static constexpr size_t kMultiThreadExecutionCountBegin{6};
-  static constexpr size_t kMultiThreadExecutionCountEnd{10};
-  static constexpr size_t kSingleThreadExecutionCountBegin{11};
-  static constexpr size_t kSingleThreadExecutionCountEnd{15};
+  static constexpr size_t kMultiThreadExecutionCountBegin{31};
+  static constexpr size_t kMultiThreadExecutionCountEnd{40};
+  static constexpr size_t kSingleThreadExecutionCountBegin{41};
+  static constexpr size_t kSingleThreadExecutionCountEnd{50};
   // The single thread execution constraint.
   static constexpr size_t kSingleThreadExecutionActorMaxNum{100};
 
