@@ -174,6 +174,7 @@ class WindowType(str, Enum):
     - WindowType.HAMMING: means the type of window function is hamming.
     - WindowType.HANN: means the type of window function is hann.
     - WindowType.KAISER: means the type of window function is kaiser.
+      Currently kaiser window is not supported on macOS.
     """
     BARTLETT: str = "bartlett"
     BLACKMAN: str = "blackman"
