@@ -19,6 +19,10 @@
 #ifndef MINDSPORE_CORE_IR_DTYPE_TYPE_ID_H_
 #define MINDSPORE_CORE_IR_DTYPE_TYPE_ID_H_
 
+#if __has_include("include/mindapi/base/type_id.h")
+#include "include/mindapi/base/type_id.h"
+#else
 #include "mindapi/base/type_id.h"
+#endif
 
 #endif  // MINDSPORE_CORE_IR_DTYPE_TYPE_ID_H_
