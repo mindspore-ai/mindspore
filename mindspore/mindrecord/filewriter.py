@@ -322,7 +322,7 @@ class FileWriter:
 
         Args:
             header_size (int): Size of header, between 16*1024(16KB) and
-                128*1024*1024(128MB).(default=16MB)
+                128*1024*1024(128MB).
 
 
         Returns:
@@ -349,7 +349,7 @@ class FileWriter:
 
         Args:
            page_size (int): Size of page, between 32*1024(32KB) and
-               256*1024*1024(256MB).(default=32MB)
+               256*1024*1024(256MB).
 
         Returns:
             MSRStatus, SUCCESS or FAILED.

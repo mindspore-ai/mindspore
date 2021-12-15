@@ -77,7 +77,7 @@ class Cifar100ToMR:
         Execute transformation from cifar100 to MindRecord.
 
         Args:
-            fields (list[str]): A list of index field, e.g.["fine_label", "coarse_label"].
+            fields (list[str]): A list of index field, e.g.["fine_label", "coarse_label"]. Default: None.
 
         Returns:
             MSRStatus, whether cifar100 is successfully transformed to MindRecord.
@@ -116,7 +116,7 @@ class Cifar100ToMR:
         Encapsulate the run function to exit normally
 
         Args:
-            fields (list[str]): A list of index field, e.g.["fine_label", "coarse_label"].
+            fields (list[str]): A list of index field, e.g.["fine_label", "coarse_label"]. Default: None.
 
         Returns:
             MSRStatus, whether cifar100 is successfully transformed to MindRecord.
