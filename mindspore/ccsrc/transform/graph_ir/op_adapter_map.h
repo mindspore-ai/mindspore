@@ -237,6 +237,7 @@ constexpr const char kNameSigmoid[] = "Sigmoid";
 constexpr const char kNameSigmoidGrad[] = "SigmoidGrad";
 constexpr const char kNameHSwish[] = "HSwish";
 constexpr const char kNameHSwishGrad[] = "HSwishGrad";
+constexpr const char kNameHSigmoid[] = "HSigmoid";
 constexpr const char kNameL2Normalize[] = "L2Normalize";
 constexpr const char kNameL2NormalizeGrad[] = "L2NormalizeGrad";
 constexpr const char kNameSoftmax[] = "Softmax";
