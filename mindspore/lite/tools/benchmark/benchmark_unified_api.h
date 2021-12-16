@@ -117,8 +117,6 @@ class MS_API BenchmarkUnifiedApi : public BenchmarkBase {
 
   MSKernelCallBack ms_before_call_back_ = nullptr;
   MSKernelCallBack ms_after_call_back_ = nullptr;
-
-  float cosine_distance_threshold_ = 0.99;
 };
 
 }  // namespace mindspore::lite

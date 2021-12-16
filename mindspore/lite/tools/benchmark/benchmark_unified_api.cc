@@ -714,14 +714,14 @@ int BenchmarkUnifiedApi::MarkAccuracy() {
     std::cerr << "Compare output error " << status << std::endl;
     return status;
   }
-#ifdef SUPPORT_34XX
-  status = CompareOutputByCosineDistance(this->flags_->cosine_distance_threshold_);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "Compare output error by consine distance " << status;
-    std::cerr << "Compare output error by consine distance" << status << std::endl;
-    return status;
+  if (this->flags_->cosine_distance_threshold_ >= -1) {
+    status = CompareOutputByCosineDistance(this->flags_->cosine_distance_threshold_);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Compare output error by consine distance " << status;
+      std::cerr << "Compare output error by consine distance" << status << std::endl;
+      return status;
+    }
   }
-#endif
   return RET_OK;
 }
 
