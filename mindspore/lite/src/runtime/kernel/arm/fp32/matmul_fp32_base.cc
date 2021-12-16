@@ -28,17 +28,28 @@ namespace mindspore::kernel {
 int MatmulRun(const void *cdata, int task_id, float, float) {
   CHECK_NULL_RETURN(cdata);
   auto op = reinterpret_cast<const MatmulFp32BaseCPUKernel *>(cdata);
-  auto error_code = (op->*(op->parallel_fun_))(task_id);
-  if (error_code != RET_OK) {
-    MS_LOG(ERROR) << "MatmulRun error task_id[" << task_id << "] error_code[" << error_code << "]";
-    return RET_ERROR;
+  if (op->is_pack_) {
+    auto error_code = (op->*(op->parallel_fun_))(task_id);
+    if (error_code != RET_OK) {
+      MS_LOG(ERROR) << "MatmulRun error task_id[" << task_id << "] error_code[" << error_code << "]";
+      return RET_ERROR;
+    }
+  } else {
+    auto error_code = op->ParallelRunIsNotPackByBatch(task_id);
+    if (error_code != RET_OK) {
+      MS_LOG(ERROR) << "MatmulRun error task_id[" << task_id << "] error_code[" << error_code
+                    << "] in ParallelRunIsNotPackByBatch";
+      return RET_ERROR;
+    }
   }
   return RET_OK;
 }
 
 MatmulFp32BaseCPUKernel::~MatmulFp32BaseCPUKernel() {
-  FreeResizeBufA();
-  FreeResizeBufB();
+  if (is_pack_) {
+    FreeResizeBufA();
+    FreeResizeBufB();
+  }
   FreeBiasBuf();
 }
 
@@ -188,14 +199,14 @@ void MatmulFp32BaseCPUKernel::FreeBiasBuf() {
 }
 
 void MatmulFp32BaseCPUKernel::FreeResizeBufA() {
-  if (!vec_matmul_ && !op_parameter_->is_train_session_ && a_pack_ptr_ != nullptr) {
+  if (!vec_matmul_ && !op_parameter_->is_train_session_ && a_pack_ptr_ != nullptr && is_pack_) {
     ms_context_->allocator->Free(a_pack_ptr_);
   }
   a_pack_ptr_ = nullptr;
 }
 
 void MatmulFp32BaseCPUKernel::FreeResizeBufB() {
-  if (!op_parameter_->is_train_session_ && b_pack_ptr_ != nullptr) {
+  if (!op_parameter_->is_train_session_ && b_pack_ptr_ != nullptr && is_pack_) {
     ms_context_->allocator->Free(b_pack_ptr_);
   }
   b_pack_ptr_ = nullptr;
@@ -235,6 +246,22 @@ int MatmulFp32BaseCPUKernel::ParallelRunByBatch(int task_id) const {
                 OutType_Nhwc);
 #endif
     }
+  }
+  return RET_OK;
+}
+
+int MatmulFp32BaseCPUKernel::ParallelRunIsNotPackByBatch(int task_id) const {
+  int start_batch = task_id * batch_stride_;
+  int end_batch = MSMIN(params_->batch, start_batch + batch_stride_);
+  float bias = 0;
+  if (bias_ptr_ != nullptr) {
+    bias = bias_ptr_[0];
+  }
+  for (int index = start_batch; index < end_batch; ++index) {
+    const float *a = a_pack_ptr_ + index * params_->row_ * params_->deep_;
+    const float *b = b_pack_ptr_ + index * params_->deep_ * params_->col_;
+    float *c = output_data_ + index * params_->row_ * params_->col_;
+    GemmIsNotPack(a, b, c, &bias, params_->row_);
   }
   return RET_OK;
 }
@@ -392,23 +419,27 @@ void MatmulFp32BaseCPUKernel::ResizeParameter() {
 int MatmulFp32BaseCPUKernel::InitTmpOutBuffer() {
   auto out_data = reinterpret_cast<float *>(out_tensors_.front()->data());
   MS_ASSERT(out_data != nullptr);
-#if defined(ENABLE_AVX) || defined(ENABLE_AVX512)
-  if (oc_res_ != 0) {  // avx matmul need to malloc dst aligned to C8NUM and avx512 need to aligned to C16NUM
-    int out_channel = params_->col_;
-    int oc_block_num = UP_DIV(out_channel, col_tile_);
-    MS_ASSERT(ms_context_->allocator != nullptr);
-    output_data_ = reinterpret_cast<float *>(ms_context_->allocator->Malloc(
-      params_->batch * params_->row_ * oc_block_num * col_tile_ * static_cast<int>(sizeof(float))));
-    if (output_data_ == nullptr) {
-      MS_LOG(ERROR) << "malloc tmp output data failed.";
-      return RET_NULL_PTR;
-    }
-  } else {  // need to malloc dst to algin block
+  if (!is_pack_) {
     output_data_ = out_data;
-  }
+  } else {
+#if defined(ENABLE_AVX) || defined(ENABLE_AVX512)
+    if (oc_res_ != 0) {  // avx matmul need to malloc dst aligned to C8NUM
+      int out_channel = params_->col_;
+      int oc_block_num = UP_DIV(out_channel, col_tile_);
+      MS_ASSERT(ms_context_->allocator != nullptr);
+      output_data_ = reinterpret_cast<float *>(ms_context_->allocator->Malloc(
+        params_->batch * params_->row_ * oc_block_num * col_tile_ * static_cast<int>(sizeof(float))));
+      if (output_data_ == nullptr) {
+        MS_LOG(ERROR) << "malloc tmp output data failed.";
+        return RET_NULL_PTR;
+      }
+    } else {  // need to malloc dst to algin block
+      output_data_ = out_data;
+    }
 #else
-  output_data_ = out_data;
+    output_data_ = out_data;
 #endif
+  }
   return RET_OK;
 }
 
@@ -431,41 +462,46 @@ void MatmulFp32BaseCPUKernel::GetThreadCuttingPolicy() {
 }
 
 int MatmulFp32BaseCPUKernel::Run() {
-  if (!params_->a_const_) {
-    auto a_ptr = reinterpret_cast<float *>(in_tensors_[0]->data());
-    CHECK_NULL_RETURN(a_ptr);
-    if (RET_OK != InitBufferA()) {
-      return RET_ERROR;
-    }
-    auto ret = InitMatrixA(a_ptr);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "InitMatrixA failed!";
-      return ret;
-    }
-  }
   if (!params_->b_const_) {
     auto b_ptr = reinterpret_cast<float *>(in_tensors_[1]->data());
     CHECK_NULL_RETURN(b_ptr);
-    if (RET_OK != InitBufferB()) {
-      FreeResizeBufA();
-      return RET_ERROR;
+    if (params_->col_ == 1 && params_->deep_ == 1) {
+      b_pack_ptr_ = b_ptr;
+      is_pack_ = false;
+    } else {
+      if (RET_OK != InitBufferB()) {
+        return RET_ERROR;
+      }
+      auto ret = InitMatrixB(b_ptr);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "InitMatrixB failed!";
+        return ret;
+      }
     }
-    auto ret = InitMatrixB(b_ptr);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "InitMatrixB failed!";
-      return ret;
+  }
+  if (!params_->a_const_) {
+    auto a_ptr = reinterpret_cast<float *>(in_tensors_[0]->data());
+    CHECK_NULL_RETURN(a_ptr);
+    if (!is_pack_) {
+      a_pack_ptr_ = a_ptr;
+    } else {
+      if (RET_OK != InitBufferA()) {
+        return RET_ERROR;
+      }
+      auto ret = InitMatrixA(a_ptr);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "InitMatrixA failed!";
+        return ret;
+      }
     }
   }
 
   auto ret = InitTmpOutBuffer();
   if (ret != RET_OK) {
-    FreeResizeBufA();
-    FreeResizeBufB();
     MS_LOG(ERROR) << "InitTmpOutBuffer error!";
     return ret;
   }
-
-  if (batch_split_) {
+  if (batch_split_ || !is_pack_) {
     ret = ParallelLaunch(this->ms_context_, MatmulRun, this, thread_count_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "MatmulRun failed in split by batch";
@@ -491,7 +527,7 @@ int MatmulFp32BaseCPUKernel::Run() {
   }
 
 #if defined(ENABLE_AVX) || defined(ENABLE_AVX512)
-  if (oc_res_ != 0) {
+  if (oc_res_ != 0 && is_pack_) {
     auto out_data = reinterpret_cast<float *>(out_tensors_.front()->MutableData());
     PackNHWCXToNHWCFp32(output_data_, out_data, params_->batch, params_->row_, params_->col_, col_tile_);
     ms_context_->allocator->Free(output_data_);

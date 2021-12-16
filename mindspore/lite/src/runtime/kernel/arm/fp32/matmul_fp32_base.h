@@ -49,8 +49,10 @@ class MatmulFp32BaseCPUKernel : public InnerKernel {
  public:
   int ParallelRunByOC(int task_id) const;
   int ParallelRunByBatch(int task_id) const;
+  int ParallelRunIsNotPackByBatch(int task_id) const;
   using ParallelRun = int (MatmulFp32BaseCPUKernel::*)(int task_id) const;
   ParallelRun parallel_fun_ = nullptr;
+  bool is_pack_ = true;
 
  protected:
   int InitBufferA();
