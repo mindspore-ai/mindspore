@@ -298,7 +298,7 @@ if(CMAKE_SYSTEM_NAME MATCHES "Windows")
 endif()
 
 # set python files
-file(GLOB MS_PY_LIST ${CMAKE_SOURCE_DIR}/mindspore/*.py)
+file(GLOB MS_PY_LIST ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/*.py)
 install(
     FILES ${MS_PY_LIST}
     DESTINATION ${INSTALL_PY_DIR}
@@ -307,20 +307,20 @@ install(
 
 install(
     DIRECTORY
-        ${CMAKE_SOURCE_DIR}/mindspore/nn
-        ${CMAKE_SOURCE_DIR}/mindspore/_extends
-        ${CMAKE_SOURCE_DIR}/mindspore/parallel
-        ${CMAKE_SOURCE_DIR}/mindspore/mindrecord
-        ${CMAKE_SOURCE_DIR}/mindspore/numpy
-        ${CMAKE_SOURCE_DIR}/mindspore/scipy
-        ${CMAKE_SOURCE_DIR}/mindspore/train
-        ${CMAKE_SOURCE_DIR}/mindspore/boost
-        ${CMAKE_SOURCE_DIR}/mindspore/common
-        ${CMAKE_SOURCE_DIR}/mindspore/ops
-        ${CMAKE_SOURCE_DIR}/mindspore/communication
-        ${CMAKE_SOURCE_DIR}/mindspore/profiler
-        ${CMAKE_SOURCE_DIR}/mindspore/compression
-        ${CMAKE_SOURCE_DIR}/mindspore/run_check
+        ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/nn
+        ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/_extends
+        ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/parallel
+        ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/mindrecord
+        ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/numpy
+        ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/scipy
+        ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/train
+        ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/boost
+        ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/common
+        ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/ops
+        ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/communication
+        ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/profiler
+        ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/compression
+        ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/run_check
     DESTINATION ${INSTALL_PY_DIR}
     COMPONENT mindspore
 )
@@ -339,9 +339,9 @@ if(ENABLE_AKG AND CMAKE_SYSTEM_NAME MATCHES "Linux")
     )
 endif()
 
-if(EXISTS ${CMAKE_SOURCE_DIR}/mindspore/dataset)
+if(EXISTS ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/dataset)
     install(
-        DIRECTORY ${CMAKE_SOURCE_DIR}/mindspore/dataset
+        DIRECTORY ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/dataset
         DESTINATION ${INSTALL_PY_DIR}
         COMPONENT mindspore
     )
@@ -350,9 +350,9 @@ endif()
 if(CMAKE_SYSTEM_NAME MATCHES "Windows")
     message("offline debugger does not support windows system temporarily")
 else()
-    if(EXISTS ${CMAKE_SOURCE_DIR}/mindspore/offline_debug)
+    if(EXISTS ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/offline_debug)
         install(
-            DIRECTORY ${CMAKE_SOURCE_DIR}/mindspore/offline_debug
+            DIRECTORY ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/offline_debug
             DESTINATION ${INSTALL_PY_DIR}
             COMPONENT mindspore
         )
