@@ -22,6 +22,7 @@ from mindspore._checkparam import Validator as validator
 from mindspore import ops, nn
 from ...common import dtype as mstype
 from ...common.parameter import Parameter, ParameterTuple
+from ...ops.primitive import constexpr
 from ...ops import composite as C
 from ...ops import functional as F
 from ...ops import operations as P
@@ -435,6 +436,13 @@ class _VirtualDatasetCell(Cell):
         return self._backbone(*output)
 
 
+@constexpr
+def _check_shape_value_on_axis_divided_by_target_value(input_shape, dim, param_name, cls_name, target_value):
+    if input_shape[dim] % target_value != 0:
+        raise ValueError(f"{cls_name} {param_name} at {dim} shape should be divided by {target_value},"
+                         f"but got {input_shape[dim]}")
+    return True
+
 class _MicroBatch(Cell):
     """
     transform mini-batch to micro-batch in pipeline parallel.
@@ -452,6 +460,8 @@ class _MicroBatch(Cell):
         micro_inputs = ()
         for each_input in inputs:
             input_shape = self.shape(each_input)
+            _check_shape_value_on_axis_divided_by_target_value(input_shape, 0, "inputs",
+                                                               self.cls_name, self.micro_size)
             micro_batch_begin = i * input_shape[0] // self.micro_size
             micro_batch_end = (i + 1) * input_shape[0] // self.micro_size
             strided_slice_begin = (micro_batch_begin,)
@@ -483,10 +493,15 @@ class MicroBatchInterleaved(Cell):
     """
     def __init__(self, network, interleave_num=2):
         super(MicroBatchInterleaved, self).__init__(auto_prefix=False)
+        if not isinstance(interleave_num, int):
+            raise TypeError("For 'MicroBatchInterleaved', the argument 'interleave_num' should be integer, "
+                            "but got the type : {}.".format(type(interleave_num)))
+        if interleave_num <= 0:
+            raise ValueError("For 'MicroBatchInterleaved', the argument 'interleave_num' should be greater than 0, "
+                             "but got {}.".format(interleave_num))
         self.network = network
         self.interleave_num = interleave_num
         self.interleave_inputs = nn.CellList()
-        self.realdiv = P.RealDiv().add_prim_attr("realdiv_flag", True)
         for _ in range(interleave_num):
             interleave_data = _MicroBatch(interleave_num)
             interleave_data.strided_slice.add_prim_attr("strided_slice_flag", True)
@@ -497,7 +512,7 @@ class MicroBatchInterleaved(Cell):
         for i in range(self.interleave_num):
             interleave_input = self.interleave_inputs[i](i, *inputs)
             output += self.network(*interleave_input)
-        return self.realdiv(output, self.interleave_num)
+        return output
 
 
 class PipelineCell(Cell):

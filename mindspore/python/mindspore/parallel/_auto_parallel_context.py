@@ -271,7 +271,7 @@ class _AutoParallelContext:
             loss_repeated_mean (bool): The loss_repeated_mean flag.
         """
         if not isinstance(loss_repeated_mean, bool):
-            raise TypeError("For 'auto_parallel_context', the argument 'loss_repeated_mean' "
+            raise TypeError("For 'set_auto_parallel_context', the argument 'loss_repeated_mean' "
                             "must be bool, but got the type : {}.".format(type(loss_repeated_mean)))
         self.check_context_handle()
         self._context_handle.set_loss_repeated_mean(loss_repeated_mean)
