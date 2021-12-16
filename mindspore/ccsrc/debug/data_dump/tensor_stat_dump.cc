@@ -161,11 +161,13 @@ bool TensorStatDump::DumpTensorStatsToFile(const std::string &dump_path, std::sh
     MS_LOG(INFO) << "Tensor data is empty, skipping current statistics";
     return false;
   }
+  std::string type;
   auto iter_type = kDbgDataTypeToStringMap.find(data->GetType());
   if (iter_type == kDbgDataTypeToStringMap.end()) {
-    MS_LOG(INFO) << "Unsupported tensor data_type unsupported(" << data->GetType() << ") for tensor "
-                 << data->GetName();
-    return false;
+    type = "unsupported(" + std::to_string(data->GetType()) + ")";
+    MS_LOG(INFO) << "Unsupported tensor data_type " << type << " for tensor " << data->GetName();
+  } else {
+    type = iter_type->second;
   }
   if (!OpenStatisticsFile(dump_path)) {
     return false;
@@ -187,7 +189,7 @@ bool TensorStatDump::DumpTensorStatsToFile(const std::string &dump_path, std::sh
   csv.WriteToCsv(io_);
   csv.WriteToCsv(slot_);
   csv.WriteToCsv(stat.data_size);
-  csv.WriteToCsv(iter_type->second);
+  csv.WriteToCsv(type);
   csv.WriteToCsv(shape.str());
   if (stat.count == stat.nan_count + stat.neg_inf_count + stat.pos_inf_count) {
     csv.WriteToCsv("null");
