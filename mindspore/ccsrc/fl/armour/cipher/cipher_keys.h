@@ -55,6 +55,11 @@ class CipherKeys {
   // build response code of get keys.
   void BuildGetKeysRsp(const std::shared_ptr<fl::server::FBBuilder> &fbb, const schema::ResponseCode retcode,
                        const size_t iteration, const std::string &next_req_time, bool is_good);
+
+  // build response code of get keys in pki_verify mode.
+  void BuildPkiVerifyGetKeysRsp(const std::shared_ptr<fl::server::FBBuilder> &fbb, const schema::ResponseCode retcode,
+                                const size_t iteration, const std::string &next_req_time, bool is_good);
+
   // build response code of exchange keys.
   void BuildExchangeKeysRsp(const std::shared_ptr<fl::server::FBBuilder> &fbb, const schema::ResponseCode retcode,
                             const std::string &reason, const std::string &next_req_time, const size_t iteration);

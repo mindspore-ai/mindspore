@@ -60,13 +60,18 @@ bool CipherKeys::GetKeys(const size_t cur_iterator, const std::string &next_req_
 
   bool ret = cipher_init_->cipher_meta_storage_.UpdateClientToServer(fl::server::kCtxGetKeysClientList, fl_id);
   if (!ret) {
-    MS_LOG(ERROR) << "update get keys clients failed";
+    MS_LOG(ERROR) << "Update get keys clients failed";
     BuildGetKeysRsp(fbb, schema::ResponseCode_OutOfTime, cur_iterator, next_req_time, false);
     return false;
   }
 
   MS_LOG(INFO) << "GetKeys client list: ";
-  BuildGetKeysRsp(fbb, schema::ResponseCode_SUCCEED, cur_iterator, next_req_time, true);
+  if (encrypt_type == ps::kPWEncryptType && ps::PSContext::instance()->pki_verify()) {
+    MS_LOG(INFO) << "Build get_keys response in pki_verify mode.";
+    BuildPkiVerifyGetKeysRsp(fbb, schema::ResponseCode_SUCCEED, cur_iterator, next_req_time, true);
+  } else {
+    BuildGetKeysRsp(fbb, schema::ResponseCode_SUCCEED, cur_iterator, next_req_time, true);
+  }
   return true;
 }
 
@@ -220,6 +225,70 @@ void CipherKeys::BuildGetKeysRsp(const std::shared_ptr<fl::server::FBBuilder> &f
   rsp_builder.add_remote_publickeys(remote_publickeys);
   rsp_builder.add_next_req_time(fbs_next_req_time);
   auto rsp_get_keys = rsp_builder.Finish();
+  fbb->Finish(rsp_get_keys);
+  MS_LOG(INFO) << "CipherMgr::GetKeys Success";
+  return;
+}
+
+void CipherKeys::BuildPkiVerifyGetKeysRsp(const std::shared_ptr<fl::server::FBBuilder> &fbb,
+                                          const schema::ResponseCode retcode, const size_t iteration,
+                                          const std::string &next_req_time, bool is_good) {
+  if (!is_good) {
+    auto fbs_next_req_time = fbb->CreateString(next_req_time);
+    schema::ReturnExchangeKeysBuilder rsp_buider(*(fbb.get()));
+    rsp_buider.add_retcode(static_cast<int>(retcode));
+    rsp_buider.add_iteration(SizeToInt(iteration));
+    rsp_buider.add_next_req_time(fbs_next_req_time);
+    auto rsp_get_keys = rsp_buider.Finish();
+    fbb->Finish(rsp_get_keys);
+    return;
+  }
+  const fl::PBMetadata &clients_keys_pb_out =
+    fl::server::DistributedMetadataStore::GetInstance().GetMetadata(fl::server::kCtxClientsKeys);
+  const fl::ClientKeys &clients_keys_pb = clients_keys_pb_out.client_keys();
+  std::vector<flatbuffers::Offset<schema::ClientPublicKeys>> public_keys_list;
+  for (auto iter = clients_keys_pb.client_keys().begin(); iter != clients_keys_pb.client_keys().end(); ++iter) {
+    std::string fl_id = iter->first;
+    fl::KeysPb keys_pb = iter->second;
+    auto fbs_fl_id = fbb->CreateString(fl_id);
+
+    // package public keys for pairwise encryption
+    std::vector<uint8_t> cpk(keys_pb.key(0).begin(), keys_pb.key(0).end());
+    std::vector<uint8_t> spk(keys_pb.key(1).begin(), keys_pb.key(1).end());
+    auto fbs_c_pk = fbb->CreateVector(cpk.data(), cpk.size());
+    auto fbs_s_pk = fbb->CreateVector(spk.data(), spk.size());
+
+    std::string timestamp = keys_pb.timestamp();
+    auto fbs_timestamp = fbb->CreateString(timestamp);
+    int iter_num = keys_pb.iter_num();
+
+    // package initialization vector and salt value for pairwise encryption
+    std::vector<uint8_t> pw_iv(keys_pb.pw_iv().begin(), keys_pb.pw_iv().end());
+    auto fbs_pw_iv = fbb->CreateVector(pw_iv.data(), pw_iv.size());
+    std::vector<uint8_t> pw_salt(keys_pb.pw_salt().begin(), keys_pb.pw_salt().end());
+    auto fbs_pw_salt = fbb->CreateVector(pw_salt.data(), pw_salt.size());
+
+    // package signature and certifications
+    std::vector<uint8_t> signature(keys_pb.signature().begin(), keys_pb.signature().end());
+    auto fbs_sign = fbb->CreateVector(signature.data(), signature.size());
+    std::vector<flatbuffers::Offset<flatbuffers::String>> cert_chain;
+    for (auto &cert_iter : keys_pb.certificate_chain()) {
+      auto fbs_cert = fbb->CreateString(cert_iter);
+      cert_chain.push_back(fbs_cert);
+    }
+    auto fbs_cert_chain = fbb->CreateVector(cert_chain);
+    auto cur_public_key = schema::CreateClientPublicKeys(*fbb, fbs_fl_id, fbs_c_pk, fbs_s_pk, fbs_pw_iv, fbs_pw_salt,
+                                                         fbs_timestamp, iter_num, fbs_sign, fbs_cert_chain);
+    public_keys_list.push_back(cur_public_key);
+  }
+  auto remote_publickeys = fbb->CreateVector(public_keys_list);
+  auto fbs_next_req_time = fbb->CreateString(next_req_time);
+  schema::ReturnExchangeKeysBuilder rsp_buider(*(fbb.get()));
+  rsp_buider.add_retcode(static_cast<int>(retcode));
+  rsp_buider.add_iteration(SizeToInt(iteration));
+  rsp_buider.add_remote_publickeys(remote_publickeys);
+  rsp_buider.add_next_req_time(fbs_next_req_time);
+  auto rsp_get_keys = rsp_buider.Finish();
   fbb->Finish(rsp_get_keys);
   MS_LOG(INFO) << "CipherMgr::GetKeys Success";
   return;
