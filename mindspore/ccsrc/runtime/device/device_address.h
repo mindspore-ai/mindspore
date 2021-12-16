@@ -101,6 +101,7 @@ class DeviceAddress : public mindspore::DeviceSync {
   bool is_ptr_persisted() const { return is_ptr_persisted_; }
   void set_is_ptr_persisted(bool is_ptr_persisted) { is_ptr_persisted_ = is_ptr_persisted; }
   void set_host_shape(const ShapeVector &shape) { host_shape_ = shape; }
+  ShapeVector host_shape() const { return host_shape_; }
   bool from_persistent_mem() const { return from_persistent_mem_; }
   void set_from_persistent_mem(bool from_persistent_mem) { from_persistent_mem_ = from_persistent_mem; }
   virtual void set_status(DeviceAddressStatus status) {}

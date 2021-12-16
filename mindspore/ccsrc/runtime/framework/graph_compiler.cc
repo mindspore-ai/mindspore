@@ -195,6 +195,7 @@ void CreateKernelOutputDeviceAddress(const DeviceContext *device_context, const 
       auto output_type = AnfAlgo::GetOutputDeviceDataType(kernel, i);
       auto address_size = AnfAlgo::GetOutputTensorMemSize(kernel, i);
       auto device_address = device_context->CreateDeviceAddress(nullptr, address_size, output_format, output_type);
+      device_address->set_host_shape(trans::GetRuntimePaddingShape(kernel, i));
       if (is_gradient_out) {
         device_address->set_from_persistent_mem(true);
       }
