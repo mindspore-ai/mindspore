@@ -48,6 +48,7 @@ endif()
 
 set(TOP_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../..)
 set(LITE_DIR ${TOP_DIR}/mindspore/lite)
+set(NEW_NATIVE_DIR ${LITE_DIR}/java/src/main/native)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${LITE_DIR}) ## lite include
@@ -69,6 +70,12 @@ set(JNI_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/ms_tensor.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/lite_session.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/common/jni_utils.cpp
+        ${NEW_NATIVE_DIR}/graph.cpp
+        ${NEW_NATIVE_DIR}/model.cpp
+        ${NEW_NATIVE_DIR}/ms_context.cpp
+        ${NEW_NATIVE_DIR}/ms_tensor.cpp
+        ${NEW_NATIVE_DIR}/train_config.cpp
+        ${NEW_NATIVE_DIR}/version.cpp
   )
 
 set(LITE_SO_NAME mindspore-lite)
