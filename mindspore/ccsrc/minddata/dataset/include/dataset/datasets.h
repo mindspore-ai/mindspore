@@ -3162,6 +3162,105 @@ inline std::shared_ptr<IWSLT2017Dataset> MS_API IWSLT2017(const std::string &dat
                                             shard_id, cache);
 }
 
+/// \class KITTIDataset
+/// \brief A source dataset that reads KITTI images and labels.
+class MS_API KITTIDataset : public Dataset {
+ public:
+  /// \brief Constructor of KITTIDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] usage The type of data file to read.
+  /// \param[in] decode Decode the images after reading.
+  /// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  KITTIDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, bool decode,
+               const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Constructor of KITTIDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] usage The type of data file to read.
+  /// \param[in] decode Decode the images after reading.
+  /// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  KITTIDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, bool decode,
+               const Sampler *sampler, const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Constructor of KITTIDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] usage The type of data file to read.
+  /// \param[in] decode Decode the images after reading.
+  /// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  KITTIDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, bool decode,
+               const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Destructor of KITTIDataset.
+  ~KITTIDataset() = default;
+};
+
+/// \brief Function to create a KITTIDataset.
+/// \notes When usage is 'train', the generated dataset has multi-columns, 'image', 'label', 'truncated',
+///     'occluded', 'alpha', 'bbox', 'dimensions', 'location', 'rotation_y'; When usage is 'test',
+///     the generated dataset has one column 'image'.
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage The type of data file to read (default = "train").
+/// \param[in] decode Decode the images after reading (default = false).
+/// \param[in] sampler Sampler object used to choose samples from the dataset. If sampler is not
+///     given, a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler()).
+/// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
+/// \return Shared pointer to the current Dataset.
+/// \par Example
+/// \code
+///      /* Define dataset path and MindData object */
+///      std::string folder_path = "/path/to/kitti_dataset_directory";
+///      std::shared_ptr<Dataset> ds = KITTI(folder_path);
+///
+///      /* Create iterator to read dataset */
+///      std::shared_ptr<Iterator> iter = ds->CreateIterator();
+///      std::unordered_map<std::string, mindspore::MSTensor> row;
+///      iter->GetNextRow(&row);
+///
+///      /* Note: In KITTI dataset, each dictionary has key "image" */
+///      auto image = row["image"];
+/// \endcode
+inline std::shared_ptr<KITTIDataset> MS_API
+KITTI(const std::string &dataset_dir, const std::string &usage = "train", bool decode = false,
+      const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
+      const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<KITTIDataset>(StringToChar(dataset_dir), StringToChar(usage), decode, sampler, cache);
+}
+
+/// \brief Function to create a KITTIDataset.
+/// \notes When usage is 'train', the generated dataset has multi-columns, 'image', 'label', 'truncated',
+///     'occluded', 'alpha', 'bbox', 'dimensions', 'location', 'rotation_y'; When usage is 'test',
+///     the generated dataset has one column 'image'.
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage The type of data file to read.
+/// \param[in] decode Decode the images after reading.
+/// \param[in] sampler Sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
+/// \return Shared pointer to the current Dataset.
+inline std::shared_ptr<KITTIDataset> MS_API KITTI(const std::string &dataset_dir, const std::string &usage, bool decode,
+                                                  const Sampler *sampler,
+                                                  const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<KITTIDataset>(StringToChar(dataset_dir), StringToChar(usage), decode, sampler, cache);
+}
+
+/// \brief Function to create a KITTIDataset.
+/// \notes When usage is 'train', the generated dataset has multi-columns, 'image', 'label', 'truncated',
+///     'occluded', 'alpha', 'bbox', 'dimensions', 'location', 'rotation_y'; When usage is 'test',
+///     the generated dataset has one column 'image'.
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage The type of data file to read.
+/// \param[in] decode Decode the images after reading.
+/// \param[in] sampler Sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
+/// \return Shared pointer to the current Dataset.
+inline std::shared_ptr<KITTIDataset> MS_API KITTI(const std::string &dataset_dir, const std::string &usage, bool decode,
+                                                  const std::reference_wrapper<Sampler> &sampler,
+                                                  const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<KITTIDataset>(StringToChar(dataset_dir), StringToChar(usage), decode, sampler, cache);
+}
+
 /// \class KMnistDataset.
 /// \brief A source dataset for reading and parsing KMnist dataset.
 class MS_API KMnistDataset : public Dataset {

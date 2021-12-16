@@ -32,7 +32,7 @@ import mindspore._c_dataengine as cde
 
 from .datasets import VisionBaseDataset, SourceDataset, MappableDataset, Shuffle, Schema
 from .datasets_user_defined import GeneratorDataset
-from .validators import check_imagefolderdataset, \
+from .validators import check_imagefolderdataset, check_kittidataset,\
     check_mnist_cifar_dataset, check_manifestdataset, check_vocdataset, check_cocodataset, \
     check_celebadataset, check_flickr_dataset, check_sb_dataset, check_flowers102dataset, check_cityscapes_dataset, \
     check_usps_dataset, check_div2k_dataset, check_random_dataset, \
@@ -2297,6 +2297,152 @@ class ImageFolderDataset(MappableDataset, VisionBaseDataset):
 
     def parse(self, children=None):
         return cde.ImageFolderNode(self.dataset_dir, self.decode, self.sampler, self.extensions, self.class_indexing)
+
+
+class KITTIDataset(MappableDataset):
+    """
+    A source dataset that reads and parses the KITTI dataset.
+
+    When usage is "train", the generated dataset has multiple columns: :py:obj:`[image, label, truncated,
+    occluded, alpha, bbox, dimensions, location, rotation_y]`; When usage is "test", the generated dataset
+    has only one column: :py:obj:`[image]`.
+    The tensor of column :py:obj:`image` is of the uint8 type.
+    The tensor of column :py:obj:`label` is of the uint32 type.
+    The tensor of column :py:obj:`truncated` is of the float32 type.
+    The tensor of column :py:obj:`occluded` is of the uint32 type.
+    The tensor of column :py:obj:`alpha` is of the float32 type.
+    The tensor of column :py:obj:`bbox` is of the float32 type.
+    The tensor of column :py:obj:`dimensions` is of the float32 type.
+    The tensor of column :py:obj:`location` is of the float32 type.
+    The tensor of column :py:obj:`rotation_y` is of the float32 type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        usage (str, optional): Usage of this dataset, can be `train` or `test`. `train` will read 7481
+            train samples, `test` will read from 7518 test samples without label (default=None, will use `train`).
+        num_samples (int, optional): The number of images to be included in the dataset
+            (default=None, will include all images).
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, number set in the config).
+        shuffle (bool, optional): Whether to perform shuffle on the dataset (default=None, expected
+            order behavior shown in the table).
+        decode (bool, optional): Decode the images after reading (default=False).
+        sampler (Sampler, optional): Object used to choose samples from the dataset
+            (default=None, expected order behavior shown in the table).
+        num_shards (int, optional): Number of shards that the dataset will be divided
+            into (default=None). When this argument is specified, 'num_samples' reflects
+            the max sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument can only be specified when num_shards is also specified.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing
+            (default=None, which means no cache is used).
+
+    Raises:
+        RuntimeError: If `sampler` and `shuffle` are specified at the same time.
+        RuntimeError: If `sampler` and `num_shards`/`shard_id` are specified at the same time.
+        RuntimeError: If `num_shards` is specified but `shard_id` is None.
+        RuntimeError: If `shard_id` is specified but `num_shards` is None.
+        ValueError: If `dataset_dir` is not exist.
+        ValueError: If `shard_id` is invalid (< 0 or >= num_shards).
+
+    Note:
+        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+          The table below shows what input arguments are allowed and their expected behavior.
+
+    .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
+       :widths: 25 25 50
+       :header-rows: 1
+
+       * - Parameter `sampler`
+         - Parameter `shuffle`
+         - Expected Order Behavior
+       * - None
+         - None
+         - random order
+       * - None
+         - True
+         - random order
+       * - None
+         - False
+         - sequential order
+       * - Sampler object
+         - None
+         - order defined by sampler
+       * - Sampler object
+         - True
+         - not allowed
+       * - Sampler object
+         - False
+         - not allowed
+
+    Examples:
+        >>> kitti_dataset_dir = "/path/to/kitti_dataset_directory"
+        >>>
+        >>> # 1) Read all KITTI train dataset samples in kitti_dataset_dir in sequence
+        >>> dataset = ds.KITTIDataset(dataset_dir=kitti_dataset_dir, usage="train")
+        >>>
+        >>> # 2) Read then decode all KITTI test dataset samples in kitti_dataset_dir in sequence
+        >>> dataset = ds.KITTIDataset(dataset_dir=kitti_dataset_dir, usage="test",
+        ...                           decode=True, shuffle=False)
+
+    About KITTI dataset:
+
+    KITTI (Karlsruhe Institute of Technology and Toyota Technological Institute) is one of the most popular
+    datasets for use in mobile robotics and autonomous driving. It consists of hours of traffic scenarios
+    recorded with a variety of sensor modalities, including high-resolution RGB, grayscale stereo cameras,
+    and a 3D laser scanner. Despite its popularity, the dataset itself does not contain ground truth for
+    semantic segmentation. However, various researchers have manually annotated parts of the dataset to fit
+    their necessities. Álvarez et al. generated ground truth for 323 images from the road detection challenge
+    with three classes: road, vertical,and sky. Zhang et al. annotated 252 (140 for training and 112 for testing)
+    acquisitions – RGB and Velodyne scans – from the tracking challenge for ten object categories: building, sky,
+    road, vegetation, sidewalk, car, pedestrian, cyclist, sign/pole, and fence.
+
+    You can unzip the original KITTI dataset files into this directory structure and read by MindSpore's API.
+
+    .. code-block::
+        .
+        └── kitti_dataset_directory
+            ├── data_object_image_2
+            │    ├──training
+            │    │    ├──image_2
+            │    │    │    ├── 000000000001.jpg
+            │    │    │    ├── 000000000002.jpg
+            │    │    │    ├── ...
+            │    ├──testing
+            │    │    ├── image_2
+            │    │    │    ├── 000000000001.jpg
+            │    │    │    ├── 000000000002.jpg
+            │    │    │    ├── ...
+            ├── data_object_label_2
+            │    ├──training
+            │    │    ├──label_2
+            │    │    │    ├── 000000000001.jpg
+            │    │    │    ├── 000000000002.jpg
+            │    │    │    ├── ...
+
+    Citation:
+
+    .. code-block::
+
+        @INPROCEEDINGS{Geiger2012CVPR,
+        author={Andreas Geiger and Philip Lenz and Raquel Urtasun},
+        title={Are we ready for Autonomous Driving? The KITTI Vision Benchmark Suite},
+        booktitle={Conference on Computer Vision and Pattern Recognition (CVPR)},
+        year={2012}
+        }
+    """
+
+    @check_kittidataset
+    def __init__(self, dataset_dir, usage=None, num_samples=None, num_parallel_workers=None, shuffle=None,
+                 decode=False, sampler=None, num_shards=None, shard_id=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, sampler=sampler, num_samples=num_samples,
+                         shuffle=shuffle, num_shards=num_shards, shard_id=shard_id, cache=cache)
+        self.dataset_dir = dataset_dir
+        self.usage = replace_none(usage, "train")
+        self.decode = replace_none(decode, False)
+
+    def parse(self, children=None):
+        return cde.KITTINode(self.dataset_dir, self.usage, self.decode, self.sampler)
 
 
 class KMnistDataset(MappableDataset, VisionBaseDataset):

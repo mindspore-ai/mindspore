@@ -98,6 +98,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/imdb_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/iwslt2016_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/iwslt2017_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/kitti_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/kmnist_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/lfw_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/libri_tts_node.h"
@@ -1372,6 +1373,27 @@ IWSLT2017Dataset::IWSLT2017Dataset(const std::vector<char> &dataset_dir, const s
   auto ds =
     std::make_shared<IWSLT2017Node>(CharToString(dataset_dir), CharToString(usage), VectorCharToString(language_pair),
                                     num_samples, shuffle, num_shards, shard_id, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+
+KITTIDataset::KITTIDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, bool decode,
+                           const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
+  auto ds = std::make_shared<KITTINode>(CharToString(dataset_dir), CharToString(usage), decode, sampler_obj, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+
+KITTIDataset::KITTIDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, bool decode,
+                           const Sampler *sampler, const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
+  auto ds = std::make_shared<KITTINode>(CharToString(dataset_dir), CharToString(usage), decode, sampler_obj, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+
+KITTIDataset::KITTIDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, bool decode,
+                           const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler.get().Parse();
+  auto ds = std::make_shared<KITTINode>(CharToString(dataset_dir), CharToString(usage), decode, sampler_obj, cache);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
 

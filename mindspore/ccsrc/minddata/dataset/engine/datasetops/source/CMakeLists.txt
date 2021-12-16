@@ -27,6 +27,7 @@ set(DATASET_ENGINE_DATASETOPS_SOURCE_SRC_FILES
     imdb_op.cc
     iwslt_op.cc
     io_block.cc
+    kitti_op.cc
     kmnist_op.cc
     lfw_op.cc
     libri_tts_op.cc

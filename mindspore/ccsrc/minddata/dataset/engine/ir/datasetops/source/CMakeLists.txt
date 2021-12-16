@@ -28,6 +28,7 @@ set(DATASET_ENGINE_IR_DATASETOPS_SOURCE_SRC_FILES
         imdb_node.cc
         iwslt2016_node.cc
         iwslt2017_node.cc
+        kitti_node.cc
         kmnist_node.cc
         lfw_node.cc
         libri_tts_node.cc

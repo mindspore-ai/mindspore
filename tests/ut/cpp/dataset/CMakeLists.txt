@@ -37,6 +37,7 @@ SET(DE_UT_SRCS
         c_api_dataset_imdb_test.cc
         c_api_dataset_iterator_test.cc
         c_api_dataset_iwslt_test.cc
+        c_api_dataset_kitti_test.cc
         c_api_dataset_kmnist_test.cc
         c_api_dataset_lfw_test.cc
         c_api_dataset_libri_tts.cc
