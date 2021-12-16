@@ -17,9 +17,12 @@
 
       - O0: 无变化。
       - O2: 将网络精度转为float16，batchnorm保持float32精度，使用动态调整梯度放大系数（loss scale）的策略。
-      - O3: 将网络精度转为float16，并为 `mindspore.build_train_network` 接口配置属性 `keep_batchnorm_fp32=False`。
-      - auto: 为不同处理器设置专家推荐的混合精度等级，如在GPU上设为O2，在Ascend上设为O3。该设置方式不适用于所有场景，建议用户根据具体的网络模型自定义设置 `amp_level` 。在GPU上建议使用O2，在Ascend上建议使用O3。关于 `amp_level` 详见 `mindpore.build_train_network`。
+      - O3: 将网络精度（包括batchnorm）转为float16，不使用梯度调整策略。
+      - auto: 为不同处理器设置专家推荐的混合精度等级，如在GPU上设为O2，在Ascend上设为O3。该设置方式可能在部分场景下不适用，建议用户根据具体的网络模型自定义设置 `amp_level` 。
 
+      在GPU上建议使用O2，在Ascend上建议使用O3。
+      通过`kwargs`设置`keep_batchnorm_fp32`，可修改batchnorm策略，`keep_batchnorm_fp32`必须为bool类型；通过`kwargs`设置`loss_scale_manager`可修改梯度放大策略，`loss_scale_manager`必须为:class:`mindspore.LossScaleManager`的子类，
+      关于 `amp_level` 详见 `mindpore.build_train_network`。
 
     **样例:**
 
