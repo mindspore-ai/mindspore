@@ -2738,7 +2738,7 @@ void GradExecutor::GradNetInner(py::object *ret, const prim::GradOperationPtr &g
   // Launch bprop graph to backend
   SaveForwardTensorInfoInBpropGraph(resource);
   compile::SetMindRTEnable();
-  resource->results()[pipeline::kBackend] = compile::CreateBackend();
+  resource->SetResult(pipeline::kBackend, compile::CreateBackend());
   MS_LOG(DEBUG) << "Start task emit action";
   TaskEmitAction(resource);
   MS_LOG(DEBUG) << "Start execute action";
@@ -2747,6 +2747,12 @@ void GradExecutor::GradNetInner(py::object *ret, const prim::GradOperationPtr &g
   UpdateTopCellInfo(false, false, true);
   resource->Clean();
   abstract::AnalysisContext::ClearContext();
+  // Clean cache used for parse. As static variable is released after
+  // Python threads is released.
+  parse::data_converter::ClearObjectCache();
+  parse::Parser::CleanParserResource();
+  parse::CleanDataClassToClassMap();
+  trace::ClearTraceStack();
 }
 
 std::vector<AnfNodePtr> GradExecutor::GetWeightsArgs(const py::object &weights, const FuncGraphPtr &df_builder) {
@@ -3031,13 +3037,7 @@ void GradExecutor::RunGradGraph(py::object *ret, const py::object &cell, const p
   py::tuple converted_args = ConvertArgs(FilterTensorArgs(args, has_sens));
   pipeline::ProcessVmArgInner(converted_args, resource, &arg_list);
   MS_LOG(DEBUG) << "Convert args size " << converted_args.size() << ", graph param size " << arg_list.size();
-  if (resource->results().find(pipeline::kOutput) == resource->results().end()) {
-    MS_LOG(EXCEPTION) << "Can't find run graph output";
-  }
-  if (!resource->results()[pipeline::kOutput].is<compile::VmEvalFuncPtr>()) {
-    MS_LOG(EXCEPTION) << "Run graph is not VmEvalFuncPtr";
-  }
-  compile::VmEvalFuncPtr run = resource->results()[pipeline::kOutput].cast<compile::VmEvalFuncPtr>();
+  compile::VmEvalFuncPtr run = resource->GetResult(pipeline::kOutput).cast<compile::VmEvalFuncPtr>();
   MS_EXCEPTION_IF_NULL(run);
 
   const auto &backend = MsContext::GetInstance()->backend_policy();

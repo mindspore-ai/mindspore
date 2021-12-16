@@ -3263,7 +3263,7 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
 
   // step parallel only run once
   root->set_flag(SEMI_AUTO_PARALLEL_RUN_ONCE_ONLY, true);
-  res->results()[pipeline::kStepParallelGraph] = root;
+  res->SetResult(pipeline::kStepParallelGraph, root);
 
   // in auto parallel mode, no need to check if stategies set
   root->set_flag(CHECK_SET_STRATEGY_VALID_ONCE_ONLY, true);

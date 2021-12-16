@@ -433,7 +433,7 @@ void CacheFuncGraph(const ResourcePtr &resource) {
   std::string parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
   if (fg->has_flag(parallel::AUTO_PARALLEL) &&
       ((parallel_mode == parallel::AUTO_PARALLEL) || (parallel_mode == parallel::SEMI_AUTO_PARALLEL))) {
-    layout_fg = resource->results()[kStepParallelGraph].cast<FuncGraphPtr>();
+    layout_fg = resource->GetResult(kStepParallelGraph).cast<FuncGraphPtr>();
   }
   if (!ExportFuncGraphToMindIR(fg, layout_fg, resource->compile_cache_id())) {
     MS_LOG(ERROR) << "Failed to cache graph: " << fg->ToString();
@@ -587,8 +587,8 @@ void GraphExecutorPy::SetGradGraph(const FuncGraphPtr &grad_graph, const std::st
 compile::VmEvalFuncPtr GraphExecutorPy::GetVmEvalFunc(const std::string &phase) {
   ResourcePtr res = GetResource(phase);
   MS_EXCEPTION_IF_NULL(res);
-  if (res->results().find(kOutput) != res->results().end() && res->results()[kOutput].is<compile::VmEvalFuncPtr>()) {
-    return res->results()[kOutput].cast<compile::VmEvalFuncPtr>();
+  if (res->HasResult(kOutput) && res->GetResult(kOutput).is<compile::VmEvalFuncPtr>()) {
+    return res->GetResult(kOutput).cast<compile::VmEvalFuncPtr>();
   }
   MS_LOG(ERROR) << "GetVmEvalFunc vm model can't find kOutput:" << kOutput;
   return nullptr;
@@ -871,10 +871,10 @@ void GraphExecutorPy::SaveCompiledGraph(const std::string &phase) {
   if ((func_graph != nullptr) && func_graph->has_flag(parallel::AUTO_PARALLEL) &&
       ((parallel_mode == parallel::AUTO_PARALLEL) || (parallel_mode == parallel::SEMI_AUTO_PARALLEL))) {
     MS_LOG(DEBUG) << "Save model parallel parameter layout graph!";
-    auto results = info_[phase]->resource->results();
+    auto res = info_[phase]->resource;
     // When using frontend compile cache, model parallel parameter layout graph is not saved.
-    if (results.find(kStepParallelGraph) != results.end()) {
-      func_graph = results[kStepParallelGraph].cast<FuncGraphPtr>();
+    if (res->HasResult(kStepParallelGraph)) {
+      func_graph = res->GetResult(kStepParallelGraph).cast<FuncGraphPtr>();
       ExecutorInfoPtr executor_info = std::make_shared<ExecutorInfo>();
       std::string layout_graph = phase + kStepParallelGraph;
       executor_info->func_graph = func_graph;
@@ -923,7 +923,7 @@ std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::stri
     return ServerPipeline();
   }
   if (ps::PSContext::instance()->is_server()) {
-    resource->results()[kBackend] = compile::CreateBackend();
+    resource->SetResult(kBackend, compile::CreateBackend());
     return PServerPipeline();
   }
   if (ps::PSContext::instance()->is_scheduler()) {
@@ -952,7 +952,7 @@ std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::stri
     // Connect session to debugger
     backend_ptr->SetDebugger();
 #endif
-    resource->results()[kBackend] = backend_ptr;
+    resource->SetResult(kBackend, backend_ptr);
     // If enable compilation cache and the cache is read successfully, do the backend actions only.
     if (resource->enable_compile_cache() && resource->func_graph() != nullptr) {
       return BackendPipeline();
@@ -1033,8 +1033,14 @@ bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple
   abstract::AnalysisContext::ClearContext();
   // Reclaim all resource used by optimizer.
   ReclaimOptimizer();
+  // Clean cache used for parse. As static variable is released after
+  // Python threads is released.
+  parse::data_converter::ClearObjectCache();
+  parse::Parser::CleanParserResource();
+  parse::CleanDataClassToClassMap();
+  trace::ClearTraceStack();
+  // Clean cache used while compile
   resource->Clean();
-
   MS_LOG(INFO) << "Finish compiling.";
   return true;
 }
@@ -1061,6 +1067,12 @@ void GraphExecutorPy::ReleaseResource(const py::object &phase) {
   if (res != nullptr) {
     res->Clean();
   }
+  // Clean cache used for parse. As static variable is released after
+  // Python threads is released.
+  parse::data_converter::ClearObjectCache();
+  parse::Parser::CleanParserResource();
+  parse::CleanDataClassToClassMap();
+  trace::ClearTraceStack();
   // Reclaim all resource used by optimizer;
   ReclaimOptimizer();
 }

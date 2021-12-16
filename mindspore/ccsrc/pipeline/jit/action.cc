@@ -138,30 +138,27 @@ void ResetMindRTEnable(const ResourcePtr &res) {
     // Update the backend.
     auto new_backend = compile::CreateBackend();
     new_backend->SetDebugger();
-    res->results()[kBackend] = new_backend;
+    res->SetResult(kBackend, new_backend);
   }
 }
 
 void TaskEmitActionForMindRT(const ResourcePtr &res) {
   MS_EXCEPTION_IF_NULL(res);
   // Get the mindRT backend.
-  auto bc_ptr = res->results()[kBackend].cast<compile::BackendPtr>();
+  auto bc_ptr = res->GetResult(kBackend).cast<compile::BackendPtr>();
   auto mindrt_bc_ptr = std::dynamic_pointer_cast<compile::MindRTBackend>(bc_ptr);
   MS_EXCEPTION_IF_NULL(mindrt_bc_ptr);
 
   // The output of graph compiler is actor.
-  res->results()[kOutput] = mindrt_bc_ptr->CompileGraphs(res->func_graph());
+  auto actor_info = mindrt_bc_ptr->CompileGraphs(res->func_graph());
+  res->SetResult(kOutput, actor_info);
 }
 
 void ExecuteActionForMindRT(const ResourcePtr &res) {
   MS_EXCEPTION_IF_NULL(res);
-  if (!res->results()[kOutput].is<compile::ActorInfo>()) {
-    MS_LOG(EXCEPTION) << "Execute args error";
-  }
-  const auto &actor_info = res->results()[kOutput].cast<compile::ActorInfo>();
-
+  const auto actor_info = res->GetResult(kOutput).cast<compile::ActorInfo>();
   // Get the mindRT backend.
-  std::shared_ptr<compile::Backend> bc_ptr = res->results()[kBackend].cast<std::shared_ptr<compile::Backend>>();
+  std::shared_ptr<compile::Backend> bc_ptr = res->GetResult(kBackend).cast<std::shared_ptr<compile::Backend>>();
   auto mindrt_bc_ptr = (std::dynamic_pointer_cast<compile::MindRTBackend>(bc_ptr)).get();
   MS_EXCEPTION_IF_NULL(mindrt_bc_ptr);
 
@@ -174,7 +171,7 @@ void ExecuteActionForMindRT(const ResourcePtr &res) {
       MS_LOG(DEBUG) << "out size " << outputs.size();
       return outputs[0];
     });
-  res->results()[kOutput] = run;
+  res->SetResult(kOutput, run);
 }
 
 // Modify the output node of func_graph to add forward nodes used in bprop graph.
@@ -744,7 +741,7 @@ bool TaskEmitAction(const ResourcePtr &res) {
   ResetMindRTEnable(res);
   FuncGraphPtr func_graph = res->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
-  auto bc_ptr = res->results()[kBackend].cast<compile::BackendPtr>();
+  auto bc_ptr = res->GetResult(kBackend).cast<compile::BackendPtr>();
   auto context_ptr = MsContext::GetInstance();
   std::string backend = MsContext::GetInstance()->backend_policy();
   MS_EXCEPTION_IF_NULL(context_ptr);
@@ -778,7 +775,8 @@ bool TaskEmitAction(const ResourcePtr &res) {
 
   // The graph compiling of control sink.
   if (IsCtrlSink() && backend == kMsConvert) {
-    res->results()[kOutput] = bc_ptr->CompileGraph(NOT_NULL(func_graph));
+    auto graph_id = bc_ptr->CompileGraph(NOT_NULL(func_graph));
+    res->SetResult(kOutput, graph_id);
     return true;
   }
   std::vector<PrimitivePtr> cut_list = compile::nonlinear_ops;
@@ -786,7 +784,8 @@ bool TaskEmitAction(const ResourcePtr &res) {
     cut_list = compile::GetMsNonlinearOps();
   }
   std::shared_ptr<CompileGraphs> compile = std::make_shared<CompileGraphs>(bc_ptr, cut_list);
-  res->results()[kOutput] = compile->CompileAndLink(func_graph);
+  auto vm = compile->CompileAndLink(func_graph);
+  res->SetResult(kOutput, vm);
   return true;
 }
 
@@ -796,7 +795,7 @@ bool ExecuteAction(const ResourcePtr &res) {
       CheckGraphOutputConstOrParameter(res->func_graph())) {
     return true;
   }
-  if (res->results().count(kOutput) == 0) {
+  if (!res->HasResult(kOutput)) {
     MS_LOG(EXCEPTION) << "Execute args error";
   }
   std::string backend = MsContext::GetInstance()->backend_policy();
@@ -808,11 +807,8 @@ bool ExecuteAction(const ResourcePtr &res) {
 
   // The graph running of control sink.
   if (IsCtrlSink() && backend == kMsConvert) {
-    if (!res->results()[kOutput].is<GraphId>()) {
-      MS_LOG(EXCEPTION) << "Execute args error";
-    }
-    auto graph_id = res->results()[kOutput].cast<GraphId>();
-    std::shared_ptr<compile::Backend> bc_ptr = res->results()[kBackend].cast<std::shared_ptr<compile::Backend>>();
+    auto graph_id = res->GetResult(kOutput).cast<GraphId>();
+    std::shared_ptr<compile::Backend> bc_ptr = res->GetResult(kBackend).cast<std::shared_ptr<compile::Backend>>();
     compile::MsBackend *msbc_ptr = std::dynamic_pointer_cast<compile::MsBackend>(bc_ptr).get();
     MS_EXCEPTION_IF_NULL(msbc_ptr);
     compile::VmEvalFuncPtr run =
@@ -822,21 +818,18 @@ bool ExecuteAction(const ResourcePtr &res) {
         MS_LOG(DEBUG) << "out size " << outs.size();
         return outs[0];
       });
-    res->results()[kOutput] = run;
+    res->SetResult(kOutput, run);
     return true;
   }
 
-  if (!res->results()[kOutput].is<compile::FinalVMPtr>()) {
-    MS_LOG(EXCEPTION) << "Execute args error";
-  }
-  compile::FinalVMPtr vm = res->results()[kOutput].cast<compile::FinalVMPtr>();
+  compile::FinalVMPtr vm = res->GetResult(kOutput).cast<compile::FinalVMPtr>();
   if (vm == nullptr) {
     MS_LOG(INFO) << "Call GE to Run the func_graph instead of VM";
     return true;
   }
   compile::VmEvalFuncPtr run =
     std::make_shared<compile::VmEvalFunc>(std::bind(&compile::FinalVM::Eval, vm, std::placeholders::_1));
-  res->results()[kOutput] = run;
+  res->SetResult(kOutput, run);
   return true;
 }
 
