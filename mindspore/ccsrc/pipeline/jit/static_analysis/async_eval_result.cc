@@ -159,6 +159,34 @@ AbstractBasePtr AsyncAbstract::GetResult() {
   return ret;
 }
 
+namespace {
+AbstractFunctionPtr GetAbstractFuncRecursively(const AbstractBasePtr &abs, const std::vector<std::size_t> &index,
+                                               const std::size_t offset) {
+  if (abs->isa<AbstractFuncAtom>()) {
+    return abs->cast<AbstractFuncAtomPtr>();
+  } else if (abs->isa<AbstractSequence>()) {
+    const auto &abs_seq = abs->cast<AbstractSequencePtr>();
+    MS_EXCEPTION_IF_NULL(abs_seq);
+    const auto &elements = abs_seq->elements();
+    if (offset >= index.size()) {
+      MS_LOG(EXCEPTION) << "Offset " << offset << " is greater than or equal to vector size: " << index.size();
+    }
+    if (index[offset] >= elements.size()) {
+      MS_LOG(EXCEPTION) << "At offset" << offset << ", elements size of AsyncAbstract result: " << abs->ToString()
+                        << " is less than or equal to index: " << index[offset];
+    }
+    const auto &resolved = GetAbstractFuncRecursively(elements[index[offset]], index, offset + 1);
+    if (!resolved->isa<AbstractFuncAtom>()) {
+      MS_LOG(EXCEPTION) << "AsyncAbstract result cannot be resolved to AbstractFuncAtom, but: " << resolved->ToString();
+    }
+    MS_LOG(DEBUG) << "Return abstract: " << resolved->ToString();
+    return resolved->cast<AbstractFuncAtomPtr>();
+  }
+  MS_LOG(EXCEPTION) << "AsyncAbstract cannot resolved to AbstractFuncAtom or AbstractSeqeunce, but: "
+                    << abs->ToString();
+}
+}  // namespace
+
 AbstractFunctionPtr AsyncAbstractFuncAtom::GetUnique() {
   if (resolved_ != nullptr) {
     return resolved_;
@@ -168,26 +196,7 @@ AbstractFunctionPtr AsyncAbstractFuncAtom::GetUnique() {
 
   MS_LOG(DEBUG) << "Try to GetResult from async_abstract: " << async_abstract_->ToString();
   const auto &result = async_abstract_->GetResult();
-  if (result->isa<AbstractFuncAtom>()) {
-    resolved_ = result->cast<AbstractFuncAtomPtr>();
-  } else if (result->isa<AbstractSequence>()) {
-    const auto &abs_seq = result->cast<AbstractSequencePtr>();
-    MS_EXCEPTION_IF_NULL(abs_seq);
-    const auto &elements = abs_seq->elements();
-    if (elements.size() < index_) {
-      MS_LOG(EXCEPTION) << "Elements of AsyncAbstract result: " << result->ToString()
-                        << " size is less than index: " << index_;
-    }
-    if (!elements[index_]->isa<AbstractFuncAtom>()) {
-      MS_LOG(EXCEPTION) << "AsyncAbstract result cannot resolve to AbstractFuncAtom, but: "
-                        << elements[index_]->ToString();
-    }
-    MS_LOG(DEBUG) << "Return Abstract: " << elements[index_]->ToString();
-    resolved_ = elements[index_]->cast<AbstractFuncAtomPtr>();
-  } else {
-    MS_LOG(EXCEPTION) << "AsyncAbstract cannot resolve to AbstractFuncAtom or AbstractSequence, but: "
-                      << result->ToString();
-  }
+  resolved_ = GetAbstractFuncRecursively(result, index_, 0);
   return resolved_;
 }
 
