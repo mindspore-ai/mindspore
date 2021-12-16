@@ -56,7 +56,7 @@ class MS_CORE_API NonMaxSuppression : public PrimitiveC {
 
   /// \brief Method to get center_point_box attribute.
   ///
-  /// \return a integer value.
+  /// \return an integer value.
   int64_t get_center_point_box() const;
 };
 AbstractBasePtr NonMaxSuppressionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

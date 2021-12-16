@@ -79,7 +79,7 @@ bool CheckValues(const ValuePtrList &strides_values) {
           return false;
         }
       } else {
-        MS_LOG(DEBUG) << "strides value is not a Integer";
+        MS_LOG(DEBUG) << "Strides value is not an integer";
         return false;
       }
     } else {

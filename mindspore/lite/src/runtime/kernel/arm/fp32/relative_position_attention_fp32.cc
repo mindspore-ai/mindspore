@@ -246,7 +246,7 @@ int RelativePositionAttentionCPUKernel::PrepareParam() {
     return RET_ERROR;
   }
   if (param_->d_model_ % param_->num_heads_ != 0) {
-    MS_LOG(ERROR) << "D_model should be a integer multiple of num_heads.";
+    MS_LOG(ERROR) << "D_model should be an integer multiple of num_heads.";
     return RET_ERROR;
   }
   return RET_OK;

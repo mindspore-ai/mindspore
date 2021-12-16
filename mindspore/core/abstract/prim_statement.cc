@@ -80,7 +80,7 @@ AbstractBasePtr InferImplSwitchLayer(const AnalysisEnginePtr &, const PrimitiveP
   }
   auto dtype = index->element()->BuildType();
   if (dtype->type_id() != kInt32->type_id()) {
-    MS_EXCEPTION(ValueError) << op_name << " index must be a int32, but got " << dtype->ToString();
+    MS_EXCEPTION(ValueError) << op_name << " index must be an int32, but got " << dtype->ToString();
   }
 
   AbstractTuplePtr branches_abs = CheckArg<AbstractTuple>(op_name, args_spec_list, 1);
