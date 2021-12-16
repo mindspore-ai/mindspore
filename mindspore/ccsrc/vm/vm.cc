@@ -159,7 +159,7 @@ void FinalVM::DoJmp(const BaseRef &jmp_orig) {
   }
 
   if (!utils::isa<int64_t>(jmp)) {
-    MS_LOG(EXCEPTION) << "Jmp inst should be a int64_t";
+    MS_LOG(EXCEPTION) << "Jmp inst should be an int64_t";
   }
   pc_ = utils::cast<int64_t>(jmp);
   MS_LOG(DEBUG) << "End do jump pc_:" << pc_;

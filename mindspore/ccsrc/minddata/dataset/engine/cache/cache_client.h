@@ -179,7 +179,7 @@ class CacheClient {
   Status GetStat(CacheServiceStat *);
 
   /// \brief Get the state of a cache server
-  /// \param[in/out] Pointer to a int8_t
+  /// \param[in/out] Pointer to an int8_t
   /// \return Status object
   Status GetState(int8_t *);
 

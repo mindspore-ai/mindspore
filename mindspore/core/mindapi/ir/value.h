@@ -197,7 +197,7 @@ inline ValuePtr MakeValue(T v) {
 /// \return The created StringImm Value object.
 inline ValuePtr MakeValue(const char *s) { return MakeShared<StringImm>(std::string(s)); }
 
-/// \brief brief Create a Int64Imm Value object from a int value.
+/// \brief brief Create an Int64Imm Value object from a int value.
 ///
 /// \param[in] i The int value.
 ///

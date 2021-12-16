@@ -333,7 +333,7 @@ py::object GetItemObjectFromSequence(const NameSpacePtr &name_space, const Symbo
   const std::string module = "mindspore._extends.parse.parser";
   auto imm_value = GetValueNode<Int64ImmPtr>(index_node);
   if (imm_value == nullptr) {
-    MS_LOG(EXCEPTION) << "Expect a int64 value node, node: " << node->DebugString()
+    MS_LOG(EXCEPTION) << "Expect an int64 value node, node: " << node->DebugString()
                       << ", index_node: " << index_node->DebugString();
   }
   int index = imm_value->value();
