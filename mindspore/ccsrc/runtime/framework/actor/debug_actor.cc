@@ -81,7 +81,9 @@ void DebugActor::DebugForGraph(const KernelGraphPtr &graph, const DeviceContext 
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(op_context);
   MS_EXCEPTION_IF_NULL(from_aid);
-
+#ifdef ENABLE_DEBUGGER
+  LoadDataForDump(graph);
+#endif
   // Call back to the from actor to process after debug finished.
   ActorDispatcher::Send(*from_aid, &DebugAwareActor::OnDebugFinish, op_context);
 }

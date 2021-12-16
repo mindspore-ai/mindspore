@@ -184,6 +184,25 @@ std::string CheckDatasetSinkMode(const KernelGraphPtr &graph_ptr) {
   return error_info;
 }
 
+void LoadDataForDump(const KernelGraphPtr &graph_ptr) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) != kAscendDevice) {
+    return;
+  }
+#ifdef ENABLE_DEBUGGER
+  MS_LOG(INFO) << "Start load step";
+  auto debugger = Debugger::GetInstance();
+  MS_EXCEPTION_IF_NULL(debugger);
+  debugger->SetGraphPtr(graph_ptr);
+  // load output
+  debugger->LoadGraphOutputs();
+  // load parameters
+  debugger->LoadParametersAndConst();
+
+#endif
+}
+
 #ifdef ENABLE_D
 int32_t DumpDataCallBack(const DumpChunk *dump_chunk, int32_t size) {
   MS_LOG(DEBUG) << "ADX DumpDataCallBack is called";
