@@ -116,8 +116,8 @@ def solve_triangular(A, b, trans=0, lower=False, unit_diagonal=False,
 
     Returns:
         Tensor of shape :math:`(M,)` or :math:`(M, N)`,
-            which is the solution to the system :math:`A x = b`.
-            Shape of :math:`x` matches :math:`b`.
+        which is the solution to the system :math:`A x = b`.
+        Shape of :math:`x` matches :math:`b`.
 
     Raises:
         LinAlgError: If :math:`A` is singular
@@ -213,9 +213,9 @@ def cho_factor(a, lower=False, overwrite_a=False, check_finite=True):
             (crashes, non-termination) if the inputs do contain infinities or NaNs.
 
     Returns:
-        Tensor, Matrix whose upper or lower triangle contains the Cholesky factor of `a`.
-         Other parts of the matrix contain random data.
-        bool, Flag indicating whether the factor is in the lower or upper triangle
+         - Tensor, Matrix whose upper or lower triangle contains the Cholesky factor of `a`.
+        Other parts of the matrix contain random data.
+         - bool, Flag indicating whether the factor is in the lower or upper triangle
 
     Raises:
         LinAlgError: Raised if decomposition fails.
@@ -357,9 +357,9 @@ def eigh(a, b=None, lower=True, eigvals_only=False, overwrite_a=False,
             and eigenvectors are returned.
 
     Returns:
-        Tensor with shape (N,), The N (1<=N<=M) selected eigenvalues, in ascending order,
-            each repeated according to its multiplicity.
-        Tensor with shape (M, N), (if ``eigvals_only == False``)
+         - Tensor with shape (N,), The N (1<=N<=M) selected eigenvalues, in ascending order,
+        each repeated according to its multiplicity.
+         - Tensor with shape (M, N), (if ``eigvals_only == False``)
 
     Raises:
         LinAlgError: If eigenvalue computation does not converge, an error occurred, or b matrix is not
@@ -457,9 +457,9 @@ def lu_factor(a, overwrite_a=False, check_finite=True):
 
     Returns:
         Tensor, a square matrix of (N, N) containing U in its upper triangle, and L in its lower triangle.
-            The unit diagonal elements of L are not stored.
+        The unit diagonal elements of L are not stored.
         Tensor, (N,) Pivot indices representing the permutation matrix P:
-            row i of matrix was interchanged with row piv[i].
+        row i of matrix was interchanged with row piv[i].
 
     Supported Platforms:
         ``CPU`` ``GPU``
@@ -506,16 +506,14 @@ def lu(a, permute_l=False, overwrite_a=False, check_finite=True):
     Returns:
         **(If permute_l == False)**
 
-        Tensor, (M, M) Permutation matrix
-        Tensor, (M, K) Lower triangular or trapezoidal matrix with unit diagonal.
-            K = min(M, N)
-        Tensor, (K, N) Upper triangular or trapezoidal matrix
+        - Tensor, (M, M) Permutation matrix
+        - Tensor, (M, K) Lower triangular or trapezoidal matrix with unit diagonal. K = min(M, N)
+        - Tensor, (K, N) Upper triangular or trapezoidal matrix
 
         **(If permute_l == True)**
 
-        Tensor, (M, K) Permuted L matrix.
-            K = min(M, N)
-        Tensor, (K, N) Upper triangular or trapezoidal matrix
+         - Tensor, (M, K) Permuted L matrix. K = min(M, N)
+         - Tensor, (K, N) Upper triangular or trapezoidal matrix
 
     Supported Platforms:
         ``CPU`` ``GPU``

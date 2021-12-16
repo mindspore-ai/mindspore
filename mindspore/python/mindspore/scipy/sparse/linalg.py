@@ -187,6 +187,10 @@ def gmres(A, b, x0=None, *, tol=1e-5, atol=0.0, restart=20, maxiter=None,
     need not have any particular special properties, such as symmetry. However,
     convergence is often slow for nearly symmetric operators.
 
+    Note:
+        In the future, MindSpore will report the number of iterations when convergence
+        is not achieved, like SciPy. Currently it is None, as a Placeholder.
+
     Args:
         A (Tensor or function): 2D Tensor or function that calculates the linear
             map (matrix-vector product) ``Ax`` when called like ``A(x)``.
@@ -225,9 +229,8 @@ def gmres(A, b, x0=None, *, tol=1e-5, atol=0.0, restart=20, maxiter=None,
             early termination, but has much less overhead on GPUs.
 
     Returns:
-        Tensor, The converged solution. Has the same structure as ``b``.
-        None, Placeholder for convergence information. In the future, MindSpore
-            will report the number of iterations when convergence is not achieved, like SciPy.
+         - Tensor, The converged solution. Has the same structure as ``b``.
+         - None, Placeholder for convergence information.
 
     Supported Platforms:
         ``CPU`` ``GPU``
@@ -324,6 +327,10 @@ def cg(A, b, x0=None, *, tol=1e-5, atol=0.0, maxiter=None, M=None):
     another ``cg`` solve, rather than by differentiating *through* the solver.
     They will be accurate only if both solves converge.
 
+    Note:
+        In the future, MindSpore will report the number of iterations when convergence
+        is not achieved, like SciPy. Currently it is None, as a Placeholder.
+
     Args:
         A (Tensor or function): 2D Tensor or function that calculates the linear
             map (matrix-vector product) ``Ax`` when called like ``A(x)``.
@@ -342,9 +349,8 @@ def cg(A, b, x0=None, *, tol=1e-5, atol=0.0, maxiter=None, M=None):
             to reach a given error tolerance.
 
     Returns:
-        Tensor, The converged solution. Has the same structure as ``b``.
-        None, Placeholder for convergence information. In the future, MindSpore will report
-            the number of iterations when convergence is not achieved, like SciPy.
+         - Tensor, The converged solution. Has the same structure as ``b``.
+         - None, Placeholder for convergence information.
 
     Supported Platforms:
         ``CPU`` ``GPU``
