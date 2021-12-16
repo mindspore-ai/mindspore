@@ -152,6 +152,10 @@ public class SessionUtil {
             logger.severe(Common.addTag("trainSession cannot be null"));
             return;
         }
+        if(trainSession.getSessionPtr() == 0) {
+            logger.warning(Common.addTag("trainSession pointer has already free"));
+            return;
+        }
         trainSession.free();
     }
 }
