@@ -370,7 +370,7 @@ void GPUDeviceContext::UpdateDynamicShape(const CNodePtr &kernel) const {
   MS_EXCEPTION_IF_NULL(ms_context);
   bool is_pynative_infer = ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER);
   bool is_pynative_mode = ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode;
-  std::vector<int64_t> dynamic_shape_depends = abstract::GetDependsFormMap(kernel);
+  auto dynamic_shape_depends = abstract::GetDependsFormMap(kernel);
   if ((is_pynative_infer || is_pynative_mode) && dynamic_shape_depends.empty()) {
     return;
   }

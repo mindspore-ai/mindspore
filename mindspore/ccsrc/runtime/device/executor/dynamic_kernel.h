@@ -21,6 +21,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <set>
 #include "ir/anf.h"
 #include "ir/tensor.h"
 #include "abstract/primitive_infer_map.h"
@@ -46,8 +47,6 @@ class DynamicKernel {
   [[nodiscard]] int GetKernelType() const;
 
  protected:
-  void RebuildDependTensor();
-  void InferShapeRecursive();
   static void InferShapeForNopNode(AnfNodePtr *input_node);
 
   void *stream_;
@@ -55,7 +54,7 @@ class DynamicKernel {
   bool is_dynamic_shape_;
   bool is_input_dynamic_shape_;
   bool is_output_dynamic_shape_;
-  std::vector<uint32_t> depend_list_;
+  std::set<uint32_t> depend_list_;
   std::map<uint32_t, tensor::TensorPtr> depend_tensor_map_;
 };
 using DynamicKernelPtr = std::shared_ptr<DynamicKernel>;

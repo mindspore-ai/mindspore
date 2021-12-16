@@ -29,7 +29,7 @@
 
 namespace mindspore {
 enum SourceLineTip { kSourceLineTipDiscard = 0, kSourceLineTipNextLine = 1, kSourceLineTipInLine = 2 };
-
+typedef enum CacheBool { UNCACHED = -1, FALSE, TRUE } CacheBool;
 // Location class record the location in source code.
 class Location {
  public:

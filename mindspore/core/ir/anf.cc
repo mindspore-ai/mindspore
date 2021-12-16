@@ -622,14 +622,36 @@ std::string GetOriginNodeTarget(const AnfNodePtr &node) {
 }
 
 std::string GetCNodeTarget(const AnfNodePtr &node) {
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  std::string default_target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  auto target = GetOriginNodeTarget(node);
-  if (target != kTargetUnDefined) {
-    return target;
+  auto kernel_info = node->kernel_info();
+  if (kernel_info != nullptr) {
+    auto runtime_cache = kernel_info->runtime_cache();
+    MS_EXCEPTION_IF_NULL(runtime_cache);
+    if (runtime_cache->is_valid()) {
+      auto tmp_target = runtime_cache->device_target();
+      if (!tmp_target.empty()) {
+        return tmp_target;
+      }
+    }
   }
-  return default_target;
+
+  std::string target;
+  auto ori_target = GetOriginNodeTarget(node);
+  if (ori_target != kTargetUnDefined) {
+    target = ori_target;
+  } else {
+    auto context_ptr = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context_ptr);
+    target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  }
+
+  if (kernel_info != nullptr) {
+    auto runtime_cache = kernel_info->runtime_cache();
+    MS_EXCEPTION_IF_NULL(runtime_cache);
+    if (runtime_cache->is_valid()) {
+      runtime_cache->set_device_target(target);
+    }
+  }
+  return target;
 }
 
 bool ContainMultiTarget(const std::vector<AnfNodePtr> &nodes) {

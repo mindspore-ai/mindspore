@@ -18,6 +18,10 @@
 #define MINDSPORE_CORE_IR_KERNEL_INFO_DEV_H_
 
 #include <memory>
+#include <map>
+#include <utility>
+#include <string>
+#include "utils/info.h"
 
 namespace mindspore {
 enum Axis : int {
@@ -26,11 +30,51 @@ enum Axis : int {
   H,
   W,
 };
+
+// Cache some runtime information which not be changed.
+class RuntimeCache {
+ public:
+  std::pair<AnfNodePtr, size_t> get_prev_node_output(size_t index) {
+    auto it = prev_node_output_map_.find(index);
+    if (it != prev_node_output_map_.end()) {
+      return it->second;
+    } else {
+      return std::pair<AnfNodePtr, size_t>();
+    }
+  }
+
+  void set_prev_node_output(size_t index, std::pair<AnfNodePtr, size_t> output) {
+    auto pr = std::make_pair(index, output);
+    (void)prev_node_output_map_.insert(pr);
+  }
+
+  std::string device_target() { return device_target_; }
+
+  void set_device_target(const std::string &target) { device_target_ = target; }
+  bool is_valid() { return is_valid_; }
+  void set_valid() { is_valid_ = true; }
+  void set_output_tensor_num(const ssize_t output_tensor_num) { output_tensor_num_ = output_tensor_num; }
+  ssize_t output_tensor_num() const { return output_tensor_num_; }
+  void set_real_kernel(enum CacheBool b) { is_real_kernel_ = b; }
+  enum CacheBool is_real_kernel() { return is_real_kernel_; }
+
+ private:
+  bool is_valid_{false};
+  std::map<size_t, std::pair<AnfNodePtr, size_t>> prev_node_output_map_;
+  std::string device_target_;
+  ssize_t output_tensor_num_ = -1;
+  enum CacheBool is_real_kernel_ = CacheBool::UNCACHED;
+};
 // Interface for device kernel program information.
 class KernelInfoDevice {
  public:
   // If kernel program was built and build info is set.
   virtual bool has_build_info() const = 0;
+
+  RuntimeCache *runtime_cache() { return &runtime_cache_; }
+
+ private:
+  RuntimeCache runtime_cache_;
 };
 using KernelInfoDevicePtr = std::shared_ptr<KernelInfoDevice>;
 }  // namespace mindspore

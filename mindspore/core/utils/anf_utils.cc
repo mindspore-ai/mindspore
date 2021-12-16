@@ -108,7 +108,28 @@ bool AnfUtils::IsRealKernel(const AnfNodePtr &node) {
   if (cnode->size() == 0) {
     MS_LOG(EXCEPTION) << "Illegal null input of cnode(%s)" << node->DebugString() << trace::DumpSourceLines(node);
   }
-  return !IsOneOfPrimitive(cnode->input(kAnfPrimitiveIndex), virtual_prims);
+
+  auto kernel_info = cnode->kernel_info();
+  if (kernel_info) {
+    auto runtime_cache = kernel_info->runtime_cache();
+    MS_EXCEPTION_IF_NULL(runtime_cache);
+    if (runtime_cache->is_real_kernel() != CacheBool::UNCACHED) {
+      return (runtime_cache->is_real_kernel() == CacheBool::TRUE);
+    }
+  }
+  bool res = !IsOneOfPrimitive(cnode->input(kAnfPrimitiveIndex), virtual_prims);
+
+  if (kernel_info) {
+    auto runtime_cache = kernel_info->runtime_cache();
+    MS_EXCEPTION_IF_NULL(runtime_cache);
+    if (res) {
+      runtime_cache->set_real_kernel(CacheBool::TRUE);
+    } else {
+      runtime_cache->set_real_kernel(CacheBool::FALSE);
+    }
+  }
+
+  return res;
 }
 
 bool AnfUtils::IsRealCNodeKernel(const AnfNodePtr &node) {
@@ -183,19 +204,38 @@ size_t AnfUtils::GetInputTensorNum(const AnfNodePtr &node) {
 
 size_t AnfUtils::GetOutputTensorNum(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
+  auto kernel_info = node->kernel_info();
+  if (kernel_info) {
+    auto runtime_cache = kernel_info->runtime_cache();
+    if (runtime_cache->is_valid()) {
+      ssize_t output_tensor_num = runtime_cache->output_tensor_num();
+      if (output_tensor_num >= 0) {
+        return static_cast<size_t>(output_tensor_num);
+      }
+    }
+  }
+
+  size_t res;
   TypePtr type = node->Type();
   if (type == nullptr) {
-    return 0;
-  }
-  if (type->isa<Tuple>()) {
+    res = 0;
+  } else if (type->isa<Tuple>()) {
     auto tuple_type = type->cast<TuplePtr>();
     MS_EXCEPTION_IF_NULL(tuple_type);
-    return tuple_type->size();
+    res = tuple_type->size();
+  } else if (type->isa<TypeNone>()) {
+    res = 0;
+  } else {
+    res = 1;
   }
-  if (type->isa<TypeNone>()) {
-    return 0;
+
+  if (kernel_info) {
+    auto runtime_cache = kernel_info->runtime_cache();
+    if (runtime_cache->is_valid()) {
+      runtime_cache->set_output_tensor_num(static_cast<ssize_t>(res));
+    }
   }
-  return 1;
+  return res;
 }
 
 std::pair<AnfNodePtr, size_t> AnfUtils::VisitKernel(const AnfNodePtr &anf_node, size_t index) {
