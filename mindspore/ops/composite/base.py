@@ -20,7 +20,7 @@ from functools import partial
 from types import FunctionType
 
 from mindspore import context
-from ..._c_expression import EnvInstance_, GradOperation_, HyperMap_, Map_, MultitypeFuncGraph_, Tail_, \
+from ..._c_expression import EnvInstance_, GradOperation_, HyperMap_, Map_, MultitypeFuncGraph_, Tail_, Shard_, \
     TupleAdd_, TupleSlice_, UnpackCall_, ZipOperation_, ListAppend_, TupleGetItemTensor_, ListInsert_
 from ...common import dtype as mstype
 from ...common.api import ms_function, _pynative_executor, _wrap_func
@@ -733,6 +733,48 @@ class Map(Map_):
             func = args[0]
             args_list = args[1:]
         return tuple(map(func, *args_list))
+
+
+class Shard(Shard_):
+    """Shard operation"""
+    def __init__(self):
+        """Initialize Shard."""
+        Shard_.__init__(self, 'Shard')
+        self.shard_fn = None
+        self.fn = None
+        self.in_axes = None
+        self.out_axes = None
+        self.device = None
+        self.level = None
+
+    def __call__(self, fn, in_axes, out_axes, device, level=0):
+        if not isinstance(in_axes, tuple):
+            raise TypeError(f"For 'Shard', the 'in_axes' should be a tuple, but got {type(in_axes).__name__}")
+        if not isinstance(out_axes, tuple):
+            raise TypeError(f"For 'Shard', the 'out_axes' should be a tuple, "
+                            f"but got {type(out_axes).__name__}")
+        if not isinstance(device, str):
+            raise TypeError(f"For 'Shard', the 'device' should be a string, "
+                            f"but got {type(device).__name__}")
+        if not isinstance(level, int):
+            raise TypeError(f"For 'Shard', the 'level' should be an integer, "
+                            f"but got {type(level).__name__}")
+        if self.shard_fn is not None and self.fn == fn and self.in_axes == in_axes and self.out_axes == out_axes and \
+            self.device == device and self.level == level:
+            return self.shard_fn
+        shard_ = Shard()
+
+        @ms_function
+        def after_shard(*args):
+            return shard_(fn, in_axes, out_axes, device, level)(*args)
+
+        self.shard_fn = after_shard
+        self.fn = fn
+        self.in_axes = in_axes
+        self.out_axes = out_axes
+        self.device = device
+        self.level = level
+        return self.shard_fn
 
 
 class _ListAppend(ListAppend_):

@@ -322,6 +322,36 @@ class MS_CORE_API JTransformedAbstractClosure final : public AbstractFuncAtom {
   AbstractFuncAtomPtr fn_;
 };
 
+/// \brief ShardTransformedAbstractClosure defines interface for abstract of Function
+/// transformed through the application of Shard.
+class MS_CORE_API ShardTransformedAbstractClosure final : public AbstractFuncAtom {
+ public:
+  /// \brief Constructor of ShardTransformedAbstractClosure
+  ///
+  /// \param[in] fn The AbstractFuncAtom transformed through the application of Shard.
+  explicit ShardTransformedAbstractClosure(const AbstractFuncAtomPtr &fn) : fn_(fn) {}
+
+  /// \brief Destructor of ShardTransformedAbstractClosure
+  ~ShardTransformedAbstractClosure() override = default;
+  MS_DECLARE_PARENT(ShardTransformedAbstractClosure, AbstractFuncAtom)
+
+  /// \brief Get the AbstractFuncAtom ShardTransformedAbstractClosure corresponding to.
+  ///
+  /// \return The AbstractFuncAtom ShardTransformedAbstractClosure corresponding to.
+  AbstractFuncAtomPtr fn() { return fn_; }
+
+  AbstractFunctionPtr Copy() const override { return std::make_shared<ShardTransformedAbstractClosure>(fn_); }
+
+  bool operator==(const AbstractFunction &other) const override;
+
+  std::size_t hash() const override;
+
+  std::string ToString() const override { return "Shard(" + fn_->ToString() + ")"; }
+
+ private:
+  AbstractFuncAtomPtr fn_;
+};
+
 /// \brief VirtualAbstractClosure defines interface for function with an explicitly
 /// fixed type signature.
 class MS_CORE_API VirtualAbstractClosure final : public AbstractFuncAtom {

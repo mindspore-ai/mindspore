@@ -1115,5 +1115,76 @@ REGISTER_PYBIND_DEFINE(TupleGetItemTensor_, ([](const py::module *m) {
                            *m, "TupleGetItemTensor_")
                            .def(py::init<std::string &>());
                        }));
+
+namespace {
+FuncGraphPtr GetShard(const AnfNodePtr &shard, const std::vector<AnfNodePtr> &origin_graph_params) {
+  FuncGraphPtr shard_child = std::make_shared<FuncGraph>();
+  shard_child->set_flag(FUNC_GRAPH_FLAG_CORE, true);
+
+  std::vector<AnfNodePtr> inputs;
+  inputs.reserve(origin_graph_params.size() + 1);
+  (void)inputs.emplace_back(shard);
+  for (size_t i = 0; i < origin_graph_params.size(); ++i) {
+    (void)inputs.emplace_back(shard_child->add_parameter());
+  }
+  auto shard_app = shard_child->NewCNodeInOrder(std::move(inputs));
+
+  shard_child->set_output(shard_app);
+  return shard_child;
+}
+}  // namespace
+
+FuncGraphPtr Shard::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
+  constexpr size_t shard_input_size = 5;
+  if (args_spec_list.size() != shard_input_size) {
+    MS_LOG(EXCEPTION) << "'Shard' requires " << shard_input_size
+                      << " inputs. Includes a Cell or function, in_axes, out_axes, device and level.";
+  }
+
+  MS_EXCEPTION_IF_NULL(args_spec_list[0]);
+  AbstractFunctionPtr fn = dyn_cast<AbstractFunction>(args_spec_list[0]);
+  if (fn == nullptr) {
+    MS_LOG(EXCEPTION) << "'Shard' arg0 must be a 'Function' or 'Cell', but got " << args_spec_list[0]->ToString()
+                      << ".";
+  }
+
+  auto real_fn = dyn_cast<FuncGraphAbstractClosure>(fn);
+  MS_EXCEPTION_IF_NULL(real_fn);
+  FuncGraphPtr origin_graph = real_fn->func_graph();
+  MS_EXCEPTION_IF_NULL(origin_graph);
+  origin_graph->set_flag(FUNC_GRAPH_FLAG_DEFER_INLINE, true);
+  FuncGraphPtr shard_fg = nullptr;
+  {
+    TraceGuard g(std::make_shared<TraceShard>(origin_graph->debug_info()));
+    shard_fg = std::make_shared<FuncGraph>();
+  }
+  // Create the debug info
+  auto parameter_size = origin_graph->parameters().size();
+  std::ostringstream ss;
+  ss << "shard{" << parameter_size << "}";
+  shard_fg->set_flag(FUNC_GRAPH_FLAG_CORE, true);
+  shard_fg->debug_info()->set_name(ss.str());
+  // Make the Shard node.
+  std::vector<AnfNodePtr> inputs;
+  inputs.reserve(args_spec_list.size() + 1);
+  (void)inputs.emplace_back(NewValueNode(prim::kPrimShard));
+  for (size_t i = 0; i < args_spec_list.size(); ++i) {
+    (void)inputs.emplace_back(shard_fg->add_parameter());
+  }
+  auto shard = shard_fg->NewCNodeInOrder(std::move(inputs));
+
+  FuncGraphPtr shard_child = nullptr;
+  {
+    TraceGuard guard(std::make_shared<TraceShard>(shard_fg->debug_info()));
+    shard_child = GetShard(shard, origin_graph->parameters());
+  }
+  shard_fg->set_output(NewValueNode(shard_child));
+  return shard_fg;
+}
+
+REGISTER_PYBIND_DEFINE(Shard_, ([](const py::module *m) {
+                         (void)py::class_<Shard, MetaFuncGraph, std::shared_ptr<Shard>>(*m, "Shard_")
+                           .def(py::init<std::string &>(), py::arg("fn"));
+                       }));
 }  // namespace prim
 }  // namespace mindspore

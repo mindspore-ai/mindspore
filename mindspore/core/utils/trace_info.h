@@ -402,6 +402,14 @@ class TraceMixedPrecision : public TraceInfo {
   ~TraceMixedPrecision() override = default;
   TraceInfoPtr clone() override { return std::make_shared<TraceMixedPrecision>(*this); }
 };
+
+class TraceShard : public TraceInfo {
+ public:
+  explicit TraceShard(const DebugInfoPtr &info) : TraceInfo(info) {}
+  ~TraceShard() override = default;
+  std::string name() const override { return "shard_ops"; }
+  TraceInfoPtr clone() override { return std::make_shared<TraceShard>(*this); }
+};
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_UTILS_TRACE_INFO_H_
