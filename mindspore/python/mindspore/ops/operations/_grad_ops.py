@@ -2441,6 +2441,44 @@ class LRNGrad(PrimitiveWithInfer):
         return x
 
 
+class MvlgammaGrad(Primitive):
+    r"""
+    Computes gradients for Mvlgamma.
+
+    The following tex shows the mathematical calculation process of Mvlgamma:
+
+    .. math::
+
+        \log (\Gamma_{p}(a))=C+\sum_{i=1}^{p} \log (\Gamma(a-\frac{i-1}{2}))
+
+    where :math:`C = \log(\pi) \times \frac{p(p-1)}{4}` and :math:`\Gamma(\cdot)` is the Gamma function.
+
+    Args:
+        p(int): The number of dimensions. And the value of `p` must be greater than or equal to 1.
+
+    Inputs:
+        - **y_grad** (Tensor) - The input gradient.
+        - **x** (Tensor) - The input of Mvlgamma with data type of float32 or float64.
+
+    Outputs:
+        Tensor, has the same shape and type as `x`.
+
+    Raises:
+        TypeError: If dtype of `y_grad or `x` is neither float32 nor float64.
+        TypeError: If `p` is not an int.
+        ValueError: If p is not greater than or equal to 1.
+        ValueError: If all elements of `x` are not greater than (p-1)/2.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+    """
+
+    @prim_attr_register
+    def __init__(self, p):
+        self.init_prim_io_names(inputs=['y_grad', 'x'], outputs=['x_grad'])
+        self.p = validator.check_value_type('p', p, [int], self.name)
+
+
 class MaskedSelectGrad(PrimitiveWithInfer):
     """Computes gradient for MaskedSelect."""
 

@@ -3959,6 +3959,56 @@ class DiagPart(PrimitiveWithInfer):
         return Tensor(ret)
 
 
+class Mvlgamma(Primitive):
+    r"""
+    Computes the multivariate log-gamma function with dimension p element-wise.
+
+    The following tex shows the mathematical calculation process of Mvlgamma:
+
+    .. math::
+
+        \log (\Gamma_{p}(a))=C+\sum_{i=1}^{p} \log (\Gamma(a-\frac{i-1}{2}))
+
+    where :math:`C = \log(\pi) \times \frac{p(p-1)}{4}` and :math:`\Gamma(\cdot)` is the Gamma function.
+
+    Args:
+        p(int): The number of dimensions. And the value of `p` must be greater than or equal to 1.
+
+    Inputs:
+        - **x** (Tensor) - The tensor to compute the multivariate log-gamma function,
+          which must be one of the following types: float32, float64.
+          The shape is :math:`(N,*)`, where :math:`*` means any number of additional dimensions.
+          And the value of any element in `x` must be greater than (p - 1) / 2.
+
+    Outputs:
+        Tensor, has the same shape and type as `x`.
+
+    Raises:
+        TypeError: If dtype of `x` is neither float32 nor float64.
+        TypeError: If `p` is not an int.
+        ValueError: If `p` is not greater than or equal to 1.
+        ValueError: If all elements of `x` are not greater than (p-1)/2.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([[3, 4, 5], [4, 2, 6]]), mindspore.float32)
+        >>> op = ops.Mvlgamma(p=3)
+        >>> y = op(x)
+        >>> print(y)
+        [[ 2.694925   5.402975   9.140645 ]
+         [ 5.402975   1.5963125 13.640454 ]]
+    """
+
+    @prim_attr_register
+    def __init__(self, p):
+        """Initialize Mvlgamma."""
+        self.init_prim_io_names(inputs=['x'], outputs=['y'])
+        validator.check_value_type('p', p, [int], self.name)
+        validator.check_positive_int(p, 'p', self.name)
+
+
 class Eye(Primitive):
     """
     Creates a tensor with ones on the diagonal and zeros in the rest.

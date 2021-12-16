@@ -174,6 +174,8 @@ constexpr auto kUpperBound = "UpperBound";
 constexpr auto kNonZero = "NonZero";
 constexpr auto kCummax = "Cummax";
 constexpr auto kLogSpace = "LogSpace";
+constexpr auto kMvlgamma = "Mvlgamma";
+constexpr auto kMvlgammaGrad = "MvlgammaGrad";
 constexpr auto kTril = "Tril";
 constexpr auto kEye = "Eye";
 constexpr auto kTriu = "Triu";
@@ -508,6 +510,8 @@ GVAR_DEF(PrimitivePtr, kPrimUpperBound, std::make_shared<Primitive>(kUpperBound)
 GVAR_DEF(PrimitivePtr, kPrimResizeBicubic, std::make_shared<Primitive>("ResizeBicubic"));
 GVAR_DEF(PrimitivePtr, kPrimResizeBicubicGrad, std::make_shared<Primitive>("ResizeBicubicGrad"));
 GVAR_DEF(PrimitivePtr, kPrimCummax, std::make_shared<Primitive>(kCummax));
+GVAR_DEF(PrimitivePtr, kPrimMvlgamma, std::make_shared<Primitive>(kMvlgamma));
+GVAR_DEF(PrimitivePtr, kPrimMvlgammaGrad, std::make_shared<Primitive>(kMvlgammaGrad));
 GVAR_DEF(PrimitivePtr, kPrimRightShift, std::make_shared<Primitive>(kRightShift));
 GVAR_DEF(PrimitivePtr, kPrimLogSpace, std::make_shared<Primitive>(kLogSpace));
 GVAR_DEF(PrimitivePtr, kPrimTril, std::make_shared<Primitive>(kTril));

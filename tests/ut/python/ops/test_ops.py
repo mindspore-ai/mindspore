@@ -3110,6 +3110,16 @@ test_case_array_ops = [
         'block': P.Rint(),
         'desc_inputs': [(Tensor(np.array([-1.6, -0.1, 1.5, 2.0]).astype(np.float32)))],
         'skip': ['backward']}),
+    ('Mvlgamma', {
+        'block': P.Mvlgamma(p=1),
+        'desc_inputs': [Tensor(np.array([[3, 4, 5], [4, 2, 6]]).astype(np.float32))],
+        'desc_bprop': [Tensor(np.array([[3, 4, 5], [4, 2, 6]]).astype(np.float32))]
+        }),
+    ('MvlgammaGrad', {
+        'block': G.MvlgammaGrad(p=1),
+        'desc_inputs': [Tensor(np.array([[3, 4, 5], [4, 2, 6]]).astype(np.float32)),
+                        Tensor(np.array([[3, 4, 5], [4, 2, 6]]).astype(np.float32))],
+        'skip': ['backward']}),
     ('ConcatV2_0', {
         'block': NetForConcat1(),
         'desc_inputs': [
