@@ -38,6 +38,7 @@ set(DATASET_ENGINE_IR_DATASETOPS_SOURCE_SRC_FILES
         minddata_node.cc
         mnist_node.cc
         multi30k_node.cc
+        omniglot_node.cc
         penn_treebank_node.cc
         photo_tour_node.cc
         places365_node.cc

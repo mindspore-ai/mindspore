@@ -4318,6 +4318,99 @@ inline std::shared_ptr<Multi30kDataset> MS_API Multi30k(const std::string &datas
                                            shard_id, cache);
 }
 
+/// \class OmniglotDataset
+/// \brief A source dataset for reading and parsing Omniglot dataset.
+class MS_API OmniglotDataset : public Dataset {
+ public:
+  /// \brief Constructor of OmniglotDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] background A flag to use background dataset or evaluation dataset.
+  /// \param[in] decode Decode the images after reading.
+  /// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  OmniglotDataset(const std::vector<char> &dataset_dir, bool background, bool decode,
+                  const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Constructor of OmniglotDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] background A flag to use background dataset or evaluation dataset.
+  /// \param[in] decode Decode the images after reading.
+  /// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  OmniglotDataset(const std::vector<char> &dataset_dir, bool background, bool decode, const Sampler *sampler,
+                  const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Constructor of OmniglotDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] background A flag to use background dataset or evaluation dataset.
+  /// \param[in] decode Decode the images after reading.
+  /// \param[in] sampler Sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  OmniglotDataset(const std::vector<char> &dataset_dir, bool background, bool decode,
+                  const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
+
+  /// Destructor of OmniglotDataset.
+  ~OmniglotDataset() = default;
+};
+
+/// \brief Function to create an OmniglotDataset.
+/// \notes The generated dataset has two columns ["image", "label"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] background A flag to use background dataset or evaluation dataset (Default=true).
+/// \param[in] decode Decode the images after reading (Default=false).
+/// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
+///     given, a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler()).
+/// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
+/// \return Shared pointer to the current OmniglotDataset.
+/// \par Example
+/// \code
+///      /* Define dataset path and MindData object */
+///      std::string folder_path = "/path/to/omniglot_dataset_directory";
+///      std::shared_ptr<Dataset> ds = Omniglot(folder_path, true, false, std::make_shared<RandomSampler>(false, 5));
+///
+///      /* Create iterator to read dataset */
+///      std::shared_ptr<Iterator> iter = ds->CreateIterator();
+///      std::unordered_map<std::string, mindspore::MSTensor> row;
+///      iter->GetNextRow(&row);
+///
+///      /* Note: In Omniglot dataset, each dictionary has keys "image" and "label" */
+///      auto image = row["image"];
+/// \endcode
+inline std::shared_ptr<OmniglotDataset> MS_API
+Omniglot(const std::string &dataset_dir, bool background = true, bool decode = false,
+         const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
+         const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<OmniglotDataset>(StringToChar(dataset_dir), background, decode, sampler, cache);
+}
+
+/// \brief Function to create an OmniglotDataset.
+/// \notes The generated dataset has two columns ["image", "label"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] background A flag to use background dataset or evaluation dataset.
+/// \param[in] decode Decode the images after reading.
+/// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
+/// \return Shared pointer to the current OmniglotDataset.
+inline std::shared_ptr<OmniglotDataset> MS_API Omniglot(const std::string &dataset_dir, bool background, bool decode,
+                                                        const Sampler *sampler,
+                                                        const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<OmniglotDataset>(StringToChar(dataset_dir), background, decode, sampler, cache);
+}
+
+/// \brief Function to create an OmniglotDataset.
+/// \notes The generated dataset has two columns ["image", "label"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] background A flag to use background dataset or evaluation dataset.
+/// \param[in] decode Decode the images after reading.
+/// \param[in] sampler Sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
+/// \return Shared pointer to the current OmniglotDataset.
+inline std::shared_ptr<OmniglotDataset> MS_API Omniglot(const std::string &dataset_dir, bool background, bool decode,
+                                                        const std::reference_wrapper<Sampler> &sampler,
+                                                        const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<OmniglotDataset>(StringToChar(dataset_dir), background, decode, sampler, cache);
+}
+
 /// \class PennTreebankDataset
 /// \brief A source dataset for reading and parsing PennTreebank dataset.
 class MS_API PennTreebankDataset : public Dataset {

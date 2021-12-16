@@ -110,6 +110,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/mnist_node.h"
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/engine/ir/datasetops/source/multi30k_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/omniglot_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/penn_treebank_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/photo_tour_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/places365_node.h"
@@ -1673,6 +1674,31 @@ Multi30kDataset::Multi30kDataset(const std::vector<char> &dataset_dir, const std
     std::make_shared<Multi30kNode>(CharToString(dataset_dir), CharToString(usage), VectorCharToString(language_pair),
                                    num_samples, shuffle, num_shards, shard_id, cache);
   ir_node_ = std::static_pointer_cast<Multi30kNode>(ds);
+}
+
+OmniglotDataset::OmniglotDataset(const std::vector<char> &dataset_dir, bool background, bool decode,
+                                 const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache) {
+  // Create logical representation of OmniglotDataset.
+  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
+  auto ds = std::make_shared<OmniglotNode>(CharToString(dataset_dir), background, decode, sampler_obj, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+
+OmniglotDataset::OmniglotDataset(const std::vector<char> &dataset_dir, bool background, bool decode,
+                                 const Sampler *sampler, const std::shared_ptr<DatasetCache> &cache) {
+  // Create logical representation of OmniglotDataset.
+  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
+  auto ds = std::make_shared<OmniglotNode>(CharToString(dataset_dir), background, decode, sampler_obj, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+
+OmniglotDataset::OmniglotDataset(const std::vector<char> &dataset_dir, bool background, bool decode,
+                                 const std::reference_wrapper<Sampler> &sampler,
+                                 const std::shared_ptr<DatasetCache> &cache) {
+  // Create logical representation of OmniglotDataset.
+  auto sampler_obj = sampler.get().Parse();
+  auto ds = std::make_shared<OmniglotNode>(CharToString(dataset_dir), background, decode, sampler_obj, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
 
 PennTreebankDataset::PennTreebankDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
