@@ -71,7 +71,7 @@ def fake_quant_per_layer_compute(x, min_val, max_val, y, quant_min, quant_max, s
     nudge_min = te.lang.cce.vmul(te.lang.cce.vsub(quant_min, nudge_zp), scale)
     nudge_max = te.lang.cce.vmul(te.lang.cce.vsub(quant_max, nudge_zp), scale)
 
-    # boradcast to shape
+    # broadcast to shape
     nudge_min = te.lang.cce.broadcast(nudge_min, shape, x.dtype)
     nudge_max = te.lang.cce.broadcast(nudge_max, shape, x.dtype)
     scale = te.lang.cce.broadcast(scale, shape, x.dtype)
