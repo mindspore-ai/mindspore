@@ -89,7 +89,7 @@ class Resource : public ResourceBase {
   int64_t loop_size() { return loop_size_; }
 
   void set_layout_map(const LayoutMap &layout_map) { layout_map_ = layout_map; }
-  const LayoutMap get_layout_map() const { return layout_map_; }
+  const LayoutMap &get_layout_map() const { return layout_map_; }
 
   bool enable_compile_cache() { return enable_compile_cache_; }
   void set_enable_compile_cache(bool enable_compile_cache) { enable_compile_cache_ = enable_compile_cache; }
