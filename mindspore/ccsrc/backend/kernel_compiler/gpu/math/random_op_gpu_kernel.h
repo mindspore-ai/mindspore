@@ -88,8 +88,11 @@ class RandomOpGpuKernel : public GpuKernel {
         } else if (seed_ != 0) {
           RNG_seed = seed_;
         }
-        CHECK_CURAND_RET_WITH_EXCEPT(curandCreateGenerator(&mask_generator_, CURAND_RNG_PSEUDO_PHILOX4_32_10),
-                                     "Failed to create generator");
+        if (!states_init_) {
+          CHECK_CURAND_RET_WITH_EXCEPT(curandCreateGenerator(&mask_generator_, CURAND_RNG_PSEUDO_PHILOX4_32_10),
+                                       "Failed to create generator");
+          states_init_ = true;
+        }
         CHECK_CURAND_RET_WITH_EXCEPT(curandSetPseudoRandomGeneratorSeed(mask_generator_, RNG_seed),
                                      "Failed to SetPseudoRandomGeneratorSeed");
         MS_EXCEPTION_IF_NULL(mask_generator_);
@@ -98,7 +101,7 @@ class RandomOpGpuKernel : public GpuKernel {
         // curandGen only support float or double for mask.
         CHECK_CURAND_RET_WITH_EXCEPT(
           curandGenerateNormal(mask_generator_, mask_f, outputs[0]->size / sizeof(float), 0.0, 1.0),
-          "Failed to generate uniform");
+          "Failed to generate normal");
         break;
       }
       case RANDOM_OP_UNIFORM_INT: {
