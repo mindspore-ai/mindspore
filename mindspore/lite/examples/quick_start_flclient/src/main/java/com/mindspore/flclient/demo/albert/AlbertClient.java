@@ -14,17 +14,16 @@
  * limitations under the License.
  */
 
-package com.mindspore.flclient.example.lenet;
+package com.mindspore.flclient.demo.albert;
 
-import com.mindspore.flclient.Common;
+import com.mindspore.flclient.demo.common.ClassifierAccuracyCallback;
+import com.mindspore.flclient.demo.common.PredictCallback;
 import com.mindspore.flclient.model.Callback;
 import com.mindspore.flclient.model.Client;
 import com.mindspore.flclient.model.ClientManager;
-import com.mindspore.flclient.model.CommonUtils;
 import com.mindspore.flclient.model.DataSet;
 import com.mindspore.flclient.model.LossCallback;
 import com.mindspore.flclient.model.RunType;
-import com.mindspore.lite.MSTensor;
 import com.mindspore.lite.config.MSConfig;
 
 import java.util.ArrayList;
@@ -34,16 +33,17 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 /**
- * Defining the lenet client base class.
+ * Defining the albert client class.
  *
  * @since v1.0
  */
-public class LenetClient extends Client {
-    private static final Logger logger = Logger.getLogger(LenetClient.class.toString());
-    private static final int NUM_OF_CLASS = 62;
+public class AlbertClient extends Client {
+    private static final Logger LOGGER = Logger.getLogger(AlbertClient.class.toString());
+    private static final int NUM_OF_CLASS = 4;
+    private static final int MAX_SEQ_LEN = 8;
 
     static {
-        ClientManager.registerClient(new LenetClient());
+        ClientManager.registerClient(new AlbertClient());
     }
 
     @Override
@@ -53,9 +53,9 @@ public class LenetClient extends Client {
             Callback lossCallback = new LossCallback(trainSession);
             callbacks.add(lossCallback);
         } else if (runType == RunType.EVALMODE) {
-            if (dataSet instanceof LenetDataSet) {
+            if (dataSet instanceof AlbertDataSet) {
                 Callback evalCallback = new ClassifierAccuracyCallback(trainSession, dataSet.batchSize, NUM_OF_CLASS,
-                        ((LenetDataSet) dataSet).getTargetLabels());
+                        ((AlbertDataSet) dataSet).getTargetLabels());
                 callbacks.add(evalCallback);
             }
         } else {
@@ -70,21 +70,21 @@ public class LenetClient extends Client {
         Map<RunType, Integer> sampleCounts = new HashMap<>();
         List<String> trainFiles = files.getOrDefault(RunType.TRAINMODE, null);
         if (trainFiles != null) {
-            DataSet trainDataSet = new LenetDataSet(NUM_OF_CLASS);
+            DataSet trainDataSet = new AlbertDataSet(RunType.TRAINMODE, MAX_SEQ_LEN);
             trainDataSet.init(trainFiles);
             dataSets.put(RunType.TRAINMODE, trainDataSet);
             sampleCounts.put(RunType.TRAINMODE, trainDataSet.sampleSize);
         }
         List<String> evalFiles = files.getOrDefault(RunType.EVALMODE, null);
         if (evalFiles != null) {
-            LenetDataSet evalDataSet = new LenetDataSet(NUM_OF_CLASS);
+            DataSet evalDataSet = new AlbertDataSet(RunType.EVALMODE, MAX_SEQ_LEN);
             evalDataSet.init(evalFiles);
             dataSets.put(RunType.EVALMODE, evalDataSet);
             sampleCounts.put(RunType.EVALMODE, evalDataSet.sampleSize);
         }
         List<String> inferFiles = files.getOrDefault(RunType.INFERMODE, null);
         if (inferFiles != null) {
-            DataSet inferDataSet = new LenetDataSet(NUM_OF_CLASS);
+            DataSet inferDataSet = new AlbertDataSet(RunType.INFERMODE, MAX_SEQ_LEN);
             inferDataSet.init(inferFiles);
             dataSets.put(RunType.INFERMODE, inferDataSet);
             sampleCounts.put(RunType.INFERMODE, inferDataSet.sampleSize);
@@ -99,7 +99,7 @@ public class LenetClient extends Client {
                 return ((ClassifierAccuracyCallback) callBack).getAccuracy();
             }
         }
-        logger.severe(Common.addTag("don not find accuracy related callback"));
+        LOGGER.severe("don not find accuracy related callback");
         return Float.NaN;
     }
 
@@ -110,7 +110,7 @@ public class LenetClient extends Client {
                 return ((PredictCallback) callBack).getPredictResults();
             }
         }
-        logger.severe(Common.addTag("don not find accuracy related callback"));
+        LOGGER.severe("don not find accuracy related callback");
         return new ArrayList<>();
     }
 }
