@@ -373,6 +373,68 @@ Status GatherInfo::CheckStrategy(const StrategyPtr &strategy) {
   return SUCCESS;
 }
 
+Status GatherInfo::CheckOutputStrategy(const StrategyPtr &out_strategy) {
+  if (out_strategy == nullptr) {
+    MS_LOG(INFO) << name_ << ": The output strategy is null";
+    return SUCCESS;
+  }
+
+  if (CheckStrategyValue(out_strategy, outputs_shape_) != SUCCESS) {
+    MS_LOG(ERROR) << name_ << ": Invalid output strategy";
+    return FAILED;
+  }
+
+  if (manual_split_) {
+    MS_LOG(ERROR) << name_ << ": The manual split do not support set output strategy";
+    return FAILED;
+  }
+
+  if (axis_ != 0) {
+    MS_LOG(ERROR) << name_ << ": The output strategy only support axis = 0, but the axis is " << axis_;
+    return FAILED;
+  }
+
+  if (dynamic_shape_indices_) {
+    MS_LOG(ERROR) << name_ << ": The dynamic shape do not support set output strategy";
+    return FAILED;
+  }
+
+  auto in_stra = strategy_->GetInputDim();
+  auto param_strategy = in_stra[0];
+  if (inputs_shape_[1].empty() || (inputs_shape_[1][0] % param_strategy[0] != 0)) {
+    MS_LOG(ERROR) << name_ << ": index_shape[0] can't be divided by param_strategy[0], can not set output strategy";
+    return FAILED;
+  }
+
+  if (param_strategy[axis_] == 1) {
+    MS_LOG(ERROR) << name_ << ": The axis is not split, can not set output strategy";
+    return FAILED;
+  }
+
+  auto index_strategy = in_stra[1];
+
+  // only for axis == 0
+  auto allreduce_strategy = index_strategy;
+  (void)allreduce_strategy.insert(allreduce_strategy.end(), param_strategy.begin() + 1, param_strategy.end());
+  auto reduce_scatter_strategy = allreduce_strategy;
+  reduce_scatter_strategy[0] *= param_strategy[0];
+
+  auto out_stra = out_strategy->GetInputDim()[0];
+  if (out_stra == allreduce_strategy) {
+    axis_split_forward_allreduce_ = true;
+    MS_LOG(INFO) << name_ << ": The output strategy is " << out_stra << ", forward use allreduce";
+    return SUCCESS;
+  } else if (out_stra == reduce_scatter_strategy) {
+    axis_split_forward_allreduce_ = false;
+    MS_LOG(INFO) << name_ << ": The output strategy is " << out_stra << ", forward use reduce scatter";
+    return SUCCESS;
+  }
+
+  MS_LOG(ERROR) << name_ << ": The output strategy " << out_stra << " is invalid, it must be " << allreduce_strategy
+                << " or " << reduce_scatter_strategy;
+  return FAILED;
+}
+
 Status GatherInfo::InferMirrorOps() {
   // There is no mirror operators for manual split
   if (manual_split_) {
@@ -418,8 +480,12 @@ Status GatherInfo::InferDevMatrixShape() {
 
   if (shard_batch_and_axis_) {
     dev_matrix_shape_ = {index_strategy[0], param_strategy[0]};
-    // if forward use reducescatter, the dev matrix is {index_strategy[0] * param_strategy[0]}
-    out_dev_matrix_shape_ = dev_matrix_shape_;
+    // if forward use reducescatter, the output's dev matrix is {index_strategy[0] * param_strategy[0]}
+    if (axis_split_forward_allreduce_) {
+      out_dev_matrix_shape_ = dev_matrix_shape_;
+    } else {
+      out_dev_matrix_shape_ = {index_strategy[0] * param_strategy[0]};
+    }
     MS_LOG(INFO) << name_ << ": Sharding batch and axis, the dev matrix is " << dev_matrix_shape_
                  << ", out dev matrix is " << out_dev_matrix_shape_;
     return SUCCESS;
@@ -545,8 +611,8 @@ void GatherInfo::InferOutputsTensorMap() {
 Status GatherInfo::InferTensorMap() {
   if (manual_split_) {
     Shape param_map = {1, 0};
-    Shape indices_map = {-1, 1};
-    Shape out_map = {-1, 1, 0};
+    Shape indices_map = {MAP_NONE, 1};
+    Shape out_map = {MAP_NONE, 1, 0};
     (void)inputs_tensor_map_.emplace_back(std::move(param_map));
     (void)inputs_tensor_map_.emplace_back(std::move(indices_map));
     (void)outputs_tensor_map_.emplace_back(std::move(out_map));
@@ -554,13 +620,17 @@ Status GatherInfo::InferTensorMap() {
   }
 
   if (shard_batch_and_axis_) {
-    Shape param_tensor_map = {0, -1};
-    Shape indices_tensor_map = {1, -1};
-    Shape out_tensor_map = {1, -1, -1};
+    Shape param_tensor_map = {0, MAP_NONE};
+    Shape indices_tensor_map = {1, MAP_NONE};
+    Shape out_tensor_map;
+    if (axis_split_forward_allreduce_) {
+      out_tensor_map = {1, MAP_NONE, MAP_NONE};  // the dev matrix is (index_strategy[0], param_strategy[0])
+    } else {
+      out_tensor_map = {0, MAP_NONE, MAP_NONE};  // the dev matrix is (index_strategy[0] * param_strategy[0])
+    }
     (void)inputs_tensor_map_.emplace_back(std::move(param_tensor_map));    // param
     (void)inputs_tensor_map_.emplace_back(std::move(indices_tensor_map));  // indices
-    (void)outputs_tensor_map_.emplace_back(
-      std::move(out_tensor_map));  // output, if forward use reducescatter, tensormap is {0, -1, -1}
+    (void)outputs_tensor_map_.emplace_back(std::move(out_tensor_map));     // output
     return SUCCESS;
   }
   InferInputsTensorMap();
@@ -734,7 +804,13 @@ Status GatherInfo::InferForwardCommunication() {
     return FAILED;
   }
   Attr attr_group;
-  operator_name = REDUCE_SCATTER;
+
+  if (axis_split_forward_allreduce_) {
+    operator_name = ALL_REDUCE;
+  } else {
+    operator_name = REDUCE_SCATTER;
+  }
+
   if (InferGroup() != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Infer Group failed.";
     return FAILED;
