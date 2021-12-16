@@ -338,7 +338,7 @@ class MSSSIM(Cell):
         ValueError: If length of shape of `img1` or `img2` is not equal to 4.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> import numpy as np

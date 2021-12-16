@@ -875,7 +875,7 @@ def cummin(x, axis):
 
     Raises:
         TypeError: If `input_x` is not a Tensor.
-        TypeError: If 'axis' is not a int.
+        TypeError: If 'axis' is not an int.
         ValueError:If 'axis' is out the range of [-len(`input_x`.shape) to len(`input_x`.shape) - 1]
 
     Supported Platforms:

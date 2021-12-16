@@ -167,13 +167,13 @@ class RegOp:
 
     def _is_int(self, value):
         """
-        Check if the value is a int.
+        Check if the value is an int.
 
         Args:
             value: Parameter to be checked.
 
         Raises:
-            TypeError: If the type of value is not a int.
+            TypeError: If the type of value is not an int.
         """
         if not isinstance(value, int):
             raise TypeError("%s value must be int" % str(value))

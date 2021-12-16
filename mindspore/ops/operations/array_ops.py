@@ -5665,7 +5665,7 @@ class InplaceUpdate(PrimitiveWithInfer):
 
     Args:
         indices (Union[int, tuple]): Indices into the left-most dimension of `x`, and determines which rows of x
-            to update with v. It is a int or tuple, whose value is in [0, the first dimension size of x).
+            to update with v. It is an int or tuple, whose value is in [0, the first dimension size of x).
 
     Inputs:
         - **x** (Tensor) - A tensor which to be inplace updated. It can be one of the following data types:
@@ -6773,7 +6773,7 @@ class ExtractVolumePatches(Primitive):
 
     Raises:
         TypeError: If dtype of input_x is neither float16 nor float32.
-        TypeError: If kernel_size or strides is not a list, a tuple or a int.
+        TypeError: If kernel_size or strides is not a list, a tuple or an int.
         TypeError: If input_x is not a tensor.
         TypeError: If padding is not str.
         ValueError: If the length of kernel_size is neither 3 nor 5 and kernel_size is not an integer.
