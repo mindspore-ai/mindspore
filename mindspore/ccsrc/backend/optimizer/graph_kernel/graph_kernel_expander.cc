@@ -168,7 +168,7 @@ FuncGraphPtr DefaultExpander::CreateExpandFuncGraph(const CNodePtr &node) {
     MS_LOG(INFO) << "undo expanding " << node->fullname_with_scope();
     return nullptr;
   }
-  return LiteGraph2AnfGraph(litegraph);
+  return GkUtils::LiteGraph2AnfGraph(litegraph);
 }
 
 AnfNodePtr DefaultExpander::CreateExpandGraphKernel(const FuncGraphPtr &new_func_graph, const CNodePtr &old_node) {

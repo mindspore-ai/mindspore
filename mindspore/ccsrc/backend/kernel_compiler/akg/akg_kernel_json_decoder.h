@@ -40,9 +40,6 @@ class AkgKernelJsonDecoder {
   AnfNodePtr DecodeOutput(const std::vector<nlohmann::json> &output_descs, const FuncGraphPtr &func_graph);
   std::map<std::string, AnfNodePtr> nodes_map_;
 };
-
-// infer abstract shape by device_shape and data_format
-ShapeVector GetFakeAbstractShape(const ShapeVector &device_shape, const std::string &format);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_AKG_KERNEL_JSON_DECODER_H_

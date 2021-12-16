@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <string>
 #include <tuple>
+#include <vector>
 #include "base/core_ops.h"
 #include "ir/dtype.h"
 #include "utils/anf_utils.h"
@@ -122,4 +123,8 @@ std::string CallbackImpl::GetProcessor(const AnfNodePtr &node) { return "cpu"; }
 std::string CallbackImpl::GetTargetFromContext() { return "CPU"; }
 
 void CallbackImpl::SetGraphKernelNodeKernelInfo(const AnfNodePtr &node) {}
+
+void CallbackImpl::SetBasicNodeKernelInfo(const AnfNodePtr &node, const std::vector<inner::NodeBase> &outputs_info) {}
+
+void CallbackImpl::SetEmptyKernelInfo(const AnfNodePtr &node) {}
 }  // namespace mindspore::graphkernel

@@ -22,6 +22,7 @@
 #include <vector>
 #include "ir/anf.h"
 #include "ir/func_graph.h"
+#include "backend/optimizer/graph_kernel/model/lite_graph.h"
 
 namespace mindspore::graphkernel {
 constexpr auto kGraphKernelDumpPath = "graph_kernel_dump";
@@ -73,6 +74,17 @@ class GkUtils {
    * @brief Check whether graphkernel supports the node
    */
   static bool IsKeepBasicNode(const AnfNodePtr &node);
+
+  /**
+   * @brief Create CNode.
+   */
+  static CNodePtr NewRealCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &func_graph,
+                               const std::vector<inner::NodeBase> &out_info_list);
+
+  /**
+   * @brief Change lite graph to anf graph.
+   */
+  static FuncGraphPtr LiteGraph2AnfGraph(const inner::LiteGraphPtr &lite_graph);
 };
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_CORE_GRAPH_KERNEL_UTILS_H_

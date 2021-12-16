@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_LITE_ADAPTER_CALLBACK_IMPL_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_LITE_ADAPTER_CALLBACK_IMPL_H_
 #include <string>
+#include <vector>
 #include <utility>
 #include "backend/optimizer/graph_kernel/core/graph_kernel_callback.h"
 
@@ -37,6 +38,8 @@ class CallbackImpl : public Callback {
   std::string GetProcessor(const AnfNodePtr &node) override;
   std::string GetTargetFromContext() override;
   void SetGraphKernelNodeKernelInfo(const AnfNodePtr &node) override;
+  void SetBasicNodeKernelInfo(const AnfNodePtr &node, const std::vector<inner::NodeBase> &outputs_info) override;
+  void SetEmptyKernelInfo(const AnfNodePtr &node) override;
 };
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_LITE_ADAPTER_CALLBACK_IMPL_H_

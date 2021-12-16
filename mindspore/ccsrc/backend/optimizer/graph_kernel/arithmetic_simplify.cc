@@ -26,6 +26,7 @@
 #include "utils/hash_set.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_helper.h"
 #include "backend/optimizer/graph_kernel/core/graph_builder.h"
+#include "backend/optimizer/graph_kernel/core/graph_kernel_utils.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "ir/anf.h"
 #include "utils/context/graph_kernel_flags.h"
@@ -646,7 +647,7 @@ bool ArithmeticSimplify::Run(const FuncGraphPtr &func_graph) {
       }
       if (!change_anf_graph) continue;
       ReorganizeEmptyGraph(lg);
-      auto new_funcgraph = LiteGraph2AnfGraph(lg);
+      auto new_funcgraph = GkUtils::LiteGraph2AnfGraph(lg);
       new_funcgraph->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, sub_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL));
       auto cnode = node->cast<CNodePtr>();
       AnfNodePtrList inputs(cnode->inputs().begin() + 1, cnode->inputs().end());
