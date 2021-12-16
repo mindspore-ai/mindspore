@@ -55,9 +55,9 @@ bool UssAtomicAdd::Run(const FuncGraphPtr &func_graph) {
     if (!atomic_add_checker->Check(node)) {
       continue;
     }
-    auto info = atomic_add_checker->GetAtomicAddInfo();
-    UpdateAtomicAddInfo(info);
-    InsertAtomicClean(kernel_graph, node, mng);
+
+    auto atomic_add_infos = atomic_add_checker->GetAtomicAddInfo();
+    InsertAtomicClean(kernel_graph, node, atomic_add_infos, mng);
     changed = true;
   }
 

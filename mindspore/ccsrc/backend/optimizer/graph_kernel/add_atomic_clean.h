@@ -39,13 +39,13 @@ class AtomicAddChecker {
   static std::shared_ptr<AtomicAddChecker> Init();
 
   bool Check(const AnfNodePtr &node);
-  AtomicAddInfo GetAtomicAddInfo() { return atomic_add_info_; }
+  std::vector<AtomicAddInfo> GetAtomicAddInfo() { return atomic_add_infos_; }
 
  protected:
   virtual bool SuitableForAtomicAdd(const AnfNodePtr &node) { return false; }
   virtual bool FindCandidate(const AnfNodePtr &anf_node);
   virtual bool CanActivateAtomicAdd(const AnfNodePtr &anf_node);
-  AtomicAddInfo atomic_add_info_;
+  std::vector<AtomicAddInfo> atomic_add_infos_;
   PrimitivePtr target_type_{prim::kPrimReduceSum};
 };
 
@@ -74,31 +74,28 @@ class AtomicCleanInsertter : public opt::Pass {
   bool Run(const FuncGraphPtr &func_graph) override;
 
  protected:
-  virtual void CorrectKernelBuildInfo(const AnfNodePtr &composite_node, const AnfNodePtr &new_input,
-                                      bool bypass = true);
-  virtual void ProcessOriginCNode(const AnfNodePtr &composite_node, const AnfNodePtr &new_input);
-  virtual CNodePtr CreateAtomicCleanCompositeNode(const KernelGraphPtr &main_graph, TypeId dst_type);
-  void AddDepend(const FuncGraphPtr &main_graph, const AnfNodePtr &clean_node, const AnfNodePtr &composite_node,
-                 const AnfNodePtr &user_node, int index) const;
-  void InsertAtomicClean(const KernelGraphPtr &main_graph, const AnfNodePtr &anf_node, const FuncGraphManagerPtr &mng);
+  virtual void CorrectKernelBuildInfo(const AnfNodePtr &composite_node,
+                                      const std::vector<std::pair<AtomicAddInfo, AnfNodePtr>> &clean_infos);
+  virtual void ProcessOriginCNode(const AnfNodePtr &composite_node,
+                                  const std::vector<std::pair<AtomicAddInfo, AnfNodePtr>> &info_and_broadcast_to_nodes);
+  virtual CNodePtr CreateAtomicCleanCompositeNode(const AtomicAddInfo &atomic_add_info,
+                                                  const KernelGraphPtr &main_graph, TypeId dst_type);
+  void InsertAtomicClean(const KernelGraphPtr &main_graph, const AnfNodePtr &anf_node,
+                         const std::vector<AtomicAddInfo> &atomic_add_infos, const FuncGraphManagerPtr &mng);
   CNodePtr InsertUpdateState(const KernelGraphPtr &main_graph, const CNodePtr &composite_node) const;
-  void CorrectAbstract(const AnfNodePtr &composite_node) const;
-  void CreateInplaceAssignNodeAndCorrectReturn(const FuncGraphPtr &sub_graph, const AnfNodePtr &new_parameter);
+  void CorrectAbstract(const AnfNodePtr &composite_node,
+                       const std::vector<std::pair<AtomicAddInfo, AnfNodePtr>> &process_infos) const;
+  void CreateInplaceAssignNodeAndCorrectReturn(
+    const FuncGraphPtr &sub_graph, const std::vector<std::pair<AtomicAddInfo, AnfNodePtr>> &parameters_infos);
   void ProcessOriginCNodeUser(const KernelGraphPtr &main_graph, const AnfNodePtr &composite_node,
-                              const AnfNodePtr &broadcast_to_node, const AnfNodePtr &update_state_node,
-                              const FuncGraphManagerPtr &mng);
-  void UpdateAtomicAddInfo(const AtomicAddInfo &info);
-  CNodePtr atomic_add_node_{nullptr};
-  size_t reduce_real_output_index_{0};
-  size_t real_output_num_{0};
+                              const std::vector<std::pair<AtomicAddInfo, AnfNodePtr>> &info_and_broadcast_to_nodes,
+                              const AnfNodePtr &update_state_node, const FuncGraphManagerPtr &mng);
 
  private:
-  std::vector<std::pair<AnfNodePtr, int>> FindOriginCNodeUsers(const KernelGraphPtr &main_graph,
-                                                               const AnfNodePtr &composite_node,
-                                                               const FuncGraphManagerPtr &mng,
-                                                               bool correct_index) const;
-  bool IsExistStructuralObstacle(const KernelGraphPtr &main_graph, const AnfNodePtr &node,
-                                 const FuncGraphManagerPtr &mng);
+  std::vector<std::tuple<AnfNodePtr, int, AnfNodePtr>> FindOriginCNodeUsers(
+    const KernelGraphPtr &main_graph, const AnfNodePtr &composite_node,
+    const std::vector<std::pair<AtomicAddInfo, AnfNodePtr>> &info_and_broadcast_to_nodes,
+    const FuncGraphManagerPtr &mng, bool correct_index) const;
 };
 using AtomicCleanInsertterPtr = std::shared_ptr<AtomicCleanInsertter>;
 }  // namespace mindspore::graphkernel

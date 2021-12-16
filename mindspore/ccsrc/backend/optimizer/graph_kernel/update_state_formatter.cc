@@ -133,6 +133,7 @@ bool ExtendOutputForUpdateState::Run(const FuncGraphPtr &func_graph) {
     }
   }
   if (changed) {
+    UpdateMng(mng, func_graph);
     std::make_shared<SpreadUpdateState>()->Run(func_graph);
     std::make_shared<EliminateHangingOutput>()->Run(func_graph);
   }
