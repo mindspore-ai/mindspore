@@ -16,6 +16,7 @@
 import os
 import shutil
 import subprocess
+import pytest
 import numpy as np
 import mindspore as ms
 from mindspore import nn
@@ -48,7 +49,7 @@ def test_ms_function():
     context.set_context(save_graphs=True, save_graphs_path="ir_dump_path")
     input1 = np.random.randn(5, 5)
     add(Tensor(input1, ms.float32))
-    result = find_files("./ir_dump_path/*validate*.ir", "test_debug_info.py(45)/        return x + 1/")
+    result = find_files("./ir_dump_path/*validate*.ir", "test_debug_info.py(46)/        return x + 1/")
     assert result == '2'
     remove_path("./ir_dump_path/")
 
@@ -66,6 +67,24 @@ def test_cell_ms_function():
     input1 = np.random.randn(5, 5)
     net = Net()
     net(Tensor(input1, ms.float32))
-    result = find_files("./ir_dump_path/*validate*.ir", "test_debug_info.py(62)/            return x/")
+    result = find_files("./ir_dump_path/*validate*.ir", "test_debug_info.py(63)/            return x/")
     assert result == '1'
     remove_path("./ir_dump_path/")
+
+
+def test_parse_slice_location():
+    """
+    Feature: parse location.
+    Description: Test Slice node will be parsed with correct location.
+    Expectation: TypeError.
+    """
+    class Net(nn.Cell):
+        def construct(self, x):
+            return x[1.2:]
+
+    context.set_context(mode=context.GRAPH_MODE)
+    input1 = Tensor((1, 2, 3))
+    net = Net()
+    with pytest.raises(TypeError) as ex:
+        net(input1)
+    assert "return x[1.2:]" in str(ex.value)

@@ -789,8 +789,8 @@ class Parser:
             end_node = node
 
         if err_exit == 0:
-            if hasattr(start_node, "lineno") and \
-                    hasattr(end_node, "col_offset"):
+            if hasattr(start_node, "first_token") and \
+                    hasattr(end_node, "last_token"):
                 start_lineno, start_colno = start_node.first_token.start
                 end_lineno, end_colno = end_node.last_token.end
                 start_lineno += self.line_offset - 1
