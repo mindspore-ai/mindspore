@@ -609,14 +609,14 @@ bool E2eDump::ConvertFormatForTensorAndDump(std::string dump_path, const T &tens
   // get format
   auto iter_fmt = kFormatToStringMap.find(tensor.format());
   if (iter_fmt == kFormatToStringMap.end()) {
-    MS_LOG(INFO) << "Unsupported tensor format " << iter_fmt->second << " for tensor " << dump_path_slot;
+    MS_LOG(INFO) << "Unsupported tensor format for tensor " << dump_path << ": unknown(" << tensor.format() << ")";
     return false;
   }
   std::string device_format = iter_fmt->second;
   // get data type
   auto iter_dtype = kDataTypetoMSTypeMap.find(tensor.data_type());
   if (iter_dtype == kDataTypetoMSTypeMap.end()) {
-    MS_LOG(INFO) << "Unsupported tensor type " << iter_dtype->second << " for tensor " << dump_path_slot;
+    MS_LOG(INFO) << "Unsupported data type for tensor " << dump_path << ": unknown(" << tensor.data_type() << ")";
     return false;
   }
   auto src_type = iter_dtype->second;
