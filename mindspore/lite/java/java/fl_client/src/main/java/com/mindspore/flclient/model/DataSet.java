@@ -69,21 +69,21 @@ public abstract class DataSet {
      * @param files data files.
      * @return preprocess status.
      */
-    public abstract int dataPreprocess(List<String> files);
+    public abstract Status dataPreprocess(List<String> files);
 
     /**
      * Init dataset.
      *
      * @param files data files.
-     * @return dataset size.
+     * @return init status.
      */
-    public int init(List<String> files) {
-        int status = dataPreprocess(files);
-        if (status != 0) {
+    public Status init(List<String> files) {
+        Status status = dataPreprocess(files);
+        if (status != Status.SUCCESS) {
             logger.severe(Common.addTag("data preprocess failed"));
             return status;
         }
         shuffle();
-        return sampleSize;
+        return status;
     }
 }

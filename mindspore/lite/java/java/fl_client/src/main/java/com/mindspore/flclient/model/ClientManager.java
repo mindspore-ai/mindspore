@@ -17,7 +17,6 @@
 package com.mindspore.flclient.model;
 
 import com.mindspore.flclient.Common;
-import com.mindspore.flclient.example.lenet.ClassifierAccuracyCallback;
 
 import java.util.HashMap;
 import java.util.logging.Logger;
@@ -25,7 +24,7 @@ import java.util.logging.Logger;
 public class ClientManager {
     private static final HashMap<String, Client> clientMaps = new HashMap<>();
 
-    private static final Logger logger = Logger.getLogger(ClassifierAccuracyCallback.class.toString());
+    private static final Logger logger = Logger.getLogger(ClientManager.class.toString());
 
     /**
      * Register client.
