@@ -115,21 +115,19 @@ int BenchmarkCApi::InitContext() {
   MSContextSetEnableParallel(context_, flags_->enable_parallel_);
   MSContextSetThreadAffinityMode(context_, flags_->cpu_bind_mode_);
 
-  MSDeviceInfoHandle cpu_device_info = MSDeviceInfoCreate(kMSDeviceTypeCPU);
-  MSDeviceInfoSetEnableFP16(cpu_device_info, flags_->enable_fp16_);
-  MSContextAddDeviceInfo(context_, cpu_device_info);
-
   if (flags_->device_ == "GPU") {
     MSDeviceInfoHandle gpu_device_info = MSDeviceInfoCreate(kMSDeviceTypeGPU);
     MSDeviceInfoSetEnableFP16(gpu_device_info, flags_->enable_fp16_);
     MSContextAddDeviceInfo(context_, gpu_device_info);
   }
-
   if (flags_->device_ == "NPU") {
     MSDeviceInfoHandle npu_device_info = MSDeviceInfoCreate(kMSDeviceTypeKirinNPU);
     MSDeviceInfoSetFrequency(npu_device_info, kFrequencyDefault);
     MSContextAddDeviceInfo(context_, npu_device_info);
   }
+  MSDeviceInfoHandle cpu_device_info = MSDeviceInfoCreate(kMSDeviceTypeCPU);
+  MSDeviceInfoSetEnableFP16(cpu_device_info, flags_->enable_fp16_);
+  MSContextAddDeviceInfo(context_, cpu_device_info);
   return RET_OK;
 }
 
