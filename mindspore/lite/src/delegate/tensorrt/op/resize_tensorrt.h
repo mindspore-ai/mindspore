@@ -38,10 +38,14 @@ class ResizeTensorRT : public TensorRTOp {
  private:
   int SetOutputDims(nvinfer1::ITensor *resize_in_tensor, nvinfer1::IResizeLayer *resize_layer);
 
+  void ParseValueFromShapeTensor(const mindspore::MSTensor &shape_value_tensor, std::vector<float> *out_shape);
+
   bool IsScaleOutputDim(const std::vector<int64_t> &in_shape, const std::vector<int64_t> &out_shape,
                         const std::vector<float> &shape_tensor_val);
 
   int SetParams(nvinfer1::IResizeLayer *resize_layer);
+
+  const schema::Resize *resize_op_{nullptr};
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_OP_RESIZE_TENSORRT_H_

@@ -420,10 +420,11 @@ void PackNHWCToNCHWFp16(const void *src, void *dst, size_t batches, size_t plane
     }
   }
 }
-std::string GetTensorFormat(nvinfer1::ITensor *trt_tensor, mindspore::Format format) {
+std::string GetTensorFormat(nvinfer1::ITensor *trt_tensor, mindspore::Format format, bool is_same) {
   nvinfer1::Dims dims = trt_tensor->getDimensions();
+  std::string is_same_string = is_same ? " is same with ms tensor " : " is different from ms tensor ";
   std::string out_string = "tensor " + std::string(trt_tensor->getName()) + ": format (NHWC:1, NCHW:0) is " +
-                           std::to_string(static_cast<int>(format)) + ", dims is ";
+                           std::to_string(static_cast<int>(format)) + is_same_string + ", dims is ";
   std::string dim_string = "[";
   for (int i = 0; i < dims.nbDims; i++) {
     dim_string += std::to_string(dims.d[i]);
@@ -435,6 +436,13 @@ std::string GetTensorFormat(nvinfer1::ITensor *trt_tensor, mindspore::Format for
   out_string += dim_string;
   return out_string;
 }
+
+std::string GetTensorFormat(ITensorHelper tensor_helper) {
+  return GetTensorFormat(tensor_helper.trt_tensor_, tensor_helper.format_, tensor_helper.same_format_);
+}
+
+std::string GetTensorFormat(nvinfer1::ITensor *trt_tensor) { return GetTensorFormat(trt_tensor, Format::NHWC, true); }
+
 nvinfer1::ReduceOperation ConvertTRTReduceMode(schema::ReduceMode mode) {
   std::map<schema::ReduceMode, nvinfer1::ReduceOperation> reduce_ops_ = {
     {schema::ReduceMode::ReduceMode_ReduceMean, nvinfer1::ReduceOperation::kAVG},

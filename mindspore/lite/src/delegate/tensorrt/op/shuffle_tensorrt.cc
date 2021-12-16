@@ -28,7 +28,6 @@ int ShuffleTensorRT::IsSupport(const schema::Primitive *primitive, const std::ve
   }
   switch (type_) {
     case schema::PrimitiveType_Flatten:
-    case schema::PrimitiveType_Squeeze:
     case schema::PrimitiveType_Unsqueeze: {
       if (in_tensors.size() != 1) {
         MS_LOG(ERROR) << "Unsupported in_tensors size " << in_tensors.size() << " of "
@@ -37,11 +36,31 @@ int ShuffleTensorRT::IsSupport(const schema::Primitive *primitive, const std::ve
       }
       break;
     }
+    case schema::PrimitiveType_Squeeze: {
+      if (in_tensors.size() != 1) {
+        MS_LOG(ERROR) << "Unsupported in_tensors size " << in_tensors.size() << " of "
+                      << schema::EnumNamePrimitiveType(type_);
+        return RET_ERROR;
+      }
+      auto squeeze_op = this->op_primitive_->value_as_Squeeze();
+      if (squeeze_op == nullptr) {
+        MS_LOG(ERROR) << "SqueezeOp convert failed";
+        return RET_ERROR;
+      }
+      param_axis_ = squeeze_op->axis();
+      if (param_axis_ == nullptr) {
+        MS_LOG(WARNING) << op_name_ << " is a full dim squeeze, don't support dynamic input shape.";
+        dynamic_shape_params_.support_dynamic_ = false;
+        dynamic_shape_params_.support_hw_dynamic_ = false;
+      }
+      break;
+    }
     case schema::PrimitiveType_Reshape: {
       if (in_tensors.size() != INPUT_SIZE2) {
         MS_LOG(ERROR) << "PrimitiveType_Transpose Unsupported in_tensors size: " << in_tensors.size();
         return RET_ERROR;
       }
+      dynamic_shape_params_.support_hw_dynamic_ = false;
       break;
     }
     case schema::PrimitiveType_Transpose:
@@ -128,14 +147,14 @@ int ShuffleTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     return RET_ERROR;
   }
   shuffler_output_->setName((op_name_ + "_output").c_str());
-  MS_LOG(DEBUG) << "output " << GetTensorFormat(shuffler_output_, out_format_);
   this->AddInnerOutTensors(ITensorHelper{shuffler_output_, out_format_, true});
+  MS_LOG(DEBUG) << "output " << GetTensorFormat(tensorrt_out_tensors_[0]);
   return RET_OK;
 }
 
 int ShuffleTensorRT::InputTensorPreprocess() {
   shuffler_input_ = tensorrt_in_tensors_[0].trt_tensor_;
-  MS_LOG(DEBUG) << "before transpose " << GetTensorFormat(shuffler_input_, tensorrt_in_tensors_[0].format_);
+  MS_LOG(DEBUG) << "before transpose " << GetTensorFormat(tensorrt_in_tensors_[0]);
   out_format_ = tensorrt_in_tensors_[0].format_;
   if (shuffler_input_->getDimensions().nbDims == DIMENSION_4D && !tensorrt_in_tensors_[0].same_format_) {
     // input tensor support NCHW format input
@@ -161,31 +180,24 @@ int ShuffleTensorRT::InputTensorPreprocess() {
       out_format_ = Format::NCHW;
     }
   }
-  MS_LOG(DEBUG) << "after transpose " << GetTensorFormat(shuffler_input_, out_format_);
+  MS_LOG(DEBUG) << "after transpose " << GetTensorFormat(shuffler_input_, out_format_, true);
   return RET_OK;
 }
 
 int ShuffleTensorRT::AddSqueezeOp(nvinfer1::IShuffleLayer *shuffle_layer) {
-  // squeeze
-  auto squeeze_op = this->op_primitive_->value_as_Squeeze();
-  if (squeeze_op == nullptr) {
-    MS_LOG(ERROR) << "SqueezeOp convert failed";
-    return RET_ERROR;
-  }
-
   // axis
   auto squeeze_shape = shuffler_input_->getDimensions();
   std::vector<int64_t> new_shape(squeeze_shape.d, squeeze_shape.d + squeeze_shape.nbDims);
-  auto axis = squeeze_op->axis();
-  if (axis == nullptr) {
-    MS_LOG(WARNING) << op_name_ << " has invalid axis, output shape is totally depends on ms tensor.";
+  if (param_axis_ == nullptr) {
+    MS_LOG(WARNING) << op_name_ << " has null axis, output shape is totally depends on ms tensor.";
     new_shape = out_tensors_[0].Shape();
   } else {
-    for (int i = axis->size() - 1; i >= 0; i--) {
-      if (new_shape[axis->Get(i)] != 1) {
-        MS_LOG(WARNING) << "squeeze_shape value at " << i << " is " << axis->Get(i) << ", need check " << op_name_;
+    for (int i = param_axis_->size() - 1; i >= 0; i--) {
+      if (new_shape[param_axis_->Get(i)] != 1) {
+        MS_LOG(WARNING) << "squeeze_shape value at " << i << " is " << param_axis_->Get(i) << ", need check "
+                        << op_name_;
       }
-      new_shape.erase(new_shape.begin() + axis->Get(i));
+      new_shape.erase(new_shape.begin() + param_axis_->Get(i));
     }
   }
 
@@ -212,10 +224,14 @@ int ShuffleTensorRT::AddUnsqueezeOp(nvinfer1::IShuffleLayer *shuffle_layer) {
   // axis
   auto unsqueeze_shape = shuffler_input_->getDimensions();
   std::vector<int64_t> new_shape(unsqueeze_shape.d, unsqueeze_shape.d + unsqueeze_shape.nbDims);
-  auto axis = unsqueeze_op->axis();
+  param_axis_ = unsqueeze_op->axis();
+  if (param_axis_ == nullptr) {
+    MS_LOG(ERROR) << "axis is invalid for " << op_name_;
+    return RET_ERROR;
+  }
 
-  for (size_t i = 0; i < axis->size(); i++) {
-    new_shape.insert(new_shape.begin() + axis->Get(i), 1);
+  for (size_t i = 0; i < param_axis_->size(); i++) {
+    new_shape.insert(new_shape.begin() + param_axis_->Get(i), 1);
   }
 
   nvinfer1::Dims unsqueeze_dims = lite::ConvertCudaDims(new_shape);

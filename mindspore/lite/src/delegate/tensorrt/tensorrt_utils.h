@@ -95,7 +95,11 @@ int ConvertAxisFromNHWC2NCHW(int nhwc_axis);
 void PackNHWCToNCHWFp16(const void *src, void *dst, size_t batch, size_t plane, size_t channel, size_t task_id,
                         size_t thread_count);
 
-std::string GetTensorFormat(nvinfer1::ITensor *trt_tensor, mindspore::Format format = Format::NHWC);
+std::string GetTensorFormat(nvinfer1::ITensor *trt_tensor, mindspore::Format format, bool is_same);
+
+std::string GetTensorFormat(ITensorHelper tensor_helper);
+
+std::string GetTensorFormat(nvinfer1::ITensor *trt_tensors);
 
 nvinfer1::ReduceOperation ConvertTRTReduceMode(schema::ReduceMode mode);
 
@@ -126,7 +130,7 @@ nvinfer1::Dims ConvertCudaDims(const std::vector<T> &shape) {
       dims.d[i] = static_cast<int>(shape[i]);
     }
   } else {
-    MS_LOG(ERROR) << "invalid shape.";
+    MS_LOG(WARNING) << "ms shape is invalid or empty.";
   }
   return dims;
 }

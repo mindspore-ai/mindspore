@@ -51,8 +51,7 @@ int PoolTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     MS_LOG(ERROR) << "ParseParams failed for : " << op_name_;
     return RET_ERROR;
   }
-  MS_LOG(DEBUG) << "before transpose "
-                << GetTensorFormat(tensorrt_in_tensors_[0].trt_tensor_, tensorrt_in_tensors_[0].format_);
+  MS_LOG(DEBUG) << "before transpose " << GetTensorFormat(tensorrt_in_tensors_[0]);
 
   nvinfer1::ITensor *pool_input = tensorrt_in_tensors_[0].trt_tensor_;
   if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
@@ -99,7 +98,7 @@ int PoolTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   bool same_format = SameDims(out_trt_tensor->getDimensions(), out_tensors_[0].Shape()) &&
                      SameDims(tensorrt_in_tensors_[0].trt_tensor_->getDimensions(), in_tensors_[0].Shape());
   this->AddInnerOutTensors(ITensorHelper{out_trt_tensor, Format::NCHW, same_format});
-  MS_LOG(DEBUG) << "output " << GetTensorFormat(out_trt_tensor, Format::NCHW);
+  MS_LOG(DEBUG) << "output " << GetTensorFormat(tensorrt_out_tensors_[0]);
   return RET_OK;
 }
 

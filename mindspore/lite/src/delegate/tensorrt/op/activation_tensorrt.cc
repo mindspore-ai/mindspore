@@ -75,8 +75,8 @@ int ActivationTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
 
   nvinfer1::IActivationLayer *activation_layer = ActivationTensorRT::AddActivation(
     network, activation_op->activation_type(), alpha,
-    std::isfinite(activation_op->min_val()) ? FLT_MIN + 1 : activation_op->min_val(),
-    std::isfinite(activation_op->max_val()) ? FLT_MAX - 1 : activation_op->max_val(), activation_input);
+    std::isfinite(activation_op->min_val()) ? activation_op->min_val() : FLT_MIN,
+    std::isfinite(activation_op->max_val()) ? activation_op->max_val() : FLT_MAX, activation_input);
   if (activation_layer == nullptr) {
     MS_LOG(ERROR) << "add activation op failed for TensorRT.";
     return RET_ERROR;

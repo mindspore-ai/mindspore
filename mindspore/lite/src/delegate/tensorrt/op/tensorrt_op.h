@@ -32,8 +32,8 @@ constexpr int INPUT_SIZE4 = 4;
 
 struct ITensorHelper {
   nvinfer1::ITensor *trt_tensor_{nullptr};
-  mindspore::Format format_;
-  bool same_format_;
+  mindspore::Format format_{Format::NHWC};
+  bool same_format_{true};
 };
 
 struct BindingHelper {
@@ -42,6 +42,11 @@ struct BindingHelper {
   nvinfer1::DataType data_type_;
   size_t size_;
   bool is_input_binding_{false};
+};
+
+struct DynamicShapeParams {
+  bool support_dynamic_{true};
+  bool support_hw_dynamic_{true};
 };
 
 class TensorRTRuntime;
@@ -96,6 +101,8 @@ class TensorRTOp {
 
   void SetRuntime(TensorRTRuntime *runtime);
 
+  DynamicShapeParams GetDynamicShapeParams() const;
+
  protected:
   bool IsShapeKnown();
 
@@ -120,6 +127,8 @@ class TensorRTOp {
   std::vector<BindingHelper> op_binding_tensor_;
 
   TensorRTRuntime *runtime_{nullptr};
+
+  DynamicShapeParams dynamic_shape_params_;
 };
 
 template <class T>
@@ -127,13 +136,13 @@ TensorRTOp *GetTensorRTOp(const schema::Primitive *primitive, const std::vector<
                           const std::vector<mindspore::MSTensor> &out_tensors, const std::string &name) {
   auto *op = new (std::nothrow) T(primitive, in_tensors, out_tensors, name);
   if (op == nullptr) {
-    MS_LOG(ERROR) << "TensorRT is nullptr.";
+    MS_LOG(WARNING) << "TensorRT is nullptr.";
     return nullptr;
   }
 
   auto ret = op->IsSupport(primitive, in_tensors, out_tensors);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "TensorRT op is not supported: " << name;
+    MS_LOG(WARNING) << "TensorRT op is not supported: " << name;
     delete op;
     return nullptr;
   }
