@@ -33,28 +33,25 @@ np_types = (np.int8, np.int16, np.int32, np.int64,
 
 class Tensor(Tensor_):
     """
-    Tensor is used for data storage.
-
-    Tensor inherits tensor object in C++.
-    Some functions are implemented in C++ and some functions are implemented in Python.
+    Tensor is a data structure that stores an n-dimensional array.
 
     Args:
-        input_data (Union[Tensor, float, int, bool, tuple, list, numpy.ndarray]): Input data of the tensor.
-            Default: None.
-        dtype (:class:`mindspore.dtype`): Input data should be None, bool or numeric type defined in `mindspore.dtype`.
-            The argument is used to define the data type of the output tensor. If it is None, the data type of the
-            output tensor will be the same as the `input_data`. Default: None.
-        shape (Union[tuple, list, int]): A list of integers, a tuple of integers or an integer as the shape of
-            output. If `input_data` is available, `shape` doesn't need to be set. Default: None.
+        input_data (Union[Tensor, float, int, bool, tuple, list, numpy.ndarray]): The data to be stroed. It can be
+            another Tensor, Python number or NumPy ndarray. Default: None.
+        dtype (:class:`mindspore.dtype`): Used to indicate the data type of the output Tensor. The argument should
+            be defined in `mindspore.dtype`. If it is None, the data type of the output Tensor will be the same
+            as the `input_data`. Default: None.
+        shape (Union[tuple, list, int]): Used to indicate the shape of the output Tensor. The argument should be
+            a list of integers, a tuple of integers or an integer. If `input_data` is available,
+            `shape` doesn't need to be set. Default: None.
         init (Initializer): The information of init data.
             'init' is used for delayed initialization in parallel mode. Usually, it is not recommended to use
-            'init' interface to initialize parameters in other conditions. If 'init' interface is used to initialize
-            parameters, the `Tensor.init_data` API needs to be called to convert `Tensor` to the actual data.
+            'init' interface to initialize Tensor in the other conditions. If 'init' interface is used to initialize
+            Tensor, the `Tensor.init_data` API needs to be called to convert `Tensor` to the actual data.
             Default: None.
 
     Outputs:
-        Tensor. If `dtype` and `shape` are not set, return a tensor with the same dtype and shape as `input_data`.
-        If `dtype` or `shape` is set, the dtype or shape of the output Tensor is consistent with the setting.
+        Tensor.
 
     Examples:
         >>> import numpy as np
