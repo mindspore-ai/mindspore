@@ -91,7 +91,7 @@ mindspore.Tensor
 
     .. py:method:: any(axis=(), keep_dims=False)
 
-        检查在指定轴方向上是否存在任意为True的数组元素。
+        检查在指定轴方向上是否存在任意为True的Tensor元素。
 
         **参数：**
 
@@ -100,7 +100,7 @@ mindspore.Tensor
 
         **返回：**
 
-        Tensor。如果在指定轴方向上所有数组元素都为True，则其值为True，否则其值为False。如果轴为None或空元组，则简化所有维度。
+        Tensor。如果在指定轴方向上所有Tensor元素都为True，则其值为True，否则其值为False。如果轴为None或空元组，则简化所有维度。
 
         **支持平台：**
 
@@ -172,8 +172,12 @@ mindspore.Tensor
 
     .. py:method:: asnumpy()
 
-        将张量转换为NumPy数组。
-      
+        将张量转换为NumPy数组。该方法会将Tensor本身转换为NumPy的ndarray。这个Tensor和函数返回的ndarray共享内存地址。对Tensor本身的修改会反映到相应的ndarray上。
+
+        **返回：**
+
+        NumPy的ndarray，该ndarray与Tensor共享内存地址。
+
         **样例：**
 
         >>> from mindspore import Tensor
