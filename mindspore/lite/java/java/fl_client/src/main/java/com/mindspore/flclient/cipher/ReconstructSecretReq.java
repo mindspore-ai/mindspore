@@ -20,6 +20,7 @@ import static com.mindspore.flclient.FLParameter.SLEEP_TIME;
 
 import com.google.flatbuffers.FlatBufferBuilder;
 
+import com.mindspore.flclient.CipherClient;
 import com.mindspore.flclient.Common;
 import com.mindspore.flclient.FLClientStatus;
 import com.mindspore.flclient.FLCommunication;
@@ -68,7 +69,8 @@ public class ReconstructSecretReq {
      */
     public FLClientStatus sendReconstructSecret(List<DecryptShareSecrets> decryptShareSecretsList,
                                                 List<String> u3ClientList, int iteration) {
-        String url = Common.generateUrl(flParameter.isUseElb(), flParameter.getServerNum(), flParameter.getDomainName());
+        String url = Common.generateUrl(flParameter.isUseElb(), flParameter.getServerNum(),
+                flParameter.getDomainName());
         FlatBufferBuilder builder = new FlatBufferBuilder();
         int desFlId = builder.createString(localFLParameter.getFlID());
         Date date = new Date();
@@ -106,12 +108,28 @@ public class ReconstructSecretReq {
             }
             int reconstructShareSecrets = SendReconstructSecret.createReconstructSecretSharesVector(builder,
                     decryptShareList);
-            SendReconstructSecret.startSendReconstructSecret(builder);
-            SendReconstructSecret.addFlId(builder, desFlId);
-            SendReconstructSecret.addReconstructSecretShares(builder, reconstructShareSecrets);
-            SendReconstructSecret.addIteration(builder, iteration);
-            SendReconstructSecret.addTimestamp(builder, time);
-            int reconstructSecretRoot = SendReconstructSecret.endSendReconstructSecret(builder);
+
+            int reconstructSecretRoot;
+            byte[] signature = CipherClient.signTimeAndIter(dateTime, iteration);
+            if (signature.length > 0) {
+                int signed = SendReconstructSecret.createSignatureVector(builder, signature);
+                SendReconstructSecret.startSendReconstructSecret(builder);
+                SendReconstructSecret.addFlId(builder, desFlId);
+                SendReconstructSecret.addReconstructSecretShares(builder, reconstructShareSecrets);
+                SendReconstructSecret.addIteration(builder, iteration);
+                SendReconstructSecret.addTimestamp(builder, time);
+                SendReconstructSecret.addSignature(builder, signed);
+                reconstructSecretRoot = SendReconstructSecret.endSendReconstructSecret(builder);
+            } else {
+                SendReconstructSecret.startSendReconstructSecret(builder);
+                SendReconstructSecret.addFlId(builder, desFlId);
+                SendReconstructSecret.addReconstructSecretShares(builder, reconstructShareSecrets);
+                SendReconstructSecret.addIteration(builder, iteration);
+                SendReconstructSecret.addTimestamp(builder, time);
+                SendReconstructSecret.addSignature(builder, 0);
+                reconstructSecretRoot = SendReconstructSecret.endSendReconstructSecret(builder);
+            }
+
             builder.finish(reconstructSecretRoot);
             byte[] msg = builder.sizedByteArray();
             try {
@@ -121,6 +139,7 @@ public class ReconstructSecretReq {
                             "time and request again"));
                     Common.sleep(SLEEP_TIME);
                     nextRequestTime = "";
+                    retCode = ResponseCode.OutOfTime;
                     return FLClientStatus.RESTART;
                 }
                 ByteBuffer buffer = ByteBuffer.wrap(responseData);

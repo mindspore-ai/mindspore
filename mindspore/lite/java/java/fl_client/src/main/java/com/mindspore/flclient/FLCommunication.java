@@ -17,6 +17,8 @@
 package com.mindspore.flclient;
 
 import static com.mindspore.flclient.FLParameter.TIME_OUT;
+import static com.mindspore.flclient.LocalFLParameter.ANDROID;
+import static com.mindspore.flclient.LocalFLParameter.X86;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -49,12 +51,16 @@ import javax.net.ssl.X509TrustManager;
  */
 public class FLCommunication implements IFLCommunication {
     private static int timeOut;
-    private static boolean ifCertificateVerify = false;
+    private static String sslProtocol;
+    private static String env;
+    private static SSLSocketFactory sslSocketFactory;
+    private static X509TrustManager x509TrustManager;
     private static final MediaType MEDIA_TYPE_JSON = MediaType.parse("applicatiom/json;charset=utf-8");
     private static final Logger LOGGER = Logger.getLogger(FLCommunication.class.toString());
     private static volatile FLCommunication communication;
 
     private FLParameter flParameter = FLParameter.getInstance();
+    private LocalFLParameter localFLParameter = LocalFLParameter.getInstance();
     private OkHttpClient client;
 
     private FLCommunication() {
@@ -63,7 +69,14 @@ public class FLCommunication implements IFLCommunication {
         } else {
             timeOut = TIME_OUT;
         }
-        ifCertificateVerify = flParameter.isUseSSL();
+        sslProtocol = flParameter.getSslProtocol();
+        if (!Common.checkFLName(flParameter.getFlName())) {
+            env = flParameter.getDeployEnv();
+            if (ANDROID.equals(env)) {
+                sslSocketFactory = flParameter.getSslSocketFactory();
+                x509TrustManager = flParameter.getX509TrustManager();
+            }
+        }
         client = getOkHttpClient();
     }
 
@@ -85,33 +98,29 @@ public class FLCommunication implements IFLCommunication {
             }
         };
         final TrustManager[] trustAllCerts = new TrustManager[]{trustManager};
-        try {
-            LOGGER.info(Common.addTag("the set timeOut in OkHttpClient: " + timeOut));
-            OkHttpClient.Builder builder = new OkHttpClient.Builder();
-            builder.connectTimeout(timeOut, TimeUnit.SECONDS);
-            builder.writeTimeout(timeOut, TimeUnit.SECONDS);
-            builder.readTimeout(3 * timeOut, TimeUnit.SECONDS);
-            if (ifCertificateVerify) {
-                builder.sslSocketFactory(SSLSocketFactoryTools.getInstance().getmSslSocketFactory(),
-                        SSLSocketFactoryTools.getInstance().getmTrustManager());
-                builder.hostnameVerifier(SSLSocketFactoryTools.getInstance().getHostnameVerifier());
-            } else {
-                final SSLContext sslContext = SSLContext.getInstance("TLS");
-                sslContext.init(null, trustAllCerts, Common.getSecureRandom());
-                final SSLSocketFactory sslFactory = sslContext.getSocketFactory();
-                builder.sslSocketFactory(sslFactory, trustManager);
+        LOGGER.info(Common.addTag("the set timeOut in OkHttpClient: " + timeOut));
+        OkHttpClient.Builder builder = new OkHttpClient.Builder();
+        builder.connectTimeout(timeOut, TimeUnit.SECONDS);
+        builder.writeTimeout(timeOut, TimeUnit.SECONDS);
+        builder.readTimeout(3 * timeOut, TimeUnit.SECONDS);
+        if (Common.isHttps()) {
+            if (ANDROID.equals(env)) {
+                builder.sslSocketFactory(sslSocketFactory, x509TrustManager);
                 builder.hostnameVerifier(new HostnameVerifier() {
                     @Override
                     public boolean verify(String arg0, SSLSession arg1) {
                         return true;
                     }
                 });
+            } else {
+                builder.sslSocketFactory(SSLSocketFactoryTools.getInstance().getmSslSocketFactory(),
+                        SSLSocketFactoryTools.getInstance().getmTrustManager());
+                builder.hostnameVerifier(SSLSocketFactoryTools.getInstance().getHostnameVerifier());
             }
-            return builder.build();
-        } catch (NoSuchAlgorithmException | KeyManagementException ex) {
-            LOGGER.severe(Common.addTag("[OkHttpClient] catch NoSuchAlgorithmException or KeyManagementException: " + ex.getMessage()));
-            throw new IllegalArgumentException(ex);
+        } else {
+            LOGGER.info(Common.addTag("conducting http communication, do not need SSLSocketFactoryTools"));
         }
+        return builder.build();
     }
 
     /**

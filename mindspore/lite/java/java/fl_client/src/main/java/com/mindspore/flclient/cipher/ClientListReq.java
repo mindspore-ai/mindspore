@@ -21,6 +21,7 @@ import static com.mindspore.flclient.FLParameter.SLEEP_TIME;
 
 import com.google.flatbuffers.FlatBufferBuilder;
 
+import com.mindspore.flclient.CipherClient;
 import com.mindspore.flclient.Common;
 import com.mindspore.flclient.FLClientStatus;
 import com.mindspore.flclient.FLCommunication;
@@ -91,12 +92,28 @@ public class ClientListReq {
         long timestamp = date.getTime();
         String dateTime = String.valueOf(timestamp);
         int time = builder.createString(dateTime);
-
-        GetClientList.startGetClientList(builder);
-        GetClientList.addFlId(builder, id);
-        GetClientList.addIteration(builder, iteration);
-        GetClientList.addTimestamp(builder, time);
-        int clientListRoot = GetClientList.endGetClientList(builder);
+        int clientListRoot;
+        byte[] signature = CipherClient.signTimeAndIter(dateTime, iteration);
+        if (signature == null) {
+            LOGGER.severe(Common.addTag("[getClientList] get signature is null!"));
+            return FLClientStatus.FAILED;
+        }
+        if (signature.length > 0) {
+            int signed = GetClientList.createSignatureVector(builder, signature);
+            GetClientList.startGetClientList(builder);
+            GetClientList.addFlId(builder, id);
+            GetClientList.addIteration(builder, iteration);
+            GetClientList.addTimestamp(builder, time);
+            GetClientList.addSignature(builder, signed);
+            clientListRoot = GetClientList.endGetClientList(builder);
+        } else {
+            GetClientList.startGetClientList(builder);
+            GetClientList.addFlId(builder, id);
+            GetClientList.addIteration(builder, iteration);
+            GetClientList.addTimestamp(builder, time);
+            GetClientList.addSignature(builder, 0);
+            clientListRoot = GetClientList.endGetClientList(builder);
+        }
         builder.finish(clientListRoot);
         byte[] msg = builder.sizedByteArray();
         String url = Common.generateUrl(flParameter.isUseElb(), flParameter.getServerNum(), flParameter.getDomainName());
@@ -107,6 +124,7 @@ public class ClientListReq {
                         "request again"));
                 Common.sleep(SLEEP_TIME);
                 nextRequestTime = "";
+                retCode = ResponseCode.OutOfTime;
                 return FLClientStatus.RESTART;
             }
             ByteBuffer buffer = ByteBuffer.wrap(responseData);

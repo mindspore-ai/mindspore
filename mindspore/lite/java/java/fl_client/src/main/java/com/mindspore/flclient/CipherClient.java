@@ -25,33 +25,44 @@ import com.google.flatbuffers.FlatBufferBuilder;
 
 import com.mindspore.flclient.cipher.AESEncrypt;
 import com.mindspore.flclient.cipher.BaseUtil;
+import com.mindspore.flclient.cipher.CertVerify;
 import com.mindspore.flclient.cipher.ClientListReq;
 import com.mindspore.flclient.cipher.KEYAgreement;
 import com.mindspore.flclient.cipher.Masking;
 import com.mindspore.flclient.cipher.ReconstructSecretReq;
 import com.mindspore.flclient.cipher.ShareSecrets;
+import com.mindspore.flclient.cipher.SignAndVerify;
 import com.mindspore.flclient.cipher.struct.ClientPublicKey;
 import com.mindspore.flclient.cipher.struct.DecryptShareSecrets;
 import com.mindspore.flclient.cipher.struct.EncryptShare;
 import com.mindspore.flclient.cipher.struct.NewArray;
 import com.mindspore.flclient.cipher.struct.ShareSecret;
+import com.mindspore.flclient.pki.PkiUtil;
 
 import mindspore.schema.ClientShare;
 import mindspore.schema.GetExchangeKeys;
 import mindspore.schema.GetShareSecrets;
+import mindspore.schema.RequestAllClientListSign;
 import mindspore.schema.RequestExchangeKeys;
 import mindspore.schema.RequestShareSecrets;
+import mindspore.schema.ResponseClientListSign;
 import mindspore.schema.ResponseCode;
 import mindspore.schema.ResponseExchangeKeys;
 import mindspore.schema.ResponseShareSecrets;
+import mindspore.schema.ReturnAllClientListSign;
 import mindspore.schema.ReturnExchangeKeys;
 import mindspore.schema.ReturnShareSecrets;
+import mindspore.schema.SendClientListSign;
 
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
+import java.security.cert.CertificateEncodingException;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -93,6 +104,7 @@ public class CipherClient {
     private ClientListReq clientListReq = new ClientListReq();
     private ReconstructSecretReq reconstructSecretReq = new ReconstructSecretReq();
     private int retCode;
+    private Map<String, X509Certificate[]> certificateList = new HashMap<String, X509Certificate[]>();
 
     /**
      * Construct function of cipherClient
@@ -423,12 +435,6 @@ public class CipherClient {
                     " please check!"));
             return FLClientStatus.FAILED;
         }
-        FlatBufferBuilder fbBuilder = new FlatBufferBuilder();
-        byte[] cPK = cKey.get(0);
-        byte[] sPK = sKey.get(0);
-        int cpk = RequestExchangeKeys.createCPkVector(fbBuilder, cPK);
-        int spk = RequestExchangeKeys.createSPkVector(fbBuilder, sPK);
-
         byte[] indIv = new byte[I_VEC_LEN];
         byte[] pwIv = new byte[I_VEC_LEN];
         byte[] thisPwSalt = new byte[SALT_SIZE];
@@ -439,15 +445,24 @@ public class CipherClient {
         this.individualIv = indIv;
         this.pwIVec = pwIv;
         this.pwSalt = thisPwSalt;
+        FlatBufferBuilder fbBuilder = new FlatBufferBuilder();
+
         int indIvFbs = RequestExchangeKeys.createIndIvVector(fbBuilder, indIv);
         int pwIvFbs = RequestExchangeKeys.createPwIvVector(fbBuilder, pwIv);
         int pwSaltFbs = RequestExchangeKeys.createPwSaltVector(fbBuilder, thisPwSalt);
 
+        // for pkiVerify mode
+        int exchangeKeysRoot;
+        byte[] cPK = cKey.get(0);
+        byte[] sPK = sKey.get(0);
+        int cpk = RequestExchangeKeys.createCPkVector(fbBuilder, cPK);
+        int spk = RequestExchangeKeys.createSPkVector(fbBuilder, sPK);
         int id = fbBuilder.createString(localFLParameter.getFlID());
         Date date = new Date();
         long timestamp = date.getTime();
         String dateTime = String.valueOf(timestamp);
         int time = fbBuilder.createString(dateTime);
+        String clientID = flParameter.getClientID();
 
         // start build
         RequestExchangeKeys.startRequestExchangeKeys(fbBuilder);
@@ -459,7 +474,24 @@ public class CipherClient {
         RequestExchangeKeys.addIndIv(fbBuilder, indIvFbs);
         RequestExchangeKeys.addPwIv(fbBuilder, pwIvFbs);
         RequestExchangeKeys.addPwSalt(fbBuilder, pwSaltFbs);
-        int exchangeKeysRoot = RequestExchangeKeys.endRequestExchangeKeys(fbBuilder);
+        if (flParameter.isPkiVerify()) {
+            // waiting for certificates to take effect
+            int waitTakeEffectTime = 5000;
+            Common.sleep(waitTakeEffectTime);
+            int nSize = 2;  // exchange equipment certificate and service equipment
+            String[] pemCertificateChains = transformX509ArrayToPemArray(CertVerify.getX509CertificateChain(clientID));
+            int[] pemList = new int[nSize];
+            for (int i = 0; i < nSize; i++) {
+                pemList[i] = fbBuilder.createString(pemCertificateChains[i]);
+            }
+            int certificatesInt = RequestExchangeKeys.createCertificateChainVector(fbBuilder, pemList);
+            byte[] signature = signPkAndTime(clientID, cPK, sPK, dateTime, iteration);
+            int signed = RequestExchangeKeys.createSignatureVector(fbBuilder, signature);
+
+            RequestExchangeKeys.addSignature(fbBuilder, signed);
+            RequestExchangeKeys.addCertificateChain(fbBuilder, certificatesInt);
+        }
+        exchangeKeysRoot = RequestExchangeKeys.endRequestExchangeKeys(fbBuilder);
         fbBuilder.finish(exchangeKeysRoot);
         byte[] msg = fbBuilder.sizedByteArray();
         String url = Common.generateUrl(flParameter.isUseElb(), flParameter.getServerNum(),
@@ -472,6 +504,7 @@ public class CipherClient {
                         "request again"));
                 Common.sleep(SLEEP_TIME);
                 nextRequestTime = "";
+                retCode = ResponseCode.OutOfTime;
                 return FLClientStatus.RESTART;
             }
             ByteBuffer buffer = ByteBuffer.wrap(responseData);
@@ -518,12 +551,30 @@ public class CipherClient {
         String dateTime = String.valueOf(timestamp);
         int time = fbBuilder.createString(dateTime);
 
-        // start build
-        GetExchangeKeys.startGetExchangeKeys(fbBuilder);
-        GetExchangeKeys.addFlId(fbBuilder, id);
-        GetExchangeKeys.addIteration(fbBuilder, iteration);
-        GetExchangeKeys.addTimestamp(fbBuilder, time);
-        int getExchangeKeysRoot = GetExchangeKeys.endGetExchangeKeys(fbBuilder);
+        int getExchangeKeysRoot;
+        byte[] signature = signTimeAndIter(dateTime, iteration);
+        if (signature == null) {
+            LOGGER.severe(Common.addTag("[getExchangeKeys] get signature is null!"));
+            return FLClientStatus.FAILED;
+        }
+        if (signature.length > 0) {
+            int signed = GetExchangeKeys.createSignatureVector(fbBuilder, signature);
+            // start build
+            GetExchangeKeys.startGetExchangeKeys(fbBuilder);
+            GetExchangeKeys.addFlId(fbBuilder, id);
+            GetExchangeKeys.addIteration(fbBuilder, iteration);
+            GetExchangeKeys.addTimestamp(fbBuilder, time);
+            GetExchangeKeys.addSignature(fbBuilder, signed);
+            getExchangeKeysRoot = GetExchangeKeys.endGetExchangeKeys(fbBuilder);
+        } else {
+            // start build
+            GetExchangeKeys.startGetExchangeKeys(fbBuilder);
+            GetExchangeKeys.addFlId(fbBuilder, id);
+            GetExchangeKeys.addIteration(fbBuilder, iteration);
+            GetExchangeKeys.addTimestamp(fbBuilder, time);
+            getExchangeKeysRoot = GetExchangeKeys.endGetExchangeKeys(fbBuilder);
+        }
+
         fbBuilder.finish(getExchangeKeysRoot);
         byte[] msg = fbBuilder.sizedByteArray();
         String url = Common.generateUrl(flParameter.isUseElb(), flParameter.getServerNum(),
@@ -535,6 +586,7 @@ public class CipherClient {
                         "request again"));
                 Common.sleep(SLEEP_TIME);
                 nextRequestTime = "";
+                retCode = ResponseCode.OutOfTime;
                 return FLClientStatus.RESTART;
             }
             ByteBuffer buffer = ByteBuffer.wrap(responseData);
@@ -558,22 +610,44 @@ public class CipherClient {
                 clientPublicKeyList.clear();
                 u1ClientList.clear();
                 int length = bufData.remotePublickeysLength();
+
                 for (int i = 0; i < length; i++) {
+                    ByteBuffer bufCpk = bufData.remotePublickeys(i).cPkAsByteBuffer();
+                    ByteBuffer bufSpk = bufData.remotePublickeys(i).sPkAsByteBuffer();
+                    int sizeCpk = bufData.remotePublickeys(i).cPkLength();
+                    int sizeSpk = bufData.remotePublickeys(i).sPkLength();
+                    byte[] bufCpkList = byteBufferToList(bufCpk, sizeCpk);
+                    byte[] bufSpkList = byteBufferToList(bufSpk, sizeSpk);
+                    // copy bufCpkList and bufSpkList
+                    byte[] cPkByte = bufCpkList.clone();
+                    byte[] sPkByte = bufSpkList.clone();
+
+                    // check signature
+                    boolean isPkiVerify = flParameter.isPkiVerify();
+                    if (isPkiVerify) {
+                        FLClientStatus checkResult = checkSignature(bufData, i, cPkByte, sPkByte);
+                        if (checkResult == FLClientStatus.FAILED) {
+                            return FLClientStatus.FAILED;
+                        }
+                    }
+
                     ClientPublicKey publicKey = new ClientPublicKey();
                     String srcFlId = bufData.remotePublickeys(i).flId();
                     publicKey.setFlID(srcFlId);
-                    ByteBuffer bufCpk = bufData.remotePublickeys(i).cPkAsByteBuffer();
-                    int sizeCpk = bufData.remotePublickeys(i).cPkLength();
-                    ByteBuffer bufSpk = bufData.remotePublickeys(i).sPkAsByteBuffer();
-                    int sizeSpk = bufData.remotePublickeys(i).sPkLength();
                     ByteBuffer bufPwIv = bufData.remotePublickeys(i).pwIvAsByteBuffer();
                     int sizePwIv = bufData.remotePublickeys(i).pwIvLength();
                     ByteBuffer bufPwSalt = bufData.remotePublickeys(i).pwSaltAsByteBuffer();
                     int sizePwSalt = bufData.remotePublickeys(i).pwSaltLength();
-                    publicKey.setCPK(byteToArray(bufCpk, sizeCpk));
-                    publicKey.setSPK(byteToArray(bufSpk, sizeSpk));
                     publicKey.setPwIv(byteToArray(bufPwIv, sizePwIv));
                     publicKey.setPwSalt(byteToArray(bufPwSalt, sizePwSalt));
+                    NewArray<byte[]> bufCpkArray = new NewArray<>();
+                    bufCpkArray.setSize(sizeCpk);
+                    bufCpkArray.setArray(bufCpkList);
+                    NewArray<byte[]> bufSpkArray = new NewArray<>();
+                    bufSpkArray.setSize(sizeSpk);
+                    bufSpkArray.setArray(bufSpkList);
+                    publicKey.setCPK(bufCpkArray);
+                    publicKey.setSPK(bufSpkArray);
                     clientPublicKeyList.put(srcFlId, publicKey);
                     u1ClientList.add(srcFlId);
                 }
@@ -596,6 +670,86 @@ public class CipherClient {
                         " invalid: " + retCode));
                 return FLClientStatus.FAILED;
         }
+    }
+
+    private FLClientStatus checkSignature(ReturnExchangeKeys bufData, int dataIndex, byte[] cPkByte, byte[] sPkByte) {
+        ByteBuffer signature = bufData.remotePublickeys(dataIndex).signatureAsByteBuffer();
+        byte[] sigByte = new byte[signature.remaining()];
+        signature.get(sigByte);
+        int certifyNum = bufData.remotePublickeys(dataIndex).certificateChainLength();
+        String[] pemCerts = new String[certifyNum];
+        for (int certIndex = 0; certIndex < certifyNum; certIndex++) {
+            pemCerts[certIndex] = bufData.remotePublickeys(dataIndex).certificateChain(certIndex);
+        }
+
+        X509Certificate[] x509Certificates = CertVerify.transformPemArrayToX509Array(pemCerts);
+        if (x509Certificates.length < 2) {
+            LOGGER.severe(Common.addTag("the length of x509Certificates is not valid, should be >= 2"));
+            return FLClientStatus.FAILED;
+        }
+        String certificateHash = PkiUtil.genHashFromCer(x509Certificates[1]);
+        LOGGER.info(Common.addTag("Get certificate hash success!"));
+
+        // check srcId
+        String srcFlId = bufData.remotePublickeys(dataIndex).flId();
+        if (certificateHash.equals(srcFlId)) {
+            LOGGER.info(Common.addTag("Check flID success and source flID is:" + srcFlId));
+        } else {
+            LOGGER.severe(Common.addTag("Check flID failed!" + "source flID: " + srcFlId + "Hash ID from certificate:" +
+                    " " + certificateHash.equals(srcFlId)));
+            return FLClientStatus.FAILED;
+        }
+
+        certificateList.put(srcFlId, x509Certificates);
+        String timestamp = bufData.remotePublickeys(dataIndex).timestamp();
+        String clientID = flParameter.getClientID();
+        if (!verifySignature(clientID, x509Certificates, sigByte, cPkByte, sPkByte, timestamp, iteration)) {
+            LOGGER.info(Common.addTag("[PairWiseMask] FlID: " + srcFlId +
+                    ", signature authentication failed"));
+            return FLClientStatus.FAILED;
+        } else {
+            LOGGER.info(Common.addTag("[PairWiseMask] Verify signature success!"));
+        }
+
+        // check iteration and timestamp
+        int remoteIter = bufData.iteration();
+        FLClientStatus iterTimeCheck = checkIterAndTimestamp(remoteIter, timestamp);
+        if (iterTimeCheck == FLClientStatus.FAILED) {
+            return FLClientStatus.FAILED;
+        }
+
+        return FLClientStatus.SUCCESS;
+    }
+
+    private FLClientStatus checkIterAndTimestamp(int remoteIter, String timestamp) {
+        if (remoteIter != iteration) {
+            LOGGER.severe(Common.addTag("[PairWiseMask] iteration check failed. Remote iteration of client: " + "is "
+                    + remoteIter + ", which is not consistent with current iteration:" + iteration));
+            return FLClientStatus.FAILED;
+        }
+        Date date = new Date();
+        long currentTimeStamp = date.getTime();
+        if (timestamp == null) {
+            LOGGER.severe(Common.addTag("[PairWiseMask] Received timeStamp is null,please check it!"));
+            return FLClientStatus.FAILED;
+        }
+        long remoteTimeStamp = Long.parseLong(timestamp);
+        long validIterInterval = flParameter.getValidInterval();
+        if (currentTimeStamp - remoteTimeStamp > validIterInterval || currentTimeStamp < remoteTimeStamp) {
+            LOGGER.severe(Common.addTag("[PairWiseMask] timeStamp check failed! The difference between" +
+                    " remote timestamp and current timestamp is beyond valid iteration interval!"));
+            return FLClientStatus.FAILED;
+        }
+        return FLClientStatus.SUCCESS;
+    }
+
+    private byte[] byteBufferToList(ByteBuffer buf, int size) {
+        byte[] array = new byte[size];
+        for (int i = 0; i < size; i++) {
+            byte word = buf.get();
+            array[i] = word;
+        }
+        return array;
     }
 
     private FLClientStatus requestShareSecrets() {
@@ -642,25 +796,44 @@ public class CipherClient {
             }
             int encryptedSharesFbs = RequestShareSecrets.createEncryptedSharesVector(fbBuilder, add);
 
-            // start build
-            RequestShareSecrets.startRequestShareSecrets(fbBuilder);
-            RequestShareSecrets.addFlId(fbBuilder, id);
-            RequestShareSecrets.addEncryptedShares(fbBuilder, encryptedSharesFbs);
-            RequestShareSecrets.addIteration(fbBuilder, iteration);
-            RequestShareSecrets.addTimestamp(fbBuilder, time);
-            int requestShareSecretsRoot = RequestShareSecrets.endRequestShareSecrets(fbBuilder);
+            int requestShareSecretsRoot;
+            byte[] signature = signTimeAndIter(dateTime, iteration);
+            if (signature == null) {
+                LOGGER.severe(Common.addTag("[PairWiseMask] get signature is null!"));
+                return FLClientStatus.FAILED;
+            }
+            if (signature.length > 0) {
+                int signed = RequestShareSecrets.createSignatureVector(fbBuilder, signature);
+                // start build
+                RequestShareSecrets.startRequestShareSecrets(fbBuilder);
+                RequestShareSecrets.addFlId(fbBuilder, id);
+                RequestShareSecrets.addEncryptedShares(fbBuilder, encryptedSharesFbs);
+                RequestShareSecrets.addIteration(fbBuilder, iteration);
+                RequestShareSecrets.addTimestamp(fbBuilder, time);
+                RequestShareSecrets.addSignature(fbBuilder, signed);
+                requestShareSecretsRoot = RequestShareSecrets.endRequestShareSecrets(fbBuilder);
+            } else {
+                // start build
+                RequestShareSecrets.startRequestShareSecrets(fbBuilder);
+                RequestShareSecrets.addFlId(fbBuilder, id);
+                RequestShareSecrets.addEncryptedShares(fbBuilder, encryptedSharesFbs);
+                RequestShareSecrets.addIteration(fbBuilder, iteration);
+                RequestShareSecrets.addTimestamp(fbBuilder, time);
+                requestShareSecretsRoot = RequestShareSecrets.endRequestShareSecrets(fbBuilder);
+            }
+
             fbBuilder.finish(requestShareSecretsRoot);
             byte[] msg = fbBuilder.sizedByteArray();
-            String url = Common.generateUrl(flParameter.isUseElb(), flParameter.getServerNum(),
-                    flParameter.getDomainName());
             try {
+                String url = Common.generateUrl(flParameter.isUseElb(), flParameter.getServerNum(),
+                        flParameter.getDomainName());
                 byte[] responseData = flCommunication.syncRequest(url + "/shareSecrets", msg);
                 if (!Common.isSeverReady(responseData)) {
                     LOGGER.info(Common.addTag("[requestShareSecrets] the server is not ready now, need wait some time" +
-                            " " +
-                            "and request again"));
+                            " and request again"));
                     Common.sleep(SLEEP_TIME);
                     nextRequestTime = "";
+                    retCode = ResponseCode.OutOfTime;
                     return FLClientStatus.RESTART;
                 }
                 ByteBuffer buffer = ByteBuffer.wrap(responseData);
@@ -708,11 +881,27 @@ public class CipherClient {
         String dateTime = String.valueOf(timestamp);
         int time = fbBuilder.createString(dateTime);
 
-        GetShareSecrets.startGetShareSecrets(fbBuilder);
-        GetShareSecrets.addFlId(fbBuilder, id);
-        GetShareSecrets.addIteration(fbBuilder, iteration);
-        GetShareSecrets.addTimestamp(fbBuilder, time);
-        int getShareSecrets = GetShareSecrets.endGetShareSecrets(fbBuilder);
+        int getShareSecrets;
+        byte[] signature = signTimeAndIter(dateTime, iteration);
+        if (signature == null) {
+            LOGGER.severe(Common.addTag("[getShareSecrets] get signature is null!"));
+            return FLClientStatus.FAILED;
+        }
+        if (signature.length > 0) {
+            int signed = GetShareSecrets.createSignatureVector(fbBuilder, signature);
+            GetShareSecrets.startGetShareSecrets(fbBuilder);
+            GetShareSecrets.addFlId(fbBuilder, id);
+            GetShareSecrets.addIteration(fbBuilder, iteration);
+            GetShareSecrets.addTimestamp(fbBuilder, time);
+            GetShareSecrets.addSignature(fbBuilder, signed);
+            getShareSecrets = GetShareSecrets.endGetShareSecrets(fbBuilder);
+        } else {
+            GetShareSecrets.startGetShareSecrets(fbBuilder);
+            GetShareSecrets.addFlId(fbBuilder, id);
+            GetShareSecrets.addIteration(fbBuilder, iteration);
+            GetShareSecrets.addTimestamp(fbBuilder, time);
+            getShareSecrets = GetShareSecrets.endGetShareSecrets(fbBuilder);
+        }
         fbBuilder.finish(getShareSecrets);
         byte[] msg = fbBuilder.sizedByteArray();
         String url = Common.generateUrl(flParameter.isUseElb(), flParameter.getServerNum(),
@@ -724,6 +913,7 @@ public class CipherClient {
                         "request again"));
                 Common.sleep(SLEEP_TIME);
                 nextRequestTime = "";
+                retCode = ResponseCode.OutOfTime;
                 return FLClientStatus.RESTART;
             }
             ByteBuffer buffer = ByteBuffer.wrap(responseData);
@@ -864,6 +1054,19 @@ public class CipherClient {
         }
         retCode = clientListReq.getRetCode();
 
+        // clientListCheck
+        if (flParameter.isPkiVerify()) {
+            LOGGER.info(Common.addTag("[PairWiseMask] The mode is pkiVerify mode, start clientList check ..."));
+            curStatus = clientListCheck();
+            while (curStatus == FLClientStatus.WAIT) {
+                Common.sleep(SLEEP_TIME);
+                curStatus = clientListCheck();
+            }
+            if (curStatus != FLClientStatus.SUCCESS) {
+                return curStatus;
+            }
+        }
+
         // SendReconstructSecret
         curStatus = reconstructSecretReq.sendReconstructSecret(decryptShareSecretsList, u3ClientList, iteration);
         while (curStatus == FLClientStatus.WAIT) {
@@ -875,5 +1078,341 @@ public class CipherClient {
         }
         retCode = reconstructSecretReq.getRetCode();
         return curStatus;
+    }
+
+    private byte[] signPkAndTime(String clientID, byte[] cPK, byte[] sPK, String time, int iterNum) {
+        // concatenate cPK, sPK and time
+        byte[] concatData = concatenateData(cPK, sPK, time, iterNum);
+        LOGGER.info("concatenate data success!");
+        // signature
+        return SignAndVerify.signData(clientID, concatData);
+    }
+
+    private static byte[] concatenateData(byte[] cPK, byte[] sPK, String time, int iterNum) {
+        // concatenate cPK, sPK and time
+        if (time == null) {
+            LOGGER.severe(Common.addTag("[concatenateData] input time is null, please check!"));
+            throw new IllegalArgumentException();
+        }
+        byte[] byteTime = time.getBytes(StandardCharsets.UTF_8);
+        String iterString = String.valueOf(iterNum);
+        byte[] byteIter = iterString.getBytes(StandardCharsets.UTF_8);
+        int concatLength = cPK.length + sPK.length + byteTime.length + byteIter.length;
+        byte[] concatData = new byte[concatLength];
+
+        int offset = 0;
+        System.arraycopy(cPK, 0, concatData, offset, cPK.length);
+
+        offset += cPK.length;
+        System.arraycopy(sPK, 0, concatData, offset, sPK.length);
+
+        offset += sPK.length;
+        System.arraycopy(byteTime, 0, concatData, offset, byteTime.length);
+
+        offset += byteTime.length;
+        System.arraycopy(byteIter, 0, concatData, offset, byteIter.length);
+        return concatData;
+    }
+
+    private static byte[] concatenateIterAndTime(String time, int iterNum) {
+        // concatenate cPK, sPK and time
+        byte[] byteTime = time.getBytes(StandardCharsets.UTF_8);
+        String iterString = String.valueOf(iterNum);
+        byte[] byteIter = iterString.getBytes(StandardCharsets.UTF_8);
+        int concatLength = byteTime.length + byteIter.length;
+        byte[] concatData = new byte[concatLength];
+        int offset = 0;
+        System.arraycopy(byteTime, 0, concatData, offset, byteTime.length);
+        offset += byteTime.length;
+        System.arraycopy(byteIter, 0, concatData, offset, byteIter.length);
+        return concatData;
+    }
+
+    private static boolean verifySignature(String clientID, X509Certificate[] x509Certificates, byte[] signature,
+                                           byte[] cPK, byte[] sPK, String timestamp, int iteration) {
+        byte[] concatData = concatenateData(cPK, sPK, timestamp, iteration);
+        return SignAndVerify.verifySignatureByCert(clientID, x509Certificates, concatData, signature);
+    }
+
+    private FLClientStatus clientListCheck() {
+        LOGGER.info(Common.addTag("[PairWiseMask] ==================== ClientListCheck ======================"));
+        FLClientStatus curStatus;
+        // send signed clientList
+
+        curStatus = sendClientListSign();
+        while (curStatus == FLClientStatus.WAIT) {
+            Common.sleep(SLEEP_TIME);
+            curStatus = sendClientListSign();
+        }
+        if (curStatus != FLClientStatus.SUCCESS) {
+            return curStatus;
+        }
+
+        // get signed clientList
+
+        curStatus = getAllClientListSign();
+        while (curStatus == FLClientStatus.WAIT) {
+            Common.sleep(SLEEP_TIME);
+            curStatus = getAllClientListSign();
+        }
+        return curStatus;
+    }
+
+    private FLClientStatus sendClientListSign() {
+        LOGGER.info(Common.addTag("[PairWiseMask] ==============request flID: " +
+                localFLParameter.getFlID() + "=============="));
+        genDHKeyPairs();
+        List<String> clientList = u3ClientList;
+        int listSize = u3ClientList.size();
+        if (listSize == 0) {
+            LOGGER.severe("[Encrypt] u3List is empty, please check!");
+            return FLClientStatus.FAILED;
+        }
+
+        // send signature
+        byte[] clientListByte = transStringListToByte(clientList);
+        byte[] listHash = SignAndVerify.getSHA256(clientListByte);
+        String clientID = flParameter.getClientID();
+        byte[] signature = SignAndVerify.signData(clientID, listHash);
+        if (signature == null) {
+            LOGGER.severe(Common.addTag("[sendClientListSign] the returned signature is null"));
+            return FLClientStatus.FAILED;
+        }
+        FlatBufferBuilder fbBuilder = new FlatBufferBuilder();
+        int signed = RequestExchangeKeys.createSignatureVector(fbBuilder, signature);
+
+        int sendClientListRoot;
+        Date date = new Date();
+        long timestamp = date.getTime();
+        String dateTime = String.valueOf(timestamp);
+        byte[] reqSign = signTimeAndIter(dateTime, iteration);
+        String flID = localFLParameter.getFlID();
+        int id = fbBuilder.createString(flID);
+        int time = fbBuilder.createString(dateTime);
+        if (signature.length > 0) {
+            int reqSigned = SendClientListSign.createSignatureVector(fbBuilder, reqSign);
+            sendClientListRoot = SendClientListSign.createSendClientListSign(fbBuilder, id, iteration, time, signed,
+                    reqSigned);
+        } else {
+            sendClientListRoot = SendClientListSign.createSendClientListSign(fbBuilder, id, iteration, time, signed, 0);
+        }
+
+        fbBuilder.finish(sendClientListRoot);
+        byte[] msg = fbBuilder.sizedByteArray();
+        String url = Common.generateUrl(flParameter.isUseElb(), flParameter.getServerNum(),
+                flParameter.getDomainName());
+        try {
+            byte[] responseData = flCommunication.syncRequest(url + "/pushListSign", msg);
+
+            if (!Common.isSeverReady(responseData)) {
+                LOGGER.info(Common.addTag("[sendClientListSign] the server is not ready now, need wait some time and " +
+                        "request again"));
+                Common.sleep(SLEEP_TIME);
+                nextRequestTime = "";
+                retCode = ResponseCode.OutOfTime;
+                return FLClientStatus.RESTART;
+            }
+            ByteBuffer buffer = ByteBuffer.wrap(responseData);
+            ResponseClientListSign responseClientListSign =
+                    ResponseClientListSign.getRootAsResponseClientListSign(buffer);
+            return judgeRequestClientList(responseClientListSign);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return FLClientStatus.FAILED;
+        }
+    }
+
+    private FLClientStatus judgeRequestClientList(ResponseClientListSign bufData) {
+        retCode = bufData.retcode();
+        LOGGER.info(Common.addTag("[PairWiseMask] **************the response of RequestClientListSign**************"));
+        LOGGER.info(Common.addTag("[PairWiseMask] return code: " + retCode));
+        LOGGER.info(Common.addTag("[PairWiseMask] reason: " + bufData.reason()));
+        LOGGER.info(Common.addTag("[PairWiseMask] current iteration in server: " + bufData.iteration()));
+        LOGGER.info(Common.addTag("[PairWiseMask] next request time: " + bufData.nextReqTime()));
+        switch (retCode) {
+            case (ResponseCode.SUCCEED):
+                LOGGER.info(Common.addTag("[PairWiseMask] RequestClientListSign success"));
+                return FLClientStatus.SUCCESS;
+            case (ResponseCode.OutOfTime):
+                LOGGER.info(Common.addTag("[PairWiseMask] RequestClientListSign out of time: need wait and request " +
+                        "startFLJob again"));
+                setNextRequestTime(bufData.nextReqTime());
+                return FLClientStatus.RESTART;
+            case (ResponseCode.RequestError):
+            case (ResponseCode.SystemError):
+                LOGGER.info(Common.addTag("[PairWiseMask] catch RequestError or SystemError in RequestClientListSign"));
+                return FLClientStatus.FAILED;
+            default:
+                LOGGER.severe(Common.addTag("[PairWiseMask] the return <retCode> from server in RequestClientListSign" +
+                        " is invalid: " + retCode));
+                return FLClientStatus.FAILED;
+        }
+    }
+
+    private FLClientStatus getAllClientListSign() {
+        FlatBufferBuilder fbBuilder = new FlatBufferBuilder();
+        int id = fbBuilder.createString(localFLParameter.getFlID());
+        Date date = new Date();
+        long timestamp = date.getTime();
+        String dateTime = String.valueOf(timestamp);
+        int time = fbBuilder.createString(dateTime);
+
+        int requestAllClientListSign;
+        byte[] signature = signTimeAndIter(dateTime, iteration);
+        if (signature.length > 0) {
+            int signed = RequestAllClientListSign.createSignatureVector(fbBuilder, signature);
+            requestAllClientListSign = RequestAllClientListSign.createRequestAllClientListSign(fbBuilder, id,
+                    iteration, time, signed);
+        } else {
+            requestAllClientListSign = RequestAllClientListSign.createRequestAllClientListSign(fbBuilder, id,
+                    iteration, time, 0);
+        }
+
+        fbBuilder.finish(requestAllClientListSign);
+        byte[] msg = fbBuilder.sizedByteArray();
+        String url = Common.generateUrl(flParameter.isUseElb(), flParameter.getServerNum(),
+                flParameter.getDomainName());
+        try {
+            byte[] responseData = flCommunication.syncRequest(url + "/getListSign", msg);
+
+            if (!Common.isSeverReady(responseData)) {
+                LOGGER.info(Common.addTag("[getAllClientListSign] the server is not ready now, need wait some time " +
+                        "and request again"));
+                Common.sleep(SLEEP_TIME);
+                nextRequestTime = "";
+                retCode = ResponseCode.OutOfTime;
+                return FLClientStatus.RESTART;
+            }
+            ByteBuffer buffer = ByteBuffer.wrap(responseData);
+            ReturnAllClientListSign returnAllClientList =
+                    ReturnAllClientListSign.getRootAsReturnAllClientListSign(buffer);
+            return judgeAllClientList(returnAllClientList);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return FLClientStatus.FAILED;
+        }
+    }
+
+    private FLClientStatus judgeAllClientList(ReturnAllClientListSign bufData) {
+        retCode = bufData.retcode();
+        LOGGER.info(Common.addTag("[PairWiseMask] **************the response of GetAllClientsList**************"));
+        LOGGER.info(Common.addTag("[PairWiseMask] return code: " + retCode));
+        LOGGER.info(Common.addTag("[PairWiseMask] reason: " + bufData.reason()));
+        LOGGER.info(Common.addTag("[PairWiseMask] current iteration in server: " + bufData.iteration()));
+        LOGGER.info(Common.addTag("[PairWiseMask] next request time: " + bufData.nextReqTime()));
+        switch (retCode) {
+            case (ResponseCode.SUCCEED):
+                LOGGER.info(Common.addTag("[PairWiseMask] GetAllClientList success"));
+                int length = bufData.clientListSignLength();
+                String clientID = flParameter.getClientID();
+                String localFlID = localFLParameter.getFlID();
+                byte[] localClientList = transStringListToByte(u3ClientList);
+                byte[] localListHash = SignAndVerify.getSHA256(localClientList);
+                for (int i = 0; i < length; i++) {
+                    // verify signature
+                    ByteBuffer signature = bufData.clientListSign(i).signatureAsByteBuffer();
+                    byte[] sigByte = new byte[signature.remaining()];
+                    signature.get(sigByte);
+                    if (bufData.clientListSign(i).flId() == null) {
+                        LOGGER.severe(Common.addTag("[PairWiseMask] get flID failed!"));
+                        return FLClientStatus.FAILED;
+                    }
+                    String srcFlId = bufData.clientListSign(i).flId();
+                    X509Certificate[] remoteCertificates = certificateList.get(srcFlId);
+                    if (localFlID.equals(srcFlId)) {
+                        continue;
+                    }  // Do not verify itself
+                    if (!SignAndVerify.verifySignatureByCert(clientID, remoteCertificates, localListHash, sigByte)) {
+                        LOGGER.info(Common.addTag("[PairWiseMask] FlID: " + srcFlId +
+                                ", signature authentication failed"));
+                        return FLClientStatus.FAILED;
+                    }
+                }
+                return FLClientStatus.SUCCESS;
+            case (ResponseCode.SucNotReady):
+                LOGGER.info(Common.addTag("[PairWiseMask] server is not ready now, need wait and request " +
+                        "GetAllClientsList again!"));
+                return FLClientStatus.WAIT;
+            case (ResponseCode.OutOfTime):
+                LOGGER.info(Common.addTag("[PairWiseMask] GetAllClientsList out of time: need wait and request " +
+                        "startFLJob again"));
+                setNextRequestTime(bufData.nextReqTime());
+                return FLClientStatus.RESTART;
+            case (ResponseCode.RequestError):
+            case (ResponseCode.SystemError):
+                LOGGER.info(Common.addTag("[PairWiseMask] catch SucNotMatch or SystemError in GetAllClientsList"));
+                return FLClientStatus.FAILED;
+            default:
+                LOGGER.severe(Common.addTag("[PairWiseMask] the return <retCode> from server in ReturnAllClientList " +
+                        "is invalid: " + retCode));
+                return FLClientStatus.FAILED;
+        }
+    }
+
+    private byte[] transStringListToByte(List<String> stringList) {
+        int byteNum = 0;
+        for (String value : stringList) {
+            byte[] stringByte = value.getBytes(StandardCharsets.UTF_8);
+            byteNum += stringByte.length;
+        }
+        byte[] concatData = new byte[byteNum];
+        int offset = 0;
+        for (String str : stringList) {
+            byte[] stringByte = str.getBytes(StandardCharsets.UTF_8);
+            System.arraycopy(stringByte, 0, concatData, offset, stringByte.length);
+            offset += stringByte.length;
+        }
+        return concatData;
+    }
+
+    /**
+     * Add signature on timestamp and iteration
+     *
+     * @param dateTime  the timestamp of data
+     * @param iteration iteration number
+     * @return signed time and iteration
+     */
+    public static byte[] signTimeAndIter(String dateTime, int iteration) {
+        // signature
+        FLParameter flParameter = FLParameter.getInstance();
+        String clientID = flParameter.getClientID();
+        boolean isPkiVerify = flParameter.isPkiVerify();
+        byte[] signature = new byte[0];
+        if (isPkiVerify) {
+            LOGGER.info(Common.addTag("ClientID is:" + clientID));
+            byte[] concatData = concatenateIterAndTime(dateTime, iteration);
+            signature = SignAndVerify.signData(clientID, concatData);
+        }
+        return signature;
+    }
+
+    private static String transformX509ToPem(X509Certificate x509Certificate) {
+        if (x509Certificate == null) {
+            LOGGER.severe(Common.addTag("[CertVerify] x509Certificate is null, please check!"));
+            return null;
+        }
+        String pemCert;
+        try {
+            byte[] derCert = x509Certificate.getEncoded();
+            pemCert = new String(Base64.getEncoder().encode(derCert));
+        } catch (CertificateEncodingException e) {
+            LOGGER.severe(Common.addTag("[CertVerify] catch Exception: " + e.getMessage()));
+            return null;
+        }
+        return pemCert;
+    }
+
+    private static String[] transformX509ArrayToPemArray(X509Certificate[] x509Certificates) {
+        if (x509Certificates == null || x509Certificates.length == 0) {
+            LOGGER.severe(Common.addTag("[CertVerify] certificateChains is null or empty, please check!"));
+            throw new IllegalArgumentException();
+        }
+        int nSize = x509Certificates.length;
+        String[] pemCerts = new String[nSize];
+        for (int i = 0; i < nSize; ++i) {
+            String pemCert = transformX509ToPem(x509Certificates[i]);
+            pemCerts[i] = pemCert;
+        }
+        return pemCerts;
     }
 }

@@ -33,6 +33,7 @@ public class FLJobResultCallback implements IFLJobResultCallback {
      * @param iterationSeq Iteration number
      * @param resultCode   Status Code
      */
+    @Override
     public void onFlJobIterationFinished(String modelName, int iterationSeq, int resultCode) {
         LOGGER.info(Common.addTag("[onFlJobIterationFinished] modelName: " + modelName + " iterationSeq: " +
                 iterationSeq + " resultCode: " + resultCode));
@@ -45,6 +46,7 @@ public class FLJobResultCallback implements IFLJobResultCallback {
      * @param iterationCount total Iteration numbers
      * @param resultCode     Status Code
      */
+    @Override
     public void onFlJobFinished(String modelName, int iterationCount, int resultCode) {
         LOGGER.info(Common.addTag("[onFlJobFinished] modelName: " + modelName + " iterationCount: " +
                 iterationCount + " resultCode: " + resultCode));

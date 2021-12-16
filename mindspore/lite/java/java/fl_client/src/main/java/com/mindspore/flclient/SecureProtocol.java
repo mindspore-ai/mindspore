@@ -16,20 +16,12 @@
 
 package com.mindspore.flclient;
 
-import static com.mindspore.flclient.LocalFLParameter.ALBERT;
-import static com.mindspore.flclient.LocalFLParameter.LENET;
-
 import com.google.flatbuffers.FlatBufferBuilder;
-
-import com.mindspore.flclient.model.AlTrainBert;
-import com.mindspore.flclient.model.SessionUtil;
-import com.mindspore.flclient.model.TrainLenet;
 
 import mindspore.schema.FeatureMap;
 
 import java.security.SecureRandom;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -52,7 +44,7 @@ public class SecureProtocol {
     private double dpEps;
     private double dpDelta;
     private double dpNormClip;
-    private ArrayList<String> encryptFeatureName = new ArrayList<String>();
+    private ArrayList<String> updateFeatureName = new ArrayList<String>();
     private int retCode;
 
     /**
@@ -115,17 +107,17 @@ public class SecureProtocol {
      *
      * @return the feature names that needed to be encrypted.
      */
-    public ArrayList<String> getEncryptFeatureName() {
-        return encryptFeatureName;
+    public ArrayList<String> getUpdateFeatureName() {
+        return updateFeatureName;
     }
 
     /**
-     * Set the parameter encryptFeatureName.
+     * Set the parameter updateFeatureName.
      *
-     * @param encryptFeatureName the feature names that needed to be encrypted.
+     * @param updateFeatureName the feature names that needed to be encrypted.
      */
-    public void setEncryptFeatureName(ArrayList<String> encryptFeatureName) {
-        this.encryptFeatureName = encryptFeatureName;
+    public void setUpdateFeatureName(ArrayList<String> updateFeatureName) {
+        this.updateFeatureName = updateFeatureName;
     }
 
     /**
@@ -146,6 +138,10 @@ public class SecureProtocol {
         LOGGER.info(String.format("[PairWiseMask] ==============request flID: %s ==============",
                 localFLParameter.getFlID()));
         // round 0
+        if (localFLParameter.isStopJobFlag()) {
+            LOGGER.info(Common.addTag("the stopJObFlag is set to true, the job will be stop"));
+            return status;
+        }
         status = cipherClient.exchangeKeys();
         retCode = cipherClient.getRetCode();
         LOGGER.info(String.format("[PairWiseMask] ============= RequestExchangeKeys+GetExchangeKeys response: %s ",
@@ -154,6 +150,10 @@ public class SecureProtocol {
             return status;
         }
         // round 1
+        if (localFLParameter.isStopJobFlag()) {
+            LOGGER.info(Common.addTag("the stopJObFlag is set to true, the job will be stop"));
+            return status;
+        }
         status = cipherClient.shareSecrets();
         retCode = cipherClient.getRetCode();
         LOGGER.info(String.format("[Encrypt] =============RequestShareSecrets+GetShareSecrets response: %s ",
@@ -162,6 +162,10 @@ public class SecureProtocol {
             return status;
         }
         // round2
+        if (localFLParameter.isStopJobFlag()) {
+            LOGGER.info(Common.addTag("the stopJObFlag is set to true, the job will be stop"));
+            return status;
+        }
         featureMask = cipherClient.doubleMaskingWeight();
         if (featureMask == null || featureMask.length <= 0) {
             LOGGER.severe(Common.addTag("[Encrypt] the returned featureMask from cipherClient.doubleMaskingWeight" +
@@ -180,30 +184,18 @@ public class SecureProtocol {
      * @param trainDataSize trainDataSize tne size of train data set.
      * @return the serialized model weights after adding masks.
      */
-    public int[] pwMaskModel(FlatBufferBuilder builder, int trainDataSize) {
+    public int[] pwMaskModel(FlatBufferBuilder builder, int trainDataSize, Map<String, float[]> trainedMap) {
         if (featureMask == null || featureMask.length == 0) {
             LOGGER.severe("[Encrypt] feature mask is null, please check");
             return new int[0];
         }
         LOGGER.info(String.format("[Encrypt] feature mask size: %s", featureMask.length));
-        // get feature map
-        Map<String, float[]> map = new HashMap<String, float[]>();
-        if (flParameter.getFlName().equals(ALBERT)) {
-            AlTrainBert alTrainBert = AlTrainBert.getInstance();
-            map = SessionUtil.convertTensorToFeatures(SessionUtil.getFeatures(alTrainBert.getTrainSession()));
-        } else if (flParameter.getFlName().equals(LENET)) {
-            TrainLenet trainLenet = TrainLenet.getInstance();
-            map = SessionUtil.convertTensorToFeatures(SessionUtil.getFeatures(trainLenet.getTrainSession()));
-        } else {
-            LOGGER.severe(Common.addTag("[Encrypt] the flName is not valid, only support: lenet, albert"));
-            throw new IllegalArgumentException();
-        }
-        int featureSize = encryptFeatureName.size();
+        int featureSize = updateFeatureName.size();
         int[] featuresMap = new int[featureSize];
         int maskIndex = 0;
         for (int i = 0; i < featureSize; i++) {
-            String key = encryptFeatureName.get(i);
-            float[] data = map.get(key);
+            String key = updateFeatureName.get(i);
+            float[] data = trainedMap.get(key);
             LOGGER.info(String.format("[Encrypt] feature name: %s feature size: %s", key, data.length));
             for (int j = 0; j < data.length; j++) {
                 float rawData = data[j];
@@ -349,21 +341,10 @@ public class SecureProtocol {
      * @param trainDataSize tne size of train data set.
      * @return the serialized model weights after adding masks.
      */
-    public int[] dpMaskModel(FlatBufferBuilder builder, int trainDataSize) {
+    public int[] dpMaskModel(FlatBufferBuilder builder, int trainDataSize, Map<String, float[]> trainedMap) {
         // get feature map
-        Map<String, float[]> map = new HashMap<String, float[]>();
-        if (flParameter.getFlName().equals(ALBERT)) {
-            AlTrainBert alTrainBert = AlTrainBert.getInstance();
-            map = SessionUtil.convertTensorToFeatures(SessionUtil.getFeatures(alTrainBert.getTrainSession()));
-        } else if (flParameter.getFlName().equals(LENET)) {
-            TrainLenet trainLenet = TrainLenet.getInstance();
-            map = SessionUtil.convertTensorToFeatures(SessionUtil.getFeatures(trainLenet.getTrainSession()));
-        } else {
-            LOGGER.severe(Common.addTag("[Encrypt] the flName is not valid, only support: lenet, albert"));
-            throw new IllegalArgumentException();
-        }
         Map<String, float[]> mapBeforeTrain = modelMap;
-        int featureSize = encryptFeatureName.size();
+        int featureSize = updateFeatureName.size();
         // calculate sigma
         double gaussianSigma = calculateSigma(dpNormClip, dpEps, dpDelta);
         LOGGER.info(Common.addTag("[Encrypt] =============Noise sigma of DP is: " + gaussianSigma + "============="));
@@ -371,8 +352,8 @@ public class SecureProtocol {
         // calculate l2-norm of all layers' update array
         double updateL2Norm = 0d;
         for (int i = 0; i < featureSize; i++) {
-            String key = encryptFeatureName.get(i);
-            float[] data = map.get(key);
+            String key = updateFeatureName.get(i);
+            float[] data = trainedMap.get(key);
             float[] dataBeforeTrain = mapBeforeTrain.get(key);
             for (int j = 0; j < data.length; j++) {
                 float rawData = data[j];
@@ -391,12 +372,12 @@ public class SecureProtocol {
         // clip and add noise
         int[] featuresMap = new int[featureSize];
         for (int i = 0; i < featureSize; i++) {
-            String key = encryptFeatureName.get(i);
-            if (!map.containsKey(key)) {
+            String key = updateFeatureName.get(i);
+            if (!trainedMap.containsKey(key)) {
                 LOGGER.severe("[Encrypt] the key: " + key + " is not in map, please check!");
                 return new int[0];
             }
-            float[] data = map.get(key);
+            float[] data = trainedMap.get(key);
             float[] data2 = new float[data.length];
             if (!mapBeforeTrain.containsKey(key)) {
                 LOGGER.severe("[Encrypt] the key: " + key + " is not in mapBeforeTrain, please check!");

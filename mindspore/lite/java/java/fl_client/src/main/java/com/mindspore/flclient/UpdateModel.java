@@ -16,14 +16,16 @@
 
 package com.mindspore.flclient;
 
-import static com.mindspore.flclient.LocalFLParameter.ALBERT;
-import static com.mindspore.flclient.LocalFLParameter.LENET;
-
 import com.google.flatbuffers.FlatBufferBuilder;
 
 import com.mindspore.flclient.model.AlTrainBert;
+import com.mindspore.flclient.model.Client;
+import com.mindspore.flclient.model.ClientManager;
+import com.mindspore.flclient.model.CommonUtils;
 import com.mindspore.flclient.model.SessionUtil;
+import com.mindspore.flclient.model.Status;
 import com.mindspore.flclient.model.TrainLenet;
+import com.mindspore.lite.MSTensor;
 
 import mindspore.schema.FeatureMap;
 import mindspore.schema.RequestUpdateModel;
@@ -33,8 +35,12 @@ import mindspore.schema.ResponseUpdateModel;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
+
+import static com.mindspore.flclient.LocalFLParameter.ALBERT;
+import static com.mindspore.flclient.LocalFLParameter.LENET;
 
 /**
  * Define the serialization method, handle the response message returned from server for updateModel request.
@@ -52,6 +58,7 @@ public class UpdateModel {
     private FLParameter flParameter = FLParameter.getInstance();
     private LocalFLParameter localFLParameter = LocalFLParameter.getInstance();
     private FLClientStatus status;
+    private int retCode = ResponseCode.RequestError;
 
     private UpdateModel() {
     }
@@ -78,6 +85,10 @@ public class UpdateModel {
         return status;
     }
 
+    public int getRetCode() {
+        return retCode;
+    }
+
     /**
      * Get a flatBuffer builder of RequestUpdateModel.
      *
@@ -88,7 +99,16 @@ public class UpdateModel {
      */
     public byte[] getRequestUpdateFLJob(int iteration, SecureProtocol secureProtocol, int trainDataSize) {
         RequestUpdateModelBuilder builder = new RequestUpdateModelBuilder(localFLParameter.getEncryptLevel());
-        return builder.flName(flParameter.getFlName()).time().id(localFLParameter.getFlID())
+        boolean isPkiVerify = flParameter.isPkiVerify();
+        if (isPkiVerify) {
+            Date date = new Date();
+            long timestamp = date.getTime();
+            String dateTime = String.valueOf(timestamp);
+            byte[] signature = CipherClient.signTimeAndIter(dateTime, iteration);
+            return builder.flName(flParameter.getFlName()).time(dateTime).id(localFLParameter.getFlID())
+                    .featuresMap(secureProtocol, trainDataSize).iteration(iteration).signData(signature).build();
+        }
+        return builder.flName(flParameter.getFlName()).time("null").id(localFLParameter.getFlID())
                 .featuresMap(secureProtocol, trainDataSize).iteration(iteration).build();
     }
 
@@ -99,8 +119,9 @@ public class UpdateModel {
      * @return the status code corresponding to the response message.
      */
     public FLClientStatus doResponse(ResponseUpdateModel response) {
-        LOGGER.info(Common.addTag("[updateModel] ==========updateModel response================"));
-        LOGGER.info(Common.addTag("[updateModel] ==========retcode: " + response.retcode()));
+        retCode = response.retcode();
+        LOGGER.info(Common.addTag("[updateModel] ==========the response message of updateModel is================"));
+        LOGGER.info(Common.addTag("[updateModel] ==========retCode: " + retCode));
         LOGGER.info(Common.addTag("[updateModel] ==========reason: " + response.reason()));
         LOGGER.info(Common.addTag("[updateModel] ==========next request time: " + response.nextReqTime()));
         switch (response.retcode()) {
@@ -120,6 +141,65 @@ public class UpdateModel {
         }
     }
 
+    private Map<String, float[]> getFeatureMap() {
+        Client client = ClientManager.getClient(flParameter.getFlName());
+        status = Common.initSession(flParameter.getTrainModelPath());
+        if (status == FLClientStatus.FAILED) {
+            retCode = ResponseCode.RequestError;
+            throw new IllegalArgumentException();
+        }
+        List<MSTensor> features = client.getFeatures();
+        Map<String, float[]> trainedMap = CommonUtils.convertTensorToFeatures(features);
+        LOGGER.info(Common.addTag("[updateModel] ===========free session============="));
+        Common.freeSession();
+        if (trainedMap.isEmpty()) {
+            LOGGER.severe(Common.addTag("[updateModel] the return trainedMap is empty in <CommonUtils" +
+                    ".convertTensorToFeatures>"));
+            retCode = ResponseCode.RequestError;
+            status = FLClientStatus.FAILED;
+            throw new IllegalArgumentException();
+        }
+        return trainedMap;
+    }
+
+    private Map<String, float[]> deprecatedGetFeatureMap() {
+        status = Common.initSession(flParameter.getTrainModelPath());
+        if (status == FLClientStatus.FAILED) {
+            retCode = ResponseCode.RequestError;
+            throw new IllegalArgumentException();
+        }
+        Map<String, float[]> map = new HashMap<String, float[]>();
+        if (flParameter.getFlName().equals(ALBERT)) {
+            LOGGER.info(Common.addTag("[updateModel] serialize feature map for " +
+                    flParameter.getFlName()));
+            AlTrainBert alTrainBert = AlTrainBert.getInstance();
+            map = SessionUtil.convertTensorToFeatures(SessionUtil.getFeatures(alTrainBert.getTrainSession()));
+            if (map.isEmpty()) {
+                LOGGER.severe(Common.addTag("[updateModel] the return map is empty in <SessionUtil" +
+                        ".convertTensorToFeatures>"));
+                status = FLClientStatus.FAILED;
+                throw new IllegalArgumentException();
+            }
+        } else if (flParameter.getFlName().equals(LENET)) {
+            LOGGER.info(Common.addTag("[updateModel] serialize feature map for " +
+                    flParameter.getFlName()));
+            TrainLenet trainLenet = TrainLenet.getInstance();
+            map = SessionUtil.convertTensorToFeatures(SessionUtil.getFeatures(trainLenet.getTrainSession()));
+            if (map.isEmpty()) {
+                LOGGER.severe(Common.addTag("[updateModel] the return map is empty in <SessionUtil" +
+                        ".convertTensorToFeatures>"));
+                status = FLClientStatus.FAILED;
+                throw new IllegalArgumentException();
+            }
+        } else {
+            LOGGER.severe(Common.addTag("[updateModel] the flName is not valid"));
+            status = FLClientStatus.FAILED;
+            throw new IllegalArgumentException();
+        }
+        Common.freeSession();
+        return map;
+    }
+
     class RequestUpdateModelBuilder {
         private RequestUpdateModel requestUM;
         private FlatBufferBuilder builder;
@@ -127,6 +207,7 @@ public class UpdateModel {
         private int nameOffset = 0;
         private int idOffset = 0;
         private int timestampOffset = 0;
+        private int signDataOffset = 0;
         private int iteration = 0;
         private EncryptLevel encryptLevel = EncryptLevel.NOT_ENCRYPT;
 
@@ -153,12 +234,22 @@ public class UpdateModel {
         /**
          * Serialize the element timestamp in RequestUpdateModel.
          *
+         * @param setTime current timestamp when the request is sent.
          * @return the RequestUpdateModelBuilder object.
          */
-        private RequestUpdateModelBuilder time() {
-            Date date = new Date();
-            long time = date.getTime();
-            this.timestampOffset = builder.createString(String.valueOf(time));
+        private RequestUpdateModelBuilder time(String setTime) {
+            if (setTime == null || setTime.isEmpty()) {
+                LOGGER.severe(Common.addTag("[updateModel] the parameter of <setTime> is null or empty, please " +
+                        "check!"));
+                throw new IllegalArgumentException();
+            }
+            if (setTime.equals("null")) {
+                Date date = new Date();
+                long time = date.getTime();
+                this.timestampOffset = builder.createString(String.valueOf(time));
+            } else {
+                this.timestampOffset = builder.createString(setTime);
+            }
             return this;
         }
 
@@ -189,10 +280,16 @@ public class UpdateModel {
         }
 
         private RequestUpdateModelBuilder featuresMap(SecureProtocol secureProtocol, int trainDataSize) {
-            ArrayList<String> encryptFeatureName = secureProtocol.getEncryptFeatureName();
+            ArrayList<String> updateFeatureName = secureProtocol.getUpdateFeatureName();
+            Map<String, float[]> trainedMap = new HashMap<String, float[]>();
+            if (Common.checkFLName(flParameter.getFlName())) {
+                trainedMap = deprecatedGetFeatureMap();
+            } else {
+                trainedMap = getFeatureMap();
+            }
             switch (encryptLevel) {
                 case PW_ENCRYPT:
-                    int[] fmOffsetsPW = secureProtocol.pwMaskModel(builder, trainDataSize);
+                    int[] fmOffsetsPW = secureProtocol.pwMaskModel(builder, trainDataSize, trainedMap);
                     if (fmOffsetsPW == null || fmOffsetsPW.length == 0) {
                         LOGGER.severe("[Encrypt] the return fmOffsetsPW from <secureProtocol.pwMaskModel> is " +
                                 "null, please check");
@@ -202,10 +299,12 @@ public class UpdateModel {
                     LOGGER.info(Common.addTag("[Encrypt] pairwise mask model ok!"));
                     return this;
                 case DP_ENCRYPT:
-                    int[] fmOffsetsDP = secureProtocol.dpMaskModel(builder, trainDataSize);
+                    int[] fmOffsetsDP = secureProtocol.dpMaskModel(builder, trainDataSize, trainedMap);
                     if (fmOffsetsDP == null || fmOffsetsDP.length == 0) {
                         LOGGER.severe("[Encrypt] the return fmOffsetsDP from <secureProtocol.dpMaskModel> is " +
                                 "null, please check");
+                        retCode = ResponseCode.RequestError;
+                        status = FLClientStatus.FAILED;
                         throw new IllegalArgumentException();
                     }
                     this.fmOffset = RequestUpdateModel.createFeatureMapVector(builder, fmOffsetsDP);
@@ -213,36 +312,11 @@ public class UpdateModel {
                     return this;
                 case NOT_ENCRYPT:
                 default:
-                    Map<String, float[]> map = new HashMap<String, float[]>();
-                    if (flParameter.getFlName().equals(ALBERT)) {
-                        LOGGER.info(Common.addTag("[updateModel] serialize feature map for " +
-                                flParameter.getFlName()));
-                        AlTrainBert alTrainBert = AlTrainBert.getInstance();
-                        map = SessionUtil.convertTensorToFeatures(SessionUtil.getFeatures(alTrainBert.getTrainSession()));
-                        if (map.isEmpty()) {
-                            LOGGER.severe(Common.addTag("[updateModel] the return map is empty in <SessionUtil" +
-                                    ".convertTensorToFeatures>"));
-                            status = FLClientStatus.FAILED;
-                        }
-                    } else if (flParameter.getFlName().equals(LENET)) {
-                        LOGGER.info(Common.addTag("[updateModel] serialize feature map for " +
-                                flParameter.getFlName()));
-                        TrainLenet trainLenet = TrainLenet.getInstance();
-                        map = SessionUtil.convertTensorToFeatures(SessionUtil.getFeatures(trainLenet.getTrainSession()));
-                        if (map.isEmpty()) {
-                            LOGGER.severe(Common.addTag("[updateModel] the return map is empty in <SessionUtil" +
-                                    ".convertTensorToFeatures>"));
-                            status = FLClientStatus.FAILED;
-                        }
-                    } else {
-                        LOGGER.severe(Common.addTag("[updateModel] the flName is not valid"));
-                        throw new IllegalArgumentException();
-                    }
-                    int featureSize = encryptFeatureName.size();
+                    int featureSize = updateFeatureName.size();
                     int[] fmOffsets = new int[featureSize];
                     for (int i = 0; i < featureSize; i++) {
-                        String key = encryptFeatureName.get(i);
-                        float[] data = map.get(key);
+                        String key = updateFeatureName.get(i);
+                        float[] data = trainedMap.get(key);
                         LOGGER.info(Common.addTag("[updateModel build featuresMap] feature name: " + key + " feature " +
                                 "size: " + data.length));
                         for (int j = 0; j < data.length; j++) {
@@ -259,6 +333,22 @@ public class UpdateModel {
         }
 
         /**
+         * Serialize the element signature in RequestUpdateModel.
+         *
+         * @param signData the signature Data.
+         * @return the RequestUpdateModelBuilder object.
+         */
+        private RequestUpdateModelBuilder signData(byte[] signData) {
+            if (signData == null || signData.length == 0) {
+                LOGGER.severe(Common.addTag("[updateModel] the parameter of <signData> is null or empty, please " +
+                        "check!"));
+                throw new IllegalArgumentException();
+            }
+            this.signDataOffset = RequestUpdateModel.createSignatureVector(builder, signData);
+            return this;
+        }
+
+        /**
          * Create a flatBuffer builder of RequestUpdateModel.
          *
          * @return the flatBuffer builder of RequestUpdateModel in byte[] format.
@@ -270,6 +360,7 @@ public class UpdateModel {
             RequestUpdateModel.addTimestamp(builder, this.timestampOffset);
             RequestUpdateModel.addIteration(builder, this.iteration);
             RequestUpdateModel.addFeatureMap(builder, this.fmOffset);
+            RequestUpdateModel.addSignature(builder, this.signDataOffset);
             int root = RequestUpdateModel.endRequestUpdateModel(builder);
             builder.finish(root);
             return builder.sizedByteArray();
