@@ -114,6 +114,7 @@ constexpr char kTextFileNode[] = "TextFileDataset";
 constexpr char kTFRecordNode[] = "TFRecordDataset";
 constexpr char kUSPSNode[] = "USPSDataset";
 constexpr char kVOCNode[] = "VOCDataset";
+constexpr char kYahooAnswersNode[] = "YahooAnswersDataset";
 constexpr char kYelpReviewNode[] = "YelpReviewDataset";
 constexpr char kYesNoNode[] = "YesNoDataset";
 

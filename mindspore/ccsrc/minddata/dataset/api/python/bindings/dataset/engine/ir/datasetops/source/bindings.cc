@@ -51,6 +51,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/stl10_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/tedlium_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/text_file_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/yahoo_answers_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/yelp_review_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/yes_no_node.h"
 
@@ -549,6 +550,18 @@ PYBIND_REGISTER(VOCNode, 2, ([](const py::module *m) {
                                                   toSamplerObj(sampler), nullptr, extra_metadata);
                       THROW_IF_ERROR(voc->ValidateParams());
                       return voc;
+                    }));
+                }));
+
+PYBIND_REGISTER(YahooAnswersNode, 2, ([](const py::module *m) {
+                  (void)py::class_<YahooAnswersNode, DatasetNode, std::shared_ptr<YahooAnswersNode>>(
+                    *m, "YahooAnswersNode", "to create a YahooAnswersNode")
+                    .def(py::init([](std::string dataset_dir, std::string usage, int64_t num_samples, int32_t shuffle,
+                                     int32_t num_shards, int32_t shard_id) {
+                      auto yahoo_answers = std::make_shared<YahooAnswersNode>(
+                        dataset_dir, usage, num_samples, toShuffleMode(shuffle), num_shards, shard_id, nullptr);
+                      THROW_IF_ERROR(yahoo_answers->ValidateParams());
+                      return yahoo_answers;
                     }));
                 }));
 
