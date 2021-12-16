@@ -790,6 +790,8 @@ Status DetectPitchFrequency(const std::shared_ptr<Tensor> &input, std::shared_pt
 Status GenerateWaveTable(std::shared_ptr<Tensor> *output, const DataType &type, Modulation modulation,
                          int32_t table_size, float min, float max, float phase) {
   RETURN_UNEXPECTED_IF_NULL(output);
+  CHECK_FAIL_RETURN_UNEXPECTED(table_size > 0,
+                               "table_size must be more than 0, but got: " + std::to_string(table_size));
   int32_t phase_offset = static_cast<int32_t>(phase / PI / 2 * table_size + 0.5);
   // get the offset of the i-th
   std::vector<int32_t> point;

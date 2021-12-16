@@ -31,6 +31,7 @@ set(DATASET_ENGINE_DATASETOPS_SOURCE_SRC_FILES
     qmnist_op.cc
     random_data_op.cc
     sbu_op.cc
+    sogou_news_op.cc
     speech_commands_op.cc
     stl10_op.cc
     tedlium_op.cc
