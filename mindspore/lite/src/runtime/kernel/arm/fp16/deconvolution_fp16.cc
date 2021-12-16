@@ -279,6 +279,9 @@ int DeConvolutionFp16CPUKernel::Run() {
       FreeRunBuf();
       return error_code;
     }
+
+    PackNC8HW8ToNHWCFp16(pack_output_, batch_output_, 1, conv_param_->output_w_ * conv_param_->output_h_,
+                         conv_param_->output_channel_);
   }
 
   FreeRunBuf();
