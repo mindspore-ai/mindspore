@@ -134,7 +134,7 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
     AddFlag(&BenchmarkFlags::benchmark_data_type_, "benchmarkDataType",
             "Benchmark data type. FLOAT | INT32 | INT8 | UINT8", "FLOAT");
     AddFlag(&BenchmarkFlags::accuracy_threshold_, "accuracyThreshold", "Threshold of accuracy", 0.5);
-    AddFlag(&BenchmarkFlags::cosine_distance_threshold_, "cosineDistanceThreshold", "cosine distance threshold", 0.99);
+    AddFlag(&BenchmarkFlags::cosine_distance_threshold_, "cosineDistanceThreshold", "cosine distance threshold", -1.1);
     AddFlag(&BenchmarkFlags::resize_dims_in_, "inputShapes",
             "Shape of input data, the format should be NHWC. e.g. 1,32,32,32:1,1,32,32,1", "");
 #ifdef ENABLE_OPENGL_TEXTURE
@@ -171,7 +171,7 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
   std::string benchmark_data_file_;
   std::string benchmark_data_type_ = "FLOAT";
   float accuracy_threshold_ = 0.5;
-  float cosine_distance_threshold_ = 0.5;
+  float cosine_distance_threshold_ = -1.1;
   // Resize
   std::string resize_dims_in_;
   std::vector<std::vector<int>> resize_dims_;
