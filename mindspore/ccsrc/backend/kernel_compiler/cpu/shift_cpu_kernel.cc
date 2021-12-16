@@ -82,8 +82,8 @@ bool ShiftCpuKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const std:
   if (outputs[0]->size != inputs[0]->size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the memory size of output should be equal to the memory size "
-                         "of the first input, but got the memory size of output "
-                      << outputs[0]->size << " and the memory size of the first input " << inputs[0]->size;
+                         "of the first input, but got the memory size of output: "
+                      << outputs[0]->size << " and the memory size of the first input: " << inputs[0]->size;
   }
 
   // if periods_ is 0, do nothing
@@ -104,9 +104,7 @@ bool ShiftCpuKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const std:
   }
 
   if (inputs[0]->size != outer_size * axis_size * inner_size * sizeof(T)) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the memory size of inputs should satisfy the equivalence "
-                         "relationship: 'inputs[0]->size == outer_size * axis_size * inner_size * sizeof(T)'";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the memory size of inputs error.";
   }
 
   // check if the tensor is linear

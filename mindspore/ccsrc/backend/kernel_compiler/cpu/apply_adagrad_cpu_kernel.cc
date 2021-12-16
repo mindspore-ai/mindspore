@@ -56,21 +56,20 @@ void ApplyAdagradCPUKernel::CheckParam(const std::vector<AddressPtr> &inputs,
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kApplyAdagradOutputsNum, kernel_name_);
   if (inputs[0]->size != inputs[1]->size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the type of input data 'accum' and 'var' should be "
-                         "same, but got the memory size of 'accum': "
+                      << "', the shape and dtype of 'accum' and 'var' should be same, "
+                         "but got the memory size of 'accum': "
                       << inputs[1]->size << " and 'var': " << inputs[0]->size;
   }
   if (inputs[0]->size != inputs[3]->size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the type of input data 'grad' and 'var' should be "
-                         "same, but got the memory size of 'grad': "
+                      << "', the shape and dtype of 'grad' and 'var' should be same, "
+                         "but got the memory size of 'grad': "
                       << inputs[3]->size << " and 'var': " << inputs[0]->size;
   }
   if (inputs[2]->size != kSizeFloat16 && inputs[2]->size != kSizeFloat32) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the parameter 'lr' should be float16(memory size: 2) or "
-                         "float32(memory size:4), but got memory size of 'lr': "
-                      << inputs[2]->size << " bytes.";
+                      << "', the 'lr' should be float16(memory size: 2) or float32(memory size:4), but got 'lr': "
+                      << inputs[2] << ", with memory size: " << inputs[2]->size << " bytes.";
   }
 }
 

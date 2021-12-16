@@ -61,8 +61,9 @@ void SliceGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
                          [](const int64_t &value) { return LongToInt(value); });
     if (strides_.size() != end_.size() || strides_.size() != output_shape_.size()) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', 'stride|end|input' size should be equal, but got 'stride' size: " << strides_.size()
-                        << ", 'end' size: " << end_.size() << " and 'input' size: " << output_shape_.size();
+                        << "', the dimension of 'strides|end|output' should be equal, but got the dimension of "
+                        << "'strides': " << strides_.size() << ", the dimension of 'end': " << end_.size()
+                        << ", and the dimension of output: " << output_shape_.size();
     }
     FormatArgs(true);
   } else {
@@ -146,8 +147,9 @@ void SliceGradCPUKernel::InitParams(const std::vector<kernel::AddressPtr> &input
     (void)std::transform(end.begin(), end.end(), std::back_inserter(end_), [](const int32_t &value) { return value; });
     if (strides_.size() != end_.size() || strides_.size() != output_shape_.size()) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', 'stride|end|input' size should be equal, but got 'stride' size: " << strides_.size()
-                        << ", 'end' size: " << end_.size() << " and 'input' size: " << output_shape_.size();
+                        << "', the dimension of 'strides|end|output' should be equal, but got the dimension of "
+                        << "'strides': " << strides_.size() << ", the dimension of 'end': " << end_.size()
+                        << ", and the dimension of output: " << output_shape_.size();
     }
     FormatArgs(true);
   } else {

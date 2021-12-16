@@ -110,27 +110,43 @@ bool AdamCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const 
 
   if (inputs[VAR]->size != inputs[M]->size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the memory size of input 'm' and 'var' should be same, but got "
-                         "the memory size of input 'm': "
+                      << "', the shape and dtype of 'm' and 'var' should be same, but got the memory size of 'm': "
                       << inputs[M]->size << " and 'var': " << inputs[VAR]->size;
   }
   if (inputs[VAR]->size != inputs[V]->size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the memory size of input 'v' and 'var' should be same, but got "
-                         "the memory size of input 'v': "
+                      << "', the shape and dtype of 'v' and 'var' should be same, but got the memory size of 'v': "
                       << inputs[V]->size << " and 'var': " << inputs[VAR]->size;
   }
   if (inputs[VAR]->size != inputs[GRAD]->size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the memory size of input 'grad' and 'var' should be same, "
-                         "but got the memory size of input 'grad': "
+                      << "', the shape and dtype of 'gradient' and 'var' should be same, but got "
+                         "the memory size of 'gradient': "
                       << inputs[GRAD]->size << " and 'var': " << inputs[VAR]->size;
   }
   size_t f_size = sizeof(float);
-  if (inputs[BETA1_POWER]->size != f_size || inputs[BETA2_POWER]->size != f_size || inputs[LR]->size != f_size ||
-      inputs[BETA1]->size != f_size || inputs[BETA2]->size != f_size || inputs[EPSILON]->size != f_size) {
+  if (inputs[BETA1_POWER]->size != f_size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the attribute beta_power, beta, lr and epsilon should be float!";
+                      << "', the 'beta1_power' should be float, but got 'beta1_power': " << inputs[BETA1_POWER];
+  }
+  if (inputs[BETA2_POWER]->size != f_size) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the 'beta2_power' should be float, but got 'beta2_power': " << inputs[BETA2_POWER];
+  }
+  if (inputs[LR]->size != f_size) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'lr' should be float, but got 'lr': " << inputs[LR];
+  }
+  if (inputs[BETA1]->size != f_size) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the 'beta1' should be float, but got 'beta1': " << inputs[BETA1];
+  }
+  if (inputs[BETA2]->size != f_size) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the 'beta2' should be float, but got 'beta2': " << inputs[BETA2];
+  }
+  if (inputs[EPSILON]->size != f_size) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the 'epsilon' should be float, but got 'epsilon': " << inputs[EPSILON];
   }
 
   if (dtype_ == kNumberTypeFloat32) {
