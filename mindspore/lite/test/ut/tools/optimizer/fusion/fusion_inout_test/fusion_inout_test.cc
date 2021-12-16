@@ -66,8 +66,11 @@ ParameterPtr FusionInoutTest::AddParameter(const FuncGraphPtr &graph, size_t dat
     }
   }
   auto tensor_info = lite::CreateTensorInfo(data, data_size, shape, data_type);
-  free(data);
-  data = nullptr;
+  if (data != nullptr) {
+    free(data);
+    data = nullptr;
+  }
+
   if (tensor_info == nullptr) {
     MS_LOG(ERROR) << "CreateTensorInfo failed";
     return nullptr;
