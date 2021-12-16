@@ -393,6 +393,7 @@ from .atan_grad_ds import _atan_grad_ds_tbe
 from .atanh import _atanh_tbe
 from .atanh_ds import _atanh_ds_tbe
 from .cosh import _cosh_tbe
+from .cosh_ds import _cosh_ds_tbe
 from .sinh import _sinh_tbe
 from .sinh_ds import _sinh_ds_tbe
 from .inv import _inv_tbe
