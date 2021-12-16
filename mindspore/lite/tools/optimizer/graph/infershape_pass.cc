@@ -16,6 +16,7 @@
 
 #include "tools/optimizer/graph/infershape_pass.h"
 #include "tools/common/node_util.h"
+#include "tools/common/tensor_util.h"
 #include "nnacl/op_base.h"
 #include "src/common/log_util.h"
 
@@ -47,8 +48,8 @@ int GetCNodeCertainInputFormat(const CNodePtr cnode, int index, mindspore::Forma
   auto primitive = GetValueNode<PrimitivePtr>(real_cnode->input(0));
   MS_CHECK_TRUE_MSG(primitive != nullptr, lite::RET_NULL_PTR, "GetValueNode Failed");
   if (primitive->GetAttr(ops::kFormat) == nullptr) {
-    MS_LOG(ERROR) << "cnode has no format attr. " << real_cnode->fullname_with_scope();
-    return lite::RET_ERROR;
+    MS_LOG(DEBUG) << "cnode has no format attr. " << real_cnode->fullname_with_scope();
+    return lite::RET_NO_CHANGE;
   }
   auto format_attr = primitive->GetAttr(ops::kFormat);
   MS_CHECK_TRUE_MSG(format_attr != nullptr, lite::RET_NULL_PTR, "GetAttr Failed");
@@ -110,11 +111,20 @@ bool InferShapePass::Run(const FuncGraphPtr &func_graph) {
     MS_LOG(WARNING) << "exist op cannot support infer shape.";
     return false;
   }
+  manager_ = Manage(func_graph, true);
+  if (manager_ == nullptr) {
+    MS_LOG(ERROR) << "generate a manager for func_graph failed.";
+    return false;
+  }
   if (InferProcess(func_graph) != lite::RET_OK) {
     MS_LOG(ERROR) << "infer shape failed.";
     return false;
   }
-  return ResetSubGraphInput();
+  if (ResetSubGraphInput() != lite::RET_OK) {
+    MS_LOG(ERROR) << "ResetSubGraphInput failed.";
+    return false;
+  }
+  return true;
 }
 
 bool InferShapePass::JudgeAllOpsCanInfer(const FuncGraphPtr &func_graph) {
@@ -165,6 +175,7 @@ bool InferShapePass::JudgeAllOpsCanInfer(const FuncGraphPtr &func_graph) {
 
 STATUS InferShapePass::InferProcess(const FuncGraphPtr &func_graph) {
   MS_ASSERT(func_graph != nullptr);
+  manager_->AddFuncGraph(func_graph);
   auto node_list = TopoSort(func_graph->get_return());
   for (auto &node : node_list) {
     if (!utils::isa<CNode>(node)) {
@@ -184,38 +195,49 @@ STATUS InferShapePass::InferProcess(const FuncGraphPtr &func_graph) {
       auto ret = SetSubGraphInput(cnode, sub_func_graph);
       if (ret != lite::RET_OK) {
         MS_LOG(ERROR) << "SetSubGraphInput failed: " << ret;
-        return lite::RET_ERROR;
+        return RET_ERROR;
       }
       if (InferProcess(sub_func_graph) != lite::RET_OK) {
         MS_LOG(ERROR) << "subgraph infer shape failed.";
-        return lite::RET_ERROR;
+        return RET_ERROR;
       }
-      SetSubGraphOutput(sub_func_graph);
+      if (SetSubGraphOutput(sub_func_graph) != lite::RET_OK) {
+        MS_LOG(ERROR) << "SetSubGraphOutput failed.";
+        return RET_ERROR;
+      }
       sub_func_graph = GetValueNode<FuncGraphPtr>(cnode->input(kInputIndexTwo));
       if (sub_func_graph == nullptr) {
         lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
-        return lite::RET_ERROR;
+        return RET_ERROR;
       }
       ret = SetSubGraphInput(cnode, sub_func_graph);
-      if (ret != lite::RET_OK) {
+      if (ret != RET_OK) {
         MS_LOG(ERROR) << "SetSubGraphInput failed: " << ret;
-        return lite::RET_ERROR;
+        return RET_ERROR;
       }
       if (InferProcess(sub_func_graph) != lite::RET_OK) {
         MS_LOG(ERROR) << "subgraph infer shape failed.";
-        return lite::RET_ERROR;
+        return RET_ERROR;
       }
-      SetSubGraphOutput(sub_func_graph);
+      if (SetSubGraphOutput(sub_func_graph) != lite::RET_OK) {
+        MS_LOG(ERROR) << "SetSubGraphOutput failed.";
+        return RET_ERROR;
+      }
       ret = SetSubGraphAbstract(cnode, sub_func_graph);
-      if (ret != lite::RET_OK) {
+      if (ret != RET_OK) {
         MS_LOG(ERROR) << "SetSubGraphAbstract failed: " << ret;
-        return lite::RET_ERROR;
+        return RET_ERROR;
       }
       continue;
     }
     auto status = node_infer_shape_->InferShape(cnode);
     if (status != lite::RET_OK && status != lite::RET_INFER_INVALID) {
       MS_LOG(ERROR) << "node infer shape failed, node is " << node->fullname_with_scope();
+      return lite::RET_ERROR;
+    }
+    status = PostProcess(func_graph, cnode);
+    if (status != lite::RET_OK) {
+      MS_LOG(ERROR) << "post process current node failed, node is " << node->fullname_with_scope();
       return lite::RET_ERROR;
     }
   }
@@ -260,35 +282,27 @@ STATUS InferShapePass::SetSubGraphInput(const CNodePtr &cnode, const FuncGraphPt
       if (ModifySubGraphInputCNodeFormat(sub_graph, param_node, format) != lite::RET_OK) {
         MS_LOG(DEBUG) << "modify subgraph input cnode format failed." << cnode->func_graph_as_var();
       }
-    } else {
+    }
+    if (utils::isa<Parameter>(cnode->input(index))) {
+      param_node->set_default_param(cnode->input(index)->cast<ParameterPtr>()->default_param());
+    }
+    if (utils::isa<ValueNode>(cnode->input(index))) {
       lite::DataInfo data_info;
-      if (utils::isa<ParameterPtr>(cnode->input(index))) {
-        if (cnode->input(index)->cast<ParameterPtr>()->has_default()) {
-          param_node->set_default_param(cnode->input(index)->cast<ParameterPtr>()->default_param());
-        }
-        continue;
-      }
       auto status = lite::FetchDataFromValueNode(cnode, index, fmk_type_, train_flag_, &data_info, false);
       if (status != lite::RET_OK) {
         continue;
       }
       ShapeVector shape_vec(data_info.shape_.begin(), data_info.shape_.end());
-      if (data_info.data_.empty()) {
-        auto tensor_info = std::make_shared<tensor::Tensor>((TypeId)data_info.data_type_, shape_vec);
-        CHECK_NULL_RETURN(tensor_info);
-        param_node->set_default_param(tensor_info);
-      } else {
-        auto tensor_info = std::make_shared<tensor::Tensor>((TypeId)data_info.data_type_, shape_vec,
-                                                            data_info.data_.data(), data_info.data_.size());
-        CHECK_NULL_RETURN(tensor_info);
-        param_node->set_default_param(tensor_info);
-      }
+      auto tensor_info =
+        lite::CreateTensorInfo(data_info.data_.data(), data_info.data_.size(), shape_vec, (TypeId)data_info.data_type_);
+      MS_CHECK_TRUE_MSG(tensor_info != nullptr, RET_ERROR, "created tensor is a nullptr.");
+      param_node->set_default_param(tensor_info);
     }
   }
   return RET_OK;
 }
 
-void InferShapePass::SetSubGraphOutput(const FuncGraphPtr &sub_graph) {
+STATUS InferShapePass::SetSubGraphOutput(const FuncGraphPtr &sub_graph) {
   MS_ASSERT(sub_graph != nullptr);
   auto return_node = sub_graph->get_return();
   MS_ASSERT(return_node != nullptr);
@@ -317,6 +331,7 @@ void InferShapePass::SetSubGraphOutput(const FuncGraphPtr &sub_graph) {
     trans_cnode->set_fullname_with_scope(trans_input_name);
   }
   return_node->set_inputs(origin_input);
+  return lite::RET_OK;
 }
 
 STATUS InferShapePass::SetSubGraphAbstract(const CNodePtr &cnode, const FuncGraphPtr &sub_graph) {
@@ -371,24 +386,26 @@ STATUS InferShapePass::SetSubGraphAbstract(const CNodePtr &cnode, const FuncGrap
   return RET_OK;
 }
 
-bool InferShapePass::ResetSubGraphInput() {
-  for (auto iter = sub_inputs_map_.begin(); iter != sub_inputs_map_.end(); ++iter) {
-    auto &sub_graph = iter->first;
-    auto &sub_inputs = iter->second;
-    auto manager = sub_graph->manager();
-    MS_ASSERT(manager != nullptr);
+int InferShapePass::ResetSubGraphInput() {
+  for (auto &iter : sub_inputs_map_) {
+    auto &sub_graph = iter.first;
+    auto &sub_inputs = iter.second;
+    MS_ASSERT(manager_ != nullptr);
     for (auto &sub_input : sub_inputs) {
       auto param_node = sub_graph->add_parameter();
-      MS_CHECK_TRUE_MSG(param_node != nullptr, false, "Add parameter Failed");
+      MS_CHECK_TRUE_MSG(param_node != nullptr, RET_ERROR, "Add parameter Failed");
       param_node->set_abstract(sub_input->abstract()->Clone());
       param_node->set_name(sub_input->fullname_with_scope());
-      manager->Replace(sub_input, param_node);
+      if (!manager_->Replace(sub_input, param_node)) {
+        MS_LOG(ERROR) << "replace cnode failed.";
+        return RET_ERROR;
+      }
       auto sub_param_input = sub_input->cast<ParameterPtr>();
       MS_ASSERT(sub_param_input != nullptr);
       sub_param_input->set_default_param(nullptr);
     }
   }
-  return true;
+  return lite::RET_OK;
 }
 }  // namespace opt
 }  // namespace mindspore

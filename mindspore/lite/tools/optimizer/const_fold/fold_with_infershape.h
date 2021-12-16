@@ -14,41 +14,37 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_PASS_FUSION_CONSTANT_FOLDING_FUSION_H_
-#define MINDSPORE_LITE_SRC_PASS_FUSION_CONSTANT_FOLDING_FUSION_H_
+#ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_CONST_FOLD_FOLD_WITH_INFERSHAPE_H_
+#define MINDSPORE_LITE_TOOLS_OPTIMIZER_CONST_FOLD_FOLD_WITH_INFERSHAPE_H_
 
 #include <set>
 #include <utility>
 #include <memory>
 #include "backend/optimizer/common/pass.h"
-#include "include/api/context.h"
 #include "include/registry/converter_context.h"
-#include "src/inner_context.h"
 #include "tools/optimizer/graph/node_infershape.h"
+#include "tools/optimizer/const_fold/fold_utils.h"
 
 namespace mindspore {
 namespace opt {
-class ConstFoldPass : public Pass {
+class ConstFoldWithInferShape : public Pass {
  public:
-  explicit ConstFoldPass(converter::FmkType fmk_type = converter::kFmkTypeMs, bool train_flag = false)
-      : Pass("ConstFoldPass"), fmk_type_(fmk_type), train_flag_(train_flag) {}
-  ~ConstFoldPass() override = default;
+  explicit ConstFoldWithInferShape(converter::FmkType fmk_type = converter::kFmkTypeMs, bool train_flag = false)
+      : Pass("ConstFoldWithInferShape"), fmk_type_(fmk_type), train_flag_(train_flag) {}
+  ~ConstFoldWithInferShape() override = default;
   bool Run(const FuncGraphPtr &func_graph) override;
 
  private:
-  bool Init();
   int HandleCommonFold(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *has_visited);
   bool CheckCanCommonFold(const CNodePtr &cnode) const;
   int HandleSpecialFold(const FuncGraphPtr &func_graph);
   bool CheckCanSpecialFold(const CNodePtr &cnode) const;
-  int DoConstantFold(const FuncGraphPtr &func_graph, const CNodePtr &cnode) const;
   converter::FmkType fmk_type_{converter::kFmkTypeMs};
   bool train_flag_{false};
-  std::shared_ptr<lite::InnerContext> context_{nullptr};
-  std::shared_ptr<mindspore::Context> ms_context_{nullptr};
+  std::shared_ptr<ConstFoldProcessor> const_fold_processor_{nullptr};
   std::shared_ptr<NodeInferShape> node_infershape_{nullptr};
   FuncGraphManagerPtr manager_{nullptr};
 };
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_SRC_PASS_FUSION_CONSTANT_FOLDING_FUSION_H_
+#endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_CONST_FOLD_FOLD_WITH_INFERSHAPE_H_
