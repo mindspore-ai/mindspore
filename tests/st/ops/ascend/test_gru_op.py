@@ -126,8 +126,8 @@ def test_sit_gru_forward_input_3_32_32_is_32_hs_16():
     net_pynative.gru.b_hh_list = b_hh_list
     out_pynative, hy_pynative = net_pynative(input_ms, h0)
 
-    assert np.allclose(out.asnumpy(), out_pynative.asnumpy(), 0.0001, 0.0001)
-    assert np.allclose(hy.asnumpy(), hy_pynative.asnumpy(), 0.0001, 0.0001)
+    assert np.allclose(out.asnumpy(), out_pynative.asnumpy(), 0.001, 0.001)
+    assert np.allclose(hy.asnumpy(), hy_pynative.asnumpy(), 0.001, 0.001)
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
