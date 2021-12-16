@@ -108,8 +108,12 @@ Status Flip(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output, int 
   std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(std::move(input));
 
   if (input_cv->Rank() == 1 || input_cv->mat().dims > 2) {
-    RETURN_STATUS_UNEXPECTED("Flip: shape of input is not <H,W,C> or <H,W>, but got rank:" +
-                             std::to_string(input_cv->Rank()));
+    std::string err_msg =
+      "Flip: shape of input is not <H,W,C> or <H,W>, but got rank:" + std::to_string(input_cv->Rank());
+    if (input_cv->Rank() == 1) {
+      err_msg = err_msg + ", may need to do Decode first.";
+    }
+    RETURN_STATUS_UNEXPECTED(err_msg);
   }
 
   std::shared_ptr<CVTensor> output_cv;
@@ -998,7 +1002,7 @@ Status AdjustGamma(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor>
                    const float &gain) {
   try {
     int num_channels = 1;
-    if (input->Rank() < 2) {
+    if (input->Rank() < MIN_IMAGE_DIMENSION) {
       RETURN_STATUS_UNEXPECTED("AdjustGamma: input tensor is not in shape of <...,H,W,C> or <H,W>, got shape:" +
                                input->shape().ToString());
     }
@@ -1061,6 +1065,10 @@ Status AutoContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
       RETURN_STATUS_UNEXPECTED("[Internal ERROR] AutoContrast: load image failed.");
     }
     if (input_cv->Rank() != DEFAULT_IMAGE_RANK && input_cv->Rank() != MIN_IMAGE_DIMENSION) {
+      std::string err_msg = "AutoContrast: image rank should be 2 or 3,  but got: " + std::to_string(input_cv->Rank());
+      if (input_cv->Rank() == 1) {
+        err_msg = err_msg + ", may need to do Decode operation first.";
+      }
       RETURN_STATUS_UNEXPECTED("AutoContrast: image rank should be 2 or 3,  but got: " +
                                std::to_string(input_cv->Rank()));
     }
@@ -1210,7 +1218,7 @@ Status Equalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
       RETURN_STATUS_UNEXPECTED("[Internal ERROR] Equalize: load image failed.");
     }
     if (input_cv->Rank() != DEFAULT_IMAGE_RANK && input_cv->Rank() != MIN_IMAGE_DIMENSION) {
-      RETURN_STATUS_UNEXPECTED("Equalize: image rank should be 1 or 3,  but got: " + std::to_string(input_cv->Rank()));
+      RETURN_STATUS_UNEXPECTED("Equalize: image rank should be 2 or 3,  but got: " + std::to_string(input_cv->Rank()));
     }
     // For greyscale images, extend dimension if rank is 2 and reshape output to be of rank 2.
     if (input_cv->Rank() == MIN_IMAGE_DIMENSION) {
@@ -1323,8 +1331,11 @@ Status Pad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output
 
     // validate rank
     if (input_cv->Rank() == 1 || input_cv->mat().dims > MIN_IMAGE_DIMENSION) {
-      RETURN_STATUS_UNEXPECTED("Pad: input shape is not <H,W,C> or <H, W>, got rank: " +
-                               std::to_string(input_cv->Rank()));
+      std::string err_msg = "Pad: input shape is not <H,W,C> or <H, W>, got rank: " + std::to_string(input_cv->Rank());
+      if (input_cv->Rank() == 1) {
+        err_msg = err_msg + ", may need to do Decode operation first.";
+      }
+      RETURN_STATUS_UNEXPECTED(err_msg);
     }
 
     // get the border type in openCV
@@ -1660,6 +1671,9 @@ Status SlicePatches(const std::shared_ptr<Tensor> &input, std::vector<std::share
 Status ValidateImageRank(const std::string &op_name, int32_t rank) {
   if (rank != 2 && rank != 3) {
     std::string err_msg = op_name + ": image shape is not <H,W,C> or <H, W>, but got rank:" + std::to_string(rank);
+    if (rank == 1) {
+      err_msg = err_msg + ", may need to do Decode operation first.";
+    }
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
   return Status::OK();
