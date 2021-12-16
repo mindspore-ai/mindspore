@@ -740,8 +740,11 @@ bool TaskEmitAction(const ResourcePtr &res) {
   if (res->func_graph() == nullptr) {
     MS_LOG(EXCEPTION) << "TaskEmit args error";
   }
-  // Disable mindRT in the control flow scenario.
-  ResetMindRTEnable(res);
+  auto closure_env = std::getenv("MS_DEV_ENABLE_CLOSURE");
+  if (closure_env == nullptr) {
+    // Disable mindRT in the control flow scenario.
+    ResetMindRTEnable(res);
+  }
   FuncGraphPtr func_graph = res->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
   auto bc_ptr = res->results()[kBackend].cast<compile::BackendPtr>();
