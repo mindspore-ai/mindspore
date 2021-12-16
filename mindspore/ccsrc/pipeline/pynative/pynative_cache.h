@@ -21,6 +21,7 @@
 #include <memory>
 #include <unordered_map>
 #include "utils/hash_map.h"
+#include "utils/ms_utils.h"
 #include "ir/anf.h"
 
 namespace mindspore::pynative {
@@ -36,26 +37,10 @@ struct AbsCacheKeyHasher {
 
 struct AbsCacheKeyEqual {
   bool operator()(const AbsCacheKey &lk, const AbsCacheKey &rk) const {
-    if (lk.prim_attrs_.size() != rk.prim_attrs_.size()) {
-      return false;
-    }
     if (lk.prim_name_ != rk.prim_name_) {
       return false;
     }
-
-    auto all = std::all_of(lk.prim_attrs_.begin(), lk.prim_attrs_.end(), [&rk](const auto &item) -> bool {
-      auto iter = rk.prim_attrs_.find(item.first);
-      if (iter == rk.prim_attrs_.end()) {
-        return false;
-      }
-      if (item.second == iter->second) {
-        return true;
-      }
-      MS_EXCEPTION_IF_NULL(item.second);
-      MS_EXCEPTION_IF_NULL(iter->second);
-      return *item.second == *iter->second;
-    });
-    return all;
+    return common::IsAttrsEqual(lk.prim_attrs_, rk.prim_attrs_);
   }
 };
 

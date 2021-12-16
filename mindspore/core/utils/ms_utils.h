@@ -103,7 +103,7 @@ static inline bool CheckUseMPI() {
 }
 
 template <typename T>
-bool IsEqual(const std::shared_ptr<T> &a, const std::shared_ptr<T> &b) {
+inline bool IsEqual(const std::shared_ptr<T> &a, const std::shared_ptr<T> &b) {
   if (a == b) {
     return true;
   }
@@ -111,6 +111,29 @@ bool IsEqual(const std::shared_ptr<T> &a, const std::shared_ptr<T> &b) {
     return false;
   }
   return *a == *b;
+}
+
+template <typename T>
+inline bool IsAttrsEqual(const T &a, const T &b) {
+  if (&a == &b) {
+    return true;
+  }
+  if (a.size() != b.size()) {
+    return false;
+  }
+  auto iter1 = a.begin();
+  auto iter2 = b.begin();
+  while (iter1 != a.end()) {
+    if (iter1->first != iter2->first) {
+      return false;
+    }
+    if (!IsEqual(iter1->second, iter2->second)) {
+      return false;
+    }
+    ++iter1;
+    ++iter2;
+  }
+  return true;
 }
 }  // namespace common
 }  // namespace mindspore
