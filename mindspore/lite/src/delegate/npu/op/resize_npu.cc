@@ -38,7 +38,8 @@ int ResizeNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector
     MS_LOG(WARNING) << "Npu resize does not support reduction.";
     return RET_NOT_SUPPORT;
   }
-  is_support_v2_ = NPUManager::CheckDDKVersion("100.500.010.010");
+  is_support_v2_ = NPUManager::CheckDDKVerGreatEqual("100.500.010.010");
+  is_support_scale_ = NPUManager::CheckDDKVerGreatEqual("100.320.012.043");
   return RET_OK;
 }
 
@@ -46,19 +47,27 @@ int ResizeNPUOp::Init(const schema::Primitive *primitive, const std::vector<mind
                       const std::vector<mindspore::MSTensor> &out_tensors) {
   auto org_height = static_cast<float>(in_tensors.at(0).Shape().at(NHWC_H));
   auto org_width = static_cast<float>(in_tensors.at(0).Shape().at(NHWC_W));
-  auto new_height = static_cast<float>(out_tensors.at(0).Shape().at(NHWC_H));
-  auto new_width = static_cast<float>(out_tensors.at(0).Shape().at(NHWC_W));
+  auto new_height = static_cast<int>(out_tensors.at(0).Shape().at(NHWC_H));
+  auto new_width = static_cast<int>(out_tensors.at(0).Shape().at(NHWC_W));
 
-  ge::TensorDesc sizeTensorDesc(ge::Shape({NPU_SHAPE_SIZE}), ge::FORMAT_ND, ge::DT_FLOAT);
-  ge::TensorPtr sizeTensor = std::make_shared<hiai::Tensor>(sizeTensorDesc);
-  std::vector<float> dataValue = {1, 1, new_height / org_height, new_width / org_width};
-  sizeTensor->SetData(reinterpret_cast<uint8_t *>(dataValue.data()), NPU_SHAPE_SIZE * sizeof(float));
+  ge::TensorPtr size_tensor = std::make_shared<hiai::Tensor>();
+  if (is_support_scale_) {
+    ge::TensorDesc size_tensor_desc(ge::Shape({NPU_SHAPE_SIZE}), ge::FORMAT_ND, ge::DT_FLOAT);
+    size_tensor->SetTensorDesc(size_tensor_desc);
+    std::vector<float> data_value = {1, 1, new_height / org_height, new_width / org_width};
+    size_tensor->SetData(reinterpret_cast<uint8_t *>(data_value.data()), NPU_SHAPE_SIZE * sizeof(float));
+  } else {
+    ge::TensorDesc size_tensor_desc(ge::Shape({DIMENSION_2D}), ge::FORMAT_ND, ge::DT_INT32);
+    size_tensor->SetTensorDesc(size_tensor_desc);
+    std::vector<int> data_value = {new_height, new_width};
+    size_tensor->SetData(reinterpret_cast<uint8_t *>(data_value.data()), DIMENSION_2D * sizeof(int));
+  }
   out_size_ = new (std::nothrow) hiai::op::Const(name_ + "_size");
   if (out_size_ == nullptr) {
     MS_LOG(ERROR) << "create const NPU op failed for " << name_;
     return RET_ERROR;
   }
-  out_size_->set_attr_value(sizeTensor);
+  out_size_->set_attr_value(size_tensor);
 
   auto resize_prim = primitive->value_as_Resize();
   if (resize_prim == nullptr) {

@@ -130,7 +130,7 @@ int ScaleNPUOp::ConvertScaleToMul(const std::vector<ge::Operator *> &npu_inputs,
   if (input_shape.size() == scale_shape.size()) {
     mul_op->set_input_x2(*npu_inputs.at(SCALE_INDEX));
   } else {
-    int valid_shape[4] = {1, 1, 1, 1};
+    int valid_shape[NPU_SHAPE_SIZE] = {1, 1, 1, 1};
     for (size_t i = 0; i < scale_shape.size(); i++) {
       valid_shape[axis_ + i] = static_cast<int>(scale_shape[i]);
     }

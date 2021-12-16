@@ -200,6 +200,8 @@ int ConverterToNPUActivationMode(schema::ActivationType type) {
       return HARD_SIGMOID;
     case schema::ActivationType_RELU6:
       return RELU6;
+    case schema::ActivationType_ELU:
+      return ELU;
     default:
       return ACTIVATION_INVALID;
   }
