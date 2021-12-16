@@ -757,6 +757,9 @@ bool TaskEmitAction(const ResourcePtr &res) {
     std::string device_target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
     auto manager = func_graph->manager();
     auto graphs = manager->func_graphs();
+    if (graphs.size() > 1 && device_target == kAscendDevice) {
+      MS_LOG(INFO) << "This func_graph has control flow nodes, owns " << graphs.size() << " subgraphs.";
+    }
     bool exist_while =
       std::any_of(graphs.cbegin(), graphs.cend(), [](const FuncGraphPtr &fg) { return fg->recursive(); });
     if (device_target == kAscendDevice && backend != kMsVm && !exist_while) {
