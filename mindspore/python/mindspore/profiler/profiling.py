@@ -233,17 +233,20 @@ class Profiler:
         if not isinstance(optypes_not_deal, str):
             raise TypeError("The parameter optypes_not_deal must be str.")
         self._filt_optype_names = optypes_not_deal.split(",") if optypes_not_deal else []
-        job_dir = kwargs.pop("ascend_job_id", "")
-        if job_dir:
-            job_dir = validate_and_normalize_path(job_dir)
-            if not os.path.exists(job_dir):
-                msg = f"Invalid ascend_job_id: {job_dir}, Please pass the absolute path of the JOB dir"
+
+        self._ascend_job_id = kwargs.pop("ascend_job_id", "")
+        if self._ascend_job_id:
+            self._ascend_job_id = validate_and_normalize_path(self._ascend_job_id)
+            if not os.path.exists(self._ascend_job_id):
+                msg = f"Invalid ascend_job_id: {self._ascend_job_id}, Please pass the absolute path of the JOB dir"
                 logger.critical(msg)
                 raise ValueError(msg)
-            self._output_path, _ = os.path.split(job_dir)
+            self._output_path, _ = os.path.split(self._ascend_job_id)
+
         self.start_profile = kwargs.pop("start_profile", True)
         if not isinstance(self.start_profile, bool):
             raise TypeError("The parameter start_profile must be bool.")
+
         self._profile_communication = kwargs.pop("profile_communication", False)
         if not isinstance(self._profile_communication, bool):
             raise TypeError("The parameter profile_communication must be bool.")
@@ -253,14 +256,22 @@ class Profiler:
             if not self.start_profile:
                 raise RuntimeError("The parameter profile_communication can not be True while starting profiler in the "
                                    "process of training.")
+
         self._profile_memory = kwargs.pop("profile_memory", False)
         if not isinstance(self._profile_memory, bool):
             raise TypeError("The parameter profile_memory must be bool")
         if kwargs:
             logger.warning("There are invalid params which don't work.")
+
         task_sink = os.getenv("GRAPH_OP_RUN")
         if task_sink and task_sink == "1":
             logger.warning("Profiling is not supported when task is not sink.")
+
+    def _is_offline_parser(self):
+        """Return whether offline parser or online parser."""
+        if self._device_target and self._device_target == "Ascend":
+            return bool(self._ascend_job_id)
+        return False
 
     def analyse(self):
         """
@@ -449,6 +460,7 @@ class Profiler:
              >>>     def end(self, run_context):
              ...         self.profiler.analyse()
         """
+
         self._start_time = int(time.time() * 10000000)
         logger.info("Profiling: start time: %d", self._start_time)
 
@@ -461,6 +473,10 @@ class Profiler:
         else:
             raise RuntimeError("The profiler has already started. Use profiler.start() only when start_profile value "
                                "is set to False.")
+
+        #No need to start anything if parse profiling data offline
+        if self._is_offline_parser():
+            return
 
         self._md_profiler.start()
         self._cpu_profiler.step_profiling_enable(True)
@@ -504,6 +520,10 @@ class Profiler:
             self._has_started = False
         else:
             raise RuntimeError("The profiler has not started, so can not stop.")
+
+        #No need to stop anything if parse profiling data offline
+        if self._is_offline_parser():
+            return
 
         self._md_profiler.stop()
         self._md_profiler.save(self._output_path)
@@ -683,6 +703,10 @@ class Profiler:
         Returns:
             str, profiling job id.
         """
+
+        if self._is_offline_parser():
+            return self._ascend_job_id
+
         job_id = ""
         job_dirs = filter(lambda item: item.startswith('JOB') or item.startswith('PROF') and \
                                        os.path.isdir(os.path.join(self._output_path, item)),
