@@ -39,8 +39,9 @@ class ContextUtils {
                              const std::string &provider, const std::string &provider_device,
                              lite::InnerContext *inner_context);
   static Status AddGpuDevice(bool enable_fp16, uint32_t device_id, int rank_id, int group_size, bool enable_gl_texture,
-                             const std::string &provider, const std::string &provider_device,
-                             const std::shared_ptr<Allocator> &allocator, lite::InnerContext *inner_context);
+                             void *gl_context, void *gl_display, const std::string &provider,
+                             const std::string &provider_device, const std::shared_ptr<Allocator> &allocator,
+                             lite::InnerContext *inner_context);
   static Status AddNpuDevice(int frequency, lite::InnerContext *inner_context);
   static Status AddAscend310Device(lite::InnerContext *inner_context, DeviceInfoContext *device);
   static bool IsAffinityModeValid(int affinity_mode) {

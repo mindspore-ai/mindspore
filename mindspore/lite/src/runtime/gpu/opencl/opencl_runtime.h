@@ -71,6 +71,15 @@ class OpenCLRuntime {
 #ifdef ENABLE_OPENGL_TEXTURE
   bool GetGLTextureEnable() const;
   bool SetGLTextureEnable(bool enable);
+
+  void SetGLContext(void *gl_context) { gl_context_ = reinterpret_cast<EGLContext *>(gl_context); }
+  EGLContext *GetGLContext() const { return gl_context_; }
+  bool CheckGLContext() const { return (GetGLContext() != nullptr && *GetGLContext() != EGL_NO_CONTEXT); }
+
+  void SetGLDisplay(void *gl_display) { gl_display_ = reinterpret_cast<EGLDisplay *>(gl_display); }
+  EGLDisplay *GetGLDisplay() const { return gl_display_; }
+  bool CheckGLDisplay() const { return (GetGLDisplay() != nullptr && *GetGLDisplay() != EGL_NO_DISPLAY); }
+
   int InitGLQueue() { return InitQueue(nullptr); }
 #endif
   bool GetSVMEnable() const { return svm_enable_; }
@@ -197,6 +206,8 @@ class OpenCLRuntime {
   void *handle_{nullptr};
 #ifdef ENABLE_OPENGL_TEXTURE
   bool enable_gl_texture_{false};
+  EGLContext *gl_context_{nullptr};
+  EGLDisplay *gl_display_{nullptr};
 #endif
   TuningMode tuning_mode_{TuningMode::DEFAULT};
 #if MS_OPENCL_PROFILE

@@ -52,7 +52,8 @@ int Benchmark::LoadInput() {
     }
     return RET_OK;
   }
-#else
+#endif
+
   if (flags_->in_data_file_.empty()) {
     auto status = GenerateInputData();
     if (status != RET_OK) {
@@ -68,7 +69,6 @@ int Benchmark::LoadInput() {
       return status;
     }
   }
-#endif
   return RET_OK;
 }
 
@@ -294,7 +294,7 @@ int Benchmark::GetDataTypeByTensorName(const std::string &tensor_name) {
   }
 }
 
-void Benchmark::InitContext(const std::shared_ptr<Context> &context) {
+int Benchmark::InitContext(const std::shared_ptr<Context> &context) {
   auto &cpu_device_ctx = context->device_list_[0];
   if (flags_->cpu_bind_mode_ == MID_CPU || flags_->cpu_bind_mode_ == HIGHER_CPU) {
     cpu_device_ctx.device_info_.cpu_device_info_.cpu_bind_mode_ = CpuBindMode(flags_->cpu_bind_mode_);
@@ -309,6 +309,24 @@ void Benchmark::InitContext(const std::shared_ptr<Context> &context) {
 #ifdef ENABLE_OPENGL_TEXTURE
     if (flags_->enable_gl_texture_) {
       gpu_device_ctx.device_info_.gpu_device_info_.enable_gl_texture_ = true;
+
+      EGLContext *gl_context = new (std::nothrow) EGLContext();
+      if (gl_context == nullptr) {
+        MS_LOG(ERROR) << "new EGLContext failed";
+        return RET_ERROR;
+      } else {
+        *gl_context = eglGetCurrentContext();
+      }
+      gpu_device_ctx.device_info_.gpu_device_info_.gl_context_ = gl_context;
+
+      EGLDisplay *gl_display = new (std::nothrow) EGLDisplay();
+      if (gl_display == nullptr) {
+        MS_LOG(ERROR) << "new EGLDisplay failed";
+        return RET_ERROR;
+      } else {
+        *gl_display = eglGetCurrentDisplay();
+      }
+      gpu_device_ctx.device_info_.gpu_device_info_.gl_display_ = gl_display;
     }
 #endif
     context->device_list_.push_back(gpu_device_ctx);
@@ -322,6 +340,8 @@ void Benchmark::InitContext(const std::shared_ptr<Context> &context) {
 
   context->thread_num_ = flags_->num_threads_;
   context->enable_parallel_ = flags_->enable_parallel_;
+
+  return RET_OK;
 }
 
 int Benchmark::CompareOutput() {
@@ -656,14 +676,19 @@ int Benchmark::RunBenchmark() {
     std::cerr << "New context failed while running " << model_name.c_str() << std::endl;
     return RET_ERROR;
   }
-  (void)InitContext(context);
+  auto ret = InitContext(context);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "InitContext failed while running ", model_name.c_str();
+    std::cout << "InitContext failed while running ", model_name.c_str();
+    return ret;
+  }
   session_ = session::LiteSession::CreateSession(context.get());
   if (session_ == nullptr) {
     MS_LOG(ERROR) << "CreateSession failed while running ", model_name.c_str();
     std::cout << "CreateSession failed while running ", model_name.c_str();
     return RET_ERROR;
   }
-  auto ret = session_->CompileGraph(model.get());
+  ret = session_->CompileGraph(model.get());
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "CompileGraph failed while running ", model_name.c_str();
     std::cout << "CompileGraph failed while running ", model_name.c_str();

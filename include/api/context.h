@@ -277,6 +277,26 @@ class MS_API GPUDeviceInfo : public DeviceInfoContext {
   /// \return Whether enable sharing mem with OpenGL.
   bool GetEnableGLTexture() const;
 
+  /// \brief Set current OpenGL context
+  ///
+  /// \param[in] gl_context Current OpenGL context.
+  void SetGLContext(void *gl_context);
+
+  /// \brief Get current OpenGL context
+  ///
+  /// \return the OpenCL context by OpenGL used.
+  void *GetGLContext() const;
+
+  /// \brief Set current OpenGL display
+  ///
+  /// \param[in] gl_display Current OpenGL display.
+  void SetGLDisplay(void *gl_display);
+
+  /// \brief Get current OpenGL display
+  ///
+  /// \return the OpenCL display by OpenGL used.
+  void *GetGLDisplay() const;
+
  private:
   void SetPrecisionMode(const std::vector<char> &precision_mode);
   std::vector<char> GetPrecisionModeChar() const;

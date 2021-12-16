@@ -26,7 +26,9 @@ namespace mindspore {
 constexpr auto kModelOptionCpuEnableFP16 = "mindspore.option.cpu.enable_fp16";
 constexpr auto kModelOptionGPUEnableFP16 = "mindspore.option.gpu.enable_fp16";
 #ifdef ENABLE_OPENGL_TEXTURE
-constexpr auto kModelOptionGPUEnableEnableGLTexture = "mindspore.option.gpu.enable_gl_texture_";
+constexpr auto kModelOptionGPUEnableGLTexture = "mindspore.option.gpu.enable_gl_texture_";
+constexpr auto kModelOptionGPUGLContext = "mindspore.option.gpu.gl_context_";
+constexpr auto kModelOptionGPUGLDisplay = "mindspore.option.gpu.gl_display_";
 #endif
 constexpr auto kModelOptionGPUDeviceID = "mindspore.option.gpu.device_id";
 constexpr auto kModelOptionGPURankID = "mindspore.option.gpu.rank_id";
@@ -238,16 +240,6 @@ void GPUDeviceInfo::SetEnableFP16(bool is_fp16) {
   data_->params[kModelOptionGPUEnableFP16] = is_fp16;
 }
 
-#ifdef ENABLE_OPENGL_TEXTURE
-void GPUDeviceInfo::SetEnableGLTexture(bool is_enable_gl_texture) {
-  if (data_ == nullptr) {
-    MS_LOG(ERROR) << "Invalid context.";
-    return;
-  }
-  data_->params[kModelOptionGPUEnableEnableGLTexture] = is_enable_gl_texture;
-}
-#endif
-
 bool GPUDeviceInfo::GetEnableFP16() const {
   if (data_ == nullptr) {
     MS_LOG(ERROR) << "Invalid context.";
@@ -257,12 +249,70 @@ bool GPUDeviceInfo::GetEnableFP16() const {
 }
 
 #ifdef ENABLE_OPENGL_TEXTURE
+void GPUDeviceInfo::SetEnableGLTexture(bool is_enable_gl_texture) {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid context.";
+    return;
+  }
+  data_->params[kModelOptionGPUEnableGLTexture] = is_enable_gl_texture;
+}
+
 bool GPUDeviceInfo::GetEnableGLTexture() const {
   if (data_ == nullptr) {
     MS_LOG(ERROR) << "Invalid context.";
     return false;
   }
-  return GetValue<bool>(data_, kModelOptionGPUEnableEnableGLTexture);
+  return GetValue<bool>(data_, kModelOptionGPUEnableGLTexture);
+}
+
+void GPUDeviceInfo::SetGLContext(void *gl_context) {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid context.";
+    return;
+  }
+  data_->params[kModelOptionGPUGLContext] = gl_context;
+}
+
+void *GPUDeviceInfo::GetGLContext() const {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid context.";
+    return nullptr;
+  }
+  return GetValue<void *>(data_, kModelOptionGPUGLContext);
+}
+
+void GPUDeviceInfo::SetGLDisplay(void *gl_display) {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid context.";
+    return;
+  }
+  data_->params[kModelOptionGPUGLDisplay] = gl_display;
+}
+
+void *GPUDeviceInfo::GetGLDisplay() const {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid context.";
+    return nullptr;
+  }
+  return GetValue<void *>(data_, kModelOptionGPUGLDisplay);
+}
+#else
+void GPUDeviceInfo::SetEnableGLTexture(bool is_enable_gl_texture) { MS_LOG(ERROR) << "Unsupported Feature."; }
+bool GPUDeviceInfo::GetEnableGLTexture() const {
+  MS_LOG(ERROR) << "Unsupported Feature.";
+  return false;
+}
+
+void GPUDeviceInfo::SetGLContext(void *gl_context) { MS_LOG(ERROR) << "Unsupported Feature."; }
+void *GPUDeviceInfo::GetGLContext() const {
+  MS_LOG(ERROR) << "Unsupported Feature.";
+  return nullptr;
+}
+
+void GPUDeviceInfo::SetGLDisplay(void *gl_display) { MS_LOG(ERROR) << "Unsupported Feature."; }
+void *GPUDeviceInfo::GetGLDisplay() const {
+  MS_LOG(ERROR) << "Unsupported Feature.";
+  return nullptr;
 }
 #endif
 
