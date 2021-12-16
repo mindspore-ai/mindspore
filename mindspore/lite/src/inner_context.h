@@ -26,7 +26,6 @@
 #endif
 
 namespace mindspore::lite {
-const constexpr int kMaxDeviceNums = 2;
 struct InnerContext : public Context {
  public:
   InnerContext() = default;
@@ -40,6 +39,8 @@ struct InnerContext : public Context {
   bool IsGpuFloat16Enabled() const;
 
   bool IsCpuEnabled() const;
+
+  int GetCpuBindMode() const;
 
   bool IsGpuEnabled() const;
 
@@ -82,7 +83,6 @@ struct InnerContext : public Context {
 };
 
 int ParallelLaunch(const Context *context, const Func &func, Content content, int task_num);
-
 }  // namespace mindspore::lite
 
 #endif  // MINDSPORE_LITE_SRC_INNER_CONTEXT_H

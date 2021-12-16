@@ -33,6 +33,7 @@
 #include "src/common/version_manager.h"
 #include "src/common/prim_util.h"
 #include "src/common/tensor_util.h"
+#include "src/common/context_util.h"
 #include "src/runtime/infer_manager.h"
 #include "src/sub_graph_split.h"
 #include "src/weight_decoder.h"
@@ -234,6 +235,19 @@ int Scheduler::InitKernels(std::vector<kernel::LiteKernel *> dst_kernels) {
   return RET_OK;
 }
 
+int Scheduler::CheckCpuValid(const std::vector<kernel::LiteKernel *> *dst_kernels) const {
+  if (context_->IsCpuEnabled()) {
+    return RET_OK;
+  }
+  for (auto kernel : *dst_kernels) {
+    if (kernel->desc().arch == kernel::KERNEL_ARCH::kCPU) {
+      MS_LOG(ERROR) << "kernel: " << kernel->name() << " only support in CPU.";
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
+}
+
 int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
   if (dst_kernels == nullptr) {
     return RET_ERROR;
@@ -270,16 +284,19 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
     MS_LOG(ERROR) << "Schedule graph to kernels failed.";
     return ret;
   }
-
   SetSubgraphForPartialNode();
-  if (delegate_ != nullptr) {
-    ret = ReplaceDelegateKernels(dst_kernels);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Repalce delegate kernels failed.";
-      return ret;
-    }
-    context_->thread_pool()->SetMaxSpinCount(kMinSpinCount);
+
+  ret = InitDelegateKernels(dst_kernels);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Repalce delegate kernels failed.";
+    return ret;
   }
+  ret = CheckCpuValid(dst_kernels);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "kernels invalid in set devices.";
+    return ret;
+  }
+
   FindAllInoutKernels(*dst_kernels);
 
   if (IsControlFlowParttern(*dst_kernels)) {
@@ -375,6 +392,55 @@ int Scheduler::ReplaceDelegateKernels(std::vector<kernel::LiteKernel *> *dst_ker
     }
   }
   delete model;
+  return RET_OK;
+}
+
+int Scheduler::InitDelegateKernels(std::vector<kernel::LiteKernel *> *dst_kernels) {
+  /* no delegate valid */
+  if (delegate_ == nullptr) {
+    return RET_OK;
+  }
+  /* set delegate spin count */
+  context_->thread_pool()->SetMaxSpinCount(kMinSpinCount);
+  /* Inner delegate  :  check Priority */
+  std::vector<kernel::LiteKernel *> src_kernels = *dst_kernels;
+  dst_kernels->clear();
+
+  while (!src_kernels.empty()) {
+    std::vector<kernel::LiteKernel *> tmp_kernels;
+    kernel::LiteKernel *remain_kernel = nullptr;
+    /* Loop for inner delegate npu and TensorRT subgraph */
+    while (!src_kernels.empty()) {
+      auto kernel = src_kernels.front();
+      VectorErase(&src_kernels, kernel);
+      bool priority_ret = DeviceTypePriority(context_, DT_NPU, KernelArchToDeviceType(kernel->desc().arch));
+      if (priority_ret == true) {
+        tmp_kernels.push_back(kernel);
+      } else {
+        remain_kernel = kernel;
+        break;
+      }
+    }
+    /* start current NPU-kernels replace */
+    if (tmp_kernels.empty()) {
+      if (remain_kernel != nullptr) {
+        dst_kernels->push_back(remain_kernel);
+        remain_kernel = nullptr;
+      }
+      continue;
+    }
+    auto ret = ReplaceDelegateKernels(&tmp_kernels);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "NPU delegate repalce delegate kernels failed.";
+      return ret;
+    }
+    dst_kernels->insert(dst_kernels->end(), tmp_kernels.begin(), tmp_kernels.end());
+    tmp_kernels.clear();
+    if (remain_kernel != nullptr) {
+      dst_kernels->push_back(remain_kernel);
+      remain_kernel = nullptr;
+    }
+  }
   return RET_OK;
 }
 
@@ -914,7 +980,9 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
   op_parameter->is_train_session_ = is_train_session_;
   kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type, static_cast<schema::PrimitiveType>(op_parameter->type_)};
 #ifdef GPU_OPENCL
-  if (node->device_type_ == DT_GPU || node->device_type_ == kDefaultDeviceType) {
+  bool gpu_priority = DeviceTypePriority(context_, DT_GPU, DT_CPU);
+  bool use_gpu_kernel = node->device_type_ == DT_GPU || node->device_type_ == kDefaultDeviceType;
+  if (gpu_priority && use_gpu_kernel) {
     status = FindGpuKernel(in_tensors, out_tensors, op_parameter, desc, &kernel);
     if (status == RET_OK) {
       return kernel;

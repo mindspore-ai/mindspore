@@ -51,7 +51,7 @@ TrainSession::TrainSession() {
   InitCallBack();
 }
 
-int TrainSession::Init(const Context *context, const TrainCfg *train_cfg) {
+int TrainSession::Init(InnerContext *context, const TrainCfg *train_cfg) {
   if (train_cfg != nullptr) {
     if (train_cfg->mix_precision_cfg_.loss_scale_ <= 0) {
       MS_LOG(ERROR) << "illegal loss scale configuration";
@@ -769,7 +769,7 @@ session::LiteSession *session::TrainSession::CreateTrainSession(const std::strin
     return nullptr;
   }
 
-  auto ret = session->Init(context, cfg);
+  auto ret = session->Init(new (std::nothrow) mindspore::lite::InnerContext(context), cfg);
   if (ret != mindspore::lite::RET_OK) {
     MS_LOG(ERROR) << "init session failed";
     return nullptr;

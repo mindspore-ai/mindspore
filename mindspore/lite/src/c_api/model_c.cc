@@ -32,8 +32,8 @@ class ModelC {
     }
   }
 
-  Status Build(const void *model_data, size_t data_size, ModelType model_type, const ContextC *model_context);
-  Status Build(const std::string &model_path, ModelType model_type, const ContextC *model_context);
+  int Build(const void *model_data, size_t data_size, ModelType model_type, const ContextC *model_context);
+  int Build(const std::string &model_path, ModelType model_type, const ContextC *model_context);
   Status Resize(const std::vector<MSTensor::Impl *> &inputs, const std::vector<std::vector<int64_t>> &shapes);
 
   Status Predict(const MSTensorHandle *inputs, size_t input_num, MSTensorHandle **outputs, size_t *output_num,
@@ -45,45 +45,41 @@ class ModelC {
   MSTensor::Impl *GetOutputByTensorName(const std::string &name);
 
  private:
-  std::shared_ptr<session::LiteSession> session_ = nullptr;
-  std::shared_ptr<const ContextC> context_ = nullptr;
+  std::unique_ptr<lite::LiteSession> session_ = nullptr;
+  std::unique_ptr<const ContextC> context_ = nullptr;
   std::map<mindspore::tensor::MSTensor *, MSTensor::Impl *> tensor_map_;
   std::vector<MSTensor::Impl *> inputs_;
   std::vector<MSTensor::Impl *> outputs_;
+  int CreateLiteSession(const ContextC *context);
   Status RunGraph(const MSKernelCallBackC &before, const MSKernelCallBackC &after);
   void ResetTensorData(std::vector<void *> old_data, std::vector<tensor::MSTensor *> tensors);
   MSTensor::Impl *TensorToTensorImpl(mindspore::tensor::MSTensor *tensor);
 };
 
-Status ModelC::Build(const void *model_data, size_t data_size, ModelType model_type, const ContextC *model_context) {
-  context_.reset(model_context);
-  lite::Context lite_context;
-  auto status = A2L_ConvertContext(model_context, &lite_context);
-  if (status != kSuccess) {
-    return status;
+int ModelC::Build(const void *model_data, size_t data_size, ModelType model_type, const ContextC *model_context) {
+  int ret = CreateLiteSession(model_context);
+  if (ret != lite::RET_OK) {
+    return ret;
   }
-  session_ = std::shared_ptr<session::LiteSession>(
-    session::LiteSession::CreateSession(static_cast<const char *>(model_data), data_size, &lite_context));
-  if (session_ == nullptr) {
-    MS_LOG(ERROR) << "Allocate session failed.";
-    return kLiteNullptr;
-  }
-  return kSuccess;
+  return session_->LoadModelAndCompileByBuf(static_cast<const char *>(model_data), data_size);
 }
 
-Status ModelC::Build(const std::string &model_path, ModelType model_type, const ContextC *model_context) {
-  context_.reset(model_context);
-  lite::Context lite_context;
-  auto status = A2L_ConvertContext(model_context, &lite_context);
-  if (status != kSuccess) {
-    return status;
+int ModelC::Build(const std::string &model_path, ModelType model_type, const ContextC *model_context) {
+  int ret = CreateLiteSession(model_context);
+  if (ret != lite::RET_OK) {
+    return ret;
   }
-  session_ = std::shared_ptr<session::LiteSession>(lite::LiteSession::CreateSession(model_path, &lite_context));
+  return session_->LoadModelAndCompileByPath(model_path);
+}
+
+int ModelC::CreateLiteSession(const ContextC *context) {
+  context_.reset(context);
+  session_.reset(new (std::nothrow) lite::LiteSession());
   if (session_ == nullptr) {
-    MS_LOG(ERROR) << "Allocate session failed.";
-    return kLiteError;
+    MS_LOG(ERROR) << "create session failed";
+    return kLiteMemoryFailed;
   }
-  return kSuccess;
+  return session_->Init(ContextUtils::Convert(context_.get()));
 }
 
 Status ModelC::Resize(const std::vector<MSTensor::Impl *> &inputs, const std::vector<std::vector<int64_t>> &shapes) {
@@ -332,7 +328,7 @@ MSStatus MSModelBuild(MSModelHandle model, const void *model_data, size_t data_s
   mindspore::ContextC *context = static_cast<mindspore::ContextC *>(model_context);
   auto impl = static_cast<mindspore::ModelC *>(model);
   auto ret = impl->Build(model_data, data_size, static_cast<mindspore::ModelType>(model_type), context);
-  return static_cast<MSStatus>(ret.StatusCode());
+  return static_cast<MSStatus>(ret);
 }
 
 MSStatus MSModelBuildFromFile(MSModelHandle model, const char *model_path, MSModelType model_type,
@@ -348,7 +344,7 @@ MSStatus MSModelBuildFromFile(MSModelHandle model, const char *model_path, MSMod
   mindspore::ContextC *context = static_cast<mindspore::ContextC *>(model_context);
   auto impl = static_cast<mindspore::ModelC *>(model);
   auto ret = impl->Build(model_path, static_cast<mindspore::ModelType>(model_type), context);
-  return static_cast<MSStatus>(ret.StatusCode());
+  return static_cast<MSStatus>(ret);
 }
 
 MSStatus MSModelResize(MSModelHandle model, const MSTensorHandleArray inputs, MSShapeInfo *shape_infos,

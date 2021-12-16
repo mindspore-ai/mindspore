@@ -127,10 +127,6 @@ void BenchmarkUnifiedApi::InitMSContext(const std::shared_ptr<mindspore::Context
   context->SetThreadAffinity(flags_->cpu_bind_mode_);
   auto &device_list = context->MutableDeviceInfo();
 
-  std::shared_ptr<CPUDeviceInfo> device_info = std::make_shared<CPUDeviceInfo>();
-  device_info->SetEnableFP16(flags_->enable_fp16_);
-  device_list.push_back(device_info);
-
   if (flags_->device_ == "GPU") {
     std::shared_ptr<GPUDeviceInfo> gpu_device_info = std::make_shared<GPUDeviceInfo>();
     gpu_device_info->SetEnableFP16(flags_->enable_fp16_);
@@ -142,6 +138,11 @@ void BenchmarkUnifiedApi::InitMSContext(const std::shared_ptr<mindspore::Context
     npu_device_info->SetFrequency(kFrequencyDefault);
     device_list.push_back(npu_device_info);
   }
+
+  // CPU priority is behind GPU and NPU
+  std::shared_ptr<CPUDeviceInfo> device_info = std::make_shared<CPUDeviceInfo>();
+  device_info->SetEnableFP16(flags_->enable_fp16_);
+  device_list.push_back(device_info);
 }
 
 int BenchmarkUnifiedApi::CompareOutput() {

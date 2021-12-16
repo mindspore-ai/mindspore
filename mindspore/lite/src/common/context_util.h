@@ -21,11 +21,14 @@
 #include <string>
 #include "include/context.h"
 #include "include/api/context.h"
+#include "src/lite_kernel.h"
 
 namespace mindspore {
 namespace lite {
 mindspore::Context *MSContextFromContext(const lite::Context *context);
 std::set<std::string> ProvidersFromMSContext(const mindspore::Context *context);
+bool DeviceTypePriority(const lite::Context *context, int device_type1, int device_type2);
+DeviceType KernelArchToDeviceType(kernel::KERNEL_ARCH kernel_arch);
 }  // namespace lite
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_COMMON_CONTEXT_UTIL_H_
