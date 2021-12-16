@@ -33,10 +33,6 @@ class NPUFusionPass : public NPUBasePass {
   void RemoveAndFreeOp(NPUOp *cur_op);
   int UpdateOp(NPUOp *cur_op);
   int CommonFusion(NPUOp *cur_op);
-  int ConcatFusion(NPUOp *cur_op);
-  int SplitFusion(NPUOp *cur_op);
-  int PadFusion(NPUOp *cur_op);
-  int StridedSliceFusion(NPUOp *cur_op);
   int FormatFusion(NPUOp *cur_op);
 
  private:

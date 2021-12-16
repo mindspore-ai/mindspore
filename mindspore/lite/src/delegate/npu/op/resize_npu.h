@@ -47,6 +47,7 @@ class ResizeNPUOp : public NPUOp {
  private:
   schema::ResizeMethod resize_method_ = schema::ResizeMethod_UNKNOWN;
   bool is_support_v2_ = false;
+  bool is_support_scale_ = false;
   ge::Operator *resize_ = nullptr;
   hiai::op::Const *out_size_ = nullptr;
 };

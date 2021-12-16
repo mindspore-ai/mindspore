@@ -27,7 +27,7 @@ constexpr int kNumDims = 4;
 }  // namespace
 
 namespace mindspore {
-bool CheckFusion(NPUOp *cur_op) {
+bool CheckFusion(NPUOp *cur_op, const std::vector<mindspore::MSTensor> &graph_outputs) {
   if (cur_op->in_ops().empty() || cur_op->out_ops().empty()) {
     return false;
   }
@@ -39,7 +39,18 @@ bool CheckFusion(NPUOp *cur_op) {
   }
   auto post_flag = std::all_of(cur_op->out_ops().begin(), cur_op->out_ops().end(),
                                [](NPUOp *out_op) { return NPUPassUtils::IsNhwc2Nchw(out_op); });
-  return post_flag;
+  if (!post_flag) {
+    return false;
+  }
+  for (auto out_op : cur_op->out_ops()) {
+    // If the pattern is "nc2nh->cur_op->nh2nc" while the output tensors of "cur_op" and "nh2nc" are both graph output,
+    // the trans ops can not be fused since it will cause the missing of graph output.
+    if (out_op->out_ops().empty() &&
+        std::find(graph_outputs.begin(), graph_outputs.end(), out_op->inputs().at(0)) != graph_outputs.end()) {
+      return false;
+    }
+  }
+  return true;
 }
 
 bool CheckFormatFusion(NPUOp *cur_op) {
@@ -341,7 +352,7 @@ int NPUFusionPass::Run(NPUGraph *subgraph) {
   for (size_t i = 0; i < all_ops_->size(); i++) {
     auto cur_op = (*all_ops_)[i];
     auto ret = RET_OK;
-    if (CheckFusion(cur_op)) {
+    if (CheckFusion(cur_op, subgraph->outputs())) {
       i -= cur_op->in_ops().size();
       ret = CommonFusion(cur_op);
     }
