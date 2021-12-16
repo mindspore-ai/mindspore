@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <map>
 #include "backend/optimizer/ascend/enhancer/insert_depend_for_all_gather.h"
 #include "utils/utils.h"
 #include "backend/session/anf_runtime_algorithm.h"
