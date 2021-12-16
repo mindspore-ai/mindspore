@@ -55,8 +55,8 @@ int QuantTransform(const converter::Flags &ctx, schema::MetaGraphT *graph_defT) 
   MS_ASSERT(graph_defT != nullptr);
   // quantization
   if (ctx.commonQuantParam.quant_type != schema::QuantType_QUANT_ALL) {
-    // quantization
-    if (ctx.fmk != converter::kFmkTypeTf) {
+    {
+      // quantization
       // init old node indices
       auto old_nodes = GetGraphNodes(*graph_defT);
       Optimizer tensor_quant_optimizer;
@@ -71,9 +71,8 @@ int QuantTransform(const converter::Flags &ctx, schema::MetaGraphT *graph_defT) 
         return status;
       }
     }
-
-    // quantization
-    if (ctx.fmk != converter::kFmkTypeTf) {
+    {
+      // quantization
       // init old node indices
       Optimizer quant_node_optimizer;
       quant_node_optimizer.AddPass(new (std::nothrow) TopologicalSortPass());
