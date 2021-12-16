@@ -21,12 +21,10 @@
 #include <string>
 #include <vector>
 #include "include/api/kernel.h"
-#include "src/delegate/parameter_cache/embedding_cache.h"
-#include "src/delegate/parameter_cache/lfu_cache.h"
-#include "ps/ps_cache/ps_cache_basic.h"
-#include "src/delegate/parameter_cache/load_host_cache_model.h"
 #include "include/api/status.h"
 #include "include/api/data_type.h"
+#include "src/delegate/parameter_cache/embedding_cache.h"
+#include "src/delegate/parameter_cache/load_host_cache_model.h"
 #include "src/delegate/tensorrt/distribution/distribution_base.h"
 
 namespace mindspore {

@@ -14,32 +14,29 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_LOAD_HOST_CACHE_DATA_H_
-#define MINDSPORE_LITE_LOAD_HOST_CACHE_DATA_H_
+#ifndef MINDSPORE_LITE_LRU_CACHE_ALGORITHM_H_
+#define MINDSPORE_LITE_LRU_CACHE_ALGORITHM_H_
 
-#include <map>
-#include <string>
+#include <vector>
 #include "include/api/status.h"
-#include "include/api/data_type.h"
-#include "include/api/types.h"
-#include "include/api/kernel.h"
-#include "src/lite_model.h"
 
 namespace mindspore {
 namespace cache {
-class HostCacheModel {
- public:
-  HostCacheModel() {}
-  Status LoadCache(const std::string &model_path);
-  bool CheckIsCacheKernel(kernel::Kernel *kernel);
-  MSTensor GetHostCacheTensor(kernel::Kernel *kernel);
+struct CacheNoe {
+  CacheNoe(int _index, int _frequency, int _value) : key(_index), frequency(_frequency), value(_value) {}
+  int key;  // host input index
+  int frequency;
+  int value;  // cache index
+};
 
- private:
-  std::map<std::string, MSTensor> cache_tensor_;
-  mindspore::lite::LiteModel *cache_model_{nullptr};
-  char *model_buf_{nullptr};
-  size_t model_size_;
+class CacheAlgorithm {
+ public:
+  virtual ~CacheAlgorithm() {}
+  virtual int Get(int key) = 0;
+  virtual void Put(int key, int value) = 0;
+  virtual Status CheckCacheHit(const int *batch_ids, const size_t batch_ids_len, int *cache_index,
+                               std::vector<int> *need_swap_indies, std::vector<int> *need_swap_indies_cache_index) = 0;
 };
 }  // namespace cache
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_EMBEDDING_CACHE_H_
+#endif  // MINDSPORE_LITE_LRU_CACHE_ALGORITHM_H_

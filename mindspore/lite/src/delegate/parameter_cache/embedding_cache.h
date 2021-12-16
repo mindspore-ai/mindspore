@@ -16,15 +16,14 @@
 
 #ifndef MINDSPORE_LITE_EMBEDDING_CACHE_H_
 #define MINDSPORE_LITE_EMBEDDING_CACHE_H_
-
 #include <cmath>
 #include <algorithm>
 #include <memory>
-#include "src/delegate/parameter_cache/lfu_cache.h"
-#include "ps/ps_cache/ps_cache_basic.h"
 #include "include/api/status.h"
 #include "include/api/data_type.h"
 #include "src/common/log_adapter.h"
+#include "src/delegate/parameter_cache/cache_algorithm.h"
+#include "src/delegate/parameter_cache/cache_mem_base.h"
 
 namespace mindspore {
 namespace cache {
@@ -67,7 +66,7 @@ class EmbeddingCache {
   size_t GetDeviceStartIndex() { return device_start_index_; }
 
  private:
-  std::shared_ptr<ps::PsCacheBasic> device_cache_{nullptr};
+  std::shared_ptr<cache::CacheMemBase> device_cache_{nullptr};
   std::shared_ptr<CacheAlgorithm> cache_{nullptr};
 
   size_t vocab_size_{0};         // total size
