@@ -179,9 +179,9 @@ class SymbolResolver {
 };
 using SymbolResolverPtr = std::shared_ptr<SymbolResolver>;
 
-// Get python object with index from a list.
-py::object GetItemObjectFromSequence(const NameSpacePtr &name_space, const SymbolPtr &symbol, const AnfNodePtr &node,
-                                     const AnfNodePtr &index_node);
+// Get python object with index from a list or the whole list if the index is not fixed.
+py::object GetObjectFromSequence(const NameSpacePtr &name_space, const SymbolPtr &symbol, const AnfNodePtr &node,
+                                 const AnfNodePtr &index_node);
 std::pair<parse::NameSpacePtr, parse::SymbolPtr> GetNamespaceAndSymbol(const AnfNodePtr &node);
 
 // Get resolved python object by namespace and symbol.

@@ -311,9 +311,9 @@ AnfNodePtr ResolveObjectAndAddToManager(const FuncGraphManagerPtr &manager, cons
 }
 }  // namespace
 
-// Get python object with index from a list.
-py::object GetItemObjectFromSequence(const NameSpacePtr &name_space, const SymbolPtr &symbol, const AnfNodePtr &node,
-                                     const AnfNodePtr &index_node) {
+// Get python object with index from a list or the whole list if the index is not fixed.
+py::object GetObjectFromSequence(const NameSpacePtr &name_space, const SymbolPtr &symbol, const AnfNodePtr &node,
+                                 const AnfNodePtr &index_node) {
   MS_EXCEPTION_IF_NULL(node);
   TraceGuard trace_guard(std::make_shared<TraceResolve>(node->debug_info()));
   if (node->func_graph() == nullptr) {
@@ -329,15 +329,18 @@ py::object GetItemObjectFromSequence(const NameSpacePtr &name_space, const Symbo
     MS_LOG(EXCEPTION) << "Should not get item from non-sequence type, obj: " << py::str(obj);
   }
 
-  const std::string fn = PYTHON_MOD_GET_ITEM_FROM_SEQUENCE;
-  const std::string module = "mindspore._extends.parse.parser";
+  MS_LOG(DEBUG) << "obj: " << py::str(obj) << ", index_node: " << index_node->ToString();
   auto imm_value = GetValueNode<Int64ImmPtr>(index_node);
   if (imm_value == nullptr) {
-    MS_LOG(EXCEPTION) << "Expect an int64 value node, node: " << node->DebugString()
-                      << ", index_node: " << index_node->DebugString();
+    MS_LOG(DEBUG) << "The index is not a value node, so we return the whole list, node: " << node->DebugString()
+                  << ", index_node: " << index_node->DebugString();
+    // Index is not fixed, return the whole list.
+    return obj;
   }
+  // It index is a value node, get the item of index directly.
+  const std::string fn = PYTHON_MOD_GET_ITEM_FROM_SEQUENCE;
+  const std::string module = "mindspore._extends.parse.parser";
   int index = imm_value->value();
-  MS_LOG(DEBUG) << "obj: " << py::str(obj) << ", index: " << index;
   py::object item_obj = parse::python_adapter::GetPyFn(module, fn)(obj, py::int_(index));
   return item_obj;
 }
