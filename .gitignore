@@ -100,7 +100,7 @@ mindspore/python/mindspore/version.py
 mindspore/python/mindspore/default_config.py
 mindspore/python/mindspore/device_target.py
 mindspore/python/mindspore/package_name.py
-mindspore/.commit_id
+mindspore/python/mindspore/.commit_id
 
 # lite test file
 mindspore/lite/test/do_test/
