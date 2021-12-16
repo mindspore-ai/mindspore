@@ -540,8 +540,8 @@ void FullQuantQuantizer::InitCpuConfig() {
     prim::kPrimMatMul,
     prim::kPrimMaxPoolFusion,
     prim::kPrimAvgPoolFusion,
-    prim::kPrimConv2dTransposeFusion,
     prim::kPrimLayerNormFusion,
+    // prim::kPrimConv2dTransposeFusion, // Precision needs to be optimized.
     // Memory
     prim::kPrimReshape,
     prim::kPrimTranspose,
@@ -567,7 +567,8 @@ void FullQuantQuantizer::InitCpuConfig() {
   per_channel_ops_ = {prim::kPrimConv2DFusion, prim::kPrimConv2dTransposeFusion, prim::kPrimMatMul,
                       prim::kPrimFullConnection, prim::kPrimLayerNormFusion};
   support_activation_ = {
-    RELU, RELU6, HSWISH, SIGMOID, LEAKY_RELU, TANH,
+    RELU, RELU6, HSWISH, SIGMOID, TANH,
+    // LEAKY_RELU must be symmetric.
   };
 }
 
