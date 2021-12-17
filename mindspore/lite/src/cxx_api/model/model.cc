@@ -19,14 +19,14 @@
 #include <cuda_runtime.h>
 #endif
 #include <mutex>
-#include "include/api/types.h"
-#include "include/api/context.h"
 #include "include/api/callback/callback.h"
+#include "include/api/context.h"
 #include "include/api/dual_abi_helper.h"
-#include "src/cxx_api/model/model_impl.h"
-#include "src/cxx_api/callback/callback_impl.h"
-#include "src/cxx_api/callback/callback_adapter.h"
+#include "include/api/types.h"
 #include "src/common/log_adapter.h"
+#include "src/cxx_api/callback/callback_adapter.h"
+#include "src/cxx_api/callback/callback_impl.h"
+#include "src/cxx_api/model/model_impl.h"
 
 namespace mindspore {
 std::mutex g_impl_init_lock;
@@ -111,6 +111,16 @@ Status Model::UpdateWeights(const std::vector<MSTensor> &new_weights) {
     return kLiteNullptr;
   }
   return impl_->UpdateWeights(new_weights);
+}
+
+Status Model::RunStep(const MSKernelCallBack &before, const MSKernelCallBack &after) {
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "Model implement is null.";
+    return kLiteNullptr;
+  }
+  auto inputs = impl_->GetInputs();
+  auto outputs = impl_->GetOutputs();
+  return impl_->Predict(inputs, &outputs, before, after);
 }
 
 Status Model::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
@@ -289,6 +299,23 @@ Status Model::ApplyGradients(const std::vector<MSTensor> &gradients) {
     return kLiteUninitializedObj;
   }
   return impl_->ApplyGradients(gradients);
+}
+
+std::vector<MSTensor> Model::GetFeatureMaps() const {
+  std::vector<MSTensor> empty;
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "Model implement is null.";
+    return empty;
+  }
+  return impl_->GetFeatureMaps();
+}
+
+Status Model::UpdateFeatureMaps(const std::vector<MSTensor> &new_weights) {
+  if ((impl_ == nullptr) || (impl_->session_ == nullptr)) {
+    MS_LOG(ERROR) << "Model is null.";
+    return kLiteUninitializedObj;
+  }
+  return impl_->UpdateFeatureMaps(new_weights);
 }
 
 std::vector<MSTensor> Model::GetOptimizerParams() const {
