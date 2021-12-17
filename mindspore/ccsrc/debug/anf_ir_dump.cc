@@ -628,7 +628,7 @@ void SetDumpConfigByString(const std::string &str, DumpConfig *dump_config) {
     {kDumpConfigLineLevel0, kOff}, {kDumpConfigLineLevel1, kTopStack}, {kDumpConfigLineLevel2, kWholeStack}};
   auto it = dump_level_map.find(str);
   if (it != dump_level_map.end()) {
-    dump_config->enable_dump_pass_ir = it->second;
+    dump_config->dump_line_level = it->second;
     return;
   }
   if (str == kDumpConfigDisableBackend) {

@@ -122,12 +122,12 @@ class MS_CORE_API TraceManager {
   /// \brief Get debug info for parse or resolve.
   ///
   /// \return The debug info for parse or resolve.
-  static DebugInfoPtr GetParseOrResolveDebugInfo();
+  static DebugInfoPtr record_debug_info();
 
   /// \brief Get the flag of recording a debug info.
   ///
   /// \return A bool.
-  static bool GetRecordDebugInfoFlag();
+  static bool record_debug_info_flag();
 
   /// \brief Set the flag to false for not recording a debug info.
   static void CloseRecordDebugInfoFlag();

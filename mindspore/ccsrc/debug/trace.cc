@@ -474,8 +474,8 @@ void GetTraceStackInfo(std::ostringstream &oss) {
   std::ostringstream trace_info;
   GetEvalStackInfo(trace_info);
   if (trace_info.str().empty()) {
-    DebugInfoPtr debug_info = TraceManager::GetParseOrResolveDebugInfo();
-    if (debug_info != nullptr && TraceManager::GetRecordDebugInfoFlag() == true) {
+    DebugInfoPtr debug_info = TraceManager::record_debug_info();
+    if (debug_info != nullptr && TraceManager::record_debug_info_flag() == true) {
       auto debug_str = trace::GetDebugInfo(debug_info);
       if (!debug_str.empty()) {
         oss << "\n\n# " << debug_str;
