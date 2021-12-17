@@ -39,9 +39,9 @@ py::dict GetParameterLayoutFromGraph(const FuncGraphPtr &graph) {
     if (tensor_layout == nullptr) {
       MS_LOG(INFO) << "GetParameterLayout nullptr name = " << name;
     } else {
-      auto device_arrangement = tensor_layout->device_arrangement().array();
-      auto tensor_map = tensor_layout->tensor_map().array();
-      auto slice_shape = tensor_layout->slice_shape().array();
+      const auto &device_arrangement = tensor_layout->device_arrangement().array();
+      const auto &tensor_map = tensor_layout->tensor_map().array();
+      const auto &slice_shape = tensor_layout->slice_shape().array();
       int64_t field_size = tensor_layout->get_field_size();
       bool uniform_split = tensor_layout->uniform_split();
       const std::string &opt_shard_group = tensor_layout->opt_shard_group();
@@ -56,13 +56,13 @@ py::dict GetParameterLayoutFromGraph(const FuncGraphPtr &graph) {
 
 py::dict GetParameterLayoutFromResource(const pipeline::ResourcePtr &resource) {
   py::dict dict;
-  auto layout_map = resource->get_layout_map();
+  const auto &layout_map = resource->get_layout_map();
   for (auto iter = layout_map.begin(); iter != layout_map.end(); ++iter) {
     auto name = iter->first;
     auto layout = iter->second;
-    auto device_arrangement = layout->get_device_arrangement();
-    auto tensor_map = layout->get_tensor_map();
-    auto slice_shape = layout->get_slice_shape();
+    const auto &device_arrangement = layout->get_device_arrangement();
+    const auto &tensor_map = layout->get_tensor_map();
+    const auto &slice_shape = layout->get_slice_shape();
     int64_t field_size = layout->get_field_size();
     bool uniform_split = layout->get_uniform_split();
     const std::string &opt_shard_group = layout->get_opt_shard_group();

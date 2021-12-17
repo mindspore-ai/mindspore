@@ -65,11 +65,11 @@ class MindIRLoader {
 
   bool get_need_renormalize() const { return need_renormalize_; }
   void set_need_renormalize(bool need_renormalize) { need_renormalize_ = need_renormalize; }
-  void set_need_layout(bool need_layout) { need_layout_ = need_layout; }
+  void set_has_parallel_info(bool has_parallel_info) { has_parallel_info_ = has_parallel_info; }
   void set_weights_value_map(const std::map<string, ValuePtr> &weights_value_map) {
     weights_value_map_ = weights_value_map;
   }
-  LayoutMap get_layout_map() { return layout_map_; }
+  const LayoutMap &get_layout_map() { return layout_map_; }
   FuncGraphPtr LoadMindIR(const void *buffer, const size_t &size);
   FuncGraphPtr LoadMindIR(const std::string &file_name);
   std::vector<FuncGraphPtr> LoadMindIRs(const std::vector<std::string> file_names);
@@ -85,7 +85,7 @@ class MindIRLoader {
   bool inc_load_ = false;
   bool need_renormalize_ = true;
   std::map<string, ValuePtr> weights_value_map_;
-  bool need_layout_ = false;
+  bool has_parallel_info_ = false;
   LayoutMap layout_map_;
 };
 
