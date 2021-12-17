@@ -24,7 +24,7 @@ from mindspore.profiler.common.exceptions.exceptions import ProfilerParamTypeErr
 from mindspore import log
 from mindspore.profiler.common.util import to_int
 
-AICORE_TYPE_COL = ["op_type", "execution_time", "execution_frequency", "precent"]
+AICORE_TYPE_COL = ["op_type", "execution_time", "execution_frequency", "percent"]
 AICORE_DETAIL_COL = ["op_name", "op_type", "avg_execution_time", "subgraph", "full_op_name"]
 AICPU_COL = ["serial_number", "op_type", "total_time", "dispatch_time", "run_start",
              "run_end"]
