@@ -15,7 +15,7 @@
  */
 
 #include "nnacl/fp16/deconv_fp16.h"
-
+#include <float.h>
 int DeConvPostFp16(const float16_t *src, float16_t *tmp, const float16_t *bias, float16_t *dst, int output_channel,
                    const ConvParameter *conv_param) {
   float16x8_t min_v = vdupq_n_f16(-FLT_MAX);
