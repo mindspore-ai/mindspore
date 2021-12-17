@@ -531,17 +531,6 @@ int Sign(float x) {
   return 0;
 }
 
-int GetReductionInt(const std::string &reduction) {
-  if (reduction == "none") {
-    return 0;
-  } else if (reduction == "sum") {
-    return 2;
-  } else {
-    // reduction = 'mean'
-    return 1;
-  }
-}
-
 std::vector<std::pair<AnfNodePtr, size_t>> GetOutputIndex(const std::vector<AnfNodePtr> &node_list,
                                                           const std::vector<AnfNodePtr> &input_list,
                                                           const std::vector<AnfNodePtr> &output_list) {

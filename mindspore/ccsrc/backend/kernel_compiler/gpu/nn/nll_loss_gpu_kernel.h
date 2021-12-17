@@ -48,8 +48,8 @@ class NLLLossGpuKernel : public GpuKernel {
     T *loss_device = GetDeviceAddress<T>(outputs, 0);
     S *total_weight_device = GetDeviceAddress<S>(outputs, 1);
 
-    T *tmp_loss_device =
-      reduction_ != 0 ? GetDeviceAddress<T>(workspace, 0) : GetPossiblyNullDeviceAddress<T>(workspace, 0);
+    T *tmp_loss_device = reduction_ != ReductionMode::kNone ? GetDeviceAddress<T>(workspace, 0)
+                                                            : GetPossiblyNullDeviceAddress<T>(workspace, 0);
 
     S *tmp_target_weight_device = GetDeviceAddress<S>(workspace, 1);
 
@@ -76,8 +76,8 @@ class NLLLossGpuKernel : public GpuKernel {
       input_size_ *= input_shape[i];
     }
     string reduction = GetAttr<string>(kernel_node, "reduction");
-    reduction_ = GetReductionInt(reduction);
-    if ((reduction_ == 2) || (reduction_ == 1)) {
+    reduction_ = kReductionModeMap[reduction];
+    if ((reduction_ == ReductionMode::kSum) || (reduction_ == ReductionMode::kMean)) {
       tmp_loss_size_ = sizeof(T) * n_;
     }
     tmp_target_weight_size_ = n_ * sizeof(S);
@@ -91,7 +91,7 @@ class NLLLossGpuKernel : public GpuKernel {
     n_ = 0;
     c_ = 0;
     is_null_input_ = false;
-    reduction_ = 1;  // default value
+    reduction_ = ReductionMode::kMean;  // default value
     tmp_loss_size_ = 0;
     tmp_target_weight_size_ = 0;  // tmp_target_weight (N,) array
     input_size_list_.clear();
@@ -105,7 +105,7 @@ class NLLLossGpuKernel : public GpuKernel {
     input_size_list_.push_back(n_ * sizeof(int32_t));     // target tensor with shape (N)
     input_size_list_.push_back(c_ * sizeof(S));           // weight tensor with shape (C)
 
-    if (reduction_ == 0) {
+    if (reduction_ == ReductionMode::kNone) {
       output_size_list_.push_back(n_ * sizeof(T));  // loss output of shape (N,)
     } else {
       output_size_list_.push_back(sizeof(T));  // scalar loss output
@@ -117,7 +117,7 @@ class NLLLossGpuKernel : public GpuKernel {
 
  private:
   size_t input_size_;
-  int reduction_;
+  ReductionMode reduction_;
   size_t tmp_loss_size_;
   size_t tmp_target_weight_size_;
   int n_;

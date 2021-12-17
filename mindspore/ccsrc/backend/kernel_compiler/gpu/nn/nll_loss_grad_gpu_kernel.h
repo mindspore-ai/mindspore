@@ -73,8 +73,8 @@ class NLLLossGradGpuKernel : public GpuKernel {
       input_size_ *= input_shape[i];
     }
     string reduction = GetAttr<string>(kernel_node, "reduction");
-    reduction_ = GetReductionInt(reduction);
-    if (reduction_ == 0) {
+    reduction_ = kReductionModeMap[reduction];
+    if (reduction_ == ReductionMode::kNone) {
       num_dloss_ = n_;
     }
 
@@ -87,8 +87,8 @@ class NLLLossGradGpuKernel : public GpuKernel {
     n_ = 0;
     c_ = 0;
     is_null_input_ = false;
-    reduction_ = 1;  // default value
-    num_dloss_ = 1;  // default size (scalar)
+    reduction_ = ReductionMode::kMean;  // default value
+    num_dloss_ = 1;                     // default size (scalar)
     input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
@@ -107,7 +107,7 @@ class NLLLossGradGpuKernel : public GpuKernel {
 
  private:
   size_t input_size_;
-  int reduction_;
+  ReductionMode reduction_;
   int n_;
   int c_;
   bool is_null_input_;
