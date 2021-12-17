@@ -1321,17 +1321,6 @@ class MS_CORE_API AbstractRef final : public AbstractTensor {
 };
 using AbstractRefPtr = std::shared_ptr<AbstractRef>;
 
-/// \brief Struct AbstractBasePtrListHasher provides a function to compute the hash of a list of abstracts.
-struct MS_CORE_API AbstractBasePtrListHasher {
-  std::size_t operator()(const AbstractBasePtrList &args_spec_list) const;
-};
-
-/// \brief Struct AbstractBasePtrListEqual provides a function to determine whether a list of abstracts is equal to
-///        another.
-struct MS_CORE_API AbstractBasePtrListEqual {
-  bool operator()(const AbstractBasePtrList &lhs, const AbstractBasePtrList &rhs) const;
-};
-
 /// \brief Compute the hash of a list of abstracts.
 ///
 /// \param[in] args_spec_list A list of abstracts.
@@ -1344,6 +1333,21 @@ MS_CORE_API std::size_t AbstractBasePtrListHash(const AbstractBasePtrList &args_
 /// \param[in] rhs The second list of abstracts.
 /// \return A boolean.
 MS_CORE_API bool AbstractBasePtrListDeepEqual(const AbstractBasePtrList &lhs, const AbstractBasePtrList &rhs);
+
+/// \brief Struct AbstractBasePtrListHasher provides a function to compute the hash of a list of abstracts.
+struct AbstractBasePtrListHasher {
+  std::size_t operator()(const AbstractBasePtrList &args_spec_list) const {
+    return AbstractBasePtrListHash(args_spec_list);
+  }
+};
+
+/// \brief Struct AbstractBasePtrListEqual provides a function to determine whether a list of abstracts is equal to
+///        another.
+struct AbstractBasePtrListEqual {
+  bool operator()(const AbstractBasePtrList &lhs, const AbstractBasePtrList &rhs) const {
+    return AbstractBasePtrListDeepEqual(lhs, rhs);
+  }
+};
 
 /// \brief Class AbstractRowTensor describes a RowTensor's abstract value.
 class MS_CORE_API AbstractRowTensor final : public AbstractUndetermined {

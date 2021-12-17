@@ -23,6 +23,7 @@
 #include <vector>
 #include "backend/session/anf_runtime_algorithm.h"
 #include "runtime/device/kernel_info.h"
+#include "utils/ms_utils.h"
 
 namespace mindspore::graphkernel {
 namespace {
@@ -37,33 +38,15 @@ bool IsCNodePrimitveEqual(const CNodePtr &main, const CNodePtr &node, const std:
                     [&node](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); })) {
       return false;
     }
-
     auto main_attrs = main_primitive->attrs();
     auto node_attrs = node_primitive->attrs();
-
     std::vector<std::string> exclude_attrs{"IsFeatureMapOutput", "IsFeatureMapInputList", "pri_format"};
     for (auto &attr : exclude_attrs) {
       main_attrs.erase(attr);
       node_attrs.erase(attr);
     }
-
-    if (main_attrs.size() != node_attrs.size()) {
-      return false;
-    }
-
-    auto all = std::all_of(main_attrs.begin(), main_attrs.end(), [&node_attrs](const auto &item) -> bool {
-      if (item.second == nullptr) {
-        return false;
-      }
-      auto iter = node_attrs.find(item.first);
-      if (iter == node_attrs.end()) {
-        return false;
-      }
-      return *item.second == *iter->second;
-    });
-    return all;
+    return common::IsAttrsEqual(main_attrs, node_attrs);
   }
-
   return *main->inputs()[0] == *node->inputs()[0];
 }
 }  // namespace

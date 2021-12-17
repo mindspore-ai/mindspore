@@ -18,6 +18,7 @@
 
 #include <utility>
 #include "abstract/abstract_function.h"
+#include "utils/ms_utils.h"
 
 namespace mindspore {
 static uint64_t MakeId() {
@@ -73,20 +74,7 @@ bool Primitive::operator==(const Primitive &other) const {
   if (name() != other.name()) {
     return false;
   }
-  if (attrs_.size() != other.attrs_.size()) {
-    return false;
-  }
-  auto all = std::all_of(attrs_.begin(), attrs_.end(), [&other](const auto &item) {
-    if (item.second == nullptr) {
-      return false;
-    }
-    auto iter = other.attrs_.find(item.first);
-    if (iter == other.attrs_.end()) {
-      return false;
-    }
-    return *item.second == *iter->second;
-  });
-  return all;
+  return common::IsAttrsEqual(attrs_, other.attrs_);
 }
 
 std::string Primitive::GetAttrsText() const {

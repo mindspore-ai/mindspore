@@ -21,6 +21,7 @@
 #include <algorithm>
 
 #include "abstract/abstract_value.h"
+#include "utils/ms_utils.h"
 
 namespace mindspore {
 using mindspore::abstract::AbstractFunction;
@@ -40,21 +41,7 @@ bool Cell::operator==(const Cell &other) const {
   if (name() != other.name()) {
     return false;
   }
-  if (attrs_.size() != other.attrs_.size()) {
-    return false;
-  }
-  auto all = std::all_of(attrs_.begin(), attrs_.end(), [&other](const auto &item) {
-    if (item.second == nullptr) {
-      return false;
-    }
-    auto iter = other.attrs_.find(item.first);
-    if (iter == other.attrs_.end()) {
-      return false;
-    }
-    MS_EXCEPTION_IF_NULL(iter->second);
-    return *item.second == *iter->second;
-  });
-  return all;
+  return common::IsAttrsEqual(attrs_, other.attrs_);
 }
 
 std::string Cell::GetAttrString() const {

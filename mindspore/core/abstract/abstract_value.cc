@@ -745,30 +745,10 @@ bool AbstractClass::operator==(const AbstractClass &other) const {
   if (!(tag_ == other.tag_)) {
     return false;
   }
-  if (attributes_.size() != other.attributes_.size()) {
+  if (!common::IsAttrsEqual(attributes_, other.attributes_)) {
     return false;
   }
-  for (size_t i = 0; i < attributes_.size(); ++i) {
-    auto &attr1 = attributes_[i];
-    auto &attr2 = other.attributes_[i];
-    if (attr1.first != attr2.first || !IsEqual(attr1.second, attr2.second)) {
-      return false;
-    }
-  }
-  // Compare methods.
-  if (methods_.size() != other.methods_.size()) {
-    return false;
-  }
-  auto iter1 = methods_.begin();
-  auto iter2 = other.methods_.begin();
-  while (iter1 != methods_.end() && iter2 != other.methods_.end()) {
-    if (iter1->first != iter2->first || !IsEqual(iter1->second, iter2->second)) {
-      return false;
-    }
-    ++iter1;
-    ++iter2;
-  }
-  return true;
+  return common::IsAttrsEqual(methods_, other.methods_);
 }
 
 bool AbstractClass::operator==(const AbstractBase &other) const {
@@ -1158,41 +1138,30 @@ ValuePtr AbstractKeywordArg::RealBuildValue() const {
 }
 
 std::size_t AbstractBasePtrListHash(const AbstractBasePtrList &args_spec_list) {
-  std::size_t hash_value = 0;
-  // Hashing all elements is costly, so only take at most 4 elements into account based on
-  // some experiments.
-  constexpr auto kMaxElementsNum = 4;
-  for (size_t i = 0; (i < args_spec_list.size()) && (i < kMaxElementsNum); i++) {
-    MS_EXCEPTION_IF_NULL(args_spec_list[i]);
-    hash_value = hash_combine(hash_value, args_spec_list[i]->hash());
+  const size_t n_args = args_spec_list.size();
+  std::size_t hash_value = n_args;
+  // Hashing all elements is costly, we only calculate hash from
+  // the first few elements base on some experiments.
+  constexpr size_t kMaxElementsNum = 4;
+  for (size_t i = 0; (i < n_args) && (i < kMaxElementsNum); ++i) {
+    const auto &arg = args_spec_list[i];
+    MS_EXCEPTION_IF_NULL(arg);
+    hash_value = hash_combine(hash_value, arg->hash());
   }
   return hash_value;
 }
 
 bool AbstractBasePtrListDeepEqual(const AbstractBasePtrList &lhs, const AbstractBasePtrList &rhs) {
-  if (lhs.size() != rhs.size()) {
+  const std::size_t size = lhs.size();
+  if (size != rhs.size()) {
     return false;
   }
-  std::size_t size = lhs.size();
-  for (std::size_t i = 0; i < size; i++) {
-    MS_EXCEPTION_IF_NULL(lhs[i]);
-    MS_EXCEPTION_IF_NULL(rhs[i]);
-    if (lhs[i] == rhs[i]) {
-      continue;
-    }
-    if (!(*lhs[i] == *rhs[i])) {
+  for (std::size_t i = 0; i < size; ++i) {
+    if (!IsEqual(lhs[i], rhs[i])) {
       return false;
     }
   }
   return true;
-}
-
-std::size_t AbstractBasePtrListHasher::operator()(const AbstractBasePtrList &args_spec_list) const {
-  return AbstractBasePtrListHash(args_spec_list);
-}
-
-bool AbstractBasePtrListEqual::operator()(const AbstractBasePtrList &lhs, const AbstractBasePtrList &rhs) const {
-  return AbstractBasePtrListDeepEqual(lhs, rhs);
 }
 
 // RowTensor
