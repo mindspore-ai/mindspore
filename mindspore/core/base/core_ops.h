@@ -468,6 +468,7 @@ inline const PrimitivePtr kPrimInitDataSetQueue = std::make_shared<Primitive>("I
 inline const PrimitivePtr kPrimVirtualAssignAdd = std::make_shared<Primitive>("_VirtualAssignAdd");
 inline const PrimitivePtr kPrimVirtualAccuGrad = std::make_shared<Primitive>("_VirtualAccuGrad");
 inline const PrimitivePtr kPrimMirrorMicroStep = std::make_shared<Primitive>("_MirrorMicroStepOperator");
+inline const PrimitivePtr kPrimApplyProximalAdagrad = std::make_shared<Primitive>("ApplyProximalAdagrad");
 
 // Quant ops
 inline const PrimitivePtr kPrimBatchNormFold = std::make_shared<Primitive>("BatchNormFold");

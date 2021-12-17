@@ -5897,7 +5897,7 @@ class SparseApplyAdagradV2(PrimitiveWithInfer):
         return var_type, accum_type
 
 
-class ApplyProximalAdagrad(PrimitiveWithInfer):
+class ApplyProximalAdagrad(Primitive):
     r"""
     Updates relevant entries according to the proximal adagrad algorithm.
 
@@ -5988,33 +5988,6 @@ class ApplyProximalAdagrad(PrimitiveWithInfer):
                                 outputs=['var', 'accum'])
         self.add_prim_attr('side_effect_mem', True)
         self.use_locking = validator.check_value_type("use_locking", use_locking, [bool], self.name)
-
-    def infer_shape(self, var_shape, accum_shape, lr_shape, l1_shape, l2_shape, grad_shape):
-        validator.check('accum shape', accum_shape, 'var shape', var_shape, Rel.EQ, self.name)
-        validator.check('grad shape', grad_shape, 'var shape', var_shape, Rel.EQ, self.name)
-        lr_shp_len = len(lr_shape)
-        validator.check_int(lr_shp_len, 1, Rel.LE, "lr's rank", self.name)
-        if lr_shp_len == 1:
-            validator.check_int(lr_shape[0], 1, Rel.EQ, "lr_shape[0]", self.name)
-        l1_shp_len = len(l1_shape)
-        validator.check_int(l1_shp_len, 1, Rel.LE, "l1's rank", self.name)
-        if l1_shp_len == 1:
-            validator.check_int(l1_shape[0], 1, Rel.EQ, "l1_shape[0]", self.name)
-        l2_shp_len = len(l2_shape)
-        validator.check_int(l2_shp_len, 1, Rel.LE, "l2's rank", self.name)
-        if l2_shp_len == 1:
-            validator.check_int(l2_shape[0], 1, Rel.EQ, "l2_shape[0]", self.name)
-        return var_shape, accum_shape
-
-    def infer_dtype(self, var_dtype, accum_dtype, lr_dtype, l1_dtype, l2_dtype, grad_dtype):
-        valid_dtypes = [mstype.float16, mstype.float32]
-        args = {'var': var_dtype, 'accum': accum_dtype, 'grad': grad_dtype}
-        validator.check_tensors_dtypes_same_and_valid(args, valid_dtypes, self.name)
-        validator.check_scalar_or_tensor_types_same({"lr": lr_dtype}, valid_dtypes, self.name)
-        validator.check_scalar_or_tensor_types_same({"l1": l1_dtype}, valid_dtypes, self.name)
-        validator.check_scalar_or_tensor_types_same({"l2": l2_dtype}, valid_dtypes, self.name)
-        return var_dtype, accum_dtype
-
 
 class SparseApplyProximalAdagrad(PrimitiveWithCheck):
     r"""
