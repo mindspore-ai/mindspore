@@ -15,24 +15,24 @@ The objective of MDP is to integrate deep learning with Bayesian learning. On th
 
 ### Layer 1-1: Statistical distributions classes used to generate stochastic tensors
 
-- Distributions ([mindspore.nn.probability.distribution](https://gitee.com/mindspore/mindspore/tree/master/mindspore/nn/probability/distribution)): A large collection of probability distributions.
-- Bijectors([mindspore.nn.probability.bijectors](https://gitee.com/mindspore/mindspore/tree/master/mindspore/nn/probability/bijector)): Reversible and composable transformations of random variables.
+- Distributions ([mindspore.nn.probability.distribution](https://gitee.com/mindspore/mindspore/tree/master/mindspore/python/mindspore/nn/probability/distribution)): A large collection of probability distributions.
+- Bijectors([mindspore.nn.probability.bijectors](https://gitee.com/mindspore/mindspore/tree/master/mindspore/python/mindspore/nn/probability/bijector)): Reversible and composable transformations of random variables.
 
 ### Layer 1-2: Probabilistic inference algorithms
 
-- SVI([mindspore.nn.probability.infer.variational](https://gitee.com/mindspore/mindspore/tree/master/mindspore/nn/probability/infer/variational)): A unified interface for stochastic variational inference.
+- SVI([mindspore.nn.probability.infer.variational](https://gitee.com/mindspore/mindspore/tree/master/mindspore/python/mindspore/nn/probability/infer/variational)): A unified interface for stochastic variational inference.
 - MC: Algorithms for approximating integrals via sampling.
 
 ## Layer 2: Deep Probabilistic Programming (DPP) aims to provide composable BNN modules
 
-- Layers([mindspore.nn.probability.bnn_layers](https://gitee.com/mindspore/mindspore/tree/master/mindspore/nn/probability/bnn_layers)): BNN layers, which are used to construct BNN.
-- Dpn([mindspore.nn.probability.dpn](https://gitee.com/mindspore/mindspore/tree/master/mindspore/nn/probability/dpn)): A bunch of BNN models that allow to be integrated into DNN;
-- Transform([mindspore.nn.probability.transforms](https://gitee.com/mindspore/mindspore/tree/master/mindspore/nn/probability/transforms)): Interfaces for the transformation between BNN and DNN;
+- Layers([mindspore.nn.probability.bnn_layers](https://gitee.com/mindspore/mindspore/tree/master/mindspore/python/mindspore/nn/probability/bnn_layers)): BNN layers, which are used to construct BNN.
+- Dpn([mindspore.nn.probability.dpn](https://gitee.com/mindspore/mindspore/tree/master/mindspore/python/mindspore/nn/probability/dpn)): A bunch of BNN models that allow to be integrated into DNN;
+- Transform([mindspore.nn.probability.transforms](https://gitee.com/mindspore/mindspore/tree/master/mindspore/python/mindspore/nn/probability/transforms)): Interfaces for the transformation between BNN and DNN;
 - Context: context managers for models and layers.
 
 ## Layer 3: Toolbox provides a set of BNN tools for some specific applications
 
-- Uncertainty Estimation([mindspore.nn.probability.toolbox.uncertainty_evaluation](https://gitee.com/mindspore/mindspore/tree/master/mindspore/nn/probability/toolbox/uncertainty_evaluation.py)): Interfaces to estimate epistemic uncertainty and aleatoric uncertainty.
+- Uncertainty Estimation([mindspore.nn.probability.toolbox.uncertainty_evaluation](https://gitee.com/mindspore/mindspore/tree/master/mindspore/python/mindspore/nn/probability/toolbox/uncertainty_evaluation.py)): Interfaces to estimate epistemic uncertainty and aleatoric uncertainty.
 - OoD detection: Interfaces to detect out of distribution samples.
 
 ![Structure of MDP](https://images.gitee.com/uploads/images/2020/0820/115117_2a20da64_7825995.png "MDP.png")
