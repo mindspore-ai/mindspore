@@ -44,6 +44,7 @@ class AscendProfiler : public Profiler {
   aclprofAicoreMetrics GetAicMetrics() const;
   void Finalize() const;
   bool IsInitialized() { return init_flag_; }
+  void ReportErrorMessage() const;
 
  private:
   static std::shared_ptr<AscendProfiler> ascend_profiler_;

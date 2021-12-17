@@ -74,6 +74,7 @@ class ProfilingManager {
   Status ProfHandleStart();
   Status ProfHandleStop();
   Status ProfHandleFinalize();
+  void ReportErrorMessage() const;
 
  protected:
   ProfilingManager();

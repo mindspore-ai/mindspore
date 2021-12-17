@@ -17,6 +17,7 @@
 #include "runtime/device/ascend/profiling/profiling_manager.h"
 #include <cstdlib>
 #include <vector>
+#include "common/util/error_manager/error_manager.h"
 #include "securec/include/securec.h"
 #include "./prof_mgr_core.h"
 #include "utils/log_adapter.h"
@@ -37,6 +38,8 @@ constexpr Status PROF_FAILED = 0xFFFFFFFF;
 namespace mindspore {
 namespace device {
 namespace ascend {
+constexpr auto kUnknownErrorString = "Unknown error occurred";
+
 ProfilingManager &ProfilingManager::GetInstance() {
   static ProfilingManager inst{};
   return inst;
@@ -150,6 +153,13 @@ rtError_t CtrlCallbackHandle(uint32_t rt_type, void *data, uint32_t /* len */) {
   return RT_ERROR_NONE;
 }
 
+void ProfilingManager::ReportErrorMessage() const {
+  const std::string &error_message = ErrorManager::GetInstance().GetErrorMessage();
+  if (!error_message.empty() && error_message.find(kUnknownErrorString) == std::string::npos) {
+    MS_LOG(ERROR) << "Ascend error occurred, error message:\n" << error_message;
+  }
+}
+
 Status ProfilingManager::CallMsprofReport(const NotNull<ReporterData *> reporter_data) const {
   if (prof_cb_.msprofReporterCallback == nullptr) {
     MS_LOG(ERROR) << "MsprofReporterCallback callback is nullptr.";
@@ -161,7 +171,7 @@ Status ProfilingManager::CallMsprofReport(const NotNull<ReporterData *> reporter
                                     static_cast<void *>(reporter_data.get()), sizeof(ReporterData));
 
   if (ret != UintToInt(PROF_SUCCESS)) {
-    MS_LOG(ERROR) << "Call MsprofReporterCallback failed. ret: " << ret;
+    ReportErrorMessage();
     return PROF_FAILED;
   }
   return PROF_SUCCESS;
