@@ -37,7 +37,7 @@ void TensorArrayCPUReadKernel::InitKernel(const CNodePtr &kernel_node) {
   type_ = AnfAlgo::GetNodeAttr<TypePtr>(kernel_node, "dtype");
   value_size_ = GetTypeByte(type_);
   for (auto i : shapes_) {
-    value_size_ *= i;
+    value_size_ *= LongToSize(i);
   }
   input_size_list_.push_back(sizeof(int64_t));
   input_size_list_.push_back(sizeof(int64_t));
@@ -60,9 +60,10 @@ bool TensorArrayCPUReadKernel::Launch(const std::vector<AddressPtr> &inputs, con
   }
   auto value_addr = tensors_->Read(index_host);
   MS_LOG(DEBUG) << "Read value index:" << index_host;
-  auto ret = memcpy_s(out_value, value_size_, value_addr->addr, value_size_);
+  auto out_value_size = value_size_;
+  auto ret = memcpy_s(out_value, out_value_size, value_addr->addr, value_size_);
   if (ret != EOK) {
-    MS_LOG(EXCEPTION) << "Memcpy failed.";
+    MS_LOG(EXCEPTION) << "Memcpy failed, errorno(" << ret << ")";
   }
   return true;
 }

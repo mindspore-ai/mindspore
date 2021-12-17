@@ -31,7 +31,7 @@ namespace mindspore {
 namespace abstract {
 constexpr int64_t kMaxElement = 10000;
 AbstractBasePtr InferImplTensorArrayStack(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                          const AbstractBasePtrList &args_spec_list) {
+                                          const AbstractBasePtrList &) {
   // Infer TensorArrayStack
   const std::string op_name = primitive->name();
   auto attr_shape = primitive->GetAttr("element_shape");
@@ -48,9 +48,9 @@ AbstractBasePtr InferImplTensorArrayStack(const AnalysisEnginePtr &, const Primi
   auto max_shape_ = ele_shape;
   auto min_shape_ = ele_shape;
   auto out_shape_ = ele_shape;
-  max_shape_.insert(max_shape_.begin(), kMaxElement);
-  min_shape_.insert(min_shape_.begin(), 1);
-  out_shape_.insert(out_shape_.begin(), -1);
+  (void)max_shape_.insert(max_shape_.begin(), kMaxElement);
+  (void)min_shape_.insert(min_shape_.begin(), 1);
+  (void)out_shape_.insert(out_shape_.begin(), -1);
   ShapeVector out_shape = out_shape_;
   ShapeVector min_shape = min_shape_;
   ShapeVector max_shape = max_shape_;
