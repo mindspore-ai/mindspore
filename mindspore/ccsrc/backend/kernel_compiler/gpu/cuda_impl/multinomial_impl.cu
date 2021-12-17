@@ -93,8 +93,9 @@ template <typename T>
 __global__ void MultinomialKernel(int row, int col, T *probs, curandState *state, int64_t *num_sample, int *output) {
   // Load the probs to shared memory.
   extern __shared__ float accum_probs[];
-  int probs_base_index = (blockIdx.x * blockDim.x + threadIdx.x) * col;
-  if (probs_base_index > row * col) {
+  int gid = blockIdx.x * blockDim.x + threadIdx.x;
+  int probs_base_index = gid * col;
+  if (probs_base_index >= row * col) {
     return;
   }
 
@@ -114,13 +115,13 @@ __global__ void MultinomialKernel(int row, int col, T *probs, curandState *state
   __syncthreads();
 
   // Sample.
-  int output_base_index = (blockIdx.x * blockDim.x + threadIdx.x) * num_sample[0];
-  auto local_state = state[output_base_index];
+  int output_base_index = gid * num_sample[0];
+  auto local_state = state[gid];
   for (int i = 0; i < num_sample[0]; i++) {
     float rand = curand_uniform(&local_state);
     output[output_base_index + i] = BinarySearchForMultinomial(&accum_probs[shm_base_index], col, rand);
   }
-  state[output_base_index] = local_state;
+  state[gid] = local_state;
 }
 
 template <typename T>
