@@ -2065,7 +2065,7 @@ class Reciprocal(PrimitiveWithInfer):
         return None
 
 
-class Pow(_MathBinaryOp):
+class Pow(Primitive):
     """
     Computes a tensor to the power of the second input.
 
@@ -2112,6 +2112,13 @@ class Pow(_MathBinaryOp):
         >>> print(output)
         [ 1. 16. 64.]
     """
+
+    __mindspore_signature__ = (sig.sig_dtype.T, sig.sig_dtype.T)
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize _BinaryOp"""
+        self.init_prim_io_names(inputs=['x1', 'x2'], outputs=['y'])
 
     def infer_value(self, x, power):
         if x is not None and power is not None:
