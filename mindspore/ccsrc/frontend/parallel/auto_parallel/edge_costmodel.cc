@@ -529,8 +529,11 @@ bool Edge::CheckStrategyConsistency(StrategyPtr prev_stra, StrategyPtr next_stra
                        "different sharding strategies. These operators are: ";
       auto const &succ_edges = prev_op_->succ_edges();
       for (auto const &succ_edge : succ_edges) {
+        if (succ_edge->next_operator()->cnodes().empty()) {
+          MS_LOG(EXCEPTION) << "No CNODE info has been set in operator: " << succ_edge->next_operator()->name();
+        }
         MS_LOG(ERROR) << succ_edge->next_operator()->name() << ", the corresponding fullname is: "
-                      << succ_edge->next_operator()->cnode()->fullname_with_scope();
+                      << succ_edge->next_operator()->cnodes()[0]->fullname_with_scope();
       }
       MS_LOG(EXCEPTION) << "Configure these operators with consistent sharding strategies.";
     }

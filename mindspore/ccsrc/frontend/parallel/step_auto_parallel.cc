@@ -233,6 +233,7 @@ bool IsOperatorsInTwoSeparateLoops(const CNodePtr &a_cnode, const CNodePtr &b_cn
 
 // 'configured_stra_ops_' includes all operators that are configured sharding strategies.
 std::map<OperatorInfoPtr, StrategyPtr, OpsPtrCompare> configured_stra_ops_;
+std::set<OperatorInfoPtr> ignore_candidate_;
 void InitCostGraph() {
   if (entire_costgraph == nullptr) {
     entire_costgraph = std::make_shared<CostGraph>();
@@ -241,6 +242,7 @@ void InitCostGraph() {
   CostModelContext::GetInstance()->PrintCostModel();
   entire_costgraph->Init();
   configured_stra_ops_.clear();
+  ignore_candidate_.clear();
 }
 
 void SetStrategyToOperator(const OperatorInfoPtr &operator_info, const PrimitivePtr &prim,
@@ -297,6 +299,13 @@ void ApplyApproximationForNode(const OperatorInfoPtr &operator_info) {
   }
 }
 
+void AddOperatorToIgnoreCandidates(const PrimitivePtr &prim, const OperatorInfoPtr &operator_info) {
+  if (prim->name() == CAST) {
+    // add CAST into ignore_candidate
+    ignore_candidate_.insert(operator_info);
+  }
+}
+
 OperatorInfoPtr CreateTheOperatorInfo(const PrimitivePtr &prim, const CNodePtr &cnode, bool is_last_nodes,
                                       StrategyMap *stra_map) {
   MS_EXCEPTION_IF_NULL(prim);
@@ -344,6 +353,8 @@ OperatorInfoPtr CreateTheOperatorInfo(const PrimitivePtr &prim, const CNodePtr &
   operator_info->set_input_value(input_value);
   operator_info->set_outputs_dtype(cnode->Type());
   operator_info->set_cnode(cnode);
+
+  AddOperatorToIgnoreCandidates(prim, operator_info);
   // key of strategy map
   std::string strategy_key_name = "";
   auto param_names = NodeParameterName(cnode, -1, 0);
@@ -968,6 +979,17 @@ void ReshapeCostCompute(const std::vector<AnfNodePtr> &all_nodes) {
   }
 }
 
+Status IgnoreOperatorsInCostGraph() {
+  for (const auto &op : ignore_candidate_) {
+    auto cnodes = op->cnodes();
+    for (auto &cnode : cnodes) {
+      MS_EXCEPTION_IF_NULL(cnode);
+      cnode->set_user_data<OperatorInfo>(nullptr);
+    }
+  }
+  return SUCCESS;
+}
+
 Status ParallelStrategySearch(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root) {
   // There are 4 meta-steps to determine the parallelization strategy for the ANF graph.
   // Step 1: Traverse the ANF graph, and create NODEs for costgraph:
@@ -1035,7 +1057,6 @@ Status ParallelStrategySearch(const std::vector<AnfNodePtr> &all_nodes, const Fu
                 (ParallelContext::GetInstance()->sharding_propagation());
   if (use_sp) {
     entire_costgraph->StrategyPropagate(configured_stra_ops_);
-    configured_stra_ops_.clear();
   } else if (GetStrategy(entire_costgraph) != SUCCESS) {
     MS_LOG(ERROR) << "Strategy search for cost-graph fails";
     return FAILED;
@@ -1054,7 +1075,12 @@ Status ParallelStrategySearch(const std::vector<AnfNodePtr> &all_nodes, const Fu
     MS_LOG(INFO) << op->name() << " : The strategy is:";
     PrintStrategy(s_strategy);
   }
+  // Remove some operatorInfo from the CNODEs
+  IgnoreOperatorsInCostGraph();
+
   ops_in_a_loop_.clear();
+  configured_stra_ops_.clear();
+  ignore_candidate_.clear();
 
   return SUCCESS;
 }

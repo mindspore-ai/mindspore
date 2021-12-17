@@ -167,8 +167,11 @@ class OperatorInfo {
   void set_input_value(const std::vector<ValuePtr> &input_value) { input_value_ = input_value; }
   const std::vector<ValuePtr> &input_value() const { return input_value_; }
   void set_outputs_dtype(const TypePtr &dtype) { outputs_dtype_ = dtype; }
-  void set_cnode(const CNodePtr &cnode) { cnode_ = cnode; }
-  CNodePtr cnode();
+  void set_cnode(const CNodePtr &cnode) {
+    cnode_ = cnode;
+    cnodes_.push_back(cnode);
+  }
+  std::vector<CNodePtr> cnodes();
   bool is_alive() const { return is_alive_; }
   void SetNotAlive() { is_alive_ = false; }
   StrategyPtr strategy() const { return strategy_; }
@@ -299,6 +302,7 @@ class OperatorInfo {
   std::vector<bool> split_flag_list_;
   std::string refkey_parameter_name_;
   CNodePtr cnode_;
+  std::vector<CNodePtr> cnodes_;
   int64_t used_devices_ = -1;
   // the repeated_calc_num_ will be inserted to the last dimension of dev matrix in default
   bool repeated_num_in_dev_matrix_right_ = true;
