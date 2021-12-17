@@ -23,6 +23,7 @@
 #include <utility>
 #include <memory>
 #include <string>
+#include <functional>
 #include "abstract/abstract_value.h"
 #include "utils/any.h"
 #include "utils/misc.h"
@@ -46,7 +47,10 @@ AbstractBasePtr SensitivityTransform(const AbstractBasePtr &spec);
 ShapeVector BroadcastShape(ShapeVector shpx, ShapeVector shpy);
 
 MS_CORE_API size_t TypeIdSize(const TypeId data_type);
-size_t ShapeSize(const std::vector<size_t> &shape);
+template <typename T>
+T ShapeSize(const std::vector<T> &shape) {
+  return std::accumulate(shape.begin(), shape.end(), static_cast<T>(1), std::multiplies<T>());
+}
 
 // Check dynamic shape routine
 void CheckMinMaxShape(const ShapeVector &shape, ShapeVector *min_shape, ShapeVector *max_shape);
