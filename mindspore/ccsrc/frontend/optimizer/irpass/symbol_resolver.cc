@@ -55,22 +55,30 @@ AnfNodePtr Resolver::operator()(const OptimizerPtr &optimizer, const AnfNodePtr 
           auto [name_space, symbol] = parse::GetNamespaceAndSymbol(resolve_node);
           auto obj = parse::GetObjectFromSequence(name_space, symbol, resolve_node, index_node);
           if (py::isinstance<py::tuple>(obj) || py::isinstance<py::list>(obj)) {
+            bool should_incorporate_getattr = true;
             std::vector<AnfNodePtr> inputs;
             inputs.push_back(NewValueNode(prim::kPrimMakeTuple));
             auto sequence = obj.cast<py::sequence>();
             for (size_t i = 0; i < sequence.size(); ++i) {
+              if (!parse::data_converter::IsCellInstance(sequence[i])) {
+                should_incorporate_getattr = false;
+                break;
+              }
               auto res = parse::ResolveCellWithAttr(optimizer->manager(), sequence[i], resolve_node, attr);
               inputs.emplace_back(res);
             }
-            auto make_tuple_node = getitem_cnode->func_graph()->NewCNodeInOrder(inputs);
-            auto resolve_getitem_name_space = GetValueNode<parse::NameSpacePtr>(resolve_getitem_cnode->input(1));
-            auto resolved_getitem_node =
-              ResolveSymbol(optimizer->manager(), resolve_getitem_name_space, resolve_getitem_symbol, node);
-            auto out =
-              getitem_cnode->func_graph()->NewCNodeInOrder({resolved_getitem_node, make_tuple_node, index_node});
-            return out;
+            if (should_incorporate_getattr) {
+              auto make_tuple_node = getitem_cnode->func_graph()->NewCNodeInOrder(inputs);
+              auto resolve_getitem_name_space = GetValueNode<parse::NameSpacePtr>(resolve_getitem_cnode->input(1));
+              auto resolved_getitem_node =
+                ResolveSymbol(optimizer->manager(), resolve_getitem_name_space, resolve_getitem_symbol, node);
+              auto out =
+                getitem_cnode->func_graph()->NewCNodeInOrder({resolved_getitem_node, make_tuple_node, index_node});
+              return out;
+            }
+          } else {
+            return parse::ResolveCellWithAttr(optimizer->manager(), obj, resolve_node, attr);
           }
-          return parse::ResolveCellWithAttr(optimizer->manager(), obj, resolve_node, attr);
         }
       }
     }
