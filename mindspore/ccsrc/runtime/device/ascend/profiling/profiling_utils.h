@@ -24,7 +24,7 @@
 #include <unordered_map>
 #include "backend/session/kernel_graph.h"
 #include "utils/contract.h"
-#include "runtime/device/ascend/profiling/reporter/profiling_desc.h"
+#include "runtime/device/ascend/profiling/profiling_reporter.h"
 
 namespace mindspore {
 namespace device {
@@ -117,7 +117,7 @@ class ProfilingUtils {
   // graph id --> (kernel name list)
   inline static std::map<uint32_t, std::vector<CNodePtr>> graph_profiling_cnode_;
   inline static std::map<uint32_t, std::vector<std::string>> graph_kernel_name_;
-  inline static std::map<uint32_t, std::vector<std::shared_ptr<ProfDesc>>> graph_point_;
+  inline static std::map<uint32_t, std::vector<std::shared_ptr<StepPointDesc>>> graph_point_;
   inline static uint32_t custom_node_index_;
   inline static std::vector<GraphProfilingData> report_data_;
 };

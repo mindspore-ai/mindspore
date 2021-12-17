@@ -18,4 +18,5 @@ import os
 RAW_DATA_BASE = os.path.realpath(os.path.join(os.path.dirname(__file__), '../../data/profiler_data'))
 RAW_DATA = os.path.realpath(os.path.join(RAW_DATA_BASE, 'JOB1'))
 RAW_DATA_JOB2 = os.path.realpath(os.path.join(RAW_DATA_BASE, 'JOB2'))
+FRAMEWORK_RAW_DATA = os.path.realpath(os.path.join(RAW_DATA_BASE, 'framework'))
 PROFILER_DIR = os.path.realpath(os.path.join(RAW_DATA_BASE, 'profiler'))

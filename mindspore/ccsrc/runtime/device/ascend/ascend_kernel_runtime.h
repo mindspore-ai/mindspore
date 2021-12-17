@@ -99,7 +99,6 @@ class AscendKernelRuntime : public KernelRuntime {
 #ifndef ENABLE_SECURITY
   void DistributeDebugTask(const session::KernelGraph &graph, const NotNull<std::function<void *()>> &model_handle);
   void LaunchDataDump(GraphId graph_id);
-  void ReportProfilingData();
 #endif
   static CNodePtr GetErrorNodeName(uint32_t streamid, uint32_t taskid);
   static std::string GetDumpPath();

@@ -25,6 +25,8 @@ import mindspore._c_expression as c_expression
 import mindspore._c_dataengine as cde
 from mindspore.profiler.common.exceptions.exceptions import ProfilerFileNotFoundException, \
     ProfilerIOException, ProfilerException, ProfilerRawFileException
+from mindspore.profiler.common.exceptions.exceptions import ProfilerPathErrorException
+from mindspore.profiler.common.exceptions.exceptions import ProfilerDirNotFoundException
 from mindspore.profiler.common.util import get_file_path, fwrite_format
 from mindspore.profiler.common.validator.validate_path import \
     validate_and_normalize_path
@@ -299,6 +301,8 @@ class Profiler:
         job_id = self._get_profiling_job_id()
         logger.info("Profiling: job id is %s ", job_id)
 
+        self._check_output_path(output_path=self._output_path)
+
         source_path = os.path.join(self._output_path, job_id)
         # parse hwts.log.data.45.dev file, and get task profiling data
         hwts_output_filename = self._hwts_output_filename_target + self._rank_id + ".txt"
@@ -310,7 +314,7 @@ class Profiler:
         hwtslog_parser.execute()
 
         # parse Framework file, and get the relation of op and tasks
-        framework_parser = FrameworkParser(job_id, self._dev_id, self._rank_id, self._output_path)
+        framework_parser = FrameworkParser(source_path, self._rank_id, self._output_path)
         logger.info("Profiling: analyzing framework data.")
         framework_parser.parse()
         op_task_dict = framework_parser.to_task_id_full_op_name_dict()
@@ -402,6 +406,16 @@ class Profiler:
                                    self._dev_id, self._rank_id, is_training_mode_flag)
         logger.info("Profiling: analyzing the operation FLOPs.")
         flops_parser.execute()
+
+    @staticmethod
+    def _check_output_path(output_path):
+        try:
+            output_path = validate_and_normalize_path(output_path)
+        except RuntimeError:
+            raise ProfilerPathErrorException('Output path is invalid.')
+        if not os.path.isdir(output_path):
+            raise ProfilerDirNotFoundException(output_path)
+        return output_path
 
     def start(self):
         """
@@ -669,7 +683,6 @@ class Profiler:
         Returns:
             str, profiling job id.
         """
-
         job_id = ""
         job_dirs = filter(lambda item: item.startswith('JOB') or item.startswith('PROF') and \
                                        os.path.isdir(os.path.join(self._output_path, item)),
@@ -697,6 +710,9 @@ class Profiler:
                 logger.warning("Find profiling find job path %s, but not current training device id. "
                                "Current training device id %s, but job path device id: %s, "
                                "profiler will ignore this job dir.", job_dir, self._dev_id, training_device_id)
+                continue
+
+            if not os.listdir(os.path.join(job_dir, 'data')):
                 continue
 
             job_start_time = self._parse_host_start_log(host_start_file_path)

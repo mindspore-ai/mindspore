@@ -14,156 +14,36 @@
 # ============================================================================
 """Thr parser for parsing framework files."""
 import csv
-import enum
-import json
 import os
 import re
-import stat
+import struct
+import json
+from pathlib import Path
+from typing import List
+from collections import defaultdict
+from collections import namedtuple
 
-from mindspore.profiler.common.exceptions.exceptions import \
-    ProfilerPathErrorException, ProfilerDirNotFoundException, \
-    ProfilerFileNotFoundException, ProfilerDeviceIdMismatchException, \
-    ProfilerRawFileException, ProfilerParamValueErrorException
-from mindspore.profiler.common.validator.validate_path import \
-    validate_and_normalize_path
+from mindspore import log as logger
+from mindspore.profiler.parser.framework_struct import TASK_DESC_STRUCT
+from mindspore.profiler.parser.framework_struct import TENSOR_DATA_STRUCT
+from mindspore.profiler.parser.framework_struct import STEP_INFO_STRUCT
+from mindspore.profiler.parser.framework_enum import VmDataType, VmFormat, FileDataType
+from mindspore.profiler.common.struct_type import StructType
 
-
-class VmDataType(enum.IntEnum):
-    """Definition of vm data type."""
-    NUMBER_TYPE_BEGIN = 30
-    NUMBER_TYPE_BOOL = 31
-    NUMBER_TYPE_INT = 32
-    NUMBER_TYPE_INT8 = 33
-    NUMBER_TYPE_INT16 = 34
-    NUMBER_TYPE_INT32 = 35
-    NUMBER_TYPE_INT64 = 36
-    NUMBER_TYPE_UINT = 37
-    NUMBER_TYPE_UINT8 = 38
-    NUMBER_TYPE_UINT16 = 39
-    NUMBER_TYPE_UINT32 = 40
-    NUMBER_TYPE_UINT64 = 41
-    NUMBER_TYPE_FLOAT = 42
-    NUMBER_TYPE_FLOAT16 = 43
-    NUMBER_TYPE_FLOAT32 = 44
-    NUMBER_TYPE_FLOAT64 = 45
-    NUMBER_TYPE_COMPLEX = 46
-    NUMBER_TYPE_END = 47
-
-    @classmethod
-    def get_data_type_name(cls, num):
-        """
-        Get the name of data type by enum number.
-
-        Args:
-            num (int): Enum number.
-
-        Returns:
-            str, the name of data type.
-        """
-        data_type = cls._value2member_map_.get(num)
-        return 'UNKNOWN' if data_type is None else data_type.name
+from mindspore.profiler.common.exceptions.exceptions import ProfilerDirNotFoundException
+from mindspore.profiler.common.exceptions.exceptions import ProfilerFileNotFoundException
+from mindspore.profiler.common.exceptions.exceptions import ProfilerParamValueErrorException
 
 
-class GeDataType(enum.IntEnum):
-    """Definition of ge data type."""
-    DT_FLOAT = 0
-    DT_FLOAT16 = 1
-    DT_INT8 = 2
-    DT_INT16 = 6
-    DT_UINT16 = 7
-    DT_UINT8 = 4
-    DT_INT32 = 3
-    DT_INT64 = 9
-    DT_UINT32 = 8
-    DT_UINT64 = 10
-    DT_BOOL = 12
-    DT_DOUBLE = 11
-    DT_STRING = 13
-    DT_DUAL_SUB_INT8 = 14
-    DT_DUAL_SUB_UINT8 = 15
-    DT_COMPLEX64 = 16
-    DT_COMPLEX128 = 17
-    DT_QINT8 = 18
-    DT_QINT16 = 19
-    DT_QINT32 = 20
-    DT_QUINT8 = 21
-    DT_QUINT16 = 22
-    DT_RESOURCE = 23
-    DT_STRING_REF = 24
-    DT_DUAL = 25
-    DT_UNDEFINED = 26
-
-    @classmethod
-    def get_data_type_name(cls, num):
-        """
-        Get the name of data type by enum number.
-
-        Args:
-            num (int): Enum number.
-
-        Returns:
-            str, the name of data type.
-        """
-        data_type = cls._value2member_map_.get(num)
-        return 'UNKNOWN' if data_type is None else data_type.name
+FILE_DATA_STRUCT_DICT = {
+    FileDataType.STEP_INFO.value: STEP_INFO_STRUCT,
+    FileDataType.TENSOR_DATA_INFO.value: TENSOR_DATA_STRUCT,
+    FileDataType.TASK_DESC_INFO.value: TASK_DESC_STRUCT
+}
 
 
-class GeFormat(enum.IntEnum):
-    """Definition of ge format type."""
-    FORMAT_NCHW = 0
-    FORMAT_NHWC = 1
-    FORMAT_ND = 2
-    FORMAT_NC1HWC0 = 3
-    FORMAT_FRACTAL_Z = 4
-    FORMAT_NC1C0HWPAD = 5
-    FORMAT_NHWC1C0 = 6
-    FORMAT_FSR_NCHW = 7
-    FORMAT_FRACTAL_DECONV = 8
-    FORMAT_C1HWNC0 = 9
-    FORMAT_FRACTAL_DECONV_TRANSPOSE = 10
-    FORMAT_FRACTAL_DECONV_SP_STRIDE_TRANS = 11
-    FORMAT_NC1HWC0_C04 = 12
-    FORMAT_FRACTAL_Z_C04 = 13
-    FORMAT_CHWN = 14
-    FORMAT_FRACTAL_DECONV_SP_STRIDE8_TRANS = 15
-    FORMAT_HWCN = 16
-    FORMAT_NC1KHKWHWC0 = 17
-    FORMAT_BN_WEIGHT = 18
-    FORMAT_FILTER_HWCK = 19
-    FORMAT_HASHTABLE_LOOKUP_LOOKUPS = 20
-    FORMAT_HASHTABLE_LOOKUP_KEYS = 21
-    FORMAT_HASHTABLE_LOOKUP_VALUE = 22
-    FORMAT_HASHTABLE_LOOKUP_OUTPUT = 23
-    FORMAT_HASHTABLE_LOOKUP_HITS = 24
-    FORMAT_C1HWNCOC0 = 25
-    FORMAT_MD = 26
-    FORMAT_NDHWC = 27
-    FORMAT_FRACTAL_ZZ = 28
-    FORMAT_FRACTAL_NZ = 29
-    FORMAT_NCDHW = 30
-    FORMAT_DHWCN = 31
-    FORMAT_NDC1HWC0 = 32
-    FORMAT_FRACTAL_Z_3D = 33
-    FORMAT_CN = 34
-    FORMAT_NC = 35
-    FORMAT_DHWNC = 36
-    FORMAT_FRACTAL_Z_3D_TRANSPOSE = 37
-    FORMAT_RESERVED = 38
-    FORMAT_ALL = 39
-
-    @classmethod
-    def get_format_name(cls, num):
-        """
-        Get the name of format type by enum number.
-
-        Args:
-            num (int): Enum number.
-
-        Returns:
-            str, the name of format type.
-        """
-        format_type = cls._value2member_map_.get(num)
-        return 'UNKNOWN' if format_type is None else format_type.name
+COL_NAMES = ['task_id', 'stream_id', 'block_dim', 'full_op_name', 'op_name', 'op_type', 'subgraph', 'op_info']
+OpData = namedtuple('OpData', field_names=COL_NAMES)
 
 
 class FrameworkParser:
@@ -171,41 +51,30 @@ class FrameworkParser:
     Thr parser for parsing framework files.
 
     Args:
-        profiling_id (str): The profiling ID.
-        device_id (str): The device ID.
+        profiling_path (str): The profiling path which should be contain CANN profiling data.
         rank_id (str): The rank ID.
         output_path (str): The directory of the parsed file. Default: `./`.
     """
     _regex_framework = r'Framework\.(?P<data_type>.+)\.(?P<device_id>\d).+'
-    _regex_framework_in_data = r'Framework\.(?P<data_type>.+)\.' \
-                               r'(?P<device_id>\d)\.(?P<profiling_id>[a-zA-Z0-9]+).+'
-    _col_names = [
-        'task_id', 'stream_id', 'block_dim', 'full_op_name', 'op_name',
-        'op_type', 'subgraph', 'op_info'
-    ]
     _graph_attr_name = [
         'input_format', 'input_data_type', 'input_shape', 'output_format',
         'output_data_type', 'output_shape'
     ]
+    output_file_format = 'framework_raw_{rank_id}.csv'
 
-    # if the task id is less than the task id threshold, The combination of
-    # task id and Stream id represents one operator, else the task id represents
-    # one operator
-    _task_id_threshold = 25000
+    def __init__(self, profiling_path, rank_id, output_path='./'):
+        self._profiling_path = profiling_path
+        self._output_path = output_path
+        self._rank_id = rank_id
 
-    def __init__(self, profiling_id, device_id, rank_id, output_path='./'):
-        self._raw_data_dir = output_path
-        self._profiling_path = self._get_raw_profiling_path(profiling_id)
-        self._backend_type = None
-        self._framework_path = {'graph': [], 'task': [], 'point': []}
-        self._search_file(profiling_id, device_id)
-        self._device_id = device_id
-        self._save_path = self._get_save_path(rank_id, output_path)
+        self._hash_dict = {}
         self._task_id_full_op_name_dict = {}
-        self._task_cache = {}
         self._point_info = {}
-        self._parse_task_files()
-        self._parse_point_files()
+
+    @staticmethod
+    def _check_output_path(path):
+        if not os.path.exists(path) or not os.path.isdir(path):
+            raise ProfilerDirNotFoundException(path)
 
     @property
     def save_path(self):
@@ -215,7 +84,7 @@ class FrameworkParser:
         Returns:
             str, the save path.
         """
-        return self._save_path
+        return os.path.realpath(os.path.join(self._output_path, self.output_file_format.format(rank_id=self._rank_id)))
 
     @property
     def point_info(self):
@@ -223,23 +92,10 @@ class FrameworkParser:
         The property of the framework point information.
 
         Returns:
-            dict, the framework point information.
+            dict, the framework point information, key is tag, value is op name.
         """
+        # Note: In the multi-subgraph or multi-tag scenario, op name is overwritten.
         return self._point_info
-
-    def to_task_id_full_op_name_dict(self):
-        """
-        Get the task id and full operator name dict.
-
-        Returns:
-            dict, the task id and full operator name dict.
-        """
-        return self._task_id_full_op_name_dict
-
-    def parse(self):
-        """Parse the framework files."""
-        self._parse_graph_files_and_save(self._task_cache)
-        del self._task_cache
 
     def check_op_name(self, op_name, is_prefix=True):
         """
@@ -264,318 +120,281 @@ class FrameworkParser:
                     return True
         return False
 
-    def _get_raw_profiling_path(self, profiling_id):
+    def to_task_id_full_op_name_dict(self):
         """
-        Get raw profiling path.
-
-        Args:
-            profiling_id (str): The profiling ID.
+        Get the task id and full operator name dict.
 
         Returns:
-            str, the raw profiling path.
-
-        Raises:
-            ProfilerPathErrorException: If the profiling path is invalid.
-            ProfilerDirNotFoundException: If the profiling dir is not found.
+            dict, the task id and full operator name dict.
         """
-        profiling_path = os.path.join(self._raw_data_dir, profiling_id)
-        try:
-            profiling_path = validate_and_normalize_path(profiling_path)
-        except RuntimeError:
-            raise ProfilerPathErrorException('Profiling path is invalid.')
-        if not os.path.isdir(profiling_path):
-            raise ProfilerDirNotFoundException(profiling_path)
-        return profiling_path
+        return self._task_id_full_op_name_dict
 
-    def _search_file(self, profiling_id, device_id):
+    def parse(self):
+        """Parse the framework files."""
+        framework_path_dict = self._search_file(self._profiling_path)
+        self._hash_dict = self._parse_hash_dic(framework_path_dict)
+
+        all_file_data = self._parse_binary_data(framework_path_dict)
+        task_id_full_op_name_dict = self._construct_task_id_full_op_name_dict(
+            all_file_data[FileDataType.TASK_DESC_INFO.value])
+        point_info = self._construct_point_info(task_id_full_op_name_dict, all_file_data[FileDataType.STEP_INFO.value])
+        task_id_op_attr_dict = self._construct_task_id_op_attr_dict(all_file_data[FileDataType.TENSOR_DATA_INFO.value])
+
+        self._point_info = point_info
+        self._task_id_full_op_name_dict = task_id_full_op_name_dict
+
+        all_op_data = self._construct_op_data_to_file(all_file_data[FileDataType.TASK_DESC_INFO.value],
+                                                      task_id_op_attr_dict)
+
+        self._write_framework_to_file(all_op_data, output_file=self.save_path)
+
+    def _search_file(self, profiling_path):
         """
         Search all framework files in raw profiling path.
 
         Args:
-            profiling_id (str): The profiling ID.
-            device_id (str): The device ID.
+            profiling_path (str): This profiling path should contain data dir.
+
+        Return:
+            dict, return a dict container all framework file paths. Format is {FileDataType: [file paths]}.
 
         Raises:
             ProfilerFileNotFoundException: If the framework files are not found.
         """
-        # first search in the JOB dir, and if not, search in the sub directory
-        # in the JOB
-        self._search_file_from_job_path(device_id, search_in_sub_path=False)
-        if self._backend_type is None:
-            self._search_file_from_job_path(device_id, search_in_sub_path=True)
-        self._search_file_from_data_path(profiling_id, device_id)
+        data_dir = os.path.join(profiling_path, 'data')
+        if not os.path.isdir(data_dir):
+            raise ProfilerDirNotFoundException(data_dir)
 
-        if self._backend_type is None:
+        framework_path_dict = defaultdict(list)
+        for file in Path(data_dir).glob(r'Framework*[0-9]'):
+            file_name = file.name
+            match = re.search(self._regex_framework, file_name)
+            if match is None:
+                logger.warning("Profiler does not support to analyse file(%s), this file name format is not %s, "
+                               "skip this file.", file.resolve(), self._regex_framework)
+                continue
+
+            if match['data_type'] not in FileDataType.members():
+                logger.warning("Profiler does not support to analyse file(%s), this file data type is %s, "
+                               "skip this file.", file.resolve(), match['data_type'])
+                continue
+
+            framework_path_dict[match['data_type']].append(file.resolve())
+
+        empty_files = [data_type for data_type, files in framework_path_dict.items() if not files]
+        if not framework_path_dict or empty_files:
+            if empty_files:
+                logger.error("Can not find %s files when parse profiler framework file.", ','.join(empty_files))
             raise ProfilerFileNotFoundException('Framework')
-        self._framework_path['graph'].sort()
-        self._framework_path['task'].sort()
 
-    def _search_file_from_job_path(self, device_id, search_in_sub_path=False):
-        """
-        Search framework files from job path.
-
-        Args:
-            device_id (str): The device ID.
-            search_in_sub_path (bool): `True` if search file in profiling dir,
-                else search in profiling sub dir. Default: False.
-
-        Raises:
-            ProfilerRawFileException: If the framework file type is inconsistent.
-            ProfilerDeviceIdMismatchException: If the device id is mismatch
-                with framework in the raw dir.
-        """
-        profiling_dir = os.path.join(self._profiling_path, 'data') \
-            if search_in_sub_path else self._profiling_path
-        if not os.path.isdir(profiling_dir):
-            return
-
-        files = os.listdir(profiling_dir)
-        for file in files:
-            pattern = re.search(self._regex_framework, file)
-            if not pattern or file.endswith('.done'):
+        for data_type in FileDataType.members():
+            if data_type not in framework_path_dict:
+                logger.warning("Can not find %s file when parse profiler framework file.", data_type)
                 continue
-            attrs = pattern.groupdict()
+            framework_path_dict[data_type].sort()
 
-            device_id_in_path = attrs.get('device_id')
-            if device_id_in_path != device_id:
-                raise ProfilerDeviceIdMismatchException()
+        return framework_path_dict
 
-            data_type = attrs.get('data_type')
-            data_type = data_type.replace("host.", "")
-            if data_type.startswith('vm_'):
-                if self._backend_type and self._backend_type != 'vm':
-                    raise ProfilerRawFileException('Backend type is inconsistent.')
-                self._backend_type = 'vm'
-                _, data_type = data_type.split('_', 1)
-            else:
-                if self._backend_type and self._backend_type != 'ge':
-                    raise ProfilerRawFileException('Backend type is inconsistent.')
-                self._backend_type = 'ge'
-            if data_type.startswith('graph_desc_info'):
-                self._framework_path['graph'].append(
-                    os.path.join(profiling_dir, file)
-                )
-            elif data_type.startswith('task_desc_info'):
-                self._framework_path['task'].append(
-                    os.path.join(profiling_dir, file)
-                )
-            elif data_type.startswith('point'):
-                self._framework_path['point'].append(
-                    os.path.join(profiling_dir, file)
-                )
-
-    def _search_file_from_data_path(self, profiling_id, device_id):
-        """
-        Search framework files from data path.
-
-        Args:
-            profiling_id (str): The profiling ID.
-            device_id (str): The device ID.
-
-        Raises:
-            ProfilerRawFileException: If the framework file type is inconsistent.
-            ProfilerDeviceIdMismatchException: If the device id is mismatch
-                with framework in the raw dir.
-        """
-        profiling_data_path = os.path.join(
-            self._raw_data_dir, 'container', device_id, 'data'
-        )
-        if not os.path.isdir(profiling_data_path):
-            return
-
-        files = os.listdir(profiling_data_path)
-        for file in files:
-            pattern = re.search(self._regex_framework_in_data, file)
-            if not pattern or file.endswith('.done') or file.endswith('.zip'):
-                continue
-            attrs = pattern.groupdict()
-
-            profiling_id_in_path = attrs.get('profiling_id')
-            if profiling_id_in_path != profiling_id:
-                continue
-
-            device_id_in_path = attrs.get('device_id')
-            if device_id_in_path != device_id:
-                raise ProfilerDeviceIdMismatchException()
-
-            data_type = attrs.get('data_type')
-            data_type = data_type.replace("host.", "")
-            if data_type.startswith('vm_'):
-                if self._backend_type and self._backend_type != 'vm':
-                    raise ProfilerRawFileException('Backend type is inconsistent.')
-                self._backend_type = 'vm'
-                _, data_type = data_type.split('_', 1)
-            else:
-                if self._backend_type and self._backend_type != 'ge':
-                    raise ProfilerRawFileException('Backend type is inconsistent.')
-                self._backend_type = 'ge'
-            if data_type.startswith('graph_desc_info'):
-                self._framework_path['graph'].append(
-                    os.path.join(profiling_data_path, file)
-                )
-            elif data_type.startswith('task_desc_info'):
-                self._framework_path['task'].append(
-                    os.path.join(profiling_data_path, file)
-                )
-            elif data_type.startswith('point'):
-                self._framework_path['point'].append(
-                    os.path.join(profiling_data_path, file)
-                )
-
-    def _get_save_path(self, rank_id, output_path):
-        """
-        Get the save path.
-
-        Args:
-            rank_id (str): The rank ID.
-            output_path (str): The output dir.
-
-        Returns:
-            str, the save path.
-
-        Raises:
-            ProfilerPathErrorException: If the output path is invalid.
-            ProfilerDirNotFoundException: If the output dir is not found.
-        """
-        try:
-            output_dir = validate_and_normalize_path(output_path)
-        except RuntimeError:
-            raise ProfilerPathErrorException('Output path is invalid.')
-        if not os.path.isdir(output_dir):
-            raise ProfilerDirNotFoundException(output_dir)
-        return os.path.join(
-            output_dir, '_'.join(['framework', 'raw', rank_id]) + '.csv'
-        )
-
-    def _parse_task_files(self):
-        """Parse the framework task files."""
-        for path in self._framework_path['task']:
-            path = validate_and_normalize_path(path)
+    @staticmethod
+    def _parse_hash_dic(framework_path_dict):
+        """Parse the hash dic files, and return a hash value map op name dict."""
+        hash_op_dict = {}
+        for path in framework_path_dict[FileDataType.HASH_DIC.value]:
             with open(path, 'r') as file:
-                for task_info in file:
-                    infos = task_info.strip('\n').split(' ')
-                    infos = infos[1:] if len(infos) == 5 else infos
-                    # key is op name, values is task id, stream id, block_dim
-                    self._task_cache[infos[0]] = [infos[2], infos[3], infos[1]]
+                for hash_str in file:
+                    hash_value, op_name = hash_str.strip().split(':')
+                    hash_op_dict[hash_value] = op_name
+        return hash_op_dict
 
-                    # if the task id is less than the task id threshold, the
-                    # stream id and task id correspond to an operator
-                    task_id = infos[2]
-                    if int(task_id) < self._task_id_threshold:
-                        task_id = '_'.join([infos[3], task_id])
-                    self._task_id_full_op_name_dict[task_id] = infos[0]
+    def _parse_binary_data(self, framework_path_dict):
+        """Parse binary data in the FILE_DATA_STRUCT_DICT from given files, such as task data, step point data"""
+        all_file_data = defaultdict(list)
+        for file_data_type, data_struct in FILE_DATA_STRUCT_DICT.items():
+            line_size = StructType.sizeof(data_struct.values())
+            for path in framework_path_dict[file_data_type]:
+                with open(path, 'rb') as file_handler:
+                    while True:
+                        line = file_handler.read(line_size)
+                        if len(line) < line_size:
+                            break
+                        line_data = self._transform_binary_data(data_struct, line)
+                        all_file_data[file_data_type].append(line_data)
+        return all_file_data
 
-    def _parse_graph_files_and_save(self, task_cache):
+    def _transform_binary_data(self, data_struct, binary_data):
         """
-        Parse the framework graph files and save the framework information.
+        Parse the binary data to get the actual data
 
-        Args:
-            task_cache (dict): The task information cache.
-        """
-        with open(self._save_path, 'w') as save_file:
-            csv_writer = csv.writer(save_file)
-            csv_writer.writerow(self._col_names)
-            pre_graph_info = None
-            for path in self._framework_path['graph']:
-                first_row = True
-                with open(path, 'r') as graph_file:
-                    for graph_info in graph_file:
-                        if first_row is True:
-                            first_row = False
-                            # The last row of the previous file and the first row of the current file may need
-                            # to be combined to one row
-                            if graph_info.startswith("op_name:") is False:
-                                pre_graph_info = pre_graph_info + graph_info
-                                continue
-                        if pre_graph_info is not None:
-                            self._parse_graph_row_and_save(task_cache, csv_writer, pre_graph_info)
-                        pre_graph_info = graph_info
-
-            if pre_graph_info is not None:
-                self._parse_graph_row_and_save(task_cache, csv_writer, pre_graph_info)
-
-            none_list = [None, None, None, None]
-            for key, value in task_cache.items():
-                value.append(key)
-                value.extend(none_list)
-                csv_writer.writerow(value)
-        os.chmod(self._save_path, stat.S_IREAD | stat.S_IWRITE)
-
-    def _parse_graph_row_and_save(self, task_cache, csv_writer, graph_info):
-        """
-        Parse the framework graph row and save the framework information.
-
-        Args:
-            task_cache (dict): The task information cache.
-            csv_writer (csv): Csv writer.
-            graph_info (str): Row info of graph.
-        """
-        result = self._parse_one_row_graph_info(graph_info)
-        task_info = task_cache.get(result[0])
-        if task_info:
-            task_info.extend(result)
-            csv_writer.writerow(task_info)
-            del task_cache[result[0]]
-        else:
-            save_info = [None, None, None]
-            save_info.extend(result)
-            csv_writer.writerow(save_info)
-
-    def _parse_one_row_graph_info(self, row_info):
-        """
-        Parse the graph information in one row.
-
-        Args:
-            row_info (str): One row graph information.
+        Args：
+            data_struct (dict): Key is the data name, value is StructType.
+            binary_data (str): This value should be a binary string.
 
         Returns:
-            list[str], the parsed graph information.
+            dict, key is data name, value is a actual value.
+
+        Example:
+            >>> ret = self._transform_binary_data({'op_name': StructType.UINT32}, b'1101')
+            >>> print(ret)
+            ... {'op_name': (825241905,)}
+
         """
-        full_op_name = None
-        op_name = None
-        subgraph_name = None
-        op_type = None
-        op_info = dict()
-        cur_op_info_key = None
-
-        infos = row_info.strip('\n').split(' ')
-        for info in infos:
-            attr_name, attr_value = info.split(':', 1)
-            if attr_name == 'op_name':
-                full_op_name = attr_value
-                subgraph_name = self._get_subgraph_name(full_op_name)
-                op_name = self._get_op_name(full_op_name, subgraph_name)
-            elif attr_name == 'op_type':
-                op_type = attr_value
-            elif attr_name in ['input_id', 'output_id']:
-                cur_op_info_key = '{}_{}'.format(
-                    attr_name.split('_')[0], attr_value
-                )
-                op_info[cur_op_info_key] = dict()
-            elif attr_name in self._graph_attr_name:
-                op_attr = attr_name.split('_', 1)[1]
-                if op_attr == 'shape':
-                    attr_value = attr_value.strip('"')
-                if self._backend_type == 'vm':
-                    if op_attr == 'data_type':
-                        attr_value = VmDataType.get_data_type_name(
-                            int(attr_value)
-                        )
+        actual_data = {}
+        cursor = 0
+        for name, data_type in data_struct.items():
+            data_size = StructType.sizeof(data_type)
+            if isinstance(data_type, list):
+                if name in ('opName', 'opType'):
+                    unpack_data = self._special_process_mixed_data(binary_data, cursor, data_size)
+                elif name == 'tensorData':
+                    tensor_num = actual_data['tensorNum']
+                    unpack_data = self._special_process_tensor_data(cursor, data_type, binary_data, tensor_num)
+                elif name == 'tensorNum':
+                    unpack_data = self._speceal_process_tensor_num(data_type, binary_data, cursor)
                 else:
-                    if op_attr == 'data_type':
-                        attr_value = GeDataType.get_data_type_name(
-                            int(attr_value)
-                        )
-                    elif op_attr == 'format':
-                        attr_value = GeFormat.get_format_name(int(attr_value))
+                    # skip reserve data
+                    unpack_data = None
 
-                op_info[cur_op_info_key][op_attr] = attr_value
+                actual_data[name] = unpack_data
+                cursor += data_size
+                continue
 
-        # the list info are full_op_name, op_name, op_type, subgraph, op_info
-        return [full_op_name, op_name, op_type, subgraph_name,
-                json.dumps(op_info)]
+            unpack_data = struct.unpack(data_type.value, binary_data[cursor: cursor+data_size])[0]
+            cursor += data_size
+            actual_data[name] = unpack_data
+        return actual_data
 
-    def _get_subgraph_name(self, full_op_name):
+    def _special_process_mixed_data(self, binary_data, cursor, data_size):
+        """Specially processes mixed data, for example, opName and opType"""
+        # The first byte is type flag, 0 means data is string, 1 means data is hash value
+        flag = struct.unpack(StructType.UCHAR.value, binary_data[cursor:cursor + 1])[0]
+
+        # skip rsv data, rsv has 7 bytes
+        skip_size = 8
+        remain_size = data_size - skip_size
+        if flag == 0:
+            unpack_data = struct.unpack(StructType.CHAR.value * remain_size,
+                                        binary_data[cursor + skip_size:cursor + data_size])
+            try:
+                unpack_data = ''.join(list(map(lambda c: c.decode(),
+                                               filter(lambda c: c != b'\x00', unpack_data))))
+            except Exception as exc:
+                raise exc
+        else:
+            size = StructType.sizeof(StructType.UINT64) + skip_size
+            hash_value = struct.unpack(StructType.UINT64.value,
+                                       binary_data[cursor + skip_size:cursor + size])[0]
+            unpack_data = self._hash_dict[str(hash_value)]
+        return unpack_data
+
+    @staticmethod
+    def _special_process_tensor_data(cursor, data_type, binary_data, tensor_num):
+        """The tensor data depends tensor num, so need to special process."""
+        start = cursor
+        op_attr_struct = data_type[0]
+        op_attr_size = StructType.sizeof(op_attr_struct)
+        unpack_data = []
+
+        for _ in range(tensor_num):
+            buffer = binary_data[start:start + op_attr_size]
+            values = struct.unpack(StructType.format(op_attr_struct), buffer)
+            one_data = dict(
+                tensorType=values[0],
+                format=values[1],
+                dataType=values[2],
+                shape=list(filter(lambda x: x != 0, values[3:]))
+            )
+            unpack_data.append(one_data)
+            start += op_attr_size
+
+        return unpack_data
+
+    @staticmethod
+    def _speceal_process_tensor_num(data_type, binary_data, cursor):
+        """The memory of tensorNum is aligned, so here need to special process"""
+        tensor_num_struct = data_type[0]
+        size = StructType.sizeof(tensor_num_struct)
+        unpack_data = struct.unpack(tensor_num_struct.value, binary_data[cursor:cursor + size])[0]
+        return unpack_data
+
+    def _construct_task_id_full_op_name_dict(self, task_desc_info):
+        """The task desc info is a list[task_desc], task_desc is a dict, key is same as TASK_DESC_STRUCT."""
+        task_id_full_op_name = {}
+        for task_desc in task_desc_info:
+            task_id = self._combine_stream_task_id(task_desc['streamId'], task_desc['taskId'])
+            task_id_full_op_name[task_id] = task_desc['opName']
+        return task_id_full_op_name
+
+    def _construct_point_info(self, task_id_full_op_name_dict, step_point_data):
+        """step_point_data is a list[step_data], step data is a dict, key is same as STEP_INFO_STRUCT."""
+        point_info = {}
+        for step_point in step_point_data:
+            task_id = self._combine_stream_task_id(step_point['streamId'], step_point['taskId'])
+            tag = step_point['tag']
+            full_op_name = task_id_full_op_name_dict[task_id]
+            point_info[tag] = full_op_name
+        return point_info
+
+    def _construct_task_id_op_attr_dict(self, prof_tensor_data):
+        """prof_tensor_data is a list[tensor_data], tensor_data is a dict, key is same as TENSOR_DATA_STRUCT."""
+        task_id_op_attr_dict = defaultdict(list)
+        for tensor_data in prof_tensor_data:
+            task_id = self._combine_stream_task_id(tensor_data['streamId'], tensor_data['taskId'])
+            for tensor_attr in tensor_data['tensorData']:
+                tensor_type = 'input' if tensor_attr['tensorType'] == 0 else 'output'
+                tensor_format = VmFormat.get_format_name(tensor_attr['format'])
+                op_attr = dict(
+                    tensor_type=tensor_type,
+                    format=tensor_format,
+                    data_type=VmDataType.get_data_type_name(tensor_attr['dataType']),
+                    shape=tensor_attr['shape']
+                )
+                task_id_op_attr_dict[task_id].append(op_attr)
+
+        for task_id, op_attrs in task_id_op_attr_dict.items():
+            input_count = 0
+            output_count = 0
+            new_op_attr = {}
+            for op_attr in op_attrs:
+                if op_attr['tensor_type'] == 'input':
+                    op_attr.pop('tensor_type')
+                    new_op_attr[f'input_{input_count}'] = op_attr
+                    input_count += 1
+                else:
+                    op_attr.pop('tensor_type')
+                    new_op_attr[f'output_{output_count}'] = op_attr
+                    output_count += 1
+            task_id_op_attr_dict[task_id] = new_op_attr
+
+        return task_id_op_attr_dict
+
+    def _construct_op_data_to_file(self, task_desc_info, task_id_op_attr_dict):
+        """Build data written to a file."""
+        all_op_data = []
+        for task_desc in task_desc_info:
+            task_id = task_desc['taskId']
+            full_op_name = task_desc['opName']
+            subgraph = self._get_subgraph_name(full_op_name)
+            combined_task_id = self._combine_stream_task_id(task_desc['streamId'], task_id)
+            op_data = OpData(task_id=task_id,
+                             stream_id=task_desc['streamId'],
+                             block_dim=task_desc['blockDims'],
+                             full_op_name=full_op_name,
+                             op_name=full_op_name.split('/')[-1],
+                             op_type=task_desc['opType'],
+                             subgraph=subgraph,
+                             op_info=json.dumps(task_id_op_attr_dict[combined_task_id]))
+            all_op_data.append(op_data)
+        return all_op_data
+
+    @staticmethod
+    def _write_framework_to_file(all_op_data: List[OpData], output_file):
+        with open(output_file, 'w') as file_handler:
+            csv_writer = csv.writer(file_handler)
+            csv_writer.writerow(COL_NAMES)
+            csv_writer.writerows(all_op_data)
+
+    @staticmethod
+    def _get_subgraph_name(full_op_name):
         """
         Get subgraph name.
 
@@ -590,39 +409,16 @@ class FrameworkParser:
             return subgraph_name
         return None
 
-    def _get_op_name(self, full_op_name, subgraph_name):
+    @staticmethod
+    def _combine_stream_task_id(stream_id, task_id):
         """
-        Get operator name.
-
-        Args:
-            full_op_name (str): The full operator name.
-            subgraph_name (str): The subgraph name.
-
-        Returns:
-            str, the operator name.
+        When the Task ID is less than the threshold, it will be reuse in different streams,
+        only the stream ID and task ID combined are unique values.
         """
-        if subgraph_name is None:
-            return full_op_name
-
-        if self._backend_type == 'vm':
-            return full_op_name.split('/')[-1]
-
-        strs = full_op_name.split(subgraph_name + '/')
-        op_name = None
-        for name_str in strs:
-            if not name_str:
-                continue
-            if op_name is None:
-                op_name = name_str.split('/')[-1]
-            else:
-                op_name = '+'.join([op_name, name_str.split('/')[-1]])
-        return op_name
-
-    def _parse_point_files(self):
-        """Parse the framework point files."""
-        for path in self._framework_path['point']:
-            path = validate_and_normalize_path(path)
-            with open(path, 'r') as file:
-                for point_info in file:
-                    infos = point_info.strip('\n').split(' ')
-                    self._point_info[int(infos[0])] = infos[1]
+        # if the task id is less than the task id threshold, The combination of
+        # task id and Stream id represents one operator, else the task id represents
+        # one operator
+        task_id_threshold = 25000
+        if task_id < task_id_threshold:
+            return f'{stream_id}_{task_id}'
+        return str(task_id)
