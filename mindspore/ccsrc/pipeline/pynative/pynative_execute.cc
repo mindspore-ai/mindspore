@@ -582,7 +582,7 @@ void ConstructInputTensor(const OpExecInfoPtr &op_run_info, std::vector<int64_t>
     opt::GetCustomOpAttrIndex(op_prim, &attr_indexes);
     if (!attr_indexes.empty()) {
       reg_exist = true;
-      reg.SetConstInputToAttr(attr_indexes);
+      (void)reg.SetConstInputToAttr(attr_indexes);
     }
   } else {
     reg_exist = opt::ConstInputToAttrInfoRegistry::Instance().GetRegisterByOpName(op_run_info->op_name, &reg);
