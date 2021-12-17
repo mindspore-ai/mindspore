@@ -1381,6 +1381,83 @@ class DynamicRNNGrad(PrimitiveWithInfer):
         return x_dtype, x_dtype, x_dtype, x_dtype, x_dtype
 
 
+class GruGradData(PrimitiveWithInfer):
+    """Computes the data gradients of GRU."""
+
+    @prim_attr_register
+    def __init__(self, input_size, hidden_size, num_layers, has_bias, bidirectional, dropout):
+        self.input_size = validator.check_positive_int(input_size, 'input_size', self.name)
+        self.hidden_size = validator.check_positive_int(hidden_size, 'hidden_size', self.name)
+        self.num_layers = validator.check_positive_int(num_layers, 'num_layers', self.name)
+        self.has_bias = validator.check_value_type('has_bias', has_bias, (bool,), self.name)
+        self.bidirectional = validator.check_value_type('bidirectional', bidirectional, (bool,), self.name)
+        self.dropout = validator.check_value_type("dropout", dropout, [float], self.name)
+        self.dropout = validator.check_float_range(dropout, 0, 1, Rel.INC_BOTH, 'dropout', self.name)
+
+        if bidirectional:
+            self.num_directions = 2
+        else:
+            self.num_directions = 1
+
+    def infer_shape(self, y_shape, dy_shape, dhy_shape, w_shape,
+                    hx_shape, reserve_shape, state_shape):
+        # dhy and dcy should be same shape
+        validator.check_equal_int(len(dhy_shape), 3, "h_shape", self.name)
+
+        validator.check_int(dhy_shape[0], self.num_layers * self.num_directions, Rel.EQ, "h_shape[0]", self.name)
+        validator.check_equal_int(dhy_shape[2], self.hidden_size, "h_shape[2]", self.name)
+
+        validator.check_equal_int(len(dy_shape), 3, "dy_shape", self.name)
+        validator.check_equal_int(dy_shape[1], dhy_shape[1], "dy[1]", self.name)
+        validator.check_int(dy_shape[2], self.hidden_size * self.num_directions, Rel.EQ, "dy[2]", self.name)
+
+        dx_shape = (y_shape[0], y_shape[1], self.input_size)
+        dhx_shape = dhy_shape
+
+        return (dx_shape, dhx_shape)
+
+    def infer_dtype(self, y_dtype, dy_dtype, dhy_dtype, w_dtype,
+                    hx_dtype, reserve_dtype, state_dtype):
+        args = {"dy": dy_dtype, "dhy": dhy_dtype}
+        validator.check_tensors_dtypes_same_and_valid(args, (mstype.float32, mstype.float16), self.name)
+        return (dy_dtype, dy_dtype)
+
+
+class GruGradWeight(PrimitiveWithInfer):
+    """Computes the weight gradients of GRU."""
+
+    @prim_attr_register
+    def __init__(self, input_size, hidden_size, num_layers, has_bias, bidirectional, dropout):
+        self.input_size = validator.check_positive_int(input_size, 'input_size', self.name)
+        self.hidden_size = validator.check_positive_int(hidden_size, 'hidden_size', self.name)
+        self.num_layers = validator.check_positive_int(num_layers, 'num_layers', self.name)
+        self.has_bias = validator.check_value_type('has_bias', has_bias, (bool,), self.name)
+        self.bidirectional = validator.check_value_type('bidirectional', bidirectional, (bool,), self.name)
+        self.dropout = validator.check_value_type("dropout", dropout, [float], self.name)
+        self.dropout = validator.check_float_range(dropout, 0, 1, Rel.INC_BOTH, 'dropout', self.name)
+
+        if bidirectional:
+            self.num_directions = 2
+        else:
+            self.num_directions = 1
+
+    def infer_shape(self, x_shape, hx_shape, y_shape, reserve_shape, state_shape):
+        weight_size = 0
+        gate_size = 3 * self.hidden_size
+        for layer in range(self.num_layers):
+            for _ in range(self.num_directions):
+                input_layer_size = self.input_size if layer == 0 else self.hidden_size * self.num_directions
+                weight_size += gate_size * input_layer_size
+                weight_size += gate_size * self.hidden_size
+                if self.has_bias:
+                    weight_size += 2 * gate_size
+
+        return (weight_size, 1, 1)
+
+    def infer_dtype(self, x_dtype, hx_dtype, y_dtype, reserve_dtype, state_dtype):
+        return hx_dtype
+
+
 class DynamicGRUV2Grad(PrimitiveWithInfer):
     r"""
     Computes the input gradients of DynamicGRUV2.
