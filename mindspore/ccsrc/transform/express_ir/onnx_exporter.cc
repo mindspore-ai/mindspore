@@ -632,6 +632,7 @@ void OnnxExporter::MatchAndMark(const FuncGraphPtr &func_graph, const std::vecto
 
 void OnnxExporter::MatchAndMarkCNode(const CNodePtr &cnode,
                                      mindspore::HashMap<AnfNodePtr, OpMergedInfo> *op_merged_infos_ptr) {
+  constexpr size_t item_index_input = 2;
   auto &op_merged_infos = *op_merged_infos_ptr;
   // MindSpore Conv + BiasAdd --> ONNX Conv
   if (cnode->IsApply(std::make_shared<Primitive>("BiasAdd")) && IsPrimitiveCNode(cnode->input(1), prim::kPrimConv2D)) {
@@ -645,19 +646,19 @@ void OnnxExporter::MatchAndMarkCNode(const CNodePtr &cnode,
     op_merged_infos[cnode->input(1)].referred_count -= 1;
   } else if (cnode->IsApply(prim::kPrimTupleGetItem) &&
              IsPrimitiveCNode(cnode->input(1), std::make_shared<Primitive>("BatchNorm")) &&
-             GetInt64Value(cnode->input(2)) == 0) {
+             GetInt64Value(cnode->input(item_index_input)) == 0) {
     op_merged_infos[cnode].mode = OP_MERGE_BATCH_NORM;
     op_merged_infos[cnode->input(1)].mode = OP_MERGE_IGNORE;
     op_merged_infos[cnode->input(1)].referred_count -= 1;
   } else if (cnode->IsApply(prim::kPrimTupleGetItem) &&
              IsPrimitiveCNode(cnode->input(1), std::make_shared<Primitive>("MaxPoolWithArgmax")) &&
-             GetInt64Value(cnode->input(2)) == 0) {
+             GetInt64Value(cnode->input(item_index_input)) == 0) {
     op_merged_infos[cnode].mode = OP_MERGE_MAXPOOL_WITH_ARGMAX;
     op_merged_infos[cnode->input(1)].mode = OP_MERGE_IGNORE;
     op_merged_infos[cnode->input(1)].referred_count -= 1;
   } else if (cnode->IsApply(prim::kPrimTupleGetItem) &&
              IsPrimitiveCNode(cnode->input(1), std::make_shared<Primitive>("LayerNorm")) &&
-             GetInt64Value(cnode->input(2)) == 0) {
+             GetInt64Value(cnode->input(item_index_input)) == 0) {
     op_merged_infos[cnode].mode = OP_MERGE_LAYER_NORM;
     op_merged_infos[cnode->input(1)].mode = OP_MERGE_IGNORE;
     op_merged_infos[cnode->input(1)].referred_count -= 1;
@@ -1438,10 +1439,10 @@ void OnnxExporter::ExportPrimDepthwiseConv2d(const FuncGraphPtr &, const CNodePt
   tensor_proto->add_dims(static_cast<::google::protobuf::int64>(w_shape->shape().size()));
   tensor_proto->set_data_type(onnx::TensorProto_DataType_INT64);
   // reshape
-  tensor_proto->add_int64_data(w_shape->shape()[1]);
-  tensor_proto->add_int64_data(w_shape->shape()[0]);
-  tensor_proto->add_int64_data(w_shape->shape()[2]);
-  tensor_proto->add_int64_data(w_shape->shape()[3]);
+  tensor_proto->add_int64_data(w_shape->shape()[kOneNum]);
+  tensor_proto->add_int64_data(w_shape->shape()[kZeroNum]);
+  tensor_proto->add_int64_data(w_shape->shape()[kTwoNum]);
+  tensor_proto->add_int64_data(w_shape->shape()[kThreeNum]);
 
   // add reshape node
   node_idx = AllocateNodeIndex();
