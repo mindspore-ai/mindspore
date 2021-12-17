@@ -264,7 +264,7 @@ class Cell(Cell_):
 
     @pipeline_stage.setter
     def pipeline_stage(self, value):
-        if not isinstance(value, int):
+        if not isinstance(value, int) or isinstance(value, bool):
             raise TypeError("For 'context.set_auto_parallel_context', the argument 'pipeline_stages' "
                             "must be int type, but got type : {}".format(type(value)))
 

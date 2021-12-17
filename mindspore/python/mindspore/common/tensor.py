@@ -1673,7 +1673,9 @@ class Tensor(Tensor_):
             mode ('raise', 'wrap', 'clip', optional):
 
                 'raise' – Raises an error;
+
                 'wrap' – Wraps around;
+
                 'clip' – Clips to the range. 'clip' mode means that all indices that are
                 too large are replaced by the index that addresses the last element
                 along that axis. Note that this disables indexing with negative numbers.
@@ -1739,8 +1741,10 @@ class Tensor(Tensor_):
             mode ('raise', 'wrap', 'clip', optional): Specifies how indices outside
                 ``[0, n-1]`` will be treated:
 
-                'raise' – Raises an error (default);
+                'raise' – Raises an error;
+
                 'wrap' – Wraps around;
+
                 'clip' – Clips to the range. 'clip' mode means that values greater than n-1 are mapped to n-1.
                 Note that this disables indexing with negative numbers.
 
