@@ -19,7 +19,7 @@ import tempfile
 import pytest
 
 from mindspore.common import set_seed
-from mindspore import nn, context
+from mindspore import nn
 from mindspore.nn.metrics import Loss
 from mindspore.train import Model
 from mindspore.train.callback import SummaryLandscape
@@ -83,7 +83,6 @@ class TestLandscape:
     ])
     def test_params_gen_landscape_with_multi_process_value_type_error(self, collect_landscape):
         """Test the value of gen_landscape_with_multi_process param."""
-        device_target = context.get_context("device_target")
         device_id = int(os.getenv('DEVICE_ID')) if os.getenv('DEVICE_ID') else 0
         summary_dir = tempfile.mkdtemp(dir=self.base_summary_dir)
         summary_landscape = SummaryLandscape(summary_dir)
@@ -91,8 +90,7 @@ class TestLandscape:
             summary_landscape.gen_landscapes_with_multi_process(
                 callback_fn,
                 collect_landscape=collect_landscape,
-                device_ids=[device_id],
-                device_target=device_target
+                device_ids=[device_id]
             )
         param_name = list(collect_landscape)[0]
         param_value = collect_landscape[param_name]

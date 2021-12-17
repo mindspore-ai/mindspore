@@ -17,12 +17,13 @@ import os
 import time
 import json
 import shutil
+import numbers
 
 from collections import defaultdict, namedtuple
 from concurrent.futures import wait, ALL_COMPLETED, ProcessPoolExecutor
 
 import numpy as np
-from scipy import linalg as LA
+from scipy import linalg, sparse
 
 from mindspore import log as logger
 from mindspore.common.tensor import Tensor
@@ -194,7 +195,7 @@ class SummaryLandscape:
         ...     # Simple usage for collect landscape information:
         ...     interval_1 = [1, 2, 3, 4, 5]
         ...     summary_collector = SummaryCollector(summary_dir='./summary/lenet_interval_1',
-        ...                                          collect_specified_data={'collect_landscape':{"landscape_size": 30,
+        ...                                          collect_specified_data={'collect_landscape':{"landscape_size": 4,
         ...                                                                                        "unit": "step",
         ...                                                                            "create_landscape":{"train":True,
         ...                                                                                               "result":False
@@ -218,15 +219,14 @@ class SummaryLandscape:
         ...     summary_landscape = SummaryLandscape('./summary/lenet_interval_1')
         ...     # parameters of collect_landscape can be modified or unchanged
         ...     summary_landscape.gen_landscapes_with_multi_process(callback_fn,
-        ...                                                         collect_landscape={"landscape_size": 40,
+        ...                                                         collect_landscape={"landscape_size": 4,
         ...                                                                            "create_landscape":{"train":True,
         ...                                                                                               "result":True
         ...                                                                                                           },
         ...                                                                            "num_samples": 2048,
         ...                                                                            "intervals": [interval_1
         ...                                                                                          ]},
-        ...                                                         device_ids=[0, 1],
-        ...                                                         device_target="GPU")
+        ...                                                         device_ids=[1])
     """
     def __init__(self, summary_dir):
         self._summary_dir = os.path.realpath(summary_dir)
@@ -250,7 +250,7 @@ class SummaryLandscape:
         shutil.rmtree(self._ckpt_dir, ignore_errors=True)
 
     def gen_landscapes_with_multi_process(self, callback_fn, collect_landscape=None,
-                                          device_ids=None, device_target='Ascend', output=None):
+                                          device_ids=None, output=None):
         """
         Use the multi process to generate landscape.
 
@@ -286,18 +286,13 @@ class SummaryLandscape:
             device_ids (List(int)): Specifies which devices are used to create loss landscape.
                 For example: [0, 1] refers to creating loss landscape with device 0 and device 1.
                 Default: None.
-            device_target (str): Specifies the type of computing device.
-                Default: Ascend. Optional: Ascend/GPU/CPU.
             output (str): Specifies the path to save the loss landscape.
                 Default: None. The default save path is the same as the summary file.
         """
 
         output_path = os.path.realpath(output) if output is not None else self._summary_dir
         summary_record = SummaryRecord(output_path)
-        check_value_type('device_target', device_target, str)
         self._check_device_ids(device_ids)
-        if device_target not in ["Ascend", "GPU", "CPU"]:
-            raise ValueError(f'Landscape device_target should be Ascend, GPU or CPU, but got {device_target}.')
         if collect_landscape is not None:
             self._check_collect_landscape_data(collect_landscape)
             json_path = os.path.join(self._ckpt_dir, 'train_metadata.json')
@@ -319,15 +314,13 @@ class SummaryLandscape:
             with open(json_path, 'w') as file:
                 json.dump(data, file)
 
-        for interval, landscape in self._list_landscapes(callback_fn=callback_fn,
-                                                         device_ids=device_ids,
-                                                         device_target=device_target):
+        for interval, landscape in self._list_landscapes(callback_fn=callback_fn, device_ids=device_ids):
             summary_record.add_value(PluginEnum.LANDSCAPE.value, f'landscape_{str(interval)}', landscape)
             summary_record.record(0)
             summary_record.flush()
         summary_record.close()
 
-    def _list_landscapes(self, callback_fn, device_ids=None, device_target='Ascend'):
+    def _list_landscapes(self, callback_fn, device_ids=None):
         """Create landscape with single device and list all landscape."""
 
         json_path = os.path.join(self._ckpt_dir, 'train_metadata.json')
@@ -350,7 +343,7 @@ class SummaryLandscape:
             if count > 1:
                 futures = []
                 for device_id in device_ids:
-                    future = executor.submit(self._set_context, device_id, device_target)
+                    future = executor.submit(self._set_context, device_id)
                     futures.append(future)
                 wait(futures, return_when=ALL_COMPLETED)
 
@@ -402,9 +395,9 @@ class SummaryLandscape:
         logger.info("Total use time: %s s." % (round(time.time() - start, 6)))
 
     @staticmethod
-    def _set_context(device_id, device_target):
+    def _set_context(device_id):
         """Set context."""
-        context.set_context(device_id=device_id, device_target=device_target)
+        context.set_context(device_id=device_id)
         context.set_context(mode=context.GRAPH_MODE)
 
     def _create_landscape_by_pca(self, epochs, proz, landscape_size, device_ids=None, callback_fn=None, executor=None):
@@ -423,8 +416,9 @@ class SummaryLandscape:
         param_matrixs = np.vstack(param_matrixs)
         param_matrixs = param_matrixs[:-1] - param_matrixs[-1]
         # Only 2 are needed, as we have to reduce high dimensions into 2D.And we reserve one for loss value.
-        principal_components = self._compute_pca(param_matrixs.T)
-        v_ori, w_ori = -np.array(principal_components[:, 0]), -np.array(principal_components[:, -1])
+        pca = _PCA(n_comps=2)
+        principal_components = pca.compute(param_matrixs.T)
+        v_ori, w_ori = np.array(principal_components[:, 0]), np.array(principal_components[:, -1])
         final_params = list(multi_parameters[-1])
 
         # Reshape PCA directions(include dimensions of all parameters) into original shape of Model parameters
@@ -822,7 +816,7 @@ class SummaryLandscape:
                                 f'but got the: {type(i)}.')
             #device_id should be between 0 and 7.
             if i < 0 or i > 7:
-                raise ValueError(f'Landscape device_ids value should be between 0 and 7,bu got {i}.')
+                raise ValueError(f'Landscape device_ids value should be between 0 and 7,but got {i}.')
 
 
     def _check_collect_landscape_data(self, collect_landscape):
@@ -877,11 +871,165 @@ class SummaryLandscape:
         check_value_type("num_samples", num_samples, int)
         self._check_create_landscape(create_landscape)
 
-    def _compute_pca(self, x):
-        x -= np.mean(x, axis=0)
-        cov = np.cov(x, rowvar=False)
-        evals, evecs = LA.eigh(cov)
-        idx = np.argsort(evals)[::-1]
-        evecs = evecs[:, idx]
-        result = np.dot(x, evecs[:, :2])
-        return result
+
+class _PCA:
+    r"""
+    The internal class for computing PCA vectors.
+
+    .. math::
+
+        u, s, vt = svd(x - mean(x)),
+        u_i = u_i * s_i,
+
+    where :math:`mean` is the mean operator, :math:`svd` is the singular value decomposition operator.
+    :math:`u_i` is line :math:`i` of the :math:`u`, :math:`s_i` is column :math:`i` of the :math:`s`,
+    :math:`i` ranges from :math:`0` to :math:`n\_comps`.
+
+    Args:
+        n_comps (int): Number of principal components needed.
+    """
+    def __init__(self, n_comps):
+        self._n_comps = n_comps
+        self._random_status = None
+        self._iterated_power = "auto"
+        self._n_oversamples = 10
+
+    def compute(self, x):
+        """Main method for computing principal components."""
+        n_components = self._n_comps
+        # small dimension (the shape is less than 500), and the full amount is calculated.
+        if max(x.shape) <= 500:
+            u, s, _ = self._fit_few(x)
+        # When dimension of x is much, truncated SVD is used for calculation.
+        elif 1 <= n_components < 0.8 * min(x.shape):
+            u, s, _ = self._fit_much(x, n_components)
+        #  A case of n_components in (0, 1)
+        else:
+            u, s, _ = self._fit_few(x)
+
+        u = u[:, :self._n_comps]
+        u *= s[:self._n_comps]
+
+        return u
+
+    def _fit_few(self, x):
+        """Compute principal components with full SVD on x, when dimension of x is few."""
+        mean_ = np.mean(x, axis=0)
+        x -= mean_
+        u, s, vt = linalg.svd(x, full_matrices=False)
+        u, vt = self._svd_turn(u, vt)
+
+        return u, s, vt
+
+    def _fit_much(self, x, n_components):
+        """Compute principal components with truncated SVD on x, when dimension of x is much."""
+        random_state = self._check_random_status(self._random_status)
+        mean_ = np.mean(x, axis=0)
+        x -= mean_
+        u, s, vt = self._random_svd(x, n_components, n_oversamples=self._n_oversamples, random_state=random_state)
+        return u, s, vt
+
+    def _random_svd(self, m, n_components, n_oversamples=10, random_state="warn"):
+        """Compute a truncated randomized SVD."""
+        n_random = n_components + n_oversamples
+        n_samples, n_features = m.shape
+        # Adjust 7 or 4 was found a good compromise for randomized SVD.
+        n_iter = 7 if n_components < 0.1 * min(m.shape) else 4
+        transpose = n_samples < n_features
+        if transpose:
+            m = m.T
+
+        q = self._random_range_finder(m, size=n_random, n_iter=n_iter, random_state=random_state)
+        # Project m to the low dimensional space using the basis vectors (q vector).
+        b = self._safe_dot(q.T, m)
+        # Compute the svd on this matrix (b matrix)
+        uhat, s, vt = linalg.svd(b, full_matrices=False)
+
+        del b
+        u = np.dot(q, uhat)
+
+        if not transpose:
+            u, vt = self._svd_turn(u, vt)
+        else:
+            u, vt = self._svd_turn(u, vt, u_decision=False)
+
+        if transpose:
+            return vt[:n_components, :].T, s[:n_components], u[:, :n_components].T
+
+        return u[:, :n_components], s[:n_components], vt[:n_components, :]
+
+    def _random_range_finder(self, a, size, n_iter, random_state=None):
+        """Computes an orthonormal matrix whose range approximates the range of A."""
+        random_state = self._check_random_status(random_state)
+        # Generate normal random vectors.
+        q = random_state.normal(size=(a.shape[1], size))
+        if a.dtype.kind == "f":
+            # Ensure f32 is retained as f32
+            q = q.astype(a.dtype, copy=False)
+        if n_iter <= 2:
+            power_iteration_normalizer = "none"
+        else:
+            power_iteration_normalizer = "LU"
+        # use power iterations with q to further compute the top singular vectors of a in q
+        for _ in range(n_iter):
+            if power_iteration_normalizer == "none":
+                q = self._safe_dot(a, q)
+                q = self._safe_dot(a.T, q)
+            elif power_iteration_normalizer == "LU":
+                q, _ = linalg.lu(self._safe_dot(a, q), permute_l=True)
+                q, _ = linalg.lu(self._safe_dot(a.T, q), permute_l=True)
+        # The orthogonal basis is extracted by the linear projection of Q, and the range of a is sampled.
+        q, _ = linalg.qr(self._safe_dot(a, q), mode="economic")
+        return q
+
+    def _safe_dot(self, a, b):
+        """Dot product that handle the matrix case correctly."""
+        if a.ndim > 2 or b.ndim > 2:
+            if sparse.issparse(b):
+                # Sparse is always 2 dimensional. Implies a is above 3 dimensional.
+                # [n, ..., o, p] @ [l, m] -> [n, ..., o, m]
+                a_2d = a.reshape(-1, a.shape[-1])
+                ret = a_2d @ b
+                ret = ret.reshape(*a.shape[:-1], b.shape[1])
+            elif sparse.issparse(a):
+                # Sparse is always 2 dimensional. Implies b is above 3 dimensional.
+                # [l, m] @ [n, ..., o, p, q] -> [l, n, ..., o, q]
+                b_ = np.rollaxis(b, -2)
+                b_2d = b_.reshape((b.shape[-2], -1))
+                ret = a @ b_2d
+                ret = ret.reshape(a.shape[0], *b_.shape[1:])
+            else:
+                ret = np.dot(a, b)
+
+        else:
+            ret = a @ b
+
+        return ret
+
+    def _svd_turn(self, u, v, u_decision=True):
+        """Confirm correction to ensure deterministic output from SVD."""
+        if u_decision:
+            # rows of v, columns of u
+            max_cols = np.argmax(np.abs(u), axis=0)
+            signs = np.sign(u[max_cols, range(u.shape[1])])
+            v *= signs[:, np.newaxis]
+            u *= signs
+        else:
+            # rows of u, columns of v
+            max_rows = np.argmax(np.abs(v), axis=1)
+            signs = np.sign(v[range(v.shape[0]), max_rows])
+            v *= signs[:, np.newaxis]
+            u *= signs
+        return u, v
+
+    def _check_random_status(self, seed):
+        """Transform seed into a np.random.RandomState instance."""
+        if isinstance(seed, np.random.RandomState):
+            return seed
+        if seed is None or seed is np.random:
+            return np.random.RandomState()
+        if isinstance(seed, numbers.Integral):
+            return np.random.RandomState(seed)
+        raise ValueError(
+            "%r cannot be used to seed a numpy.random.RandomState instance" % seed
+        )

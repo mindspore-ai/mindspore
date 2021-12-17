@@ -120,7 +120,8 @@ class SummaryCollector(Callback):
                 For example, if it is set to 128, the resolution of the landscape is 128 * 128.
                 The calculation time increases with the increase of resolution.
                 Default: 40. Optional values: between 3 and 256.
-              - unit (str): Specify the interval strength of the training process. Optional: epoch/step.
+              - unit (str): Specify the interval strength of the training process. Default: "step".
+                Optional: epoch/step.
               - create_landscape (dict): Select how to create loss landscape.
                 Training process loss landscape(train) and training result loss landscape(result).
                 Default: {"train": True, "result": True}. Optional: True/False.
@@ -372,11 +373,11 @@ class SummaryCollector(Callback):
                              f'but got the: {landscape_size}')
 
     @staticmethod
-    def _check_unit(unit):
+    def  _check_unit(unit):
         """Check unit type and value."""
         check_value_type('unit', unit, str)
-        if "step" not in unit and "epoch" not in unit:
-            raise ValueError(f'Unit should be step or epoch, but got the: {unit}')
+        if unit not in ["step", "epoch"]:
+            raise ValueError(f'Unit should be "step" or "epoch", but got the: {unit}')
 
     @staticmethod
     def _check_create_landscape(create_landscape):
@@ -595,7 +596,7 @@ class SummaryCollector(Callback):
                 json.dump(data, file)
             os.chmod(meta_path, stat.S_IRUSR)
         except OSError as e:
-            logger.error(str(e))
+            logger.error("Write meta data %s failed, detail: %s" % (meta_path, str(e)))
 
     def _save_model_params(self, cur_num, unit, backbone):
         """Save model params."""
