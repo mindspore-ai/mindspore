@@ -476,13 +476,13 @@ else()
         install(FILES ${glog_LIBPATH}/libglog.so.0.4.0 DESTINATION ${CONVERTER_ROOT_DIR}/lib RENAME libglog.so.0
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
 
-        install(FILES ${opencv_LIBPATH}/libopencv_core.so.4.5.1
+        install(FILES ${opencv_LIBPATH}/libopencv_core.so.4.5.2
                 DESTINATION ${CONVERTER_ROOT_DIR}/lib RENAME libopencv_core.so.4.5
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(FILES ${opencv_LIBPATH}/libopencv_imgcodecs.so.4.5.1
+        install(FILES ${opencv_LIBPATH}/libopencv_imgcodecs.so.4.5.2
                 DESTINATION ${CONVERTER_ROOT_DIR}/lib RENAME libopencv_imgcodecs.so.4.5
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(FILES ${opencv_LIBPATH}/libopencv_imgproc.so.4.5.1
+        install(FILES ${opencv_LIBPATH}/libopencv_imgproc.so.4.5.2
                 DESTINATION ${CONVERTER_ROOT_DIR}/lib RENAME libopencv_imgproc.so.4.5
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
 
@@ -502,13 +502,13 @@ else()
             install(FILES ${TOP_DIR}/mindspore/lite/build/tools/converter/registry/libmslite_converter_plugin.so
                     DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
 
-            install(FILES ${opencv_LIBPATH}/libopencv_core.so.4.5.1
+            install(FILES ${opencv_LIBPATH}/libopencv_core.so.4.5.2
                     DESTINATION ${RUNTIME_LIB_DIR} RENAME libopencv_core.so.4.5
                     COMPONENT ${RUNTIME_COMPONENT_NAME})
-            install(FILES ${opencv_LIBPATH}/libopencv_imgcodecs.so.4.5.1
+            install(FILES ${opencv_LIBPATH}/libopencv_imgcodecs.so.4.5.2
                     DESTINATION ${RUNTIME_LIB_DIR} RENAME libopencv_imgcodecs.so.4.5
                     COMPONENT ${RUNTIME_COMPONENT_NAME})
-            install(FILES ${opencv_LIBPATH}/libopencv_imgproc.so.4.5.1
+            install(FILES ${opencv_LIBPATH}/libopencv_imgproc.so.4.5.2
                     DESTINATION ${RUNTIME_LIB_DIR} RENAME libopencv_imgproc.so.4.5
                     COMPONENT ${RUNTIME_COMPONENT_NAME})
         endif()

@@ -129,21 +129,12 @@ if(ENABLE_MINDDATA)
             COMPONENT mindspore
         )
     endif()
-    if(PYTHON_VERSION MATCHES "3.8" OR PYTHON_VERSION MATCHES "3.7")
-      install(FILES ${opencv_LIBPATH}/libopencv_core.so.4.2.0
-        DESTINATION ${INSTALL_LIB_DIR} RENAME libopencv_core.so.4.2 COMPONENT mindspore)
-      install(FILES ${opencv_LIBPATH}/libopencv_imgcodecs.so.4.2.0
-        DESTINATION ${INSTALL_LIB_DIR} RENAME libopencv_imgcodecs.so.4.2 COMPONENT mindspore)
-      install(FILES ${opencv_LIBPATH}/libopencv_imgproc.so.4.2.0
-        DESTINATION ${INSTALL_LIB_DIR} RENAME libopencv_imgproc.so.4.2 COMPONENT mindspore)
-    elseif(PYTHON_VERSION MATCHES "3.9")
-      install(FILES ${opencv_LIBPATH}/libopencv_core.so.4.5.1
-        DESTINATION ${INSTALL_LIB_DIR} RENAME libopencv_core.so.4.5 COMPONENT mindspore)
-      install(FILES ${opencv_LIBPATH}/libopencv_imgcodecs.so.4.5.1
-        DESTINATION ${INSTALL_LIB_DIR} RENAME libopencv_imgcodecs.so.4.5 COMPONENT mindspore)
-      install(FILES ${opencv_LIBPATH}/libopencv_imgproc.so.4.5.1
-        DESTINATION ${INSTALL_LIB_DIR} RENAME libopencv_imgproc.so.4.5 COMPONENT mindspore)
-    endif()
+    install(FILES ${opencv_LIBPATH}/libopencv_core.so.4.5.2
+      DESTINATION ${INSTALL_LIB_DIR} RENAME libopencv_core.so.4.5 COMPONENT mindspore)
+    install(FILES ${opencv_LIBPATH}/libopencv_imgcodecs.so.4.5.2
+      DESTINATION ${INSTALL_LIB_DIR} RENAME libopencv_imgcodecs.so.4.5 COMPONENT mindspore)
+    install(FILES ${opencv_LIBPATH}/libopencv_imgproc.so.4.5.2
+      DESTINATION ${INSTALL_LIB_DIR} RENAME libopencv_imgproc.so.4.5 COMPONENT mindspore)
     install(FILES ${tinyxml2_LIBPATH}/libtinyxml2.so.8.0.0
       DESTINATION ${INSTALL_LIB_DIR} RENAME libtinyxml2.so.8 COMPONENT mindspore)
 
