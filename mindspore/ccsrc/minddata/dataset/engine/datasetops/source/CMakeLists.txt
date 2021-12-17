@@ -37,6 +37,7 @@ set(DATASET_ENGINE_DATASETOPS_SOURCE_SRC_FILES
     tedlium_op.cc
     text_file_op.cc
     usps_op.cc
+    yahoo_answers_op.cc
     yelp_review_op.cc
     yes_no_op.cc
     )

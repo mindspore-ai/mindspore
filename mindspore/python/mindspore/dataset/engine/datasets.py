@@ -72,7 +72,7 @@ from .validators import check_batch, check_shuffle, check_map, check_filter, che
     check_photo_tour_dataset, check_ag_news_dataset, check_dbpedia_dataset, check_lj_speech_dataset, \
     check_yes_no_dataset, check_speech_commands_dataset, check_tedlium_dataset, check_svhn_dataset, \
     check_stl10_dataset, check_yelp_review_dataset, check_penn_treebank_dataset, check_iwslt2016_dataset, \
-    check_iwslt2017_dataset, check_sogou_news_dataset
+    check_iwslt2017_dataset, check_sogou_news_dataset, check_yahoo_answers_dataset
 from ..core.config import get_callback_timeout, _init_device_info, get_enable_shared_mem, get_num_parallel_workers, \
     get_prefetch_size, get_auto_offload
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
@@ -9783,3 +9783,98 @@ class STL10Dataset(MappableDataset):
 
     def parse(self, children=None):
         return cde.STL10Node(self.dataset_dir, self.usage, self.sampler)
+
+
+class YahooAnswersDataset(SourceDataset):
+    """
+    A source dataset that reads and parses the YahooAnswers dataset.
+
+    The generated dataset has three columns :py:obj:`[class, title, content, answer]`.
+    The tensor of column :py:obj:`class` is of the string type.
+    The tensor of column :py:obj:`title` is of the string type.
+    The tensor of column :py:obj:`content` is of the string type.
+    The tensor of column :py:obj:`answer` is of the string type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        usage (str, optional): Usage of this dataset, can be `train`, `test` or `all`. `train` will read
+            from 1,400,000 train samples, `test` will read from 60,000 test samples, `all` will read from
+            all 1,460,000 samples (default=None, all samples).
+        num_samples (int, optional): The number of samples to be included in the dataset
+            (default=None, will include all text).
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, number set in the config).
+        shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
+            (default=Shuffle.GLOBAL).
+            If shuffle is False, no shuffling will be performed;
+            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
+            Otherwise, there are two levels of shuffling:
+
+            - Shuffle.GLOBAL: Shuffle both the files and samples.
+
+            - Shuffle.FILES: Shuffle files only.
+
+        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument can only be specified when num_shards is also specified.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing
+            (default=None, which means no cache is used).
+
+    Raises:
+        RuntimeError: If dataset_dir does not contain data files.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+
+    Examples:
+        >>> yahoo_answers_dataset_dir = "/path/to/yahoo_answers_dataset_directory"
+        >>>
+        >>> # 1) Read 3 samples from YahooAnswers dataset
+        >>> dataset = ds.YahooAnswersDataset(dataset_dir=yahoo_answers_dataset_dir, num_samples=3)
+        >>>
+        >>> # 2) Read train samples from YahooAnswers dataset
+        >>> dataset = ds.YahooAnswersDataset(dataset_dir=yahoo_answers_dataset_dir, usage="train")
+
+    About YahooAnswers dataset:
+
+    The YahooAnswers dataset consists of 630,000 text samples in 14 classes,
+    There are 560,000 samples in the train.csv and 70,000 samples in the test.csv.
+    The 10 different classes represent Society & Culture, Science & Mathematics, Health, Education & Reference,
+    Computers & Internet, Sports, Business & Finance, Entertainment & Music, Family & Relationships,
+    Politics & Government.
+
+    Here is the original YahooAnswers dataset structure.
+    You can unzip the dataset files into this directory structure and read by Mindspore's API.
+
+    .. code-block::
+
+        .
+        └── yahoo_answers_dataset_dir
+            ├── train.csv
+            ├── test.csv
+            ├── classes.txt
+            └── readme.txt
+
+    .. code-block::
+
+        @article{YahooAnswers,
+        title   = {Yahoo! Answers Topic Classification Dataset},
+        author  = {Xiang Zhang},
+        year    = {2015},
+        howpublished = {}
+        }
+    """
+
+    @check_yahoo_answers_dataset
+    def __init__(self, dataset_dir, usage=None, num_samples=None, num_parallel_workers=None, shuffle=Shuffle.GLOBAL,
+                 num_shards=None, shard_id=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, num_samples=num_samples, shuffle=shuffle,
+                         num_shards=num_shards, shard_id=shard_id, cache=cache)
+        self.dataset_dir = dataset_dir
+        self.usage = replace_none(usage, "all")
+
+    def parse(self, children=None):
+        return cde.YahooAnswersNode(self.dataset_dir, self.usage, self.num_samples, self.shuffle_flag,
+                                    self.num_shards, self.shard_id)
