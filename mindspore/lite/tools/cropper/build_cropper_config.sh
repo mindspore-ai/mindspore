@@ -283,6 +283,7 @@ while IFS='' read -r line; do opencl_files+=("$line"); done < <(ls mindspore/lit
 opencl_others_files=(
   "mindspore/lite/src/runtime/kernel/opencl/kernel/fusion_eltwise.cc"
   "mindspore/lite/src/runtime/kernel/opencl/kernel/to_format.cc"
+  "mindspore/lite/src/runtime/kernel/opencl/kernel/gl_to_cl.cc"
 )
 opencl_files=("${opencl_files[@]}" "${opencl_others_files[@]}")
 # shellcheck disable=SC2068

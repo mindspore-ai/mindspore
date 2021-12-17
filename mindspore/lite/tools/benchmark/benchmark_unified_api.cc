@@ -67,6 +67,7 @@ int BenchmarkUnifiedApi::GenerateGLTexture(std::map<std::string, GLuint> *input_
       return status;
     }
   }
+
   return RET_OK;
 }
 
@@ -105,7 +106,7 @@ int BenchmarkUnifiedApi::FillGLTextureToTensor(std::map<std::string, GLuint> *gl
   return RET_OK;
 }
 
-int BenchmarkUnifiedApi::LoadGLTexture() {
+int BenchmarkUnifiedApi::LoadAndBindGLTexture() {
   std::map<std::string, GLuint> input_gl_texture;
   std::map<std::string, GLuint> output_gl_texture;
 
@@ -117,13 +118,23 @@ int BenchmarkUnifiedApi::LoadGLTexture() {
       return status;
     }
   } else {
-    auto status = ReadGLTextureFile(&input_gl_texture, &output_gl_texture);
+    auto status = ReadGLTextureFile(&input_gl_texture);
     if (status != RET_OK) {
       std::cerr << "ReadGLTextureFile error, " << status << std::endl;
       MS_LOG(ERROR) << "ReadGLTextureFile error, " << status;
       return status;
     }
   }
+
+  for (auto &tensor : ms_outputs_for_api_) {
+    MS_ASSERT(tensor != nullptr);
+    auto status = FillGLTextureToTensor(&output_gl_texture, &tensor, tensor.Name());
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Fill GLTexture to output tensor" << status;
+      return status;
+    }
+  }
+
   auto status = ms_model_.BindGLTexture2DMemory(input_gl_texture, &output_gl_texture);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "BindGLTexture2DMemory failed";
@@ -132,8 +143,7 @@ int BenchmarkUnifiedApi::LoadGLTexture() {
   return RET_OK;
 }
 
-int BenchmarkUnifiedApi::ReadGLTextureFile(std::map<std::string, GLuint> *input_gl_texture,
-                                           std::map<std::string, GLuint> *output_gl_texture) {
+int BenchmarkUnifiedApi::ReadGLTextureFile(std::map<std::string, GLuint> *input_gl_texture) {
   if (ms_inputs_for_api_.empty()) {
     return RET_OK;
   }
@@ -167,14 +177,7 @@ int BenchmarkUnifiedApi::ReadGLTextureFile(std::map<std::string, GLuint> *input_
       }
     }
   }
-  for (auto &tensor : ms_outputs_for_api_) {
-    MS_ASSERT(tensor != nullptr);
-    auto status = FillGLTextureToTensor(output_gl_texture, &tensor, tensor.Name());
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "Fill GLTexture to output tensor" << status;
-      return status;
-    }
-  }
+
   return RET_OK;
 }
 #endif
@@ -182,7 +185,7 @@ int BenchmarkUnifiedApi::ReadGLTextureFile(std::map<std::string, GLuint> *input_
 int BenchmarkUnifiedApi::LoadInput() {
 #ifdef ENABLE_OPENGL_TEXTURE
   if (flags_->enable_gl_texture_ == true) {
-    if (lite::BenchmarkUnifiedApi::LoadGLTexture() != RET_OK) {
+    if (lite::BenchmarkUnifiedApi::LoadAndBindGLTexture() != RET_OK) {
       MS_LOG(ERROR) << "Generate input GLTexture error";
       return RET_ERROR;
     }

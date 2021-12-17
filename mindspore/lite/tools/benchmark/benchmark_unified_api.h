@@ -60,9 +60,9 @@ class MS_API BenchmarkUnifiedApi : public BenchmarkBase {
 #ifdef ENABLE_OPENGL_TEXTURE
   int GenerateGLTexture(std::map<std::string, GLuint> *inputGlTexture);
 
-  int LoadGLTexture();
+  int LoadAndBindGLTexture();
 
-  int ReadGLTextureFile(std::map<std::string, GLuint> *inputGlTexture, std::map<std::string, GLuint> *outputGLTexture);
+  int ReadGLTextureFile(std::map<std::string, GLuint> *inputGlTexture);
 
   int FillGLTextureToTensor(std::map<std::string, GLuint> *gl_texture, mindspore::MSTensor *tensor, std::string name,
                             void *data = nullptr);
