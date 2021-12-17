@@ -6569,7 +6569,7 @@ class LARSUpdate(PrimitiveWithInfer):
         validator.check_value_type("use_clip", use_clip, [bool], self.name)
 
 
-class ApplyFtrl(PrimitiveWithInfer):
+class ApplyFtrl(Primitive):
     """
     Updates relevant entries according to the FTRL scheme.
 
@@ -6643,24 +6643,6 @@ class ApplyFtrl(PrimitiveWithInfer):
                                 outputs=['output'])
         self.add_prim_attr('side_effect_mem', True)
         self.use_locking = validator.check_value_type("use_locking", use_locking, [bool], self.name)
-
-    def infer_shape(self, var_shape, accum_shape, linear_shape, grad_shape, lr_shape, l1_shape, l2_shape,
-                    lr_power_shape):
-        validator.check('var shape', var_shape, 'accum shape', accum_shape, Rel.EQ, self.name)
-        validator.check('var shape', var_shape, 'linear shape', linear_shape, Rel.EQ, self.name)
-        return var_shape
-
-    def infer_dtype(self, var_type, accum_type, linear_type, grad_type, lr_type, l1_type, l2_type,
-                    lr_power_type):
-        valid_dtypes = [mstype.float16, mstype.float32]
-        args = {'var': var_type, 'accum': accum_type, 'linear': linear_type, 'grad': grad_type}
-        validator.check_tensors_dtypes_same_and_valid(args, valid_dtypes, self.name)
-
-        validator.check_scalar_or_tensor_types_same({"lr": lr_type}, valid_dtypes, self.name)
-        validator.check_scalar_or_tensor_types_same({"l1": l1_type}, valid_dtypes, self.name)
-        validator.check_scalar_or_tensor_types_same({"l2": l2_type}, valid_dtypes, self.name)
-        validator.check_scalar_or_tensor_types_same({"lr_power": lr_power_type}, valid_dtypes, self.name)
-        return var_type
 
 
 class SparseApplyFtrl(PrimitiveWithCheck):
