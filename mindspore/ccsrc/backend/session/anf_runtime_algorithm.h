@@ -341,6 +341,8 @@ class AnfRuntimeAlgorithm {
   static size_t GetOutputNumByAbstract(const AbstractBasePtr &node_abstract);
   // Fetch all outputs of call node.
   static std::vector<KernelWithIndex> GetAllOutputByCallNode(const KernelWithIndex &output_with_index);
+  // Get attr groups
+  static int64_t GetAttrGroups(const AnfNodePtr &node, const size_t index);
 
   static inline bool IsAllgather(const CNodePtr &cnode) { return GetCNodeName(cnode) == kAllGatherOpName; }
 

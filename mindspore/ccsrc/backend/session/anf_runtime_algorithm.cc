@@ -2536,5 +2536,32 @@ void AnfRuntimeAlgorithm::UpdateGraphValidRefPair(const KernelGraphPtr &graph) {
   }
   graph->set_ref_out_in_map(new_ref_map);
 }
+
+int64_t AnfRuntimeAlgorithm::GetAttrGroups(const AnfNodePtr &node, const size_t index) {
+  if (node == nullptr) {
+    return 1;
+  }
+  if (node->isa<CNode>()) {
+    auto cnode = node->cast<CNodePtr>();
+    if (AnfAlgo::HasNodeAttr(kAttrFracZGroup, cnode)) {
+      auto node_name = AnfAlgo::GetCNodeName(cnode);
+      if (node_name == kAllReduceOpName || node_name == kBroadcastOpName) {
+        // if index not exists in fracz_group_idx, return default value 1
+        auto fz_group_idx = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrFracZGroupIdx);
+        int64_t out_index = SizeToLong(index);
+        auto fz_iter = std::find(std::begin(fz_group_idx), std::end(fz_group_idx), out_index);
+        if (fz_iter == std::end(fz_group_idx)) {
+          return 1;
+        }
+      }
+      return AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrFracZGroup);
+    }
+  } else if (node->isa<Parameter>()) {
+    auto param = node->cast<ParameterPtr>();
+    MS_EXCEPTION_IF_NULL(param);
+    return param->fracz_group();
+  }
+  return 1;
+}
 }  // namespace session
 }  // namespace mindspore
