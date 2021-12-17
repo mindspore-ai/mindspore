@@ -18,7 +18,8 @@
 #include <memory>
 #include <set>
 #include <algorithm>
-#include "tools/converter/ops/ops_def.h"
+#include "ops/make_tuple.h"
+#include "ops/return.h"
 #include "tools/converter/converter_context.h"
 #include "tools/converter/quant_param_holder.h"
 #include "src/common/log_adapter.h"
@@ -130,7 +131,7 @@ FuncGraphPtr MindIRControlFlowAdjust::AddAfterFuncGraph(const FuncGraphPtr &fg,
 
   if (after_fg->get_inputs().size() > 1) {
     std::vector<AnfNodePtr> make_tuple_inputs = after_fg->get_inputs();
-    auto make_tuple_prim_ptr = std::make_shared<lite::MakeTuple>();
+    auto make_tuple_prim_ptr = std::make_shared<ops::MakeTuple>();
     if (make_tuple_prim_ptr == nullptr) {
       MS_LOG(ERROR) << "new MakeTuple failed";
       return nullptr;
@@ -141,7 +142,7 @@ FuncGraphPtr MindIRControlFlowAdjust::AddAfterFuncGraph(const FuncGraphPtr &fg,
     auto make_tuple_cnode = after_fg->NewCNode(make_tuple_inputs);
     MS_CHECK_TRUE_MSG(make_tuple_cnode != nullptr, nullptr, "Failed to create C node.");
     make_tuple_cnode->set_fullname_with_scope("return tuple");
-    auto return_prim_ptr = std::make_shared<lite::Return>();
+    auto return_prim_ptr = std::make_shared<ops::Return>();
     if (return_prim_ptr == nullptr) {
       MS_LOG(ERROR) << "new Return failed";
       return nullptr;
@@ -154,7 +155,7 @@ FuncGraphPtr MindIRControlFlowAdjust::AddAfterFuncGraph(const FuncGraphPtr &fg,
     cnode->set_fullname_with_scope("Return");
     after_fg->set_return(cnode);
   } else {
-    auto return_prim_ptr = std::make_shared<lite::Return>();
+    auto return_prim_ptr = std::make_shared<ops::Return>();
     if (return_prim_ptr == nullptr) {
       MS_LOG(ERROR) << "new Return failed";
       return nullptr;

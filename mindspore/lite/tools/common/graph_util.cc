@@ -27,8 +27,8 @@
 #include "tools/common/node_util.h"
 #include "src/common/log_adapter.h"
 #include "src/common/utils.h"
-#include "tools/converter/ops/ops_def.h"
 #include "nnacl/op_base.h"
+#include "ops/make_tuple.h"
 
 namespace mindspore {
 namespace lite {
@@ -45,7 +45,7 @@ int SetFuncGraphOutput(const FuncGraphPtr &graph, const std::vector<AnfNodePtr> 
     graph->set_output(outputs.front(), false);
     return RET_OK;
   }
-  auto make_tuple_prim_ptr = std::make_shared<lite::MakeTuple>();
+  auto make_tuple_prim_ptr = std::make_shared<ops::MakeTuple>();
   if (make_tuple_prim_ptr == nullptr) {
     MS_LOG(DEBUG) << "new MakeTuple failed";
     return lite::RET_NULL_PTR;

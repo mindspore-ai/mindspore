@@ -26,7 +26,9 @@
 #include "tools/converter/converter_context.h"
 #include "tools/converter/parser/tf/tf_node_parser_registry.h"
 #include "tools/optimizer/common/gllo_utils.h"
-#include "tools/converter/ops/ops_def.h"
+#include "ops/make_tuple.h"
+#include "ops/return.h"
+#include "ops/tuple_get_item.h"
 #include "ir/anf.h"
 #include "abstract/utils.h"
 #include "tools/converter/converter_flags.h"
@@ -884,7 +886,7 @@ STATUS TFModelParser::ConvertOutputTensor(const tensorflow::NodeDef &op, const C
         return RET_ERROR;
       }
       abstract_list.emplace_back(abstract_tensor);
-      auto tuple_get_item_prim_ptr = std::make_shared<lite::TupleGetItem>();
+      auto tuple_get_item_prim_ptr = std::make_shared<ops::TupleGetItem>();
       if (tuple_get_item_prim_ptr == nullptr) {
         MS_LOG(ERROR) << "new TupleGetItem failed";
         return RET_NULL_PTR;
@@ -1145,7 +1147,7 @@ STATUS TFModelParser::MakeAnfGraphOutputs(const std::vector<AnfNodePtr> &output_
   }
   if (output_nodes.size() > 1) {
     std::vector<AnfNodePtr> make_tuple_inputs = output_nodes;
-    auto make_tuple_prim_ptr = std::make_shared<lite::MakeTuple>();
+    auto make_tuple_prim_ptr = std::make_shared<ops::MakeTuple>();
     if (make_tuple_prim_ptr == nullptr) {
       MS_LOG(ERROR) << "new MakeTuple failed";
       return RET_NULL_PTR;
@@ -1157,7 +1159,7 @@ STATUS TFModelParser::MakeAnfGraphOutputs(const std::vector<AnfNodePtr> &output_
     CHECK_NULL_RETURN(make_tuple_cnode);
     make_tuple_cnode->set_fullname_with_scope("return_tuple");
 
-    auto return_prim_ptr = std::make_shared<lite::Return>();
+    auto return_prim_ptr = std::make_shared<ops::Return>();
     if (return_prim_ptr == nullptr) {
       MS_LOG(ERROR) << "new Return failed";
       return RET_NULL_PTR;
@@ -1170,7 +1172,7 @@ STATUS TFModelParser::MakeAnfGraphOutputs(const std::vector<AnfNodePtr> &output_
     cnode->set_fullname_with_scope("Return");
     anf_graph->set_return(cnode);
   } else {
-    auto return_prim_ptr = std::make_shared<lite::Return>();
+    auto return_prim_ptr = std::make_shared<ops::Return>();
     if (return_prim_ptr == nullptr) {
       MS_LOG(ERROR) << "new Return failed";
       return RET_NULL_PTR;

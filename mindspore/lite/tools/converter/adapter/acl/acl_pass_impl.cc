@@ -17,7 +17,6 @@
 #include "tools/converter/adapter/acl/acl_pass_impl.h"
 #include <set>
 #include <map>
-#include "tools/converter/ops/ops_def.h"
 #include "tools/common/graph_util.h"
 #include "tools/common/tensor_util.h"
 #include "tools/converter/adapter/acl/mapper/primitive_mapper_register.h"
@@ -28,6 +27,7 @@
 #include "include/registry/pass_registry.h"
 #include "common/utils.h"
 #include "ops/custom.h"
+#include "ops/tuple_get_item.h"
 #include "base/core_ops.h"
 #include "cxx_api/model/acl/model_converter.h"
 #include "backend/kernel_compiler/cpu/nnacl/op_base.h"
@@ -570,7 +570,7 @@ STATUS AclPassImpl::ModifyGraphByCustomNode(const FuncGraphPtr &func_graph, cons
     }
   } else {
     for (size_t j = 0; j < graph_outputs_.size(); ++j) {
-      auto tuple_get_item_prim_ptr = std::make_shared<lite::TupleGetItem>();
+      auto tuple_get_item_prim_ptr = std::make_shared<ops::TupleGetItem>();
       if (tuple_get_item_prim_ptr == nullptr) {
         MS_LOG(ERROR) << "New TupleGetItem failed for output " << j;
         return lite::RET_ERROR;

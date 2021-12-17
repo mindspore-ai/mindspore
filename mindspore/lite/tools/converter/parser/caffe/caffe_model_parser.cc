@@ -25,7 +25,6 @@
 #include "tools/common/graph_util.h"
 #include "tools/common/protobuf_utils.h"
 #include "tools/common/tensor_util.h"
-#include "tools/converter/ops/ops_def.h"
 #include "ir/func_graph.h"
 #include "tools/converter/converter_flags.h"
 #include "tools/converter/converter_context.h"
@@ -35,6 +34,9 @@
 #include "tools/converter/parser/unify_format.h"
 #include "nnacl/op_base.h"
 #include "src/common/log_util.h"
+#include "ops/make_tuple.h"
+#include "ops/return.h"
+#include "ops/tuple_get_item.h"
 
 using mindspore::converter::kFmkTypeCaffe;
 namespace mindspore::lite {
@@ -416,7 +418,7 @@ STATUS CaffeModelParser::ConvertGraphOutputs() {
   caffeInspector.InspectModel(caffe_model_);
   if (caffeInspector.GetGraphOutput().size() > 1) {
     std::vector<AnfNodePtr> make_tuple_inputs;
-    auto make_tuple_prim_ptr = std::make_shared<lite::MakeTuple>();
+    auto make_tuple_prim_ptr = std::make_shared<ops::MakeTuple>();
     MSLITE_CHECK_PTR(make_tuple_prim_ptr);
     auto make_tuple_prim = NewValueNode(make_tuple_prim_ptr);
     MSLITE_CHECK_PTR(make_tuple_prim);
@@ -434,7 +436,7 @@ STATUS CaffeModelParser::ConvertGraphOutputs() {
     make_tuple_cnode->set_fullname_with_scope("return tuple");
 
     std::vector<AnfNodePtr> op_inputs;
-    auto return_prim_ptr = std::make_shared<lite::Return>();
+    auto return_prim_ptr = std::make_shared<ops::Return>();
     MSLITE_CHECK_PTR(return_prim_ptr);
     auto value_node = NewValueNode(return_prim_ptr);
     MSLITE_CHECK_PTR(value_node);
@@ -445,7 +447,7 @@ STATUS CaffeModelParser::ConvertGraphOutputs() {
     cnode->set_fullname_with_scope("Return");
     res_graph_->set_return(cnode);
   } else {
-    auto returnPrim = std::make_shared<lite::Return>();
+    auto returnPrim = std::make_shared<ops::Return>();
     MSLITE_CHECK_PTR(returnPrim);
     auto valueNode = NewValueNode(returnPrim);
     MSLITE_CHECK_PTR(valueNode);
@@ -584,7 +586,7 @@ STATUS CaffeModelParser::ConvertTop(const caffe::LayerParameter &layer, const CN
       return RET_ERROR;
     }
     abstract_list.emplace_back(abstract);
-    auto tuple_get_item_prim_ptr = std::make_shared<lite::TupleGetItem>();
+    auto tuple_get_item_prim_ptr = std::make_shared<ops::TupleGetItem>();
     if (tuple_get_item_prim_ptr == nullptr) {
       MS_LOG(ERROR) << "new TupleGetItem failed";
       return RET_NULL_PTR;

@@ -19,7 +19,7 @@
 #include <functional>
 #include "ops/lstm.h"
 #include "ops/squeeze.h"
-#include "tools/converter/ops/ops_def.h"
+#include "ops/tuple_get_item.h"
 #include "src/common/utils.h"
 #include "tools/common/tensor_util.h"
 #include "utils/utils.h"
@@ -608,7 +608,7 @@ CNodePtr TfliteLstmCellFusion::CreateOutputGetItem(const FuncGraphPtr &func_grap
                                                    const int item_index) {
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(node != nullptr);
-  auto tuple_get_item_prim = std::make_shared<lite::TupleGetItem>();
+  auto tuple_get_item_prim = std::make_shared<ops::TupleGetItem>();
   auto get_item_value = NewValueNode(MakeValue<int>(item_index));
   if (tuple_get_item_prim == nullptr || get_item_value == nullptr) {
     MS_LOG(ERROR) << "NewValueNode is nullptr";
@@ -801,9 +801,7 @@ const AnfNodePtr TfliteLstmCellFusion::Process(const FuncGraphPtr &func_graph, c
 
   std::vector<int> squeeze_axis{1};  // our lstm output:0 have an extra axis that tflite not have, it must be squeezed
   auto squeeze_node = CreateSqueezeNode(func_graph, get_item_node, squeeze_axis);
-  if (squeeze_node == nullptr) {
-    return nullptr;
-  }
+  MS_CHECK_TRUE_MSG(squeeze_node != nullptr, nullptr, "create a squeeze node failed.");
 
   auto cond_cnode_index_pair = std::make_shared<CNodeIndexPair>(while_cnode, 1);
   MS_CHECK_TRUE_RET(cond_cnode_index_pair != nullptr, nullptr);

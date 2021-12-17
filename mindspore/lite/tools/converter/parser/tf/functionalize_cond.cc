@@ -23,6 +23,7 @@
 #include "tools/converter/ops/ops_def.h"
 #include "nnacl/op_base.h"
 #include "src/common/log_util.h"
+#include "ops/return.h"
 
 namespace mindspore::opt {
 
@@ -157,7 +158,7 @@ FuncGraphPtr FunctionalizeCond::CreateBranchGraph(const AnfNodePtr &node, std::s
   }
 
   if (!CheckPrimitiveType(node, prim::kPrimSwitch)) {  // graph is not empty
-    auto return_prim_ptr = std::make_shared<lite::Return>();
+    auto return_prim_ptr = std::make_shared<ops::Return>();
     if (return_prim_ptr == nullptr) {
       MS_LOG(ERROR) << "GetReturnPrim return nullptr";
       return nullptr;

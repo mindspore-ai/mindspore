@@ -20,7 +20,6 @@
 #include <memory>
 #include <string>
 #include "tools/converter/adapter/acl/common/utils.h"
-#include "tools/converter/ops/ops_def.h"
 #include "tools/converter/adapter/acl/mapper/tbe_op_def.h"
 #include "tools/common/tensor_util.h"
 #include "include/errorcode.h"
@@ -30,6 +29,7 @@
 #include "ops/batch_norm.h"
 #include "ops/fused_batch_norm.h"
 #include "ops/stack.h"
+#include "ops/tuple_get_item.h"
 
 namespace mindspore {
 namespace lite {
@@ -44,7 +44,7 @@ const std::set<std::string> kCNodeWithDynamicInput = {kNamewiEltwise, ops::kName
 
 CNodePtr CreateTupleGetItemNode(const FuncGraphPtr &func_graph, const CNodePtr &input_cnode) {
   CNodePtr get_item_cnode = nullptr;
-  auto tuple_get_item_prim_ptr = std::make_shared<lite::TupleGetItem>();
+  auto tuple_get_item_prim_ptr = std::make_shared<ops::TupleGetItem>();
   if (tuple_get_item_prim_ptr == nullptr) {
     MS_LOG(ERROR) << "New TupleGetItem failed";
     return nullptr;

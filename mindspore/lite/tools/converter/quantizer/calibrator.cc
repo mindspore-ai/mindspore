@@ -17,7 +17,7 @@
 #include "tools/converter/quantizer/calibrator.h"
 #include <utility>
 #include "tools/converter/preprocess/image_preprocess.h"
-#include "tools/converter/ops/ops_def.h"
+#include "ops/tuple_get_item.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
@@ -63,7 +63,7 @@ int Calibrator::ComputeThreshold() {
           for (const auto &output_diverg_info : outputs_diverg_info.second) {
             auto output_diverg_cnode = output_diverg_info.second->GetCNode();
             if (output_diverg_cnode == input_cnode) {
-              if (NodePrimitiveType(input_cnode) != lite::kNameTupleGetItem) {
+              if (NodePrimitiveType(input_cnode) != ops::kNameTupleGetItem) {
                 *(input_infos[i]) = *output_diverg_info.second;
                 input_infos[i]->GetCNode() = cnode;
                 already_computed = true;

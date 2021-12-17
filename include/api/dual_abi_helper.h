@@ -103,6 +103,26 @@ inline std::unordered_map<std::string, std::string> UnorderedMapCharToString(
   return ret;
 }
 
+inline std::map<std::vector<char>, std::vector<char>> MapStringToVectorChar(
+  const std::map<std::string, std::string> &s) {
+  std::map<std::vector<char>, std::vector<char>> ret;
+  std::transform(s.begin(), s.end(), std::inserter(ret, ret.begin()), [](auto str) {
+    return std::pair<std::vector<char>, std::vector<char>>(std::vector<char>(str.first.begin(), str.first.end()),
+                                                           std::vector<char>(str.second.begin(), str.second.end()));
+  });
+  return ret;
+}
+
+inline std::map<std::string, std::string> MapVectorCharToString(
+  const std::map<std::vector<char>, std::vector<char>> &c) {
+  std::map<std::string, std::string> ret;
+  std::transform(c.begin(), c.end(), std::inserter(ret, ret.begin()), [](auto ch) {
+    return std::pair<std::string, std::string>(std::string(ch.first.begin(), ch.first.end()),
+                                               std::string(ch.second.begin(), ch.second.end()));
+  });
+  return ret;
+}
+
 inline std::vector<std::pair<std::vector<char>, std::vector<int32_t>>> ClassIndexStringToChar(
   const std::vector<std::pair<std::string, std::vector<int32_t>>> &s) {
   std::vector<std::pair<std::vector<char>, std::vector<int32_t>>> ret;

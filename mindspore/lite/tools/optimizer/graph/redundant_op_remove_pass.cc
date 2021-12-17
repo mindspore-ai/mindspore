@@ -20,7 +20,7 @@
 #include <utility>
 #include "include/errorcode.h"
 #include "tools/anf_exporter/fetch_content.h"
-#include "tools/converter/ops/ops_def.h"
+#include "ops/make_tuple.h"
 #include "ops/depend.h"
 #include "ops/fusion/pad_fusion.h"
 #include "ops/op_utils.h"
@@ -120,7 +120,7 @@ int ProcessInputHaveDependency(const FuncGraphPtr &func_graph, const CNodePtr &c
   if (ProcessDependencyWithTwoNodes(func_graph, cnode, false) == lite::RET_OK) {
     return lite::RET_OK;
   }
-  auto make_tuple_prim = NewValueNode(std::make_shared<lite::MakeTuple>());
+  auto make_tuple_prim = NewValueNode(std::make_shared<ops::MakeTuple>());
   auto manager = func_graph->manager();
   MS_CHECK_TRUE_MSG(make_tuple_prim != nullptr, lite::RET_NULL_PTR, "NewCNode Failed");
   MS_ASSERT(manager != nullptr);
