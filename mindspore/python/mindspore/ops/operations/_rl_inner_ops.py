@@ -203,3 +203,106 @@ class DiscountedReturn(PrimitiveWithInfer):
         validator.check_tensors_dtypes_same_and_valid(args, valid_dtypes, self.name)
         validator.check_tensor_dtype_valid('done_dtype', done_dtype, [mstype.bool_], self.name)
         return reward_dtype
+
+
+class CudnnGRU(PrimitiveWithInfer):
+    """
+    Performs the Stacked GRU (Gated Recurrent Unit) on the input.
+
+    For detailed information, please refer to :class:`mindspore.nn.GRU`.
+
+    Args:
+        input_size (int): Number of features of input.
+        hidden_size (int):  Number of features of hidden layer.
+        num_layers (int): Number of layers of stacked GRU.
+        has_bias (bool): Whether the cell has bias `b_ih` and `b_hh`.
+        bidirectional (bool): Specifies whether it is a bidirectional GRU.
+        dropout (float): If not 0, append `Dropout` layer on the outputs of each
+            GRU layer except the last layer. The range of dropout is [0.0, 1.0].
+
+    Inputs:
+        - **input** (Tensor) - Tensor of shape (seq_len, batch_size, `input_size`) or
+          (batch_size, seq_len, `input_size`).
+        - **h** (tuple) - Tensor of shape (num_directions * `num_layers`, batch_size, `hidden_size`).
+        - **w** (Tensor) - The input tensor which states for weights.
+
+    Outputs:
+        Tuple, a tuple contains (`output`, `h_n`, `reserve`, `state`).
+
+        - **output** (Tensor) - Tensor of shape (seq_len, batch_size, num_directions * `hidden_size`).
+        - **h_n** (Tensor) - Tensor of shape (num_directions * `num_layers`, batch_size, `hidden_size`).
+        - **reserve** (Tensor) - Tensor of shape (r, 1).
+        - **state** (Tensor) - Random number generator state and its shape is (s, 1).
+
+    Raises:
+        TypeError: If `input_size`, `hidden_size` or `num_layers` is not an int.
+        TypeError: If `has_bias` or `bidirectional` is not a bool.
+        TypeError: If `dropout` is not a float.
+        ValueError: If `dropout` is not in range [0.0, 1.0].
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> input_size = 10
+        >>> hidden_size = 2
+        >>> num_layers = 1
+        >>> seq_len = 5
+        >>> batch_size = 2
+        >>>
+        >>> import mindspore.ops.operations._rl_inner_ops as rl_ops
+        >>> net = rl_ops.CudnnGRU(input_size, hidden_size, num_layers, True, False, 0.0)
+        >>> input_tensor = Tensor(np.ones([seq_len, batch_size, input_size]).astype(np.float32))
+        >>> h0 = Tensor(np.ones([num_layers, batch_size, hidden_size]).astype(np.float32))
+        >>> w = Tensor(np.ones([84, 1, 1]).astype(np.float32))
+        >>> output, hn,  _, _ = net(input_tensor, h0, w)
+        >>> print(output)
+        [[[1.  1. ]
+          [1.  1. ]]
+         [[1.  1. ]
+          [1.  1. ]]
+         [[1.  1.]
+          [1.  1.]]
+         [[1.  1. ]
+          [1.  1. ]]
+         [[1.  1. ]
+          [1.  1. ]]]
+    """
+
+    @prim_attr_register
+    def __init__(self, input_size, hidden_size, num_layers, has_bias, bidirectional, dropout):
+        """Initialize GRU."""
+        self.input_size = validator.check_positive_int(input_size, "input_size", self.name)
+        self.hidden_size = validator.check_positive_int(hidden_size, "hidden_size", self.name)
+        self.num_layers = validator.check_positive_int(num_layers, "num_layers", self.name)
+        self.has_bias = validator.check_value_type("has_bias", has_bias, (bool,), self.name)
+        self.bidirectional = validator.check_value_type("bidirectional", bidirectional, (bool,), self.name)
+        self.dropout = validator.check_value_type("dropout", dropout, [float], self.name)
+        self.dropout = validator.check_float_range(dropout, 0, 1, Rel.INC_BOTH, 'dropout', self.name)
+
+        if bidirectional:
+            self.num_directions = 2
+        else:
+            self.num_directions = 1
+
+    def infer_shape(self, x_shape, h_shape, w_shape):
+        validator.check_equal_int(len(x_shape), 3, "x rank", self.name)
+        validator.check_equal_int(x_shape[2], self.input_size, "x[2]", self.name)
+
+        validator.check_equal_int(len(h_shape), 3, "h rank", self.name)
+
+        validator.check_int(h_shape[0], self.num_layers * self.num_directions, Rel.EQ, "h[0]", self.name)
+        validator.check_equal_int(h_shape[1], x_shape[1], "h[1]", self.name)
+        validator.check_int(h_shape[2], self.hidden_size, Rel.EQ, "h[2]", self.name)
+
+        y_shape = (x_shape[0], x_shape[1], self.hidden_size * self.num_directions)
+
+        # set arbitrary shape for reserved space
+        reserved_shape = (1, 1)
+        state_shape = (1, 1)
+        return y_shape, h_shape, reserved_shape, state_shape
+
+    def infer_dtype(self, x_dtype, h_dtype, w_dtype):
+        args = {'x': x_dtype, 'h': h_dtype, 'w': w_dtype}
+        validator.check_tensors_dtypes_same_and_valid(args, (mstype.float32, mstype.float16), self.name)
+        return x_dtype, x_dtype, x_dtype, x_dtype
