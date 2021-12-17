@@ -728,14 +728,17 @@ AnfNodePtr Parser::ParseCall(const FunctionBlockPtr &block, const py::object &no
   // Function call arguments should be passed in as groups and unpacked later using unpack call
   std::vector<AnfNodePtr> packed_arguments;
   std::vector<AnfNodePtr> group_arguments;
-
-  bool need_unpack_args = ParseArgsInCall(block, args, &packed_arguments, &group_arguments);
+  bool need_fallback = false;
+  bool need_unpack_args = ParseArgsInCall(block, args, &need_fallback, &packed_arguments, &group_arguments);
   bool need_unpack_keywords = ParseKeywordsInCall(block, node, &packed_arguments);
   // If there is stared or keyword argument, unpack may be needed
   bool need_unpack = need_unpack_args || need_unpack_keywords;
 
   auto call_cnode = GenerateAnfNodeForCall(block, call_function_node, packed_arguments, group_arguments, need_unpack);
   UpdateInterpretForUserNode(call_function_node, call_cnode);
+  if (call_cnode->interpret_special_type() && need_fallback) {
+    call_cnode = HandleInterpret(block, call_cnode, node);
+  }
   return call_cnode;
 }
 
@@ -769,7 +772,7 @@ AnfNodePtr Parser::GenerateAnfNodeForCall(const FunctionBlockPtr &block, const A
   return call_anf_node;
 }
 
-bool Parser::ParseArgsInCall(const FunctionBlockPtr &block, const py::list &args,
+bool Parser::ParseArgsInCall(const FunctionBlockPtr &block, const py::list &args, bool *need_fallback,
                              std::vector<AnfNodePtr> *packed_arguments, std::vector<AnfNodePtr> *group_arguments) {
   MS_LOG(DEBUG) << "Process ast args in call";
   MS_EXCEPTION_IF_NULL(packed_arguments);
@@ -787,6 +790,8 @@ bool Parser::ParseArgsInCall(const FunctionBlockPtr &block, const py::list &args
     } else {
       auto node = ParseExprNode(block, args[i]);
       node = HandleInterpret(block, node, args[i]);
+      *need_fallback =
+        ((node->interpret() || IsPrimitiveCNode(node, prim::kPrimPyInterpret)) && !node->interpret_internal_type());
       group_arguments->push_back(node);
     }
   }
@@ -1904,6 +1909,9 @@ void Parser::UpdateInterpretForUserNode(const AnfNodePtr &node, const AnfNodePtr
       user_node->set_interpret_internal_type(true);
     }
   }
+  if (node->interpret_special_type()) {
+    user_node->set_interpret_special_type(true);
+  }
 }
 
 bool Parser::IsScriptInParams(const std::string &script_text, const py::dict &global_dict,
@@ -1942,7 +1950,8 @@ AnfNodePtr Parser::HandleInterpret(const FunctionBlockPtr &block, const AnfNodeP
   // Check if script_text is in global/local params.
   py::dict global_dict = block->global_py_params();
   auto [keys, values] = block->local_py_params();
-  if (IsScriptInParams(script_text, global_dict, keys, block->func_graph())) {
+  bool is_special_node = value_node->interpret_special_type();
+  if (IsScriptInParams(script_text, global_dict, keys, block->func_graph()) && !is_special_node) {
     return value_node;
   }
 

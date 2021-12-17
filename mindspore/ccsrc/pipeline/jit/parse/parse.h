@@ -247,8 +247,8 @@ class Parser {
   bool ParseKeywordsInCall(const FunctionBlockPtr &block, const py::object &node,
                            std::vector<AnfNodePtr> *packed_arguments);
 
-  bool ParseArgsInCall(const FunctionBlockPtr &block, const py::list &args, std::vector<AnfNodePtr> *packed_arguments,
-                       std::vector<AnfNodePtr> *group_arguments);
+  bool ParseArgsInCall(const FunctionBlockPtr &block, const py::list &args, bool *need_fallback,
+                       std::vector<AnfNodePtr> *packed_arguments, std::vector<AnfNodePtr> *group_arguments);
 
   AnfNodePtr GenerateAnfNodeForCall(const FunctionBlockPtr &block, const AnfNodePtr &call_function_anf_node,
                                     const std::vector<AnfNodePtr> &packed_arguments,

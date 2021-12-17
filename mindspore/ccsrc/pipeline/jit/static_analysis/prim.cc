@@ -1374,7 +1374,10 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
     MS_LOG(DEBUG) << "Call script: " << script_obj->script() << ", params: " << py::str(params);
     auto obj = parse::data_converter::CallPythonScript(py::str(script_obj->script()), params);
     if (py::isinstance<py::none>(obj)) {
-      MS_LOG(EXCEPTION) << "Failed to call python script: `" << script_obj->script() << "`";
+      AbstractBasePtr res = std::make_shared<abstract::AbstractNone>();
+      auto infer_result = std::make_shared<EvalResult>(res, nullptr);
+      evaluator_cache_mgr_->SetValue(args_spec_list, infer_result);
+      return infer_result;
     }
 
     ValuePtr converted_val = nullptr;

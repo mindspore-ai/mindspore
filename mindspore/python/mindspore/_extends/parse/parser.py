@@ -73,7 +73,8 @@ AST_SUB_TYPE_UNKNOWN = 0xFF            # unknown
 SYNTAX_SUPPORTED = 0                   # supported syntax
 SYNTAX_UNSUPPORTED_INTERNAL_TYPE = 1   # unsupported internal type
 SYNTAX_UNSUPPORTED_EXTERNAL_TYPE = 2   # unsupported external type
-SYNTAX_UNSUPPORTED_NAMESPACE = 3       # unsupported namespace
+SYNTAX_UNSUPPORTED_SPECIAL_TYPE = 3    # unsupported special type
+SYNTAX_UNSUPPORTED_NAMESPACE = 4       # unsupported namespace
 
 # Process expr statement white list
 # add as needed, eg: "clear", "extend", "insert", "remove", "reverse"
@@ -89,6 +90,10 @@ _unsupported_python_builtin_type = (
 
 _unsupported_internal_type = (
     Tensor,
+)
+
+_unsupported_special_type = (
+    print,
 )
 
 
@@ -545,9 +550,6 @@ def eval_script(exp_str, params):
         logger.error(error_info)
         raise e
 
-    # Check the result of eval.
-    if obj is None:
-        raise ValueError(f"When call 'eval', the result is none. exp_str: '{exp_str}'")
     # Convert set to tuple.
     if isinstance(obj, set):
         obj = tuple(obj)
@@ -639,6 +641,13 @@ class Parser:
             if value == item:
                 logger.debug(f"Found unsupported internal type: '{value}'.")
                 return True
+        return False
+
+    def is_unsupported_special_type(self, value):
+        """To check if not supported special type, such as print"""
+        if value in _unsupported_special_type:
+            logger.debug(f"Found unsupported special type: '{value}'.")
+            return True
         return False
 
     def get_namespace_symbol(self, var: str):
@@ -733,6 +742,8 @@ class Parser:
                 return self.global_namespace, var, value, SYNTAX_UNSUPPORTED_INTERNAL_TYPE
             if self.is_unsupported_python_builtin_type(value):
                 return self.global_namespace, var, value, SYNTAX_UNSUPPORTED_EXTERNAL_TYPE
+            if self.is_unsupported_special_type(value):
+                return self.global_namespace, var, value, SYNTAX_UNSUPPORTED_SPECIAL_TYPE
             if self.is_unsupported_namespace(value) or not self.is_supported_namespace_module(value):
                 return self.global_namespace, var, value, SYNTAX_UNSUPPORTED_NAMESPACE
             return self.global_namespace, var, value, SYNTAX_SUPPORTED

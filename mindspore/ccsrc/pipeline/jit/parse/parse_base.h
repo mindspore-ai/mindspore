@@ -171,7 +171,8 @@ enum SyntaxSupportDef {
   SYNTAX_SUPPORTED = 0,                  // supported syntax
   SYNTAX_UNSUPPORTED_INTERNAL_TYPE = 1,  // unsupported internal type
   SYNTAX_UNSUPPORTED_EXTERNAL_TYPE = 2,  // unsupported external type
-  SYNTAX_UNSUPPORTED_NAMESPACE = 3       // unsupported namespace
+  SYNTAX_UNSUPPORTED_SPECIAL_TYPE = 3,   // unsupported special type
+  SYNTAX_UNSUPPORTED_NAMESPACE = 4       // unsupported namespace
 };
 
 // Convert python object to ValuePtr.
