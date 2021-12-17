@@ -20,6 +20,7 @@
 #include <unordered_map>
 #include <functional>
 #include <string>
+#include <set>
 #include "base/float16.h"
 #include "ops/fusion/conv2d_fusion.h"
 #include "ops/transpose.h"
@@ -31,6 +32,7 @@
 #include "tools/converter/quant_param_holder.h"
 #include "nnacl/op_base.h"
 #include "src/common/log_util.h"
+#include "tools/converter/parser/parser_utils.h"
 
 namespace mindspore {
 namespace opt {
@@ -1262,6 +1264,20 @@ bool IsQuantParameterNode(const PrimitiveCPtr &prim) {
     }
   }
   return false;
+}
+void UpdateManager(const FuncGraphPtr &func_graph) {
+  auto manager = func_graph->manager();
+  if (manager == nullptr) {
+    manager = Manage(func_graph, true);
+  } else {
+    manager->Clear();
+    manager->AddFuncGraph(func_graph, true);
+  }
+  std::set<FuncGraphPtr> all_func_graphs;
+  mindspore::lite::GetAllFuncGraph(func_graph, &all_func_graphs);
+  for (auto &one_func_graph : all_func_graphs) {
+    manager->AddFuncGraph(one_func_graph);
+  }
 }
 }  // namespace opt
 }  // namespace mindspore

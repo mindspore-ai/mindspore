@@ -128,6 +128,8 @@ int GetDataTypeFromAnfNode(const AnfNodePtr &anf_node, TypeId *type_id);
 
 bool IsQuantParameterNode(const PrimitiveCPtr &prim);
 
+void UpdateManager(const FuncGraphPtr &func_graph);
+
 template <const PrimitivePtr *prim = nullptr>
 inline bool IsSpecifiedNode(const BaseRef &n) {
   if (utils::isa<AnfNodePtr>(n)) {
