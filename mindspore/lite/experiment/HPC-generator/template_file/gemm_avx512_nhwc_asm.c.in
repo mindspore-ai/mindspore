@@ -20,6 +20,9 @@ void nnacl_gemm_avx512_@{row_block}x@{col_block}_kernel_nhwc_fp32(float *dst, co
                                                                 const float *bias, const size_t act_flag, const size_t row_block,
                                                                 const size_t col_block, const size_t deep, const size_t src_stride,
                                                                 const size_t dst_stride, const size_t inc_flag) {
+    @import math
+    @row_stride_map = {6 : 4, 5 : 5, 4 : 6, 3 : 8, 2 : 12, 1 : 20}
+    @src_addr_stride = 3
     @asm_flag_list = []
     @row_split_number = [row for row in range(3, row_block, 3)]
     @for row in row_split_number:
@@ -27,19 +30,18 @@ void nnacl_gemm_avx512_@{row_block}x@{col_block}_kernel_nhwc_fp32(float *dst, co
         @asm_flag_list.append("[dst_" + str(row) + "] " +  "\"r\"(dst_" + str(row) + ")");
     size_t deep_t = deep >> 3;
     size_t dst_stride_t = dst_stride << 2;
-    size_t src_stride_t = src_stride << 2;
     @col_split_num = col_block >> 4;
     asm volatile(
         // inc in deep
         "and $0x1, %[inc_flag]\\n"
         "je 0f\\n"
         @for row in range(0, row_block):
-            @tmp = int(row / 3) * 3
+            @src_addr = int(row / 3) * 3
             @for col in range(0, col_split_num):
                @if row % 3 == 0:
-                   "vmovups @{col * 64}(%[dst_@{tmp}]), %%zmm@{row * col_split_num + col}\\n"
+                   "vmovups @{col * 64}(%[dst_@{src_addr}]), %%zmm@{row * col_split_num + col}\\n"
                @else:
-                   "vmovups @{col * 64}(%[dst_@{tmp}], %[dst_stride], @{row - tmp}), %%zmm@{row * col_split_num + col}\\n"
+                   "vmovups @{col * 64}(%[dst_@{src_addr}], %[dst_stride], @{row - src_addr}), %%zmm@{row * col_split_num + col}\\n"
         "jmp 2f\\n"
         "0:\\n"
         "cmpq $0, %[bias]\\n"
@@ -60,8 +62,9 @@ void nnacl_gemm_avx512_@{row_block}x@{col_block}_kernel_nhwc_fp32(float *dst, co
         @print("        : " + ", ".join(["\"%zmm" + str(i) + "\"" for i in range(0, row_block * col_block >>4)]), file=OUT_STREAM)
     );
     @for row in row_split_number:
-        const float *src_@{row} = src + @{row} * dst_stride;
+        const float *src_@{row} = src + @{row} * src_stride;
         @asm_flag_list.append("[src_" + str(row) + "] " +  "\"r\"(src_" + str(row) + ")");
+    size_t src_stride_t = src_stride << 2;
     asm volatile(
         "0:\\n"
         @loop_count = 8
@@ -69,63 +72,52 @@ void nnacl_gemm_avx512_@{row_block}x@{col_block}_kernel_nhwc_fp32(float *dst, co
             // block @{i}
             @for col in range(0, col_split_num):
                 "vmovups @{col * 64 + i * col_block * 4}(%[weight]), %%zmm@{31 - col}\\n"
-            @if col_split_num == 6:
-                @if row_block == 4:
-                    "vbroadcastss @{i * 4}(%[src_0]), %%zmm@{31 - col_split_num}\\n"
-                    "vbroadcastss @{i * 4}(%[src_0], %[src_stride], 1), %%zmm@{31 - col_split_num - 1}\\n"
+            @if row_block * col_split_num + row_block + col_split_num <= 32:
+                @for row in range(0, row_block):
+                    @src_addr = math.floor(row / src_addr_stride) * src_addr_stride
+                    @src_index = 31 - col_split_num - row
+                    @if row % src_addr_stride == 0:
+                        "vbroadcastss @{i * 4}(%[src_@{src_addr}]), %%zmm@{src_index}\\n"
+                    @else:
+                        "vbroadcastss @{i * 4}(%[src_@{src_addr}], %[src_stride], @{row - src_addr}), %%zmm@{src_index}\\n"
+                @for row in range(0, row_block):
+                    @src_index = 31 - col_split_num - row
                     @for col in range(0, col_split_num):
-                        "vfmadd231ps %%zmm@{31 - col}, %%zmm@{31 - col_split_num}, %%zmm@{0 * col_split_num + col}\\n"
-                        "vfmadd231ps %%zmm@{31 - col}, %%zmm@{31 - col_split_num - 1}, %%zmm@{1 * col_split_num + col}\\n"
-                    "vbroadcastss @{i * 4}(%[src_0], %[src_stride], 2), %%zmm@{31 - col_split_num}\\n"
-                    "vbroadcastss @{i * 4}(%[src_3]), %%zmm@{31 - col_split_num - 1}\\n"
-                    @for col in range(0, col_split_num):
-                        "vfmadd231ps %%zmm@{31 - col}, %%zmm@{31 - col_split_num}, %%zmm@{2 * col_split_num + col}\\n"
-                        "vfmadd231ps %%zmm@{31 - col}, %%zmm@{31 - col_split_num - 1}, %%zmm@{3 * col_split_num + col}\\n"
-                @else:
-                    @for row in range(0, row_block):
-                        @if row == 0:
-                            "vbroadcastss @{i * 4}(%[src_0]), %%zmm@{31 - col_split_num - row}\\n"
+                        @weight_index = 31 - col
+                        @dst_index = row * col_split_num + col
+                        "vfmadd231ps %%zmm@{weight_index}, %%zmm@{src_index}, %%zmm@{dst_index}\\n"
+            @else:
+                @row_stride = 32 - (row_stride_map[col_split_num] + 1) * col_split_num
+                @row_split_num = math.floor(row_block / row_stride)
+                @for row_index in range(0, row_split_num):
+                    @row_split_start = row_index * row_stride
+                    @for row in range(row_split_start, row_split_start + row_stride):
+                        @src_addr = math.floor(row / src_addr_stride) * src_addr_stride
+                        @src_index = 31 - col_split_num - (row - row_split_start)
+                        @if row % src_addr_stride == 0:
+                            "vbroadcastss @{i * 4}(%[src_@{src_addr}]), %%zmm@{src_index}\\n"
                         @else:
-                            "vbroadcastss @{i * 4}(%[src_0], %[src_stride], @{row}), %%zmm@{31 - col_split_num - row}\\n"
-                    @for row in range(0, row_block):
+                            "vbroadcastss @{i * 4}(%[src_@{src_addr}], %[src_stride], @{row - src_addr}), %%zmm@{src_index}\\n"
+                    @for row in range(0, row_stride):
+                        @src_index = 31 - col_split_num - row
                         @for col in range(0, col_split_num):
-                            "vfmadd231ps %%zmm@{31 - col}, %%zmm@{31 - col_split_num - row}, %%zmm@{row * col_split_num + col}\\n"
-            @elif col_split_num == 5:
-                @if row_block == 5:
-                    "vbroadcastss @{i * 4}(%[src_0]), %%zmm@{31 - col_split_num}\\n"
-                    "vbroadcastss @{i * 4}(%[src_0], %[src_stride], 1), %%zmm@{31 - col_split_num - 1}\\n"
+                            @weight_index = 31 - col
+                            @dst_index = (row_split_start + row) * col_split_num + col
+                            "vfmadd231ps %%zmm@{weight_index}, %%zmm@{src_index}, %%zmm@{dst_index}\\n"
+                @row_split_start = row_split_num * row_stride
+                @for row in range(row_split_start, row_block):
+                    @src_addr = math.floor(row / src_addr_stride) * src_addr_stride
+                    @src_index = 31 - col_split_num - (row - row_split_start)
+                    @if row % src_addr_stride == 0:
+                        "vbroadcastss @{i * 4}(%[src_@{src_addr}]), %%zmm@{src_index}\\n"
+                    @else:
+                        "vbroadcastss @{i * 4}(%[src_@{src_addr}], %[src_stride], @{row - src_addr}), %%zmm@{src_index}\\n"
+                @for row in range(row_split_start, row_block):
+                    @src_index = 31 - col_split_num - (row - row_split_start)
                     @for col in range(0, col_split_num):
-                        "vfmadd231ps %%zmm@{31 - col}, %%zmm@{31 - col_split_num}, %%zmm@{0 * col_split_num + col}\\n"
-                        "vfmadd231ps %%zmm@{31 - col}, %%zmm@{31 - col_split_num - 1}, %%zmm@{1 * col_split_num + col}\\n"
-                    "vbroadcastss @{i * 4}(%[src_0], %[src_stride], 2), %%zmm@{31 - col_split_num}\\n"
-                    "vbroadcastss @{i * 4}(%[src_3]), %%zmm@{31 - col_split_num - 1}\\n"
-                    @for col in range(0, col_split_num):
-                        "vfmadd231ps %%zmm@{31 - col}, %%zmm@{31 - col_split_num}, %%zmm@{2 * col_split_num + col}\\n"
-                        "vfmadd231ps %%zmm@{31 - col}, %%zmm@{31 - col_split_num - 1}, %%zmm@{3 * col_split_num + col}\\n"
-                    "vbroadcastss @{i * 4}(%[src_3], %[src_stride], 1), %%zmm@{31 - col_split_num}\\n"
-                    @for col in range(0, col_split_num):
-                        "vfmadd231ps %%zmm@{31 - col}, %%zmm@{31 - col_split_num}, %%zmm@{2 * col_split_num + col}\\n"
-                @else:
-                    @for row in range(0, row_block):
-                        @if row == 0:
-                            "vbroadcastss @{i * 4}(%[src_0]), %%zmm@{31 - col_split_num - row}\\n"
-                        @else:
-                            "vbroadcastss @{i * 4}(%[src_0], %[src_stride], @{row}), %%zmm@{31 - col_split_num - row}\\n"
-                    @for row in range(0, row_block):
-                        @for col in range(0, col_split_num):
-                            "vfmadd231ps %%zmm@{31 - col}, %%zmm@{31 - col_split_num - row}, %%zmm@{row * col_split_num + col}\\n"
-            @elif col_split_num == 2:
-                @for row in range(int(row_block / 6)):
-                    @for j in range(0, 6):
-                        @tmp = int(j / 3) * 3
-                        @if j % 3 == 0:
-                            "vbroadcastss @{i * 4}(%[src_@{row * 6 + tmp}]), %%zmm@{31 - col_split_num - j}\\n"
-                        @else:
-                            "vbroadcastss @{i * 4}(%[src_@{row * 6 + tmp}], %[src_stride], @{j - tmp}), %%zmm@{31 - col_split_num - j}\\n"
-                    @for col in range(0, col_split_num):
-                        @for j in range(0, 6):
-                            "fmadd231ps %%zmm@{31 - col}, %%zmm@{31 - col_split_num - j}, %%zmm@{(row * 6 + j) * col_split_num + col}\\n"
-
+                        @weight_index = 31 - col
+                        @dst_index = row * col_split_num + col
+                        "vfmadd231ps %%zmm@{weight_index}, %%zmm@{src_index}, %%zmm@{dst_index}\\n"
         "dec %[deep]\\n"
         "add $@{col_block * 4 * 8}, %[weight]\\n"
         "add $@{loop_count * 4}, %[src_0]\\n"
@@ -154,12 +146,12 @@ void nnacl_gemm_avx512_@{row_block}x@{col_block}_kernel_nhwc_fp32(float *dst, co
                 "vminps %%zmm@{row + col * row_block}, %%zmm30, %%zmm@{row + col * row_block}\\n"
         "3:\\n"
         @for row in range(0, row_block):
-            @tmp = int(row / 3) * 3
+            @src_addr = int(row / 3) * 3
             @for col in range(0, col_split_num):
                @if row % 3 == 0:
-                   "vmovups %%zmm@{row * col_split_num + col}, @{col * 64}(%[dst_@{tmp}])\\n"
+                   "vmovups %%zmm@{row * col_split_num + col}, @{col * 64}(%[dst_@{src_addr}])\\n"
                @else:
-                   "vmovups %%zmm@{row * col_split_num + col}, @{col * 64}(%[dst_@{tmp}], %[dst_stride], @{row - tmp}),\\n"
+                   "vmovups %%zmm@{row * col_split_num + col}, @{col * 64}(%[dst_@{src_addr}], %[dst_stride], @{row - src_addr})\\n"
         :
         @list = ["[src_0] \"r\"(src)", "[src_stride] \"r\"(src_stride_t)", "[weight] \"r\"(weight)", "[deep] \"r\"(deep_t)", "[inc_flag] \"r\"(inc_flag)", "[act_flag] \"r\"(act_flag)", "[dst_0] \"r\"(dst)", "[dst_stride] \"r\"(dst_stride_t)"]
         @list.extend(asm_flag_list)

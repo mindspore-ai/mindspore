@@ -23,7 +23,6 @@ void nnacl_gemm_avx512_4x80_kernel_nhwc_fp32(float *dst, const float *src, const
   const float *dst_3 = dst + 3 * dst_stride;
   size_t deep_t = deep >> 3;
   size_t dst_stride_t = dst_stride << 2;
-  size_t src_stride_t = src_stride << 2;
   asm volatile(
     // inc in deep
     "and $0x1, %[inc_flag]\n"
@@ -100,7 +99,8 @@ void nnacl_gemm_avx512_4x80_kernel_nhwc_fp32(float *dst, const float *src, const
       [ dst_3 ] "r"(dst_3)
     : "%zmm0", "%zmm1", "%zmm2", "%zmm3", "%zmm4", "%zmm5", "%zmm6", "%zmm7", "%zmm8", "%zmm9", "%zmm10", "%zmm11",
       "%zmm12", "%zmm13", "%zmm14", "%zmm15", "%zmm16", "%zmm17", "%zmm18", "%zmm19");
-  const float *src_3 = src + 3 * dst_stride;
+  const float *src_3 = src + 3 * src_stride;
+  size_t src_stride_t = src_stride << 2;
   asm volatile(
     "0:\n"
     // block 0
@@ -112,7 +112,7 @@ void nnacl_gemm_avx512_4x80_kernel_nhwc_fp32(float *dst, const float *src, const
     "vbroadcastss 0(%[src_0]), %%zmm26\n"
     "vbroadcastss 0(%[src_0], %[src_stride], 1), %%zmm25\n"
     "vbroadcastss 0(%[src_0], %[src_stride], 2), %%zmm24\n"
-    "vbroadcastss 0(%[src_0], %[src_stride], 3), %%zmm23\n"
+    "vbroadcastss 0(%[src_3]), %%zmm23\n"
     "vfmadd231ps %%zmm31, %%zmm26, %%zmm0\n"
     "vfmadd231ps %%zmm30, %%zmm26, %%zmm1\n"
     "vfmadd231ps %%zmm29, %%zmm26, %%zmm2\n"
@@ -142,7 +142,7 @@ void nnacl_gemm_avx512_4x80_kernel_nhwc_fp32(float *dst, const float *src, const
     "vbroadcastss 4(%[src_0]), %%zmm26\n"
     "vbroadcastss 4(%[src_0], %[src_stride], 1), %%zmm25\n"
     "vbroadcastss 4(%[src_0], %[src_stride], 2), %%zmm24\n"
-    "vbroadcastss 4(%[src_0], %[src_stride], 3), %%zmm23\n"
+    "vbroadcastss 4(%[src_3]), %%zmm23\n"
     "vfmadd231ps %%zmm31, %%zmm26, %%zmm0\n"
     "vfmadd231ps %%zmm30, %%zmm26, %%zmm1\n"
     "vfmadd231ps %%zmm29, %%zmm26, %%zmm2\n"
@@ -172,7 +172,7 @@ void nnacl_gemm_avx512_4x80_kernel_nhwc_fp32(float *dst, const float *src, const
     "vbroadcastss 8(%[src_0]), %%zmm26\n"
     "vbroadcastss 8(%[src_0], %[src_stride], 1), %%zmm25\n"
     "vbroadcastss 8(%[src_0], %[src_stride], 2), %%zmm24\n"
-    "vbroadcastss 8(%[src_0], %[src_stride], 3), %%zmm23\n"
+    "vbroadcastss 8(%[src_3]), %%zmm23\n"
     "vfmadd231ps %%zmm31, %%zmm26, %%zmm0\n"
     "vfmadd231ps %%zmm30, %%zmm26, %%zmm1\n"
     "vfmadd231ps %%zmm29, %%zmm26, %%zmm2\n"
@@ -202,7 +202,7 @@ void nnacl_gemm_avx512_4x80_kernel_nhwc_fp32(float *dst, const float *src, const
     "vbroadcastss 12(%[src_0]), %%zmm26\n"
     "vbroadcastss 12(%[src_0], %[src_stride], 1), %%zmm25\n"
     "vbroadcastss 12(%[src_0], %[src_stride], 2), %%zmm24\n"
-    "vbroadcastss 12(%[src_0], %[src_stride], 3), %%zmm23\n"
+    "vbroadcastss 12(%[src_3]), %%zmm23\n"
     "vfmadd231ps %%zmm31, %%zmm26, %%zmm0\n"
     "vfmadd231ps %%zmm30, %%zmm26, %%zmm1\n"
     "vfmadd231ps %%zmm29, %%zmm26, %%zmm2\n"
@@ -232,7 +232,7 @@ void nnacl_gemm_avx512_4x80_kernel_nhwc_fp32(float *dst, const float *src, const
     "vbroadcastss 16(%[src_0]), %%zmm26\n"
     "vbroadcastss 16(%[src_0], %[src_stride], 1), %%zmm25\n"
     "vbroadcastss 16(%[src_0], %[src_stride], 2), %%zmm24\n"
-    "vbroadcastss 16(%[src_0], %[src_stride], 3), %%zmm23\n"
+    "vbroadcastss 16(%[src_3]), %%zmm23\n"
     "vfmadd231ps %%zmm31, %%zmm26, %%zmm0\n"
     "vfmadd231ps %%zmm30, %%zmm26, %%zmm1\n"
     "vfmadd231ps %%zmm29, %%zmm26, %%zmm2\n"
@@ -262,7 +262,7 @@ void nnacl_gemm_avx512_4x80_kernel_nhwc_fp32(float *dst, const float *src, const
     "vbroadcastss 20(%[src_0]), %%zmm26\n"
     "vbroadcastss 20(%[src_0], %[src_stride], 1), %%zmm25\n"
     "vbroadcastss 20(%[src_0], %[src_stride], 2), %%zmm24\n"
-    "vbroadcastss 20(%[src_0], %[src_stride], 3), %%zmm23\n"
+    "vbroadcastss 20(%[src_3]), %%zmm23\n"
     "vfmadd231ps %%zmm31, %%zmm26, %%zmm0\n"
     "vfmadd231ps %%zmm30, %%zmm26, %%zmm1\n"
     "vfmadd231ps %%zmm29, %%zmm26, %%zmm2\n"
@@ -292,7 +292,7 @@ void nnacl_gemm_avx512_4x80_kernel_nhwc_fp32(float *dst, const float *src, const
     "vbroadcastss 24(%[src_0]), %%zmm26\n"
     "vbroadcastss 24(%[src_0], %[src_stride], 1), %%zmm25\n"
     "vbroadcastss 24(%[src_0], %[src_stride], 2), %%zmm24\n"
-    "vbroadcastss 24(%[src_0], %[src_stride], 3), %%zmm23\n"
+    "vbroadcastss 24(%[src_3]), %%zmm23\n"
     "vfmadd231ps %%zmm31, %%zmm26, %%zmm0\n"
     "vfmadd231ps %%zmm30, %%zmm26, %%zmm1\n"
     "vfmadd231ps %%zmm29, %%zmm26, %%zmm2\n"
@@ -322,7 +322,7 @@ void nnacl_gemm_avx512_4x80_kernel_nhwc_fp32(float *dst, const float *src, const
     "vbroadcastss 28(%[src_0]), %%zmm26\n"
     "vbroadcastss 28(%[src_0], %[src_stride], 1), %%zmm25\n"
     "vbroadcastss 28(%[src_0], %[src_stride], 2), %%zmm24\n"
-    "vbroadcastss 28(%[src_0], %[src_stride], 3), %%zmm23\n"
+    "vbroadcastss 28(%[src_3]), %%zmm23\n"
     "vfmadd231ps %%zmm31, %%zmm26, %%zmm0\n"
     "vfmadd231ps %%zmm30, %%zmm26, %%zmm1\n"
     "vfmadd231ps %%zmm29, %%zmm26, %%zmm2\n"
@@ -343,7 +343,6 @@ void nnacl_gemm_avx512_4x80_kernel_nhwc_fp32(float *dst, const float *src, const
     "vfmadd231ps %%zmm29, %%zmm23, %%zmm17\n"
     "vfmadd231ps %%zmm28, %%zmm23, %%zmm18\n"
     "vfmadd231ps %%zmm27, %%zmm23, %%zmm19\n"
-
     "dec %[deep]\n"
     "add $2560, %[weight]\n"
     "add $32, %[src_0]\n"
@@ -409,16 +408,16 @@ void nnacl_gemm_avx512_4x80_kernel_nhwc_fp32(float *dst, const float *src, const
     "vmovups %%zmm2, 128(%[dst_0])\n"
     "vmovups %%zmm3, 192(%[dst_0])\n"
     "vmovups %%zmm4, 256(%[dst_0])\n"
-    "vmovups %%zmm5, 0(%[dst_0], %[dst_stride], 1),\n"
-    "vmovups %%zmm6, 64(%[dst_0], %[dst_stride], 1),\n"
-    "vmovups %%zmm7, 128(%[dst_0], %[dst_stride], 1),\n"
-    "vmovups %%zmm8, 192(%[dst_0], %[dst_stride], 1),\n"
-    "vmovups %%zmm9, 256(%[dst_0], %[dst_stride], 1),\n"
-    "vmovups %%zmm10, 0(%[dst_0], %[dst_stride], 2),\n"
-    "vmovups %%zmm11, 64(%[dst_0], %[dst_stride], 2),\n"
-    "vmovups %%zmm12, 128(%[dst_0], %[dst_stride], 2),\n"
-    "vmovups %%zmm13, 192(%[dst_0], %[dst_stride], 2),\n"
-    "vmovups %%zmm14, 256(%[dst_0], %[dst_stride], 2),\n"
+    "vmovups %%zmm5, 0(%[dst_0], %[dst_stride], 1)\n"
+    "vmovups %%zmm6, 64(%[dst_0], %[dst_stride], 1)\n"
+    "vmovups %%zmm7, 128(%[dst_0], %[dst_stride], 1)\n"
+    "vmovups %%zmm8, 192(%[dst_0], %[dst_stride], 1)\n"
+    "vmovups %%zmm9, 256(%[dst_0], %[dst_stride], 1)\n"
+    "vmovups %%zmm10, 0(%[dst_0], %[dst_stride], 2)\n"
+    "vmovups %%zmm11, 64(%[dst_0], %[dst_stride], 2)\n"
+    "vmovups %%zmm12, 128(%[dst_0], %[dst_stride], 2)\n"
+    "vmovups %%zmm13, 192(%[dst_0], %[dst_stride], 2)\n"
+    "vmovups %%zmm14, 256(%[dst_0], %[dst_stride], 2)\n"
     "vmovups %%zmm15, 0(%[dst_3])\n"
     "vmovups %%zmm16, 64(%[dst_3])\n"
     "vmovups %%zmm17, 128(%[dst_3])\n"

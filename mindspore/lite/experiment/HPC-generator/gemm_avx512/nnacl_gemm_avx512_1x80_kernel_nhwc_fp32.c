@@ -22,7 +22,6 @@ void nnacl_gemm_avx512_1x80_kernel_nhwc_fp32(float *dst, const float *src, const
                                              const size_t inc_flag) {
   size_t deep_t = deep >> 3;
   size_t dst_stride_t = dst_stride << 2;
-  size_t src_stride_t = src_stride << 2;
   asm volatile(
     // inc in deep
     "and $0x1, %[inc_flag]\n"
@@ -52,6 +51,7 @@ void nnacl_gemm_avx512_1x80_kernel_nhwc_fp32(float *dst, const float *src, const
     :
     : [ dst_0 ] "r"(dst), [ bias ] "r"(bias), [ dst_stride ] "r"(dst_stride_t), [ inc_flag ] "r"(inc_flag)
     : "%zmm0", "%zmm1", "%zmm2", "%zmm3", "%zmm4");
+  size_t src_stride_t = src_stride << 2;
   asm volatile(
     "0:\n"
     // block 0
@@ -150,7 +150,6 @@ void nnacl_gemm_avx512_1x80_kernel_nhwc_fp32(float *dst, const float *src, const
     "vfmadd231ps %%zmm29, %%zmm26, %%zmm2\n"
     "vfmadd231ps %%zmm28, %%zmm26, %%zmm3\n"
     "vfmadd231ps %%zmm27, %%zmm26, %%zmm4\n"
-
     "dec %[deep]\n"
     "add $2560, %[weight]\n"
     "add $32, %[src_0]\n"
