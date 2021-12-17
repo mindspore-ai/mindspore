@@ -38,7 +38,7 @@ import mindspore
 import mindspore.nn as nn
 from mindspore import context
 from mindspore import log as logger
-from mindspore._checkparam import check_input_data, Validator
+from mindspore._checkparam import check_input_data, check_input_dataset, Validator
 from mindspore.common import dtype as mstype
 from mindspore.common.api import _cell_graph_executor as _executor
 from mindspore.common.initializer import initializer
@@ -733,7 +733,11 @@ def export(net, *inputs, file_name, file_format='AIR', **kwargs):
 
     Args:
         net (Cell): MindSpore network.
-        inputs (Tensor): Inputs of the `net`, if the network has multiple inputs, incoming tuple(Tensor).
+        inputs (Union[Tensor, tuple(Tensor), Dataset]): While the input type is Tensor, it represents the inputs
+             of the `net`, if the network has multiple inputs, incoming tuple(Tensor). While its type is Dataset,
+             it represents the preprocess behavior of the `net`, data preprocess operations will be serialized.
+             In second situation, you should adjust batch size of dataset script manually which will impact on
+             the batch size of 'net' input. Only supports parse "image" column from dataset currently.
         file_name (str): File name of the model to be exported.
         file_format (str): MindSpore currently supports 'AIR', 'ONNX' and 'MINDIR' format for exported model.
             Default: 'AIR'.
@@ -754,7 +758,6 @@ def export(net, *inputs, file_name, file_format='AIR', **kwargs):
             - enc_key (byte): Byte type key used for encryption. The valid length is 16, 24, or 32.
             - enc_mode (str): Specifies the encryption mode, to take effect when enc_key is set.
               Option: 'AES-GCM' | 'AES-CBC'. Default: 'AES-GCM'.
-            - dataset (Dataset): Specifies the preprocess methods of network.
 
     Examples:
         >>> import numpy as np
@@ -765,7 +768,24 @@ def export(net, *inputs, file_name, file_format='AIR', **kwargs):
         >>> export(net, Tensor(input_tensor), file_name='lenet', file_format='MINDIR')
     """
     logger.info("exporting model file:%s format:%s.", file_name, file_format)
-    check_input_data(*inputs, data_class=Tensor)
+    if check_input_dataset(*inputs, dataset_type=mindspore.dataset.Dataset):
+        if len(inputs) != 1:
+            raise RuntimeError(f"You can only serialize one dataset into MindIR, got " + str(len(inputs)) + " datasets")
+        shapes, types, columns = inputs[0].output_shapes(), inputs[0].output_types(), inputs[0].get_col_names()
+        kwargs['dataset'] = inputs[0]
+        only_support_col = "image"
+
+        inputs = list()
+        for c, s, t in zip(columns, shapes, types):
+            if only_support_col != c:
+                continue
+            inputs.append(Tensor(np.random.uniform(-1.0, 1.0, size=s).astype(t)))
+        if not inputs:
+            raise RuntimeError(f"Only supports parse \"image\" column from dataset now, given dataset has columns: "
+                               + str(columns))
+        inputs = tuple(inputs)
+    else:
+        check_input_data(*inputs, data_class=Tensor)
     Validator.check_file_name_by_regular(file_name)
     file_name = os.path.realpath(file_name)
     net = _quant_export(net, *inputs, file_format=file_format, **kwargs)
@@ -790,8 +810,6 @@ def _export(net, file_name, file_format, *inputs, **kwargs):
     """
     logger.info("exporting model file:%s format:%s.", file_name, file_format)
     check_input_data(*inputs, data_class=Tensor)
-    if 'dataset' in kwargs.keys() and kwargs['dataset'] is not None:
-        check_input_data(kwargs['dataset'], data_class=mindspore.dataset.Dataset)
 
     if file_format == 'GEIR':
         logger.warning(f"Format 'GEIR' is deprecated, it would be removed in future release, use 'AIR' instead.")
@@ -966,8 +984,9 @@ def _save_mindir(net, file_name, *inputs, **kwargs):
     model.ParseFromString(mindir_stream)
 
     if 'dataset' in kwargs.keys() and kwargs['dataset'] is not None:
+        check_input_data(kwargs['dataset'], data_class=mindspore.dataset.Dataset)
         dataset = kwargs['dataset']
-        model.preprocessor = json.dumps(dataset.to_json(), indent=2)
+        _save_dataset_to_mindir(model, dataset)
 
     save_together = _save_together(net_dict, model)
     is_encrypt = lambda: 'enc_key' in kwargs.keys() and 'enc_mode' in kwargs.keys()
@@ -1017,6 +1036,27 @@ def _save_together(net_dict, model):
         if data_total > TOTAL_SAVE:
             return False
     return True
+
+
+def _save_dataset_to_mindir(model, dataset):
+    """Save dataset preprocess operations into mindir model."""
+    dataset_json = dataset.to_json()
+    reverse_dataset = []
+    while dataset_json:
+        reverse_dataset = [dataset_json] + reverse_dataset
+        if len(dataset_json['children']) > 1:
+            logger.warning("Need to support dataset_node with more than one child, using child 0 as default.")
+        dataset_json = dataset_json['children'][0] if dataset_json['children'] else []
+
+    for op in reverse_dataset:
+        if op['op_type'] == 'Map':
+            model.preprocessor.op.add()
+            model.preprocessor.op[-1].input_columns = json.dumps(op['input_columns'])
+            model.preprocessor.op[-1].output_columns = json.dumps(op['output_columns'])
+            model.preprocessor.op[-1].project_columns = json.dumps(op['project_columns'])
+            model.preprocessor.op[-1].op_type = json.dumps(op['op_type'])
+            model.preprocessor.op[-1].operations = json.dumps(op['operations'])
+            model.preprocessor.op[-1].offload = op['offload'] if 'offload' in op.keys() else False
 
 
 def quant_mode_manage(func):

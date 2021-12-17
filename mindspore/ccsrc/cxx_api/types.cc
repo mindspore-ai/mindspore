@@ -186,55 +186,72 @@ MSTensor *MSTensor::CreateDevTensor(const std::vector<char> &name, enum DataType
   }
 }
 
-MSTensor *MSTensor::CreateImageTensor(const std::vector<char> &image_file) noexcept {
-  std::string image_file_str = CharToString(image_file);
+MSTensor *MSTensor::CreateTensorFromFile(const std::vector<char> &file, enum DataType type,
+                                         const std::vector<int64_t> &shape) noexcept {
+  std::string file_str = CharToString(file);
 
   try {
-    auto realpath = FileUtils::GetRealPath(image_file_str.c_str());
+    auto realpath = FileUtils::GetRealPath(file_str.c_str());
     if (!realpath.has_value()) {
-      MS_LOG(ERROR) << "Get real path failed, path=" << image_file_str;
+      MS_LOG(ERROR) << "Get real path failed, path=" << file_str;
       return nullptr;
     }
 
     // Read image file
-    auto file = realpath.value();
-    if (file.empty()) {
-      MS_LOG(ERROR) << "can not find any input file.";
+    auto file_path = realpath.value();
+    if (file_path.empty()) {
+      MS_LOG(ERROR) << "Can not find any input file.";
       return nullptr;
     }
 
-    std::ifstream ifs(file, std::ios::in | std::ios::binary);
+    std::ifstream ifs(file_path, std::ios::in | std::ios::binary);
     if (!ifs.good()) {
-      MS_LOG(ERROR) << "File: " + file + " does not exist.";
+      MS_LOG(ERROR) << "File: " + file_path + " does not exist.";
       return nullptr;
     }
     if (!ifs.is_open()) {
-      MS_LOG(ERROR) << "File: " + file + " open failed.";
+      MS_LOG(ERROR) << "File: " + file_path + " open failed.";
       return nullptr;
     }
 
     auto &io_seekg1 = ifs.seekg(0, std::ios::end);
     if (!io_seekg1.good() || io_seekg1.fail() || io_seekg1.bad()) {
       ifs.close();
-      MS_LOG(ERROR) << "Failed to seekg file: " + file;
+      MS_LOG(ERROR) << "Failed to seekg file: " + file_path;
       return nullptr;
     }
 
     size_t size = static_cast<size_t>(ifs.tellg());
-    MSTensor *ret =
-      new MSTensor(file, mindspore::DataType::kNumberTypeUInt8, {static_cast<int64_t>(size)}, nullptr, size);
+    std::vector<int64_t> tensor_shape;
+    tensor_shape = shape.empty() ? std::vector<int64_t>{static_cast<int64_t>(size)} : shape;
+    MSTensor *ret = new MSTensor(file_path, type, tensor_shape, nullptr, size);
 
     auto &io_seekg2 = ifs.seekg(0, std::ios::beg);
     if (!io_seekg2.good() || io_seekg2.fail() || io_seekg2.bad()) {
       ifs.close();
-      MS_LOG(ERROR) << "Failed to seekg file: " + file;
+      MS_LOG(ERROR) << "Failed to seekg file: " + file_path;
+      return nullptr;
+    }
+
+    std::map<enum DataType, size_t> TypeByte = {
+      {DataType::kTypeUnknown, 0},       {DataType::kObjectTypeString, 0},  {DataType::kNumberTypeBool, 1},
+      {DataType::kNumberTypeInt8, 1},    {DataType::kNumberTypeInt16, 2},   {DataType::kNumberTypeInt32, 4},
+      {DataType::kNumberTypeInt64, 8},   {DataType::kNumberTypeUInt8, 1},   {DataType::kNumberTypeUInt16, 2},
+      {DataType::kNumberTypeUInt32, 4},  {DataType::kNumberTypeUInt64, 8},  {DataType::kNumberTypeFloat16, 2},
+      {DataType::kNumberTypeFloat32, 4}, {DataType::kNumberTypeFloat64, 8},
+    };
+
+    if (ret->ElementNum() * TypeByte[type] != size) {
+      ifs.close();
+      MS_LOG(ERROR) << "Tensor data size: " << ret->ElementNum() * TypeByte[type]
+                    << " not match input data length: " << size;
       return nullptr;
     }
 
     auto &io_read = ifs.read(reinterpret_cast<char *>(ret->MutableData()), static_cast<std::streamsize>(size));
     if (!io_read.good() || io_read.fail() || io_read.bad()) {
       ifs.close();
-      MS_LOG(ERROR) << "Failed to read file: " + file;
+      MS_LOG(ERROR) << "Failed to read file: " + file_path;
       return nullptr;
     }
     ifs.close();

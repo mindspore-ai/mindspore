@@ -179,11 +179,10 @@ class Serdes {
   static Status ConstructTensorOps(nlohmann::json json_obj, std::vector<std::shared_ptr<TensorOperation>> *result);
 
   /// \brief helper function to load tensor operations from dataset JSON and construct Execute object.
-  /// \param[in] dataset_json JSON string of dataset.
-  /// \param[in] process_column Select all map operations which process this column.
+  /// \param[in] map_json_string JSON string of dataset.
   /// \param[out] data_graph Execute object contains tensor operations of map.
   /// \return Status The status code returned.
-  static Status ParseMindIRPreprocess(const std::string &dataset_json, const std::string &process_column,
+  static Status ParseMindIRPreprocess(const std::vector<std::string> &map_json_string,
                                       std::vector<std::shared_ptr<mindspore::dataset::Execute>> *data_graph);
 
  protected:

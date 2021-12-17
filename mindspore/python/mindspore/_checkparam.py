@@ -921,6 +921,14 @@ def check_input_data(*data, data_class):
                                  f'but got part data type is {item if item is None else type(item).__name__}.')
 
 
+def check_input_dataset(*dataset, dataset_type):
+    """Input dataset check."""
+    for item in dataset:
+        if not isinstance(item, dataset_type):
+            return False
+    return True
+
+
 def check_output_data(data):
     """Output data check."""
     if data is None:

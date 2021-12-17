@@ -92,7 +92,7 @@ class MS_API Model {
   /// \param[in] after CallBack after predict.
   ///
   /// \return Status.
-  Status PredictWithPreprocess(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
+  Status PredictWithPreprocess(const std::vector<std::vector<MSTensor>> &inputs, std::vector<MSTensor> *outputs,
                                const MSKernelCallBack &before = nullptr, const MSKernelCallBack &after = nullptr);
 
   /// \brief Apply data preprocess if it exits in model.
@@ -101,7 +101,7 @@ class MS_API Model {
   /// \param[out] outputs Which is a pointer to a vector. The model outputs are filled in the container in sequence.
   ///
   /// \return Status.
-  Status Preprocess(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs);
+  Status Preprocess(const std::vector<std::vector<MSTensor>> &inputs, std::vector<MSTensor> *outputs);
 
   /// \brief Check if data preprocess exists in model.
   /// \return true if data preprocess exists.
