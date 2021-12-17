@@ -37,7 +37,7 @@ void TopKCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const st
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', address size of 'input_x' error.";
   }
   if (inputs[1]->size != sizeof(int)) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the type of 'k' should be int.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'k' should be int, but got " << inputs[1];
   }
   auto input = reinterpret_cast<T *>(inputs[0]->addr);
   int k = reinterpret_cast<int *>(inputs[1]->addr)[0];

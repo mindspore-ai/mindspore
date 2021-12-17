@@ -167,24 +167,23 @@ void FusedCastAdamWeightDecayCPUKernel::CheckParam(const std::vector<kernel::Add
                       << ", but got " << inputs[GRAD]->size;
   }
   if (inputs[LR]->size != kSizeFloat32) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'lr' should be " << kSizeFloat32
-                      << ", but got " << inputs[LR]->size;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the type of 'lr' should be float, but got 'lr': " << inputs[LR];
   }
   if (inputs[BETA1]->size != kSizeFloat32) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'beta1' should be " << kSizeFloat32
-                      << ", but got " << inputs[BETA1]->size;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the type of 'beta1' should be float, but got 'beta1': " << inputs[BETA1];
   }
   if (inputs[BETA2]->size != kSizeFloat32) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'beta2' should be " << kSizeFloat32
-                      << ", but got " << inputs[BETA2]->size;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the type of 'beta2' should be float, but got 'beta2': " << inputs[BETA2];
   }
   if (inputs[EPSILON]->size != kSizeFloat32) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'epsilon' should be " << kSizeFloat32
-                      << ", but got " << inputs[EPSILON]->size;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the type of 'epsilon' should be float, but got 'epsilon': " << inputs[EPSILON];
   }
   if (inputs[DECAY]->size != kSizeFloat32) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'decay' should be " << kSizeFloat32
-                      << ", but got " << inputs[DECAY]->size;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the type of 'decay' should be float, but got 'decay': " << inputs[DECAY];
   }
 }
 

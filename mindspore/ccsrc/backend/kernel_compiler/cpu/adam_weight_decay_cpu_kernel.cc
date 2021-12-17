@@ -101,45 +101,38 @@ bool AdamWeightDecayCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inp
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kAdamWeightDecayOutputsNum, kernel_name_);
   if (inputs[VAR]->size != inputs[M]->size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the type and shape of input data 'm' and 'var' should be same, "
-                         "but got the memory size of 'm': "
+                      << "', the dtype and shape of 'm' and 'var' should be same, but got the memory size of 'm': "
                       << inputs[M]->size << " and 'var': " << inputs[VAR]->size;
   }
   if (inputs[VAR]->size != inputs[V]->size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the type and shape of input data 'v' and 'var' should be same, "
-                         "but got the memory size of 'v': "
+                      << "', the dtype and shape of 'v' and 'var' should be same, but got the memory size of 'v': "
                       << inputs[V]->size << " and 'var': " << inputs[VAR]->size;
   }
   if (inputs[VAR]->size != inputs[GRAD]->size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the type and shape of input data 'grad' and 'var' should be "
-                         "same, but got the memory size of 'grad': "
+                      << "', the dtype and shape of 'grad' and 'var' should be same, "
+                         "but got the memory size of 'grad': "
                       << inputs[GRAD]->size << " and 'var': " << inputs[VAR]->size;
   }
   if (inputs[LR]->size != kSizeFloat32) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the attribute 'lr' should be float, but got the memory size of 'lr': " << inputs[LR]->size;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'lr' should be float, but got 'lr': " << inputs[LR];
   }
   if (inputs[BETA1]->size != kSizeFloat32) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the attribute 'beta1' should be float, but got the memory size of 'beta1': "
-                      << inputs[BETA1]->size;
+                      << "', the 'beta1' should be float, but got 'beta1': " << inputs[BETA1];
   }
   if (inputs[BETA2]->size != kSizeFloat32) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the attribute 'beta2' should be float, but got the memory size of 'beta2': "
-                      << inputs[BETA2]->size;
+                      << "', the 'beta2' should be float, but got 'beta2': " << inputs[BETA2];
   }
   if (inputs[EPSILON]->size != kSizeFloat32) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the attribute 'epsilon' should be float, but got the memory size of 'epsilon': "
-                      << inputs[EPSILON]->size;
+                      << "', the 'epsilon' should be float, but got 'epsilon': " << inputs[EPSILON];
   }
   if (inputs[DECAY]->size != kSizeFloat32) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the attribute 'decay' should be float, but got the memory size of 'decay': "
-                      << inputs[DECAY]->size;
+                      << "', the 'decay' should be float, but got 'decay': " << inputs[DECAY];
   }
   if (dtype_ == kNumberTypeFloat32) {
     LaunchAdamWeightDecayNnacl(inputs, outputs);

@@ -66,10 +66,7 @@ bool SortCpuKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const std::
                       << " output(s).";
   }
   if (inputs[0]->size != axisIterator_.OuterSize() * axisIterator_.AxisSize() * axisIterator_.InnerSize() * sizeof(T)) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the memory size of inputs should satisfy the equivalence "
-                         "relationship: 'inputs[0]->size != axisIterator_.OuterSize() * axisIterator_.AxisSize() * "
-                         "axisIterator_.InnerSize() * sizeof(T)'";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the memory size of inputs error.";
   }
   auto input = reinterpret_cast<T *>(inputs[0]->addr);
   auto ids_addr = reinterpret_cast<size_t *>(workspace[0]->addr);
