@@ -27,7 +27,7 @@ from ..functional import broadcast_gradient_args, reduced_shape, tuple_div
 from .grad_base import bprop_getters
 from ..primitive import constexpr
 from ..composite.multitype_ops import _constexpr_utils as const_utils
-from ..operations._inner_ops import DynamicStitch, DynamicBroadcastGradientArgs
+from ..operations._inner_ops import DynamicStitch, DynamicBroadcastGradientArgs, DynamicBroadcastTo
 from ...common import Tensor
 from .._utils.utils import is_shape_unknown
 
@@ -120,10 +120,11 @@ def _sum_grad(x, axis, dout):
     if is_shape_unknown(input_shape):
         input_shape = dyn_shape_op(x)
         output_shape_kept_dims = _dyn_reduced_shape(input_shape, axis)
-        tile_scaling = real_div(input_shape, output_shape_kept_dims)
-    else:
-        output_shape_kept_dims = reduced_shape(input_shape, axis)
-        tile_scaling = tuple_div(input_shape, output_shape_kept_dims)
+        grad = reshape(dout, output_shape_kept_dims)
+        return DynamicBroadcastTo()(grad, input_shape)
+
+    output_shape_kept_dims = reduced_shape(input_shape, axis)
+    tile_scaling = tuple_div(input_shape, output_shape_kept_dims)
     grad = reshape(dout, output_shape_kept_dims)
     return tile(grad, tile_scaling)
 
