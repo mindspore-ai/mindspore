@@ -23,6 +23,7 @@
 #include "include/api/data_type.h"
 #include "include/api/types.h"
 #include "include/api/kernel.h"
+#include "include/api/delegate.h"
 #include "src/lite_model.h"
 
 namespace mindspore {
@@ -31,6 +32,7 @@ class HostCacheModel {
  public:
   HostCacheModel() {}
   Status LoadCache(const std::string &model_path);
+  Status LoadCache(DelegateModel<schema::Primitive> *model);
   bool CheckIsCacheKernel(kernel::Kernel *kernel);
   MSTensor GetHostCacheTensor(kernel::Kernel *kernel);
 

@@ -29,11 +29,13 @@ namespace mindspore {
 namespace cache {
 class EmbeddingCache {
  public:
-  EmbeddingCache(size_t vocab_size, size_t host_cache_size, size_t device_cache_size, size_t embedding_size,
-                 size_t batch_elements, DataType data_type, void *host_addr, int rank_id, int rank_group_size)
+  EmbeddingCache(size_t vocab_size, size_t host_cache_size, size_t device_cache_size, size_t device_start_index,
+                 size_t embedding_size, size_t batch_elements, DataType data_type, void *host_addr, int rank_id,
+                 int rank_group_size)
       : vocab_size_(vocab_size),
         host_cache_size_(host_cache_size),
         device_cache_size_(device_cache_size),
+        device_start_index_(device_start_index),
         embedding_size_(embedding_size),
         batch_elements_(batch_elements),
         data_type_(data_type),
@@ -51,7 +53,6 @@ class EmbeddingCache {
       default:
         sizeof_data_type_ = sizeof(float);
     }
-    device_start_index_ = device_cache_size_ * rank_id_;
     MS_LOG(INFO) << "rank_group_size_ num:" << rank_group_size_ << ", rank id:" << rank_id_
                  << ", vocab_size_:" << vocab_size_ << ", host_cache_size_:" << host_cache_size_
                  << ", device_cache_size_:" << device_cache_size_ << ", embedding_size_:" << embedding_size_

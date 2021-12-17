@@ -35,12 +35,15 @@ class EmbeddingCacheManager {
     rank_id_ = lite::GetRankID();
     rank_group_size_ = lite::GetGPUGroupSize();
   }
-  Status Init(const std::string &cache_model_path, size_t vocab_size);
+  Status Init(const std::string &cache_model_path, size_t vocab_size, size_t device_cache_size);
+  Status Init(DelegateModel<schema::Primitive> *model, size_t vocab_size, size_t device_cache_size);
   bool CheckIsCacheKernel(kernel::Kernel *kernel);
   Status InitCacheKernel(kernel::Kernel *kernel, uint32_t device_id, const void *context);
   bool IsCacheTensor(mindspore::MSTensor tensor);
   int CacheHandle(const std::string &tensor_name, mindspore::MSTensor model_input_tensor, void *device_addr);
   Status SetDeviceCacheAddr(const std::string &tensor_name, void *device_mem_addr, size_t size);
+  std::vector<int64_t> GetCacheShape(mindspore::MSTensor tensor);
+  size_t GetCacheDataSize(mindspore::MSTensor tensor);
 
  private:
   std::map<std::string, std::shared_ptr<EmbeddingCache>> caches_;
@@ -50,6 +53,7 @@ class EmbeddingCacheManager {
 
   std::shared_ptr<HostCacheModel> host_cache_model_;
   size_t vocab_size_;
+  size_t device_cache_size_;
 };
 }  // namespace cache
 }  // namespace mindspore
