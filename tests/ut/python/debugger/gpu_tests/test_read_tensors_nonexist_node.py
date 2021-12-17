@@ -21,7 +21,7 @@ import json
 import shutil
 import numpy as np
 import mindspore.offline_debug.dbg_services as d
-from dump_test_utils import build_dump_structure
+from dump_test_utils import build_dump_structure, write_tensor_to_json
 from tests.security_utils import security_off_wrap
 
 
@@ -115,50 +115,17 @@ class TestOfflineReadNonExistTensor:
         with open(golden_file) as f:
             expected_list = json.load(f)
         for x, (tensor_info, tensor_data) in enumerate(zip(tensor_info_list, tensor_data_list)):
-            tensor_id = "tensor_"+ str(test_index+x+1)
-            info = expected_list[x+test_index][tensor_id]
-            assert tensor_info.node_name == info['tensor_info']['node_name']
-            assert tensor_info.slot == info['tensor_info']['slot']
-            assert tensor_info.iteration == info['tensor_info']['iteration']
-            assert tensor_info.rank_id == info['tensor_info']['rank_id']
-            assert tensor_info.root_graph_id == info['tensor_info']['root_graph_id']
-            assert tensor_info.is_output == info['tensor_info']['is_output']
-            actual_data = np.frombuffer(
-                tensor_data.data_ptr, np.uint8, tensor_data.data_size).tolist()
-            assert actual_data == info['tensor_data']['data']
-            assert tensor_data.data_size == info['tensor_data']['size_in_bytes']
-            assert tensor_data.dtype == info['tensor_data']['debugger_dtype']
-            assert tensor_data.shape == info['tensor_data']['shape']
+            tensor_id = "tensor_" + str(test_index + x + 1)
+            expect_tensor = expected_list[x + test_index][tensor_id]
+            actual_tensor = write_tensor_to_json(tensor_info, tensor_data)
+            assert expect_tensor == actual_tensor
 
     def print_read_tensors(self, tensor_info_list, tensor_data_list, test_index, is_print):
         """Print read tensors result if GENERATE_GOLDEN is True."""
         for x, (tensor_info, tensor_data) in enumerate(zip(tensor_info_list, tensor_data_list)):
-            tensor = "tensor_" + str(test_index+x+1)
-            data = np.frombuffer(
-                tensor_data.data_ptr, np.uint8, tensor_data.data_size).tolist()
-            py_byte_size = len(tensor_data.data_ptr)
-            c_byte_size = tensor_data.data_size
-            if c_byte_size != py_byte_size:
-                print("The python byte size of " + str(py_byte_size) +
-                      " does not match the C++ byte size of " + str(c_byte_size) + "\n")
-            self.tensor_json.append({
-                tensor: {
-                    'tensor_info': {
-                        'node_name': tensor_info.node_name,
-                        'slot': tensor_info.slot,
-                        'iteration': tensor_info.iteration,
-                        'rank_id': tensor_info.rank_id,
-                        'root_graph_id': tensor_info.root_graph_id,
-                        'is_output': tensor_info.is_output
-                    },
-                    'tensor_data': {
-                        'data': data,
-                        'size_in_bytes': tensor_data.data_size,
-                        'debugger_dtype': tensor_data.dtype,
-                        'shape': tensor_data.shape
-                    }
-                }
-            })
+            tensor_name = "tensor_" + str(test_index + x + 1)
+            tensor = write_tensor_to_json(tensor_info, tensor_data)
+            self.tensor_json.append({tensor_name: tensor})
         if is_print:
             with open(self.test_name + "_expected.json", "w") as dump_f:
                 json.dump(self.tensor_json, dump_f, indent=4, separators=(',', ': '))
