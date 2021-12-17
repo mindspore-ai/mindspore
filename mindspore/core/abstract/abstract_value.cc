@@ -94,10 +94,21 @@ bool AbstractBase::operator==(const AbstractBase &other) const {
     // Same object.
     return true;
   }
-  return tid() == other.tid() &&           // c++ type equal and
-         IsEqual(type_, other.type_) &&    // type equal and
-         IsEqual(shape_, other.shape_) &&  // shape equal and
-         IsEqual(value_, other.value_);    // value equal.
+  // Check C++ type.
+  if (tid() != other.tid()) {
+    return false;
+  }
+  // Check data type.
+  if (!IsEqual(type_, other.type_)) {
+    return false;
+  }
+  // If both are "undetermined" type, they are considered equal.
+  if (type_ == kAnyType && BuildType()->type_id() == kObjectTypeUndeterminedType &&
+      other.BuildType()->type_id() == kObjectTypeUndeterminedType) {
+    return true;
+  }
+  // Check shape and value.
+  return IsEqual(shape_, other.shape_) && IsEqual(value_, other.value_);
 }
 
 ValuePtr AbstractBase::BuildValue() const {
