@@ -29,23 +29,13 @@ FILES = ["../data/dataset/testTFTestAllTypes/test.data"]
 DATASET_ROOT = "../data/dataset/testTFTestAllTypes/"
 SCHEMA_FILE = "../data/dataset/testTFTestAllTypes/datasetSchema.json"
 
-# add file name to rank id mapping to avoid file writing crash
-file_name_map_rank_id = {"test_profiling_simple_pipeline": "0",
-                         "test_profiling_complex_pipeline": "1",
-                         "test_profiling_inline_ops_pipeline1": "2",
-                         "test_profiling_inline_ops_pipeline2": "3",
-                         "test_profiling_sampling_interval": "4",
-                         "test_profiling_basic_pipeline": "5",
-                         "test_profiling_cifar10_pipeline": "6",
-                         "test_profiling_seq_pipelines_epochctrl3": "7",
-                         "test_profiling_seq_pipelines_epochctrl2": "8",
-                         "test_profiling_seq_pipelines_repeat": "9"}
-
 
 @pytest.mark.forked
 class TestMinddataProfilingManager:
     """
     Test MinddataProfilingManager
+    Note: Use pytest fixture tmp_path to create files within this temporary directory,
+    which is automatically created for each test and deleted at the end of the test.
     """
 
     def setup_class(self):
@@ -55,29 +45,14 @@ class TestMinddataProfilingManager:
         # Get instance pointer for MindData profiling manager
         self.md_profiler = cde.GlobalContext.profiling_manager()
 
-        self._pipeline_file = "./pipeline_profiling"
-        self._cpu_util_file = "./minddata_cpu_utilization"
-        self._dataset_iterator_file = "./dataset_iterator_profiling"
-
     def setup_method(self):
         """
         Run before each test function.
         """
-        file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
-        file_id = file_name_map_rank_id[file_name]
-
-        pipeline_file = self._pipeline_file + "_" + file_id + ".json"
-        cpu_util_file = self._cpu_util_file + "_" + file_id + ".json"
-        dataset_iterator_file = self._dataset_iterator_file + "_" + file_id + ".txt"
-
-        # Confirm MindData Profiling files do not yet exist
-        assert os.path.exists(pipeline_file) is False
-        assert os.path.exists(cpu_util_file) is False
-        assert os.path.exists(dataset_iterator_file) is False
 
         # Set the MindData Profiling related environment variables
-        os.environ['RANK_ID'] = file_id
-        os.environ['DEVICE_ID'] = file_id
+        os.environ['RANK_ID'] = "1"
+        os.environ['DEVICE_ID'] = "1"
 
         # Initialize MindData profiling manager
         self.md_profiler.init()
@@ -89,18 +64,6 @@ class TestMinddataProfilingManager:
         """
         Run after each test function.
         """
-
-        file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
-        file_id = file_name_map_rank_id[file_name]
-
-        pipeline_file = self._pipeline_file + "_" + file_id + ".json"
-        cpu_util_file = self._cpu_util_file + "_" + file_id + ".json"
-        dataset_iterator_file = self._dataset_iterator_file + "_" + file_id + ".txt"
-
-        # Delete MindData profiling files generated from the test.
-        os.remove(pipeline_file)
-        os.remove(cpu_util_file)
-        os.remove(dataset_iterator_file)
 
         # Disable MindData Profiling related environment variables
         del os.environ['RANK_ID']
@@ -127,16 +90,10 @@ class TestMinddataProfilingManager:
             for i in range(num_ops):
                 assert op_info[i]["op_type"] in op_list
 
-    def test_profiling_simple_pipeline(self):
+    def test_profiling_simple_pipeline(self, tmp_path):
         """
         Generator -> Shuffle -> Batch
         """
-        file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
-        file_id = file_name_map_rank_id[file_name]
-
-        pipeline_file = self._pipeline_file + "_" + file_id + ".json"
-        cpu_util_file = self._cpu_util_file + "_" + file_id + ".json"
-        dataset_iterator_file = self._dataset_iterator_file + "_" + file_id + ".txt"
 
         source = [(np.array([x]),) for x in range(1024)]
         data1 = ds.GeneratorDataset(source, ["data"])
@@ -147,35 +104,28 @@ class TestMinddataProfilingManager:
         assert [str(tp) for tp in data1.output_types()] == ["int64"]
         assert data1.get_dataset_size() == 32
 
-        # Confirm profiling files do not (yet) exist
-        assert os.path.exists(pipeline_file) is False
-        assert os.path.exists(cpu_util_file) is False
-        assert os.path.exists(dataset_iterator_file) is False
-
         for _ in data1:
             pass
 
         # Stop MindData Profiling and save output files to current working directory
         self.md_profiler.stop()
-        self.md_profiler.save('./')
+        self.md_profiler.save(str(tmp_path))
+
+        pipeline_file = str(tmp_path) + "/pipeline_profiling_1.json"
+        cpu_util_file = str(tmp_path) + "/minddata_cpu_utilization_1.json"
+        dataset_iterator_file = str(tmp_path) + "/dataset_iterator_profiling_1.txt"
 
         # Confirm profiling files now exist
         assert os.path.exists(pipeline_file) is True
         assert os.path.exists(cpu_util_file) is True
         assert os.path.exists(dataset_iterator_file) is True
 
-    def test_profiling_complex_pipeline(self):
+    def test_profiling_complex_pipeline(self, tmp_path):
         """
         Generator -> Map     ->
                                  -> Zip
         TFReader  -> Shuffle ->
         """
-
-        file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
-        file_id = file_name_map_rank_id[file_name]
-
-        pipeline_file = self._pipeline_file + "_" + file_id + ".json"
-        cpu_util_file = self._cpu_util_file + "_" + file_id + ".json"
 
         source = [(np.array([x]),) for x in range(1024)]
         data1 = ds.GeneratorDataset(source, ["gen"])
@@ -192,7 +142,10 @@ class TestMinddataProfilingManager:
 
         # Stop MindData Profiling and save output files to current working directory
         self.md_profiler.stop()
-        self.md_profiler.save('./')
+        self.md_profiler.save(str(tmp_path))
+
+        pipeline_file = str(tmp_path) + "/pipeline_profiling_1.json"
+        cpu_util_file = str(tmp_path) + "/minddata_cpu_utilization_1.json"
 
         with open(pipeline_file) as f:
             data = json.load(f)
@@ -209,18 +162,13 @@ class TestMinddataProfilingManager:
         # Confirm CPU util JSON file content, when 5 ops are in the pipeline JSON file
         self.confirm_cpuutil(5, cpu_util_file)
 
-    def test_profiling_inline_ops_pipeline1(self):
+    def test_profiling_inline_ops_pipeline1(self, tmp_path):
         """
         Test pipeline with inline ops: Concat and EpochCtrl
         Generator ->
                      Concat -> EpochCtrl
         Generator ->
         """
-        file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
-        file_id = file_name_map_rank_id[file_name]
-
-        pipeline_file = self._pipeline_file + "_" + file_id + ".json"
-        cpu_util_file = self._cpu_util_file + "_" + file_id + ".json"
 
         # In source1 dataset: Number of rows is 3; its values are 0, 1, 2
         def source1():
@@ -248,7 +196,10 @@ class TestMinddataProfilingManager:
 
         # Stop MindData Profiling and save output files to current working directory
         self.md_profiler.stop()
-        self.md_profiler.save('./')
+        self.md_profiler.save(str(tmp_path))
+
+        pipeline_file = str(tmp_path) + "/pipeline_profiling_1.json"
+        cpu_util_file = str(tmp_path) + "/minddata_cpu_utilization_1.json"
 
         # Confirm pipeline is created with EpochCtrl op
         with open(pipeline_file) as f:
@@ -267,16 +218,11 @@ class TestMinddataProfilingManager:
         # Confirm CPU util JSON file content, when 4 ops are in the pipeline JSON file
         self.confirm_cpuutil(4, cpu_util_file)
 
-    def test_profiling_inline_ops_pipeline2(self):
+    def test_profiling_inline_ops_pipeline2(self, tmp_path):
         """
         Test pipeline with many inline ops
         Generator -> Rename -> Skip -> Repeat -> Take
         """
-        file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
-        file_id = file_name_map_rank_id[file_name]
-
-        pipeline_file = self._pipeline_file + "_" + file_id + ".json"
-        cpu_util_file = self._cpu_util_file + "_" + file_id + ".json"
 
         # In source1 dataset: Number of rows is 10; its values are 0, 1, 2, 3, 4, 5 ... 9
         def source1():
@@ -294,7 +240,10 @@ class TestMinddataProfilingManager:
 
         # Stop MindData Profiling and save output files to current working directory
         self.md_profiler.stop()
-        self.md_profiler.save('./')
+        self.md_profiler.save(str(tmp_path))
+
+        pipeline_file = str(tmp_path) + "/pipeline_profiling_1.json"
+        cpu_util_file = str(tmp_path) + "/minddata_cpu_utilization_1.json"
 
         with open(pipeline_file) as f:
             data = json.load(f)
@@ -312,7 +261,7 @@ class TestMinddataProfilingManager:
         # Confirm CPU util JSON file content, when 5 ops are in the pipeline JSON file
         self.confirm_cpuutil(5, cpu_util_file)
 
-    def test_profiling_sampling_interval(self):
+    def test_profiling_sampling_interval(self, tmp_path):
         """
         Test non-default monitor sampling interval
         """
@@ -334,18 +283,13 @@ class TestMinddataProfilingManager:
 
         # Stop MindData Profiling and save output files to current working directory
         self.md_profiler.stop()
-        self.md_profiler.save('./')
+        self.md_profiler.save(str(tmp_path))
 
-    def test_profiling_basic_pipeline(self):
+    def test_profiling_basic_pipeline(self, tmp_path):
         """
         Test with this basic pipeline
         Generator -> Map -> Batch -> Repeat -> EpochCtrl
         """
-        file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
-        file_id = file_name_map_rank_id[file_name]
-
-        pipeline_file = self._pipeline_file + "_" + file_id + ".json"
-        cpu_util_file = self._cpu_util_file + "_" + file_id + ".json"
 
         def source1():
             for i in range(8000):
@@ -369,7 +313,10 @@ class TestMinddataProfilingManager:
 
         # Stop MindData Profiling and save output files to current working directory
         self.md_profiler.stop()
-        self.md_profiler.save('./')
+        self.md_profiler.save(str(tmp_path))
+
+        pipeline_file = str(tmp_path) + "/pipeline_profiling_1.json"
+        cpu_util_file = str(tmp_path) + "/minddata_cpu_utilization_1.json"
 
         with open(pipeline_file) as f:
             data = json.load(f)
@@ -387,16 +334,11 @@ class TestMinddataProfilingManager:
         # Confirm CPU util JSON file content, when 5 ops are in the pipeline JSON file
         self.confirm_cpuutil(5, cpu_util_file)
 
-    def test_profiling_cifar10_pipeline(self):
+    def test_profiling_cifar10_pipeline(self, tmp_path):
         """
         Test with this common pipeline with Cifar10
         Cifar10 -> Map -> Map -> Batch -> Repeat
         """
-        file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
-        file_id = file_name_map_rank_id[file_name]
-
-        pipeline_file = self._pipeline_file + "_" + file_id + ".json"
-        cpu_util_file = self._cpu_util_file + "_" + file_id + ".json"
 
         # Create this common pipeline
         # Cifar10 -> Map -> Map -> Batch -> Repeat
@@ -420,7 +362,10 @@ class TestMinddataProfilingManager:
 
         # Stop MindData Profiling and save output files to current working directory
         self.md_profiler.stop()
-        self.md_profiler.save('./')
+        self.md_profiler.save(str(tmp_path))
+
+        pipeline_file = str(tmp_path) + "/pipeline_profiling_1.json"
+        cpu_util_file = str(tmp_path) + "/minddata_cpu_utilization_1.json"
 
         with open(pipeline_file) as f:
             data = json.load(f)
@@ -438,18 +383,13 @@ class TestMinddataProfilingManager:
         # Confirm CPU util JSON file content, when 5 ops are in the pipeline JSON file
         self.confirm_cpuutil(5, cpu_util_file)
 
-    def test_profiling_seq_pipelines_epochctrl3(self):
+    def test_profiling_seq_pipelines_epochctrl3(self, tmp_path):
         """
         Test with these 2 sequential pipelines:
         1) Generator -> Batch -> EpochCtrl
         2) Generator -> Batch
         Note: This is a simplification of the user scenario to use the same pipeline for training and then evaluation.
         """
-        file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
-        file_id = file_name_map_rank_id[file_name]
-
-        pipeline_file = self._pipeline_file + "_" + file_id + ".json"
-        cpu_util_file = self._cpu_util_file + "_" + file_id + ".json"
 
         source = [(np.array([x]),) for x in range(64)]
         data1 = ds.GeneratorDataset(source, ["data"])
@@ -464,7 +404,10 @@ class TestMinddataProfilingManager:
 
         # Stop MindData Profiling and save output files to current working directory
         self.md_profiler.stop()
-        self.md_profiler.save('./')
+        self.md_profiler.save(str(tmp_path))
+
+        pipeline_file = str(tmp_path) + "/pipeline_profiling_1.json"
+        cpu_util_file = str(tmp_path) + "/minddata_cpu_utilization_1.json"
 
         # Confirm pipeline file and CPU util file each have 3 ops
         self.confirm_ops_in_pipeline(3, ["GeneratorOp", "BatchOp", "EpochCtrlOp"], pipeline_file)
@@ -485,23 +428,18 @@ class TestMinddataProfilingManager:
 
         # Stop MindData Profiling and save output files to current working directory
         self.md_profiler.stop()
-        self.md_profiler.save('./')
+        self.md_profiler.save(str(tmp_path))
 
         # Confirm pipeline file and CPU util file each have 2 ops
         self.confirm_ops_in_pipeline(2, ["GeneratorOp", "BatchOp"], pipeline_file)
         self.confirm_cpuutil(2, cpu_util_file)
 
-    def test_profiling_seq_pipelines_epochctrl2(self):
+    def test_profiling_seq_pipelines_epochctrl2(self, tmp_path):
         """
         Test with these 2 sequential pipelines:
         1) Generator -> Batch
         2) Generator -> Batch -> EpochCtrl
         """
-        file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
-        file_id = file_name_map_rank_id[file_name]
-
-        pipeline_file = self._pipeline_file + "_" + file_id + ".json"
-        cpu_util_file = self._cpu_util_file + "_" + file_id + ".json"
 
         source = [(np.array([x]),) for x in range(64)]
         data2 = ds.GeneratorDataset(source, ["data"])
@@ -516,7 +454,10 @@ class TestMinddataProfilingManager:
 
         # Stop MindData Profiling and save output files to current working directory
         self.md_profiler.stop()
-        self.md_profiler.save('./')
+        self.md_profiler.save(str(tmp_path))
+
+        pipeline_file = str(tmp_path) + "/pipeline_profiling_1.json"
+        cpu_util_file = str(tmp_path) + "/minddata_cpu_utilization_1.json"
 
         # Confirm pipeline file and CPU util file each have 2 ops
         self.confirm_ops_in_pipeline(2, ["GeneratorOp", "BatchOp"], pipeline_file)
@@ -537,23 +478,18 @@ class TestMinddataProfilingManager:
 
         # Stop MindData Profiling and save output files to current working directory
         self.md_profiler.stop()
-        self.md_profiler.save('./')
+        self.md_profiler.save(str(tmp_path))
 
         # Confirm pipeline file and CPU util file each have 3 ops
         self.confirm_ops_in_pipeline(3, ["GeneratorOp", "BatchOp", "EpochCtrlOp"], pipeline_file)
         self.confirm_cpuutil(3, cpu_util_file)
 
-    def test_profiling_seq_pipelines_repeat(self):
+    def test_profiling_seq_pipelines_repeat(self, tmp_path):
         """
         Test with these 2 sequential pipelines:
         1) Generator -> Batch
         2) Generator -> Batch -> Repeat
         """
-        file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
-        file_id = file_name_map_rank_id[file_name]
-
-        pipeline_file = self._pipeline_file + "_" + file_id + ".json"
-        cpu_util_file = self._cpu_util_file + "_" + file_id + ".json"
 
         source = [(np.array([x]),) for x in range(64)]
         data2 = ds.GeneratorDataset(source, ["data"])
@@ -567,7 +503,10 @@ class TestMinddataProfilingManager:
 
         # Stop MindData Profiling and save output files to current working directory
         self.md_profiler.stop()
-        self.md_profiler.save('./')
+        self.md_profiler.save(str(tmp_path))
+
+        pipeline_file = str(tmp_path) + "/pipeline_profiling_1.json"
+        cpu_util_file = str(tmp_path) + "/minddata_cpu_utilization_1.json"
 
         # Confirm pipeline file and CPU util file each have 2 ops
         self.confirm_ops_in_pipeline(2, ["GeneratorOp", "BatchOp"], pipeline_file)
@@ -587,7 +526,7 @@ class TestMinddataProfilingManager:
 
         # Stop MindData Profiling and save output files to current working directory
         self.md_profiler.stop()
-        self.md_profiler.save('./')
+        self.md_profiler.save(str(tmp_path))
 
         # Confirm pipeline file and CPU util file each have 3 ops
         self.confirm_ops_in_pipeline(3, ["GeneratorOp", "BatchOp", "RepeatOp"], pipeline_file)
