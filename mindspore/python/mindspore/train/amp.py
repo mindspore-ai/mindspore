@@ -153,8 +153,8 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_leve
               level to O3 Ascend. The recommended level is chosen by the export experience, cannot
               always general. User should specify the level for special network.
 
-            O2 is recommended on GPU, O3 is recommended on Ascend.Property of `keep_batchnorm_fp32` , `cast_model_type`
-            and `loss_scale_manager` determined by `level` setting may be overwritten by settings in `kwargs` .
+            O2 is recommended on GPU, O3 is recommended on Ascend. Property of `keep_batchnorm_fp32`, `cast_model_type`
+            and `loss_scale_manager` determined by `level` setting may be overwritten by settings in `kwargs`.
 
         boost_level (str): Option for argument `level` in `mindspore.boost` , level for boost mode
             training. Supports ["O0", "O1", "O2"]. Default: "O0".

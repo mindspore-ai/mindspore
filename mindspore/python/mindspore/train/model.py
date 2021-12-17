@@ -140,14 +140,17 @@ class Model:
 
             - O0: Do not change.
             - O2: Cast network to float16, keep batchnorm run in float32, using dynamic loss scale.
-            - O3: Cast network to float16 and add property `keep_batchnorm_fp32=False` to
-              :func:`mindspore.build_train_network`.
+            - O3: Cast network to float16, the batchnorm is also cast to float16, loss scale will not be used.
             - auto: Set level to recommended level in different devices. Set level to O2 on GPU, set
               level to O3 on Ascend. The recommended level is chosen by the export experience, not applicable to all
               scenarios. User should specify the level for special network.
 
-            O2 is recommended on GPU, O3 is recommended on Ascend. The more detailed explanation of `amp_level` setting
-            can be found at `mindspore.build_train_network`.
+            O2 is recommended on GPU, O3 is recommended on Ascend.
+            The batchnorm strategy can be changed by `keep_batchnorm_fp32` settings in `kwargs`. `keep_batchnorm_fp32`
+            must be a bool. The loss scale strategy can be changed by `loss_scale_manager` setting in `kwargs`.
+            `loss_scale_manager` should be a subclass of :class:`mindspore.LossScaleManager`.
+            The more detailed explanation of `amp_level` setting can be found at `mindspore.build_train_network`.
+
         boost_level (str): Option for argument `level` in `mindspore.boost`, level for boost mode
             training. Supports ["O0", "O1", "O2"]. Default: "O0".
 
