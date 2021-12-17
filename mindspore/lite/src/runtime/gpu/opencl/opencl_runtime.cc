@@ -176,16 +176,18 @@ int OpenCLRuntime::InitQueue(std::vector<cl::Platform> *platforms) {
   if (this->GetGLTextureEnable()) {
     // create context from glcontext
     MS_LOG(INFO) << "Create special opencl context to share with OpenGL";
-    if (eglGetCurrentContext() == EGL_NO_CONTEXT) {
-      MS_LOG(ERROR) << "eglGetCurrentContext error, find GL context failed";
+
+    if (!CheckGLContext()) {
+      MS_LOG(ERROR) << "GL Context error";
       return RET_ERROR;
     }
-    if (eglGetCurrentDisplay() == EGL_NO_DISPLAY) {
-      MS_LOG(ERROR) << "eglGetDisplay error";
+    if (!CheckGLDisplay()) {
+      MS_LOG(ERROR) << "GL Display error";
       return RET_ERROR;
     }
-    cl_context_properties context_prop[] = {CL_GL_CONTEXT_KHR, (cl_context_properties)eglGetCurrentContext(),
-                                            CL_EGL_DISPLAY_KHR, (cl_context_properties)eglGetCurrentDisplay(), 0};
+
+    cl_context_properties context_prop[] = {CL_GL_CONTEXT_KHR, (cl_context_properties)*GetGLContext(),
+                                            CL_EGL_DISPLAY_KHR, (cl_context_properties)*GetGLDisplay(), 0};
     context_ = new (std::nothrow) cl::Context(std::vector<cl::Device>{*device_}, context_prop, nullptr, nullptr, &ret);
     if (context_ == nullptr || ret != CL_SUCCESS) {
       MS_LOG(ERROR)
@@ -390,10 +392,6 @@ GpuInfo OpenCLRuntime::GetGpuInfo() { return gpu_info_; }
 
 bool OpenCLRuntime::GetFp16Enable() const { return fp16_enable_; }
 
-#ifdef ENABLE_OPENGL_TEXTURE
-bool OpenCLRuntime::GetGLTextureEnable() const { return enable_gl_texture_; }
-#endif
-
 // if support fp16, set fp16 will success.
 bool OpenCLRuntime::SetFp16Enable(bool enable) {
   fp16_enable_ = enable && support_fp16_;
@@ -405,6 +403,9 @@ bool OpenCLRuntime::SetGLTextureEnable(bool enable) {
   enable_gl_texture_ = enable;
   return enable_gl_texture_ == enable;
 }
+
+bool OpenCLRuntime::GetGLTextureEnable() const { return enable_gl_texture_; }
+
 #endif
 
 int OpenCLRuntime::BuildKernel(const cl::Kernel &kernel, const std::string &program_name,

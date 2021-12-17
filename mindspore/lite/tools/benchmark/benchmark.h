@@ -69,7 +69,7 @@ class MS_API Benchmark : public BenchmarkBase {
 
   int GetDataTypeByTensorName(const std::string &tensor_name) override;
 
-  void InitContext(const std::shared_ptr<Context> &context);
+  int InitContext(const std::shared_ptr<Context> &context);
 
   int CompareOutput() override;
 

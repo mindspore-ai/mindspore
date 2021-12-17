@@ -325,7 +325,7 @@ void BenchmarkUnifiedApi::UpdateDistributionName(const std::shared_ptr<mindspore
   return;
 }
 
-void BenchmarkUnifiedApi::InitMSContext(const std::shared_ptr<mindspore::Context> &context) {
+int BenchmarkUnifiedApi::InitMSContext(const std::shared_ptr<mindspore::Context> &context) {
   context->SetThreadNum(flags_->num_threads_);
   context->SetEnableParallel(flags_->enable_parallel_);
   context->SetThreadAffinity(flags_->cpu_bind_mode_);
@@ -337,6 +337,24 @@ void BenchmarkUnifiedApi::InitMSContext(const std::shared_ptr<mindspore::Context
 
 #ifdef ENABLE_OPENGL_TEXTURE
     gpu_device_info->SetEnableGLTexture(flags_->enable_gl_texture_);
+
+    EGLContext *gl_context = new (std::nothrow) EGLContext();
+    if (gl_context == nullptr) {
+      MS_LOG(ERROR) << "new EGLContext failed";
+      return RET_ERROR;
+    } else {
+      *gl_context = eglGetCurrentContext();
+    }
+    gpu_device_info->SetGLContext(gl_context);
+
+    EGLDisplay *gl_display = new (std::nothrow) EGLDisplay();
+    if (gl_display == nullptr) {
+      MS_LOG(ERROR) << "new EGLDisplay failed";
+      return RET_ERROR;
+    } else {
+      *gl_display = eglGetCurrentDisplay();
+    }
+    gpu_device_info->SetGLDisplay(gl_display);
 #endif
 
     device_list.push_back(gpu_device_info);
@@ -358,6 +376,8 @@ void BenchmarkUnifiedApi::InitMSContext(const std::shared_ptr<mindspore::Context
   std::shared_ptr<CPUDeviceInfo> device_info = std::make_shared<CPUDeviceInfo>();
   device_info->SetEnableFP16(flags_->enable_fp16_);
   device_list.push_back(device_info);
+
+  return RET_OK;
 }
 
 int BenchmarkUnifiedApi::CompareOutput() {
@@ -793,7 +813,12 @@ int BenchmarkUnifiedApi::RunBenchmark() {
     return RET_ERROR;
   }
 
-  (void)InitMSContext(context);
+  auto status = InitMSContext(context);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "InitMSContext failed while running ", model_name.c_str();
+    std::cout << "InitMSContext failed while running ", model_name.c_str();
+    return RET_ERROR;
+  }
 
   (void)UpdateDistributionName(context, &flags_->model_file_);
   (void)UpdateDistributionName(context, &flags_->benchmark_data_file_);
@@ -835,7 +860,7 @@ int BenchmarkUnifiedApi::RunBenchmark() {
 
   // Load input
   MS_LOG(INFO) << "start generate input data";
-  auto status = LoadInput();
+  status = LoadInput();
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Generate input data error";
     return status;

@@ -1382,6 +1382,8 @@ int LiteSession::InitGPURuntime() {
 #ifdef ENABLE_OPENGL_TEXTURE
     MS_LOG(INFO) << " InitGLQueue";
     opencl_runtime->SetGLTextureEnable(gpu_device_info.enable_gl_texture_);
+    opencl_runtime->SetGLContext(gpu_device_info.gl_context_);
+    opencl_runtime->SetGLDisplay(gpu_device_info.gl_display_);
     if (opencl_runtime->InitGLQueue() != RET_OK) {
       MS_LOG(ERROR)
         << "Init OpenCL Runtime failed, the device unspport OpenGL sharing context or OpenGL Context is not Init";

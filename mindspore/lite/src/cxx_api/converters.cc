@@ -43,11 +43,12 @@ Status ContextUtils::AddCpuDevice(const std::shared_ptr<Allocator> &allocator, i
 }
 
 Status ContextUtils::AddGpuDevice(bool enable_fp16, uint32_t device_id, int rank_id, int group_size,
-                                  bool enable_gl_texture, const std::string &provider,
-                                  const std::string &provider_device, const std::shared_ptr<Allocator> &allocator,
-                                  lite::InnerContext *inner_context) {
+                                  bool enable_gl_texture, void *gl_context, void *gl_display,
+                                  const std::string &provider, const std::string &provider_device,
+                                  const std::shared_ptr<Allocator> &allocator, lite::InnerContext *inner_context) {
   lite::DeviceInfo device_info = {0};
-  device_info.gpu_device_info_ = {enable_fp16, device_id, rank_id, group_size, enable_gl_texture};
+  device_info.gpu_device_info_ = {enable_fp16,       device_id,  rank_id,   group_size,
+                                  enable_gl_texture, gl_context, gl_display};
   inner_context->device_list_.push_back({lite::DT_GPU, device_info, provider, provider_device, allocator});
   return kSuccess;
 }
@@ -95,12 +96,17 @@ lite::InnerContext *ContextUtils::Convert(Context *context) {
     } else if (device->GetDeviceType() == kGPU) {
       auto gpu_context = device->Cast<GPUDeviceInfo>();
       bool enable_gl_texture = false;
+      void *gl_context = nullptr;
+      void *gl_display = nullptr;
 #ifdef ENABLE_OPENGL_TEXTURE
       enable_gl_texture = gpu_context->GetEnableGLTexture();
+      gl_context = gpu_context->GetGLContext();
+      gl_display = gpu_context->GetGLDisplay();
 #endif
-      ret = AddGpuDevice(gpu_context->GetEnableFP16(), gpu_context->GetDeviceID(), gpu_context->GetRankID(),
-                         gpu_context->GetGroupSize(), enable_gl_texture, gpu_context->GetProvider(),
-                         gpu_context->GetProviderDevice(), gpu_context->GetAllocator(), inner_context.get());
+      ret =
+        AddGpuDevice(gpu_context->GetEnableFP16(), gpu_context->GetDeviceID(), gpu_context->GetRankID(),
+                     gpu_context->GetGroupSize(), enable_gl_texture, gl_context, gl_display, gpu_context->GetProvider(),
+                     gpu_context->GetProviderDevice(), gpu_context->GetAllocator(), inner_context.get());
     } else if (device->GetDeviceType() == kKirinNPU) {
       auto npu_context = device->Cast<KirinNPUDeviceInfo>();
       ret = AddNpuDevice(npu_context->GetFrequency(), inner_context.get());
@@ -140,7 +146,7 @@ lite::InnerContext *ContextUtils::Convert(const ContextC *context_c) {
       ret = AddCpuDevice(device_info_c->allocator, context_c->affinity_mode, device_info_c->enable_fp16,
                          device_info_c->provider, device_info_c->provider_device, inner_context.get());
     } else if (device_info_c->device_type == kMSDeviceTypeGPU) {
-      ret = AddGpuDevice(device_info_c->enable_fp16, 0, 0, 0, false, device_info_c->provider,
+      ret = AddGpuDevice(device_info_c->enable_fp16, 0, 0, 0, false, nullptr, nullptr, device_info_c->provider,
                          device_info_c->provider_device, device_info_c->allocator, inner_context.get());
     } else if (device_info_c->device_type == kMSDeviceTypeKirinNPU) {
       ret = AddNpuDevice(device_info_c->frequency, inner_context.get());

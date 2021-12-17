@@ -144,6 +144,8 @@ class Scheduler {
 
 #ifdef ENABLE_OPENGL_TEXTURE
   bool GetEnableGLTexture() { return context_->GetGpuInfo().enable_gl_texture_; }
+  void *GetGLContext() { return context_->GetGpuInfo().gl_context_; }
+  void *GetGLDisplay() { return context_->GetGpuInfo().gl_display_; }
 #endif
 
  protected:

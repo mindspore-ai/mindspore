@@ -74,7 +74,7 @@ class MS_API BenchmarkUnifiedApi : public BenchmarkBase {
 
   int ReadInputFile() override;
 
-  void InitMSContext(const std::shared_ptr<Context> &context);
+  int InitMSContext(const std::shared_ptr<Context> &context);
 
   int GetDataTypeByTensorName(const std::string &tensor_name) override;
 
