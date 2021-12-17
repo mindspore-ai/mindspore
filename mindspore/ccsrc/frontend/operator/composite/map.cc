@@ -206,48 +206,6 @@ AnfNodePtr Map::FullMakeTuple(const std::shared_ptr<Tuple> &type, const FuncGrap
   return func_graph->NewCNodeInOrder(inputs);
 }
 
-AnfNodePtr Map::FullMakeClass(const std::shared_ptr<Class> &type, const FuncGraphPtr &func_graph,
-                              const AnfNodePtr &fn_arg, const ArgsPairList &arg_pairs) {
-  MS_EXCEPTION_IF_NULL(type);
-  MS_EXCEPTION_IF_NULL(func_graph);
-
-  size_t attrSize = type->GetAttributes().size();
-  constexpr size_t kPrimAndTypeLen = 2;
-  std::vector<AnfNodePtr> inputs;
-  inputs.reserve(attrSize + kPrimAndTypeLen);
-  inputs.push_back(NewValueNode(prim::kPrimMakeRecord));
-  inputs.push_back(NewValueNode(type));
-
-  for (size_t i = 0; i < attrSize; i++) {
-    MS_LOG(DEBUG) << "FullMakeClass for the " << i << "th element of the inputs, reverse_: " << reverse_ << ".";
-    auto ptrGraph = GenerateLeafFunc(arg_pairs.size());
-    auto fn = NewValueNode(ptrGraph);
-
-    std::vector<AnfNodePtr> inputs2;
-    inputs2.push_back(fn);
-    if (fn_arg != nullptr) {
-      inputs2.push_back(fn_arg);
-    }
-
-    size_t size = arg_pairs.size();
-    for (size_t j = 0; j < size; j++) {
-      size_t pos = (reverse_ ? (size - 1 - j) : j);
-      auto &item = arg_pairs[pos];
-      inputs2.push_back(
-        func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimGetAttr), item.first, NewValueNode(SizeToLong(pos))}));
-    }
-
-    auto call_node = func_graph->NewCNodeInOrder(inputs2);
-    if (reverse_) {
-      constexpr auto kCallNodePosition = 2;
-      (void)inputs.insert(inputs.begin() + kCallNodePosition, call_node);
-    } else {
-      inputs.emplace_back(call_node);
-    }
-  }
-  return func_graph->NewCNodeInOrder(inputs);
-}
-
 AnfNodePtr Map::Make(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg, const ArgsPairList &arg_pairs) {
   if (arg_pairs.empty()) {
     MS_EXCEPTION(TypeError) << "The Map operator must have at least two arguments. But the size of arguments is "
@@ -308,13 +266,8 @@ AnfNodePtr Map::Make(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg, c
       auto type = std::static_pointer_cast<Tuple>(pair.second);
       return FullMakeTuple(type, func_graph, fn_arg, arg_pairs);
     }
-    case kObjectTypeClass: {
-      auto type = std::static_pointer_cast<Class>(pair.second);
-      return FullMakeClass(type, func_graph, fn_arg, arg_pairs);
-    }
     default:
-      MS_LOG(EXCEPTION) << "Map can only be applied to list, tuple and class, but got " << pair.second->ToString()
-                        << ".";
+      MS_LOG(EXCEPTION) << "Map can only be applied to list, tuple, but got " << pair.second->ToString() << ".";
   }
 }
 

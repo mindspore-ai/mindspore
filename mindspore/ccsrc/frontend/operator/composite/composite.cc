@@ -45,7 +45,6 @@ using FuncGraphAbstractClosure = mindspore::abstract::FuncGraphAbstractClosure;
 
 using mindspore::abstract::AbstractAttribute;
 using mindspore::abstract::AbstractBase;
-using mindspore::abstract::AbstractClass;
 using mindspore::abstract::AbstractDictionary;
 using mindspore::abstract::AbstractDictionaryPtr;
 using mindspore::abstract::AbstractEllipsis;
@@ -77,20 +76,12 @@ void HyperMap::Init() {
 }
 
 HyperMap::HyperMap(bool reverse, const std::shared_ptr<MultitypeFuncGraph> &fn_leaf)
-    : MetaFuncGraph("hyper_map"),
-      fn_leaf_(fn_leaf),
-      reverse_(reverse),
-      broadcast_(false),
-      nonleaf_({kObjectTypeList, kObjectTypeTuple, kObjectTypeClass}) {
+    : MetaFuncGraph("hyper_map"), fn_leaf_(fn_leaf), reverse_(reverse), nonleaf_({kObjectTypeList, kObjectTypeTuple}) {
   Init();
 }
 
 HyperMap::HyperMap(const HyperMap &h)
-    : MetaFuncGraph("hyper_map"),
-      fn_leaf_(h.fn_leaf_),
-      reverse_(h.reverse_),
-      broadcast_(h.broadcast_),
-      nonleaf_(h.nonleaf_) {
+    : MetaFuncGraph("hyper_map"), fn_leaf_(h.fn_leaf_), reverse_(h.reverse_), nonleaf_(h.nonleaf_) {
   Init();
 }
 
@@ -247,61 +238,21 @@ AnfNodePtr HyperMap::FullMake(const std::shared_ptr<Tuple> &type, const FuncGrap
   return func_graph->NewCNodeInOrder(inputs);
 }
 
-AnfNodePtr HyperMap::FullMake(const std::shared_ptr<Class> &type, const FuncGraphPtr &func_graph,
-                              const AnfNodePtr &fn_arg, const ArgsPairList &arg_map) {
-  MS_EXCEPTION_IF_NULL(type);
-  MS_EXCEPTION_IF_NULL(func_graph);
-
-  std::size_t attrSize = type->GetAttributes().size();
-  constexpr size_t kPrimAndTypeLen = 2;
-  std::vector<AnfNodePtr> inputs;
-  inputs.reserve(attrSize + kPrimAndTypeLen);
-  inputs.push_back(NewValueNode(prim::kPrimMakeRecord));
-  inputs.push_back(NewValueNode(type));
-
-  // cannot use shared_from_base() also known as this, as it will make a reference cycle on
-  // hypermap and graph generated, it will cause memory leak.
-  auto fn_rec = NewValueNode(std::make_shared<HyperMap>(*this));
-  for (std::size_t i = 0; i < attrSize; i++) {
-    MS_LOG(DEBUG) << "FullMakeClass for the " << i << "th element of the target, reverse_: " << reverse_;
-    std::vector<AnfNodePtr> inputs2;
-    inputs2.push_back(fn_rec);
-    if (fn_arg) {
-      inputs2.push_back(fn_arg);
-    }
-
-    size_t size = arg_map.size();
-    for (size_t j = 0; j < size; j++) {
-      size_t pos = (reverse_ ? (size - 1 - j) : j);
-      auto &item = arg_map[pos];
-      inputs2.push_back(
-        func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimGetAttr), item.first, NewValueNode(SizeToLong(pos))}));
-    }
-
-    auto call_node = func_graph->NewCNodeInOrder(inputs2);
-    if (reverse_) {
-      inputs.insert(inputs.begin() + kPrimAndTypeLen, call_node);
-    } else {
-      inputs.emplace_back(call_node);
-    }
-  }
-  return func_graph->NewCNodeInOrder(inputs);
-}
-
 AnfNodePtr HyperMap::Make(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg, const ArgsPairList &arg_map) {
-  bool found = false;
+  bool is_leaf = false;
   TypeId id = kObjectTypeEnd;
   std::pair<AnfNodePtr, TypePtr> pair;
   for (auto &item : arg_map) {
     pair = item;
     id = item.second->type_id();
-    if (nonleaf_.count(id)) {
-      found = true;
+    // The graph building reaches the leaf situation when there exists type that can not be divided any more.
+    if (!nonleaf_.count(id)) {
+      is_leaf = true;
       break;
     }
   }
 
-  if (found) {
+  if (!is_leaf) {
     // In a nonleaf situation, all arguments must have the same generic.
     bool is_not_same = std::any_of(arg_map.begin(), arg_map.end(), [pair](const std::pair<AnfNodePtr, TypePtr> &item) {
       if (item.first != pair.first) {
@@ -328,7 +279,7 @@ AnfNodePtr HyperMap::Make(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_a
         ++idx;
         oss << "The type of the " << str_index << " argument in HyperMap is " << item.second->ToString() << ".\n";
       }
-      MS_LOG(EXCEPTION) << "The types of arguments in HyperMap must be consistent, "
+      MS_LOG(EXCEPTION) << "In a nonleaf situation, the types of arguments in HyperMap must be consistent, "
                         << "but the types of arguments are inconsistent.\n"
                         << oss.str();
     }
@@ -343,34 +294,9 @@ AnfNodePtr HyperMap::Make(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_a
       auto type = std::static_pointer_cast<Tuple>(pair.second);
       return FullMake(type, func_graph, fn_arg, arg_map);
     }
-    case kObjectTypeClass: {
-      auto type = std::static_pointer_cast<Class>(pair.second);
-      return FullMake(type, func_graph, fn_arg, arg_map);
-    }
     default:
       return FullMake(func_graph, fn_arg, arg_map);
   }
-}
-
-ArgsPairList HyperMap::Harmonize(const FuncGraphPtr &func_graph, const ArgsPairList &args_spec_list) {
-  TypePtr type_tensor = std::make_shared<TensorType>();
-  bool flag = std::any_of(
-    args_spec_list.begin(), args_spec_list.end(),
-    [type_tensor](const std::pair<AnfNodePtr, TypePtr> &item) { return IsSubType(item.second, type_tensor); });
-  if (flag && broadcast_) {
-    ArgsPairList ret;
-    for (auto &item : args_spec_list) {
-      if (!IsSubType(item.second, type_tensor)) {
-        TypePtr type_tensor_ele = std::make_shared<TensorType>(item.second);
-        ret.push_back(std::make_pair(func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimScalarToArray), item.first}),
-                                     type_tensor_ele));
-      } else {
-        ret.push_back(std::make_pair(item.first, item.second));
-      }
-    }
-    return ret;
-  }
-  return args_spec_list;
 }
 
 FuncGraphPtr HyperMap::GenerateFromTypes(const TypePtrList &args_spec_list) {
@@ -382,7 +308,6 @@ FuncGraphPtr HyperMap::GenerateFromTypes(const TypePtrList &args_spec_list) {
   AnfNodePtr ptrFnArg = nullptr;
   std::size_t i = 0;
   ArgsPairList argmap;
-  ArgsPairList argmap2;
   if (fn_leaf_ == nullptr) {
     ptrFnArg = ptr_graph->add_parameter();
     i = 1;
@@ -393,8 +318,7 @@ FuncGraphPtr HyperMap::GenerateFromTypes(const TypePtrList &args_spec_list) {
     argmap.push_back(std::make_pair(ptr_graph->add_parameter(), args_spec_list[i]));
   }
 
-  argmap2 = Harmonize(ptr_graph, argmap);
-  ptr_graph->set_output(Make(ptr_graph, ptrFnArg, argmap2));
+  ptr_graph->set_output(Make(ptr_graph, ptrFnArg, argmap));
   return ptr_graph;
 }
 
