@@ -67,7 +67,10 @@ constexpr auto kAbs = "Abs";
 constexpr auto kTrunc = "Trunc";
 constexpr auto kLpNorm = "LpNorm";
 constexpr auto kSquare = "Square";
+constexpr auto kRealInner = "RealInner";
 constexpr auto kReal = "Real";
+constexpr auto kImag = "Imag";
+constexpr auto kConj = "Conj";
 constexpr auto kGer = "Ger";
 
 // Arrays
@@ -274,7 +277,10 @@ inline const PrimitivePtr kPrimMaskedSelect = std::make_shared<Primitive>("Maske
 inline const PrimitivePtr kPrimDiag = std::make_shared<Primitive>(kDiag);
 inline const PrimitivePtr kPrimDiagPart = std::make_shared<Primitive>(kDiagPart);
 inline const PrimitivePtr kPrimNonZero = std::make_shared<Primitive>("NonZero");
+inline const PrimitivePtr kPrimRealInner = std::make_shared<Primitive>(kRealInner);
 inline const PrimitivePtr kPrimReal = std::make_shared<Primitive>(kReal);
+inline const PrimitivePtr kPrimImag = std::make_shared<Primitive>(kImag);
+inline const PrimitivePtr kPrimConj = std::make_shared<Primitive>(kConj);
 inline const PrimitivePtr kPrimExtractVolumePatches = std::make_shared<Primitive>("ExtractVolumePatches");
 
 // NN

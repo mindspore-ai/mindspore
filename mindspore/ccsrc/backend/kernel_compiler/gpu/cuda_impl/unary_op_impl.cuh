@@ -68,7 +68,13 @@ void Sign(const T *input, T *output, const size_t count, cudaStream_t cuda_strea
 template <typename T>
 void Real(const Complex<T> *input, T *output, const size_t count, cudaStream_t cuda_stream);
 template <typename T>
+void Real(const T *input, T *output, const size_t count, cudaStream_t cuda_stream);
+template <typename T>
 void Imag(const Complex<T> *input, T *output, const size_t count, cudaStream_t cuda_stream);
 template <typename T>
+void Imag(const T *input, T *output, const size_t count, cudaStream_t cuda_stream);
+template <typename T>
 void Conj(const Complex<T> *input, Complex<T> *output, const size_t count, cudaStream_t cuda_stream);
+template <typename T>
+void Conj(const T *input, T *output, const size_t count, cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_UNARYOPIMPL_H_

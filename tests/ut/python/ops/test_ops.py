@@ -1746,6 +1746,18 @@ test_case_math_ops = [
         'desc_inputs': (Tensor(np.array([0, 1, 2]).astype(np.int32)),
                         Tensor(np.array([[0.5, 1.0, 1.5], [1.0, 1.5, 2.0], [2.0, 2.5, 3.0]]).astype(np.float32))),
         'desc_bprop': [Tensor(np.array([[1, 1, 1], [1, 1, 1], [1, 1, 1]]).astype(np.float32))]}),
+    ('Real', {
+        'block': P.Real(),
+        'desc_inputs': [[2, 2]],
+        'skip': ['backward']}),
+    ('Imag', {
+        'block': P.Imag(),
+        'desc_inputs': [[2, 2]],
+        'skip': ['backward']}),
+    ('Conj', {
+        'block': P.Real(),
+        'desc_inputs': [[2, 2]],
+        'skip': ['backward']}),
 ]
 
 test_case_nn_ops = [

@@ -129,7 +129,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimMaximumGrad, R{InferImplMinOrMaxGrad, nullptr, true}},
     {prim::kPrimMinimumGrad, R{InferImplMinOrMaxGrad, nullptr, true}},
     {prim::kPrimSqrt, R{InferImplSqrt, nullptr, true}},
-    {prim::kPrimReal, R{InferImplReal, nullptr, true}},
+    {prim::kPrimRealInner, R{InferImplReal, nullptr, true}},
     // Array
     {prim::kPrimRange, R{InferImplRange, nullptr, true}},
     {prim::kPrimScalarToArray, R{InferImplScalarToArray, nullptr, true}},

@@ -203,7 +203,7 @@ AnfNodePtr HandleRealToComplex(const AnfNodePtr &input, const CNodePtr &din, Fun
   // and eliminate it in "real_op_elimiate" pass.
   MS_EXCEPTION_IF_NULL(fg);
   if (din->abstract() == nullptr) {
-    return fg->NewCNode({NewValueNode(prim::kPrimReal), din});
+    return fg->NewCNode({NewValueNode(prim::kPrimRealInner), din});
   }
 
   TypePtr din_type = din->Type();
