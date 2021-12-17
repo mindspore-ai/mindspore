@@ -153,7 +153,7 @@ void ActorMgr::Finalize() {
   // stop iomgr thread
   for (auto mgrIt = ioMgrs.begin(); mgrIt != ioMgrs.end(); ++mgrIt) {
     MS_LOG(INFO) << "finalize IOMgr=" << mgrIt->first.c_str();
-    mgrIt->second->Finish();
+    mgrIt->second->Finalize();
   }
 
   // delete actor thread pool if use_inner_pool

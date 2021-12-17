@@ -56,7 +56,7 @@ static const char HTTP_CLIENT_EVLOOP_THREADNAME[] = "MINDRT_Htp";
 
 class IOMgr {
  public:
-  using MsgHandler = void (*)(std::unique_ptr<MessageBase> &&msg);
+  using MessageHandler = void (*)(std::unique_ptr<MessageBase> &&msg);
   /**
    * remoteLink and isExactNotRemote are flags to tell us which link should be used. There are several cases:
    * 1. remoteLink is false and isExactNotRemote is false : callers can reuse remote link when threr are no links
@@ -71,16 +71,15 @@ class IOMgr {
   // close the socket,and send exitedEvent to all linkers.
   virtual void UnLink(const AID &dAid) = 0;
   virtual void Reconnect(const AID &sAid, const AID &dAid) = 0;
-  virtual void RegisterMsgHandle(MsgHandler handle) = 0;
-  virtual bool Init() = 0;                                                                  // once
-  virtual void Finish() = 0;                                                                // once
-  virtual bool StartIOServer(const std::string &url, const std::string &advertiseUrl) = 0;  // multicalledable
+  virtual void SetMessageHandler(MessageHandler handle) = 0;
+  virtual bool Initialize() = 0;                                                                // once
+  virtual void Finalize() = 0;                                                                  // once
+  virtual bool StartServerSocket(const std::string &url, const std::string &advertiseUrl) = 0;  // multicalledable
   virtual uint64_t GetOutBufSize() = 0;
   virtual uint64_t GetInBufSize() = 0;
   virtual void CollectMetrics() = 0;
-  virtual int AddRuleUdp(std::string peer, int recordNum) = 0;
-  virtual void DelRuleUdp(std::string peer, bool outputLog) = 0;
-  virtual void LinkRecycleCheck(int recyclePeroid) = 0;
+  virtual int AddRuleUdp(std::string peer, int recordNum) { return 0; }
+  virtual void DelRuleUdp(std::string peer, bool outputLog) { return; }
   IOMgr() {}
   virtual ~IOMgr() {}
 };
