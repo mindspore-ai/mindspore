@@ -538,10 +538,6 @@ void FullQuantQuantizer::InitCpuConfig() {
     prim::kPrimConv2DFusion,
     prim::kPrimFullConnection,
     prim::kPrimMatMul,
-    prim::kPrimMaxPoolFusion,
-    prim::kPrimAvgPoolFusion,
-    prim::kPrimLayerNormFusion,
-    // prim::kPrimConv2dTransposeFusion, // Precision needs to be optimized.
     // Memory
     prim::kPrimReshape,
     prim::kPrimTranspose,
@@ -554,14 +550,6 @@ void FullQuantQuantizer::InitCpuConfig() {
     prim::kPrimGather,
     prim::kPrimReduceFusion,
     prim::kPrimAffine,
-    // Arithmetic
-    prim::kPrimAddFusion,
-    prim::kPrimActivation,
-    prim::kPrimMulFusion,
-    prim::kPrimDivFusion,
-    prim::kPrimSqrt,
-    prim::kPrimPowFusion,
-    prim::kPrimEltwise,
   };
   skip_check_dtype_ops_ = {prim::kPrimTupleGetItem, prim::kPrimShape};
   per_channel_ops_ = {prim::kPrimConv2DFusion, prim::kPrimConv2dTransposeFusion, prim::kPrimMatMul,
@@ -587,19 +575,19 @@ void FullQuantQuantizer::InitKirinConfig() {
 void FullQuantQuantizer::InitQMinMax() {
   MS_ASSERT(activation_quant_data_type_ == kNumberTypeInt8 || activation_quant_data_type_ == kNumberTypeUInt8);
   if (activation_quant_data_type_ == kNumberTypeInt8) {
-    activation_q_min_ = QuantMin(this->bit_num_, false, true);  // -127
-    activation_q_max_ = QuantMax(this->bit_num_, false);        // 127
+    activation_q_min_ = QuantMin(this->bit_num_, false, activation_symmetry_);  // -128
+    activation_q_max_ = QuantMax(this->bit_num_, false);                        // 127
   } else if (activation_quant_data_type_ == kNumberTypeUInt8) {
     activation_q_min_ = QuantMin(this->bit_num_, true, false);  // 0
     activation_q_max_ = QuantMax(this->bit_num_, true);         // 255
   }
   MS_ASSERT(weight_data_type_ == kNumberTypeInt8 || weight_data_type_ == kNumberTypeUInt8);
   if (weight_data_type_ == kNumberTypeInt8) {
-    weight_q_max_ = QuantMax(this->bit_num_, false);        // 127
-    weight_q_min_ = QuantMin(this->bit_num_, false, true);  // -127
+    weight_q_min_ = QuantMin(this->bit_num_, false, weight_symmetry_);  // -127
+    weight_q_max_ = QuantMax(this->bit_num_, false);                    // 127
   } else if (activation_quant_data_type_ == kNumberTypeUInt8) {
-    weight_q_max_ = QuantMax(this->bit_num_, true);         // 255
     weight_q_min_ = QuantMin(this->bit_num_, true, false);  // 0
+    weight_q_max_ = QuantMax(this->bit_num_, true);         // 255
   }
 }
 
