@@ -46,9 +46,10 @@ std::string GenerateDumpPath(uint32_t graph_id, uint32_t rank_id, bool is_cst) {
     dump_path += "/";
   }
   if (is_cst) {
-    dump_path += ("rank_" + std::to_string(rank_id) + "/" + net_name + "/" + std::to_string(graph_id) + "/constants");
+    dump_path += ("rank_" + std::to_string(rank_id) + "/" + net_name + "/" + std::to_string(graph_id) + "/constants/");
   } else {
-    dump_path += ("rank_" + std::to_string(rank_id) + "/" + net_name + "/" + std::to_string(graph_id) + "/" + iterator);
+    dump_path +=
+      ("rank_" + std::to_string(rank_id) + "/" + net_name + "/" + std::to_string(graph_id) + "/" + iterator + "/");
   }
   return dump_path;
 }
