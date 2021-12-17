@@ -36,6 +36,9 @@ class MS_CORE_API Cos : public PrimitiveC {
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Cos for the inputs.
   void Init(float alpha = 0.0);
 };
+
+AbstractBasePtr CosInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                         const std::vector<AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_COS_H_

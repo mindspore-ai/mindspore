@@ -4537,7 +4537,7 @@ class Cos(Primitive):
         >>> x = Tensor(np.array([0.24, 0.83, 0.31, 0.09]), mindspore.float32)
         >>> output = cos(x)
         >>> print(output)
-        [0.971338 0.67487574 0.95233357 0.9959527 ]
+        [0.971338 0.6748758 0.95233357 0.9959527]
     """
 
     @prim_attr_register
@@ -4608,7 +4608,7 @@ class Sin(Primitive):
         >>> x = Tensor(np.array([0.62, 0.28, 0.43, 0.62]), mindspore.float32)
         >>> output = sin(x)
         >>> print(output)
-        [0.5810352  0.27635565 0.41687083 0.5810352 ]
+        [0.5810352 0.27635565 0.41687083 0.5810352]
     """
 
     @prim_attr_register

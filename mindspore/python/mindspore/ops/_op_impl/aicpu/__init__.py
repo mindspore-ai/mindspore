@@ -46,6 +46,8 @@ from .is_inf import _is_inf_aicpu
 from .is_nan import _is_nan_aicpu
 from .reshape import _reshape_aicpu
 from .flatten import _flatten_aicpu
+from .sin import _sin_aicpu
+from .cos import _cos_aicpu
 from .squeeze import _squeeze_aicpu
 from .acos import _acos_aicpu
 from .acos_grad import _acos_grad_aicpu

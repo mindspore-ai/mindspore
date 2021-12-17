@@ -18,9 +18,10 @@
 #define MINDSPORE_CORE_OPS_SIN_H_
 #include <vector>
 #include <memory>
+
 #include "ops/primitive_c.h"
+#include "ops/op_utils.h"
 #include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -36,10 +37,10 @@ class MS_CORE_API Sin : public PrimitiveC {
   /// \brief Init.
   void Init() const {}
 };
+
 AbstractBasePtr SinInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                          const std::vector<AbstractBasePtr> &input_args);
 using kPrimSinPtr = std::shared_ptr<Sin>;
 }  // namespace ops
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CORE_OPS_SIN_H_
