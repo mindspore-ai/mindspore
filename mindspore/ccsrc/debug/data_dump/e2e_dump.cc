@@ -351,6 +351,7 @@ void E2eDump::DumpConstantData(const session::KernelGraph *graph, uint32_t rank_
   if (!IsDeviceTargetGPU() || !dump_json_parser.e2e_dump_enabled()) {
     return;
   }
+  MS_LOG(INFO) << "DumpConstants. Current iteration is " << dump_json_parser.cur_dump_iter();
   uint32_t graph_id = graph->graph_id();
   std::string cst_path = GenerateDumpPath(graph_id, rank_id, true);
   DumpConstantData(graph, cst_path, debugger);

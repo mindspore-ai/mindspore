@@ -507,6 +507,10 @@ void DebuggerProtoExporter::ExportValueNodes(const std::map<AnfNodePtr, size_t> 
     std::string node_name = GetKernelNodeName(item.first);
     GetFileKernelName(NOT_NULL(&node_name));
     named_value->set_full_name(node_name);
+    if (GetValueNode(item.first)->isa<tensor::Tensor>()) {
+      continue;
+    }
+    SetValueToProto(GetValueNode(item.first), named_value->mutable_value());
   }
 }
 
