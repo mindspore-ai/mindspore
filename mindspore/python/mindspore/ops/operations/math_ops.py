@@ -3477,16 +3477,6 @@ class ApproximateEqual(_LogicBinaryOp):
         """Initialize ApproximateEqual"""
         validator.check_value_type("tolerance", tolerance, [float], self.name)
 
-    def infer_shape(self, x_shape, y_shape):
-        validator.check("x_shape", x_shape, "y_shape", y_shape, Rel.EQ, self.name)
-        return x_shape
-
-    def infer_dtype(self, x_dtype, y_dtype):
-        args_dtype = {"x": x_dtype, "y": y_dtype}
-        valid_type = [mstype.float32, mstype.float16]
-        validator.check_tensors_dtypes_same_and_valid(args_dtype, valid_type, prim_name=self.name)
-        return mstype.tensor_type(mstype.bool_)
-
 
 class EqualCount(PrimitiveWithInfer):
     """

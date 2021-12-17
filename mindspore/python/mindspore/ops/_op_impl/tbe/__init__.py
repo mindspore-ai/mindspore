@@ -61,6 +61,7 @@ from .apply_proximal_gradient_descent import _apply_proximal_gradient_descent_tb
 from .sparse_apply_ftrl_v2 import _sparse_apply_ftrl_v2_tbe
 from .sparse_apply_adagrad_v2 import _sparse_apply_adagrad_v2_tbe
 from .approximate_equal import _approximate_equal_tbe
+from .approximate_equal_ds import _approximate_equal_ds_tbe
 from .adam_apply_one import _adam_apply_one_tbe
 from .assign import _assign_tbe
 from .assign_ds import _assign_ds_tbe

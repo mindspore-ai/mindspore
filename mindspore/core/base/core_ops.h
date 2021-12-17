@@ -156,6 +156,7 @@ inline const PrimitivePtr kPrimLogicalAnd = std::make_shared<Primitive>("Logical
 inline const PrimitivePtr kPrimLogicalOr = std::make_shared<Primitive>("LogicalOr");
 inline const PrimitivePtr kPrimLogicalNot = std::make_shared<Primitive>("LogicalNot");
 inline const PrimitivePtr kPrimEqualCount = std::make_shared<Primitive>("EqualCount");
+inline const PrimitivePtr kPrimApproximateEqual = std::make_shared<Primitive>("ApproximateEqual");
 
 inline const PrimitivePtr kPrimDistribute = std::make_shared<Primitive>("distribute");
 inline const PrimitivePtr kPrimIm2Col = std::make_shared<Primitive>("im2col");
