@@ -30,7 +30,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 constexpr uint32_t kPatchNumPerRow = 16;
 constexpr uint32_t kPatchNumPerCol = 16;
 constexpr uint32_t kColPerPatch = 64;
@@ -68,7 +67,6 @@ Status PhotoTourOp::LoadTensorRow(row_id_type row_id, TensorRow *trow) {
     (*trow) = TensorRow(row_id, {std::move(image)});
     trow->setPath({image_names_[row_id / (kPatchNumPerRow * kPatchNumPerCol)],
                    std::to_string(row_id % (kPatchNumPerRow * kPatchNumPerCol))});
-
   } else {
     std::shared_ptr<Tensor> image1, image2, matches;
     // make a copy of cached tensor
@@ -414,6 +412,5 @@ Status PhotoTourOp::ComputeColMap() {
   }
   return Status::OK();
 }
-
 }  // namespace dataset
 }  // namespace mindspore

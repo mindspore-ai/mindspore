@@ -18,7 +18,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 const float RandomAdjustSharpnessOp::kDefProbability = 0.5;
 
 Status RandomAdjustSharpnessOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {

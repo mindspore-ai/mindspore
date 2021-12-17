@@ -18,7 +18,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 Status AutotuneCallback::DSNStepBegin(const CallbackParam &cb_param) {
   // check if the queue is empty, no need to wait until a change request is ready
   if (!change_request_queue_->empty()) {

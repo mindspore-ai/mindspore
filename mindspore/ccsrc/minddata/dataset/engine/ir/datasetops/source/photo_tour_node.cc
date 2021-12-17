@@ -26,7 +26,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 PhotoTourNode::PhotoTourNode(const std::string &dataset_dir, const std::string &name, const std::string &usage,
                              std::shared_ptr<SamplerObj> sampler, std::shared_ptr<DatasetCache> cache)
     : MappableSourceNode(std::move(cache)), dataset_dir_(dataset_dir), name_(name), usage_(usage), sampler_(sampler) {}

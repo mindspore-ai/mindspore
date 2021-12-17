@@ -304,6 +304,5 @@ Status Places365Op::ComputeColMap() {
   }
   return Status::OK();
 }
-
 }  // namespace dataset
 }  // namespace mindspore
