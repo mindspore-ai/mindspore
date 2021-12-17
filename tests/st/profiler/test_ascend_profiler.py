@@ -51,4 +51,5 @@ def test_ascend_profiling():
     add = Net()
     add(Tensor(x), Tensor(y))
     profiler.analyse()
-    assert len(glob.glob("./data_ascend_profiler/profiler*/JOB*/data/Framework*")) == 6
+    assert len(glob.glob("./data_ascend_profiler/profiler*/JOB*/data/Framework*")) == 6 or \
+        len(glob.glob("./data_ascend_profiler/profiler*/*PROF*/device_*/data/Framework*")) == 6
