@@ -954,13 +954,24 @@ BaseRef MindRTBackend::ConstructOutputByAbstract(const abstract::AbstractBasePtr
     MS_LOG(EXCEPTION) << "The output position is out of range: " << *output_position << " need:" << outputs_num
                       << " total:" << output_tensors.size();
   }
+  VectorRef outputs;
+
+  if (abstract->isa<abstract::AbstractCSRTensor>()) {
+    auto csr_tensor_abstract = abstract->cast<abstract::AbstractCSRTensorPtr>();
+    MS_EXCEPTION_IF_NULL(csr_tensor_abstract);
+    outputs.emplace_back(ConstructOutputByAbstract(csr_tensor_abstract->indptr(), output_tensors, output_position));
+    outputs.emplace_back(ConstructOutputByAbstract(csr_tensor_abstract->indices(), output_tensors, output_position));
+    outputs.emplace_back(ConstructOutputByAbstract(csr_tensor_abstract->values(), output_tensors, output_position));
+    outputs.emplace_back(
+      ConstructOutputByAbstract(csr_tensor_abstract->dense_shape(), output_tensors, output_position));
+    return outputs;
+  }
 
   if (!abstract->isa<abstract::AbstractTuple>()) {
     (*output_position)++;
     return output_tensors[(*output_position) - 1];
   }
 
-  VectorRef outputs;
   auto tuple_abstract = abstract->cast<abstract::AbstractTuplePtr>();
   MS_EXCEPTION_IF_NULL(tuple_abstract);
   const auto &sub_abstracts = tuple_abstract->elements();

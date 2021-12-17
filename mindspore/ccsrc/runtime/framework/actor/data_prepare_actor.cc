@@ -142,6 +142,9 @@ void PrepareDataForValue(const ValuePtr &value, const KernelWithIndex &node_with
   } else if (value->isa<Int64Imm>()) {
     type = kNumberTypeInt64;
     (reinterpret_cast<int64_t *>(host_addr.get()))[0] = GetValue<int64_t>(value);
+  } else if (value->isa<Int32Imm>()) {
+    type = kNumberTypeInt32;
+    (reinterpret_cast<int32_t *>(host_addr.get()))[0] = GetValue<int32_t>(value);
   } else {
     MS_LOG(EXCEPTION) << "Invalid value:" << value->ToString();
   }
