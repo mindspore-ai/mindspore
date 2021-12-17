@@ -132,8 +132,7 @@ std::string GetDebugInfo(const DebugInfoPtr &info, const std::string &prefix, So
     return "";
   }
   if (tip == kSourceLineTipDiscard) {
-    std::replace(debug_info.begin(), debug_info.end(), '\r', '/');
-    std::replace(debug_info.begin(), debug_info.end(), '\n', '/');
+    ReplaceLinefeed(&debug_info);
   }
   std::ostringstream oss;
   oss << prefix << debug_info;
