@@ -44,10 +44,7 @@ constexpr uint32_t kDeviceNumThreshold = 1024;
 const char kDefaultGroup[] = "__default_group";
 constexpr auto kAttrStreamID = "stream_id";
 
-constexpr uint32_t kMaxStreamNum = 1024;
 constexpr uint32_t kHcomSecondaryStreamNum = 3;
-
-constexpr uint32_t kMaxTaskNumPerStream = 1010;
 constexpr uint32_t kMaxCommonNodeNumPerStream = 350;
 
 constexpr uint32_t kTaskNumPerHcomNode = 200;
@@ -674,8 +671,14 @@ void AscendStreamAssign::AssignAllNodesStream(const NotNull<KernelGraphPtr> &gra
                << ", hcom stream number: " << hcom_stream_num << "*" << (kHcomSecondaryStreamNum + 1)
                << ", independent stream number: " << independent_stream_num << ".";
 
-  if (total_stream_num > kMaxStreamNum) {
-    MS_LOG(EXCEPTION) << "Total stream number " << total_stream_num << " exceeds the limit of " << kMaxStreamNum
+  uint32_t max_stream_count = 0;
+  uint32_t max_task_count = 0;
+  auto ret = rtGetMaxStreamAndTask(RT_NORMAL_STREAM, &max_stream_count, &max_task_count);
+  if (ret != RT_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "call rtGetMaxStreamAndTask failed.";
+  }
+  if (total_stream_num > max_stream_count) {
+    MS_LOG(EXCEPTION) << "Total stream number " << total_stream_num << " exceeds the limit of " << max_stream_count
                       << ", search details information in mindspore's FAQ.";
   }
 
@@ -777,7 +780,13 @@ uint32_t AscendStreamAssign::AssignHcomStreamId(const CNodePtr &cur_cnode_ptr, b
     AnfAlgo::SetStreamId(cur_hcom_stream_id, cur_cnode_ptr.get());
     hcom_stream_map_.emplace(cur_hcom_stream_id, task_num);
   } else {
-    if (it->second <= kMaxTaskNumPerStream - task_num) {
+    uint32_t max_stream_count = 0;
+    uint32_t max_task_count = 0;
+    auto ret = rtGetMaxStreamAndTask(RT_NORMAL_STREAM, &max_stream_count, &max_task_count);
+    if (ret != RT_ERROR_NONE) {
+      MS_LOG(EXCEPTION) << "call rtGetMaxStreamAndTask failed.";
+    }
+    if (it->second <= max_task_count - task_num) {
       AnfAlgo::SetStreamId(it->first, cur_cnode_ptr.get());
       it->second = Uint32tAddWithOverflowCheck(it->second, task_num);
     } else {
