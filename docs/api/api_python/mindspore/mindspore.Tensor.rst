@@ -397,11 +397,11 @@ mindspore.Tensor
 
         **参数：**
 
-        - **x** (Tensor) - 输入的张量。该张量的形状必须遵守广播规则。
+        - **x** (Tensor) - 输入的张量。
 
         **返回：**
 
-        Tensor，维度与输入张量的相同。
+        维度与输入张量的相同的Tensor。输出张量的维度必须遵守广播规则。广播规则指输出张量的维度需要扩展为输入张量的维度，如果目标张量的维度大于输入张量的维度，则不满足广播规则。
 
         **样例：**
 
@@ -414,6 +414,15 @@ mindspore.Tensor
         >>> print(output)
         [[1. 2. 3.]
         [1. 2. 3.]]
+
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> from mindspore import dtype as mstype
+        >>> x = Tensor([[1, 2, 3], [1, 2, 3]], dtype=mstype.float32)
+        >>> y = Tensor(np.ones((1, 3)), dtype=mstype.float32)
+        >>> output = x.expand_as(y)
+        >>> print(output)
+        Not support shapes for broadcast, x_shape: (2, 3), target shape: (1, 3)
 
     .. py:method:: fill(value)
 
@@ -493,7 +502,7 @@ mindspore.Tensor
     .. py:method:: from_numpy(array)
         :staticmethod:
 
-        将NumPy数组转换为张量，且不需要复制数据。
+        通过不复制数据的方式将Numpy数组转换为张量。
 
         **参数：**
 
@@ -501,7 +510,7 @@ mindspore.Tensor
 
         **返回：**
 
-        Tensor，与输入的张量具有相同的数据类型。
+        与输入的张量具有相同的数据类型的Tensor。
 
         **样例：**
 
@@ -651,7 +660,7 @@ mindspore.Tensor
 
     .. py:method:: mean(axis=(), keep_dims=False)
 
-        通过计算出维度中的所有元素的平均值来简化张量的维度。
+        计算指定维度上所有元素的均值，简化Tensor的维度。
 
         **参数：**
 
@@ -660,7 +669,7 @@ mindspore.Tensor
 
         **返回：**
 
-        Tensor，与输入的张量具有相同的数据类型。
+        与输入的张量具有相同的数据类型的Tensor。
 
         **支持平台：**
 
