@@ -2781,16 +2781,6 @@ class MulNoNan(_MathBinaryOp):
         """Initialize _BinaryOp"""
         self.init_prim_io_names(inputs=['x', 'y'], outputs=['output'])
 
-    def infer_value(self, x, y):
-        if x is not None and y is not None:
-            x = x.asnumpy()
-            y = y.asnumpy()
-            with np.errstate(divide='ignore', invalid='ignore'):
-                out = np.multiply(x, y)
-                out[y == 0] = 0
-            return out
-        return None
-
 
 class FloorDiv(Primitive):
     """

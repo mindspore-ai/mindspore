@@ -470,6 +470,7 @@ from .nll_loss_grad import _nll_loss_grad_tbe
 from .masked_fill import _masked_fill_tbe
 from .mish import _mish_tbe
 from .mul_no_nan import _mul_no_nan_tbe
+from .mul_no_nan_ds import _mul_no_nan_ds_tbe
 from .selu import _selu_tbe
 from .centralization import _centralization_tbe
 from .exp_ds import _exp_ds_tbe
