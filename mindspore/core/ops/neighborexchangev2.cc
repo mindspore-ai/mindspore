@@ -150,11 +150,21 @@ void Check(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &in
   if (input_shape.size() != kInputSize) {
     MS_EXCEPTION(ValueError) << "Input size is not 4, only support NCHW now.";
   }
-  if (send_lens[kIdx0] + send_lens[kIdx1] > input_shape[kHDim]) {
-    MS_EXCEPTION(ValueError) << "send_lens in H dim is larger than input size.";
+  if (send_lens[kIdx0] > input_shape[kHDim]) {
+    MS_EXCEPTION(ValueError) << "Attr send_lens[0]: " << send_lens[kIdx0]
+                             << " is larger than input size in H dim: " << input_shape[kHDim] << ".";
   }
-  if (send_lens[kIdx2] + send_lens[kIdx3] > input_shape[kWDim]) {
-    MS_EXCEPTION(ValueError) << "send_lens in W dim is larger than input size.";
+  if (send_lens[kIdx1] > input_shape[kHDim]) {
+    MS_EXCEPTION(ValueError) << "Attr send_lens[1]: " << send_lens[kIdx1]
+                             << " is larger than input size in H dim: " << input_shape[kHDim] << ".";
+  }
+  if (send_lens[kIdx2] > input_shape[kWDim]) {
+    MS_EXCEPTION(ValueError) << "Attr send_lens[2]: " << send_lens[kIdx2]
+                             << " is larger than input size in W dim: " << input_shape[kWDim] << ".";
+  }
+  if (send_lens[kIdx3] > input_shape[kWDim]) {
+    MS_EXCEPTION(ValueError) << "Attr send_lens[3]: " << send_lens[kIdx3]
+                             << " is larger than input size in W dim: " << input_shape[kWDim] << ".";
   }
 
   // check group
