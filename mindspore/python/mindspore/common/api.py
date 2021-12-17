@@ -117,14 +117,23 @@ def _check_all_tensor(sequence):
             return False
     return True
 
+
 def _get_filename_from_trace(trace):
     # format: File "xxx.py", line x, in <module>
     strings = trace.strip().split(' ')
     filename = strings[1].rstrip(',').strip('"')
     return filename
 
+# The first path is the current path or empty.
+sys_path = sys.path[1:]
+def _in_sys_path(file_path):
+    for path in sys_path:
+        if file_path.startswith(path):
+            return True
+    return False
 
-def __get_compile_cache_dep_files(file_path, python_bin_dir, compile_cache_dep_files, pkg):
+
+def __get_compile_cache_dep_files(file_path, compile_cache_dep_files, pkg):
     """Get the dependency files of the network"""
     with open(file_path) as fh:
         root = ast.parse(fh.read(), file_path)
@@ -161,26 +170,20 @@ def __get_compile_cache_dep_files(file_path, python_bin_dir, compile_cache_dep_f
                 dep_file_path = module.__file__
             else:
                 continue
-            if not dep_file_path.startswith(python_bin_dir) and not dep_file_path in compile_cache_dep_files:
+            if not _in_sys_path(dep_file_path) and not dep_file_path in compile_cache_dep_files:
                 logger.debug(f"dependent file path: {dep_file_path}")
                 compile_cache_dep_files.append(dep_file_path)
-                __get_compile_cache_dep_files(dep_file_path, python_bin_dir, compile_cache_dep_files,
-                                              module.__package__)
+                __get_compile_cache_dep_files(dep_file_path, compile_cache_dep_files, module.__package__)
 
 
 def _get_compile_cache_dep_files():
     """Get the dependency files of the network"""
-    python_bin_path = sys.executable
-    if python_bin_path.endswith('bin/python'):
-        python_bin_dir = python_bin_path[:-10]
-    else:
-        return []
     tb = traceback.format_stack()
     compile_cache_dep_files = []
     filename = None
     # Get the entry script file.
     entry_id = 0
-    while entry_id < len(tb) and _get_filename_from_trace(tb[entry_id]).startswith(python_bin_dir):
+    while entry_id < len(tb) and _in_sys_path(_get_filename_from_trace(tb[entry_id])):
         logger.debug(f"trace: {tb[entry_id]}")
         entry_id += 1
     if entry_id < len(tb):
@@ -190,7 +193,7 @@ def _get_compile_cache_dep_files():
     file_path = os.path.realpath(filename)
     logger.debug(f"entry script file path: {file_path}")
     compile_cache_dep_files.append(file_path)
-    __get_compile_cache_dep_files(file_path, python_bin_dir, compile_cache_dep_files, None)
+    __get_compile_cache_dep_files(file_path, compile_cache_dep_files, None)
     return compile_cache_dep_files
 
 
