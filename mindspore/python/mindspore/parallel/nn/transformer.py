@@ -1885,7 +1885,7 @@ class TransformerEncoder(Cell):
             represents the transformer block, `layer_id(int)` means the layer index for the current module, counts from
             zero, `offset(int)` means the layer_index needs an offset, if there are other modules in the net. The
             default setting for the pipeline is: `(layer_id + offset) // (layers / pipeline_stage)`. Default None.
-        offset(int): The initial layer index for the `decoder`. Used for setting the fusion id and stage id, to not
+        offset(int): The initial layer index for the `encoder`. Used for setting the fusion id and stage id, to not
             overlap with the encoder layer. Default 0.
         use_past(bool): Use the past state to compute, used for incremental prediction. For example, if we have two
             words and want to generate the ten more words. We just need to compute the two words' state only once,

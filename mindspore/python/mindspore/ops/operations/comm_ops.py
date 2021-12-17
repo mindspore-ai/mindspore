@@ -13,7 +13,8 @@
 # limitations under the License.
 # ============================================================================
 
-"""comm_ops"""
+"""Communication APIs.
+"""
 
 from mindspore.common import Tensor
 from ..._checkparam import Validator as validator
@@ -45,6 +46,10 @@ class ReduceOp:
 
     Note:
         For more, refer to example. This needs to run in an environment with multiple graphics cards.
+        The user needs to preset
+        communication environment variables before running the following example, please check the details on the
+        official websit of MindSpore \
+        <https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.ops.html#communication-operators>`_.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -96,7 +101,10 @@ class AllReduce(PrimitiveWithInfer):
 
     Note:
         The operation of AllReduce does not support "prod" currently.
-        The tensors must have the same shape and format in all processes of the collection.
+        The tensors must have the same shape and format in all processes of the collection. The user needs to preset
+        communication environment variables before running the following example, please check the details on the
+        official websit of MindSpore \
+        <https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.ops.html#communication-operators>`_.
 
     Args:
         op (str): Specifies an operation used for element-wise reductions,
@@ -171,7 +179,10 @@ class AllGather(PrimitiveWithInfer):
     Gathers tensors from the specified communication group.
 
     Note:
-        The tensors must have the same shape and format in all processes of the collection.
+        The tensors must have the same shape and format in all processes of the collection. The user needs to preset
+        communication environment variables before running the following example, please check the details on the
+        official websit of MindSpore \
+        <https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.ops.html#communication-operators>`_.
 
     Args:
         group (str): The communication group to work on. Default: "GlobalComm.WORLD_COMM_GROUP".
@@ -371,7 +382,10 @@ class ReduceScatter(PrimitiveWithInfer):
 
     Note:
         The back propagation of the op is not supported yet. Stay tuned for more.
-        The tensors must have the same shape and format in all processes of the collection.
+        The tensors must have the same shape and format in all processes of the collection. The user needs to preset
+        communication environment variables before running the following example, please check the details on the
+        official websit of MindSpore \
+        <https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.ops.html#communication-operators>`_.
 
     Args:
         op (str): Specifies an operation used for element-wise reductions,
@@ -501,7 +515,10 @@ class Broadcast(PrimitiveWithInfer):
     Broadcasts the tensor to the whole group.
 
     Note:
-        The tensors must have the same shape and format in all processes of the collection.
+        The tensors must have the same shape and format in all processes of the collection. The user needs to preset
+        communication environment variables before running the following example, please check the details on the
+        official websit of MindSpore \
+        <https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.ops.html#communication-operators>`_.
 
     Args:
         root_rank (int): Source rank. Required in all processes except the one
@@ -631,6 +648,12 @@ class NeighborExchange(Primitive):
     NeighborExchange sends data from the local rank to ranks in the send_rank_ids,
     as while receive data from recv_rank_ids.
 
+    Note:
+        The user needs to preset
+        communication environment variables before running the following example, please check the details on the
+        official websit of MindSpore \
+        <https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.ops.html#communication-operators>`_.
+
     Args:
         send_rank_ids (list(int)): Ranks which the data is sent to.
         recv_rank_ids (list(int)): Ranks which the data is received from.
@@ -666,7 +689,10 @@ class AlltoAll(PrimitiveWithInfer):
     - The gather phase: Each process concatenates the received blocks along the concat_dimension.
 
     Note:
-        The tensors must have the same shape and format in all processes of the collection.
+        The tensors must have the same shape and format in all processes of the collection. The user needs to preset
+        communication environment variables before running the following example, please check the details on the
+        official websit of MindSpore \
+        <https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.ops.html#communication-operators>`_.
 
     Args:
         split_count (int): On each process, divide blocks into split_count number.
@@ -716,6 +742,12 @@ class NeighborExchangeV2(Primitive):
 
     NeighborExchangeV2 sends data from the local rank to ranks in the send_rank_ids,
     as while receive data from recv_rank_ids.
+
+    Note:
+        The user needs to preset
+        communication environment variables before running the following example, please check the details on the
+        official websit of MindSpore \
+        <https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.ops.html#communication-operators>`_.
 
     Args:
         send_rank_ids (list(int)): Ranks which the data is sent to. 8 rank_ids represents 8 directions, if one
