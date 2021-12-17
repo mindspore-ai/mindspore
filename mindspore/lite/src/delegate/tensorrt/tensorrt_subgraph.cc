@@ -108,8 +108,8 @@ int TensorRTSubGraph::SetDeviceConfig(cudaStream_t stream) {
 
   config_->setProfileStream(stream);
 
-  // config setMaxWorkspaceSize to 1024 MB for max limit
-  config_->setMaxWorkspaceSize(1024 * (1 << 20));
+  // config setMaxWorkspaceSize to 1152 MB for max limit
+  config_->setMaxWorkspaceSize(1152 * (1 << 20));
   return RET_OK;
 }
 
@@ -194,6 +194,9 @@ nvinfer1::ITensor *TensorRTSubGraph::SetTensorRTNetworkInput(const mindspore::MS
     return nullptr;
   }
   nvinfer1::Dims input_dims_opt = ConvertCudaDims(in_tensor.Shape());
+  if (input_batchsize_index_ != -1) {
+    input_dims_opt.d[input_batchsize_index_] = 1;
+  }
   if (!profile_->setDimensions(in_tensor.Name().c_str(), nvinfer1::OptProfileSelector::kOPT, input_dims_opt)) {
     MS_LOG(ERROR) << "setDimensions of kOPT failed for " << in_tensor.Name();
     return nullptr;
