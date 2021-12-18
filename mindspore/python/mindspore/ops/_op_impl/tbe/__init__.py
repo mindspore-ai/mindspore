@@ -282,7 +282,9 @@ from .pad_d_ds import _pad_d_ds_tbe
 from .arg_max_with_value import _arg_max_with_value_tbe
 from .arg_min_with_value import _arg_min_with_value_tbe
 from .smooth_l1_loss import _smooth_l1_loss_tbe
+from .smooth_l1_loss_ds import _smooth_l1_loss_ds_tbe
 from .smooth_l1_loss_grad import _smooth_l1_loss_grad_tbe
+from .smooth_l1_loss_grad_ds import _smooth_l1_loss_grad_ds_tbe
 from .soft_margin_loss import _soft_margin_loss_tbe
 from .soft_margin_loss_grad import _soft_margin_loss_grad_tbe
 from .fused_mul_add import _fused_mul_add_tbe

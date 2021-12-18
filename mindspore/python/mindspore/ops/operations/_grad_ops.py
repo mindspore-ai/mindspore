@@ -1822,22 +1822,12 @@ class NLLLossGrad(PrimitiveWithInfer):
         return x_dtype
 
 
-class SmoothL1LossGrad(PrimitiveWithInfer):
+class SmoothL1LossGrad(Primitive):
     """Computes gradient for prediction on SmoothL1Loss."""
 
     @prim_attr_register
     def __init__(self, beta=1.0):
         pass
-
-    def infer_shape(self, prediction, target, dloss):
-        validator.check('prediction shape', prediction, 'target shape', target, Rel.EQ, self.name)
-        validator.check('prediction shape', prediction, 'dloss shape', dloss, Rel.EQ, self.name)
-        return prediction
-
-    def infer_dtype(self, prediction, target, dloss):
-        args = {"prediction": prediction, "target": target, 'dloss': dloss}
-        validator.check_tensors_dtypes_same_and_valid(args, mstype.number_type, self.name)
-        return dloss
 
 
 class SoftMarginLossGrad(Primitive):

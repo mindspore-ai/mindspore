@@ -45,6 +45,7 @@ class MS_CORE_API SmoothL1Loss : public PrimitiveC {
 };
 AbstractBasePtr SmoothL1LossInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const std::vector<AbstractBasePtr> &input_args);
+using kPrimSmoothL1LossPtr = std::shared_ptr<SmoothL1Loss>;
 }  // namespace ops
 }  // namespace mindspore
 

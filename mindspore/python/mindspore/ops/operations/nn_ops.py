@@ -2604,7 +2604,7 @@ class ApplyMomentum(Primitive):
         self.add_prim_attr('side_effect_mem', True)
 
 
-class SmoothL1Loss(PrimitiveWithInfer):
+class SmoothL1Loss(Primitive):
     r"""
     Computes smooth L1 loss, a robust L1 loss.
 
@@ -2666,15 +2666,6 @@ class SmoothL1Loss(PrimitiveWithInfer):
         validator.check_value_type('beta', beta, [float], self.name)
         validator.check('beta', beta, '', 0, Rel.GT, self.name)
         self.init_prim_io_names(inputs=['prediction', 'target'], outputs=['output'])
-
-    def infer_shape(self, prediction, target):
-        validator.check('prediction shape', prediction, 'target shape', target, Rel.EQ, self.name)
-        return prediction
-
-    def infer_dtype(self, prediction, target):
-        args = {"prediction": prediction, "target": target}
-        validator.check_tensors_dtypes_same_and_valid(args, (mstype.float16, mstype.float32), self.name)
-        return prediction
 
 
 class SoftMarginLoss(Primitive):

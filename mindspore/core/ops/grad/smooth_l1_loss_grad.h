@@ -38,6 +38,7 @@ class MS_CORE_API SmoothL1LossGrad : public PrimitiveC {
 };
 AbstractBasePtr SmoothL1LossGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                       const std::vector<AbstractBasePtr> &input_args);
+using kPrimSmoothL1LossGradPtr = std::shared_ptr<SmoothL1LossGrad>;
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_SMOOTH_L1_LOSS_GRAD_H_
