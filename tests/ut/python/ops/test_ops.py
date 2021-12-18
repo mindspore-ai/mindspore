@@ -1008,6 +1008,18 @@ class EditDistance(nn.Cell):
         return self.edit_distance(hypothesis_indices, hypothesis_values, self.hypothesis_shape,
                                   truth_indices, truth_values, self.truth_shape)
 
+class ApplyAdamWithAmsgradNet(nn.Cell):
+    def __init__(self, beta1=0.1, beta2=0.1, epsilon=0.001, use_locking=False):
+        super(ApplyAdamWithAmsgradNet, self).__init__()
+        self.apply_adam_with_amsgrad = P.ApplyAdamWithAmsgrad(beta1, beta2, epsilon, use_locking)
+        self.var = Parameter(Tensor(np.array([[0.2, 0.3], [0.1, 0.4]]).astype(np.float32)), name="var")
+        self.m = Parameter(Tensor(np.array([[0.2, 0.3], [0.1, 0.4]]).astype(np.float32)), name="m")
+        self.v = Parameter(Tensor(np.array([[0.2, 0.3], [0.1, 0.4]]).astype(np.float32)), name="v")
+        self.vhat = Parameter(Tensor(np.array([[0.2, 0.3], [0.1, 0.4]]).astype(np.float32)), name="vhat")
+
+    def construct(self, beta1_power, beta2_power, lr, grad):
+        out = self.apply_adam_with_amsgrad(self.var, self.m, self.v, self.vhat, beta1_power, beta2_power, lr, grad)
+        return out
 
 class ApplyAdagradDANet(nn.Cell):
     def __init__(self, use_locking=False):
@@ -2334,6 +2346,15 @@ test_case_nn_ops = [
                         Tensor(0.001, mstype.float32),
                         Tensor(0.001, mstype.float32),
                         Tensor(2, mstype.int32)],
+        'desc_bprop': [],
+        'skip': ['backward']}),
+    ('ApplyAdamWithAmsgrad', {
+        'block': ApplyAdamWithAmsgradNet(),
+        'desc_inputs': [Tensor(0.3, mstype.float32),
+                        Tensor(0.3, mstype.float32),
+                        Tensor(0.3, mstype.float32),
+                        Tensor(np.array([[0.3, 0.2], [0.4, 0.1]]).astype(np.float32))],
+        'desc_bprop': [],
         'skip': ['backward']}),
     ('SparseApplyRMSProp', {
         'block': SparseApplyRMSPropNet(0.2, 0.01, 1e-6),

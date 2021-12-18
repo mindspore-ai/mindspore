@@ -8956,3 +8956,110 @@ class ApplyKerasMomentum(Primitive):
         """Initialize ApplyKerasMomentum"""
         validator.check_value_type("use_locking", use_locking, [bool], self.name)
         validator.check_value_type("use_nesterov", use_nesterov, [bool], self.name)
+
+
+class ApplyAdamWithAmsgrad(Primitive):
+    r"""
+    Update var according to the Adam algorithm.
+
+    .. math::
+        \begin{array}{l1} \\
+            lr_t:=learning\_rate*\sqrt{1-\beta_2^t}/(1-\beta_1^t) \\
+            m_t:=\beta_1*m_{t-1}+(1-\beta_1)*g \\
+            v_t:=\beta_2*v_{t-1}+(1-\beta_2)*g*g \\
+            \hat v_t:=max(\hat v_{t-1}, v_t) \\
+            var:=var-lr_t*m_t/(\sqrt{\hat v_t}+\epsilon) \\
+        \end{array}
+
+    Args:
+        beta1 (float): A Tensor. Must have the same type as beta1_power. Momentum factor. Must be a scalar.
+        beta2 (float): A Tensor. Must have the same type as beta1_power. Momentum factor. Must be a scalar.
+        epsilon (float): A Tensor. Must have the same type as beta1_power. Ridge term. Must be a scalar.
+        use_locking (bool): use_locking: If True , updating of the `var`, `m`, and `v` tensors will
+          be protected by a lock; Otherwise the behavior is undefined, but may exhibit less contention.
+          Default: False.
+
+    Inputs:
+        - **var** (Parameter) - Variable to be updated. The data type can be float16 or float32.
+        - **m** (Parameter) - The 1st moment vector in the updating formula,
+          the shape and data type value should be the same as `var`.
+        - **v** (Parameter) - the 2nd moment vector in the updating formula,
+          the shape and data type value should be the same as `var`.
+        - **vhat** (Parameter) - :math:`\hat v_t` in the updating formula,
+          the shape and data type value should be the same as `var`.
+        - **beta1_power** (Union[float, Tensor]) - :math:`beta_1^t(\beta_1^{t})` in the updating formula,
+          a scalar tensor with float16 or float32 data type.
+        - **beta2_power** (Union[float, Tensor]) - :math:`beta_2^t(\beta_2^{t})` in the updating formula,
+          a scalar tensor with float16 or float32 data type.
+        - **lr** (Union[float, Tensor]) - Scaling factor, a scalar tensor with float16 or float32 data type.
+        - **grad** (Tensor) - The gradient, has the same shape and data type as `var`.
+
+    Outputs:
+        Tuple of 4 Tensors, the updated parameters.
+
+        - **var** (Tensor) - The same shape and data type as `var`.
+        - **m** (Tensor) - The same shape and data type as `m`.
+        - **v** (Tensor) - The same shape and data type as `v`.
+        - **vhat** (Tensor) - The same shape and data type as `vhat`.
+
+    Raises:
+        TypeError: If `var`, `m`, `v`, `vhat` is not a Parameter.
+        TypeError: If `beta1_power`, `beta2_power`, `lr` is neither a Number nor a Tensor.
+        TypeError: If `grad` is not a Tensor.
+        TypeError: If dtype of `var`, `m`, `v`, `vhat`, `beta1_power`, `beta2_power`,
+          `lr`, `grad`, `momentum` is not float32 or float16.
+        ValueError: If `m` or `v` or `vhat` or `grad` doesn't have the same shape of `var`.
+        ValueError: If the shape of `beta1_power`, `beta2_power`, `lr` is not 0.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> class ApplyAdamWithAmsgradNet(nn.Cell):
+        ...     def __init__(self, beta1, beta2, epsilon, use_locking=False):
+        ...         super(ApplyAdamWithAmsgradNet, self).__init__()
+        ...         self.apply_adam_with_amsgrad = P.ApplyAdamWithAmsgrad(beta1, beta2, epsilon, use_locking)
+        ...         self.var = Parameter(Tensor(np.array([[0.2, 0.3], [0.1, 0.4]]).astype(np.float32)), name="var")
+        ...         self.m = Parameter(Tensor(np.array([[0.2, 0.3], [0.1, 0.4]]).astype(np.float32)), name="m")
+        ...         self.v = Parameter(Tensor(np.array([[0.2, 0.3], [0.1, 0.4]]).astype(np.float32)), name="v")
+        ...         self.vhat = Parameter(Tensor(np.array([[0.2, 0.3], [0.1, 0.4]]).astype(np.float32)), name="vhat")
+        ...     def construct(self, beta1_power, beta2_power, lr, grad):
+        ...         out = self.apply_adam_with_amsgrad(self.var, self.m, self.v, self.vhat,
+        ...                                            beta1_power, beta2_power, lr, grad)
+        ...         return out
+        >>> net = ApplyAdamWithAmsgradNet(0.1, 0.1, 0.001)
+        >>> beta1_power = Tensor(0.3, mstype.float32)
+        >>> beta2_power = Tensor(0.3, mstype.float32)
+        >>> lr = Tensor(0.3, mstype.float32)
+        >>> grad = Tensor(np.array([[0.3, 0.2], [0.4, 0.1]]).astype(np.float32))
+        >>> output = net(beta1_power, beta2_power, lr, grad)
+        >>> print(output)
+        (Tensor(shape=[2, 2], dtype=Float32, value=
+        [[-3.19985598e-02,  1.62773281e-01],
+        [-2.37216085e-01,  3.26413274e-01]]), Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 2.90000021e-01,  2.09999993e-01],
+        [ 3.69999975e-01,  1.29999995e-01]]), Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 1.01000004e-01,  6.59999996e-02],
+        [ 1.54000014e-01,  4.90000024e-02]]), Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 2.00000003e-01,  3.00000012e-01],
+        [ 1.54000014e-01,  4.00000006e-01]]))
+    """
+
+    __mindspore_signature__ = (
+        sig.make_sig('var', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('m', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('v', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('vhat', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('beta1_power', dtype=sig.sig_dtype.T1),
+        sig.make_sig('beta2_power', dtype=sig.sig_dtype.T2),
+        sig.make_sig('lr', dtype=sig.sig_dtype.T3),
+        sig.make_sig('grad', dtype=sig.sig_dtype.T)
+    )
+
+    @prim_attr_register
+    def __init__(self, beta1, beta2, epsilon, use_locking=False):
+        """Initialize ApplyAdamWithAmsgrad"""
+        validator.check_value_type("beta1", beta1, [float], self.name)
+        validator.check_value_type("beta2", beta2, [float], self.name)
+        validator.check_value_type("epsilon", epsilon, [float], self.name)
+        validator.check_value_type("use_locking", use_locking, [bool], self.name)
