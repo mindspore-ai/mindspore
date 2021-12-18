@@ -63,17 +63,17 @@ mindspore.communication
 
 .. py:class:: mindspore.communication.get_group_size(group=GlobalComm.WORLD_COMM_GROUP)
 
-    获取指定通信组的设备总数。
+    获取指定通信组实例的rank_size。
 
     .. note:: `get_group_size` 方法应该在 `init` 方法之后使用。
 
     **参数：**
 
-    - **group** (str) - 通信组名称，通常由 `create_group` 方法创建，否则将使用默认组。默认值：‘WORLD_COMM_GROUP’。
+    - **group** (str) - 指定工作组实例（由 create_group 方法创建）的名称，支持数据类型为str，默认值为‘WORLD_COMM_GROUP’。
 
     **返回：**
 
-    int, 指定通信组的设备总数。
+    指定通信组实例的rank_size，数据类型为int。
 
     **异常：**
 
@@ -118,7 +118,7 @@ mindspore.communication
 
 .. py:class:: mindspore.communication.get_group_rank_from_world_rank(world_rank_id, group)
 
-    由通信集群中的全局设备序号获取指定用户通信组中的设备序号。
+    由通信集群中的全局设备序号获取指定用户通信组中的rank ID。
 
     .. note::
         - GPU 版本的MindSpore不支持此方法；
@@ -127,12 +127,12 @@ mindspore.communication
 
     **参数：**
 
-    - **world_rank_id** (`int`) - 通信集群内的全局设备序号。
-    - **group** (`str`) - 传入的通信组名称，通常由 `create_group` 方法创建。
+    - **world_rank_id** (`int`) - 通信集群内的全局rank ID。
+    - **group** (`str`) - 指定通信组实例（由 create_group 方法创建）的名称。
 
     **返回：**
 
-    int, 当前用户通信组中的设备序号。
+    当前通信组内的rank_ID，数据类型为int。
 
     **异常：**
 
@@ -153,7 +153,7 @@ mindspore.communication
 
 .. py:class:: mindspore.communication.create_group(group, rank_ids)
 
-    创建用户通信组。
+    创建用户自定义的通信组实例。
 
     .. note::
         - GPU 版本的MindSpore不支持此方法；
@@ -163,7 +163,7 @@ mindspore.communication
 
     **参数：**
 
-    - **group** (str) - 将被创建的通信组名称。
+    - **group** (str) - 输入用户自定义的通信组实例名称，支持数据类型为str。
     - **rank_ids** (list) - 设备编号列表。
 
     **异常：**
@@ -227,7 +227,7 @@ mindspore.communication
 
 .. py:class:: mindspore.communication.destroy_group(group)
 
-    销毁用户通信组。
+    注销用户通信组。
 
     .. note::
         - GPU 版本的MindSpore不支持此方法；
@@ -236,7 +236,7 @@ mindspore.communication
 
     **参数：**
 
-    - **group** (str) - 将被销毁的通信组，通常由 `create_group` 方法创建。
+    - **group** (str) - 被注销通信组实例（通常由 create_group 方法创建）的名称。
 
     **异常：**
 
