@@ -21,7 +21,7 @@ import json
 import shutil
 import numpy as np
 import mindspore.offline_debug.dbg_services as d
-from dump_test_utils import build_dump_structure
+from dump_test_utils import build_dump_structure, write_watchpoint_to_json
 from tests.security_utils import security_off_wrap
 
 
@@ -188,51 +188,17 @@ class TestOfflineWatchpoints:
         with open(golden_file) as f:
             expected_list = json.load(f)
             for x, watchpoint_hits in enumerate(watchpoint_hits_list):
-                test_id = "watchpoint_hit" + str(test_index+x+1)
-                info = expected_list[x+test_index][test_id]
-                assert watchpoint_hits.name == info['name']
-                assert watchpoint_hits.slot == info['slot']
-                assert watchpoint_hits.condition == info['condition']
-                assert watchpoint_hits.watchpoint_id == info['watchpoint_id']
-                assert watchpoint_hits.error_code == info['error_code']
-                assert watchpoint_hits.rank_id == info['rank_id']
-                assert watchpoint_hits.root_graph_id == info['root_graph_id']
-                for p, _ in enumerate(watchpoint_hits.parameters):
-                    parameter = "parameter" + str(p)
-                    assert watchpoint_hits.parameters[p].name == info['paremeter'][p][parameter]['name']
-                    assert watchpoint_hits.parameters[p].disabled == info['paremeter'][p][parameter]['disabled']
-                    assert watchpoint_hits.parameters[p].value == info['paremeter'][p][parameter]['value']
-                    assert watchpoint_hits.parameters[p].hit == info['paremeter'][p][parameter]['hit']
-                    assert watchpoint_hits.parameters[p].actual_value == info['paremeter'][p][parameter]['actual_value']
+                test_id = "watchpoint_hit" + str(test_index + x + 1)
+                expect_wp = expected_list[x + test_index][test_id]
+                actual_wp = write_watchpoint_to_json(watchpoint_hits)
+                assert actual_wp == expect_wp
 
     def print_watchpoint_hits(self, watchpoint_hits_list, test_index, is_print):
         """Print watchpoint hits."""
         for x, watchpoint_hits in enumerate(watchpoint_hits_list):
-            parameter_json = []
-            for p, _ in enumerate(watchpoint_hits.parameters):
-                parameter = "parameter" + str(p)
-                parameter_json.append({
-                    parameter: {
-                        'name': watchpoint_hits.parameters[p].name,
-                        'disabled': watchpoint_hits.parameters[p].disabled,
-                        'value': watchpoint_hits.parameters[p].value,
-                        'hit': watchpoint_hits.parameters[p].hit,
-                        'actual_value': watchpoint_hits.parameters[p].actual_value
-                    }
-                })
-            watchpoint_hit = "watchpoint_hit" + str(test_index+x+1)
-            self.watchpoint_hits_json.append({
-                watchpoint_hit: {
-                    'name': watchpoint_hits.name,
-                    'slot': watchpoint_hits.slot,
-                    'condition': watchpoint_hits.condition,
-                    'watchpoint_id': watchpoint_hits.watchpoint_id,
-                    'paremeter': parameter_json,
-                    'error_code': watchpoint_hits.error_code,
-                    'rank_id': watchpoint_hits.rank_id,
-                    'root_graph_id': watchpoint_hits.root_graph_id
-                }
-            })
+            watchpoint_hit = "watchpoint_hit" + str(test_index + x + 1)
+            wp = write_watchpoint_to_json(watchpoint_hits)
+            self.watchpoint_hits_json.append({watchpoint_hit: wp})
         if is_print:
             with open(self.test_name + "_expected.json", "w") as dump_f:
                 json.dump(self.watchpoint_hits_json, dump_f, indent=4, separators=(',', ': '))

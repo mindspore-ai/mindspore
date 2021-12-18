@@ -21,7 +21,7 @@ import shutil
 import json
 import numpy as np
 import mindspore.offline_debug.dbg_services as d
-from dump_test_utils import build_dump_structure
+from dump_test_utils import build_dump_structure, write_tensor_stat_to_json
 from tests.security_utils import security_off_wrap
 
 
@@ -121,72 +121,19 @@ class TestOfflineReadTensorBaseStat:
         for x, (tensor_info_item, tensor_base, tensor_stat) in enumerate(zip(tensor_info,
                                                                              tensor_base_data_list,
                                                                              tensor_stat_data_list)):
-            test_id = "test"+ str(test_index+x+1)
-            info_json = expected_list[x+test_index][test_id]['tensor_info']
-            base_json = expected_list[x+test_index][test_id]['tensor_base_info']
-            stat_json = expected_list[x+test_index][test_id]['tensor_stat_info']
-            assert tensor_info_item.node_name == info_json['node_name']
-            assert tensor_info_item.slot == info_json['slot']
-            assert tensor_info_item.iteration == info_json['iteration']
-            assert tensor_info_item.rank_id == info_json['rank_id']
-            assert tensor_info_item.root_graph_id == info_json['root_graph_id']
-            assert tensor_info_item.is_output == info_json['is_output']
-            assert tensor_base.data_size == base_json['size_in_bytes']
-            assert tensor_base.dtype == base_json['debugger_dtype']
-            assert tensor_base.shape == base_json['shape']
-            assert tensor_stat.data_size == stat_json['size_in_bytes']
-            assert tensor_stat.dtype == stat_json['debugger_dtype']
-            assert tensor_stat.shape == stat_json['shape']
-            assert tensor_stat.is_bool == stat_json['is_bool']
-            assert tensor_stat.max_value == stat_json['max_vaue']
-            assert tensor_stat.min_value == stat_json['min_value']
-            assert tensor_stat.avg_value == stat_json['avg_value']
-            assert tensor_stat.count == stat_json['count']
-            assert tensor_stat.neg_zero_count == stat_json['neg_zero_count']
-            assert tensor_stat.pos_zero_count == stat_json['pos_zero_count']
-            assert tensor_stat.nan_count == stat_json['nan_count']
-            assert tensor_stat.neg_inf_count == stat_json['neg_inf_count']
-            assert tensor_stat.pos_inf_count == stat_json['pos_inf_count']
-            assert tensor_stat.zero_count == stat_json['zero_count']
+            test_id = "test"+ str(test_index + x + 1)
+            expect_tensor = expected_list[x + test_index][test_id]
+            actual_tensor = write_tensor_stat_to_json(tensor_info_item, tensor_base, tensor_stat)
+            assert actual_tensor == expect_tensor
 
     def print_read_tensors(self, tensor_info, tensor_base_data_list, tensor_stat_data_list, test_index, is_print):
         """Print read tensors info."""
         for x, (tensor_info_item, tensor_base, tensor_stat) in enumerate(zip(tensor_info,
                                                                              tensor_base_data_list,
                                                                              tensor_stat_data_list)):
-            test_name = "test" + str(test_index+x+1)
-            self.tensor_json.append({
-                test_name: {
-                    'tensor_info': {
-                        'node_name': tensor_info_item.node_name,
-                        'slot': tensor_info_item.slot,
-                        'iteration': tensor_info_item.iteration,
-                        'rank_id': tensor_info_item.rank_id,
-                        'root_graph_id': tensor_info_item.root_graph_id,
-                        'is_output': tensor_info_item.is_output
-                    },
-                    'tensor_base_info': {
-                        'size_in_bytes': tensor_base.data_size,
-                        'debugger_dtype': tensor_base.dtype,
-                        'shape': tensor_base.shape
-                    },
-                    'tensor_stat_info': {
-                        'size_in_bytes': tensor_stat.data_size,
-                        'debugger_dtype': tensor_stat.dtype,
-                        'shape': tensor_stat.shape,
-                        'is_bool': tensor_stat.is_bool,
-                        'max_vaue': tensor_stat.max_value,
-                        'min_value': tensor_stat.min_value,
-                        'avg_value': tensor_stat.avg_value,
-                        'count': tensor_stat.count,
-                        'neg_zero_count': tensor_stat.neg_zero_count,
-                        'pos_zero_count': tensor_stat.pos_zero_count,
-                        'nan_count': tensor_stat.nan_count,
-                        'neg_inf_count': tensor_stat.neg_inf_count,
-                        'pos_inf_count': tensor_stat.pos_inf_count,
-                        'zero_count': tensor_stat.zero_count
-                    }
-                }})
+            test_name = "test" + str(test_index + x + 1)
+            tensor = write_tensor_stat_to_json(tensor_info_item, tensor_base, tensor_stat)
+            self.tensor_json.append({test_name: tensor})
         if is_print:
             with open(self.test_name + "_expected.json", "w") as dump_f:
                 json.dump(self.tensor_json, dump_f, indent=4, separators=(',', ': '))

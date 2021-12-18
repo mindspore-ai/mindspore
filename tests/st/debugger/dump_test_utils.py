@@ -23,6 +23,57 @@ import csv
 import numpy as np
 
 
+def write_watchpoint_to_json(watchpoint_hits):
+    parameter_json = []
+    for p, _ in enumerate(watchpoint_hits.parameters):
+        parameter = "parameter" + str(p)
+        parameter_json.append({
+            parameter: {
+                'name': watchpoint_hits.parameters[p].name,
+                'disabled': watchpoint_hits.parameters[p].disabled,
+                'value': watchpoint_hits.parameters[p].value,
+                'hit': watchpoint_hits.parameters[p].hit,
+                'actual_value': watchpoint_hits.parameters[p].actual_value
+            }
+        })
+    wp = {
+        'name': watchpoint_hits.name,
+        'slot': watchpoint_hits.slot,
+        'condition': watchpoint_hits.condition,
+        'watchpoint_id': watchpoint_hits.watchpoint_id,
+        'parameter': parameter_json,
+        'error_code': watchpoint_hits.error_code,
+        'rank_id': watchpoint_hits.rank_id,
+        'root_graph_id': watchpoint_hits.root_graph_id
+        }
+    return wp
+
+def write_tensor_to_json(tensor_info, tensor_data):
+    data = np.frombuffer(
+        tensor_data.data_ptr, np.uint8, tensor_data.data_size).tolist()
+    py_byte_size = len(tensor_data.data_ptr)
+    c_byte_size = tensor_data.data_size
+    if c_byte_size != py_byte_size:
+        print("The python byte size of " + str(py_byte_size) +
+              " does not match the C++ byte size of " + str(c_byte_size) + "\n")
+    tensor = {
+        'tensor_info': {
+            'node_name': tensor_info.node_name,
+            'slot': tensor_info.slot,
+            'iteration': tensor_info.iteration,
+            'rank_id': tensor_info.rank_id,
+            'root_graph_id': tensor_info.root_graph_id,
+            'is_output': tensor_info.is_output
+        },
+        'tensor_data': {
+            'data': data,
+            'size_in_bytes': tensor_data.data_size,
+            'debugger_dtype': tensor_data.dtype,
+            'shape': tensor_data.shape
+        }
+    }
+    return tensor
+
 def build_dump_structure(path, tensor_name_list, tensor_list, net_name, tensor_info_list):
     """Build dump file structure from tensor_list."""
     ranks_run_history = {}
