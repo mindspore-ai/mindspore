@@ -81,6 +81,7 @@ constexpr auto kBNTrainingReduceOpName = "BNTrainingReduce";
 constexpr auto kBNTrainingUpdateOpName = "BNTrainingUpdate";
 constexpr auto kBNTrainingUpdateV2OpName = "BNTrainingUpdateV2";
 constexpr auto kBNTrainingUpdateV3OpName = "BNTrainingUpdateV3";
+constexpr auto kNonMaxSuppressionV3OpName = "NonMaxSuppressionV3";
 constexpr auto kSimpleMeanGradOpName = "SimpleMeanGrad";
 constexpr auto kMeanGradOpName = "MeanGrad";
 constexpr auto kSliceOpName = "Slice";
@@ -716,9 +717,10 @@ const std::set<std::string> kHWSpecialFormatSet = {
 
 const std::set<TypeId> kFloatDataTypeSet = {kNumberTypeFloat16, kNumberTypeFloat32};
 
-const std::set<std::string> kComputeDepend = {kUniqueOpName,       kComputeAccidentalHitsOpName, kSubAndFilterOpName,
-                                              kPadAndShiftOpName,  kCTCGreedyDecoderOpName,      kDropoutGenMaskOpName,
-                                              kMaskedSelectOpName, kDynamicStitchOpName,         kGetNextOpName};
+const std::set<std::string> kComputeDepend = {
+  kUniqueOpName,           kComputeAccidentalHitsOpName, kSubAndFilterOpName, kPadAndShiftOpName,
+  kCTCGreedyDecoderOpName, kDropoutGenMaskOpName,        kMaskedSelectOpName, kDynamicStitchOpName,
+  kGetNextOpName,          kNonMaxSuppressionV3OpName};
 
 const std::set<std::string> k3DFormatSet = {kOpFormat_NCDHW, kOpFormat_NDC1HWC0, kOpFormat_FRACTAL_Z_3D,
                                             kOpFormat_NDHWC, kOpFormat_DHWCN,    kOpFormat_DHWNC};

@@ -63,6 +63,7 @@ constexpr auto kPadAndShift = "PadAndShift";
 constexpr auto kCpuRunApi = "RunCpuKernel";
 constexpr auto kDropout2D = "Dropout2D";
 constexpr auto kDropout3D = "Dropout3D";
+constexpr auto kNonMaxSuppressionV3 = "NonMaxSuppressionV3";
 constexpr auto kMaskedSelect = "MaskedSelect";
 constexpr auto kMaskedSelectGrad = "MaskedSelectGrad";
 constexpr auto kDynamicStitch = "DynamicStitch";
@@ -72,8 +73,8 @@ constexpr auto kResizeBilinearGrad = "ResizeBilinearGrad";
 constexpr auto kScatterElements = "ScatterElements";
 const std::set<std::string> kCpuKernelOps{kIdentity,     kMaskedSelect,   kMaskedSelectGrad,   kDynamicStitch,
                                           kSearchSorted, kResizeBilinear, kResizeBilinearGrad, kScatterElements};
-const std::set<std::string> kCacheKernelOps{kUpdateCache, kCacheSwapTable, kSubAndFilter,
-                                            kPadAndShift, kDropout3D,      kDropout2D};
+const std::set<std::string> kCacheKernelOps{kUpdateCache, kCacheSwapTable, kSubAndFilter,       kPadAndShift,
+                                            kDropout3D,   kDropout2D,      kNonMaxSuppressionV3};
 const std::set<std::string> kCpuKernelBaseOps{kGetNext, kInitData, kRandomChoiceWithMask};
 const std::set<std::string> kDynamicInputOps{
   kPrint, kPack, kMeshgrid, kStackInitOpName, kStackDestroyOpName, kStackPushOpName, kStackPopOpName, kDynamicStitch};

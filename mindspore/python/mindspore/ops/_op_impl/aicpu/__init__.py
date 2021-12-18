@@ -82,3 +82,4 @@ from .ctc_greedy_decoder import _ctc_greedy_decoder_aicpu
 from .resize_bilinear import _resize_bilinear_aicpu
 from .resize_bilinear_grad import _resize_bilinear_grad_aicpu
 from .scatter_elements import _scatter_elements_aicpu
+from .non_max_suppression import _non_max_suppression_aicpu

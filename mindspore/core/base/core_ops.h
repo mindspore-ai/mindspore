@@ -591,6 +591,9 @@ inline const PrimitivePtr kPrimComplex = std::make_shared<Primitive>("Complex");
 inline const PrimitivePtr kPrimXdivy = std::make_shared<Primitive>("Xdivy");
 inline const PrimitivePtr kPrimInv = std::make_shared<Primitive>("Inv");
 
+// Image
+inline const PrimitivePtr kPrimNonMaxSuppressionV3 = std::make_shared<Primitive>("NonMaxSuppressionV3");
+
 // Statements
 inline const PrimitivePtr kPrimReturn = std::make_shared<Primitive>("Return");
 inline const PrimitivePtr kPrimUnroll = std::make_shared<Primitive>("Unroll");
