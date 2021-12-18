@@ -1,9 +1,16 @@
 # set cross-compiled system type, it's better not use the type which cmake cannot recognized.
 set(CMAKE_SYSTEM_NAME Linux)
 set(CMAKE_SYSTEM_PROCESSOR arm)
+
+if(DEFINED ENV{HISI_TOOLCHAIN_PATH})
+    set(TOOLCHAIN_PATH $ENV{HISI_TOOLCHAIN_PATH}/hisi-linux/x86_arm)
+else()
+    set(TOOLCHAIN_PATH "/opt/linux/x86-arm")
+endif()
+
 # when hislicon SDK was installed, toolchain was installed in the path as below:
-set(CMAKE_C_COMPILER /opt/linux/x86-arm/aarch64-mix210-linux/bin/aarch64-mix210-linux-gcc)
-set(CMAKE_CXX_COMPILER /opt/linux/x86-arm/aarch64-mix210-linux/bin/aarch64-mix210-linux-g++)
+set(CMAKE_C_COMPILER ${TOOLCHAIN_PATH}/aarch64-mix210-linux/bin/aarch64-mix210-linux-gcc)
+set(CMAKE_CXX_COMPILER ${TOOLCHAIN_PATH}/aarch64-mix210-linux/bin/aarch64-mix210-linux-g++)
 
 find_path(GCC_PATH gcc)
 find_path(GXX_PATH g++)
