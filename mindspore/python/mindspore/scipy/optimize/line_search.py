@@ -302,7 +302,7 @@ class LineSearch(nn.Cell):
         return state
 
 
-def line_search(f, xk, pk, old_fval=None, old_old_fval=None, gfk=None, c1=1e-4,
+def line_search(f, xk, pk, gfk=None, old_fval=None, old_old_fval=None, c1=1e-4,
                 c2=0.9, maxiter=20):
     """Inexact line search that satisfies strong Wolfe conditions.
 
@@ -311,12 +311,14 @@ def line_search(f, xk, pk, old_fval=None, old_old_fval=None, gfk=None, c1=1e-4,
     Args:
         fun (function): function of the form f(x) where x is a flat Tensor and returns a real
             scalar. The function should be composed of operations with vjp defined.
-        x0 (Tensor): initial guess.
+        xk (Tensor): initial guess.
         pk (Tensor): direction to search in. Assumes the direction is a descent direction.
-        old_fval, gfk (Tensor): initial value of value_and_gradient as position.
+        gfk (Tensor): initial value of value_and_gradient as position.
+        old_fval (Tensor): The same as gfk.
         old_old_fval (Tensor): unused argument, only for scipy API compliance.
+        c1 (float): Wolfe criteria constant, see ref.
+        c2 (float): The same as c1.
         maxiter (int): maximum number of iterations to search
-        c1, c2 (float): Wolfe criteria constant, see ref.
 
     Returns:
         LineSearchResults

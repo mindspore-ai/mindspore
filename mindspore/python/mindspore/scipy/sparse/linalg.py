@@ -192,17 +192,18 @@ def gmres(A, b, x0=None, *, tol=1e-5, atol=0.0, restart=20, maxiter=None,
         is not achieved, like SciPy. Currently it is None, as a Placeholder.
 
     Args:
-        A (Tensor or function): 2D Tensor or function that calculates the linear
+        A (Union[Tensor, function]): 2D Tensor or function that calculates the linear
             map (matrix-vector product) ``Ax`` when called like ``A(x)``.
             ``A`` must return Tensor with the same structure and shape as its argument.
         b (Tensor): Right hand side of the linear system representing a single vector.
             Can be stored as a Tensor
         x0 (Tensor, optional): Starting guess for the solution. Must have the same structure
             as ``b``. If this is unspecified, zeroes are used.
-        tol, atol (float, optional): Tolerances for convergence,
+        tol (float, optional): Tolerances for convergence,
             ``norm(residual) <= max(tol*norm(b), atol)``. We do not implement SciPy's
             "legacy" behavior, so MindSpore's tolerance will differ from SciPy unless you
             explicitly pass ``atol`` to SciPy's ``gmres``.
+        atol (float, optional): The same as tol.
         restart (integer, optional): Size of the Krylov subspace ("number of iterations")
             built between restarts. GMRES works by approximating the true solution x as its
             projection into a Krylov space of this dimension - this parameter
@@ -215,22 +216,21 @@ def gmres(A, b, x0=None, *, tol=1e-5, atol=0.0, restart=20, maxiter=None,
             Krylov space starting from the solution found at the last iteration. If GMRES
             halts or is very slow, decreasing this parameter may help.
             Default is infinite.
-        M (Tensor or function): Preconditioner for A.  The preconditioner should approximate the
+        M (Union[Tensor, function]): Preconditioner for A.  The preconditioner should approximate the
             inverse of A.  Effective preconditioning dramatically improves the
             rate of convergence, which implies that fewer iterations are needed
             to reach a given error tolerance.
-        solve_method ('incremental' or 'batched'): The 'incremental' solve method
-            builds a QR decomposition for the Krylov subspace incrementally during
-            the GMRES process using Givens rotations.
-            This improves numerical stability and gives a free estimate of the
-            residual norm that allows for early termination within a single "restart".
-            In contrast, the 'batched' solve method solves the least squares problem
-            from scratch at the end of each GMRES iteration. It does not allow for
-            early termination, but has much less overhead on GPUs.
+        solve_method (str): There are two kinds of solve methods,'incremental' or 'batched'. Default: "batched".
+
+            - incremental: builds a QR decomposition for the Krylov subspace incrementally during
+              the GMRES process using Givens rotations. This improves numerical stability and gives
+              a free estimate of the residual norm that allows for early termination within a single "restart".
+            - batched: solve the least squares problem from scratch at the end of each GMRES
+              iteration. It does not allow for early termination, but has much less overhead on GPUs.
 
     Returns:
-         - Tensor, The converged solution. Has the same structure as ``b``.
-         - None, Placeholder for convergence information.
+        - Tensor, The converged solution. Has the same structure as ``b``.
+        - None, Placeholder for convergence information.
 
     Supported Platforms:
         ``CPU`` ``GPU``
@@ -332,25 +332,26 @@ def cg(A, b, x0=None, *, tol=1e-5, atol=0.0, maxiter=None, M=None):
         is not achieved, like SciPy. Currently it is None, as a Placeholder.
 
     Args:
-        A (Tensor or function): 2D Tensor or function that calculates the linear
+        A (Union[Tensor, function]): 2D Tensor or function that calculates the linear
             map (matrix-vector product) ``Ax`` when called like ``A(x)``.
             ``A`` must return Tensor with the same structure and shape as its argument.
         b (Tensor): Right hand side of the linear system representing a single vector. Can be
             stored as a Tensor.
         x0 (Tensor): Starting guess for the solution. Must have the same structure as ``b``.
-        tol, atol (float, optional): Tolerances for convergence, ``norm(residual) <= max(tol*norm(b), atol)``.
+        tol (float, optional): Tolerances for convergence, ``norm(residual) <= max(tol*norm(b), atol)``.
             We do not implement SciPy's "legacy" behavior, so MindSpore's tolerance will
             differ from SciPy unless you explicitly pass ``atol`` to SciPy's ``cg``.
+        atol (float, optional): The same as tol.
         maxiter (int): Maximum number of iterations.  Iteration will stop after maxiter
             steps even if the specified tolerance has not been achieved.
-        M (Tensor or function): Preconditioner for A.  The preconditioner should approximate the
+        M (Union[Tensor, function]): Preconditioner for A.  The preconditioner should approximate the
             inverse of A.  Effective preconditioning dramatically improves the
             rate of convergence, which implies that fewer iterations are needed
             to reach a given error tolerance.
 
     Returns:
-         - Tensor, The converged solution. Has the same structure as ``b``.
-         - None, Placeholder for convergence information.
+        - Tensor, The converged solution. Has the same structure as ``b``.
+        - None, Placeholder for convergence information.
 
     Supported Platforms:
         ``CPU`` ``GPU``

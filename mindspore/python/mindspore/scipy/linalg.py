@@ -496,9 +496,9 @@ def lu(a, permute_l=False, overwrite_a=False, check_finite=True):
     diagonal elements, and U upper triangular.
 
     Args:
-        a (Tensor): a (M, N) matrix to decompose
-        permute_l (bool, optional): Perform the multiplication P*L (Default: do not permute)
-        overwrite_a (bool, optional): Whether to overwrite data in a (may improve performance)
+        a (Tensor): a (M, N) matrix to decompose.
+        permute_l (bool, optional): Perform the multiplication P*L (Default: do not permute).
+        overwrite_a (bool, optional): Whether to overwrite data in a (may improve performance).
         check_finite (bool, optional):  Whether to check that the input matrix contains
             only finite numbers. Disabling may give a performance gain, but may result
             in problems (crashes, non-termination) if the inputs do contain infinities or NaNs.
@@ -506,14 +506,14 @@ def lu(a, permute_l=False, overwrite_a=False, check_finite=True):
     Returns:
         **(If permute_l == False)**
 
-        - Tensor, (M, M) Permutation matrix
-        - Tensor, (M, K) Lower triangular or trapezoidal matrix with unit diagonal. K = min(M, N)
-        - Tensor, (K, N) Upper triangular or trapezoidal matrix
+        - Tensor, (M, M) Permutation matrix.
+        - Tensor, (M, K) Lower triangular or trapezoidal matrix with unit diagonal. K = min(M, N).
+        - Tensor, (K, N) Upper triangular or trapezoidal matrix.
 
         **(If permute_l == True)**
 
-         - Tensor, (M, K) Permuted L matrix. K = min(M, N)
-         - Tensor, (K, N) Upper triangular or trapezoidal matrix
+        - Tensor, (M, K) Permuted L matrix. K = min(M, N).
+        - Tensor, (K, N) Upper triangular or trapezoidal matrix.
 
     Supported Platforms:
         ``CPU`` ``GPU``
