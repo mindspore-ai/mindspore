@@ -1,0 +1,21 @@
+From	Abed	Ido
+The	Dead	Dead
+Abed	Psg	Nine
+Come	Vivi	Vivi
+The	Dead	Dead
+Std	Nine	Nine
+
+Psg	Psg	Nine
+Bus	Psg	Nine
+Ori	Abed	Iike
+The	Psg	Nine
+Abed	Vivi	Vivi
+The	Nine	Come
+
+Bus	Psg	Nine
+Nine	Vivi	Vivi
+Job	Psg	Nine
+Mom	Psg	Nine
+Abed	Psg	Nine
+From	Abed	Iike
+

@@ -1,0 +1,14 @@
+Abed	Psg	Nine
+...	Psg	High
+Zoom	Psg	Nine
+...	Psg	...
+Abed	Abed	Job
+From	Nine	Nine
+
+...	Psg	---
+The	Dead	Dead
+ken	Nine	Nine
+Ori	Abed	Iike
+...	Dead	Dead
+Respect	Abed	Job
+

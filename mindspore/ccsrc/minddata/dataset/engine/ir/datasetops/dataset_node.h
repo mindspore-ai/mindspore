@@ -112,6 +112,7 @@ constexpr char kSTL10Node[] = "STL10Dataset";
 constexpr char kTedliumNode[] = "TedliumDataset";
 constexpr char kTextFileNode[] = "TextFileDataset";
 constexpr char kTFRecordNode[] = "TFRecordDataset";
+constexpr char kUDPOSNode[] = "UDPOSDataset";
 constexpr char kUSPSNode[] = "USPSDataset";
 constexpr char kVOCNode[] = "VOCDataset";
 constexpr char kYahooAnswersNode[] = "YahooAnswersDataset";

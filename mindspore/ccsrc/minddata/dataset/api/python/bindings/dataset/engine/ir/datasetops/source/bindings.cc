@@ -51,6 +51,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/stl10_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/tedlium_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/text_file_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/udpos_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/yahoo_answers_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/yelp_review_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/yes_no_node.h"
@@ -525,6 +526,18 @@ PYBIND_REGISTER(TFRecordNode, 2, ([](const py::module *m) {
                         toShuffleMode(shuffle), num_shards, shard_id, shard_equal_rows, nullptr);
                       THROW_IF_ERROR(tfrecord->ValidateParams());
                       return tfrecord;
+                    }));
+                }));
+
+PYBIND_REGISTER(UDPOSNode, 2, ([](const py::module *m) {
+                  (void)py::class_<UDPOSNode, DatasetNode, std::shared_ptr<UDPOSNode>>(*m, "UDPOSNode",
+                                                                                       "to create an UDPOSNode")
+                    .def(py::init([](std::string dataset_dir, std::string usage, int64_t num_samples, int32_t shuffle,
+                                     int32_t num_shards, int32_t shard_id) {
+                      std::shared_ptr<UDPOSNode> udpos = std::make_shared<UDPOSNode>(
+                        dataset_dir, usage, num_samples, toShuffleMode(shuffle), num_shards, shard_id, nullptr);
+                      THROW_IF_ERROR(udpos->ValidateParams());
+                      return udpos;
                     }));
                 }));
 

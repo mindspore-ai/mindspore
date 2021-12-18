@@ -38,6 +38,7 @@ set(DATASET_ENGINE_IR_DATASETOPS_SOURCE_SRC_FILES
         tedlium_node.cc
         text_file_node.cc
         tf_record_node.cc
+        udpos_node.cc
         usps_node.cc
         voc_node.cc
         yahoo_answers_node.cc

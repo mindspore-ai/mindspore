@@ -48,6 +48,7 @@ SET(DE_UT_SRCS
         c_api_dataset_tedlium_test.cc
         c_api_dataset_textfile_test.cc
         c_api_dataset_tfrecord_test.cc
+        c_api_dataset_udpos_test.cc
         c_api_dataset_usps_test.cc
         c_api_dataset_voc_test.cc
         c_api_dataset_yahoo_answers_test.cc
