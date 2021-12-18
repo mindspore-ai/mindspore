@@ -29,7 +29,7 @@ constexpr auto kNameGatherNd = "GatherNd";
 class MS_CORE_API GatherNd : public PrimitiveC {
  public:
   /// \brief Constructor.
-  GatherNd() : PrimitiveC(kNameGatherNd) { InitIOName({"input_x", "indices"}, {"y"}); }
+  GatherNd() : PrimitiveC(kNameGatherNd) { InitIOName({"x1", "x2"}, {"y"}); }
   /// \brief Destructor.
   ~GatherNd() = default;
   MS_DECLARE_PARENT(GatherNd, PrimitiveC);
@@ -38,7 +38,7 @@ class MS_CORE_API GatherNd : public PrimitiveC {
 };
 AbstractBasePtr GatherNdInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const std::vector<AbstractBasePtr> &input_args);
-using PrimGatherNd = std::shared_ptr<GatherNd>;
+using kPrimGatherNdPtr = std::shared_ptr<GatherNd>;
 }  // namespace ops
 }  // namespace mindspore
 

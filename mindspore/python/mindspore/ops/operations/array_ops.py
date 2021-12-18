@@ -3882,7 +3882,7 @@ class ResizeNearestNeighbor(PrimitiveWithInfer):
         return x_dtype
 
 
-class GatherNd(PrimitiveWithInfer):
+class GatherNd(Primitive):
     r"""
     Gathers slices from a tensor by indices.
 
@@ -3926,14 +3926,6 @@ class GatherNd(PrimitiveWithInfer):
         """Initialize GatherNd"""
         self.init_prim_io_names(inputs=['input_x', 'indices'], outputs=['y'])
 
-    def infer_shape(self, x_shape, indices_shape):
-        validator.check('the dimension of x', len(x_shape),
-                        'the dimension of indices', indices_shape[-1], Rel.GE, self.name)
-        return indices_shape[:-1] + x_shape[indices_shape[-1]:]
-
-    def infer_dtype(self, x_dtype, indices_dtype):
-        validator.check_tensor_dtype_valid("indices", indices_dtype, mstype.int_type, self.name)
-        return x_dtype
 
 
 class TensorScatterUpdate(PrimitiveWithInfer):
