@@ -167,7 +167,7 @@ void TraceManager::DebugTrace(const DebugInfoPtr &debug_info, const TraceInfoPtr
   (void)TraceManager::trace_context_stack_.emplace_back(cloned_info);
 }
 
-DebugInfoPtr TraceManager::GetParseOrResolveDebugInfo() { return TraceManager::record_debug_info_; }
+DebugInfoPtr TraceManager::record_debug_info() { return TraceManager::record_debug_info_; }
 
 void TraceManager::ClearParseOrResolveDebugInfo() { TraceManager::record_debug_info_ = nullptr; }
 
@@ -175,7 +175,7 @@ void TraceManager::CloseRecordDebugInfoFlag() { record_debug_info_flag_ = false;
 
 void TraceManager::OpenRecordDebugInfoFlag() { record_debug_info_flag_ = true; }
 
-bool TraceManager::GetRecordDebugInfoFlag() { return record_debug_info_flag_; }
+bool TraceManager::record_debug_info_flag() { return record_debug_info_flag_; }
 
 thread_local std::vector<TraceContext> TraceManager::trace_context_stack_;
 
