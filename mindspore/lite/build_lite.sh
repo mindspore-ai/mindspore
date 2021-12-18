@@ -109,9 +109,9 @@ build_lite_x86_64_jni_and_jar() {
     fi
 
     # build jar
-    ${LITE_JAVA_PATH}/java/gradlew clean -p ${LITE_JAVA_PATH}/java/linux_x86/
-    ${LITE_JAVA_PATH}/java/gradlew releaseJar -p ${LITE_JAVA_PATH}/java/linux_x86/
-    cp ${LITE_JAVA_PATH}/java/linux_x86/build/lib/jar/*.jar ${BASEPATH}/output/tmp/${pkg_name}/runtime/lib/
+    ${LITE_JAVA_PATH}/java/gradlew clean -p ${LITE_JAVA_PATH}/
+    ${LITE_JAVA_PATH}/java/gradlew releaseJar -p ${LITE_JAVA_PATH}/
+    cp ${LITE_JAVA_PATH}/build/lib/jar/*.jar ${BASEPATH}/output/tmp/${pkg_name}/runtime/lib/
 
     # package
     cd ${BASEPATH}/output/tmp
@@ -413,6 +413,9 @@ build_aar() {
     # build common module
     ${LITE_JAVA_PATH}/java/gradlew clean -p ${LITE_JAVA_PATH}/java/common
     ${LITE_JAVA_PATH}/java/gradlew build -p ${LITE_JAVA_PATH}/java/common
+    # build new java api module
+    ${LITE_JAVA_PATH}/java/gradlew clean -p ${LITE_JAVA_PATH}/
+    ${LITE_JAVA_PATH}/java/gradlew build -p ${LITE_JAVA_PATH}/
 
     # build aar
     local npu_bak=${MSLITE_ENABLE_NPU}
@@ -439,6 +442,7 @@ build_aar() {
     fi
 
     cp ${LITE_JAVA_PATH}/java/common/build/libs/mindspore-lite-java-common.jar ${LITE_JAVA_PATH}/java/app/libs
+    cp ${LITE_JAVA_PATH}/build/libs/mindspore-lite-java.jar ${LITE_JAVA_PATH}/java/app/libs
     ${LITE_JAVA_PATH}/java/gradlew clean -p ${LITE_JAVA_PATH}/java/app
     ${LITE_JAVA_PATH}/java/gradlew assembleRelease  -p ${LITE_JAVA_PATH}/java/app
     ${LITE_JAVA_PATH}/java/gradlew publish -PLITE_VERSION=${VERSION_STR} -p ${LITE_JAVA_PATH}/java/app

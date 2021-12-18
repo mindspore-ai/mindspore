@@ -16,21 +16,22 @@
 
 package com.mindspore.lite.train_lenet;
 
-import com.mindspore.lite.MSTensor;
-import com.mindspore.lite.LiteSession;
-import com.mindspore.lite.TrainSession;
-import com.mindspore.lite.config.MSConfig;
+import com.mindspore.Model;
+import com.mindspore.Graph;
+import com.mindspore.MSTensor;
+import com.mindspore.config.DeviceType;
+import com.mindspore.config.MSContext;
+import com.mindspore.config.TrainCfg;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.List;
-import java.util.Map;
 import java.util.Vector;
 
 public class NetRunner {
     private int dataIndex = 0;
     private int labelIndex = 1;
-    private LiteSession session;
+    private Model liteModel;
     private long batchSize;
     private long dataSize; // one input data size, in byte
     private DataSet ds = new DataSet();
@@ -41,19 +42,25 @@ public class NetRunner {
     private String trainedFilePath = "trained.ms";
 
     public void initAndFigureInputs(String modelPath, int virtualBatchSize) {
-        MSConfig msConfig = new MSConfig();
-        // arg 0: DeviceType:DT_CPU -> 0
-        // arg 1: ThreadNum -> 2
-        // arg 2: cpuBindMode:NO_BIND ->  0
-        // arg 3: enable_fp16 -> false
-        msConfig.init(0, 2, 0, false);
-        session = new LiteSession();
+        Graph graph = new Graph();
+        boolean isSuccess = graph.Load(modelPath);
+        if (!isSuccess) {
+            System.out.println("Graph load failed");
+        }
         System.out.println("Model path is " + modelPath);
-        session = TrainSession.createTrainSession(modelPath, msConfig, false);
-        virtualBatch = virtualBatchSize;
-        session.setupVirtualBatch(virtualBatch, 0.01f, 1.00f);
+        TrainCfg cfg = new TrainCfg();
+        cfg.init();
 
-        List<MSTensor> inputs = session.getInputs();
+        MSContext context = new MSContext();
+        context.init(1, 0);
+        context.addDeviceInfo(DeviceType.DT_CPU, false, 0);
+        liteModel = new Model();
+        isSuccess = liteModel.build(graph, context, cfg);
+        if (!isSuccess) {
+            System.out.println("model build failed failed");
+        }
+        virtualBatch = virtualBatchSize;
+        List<MSTensor> inputs = liteModel.getInputs();
         if (inputs.size() <= 1) {
             System.err.println("model input size: " + inputs.size());
             return;
@@ -98,8 +105,8 @@ public class NetRunner {
     }
 
     private MSTensor searchOutputsForSize(int size) {
-        Map<String, MSTensor> outputs = session.getOutputMapByTensor();
-        for (MSTensor tensor : outputs.values()) {
+        List<MSTensor> outputs = liteModel.getOutputs();
+        for (MSTensor tensor : outputs) {
             if (tensor.elementsNum() == size) {
                 return tensor;
             }
@@ -109,13 +116,13 @@ public class NetRunner {
     }
 
     public int trainLoop() {
-        session.train();
+        liteModel.setTrainMode(true);
         float min_loss = 1000;
         float max_acc = 0;
         for (int i = 0; i < cycles; i++) {
             for (int b = 0; b < virtualBatch; b++) {
                 fillInputData(ds.getTrainData(), false);
-                session.runGraph();
+                liteModel.runStep();
                 float loss = getLoss();
                 if (min_loss > loss) {
                     min_loss = loss;
@@ -125,7 +132,8 @@ public class NetRunner {
                     if (max_acc < acc) {
                         max_acc = acc;
                     }
-                    System.out.println("step_" + (i + 1) + ": \tLoss is " + loss + " [min=" + min_loss + "]" + " max_accc=" + max_acc);
+                    System.out.println("step_" + (i + 1) + ": \tLoss is " + loss + " [min=" + min_loss + "]" + " " +
+                            "max_accc=" + max_acc);
                 }
             }
         }
@@ -139,14 +147,14 @@ public class NetRunner {
         if (maxTests != -1 && tests < maxTests) {
             tests = maxTests;
         }
-        session.eval();
+        liteModel.setTrainMode(false);
         for (long i = 0; i < tests; i++) {
             Vector<Integer> labels = fillInputData(test_set, (maxTests == -1));
             if (labels.size() != batchSize) {
                 System.err.println("unexpected labels size: " + labels.size() + " batch_size size: " + batchSize);
                 System.exit(1);
             }
-            session.runGraph();
+            liteModel.runStep();
             MSTensor outputsv = searchOutputsForSize((int) (batchSize * numOfClasses));
             if (outputsv == null) {
                 System.err.println("can not find output tensor with size: " + batchSize * numOfClasses);
@@ -168,7 +176,7 @@ public class NetRunner {
                 }
             }
         }
-        session.train();
+        liteModel.setTrainMode(true);
         accuracy /= (batchSize * tests);
         return accuracy;
     }
@@ -178,7 +186,7 @@ public class NetRunner {
         Vector<Integer> labelsVec = new Vector<Integer>();
         int totalSize = dataset.size();
 
-        List<MSTensor> inputs = session.getInputs();
+        List<MSTensor> inputs = liteModel.getInputs();
 
         int inputDataCnt = inputs.get(dataIndex).elementsNum();
         float[] inputBatchData = new float[inputDataCnt];
@@ -196,7 +204,8 @@ public class NetRunner {
             int label = 0;
             DataSet.DataLabelTuple dataLabelTuple = dataset.get(idx);
             label = dataLabelTuple.label;
-            System.arraycopy(dataLabelTuple.data, 0, inputBatchData, (int) (i * dataLabelTuple.data.length), dataLabelTuple.data.length);
+            System.arraycopy(dataLabelTuple.data, 0, inputBatchData, (int) (i * dataLabelTuple.data.length),
+                    dataLabelTuple.data.length);
             labelBatchData[i] = label;
             labelsVec.add(label);
         }
@@ -230,16 +239,13 @@ public class NetRunner {
         System.out.println("accuracy = " + acc);
 
         if (cycles > 0) {
-            // arg 0: FileName
-            // arg 1: model type MT_TRAIN -> 0
-            // arg 2: quantization type QT_DEFAULT -> 0
-            if (session.export(trainedFilePath, 0, 0)) {
+            if (liteModel.export(trainedFilePath, 0, false, null)) {
                 System.out.println("Trained model successfully saved: " + trainedFilePath);
             } else {
                 System.err.println("Save model error.");
             }
         }
-        session.free();
+        liteModel.free();
     }
 
 }

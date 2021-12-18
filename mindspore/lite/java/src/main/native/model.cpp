@@ -275,6 +275,17 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_setTrainMode(JNIE
   return static_cast<jboolean>(status.IsOk());
 }
 
+extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_runStep(JNIEnv *env, jobject thiz, jlong model_ptr) {
+  auto *pointer = reinterpret_cast<void *>(model_ptr);
+  if (pointer == nullptr) {
+    MS_LOGE("Model pointer from java is nullptr");
+    return jlong(false);
+  }
+  auto *lite_model_ptr = static_cast<mindspore::Model *>(pointer);
+  auto status = lite_model_ptr->RunStep(nullptr, nullptr);
+  return static_cast<jboolean>(status.IsOk());
+}
+
 std::vector<mindspore::MSTensor> convertArrayToVector(JNIEnv *env, jlongArray inputs) {
   auto input_size = static_cast<int>(env->GetArrayLength(inputs));
   jlong *input_data = env->GetLongArrayElements(inputs, nullptr);
@@ -375,6 +386,53 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_export(JNIEnv *en
   auto ret = mindspore::Serialization::ExportModel(*lite_model_ptr, mindspore::kMindIR, model_path, quant_type,
                                                    export_inference_only, output_tensor_names);
   return (jboolean)(ret.IsOk());
+}
+
+extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_updateFeatureMaps(JNIEnv *env, jclass, jlong model_ptr,
+                                                                                 jlongArray features) {
+  auto size = static_cast<int>(env->GetArrayLength(features));
+  jlong *input_data = env->GetLongArrayElements(features, nullptr);
+  std::vector<mindspore::MSTensor> newFeatures;
+  for (int i = 0; i < size; ++i) {
+    auto *tensor_pointer = reinterpret_cast<void *>(input_data[i]);
+    if (tensor_pointer == nullptr) {
+      MS_LOGE("Tensor pointer from java is nullptr");
+      return false;
+    }
+    auto *ms_tensor_ptr = static_cast<mindspore::MSTensor *>(tensor_pointer);
+    newFeatures.emplace_back(*ms_tensor_ptr);
+  }
+  auto lite_model_ptr = reinterpret_cast<mindspore::Model *>(model_ptr);
+  auto ret = lite_model_ptr->UpdateFeatureMaps(newFeatures);
+  return (jboolean)(ret.IsOk());
+}
+
+extern "C" JNIEXPORT jobject JNICALL Java_com_mindspore_Model_getFeatureMaps(JNIEnv *env, jobject thiz,
+                                                                             jlong model_ptr) {
+  jclass array_list = env->FindClass("java/util/ArrayList");
+  jmethodID array_list_construct = env->GetMethodID(array_list, "<init>", "()V");
+  jobject ret = env->NewObject(array_list, array_list_construct);
+  jmethodID array_list_add = env->GetMethodID(array_list, "add", "(Ljava/lang/Object;)Z");
+
+  jclass long_object = env->FindClass("java/lang/Long");
+  jmethodID long_object_construct = env->GetMethodID(long_object, "<init>", "(J)V");
+  auto *pointer = reinterpret_cast<void *>(model_ptr);
+  if (pointer == nullptr) {
+    MS_LOGE("Model pointer from java is nullptr");
+    return ret;
+  }
+  auto *lite_model_ptr = static_cast<mindspore::Model *>(pointer);
+  auto features = lite_model_ptr->GetFeatureMaps();
+  for (auto &feature : features) {
+    auto tensor_ptr = std::make_unique<mindspore::MSTensor>(feature);
+    if (tensor_ptr == nullptr) {
+      MS_LOGE("Make ms tensor failed");
+      return ret;
+    }
+    jobject tensor_addr = env->NewObject(long_object, long_object_construct, jlong(tensor_ptr.release()));
+    env->CallBooleanMethod(ret, array_list_add, tensor_addr);
+  }
+  return ret;
 }
 
 extern "C" JNIEXPORT void JNICALL Java_com_mindspore_Model_free(JNIEnv *env, jobject thiz, jlong model_ptr) {

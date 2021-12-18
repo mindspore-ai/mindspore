@@ -110,6 +110,24 @@ public class Model {
     }
 
     /**
+     * Execute predict.
+     *
+     * @return predict status.
+     */
+    public boolean predict() {
+        return this.runStep(modelPtr);
+    }
+
+    /**
+     * Run Model by step.
+     *
+     * @return run model status.work in train mode.
+     */
+    public boolean runStep() {
+        return this.runStep(modelPtr);
+    }
+
+    /**
      * Resize inputs shape.
      *
      * @param inputs Model inputs.
@@ -257,6 +275,8 @@ public class Model {
     private native List<Long> getInputs(long modelPtr);
 
     private native long getInputByTensorName(long modelPtr, String tensorName);
+
+    private native boolean runStep(long modelPtr);
 
     private native List<Long> getOutputs(long modelPtr);
 

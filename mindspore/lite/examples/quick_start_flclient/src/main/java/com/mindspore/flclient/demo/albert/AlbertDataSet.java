@@ -16,9 +16,7 @@
 
 package com.mindspore.flclient.demo.albert;
 
-import com.mindspore.flclient.model.CustomTokenizer;
 import com.mindspore.flclient.model.DataSet;
-import com.mindspore.flclient.model.Feature;
 import com.mindspore.flclient.model.RunType;
 import com.mindspore.flclient.model.Status;
 
