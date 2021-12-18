@@ -339,6 +339,10 @@ bool CollectiveOpsImpl::AllReduce(const void *sendbuff, void *recvbuff, size_t c
     MS_LOG(ERROR) << "Rank size should not be 0.";
     return false;
   }
+  if (rank_size_ == 1) {
+    MS_LOG(DEBUG) << "Rank size is 1. Do nothing.";
+    return true;
+  }
 
   if (count >= rank_size) {
     return RingAllReduce<T>(sendbuff, recvbuff, count);
@@ -374,6 +378,10 @@ bool CollectiveOpsImpl::AllGather(const void *sendbuff, void *const recvbuff, si
     MS_LOG(ERROR) << "Rank size should not be 0.";
     return false;
   }
+  if (rank_size_ == 1) {
+    MS_LOG(DEBUG) << "Rank size is 1. Do nothing.";
+    return true;
+  }
 
   return RingAllGather<T>(sendbuff, recvbuff, send_count);
 }
@@ -396,6 +404,11 @@ bool CollectiveOpsImpl::Broadcast(const void *sendbuff, void *const recvbuff, si
     MS_LOG(ERROR) << "Rank size should not be 0.";
     return false;
   }
+  if (rank_size_ == 1) {
+    MS_LOG(DEBUG) << "Rank size is 1. Do nothing.";
+    return true;
+  }
+
   return Broadcast<T>(sendbuff, recvbuff, count, root, group_info);
 }
 
