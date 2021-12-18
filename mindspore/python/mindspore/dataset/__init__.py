@@ -29,13 +29,22 @@ Common imported modules in corresponding API examples are as follows:
 
     import mindspore.dataset as ds
     from mindspore.dataset.transforms import c_transforms
+
+
+Descriptions of common dataset terms are as follows:
+
+    - Dataset, the base class of all the datasets. It provides data processing methods to help preprocess the data.
+    - SourceDataset, an abstract class to represent the source of dataset pipeline which produces data from data
+      sources such as files and databases.
+    - MappableDataset, an abstract class to represent a source dataset which supports for random access.
+    - Iterator, the base class of dataset iterator for enumerating elements.
 """
 
 from .core import config
 from .engine import *
 from .engine.cache_client import DatasetCache
 from .engine.datasets import *
-from .engine.graphdata import GraphData
+from .engine.graphdata import GraphData, SamplingStrategy, OutputFormat
 from .engine.samplers import *
 from .engine.serializer_deserializer import compare, deserialize, serialize, show
 
