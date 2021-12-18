@@ -528,6 +528,11 @@ void FetchAllExecutionFunction(const FuncGraphPtr &func_graph, std::set<FuncGrap
 
 // Fetch all inputs of node.
 std::vector<KernelWithIndex> FetchInputNodeByNode(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (HasAbstractMonad(node)) {
+    return {};
+  }
+
   // The node is divided into the following types:
   // 1. depend and load.
   const auto &node_with_index =
@@ -586,18 +591,43 @@ std::vector<KernelWithIndex> FetchInputNodeByNode(const AnfNodePtr &node) {
 
   // 4. One output node.
   const auto &abstract = real_node->abstract();
-  if (abstract == nullptr ||
-      ((!abstract->isa<abstract::AbstractTuple>()) && (!abstract->isa<abstract::AbstractCSRTensor>()))) {
-    if (abstract == nullptr) {
-      MS_LOG(WARNING) << "Empty abstract for node:" << real_node->DebugString();
-    }
-    return {AnfAlgo::VisitKernelWithReturnType(real_node, real_index)};
+  if (abstract == nullptr) {
+    MS_LOG(WARNING) << "Empty abstract for node:" << real_node->DebugString();
+    results.emplace_back(AnfAlgo::VisitKernelWithReturnType(real_node, real_index));
+    return results;
   }
 
-  // 4. Abstract is Tuple.
+  // 5 Other.
   size_t output_num = AnfAlgo::GetOutputNumByAbstract(abstract);
-  for (size_t i = 0; i < output_num; ++i) {
-    results.emplace_back(real_node, i);
+  if (AnfAlgo::CheckPrimitiveType(real_node, prim::kPrimTupleGetItem)) {
+    const auto &get_item_cnode = real_node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(get_item_cnode);
+    const auto &get_item_src_node = AnfAlgo::GetTupleGetItemRealInput(get_item_cnode);
+    size_t get_item_src_index = AnfAlgo::GetTupleGetItemOutIndex(get_item_cnode);
+
+    // Input node of getitm is a make tuple.
+    if (AnfAlgo::CheckPrimitiveType(get_item_src_node, prim::kPrimMakeTuple)) {
+      const auto &make_tuple_cnode = get_item_src_node->cast<CNodePtr>();
+      const auto &makt_tuple_inputs = make_tuple_cnode->inputs();
+      if (makt_tuple_inputs.size() <= get_item_src_index) {
+        MS_LOG(EXCEPTION) << "Invalid index:" << get_item_src_index
+                          << " for make tuple node : " << get_item_src_node->DebugString();
+      }
+      const auto &sub_results = FetchInputNodeByNode(makt_tuple_inputs[get_item_src_index + kMakeTupleInputStartPos]);
+      results.insert(results.end(), sub_results.begin(), sub_results.end());
+    } else {
+      // Input node of getitm is a parameter or make tuple.
+      auto get_item_src_abstract = get_item_src_node->abstract();
+      MS_EXCEPTION_IF_NULL(get_item_src_abstract);
+      auto real_indexs = FetchRealIndexByAbstract(get_item_src_abstract, get_item_src_index);
+      (void)std::transform(
+        real_indexs.begin(), real_indexs.end(), std::back_inserter(results),
+        [&get_item_src_node](const auto &index) { return KernelWithIndex(get_item_src_node, index); });
+    }
+  } else {
+    for (size_t i = 0; i < output_num; ++i) {
+      results.emplace_back(real_node, i);
+    }
   }
   return results;
 }
@@ -1705,7 +1735,7 @@ void ControlNodeParser::ParseNeedStackKernelGraph(const KernelGraphToDeviceConte
           MS_EXCEPTION_IF_NULL(front_node_with_index.first);
           // If input come from the output of kernel graph belong the same group, it should not be collected in
           // the group inputs.
-          if (HasAbstractMonad(front_node_with_index.first) ||
+          if (HasAbstractMonad(front_node_with_index.first) || HasAbstractMonad(parameter) ||
               kernel_graph_group_info->front_output_nodes_.find(front_node_with_index) !=
                 kernel_graph_group_info->front_output_nodes_.end()) {
             continue;

@@ -225,13 +225,6 @@ std::vector<KernelWithIndex> GetAllOutputWithIndexInner(const AnfNodePtr &node) 
       continue;
     }
 
-    // Fetch outputs by control nodes.
-    if (AnfAlgo::IsCallNode(node)) {
-      const auto &control_node_output = AnfAlgo::GetAllOutputByCallNode(output_with_index);
-      (void)std::copy(control_node_output.begin(), control_node_output.end(), std::back_inserter(ret));
-      continue;
-    }
-
     // The InitDataSetQueue node has no output.
     if (AnfAlgo::CheckPrimitiveType(output_with_index.first, prim::kPrimInitDataSetQueue)) {
       return ret_empty;
@@ -398,6 +391,7 @@ size_t AnfRuntimeAlgorithm::GetOutputNumByAbstract(const AbstractBasePtr &node_a
   MS_EXCEPTION_IF_NULL(tuple_abstract);
   const auto &sub_abstracts = tuple_abstract->elements();
   for (const auto &sub_abstract : sub_abstracts) {
+    MS_EXCEPTION_IF_NULL(sub_abstract);
     result += GetOutputNumByAbstract(sub_abstract);
   }
   return result;
@@ -414,7 +408,7 @@ std::vector<KernelWithIndex> AnfRuntimeAlgorithm::GetAllOutputByCallNode(const K
   auto tuple_abstract = node_abstract->cast<abstract::AbstractTuplePtr>();
   MS_EXCEPTION_IF_NULL(tuple_abstract);
   const auto &sub_abstracts = tuple_abstract->elements();
-  if (sub_abstracts.size() <= output_with_index.second) {
+  if (GetOutputNumByAbstract(tuple_abstract) <= output_with_index.second) {
     MS_LOG(EXCEPTION) << "Invalid index:" << output_with_index.second
                       << "for node:" << output_with_index.first->DebugString();
   }
@@ -423,9 +417,11 @@ std::vector<KernelWithIndex> AnfRuntimeAlgorithm::GetAllOutputByCallNode(const K
   // to count the number of outputs before the target in order to accurately obtain its number.
   size_t pre_output_num = 0;
   for (size_t i = 0; i < output_with_index.second; ++i) {
+    MS_EXCEPTION_IF_NULL(sub_abstracts[i]);
     pre_output_num += GetOutputNumByAbstract(sub_abstracts[i]);
   }
 
+  MS_EXCEPTION_IF_NULL(sub_abstracts[output_with_index.second]);
   size_t output_num = GetOutputNumByAbstract(sub_abstracts[output_with_index.second]);
   std::vector<KernelWithIndex> results;
   for (size_t i = 0; i < output_num; ++i) {
