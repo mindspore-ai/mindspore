@@ -83,6 +83,14 @@ class MS_API Model {
   Status Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
                  const MSKernelCallBack &before = nullptr, const MSKernelCallBack &after = nullptr);
 
+  /// \brief Train model by step.
+  ///
+  /// \param[in] before CallBack before predict.
+  /// \param[in] after CallBack after predict.
+  ///
+  /// \return Status.
+  Status RunStep(const MSKernelCallBack &before = nullptr, const MSKernelCallBack &after = nullptr);
+
   /// \brief Inference model with preprocess in model.
   ///
   /// \param[in] inputs A vector where model inputs are arranged in sequence.
@@ -143,7 +151,18 @@ class MS_API Model {
   /// \return Status of operation
   Status ApplyGradients(const std::vector<MSTensor> &gradients);
 
-  /// \brief Obtains optimizer params tensors of the model.
+  /// \brief Obtains all weights tensors of the model.
+  ///
+  /// \return The vector that includes all gradient tensors.
+  std::vector<MSTensor> GetFeatureMaps() const;
+
+  /// \brief update weights tensors of the model.
+  ///
+  /// \param[in] inputs A vector new weights.
+  /// \return Status of operation
+  Status UpdateFeatureMaps(const std::vector<MSTensor> &new_weights);
+
+    /// \brief Obtains optimizer params tensors of the model.
   ///
   /// \return The vector that includes all params tensors.
   std::vector<MSTensor> GetOptimizerParams() const;

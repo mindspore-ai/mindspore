@@ -410,6 +410,44 @@ Status ModelImpl::ApplyGradients(const std::vector<MSTensor> &gradients) {
   return static_cast<StatusCode>(ret);
 }
 
+std::vector<MSTensor> ModelImpl::GetFeatureMaps() const {
+  std::vector<MSTensor> empty;
+  if (session_ == nullptr) {
+    MS_LOG(ERROR) << "Session is null.";
+    return empty;
+  }
+  auto params = session_->GetFeatureMaps();
+  if (params.empty()) {
+    MS_LOG(ERROR) << "No optimizer parameters avelibale.";
+    return empty;
+  }
+  std::vector<MSTensor> res = LiteTensorsToMSTensors(params, false);
+  return res;
+}
+
+Status ModelImpl::UpdateFeatureMaps(const std::vector<MSTensor> &new_weights) {
+  if (session_ == nullptr) {
+    MS_LOG(ERROR) << "Session is null.";
+    return kLiteNullptr;
+  }
+  if (new_weights.empty()) {
+    MS_LOG(ERROR) << "gradients is null.";
+    return kLiteInputParamInvalid;
+  }
+  std::vector<tensor::MSTensor *> inner_weights;
+  inner_weights.resize(new_weights.size());
+  for (size_t i = 0; i < new_weights.size(); i++) {
+    auto new_weight = new_weights[i];
+    if (new_weight.impl_ == nullptr || new_weight.impl_->lite_tensor() == nullptr) {
+      MS_LOG(ERROR) << "gradient tensor " << new_weight.Name() << " is null.";
+      return kLiteInputTensorError;
+    }
+    inner_weights[i] = new_weight.impl_->lite_tensor();
+  }
+  auto ret = session_->UpdateFeatureMaps(inner_weights);
+  return static_cast<StatusCode>(ret);
+}
+
 std::vector<MSTensor> ModelImpl::GetOptimizerParams() const {
   std::vector<MSTensor> empty;
   if (session_ == nullptr) {
