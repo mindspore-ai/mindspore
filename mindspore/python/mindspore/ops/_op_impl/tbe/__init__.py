@@ -400,6 +400,7 @@ from .bitwise_and_ds import _bitwise_and_ds_tbe
 from .bitwise_or import _bitwise_or_tbe
 from .bitwise_or_ds import _bitwise_or_ds_tbe
 from .bitwise_xor import _bitwise_xor_tbe
+from .bitwise_xor_ds import _bitwise_xor_ds_tbe
 from .reduce_all import _reduce_all_tbe
 from .reduce_any import _reduce_any_tbe
 from .sparse_apply_adagrad import _sparse_apply_adagrad_tbe
