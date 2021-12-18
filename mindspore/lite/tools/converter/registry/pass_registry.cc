@@ -25,6 +25,7 @@
 namespace mindspore {
 namespace registry {
 namespace {
+constexpr size_t kPassNumLimit = 10000;
 std::map<std::string, PassBasePtr> outer_pass_storage;
 std::map<registry::PassPosition, std::vector<std::string>> external_assigned_passes;
 std::mutex pass_mutex;
@@ -34,6 +35,10 @@ void RegPass(const std::string &pass_name, const PassBasePtr &pass) {
     return;
   }
   std::unique_lock<std::mutex> lock(pass_mutex);
+  if (outer_pass_storage.size() == kPassNumLimit) {
+    MS_LOG(WARNING) << "ass's number is up to the limitation. The pass will not be registered.";
+    return;
+  }
   outer_pass_storage[pass_name] = pass;
 }
 }  // namespace
@@ -43,6 +48,10 @@ PassRegistry::PassRegistry(const std::vector<char> &pass_name, const PassBasePtr
 }
 
 PassRegistry::PassRegistry(PassPosition position, const std::vector<std::vector<char>> &names) {
+  if (position < POSITION_BEGIN || position > POSITION_END) {
+    MS_LOG(ERROR) << "ILLEGAL position: position must be POSITION_BEGIN or POSITION_END.";
+    return;
+  }
   std::unique_lock<std::mutex> lock(pass_mutex);
   external_assigned_passes[position] = VectorCharToString(names);
 }

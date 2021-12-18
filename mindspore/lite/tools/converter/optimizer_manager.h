@@ -18,6 +18,7 @@
 #define MINDSPORE_LITE_TOOLS_CONVERTER_OPTIMIZER_MANAGER_H
 
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 #include "backend/optimizer/common/pass.h"
@@ -29,17 +30,24 @@ namespace mindspore {
 namespace lite {
 class PassStorage {
  public:
-  static int StorePass(const std::string &pass_name, const opt::PassPtr &pass) {
+  static int StorePass(const std::string &pass_name, const opt::PassPtr &pass, bool access_for_outer) {
     if (registry::PassRegistry::GetPassFromStoreRoom(pass_name) != nullptr) {
       return RET_ERROR;
     }
     pass_storage_[pass_name] = pass;
+    if (!access_for_outer) {
+      inaccessible_for_outer_.insert(pass_name);
+    }
     return RET_OK;
   }
   static opt::PassPtr GetPassFromStorage(const std::string &pass_name) { return pass_storage_[pass_name]; }
+  static bool IsAccessibleForOuter(const std::string &pass_name) {
+    return inaccessible_for_outer_.find(pass_name) == inaccessible_for_outer_.end();
+  }
 
  private:
   static std::map<std::string, opt::PassPtr> pass_storage_;
+  static std::set<std::string> inaccessible_for_outer_;
 };
 
 bool RunOptimizerPass(const FuncGraphPtr &func_graph, const std::vector<std::string> &pass_names);
