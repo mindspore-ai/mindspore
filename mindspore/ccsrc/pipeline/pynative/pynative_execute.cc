@@ -431,8 +431,7 @@ py::list FilterTensorArgs(const py::args &args, bool has_sens = false) {
 }
 
 bool RunOpConvertConstInputToAttr(const py::object &input_object, size_t input_index, const PrimitivePtr &op_prim,
-                                  const mindspore::HashSet<size_t> &input_attrs, std::vector<size_t> *input_to_attr_idx,
-                                  std::vector<string> *input_to_attr_name) {
+                                  const mindspore::HashSet<size_t> &input_attrs) {
   MS_EXCEPTION_IF_NULL(op_prim);
   const auto &input_names_value = op_prim->GetAttr(kAttrInputNames);
   if (input_names_value == nullptr) {
@@ -447,8 +446,6 @@ bool RunOpConvertConstInputToAttr(const py::object &input_object, size_t input_i
     const auto &value = PyObjToValue(input_object);
     auto input_name = input_names_vec[input_index];
     op_prim->AddAttr(input_name, value);
-    input_to_attr_idx->push_back(input_index);
-    input_to_attr_name->push_back(input_name);
     return true;
   }
   return false;
@@ -615,13 +612,10 @@ void ConstructInputTensor(const OpExecInfoPtr &op_run_info, std::vector<int64_t>
     MS_LOG(EXCEPTION) << "The op input size " << input_num << ", but the size of input mask "
                       << op_run_info->inputs_mask.size();
   }
-  std::vector<size_t> input_to_attr_idx;
-  std::vector<string> input_to_attr_name;
   for (size_t index = 0; index < input_num; ++index) {
     // convert const input to attr
     if (reg_exist &&
-        RunOpConvertConstInputToAttr(op_run_info->op_inputs[index], index, op_prim, reg.GetConstInputAttrInfo(),
-                                     &input_to_attr_idx, &input_to_attr_name)) {
+        RunOpConvertConstInputToAttr(op_run_info->op_inputs[index], index, op_prim, reg.GetConstInputAttrInfo())) {
       continue;
     }
     // convert const and tuple input to tensor
@@ -631,13 +625,6 @@ void ConstructInputTensor(const OpExecInfoPtr &op_run_info, std::vector<int64_t>
     op_run_info->inputs_mask[index] = tensor_mask;
     std::vector<int64_t> new_mask(input_tensors->size() - tensors_mask->size(), tensor_mask);
     tensors_mask->insert(tensors_mask->end(), new_mask.begin(), new_mask.end());
-  }
-  bool exec_on_ascend =
-    (op_prim->HasAttr(kAttrPrimitiveTarget) && GetValue<string>(op_prim->GetAttr(kAttrPrimitiveTarget)) == "Ascend") ||
-    ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice;
-  if (!input_to_attr_idx.empty() && exec_on_ascend) {
-    op_prim->set_attr(kAttrInputToAttrIdx, MakeValue(input_to_attr_idx));
-    op_prim->set_attr(kAttrInputToAttrName, MakeValue(input_to_attr_name));
   }
   op_prim->EndRecordAddAttr();
 }

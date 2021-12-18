@@ -156,6 +156,7 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/backend/kernel_compiler/rts/*.cc"
         "../../../mindspore/ccsrc/backend/kernel_compiler/hccl/*.cc"
         "../../../mindspore/ccsrc/backend/kernel_compiler/kernel_query.cc"
+        "../../../mindspore/ccsrc/backend/kernel_compiler/aicpu/aicpu_attr_to_input_registry.cc"
         "../../../mindspore/ccsrc/backend/kernel_compiler/aicpu/aicpu_kernel_metadata.cc"
         "../../../mindspore/ccsrc/backend/kernel_compiler/rts/rt_kernel_info.cc"
         "../../../mindspore/ccsrc/backend/kernel_compiler/tbe/*.cc"
