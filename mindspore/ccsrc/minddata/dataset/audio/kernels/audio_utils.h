@@ -38,7 +38,6 @@ constexpr int TWO = 2;
 
 namespace mindspore {
 namespace dataset {
-
 /// \brief Turn a tensor from the power/amplitude scale to the decibel scale.
 /// \param input/output: Tensor of shape <..., freq, time>.
 /// \param multiplier: power - 10, amplitude - 20.
@@ -109,6 +108,8 @@ Status Angle(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outp
   *output = output_tensor;
   return Status::OK();
 }
+
+Status Bartlett(std::shared_ptr<Tensor> *output, int len);
 
 /// \brief Perform a biquad filter of input tensor.
 /// \param input/output: Tensor of shape <..., time>.
@@ -1077,6 +1078,275 @@ Status SlidingWindowCmn(const std::shared_ptr<Tensor> &input, std::shared_ptr<Te
 /// \return Status code.
 Status ComputeDeltas(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t win_length,
                      const BorderType &mode);
+
+template <typename T>
+Status Mul(const std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output, T value) {
+  RETURN_UNEXPECTED_IF_NULL(output);
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(input->shape(), input->type(), output));
+  auto iter_in = input->begin<T>();
+  auto iter_out = (*output)->begin<T>();
+  for (; iter_in != input->end<T>(); ++iter_in, ++iter_out) {
+    *iter_out = (*iter_in) * value;
+  }
+  return Status::OK();
+}
+
+template <typename T>
+Status Div(const std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output, T value) {
+  RETURN_UNEXPECTED_IF_NULL(output);
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(input->shape(), input->type(), output));
+  CHECK_FAIL_RETURN_UNEXPECTED(value != 0, "Div: invalid parameter, 'value' can not be zero.");
+  auto iter_in = input->begin<T>();
+  auto iter_out = (*output)->begin<T>();
+  for (; iter_in != input->end<T>(); ++iter_in, ++iter_out) {
+    *iter_out = (*iter_in) / value;
+  }
+  return Status::OK();
+}
+
+template <typename T>
+Status Add(const std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output, T value) {
+  RETURN_UNEXPECTED_IF_NULL(output);
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(input->shape(), input->type(), output));
+  auto iter_in = input->begin<T>();
+  auto iter_out = (*output)->begin<T>();
+  for (; iter_in != input->end<T>(); ++iter_in, ++iter_out) {
+    *iter_out = (*iter_in) + value;
+  }
+  return Status::OK();
+}
+
+template <typename T>
+Status SubTensor(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int len) {
+  RETURN_UNEXPECTED_IF_NULL(output);
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({len}), input->type(), output));
+  RETURN_IF_NOT_OK(
+    ValidateNoGreaterThan("SubTensor", "len", len, "size of input tensor", static_cast<int>(input->Size())));
+  auto iter_in = input->begin<T>();
+  auto iter_out = (*output)->begin<T>();
+  for (; iter_out != (*output)->end<T>(); ++iter_in, ++iter_out) {
+    *iter_out = *iter_in;
+  }
+  return Status::OK();
+}
+
+template <typename T>
+Status TensorAdd(const std::shared_ptr<Tensor> &input, const std::shared_ptr<Tensor> &other,
+                 std::shared_ptr<Tensor> *output) {
+  RETURN_UNEXPECTED_IF_NULL(output);
+  CHECK_FAIL_RETURN_UNEXPECTED(input->shape() == other->shape(), "TensorAdd: input tensor shape must be the same.");
+  CHECK_FAIL_RETURN_UNEXPECTED(input->type() == other->type(), "TensorAdd: input tensor type must be the same.");
+
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(input->shape(), input->type(), output));
+  auto iter_in1 = input->begin<T>();
+  auto iter_in2 = other->begin<T>();
+  auto iter_out = (*output)->begin<T>();
+  for (; iter_out != (*output)->end<T>(); ++iter_in1, ++iter_in2, ++iter_out) {
+    *iter_out = (*iter_in1) + (*iter_in2);
+  }
+  return Status::OK();
+}
+
+template <typename T>
+Status TensorSub(const std::shared_ptr<Tensor> &input, const std::shared_ptr<Tensor> &other,
+                 std::shared_ptr<Tensor> *output) {
+  RETURN_UNEXPECTED_IF_NULL(output);
+  CHECK_FAIL_RETURN_UNEXPECTED(input->shape() == other->shape(), "TensorSub: input tensor shape must be the same.");
+  CHECK_FAIL_RETURN_UNEXPECTED(input->type() == other->type(), "TensorSub: input tensor type must be the same.");
+
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(input->shape(), input->type(), output));
+  auto iter_in1 = input->begin<T>();
+  auto iter_in2 = other->begin<T>();
+  auto iter_out = (*output)->begin<T>();
+  for (; iter_out != (*output)->end<T>(); ++iter_in1, ++iter_in2, ++iter_out) {
+    *iter_out = (*iter_in1) - (*iter_in2);
+  }
+  return Status::OK();
+}
+
+template <typename T>
+Status TensorCat(const std::shared_ptr<Tensor> &input, const std::shared_ptr<Tensor> &other,
+                 std::shared_ptr<Tensor> *output) {
+  RETURN_UNEXPECTED_IF_NULL(output);
+  CHECK_FAIL_RETURN_UNEXPECTED(input->type() == other->type(), "TensorCat: input tensor type must be the same.");
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({input->shape()[-1] + other->shape()[-1]}), input->type(), output));
+  auto iter_in1 = input->begin<T>();
+  auto iter_in2 = other->begin<T>();
+  auto iter_out = (*output)->begin<T>();
+  for (; iter_in1 != input->end<T>(); ++iter_in1, ++iter_out) {
+    *iter_out = *iter_in1;
+  }
+  for (; iter_in2 != other->end<T>(); ++iter_in2, ++iter_out) {
+    *iter_out = *iter_in2;
+  }
+  return Status::OK();
+}
+
+template <typename T>
+Status TensorRepeat(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int rank_repeat) {
+  RETURN_UNEXPECTED_IF_NULL(output);
+
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({rank_repeat, (input->shape()[-1])}), input->type(), output));
+  auto iter_in = input->begin<T>();
+  auto iter_out = (*output)->begin<T>();
+  for (int i = 0; i < rank_repeat; i++) {
+    auto iter_in = input->begin<T>();
+    for (; iter_in != input->end<T>(); ++iter_in, ++iter_out) {
+      *iter_out = *iter_in;
+    }
+  }
+  return Status::OK();
+}
+
+template <typename T>
+Status TensorRowReplace(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int row) {
+  RETURN_UNEXPECTED_IF_NULL(output);
+  auto iter_in = input->begin<T>();
+  auto iter_out = (*output)->begin<T>() + (*output)->shape()[-1] * row;
+  CHECK_FAIL_RETURN_UNEXPECTED(iter_out <= (*output)->end<T>(), "TensorRowReplace: pointer out of bounds");
+  CHECK_FAIL_RETURN_UNEXPECTED(input->Size() <= (*output)->shape()[-1], "TensorRowReplace: pointer out of bounds");
+  for (; iter_in != input->end<T>(); ++iter_in, ++iter_out) {
+    *iter_out = *iter_in;
+  }
+  return Status::OK();
+}
+
+template <typename T>
+Status TensorRowAt(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int rank_index) {
+  RETURN_UNEXPECTED_IF_NULL(output);
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({input->shape()[-1]}), input->type(), output));
+  auto iter_in = input->begin<T>() + input->shape()[-1] * rank_index;
+  auto iter_out = (*output)->begin<T>();
+  CHECK_FAIL_RETURN_UNEXPECTED(iter_in <= input->end<T>(), "TensorRowAt: pointer out of bounds");
+  for (; iter_out != (*output)->end<T>(); ++iter_in, ++iter_out) {
+    *iter_out = *iter_in;
+  }
+  return Status::OK();
+}
+
+template <typename T>
+Status TensorRound(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
+  RETURN_UNEXPECTED_IF_NULL(output);
+
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(input->shape(), input->type(), output));
+  auto iter_in = input->begin<T>();
+  auto iter_out = (*output)->begin<T>();
+  for (; iter_in != input->end<T>(); ++iter_in, ++iter_out) {
+    *iter_out = round(*iter_in);
+  }
+  return Status::OK();
+}
+
+template <typename T>
+Status ApplyProbabilityDistribution(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output,
+                                    DensityFunction density_function, std::mt19937 rnd) {
+  int channel_size = input->shape()[0] - 1;
+  int time_size = input->shape()[-1] - 1;
+  std::uniform_int_distribution<> dis_channel(0, channel_size);
+  int random_channel = channel_size > 0 ? dis_channel(rnd) : 0;
+  std::uniform_int_distribution<> dis_time(0, time_size);
+  int random_time = time_size > 0 ? dis_time(rnd) : 0;
+  int number_of_bits = 16;
+  int up_scaling = static_cast<int>(pow(2, number_of_bits - 1) - 2);
+  int down_scaling = static_cast<int>(pow(2, number_of_bits - 1));
+
+  std::shared_ptr<Tensor> signal_scaled;
+  RETURN_IF_NOT_OK(Mul<T>(input, &signal_scaled, up_scaling));
+
+  std::shared_ptr<Tensor> signal_scaled_dis;
+  RETURN_IF_NOT_OK(Tensor::CreateFromTensor(input, &signal_scaled_dis));
+
+  if (density_function == DensityFunction::kRPDF) {
+    auto iter_in = input->begin<T>();
+    iter_in += (time_size + 1) * random_channel + random_time;
+    auto RPDF = *(iter_in);
+    RETURN_IF_NOT_OK(Add<T>(signal_scaled, &signal_scaled_dis, RPDF));
+  } else if (density_function == DensityFunction::kGPDF) {
+    int num_rand_variables = 6;
+    auto iter_in = input->begin<T>();
+    iter_in += (time_size + 1) * random_channel + random_time;
+    auto gaussian = *(iter_in);
+    for (int i = 0; i < num_rand_variables; i++) {
+      int rand_channel = channel_size > 0 ? dis_channel(rnd) : 0;
+      int rand_time = time_size > 0 ? dis_time(rnd) : 0;
+
+      auto iter_in_rand = input->begin<T>();
+      iter_in_rand += (time_size + 1) * rand_channel + rand_time;
+      gaussian += *(iter_in_rand);
+      *(iter_in_rand) = gaussian;
+    }
+    RETURN_IF_NOT_OK(Add<T>(signal_scaled, &signal_scaled_dis, gaussian));
+  } else {
+    int window_length = time_size + 1;
+    std::shared_ptr<Tensor> float_bartlett;
+    RETURN_IF_NOT_OK(Bartlett(&float_bartlett, window_length));
+    std::shared_ptr<Tensor> type_convert_bartlett;
+    RETURN_IF_NOT_OK(TypeCast(float_bartlett, &type_convert_bartlett, input->type()));
+
+    int rank_repeat = channel_size + 1;
+    std::shared_ptr<Tensor> TPDF;
+    RETURN_IF_NOT_OK(TensorRepeat<T>(type_convert_bartlett, &TPDF, rank_repeat));
+    RETURN_IF_NOT_OK(TensorAdd<T>(signal_scaled, TPDF, &signal_scaled_dis));
+  }
+  std::shared_ptr<Tensor> quantised_signal_scaled;
+  RETURN_IF_NOT_OK(TensorRound<T>(signal_scaled_dis, &quantised_signal_scaled));
+
+  std::shared_ptr<Tensor> quantised_signal;
+  RETURN_IF_NOT_OK(Div<T>(quantised_signal_scaled, &quantised_signal, down_scaling));
+  *output = quantised_signal;
+  return Status::OK();
+}
+
+template <typename T>
+Status AddNoiseShaping(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
+  std::shared_ptr<Tensor> dithered_waveform;
+  RETURN_IF_NOT_OK(Tensor::CreateFromTensor(*output, &dithered_waveform));
+  std::shared_ptr<Tensor> waveform;
+  RETURN_IF_NOT_OK(Tensor::CreateFromTensor(input, &waveform));
+
+  std::shared_ptr<Tensor> error;
+  RETURN_IF_NOT_OK(TensorSub<T>(dithered_waveform, waveform, &error));
+  for (int i = 0; i < error->shape()[0]; i++) {
+    std::shared_ptr<Tensor> err;
+    RETURN_IF_NOT_OK(TensorRowAt<T>(error, &err, i));
+    std::shared_ptr<Tensor> tensor_zero;
+    std::vector<T> vector_zero(1, 0);
+    RETURN_IF_NOT_OK(Tensor::CreateFromVector(vector_zero, TensorShape({1}), &tensor_zero));
+    std::shared_ptr<Tensor> error_offset;
+    RETURN_IF_NOT_OK(TensorCat<T>(tensor_zero, err, &error_offset));
+    int k = error->shape()[-1];
+    std::shared_ptr<Tensor> fresh_error_offset;
+    RETURN_IF_NOT_OK(SubTensor<T>(error_offset, &fresh_error_offset, k));
+    RETURN_IF_NOT_OK(TensorRowReplace<T>(fresh_error_offset, &error, i));
+  }
+  std::shared_ptr<Tensor> noise_shaped;
+  RETURN_IF_NOT_OK(TensorAdd<T>(dithered_waveform, error, &noise_shaped));
+  *output = noise_shaped;
+  return Status::OK();
+}
+
+/// \brief Apply dither effect.
+/// \param input/output: Tensor of shape <..., time>.
+/// \param density_function: The density function of a continuous random variable.
+/// \param noise_shaing: A filtering process that shapes the spectral energy of quantisation error.
+/// \return Status code.
+template <typename T>
+Status Dither(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, DensityFunction density_function,
+              bool noise_shaping, std::mt19937 rnd) {
+  TensorShape shape = input->shape();
+  TensorShape new_shape({input->Size() / shape[-1], shape[-1]});
+  RETURN_IF_NOT_OK(input->Reshape(new_shape));
+
+  RETURN_IF_NOT_OK(ApplyProbabilityDistribution<T>(input, output, density_function, rnd));
+  if (noise_shaping) {
+    RETURN_IF_NOT_OK(AddNoiseShaping<T>(input, output));
+  }
+
+  RETURN_IF_NOT_OK((*output)->Reshape(shape));
+  RETURN_IF_NOT_OK(input->Reshape(shape));
+  return Status::OK();
+}
+
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_AUDIO_KERNELS_AUDIO_UTILS_H_

@@ -71,6 +71,13 @@ enum class MS_API ConvertMode {
   COLOR_RGBA2GRAY = 11                ///< Convert RGBA image to GRAY image.
 };
 
+// \brief Possible density function in Dither.
+enum MS_API DensityFunction {
+  kTPDF = 0,  ///< Use triangular probability density function.
+  kRPDF = 1,  ///< Use rectangular probability density function.
+  kGPDF = 2   ///< Use gaussian probability density function.
+};
+
 /// \brief Values of norm in CreateDct.
 enum class MS_API NormMode {
   kNone = 0,  ///< None type norm.

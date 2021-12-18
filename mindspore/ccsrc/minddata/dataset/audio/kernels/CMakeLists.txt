@@ -18,6 +18,7 @@ add_library(audio-kernels OBJECT
         dc_shift_op.cc
         deemph_biquad_op.cc
         detect_pitch_frequency_op.cc
+        dither_op.cc
         equalizer_biquad_op.cc
         fade_op.cc
         flanger_op.cc

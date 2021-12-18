@@ -21,7 +21,7 @@ from functools import wraps
 from mindspore.dataset.core.validator_helpers import check_float32, check_float32_not_zero, check_int32, \
     check_int32_not_zero, check_list_same_size, check_non_negative_float32, check_non_negative_int32, \
     check_pos_float32, check_pos_int32, check_value, INT32_MAX, parse_user_args, type_check
-from .utils import BorderType, FadeShape, GainType, Interpolation, Modulation, ScaleType, WindowType
+from .utils import BorderType, DensityFunction, FadeShape, GainType, Interpolation, Modulation, ScaleType, WindowType
 
 
 def check_amplitude_to_db(method):
@@ -234,6 +234,22 @@ def check_deemph_biquad(method):
         type_check(sample_rate, (int,), "sample_rate")
         if sample_rate not in (44100, 48000):
             raise ValueError("Argument sample_rate should be 44100 or 48000, but got {0}.".format(sample_rate))
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_dither(method):
+    """Wrapper method to check the parameters of Dither."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [density_function, noise_shaping], _ = parse_user_args(
+            method, *args, **kwargs)
+
+        type_check(density_function, (DensityFunction), "density_function")
+        type_check(noise_shaping, (bool,), "noise_shaping")
+
         return method(self, *args, **kwargs)
 
     return new_method

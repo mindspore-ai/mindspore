@@ -35,6 +35,7 @@
 #include "minddata/dataset/audio/ir/kernels/dc_shift_ir.h"
 #include "minddata/dataset/audio/ir/kernels/deemph_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/detect_pitch_frequency_ir.h"
+#include "minddata/dataset/audio/ir/kernels/dither_ir.h"
 #include "minddata/dataset/audio/ir/kernels/equalizer_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/fade_ir.h"
 #include "minddata/dataset/audio/ir/kernels/flanger_ir.h"
@@ -228,6 +229,24 @@ PYBIND_REGISTER(DetectPitchFrequencyOperation, 1, ([](const py::module *m) {
                         sample_rate, frame_time, win_length, freq_low, freq_high);
                       THROW_IF_ERROR(detect_pitch_frequency->ValidateParams());
                       return detect_pitch_frequency;
+                    }));
+                }));
+
+PYBIND_REGISTER(DensityFunction, 0, ([](const py::module *m) {
+                  (void)py::enum_<DensityFunction>(*m, "DensityFunction", py::arithmetic())
+                    .value("DE_DENSITYFUNCTION_TPDF", DensityFunction::kTPDF)
+                    .value("DE_DENSITYFUNCTION_RPDF", DensityFunction::kRPDF)
+                    .value("DE_DENSITYFUNCTION_GPDF", DensityFunction::kGPDF)
+                    .export_values();
+                }));
+
+PYBIND_REGISTER(DitherOperation, 1, ([](const py::module *m) {
+                  (void)py::class_<audio::DitherOperation, TensorOperation, std::shared_ptr<audio::DitherOperation>>(
+                    *m, "DitherOperation")
+                    .def(py::init([](DensityFunction density_function, bool noise_shaping) {
+                      auto dither = std::make_shared<audio::DitherOperation>(density_function, noise_shaping);
+                      THROW_IF_ERROR(dither->ValidateParams());
+                      return dither;
                     }));
                 }));
 
