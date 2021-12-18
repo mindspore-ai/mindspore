@@ -7,9 +7,9 @@ __download_pkg(34xx_sdk
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${34xx_sdk_SOURCE_DIR})
 include_directories(${34xx_sdk_SOURCE_DIR}/include)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party/runtime)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party/runtime/include)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party/runtime/include/third_party)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../runtime)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../runtime/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../runtime/include/third_party)
 link_directories(${34xx_sdk_SOURCE_DIR}/lib)
 
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src COMMON_SRC3)

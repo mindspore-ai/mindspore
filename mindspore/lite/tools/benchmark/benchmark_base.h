@@ -29,7 +29,9 @@
 #include <memory>
 #include <cfloat>
 #include <utility>
+#ifndef BENCHMARK_CLIP_JSON
 #include <nlohmann/json.hpp>
+#endif
 #include "include/model.h"
 #include "include/api/types.h"
 #include "include/api/format.h"
@@ -419,9 +421,10 @@ class MS_API BenchmarkBase {
   float op_cost_total_ = 0.0f;
   std::map<std::string, std::pair<int, float>> op_times_by_type_;
   std::map<std::string, std::pair<int, float>> op_times_by_name_;
-
+#ifndef BENCHMARK_CLIP_JSON
   // dump data
   nlohmann::json dump_cfg_json_;
+#endif
   std::string dump_file_output_dir_;
 #ifdef ENABLE_ARM64
   int perf_fd = 0;
@@ -432,6 +435,10 @@ class MS_API BenchmarkBase {
 #endif
   std::mt19937 random_engine_;
 };
+#ifdef SUPPORT_NNIE
+int SvpSysInit();
+int SvpSysExit();
+#endif
 
 }  // namespace mindspore::lite
 #endif  // MINNIE_BENCHMARK_BENCHMARK_BASE_H_

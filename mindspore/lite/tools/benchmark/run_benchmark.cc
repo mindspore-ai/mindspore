@@ -26,6 +26,12 @@ namespace lite {
 int RunBenchmark(int argc, const char **argv) {
   BenchmarkFlags flags;
   Option<std::string> err = flags.ParseFlags(argc, argv);
+#ifdef SUPPORT_NNIE
+  if (SvpSysInit() != RET_OK) {
+    std::cerr << "SVP Init failed" << std::endl;
+    return RET_ERROR;
+  }
+#endif
   if (err.IsSome()) {
     std::cerr << err.Get() << std::endl;
     std::cerr << flags.Usage() << std::endl;
@@ -36,7 +42,9 @@ int RunBenchmark(int argc, const char **argv) {
     std::cerr << flags.Usage() << std::endl;
     return RET_OK;
   }
-
+#ifdef SUPPORT_NNIE
+  BenchmarkBase *benchmark = new (std::nothrow) Benchmark(&flags);
+#else
   auto api_type = std::getenv("MSLITE_API_TYPE");
   if (api_type != nullptr) {
     MS_LOG(INFO) << "MSLITE_API_TYPE = " << api_type;
@@ -53,6 +61,7 @@ int RunBenchmark(int argc, const char **argv) {
     BENCHMARK_LOG_ERROR("Invalid MSLITE_API_TYPE, (OLD/NEW/C, default:OLD)");
     return RET_ERROR;
   }
+#endif
   if (benchmark == nullptr) {
     BENCHMARK_LOG_ERROR("new benchmark failed ");
     return RET_ERROR;
@@ -61,6 +70,7 @@ int RunBenchmark(int argc, const char **argv) {
   auto status = benchmark->Init();
   if (status != 0) {
     BENCHMARK_LOG_ERROR("Benchmark init Error : " << status);
+    delete benchmark;
     return RET_ERROR;
   }
   auto model_name = flags.model_file_.substr(flags.model_file_.find_last_of(DELIM_SLASH) + 1);
@@ -68,6 +78,7 @@ int RunBenchmark(int argc, const char **argv) {
   status = benchmark->RunBenchmark();
   if (status != 0) {
     BENCHMARK_LOG_ERROR("Run Benchmark " << model_name << " Failed : " << status);
+    delete benchmark;
     return RET_ERROR;
   }
 

@@ -35,6 +35,12 @@
 #include <asm/unistd.h>
 #include <unistd.h>
 #endif
+#ifdef SUPPORT_NNIE
+#include "include/hi_common.h"
+#include "include/hi_comm_vb.h"
+#include "include/mpi_sys.h"
+#include "include/mpi_vb.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -344,18 +350,48 @@ int Benchmark::InitContext(const std::shared_ptr<Context> &context) {
   return RET_OK;
 }
 
+tensor::MSTensor *Benchmark::GetTensorByNodeShape(const std::vector<size_t> &node_shape) {
+  std::vector<tensor::MSTensor *> match_tensors;
+  std::vector<int> shape_vector;
+  (void)std::transform(node_shape.begin(), node_shape.end(), std::back_inserter(shape_vector),
+                       [](const size_t &value) { return static_cast<int>(value); });
+  auto tensors = session_->GetOutputs();
+  for (auto &out_tensor_pair : tensors) {
+    if (out_tensor_pair.second->shape() == shape_vector) {
+      match_tensors.emplace_back(out_tensor_pair.second);
+    }
+  }
+  if (match_tensors.empty() || match_tensors.size() != 1) {
+    MS_LOG(ERROR) << "get tensor by node shape failed";
+    return nullptr;
+  }
+  return match_tensors.front();
+}
+
+tensor::MSTensor *Benchmark::GetTensorByNameOrShape(const std::string &node_or_tensor_name,
+                                                    const std::vector<size_t> &dims) {
+  tensor::MSTensor *tensor = session_->GetOutputByTensorName(node_or_tensor_name);
+  if (tensor == nullptr) {
+    MS_LOG(INFO) << "Cannot find output node: " << node_or_tensor_name
+                 << " or node has more than one output tensor, switch to GetOutputByTensorName";
+    auto tensors = session_->GetOutputsByNodeName(node_or_tensor_name);
+    if (!tensors.empty() && tensors.size() == 1) {
+      tensor = tensors.front();
+    } else {
+      return GetTensorByNodeShape(dims);
+    }
+  }
+  return tensor;
+}
+
 int Benchmark::CompareOutput() {
   std::cout << "================ Comparing Output data ================" << std::endl;
   float total_bias = 0;
   int total_size = 0;
-  // check the output tensor name.
-  if (this->benchmark_tensor_names_ != session_->GetOutputTensorNames()) {
-    MS_LOG(ERROR) << "The output tensor name is wrong.";
-    return RET_ERROR;
-  }
+
   for (const auto &calib_tensor : benchmark_data_) {
     std::string tensor_name = calib_tensor.first;
-    tensor::MSTensor *tensor = session_->GetOutputByTensorName(tensor_name);
+    tensor::MSTensor *tensor = GetTensorByNameOrShape(tensor_name, calib_tensor.second->shape);
     if (tensor == nullptr) {
       MS_LOG(ERROR) << "Get tensor failed, tensor name: " << tensor_name;
       return RET_ERROR;
@@ -940,7 +976,7 @@ std::string DumpMSTensor(tensor::MSTensor *tensor) {
   }
   return oss.str();
 }
-
+#ifndef BENCHMARK_CLIP_JSON
 std::string GenerateOutputFileName(tensor::MSTensor *tensor, const std::string &op_name, const std::string &file_type,
                                    const size_t &idx) {
   std::string file_name = op_name;
@@ -962,6 +998,7 @@ std::string GenerateOutputFileName(tensor::MSTensor *tensor, const std::string &
   }
   return file_name;
 }
+#endif
 }  // namespace
 
 int Benchmark::InitPrintTensorDataCallbackParameter() {
@@ -990,6 +1027,7 @@ int Benchmark::InitPrintTensorDataCallbackParameter() {
   return RET_OK;
 }
 int Benchmark::InitDumpTensorDataCallbackParameter() {
+#ifndef BENCHMARK_CLIP_JSON
   // before callback
   before_call_back_ = [&](const std::vector<mindspore::tensor::MSTensor *> &before_inputs,
                           const std::vector<mindspore::tensor::MSTensor *> &before_outputs,
@@ -1035,6 +1073,7 @@ int Benchmark::InitDumpTensorDataCallbackParameter() {
     }
     return true;
   };
+#endif
   return RET_OK;
 }
 

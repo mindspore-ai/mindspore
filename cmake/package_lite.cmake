@@ -11,6 +11,7 @@ set(TEST_CASE_DIR ${TOP_DIR}/mindspore/lite/test/build)
 set(RUNTIME_DIR ${RUNTIME_PKG_NAME}/runtime)
 set(RUNTIME_INC_DIR ${RUNTIME_PKG_NAME}/runtime/include)
 set(RUNTIME_LIB_DIR ${RUNTIME_PKG_NAME}/runtime/lib)
+set(PROVIDERS_LIB_DIR ${RUNTIME_PKG_NAME}/providers)
 set(MIND_DATA_INC_DIR ${RUNTIME_PKG_NAME}/runtime/include/dataset)
 set(TURBO_DIR ${RUNTIME_PKG_NAME}/runtime/third_party/libjpeg-turbo)
 set(GLOG_DIR ${RUNTIME_PKG_NAME}/runtime/third_party/glog)
@@ -18,6 +19,10 @@ set(SECUREC_DIR ${RUNTIME_PKG_NAME}/runtime/third_party/securec)
 set(MINDSPORE_LITE_LIB_NAME libmindspore-lite)
 set(MINDSPORE_CORE_LIB_NAME libmindspore_core)
 set(BENCHMARK_NAME benchmark)
+set(MSLITE_NNIE_LIB_NAME libmslite_nnie)
+set(MSLITE_PROPOSAL_LIB_NAME libmslite_proposal)
+set(MICRO_NNIE_LIB_NAME libmicro_nnie)
+set(DPICO_ACL_ADAPTER_LIB_NAME libdpico_acl_adapter)
 set(BENCHMARK_ROOT_DIR ${RUNTIME_PKG_NAME}/tools/benchmark)
 
 set(MINDSPORE_LITE_TRAIN_LIB_NAME libmindspore-lite-train)
@@ -227,11 +232,31 @@ if(PLATFORM_ARM64)
             COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h" PATTERN "ops*" EXCLUDE)
     install(DIRECTORY ${TOP_DIR}/include/c_api/ DESTINATION ${RUNTIME_INC_DIR}/c_api
             COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
-    if(NOT MSLITE_ENABLE_DPICO_ACL_ADAPTER)
+    if(NOT TARGET_MIX210)
         __install_micro_wrapper()
     endif()
     if(MSLITE_ENABLE_TOOLS)
-        install(TARGETS ${BENCHMARK_NAME} RUNTIME DESTINATION ${BENCHMARK_ROOT_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        if(NOT BUILD_FIRST)
+            install(TARGETS ${BENCHMARK_NAME} RUNTIME DESTINATION ${BENCHMARK_ROOT_DIR}
+                    COMPONENT ${RUNTIME_COMPONENT_NAME})
+            if(TARGET_HIMIX)
+                if(${MSLITE_REGISTRY_DEVICE}  STREQUAL "Hi3559A")
+                    install(FILES ${TOP_DIR}/mindspore/lite/build/tools/benchmark/nnie/${MSLITE_NNIE_LIB_NAME}.so
+                            DESTINATION ${PROVIDERS_LIB_DIR}/${MSLITE_REGISTRY_DEVICE}
+                            COMPONENT ${RUNTIME_COMPONENT_NAME})
+                    install(FILES
+                            ${TOP_DIR}/mindspore/lite/build/tools/benchmark/nnie_proposal/${MSLITE_PROPOSAL_LIB_NAME}.so
+                            DESTINATION ${PROVIDERS_LIB_DIR}/${MSLITE_REGISTRY_DEVICE}
+                            COMPONENT ${RUNTIME_COMPONENT_NAME})
+                endif()
+            elseif(TARGET_MIX210)
+                if(${MSLITE_REGISTRY_DEVICE}  STREQUAL "SD3403")
+                    install(FILES ${TOP_DIR}/mindspore/lite/build/tools/benchmark/dpico/${DPICO_ACL_ADAPTER_LIB_NAME}.so
+                            DESTINATION ${PROVIDERS_LIB_DIR}/${MSLITE_REGISTRY_DEVICE}
+                            COMPONENT ${RUNTIME_COMPONENT_NAME})
+                endif()
+            endif()
+        endif()
         if(SUPPORT_TRAIN)
             install(TARGETS ${BENCHMARK_TRAIN_NAME} RUNTIME DESTINATION ${BENCHMARK_TRAIN_ROOT_DIR} COMPONENT
                     ${RUNTIME_COMPONENT_NAME})
@@ -310,7 +335,27 @@ elseif(PLATFORM_ARM32)
             COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
     __install_micro_wrapper()
     if(MSLITE_ENABLE_TOOLS AND NOT TARGET_OHOS_LITE)
-        install(TARGETS ${BENCHMARK_NAME} RUNTIME DESTINATION ${BENCHMARK_ROOT_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        if(NOT BUILD_FIRST)
+            install(TARGETS ${BENCHMARK_NAME} RUNTIME
+                    DESTINATION ${BENCHMARK_ROOT_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+            if(TARGET_HIMIX)
+                if(${MSLITE_REGISTRY_DEVICE}  STREQUAL "Hi3516D" OR ${MSLITE_REGISTRY_DEVICE}  STREQUAL "Hi3519A")
+                    install(FILES ${TOP_DIR}/mindspore/lite/build/tools/benchmark/nnie/${MSLITE_NNIE_LIB_NAME}.so
+                            DESTINATION ${PROVIDERS_LIB_DIR}/${MSLITE_REGISTRY_DEVICE}
+                            COMPONENT ${RUNTIME_COMPONENT_NAME})
+                    install(FILES
+                            ${TOP_DIR}/mindspore/lite/build/tools/benchmark/nnie_proposal/${MSLITE_PROPOSAL_LIB_NAME}.so
+                            DESTINATION ${PROVIDERS_LIB_DIR}/${MSLITE_REGISTRY_DEVICE}
+                            COMPONENT ${RUNTIME_COMPONENT_NAME})
+                    if(${MSLITE_REGISTRY_DEVICE}  STREQUAL "Hi3516D")
+                        install(FILES
+                                ${TOP_DIR}/mindspore/lite/tools/benchmark/nnie/third_patry/${MICRO_NNIE_LIB_NAME}.so
+                                DESTINATION ${PROVIDERS_LIB_DIR}/${MSLITE_REGISTRY_DEVICE}
+                                COMPONENT ${RUNTIME_COMPONENT_NAME})
+                    endif()
+                endif()
+            endif()
+        endif()
         if(SUPPORT_TRAIN)
             install(TARGETS ${BENCHMARK_TRAIN_NAME} RUNTIME DESTINATION ${BENCHMARK_TRAIN_ROOT_DIR} COMPONENT
                     ${RUNTIME_COMPONENT_NAME})
@@ -516,7 +561,10 @@ else()
         __install_micro_codegen()
     endif()
     if(MSLITE_ENABLE_TOOLS)
-        install(TARGETS ${BENCHMARK_NAME} RUNTIME DESTINATION ${BENCHMARK_ROOT_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        if(NOT BUILD_FIRST)
+            install(TARGETS ${BENCHMARK_NAME} RUNTIME DESTINATION ${BENCHMARK_ROOT_DIR}
+                    COMPONENT ${RUNTIME_COMPONENT_NAME})
+        endif()
         if(SUPPORT_TRAIN)
             install(TARGETS ${BENCHMARK_TRAIN_NAME} RUNTIME DESTINATION ${BENCHMARK_TRAIN_ROOT_DIR} COMPONENT
                     ${RUNTIME_COMPONENT_NAME})

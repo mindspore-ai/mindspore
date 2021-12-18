@@ -29,7 +29,9 @@
 #include <memory>
 #include <cfloat>
 #include <utility>
+#ifndef BENCHMARK_CLIP_JSON
 #include <nlohmann/json.hpp>
+#endif
 #include "tools/benchmark/benchmark_base.h"
 #include "include/model.h"
 #include "tools/common/flag_parser.h"

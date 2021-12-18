@@ -29,7 +29,9 @@
 #include <memory>
 #include <cfloat>
 #include <utility>
+#ifndef BENCHMARK_CLIP_JSON
 #include <nlohmann/json.hpp>
+#endif
 #include "tools/benchmark/benchmark_base.h"
 #include "include/model.h"
 #include "tools/common/flag_parser.h"
@@ -96,6 +98,8 @@ class MS_API Benchmark : public BenchmarkBase {
 
   int CompareDataGetTotalCosineDistanceAndSize(const std::string &name, tensor::MSTensor *tensor,
                                                float *total_cosine_distance, int *total_size);
+  tensor::MSTensor *GetTensorByNodeShape(const std::vector<size_t> &node_shape);
+  tensor::MSTensor *GetTensorByNameOrShape(const std::string &node_or_tensor_name, const std::vector<size_t> &dims);
 
  private:
 #ifdef ENABLE_OPENGL_TEXTURE
