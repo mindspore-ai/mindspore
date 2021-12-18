@@ -579,23 +579,25 @@ bool AnfTransform::StoreBuiltinPass(const converter::Flags *config) {
   }
   auto fmk = config->fmk;
   auto is_train = config->trainModel;
-  std::unordered_map<std::string, opt::PassPtr> passes = {
-    {"DumpGraph", std::make_shared<opt::DumpGraph>(config)},
-    {"RemoveRedundantOpPass", std::make_shared<opt::RemoveRedundantOpPass>(config->trainModel)},
-    {"ToNCHWFormat", std::make_shared<opt::ToNCHWFormat>(fmk, is_train)},
-    {"ToNHWCFormat", std::make_shared<opt::ToNHWCFormat>(fmk, is_train)},
-    {"ConstFoldPass", std::make_shared<opt::ConstFoldPass>(fmk, is_train)},
-    {"InferShapePass", std::make_shared<opt::InferShapePass>(fmk, is_train)},
-    {"DeleteRedundantTranspose", std::make_shared<opt::DeleteRedundantTranspose>()},
-    {"SpecialNodePostProcess", std::make_shared<opt::SpecialNodePostProcess>()},
-    {"DecreaseTransposeAlgo", std::make_shared<opt::DecreaseTransposeAlgo>(fmk, is_train)},
-    {"SpecifyGraphInputFormat", std::make_shared<opt::SpecifyGraphInputFormat>(config->graphInputFormat)}};
+  // pass_name, pass and boolean value to indicate whether can be called by external extension,
+  std::vector<std::tuple<std::string, opt::PassPtr, bool>> pass_infos = {
+    {"DumpGraph", std::make_shared<opt::DumpGraph>(config), true},
+    {"RemoveRedundantOpPass", std::make_shared<opt::RemoveRedundantOpPass>(config->trainModel), false},
+    {"ToNCHWFormat", std::make_shared<opt::ToNCHWFormat>(fmk, is_train), true},
+    {"ToNHWCFormat", std::make_shared<opt::ToNHWCFormat>(fmk, is_train), true},
+    {"ConstFoldPass", std::make_shared<opt::ConstFoldPass>(fmk, is_train), true},
+    {"InferShapePass", std::make_shared<opt::InferShapePass>(fmk, is_train), false},
+    {"DeleteRedundantTranspose", std::make_shared<opt::DeleteRedundantTranspose>(), false},
+    {"SpecialNodePostProcess", std::make_shared<opt::SpecialNodePostProcess>(), false},
+    {"DecreaseTransposeAlgo", std::make_shared<opt::DecreaseTransposeAlgo>(fmk, is_train), true},
+    {"SpecifyGraphInputFormat", std::make_shared<opt::SpecifyGraphInputFormat>(config->graphInputFormat), false}};
   bool succeed_store = true;
-  for (auto iter = passes.begin(); iter != passes.end(); ++iter) {
-    MS_CHECK_TRUE_RET(iter->second != nullptr, false);
-    if (PassStorage::StorePass(iter->first, iter->second) != RET_OK) {
-      MS_LOG(ERROR) << "external pass name conflicts with that of internal pass, the pass name is " << iter->first
-                    << ", please edit external pass name.";
+  for (const auto &pass_info : pass_infos) {
+    MS_CHECK_TRUE_RET(std::get<1>(pass_info) != nullptr, false);
+    if (PassStorage::StorePass(std::get<0>(pass_info), std::get<1>(pass_info),
+                               std::get<opt::kInputIndexTwo>(pass_info)) != RET_OK) {
+      MS_LOG(ERROR) << "external pass name conflicts with that of internal pass, the pass name is "
+                    << std::get<0>(pass_info) << ", please edit external pass name.";
       succeed_store = false;
     }
   }

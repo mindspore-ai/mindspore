@@ -16,6 +16,7 @@
 
 #include "tools/converter/optimizer_manager.h"
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 #include "backend/optimizer/common/pass.h"
@@ -25,6 +26,7 @@
 namespace mindspore {
 namespace lite {
 std::map<std::string, opt::PassPtr> PassStorage::pass_storage_;
+std::set<std::string> PassStorage::inaccessible_for_outer_;
 bool RunOptimizerPass(const FuncGraphPtr &func_graph, const std::vector<std::string> &pass_names) {
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "func graph is nullptr.";
@@ -58,6 +60,12 @@ bool RunExternalPass(const FuncGraphPtr &func_graph, registry::PassPosition posi
     return false;
   }
   auto schedule_task = registry::PassRegistry::GetOuterScheduleTask(position);
+  for (const auto &pass_name : schedule_task) {
+    if (!PassStorage::IsAccessibleForOuter(pass_name)) {
+      MS_LOG(ERROR) << pass_name << " is an inaccessible pass for outer calling.";
+      return false;
+    }
+  }
   if (!RunOptimizerPass(func_graph, schedule_task)) {
     MS_LOG(WARNING) << "run external scheduled task failed.";
     return false;
