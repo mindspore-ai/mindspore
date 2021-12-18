@@ -55,6 +55,7 @@
 #include "backend/session/session_factory.h"
 #include "backend/session/pynative_task_manager.h"
 #include "pipeline/pynative/pynative_execute.h"
+#include "runtime/op_builder/op_lazy_builder.h"
 
 namespace mindspore {
 namespace session {
@@ -1244,7 +1245,7 @@ OpRunInfo SessionBasic::GetSingleOpRunInfo(const CNodePtr &cnode, const GraphInf
                            .abstract = abstract,
                            .is_dynamic_shape = shape->IsDynamic(),
                            .is_auto_mixed_precision = false,
-                           .lazy_build = false,
+                           .lazy_build = true,
                            .next_op_name = std::string(),
                            .next_input_index = 0,
                            .graph_info = graph_info,
@@ -2621,6 +2622,8 @@ void SessionBasic::AddGradAddrToBucket(const GraphId &graph_id, const std::vecto
     auto &free_bucket = bucket_list[free_bucket_index];
     free_bucket->AddGradTensor(tensor);
     if (free_bucket->full()) {
+      // Delete this when session is moved to MindRT.
+      runtime::OpLazyBuilder::GetInstance().ExecuteRemainingTasks();
       MS_LOG(INFO) << "bucket is full";
       free_bucket->Launch();
       free_bucket_index = ++free_bucket_iter->second;

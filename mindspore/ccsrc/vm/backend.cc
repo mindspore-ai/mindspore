@@ -798,7 +798,7 @@ void PushTupleTensor(const VectorRef &args, const std::vector<AnfNodePtr> &param
 
 void MindRTBackend::RunGraphBySingleOp(const std::vector<KernelGraphPtr> &graphs,
                                        const std::vector<std::vector<tensor::TensorPtr>> &inputs, VectorRef *outputs) {
-  runtime::OpLazyBuilder::GetInstance().ExecuteRemainingTasks();
+  SyncLazyTasks();
   MS_EXCEPTION_IF_NULL(graph_compiler_);
   for (size_t graph_index = 0; graph_index < graphs.size(); ++graph_index) {
     const auto &graph = graphs[graph_index];
@@ -839,10 +839,11 @@ void MindRTBackend::RunGraphBySingleOp(const std::vector<KernelGraphPtr> &graphs
 
         RunOp(&op_run_info, &op_outputs);
       } else {
+        SyncLazyTasks();
         RunControlOperator(graph_compiler_, graph, kernel, op_output_map, parameter_index, inputs[graph_index],
                            &input_tensor_info, &op_outputs);
         // Execute remaining lazy tasks before PyNative hook exit.
-        runtime::OpLazyBuilder::GetInstance().ExecuteRemainingTasks();
+        SyncLazyTasks();
       }
 
       graph_compiler_->UpdateRefCount(input_tensor_info.input_kernel, &cnode_ref_count, &forward_output_refcount,
@@ -856,6 +857,7 @@ void MindRTBackend::RunGraphBySingleOp(const std::vector<KernelGraphPtr> &graphs
         graph_compiler_->AddGradAddrToBucket(graph->graph_id(), graph_output_info.graph_output_tensors);
       }
     }
+    SyncLazyTasks();
   }
 }
 
