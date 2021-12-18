@@ -506,36 +506,34 @@ int DecreaseTransposeAlgo::SetSubGraphInput(const CNodePtr &cnode, const FuncGra
       MS_LOG(ERROR) << "Get index failed: " << e.what();
       return lite::RET_ERROR;
     }
-    param_node->set_abstract(GetCNodeInputAbstract(cnode, index)->Clone());
+    auto abstract = GetCNodeInputAbstract(cnode, index);
+    MS_CHECK_TRUE_MSG(abstract != nullptr, RET_ERROR, "abstract is a nullptr.");
+    param_node->set_abstract(abstract->Clone());
     if (utils::isa<CNodePtr>(cnode->input(index))) {
       ShapeVector shape_vec = {-1};
-      auto out_cnode = cnode->input(index)->cast<CNodePtr>();
-      MS_ASSERT(out_cnode != nullptr);
-      MS_ASSERT(trans_cnode != nullptr);
-      auto out_prim = GetValueNode<PrimitivePtr>(out_cnode->input(0));
-      MS_CHECK_TRUE_MSG(out_prim != nullptr, lite::RET_ERROR, "GetValueNode failed");
-      if (out_prim->GetAttr(kInferDone) == nullptr || !GetValue<bool>(out_prim->GetAttr(kInferDone))) {
-        param_node->abstract()->set_shape(std::make_shared<abstract::Shape>(shape_vec));
+      bool has_inferred{false};
+      auto ret = DetermineCertainVarInputHasInferred(cnode, index, &has_inferred);
+      MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "determine infer flag failed.");
+      if (!has_inferred) {
+        auto abstract_shape = std::make_shared<abstract::Shape>(shape_vec);
+        MS_CHECK_TRUE_MSG(abstract_shape != nullptr, RET_ERROR, "create shape failed.");
+        param_node->abstract()->set_shape(abstract_shape);
       }
-    } else {
+    }
+    if (utils::isa<Parameter>(cnode->input(index))) {
+      param_node->set_default_param(cnode->input(index)->cast<ParameterPtr>()->default_param());
+    }
+    if (utils::isa<ValueNode>(cnode->input(index))) {
       lite::DataInfo data_info;
-      if (utils::isa<ParameterPtr>(cnode->input(index))) {
-        if (cnode->input(index)->cast<ParameterPtr>()->has_default()) {
-          param_node->set_default_param(cnode->input(index)->cast<ParameterPtr>()->default_param());
-        }
-        continue;
-      }
       auto status = lite::FetchDataFromValueNode(cnode, index, fmk_type_, train_flag_, &data_info, true);
       if (status != lite::RET_OK) {
         continue;
       }
       ShapeVector shape_vec(data_info.shape_.begin(), data_info.shape_.end());
-      if (data_info.data_.empty()) {
-        param_node->set_default_param(std::make_shared<tensor::Tensor>((TypeId)data_info.data_type_, shape_vec));
-      } else {
-        param_node->set_default_param(std::make_shared<tensor::Tensor>((TypeId)data_info.data_type_, shape_vec,
-                                                                       data_info.data_.data(), data_info.data_.size()));
-      }
+      auto tensor_info = lite::CreateTensorInfo(data_info.data_.data(), data_info.data_.size(), shape_vec,
+                                                static_cast<TypeId>(data_info.data_type_));
+      MS_CHECK_TRUE_MSG(tensor_info != nullptr, RET_ERROR, "create a tensor failed.");
+      param_node->set_default_param(tensor_info);
     }
   }
   return lite::RET_OK;

@@ -223,5 +223,52 @@ bool IsSpecialType(const CNodePtr &cnode) {
          CheckPrimitiveType(cnode, prim::kPrimMakeTuple) || CheckPrimitiveType(cnode, kPrimMakeTupleV2) ||
          CheckPrimitiveType(cnode, prim::kPrimReturn);
 }
+
+int DetermineCertainVarInputFormat(const CNodePtr &cnode, size_t index, Format *format) {
+  MS_CHECK_TRUE_MSG(cnode != nullptr && format != nullptr, RET_ERROR, "function's parameter is nullptr.");
+  auto var_input_info = GetRealCertainVarInput(cnode, index);
+  if (var_input_info.first == nullptr) {
+    MS_LOG(ERROR) << "cannot get the real var input.";
+    return RET_ERROR;
+  }
+  *format = mindspore::NHWC;
+  auto real_input_cnode = var_input_info.first;
+  auto item_index = var_input_info.second;
+  auto input_node_prim = GetValueNode<PrimitivePtr>((real_input_cnode->input(0)));
+  MS_CHECK_TRUE_MSG(input_node_prim != nullptr, RET_ERROR, "get primitive failed");
+  auto value_ptr = input_node_prim->GetAttr(ops::kFormat);
+  if (value_ptr != nullptr) {
+    MS_CHECK_TRUE_MSG(value_ptr->isa<mindspore::Int64Imm>(), RET_ERROR, "format attr must be an int64_t val.");
+    auto value = GetValue<int64_t>(value_ptr);
+    MS_CHECK_TRUE_MSG(value >= NCHW && value <= NCW, RET_ERROR, "format val is out of enum's range.");
+    *format = static_cast<Format>(value);
+  }
+  value_ptr = input_node_prim->GetAttr(kOutputsFormat);
+  if (value_ptr != nullptr) {
+    MS_CHECK_TRUE_MSG(value_ptr->isa<ValueSequeue>(), RET_ERROR, "outputs_format attr should be sequence.");
+    auto formats = CastToInt(value_ptr);
+    if (item_index >= 0 && static_cast<size_t>(item_index) < formats.size()) {
+      MS_CHECK_TRUE_MSG(formats[item_index] >= NCHW && formats[item_index] <= NCW, RET_ERROR,
+                        "format val is out of enum's range.");
+      *format = static_cast<Format>(formats[item_index]);
+    }
+  }
+  if (CheckPrimitiveType(real_input_cnode, prim::kPrimTranspose)) {
+    std::vector<int> perm;
+    if (GetTransposePerm(real_input_cnode, &perm) != RET_OK) {
+      MS_LOG(ERROR) << "fetch transpose's perm failed.";
+      return RET_ERROR;
+    }
+    if (perm.size() != kNC2NH.size()) {
+      return RET_OK;
+    }
+    if (perm == kNH2NC && (*format == NHWC || *format == KHWC)) {
+      *format = NCHW;
+    } else if (perm == opt::kNC2NH && *format == NCHW) {
+      *format = NHWC;
+    }
+  }
+  return RET_OK;
+}
 }  // namespace opt
 }  // namespace mindspore
