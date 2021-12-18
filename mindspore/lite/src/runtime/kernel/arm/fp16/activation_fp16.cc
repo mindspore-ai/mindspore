@@ -30,6 +30,7 @@ using mindspore::schema::ActivationType_HSWISH;
 using mindspore::schema::ActivationType_LEAKY_RELU;
 using mindspore::schema::ActivationType_RELU;
 using mindspore::schema::ActivationType_RELU6;
+using mindspore::schema::ActivationType_SOFTPLUS;
 using mindspore::schema::ActivationType_SWISH;
 using mindspore::schema::PrimitiveType_Activation;
 
@@ -76,6 +77,8 @@ int ActivationFp16CPUKernel::DoActivation(int task_id) {
       HardTanhFp16(fp16_input_ + stride * task_id, count, fp16_output_ + stride * task_id, min_val_, max_val_);
   } else if (type_ == schema::ActivationType_GELU) {
     error_code = GeluFp16(fp16_input_ + stride * task_id, count, fp16_output_ + stride * task_id, true);
+  } else if (type_ == schema::ActivationType_SOFTPLUS) {
+    error_code = SoftplusFp16(fp16_input_ + stride * task_id, count, fp16_output_ + stride * task_id);
   } else if (type_ == schema::ActivationType_ELU) {
     error_code = EluFp16(fp16_input_ + stride * task_id, count, fp16_output_ + stride * task_id, alpha_);
   } else {
@@ -127,7 +130,7 @@ kernel::InnerKernel *CpuActivationFp16KernelCreator(const std::vector<lite::Tens
       type != schema::ActivationType_TANH && type != schema::ActivationType_HSWISH &&
       type != schema::ActivationType_SWISH && type != schema::ActivationType_HARD_TANH &&
       type != schema::ActivationType_GELU && type != schema::ActivationType_HSIGMOID &&
-      type != schema::ActivationType_ELU) {
+      type != schema::ActivationType_SOFTPLUS && type != schema::ActivationType_ELU) {
     MS_LOG(ERROR) << "Activation fp16 not support type: " << type;
     free(opParameter);
     return nullptr;

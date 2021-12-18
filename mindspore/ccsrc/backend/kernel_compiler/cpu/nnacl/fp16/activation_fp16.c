@@ -252,6 +252,15 @@ int GeluFp16(const float16_t *src, int length, float16_t *dst, bool approximate)
   return NNACL_OK;
 }
 
+int SoftplusFp16(const float16_t *src, int length, float16_t *dst) {
+  int i = 0;
+  for (; i < length; ++i) {
+    single_exp_fp16(src[i], dst + i);
+    dst[i] = log1p(dst[i]);
+  }
+  return NNACL_OK;
+}
+
 int EluFp16(const float16_t *src, int length, float16_t *dst, float16_t alpha) {
   int i = 0;
 #ifdef ENABLE_NEON

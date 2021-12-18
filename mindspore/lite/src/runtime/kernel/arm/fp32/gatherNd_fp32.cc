@@ -122,7 +122,9 @@ int GatherNdCPUKernel::DoGatherNd(int task_id) const {
     return RET_OK;
   }
   int offset = task_id * thread_sz_stride_;
-  auto ret = GatherNd(in_ptr_, out_ptr_ + offset * area_, in_offset_ + offset, area_, count);
+  int dtype_len = lite::DataTypeSize(in_tensors_.front()->data_type());
+  auto ret = GatherNd(in_ptr_, static_cast<int8_t *>(out_ptr_) + offset * area_ * dtype_len, in_offset_ + offset, area_,
+                      count, dtype_len);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "GatherNdRun error task_id[" << task_id << "] error_code[" << ret << "]";
     return ret;
@@ -141,8 +143,8 @@ int GatherNdRun(const void *cdata, int task_id, float, float) {
 }
 
 int GatherNdCPUKernel::Run() {
-  in_ptr_ = reinterpret_cast<float *>(in_tensors_.front()->data());
-  out_ptr_ = reinterpret_cast<float *>(out_tensors_.front()->data());
+  in_ptr_ = in_tensors_.front()->data();
+  out_ptr_ = out_tensors_.front()->data();
   CHECK_NULL_RETURN(in_ptr_);
   CHECK_NULL_RETURN(out_ptr_);
   if (InitOffset() != RET_OK) {
@@ -159,4 +161,7 @@ int GatherNdCPUKernel::Run() {
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_GatherNd, LiteKernelCreator<GatherNdCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_GatherNd, LiteKernelCreator<GatherNdCPUKernel>)
+#ifdef ENABLE_FP16
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_GatherNd, LiteKernelCreator<GatherNdCPUKernel>)
+#endif
 }  // namespace mindspore::kernel
