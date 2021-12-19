@@ -26,7 +26,6 @@
 #include "tools/common/graph_util.h"
 #include "tools/common/protobuf_utils.h"
 #include "tools/common/tensor_util.h"
-#include "tools/converter/ops/ops_def.h"
 #include "ops/tensor_list_stack.h"
 #include "ir/func_graph.h"
 #include "tools/converter/converter_flags.h"
@@ -38,6 +37,9 @@
 #include "tools/converter/parser/unify_format.h"
 #include "nnacl/op_base.h"
 #include "src/common/log_util.h"
+#include "ops/make_tuple.h"
+#include "ops/return.h"
+#include "ops/tuple_get_item.h"
 
 using mindspore::converter::kFmkTypeOnnx;
 namespace mindspore {
@@ -161,7 +163,7 @@ CNodePtr GetCNodeFromControlFlowNodesMap(
 
 STATUS BuildReturnNode(const FuncGraphPtr &anf_graph, const std::vector<AnfNodePtr> &return_inputs) {
   MS_ASSERT(anf_graph != nullptr);
-  auto return_prim = std::make_shared<lite::Return>();
+  auto return_prim = std::make_shared<ops::Return>();
   if (return_prim == nullptr) {
     MS_LOG(ERROR) << "new Return failed";
     return RET_NULL_PTR;
@@ -227,7 +229,7 @@ STATUS BuildOpOutputs(const onnx::NodeProto &onnx_node, const FuncGraphPtr &anf_
         return RET_ERROR;
       }
       abstract_list.emplace_back(abstract_tensor);
-      auto tuple_get_item_prim_ptr = std::make_shared<lite::TupleGetItem>();
+      auto tuple_get_item_prim_ptr = std::make_shared<ops::TupleGetItem>();
       if (tuple_get_item_prim_ptr == nullptr) {
         MS_LOG(ERROR) << "new TupleGetItem failed";
         return RET_NULL_PTR;
@@ -326,7 +328,7 @@ STATUS ConvertGraphOutputs(const onnx::GraphProto &onnx_graph, const FuncGraphPt
   }
   if (onnx_graph.output_size() > 1) {
     std::vector<AnfNodePtr> make_tuple_inputs;
-    auto make_tuple_prim_ptr = std::make_shared<lite::MakeTuple>();
+    auto make_tuple_prim_ptr = std::make_shared<ops::MakeTuple>();
     if (make_tuple_prim_ptr == nullptr) {
       MS_LOG(ERROR) << "new MakeTuple failed";
       return RET_NULL_PTR;

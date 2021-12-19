@@ -15,22 +15,41 @@
  */
 
 #include "tools/converter/converter_context.h"
-#include <string>
 #include <vector>
 #include "include/registry/converter_context.h"
 
 namespace mindspore {
 namespace converter {
-void ConverterContext::SetGraphOutputTensorNames(const std::vector<std::string> &output_names) {
+void ConverterContext::SetGraphOutputTensorNames(const std::vector<std::vector<char>> &&output_names) {
   auto converter_context = lite::ConverterInnerContext::GetInstance();
-  MS_ASSERT(converter_context != nullptr);
-  converter_context->SetGraphOutputTensorNames(output_names);
+  if (converter_context == nullptr) {
+    MS_LOG(ERROR) << "Set graph output's names failed.";
+    return;
+  }
+  converter_context->SetGraphOutputTensorNames(VectorCharToString(output_names));
 }
 
-std::vector<std::string> ConverterContext::GetGraphOutputTensorNames() {
+std::vector<std::vector<char>> ConverterContext::GetGraphOutputTensorNamesInChar() {
   auto converter_context = lite::ConverterInnerContext::GetInstance();
-  MS_ASSERT(converter_context != nullptr);
-  return converter_context->GetGraphOutputTensorNames();
+  if (converter_context == nullptr) {
+    MS_LOG(ERROR) << "Get graph output's names failed.";
+    return {};
+  }
+  return VectorStringToChar(converter_context->GetGraphOutputTensorNames());
+}
+
+std::map<std::vector<char>, std::vector<char>> ConverterContext::GetConfigInfo(const std::vector<char> &&section) {
+  auto converter_context = lite::ConverterInnerContext::GetInstance();
+  if (converter_context == nullptr) {
+    MS_LOG(ERROR) << "Get config information only used by external extension failed.";
+    return {};
+  }
+  auto &external_used_config_infos = converter_context->GetExternalUsedConfigInfos();
+  if (external_used_config_infos.find(CharToString(section)) == external_used_config_infos.end()) {
+    MS_LOG(ERROR) << "This section " << section << " config info is not existed.";
+    return {};
+  }
+  return MapStringToVectorChar(external_used_config_infos.at(CharToString(section)));
 }
 }  // namespace converter
 }  // namespace mindspore

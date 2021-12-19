@@ -18,7 +18,8 @@
 #include <memory>
 #include "src/common/log_adapter.h"
 #include "tools/common/tensor_util.h"
-#include "tools/converter/ops/ops_def.h"
+#include "ops/make_tuple.h"
+#include "ops/return.h"
 #include "ir/func_graph.h"
 #include "ops/fusion/conv2d_fusion.h"
 #include "backend/kernel_compiler/cpu/nnacl/op_base.h"
@@ -93,7 +94,7 @@ CNodePtr FusionInoutTest::AddReturn(const FuncGraphPtr &graph, const std::vector
   if (return_inputs.size() == 1) {
     return_input = return_inputs.front();
   } else {
-    auto make_tuple_prim_ptr = std::make_shared<lite::MakeTuple>();
+    auto make_tuple_prim_ptr = std::make_shared<ops::MakeTuple>();
     if (make_tuple_prim_ptr == nullptr) {
       MS_LOG(ERROR) << "new MakeTuple failed";
       return nullptr;
@@ -107,7 +108,7 @@ CNodePtr FusionInoutTest::AddReturn(const FuncGraphPtr &graph, const std::vector
     return_input = return_input_cnode;
   }
 
-  auto return_prim = std::make_shared<lite::Return>();
+  auto return_prim = std::make_shared<ops::Return>();
   MS_CHECK_TRUE_MSG(return_prim != nullptr, nullptr, "create return primitivec failed");
   auto return_cnode = graph->NewCNode(return_prim, {return_input});
   MS_CHECK_TRUE_MSG(return_cnode != nullptr, nullptr, "create Return failed");

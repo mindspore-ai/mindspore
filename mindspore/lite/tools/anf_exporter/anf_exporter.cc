@@ -29,8 +29,10 @@
 #include "ops/call.h"
 #include "ops/control_depend.h"
 #include "ops/depend.h"
-#include "tools/converter/ops/ops_def.h"
 #include "ops/quant_dtype_cast.h"
+#include "ops/make_tuple.h"
+#include "ops/return.h"
+#include "ops/tuple_get_item.h"
 #include "tools/converter/quant_param_holder.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/converter/quantizer/bitpacking.h"
@@ -428,8 +430,8 @@ int AnfExporter::SetTailCallForNonOutput() {
 }
 
 bool AnfExporter::CaseToContinue(const string &prim_name) {
-  return prim_name == mindspore::ops::kNameDepend || prim_name == mindspore::lite::kNameTupleGetItem ||
-         prim_name == mindspore::lite::kNameMakeTuple || prim_name == "make_tuple";
+  return prim_name == mindspore::ops::kNameDepend || prim_name == mindspore::ops::kNameTupleGetItem ||
+         prim_name == mindspore::ops::kNameMakeTuple || prim_name == "make_tuple";
 }
 
 int AnfExporter::Anf2Fb(const FuncGraphPtr &func_graph, const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
@@ -464,7 +466,7 @@ int AnfExporter::Anf2Fb(const FuncGraphPtr &func_graph, const std::unique_ptr<sc
       break;
     }
     if (opt::CheckPrimitiveType(cnode, prim::kPrimReturn)) {
-      node->name = mindspore::lite::kNameReturn;
+      node->name = mindspore::ops::kNameReturn;
       ret = SetSubGraphOutputIndex(cnode, subgraph_index, meta_graphT, node.get());
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "SetOpOutputN failed";

@@ -18,6 +18,7 @@
 #include "tools/common/parse_config_utils.h"
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
+#include "tools/converter/converter_context.h"
 
 namespace mindspore {
 namespace lite {
@@ -37,34 +38,43 @@ int ConfigFileParser::ParseConfigFile(const std::string &config_file_path) {
     return ret;
   }
   ret = ParseDataPreProcessString(maps);
+  (void)maps.erase(kDataPreprocessParam);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ParseDataPreProcessString failed.";
     return ret;
   }
   ret = ParseCommonQuantString(maps);
+  (void)maps.erase(kCommonQuantParam);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ParseCommonQuantString failed.";
     return ret;
   }
   ret = ParseMixedBitQuantString(maps);
+  (void)maps.erase(kMixedBitWeightQuantParam);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ParseMixedBitQuantString failed.";
     return ret;
   }
   ret = ParseFullQuantString(maps);
+  (void)maps.erase(kFullQuantParam);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ParseFullQuantString failed.";
     return ret;
   }
   ret = ParseRegistryInfoString(maps);
+  (void)maps.erase(kRegistry);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ParseExtendedintegrationString failed.";
     return ret;
   }
   ret = ParseAclOptionCfgString(maps);
+  (void)maps.erase(kAclOptionParam);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ParseAclOptionCfgString failed.";
     return ret;
+  }
+  for (const auto &config_info : maps) {
+    ConverterInnerContext::GetInstance()->SetExternalUsedConfigInfos(config_info.first, config_info.second);
   }
   return RET_OK;
 }

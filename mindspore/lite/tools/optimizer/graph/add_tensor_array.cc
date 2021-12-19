@@ -23,8 +23,9 @@
 #include "ops/tensor_array.h"
 #include "ops/tensor_array_read.h"
 #include "ops/tensor_array_write.h"
-#include "tools/converter/ops/ops_def.h"
 #include "nnacl/op_base.h"
+#include "ops/make_tuple.h"
+#include "ops/return.h"
 
 namespace mindspore::opt {
 constexpr auto kDefaultIndex = 0;
@@ -78,7 +79,7 @@ static int SetGraphOutput(const FuncGraphPtr &func_graph, const AnfNodePtr &tens
 
   // for single output graph, create tuple for graph output
   // make_tuple node
-  auto make_tuple_prim_ptr = std::make_shared<lite::MakeTuple>();
+  auto make_tuple_prim_ptr = std::make_shared<ops::MakeTuple>();
   if (make_tuple_prim_ptr == nullptr) {
     MS_LOG(ERROR) << "make_tuple_prim_ptr is nullptr";
     return lite::RET_NULL_PTR;
@@ -93,7 +94,7 @@ static int SetGraphOutput(const FuncGraphPtr &func_graph, const AnfNodePtr &tens
   make_tuple_cnode->set_fullname_with_scope("return tuple");
 
   // return node
-  auto return_prim_ptr = std::make_shared<lite::Return>();
+  auto return_prim_ptr = std::make_shared<ops::Return>();
   if (return_prim_ptr == nullptr) {
     MS_LOG(ERROR) << "return_prim_ptr is nullptr";
     return lite::RET_NULL_PTR;

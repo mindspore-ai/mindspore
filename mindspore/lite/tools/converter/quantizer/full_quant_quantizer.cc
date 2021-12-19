@@ -28,7 +28,7 @@
 #include <vector>
 #include <algorithm>
 #include "ops/fusion/full_connection.h"
-#include "tools/converter/ops/ops_def.h"
+#include "ops/tuple_get_item.h"
 #include "src/tensor.h"
 #include "tools/converter/quantizer/quant_cast.h"
 #include "tools/converter/quantizer/quantize_util.h"
@@ -462,7 +462,7 @@ int FullQuantQuantizer::QuantNode(const FuncGraphPtr &func_graph) {
 
     auto op_type = primitive->name();
     MS_LOG(DEBUG) << "OpName: " << op_name;
-    if (op_type == lite::kNameTupleGetItem) {
+    if (op_type == mindspore::ops::kNameTupleGetItem) {
       constexpr int tuple_get_item_input_size = 3;
       MS_CHECK_TRUE_MSG(cnode->size() == tuple_get_item_input_size, RET_ERROR, "cnode->size() != 3");
       auto index_node = cnode->input(THIRD_INPUT);

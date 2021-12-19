@@ -21,6 +21,7 @@
 #include <string>
 #include <vector>
 #include "include/lite_utils.h"
+#include "include/api/dual_abi_helper.h"
 
 namespace mindspore {
 namespace converter {
@@ -53,12 +54,30 @@ class MS_API ConverterContext {
   /// \brief Static method to set exported model's output name as needed by users.
   ///
   /// \param[in] output_names Define model's output name, the order of which is consistent with the original model.
-  static void SetGraphOutputTensorNames(const std::vector<std::string> &output_names);
+  static void SetGraphOutputTensorNames(const std::vector<std::string> &output_names) {
+    SetGraphOutputTensorNames(VectorStringToChar(output_names));
+  }
 
   /// \brief Static method to obtain the outputs' name.
   ///
   /// \return the outputs' name.
-  static std::vector<std::string> GetGraphOutputTensorNames();
+  static std::vector<std::string> GetGraphOutputTensorNames() {
+    return VectorCharToString(GetGraphOutputTensorNamesInChar());
+  }
+
+  /// \brief Static method to get configure information which is used only by external extension.
+  ///
+  /// \param[in] section Define config section name.
+  ///
+  /// \return config key-value map.
+  static std::map<std::string, std::string> GetConfigInfo(const std::string &section) {
+    return MapVectorCharToString(GetConfigInfo(StringToChar(section)));
+  }
+
+ private:
+  static void SetGraphOutputTensorNames(const std::vector<std::vector<char>> &&output_names);
+  static std::vector<std::vector<char>> GetGraphOutputTensorNamesInChar();
+  static std::map<std::vector<char>, std::vector<char>> GetConfigInfo(const std::vector<char> &&section);
 };
 }  // namespace converter
 }  // namespace mindspore
