@@ -72,7 +72,11 @@ struct InnerContext : public Context {
 
   std::set<void *> GetLinkInfo(void *pre) const;
 
+  std::unordered_map<void *, std::set<void *>> GetAllLinkInfo() const;
+
   void SetLinkInfo(void *pre, void *suc);
+
+  void SetAllLinkInfo(const std::unordered_map<void *, std::set<void *>> &all_link_info);
 
  private:
   bool IsAllDeviceTypeValid() const;

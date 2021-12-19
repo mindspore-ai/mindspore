@@ -361,12 +361,19 @@ std::set<void *> InnerContext::GetLinkInfo(void *pre) const {
   return link_info_.at(pre);
 }
 
+std::unordered_map<void *, std::set<void *>> InnerContext::GetAllLinkInfo() const { return link_info_; }
+
 void InnerContext::SetLinkInfo(void *pre, void *suc) {
   if (link_info_.find(pre) != link_info_.end()) {
     link_info_.at(pre).insert(suc);
+    return;
   }
   std::set<void *> suc_set{suc};
   link_info_[pre] = suc_set;
+}
+
+void InnerContext::SetAllLinkInfo(const std::unordered_map<void *, std::set<void *>> &all_link_info) {
+  link_info_ = all_link_info;
 }
 
 int ParallelLaunch(const Context *context, const Func &func, Content content, int task_num) {

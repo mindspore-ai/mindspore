@@ -263,6 +263,12 @@ if(MSLITE_ENABLE_MINDRT)
         ${CMAKE_CURRENT_SOURCE_DIR}/lite_mindrt.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/mindrt_executor.cc
         )
+    if(MSLITE_ENABLE_CONTROLFLOW)
+        file(GLOB CONTROL_FLOW_ACTOR_SRC
+                ${CMAKE_CURRENT_SOURCE_DIR}/control_flow/actor/*.cc
+                )
+        set(LITE_SRC ${LITE_SRC} ${CONTROL_FLOW_ACTOR_SRC})
+    endif()
 else()
     set(LITE_SRC ${LITE_SRC}
         ${CORE_DIR}/mindrt/src/thread/core_affinity.cc

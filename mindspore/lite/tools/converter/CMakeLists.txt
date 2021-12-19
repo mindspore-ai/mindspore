@@ -145,6 +145,13 @@ if(MSLITE_ENABLE_MINDRT)
             ${SRC_DIR}/lite_mindrt.cc
             ${SRC_DIR}/mindrt_executor.cc
             )
+
+    if(MSLITE_ENABLE_CONTROLFLOW)
+        file(GLOB CONTROL_FLOW_ACTOR_SRC
+                ${SRC_DIR}/control_flow/actor/*.cc
+                )
+        set(LITE_SRC ${LITE_SRC} ${CONTROL_FLOW_ACTOR_SRC})
+    endif()
 endif()
 
 if(MSLITE_GPU_BACKEND STREQUAL opencl)

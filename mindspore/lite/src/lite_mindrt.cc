@@ -25,13 +25,9 @@
 #ifdef ENABLE_FP16
 #include "src/runtime/kernel/arm/fp16/fp16_op_handler.h"
 #endif
-namespace {
-const constexpr int kSwitchMaxInputKernelSize = 3;
-const constexpr int kSwitchMinInputKernelSize = 2;
-const constexpr int kSwitchTruePartialInputIndex = 1;
-const constexpr int kSwitchFalsePartialInputIndex = 2;
-const constexpr int kSwitchCondTensorIndex = 0;
-}  // namespace
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
+#include "src/control_flow/actor/switch_actor.h"
+#endif
 
 namespace mindspore::lite {
 void LiteOpActor::RunOpData(OpData<lite::Tensor> *inputs, OpContext<lite::Tensor> *context) {
@@ -81,7 +77,9 @@ bool OfflineIsolated(const std::vector<kernel::LiteKernel *> &kernels, const ker
   return true;
 }
 
-int LiteOpActor::IsolateInputData(std::vector<std::shared_ptr<LiteOpActor>> *actors) {
+int LiteOpActor::IsolateInputData(std::vector<std::shared_ptr<LiteOpActor>> *actors,
+                                  std::unordered_map<Tensor *, Tensor *> *input_map) {
+  isolate_input_map_ = input_map;
   std::vector<kernel::LiteKernel *> kernels{};
   std::transform(actors->begin(), actors->end(), std::back_inserter(kernels),
                  [](std::shared_ptr<LiteOpActor> actor) { return actor->kernel_; });
@@ -133,35 +131,17 @@ int LiteOpActor::IsolateInputData(std::vector<std::shared_ptr<LiteOpActor>> *act
       return ret;
     }
 
+    // for case that subgraph input is subgraph output, replace old_tensor with new_tensor
+    auto receiver_set = ctx_->GetLinkInfo(old_tensor);
+    for (auto item : receiver_set) {
+      ctx_->SetLinkInfo(new_tensor, item);
+    }
+
+    // keep new link info for isolate input data case.
+    ctx_->SetLinkInfo(old_tensor, new_tensor);
+
     /* set subgraph input for copy data */
     kernel_->set_in_tensor(new_tensor, i);
-  }
-  return RET_OK;
-}
-
-int LiteOpActor::LiteActorInit(std::vector<std::shared_ptr<LiteOpActor>> *actors,
-                               std::unordered_map<Tensor *, Tensor *> *input_map) {
-  isolate_input_map_ = input_map;
-
-  /* Init output arrow */
-  auto ret = CompileArrow();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "compile arrow failed.";
-    return ret;
-  }
-
-  /* Init Actor output data */
-  ret = PrepareOutputData();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "prepare output data failed.";
-    return ret;
-  }
-
-  /* subgraph transaction isolation */
-  ret = IsolateInputData(actors);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "isolate input data failed.";
-    return ret;
   }
   return RET_OK;
 }
@@ -180,70 +160,68 @@ int LiteOpActor::ResizeGraphInput(const std::vector<mindspore::tensor::MSTensor 
   return RET_OK;
 }
 
-int LiteOpActor::CompileArrowThroughOutputKernels() {
-  output_data_arrows_.clear();
-  int out_tensor_size = static_cast<int>(kernel_->out_tensors().size());
-  for (int i = 0; i < out_tensor_size; i++) {
-    for (auto out : kernel_->out_kernels()) {
-      int in_tensor_size = static_cast<int>(out->in_tensors().size());
-      int to_input_index = -1;
-      for (int j = 0; j < in_tensor_size; j++) {
-        if (kernel_->out_tensors()[i] == out->in_tensors()[j]) {
-          to_input_index = j;
-          break;
-        }
-      }
-      if (to_input_index == -1) {
-        continue;
-      }
-      auto id = out->name() + this->GetAID().Url();
-      auto arrow = std::make_shared<DataArrow>(i, AID(id), to_input_index);
-      if (arrow == nullptr) {
-        MS_LOG(ERROR) << "create DataArrow failed, out kernel: " << out->name();
-        return RET_ERROR;
-      }
-      output_data_arrows_.emplace_back(std::move(arrow));
-    }
+int LiteOpActor::CompileArrow(const std::unordered_map<void *, std::set<std::pair<AID, size_t>>> &receivers_map) {
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
+  auto ret = UpdateActorOutput();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "update actor output failed.";
+    return ret;
   }
-  return RET_OK;
+#endif
+
+  return CompileArrowThroughOutputTensors(receivers_map);
 }
 
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
-int LiteOpActor::CompileArrowThroughPartialCall() {
-#ifndef DELEGATE_CLIP
+int LiteOpActor::UpdateActorOutput() {
   if (kernel_->desc().arch == kernel::kDelegate) {
-    MS_LOG(INFO) << "kernel is delegate subgraph kernel.";
+    MS_LOG(DEBUG) << "no need for delegate kernel.";
     return RET_OK;
   }
-#endif
   auto *subgraph_kernel = reinterpret_cast<kernel::SubGraphKernel *>(kernel_);
   if (subgraph_kernel == nullptr) {
     MS_LOG(INFO) << "kernel is not subgraph kernel, no partial call.";
     return RET_OK;
   }
-  for (auto &node : subgraph_kernel->nodes()) {
-    if (node->type() != schema::PrimitiveType_Call) {
-      continue;
-    }
-    call_node_ = node;
-    auto partial_node = kernel::LiteKernelUtil::GetInputsSpecificNode(node, schema::PrimitiveType_PartialFusion);
-    if (!partial_node) {
-      continue;
-    }
-    partial_node_ = partial_node;
-    auto subgraph = reinterpret_cast<kernel::PartialFusionKernel *>(partial_node->kernel())->subgraph_kernel();
-    auto out_actor_id = subgraph_to_actor_.at(subgraph);
-
-    kernel_->set_out_tensors(partial_node->in_tensors());
-    for (size_t i = 0; i < partial_node->in_tensors().size(); ++i) {
-      auto arrow = std::make_shared<DataArrow>(i, out_actor_id, i);
-      if (arrow == nullptr) {
-        MS_LOG(ERROR) << "create DataArrow failed";
-        return RET_ERROR;
-      }
-      output_data_arrows_.emplace_back(std::move(arrow));
+  auto output_kernels = subgraph_kernel->out_nodes();
+  std::vector<kernel::LiteKernel *> call_kernels{};
+  for (auto output_kernel : output_kernels) {
+    if (output_kernel->type() == schema::PrimitiveType_Call) {
+      call_kernels.push_back(output_kernel);
     }
   }
+  if (call_kernels.empty()) {
+    MS_LOG(DEBUG) << "not end with call kernel, no need to update output.";
+    return RET_OK;
+  }
+  if (call_kernels.size() != 1) {
+    MS_LOG(ERROR) << "not support many call kernels in one subgraph.";
+    return RET_NOT_SUPPORT;
+  }
+  call_node_ = call_kernels.front();
+
+  // erase call output tensor
+  auto origin_output_tensors = kernel_->out_tensors();
+  auto call_output_tensors = call_node_->out_tensors();
+
+  for (auto iter = origin_output_tensors.begin(); iter != origin_output_tensors.end();) {
+    if (IsContain(call_output_tensors, *iter)) {
+      iter = origin_output_tensors.erase(iter);
+    } else {
+      ++iter;
+    }
+  }
+
+  auto partial_nodes = kernel::LiteKernelUtil::GetCallInputPartials(call_node_);
+  if (partial_nodes.size() != 1) {
+    MS_LOG(ERROR) << "partial output is not right.";
+    return RET_ERROR;
+  }
+  partial_node_ = partial_nodes.front();
+  std::copy(partial_node_->in_tensors().begin(), partial_node_->in_tensors().end(),
+            std::back_inserter(origin_output_tensors));
+
+  kernel_->set_out_tensors(origin_output_tensors);
 
   subgraph_kernel->DropNode(partial_node_);
   subgraph_kernel->DropNode(call_node_);
@@ -251,28 +229,70 @@ int LiteOpActor::CompileArrowThroughPartialCall() {
 }
 #endif
 
-int LiteOpActor::CompileArrow() {
-  int ret;
-  output_data_arrows_.clear();
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
-  ret = CompileArrowThroughPartialCall();
-  if (ret != RET_OK) {
-    output_data_arrows_.clear();
-    MS_LOG(ERROR) << "CompileArrowThroughPartialCall failed.";
-    return ret;
+bool LiteOpActor::ArrowHasCompiled(const AID &actor_name, const size_t &to_index,
+                                   const std::unordered_map<AID, std::set<size_t>> &receiver_index_set) {
+  if (receiver_index_set.find(actor_name) != receiver_index_set.end()) {
+    return receiver_index_set.at(actor_name).find(to_index) != receiver_index_set.at(actor_name).end();
   }
-  if (!output_data_arrows_.empty()) {
-    MS_LOG(INFO) << "CompileArrowThroughPartialCall done.";
-    return RET_OK;
+  return false;
+}
+
+void LiteOpActor::MarkArrowAsCompiled(const AID *actor_name, const size_t *to_index,
+                                      std::unordered_map<AID, std::set<size_t>> *receiver_index_set) {
+  if (receiver_index_set->find(*actor_name) == receiver_index_set->end()) {
+    std::set<size_t> tmp{*to_index};
+    receiver_index_set->insert(std::pair<AID, std::set<size_t>>(*actor_name, tmp));
+  } else {
+    receiver_index_set->at(*actor_name).insert(*to_index);
   }
-#endif
-  ret = CompileArrowThroughOutputKernels();
-  if (ret != RET_OK) {
-    output_data_arrows_.clear();
-    MS_LOG(ERROR) << "CompileArrowThroughOutputKernels failed.";
-    return ret;
+}
+
+int LiteOpActor::CreateCommonArrow(const std::unordered_map<void *, std::set<std::pair<AID, size_t>>> &receivers_map,
+                                   const std::set<void *> &subgraph_inputs_set,
+                                   const std::set<void *> &receiver_tensors, const size_t &output_index,
+                                   std::unordered_map<AID, std::set<size_t>> *receiver_index_set) {
+  for (auto receiver_tensor : receiver_tensors) {
+    MS_CHECK_TRUE_MSG(receivers_map.find(receiver_tensor) != receivers_map.end(), RET_ERROR,
+                      "not find receiver_tensor in receivers_map");
+    if (partial_node_ != nullptr && subgraph_inputs_set.find(receiver_tensor) == subgraph_inputs_set.end()) {
+      MS_LOG(DEBUG) << "not a need arrow for this actor.";
+      continue;
+    }
+    auto receiver_set = receivers_map.at(receiver_tensor);
+    for (auto item : receiver_set) {
+      if (ArrowHasCompiled(item.first, item.second, *receiver_index_set)) {
+        continue;
+      }
+      MarkArrowAsCompiled(&(item.first), &(item.second), receiver_index_set);
+      auto arrow = std::make_shared<DataArrow>(output_index, item.first, item.second);
+      MS_CHECK_TRUE_MSG(arrow != nullptr, RET_ERROR, "create arrow failed.");
+      output_data_arrows_.push_back(arrow);
+    }
   }
-  return ret;
+
+  return RET_OK;
+}
+
+int LiteOpActor::CompileArrowThroughOutputTensors(
+  const std::unordered_map<void *, std::set<std::pair<AID, size_t>>> &receivers_map) {
+  auto output_tensors = this->kernel_->out_tensors();
+  auto output_tensors_size = output_tensors.size();
+  auto subgraph_inputs_set = PartialSubgraphInputTensors(partial_node_);
+
+  std::unordered_map<AID, std::set<size_t>> receiver_index_set{};
+  for (size_t i = 0; i < output_tensors_size; ++i) {
+    auto receiver_tensors = ctx_->GetLinkInfo(output_tensors[i]);
+    if (receiver_tensors.empty()) {
+      MS_LOG(DEBUG) << "may be graph output.";
+      continue;
+    }
+    auto ret = CreateCommonArrow(receivers_map, subgraph_inputs_set, receiver_tensors, i, &receiver_index_set);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "CreateCommonArrow failed, output tensor name: " << output_tensors[i]->tensor_name();
+      return ret;
+    }
+  }
+  return RET_OK;
 }
 
 void LiteOpActor::MoveTensorInputData(Tensor *dst_tensor, Tensor *src_tensor) {
@@ -436,235 +456,29 @@ int LiteOpActor::CastTensorListInputData(TensorList *dst_tensorlist, TensorList 
   }
   return RET_OK;
 }
-
-int LiteSwitchOpActor::CompileBranchArrow() {
-  for (auto &partial_node : partial_nodes_) {
-    if (partial_node == nullptr) {
-      MS_LOG(ERROR) << "partial_node_ is nullptr.";
-      return RET_NULL_PTR;
-    }
-    auto subgraph = static_cast<kernel::PartialFusionKernel *>(partial_node->kernel())->subgraph_kernel();
-    auto branch_actor_id = subgraph_to_actor_.at(subgraph);
-
-    std::vector<DataArrowPtr> branch_output_data_arrows_;
-    for (size_t i = 0; i < partial_node->in_tensors().size(); ++i) {
-      int out_tensor_size = static_cast<int>(kernel_->out_tensors().size());
-      for (int j = 0; j < out_tensor_size; ++j) {
-        if (partial_node->in_tensors()[i] != kernel_->out_tensors()[j]) {
-          continue;
-        }
-        auto arrow = std::make_shared<DataArrow>(j, branch_actor_id, i);
-        if (arrow == nullptr) {
-          MS_LOG(ERROR) << "create DataArrow failed";
-          return RET_ERROR;
-        }
-        branch_output_data_arrows_.emplace_back(std::move(arrow));
-      }
-    }
-    all_branch_output_data_arrows_.push_back(branch_output_data_arrows_);
-  }
-  return RET_OK;
-}
-int LiteSwitchOpActor::SetSwitchPartialNodes() {
-  auto switch_op_input_kernel_size = switch_type_node_->in_kernels().size();
-  // special case, switch cond input is const, should be removed in the future.
-  if (switch_op_input_kernel_size == kSwitchMinInputKernelSize) {
-    // reverse switch node input, then false cast to 0, true cast to 1, which is same as switch layer index.
-    partial_nodes_.push_back(switch_type_node_->in_kernels().at(kSwitchFalsePartialInputIndex - 1));
-    partial_nodes_.push_back(switch_type_node_->in_kernels().at(kSwitchTruePartialInputIndex - 1));
-    return RET_OK;
-  }
-
-  if (switch_op_input_kernel_size == kSwitchMaxInputKernelSize) {
-    // reverse switch node input.
-    partial_nodes_.push_back(switch_type_node_->in_kernels().at(kSwitchFalsePartialInputIndex));
-    partial_nodes_.push_back(switch_type_node_->in_kernels().at(kSwitchTruePartialInputIndex));
-    return RET_OK;
-  }
-  MS_LOG(ERROR) << "switch op input kernel size: " << switch_op_input_kernel_size << ", which is not support.";
-  return RET_ERROR;
-}
-int LiteSwitchOpActor::SetSwitchLayerPartialNodes() {
-  for (size_t i = 1; i < switch_type_node_->in_kernels().size(); ++i) {
-    partial_nodes_.push_back(switch_type_node_->in_kernels()[i]);
-  }
-  return RET_OK;
-}
-
-int LiteSwitchOpActor::GetSwitchAndCallNode(kernel::SubGraphKernel *subgraph_kernel) {
-  for (auto &node : subgraph_kernel->nodes()) {
-    if (node->type() != schema::PrimitiveType_Call) {
-      continue;
-    }
-    call_node_ = node;
-    auto switch_node = kernel::LiteKernelUtil::GetInputsSpecificNode(node, schema::PrimitiveType_Switch);
-    auto switch_layer_node = kernel::LiteKernelUtil::GetInputsSpecificNode(node, schema::PrimitiveType_SwitchLayer);
-    if (switch_node == nullptr && switch_layer_node == nullptr) {
-      continue;
-    }
-
-    if (switch_node) {
-      switch_type_node_ = switch_node;
-      return SetSwitchPartialNodes();
-    } else {
-      switch_type_node_ = switch_layer_node;
-      return SetSwitchLayerPartialNodes();
-    }
-  }
-  return RET_OK;
-}
-
-void LiteSwitchOpActor::AppendOutputTensors() {
-  for (auto &partial_node : partial_nodes_) {
-    for (auto &tensor : partial_node->in_tensors()) {
-      if (std::find(output_tensors_.begin(), output_tensors_.end(), tensor) == output_tensors_.end()) {
-        output_tensors_.push_back(tensor);
-      }
-    }
-  }
-  kernel_->set_out_tensors(output_tensors_);
-}
-
-int LiteSwitchOpActor::CompileArrowThroughSwitchCall() {
-  auto *subgraph_kernel = reinterpret_cast<kernel::SubGraphKernel *>(kernel_);
-  if (subgraph_kernel == nullptr) {
-    MS_LOG(INFO) << "kernel is not subgraph kernel, no partial call.";
-    return RET_OK;
-  }
-
-  int ret = GetSwitchAndCallNode(subgraph_kernel);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "GetSwitchAndCallCnode failed.";
-    return ret;
-  }
-
-  AppendOutputTensors();
-
-  ret = CompileBranchArrow();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "CompileBranchArrow failed.";
-    return ret;
-  }
-
-  subgraph_kernel->DropNode(call_node_);
-  subgraph_kernel->DropNode(switch_type_node_);
-  for (auto &partial_node : partial_nodes_) {
-    subgraph_kernel->DropNode(partial_node);
-  }
-
-  return ret;
-}
-
-int LiteSwitchOpActor::CompileArrow() {
-  int ret = CompileArrowThroughSwitchCall();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "CompileArrowThroughSwitchCall failed.";
-    return ret;
-  }
-  ret = CompileArrowThroughOutputKernels();
-  if (ret != RET_OK) {
-    output_data_arrows_.clear();
-    MS_LOG(ERROR) << "CompileArrowThroughOutputKernels failed.";
-    return ret;
-  }
-  return ret;
-}
-
-int LiteSwitchOpActor::PrepareOutputData() {
-  for (auto &branch_output_data_arrows : all_branch_output_data_arrows_) {
-    std::vector<OpDataPtr<Tensor>> branch_outputs_data{};
-    branch_outputs_data.resize(branch_output_data_arrows.size());
-    for (size_t i = 0; i < branch_output_data_arrows.size(); i++) {
-      auto &arrow = branch_output_data_arrows[i];
-      auto data =
-        std::make_shared<OpData<Tensor>>(arrow->to_op_id_, (kernel_->out_tensors()).at(arrow->from_output_index_),
-                                         static_cast<int>(arrow->to_input_index_));
-      if (data == nullptr) {
-        MS_LOG(ERROR) << "new branch_output_data failed.";
-        return RET_NULL_PTR;
-      }
-      branch_outputs_data.at(i) = data;
-    }
-    all_branchs_output_data_.push_back(branch_outputs_data);
-  }
-  return RET_OK;
-}
-
-void LiteSwitchOpActor::DecreaseOtherBranchInputTensor(const size_t &index) {
-  switch_type_node_->in_tensors()[kSwitchCondTensorIndex]->DecRefCount();
-  for (size_t i = 0; i < partial_nodes_.size(); ++i) {
-    if (i == index) {
-      continue;
-    }
-    for (auto input : partial_nodes_[i]->in_tensors()) {
-      input->DecRefCount();
-    }
-  }
-}
-
-void LiteSwitchOpActor::AsyncBranchOutput(const size_t &index, OpContext<Tensor> *context) {
-  if (index >= all_branch_output_data_arrows_.size()) {
-    MS_LOG(ERROR) << "index " << index
-                  << " extend all_branch_output_data_arrows_.size(): " << all_branch_output_data_arrows_.size();
-    context->SetFailed(RET_ERROR);
-    return;
-  }
-  if (index >= all_branchs_output_data_.size()) {
-    MS_LOG(ERROR) << "index " << index
-                  << " extend all_branchs_output_data_.size(): " << all_branchs_output_data_.size();
-    context->SetFailed(RET_ERROR);
-    return;
-  }
-  auto branch_output_data_arrows = all_branch_output_data_arrows_.at(index);
-  auto branch_outputs_data = all_branchs_output_data_.at(index);
-  if (branch_output_data_arrows.size() != branch_outputs_data.size()) {
-    MS_LOG(ERROR) << "index " << index
-                  << " extend all_branchs_output_data_.size(): " << all_branchs_output_data_.size();
-    context->SetFailed(RET_ERROR);
-    return;
-  }
-  for (size_t i = 0; i < branch_output_data_arrows.size(); ++i) {
-    auto &data = branch_outputs_data.at(i);
-    Async(branch_output_data_arrows[i]->to_op_id_, &mindspore::OpActor<Tensor>::RunOpData, data.get(), context);
-  }
-}
-
-void LiteSwitchOpActor::RunOpData(OpData<Tensor> *inputs, OpContext<Tensor> *context) {
-  auto op_uuid = context->sequential_num_;
-  input_op_datas_[op_uuid].push_back(inputs);
-  inputs_data_[inputs->index_] = inputs->data_;
-  if (input_op_datas_[op_uuid].size() < kernel_->in_tensors().size()) {
-    return;
-  }
-
-  int ret = InitInputData();
-  if (ret != RET_OK) {
-    input_op_datas_.erase(op_uuid);
-    context->SetFailed(ret);
-    return;
-  }
-
-  ret = RunKernel(*(reinterpret_cast<const KernelCallBack *>(context->kernel_call_back_before_)),
-                  *(reinterpret_cast<const KernelCallBack *>(context->kernel_call_back_after_)));
-  if (ret != RET_OK) {
-    input_op_datas_.erase(op_uuid);
-    context->SetFailed(ret);
-    return;
-  }
-  input_op_datas_.erase(op_uuid);
-
-  auto cond_ptr = reinterpret_cast<bool *>(switch_type_node_->in_tensors()[kSwitchCondTensorIndex]->data());
-  if (cond_ptr == nullptr) {
-    MS_LOG(ERROR) << "switch cond input data is nullptr.";
-    context->SetFailed(RET_NULL_PTR);
-    return;
-  }
-  size_t index = static_cast<size_t>(*cond_ptr);
-  DecreaseOtherBranchInputTensor(index);
-  AsyncBranchOutput(index, context);
-}
-
 #endif
+
+std::set<void *> LiteOpActor::PartialSubgraphInputTensors(kernel::LiteKernel *partial_node) {
+  if (partial_node == nullptr) {
+    return {};
+  }
+  auto partial_kernel = reinterpret_cast<kernel::PartialFusionKernel *>(partial_node->kernel());
+  if (partial_kernel == nullptr) {
+    MS_LOG(WARNING) << "cast to partial kernel failed.";
+    return {};
+  }
+  std::set<void *> ret{};
+  auto partial_subgraph_kernel = partial_kernel->subgraph_kernel();
+  if (partial_subgraph_kernel == nullptr) {
+    MS_LOG(ERROR) << "partial's subgraph kernel is nullptr.";
+    return {};
+  }
+  auto inputs = partial_subgraph_kernel->in_tensors();
+  for (auto &input : inputs) {
+    ret.insert(input);
+  }
+  return ret;
+}
 
 void LiteOpActor::SetInputShape() {
   for (size_t i = 0; i < inputs_data_.size(); ++i) {
@@ -741,9 +555,8 @@ int LiteOpActor::PrepareOutputData() {
   outputs_data_.resize(output_data_arrows_.size());
   for (size_t i = 0; i < output_data_arrows_.size(); i++) {
     auto &arrow = output_data_arrows_[i];
-    auto data =
-      std::make_shared<OpData<Tensor>>(arrow->to_op_id_, (kernel_->out_tensors()).at(arrow->from_output_index_),
-                                       static_cast<int>(arrow->to_input_index_));
+    auto data = std::make_shared<OpData<Tensor>>(this->GetAID(), (kernel_->out_tensors()).at(arrow->from_output_index_),
+                                                 static_cast<int>(arrow->to_input_index_));
     if (data == nullptr) {
       MS_LOG(ERROR) << "new output_data failed.";
       return RET_NULL_PTR;
@@ -793,7 +606,6 @@ std::vector<std::shared_ptr<LiteOpActor>> CreateOpActor(const std::vector<kernel
   }
 
   for (auto &actor : actors) {
-    actor->SetSubgraphAIDMap(subgraph_name_AID_map);
     auto aid = mindspore::Spawn(actor);
   }
   return actors;
