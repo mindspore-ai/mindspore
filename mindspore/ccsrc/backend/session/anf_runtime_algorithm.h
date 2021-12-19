@@ -305,6 +305,7 @@ class AnfRuntimeAlgorithm {
                                    std::set<AnfNodePtr> *visited);
   static void GetAllVisitedCNode(const CNodePtr &cnode, std::vector<AnfNodePtr> *used_kernels,
                                  std::set<AnfNodePtr> *visited);
+  static AnfNodePtr FetchFrontNodeByBackendNode(const AnfNodePtr &backend_node, const KernelGraph &graph);
   static void InsertMakeTupleForOutput(const NotNull<KernelGraphPtr> &root_graph);
   static AnfNodeIndexSet GetUpdateStateUsers(const FuncGraphManagerPtr &manager, const AnfNodePtr &node);
   // Get node real inputs, skip `MakeTuple`, `TupleGetItem`, `Depend`, `Load`, `UpdateState` etc.

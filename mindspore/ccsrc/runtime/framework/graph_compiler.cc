@@ -344,7 +344,7 @@ GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNod
   MS_EXCEPTION_IF_NULL(segment);
   auto nodes = segment->nodes_;
   // Generate kernel graph.
-  KernelGraphPtr graph = session_->ConstructKernelGraph(nodes, outputs);
+  KernelGraphPtr graph = session_->ConstructKernelGraph(nodes, outputs, true, device_context);
   MS_EXCEPTION_IF_NULL(graph);
   SetGraphDependency(graph, segment);
 

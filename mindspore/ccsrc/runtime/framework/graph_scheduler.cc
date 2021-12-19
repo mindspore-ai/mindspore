@@ -1796,6 +1796,10 @@ void GraphScheduler::PersistDeviceTensor(const GraphCompilerInfo &graph_compiler
       if (!IsPersistentDeviceTensor(front_node)) {
         continue;
       }
+      if (device_tensor->is_ptr_persisted()) {
+        device_tensor->SetNodeIndex(input_node, 0);
+        AddDeviceTensorStore(front_node.get(), device_tensor);
+      }
       // If the device tensor store of this device type is not exist, then create the new device tensor of this type.
       if (DeviceTensorStore::GetInstance().Fetch(front_node.get(), device_context->GetDeviceAddressType()) == nullptr) {
         MS_LOG(INFO) << "Fetch no device tensor store by:" << front_node->fullname_with_scope()

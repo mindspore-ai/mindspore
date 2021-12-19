@@ -588,6 +588,8 @@ void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph &graph) {
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
   bool ps_cache_check = false;
 #endif
+  std::map<AnfNodePtr, AnfNodePtr> shadow_backend_node_map;
+  GetShadowBackendNodeMap(graph, &shadow_backend_node_map);
   for (auto &item : need_alloc_nodes) {
     MS_EXCEPTION_IF_NULL(item);
     auto output_size = AnfAlgo::GetOutputTensorNum(item);
@@ -617,21 +619,37 @@ void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph &graph) {
         continue;
       }
 #endif
-      if (device_address == nullptr) {
-        auto tensor_size = AnfAlgo::GetOutputTensorMemSize(item, index);
-        device_address = CreateDeviceAddress(nullptr, tensor_size, AnfAlgo::GetOutputFormat(item, index),
-                                             output_type_id, {item, index});
-        MS_LOG(INFO) << "Assign Static Memory for Input node, size:" << tensor_size
-                     << " node:" << item->fullname_with_scope() << " index: " << index;
-        if (mem_manager_->MallocMem(kStaticMem, tensor_size, device_address, graph.graph_id()) == nullptr) {
-          MS_LOG(EXCEPTION) << "Cannot alloc address when flag is: " << kStaticMem
-                            << ", tensor size is: " << tensor_size;
-        }
-      }
+      GetDeviceAddress(item, shadow_backend_node_map, index, graph.graph_id(), &device_address);
       AnfAlgo::SetOutputAddr(device_address, index, item.get());
     }
   }
   MS_LOG(INFO) << "AssignStaticMemoryInput end";
+}
+
+void KernelRuntime::GetDeviceAddress(const AnfNodePtr &item,
+                                     const std::map<AnfNodePtr, AnfNodePtr> shadow_backend_node_map, size_t index,
+                                     uint32_t graph_id, DeviceAddressPtr *device_address) {
+  AnfNodePtr shadow_node = nullptr;
+  auto iter = shadow_backend_node_map.find(item);
+  if (iter != shadow_backend_node_map.end()) {
+    shadow_node = iter->second;
+  }
+  if (*device_address == nullptr && shadow_node != nullptr) {
+    auto conj_device_address = AnfAlgo::GetMutableOutputAddr(shadow_node, index);
+    if (conj_device_address != nullptr && conj_device_address->DeviceType() == DeviceAddressType::kAscend) {
+      *device_address = conj_device_address;
+    }
+  } else if (*device_address == nullptr) {
+    auto tensor_size = AnfAlgo::GetOutputTensorMemSize(item, index);
+    TypeId output_type_id = AnfAlgo::GetOutputDeviceDataType(item, index);
+    *device_address =
+      CreateDeviceAddress(nullptr, tensor_size, AnfAlgo::GetOutputFormat(item, index), output_type_id, {item, index});
+    MS_LOG(INFO) << "Assign Static Memory for Input node, size:" << tensor_size
+                 << " node:" << item->fullname_with_scope() << " index: " << index;
+    if (mem_manager_->MallocMem(kStaticMem, tensor_size, *device_address, graph_id) == nullptr) {
+      MS_LOG(EXCEPTION) << "Cannot alloc address when flag is: " << kStaticMem << ", tensor size is: " << tensor_size;
+    }
+  }
 }
 
 void KernelRuntime::AssignStaticMemoryOutput(const session::KernelGraph &graph) {

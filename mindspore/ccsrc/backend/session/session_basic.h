@@ -122,14 +122,15 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   bool CreateCNodeOfKernelGraph(const AnfNodePtr &node, KernelGraph *graph);
 
   std::shared_ptr<KernelGraph> ConstructKernelGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs,
-                                                    bool common_opt = true);
+                                                    bool common_opt = true,
+                                                    const device::DeviceContext *device_context = nullptr);
   std::shared_ptr<KernelGraph> ConstructKernelGraph(const FuncGraphPtr &func_graph,
                                                     std::vector<KernelGraphPtr> *all_out_graph);
 
   void SetInputNodeUsage(const KernelGraphPtr &graph, const FuncGraphManagerPtr &manager);
 
   CNodePtr CreateNewCNode(const CNodePtr &cnode, KernelGraph *graph,
-                          mindspore::HashMap<AnfNodePtr, AnfNodePtr> *other_graph_cnode);
+                          mindspore::HashMap<AnfNodePtr, AnfNodePtr> *other_graph_cnode, const std::string &target);
   CNodePtr CreateNewCNode(const CNodePtr &cnode, KernelGraph *graph);
 
   // get graph id in child graphs by ME front anf node pointer
@@ -181,7 +182,7 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   std::vector<AnfNodePtr> CreateCallSwitchInputs(const CNodePtr &cnode, KernelGraph *graph);
   void GetCNodeInfo(const CNodePtr &cnode, std::vector<AnfNodePtr> *cnode_inputs) const;
   void GetNewCNodeInputs(const CNodePtr &cnode, KernelGraph *graph, std::vector<AnfNodePtr> *cnode_inputs,
-                         mindspore::HashMap<AnfNodePtr, AnfNodePtr> *other_graph_cnode);
+                         mindspore::HashMap<AnfNodePtr, AnfNodePtr> *other_graph_cnode, const std::string &target);
   std::vector<AnfNodePtr> CreateCallSwitchLayerInputs(const CNodePtr &cnode, KernelGraph *graph);
   void ProcessNodeRetFunc(const CNodePtr &cnode, KernelGraph *graph, const std::vector<AnfNodePtr> &real_inputs);
   void HandleInternalOutput(const AnfNodePtr &input_front_node, const AnfNodePtr &backend_node,
@@ -303,7 +304,8 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   // create a new kernel graph and update the graph sum
   KernelGraphPtr NewKernelGraph();
   AnfNodePtr CreateParameterFromTuple(const AnfNodePtr &node, KernelGraph *graph);
-  virtual ParameterPtr CreateNewParameterFromParameter(const AnfNodePtr &anf, KernelGraph *graph);
+  virtual ParameterPtr CreateNewParameterFromParameter(const AnfNodePtr &anf, KernelGraph *graph,
+                                                       const std::string &target = "");
   ValueNodePtr CreateValueNodeKernelGraph(const AnfNodePtr &anf, KernelGraph *graph);
   ParameterPtr CreateNewParameter(const AnfNodePtr &anf, KernelGraph *graph);
   AnfNodePtr CreateNewParameterFromCNode(const AnfNodePtr &anf, KernelGraph *graph);

@@ -2112,6 +2112,21 @@ std::vector<size_t> AnfRuntimeAlgorithm::GetOutputRealDeviceShapeIfExist(const A
   return device_shape;
 }
 
+AnfNodePtr AnfRuntimeAlgorithm::FetchFrontNodeByBackendNode(const AnfNodePtr &backend_node, const KernelGraph &graph) {
+  MS_EXCEPTION_IF_NULL(backend_node);
+  auto front_node_with_index = graph.GetFrontNodeByInternalParameter(backend_node);
+  if (front_node_with_index.first != nullptr) {
+    return front_node_with_index.first;
+  }
+
+  auto front_node = graph.GetFrontAnfByBackendAnf(backend_node);
+  // PyNative forward graph does not has front node, using backend node instead.
+  if (front_node == nullptr) {
+    front_node = backend_node;
+  }
+  return front_node;
+}
+
 void AnfRuntimeAlgorithm::GetAllVisitedCNode(const CNodePtr &anf_node, std::vector<AnfNodePtr> *used_kernels,
                                              std::set<AnfNodePtr> *visited) {
   MS_EXCEPTION_IF_NULL(anf_node);
