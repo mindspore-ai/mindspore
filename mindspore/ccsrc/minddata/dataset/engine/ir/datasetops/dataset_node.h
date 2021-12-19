@@ -103,6 +103,7 @@ constexpr char kIMDBNode[] = "IMDBDataset";
 constexpr char kIWSLT2016Node[] = "IWSLT2016Dataset";
 constexpr char kIWSLT2017Node[] = "IWSLT2017Dataset";
 constexpr char kKMnistNode[] = "KMnistDataset";
+constexpr char kLFWNode[] = "LFWDataset";
 constexpr char kLibriTTSNode[] = "LibriTTSDataset";
 constexpr char kLJSpeechNode[] = "LJSpeechDataset";
 constexpr char kLSUNNode[] = "LSUNDataset";

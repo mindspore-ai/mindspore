@@ -38,7 +38,7 @@ from .validators import check_imagefolderdataset, \
     check_usps_dataset, check_div2k_dataset, check_random_dataset, \
     check_sbu_dataset, check_qmnist_dataset, check_emnist_dataset, check_fake_image_dataset, check_places365_dataset, \
     check_photo_tour_dataset, check_svhn_dataset, check_stl10_dataset, check_semeion_dataset, \
-    check_caltech101_dataset, check_caltech256_dataset, check_wider_face_dataset, check_lsun_dataset
+    check_caltech101_dataset, check_caltech256_dataset, check_wider_face_dataset, check_lfw_dataset, check_lsun_dataset
 
 from ..core.validator_helpers import replace_none
 
@@ -2418,6 +2418,160 @@ class KMnistDataset(MappableDataset, VisionBaseDataset):
 
     def parse(self, children=None):
         return cde.KMnistNode(self.dataset_dir, self.usage, self.sampler)
+
+
+class LFWDataset(MappableDataset, VisionBaseDataset):
+    """
+    A source dataset that reads and parses the LFW dataset.
+
+    When task is "people", the generated dataset has two columns: :py:obj:`[image, label]`;
+    When task is "pairs", the generated dataset has three columns: :py:obj:`[image1, image2, label]`.
+    The tensor of column :py:obj:`image` is of the uint8 type.
+    The tensor of column :py:obj:`image1` is of the uint8 type.
+    The tensor of column :py:obj:`image2` is of the uint8 type.
+    The tensor of column :py:obj:`label` is a scalar of the uint32 type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        task (str, optional): Set the task type of reading lfw data, support "people" and "pairs"
+            (default="people").
+        usage (str, optional): The image split to use, support "10fold", "train", "test" and "all"
+            (default="all", will read samples including train and test).
+        image_set (str, optional): Image set of image funneling to use, support "original", "funneled" or
+            "deepfunneled" (default="funneled", will read "funneled" set).
+        num_samples (int, optional): The number of images to be included in the dataset
+            (default=None, all images).
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, set in the config).
+        shuffle (bool, optional): Whether or not to perform shuffle on the dataset
+            (default=None, expected order behavior shown in the table).
+        decode (bool, optional): Decode the images after reading (default=False).
+        sampler (Sampler, optional): Object used to choose samples from the
+            dataset (default=None, expected order behavior shown in the table).
+        num_shards (int, optional): Number of shards that the dataset will be divided
+            into (default=None). When this argument is specified, 'num_samples' reflects
+            the max sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument can only be specified when num_shards is also specified.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing
+            (default=None, which means no cache is used).
+
+    Raises:
+        RuntimeError: If sampler and shuffle are specified at the same time.
+        RuntimeError: If sampler and sharding are specified at the same time.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+
+    .. list-table:: Expected Order Behavior of Using 'sampler' and 'shuffle'
+       :widths: 25 25 50
+       :header-rows: 1
+
+       * - Parameter 'sampler'
+         - Parameter 'shuffle'
+         - Expected Order Behavior
+       * - None
+         - None
+         - random order
+       * - None
+         - True
+         - random order
+       * - None
+         - False
+         - sequential order
+       * - Sampler object
+         - None
+         - order defined by sampler
+       * - Sampler object
+         - True
+         - not allowed
+       * - Sampler object
+         - False
+         - not allowed
+
+    Examples:
+        >>> # 1) Read LFW People dataset
+        >>> lfw_people_dataset_dir = "/path/to/lfw_people_dataset_directory"
+        >>> dataset = ds.LFWDataset(dataset_dir=lfw_people_dataset_dir, task="people", uasge="10fold",
+        ...                         image_set="original")
+        >>>
+        >>> # 2) Read LFW Pairs dataset
+        >>> lfw_pairs_dataset_dir = "/path/to/lfw_pairs_dataset_directory"
+        >>> dataset = ds.LFWDataset(dataset_dir=lfw_pairs_dataset_dir, task="pairs", uasge="test", image_set="funneled")
+
+    About LFW dataset:
+
+    Labeled Faces in the Wild (LFW) is a database of face photographs designed for studying the problem of
+    unconstrained face recognition. This database was created and maintained by researchers at the University
+    of Massachusetts, Amherst (specific references are in Acknowledgments section). 13,233 images of 5,749
+    people were detected and centered by the Viola Jones face detector and collected from the web. 1,680 of the
+    people pictured have two or more distinct photos in the dataset.
+
+    You can unzip the original LFW dataset files into this directory structure and read by MindSpore's API.
+
+    .. code-block::
+        .
+        └── lfw_dataset_directory
+            ├── lfw
+            │    ├──Aaron_Eckhart
+            │    │    ├──Aaron_Eckhart_0001.jpg
+            │    │    ├──...
+            │    ├──Abbas_Kiarostami
+            │    │    ├── Abbas_Kiarostami_0001.jpg
+            │    │    ├──...
+            │    ├──...
+            ├── lfw-deepfunneled
+            │    ├──Aaron_Eckhart
+            │    │    ├──Aaron_Eckhart_0001.jpg
+            │    │    ├──...
+            │    ├──Abbas_Kiarostami
+            │    │    ├── Abbas_Kiarostami_0001.jpg
+            │    │    ├──...
+            │    ├──...
+            ├── lfw_funneled
+            │    ├──Aaron_Eckhart
+            │    │    ├──Aaron_Eckhart_0001.jpg
+            │    │    ├──...
+            │    ├──Abbas_Kiarostami
+            │    │    ├── Abbas_Kiarostami_0001.jpg
+            │    │    ├──...
+            │    ├──...
+            ├── lfw-names.txt
+            ├── pairs.txt
+            ├── pairsDevTest.txt
+            ├── pairsDevTrain.txt
+            ├── people.txt
+            ├── peopleDevTest.txt
+            ├── peopleDevTrain.txt
+
+    Citation:
+
+    .. code-block::
+
+        @TechReport{LFWTech,
+            title={Labeled Faces in the Wild: A Database for Studying Face Recognition in Unconstrained Environments},
+            author={Gary B. Huang and Manu Ramesh and Tamara Berg and Erik Learned-Miller},
+            institution ={University of Massachusetts, Amherst},
+            year={2007}
+            number={07-49},
+            month={October},
+            howpublished = {http://vis-www.cs.umass.edu/lfw}
+        }
+    """
+
+    @check_lfw_dataset
+    def __init__(self, dataset_dir, task=None, usage=None, image_set=None, num_samples=None, num_parallel_workers=None,
+                 shuffle=None, decode=False, sampler=None, num_shards=None, shard_id=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, sampler=sampler, num_samples=num_samples,
+                         shuffle=shuffle, num_shards=num_shards, shard_id=shard_id, cache=cache)
+        self.dataset_dir = dataset_dir
+        self.task = replace_none(task, "people")
+        self.usage = replace_none(usage, "all")
+        self.image_set = replace_none(image_set, "funneled")
+        self.decode = replace_none(decode, False)
+
+    def parse(self, children=None):
+        return cde.LFWNode(self.dataset_dir, self.task, self.usage, self.image_set, self.decode, self.sampler)
 
 
 class LSUNDataset(MappableDataset, VisionBaseDataset):
