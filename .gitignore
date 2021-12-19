@@ -96,10 +96,10 @@ test_temp_summary_event_file/
 *.pkl
 *.pb
 .clangd
-mindspore/version.py
-mindspore/default_config.py
-mindspore/device_target.py
-mindspore/package_name.py
+mindspore/python/mindspore/version.py
+mindspore/python/mindspore/default_config.py
+mindspore/python/mindspore/device_target.py
+mindspore/python/mindspore/package_name.py
 mindspore/.commit_id
 
 # lite test file
