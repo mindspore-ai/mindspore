@@ -42,12 +42,15 @@
 #define C12NUM 12
 #define C16NUM 16
 #define C20NUM 20
+#define C21NUM 21
 #define C24NUM 24
 #define C32NUM 32
 #define C40NUM 40
 #define C48NUM 48
 #define C56NUM 56
 #define C64NUM 64
+#define C128NUM 128
+#define C1500NUM 1500
 #define TILE_NUM 8
 
 #define FP16_DATA_TYPE_LEN 2

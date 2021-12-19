@@ -97,7 +97,7 @@ static inline float32x4_t vrecp(float32x4_t v) {
 #define MS_ADD256_EPI32 _mm256_add_epi32
 #define MS_MOV256_F32 _mm256_set1_ps
 #define MS_MOV256_EPI32 _mm256_set1_epi32
-#define MS_MLA256_F32(src1, src2, src3) _mm256_add_ps(src1, _mm256_mul_ps(src2, src3))
+#define MS_MLA256_F32(src1, src2, src3) _mm256_fmadd_ps(src2, src3, src1)
 #define MS_ST256_F32 _mm256_storeu_ps
 #define MS_ST256_EPI32(src1, src2) _mm256_storeu_si256((__m256i *)(src1), src2)
 #define MS_SUB256_F32 _mm256_sub_ps

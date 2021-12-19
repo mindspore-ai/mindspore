@@ -142,6 +142,20 @@ void RowMajor2Row32Major(const float *src_ptr, float *dst_ptr, int col, int row)
   }
 }
 
+void RowMajor2Row64Major(const float *src_ptr, float *dst_ptr, int col, int row) {
+  // Not exactly aligned to 32, but aligned to 24 or 16 or 8 If 32 is not met.
+  int row_block_num = UP_DIV(row, C16NUM);
+  int row_block = C4NUM;
+  for (int i = 0; i < row_block_num; i += row_block) {
+    row_block = MSMIN(C4NUM, row_block_num - i);  // max_tile = 4
+    int row_remainder = MSMIN(row_block * C16NUM, row - i * C16NUM);
+    for (int oc = 0; oc < col; ++oc) {
+      memcpy(dst_ptr, src_ptr + oc * row + i * C16NUM, row_remainder * sizeof(float));
+      dst_ptr += row_block * C16NUM;
+    }
+  }
+}
+
 #ifdef ENABLE_ARM64
 void RowMajor2Col12Major_arm64(const float *src_c, float *dst_c, size_t col) {
   size_t stride = col * sizeof(float);
@@ -283,7 +297,7 @@ void RowMajor2Col12Major(const float *src_ptr, float *dst_ptr, int row, int col)
       __m128 src2 = _mm_loadu_ps(src_c + col);
       __m128 src3 = _mm_loadu_ps(src_c + 2 * col);
       __m128 src4 = _mm_loadu_ps(src_c + 3 * col);
-      src_c += 4 * col;
+      src_c += C4NUM * col;
       __m128 src12L = _mm_unpacklo_ps(src1, src2);
       __m128 src12H = _mm_unpackhi_ps(src1, src2);
       __m128 src34L = _mm_unpacklo_ps(src3, src4);
@@ -298,7 +312,7 @@ void RowMajor2Col12Major(const float *src_ptr, float *dst_ptr, int row, int col)
       __m128 src6 = _mm_loadu_ps(src_c + col);
       __m128 src7 = _mm_loadu_ps(src_c + 2 * col);
       __m128 src8 = _mm_loadu_ps(src_c + 3 * col);
-      src_c += 4 * col;
+      src_c += C4NUM * col;
       __m128 src56L = _mm_unpacklo_ps(src5, src6);
       __m128 src56H = _mm_unpackhi_ps(src5, src6);
       __m128 src78L = _mm_unpacklo_ps(src7, src8);
@@ -312,7 +326,7 @@ void RowMajor2Col12Major(const float *src_ptr, float *dst_ptr, int row, int col)
       __m128 src10 = _mm_loadu_ps(src_c + col);
       __m128 src11 = _mm_loadu_ps(src_c + 2 * col);
       __m128 src12 = _mm_loadu_ps(src_c + 3 * col);
-      src_c += 4 * col;
+      src_c += C4NUM * col;
       __m128 src910L = _mm_unpacklo_ps(src9, src10);
       __m128 src910H = _mm_unpackhi_ps(src9, src10);
       __m128 src1112L = _mm_unpacklo_ps(src11, src12);
@@ -563,27 +577,27 @@ void RowMajor2Col8Major(const float *src_ptr, float *dst_ptr, int row, int col) 
       __m128 src2 = _mm_loadu_ps(src_c + col);
       __m128 src3 = _mm_loadu_ps(src_c + 2 * col);
       __m128 src4 = _mm_loadu_ps(src_c + 3 * col);
-      src_c += 4 * col;
+      src_c += C4NUM * col;
       __m128 src12L = _mm_unpacklo_ps(src1, src2);  // x5
       __m128 src12H = _mm_unpackhi_ps(src1, src2);  // x1
       __m128 src34L = _mm_unpacklo_ps(src3, src4);  // x
       __m128 src34H = _mm_unpackhi_ps(src3, src4);
       _mm_storeu_ps(dst_c, _mm_movelh_ps(src12L, src34L));
-      _mm_storeu_ps(dst_c + 8, _mm_movehl_ps(src34L, src12L));
-      _mm_storeu_ps(dst_c + 16, _mm_movelh_ps(src12H, src34H));
-      _mm_storeu_ps(dst_c + 24, _mm_movehl_ps(src34H, src12H));
+      _mm_storeu_ps(dst_c + C8NUM, _mm_movehl_ps(src34L, src12L));
+      _mm_storeu_ps(dst_c + C16NUM, _mm_movelh_ps(src12H, src34H));
+      _mm_storeu_ps(dst_c + C24NUM, _mm_movehl_ps(src34H, src12H));
 
       __m128 src5 = _mm_loadu_ps(src_c);
       __m128 src6 = _mm_loadu_ps(src_c + col);
       __m128 src7 = _mm_loadu_ps(src_c + 2 * col);
       __m128 src8 = _mm_loadu_ps(src_c + 3 * col);
-      src_c += 4 * col;
+      src_c += C4NUM * col;
       __m128 src56L = _mm_unpacklo_ps(src5, src6);
       __m128 src56H = _mm_unpackhi_ps(src5, src6);
       __m128 src78L = _mm_unpacklo_ps(src7, src8);
       __m128 src78H = _mm_unpackhi_ps(src7, src8);
-      _mm_storeu_ps(dst_c + 4, _mm_movelh_ps(src56L, src78L));
-      _mm_storeu_ps(dst_c + 12, _mm_movehl_ps(src78L, src56L));
+      _mm_storeu_ps(dst_c + C4NUM, _mm_movelh_ps(src56L, src78L));
+      _mm_storeu_ps(dst_c + C12NUM, _mm_movehl_ps(src78L, src56L));
       _mm_storeu_ps(dst_c + 20, _mm_movelh_ps(src56H, src78H));
       _mm_storeu_ps(dst_c + 28, _mm_movehl_ps(src78H, src56H));
 #else
@@ -697,6 +711,25 @@ void RowMajor2Col32Major(const float *src_ptr, float *dst_ptr, int row, int col)
       }
     }
 #endif
+    for (; r < row_num; r++) {
+      for (int c = 0; c < col; ++c) {
+        dst[c * dst_stride + r] = src[r * col + c];
+      }
+    }
+  }
+}
+
+void RowMajor2Col64Major(const float *src_ptr, float *dst_ptr, int row, int col) {
+  // Not exactly aligned to 64, but aligned to 48 or 32 or 16 If 64 is not met.
+  int all_block_num = UP_DIV(row, C16NUM);
+  int cur_block = C4NUM;
+  for (int i = 0; i < all_block_num; i += cur_block) {
+    cur_block = MSMIN(C4NUM, all_block_num - i);  // max_tile = 4
+    int dst_stride = cur_block * C16NUM;
+    int row_num = MSMIN(dst_stride, row - i * C8NUM);
+    const float *src = src_ptr + i * C16NUM * col;
+    float *dst = dst_ptr + i * C16NUM * col;
+    int r = 0;
     for (; r < row_num; r++) {
       for (int c = 0; c < col; ++c) {
         dst[c * dst_stride + r] = src[r * col + c];
@@ -849,7 +882,7 @@ void RowMajor2Col4Major(const float *src_ptr, float *dst_ptr, int row, int col) 
       __m128 src2 = _mm_loadu_ps(src_c + col);
       __m128 src3 = _mm_loadu_ps(src_c + 2 * col);
       __m128 src4 = _mm_loadu_ps(src_c + 3 * col);
-      src_c += 4 * col;
+      src_c += C4NUM * col;
       __m128 src12L = _mm_unpacklo_ps(src1, src2);
       __m128 src12H = _mm_unpackhi_ps(src1, src2);
       __m128 src34L = _mm_unpacklo_ps(src3, src4);
