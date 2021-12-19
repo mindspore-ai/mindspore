@@ -1,0 +1,182 @@
+/**
+ * Copyright 2022 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+#include "ops/matrix_set_diag_v3.h"
+#include <algorithm>
+#include <map>
+#include <memory>
+#include <set>
+#include <string>
+#include <vector>
+#include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
+#include "abstract/primitive_infer_map.h"
+#include "abstract/param_validator.h"
+#include "abstract/utils.h"
+#include "mindapi/src/helper.h"
+
+namespace mindspore {
+namespace ops {
+namespace {
+void TrueValueCalAndCheck(const std::vector<AbstractBasePtr> &input_args, int64_t max_value) {
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto rank = SizeToLong(x_shape.size());
+  int64_t true_value = 1;
+  for (int64_t i = 0; i < rank; i++) {
+    true_value *= x_shape[i];
+  }
+  if (true_value > max_value) {
+    MS_EXCEPTION(ValueError) << "For MatrixSetDiagV3"
+                             << ", the number of elements of output must be less than max length: " << max_value
+                             << ", but got " << true_value
+                             << "! The shape of output should be reduced or max_length should be increased.";
+  }
+}
+abstract::ShapePtr MatrixSetDiagV3InferShape(const PrimitivePtr &primitive,
+                                             const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+  const int64_t kNumber2 = 2;
+  const int64_t kNumber1 = 1;
+  auto k_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+  auto k_rank = SizeToLong(k_shape.size());
+  CheckAndConvertUtils::CheckInRange<int64_t>("k rank", k_rank, kIncludeBoth, {0, kNumber1}, prim_name);
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto rank = SizeToLong(x_shape.size());
+  CheckAndConvertUtils::CheckInteger("x rank", rank, kGreaterEqual, kNumber2, prim_name);
+  auto diagonal_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto diagonal_rank = SizeToLong(diagonal_shape.size());
+  auto max_length_ptr = primitive->GetAttr("max_length");
+  MS_EXCEPTION_IF_NULL(max_length_ptr);
+  int64_t max_value = GetValue<int64_t>(max_length_ptr);
+  TrueValueCalAndCheck(input_args, max_value);
+  if (input_args[kInputIndex2]->isa<abstract::AbstractTensor>() &&
+      input_args[kInputIndex2]->BuildValue()->isa<tensor::Tensor>()) {
+    int64_t row = x_shape[rank - kNumber2];
+    int64_t col = x_shape[rank - 1];
+    auto k = input_args[kInputIndex2]->cast<abstract::AbstractTensorPtr>();
+    MS_EXCEPTION_IF_NULL(k);
+    auto k_value_ptr = k->BuildValue();
+    MS_EXCEPTION_IF_NULL(k_value_ptr);
+    auto k_tensor = k_value_ptr->cast<tensor::TensorPtr>();
+    MS_EXCEPTION_IF_NULL(k_tensor);
+    auto k_val = reinterpret_cast<int *>(k_tensor->data_c());
+    size_t k_val_size = LongToSize(k_tensor->DataSize());
+    CheckAndConvertUtils::CheckInRange<int64_t>("k size", SizeToLong(k_val_size), kIncludeBoth, {kNumber1, kNumber2},
+                                                prim_name);
+    int64_t max_diag_len = 0;
+    CheckAndConvertUtils::CheckInteger("diagonal rank", diagonal_rank, kGreaterEqual, kNumber1, prim_name);
+    int64_t last_shape_diagonal = diagonal_shape[diagonal_rank - 1];
+    if (!(k_val[0] > -row && k_val[0] < col)) {
+      MS_EXCEPTION(ValueError) << "For " << prim_name << ", the value of k must be in (-x.shape[-2], x.shape[-1]),"
+                               << " meaning the value of k must be in (" << -row << ", " << col << ") in this case"
+                               << ", but got " << k_val[0] << ".";
+    }
+    if (k_val_size == 1 || k_val[0] == k_val[1]) {
+      if (SizeToLong(diagonal_rank) != rank - 1) {
+        MS_EXCEPTION(ValueError) << "For " << prim_name << ", diagonal rank size don't match with x rank size.";
+      }
+      for (int64_t i = 0; i < rank - kNumber2; i++) {
+        if (diagonal_shape[i] != x_shape[i])
+          MS_EXCEPTION(ValueError) << "For " << prim_name << ", diagonal shape value don't match with x shape value.";
+      }
+      max_diag_len = std::min(row + std::min(k_val[0], 0), col + std::min(-k_val[0], 0));
+    } else {
+      if (!(k_val[1] > -row && k_val[1] < col)) {
+        MS_EXCEPTION(ValueError) << "For " << prim_name << ", the value of k must be in (-x.shape[-2], x.shape[-1]),"
+                                 << " meaning the value of k must be in (" << -row << ", " << col << ") in this case"
+                                 << ", but got " << k_val[1] << ".";
+      }
+      if (!(k_val[0] <= k_val[1])) {
+        MS_EXCEPTION(ValueError) << "For " << prim_name << ", k[0] must not be greater than k[1].";
+      }
+      if (SizeToLong(diagonal_rank) != rank) {
+        MS_EXCEPTION(ValueError) << "For " << prim_name << ", diagonal rank size don't match with x rank size.";
+      }
+      for (int64_t i = 0; i < rank - kNumber2; i++) {
+        if (diagonal_shape[i] != x_shape[i])
+          MS_EXCEPTION(ValueError) << "For " << prim_name << ", diagonal shape value don't match with x shape value.";
+      }
+      max_diag_len = std::min(row + std::min(k_val[1], 0), col + std::min(-k_val[0], 0));
+      int64_t in_row_diagonal = diagonal_shape[diagonal_rank - kNumber2];
+      int64_t num_diags = k_val[1] - k_val[0] + 1;
+      if (num_diags != in_row_diagonal) {
+        MS_EXCEPTION(ValueError) << "For " << prim_name
+                                 << ", diagonal.shape[-2] is not equal to num_diags calculated by k[1] - k[0] + 1, "
+                                 << "which value is " << num_diags
+                                 << " in this case, but got diagonal.shape[-2]: " << in_row_diagonal
+                                 << " in this case.";
+      }
+    }
+    if (max_diag_len != last_shape_diagonal) {
+      MS_EXCEPTION(ValueError) << "For " << prim_name << ", diagonal.shape[-1] is not equal to "
+                               << "max_diag_len calculated by min(x.shape[-2] + min(k[1], 0), x.shape[-1] + "
+                               << "min(-k[0], 0)), which value is " << max_diag_len
+                               << " in this case, but got diagonal.shape[-1]: " << last_shape_diagonal
+                               << " in this case.";
+    }
+    return std::make_shared<abstract::Shape>(x_shape);
+  } else {
+    ShapeVector out_shape;
+    ShapeVector infer_shape_min;
+    ShapeVector infer_shape_max;
+    (void)infer_shape_max.insert(infer_shape_max.end(), x_shape.begin(), x_shape.end());
+    for (int64_t i = 0; i < rank; i++) {
+      out_shape.push_back(-1);
+      infer_shape_min.push_back(0);
+    }
+    return std::make_shared<abstract::Shape>(out_shape, infer_shape_min, infer_shape_max);
+  }
+}
+
+TypePtr MatrixSetDiagV3InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(prim);
+  auto prim_name = prim->name();
+
+  auto x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
+  auto diagonal = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex1);
+  CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex2);
+
+  (void)abstract::CheckDtypeSame(prim_name, x, diagonal);
+
+  auto x_type = input_args[kInputIndex0]->BuildType();
+  MS_EXCEPTION_IF_NULL(x_type);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, common_valid_types, prim_name);
+
+  const std::set<TypePtr> valid_type = {kInt32};
+  auto k_type = input_args[kInputIndex2]->BuildType();
+  MS_EXCEPTION_IF_NULL(k_type);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("k", k_type, valid_type, prim_name);
+
+  return x_type;
+}
+}  // namespace
+
+MIND_API_OPERATOR_IMPL(MatrixSetDiagV3, BaseOperator);
+AbstractBasePtr MatrixSetDiagV3Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                     const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  const int64_t input_num = 3;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
+  auto infer_type = MatrixSetDiagV3InferType(primitive, input_args);
+  auto infer_shape = MatrixSetDiagV3InferShape(primitive, input_args);
+  return abstract::MakeAbstract(infer_shape, infer_type);
+}
+REGISTER_PRIMITIVE_EVAL_IMPL(MatrixSetDiagV3, prim::kPrimMatrixSetDiagV3, MatrixSetDiagV3Infer, nullptr, true);
+}  // namespace ops
+}  // namespace mindspore

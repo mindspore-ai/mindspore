@@ -15,14 +15,19 @@
 
 """array_ops"""
 
+from mindspore import Tensor
 from ...common import dtype as mstype
 from .._grad.grad_math_ops import binop_grad_common
 from .._grad.grad_base import bprop_getters
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
 from ..operations.array_ops import Tril
+from ..operations.array_ops import MatrixDiagV3
+from ..operations.array_ops import MatrixDiagPartV3
+from ..operations.array_ops import MatrixSetDiagV3
 from ..operations.array_ops import Triu
 from .. import functional as F
 from .. import operations as P
+from .._utils.utils import is_shape_unknown
 
 
 @bprop_getters.register(P.MaskedFill)
@@ -57,6 +62,85 @@ def get_bprop_tensor_scatter_sub(self):
     def bprop(x, indices, update, out, dout):
         update_grad = neg(gather_nd(dout, indices))
         return dout, zeros_like(indices), update_grad
+
+    return bprop
+
+
+@bprop_getters.register(MatrixDiagV3)
+def get_bprop_matrix_diag_v3(self):
+    """Generate bprop for MatrixDiagV3"""
+    align = self.align
+    matrix_diag_part_v3 = MatrixDiagPartV3(align=align)
+    zeros = P.Zeros()
+
+    def bprop(x, k, num_rows, num_cols, padding_value, out, dout):
+        result = (matrix_diag_part_v3(dout, k, zeros((), dout.dtype)), zeros_like(k), zeros_like(num_rows),
+                  zeros_like(num_cols), zeros_like(padding_value))
+        return result
+
+    return bprop
+
+
+@bprop_getters.register(MatrixDiagPartV3)
+def get_bprop_matrix_diag_part_v3(self):
+    """Generate bprop for MatrixDiagPartV3"""
+    align = self.align
+    matrix_diag_v3 = MatrixDiagV3(align=align)
+    matrix_set_diag_v3 = MatrixSetDiagV3(align=align)
+    zeros = P.Zeros()
+
+    def bprop(x, k, padding_value, out, dout):
+        shape_this = P.Shape()(x)[-2:]
+        if not is_shape_unknown(shape_this):
+            row = shape_this[0]
+            col = shape_this[1]
+            result = (matrix_diag_v3(dout, k, Tensor(row, dtype=mstype.int32), Tensor(col, dtype=mstype.int32),
+                                     zeros((), dout.dtype)), zeros_like(k), zeros_like(padding_value))
+        else:
+            result = (matrix_set_diag_v3(zeros_like(x), dout, k), zeros_like(k), zeros_like(padding_value))
+        return result
+
+    return bprop
+
+
+@bprop_getters.register(MatrixSetDiagV3)
+def get_bprop_matrix_set_diag_v3(self):
+    """Generate bprop for MatrixSetDiagV3"""
+    align = self.align
+    matrix_diag_part_v3 = MatrixDiagPartV3(align=align)
+    matrix_set_diag_v3 = MatrixSetDiagV3(align=align)
+    resha = P.Reshape()
+    zeros = P.Zeros()
+    minimum = P.Minimum()
+    concat = P.Concat()
+
+    def bprop(x, diagonal, k, out, dout):
+        diagonal_cal = matrix_diag_part_v3(dout, k, zeros((), dout.dtype))
+
+        diagonal_shape = P.Shape()(diagonal)
+        if is_shape_unknown(diagonal_shape):
+            shape_dout = P.Shape()(dout)
+            pre_shape = shape_dout[:-2]
+            back_shape = shape_dout[-2:]
+
+            site_dia = resha(k, (-1))
+            index_min = -1 * site_dia[0]
+            index_max = site_dia[-1]
+            col = 0
+            if index_max < 0:
+                col = index_max
+            row = 0
+            if index_min < 0:
+                row = index_min
+            max_diag_len = minimum(back_shape[0] + col, back_shape[1] + row)
+
+            back = [max_diag_len]
+            if index_max != index_min:
+                back = [index_max-index_min+1, max_diag_len]
+            diagonal_shape = concat([pre_shape, back])
+        x_cal = matrix_set_diag_v3(dout, zeros(diagonal_shape, dout.dtype), k)
+
+        return x_cal, diagonal_cal, zeros_like(k)
 
     return bprop
 

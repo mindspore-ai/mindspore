@@ -40,6 +40,9 @@
 #include "utils/ms_context.h"
 #include "ops/tile.h"
 #include "ops/slice.h"
+#include "ops/matrix_diag_part_v3.h"
+#include "ops/matrix_diag_v3.h"
+#include "ops/matrix_set_diag_v3.h"
 #include "ops/grad/slice_grad.h"
 #include "ops/lstm.h"
 
@@ -54,6 +57,9 @@ std::set<int64_t> GetDependsFormMap(const std::string &prim_name, size_t input_n
   static const auto &kStridedSlice = prim::kPrimStridedSlice->name();
   static const auto &kStridedSliceGrad = prim::kPrimStridedSliceGrad->name();
   static const auto &kReduceSum = prim::kPrimReduceSum->name();
+  static const auto &kMatrixDiagV3 = prim::kPrimMatrixDiagV3->name();
+  static const auto &kMatrixDiagPartV3 = prim::kPrimMatrixDiagPartV3->name();
+  static const auto &kMatrixSetDiagV3 = prim::kPrimMatrixSetDiagV3->name();
   static const auto &kDynamicBroadcastTo = prim::kPrimDynamicBroadcastTo->name();
   static const auto &kUnsortedSegmentSum = prim::kPrimUnsortedSegmentSum->name();
   static const auto &kUnsortedSegmentMin = prim::kPrimUnsortedSegmentMin->name();
@@ -74,6 +80,9 @@ std::set<int64_t> GetDependsFormMap(const std::string &prim_name, size_t input_n
   static const PrimShapeDependMap dynamic_shape_depends{{kUnsortedSegmentSum, ShapeSet{2}},
                                                         {kUnsortedSegmentMin, ShapeSet{2}},
                                                         {kUnsortedSegmentMax, ShapeSet{2}},
+                                                        {kMatrixDiagV3, ShapeSet{1, 2, 3, 4}},
+                                                        {kMatrixDiagPartV3, ShapeSet{1, 2}},
+                                                        {kMatrixSetDiagV3, ShapeSet{2}},
                                                         {kGather, ShapeSet{2}},
                                                         {kGatherV2, ShapeSet{2}},
                                                         {kSparseGatherV2, ShapeSet{2}},

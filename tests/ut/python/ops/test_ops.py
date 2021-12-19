@@ -35,6 +35,9 @@ from mindspore.ops.operations import nn_ops as nps
 from mindspore.ops.operations.array_ops import Tril
 from mindspore.ops.operations.random_ops import NonDeterministicInts
 from mindspore.ops.operations.array_ops import Triu
+from mindspore.ops.operations.array_ops import MatrixDiagV3
+from mindspore.ops.operations.array_ops import MatrixDiagPartV3
+from mindspore.ops.operations.array_ops import MatrixSetDiagV3
 from mindspore.ops.operations.nn_ops import FractionalMaxPool
 from mindspore.ops.operations._grad_ops import FractionalMaxPoolGrad
 from mindspore.nn.layer import normalization
@@ -1064,6 +1067,40 @@ class ApplyAdagradDANet(nn.Cell):
         out = self.apply_adagrad_d_a(self.var, self.gradient_accumulator, self.gradient_squared_accumulator, grad,
                                      lr, l1, l2, global_step)
         return out
+
+
+class MatrixDiagV3Net(nn.Cell):
+    def __init__(self, k, num_rows, num_cols, padding_value, align='LEFT_RIGHT'):
+        super(MatrixDiagV3Net, self).__init__()
+        self.k = k
+        self.num_rows = num_rows
+        self.num_cols = num_cols
+        self.padding_value = padding_value
+        self.matrix_diag_v3 = MatrixDiagV3(align=align)
+
+    def construct(self, x, k, num_rows, num_cols, padding_value):
+        return self.matrix_diag_v3(x, self.k, self.num_rows, self.num_cols, self.padding_value)
+
+
+class MatrixDiagPartV3Net(nn.Cell):
+    def __init__(self, k, padding_value, align='LEFT_RIGHT'):
+        super(MatrixDiagPartV3Net, self).__init__()
+        self.k = k
+        self.padding_value = padding_value
+        self.matrix_diag_dart_v3 = MatrixDiagPartV3(align=align)
+
+    def construct(self, x, k, padding_value):
+        return self.matrix_diag_dart_v3(x, self.k, self.padding_value)
+
+
+class MatrixSetDiagV3Net(nn.Cell):
+    def __init__(self, k, align='LEFT_RIGHT'):
+        super(MatrixSetDiagV3Net, self).__init__()
+        self.k = k
+        self.matrix_set_diag_v3 = MatrixSetDiagV3(align=align)
+
+    def construct(self, x, diagonal, k):
+        return self.matrix_set_diag_v3(x, diagonal, self.k)
 
 
 class SparseApplyRMSPropNet(nn.Cell):
@@ -2806,6 +2843,69 @@ test_case_array_ops = [
                         Tensor(np.arange(6).reshape(3, 2), mstype.float32),
                         Tensor(np.arange(-12, 0).reshape(3, 2, 2), mstype.float32)],
         'skip': ['backward'],
+    }),
+    ('MatrixDiagV3', {
+        'block': MatrixDiagV3Net(k=Tensor(np.array([-1, 1]), mstype.int32), num_rows=Tensor(np.array(3), mstype.int32)
+                                 , num_cols=Tensor(np.array(3), mstype.int32),
+                                 padding_value=Tensor(np.array(11), mstype.float32), align='LEFT_RIGHT'),
+        'desc_inputs': [Tensor(np.array([[[8, 9, 0],
+                                          [1, 2, 3],
+                                          [0, 4, 5]],
+                                         [[2, 3, 0],
+                                          [6, 7, 9],
+                                          [0, 9, 1]]]), mstype.float32),
+                        Tensor(np.array([-1, 1]), mstype.int32),
+                        Tensor(np.array(3), mstype.int32),
+                        Tensor(np.array(3), mstype.int32),
+                        Tensor(np.array(11), mstype.float32)],
+        'desc_bprop': [(Tensor(np.array([[[1, 8, 11],
+                                          [4, 2, 9],
+                                          [11, 5, 3]],
+                                         [[6, 2, 11],
+                                          [9, 7, 3],
+                                          [11, 1, 9]]]), mstype.float32))],
+    }),
+    ('MatrixDiagPartV3', {
+        'block': MatrixDiagPartV3Net(k=Tensor(np.array([1, 3]), mstype.int32),
+                                     padding_value=Tensor(np.array(9), mstype.float32), align='RIGHT_LEFT'),
+        'desc_inputs': [Tensor(np.array([[[1, 2, 3, 4],
+                                          [5, 6, 7, 8],
+                                          [9, 8, 7, 6]],
+                                         [[5, 4, 3, 2],
+                                          [1, 2, 3, 4],
+                                          [5, 6, 7, 8]]]), mstype.float32),
+                        Tensor(np.array([1, 3]), mstype.int32),
+                        Tensor(np.array(9), mstype.float32)],
+        'desc_bprop': [(Tensor(np.array([[[9, 9, 4],
+                                          [9, 3, 8],
+                                          [2, 7, 6]],
+                                         [[9, 9, 2],
+                                          [9, 3, 4],
+                                          [4, 3, 8]]]), mstype.float32))],
+    }),
+    ('MatrixSetDiagV3', {
+        'block': MatrixSetDiagV3Net(k=Tensor(np.array([-1, 2]), mstype.int32), align='RIGHT_LEFT'),
+        'desc_inputs': [Tensor(np.array([[[7, 7, 7, 7],
+                                          [7, 7, 7, 7],
+                                          [7, 7, 7, 7]],
+                                         [[7, 7, 7, 7],
+                                          [7, 7, 7, 7],
+                                          [7, 7, 7, 7]]]), mstype.float32),
+                        Tensor(np.array([[[0, 9, 1],
+                                          [6, 5, 8],
+                                          [1, 2, 3],
+                                          [4, 5, 0]],
+                                         [[0, 1, 2],
+                                          [5, 6, 4],
+                                          [6, 1, 2],
+                                          [3, 4, 0]]]), mstype.float32),
+                        Tensor(np.array([-1, 2]), mstype.int32)],
+        'desc_bprop': [(Tensor(np.array([[[1, 6, 9, 7],
+                                          [4, 2, 5, 1],
+                                          [7, 5, 3, 8]],
+                                         [[6, 5, 1, 7],
+                                          [3, 1, 6, 2],
+                                          [7, 4, 2, 4]]]), mstype.float32))],
     }),
     ('TransShape', {
         'block': P.TransShape(),
