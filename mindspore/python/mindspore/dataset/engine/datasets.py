@@ -30,6 +30,7 @@ import time
 import uuid
 import multiprocessing
 from multiprocessing.pool import RUN
+from multiprocessing.util import Finalize
 import queue
 from enum import Enum
 from functools import partial
@@ -4959,6 +4960,7 @@ class SamplerFn:
         self.ppid = os.getpid()
         self.pids = []
         self.check_interval = 300  # the interval of check queue's size
+        self._final_join = True
 
         # Event for end of epoch
         if multi_process is True:
@@ -5001,6 +5003,13 @@ class SamplerFn:
             self.watch_dog = threading.Thread(target=_watch_dog, args=(self.eot, self.pids))
             self.watch_dog.daemon = True
             self.watch_dog.start()
+
+            if self._final_join is True:
+                self._jointhread = Finalize(
+                    self.watch_dog, self._finalize_join,
+                    args=(weakref.ref(self.watch_dog), self.eot),
+                    exitpriority=-5
+                )
 
     def process(self, indices):
         """
@@ -5062,13 +5071,21 @@ class SamplerFn:
             self.eof.set()
             self.need_join = False
             for w in self.workers:
-                if psutil.pid_exists(w.pid):
+                if self.multi_process is True and hasattr(w, '_closed') and w._closed is False:  # pylint: disable=W0212
                     w.join()
             self._abort_watchdog()
 
     def _abort_watchdog(self):
         if hasattr(self, 'eot') and self.eot is not None and not self.eot.is_set():
             self.eot.set()
+
+    @classmethod
+    def _finalize_join(cls, twr, eot):
+        thread = twr()
+        if thread is not None:
+            if eot is not None and not eot.is_set():
+                eot.set()
+            thread.join()
 
     def __del__(self):
         self._stop_subprocess()
