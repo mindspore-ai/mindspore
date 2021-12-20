@@ -161,6 +161,7 @@ constexpr char kDBToAmplitudeOp[] = " DBToAmplitudeOp";
 constexpr char kDCShiftOp[] = "DCShiftOp";
 constexpr char kDeemphBiquadOp[] = "DeemphBiquadOp";
 constexpr char kDetectPitchFrequencyOp[] = "DetectPitchFrequencyOp";
+constexpr char kDitherOp[] = "DitherOp";
 constexpr char kEqualizerBiquadOp[] = "EqualizerBiquadOp";
 constexpr char kFadeOp[] = "FadeOp";
 constexpr char kFlangerOp[] = "FlangerOp";

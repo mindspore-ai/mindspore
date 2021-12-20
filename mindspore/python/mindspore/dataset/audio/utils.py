@@ -20,6 +20,22 @@ from enum import Enum
 import mindspore._c_dataengine as cde
 
 
+class DensityFunction(str, Enum):
+    """
+    Density Functions.
+
+    Possible enumeration values are: DensityFunction.TPDF, DensityFunction.GPDF,
+    DensityFunction.RPDF.
+
+    - DensityFunction.TPDF: means triangular probability density function.
+    - DensityFunction.GPDF: means gaussian probability density function.
+    - DensityFunction.RPDF: means rectangular probability density function.
+    """
+    TPDF: str = "TPDF"
+    RPDF: str = "RPDF"
+    GPDF: str = "GPDF"
+
+
 class FadeShape(str, Enum):
     """
     Fade Shapes.

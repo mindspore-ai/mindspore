@@ -207,6 +207,26 @@ def diff_me(in1, in2):
     return mse / 255 * 100
 
 
+def visualize_audio(waveform, expect_waveform):
+    """
+    Visualizes audio waveform.
+    """
+    plt.figure(1)
+    plt.subplot(1, 3, 1)
+    plt.imshow(waveform)
+    plt.title("waveform")
+
+    plt.subplot(1, 3, 2)
+    plt.imshow(expect_waveform)
+    plt.title("expect waveform")
+
+    plt.subplot(1, 3, 3)
+    plt.imshow(waveform - expect_waveform)
+    plt.title("difference")
+
+    plt.show()
+
+
 def visualize_one_channel_dataset(images_original, images_transformed, labels):
     """
     Helper function to visualize one channel grayscale images

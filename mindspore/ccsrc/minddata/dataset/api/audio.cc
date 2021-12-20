@@ -31,6 +31,7 @@
 #include "minddata/dataset/audio/ir/kernels/dc_shift_ir.h"
 #include "minddata/dataset/audio/ir/kernels/deemph_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/detect_pitch_frequency_ir.h"
+#include "minddata/dataset/audio/ir/kernels/dither_ir.h"
 #include "minddata/dataset/audio/ir/kernels/equalizer_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/fade_ir.h"
 #include "minddata/dataset/audio/ir/kernels/flanger_ir.h"
@@ -290,6 +291,21 @@ DetectPitchFrequency::DetectPitchFrequency(int32_t sample_rate, float frame_time
 std::shared_ptr<TensorOperation> DetectPitchFrequency::Parse() {
   return std::make_shared<DetectPitchFrequencyOperation>(data_->sample_rate_, data_->frame_time_, data_->win_length_,
                                                          data_->freq_low_, data_->freq_high_);
+}
+
+// Dither Transform Operation.
+struct Dither::Data {
+  Data(DensityFunction density_function, bool noise_shaping)
+      : density_function_(density_function), noise_shaping_(noise_shaping) {}
+  DensityFunction density_function_;
+  bool noise_shaping_;
+};
+
+Dither::Dither(DensityFunction density_function, bool noise_shaping)
+    : data_(std::make_shared<Data>(density_function, noise_shaping)) {}
+
+std::shared_ptr<TensorOperation> Dither::Parse() {
+  return std::make_shared<DitherOperation>(data_->density_function_, data_->noise_shaping_);
 }
 
 // EqualizerBiquad Transform Operation.

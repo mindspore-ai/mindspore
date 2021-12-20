@@ -377,6 +377,32 @@ class MS_API DetectPitchFrequency final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief Dither increases the perceived dynamic range of audio stored at a
+///     particular bit-depth by eliminating nonlinear truncation distortion.
+class MS_API Dither final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] density_function The density function of a continuous random variable.
+  ///     Can be one of DensityFunction::kTPDF (Triangular Probability Density Function),
+  ///     DensityFunction::kRPDF (Rectangular Probability Density Function) or
+  ///     DensityFunction::kGPDF (Gaussian Probability Density Function) (Default: DensityFunction::kTPDF).
+  /// \param[in] noise_shaping A filtering process that shapes the spectral energy of
+  ///     quantisation error (Default: false).
+  explicit Dither(DensityFunction density_function = DensityFunction::kTPDF, bool noise_shaping = false);
+
+  /// \brief Destructor.
+  ~Dither() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief EqualizerBiquad TensorTransform. Apply highpass biquad filter on audio.
 class MS_API EqualizerBiquad final : public TensorTransform {
  public:

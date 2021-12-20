@@ -23,14 +23,14 @@ import numpy as np
 
 import mindspore._c_dataengine as cde
 from ..transforms.c_transforms import TensorOperation
-from .utils import BorderType, FadeShape, GainType, Interpolation, Modulation, ScaleType, WindowType
+from .utils import BorderType, DensityFunction, FadeShape, GainType, Interpolation, Modulation, ScaleType, WindowType
 from .validators import check_allpass_biquad, check_amplitude_to_db, check_band_biquad, check_bandpass_biquad, \
     check_bandreject_biquad, check_bass_biquad, check_biquad, check_complex_norm, check_compute_deltas, \
     check_contrast, check_db_to_amplitude, check_dc_shift, check_deemph_biquad, check_detect_pitch_frequency, \
-    check_equalizer_biquad, check_fade, check_flanger, check_gain, check_highpass_biquad, check_lfilter, \
-    check_lowpass_biquad, check_magphase, check_masking, check_mu_law_coding, check_overdrive, check_phaser, \
-    check_riaa_biquad, check_sliding_window_cmn, check_spectrogram, check_time_stretch, check_treble_biquad, \
-    check_vol
+    check_dither, check_equalizer_biquad, check_fade, check_flanger, check_gain, check_highpass_biquad, \
+    check_lfilter, check_lowpass_biquad, check_magphase, check_masking, check_mu_law_coding, check_overdrive, \
+    check_phaser, check_riaa_biquad, check_sliding_window_cmn, check_spectrogram, check_time_stretch, \
+    check_treble_biquad, check_vol
 
 
 
@@ -493,6 +493,43 @@ class DetectPitchFrequency(AudioTensorOperation):
     def parse(self):
         return cde.DetectPitchFrequencyOperation(self.sample_rate, self.frame_time,
                                                  self.win_length, self.freq_low, self.freq_high)
+
+
+DE_C_DENSITYFUNCTION_TYPE = {DensityFunction.TPDF: cde.DensityFunction.DE_DENSITYFUNCTION_TPDF,
+                             DensityFunction.RPDF: cde.DensityFunction.DE_DENSITYFUNCTION_RPDF,
+                             DensityFunction.GPDF: cde.DensityFunction.DE_DENSITYFUNCTION_GPDF}
+
+
+class Dither(AudioTensorOperation):
+    """
+    Dither increases the perceived dynamic range of audio stored at a
+    particular bit-depth by eliminating nonlinear truncation distortion.
+
+    Args:
+        density_function (DensityFunction, optional): The density function of a continuous
+            random variable. Can be one of DensityFunction.TPDF (Triangular Probability Density Function),
+            DensityFunction.RPDF (Rectangular Probability Density Function) or
+            DensityFunction.GPDF (Gaussian Probability Density Function)
+            (default=DensityFunction.TPDF).
+        noise_shaping (bool, optional): A filtering process that shapes the spectral
+            energy of quantisation error (default=False).
+
+    Examples:
+        >>> import numpy as np
+        >>>
+        >>> waveform = np.array([[1, 2, 3], [4, 5, 6]])
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
+        >>> transforms = [audio.Dither()]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+    """
+
+    @check_dither
+    def __init__(self, density_function=DensityFunction.TPDF, noise_shaping=False):
+        self.density_function = density_function
+        self.noise_shaping = noise_shaping
+
+    def parse(self):
+        return cde.DitherOperation(DE_C_DENSITYFUNCTION_TYPE[self.density_function], self.noise_shaping)
 
 
 class EqualizerBiquad(AudioTensorOperation):
