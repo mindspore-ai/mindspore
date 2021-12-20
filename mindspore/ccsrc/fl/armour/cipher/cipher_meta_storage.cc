@@ -217,6 +217,14 @@ bool CipherMetaStorage::UpdateClientKeyToServer(const char *list_name,
   cur_public_key.push_back(cpk);
   cur_public_key.push_back(spk);
 
+  auto fbs_signature = exchange_keys_req->signature();
+  std::vector<char> signature;
+  if (fbs_signature == nullptr) {
+    MS_LOG(WARNING) << "signature in exchange_keys_req is nullptr";
+  } else {
+    signature.assign(fbs_signature->begin(), fbs_signature->end());
+  }
+
   auto fbs_ind_iv = exchange_keys_req->ind_iv();
   std::vector<char> ind_iv;
   if (fbs_ind_iv == nullptr) {
@@ -241,13 +249,31 @@ bool CipherMetaStorage::UpdateClientKeyToServer(const char *list_name,
     pw_salt.assign(fbs_pw_salt->begin(), fbs_pw_salt->end());
   }
 
+  auto fbs_cert_chain = exchange_keys_req->certificate_chain();
+  std::vector<std::string> cert_chain;
+  if (fbs_cert_chain == nullptr) {
+    MS_LOG(WARNING) << "certificate_chain in exchange_keys_req is nullptr";
+  } else {
+    for (auto iter = fbs_cert_chain->begin(); iter != fbs_cert_chain->end(); ++iter) {
+      cert_chain.push_back(iter->str());
+    }
+  }
+
   // update new item to memory server.
   fl::KeysPb keys;
   keys.add_key()->assign(cur_public_key[0].begin(), cur_public_key[0].end());
   keys.add_key()->assign(cur_public_key[1].begin(), cur_public_key[1].end());
+  auto timestamp_ptr = exchange_keys_req->timestamp();
+  MS_EXCEPTION_IF_NULL(timestamp_ptr);
+  keys.set_timestamp(timestamp_ptr->str());
+  keys.set_iter_num(exchange_keys_req->iteration());
   keys.set_ind_iv(ind_iv.data(), ind_iv.size());
   keys.set_pw_iv(pw_iv.data(), pw_iv.size());
   keys.set_pw_salt(pw_salt.data(), pw_salt.size());
+  keys.set_signature(signature.data(), signature.size());
+  for (size_t i = 0; i < cert_chain.size(); i++) {
+    keys.add_certificate_chain(cert_chain[i]);
+  }
   fl::PairClientKeys pair_client_keys_pb;
   pair_client_keys_pb.set_fl_id(fl_id);
   pair_client_keys_pb.mutable_client_keys()->MergeFrom(keys);
@@ -373,6 +399,10 @@ void CipherMetaStorage::RegisterClass() {
                                                                        get_update_clients_list);
   fl::PBMetadata client_noises;
   fl::server::DistributedMetadataStore::GetInstance().RegisterMetadata(fl::server::kCtxClientNoises, client_noises);
+
+  fl::PBMetadata clients_list_signs;
+  fl::server::DistributedMetadataStore::GetInstance().RegisterMetadata(fl::server::kCtxClientListSigns,
+                                                                       clients_list_signs);
 }
 
 void CipherMetaStorage::RegisterStablePWClass() {

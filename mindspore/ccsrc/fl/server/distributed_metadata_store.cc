@@ -255,7 +255,14 @@ bool DistributedMetadataStore::DoUpdateMetadata(const std::string &name, const P
     *update_model_threshold = meta.update_model_threshold();
   } else if (meta.has_prime()) {
     metadata_[name] = meta;
-  } else if (meta.has_pair_client_keys()) {
+  } else {
+    return DoUpdateEncryptMetadata(name, meta);
+  }
+  return true;
+}
+
+bool DistributedMetadataStore::DoUpdateEncryptMetadata(const std::string &name, const PBMetadata &meta) {
+  if (meta.has_pair_client_keys()) {
     bool keys_update_succeed = UpdatePairClientKeys(name, meta);
     if (!keys_update_succeed) {
       MS_LOG(ERROR) << "Update pair_client_keys failed.";
@@ -275,6 +282,28 @@ bool DistributedMetadataStore::DoUpdateMetadata(const std::string &name, const P
       client_noises.Clear();
     }
     client_noises.mutable_one_client_noises()->MergeFrom(meta.one_client_noises());
+  } else if (meta.has_pair_client_list_sign()) {
+    auto &client_list_sign_map = *metadata_[name].mutable_client_list_sign()->mutable_client_list_sign();
+    auto &fl_id = meta.pair_client_list_sign().fl_id();
+    // Check whether the new item already exists.
+    if (client_list_sign_map.count(fl_id) != 0) {
+      MS_LOG(WARNING) << "Leader server updating value for " << name << " failed: The Protobuffer of fl id " << fl_id
+                      << " already exists.";
+      return false;
+    }
+    auto &client_list_sign = meta.pair_client_list_sign().signature();
+    client_list_sign_map[fl_id] = client_list_sign;
+  } else if (meta.has_pair_key_attestation()) {
+    auto &key_attestation_map = *metadata_[name].mutable_key_attestation()->mutable_key_attestations();
+    auto &fl_id = meta.pair_key_attestation().fl_id();
+    // Check whether the new item already exists.
+    if (key_attestation_map.count(fl_id) != 0) {
+      MS_LOG(WARNING) << "Leader server updating value for " << name << " failed: The Protobuffer of fl id " << fl_id
+                      << " already exists.";
+      return false;
+    }
+    auto &certificate = meta.pair_key_attestation().certificate();
+    key_attestation_map[fl_id] = certificate;
   } else {
     MS_LOG(ERROR) << "Leader server updating value for " << name
                   << " failed: The Protobuffer of this value is not defined.";

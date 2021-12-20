@@ -88,6 +88,9 @@ class DistributedMetadataStore {
   // Do updating metadata in the server where the metadata for the name is stored.
   bool DoUpdateMetadata(const std::string &name, const PBMetadata &meta);
 
+  // Do updating metadata about pairwise-encryption in the server where the metadata for the name is stored.
+  bool DoUpdateEncryptMetadata(const std::string &name, const PBMetadata &meta);
+
   // Update client keys stored in server
   bool UpdatePairClientKeys(const std::string &name, const PBMetadata &meta);
 
