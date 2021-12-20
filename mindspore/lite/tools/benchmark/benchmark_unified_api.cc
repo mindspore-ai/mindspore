@@ -23,7 +23,6 @@
 #include <functional>
 #include <iomanip>
 #include <limits>
-#include "include/context.h"
 #include "include/ms_tensor.h"
 #include "include/version.h"
 #include "schema/model_generated.h"
@@ -375,10 +374,10 @@ int BenchmarkUnifiedApi::InitMSContext(const std::shared_ptr<mindspore::Context>
     device_list.push_back(npu_device_info);
   }
 
-  if (flags_->device_ == "Ascend310") {
-    std::shared_ptr<Ascend310DeviceInfo> ascend310_device_info = std::make_shared<Ascend310DeviceInfo>();
-    ascend310_device_info->SetDeviceID(0);
-    device_list.push_back(ascend310_device_info);
+  if (flags_->device_ == "Ascend310" || flags_->device_ == "Ascend710") {
+    std::shared_ptr<AscendDeviceInfo> ascend_device_info = std::make_shared<AscendDeviceInfo>();
+    ascend_device_info->SetDeviceID(0);
+    device_list.push_back(ascend_device_info);
   }
 
   // CPU priority is behind GPU and NPU

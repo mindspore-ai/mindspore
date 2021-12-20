@@ -44,7 +44,7 @@ typedef struct NpuDeviceInfo {
   int frequency_ = 3; /**< npu frequency inference, low 1, medium 2, high 3, extreme 4, other values will be set to 3 */
 } NpuDeviceInfo;
 
-/// \brief Ascend310DeviceInfo defined for Ascend's configuration information.
+/// \brief AscendDeviceInfo defined for Ascend's configuration information.
 typedef struct AscendDeviceInfo {
   uint32_t device_id_;
   std::string batch_size_;
@@ -55,7 +55,7 @@ struct DeviceInfo {
   CpuDeviceInfo cpu_device_info_;
   GpuDeviceInfo gpu_device_info_;
   NpuDeviceInfo npu_device_info_;
-  AscendDeviceInfo ascend310_device_info_;
+  AscendDeviceInfo ascend_device_info_;
 };
 
 /// \brief DeviceContext defined for holding backend's configuration information.

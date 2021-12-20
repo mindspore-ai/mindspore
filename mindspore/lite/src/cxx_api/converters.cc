@@ -60,12 +60,12 @@ Status ContextUtils::AddNpuDevice(int frequency, lite::InnerContext *inner_conte
   return kSuccess;
 }
 
-Status ContextUtils::AddAscend310Device(lite::InnerContext *inner_context, DeviceInfoContext *device) {
+Status ContextUtils::AddAscendDevice(lite::InnerContext *inner_context, DeviceInfoContext *device) {
   lite::DeviceInfo device_info = {0};
-  auto ascend310_context = device->Cast<Ascend310DeviceInfo>();
-  device_info.ascend310_device_info_ = {ascend310_context->GetDeviceID(), ascend310_context->GetDynamicBatchSize(),
-                                        ascend310_context->GetDynamicImageSize()};
-  inner_context->device_list_.push_back({lite::DT_ASCEND310, device_info});
+  auto ascend_context = device->Cast<AscendDeviceInfo>();
+  device_info.ascend_device_info_ = {ascend_context->GetDeviceID(), ascend_context->GetDynamicBatchSize(),
+                                     ascend_context->GetDynamicImageSize()};
+  inner_context->device_list_.push_back({lite::DT_ASCEND, device_info});
   return kSuccess;
 }
 
@@ -111,7 +111,7 @@ lite::InnerContext *ContextUtils::Convert(Context *context) {
       auto npu_context = device->Cast<KirinNPUDeviceInfo>();
       ret = AddNpuDevice(npu_context->GetFrequency(), inner_context.get());
     } else if (device->GetDeviceType() == kAscend) {
-      ret = AddAscend310Device(inner_context.get(), device.get());
+      ret = AddAscendDevice(inner_context.get(), device.get());
     }
     if (ret != kSuccess) {
       MS_LOG(ERROR) << "Add device failed!";

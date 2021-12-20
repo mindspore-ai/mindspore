@@ -308,7 +308,7 @@ void GPUDeviceInfo::SetPrecisionMode(const std::string &precision_mode) {
 }
 std::string GPUDeviceInfo::GetPrecisionMode() const { return CharToString(GetPrecisionModeChar()); }
 
-/// \brief Derived from DeviceInfoContext, The configuration of the model running on the Ascend310. This option is
+/// \brief Derived from DeviceInfoContext, The configuration of the model running on the Ascend. This option is
 /// invalid for MindSpore Lite.
 class MS_API AscendDeviceInfo : public DeviceInfoContext {
  public:

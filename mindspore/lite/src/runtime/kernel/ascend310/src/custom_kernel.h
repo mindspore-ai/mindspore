@@ -31,11 +31,11 @@ namespace mindspore::kernel {
 namespace acl {
 using mindspore::lite::STATUS;
 
-class CustomAscend310Kernel : public kernel::Kernel {
+class CustomAscendKernel : public kernel::Kernel {
  public:
-  CustomAscend310Kernel(const std::vector<mindspore::MSTensor> &inputs, const std::vector<mindspore::MSTensor> &outputs,
-                        const mindspore::schema::Primitive *primitive, const mindspore::Context *ctx);
-  ~CustomAscend310Kernel() override;
+  CustomAscendKernel(const std::vector<mindspore::MSTensor> &inputs, const std::vector<mindspore::MSTensor> &outputs,
+                     const mindspore::schema::Primitive *primitive, const mindspore::Context *ctx);
+  ~CustomAscendKernel() override;
 
   STATUS Prepare() override;
   STATUS ReSize() override;

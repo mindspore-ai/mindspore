@@ -43,7 +43,7 @@ class ContextUtils {
                              const std::string &provider_device, const std::shared_ptr<Allocator> &allocator,
                              lite::InnerContext *inner_context);
   static Status AddNpuDevice(int frequency, lite::InnerContext *inner_context);
-  static Status AddAscend310Device(lite::InnerContext *inner_context, DeviceInfoContext *device);
+  static Status AddAscendDevice(lite::InnerContext *inner_context, DeviceInfoContext *device);
   static bool IsAffinityModeValid(int affinity_mode) {
     return affinity_mode >= lite::NO_BIND && affinity_mode <= lite::MID_CPU;
   }

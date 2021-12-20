@@ -37,18 +37,18 @@ constexpr auto kModelOptionKirinNpuFrequency = "mindspore.option.kirin_npu.frequ
 constexpr auto kModelOptionProvider = "mindspore.option.provider";
 constexpr auto kModelOptionProviderDevice = "mindspore.option.provider.device";
 constexpr auto kModelOptionDeviceID = "mindspore.option.device_id";
-constexpr auto kModelOptionAscend310DeviceID = kModelOptionDeviceID;
-constexpr auto kModelOptionAscend310InsertOpCfgPath = "mindspore.option.ascend310.insert_op_config_file_path";
-constexpr auto kModelOptionAscend310InputFormat = "mindspore.option.ascend310.input_format";
-constexpr auto kModelOptionAscend310InputShapeMap = "mindspore.option.ascend310.input_shape_map";
-constexpr auto kModelOptionAscend310InputShape = "mindspore.option.ascend310.input_shape";
-constexpr auto kModelOptionAscend310OutputType = "mindspore.option.ascend310.output_type";
-constexpr auto kModelOptionAscend310PrecisionMode = "mindspore.option.ascend310.precision_mode";
-constexpr auto kModelOptionAscend310OpSelectImplMode = "mindspore.option.ascend310.op_select_impl_mode";
-constexpr auto KModelOptionAscend310FusionSwitchCfgPath = "mindspore.option.ascend310.fusion_switch_config_file_path";
-constexpr auto kModelOptionAscend310DynamicBatchSize = "mindspore.option.ascend310.dynamic_batch_size";
-constexpr auto kModelOptionAscend310DynamicImageSize = "mindspore.option.ascend310.dynamic_image_size";
-constexpr auto kModelOptionAscend310BufferOptimize = "mindspore.option.ascend310.buffer_optimize";
+constexpr auto kModelOptionAscendDeviceID = kModelOptionDeviceID;
+constexpr auto kModelOptionAscendInsertOpCfgPath = "mindspore.option.ascend.insert_op_config_file_path";
+constexpr auto kModelOptionAscendInputFormat = "mindspore.option.ascend.input_format";
+constexpr auto kModelOptionAscendInputShapeMap = "mindspore.option.ascend.input_shape_map";
+constexpr auto kModelOptionAscendInputShape = "mindspore.option.ascend.input_shape";
+constexpr auto kModelOptionAscendOutputType = "mindspore.option.ascend.output_type";
+constexpr auto kModelOptionAscendPrecisionMode = "mindspore.option.ascend.precision_mode";
+constexpr auto kModelOptionAscendOpSelectImplMode = "mindspore.option.ascend.op_select_impl_mode";
+constexpr auto KModelOptionAscendFusionSwitchCfgPath = "mindspore.option.ascend.fusion_switch_config_file_path";
+constexpr auto kModelOptionAscendDynamicBatchSize = "mindspore.option.ascend.dynamic_batch_size";
+constexpr auto kModelOptionAscendDynamicImageSize = "mindspore.option.ascend.dynamic_image_size";
+constexpr auto kModelOptionAscendBufferOptimize = "mindspore.option.ascend.buffer_optimize";
 
 Context::Context() : data_(std::make_shared<Data>()) {}
 
@@ -372,7 +372,7 @@ void AscendDeviceInfo::SetDeviceID(uint32_t device_id) {
     MS_LOG(ERROR) << "Invalid context.";
     return;
   }
-  data_->params[kModelOptionAscend310DeviceID] = device_id;
+  data_->params[kModelOptionAscendDeviceID] = device_id;
 }
 
 uint32_t AscendDeviceInfo::GetDeviceID() const {
@@ -380,7 +380,7 @@ uint32_t AscendDeviceInfo::GetDeviceID() const {
     MS_LOG(ERROR) << "Invalid context.";
     return 0;
   }
-  return GetValue<uint32_t>(data_, kModelOptionAscend310DeviceID);
+  return GetValue<uint32_t>(data_, kModelOptionAscendDeviceID);
 }
 
 void AscendDeviceInfo::SetInsertOpConfigPath(const std::vector<char> &cfg_path) {
@@ -388,14 +388,14 @@ void AscendDeviceInfo::SetInsertOpConfigPath(const std::vector<char> &cfg_path) 
     MS_LOG(ERROR) << "Invalid context.";
     return;
   }
-  data_->params[kModelOptionAscend310InsertOpCfgPath] = CharToString(cfg_path);
+  data_->params[kModelOptionAscendInsertOpCfgPath] = CharToString(cfg_path);
 }
 std::vector<char> AscendDeviceInfo::GetInsertOpConfigPathChar() const {
   if (data_ == nullptr) {
     MS_LOG(ERROR) << "Invalid context.";
     return std::vector<char>();
   }
-  const std::string &ref = GetValue<std::string>(data_, kModelOptionAscend310InsertOpCfgPath);
+  const std::string &ref = GetValue<std::string>(data_, kModelOptionAscendInsertOpCfgPath);
   return StringToChar(ref);
 }
 
@@ -404,7 +404,7 @@ void AscendDeviceInfo::SetInputFormat(const std::vector<char> &format) {
     MS_LOG(ERROR) << "Invalid context.";
     return;
   }
-  data_->params[kModelOptionAscend310InputFormat] = CharToString(format);
+  data_->params[kModelOptionAscendInputFormat] = CharToString(format);
 }
 
 std::vector<char> AscendDeviceInfo::GetInputFormatChar() const {
@@ -412,7 +412,7 @@ std::vector<char> AscendDeviceInfo::GetInputFormatChar() const {
     MS_LOG(ERROR) << "Invalid context.";
     return std::vector<char>();
   }
-  const std::string &ref = GetValue<std::string>(data_, kModelOptionAscend310InputFormat);
+  const std::string &ref = GetValue<std::string>(data_, kModelOptionAscendInputFormat);
   return StringToChar(ref);
 }
 
@@ -421,14 +421,14 @@ void AscendDeviceInfo::SetInputShape(const std::vector<char> &shape) {
     MS_LOG(ERROR) << "Invalid context.";
     return;
   }
-  data_->params[kModelOptionAscend310InputShape] = CharToString(shape);
+  data_->params[kModelOptionAscendInputShape] = CharToString(shape);
 }
 std::vector<char> AscendDeviceInfo::GetInputShapeChar() const {
   if (data_ == nullptr) {
     MS_LOG(ERROR) << "Invalid context.";
     return std::vector<char>();
   }
-  const std::string &ref = GetValue<std::string>(data_, kModelOptionAscend310InputShape);
+  const std::string &ref = GetValue<std::string>(data_, kModelOptionAscendInputShape);
   return StringToChar(ref);
 }
 
@@ -444,7 +444,7 @@ void AscendDeviceInfo::SetDynamicBatchSize(const std::vector<size_t> &dynamic_ba
     }
     batchs += std::to_string(dynamic_batch_size[i]);
   }
-  data_->params[kModelOptionAscend310DynamicBatchSize] = batchs;
+  data_->params[kModelOptionAscendDynamicBatchSize] = batchs;
 }
 
 std::vector<char> AscendDeviceInfo::GetDynamicBatchSizeChar() const {
@@ -452,7 +452,7 @@ std::vector<char> AscendDeviceInfo::GetDynamicBatchSizeChar() const {
     MS_LOG(ERROR) << "Invalid context.";
     return std::vector<char>();
   }
-  const std::string &ref = GetValue<std::string>(data_, kModelOptionAscend310DynamicBatchSize);
+  const std::string &ref = GetValue<std::string>(data_, kModelOptionAscendDynamicBatchSize);
   return StringToChar(ref);
 }
 
@@ -461,7 +461,7 @@ void AscendDeviceInfo::SetDynamicImageSize(const std::vector<char> &dynamic_imag
     MS_LOG(ERROR) << "Invalid context.";
     return;
   }
-  data_->params[kModelOptionAscend310DynamicImageSize] = CharToString(dynamic_image_size);
+  data_->params[kModelOptionAscendDynamicImageSize] = CharToString(dynamic_image_size);
 }
 
 std::vector<char> AscendDeviceInfo::GetDynamicImageSizeChar() const {
@@ -469,7 +469,7 @@ std::vector<char> AscendDeviceInfo::GetDynamicImageSizeChar() const {
     MS_LOG(ERROR) << "Invalid context.";
     return std::vector<char>();
   }
-  const std::string &ref = GetValue<std::string>(data_, kModelOptionAscend310DynamicImageSize);
+  const std::string &ref = GetValue<std::string>(data_, kModelOptionAscendDynamicImageSize);
   return StringToChar(ref);
 }
 
@@ -478,7 +478,7 @@ void AscendDeviceInfo::SetPrecisionMode(const std::vector<char> &precision_mode)
     MS_LOG(ERROR) << "Invalid context.";
     return;
   }
-  data_->params[kModelOptionAscend310PrecisionMode] = CharToString(precision_mode);
+  data_->params[kModelOptionAscendPrecisionMode] = CharToString(precision_mode);
 }
 
 std::vector<char> AscendDeviceInfo::GetPrecisionModeChar() const {
@@ -486,7 +486,7 @@ std::vector<char> AscendDeviceInfo::GetPrecisionModeChar() const {
     MS_LOG(ERROR) << "Invalid context.";
     return std::vector<char>();
   }
-  const std::string &ref = GetValue<std::string>(data_, kModelOptionAscend310PrecisionMode);
+  const std::string &ref = GetValue<std::string>(data_, kModelOptionAscendPrecisionMode);
   return StringToChar(ref);
 }
 
@@ -495,7 +495,7 @@ void AscendDeviceInfo::SetOpSelectImplMode(const std::vector<char> &op_select_im
     MS_LOG(ERROR) << "Invalid context.";
     return;
   }
-  data_->params[kModelOptionAscend310OpSelectImplMode] = CharToString(op_select_impl_mode);
+  data_->params[kModelOptionAscendOpSelectImplMode] = CharToString(op_select_impl_mode);
 }
 
 std::vector<char> AscendDeviceInfo::GetOpSelectImplModeChar() const {
@@ -503,7 +503,7 @@ std::vector<char> AscendDeviceInfo::GetOpSelectImplModeChar() const {
     MS_LOG(ERROR) << "Invalid context.";
     return std::vector<char>();
   }
-  const std::string &ref = GetValue<std::string>(data_, kModelOptionAscend310OpSelectImplMode);
+  const std::string &ref = GetValue<std::string>(data_, kModelOptionAscendOpSelectImplMode);
   return StringToChar(ref);
 }
 
@@ -512,14 +512,14 @@ void AscendDeviceInfo::SetFusionSwitchConfigPath(const std::vector<char> &cfg_pa
     MS_LOG(ERROR) << "Invalid context.";
     return;
   }
-  data_->params[KModelOptionAscend310FusionSwitchCfgPath] = CharToString(cfg_path);
+  data_->params[KModelOptionAscendFusionSwitchCfgPath] = CharToString(cfg_path);
 }
 std::vector<char> AscendDeviceInfo::GetFusionSwitchConfigPathChar() const {
   if (data_ == nullptr) {
     MS_LOG(ERROR) << "Invalid context.";
     return std::vector<char>();
   }
-  const std::string &ref = GetValue<std::string>(data_, KModelOptionAscend310FusionSwitchCfgPath);
+  const std::string &ref = GetValue<std::string>(data_, KModelOptionAscendFusionSwitchCfgPath);
   return StringToChar(ref);
 }
 
@@ -528,7 +528,7 @@ void AscendDeviceInfo::SetInputShapeMap(const std::map<int, std::vector<int>> &s
     MS_LOG(ERROR) << "Invalid context.";
     return;
   }
-  data_->params[kModelOptionAscend310InputShapeMap] = shape;
+  data_->params[kModelOptionAscendInputShapeMap] = shape;
 }
 
 std::map<int, std::vector<int>> AscendDeviceInfo::GetInputShapeMap() const {
@@ -536,7 +536,7 @@ std::map<int, std::vector<int>> AscendDeviceInfo::GetInputShapeMap() const {
     MS_LOG(ERROR) << "Invalid context.";
     return std::map<int, std::vector<int>>();
   }
-  return GetValue<std::map<int, std::vector<int>>>(data_, kModelOptionAscend310InputShapeMap);
+  return GetValue<std::map<int, std::vector<int>>>(data_, kModelOptionAscendInputShapeMap);
 }
 
 void AscendDeviceInfo::SetOutputType(enum DataType output_type) {
@@ -544,7 +544,7 @@ void AscendDeviceInfo::SetOutputType(enum DataType output_type) {
     MS_LOG(ERROR) << "Invalid context.";
     return;
   }
-  data_->params[kModelOptionAscend310OutputType] = output_type;
+  data_->params[kModelOptionAscendOutputType] = output_type;
 }
 
 enum DataType AscendDeviceInfo::GetOutputType() const {
@@ -552,7 +552,7 @@ enum DataType AscendDeviceInfo::GetOutputType() const {
     MS_LOG(ERROR) << "Invalid context.";
     return DataType::kTypeUnknown;
   }
-  return GetValue<enum DataType>(data_, kModelOptionAscend310OutputType);
+  return GetValue<enum DataType>(data_, kModelOptionAscendOutputType);
 }
 
 void AscendDeviceInfo::SetBufferOptimizeMode(const std::vector<char> &buffer_optimize_mode) {
@@ -560,7 +560,7 @@ void AscendDeviceInfo::SetBufferOptimizeMode(const std::vector<char> &buffer_opt
     MS_LOG(ERROR) << "Invalid context.";
     return;
   }
-  data_->params[kModelOptionAscend310BufferOptimize] = CharToString(buffer_optimize_mode);
+  data_->params[kModelOptionAscendBufferOptimize] = CharToString(buffer_optimize_mode);
 }
 
 std::vector<char> AscendDeviceInfo::GetBufferOptimizeModeChar() const {
@@ -568,7 +568,7 @@ std::vector<char> AscendDeviceInfo::GetBufferOptimizeModeChar() const {
     MS_LOG(ERROR) << "Invalid context.";
     return std::vector<char>();
   }
-  const std::string &ref = GetValue<std::string>(data_, kModelOptionAscend310BufferOptimize);
+  const std::string &ref = GetValue<std::string>(data_, kModelOptionAscendBufferOptimize);
   return StringToChar(ref);
 }
 }  // namespace mindspore
