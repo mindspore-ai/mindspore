@@ -34,6 +34,10 @@ void GetListSignKernel::InitKernel(size_t) {
 }
 
 sigVerifyResult GetListSignKernel::VerifySignature(const schema::RequestAllClientListSign *client_list_sign_req) {
+  MS_ERROR_IF_NULL_W_RET_VAL(client_list_sign_req, sigVerifyResult::FAILED);
+  MS_ERROR_IF_NULL_W_RET_VAL(client_list_sign_req->fl_id(), sigVerifyResult::FAILED);
+  MS_ERROR_IF_NULL_W_RET_VAL(client_list_sign_req->timestamp(), sigVerifyResult::FAILED);
+
   std::string fl_id = client_list_sign_req->fl_id()->str();
   std::string timestamp = client_list_sign_req->timestamp()->str();
   int iteration = client_list_sign_req->iteration();
@@ -199,6 +203,8 @@ bool GetListSignKernel::GetListSign(const size_t cur_iterator, const std::string
     (void)client_list_signs_all.emplace(std::pair<std::string, std::vector<unsigned char>>(iter->first, signature));
   }
 
+  MS_ERROR_IF_NULL_W_RET_VAL(get_list_sign_req, false);
+  MS_ERROR_IF_NULL_W_RET_VAL(get_list_sign_req->fl_id(), false);
   std::string fl_id = get_list_sign_req->fl_id()->str();
   if (client_list_signs_all.find(fl_id) == client_list_signs_all.end()) {
     std::string reason;

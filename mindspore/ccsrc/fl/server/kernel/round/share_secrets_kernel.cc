@@ -45,6 +45,10 @@ bool ShareSecretsKernel::CountForShareSecrets(const std::shared_ptr<FBBuilder> &
 }
 
 sigVerifyResult ShareSecretsKernel::VerifySignature(const schema::RequestShareSecrets *share_secrets_req) {
+  MS_ERROR_IF_NULL_W_RET_VAL(share_secrets_req, sigVerifyResult::FAILED);
+  MS_ERROR_IF_NULL_W_RET_VAL(share_secrets_req->fl_id(), sigVerifyResult::FAILED);
+  MS_ERROR_IF_NULL_W_RET_VAL(share_secrets_req->timestamp(), sigVerifyResult::FAILED);
+
   std::string fl_id = share_secrets_req->fl_id()->str();
   std::string timestamp = share_secrets_req->timestamp()->str();
   int iteration = share_secrets_req->iteration();
