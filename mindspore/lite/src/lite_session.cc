@@ -1005,7 +1005,8 @@ void LiteSession::ResetInputsShape(const std::vector<std::vector<int>> &dims) {
   }
 }
 
-int LiteSession::ReSizeKernels(const std::vector<kernel::LiteKernel *> &kernels) {
+int LiteSession::ReSizeKernels(const std::vector<kernel::LiteKernel *> &kernels,
+                               const std::unordered_map<Tensor *, Tensor *> isolate_input_map) {
   for (auto kernel : kernels) {
     if (kernel == nullptr) {
       MS_LOG(ERROR) << "input kernel is nullptr!";
@@ -1017,6 +1018,13 @@ int LiteSession::ReSizeKernels(const std::vector<kernel::LiteKernel *> &kernels)
       ret = kernel->ReSize();
     } else {
 #endif
+      // resize subgraph inputs
+      auto sub_graph_kernel = reinterpret_cast<kernel::SubGraphKernel *>(kernel);
+      for (auto input : sub_graph_kernel->in_tensors()) {
+        if (isolate_input_map.find(input) != isolate_input_map.end()) {
+          input->set_shape(isolate_input_map.at(input)->shape());
+        }
+      }
       if (kernel->subgraph_type() == kernel::kGpuFp16SubGraph || kernel->subgraph_type() == kernel::kGpuFp32SubGraph) {
 #if GPU_OPENCL
         auto sub_graph = reinterpret_cast<kernel::OpenCLSubGraph *>(kernel);
@@ -1110,7 +1118,7 @@ int LiteSession::Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs
     return ret;
   }
 
-  ret = ReSizeKernels(kernels_);
+  ret = ReSizeKernels(kernels_, isolate_input_map_);
   if (ret != RET_OK) {
     ResetInputsShape(old_dims);
     auto resize_ret = ReSizeKernels(kernels_);
