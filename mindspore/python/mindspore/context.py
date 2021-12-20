@@ -965,7 +965,8 @@ def set_ps_context(**kwargs):
         enable_ps (bool): Whether to enable parameter server training mode.
                           Only after enable_ps is set True, the environment variables will be effective.
                           Default: False.
-        config_file_path (string): Configuration file path used by recovery. Default: ''.
+        config_file_path (string): Configuration file path used by recovery, parameter server training mode only
+                                   supports Server disaster recovery currently. Default: ''.
         scheduler_manage_port (int): scheduler manage port used to scale out/in. Default: 11202.
         enable_ssl (bool): Set PS SSL mode enabled or disabled. Default: False.
         client_password (str): Password to decrypt the secret key stored in the client certificate. Default: ''.
