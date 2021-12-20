@@ -2970,13 +2970,6 @@ class Mod(_MathBinaryOp):
         [-1.  1.  0.]
     """
 
-    def infer_value(self, x, y):
-        if x is not None and y is not None:
-            x = x.asnumpy()
-            y = y.asnumpy()
-            return Tensor(np.fmod(x, y))
-        return None
-
 
 class Floor(Primitive):
     r"""
