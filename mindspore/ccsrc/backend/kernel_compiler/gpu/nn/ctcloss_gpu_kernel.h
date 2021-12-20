@@ -177,9 +177,8 @@ class CtcLossGpuKernel : public GpuKernel {
       "cudaMemcpyAsync failed.");
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamSynchronize(stream), "cudaStreamSynchronize failed.");
     if (batch != batch_label + 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', the x[0] should be equal to batch_label + 1, but got x[0]: " << max_time
-                        << ", batch_label: " << batch_label;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the batch size of input should be equal to "
+                        << (batch_label + 1) << ", but got " << batch;
     }
     GenLabelValue(label_value_sp, label_indices, label_values, label_squence_length, cum_labels_length,
                   max_labels_length, label_size_ / sizeof(int), numclass - 1, batch, stream);
