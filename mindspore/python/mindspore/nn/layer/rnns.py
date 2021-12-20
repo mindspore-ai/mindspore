@@ -218,7 +218,9 @@ class _DynamicLSTMCPUGPU(Cell):
     def construct(self, x, h_0, seq_length, w_ih, w_hh, b_ih, b_hh):
         gate_size, input_size = w_ih.shape
         hidden_size = gate_size // 4
-        if self.is_gpu and seq_length is None:
+        if seq_length is not None:
+            output, (h_n, c_n) = _DynamicRNNBase('LSTM')(x, h_0, seq_length, w_ih, w_hh, b_ih, b_hh)
+        else:
             if b_ih is None:
                 weights = self.concat((
                     w_ih.view(-1, 1, 1),
@@ -226,21 +228,27 @@ class _DynamicLSTMCPUGPU(Cell):
                 ))
                 has_bias = False
             else:
-                weights = self.concat((
-                    w_ih.view(-1, 1, 1),
-                    w_hh.view(-1, 1, 1),
-                    b_ih.view(-1, 1, 1),
-                    b_hh.view(-1, 1, 1)
-                ))
                 has_bias = True
+                if self.is_gpu:
+                    weights = self.concat((
+                        w_ih.view(-1, 1, 1),
+                        w_hh.view(-1, 1, 1),
+                        b_ih.view(-1, 1, 1),
+                        b_hh.view(-1, 1, 1)
+                    ))
+                else:
+                    bias = b_ih + b_hh
+                    weights = self.concat((
+                        w_ih.view(-1, 1, 1),
+                        w_hh.view(-1, 1, 1),
+                        bias.view(-1, 1, 1)
+                    ))
             output, h_n, c_n, _, _ = P.LSTM(input_size, hidden_size, 1, has_bias, False, 0.0)(
                 x,
                 h_0[0].view(1, *h_0[0].shape),
                 h_0[1].view(1, *h_0[1].shape),
                 weights
             )
-        else:
-            output, (h_n, c_n) = _DynamicRNNBase('LSTM')(x, h_0, seq_length, w_ih, w_hh, b_ih, b_hh)
         return output, (h_n, c_n)
 
 class _DynamicLSTMAscend(Cell):
