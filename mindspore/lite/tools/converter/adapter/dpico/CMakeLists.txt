@@ -1,24 +1,24 @@
 cmake_minimum_required(VERSION 3.14)
 project(DPICO_CONVERTER)
 
-__download_pkg(pico_mapper
-        http://mindspore-repo.csi.rnd.huawei.com/mindspore/enterprise/dpico/pico_mapper_1115.tar.gz
-        b7c8ea7f4585cbc629b67a4a6ac1ad98)
-__download_pkg(protobuf-3.9-for-dpico
-        http://mindspore-repo.csi.rnd.huawei.com/mindspore/enterprise/dpico/protobuf-3.9.0.tar.gz
-        b5c5a0ba33d301ae51a2f878c17e88be)
-__download_pkg(opencv-4.2-for-dpico
-        http://mindspore-repo.csi.rnd.huawei.com/mindspore/enterprise/dpico/opencv-4.2.0.tar.gz
-        00d2ff839f74c0314ee28acb120fff9a)
-__download_pkg(proto-for-dpico
-        http://mindspore-repo.csi.rnd.huawei.com/mindspore/enterprise/dpico/proto1030.tar.gz
-        461563613d3205045ca3008fd43aea63)
+if(DEFINED ENV{HISI_SDK_PATH})
+    set(SD3403_ATC_LIB_PATH $ENV{HISI_SDK_PATH}/sd3403_sdk/dpico_atc_adapter)
+else()
+    message(FATAL_ERROR "error, HISI_SDK_PATH env not found")
+endif()
 
-set(PROTOC ${protobuf-3.9-for-dpico_SOURCE_DIR}/bin/protoc)
+set(OPENCV_PATH ${SD3403_ATC_LIB_PATH}/opencv-4.2.0)
+set(PROTOBUF_PATH ${SD3403_ATC_LIB_PATH}/protobuf-3.9.0)
+set(PICO_PROTO_PATH ${SD3403_ATC_LIB_PATH}/pico_proto)
+set(PICO_MAPPER_PATH ${SD3403_ATC_LIB_PATH}/pico_mapper)
+
+set(PROTOC ${PROTOBUF_PATH}/bin/protoc)
+set(PROTO_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/pico_proto)
+file(MAKE_DIRECTORY ${PROTO_OUTPUT_PATH})
 execute_process(COMMAND
-        ${PROTOC} -I=${proto-for-dpico_SOURCE_DIR} --cpp_out=${proto-for-dpico_SOURCE_DIR} pico_caffe.proto)
+        ${PROTOC} -I=${PICO_PROTO_PATH} --cpp_out=${PROTO_OUTPUT_PATH} pico_caffe.proto)
 execute_process(COMMAND
-        ${PROTOC} -I=${TOP_DIR}/third_party/proto/onnx --cpp_out=${proto-for-dpico_SOURCE_DIR} onnx.proto)
+        ${PROTOC} -I=${TOP_DIR}/third_party/proto/onnx --cpp_out=${PROTO_OUTPUT_PATH} onnx.proto)
 
 file(GLOB_RECURSE DPICO_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cc
@@ -29,15 +29,11 @@ file(GLOB_RECURSE DPICO_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/mapper/*.cc
         )
 
-set(PICO_MAPPER_LIB_PATH ${pico_mapper_SOURCE_DIR}/lib CACHE STRING "dpico mapper lib path")
-set(OPENCV_4.2.0_LIB_PATH ${opencv-4.2-for-dpico_SOURCE_DIR}/lib CACHE STRING "dpico opencv-4.2.0 lib path")
-set(PROTOBUF_3.9.0_LIB_PATH ${protobuf-3.9-for-dpico_SOURCE_DIR}/lib CACHE STRING "dpico protobuf-3.9.0 lib path")
-
 include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR})
-include_directories(BEFORE ${opencv-4.2-for-dpico_SOURCE_DIR}/include/opencv4)
-include_directories(BEFORE ${protobuf-3.9-for-dpico_SOURCE_DIR}/include)
-include_directories(${pico_mapper_SOURCE_DIR}/include)
-include_directories(${proto-for-dpico_SOURCE_DIR})
+include_directories(BEFORE ${OPENCV_PATH}include/opencv4)
+include_directories(BEFORE ${PROTOBUF_PATH}/include)
+include_directories(${PICO_MAPPER_PATH}/include)
+include_directories(${PROTO_OUTPUT_PATH})
 
 link_directories(${pico_mapper_SOURCE_DIR}/lib)
 set_property(SOURCE ${DPICO_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
@@ -45,11 +41,11 @@ set_property(SOURCE ${DPICO_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=minds
 add_library(dpico_atc_adapter SHARED ${DPICO_SRC})
 add_dependencies(dpico_atc_adapter fbs_src fbs_inner_src)
 target_link_libraries(dpico_atc_adapter
-        pico_mapper_api
-        ${PROTOBUF_3.9.0_LIB_PATH}/libprotobuf.so.3.9.0.0
-        ${OPENCV_4.2.0_LIB_PATH}/libopencv_core.so.4.2
-        ${OPENCV_4.2.0_LIB_PATH}/libopencv_imgcodecs.so.4.2
-        ${OPENCV_4.2.0_LIB_PATH}/libopencv_imgproc.so.4.2
+        ${PICO_MAPPER_PATH}/lib/libpico_mapper_api.so
+        ${PROTOBUF_PATH}/lib/libprotobuf.so.3.9.0.0
+        ${OPENCV_PATH}/lib/libopencv_core.so.4.2
+        ${OPENCV_PATH}/lib/libopencv_imgcodecs.so.4.2
+        ${OPENCV_PATH}/lib/libopencv_imgproc.so.4.2
         stdc++fs)
 
 if((NOT WIN32) AND ${CMAKE_BUILD_TYPE} STREQUAL "Release")

@@ -57,6 +57,9 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ../optimizer/*.cc
         )
 
+if((NOT WIN32) AND MSLITE_ENABLE_DPICO_ATC_ADAPTER)
+    add_subdirectory(adapter/dpico)
+endif()
 add_subdirectory(../anf_exporter anf_exporter)
 add_subdirectory(parser/caffe)
 add_subdirectory(parser/tflite)
@@ -185,7 +188,9 @@ add_executable(converter_lite
         ${LITE_SRC}
         )
 add_dependencies(converter_lite fbs_src fbs_inner_src)
-
+if((NOT WIN32) AND MSLITE_ENABLE_DPICO_ATC_ADAPTER)
+    add_dependencies(converter_lite dpico_atc_adapter)
+endif()
 
 if(MSLITE_GPU_BACKEND STREQUAL opencl)
     include_directories(${SRC_DIR}/runtime/kernel/opencl)

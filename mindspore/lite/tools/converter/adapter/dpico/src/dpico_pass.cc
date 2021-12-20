@@ -283,7 +283,7 @@ STATUS DpicoPass::MarkNodes(const api::FuncGraphPtr &func_graph) {
     primitive->AddAttr(kIsMapperSupported, MakeValue(is_supported));
   }
 #ifdef Debug
-  PrintUnsupportedOps();
+  PrintUnsupportedOps(unsupported_ops, unsupported_ops_size, func_graph);
 #endif
   return RET_OK;
 }

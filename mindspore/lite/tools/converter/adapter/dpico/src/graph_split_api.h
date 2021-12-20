@@ -20,24 +20,9 @@
 #include <memory>
 #include <map>
 #include <vector>
+#include "api/ir/func_graph_manager.h"
 
 namespace mindspore {
-class AnfNode;
-using AnfNodePtr = std::shared_ptr<AnfNode>;
-using AnfNodePtrList = std::vector<AnfNodePtr>;
-
-class CNode;
-using CNodePtr = std::shared_ptr<CNode>;
-using CNodePtrList = std::vector<CNodePtr>;
-
-namespace api {
-class FuncGraph;
-using FuncGraphPtr = std::shared_ptr<FuncGraph>;
-
-class FuncGraphManager;
-using FuncGraphManagerPtr = std::shared_ptr<FuncGraphManager>;
-}  // namespace api
-
 namespace dpico {
 struct Subgraph;
 struct GraphSplitInfo;

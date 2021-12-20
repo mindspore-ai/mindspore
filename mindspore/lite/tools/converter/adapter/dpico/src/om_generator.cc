@@ -127,7 +127,7 @@ std::string GetInputTypeStr(const AnfNodePtrList &subgraph_inputs,
     }
     std::string data_type;
     if (kMapperSupportedTypes.find(type_id) == kMapperSupportedTypes.end()) {
-      MS_LOG(WARNING) << node_name << "'s data type " << TypeIdToString(type_id)
+      MS_LOG(WARNING) << node_name << "'s data type " << dpico::TypeIdToString(type_id)
                       << " is unsupported by dpico, will set it to FP32";
       data_type = "FP32";
     } else {

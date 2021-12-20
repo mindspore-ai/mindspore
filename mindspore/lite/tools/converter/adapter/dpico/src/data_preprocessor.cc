@@ -229,7 +229,7 @@ int DataPreprocessor::GenerateInputBinFromTxt(const std::string &raw_data_path, 
         status = GenerateInputBin<uint64_t>(preprocessed_line, op_shape, op_name);
         break;
       default:
-        MS_LOG(ERROR) << "unsupported data type " << TypeIdToString(type_id);
+        MS_LOG(ERROR) << "unsupported data type " << dpico::TypeIdToString(type_id);
         status = RET_ERROR;
     }
     if (status != RET_OK) {
