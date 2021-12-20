@@ -923,6 +923,8 @@ def check_input_data(*data, data_class):
 
 def check_input_dataset(*dataset, dataset_type):
     """Input dataset check."""
+    if not dataset:
+        return False
     for item in dataset:
         if not isinstance(item, dataset_type):
             return False
