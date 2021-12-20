@@ -314,10 +314,10 @@ def line_search(f, xk, pk, gfk=None, old_fval=None, old_old_fval=None, c1=1e-4,
         xk (Tensor): initial guess.
         pk (Tensor): direction to search in. Assumes the direction is a descent direction.
         gfk (Tensor): initial value of value_and_gradient as position.
-        old_fval (Tensor): The same as gfk.
+        old_fval (Tensor): The same as `gfk`.
         old_old_fval (Tensor): unused argument, only for scipy API compliance.
         c1 (float): Wolfe criteria constant, see ref.
-        c2 (float): The same as c1.
+        c2 (float): The same as `c1`.
         maxiter (int): maximum number of iterations to search
 
     Returns:

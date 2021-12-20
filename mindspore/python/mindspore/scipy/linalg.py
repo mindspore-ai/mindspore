@@ -31,21 +31,21 @@ def block_diag(*arrs):
     Create a block diagonal matrix from provided arrays.
 
     Given the inputs `A`, `B` and `C`, the output will have these
-    Tensor arranged on the diagonal::
+    Tensors arranged on the diagonal::
 
         [[A, 0, 0],
          [0, B, 0],
          [0, 0, C]]
 
     Args:
-        A, B, C, ... (Tensor): up to 2-D
-            Input Tensors.  A 1-D Tensor or a 2-D Tensor with shape ``(1,n)``.
+        `A`, `B`, `C`, ... (Tensor): up to 2-D Input Tensors.
+        A 1-D Tensor or a 2-D Tensor with shape :math:`(1,n)`.
 
     Returns:
         Tensor with `A`, `B`, `C`, ... on the diagonal which has the same dtype as `A`.
 
     Raises:
-        ValueError: If there are tensors with dimensions higher than 2 in all arguments.
+        ValueError: If there are Tensors with dimensions higher than 2 in all arguments.
 
     Supported Platforms:
         ``CPU`` ``GPU``
@@ -97,7 +97,7 @@ def solve_triangular(A, b, trans=0, lower=False, unit_diagonal=False,
 
     Args:
         A (Tensor): A triangular matrix of shape :math:`(N, N)`.
-        b (Tensor): A tensor of shape :math:`(M,)` or :math:`(M, N)`.
+        b (Tensor): A Tensor of shape :math:`(M,)` or :math:`(M, N)`.
             Right-hand side matrix in :math:`A x = b`.
         lower (bool, optional): Use only data contained in the lower triangle of `a`.
             Default is to use upper triangle.
@@ -321,31 +321,31 @@ def eigh(a, b=None, lower=True, eigvals_only=False, overwrite_a=False,
     Solve a standard or generalized eigenvalue problem for a complex
     Hermitian or real symmetric matrix.
 
-    Find eigenvalues Tensor ``w`` and optionally eigenvectors Tensor ``v`` of Tensor ``a``,
-    where ``b`` is positive definite such that for every eigenvalue λ (i-th entry of w) and
-    its eigenvector ``vi`` (i-th column of``v``) satisfies::
+    Find eigenvalues Tensor `w` and optionally eigenvectors Tensor `v` of Tensor `a`,
+    where `b` is positive definite such that for every eigenvalue `λ` (i-th entry of w) and
+    its eigenvector `vi` (i-th column of `v`) satisfies:
         a @ vi = λ * b @ vi
         vi.conj().T @ a @ vi = λ
         vi.conj().T @ b @ vi = 1
-    In the standard problem, ``b`` is assumed to be the identity matrix.
+    In the standard problem, `b` is assumed to be the identity matrix.
 
     Args:
-        a (Tensor): A (M, M) complex Hermitian or real symmetric matrix whose eigenvalues and
+        a (Tensor): A :math:`(M, M)` complex Hermitian or real symmetric matrix whose eigenvalues and
             eigenvectors will be computed.
-        b (Tensor, optional): A (M, M) complex Hermitian or real symmetric definite positive matrix in.
+        b (Tensor, optional): A :math:`(M, M)` complex Hermitian or real symmetric definite positive matrix in.
             If omitted, identity matrix is assumed.
         lower (bool, optional): Whether the pertinent Tensor data is taken from the lower or upper
-            triangle of ``a`` and, if applicable, ``b``. (Default: lower)
+            triangle of `a` and, if applicable, `b`. Default: True.
         eigvals_only (bool, optional): Whether to calculate only eigenvalues and no eigenvectors.
-            (Default: both are calculated)
+            Default: False.
         _type (int, optional): For the generalized problems, this keyword specifies the problem type
-            to be solved for ``w`` and ``v`` (only takes 1, 2, 3 as possible inputs)::
+            to be solved for `w` and `v` (only takes 1, 2, 3 as possible inputs):
                 1 =>     a @ v = w @ b @ v
                 2 => a @ b @ v = w @ v
                 3 => b @ a @ v = w @ v
             This keyword is ignored for standard problems.
-        overwrite_a (bool, optional): Whether to overwrite data in ``a`` (may improve performance). Default is False.
-        overwrite_b (bool, optional): Whether to overwrite data in ``b`` (may improve performance). Default is False.
+        overwrite_a (bool, optional): Whether to overwrite data in `a` (may improve performance). Default: False.
+        overwrite_b (bool, optional): Whether to overwrite data in `b` (may improve performance). Default is False.
         check_finite (bool, optional): Whether to check that the input matrices contain only finite numbers.
             Disabling may give a performance gain, but may result in problems (crashes, non-termination)
             if the inputs do contain infinities or NaNs.
@@ -353,13 +353,13 @@ def eigh(a, b=None, lower=True, eigvals_only=False, overwrite_a=False,
             for generalized eigenvalue problem and if full set of eigenvalues are requested.).
             Has no significant effect if eigenvectors are not requested.
             eigvals (tuple, optional): Indexes of the smallest and largest (in ascending order) eigenvalues
-            and corresponding eigenvectors to be returned: 0 <= lo <= hi <= M-1. If omitted, all eigenvalues
+            and corresponding eigenvectors to be returned: :math:`0 <= lo <= hi <= M-1`. If omitted, all eigenvalues
             and eigenvectors are returned.
 
     Returns:
-         - Tensor with shape (N,), The N (1<=N<=M) selected eigenvalues, in ascending order,
+         - Tensor with shape :math:`(N,)`, The :math:`N (1<=N<=M)` selected eigenvalues, in ascending order,
         each repeated according to its multiplicity.
-         - Tensor with shape (M, N), (if ``eigvals_only == False``)
+         - Tensor with shape :math:`(M, N)`, (if :math:`eigvals_only == False`)
 
     Raises:
         LinAlgError: If eigenvalue computation does not converge, an error occurred, or b matrix is not
@@ -445,20 +445,21 @@ def lu_factor(a, overwrite_a=False, check_finite=True):
     """
     Compute pivoted LU decomposition of a matrix.
     The decomposition is::
+    .. math::
         A = P L U
     where P is a permutation matrix, L lower triangular with unit diagonal elements, and U upper triangular.
 
     Args:
-        a (Tensor): square matrix of (M, M) to decompose
-        overwrite_a (bool, optional): Whether to overwrite data in A (may increase performance)
+        a (Tensor): square matrix of :math:`(M, M)` to decompose.
+        overwrite_a (bool, optional): Whether to overwrite data in `A` (may increase performance).
         check_finite (bool, optional): Whether to check that the input matrix contains only finite numbers.
             Disabling may give a performance gain, but may result in problems
             (crashes, non-termination) if the inputs do contain infinities or NaNs.
 
     Returns:
-        Tensor, a square matrix of (N, N) containing U in its upper triangle, and L in its lower triangle.
-        The unit diagonal elements of L are not stored.
-        Tensor, (N,) Pivot indices representing the permutation matrix P:
+        Tensor, a square matrix of :math:`(N, N)` containing `U` in its upper triangle, and `L` in its lower triangle.
+        The unit diagonal elements of `L` are not stored.
+        Tensor, :math:`(N,)` Pivot indices representing the permutation matrix `P`:
         row i of matrix was interchanged with row piv[i].
 
     Supported Platforms:
@@ -496,8 +497,8 @@ def lu(a, permute_l=False, overwrite_a=False, check_finite=True):
     diagonal elements, and U upper triangular.
 
     Args:
-        a (Tensor): a (M, N) matrix to decompose.
-        permute_l (bool, optional): Perform the multiplication P*L (Default: do not permute).
+        a (Tensor): a :math:`(M, N)` matrix to decompose.
+        permute_l (bool, optional): Perform the multiplication :math:`P*L` (Default: do not permute).
         overwrite_a (bool, optional): Whether to overwrite data in a (may improve performance).
         check_finite (bool, optional):  Whether to check that the input matrix contains
             only finite numbers. Disabling may give a performance gain, but may result
@@ -506,14 +507,14 @@ def lu(a, permute_l=False, overwrite_a=False, check_finite=True):
     Returns:
         **(If permute_l == False)**
 
-        - Tensor, (M, M) Permutation matrix.
-        - Tensor, (M, K) Lower triangular or trapezoidal matrix with unit diagonal. K = min(M, N).
-        - Tensor, (K, N) Upper triangular or trapezoidal matrix.
+        - Tensor, :math:`(M, M)` Permutation matrix.
+        - Tensor, :math:`(M, K)` Lower triangular or trapezoidal matrix with unit diagonal. :math:`K = min(M, N)`.
+        - Tensor, :math:`(K, N)` Upper triangular or trapezoidal matrix.
 
         **(If permute_l == True)**
 
-        - Tensor, (M, K) Permuted L matrix. K = min(M, N).
-        - Tensor, (K, N) Upper triangular or trapezoidal matrix.
+        - Tensor, :math:`(M, K)` Permuted L matrix. :math:`K = min(M, N)`.
+        - Tensor, :math:`(K, N)` Upper triangular or trapezoidal matrix.
 
     Supported Platforms:
         ``CPU`` ``GPU``

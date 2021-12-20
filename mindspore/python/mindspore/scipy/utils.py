@@ -29,7 +29,7 @@ _eps_net = ops.Eps()
 
 
 def _convert_64_to_32(tensor):
-    """Convert tensor with float64/int64 types to float32/int32."""
+    """Convert Tensor with float64/int64 types to float32/int32."""
     if tensor.dtype == mstype.float64:
         return tensor.astype("float32")
     if tensor.dtype == mstype.int64:

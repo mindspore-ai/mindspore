@@ -41,7 +41,7 @@ class _BFGSResults(NamedTuple):
             search converged, then this is the (local) minimum of the objective
             function.
         g_k (Tensor): containing the gradient of the objective function at `x_k`. If
-            the search converged the l2-norm of this tensor should be below the
+            the search converged the l2-norm of this Tensor should be below the
             tolerance.
         H_k (Tensor): containing the inverse of the estimated Hessian.
         old_old_fval (float): Function value for the point preceding x=x_k.
