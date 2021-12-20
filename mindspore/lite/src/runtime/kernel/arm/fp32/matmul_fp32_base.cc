@@ -18,6 +18,9 @@
 #include <algorithm>
 #include "nnacl/fp32/matmul_fp32.h"
 #include "nnacl/fp32/pack_fp32.h"
+#ifdef ENABLE_AVX512
+#include "nnacl/fp32/matmul_avx512_fp32.h"
+#endif
 
 using mindspore::lite::RET_NULL_PTR;
 
@@ -201,7 +204,7 @@ void MatmulFp32BaseCPUKernel::FreeResizeBufB() {
 int MatmulFp32BaseCPUKernel::ParallelRunByBatch(int task_id) const {
   int start_batch = task_id * batch_stride_;
   int end_batch = MSMIN(params_->batch, start_batch + batch_stride_);
-#ifdef ENABLE_AVX
+#if defined(ENABLE_AVX) || defined(ENABLE_AVX512)
   int col_step = params_->col_align_;
 #else
   // col need not aligned
@@ -215,8 +218,8 @@ int MatmulFp32BaseCPUKernel::ParallelRunByBatch(int task_id) const {
 
     auto bias = (bias_ptr_ == nullptr) ? nullptr : bias_ptr_;
     if (vec_matmul_) {
-#ifdef ENABLE_AVX
-      MatVecMulAvxFp32(a, b, c, bias, params_->act_type_, params_->deep_, col_step, params_->col_align_);
+#if defined(ENABLE_AVX) || defined(ENABLE_AVX512)
+      gemvCalFun(a, b, c, bias, params_->act_type_, params_->deep_, col_step, params_->col_align_);
 #elif defined(ENABLE_ARM64)
       MatVecMulFp32Neon64(a, b, c, bias, params_->act_type_, params_->deep_, col_step, params_->col_align_);
 #elif defined(ENABLE_ARM32)
@@ -225,8 +228,8 @@ int MatmulFp32BaseCPUKernel::ParallelRunByBatch(int task_id) const {
       MatVecMulFp32Block8(a, b, c, bias, params_->act_type_, params_->deep_, col_step);
 #endif
     } else {
-#ifdef ENABLE_AVX
-      MatMulAvxFp32(a, b, c, bias, params_->act_type_, params_->deep_, col_step, params_->col_align_, params_->row_);
+#if defined(ENABLE_AVX512) || defined(ENABLE_AVX)
+      gemmCalFun(a, b, c, bias, params_->act_type_, params_->deep_, col_step, params_->col_align_, params_->row_);
 #else
       MatMulOpt(a, b, c, bias, params_->act_type_, params_->deep_, params_->row_, col_step, params_->col_,
                 OutType_Nhwc);
@@ -238,7 +241,7 @@ int MatmulFp32BaseCPUKernel::ParallelRunByBatch(int task_id) const {
 
 int MatmulFp32BaseCPUKernel::ParallelRunByOC(int task_id) const {
   int current_start_oc = task_id * oc_stride_ * col_tile_;
-#if defined(ENABLE_AVX)
+#if defined(ENABLE_AVX) || defined(ENABLE_AVX512)
   int current_rest_oc = params_->col_align_ - current_start_oc;
 #else
   int current_rest_oc = params_->col_ - current_start_oc;
@@ -252,7 +255,9 @@ int MatmulFp32BaseCPUKernel::ParallelRunByOC(int task_id) const {
   auto c = batch_c_ptr_ + current_start_oc;
   auto bias = (bias_ptr_ == nullptr) ? nullptr : bias_ptr_ + current_start_oc;
   if (vec_matmul_) {
-#ifdef ENABLE_AVX
+#ifdef ENABLE_AVX512
+    MatVecMulAvx512Fp32(batch_a_ptr_, b, c, bias, params_->act_type_, params_->deep_, cur_oc, params_->col_align_);
+#elif defined(ENABLE_AVX)
     MatVecMulAvxFp32(batch_a_ptr_, b, c, bias, params_->act_type_, params_->deep_, cur_oc, params_->col_align_);
 #elif defined(ENABLE_ARM64)
     int rest_align_col = MSMIN(params_->col_align_ - current_start_oc, oc_stride_ * col_tile_);
@@ -263,7 +268,10 @@ int MatmulFp32BaseCPUKernel::ParallelRunByOC(int task_id) const {
     MatVecMulFp32Block8(batch_a_ptr_, b, c, bias, params_->act_type_, params_->deep_, cur_oc);
 #endif
   } else {
-#ifdef ENABLE_AVX
+#ifdef ENABLE_AVX512
+    MatMulAvx512Fp32(batch_a_ptr_, b, c, bias, params_->act_type_, params_->deep_, cur_oc, params_->col_align_,
+                     params_->row_);
+#elif defined(ENABLE_AVX)
     MatMulAvxFp32(batch_a_ptr_, b, c, bias, params_->act_type_, params_->deep_, cur_oc, params_->col_align_,
                   params_->row_);
 #else
@@ -275,11 +283,20 @@ int MatmulFp32BaseCPUKernel::ParallelRunByOC(int task_id) const {
 }
 
 void MatmulFp32BaseCPUKernel::init_global_variable() {
-#ifdef ENABLE_AVX
+#ifdef ENABLE_AVX512
+  matrix_a_pack_fun_ = params_->a_transpose_ ? RowMajor2ColMajor : RowMajor2RowMajor;
+  matrix_b_pack_fun_ = params_->b_transpose_ ? RowMajor2Col64Major : RowMajor2Row64Major;
+  row_tile_ = C1NUM;
+  col_tile_ = C16NUM;
+  gemmCalFun = MatMulAvx512Fp32;
+  gemvCalFun = MatVecMulAvx512Fp32;
+#elif defined(ENABLE_AVX)
   matrix_a_pack_fun_ = params_->a_transpose_ ? RowMajor2ColMajor : RowMajor2RowMajor;
   matrix_b_pack_fun_ = params_->b_transpose_ ? RowMajor2Col32Major : RowMajor2Row32Major;
   row_tile_ = C1NUM;
   col_tile_ = C8NUM;
+  gemmCalFun = MatMulAvxFp32;
+  gemvCalFun = MatVecMulAvxFp32;
 #elif defined(ENABLE_ARM32)
   matrix_a_pack_fun_ = params_->a_transpose_ ? RowMajor2Row12Major : RowMajor2Col12Major;
   matrix_b_pack_fun_ = params_->b_transpose_ ? RowMajor2Col4Major : RowMajor2Row4Major;
@@ -375,8 +392,8 @@ void MatmulFp32BaseCPUKernel::ResizeParameter() {
 int MatmulFp32BaseCPUKernel::InitTmpOutBuffer() {
   auto out_data = reinterpret_cast<float *>(out_tensors_.front()->data());
   MS_ASSERT(out_data != nullptr);
-#ifdef ENABLE_AVX
-  if (oc_res_ != 0) {  // avx matmul need to malloc dst aligned to C8NUM
+#if defined(ENABLE_AVX) || defined(ENABLE_AVX512)
+  if (oc_res_ != 0) {  // avx matmul need to malloc dst aligned to C8NUM and avx512 need to aligned to C16NUM
     int out_channel = params_->col_;
     int oc_block_num = UP_DIV(out_channel, col_tile_);
     MS_ASSERT(ms_context_->allocator != nullptr);
@@ -403,7 +420,7 @@ void MatmulFp32BaseCPUKernel::GetThreadCuttingPolicy() {
     parallel_fun_ = &MatmulFp32BaseCPUKernel::ParallelRunByBatch;
   } else {
     thread_count_ = MSMIN(op_parameter_->thread_num_, UP_DIV(params_->col_align_, col_tile_));
-#if defined(ENABLE_AVX)  // thread tile by col_tile * C4NUM
+#if defined(ENABLE_AVX) || defined(ENABLE_AVX512)  // thread tile by col_tile * C4NUM
     oc_stride_ = UP_DIV(UP_DIV(params_->col_align_, col_tile_ * C4NUM), thread_count_) * C4NUM;
 #else
     oc_stride_ = UP_DIV(UP_DIV(params_->col_align_, col_tile_), thread_count_);
@@ -455,7 +472,7 @@ int MatmulFp32BaseCPUKernel::Run() {
       return ret;
     }
   } else {
-#ifdef ENABLE_AVX
+#if defined(ENABLE_AVX) || defined(ENABLE_AVX512)
     int col_step = params_->col_align_;
 #else
     // need not aligned
@@ -473,7 +490,7 @@ int MatmulFp32BaseCPUKernel::Run() {
     }
   }
 
-#ifdef ENABLE_AVX
+#if defined(ENABLE_AVX) || defined(ENABLE_AVX512)
   if (oc_res_ != 0) {
     auto out_data = reinterpret_cast<float *>(out_tensors_.front()->MutableData());
     PackNHWCXToNHWCFp32(output_data_, out_data, params_->batch, params_->row_, params_->col_, col_tile_);

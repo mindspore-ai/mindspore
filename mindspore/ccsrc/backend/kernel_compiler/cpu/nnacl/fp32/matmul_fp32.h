@@ -50,12 +50,14 @@ void RowMajor2Row8Major(const float *src_ptr, float *dst_ptr, int row, int col);
 void RowMajor2Row12Major(const float *src_ptr, float *dst_ptr, int row, int col);
 void RowMajor2Row16Major(const float *src_ptr, float *dst_ptr, int row, int col);
 void RowMajor2Row32Major(const float *src_ptr, float *dst_ptr, int row, int col);
+void RowMajor2Row64Major(const float *src_ptr, float *dst_ptr, int row, int col);
 void RowMajor2Col4Major(const float *src_ptr, float *dst_ptr, int row, int col);
 void RowMajor2Col6Major(const float *src_ptr, float *dst_ptr, int row, int col);
 void RowMajor2Col8Major(const float *src_ptr, float *dst_ptr, int row, int col);
 void RowMajor2Col12Major(const float *src_ptr, float *dst_ptr, int row, int col);
 void RowMajor2Col16Major(const float *src_ptr, float *dst_ptr, int row, int col);
 void RowMajor2Col32Major(const float *src_ptr, float *dst_ptr, int row, int col);
+void RowMajor2Col64Major(const float *src_ptr, float *dst_ptr, int row, int col);
 
 #ifdef ENABLE_ARM64
 void MatmulFloatNeon64(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int row,

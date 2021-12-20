@@ -29,6 +29,10 @@ using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
 using MatrixPackFun = void (*)(const float *src_ptr, float *dst_ptr, int row, int col);
+using GemmFun = void (*)(const float *a, const float *b, float *c, const float *bias, const int act_type,
+                         const int depth, const int cur_col, const int col_align, const int row);
+using GemvFun = void (*)(const float *a, const float *b, float *c, const float *bias, const int act_type,
+                         const int depth, const int cur_col, const int col_align);
 class MatmulFp32BaseCPUKernel : public InnerKernel {
  public:
   MatmulFp32BaseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
@@ -93,6 +97,10 @@ class MatmulFp32BaseCPUKernel : public InnerKernel {
   MatrixPackFun matrix_a_pack_fun_ = nullptr;
   MatrixPackFun matrix_b_pack_fun_ = nullptr;
   bool batch_split_ = false;
+#if defined(ENABLE_AVX) || defined(ENABLE_AVX512)
+  GemmFun gemmCalFun = nullptr;
+  GemvFun gemvCalFun = nullptr;
+#endif
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_MATMUL_FP32_BASE_H_
