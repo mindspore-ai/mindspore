@@ -48,6 +48,7 @@
 #include "backend/optimizer/gpu/add_relu_v2_fusion.h"
 #include "backend/optimizer/gpu/add_relu_grad_v2_fusion.h"
 #include "backend/optimizer/gpu/matmul_biasadd_fusion.h"
+#include "backend/optimizer/gpu/neighbor_exchange_v2_fusion.h"
 #ifdef ENABLE_GPU_INFER
 #include "backend/optimizer/trt_pass/graph_converter.h"
 #endif
@@ -173,6 +174,8 @@ void GPUSession::Optimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
   pm->AddPass(std::make_shared<opt::PrintReduceFusion>("print_reduce"));
   pm->AddPass(std::make_shared<opt::BCEWithLogitsLossFusion>());
   pm->AddPass(std::make_shared<opt::InsertCastGPU>("insert_cast_gpu"));
+  pm->AddPass(std::make_shared<opt::NeighborExchangeV2Fusion>());
+  pm->AddPass(std::make_shared<opt::NeighborExchangeV2GradFusion>());
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();

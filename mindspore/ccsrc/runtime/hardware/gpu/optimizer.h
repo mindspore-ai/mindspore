@@ -53,5 +53,6 @@
 #include "backend/optimizer/gpu/bce_with_logits_loss_fusion.h"
 #include "backend/optimizer/gpu/insert_cast_gpu.h"
 #include "backend/optimizer/gpu/adjust_depend_for_parallel_optimizer_recompute_all_gather_fusion.h"
+#include "backend/optimizer/gpu/neighbor_exchange_v2_fusion.h"
 
 #endif  // MINDSPORE_CCSRC_RUNTIME_HARDWARE_GPU_OPTIMIZER_H_
