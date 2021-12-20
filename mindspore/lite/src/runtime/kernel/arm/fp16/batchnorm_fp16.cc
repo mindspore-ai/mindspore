@@ -85,7 +85,8 @@ int BatchnormFp16CPUKernel::Run() {
 int BatchnormFp16CPUKernel::DoExecute(int task_id) {
   auto param = reinterpret_cast<BatchNormParameter *>(op_parameter_);
   CHECK_NULL_RETURN(param);
-  BatchNormFp16(input_, mean_, variance_, param, task_id, output_);
+  BatchNormFp16(input_, reinterpret_cast<float16_t *>(mean_), reinterpret_cast<float16_t *>(variance_), param, task_id,
+                output_);
   return RET_OK;
 }
 

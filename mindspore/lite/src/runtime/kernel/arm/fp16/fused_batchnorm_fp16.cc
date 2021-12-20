@@ -39,8 +39,8 @@ void FusedBatchnormFp16CPUKernel::CalcMeanVar(float16_t *in, float16_t *scale, f
                                               float16_t *save_variance) {
   auto param = reinterpret_cast<BatchNormParameter *>(op_parameter_);
   MS_ASSERT(param != nullptr);
-  float16_t *current_mean = static_cast<float16_t *>(mean_);
-  float16_t *current_var = static_cast<float16_t *>(variance_);
+  float16_t *current_mean = reinterpret_cast<float16_t *>(mean_);
+  float16_t *current_var = reinterpret_cast<float16_t *>(variance_);
 
   std::fill(current_mean, current_mean + in_tensors_.at(kInCurrentMeanIdx)->ElementsNum(), 0.f);
   std::fill(current_var, current_var + in_tensors_.at(kInCurrentVarIdx)->ElementsNum(), 0.f);
@@ -67,24 +67,26 @@ int FusedBatchnormFp16CPUKernel::DoExecute(int task_id) {
   CHECK_NULL_RETURN(in_tensors_.at(0)->data());
   CHECK_NULL_RETURN(out_tensors_.at(0)->data());
   if (IsTrain() && IsTrainable() && in_tensors_.size() >= kMaxInIdx) {
-    CalcMeanVar(static_cast<float16_t *>(in_tensors_.at(0)->data()),
-                static_cast<float16_t *>(in_tensors_.at(kInScaleIdx)->data()),
-                static_cast<float16_t *>(in_tensors_.at(kInOffsetIdx)->data()),
-                static_cast<float16_t *>(in_tensors_.at(kInCurrentMeanIdx)->data()),
-                static_cast<float16_t *>(in_tensors_.at(kInCurrentVarIdx)->data()));
+    CalcMeanVar(reinterpret_cast<float16_t *>(in_tensors_.at(0)->data()),
+                reinterpret_cast<float16_t *>(in_tensors_.at(kInScaleIdx)->data()),
+                reinterpret_cast<float16_t *>(in_tensors_.at(kInOffsetIdx)->data()),
+                reinterpret_cast<float16_t *>(in_tensors_.at(kInCurrentMeanIdx)->data()),
+                reinterpret_cast<float16_t *>(in_tensors_.at(kInCurrentVarIdx)->data()));
   }
-  FusedBatchNormFp16(in_tensors_.at(0)->data(), scale_, offset_, mean_, variance_, param, task_id,
-                     out_tensors_.at(0)->data());
+  FusedBatchNormFp16(reinterpret_cast<float16_t *>(in_tensors_.at(0)->data()), reinterpret_cast<float16_t *>(scale_),
+                     reinterpret_cast<float16_t *>(offset_), reinterpret_cast<float16_t *>(mean_),
+                     reinterpret_cast<float16_t *>(variance_), param, task_id,
+                     reinterpret_cast<float16_t *>(out_tensors_.at(0)->data()));
   return RET_OK;
 }
 
 int FusedBatchnormFp16CPUKernel::Eval() {
   InnerKernel::Eval();
   if (trained_) {
-    float16_t *save_mean = static_cast<float16_t *>(in_tensors_.at(kInCurrentMeanIdx)->data());
-    float16_t *save_var = static_cast<float16_t *>(in_tensors_.at(kInCurrentVarIdx)->data());
-    float16_t *scale = static_cast<float16_t *>(in_tensors_.at(kInScaleIdx)->data());
-    float16_t *bias = static_cast<float16_t *>(in_tensors_.at(kInOffsetIdx)->data());
+    float16_t *save_mean = reinterpret_cast<float16_t *>(in_tensors_.at(kInCurrentMeanIdx)->data());
+    float16_t *save_var = reinterpret_cast<float16_t *>(in_tensors_.at(kInCurrentVarIdx)->data());
+    float16_t *scale = reinterpret_cast<float16_t *>(in_tensors_.at(kInScaleIdx)->data());
+    float16_t *bias = reinterpret_cast<float16_t *>(in_tensors_.at(kInOffsetIdx)->data());
     CHECK_NULL_RETURN(save_mean);
     CHECK_NULL_RETURN(save_var);
     CHECK_NULL_RETURN(scale);

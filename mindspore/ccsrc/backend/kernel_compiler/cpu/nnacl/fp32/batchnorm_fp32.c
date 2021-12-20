@@ -19,8 +19,8 @@
 #include "nnacl/batchnorm_parameter.h"
 #include "nnacl/op_base.h"
 
-void BatchNormFp32(const void *input, const void *mean, const void *variance, const BatchNormParameter *param,
-                   int task_id, void *output) {
+void BatchNormFp32(const float *input, const float *mean, const float *variance, const BatchNormParameter *param,
+                   int task_id, float *output) {
   if (param->op_parameter_.thread_num_ == 0) {
     return;
   }
@@ -30,17 +30,29 @@ void BatchNormFp32(const void *input, const void *mean, const void *variance, co
   int cur_offset = completed_units * param->channel_;
 
   for (int i = 0; i < cur_unit; i++) {
-    for (int c = 0; c < param->channel_; c++) {
-      float variance_sqrt = sqrtf(((const float *)variance)[c] + param->epsilon_);
-      ((float *)output)[cur_offset + c] =
-        (((const float *)input)[cur_offset + c] - ((const float *)mean)[c]) / variance_sqrt;
+    const float *unit_input = input + cur_offset;
+    float *unit_output = output + cur_offset;
+    int c = 0;
+#ifdef ENABLE_ARM
+    for (; c <= param->channel_ - C4NUM; c += C4NUM) {
+      MS_FLOAT32X4 input_4 = MS_LDQ_F32(unit_input + c);
+      MS_FLOAT32X4 mean_4 = MS_LDQ_F32(mean + c);
+      MS_FLOAT32X4 variance_4 = MS_LDQ_F32(variance + c);
+      MS_FLOAT32X4 variance_sqrt = MS_SQRTFX4_F32(MS_ADDQ_F32(variance_4, MS_MOVQ_F32(param->epsilon_)));
+      MS_FLOAT32X4 output_4 = MS_DIVQ_F32(MS_SUBQ_F32(input_4, mean_4), variance_sqrt);
+      MS_STQ_F32(unit_output + c, output_4);
+    }
+#endif
+    for (; c < param->channel_; c++) {
+      float variance_sqrt = sqrtf(variance[c] + param->epsilon_);
+      unit_output[c] = (unit_input[c] - mean[c]) / variance_sqrt;
     }
     cur_offset += param->channel_;
   }
 }
 
-void FusedBatchNormFp32(const void *input, const void *scale, const void *offset, const void *mean,
-                        const void *variance, const BatchNormParameter *param, int task_id, void *output) {
+void FusedBatchNormFp32(const float *input, const float *scale, const float *offset, const float *mean,
+                        const float *variance, const BatchNormParameter *param, int task_id, float *output) {
   if (param->op_parameter_.thread_num_ == 0) {
     return;
   }
@@ -50,10 +62,26 @@ void FusedBatchNormFp32(const void *input, const void *scale, const void *offset
   int cur_offset = completed_units * param->channel_;
 
   for (int i = 0; i < cur_unit; i++) {
-    for (int c = 0; c < param->channel_; c++) {
-      float variance_sqrt = sqrtf(((const float *)variance)[c] + param->epsilon_);
-      float norm_val = (((const float *)input)[cur_offset + c] - ((const float *)mean)[c]) / variance_sqrt;
-      ((float *)output)[cur_offset + c] = norm_val * ((const float *)scale)[c] + ((const float *)offset)[c];
+    const float *unit_input = input + cur_offset;
+    float *unit_output = output + cur_offset;
+    int c = 0;
+#ifdef ENABLE_ARM
+    for (; c <= param->channel_ - C4NUM; c += C4NUM) {
+      MS_FLOAT32X4 input_4 = MS_LDQ_F32(unit_input + c);
+      MS_FLOAT32X4 scale_4 = MS_LDQ_F32(scale + c);
+      MS_FLOAT32X4 offset_4 = MS_LDQ_F32(offset + c);
+      MS_FLOAT32X4 mean_4 = MS_LDQ_F32(mean + c);
+      MS_FLOAT32X4 variance_4 = MS_LDQ_F32(variance + c);
+      MS_FLOAT32X4 variance_sqrt = MS_SQRTFX4_F32(MS_ADDQ_F32(variance_4, MS_MOVQ_F32(param->epsilon_)));
+      MS_FLOAT32X4 norm_val = MS_DIVQ_F32(MS_SUBQ_F32(input_4, mean_4), variance_sqrt);
+      MS_FLOAT32X4 output_4 = MS_ADDQ_F32(MS_MULQ_F32(norm_val, scale_4), offset_4);
+      MS_STQ_F32(unit_output + c, output_4);
+    }
+#endif
+    for (; c < param->channel_; c++) {
+      float variance_sqrt = sqrtf(variance[c] + param->epsilon_);
+      float norm_val = (unit_input[c] - mean[c]) / variance_sqrt;
+      unit_output[c] = norm_val * scale[c] + offset[c];
     }
     cur_offset += param->channel_;
   }

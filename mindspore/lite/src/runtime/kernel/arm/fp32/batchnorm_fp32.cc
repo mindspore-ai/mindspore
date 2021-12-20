@@ -102,11 +102,12 @@ int BatchnormCPUKernel::Run() {
 
 int BatchnormCPUKernel::DoExecute(int task_id) {
   auto param = reinterpret_cast<BatchNormParameter *>(op_parameter_);
-  auto in_tensor_data = in_tensors_.at(0)->MutableData();
+  auto in_tensor_data = reinterpret_cast<float *>(in_tensors_.at(0)->data());
   CHECK_NULL_RETURN(in_tensor_data);
-  auto out_tensor_data = out_tensors_.at(0)->MutableData();
+  auto out_tensor_data = reinterpret_cast<float *>(out_tensors_.at(0)->data());
   CHECK_NULL_RETURN(out_tensor_data);
-  BatchNormFp32(in_tensor_data, mean_, variance_, param, task_id, out_tensor_data);
+  BatchNormFp32(in_tensor_data, reinterpret_cast<float *>(mean_), reinterpret_cast<float *>(variance_), param, task_id,
+                out_tensor_data);
   return RET_OK;
 }
 
