@@ -388,9 +388,9 @@ class AscendEnvChecker(EnvChecker):
 
 def check_version_and_env_config():
     """check version and env config"""
-    if os.getenv("MS_CLOSE_VERSION_CHECK") == "ON":
+    if os.getenv("MS_DEV_CLOSE_VERSION_CHECK") == "ON":
         return
-    os.environ["MS_CLOSE_VERSION_CHECK"] = "ON"
+    os.environ["MS_DEV_CLOSE_VERSION_CHECK"] = "ON"
     if __package_name__.lower() == "mindspore-ascend":
         env_checker = AscendEnvChecker()
         # Note: pre-load libgomp.so to solve error like "cannot allocate memory in statis TLS block"
