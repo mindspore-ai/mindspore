@@ -535,6 +535,15 @@ else()
                     DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
         endif()
 
+        if(MSLITE_ENABLE_DPICO_ATC_ADAPTER)
+            install(FILES ${TOP_DIR}/mindspore/lite/build/tools/converter/adapter/dpico/libdpico_atc_adapter.so
+                    DESTINATION ${CONVERTER_ROOT_DIR}/providers/SD3403 COMPONENT ${RUNTIME_COMPONENT_NAME})
+            if(MSLITE_ENABLE_TOOLS)
+                install(TARGETS ${BECHCHMARK_NAME} RUNTIME DESTINATION ${BENCHMARK_ROOT_DIR}
+                        COMPONENT ${RUNTIME_COMPONENT_NAME})
+            endif()
+        endif()
+
         if(MSLITE_ENABLE_RUNTIME_GLOG)
             install(DIRECTORY ${glog_LIBPATH}/../include/glog/ DESTINATION ${RUNTIME_INC_DIR}/third_party/glog
                     COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
