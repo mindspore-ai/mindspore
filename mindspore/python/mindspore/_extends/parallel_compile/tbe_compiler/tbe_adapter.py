@@ -206,7 +206,7 @@ def _parallel_compilation_init(initialize: TbeJob):
     time_str = datetime.now().strftime('%Y%m%d_%H%M%S%f')[:-3]
     pid_ts = "{}_pid{}".format(time_str, pid_str)
     ret = init_multi_process_env(embedding, soc_info, auto_tiling_mode, real_debug_level,
-                                 global_loglevel, enable_event, pid_ts, None)
+                                 global_loglevel, enable_event, pid_ts)
     if ret is None:
         initialize.error("Init multiprocess env failed")
         return False
@@ -390,15 +390,17 @@ def _pre_build_compute_op_info(compute_op, job):
     res = check_op_impl_mode(op_module_name, op_func_name)
     op_impl_mode = job.content["SocInfo"]["op_impl_mode"]
     op_impl_mode_list = job.content["SocInfo"]["op_impl_mode_list"]
+    op_full_name = job.content["full_name"]
     if not res:
         if op_impl_mode_list:
             job.warning("The op {} do NOT support op_impl_mode, current op_impl_mode:{}".format(op_type, op_impl_mode))
     else:
         job.info("OpType {} support op_impl_mode, current op_impl_mode:{}".format(op_type, op_impl_mode))
     options = get_options_info(job.content)
-    dispatch_prebuild_task(job.source_id, job.id, l1_size, op_module_name, op_type, op_func_name, unknown_shape,
+    dispatch_prebuild_task(job.source_id, job.id, l1_size, op_module_name, op_full_name,
+                           op_type, op_func_name, unknown_shape,
                            (inputs, outputs, attrs, options), int64_mode, dynamic_compile_static, unknown_shape,
-                           job.rl_tune_switch, job.rl_tune_list, job.pass_list, job.op_tune_switch, job.op_tune_list)
+                           None, job.pass_list)
 
 
 def get_prebuild_output(op_name):
@@ -453,6 +455,7 @@ def build_single_pre_op(job: TbeJob):
     op_module_name = get_module_name(compute_op_info)
     op_kernel_name = compute_op_info["op_name"]
     py_module_path = compute_op_info["py_module_path"]
+    op_name = job.content["full_name"]
     op_func_name = compute_op_info["func_name"]
     _normalize_module_name(op_module_name, py_module_path)
     unknown_shape = compute_op_info["unknown_shape"]
@@ -461,11 +464,10 @@ def build_single_pre_op(job: TbeJob):
     op_pattern = compute_op_info["pattern"]
     options = get_options_info(job.content)
     fuzz_build_info = get_fuzz_build_info(job.content)
-    dispatch_single_op_compile_task(job.source_id, job.id, l1_size, op_module_name, op_type, op_func_name,
+    dispatch_single_op_compile_task(job.source_id, job.id, l1_size, op_module_name, op_name, op_type, op_func_name,
                                     op_kernel_name, unknown_shape, (inputs, outputs, attrs, options), int64_mode,
                                     None, None, dynamic_compile_static, unknown_shape, op_pattern,
-                                    json.dumps(fuzz_build_info), job.rl_tune_switch, job.rl_tune_list, job.pass_list,
-                                    job.op_tune_switch, job.op_tune_list)
+                                    json.dumps(fuzz_build_info), None, job.pass_list)
     return True
 
 
@@ -513,9 +515,9 @@ def parallel_compile_fusion_op(job: TbeJob):
     l1_size = job.content["l1_size"]
     options = get_options_info(job.content)
     op_kernel_name = job.content["fusion_op_name"]
+    op_name = job.content["full_name"]
     dispatch_fusion_op_compile_task(job.source_id, job.id, l1_size, json.dumps(job.content), op_kernel_name, None, None,
-                                    options, job.rl_tune_switch, job.rl_tune_list, job.pass_list,
-                                    job.op_tune_switch, job.op_tune_list)
+                                    options, None, job.pass_list, op_name)
     return True
 
 
@@ -527,7 +529,8 @@ def ga_tune(job: TbeJob):
     """
     l1_size = job.content["l1_size"]
     op_kernel_name = job.content["fusion_op_name"]
-    dispatch_autotune_task(job.source_id, job.id, l1_size, json.dumps(job.content), {}, op_kernel_name)
+    op_name = job.content["full_name"]
+    dispatch_autotune_task(job.source_id, job.id, l1_size, json.dumps(job.content), {}, op_kernel_name, op_name)
     job.status = JobStatus.JOB_RUNNING
     return True
 
