@@ -5,7 +5,7 @@ mindspore.nn.ReLU
 
     修正线性单元激活函数（Rectified Linear Unit activation function）。
 
-    按元素返回 :math:`\max(x,\  0)` 。特别说明，负数输出值会被修改为0，正数输出不受影响。
+    逐元素求 :math:`\max(x,\  0)` 。特别说明，负数输出值会被修改为0，正数输出不受影响。
 
     .. math::
 
@@ -15,15 +15,15 @@ mindspore.nn.ReLU
 
     **输入：**
 
-    - **x** (Tensor) - 用于计算ReLU的Tensor。数据类型为Number。shape为 :math:`(N,*)` ，其中 :math:`*` 表示任意的附加维度数。
+    - **x** (Tensor) - 用于计算ReLU的任意维度的Tensor。数据类型为 `number <https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.html#mindspore.dtype>`_。
 
     **输出：**
 
-    Tensor，具有与 `x` 相同的数据类型和shape。
+    Tensor，数据类型和shape与 `x` 相同。
 
     **异常：**
 
-    - **TypeError** - `x` 的数据类型不是Number。
+    - **TypeError** - `x` 的数据类型不是number。
 
     **支持平台：**
 

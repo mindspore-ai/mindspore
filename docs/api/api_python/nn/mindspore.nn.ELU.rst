@@ -10,10 +10,11 @@ mindspore.nn.ELU
     .. math::
             E_{i} =
             \begin{cases}
-            x, &\text{if } x \geq 0; \cr
-            \text{alpha} * (\exp(x_i) - 1), &\text{otherwise.}
+            x_i, &\text{if } x_i \geq 0; \cr
+            \alpha * (\exp(x_i) - 1), &\text{otherwise.}
             \end{cases}
 
+    其中，:math:`x_i` 表示输入的元素，:math:`\alpha` 表示 `alpha` 参数。
 
     ELU相关图参见 `ELU <https://en.wikipedia.org/wiki/Activation_function#/media/File:Activation_elu.svg>`_  。
 
@@ -23,11 +24,11 @@ mindspore.nn.ELU
 
     **输入：**
 
-    - **x** （Tensor） - 用于计算ELU的Tensor，数据类型为float16或float32。shape为 :math:`(N,*)` ， :math:`*` 表示任意的附加维度数。
+    - **x** （Tensor） - 用于计算ELU的任意维度的Tensor，数据类型为float16或float32。
 
     **输出：**
 
-    Tensor，具有与 `x` 相同的数据类型和shape。
+    Tensor，数据类型和shape与 `x` 相同。
 
     **异常：**
 
