@@ -142,15 +142,19 @@ STATUS NodeInferShape::InferShape(const CNodePtr &cnode) {
   }
   if (ret == lite::RET_OK || ret == lite::RET_INFER_INVALID) {
     auto set_status = SetCNodeAbstract(cnode, outputs, ret);
-    auto cnode_prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-    MS_CHECK_TRUE_MSG(cnode_prim != nullptr, lite::RET_NULL_PTR, "GetValueNode Failed");
-    cnode_prim->AddAttr(ops::kFormat, MakeValue<int64_t>(inputs[0]->format()));
+    anf_prim->AddAttr(ops::kFormat, MakeValue<int64_t>(inputs[0]->format()));
     if (set_status != lite::RET_OK) {
       MS_LOG(ERROR) << "set CNode abstract failed: " << cnode->fullname_with_scope();
       return set_status;
     }
   } else {
     MS_LOG(WARNING) << "infer shape failed.";
+  }
+  if (CheckPrimitiveType(cnode, prim::kPrimCustom)) {
+    std::vector<int64_t> outputs_format;
+    std::transform(outputs.begin(), outputs.end(), std::back_inserter(outputs_format),
+                   [](const lite::Tensor *output) { return output->format(); });
+    anf_prim->AddAttr(kOutputsFormat, MakeValue(outputs_format));
   }
   return ret;
 }

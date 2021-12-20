@@ -148,7 +148,27 @@ STATUS DeleteRedundantTranspose::UpdateNodeFormat(const CNodePtr &cnode) {
   if (prim->GetAttr(ops::kFormat) == nullptr) {
     return lite::RET_OK;
   }
-  auto format = GetValue<int64_t>(prim->GetAttr(ops::kFormat));
+  auto forward_format = GetValue<int64_t>(prim->GetAttr(ops::kFormat));
+  const int max_search_depth{3};
+  int loop{0};
+  auto search_node = cnode->input(1);
+  while (loop < max_search_depth) {
+    MS_CHECK_TRUE_RET(search_node != nullptr, lite::RET_ERROR);
+    auto search_cnode = search_node->cast<CNodePtr>();
+    if (search_cnode == nullptr) {
+      break;
+    }
+    auto primitive = GetCNodePrimitive(search_cnode);
+    if (primitive == nullptr) {
+      break;
+    }
+    if (primitive->GetAttr(ops::kFormat) != nullptr) {
+      forward_format = GetValue<int64_t>(primitive->GetAttr(ops::kFormat));
+      break;
+    }
+    search_node = search_cnode->input(1);
+    ++loop;
+  }
   auto node_users = manager_->node_users()[cnode];
   for (auto &node_user : node_users) {
     if (node_user.second != 1) {
@@ -161,7 +181,7 @@ STATUS DeleteRedundantTranspose::UpdateNodeFormat(const CNodePtr &cnode) {
     auto post_cnode = node_user.first->cast<CNodePtr>();
     auto post_prim = GetValueNode<PrimitivePtr>(post_cnode->input(0));
     MS_ASSERT(post_prim != nullptr);
-    post_prim->AddAttr(ops::kFormat, MakeValue<int64_t>(format));
+    post_prim->AddAttr(ops::kFormat, MakeValue<int64_t>(forward_format));
   }
   return lite::RET_OK;
 }

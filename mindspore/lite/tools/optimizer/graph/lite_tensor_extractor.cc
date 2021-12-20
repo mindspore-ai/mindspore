@@ -197,18 +197,10 @@ int GetCNodeVarInput(const CNodePtr &cnode, std::vector<TensorPtr> *var_ms_input
       return lite::RET_ERROR;
     }
     tensor->set_format((Format)(data_info.format_));
-    MS_ASSERT(cnode->input(i) != nullptr);
-    auto input_cnode = cnode->input(i)->cast<CNodePtr>();
-    MS_ASSERT(input_cnode != nullptr);
-    auto input_prim = GetValueNode<PrimitivePtr>(input_cnode->input(0));
-    if (CheckPrimitiveType(input_cnode, prim::kPrimTupleGetItem)) {
-      MS_CHECK_TRUE_RET(input_cnode->input(1) != nullptr, lite::RET_NULL_PTR);
-      auto item_input_cnode = input_cnode->input(1)->cast<CNodePtr>();
-      MS_CHECK_TRUE_RET(item_input_cnode != nullptr, lite::RET_NULL_PTR);
-      input_prim = GetValueNode<PrimitivePtr>(item_input_cnode->input(0));
-    }
-    MS_CHECK_TRUE_RET(input_prim != nullptr, lite::RET_NULL_PTR);
-    if (input_prim->GetAttr(kInferDone) == nullptr || !GetValue<bool>(input_prim->GetAttr(kInferDone))) {
+    bool has_inferred{false};
+    auto ret = DetermineCertainVarInputHasInferred(cnode, i, &has_inferred);
+    MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "determine infer flag failed.");
+    if (!has_inferred) {
       tensor->set_shape({-1});
     }
     var_ms_inputs->emplace_back(tensor);

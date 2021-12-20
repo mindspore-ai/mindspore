@@ -360,38 +360,6 @@ int FetchDataFromValueNode(const CNodePtr &cnode, size_t index, converter::FmkTy
   return ret;
 }
 
-int SetFormatForCnode(const CNodePtr &cnode, size_t index, converter::FmkType fmk_type, bool train_flag,
-                      DataInfo *data_info) {
-  data_info->format_ = mindspore::NHWC;
-  MS_CHECK_TRUE_MSG(cnode->input(index) != nullptr, RET_ERROR, "input is nullptr");
-  auto input_node_prim = GetValueNode<PrimitivePtr>((cnode->input(index)->cast<CNodePtr>()->input(0)));
-  MS_CHECK_TRUE_MSG(input_node_prim != nullptr, RET_ERROR, "GetValueNode failed");
-  if (input_node_prim->GetAttr(mindspore::ops::kFormat) != nullptr) {
-    auto value = input_node_prim->GetAttr(mindspore::ops::kFormat);
-    if (value->isa<mindspore::Int64Imm>()) {
-      data_info->format_ = GetValue<int64_t>(value);
-    }
-  }
-  if (opt::CheckPrimitiveType(cnode->input(index), prim::kPrimTranspose)) {
-    std::vector<int> perm;
-    if (opt::GetTransposePerm(cnode->input(index)->cast<CNodePtr>(), &perm) != RET_OK) {
-      return RET_ERROR;
-    }
-    if (perm.size() < kNumTransposePermSize) {
-      return RET_OK;
-    }
-    // NHWC to NCHW: perm is {0, 3, 1, 2}
-    // NCHW to NHWC: perm is {0, 2, 3, 1}
-    if (perm[0] == 0 && perm[1] == 3 && perm[2] == 1 && perm[3] == 2 &&
-        (data_info->format_ == NHWC || data_info->format_ == KHWC)) {
-      data_info->format_ = NCHW;
-    } else if (perm[0] == 0 && perm[1] == 2 && perm[2] == 3 && perm[3] == 1 && data_info->format_ == NCHW) {
-      data_info->format_ = NHWC;
-    }
-  }
-  return RET_OK;
-}
-
 int FetchDataFromCNode(const CNodePtr &cnode, size_t index, converter::FmkType fmk_type, bool train_flag,
                        DataInfo *data_info) {
   MS_ASSERT(cnode != nullptr && data_info != nullptr);
@@ -414,11 +382,13 @@ int FetchDataFromCNode(const CNodePtr &cnode, size_t index, converter::FmkType f
   }
   auto shape_vector = utils::cast<abstract::ShapePtr>(abstract_tensor->BuildShape())->shape();
   std::vector<int32_t> dims(shape_vector.begin(), shape_vector.end());
-  auto ret = SetFormatForCnode(cnode, index, fmk_type, train_flag, data_info);
+  Format format{mindspore::NHWC};
+  auto ret = opt::DetermineCertainVarInputFormat(cnode, index, &format);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "set format for cnode failed";
     return RET_ERROR;
   }
+  data_info->format_ = format;
   data_info->data_type_ = type_ptr->type_id();
   data_info->shape_ = dims;
   data_info->node_type_ = NodeType_CNode;

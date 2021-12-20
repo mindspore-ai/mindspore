@@ -39,7 +39,7 @@ namespace opt {
 namespace {
 constexpr auto kAnfPrimitiveIndex = 0;
 constexpr auto kDeviceTypeNone = -1;
-int DeduceDimConvertion(schema::Format src_format, schema::Format dst_format, std::vector<int> *perm) {
+int DeduceDimConvertion(schema::Format src_format, schema::Format dst_format, std::vector<int> *const perm) {
   MS_ASSERT(perm != nullptr);
   auto src_format_str = std::string(schema::EnumNameFormat(src_format));
   auto dst_format_str = std::string(schema::EnumNameFormat(dst_format));
@@ -66,10 +66,16 @@ int DeduceDimConvertion(schema::Format src_format, schema::Format dst_format, st
 
 template <typename T>
 void TransposeData(const ShapeVector &origin_shape, const ShapeVector &cur_shape, const std::vector<int> &perm,
-                   T *weight_data, std::vector<T> *buf) {
+                   T *const weight_data, std::vector<T> *buf) {
   MS_ASSERT(weight_data != nullptr && buf != nullptr);
   MS_ASSERT(origin_shape.size() == cur_shape.size() && cur_shape.size() == perm.size());
-  int count = std::accumulate(origin_shape.begin(), origin_shape.end(), 1, std::multiplies<int>());
+  int count = 1;
+  for (const auto &dat : origin_shape) {
+    if (INT_MUL_OVERFLOW(count, static_cast<int>(dat))) {
+      return;
+    }
+    count *= static_cast<int>(dat);
+  }
   ShapeVector post_multiply(cur_shape.size());
   std::unordered_map<int, int> dim_map;
   for (int i = cur_shape.size() - 1; i >= 0; --i) {
@@ -88,10 +94,17 @@ void TransposeData(const ShapeVector &origin_shape, const ShapeVector &cur_shape
       position_map[j] = temp % origin_shape[j];
       temp /= origin_shape[j];
     }
-    int64_t new_pos = std::accumulate(position_map.begin(), position_map.end(), 0,
-                                      [&post_multiply, &dim_map](int64_t res, const std::pair<int, int> &pair_y) {
-                                        return res + post_multiply[dim_map[pair_y.first]] * pair_y.second;
-                                      });
+    int64_t new_pos = 0;
+    for (const auto &pair_y : position_map) {
+      if (INT_MUL_OVERFLOW(post_multiply[dim_map[pair_y.first]], pair_y.second)) {
+        return;
+      }
+      if (INT_ADD_OVERFLOW(new_pos, post_multiply[dim_map[pair_y.first]] * pair_y.second)) {
+        return;
+      }
+      new_pos += post_multiply[dim_map[pair_y.first]] * pair_y.second;
+    }
+
     buf->at(new_pos) = weight_data[i];
   }
 }
@@ -121,7 +134,14 @@ STATUS DoTransposeData(const tensor::TensorPtr &tensor, schema::Format src_forma
     }
     new_shape.push_back(origin_shape[val]);
   }
-  auto count = std::accumulate(origin_shape.begin(), origin_shape.end(), 1LL, std::multiplies<int64_t>());
+  int64_t count = 1;
+  for (const auto &dat : origin_shape) {
+    if (INT_MUL_OVERFLOW(count, dat)) {
+      MS_LOG(ERROR) << "Int mul overflow";
+      return RET_ERROR;
+    }
+    count *= dat;
+  }
   if (count <= 0 || count > static_cast<int64_t>(INT32_MAX)) {
     MS_LOG(ERROR) << "tensor element num is too big, which should be smaller than int32_max.";
     return RET_ERROR;
@@ -173,6 +193,38 @@ bool IsRealKernel(const AnfNodePtr &node) {
                          IsPrimitive(input, prim::kPrimReturn) || IsPrimitive(input, prim::kPrimPartial);
 #endif
   return !is_virtual_node;
+}
+
+int CopyTensorDataFromTensorInfo(const tensor::TensorPtr &tensor_info,
+                                 const std::shared_ptr<tensor::Tensor> &tensor_info_dst, size_t data_count) {
+  if (tensor_info->data_type() == kNumberTypeInt64) {
+    auto *tensor_data = reinterpret_cast<int *>(tensor_info_dst->data_c());
+    if (tensor_data == nullptr) {
+      MS_LOG(ERROR) << "new data failed";
+      return RET_ERROR;
+    }
+    auto *origin_data = reinterpret_cast<int64_t *>(tensor_info->data_c());
+    for (size_t i = 0; i < data_count; ++i) {
+      if (origin_data[i] > static_cast<int64_t>(INT32_MAX) || origin_data[i] < static_cast<int64_t>(INT32_MIN)) {
+        MS_LOG(WARNING) << "int64 data " << origin_data[i] << "too big to fit into int32";
+        tensor_data[i] = origin_data[i] > 0 ? INT32_MAX : INT32_MIN;
+      } else {
+        tensor_data[i] = static_cast<int>(origin_data[i]);
+      }
+    }
+  } else {
+    tensor_info_dst->set_data_type(tensor_info->data_type());
+    auto *tensor_data = reinterpret_cast<int8_t *>(tensor_info_dst->data_c());
+    if (tensor_data == nullptr) {
+      MS_LOG(ERROR) << "new data failed";
+      return RET_ERROR;
+    }
+    if (memcpy_s(tensor_data, tensor_info_dst->Size(), tensor_info->data_c(), tensor_info->Size()) != lite::RET_OK) {
+      MS_LOG(ERROR) << "memcpy data failed.";
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
 }
 }  // namespace
 
@@ -351,7 +403,7 @@ bool IsGraphKernel(const AnfNodePtr &node) {
   return func_graph->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL);
 }
 
-ParameterPtr AddNewBiasNode(float *bias_data, const FuncGraphPtr &func_graph, int kernel_num, TypeId type_id) {
+ParameterPtr AddNewBiasNode(const float *bias_data, const FuncGraphPtr &func_graph, int kernel_num, TypeId type_id) {
   if (bias_data == nullptr || func_graph == nullptr) {
     MS_LOG(ERROR) << "input parameter is nullptr.";
     return nullptr;
@@ -461,7 +513,7 @@ bool IsParamNode(const BaseRef &n) {
   return tensor->data_c() != nullptr;
 }
 
-STATUS GetTensorInfoFromAbstract(tensor::TensorPtr *tensor_info, const CNodePtr &cnode, size_t index) {
+STATUS GetTensorInfoFromAbstract(tensor::TensorPtr *const tensor_info, const CNodePtr &cnode, size_t index) {
   CHECK_NULL_RETURN(tensor_info);
   CHECK_NULL_RETURN(cnode);
   AbstractBasePtr abstract = GetCNodeInputAbstract(cnode, index);
@@ -673,7 +725,18 @@ ParameterPtr BuildParameterNode(const FuncGraphPtr &func_graph, const AnfNodePtr
     MS_LOG(ERROR) << "new tensor::Tensor failed.";
     return nullptr;
   }
-  size_t data_count = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int>());
+  int data_count = 1;
+  for (const auto &dat : shape) {
+    if (INT_MUL_OVERFLOW(data_count, static_cast<int>(dat))) {
+      MS_LOG(ERROR) << "Int mul overflow.";
+      return nullptr;
+    }
+    data_count *= static_cast<int>(dat);
+  }
+  if (data_count < 0) {
+    MS_LOG(ERROR) << "Invalid shape.";
+    return nullptr;
+  }
   if (tensor_info->Size() == 0) {
     auto status = lite::InitParameterFromTensorInfo(param_node, tensor_info_new);
     if (status != RET_OK) {
@@ -682,33 +745,12 @@ ParameterPtr BuildParameterNode(const FuncGraphPtr &func_graph, const AnfNodePtr
     }
     return param_node;
   }
-  if (tensor_info->data_type() == kNumberTypeInt64) {
-    auto *tensor_data = reinterpret_cast<int *>(tensor_info_new->data_c());
-    if (tensor_data == nullptr) {
-      MS_LOG(ERROR) << "new data failed";
-      return nullptr;
-    }
-    auto *origin_data = reinterpret_cast<int64_t *>(tensor_info->data_c());
-    for (size_t i = 0; i < data_count; ++i) {
-      if (origin_data[i] > static_cast<int64_t>(INT32_MAX) || origin_data[i] < static_cast<int64_t>(INT32_MIN)) {
-        MS_LOG(WARNING) << "int64 data " << origin_data[i] << "too big to fit into int32";
-        tensor_data[i] = origin_data[i] > 0 ? INT32_MAX : INT32_MIN;
-      } else {
-        tensor_data[i] = static_cast<int>(origin_data[i]);
-      }
-    }
-  } else {
-    tensor_info_new->set_data_type(tensor_info->data_type());
-    auto *tensor_data = reinterpret_cast<int8_t *>(tensor_info_new->data_c());
-    if (tensor_data == nullptr) {
-      MS_LOG(ERROR) << "new data failed";
-      return nullptr;
-    }
-    if (memcpy_s(tensor_data, tensor_info_new->Size(), tensor_info->data_c(), tensor_info->Size()) != lite::RET_OK) {
-      MS_LOG(ERROR) << "memcpy data failed.";
-      return nullptr;
-    }
+
+  if (CopyTensorDataFromTensorInfo(tensor_info, tensor_info_new, static_cast<size_t>(data_count)) != RET_OK) {
+    MS_LOG(ERROR) << "copy tensor data failed";
+    return nullptr;
   }
+
   auto status = lite::InitParameterFromTensorInfo(param_node, tensor_info_new);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "init parameter from tensor info failed";
@@ -1012,6 +1054,7 @@ bool IsQuantParameterNode(const PrimitiveCPtr &prim) {
   }
   return false;
 }
+
 void UpdateManager(const FuncGraphPtr &func_graph) {
   auto manager = func_graph->manager();
   if (manager == nullptr) {
@@ -1025,6 +1068,63 @@ void UpdateManager(const FuncGraphPtr &func_graph) {
   for (auto &one_func_graph : all_func_graphs) {
     manager->AddFuncGraph(one_func_graph);
   }
+}
+
+std::pair<CNodePtr, int> GetRealCertainVarInput(const CNodePtr &cnode, size_t index) {
+  MS_CHECK_TRUE_MSG(cnode != nullptr, {}, "function's parameter is nullptr.");
+  MS_CHECK_TRUE_MSG(cnode->input(index) != nullptr, {}, "required input is nullptr");
+  auto real_input_cnode = cnode->input(index)->cast<CNodePtr>();
+  MS_CHECK_TRUE_MSG(real_input_cnode != nullptr, {}, "input node is not a cnode.");
+  int item_index = 0;
+  if (opt::CheckPrimitiveType(real_input_cnode, prim::kPrimTupleGetItem)) {
+    auto index_node = real_input_cnode->input(opt::kInputIndexTwo);
+    MS_CHECK_TRUE_MSG(index_node != nullptr, {}, "tuple_get_item's second input is nullptr.");
+    MS_CHECK_TRUE_MSG(index_node->isa<ValueNode>(), {}, "tuple_get_item's second input should be valuenode.");
+    auto index_ptr = index_node->cast<ValueNodePtr>()->value();
+    MS_CHECK_TRUE_MSG(index_ptr != nullptr, {}, "tuple_get_item's second input val is nullptr.");
+    auto value = CastToInt(index_ptr);
+    MS_CHECK_TRUE_MSG(value.size() == 1, {}, "tuple_get_item's second input is invalid.");
+    item_index = value.front();
+    MS_CHECK_TRUE_MSG(real_input_cnode->input(1) != nullptr, {}, "tuple_get_item's first input is nullptr");
+    real_input_cnode = real_input_cnode->input(1)->cast<CNodePtr>();
+    MS_CHECK_TRUE_MSG(real_input_cnode != nullptr, {}, "tuple_get_item first input is not cnode.");
+  }
+  return {real_input_cnode, item_index};
+}
+
+int DetermineCertainVarInputHasInferred(const CNodePtr &cnode, size_t index, bool *infer_succ) {
+  MS_CHECK_TRUE_MSG(cnode != nullptr && infer_succ != nullptr, RET_ERROR, "function's parameter is nullptr.");
+  auto var_input_info = GetRealCertainVarInput(cnode, index);
+  if (var_input_info.first == nullptr) {
+    MS_LOG(ERROR) << "cannot get the real var input.";
+    return RET_ERROR;
+  }
+  auto real_input_cnode = var_input_info.first;
+  auto item_index = var_input_info.second;
+  auto input_node_prim = GetValueNode<PrimitivePtr>((real_input_cnode->input(0)));
+  MS_CHECK_TRUE_MSG(input_node_prim != nullptr, RET_ERROR, "get primitive failed.");
+  *infer_succ = false;
+  auto value_ptr = input_node_prim->GetAttr(kInferDone);
+  if (value_ptr != nullptr) {
+    MS_CHECK_TRUE_MSG(value_ptr->isa<BoolImm>(), RET_ERROR, "value is not a boolean.");
+    *infer_succ = GetValue<bool>(value_ptr);
+  }
+  value_ptr = input_node_prim->GetAttr(kInferFlags);
+  if (value_ptr == nullptr) {
+    return RET_OK;
+  }
+  MS_CHECK_TRUE_MSG(value_ptr->isa<ValueSequeue>(), RET_ERROR, "infer flag should be a vector.");
+  auto value_sequence = value_ptr->cast<ValueSequeuePtr>();
+  auto elements = value_sequence->value();
+  MS_CHECK_TRUE_MSG(!elements.empty(), RET_ERROR, "infer_info has no content.");
+  auto first_element = elements.front();
+  MS_CHECK_TRUE_MSG(first_element != nullptr, RET_ERROR, "element is a nullptr.");
+  MS_CHECK_TRUE_MSG(first_element->isa<BoolImm>(), RET_ERROR, "each element is not a boolean.");
+  auto infer_infos = GetValue<std::vector<bool>>(value_ptr);
+  MS_CHECK_TRUE_MSG(item_index >= 0 && static_cast<size_t>(item_index) < infer_infos.size(), RET_ERROR,
+                    "item index is out of range.");
+  *infer_succ = infer_infos[item_index];
+  return RET_OK;
 }
 }  // namespace opt
 }  // namespace mindspore
