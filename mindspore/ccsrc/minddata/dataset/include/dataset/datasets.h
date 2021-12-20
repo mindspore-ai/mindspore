@@ -4280,6 +4280,68 @@ std::shared_ptr<TFRecordDataset> MS_API TFRecord(const std::vector<std::string> 
   return ds;
 }
 
+/// \class UDPOSDataset
+/// \brief A source dataset for reading and parsing UDPOS dataset.
+class MS_API UDPOSDataset : public Dataset {
+ public:
+  /// \brief Constructor of UDPOS Dataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] usage The type of data list txt file to be read, can be "train", "test", 'valid' or "all".
+  /// \param[in] num_samples The number of samples to be included in the dataset.
+  /// \param[in] shuffle The mode for shuffling data every epoch.
+  ///     Can be any of:
+  ///     ShuffleMode.kFalse - No shuffling is performed.
+  ///     ShuffleMode.kFiles - Shuffle files only.
+  ///     ShuffleMode.kGlobal - Shuffle both the files and samples.
+  /// \param[in] num_shards Number of shards that the dataset should be divided into.
+  /// \param[in] shard_id The shard ID within num_shards. This argument should be
+  ///     specified only when num_shards is also specified.
+  /// \param[in] cache Tensor cache to use.
+  UDPOSDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, int64_t num_samples,
+               ShuffleMode shuffle, int32_t num_shards, int32_t shard_id, const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Destructor of UDPOSDataset.
+  ~UDPOSDataset() = default;
+};
+
+/// \brief Function to create a UDPOSDataset.
+/// \note The generated dataset has three column ['word','universal','stanford'].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage Part of dataset of UDPOS, can be "train", "test", "valid" or "all" (default="all").
+/// \param[in] num_samples The number of samples to be included in the dataset
+///     (Default = 0, means all samples).
+/// \param[in] shuffle The mode for shuffling data every epoch. (Default=ShuffleMode.kGlobal)
+///     Can be any of:
+///     ShuffleMode::kFalse - No shuffling is performed.
+///     ShuffleMode::kFiles - Shuffle files only.
+///     ShuffleMode::kGlobal - Shuffle both the files and samples.
+/// \param[in] num_shards Number of shards that the dataset should be divided into (Default = 1).
+/// \param[in] shard_id The shard ID within num_shards. This argument should be
+///     specified only when num_shards is also specified (Default = 0).
+/// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
+/// \return Shared pointer to the UDPOSDataset.
+/// \par Example
+/// \code
+///      /* Define dataset path and MindData object */
+///      std::string folder_path = "/path/to/udpos_dataset_directory";
+///      std::shared_ptr<Dataset> ds = UDPOS(dataset_dir, "test", 0, ShuffleMode::kGlobal);
+///
+///      /* Create iterator to read dataset */
+///      std::shared_ptr<Iterator> iter = ds->CreateIterator();
+///      std::unordered_map<std::string, mindspore::MSTensor> row;
+///      iter->GetNextRow(&row);
+///
+///      /* Note: In UDPOS dataset, each dictionary has keys "word", "universal", "stanford" */
+///      auto word = row["word"];
+/// \endcode
+inline std::shared_ptr<UDPOSDataset> MS_API UDPOS(const std::string &dataset_dir, const std::string &usage = "all",
+                                                  int64_t num_samples = 0, ShuffleMode shuffle = ShuffleMode::kGlobal,
+                                                  int32_t num_shards = 1, int32_t shard_id = 0,
+                                                  const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<UDPOSDataset>(StringToChar(dataset_dir), StringToChar(usage), num_samples, shuffle,
+                                        num_shards, shard_id, cache);
+}
+
 /// \class USPSDataset
 /// \brief A source dataset that reads and parses USPS datasets.
 class MS_API USPSDataset : public Dataset {
