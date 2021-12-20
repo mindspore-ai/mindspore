@@ -30,6 +30,7 @@ from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops.operations import _quant_ops as Q
 from mindspore.ops.operations import nn_ops as nps
+from mindspore.ops.operations.random_ops import NonDeterministicInts
 from mindspore.nn.layer import normalization
 from mindspore._c_expression import security
 from tests.security_utils import security_off_wrap
@@ -2840,6 +2841,10 @@ test_case_image_ops = [
 ]
 
 test_case_other_ops = [
+    ('NonDeterministicInts', {
+        'block': NonDeterministicInts(dtype=mstype.int32),
+        'desc_inputs': [Tensor(np.array([2, 2]), mstype.int32)],
+        'skip': ['backward']}),
     ('ScalarLog', {
         'block': F.scalar_log,
         'desc_const': [0.0],

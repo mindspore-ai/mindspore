@@ -124,6 +124,7 @@ from .environ_destroy_all import _environ_destroy_all_aicpu
 from .cross import _cross_aicpu
 from .cummax import _cummax_aicpu
 from .floor_div import _floor_div_aicpu
+from .non_deterministic_ints import _non_deterministic_ints_aicpu
 from .one_hot import _one_hot_aicpu
 from .mul_no_nan import _mul_no_nan_aicpu
 from .priority_replay_buffer import _prb_create_op_cpu

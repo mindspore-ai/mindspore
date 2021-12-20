@@ -16,8 +16,59 @@
 
 from ..._checkparam import Validator, Rel
 from ...common import dtype as mstype
-from ..primitive import PrimitiveWithInfer, prim_attr_register
+from ..primitive import PrimitiveWithInfer, prim_attr_register, Primitive
 from .._utils import get_broadcast_shape
+
+
+class NonDeterministicInts(Primitive):
+    r"""
+    Generates some integers that match the given type.
+
+    Returns the tensor with the given shape, the random numbers in it drawn from the data range
+    that a given type can represent.
+
+    .. warning::
+        The value of "shape" must be greater than zero. The output length must be less than 1000000.
+
+    Args:
+        dtype (mindspore.dtype): The type of output. Its value must be one of the following types: mindspore.int32
+            and mindspore.int64. Default: mindspore.int64.
+
+    Inputs:
+        - **shape** (Tensor) - The shape of random tensor to be generated. Its type must be one of the following types:
+          mindspore.int32 and mindspore.int64.
+
+    Outputs:
+        Tensor. Its shape is spcified by the input `shape`. Its type is spcified by `dtype`.
+
+    Raises:
+        TypeError: If `shape` is not a Tensor.
+        TypeError: If `dtype` and input tensor type are not allowed.
+        ValueError: If `shape` has negative elements.
+        ValueError: If `shape` has less than 2 elements.
+        ValueError: If `shape` is not a 1-D tensor.
+        ValueError: If the number of elements of output is more than 1000000.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> shape = Tensor(np.array([2,2]), mstype.int32)
+        >>> ndints = ops.NonDeterministicInts(dtype=mstype.int32)
+        >>> output = ndints(shape)
+        >>> print(output)
+        [[13031056   -141954883 ]
+         [ 140364228  290834494 ]]
+    """
+
+    @prim_attr_register
+    def __init__(self, dtype=mstype.int64):
+        """Initialize NonDeterministicInts"""
+        self.dtype = dtype
+        self.add_prim_attr("max_length", 1000000)
+        self.init_prim_io_names(inputs=["shape"], outputs=["output"])
+        valid_values = (mstype.int32, mstype.int64)
+        Validator.check_type_name("dtype", dtype, valid_values, self.name)
 
 
 class StandardNormal(PrimitiveWithInfer):
