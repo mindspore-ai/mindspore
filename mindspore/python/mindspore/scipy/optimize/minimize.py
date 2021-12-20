@@ -69,14 +69,14 @@ def minimize(func, x0, args=(), *, method, tol=None, options=None):
         On GPU, the supported dtypes is float32.
 
     Args:
-      fun (Callable): the objective function to be minimized, ``fun(x, *args) -> float``,
-        where ``x`` is a 1-D array with shape ``(n,)`` and ``args`` is a tuple
+      fun (Callable): the objective function to be minimized, :math:`fun(x, *args) -> float`,
+        where `x` is a 1-D array with shape :math:`(n,)` and `args` is a tuple
         of the fixed parameters needed to completely specify the function.
-        ``fun`` must support differentiation.
-      x0 (Tensor): initial guess. Array of real elements of size ``(n,)``, where ``n`` is
+        `fun` must support differentiation.
+      x0 (Tensor): initial guess. Array of real elements of size :math:`(n,)`, where `n` is
         the number of independent variables.
       args (Tuple): extra arguments passed to the objective function.
-      method (str): solver type. Currently only ``"BFGS"`` is supported.
+      method (str): solver type. Currently only `"BFGS"` is supported.
       tol (float, optional): tolerance for termination. For detailed control, use solver-specific
         options.
       options (Mapping[str, Any], optional): a dictionary of solver options. All methods accept the following

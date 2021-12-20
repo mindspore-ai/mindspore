@@ -40,10 +40,10 @@ class SolveTriangular(PrimitiveWithInfer):
 
     Inputs:
         - **A** (Tensor) - A triangular matrix of shape :math:`(N, N)`.
-        - **b** (Tensor) - A tensor of shape :math:`(M,)` or :math:`(M, N)`. Right-hand side matrix in :math:`A x = b`.
+        - **b** (Tensor) - A Tensor of shape :math:`(M,)` or :math:`(M, N)`. Right-hand side matrix in :math:`A x = b`.
 
     Returns:
-        - **x** (Tensor) - A tensor of shape :math:`(M,)` or :math:`(M, N)`,
+        - **x** (Tensor) - A Tensor of shape :math:`(M,)` or :math:`(M, N)`,
             which is the solution to the system :math:`A x = b`.
             Shape of :math:`x` matches :math:`b`.
 
@@ -150,7 +150,7 @@ class CholeskySolver(PrimitiveWithInfer):
 
     Inputs:
         - **A** (Tensor) - A matrix of shape :math:`(M, M)` to be decomposed.
-        - **b** (Tensor) - A tensor of shape :math:`(M,)` or :math:`(..., M)`.
+        - **b** (Tensor) - A Tensor of shape :math:`(M,)` or :math:`(..., M)`.
                            Right-hand side matrix in :math:`A x = b`.
     Returns
     -------
