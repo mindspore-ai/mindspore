@@ -78,6 +78,7 @@ std::set<int64_t> GetDependsFormMap(const std::string &prim_name, size_t input_n
   static const auto &kNonDeterministicInts = prim::kPrimNonDeterministicInts->name();
   static const auto &kSliceGrad = prim::kPrimSliceGrad->name();
   static const auto &kReshape = prim::kPrimReshape->name();
+  static const auto &kTruncatedNormal = prim::kPrimTruncatedNormal->name();
   static const auto &kFillV2 = prim::kPrimFillV2->name();
   static const auto &kFractionalAvgPoolGrad = prim::kPrimFractionalAvgPoolGrad->name();
   // Common dynamic shape depends.
@@ -106,6 +107,7 @@ std::set<int64_t> GetDependsFormMap(const std::string &prim_name, size_t input_n
                                                         {kDynamicBroadcastTo, ShapeSet{1}},
                                                         {kNonDeterministicInts, ShapeSet{0}},
                                                         {kReduceSum, ShapeSet{1}},
+                                                        {kTruncatedNormal, ShapeSet{0}},
                                                         {kRaggedRange, ShapeSet{0, 1, 2}}};
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);

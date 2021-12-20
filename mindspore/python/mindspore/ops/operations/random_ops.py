@@ -71,6 +71,64 @@ class NonDeterministicInts(Primitive):
         Validator.check_type_name("dtype", dtype, valid_values, self.name)
 
 
+class TruncatedNormal(Primitive):
+    """
+    Returns a tensor of the specified shape filled with truncated normal values.
+
+    The generated values follow a normal distribution.
+
+    .. warning::
+        The value of "shape" must be greater than zero. The output length must be less than 1000000.
+
+    Args:
+        seed (int): An optional int. Defaults to 0. If either `seed` or `seed2` are set to be non-zero,
+            the seed is set by the given seed. Otherwise, it is seeded by a random seed.
+        seed2 (int): An optional int. Defaults to 0. A second seed to avoid seed collision.
+        dtype (mindspore.dtype): Must be one of the following types: mindspore.float16, mindspore.float32 and
+            mindspore.float64. Default: mindspore.float32.
+
+    Inputs:
+        - **shape** (Tensor) - The shape of random tensor to be generated. Its type must be one of the following types:
+          mindspore.int32 and mindspore.int64.
+
+    Outputs:
+        Tensor. Its shape is spcified by the input `shape`. Its type is spcified by `dtype`.
+        Its values are in [-2,2].
+
+    Raises:
+        TypeError: If `shape` is not a Tensor.
+        TypeError: If `dtype` and input tensor type are not allowed.
+        ValueError: If `shape` elements are not positive.
+        ValueError: If `shape` has less than 2 elements.
+        ValueError: If `shape` is not a 1-D tensor.
+        ValueError: If the number of elements of output is more than 1000000.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> shape = Tensor(np.array([2, 2]), mstype.int32)
+        >>> seed = 0
+        >>> seed2 = 0
+        >>> truncated_normal = ops.TruncatedNormal(seed=seed, seed2=seed2)
+        >>> output = truncated_normal(shape)
+        >>> print(output)
+        [[ -1.303105  0.641905 ]
+         [ -0.917926  0.650655 ]]
+    """
+
+    @prim_attr_register
+    def __init__(self, dtype=mstype.float32, seed=0, seed2=0):
+        """Initialize TruncatedNormal"""
+        self.dtype = dtype
+        self.add_prim_attr("max_length", 1000000)
+        self.init_prim_io_names(inputs=["shape"], outputs=["output"])
+        Validator.check_value_type('seed', seed, [int], self.name)
+        Validator.check_value_type('seed2', seed2, [int], self.name)
+        valid_values = (mstype.float16, mstype.float32, mstype.float64)
+        Validator.check_type_name("dtype", dtype, valid_values, self.name)
+
+
 class StandardNormal(PrimitiveWithInfer):
     r"""
     Generates random numbers according to the standard Normal (or Gaussian) random number distribution.

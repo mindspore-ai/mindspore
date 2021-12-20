@@ -34,6 +34,7 @@ from mindspore.ops.operations.math_ops import BesselK0, BesselK1, BesselK0e, Bes
 from mindspore.ops.operations import nn_ops as nps
 from mindspore.ops.operations.array_ops import Tril
 from mindspore.ops.operations.random_ops import NonDeterministicInts
+from mindspore.ops.operations.random_ops import TruncatedNormal
 from mindspore.ops.operations.array_ops import Triu
 from mindspore.ops.operations.array_ops import MatrixDiagV3
 from mindspore.ops.operations.array_ops import MatrixDiagPartV3
@@ -1469,12 +1470,6 @@ test_case_math_ops = [
         'block': P.Sub(),
         'desc_inputs': [[3], [3]],
         'desc_bprop': [[3]]}),
-    ('TruncatedNormal', {
-        'block': P.TruncatedNormal(),
-        'desc_const': [(1, 2, 3)],
-        'desc_inputs': [],
-        'skip': ['backward'],
-        'add_fake_input': True}),
     ('Select', {
         'block': P.Select(),
         'desc_inputs': [Tensor(np.array([[True, False, False], [False, True, True]])),
@@ -3052,6 +3047,10 @@ test_case_image_ops = [
 test_case_other_ops = [
     ('NonDeterministicInts', {
         'block': NonDeterministicInts(dtype=mstype.int32),
+        'desc_inputs': [Tensor(np.array([2, 2]), mstype.int32)],
+        'skip': ['backward']}),
+    ('TruncatedNormal', {
+        'block': TruncatedNormal(dtype=mstype.float32, seed=1, seed2=1),
         'desc_inputs': [Tensor(np.array([2, 2]), mstype.int32)],
         'skip': ['backward']}),
     ('ScalarLog', {
