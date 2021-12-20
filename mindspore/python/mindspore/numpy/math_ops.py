@@ -4132,7 +4132,7 @@ def multi_dot(arrays):
     Computes the dot product of two or more arrays in a single function call, while automatically
     selecting the fastest evaluation order.
     multi_dot chains numpy.dot and uses optimal parenthesization of the matrices. For more
-    information, refer to the `wiki page <en.wikipedia.org/wiki/Matrix_chain_multiplication>`_.
+    information, refer to the `wiki page <https://en.wikipedia.org/wiki/Matrix_chain_multiplication>`_.
     Depending on the shapes of the matrices, this can speed up the multiplication a lot.
     If the first argument is 1-D it is treated as a row vector. If the last argument is 1-D it
     is treated as a column vector. The other arguments must be 2-D.
