@@ -203,6 +203,7 @@ from .less_ds import _less_ds_tbe
 from .less_equal import _less_equal_tbe
 from .less_equal_ds import _less_equal_ds_tbe
 from .logical_and import _logical_and_tbe
+from .logical_and_ds import _logical_and_ds_tbe
 from .logical_not import _logical_not_tbe
 from .logical_not_ds import _logical_not_ds_tbe
 from .logical_or import _logical_or_tbe
