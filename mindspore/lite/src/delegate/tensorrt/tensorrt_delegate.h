@@ -35,8 +35,12 @@ typedef TensorRTOp *(*TensorRTGetOp)(const schema::Primitive *primitive,
 
 class TensorRTDelegate : public Delegate {
  public:
-  explicit TensorRTDelegate(mindspore::Context *context, const std::string &cache_model_path, size_t vocab_size)
-      : context_(context), cache_model_path_(cache_model_path), vocab_size_(vocab_size) {}
+  explicit TensorRTDelegate(mindspore::Context *context, const std::string &cache_model_path, size_t vocab_size,
+                            size_t device_cache_size)
+      : context_(context),
+        cache_model_path_(cache_model_path),
+        vocab_size_(vocab_size),
+        device_cache_size_(device_cache_size) {}
 
   ~TensorRTDelegate() override;
 
@@ -45,6 +49,8 @@ class TensorRTDelegate : public Delegate {
   Status Build(DelegateModel<schema::Primitive> *model) override;
 
  private:
+  Status BuildSubGraph(DelegateModel<schema::Primitive> *model);
+  void CheckSupportResize(schema::PrimitiveType type);
   TensorRTOp *FindTensorRTOp(kernel::Kernel *kernel, const schema::Primitive *primitive);
 
   TensorRTSubGraph *CreateTensorRTGraph(const std::vector<TensorRTOp *> &ops, DelegateModel<schema::Primitive> *model,
@@ -67,6 +73,7 @@ class TensorRTDelegate : public Delegate {
   bool support_resize_{true};
   const std::string cache_model_path_;
   size_t vocab_size_;
+  size_t device_cache_size_;
   std::shared_ptr<cache::EmbeddingCacheManager> cache_mgr_{nullptr};
 
   cudaStream_t stream_;

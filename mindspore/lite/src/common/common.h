@@ -55,6 +55,7 @@ static const int32_t DIM_DEFAULT_SIZE = 4;
 static const char *const kMSCache = "ms_cache";
 static const char *const kMSCacheModelPath = "cache_model_path";
 static const char *const kMSCacheVocabSize = "vocab_size";
+static const char *const kMSCacheDeviceSize = "device_cache_size";
 }  // namespace lite
 }  // namespace mindspore
 

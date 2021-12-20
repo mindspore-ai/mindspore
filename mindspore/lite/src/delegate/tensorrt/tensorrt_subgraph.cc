@@ -359,8 +359,8 @@ int TensorRTSubGraph::Prepare() {
 
   // malloc for cache weight tensor
   for (auto cache_tensor : cache_const_inputs_) {
-    auto data_size = cache_tensor.DataSize();
-    auto device_ptr = runtime_->GetAllocator()->MallocDeviceMem(cache_tensor, cache_tensor.DataSize());
+    size_t data_size = cache_mgr_->GetCacheDataSize(cache_tensor);
+    auto device_ptr = runtime_->GetAllocator()->MallocDeviceMem(cache_tensor, data_size);
     runtime_->GetAllocator()->SyncMemInHostAndDevice(cache_tensor, cache_tensor.Name().c_str(), true);
     runtime_->GetAllocator()->MarkMemValid(cache_tensor.Name().c_str(), true);
     int index = this->engine_->getBindingIndex(cache_tensor.Name().c_str());
@@ -596,9 +596,10 @@ int TensorRTSubGraph::HandleCacheTensor(TensorRTOp *cur_op, const mindspore::MST
   FindCacheTensorInfo(cur_op, in_tensor);
   // cache kernel weight tensor
   cache_const_inputs_.push_back(in_tensor);
+  auto shape = cache_mgr_->GetCacheShape(in_tensor);
   MS_LOG(INFO) << "auto add cache constant tensor for: " << in_tensor.Name();
   auto cuda_dtype = ConvertDataType(in_tensor.DataType());
-  nvinfer1::Dims input_dims = ConvertCudaDims(in_tensor.Shape());
+  nvinfer1::Dims input_dims = ConvertCudaDims(shape);
   nvinfer1::ITensor *cache_input = network_->addInput(in_tensor.Name().c_str(), cuda_dtype, input_dims);
   if (cache_input == nullptr) {
     MS_LOG(ERROR) << "add cache Weight Tensor data is nullptr.";

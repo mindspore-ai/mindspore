@@ -22,9 +22,9 @@
 
 namespace mindspore {
 namespace cache {
-Status EmbeddingCacheManager::Init(const std::string &cache_model_path, size_t vocab_size) {
-  if (cache_model_path.empty()) {
-    MS_LOG(INFO) << "no cache model ";
+Status EmbeddingCacheManager::Init(const std::string &cache_model_path, size_t vocab_size, size_t device_cache_size) {
+  if (cache_model_path.empty() || vocab_size == 0 || device_cache_size >= vocab_size) {
+    MS_LOG(INFO) << "no cache model ,  vocab_size " << vocab_size << ",  device_cache_size " << device_cache_size;
     return kSuccess;
   }
 
@@ -34,8 +34,39 @@ Status EmbeddingCacheManager::Init(const std::string &cache_model_path, size_t v
     return kLiteMemoryFailed;
   }
   auto ret = host_cache_model_->LoadCache(cache_model_path);
+  if (ret != kSuccess) {
+    MS_LOG(ERROR) << "load cache failed";
+    return ret;
+  }
   vocab_size_ = vocab_size;
-  MS_LOG(INFO) << "cache manager init end, ret " << ret.ToString();
+  device_cache_size_ = device_cache_size;
+
+  MS_LOG(INFO) << "cache manager init succ, cache model" << cache_model_path << " ,  vocab_size " << vocab_size
+               << ",  device_cache_size " << device_cache_size;
+  return ret;
+}
+
+Status EmbeddingCacheManager::Init(DelegateModel<schema::Primitive> *model, size_t vocab_size,
+                                   size_t device_cache_size) {
+  if (model == nullptr || vocab_size == 0 || device_cache_size >= vocab_size) {
+    MS_LOG(INFO) << "no cache model ,  vocab_size " << vocab_size << ",  device_cache_size " << device_cache_size;
+    return kSuccess;
+  }
+
+  host_cache_model_ = std::make_shared<HostCacheModel>();
+  if (host_cache_model_ == nullptr) {
+    MS_LOG(ERROR) << "HostCacheModel malloc failed";
+    return kLiteMemoryFailed;
+  }
+  auto ret = host_cache_model_->LoadCache(model);
+  if (ret != kSuccess) {
+    MS_LOG(ERROR) << "load cache failed";
+    return ret;
+  }
+  vocab_size_ = vocab_size;
+  device_cache_size_ = device_cache_size;
+
+  MS_LOG(INFO) << "cache manager init succ,  vocab_size " << vocab_size << ",  device_cache_size " << device_cache_size;
   return ret;
 }
 
@@ -70,14 +101,17 @@ Status EmbeddingCacheManager::InitCacheKernel(kernel::Kernel *kernel, uint32_t d
     return kLiteError;
   }
   size_t vocab_size = vocab_size_;
-  size_t host_cache_size = host_cache_tensor.ElementNum();
-  size_t device_cache_size = tensor.Shape()[0];
+  size_t host_cache_size = host_cache_tensor.Shape()[0];
   size_t embedding_size_ = tensor.Shape()[1];
   DataType data_type = tensor.DataType();
   size_t batch_elements = kernel->inputs()[1].ElementNum();
-  auto cache =
-    std::make_shared<EmbeddingCache>(vocab_size, host_cache_size, device_cache_size, embedding_size_, batch_elements,
-                                     data_type, host_cache_tensor.MutableData(), rank_id_, rank_group_size_);
+  size_t device_start_index = device_cache_size_ * rank_id_;
+  if (tensor.Shape()[0] == host_cache_tensor.Shape()[0]) {
+    device_start_index = rank_id_ * static_cast<int>(std::ceil(static_cast<float>(vocab_size_) / rank_group_size_));
+  }
+  auto cache = std::make_shared<EmbeddingCache>(vocab_size, host_cache_size, device_cache_size_, device_start_index,
+                                                embedding_size_, batch_elements, data_type,
+                                                host_cache_tensor.MutableData(), rank_id_, rank_group_size_);
   if (cache == nullptr) {
     MS_LOG(ERROR) << kernel->name() << ": malloc EmbeddingCache failed";
     return kLiteError;
@@ -105,6 +139,23 @@ bool EmbeddingCacheManager::IsCacheTensor(mindspore::MSTensor tensor) {
     return true;
   }
   return false;
+}
+
+std::vector<int64_t> EmbeddingCacheManager::GetCacheShape(mindspore::MSTensor tensor) {
+  std::vector<int64_t> shape = tensor.Shape();
+  if (shape.size() > 0 && IsCacheTensor(tensor)) {
+    shape[0] = device_cache_size_;
+  }
+  return shape;
+}
+
+size_t EmbeddingCacheManager::GetCacheDataSize(mindspore::MSTensor tensor) {
+  auto data_size = tensor.DataSize();
+  auto &shape = tensor.Shape();
+  if (shape.size() > 0 && IsCacheTensor(tensor) && shape[0] > 0) {
+    data_size = data_size * device_cache_size_ / shape[0];
+  }
+  return data_size;
 }
 
 Status EmbeddingCacheManager::SetDeviceCacheAddr(const std::string &tensor_name, void *device_mem_addr, size_t size) {

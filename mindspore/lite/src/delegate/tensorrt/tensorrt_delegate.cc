@@ -146,7 +146,7 @@ Status TensorRTDelegate::Init() {
     MS_LOG(ERROR) << "malloc EmbeddingCacheManager failed.";
     return kLiteMemoryFailed;
   }
-  auto cache_ret = cache_mgr_->Init(cache_model_path_, vocab_size_);
+  auto cache_ret = cache_mgr_->Init(cache_model_path_, vocab_size_, device_cache_size_);
   if (cache_ret != mindspore::kSuccess) {
     MS_LOG(ERROR) << "cache_mgr_ init failed.";
     return cache_ret;
@@ -155,40 +155,37 @@ Status TensorRTDelegate::Init() {
   return mindspore::kSuccess;
 }
 
-Status TensorRTDelegate::Build(DelegateModel<schema::Primitive> *model) {
-  int ret = lite::SetCudaDevice(device_info_);
-  if (ret != RET_OK) {
-    return mindspore::kLiteError;
+void TensorRTDelegate::CheckSupportResize(schema::PrimitiveType type) {
+  if (support_resize_) {
+    auto opt_iter = unsupport_resize_op_list_.find(type);
+    if (opt_iter != unsupport_resize_op_list_.end()) {
+      support_resize_ = false;
+      support_hw_resize_ = false;
+      MS_LOG(INFO) << "network has op don't support resize, op: " << type;
+      return;
+    }
   }
+  if (support_hw_resize_) {
+    auto opt_iter = unsupport_hw_op_lists_.find(type);
+    if (opt_iter != unsupport_hw_op_lists_.end()) {
+      support_hw_resize_ = false;
+      MS_LOG(INFO) << "network has op don't support hw resize, op: " << type;
+    }
+  }
+}
+
+Status TensorRTDelegate::BuildSubGraph(DelegateModel<schema::Primitive> *model) {
   KernelIter from, end;
   std::vector<TensorRTOp *> tensorrt_ops;
   for (KernelIter iter = model->BeginKernelIterator(); iter != model->EndKernelIterator(); iter++) {
     kernel::Kernel *kernel = *iter;
-    if (support_resize_) {
-      for (auto no_type : unsupport_resize_op_list_) {
-        if (model->GetPrimitive(kernel)->value_type() == no_type) {
-          support_resize_ = false;
-          support_hw_resize_ = false;
-          MS_LOG(INFO) << "network has op don't support resize.";
-          continue;
-        }
-      }
-    }
-    if (support_hw_resize_) {
-      for (auto no_type : unsupport_hw_op_lists_) {
-        if (model->GetPrimitive(kernel)->value_type() == no_type) {
-          support_hw_resize_ = false;
-          MS_LOG(INFO) << "network has op don't support hw resize.";
-          continue;
-        }
-      }
-    }
+    CheckSupportResize(model->GetPrimitive(kernel)->value_type());
     auto tensorrt_op = FindTensorRTOp(kernel, model->GetPrimitive(kernel));
     if (tensorrt_op != nullptr) {
       if (cache_mgr_->CheckIsCacheKernel(kernel)) {
         auto cache_ret = cache_mgr_->InitCacheKernel(kernel, device_info_->GetDeviceID(), &stream_);
         if (cache_ret != kSuccess) {
-          MS_LOG(INFO) << "InitCacheKernel failed " << kernel->name();
+          MS_LOG(ERROR) << "InitCacheKernel failed " << kernel->name();
           return cache_ret;
         }
       }
@@ -215,12 +212,34 @@ Status TensorRTDelegate::Build(DelegateModel<schema::Primitive> *model) {
   if (tensorrt_ops.size() > 0) {
     auto tensorrt_subgraph = CreateTensorRTGraph(tensorrt_ops, model, from, end);
     if (tensorrt_subgraph == nullptr) {
-      MS_LOG(DEBUG) << "Create TensorRT Graph failed.";
+      MS_LOG(ERROR) << "Create TensorRT Graph failed.";
       return mindspore::kLiteNullptr;
     }
     model->Replace(from, end + 1, tensorrt_subgraph);
     tensorrt_ops.clear();
   }
+  return mindspore::kSuccess;
+}
+
+Status TensorRTDelegate::Build(DelegateModel<schema::Primitive> *model) {
+  int ret = lite::SetCudaDevice(device_info_);
+  if (ret != RET_OK) {
+    return mindspore::kLiteError;
+  }
+  if (cache_model_path_.empty() && vocab_size_ > 0) {
+    auto cache_ret = cache_mgr_->Init(model, vocab_size_, device_cache_size_);
+    if (cache_ret != mindspore::kSuccess) {
+      MS_LOG(ERROR) << "cache_mgr_ init failed.";
+      return cache_ret;
+    }
+  }
+
+  auto build_ret = BuildSubGraph(model);
+  if (build_ret != kSuccess) {
+    MS_LOG(INFO) << "BuildSubGraph failed";
+    return build_ret;
+  }
+
   return mindspore::kSuccess;
 }
 

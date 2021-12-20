@@ -20,6 +20,7 @@
 #include <vector>
 #include "src/delegate/parameter_cache/load_host_cache_model.h"
 #include "src/common/log_adapter.h"
+#include "src/common/common.h"
 #include "include/errorcode.h"
 #include "src/common/file_utils.h"
 
@@ -77,6 +78,45 @@ Status HostCacheModel::LoadCache(const std::string &model_path) {
     }
   }
   return kSuccess;
+}
+
+size_t GetVocabSize(kernel::Kernel *kernel) {
+  size_t vocab_size = 0;
+  auto cache_config = kernel->GetConfig(lite::kMSCache);
+  auto vocab_size_iter = cache_config.find(lite::kMSCacheVocabSize);
+  if (vocab_size_iter == cache_config.end()) {
+    return vocab_size;
+  }
+
+  auto vocab_size_opt = lite::GenericParseValue<size_t>(vocab_size_iter->second);
+  if (!vocab_size_opt.IsNone()) {
+    vocab_size = vocab_size_opt.Get();
+  }
+  return vocab_size;
+}
+
+Status HostCacheModel::LoadCache(DelegateModel<schema::Primitive> *model) {
+  KernelIter from, end;
+  for (KernelIter iter = model->BeginKernelIterator(); iter != model->EndKernelIterator(); iter++) {
+    kernel::Kernel *kernel = *iter;
+    // only support embedding cache
+    if (kernel->type() != schema::PrimitiveType_Gather) {
+      continue;
+    }
+    MS_ASSERT(kernel->inputs.size() == 3);
+    auto tensor = kernel->inputs()[0];
+    if (tensor.Data() == nullptr) {
+      continue;
+    }
+
+    size_t vocab_size = GetVocabSize(kernel);
+    if (vocab_size == 0) {
+      continue;
+    }
+
+    cache_tensor_[tensor.Name()] = tensor;
+  }
+  return mindspore::kSuccess;
 }
 
 bool HostCacheModel::CheckIsCacheKernel(kernel::Kernel *kernel) {
