@@ -41,7 +41,8 @@ bool IsParameterOrValueNode(const AnfNodePtr &node) {
 }
 
 // NodeUsersMap, for node B input i use node A, it will be one item in map with key: A, and value: (B, i)
-bool IsNodeOutPutUsedByOtherRealKernel(const FuncGraphPtr &graph, const AnfNodePtr &input) {
+bool IsNodeOutPutUsedByOtherRealKernel(const FuncGraphPtr &graph, const AnfNodePtr &input, size_t input_idx,
+                                       const CNodePtr &cur_node) {
   auto manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
   auto &node_users = manager->node_users();
@@ -56,8 +57,9 @@ bool IsNodeOutPutUsedByOtherRealKernel(const FuncGraphPtr &graph, const AnfNodeP
   }
   for (const auto &node_pair : user_items) {
     auto node = node_pair.first;
+    auto idx = node_pair.second;
     MS_EXCEPTION_IF_NULL(node);
-    if (AnfUtils::IsRealKernel(node) && !AnfAlgo::IsCommunicationOp(node)) {
+    if (AnfUtils::IsRealKernel(node) && node != cur_node && idx != SizeToInt(input_idx)) {
       MS_LOG(INFO) << "This node only used other real kernel: " << node->fullname_with_scope();
       return true;
     }
@@ -68,7 +70,7 @@ bool IsNodeOutPutUsedByOtherRealKernel(const FuncGraphPtr &graph, const AnfNodeP
 }  // namespace
 
 bool InsertTensorMoveForHcclOp::NeedInsertTensorMove(const FuncGraphPtr &graph, const AnfNodePtr &input,
-                                                     const CNodePtr &cur_node) const {
+                                                     size_t input_idx, const CNodePtr &cur_node) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(input);
   MS_EXCEPTION_IF_NULL(cur_node);
@@ -98,13 +100,13 @@ bool InsertTensorMoveForHcclOp::NeedInsertTensorMove(const FuncGraphPtr &graph, 
   // example3: NodeA --> NopNode --> Allreduce
   //                             --> other RealNode(!Allreude)
   // when input is used by others
-  if (IsNodeOutPutUsedByOtherRealKernel(graph, input)) {
+  if (IsNodeOutPutUsedByOtherRealKernel(graph, input, input_idx, cur_node)) {
     return true;
   }
   if (opt::IsNopNode(real_input)) {
     auto cnode = real_input->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
-    return NeedInsertTensorMove(graph, cnode->input(1), cur_node);
+    return NeedInsertTensorMove(graph, cnode->input(1), input_idx, cur_node);
   }
   return false;
 }
@@ -116,7 +118,7 @@ void InsertTensorMoveForHcclOp::InsertTensorMove(const FuncGraphPtr &graph, cons
   std::vector<AnfNodePtr> new_inputs = {hccl_node->input(0)};
   for (size_t i = 1; i < hccl_node->size(); ++i) {
     auto input = hccl_node->input(i);
-    if (NeedInsertTensorMove(graph, input, hccl_node)) {
+    if (NeedInsertTensorMove(graph, input, i, hccl_node)) {
       auto tensor_move = CreateTensorMoveOp(graph, input);
       if (tensor_move == nullptr) {
         MS_LOG(EXCEPTION) << "Create tensor_move op failed.";
