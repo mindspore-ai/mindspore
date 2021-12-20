@@ -124,6 +124,10 @@ class KernelRuntime {
   virtual DeviceAddressPtr GetInternalDeviceAddress(const session::KernelGraph &graph, const AnfNodePtr &node) {
     return nullptr;
   }
+  virtual void GetShadowBackendNodeMap(const session::KernelGraph &graph,
+                                       std::map<AnfNodePtr, AnfNodePtr> *shadow_backend_node_map) {
+    return;
+  }
 
   // add for MindRT
   std::shared_ptr<MemoryManager> GetMemoryManager() { return mem_manager_; }
@@ -151,6 +155,8 @@ class KernelRuntime {
   virtual void KernelLaunchProfiling(const std::string &kernel_name) {}
 
  private:
+  void GetDeviceAddress(const AnfNodePtr &item, const std::map<AnfNodePtr, AnfNodePtr> shadow_backend_node_map,
+                        size_t index, uint32_t graph_id, DeviceAddressPtr *device_address);
   void UseMemSchedulerIfNeeded(const session::KernelGraph &graph);
   bool LaunchKernel(const session::KernelGraph &graph, const AnfNodePtr &kernel,
                     const std::shared_ptr<MemScheduler> &mem_scheduler, bool mock = false);

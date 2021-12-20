@@ -61,7 +61,8 @@ void CPUSession::Init(uint32_t device_id) {
   InitExecutor(kCPUDevice, device_id);
 }
 
-ParameterPtr CPUSession::CreateNewParameterFromParameter(const AnfNodePtr &anf, KernelGraph *graph) {
+ParameterPtr CPUSession::CreateNewParameterFromParameter(const AnfNodePtr &anf, KernelGraph *graph,
+                                                         const std::string &) {
   MS_EXCEPTION_IF_NULL(anf);
   MS_EXCEPTION_IF_NULL(graph);
   if (!anf->isa<Parameter>()) {

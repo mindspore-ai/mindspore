@@ -156,7 +156,7 @@ class KernelGraph : public FuncGraph {
   // get backend anf by front anf
   AnfNodePtr GetBackendAnfByFrontAnf(const AnfNodePtr &front_anf);
   // get front anf by backend anf
-  AnfNodePtr GetFrontAnfByBackendAnf(const AnfNodePtr &backend_anf);
+  AnfNodePtr GetFrontAnfByBackendAnf(const AnfNodePtr &backend_anf) const;
   // check backend node whether exist in map
   bool BackendNodeExistInFrontBackendMap(const AnfNodePtr &backend_anf);
   // get value node by tensor

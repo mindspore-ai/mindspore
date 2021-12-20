@@ -800,7 +800,7 @@ AnfNodePtr KernelGraph::GetBackendAnfByFrontAnf(const AnfNodePtr &front_anf) {
   return iter->second;
 }
 
-AnfNodePtr KernelGraph::GetFrontAnfByBackendAnf(const AnfNodePtr &backend_anf) {
+AnfNodePtr KernelGraph::GetFrontAnfByBackendAnf(const AnfNodePtr &backend_anf) const {
   auto iter = backend_front_anf_map_.find(backend_anf);
   if (iter == backend_front_anf_map_.end()) {
     return nullptr;

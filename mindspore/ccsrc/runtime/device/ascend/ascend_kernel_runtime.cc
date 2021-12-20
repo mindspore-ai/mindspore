@@ -775,6 +775,22 @@ void AscendKernelRuntime::SetKernelModStream(const std::vector<CNodePtr> &kernel
                        [](const std::pair<void *, size_t> &item) { return item.second; });
 }
 
+void AscendKernelRuntime::GetShadowBackendNodeMap(const session::KernelGraph &graph,
+                                                  std::map<AnfNodePtr, AnfNodePtr> *shadow_backend_node_map) {
+  auto input_nodes = graph.input_nodes();
+  for (auto &node : input_nodes) {
+    auto front_node = AnfAlgo::FetchFrontNodeByBackendNode(node, graph);
+    for (auto &knode : input_nodes) {
+      if (knode == node) break;
+      if (!AnfAlgo::IsTupleOutput(front_node) && front_node != nullptr &&
+          front_node == AnfAlgo::FetchFrontNodeByBackendNode(knode, graph)) {
+        shadow_backend_node_map->emplace(node, knode);
+        break;
+      }
+    }
+  }
+}
+
 DeviceAddressPtr AscendKernelRuntime::GetInternalDeviceAddress(const session::KernelGraph &graph,
                                                                const AnfNodePtr &node) {
   auto front_node = graph.GetFrontNodeByInternalParameter(node);
@@ -789,9 +805,13 @@ DeviceAddressPtr AscendKernelRuntime::GetInternalDeviceAddress(const session::Ke
     if (graph_output.first == nullptr) {
       continue;
     }
+    if (!AnfAlgo::OutputAddrExist(graph_output.first, 0)) {
+      return nullptr;
+    }
     auto output_device_address = AnfAlgo::GetMutableOutputAddr(graph_output.first, 0);
     MS_EXCEPTION_IF_NULL(output_device_address);
-    if (output_device_address->DeviceType() == DeviceAddressType::kAscend) {
+    if (output_device_address->GetPtr() != nullptr &&
+        output_device_address->DeviceType() == DeviceAddressType::kAscend) {
       return output_device_address;
     }
   }
