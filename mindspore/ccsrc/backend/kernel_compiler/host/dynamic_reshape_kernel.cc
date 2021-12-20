@@ -97,8 +97,8 @@ void DynamicReshapeKernel::Execute() {
   size_t input_size_byte = LongToSize(arr_prod) * abstract::TypeIdSize(type_x);
   auto output_addr = AnfAlgo::GetOutputAddr(cnode, 0);
   MS_EXCEPTION_IF_NULL(output_addr);
-  if (!output_addr->SyncDeviceToDevice(output_shapes, input_size_byte, address_x->type_id(), address_x->GetPtr(),
-                                       address_x->format())) {
+  if (!output_addr->SyncDeviceToDeviceWithSameFormatType(output_shapes, input_size_byte, address_x->type_id(),
+                                                         address_x->GetPtr(), address_x->format())) {
     MS_LOG(EXCEPTION) << "Host Reshape sync device to device failed.";
   }
   MS_LOG(INFO) << "Execute host ReshapeKernel End";

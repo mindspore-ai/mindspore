@@ -39,10 +39,12 @@ class DeviceSync {
   virtual bool SyncDeviceToHost(const ShapeVector &shape, size_t size, TypeId type, void *host_ptr) const = 0;
   virtual bool SyncHostToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *host_ptr,
                                 const std::string &format = "DefaultFormat") const = 0;
-  virtual bool SyncDeviceToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *src_ptr,
-                                  const std::string &format) const {
+  virtual bool SyncDeviceToDevice(const DeviceSync *src_device_addr) const { return true; }
+  virtual bool SyncDeviceToDeviceWithSameFormatType(const ShapeVector &shape, size_t size, TypeId type,
+                                                    const void *src_ptr, const std::string &format) const {
     return true;
   }
+  virtual bool SyncDeviceToDeviceWithDiffFormatType(const DeviceSync *src_device_addr) const { return true; }
   virtual bool AsyncDeviceToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *src_ptr,
                                    const std::string &format) const {
     return true;

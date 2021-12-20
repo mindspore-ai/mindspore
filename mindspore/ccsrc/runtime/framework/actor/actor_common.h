@@ -210,8 +210,6 @@ KernelTransformType FetchKernelTransformType(const AnfNodePtr &node, const Kerne
                                              GraphExecutionStrategy strategy = GraphExecutionStrategy::kPipeline);
 std::string FetchActorName(KernelTransformType kernel_type, const std::string &actor_set_name,
                            const AnfNodePtr &node = nullptr, const KernelGraphPtr &graph = nullptr);
-
-bool NeedSyncByTensor(const DeviceTensor *dst_device_tensor, const DeviceTensor *src_device_tensor);
 }  // namespace runtime
 }  // namespace mindspore
 

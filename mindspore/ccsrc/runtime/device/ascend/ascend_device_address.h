@@ -52,8 +52,10 @@ class AscendDeviceAddress : public DeviceAddress {
                         const std::string &format = "DefaultFormat") const override;
   bool AsyncDeviceToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *src_ptr,
                            const std::string &format) const override;
-  bool SyncDeviceToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *src_ptr,
-                          const std::string &format) const override;
+  bool SyncDeviceToDeviceWithSameFormatType(const ShapeVector &shape, size_t size, TypeId type, const void *src_ptr,
+                                            const std::string &format) const override;
+  bool SyncDeviceToDeviceWithDiffFormatType(const DeviceSync *src_device_addr) const override;
+  bool SyncDeviceToDevice(const DeviceSync *src_device_addr) const override;
   void ClearDeviceMemory() override;
   DeviceAddressType DeviceType() const override { return DeviceAddressType::kAscend; }
 #ifndef ENABLE_SECURITY
