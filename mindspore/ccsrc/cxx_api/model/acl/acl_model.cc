@@ -33,15 +33,23 @@ Status AclModel::Build() {
     return kSuccess;
   }
 
+  std::shared_ptr<AclModelOptions> options = std::make_shared<AclModelOptions>(model_context_);
+  MS_EXCEPTION_IF_NULL(options);
+
   if (graph_cell_ == nullptr && graph_->ModelType() == ModelType::kOM) {
-    MS_LOG(INFO) << "Note: Load om model and all build options will be ignored.";
+    MS_LOG(INFO) << "Load om model and all build options will be ignored.";
     graph_cell_ = std::make_shared<GraphCell>(graph_);
     MS_EXCEPTION_IF_NULL(graph_cell_);
+    auto ret = graph_cell_->Load(options->GetDeviceID());
+    if (ret != kSuccess) {
+      MS_LOG(ERROR) << "Load failed.";
+      return ret;
+    }
+
+    options_ = std::move(options);
     return kSuccess;
   }
 
-  std::shared_ptr<AclModelOptions> options = std::make_shared<AclModelOptions>(model_context_);
-  MS_EXCEPTION_IF_NULL(options);
   std::string options_key = options->GenAclOptionsKey();
   std::shared_ptr<Graph> graph;
   if (auto iter = dynamic_size_graph_map_.find(options_key); iter != dynamic_size_graph_map_.end()) {
