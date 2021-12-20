@@ -16,7 +16,6 @@
 
 
 from .addn import AddN
-from .assign_add import AssignAdd
 from .batchnorm import BatchNorm
 from .batchnorm_grad import BatchNormGrad
 from .bias_add_grad import BiasAddGrad
@@ -34,8 +33,6 @@ from .gelu import GeLU
 from .gelu_grad import GeLUGrad
 from .gkdropout import GkDropout
 from .identity import Identity
-from .lamb_apply_optimizer_assign import LambApplyOptimizerAssign
-from .lamb_apply_weight_assign import LambApplyWeightAssign
 from .layernorm import LayerNorm
 from .layernorm_grad import LayerNormGrad
 from .logsoftmax import LogSoftmax

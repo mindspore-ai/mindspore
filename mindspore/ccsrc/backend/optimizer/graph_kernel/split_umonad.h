@@ -27,7 +27,7 @@ class SplitAssign : public opt::PatternProcessPass {
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 };
 
-class OpUMonadExpander : public PyExpander {
+class OpUMonadExpander : public DefaultExpander {
  public:
   explicit OpUMonadExpander(size_t input_idx) : input_idx_(input_idx) {}
   ~OpUMonadExpander() = default;

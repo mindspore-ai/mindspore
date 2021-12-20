@@ -204,7 +204,6 @@ ExpanderPtr GraphKernelExpanderWithPy::GetExpander(const AnfNodePtr &node) {
   std::vector<std::pair<PrimitivePtr, ExpanderPtr>> expanders = {
     {prim::kPrimDropout, std::make_shared<DropoutExpander>()},
     {prim::kPrimAssignAdd, std::make_shared<OpUMonadExpander>(kAssignInputIdx)},
-    {prim::kPrimAssignSub, std::make_shared<OpUMonadExpander>(kAssignInputIdx)},
     {prim::kLambApplyOptimizerAssign, std::make_shared<OpUMonadExpander>(kLambOptimizerInputIdx)},
     {prim::kLambApplyWeightAssign, std::make_shared<OpUMonadExpander>(kLambWeightInputIdx)},
     {prim::kPrimStandardNormal, std::make_shared<OpUMonadExpander>(kRandomInputIdx)},
