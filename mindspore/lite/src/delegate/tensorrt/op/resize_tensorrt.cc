@@ -86,6 +86,10 @@ int ResizeTensorRT::SetOutputDims(nvinfer1::ITensor *resize_in_tensor, nvinfer1:
   }
   if (in_tensors_.size() == 1) {
     nvinfer1::Dims new_dims = resize_in_tensor->getDimensions();  // nhwc
+    if (new_dims.nbDims != DIMENSION_4D) {
+      MS_LOG(ERROR) << op_name_ << " resize has new height and width value, but input dim is " << new_dims.nbDims;
+      return RET_ERROR;
+    }
     new_dims.d[1] = resize_op->new_height();
     new_dims.d[2] = resize_op->new_width();
     resize_layer->setOutputDimensions(new_dims);
@@ -129,7 +133,7 @@ int ResizeTensorRT::SetOutputDims(nvinfer1::ITensor *resize_in_tensor, nvinfer1:
         resize_layer->setOutputDimensions(ConvertCudaDims(out_shape));
       } else if (IsScaleOutputDim(in_tensors_[0].Shape(), out_tensors_[0].Shape(), out_shape)) {
         // scale dims
-        if (out_shape.size() > DIMENSION_4D) {
+        if (out_shape.size() != DIMENSION_4D) {
           MS_LOG(ERROR) << "dims count needs check for " << op_name_;
           return RET_ERROR;
         }

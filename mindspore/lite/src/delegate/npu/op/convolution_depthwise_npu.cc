@@ -18,8 +18,10 @@
 #include "src/delegate/npu/npu_converter_utils.h"
 namespace mindspore {
 int ConvolutionDepthwiseNPUOp::SetConvDwParam(const schema::Conv2DFusion *conv_prim) {
+  CHECK_NULL_RETURN(conv_prim->stride());
   auto stride_h = static_cast<int>(*(conv_prim->stride()->begin()));
   auto stride_w = static_cast<int>(*(conv_prim->stride()->begin() + 1));
+  CHECK_NULL_RETURN(conv_prim->dilation());
   auto dilation_h = static_cast<int>(*(conv_prim->dilation()->begin()));
   auto dilation_w = static_cast<int>(*(conv_prim->dilation()->begin() + 1));
   conv_dw_->set_attr_strides(ge::AttrValue::LIST_INT({stride_h, stride_w}));
@@ -33,6 +35,7 @@ int ConvolutionDepthwiseNPUOp::SetConvDwParam(const schema::Conv2DFusion *conv_p
     conv_dw_->set_attr_pads(ge::AttrValue::LIST_INT({0, 0, 0, 0}));
   } else {
     conv_dw_->set_attr_pad_mode(ge::AttrValue::STR{"VALID"});
+    CHECK_NULL_RETURN(conv_prim->pad_list());
     auto pad_u = static_cast<int>(*(conv_prim->pad_list()->begin() + PAD_UP));
     auto pad_d = static_cast<int>(*(conv_prim->pad_list()->begin() + PAD_DOWN));
     auto pad_l = static_cast<int>(*(conv_prim->pad_list()->begin() + PAD_LEFT));
