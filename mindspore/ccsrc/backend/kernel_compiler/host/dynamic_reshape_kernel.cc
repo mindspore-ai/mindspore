@@ -99,17 +99,24 @@ void DynamicReshapeKernel::Execute() {
   size_t input_size_byte = LongToSize(arr_prod) * abstract::TypeIdSize(type_x);
   auto output_addr = AnfAlgo::GetOutputAddr(cnode, 0);
   MS_EXCEPTION_IF_NULL(output_addr);
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-  auto temp_device_address = std::make_shared<device::ascend::AscendDeviceAddress>(
-    address_x->GetMutablePtr(), input_size_byte, address_x->format(), address_x->type_id(), kAscendDevice, device_id);
-  if (!output_addr->SyncDeviceToDevice(temp_device_address.get())) {
-    MS_LOG(EXCEPTION) << "Host Reshape sync device to device failed.";
+  if (address_x->DeviceType() == device::DeviceAddressType::kCPU) {
+    auto ret =
+      memcpy_s(const_cast<void *>(output_addr->GetPtr()), output_addr->GetSize(), address_x->GetPtr(), input_size_byte);
+    if (ret != EOK) {
+      MS_LOG(EXCEPTION) << "Execute DynamicReshapeKernel memcpy_s failed";
+    }
+  } else {
+    auto ms_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ms_context);
+    auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+    auto temp_device_address = std::make_shared<device::ascend::AscendDeviceAddress>(
+      address_x->GetMutablePtr(), input_size_byte, address_x->format(), address_x->type_id(), kAscendDevice, device_id);
+    if (!output_addr->SyncDeviceToDevice(temp_device_address.get())) {
+      MS_LOG(EXCEPTION) << "Host Reshape sync device to device failed.";
+    }
+    MS_LOG(INFO) << "Execute host ReshapeKernel End";
   }
-  MS_LOG(INFO) << "Execute host ReshapeKernel End";
 }
-
 device::DynamicKernelPtr DynamicReshapeKernelMod::GenDynamicKernel(const CNodePtr &cnode_ptr, void *stream_ptr) {
   return std::make_shared<DynamicReshapeKernel>(stream_ptr, cnode_ptr);
 }

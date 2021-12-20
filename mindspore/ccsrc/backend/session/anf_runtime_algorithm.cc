@@ -2233,6 +2233,39 @@ void AnfRuntimeAlgorithm::GetAllFatherRealNode(const AnfNodePtr &anf_node, std::
   }
 }
 
+bool AnfRuntimeAlgorithm::IsHostKernel(const CNodePtr &kernel_node) {
+  const std::set<std::string> host_kernel = {prim::kPrimDynamicShape->name(), prim::kPrimDynamicReshape->name(),
+                                             prim::kPrimDynamicBroadcastGradientArgs->name()};
+  auto op_name = AnfAlgo::GetCNodeName(kernel_node);
+  if (host_kernel.find(op_name) == host_kernel.end()) {
+    return false;
+  }
+  return true;
+}
+
+namespace {
+// Host kernel with inputs on host
+bool SkipDataSync(const CNodePtr &node, const std::map<uint32_t, tensor::TensorPtr> &depend_tensors) {
+  if (!AnfAlgo::IsHostKernel(node)) {
+    return false;
+  }
+  auto input_size = AnfAlgo::GetInputTensorNum(node);
+  for (size_t i = 0; i < input_size; ++i) {
+    auto input_with_index = AnfAlgo::GetPrevNodeOutput(node, i);
+    auto real_input = input_with_index.first;
+    auto iter_tensor = depend_tensors.find(i);
+    if (iter_tensor != depend_tensors.end()) {
+      auto output_addr = AnfAlgo::GetOutputAddr(real_input, 0);
+      MS_EXCEPTION_IF_NULL(output_addr);
+      if (output_addr->DeviceType() != device::DeviceAddressType::kCPU) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+}  // namespace
+
 void AnfRuntimeAlgorithm::InferShape(const CNodePtr &node, std::map<uint32_t, tensor::TensorPtr> *depend_tensors) {
   MS_EXCEPTION_IF_NULL(node);
   MS_LOG(INFO) << "InferShape start, node:" << node->DebugString();
@@ -2255,8 +2288,10 @@ void AnfRuntimeAlgorithm::InferShape(const CNodePtr &node, std::map<uint32_t, te
       if (iter_tensor != depend_tensors->end()) {
         auto tensor_ptr = iter_tensor->second;
         MS_EXCEPTION_IF_NULL(tensor_ptr);
-        // sync data from device to host
-        tensor_ptr->data_sync();
+        if (!SkipDataSync(node, *depend_tensors)) {
+          // sync data from device to host
+          tensor_ptr->data_sync();
+        }
         auto real_abs = real_input->abstract();
         if (real_abs->isa<abstract::AbstractTensor>()) {
           real_input->abstract()->set_value(tensor_ptr);
