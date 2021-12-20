@@ -44,7 +44,8 @@ void ExitActor::FetchInput(OpContext<DeviceTensor> *const context) {
     for (auto &output_data : data_iter->second) {
       MS_EXCEPTION_IF_NULL(output_data.second);
       if (output_data.first >= input_device_tensors_.size()) {
-        MS_LOG(EXCEPTION) << "Invalid from index:" << output_data.first << " for actor:" << GetAID();
+        MS_LOG(EXCEPTION) << "Invalid from index:" << output_data.first << " for actor:" << GetAID()
+                          << " to actor:" << output_data.second->op_id_ << " to index:" << output_data.second->index_;
       }
       MS_EXCEPTION_IF_NULL(input_device_tensors_[output_data.first]);
       output_data.second->data_ = input_device_tensors_[output_data.first];

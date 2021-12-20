@@ -114,6 +114,8 @@ class ControlNodeParser {
   bool IsInited() { return is_inited_; }
   // Check whether there is a call node in the front input nodes of the kernel graph.
   bool IsCallInputKernelGraph(KernelGraph *const graph);
+  // Check whether there is a call node in the front input nodes of the kernel graph group.
+  bool IsCallInputKernelGraphGroup(const std::string &group_name);
   // Check whether the data arrow of the kernel actor needs to be connected to the control actor.
   // There are two situations:
   // 1. In control flow, the parameter input needs to be connected to the entrance actor of the funcgraph.
@@ -121,6 +123,8 @@ class ControlNodeParser {
   bool IsControlFlowDataArrow(const KernelGraphPtr &graph, const AnfNodePtr &node);
   bool IsRootGraphParameter(const AnfNodePtr &node);
   bool IsRecursionCallNode(const AnfNodePtr &node);
+  // If there is a recursive call node in the input of the kernel graph, the graph is recursive.
+  bool IsRecursionKernelGraph(const KernelGraphPtr &graph);
   bool IsSameKernelGraphGroup(const AnfNodePtr &node, const KernelGraphPtr &graph);
 
   const std::vector<AnfNodePtr> &control_node_parameters() const { return control_node_parameters_; }

@@ -809,11 +809,11 @@ void ControlNodeParser::Parse(const std::vector<AnfNodePtr> &control_nodes, cons
 
   ParseCallNodeToFuncGraph(control_nodes);
 
+  ParseUnRecursionCallNode();
+
   ParseNeedStackKernelGraph(kernel_graph_to_device_contexts);
 
   ParseNeedStackControlNode(control_nodes);
-
-  ParseUnRecursionCallNode();
 
   FetchFrontNodeToKernelGraph(graphs);
 
@@ -891,9 +891,32 @@ bool ControlNodeParser::IsRootGraphParameter(const AnfNodePtr &node) {
 
 bool ControlNodeParser::IsRecursionCallNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
+  if (!AnfAlgo::IsCallNode(node)) {
+    return false;
+  }
   return (find(unrecursion_call_nodes_.begin(), unrecursion_call_nodes_.end(), node) ==
           unrecursion_call_nodes_.end()) ||
          (need_stack_control_nodes_.find(node) != need_stack_control_nodes_.end());
+}
+
+bool ControlNodeParser::IsRecursionKernelGraph(const KernelGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  auto group_info_iter = kernel_graphs_to_group_info_.find(graph);
+  if (group_info_iter == kernel_graphs_to_group_info_.end()) {
+    MS_LOG(EXCEPTION) << "Invalid kernel graph:" << graph->ToString();
+  }
+  MS_EXCEPTION_IF_NULL(group_info_iter->second);
+  if (!group_info_iter->second->is_call_input_) {
+    return false;
+  }
+  for (const auto &front_input_node : group_info_iter->second->front_input_nodes_) {
+    const auto &node = front_input_node.first.first;
+    MS_EXCEPTION_IF_NULL(node);
+    if (IsRecursionCallNode(node)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 bool ControlNodeParser::IsSameKernelGraphGroup(const AnfNodePtr &node, const KernelGraphPtr &graph) {
@@ -1214,6 +1237,16 @@ bool ControlNodeParser::IsCallInputKernelGraph(KernelGraph *const graph) {
     return false;
   }
   return true;
+}
+
+bool ControlNodeParser::IsCallInputKernelGraphGroup(const std::string &group_name) {
+  for (const auto &graph_group : kernel_graph_group_infos_) {
+    if (group_name.find(graph_group->group_name_) != std ::string::npos) {
+      return graph_group->is_call_input_;
+    }
+  }
+  MS_LOG(EXCEPTION) << "Invalid kernel graph group name:" << group_name;
+  return false;
 }
 
 KernelWithIndex ControlNodeParser::FetchBackendNodeByFrontNode(const KernelWithIndex &node_with_index) {
@@ -1704,6 +1737,13 @@ void ControlNodeParser::ParseNeedStackControlNode(const std::vector<AnfNodePtr> 
       if (call_input_num != 0 && (AnfAlgo::CheckPrimitiveType(inputs[kReturnInputPos], prim::kPrimDepend))) {
         need_stack_control_nodes_.emplace(control_node);
       }
+    } else if (AnfAlgo::CheckPrimitiveType(control_node, prim::kPrimPartial)) {
+      auto input_with_indexs = FetchInputNodeByCNode(control_node);
+      if (std::any_of(input_with_indexs.begin(), input_with_indexs.end(),
+                      [this](const auto &input_with_index) { return IsRecursionCallNode(input_with_index.first); })) {
+        need_stack_control_nodes_.emplace(control_node);
+        MS_LOG(DEBUG) << "Add need stack control node:" << control_node->DebugString();
+      }
     }
   }
 }
@@ -1748,10 +1788,11 @@ void ControlNodeParser::ParseNeedStackKernelGraph(const KernelGraphToDeviceConte
 
         // Collect outputs in group.
         for (const auto &backend_to_front : kernel_graph->graph_output_map()) {
-          if (HasAbstractMonad(backend_to_front.second.first)) {
+          if (HasAbstractMonad(backend_to_front.second.first) || HasAbstractMonad(backend_to_front.first.first)) {
             continue;
           }
-          MS_LOG(DEBUG) << "Kernel graph front output node:" << backend_to_front.second.first->DebugString()
+          MS_LOG(DEBUG) << "Kernel graph:" << kernel_graph->ToString()
+                        << " add front output node:" << backend_to_front.second.first->DebugString()
                         << " index:" << backend_to_front.second.second
                         << " backend node:" << backend_to_front.first.first->DebugString()
                         << " index:" << backend_to_front.first.second;

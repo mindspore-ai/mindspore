@@ -74,7 +74,7 @@ class ControlNodeScheduler {
   void LinkArrowByValueNode(const AnfNodePtr &value_node, ControlActor *const to_actor, size_t from_index,
                             size_t to_index);
   // Link arrow from stack actor to control actor.
-  void LinkArrowFromStackActor(ControlActor *to_actor);
+  void LinkArrowFromStackActor(StackActor *stack_actor, ControlActor *to_actor);
 
   // Link data arrow between control actor and actor in frame, including kernel actor, output actor, data source actor.
   void LinkDataArrowForKernelActor(const GraphCompilerInfo &graph_compiler_info);

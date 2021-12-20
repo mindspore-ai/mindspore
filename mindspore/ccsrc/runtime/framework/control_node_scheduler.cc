@@ -35,6 +35,15 @@ std::string GetActorName(const AnfNodePtr &node) {
   }
 }
 
+std::string GetStackActorNameByExitName(const std::string &exit_name) {
+  size_t pos = exit_name.find(kExitActorNameSuffix);
+  if (pos == std::string::npos) {
+    MS_LOG(EXCEPTION) << "Invalid exit actor name:" << exit_name;
+  }
+
+  return exit_name.substr(0, pos) + kStackActorNameSuffix;
+}
+
 // Fetch the depend nodes according to the monad node.
 void FetchRealDependNodeByAutoMonad(const AnfNodePtr &node, std::set<AnfNodePtr> *depend_nodes) {
   // Find the real input node, include the monad node and make tuple node.
@@ -297,8 +306,10 @@ std::vector<StackActorPtr> ControlNodeScheduler::BuildStackActor(const GraphComp
     // Collect inputs of stack actor.
     for (const auto &node_with_context : kernel_graph_group_info->front_input_nodes_) {
       // If the input comes from inside funcgraph, put it at the front of the vector, otherwise put it at the end.
-      if (AnfAlgo::IsCallNode(node_with_context.first.first) &&
-          (parser->IsRecursionCallNode(node_with_context.first.first))) {
+      const auto &from_node = node_with_context.first.first;
+      MS_EXCEPTION_IF_NULL(from_node);
+      const auto &graph = (from_node->isa<CNode>() ? parser->FetchKernelGraphByFrontNode(from_node) : nullptr);
+      if (parser->IsRecursionCallNode(from_node) || (graph != nullptr && parser->IsRecursionKernelGraph(graph))) {
         formal_parameters.emplace_back(node_with_context.first);
         device_contexts.emplace_back(node_with_context.second);
       } else {
@@ -469,15 +480,19 @@ void ControlNodeScheduler::LinkArrowForControlActor(ControlActorSet *const contr
 
   for (auto &gather_actor : control_actor_set->gather_actors_) {
     MS_EXCEPTION_IF_NULL(gather_actor->node_);
-    if ((gather_actor->node_ != nullptr) &&
-        (parser->need_stack_control_nodes_.find(gather_actor->node_) == parser->need_stack_control_nodes_.end())) {
+    if (parser->need_stack_control_nodes_.find(gather_actor->node_) == parser->need_stack_control_nodes_.end()) {
       for (size_t i = 0; i < gather_actor->formal_parameters_.size(); ++i) {
         LinkArrowbyFormalParameter(gather_actor.get(), gather_actor->formal_parameters_[i], {gather_actor->node_, i},
                                    parser);
       }
     } else {
       // If the control actor has a corresponding stack actor, the input should be linked to the stack actor.
-      LinkArrowFromStackActor(gather_actor.get());
+      auto stack_actor_name = GetActorName(gather_actor->node_) + kStackActorNameSuffix;
+      auto actor = FetchActor(stack_actor_name);
+      MS_EXCEPTION_IF_NULL(actor);
+      auto stack_actor = dynamic_cast<StackActor *>(actor);
+      MS_EXCEPTION_IF_NULL(stack_actor);
+      LinkArrowFromStackActor(stack_actor, gather_actor.get());
     }
   }
 
@@ -488,14 +503,21 @@ void ControlNodeScheduler::LinkArrowForControlActor(ControlActorSet *const contr
   }
 
   for (auto &exit_actor : control_actor_set->exit_actors_) {
-    if ((exit_actor->node_ == nullptr) ||
+    MS_EXCEPTION_IF_NULL(exit_actor);
+    if (exit_actor->node_ == nullptr ||
         (parser->need_stack_control_nodes_.find(exit_actor->node_) == parser->need_stack_control_nodes_.end())) {
       for (size_t i = 0; i < exit_actor->formal_parameters_.size(); ++i) {
         LinkArrowbyFormalParameter(exit_actor.get(), exit_actor->formal_parameters_[i], {exit_actor->node_, i}, parser);
       }
     } else {
       // If the control actor has a corresponding stack actor, the input should be linked to the stack actor.
-      LinkArrowFromStackActor(exit_actor.get());
+      auto stack_actor_name = (exit_actor->node_ == nullptr ? GetStackActorNameByExitName(exit_actor->GetAID().Name())
+                                                            : GetActorName(exit_actor->node_) + kStackActorNameSuffix);
+      auto actor = FetchActor(stack_actor_name);
+      MS_EXCEPTION_IF_NULL(actor);
+      auto stack_actor = dynamic_cast<StackActor *>(actor);
+      MS_EXCEPTION_IF_NULL(stack_actor);
+      LinkArrowFromStackActor(stack_actor, exit_actor.get());
     }
   }
 
@@ -507,13 +529,9 @@ void ControlNodeScheduler::LinkArrowForControlActor(ControlActorSet *const contr
   }
 }
 
-void ControlNodeScheduler::LinkArrowFromStackActor(ControlActor *to_actor) {
-  MS_EXCEPTION_IF_NULL(to_actor->node_);
-  auto stack_actor_name = GetActorName(to_actor->node_) + kStackActorNameSuffix;
-  auto actor = FetchActor(stack_actor_name);
-  MS_EXCEPTION_IF_NULL(actor);
-  auto stack_actor = dynamic_cast<StackActor *>(actor);
+void ControlNodeScheduler::LinkArrowFromStackActor(StackActor *stack_actor, ControlActor *to_actor) {
   MS_EXCEPTION_IF_NULL(stack_actor);
+  MS_EXCEPTION_IF_NULL(to_actor);
 
   for (size_t to_index = 0; to_index < to_actor->formal_parameters_.size(); ++to_index) {
     const auto &formal_parameter = to_actor->formal_parameters_[to_index];
@@ -944,6 +962,8 @@ void ControlNodeScheduler::LinkControlArrowByAutoMonad(ControlActor *to_actor, c
   for (const auto &depend_node : depend_nodes) {
     MS_EXCEPTION_IF_NULL(depend_node);
     auto from_actor = FetchActor(depend_node->DebugString());
+    auto graph = parser->FetchKernelGraphByFrontNode(depend_node);
+
     std::vector<AbstractActor *> from_actors;
     if (AnfAlgo::IsCallNode(depend_node)) {
       int branch_id = parser->FetchBranchIDByCallNode(depend_node);
@@ -965,7 +985,6 @@ void ControlNodeScheduler::LinkControlArrowByAutoMonad(ControlActor *to_actor, c
       from_actors.emplace_back(from_actor);
       LinkControlArrow(from_actor, to_actor);
     } else {
-      auto graph = parser->FetchKernelGraphByFrontNode(depend_node);
       if (graph == nullptr) {
         MS_LOG(EXCEPTION) << "Failed to find actor for node:" << depend_node->DebugString();
       }
@@ -974,15 +993,18 @@ void ControlNodeScheduler::LinkControlArrowByAutoMonad(ControlActor *to_actor, c
       from_actors.emplace_back(from_actor);
       LinkControlArrow(from_actor, to_actor);
     }
-    if (to_actor->type_ == KernelTransformType::kStackActor &&
-        ((!AnfAlgo::IsCallNode(depend_node)) || (!parser->IsRecursionCallNode(depend_node)))) {
-      auto stack_actor = dynamic_cast<StackActor *>(to_actor);
-      MS_EXCEPTION_IF_NULL(stack_actor);
-      stack_actor->input_controls_num_--;
-      stack_actor->input_stack_controls_num_++;
-      for (const auto &actor : from_actors) {
-        stack_actor->stack_control_aids_.emplace(actor->GetAID());
-      }
+    if (to_actor->type_ != KernelTransformType::kStackActor || parser->IsRecursionCallNode(depend_node) ||
+        (graph != nullptr && parser->IsRecursionKernelGraph(graph))) {
+      continue;
+    }
+    // If the control arrow comes from a recursive call node or a recursive kernel graph, these control edges will be
+    // directly linked to the stack actor, otherwise, they need to be cached in the stack of the stack actor.
+    auto stack_actor = dynamic_cast<StackActor *>(to_actor);
+    MS_EXCEPTION_IF_NULL(stack_actor);
+    stack_actor->input_controls_num_--;
+    stack_actor->input_stack_controls_num_++;
+    for (const auto &actor : from_actors) {
+      stack_actor->stack_control_aids_.emplace(actor->GetAID());
     }
   }
 }
