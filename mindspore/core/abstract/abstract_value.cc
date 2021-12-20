@@ -89,6 +89,10 @@ std::string ExtractLoggingInfo(const std::string &info) {
   return "";
 }
 
+static inline bool IsUndeterminedType(const TypePtr &type) {
+  return (type != nullptr) && (type->type_id() == kObjectTypeUndeterminedType);
+}
+
 bool AbstractBase::operator==(const AbstractBase &other) const {
   if (this == &other) {
     // Same object.
@@ -98,17 +102,12 @@ bool AbstractBase::operator==(const AbstractBase &other) const {
   if (tid() != other.tid()) {
     return false;
   }
-  // Check data type.
-  if (!IsEqual(type_, other.type_)) {
-    return false;
-  }
   // If both are "undetermined" type, they are considered equal.
-  if (type_ == kAnyType && BuildType()->type_id() == kObjectTypeUndeterminedType &&
-      other.BuildType()->type_id() == kObjectTypeUndeterminedType) {
+  if (IsUndeterminedType(BuildType()) && IsUndeterminedType(other.BuildType())) {
     return true;
   }
-  // Check shape and value.
-  return IsEqual(shape_, other.shape_) && IsEqual(value_, other.value_);
+  // Check data type, shape and value.
+  return IsEqual(type_, other.type_) && IsEqual(shape_, other.shape_) && IsEqual(value_, other.value_);
 }
 
 ValuePtr AbstractBase::BuildValue() const {
