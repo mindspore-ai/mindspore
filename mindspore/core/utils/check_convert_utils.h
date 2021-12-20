@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,12 @@
 #include "ir/dtype/type_id.h"
 #include "include/api/format.h"
 #include "utils/log_adapter.h"
+#if __has_include("include/mindapi/base/types.h")
+#include "include/mindapi/base/types.h"
+#else
+#include "mindapi/base/types.h"
+#endif
+
 namespace mindspore {
 typedef std::pair<std::map<std::string, int64_t>, std::map<int64_t, std::string>> AttrConverterPair;
 typedef std::map<std::string, std::vector<int64_t>> ShapeMap;
@@ -51,40 +57,7 @@ enum CompareRange {
   kIncludeRight = 3,    // (a,b]
   kIncludeBoth = 4,     // [a,b]
 };
-enum ActivationType : int64_t {
-  NO_ACTIVATION = 0,
-  RELU = 1,
-  SIGMOID = 2,
-  RELU6 = 3,
-  ELU = 4,
-  LEAKY_RELU = 5,
-  ABS = 6,
-  RELU1 = 7,
-  SOFTSIGN = 8,
-  SOFTPLUS = 9,
-  TANH = 10,
-  SELU = 11,
-  HSWISH = 12,
-  HSIGMOID = 13,
-  THRESHOLDRELU = 14,
-  LINEAR = 15,
-  HARD_TANH = 16,
-  SIGN = 17,
-  SWISH = 18,
-  GELU = 19,
-  GLU = 20,
-  UNKNOWN = 21
-};
-enum ReduceMode : int64_t {
-  Reduce_Mean = 0,
-  Reduce_Max = 1,
-  Reduce_Min = 2,
-  Reduce_Prod = 3,
-  Reduce_Sum = 4,
-  Reduce_Sum_Square = 5,
-  Reduce_ASum = 6,
-  Reduce_All = 7
-};
+
 enum ReduceType : int64_t {
   REDUCE_MAX = 0,
   REDUCE_MEAN = 1,
@@ -95,16 +68,6 @@ enum ReduceType : int64_t {
   REDUCE_SUM = 6,
   REDUCE_UNKNOW = 7,
 };
-enum EltwiseMode : int64_t { PROD = 0, SUM = 1, MAXIMUM = 2, ELTWISEMODE_UNKNOW = 3 };
-
-enum Reduction : int64_t { REDUCTION_SUM = 0, MEAN = 1, NONE = 2 };
-
-enum PadMode : int64_t { PAD = 0, SAME = 1, VALID = 2 };
-
-enum RoundMode : int64_t {
-  FLOOR = 0,
-  CEIL = 1,
-};
 
 enum PoolMode : int64_t {
   MAX_POOLING = 0,
@@ -112,16 +75,6 @@ enum PoolMode : int64_t {
 };
 
 enum GateOrderMode : int64_t { RZH = 0, ZRH = 1 };
-
-enum class LshProjectionType : int64_t { UNKNOWN = 0, SPARSE = 1, DENSE = 2 };
-
-enum PaddingMode : int64_t { CONSTANT = 0, REFLECT = 1, SYMMETRIC = 2, MODE_RESERVED = 3 };
-
-enum class ResizeMethod : int64_t { UNKNOWN = -1, LINEAR = 0, NEAREST = 1, CUBIC = 2 };
-
-enum CoordinateTransformMode : int64_t { ASYMMETRIC = 0, ALIGN_CORNERS = 1, HALF_PIXEL = 2, CROP_AND_RESIZE = 3 };
-
-enum class NearestMode : int64_t { NORMAL = 0, ROUND_HALF_DOWN = 1, ROUND_HALF_UP = 2, FLOOR = 3, CEIL = 4 };
 
 template <typename T>
 const std::map<CompareEnum, std::function<bool(T, T)>> kCompareMap = {

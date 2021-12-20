@@ -226,7 +226,11 @@ if(PLATFORM_ARM64)
     endif()
     install(FILES ${TOP_DIR}/mindspore/core/ir/dtype/type_id.h DESTINATION ${RUNTIME_INC_DIR}/ir/dtype
             COMPONENT ${RUNTIME_COMPONENT_NAME})
-    install(FILES ${TOP_DIR}/mindspore/core/mindapi/base/type_id.h DESTINATION ${RUNTIME_INC_DIR}/mindapi/base
+    install(FILES
+            ${TOP_DIR}/mindspore/core/mindapi/base/format.h
+            ${TOP_DIR}/mindspore/core/mindapi/base/type_id.h
+            ${TOP_DIR}/mindspore/core/mindapi/base/types.h
+            DESTINATION ${RUNTIME_INC_DIR}/mindapi/base
             COMPONENT ${RUNTIME_COMPONENT_NAME})
     install(DIRECTORY ${TOP_DIR}/include/api/ DESTINATION ${RUNTIME_INC_DIR}/api
             COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h" PATTERN "ops*" EXCLUDE)
@@ -327,7 +331,11 @@ elseif(PLATFORM_ARM32)
     endif()
     install(FILES ${TOP_DIR}/mindspore/core/ir/dtype/type_id.h DESTINATION ${RUNTIME_INC_DIR}/ir/dtype
             COMPONENT ${RUNTIME_COMPONENT_NAME})
-    install(FILES ${TOP_DIR}/mindspore/core/mindapi/base/type_id.h DESTINATION ${RUNTIME_INC_DIR}/mindapi/base
+    install(FILES
+            ${TOP_DIR}/mindspore/core/mindapi/base/format.h
+            ${TOP_DIR}/mindspore/core/mindapi/base/type_id.h
+            ${TOP_DIR}/mindspore/core/mindapi/base/types.h
+            DESTINATION ${RUNTIME_INC_DIR}/mindapi/base
             COMPONENT ${RUNTIME_COMPONENT_NAME})
     install(DIRECTORY ${TOP_DIR}/include/api/ DESTINATION ${RUNTIME_INC_DIR}/api
             COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h" PATTERN "ops*" EXCLUDE)
@@ -416,7 +424,11 @@ elseif(WIN32)
             COMPONENT ${RUNTIME_COMPONENT_NAME})
     install(FILES ${TOP_DIR}/mindspore/core/ir/dtype/type_id.h DESTINATION ${RUNTIME_INC_DIR}/ir/dtype
             COMPONENT ${RUNTIME_COMPONENT_NAME})
-    install(FILES ${TOP_DIR}/mindspore/core/mindapi/base/type_id.h DESTINATION ${RUNTIME_INC_DIR}/mindapi/base
+    install(FILES
+            ${TOP_DIR}/mindspore/core/mindapi/base/format.h
+            ${TOP_DIR}/mindspore/core/mindapi/base/type_id.h
+            ${TOP_DIR}/mindspore/core/mindapi/base/types.h
+            DESTINATION ${RUNTIME_INC_DIR}/mindapi/base
             COMPONENT ${RUNTIME_COMPONENT_NAME})
     install(DIRECTORY ${TOP_DIR}/include/api/ DESTINATION ${RUNTIME_INC_DIR}/api
             COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h" PATTERN "ops*" EXCLUDE)
@@ -462,7 +474,11 @@ else()
             COMPONENT ${RUNTIME_COMPONENT_NAME})
     install(FILES ${TOP_DIR}/mindspore/core/ir/dtype/type_id.h DESTINATION ${RUNTIME_INC_DIR}/ir/dtype
             COMPONENT ${RUNTIME_COMPONENT_NAME})
-    install(FILES ${TOP_DIR}/mindspore/core/mindapi/base/type_id.h DESTINATION ${RUNTIME_INC_DIR}/mindapi/base
+    install(FILES
+            ${TOP_DIR}/mindspore/core/mindapi/base/format.h
+            ${TOP_DIR}/mindspore/core/mindapi/base/type_id.h
+            ${TOP_DIR}/mindspore/core/mindapi/base/types.h
+            DESTINATION ${RUNTIME_INC_DIR}/mindapi/base
             COMPONENT ${RUNTIME_COMPONENT_NAME})
     install(DIRECTORY ${TOP_DIR}/include/api/ DESTINATION ${RUNTIME_INC_DIR}/api
             COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h" PATTERN "ops*" EXCLUDE)
