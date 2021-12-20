@@ -132,9 +132,6 @@ def test_float_tensor_and_list_add():
 
 def test_float_tensor_and_bool_tensors_add_grad():
     class Net(nn.Cell):
-        def __init__(self):
-            super(Net, self).__init__()
-
         def construct(self, x, y):
             return x + y
 
@@ -160,9 +157,6 @@ def test_float_tensor_and_bool_tensors_add_grad():
 
 def test_float_tensor_and_int_tensors_sub_grad():
     class Net(nn.Cell):
-        def __init__(self):
-            super(Net, self).__init__()
-
         def construct(self, x, y):
             return x - y
 
@@ -188,9 +182,6 @@ def test_float_tensor_and_int_tensors_sub_grad():
 
 def test_float16_tensor_and_float32_tensors_sub_grad():
     class Net(nn.Cell):
-        def __init__(self):
-            super(Net, self).__init__()
-
         def construct(self, x, y):
             return x - y
 
@@ -216,9 +207,6 @@ def test_float16_tensor_and_float32_tensors_sub_grad():
 
 def test_float_tensor_and_int_add_grad():
     class Net(nn.Cell):
-        def __init__(self):
-            super(Net, self).__init__()
-
         def construct(self, x):
             return x + 2
 
@@ -241,9 +229,6 @@ def test_float_tensor_and_int_add_grad():
 
 def test_int8_tensor_and_uint8_tensors_add_grad():
     class Net(nn.Cell):
-        def __init__(self):
-            super(Net, self).__init__()
-
         def construct(self, x, y):
             return x + y
 
@@ -266,6 +251,7 @@ def test_int8_tensor_and_uint8_tensors_add_grad():
     assert (ret[0].asnumpy() == sens.asnumpy()).all()
     assert (ret[1].asnumpy() == sens.asnumpy()).all()
 
+
 class AssignCheck(nn.Cell):
     """ NetWithNDarray definition """
 
@@ -285,4 +271,4 @@ def test_assign_check_in_sig():
     y = Tensor(3, ms.uint8)
     with pytest.raises(RuntimeError) as e:
         net(x, y)
-    assert "can not cast automatically" in e.value.args[0]
+    assert "Data type conversion of parameter is not supported" in e.value.args[0]
