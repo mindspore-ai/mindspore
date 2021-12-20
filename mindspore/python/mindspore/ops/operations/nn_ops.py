@@ -8215,6 +8215,115 @@ def _deconv_output_length(input_length, kernel_size, stride_size, dilation_size)
     return length
 
 
+class SparseApplyAdadelta(Primitive):
+    r"""
+    Updates relevant entries according to the adadelta scheme.
+
+    .. math::
+            \begin{array}{ll} \\
+                accum = \rho * accum + (1 - \rho) * grad^2 \\
+                \text{update} = \sqrt{\text{accum_update} + \epsilon} * \frac{grad}{\sqrt{accum + \epsilon}} \\
+                var = var -  update * lr \\
+                \text{accum_update} = \rho * \text{accum_update} + (1 - \rho) * update^2 \\
+            \end{array}
+
+    Inputs of 'var', 'accum', 'accum_update' and 'grad' comply with the implicit type conversion rules
+    to make the data types consistent. Besides, inputs of 'lr' and 'rho' also support implicit type conversion.
+    If they have different data types, lower priority data type will be converted to
+    relatively highest priority data type.
+    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+
+    Note:
+        If there are negative values or values greater than or equal to var.shape[0] in `indices`,
+        the behavior is undefined. Besides, this operator doesn't support duplicates in `indices`.
+
+    Args:
+        epsilon (float): A small value added for numerical stability. Its value must be greater or equal to 0.
+        use_locking (bool): If `True`, the `var` and `accum` tensors will be protected from being updated.
+            Default: False.
+
+    Inputs:
+        - **var** (Parameter) - Weights to be updated. With float32 or float16 data type.
+        - **accum** (Parameter) - Accumulation to be updated. Mush have the same shape and dtype as `var`.
+          With float32 or float16 data type.
+        - **accum_update** (Parameter) - Accum_update to be updated. Must have the same shape and dtype as `var`.
+          With float32 or float16 data type.
+        - **lr** (Union[float, Tensor]) - Learning rate, must be scalar. With float32 or float16 data type.
+        - **rho** (Union[float, Tensor]) - Decay rate, must be scalar. With float32 or float16 data type.
+        - **grad** (Tensor) - A tensor for gradient. Must have the same shape and dtype as `var`.
+        - **indices** (Tensor) - A tensor of indices in the first dimension of `var` and `accum`.
+          Must be one of the following types: int32, int64 and indices.shape[0] = grad.shape[0].
+
+    Outputs:
+        Tuple of 3 Tensor, the updated parameters.
+
+        - **var** (Tensor) - The same shape and data type as `var`.
+        - **accum** (Tensor) - The same shape and data type as `accum`.
+        - **accum_update** (Tensor) - The same shape and data type as `accum_update`.
+
+    Raises:
+        TypeError: If `epsilon` is not a float.
+        TypeError: If `use_locking` is not a bool.
+        TypeError: If `var`, 'accum', 'accum_update' is not a Parameter.
+        TypeError: If dtype of `accum`, `accum_updata`, `grad` is not same as `var`.
+        TypeError: If dtype of `var`, `accum`, `accum_update`, `lr`, `rho` or `grad` is neither float16 nor
+                   float32.
+        TypeError: If dtype of `indices` is neither int32 nor int64.
+        ValueError: If `epsilon` is less than 0.
+        ValueError: If the shape of `accum`, `accum_updata`, `grad` is not same as `var`.
+        ValueError: If the rank of `indices` is not equal to 1.
+        ValueError: If shape of `indices` is not same as shape of first dimension of `grad`.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> class Net(nn.Cell):
+        ...     def __init__(self,epsilon,use_locking = False):
+        ...         super(Net, self).__init__()
+        ...         self.sparse_apply_adadelta = P.SparseApplyAdadelta(epsilon,use_locking)
+        ...         self.var = Parameter(Tensor(np.array([[1.0,2.0],[2.0,3.0]]).astype(np.float32)), name="var")
+        ...         self.accum = Parameter(Tensor(np.array([[1.5,2.5],[3.5,4.5]]).astype(np.float32)), name="accum")
+        ...         self.accum_update = Parameter(Tensor(np.array([[1.2,2.4],[1.8,0.6]]).astype(np.float32)),
+        ...                name="accum_update")
+        ...     def construct(self, lr, rho, grad, indices):
+        ...         out = self.sparse_apply_adadelta(self.var, self.accum, self.accum_update, lr, rho, grad, indices)
+        ...         return out
+        ...
+        >>> epsilon = 1e-6
+        >>> net = Net(epsilon)
+        >>> lr = 0.01
+        >>> rho = 0.2
+        >>> grad = Tensor(np.array([[0.3, 0.7], [0.1, 0.8]]).astype(np.float32))
+        >>> output = net(lr, rho, grad, Tensor(np.array([0,1],dtype=np.int32)))
+        >>> print(output)
+        (Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 9.94611859e-01,  1.98851788e+00],
+         [ 1.99840558e+00,  2.99478507e+00]]), Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 3.72000009e-01,  8.91999960e-01],
+         [ 7.08000004e-01,  1.41200006e+00]]), Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 4.72257614e-01,  1.53470778e+00],
+         [ 3.80338937e-01,  3.37563992e-01]]))
+    """
+
+    __mindspore_signature__ = (
+        sig.make_sig('var', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('accum', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('accum_updata', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('lr', dtype=sig.sig_dtype.T1),
+        sig.make_sig('rho', dtype=sig.sig_dtype.T1),
+        sig.make_sig('grad', dtype=sig.sig_dtype.T),
+        sig.make_sig('indices', dtype=sig.sig_dtype.T2),
+    )
+
+    @prim_attr_register
+    def __init__(self, epsilon, use_locking=False):
+        """Initialize SparseApplyAdadelta"""
+        validator.check_value_type("epsilon", epsilon, [float], self.name)
+        validator.check_number("epsilon", epsilon, 0.0, Rel.GE, self.name)
+        validator.check_value_type("use_locking", use_locking, [bool], self.name)
+
+
 class CTCLossV2(Primitive):
     """
     Calculates the CTC (Connectionist Temporal Classification) loss and the gradient.

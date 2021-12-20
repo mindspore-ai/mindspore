@@ -110,6 +110,7 @@ constexpr auto kDropoutDoMask = "DropoutDoMask";
 constexpr auto kDropout = "Dropout";
 constexpr auto kDropoutGrad = "DropoutGrad";
 constexpr auto kConv2DTranspose = "Conv2DTranspose";
+constexpr auto kSparseApplyAdadelta = "SparseApplyAdadelta";
 constexpr auto kRoll = "Roll";
 constexpr auto kTanh = "Tanh";
 
@@ -425,6 +426,7 @@ inline const PrimitivePtr kPrimCustomExtractFeatures = std::make_shared<Primitiv
 inline const PrimitivePtr kLambApplyOptimizerAssign = std::make_shared<Primitive>("LambApplyOptimizerAssign");
 inline const PrimitivePtr kLambApplyWeightAssign = std::make_shared<Primitive>("LambApplyWeightAssign");
 inline const PrimitivePtr kSoftmaxGradExt = std::make_shared<Primitive>("SoftmaxGradExt");
+inline const PrimitivePtr kPrimSparseApplyAdadelta = std::make_shared<Primitive>(kSparseApplyAdadelta);
 inline const PrimitivePtr kSquareSumV1 = std::make_shared<Primitive>("SquareSumV1");
 inline const PrimitivePtr kFusedMulAdd = std::make_shared<Primitive>("FusedMulAdd");
 inline const PrimitivePtr kPrimSoftShrink = std::make_shared<Primitive>("SoftShrink");

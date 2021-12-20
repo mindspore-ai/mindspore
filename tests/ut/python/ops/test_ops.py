@@ -53,6 +53,7 @@ class TargetNet(nn.Cell):
     def construct(self, x, y):
         return self.mul(x, y)
 
+
 # Recursive GradOperation in Cell.
 class Grad(nn.Cell):
     def __init__(self, network):
@@ -63,11 +64,15 @@ class Grad(nn.Cell):
     def construct(self, x, y):
         return self.grad(self.network)(x, y)
 
+
 # Recursive GradOperaton with GradOperation object.
 grad1 = C.GradOperation()
+
+
 @ms_function
 def f1(x, y):
     return grad1(grad1(TargetNet()))(x, y)
+
 
 def test_recursive_grad():
     x = Tensor(3, mstype.float32)
@@ -938,6 +943,7 @@ class StridedSliceNet(nn.Cell):
         out_3 = self.strided_slice_3(x, self.begins, self.ends, self.strides) + self.const_3
         return out_0, out_1, out_2, out_3
 
+
 @pytest.mark.skip(reason='0 in shape is not support')
 def test_strided_slice_const():
     class StridedSLiceConstNet(nn.Cell):
@@ -1021,6 +1027,21 @@ class ApplyAdamWithAmsgradNet(nn.Cell):
         out = self.apply_adam_with_amsgrad(self.var, self.m, self.v, self.vhat, beta1_power, beta2_power, lr, grad)
         return out
 
+class SparseApplyAdadeltaNet(nn.Cell):
+    def __init__(self, epsilon, use_locking=True):
+        super(SparseApplyAdadeltaNet, self).__init__()
+        self.sparse_apply_adadelta = P.SparseApplyAdadelta(epsilon, use_locking)
+        self.lr = 0.001
+        self.rho = 0.0
+        self.var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
+        self.accum = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="accum")
+        self.accum_update = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="accum_update")
+
+    def construct(self, grad, indices):
+        out = self.sparse_apply_adadelta(self.var, self.accum, self.accum_update, self.lr, self.rho, grad, indices)
+        return out
+
+
 class ApplyAdagradDANet(nn.Cell):
     def __init__(self, use_locking=False):
         super(ApplyAdagradDANet, self).__init__()
@@ -1030,6 +1051,7 @@ class ApplyAdagradDANet(nn.Cell):
                                               name="gradient_accumulator")
         self.gradient_squared_accumulator = Parameter(Tensor(np.array([[0.2, 0.1], [0.1, 0.2]]).astype(np.float32)),
                                                       name="gradient_squared_accumulator")
+
     def construct(self, grad, lr, l1, l2, global_step):
         out = self.apply_adagrad_d_a(self.var, self.gradient_accumulator, self.gradient_squared_accumulator, grad,
                                      lr, l1, l2, global_step)
@@ -1059,6 +1081,7 @@ class ApplyKerasMomentumNet(nn.Cell):
     def construct(self, lr, grad, momentum):
         out = self.apply_keras_momentum(self.var, self.accum, lr, grad, momentum)
         return out
+
 
 test_case_math_ops = [
     ('Ger', {
@@ -2333,6 +2356,11 @@ test_case_nn_ops = [
         'block': P.HShrink(),
         'desc_inputs': [Tensor(np.array([[0.5, 1, 2.0], [0.0533, 0.0776, -2.1233]]), mstype.float32)],
         'desc_bprop': [],
+        'skip': ['backward']}),
+    ('SparseApplyAdadelta', {
+        'block': SparseApplyAdadeltaNet(1e-6),
+        'desc_inputs': [Tensor(np.random.rand(3, 3), mstype.float32),
+                        Tensor(np.ones((3,)), mstype.int32)],
         'skip': ['backward']}),
     ('HShrinkGrad', {
         'block': G.HShrinkGrad(),
