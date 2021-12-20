@@ -27,19 +27,22 @@ bool Initialize() {
   }
 
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
-  // Server and Scheduler don't use collective communication library.
-  auto node = cluster::ClusterContext::instance()->node();
-  MS_EXCEPTION_IF_NULL(node);
-  if (node->role() != ps::core::NodeRole::SERVER && node->role() != ps::core::NodeRole::SCHEDULER) {
-    // Global rank id and size should be manually set if cluster is initialized by MindSpore communication framework.
-    auto abstract_node = std::dynamic_pointer_cast<ps::core::AbstractNode>(cluster::ClusterContext::instance()->node());
-    MS_EXCEPTION_IF_NULL(abstract_node);
-    collective::CollectiveManager::instance()->set_global_rank_id(abstract_node->rank_id());
-    collective::CollectiveManager::instance()->set_global_rank_size(abstract_node->worker_num());
+  if (cluster::ClusterContext::instance()->initialized()) {
+    // Server and Scheduler don't use collective communication library.
+    auto node = cluster::ClusterContext::instance()->node();
+    MS_EXCEPTION_IF_NULL(node);
+    if (node->role() != ps::core::NodeRole::SCHEDULER) {
+      // Global rank id and size should be manually set if cluster is initialized by MindSpore communication framework.
+      auto abstract_node =
+        std::dynamic_pointer_cast<ps::core::AbstractNode>(cluster::ClusterContext::instance()->node());
+      MS_EXCEPTION_IF_NULL(abstract_node);
+      collective::CollectiveManager::instance()->set_global_rank_id(abstract_node->rank_id());
+      collective::CollectiveManager::instance()->set_global_rank_size(abstract_node->worker_num());
 
-    if (!InitializeCollective()) {
-      MS_LOG(ERROR) << "Failed to initialize collective communication.";
-      return false;
+      if (!InitializeCollective()) {
+        MS_LOG(ERROR) << "Failed to initialize collective communication.";
+        return false;
+      }
     }
   }
 #endif

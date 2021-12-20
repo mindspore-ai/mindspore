@@ -53,6 +53,12 @@ class ClusterContext {
   // Return node object of this process.
   const std::shared_ptr<ps::core::Node> &node() const;
 
+  // Return node role in this cluster.
+  const std::string &node_role() const;
+
+  // Returns total number of the specified node role. This is used as the group size of this node role.
+  uint32_t node_num(const std::string &node_role);
+
   // Return cluster is initialized.
   bool initialized() const;
 

@@ -99,6 +99,10 @@ bool CollectiveInitializer::CreateCommunicationGroup(const std::string &group_na
     MS_EXCEPTION_IF_NULL(create_comm_group_funcptr);
     return (*create_comm_group_funcptr)(group_name, group_ranks);
   } else {
+    // There's only one scheduler in cluster. It shouldn't have collective operations.
+    if (distributed::cluster::ClusterContext::instance()->node_role() == distributed::kEnvRoleOfScheduler) {
+      return true;
+    }
     return distributed::collective::CollectiveManager::instance()->CreateCommunicationGroup(group_name, group_ranks);
   }
 }
@@ -111,6 +115,10 @@ bool CollectiveInitializer::DestroyCommunicationGroup(const std::string &group_n
     MS_EXCEPTION_IF_NULL(destroy_group_funcptr);
     return (*destroy_group_funcptr)(group_name);
   } else {
+    // There's only one scheduler in cluster. It shouldn't have collective operations.
+    if (distributed::cluster::ClusterContext::instance()->node_role() == distributed::kEnvRoleOfScheduler) {
+      return true;
+    }
     return distributed::collective::CollectiveManager::instance()->DestroyCommunicationGroup(group_name);
   }
 }
@@ -123,6 +131,10 @@ uint32_t CollectiveInitializer::GetRankIDByGroup(const std::string &group_name) 
     MS_EXCEPTION_IF_NULL(get_rank_id_funcptr);
     return IntToUint((*get_rank_id_funcptr)(group_name));
   } else {
+    // There's only one scheduler in cluster. It shouldn't have collective operations.
+    if (distributed::cluster::ClusterContext::instance()->node_role() == distributed::kEnvRoleOfScheduler) {
+      return 0;
+    }
     return distributed::collective::CollectiveManager::instance()->GetRankId(group_name);
   }
 }
@@ -135,6 +147,10 @@ uint32_t CollectiveInitializer::GetGroupSize(const std::string &group_name) {
     MS_EXCEPTION_IF_NULL(get_group_size_funcptr);
     return IntToUint((*get_group_size_funcptr)(group_name));
   } else {
+    // There's only one scheduler in cluster. It shouldn't have collective operations.
+    if (distributed::cluster::ClusterContext::instance()->node_role() == distributed::kEnvRoleOfScheduler) {
+      return 0;
+    }
     return distributed::collective::CollectiveManager::instance()->GetGroupSize(group_name);
   }
 }

@@ -20,8 +20,10 @@ namespace mindspore {
 namespace device {
 namespace cpu {
 MsCollectiveCommLib::MsCollectiveCommLib() {
-  global_group_name_ = kMSGlobalGroupName;
   node_ = std::dynamic_pointer_cast<ps::core::AbstractNode>(ClusterContext::instance()->node());
+  // Generate the global group name with node role.
+  global_group_name_ = ClusterContext::instance()->node_role() + "_" + kMSGlobalGroupName;
+  MS_LOG(INFO) << "Global group name of MindSpore collective communication library is " << global_group_name_;
 }
 
 bool MsCollectiveCommLib::Initialize(uint32_t global_rank, uint32_t global_rank_size) {

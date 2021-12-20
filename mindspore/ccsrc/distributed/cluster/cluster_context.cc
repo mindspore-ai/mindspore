@@ -102,6 +102,17 @@ bool ClusterContext::Finalize(uint32_t timeout) {
 
 const std::shared_ptr<ps::core::Node> &ClusterContext::node() const { return node_; }
 
+const std::string &ClusterContext::node_role() const { return node_role_; }
+
+uint32_t ClusterContext::node_num(const std::string &node_role) {
+  if (node_num_each_role_.count(node_role) == 0) {
+    MS_LOG(EXCEPTION) << "Node role " << node_role << " is invalid.";
+    return 0;
+  }
+  MS_LOG(INFO) << "Number of role " << node_role << " is " << node_num_each_role_[node_role];
+  return node_num_each_role_[node_role];
+}
+
 bool ClusterContext::initialized() const { return inited_; }
 
 void ClusterContext::InitClusterConfig() {

@@ -22,6 +22,10 @@
 #include "frontend/parallel/context.h"
 #include "frontend/parallel/pipeline_transformer/pipeline_transformer.h"
 #include "frontend/parallel/step_parallel.h"
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
+#include "ps/util.h"
+#include "ps/ps_context.h"
+#endif
 
 namespace mindspore {
 namespace pipeline {
@@ -69,6 +73,11 @@ static int64_t InferStage(int64_t rank_id, int64_t stage_num, int64_t device_num
 
 // Only auto_parallel and semi_auto_parallel support PipelineSplit
 bool PipelineSplit(const ResourcePtr &res) {
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
+  if (ps::PSContext::instance()->is_server() || ps::PSContext::instance()->is_scheduler()) {
+    return true;
+  }
+#endif
   MS_EXCEPTION_IF_NULL(res);
   auto parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
   if (parallel_mode != parallel::SEMI_AUTO_PARALLEL && parallel_mode != parallel::AUTO_PARALLEL) {

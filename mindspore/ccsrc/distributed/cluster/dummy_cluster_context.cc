@@ -33,6 +33,10 @@ bool ClusterContext::Initialize() const { return true; }
 
 bool ClusterContext::Finalize(uint32_t) const { return true; }
 
+std::string ClusterContext::node_role() const { return ""; }
+
+uint32_t ClusterContext::node_num(const std::string &) { return 0; }
+
 bool ClusterContext::initialized() const { return false; }
 }  // namespace cluster
 }  // namespace distributed
