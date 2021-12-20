@@ -115,7 +115,7 @@ class ControlActor : public MemoryAwareActor {
   std::vector<DeviceTensor *> input_device_tensors_;
 
   // The lists of device tensors which need free by dynamic ref count, will be cleared at the end of step.
-  std::vector<std::vector<DeviceTensor *>> memory_free_lists_;
+  std::queue<std::vector<DeviceTensor *>> memory_free_lists_;
 
   // Input num.
   size_t input_partials_num_{0};

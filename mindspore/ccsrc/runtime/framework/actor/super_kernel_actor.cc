@@ -191,16 +191,16 @@ void SuperKernelActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context)
     for (auto &input_data : input_op_datas_[sequential_num]) {
       MS_EXCEPTION_IF_NULL(input_data);
       MS_EXCEPTION_IF_NULL(input_data->data_);
-      if (input_data->data_->dynamic_ref_conut() != INT32_MAX) {
+      if (input_data->data_->dynamic_ref_count() != INT32_MAX) {
         memory_free_list.emplace_back(input_data->data_);
       }
     }
   }
 
   if (memory_free_list.size() > 0) {
-    memory_free_lists_.emplace_back(memory_free_list);
+    memory_free_lists_.push(memory_free_list);
     ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &(memory_free_lists_.back()),
-                          device_contexts_[0], context);
+                          device_contexts_[0], context, GetAID());
   }
 }
 }  // namespace runtime

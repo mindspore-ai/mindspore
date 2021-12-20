@@ -251,9 +251,9 @@ void EntranceActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
   }
 
   if (memory_free_list.size() > 0) {
-    memory_free_lists_.emplace_back(memory_free_list);
+    memory_free_lists_.push(memory_free_list);
     ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &(memory_free_lists_.back()),
-                          device_contexts_[0], context);
+                          device_contexts_[0], context, GetAID());
   }
 }
 }  // namespace runtime

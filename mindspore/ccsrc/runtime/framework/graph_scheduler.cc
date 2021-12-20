@@ -220,7 +220,7 @@ void GraphScheduler::ClearActorData(const ActorSet *actor_set) {
 
   for (auto &super_kernel_actor : actor_set->super_kernel_actors_) {
     MS_EXCEPTION_IF_NULL(super_kernel_actor);
-    super_kernel_actor->memory_free_lists_.clear();
+    super_kernel_actor->memory_free_lists_ = std::queue<std::vector<DeviceTensor *>>();
   }
 
   control_node_scheduler_.ClearActorData(actor_set->control_actors_.get());
@@ -1881,6 +1881,7 @@ void GraphScheduler::DumpDeviceTensorStore(const GraphCompilerInfo &graph_compil
         MS_EXCEPTION_IF_NULL(device_tensor);
         ofs << "\t\t\tdevice tensor value:" << device_tensor << "\tptr:" << device_tensor->GetPtr()
             << "\tsize:" << device_tensor->GetSize() << "\toriginal_ref_count:" << device_tensor->original_ref_count()
+            << "\tdynamic_ref_count:" << device_tensor->dynamic_ref_count()
             << "\tdevice_type:" << device_tensor->DeviceType()
             << "\tis_ptr_persisted:" << device_tensor->is_ptr_persisted() << "\n ";
       }
@@ -1905,6 +1906,7 @@ void GraphScheduler::DumpDeviceTensorStore(const GraphCompilerInfo &graph_compil
         MS_EXCEPTION_IF_NULL(device_tensor);
         ofs << "\t\t\tdevice tensor value:" << device_tensor << "\tptr:" << device_tensor->GetPtr()
             << "\tsize:" << device_tensor->GetSize() << "\toriginal_ref_count:" << device_tensor->original_ref_count()
+            << "\tdynamic_ref_count:" << device_tensor->dynamic_ref_count()
             << "\tdevice_type:" << device_tensor->DeviceType()
             << "\tis_ptr_persisted:" << device_tensor->is_ptr_persisted() << "\n ";
       }

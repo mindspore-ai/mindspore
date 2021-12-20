@@ -118,18 +118,20 @@ class DeviceAddress : public mindspore::DeviceSync {
   }
 
   // The related interface of dynamic reference count operation.
-  void set_dynamic_ref_conut(int32_t dynamic_ref_conut) { dynamic_ref_conut_ = dynamic_ref_conut; }
-  int32_t dynamic_ref_conut() const { return dynamic_ref_conut_; }
-  void IncreaseDynamicRefCount() {
-    if (dynamic_ref_conut_ < INT32_MAX) {
-      dynamic_ref_conut_++;
+  void set_dynamic_ref_count(int32_t dynamic_ref_conut) { dynamic_ref_count_ = dynamic_ref_conut; }
+  int32_t dynamic_ref_count() const { return dynamic_ref_count_; }
+  void IncreaseDynamicRefCount(const std::string &op_object) {
+    if (dynamic_ref_count_ < INT32_MAX) {
+      dynamic_ref_count_++;
+      MS_LOG(DEBUG) << op_object << " increases dynamic ref count to:" << dynamic_ref_count_ << " for ptr:" << ptr_;
     }
   }
-  void DecreaseDynamicRefCount() {
-    if (dynamic_ref_conut_ <= 0) {
-      MS_LOG(EXCEPTION) << "The dynamic reference count is invalid value:" << dynamic_ref_conut_;
+  void DecreaseDynamicRefCount(const std::string &op_object) {
+    if (dynamic_ref_count_ <= 0) {
+      MS_LOG(EXCEPTION) << "The dynamic reference count is invalid value:" << dynamic_ref_count_;
     }
-    dynamic_ref_conut_--;
+    dynamic_ref_count_--;
+    MS_LOG(DEBUG) << op_object << " decreases dynamic ref count to:" << dynamic_ref_count_ << " for ptr:" << ptr_;
   }
 
   virtual bool DumpMemToFile(const std::string &filepath, const std::string &host_fmt, const ShapeVector &host_shape,
@@ -162,8 +164,8 @@ class DeviceAddress : public mindspore::DeviceSync {
   // execution.
   bool is_ptr_persisted_{false};
 
-  // The device address generated in the control flow scene uses dynamic_ref_conut_.
-  std::atomic_int32_t dynamic_ref_conut_{INT32_MAX};
+  // The device address generated in the control flow scene uses dynamic_ref_count_.
+  std::atomic_int32_t dynamic_ref_count_{INT32_MAX};
 
   // The key of device context.
   std::string device_name_{""};
