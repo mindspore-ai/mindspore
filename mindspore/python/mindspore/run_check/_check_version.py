@@ -264,17 +264,18 @@ class AscendEnvChecker(EnvChecker):
 
     def check_version(self):
         if not Path(self.fwk_version).is_file():
-            logger.warning("Using custom Ascend 910 AI software package path, package version checking is skipped, "
-                           "please make sure Ascend 910 AI software package version is supported, you can reference to "
-                           "the installation guidelines https://www.mindspore.cn/install")
+            logger.warning("Using custom Ascend AI software package (Ascend Data Center Solution) path, package "
+                           "version checking is skipped, please make sure Ascend AI software package (Ascend Data "
+                           "Center Solution) version is supported, you can reference to the installation guidelines "
+                           "https://www.mindspore.cn/install")
             return
 
         v = self._read_version(self.fwk_version)
         if v not in self.version:
             v_list = str([x for x in self.version])
-            logger.warning(f"MindSpore version {__version__} and Ascend 910 AI software package version {v} does not "
-                           f"match, the version of software package expect one of {v_list}, "
-                           "please reference to the match info on: https://www.mindspore.cn/install")
+            logger.warning(f"MindSpore version {__version__} and Ascend AI software package (Ascend Data Center "
+                           f"Solution)version {v} does not match, the version of software package expect one of "
+                           f"{v_list}, please reference to the match info on: https://www.mindspore.cn/install")
 
     def check_deps_version(self):
         """
@@ -314,8 +315,8 @@ class AscendEnvChecker(EnvChecker):
                     os.environ['LD_LIBRARY_PATH'] = self.tbe_path
             else:
                 raise EnvironmentError(
-                    f"No such directory: {self.tbe_path}, Please check if Ascend 910 AI software package is "
-                    "installed correctly.")
+                    f"No such directory: {self.tbe_path}, Please check if Ascend AI software package (Ascend Data "
+                    "Center Solution) is installed correctly.")
 
         # check te version after set te env
         self.check_deps_version()
@@ -332,15 +333,15 @@ class AscendEnvChecker(EnvChecker):
             os.environ['TBE_IMPL_PATH'] = self.op_impl_path
         else:
             raise EnvironmentError(
-                f"No such directory: {self.op_impl_path}, Please check if Ascend 910 AI software package is "
-                "installed correctly.")
+                f"No such directory: {self.op_impl_path}, Please check if Ascend AI software package (Ascend Data "
+                "Center Solution) is installed correctly.")
 
         if Path(self.cce_path).is_dir():
             os.environ['PATH'] = self.cce_path + ":" + os.environ['PATH']
         else:
             raise EnvironmentError(
-                f"No such directory: {self.cce_path}, Please check if Ascend 910 AI software package is "
-                "installed correctly.")
+                f"No such directory: {self.cce_path}, Please check if Ascend AI software package (Ascend Data Center "
+                "Solution) is installed correctly.")
 
         if self.op_path is None:
             pass
@@ -348,8 +349,8 @@ class AscendEnvChecker(EnvChecker):
             os.environ['ASCEND_OPP_PATH'] = self.op_path
         else:
             raise EnvironmentError(
-                f"No such directory: {self.op_path}, Please check if Ascend 910 AI software package is "
-                "installed correctly.")
+                f"No such directory: {self.op_path}, Please check if Ascend AI software package (Ascend Data Center "
+                "Solution) is installed correctly.")
 
     def _check_env(self):
         """ascend dependence path check"""

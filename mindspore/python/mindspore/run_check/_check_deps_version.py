@@ -41,7 +41,7 @@ def check_deps_version(mindspore_version, supported_version):
 
     Args:
         mindspore_version (str): this mindspore package version
-        supported_version (str list): supported Ascend 910 AI software package version by this mindspore package
+        supported_version (str list): supported Ascend AI software package version by this mindspore package
 
     Returns:
         void
@@ -65,9 +65,9 @@ def check_deps_version(mindspore_version, supported_version):
 
     except ImportError as e:
         print("CheckFailed: ", e.args)
-        print("Minspore relies on the 3 whl packages of \"te\", \"topi\" and \"hccl\" in the \"fwkacllib\" "
-              "folder of the Ascend 910 AI software package, please check whether they are installed "
-              "correctly or not, reference to the match info on: https://www.mindspore.cn/install")
+        print("MindSpore relies on the 3 whl packages of \"te\", \"topi\" and \"hccl\" in the \"fwkacllib\" "
+              "folder of the Ascend AI software package (Ascend Data Center Solution), please check whether they are "
+              "installed correctly or not, reference to the match info on: https://www.mindspore.cn/install")
 
 
 def main():
