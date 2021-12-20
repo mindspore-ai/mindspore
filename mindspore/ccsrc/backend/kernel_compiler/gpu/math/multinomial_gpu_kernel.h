@@ -133,7 +133,7 @@ class MultinomialGpuKernel : public GpuKernel {
  protected:
   void InitSizeLists() override {
     input_size_list_.push_back(input_size_0_);
-    input_size_list_.push_back(sizeof(int));
+    input_size_list_.push_back(sizeof(int64_t));
     output_size_list_.push_back(output_size_);
   }
 
