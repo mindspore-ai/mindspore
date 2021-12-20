@@ -320,6 +320,13 @@ __global__ void RealKernel(const Complex<T> *input, T *output, const size_t coun
   return;
 }
 template <typename T>
+__global__ void RealKernel(const T *input, T *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = input[i];
+  }
+  return;
+}
+template <typename T>
 __global__ void ImagKernel(const Complex<T> *input, T *output, const size_t count) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
     output[i] = input[i].imag();
@@ -327,9 +334,24 @@ __global__ void ImagKernel(const Complex<T> *input, T *output, const size_t coun
   return;
 }
 template <typename T>
+__global__ void ImagKernel(const T *input, T *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    T zero = 0;
+    output[i] = zero;
+  }
+  return;
+}
+template <typename T>
 __global__ void ConjKernel(const Complex<T> *input, Complex<T> *output, const size_t count) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
     output[i] = Complex<T>(input[i].real(), -input[i].imag());
+  }
+  return;
+}
+template <typename T>
+__global__ void ConjKernel(const T *input, T *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = input[i];
   }
   return;
 }
@@ -516,12 +538,27 @@ void Real(const Complex<T> *input, T *output, const size_t count, cudaStream_t c
   return;
 }
 template <typename T>
+void Real(const T *input, T *output, const size_t count, cudaStream_t cuda_stream) {
+  RealKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
+  return;
+}
+template <typename T>
 void Imag(const Complex<T> *input, T *output, const size_t count, cudaStream_t cuda_stream) {
   ImagKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
   return;
 }
 template <typename T>
+void Imag(const T *input, T *output, const size_t count, cudaStream_t cuda_stream) {
+  ImagKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
+  return;
+}
+template <typename T>
 void Conj(const Complex<T> *input, Complex<T> *output, const size_t count, cudaStream_t cuda_stream) {
+  ConjKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
+  return;
+}
+template <typename T>
+void Conj(const T *input, T *output, const size_t count, cudaStream_t cuda_stream) {
   ConjKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
   return;
 }
@@ -570,6 +607,9 @@ template void Floor<double>(const double *input, double *output, const size_t co
 template void Rint<double>(const double *input, double *output, const size_t count, cudaStream_t cuda_stream);
 template void Round<double>(const double *input, double *output, const size_t count, cudaStream_t cuda_stream);
 template void Sign<double>(const double *input, double *output, const size_t count, cudaStream_t cuda_stream);
+template void Real<double>(const double *input, double *output, const size_t count, cudaStream_t cuda_stream);
+template void Imag<double>(const double *input, double *output, const size_t count, cudaStream_t cuda_stream);
+template void Conj<double>(const double *input, double *output, const size_t count, cudaStream_t cuda_stream);
 
 
 // float
@@ -596,6 +636,9 @@ template void Floor<float>(const float *input, float *output, const size_t count
 template void Rint<float>(const float *input, float *output, const size_t count, cudaStream_t cuda_stream);
 template void Round<float>(const float *input, float *output, const size_t count, cudaStream_t cuda_stream);
 template void Sign<float>(const float *input, float *output, const size_t count, cudaStream_t cuda_stream);
+template void Real<float>(const float *input, float *output, const size_t count, cudaStream_t cuda_stream);
+template void Imag<float>(const float *input, float *output, const size_t count, cudaStream_t cuda_stream);
+template void Conj<float>(const float *input, float *output, const size_t count, cudaStream_t cuda_stream);
 
 // half
 template void Exponential<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
@@ -621,6 +664,9 @@ template void Floor<half>(const half *input, half *output, const size_t count, c
 template void Rint<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
 template void Round<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
 template void Sign<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
+template void Real<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
+template void Imag<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
+template void Conj<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
 
 // int8
 template void Exponential<char>(const char *input, char *output, const size_t count, cudaStream_t cuda_stream);
@@ -646,6 +692,9 @@ template void Floor<char>(const char *input, char *output, const size_t count, c
 template void Rint<char>(const char *input, char *output, const size_t count, cudaStream_t cuda_stream);
 template void Round<char>(const char *input, char *output, const size_t count, cudaStream_t cuda_stream);
 template void Sign<char>(const char *input, char *output, const size_t count, cudaStream_t cuda_stream);
+template void Real<char>(const char *input, char *output, const size_t count, cudaStream_t cuda_stream);
+template void Imag<char>(const char *input, char *output, const size_t count, cudaStream_t cuda_stream);
+template void Conj<char>(const char *input, char *output, const size_t count, cudaStream_t cuda_stream);
 
 // uint8
 template void Exponential<unsigned char>(const unsigned char *input, unsigned char *output, const size_t count,
@@ -694,6 +743,12 @@ template void Round<unsigned char>(const unsigned char *input, unsigned char *ou
                                    cudaStream_t cuda_stream);
 template void Sign<unsigned char>(const unsigned char *input, unsigned char *output, const size_t count,
                                   cudaStream_t cuda_stream);
+template void Real<unsigned char>(const unsigned char *input, unsigned char *output, const size_t count,
+                                  cudaStream_t cuda_stream);
+template void Imag<unsigned char>(const unsigned char *input, unsigned char *output, const size_t count,
+                                  cudaStream_t cuda_stream);
+template void Conj<unsigned char>(const unsigned char *input, unsigned char *output, const size_t count,
+                                  cudaStream_t cuda_stream);
 
 // int32
 template void Exponential<int>(const int *input, int *output, const size_t count, cudaStream_t cuda_stream);
@@ -719,6 +774,9 @@ template void Floor<int>(const int *input, int *output, const size_t count, cuda
 template void Rint<int>(const int *input, int *output, const size_t count, cudaStream_t cuda_stream);
 template void Round<int>(const int *input, int *output, const size_t count, cudaStream_t cuda_stream);
 template void Sign<int>(const int *input, int *output, const size_t count, cudaStream_t cuda_stream);
+template void Real<int>(const int *input, int *output, const size_t count, cudaStream_t cuda_stream);
+template void Imag<int>(const int *input, int *output, const size_t count, cudaStream_t cuda_stream);
+template void Conj<int>(const int *input, int *output, const size_t count, cudaStream_t cuda_stream);
 
 // complex64
 template void Real<float>(const Complex<float> *input, float *output, const size_t count, cudaStream_t cuda_stream);
@@ -731,3 +789,32 @@ template void Real<double>(const Complex<double> *input, double *output, const s
 template void Imag<double>(const Complex<double> *input, double *output, const size_t count, cudaStream_t cuda_stream);
 template void Conj<double>(const Complex<double> *input, Complex<double> *output, const size_t count,
                            cudaStream_t cuda_stream);
+
+// bool
+template void Real<bool>(const bool *input, bool *output, const size_t count, cudaStream_t cuda_stream);
+template void Imag<bool>(const bool *input, bool *output, const size_t count, cudaStream_t cuda_stream);
+
+// int16
+template void Real<int16_t>(const int16_t *input, int16_t *output, const size_t count, cudaStream_t cuda_stream);
+template void Imag<int16_t>(const int16_t *input, int16_t *output, const size_t count, cudaStream_t cuda_stream);
+template void Conj<int16_t>(const int16_t *input, int16_t *output, const size_t count, cudaStream_t cuda_stream);
+
+// uint16
+template void Real<uint16_t>(const uint16_t *input, uint16_t *output, const size_t count, cudaStream_t cuda_stream);
+template void Imag<uint16_t>(const uint16_t *input, uint16_t *output, const size_t count, cudaStream_t cuda_stream);
+template void Conj<uint16_t>(const uint16_t *input, uint16_t *output, const size_t count, cudaStream_t cuda_stream);
+
+// uint32
+template void Real<uint32_t>(const uint32_t *input, uint32_t *output, const size_t count, cudaStream_t cuda_stream);
+template void Imag<uint32_t>(const uint32_t *input, uint32_t *output, const size_t count, cudaStream_t cuda_stream);
+template void Conj<uint32_t>(const uint32_t *input, uint32_t *output, const size_t count, cudaStream_t cuda_stream);
+
+// int64
+template void Real<int64_t>(const int64_t *input, int64_t *output, const size_t count, cudaStream_t cuda_stream);
+template void Imag<int64_t>(const int64_t *input, int64_t *output, const size_t count, cudaStream_t cuda_stream);
+template void Conj<int64_t>(const int64_t *input, int64_t *output, const size_t count, cudaStream_t cuda_stream);
+
+// uint64
+template void Real<uint64_t>(const uint64_t *input, uint64_t *output, const size_t count, cudaStream_t cuda_stream);
+template void Imag<uint64_t>(const uint64_t *input, uint64_t *output, const size_t count, cudaStream_t cuda_stream);
+template void Conj<uint64_t>(const uint64_t *input, uint64_t *output, const size_t count, cudaStream_t cuda_stream);

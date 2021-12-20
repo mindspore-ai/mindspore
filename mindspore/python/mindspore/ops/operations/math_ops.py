@@ -5376,16 +5376,17 @@ class Erfinv(Primitive):
 
 class Conj(PrimitiveWithInfer):
     """
-    Returns a Tensor that is the real part of the input.
+    Returns a Tensor that is the conjugate part of the input.
 
     Inputs:
-        - **input** (Tensor, complex) - The input tensor. types: complex64, complex128.
+        -**input** (Tensor) - The input tensor to compute to. Must have numeric type.
 
     Outputs:
-        Tensor, has the float type.
+        A Tensor that is the conjugate of x (with the same type).
 
     Raises:
-       TypeError: If the dtype of input is not one of: complex64, complex128.
+       TypeError: If the dtype of input is not a numeric type.
+                  If the input is not a Tensor.
 
     Supported Platforms:
         ``GPU``
@@ -5395,22 +5396,13 @@ class Conj(PrimitiveWithInfer):
         >>> conj = ops.Conj()
         >>> output = conj(x)
         >>> print(output)
-        1.3-0.4j
+        (1.3-0.4j)
     """
 
     @prim_attr_register
     def __init__(self):
-        self.init_prim_io_names(
-            inputs=['input_tensor'],
-            outputs=['output_tensor'])
-
-    def infer_shape(self, input_shape):
-        return input_shape
-
-    def infer_dtype(self, input_dtype):
-        validator.check_tensor_dtype_valid('input_tensor', input_dtype,
-                                           [mstype.complex64, mstype.complex128], self.name)
-        return input_dtype
+        """Initialize Conj"""
+        self.init_prim_io_names(inputs=['input'], outputs=['output'])
 
 
 class Real(PrimitiveWithInfer):
@@ -5418,42 +5410,29 @@ class Real(PrimitiveWithInfer):
     Returns a Tensor that is the real part of the input.
 
     Inputs:
-        - **input** (Tensor, complex) - The input tensor. types: complex64, complex128.
+        -**input** (Tensor) - The input tensor to compute to.
 
     Outputs:
-        Tensor, has the float type.
+        Tensor, the shape is the same as the input.
 
     Raises:
-       TypeError: If the dtype of input is not one of: complex64, complex128.
+       TypeError: If the input is not a Tensor.
 
     Supported Platforms:
         ``GPU``
 
     Examples:
         >>> x = Tensor(np.asarray(np.complex(1.3+0.4j)), mindspore.complex64)
-        >>> conj = ops.Real()
-        >>> output = conj(x)
+        >>> real = ops.Real()
+        >>> output = real(x)
         >>> print(output)
         1.3
     """
 
     @prim_attr_register
     def __init__(self):
-        self.init_prim_io_names(
-            inputs=['input_tensor'],
-            outputs=['output_tensor'])
-
-    def infer_shape(self, input_shape):
-        return input_shape
-
-    def infer_dtype(self, input_dtype):
-        validator.check_tensor_dtype_valid('input_tensor', input_dtype,
-                                           [mstype.complex64, mstype.complex128], self.name)
-        if input_dtype == mstype.tensor_type(mstype.complex64):
-            output_dtype = mstype.float32
-        elif input_dtype == mstype.tensor_type(mstype.complex128):
-            output_dtype = mstype.float64
-        return output_dtype
+        """Initialize Real"""
+        self.init_prim_io_names(inputs=['input'], outputs=['output'])
 
 
 class Complex(Primitive):
@@ -5494,42 +5473,29 @@ class Imag(PrimitiveWithInfer):
     Returns a new tensor containing imaginary value of the input.
 
     Inputs:
-        - **input** (Tensor, complex) - The input tensor. types: complex64, complex128.
+        -**input** (Tensor) - The input tensor to compute to.
 
     Outputs:
-        Tensor, has the float type.
+        Tensor, the shape is the same as the input.
 
     Raises:
-       TypeError: If the dtype of input is not one of: complex64, complex128.
+       TypeError: If the input is not a Tensor.
 
     Supported Platforms:
         ``GPU``
 
     Examples:
         >>> x = Tensor(np.asarray(np.complex(1.3+0.4j)), mindspore.complex64)
-        >>> conj = ops.Imag()
-        >>> output = conj(x)
+        >>> imag = ops.Imag()
+        >>> output = imag(x)
         >>> print(output)
         0.4
     """
 
     @prim_attr_register
     def __init__(self):
-        self.init_prim_io_names(
-            inputs=['input_tensor'],
-            outputs=['output_tensor'])
-
-    def infer_shape(self, input_shape):
-        return input_shape
-
-    def infer_dtype(self, input_dtype):
-        validator.check_tensor_dtype_valid('input_tensor', input_dtype,
-                                           [mstype.complex64, mstype.complex128], self.name)
-        if input_dtype == mstype.tensor_type(mstype.complex64):
-            output_dtype = mstype.float32
-        elif input_dtype == mstype.tensor_type(mstype.complex128):
-            output_dtype = mstype.float64
-        return output_dtype
+        """Initialize Imag"""
+        self.init_prim_io_names(inputs=['input'], outputs=['output'])
 
 
 class Trunc(Primitive):

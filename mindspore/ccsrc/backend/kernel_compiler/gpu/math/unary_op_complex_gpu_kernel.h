@@ -27,9 +27,7 @@
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
-using Complex = mindspore::utils::Complex<T>;
-template <typename T>
+template <typename T, typename S>
 class UnaryOpComplexGpuKernel : public GpuKernel {
  public:
   UnaryOpComplexGpuKernel() { ResetResource(); }
@@ -41,37 +39,35 @@ class UnaryOpComplexGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    Complex<T> *input_addr = GetDeviceAddress<Complex<T>>(inputs, 0);
-    if (is_c2r_op_) {
-      T *output_addr = GetDeviceAddress<T>(outputs, 0);
-      switch (unary_op_type_) {
-        case UNARY_OP_REAL: {
-          Real(input_addr, output_addr, inputs[0]->size / sizeof(Complex<T>),
-               reinterpret_cast<cudaStream_t>(stream_ptr));
-          break;
+    T *input_addr = GetDeviceAddress<T>(inputs, 0);
+
+    S *output_addr = GetDeviceAddress<S>(outputs, 0);
+    switch (unary_op_type_) {
+      case UNARY_OP_REAL: {
+        if constexpr (!std::is_same<S, utils::Complex<float>>::value &&
+                      !std::is_same<S, utils::Complex<double>>::value) {
+          Real(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
         }
-        case UNARY_OP_IMAG: {
-          Imag(input_addr, output_addr, inputs[0]->size / sizeof(Complex<T>),
-               reinterpret_cast<cudaStream_t>(stream_ptr));
-          break;
-        }
-        default: {
-          MS_LOG(EXCEPTION) << "Unary operation " << unary_op_type_ << " is not supported.";
-        }
+        break;
       }
-    } else {
-      Complex<T> *output_addr = GetDeviceAddress<Complex<T>>(outputs, 0);
-      switch (unary_op_type_) {
-        case UNARY_OP_CONJ: {
-          Conj(input_addr, output_addr, inputs[0]->size / sizeof(Complex<T>),
-               reinterpret_cast<cudaStream_t>(stream_ptr));
-          break;
+      case UNARY_OP_IMAG: {
+        if constexpr (!std::is_same<S, utils::Complex<float>>::value &&
+                      !std::is_same<S, utils::Complex<double>>::value) {
+          Imag(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
         }
-        default: {
-          MS_LOG(EXCEPTION) << "Unary operation " << unary_op_type_ << " is not supported.";
+        break;
+      }
+      case UNARY_OP_CONJ: {
+        if constexpr (std::is_same<T, S>::value && !std::is_same<T, bool>::value) {
+          Conj(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
         }
+        break;
+      }
+      default: {
+        MS_LOG(EXCEPTION) << "Unary operation " << unary_op_type_ << " is not supported.";
       }
     }
+
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
@@ -98,18 +94,14 @@ class UnaryOpComplexGpuKernel : public GpuKernel {
       input_size_ *= input_shape[i];
       output_size_ *= input_shape[i];
     }
-    if (is_c2r_op_) {
-      output_size_ /= 2;
-    }
     InitSizeLists();
     return true;
   }
   void ResetResource() noexcept override {
-    input_size_ = sizeof(Complex<T>);
-    output_size_ = sizeof(Complex<T>);
+    input_size_ = 1;
+    output_size_ = 1;
     workspace_size_ = 0;
     is_null_input_ = false;
-    is_c2r_op_ = false;
     input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
@@ -117,26 +109,18 @@ class UnaryOpComplexGpuKernel : public GpuKernel {
 
  protected:
   void InitSizeLists() override {
-    input_size_list_.push_back(input_size_);
-    output_size_list_.push_back(output_size_);
+    input_size_list_.push_back(input_size_ * sizeof(T));
+    output_size_list_.push_back(output_size_ * sizeof(S));
   }
 
  private:
   void GetOpType(const CNodePtr &kernel_node) {
     std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
-    static std::map<std::string, UnaryOptype> kComplexSupportedC2RTypeMap = {{"Real", UNARY_OP_REAL},
-                                                                             {"Imag", UNARY_OP_IMAG}};
-    auto iter = kComplexSupportedC2RTypeMap.find(kernel_name);
-    if (iter != kComplexSupportedC2RTypeMap.end()) {
+    static std::map<std::string, UnaryOptype> kComplexSupportedTypeMap = {
+      {"Real", UNARY_OP_REAL}, {"Imag", UNARY_OP_IMAG}, {"Conj", UNARY_OP_CONJ}};
+    auto iter = kComplexSupportedTypeMap.find(kernel_name);
+    if (iter != kComplexSupportedTypeMap.end()) {
       unary_op_type_ = iter->second;
-      is_c2r_op_ = true;
-      return;
-    }
-    static std::map<std::string, UnaryOptype> kComplexSupportedC2CTypeMap = {{"Conj", UNARY_OP_CONJ}};
-    iter = kComplexSupportedC2CTypeMap.find(kernel_name);
-    if (iter != kComplexSupportedC2RTypeMap.end()) {
-      unary_op_type_ = iter->second;
-      is_c2r_op_ = false;
       return;
     }
 
@@ -148,7 +132,6 @@ class UnaryOpComplexGpuKernel : public GpuKernel {
   size_t output_size_;
   size_t workspace_size_;
   bool is_null_input_;
-  bool is_c2r_op_;
   UnaryOptype unary_op_type_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;

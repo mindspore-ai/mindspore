@@ -28,7 +28,7 @@ class RealOpEliminate : public AnfVisitor {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
     Reset();
-    AnfVisitor::Match(prim::kPrimReal, {IsNode})(node);
+    AnfVisitor::Match(prim::kPrimRealInner, {IsNode})(node);
     auto src_type = src_->Type();
     if (src_type == nullptr || !src_type->isa<TensorType>()) {
       return src_;
@@ -38,7 +38,9 @@ class RealOpEliminate : public AnfVisitor {
     MS_EXCEPTION_IF_NULL(src_type);
     // Real ops only makes sense when input data type is complex number.
     if (src_type->type_id() == kNumberTypeComplex64 || src_type->type_id() == kNumberTypeComplex128) {
-      return nullptr;
+      auto new_node = NewCNode({NewValueNode(prim::kPrimReal), src_}, node->func_graph());
+      new_node->set_abstract(node->abstract());
+      return new_node;
     }
 
     return src_;
