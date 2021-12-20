@@ -103,8 +103,8 @@ AbstractBasePtr AdamInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   auto prim_name = primitive->name();
   const int64_t kInputNum = 10;
   CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
-  auto infer_shape = AdamInferShape(primitive, input_args);
   auto infer_type = AdamInferType(primitive, input_args);
+  auto infer_shape = AdamInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(Adam, prim::kPrimAdam, AdamInfer, nullptr, true);
