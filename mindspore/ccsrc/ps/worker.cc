@@ -377,8 +377,8 @@ bool Worker::DoPSEmbeddingLookup(const Key &key, const std::vector<int> &lookup_
     src_size = size;
     dst_data = result_addr + offset;
     src_data = pair->first;
-    MS_EXCEPTION_IF_NULL(dst_data);
-    MS_EXCEPTION_IF_NULL(src_data);
+    MS_ERROR_IF_NULL(dst_data);
+    MS_ERROR_IF_NULL(src_data);
     auto mem_ret = memcpy_s(dst_data, dst_size, src_data, src_size);
     if (mem_ret != 0) {
       MS_LOG(ERROR) << "memcpy_s error, errorno(" << mem_ret << ")";
