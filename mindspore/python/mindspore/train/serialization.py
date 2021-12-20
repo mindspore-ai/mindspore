@@ -1299,9 +1299,9 @@ def _merge_param_with_strategy(sliced_data, parameter_name, strategy, is_even):
 def restore_group_info_list(group_info_file_name):
     """
     Build rank list, the checkpoint of ranks in the rank list has the same contents with the local rank
-    that saves the group_info_file_name.
-    To save the group info file, please export GROUP_INFO_FILE environment variables like
-    "export GROUP_INFO_FILE=/data/group_info.pb".
+    who saves the group_info_file_name. To save the group info file, please export GROUP_INFO_FILE environment variables
+    like "export GROUP_INFO_FILE=/data/group_info.pb".
+
     Args:
         group_info_file_name (str): Name of group information file.
 
