@@ -191,6 +191,68 @@ class DeviceShapeTransfer {
 };
 
 /**
+ * Trans data at host according to the node's format
+ * */
+class FormatTransfer {
+ public:
+  FormatTransfer() = default;
+  ~FormatTransfer() = default;
+
+  bool TransDataByFormat(const FormatArgs &args, void *result, const AnfNodePtr &node, size_t index, bool is_forward);
+  bool TransDataForwardCore(const FormatArgs &args, void *result, int64_t groups = 1);
+  bool TransDataBackwordCore(const FormatArgs &args, void *result, int64_t groups = 1);
+
+ private:
+  using TransferCore = std::function<bool(const FormatArgs &, void *)>;
+  // fp map
+  const std::map<std::string, TransferCore> format_trans_fp_map = {{kOpFormat_HWCN, NCHW_TO_4D},
+                                                                   {kOpFormat_NHWC, NCHW_TO_4D},
+                                                                   {kOpFormat_FRAC_Z, NCHW_TO_FRAC_Z},
+                                                                   {kOpFormat_FRAC_NZ, NCHW_TO_FRAC_NZ},
+                                                                   {kOpFormat_NC1HWC0, NCHW_TO_NC1HWC0},
+                                                                   {kOpFormat_NDC1HWC0, NCDHW_TO_NDC1HWC0},
+                                                                   {kOpFormat_C1HWNCoC0, NCHW_TO_C1HWNCOC0},
+                                                                   {kOpFormat_NC1HWC0_C04, NCHW_TO_NC1HWC04},
+                                                                   {kOpFormat_FRACTAL_Z_3D, NCDHW_TO_FRAC_Z3D},
+                                                                   {kOpFormat_FRACTAL_Z_C04, NCHW_TO_FRAC_ZC04}};
+  // bp map
+  const std::map<std::string, TransferCore> format_trans_bp_map = {{kOpFormat_HWCN, TO_NCHW},
+                                                                   {kOpFormat_NHWC, TO_NCHW},
+                                                                   {kOpFormat_FRAC_Z, FRAC_Z_TO_NCHW},
+                                                                   {kOpFormat_FRAC_NZ, FRAC_NZ_TO_NCHW},
+                                                                   {kOpFormat_NC1HWC0, NC1HWC0_TO_NCHW},
+                                                                   {kOpFormat_NDC1HWC0, NDC1HWC0_TO_NCDHW},
+                                                                   {kOpFormat_C1HWNCoC0, C1HWNCOC0_TO_NCHW},
+                                                                   {kOpFormat_NC1HWC0_C04, NC1HWC04_TO_NCHW},
+                                                                   {kOpFormat_FRACTAL_Z_3D, FRAC_Z3D_TO_NCDHW}};
+
+  static bool CheckArgs(const FormatArgs &args, int64_t *size);
+  static bool TransShapeToHW_NZ(const ShapeVector &host_shape, ShapeVector *hw_shape);
+  // HOST TO DEVICE
+  static bool NCHW_TO_4D(const FormatArgs &args, void *result);
+  static bool NCHW_TO_FRAC_Z(const FormatArgs &args, void *result);
+  static bool NCHW_TO_NC1HWC0(const FormatArgs &args, void *result);
+  static bool NCHW_TO_FRAC_NZ(const FormatArgs &args, void *result);
+  static bool NCHW_TO_NC1HWC04(const FormatArgs &args, void *result);
+  static bool NCHW_TO_FRAC_ZC04(const FormatArgs &args, void *result);
+  static bool NCHW_TO_C1HWNCOC0(const FormatArgs &args, void *result);
+  static bool NCDHW_TO_NDC1HWC0(const FormatArgs &args, void *result);
+  static bool NCDHW_TO_FRAC_Z3D(const FormatArgs &args, void *result);
+  static bool NCHW_TO_FRAC_Z_WITH_GROPUS(const FormatArgs &args, void *result, bool to_device, int64_t groups);
+
+  // DEVICE TO HOST
+  static bool TO_NCHW(const FormatArgs &args, void *result);
+  static bool FRAC_Z_TO_NCHW(const FormatArgs &args, void *result);
+  static bool FRAC_NZ_TO_NCHW(const FormatArgs &args, void *result);
+  static bool NC1HWC0_TO_NCHW(const FormatArgs &args, void *result);
+  static bool NC1HWC04_TO_NCHW(const FormatArgs &args, void *result);
+  static bool C1HWNCOC0_TO_NCHW(const FormatArgs &args, void *result);
+  static bool FRAC_Z3D_TO_NCDHW(const FormatArgs &args, void *result);
+  static bool NDC1HWC0_TO_NCDHW(const FormatArgs &args, void *result);
+  static bool FRAC_Z_TO_NCHW_WITH_GROUPS(const FormatArgs &args, void *result, int64_t groups);
+};
+
+/**
  * Padding shape to 5D by default mode
  * */
 template <typename T>
