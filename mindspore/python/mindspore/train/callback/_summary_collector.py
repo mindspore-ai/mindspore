@@ -1038,13 +1038,14 @@ class SummaryCollector(Callback):
         dataset_dir_set = (dataset_package.ImageFolderDataset, dataset_package.MnistDataset,
                            dataset_package.Cifar10Dataset, dataset_package.Cifar100Dataset,
                            dataset_package.VOCDataset, dataset_package.CelebADataset)
-        dataset_file_set = (dataset_package.MindDataset, dataset_package.ManifestDataset)
         dataset_files_set = (dataset_package.TFRecordDataset, dataset_package.TextFileDataset)
 
         dataset_path = ''
 
-        if isinstance(output_dataset, dataset_file_set):
+        if isinstance(output_dataset, dataset_package.ManifestDataset):
             dataset_path = output_dataset.dataset_file
+        if isinstance(output_dataset, dataset_package.MindDataset):
+            dataset_path = output_dataset.dataset_files
         if isinstance(output_dataset, dataset_dir_set):
             dataset_path = output_dataset.dataset_dir
         if isinstance(output_dataset, dataset_files_set):
