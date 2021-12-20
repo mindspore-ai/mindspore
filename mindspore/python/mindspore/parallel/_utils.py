@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """Utils of auto parallel"""
-
 import numpy as np
 from mindspore import context, log as logger
 from mindspore.context import ParallelMode

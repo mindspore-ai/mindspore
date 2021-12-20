@@ -26,6 +26,7 @@ from .less_batch_normalization import LessBN
 from .grad_freeze import GradientFreeze, FreezeOpt, freeze_cell
 from .grad_accumulation import GradientAccumulation
 from .adasum import AdaSum
+from .dim_reduce import DimReduce
 
 
 __all__ = ['AutoBoost',
@@ -34,4 +35,4 @@ __all__ = ['AutoBoost',
            'LessBN',
            'GradientFreeze', 'FreezeOpt', 'freeze_cell',
            'GradientAccumulation',
-           'AdaSum']
+           'AdaSum', 'DimReduce']

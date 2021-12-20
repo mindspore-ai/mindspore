@@ -13,15 +13,23 @@
 # limitations under the License.
 # ============================================================================
 """base process"""
+import os
+import time
+import math
 import copy
+import numpy as np
+from scipy import linalg as la
 import mindspore.nn as nn
 from mindspore.nn.optim import LARS
 from mindspore import log as logger
 from mindspore.common import Parameter
+from mindspore.communication.management import get_group_size
+from mindspore.parallel._utils import _get_global_rank
+from mindspore.train.serialization import load_checkpoint
 from .less_batch_normalization import CommonHeadLastFN
 
 
-__all__ = ["OptimizerProcess", "ParameterProcess"]
+__all__ = ["OptimizerProcess", "ParameterProcess", "get_local_pca_mat_path", "load_local_pca_mat"]
 
 
 class OptimizerProcess:
@@ -265,3 +273,150 @@ class ParameterProcess:
             else:
                 group_params.append({"params": params_value})
         return group_params
+
+
+def get_local_pca_mat_path(weight_load_dir, pca_mat_path, n_component, device_number):
+    """
+    get local pca mat path.
+
+    Args:
+        weight_load_dir (str): The weight(ckpt) file directory to be load.
+        pca_mat_path (str): the path to load pca mat. Default: None.
+        n_component (int): pca component.
+        device_number (int): device number.
+    """
+    if pca_mat_path is not None and os.path.exists(pca_mat_path) and os.path.isfile(pca_mat_path) and \
+            pca_mat_path.endswith(".npy"):
+        full_pca_mat_path = pca_mat_path
+        pca_mat_exist = True
+
+    else:
+        if weight_load_dir is None or not os.path.exists(weight_load_dir) or not os.path.isdir(weight_load_dir):
+            raise ValueError("The weight_load_dir: {} is None / not exists / not directory.".format(weight_load_dir))
+
+        full_pca_mat_path = os.path.join(weight_load_dir, "pca_mat_temp.npy")
+        pca_mat_exist = False
+
+    rank = _get_global_rank()
+    local_pca_mat_path = full_pca_mat_path[:-4] + "_rank_" + str(rank) + ".npy"
+    if os.path.exists(local_pca_mat_path):
+        os.remove(local_pca_mat_path)
+    if rank % device_number != 0:
+        return local_pca_mat_path
+
+    if pca_mat_exist:
+        pca_mat = np.load(full_pca_mat_path)
+    else:
+        data = _load_weights(weight_load_dir)
+        pca_mat = _compute_pca_mat(data, n_component)
+        np.save(full_pca_mat_path, pca_mat)
+    _save_local_pca_mat(pca_mat, full_pca_mat_path, n_component)
+    return local_pca_mat_path
+
+
+def _load_weights(weight_load_dir):
+    """
+    load weights.
+
+    Args:
+        weight_load_dir (str): The weight(ckpt) file directory to be load.
+    """
+    param_mat = None
+    weight_file_list = os.listdir(weight_load_dir)
+    for file in weight_file_list:
+        if not file.endswith('.ckpt'):
+            continue
+        file_path = os.path.join(weight_load_dir, file)
+        param_dict = load_checkpoint(file_path)
+        param = None
+        for _, value in param_dict.items():
+            if param is None:
+                param = value.asnumpy().reshape((1, -1))
+            else:
+                param = np.hstack((param, value.asnumpy().reshape((1, -1))))
+        if param_mat is None:
+            param_mat = param
+        else:
+            param_mat = np.vstack((param_mat, param))
+    return param_mat
+
+
+def _compute_pca_mat(data, n_component):
+    """
+    compute pca mat.
+
+    Args:
+        data : array-like of shape (n_samples, n_features)
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
+        n_component (int): pca component.
+    """
+    if data.shape[0] < n_component:
+        raise ValueError("The samples: {} is less than: n_component {}.".format(data.shape[0], n_component))
+    mean = np.mean(data, axis=0)
+    data -= mean
+    u, _, v = la.svd(data, full_matrices=False)
+    _, v = _svd_flip(u, v)
+    components = v[:n_component]
+    return components
+
+
+def _svd_flip(u, v):
+    """
+    svd flip.
+
+    Args:
+        u (ndarray): the output of `linalg.svd`.
+        v (ndarray): the output of `linalg.svd`.
+    """
+    max_abs_cols = np.argmax(np.abs(u), axis=0)
+    signs = np.sign(u[max_abs_cols, range(u.shape[1])])
+    u *= signs
+    v *= signs[:, np.newaxis]
+    return u, v
+
+
+def _save_local_pca_mat(pca_mat, full_pca_mat_path, n_component):
+    """
+    save pca mat.
+
+    Args:
+        pca_mat (numpy.ndarray): pca mat to be saved.
+        full_pca_mat_path (str): the path of full pca mat.
+        n_component (int): pca component.
+    """
+    rank_size = get_group_size()
+    local_dim = math.ceil(n_component / rank_size)
+    for rank_id in range(rank_size):
+        start_index = rank_id * local_dim
+        end_index = (rank_id + 1) * local_dim
+        pca_start_index = min(n_component, start_index)
+        pca_end_index = min(n_component, end_index)
+        p_local = np.zeros([local_dim + 1, pca_mat.shape[1]])
+        if pca_start_index != pca_end_index:
+            p_local[0: pca_end_index - pca_start_index, :] = pca_mat[pca_start_index: pca_end_index, :]
+        local_pca_mat_path = full_pca_mat_path[:-4] + "_rank_" + str(rank_id) + ".npy"
+        np.save(local_pca_mat_path, p_local)
+
+
+def load_local_pca_mat(local_pca_mat_path, n_component):
+    """
+    load pca mat.
+
+    Args:
+        local_pca_mat_path (str): local pca mat file path.
+        n_component (int): pca component.
+    """
+    rank_size = get_group_size()
+    local_dim = math.ceil(n_component / rank_size)
+    while True:
+        if os.path.exists(local_pca_mat_path):
+            break
+        time.sleep(5)
+    while True:
+        pca_mat = np.load(local_pca_mat_path)
+        if pca_mat.shape[0] == local_dim + 1:
+            break
+        time.sleep(5)
+    pca_mat = pca_mat[:-1, :]
+    return pca_mat

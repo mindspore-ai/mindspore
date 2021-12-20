@@ -110,6 +110,7 @@ def _check_level(level, boost_level):
 
     return level, enable_boost
 
+
 def _add_loss_network(network, loss_fn, cast_model_type):
     """Add loss network."""
 
