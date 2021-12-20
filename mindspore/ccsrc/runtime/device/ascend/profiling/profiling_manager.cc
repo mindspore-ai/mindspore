@@ -241,6 +241,24 @@ Status ProfCtrlSwitchHandle(void *data) {
 }
 
 Status ProfCommandHandle(ProfCommandHandleType type) { return ProfilingManager::GetInstance().ProfCommandHandle(type); }
+
+void ProfilingManager::QueryHashId(const int32_t &device_id, const std::string &src_str, uint64_t &hash_id) {
+  // when some profiling data size exceeds the specified size, query its hashId instead.
+  MsprofHashData hash_data{};
+  hash_data.deviceId = device_id;
+  hash_data.dataLen = src_str.size();
+  hash_data.data = reinterpret_cast<unsigned char *>(const_cast<char *>(src_str.c_str()));
+
+  const int32_t ret = prof_cb_.msprofReporterCallback(
+    static_cast<int32_t>(MsprofReporterModuleId::MSPROF_MODULE_FRAMEWORK),
+    static_cast<int32_t>(MsprofReporterCallbackType::MSPROF_REPORTER_HASH), &hash_data, sizeof(MsprofHashData));
+  if (ret != 0) {
+    MS_LOG(EXCEPTION) << "[Profiling] Query hash id of long string failed, src string is " << src_str.c_str();
+  }
+
+  hash_id = hash_data.hashId;
+}
+
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

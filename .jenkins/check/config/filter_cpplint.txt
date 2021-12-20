@@ -7,6 +7,8 @@
 "mindspore/mindspore/core/abstract/utils.cc"                                                       "build/include_what_you_use"
 "mindspore/mindspore/ccsrc/backend/optimizer/ascend/buffer_fusion/ub_pattern_fusion.cc"            "build/include_what_you_use"
 "mindspore/mindspore/ccsrc/runtime/device/ascend/profiling/profiling_callback_register.cc"         "runtime/references"
+"mindspore/mindspore/ccsrc/runtime/device/ascend/profiling/profiling_manager.h"                    "runtime/references"
+"mindspore/mindspore/ccsrc/runtime/device/ascend/profiling/profiling_reporter.h"                   "runtime/references"
 "mindspore/mindspore/core/mindrt/src/actor/actormgr.h"                                             "runtime/references"
 "mindspore/mindspore/core/mindrt/src/actor/actorpolicyinterface.h"                                 "runtime/references"
 "mindspore/mindspore/core/mindrt/src/actor/actorthread.h"                                          "runtime/references"

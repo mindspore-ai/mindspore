@@ -15,16 +15,13 @@
  */
 
 #include <algorithm>
-#include "runtime/device/ascend/profiling/reporter/graph_desc_reporter.h"
 #include "runtime/device/ascend/profiling/profiling_utils.h"
 #include "backend/kernel_compiler/kernel.h"
 #include "runtime/device/ascend/profiling/profiling_manager.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "utils/ms_utils.h"
 #include "utils/utils.h"
-#include "runtime/device/ascend/profiling/reporter/task_desc_reporter.h"
 #include "utils/ms_context.h"
-#include "runtime/device/ascend/profiling/reporter/point_reporter.h"
 #include "nlohmann/json.hpp"
 #include "base/core_ops.h"
 #include "profiler/device/profiling.h"
@@ -271,12 +268,14 @@ NotNull<CNodePtr> ProfilingUtils::CreateProfilingCNode(const ProfilingContent &p
 }
 
 void ProfilingUtils::SaveProfilingPoint(uint32_t graph_id, const std::string &node_name, uint32_t point_id) {
-  std::shared_ptr<ProfDesc> prof_desc_ptr = std::make_shared<PointDesc>(node_name, point_id);
+  MS_LOG(INFO) << "Save profiling point, graph id" << graph_id << ", node name: " << node_name
+               << ", point_id: " << point_id;
+  std::shared_ptr<StepPointDesc> point_desc_ptr = std::make_shared<StepPointDesc>(node_name, point_id);
   auto iter = graph_point_.find(graph_id);
   if (iter == graph_point_.end()) {
-    graph_point_.emplace(graph_id, std::vector<std::shared_ptr<ProfDesc>>{prof_desc_ptr});
+    graph_point_.emplace(graph_id, std::vector<std::shared_ptr<StepPointDesc>>{point_desc_ptr});
   } else {
-    iter->second.emplace_back(prof_desc_ptr);
+    iter->second.emplace_back(point_desc_ptr);
   }
 }
 
@@ -383,7 +382,8 @@ void ProfilingUtils::SetGraphProfilingCNode(uint32_t graph_id, const std::vector
 
 bool ProfilingUtils::ValidComputeGraph(const session::KernelGraph &kernel_graph) {
   for (const auto &node : kernel_graph.execution_order()) {
-    if (AnfAlgo::GetKernelType(node) == TBE_KERNEL || AnfAlgo::GetKernelType(node) == AKG_KERNEL) {
+    auto kernel_type = AnfAlgo::GetKernelType(node);
+    if (kernel_type == TBE_KERNEL || kernel_type == AKG_KERNEL || kernel_type == AICPU_KERNEL) {
       return true;
     }
   }
@@ -400,32 +400,26 @@ void ProfilingUtils::ReportProfilingData(const std::vector<uint32_t> &task_ids, 
                                          uint32_t graph_id) {
   auto ret = graph_profiling_cnode_.find(graph_id);
   if (ret == graph_profiling_cnode_.end()) {
-    MS_LOG(ERROR) << "Graph id not found";
+    MS_LOG(ERROR) << "Graph id not found in graph_profiling_cnode_, graph id is " << graph_id
+                  << ", will not report this graph profiling data.";
     return;
   }
 
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  TaskDescReporter task_reporter(context->get_param<uint32_t>(MS_CTX_DEVICE_ID), "vm_task_desc_info", ret->second);
-  task_reporter.set_task_ids(task_ids);
-  task_reporter.set_stream_ids(stream_ids);
-  task_reporter.ReportData();
 
-  GraphDescReporter graph_reporter(context->get_param<uint32_t>(MS_CTX_DEVICE_ID), "vm_graph_desc_info", ret->second);
-  graph_profiling_cnode_.erase(ret);
-  graph_reporter.ReportData();
+  auto device_id = context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+  ProfilingReporter reporter(device_id, graph_id, ret->second, stream_ids, task_ids);
+  reporter.ReportTasks();
 
   // Report profiling point
   auto point_iter = graph_point_.find(graph_id);
   if (point_iter == graph_point_.end()) {
-    MS_LOG(ERROR) << "Graph id not found in graph_point";
+    MS_LOG(ERROR) << "Graph id not found in graph_point, will not report this graph step point data, graph id is: "
+                  << graph_id;
     return;
   }
-  PointReporter point_reporter(context->get_param<uint32_t>(MS_CTX_DEVICE_ID), "vm_point");
-  for (const auto &point : point_iter->second) {
-    point_reporter.AddReportData(point);
-  }
-  point_reporter.ReportData();
+  reporter.ReportStepPoint(point_iter->second);
 }
 
 void ProfilingUtils::SetReportProfilingData(const std::vector<uint32_t> &task_ids,

@@ -60,7 +60,6 @@
 #endif
 #include "runtime/device/ascend/executor/hccl_dynamic_kernel.h"
 #include "utils/config_manager.h"
-#include "runtime/device/ascend/profiling/reporter/op_name_task_stream_reporter.h"
 #include "runtime/hccl_adapter/hccl_adapter.h"
 #ifdef ENABLE_TDTQUE
 #include "minddata/dataset/engine/tdt/tdt_handle.h"
@@ -241,17 +240,6 @@ void AsyncDataDumpUninit() {
     }
   }
 }
-
-void AscendKernelRuntime::ReportProfilingData() {
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  if (ProfilingManager::GetInstance().IsProfilingStart() &&
-      context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
-    // Save Profiling Framework data
-    OpNameTaskStreamReporter reporter(device_id_, "nonsink", stream_id_task_id_op_name_map_);
-    reporter.ReportData();
-  }
-}
 #endif
 
 void AscendKernelRuntime::ReleaseDeviceRes() {
@@ -269,9 +257,7 @@ void AscendKernelRuntime::ReleaseDeviceRes() {
     return;
   }
   SetCurrentContext();
-#ifndef ENABLE_SECURITY
-  ReportProfilingData();
-#endif
+
   // release ge runtime
   ClearGraphModelMap();
 

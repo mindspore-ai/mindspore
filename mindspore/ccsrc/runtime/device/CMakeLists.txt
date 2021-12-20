@@ -90,12 +90,6 @@ if(ENABLE_SECURITY)
     list(REMOVE_ITEM D_SRC_LIST "ascend/profiling/profiling_callback_register.cc")
     list(REMOVE_ITEM D_SRC_LIST "ascend/profiling/profiling_manager.cc")
     list(REMOVE_ITEM D_SRC_LIST "ascend/profiling/profiling_utils.cc")
-    list(REMOVE_ITEM D_SRC_LIST "ascend/profiling/reporter/desc_reporter.cc")
-    list(REMOVE_ITEM D_SRC_LIST "ascend/profiling/reporter/graph_desc_reporter.cc")
-    list(REMOVE_ITEM D_SRC_LIST "ascend/profiling/reporter/op_name_task_stream_reporter.cc")
-    list(REMOVE_ITEM D_SRC_LIST "ascend/profiling/reporter/point_reporter.cc")
-    list(REMOVE_ITEM D_SRC_LIST "ascend/profiling/reporter/profiling_desc.cc")
-    list(REMOVE_ITEM D_SRC_LIST "ascend/profiling/reporter/task_desc_reporter.cc")
 endif()
 
 set_property(SOURCE ${DEVICE_SRC_LIST} ${D_SRC_LIST} ${CPU_SRC_LIST}

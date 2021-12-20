@@ -1434,6 +1434,11 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
             if start_time > step_end_time:
                 per_step_time_list.append(cur_step_metric_time)
                 step += 1
+                if step >= len(step_time_list):
+                    logger.warning("Compute profiler compute_time_inside_step time, "
+                                   "find the data length is more than step count, "
+                                   "maybe current graph has multi sub graph, skip the last data.")
+                    break
                 step_end_time = step_time_list[step][self._start_time_idx] + \
                     step_time_list[step][self._duration_idx]
                 cur_step_metric_time = 0
