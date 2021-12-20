@@ -31,7 +31,7 @@ from mindspore._checkparam import Validator
 from mindspore import log as logger
 from mindspore.parallel._utils import _get_parallel_mode
 from mindspore.context import ParallelMode
-from .layers import _LayerNorm, _Linear, _check_input_shape, \
+from .layers import _LayerNorm, _Linear, _Dropout, _check_input_shape, \
     _args_type_validator_check, _valid_type_checks, _valid_value_checks, \
     _check_shape_equal, _check_past_none_input_none, _check_input_dtype, _check_input_shape_value
 from .op_parallel_config import default_dpmp_config, _PipeLineConfig, OpParallelConfig, _Config, _check_config
@@ -466,10 +466,10 @@ class FeedForward(Cell):
             self.projection.shard(strategy_matmul=((dp, mp), (mp, 1)),
                                   strategy_bias=((dp, 1), (1,)))
         self.projection.bias.parallel_optimizer = False
-        self.dropout = nn.Dropout(1 - dropout_rate)
-        self.dropout.dropout.shard(((dp, 1),))
-        self.dropout_3d = nn.Dropout(1 - dropout_rate)
-        self.dropout_3d.dropout.shard(((dp, 1, 1),))
+        self.dropout = _Dropout(1 - dropout_rate)
+        self.dropout.shard(((dp, 1),))
+        self.dropout_3d = _Dropout(1 - dropout_rate)
+        self.dropout_3d.shard(((dp, 1, 1),))
         self.cast = P.Cast()
 
     def construct(self, x):
@@ -859,10 +859,10 @@ class MultiHeadAttention(Cell):
         # Normalize factor for attention, sqrt(dk) as widely used
         self.scale_factor = Tensor(math.sqrt(self.size_per_head))
         self.use_past = use_past
-        self.dropout = nn.Dropout(1 - hidden_dropout_rate)
-        self.dropout.dropout.shard(((parallel_config.data_parallel, 1),))
-        self.prob_dropout = nn.Dropout(1 - attention_dropout_rate)
-        self.prob_dropout.dropout.shard(
+        self.dropout = _Dropout(1 - hidden_dropout_rate)
+        self.dropout.shard(((parallel_config.data_parallel, 1),))
+        self.prob_dropout = _Dropout(1 - attention_dropout_rate)
+        self.prob_dropout.shard(
             ((parallel_config.data_parallel, parallel_config.model_parallel, 1, 1),))
         self.softmax = nn.Softmax().to_float(softmax_compute_type)
         self.softmax.softmax.shard(((parallel_config.data_parallel, parallel_config.model_parallel, 1),))
