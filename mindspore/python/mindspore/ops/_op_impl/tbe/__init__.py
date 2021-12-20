@@ -274,6 +274,7 @@ from .lamb_next_mv import _lamb_next_mv_tbe
 from .lamb_next_mv_with_decay import _lamb_next_mv_with_decay_tbe
 from .lamb_update_with_lr import _lamb_update_with_lr_tbe
 from .rsqrt import _rsqrt_tbe
+from .rsqrt_ds import _rsqrt_ds_tbe
 from .sigmoid import _sigmoid_tbe
 from .sigmoid_ds import _sigmoid_ds_tbe
 from .sigmoid_grad import _sigmoid_grad_tbe

@@ -1912,7 +1912,7 @@ class Square(Primitive):
         self.init_prim_io_names(inputs=['input_x'], outputs=['output'])
 
 
-class Rsqrt(PrimitiveWithInfer):
+class Rsqrt(Primitive):
     r"""
     Computes reciprocal of square root of input tensor element-wise.
 
@@ -1946,21 +1946,6 @@ class Rsqrt(PrimitiveWithInfer):
     def __init__(self):
         """Initialize Rsqrt"""
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
-
-    def infer_shape(self, x_shape):
-        return x_shape
-
-    def infer_dtype(self, x_dtype):
-        validator.check_tensor_dtype_valid("x", x_dtype, mstype.number_type, self.name)
-        return x_dtype
-
-    def infer_value(self, x):
-        if x is not None:
-            x = x.asnumpy()
-            out = 1.0 / np.sqrt(x)
-            out = np.array(out, x.dtype)
-            return Tensor(out)
-        return None
 
 
 class Sqrt(PrimitiveWithCheck):
