@@ -3901,7 +3901,6 @@ class GatherNd(Primitive):
         - **input_x** (Tensor) - The target tensor to gather values.
           The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
         - **indices** (Tensor) - The index tensor, with int32 or int64 data type.
-          The dimension of `indices` should be <= the dimension of `input_x`.
 
     Outputs:
         Tensor, has the same type as `input_x` and the shape is indices_shape[:-1] + x_shape[indices_shape[-1]:].

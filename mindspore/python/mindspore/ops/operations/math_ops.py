@@ -965,7 +965,7 @@ class ReduceProd(_Reduce):
         ValueError: If `axis` is not one of the following: int, tuple or list.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
@@ -1172,9 +1172,9 @@ class LpNorm(Primitive):
         ``Ascend``
 
     Examples:
-        >>> input = Tensor(np.array([[[1.0, 2.0], [3.0, 4.0]], [[5.0, 6.0], [7.0, 8.0]]]).astype(np.float32))
+        >>> input_x = Tensor(np.array([[[1.0, 2.0], [3.0, 4.0]], [[5.0, 6.0], [7.0, 8.0]]]).astype(np.float32))
         >>> op = ops.LpNorm(axis=[0, 1], p=2, keep_dims=False)
-        >>> output = op(input)
+        >>> output = op(input_x)
         >>> print(output)
         [ 9.165152 10.954452]
     """
@@ -2015,7 +2015,7 @@ class Reciprocal(PrimitiveWithInfer):
         TypeError: If `x` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)

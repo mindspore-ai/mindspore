@@ -269,7 +269,7 @@ class Lamb(Optimizer):
         ValueError: If `weight_decay` is less than 0.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> net = Net()

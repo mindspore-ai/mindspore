@@ -91,7 +91,7 @@ class LARS(Optimizer):
         Union[Tensor[bool], tuple[Parameter]], it depends on the output of `optimizer`.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend``
 
     Examples:
         >>> net = Net()
