@@ -246,6 +246,9 @@ AnfNodePtr FunctionBlock::HandleBuiltinNamespaceInfo(const py::tuple &info) {
     if (syntax_support == SYNTAX_UNSUPPORTED_INTERNAL_TYPE) {
       resolved_node->set_interpret_internal_type(true);
     }
+    if (syntax_support == SYNTAX_UNSUPPORTED_SPECIAL_TYPE) {
+      resolved_node->set_interpret_special_type(true);
+    }
   }
   SymbolPtr symbol = std::make_shared<Symbol>(info[symbol_index].cast<std::string>());
   py::object py_obj = info[value_index];

@@ -120,6 +120,7 @@ class MS_CORE_API AnfNode : public Base {
         kernel_info_(nullptr),
         interpret_(false),
         interpret_internal_type_(false),
+        interpret_special_type_(false),
         interpreted_node_(nullptr) {}
 
   /// \brief Constructor.
@@ -358,6 +359,18 @@ class MS_CORE_API AnfNode : public Base {
     interpret_internal_type_ = interpret_internal_type;
   }
 
+  /// \brief Check if there is an interpret node related to the unsupported special type.
+  ///
+  /// \return True if there is an interpret node related to the unsupported special type, otherwise false.
+  bool interpret_special_type() { return interpret_special_type_; }
+
+  /// \brief Whether there is an interpret node with unsupported internal type.
+  ///
+  /// \param[in] interpret_special_type Boolean.
+  void set_interpret_special_type(const bool &interpret_special_type) {
+    interpret_special_type_ = interpret_special_type;
+  }
+
   /// \brief Get interpreted node.
   ///
   /// \return Interpreted node.
@@ -383,6 +396,7 @@ class MS_CORE_API AnfNode : public Base {
   UserData user_data_;
   bool interpret_;
   bool interpret_internal_type_;
+  bool interpret_special_type_;
   AnfNodePtr interpreted_node_;
 };
 
