@@ -29,6 +29,7 @@ class StridedSliceOpenCLKernel : public OpenCLKernel {
   ~StridedSliceOpenCLKernel() override = default;
 
   int CheckSpecs() override;
+  int CheckSpecsWithoutShape() override;
 
   int Prepare() override;
   int SetConstArgs() override;

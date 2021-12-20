@@ -201,6 +201,7 @@ class OpenCLKernel : public InnerKernel {
   int Run() override { return RET_ERROR; }
 
   virtual int CheckSpecs();
+  virtual int CheckSpecsWithoutShape() { return RET_OK; }
   virtual int InitWeights() { return RET_OK; }
   virtual int SetConstArgs() { return RET_OK; }
   virtual void SetGlobalLocal() {}
@@ -261,6 +262,14 @@ kernel::InnerKernel *OpenCLKernelCreator(const std::vector<lite::Tensor *> &inpu
     free(opParameter);
     return nullptr;
   }
+
+  auto ret = kernel->CheckSpecsWithoutShape();
+  if (ret != mindspore::lite::RET_OK) {
+    MS_LOG(ERROR) << "Check " << opParameter->name_ << " specification Without shape failed!";
+    delete kernel;
+    return nullptr;
+  }
+
   auto shape = outputs.front()->shape();
   if (std::find(shape.begin(), shape.end(), -1) != shape.end()) {
     MS_LOG(WARNING) << "kernel " << opParameter->name_ << "don't infer shape yet!";
@@ -270,7 +279,7 @@ kernel::InnerKernel *OpenCLKernelCreator(const std::vector<lite::Tensor *> &inpu
     MS_LOG(WARNING) << "kernel " << opParameter->name_ << "don't support output shape has zero.";
     return nullptr;
   }
-  auto ret = kernel->CheckSpecs();
+  ret = kernel->CheckSpecs();
   if (ret != mindspore::lite::RET_OK) {
     MS_LOG(ERROR) << "Check " << opParameter->name_ << " specification failed!";
     delete kernel;

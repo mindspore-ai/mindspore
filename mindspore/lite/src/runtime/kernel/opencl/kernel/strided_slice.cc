@@ -30,17 +30,10 @@ using mindspore::schema::PrimitiveType_SliceFusion;
 using mindspore::schema::PrimitiveType_StridedSlice;
 
 namespace mindspore::kernel {
-int StridedSliceOpenCLKernel::CheckSpecs() {
+int StridedSliceOpenCLKernel::CheckSpecsWithoutShape() {
   if (type() == PrimitiveType_SliceFusion) {
     if (in_tensors_.size() != INPUT_TENSOR_SIZE_3) {
       MS_LOG(WARNING) << "Slice only supports 3 input Tensor.";
-      return RET_ERROR;
-    }
-    int in_ndim = in_tensors_.front()->shape().size();
-    if (CheckParamLikeTensor("Slice", "begin", in_tensors_.at(1), kNumberTypeInt32, {in_ndim}) != RET_OK) {
-      return RET_ERROR;
-    }
-    if (CheckParamLikeTensor("Slice", "size", in_tensors_.at(2), kNumberTypeInt32, {in_ndim}) != RET_OK) {
       return RET_ERROR;
     }
   } else if (type() == PrimitiveType_StridedSlice) {
@@ -48,8 +41,27 @@ int StridedSliceOpenCLKernel::CheckSpecs() {
       MS_LOG(WARNING) << "StridedSlice only supports 4 input Tensor.";
       return RET_ERROR;
     }
+  }
+  if (out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
+    MS_LOG(WARNING) << " only supports 1 output Tensor.";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+int StridedSliceOpenCLKernel::CheckSpecs() {
+  if (type() == PrimitiveType_SliceFusion) {
     int in_ndim = in_tensors_.front()->shape().size();
-    if (CheckParamLikeTensor("StridedSlice", "begin", in_tensors_.at(1), kNumberTypeInt32, {in_ndim}) != RET_OK) {
+    if (CheckParamLikeTensor("Slice", "begin", in_tensors_.at(SECOND_INPUT), kNumberTypeInt32, {in_ndim}) != RET_OK) {
+      return RET_ERROR;
+    }
+    if (CheckParamLikeTensor("Slice", "size", in_tensors_.at(THIRD_INPUT), kNumberTypeInt32, {in_ndim}) != RET_OK) {
+      return RET_ERROR;
+    }
+  } else if (type() == PrimitiveType_StridedSlice) {
+    int in_ndim = in_tensors_.front()->shape().size();
+    if (CheckParamLikeTensor("StridedSlice", "begin", in_tensors_.at(SECOND_INPUT), kNumberTypeInt32, {in_ndim}) !=
+        RET_OK) {
       return RET_ERROR;
     }
     if (CheckParamLikeTensor("StridedSlice", "end", in_tensors_.at(2), kNumberTypeInt32, {in_ndim}) != RET_OK) {
@@ -63,10 +75,6 @@ int StridedSliceOpenCLKernel::CheckSpecs() {
     return RET_ERROR;
   }
   const std::string kernel_name = type() == PrimitiveType_SliceFusion ? "Slice" : "StridedSlice";
-  if (out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
-    MS_LOG(WARNING) << kernel_name + " only supports 1 output Tensor.";
-    return RET_ERROR;
-  }
   auto in_ndim = in_tensors_.front()->shape().size();
   if (in_ndim == 0 || in_ndim > DIMENSION_4D) {
     MS_LOG(WARNING) << kernel_name + " only supports 1D-4D input tensor";
