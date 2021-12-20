@@ -1,0 +1,36 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+buildscript {
+    repositories {
+        google()
+        jcenter()
+        mavenCentral()
+    }
+    dependencies {
+        classpath "com.android.tools.build:gradle:4.0.0"
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        jcenter()
+        mavenCentral()
+    }
+}
+
+apply plugin: 'java'
+
+dependencies {
+    implementation fileTree(dir: "libs", include: ["*.jar"])
+    implementation project(':linux_x86')
+}
+
+archivesBaseName = 'mindspore-lite-java'
+
+task releaseJar(type: Jar) {
+    from('java/common/build/classes/java/main')
+    from('java/linux_x86/build/classes/java/main')
+    from('build/classes/java/main')
+    destinationDirectory = file('build/lib/jar')
+}
+releaseJar.dependsOn(build)
