@@ -655,7 +655,7 @@ int LiteSession::RunGraph(const KernelCallBack &before, const KernelCallBack &af
   return ret;
 }
 
-int LiteSession::Init(const Context *context) {
+int LiteSession::Init(InnerContext *context) {
   bool expected = false;
   if (!is_running_.compare_exchange_strong(expected, true)) {
     MS_LOG(ERROR) << "Not support multi-threading";
@@ -666,20 +666,22 @@ int LiteSession::Init(const Context *context) {
     is_running_.store(false);
     return RET_NULL_PTR;
   }
-  this->context_ = new (std::nothrow) InnerContext(context);
-  if (this->context_ == nullptr) {
-    MS_LOG(ERROR) << "New Context failed";
-    is_running_.store(false);
-    return RET_MEMORY_FAILED;
-  }
+  this->context_ = context;
   auto ret = this->context_->Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init Context failed";
     is_running_.store(false);
     return ret;
   }
-  if (context->delegate != nullptr) {
-    delegate_ = context->delegate;
+  ms_context_ = MSContextFromContext(context_);
+  if (ms_context_ == nullptr) {
+    MS_LOG(ERROR) << "transfer context to ms context failed.";
+    is_running_.store(false);
+    return RET_NULL_PTR;
+  }
+
+  if (context_->delegate != nullptr) {
+    delegate_ = context_->delegate;
   }
 #if SUPPORT_NPU
   if (delegate_ == nullptr && context_->IsNpuEnabled()) {
@@ -688,7 +690,6 @@ int LiteSession::Init(const Context *context) {
       MS_LOG(ERROR) << "New delegate_ failed";
       return RET_ERROR;
     }
-    this->context_->delegate = delegate_;
   }
 #endif
 #if GPU_TENSORRT
@@ -698,7 +699,6 @@ int LiteSession::Init(const Context *context) {
       MS_LOG(ERROR) << "New tensorrt delegate_ failed";
       return RET_ERROR;
     }
-    this->context_->delegate = delegate_;
   }
 #endif
   if (delegate_ != nullptr) {
@@ -719,12 +719,6 @@ int LiteSession::Init(const Context *context) {
     MS_LOG(ERROR) << "Init GPU runtime failed.";
     is_running_.store(false);
     return ret;
-  }
-  ms_context_ = MSContextFromContext(context);
-  if (ms_context_ == nullptr) {
-    MS_LOG(ERROR) << "transfer context to ms context failed.";
-    is_running_.store(false);
-    return RET_NULL_PTR;
   }
   is_running_.store(false);
   return RET_OK;
@@ -921,14 +915,15 @@ int LiteSession::Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs
 }
 
 int LiteSession::InitGPURuntime() {
-  CpuBindMode cpu_bind_mode = this->context_->device_list_.front().device_info_.cpu_device_info_.cpu_bind_mode_;
-  ActorThreadPool *thread_pool = this->context_->thread_pool();
-  if (thread_pool == nullptr) {
-    MS_LOG(ERROR) << "thread pool is nullptr";
-    is_running_.store(false);
-    return RET_NULL_PTR;
+  if (context_->IsCpuEnabled()) {
+    ActorThreadPool *thread_pool = this->context_->thread_pool();
+    if (thread_pool == nullptr) {
+      MS_LOG(ERROR) << "thread pool is nullptr";
+      is_running_.store(false);
+      return RET_NULL_PTR;
+    }
+    thread_pool->SetProcessAffinity(static_cast<BindMode>(static_cast<BindMode>(context_->GetCpuBindMode())));
   }
-  thread_pool->SetProcessAffinity(static_cast<BindMode>(cpu_bind_mode));
 #if GPU_OPENCL
   if (this->context_->IsGpuEnabled()) {
     opencl_runtime_wrapper_ = new (std::nothrow) opencl::OpenCLRuntimeWrapper();
@@ -971,7 +966,10 @@ int LiteSession::InitGPURuntime() {
   }
 #endif
   // Setting the binding core will affect the opencl drive scheduling.
-  thread_pool->SetProcessAffinity(static_cast<BindMode>(NO_BIND));
+  if (context_->IsCpuEnabled()) {
+    ActorThreadPool *thread_pool = this->context_->thread_pool();
+    thread_pool->SetProcessAffinity(static_cast<BindMode>(NO_BIND));
+  }
   return RET_OK;
 }
 }  // namespace lite
@@ -982,7 +980,7 @@ session::LiteSession *session::LiteSession::CreateSession(const lite::Context *c
     MS_LOG(ERROR) << "create session failed";
     return nullptr;
   }
-  auto ret = session->Init(context);
+  auto ret = session->Init(new (std::nothrow) mindspore::lite::InnerContext(context));
   if (ret != mindspore::lite::RET_OK) {
     MS_LOG(ERROR) << "init session failed";
     delete session;
@@ -998,52 +996,67 @@ session::LiteSession *session::LiteSession::CreateSession(const char *model_buf,
     MS_LOG(ERROR) << "Create session failed";
     return nullptr;
   }
-  auto *model = lite::ImportFromBuffer(model_buf, size, true);
-  if (model == nullptr) {
-    MS_LOG(ERROR) << "Import model failed";
+  auto ret = reinterpret_cast<lite::LiteSession *>(session)->LoadModelAndCompileByBuf(model_buf, size);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Init session failed";
     delete session;
     return nullptr;
   }
-  auto ret = session->CompileGraph(model);
-  if (ret != lite::RET_OK) {
-    MS_LOG(ERROR) << "Compile model failed";
-    model->buf = nullptr;
-    delete model;
-    delete session;
-    return nullptr;
-  }
-  model->buf = nullptr;
-  (reinterpret_cast<lite::LiteSession *>(session))->set_model(model);
   return session;
 }
 
 session::LiteSession *lite::LiteSession::CreateSession(const std::string &model_path, const lite::Context *context) {
-  size_t model_size;
-  auto model_buf = lite::ReadFile(model_path.c_str(), &model_size);
-  if (model_buf == nullptr) {
-    MS_LOG(ERROR) << "Read model file failed";
-    return nullptr;
-  }
   auto *session = session::LiteSession::CreateSession(context);
   if (session == nullptr) {
     MS_LOG(ERROR) << "Create session failed";
     return nullptr;
   }
+  auto ret = reinterpret_cast<lite::LiteSession *>(session)->LoadModelAndCompileByPath(model_path);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Init session failed";
+    delete session;
+    return nullptr;
+  }
+  return session;
+}
+
+int lite::LiteSession::LoadModelAndCompileByBuf(const char *model_buf, size_t buf_size) {
+  auto *model = lite::ImportFromBuffer(model_buf, buf_size, true);
+  if (model == nullptr) {
+    MS_LOG(ERROR) << "Import model failed";
+    return RET_ERROR;
+  }
+  auto ret = CompileGraph(model);
+  model->buf = nullptr;
+  if (ret != lite::RET_OK) {
+    MS_LOG(ERROR) << "Compile model failed";
+    delete model;
+    return RET_ERROR;
+  }
+  set_model(model);
+  return RET_OK;
+}
+
+int lite::LiteSession::LoadModelAndCompileByPath(const std::string &model_path) {
+  size_t model_size;
+  auto model_buf = lite::ReadFile(model_path.c_str(), &model_size);
+  if (model_buf == nullptr) {
+    MS_LOG(ERROR) << "Read model file failed";
+    return RET_ERROR;
+  }
   auto *model = lite::ImportFromBuffer(model_buf, model_size, true);
   if (model == nullptr) {
-    delete session;
     MS_LOG(ERROR) << "Import model failed";
-    return nullptr;
+    return RET_ERROR;
   }
   (reinterpret_cast<lite::LiteModel *>(model))->set_keep_model_buf(true);
-  auto ret = session->CompileGraph(model);
+  auto ret = CompileGraph(model);
   if (ret != lite::RET_OK) {
-    delete model;
-    delete session;
     MS_LOG(ERROR) << "Compile model failed";
-    return nullptr;
+    delete model;
+    return RET_ERROR;
   }
-  (reinterpret_cast<lite::LiteSession *>(session))->set_model(model);
-  return session;
+  set_model(model);
+  return RET_OK;
 }
 }  // namespace mindspore
