@@ -16,5 +16,5 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/third_party)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/third_party/eigen3)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/third_party/securec)
 
-file(GLOB_RECURSE CONVERTER_REGISTRY_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cc)
+file(GLOB_RECURSE CONVERTER_REGISTRY_SRC ${CMAKE_CURRENT_SOURCE_DIR}/*.cc)
 add_library(converter_extend_tutorial SHARED ${CONVERTER_REGISTRY_SRC})

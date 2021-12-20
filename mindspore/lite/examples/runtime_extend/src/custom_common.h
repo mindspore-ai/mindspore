@@ -19,16 +19,16 @@
 
 #include <vector>
 #include "include/api/types.h"
-#include "include/errorcode.h"
+#include "include/api/status.h"
 #include "include/ms_tensor.h"
 
 namespace mindspore {
 namespace common {
 // verify that the inputs' shape is inferred successfully when inferring current node.
-int CheckInputs(const std::vector<mindspore::MSTensor> &inputs);
+Status CheckInputs(const std::vector<mindspore::MSTensor> &inputs);
 
 // versify that the outputs' shape is inferred successfully when running current node.
-int CheckOutputs(const std::vector<mindspore::MSTensor> &inputs);
+Status CheckOutputs(const std::vector<mindspore::MSTensor> &inputs);
 }  // namespace common
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_EXAMPLES_RUNTIME_REGISTRY_SRC_CUSTOM_COMMON_H

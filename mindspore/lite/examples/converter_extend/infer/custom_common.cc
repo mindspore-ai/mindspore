@@ -14,24 +14,19 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_EXAMPLES_CONVERTER_REGISTER_SRC_PASS_REGISTRY_TUTORIAL_H
-#define MINDSPORE_LITE_EXAMPLES_CONVERTER_REGISTER_SRC_PASS_REGISTRY_TUTORIAL_H
-
-#include "include/registry/pass_base.h"
+#include "infer/custom_common.h"
+#include <vector>
 
 namespace mindspore {
-namespace opt {
-class PassTutorial : public registry::PassBase {
- public:
-  PassTutorial() : PassBase("PassTutorial") {}
-
-  ~PassTutorial() = default;
-
-  bool Execute(const api::FuncGraphPtr &func_graph) override;
-
- private:
-  AnfNodePtr CreateCustomOp(const api::FuncGraphPtr func_graph, const CNodePtr &cnode);
-};
-}  // namespace opt
+namespace common {
+Status CheckInputs(const std::vector<mindspore::MSTensor> &inputs) {
+  for (auto &input : inputs) {
+    auto input_shape = input.Shape();
+    if (std::find(input_shape.begin(), input_shape.end(), -1) != input_shape.end()) {
+      return kLiteInferInvalid;
+    }
+  }
+  return kSuccess;
+}
+}  // namespace common
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_EXAMPLES_CONVERTER_REGISTER_SRC_PASS_REGISTRY_TUTORIAL_H

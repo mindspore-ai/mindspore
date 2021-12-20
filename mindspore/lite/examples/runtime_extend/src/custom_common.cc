@@ -19,24 +19,24 @@
 
 namespace mindspore {
 namespace common {
-int CheckInputs(const std::vector<mindspore::MSTensor> &inputs) {
+Status CheckInputs(const std::vector<mindspore::MSTensor> &inputs) {
   for (auto &input : inputs) {
     auto input_shape = input.Shape();
     if (std::find(input_shape.begin(), input_shape.end(), -1) != input_shape.end()) {
-      return lite::RET_INFER_INVALID;
+      return kLiteInferInvalid;
     }
   }
-  return lite::RET_OK;
+  return kSuccess;
 }
 
-int CheckOutputs(const std::vector<mindspore::MSTensor> &outputs) {
+Status CheckOutputs(const std::vector<mindspore::MSTensor> &outputs) {
   for (auto &output : outputs) {
     auto output_shape = output.Shape();
     if (std::find(output_shape.begin(), output_shape.end(), -1) != output_shape.end()) {
-      return lite::RET_INFER_INVALID;
+      return kLiteInferInvalid;
     }
   }
-  return lite::RET_OK;
+  return kSuccess;
 }
 }  // namespace common
 }  // namespace mindspore
