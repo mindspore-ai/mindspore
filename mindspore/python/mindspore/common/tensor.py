@@ -506,8 +506,9 @@ class Tensor(Tensor_):
         Check all tensor elements along a given axis evaluate to True.
 
         Args:
-            axis (Union[None, int, tuple(int)]): Dimensions of reduction,
-                when the axis is None or empty tuple, reduce all dimensions. Default: ().
+            axis (Union[None, int, tuple(int)]): Dimensions of reduction.
+                When the axis is None or empty tuple, reduce all dimensions. When the axis is int or
+                tuple(int), if the dimension of Tensor is dim, the value range is [-dim, dim). Default: ().
             keep_dims (bool): Whether to keep the reduced dimensions. Default: False.
 
         Returns:
@@ -538,8 +539,9 @@ class Tensor(Tensor_):
         Check any tensor element along a given axis evaluate to True.
 
         Args:
-            axis (Union[None, int, tuple(int)]): Dimensions of reduction,
-                when the axis is None or empty tuple, reduce all dimensions. Default: ().
+            axis (Union[None, int, tuple(int)]): Dimensions of reduction.
+                When the axis is None or empty tuple, reduce all dimensions. When the axis is int or
+                tuple(int), if the dimension of Tensor is dim, the value range is [-dim, dim). Default: ().
             keep_dims (bool): Whether to keep the reduced dimensions. Default: False.
 
         Returns:
@@ -624,7 +626,7 @@ class Tensor(Tensor_):
         Return absolute value element-wisely.
 
         Returns:
-            Tensor, with absolute value element-wisely.
+            Tensor.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
@@ -644,8 +646,9 @@ class Tensor(Tensor_):
         Reduce a dimension of a tensor by averaging all elements in the dimension.
 
         Args:
-            axis (Union[None, int, tuple(int), list(int)]): Dimensions of reduction,
-                when the axis is None or empty tuple, reduce all dimensions. Default: ().
+            axis (Union[None, int, tuple(int), list(int)]): Dimensions of reduction.
+                When the axis is None or empty tuple, reduce all dimensions. When the axis is int, tuple(int) or
+                list(int), if the dimension of Tensor is dim, the value range is [-dim, dim). Default: ().
             keep_dims (bool): Whether to keep the reduced dimensions. Default: False.
 
         Returns:
