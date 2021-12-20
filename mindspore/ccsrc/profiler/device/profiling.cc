@@ -69,6 +69,7 @@ void Profiler::RecordOneStepStartEndInfo() {
   // Multi-graph dotting data is not supported.
   std::lock_guard<std::mutex> locker(record_mutex_);
   std::string step_end_op_name;
+  std::string op_type = "GetNext";
   uint32_t vector_size = step_start_end_info_vector_.size();
   step_start_end_info_.iter_start_op_name = step_start_end_info_vector_[0];
   step_start_end_info_.fp_start_op_name = step_start_end_info_vector_[0];
@@ -96,11 +97,15 @@ void Profiler::RecordOneStepStartEndInfo() {
         std::string op_name = step_start_end_info_vector_[i];
         auto op_type_begin_iter = op_name.rfind('/') + 1;
         auto op_type_end_iter = op_name.rfind('-');
-        auto op_type = op_name.substr(op_type_begin_iter, op_type_end_iter - op_type_begin_iter);
-        // If there is a data processing operator, it will be treated as fp_start_op,
-        // but the real fp_start_op should be GetNext.
-        if (op_type == "GetNext") {
-          step_start_end_info_.fp_start_op_name = op_name;
+        auto type = op_name.substr(op_type_begin_iter, op_type_end_iter - op_type_begin_iter);
+        if (type == op_type) {
+          if (i == 0) {
+            // If the type of the first operator is GetNext, the next operator of it is the fp_start operator.
+            step_start_end_info_.fp_start_op_name = step_start_end_info_vector_[i + 1];
+          } else {
+            // If the data processing operator is iter_start, the type of the fp_start operator should be GetNext.
+            step_start_end_info_.fp_start_op_name = op_name;
+          }
           break;
         }
       }
