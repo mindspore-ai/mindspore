@@ -55,10 +55,6 @@ Status ProposalInterface::Infer(std::vector<mindspore::MSTensor> *inputs, std::v
 
   size_t id = 0;
   while (id < outputs->size()) {
-    // 待补完
-    // outputs[id]->format_ = input->format_;
-    // outputs[id]->data_type_ = kNumberTypeFloat32;
-    // 设置type为int
     std::vector<int64_t> shape{-1, COORDI_NUM};
     (*outputs)[id].SetShape(shape);
     (*outputs)[id].SetDataType(DataType::kNumberTypeFloat32);

@@ -37,6 +37,14 @@
     }                                                                                             \
   } while (0)
 
+#define LOGI(format, ...)                                                                         \
+  do {                                                                                            \
+    if (0) {                                                                                      \
+      fprintf(stderr, "\n[Warning] " LOG_TAG1 " [" __FILE__ ":%d] %s] ", __LINE__, __FUNCTION__); \
+      fprintf(stderr, format, ##__VA_ARGS__);                                                     \
+    }                                                                                             \
+  } while (0)
+
 constexpr int kMaxSize = 1024;
 constexpr int kDecimal = 10;
 

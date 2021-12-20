@@ -255,9 +255,9 @@ build_lite() {
     else
       make -j$THREAD_NUM && make install
       cp -r ${BASEPATH}/output/tmp/mindspore*/runtime ${BASEPATH}/mindspore/lite/tools/benchmark
-      cmake ${LITE_CMAKE_ARGS} -DBUILD_FIRST=off --target benchmark "${BASEPATH}/mindspore/lite"
-
-      make -j$THREAD_NUM && make install && make package
+      cmake ${LITE_CMAKE_ARGS} -DBUILD_FIRST=off "${BASEPATH}/mindspore/lite"
+      cmake --build "${BASEPATH}/mindspore/lite/build" --target benchmark -j$THREAD_NUM
+      make install && make package
       if [[ "${local_lite_platform}" == "x86_64" ]]; then
         if [ "${JAVA_HOME}" ]; then
             echo -e "\e[31mJAVA_HOME=$JAVA_HOME  \e[0m"

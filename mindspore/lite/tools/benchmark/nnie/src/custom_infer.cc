@@ -70,9 +70,6 @@ int GetCustomShape(const mindspore::schema::Custom *op, const std::string &attr,
   char *save_ptr = nullptr;
   res = strtok_r(buf, delims, &save_ptr);
   while (res != nullptr) {
-    // 待补完
-    // outputs[id]->format_ = input->format_;
-    // outputs[id]->data_type_ = kNumberTypeFloat32;
     int64_t ndims = strtol(res, &res, kDecimal);
     int j = 0;
     std::vector<int64_t> shape;
