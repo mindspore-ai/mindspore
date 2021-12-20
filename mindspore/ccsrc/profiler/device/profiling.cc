@@ -66,7 +66,55 @@ void Profiler::SetRunTimeData(const std::string &op_name, const uint64_t start, 
 }
 
 void Profiler::RecordOneStepStartEndInfo() {
+  // Multi-graph dotting data is not supported.
   std::lock_guard<std::mutex> locker(record_mutex_);
+  std::string step_end_op_name;
+  uint32_t vector_size = step_start_end_info_vector_.size();
+  step_start_end_info_.iter_start_op_name = step_start_end_info_vector_[0];
+  step_start_end_info_.fp_start_op_name = step_start_end_info_vector_[0];
+
+  // If is the first step, the step_start_end_info_vector_ length is 1.
+  if (vector_size > 1) {
+    // Iterate through step_start_end_info_vector_ for the repeat operator, which is the operator of the next step and
+    // is preceded by iter_end_op of the current step.
+    for (uint32_t i = vector_size - 1; i > 0; i--) {
+      step_end_op_name = step_start_end_info_vector_[i];
+      uint32_t j = 0;
+      for (; j < i; j++) {
+        if (step_end_op_name == step_start_end_info_vector_[j]) {
+          has_find = true;
+          iter_end_op_index = i - 1;
+          break;
+        }
+      }
+      if (i == j) {
+        break;
+      }
+    }
+    if (has_find) {
+      for (uint32_t i = 0; i < vector_size; i++) {
+        std::string op_name = step_start_end_info_vector_[i];
+        auto op_type_begin_iter = op_name.rfind('/') + 1;
+        auto op_type_end_iter = op_name.rfind('-');
+        auto op_type = op_name.substr(op_type_begin_iter, op_type_end_iter - op_type_begin_iter);
+        // If there is a data processing operator, it will be treated as fp_start_op,
+        // but the real fp_start_op should be GetNext.
+        if (op_type == "GetNext") {
+          step_start_end_info_.fp_start_op_name = op_name;
+          break;
+        }
+      }
+      step_start_end_info_.iter_end_op_name = step_start_end_info_vector_[iter_end_op_index];
+      // Delete the operator of the current step.
+      step_start_end_info_vector_.erase(step_start_end_info_vector_.begin(),
+                                        step_start_end_info_vector_.begin() + iter_end_op_index + 1);
+    } else {
+      step_start_end_info_.iter_end_op_name = step_start_end_info_vector_[step_start_end_info_vector_.size() - 1];
+      step_start_end_info_vector_.clear();
+    }
+  } else {
+    step_start_end_info_vector_.clear();
+  }
   all_step_start_end_info_.push_back(step_start_end_info_);
   step_start_end_info_.iter_start_op_name = "";
   step_start_end_info_.fp_start_op_name = "";
@@ -88,6 +136,7 @@ void Profiler::RecordOneStepStartEndInfo(const std::string op_name) {
     step_start_end_info_.fp_start_op_name = op_name;
   }
   step_start_end_info_.iter_end_op_name = op_name;
+  step_start_end_info_vector_.push_back(op_name);
 }
 
 std::shared_ptr<ProfilerManager> &ProfilerManager::GetInstance() {

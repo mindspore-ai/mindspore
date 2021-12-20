@@ -94,10 +94,13 @@ class Profiler {
   virtual void ClearInst() = 0;
   std::pair<double, double> single_op_launch_start_time_end_time_;
   bool enable_flag_ = false;
+  bool has_find = false;
+  uint32_t iter_end_op_index;
   std::string profile_data_path_;
   std::unordered_map<std::string, OpInfo> op_info_map_;
   OneStepStartEndInfo step_start_end_info_;
   std::vector<OneStepStartEndInfo> all_step_start_end_info_;
+  std::vector<std::string> step_start_end_info_vector_;
   std::mutex record_mutex_;
   bool init_flag_ = false;
 };
