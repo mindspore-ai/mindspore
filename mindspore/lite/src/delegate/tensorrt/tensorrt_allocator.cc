@@ -115,7 +115,7 @@ int TensorRTAllocator::SyncMemInHostAndDevice(void *host_data, const std::string
   cudaMemcpyKind kind = is_host2device ? cudaMemcpyHostToDevice : cudaMemcpyDeviceToHost;
   auto cuda_ret = cudaMemcpy(dst_ptr, src_ptr, data_size, kind);
   if (cuda_ret != cudaSuccess) {
-    MS_LOG(ERROR) << "copy mem failed.";
+    MS_LOG(ERROR) << "copy mem failed,ret " << cudaGetErrorName(cuda_ret);
     return RET_ERROR;
   }
   MS_LOG(INFO) << "cuda memcpy success for " << device_tensor_name;

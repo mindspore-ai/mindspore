@@ -29,42 +29,34 @@ namespace mindspore {
 namespace cache {
 class EmbeddingCache {
  public:
-  EmbeddingCache(size_t vocab_size, size_t host_cache_size, size_t device_cache_size, size_t device_start_index,
-                 size_t embedding_size, size_t batch_elements, DataType data_type, void *host_addr, int rank_id,
-                 int rank_group_size)
+  EmbeddingCache(size_t vocab_size, size_t device_cache_size, size_t batch_elements, int rank_id, int rank_group_size)
       : vocab_size_(vocab_size),
-        host_cache_size_(host_cache_size),
         device_cache_size_(device_cache_size),
-        device_start_index_(device_start_index),
-        embedding_size_(embedding_size),
         batch_elements_(batch_elements),
-        data_type_(data_type),
-        host_addr_(host_addr),
         rank_id_(rank_id),
         rank_group_size_(rank_group_size) {
+    MS_ASSERT(rank_group_size_ != 0);
     auto local_shard_size = static_cast<int>(std::ceil(static_cast<float>(vocab_size_) / rank_group_size_));
     min_host_index_ = local_shard_size * rank_id_;
     max_host_index_ = std::min(min_host_index_ + local_shard_size, static_cast<int>(vocab_size_));
     host_cache_size_ = max_host_index_ - min_host_index_;
-    switch (data_type_) {
-      case DataType::kNumberTypeFloat16:
-        sizeof_data_type_ = sizeof(int16_t);
-        break;
-      default:
-        sizeof_data_type_ = sizeof(float);
-    }
+
     MS_LOG(INFO) << "rank_group_size_ num:" << rank_group_size_ << ", rank id:" << rank_id_
                  << ", vocab_size_:" << vocab_size_ << ", host_cache_size_:" << host_cache_size_
-                 << ", device_cache_size_:" << device_cache_size_ << ", embedding_size_:" << embedding_size_
-                 << ", batch_elements_:" << batch_elements_ << ", index begin:" << min_host_index_
-                 << ", index end:" << max_host_index_;
+                 << ", index begin:" << min_host_index_ << ", index end:" << max_host_index_;
   }
+
   ~EmbeddingCache();
-  Status Init(uint32_t device_id, const void *context);
+  Status Init(uint32_t device_id, const void *context, mindspore::MSTensor host_cache_tensor,
+              mindspore::MSTensor device_tensor);
   Status SetHostCacheAddr(void *addr, size_t size);
   Status SetDeviceCacheAddr(void *host_mem_addr, size_t size);
   Status CheckCacheHit(const int *batch_ids, const size_t batch_ids_len, int *hash_index);
   size_t GetDeviceStartIndex() { return device_start_index_; }
+
+ private:
+  Status Init(mindspore::MSTensor host_cache_tensor, mindspore::MSTensor device_tensor);
+  Status MallocCacheMemory();
 
  private:
   std::shared_ptr<cache::CacheMemBase> device_cache_{nullptr};

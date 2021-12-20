@@ -25,10 +25,8 @@ using mindspore::schema::PrimitiveType_ReduceScatter;
 
 namespace mindspore::kernel {
 int ReduceScatterCPUKernel::Prepare() {
-  if (!InferShapeDone()) {
-    return lite::RET_OK;
-  }
-  return ReSize();
+  MS_LOG(ERROR) << "unsupported ReduceScatter kernel";
+  return lite::RET_NOT_SUPPORT;
 }
 
 int ReduceScatterCPUKernel::ReSize() { return lite::RET_OK; }

@@ -14,17 +14,30 @@
  * limitations under the License.
  */
 #include <vector>
+#include <string>
 #include "src/common/log_adapter.h"
 #include "src/delegate/parameter_cache/lfu_cache.h"
-
+#include "src/delegate/parameter_cache/factory_mgr_base.h"
 namespace mindspore {
 namespace cache {
+RET_COMMON_PRODUCT_REGISTRAR(std::string, cache::CacheAlgorithm, cache::LFUCacheAlgorithm, "lfu", LFUCacheAlgorithm);
+
 LFUCacheAlgorithm::~LFUCacheAlgorithm() {
   for (auto iter : key_table_) {
     delete *(iter.second);
   }
   key_table_.clear();
   frequency_table_.clear();
+}
+
+Status LFUCacheAlgorithm::Init(size_t cache_size, int min_host_index, int max_host_index) {
+  if (cache_size <= 0 || min_host_index < 0 || max_host_index <= 0) {
+    return kLiteParamInvalid;
+  }
+  cache_size_ = cache_size;
+  min_host_index_ = min_host_index;
+  max_host_index_ = max_host_index;
+  return kSuccess;
 }
 
 CacheNoe *LFUCacheAlgorithm::GetNode(int key) {

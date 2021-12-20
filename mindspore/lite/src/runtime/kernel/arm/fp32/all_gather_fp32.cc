@@ -25,10 +25,8 @@ using mindspore::schema::PrimitiveType_AllGather;
 
 namespace mindspore::kernel {
 int AllGatherCPUKernel::Prepare() {
-  if (!InferShapeDone()) {
-    return lite::RET_OK;
-  }
-  return ReSize();
+  MS_LOG(ERROR) << "unsupported AllGather kernel";
+  return lite::RET_NOT_SUPPORT;
 }
 
 int AllGatherCPUKernel::ReSize() { return lite::RET_OK; }

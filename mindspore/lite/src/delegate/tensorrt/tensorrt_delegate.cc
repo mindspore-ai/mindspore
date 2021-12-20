@@ -161,7 +161,7 @@ void TensorRTDelegate::CheckSupportResize(schema::PrimitiveType type) {
     if (opt_iter != unsupport_resize_op_list_.end()) {
       support_resize_ = false;
       support_hw_resize_ = false;
-      MS_LOG(INFO) << "network has op don't support resize, op: " << type;
+      MS_LOG(WARNING) << "network has op don't support resize, op: " << type;
       return;
     }
   }
@@ -169,7 +169,7 @@ void TensorRTDelegate::CheckSupportResize(schema::PrimitiveType type) {
     auto opt_iter = unsupport_hw_op_lists_.find(type);
     if (opt_iter != unsupport_hw_op_lists_.end()) {
       support_hw_resize_ = false;
-      MS_LOG(INFO) << "network has op don't support hw resize, op: " << type;
+      MS_LOG(WARNING) << "network has op don't support hw resize, op: " << type;
     }
   }
 }

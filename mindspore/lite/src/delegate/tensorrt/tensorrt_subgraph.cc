@@ -361,7 +361,6 @@ int TensorRTSubGraph::Prepare() {
   for (auto cache_tensor : cache_const_inputs_) {
     size_t data_size = cache_mgr_->GetCacheDataSize(cache_tensor);
     auto device_ptr = runtime_->GetAllocator()->MallocDeviceMem(cache_tensor, data_size);
-    runtime_->GetAllocator()->SyncMemInHostAndDevice(cache_tensor, cache_tensor.Name().c_str(), true);
     runtime_->GetAllocator()->MarkMemValid(cache_tensor.Name().c_str(), true);
     int index = this->engine_->getBindingIndex(cache_tensor.Name().c_str());
     tensor_bindings_[index] = device_ptr;

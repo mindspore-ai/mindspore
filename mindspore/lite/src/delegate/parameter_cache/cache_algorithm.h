@@ -34,6 +34,7 @@ class CacheAlgorithm {
   virtual ~CacheAlgorithm() {}
   virtual int Get(int key) = 0;
   virtual void Put(int key, int value) = 0;
+  virtual Status Init(size_t cache_size, int min_host_index, int max_host_index) = 0;
   virtual Status CheckCacheHit(const int *batch_ids, const size_t batch_ids_len, int *cache_index,
                                std::vector<int> *need_swap_indies, std::vector<int> *need_swap_indies_cache_index) = 0;
 };

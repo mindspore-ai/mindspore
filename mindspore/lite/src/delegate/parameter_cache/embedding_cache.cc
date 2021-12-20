@@ -19,11 +19,16 @@
 #include <vector>
 #include <cmath>
 #include <cstring>
+#include <string>
 #include "src/common/log_adapter.h"
 #include "include/errorcode.h"
 #include "src/delegate/parameter_cache/gpu/gpu_cache_mem.h"
 #include "src/delegate/parameter_cache/lfu_cache.h"
+#include "src/delegate/parameter_cache/factory_mgr_base.h"
 
+namespace {
+constexpr size_t kEmbeddingTensorShapeSize = 2;
+}
 namespace mindspore {
 namespace cache {
 void LookUpTableTask(size_t indices_lens, size_t first_dim_size, const char *input_addr, const int *indices_addr,
@@ -55,21 +60,45 @@ EmbeddingCache::~EmbeddingCache() {
   }
 }
 
-Status EmbeddingCache::Init(uint32_t device_id, const void *context) {
-  cache_ = std::make_shared<LFUCacheAlgorithm>(device_cache_size_, min_host_index_, max_host_index_);
-  if (cache_ == nullptr) {
-    MS_LOG(ERROR) << "malloc LFUCacheAlgorithm failed";
-    return kLiteMemoryFailed;
-  }
-  device_cache_ = std::make_shared<gpu::GPUCacheMem>();
-  if (device_cache_ == nullptr) {
-    MS_LOG(ERROR) << "get cache failed";
-    return kLiteMemoryFailed;
-  }
-  if (!device_cache_->InitDevice(device_id, context)) {
-    MS_LOG(ERROR) << "init device failed";
+Status EmbeddingCache::Init(mindspore::MSTensor host_cache_tensor, mindspore::MSTensor device_tensor) {
+  MS_ASSERT(device_tensor.Shape().size() == kEmbeddingTensorShapeSize);
+  MS_ASSERT(host_cache_tensor.Shape().size() == kEmbeddingTensorShapeSize);
+  MS_ASSERT(device_tensor.DataType() == host_cache_tensor.DataType());
+  MS_ASSERT(host_cache_tensor.Data() != nullptr);
+
+  if (device_tensor.Shape()[1] != host_cache_tensor.Shape()[1]) {
+    MS_LOG(ERROR) << device_tensor.Name() << " embedding_size is invalid, device size is " << device_tensor.Shape()[1]
+                  << ", host size is " << host_cache_tensor.Shape()[1];
     return kLiteError;
   }
+  if (host_cache_size_ != host_cache_tensor.Shape()[0]) {
+    MS_LOG(ERROR) << device_tensor.Name() << " host_cache_size is invalid, host_cache_size"
+                  << host_cache_tensor.Shape()[0] << ", index begin:" << min_host_index_
+                  << ", index end:" << max_host_index_ << "rank_group_size_ num:" << rank_group_size_
+                  << ", rank id:" << rank_id_ << ", vocab_size_:" << vocab_size_;
+    return kLiteError;
+  }
+
+  data_type_ = device_tensor.DataType();
+  switch (data_type_) {
+    case DataType::kNumberTypeFloat32:
+      sizeof_data_type_ = sizeof(float);
+      break;
+    default:
+      MS_LOG(ERROR) << device_tensor.Name() << " unsupported data type " << static_cast<int>(data_type_);
+      return kLiteError;
+  }
+  host_addr_ = host_cache_tensor.MutableData();
+  embedding_size_ = device_tensor.Shape()[1];
+  device_start_index_ = device_cache_size_ * rank_id_;
+  // host cache tensor is device tensor
+  if (device_tensor.Shape()[0] == host_cache_tensor.Shape()[0]) {
+    device_start_index_ = min_host_index_;
+  }
+  return kSuccess;
+}
+
+Status EmbeddingCache::MallocCacheMemory() {
   auto hash_swap_value_size = embedding_size_ * batch_elements_ * sizeof_data_type_;
   hash_swap_value_device_addr_ = device_cache_->MallocMemory(hash_swap_value_size);
   if (hash_swap_value_device_addr_ == nullptr) {
@@ -89,9 +118,45 @@ Status EmbeddingCache::Init(uint32_t device_id, const void *context) {
     MS_LOG(ERROR) << "malloc hash_swap_index failed, malloc size " << batch_elements_ * sizeof(int);
     return kLiteMemoryFailed;
   }
+  return kSuccess;
+}
 
-  MS_LOG(INFO) << "init succ, rank_group_size_ num:" << rank_group_size_ << ", rank id:" << rank_id_
-               << ", index begin:" << min_host_index_ << ", index end:" << max_host_index_;
+Status EmbeddingCache::Init(uint32_t device_id, const void *context, mindspore::MSTensor host_cache_tensor,
+                            mindspore::MSTensor device_tensor) {
+  auto ret = Init(host_cache_tensor, device_tensor);
+  if (ret != kSuccess) {
+    return ret;
+  }
+  cache_ = lite::FactoryManagerBase<std::string, cache::CacheAlgorithm>::Instance().GetProduct("lfu");
+  if (cache_ == nullptr) {
+    MS_LOG(ERROR) << "malloc LFUCacheAlgorithm failed";
+    return kLiteMemoryFailed;
+  }
+  ret = cache_->Init(device_cache_size_, min_host_index_, max_host_index_);
+  if (ret != kSuccess) {
+    MS_LOG(ERROR) << "init cache failed," << ret.CodeAsString;
+    return kLiteError;
+  }
+
+  device_cache_ = lite::FactoryManagerBase<std::string, cache::CacheMemBase>::Instance().GetProduct("gpu");
+  if (device_cache_ == nullptr) {
+    MS_LOG(ERROR) << "get cache failed";
+    return kLiteMemoryFailed;
+  }
+  if (!device_cache_->InitDevice(device_id, context)) {
+    MS_LOG(ERROR) << "init device failed";
+    return kLiteError;
+  }
+  ret = MallocCacheMemory();
+  if (ret != kSuccess) {
+    return ret;
+  }
+
+  MS_LOG(INFO) << "init succ,  rank_group_size_ num:" << rank_group_size_ << ", rank id:" << rank_id_
+               << ", vocab_size_:" << vocab_size_ << ", host_cache_size_:" << host_cache_size_
+               << ", device_cache_size_:" << device_cache_size_ << ", embedding_size_:" << embedding_size_
+               << ", batch_elements_:" << batch_elements_ << ", index begin:" << min_host_index_
+               << ", index end:" << max_host_index_;
   return kSuccess;
 }
 
@@ -144,7 +209,6 @@ Status EmbeddingCache::CheckCacheHit(const int *batch_ids, const size_t batch_id
     LookUpTableTask(swap_indices_size, host_cache_size_, static_cast<char *>(host_addr_), need_swap_indies.data(),
                     static_cast<char *>(hash_swap_value_addr_), embedding_size_ * sizeof_data_type_, min_host_index_);
 
-    // copy data
     auto device_cache_ret = device_cache_->CopyHostMemToDevice(hash_swap_value_device_addr_, hash_swap_value_addr_,
                                                                swap_indices_size * embedding_size_ * sizeof_data_type_);
     if (!device_cache_ret) {
