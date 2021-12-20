@@ -27,7 +27,7 @@ typedef struct GatherNdParameter {
 #ifdef __cplusplus
 extern "C" {
 #endif
-int GatherNd(const float *input, float *output, const int *in_offset, int area, int count);
+int GatherNd(const void *input, void *output, const int *in_offset, int area, int count, int data_type_len);
 #ifdef __cplusplus
 }
 #endif

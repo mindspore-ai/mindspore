@@ -46,8 +46,8 @@ class GatherNdCPUKernel : public InnerKernel {
   int count_ = 0;
   int area_ = 0;
   int *in_offset_ = nullptr;
-  float *in_ptr_ = nullptr;
-  float *out_ptr_ = nullptr;
+  void *in_ptr_ = nullptr;
+  void *out_ptr_ = nullptr;
   int thread_count_ = 0;
 };
 }  // namespace mindspore::kernel
