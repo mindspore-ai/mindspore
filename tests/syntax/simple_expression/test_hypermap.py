@@ -106,7 +106,7 @@ def test_tuple_slice_stop_index():
             Tensor(np.ones([2, 3, 4], np.int32)))
 
     net = TupleSliceNet()
-    with pytest.raises(Exception, match="The 1th input of scalar should be int or bool"):
+    with pytest.raises(Exception, match="Slice indices must be integers or bool."):
         output = net(data)
         print("output:", output)
 
@@ -145,7 +145,7 @@ def test_tuple_slice_start_index():
             Tensor(np.ones([2, 3, 4], np.int32)))
 
     net = TupleSliceNet()
-    with pytest.raises(Exception, match="The 0th input of scalar should be int or bool"):
+    with pytest.raises(Exception, match="Slice indices must be integers or bool."):
         output = net(data)
         print("output:", output)
 
@@ -184,6 +184,6 @@ def test_tuple_slice_step():
             Tensor(np.ones([2, 3, 4], np.int32)))
 
     net = TupleSliceNet()
-    with pytest.raises(Exception, match="TupleSlice require the step value could not be 0, but got 0."):
+    with pytest.raises(Exception, match="Slice step cannot be zero."):
         output = net(data)
         print("output:", output)

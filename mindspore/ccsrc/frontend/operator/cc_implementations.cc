@@ -110,8 +110,7 @@ T InnerScalarFloordiv(T x, T y) {
 template <typename T>
 T InnerScalarMod(T x, T y) {
   if (y == 0) {
-    MS_EXCEPTION(ValueError) << "The second input of ScalarMod operator could not be zero. "
-                             << "But the second input is zero now.";
+    MS_EXCEPTION(ValueError) << "Cannot perform modulo operation on zero.";
   }
   if constexpr (!std::is_integral<T>::value) {
     return x - y * std::floor(x / y);
