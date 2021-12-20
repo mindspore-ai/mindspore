@@ -106,31 +106,12 @@ void EmbeddingLookUpCPUKernel::LaunchKernel(const std::vector<kernel::AddressPtr
   const auto *input_addr = reinterpret_cast<float *>(inputs[0]->addr);
   const auto *indices_addr = reinterpret_cast<T *>(inputs[1]->addr);
   auto *output_addr = reinterpret_cast<float *>(outputs[0]->addr);
-  size_t thread_num = indices_lens_ / kBlockSize + 1;
-  auto max_thread_num = common::ThreadPool::GetInstance().GetSyncRunThreadNum();
-  thread_num = thread_num > max_thread_num ? max_thread_num : thread_num;
-  std::vector<common::Task> tasks;
-  size_t task_proc_lens = (indices_lens_ + thread_num - 1) / thread_num;
-  size_t i;
-  size_t task_offset = 0;
-  MS_LOG(DEBUG) << "indices_lens_: " << indices_lens_ << " one task proc lens:" << task_proc_lens;
-  for (i = 0; i < thread_num; i++) {
-    if (task_offset >= indices_lens_) {
-      break;
-    }
-    MS_LOG(DEBUG) << "task_offset: " << task_offset << " task_proc_lenss:" << task_proc_lens;
-    auto task = [input_addr, indices_addr, output_addr, task_offset, task_proc_lens, this]() {
-      LookUpTableTask<T>(input_addr, indices_addr + task_offset, output_addr + task_offset * outer_dim_size_,
-                         task_proc_lens, outer_dim_size_, static_cast<T>(offset_), first_dim_size_, kernel_name_);
-      return common::SUCCESS;
-    };
-    (void)tasks.emplace_back(task);
-    task_offset += task_proc_lens;
-    if (task_offset + task_proc_lens > indices_lens_) {
-      task_proc_lens = indices_lens_ - task_offset;
-    }
-  }
-  (void)common::ThreadPool::GetInstance().SyncRun(tasks);
+  auto task = [&](size_t start, size_t end) {
+    size_t task_proc_lens = end - start;
+    LookUpTableTask<T>(input_addr, indices_addr + start, output_addr + start * outer_dim_size_, task_proc_lens,
+                       outer_dim_size_, static_cast<T>(offset_), first_dim_size_, kernel_name_);
+  };
+  ParallelLaunchAutoSearch(task, indices_lens_, this, &parallel_search_info_);
 }
 
 bool EmbeddingLookUpCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,

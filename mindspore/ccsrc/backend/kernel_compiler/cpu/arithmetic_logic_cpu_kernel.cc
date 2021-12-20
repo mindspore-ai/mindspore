@@ -32,137 +32,91 @@ constexpr size_t kOutputsNum = 1;
 }  // namespace
 
 template <typename T>
-void ArithmeticLogicCPUKernel<T>::Less(const T *input1, const T *input2, bool *out) {
-  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
-  if (output_size_ > kMaxLessSerialSize) {
-    auto task = [&](size_t start, size_t end) {
+template <typename Op>
+void ArithmeticLogicCPUKernel<T>::BinaryOp(const T *input1, const T *input2, bool *out, Op op) {
+  size_t input1_size = 1;
+  size_t input2_size = 2;
+
+  for (size_t i = 0; i < output_shape_.size(); i++) {
+    input1_size *= input_shape1_[i];
+    input2_size *= input_shape2_[i];
+  }
+
+  if (input_shape1_ == input_shape2_) {
+    auto task = [this, input1, input2, out, op](size_t start, size_t end) {
+      for (size_t i = start; i < end; i++) {
+        out[i] = op(input1[i], input2[i]);
+      }
+    };
+    ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
+  } else if (input1_size == 1) {
+    auto task = [this, input1, input2, out, op](size_t start, size_t end) {
+      for (size_t i = start; i < end; i++) {
+        out[i] = op(input1[0], input2[i]);
+      }
+    };
+    ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
+  } else if (input2_size == 1) {
+    auto task = [this, input1, input2, out, op](size_t start, size_t end) {
+      for (size_t i = start; i < end; i++) {
+        out[i] = op(input1[i], input2[0]);
+      }
+    };
+    ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
+  } else {
+    BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
+    auto task = [this, input1, input2, out, op, &base_iter](size_t start, size_t end) {
       auto iter = base_iter;
       iter.SetPos(start);
       for (size_t i = start; i < end; i++) {
         auto x = input1[iter.GetInputPosA()];
         auto y = input2[iter.GetInputPosB()];
-        out[i] = std::less<T>()(x, y);
+        out[i] = op(x, y);
         iter.GenNextPos();
       }
     };
     ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
-  } else {
-    base_iter.SetPos(0);
-    for (size_t i = 0; i < output_size_; i++) {
-      auto x = input1[base_iter.GetInputPosA()];
-      auto y = input2[base_iter.GetInputPosB()];
-      out[i] = std::less<T>()(x, y);
-      base_iter.GenNextPos();
-    }
   }
 }
 
 template <typename T>
+void ArithmeticLogicCPUKernel<T>::Less(const T *input1, const T *input2, bool *out) {
+  BinaryOp(input1, input2, out, std::less<T>());
+}
+
+template <typename T>
 void ArithmeticLogicCPUKernel<T>::Equal(const T *input1, const T *input2, bool *out) {
-  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
-  auto task = [&](size_t start, size_t end) {
-    auto iter = base_iter;
-    iter.SetPos(start);
-    for (size_t i = start; i < end; i++) {
-      auto x = input1[iter.GetInputPosA()];
-      auto y = input2[iter.GetInputPosB()];
-      out[i] = std::equal_to<T>()(x, y);
-      iter.GenNextPos();
-    }
-  };
-  ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
+  BinaryOp(input1, input2, out, std::equal_to<T>());
 }
 
 template <typename T>
 void ArithmeticLogicCPUKernel<T>::NotEqual(const T *input1, const T *input2, bool *out) {
-  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
-  auto task = [&](size_t start, size_t end) {
-    auto iter = base_iter;
-    iter.SetPos(start);
-    for (size_t i = start; i < end; i++) {
-      auto x = input1[iter.GetInputPosA()];
-      auto y = input2[iter.GetInputPosB()];
-      out[i] = std::not_equal_to<T>()(x, y);
-      iter.GenNextPos();
-    }
-  };
-  ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
+  BinaryOp(input1, input2, out, std::not_equal_to<T>());
 }
 
 template <typename T>
 void ArithmeticLogicCPUKernel<T>::LogicalAnd(const T *input1, const T *input2, bool *out) {
-  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
-  auto task = [&](size_t start, size_t end) {
-    auto iter = base_iter;
-    iter.SetPos(start);
-    for (size_t i = start; i < end; i++) {
-      out[i] = input1[iter.GetInputPosA()] && input2[iter.GetInputPosB()];
-      iter.GenNextPos();
-    }
-  };
-  ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
+  BinaryOp(input1, input2, out, std::logical_and<T>());
 }
 
 template <typename T>
 void ArithmeticLogicCPUKernel<T>::LogicalOr(const T *input1, const T *input2, bool *out) {
-  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
-  auto task = [&](size_t start, size_t end) {
-    auto iter = base_iter;
-    iter.SetPos(start);
-    for (size_t i = start; i < end; i++) {
-      out[i] = input1[iter.GetInputPosA()] || input2[iter.GetInputPosB()];
-      iter.GenNextPos();
-    }
-  };
-  ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
+  BinaryOp(input1, input2, out, std::logical_or<T>());
 }
 
 template <typename T>
 void ArithmeticLogicCPUKernel<T>::Greater(const T *input1, const T *input2, bool *out) {
-  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
-  auto task = [&](size_t start, size_t end) {
-    auto iter = base_iter;
-    iter.SetPos(start);
-    for (size_t i = start; i < end; i++) {
-      auto x = input1[iter.GetInputPosA()];
-      auto y = input2[iter.GetInputPosB()];
-      out[i] = std::greater<T>()(x, y);
-      iter.GenNextPos();
-    }
-  };
-  ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
+  BinaryOp(input1, input2, out, std::greater<T>());
 }
 
 template <typename T>
 void ArithmeticLogicCPUKernel<T>::GreaterEqual(const T *input1, const T *input2, bool *out) {
-  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
-  auto task = [&](size_t start, size_t end) {
-    auto iter = base_iter;
-    iter.SetPos(start);
-    for (size_t i = start; i < end; i++) {
-      auto x = input1[iter.GetInputPosA()];
-      auto y = input2[iter.GetInputPosB()];
-      out[i] = std::greater_equal<T>()(x, y);
-      iter.GenNextPos();
-    }
-  };
-  ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
+  BinaryOp(input1, input2, out, std::greater_equal<T>());
 }
 
 template <typename T>
 void ArithmeticLogicCPUKernel<T>::LessEqual(const T *input1, const T *input2, bool *out) {
-  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
-  auto task = [&](size_t start, size_t end) {
-    auto iter = base_iter;
-    iter.SetPos(start);
-    for (size_t i = start; i < end; i++) {
-      auto x = input1[iter.GetInputPosA()];
-      auto y = input2[iter.GetInputPosB()];
-      out[i] = std::less_equal<T>()(x, y);
-      iter.GenNextPos();
-    }
-  };
-  ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
+  BinaryOp(input1, input2, out, std::less_equal<T>());
 }
 
 template <typename T>

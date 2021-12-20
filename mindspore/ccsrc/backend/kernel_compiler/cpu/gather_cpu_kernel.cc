@@ -66,14 +66,6 @@ bool GatherV2CPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
     axis_ = axis_ + dims;
   }
 
-  int max_thread_num = SizeToInt(common::ThreadPool::GetInstance().GetSyncRunThreadNum());
-  ParallelRun(input_tensor, indices_data, output_addr, max_thread_num);
-  return true;
-}
-
-template <typename T>
-void GatherV2CPUKernel<T>::ParallelRun(const int8_t *input_addr, const int *indices_data, int8_t *output_addr,
-                                       int thread_num) {
   size_t outer_size = 1, inner_size = 1;
   auto axis = static_cast<size_t>(axis_);
   for (size_t i = 0; i < axis; ++i) {
@@ -87,32 +79,17 @@ void GatherV2CPUKernel<T>::ParallelRun(const int8_t *input_addr, const int *indi
     indices_element_size *= indices_shape_.at(i);
   }
   auto limit = input_shape_.at(axis);
-  size_t stride = UP_DIV(outer_size, IntToSize(thread_num));
-  std::vector<common::Task> tasks;
-  int thread_index = 0;
-  while (thread_index < thread_num) {
-    int count = MSMIN(SizeToInt(stride), SizeToInt(outer_size) - SizeToInt(stride) * thread_index);
-    if (count <= 0) {
-      break;
+  auto task = [&](size_t start, size_t end) {
+    int count = SizeToInt(end - start);
+    const int8_t *in = input_tensor + start * limit * inner_size * sizeof(T);
+    int8_t *out = output_addr + start * indices_element_size * inner_size * sizeof(T);
+    int ret = Gather(in, count, inner_size, limit, indices_data, indices_element_size, out, sizeof(T));
+    if (ret != 0) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', error_code[" << ret << "]";
     }
-    auto thread_stride = static_cast<size_t>(stride * thread_index);
-    const int8_t *in = input_addr + thread_stride * limit * inner_size * sizeof(T);
-    int8_t *out = output_addr + thread_stride * indices_element_size * inner_size * sizeof(T);
-    auto block = [this, in, indices_data, count, inner_size, limit, indices_element_size, out, thread_index]() {
-      int ret = Gather(in, count, inner_size, limit, indices_data, indices_element_size, out, sizeof(T));
-      if (ret != 0) {
-        MS_LOG(ERROR) << "For '" << kernel_name_ << "', run error task_id[" << thread_index << "] error_code[" << ret
-                      << "]";
-        return common::FAIL;
-      }
-      return common::SUCCESS;
-    };
-    (void)tasks.emplace_back(block);
-    thread_index++;
-  }
-  if (!common::ThreadPool::GetInstance().SyncRun(tasks)) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', syncRun error.";
-  }
+  };
+  ParallelLaunchAutoSearch(task, outer_size, this, &parallel_search_info_);
+  return true;
 }
 }  // namespace kernel
 }  // namespace mindspore

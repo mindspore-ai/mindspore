@@ -37,7 +37,6 @@ class GatherV2CPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  void ParallelRun(const int8_t *input_addr, const int *indices_data, int8_t *output_addr, int thread_num);
   std::vector<size_t> input_shape_;
   std::vector<size_t> indices_shape_;
   std::vector<size_t> output_shape_;
