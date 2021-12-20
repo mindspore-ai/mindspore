@@ -55,7 +55,7 @@ int CheckRuntime(mindspore::session::LiteSession *session) {
 
 TEST_F(MindrtRuntimeTest, Runtime) {
   size_t size = 0;
-  char *graph_buf = mindspore::lite::ReadFile("./test_data/mindrt_parallel/mindrt_parallel_model.ms", &size);
+  char *graph_buf = mindspore::lite::ReadFile("./test_data/mindrt_parallel/parallel.ms", &size);
   ASSERT_NE(graph_buf, nullptr);
 
   auto model = std::shared_ptr<mindspore::lite::Model>(mindspore::lite::Model::Import(graph_buf, size));
@@ -106,7 +106,7 @@ int CheckRuntime2(mindspore::session::LiteSession *session) {
 
 TEST_F(MindrtRuntimeTest, RuntimeFp16) {
   size_t size = 0;
-  char *graph_buf = mindspore::lite::ReadFile("./test_data/mindrt_parallel/mindrt_parallel_model.ms", &size);
+  char *graph_buf = mindspore::lite::ReadFile("./test_data/mindrt_parallel/parallel.ms", &size);
   ASSERT_NE(graph_buf, nullptr);
 
   auto model = std::shared_ptr<mindspore::lite::Model>(mindspore::lite::Model::Import(graph_buf, size));
