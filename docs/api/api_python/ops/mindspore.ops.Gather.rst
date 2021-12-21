@@ -1,15 +1,18 @@
 mindspore.ops.Gather
 ======================
 
-.. py:class:: mindspore.ops.Gather(*args, **kwargs)
+.. py:class:: mindspore.ops.Gather()
 
     返回输入Tensor在指定 `axis` 上 `input_indices` 索引对应的元素组成的切片。
 
     **输入：**
 
     - **input_params** (Tensor) - 原始Tensor，shape为 :math:`(x_1, x_2, ..., x_R)` 。
-    - **input_indices** (Tensor) - 要切片的索引Tensor，shape为 :math:`(y_1, y_2, ..., y_S)` 。指定原始Tensor中要切片的索引。其值必须在 `[0, input_param.shape[axis])` 范围内，该校验仅在CPU上生效。在Ascend和GPU上超出该范围时，对应的值会置为0。数据类型可以是int32或int64。
+    - **input_indices** (Tensor) - 要切片的索引Tensor，shape为 :math:`(y_1, y_2, ..., y_S)` 。指定原始Tensor中要切片的索引。数据类型必须是int32或int64。
     - **axis** (int) - 指定要切片的维度索引。
+
+    .. note::
+        input_indices的值必须在 `[0, input_param.shape[axis])` 范围内，超出该范围则报错。
 
     **输出：**
 
@@ -18,6 +21,7 @@ mindspore.ops.Gather
     **异常：**
 
     - **TypeError** - `axis` 不是int。
+    - **TypeError** - `input_indices` 不是int类型的Tensor。
     - **TypeError** - `input_params` 或 `input_indices` 不是Tensor。
 
     **支持平台：**

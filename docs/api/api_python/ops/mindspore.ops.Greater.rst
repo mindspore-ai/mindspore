@@ -1,14 +1,9 @@
 mindspore.ops.Greater
 =====================
 
-.. py:class:: mindspore.ops.Greater(*args, **kwargs)
+.. py:class:: mindspore.ops.Greater()
 
-    按元素计算 :math:`x > y` 的bool值。
-
-    输入 `x` 和 `y` 遵循隐式类型转换规则，使数据类型保持一致。
-    输入必须是两个Tensor，或一个Tensor和一个Scalar。
-    当输入是两个Tensor时，它们的数据类型不能同时是bool，它们的shape可以广播。
-    当输入是一个Tensor和一个Scalar时，Scalar只能是一个常数。
+    按元素比较输入参数 :math:`x,y` 的值，输出结果为bool值。
 
     .. math::
         out_{i} =\begin{cases}
@@ -17,12 +12,17 @@ mindspore.ops.Greater
             \end{cases}
 
     .. note::
-        支持广播。
+        - 输入 `x` 和 `y` 遵循隐式类型转换规则，使数据类型保持一致。
+        - 输入必须是两个Tensor，或一个Tensor和一个Scalar。
+        - 当输入是两个Tensor时，它们的数据类型不能同时是bool，并保证其shape可以广播。
+        - 当输入是一个Tensor和一个Scalar时，Scalar只能是一个常数。
+        - 支持广播。
+        - 若输入的Tensor可以广播，则会把低维度通过复制该维度的值的方式扩展到另一个输入中对应的高维度。
 
     **输入：**
 
-    - **x** (Union[Tensor, Number, bool]) - 第一个输入，是一个Number、bool值或数据类型为Number或bool的Tensor。
-    - **y** (Union[Tensor, Number, bool]) - 第二个输入，当第一个输入是Tensor时，第二个输入应该是一个Number或bool值，或数据类型为Number或bool的Tensor。
+    - **x** (Union[Tensor, number.Number, bool]) - 第一个输入，是一个number.Number、bool值或数据类型为`number <https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.html#mindspore.dtype>`_或`bool_ <https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.html#mindspore.dtype>`_的Tensor。
+    - **y** (Union[Tensor, number.Number, bool]) - 第二个输入，当第一个输入是Tensor时，第二个输入应该是一个number.Number或bool值，或数据类型为number或bool_的Tensor。当第一个输入是Scalar时，第二个输入必须是数据类型为number或bool_的Tensor。
 
     **输出：**
 

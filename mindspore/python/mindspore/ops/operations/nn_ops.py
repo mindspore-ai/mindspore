@@ -3277,6 +3277,8 @@ class L2Normalize(PrimitiveWithInfer):
 
     def infer_shape(self, input_x):
         dim = len(input_x)
+        if dim == 0:
+            raise ValueError(f"For '{self.name}', the dimension of 'x' must be greater than 0, but got {dim}")
         validator.check_int_range(self.axis[0], -dim, dim, Rel.INC_LEFT, 'axis value', self.name)
         return input_x
 
