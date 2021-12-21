@@ -23,6 +23,7 @@ from mindspore._checkparam import Rel
 from .optimizer import Optimizer
 from .optimizer import opt_init_args_register
 
+
 class Rprop(Optimizer):
     r"""
     Implements Resilient backpropagation.
