@@ -411,7 +411,34 @@ class AkgAscendRegOp(AkgRegOp):
 
 
 class AiCPURegOp(CpuRegOp):
-    """Class for AiCPU op info register"""
+    r"""
+    Class for AiCPU operator information register.
+
+    Args:
+        op_name (str):kernel name.
+
+    Examples:
+        >>> from mindspore.ops.op_info_register import op_info_register, AiCPURegOp, DataType
+        >>> stack_op_info = AiCPURegOp("Stack") \
+        ...    .fusion_type("OPAQUE") \
+        ...    .attr("axis", "int") \
+        ...    .input(0, "x", "dynamic") \
+        ...    .output(0, "y", "required") \
+        ...    .dtype_format(DataType.I8_Default, DataType.I8_Default) \
+        ...    .dtype_format(DataType.I16_Default, DataType.I16_Default) \
+        ...    .dtype_format(DataType.I32_Default, DataType.I32_Default) \
+        ...    .dtype_format(DataType.I64_Default, DataType.I64_Default) \
+        ...    .dtype_format(DataType.U8_Default, DataType.U8_Default) \
+        ...    .dtype_format(DataType.U16_Default, DataType.U16_Default) \
+        ...    .dtype_format(DataType.U32_Default, DataType.U32_Default) \
+        ...    .dtype_format(DataType.U64_Default, DataType.U64_Default) \
+        ...    .dtype_format(DataType.F16_Default, DataType.F16_Default) \
+        ...    .dtype_format(DataType.F32_Default, DataType.F32_Default) \
+        ...    .dtype_format(DataType.F64_Default, DataType.F64_Default) \
+        ...    .dtype_format(DataType.BOOL_Default, DataType.BOOL_Default) \
+        ...    .get_op_info()
+        >>>
+    """
 
     def __init__(self, op_name):
         super(AiCPURegOp, self).__init__(op_name)

@@ -83,7 +83,7 @@ class DimReduce(Cell):
         optimizer (Union[Cell]): Optimizer for updating the weights.
         weight (Tuple(Parameter)): Tuple of parameters.
         pca_mat_local (numpy.ndarray): For PCA operation, k*n, k is part of n_components, n is the size of weight.
-        n_components (int): PCA.componets_.
+        n_components (int): PCA.components.
         rho (float): Apply to grad.
         ls_weight_decay (float): Apply to l2loss.
         gamma (float): Apply to grad.
