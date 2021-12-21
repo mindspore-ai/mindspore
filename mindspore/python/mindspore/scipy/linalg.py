@@ -30,16 +30,18 @@ def block_diag(*arrs):
     """
     Create a block diagonal matrix from provided arrays.
 
-    Given the inputs `A`, `B` and `C`, the output will have these
-    Tensors arranged on the diagonal::
+    Given the list of Tensors `A`, `B` and `C`, the output will have these
+    Tensors arranged on the diagonal:
+
+    .. code-block::
 
         [[A, 0, 0],
          [0, B, 0],
          [0, 0, C]]
 
     Args:
-        `A`, `B`, `C`, ... (Tensor): up to 2-D Input Tensors.
-        A 1-D Tensor or a 2-D Tensor with shape :math:`(1,n)`.
+        arrs (list): up to 2-D Input Tensors.
+            A 1-D Tensor or a 2-D Tensor with shape :math:`(1,n)`.
 
     Returns:
         Tensor with `A`, `B`, `C`, ... on the diagonal which has the same dtype as `A`.
@@ -445,8 +447,10 @@ def lu_factor(a, overwrite_a=False, check_finite=True):
     """
     Compute pivoted LU decomposition of a matrix.
     The decomposition is::
+
     .. math::
         A = P L U
+
     where P is a permutation matrix, L lower triangular with unit diagonal elements, and U upper triangular.
 
     Args:
@@ -505,13 +509,13 @@ def lu(a, permute_l=False, overwrite_a=False, check_finite=True):
             in problems (crashes, non-termination) if the inputs do contain infinities or NaNs.
 
     Returns:
-        **(If permute_l == False)**
+        **If permute_l == False**
 
         - Tensor, :math:`(M, M)` Permutation matrix.
         - Tensor, :math:`(M, K)` Lower triangular or trapezoidal matrix with unit diagonal. :math:`K = min(M, N)`.
         - Tensor, :math:`(K, N)` Upper triangular or trapezoidal matrix.
 
-        **(If permute_l == True)**
+        **If permute_l == True**
 
         - Tensor, :math:`(M, K)` Permuted L matrix. :math:`K = min(M, N)`.
         - Tensor, :math:`(K, N)` Upper triangular or trapezoidal matrix.
