@@ -20,8 +20,14 @@ namespace mindspore {
 namespace kernel {
 MS_REG_GPU_KERNEL_TWO(
   SigmoidCrossEntropyWithLogits,
+  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+  SigmoidCrossEntropyWithLogitsGpuKernel, half, half)
+
+MS_REG_GPU_KERNEL_TWO(
+  SigmoidCrossEntropyWithLogits,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
   SigmoidCrossEntropyWithLogitsGpuKernel, float, float)
+
 MS_REG_GPU_KERNEL_TWO(
   SigmoidCrossEntropyWithLogits,
   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
