@@ -27,13 +27,12 @@ namespace mindspore {
 namespace cache {
 class LFUCacheAlgorithm : public CacheAlgorithm {
  public:
-  LFUCacheAlgorithm(size_t cache_size, int min_host_index, int max_host_index)
-      : cache_size_(cache_size), min_host_index_(min_host_index), max_host_index_(max_host_index) {}
+  LFUCacheAlgorithm() {}
   ~LFUCacheAlgorithm() override;
 
   int Get(int key) override;
-
   void Put(int key, int value) override;
+  Status Init(size_t cache_size, int min_host_index, int max_host_index) override;
   Status CheckCacheHit(const int *batch_ids, const size_t batch_ids_len, int *cache_index,
                        std::vector<int> *need_swap_indies, std::vector<int> *need_swap_indies_cache_index) override;
 
@@ -46,7 +45,7 @@ class LFUCacheAlgorithm : public CacheAlgorithm {
 
   std::unordered_map<int, std::list<CacheNoe *>::iterator> key_table_;
   std::map<int, std::list<CacheNoe *>> frequency_table_;
-  size_t cache_size_;
+  size_t cache_size_{0};
 
   int min_host_index_{0};
   int max_host_index_{1};

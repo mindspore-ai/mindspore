@@ -19,10 +19,11 @@
 #include "src/delegate/tensorrt/cuda_impl/hash.cuh"
 #include "runtime/device/gpu/cuda_driver.h"
 #include "src/common/log_adapter.h"
-
+#include "src/delegate/parameter_cache/factory_mgr_base.h"
 namespace mindspore {
 namespace cache {
 namespace gpu {
+RET_COMMON_PRODUCT_REGISTRAR(std::string, cache::CacheMemBase, cache::gpu::GPUCacheMem, "gpu", GPUCacheMem);
 bool GPUCacheMem::InitDevice(uint32_t device_id, const void *context) {
   auto cuda_ret = cudaSetDevice(static_cast<int>(device_id));
   if (cuda_ret != cudaSuccess) {

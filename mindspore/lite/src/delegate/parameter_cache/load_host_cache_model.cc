@@ -24,6 +24,9 @@
 #include "include/errorcode.h"
 #include "src/common/file_utils.h"
 
+namespace {
+constexpr size_t kGatherInputsSize = 3;
+}
 namespace mindspore {
 namespace cache {
 MSTensor *SchemaTensorToMSTensor(lite::SchemaTensorWrapper *schema_tensor_wrapper,
@@ -103,7 +106,7 @@ Status HostCacheModel::LoadCache(DelegateModel<schema::Primitive> *model) {
     if (kernel->type() != schema::PrimitiveType_Gather) {
       continue;
     }
-    MS_ASSERT(kernel->inputs.size() == 3);
+    MS_ASSERT(kernel->inputs.size() == kGatherInputsSize);
     auto tensor = kernel->inputs()[0];
     if (tensor.Data() == nullptr) {
       continue;

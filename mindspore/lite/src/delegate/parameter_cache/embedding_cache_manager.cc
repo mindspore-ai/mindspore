@@ -20,6 +20,9 @@
 #include "src/common/log_adapter.h"
 #include "include/errorcode.h"
 
+namespace {
+constexpr size_t kGatherInputsSize = 3;
+}
 namespace mindspore {
 namespace cache {
 Status EmbeddingCacheManager::Init(const std::string &cache_model_path, size_t vocab_size, size_t device_cache_size) {
@@ -93,39 +96,25 @@ Status EmbeddingCacheManager::InitCacheKernel(kernel::Kernel *kernel, uint32_t d
     MS_LOG(ERROR) << kernel->name() << " is not embedding kernel";
     return kLiteError;
   }
-
-  auto tensor = kernel->inputs()[0];
-  if (tensor.Shape()[1] != host_cache_tensor.Shape()[1]) {
-    MS_LOG(ERROR) << kernel->name() << " embedding_size is invalid, device size is " << tensor.Shape()[1]
-                  << " host size is " << host_cache_tensor.Shape()[1];
-    return kLiteError;
-  }
-  size_t vocab_size = vocab_size_;
-  size_t host_cache_size = host_cache_tensor.Shape()[0];
-  size_t embedding_size_ = tensor.Shape()[1];
-  DataType data_type = tensor.DataType();
+  MS_ASSERT(kernel->inputs().size() == kGatherInputsSize);
+  auto device_tensor = kernel->inputs()[0];
   size_t batch_elements = kernel->inputs()[1].ElementNum();
-  size_t device_start_index = device_cache_size_ * rank_id_;
-  if (tensor.Shape()[0] == host_cache_tensor.Shape()[0]) {
-    device_start_index = rank_id_ * static_cast<int>(std::ceil(static_cast<float>(vocab_size_) / rank_group_size_));
-  }
-  auto cache = std::make_shared<EmbeddingCache>(vocab_size, host_cache_size, device_cache_size_, device_start_index,
-                                                embedding_size_, batch_elements, data_type,
-                                                host_cache_tensor.MutableData(), rank_id_, rank_group_size_);
+  auto cache =
+    std::make_shared<EmbeddingCache>(vocab_size_, device_cache_size_, batch_elements, rank_id_, rank_group_size_);
   if (cache == nullptr) {
     MS_LOG(ERROR) << kernel->name() << ": malloc EmbeddingCache failed";
     return kLiteError;
   }
 
-  auto ret = cache->Init(device_id, context);
+  auto ret = cache->Init(device_id, context, host_cache_tensor, device_tensor);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << kernel->name() << ": EmbeddingCache init failed";
     return kLiteError;
   }
-  caches_[tensor.Name()] = cache;
 
+  caches_[device_tensor.Name()] = cache;
   MS_LOG(INFO) << kernel->name() << " is cache kernel, input tensor " << kernel->inputs()[1].Name() << ", cache tensor "
-               << tensor.Name();
+               << device_tensor.Name();
 
   return kSuccess;
 }
