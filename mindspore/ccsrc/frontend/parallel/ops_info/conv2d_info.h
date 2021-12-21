@@ -53,13 +53,11 @@ class Conv2DInfo : public OperatorInfo {
   Status InferRankBias();
   void InferOverlapSize();
   void InferNewOperatorAttrs();
-  void InferSendRecvFlag();
-  void InferOverlapShapes();
-  void InferStridedSliceAttrs();
+  void InferCommunicationAttrs();
   std::string ReplaceNodeName() const;
   AnfNodePtr GenerateConv2DNode(const AnfNodePtr &new_input, const CNodePtr &cnode);
   ReplaceGraphPtr replace_graph(const CNodePtr &cnode) override;
-  OperatorAttrs CreateNeighborExchangeAttrs(const CNodePtr &cnode);
+  OperatorAttrs CreateNeighborExchangeV2Attrs();
   OperatorAttrs CreateConv2DAttrs();
   void ComputeReplaceGraph(const CNodePtr &cnode);
 
@@ -91,21 +89,11 @@ class Conv2DInfo : public OperatorInfo {
   int64_t w_dimension_shard_num_ = 1;
   Shape input_slice_shape_;
 
-  bool left_need_send_ = false;
-  bool left_need_recv_ = false;
-  bool right_need_send_ = false;
-  bool right_need_recv_ = false;
-  Shape left_strided_slice_begin_;
-  Shape left_strided_slice_end_;
-  Shape left_strided_slice_strides_;
-  Shape right_strided_slice_begin_;
-  Shape right_strided_slice_end_;
-  Shape right_strided_slice_strides_;
-
   std::vector<int64_t> send_rank_ids_;
   std::vector<int64_t> recv_rank_ids_;
-  Shapes send_shapes_;
-  Shapes recv_shapes_;
+  std::vector<int64_t> send_lens_;
+  std::vector<int64_t> recv_lens_;
+  std::string all_to_all_group_;
 
   GenerateGraph gen_g_ = GenerateGraph(attrs_);
 

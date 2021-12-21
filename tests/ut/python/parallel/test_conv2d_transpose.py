@@ -70,6 +70,11 @@ def compile_net(net):
 
 
 def test_conv2d_transpose_data_parallel():
+    """
+    Feature: test data parallel strategy
+    Description: only shard batch dimension
+    Expectation: compile success
+    """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     strategy1 = ((8, 1, 1, 1), (1, 1, 1, 1))
     strategy2 = ((8, 1, 1, 1),)
@@ -78,6 +83,11 @@ def test_conv2d_transpose_data_parallel():
 
 
 def test_conv2d_transpose_model_parallel1():
+    """
+    Feature: test model parallel strategy
+    Description: only shard batch dimension and channel dimension
+    Expectation: compile success
+    """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     strategy1 = ((2, 2, 1, 1), (2, 2, 1, 1))
     strategy2 = ((8, 1, 1, 1),)
@@ -86,6 +96,11 @@ def test_conv2d_transpose_model_parallel1():
 
 
 def test_conv2d_transpose_model_parallel2():
+    """
+    Feature: test model parallel strategy
+    Description: shard batch dimension and w dimension
+    Expectation: compile success
+    """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     strategy1 = ((2, 1, 1, 4), (1, 1, 1, 1))
     strategy2 = ((2, 1, 1, 4),)
@@ -95,6 +110,11 @@ def test_conv2d_transpose_model_parallel2():
 
 
 def test_conv2d_transpose_model_parallel3():
+    """
+    Feature: test model parallel strategy
+    Description: shard batch dimension, channel dimension and w dimension
+    Expectation: compile success
+    """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
     strategy1 = ((2, 2, 1, 4), (2, 1, 1, 1))
     strategy2 = ((2, 2, 1, 4),)
@@ -104,6 +124,11 @@ def test_conv2d_transpose_model_parallel3():
 
 
 def test_conv2d_transpose_all_rank_no_need_overlap():
+    """
+    Feature: test model parallel strategy
+    Description: shard batch dimension, channel dimension and w dimension
+    Expectation: compile success
+    """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
     strategy1 = ((2, 2, 1, 4), (2, 1, 1, 1))
     strategy2 = ((2, 2, 1, 4),)
@@ -113,6 +138,11 @@ def test_conv2d_transpose_all_rank_no_need_overlap():
 
 
 def test_conv2d_transpose_split_h_or_w_in_pad_mode():
+    """
+    Feature: test pad mode
+    Description: shard batch dimension, channel dimension and w dimension in pad mode
+    Expectation: compile failed
+    """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
     strategy1 = ((2, 2, 1, 4), (2, 1, 1, 1))
     strategy2 = ((2, 2, 1, 4),)
@@ -123,6 +153,11 @@ def test_conv2d_transpose_split_h_or_w_in_pad_mode():
 
 
 def test_conv2d_transpose_split_h_in_same_mode():
+    """
+    Feature: test split h dimension
+    Description: shard h dimension in same mode
+    Expectation: compile failed
+    """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
     strategy1 = ((2, 2, 4, 1), (2, 1, 1, 1))
     strategy2 = ((2, 2, 1, 4),)
@@ -133,6 +168,11 @@ def test_conv2d_transpose_split_h_in_same_mode():
 
 
 def test_conv2d_transpose_overlap_size_too_large():
+    """
+    Feature: test overlap size is too large
+    Description: shard w dimension and overlap size larger than slice shape
+    Expectation: compile failed
+    """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     strategy1 = ((1, 1, 1, 8), (1, 1, 1, 1))
     strategy2 = ((1, 1, 1, 8),)
@@ -140,24 +180,4 @@ def test_conv2d_transpose_overlap_size_too_large():
                strategy1=strategy1, strategy2=strategy2)
     with pytest.raises(RuntimeError):
         compile_net(net)
-
-
-def test_conv2d_transpose_overlap_size_too_large2():
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
-    strategy1 = ((1, 1, 1, 8), (1, 1, 1, 1))
-    strategy2 = ((2, 2, 1, 4),)
-    net = Net2(_w2, out_channel=8, kernel_size=(4, 4), pad_mode="same", stride=2,
-               strategy1=strategy1, strategy2=strategy2)
-    with pytest.raises(RuntimeError):
-        compile_net(net)
-
-
-def test_conv2d_transpose_rank0_no_need_overlap():
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
-    strategy1 = ((2, 2, 1, 4), (2, 1, 1, 1))
-    strategy2 = ((2, 2, 1, 4),)
-    net = Net2(_w4, out_channel=8, kernel_size=(3, 3), pad_mode="same", stride=2,
-               strategy1=strategy1, strategy2=strategy2)
-    with pytest.raises(RuntimeError):
-        compile_net(net)
-    
+  
