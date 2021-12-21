@@ -175,7 +175,7 @@ class CheckAndConvertUtils {
     if (prim_name.empty()) {
       buffer << "The attribute[" << arg_name << "] must ";
     } else {
-      buffer << "The primitive[" << prim_name << "]'s " << arg_name << " must ";
+      buffer << "For primitive[" << prim_name << "], the " << arg_name << " must ";
     }
     auto iter_to_string = kCompareToString.find(compare_operator);
     if (iter_to_string == kCompareToString.end()) {
@@ -204,7 +204,7 @@ class CheckAndConvertUtils {
     if (prim_name.empty()) {
       buffer << "The attribute[" << arg_name << "] must ";
     } else {
-      buffer << "The primitive[" << prim_name << "] " << arg_name << " must ";
+      buffer << "For primitive[" << prim_name << "], the " << arg_name << " must ";
     }
     auto iter_to_string = kCompareRangeToString.find(compare_operator);
     if (iter_to_string == kCompareRangeToString.end()) {
@@ -244,7 +244,7 @@ class CheckAndConvertUtils {
     if (prim_name.empty()) {
       buffer << "The attribute[" << arg_name << "]:";
     } else {
-      buffer << "The primitive[" << prim_name << "]'s " << arg_name << ":";
+      buffer << "For primitive[" << prim_name << "], the " << arg_name << ":";
     }
     auto iter_to_string = kCompareToString.find(compare_type);
     if (iter_to_string == kCompareToString.end()) {
@@ -274,7 +274,7 @@ class CheckAndConvertUtils {
     MS_EXCEPTION_IF_NULL(args_spec);
     auto arg = dyn_cast<T>(args_spec);
     if (arg == nullptr) {
-      MS_EXCEPTION(TypeError) << "The primitive[" << op << "]'s input[" << index << "] should be a "
+      MS_EXCEPTION(TypeError) << "For primitive[" << op << "], the input[" << index << "] should be a "
                               << abstract::ReportNameTraits<T>::name << ", but got "
                               << args_spec_list[index]->BuildType()->ToString() << ".";
     }
