@@ -54,6 +54,7 @@ constexpr size_t kPartialFuncGraphPos = 1;
 constexpr size_t kSwitchLayerBranchPos = 2;
 constexpr size_t kSwitchTrueBranchPos = 2;
 constexpr size_t kMakeTupleInputStartPos = 1;
+const std::set<std::string> kNodeTupleOutSet = {prim::kPrimMakeTuple->name(), prim::kPrimGetNext->name()};
 
 const PrimitiveSet follow_first_input_prims = {prim::kPrimDepend, prim::kPrimLoad};
 
@@ -1213,9 +1214,11 @@ void AnfRuntimeAlgorithm::SetOutputTypeAndDetailShape(const std::vector<TypeId> 
     MS_LOG(EXCEPTION) << "Types size " << types.size() << "should be same with shapes size " << shapes.size()
                       << " trace: " << trace::DumpSourceLines(node);
   }
-  if (shapes.empty() && node_name != prim::kPrimMakeTuple->name()) {
+
+  auto tuple_node = kNodeTupleOutSet.find(node_name);
+  if (shapes.empty() && tuple_node == kNodeTupleOutSet.end()) {
     node->set_abstract(std::make_shared<abstract::AbstractNone>());
-  } else if (shapes.size() == 1 && node_name != prim::kPrimMakeTuple->name()) {
+  } else if (shapes.size() == 1 && tuple_node == kNodeTupleOutSet.end()) {
     // single output handle
     auto abstract = std::make_shared<AbstractTensor>(TypeIdToType(types[0]), shapes[0]);
     node->set_abstract(abstract);
@@ -1246,9 +1249,11 @@ void AnfRuntimeAlgorithm::SetOutputInferTypeAndShape(const std::vector<TypeId> &
                       << " trace: " << trace::DumpSourceLines(node);
   }
   auto abstract_ptr = node_ptr->abstract();
-  if (shapes.empty() && node_name != prim::kPrimMakeTuple->name()) {
+
+  auto tuple_node = kNodeTupleOutSet.find(node_name);
+  if (shapes.empty() && tuple_node == kNodeTupleOutSet.end()) {
     node->set_abstract(std::make_shared<abstract::AbstractNone>());
-  } else if (shapes.size() == 1 && node_name != prim::kPrimMakeTuple->name()) {
+  } else if (shapes.size() == 1 && tuple_node == kNodeTupleOutSet.end()) {
     // single output handle
     ShapeVector shape_int;
     abstract::AbstractTensorPtr abstract = nullptr;
