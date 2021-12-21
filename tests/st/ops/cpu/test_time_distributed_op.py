@@ -59,7 +59,7 @@ def test_time_distributed_maxpool2d():
     time_distributed = TestTimeDistributed(pool, time_axis=1, reshape_with_axis=0)
     output = time_distributed(Tensor(inputs, mindspore.float32)).asnumpy()
     for i in range(output.shape[1]):
-        assert np.all(output[:, i, :] == output_expect)
+        assert np.all(np.abs(output[:, i, :] - output_expect) < 1e-5)
     print("MaxPooling2D layer wrapped successful")
 
 
@@ -74,7 +74,7 @@ def test_time_distributed_dense():
     time_distributed = TestTimeDistributed(dense, time_axis=1, reshape_with_axis=0)
     output = time_distributed(Tensor(inputs, mindspore.float32)).asnumpy()
     for i in range(output.shape[1]):
-        assert np.all(output[:, i, :] == output_expect)
+        assert np.all(np.abs(output[:, i, :] - output_expect) < 1e-5)
     print("Dense layer wrapped successful")
 
 
@@ -90,7 +90,7 @@ def test_time_distributed_dense_pynative():
     time_distributed = TestTimeDistributed(dense, time_axis=1, reshape_with_axis=0)
     output = time_distributed(Tensor(inputs, mindspore.float32)).asnumpy()
     for i in range(output.shape[1]):
-        assert np.all(output[:, i, :] == output_expect)
+        assert np.all(np.abs(output[:, i, :] - output_expect) < 1e-5)
     print("Dense layer with pynative mode wrapped successful")
 
 
@@ -105,7 +105,7 @@ def test_time_distributed_dense_with_reshape_axis_not_first():
     time_distributed = TestTimeDistributed(dense, time_axis=0, reshape_with_axis=1)
     output = time_distributed(Tensor(inputs, mindspore.float32)).asnumpy()
     for i in range(output.shape[0]):
-        assert np.all(output[i, :] == output_expect)
+        assert np.all(np.abs(output[i, :] - output_expect) < 1e-5)
     print("Dense layer wrapped successful")
 
 
@@ -120,7 +120,7 @@ def test_time_distributed_argmax():
     time_distributed = TestTimeDistributed(argmax, time_axis=1, reshape_with_axis=0)
     output = time_distributed(Tensor(inputs, mindspore.float32)).asnumpy()
     for i in range(output.shape[1]):
-        assert np.all(output[:, i] == output_expect)
+        assert np.all(np.abs(output[:, i] - output_expect) < 1e-5)
     print("Argmax op wrapped successful")
 
 
@@ -135,7 +135,7 @@ def test_time_distributed_flatten():
     time_distributed = TestTimeDistributed(flatten, time_axis=1, reshape_with_axis=0)
     output = time_distributed(Tensor(inputs, mindspore.float32)).asnumpy()
     for i in range(output.shape[1]):
-        assert np.all(output[:, i, :] == output_expect)
+        assert np.all(np.abs(output[:, i, :] - output_expect) < 1e-5)
     print("Flatten op wrapped successful")
 
 
@@ -150,7 +150,7 @@ def test_time_distributed_conv2d_no_reshape_axis():
     time_distributed = TestTimeDistributed(conv2d, time_axis=1)
     output = time_distributed(Tensor(inputs, mindspore.float32)).asnumpy()
     for i in range(output.shape[1]):
-        assert np.all(output[:, i, :] == output_expect)
+        assert np.all(np.abs(output[:, i, :] - output_expect) < 1e-5)
     print("Conv2D layer with no reshape axis wrapped successful")
 
 
@@ -165,7 +165,7 @@ def test_time_distributed_maxpool2d_no_reshape_axis():
     time_distributed = TestTimeDistributed(pool, time_axis=1)
     output = time_distributed(Tensor(inputs, mindspore.float32)).asnumpy()
     for i in range(output.shape[1]):
-        assert np.all(output[:, i, :] == output_expect)
+        assert np.all(np.abs(output[:, i, :] - output_expect) < 1e-5)
     print("MaxPooling2D layer with no reshape axis wrapped successful")
 
 
@@ -180,7 +180,7 @@ def test_time_distributed_dense_no_reshape_axis():
     time_distributed = TestTimeDistributed(dense, time_axis=1)
     output = time_distributed(Tensor(inputs, mindspore.float32)).asnumpy()
     for i in range(output.shape[1]):
-        assert np.all(output[:, i, :] == output_expect)
+        assert np.all(np.abs(output[:, i, :] - output_expect) < 1e-5)
     print("Dense layer with no reshape axis wrapped successful")
 
 
@@ -195,7 +195,7 @@ def test_time_distributed_argmax_no_reshape_axis():
     time_distributed = TestTimeDistributed(argmax, time_axis=1)
     output = time_distributed(Tensor(inputs, mindspore.float32)).asnumpy()
     for i in range(output.shape[1]):
-        assert np.all(output[:, i] == output_expect)
+        assert np.all(np.abs(output[:, i] - output_expect) < 1e-5)
     print("Argmax op with no reshape axis wrapped successful")
 
 
@@ -210,5 +210,5 @@ def test_time_distributed_flatten_no_reshape_axis():
     time_distributed = TestTimeDistributed(flatten, time_axis=1)
     output = time_distributed(Tensor(inputs, mindspore.float32)).asnumpy()
     for i in range(output.shape[1]):
-        assert np.all(output[:, i, :] == output_expect)
+        assert np.all(np.abs(output[:, i, :] - output_expect) < 1e-5)
     print("Flatten op with no reshape axis wrapped successful")
