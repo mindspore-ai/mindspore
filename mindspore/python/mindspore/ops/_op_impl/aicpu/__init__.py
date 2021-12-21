@@ -182,6 +182,8 @@ from .round import _round_aicpu
 from .gcd import _gcd_aicpu
 from .truncated_normal import _truncated_normal_aicpu
 from .stft import _stft_aicpu
+from .resize_bicubic import _resize_bicubic_aicpu
+from .resize_bicubic_grad import _resize_bicubic_grad_aicpu
 from .floor_div import _floor_div_aicpu
 from .non_deterministic_ints import _non_deterministic_ints_aicpu
 from .one_hot import _one_hot_aicpu

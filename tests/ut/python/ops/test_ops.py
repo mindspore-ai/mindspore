@@ -63,6 +63,8 @@ from mindspore.ops.operations.math_ops import DivNoNan
 from mindspore.ops.operations.math_ops import Gcd
 from mindspore.ops.operations.math_ops import Histogram
 from mindspore.ops.operations.math_ops import RaggedRange
+from mindspore.ops.operations.image_ops import ResizeBicubic
+from mindspore.ops.operations._grad_ops import ResizeBicubicGrad
 from mindspore.ops.operations.array_ops import RangeV2
 from mindspore.ops.operations.array_ops import ListDiff
 from mindspore.ops.operations.nn_ops import FractionalMaxPool, DataFormatVecPermute
@@ -2702,6 +2704,17 @@ test_case_nn_ops = [
         'block': P.BCEWithLogitsLoss(),
         'desc_inputs': [[3, 3], [3, 3], [3, 3], [3, 3]],
         'desc_bprop': []}),
+    ('ResizeBicubic', {
+        'block': ResizeBicubic(align_corners=False, half_pixel_centers=False),
+        'desc_inputs': [Tensor([[[[1.0], [2.0]], [[3.0], [4.0]]]]),
+                        Tensor(np.array([1, 4]).reshape(2).astype(np.int32))],
+        'desc_bprop': [Tensor([[[[1.], [1.5], [2.], [2.09375]]]], mstype.float32)]}),
+    ('ResizeBicubicGrad', {
+        'block': ResizeBicubicGrad(),
+        'desc_inputs': [Tensor([[[[1.0], [2.0]], [[3.0], [4.0]]]], mstype.float32),
+                        Tensor([[[[1.], [4.], [6.], [4.]]]])],
+        'desc_bprop': [Tensor([[[[1, 2, 3, 4, 5]]]], mstype.float32)],
+        'skip': ['backward']}),
     ('ResizeBilinear', {
         'block': P.ResizeBilinear((5, 5)),
         'desc_inputs': [Tensor([[[[1, 2, 3, 4, 5], [1, 2, 3, 4, 5]]]], mstype.float16)],

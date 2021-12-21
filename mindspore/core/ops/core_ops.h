@@ -475,6 +475,8 @@ GVAR_DEF(PrimitivePtr, kPrimExtractVolumePatches, std::make_shared<Primitive>("E
 GVAR_DEF(PrimitivePtr, kPrimLstsq, std::make_shared<Primitive>(kLstsq));
 GVAR_DEF(PrimitivePtr, kPrimLowerBound, std::make_shared<Primitive>(kLowerBound));
 GVAR_DEF(PrimitivePtr, kPrimUpperBound, std::make_shared<Primitive>(kUpperBound));
+GVAR_DEF(PrimitivePtr, kPrimResizeBicubic, std::make_shared<Primitive>("ResizeBicubic"));
+GVAR_DEF(PrimitivePtr, kPrimResizeBicubicGrad, std::make_shared<Primitive>("ResizeBicubicGrad"));
 GVAR_DEF(PrimitivePtr, kPrimCummax, std::make_shared<Primitive>(kCummax));
 GVAR_DEF(PrimitivePtr, kPrimRightShift, std::make_shared<Primitive>(kRightShift));
 GVAR_DEF(PrimitivePtr, kPrimTril, std::make_shared<Primitive>(kTril));

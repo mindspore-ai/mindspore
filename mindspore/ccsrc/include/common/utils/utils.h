@@ -365,6 +365,7 @@ constexpr auto kEnvironSetOpName = "EnvironSet";
 constexpr auto kEnvironGetOpName = "EnvironGet";
 constexpr auto kEnvironDestroyAllOpName = "EnvironDestroyAll";
 constexpr auto kNonDeterministicInts = "NonDeterministicInts";
+constexpr auto kResizeBicubicOpName = "ResizeBicubic";
 constexpr auto kUpdateStateOpName = "UpdateState";
 constexpr auto kTruncatedNormal = "TruncatedNormal";
 constexpr auto kPriorityReplayBufferCreate = "PriorityReplayBufferCreate";
@@ -851,6 +852,7 @@ const std::set<std::string> kComputeDepend = {kUniqueOpName,
                                               kSegmentMaxOpName,
                                               kSegmentMinOpName,
                                               kSegmentSumOpName,
+                                              kResizeBicubicOpName,
                                               kNonZeroOpName};
 
 const std::set<std::string> k3DFormatSet = {kOpFormat_NCDHW, kOpFormat_NDC1HWC0, kOpFormat_FRACTAL_Z_3D,

@@ -545,3 +545,105 @@ class ResizeBilinearV2(Primitive):
         target = context.get_context("device_target")
         if half_pixel_centers and target == "CPU":
             raise ValueError(f"Currently `half_pixel_centers`=True is not supported in CPU device_target")
+
+
+class ResizeBicubic(Primitive):
+    """
+    Resize images to size using bicubic interpolation.
+
+    .. warning::
+        The max output length is 1000000.
+
+    Args:
+        align_corners (bool):If true, the centers of the 4 corner pixels of the input
+            and output tensors are aligned, preserving the values at the corner pixels.Default: False.
+        half_pixel_centers (bool): An optional bool. Default: False.
+
+    Inputs:
+        - **images** (Tensor) - The input image must be a 4-D tensor of shape [batch, height, width, channels].
+          The format must be NHWC.
+          Types allowed: int8, int16, int32, int64, float16, float32, float64, uint8, uint16.
+        - **size** (Tensor) - A 1-D tensor of shape [2], with 2 elements: new_height, new_width.
+          Types allowed: int32.
+    Outputs:
+        A 4-D tensor of shape [batch, new_height, new_width, channels] with type: float32.
+
+    Raises:
+        TypeError: If `images` type is not allowed.
+        TypeError: If `size` type is not allowed.
+        TypeError: If `align_corners` type is not allowed.
+        TypeError: If `half_pixel_centers` type is not allowed.
+        ValueError: If `images` dim is not 4.
+        ValueError: If `size` dim is not 1.
+        ValueError: If `size` size is not 2.
+        ValueError: If `size` value is not positive.
+        ValueError: If `align_corners` and `half_pixel_centers` value are both true.
+
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> class NetResizeBicubic(nn.Cell):
+        ...     def __init__(self):
+        ...         super(NetResizeBicubic, self).__init__()
+        ...         align_corners = False
+        ...         half_pixel_centers = False
+        ...         self.resize = P.ResizeBicubic(align_corners, half_pixel_centers)
+        ...
+        ...     def construct(self, images, size):
+        ...         return self.resize(images, size)
+        ...
+        >>> images = Tensor(np.array([1, 2, 3, 4]).reshape(1, 2, 2, 1).astype(np.float32))
+        >>> size = Tensor([1, 4], mindspore.int32)
+        >>> resizebicubic = NetResizeBicubic()
+        >>> output = resizebicubic(images, size)
+        >>> print(output)
+            [[[[1.     ]
+            [1.5    ]
+            [2.     ]
+            [2.09375]]]]
+    """
+
+    @prim_attr_register
+    def __init__(self, align_corners=False, half_pixel_centers=False):
+        """Initialize"""
+        self.add_prim_attr("max_length", 1000000)
+        validator.check_value_type('align_corners', align_corners, bool, self.name)
+        validator.check_value_type('half_pixel_centers', half_pixel_centers, bool, self.name)
+        self.init_prim_io_names(inputs=['images', 'size'], outputs=['y'])
+
+    def __infer__(self, images, size):
+        # get shape
+        images_shape = list(images['shape'])
+        size_shape = list(size['shape'])
+        # get value
+        if images['value'] is None:
+            raise ValueError(f"For '{self.name}', the 'images' cannot be None, but got {images['value']}.")
+        if size['value'] is None:
+            raise ValueError(f"For '{self.name}', the 'size' cannot be None, but got {size['value']}.")
+        size_value = size['value']
+        # get dtype
+        images_dtype = images['dtype']
+        size_dtype = size['dtype']
+        # check dytpe
+        validator.check_tensor_dtype_valid("images", images_dtype,
+                                           [mstype.int8, mstype.int16, mstype.int32, mstype.int64, mstype.float16,
+                                            mstype.float32, mstype.uint8, mstype.uint16, mstype.double], self.name)
+        validator.check_tensor_dtype_valid("size", size_dtype, [mstype.int32], self.name)
+        # check input shape rank
+        validator.check("images rank", len(images_shape), "expected", 4, Rel.EQ, self.name)
+        validator.check("size rank", len(size_shape), "expected", 1, Rel.EQ, self.name)
+        validator.check("size dim_0", size_shape[0], "expected", 2, Rel.EQ, self.name)
+        # check size_value
+        validator.check("size[0]", size_value[0], "minimum", 0, Rel.GT, self.name)
+        validator.check("size[1]", size_value[1], "minimum", 0, Rel.GT, self.name)
+
+        batch_size = images_shape[0]
+        height = size_value[0]
+        width = size_value[1]
+        channel = images_shape[3]
+        out_shape = (batch_size, height, width, channel)
+        return {'shape': out_shape,
+                'dtype': mstype.float32,
+                'value': None}
