@@ -214,88 +214,63 @@ class FrameworkParser:
             for path in framework_path_dict[file_data_type]:
                 with open(path, 'rb') as file_handler:
                     while True:
-                        line = file_handler.read(line_size)
-                        if len(line) < line_size:
+                        binary_data = file_handler.read(line_size)
+                        if len(binary_data) < line_size:
                             break
-                        line_data = self._transform_binary_data(data_struct, line)
+                        line_data = StructType.unpack_binary_data(data_struct, binary_data,
+                                                                  self._special_process_binary_data)
                         all_file_data[file_data_type].append(line_data)
         return all_file_data
 
-    def _transform_binary_data(self, data_struct, binary_data):
-        """
-        Parse the binary data to get the actual data
+    def _special_process_binary_data(self, item_binary_data, data_name, data_type, unpacked_data):
+        """Specially processes binary data."""
+        unpack_data = None
+        success = False
+        if isinstance(data_type, list):
+            if data_name in ('opName', 'opType'):
+                unpack_data = self._special_process_mixed_data(item_binary_data)
+            elif data_name == 'tensorData':
+                tensor_num = unpacked_data['tensorNum']
+                unpack_data = self._special_process_tensor_data(item_binary_data, data_type, tensor_num)
+            elif data_name == 'tensorNum':
+                unpack_data = self._special_process_tensor_num(item_binary_data, data_type)
+            else:
+                # skip reserve data
+                unpack_data = None
+            success = True
+        return unpack_data, success
 
-        Args：
-            data_struct (dict): Key is the data name, value is StructType.
-            binary_data (str): This value should be a binary string.
-
-        Returns:
-            dict, key is data name, value is a actual value.
-
-        Example:
-            >>> ret = self._transform_binary_data({'op_name': StructType.UINT32}, b'1101')
-            >>> print(ret)
-            ... {'op_name': (825241905,)}
-
-        """
-        actual_data = {}
-        cursor = 0
-        for name, data_type in data_struct.items():
-            data_size = StructType.sizeof(data_type)
-            if isinstance(data_type, list):
-                if name in ('opName', 'opType'):
-                    unpack_data = self._special_process_mixed_data(binary_data, cursor, data_size)
-                elif name == 'tensorData':
-                    tensor_num = actual_data['tensorNum']
-                    unpack_data = self._special_process_tensor_data(cursor, data_type, binary_data, tensor_num)
-                elif name == 'tensorNum':
-                    unpack_data = self._speceal_process_tensor_num(data_type, binary_data, cursor)
-                else:
-                    # skip reserve data
-                    unpack_data = None
-
-                actual_data[name] = unpack_data
-                cursor += data_size
-                continue
-
-            unpack_data = struct.unpack(data_type.value, binary_data[cursor: cursor+data_size])[0]
-            cursor += data_size
-            actual_data[name] = unpack_data
-        return actual_data
-
-    def _special_process_mixed_data(self, binary_data, cursor, data_size):
+    def _special_process_mixed_data(self, item_binary_data):
         """Specially processes mixed data, for example, opName and opType"""
         # The first byte is type flag, 0 means data is string, 1 means data is hash value
-        flag = struct.unpack(StructType.UCHAR.value, binary_data[cursor:cursor + 1])[0]
+        cursor = 0
+        data_size = len(item_binary_data)
+        flag = struct.unpack(StructType.UCHAR.value, item_binary_data[cursor:cursor + 1])[0]
 
         # skip rsv data, rsv has 7 bytes
         skip_size = 8
         remain_size = data_size - skip_size
         if flag == 0:
             unpack_data = struct.unpack(StructType.CHAR.value * remain_size,
-                                        binary_data[cursor + skip_size:cursor + data_size])
-            try:
-                unpack_data = ''.join(list(map(lambda c: c.decode(),
-                                               filter(lambda c: c != b'\x00', unpack_data))))
-            except Exception as exc:
-                raise exc
+                                        item_binary_data[cursor + skip_size:cursor + data_size])
+            unpack_data = ''.join(list(map(lambda c: c.decode(), filter(lambda c: c != b'\x00', unpack_data))))
         else:
             size = StructType.sizeof(StructType.UINT64) + skip_size
             hash_value = struct.unpack(StructType.UINT64.value,
-                                       binary_data[cursor + skip_size:cursor + size])[0]
+                                       item_binary_data[cursor + skip_size:cursor + size])[0]
             unpack_data = self._hash_dict[str(hash_value)]
         return unpack_data
 
     @staticmethod
-    def _special_process_tensor_data(cursor, data_type, binary_data, tensor_num):
+    def _special_process_tensor_data(item_binary_data, data_type, tensor_num):
         """The tensor data depends tensor num, so need to special process."""
-        start = cursor
+        start = 0
         op_attr_struct = data_type[0]
         op_attr_size = StructType.sizeof(op_attr_struct)
         unpack_data = []
 
         for _ in range(tensor_num):
-            buffer = binary_data[start:start + op_attr_size]
+            buffer = item_binary_data[start:start + op_attr_size]
             values = struct.unpack(StructType.format(op_attr_struct), buffer)
             one_data = dict(
                 tensorType=values[0],
@@ -309,11 +284,12 @@ class FrameworkParser:
         return unpack_data
 
     @staticmethod
-    def _speceal_process_tensor_num(data_type, binary_data, cursor):
+    def _special_process_tensor_num(item_binary_data, data_type):
         """The memory of tensorNum is aligned, so here need to special process"""
+        cursor = 0
         tensor_num_struct = data_type[0]
         size = StructType.sizeof(tensor_num_struct)
-        unpack_data = struct.unpack(tensor_num_struct.value, binary_data[cursor:cursor + size])[0]
+        unpack_data = struct.unpack(tensor_num_struct.value, item_binary_data[cursor:cursor + size])[0]
         return unpack_data
 
     def _construct_task_id_full_op_name_dict(self, task_desc_info):

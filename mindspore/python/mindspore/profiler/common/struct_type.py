@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Define a cpp type map python struct type."""
-
+import struct
 from enum import Enum
 
 
@@ -64,3 +64,53 @@ class StructType(Enum):
             else:
                 size += size_map[member.name]
         return size
+
+    @classmethod
+    def unpack_binary_data(cls, data_struct, binary_data, special_process_func=None):
+        """
+        Parse the binary data to get the unpacked data
+
+        Args：
+            data_struct (dict): Key is the data name, value is StructType.
+            binary_data (str): This value should be a binary string.
+            special_func (Callable): This is a callable function,
+                the arguments are item_binary_data, data_name, data_type, unpacked_data.
+                This function should return a tuple, first value is unpacked data, second value is success flag,
+                If data can not unpack, this function should return None.
+
+        Returns:
+            dict, key is data name, value is a actual value.
+
+        Example:
+            >>> ret = StructType.unpack_binary_data({'op_name': StructType.UINT32}, b'1101')
+            >>> print(ret)
+            {'op_name': (825241905,)}
+            >>> # special_process_func example
+            >>> def handle_tensor_number(binary_data, data_size, cursor, item_name, iten_type)
+            ...     if data_name == 'tensorNum':
+            ...         tensor_num_struct = data_type[0]
+            ...         size = StructType.sizeof(tensor_num_struct)
+            ...          unpack_data = struct.unpack(tensor_num_struct.value, binary_data[cursor:cursor + size])[0]
+            ...          return unpack_data, True
+            ...      return None, False
+            ...
+            >>> data_struct = {'tensorNum': [StructType.UINT32]}
+            >>> ret = StructType.unpack_binary_data(data_struct, b'1101', special_func=handle_tensor_number)
+            >>> print(ret)
+        """
+        unpacked_data = {}
+        cursor = 0
+        for name, data_type in data_struct.items():
+            data_size = StructType.sizeof(data_type)
+            if special_process_func:
+                unpack_data, success = special_process_func(binary_data[cursor:cursor+data_size], name,
+                                                            data_type, unpacked_data)
+                if success:
+                    cursor += data_size
+                    unpacked_data[name] = unpack_data
+                    continue
+
+            unpack_data = struct.unpack(data_type.value, binary_data[cursor: cursor+data_size])[0]
+            cursor += data_size
+            unpacked_data[name] = unpack_data
+        return unpacked_data

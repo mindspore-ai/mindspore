@@ -252,8 +252,10 @@ void ProfilingManager::QueryHashId(const int32_t &device_id, const std::string &
   const int32_t ret = prof_cb_.msprofReporterCallback(
     static_cast<int32_t>(MsprofReporterModuleId::MSPROF_MODULE_FRAMEWORK),
     static_cast<int32_t>(MsprofReporterCallbackType::MSPROF_REPORTER_HASH), &hash_data, sizeof(MsprofHashData));
-  if (ret != 0) {
-    MS_LOG(EXCEPTION) << "[Profiling] Query hash id of long string failed, src string is " << src_str.c_str();
+  if (ret != UintToInt(PROF_SUCCESS)) {
+    ReportErrorMessage();
+    MS_LOG(EXCEPTION) << "[Profiling] Query hash id of long string failed, src string is " << src_str.c_str()
+                      << ", ret is " << ret;
   }
 
   hash_id = hash_data.hashId;
