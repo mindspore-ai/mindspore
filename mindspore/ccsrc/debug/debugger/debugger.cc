@@ -1120,7 +1120,8 @@ std::list<TensorBase> Debugger::LoadTensorsBase(const ProtoVector<TensorProto> &
   debug_services_->SearchNodesTensors(name, &result_list);
   for (auto result : result_list) {
     auto tensor = std::get<1>(result);
-    if (!tensor || cur_root_graph_id_ != tensor->GetRootGraphId()) {
+    if (!tensor || ((cur_root_graph_id_ != tensor->GetRootGraphId()) &&
+                    MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT))) {
       // tensor was not found or tensor's graph was not executed in the current step, creating empty tensor base.
       TensorBase tensor_base_item;
       tensor_base_item.set_data_size(0);
@@ -1149,7 +1150,8 @@ std::list<TensorSummary> Debugger::LoadTensorsStat(const ProtoVector<TensorProto
   debug_services_->SearchNodesTensors(name, &result_list);
   for (auto result : result_list) {
     auto tensor = std::get<1>(result);
-    if (!tensor || cur_root_graph_id_ != tensor->GetRootGraphId()) {
+    if (!tensor || ((cur_root_graph_id_ != tensor->GetRootGraphId()) &&
+                    MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT))) {
       // tensor was not found or tensor's graph was not executed in the current step, creating empty tensor summary.
       DebugServices::TensorStat tensor_stat;
       AddTensorStatInfo(tensor_stat, &tensor_summary_list);
