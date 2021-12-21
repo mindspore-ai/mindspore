@@ -79,10 +79,7 @@ function Run_Converter() {
     chmod +x atc
 
     cp tools/converter/converter/converter_lite ./ || exit 1
-    ls -l ${dpico_atc_path}/pico_mapper/lib || exit 1
-    ls -l ${dpico_atc_path}/protobuf-3.9.0/lib || exit 1
-    ls -l ${dpico_atc_path}/opencv-4.2.0/lib || exit 1
-    export LD_LIBRARY_PATH=./tools/converter/lib/:./runtime/lib/:${dpico_atc_path}/pico_mapper/lib:${dpico_atc_path}/protobuf-3.9.0/lib:${dpico_atc_path}/opencv-4.2.0/lib:${LD_LIBRARY_PATH}
+    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./tools/converter/lib/:./runtime/lib/:${dpico_atc_path}/pico_mapper/lib:${dpico_atc_path}/protobuf-3.9.0/lib:${dpico_atc_path}/opencv-4.2.0/lib
     chmod +x ./tools/benchmark/benchmark
 
     echo ' ' > ${run_converter_log_file}
@@ -234,7 +231,6 @@ else
 fi
 
 dpico_atc_path=${hisi_sdk}/sd3403_sdk/dpico_atc_adapter
-echo "dpico_atc_path is " ${dpico_atc_path}
 x86_path=${release_path}/ubuntu_x86
 
 # Set version
