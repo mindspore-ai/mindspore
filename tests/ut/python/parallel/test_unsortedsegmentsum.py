@@ -74,6 +74,11 @@ def compile_graph(x, y, segments, strategy1, strategy2, auto=False):
 
 
 def test_unsortedsegmentsum_model_parallel_slice_1d():
+    """
+    Feature: distribute operator unsorted_segment_sum in auto parallel.
+    Description: unsorted_segment_sum net with model [arallel strategy in semi auto parallel, slice 1d.
+    Expectation: compile done without error.
+    """
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     x = Tensor(np.ones(8), ms.float32)
     y = Tensor(np.ones(8), ms.int32)
@@ -84,6 +89,11 @@ def test_unsortedsegmentsum_model_parallel_slice_1d():
 
 
 def test_unsortedsegmentsum_model_parallel_no_slice_1d():
+    """
+    Feature: distribute operator unsorted_segment_sum in auto parallel.
+    Description: unsorted_segment_sum net with no slice strategy in semi auto parallel, slice 1d.
+    Expectation: compile done without error.
+    """
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     x = Tensor(np.ones(8), ms.float32)
     y = Tensor(np.ones(8), ms.int32)
@@ -94,6 +104,11 @@ def test_unsortedsegmentsum_model_parallel_no_slice_1d():
 
 
 def test_unsortedsegmentsum_model_parallel_index_slice_2d():
+    """
+    Feature: distribute operator unsorted_segment_sum in auto parallel.
+    Description: unsorted_segment_sum net with model parallel strategy in semi auto parallel, slice 2d.
+    Expectation: compile done without error.
+    """
     context.set_auto_parallel_context(device_num=4, global_rank=0)
     x = Tensor(np.ones((4, 8)), ms.float32)
     y = Tensor(np.arange(4), ms.int32)
@@ -104,6 +119,11 @@ def test_unsortedsegmentsum_model_parallel_index_slice_2d():
 
 
 def test_unsortedsegmentsum_model_parallel_index_slice_3d():
+    """
+    Feature: distribute operator unsorted_segment_sum in auto parallel.
+    Description: unsorted_segment_sum net with model parallel strategy in semi auto parallel, slice 3d.
+    Expectation: compile done without error.
+    """
     context.set_auto_parallel_context(device_num=4, global_rank=0)
     x = Tensor(np.ones((4, 4, 8)), ms.float32)
     y = Tensor(np.ones((4, 4)), ms.int32)
@@ -114,6 +134,11 @@ def test_unsortedsegmentsum_model_parallel_index_slice_3d():
 
 
 def test_unsortedsegmentsum_model_parallel_index_slice_diff_inputs():
+    """
+    Feature: distribute operator unsorted_segment_sum in auto parallel.
+    Description: unsorted_segment_sum net with strategy in semi auto parallel, slice different inputs.
+    Expectation: compile done without error.
+    """
     context.set_auto_parallel_context(device_num=4, global_rank=0)
     x = Tensor(np.ones((4, 4, 8)), ms.float32)
     y = Tensor(np.ones((4, 4)), ms.int32)
@@ -125,6 +150,11 @@ def test_unsortedsegmentsum_model_parallel_index_slice_diff_inputs():
 
 
 def test_unsortedsegmentsum_model_parallel_vector_slice_2d():
+    """
+    Feature: distribute operator unsorted_segment_sum in auto parallel.
+    Description: unsorted_segment_sum net with model parallel strategy in semi auto parallel, slice 2d.
+    Expectation: compile done without error.
+    """
     context.set_auto_parallel_context(device_num=4, global_rank=0)
     x = Tensor(np.ones((4, 8)), ms.float32)
     y = Tensor(np.ones(4), ms.int32)
@@ -135,6 +165,11 @@ def test_unsortedsegmentsum_model_parallel_vector_slice_2d():
 
 
 def test_unsortedsegmentsum_model_parallel_vector_slice_3d():
+    """
+    Feature: distribute operator unsorted_segment_sum in auto parallel.
+    Description: unsorted_segment_sum net with model parallel strategy in semi auto parallel, slice 3d.
+    Expectation: compile done without error.
+    """
     context.set_auto_parallel_context(device_num=4, global_rank=0)
     x = Tensor(np.ones((4, 8, 8)), ms.float32)
     y = Tensor(np.ones(4), ms.int32)
@@ -145,6 +180,11 @@ def test_unsortedsegmentsum_model_parallel_vector_slice_3d():
 
 
 def test_unsortedsegmentsum_model_parallel_index_vector_slice_2d():
+    """
+    Feature: distribute operator unsorted_segment_sum in auto parallel.
+    Description: unsorted_segment_sum net with strategy in semi auto parallel, slice 2d.
+    Expectation: compile done without error.
+    """
     context.set_auto_parallel_context(device_num=4, global_rank=0)
     x = Tensor(np.ones((4, 8)), ms.float32)
     y = Tensor(np.ones(4), ms.int32)
@@ -155,6 +195,11 @@ def test_unsortedsegmentsum_model_parallel_index_vector_slice_2d():
 
 
 def test_unsortedsegmentsum_model_parallel_index_vector_slice_3d():
+    """
+    Feature: distribute operator unsorted_segment_sum in auto parallel.
+    Description: unsorted_segment_sum net with strategy in semi auto parallel, slice 3d.
+    Expectation: compile done without error.
+    """
     context.set_auto_parallel_context(device_num=4, global_rank=0)
     x = Tensor(np.ones((4, 4, 8)), ms.float32)
     y = Tensor(np.ones((4, 4)), ms.int32)
@@ -165,6 +210,11 @@ def test_unsortedsegmentsum_model_parallel_index_vector_slice_3d():
 
 
 def test_unsortedsegmentsum_model_parallel_repeat_caculate():
+    """
+    Feature: distribute operator unsorted_segment_sum in auto parallel.
+    Description: unsorted_segment_sum net with repeated strategy in semi auto parallel.
+    Expectation: compile done without error.
+    """
     context.set_auto_parallel_context(device_num=4, global_rank=0)
     x = Tensor(np.ones((4, 4, 8)), ms.float32)
     y = Tensor(np.ones((4, 4)), ms.int32)

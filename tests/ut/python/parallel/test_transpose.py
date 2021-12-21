@@ -90,12 +90,22 @@ def transpose_common(strategy1, strategy2):
 
 
 def test_transpose1():
+    """
+    Feature: distribute operator transpose in auto parallel.
+    Description: run transpose distribute operator using model.
+    Expectation: compile done without error.
+    """
     strategy1 = ((1, 8),)
     strategy2 = ((1, 8),)
     transpose_common(strategy1, strategy2)
 
 
 def test_transpose2():
+    """
+    Feature: distribute operator transpose in auto parallel.
+    Description: run transpose distribute operator using model.
+    Expectation: compile done without error.
+    """
     strategy1 = ((1, 4),)
     strategy2 = ((1, 8),)
     transpose_common(strategy1, strategy2)

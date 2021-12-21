@@ -34,7 +34,7 @@ class Net(Cell):
         return out
 
 
-class   EvalNet(Cell):
+class EvalNet(Cell):
     def __init__(self, network, strategy2=None):
         super().__init__()
         self.network = network
@@ -45,25 +45,26 @@ class   EvalNet(Cell):
         out = self.relu(out)
         return out
 
-
-_x = Tensor(np.ones([64, 64]), dtype=ms.float32)
-_w1 = Tensor(np.ones([64, 64]), dtype=ms.float32)
-_b = Tensor(np.ones([64, 64]), dtype=ms.float32)
-
+def compile_net(net, input_data, label, is_train=True):
+    net.set_auto_parallel()
+    net.set_train(mode=is_train)
+    phase = "train" if is_train else "eval"
+    _cell_graph_executor.compile(net, input_data, label, phase=phase, auto_parallel_mode=True)
 
 def test_train_and_eval():
-    context.set_context(mode=0)
+    """
+    Feature: test train and eval in semi auto parallel.
+    Description: train and eval net in auto parallel.
+    Expectation: compile done without error.
+    """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16)
     strategy1 = ((4, 4), (4, 4))
     strategy2 = ((4, 4),)
-    net = Net(_w1, strategy1, strategy2)
+    x = Tensor(np.ones([64, 64]), dtype=ms.float32)
+    w1 = Tensor(np.ones([64, 64]), dtype=ms.float32)
+    b = Tensor(np.ones([64, 64]), dtype=ms.float32)
+    net = Net(w1, strategy1, strategy2)
     eval_net = EvalNet(net, strategy2=strategy2)
-    net.set_auto_parallel()
-    net.set_train()
-    _cell_graph_executor.compile(net, _x, _b, phase='train', auto_parallel_mode=True)
-
-    eval_net.set_train(mode=False)
-    eval_net.set_auto_parallel()
-    _cell_graph_executor.compile(eval_net, _x, _b, phase='eval', auto_parallel_mode=True)
-
+    compile_net(net, x, b)
+    compile_net(eval_net, x, b, is_train=False)
     context.reset_auto_parallel_context()

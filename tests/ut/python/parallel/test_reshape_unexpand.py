@@ -47,7 +47,19 @@ class GradWrap(nn.Cell):
     def construct(self, x):
         return grad_all(self.network)(x)
 
+def compile_net(net, input_data, dev_num=8, parallel_mode="semi_auto_parallel"):
+    context.set_auto_parallel_context(device_num=dev_num, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode=parallel_mode)
+    net.set_auto_parallel()
+    net.set_train()
+    _cell_graph_executor.compile(net, input_data)
+
 def test_reshape_unexpand():
+    """
+    Feature: distribute operator reshape which cannot do normal redistribution in semi auto parallel.
+    Description: rreshape-weight net in auto parallel.
+    Expectation: compile done without error.
+    """
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -60,17 +72,16 @@ def test_reshape_unexpand():
             out = self.mul(x, weight)
             return out
 
-    size = 8
-    context.set_auto_parallel_context(device_num=size, global_rank=0)
     x = Tensor(np.ones([128, 96]), dtype=ms.float32)
-
     net = GradWrap(NetWithLoss(Net()))
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
-    net.set_auto_parallel()
-    net.set_train()
-    _cell_graph_executor.compile(net, x)
+    compile_net(net, x)
 
 def test_reshape_unexpand_1():
+    """
+    Feature: distribute operator reshape which cannot do normal redistribution in semi auto parallel.
+    Description: weight-reshape net in auto parallel.
+    Expectation: compile done without error.
+    """
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -83,17 +94,16 @@ def test_reshape_unexpand_1():
             out = self.mul(x, self.mul_weight)
             return out
 
-    size = 8
-    context.set_auto_parallel_context(device_num=size, global_rank=0)
     x = Tensor(np.ones([128, 96]), dtype=ms.float32)
-
     net = GradWrap(NetWithLoss(Net()))
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
-    net.set_auto_parallel()
-    net.set_train()
-    _cell_graph_executor.compile(net, x)
+    compile_net(net, x)
 
 def test_reshape_unexpand_2():
+    """
+    Feature: distribute operator reshape which cannot do normal redistribution in semi auto parallel.
+    Description: weight-reshape net in auto parallel.
+    Expectation: compile done without error.
+    """
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -106,17 +116,16 @@ def test_reshape_unexpand_2():
             out = self.mul(x, self.mul_weight)
             return out
 
-    size = 8
-    context.set_auto_parallel_context(device_num=size, global_rank=0)
     x = Tensor(np.ones([128, 96]), dtype=ms.float32)
-
     net = GradWrap(NetWithLoss(Net()))
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
-    net.set_auto_parallel()
-    net.set_train()
-    _cell_graph_executor.compile(net, x)
+    compile_net(net, x)
 
 def test_reshape_unexpand_3():
+    """
+    Feature: distribute operator reshape which cannot do normal redistribution in semi auto parallel.
+    Description: relu-reshape-relu net in auto parallel.
+    Expectation: compile done without error.
+    """
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -130,17 +139,16 @@ def test_reshape_unexpand_3():
             x = self.relu2(x)
             return x
 
-    size = 4
-    context.set_auto_parallel_context(device_num=size, global_rank=0)
     x = Tensor(np.ones([4, 3]), dtype=ms.float32)
-
     net = GradWrap(NetWithLoss(Net()))
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
-    net.set_auto_parallel()
-    net.set_train()
-    _cell_graph_executor.compile(net, x)
+    compile_net(net, x, dev_num=4)
 
 def test_reshape_unexpand_4():
+    """
+    Feature: distribute operator reshape which cannot do normal redistribution in semi auto parallel.
+    Description: relu-reshape-relu net in auto parallel.
+    Expectation: compile done without error.
+    """
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -154,17 +162,16 @@ def test_reshape_unexpand_4():
             x = self.relu2(x)
             return x
 
-    size = 4
-    context.set_auto_parallel_context(device_num=size, global_rank=0)
     x = Tensor(np.ones([4, 3]), dtype=ms.float32)
-
     net = GradWrap(NetWithLoss(Net()))
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
-    net.set_auto_parallel()
-    net.set_train()
-    _cell_graph_executor.compile(net, x)
+    compile_net(net, x, dev_num=4)
 
 def test_reshape_unexpand_5():
+    """
+    Feature: distribute operator reshape which cannot do normal redistribution in semi auto parallel.
+    Description: relu-reshape-relu net in auto parallel.
+    Expectation: compile done without error.
+    """
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -178,17 +185,16 @@ def test_reshape_unexpand_5():
             x = self.relu2(x)
             return x
 
-    size = 4
-    context.set_auto_parallel_context(device_num=size, global_rank=0)
     x = Tensor(np.ones([2, 2, 3]), dtype=ms.float32)
-
     net = GradWrap(NetWithLoss(Net()))
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
-    net.set_auto_parallel()
-    net.set_train()
-    _cell_graph_executor.compile(net, x)
+    compile_net(net, x, dev_num=4)
 
 def test_reshape_unexpand_6():
+    """
+    Feature: distribute operator reshape which cannot do normal redistribution in semi auto parallel.
+    Description: weight-reshape net in auto parallel.
+    Expectation: compile done without error.
+    """
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -202,17 +208,16 @@ def test_reshape_unexpand_6():
             x = self.relu2(x)
             return x
 
-    size = 4
-    context.set_auto_parallel_context(device_num=size, global_rank=0)
     x = Tensor(np.ones([4, 3]), dtype=ms.float32)
-
     net = GradWrap(NetWithLoss(Net()))
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
-    net.set_auto_parallel()
-    net.set_train()
-    _cell_graph_executor.compile(net, x)
+    compile_net(net, x, dev_num=4)
 
 def test_reshape_unexpand_7():
+    """
+    Feature: distribute operator reshape which cannot do normal redistribution in auto parallel.
+    Description: reshape as net output in auto parallel.
+    Expectation: compile done without error.
+    """
     class Net(nn.Cell):
         def __init__(self, in_channel=3, out_channel=8, axis=1, input_shape=(32, 4, 110, -1),
                      mul_size=(32, 1, 220, 220)):
@@ -237,16 +242,17 @@ def test_reshape_unexpand_7():
             x = self.reshape(x, self.input_shape)
             return x
 
-    size = 8
-    context.set_auto_parallel_context(device_num=size, global_rank=0)
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     x = Tensor(np.ones([32, 3, 224, 224]), dtype=ms.float32)
     net = GradWrap(NetWithLoss(Net()))
-    net.set_auto_parallel()
-    net.set_train()
-    _cell_graph_executor.compile(net, x)
+    compile_net(net, x, parallel_mode="auto_parallel")
 
 def test_reshape_unexpand_8():
+    """
+    Feature: distribute operator reshape which cannot do normal redistribution in auto parallel.
+    Description: weight-reshape net in auto parallel.
+    Expectation: compile done without error.
+    """
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -259,12 +265,6 @@ def test_reshape_unexpand_8():
             out = self.mul(x, self.mul_weight)
             return out
 
-    size = 8
-    context.set_auto_parallel_context(device_num=size, global_rank=0)
     x = Tensor(np.ones([128, 96]), dtype=ms.float32)
-
     net = GradWrap(NetWithLoss(Net()))
-    context.set_auto_parallel_context(parallel_mode="auto_parallel")
-    net.set_auto_parallel()
-    net.set_train()
-    _cell_graph_executor.compile(net, x)
+    compile_net(net, x, parallel_mode="auto_parallel")
