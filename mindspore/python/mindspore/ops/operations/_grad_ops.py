@@ -1739,23 +1739,13 @@ class HSigmoidGrad(_ActivationGrad):
     """Gets the gradient of HSigmoid operation."""
 
 
-class SigmoidCrossEntropyWithLogitsGrad(PrimitiveWithInfer):
+class SigmoidCrossEntropyWithLogitsGrad(Primitive):
     """Computes the gradients of `SigmoidCrossEntropyWithLogits`."""
 
     @prim_attr_register
     def __init__(self):
         """Initialize SigmoidCrossEntropyWithLogitsGrad"""
         self.init_prim_io_names(inputs=['x', 'y', 'dout'], outputs=['x_grad'])
-
-    def infer_shape(self, x_shape, y_shape, dout_shape):
-        validator.check("x_shape", x_shape, "y_shape", y_shape, Rel.EQ, self.name)
-        validator.check("x_shape", x_shape, "dout_shape", dout_shape, Rel.EQ, self.name)
-        return x_shape
-
-    def infer_dtype(self, x_dtype, y_dtype, dout_dtype):
-        args = {"x_dtype": x_dtype, "y_dtype": y_dtype, 'dout_dtype': dout_dtype}
-        validator.check_tensors_dtypes_same_and_valid(args, mstype.number_type, self.name)
-        return dout_dtype
 
 
 class SliceGrad(PrimitiveWithInfer):
