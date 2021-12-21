@@ -15,6 +15,9 @@
  */
 
 #include "src/lite_session.h"
+#ifndef RUNTIME_PASS_CLIP
+#include "src/runtime/runtime_pass.h"
+#endif
 #if defined(MACHINE_LINUX_ARM64)
 #include <malloc.h>
 #endif
@@ -1151,6 +1154,13 @@ int LiteSession::Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs
     is_running_.store(false);
     return RET_ERROR;
   }
+#ifndef RUNTIME_PASS_CLIP
+  auto status = GraphOptimizePass(&kernels_);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "GraphOptimizePass failed.";
+    return RET_ERROR;
+  }
+#endif
 
   is_running_.store(false);
 #if defined(MACHINE_LINUX_ARM64)

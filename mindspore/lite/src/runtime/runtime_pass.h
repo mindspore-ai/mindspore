@@ -26,8 +26,8 @@
 
 namespace mindspore::lite {
 
-void RuntimePass(std::vector<kernel::LiteKernel *> *subgraphs, std::vector<Tensor *> *tensors);
-
+STATUS RuntimePass(std::vector<kernel::LiteKernel *> *subgraphs, std::vector<Tensor *> *tensors);
+STATUS GraphOptimizePass(std::vector<kernel::LiteKernel *> *sub_graphs);
 /* Nc4hw4 PASS
  * before  : --(nhwc)-- CONV --(nhwc)-- TRANSPOSE --(nchw)-- IN --(nchw)-- TRANSPOSE --(nhwc)--
  * after   : --(nhwc)-- CONV --(nc4hw4)-- IN --(nhwc)--
