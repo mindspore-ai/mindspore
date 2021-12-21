@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,9 @@
 
 #ifndef MINDSPORE_CORE_OPS_LOGICAL_OR_H_
 #define MINDSPORE_CORE_OPS_LOGICAL_OR_H_
+#include <map>
 #include <vector>
+#include <string>
 #include <memory>
 #include "ops/primitive_c.h"
 #include "abstract/abstract_value.h"
@@ -30,7 +32,7 @@ constexpr auto kNameLogicalOr = "LogicalOr";
 class MS_CORE_API LogicalOr : public PrimitiveC {
  public:
   /// \brief Constructor.
-  LogicalOr() : PrimitiveC(kNameLogicalOr) { InitIOName({"x", "y"}, {"output"}); }
+  LogicalOr() : PrimitiveC(kNameLogicalOr) { InitIOName({"x1", "x2"}, {"y"}); }
   /// \brief Destructor.
   ~LogicalOr() = default;
   MS_DECLARE_PARENT(LogicalOr, PrimitiveC);
@@ -39,6 +41,7 @@ class MS_CORE_API LogicalOr : public PrimitiveC {
 };
 AbstractBasePtr LogicalOrInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args);
+using kPrimLogicalOrPtr = std::shared_ptr<LogicalOr>;
 }  // namespace ops
 }  // namespace mindspore
 

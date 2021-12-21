@@ -198,6 +198,7 @@ from .less_equal_ds import _less_equal_ds_tbe
 from .logical_and import _logical_and_tbe
 from .logical_not import _logical_not_tbe
 from .logical_or import _logical_or_tbe
+from .logical_or_ds import _logical_or_ds_tbe
 from .reduce_max import _reduce_max_tbe
 from .reduce_min import _reduce_min_tbe
 from .reduce_sum import _reduce_sum_tbe
