@@ -20,10 +20,26 @@ namespace mindspore {
 namespace kernel {
 MS_REG_GPU_KERNEL_ONE(SmoothL1LossGrad,
                       KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddOutputAttr(kNumberTypeFloat16),
+                      SmoothL1LossGradGpuKernel, half)
+
+MS_REG_GPU_KERNEL_ONE(SmoothL1LossGrad,
+                      KernelAttr()
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
                       SmoothL1LossGradGpuKernel, float)
+
+MS_REG_GPU_KERNEL_ONE(SmoothL1LossGrad,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat64)
+                        .AddInputAttr(kNumberTypeFloat64)
+                        .AddInputAttr(kNumberTypeFloat64)
+                        .AddOutputAttr(kNumberTypeFloat64),
+                      SmoothL1LossGradGpuKernel, double)
 }  // namespace kernel
 }  // namespace mindspore

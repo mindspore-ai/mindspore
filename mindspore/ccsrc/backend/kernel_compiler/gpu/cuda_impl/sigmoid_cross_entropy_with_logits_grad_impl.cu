@@ -29,6 +29,19 @@ __global__ void SigmoidCrossEntropyWithLogitsGradKernel(const size_t size, const
   }
 }
 
+template <>
+__global__ void SigmoidCrossEntropyWithLogitsGradKernel(const size_t size, const half *logits, const half *labels,
+                                                        const half *dout_addr, half *outputs) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
+    if (logits[i] >= static_cast<half>(0.)) {
+      outputs[i] = (static_cast<half>(1.) / (static_cast<half>(1.) + hexp(-logits[i])) - labels[i]) * dout_addr[i];
+    } else {
+      const half exp_val = hexp(logits[i]);
+      outputs[i] = (exp_val / (static_cast<half>(1.) + exp_val) - labels[i]) * dout_addr[i];
+    }
+  }
+}
+
 template <typename T, typename S>
 void SigmoidCrossEntropyWithLogitsGrad(const size_t size, const T *logits, const S *labels, const T *dout_addr,
                                        T *outputs, cudaStream_t cuda_stream) {
@@ -36,9 +49,14 @@ void SigmoidCrossEntropyWithLogitsGrad(const size_t size, const T *logits, const
                                                                                              dout_addr, outputs);
 }
 
+template void SigmoidCrossEntropyWithLogitsGrad<half, half>(const size_t size, const half *logits,
+                                                              const half *labels, const half *dout_addr,
+                                                              half *outputs, cudaStream_t cuda_stream);
+
 template void SigmoidCrossEntropyWithLogitsGrad<float, float>(const size_t size, const float *logits,
                                                               const float *labels, const float *dout_addr,
                                                               float *outputs, cudaStream_t cuda_stream);
+
 template void SigmoidCrossEntropyWithLogitsGrad<double, double>(const size_t size, const double *logits,
                                                                 const double *labels, const double *dout_addr,
                                                                 double *outputs, cudaStream_t cuda_stream);

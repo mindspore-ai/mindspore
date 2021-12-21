@@ -25,12 +25,24 @@ __global__ void SigmoidCrossEntropyWithLogitsKernel(const size_t size, const T *
   }
 }
 
+template <>
+__global__ void SigmoidCrossEntropyWithLogitsKernel(const size_t size, const half *logits,
+                                                    const half *labels, half *outputs) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
+    const half reverse_factor = static_cast<half>(logits[i] >= static_cast<half>(0.));
+    const float exp_logit = exp(__half2float(logits[i] - static_cast<half>(2) * reverse_factor * logits[i]));
+    outputs[i] = __float2half(log1p(exp_logit)) - logits[i] * (labels[i] - reverse_factor);
+  }
+}
+
 template <typename T, typename S>
 void SigmoidCrossEntropyWithLogits(const size_t size, const T *logits, const S *labels, T *outputs,
                                    cudaStream_t cuda_stream) {
   SigmoidCrossEntropyWithLogitsKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, logits, labels, outputs);
 }
 
+template void SigmoidCrossEntropyWithLogits<half, half>(const size_t size, const half *logits, const half *labels,
+                                                          half *outputs, cudaStream_t cuda_stream);
 template void SigmoidCrossEntropyWithLogits<float, float>(const size_t size, const float *logits, const float *labels,
                                                           float *outputs, cudaStream_t cuda_stream);
 template void SigmoidCrossEntropyWithLogits<double, double>(const size_t size, const double *logits,

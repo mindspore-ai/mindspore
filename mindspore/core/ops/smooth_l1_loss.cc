@@ -52,7 +52,7 @@ abstract::ShapePtr SmoothL1LossInferShape(const PrimitivePtr &primitive,
 
 TypePtr SmoothL1LossInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   // Infer type
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   std::map<std::string, TypePtr> args;
   (void)args.emplace("scale", input_args[kInputIndex0]->BuildType());
   (void)args.emplace("bias", input_args[kInputIndex1]->BuildType());
