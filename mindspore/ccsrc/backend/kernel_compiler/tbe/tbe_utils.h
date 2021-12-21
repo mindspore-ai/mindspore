@@ -62,7 +62,8 @@ class TbeUtils {
 
   static bool CheckOfflineTune();
 
-  static KernelPackPtr SearchCache(const std::string &kernel_name, const bool is_akg = false);
+  static KernelPackPtr SearchCache(const std::string &kernel_name, const bool is_akg = false,
+                                   const bool is_tune = false, const std::string op_debug_level = "0");
 
   static KernelPackPtr InsertCache(const std::string &kernel_name, const std::string &processor,
                                    const bool is_akg = false);
