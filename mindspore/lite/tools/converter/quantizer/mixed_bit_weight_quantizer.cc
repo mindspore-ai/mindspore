@@ -65,8 +65,8 @@ float MixedBitWeightQuantizer::CalculateMeanError(std::vector<float> norms2, std
     error_count += 1;
     mse_error += sqrtf(dnorms2[i] / norms2[i]);
   }
-  auto meam_error = mse_error / (error_count + soft);
-  return meam_error;
+  auto mean_error = mse_error / (error_count + soft);
+  return mean_error;
 }
 
 // the `preferred` dim should point to the output channels dimension.
@@ -109,8 +109,8 @@ float MixedBitWeightQuantizer::MeasureQuantizationError(float *weights, const in
     float d = weights[i] - dequant;
     dnorms2[bucket] += d * d;
   }
-  auto meam_error = CalculateMeanError(norms2, dnorms2);
-  return meam_error;
+  auto mean_error = CalculateMeanError(norms2, dnorms2);
+  return mean_error;
 }
 
 MinMax MixedBitWeightQuantizer::GetMinMax(const float *arr, int arrc) {

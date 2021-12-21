@@ -92,6 +92,10 @@ class ModelImpl {
 
   static bool CheckModelSupport(const std::string &device_type, ModelType model_type);
   bool IsTrainModel();
+  Status SetupVirtualBatch(int virtual_batch_multiplier, float lr, float momentum);
+  Status SetLearningRate(float learning_rate);
+  float GetLearningRate();
+  Status BuildTransferLearning(const std::shared_ptr<Graph> &backbone, const std::shared_ptr<Graph> &head);
 
   Status InitMetrics(const std::vector<Metrics *> metrics) {
     metrics_ = metrics;

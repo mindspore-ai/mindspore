@@ -94,7 +94,7 @@ int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Execute(int task_id) {
   int length = sm_params_.input_shape_[sm_params_.axis_];
   int stride = UP_DIV(outter_size_, threads_);
   int count = MSMIN(stride, outter_size_ - stride * task_id);
-  if (count <= 0) return RET_ERROR;
+  if (count <= 0) return RET_OK;
   switch (stage_) {
     case 0:
       SoftMaxP1(ins, losses, sum_data, task_id * stride, count, length, inner_size_);
@@ -145,7 +145,8 @@ int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Run() {
   }
   inner_size_ = inner_size;
   outter_size_ = outter_size;
-  const std::vector<int> threads = {op_parameter_->thread_num_, op_parameter_->thread_num_, 1};
+  int max_num_of_threads = (outter_size_ < op_parameter_->thread_num_) ? outter_size_ : op_parameter_->thread_num_;
+  const std::vector<int> threads = {max_num_of_threads, max_num_of_threads, 1};
   for (int stage = 0; stage < static_cast<int>(threads.size()); stage++) {
     stage_ = stage;
     threads_ = threads.at(stage);

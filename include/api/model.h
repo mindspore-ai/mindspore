@@ -45,7 +45,7 @@ class MS_API Model {
   Model(const Model &) = delete;
   void operator=(const Model &) = delete;
 
-  /// \brief Builds a model so that it can run on a device.
+  /// \brief Builds a model
   ///
   /// \param[in] graph GraphCell is a derivative of Cell. Cell is not available currently. GraphCell can be constructed
   /// from Graph, for example, model.Build(GraphCell(graph), context).
@@ -55,6 +55,17 @@ class MS_API Model {
   /// \return Status.
   Status Build(GraphCell graph, const std::shared_ptr<Context> &model_context = nullptr,
                const std::shared_ptr<TrainCfg> &train_cfg = nullptr);
+
+  /// \brief Builds a Transfer Learning model where the backbone weights are fixed and the head weights are trainable
+  ///
+  /// \param[in] backbone The static, non-learnable part of the graph
+  /// \param[in] head The trainable part of the graph
+  /// \param[in] context A context used to store options during execution
+  /// \param[in] cfg A config used by training
+  ///
+  /// \return Status
+  Status BuildTransferLearning(GraphCell backbone, GraphCell head, const std::shared_ptr<Context> &context,
+                               const std::shared_ptr<TrainCfg> &train_cfg = nullptr);
 
   /// \brief Resizes the shapes of inputs.
   ///
@@ -172,6 +183,25 @@ class MS_API Model {
   /// \param[in] inputs A vector new optimizer params.
   /// \return Status of operation
   Status SetOptimizerParams(const std::vector<MSTensor> &params);
+
+  /// \brief Setup training with virtual batches
+  ///
+  /// \param[in] virtual_batch_multiplier - virtual batch multiplier, use any number < 1 to disable
+  /// \param[in] lr - learning rate to use for virtual batch, -1 for internal configuration
+  /// \param[in] momentum - batch norm momentum to use for virtual batch, -1 for internal configuration
+  /// \return Status of operation
+  Status SetupVirtualBatch(int virtual_batch_multiplier, float lr = -1.0f, float momentum = -1.0f);
+
+  /// \brief Sets the Learning Rate of the training
+  ///
+  /// \param[in] learning_rate to set
+  /// \return Status of operation
+  Status SetLearningRate(float learning_rate);
+
+  /// \brief Gets the Learning Rate of the optimizer
+  ///
+  /// \return learning rate. 0.0 if no optimizer was found
+  float GetLearningRate();
 
   Status InitMetrics(std::vector<Metrics *> metrics);
   std::vector<Metrics *> GetMetrics();

@@ -229,12 +229,10 @@ int TransferSession::Export(const std::string &filename, ModelType model_type, Q
   if (orig_train_state) Train();
   return status;
 }
-}  // namespace lite
 
-static session::LiteSession *CreateTransferSessionInt(const char *model_buf_backbone, size_t size_backbone,
-                                                      const char *model_buf_head, size_t size_head,
-                                                      const lite::Context *context, bool train_mode,
-                                                      const lite::TrainCfg *cfg) {
+lite::LiteSession *CreateTransferSessionInt(const char *model_buf_backbone, size_t size_backbone,
+                                            const char *model_buf_head, size_t size_head, const lite::Context *context,
+                                            bool train_mode, const lite::TrainCfg *cfg) {
   auto ValidModelSize = [](size_t size) -> bool {
     constexpr size_t MaxModelSize = 1024 * 1024 * 1024ULL;  // 1G B
     return size < MaxModelSize && size > 0;
@@ -298,6 +296,8 @@ static session::LiteSession *CreateTransferSessionInt(const char *model_buf_back
   }
   return session;
 }
+
+}  // namespace lite
 
 session::LiteSession *session::TrainSession::CreateTransferSession(const std::string &filename_backbone,
                                                                    const std::string &filename_head,
