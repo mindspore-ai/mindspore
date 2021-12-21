@@ -34,6 +34,8 @@ inline const mindspore::HashMap<std::string, ValuePtr> kSideEffectPropagate = {
 
 constexpr auto kGetNext = "GetNext";
 constexpr auto kGather = "Gather";
+constexpr auto kAddcdiv = "Addcdiv";
+constexpr auto kAddcmul = "Addcmul";
 constexpr auto kCdist = "Cdist";
 constexpr auto kCdistGrad = "CdistGrad";
 // Arithmetic
@@ -525,6 +527,8 @@ inline const PrimitivePtr kPrimGer = std::make_shared<Primitive>("Ger");
 inline const PrimitivePtr kPrimCeil = std::make_shared<Primitive>("Ceil");
 inline const PrimitivePtr kPrimTensorAdd = std::make_shared<Primitive>("TensorAdd");
 inline const PrimitivePtr kPrimAdd = std::make_shared<Primitive>(kAdd);
+inline const PrimitivePtr kPrimAddcdiv = std::make_shared<Primitive>(kAddcdiv);
+inline const PrimitivePtr kPrimAddcmul = std::make_shared<Primitive>(kAddcmul);
 inline const PrimitivePtr kPrimMatMul = std::make_shared<Primitive>("MatMul");
 inline const PrimitivePtr kPrimMatMulV2 = std::make_shared<Primitive>("MatMulV2");
 inline const PrimitivePtr kPrimMatrixDiag = std::make_shared<Primitive>("MatrixDiag");

@@ -240,6 +240,100 @@ class Add(_MathBinaryOp):
         return None
 
 
+class Addcdiv(Primitive):
+    """
+    Performs the element-wise division of tensor x1 by tensor x2,
+    multiply the result by the scalar value and add it to input_data.
+
+    .. math::
+        y[i] = input_data[i] + value[i] * (x1[i] / x2[i])
+
+    Inputs:
+        - **input_data**(Tensor) - The tensor to be added, with data type float16 and float32.
+        - **x1** (Tensor) - The numerator tensor, with data type float16 and float32.
+        - **x2** (Tensor) - The denominator tensor, with data type float16 and float32.
+        - **value** (Tensor) - The multiplier for tensor x1/x2, with data type float16, float32.
+
+    Outputs:
+        Tensor y, has the same shape and dtype as x1/x2.
+
+    Raises:
+        TypeError: If dtype of `x1`, `x2`, `value`, `input_data`is not tensor.
+        TypeError: If dtype of `input_data` is not one of: float32, float16.
+        TypeError: If dtype of `x1` or 'x2' is not one of: float32, float16.
+        TypeError: If dtype of `value` is not one of: float32, float16.
+        ValueError: If `x1` could not be broadcast to a tensor with shape of `x2`.
+        ValueError: If `value` could not be broadcast to tensors with shapes of `x1/x2`.
+        ValueError: If `input_data` could not be broadcast to tensors with shapes of `value*(x1/x2)`.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> input_data = Tensor(np.array([1, 1, 1, 1]), mindspore.float32)
+        >>> x1 = Tensor(np.array([1, 2, 3, 4]), mindspore.float32)
+        >>> x2 = Tensor(np.array([4, 3, 2, 1]), mindspore.float32)
+        >>> value = Tensor([1], mindspore.float32)
+        >>> addcdiv = ops.Addcdiv()
+        >>> y = addcdiv(input_data, x1, x2, value)
+        >>> print(y)
+        [1.25      1.6666667 2.5       5.       ]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize Addcdiv """
+        self.init_prim_io_names(inputs=['input_data', 'x1', 'x2', 'value'], outputs=['y'])
+
+
+class Addcmul(Primitive):
+    """
+    Performs the element-wise product of tensor x1 and tensor x2,
+    multiply the result by the scalar value and add it to input_data.
+
+    .. math::
+        output[i] = input_data[i] + value[i] * (x1[i] * x2[i])
+
+    Inputs:
+        - **input_data**(Tensor) - The tensor to be added, with data type float16, float32 and int32.
+        - **x1** (Tensor) - The tensor to be multiplied, with data type float16, float32 and int32.
+        - **x2** (Tensor) - The tensor to be multiplied, with data type float16, float32 and int32.
+        - **value** (Tensor) - The multiplier for tensor x1*x2, with data type float16, float32 and int32.
+
+    Outputs:
+        Tensor, has the same shape and dtype as x1*x2.
+
+    Raises:
+        TypeError: If dtype of `x1`, `x2`, `value`, `input_data`is not tensor.
+        TypeError: If dtype of `input_data` is not one of: float32, float16, int32.
+        TypeError: If dtype of `x1` or 'x2' is not one of: float32, float16, int32.
+        TypeError: If dtype of `value` is not one of: float32, float16, int32.
+        ValueError: If `x1` could not be broadcast to a tensor with shape of `x2`.
+        ValueError: If `value` could not be broadcast to tensors with shapes of `x1` * `x2`.
+        ValueError: If `input_data` could not be broadcast to tensors with shapes of `value*(x1*x2)`.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> input_data = Tensor(np.array([1, 1, 1]), mindspore.float32)
+        >>> x1 = Tensor(np.array([[1], [2], [3]]), mindspore.float32)
+        >>> x2 = Tensor(np.array([[1, 2, 3]]), mindspore.float32)
+        >>> value = Tensor([1], mindspore.float32)
+        >>> addcmul = ops.Addcmul()
+        >>> y = addcmul(input_data, x1, x2, value)
+        >>> print(y)
+        [[ 2.  3.  4.]
+         [ 3.  5.  7.]
+         [ 4.  7. 10.]]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize Addcmul """
+        self.init_prim_io_names(inputs=['input_data', 'x1', 'x2', 'value'], outputs=['y'])
+
+
 class TensorAdd(_MathBinaryOp):
     """
     Same as operator Add. TensorAdd will be deprecated in the future.
