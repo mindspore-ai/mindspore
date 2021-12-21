@@ -177,8 +177,11 @@ class ConfusionMatrixMetric(Metric):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> metric = ConfusionMatrixMetric(skip_channel=True, metric_name="tpr",
-        ...                                calculation_method=False, decrease="mean")
+        >>> import numpy as np
+        >>> from mindspore import nn, Tensor
+        >>>
+        >>> metric = nn.ConfusionMatrixMetric(skip_channel=True, metric_name="tpr",
+        ...                                   calculation_method=False, decrease="mean")
         >>> metric.clear()
         >>> x = Tensor(np.array([[[0], [1]], [[1], [0]]]))
         >>> y = Tensor(np.array([[[0], [1]], [[0], [1]]]))

@@ -31,6 +31,7 @@ class MAE(Metric):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore
         >>> from mindspore import nn, Tensor
         >>>
         >>> x = Tensor(np.array([0.1, 0.2, 0.6, 0.9]), mindspore.float32)

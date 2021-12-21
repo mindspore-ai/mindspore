@@ -39,9 +39,11 @@ def piecewise_constant_lr(milestone, learning_rates):
         list[float]. The size of list is :math:`M_N`.
 
     Examples:
+        >>> import mindspore.nn as nn
+        >>>
         >>> milestone = [2, 5, 10]
         >>> learning_rates = [0.1, 0.05, 0.01]
-        >>> output = piecewise_constant_lr(milestone, learning_rates)
+        >>> output = nn.piecewise_constant_lr(milestone, learning_rates)
         >>> print(output)
         [0.1, 0.1, 0.05, 0.05, 0.05, 0.01, 0.01, 0.01, 0.01, 0.01]
     """
@@ -102,12 +104,14 @@ def exponential_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, 
         list[float]. The size of list is `total_step`.
 
     Examples:
+        >>> import mindspore.nn as nn
+        >>>
         >>> learning_rate = 0.1
         >>> decay_rate = 0.9
         >>> total_step = 6
         >>> step_per_epoch = 2
         >>> decay_epoch = 1
-        >>> output = exponential_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch)
+        >>> output = nn.exponential_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch)
         >>> print(output)
         [0.1, 0.1, 0.09000000000000001, 0.09000000000000001, 0.08100000000000002, 0.08100000000000002]
     """
@@ -145,12 +149,14 @@ def natural_exp_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, 
         list[float]. The size of list is `total_step`.
 
     Examples:
+        >>> import mindspore.nn as nn
+        >>>
         >>> learning_rate = 0.1
         >>> decay_rate = 0.9
         >>> total_step = 6
         >>> step_per_epoch = 2
         >>> decay_epoch = 2
-        >>> output = natural_exp_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch, True)
+        >>> output = nn.natural_exp_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch, True)
         >>> print(output)
         [0.1, 0.1, 0.1, 0.1, 0.016529888822158657, 0.016529888822158657]
     """
@@ -189,12 +195,14 @@ def inverse_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, deca
         list[float]. The size of list is `total_step`.
 
     Examples:
+        >>> import mindspore.nn as nn
+        >>>
         >>> learning_rate = 0.1
         >>> decay_rate = 0.5
         >>> total_step = 6
         >>> step_per_epoch = 1
         >>> decay_epoch = 1
-        >>> output = inverse_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch, True)
+        >>> output = nn.inverse_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch, True)
         >>> print(output)
         [0.1, 0.06666666666666667, 0.05, 0.04, 0.03333333333333333, 0.028571428571428574]
     """
@@ -232,12 +240,14 @@ def cosine_decay_lr(min_lr, max_lr, total_step, step_per_epoch, decay_epoch):
         list[float]. The size of list is `total_step`.
 
     Examples:
+        >>> import mindspore.nn as nn
+        >>>
         >>> min_lr = 0.01
         >>> max_lr = 0.1
         >>> total_step = 6
         >>> step_per_epoch = 2
         >>> decay_epoch = 2
-        >>> output = cosine_decay_lr(min_lr, max_lr, total_step, step_per_epoch, decay_epoch)
+        >>> output = nn.cosine_decay_lr(min_lr, max_lr, total_step, step_per_epoch, decay_epoch)
         >>> print(output)
         [0.1, 0.1, 0.05500000000000001, 0.05500000000000001, 0.01, 0.01]
     """
@@ -301,13 +311,15 @@ def polynomial_decay_lr(learning_rate, end_learning_rate, total_step, step_per_e
         list[float]. The size of list is `total_step`.
 
     Examples:
+        >>> import mindspore.nn as nn
+        >>>
         >>> learning_rate = 0.1
         >>> end_learning_rate = 0.01
         >>> total_step = 6
         >>> step_per_epoch = 2
         >>> decay_epoch = 2
         >>> power = 0.5
-        >>> r = polynomial_decay_lr(learning_rate, end_learning_rate, total_step, step_per_epoch, decay_epoch, power)
+        >>> r = nn.polynomial_decay_lr(learning_rate, end_learning_rate, total_step, step_per_epoch, decay_epoch, power)
         >>> print(r)
         [0.1, 0.1, 0.07363961030678928, 0.07363961030678928, 0.01, 0.01]
     """
@@ -359,11 +371,13 @@ def warmup_lr(learning_rate, total_step, step_per_epoch, warmup_epoch):
         list[float]. The size of list is `total_step`.
 
     Examples:
+        >>> import mindspore.nn as nn
+        >>>
         >>> learning_rate = 0.1
         >>> total_step = 6
         >>> step_per_epoch = 2
         >>> warmup_epoch = 2
-        >>> output = warmup_lr(learning_rate, total_step, step_per_epoch, warmup_epoch)
+        >>> output = nn.warmup_lr(learning_rate, total_step, step_per_epoch, warmup_epoch)
         >>> print(output)
         [0.0, 0.0, 0.05, 0.05, 0.1, 0.1]
     """

@@ -95,10 +95,13 @@ class ExponentialDecayLR(LearningRateSchedule):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>>
         >>> learning_rate = 0.1
         >>> decay_rate = 0.9
         >>> decay_steps = 4
-        >>> global_step = Tensor(2, mstype.int32)
+        >>> global_step = Tensor(2, mindspore.int32)
         >>> exponential_decay_lr = nn.ExponentialDecayLR(learning_rate, decay_rate, decay_steps)
         >>> result = exponential_decay_lr(global_step)
         >>> print(result)
@@ -162,10 +165,13 @@ class NaturalExpDecayLR(LearningRateSchedule):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>>
         >>> learning_rate = 0.1
         >>> decay_rate = 0.9
         >>> decay_steps = 4
-        >>> global_step = Tensor(2, mstype.int32)
+        >>> global_step = Tensor(2, mindspore.int32)
         >>> natural_exp_decay_lr = nn.NaturalExpDecayLR(learning_rate, decay_rate, decay_steps, True)
         >>> result = natural_exp_decay_lr(global_step)
         >>> print(result)
@@ -230,10 +236,13 @@ class InverseDecayLR(LearningRateSchedule):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>>
         >>> learning_rate = 0.1
         >>> decay_rate = 0.9
         >>> decay_steps = 4
-        >>> global_step = Tensor(2, mstype.int32)
+        >>> global_step = Tensor(2, mindspore.int32)
         >>> inverse_decay_lr = nn.InverseDecayLR(learning_rate, decay_rate, decay_steps, True)
         >>> result = inverse_decay_lr(global_step)
         >>> print(result)
@@ -287,10 +296,13 @@ class CosineDecayLR(LearningRateSchedule):
         ``Ascend`` ``GPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>>
         >>> min_lr = 0.01
         >>> max_lr = 0.1
         >>> decay_steps = 4
-        >>> global_steps = Tensor(2, mstype.int32)
+        >>> global_steps = Tensor(2, mindspore.int32)
         >>> cosine_decay_lr = nn.CosineDecayLR(min_lr, max_lr, decay_steps)
         >>> result = cosine_decay_lr(global_steps)
         >>> print(result)
@@ -365,11 +377,14 @@ class PolynomialDecayLR(LearningRateSchedule):
         ``Ascend`` ``GPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>>
         >>> learning_rate = 0.1
         >>> end_learning_rate = 0.01
         >>> decay_steps = 4
         >>> power = 0.5
-        >>> global_step = Tensor(2, mstype.int32)
+        >>> global_step = Tensor(2, mindspore.int32)
         >>> polynomial_decay_lr = nn.PolynomialDecayLR(learning_rate, end_learning_rate, decay_steps, power)
         >>> result = polynomial_decay_lr(global_step)
         >>> print(result)
@@ -447,9 +462,12 @@ class WarmUpLR(LearningRateSchedule):
         ``Ascend`` ``GPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>>
         >>> learning_rate = 0.1
         >>> warmup_steps = 2
-        >>> global_step = Tensor(2, mstype.int32)
+        >>> global_step = Tensor(2, mindspore.int32)
         >>> warmup_lr = nn.WarmUpLR(learning_rate, warmup_steps)
         >>> result = warmup_lr(global_step)
         >>> print(result)

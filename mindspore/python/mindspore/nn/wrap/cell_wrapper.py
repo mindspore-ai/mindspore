@@ -222,13 +222,13 @@ class ForwardValueAndGrad(Cell):
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore import Tensor, nn, common
-        >>> from mindspore.ops import operations as P
+        >>> from mindspore import Tensor, nn, common, ops, ParameterTuple, Parameter
+        >>>
         >>> class Net(nn.Cell):
         ...    def __init__(self):
         ...        super(Net, self).__init__()
         ...        self.weight = Parameter(Tensor(np.ones([2, 2]).astype(np.float32)), name="weight")
-        ...        self.matmul = P.MatMul()
+        ...        self.matmul = ops.MatMul()
         ...
         ...    def construct(self, x):
         ...        out = self.matmul(x, self.weight)
@@ -386,6 +386,9 @@ class GetNextSingleOp(Cell):
         ``Ascend`` ``GPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import ops, nn
+        >>>
         >>> train_dataset = create_custom_dataset()
         >>> dataset_helper = mindspore.DatasetHelper(train_dataset, dataset_sink_mode=True)
         >>> dataset = dataset_helper.iter.dataset
@@ -393,7 +396,7 @@ class GetNextSingleOp(Cell):
         >>> queue_name = dataset.__transfer_dataset__.queue_name
         >>> get_next_single_op_net = nn.GetNextSingleOp(dataset_types, dataset_shapes, queue_name)
         >>> data, label = get_next_single_op_net()
-        >>> relu = P.ReLU()
+        >>> relu = ops.ReLU()
         >>> result = relu(data).asnumpy()
         >>> print(result.shape)
         (32, 1, 32, 32)
