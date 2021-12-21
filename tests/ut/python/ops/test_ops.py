@@ -1784,6 +1784,20 @@ test_case_math_ops = [
         'desc_inputs': (Tensor(np.array([0, 1, 2]).astype(np.int32)),
                         Tensor(np.array([[0.5, 1.0, 1.5], [1.0, 1.5, 2.0], [2.0, 2.5, 3.0]]).astype(np.float32))),
         'desc_bprop': [Tensor(np.array([[1, 1, 1], [1, 1, 1], [1, 1, 1]]).astype(np.float32))]}),
+    ('Addcdiv', {
+        'block': P.Addcdiv(),
+        'desc_inputs': [Tensor(np.array([1, 1, 1, 1]).astype(np.float32)),
+                        Tensor(np.array([1, 2, 3, 4]).astype(np.float32)),
+                        Tensor(np.array([4, 3, 2, 1]).astype(np.float32)),
+                        Tensor(np.array(1).astype(np.float32))],
+        'desc_bprop': [Tensor(np.array([1, 1, 1, 1]).astype(np.float32))]}),
+    ('Addcmul', {
+        'block': P.Addcmul(),
+        'desc_inputs': [Tensor(np.array([1, 1, 1]).astype(np.float32)),
+                        Tensor(np.array([[1], [2], [3]]).astype(np.float32)),
+                        Tensor(np.array([[1, 2, 3]]).astype(np.float32)),
+                        Tensor(np.array(1).astype(np.float32))],
+        'desc_bprop': [Tensor(np.array([[2, 3, 4], [3, 5, 7], [4, 7, 10]]).astype(np.float32))]}),
     ('Real', {
         'block': P.Real(),
         'desc_inputs': [[2, 2]],

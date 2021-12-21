@@ -81,6 +81,37 @@ def get_bprop_index_lerp(self):
     return bprop
 
 
+@bprop_getters.register(P.Addcdiv)
+def get_bprop_index_addcdiv(self):
+    """Generate bprop for Addcdiv"""
+    mul_op = P.Mul()
+    div_op = P.Div()
+    pow_op = P.Pow()
+    neg_op = P.Neg()
+
+    def bprop(input_data, x1, x2, value, out, dout):
+        dx1 = mul_op(dout, div_op(value, x2))
+        dx2 = neg_op(mul_op(mul_op(mul_op(x1, value), pow_op(x2, -2)), dout))
+        dvalue = mul_op(dout, div_op(x1, x2))
+        return dout, dx1, dx2, dvalue
+
+    return bprop
+
+
+@bprop_getters.register(P.Addcmul)
+def get_bprop_index_addcmul(self):
+    """Generate bprop for Addcmul"""
+    mul_op = P.Mul()
+
+    def bprop(input_data, x1, x2, value, out, dout):
+        dx1 = mul_op(dout, mul_op(value, x2))
+        dx2 = mul_op(dout, mul_op(value, x1))
+        dvalue = mul_op(dout, mul_op(x1, x2))
+        return dout, dx1, dx2, dvalue
+
+    return bprop
+
+
 @bprop_getters.register(P.LpNorm)
 def get_bprop_lp_norm(self):
     """Grad definition for `LpNorm` operation."""
