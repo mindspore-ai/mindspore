@@ -699,15 +699,15 @@ class LSTM(_RNNBase):
         has_bias (bool): Whether the cell has bias `b_ih` and `b_hh`. Default: True.
         batch_first (bool): Specifies whether the first dimension of input `x` is batch_size. Default: False.
         dropout (float, int): If not 0, append `Dropout` layer on the outputs of each
-            LSTM layer except the last layer. Default 0. The range of dropout is [0.0, 1.0].
+            LSTM layer except the last layer. Default 0. The range of dropout is [0.0, 1.0).
         bidirectional (bool): Specifies whether it is a bidirectional LSTM,
             num_directions=2 if bidirectional=True otherwise 1. Default: False.
 
     Inputs:
-        - **x** (Tensor) - Tensor of shape (seq_len, batch_size, `input_size`) or
-          (batch_size, seq_len, `input_size`).
-        - **hx** (tuple) - A tuple of two Tensors (h_0, c_0) both of data type mindspore.float32 or
-          mindspore.float16 and shape (num_directions * `num_layers`, batch_size, `hidden_size`).
+        - **x** (Tensor) - (Tensor) - Tensor of data type mindspore.float32 and
+          shape (seq_len, batch_size, `input_size`) or (batch_size, seq_len, `input_size`).
+        - **hx** (tuple) - A tuple of two Tensors (h_0, c_0) both of data type mindspore.float32
+          and shape (num_directions * `num_layers`, batch_size, `hidden_size`).
           Data type of `hx` must be the same as `x`.
         - **seq_length** (Tensor) - The length of each sequence in a input batch.
           Tensor of shape :math:`(\text{batch_size})`. Default: None.
