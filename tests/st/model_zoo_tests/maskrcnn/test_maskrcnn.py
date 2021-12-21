@@ -40,7 +40,7 @@ def test_maskrcnn_export():
     # ckpt_path = os.path.join(utils.ckpt_root, "bgcf/bgcf_trained.ckpt")
     exec_export_shell = "cd {}; python export.py --config_path default_config.yaml".format(model_name)
     os.system(exec_export_shell)
-    assert os.path.exists(os.path.join(cur_model_path, "{}.air".format(model_name)))
+    assert os.path.exists(os.path.join(cur_model_path, "{}.mindir".format(model_name)))
 
 if __name__ == '__main__':
     test_maskrcnn_export()
