@@ -75,11 +75,6 @@ bool IsCharEndWith(const char *src, const char *end) {
 
 // do not call RealPath function in OpenFile, because OpenFile may open a non-exist file
 std::fstream *OpenFile(const std::string &file_path, std::ios_base::openmode open_mode) {
-#ifndef _MSC_VER
-  if (access(file_path.c_str(), F_OK) == 0) {
-    chmod(file_path.c_str(), S_IWUSR | S_IRUSR);
-  }
-#endif
   auto fs = new (std::nothrow) std::fstream();
   if (fs == nullptr) {
     MS_LOG(DEBUG) << "Create file stream failed";
@@ -155,7 +150,7 @@ char *ReadFileSegment(const std::string &file, int64_t offset, int64_t len) {
 
 char *ReadFile(const char *file, size_t *size) {
   if (file == nullptr) {
-    MS_LOG(ERROR) << "file is nullptr";
+    MS_LOG(ERROR) << "File path is nullptr";
     return nullptr;
   }
   MS_ASSERT(size != nullptr);
@@ -164,8 +159,19 @@ char *ReadFile(const char *file, size_t *size) {
     MS_LOG(DEBUG) << "File path not regular: " << file;
     return nullptr;
   }
+#ifndef _MSC_VER
+  if (access(real_path.c_str(), F_OK) != 0) {
+    MS_LOG(ERROR) << "File is not exist: " << real_path;
+    return nullptr;
+  }
+  if (access(real_path.c_str(), R_OK) != 0) {
+    MS_LOG(ERROR) << "File " << real_path << " can't be read. Please change the file permission.";
+    return nullptr;
+  }
+#endif
   auto ifs = OpenFile(real_path, std::ifstream::in | std::ifstream::binary);
   if (ifs == nullptr) {
+    MS_LOG(ERROR) << "Open file failed.";
     return nullptr;
   }
 
