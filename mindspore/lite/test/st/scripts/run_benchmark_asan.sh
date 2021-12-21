@@ -57,7 +57,7 @@ while getopts "r:m:e:" opt; do
     esac
 done
 
-x86_path=${release_path}/ubuntu_x86/asan
+x86_path=${release_path}/centos_x86/asan
 file_name=$(ls ${x86_path}/*-linux-x64.tar.gz)
 IFS="-" read -r -a file_name_array <<< "$file_name"
 version=${file_name_array[2]}

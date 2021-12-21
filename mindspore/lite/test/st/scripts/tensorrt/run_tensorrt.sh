@@ -83,7 +83,7 @@ rm -rf ${basepath}
 mkdir -p ${basepath}
 echo "NVIDIA TensorRT, bashpath is ${basepath}"
 
-x86_path=${release_path}/ubuntu_x86
+x86_path=${release_path}/centos_x86
 file_name=$(ls ${x86_path}/*-linux-x64.tar.gz)
 IFS="-" read -r -a file_name_array <<< "$file_name"
 version=${file_name_array[2]}

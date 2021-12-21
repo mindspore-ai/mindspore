@@ -567,7 +567,7 @@ file_name="${file##*/}"
 IFS="-" read -r -a file_name_array <<< "$file_name"
 version_arm32=${file_name_array[2]}
 
-x86_path=${release_path}/ubuntu_x86
+x86_path=${release_path}/centos_x86
 file=$(ls ${x86_path}/*linux-x64.tar.gz)
 file_name="${file##*/}"
 IFS="-" read -r -a file_name_array <<< "$file_name"

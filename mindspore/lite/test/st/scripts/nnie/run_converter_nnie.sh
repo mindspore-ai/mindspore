@@ -117,7 +117,7 @@ function Print_Converter_Result() {
     MS_PRINT_TESTCASE_END_MSG
 }
 
-x86_path=${release_path}/ubuntu_x86
+x86_path=${release_path}/centos_x86
 arm32_path=${release_path}/linux_aarch32
 
 file_name=$(ls ${x86_path}/*linux-x64.tar.gz)

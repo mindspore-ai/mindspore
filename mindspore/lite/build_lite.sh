@@ -188,6 +188,7 @@ build_lite() {
     fi
 
     machine=`uname -m`
+    echo "machine:${machine}."
     if [[ "${local_lite_platform}" == "arm32" ]]; then
       LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DPLATFORM_ARM32=on -DENABLE_NEON=on"
       if [ "$(uname)" == "Darwin" ]; then
