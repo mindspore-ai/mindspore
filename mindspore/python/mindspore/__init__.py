@@ -22,7 +22,9 @@ from .mindrecord import *
 from .ops import _op_impl
 from .train import *
 from .log import *
-from .context import *
+from .context import GRAPH_MODE, PYNATIVE_MODE, set_context, get_context, set_auto_parallel_context, \
+                     get_auto_parallel_context, reset_auto_parallel_context, ParallelMode, set_ps_context, \
+                     get_ps_context, reset_ps_context, set_fl_context, get_fl_context
 from .version import __version__
 
 
