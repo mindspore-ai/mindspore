@@ -304,7 +304,7 @@ bool AscendKernelRuntime::Init() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   auto execution_mode = ms_context->get_param<int>(MS_CTX_EXECUTION_MODE);
-
+#ifndef ENABLE_SECURITY
   auto profiler_manager = profiler::ProfilerManager::GetInstance();
   MS_EXCEPTION_IF_NULL(profiler_manager);
   auto profiling_flag = profiler_manager->GetProfilingEnableFlag();
@@ -312,6 +312,7 @@ bool AscendKernelRuntime::Init() {
   if (execution_mode == kPynativeMode && profiling_flag) {
     pynative_mode_profiling_flag_ = true;
   }
+#endif
   if (initialized_) {
     SetCurrentContext();
     return true;
@@ -1171,6 +1172,7 @@ bool AscendKernelRuntime::CheckGraphIdValid(GraphId graph_id) const {
 }
 
 void AscendKernelRuntime::KernelLaunchProfiling(const std::string &kernel_name) {
+#ifndef ENABLE_SECURITY
   auto profiler_manager = profiler::ProfilerManager::GetInstance();
   MS_EXCEPTION_IF_NULL(profiler_manager);
   if (!profiler_manager->GetProfilingEnableFlag()) {
@@ -1193,6 +1195,7 @@ void AscendKernelRuntime::KernelLaunchProfiling(const std::string &kernel_name) 
   if (stream_id_task_id_op_name_map_.size() > kProfilingMaxTaskIdInStream) {
     MS_LOG(EXCEPTION) << "Too many profiling data";
   }
+#endif
 }
 
 std::shared_ptr<DeviceEvent> AscendKernelRuntime::CreateDeviceEvent() {

@@ -26,6 +26,7 @@ constexpr int kHostTimePointCoutWidth = 35;
 constexpr int kHostTimeCoutWidth = 30;
 
 void PynativeProfiler::SetEnableProfilingFlag() {
+#ifndef ENABLE_SECURITY
   static bool flag = false;
   if (flag) {
     return;
@@ -34,6 +35,7 @@ void PynativeProfiler::SetEnableProfilingFlag() {
   MS_EXCEPTION_IF_NULL(profiler_manager);
   enable_profiler_flag_ = profiler_manager->GetProfilingEnableFlag();
   flag = true;
+#endif
 }
 
 void PynativeProfiler::Reset() {
