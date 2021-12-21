@@ -545,8 +545,7 @@ AnfNodePtr GetPreNode(const AnfNodePtr &node) {
       continue;
     }
     (void)node_queue.erase(node_queue.begin());
-    auto prim = GetCNodePrimitive(cur_node);
-    if (!IsInEndNodeBlackList(cur_node) && cur_node->HasPrimalAttr(NEED_GRAD) && !prim->HasAttr("realdiv_flag")) {
+    if (!IsInEndNodeBlackList(cur_node) && cur_node->HasPrimalAttr(NEED_GRAD)) {
       MS_LOG(INFO) << "Pipeline End node: " << cur_node->DebugString();
       return cur_node;
     }
