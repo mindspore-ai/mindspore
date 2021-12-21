@@ -365,9 +365,8 @@ void PsCacheManager::ProcessDataTask(uint32_t device_id, const void *context) {
 }
 
 void PsCacheManager::Finalize() {
-  if (running_) {
-    SyncEmbeddingTable();
-  }
+  SyncEmbeddingTable();
+
   running_ = false;
   PsDataPrefetch::GetInstance().NotifyFinalize();
   insert_init_info_.notify_all();
@@ -933,6 +932,11 @@ bool PsCacheManager::HashSwapServerToHost(size_t key, const HashTableInfo &hash_
 }
 
 void PsCacheManager::SyncEmbeddingTable() {
+  // Do not synchronize in case of abnormally finalizing.
+  if (!running_) {
+    return;
+  }
+
   if (finish_embedding_table_sync_) {
     return;
   }
