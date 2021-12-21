@@ -950,7 +950,7 @@ class Unfold(Cell):
         ValueError: If the second and third element of `ksizes`, `strides` or `rates` is less than 1.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> net = Unfold(ksizes=[1, 2, 2, 1], strides=[1, 2, 2, 1], rates=[1, 2, 2, 1])

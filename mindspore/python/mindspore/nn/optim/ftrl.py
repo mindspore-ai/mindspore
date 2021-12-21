@@ -167,7 +167,7 @@ class FTRL(Optimizer):
         ValueError: If `initial_accum`, `l1` or `l2` is less than 0.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> net = Net()
