@@ -196,6 +196,7 @@ def test_gatherv2_forward_all_reduce():
     """
     strategy1 = ((8, 1), (1, 1))
     strategy2 = ((2, 4, 1), (2, 4, 1))
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
     net = GradWrap(NetWithLoss(Net(0, strategy1, strategy2, shape=[2, 64])))
     x = Tensor(np.ones([64, 64]), dtype=ms.float32)
     y = Tensor(np.ones([2, 64, 64]), dtype=ms.float32)
@@ -210,6 +211,7 @@ def test_gatherv2_shard_batch_and_axis():
     """
     strategy1 = ((4, 1), (2, 1))
     strategy2 = ((2, 4, 1), (2, 4, 1))
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
     net = GradWrap(NetWithLoss(Net(0, strategy1, strategy2, shape=[2, 64])))
     x = Tensor(np.ones([64, 64]), dtype=ms.float32)
     y = Tensor(np.ones([2, 64, 64]), dtype=ms.float32)
@@ -224,6 +226,7 @@ def test_gatherv2_split_axis_0_repeat_calc():
     """
     strategy1 = ((4, 1), (1, 1))
     strategy2 = ((2, 4, 1), (2, 4, 1))
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
     net = GradWrap(NetWithLoss(Net(0, strategy1, strategy2, shape=[2, 64])))
     x = Tensor(np.ones([64, 64]), dtype=ms.float32)
     y = Tensor(np.ones([2, 64, 64]), dtype=ms.float32)
@@ -350,7 +353,7 @@ def test_gatherv2_target_cpu_reducescatter():
     Description: axis is 0, split axis and batch, out strategy use reducescatter.
     Expectation: compile done without error.
     """
-    strategy1 = ((4, 1), (2, 1))
+    strategy1 = ((8, 1), (1, 1))
     out_strategy = ((8, 1, 1),)
     strategy2 = ((2, 4, 1), (2, 4, 1))
     net = GradWrap(NetWithLoss(Net(0, strategy1, strategy2, target="CPU", gather_out_strategy=out_strategy)))

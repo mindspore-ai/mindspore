@@ -251,6 +251,7 @@ def test_pack_auto_parallel_axis1():
 
 
 def test_pack_auto_parallel_3_tensor():
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
     context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0)
     net = Net2(_w1, _w2, _w3)
     compile_net2(net)

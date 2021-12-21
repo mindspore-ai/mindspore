@@ -17,12 +17,11 @@ from .. import nn
 from .._checkparam import Validator as validator
 from .._checkparam import Rel
 from ..common import dtype as mstype
-from ..nn.wrap.cell_wrapper import _VirtualDatasetCell, _TrainPipelineAccuStepCell
+from ..nn.wrap.cell_wrapper import _TrainPipelineAccuStepCell
 from ..nn.wrap.loss_scale import _TrainPipelineWithLossScaleCell
 from ..ops import functional as F
-from ..parallel._utils import _get_parallel_mode, _get_pipeline_stages
+from ..parallel._utils import _get_pipeline_stages
 from .loss_scale_manager import DynamicLossScaleManager, LossScaleManager
-from ..context import ParallelMode
 from .. import boost
 from .. import context
 
@@ -197,9 +196,6 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_leve
 
     if loss_fn:
         network = _add_loss_network(network, loss_fn, config["cast_model_type"])
-
-    if _get_parallel_mode() in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):
-        network = _VirtualDatasetCell(network)
 
     loss_scale = 1.0
     if config["loss_scale_manager"] is not None:

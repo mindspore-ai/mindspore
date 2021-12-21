@@ -124,9 +124,9 @@ def test_grad_sens_parameter_type():
     net.set_auto_parallel()
     net.set_train()
     _cell_graph_executor.compile(net, x, y, b, sens, phase='train', auto_parallel_mode=True)
-    x_layout = ([8, 8], [1, -1], [16, 32], 0, True, '')
-    y_layout = ([8, 8], [-1, 0], [32, 8], 0, True, '')
-    b_layout = ([8, 8], [0, -1], [8, 64], 0, True, '')
+    x_layout = ([64], [0, -1], [2, 32], 0, True, '')
+    y_layout = ([64], [-1, -1], [32, 64], 0, True, '')
+    b_layout = ([64], [0, -1], [1, 64], 0, True, '')
     sens_layout = ([8, 8], [1, -1], [16, 64], 0, True, '')
     expect_dict = {'x': x_layout, 'y': y_layout, 'b': b_layout, 'sens': sens_layout}
     assert net.parameter_layout_dict == expect_dict
