@@ -20,6 +20,8 @@
 #include <memory>
 #include <vector>
 #include <unordered_map>
+#include <set>
+#include <utility>
 #include "src/runtime/inner_allocator.h"
 #include "src/lite_kernel.h"
 #include "src/lite_mindrt.h"
@@ -47,10 +49,14 @@ class MindrtExecutor : public Executor {
  private:
   void TransferGraphOutput();
   void FreeOutputTensor();
+  std::unordered_map<void *, std::set<std::pair<AID, size_t>>> BuildReceiverMap();
 
  protected:
-  int PrepareInputData(const std::vector<kernel::LiteKernel *> &kernels, const std::vector<Tensor *> &inputs);
-  int PrepareOutputData(const std::vector<kernel::LiteKernel *> &kernels, const std::vector<Tensor *> &outputs);
+  int PrepareGraphInput(const std::vector<kernel::LiteKernel *> &kernels, const std::vector<Tensor *> &inputs);
+  int PrepareGraphOutput(const std::vector<kernel::LiteKernel *> &kernels, const std::vector<Tensor *> &outputs);
+  int IsolateActorsInput();
+  int LinkActors();
+  int PrepareActorsOutput();
   std::vector<std::shared_ptr<LiteOpActor>> op_actors_;
   std::vector<OpDataPtr<Tensor>> input_data_;
   std::vector<OpDataPtr<Tensor>> output_data_;

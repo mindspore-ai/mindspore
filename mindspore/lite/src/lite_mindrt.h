@@ -20,6 +20,8 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <set>
+#include <utility>
 #include "actor/op_actor.h"
 #include "src/lite_kernel.h"
 #include "actor/actor.h"
@@ -49,7 +51,7 @@ class LiteOpActor : public OpActor<lite::Tensor> {
     delete partial_node_;
   }
   void RunOpData(OpData<lite::Tensor> *input_data, OpContext<lite::Tensor> *context = nullptr) override;
-  virtual int CompileArrow();
+  virtual int CompileArrow(const std::unordered_map<void *, std::set<std::pair<AID, size_t>>> &receivers_map);
   int RunKernel(const KernelCallBack &before, const KernelCallBack &after) {
     auto ret = kernel_->Execute(before, after);
     if (RET_OK != ret) {
@@ -58,36 +60,34 @@ class LiteOpActor : public OpActor<lite::Tensor> {
     }
     return ret;
   }
-  int LiteActorInit(std::vector<std::shared_ptr<LiteOpActor>> *actors,
-                    std::unordered_map<Tensor *, Tensor *> *input_map);
+  int IsolateInputData(std::vector<std::shared_ptr<LiteOpActor>> *actors,
+                       std::unordered_map<Tensor *, Tensor *> *input_map);
   int ResizeGraphInput(const std::vector<mindspore::tensor::MSTensor *> &inputs,
                        const std::vector<std::vector<int>> &dims);
 
  public:
   void AddResultIndex(size_t index);
-  void SetSubgraphAIDMap(const std::unordered_map<kernel::LiteKernel *, AID> &partial_map) {
-    subgraph_to_actor_ = partial_map;
-  }
+  virtual int PrepareOutputData();
+  const kernel::LiteKernel *const GetKernel() { return kernel_; }
 
  protected:
   void SetInputShape();
   int InitInputData();
   void SetOutputData(OpContext<Tensor> *context);
   void AsyncOutput(OpContext<Tensor> *context);
-  int CompileArrowThroughPartialCall();
-  int CompileArrowThroughOutputKernels();
-  virtual int PrepareOutputData();
+  virtual int UpdateActorOutput();
+  int CompileArrowThroughOutputTensors(
+    const std::unordered_map<void *, std::set<std::pair<AID, size_t>>> &receivers_map);
+  std::set<void *> PartialSubgraphInputTensors(kernel::LiteKernel *partial_node);
 
   kernel::LiteKernel *kernel_;
   std::vector<size_t> results_index_{};
-  std::unordered_map<kernel::LiteKernel *, AID> subgraph_to_actor_{};
   std::vector<OpDataPtr<Tensor>> outputs_data_{};
   std::vector<Tensor *> inputs_data_{};
   std::unordered_map<Tensor *, Tensor *> *isolate_input_map_ = nullptr; /* real obj in session */
   lite::InnerContext *ctx_ = nullptr;
 
  private:
-  int IsolateInputData(std::vector<std::shared_ptr<LiteOpActor>> *actors);
   void MoveTensorInputData(Tensor *dst_tensor, Tensor *src_tensor);
   void MoveInputData(Tensor *dst_tensor, Tensor *src_tensor);
   void SetInputData(Tensor *dst_tensor, Tensor *src_tensor);
@@ -98,6 +98,13 @@ class LiteOpActor : public OpActor<lite::Tensor> {
   void MoveTensorListInputData(TensorList *dst_tensor, TensorList *src_tensor);
   int CastTensorListInputData(TensorList *dst_tensor, TensorList *src_tensor);
 #endif
+  int CreateCommonArrow(const std::unordered_map<void *, std::set<std::pair<AID, size_t>>> &receivers_map,
+                        const std::set<void *> &subgraph_inputs_set, const std::set<void *> &receiver_tensors,
+                        const size_t &output_index, std::unordered_map<AID, std::set<size_t>> *receiver_index_set);
+  bool ArrowHasCompiled(const AID &actor_name, const size_t &to_index,
+                        const std::unordered_map<AID, std::set<size_t>> &receiver_index_set);
+  void MarkArrowAsCompiled(const AID *actor_name, const size_t *to_index,
+                           std::unordered_map<AID, std::set<size_t>> *receiver_index_set);
 
  private:
   kernel::LiteKernel *partial_node_ = nullptr;
@@ -107,48 +114,10 @@ class LiteOpActor : public OpActor<lite::Tensor> {
 #endif
 };
 
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
-class LiteSwitchOpActor : public LiteOpActor {
- public:
-  explicit LiteSwitchOpActor(kernel::LiteKernel *kernel, lite::InnerContext *ctx) : LiteOpActor(kernel, ctx) {}
-  ~LiteSwitchOpActor() override {
-    delete call_node_;
-    delete switch_type_node_;
-    for (auto &partial_node : partial_nodes_) {
-      delete partial_node;
-    }
-  };
-  void RunOpData(OpData<Tensor> *inputs, OpContext<Tensor> *context = nullptr) override;
-  int CompileArrow() override;
-  int PrepareOutputData() override;
-
- private:
-  void AsyncBranchOutput(const size_t &index, OpContext<Tensor> *context);
-  void DecreaseOtherBranchInputTensor(const size_t &index);
-  int GetSwitchAndCallNode(kernel::SubGraphKernel *subgraph_kernel);
-  void AppendOutputTensors();
-  int CompileBranchArrow();
-  int CompileArrowThroughSwitchCall();
-  int SetSwitchPartialNodes();
-  int SetSwitchLayerPartialNodes();
-
-  // each element is a set of data arrow sent to the next target actor.
-  std::vector<std::vector<DataArrowPtr>> all_branch_output_data_arrows_;
-
-  std::vector<kernel::LiteKernel *> partial_nodes_{};
-  kernel::LiteKernel *switch_type_node_ = nullptr;
-  kernel::LiteKernel *call_node_ = nullptr;
-  std::vector<lite::Tensor *> output_tensors_{};
-
-  // each element is a set of output data which is going to be send to the next target actor.
-  std::vector<std::vector<OpDataPtr<Tensor>>> all_branchs_output_data_;
-};
-#endif
-
 int MindrtInit();
 void MindrtTerminate(const std::vector<std::shared_ptr<LiteOpActor>> &);
-
 static std::atomic_int64_t actor_count = 0;
+
 std::vector<std::shared_ptr<LiteOpActor>> CreateOpActor(const std::vector<kernel::LiteKernel *> &kernels,
                                                         lite::InnerContext *ctx);
 }  // namespace mindspore::lite

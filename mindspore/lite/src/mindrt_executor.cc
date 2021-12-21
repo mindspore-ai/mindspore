@@ -25,8 +25,8 @@
 #include "src/lite_kernel_util.h"
 
 namespace mindspore::lite {
-int MindrtExecutor::PrepareInputData(const std::vector<kernel::LiteKernel *> &kernels,
-                                     const std::vector<Tensor *> &inputs) {
+int MindrtExecutor::PrepareGraphInput(const std::vector<kernel::LiteKernel *> &kernels,
+                                      const std::vector<Tensor *> &inputs) {
   for (size_t j = 0; j < kernels.size(); ++j) {
     auto in_tensor_size = kernels[j]->in_tensors().size();
     for (size_t k = 0; k < in_tensor_size; ++k) {
@@ -50,8 +50,8 @@ int MindrtExecutor::PrepareInputData(const std::vector<kernel::LiteKernel *> &ke
   return RET_OK;
 }
 
-int MindrtExecutor::PrepareOutputData(const std::vector<kernel::LiteKernel *> &kernels,
-                                      const std::vector<Tensor *> &outputs) {
+int MindrtExecutor::PrepareGraphOutput(const std::vector<kernel::LiteKernel *> &kernels,
+                                       const std::vector<Tensor *> &outputs) {
   for (size_t i = 0; i < outputs.size(); ++i) {
     Tensor *graph_output_tensor = outputs[i];
     if (graph_output_tensor->IsGraphInput()) {
@@ -95,6 +95,59 @@ int MindrtExecutor::Resize(const std::vector<mindspore::tensor::MSTensor *> &inp
   return RET_OK;
 }
 
+int MindrtExecutor::IsolateActorsInput() {
+  for (auto actor : op_actors_) {
+    int ret = actor->IsolateInputData(&op_actors_, isolate_input_map_);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "IsolateInputData failed, actor aid: " << actor->GetAID();
+      return ret;
+    }
+  }
+  return RET_OK;
+}
+
+std::unordered_map<void *, std::set<std::pair<AID, size_t>>> MindrtExecutor::BuildReceiverMap() {
+  std::unordered_map<void *, std::set<std::pair<AID, size_t>>> receivers_map{};
+
+  for (auto op_actor : op_actors_) {
+    auto input_tensors = op_actor->GetKernel()->in_tensors();
+    for (size_t i = 0; i < input_tensors.size(); ++i) {
+      auto key = input_tensors[i];
+      auto pair = std::make_pair(op_actor->GetAID(), i);
+      if (receivers_map.find(key) != receivers_map.end()) {
+        receivers_map.at(key).insert(pair);
+      } else {
+        std::set<std::pair<AID, size_t>> tmp_set{pair};
+        receivers_map[input_tensors[i]] = tmp_set;
+      }
+    }
+  }
+  return receivers_map;
+}
+
+int MindrtExecutor::LinkActors() {
+  auto receivers_map = BuildReceiverMap();
+  for (auto op_actor : op_actors_) {
+    auto ret = op_actor->CompileArrow(receivers_map);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "actor: " << op_actor->GetAID() << " compile arrow failed.";
+      return ret;
+    }
+  }
+  return RET_OK;
+}
+
+int MindrtExecutor::PrepareActorsOutput() {
+  for (auto actor : op_actors_) {
+    auto ret = actor->PrepareOutputData();
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "PrepareGraphOutput failed, actor aid: " << actor->GetAID();
+      return ret;
+    }
+  }
+  return RET_OK;
+}
+
 int MindrtExecutor::Prepare(const std::vector<kernel::LiteKernel *> &kernels, const std::vector<Tensor *> &inputs,
                             const std::vector<Tensor *> &outputs, lite::InnerContext *ctx) {
   MS_ASSERT(ctx != nullptr);
@@ -110,26 +163,35 @@ int MindrtExecutor::Prepare(const std::vector<kernel::LiteKernel *> &kernels, co
     return RET_ERROR;
   }
 
-  ret = PrepareInputData(kernels, inputs);
+  ret = PrepareGraphInput(kernels, inputs);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "PrepareInputData failed";
+    MS_LOG(ERROR) << "PrepareGraphInput failed";
     return ret;
   }
 
-  ret = PrepareOutputData(kernels, outputs);
+  ret = PrepareGraphOutput(kernels, outputs);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "PrepareOutputData failed";
+    MS_LOG(ERROR) << "PrepareGraphOutput failed";
     return ret;
   }
 
-  for (auto actor : op_actors_) {
-    ret = actor->LiteActorInit(&op_actors_, isolate_input_map_);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "LiteActorInit failed, actor aid: " << actor->GetAID();
-      return ret;
-    }
+  ret = IsolateActorsInput();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "IsolateActorsInput failed";
+    return ret;
   }
 
+  ret = LinkActors();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "LinkActors failed";
+    return ret;
+  }
+
+  ret = PrepareActorsOutput();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "PrepareActorsOutput failed";
+    return ret;
+  }
   return RET_OK;
 }
 
