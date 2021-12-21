@@ -129,6 +129,13 @@ if(MSLITE_ENABLE_CONTROLFLOW)
     set(LITE_SRC ${LITE_SRC} ${CONTROL_FLOW_SRC})
 endif()
 
+if(BUILD_EXPERIMENT)
+    file(GLOB EXPERIMENT_SRC
+            ${CMAKE_CURRENT_SOURCE_DIR}/../experiment/kernel/*.cc
+            )
+    set(LITE_SRC ${LITE_SRC} ${EXPERIMENT_SRC})
+endif()
+
 if(MSLITE_ENABLE_RUNTIME_GLOG)
     add_definitions(-DPRIMITIVE_WRITEABLE)
     add_definitions(-DUSE_GLOG)
