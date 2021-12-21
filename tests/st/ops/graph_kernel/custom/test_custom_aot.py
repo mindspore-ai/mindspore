@@ -44,7 +44,8 @@ def get_file_path_gpu(cuda, so):
 
 def get_file_path_cpu(cc, so):
     dir_path = os.path.dirname(os.path.abspath(__file__))
-    cmd = "g++ --shared -fPIC -o " + dir_path + "/aot_test_files/" + so + " " + dir_path + "/aot_test_files/" + cc
+    cmd = "g++ -std=c++17 --shared -fPIC -o " + dir_path + "/aot_test_files/" + so + " " + dir_path + \
+          "/aot_test_files/" + cc
     func_path = dir_path + "/aot_test_files/" + so
     return cmd, func_path
 
