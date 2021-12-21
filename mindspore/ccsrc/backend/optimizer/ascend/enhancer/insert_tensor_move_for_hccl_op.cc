@@ -59,7 +59,7 @@ bool IsNodeOutPutUsedByOtherRealKernel(const FuncGraphPtr &graph, const AnfNodeP
     auto node = node_pair.first;
     auto idx = node_pair.second;
     MS_EXCEPTION_IF_NULL(node);
-    if (AnfUtils::IsRealKernel(node) && node != cur_node && idx != SizeToInt(input_idx)) {
+    if (AnfUtils::IsRealKernel(node) && (node != cur_node || idx != SizeToInt(input_idx))) {
       MS_LOG(INFO) << "This node only used other real kernel: " << node->fullname_with_scope();
       return true;
     }
