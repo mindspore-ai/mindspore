@@ -305,7 +305,9 @@ if(APPLE)
             ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/dtype/type_id.h
             )
     set(MINDSPORE_LITE_PUB_HDRS_MINDAPI_HDRS
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/mindapi/base/format.h
             ${CMAKE_CURRENT_SOURCE_DIR}/../../core/mindapi/base/type_id.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/mindapi/base/types.h
             )
     add_library(mindspore-lite_static STATIC
             ${LITE_SRC}
