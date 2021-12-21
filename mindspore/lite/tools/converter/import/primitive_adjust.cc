@@ -74,6 +74,7 @@
 #include "ops/tanh.h"
 #include "ops/sparse_softmax_cross_entropy_with_logits.h"
 #include "ops/grad/resize_grad.h"
+#include "ops/random_standard_normal.h"
 #include "tools/converter/parser/parser_utils.h"
 #include "nnacl/op_base.h"
 using mindspore::ops::kNameAdd;
@@ -102,6 +103,7 @@ using mindspore::ops::kNamePartial;
 using mindspore::ops::kNamePartialFusion;
 using mindspore::ops::kNamePow;
 using mindspore::ops::kNamePReLU;
+using mindspore::ops::kNameRandomStandardNormal;
 using mindspore::ops::kNameReduceAll;
 using mindspore::ops::kNameReduceASum;
 using mindspore::ops::kNameReduceMax;
@@ -146,6 +148,7 @@ constexpr auto kNameAvgPoolGradCpu = "AvgPoolGradCpu";
 constexpr auto kNameTanhGrad = "TanhGrad";
 constexpr auto kNameResizeBilinearGrad = "ResizeBilinearGrad";
 constexpr auto kNameResizeNearestNeighborGrad = "ResizeNearestNeighborGrad";
+constexpr auto kNameStandardNormal = "StandardNormal";
 constexpr int kNCHW_H = 2;
 constexpr int kNCHW_W = 3;
 
@@ -657,6 +660,7 @@ REGIST_PRIMITIVE_ADJUST(kNameScale, MoveAttrMapCommon<ops::ScaleFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameSigmoid, MoveAttrMapActivation)
 REGIST_PRIMITIVE_ADJUST(kNameSigmoidGrad, MoveAttrMapActivationGrad)
 REGIST_PRIMITIVE_ADJUST(kNameSlice, MoveAttrSlice)
+REGIST_PRIMITIVE_ADJUST(kNameStandardNormal, MoveAttrMapCommon<ops::RandomStandardNormal>)
 REGIST_PRIMITIVE_ADJUST(kNameSub, MoveAttrMapCommon<ops::SubFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameTanh, MoveAttrMapActivation)
 REGIST_PRIMITIVE_ADJUST(kNameTile, MoveAttrMapCommon<ops::TileFusion>)
