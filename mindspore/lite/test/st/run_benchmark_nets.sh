@@ -115,6 +115,15 @@ if [[ $backend == "all" || $backend == "arm32_3516D" ]]; then
     fi
 fi
 
+if [[ $backend == "all" || $backend == "simulation_sd3403" ]]; then
+    sh $cur_path/scripts/dpico/run_simulation_3403.sh -r $release_path -m $models_path -e $backend
+    simulation_sd3403_status=$?
+    if [[ simulation_sd3403_status -ne 0 ]]; then
+      echo "Run dpico simulation_sd3403 failed."
+      exit 1
+    fi
+fi
+
 if [[ $backend == "all" || $backend == "arm64_cpu_cropping" ]]; then
     sh $cur_path/scripts/run_benchmark_cropping_size.sh -r $release_path -m $models_path -d $device_id -e $backend
     cpu_cropping_status=$?

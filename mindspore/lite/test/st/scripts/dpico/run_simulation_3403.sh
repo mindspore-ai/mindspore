@@ -71,15 +71,18 @@ function Run_Convert_MODELS() {
 # Run converter for DPICO models on x86 platform:
 function Run_Converter() {
     cd ${x86_path} || exit 1
-    tar -zxf mindspore-enterprise-lite-${version}-linux-x64.tar.gz || exit 1
-    cd ${x86_path}/mindspore-enterprise-lite-${version}-linux-x64/ || exit 1
+    tar -zxf mindspore-lite-${version}-linux-x64.tar.gz || exit 1
+    cd ${x86_path}/mindspore-lite-${version}-linux-x64/ || exit 1
 
     #  atc tool
-    cp tools/converter/providers/SD3403/third_party/pico_mapper/bin/atc ./ || exit 1
+    cp ${dpico_atc_path}/pico_mapper/bin/atc ./ || exit 1
     chmod +x atc
 
     cp tools/converter/converter/converter_lite ./ || exit 1
-    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./tools/converter/lib/:./runtime/lib/:./tools/converter/providers/SD3403/third_party/pico_mapper/lib:./tools/converter/providers/SD3403/third_party/protobuf-3.9.0/lib:./tools/converter/providers/SD3403/third_party/opencv-4.2.0/lib
+    ls -l ${dpico_atc_path}/pico_mapper/lib || exit 1
+    ls -l ${dpico_atc_path}/protobuf-3.9.0/lib || exit 1
+    ls -l ${dpico_atc_path}/opencv-4.2.0/lib || exit 1
+    export LD_LIBRARY_PATH=./tools/converter/lib/:./runtime/lib/:${dpico_atc_path}/pico_mapper/lib:${dpico_atc_path}/protobuf-3.9.0/lib:${dpico_atc_path}/opencv-4.2.0/lib:${LD_LIBRARY_PATH}
     chmod +x ./tools/benchmark/benchmark
 
     echo ' ' > ${run_converter_log_file}
@@ -162,7 +165,7 @@ function Run_Func_Sim() {
 # Run benchmark on 3403:
 function Run_Simulation() {
   cd ${om_generated_path} || exit 1
-  wget http://mindspore-repo.csi.rnd.huawei.com/mindspore/enterprise/dpico/func_sim || exit 1
+  cp ${dpico_atc_path}/simulation/func_sim ./ || exit 1
   chmod +x func_sim
 
   Run_Func_Sim  ${models_onnx_3403_config}
@@ -188,7 +191,6 @@ function Run_Simulation() {
 basepath=$(pwd)
 echo ${basepath}
 
-# Example:sh run_dpico_nets.sh r /home/temp_test -m /home/temp_test/models -e arm32_3403D -d 192.168.1.1
 while getopts "r:m:e:" opt; do
     case ${opt} in
         r)
@@ -223,12 +225,22 @@ function Print_Converter_Result() {
     MS_PRINT_TESTCASE_END_MSG
 }
 
+# get sdk path
+if [ "${HISI_SDK_PATH}" ]; then
+    hisi_sdk=${HISI_SDK_PATH}
+else
+    echo "HISI_SDK_PATH env not found"
+    exit 1
+fi
+
+dpico_atc_path=${hisi_sdk}/sd3403_sdk/dpico_atc_adapter
+echo "dpico_atc_path is " ${dpico_atc_path}
 x86_path=${release_path}/ubuntu_x86
 
 # Set version
-file_name=$(ls ${x86_path}/*linux-x64.tar.gz)
+file_name=$(ls ${x86_path}/*-linux-x64.tar.gz)
 IFS="-" read -r -a file_name_array <<< "$file_name"
-version=${file_name_array[3]}
+version=${file_name_array[2]}
 
 # Set filepath
 models_caffe_3403_config=${basepath}/../config/models_caffe_3403_simulation.cfg
@@ -269,14 +281,14 @@ run_simulation_result_file=${basepath}/run_simulation_3403_result.txt
 rm ${run_simulation_result_file}
 echo ' ' > ${run_simulation_result_file}
 
-if [[ $backend == "all" || $backend == "simulation_3403" ]]; then
+if [[ $backend == "all" || $backend == "simulation_sd3403" ]]; then
     # Run funcsim
     Run_Simulation &
     Run_Simulation_PID=$!
     sleep 1
 fi
 
-if [[ $backend == "all" || $backend == "simulation_3403" ]]; then
+if [[ $backend == "all" || $backend == "simulation_sd3403" ]]; then
     wait ${Run_Simulation_PID}
     Run_Simulation_status=$?
     if [[ ${Run_Simulation_status} != 0 ]];then
