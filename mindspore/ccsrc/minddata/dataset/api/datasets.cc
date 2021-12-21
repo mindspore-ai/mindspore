@@ -95,6 +95,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/cityscapes_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/clue_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/coco_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/conll2000_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/csv_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/dbpedia_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/div2k_node.h"
@@ -1030,6 +1031,14 @@ CocoDataset::CocoDataset(const std::vector<char> &dataset_dir, const std::vector
   auto sampler_obj = sampler.get().Parse();
   auto ds = std::make_shared<CocoNode>(CharToString(dataset_dir), CharToString(annotation_file), CharToString(task),
                                        decode, sampler_obj, cache, extra_metadata);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+
+CoNLL2000Dataset::CoNLL2000Dataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                                   int64_t num_samples, ShuffleMode shuffle, int32_t num_shards, int32_t shard_id,
+                                   const std::shared_ptr<DatasetCache> &cache) {
+  auto ds = std::make_shared<CoNLL2000Node>(CharToString(dataset_dir), CharToString(usage), num_samples, shuffle,
+                                            num_shards, shard_id, cache);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
 
