@@ -133,7 +133,9 @@ class LiteSession : public session::LiteSession {
 
   int PrepareKernels(const Model *model);
 
-  static int ReSizeKernels(const std::vector<kernel::LiteKernel *> &kernels);
+  static int ReSizeKernels(
+    const std::vector<kernel::LiteKernel *> &kernels,
+    const std::unordered_map<Tensor *, Tensor *> isolate_input_map = std::unordered_map<Tensor *, Tensor *>());
 
   static void FreePackOpWeight(const std::vector<kernel::LiteKernel *> &kernels);
 
