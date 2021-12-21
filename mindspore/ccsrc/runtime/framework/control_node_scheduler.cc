@@ -990,6 +990,12 @@ void ControlNodeScheduler::LinkControlArrowByAutoMonad(ControlActor *to_actor, c
       }
       from_actor = FetchActor(parser->FetchGroupNameByKernelGraph(graph) + kExitActorNameSuffix);
       MS_EXCEPTION_IF_NULL(from_actor);
+      if (find(from_actor->output_control_arrows_.begin(), from_actor->output_control_arrows_.end(),
+               to_actor->GetAID()) != from_actor->output_control_arrows_.end()) {
+        MS_LOG(DEBUG) << "Link auto monad control from actor:" << from_actor->GetAID()
+                      << " to actor:" << to_actor->GetAID() << " is already exist.";
+        continue;
+      }
       from_actors.emplace_back(from_actor);
       LinkControlArrow(from_actor, to_actor);
     }
