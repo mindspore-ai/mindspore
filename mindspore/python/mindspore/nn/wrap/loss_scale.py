@@ -258,6 +258,7 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore
         >>> from mindspore import Tensor, Parameter, nn, ops
         >>> from mindspore import dtype as mstype
         >>>

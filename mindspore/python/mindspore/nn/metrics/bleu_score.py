@@ -35,10 +35,12 @@ class BleuScore(Metric):
         ``Ascend`` ``GPU`` ``CPU``
 
     Example:
+        >>> import mindspore.nn as nn
+        >>>
         >>> candidate_corpus = [['i', 'have', 'a', 'pen', 'on', 'my', 'desk']]
         >>> reference_corpus = [[['i', 'have', 'a', 'pen', 'in', 'my', 'desk'],
         ...                      ['there', 'is', 'a', 'pen', 'on', 'the', 'desk']]]
-        >>> metric = BleuScore()
+        >>> metric = nn.BleuScore()
         >>> metric.clear()
         >>> metric.update(candidate_corpus, reference_corpus)
         >>> bleu_score = metric.eval()
