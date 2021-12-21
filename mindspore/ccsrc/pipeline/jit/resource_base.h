@@ -38,15 +38,14 @@ class ResourceBase {
   // set a manager defined outside which will not manage the graphs.
   void set_manager(const FuncGraphManagerPtr &manager) { manager_ = manager; }
 
-  mindspore::HashMap<std::string, Any> &results() { return results_; }
-
   void SetResult(const std::string &key, const Any &value) { results_[key] = value; }
 
   Any GetResult(const std::string &key) {
-    if (results_.count(key) == 0) {
+    auto iter = results_.find(key);
+    if (iter == results_.end()) {
       MS_LOG(EXCEPTION) << "this key is not in resource list:" << key;
     }
-    return results_[key];
+    return iter->second;
   }
 
   bool HasResult(const std::string &key) const { return results_.count(key) != 0; }

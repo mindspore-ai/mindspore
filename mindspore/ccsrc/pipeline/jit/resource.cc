@@ -328,12 +328,6 @@ void Resource::Clean() {
   // it should be cleaned before Python Interpreter destructed.
   MS_EXCEPTION_IF_NULL(engine_);
   engine_->ClearEvaluatorCache();
-  // clean static variable to prevent from crash. As static variable is released after
-  // Python threads is released.
-  parse::data_converter::ClearObjectCache();
-  parse::Parser::CleanParserResource();
-  parse::CleanDataClassToClassMap();
-  trace::ClearTraceStack();
   is_cleaned_ = true;
 }
 
