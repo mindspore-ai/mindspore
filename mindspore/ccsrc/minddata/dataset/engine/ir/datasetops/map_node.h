@@ -32,7 +32,8 @@ class MapNode : public DatasetNode {
   MapNode(std::shared_ptr<DatasetNode> child, std::vector<std::shared_ptr<TensorOperation>> operations,
           std::vector<std::string> input_columns = {}, std::vector<std::string> output_columns = {},
           const std::vector<std::string> &columns = {}, std::shared_ptr<DatasetCache> cache = nullptr,
-          std::vector<std::shared_ptr<DSCallback>> callbacks = {}, bool offload = false);
+          std::vector<std::shared_ptr<DSCallback>> callbacks = {},
+          ManualOffloadMode offload = ManualOffloadMode::kUnspecified);
 
   /// \brief Destructor
   ~MapNode() = default;
@@ -87,10 +88,10 @@ class MapNode : public DatasetNode {
   const std::vector<std::string> &OutputColumns() const { return output_columns_; }
   const std::vector<std::string> &ProjectColumns() const { return project_columns_; }
   const std::vector<std::shared_ptr<DSCallback>> &Callbacks() const { return callbacks_; }
-  bool GetOffload() const { return offload_; }
+  ManualOffloadMode GetOffload() const { return offload_; }
 
   /// \brief setter to set offload flag of node
-  void SetOffload(bool offload);
+  void SetOffload(ManualOffloadMode offload);
 
   /// \brief Get the arguments of node
   /// \param[out] out_json JSON string of all attributes
@@ -123,8 +124,8 @@ class MapNode : public DatasetNode {
   std::vector<std::string> project_columns_;
   std::vector<std::shared_ptr<DSCallback>> callbacks_;
 
-  /// \brief Flag to indicate whether offload is set for the Map node.
-  bool offload_;
+  /// \brief ManualOffloadMode to indicate manual_offload status
+  ManualOffloadMode offload_;
 };
 
 }  // namespace dataset

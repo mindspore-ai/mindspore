@@ -17,7 +17,10 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_OPT_PRE_NODE_OFFLOAD_PASS_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_OPT_PRE_NODE_OFFLOAD_PASS_H_
 
+#include <map>
 #include <memory>
+#include <set>
+#include <string>
 #include <vector>
 #include "minddata/dataset/engine/opt/pass.h"
 
@@ -49,8 +52,16 @@ class NodeOffloadPass : public IRTreePass {
     std::vector<std::shared_ptr<DatasetNode>> nodes_to_offload() { return nodes_to_offload_; }
 
    private:
+    /// \brief Vector of nodes to offload
     std::vector<std::shared_ptr<DatasetNode>> nodes_to_offload_;
-    bool prev_map_offloaded_;
+    /// \brief Vector of supported offload operations
+    const std::set<std::string> supported_ops_{
+      "HwcToChw",           "Normalize", "RandomColorAdjust", "RandomHorizontalFlip", "RandomSharpness",
+      "RandomVerticalFlip", "Rescale"};
+    /// \brief std::map indicating if the map op for the input column is at the end of the pipeline
+    std::map<std::string, bool> end_of_pipeline_;
+    /// \brief bool indicating whether the auto_offload config option is enabled
+    bool auto_offload_;
   };
 
  public:
