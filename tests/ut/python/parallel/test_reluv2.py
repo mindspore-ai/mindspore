@@ -50,6 +50,11 @@ def compile_net(net):
 
 
 def test_reluv2():
+    """
+    Feature: distribute operator reluv2 in auto parallel.
+    Description: mul-reluv2 net with strategy in semi auto parallel.
+    Expectation: compile done without error.
+    """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     strategy = ((2, 1, 2, 2),)
     net = Net(_w1, strategy)
@@ -57,6 +62,11 @@ def test_reluv2():
 
 
 def test_reluv2_no_full():
+    """
+    Feature: distribute operator reluv2 in auto parallel.
+    Description: mul-reluv2 net with strategy in semi auto parallel, not fully shard.
+    Expectation: compile done without error.
+    """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     strategy = ((2, 1, 2, 1),)
     net = Net(_w1, strategy)
@@ -64,6 +74,11 @@ def test_reluv2_no_full():
 
 
 def test_reluv2_no_strategy():
+    """
+    Feature: distribute operator reluv2 in auto parallel.
+    Description: mul-reluv2 net without strategy in semi auto parallel.
+    Expectation: compile done without error.
+    """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     strategy = None
     net = Net(_w1, strategy)

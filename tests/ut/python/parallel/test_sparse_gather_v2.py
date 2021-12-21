@@ -62,18 +62,24 @@ class Net(nn.Cell):
         out = self.mul(out, y)
         return out
 
+def compile_net(net, index_shape, emb_shape, device_num=8, parallel_mode="semi_auto_parallel"):
+    context.set_auto_parallel_context(device_num=device_num, global_rank=0, parallel_mode=parallel_mode)
+    net.set_auto_parallel()
+    x = Tensor(np.ones(index_shape), dtype=ms.float32)
+    y = Tensor(np.ones(emb_shape), dtype=ms.float32)
+    net.set_train()
+    _cell_graph_executor.compile(net, x, y)
 
 def test_gatherv2_semi_auto0():
-    context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
+    """
+    Feature: distribute operator SparseGatherV2 in auto parallel.
+    Description: gather net with strategy in semi auto parallel, gather axis is 1.
+    Expectation: compile done without error.
+    """
     strategy1 = ((8, 1), (1, 1))
     strategy2 = ((4, 2, 1), (4, 2, 1))
     net = GradWrap(NetWithLoss(Net(0, strategy1, strategy2)))
-    net.set_auto_parallel()
-
-    x = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
-    net.set_train()
-    _cell_graph_executor.compile(net, x, y)
+    compile_net(net, [64, 64], [64, 64, 64])
 
 
 def test_gatherv2_semi_auto1():
@@ -82,16 +88,10 @@ def test_gatherv2_semi_auto1():
     Description: gather net with strategy in semi auto parallel, gather axis is 1.
     Expectation: compile done without error.
     """
-    context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
     strategy1 = ((1, 8), (1, 1))
     strategy2 = ((4, 2, 1), (4, 2, 1))
     net = GradWrap(NetWithLoss(Net(1, strategy1, strategy2)))
-    net.set_auto_parallel()
-
-    x = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
-    net.set_train()
-    _cell_graph_executor.compile(net, x, y)
+    compile_net(net, [64, 64], [64, 64, 64])
 
 
 def test_gatherv2_semi_auto2():
@@ -100,16 +100,10 @@ def test_gatherv2_semi_auto2():
     Description: gather net with strategy in semi auto parallel, gather axis is 1.
     Expectation: compile done without error.
     """
-    context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
     strategy1 = ((8, 1), (1, 1))
     strategy2 = ((4, 2, 1), (4, 2, 1))
     net = GradWrap(NetWithLoss(Net(1, strategy1, strategy2)))
-    net.set_auto_parallel()
-
-    x = Tensor(np.ones([64, 32]), dtype=ms.float32)
-    y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
-    net.set_train()
-    _cell_graph_executor.compile(net, x, y)
+    compile_net(net, [64, 32], [64, 64, 64])
 
 
 def test_gatherv2_semi_auto3():
@@ -118,16 +112,10 @@ def test_gatherv2_semi_auto3():
     Description: gather net with strategy in semi auto parallel, gather axis is 1.
     Expectation: compile done without error.
     """
-    context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
     strategy1 = ((2, 4), (1, 1))
     strategy2 = ((4, 2, 1), (4, 2, 1))
     net = GradWrap(NetWithLoss(Net(1, strategy1, strategy2)))
-    net.set_auto_parallel()
-
-    x = Tensor(np.ones([64, 32]), dtype=ms.float32)
-    y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
-    net.set_train()
-    _cell_graph_executor.compile(net, x, y)
+    compile_net(net, [64, 32], [64, 64, 64])
 
 
 def test_gatherv2_semi_auto4():
@@ -137,15 +125,9 @@ def test_gatherv2_semi_auto4():
     Expectation: compile done without error.
     """
     context.set_auto_parallel_context(dataset_strategy="full_batch")
-    context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
     strategy2 = ((4, 2, 1), (4, 2, 1))
     net = GradWrap(NetWithLoss(Net(0, None, strategy2)))
-    net.set_auto_parallel()
-
-    x = Tensor(np.ones([64, 32]), dtype=ms.float32)
-    y = Tensor(np.ones([64, 64, 32]), dtype=ms.float32)
-    net.set_train()
-    _cell_graph_executor.compile(net, x, y)
+    compile_net(net, [64, 32], [64, 64, 32])
 
 
 def test_gatherv2_semi_auto5():
@@ -154,71 +136,62 @@ def test_gatherv2_semi_auto5():
     Description: gather net with strategy in semi auto parallel, gather axis is 1.
     Expectation: compile done without error.
     """
-    context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
     strategy2 = ((4, 2, 1), (4, 2, 1))
     net = GradWrap(NetWithLoss(Net(1, None, strategy2)))
-    net.set_auto_parallel()
-
-    x = Tensor(np.ones([64, 32]), dtype=ms.float32)
-    y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
-    net.set_train()
-    _cell_graph_executor.compile(net, x, y)
+    compile_net(net, [64, 32], [64, 64, 64])
 
 
 def test_gatherv2_auto0():
-    context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="auto_parallel")
+    """
+    Feature: distribute operator SparseGatherV2 in auto parallel.
+    Description: gather net with strategy in semi auto parallel, gather axis is 1.
+    Expectation: compile done without error.
+    """
     net = GradWrap(NetWithLoss(Net(0)))
-    net.set_auto_parallel()
-    x = Tensor(np.ones([64, 32]), dtype=ms.float32)
-    y = Tensor(np.ones([64, 64, 32]), dtype=ms.float32)
-    net.set_train()
-    _cell_graph_executor.compile(net, x, y)
+    compile_net(net, [64, 32], [64, 64, 32], parallel_mode="auto_parallel")
 
 
 def test_gatherv2_auto1():
-    context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="auto_parallel")
+    """
+    Feature: distribute operator SparseGatherV2 in auto parallel.
+    Description: gather net with strategy in semi auto parallel, gather axis is 1.
+    Expectation: compile done without error.
+    """
     net = GradWrap(NetWithLoss(Net(1)))
-    net.set_auto_parallel()
-    x = Tensor(np.ones([64, 32]), dtype=ms.float32)
-    y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
-    net.set_train()
-    _cell_graph_executor.compile(net, x, y)
+    compile_net(net, [64, 32], [64, 64, 64], parallel_mode="auto_parallel")
 
 
 def test_gatherv2_cpu0():
-    context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
+    """
+    Feature: distribute operator SparseGatherV2 in auto parallel.
+    Description: gather net with strategy in semi auto parallel, gather axis is 1. target is cpu.
+    Expectation: compile done without error.
+    """
     strategy1 = ((8, 1), (1, 1))
     strategy2 = ((4, 2, 1), (4, 2, 1))
     net = NetWithLoss(Net(0, strategy1, strategy2, None, "CPU"))
-    net.set_auto_parallel()
-
-    x = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
-    net.set_train()
-    _cell_graph_executor.compile(net, x, y)
+    compile_net(net, [64, 64], [64, 64, 64])
 
 
 def test_gatherv2_cpu1():
-    context.set_auto_parallel_context(device_num=16, global_rank=0, parallel_mode="semi_auto_parallel")
+    """
+    Feature: distribute operator SparseGatherV2 in auto parallel.
+    Description: gather net with strategy in semi auto parallel, gather axis is 1. target is cpu.
+    Expectation: compile done without error.
+    """
     strategy1 = ((16, 1), (1, 1))
     strategy2 = ((4, 2, 1), (4, 2, 1))
     net = NetWithLoss(Net(0, strategy1, strategy2, None, "CPU"))
-    net.set_auto_parallel()
-
-    x = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
-    net.set_train()
-    _cell_graph_executor.compile(net, x, y)
+    compile_net(net, [64, 64], [64, 64, 64], device_num=16)
 
 
 def test_gatherv2_cpu2():
-    context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
+    """
+    Feature: distribute operator SparseGatherV2 in auto parallel.
+    Description: gather net with strategy in semi auto parallel, gather axis is 1. target is cpu.
+    Expectation: compile done without error.
+    """
     strategy1 = ((1, 8), (1, 1))
     strategy2 = ((4, 2, 1), (4, 2, 1))
     net = NetWithLoss(Net(0, strategy1, strategy2, None, "CPU"))
-    net.set_auto_parallel()
-
-    x = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
-    net.set_train()
-    _cell_graph_executor.compile(net, x, y)
+    compile_net(net, [64, 64], [64, 64, 64])

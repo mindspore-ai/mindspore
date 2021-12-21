@@ -57,6 +57,16 @@ class NetWithLossTwoInput(nn.Cell):
         predict = self.network(x, y)
         return self.loss(predict)
 
+class NetWithReduceLoss(nn.Cell):
+    def __init__(self, network):
+        super(NetWithReduceLoss, self).__init__()
+        self.mean = P.ReduceMean(keep_dims=False)
+        self.network = network
+
+    def construct(self, x, y):
+        predict = self.network(x, y)
+        return self.mean(predict, ())
+
 class GradWrapTwoInput(nn.Cell):
     def __init__(self, network):
         super(GradWrapTwoInput, self).__init__()
@@ -345,22 +355,12 @@ def test_reshape_depend_reshape():
             out = out1 + out3
             return out
 
-    class NetWithLoss1(nn.Cell):
-        def __init__(self, network):
-            super(NetWithLoss1, self).__init__()
-            self.mean = P.ReduceMean(keep_dims=False)
-            self.network = network
-
-        def construct(self, x, y):
-            predict = self.network(x, y)
-            return self.mean(predict, ())
-
     size = 8
     x = Tensor(np.ones([128, 96]), dtype=ms.float32)
     y = Tensor(np.ones([256, 48]), dtype=ms.float32)
-    net = GradWrapTwoInput(NetWithLoss1(Net()))
+    net = GradWrapTwoInput(NetWithReduceLoss(Net()))
     compile_graph_two_input(net, "semi_auto_parallel", size, x, y)
-    net_auto = GradWrapTwoInput(NetWithLoss1(Net()))
+    net_auto = GradWrapTwoInput(NetWithReduceLoss(Net()))
     compile_graph_two_input(net_auto, "auto_parallel", size, x, y)
 
 def test_appeq_reshape():
@@ -384,21 +384,11 @@ def test_appeq_reshape():
             out = self.relu(out3)
             return out
 
-    class NetWithLoss1(nn.Cell):
-        def __init__(self, network):
-            super(NetWithLoss1, self).__init__()
-            self.mean = P.ReduceMean(keep_dims=False)
-            self.network = network
-
-        def construct(self, x, y):
-            predict = self.network(x, y)
-            return self.mean(predict, ())
-
     size = 8
     x = Tensor(np.ones([128, 96]), dtype=ms.float32)
     y = Tensor(np.ones([128, 96]), dtype=ms.float32)
-    net = GradWrapTwoInput(NetWithLoss1(Net()))
+    net = GradWrapTwoInput(NetWithReduceLoss(Net()))
     compile_graph_two_input(net, "semi_auto_parallel", size, x, y)
-    net_auto = GradWrapTwoInput(NetWithLoss1(Net()))
+    net_auto = GradWrapTwoInput(NetWithReduceLoss(Net()))
     context.set_auto_parallel_context(search_mode="recursive_programming")
     compile_graph_two_input(net_auto, "auto_parallel", size, x, y)
