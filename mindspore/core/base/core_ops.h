@@ -762,6 +762,7 @@ inline const PrimitivePtr kPrimErfc = std::make_shared<Primitive>("Erfc");
 inline const PrimitivePtr kPrimSplice = std::make_shared<Primitive>("Splice");
 inline const PrimitivePtr kPrimAffine = std::make_shared<Primitive>("Affine");
 inline const PrimitivePtr kPrimEltwise = std::make_shared<Primitive>("Eltwise");
+inline const PrimitivePtr kPrimMatMulFusion = std::make_shared<Primitive>("MatMulFusion");
 
 // Type introspection
 inline const PrimitivePtr kPrimTypeOf = std::make_shared<Primitive>("typeof");
