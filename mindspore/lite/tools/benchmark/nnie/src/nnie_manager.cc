@@ -107,8 +107,8 @@ int NNIEManager::GetOutputData(std::vector<mindspore::MSTensor> *outputs,
     j = GetFillIndex(*outputs, output_size, nnie_cfg_.param_.model_->astSeg[seg_idx].astDstNode[i].szName);
     if (j == output_size) {
       j = i;
-      // LOGW("output tensor name(%s) can't match wk node name(%s).", (*outputs)[j].Name().c_str(),
-      //     nnie_cfg_.param_.model_->astSeg[seg_idx].astDstNode[i].szName);
+      LOGI("output tensor name(%s) can't match wk node name(%s).", (*outputs)[j].Name().c_str(),
+           nnie_cfg_.param_.model_->astSeg[seg_idx].astDstNode[i].szName);
     }
 
     auto input_data_type = (*outputs)[j].DataType();
@@ -196,8 +196,8 @@ int NNIEManager::FillData(std::vector<mindspore::MSTensor> *inputs, unsigned int
         continue;
       } else {
         j = i;
-        // LOGW("input tensor name(%s) can't match wk node name(%s).", (*inputs)[i].Name().c_str(),
-        //      nnie_cfg_.param_.model_->astSeg[seg_id].astSrcNode[i].szName);
+        LOGI("input tensor name(%s) can't match wk node name(%s).", (*inputs)[i].Name().c_str(),
+             nnie_cfg_.param_.model_->astSeg[seg_id].astSrcNode[i].szName);
       }
     }
 

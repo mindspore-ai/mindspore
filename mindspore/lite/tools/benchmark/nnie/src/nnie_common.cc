@@ -791,8 +791,8 @@ int NnieCommCreate(NnieRunCfg *nnie_run_cfg, char *model_buf, int size,
   j = GetFillIndex(inputs, inputs.size() - 1, model->model_.astSeg[0].astSrcNode[0].szName);
   if (j == (inputs.size() - 1)) {
     j = 0;
-    // LOGW("input tensor name(%s) can't match wk node name(%s).", inputs[0].Name().c_str(),
-    //     model->model_.astSeg[0].astSrcNode[0].szName);
+    LOGI("input tensor name(%s) can't match wk node name(%s).", inputs[0].Name().c_str(),
+         model->model_.astSeg[0].astSrcNode[0].szName);
   }
   if (CheckMsShapeN(nnie_run_cfg, inputs[j].Shape(), model->model_.astSeg[0].astSrcNode[0]) != RET_OK) {
     return RET_ERROR;

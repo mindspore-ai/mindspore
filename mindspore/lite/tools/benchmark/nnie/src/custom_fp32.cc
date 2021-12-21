@@ -45,7 +45,7 @@ int CustomCPUKernel::Prepare() {
 
     if (nnie::NNIEManager::GetInstance()->Init(reinterpret_cast<char *>(inputs_[inputs_.size() - 1].MutableData()),
                                                static_cast<int>(inputs_[inputs_.size() - 1].ElementNum()), inputs_)) {
-      // LOGW("Load WK Model Fail");
+      LOGI("Load WK Model Fail");
       return RET_OK;
     }
     load_model_ = true;
@@ -73,12 +73,12 @@ int CustomCPUKernel::Execute() {
   }
   run_seg_ = seg_id_;
 
-  if (nnie::NNIEManager::GetInstance()->FillData(&inputs_, run_seg_)) {
+  if (nnie::NNIEManager::GetInstance()->FillData(&inputs_, run_seg_) != RET_OK) {
     LOGE("Fail Fill Data");
     return RET_ERROR;
   }
 
-  if (nnie::NNIEManager::GetInstance()->Run(&outputs_, run_seg_, outputs_shapes_)) {
+  if (nnie::NNIEManager::GetInstance()->Run(&outputs_, run_seg_, outputs_shapes_) != RET_OK) {
     LOGE("Fail WK Run");
     return RET_ERROR;
   }

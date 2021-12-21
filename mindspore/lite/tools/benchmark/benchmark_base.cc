@@ -639,16 +639,16 @@ int SvpSysInit() {
   HI_S32 ret = HI_SUCCESS;
   VB_CONFIG_S struVbConf;
   ret = HI_MPI_SYS_Exit();
-  if (HI_SUCCESS != ret) {
+  if (ret != HI_SUCCESS) {
     MS_LOG(ERROR) << "HI_MPI_SYS_Exit failed!";
     return RET_ERROR;
   }
 
   ret = HI_MPI_VB_Exit();
-  if (HI_SUCCESS != ret) {
+  if (ret != HI_SUCCESS) {
     MS_LOG(WARNING) << "HI_MPI_VB_Exit failed!";
     ret = HI_MPI_SYS_Init();
-    if (HI_SUCCESS != ret) {
+    if (ret != HI_SUCCESS) {
       MS_LOG(ERROR) << "Error:HI_MPI_SYS_Init failed!";
       return RET_ERROR;
     }
@@ -661,19 +661,19 @@ int SvpSysInit() {
   struVbConf.astCommPool[1].u32BlkCnt = 1;
 
   ret = HI_MPI_VB_SetConfig((const VB_CONFIG_S *)&struVbConf);
-  if (HI_SUCCESS != ret) {
+  if (ret != HI_SUCCESS) {
     MS_LOG(ERROR) << "Error:HI_MPI_VB_SetConf failed!";
     return RET_ERROR;
   }
 
   ret = HI_MPI_VB_Init();
-  if (HI_SUCCESS != ret) {
+  if (ret != HI_SUCCESS) {
     MS_LOG(ERROR) << "Error:HI_MPI_VB_Init failed!";
     return RET_ERROR;
   }
 
   ret = HI_MPI_SYS_Init();
-  if (HI_SUCCESS != ret) {
+  if (ret != HI_SUCCESS) {
     MS_LOG(ERROR) << "Error:HI_MPI_SYS_Init failed!";
     return RET_ERROR;
   }
@@ -685,13 +685,13 @@ int SvpSysExit() {
   HI_S32 ret = HI_SUCCESS;
 
   ret = HI_MPI_SYS_Exit();
-  if (HI_SUCCESS != ret) {
+  if (ret != HI_SUCCESS) {
     MS_LOG(ERROR) << "HI_MPI_SYS_Exit failed!";
     return RET_ERROR;
   }
 
   ret = HI_MPI_VB_Exit();
-  if (HI_SUCCESS != ret) {
+  if (ret != HI_SUCCESS) {
     MS_LOG(WARNING) << "HI_MPI_VB_Exit failed!";
     return RET_OK;
   }
