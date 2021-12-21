@@ -71,8 +71,19 @@ int WhereRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 int WhereCPUKernel::RunWithSingleInput() {
   auto input = in_tensors_.at(0);
   MS_ASSERT(input);
-  condition_ = reinterpret_cast<bool *>(input->data());
-  CHECK_NULL_RETURN(condition_);
+  if (input->data_type() == kNumberTypeInt32) {
+    int32_condition_ = reinterpret_cast<int32_t *>(input->data());
+    CHECK_NULL_RETURN(int32_condition_);
+  } else if (input->data_type() == kNumberTypeFloat32) {
+    fp32_condition_ = reinterpret_cast<float *>(input->data());
+    CHECK_NULL_RETURN(fp32_condition_);
+  } else if (input->data_type() == kNumberTypeBool) {
+    condition_ = reinterpret_cast<bool *>(input->data());
+    CHECK_NULL_RETURN(condition_);
+  } else {
+    MS_LOG(ERROR) << "Unsupported data type: " << input->data_type() << " of where cpu kernel.";
+    return RET_ERROR;
+  }
   where_param_->condition_num_ = input->ElementsNum();
   where_param_->rank_ = static_cast<int>(input->shape().size());
   int strides[8];
@@ -88,7 +99,15 @@ int WhereCPUKernel::RunWithSingleInput() {
   int result_index = 0;
   int true_num = 0;
   for (int index = 0; index < where_param_->condition_num_; index++) {
-    if (condition_[index]) {
+    bool condition = false;
+    if (input->data_type() == kNumberTypeInt32) {
+      condition = int32_condition_[index];
+    } else if (input->data_type() == kNumberTypeFloat32) {
+      condition = fp32_condition_[index];
+    } else if (input->data_type() == kNumberTypeBool) {
+      condition = condition_[index];
+    }
+    if (condition) {
       true_num++;
       int dim = index;
       for (int j = 0; j < where_param_->rank_; j++) {
