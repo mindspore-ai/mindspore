@@ -1542,6 +1542,7 @@ mindspore::ModelType lite::LiteSession::LoadModelByBuff(const char *model_buf, c
     *lite_buf = const_cast<char *>(model_buf);
     return mindspore::ModelType::kMindIR_Opt;
   }
+  MS_LOG(WARNING) << "Invalid mslite model.";
 
 #ifdef RUNTIME_CONVERT
   *lite_buf = RuntimeConvert(model_buf, buf_size, size);

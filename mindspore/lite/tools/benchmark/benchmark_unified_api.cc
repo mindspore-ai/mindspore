@@ -243,6 +243,22 @@ int BenchmarkUnifiedApi::GenerateInputData() {
   return RET_OK;
 }
 
+void BenchmarkUnifiedApi::UpdateConfigInfo() {
+#define WIPE_DEEP_CONFIG_ENV '0'
+#define WIPE_DEEP_CONFIG_VOCAB_SIZE "100"
+#define WIPE_DEEP_CONFIG_DEVICE_CACHE_SIZE "40"
+
+  auto env = std::getenv("BENCHMARK_UPDATE_CONFIG_ENV");
+  if (env == nullptr) {
+    return;
+  }
+  if (env[0] == WIPE_DEEP_CONFIG_ENV) {
+    ms_model_.UpdateConfig(kMSCache, std::make_pair(kMSCacheVocabSize, WIPE_DEEP_CONFIG_VOCAB_SIZE));
+    ms_model_.UpdateConfig(kMSCache, std::make_pair(kMSCacheDeviceSize, WIPE_DEEP_CONFIG_DEVICE_CACHE_SIZE));
+  }
+  return;
+}
+
 int BenchmarkUnifiedApi::ReadInputFile() {
   if (ms_inputs_for_api_.empty()) {
     return RET_OK;
@@ -839,6 +855,8 @@ int BenchmarkUnifiedApi::RunBenchmark() {
       std::cout << "ms_model_.LoadConfig failed while running ", model_name.c_str();
     }
   }
+
+  UpdateConfigInfo();
 
   auto ret = ms_model_.Build(flags_->model_file_, model_type, context);
   if (ret != kSuccess) {
