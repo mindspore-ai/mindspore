@@ -2126,9 +2126,16 @@ class RowTensor:
     The dense tensor dense represented by an RowTensor slices has
     `dense[slices.indices[i], :, :, :, ...] = slices.values[i, :, :, :, ...]`.
 
+    For example, if indices is [0], values is [[1, 2]], dense_shape is
+    (3, 2), then the dense representation of the row tensor will be:
+    [[1, 2],
+     [0, 0],
+     [0, 0]]
+
     RowTensor can only be used in the `Cell`'s construct method.
 
-    It is not supported in pynative mode at the moment.
+    Note:
+        RowTensor is not supported in pynative mode.
 
     Args:
         indices (Tensor): A 1-D integer Tensor of shape [D0].
@@ -2187,10 +2194,17 @@ class SparseTensor:
 
     SparseTensor can only be used in the `Cell`'s construct method.
 
-    Pynative mode not supported at the moment.
-
     For a tensor dense, its SparseTensor(indices, values, dense_shape) has
     `dense[indices[i]] = values[i]`.
+
+    For example, if indices is [[0, 1], [1, 2]], values is [1, 2], dense_shape is
+    (3, 4), then the dense representation of the sparse tensor will be:
+    [[0, 1, 0, 0],
+     [0, 0, 2, 0],
+     [0, 0, 0, 0]]
+
+    Note:
+        SparseTensor is not supported in Pynative mode at the moment.
 
     Args:
         indices (Tensor): A 2-D integer Tensor of shape `[N, ndims]`,
