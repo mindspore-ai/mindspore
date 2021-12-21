@@ -75,10 +75,12 @@ class LiteOpActor : public OpActor<lite::Tensor> {
   int InitInputData();
   void SetOutputData(OpContext<Tensor> *context);
   void AsyncOutput(OpContext<Tensor> *context);
-  virtual int UpdateActorOutput();
   int CompileArrowThroughOutputTensors(
     const std::unordered_map<void *, std::set<std::pair<AID, size_t>>> &receivers_map);
   std::set<void *> PartialSubgraphInputTensors(kernel::LiteKernel *partial_node);
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
+  virtual int UpdateActorOutput();
+#endif
 
   kernel::LiteKernel *kernel_;
   std::vector<size_t> results_index_{};
