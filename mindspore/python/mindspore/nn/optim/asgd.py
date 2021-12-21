@@ -22,6 +22,7 @@ from mindspore._checkparam import Validator as validator
 from .optimizer import Optimizer
 from .optimizer import opt_init_args_register
 
+
 class ASGD(Optimizer):
     r"""
     Implements Average Stochastic Gradient Descent.
