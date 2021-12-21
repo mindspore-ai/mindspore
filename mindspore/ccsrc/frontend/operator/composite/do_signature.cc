@@ -347,11 +347,10 @@ FuncGraphPtr DoSignatureMetaFuncGraph::GenerateFuncGraph(const AbstractBasePtrLi
 
 void RaiseExceptionForConvertRefDtype(const std::string &func_name, const std::string &ref_type,
                                       const std::string &target_type) {
-  MS_LOG(EXCEPTION) << "For '" << func_name << "' operator, "
-                    << "the type of writable argument is '" << ref_type << "', "
-                    << "but the largest type in the same SignatureEnumDType is '" << target_type
-                    << "'. The writable arg type is not equal to the largest type, "
-                    << "so can not cast automatically.";
+  MS_LOG(EXCEPTION) << "Data type conversion of parameter is not supported, so data type " << ref_type
+                    << " cannot be converted to data type " << target_type << " by inserting cast automatically.\n"
+                    << "For more details, please refer at "
+                    << "https://www.mindspore.cn/docs/note/zh-CN/master/operator_list_implicit.html.";
 }
 void RaiseExceptionForCheckParameter(const std::string &func_name, size_t i, const std::string &source_type) {
   MS_EXCEPTION(TypeError) << "Function " << func_name << "'s input " << i << " should be a Parameter, but "
