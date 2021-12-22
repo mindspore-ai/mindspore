@@ -1202,7 +1202,7 @@ template <typename T>
 Status TensorRowReplace(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int row) {
   RETURN_UNEXPECTED_IF_NULL(output);
   auto iter_in = input->begin<T>();
-  auto iter_out = (*output)->begin<T>() + (*output)->shape()[-1] * row;
+  auto iter_out = (*output)->begin<T>() + static_cast<ptrdiff_t>((*output)->shape()[-1] * row);
   CHECK_FAIL_RETURN_UNEXPECTED(iter_out <= (*output)->end<T>(), "TensorRowReplace: pointer out of bounds");
   CHECK_FAIL_RETURN_UNEXPECTED(input->Size() <= (*output)->shape()[-1], "TensorRowReplace: pointer out of bounds");
   for (; iter_in != input->end<T>(); ++iter_in, ++iter_out) {
@@ -1215,7 +1215,7 @@ template <typename T>
 Status TensorRowAt(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int rank_index) {
   RETURN_UNEXPECTED_IF_NULL(output);
   RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({input->shape()[-1]}), input->type(), output));
-  auto iter_in = input->begin<T>() + input->shape()[-1] * rank_index;
+  auto iter_in = input->begin<T>() + static_cast<ptrdiff_t>(input->shape()[-1] * rank_index);
   auto iter_out = (*output)->begin<T>();
   CHECK_FAIL_RETURN_UNEXPECTED(iter_in <= input->end<T>(), "TensorRowAt: pointer out of bounds");
   for (; iter_out != (*output)->end<T>(); ++iter_in, ++iter_out) {
