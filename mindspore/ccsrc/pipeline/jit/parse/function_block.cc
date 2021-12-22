@@ -509,8 +509,9 @@ void FunctionBlock::SetStateAssign(const AnfNodePtr &target, const AnfNodePtr &s
   const std::string module_name("mindspore.ops.functional");
   ValueNodePtr assign_op = NewValueNode(prim::GetPythonOps(primitive_name, module_name, true));
   auto assign_node = func_graph_->NewCNodeInOrder({assign_op, target, source});
-  MS_LOG(DEBUG) << "Isolated node found(Assign), assign_node: " << assign_node->DebugString(2) << ", block: " << this
-                << "/" << func_graph_->ToString()
+  const int recursive_level = 2;
+  MS_LOG(DEBUG) << "Isolated node found(Assign), assign_node: " << assign_node->DebugString(recursive_level)
+                << ", block: " << this << "/" << func_graph_->ToString()
                 << ", Line: " << trace::GetDebugInfo(assign_node->debug_info(), "", kSourceLineTipDiscard);
   AddIsolatedNode(assign_node);
 }
@@ -545,8 +546,10 @@ void FunctionBlock::FindIsolatedNodes() {
     }
     auto &var_name = var.first;
     if (used.find(node) == used.end() && CanBeIsolatedNode(var_name, node)) {
-      MS_LOG(INFO) << "Isolated node found(NoUse), node: " << node->DebugString(2) << ", var_name: " << var_name
-                   << ", block: " << this << "/" << (func_graph() ? func_graph()->ToString() : "FG(Null)")
+      const int recursive_level = 2;
+      MS_LOG(INFO) << "Isolated node found(NoUse), node: " << node->DebugString(recursive_level)
+                   << ", var_name: " << var_name << ", block: " << this << "/"
+                   << (func_graph() ? func_graph()->ToString() : "FG(Null)")
                    << ", Line: " << trace::GetDebugInfo(node->debug_info(), "", kSourceLineTipDiscard);
       AddIsolatedNode(node);
     }
@@ -607,7 +610,7 @@ void FunctionBlock::AttachIsolatedNodesBeforeReturn() {
   depend_node->AddAttr(kAttrTopoSortRhsFirst, MakeValue(true));
   MS_EXCEPTION_IF_NULL(state);
   MS_LOG(INFO) << "Attached for side-effect nodes, depend_node: " << depend_node->DebugString()
-               << ", state: " << state->DebugString(2);
+               << ", state: " << state->DebugString(recursive_level);
   func_graph_->set_output(depend_node, true);
 }
 

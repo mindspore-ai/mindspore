@@ -178,6 +178,7 @@ FuncGraphPtr Parser::ParseFuncGraph() {
   constexpr char function_def_name[] = "FunctionDef";
   constexpr char lambda_name[] = "Lambda";
   FunctionBlockPtr fn_block = nullptr;
+  MS_EXCEPTION_IF_NULL(ast_->GetNodeType(node));
   if (ast_->GetNodeType(node)->node_name() == function_def_name) {
     fn_block = ParseDefFunction(node);
   } else {
@@ -224,6 +225,7 @@ void Parser::GenerateArgsNodeForFunction(const FunctionBlockPtr &block, const py
     auto para_node = std::make_shared<Parameter>(block_fg);
     MS_EXCEPTION_IF_NULL(para_node);
     para_node->set_name(arg_name);
+    MS_EXCEPTION_IF_NULL(para_node->debug_info());
     para_node->debug_info()->set_name(arg_name);
     block_fg->add_parameter(para_node);
     AnfNodePtr para_after_cast = GetMixedPrecisionCastHelp(block_fg, para_node);
@@ -256,6 +258,7 @@ void Parser::GenerateArgsDefaultValueForFunction(const FunctionBlockPtr &block, 
       default_values.push_back(ParseExprNode(block, defaults[i]));
     }
   }
+  MS_EXCEPTION_IF_NULL(block->func_graph());
   block->func_graph()->SetDefaultValues(namelist_for_default_value, default_values);
 }
 
@@ -286,6 +289,7 @@ FunctionBlockPtr Parser::ParseDefFunction(const py::object &node, const Function
   auto current_fg = func_block->func_graph();
   auto function_name = py::cast<std::string>(python_adapter::GetPyObjAttr(node, "name"));
   MS_LOG(DEBUG) << "The function name is " << function_name;
+  MS_EXCEPTION_IF_NULL(current_fg->debug_info());
   current_fg->debug_info()->set_name(function_name);
   MS_EXCEPTION_IF_NULL(ast_);
   py::list deco_list = node.attr("decorator_list");
@@ -317,6 +321,7 @@ FunctionBlockPtr Parser::ParseDefFunction(const py::object &node, const Function
   // Add unused variables as isolate nodes.
   for (auto &func_block_item : func_block_list_) {
     MS_EXCEPTION_IF_NULL(func_block_item);
+    MS_EXCEPTION_IF_NULL(func_block_item->func_graph());
     if (func_block_item->func_graph()->get_return() != nullptr) {
       // Find unused variables.
       func_block_item->FindIsolatedNodes();
@@ -352,6 +357,7 @@ FunctionBlockPtr Parser::ParseLambdaFunction(const py::object &node, const Funct
 
   auto function_name = ast_->function_name();
   MS_LOG(DEBUG) << "The function name is " << function_name;
+  MS_EXCEPTION_IF_NULL(current_fg->debug_info());
   current_fg->debug_info()->set_name(function_name);
   GenerateArgsNodeForFunction(func_block, node);
 
@@ -371,6 +377,7 @@ FunctionBlockPtr Parser::ParseStatements(FunctionBlockPtr block, const py::objec
     auto node = node_list[i];
     block = ParseStatement(block, node);
     MS_EXCEPTION_IF_NULL(block);
+    MS_EXCEPTION_IF_NULL(block->func_graph());
     // Insert appropriate depended items for the function block if it has a return node
     if (block->func_graph()->get_return() != nullptr || block->is_dead_block()) {
       // If break is not the last expr.
@@ -511,6 +518,7 @@ void Parser::MakeConditionBlocks(const FunctionBlockPtr &pre_block, const Functi
 
 AnfNodePtr Parser::HandelReturnExprNode(const FunctionBlockPtr &block, const AnfNodePtr &return_expr_node,
                                         const py::object &value_object) {
+  MS_EXCEPTION_IF_NULL(return_expr_node);
   // The fallback feature is enabled in default.
   static const auto use_fallback = (support_fallback() != "0");
   if (!use_fallback) {
@@ -523,6 +531,7 @@ AnfNodePtr Parser::HandelReturnExprNode(const FunctionBlockPtr &block, const Anf
     auto elts = py::cast<py::tuple>(obj);
     if (!elts.empty()) {
       auto cnode = return_expr_node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(cnode);
       // The first input of cnode is MakeTuple.
       if (cnode->size() != elts.size() + 1) {
         MS_LOG(EXCEPTION) << "The size of make_tuple's inputs must be equal to " << (elts.size() + 1) << ".";
@@ -681,6 +690,7 @@ AnfNodePtr Parser::GenerateMakeTuple(const FunctionBlockPtr &block, const std::v
   make_tuple_nodes.push_back(make_tuple_op);
   (void)std::transform(element_nodes.begin(), element_nodes.end(), std::back_inserter(make_tuple_nodes),
                        [](AnfNodePtr arg) -> AnfNodePtr { return arg; });
+  MS_EXCEPTION_IF_NULL(block->func_graph());
   return block->func_graph()->NewCNodeInOrder(std::move(make_tuple_nodes));
 }
 
@@ -736,6 +746,7 @@ AnfNodePtr Parser::ParseCall(const FunctionBlockPtr &block, const py::object &no
 
   auto call_cnode = GenerateAnfNodeForCall(block, call_function_node, packed_arguments, group_arguments, need_unpack);
   UpdateInterpretForUserNode(call_cnode, call_function_node);
+  MS_EXCEPTION_IF_NULL(call_cnode);
   if (call_cnode->interpret_special_type() && need_fallback) {
     call_cnode = HandleInterpret(block, call_cnode, node);
   }
@@ -768,6 +779,7 @@ AnfNodePtr Parser::GenerateAnfNodeForCall(const FunctionBlockPtr &block, const A
   func_call_nodes.push_back(call_function_node);
   (void)std::transform(group_arguments.begin(), group_arguments.end(), std::back_inserter(func_call_nodes),
                        [](AnfNodePtr node) -> AnfNodePtr { return node; });
+  MS_EXCEPTION_IF_NULL(block->func_graph());
   CNodePtr call_anf_node = block->func_graph()->NewCNodeInOrder(std::move(func_call_nodes));
   return call_anf_node;
 }
@@ -832,6 +844,7 @@ bool Parser::ParseKeywordsInCall(const FunctionBlockPtr &block, const py::object
     make_dict_nodes.push_back(make_dict_op);
     make_dict_nodes.push_back(keys_tuple);
     make_dict_nodes.push_back(values_tuple);
+    MS_EXCEPTION_IF_NULL(block->func_graph());
     packed_arguments->push_back(block->func_graph()->NewCNodeInOrder(std::move(make_dict_nodes)));
   }
   return need_unpack;
@@ -880,7 +893,7 @@ AnfNodePtr Parser::ParseAttribute(const FunctionBlockPtr &block, const py::objec
     TraceGuard guard(GetLocation(python_adapter::GetPyObjAttr(node, "attr")));
     attr_node = NewValueNode(attr_str);
   }
-
+  MS_EXCEPTION_IF_NULL(block->func_graph());
   // Create the apply node
   auto attr_cnode = block->func_graph()->NewCNodeInOrder({op_node, value_node, attr_node});
   UpdateInterpretForUserNode(attr_cnode, value_node);
@@ -911,6 +924,7 @@ AnfNodePtr Parser::ParseCompare(const FunctionBlockPtr &block, const py::object 
 
   MS_EXCEPTION_IF_NULL(block);
   AnfNodePtr op_node = block->MakeResolveAstOp(ops[0]);
+  MS_EXCEPTION_IF_NULL(block->func_graph());
   auto new_node = block->func_graph()->NewCNodeInOrder({op_node, left_node, right_node});
   UpdateInterpretForUserNode(new_node, {left_node, right_node});
   return new_node;
@@ -959,6 +973,8 @@ AnfNodePtr Parser::ProcessBoolOpValueList(const FunctionBlockPtr &block, const p
     }
     AnfNodePtr test_node = ParseExprNode(block, first);
     AnfNodePtr rest_node = ProcessBoolOpValueList(b1, rest, mode);
+    MS_EXCEPTION_IF_NULL(b1->func_graph());
+    MS_EXCEPTION_IF_NULL(b2->func_graph());
     b1->func_graph()->set_output(rest_node);
     b2->func_graph()->set_output(test_node);
 
@@ -1029,6 +1045,7 @@ AnfNodePtr Parser::ParseTuple(const FunctionBlockPtr &block, const py::object &n
     node_ptr = HandleInterpret(block, node_ptr, elts[i]);
     tuple_vec.emplace_back(node_ptr);
   }
+  MS_EXCEPTION_IF_NULL(block->func_graph());
   CNodePtr tuple_app = block->func_graph()->NewCNodeInOrder(std::move(tuple_vec));
   return tuple_app;
 }
@@ -1051,6 +1068,7 @@ AnfNodePtr Parser::ParseList(const FunctionBlockPtr &block, const py::object &no
     node_ptr = HandleInterpret(block, node_ptr, elts[i]);
     list_vec.emplace_back(node_ptr);
   }
+  MS_EXCEPTION_IF_NULL(block->func_graph());
   CNodePtr list_app = block->func_graph()->NewCNodeInOrder(std::move(list_vec));
   return list_app;
 }
@@ -1066,6 +1084,7 @@ AnfNodePtr Parser::ParseSubscript(const FunctionBlockPtr &block, const py::objec
   value = HandleInterpret(block, value, value_node);
   AnfNodePtr slice = ParseExprNode(block, slice_node);
   slice = HandleInterpret(block, slice, slice_node);
+  MS_EXCEPTION_IF_NULL(block->func_graph());
   auto new_node = block->func_graph()->NewCNodeInOrder({op_getitem, value, slice});
   UpdateInterpretForUserNode(new_node, value);
   return new_node;
@@ -1082,6 +1101,7 @@ AnfNodePtr Parser::ParseSlice(const FunctionBlockPtr &block, const py::object &n
   AnfNodePtr start_node = ParseExprNode(block, start);
   AnfNodePtr stop_node = ParseExprNode(block, stop);
   AnfNodePtr step_node = ParseExprNode(block, step);
+  MS_EXCEPTION_IF_NULL(block->func_graph());
   return block->func_graph()->NewCNodeInOrder({op_makeslice, start_node, stop_node, step_node});
 }
 
@@ -1098,6 +1118,7 @@ AnfNodePtr Parser::ParseExtSlice(const FunctionBlockPtr &block, const py::object
     AnfNodePtr node_ptr = ParseExprNode(block, slice_tuple[i]);
     node_vec.emplace_back(node_ptr);
   }
+  MS_EXCEPTION_IF_NULL(block->func_graph());
   CNodePtr tuple_conde = block->func_graph()->NewCNodeInOrder(std::move(node_vec));
   return tuple_conde;
 }
@@ -1121,6 +1142,7 @@ AnfNodePtr Parser::ParseUnaryOp(const FunctionBlockPtr &block, const py::object 
   py::object operand = python_adapter::GetPyObjAttr(node, "operand");
   AnfNodePtr operand_node = ParseExprNode(block, operand);
   operand_node = HandleInterpret(block, operand_node, operand);
+  MS_EXCEPTION_IF_NULL(block->func_graph());
   auto new_node = block->func_graph()->NewCNodeInOrder({op_node, operand_node});
   UpdateInterpretForUserNode(new_node, operand_node);
   return new_node;
@@ -1133,6 +1155,7 @@ AnfNodePtr Parser::ParseDictByKeysAndValues(const FunctionBlockPtr &block, const
   auto values_tuple = GenerateMakeTuple(block, value_nodes);
   MS_EXCEPTION_IF_NULL(block);
   auto make_dict_op = block->MakeResolveOperation(NAMED_PRIMITIVE_MAKEDICT);
+  MS_EXCEPTION_IF_NULL(block->func_graph());
   return block->func_graph()->NewCNodeInOrder({make_dict_op, keys_tuple, values_tuple});
 }
 
@@ -1152,6 +1175,7 @@ AnfNodePtr Parser::ParseDict(const FunctionBlockPtr &block, const py::object &no
 AnfNodePtr Parser::HandleInterpretForAugassign(const FunctionBlockPtr &block, const AnfNodePtr &augassign_node,
                                                const py::object &op_object, const py::object &target_object,
                                                const py::object &value_object) {
+  MS_EXCEPTION_IF_NULL(augassign_node);
   // The fallback feature is enabled in default.
   static const auto use_fallback = (support_fallback() != "0");
   if (!use_fallback || !augassign_node->interpret()) {
@@ -1208,6 +1232,7 @@ FunctionBlockPtr Parser::ParseAugAssign(const FunctionBlockPtr &block, const py:
   if (target_node == nullptr) {
     MS_LOG(EXCEPTION) << "Can not get target node ";
   }
+  MS_EXCEPTION_IF_NULL(block->func_graph());
   AnfNodePtr augassign_app = block->func_graph()->NewCNodeInOrder({op_node, target_node, value_node});
 
   // Check whether the augassign expression needs to be interpreted.
@@ -1241,6 +1266,7 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
   FunctionBlockPtr true_block = nullptr;
   FunctionBlockPtr false_block = nullptr;
   auto block_fg = block->func_graph();
+  MS_EXCEPTION_IF_NULL(block_fg);
   {
     TraceGuard guard(std::make_shared<TraceIfStmtTrueBranch>(block_fg->debug_info()));
     true_block = MakeFunctionBlock(*this);
@@ -1261,13 +1287,14 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
   if (MsContext::GetInstance()->backend_policy() != "ge") {
     // For backends excludes 'ge', it can handle multi graph call, use this flag to
     // generate call not inline `after_block` graph to reduce if by if switch expansion.
+    MS_EXCEPTION_IF_NULL(after_block->func_graph());
     after_block->func_graph()->set_flag(FUNC_GRAPH_FLAG_AFTER_BLOCK, true);
   }
 
   // Process the if-true branch
   py::object bodyNode = python_adapter::GetPyObjAttr(node, "body");
   FunctionBlockPtr true_end = ParseStatements(true_block, bodyNode);
-
+  MS_EXCEPTION_IF_NULL(true_end->func_graph());
   // If the return_ is set, it has its own continuation block
   if (true_end->func_graph()->get_return() == nullptr) {
     MS_LOG(DEBUG) << "true end jump to after.";
@@ -1277,7 +1304,7 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
   // Process the orelse branch
   py::object orelseNode = python_adapter::GetPyObjAttr(node, "orelse");
   FunctionBlockPtr false_end = ParseStatements(false_block, orelseNode);
-
+  MS_EXCEPTION_IF_NULL(false_end->func_graph());
   // If the return_ is set, it has its own continuation block
   if (false_end->func_graph()->get_return() == nullptr) {
     MS_LOG(DEBUG) << "false_end jump to after.";
@@ -1298,6 +1325,7 @@ FunctionBlockPtr Parser::ParseWhile(const FunctionBlockPtr &block, const py::obj
   FunctionBlockPtr header_block = nullptr;
   FunctionBlockPtr body_block = nullptr;
   FunctionBlockPtr after_block = nullptr;
+  MS_EXCEPTION_IF_NULL(block->func_graph());
   {
     TraceGuard guard(std::make_shared<TraceWhileHeader>(block->func_graph()->debug_info()));
     header_block = MakeFunctionBlock(*this);
@@ -1328,6 +1356,7 @@ FunctionBlockPtr Parser::ParseWhile(const FunctionBlockPtr &block, const py::obj
   LoopContext loop_context{&loops_, header_block, nullptr};
   py::object body_node = python_adapter::GetPyObjAttr(node, "body");
   FunctionBlockPtr after_body = ParseStatements(body_block, body_node);
+  MS_EXCEPTION_IF_NULL(after_body->func_graph());
   if (after_body->func_graph()->get_return() == nullptr) {
     after_body->Jump(header_block, {});
   }
@@ -1348,12 +1377,14 @@ CNodePtr Parser::GenerateIteratorInFor(const FunctionBlockPtr &block, const py::
                                        const AnfNodePtr &op_iter) {
   py::object iter_node = python_adapter::GetPyObjAttr(node, "iter");
   AnfNodePtr iter_anf_node = ParseExprNode(block, iter_node);
+  MS_EXCEPTION_IF_NULL(block->func_graph());
   return block->func_graph()->NewCNodeInOrder({op_iter, iter_anf_node});
 }
 
 CNodePtr Parser::GenerateCondInFor(const ParameterPtr &iter_param, const FunctionBlockPtr &header_block,
                                    const AnfNodePtr &op_hasnext) {
   MS_EXCEPTION_IF_NULL(header_block);
+  MS_EXCEPTION_IF_NULL(header_block->func_graph());
   return header_block->func_graph()->NewCNodeInOrder({op_hasnext, iter_param});
 }
 
@@ -1394,6 +1425,7 @@ FunctionBlockPtr Parser::ParseFor(const FunctionBlockPtr &block, const py::objec
   AnfNodePtr op_len = block->MakeResolveSymbol(NAMED_PRIMITIVE_LEN);
   py::object iter_obj = python_adapter::GetPyObjAttr(node, NAMED_PRIMITIVE_ITER);
   AnfNodePtr iter_node = ParseExprNode(block, iter_obj);
+  MS_EXCEPTION_IF_NULL(block->func_graph());
   CNodePtr len_iter = block->func_graph()->NewCNodeInOrder({op_len, iter_node});
   CNodePtr bool_node = block->func_graph()->NewCNodeInOrder(
     {NewValueNode(prim::kPrimScalarLt), len_iter, NewValueNode(GetForTransToWhileLoop())});
@@ -1449,6 +1481,7 @@ FunctionBlockPtr Parser::ParseForIter(const FunctionBlockPtr &block, const py::o
   MS_EXCEPTION_IF_NULL(iter_apply);
   FunctionBlockPtr header_block = GenerateBlock(std::make_shared<TraceForHeader>(block->func_graph()->debug_info()));
   MS_EXCEPTION_IF_NULL(header_block);
+  MS_EXCEPTION_IF_NULL(header_block->func_graph());
   // Generate the hasnext apply which is a condition
   ParameterPtr iter_param = header_block->func_graph()->add_parameter();
   CNodePtr cond_apply = GenerateCondInFor(iter_param, header_block, op_hasnext);
@@ -1456,6 +1489,7 @@ FunctionBlockPtr Parser::ParseForIter(const FunctionBlockPtr &block, const py::o
   FunctionBlockPtr body_block = GenerateBlock(std::make_shared<TraceForBody>(block->func_graph()->debug_info()));
   MS_EXCEPTION_IF_NULL(body_block);
   body_block->AddPrevBlock(header_block);
+  MS_EXCEPTION_IF_NULL(body_block->func_graph());
   // Generate the iterator next apply
   // Process as following: `app = next(it); target = app[0]; it = app[1];`
   CNodePtr app = body_block->func_graph()->NewCNodeInOrder({op_next, iter_param});
@@ -1469,6 +1503,9 @@ FunctionBlockPtr Parser::ParseForIter(const FunctionBlockPtr &block, const py::o
 
   // Link the variable name with the target
   auto it_info = std::make_shared<TraceIterator>(target_app->debug_info());
+  MS_EXCEPTION_IF_NULL(iter_param->debug_info());
+  MS_EXCEPTION_IF_NULL(iter2_app->debug_info());
+  MS_EXCEPTION_IF_NULL(iter_apply->debug_info());
   iter_param->debug_info()->set_trace_info(it_info);
   iter2_app->debug_info()->set_trace_info(it_info);
   iter_apply->debug_info()->set_trace_info(it_info);
@@ -1489,6 +1526,7 @@ FunctionBlockPtr Parser::ParseForIter(const FunctionBlockPtr &block, const py::o
   LoopContext loop_context{&loops_, header_block, iter2_app};
   py::object body_node = python_adapter::GetPyObjAttr(node, "body");
   FunctionBlockPtr after_body_block = ParseStatements(body_block, body_node);
+  MS_EXCEPTION_IF_NULL(after_body_block->func_graph());
   if (after_body_block->func_graph()->get_return() == nullptr) {
     after_body_block->Jump(header_block, {iter2_app});
   }
@@ -1528,6 +1566,7 @@ FunctionBlockPtr Parser::ParseForLoop(const FunctionBlockPtr &block, const py::o
   py::object iter_obj = python_adapter::GetPyObjAttr(node, "iter");
   AnfNodePtr iter_node = ParseExprNode(block, iter_obj);
   MS_EXCEPTION_IF_NULL(iter_node);
+  MS_EXCEPTION_IF_NULL(block->func_graph());
   // Generate node for loop count and convert it to tensor, to make the loop not unroll
   CNodePtr scalar_len = block->func_graph()->NewCNodeInOrder({op_len, iter_node});
   auto scalar_to_tensor = prim::GetPythonOps("ScalarToTensor", "mindspore.ops.operations");
@@ -1537,6 +1576,7 @@ FunctionBlockPtr Parser::ParseForLoop(const FunctionBlockPtr &block, const py::o
 
   FunctionBlockPtr header_block = GenerateBlock(std::make_shared<TraceForHeader>(block->func_graph()->debug_info()));
   MS_EXCEPTION_IF_NULL(header_block);
+  MS_EXCEPTION_IF_NULL(header_block->func_graph());
   // Create loop variable 'i'
   ParameterPtr loop_var = header_block->func_graph()->add_parameter();
   // Create loop condition 'i < len(xs)'
@@ -1550,6 +1590,7 @@ FunctionBlockPtr Parser::ParseForLoop(const FunctionBlockPtr &block, const py::o
   body_block->AddPrevBlock(header_block);
   // Create 'x = xs[i]'
   auto body_func_graph = body_block->func_graph();
+  MS_EXCEPTION_IF_NULL(body_func_graph);
   CNodePtr target_var = body_func_graph->NewCNodeInOrder({op_getitem, iter_node, loop_var});
   WriteAssignVars(body_block, target_node, target_var);
   // Create 'i = i + 1'
@@ -1563,6 +1604,8 @@ FunctionBlockPtr Parser::ParseForLoop(const FunctionBlockPtr &block, const py::o
 
   // Link the variable name with the target
   auto it_info = std::make_shared<TraceIterator>(loop_var_inc->debug_info());
+  MS_EXCEPTION_IF_NULL(loop_var->debug_info());
+  MS_EXCEPTION_IF_NULL(len_iter->debug_info());
   loop_var->debug_info()->set_trace_info(it_info);
   len_iter->debug_info()->set_trace_info(it_info);
 
@@ -1585,6 +1628,7 @@ FunctionBlockPtr Parser::ParseForLoop(const FunctionBlockPtr &block, const py::o
   LoopContext loop_context{&loops_, header_block, loop_var_inc};
   py::object body_node = python_adapter::GetPyObjAttr(node, "body");
   FunctionBlockPtr after_body_block = ParseStatements(body_block, body_node);
+  MS_EXCEPTION_IF_NULL(after_body_block->func_graph());
   if (after_body_block->func_graph()->get_return() == nullptr) {
     after_body_block->Jump(header_block, {loop_var_inc});
   }
@@ -1611,6 +1655,7 @@ AnfNodePtr Parser::ParseIfExp(const FunctionBlockPtr &block, const py::object &n
 
   FunctionBlockPtr true_block = nullptr;
   FunctionBlockPtr false_block = nullptr;
+  MS_EXCEPTION_IF_NULL(block->func_graph());
   {
     TraceGuard guard(std::make_shared<TraceIfExpTrueBranch>(block->func_graph()->debug_info()));
     true_block = MakeFunctionBlock(*this);
@@ -1624,11 +1669,15 @@ AnfNodePtr Parser::ParseIfExp(const FunctionBlockPtr &block, const py::object &n
 
   // Process the if-true branch
   py::object bodyNode = python_adapter::GetPyObjAttr(node, "body");
+  MS_EXCEPTION_IF_NULL(true_block->func_graph());
+  MS_EXCEPTION_IF_NULL(true_block->func_graph()->debug_info());
   true_block->func_graph()->debug_info()->set_location(GetLocation(bodyNode));
   AnfNodePtr true_node = ParseExprNode(true_block, bodyNode);
 
   // Process the orelse branch
   py::object orelseNode = python_adapter::GetPyObjAttr(node, "orelse");
+  MS_EXCEPTION_IF_NULL(false_block->func_graph());
+  MS_EXCEPTION_IF_NULL(false_block->func_graph()->debug_info());
   false_block->func_graph()->debug_info()->set_location(GetLocation(orelseNode));
   AnfNodePtr false_node = ParseExprNode(false_block, orelseNode);
 
@@ -1648,11 +1697,13 @@ AnfNodePtr Parser::ParseIfExp(const FunctionBlockPtr &block, const py::object &n
 FunctionBlockPtr Parser::ParseListCompIter(const FunctionBlockPtr &block, const py::object &node,
                                            const py::object &generator_node) {
   // Create a header block.
+  MS_EXCEPTION_IF_NULL(block->func_graph());
   FunctionBlockPtr top_block = GenerateBlock(std::make_shared<TraceListComp>(block->func_graph()->debug_info()));
   // Handle iter attribute.
   py::object iter_node = python_adapter::GetPyObjAttr(generator_node, "iter");
   AnfNodePtr iter_anf_node = ParseExprNode(block, iter_node);
   AnfNodePtr op_iter = top_block->MakeResolveOperation(NAMED_PRIMITIVE_ITER);
+  MS_EXCEPTION_IF_NULL(top_block->func_graph());
   CNodePtr iter_apply = top_block->func_graph()->NewCNodeInOrder({op_iter, iter_anf_node});
 
   // Create header graph.
@@ -1662,9 +1713,11 @@ FunctionBlockPtr Parser::ParseListCompIter(const FunctionBlockPtr &block, const 
 
   // Create hasNext apply.
   AnfNodePtr op_hasnext = top_block->MakeResolveOperation(NAMED_PRIMITIVE_HASNEXT);
+  MS_EXCEPTION_IF_NULL(list_header_block->func_graph());
   ParameterPtr iter_param = list_header_block->func_graph()->add_parameter();
   constexpr auto iter_param_name = "iter";
   iter_param->set_name(iter_param_name);
+  MS_EXCEPTION_IF_NULL(iter_param->debug_info());
   iter_param->debug_info()->set_name(iter_param_name);
   CNodePtr cond_apply = list_header_block->func_graph()->NewCNodeInOrder({op_hasnext, iter_param});
 
@@ -1672,6 +1725,7 @@ FunctionBlockPtr Parser::ParseListCompIter(const FunctionBlockPtr &block, const 
   ParameterPtr list_param = list_header_block->func_graph()->add_parameter();
   constexpr auto list_param_name = "list";
   list_param->set_name(list_param_name);
+  MS_EXCEPTION_IF_NULL(list_param->debug_info());
   list_param->debug_info()->set_name(list_param_name);
   auto empty_list = std::vector<ValuePtr>();
   AnfNodePtr empty_list_node = NewValueNode(std::make_shared<ValueList>(empty_list));
@@ -1681,6 +1735,7 @@ FunctionBlockPtr Parser::ParseListCompIter(const FunctionBlockPtr &block, const 
   FunctionBlockPtr list_body_block = GenerateBlock(std::make_shared<TraceForBody>(block->func_graph()->debug_info()));
   list_body_block->AddPrevBlock(list_header_block);
   AnfNodePtr op_next = top_block->MakeResolveOperation(NAMED_PRIMITIVE_NEXT);
+  MS_EXCEPTION_IF_NULL(list_body_block->func_graph());
   CNodePtr next_apply = list_body_block->func_graph()->NewCNodeInOrder({op_next, iter_param});
   AnfNodePtr op_getitem = top_block->MakeResolveOperation(NAMED_PRIMITIVE_GETITEM);
   CNodePtr item_apply =
@@ -1699,6 +1754,7 @@ FunctionBlockPtr Parser::ParseListCompIter(const FunctionBlockPtr &block, const 
   FunctionBlockPtr list_after_block = GenerateBlock(std::make_shared<TraceForAfter>(block->func_graph()->debug_info()));
   list_after_block->AddPrevBlock(list_header_block);
   // Return the list in after graph.
+  MS_EXCEPTION_IF_NULL(list_after_block->func_graph());
   list_after_block->func_graph()->set_output(list_param);
 
   // Run the branches.
@@ -1731,6 +1787,7 @@ AnfNodePtr Parser::ParseListCompIfs(const FunctionBlockPtr &list_body_block, con
   AnfNodePtr elt_node = ParseExprNode(list_body_block, elt_obj);
   // Append the element.
   auto list_append_op = prim::kPrimListAppend;
+  MS_EXCEPTION_IF_NULL(list_body_block->func_graph());
   auto new_list = list_body_block->func_graph()->NewCNodeInOrder({NewValueNode(list_append_op), list_param, elt_node});
   // Return new list in true branch graph.
   if_true_block->func_graph()->set_output(new_list);
@@ -1740,6 +1797,7 @@ AnfNodePtr Parser::ParseListCompIfs(const FunctionBlockPtr &list_body_block, con
     GenerateBlock(std::make_shared<TraceIfStmtFalseBranch>(list_body_block->func_graph()->debug_info()));
   if_false_block->AddPrevBlock(list_body_block);
   // Return original list in false branch graph.
+  MS_EXCEPTION_IF_NULL(if_false_block->func_graph());
   if_false_block->func_graph()->set_output(list_param);
 
   // We don't want to create a header graph, where to get and wrap the result of Switch().
@@ -1790,6 +1848,7 @@ AnfNodePtr Parser::ParseListComp(const FunctionBlockPtr &block, const py::object
   auto call_function_node = NewValueNode(top_block->func_graph());
   std::vector<AnfNodePtr> func_call_nodes;
   func_call_nodes.push_back(call_function_node);
+  MS_EXCEPTION_IF_NULL(block->func_graph());
   AnfNodePtr output = block->func_graph()->NewCNodeInOrder(std::move(func_call_nodes));
   return output;
 }
@@ -1800,11 +1859,13 @@ void Parser::HandleAssignName(const FunctionBlockPtr &block, const py::object &t
   MS_EXCEPTION_IF_NULL(assigned_node);
   py::str name = python_adapter::GetPyObjAttr(target_object, "id");
   std::string name_id = name;
+  MS_EXCEPTION_IF_NULL(assigned_node->debug_info());
   assigned_node->debug_info()->set_name(name_id);
   // Set the debug name of the constant graph
   if (IsValueNode<FuncGraph>(assigned_node)) {
     // The value should be graph
     auto fg = GetValueNode<FuncGraphPtr>(assigned_node);
+    MS_EXCEPTION_IF_NULL(fg->debug_info());
     if (fg->debug_info()->name().empty()) {
       fg->debug_info()->set_name(name_id);
     }
@@ -1821,6 +1882,7 @@ void Parser::HandleAssignTuple(const FunctionBlockPtr &block, const py::object &
   for (size_t i = 0; i < items.size(); i++) {
     // Use the Primitive replace the operation resolve node (getitem),
     // because the getitem will eventually be converted to Primitive node
+    MS_EXCEPTION_IF_NULL(block->func_graph());
     CNodePtr item_apply =
       block->func_graph()->NewCNodeInOrder({op_getitem, assigned_node, NewValueNode(static_cast<int64_t>(i))});
 
@@ -1867,6 +1929,7 @@ void Parser::HandleAssignSubscript(const FunctionBlockPtr &block, const py::obje
   py::object slice_obj = python_adapter::GetPyObjAttr(target_object, "slice");
   AnfNodePtr value_node = ParseExprNode(block, value_obj);
   AnfNodePtr slice_node = ParseExprNode(block, slice_obj);
+  MS_EXCEPTION_IF_NULL(block->func_graph());
   CNodePtr setitem_app = block->func_graph()->NewCNodeInOrder({op_setitem, value_node, slice_node, assigned_node});
   // Getitem apply should return the sequence data structure itself
   std::string var_name;
@@ -1931,6 +1994,8 @@ void Parser::WriteAssignVars(const FunctionBlockPtr &block, const py::object &ta
 }
 
 void Parser::UpdateInterpretForUserNode(const AnfNodePtr &user_node, const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(user_node);
+  MS_EXCEPTION_IF_NULL(node);
   // Do not handle user node with internal type such as Tensor.abs().
   bool interpret_without_internal = IsPrimitiveCNode(node, prim::kPrimPyInterpret) && !node->interpret_internal_type();
   if (node->interpret() || interpret_without_internal) {
@@ -1952,6 +2017,7 @@ void Parser::UpdateInterpretForUserNode(const AnfNodePtr &user_node, const std::
 
 bool Parser::IsScriptInParams(const std::string &script_text, const py::dict &global_dict,
                               const std::vector<AnfNodePtr> &local_keys, const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(func_graph);
   // Check global parameters.
   if (global_dict.contains(script_text)) {
     MS_LOG(DEBUG) << "[" << func_graph->ToString() << "] Found `" << script_text << "` in global params.";
@@ -1978,6 +2044,7 @@ AnfNodePtr Parser::HandleInterpret(const FunctionBlockPtr &block, const AnfNodeP
   // The fallback feature is enabled in default.
   // Not support change the flag during the process is alive.
   static const auto use_fallback = (support_fallback() != "0");
+  MS_EXCEPTION_IF_NULL(value_node);
   if (!use_fallback || !value_node->interpret()) {
     return value_node;
   }
@@ -1987,6 +2054,8 @@ AnfNodePtr Parser::HandleInterpret(const FunctionBlockPtr &block, const AnfNodeP
 
 AnfNodePtr Parser::MakeInterpretNode(const FunctionBlockPtr &block, const AnfNodePtr &value_node,
                                      const string &script_text) {
+  MS_EXCEPTION_IF_NULL(block);
+  MS_EXCEPTION_IF_NULL(value_node);
   // Check if script_text is in global/local params.
   py::dict global_dict = block->global_py_params();
   auto [keys, values] = block->local_py_params();
@@ -2018,6 +2087,7 @@ AnfNodePtr Parser::MakeInterpretNode(const FunctionBlockPtr &block, const AnfNod
   auto local_dict_node = ParseDictByKeysAndValues(block, filter_keys, filter_values);
   // Update the valued node if it need interpreting.
   constexpr int recursive_level = 2;
+  MS_EXCEPTION_IF_NULL(block->func_graph());
   MS_LOG(INFO) << "[" << block->func_graph()->ToString() << "] script_text: `" << script_text
                << "`,\nvalue_node: " << value_node->DebugString(recursive_level)
                << ",\nglobal_dict_node: " << global_dict_node->ToString()
@@ -2061,6 +2131,7 @@ FunctionBlockPtr Parser::ParseBreak(const FunctionBlockPtr &block, const py::obj
   Loop &loop = loops_.top();
   if (loop.end == nullptr) {
     // Create end_block if it is not existed.
+    MS_EXCEPTION_IF_NULL(block->func_graph());
     TraceGuard trace_guard(std::make_shared<TraceLoopEnd>(block->func_graph()->debug_info()));
     loop.end = MakeFunctionBlock(*this);
   }
@@ -2347,6 +2418,7 @@ FuncGraphPtr MakeTopGraph(const py::object &cell, const ValuePtr &cell_ptr) {
   }
 
   auto func_graph = std::make_shared<FuncGraph>();
+  MS_EXCEPTION_IF_NULL(func_graph->debug_info());
   func_graph->debug_info()->set_name(current_graph->debug_info()->name() + "_wrapper");
   func_graph->debug_info()->set_location(current_graph->debug_info()->location());
 
@@ -2356,6 +2428,7 @@ FuncGraphPtr MakeTopGraph(const py::object &cell, const ValuePtr &cell_ptr) {
     auto orig_param = para->cast<ParameterPtr>();
     auto name = orig_param->name();
     param->set_name(name);
+    MS_EXCEPTION_IF_NULL(param->debug_info());
     param->debug_info()->set_name(name);
     param->debug_info()->set_location(param->debug_info()->location());
     param->set_is_top_graph_param(true);
@@ -2377,6 +2450,8 @@ FuncGraphPtr MakeTopGraph(const py::object &cell, const ValuePtr &cell_ptr) {
   }
 
   auto unpacking = func_graph->has_vararg() || func_graph->has_kwarg();
+  MS_EXCEPTION_IF_NULL(current_graph->get_return());
+  MS_EXCEPTION_IF_NULL(current_graph->get_return()->debug_info());
   if (!unpacking) {
     std::vector<AnfNodePtr> inputs;
     inputs.emplace_back(NewValueNode(cell_ptr));

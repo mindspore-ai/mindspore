@@ -345,7 +345,7 @@ MsBackend::MsBackend(const std::string &name, const std::string &target, uint32_
   convert_fn_ = std::bind(&MsBackend::MsConvert, this, std::placeholders::_1, std::placeholders::_2);
   target_sess_ = session::SessionFactory::Get().Create(target);
   if (target_sess_ == nullptr) {
-    MS_LOG(EXCEPTION) << "Session create failed!, please make sure target device:" << target << " is available.";
+    MS_LOG(EXCEPTION) << "Session create failed! Please make sure target device:" << target << " is available.";
   }
   target_sess_->Init(device_id);
 #ifndef ENABLE_SECURITY
@@ -360,7 +360,7 @@ void MsBackend::CreateOtherSession(const std::string &target) {
   }
   other_sess_ = session::SessionFactory::Get().Create(target);
   if (other_sess_ == nullptr) {
-    MS_LOG(EXCEPTION) << "Session create failed!, please make sure target device:" << target << " is available.";
+    MS_LOG(EXCEPTION) << "Session create failed! Please make sure target device:" << target << " is available.";
   }
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
@@ -739,7 +739,7 @@ bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &graph_output, const Vec
 
     auto it = std::find(params.begin(), params.end(), graph_output);
     if (it == params.end()) {
-      MS_EXCEPTION(UnknownError) << "When graph output is Parameter,  it should be found in graph parameters";
+      MS_EXCEPTION(UnknownError) << "When graph output is Parameter, it should be found in graph parameters";
     }
     size_t index = it - params.cbegin();
     if (index >= args.size()) {

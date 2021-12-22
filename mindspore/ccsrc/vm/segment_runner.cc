@@ -117,7 +117,7 @@ std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> TransformSegmentToAnfGr
     if (!IsValueNode<Primitive>(inps[0]) &&
         !(IsValueNode<FuncGraph>(inps[0]) &&
           inps[0]->cast<ValueNodePtr>()->value()->cast<FuncGraphPtr>()->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL))) {
-      MS_LOG(EXCEPTION) << "Input[0] Must be a Primitive ValueNode";
+      MS_LOG(EXCEPTION) << "Input[0] must be a Primitive ValueNode";
     }
     auto fn = inps[0];
     std::vector<AnfNodePtr> args{fn};
