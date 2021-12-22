@@ -646,7 +646,8 @@ void TbeKernelCompileManager::DistributeCompileTask(const std::vector<CNodePtr> 
     kernel_json.clear();
     auto full_name = node->fullname_with_scope();
     if ((full_name_to_json_name_.find(full_name) != full_name_to_json_name_.end()) &&
-        tbe::TbeUtils::SearchCache(full_name_to_json_name_[full_name], false) != nullptr) {
+        tbe::TbeUtils::SearchCache(full_name_to_json_name_[full_name], false, is_tune_flag_, op_debug_level_) !=
+          nullptr) {
       continue;  // skip fusion ops
     }
     if (AnfAlgo::GetKernelMod(node) != nullptr && !is_tune_flag_) {
@@ -665,7 +666,7 @@ void TbeKernelCompileManager::DistributeCompileTask(const std::vector<CNodePtr> 
         continue;  // same op no need build
       }
       (void)single_processed_kernels_.insert(json_name);
-      if (!is_tune_flag_ && op_debug_level_ != "1" && tbe::TbeUtils::SearchCache(json_name, false) != nullptr) {
+      if (tbe::TbeUtils::SearchCache(json_name, false, is_tune_flag_, op_debug_level_) != nullptr) {
         continue;  // cache exist, no need build
       }
     }
@@ -742,7 +743,7 @@ JsonNameMap TbeKernelCompileManager::TbeFusionOpCompile(const std::vector<Fusion
       continue;  // same op no need build
     }
     (void)fusion_processed_kernels_.insert(json_name);
-    if (!is_tune_flag_ && op_debug_level_ != "1" && tbe::TbeUtils::SearchCache(json_name, false) != nullptr) {
+    if (tbe::TbeUtils::SearchCache(json_name, false, is_tune_flag_, op_debug_level_) != nullptr) {
       continue;  // cache exist, no need build
     }
     build_json.clear();
