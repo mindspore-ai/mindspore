@@ -56,6 +56,7 @@
 #include "tools/optimizer/fusion/scale_activation_fusion.h"
 #include "tools/optimizer/fusion/scale_scale_fusion.h"
 #include "tools/optimizer/fusion/fullconnected_fusion.h"
+#include "tools/optimizer/fusion/add_concat_activation_fusion.h"
 #include "tools/optimizer/graph/add_tensor_array.h"
 #include "tools/optimizer/graph/redundant_op_remove_pass.h"
 #include "tools/optimizer/graph/clip_convert_activation_pass.h"
@@ -178,6 +179,7 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const converter::
 
   // The training model only does the fusion of the inference part
   // remove quantdtype when awaretraining
+  fusion_pm->AddPass(std::make_shared<opt::AddConcatActivationFusion>());
   fusion_pm->AddPass(std::make_shared<opt::SqueezeFusion>());
   fusion_pm->AddPass(std::make_shared<opt::TransposeFusion>());
   fusion_pm->AddPass(std::make_shared<opt::ReshapeReshapeFusion>());
