@@ -162,8 +162,7 @@ class EnvGetItemEliminater : public AnfVisitor {
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
     PatternNode c1, c2, y;
     MATCH_REPLACE_IF(node, PPrimitive(prim::kPrimEnvGetItem, c1, c2, y), y,
-                     (IsValueNode<EnvInstance>(c1.GetNode(node)) && IsVNode(c2.GetNode(node)) &&
-                      (GetValueNode<EnvInstancePtr>(c1.GetNode(node)))->Len() == 0));
+                     (IsValueNode<EnvInstance>(c1.GetNode(node)) && IsVNode(c2.GetNode(node))));
     return nullptr;
   }
 };

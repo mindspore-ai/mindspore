@@ -107,7 +107,7 @@ class EnvInstance : public Value {
  public:
   friend std::ostream &operator<<(std::ostream &out, const std::shared_ptr<EnvInstance> &env);
 
-  explicit EnvInstance(const EnvInstanceContentsMap &contents = {}) : contents_(contents) {}
+  EnvInstance() = default;
   ~EnvInstance() override = default;
   MS_DECLARE_PARENT(EnvInstance, Value);
   abstract::AbstractBasePtr ToAbstract() override {
@@ -115,53 +115,14 @@ class EnvInstance : public Value {
   }
   bool operator==(const EnvInstance &other) const;
   bool operator==(const Value &other) const override;
-  EnvInstance(const EnvInstance &v) : Value(v), contents_(v.contents_) {}
+  EnvInstance(const EnvInstance &v) : Value(v) {}
   EnvInstance(EnvInstance &&v) = default;
-  EnvInstance &operator=(EnvInstance &&src) noexcept {
-    if (&src != this) {
-      contents_ = src.contents_;
-    }
-    return *this;
-  };
+  EnvInstance &operator=(EnvInstance &&src) noexcept { return *this; };
 
-  // Get the sensitivity list for the given key
-  const Any &Get(const SymbolicKeyInstancePtr &key, const Any &def) const {
-    auto iterator = contents_.find(key);
-    if (iterator != contents_.end()) {
-      return iterator->second;
-    }
-    return def;
-  }
-
-  // Set a value for the given key.
-  EnvInstance Set(const SymbolicKeyInstancePtr &key, const Any &value) const {
-    EnvInstance rval(contents_);
-    rval.contents_[key] = value;
-    return rval;
-  }
-
-  // Add two EnvInstances.
-  EnvInstance Add(const EnvInstance &other) const {
-    EnvInstance rval(contents_);
-    for (auto iter_other : other.contents_) {
-      auto item_self = contents_.find(iter_other.first);
-      if (item_self != contents_.end()) {
-        MS_LOG(DEBUG) << "Need to use add";
-      } else {
-        rval.contents_[iter_other.first] = iter_other.second;
-      }
-    }
-    return rval;
-  }
-
-  size_t Len() const { return contents_.size(); }
   std::size_t hash() const override {
     // deterministic characteristic of member variables.
-    return Len();
+    return tid();
   }
-
- private:
-  EnvInstanceContentsMap contents_;
 };
 
 using EnvInstancePtr = std::shared_ptr<EnvInstance>;
