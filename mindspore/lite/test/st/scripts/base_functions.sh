@@ -136,7 +136,7 @@ function Run_Benchmark() {
   # $1:cfgFileList; $2:modelPath; $3:dataPath; $4:logFile; $5:resultFile; $6:platform; $7:processor; $8:phoneId; $9:failNotReturn;
   local cfg_file_list cfg_file_name line_info model_info spec_acc_limit model_name input_num input_shapes spec_threads \
         extra_info benchmark_mode infix mode model_file input_files output_file data_path threads acc_limit enableFp16 \
-        run_result cfg_file
+        run_result cfg_file input_data_mode enableGLTexture
   cfg_file_list=$1
   for cfg_file in ${cfg_file_list[*]}; do
     cfg_file_name=${cfg_file##*/}
@@ -164,6 +164,11 @@ function Run_Benchmark() {
       mode="fp32"
       if [[ ${cfg_file_name} =~ "fp16" ]]; then
         mode="fp16"
+      fi
+      # adjust input data mode
+      input_data_mode="cpu"
+      if [[ ${cfg_file_name} =~ "gl_texture" ]]; then
+        input_data_mode="opengl"
       fi
       # adjust file name
       infix=""
@@ -211,6 +216,12 @@ function Run_Benchmark() {
       if [[ ${mode} == "fp16" ]]; then
         enableFp16="true"
       fi
+      # whether enable gl texture
+      enableGLTexture="false"
+      if [[ ${input_data_mode} == "opengl" ]]; then
+        enableGLTexture="true"
+      fi
+      
       if [[ $6 == "arm64" && ${extra_info} =~ "need_loop" ]]; then
         benchmark_mode="calib+loop"
       fi
@@ -222,7 +233,7 @@ function Run_Benchmark() {
           echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
           echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test' >> adb_run_cmd.txt
           echo './benchmark --modelFile='${model_file}' --inDataFile='${input_files}' --inputShapes='${input_shapes}' --benchmarkDataFile='${output_file}' --enableFp16='${enableFp16}' --accuracyThreshold='${acc_limit}' --device='$7' --numThreads='${threads} >> adb_run_cmd.txt
-          echo './benchmark --modelFile='${model_file}' --inDataFile='${input_files}' --inputShapes='${input_shapes}' --benchmarkDataFile='${output_file}' --enableFp16='${enableFp16}' --accuracyThreshold='${acc_limit}' --device='$7' --numThreads='${threads}>> $4
+          echo './benchmark --modelFile='${model_file}' --inDataFile='${input_files}' --inputShapes='${input_shapes}' --benchmarkDataFile='${output_file}' --enableFp16='${enableFp16}' --accuracyThreshold='${acc_limit}' --device='$7' --numThreads='${threads} >> $4
           cat adb_run_cmd.txt >> "$4"
           adb -s $8 shell < adb_run_cmd.txt >> "$4"
         else
@@ -262,6 +273,29 @@ function Run_Benchmark() {
             if [[ $9 != "ON" ]]; then
                 return 1
             fi
+        fi
+      fi
+      # run benchmark with enable gl_texture
+      if [[ ${input_data_mode} == "opengl" ]]; then
+        echo "$6 $7 ${mode} run gl texture: ${model_name}, accuracy limit:${acc_limit}" >> "$4"
+        if [[ $6 == "arm64" ]]; then
+          echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
+          echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test' >> adb_run_cmd.txt
+          echo './benchmark --modelFile='${model_file}' --inDataFile='${input_files}' --inputShapes='${input_shapes}' --benchmarkDataFile='${output_file}' --enableFp16='${enableFp16}' --enableGLTexture='${enableGLTexture}' --accuracyThreshold='${acc_limit}' --device='$7' --numThreads='${threads} >> adb_run_cmd.txt
+          echo './benchmark --modelFile='${model_file}' --inDataFile='${input_files}' --inputShapes='${input_shapes}' --benchmarkDataFile='${output_file}' --enableFp16='${enableFp16}' --enableGLTexture='${enableGLTexture}' --accuracyThreshold='${acc_limit}' --device='$7' --numThreads='${threads} >> $4
+          cat adb_run_cmd.txt >> "$4"
+          adb -s $8 shell < adb_run_cmd.txt >> "$4"
+        else
+          echo 'MSLITE_BENCH_INPUT_NAMES=${input_names} ./benchmark --modelFile='${model_file}' --inDataFile='${input_files}' --inputShapes='${input_shapes}' --benchmarkDataFile='${output_file}' --accuracyThreshold='${acc_limit}' --numThreads='${threads} >> "$4"
+          MSLITE_BENCH_INPUT_NAMES=${input_names} ./benchmark --modelFile=${model_file} --inDataFile=${input_files} --inputShapes=${input_shapes} --benchmarkDataFile=${output_file} --accuracyThreshold=${acc_limit} --numThreads=${threads} >> "$4"
+        fi
+        if [ $? = 0 ]; then
+          run_result="$6_$7_${mode}: ${model_file##*/} pass"; echo ${run_result} >> $5
+        else
+          run_result="$6_$7_${mode}: ${model_file##*/} failed"; echo ${run_result} >> $5
+          if [[ $9 != "ON" ]]; then
+              return 1
+          fi
         fi
       fi
     done < ${cfg_file}

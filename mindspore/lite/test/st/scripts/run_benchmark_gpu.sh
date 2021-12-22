@@ -15,7 +15,12 @@ function Run_Converter() {
     mkdir -p ${ms_models_path}
 
     # Prepare the config file list
-    local cfg_file_list=("$models_gpu_fp32_config" "$models_gpu_weightquant_config")
+    backend=${backend:-"all"}
+    if [[ $backend == "gpu_gl_texture" ]]; then
+        local cfg_file_list=("$models_gpu_gl_texture_fp32_config")
+    else
+        local cfg_file_list=("$models_gpu_fp32_config" "$models_gpu_weightquant_config")
+    fi
     # Convert models:
     # $1:cfgFileList; $2:inModelPath; $3:outModelPath; $4:logFile; $5:resultFile;
     Convert "${cfg_file_list[*]}" $models_path $ms_models_path $run_converter_log_file $run_converter_result_file $gpu_fail_not_return
@@ -24,7 +29,13 @@ function Run_Converter() {
 # Run on gpu platform:
 function Run_gpu() {
     # Prepare the config file list
-    local gpu_cfg_file_list=("$models_gpu_fp32_config" "$models_gpu_fp16_config" "$models_gpu_weightquant_config")
+    backend=${backend:-"all"}
+    if [[ $backend == "gpu_gl_texture" ]]; then
+        local gpu_cfg_file_list=("$models_gpu_gl_texture_fp32_config")
+    else
+        local gpu_cfg_file_list=("$models_gpu_fp32_config" "$models_gpu_fp16_config" "$models_gpu_weightquant_config")
+    fi
+    
     # Run converted models:
     # $1:cfgFileList; $2:modelPath; $3:dataPath; $4:logFile; $5:resultFile; $6:platform; $7:processor; $8:phoneId;
     Run_Benchmark "${gpu_cfg_file_list[*]}" . '/data/local/tmp' $run_gpu_log_file $run_benchmark_result_file 'arm64' 'GPU' $device_id $gpu_fail_not_return
@@ -128,6 +139,7 @@ version=${file_name_array[2]}
 # Set models config filepath
 models_gpu_fp32_config=${basepath}/../config/models_gpu_fp32.cfg
 models_gpu_fp16_config=${basepath}/../config/models_gpu_fp16.cfg
+models_gpu_gl_texture_fp32_config=${basepath}/../config/models_gpu_gl_texture_fp32.cfg
 models_gpu_weightquant_config=${basepath}/../config/models_weightquant_8bit_gpu.cfg
 models_mindrt_parallel_config=${basepath}/../config/models_mindrt_parallel.cfg
 
@@ -175,7 +187,7 @@ Push_Files $arm64_path "aarch64" $version $benchmark_test_path "adb_push_log.txt
 
 backend=${backend:-"all"}
 isFailed=0
-if [[ $backend == "all" || $backend == "gpu" ]]; then
+if [[ $backend == "all" || $backend == "gpu" || $backend == "gpu_gl_texture" ]]; then
     # Run on gpu
     echo "start Run gpu ..."
     Run_gpu
@@ -201,7 +213,7 @@ if [[ $backend == "all" || $backend == "gpu" || $backend == "cropper" ]]; then
     # sleep 1
 fi
 
-if [[ $backend == "all" || $backend == "gpu" ]]; then
+if [[ $backend == "all" || $backend == "gpu" || $backend == "gpu_gl_texture" ]]; then
     # wait ${Run_gpu_PID}
     # Run_gpu_status=$?
     if [[ ${Run_gpu_status} != 0 ]];then
