@@ -2172,3 +2172,44 @@ void MatVecMulRowxColKernel(float *dst, const float *src, const float *weight, c
 }
 #endif
 #endif
+
+void GemmIsNotPack(const float *a, const float *b, float *c, const float *bias, int row) {
+  int index = 0;
+#ifdef ENABLE_AVX512
+  __m512 b_data16 = _mm512_set1_ps(b[0]);
+  __m512 bias_data16 = _mm512_set1_ps(bias[0]);
+#endif
+#ifdef ENABLE_AVX
+  __m256 b_data8 = _mm256_set1_ps(b[0]);
+  __m256 bias_data8 = _mm256_set1_ps(bias[0]);
+#endif
+#if defined(ENABLE_SSE) || defined(ENABLE_ARM)
+  MS_FLOAT32X4 b_data4 = MS_MOVQ_F32(b[0]);
+  MS_FLOAT32X4 bias_data4 = MS_MOVQ_F32(bias[0]);
+#endif
+
+#ifdef ENABLE_AVX512
+  for (; index < row - C16NUM; index += C16NUM) {
+    __m512 a_data = _mm512_loadu_ps(a + index);
+    _mm512_storeu_ps(c + index, b_data16 * a_data + bias_data16);
+  }
+#endif
+
+#ifdef ENABLE_AVX
+  for (; index < row - C8NUM; index += C8NUM) {
+    __m256 a_data = _mm256_loadu_ps(a + index);
+    _mm256_storeu_ps(c + index, b_data8 * a_data + bias_data8);
+  }
+#endif
+
+#if defined(ENABLE_SSE) || defined(ENABLE_ARM)
+  for (; index < row - C4NUM; index += C4NUM) {
+    MS_FLOAT32X4 a_data = MS_LDQ_F32(a + index);
+    MS_STQ_F32(c + index, b_data4 * a_data + bias_data4);
+  }
+#endif
+
+  for (; index < row; ++index) {
+    c[index] = a[index] * b[0] + bias[0];
+  }
+}
