@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "backend/optimizer/ascend/buffer_fusion/segment_eltwise_fusion_pass.h"
+#include <vector>
 #include "backend/kernel_compiler/kernel_fusion.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "base/core_ops.h"

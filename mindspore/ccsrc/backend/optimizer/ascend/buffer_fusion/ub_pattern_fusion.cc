@@ -20,6 +20,7 @@
 #include <memory>
 #include <string>
 #include "utils/hash_map.h"
+#include "backend/kernel_compiler/common_utils.h"
 #include "backend/kernel_compiler/tbe/tbe_kernel_compile.h"
 #include "backend/kernel_compiler/tbe/tbe_utils.h"
 #include "debug/anf_ir_dump.h"
@@ -50,7 +51,7 @@ void DumpFusionScopeInfo(const kernel::FusionScopeInfo &info) {
   }
   for (auto &node : info.compute_nodes) {
     MS_LOG(INFO) << "=== Compute: (" << node->DebugString() << ")-("
-                 << mindspore::kekernel::tbe::GetFusionTypeName(AnfAlgo::GetFusionType(node)) << ")";
+                 << mindspore::kernel::GetFusionNameByType(AnfAlgo::GetFusionType(node)) << ")";
   }
   MS_LOG(INFO) << "=== Dump FusionScopeInfo end";
 }
