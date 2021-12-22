@@ -1966,10 +1966,6 @@ class SquaredDifference(_MathBinaryOp):
         [1. 4. 9.]
     """
 
-    def infer_dtype(self, x_dtype, y_dtype):
-        valid_type = [mstype.float16, mstype.float32, mstype.float64, mstype.int32]
-        return _MathBinaryOp.do_infer_dtype(x_dtype, y_dtype, valid_type, self.name)
-
 
 class Square(Primitive):
     """

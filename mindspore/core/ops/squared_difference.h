@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ class MS_CORE_API SquaredDifference : public PrimitiveC {
 };
 AbstractBasePtr SquaredDifferenceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                        const std::vector<AbstractBasePtr> &input_args);
+using kPrimSquaredDifferencePtr = std::shared_ptr<SquaredDifference>;
 }  // namespace ops
 }  // namespace mindspore
 

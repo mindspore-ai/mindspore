@@ -222,6 +222,7 @@ from .softmax_grad_ext import _softmax_grad_ext_tbe
 from .square import _square_tbe
 from .square_ds import _square_ds_tbe
 from .squared_difference import _squared_difference_tbe
+from .squared_difference_ds import _squared_difference_ds_tbe
 from .sqrt import _sqrt_tbe
 from .sqrt_ds import _sqrt_ds_tbe
 from .sparse_apply_ftrl_d import _sparse_apply_ftrl_d
