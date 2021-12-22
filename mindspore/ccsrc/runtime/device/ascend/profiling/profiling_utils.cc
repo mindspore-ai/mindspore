@@ -369,14 +369,14 @@ void ProfilingUtils::InsertProfilingTraceIterEnd(const AnfNodePtr &anf_node,
 void ProfilingUtils::SetGraphKernelName(uint32_t graph_id, const std::vector<std::string> &kernel_names) {
   auto ret = graph_kernel_name_.try_emplace(graph_id, kernel_names);
   if (!ret.second) {
-    MS_LOG(ERROR) << "[profiling]graph " << graph_id << " kernel names already exist";
+    MS_LOG(WARNING) << "[profiling] graph " << graph_id << " kernel names already exist";
   }
 }
 
 void ProfilingUtils::SetGraphProfilingCNode(uint32_t graph_id, const std::vector<CNodePtr> &profiling_cnode_list) {
   auto ret = graph_profiling_cnode_.try_emplace(graph_id, profiling_cnode_list);
   if (!ret.second) {
-    MS_LOG(ERROR) << "[profiling]graph " << graph_id << " profiling cnode list already exist";
+    MS_LOG(WARNING) << "[profiling] graph " << graph_id << " profiling cnode list already exist";
   }
 }
 
@@ -400,8 +400,8 @@ void ProfilingUtils::ReportProfilingData(const std::vector<uint32_t> &task_ids, 
                                          uint32_t graph_id) {
   auto ret = graph_profiling_cnode_.find(graph_id);
   if (ret == graph_profiling_cnode_.end()) {
-    MS_LOG(ERROR) << "Graph id not found in graph_profiling_cnode_, graph id is " << graph_id
-                  << ", will not report this graph profiling data.";
+    MS_LOG(WARNING) << "Graph id not found in graph_profiling_cnode_, graph id is " << graph_id
+                    << ", will not report this graph profiling data.";
     return;
   }
 
@@ -415,8 +415,8 @@ void ProfilingUtils::ReportProfilingData(const std::vector<uint32_t> &task_ids, 
   // Report profiling point
   auto point_iter = graph_point_.find(graph_id);
   if (point_iter == graph_point_.end()) {
-    MS_LOG(ERROR) << "Graph id not found in graph_point, will not report this graph step point data, graph id is: "
-                  << graph_id;
+    MS_LOG(WARNING) << "Graph id not found in graph_point, will not report this graph step point data, graph id is: "
+                    << graph_id;
     return;
   }
   reporter.ReportStepPoint(point_iter->second);

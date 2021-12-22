@@ -49,6 +49,11 @@ from mindspore.nn.cell import Cell
 INIT_OP_NAME = 'Default/InitDataSetQueue'
 
 
+def deprecated(name, version):
+    msg = f"The {name} is deprecated from MindSpore {version} and will be removed in a future version."
+    logger.warning(msg)
+
+
 def _environment_check():
     if c_expression.security.enable_security():
         raise RuntimeError("Profiler is not supported if compiled with \'-s on\'")
@@ -58,9 +63,7 @@ def _environment_check():
 
 
 class ProfileOption(Enum):
-    """
-    Profile Option Enum which be used in Profiler.profile.
-    """
+    """This Class is deprecated. Profile Option Enum which be used in Profiler.profile."""
     trainable_parameters = 0
 
 
@@ -74,15 +77,19 @@ class Profiler:
 
     Args:
         output_path (str): Output data path.
-        optypes_not_deal (str): (Ascend only) Op type names, determine the data of which optype should be collected
-            and analysed, will deal with all op if null. Different op types should be separated by comma.
-        ascend_job_id (str): (Ascend only) The directory where the profiling files to be parsed are located.
-            This parameter is used to support offline parsing.
+        optypes_not_deal (str): This parameter is deprecated. (Ascend only) Op type names, determine the data of
+            which optype should be collected and analysed, will deal with all op if null.
+            Different op types should be separated by comma.
+        ascend_job_id (str): This parameter is deprecated. (Ascend only) The directory where the profiling files
+            to be parsed are located. This parameter is used to support offline parsing.
         profile_communication (bool): Whether to collect communication performance data in a multi devices training,
             collect when True. Default is False. Setting this parameter has no effect during single device training.
         profile_memory (bool): Whether to collect tensor memory data, collect when True. Default is False.
         start_profile (bool): The start_profile parameter controls whether to enable or disable performance data
             collection based on conditions. The default value is True.
+
+    Raises:
+        RuntimeError: If ascend_job_id is transferred with data that does not match the current MindSpore version.
 
     Examples:
         >>> import numpy as np
@@ -229,6 +236,8 @@ class Profiler:
 
     def _parse_parameter_for_ascend(self, **kwargs):
         """Parse parameter in Proflier when the device target is Ascend."""
+        if 'optypes_not_deal' in kwargs:
+            deprecated('optypes_not_deal', '1.6')
         optypes_not_deal = kwargs.pop("optypes_not_deal", "Variable")
         if not isinstance(optypes_not_deal, str):
             raise TypeError("The parameter optypes_not_deal must be str.")
@@ -236,6 +245,7 @@ class Profiler:
 
         self._ascend_job_id = kwargs.pop("ascend_job_id", "")
         if self._ascend_job_id:
+            deprecated('ascend_job_id', '1.6')
             self._ascend_job_id = validate_and_normalize_path(self._ascend_job_id)
             if not os.path.exists(self._ascend_job_id):
                 msg = f"Invalid ascend_job_id: {self._ascend_job_id}, Please pass the absolute path of the JOB dir"
@@ -940,7 +950,7 @@ class Profiler:
         Returns:
             dict, the key is the option name, the value is the result of option.
         """
-        result = dict()
+        deprecated('profile', '1.6')
         if not profile_option:
             raise ValueError("The parameter profile_option must pass a value using ProfileOption.")
 
