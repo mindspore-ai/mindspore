@@ -757,7 +757,7 @@ class MS_API RandomCropWithBBox final : public TensorTransform {
   ///     auto random_op = vision::RandomCropWithBBox({224, 224}, {0, 0, 0, 0});
   ///
   ///     /* dataset is an instance of Dataset object */
-  ///     dataset = dataset->Map({decode_op, random_op},  // operations
+  ///     dataset = dataset->Map({random_op},             // operations
   ///                            {"image", "bbox"});      // input columns
   /// \endcode
   explicit RandomCropWithBBox(std::vector<int32_t> size, std::vector<int32_t> padding = {0, 0, 0, 0},
