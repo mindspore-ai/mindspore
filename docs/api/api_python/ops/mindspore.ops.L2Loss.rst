@@ -1,14 +1,14 @@
 mindspore.ops.L2Loss
 ====================
 
-.. py:class:: mindspore.ops.L2Loss(*args, **kwargs)
+.. py:class:: mindspore.ops.L2Loss()
 
-    计算Tensor的L2范数的一半，不对结果进行开方。
+    用于计算L2范数，但不对结果进行开方操作。
 
-    把 `input_x` 设为x，输出设为loss。
+    把输入设为x，输出设为loss。
 
     .. math::
-        loss = sum(x ** 2) / 2
+        loss = \frac{\sum x ^ 2}{2}
 
     **输入：**
 
@@ -16,7 +16,7 @@ mindspore.ops.L2Loss
 
     **输出：**
 
-    Tensor，具有与 `input_x` 相同的数据类型。输出Tensor是loss的值，是一个scalar Tensor。
+    Tensor，具有与 `input_x` 相同的数据类型的Scalar Tensor。
 
     **异常：**
 

@@ -1,9 +1,9 @@
 mindspore.ops.Reshape
 ======================
 
-.. py:class:: mindspore.ops.Reshape(*args, **kwargs)
+.. py:class:: mindspore.ops.Reshape()
 
-    基于给定的shape，使用相同的值对输入Tensor进行reshape操作。
+    基于给定的shape，对输入Tensor进行重新排列。
 
     `input_shape` 最多只能有一个-1，在这种情况下，它可以从剩余的维度和输入的元素个数中推断出来。
 
@@ -18,7 +18,7 @@ mindspore.ops.Reshape
 
     **异常：**
 
-    - **ValueError** - 给定的 `input_shape`，如果它有几个-1，或者除-1（若存在）之外的元素的乘积小于或等于0，或者无法被输入Tensor的shape的乘积相除，或者与输入的数组大小不匹配。
+    - **ValueError** - 给定的 `input_shape`，如果它有多个-1，或者除-1（若存在）之外的元素的乘积小于或等于0，或者无法被输入Tensor的shape的乘积整除，或者与输入的数组大小不匹配。
 
     **支持平台：**
 

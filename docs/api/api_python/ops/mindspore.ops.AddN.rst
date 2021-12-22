@@ -1,15 +1,15 @@
 mindspore.ops.AddN
 ===================
 
-.. py:class:: mindspore.ops.AddN(*args, **kwargs)
+.. py:class:: mindspore.ops.AddN()
 
-    按元素将所有输入的Tensor相加。
+    逐元素将所有输入的Tensor相加。
 
     所有输入Tensor必须具有相同的shape。
 
     **输入：**
 
-    - **x** (Union(tuple[Tensor], list[Tensor])) - 输入tuple或list由多个Tensor组成，其数据类型为Number或bool，用于相加。
+    - **x** (Union(tuple[Tensor], list[Tensor])) - Tensor组成的tuble或list，类型为 `bool_ <https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.html#mindspore.dtype>`_ 或 `number <https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.html#mindspore.dtype>`_ 。
 
     **输出：**
 
@@ -18,6 +18,7 @@ mindspore.ops.AddN
     **异常：**
 
     - **TypeError** - `x` 既不是tuple，也不是list。
+    - **ValueError** - `x` 中存在shape不同的Tensor。
 
     **支持平台：**
 

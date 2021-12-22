@@ -1,7 +1,7 @@
 mindspore.ops.GeLU
 ==================
 
-.. py:class:: mindspore.ops.GeLU(*args, **kwargs)
+.. py:class:: mindspore.ops.GeLU()
 
     高斯误差线性单元激活函数（Gaussian Error Linear Units activation function）。
 
@@ -11,13 +11,13 @@ mindspore.ops.GeLU
     GeLU函数定义如下：
 
     .. math::
-        \text{output} = 0.5 * x * (1 + tanh(x / \sqrt{2})),
+        GELU(x_i) = x_i*P(X < x_i)
 
-    其中 :math:`tanh` 是双曲正切函数。
+    其中  :math:`P` 是标准高斯分布的累积分布函数， :math:`x_i` 是输入的元素。
 
     **输入：**
 
-    - **x** (Tensor) - 用于计算GeLU函数的Tensor，数据类型为float16或float32。
+    - **x** (Tensor) - 激活函数GeLU的输入，数据类型为float16或float32。
 
     **输出：**
 

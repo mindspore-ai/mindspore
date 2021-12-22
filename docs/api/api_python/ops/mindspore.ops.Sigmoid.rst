@@ -1,11 +1,11 @@
 mindspore.ops.Sigmoid
 =====================
 
-.. py:class:: mindspore.ops.Sigmoid(*args, **kwargs)
+.. py:class:: mindspore.ops.Sigmoid()
 
     Sigmoid激活函数。
 
-    按元素计算输入的Sigmoid函数。Sigmoid函数定义为：
+    逐元素计算Sgmoid激活函数。Sigmoid函数定义为：
 
     .. math::
 
@@ -15,7 +15,7 @@ mindspore.ops.Sigmoid
 
     **输入：**
 
-    - **input_x** (Tensor) - shape为 :math:`(N, *)` 的tensor，其中， :math:`*` 表示任意的附加维度数，数据类型为float16或float32。
+    - **input_x** (Tensor) - 任意维度的Tensor，数据类型为float16或float32。
 
     **输出：**
 

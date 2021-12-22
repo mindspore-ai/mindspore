@@ -28,7 +28,7 @@ mindspore.ops.matmul
     **异常：**
 
     - **TypeError** - `transpose_a` 或 `transpose_b` 不是bool。
-    - **ValueError** - 矩阵 `a` 的维度的列不等于矩阵 `b` 的维度的行。
+    - **ValueError** - 矩阵 `a` 的列不等于矩阵 `b` 的行。
     - **ValueError** - `a` 或 `b` 的维度不等于2。
 
     **支持平台：**

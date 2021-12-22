@@ -1,9 +1,9 @@
 mindspore.ops.Erf
 =================
 
-.. py:class:: mindspore.ops.Erf(*args, **kwargs)
+.. py:class:: mindspore.ops.Erf()
 
-    按元素计算 `x` 的高斯误差函数。
+    逐元素计算 `x` 的高斯误差函数。
 
     .. math::
 
@@ -11,7 +11,7 @@ mindspore.ops.Erf
 
     **输入：**
 
-    - **x** (Tensor) - 用于计算高斯误差函数的Tensor。数据类型必须为float16或float32。shape为 :math:`(N,*)` ，其中 :math:`*` 表示任意的附加维度数，其秩应小于8。
+    - **x** (Tensor) - 高斯误差函数的输入Tensor。数据类型必须为float16或float32。任意维度小于8的Tensor。
 
     **输出：**
 
