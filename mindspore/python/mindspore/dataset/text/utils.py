@@ -192,7 +192,7 @@ class SentencePieceVocab(cde.SentencePieceVocab):
         """
 
         return dataset.build_sentencepiece_vocab(col_names, vocab_size, character_coverage,
-                                                 DE_C_INTER_SENTENCEPIECE_MODE[model_type], params)
+                                                 model_type, params)
 
     @classmethod
     @check_from_file_sentencepiece
