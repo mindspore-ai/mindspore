@@ -633,14 +633,16 @@ void DebugServices::ReadTensorFromNpy(const std::string &tensor_name, const std:
   }
 }
 
-void DebugServices::ConvertToHostFormat(const std::map<std::string, std::vector<std::string>> &dir_to_files_map,
-                                        std::vector<std::string> *const result_list) {
+void DebugServices::ConvertToHostFormat(const DirMap &dir_to_files_map, std::vector<std::string> *const result_list) {
   std::string file_format = "npy";
   for (auto const &d : dir_to_files_map) {
     std::vector<std::string> files_to_convert_in_dir;
     std::vector<std::string> files_after_convert_in_dir;
+    std::map<std::string, std::string> file_node_map;
     std::string dump_key = d.first;
-    for (auto const &file_name : d.second) {
+    for (auto const &pair : d.second) {
+      std::string file_name = pair.first;
+      std::string node_name = pair.second;
       bool already_converted = false;
       // Remove scope from the file_name for matching files converted by mindinsight tool.
       std::size_t found_first_dot = file_name.find(".");
@@ -659,6 +661,7 @@ void DebugServices::ConvertToHostFormat(const std::map<std::string, std::vector<
       if (!already_converted) {
         (void)files_to_convert_in_dir.emplace_back(dump_key + "/" + file_name);
         (void)files_after_convert_in_dir.emplace_back(dump_key + "/" + file_name_without_scope);
+        file_node_map[file_name] = node_name;
       }
     }
     MS_LOG(INFO) << "Number of files to convert: " << files_to_convert_in_dir.size();
@@ -667,7 +670,8 @@ void DebugServices::ConvertToHostFormat(const std::map<std::string, std::vector<
       // later task.
       try {
         auto pkg = pybind11::module::import("mindspore.offline_debug.convert_async");
-        auto convert_obj = pkg.attr("AsyncDumpConverter")(pybind11::cast(files_to_convert_in_dir), dump_key);
+        auto convert_obj =
+          pkg.attr("AsyncDumpConverter")(pybind11::cast(files_to_convert_in_dir), dump_key, file_node_map);
         (void)convert_obj.attr("convert_files")();
       } catch (pybind11::error_already_set &e) {
         MS_LOG(EXCEPTION) << "Failed to convert async dump data: " << e.what();
@@ -734,7 +738,7 @@ void DebugServices::ConvertReadTensors(std::vector<std::string> backend_name, st
                                        std::vector<unsigned int> root_graph_id,
                                        std::vector<std::string> *const result_list) {
   std::string file_format = "npy";
-  std::map<std::string, std::vector<std::string>> dir_to_files_map;
+  DirMap dir_to_files_map;
   for (unsigned int i = 0; i < backend_name.size(); i++) {
     // form prefix of the tensor file to read from graph pb node name
     std::string dump_style_kernel_name = backend_name[i];
@@ -765,7 +769,7 @@ void DebugServices::ConvertWatchPointNodes(const std::vector<std::tuple<std::str
                                            const std::string &specific_dump_dir,
                                            std::vector<std::string> *const result_list) {
   std::string file_format = "npy";
-  std::map<std::string, std::vector<std::string>> dir_to_files_map;
+  DirMap dir_to_files_map;
   for (const auto &node : proto_dump) {
     std::string dump_name = std::get<1>(node);
     dump_name = dump_name.substr(0, dump_name.rfind("."));
@@ -783,8 +787,7 @@ void DebugServices::ConvertWatchPointNodes(const std::vector<std::tuple<std::str
 }
 
 void DebugServices::ProcessConvertList(const std::string &prefix_dump_file_name, const std::string &file_format,
-                                       const std::string &specific_dump_dir,
-                                       std::map<std::string, std::vector<std::string>> *dir_to_files_map,
+                                       const std::string &specific_dump_dir, DirMap *dir_to_files_map,
                                        std::vector<std::string> *const result_list) {
   DIR *d = opendir(specific_dump_dir.c_str());
   struct dirent *dir = nullptr;
@@ -807,7 +810,7 @@ void DebugServices::ProcessConvertList(const std::string &prefix_dump_file_name,
     }
     if (file_name.rfind(file_format) == std::string::npos) {
       // if file matches prefix and is in device format add to candidate files to convert.
-      (*dir_to_files_map)[specific_dump_dir].push_back(file_name);
+      (*dir_to_files_map)[specific_dump_dir].push_back(std::make_pair(file_name, prefix_dump_file_name));
     } else {
       // otherwise, if file matches prefix and already has been converted to host format
       // add to result of converted files.
