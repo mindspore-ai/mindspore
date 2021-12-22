@@ -358,7 +358,11 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
 #endif
 
 #ifndef RUNTIME_PASS_CLIP
-  RuntimePass(dst_kernels, src_tensors_);
+  auto status = RuntimePass(dst_kernels, src_tensors_);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "runtime pass failed.";
+    return RET_ERROR;
+  }
 #endif
 
   ret = InitKernels(*dst_kernels);

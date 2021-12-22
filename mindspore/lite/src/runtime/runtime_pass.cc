@@ -227,7 +227,56 @@ void ConvNormC4PassAct(std::vector<kernel::LiteKernel *> *kernels) {
   return;
 }
 
-void RuntimePass(std::vector<kernel::LiteKernel *> *subgraphs, std::vector<Tensor *> *tensors) {
+STATUS DeleteRedundantTrans(std::vector<kernel::LiteKernel *> *kernels) {
+  for (auto *pre_kernel : *kernels) {
+    if (pre_kernel->subgraph_type() != kernel::kNotSubGraph) {
+      auto sub_graph = reinterpret_cast<kernel::SubGraphKernel *>(pre_kernel);
+      auto &partial = sub_graph->nodes();
+      if (DeleteRedundantTrans(&partial) != RET_OK) {
+        MS_LOG(ERROR) << "DeleteRedundantTrans failed in subgraph.";
+        return RET_ERROR;
+      }
+    }
+    if (pre_kernel->type() != schema::PrimitiveType_Transpose) {
+      continue;
+    }
+    if (pre_kernel->in_tensors().size() < 1 || pre_kernel->out_tensors().size() < 1) {
+      MS_LOG(ERROR) << "kernel input or output is empty.";
+      return RET_ERROR;
+    }
+    auto pre_kernel_in_tensor_shape = pre_kernel->in_tensors().at(0)->shape();
+    auto pre_kernel_out_tensor_shape = pre_kernel->out_tensors().at(0)->shape();
+    for (size_t i = 0; i < pre_kernel_out_tensor_shape.size(); i++) {
+      if (pre_kernel_in_tensor_shape[i] == -1) {
+        MS_LOG(DEBUG) << " input need do resize.";
+        return RET_OK;
+      }
+      if (pre_kernel_out_tensor_shape[i] != pre_kernel_in_tensor_shape[i] && pre_kernel_out_tensor_shape[i] != 1) {
+        MS_LOG(DEBUG) << "transpose do not delete.";
+        return RET_OK;
+      }
+    }
+    auto post_kernel_size = pre_kernel->out_kernels().size();
+    if (post_kernel_size != 1) {
+      continue;
+    }
+    auto post_kernel = pre_kernel->out_kernels().front();
+    if (post_kernel->type() != schema::PrimitiveType_Reshape) {
+      continue;
+    }
+    if (pre_kernel->in_kernels().size() != 1) {
+      continue;
+    }
+    auto pre_in_kernel = pre_kernel->in_kernels().front();
+    pre_in_kernel->set_out_kernels({post_kernel});
+    post_kernel->set_in_kernels({pre_in_kernel, post_kernel->in_kernels()[1]});
+    post_kernel->set_in_tensor(pre_kernel->in_tensors()[0], 0);
+    kernels->erase(find(kernels->begin(), kernels->end(), pre_kernel));
+  }
+  return RET_OK;
+}
+
+STATUS RuntimePass(std::vector<kernel::LiteKernel *> *subgraphs, std::vector<Tensor *> *tensors) {
   for (auto subgraph : *subgraphs) {
     auto sub = reinterpret_cast<kernel::SubGraphKernel *>(subgraph);
     if (RuntimePassValid(sub) == false) {
@@ -238,6 +287,28 @@ void RuntimePass(std::vector<kernel::LiteKernel *> *subgraphs, std::vector<Tenso
     auto &kernels = sub->nodes();
     Nc4hw4PassAct(&kernels, tensors, i);
     ConvNormC4PassAct(&kernels);
+    auto status = DeleteRedundantTrans(&kernels);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "DeleteRedundantTrans failed.";
+      return RET_ERROR;
+    }
   }
+  return RET_OK;
+}
+
+STATUS GraphOptimizePass(std::vector<kernel::LiteKernel *> *sub_graphs) {
+  for (auto subgraph : *sub_graphs) {
+    auto sub_graph = reinterpret_cast<kernel::SubGraphKernel *>(subgraph);
+    if (RuntimePassValid(sub_graph) == false) {
+      continue;
+    }
+    auto &kernels = sub_graph->nodes();
+    auto status = DeleteRedundantTrans(&kernels);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "DeleteRedundantTrans failed.";
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
 }
 }  // namespace mindspore::lite
