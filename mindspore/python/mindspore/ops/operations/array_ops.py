@@ -732,25 +732,6 @@ class Squeeze(PrimitiveWithInfer):
             self.axis = (axis,)
             self.add_prim_attr("axis", (axis,))
 
-    def infer_shape(self, x_shape):
-        axis = self.axis
-        x_shape = list(x_shape)
-        ndim = len(x_shape)
-        if not axis:
-            ret = [d for d in x_shape if d != 1]
-        else:
-            for a in axis:
-                validator.check_int_range(a, -ndim, ndim - 1, Rel.INC_BOTH, 'axis or its elements', self.name)
-                if x_shape[a] != 1:
-                    raise ValueError(f"For '{self.name}', the shape of 'input_x' at {a} dimension should be 1, "
-                                     f"but got {x_shape[a]}.")
-            ret = [x_shape[i] for i in range(ndim) if not (i in axis or (i - ndim) in axis)]
-        return ret
-
-    def infer_dtype(self, x_dtype):
-        validator.check_subclass("x", x_dtype, mstype.tensor, self.name)
-        return x_dtype
-
 
 class Transpose(Primitive):
     """
