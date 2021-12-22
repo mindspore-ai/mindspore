@@ -397,39 +397,6 @@ size_t AnfRuntimeAlgorithm::GetOutputNumByAbstract(const AbstractBasePtr &node_a
   return result;
 }
 
-std::vector<KernelWithIndex> AnfRuntimeAlgorithm::GetAllOutputByCallNode(const KernelWithIndex &output_with_index) {
-  MS_EXCEPTION_IF_NULL(output_with_index.first);
-  auto node_abstract = output_with_index.first->abstract();
-  MS_EXCEPTION_IF_NULL(node_abstract);
-  if (!node_abstract->isa<abstract::AbstractTuple>()) {
-    return {output_with_index};
-  }
-
-  auto tuple_abstract = node_abstract->cast<abstract::AbstractTuplePtr>();
-  MS_EXCEPTION_IF_NULL(tuple_abstract);
-  const auto &sub_abstracts = tuple_abstract->elements();
-  if (GetOutputNumByAbstract(tuple_abstract) <= output_with_index.second) {
-    MS_LOG(EXCEPTION) << "Invalid index:" << output_with_index.second
-                      << "for node:" << output_with_index.first->DebugString();
-  }
-
-  // There may be tuples in the output of the call node, these outputs will be all numbered, so it is necessary
-  // to count the number of outputs before the target in order to accurately obtain its number.
-  size_t pre_output_num = 0;
-  for (size_t i = 0; i < output_with_index.second; ++i) {
-    MS_EXCEPTION_IF_NULL(sub_abstracts[i]);
-    pre_output_num += GetOutputNumByAbstract(sub_abstracts[i]);
-  }
-
-  MS_EXCEPTION_IF_NULL(sub_abstracts[output_with_index.second]);
-  size_t output_num = GetOutputNumByAbstract(sub_abstracts[output_with_index.second]);
-  std::vector<KernelWithIndex> results;
-  for (size_t i = 0; i < output_num; ++i) {
-    results.emplace_back(output_with_index.first, pre_output_num + i);
-  }
-  return results;
-}
-
 std::vector<KernelWithIndex> AnfRuntimeAlgorithm::GetAllOutputWithIndex(const AnfNodePtr &node) {
   auto ret = GetAllOutputWithIndexInner(node);
   std::map<AnfNodePtr, size_t> value_node_index;

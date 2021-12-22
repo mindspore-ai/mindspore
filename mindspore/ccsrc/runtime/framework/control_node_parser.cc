@@ -1788,7 +1788,8 @@ void ControlNodeParser::ParseNeedStackKernelGraph(const KernelGraphToDeviceConte
 
         // Collect outputs in group.
         for (const auto &backend_to_front : kernel_graph->graph_output_map()) {
-          if (HasAbstractMonad(backend_to_front.second.first) || HasAbstractMonad(backend_to_front.first.first)) {
+          if (HasAbstractMonad(backend_to_front.second.first) || HasAbstractMonad(backend_to_front.first.first) ||
+              AnfAlgo::CheckPrimitiveType(backend_to_front.second.first, prim::kPrimPartial)) {
             continue;
           }
           MS_LOG(DEBUG) << "Kernel graph:" << kernel_graph->ToString()
