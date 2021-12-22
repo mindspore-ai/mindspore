@@ -50,7 +50,7 @@ mindspore.Tensor
 
         **返回：**
 
-        张量，含有每个元素的绝对值。
+        Tensor。
 
         **支持平台：**
 
@@ -70,12 +70,12 @@ mindspore.Tensor
 
         **参数：**
 
-        - **axis** (Union[None, int, tuple(int)) - 被简化的维度。 当 `axis` 为None或者空元组的时候，简化所有维度。 默认值：()。
-        - **keep_dims** (bool) - 是否会保留被简化的维度。 默认值： False。
+        - **axis** (Union[None, int, tuple(int)) - 缩减的维度。 当 `axis` 为None或者空元组的时候，缩减所有维度。当 `axis` 为int或tuple(int)时，记Tensor的维度为dim，则其取值范围为[-dim, dim)。默认值：()。
+        - **keep_dims** (bool) - 是否在输出Tensor中保留缩减的维度。 默认值： False。
 
         **返回：**
 
-        Tensor。如果在指定轴方向上所有数组元素都为True，则其值为True，否则其值为False。如果轴为None或空元组，则简化所有维度。
+        Tensor。如果在指定轴方向上所有数组元素都为True，则其值为True，否则其值为False。如果轴为None或空元组，则缩减所有维度。
 
         **支持平台：**
 
@@ -95,12 +95,12 @@ mindspore.Tensor
 
         **参数：**
 
-        - **axis** (Union[None, int, tuple(int)) - 简化的维度。当轴为None或空元组时，简化所有维度。默认值：()。
-        - **keep_dims** (bool) - 表示是否保留简化后的维度。默认值：False。
+        - **axis** (Union[None, int, tuple(int)) - 缩减的维度。当 `axis` 为None或空元组时，缩减所有维度。当 `axis` 为int或tuple(int)时，记Tensor的维度为dim，则其取值范围为[-dim, dim)。默认值：()。
+        - **keep_dims** (bool) - 是否在输出Tensor中保留缩减的维度。默认值：False。
 
         **返回：**
 
-        Tensor。如果在指定轴方向上所有Tensor元素都为True，则其值为True，否则其值为False。如果轴为None或空元组，则简化所有维度。
+        Tensor。如果在指定轴方向上所有Tensor元素都为True，则其值为True，否则其值为False。如果轴为None或空元组，则缩减所有维度。
 
         **支持平台：**
 
@@ -660,12 +660,12 @@ mindspore.Tensor
 
     .. py:method:: mean(axis=(), keep_dims=False)
 
-        计算指定维度上所有元素的均值，简化Tensor的维度。
+        计算指定维度上所有元素的均值，缩减Tensor的维度。
 
         **参数：**
 
-        - **axis** (Union[None, int, tuple(int), list(int)]) - 简化的维度。当轴为None或空元组时，简化所有维度。默认值：()。
-        - **keep_dims** (bool) - 表示是否保留简化后的维度。默认值：False。
+        - **axis** (Union[None, int, tuple(int), list(int)]) - 缩减的维度。当 `axis` 为None或空元组时，缩减所有维度。当 `axis` 为int、tuple(int)或list(int)时，记Tensor的维度为dim，则其取值范围为[-dim, dim)。默认值：()。
+        - **keep_dims** (bool) - 是否在输出Tensor中保留缩减的维度。。默认值：False。
 
         **返回：**
 
