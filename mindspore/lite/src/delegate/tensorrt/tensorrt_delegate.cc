@@ -107,6 +107,10 @@ Status TensorRTDelegate::Init() {
   lite::SetCudaDevice(device_info_);
   if (runtime_ == nullptr) {
     runtime_ = new (std::nothrow) TensorRTRuntime();
+    if (runtime_ == nullptr) {
+      MS_LOG(ERROR) << "create TensorRTRuntime failed.";
+      return mindspore::kLiteError;
+    }
   }
   if (runtime_->Init() != RET_OK) {
     MS_LOG(ERROR) << "TensorRTRuntime init failed.";

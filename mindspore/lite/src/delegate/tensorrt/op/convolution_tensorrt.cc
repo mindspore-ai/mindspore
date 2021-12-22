@@ -148,13 +148,15 @@ void ConvolutionTensorRT::SetAttributes(const schema::Conv2DFusion *conv_op, nvi
     conv_layer->setPaddingMode(nvinfer1::PaddingMode::kSAME_UPPER);
   } else {
     auto padding = conv_op->pad_list();
-    if (padding != nullptr) {
+    if (padding != nullptr && padding->size() == DIMENSION_4D) {
       auto padding_val = std::vector<int64_t>(padding->begin(), padding->end());
       nvinfer1::Dims dims{};
       dims.nbDims = 2;
       dims.d[0] = padding_val[0];
       dims.d[1] = padding_val[2];
       conv_layer->setPaddingNd(dims);
+    } else {
+      MS_LOG(WARNING) << "pad list is invalid for " << op_name_;
     }
   }
 }
