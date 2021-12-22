@@ -35,9 +35,18 @@ constexpr size_t kExternalDataHeadSize = 4096;
 constexpr size_t kMagicNumberSize = 4;
 constexpr size_t kFlatbuffersBuilderInitSize = 1024;
 
+void ChangeMod(const std::string &file_path) {
+#ifndef _MSC_VER
+  if (access(file_path.c_str(), F_OK) == 0) {
+    chmod(file_path.c_str(), S_IWUSR | S_IRUSR);
+  }
+#endif
+}
+
 std::fstream *ReopenFile(const std::string &file_path, std::ios_base::openmode open_mode = std::ios::in | std::ios::out,
                          std::fstream *fs = nullptr) {
   if (fs == nullptr) {
+    ChangeMod(file_path);
     return OpenFile(file_path, open_mode);
   } else {
     fs->close();
@@ -105,6 +114,7 @@ bool MetaGraphSerializer::Init(const schema::MetaGraphT &graph, const std::strin
     return false;
   }
   // init file streams
+  ChangeMod(save_model_path_);
   model_fs_ = OpenFile(save_model_path_, std::ios::out | std::ios::binary | std::ios::trunc);
   if (model_fs_ == nullptr) {
     MS_LOG(ERROR) << "Open " << save_model_path_ << " failed";
@@ -113,6 +123,8 @@ bool MetaGraphSerializer::Init(const schema::MetaGraphT &graph, const std::strin
   if (save_together) {
     return true;
   }
+
+  ChangeMod(save_data_path_);
   data_fs_ = OpenFile(save_data_path_, std::ios::out | std::ios::binary | std::ios::trunc);
   if (data_fs_ == nullptr) {
     MS_LOG(ERROR) << "Open " << save_data_path_ << " failed";
