@@ -54,9 +54,9 @@ class MindrtExecutor : public Executor {
  protected:
   int PrepareGraphInput(const std::vector<kernel::LiteKernel *> &kernels, const std::vector<Tensor *> &inputs);
   int PrepareGraphOutput(const std::vector<kernel::LiteKernel *> &kernels, const std::vector<Tensor *> &outputs);
-  int IsolateActorsInput();
+  int PreInitActors();
   int LinkActors();
-  int PrepareActorsOutput();
+  int PostInitActors();
   std::vector<std::shared_ptr<LiteOpActor>> op_actors_;
   std::vector<OpDataPtr<Tensor>> input_data_;
   std::vector<OpDataPtr<Tensor>> output_data_;

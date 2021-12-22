@@ -60,24 +60,35 @@ class LiteOpActor : public OpActor<lite::Tensor> {
     }
     return ret;
   }
-  int IsolateInputData(std::vector<std::shared_ptr<LiteOpActor>> *actors,
-                       std::unordered_map<Tensor *, Tensor *> *input_map);
+  virtual int PreInit(std::vector<std::shared_ptr<LiteOpActor>> *actors,
+                      std::unordered_map<Tensor *, Tensor *> *input_map);
+  virtual int PostInit();
   int ResizeGraphInput(const std::vector<mindspore::tensor::MSTensor *> &inputs,
                        const std::vector<std::vector<int>> &dims);
 
  public:
   void AddResultIndex(size_t index);
-  virtual int PrepareOutputData();
-  const kernel::LiteKernel *const GetKernel() { return kernel_; }
+  const kernel::LiteKernel *GetKernel() { return kernel_; }
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
+  // call this function after CompileArrow
+  virtual std::set<kernel::LiteKernel *> GetPartialKernels() const {
+    std::set ret{partial_node_};
+    return ret;
+  }
+#endif
 
  protected:
   void SetInputShape();
   int InitInputData();
   void SetOutputData(OpContext<Tensor> *context);
-  void AsyncOutput(OpContext<Tensor> *context);
+  virtual void AsyncOutput(OpContext<Tensor> *context);
+
   int CompileArrowThroughOutputTensors(
     const std::unordered_map<void *, std::set<std::pair<AID, size_t>>> &receivers_map);
   std::set<void *> PartialSubgraphInputTensors(kernel::LiteKernel *partial_node);
+  int IsolateInputData(std::vector<std::shared_ptr<LiteOpActor>> *actors,
+                       std::unordered_map<Tensor *, Tensor *> *input_map);
+  virtual int PrepareOutputData();
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
   virtual int UpdateActorOutput();
 #endif
