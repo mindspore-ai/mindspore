@@ -348,7 +348,7 @@ class Profiler:
         output_data_preprocess_aicpu = self._aicpu_op_output_filename_target + self._rank_id + ".txt"
         output_data_preprocess_aicpu = os.path.join(self._output_path, output_data_preprocess_aicpu)
         output_data_preprocess_aicpu = validate_and_normalize_path(output_data_preprocess_aicpu)
-        aicpu_data_parser = DataPreProcessParser(source_path, output_data_preprocess_aicpu)
+        aicpu_data_parser = DataPreProcessParser(source_path, output_data_preprocess_aicpu, op_task_dict)
         logger.info("Profiling: analyzing the data preprocess data.")
         aicpu_data_parser.execute()
 
