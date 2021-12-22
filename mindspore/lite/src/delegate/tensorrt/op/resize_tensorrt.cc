@@ -31,6 +31,18 @@ int ResizeTensorRT::IsSupport(const schema::Primitive *primitive, const std::vec
   if (out_tensors.size() != 1) {
     MS_LOG(ERROR) << "Unsupported output tensor size, size is " << out_tensors.size();
   }
+  resize_op_ = op_primitive_->value_as_Resize();
+  if (resize_op_ == nullptr) {
+    MS_LOG(ERROR) << "convert failed " << op_name_;
+    return RET_ERROR;
+  }
+  if (resize_op_->method() == schema::ResizeMethod_LINEAR) {
+    MS_LOG(WARNING) << "TensorRT linear resize has precision issue, using cpu instead for " << op_name_;
+    return RET_ERROR;
+  }
+  dynamic_shape_params_.support_hw_dynamic_ =
+    (resize_op_->new_height() > 0 && resize_op_->new_width() > 0) ? false : true;
+  // constant new hw op don't support hw resize
   return RET_OK;
 }
 
@@ -41,11 +53,11 @@ int ResizeTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   }
 
   nvinfer1::ITensor *resize_in_tensor = tensorrt_in_tensors_[0].trt_tensor_;
-  MS_LOG(DEBUG) << "origin input " << GetTensorFormat(resize_in_tensor, tensorrt_in_tensors_[0].format_);
+  MS_LOG(DEBUG) << "origin input " << GetTensorFormat(tensorrt_in_tensors_[0]);
 
-  if (resize_in_tensor->getDimensions().nbDims == DIMENSION_4D && tensorrt_in_tensors_[0].format_ == Format::NCHW) {
-    // NCHW->NHWC
-    nvinfer1::IShuffleLayer *transpose_layer = NCHW2NHWC(network, *tensorrt_in_tensors_[0].trt_tensor_);
+  if (resize_in_tensor->getDimensions().nbDims == DIMENSION_4D && tensorrt_in_tensors_[0].format_ == Format::NHWC) {
+    // NHWC->NCHW
+    nvinfer1::IShuffleLayer *transpose_layer = NHWC2NCHW(network, *tensorrt_in_tensors_[0].trt_tensor_);
     if (transpose_layer == nullptr) {
       MS_LOG(ERROR) << "create transpose layer failed for " << op_name_;
       return RET_ERROR;
@@ -53,7 +65,7 @@ int ResizeTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     transpose_layer->setName((op_name_ + "_transpose_in").c_str());
     resize_in_tensor = transpose_layer->getOutput(0);
   }
-  MS_LOG(DEBUG) << "after transpose input " << GetTensorFormat(resize_in_tensor, Format::NHWC);
+  MS_LOG(DEBUG) << "after transpose input " << GetTensorFormat(resize_in_tensor, Format::NCHW, false);
 
   nvinfer1::IResizeLayer *resize_layer = network->addResize(*resize_in_tensor);
   if (resize_layer == nullptr) {
@@ -73,26 +85,29 @@ int ResizeTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   }
 
   resize_layer->getOutput(0)->setName((op_name_ + "_output").c_str());
-  this->AddInnerOutTensors(ITensorHelper{resize_layer->getOutput(0), Format::NHWC, true});
-  MS_LOG(DEBUG) << "output " << GetTensorFormat(resize_layer->getOutput(0), Format::NHWC);
+  this->AddInnerOutTensors(ITensorHelper{resize_layer->getOutput(0), Format::NCHW, false});
+  MS_LOG(DEBUG) << "output " << GetTensorFormat(tensorrt_out_tensors_[0]);
   return RET_OK;
 }
 
 int ResizeTensorRT::SetOutputDims(nvinfer1::ITensor *resize_in_tensor, nvinfer1::IResizeLayer *resize_layer) {
-  auto resize_op = op_primitive_->value_as_Resize();
-  if (resize_op == nullptr) {
-    MS_LOG(ERROR) << "convert failed " << op_name_;
-    return RET_ERROR;
-  }
-  if (in_tensors_.size() == 1) {
-    nvinfer1::Dims new_dims = resize_in_tensor->getDimensions();  // nhwc
-    new_dims.d[1] = resize_op->new_height();
-    new_dims.d[2] = resize_op->new_width();
-    resize_layer->setOutputDimensions(new_dims);
+  if (in_tensors_.size() == 1 && !dynamic_shape_params_.support_dynamic_) {
+    nvinfer1::Dims new_dims = resize_in_tensor->getDimensions();  // nchw
+    new_dims.d[kNCHW_H] = resize_op_->new_height();
+    new_dims.d[kNCHW_W] = resize_op_->new_width();
+    resize_layer->setOutputDimensions(new_dims);  // static shape
+  } else if (in_tensors_.size() == 1 && !dynamic_shape_params_.support_hw_dynamic_ &&
+             dynamic_shape_params_.support_dynamic_ && resize_in_tensor->getDimensions().nbDims == DIMENSION_4D) {
+    // hw is static, but has dynamic batch size
+    float scales[DIMENSION_4D]{1, 1, 1, 1};
+    scales[kNCHW_H] =
+      static_cast<float>(resize_op_->new_height()) / static_cast<float>(resize_in_tensor->getDimensions().d[kNCHW_H]);
+    scales[kNCHW_W] =
+      static_cast<float>(resize_op_->new_width()) / static_cast<float>(resize_in_tensor->getDimensions().d[kNCHW_W]);
+    resize_layer->setScales(scales, DIMENSION_4D);
   } else {
-    std::vector<float> out_shape;
-    const void *shape_data = in_tensors_[1].Data().get();
-    if (shape_data == nullptr) {
+    auto shape_value_tensor = in_tensors_[1];
+    if (shape_value_tensor.Data() == nullptr) {
       // dynamic output shape
       if (tensorrt_in_tensors_.size() < INPUT_SIZE2) {
         MS_LOG(ERROR) << "no output shape tensor found for " << op_name_;
@@ -100,33 +115,8 @@ int ResizeTensorRT::SetOutputDims(nvinfer1::ITensor *resize_in_tensor, nvinfer1:
       }
       resize_layer->setInput(1, *tensorrt_in_tensors_[1].trt_tensor_);
     } else {
-      switch (in_tensors_[1].DataType()) {
-        case DataType::kNumberTypeFloat32: {
-          const float *shape_data_fp32 = static_cast<const float *>(shape_data);
-          for (int i = 0; i < in_tensors_[1].ElementNum(); i++) {
-            out_shape.push_back(*(shape_data_fp32 + i));
-          }
-          break;
-        }
-        case DataType::kNumberTypeFloat16: {
-          const uint16_t *shape_data_fp16 = static_cast<const uint16_t *>(shape_data);
-          for (int i = 0; i < in_tensors_[1].ElementNum(); i++) {
-            out_shape.push_back(ShortToFloat32(*(shape_data_fp16 + i)));
-          }
-          break;
-        }
-        case DataType::kNumberTypeInt32: {
-          const int *shape_data_fp16 = static_cast<const int *>(shape_data);
-          for (int i = 0; i < in_tensors_[1].ElementNum(); i++) {
-            out_shape.push_back(*(shape_data_fp16 + i));
-          }
-          break;
-        }
-        default:
-          MS_LOG(WARNING) << op_name_
-                          << " more datatype need to check: " << static_cast<int>(in_tensors_[1].DataType());
-          break;
-      }
+      std::vector<float> out_shape;
+      ParseValueFromShapeTensor(shape_value_tensor, &out_shape);
       if (out_shape.size() == DIMENSION_2D &&
           tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == DIMENSION_4D) {
         // out_shape: origin_n, out_shape[0], out_shape[1], origin_c
@@ -136,6 +126,11 @@ int ResizeTensorRT::SetOutputDims(nvinfer1::ITensor *resize_in_tensor, nvinfer1:
       }
       if (SameDims(out_shape, out_tensors_[0].Shape())) {
         // static dims
+        if (out_shape.size() == DIMENSION_4D) {
+          auto channel = out_shape[out_shape.size() - 1];
+          out_shape.insert(out_shape.begin() + 1, channel);
+          out_shape.erase(out_shape.begin() + out_shape.size() - 1);
+        }
         auto dims = ConvertCudaDims(out_shape);
         if (dims.nbDims == -1) {
           MS_LOG(ERROR) << "ConvertCudaDims failed for " << op_name_;
@@ -144,18 +139,28 @@ int ResizeTensorRT::SetOutputDims(nvinfer1::ITensor *resize_in_tensor, nvinfer1:
         resize_layer->setOutputDimensions(dims);
       } else if (IsScaleOutputDim(in_tensors_[0].Shape(), out_tensors_[0].Shape(), out_shape)) {
         // scale dims
-        if (out_shape.size() > DIMENSION_4D) {
+        if (out_shape.size() != DIMENSION_4D) {
           MS_LOG(ERROR) << "dims count needs check for " << op_name_;
           return RET_ERROR;
         }
-        float scales[DIMENSION_4D];
-        std::copy(out_shape.begin(), out_shape.end(), scales);
-        resize_layer->setScales(scales, out_shape.size());
+        float scales[DIMENSION_4D]{1, 1, 1, 1};
+        scales[kNCHW_H] =
+          static_cast<float>(out_tensors_[0].Shape()[kNHWC_H]) / static_cast<float>(in_tensors_[0].Shape()[kNHWC_H]);
+        scales[kNCHW_W] =
+          static_cast<float>(out_tensors_[0].Shape()[kNHWC_W]) / static_cast<float>(in_tensors_[0].Shape()[kNHWC_W]);
+        resize_layer->setScales(scales, DIMENSION_4D);
       } else {
-        MS_LOG(DEBUG) << op_name_ << " output shape tensor value is const, but set to scales for dynamic input shape";
+        MS_LOG(DEBUG) << op_name_ << " output shape tensor value is const, but set to scales for dynamic input shape.";
         float scales[out_tensors_[0].Shape().size()];
         for (size_t i = 0; i < out_tensors_[0].Shape().size(); i++) {
           scales[i] = static_cast<float>(out_tensors_[0].Shape()[i]) / static_cast<float>(in_tensors_[0].Shape()[i]);
+        }
+        if (out_tensors_[0].Shape().size() == DIMENSION_4D) {
+          scales[kNCHW_W] = scales[kNHWC_W];
+          scales[kNCHW_H] = scales[kNHWC_H];
+          scales[kNCHW_C] = 1;
+        }
+        for (size_t i = 0; i < out_tensors_[0].Shape().size(); i++) {
           MS_LOG(DEBUG) << op_name_ << "scale at " << i << ": " << scales[i];
         }
         resize_layer->setScales(scales, out_tensors_[0].Shape().size());
@@ -163,6 +168,37 @@ int ResizeTensorRT::SetOutputDims(nvinfer1::ITensor *resize_in_tensor, nvinfer1:
     }
   }
   return RET_OK;
+}
+
+void ResizeTensorRT::ParseValueFromShapeTensor(const mindspore::MSTensor &shape_value_tensor,
+                                               std::vector<float> *out_shape) {
+  switch (shape_value_tensor.DataType()) {
+    case DataType::kNumberTypeFloat32: {
+      const float *shape_data_fp32 = static_cast<const float *>(shape_value_tensor.Data().get());
+      for (int i = 0; i < shape_value_tensor.ElementNum(); i++) {
+        out_shape->push_back(*(shape_data_fp32 + i));
+      }
+      break;
+    }
+    case DataType::kNumberTypeFloat16: {
+      const uint16_t *shape_data_fp16 = static_cast<const uint16_t *>(shape_value_tensor.Data().get());
+      for (int i = 0; i < shape_value_tensor.ElementNum(); i++) {
+        out_shape->push_back(ShortToFloat32(*(shape_data_fp16 + i)));
+      }
+      break;
+    }
+    case DataType::kNumberTypeInt32: {
+      const int *shape_data_fp16 = static_cast<const int *>(shape_value_tensor.Data().get());
+      for (int i = 0; i < shape_value_tensor.ElementNum(); i++) {
+        out_shape->push_back(*(shape_data_fp16 + i));
+      }
+      break;
+    }
+    default:
+      MS_LOG(WARNING) << op_name_
+                      << " more datatype need to check: " << static_cast<int>(shape_value_tensor.DataType());
+      break;
+  }
 }
 
 bool ResizeTensorRT::IsScaleOutputDim(const std::vector<int64_t> &in_shape, const std::vector<int64_t> &out_shape,
@@ -180,13 +216,7 @@ bool ResizeTensorRT::IsScaleOutputDim(const std::vector<int64_t> &in_shape, cons
 }
 
 int ResizeTensorRT::SetParams(nvinfer1::IResizeLayer *resize_layer) {
-  auto resize_op = op_primitive_->value_as_Resize();
-  if (resize_op == nullptr) {
-    MS_LOG(ERROR) << "convert failed " << op_name_;
-    return RET_ERROR;
-  }
-
-  auto method = resize_op->method();
+  auto method = resize_op_->method();
   std::map<schema::ResizeMethod, nvinfer1::ResizeMode> method_map = {
     {schema::ResizeMethod_LINEAR, nvinfer1::ResizeMode::kLINEAR},
     {schema::ResizeMethod_NEAREST, nvinfer1::ResizeMode::kNEAREST}};
@@ -196,10 +226,10 @@ int ResizeTensorRT::SetParams(nvinfer1::IResizeLayer *resize_layer) {
   }
   resize_layer->setResizeMode(method_map.at(method));
 
-  // unsupported for trt6, but support in higher version
-  auto coordinate_transform_mode = resize_op->coordinate_transform_mode();
+  // unsupported for trt6, but support setCoordinateTransformation() in version8
+  auto coordinate_transform_mode = resize_op_->coordinate_transform_mode();
   if (coordinate_transform_mode != schema::CoordinateTransformMode_ASYMMETRIC) {
-    MS_LOG(WARNING) << op_name_ << " has coordinate_transform_mode not supported: "
+    MS_LOG(WARNING) << op_name_ << " has coordinate_transform_mode may not supported: "
                     << EnumNameCoordinateTransformMode(coordinate_transform_mode);
   }
   return RET_OK;

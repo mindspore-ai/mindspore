@@ -36,6 +36,8 @@ int LSTMTensorRT::IsSupport(const schema::Primitive *primitive, const std::vecto
     MS_LOG(ERROR) << "Unsupported output tensor size, size is " << out_tensors.size();
     return RET_ERROR;
   }
+  dynamic_shape_params_.support_dynamic_ = false;
+  dynamic_shape_params_.support_hw_dynamic_ = false;
   return RET_OK;
 #endif
 }
@@ -71,9 +73,9 @@ int LSTMTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   MS_LOG(DEBUG) << "lstm op_data_out_ " << GetTensorFormat(op_data_out_);
   MS_LOG(DEBUG) << "lstm op_hidden_out_ " << GetTensorFormat(op_hidden_out_);
   MS_LOG(DEBUG) << "lstm op_cell_out_ " << GetTensorFormat(op_cell_out_);
-  this->AddInnerOutTensors(ITensorHelper{op_data_out_, Format::NHWC});
-  this->AddInnerOutTensors(ITensorHelper{op_hidden_out_, Format::NHWC});
-  this->AddInnerOutTensors(ITensorHelper{op_cell_out_, Format::NHWC});
+  this->AddInnerOutTensors(ITensorHelper{op_data_out_});
+  this->AddInnerOutTensors(ITensorHelper{op_hidden_out_});
+  this->AddInnerOutTensors(ITensorHelper{op_cell_out_});
   return RET_OK;
 }
 
@@ -95,7 +97,7 @@ int LSTMTensorRT::PreProcess() {
   transpose_in_layer->setFirstTranspose(transpose_perm);
   transpose_in_layer->setName((op_name_ + "transpose_in").c_str());
   input_data_ = transpose_in_layer->getOutput(0);
-  MS_LOG(DEBUG) << "lstm input " << GetTensorFormat(input_data_, Format::NHWC);
+  MS_LOG(DEBUG) << "lstm input " << GetTensorFormat(input_data_);
 
   auto lstm_op = op_primitive_->value_as_LSTM();
   params_.layer_count_ = lstm_op->num_layers() == 0 ? 1 : lstm_op->num_layers();
@@ -283,16 +285,9 @@ nvinfer1::ITensor *LSTMTensorRT::AddLSTMCell(const LstmState *layer_input_states
 
   nvinfer1::ITensor *forward_output =
     AddLSTMCalculation(layer_input_states[0], layer_weights[0], &forward_hidden_out, &forward_cell_out);
-  MS_LOG(DEBUG) << "forward_output_layer " << GetTensorFormat(forward_output);
-  MS_LOG(DEBUG) << "forward_hidden_out " << GetTensorFormat(forward_hidden_out);
-  MS_LOG(DEBUG) << "forward_cell_out " << GetTensorFormat(forward_cell_out);
-
   if (params_.directional_cnt_ == BIDIRECTIONAL) {
     backward_output =
       AddLSTMCalculation(layer_input_states[1], layer_weights[1], &backward_hidden_out, &backward_cell_out, true);
-    MS_LOG(DEBUG) << "backward_output_layer " << GetTensorFormat(backward_output);
-    MS_LOG(DEBUG) << "backward_hidden_out " << GetTensorFormat(backward_hidden_out);
-    MS_LOG(DEBUG) << "backward_cell_out " << GetTensorFormat(backward_cell_out);
   }
 
   // concate forward and backward
@@ -323,10 +318,6 @@ nvinfer1::ITensor *LSTMTensorRT::AddLSTMCell(const LstmState *layer_input_states
     MS_LOG(ERROR) << "get one loop hidden_out and cell_out failed for " << op_name_;
     return nullptr;
   }
-  MS_LOG(DEBUG) << "one loop output " << GetTensorFormat(output_tensor);
-  MS_LOG(DEBUG) << "one loop hidden_out " << GetTensorFormat(hidden_out);
-  MS_LOG(DEBUG) << "one loop cell_out " << GetTensorFormat(cell_out);
-
   *next_state = LstmState{output_tensor, hidden_out, cell_out};
   return output_tensor;
 }
@@ -389,15 +380,11 @@ nvinfer1::ITensor *LSTMTensorRT::AddLSTMOneLoop(const LstmState &input_state, co
     return nullptr;
   }
 
-  MS_LOG(DEBUG) << "input_matmul 0 " << GetTensorFormat(input);
-  MS_LOG(DEBUG) << "input_matmul 1 " << GetTensorFormat(lstm_weights.input_weights_);
   nvinfer1::ITensor *input_matmul =
     network_
       ->addMatrixMultiply(*input, nvinfer1::MatrixOperation::kVECTOR, *lstm_weights.input_weights_,
                           nvinfer1::MatrixOperation::kTRANSPOSE)
       ->getOutput(0);
-  MS_LOG(DEBUG) << "hidden_matmul 0 " << GetTensorFormat(hidden_mid->getOutput(0));
-  MS_LOG(DEBUG) << "hidden_matmul 1 " << GetTensorFormat(lstm_weights.state_weights_);
 
   nvinfer1::ITensor *hidden_matmul =
     network_
@@ -424,19 +411,15 @@ nvinfer1::ITensor *LSTMTensorRT::AddLSTMOneLoop(const LstmState &input_state, co
   // weight order: input, output, forget, cell
   nvinfer1::ITensor *i =
     network_->addActivation(*isolateGate(*gates_calculate, 0), nvinfer1::ActivationType::kSIGMOID)->getOutput(0);
-  MS_LOG(DEBUG) << "input gate output " << GetTensorFormat(i);
 
   nvinfer1::ITensor *o =
     network_->addActivation(*isolateGate(*gates_calculate, 1), nvinfer1::ActivationType::kSIGMOID)->getOutput(0);
-  MS_LOG(DEBUG) << "output gate output " << GetTensorFormat(o);
 
   nvinfer1::ITensor *f =
     network_->addActivation(*isolateGate(*gates_calculate, 2), nvinfer1::ActivationType::kSIGMOID)->getOutput(0);
-  MS_LOG(DEBUG) << "forgate gate output " << GetTensorFormat(f);
 
   nvinfer1::ITensor *c =
     network_->addActivation(*isolateGate(*gates_calculate, 3), nvinfer1::ActivationType::kTANH)->getOutput(0);
-  MS_LOG(DEBUG) << "cell gate output " << GetTensorFormat(c);
 
   nvinfer1::ITensor *C =
     network_

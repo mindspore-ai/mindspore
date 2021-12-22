@@ -62,7 +62,7 @@ int ScaleTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   }
   mode_ = GetScaleMode(axis);
   out_format_ = tensorrt_in_tensors_[0].format_;
-  MS_LOG(DEBUG) << "before transpose " << GetTensorFormat(tensorrt_in_tensors_[0].trt_tensor_, out_format_);
+  MS_LOG(DEBUG) << "before transpose " << GetTensorFormat(tensorrt_in_tensors_[0]);
 
   nvinfer1::ITensor *scale_in_tensor = PreProcessInputTensor(network);
   if (scale_in_tensor == nullptr) {
@@ -70,7 +70,8 @@ int ScaleTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     return RET_ERROR;
   }
 
-  MS_LOG(DEBUG) << "after transpose " << GetTensorFormat(scale_in_tensor, out_format_);
+  MS_LOG(DEBUG) << "after transpose "
+                << GetTensorFormat(scale_in_tensor, out_format_, tensorrt_in_tensors_[0].same_format_);
 
   bool nd = false;
   // (input * scale + shift) ^ power
@@ -131,7 +132,7 @@ int ScaleTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   }
   op_out_tensor->setName((op_name_ + "_output").c_str());
   this->AddInnerOutTensors(ITensorHelper{op_out_tensor, out_format_, tensorrt_in_tensors_[0].same_format_});
-  MS_LOG(DEBUG) << "output " << GetTensorFormat(op_out_tensor, out_format_);
+  MS_LOG(DEBUG) << "output " << GetTensorFormat(tensorrt_out_tensors_[0]);
   return RET_OK;
 }
 

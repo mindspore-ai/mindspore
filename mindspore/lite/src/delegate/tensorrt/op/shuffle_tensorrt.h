@@ -49,6 +49,7 @@ class ShuffleTensorRT : public TensorRTOp {
   nvinfer1::ITensor *shuffler_input_{nullptr};
   nvinfer1::ITensor *shuffler_output_{nullptr};
   nvinfer1::INetworkDefinition *network_{nullptr};
+  const flatbuffers::Vector<int64_t> *param_axis_{nullptr};
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_OP_SHUFFLE_TENSORRT_H_

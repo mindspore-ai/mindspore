@@ -74,7 +74,6 @@ int ElementWiseTensorRT::IsSupport(const schema::Primitive *primitive,
     MS_LOG(ERROR) << "invalid all input tensor shape unknown for: " << op_name_;
     return RET_ERROR;
   }
-
   return RET_OK;
 }
 
@@ -91,12 +90,8 @@ int ElementWiseTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
       return ret;
     }
   }
-  MS_LOG(DEBUG) << "before transpose "
-                << GetTensorFormat(tensorrt_in_tensors_[input_x_index_].trt_tensor_,
-                                   tensorrt_in_tensors_[input_x_index_].format_);
-  MS_LOG(DEBUG) << "before transpose "
-                << GetTensorFormat(tensorrt_in_tensors_[1 - input_x_index_].trt_tensor_,
-                                   tensorrt_in_tensors_[1 - input_x_index_].format_);
+  MS_LOG(DEBUG) << "before transpose " << GetTensorFormat(tensorrt_in_tensors_[input_x_index_]);
+  MS_LOG(DEBUG) << "before transpose " << GetTensorFormat(tensorrt_in_tensors_[1 - input_x_index_]);
 
   if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
       tensorrt_in_tensors_[0].format_ != tensorrt_in_tensors_[1].format_) {
@@ -112,12 +107,8 @@ int ElementWiseTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     tensorrt_in_tensors_[transpose_input_tensor].trt_tensor_ = transpose_layer->getOutput(0);
     tensorrt_in_tensors_[transpose_input_tensor].format_ = Format::NHWC;
   }
-  MS_LOG(DEBUG) << "after transpose "
-                << GetTensorFormat(tensorrt_in_tensors_[input_x_index_].trt_tensor_,
-                                   tensorrt_in_tensors_[input_x_index_].format_);
-  MS_LOG(DEBUG) << "after transpose "
-                << GetTensorFormat(tensorrt_in_tensors_[1 - input_x_index_].trt_tensor_,
-                                   tensorrt_in_tensors_[1 - input_x_index_].format_);
+  MS_LOG(DEBUG) << "after transpose " << GetTensorFormat(tensorrt_in_tensors_[input_x_index_]);
+  MS_LOG(DEBUG) << "after transpose " << GetTensorFormat(tensorrt_in_tensors_[1 - input_x_index_]);
 
   nvinfer1::IElementWiseLayer *cal_layer =
     network->addElementWise(*tensorrt_in_tensors_[input_x_index_].trt_tensor_,
@@ -154,7 +145,7 @@ int ElementWiseTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   op_out_tensor->setName((op_name_ + "_output").c_str());
   this->AddInnerOutTensors(
     ITensorHelper{op_out_tensor, tensorrt_in_tensors_[1].format_, tensorrt_in_tensors_[1].same_format_});
-  MS_LOG(DEBUG) << "output " << GetTensorFormat(op_out_tensor, tensorrt_in_tensors_[1].format_);
+  MS_LOG(DEBUG) << "output " << GetTensorFormat(tensorrt_out_tensors_[0]);
   return RET_OK;
 }
 

@@ -46,7 +46,7 @@ int ReduceTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   bool keep_dims = reduce_op->keep_dims();
   out_format_ = tensorrt_in_tensors_[0].format_;
   nvinfer1::ITensor *shuffler_input = tensorrt_in_tensors_[0].trt_tensor_;
-  MS_LOG(DEBUG) << "origin input " << GetTensorFormat(shuffler_input, out_format_);
+  MS_LOG(DEBUG) << "origin input " << GetTensorFormat(tensorrt_in_tensors_[0]);
   if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
       !SameDims(tensorrt_in_tensors_[0].trt_tensor_->getDimensions(), in_tensors_[0].Shape())) {
     if (tensorrt_in_tensors_[0].format_ == Format::NCHW) {
@@ -81,7 +81,7 @@ int ReduceTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     unsqueeze_layer->setReshapeDimensions(unsqueeze_dims);
     reduce_input = unsqueeze_layer->getOutput(0);
   }
-  MS_LOG(DEBUG) << "after transpose and expand dims " << GetTensorFormat(reduce_input, out_format_);
+  MS_LOG(DEBUG) << "after transpose and expand dims " << GetTensorFormat(reduce_input, out_format_, true);
 
   uint32_t reduceAxis = GetAxis();
   nvinfer1::IReduceLayer *layer =
@@ -120,7 +120,7 @@ int ReduceTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   }
   out_tensor->setName((op_name_ + "_output").c_str());
   this->AddInnerOutTensors(ITensorHelper{out_tensor, out_format_, true});
-  MS_LOG(DEBUG) << "output " << GetTensorFormat(out_tensor, out_format_);
+  MS_LOG(DEBUG) << "output " << GetTensorFormat(tensorrt_out_tensors_[0]);
   return RET_OK;
 }
 uint32_t ReduceTensorRT::GetAxis() {

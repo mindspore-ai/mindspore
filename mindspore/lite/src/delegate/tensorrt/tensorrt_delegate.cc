@@ -120,9 +120,6 @@ Status TensorRTDelegate::Init() {
     {schema::PrimitiveType_Sqrt, GetTensorRTOp<UnaryTensorRT>},
     {schema::PrimitiveType_Abs, GetTensorRTOp<UnaryTensorRT>},
   };
-  unsupport_hw_op_lists_ = {schema::PrimitiveType_Reshape, schema::PrimitiveType_ReduceScatter,
-                            schema::PrimitiveType_AllGather};
-  unsupport_resize_op_list_ = {schema::PrimitiveType_StridedSlice, schema::PrimitiveType_LSTM};
   int ret = lite::SetCudaDevice(device_info_);
   if (ret != RET_OK) {
     return mindspore::kLiteError;
@@ -155,31 +152,11 @@ Status TensorRTDelegate::Init() {
   return mindspore::kSuccess;
 }
 
-void TensorRTDelegate::CheckSupportResize(schema::PrimitiveType type) {
-  if (support_resize_) {
-    auto opt_iter = unsupport_resize_op_list_.find(type);
-    if (opt_iter != unsupport_resize_op_list_.end()) {
-      support_resize_ = false;
-      support_hw_resize_ = false;
-      MS_LOG(WARNING) << "network has op don't support resize, op: " << type;
-      return;
-    }
-  }
-  if (support_hw_resize_) {
-    auto opt_iter = unsupport_hw_op_lists_.find(type);
-    if (opt_iter != unsupport_hw_op_lists_.end()) {
-      support_hw_resize_ = false;
-      MS_LOG(WARNING) << "network has op don't support hw resize, op: " << type;
-    }
-  }
-}
-
 Status TensorRTDelegate::BuildSubGraph(DelegateModel<schema::Primitive> *model) {
   KernelIter from, end;
   std::vector<TensorRTOp *> tensorrt_ops;
   for (KernelIter iter = model->BeginKernelIterator(); iter != model->EndKernelIterator(); iter++) {
     kernel::Kernel *kernel = *iter;
-    CheckSupportResize(model->GetPrimitive(kernel)->value_type());
     auto tensorrt_op = FindTensorRTOp(kernel, model->GetPrimitive(kernel));
     if (tensorrt_op != nullptr) {
       if (cache_mgr_->CheckIsCacheKernel(kernel)) {
@@ -249,7 +226,27 @@ TensorRTOp *TensorRTDelegate::FindTensorRTOp(kernel::Kernel *kernel, const schem
   auto name = kernel->name();
   auto node_type = primitive->value_type();
   if (op_func_lists_.find(node_type) != op_func_lists_.end()) {
-    return op_func_lists_[node_type](primitive, in_tensors, out_tensors, name);
+    TensorRTOp *tensorrt_op = op_func_lists_[node_type](primitive, in_tensors, out_tensors, name);
+    if (tensorrt_op == nullptr) {
+      return nullptr;
+    }
+    if (!support_resize_) {
+      return tensorrt_op;
+    }
+    support_resize_ = tensorrt_op->GetDynamicShapeParams().support_dynamic_ ? support_resize_ : false;
+    if (!tensorrt_op->GetDynamicShapeParams().support_dynamic_) {
+      MS_LOG(WARNING) << "TensorRT subgraph don't support dynamic shape resize, because of op " << name;
+      support_hw_resize_ = false;
+      return tensorrt_op;
+    }
+    if (!support_hw_resize_) {
+      return tensorrt_op;
+    }
+    support_hw_resize_ = tensorrt_op->GetDynamicShapeParams().support_hw_dynamic_ ? support_hw_resize_ : false;
+    if (!tensorrt_op->GetDynamicShapeParams().support_hw_dynamic_) {
+      MS_LOG(WARNING) << "TensorRT subgraph don't support dynamic hw dims resize, because of op " << name;
+    }
+    return tensorrt_op;
   } else {
     MS_LOG(WARNING) << "Unsupported op type for TensorRT. kernel->name:" << kernel->name()
                     << " type:" << schema::EnumNamePrimitiveType(primitive->value_type());

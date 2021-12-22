@@ -77,7 +77,7 @@ int PadTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     }
     transpose_layer_in->setName((op_name_ + "_transpose2NCHW").c_str());
     pad_input = transpose_layer_in->getOutput(0);
-    MS_LOG(DEBUG) << "after transpose " << GetTensorFormat(pad_input, Format::NCHW);
+    MS_LOG(DEBUG) << "after transpose " << GetTensorFormat(pad_input, Format::NCHW, false);
   }
 
   // trt 6 only support 2D padding

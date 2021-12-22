@@ -59,4 +59,5 @@ int TensorRTOp::Prepare(void **network_tensor_bindings, nvinfer1::ICudaEngine *e
   }
   return RET_OK;
 }
+DynamicShapeParams TensorRTOp::GetDynamicShapeParams() const { return this->dynamic_shape_params_; }
 }  // namespace mindspore::lite

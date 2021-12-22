@@ -38,6 +38,8 @@ int SliceTensorRT::IsSupport(const mindspore::schema::Primitive *primitive,
     MS_LOG(ERROR) << "invalid pad or stride tensor for: " << op_name_;
     return RET_ERROR;
   }
+  dynamic_shape_params_.support_dynamic_ = false;
+  dynamic_shape_params_.support_hw_dynamic_ = false;
   return RET_OK;
 }
 

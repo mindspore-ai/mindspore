@@ -70,7 +70,7 @@ int ConcateTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     for (size_t i = 0; i < tensorrt_in_tensors_.size(); i++) {
       if (tensorrt_in_tensors_[i].format_ == out_format) {
         trt_input_tensors[i] = tensorrt_in_tensors_[i].trt_tensor_;
-        MS_LOG(DEBUG) << "concate input " << GetTensorFormat(trt_input_tensors[i], out_format);
+        MS_LOG(DEBUG) << "concate input " << GetTensorFormat(tensorrt_in_tensors_[i]);
       } else {
         nvinfer1::IShuffleLayer *transpose_layer = NCHW2NHWC(network, *tensorrt_in_tensors_[i].trt_tensor_);
         if (transpose_layer == nullptr) {
@@ -78,13 +78,13 @@ int ConcateTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
           return RET_ERROR;
         }
         trt_input_tensors[i] = transpose_layer->getOutput(0);
-        MS_LOG(DEBUG) << "concate input " << GetTensorFormat(trt_input_tensors[i], Format::NHWC);
+        MS_LOG(DEBUG) << "concate input " << GetTensorFormat(trt_input_tensors[i], Format::NHWC, true);
       }
     }
   } else {
     for (size_t i = 0; i < tensorrt_in_tensors_.size(); i++) {
       trt_input_tensors[i] = tensorrt_in_tensors_[i].trt_tensor_;
-      MS_LOG(DEBUG) << "concate input " << GetTensorFormat(trt_input_tensors[i], tensorrt_in_tensors_[i].format_);
+      MS_LOG(DEBUG) << "concate input " << GetTensorFormat(tensorrt_in_tensors_[i]);
     }
   }
   int axis = RET_INVALID_OP_ATTR;

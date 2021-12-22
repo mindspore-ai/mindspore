@@ -46,6 +46,7 @@ int ReduceScatterTensorRT::IsSupport(const schema::Primitive *primitive,
     MS_LOG(ERROR) << "invalid output tensor size: " << out_tensors.size();
     return RET_ERROR;
   }
+  dynamic_shape_params_.support_hw_dynamic_ = false;
   return RET_OK;
 #endif
 }

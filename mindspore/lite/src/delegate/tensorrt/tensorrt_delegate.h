@@ -50,17 +50,13 @@ class TensorRTDelegate : public Delegate {
 
  private:
   Status BuildSubGraph(DelegateModel<schema::Primitive> *model);
-  void CheckSupportResize(schema::PrimitiveType type);
+
   TensorRTOp *FindTensorRTOp(kernel::Kernel *kernel, const schema::Primitive *primitive);
 
   TensorRTSubGraph *CreateTensorRTGraph(const std::vector<TensorRTOp *> &ops, DelegateModel<schema::Primitive> *model,
                                         KernelIter from, KernelIter end);
 
   std::unordered_map<schema::PrimitiveType, TensorRTGetOp> op_func_lists_;
-
-  std::unordered_set<schema::PrimitiveType> unsupport_hw_op_lists_;
-
-  std::unordered_set<schema::PrimitiveType> unsupport_resize_op_list_;
 
   mindspore::Context *context_;
 
