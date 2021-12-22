@@ -279,19 +279,45 @@ int LiteModel::SubGraphVerify() const {
       MS_LOG(ERROR) << "Index of graph->node_indices_ is beyond node_size.";
       return RET_ERROR;
     }
-    // Check the graph valid
-    for (auto output : graph->output_indices_) {
-      bool found_output = std::any_of(graph->node_indices_.begin(), graph->node_indices_.end(), [&](uint32_t node_idx) {
-        auto node = this->all_nodes_.at(node_idx);
-        return std::any_of(node->output_indices_.begin(), node->output_indices_.end(),
-                           [&output](uint32_t idx) { return output == idx; });
-      });
-      bool is_input = std::any_of(graph->input_indices_.begin(), graph->input_indices_.end(),
-                                  [&output](uint32_t idx) { return output == idx; });
-      if (!found_output && !is_input) {
-        MS_LOG(ERROR) << "The output is not valid.";
-        return RET_ERROR;
+    auto ret = SubGraphInOutVerify(graph);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Fail to pass the subgraph input output verification.";
+      return ret;
+    }
+  }
+  return RET_OK;
+}
+
+int LiteModel::SubGraphInOutVerify(const Model::SubGraph *graph) const {
+  auto from_node = [&](uint32_t cur_idx) -> bool {
+    for (auto node_idx : graph->node_indices_) {
+      auto node = this->all_nodes_.at(node_idx);
+      if (std::any_of(node->output_indices_.begin(), node->output_indices_.end(),
+                      [&cur_idx](uint32_t idx) { return cur_idx == idx; })) {
+        return true;
       }
+    }
+    return false;
+  };
+  for (auto in_idx : graph->input_indices_) {
+    auto in_tensor = this->all_tensors_.at(in_idx);
+    bool is_from_node = from_node(in_idx);
+    bool has_data = in_tensor->data() != nullptr && in_tensor->data()->data() != nullptr;
+    if (is_from_node || (in_tensor->dataType() != kObjectTypeTensorType && has_data)) {
+      MS_LOG(ERROR) << "The graph input is not valid.";
+      return RET_ERROR;
+    }
+  }
+  for (auto out_idx : graph->output_indices_) {
+    auto tensor = this->all_tensors_.at(out_idx);
+    bool is_from_node = from_node(out_idx);
+    bool is_input = std::any_of(graph->input_indices_.begin(), graph->input_indices_.end(),
+                                [&out_idx](uint32_t idx) { return out_idx == idx; });
+    bool from_node_and_has_data = is_from_node && (tensor->data() != nullptr && tensor->data()->data() != nullptr);
+    bool isolated_and_no_data = !is_from_node && (tensor->data() == nullptr || tensor->data()->data() == nullptr);
+    if (!is_input && (from_node_and_has_data || isolated_and_no_data)) {
+      MS_LOG(ERROR) << "The graph output is not valid.";
+      return RET_ERROR;
     }
   }
   return RET_OK;
