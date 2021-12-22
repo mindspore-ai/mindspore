@@ -103,20 +103,21 @@ Status CacheOp::CacheAllRows(int32_t worker_id) {
 }
 Status CacheOp::WaitForCachingAllRows() {
   // Fetch all rows and wait for workers to cache them
+  if (phase_ == Phase::kBuildPhase) {
+    // We will take the chance to cache the schema at the server.
+    RETURN_IF_NOT_OK(cache_client_->CacheSchema(column_name_id_map()));
+    // SAVE mode loop
+    TensorRow new_row;
+    auto child_iterator = std::make_unique<ChildIterator>(this, 0, 0);
+    int64_t ctr = 0;
+    do {
+      RETURN_IF_NOT_OK(child_iterator->FetchNextTensorRow(&new_row));
+      RETURN_IF_NOT_OK(cache_workers_in_queue_[ctr++ % num_workers_]->EmplaceBack(std::move(new_row)));
+    } while (!new_row.eof());
 
-  // We will take the chance to cache the schema at the server.
-  RETURN_IF_NOT_OK(cache_client_->CacheSchema(column_name_id_map()));
-  // SAVE mode loop
-  TensorRow new_row;
-  auto child_iterator = std::make_unique<ChildIterator>(this, 0, 0);
-  int64_t ctr = 0;
-  do {
-    RETURN_IF_NOT_OK(child_iterator->FetchNextTensorRow(&new_row));
-    RETURN_IF_NOT_OK(cache_workers_in_queue_[ctr++ % num_workers_]->EmplaceBack(std::move(new_row)));
-  } while (!new_row.eof());
-
-  for (int32_t i = 1; i < num_workers_; i++) {
-    RETURN_IF_NOT_OK(cache_workers_in_queue_[ctr++ % num_workers_]->EmplaceBack(TensorRow(TensorRow::kFlagEOF)));
+    for (int32_t i = 1; i < num_workers_; i++) {
+      RETURN_IF_NOT_OK(cache_workers_in_queue_[ctr++ % num_workers_]->EmplaceBack(TensorRow(TensorRow::kFlagEOF)));
+    }
   }
 
   // Wait for the workers to finish caching the rows.
