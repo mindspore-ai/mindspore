@@ -162,15 +162,14 @@ class TestProfiler:
         self._train_with_profiler(device_target="GPU")
         self._check_gpu_profiling_file()
 
-    # TODO
-    # @pytest.mark.level0
-    # @pytest.mark.platform_arm_ascend_training
-    # @pytest.mark.platform_x86_ascend_training
-    # @pytest.mark.env_onecard
-    # @security_off_wrap
-    # def test_ascend_profiler(self):
-    #     self._train_with_profiler(device_target="Ascend")
-    #     self._check_d_profiling_file()
+    @pytest.mark.level0
+    @pytest.mark.platform_arm_ascend_training
+    @pytest.mark.platform_x86_ascend_training
+    @pytest.mark.env_onecard
+    @security_off_wrap
+    def test_ascend_profiler(self):
+        self._train_with_profiler(device_target="Ascend")
+        self._check_d_profiling_file()
 
     def _train_with_profiler(self, device_target):
         context.set_context(mode=context.GRAPH_MODE, device_target=device_target)
