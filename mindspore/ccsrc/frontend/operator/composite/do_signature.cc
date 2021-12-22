@@ -347,8 +347,8 @@ FuncGraphPtr DoSignatureMetaFuncGraph::GenerateFuncGraph(const AbstractBasePtrLi
 
 void RaiseExceptionForConvertRefDtype(const std::string &func_name, const std::string &ref_type,
                                       const std::string &target_type) {
-  MS_LOG(EXCEPTION) << "Data type conversion of parameter is not supported, so data type " << ref_type
-                    << " cannot be converted to data type " << target_type << " by inserting cast automatically.\n"
+  MS_LOG(EXCEPTION) << "Data type conversion of 'Parameter' is not supported, so data type " << ref_type
+                    << " cannot be converted to data type " << target_type << " automatically.\n"
                     << "For more details, please refer at "
                     << "https://www.mindspore.cn/docs/note/zh-CN/master/operator_list_implicit.html.";
 }
