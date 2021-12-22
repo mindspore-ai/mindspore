@@ -1,0 +1,21 @@
+Challenge NNP O
+of IN B-PP
+the DT B-NP
+August NNP B-NP
+month NNP B-NP
+. . O
+
+Her PP$ B-NP
+'s POS B-NP
+chancellor NNP O
+at IN B-PP
+Lawson NNP I-NP
+. . O
+
+To TO I-VP
+economists NNS B-NP
+, , O
+foreign JJ B-NP
+exchange NN I-NP
+. . O
+

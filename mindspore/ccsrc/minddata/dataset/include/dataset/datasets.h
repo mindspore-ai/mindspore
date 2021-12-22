@@ -1776,6 +1776,70 @@ inline std::shared_ptr<CocoDataset> MS_API Coco(const std::string &dataset_dir, 
                                        decode, sampler, cache, extra_metadata);
 }
 
+/// \class CoNLL2000Dataset
+/// \brief A source dataset for reading and parsing CoNLL2000Dataset.
+class MS_API CoNLL2000Dataset : public Dataset {
+ public:
+  /// \brief Constructor of CoNLL2000Dataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] usage The type of data list txt file to be read, can be "train", "test" or "all".
+  /// \param[in] num_samples The number of samples to be included in the dataset.
+  /// \param[in] shuffle The mode for shuffling data every epoch.
+  ///     Can be any of:
+  ///     ShuffleMode.kFalse - No shuffling is performed.
+  ///     ShuffleMode.kFiles - Shuffle files only.
+  ///     ShuffleMode.kGlobal - Shuffle both the files and samples.
+  /// \param[in] num_shards Number of shards that the dataset should be divided into.
+  /// \param[in] shard_id The shard ID within num_shards. This argument should be
+  ///     specified only when num_shards is also specified.
+  /// \param[in] cache Tensor cache to use.
+  CoNLL2000Dataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, int64_t num_samples,
+                   ShuffleMode shuffle, int32_t num_shards, int32_t shard_id,
+                   const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Destructor of CoNLL2000Dataset.
+  ~CoNLL2000Dataset() = default;
+};
+
+/// \brief Function to create a CoNLL2000Dataset.
+/// \note The generated dataset has three column ['word', 'pos_tag', 'chunk_tag'].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage Part of dataset of CoNLL2000, can be "train", "test" or "all" (default="all").
+/// \param[in] num_samples The number of samples to be included in the dataset
+///     (Default = 0, means all samples).
+/// \param[in] shuffle The mode for shuffling data every epoch (Default=ShuffleMode.kGlobal).
+///     Can be any of:
+///     ShuffleMode::kFalse - No shuffling is performed.
+///     ShuffleMode::kFiles - Shuffle files only.
+///     ShuffleMode::kGlobal - Shuffle both the files and samples.
+/// \param[in] num_shards Number of shards that the dataset should be divided into (Default = 1).
+/// \param[in] shard_id The shard ID within num_shards. This argument should be
+///     specified only when num_shards is also specified (Default = 0).
+/// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
+/// \return Shared pointer to the CoNLL2000Dataset.
+/// \par Example
+/// \code
+///      /* Define dataset path and MindData object */
+///      std::string folder_path = "/path/to/conll2000_dataset_directory";
+///      std::shared_ptr<Dataset> ds = CoNLL2000(dataset_dir, "all", 0, ShuffleMode::kGlobal);
+///
+///      /* Create iterator to read dataset */
+///      std::shared_ptr<Iterator> iter = ds->CreateIterator();
+///      std::unordered_map<std::string, mindspore::MSTensor> row;
+///      iter->GetNextRow(&row);
+///
+///      /* Note: In CoNLL2000 dataset, each dictionary has keys "word", "pos_tag", "chunk_tag" */
+///      auto word = row["word"];
+/// \endcode
+inline std::shared_ptr<CoNLL2000Dataset> MS_API CoNLL2000(const std::string &dataset_dir,
+                                                          const std::string &usage = "all", int64_t num_samples = 0,
+                                                          ShuffleMode shuffle = ShuffleMode::kGlobal,
+                                                          int32_t num_shards = 1, int32_t shard_id = 0,
+                                                          const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<CoNLL2000Dataset>(StringToChar(dataset_dir), StringToChar(usage), num_samples, shuffle,
+                                            num_shards, shard_id, cache);
+}
+
 /// \class CSVDataset
 /// \brief A source dataset that reads and parses comma-separated values (CSV) datasets.
 class MS_API CSVDataset : public Dataset {

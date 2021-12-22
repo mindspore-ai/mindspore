@@ -10,6 +10,7 @@ set(DATASET_ENGINE_DATASETOPS_SOURCE_SRC_FILES
     cityscapes_op.cc
     clue_op.cc
     coco_op.cc
+    conll2000_op.cc
     csv_op.cc
     dbpedia_op.cc
     div2k_op.cc

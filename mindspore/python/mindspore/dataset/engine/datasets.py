@@ -74,7 +74,8 @@ from .validators import check_batch, check_shuffle, check_map, check_filter, che
     check_photo_tour_dataset, check_ag_news_dataset, check_dbpedia_dataset, check_lj_speech_dataset, \
     check_yes_no_dataset, check_speech_commands_dataset, check_tedlium_dataset, check_svhn_dataset, \
     check_stl10_dataset, check_yelp_review_dataset, check_penn_treebank_dataset, check_iwslt2016_dataset, \
-    check_iwslt2017_dataset, check_sogou_news_dataset, check_yahoo_answers_dataset, check_udpos_dataset
+    check_iwslt2017_dataset, check_sogou_news_dataset, check_yahoo_answers_dataset, check_udpos_dataset,\
+    check_conll2000_dataset
 from ..core.config import get_callback_timeout, _init_device_info, get_enable_shared_mem, get_num_parallel_workers, \
     get_prefetch_size
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
@@ -6660,6 +6661,64 @@ class CocoDataset(MappableDataset):
             runtime_getter = self._init_tree_getters()
             self._class_indexing = dict(runtime_getter[0].GetClassIndexing())
         return self._class_indexing
+
+
+class CoNLL2000Dataset(SourceDataset):
+    """
+    A source dataset that reads and parses CoNLL2000 dataset.
+
+    The generated dataset has three columns: :py:obj:`[word, pos_tag, chunk_tag]`.
+    The tensor of column :py:obj:`word` is of the string type.
+    The tensor of column :py:obj:`pos_tag` is of the string type.
+    The tensor of column :py:obj:`chunk_tag` is of the string type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        usage (str, optional): Usage of this dataset, can be `train`, `test`,  or `all`. `train` will read from
+            8936 train samples, `test` will read from 2,012 test samples,
+            `all` will read from all 1,0948 samples (default=None, all samples).
+        num_samples (int, optional): Number of samples (rows) to read (default=None, reads the full dataset).
+        shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
+            (default=Shuffle.GLOBAL).
+            If shuffle is False, no shuffling will be performed;
+            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
+            Otherwise, there are two levels of shuffling:
+
+            - Shuffle.GLOBAL: Shuffle both the files and samples.
+
+            - Shuffle.FILES: Shuffle files only.
+
+        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            When this argument is specified, `num_samples` reflects the max sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument can only be specified when num_shards is also specified.
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, number set in the config).
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing
+            (default=None, which means no cache is used).
+
+    Raises:
+        RuntimeError: If dataset_dir does not contain data files.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+
+    Examples:
+        >>> conll2000_dataset_dir = "/path/to/conll2000_dataset_dir"
+        >>> dataset = ds.CoNLL2000Dataset(dataset_files=conll2000_dataset_dir, usage='all')
+    """
+
+    @check_conll2000_dataset
+    def __init__(self, dataset_dir, usage=None, num_samples=None, shuffle=Shuffle.GLOBAL, num_shards=None,
+                 shard_id=None, num_parallel_workers=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, num_samples=num_samples, shuffle=shuffle,
+                         num_shards=num_shards, shard_id=shard_id, cache=cache)
+        self.dataset_dir = dataset_dir
+        self.usage = replace_none(usage, 'all')
+
+    def parse(self, children=None):
+        return cde.CoNLL2000Node(self.dataset_dir, self.usage, self.num_samples, self.shuffle_flag, self.num_shards,
+                                 self.shard_id)
 
 
 class CelebADataset(MappableDataset):

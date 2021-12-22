@@ -84,6 +84,7 @@ constexpr char kCifar10Node[] = "Cifar10Dataset";
 constexpr char kCityscapesNode[] = "CityscapesDataset";
 constexpr char kCLUENode[] = "CLUEDataset";
 constexpr char kCocoNode[] = "CocoDataset";
+constexpr char kCoNLL2000Node[] = "CoNLL2000Dataset";
 constexpr char kCSVNode[] = "CSVDataset";
 constexpr char kDBpediaNode[] = "DBpediaDataset";
 constexpr char kDIV2KNode[] = "DIV2KDataset";

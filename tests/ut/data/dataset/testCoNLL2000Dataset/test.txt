@@ -1,0 +1,14 @@
+He PBP B-NP
+reckons   VBZ  B-VP
+the       DT   B-NP
+current   JJ   I-NP
+account   NN   I-NP
+. . O
+
+The DT B-NP
+1.8       CD   I-NP
+billion   CD   I-NP
+in        IN   B-PP
+September NNP  B-NP
+. . O
+
