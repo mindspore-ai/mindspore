@@ -149,7 +149,6 @@ void OutputActor::UpdateOutputDeviceAddress() {
   // they are fixed addresses and persistent.
   for (size_t i = 0; i < output_nodes_.size(); ++i) {
     auto &output_node = output_nodes_[i].first;
-    auto output_index = output_nodes_[i].second;
     auto &tensor = outputs_[i];
 
     if (i >= output_device_tensors_.size()) {
@@ -193,9 +192,7 @@ void OutputActor::UpdateOutputDeviceAddress() {
                           << output_node->fullname_with_scope() << ", alloc size: " << tensor_device_address->GetSize()
                           << "B.";
       }
-      if (!tensor_device_address->SyncDeviceToDeviceWithSameFormatType(
-            trans::GetRuntimePaddingShape(output_node, output_index), device_tensor->GetSize(),
-            device_tensor->type_id(), device_tensor->GetPtr(), device_tensor->format())) {
+      if (!tensor_device_address->SyncDeviceToDevice(device_tensor)) {
         MS_LOG(EXCEPTION) << "Sync device to device failed, device type: " << tensor_device_address->DeviceType();
       }
     } else {
