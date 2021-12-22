@@ -334,14 +334,10 @@ class AnfRuntimeAlgorithm {
   static void CacheAddrForGraph(const KernelGraphPtr &kernel_graph);
   static void CacheAddrForKernel(const AnfNodePtr &node, kernel::KernelMod *kernel_mod);
   static void CacheAddrForAtomicClean(const AnfNodePtr &node, kernel::KernelMod *kernel_mod);
-  // Check whether node is a call node, there are two types of call nodes:
-  // 1. First input of node is a cnode.
-  // 2. First input of node is a funcgraph value node.
+  // Check whether node is a call node, call nodes are those cnodes whose first input is not primitive node.
   static bool IsCallNode(const AnfNodePtr &node);
   // Get the output number according to abstract, when there is a tuple in abstract, it needs to get recursively.
   static size_t GetOutputNumByAbstract(const AbstractBasePtr &node_abstract);
-  // Fetch all outputs of call node.
-  static std::vector<KernelWithIndex> GetAllOutputByCallNode(const KernelWithIndex &output_with_index);
   // Get attr groups
   static int64_t GetAttrGroups(const AnfNodePtr &node, const size_t index);
 

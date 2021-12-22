@@ -541,9 +541,11 @@ void MindRTBackend::CompileGraph(const GraphSegmentPtr &segment, bool contain_mu
     MS_EXCEPTION_IF_NULL(cut_node);
     MS_LOG(INFO) << "Compile cut segment, the cut node: " << cut_node->DebugString();
     control_nodes_.push_back(cut_node);
-    const auto &func_graph = cut_node->func_graph();
-    MS_EXCEPTION_IF_NULL(func_graph);
-    func_graph_to_kernel_graph_ids_[func_graph].emplace_back(std::vector<GraphId>());
+    if (AnfAlgo::IsCallNode(cut_node)) {
+      const auto &func_graph = cut_node->func_graph();
+      MS_EXCEPTION_IF_NULL(func_graph);
+      func_graph_to_kernel_graph_ids_[func_graph].emplace_back(std::vector<GraphId>());
+    }
   }
 }
 
