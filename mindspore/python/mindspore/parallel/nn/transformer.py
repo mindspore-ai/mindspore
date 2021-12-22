@@ -138,8 +138,8 @@ class TransformerRecomputeConfig(_Config):
 
     Examples:
         >>> from mindspore.parallel.nn import TransformerRecomputeConfig
-        >>> config=TransformerRecomputeConfig(recompute=True, parallel_optimizer_comm_recompute=True,
-        >>> mp_comm_recompute=True, recompute_slice_activation=True)
+        >>> config=TransformerRecomputeConfig(recompute=True, parallel_optimizer_comm_recompute=True, \
+        mp_comm_recompute=True, recompute_slice_activation=True)
     """
 
     def __init__(self, recompute=False, parallel_optimizer_comm_recompute=False,
@@ -225,8 +225,8 @@ class TransformerOpParallelConfig(_Config):
 
     Examples:
         >>> from mindspore.parallel.nn import TransformerRecomputeConfig
-        >>> recompute_config=TransformerRecomputeConfig(recompute=True, parallel_optimizer_comm_recompute=True,
-        >>> mp_comm_recompute=True, recompute_slice_activation=True)
+        >>> recompute_config=TransformerRecomputeConfig(recompute=True, parallel_optimizer_comm_recompute=True, \
+        mp_comm_recompute=True, recompute_slice_activation=True)
         >>> config=TransformerOpParallelConfig(data_parallel=1, model_parallel=1, recompute=recompute_config)
     """
 
