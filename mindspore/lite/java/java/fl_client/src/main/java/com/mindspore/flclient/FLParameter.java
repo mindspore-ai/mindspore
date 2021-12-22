@@ -74,7 +74,7 @@ public class FLParameter {
     private int serverNum = 1;
     private boolean ifPkiVerify = false;
     private String equipCrlPath = "null";
-    private long validIterInterval = 3600000L;
+    private long validIterInterval = 600000L;
     private int threadNum = 1;
     private BindMode cpuBindMode = BindMode.NOT_BINDING_CORE;
 

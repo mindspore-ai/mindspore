@@ -607,6 +607,11 @@ public class StartFLJob {
             RequestFLJob.addIteration(builder, iteration);
             RequestFLJob.addDataSize(builder, dataSize);
             RequestFLJob.addTimestamp(builder, timestampOffset);
+            RequestFLJob.addSignData(builder, signDataOffset);
+            RequestFLJob.addRootCert(builder, rootCertOffset);
+            RequestFLJob.addEquipCaCert(builder, equipCACertOffset);
+            RequestFLJob.addEquipCert(builder, equipCertOffset);
+            RequestFLJob.addKeyAttestation(builder, keyAttestationOffset);
             int root = RequestFLJob.endRequestFLJob(builder);
             builder.finish(root);
             return builder.sizedByteArray();
