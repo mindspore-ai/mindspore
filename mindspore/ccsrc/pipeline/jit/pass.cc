@@ -48,7 +48,7 @@
 #include "pipeline/pynative/pynative_execute.h"
 #include "pipeline/jit/static_analysis/auto_monad.h"
 #include "frontend/optimizer/irpass/branch_culling.h"
-#include "frontend/optimizer/irpass/gradient_eliminate.h"
+#include "frontend/optimizer/irpass/meta_fg_eliminate.h"
 #include "frontend/optimizer/irpass/parameter_eliminate.h"
 #include "frontend/optimizer/irpass/updatestate_eliminate.h"
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
@@ -232,7 +232,7 @@ bool parallel_mode() {
 void AddParallelRenormalize(OptPassGroupMap *map_a) {
   if (parallel_mode()) {
     auto parallel_end_opt =
-      find_if(map_a->begin(), map_a->end(), [](auto opt_pair) { return opt_pair.first == "grad"; });
+      find_if(map_a->begin(), map_a->end(), [](auto opt_pair) { return opt_pair.first == "meta_fg_expand"; });
     if (parallel_end_opt != map_a->end()) {
       (void)map_a->insert(parallel_end_opt, {"parallel_renormalize", opt::OptPassConfig::Renormalize()});
     }
@@ -357,7 +357,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
                          {"allreduce_fusion", opt::OptPassConfig(parallel::StepAllreduceFusion)},
                          {"virtual_dataset", virtual_dataset},
                          {"virtual_output", opt::OptPassConfig({irpass.virtual_output_eliminate_})},
-                         {"grad", opt::OptPassConfig(opt::irpass::ExpandJPrim())},
+                         {"meta_fg_expand", opt::OptPassConfig(opt::irpass::ExpandMetaFg())},
                          {"after_resolve", after_resolve_pass},
                          {"a_after_grad", a_after_grad},
                          {"renormalize", opt::OptPassConfig::Renormalize()},

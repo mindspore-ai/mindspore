@@ -159,6 +159,9 @@ constexpr auto kCSRReduceSum = "CSRReduceSum";
 constexpr auto kCSRMV = "CSRMV";
 constexpr auto kCSRMul = "CSRMul";
 
+// Meta Function Graph
+constexpr auto kJ = "J";
+
 // Others
 constexpr auto kMakeTuple = "MakeTuple";
 constexpr auto kAssign = "Assign";
@@ -822,7 +825,7 @@ MS_CORE_API inline const PrimitivePtr kPrimPyInterpret = std::make_shared<Primit
 
 // Other primitive not used by backend but used in core;
 MS_CORE_API inline const PrimitivePtr kPrimStateSetItem = std::make_shared<Primitive>("state_setitem");
-MS_CORE_API inline const PrimitivePtr kPrimJ = std::make_shared<Primitive>("J", kSideEffectPropagate);
+MS_CORE_API inline const PrimitivePtr kPrimJ = std::make_shared<Primitive>(kJ, kSideEffectPropagate);
 MS_CORE_API inline const PrimitivePtr kPrimShard = std::make_shared<Primitive>("Shard", kSideEffectPropagate);
 
 // Used to build graph which have keyword arguments
