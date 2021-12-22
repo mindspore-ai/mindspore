@@ -22,6 +22,7 @@
 #include <sstream>
 
 #include "./securec.h"
+#include "utils/file_utils.h"
 #include "utils/ms_utils.h"
 #include "minddata/dataset/util/log_adapter.h"
 
@@ -33,9 +34,21 @@ char Path::separator_ = '\\';
 char Path::separator_ = '/';
 #endif
 
-Path::Path(const std::string &s) : path_(s) {}
+Path::Path(const std::string &s) {
+#if defined(_WIN32) || defined(_WIN64)
+  path_ = FileUtils::UTF_8ToGB2312(s.data());
+#else
+  path_ = s;
+#endif
+}
 
-Path::Path(const char *p) : path_(p) {}
+Path::Path(const char *p) {
+#if defined(_WIN32) || defined(_WIN64)
+  path_ = FileUtils::UTF_8ToGB2312(p);
+#else
+  path_ = p;
+#endif
+}
 
 Path::Path(const Path &p) : path_(p.path_) {}
 
@@ -76,12 +89,20 @@ Path &Path::operator+=(const Path &rhs) {
 }
 
 Path &Path::operator+=(const std::string &p) {
+#if defined(_WIN32) || defined(_WIN64)
+  path_ += FileUtils::UTF_8ToGB2312(p.data());
+#else
   path_ += p;
+#endif
   return *this;
 }
 
 Path &Path::operator+=(const char *p) {
+#if defined(_WIN32) || defined(_WIN64)
+  path_ += FileUtils::UTF_8ToGB2312(p);
+#else
   path_ += p;
+#endif
   return *this;
 }
 

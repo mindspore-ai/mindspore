@@ -25,17 +25,224 @@
 #include "utils/system/env.h"
 #include "utils/utils.h"
 
+#if defined(_WIN32) || defined(_WIN64)
+#include <windows.h>
+#include <wchar.h>
+#endif
+
 namespace mindspore {
+#if defined(_WIN32) || defined(_WIN64)
+int IncludeChinese(const char *str) {
+  if (str == nullptr) {
+    return 0;
+  }
+
+  char *tmp_str = const_cast<char *>(str);
+  while (1) {
+    char c = *tmp_str++;
+
+    // end the input str
+    if (c == 0) {
+      break;
+    }
+
+    // The highest bit of chinese character is 1
+    if (c & 0x80) {
+      if (*tmp_str & 0x80) {
+        return 1;
+      }
+    }
+  }
+  return 0;
+}
+
+bool IsStrUTF_8(const char *str) {
+  MS_EXCEPTION_IF_NULL(str);
+  uint32_t n_bytes = 0;
+  bool b_all_ascii = true;
+  for (uint32_t i = 0; str[i] != '\0'; ++i) {
+    unsigned char chr = *(str + i);
+    if (n_bytes == 0 && (chr & 0x80) != 0) {
+      b_all_ascii = false;
+    }
+    if (n_bytes == 0) {
+      if (chr >= 0x80) {
+        if (chr >= 0xFC && chr <= 0xFD) {
+          n_bytes = 6;
+        } else if (chr >= 0xF8) {
+          n_bytes = 5;
+        } else if (chr >= 0xF0) {
+          n_bytes = 4;
+        } else if (chr >= 0xE0) {
+          n_bytes = 3;
+        } else if (chr >= 0xC0) {
+          n_bytes = 2;
+        } else {
+          return false;
+        }
+        n_bytes--;
+      }
+    } else {
+      if ((chr & 0xC0) != 0x80) {
+        return false;
+      }
+      n_bytes--;
+    }
+  }
+
+  if (n_bytes != 0) {
+    return false;
+  }
+  if (b_all_ascii) {
+    return true;
+  }
+  return true;
+}
+
+bool IsStrGBK(const char *str) {
+  MS_EXCEPTION_IF_NULL(str);
+  uint32_t n_bytes = 0;
+  bool b_all_ascii = true;
+  for (uint32_t i = 0; str[i] != '\0'; ++i) {
+    unsigned char chr = *(str + i);
+    if ((chr & 0x80) != 0 && n_bytes == 0) {
+      b_all_ascii = false;
+    }
+    if (n_bytes == 0) {
+      if (chr >= 0x80) {
+        if (chr >= 0x81 && chr <= 0xFE) {
+          n_bytes = +2;
+        } else {
+          return false;
+        }
+        n_bytes--;
+      }
+    } else {
+      if (chr < 0x40 || chr > 0xFE) {
+        return false;
+      }
+      n_bytes--;
+    }
+  }
+  if (n_bytes != 0) {
+    return false;
+  }
+  if (b_all_ascii) {
+    return true;
+  }
+  return true;
+}
+
+void UTF_8ToUnicode(WCHAR *p_out, char *p_text) {
+  MS_EXCEPTION_IF_NULL(p_out);
+  MS_EXCEPTION_IF_NULL(p_text);
+  char *uchar = reinterpret_cast<char *>(p_out);
+  uchar[1] = ((p_text[0] & 0x0F) << 4) + ((p_text[1] >> 2) & 0x0F);
+  uchar[0] = ((p_text[1] & 0x03) << 6) + (p_text[2] & 0x3F);
+  return;
+}
+
+void UnicodeToGB2312(char *p_out, WCHAR u_data) {
+  MS_EXCEPTION_IF_NULL(p_out);
+  WideCharToMultiByte(CP_ACP, 0, &u_data, 1, p_out, sizeof(WCHAR), nullptr, nullptr);
+  return;
+}
+
+std::string FileUtils::UTF_8ToGB2312(const char *text) {
+  if (text == nullptr) {
+    return "";
+  }
+
+  std::string out;
+  if (!IncludeChinese(text) && IsStrUTF_8(text)) {
+    out = text;
+    return out;
+  }
+
+  if (IsStrGBK(text) && !IsStrUTF_8(text)) {
+    out = text;
+    return out;
+  }
+  char buf[4];
+  int len = strlen(text);
+  char *new_text = const_cast<char *>(text);
+  char *rst = new char[len + (len >> 2) + 2];
+  memset_s(buf, 4, 0, 4);
+  memset_s(rst, len + (len >> 2) + 2, 0, len + (len >> 2) + 2);
+
+  int i = 0;
+  int j = 0;
+
+  while (i < len) {
+    if (*(new_text + i) >= 0) {
+      rst[j++] = new_text[i++];
+    } else {
+      WCHAR w_temp;
+      UTF_8ToUnicode(&w_temp, new_text + i);
+      UnicodeToGB2312(buf, w_temp);
+
+      rst[j] = buf[0];
+      rst[j + 1] = buf[1];
+      rst[j + 2] = buf[2];
+
+      i += 3;
+      j += 2;
+    }
+  }
+
+  rst[j] = '\0';
+  out = rst;
+  delete[] rst;
+  rst = nullptr;
+  return out;
+}
+
+// gb2312 to utf8
+std::string FileUtils::GB2312ToUTF_8(const char *gb2312) {
+  if (gb2312 == nullptr) {
+    return "";
+  }
+
+  if (IsStrUTF_8(gb2312)) {
+    return std::string(gb2312);
+  }
+
+  int len = MultiByteToWideChar(CP_ACP, 0, gb2312, -1, nullptr, 0);
+  wchar_t *wstr = new wchar_t[len + 1];
+  memset_s(wstr, len + 1, 0, len + 1);
+  MultiByteToWideChar(CP_ACP, 0, gb2312, -1, wstr, len);
+  len = WideCharToMultiByte(CP_UTF8, 0, wstr, -1, nullptr, 0, nullptr, nullptr);
+
+  char *str = new char[len + 1];
+  memset_s(str, len + 1, 0, len + 1);
+  WideCharToMultiByte(CP_UTF8, 0, wstr, -1, str, len, nullptr, nullptr);
+  std::string str_temp(str);
+
+  if (wstr != nullptr) {
+    delete[] wstr;
+    wstr = nullptr;
+  }
+  if (str != nullptr) {
+    delete[] str;
+    str = nullptr;
+  }
+
+  return str_temp;
+}
+#endif
+
 std::optional<std::string> FileUtils::GetRealPath(const char *path) {
   if (path == nullptr) {
+#if !defined(_WIN32) && !defined(_WIN64)
     MS_LOG(ERROR) << "Input path is nullptr";
+#endif
     return std::nullopt;
   }
 
   char real_path[PATH_MAX] = {0};
 #if defined(_WIN32) || defined(_WIN64)
-  if (strlen(path) >= PATH_MAX || _fullpath(real_path, path, PATH_MAX) == nullptr) {
-    MS_LOG(ERROR) << "Get _fullpath failed";
+  std::string new_path = FileUtils::UTF_8ToGB2312(path);
+  if (new_path.length() >= PATH_MAX || _fullpath(real_path, new_path.data(), PATH_MAX) == nullptr) {
     return std::nullopt;
   }
 #else
@@ -80,13 +287,17 @@ void FileUtils::ConcatDirAndFileName(const std::optional<std::string> *dir, cons
 
 std::optional<std::string> FileUtils::CreateNotExistDirs(const std::string &path, const bool support_relative_path) {
   if (path.size() >= PATH_MAX) {
+#if !defined(_WIN32) && !defined(_WIN64)
     MS_LOG(ERROR) << "The length of the path is greater than or equal to:" << PATH_MAX;
+#endif
     return std::nullopt;
   }
   if (!support_relative_path) {
     auto dot_pos = path.find("..");
     if (dot_pos != std::string::npos) {
+#if !defined(_WIN32) && !defined(_WIN64)
       MS_LOG(ERROR) << "Do not support relative path";
+#endif
       return std::nullopt;
     }
   }
@@ -103,7 +314,9 @@ std::optional<std::string> FileUtils::CreateNotExistDirs(const std::string &path
         std::string path_handle(temp_path);
         if (!fs->FileExist(path_handle)) {
           if (!fs->CreateDir(path_handle)) {
+#if !defined(_WIN32) && !defined(_WIN64)
             MS_LOG(ERROR) << "Create " << path_handle << " dir error";
+#endif
             return std::nullopt;
           }
         }
@@ -114,7 +327,9 @@ std::optional<std::string> FileUtils::CreateNotExistDirs(const std::string &path
 
   if (!fs->FileExist(path)) {
     if (!fs->CreateDir(path)) {
+#if !defined(_WIN32) && !defined(_WIN64)
       MS_LOG(ERROR) << "Create " << path << " dir error";
+#endif
       return std::nullopt;
     }
   }

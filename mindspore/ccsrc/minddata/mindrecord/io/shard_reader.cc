@@ -138,9 +138,17 @@ Status ShardReader::Init(const std::vector<std::string> &file_paths, bool load_d
 }
 
 Status ShardReader::VerifyDataset(sqlite3 **db, const string &file) {
+  std::string path_utf8 = "";
+#if defined(_WIN32) || defined(_WIN64)
+  path_utf8 = FileUtils::GB2312ToUTF_8((file + ".db").data());
+#endif
+  if (path_utf8.empty()) {
+    path_utf8 = file + ".db";
+  }
+
   // sqlite3_open create a database if not found, use sqlite3_open_v2 instead of it
   CHECK_FAIL_RETURN_UNEXPECTED(
-    sqlite3_open_v2(common::SafeCStr(file + ".db"), db, SQLITE_OPEN_READONLY, nullptr) == SQLITE_OK,
+    sqlite3_open_v2(path_utf8.data(), db, SQLITE_OPEN_READONLY, nullptr) == SQLITE_OK,
     "Invalid file, failed to open mindrecord meta files while verifying meta file. Please check the meta file: " +
       file + ".db");
   MS_LOG(DEBUG) << "Succeed to open meta file, path: " << file << ".db.";
@@ -930,7 +938,15 @@ int64_t ShardReader::GetNumClasses(const std::string &category_field) {
   auto category_ptr = std::make_shared<std::set<std::string>>();
   sqlite3 *db = nullptr;
   for (int x = 0; x < shard_count; x++) {
-    int rc = sqlite3_open_v2(common::SafeCStr(file_paths_[x] + ".db"), &db, SQLITE_OPEN_READONLY, nullptr);
+    std::string path_utf8 = "";
+#if defined(_WIN32) || defined(_WIN64)
+    path_utf8 = FileUtils::GB2312ToUTF_8((file_paths_[x] + ".db").data());
+#endif
+    if (path_utf8.empty()) {
+      path_utf8 = file_paths_[x] + ".db";
+    }
+
+    int rc = sqlite3_open_v2(path_utf8.data(), &db, SQLITE_OPEN_READONLY, nullptr);
     if (SQLITE_OK != rc) {
       MS_LOG(ERROR) << "[Internal ERROR] Failed to open meta file: " << file_paths_[x] + ".db, " << sqlite3_errmsg(db);
       return -1;

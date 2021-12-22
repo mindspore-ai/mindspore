@@ -33,6 +33,10 @@ class FileUtils {
                                    std::optional<std::string> *path);
   static std::optional<std::string> CreateNotExistDirs(const std::string &path,
                                                        const bool support_relative_path = false);
+#if defined(_WIN32) || defined(_WIN64)
+  static std::string GB2312ToUTF_8(const char *gb2312);
+  static std::string UTF_8ToGB2312(const char *text);
+#endif
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_UTILS_FILE_UTILS_H_
