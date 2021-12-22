@@ -202,7 +202,7 @@ class ControlNodeParser {
   // Get the relationship between the front and backend of the executable kernel in all kernel graphs.
   void FetchFrontToBackendKernel(const std::vector<KernelGraphPtr> &graphs,
                                  const std::vector<DeviceContext *> &device_contexts);
-  void FetchFrontNodeToKernelGraph(const std::vector<KernelGraphPtr> &graphs);
+  void ParseFrontNodeToKernelGraph(const std::vector<KernelGraphPtr> &graphs);
   // nodes and call nodes of the root funcgraph.
   void ParseControlNodeParameter(const std::vector<AnfNodePtr> &control_nodes);
   // Get all the front weight parameters related to the weight in the host parameter.
