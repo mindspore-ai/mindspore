@@ -16,7 +16,6 @@
 
 #include <string.h>
 #include "nnacl/fp32_grad/pack_ext.h"
-#include "nnacl/pack.h"
 
 void RollingIm2ColPackDwUnitFp32(const float *in_data, const ConvParameter *conv_param, float *data_col_orig,
                                  int real_cal_num, int start) {

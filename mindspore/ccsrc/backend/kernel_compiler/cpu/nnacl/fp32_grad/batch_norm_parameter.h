@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_FP32_GRAD_SOFTMAX_GRAD_H_
-#define MINDSPORE_NNACL_FP32_GRAD_SOFTMAX_GRAD_H_
+#ifndef MINDSPORE_NNACL_FP32_GRAD_BATCH_NORM_PARAMATER_H_
+#define MINDSPORE_NNACL_FP32_GRAD_BATCH_NORM_PARAMATER_H_
 
-#include "nnacl/fp32/softmax_fp32.h"
-#include "nnacl/fp32_grad/softmax_crossentropy_parameter.h"
+#include "nnacl/op_base.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+typedef struct BNGradParameter {
+  OpParameter op_parameter_;
+  float epsilon_;
+} BNGradParameter;
 
-void SoftmaxGrad(const float *input_ptr, const float *yt_ptr, float *output_ptr, float *sum_data, float *sum_mul,
-                 const SoftmaxParameter *parameter);
-#ifdef __cplusplus
-}
-#endif
-
-#endif  // MINDSPORE_NNACL_FP32_GRAD_SOFTMAX_GRAD_H_
+#endif  // MINDSPORE_NNACL_FP32_GRAD_BATCH_NORM_PARAMATER_H_

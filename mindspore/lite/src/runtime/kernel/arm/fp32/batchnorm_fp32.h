@@ -36,6 +36,7 @@ class BatchnormCPUKernel : public InnerKernel {
   int Prepare() override;
   int ReSize() override;
   int Run() override;
+  int SetupVirtualBatch(int virtual_batch_multiplier, int param) override;
   virtual int InitConstTensor();
   virtual int DoExecute(int task_id);
   virtual int set_momentum(float momentum);

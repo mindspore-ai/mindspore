@@ -19,14 +19,7 @@
 #include <math.h>
 #include "nnacl/op_base.h"
 #include "nnacl/int8/fixed_point.h"
-
-typedef struct ActivationParameter {
-  OpParameter op_parameter_;
-  int type_;
-  float alpha_;
-  float min_val_;
-  float max_val_;
-} ActivationParameter;
+#include "nnacl/activation_parameter.h"
 
 #ifdef __cplusplus
 extern "C" {

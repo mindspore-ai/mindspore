@@ -7,13 +7,18 @@ cd "${MINDSPORE_HOME}" || exit 1
 CROPPER_OUTPUT_DIR=mindspore/lite/build/tools/cropper
 mkdir -p ${CROPPER_OUTPUT_DIR}
 MAPPING_OUTPUT_FILE_NAME_TMP=${CROPPER_OUTPUT_DIR}/cropper_mapping_tmp.cfg
+MAPPING_OUTPUT_FILE_NAME_TRAIN_TMP=${CROPPER_OUTPUT_DIR}/cropper_mapping_train_tmp.cfg
 CPU_MAPPING_OUTPUT_FILE=${CROPPER_OUTPUT_DIR}/cropper_mapping_cpu.cfg
 GPU_MAPPING_OUTPUT_FILE=${CROPPER_OUTPUT_DIR}/cropper_mapping_gpu.cfg
 NPU_MAPPING_OUTPUT_FILE=${CROPPER_OUTPUT_DIR}/cropper_mapping_npu.cfg
+CPU_TRAIN_MAPPING_OUTPUT_FILE=${CROPPER_OUTPUT_DIR}/cropper_mapping_cpu_train.cfg
 [ -n "${MAPPING_OUTPUT_FILE_NAME_TMP}" ] && rm -f ${MAPPING_OUTPUT_FILE_NAME_TMP}
+[ -n "${MAPPING_OUTPUT_FILE_NAME_TRAIN_TMP}" ] && rm -f ${MAPPING_OUTPUT_FILE_NAME_TRAIN_TMP}
 [ -n "${CPU_MAPPING_OUTPUT_FILE}" ] && rm -f ${CPU_MAPPING_OUTPUT_FILE}
 [ -n "${GPU_MAPPING_OUTPUT_FILE}" ] && rm -f ${GPU_MAPPING_OUTPUT_FILE}
 [ -n "${NPU_MAPPING_OUTPUT_FILE}" ] && rm -f ${NPU_MAPPING_OUTPUT_FILE}
+[ -n "${CPU_TRAIN_MAPPING_OUTPUT_FILE}" ] && rm -f ${CPU_TRAIN_MAPPING_OUTPUT_FILE}
+
 ops_list=()
 DEFINE_STR="-DENABLE_ANDROID -DENABLE_ARM -DENABLE_ARM64 -DENABLE_NEON -DNO_DLIB -DUSE_ANDROID_LOG -DANDROID -DENABLE_FP16"
 # get the flatbuffers path
@@ -57,11 +62,17 @@ getDeep() {
     # only add existing files
     if [[ -e ${array_deep_file%h*}cc ]]; then
       file_split=$(echo ${array_deep_file} | awk -F '/' '{print $NF}')
-      echo "${1},${3},${file_split%h*}cc.o" >>${MAPPING_OUTPUT_FILE_NAME_TMP}
+      if [[ "$4" != "train_source" ]] ; then
+        echo "${1},${3},${file_split%h*}cc.o" >>${MAPPING_OUTPUT_FILE_NAME_TMP}
+      fi
+      echo "${1},${3},${file_split%h*}cc.o" >>${MAPPING_OUTPUT_FILE_NAME_TRAIN_TMP} 
     fi
     if [[ -e ${array_deep_file%h*}c ]]; then
       file_split=$(echo ${array_deep_file} | awk -F '/' '{print $NF}')
-      echo "${1},${3},${file_split%h*}c.o" >>${MAPPING_OUTPUT_FILE_NAME_TMP}
+      if [[ "$4" != "train_source" ]] ; then
+        echo "${1},${3},${file_split%h*}c.o" >>${MAPPING_OUTPUT_FILE_NAME_TMP}
+      fi
+      echo "${1},${3},${file_split%h*}c.o" >>${MAPPING_OUTPUT_FILE_NAME_TRAIN_TMP}
     fi
   done
 }
@@ -79,6 +90,7 @@ getOpsFile() {
       out_file=$(echo ${file} | awk -F '/' '{print $NF}')
       # concat schemaType + fileType + fileName append to files
       echo "${type},${3},${out_file}.o" >>${MAPPING_OUTPUT_FILE_NAME_TMP}
+      echo "${type},${3},${out_file}.o" >>${MAPPING_OUTPUT_FILE_NAME_TRAIN_TMP}
       map_files=$(gcc -MM ${file} ${DEFINE_STR} ${HEADER_LOCATION})
       # first is *.o second is *.cc
       array_file=()
@@ -91,16 +103,42 @@ getOpsFile() {
           getDeep ${type} ${array_file} ${3} &
           array_file_split=$(echo ${array_file} | awk -F '/' '{print $NF}')
           echo "${type},${3},${array_file_split%h*}cc.o" >>${MAPPING_OUTPUT_FILE_NAME_TMP}
+          echo "${type},${3},${array_file_split%h*}cc.o" >>${MAPPING_OUTPUT_FILE_NAME_TRAIN_TMP}
         fi
         if [[ -e ${array_file%h*}c ]]; then
           getDeep ${type} ${array_file%h*}c ${3} &
           getDeep ${type} ${array_file} ${3} &
           array_file_split=$(echo ${array_file} | awk -F '/' '{print $NF}')
           echo "${type},${3},${array_file_split%h*}c.o" >>${MAPPING_OUTPUT_FILE_NAME_TMP}
+          echo "${type},${3},${array_file_split%h*}c.o" >>${MAPPING_OUTPUT_FILE_NAME_TRAIN_TMP}
         fi
       done
     done
   done
+}
+
+getFilesFromArr() {
+  local -n arr_files=${1}
+  # echo " func parm 1 : ${arr_files[@]}"
+  # echo " func parm 2 : $2"
+  # shellcheck disable=SC2068
+  for file in ${arr_files[@]}; do
+    map_files=$(gcc -MM ${file} ${DEFINE_STR} ${HEADER_LOCATION})
+    # first is *.o second is *.cc
+    # shellcheck disable=SC2207
+    array_runtime=($(echo ${map_files} | awk -F '\' '{for(i=3;i<=NF;i++){print $i}}' | grep -v "flatbuffers" | egrep -v ${REMOVE_LISTS_STR}))
+    # only add existing files
+    for array_runtime_file in "${array_runtime[@]}"; do
+      if [[ -e ${array_runtime_file%h*}cc && ! ${all_files[*]} =~ ${array_runtime_file%h*}cc ]]; then
+        all_files=("${all_files[@]}" "${array_runtime_file%h*}cc")
+        getDeep "CommonFile" ${array_runtime_file%h*}cc "common" $2 &
+      fi
+      if [[ -e ${array_runtime_file%h*}c && ! ${all_files[*]} =~ ${array_runtime_file%h*}c ]]; then
+        all_files=("${all_files[@]}" "${array_runtime_file%h*}c")
+        getDeep "CommonFile" ${array_runtime_file%h*}c "common" $2 &
+      fi
+    done
+  done  
 }
 
 getCommonFile() {
@@ -115,6 +153,9 @@ getCommonFile() {
   while IFS='' read -r line; do common_files_h+=("$line"); done < <(ls mindspore/lite/src/common/*.h)
   runtime_files_h=()
   while IFS='' read -r line; do runtime_files_h+=("$line"); done < <(ls mindspore/lite/src/runtime/*.h)
+  train_files_h=()
+  while IFS='' read -r line; do train_files_h+=("$line"); done < <(ls mindspore/lite/include/train/*.h)
+  while IFS='' read -r line; do train_files_h+=("$line"); done < <(ls mindspore/lite/src/train/*.h)
   others_files_h=(
     mindspore/lite/src/runtime/infer_manager.h
     mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/infer/infer_register.h
@@ -130,7 +171,9 @@ getCommonFile() {
     mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/tensor_c.h
     mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/errorcode.h
   )
-  all_files_h=("${include_h[@]}" "${regist_include_h[@]}" "${src_files_h[@]}" "${common_files_h[@]}" "${runtime_files_h[@]}" "${others_files_h[@]}")
+  all_files_h=("${include_h[@]}" "${regist_include_h[@]}" "${src_files_h[@]}" "${common_files_h[@]}"
+               "${runtime_files_h[@]}" "${others_files_h[@]}"
+  )
 
   # concat regx
   REMOVE_LISTS_STR="${all_files_h[0]}"
@@ -167,50 +210,42 @@ getCommonFile() {
     mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/infer/infer_register.c
     mindspore/core/utils/status.cc
   )
+  # save train files
+  train_files=()
+  while IFS='' read -r line; do train_files+=("$line"); done < <(ls mindspore/lite/src/train/*.cc)
+  while IFS='' read -r line; do train_files+=("$line"); done < <(ls mindspore/lite/src/cxx_api/callback/*.cc)
+  while IFS='' read -r line; do train_files+=("$line"); done < <(ls mindspore/lite/src/cxx_api/metrics/*.cc)
+  while IFS='' read -r line; do train_files+=("$line"); done < <(ls mindspore/lite/src/cxx_api/train/*.cc)
+  others_train_files=(
+    mindspore/lite/tools/common/storage.cc
+  )
   all_files=("${src_files[@]}" "${regist_files[@]}" "${common_files[@]}" "${runtime_files_cc[@]}"
     "${others_files_c[@]}" "${assembly_files[@]}" "${mindrt_files[@]}"
     "${cxx_api_files[@]}"
-  )
-  # shellcheck disable=SC2068
-  for file in ${all_files[@]}; do
-    map_files=$(gcc -MM ${file} ${DEFINE_STR} ${HEADER_LOCATION})
-    # first is *.o second is *.cc
-    # shellcheck disable=SC2207
-    array_runtime=($(echo ${map_files} | awk -F '\' '{for(i=3;i<=NF;i++){print $i}}' | grep -v "flatbuffers" | egrep -v ${REMOVE_LISTS_STR}))
-    # only add existing files
-    for array_runtime_file in "${array_runtime[@]}"; do
-      if [[ -e ${array_runtime_file%h*}cc && ! ${all_files[*]} =~ ${array_runtime_file%h*}cc ]]; then
-        all_files=("${all_files[@]}" "${array_runtime_file%h*}cc")
-        getDeep "CommonFile" ${array_runtime_file%h*}cc "common" &
-      fi
-      if [[ -e ${array_runtime_file%h*}c && ! ${all_files[*]} =~ ${array_runtime_file%h*}c ]]; then
-        all_files=("${all_files[@]}" "${array_runtime_file%h*}c")
-        getDeep "CommonFile" ${array_runtime_file%h*}c "common" &
-      fi
-    done
-  done
-  # shellcheck disable=SC2068
-  for file in ${all_files_h[@]}; do
-    map_files=$(gcc -MM ${file} ${DEFINE_STR} ${HEADER_LOCATION})
-    # first is *.o second is *.cc
-    # shellcheck disable=SC2207
-    array_runtime=($(echo ${map_files} | awk -F '\' '{for(i=3;i<=NF;i++){print $i}}' | grep -v "flatbuffers" | egrep -v ${REMOVE_LISTS_STR}))
-    # only add existing files
-    for array_runtime_file in "${array_runtime[@]}"; do
-      if [[ -e ${array_runtime_file%h*}cc && ! ${all_files[*]} =~ ${array_runtime_file%h*}cc ]]; then
-        all_files=("${all_files[@]}" "${array_runtime_file%h*}cc")
-        getDeep "CommonFile" ${array_runtime_file%h*}cc "common" &
-      fi
-      if [[ -e ${array_runtime_file%h*}c && ! ${all_files[*]} =~ ${array_runtime_file%h*}c ]]; then
-        all_files=("${all_files[@]}" "${array_runtime_file%h*}c")
-        getDeep "CommonFile" ${array_runtime_file%h*}c "common" &
-      fi
-    done
-  done
+  ) 
+  getFilesFromArr all_files
+  getFilesFromArr all_files_h
   # shellcheck disable=SC2068
   for file in ${all_files[@]}; do
     file=$(echo ${file} | awk -F '/' '{print $NF}')
     echo "CommonFile,common,${file}.o" >>${MAPPING_OUTPUT_FILE_NAME_TMP}
+  done
+  
+  all_files_train=("${all_files[@]}" "${train_files[@]}" "${others_train_files[@]}"
+  )
+  all_files_train_h=("${all_files_h[@]}" "${train_files_h[@]}"
+  )
+  REMOVE_LISTS_STR="${all_files_train_h[0]}"
+  # shellcheck disable=SC2068
+  for val in ${all_files_train_h[@]:1}; do
+    REMOVE_LISTS_STR="$REMOVE_LISTS_STR|$val"
+  done
+  getFilesFromArr all_files_train "train_source"
+  getFilesFromArr all_files_train_h "train_source"
+  # shellcheck disable=SC2068
+  for file in ${all_files_train[@]}; do
+    file=$(echo ${file} | awk -F '/' '{print $NF}')
+    echo "CommonFile,common,${file}.o" >>${MAPPING_OUTPUT_FILE_NAME_TRAIN_TMP}
   done
 }
 
@@ -276,6 +311,11 @@ sleep 1
 sort ${MAPPING_OUTPUT_FILE_NAME_TMP} | uniq >${CPU_MAPPING_OUTPUT_FILE}
 chmod 444 ${CPU_MAPPING_OUTPUT_FILE}
 
+sleep 1
+# remove duplicate files
+sort ${MAPPING_OUTPUT_FILE_NAME_TRAIN_TMP} | uniq >${CPU_TRAIN_MAPPING_OUTPUT_FILE}
+chmod 444 ${CPU_TRAIN_MAPPING_OUTPUT_FILE}
+
 # support for gpu
 opencl_files=()
 while IFS='' read -r line; do opencl_files+=("$line"); done < <(ls mindspore/lite/src/runtime/kernel/opencl/*.cc)
@@ -320,4 +360,5 @@ chmod 444 ${NPU_MAPPING_OUTPUT_FILE}
 
 # modify file permissions to read-only
 [ -n "${MAPPING_OUTPUT_FILE_NAME_TMP}" ] && rm -f ${MAPPING_OUTPUT_FILE_NAME_TMP}
+[ -n "${MAPPING_OUTPUT_FILE_NAME_TRAIN_TMP}" ] && rm -f ${MAPPING_OUTPUT_FILE_NAME_TRAIN_TMP}
 echo "Complete all tasks."
