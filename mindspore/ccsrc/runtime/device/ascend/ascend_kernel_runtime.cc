@@ -113,6 +113,20 @@ void IntHandler(int, siginfo_t *, void *) {
   MS_LOG(WARNING) << "Process " << this_pid << " receive KeyboardInterrupt signal.";
   (void)kill(this_pid, SIGTERM);
 }
+
+void AscendEnableDynamicRuntimeCache(const KernelGraph *graph) {
+  const auto &node_list = graph->TopoSort(graph->get_return());
+  for (auto &node : node_list) {
+    auto kernel_info = node->kernel_info();
+    if (!kernel_info) {
+      continue;
+    }
+    MS_EXCEPTION_IF_NULL(kernel_info);
+    auto runtime_cache = kernel_info->runtime_cache();
+    MS_EXCEPTION_IF_NULL(runtime_cache);
+    runtime_cache->set_valid();
+  }
+}
 }  // namespace
 
 std::vector<rtExceptionInfo> AscendKernelRuntime::task_fail_infoes_ = {};
@@ -909,6 +923,7 @@ bool AscendKernelRuntime::RunDynamicKernelAsync(const session::KernelGraph &grap
     MS_LOG(ERROR) << "GraphId:" << graph.graph_id() << " Not Found! Please generator executor first";
     return false;
   }
+  AscendEnableDynamicRuntimeCache(&graph);
 
   auto dynamic_kernels = iter->second;
   for (const auto &dynamic_kernel : dynamic_kernels) {
