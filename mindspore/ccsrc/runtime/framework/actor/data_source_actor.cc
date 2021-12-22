@@ -242,15 +242,10 @@ void HostQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *cons
       if (tensor_device_address.get() == device_tensor) {
         continue;
       }
-
-      if (NeedSyncByTensor(device_tensor, tensor_device_address.get())) {
-        host_tensor->data_sync(false);
-      } else {
-        if ((!Copy(device_tensor, tensor_device_address.get()))) {
-          SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "Copy data failed.");
-        }
-        continue;
+      if ((!Copy(device_tensor, tensor_device_address.get()))) {
+        SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "Copy data failed.");
       }
+      continue;
     }
 
     // Sync data from host_tensor to device_tensor.

@@ -56,6 +56,7 @@ void OutputActor::RunOpControl(AID *const, OpContext<DeviceTensor> *const contex
       if (outputs_[device_tensor_store_key.first] == nullptr) {
         SET_OPCONTEXT_FAIL_RET_WITH_ERROR(*context, "Create output tensor failed.");
       }
+      output_nodes_[device_tensor_store_key.first] = {device_tensor_store_key.second, 0};
     }
 
     current_outputs_num_ = 0;
@@ -176,6 +177,7 @@ void OutputActor::UpdateOutputDeviceAddress() {
     auto node_with_index = device_tensor->GetNodeIndex();
     tensor_device_address->SetNodeIndex(node_with_index.first, node_with_index.second);
     tensor_device_address->set_from_persistent_mem(device_tensor->from_persistent_mem());
+    tensor_device_address->set_host_shape(device_tensor->host_shape());
     // The outputs may have the same output node, so need skip when the node has been done.
     if (device_tensor->GetPtr() == nullptr) {
       continue;
@@ -191,9 +193,9 @@ void OutputActor::UpdateOutputDeviceAddress() {
                           << output_node->fullname_with_scope() << ", alloc size: " << tensor_device_address->GetSize()
                           << "B.";
       }
-      if (!tensor_device_address->SyncDeviceToDevice(trans::GetRuntimePaddingShape(output_node, output_index),
-                                                     device_tensor->GetSize(), device_tensor->type_id(),
-                                                     device_tensor->GetPtr(), device_tensor->format())) {
+      if (!tensor_device_address->SyncDeviceToDeviceWithSameFormatType(
+            trans::GetRuntimePaddingShape(output_node, output_index), device_tensor->GetSize(),
+            device_tensor->type_id(), device_tensor->GetPtr(), device_tensor->format())) {
         MS_LOG(EXCEPTION) << "Sync device to device failed, device type: " << tensor_device_address->DeviceType();
       }
     } else {

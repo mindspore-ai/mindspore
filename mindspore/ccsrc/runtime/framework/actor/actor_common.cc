@@ -153,9 +153,7 @@ bool Copy(const DeviceTensor *dst_device_tensor, const DeviceTensor *src_device_
     // Other device tensor copy to CPU device tensor.
     return src_device_tensor->SyncDeviceToHost(copy_size, dst_device_tensor->GetMutablePtr());
   } else if (dst_device_tensor->DeviceType() == src_device_tensor->DeviceType()) {
-    return dst_device_tensor->SyncDeviceToDevice(ShapeVector(), src_device_tensor->GetSize(),
-                                                 src_device_tensor->type_id(), src_device_tensor->GetPtr(),
-                                                 src_device_tensor->format());
+    return dst_device_tensor->SyncDeviceToDevice(src_device_tensor);
   } else {
     MS_LOG(ERROR) << "Invalid device type, src device type: " << src_device_tensor->DeviceType()
                   << ", dst device type: " << dst_device_tensor->DeviceType();
@@ -291,16 +289,6 @@ std::string FetchActorName(KernelTransformType kernel_type, const std::string &a
       break;
   }
   return actor_name;
-}
-
-bool NeedSyncByTensor(const DeviceTensor *dst_device_addr, const DeviceTensor *src_device_addr) {
-  MS_EXCEPTION_IF_NULL(dst_device_addr);
-  MS_EXCEPTION_IF_NULL(src_device_addr);
-  if (src_device_addr->DeviceType() != dst_device_addr->DeviceType()) {
-    return false;
-  }
-  return (src_device_addr->format() != dst_device_addr->format() ||
-          src_device_addr->type_id() != dst_device_addr->type_id());
 }
 }  // namespace runtime
 }  // namespace mindspore

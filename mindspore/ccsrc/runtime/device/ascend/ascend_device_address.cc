@@ -79,6 +79,12 @@ void SyncMemory(void *dst, const void *src, uint64_t size, aclrtMemcpyKind kind)
   if (size == 0) {
     return;
   }
+  if (dst == nullptr) {
+    MS_LOG(EXCEPTION) << "dst ptr is null, please check the address is set correctly.";
+  }
+  if (src == nullptr) {
+    MS_LOG(EXCEPTION) << "src ptr is null, please check the address is set correctly.";
+  }
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
@@ -433,8 +439,8 @@ bool AscendDeviceAddress::SyncHostToDevice(const ShapeVector &shape, size_t size
   return sync_ok;
 }
 
-bool AscendDeviceAddress::SyncDeviceToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *src_ptr,
-                                             const std::string &format) const {
+bool AscendDeviceAddress::SyncDeviceToDeviceWithSameFormatType(const ShapeVector &shape, size_t size, TypeId type,
+                                                               const void *src_ptr, const std::string &format) const {
   if (type_id_ > kMonadTypeBegin && type_id_ < kMonadTypeEnd) {
     return true;
   }
@@ -455,6 +461,57 @@ bool AscendDeviceAddress::SyncDeviceToDevice(const ShapeVector &shape, size_t si
     return false;
   }
   return true;
+}
+
+bool AscendDeviceAddress::SyncDeviceToDeviceWithDiffFormatType(const DeviceSync *src_device_addr) const {
+  MS_EXCEPTION_IF_NULL(src_device_addr);
+  if (type_id_ > kMonadTypeBegin && type_id_ < kMonadTypeEnd) {
+    return true;
+  }
+
+  auto src_device_address = dynamic_cast<const AscendDeviceAddress *>(src_device_addr);
+  MS_EXCEPTION_IF_NULL(src_device_address);
+  if (size_ < src_device_address->GetSize()) {
+    MS_LOG(ERROR) << "Src size is greater than det size, src size is: " << src_device_address->GetSize()
+                  << ", dst size is: " << size_;
+    return false;
+  }
+  BindDevice();
+  auto host_shape = src_device_address->host_shape();
+  if (host_shape.empty()) {
+    MS_LOG(ERROR) << "host shape is empty, please check whether the host shape of source device address"
+                  << src_device_address << " is set.";
+    return false;
+  }
+  auto host_tensor = std::make_shared<tensor::Tensor>(src_device_address->type_id(), host_shape);
+  auto host_tensor_size = LongToSize(host_tensor->data().nbytes());
+  auto host_tensor_type = host_tensor->data_type();
+  if (!src_device_address->SyncDeviceToHost(host_shape, host_tensor_size, host_tensor_type, host_tensor->data_c())) {
+    MS_LOG(ERROR) << "Sync device to device failed at the stage of sync device to intermediate Tensor.";
+    return false;
+  }
+  if (!SyncHostToDevice(host_shape, host_tensor_size, host_tensor_type, host_tensor->data_c(),
+                        host_tensor->device_info().host_format_)) {
+    MS_LOG(ERROR) << "Sync device to device failed at the stage of sync intermediate tensor to device.";
+    return false;
+  }
+  return true;
+}
+
+bool AscendDeviceAddress::SyncDeviceToDevice(const DeviceSync *src_device_addr) const {
+  MS_EXCEPTION_IF_NULL(src_device_addr);
+  auto src_device_address = dynamic_cast<const AscendDeviceAddress *>(src_device_addr);
+  if (format_ == src_device_address->format() && type_id_ == src_device_address->type_id()) {
+    return SyncDeviceToDeviceWithSameFormatType(ShapeVector(), src_device_address->GetSize(),
+                                                src_device_address->type_id(), src_device_address->GetPtr(),
+                                                src_device_address->format());
+  } else {
+    MS_LOG(WARNING) << "Can not copy from device to device directly, format or type is different, src(format:"
+                    << src_device_address->format() << ", type_id:" << TypeIdLabel(src_device_address->type_id())
+                    << "), dst(format:" << format_ << ", type_id:" << TypeIdLabel(type_id_)
+                    << ", use the intermediate Tensor copy instead.";
+    return SyncDeviceToDeviceWithDiffFormatType(src_device_addr);
+  }
 }
 
 bool AscendDeviceAddress::AsyncDeviceToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *src_ptr,

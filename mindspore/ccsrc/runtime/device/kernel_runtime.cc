@@ -615,6 +615,7 @@ void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph &graph) {
         MS_EXCEPTION_IF_NULL(address.addr);
         device_address = CreateDeviceAddress(address.addr, address.size, AnfAlgo::GetOutputFormat(item, index),
                                              output_type_id, {item, index});
+        device_address->set_host_shape(trans::GetRuntimePaddingShape(item, index));
         AnfAlgo::SetOutputAddr(device_address, index, item.get());
         continue;
       }
@@ -644,6 +645,7 @@ void KernelRuntime::GetDeviceAddress(const AnfNodePtr &item,
     TypeId output_type_id = AnfAlgo::GetOutputDeviceDataType(item, index);
     *device_address =
       CreateDeviceAddress(nullptr, tensor_size, AnfAlgo::GetOutputFormat(item, index), output_type_id, {item, index});
+    (*device_address)->set_host_shape(trans::GetRuntimePaddingShape(item, index));
     MS_LOG(INFO) << "Assign Static Memory for Input node, size:" << tensor_size
                  << " node:" << item->fullname_with_scope() << " index: " << index;
     if (mem_manager_->MallocMem(kStaticMem, tensor_size, *device_address, graph_id) == nullptr) {
@@ -699,6 +701,9 @@ void KernelRuntime::UpdateRefNodeOutputMem(const session::KernelGraph &graph) {
           MS_LOG(DEBUG) << "REF address is not same, ref node output need address update";
           MS_LOG(DEBUG) << "REF origin op is " << origin_pair.first->DebugString() << ", output index is "
                         << origin_pair.second << ", cur op is " << kernel->DebugString() << ", out index is " << i;
+          if (!cur_node_output_addr->host_shape().empty()) {
+            origin_node_output_addr->set_host_shape(cur_node_output_addr->host_shape());
+          }
           AnfAlgo::SetOutputAddr(origin_node_output_addr, i, kernel.get());
         }
       }
@@ -763,6 +768,7 @@ void KernelRuntime::AssignCommunicationNodeOutputMem(MemType type, const AnfNode
     } else {
       address->set_ptr(output_ptr);
     }
+    address->set_host_shape(trans::GetRuntimePaddingShape(node, j));
     AnfAlgo::SetOutputAddr(address, j, node.get());
     output_ptr += align_size_list[j];
   }
@@ -944,6 +950,7 @@ void KernelRuntime::AssignValueNodeTensor(const ValueNodePtr &value_node, const 
     auto output_format = AnfAlgo::GetOutputFormat(value_node, output_idx);
     DeviceAddressPtr address =
       CreateDeviceAddress(nullptr, node_size, output_format, output_type_id, {value_node, output_idx});
+    address->set_host_shape(trans::GetRuntimePaddingShape(value_node, output_idx));
     address->set_from_persistent_mem(true);
     MS_EXCEPTION_IF_NULL(address);
     if (ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER) &&
