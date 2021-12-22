@@ -201,3 +201,25 @@ def test_slice_func():
     a = Tensor(np.arange(60).reshape(3, 4, 5), dtype=mstype.float32)
     b = Tensor([1], dtype=mstype.float32)
     print(slice_func(a, b))
+
+
+def test_context():
+    """
+    Feature: JIT Fallback
+    Description: Test context in graph.
+    Expectation: No exception.
+    """
+    class ContextNet(nn.Cell):
+        def __init__(self):
+            super(ContextNet, self).__init__()
+            self.mode = context.get_context("mode")
+
+        def construct(self):
+            out = 1
+            if self.mode == context.GRAPH_MODE:
+                out = 2
+            return out
+
+    net = ContextNet()
+    out = net()
+    print(out)

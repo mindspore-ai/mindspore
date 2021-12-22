@@ -82,6 +82,7 @@ const char PYTHON_PARSE_GET_NODE_TYPE[] = "get_node_type";
 const char PYTHON_PARSE_GET_AST_TYPE[] = "get_ast_type";
 const char PYTHON_PARSE_GET_NAMESPACE_SYMBOL[] = "get_namespace_symbol";
 const char PYTHON_PARSE_GET_AST_NAMESPACE_SYMBOL[] = "get_ast_namespace_symbol";
+const char PYTHON_PARSE_GET_OPERATION_SYMBOL[] = "get_operation_symbol";
 const char PYTHON_PARSE_GET_OPERATION_NAMESPACE_SYMBOL[] = "get_operation_namespace_symbol";
 const char PYTHON_PARSE_GET_BUILTIN_NAMESPACE_SYMBOL[] = "get_builtin_namespace_symbol";
 const char PYTHON_PARSE_GET_LOCATION[] = "get_location";

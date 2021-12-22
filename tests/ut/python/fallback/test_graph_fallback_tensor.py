@@ -197,6 +197,35 @@ def test_fallback_tensor_astype():
     print(foo())
 
 
+@pytest.mark.skip(reason='Not support graph fallback feature yet')
+def test_fallback_tensor_asnumpy():
+    """
+    Feature: JIT Fallback
+    Description: Test Tensor.asnumpy() in graph mode.
+    Expectation: No exception.
+    """
+    @ms_function
+    def foo():
+        me_x = Tensor(np.arange(0, 6).reshape(2, 3))
+        np_x = me_x.asnumpy()
+        return Tensor(np_x)
+    print(foo())
+
+
+def test_fallback_tensor_from_numpy():
+    """
+    Feature: JIT Fallback
+    Description: Test Tensor.from_numpy() in graph mode.
+    Expectation: No exception.
+    """
+    @ms_function
+    def foo():
+        np_x = np.array([1, 2])
+        me_x = Tensor.from_numpy(np_x)
+        return me_x
+    print(foo())
+
+
 # EvalCNode: This may be not defined, or it can't be a operator.
 @pytest.mark.skip(reason='Not support graph fallback feature yet')
 def test_np_tensor_add():
@@ -231,9 +260,6 @@ def test_fallback_tensor_binop():
     Expectation: No exception.
     """
     class BinOpNet(nn.Cell):
-        def __init__(self):
-            super(BinOpNet, self).__init__()
-
         def construct(self):
             np_array = np.array(9)
             res = Tensor(np_array) + Tensor(np_array)
@@ -250,9 +276,6 @@ def test_fallback_tensor_compare():
     Expectation: No exception.
     """
     class CompareNet(nn.Cell):
-        def __init__(self):
-            super(CompareNet, self).__init__()
-
         def construct(self):
             np_array_1 = np.array(1)
             np_array_2 = np.array(2)
@@ -270,9 +293,6 @@ def test_fallback_tensor_not():
     Expectation: No exception.
     """
     class NotNet(nn.Cell):
-        def __init__(self):
-            super(NotNet, self).__init__()
-
         def construct(self):
             np_array_1 = np.array(True, dtype=np.bool_)
             res = not Tensor(np_array_1)
@@ -290,9 +310,6 @@ def test_fallback_tensor_and():
     Expectation: No exception.
     """
     class AndNet(nn.Cell):
-        def __init__(self):
-            super(AndNet, self).__init__()
-
         def construct(self):
             np_array_1 = np.array(True, dtype=np.bool_)
             np_array_2 = np.array(False, dtype=np.bool_)
@@ -311,9 +328,6 @@ def test_fallback_tensor_or():
     Expectation: No exception.
     """
     class OrNet(nn.Cell):
-        def __init__(self):
-            super(OrNet, self).__init__()
-
         def construct(self):
             np_array_1 = np.array(True, dtype=np.bool_)
             np_array_2 = np.array(False, dtype=np.bool_)
@@ -332,9 +346,6 @@ def test_fallback_tensor_augassign():
     Expectation: No exception.
     """
     class OrNet(nn.Cell):
-        def __init__(self):
-            super(OrNet, self).__init__()
-
         def construct(self):
             np_array_1 = np.array(1)
             np_array_2 = np.array(2)
@@ -354,9 +365,6 @@ def test_fallback_tensor_subscript():
     Expectation: No exception.
     """
     class SubScriptNet(nn.Cell):
-        def __init__(self):
-            super(SubScriptNet, self).__init__()
-
         def construct(self):
             np_array_1 = np.array([1, 2, 3, 4, 5])
             np_array_2 = np.array(2)
@@ -375,9 +383,6 @@ def test_fallback_tensor_if():
     Expectation: No exception.
     """
     class IfNet(nn.Cell):
-        def __init__(self):
-            super(IfNet, self).__init__()
-
         def construct(self):
             np_array_1 = np.array(1)
             if Tensor(np_array_1):
@@ -387,3 +392,17 @@ def test_fallback_tensor_if():
     net = IfNet()
     res = net()
     print("res:", res)
+
+
+def test_fallback_tensor_slice():
+    """
+    Feature: JIT Fallback
+    Description: support interpreted nodes in slice.
+    Expectation: No exception.
+    """
+    @ms_function
+    def foo():
+        array = np.arange(10)
+        out = Tensor(array)[1:5]
+        return out
+    print(foo())

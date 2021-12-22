@@ -75,6 +75,24 @@ parse_object_map = {
     SYMBOL_UNDEFINE: (None, 'undefine'),
 }
 
+# Operation symbols corresponding to ast grammar
+ops_symbol_map = {
+    # ast grammar
+    ast.Add:        '+',
+    ast.Sub:        '-',
+    ast.Mult:       '*',
+    ast.Div:        '/',
+    ast.FloorDiv:   '//',
+    ast.Mod:        '%',
+    ast.Pow:        '**',
+    ast.LShift:     '<<',
+    ast.RShift:     '>>',
+    ast.BitXor:     '^',
+
+    # undefined type
+    SYMBOL_UNDEFINE: '',
+}
+
 # Escape an object to another object, eg: system function(len,xxx)
 # Some space set aside for readability of code
 convert_object_map = {
