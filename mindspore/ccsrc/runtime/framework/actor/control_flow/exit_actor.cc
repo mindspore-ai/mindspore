@@ -166,10 +166,7 @@ void ExitActor::CopyDeviceAddress(OpContext<DeviceTensor> *const context) {
         SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(GraphExecutionStrategy::kPipeline, *context, *device_contexts_[i],
                                                     GetAID().Name(), new_device_tensor->GetSize());
       }
-      if (!new_device_tensor->SyncDeviceToDeviceWithSameFormatType(
-            trans::GetRuntimePaddingShape(node_with_index.first, node_with_index.second),
-            input_device_tensor->GetSize(), input_device_tensor->type_id(), input_device_tensor->GetPtr(),
-            input_device_tensor->format())) {
+      if (!new_device_tensor->SyncDeviceToDevice(input_device_tensor)) {
         SET_OPCONTEXT_FAIL_RET_WITH_ERROR(*context, "Sync device to device failed.");
       }
     } else {
