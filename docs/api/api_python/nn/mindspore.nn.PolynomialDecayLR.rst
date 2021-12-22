@@ -50,11 +50,14 @@ mindspore.nn.PolynomialDecayLR
 
     **样例：**
 
+    >>> import mindspore
+    >>> from mindspore import Tensor, nn
+    >>>
     >>> learning_rate = 0.1
     >>> end_learning_rate = 0.01
     >>> decay_steps = 4
     >>> power = 0.5
-    >>> global_step = Tensor(2, mstype.int32)
+    >>> global_step = Tensor(2, mindspore.int32)
     >>> polynomial_decay_lr = nn.PolynomialDecayLR(learning_rate, end_learning_rate, decay_steps, power)
     >>> result = polynomial_decay_lr(global_step)
     >>> print(result)

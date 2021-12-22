@@ -39,10 +39,13 @@ mindspore.nn.CosineDecayLR
 
     **样例：**
 
+    >>> import mindspore
+    >>> from mindspore import Tensor, nn
+    >>>
     >>> min_lr = 0.01
     >>> max_lr = 0.1
     >>> decay_steps = 4
-    >>> global_steps = Tensor(2, mstype.int32)
+    >>> global_steps = Tensor(2, mindspore.int32)
     >>> cosine_decay_lr = nn.CosineDecayLR(min_lr, max_lr, decay_steps)
     >>> result = cosine_decay_lr(global_steps)
     >>> print(result)

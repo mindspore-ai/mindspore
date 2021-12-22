@@ -27,11 +27,13 @@ mindspore.nn.exponential_decay_lr
 
     **样例：**
 
+    >>> import mindspore.nn as nn
+    >>>
     >>> learning_rate = 0.1
     >>> decay_rate = 0.9
     >>> total_step = 6
     >>> step_per_epoch = 2
     >>> decay_epoch = 1
-    >>> output = exponential_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch)
+    >>> output = nn.exponential_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch)
     >>> print(output)
     [0.1, 0.1, 0.09000000000000001, 0.09000000000000001, 0.08100000000000002, 0.08100000000000002]

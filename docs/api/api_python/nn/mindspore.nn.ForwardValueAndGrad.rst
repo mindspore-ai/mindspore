@@ -32,13 +32,16 @@ mindspore.nn.ForwardValueAndGrad
 
     **样例：**
 
+    >>> import numpy as np
+    >>> from mindspore import Tensor, nn, common, ops, ParameterTuple, Parameter
+    >>>
     >>> class Net(nn.Cell):
-    ...    def __init__(self)：
+    ...    def __init__(self):
     ...        super(Net, self).__init__()
     ...        self.weight = Parameter(Tensor(np.ones([2, 2]).astype(np.float32)), name="weight")
-    ...        self.matmul = P.MatMul()
+    ...        self.matmul = ops.MatMul()
     ...
-    ...    def construct(self, x)：
+    ...    def construct(self, x):
     ...        out = self.matmul(x, self.weight)
     ...        return out
     ...

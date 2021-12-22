@@ -43,12 +43,14 @@ mindspore.nn.polynomial_decay_lr
 
     **样例：**
 
+    >>> import mindspore.nn as  nn
+    >>>
     >>> learning_rate = 0.1
     >>> end_learning_rate = 0.01
     >>> total_step = 6
     >>> step_per_epoch = 2
     >>> decay_epoch = 2
     >>> power = 0.5
-    >>> r = polynomial_decay_lr(learning_rate, end_learning_rate, total_step, step_per_epoch, decay_epoch, power)
+    >>> r = nn.polynomial_decay_lr(learning_rate, end_learning_rate, total_step, step_per_epoch, decay_epoch, power)
     >>> print(r)
     [0.1, 0.1, 0.07363961030678928, 0.07363961030678928, 0.01, 0.01]

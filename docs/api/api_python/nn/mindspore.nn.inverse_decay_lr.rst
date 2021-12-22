@@ -27,11 +27,13 @@ mindspore.nn.inverse_decay_lr
 
     **样例：**
 
+    >>> import mindspore.nn as nn
+    >>>
     >>> learning_rate = 0.1
     >>> decay_rate = 0.5
     >>> total_step = 6
     >>> step_per_epoch = 1
     >>> decay_epoch = 1
-    >>> output = inverse_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch, True)
+    >>> output = nn.inverse_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch, True)
     >>> print(output)
     [0.1, 0.06666666666666667, 0.05, 0.04, 0.03333333333333333, 0.028571428571428574]
