@@ -27,6 +27,7 @@
 #include <vector>
 #include <utility>
 #include <nlohmann/json.hpp>
+#include "utils/utils.h"
 #include "backend/kernel_compiler/kernel.h"
 #include "backend/kernel_compiler/oplib/opinfo.h"
 #include "backend/kernel_compiler/kernel_build_info.h"
@@ -103,6 +104,11 @@ float Scaling(size_t in_size, size_t out_size, bool align_corners);
 float ScaleGrid(const int x, const float scale);
 FusionType GetFusionTypeByName(const std::string &name);
 std::string GetFusionNameByType(const kernel::FusionType &type);
+std::vector<bool> Dec2Bin(const int64_t &mask);
+void FillEmptyDims(const CNodePtr &kernel_node, std::vector<int64_t> *begin, std::vector<int64_t> *end,
+                   std::vector<int64_t> *stride, std::vector<size_t> *input_shape);
+void ParseStrideSliceMasks(const CNodePtr &kernel_node, std::vector<int64_t> *begin, std::vector<int64_t> *end,
+                           std::vector<int64_t> *stride, const std::vector<size_t> &input_shape);
 struct CachedInterpolation {
   size_t lower;
   size_t upper;

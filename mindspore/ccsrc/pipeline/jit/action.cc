@@ -46,6 +46,7 @@
 #include "frontend/optimizer/py_pass_manager.h"
 #include "utils/ms_context.h"
 #include "vm/transform.h"
+#include "load_mindir/infer_mindir.h"
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
 #include "ps/parameter_server.h"
 #include "ps/scheduler.h"
@@ -1063,13 +1064,16 @@ bool SetMindIRGraphAction(const ResourcePtr &res) {
                          MS_EXCEPTION_IF_NULL(arg);
                          return arg->abstract()->Broaden();
                        });
+
+  bool is_equal_input_args = true;
   if (!AbstractBasePtrListDeepEqual(func_args, broaded_args)) {
-    MS_LOG(EXCEPTION) << "The input arguments is not compatible with the function graph which has been exported before."
-                      << "Please check the args is same with export.\n"
-                      << "The export input argument size: " << func_args.size() << "\n"
-                      << "The load input argument size: " << broaded_args.size() << "\n"
-                      << "Export input args info: " << abstract::ArgsToString(func_args) << "\n"
-                      << "The input args info: " << abstract::ArgsToString(broaded_args);
+    MS_LOG(WARNING) << "The input arguments is not compatible with the function graph which has been exported before."
+                    << "Please check the args is same with export.\n"
+                    << "The export input argument size: " << func_args.size() << "\n"
+                    << "The load input argument size: " << broaded_args.size() << "\n"
+                    << "Export input args info: " << abstract::ArgsToString(func_args) << "\n"
+                    << "The input args info: " << abstract::ArgsToString(broaded_args);
+    is_equal_input_args = false;
   }
 
   // suppose that there is not KeywordArgument for the top graph
@@ -1087,7 +1091,13 @@ bool SetMindIRGraphAction(const ResourcePtr &res) {
       broaded_args.push_back(abs_ref);
     }
   }
-  (void)AbstractAnalyze(res, res->func_graph(), broaded_args, true);
+
+  if (is_equal_input_args) {
+    (void)AbstractAnalyze(res, res->func_graph(), broaded_args, true);
+  } else {
+    // Use InferMindir which will find c++ infer in eval_map and backend_eval_map;
+    InferMindir(res->func_graph(), args_spec_list, true);
+  }
   auto it = abstract::AnalysisResultCacheMgr::GetInstance().begin();
   auto it_end = abstract::AnalysisResultCacheMgr::GetInstance().end();
   for (; it != it_end; ++it) {

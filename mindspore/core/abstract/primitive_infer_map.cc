@@ -38,6 +38,8 @@
 #include "ops/tile.h"
 #include "ops/slice.h"
 #include "ops/grad/slice_grad.h"
+#include "ops/lstm.h"
+
 namespace mindspore {
 namespace abstract {
 std::set<int64_t> GetDependsFormMap(const CNodePtr &cnode) {
@@ -290,6 +292,7 @@ PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap() {
     {prim::kPrimArgMaxWithValue, R{InferImplArgMaxWithValue, nullptr, true}},
     {prim::kPrimFusedSparseAdam, R{InferImplFusedSparseAdam, nullptr, true}},
     {prim::kPrimTransData, R{InferImplTransData, nullptr, true}},
+    {prim::kPrimLstm, R{ops::LstmInfer, nullptr, true}},
   };
   return prim_backend_eval_implement_map;
 }

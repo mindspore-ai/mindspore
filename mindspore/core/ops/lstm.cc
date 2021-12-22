@@ -20,14 +20,6 @@ namespace mindspore {
 namespace ops {
 namespace {
 constexpr int64_t type_size = 4;
-int64_t get_good_ld(const int64_t dim) {
-  int64_t ld = ((dim + (64 / type_size) - 1) / (64 / type_size)) * (64 / type_size);
-  if (ld * 256 == 0) {
-    return ld + 64 / type_size;
-  }
-  return ld;
-}
-
 AbstractBasePtr LstmInfer(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   // infer shape
   MS_EXCEPTION_IF_NULL(primitive);
@@ -52,52 +44,30 @@ AbstractBasePtr LstmInfer(const PrimitivePtr &primitive, const std::vector<Abstr
   CheckAndConvertUtils::Check("h_shape", h_input_shape, kEqual, "c_shape", c_input_shape, prim_name);
 
   int64_t num_layers = GetValue<int64_t>(primitive->GetAttr(kNumLayers));
-  int64_t num_directions = GetValue<int64_t>(primitive->GetAttr(kNumDirections));
+  bool bidirectional = GetValue<bool>(primitive->GetAttr(kBidirectional));
+  int64_t num_directions = 1;
+  if (bidirectional) {
+    num_directions = 2;
+  }
   int64_t hidden_size = GetValue<int64_t>(primitive->GetAttr(kHidden_size));
-  int64_t input_size = input_x_size;
   (void)CheckAndConvertUtils::CheckInteger("h_shape[0]", h_input_shape[0], kEqual, num_layers * num_directions,
                                            prim_name);
   (void)CheckAndConvertUtils::CheckInteger("h_shape[1]", h_input_shape[1], kEqual, x_input_shape[1], prim_name);
   (void)CheckAndConvertUtils::CheckInteger("h_shape[2]", h_input_shape[2], kEqual, hidden_size, prim_name);
 
   std::vector<int64_t> y_shape = {x_input_shape[0], x_input_shape[1], hidden_size * num_directions};
-
-  int64_t gates_ws_ld = get_good_ld(hidden_size * 4);
-  int64_t states_ws_ld = get_good_ld(std::max(hidden_size, input_size));
-  int64_t ws_gates_size = num_layers * num_directions * x_input_shape[0] * x_input_shape[1] * gates_ws_ld * type_size;
-  int64_t ws_states_size =
-    (num_layers + 1) * num_directions * (x_input_shape[0] + 1) * x_input_shape[1] * states_ws_ld * type_size;
-  int64_t ws_c_states_size =
-    (num_layers + 1) * num_directions * (x_input_shape[0] + 1) * x_input_shape[1] * states_ws_ld * type_size;
-  int64_t ws_diff_states_size =
-    (num_layers + 1) * num_directions * 3 * (x_input_shape[0] + 1) * x_input_shape[1] * states_ws_ld * type_size;
-  const int64_t page_size = 4096;
-  int64_t current_offset = 0;
-  current_offset += ws_gates_size;
-  current_offset = ((current_offset / page_size - 1) / page_size) * page_size;
-  current_offset += ws_states_size;
-  current_offset = ((current_offset / page_size - 1) / page_size) * page_size;
-  current_offset += ws_c_states_size;
-  current_offset = ((current_offset / page_size - 1) / page_size) * page_size;
-  current_offset += ws_diff_states_size;
-  current_offset = ((current_offset / page_size - 1) / page_size) * page_size;
-  std::vector<int64_t> x_shape = {x_input_shape};
-
+  std::vector<int64_t> h_shape = {h_input_shape};
   std::vector<int64_t> c_shape = {c_input_shape};
-  std::vector<int64_t> reverse_shape = {current_offset, 1};
+  std::vector<int64_t> reverse_shape = {1, 1};
   std::vector<int64_t> state_shape = {1, 1};
 
   // infer type
   auto infer_type0 = input_args[kInputIndex0]->BuildType()->cast<TensorTypePtr>()->element();
-  auto infer_type1 = input_args[kInputIndex1]->BuildType()->cast<TensorTypePtr>()->element();
-  auto infer_type2 = input_args[kInputIndex2]->BuildType()->cast<TensorTypePtr>()->element();
-  auto infer_type3 = input_args[kInputIndex3]->BuildType()->cast<TensorTypePtr>()->element();
-  auto infer_type4 = input_args[kInputIndex4]->BuildType()->cast<TensorTypePtr>()->element();
-  auto output0 = std::make_shared<abstract::AbstractTensor>(infer_type0, x_shape);
-  auto output1 = std::make_shared<abstract::AbstractTensor>(infer_type1, y_shape);
-  auto output2 = std::make_shared<abstract::AbstractTensor>(infer_type2, c_shape);
-  auto output3 = std::make_shared<abstract::AbstractTensor>(infer_type3, reverse_shape);
-  auto output4 = std::make_shared<abstract::AbstractTensor>(infer_type4, state_shape);
+  auto output0 = std::make_shared<abstract::AbstractTensor>(infer_type0, y_shape);
+  auto output1 = std::make_shared<abstract::AbstractTensor>(infer_type0, h_shape);
+  auto output2 = std::make_shared<abstract::AbstractTensor>(infer_type0, c_shape);
+  auto output3 = std::make_shared<abstract::AbstractTensor>(infer_type0, reverse_shape);
+  auto output4 = std::make_shared<abstract::AbstractTensor>(infer_type0, state_shape);
   AbstractBasePtrList output = {output0, output1, output2, output3, output4};
   return std::make_shared<abstract::AbstractTuple>(output);
 }
@@ -167,7 +137,7 @@ void LSTM::Init(const int64_t input_size, const int64_t hidden_size, const int64
 
 AbstractBasePtr LstmInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(LstmInfer(primitive, input_args));
+  return LstmInfer(primitive, input_args);
 }
 REGISTER_PRIMITIVE_C(kNameLSTM, LSTM);
 }  // namespace ops
