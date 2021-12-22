@@ -27,11 +27,13 @@ mindspore.nn.cosine_decay_lr
 
    **样例：**
 
+    >>> import mindspore.nn as nn
+    >>>
     >>> min_lr = 0.01
     >>> max_lr = 0.1
     >>> total_step = 6
     >>> step_per_epoch = 2
     >>> decay_epoch = 2
-    >>> output = cosine_decay_lr(min_lr, max_lr, total_step, step_per_epoch, decay_epoch)
+    >>> output = nn.cosine_decay_lr(min_lr, max_lr, total_step, step_per_epoch, decay_epoch)
     >>> print(output)
     [0.1, 0.1, 0.05500000000000001, 0.05500000000000001, 0.01, 0.01]

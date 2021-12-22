@@ -25,10 +25,12 @@ mindspore.nn.warmup_lr
 
     **样例：**
 
+    >>> import mindspore.nn as nn
+    >>>
     >>> learning_rate = 0.1
     >>> total_step = 6
     >>> step_per_epoch = 2
     >>> warmup_epoch = 2
-    >>> output = warmup_lr(learning_rate, total_step, step_per_epoch, warmup_epoch)
+    >>> output = nn.warmup_lr(learning_rate, total_step, step_per_epoch, warmup_epoch)
     >>> print(output)
     [0.0, 0.0, 0.05, 0.05, 0.1, 0.1]

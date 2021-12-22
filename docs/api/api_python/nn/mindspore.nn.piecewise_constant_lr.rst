@@ -21,9 +21,10 @@ mindspore.nn.piecewise_constant_lr
     list[float]。列表的大小为 :math:`M_N`。
 
     **样例：**
-
+    >>> import mindspore.nn as nn
+    >>>
     >>> milestone = [2, 5, 10]
     >>> learning_rates = [0.1, 0.05, 0.01]
-    >>> output = piecewise_constant_lr(milestone, learning_rates)
+    >>> output = nn.piecewise_constant_lr(milestone, learning_rates)
     >>> print(output)
     [0.1, 0.1, 0.05, 0.05, 0.05, 0.01, 0.01, 0.01, 0.01, 0.01]

@@ -27,11 +27,13 @@ mindspore.nn.natural_exp_decay_lr
 
     **样例：**
 
+    >>> import mindspore.nn as nn
+    >>>
     >>> learning_rate = 0.1
     >>> decay_rate = 0.9
     >>> total_step = 6
     >>> step_per_epoch = 2
     >>> decay_epoch = 2
-    >>> output = natural_exp_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch, True)
+    >>> output = nn.natural_exp_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch, True)
     >>> print(output)
     [0.1, 0.1, 0.1, 0.1, 0.016529888822158657, 0.016529888822158657]
