@@ -31,11 +31,13 @@ class PartialFusionKernel : public InnerKernel {
   int Prepare() override;
   int ReSize() override;
   int Run() override;
-  void set_subgraph_kernel(LiteKernel *subgraph_kernel) { subgraph_kernel_ = subgraph_kernel; }
-  LiteKernel *subgraph_kernel() const { return subgraph_kernel_; }
+  void set_subgraph_kernels(const std::vector<LiteKernel *> &subgraph_kernels) { subgraph_kernels_ = subgraph_kernels; }
+  std::vector<LiteKernel *> subgraph_kernels() const { return subgraph_kernels_; }
 
  private:
-  LiteKernel *subgraph_kernel_ = nullptr;
+  // One partial corresponds to a subgraph at offline stage, after graph schedule, a subgraph may be split into many
+  // graphs, so use a vector.
+  std::vector<LiteKernel *> subgraph_kernels_{};
 };
 }  // namespace mindspore::kernel
 

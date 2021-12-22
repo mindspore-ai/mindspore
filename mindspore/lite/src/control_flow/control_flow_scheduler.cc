@@ -20,6 +20,7 @@
 #include "src/lite_kernel_util.h"
 #include "src/runtime/kernel/arm/base/partial_fusion.h"
 #include "nnacl/partial_fusion_parameter.h"
+#include "nnacl/call_parameter.h"
 #include "src/control_flow/entrance_subgraph_kernel.h"
 #include "src/control_flow/exit_subgraph_kernel.h"
 
@@ -53,10 +54,8 @@ int ControlFlowScheduler::SplitNonTailCallSubGraphs(std::vector<kernel::LiteKern
       MS_LOG(ERROR) << "SplitSingleNonTailCallSubGraph failed, ret: " << ret;
       return ret;
     }
-
     // append dst_kernels
     std::copy(new_subgraphs.begin(), new_subgraphs.end(), std::back_inserter(*dst_kernels));
-
     AppendToProcessQ(&new_subgraphs, &all_non_tail_subgraphs);
   }
 
@@ -122,6 +121,9 @@ int ControlFlowScheduler::SplitSingleNonTailCallSubGraph(kernel::SubGraphKernel 
   auto last_subgraph = kernel::LiteKernelUtil::CreateSubGraphKernel(last_subgraph_nodes, nullptr, nullptr,
                                                                     cur_subgraph_type, *context_, schema_version_);
   subgraph_kernels->push_back(last_subgraph);
+
+  // change last non-tail call property as is tail call
+  reinterpret_cast<CallParameter *>((*last_non_tail_call_iter)->op_parameter())->is_tail_call = true;
   return RET_OK;
 }
 
@@ -154,10 +156,11 @@ int ControlFlowScheduler::RecordNonTailCallLinkInfo() {
     size_t non_tail_call_output_size = non_tail_call->out_tensors().size();
     auto partial_nodes = kernel::LiteKernelUtil::GetCallInputPartials(non_tail_call);
     for (auto node : partial_nodes) {
-      auto partial_node = reinterpret_cast<kernel::PartialFusionKernel *>(node);
+      auto partial_node = reinterpret_cast<kernel::PartialFusionKernel *>(node->kernel());
       MS_CHECK_TRUE_MSG(partial_node != nullptr, RET_ERROR, "node cast to partial node failed.");
-      auto kernel = partial_node->subgraph_kernel();
-      auto subgraph = reinterpret_cast<kernel::SubGraphKernel *>(kernel);
+      auto kernels = partial_node->subgraph_kernels();
+      MS_CHECK_TRUE_MSG(!kernels.empty(), RET_ERROR, "partial subgraph kernels empty.");
+      auto subgraph = reinterpret_cast<kernel::SubGraphKernel *>(kernels.back());
       MS_CHECK_TRUE_MSG(subgraph != nullptr, RET_ERROR, "partial node's subgraph kernel is nullptr.");
       MS_CHECK_TRUE_MSG(subgraph->out_tensors().size() == non_tail_call_output_size, RET_ERROR,
                         "partial inputs and corresponding call outputs size not same.");
@@ -234,8 +237,9 @@ int ControlFlowScheduler::BuildBoundaryForMultipleCalledGraph(std::vector<kernel
   for (auto node : more_than_once_called_partial_nodes_) {
     kernel::PartialFusionKernel *partial = reinterpret_cast<kernel::PartialFusionKernel *>(node->kernel());
     MS_CHECK_TRUE_MSG(partial != nullptr, RET_ERROR, "cast to partial node failed.");
-    auto aim_kernel = partial->subgraph_kernel();
-    auto subgraph = reinterpret_cast<kernel::SubGraphKernel *>(aim_kernel);
+    auto aim_kernels = partial->subgraph_kernels();
+    MS_CHECK_TRUE_MSG(aim_kernels.size() == 1, RET_ERROR, "partial subgraph kernels size not right.");
+    auto subgraph = reinterpret_cast<kernel::SubGraphKernel *>(aim_kernels.front());
     MS_CHECK_TRUE_MSG(subgraph != nullptr, RET_ERROR, "subgraph is nullptr");
     if (!IsNonTailCallSubGraph(subgraph)) {
       MS_LOG(DEBUG) << "graph not split, no need add entrance and exit subgraph kernel.";
@@ -263,14 +267,25 @@ int ControlFlowScheduler::BuildBoundaryForMultipleCalledGraph(std::vector<kernel
       MS_LOG(ERROR) << "create entrance subgraph failed.";
       return RET_NULL_PTR;
     }
+    entrance_subgraph->set_name(subgraph->name() + "_entrance");
+    dst_kernels->push_back(entrance_subgraph);
 
     auto exit_subgraph = CreateExitSubGraph(subgraph, link_tensor);
     if (exit_subgraph == nullptr) {
       MS_LOG(ERROR) << "create exit subgraph failed.";
       return RET_NULL_PTR;
     }
+    exit_subgraph->set_name(subgraph->name() + "_exit");
+    dst_kernels->push_back(exit_subgraph);
 
     subgraph_kernel_and_exit_kernel_[subgraph] = exit_subgraph;
+
+    // update partial's subgraph kernels
+    std::vector<kernel::LiteKernel *> subgraph_kernels{};
+    subgraph_kernels.push_back(entrance_subgraph);
+    subgraph_kernels.push_back(subgraph);
+    subgraph_kernels.push_back(exit_subgraph);
+    partial->set_subgraph_kernels(subgraph_kernels);
   }
   return RET_OK;
 }

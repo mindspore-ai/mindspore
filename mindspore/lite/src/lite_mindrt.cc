@@ -474,12 +474,14 @@ std::set<void *> LiteOpActor::PartialSubgraphInputTensors(kernel::LiteKernel *pa
     return {};
   }
   std::set<void *> ret{};
-  auto partial_subgraph_kernel = partial_kernel->subgraph_kernel();
-  if (partial_subgraph_kernel == nullptr) {
-    MS_LOG(ERROR) << "partial's subgraph kernel is nullptr.";
+  auto partial_subgraph_kernels = partial_kernel->subgraph_kernels();
+  if (partial_subgraph_kernels.empty()) {
+    MS_LOG(ERROR) << "partial's subgraph kernel is empty.";
     return {};
   }
-  auto inputs = partial_subgraph_kernel->in_tensors();
+  // the first subgraph kernel is the input subgraph kernel
+  auto subgraph = partial_subgraph_kernels.front();
+  auto inputs = subgraph->in_tensors();
   for (auto &input : inputs) {
     ret.insert(input);
   }
@@ -575,7 +577,6 @@ int LiteOpActor::PrepareOutputData() {
 std::vector<std::shared_ptr<LiteOpActor>> CreateOpActor(const std::vector<kernel::LiteKernel *> &kernels,
                                                         lite::InnerContext *ctx) {
   std::vector<std::shared_ptr<LiteOpActor>> actors;
-  std::unordered_map<kernel::LiteKernel *, AID> subgraph_name_AID_map{};
   ActorThreadPool *thread_pool = reinterpret_cast<ActorThreadPool *>(ctx->thread_pool());
   if (thread_pool == nullptr) {
     MS_LOG(ERROR) << "thread pool is nullptr";
@@ -593,7 +594,6 @@ std::vector<std::shared_ptr<LiteOpActor>> CreateOpActor(const std::vector<kernel
         return actors;
       }
       switch_actor->set_thread_pool(thread_pool);
-      subgraph_name_AID_map[kernel] = switch_actor->GetAID();
       actors.push_back(switch_actor);
     } else if (kernel->subgraph_type() == kernel::kEntranceSubGraph) {
       auto entrance_actor = std::make_shared<LiteEntranceOpActor>(kernel, ctx);
@@ -602,6 +602,7 @@ std::vector<std::shared_ptr<LiteOpActor>> CreateOpActor(const std::vector<kernel
         actors.clear();
         return actors;
       }
+      actors.push_back(entrance_actor);
     } else if (kernel->subgraph_type() == kernel::kExitSubGraph) {
       auto exit_actor = std::make_shared<LiteExitOpActor>(kernel, ctx);
       if (exit_actor == nullptr) {
@@ -609,6 +610,7 @@ std::vector<std::shared_ptr<LiteOpActor>> CreateOpActor(const std::vector<kernel
         actors.clear();
         return actors;
       }
+      actors.push_back(exit_actor);
     } else {
 #endif
       auto actor = std::make_shared<LiteOpActor>(kernel, ctx);
@@ -618,7 +620,6 @@ std::vector<std::shared_ptr<LiteOpActor>> CreateOpActor(const std::vector<kernel
         return actors;
       }
       actor->set_thread_pool(thread_pool);
-      subgraph_name_AID_map[kernel] = actor->GetAID();
       actors.push_back(actor);
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
     }
