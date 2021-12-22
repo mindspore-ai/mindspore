@@ -127,7 +127,7 @@ void InsertCastForGraphOutput(const FuncGraphPtr &func_graph, const CNodePtr &cn
         auto used_node_index = static_cast<size_t>(used_node_list->at(j).second - 1);
         auto cur_input = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(used_node), used_node_index);
         const abstract::BaseShapePtr origin_shape =
-          AnfAlgo::GetPrevNodeOutputDetailShape(utils::cast<CNodePtr>(used_node), i);
+          AnfAlgo::GetPrevNodeOutputDetailShape(utils::cast<CNodePtr>(used_node), used_node_index);
         auto cast =
           AddCastOpNodeToGraph(func_graph, cur_input, dev_fmt, device_type, infer_type, origin_shape, infer_type);
         MS_EXCEPTION_IF_NULL(cast);
