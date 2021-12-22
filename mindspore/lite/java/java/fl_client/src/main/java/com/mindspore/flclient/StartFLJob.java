@@ -310,7 +310,7 @@ public class StartFLJob {
         }
         LOGGER.info(Common.addTag("[startFLJob] set <batch size> for client: " + batchSize));
         client.setBatchSize(batchSize);
-        tag = client.updateFeatures(flParameter.getTrainModelPath(), inferFeatureMaps);
+        tag = client.updateFeatures(flParameter.getTrainModelPath(), trainFeatureMaps);
         Common.freeSession();
         if (!Status.SUCCESS.equals(tag)) {
             LOGGER.severe(Common.addTag("[startFLJob] unsolved error code in <Client.updateFeatures>"));
