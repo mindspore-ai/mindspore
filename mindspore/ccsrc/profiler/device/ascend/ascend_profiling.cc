@@ -63,6 +63,12 @@ void AscendProfiler::InitProfiling(const std::string &profiling_path, uint32_t d
   profiling_options_ = profiling_options;
   profile_data_path_ = profiling_path;
   device_id_ = device_id;
+
+  // Init ErrorManager instance in order to get error msg reported by Ascend.
+  if (ErrorManager::GetInstance().Init() != 0) {
+    MS_LOG(WARNING) << "[Internal Error] Failed to init ErrorManager class.";
+  }
+
   (void)ProfilingManager::GetInstance().InitProfiling(profiling_path, device_id);
 
   MemoryProfiling::GetInstance().SetMemoryProfilingInitialize(profiling_options_);
