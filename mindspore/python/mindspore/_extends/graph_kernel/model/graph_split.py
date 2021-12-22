@@ -680,6 +680,7 @@ class GraphSplitGpu(GraphSplitByPattern):
     """Graph splitter"""
     BROADCAST_FUSE_DEPTH = 20
     REDUCE_FUSE_DEPTH = 20
+    TRANSPOSE_FUSE_DEPTH = 6
 
     def get_default_mode(self, op):
         """Get default mode in GPU"""
@@ -842,7 +843,7 @@ class GraphSplitGpu(GraphSplitByPattern):
                 return None
             fused = []
             for a, _ in dom.in_relations.items():
-                if a.pattern <= PrimLib.BROADCAST and a.check_acyclic(dom):
+                if a.pattern <= PrimLib.BROADCAST and a.check_acyclic(dom) and len(a.ops) <= self.TRANSPOSE_FUSE_DEPTH:
                     fused.append(a)
             return fused, True
 

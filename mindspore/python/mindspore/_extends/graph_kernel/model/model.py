@@ -215,6 +215,7 @@ class PrimLib:
         'Flatten': Prim(RESHAPE),
         'FlattenGrad': Prim(RESHAPE),
         'Transpose': Prim(OPAQUE),
+        'CumSum': Prim(OPAQUE),
         'Tile': Prim(BROADCAST),
         'BroadcastTo': Prim(BROADCAST),
         'StridedSlice': Prim(OPAQUE),
