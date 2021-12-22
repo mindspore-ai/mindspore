@@ -74,7 +74,7 @@ std::vector<DeviceTensor *> ControlActor::GetAllDeviceTensors(const OpRealParame
 void ControlActor::IncreaseDynamicRefCount(const OpData<DeviceTensor> *op_data) {
   MS_EXCEPTION_IF_NULL(op_data);
   MS_EXCEPTION_IF_NULL(op_data->data_);
-  op_data->data_->IncreaseDynamicRefCount();
+  op_data->data_->IncreaseDynamicRefCount(GetAID().Name());
 }
 
 void ControlActor::IncreaseDynamicRefCount(const OpPartialPtr &op_partial) {
@@ -82,7 +82,7 @@ void ControlActor::IncreaseDynamicRefCount(const OpPartialPtr &op_partial) {
   auto partial_device_tensors = GetAllDeviceTensors(op_partial);
   for (auto &partial_device_tensor : partial_device_tensors) {
     MS_EXCEPTION_IF_NULL(partial_device_tensor);
-    partial_device_tensor->IncreaseDynamicRefCount();
+    partial_device_tensor->IncreaseDynamicRefCount(GetAID().Name());
   }
 }
 
@@ -90,7 +90,7 @@ void ControlActor::IncreaseDynamicRefCount(const OpRealParameterWithBranchID &op
   auto partial_device_tensors = GetAllDeviceTensors(op_real_parameter);
   for (auto &partial_device_tensor : partial_device_tensors) {
     MS_EXCEPTION_IF_NULL(partial_device_tensor);
-    partial_device_tensor->IncreaseDynamicRefCount();
+    partial_device_tensor->IncreaseDynamicRefCount(GetAID().Name());
   }
 }
 
@@ -303,9 +303,9 @@ void ControlActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
   }
 
   if (memory_free_list.size() > 0) {
-    memory_free_lists_.emplace_back(memory_free_list);
+    memory_free_lists_.push(memory_free_list);
     ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &(memory_free_lists_.back()),
-                          device_contexts_[0], context);
+                          device_contexts_[0], context, GetAID());
   }
 }
 

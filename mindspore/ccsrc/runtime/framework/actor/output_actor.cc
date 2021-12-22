@@ -170,8 +170,9 @@ void OutputActor::UpdateOutputDeviceAddress() {
     MS_EXCEPTION_IF_NULL(tensor_device_address);
 
     // Update tensor device address by device tensor of output node.
-    tensor_device_address->set_original_ref_count(device_tensor->original_ref_count());
+    tensor_device_address->set_original_ref_count(SIZE_MAX);
     tensor_device_address->ResetRefCount();
+    tensor_device_address->set_dynamic_ref_count(INT32_MAX);
     auto node_with_index = device_tensor->GetNodeIndex();
     tensor_device_address->SetNodeIndex(node_with_index.first, node_with_index.second);
     tensor_device_address->set_from_persistent_mem(device_tensor->from_persistent_mem());

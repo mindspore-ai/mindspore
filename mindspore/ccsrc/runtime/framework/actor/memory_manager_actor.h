@@ -53,11 +53,11 @@ class MemoryManagerActor : public ActorBase {
 
   // The process entry of memory free.
   void FreeMemory(const std::vector<DeviceTensor *> *free_list, const DeviceContext *device_context,
-                  OpContext<DeviceTensor> *const op_context);
+                  OpContext<DeviceTensor> *const op_context, const AID &from_aid);
   // device_contexts is from different device, the size of device_contexts must be equal to the free_list.
   void FreeBatchMemory(const std::vector<DeviceTensor *> *free_list,
                        const std::vector<const DeviceContext *> *device_contexts,
-                       OpContext<DeviceTensor> *const op_context);
+                       OpContext<DeviceTensor> *const op_context, const AID &from_aid);
 
   // Wait the MemoryManagerActor to finish running all current messages.
   void Wait(OpContext<DeviceTensor> *const op_context, const AID &from_aid);

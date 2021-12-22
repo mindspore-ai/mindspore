@@ -28,19 +28,24 @@ GatherActor::GatherActor(const std::string &name, const AID &memory_manager_aid,
 void GatherActor::FetchInput(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   ControlActor::FetchInput(context);
+  if (input_partials_.empty()) {
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The input partials is empty.");
+  }
+
   // The gather actor needs to put the inputs into the first partial in order. In order to keep the index consistent,
   // the inputs need to be delayed in sequence. The offset indicates the number of delays, that is, the number of
   // inputs in the first partial.
   size_t offset = input_partials_[0]->device_tensors_.size() + input_partials_[0]->partials_.size();
 
-  // Put other real parameter in partial.
-  for (size_t i = 0; i < input_device_tensors_.size(); ++i) {
+  // Put other real parameters in the first partial.
+  for (size_t i = 1; i < input_device_tensors_.size(); ++i) {
     const auto &device_tensor = input_device_tensors_[i];
     if (device_tensor != nullptr) {
       input_partials_[0]->device_tensors_.emplace_back(i + offset, device_tensor);
     }
   }
 
+  // Put other partials in the first partial.
   for (size_t i = 1; i < input_partials_.size(); ++i) {
     if (input_partials_[i] != nullptr && input_partials_[i]->func_graph_ != nullptr) {
       auto output_partial = std::make_shared<OpPartial>();
@@ -53,6 +58,9 @@ void GatherActor::FetchInput(OpContext<DeviceTensor> *const context) {
 void GatherActor::FetchOutput(OpRealParameterWithBranchID *const output, OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(output);
   MS_EXCEPTION_IF_NULL(context);
+  if (input_partials_.empty()) {
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The input partials is empty.");
+  }
   output->branch_id_ = output_branch_id_;
   output->device_tensors_ = input_partials_[0]->device_tensors_;
   output->partials_ = input_partials_[0]->partials_;
@@ -78,6 +86,10 @@ void GatherActor::FetchOutput(OpRealParameterWithBranchID *const output, OpConte
 }
 
 void GatherActor::SendOutput(OpContext<DeviceTensor> *const context) {
+  MS_EXCEPTION_IF_NULL(context);
+  if (input_partials_.empty()) {
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The input partials is empty.");
+  }
   // Send data with branch id.
   const auto &iter = output_data_with_branch_id_arrows_.find(input_partials_[0]->func_graph_);
   if (iter != output_data_with_branch_id_arrows_.end()) {
@@ -98,6 +110,9 @@ void GatherActor::IncreaseDynamicRefCounts(OpContext<DeviceTensor> *const contex
   MS_EXCEPTION_IF_NULL(context);
   ControlActor::IncreaseDynamicRefCounts(context);
 
+  if (input_partials_.empty()) {
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The input partials is empty.");
+  }
   // Increase dynamic ref count by the output data with branch id.
   const auto &iter = output_data_with_branch_id_arrows_.find(input_partials_[0]->func_graph_);
   if (iter != output_data_with_branch_id_arrows_.end()) {
@@ -113,27 +128,17 @@ void GatherActor::IncreaseDynamicRefCounts(OpContext<DeviceTensor> *const contex
 
 void GatherActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
-  const auto &sequential_num = context->sequential_num_;
-
-  std::vector<DeviceTensor *> memory_free_list;
-  if (input_op_partials_.count(sequential_num) > 0) {
-    for (auto &input_partial_pair : input_op_partials_[sequential_num]) {
-      // All inputs in gather actor will be gathered to the first input partial. When the ref count is released,
-      // only the device tensor in the first input partial needs to be released.
-      if (input_partial_pair.first != 0) {
-        continue;
-      }
-      auto partial_device_tensors = GetAllDeviceTensors(input_partial_pair.second);
-      (void)std::copy(partial_device_tensors.begin(), partial_device_tensors.end(),
-                      std::back_inserter(memory_free_list));
-      break;
-    }
+  if (input_partials_.empty()) {
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The input partials is empty.");
   }
 
-  if (memory_free_list.size() > 0) {
-    memory_free_lists_.emplace_back(memory_free_list);
+  // All inputs in gather actor will be gathered to the first input partial. When the ref count is released,
+  // only the device tensor in the first input partial needs to be released.
+  auto partial_device_tensors = GetAllDeviceTensors(input_partials_[0]);
+  if (partial_device_tensors.size() > 0) {
+    memory_free_lists_.push(partial_device_tensors);
     ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &(memory_free_lists_.back()),
-                          device_contexts_[0], context);
+                          device_contexts_[0], context, GetAID());
   }
 }
 }  // namespace runtime

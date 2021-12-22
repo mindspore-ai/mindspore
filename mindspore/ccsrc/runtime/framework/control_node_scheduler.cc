@@ -438,27 +438,27 @@ void ControlNodeScheduler::ClearActorData(const ControlActorSet *control_actor_s
 
   for (auto &switch_actor : control_actor_set->switch_actors_) {
     MS_EXCEPTION_IF_NULL(switch_actor);
-    switch_actor->memory_free_lists_.clear();
+    switch_actor->memory_free_lists_ = std::queue<std::vector<DeviceTensor *>>();
   }
 
   for (auto &gather_actor : control_actor_set->gather_actors_) {
     MS_EXCEPTION_IF_NULL(gather_actor);
-    gather_actor->memory_free_lists_.clear();
+    gather_actor->memory_free_lists_ = std::queue<std::vector<DeviceTensor *>>();
   }
 
   for (auto &entrance_actor : control_actor_set->entrance_actors_) {
     MS_EXCEPTION_IF_NULL(entrance_actor);
-    entrance_actor->memory_free_lists_.clear();
+    entrance_actor->memory_free_lists_ = std::queue<std::vector<DeviceTensor *>>();
   }
 
   for (auto &stack_actor : control_actor_set->stack_actors_) {
     MS_EXCEPTION_IF_NULL(stack_actor);
-    stack_actor->memory_free_lists_.clear();
+    stack_actor->memory_free_lists_ = std::queue<std::vector<DeviceTensor *>>();
   }
 
   for (auto &exit_actor : control_actor_set->exit_actors_) {
     MS_EXCEPTION_IF_NULL(exit_actor);
-    exit_actor->memory_free_lists_.clear();
+    exit_actor->memory_free_lists_ = std::queue<std::vector<DeviceTensor *>>();
     exit_actor->created_device_tensors_.clear();
   }
 }

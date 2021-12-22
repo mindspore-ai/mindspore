@@ -22,6 +22,7 @@
 #include <map>
 #include <utility>
 #include <vector>
+#include <queue>
 #include "runtime/framework/actor/debug_aware_actor.h"
 #include "runtime/framework/actor/actor_common.h"
 #include "runtime/hardware/device_context.h"
@@ -67,7 +68,7 @@ class SuperKernelActor : public DebugAwareActor {
   std::map<AnfNodePtr, DeviceAddress *> ref_node_addr_map_;
 
   // The lists of device tensors which need free by dynamic ref count, will be cleared at the end of step.
-  std::vector<std::vector<DeviceTensor *>> memory_free_lists_;
+  std::queue<std::vector<DeviceTensor *>> memory_free_lists_;
 };
 
 using SuperKernelActorPtr = std::shared_ptr<SuperKernelActor>;

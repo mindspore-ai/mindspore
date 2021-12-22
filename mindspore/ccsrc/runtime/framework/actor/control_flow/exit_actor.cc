@@ -157,7 +157,7 @@ void ExitActor::CopyDeviceAddress(OpContext<DeviceTensor> *const context) {
     new_device_tensor->SetNodeIndex(node_with_index.first, node_with_index.second);
     new_device_tensor->set_from_persistent_mem(input_device_tensor->from_persistent_mem());
     // The device address which is created by actor uses the dynamic ref count.
-    new_device_tensor->set_dynamic_ref_conut(0);
+    new_device_tensor->set_dynamic_ref_count(0);
     new_device_tensor->set_original_ref_count(SIZE_MAX);
     new_device_tensor->ResetRefCount();
 
@@ -180,6 +180,10 @@ void ExitActor::CopyDeviceAddress(OpContext<DeviceTensor> *const context) {
       input_device_tensor->set_ptr(nullptr);
       input_device_tensor->set_from_mem_pool(false);
     }
+    MS_LOG(DEBUG) << GetAID().Name() << " creates the dynamic ref device address:" << new_device_tensor.get()
+                  << ", ptr:" << new_device_tensor->GetPtr()
+                  << ", from node:" << node_with_index.first->fullname_with_scope()
+                  << " with index:" << node_with_index.second;
   }
   input_device_tensors_.swap(new_device_tensors);
 

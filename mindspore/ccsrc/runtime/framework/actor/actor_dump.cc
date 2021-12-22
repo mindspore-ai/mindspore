@@ -108,7 +108,8 @@ void DumpDSActor(const DataSourceActor *actor, std::ofstream &ofs) {
       const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(data_kernel, i, false);
       MS_EXCEPTION_IF_NULL(device_tensor);
       ofs << "\t\t\toutput_index:" << i << "\tptr:" << device_tensor->GetPtr() << "\tsize:" << device_tensor->GetSize()
-          << "\toriginal_ref_count:" << device_tensor->original_ref_count() << "\n ";
+          << "\toriginal_ref_count:" << device_tensor->original_ref_count()
+          << "\tdynamic_ref_count:" << device_tensor->dynamic_ref_count() << "\n ";
     }
   } else if (actor->type() == KernelTransformType::kHostDataSourceActor) {
     // Dump the member info of host queue data source actor.
@@ -122,7 +123,8 @@ void DumpDSActor(const DataSourceActor *actor, std::ofstream &ofs) {
       MS_EXCEPTION_IF_NULL(device_tensor);
       ofs << "\t\t\tnode_order_number:" << i << "\tnode_name:" << data_node->fullname_with_scope()
           << "\tptr:" << device_tensor->GetPtr() << "\tsize:" << device_tensor->GetSize()
-          << "\toriginal_ref_count:" << device_tensor->original_ref_count() << "\n";
+          << "\toriginal_ref_count:" << device_tensor->original_ref_count()
+          << "\tdynamic_ref_count:" << device_tensor->dynamic_ref_count() << "\n ";
     }
   }
 
@@ -142,7 +144,8 @@ void DumpKernelActor(const KernelActor *actor, std::ofstream &ofs) {
     const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(kernel, i, false);
     MS_EXCEPTION_IF_NULL(device_tensor);
     ofs << "\t\t\toutput_index:" << i << "\tptr:" << device_tensor->GetPtr() << "\tsize:" << device_tensor->GetSize()
-        << "\toriginal_ref_count:" << device_tensor->original_ref_count() << "\n ";
+        << "\toriginal_ref_count:" << device_tensor->original_ref_count()
+        << "\tdynamic_ref_count:" << device_tensor->dynamic_ref_count() << "\n ";
   }
 
   DumpAbstractActor(actor, ofs);
@@ -172,7 +175,8 @@ void DumpCopyActor(const CopyActor *actor, std::ofstream &ofs) {
   auto device_tensor = actor->output();
   if (device_tensor != nullptr) {
     ofs << "\t\toutput_index:" << 0 << "\tptr:" << device_tensor->GetPtr() << "\tsize:" << device_tensor->GetSize()
-        << "\toriginal_ref_count:" << device_tensor->original_ref_count() << "\n ";
+        << "\toriginal_ref_count:" << device_tensor->original_ref_count()
+        << "\tdynamic_ref_count:" << device_tensor->dynamic_ref_count() << "\n ";
   }
 
   DumpAbstractActor(actor, ofs);

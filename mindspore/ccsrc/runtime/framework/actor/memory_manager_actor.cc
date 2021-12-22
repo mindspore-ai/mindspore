@@ -38,7 +38,7 @@ void FreeMemoryInner(DeviceTensor *const device_tensor, const DeviceContext *dev
 }
 
 // Only one of the static and dynamic reference counts will take effect.
-void FreeMemoryByRefCount(DeviceTensor *const device_tensor, const DeviceContext *device_context) {
+void FreeMemoryByRefCount(DeviceTensor *const device_tensor, const DeviceContext *device_context, const AID &from_aid) {
   MS_EXCEPTION_IF_NULL(device_tensor);
   if (device_tensor->original_ref_count() != SIZE_MAX) {
     // The static reference count is decremented to zero to free memory, and reset to the original count.
@@ -49,10 +49,10 @@ void FreeMemoryByRefCount(DeviceTensor *const device_tensor, const DeviceContext
       }
       device_tensor->ResetRefCount();
     }
-  } else if (device_tensor->dynamic_ref_conut() != INT32_MAX) {
+  } else if (device_tensor->dynamic_ref_count() != INT32_MAX) {
     // The dynamic reference count is decremented to zero to free memory.
-    device_tensor->DecreaseDynamicRefCount();
-    if ((device_tensor->dynamic_ref_conut() == 0) && (device_tensor->GetPtr() != nullptr)) {
+    device_tensor->DecreaseDynamicRefCount(from_aid.Name());
+    if ((device_tensor->dynamic_ref_count() == 0) && (device_tensor->GetPtr() != nullptr)) {
       MS_LOG(DEBUG) << "Free memory by the dynamic reference count, device address" << device_tensor->GetPtr();
       FreeMemoryInner(device_tensor, device_context);
     }
@@ -149,16 +149,16 @@ void MemoryManagerActor::AllocateBatchMemory(const std::vector<DeviceTensor *> *
 }
 
 void MemoryManagerActor::FreeMemory(const std::vector<DeviceTensor *> *free_list, const DeviceContext *device_context,
-                                    OpContext<DeviceTensor> *) {
+                                    OpContext<DeviceTensor> *, const AID &from_aid) {
   MS_EXCEPTION_IF_NULL(free_list);
   for (auto &device_tensor : *free_list) {
-    FreeMemoryByRefCount(device_tensor, device_context);
+    FreeMemoryByRefCount(device_tensor, device_context, from_aid);
   }
 }
 
 void MemoryManagerActor::FreeBatchMemory(const std::vector<DeviceTensor *> *free_list,
                                          const std::vector<const DeviceContext *> *device_contexts,
-                                         OpContext<DeviceTensor> *const op_context) {
+                                         OpContext<DeviceTensor> *const op_context, const AID &from_aid) {
   MS_EXCEPTION_IF_NULL(free_list);
   MS_EXCEPTION_IF_NULL(device_contexts);
   MS_EXCEPTION_IF_NULL(op_context);
@@ -170,7 +170,7 @@ void MemoryManagerActor::FreeBatchMemory(const std::vector<DeviceTensor *> *free
   for (size_t i = 0; i < (*free_list).size(); ++i) {
     auto &device_tensor = (*free_list)[i];
     auto &device_context = (*device_contexts)[i];
-    FreeMemoryByRefCount(device_tensor, device_context);
+    FreeMemoryByRefCount(device_tensor, device_context, from_aid);
   }
 }
 

@@ -179,7 +179,7 @@ void KernelActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context) {
 void KernelActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
   if (strategy_ == GraphExecutionStrategy::kPipeline) {
     ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &memory_free_list_, device_contexts_[0],
-                          context);
+                          context, GetAID());
   } else {
     FreeMemory(memory_free_list_, device_contexts_[0]);
   }
