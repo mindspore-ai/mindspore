@@ -107,7 +107,7 @@ void ResetMindRTEnable(const ResourcePtr &res) {
                             context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode)) {
       return;
     }
-    if (common::GetEnv("ENABLE_ASCEND_MINDRT") == "1" || common::kEnableAscendMindRT) {
+    if (common::GetEnv("DISABLE_ASCEND_MINDRT") != "1") {
       MS_LOG(INFO) << "Enable Ascend MindRT";
       // No control flow && control flow without while need multigraph-sink, so enable mindrt.
       // Temporary changes: After MindRT supports control flow, the sinking mode is judged in MindRT.

@@ -57,6 +57,8 @@ void OutputActor::RunOpControl(AID *const, OpContext<DeviceTensor> *const contex
         SET_OPCONTEXT_FAIL_RET_WITH_ERROR(*context, "Create output tensor failed.");
       }
       output_nodes_[device_tensor_store_key.first] = {device_tensor_store_key.second, 0};
+      const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(device_tensor_store_key.second, 0, false);
+      output_device_tensors_[device_tensor_store_key.first] = device_tensor.get();
     }
 
     current_outputs_num_ = 0;
