@@ -13,20 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_TENSOR_C_H_
-#define MINDSPORE_NNACL_TENSOR_C_H_
+#include "nnacl/kernel.h"
+#include "nnacl/tensor_c.h"
 #include "nnacl/op_base.h"
+static KernelCreator g_kernelCreatorRegistry[PrimType_MAX][kDataTypeMax][NUM_OF_FORMAT];
 
-typedef enum TensorCFormat { NCHW, NHWC, NC4HW4, NUM_OF_FORMAT } TensorCFormat;
+void RegKernelCreator(int opType, LiteDataType dataType, TensorCFormat format, KernelCreator creator) {
+  g_kernelCreatorRegistry[opType][dataType][format] = creator;
+}
 
-typedef struct TensorC {
-  bool is_ready_;
-  int data_type_;
-  int format_;
-  void *data_;
-  size_t shape_size_;
-  int shape_[MAX_SHAPE_SIZE];
-  char *name_;
-} TensorC;
-
-#endif  // MINDSPORE_NNACL_TENSOR_C_H_
+KernelStru *CreateKernel(OpParameter *param, TensorC *in[], size_t insize, TensorC *out[], size_t outsize) {
+  int format = in[kInputIndex]->format_;
+  int dtype = in[kInputIndex]->data_type_;
+  return g_kernelCreatorRegistry[param->type_][format][dtype](param, in, insize, out, outsize);
+}

@@ -33,6 +33,7 @@ file(GLOB KERNEL_SRC
     ${NNACL_DIR}/infer/*.c
     ${NNACL_DIR}/base/*.c
     ${NNACL_DIR}/fp32_grad/*.c
+    #${NNACL_DIR}/experiment/HPC-generator/*.c
 )
 
 if((NOT DEFINED MSLITE_ENABLE_INT8) OR MSLITE_ENABLE_INT8)
