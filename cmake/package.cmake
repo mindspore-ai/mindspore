@@ -371,6 +371,14 @@ install(
     COMPONENT mindspore
 )
 
+install(
+    FILES
+        ${CMAKE_SOURCE_DIR}/mindspore/core/mindapi/base/format.h
+        ${CMAKE_SOURCE_DIR}/mindspore/core/mindapi/base/type_id.h
+        ${CMAKE_SOURCE_DIR}/mindspore/core/mindapi/base/types.h
+    DESTINATION ${INSTALL_BASE_DIR}/include/mindapi/base
+    COMPONENT mindspore)
+
 ## config files
 install(
     FILES ${CMAKE_SOURCE_DIR}/config/op_info.config
