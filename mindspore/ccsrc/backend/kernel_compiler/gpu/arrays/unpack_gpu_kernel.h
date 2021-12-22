@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_UNPACK_GPU_KERNEL_H
 
 #include <vector>
+#include <string>
 #include <memory>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
@@ -55,10 +56,9 @@ class UnpackGpuFwdKernel : public GpuKernel {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
-    if (!CheckParam(kernel_node)) {
-      return false;
-    }
+    (void)CheckParam(kernel_node);
     axis_ = static_cast<int32_t>(GetAttr<int64_t>(kernel_node, "axis"));
     if (axis_ < 0) {
       auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
@@ -73,9 +73,8 @@ class UnpackGpuFwdKernel : public GpuKernel {
     for (size_t i = 0; i < output_num_; i++) {
       size_t _size = 1;
       auto _shape = AnfAlgo::GetOutputDeviceShape(kernel_node, i);
-      is_null_input_ = CHECK_NULL_INPUT(_shape);
+      is_null_input_ = CHECK_SHAPE_NULL(_shape, kernel_name_, "output");
       if (is_null_input_) {
-        MS_LOG(WARNING) << "For 'UnpackGpuKernel', output is null";
         InitSizeLists();
         return true;
       }
@@ -87,9 +86,8 @@ class UnpackGpuFwdKernel : public GpuKernel {
     workspace_size_list_.push_back(sizeof(T *) * output_num_);
 
     auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(input_shape);
+    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'UnpackGpuKernel', input is null";
       InitSizeLists();
       return true;
     }
@@ -108,13 +106,11 @@ class UnpackGpuFwdKernel : public GpuKernel {
   void InitSizeLists() override {}
 
  private:
-  bool CheckParam(const CNodePtr &kernel_node) {
+  void CheckParam(const CNodePtr &kernel_node) {
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
-      MS_LOG(ERROR) << "input number is " << input_num << ", but UnpackGpuFwdKernel needs 1 input.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 1, but got " << input_num;
     }
-    return true;
   }
   int axis_;
   bool is_null_input_;

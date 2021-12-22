@@ -47,7 +47,8 @@ class DetTriangleGpuKernel : public GpuKernel {
 
     if (!CheckTriangle(input_addr, fill_mode_, matrix_n_, outputs[0]->size / sizeof(T),
                        reinterpret_cast<cudaStream_t>(stream_ptr))) {
-      MS_LOG(ERROR) << "The elements in the upper half of the matrix should be all 0, fill mode is: " << fill_mode_;
+      MS_LOG(ERROR) << "For '" << kernel_name_
+                    << "', the elements in the upper half of the matrix should be all 0, fill mode is: " << fill_mode_;
       return false;
     }
     DetTriangle(input_addr, output_addr, matrix_n_, outputs[0]->size / sizeof(T),
@@ -56,21 +57,20 @@ class DetTriangleGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but DetTriangle needs 1 inputs.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 1, but got " << input_num;
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(ERROR) << "Output number is " << output_num << ", but DetTriangle needs 1 output.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
     }
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(input_shape) || CHECK_NULL_INPUT(output_shape);
+    is_null_input_ =
+      CHECK_SHAPE_NULL(input_shape, kernel_name_, "input") || CHECK_SHAPE_NULL(output_shape, kernel_name_, "output");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'DeterminantTriangleGpuKernel', input or output is null";
       InitSizeLists();
       return true;
     }
@@ -79,8 +79,8 @@ class DetTriangleGpuKernel : public GpuKernel {
     }
 
     if (input_shape.size() < 2) {
-      MS_LOG(ERROR) << "The input should have rank at least 2.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input cannot be less than 2, but got "
+                        << input_shape.size();
     }
 
     matrix_n_ = input_shape[input_shape.size() - 1];
@@ -89,12 +89,11 @@ class DetTriangleGpuKernel : public GpuKernel {
       output_size_ *= output_shape[i];
     }
     if (matrix_n_ == 0 || output_size_ != input_size_ / matrix_n_ / matrix_n_) {
-      MS_LOG(ERROR) << "The output shape is wrong.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of output should be "
+                        << (input_size_ / matrix_n_ / matrix_n_) << ", but got " << output_size_;
     }
     if (input_shape[input_shape.size() - 2] != input_shape[input_shape.size() - 1]) {
-      MS_LOG(ERROR) << "The matrix should be in shape of square.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of input should be square matrix";
     }
     auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
     MS_EXCEPTION_IF_NULL(prim);

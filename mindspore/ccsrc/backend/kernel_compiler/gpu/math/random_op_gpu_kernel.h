@@ -88,8 +88,11 @@ class RandomOpGpuKernel : public GpuKernel {
         } else if (seed_ != 0) {
           RNG_seed = seed_;
         }
-        CHECK_CURAND_RET_WITH_EXCEPT(curandCreateGenerator(&mask_generator_, CURAND_RNG_PSEUDO_PHILOX4_32_10),
-                                     "Failed to create generator");
+        if (!states_init_) {
+          CHECK_CURAND_RET_WITH_EXCEPT(curandCreateGenerator(&mask_generator_, CURAND_RNG_PSEUDO_PHILOX4_32_10),
+                                       "Failed to create generator");
+          states_init_ = true;
+        }
         CHECK_CURAND_RET_WITH_EXCEPT(curandSetPseudoRandomGeneratorSeed(mask_generator_, RNG_seed),
                                      "Failed to SetPseudoRandomGeneratorSeed");
         MS_EXCEPTION_IF_NULL(mask_generator_);
@@ -98,7 +101,7 @@ class RandomOpGpuKernel : public GpuKernel {
         // curandGen only support float or double for mask.
         CHECK_CURAND_RET_WITH_EXCEPT(
           curandGenerateNormal(mask_generator_, mask_f, outputs[0]->size / sizeof(float), 0.0, 1.0),
-          "Failed to generate uniform");
+          "Failed to generate normal");
         break;
       }
       case RANDOM_OP_UNIFORM_INT: {
@@ -108,7 +111,7 @@ class RandomOpGpuKernel : public GpuKernel {
                               inputs[2]->size / sizeof(T), output_addr, outputs[0]->size / sizeof(T),
                               reinterpret_cast<cudaStream_t>(stream_ptr));
         if (!ret) {
-          MS_LOG(ERROR) << "For UniformInt op, `minval` should be strictly less than `maxval`";
+          MS_LOG(ERROR) << "For '" << kernel_name_ << "', `minval` should be strictly less than `maxval`";
           return false;
         }
         break;
@@ -136,7 +139,8 @@ class RandomOpGpuKernel : public GpuKernel {
         break;
       }
       default: {
-        MS_LOG(EXCEPTION) << "Random operation " << random_op_type_ << " is not supported.";
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", only support these types: StandardNormal, CudnnUniformReal, "
+                          << "UniformInt, UniformReal currently, but got " << random_op_type_;
       }
     }
     return true;
@@ -146,29 +150,27 @@ class RandomOpGpuKernel : public GpuKernel {
     std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     auto iter = kRandomOpTypeMap.find(kernel_name);
     if (iter == kRandomOpTypeMap.end()) {
-      MS_LOG(EXCEPTION) << "Random operation " << kernel_name << " is not supported.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << ", only support these types: StandardNormal, CudnnUniformReal, "
+                        << "UniformInt, UniformReal currently, but got " << kernel_name;
     } else {
       random_op_type_ = iter->second;
     }
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if ((random_op_type_ == RANDOM_OP_NORMAL || random_op_type_ == RANDOM_OP_UNIFORM_REAL) && input_num != 1) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but random op needs 1 input.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 1, but got " << input_num;
     }
     if (random_op_type_ == RANDOM_OP_UNIFORM_INT && input_num != 3) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but random op needs 3 inputs.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 3, but got " << input_num;
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(ERROR) << "Output number is " << output_num << ", but random op needs 1 output.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 1, but got " << output_num;
     }
     auto input_shape_0 = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(input_shape_0) || CHECK_NULL_INPUT(output_shape);
+    is_null_input_ =
+      CHECK_SHAPE_NULL(input_shape_0, kernel_name, "input") || CHECK_SHAPE_NULL(output_shape, kernel_name, "output");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'RandomOpGpuKernel', input or output is null";
       InitSizeLists();
       return true;
     }

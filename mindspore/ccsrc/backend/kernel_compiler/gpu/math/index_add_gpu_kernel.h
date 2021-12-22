@@ -62,18 +62,20 @@ class IndexAddGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 3) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but index add needs 3 inputs.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 3, but got " << input_num;
     }
     std::vector<size_t> dst_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     std::vector<size_t> index_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     std::vector<size_t> src_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
-    is_null_input_ = CHECK_NULL_INPUT(dst_shape) || CHECK_NULL_INPUT(index_shape) || CHECK_NULL_INPUT(src_shape);
+    is_null_input_ = CHECK_SHAPE_NULL(dst_shape, kernel_name, "x") ||
+                     CHECK_SHAPE_NULL(index_shape, kernel_name, "indices") ||
+                     CHECK_SHAPE_NULL(src_shape, kernel_name, "y");
+
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'IndexAddGpuKernel', input is null";
       InitSizeLists();
       return true;
     }
@@ -91,8 +93,8 @@ class IndexAddGpuKernel : public GpuKernel {
       inner_size_ *= src_shape[i];
     }
     if (axis < 0 || axis >= SizeToInt(src_shape.size()) || axis >= SizeToInt(dst_shape.size())) {
-      MS_LOG(EXCEPTION) << "Init axis size failed, actual src axis size is " << src_axis_size_
-                        << ", actual dst axis size is " << dst_axis_size_;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the size of 'axis' cannot be greater than or equal to "
+                        << SizeToInt(src_shape.size()) << " or " << SizeToInt(dst_shape.size()) << ", but got " << axis;
     }
     src_axis_size_ = src_shape[axis];
     dst_axis_size_ = dst_shape[axis];

@@ -52,13 +52,15 @@ class UnsortedSegmentSumGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     auto input_shapes = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
     auto ids_shapes = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 1);
     auto output_shapes = AnfAlgo::GetOutputRealDeviceShapeIfExist(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(input_shapes) || CHECK_NULL_INPUT(ids_shapes) || CHECK_NULL_INPUT(output_shapes);
+    is_null_input_ = CHECK_SHAPE_NULL(input_shapes, kernel_name, "input") ||
+                     CHECK_SHAPE_NULL(ids_shapes, kernel_name, "segment_ids") ||
+                     CHECK_SHAPE_NULL(output_shapes, kernel_name, "output");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'UnsortedSegmentSumGpuKernel', input or output is null";
       InitSizeLists();
       return true;
     }

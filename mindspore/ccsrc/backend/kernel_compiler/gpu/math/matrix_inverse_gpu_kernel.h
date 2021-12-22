@@ -19,6 +19,7 @@
 #include <cublas_v2.h>
 #include <cuda_runtime_api.h>
 #include <vector>
+#include <string>
 #include <type_traits>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
@@ -90,28 +91,30 @@ class MatrixInverseGpuKernel : public GpuKernel {
                             reinterpret_cast<double **>(inv_batch_addr), len, info_addr, batchsize),
         "cublas trsm batched Fail");
     } else {
-      MS_LOG(EXCEPTION) << "The data type entered must be float or double.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the data type entered must be float or double.";
     }
 
     return true;
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCublasHandle();
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(input_shape);
+    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'MatrixInverseGpuKernel', input is null";
       InitSizeLists();
       return true;
     }
     if (input_shape.size() < 2) {
-      MS_LOG(EXCEPTION) << "The dim entered needs to be greater than 2, but " << input_shape.size() << " was taken";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input cannot be less than 2, but got "
+                        << input_shape.size();
     }
     size_t last_index = input_shape.size() - 1;
     if (input_shape[last_index] != input_shape[last_index - 1]) {
-      MS_LOG(EXCEPTION) << "The last two dimensions of the input matrix should be equal!";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the last two dimensions of the input matrix should be equal, "
+                        << "but got one: " << input_shape[last_index] << ", another: " << input_shape[last_index - 1];
     }
     size_ = input_shape[last_index];
     for (size_t i = 0; i < last_index - 1; i++) {

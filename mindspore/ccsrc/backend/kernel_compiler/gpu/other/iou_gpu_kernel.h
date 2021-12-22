@@ -29,7 +29,6 @@ template <typename T>
 class IOUGpuKernel : public GpuKernel {
  public:
   IOUGpuKernel() : gt_boxes_size_(0), anchor_boxes_size_(0), iou_size_(0), mode_(0), is_null_input_(false) {}
-
   ~IOUGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
@@ -50,7 +49,7 @@ class IOUGpuKernel : public GpuKernel {
     const size_t block_size_0 = inputs[0]->size / sizeof(T);
     const size_t block_size_1 = inputs[1]->size / sizeof(T);
     if ((block_size_0 % coordinate) != 0 || (block_size_1 % coordinate) != 0) {
-      MS_LOG(ERROR) << "The size of the box must be a multiple of 4.";
+      MS_LOG(ERROR) << "For '" << kernel_name_ << ", the size of the box should be a multiple of 4.";
       return false;
     }
 
@@ -65,8 +64,7 @@ class IOUGpuKernel : public GpuKernel {
     MS_EXCEPTION_IF_NULL(kernel_node);
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but IOU needs 2 inputs.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 2, but got " << input_num;
     }
     gt_boxes_size_ = sizeof(T);
     anchor_boxes_size_ = sizeof(T);
@@ -75,10 +73,10 @@ class IOUGpuKernel : public GpuKernel {
     auto gt_boxes_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto anchor_boxes_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     auto iou_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-    is_null_input_ =
-      CHECK_NULL_INPUT(gt_boxes_shape) || CHECK_NULL_INPUT(anchor_boxes_shape) || CHECK_NULL_INPUT(iou_shape);
+    is_null_input_ = CHECK_SHAPE_NULL(gt_boxes_shape, kernel_name_, "anchor_boxes") ||
+                     CHECK_SHAPE_NULL(anchor_boxes_shape, kernel_name_, "gt_boxes") ||
+                     CHECK_SHAPE_NULL(iou_shape, kernel_name_, "output");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'IOUGpuKernel', input or output is null";
       InitSizeLists();
       return true;
     }
@@ -103,8 +101,7 @@ class IOUGpuKernel : public GpuKernel {
     } else if (mode == "iof") {
       mode_ = 1;
     } else {
-      MS_LOG(ERROR) << "Mode only support 'iou' or 'iof'.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', mode only support 'iou' or 'iof'.";
     }
 
     return true;

@@ -184,7 +184,9 @@ class UnaryOpGpuKernel : public GpuKernel {
         break;
       }
       default: {
-        MS_LOG(EXCEPTION) << "Unary operation " << unary_op_type_ << " is not supported.";
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", only support these types: Exp, Expm1, Log, Log1p, Erf, Erfc,"
+                          << " Neg, Reciprocal, Square, Sqrt, Rsqrt, Sin, Cos, Asin, ACos, Atan, Asinh, Acosh, Abs, "
+                          << "Floor, Rint, Round, Real, Imag, Sign, Conj currently, but got " << unary_op_type_;
       }
     }
     return true;
@@ -193,23 +195,22 @@ class UnaryOpGpuKernel : public GpuKernel {
     std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     auto iter = kUnaryOpTypeMap.find(kernel_name);
     if (iter == kUnaryOpTypeMap.end()) {
-      MS_LOG(EXCEPTION) << "Unary operation " << kernel_name << " is not supported.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << ", only support these types: Exp, Expm1, Log, Log1p, Erf, Erfc,"
+                        << " Neg, Reciprocal, Square, Sqrt, Rsqrt, Sin, Cos, Asin, ACos, Atan, Asinh, Acosh, Abs, "
+                        << "Floor, Rint, Round, Real, Imag, Sign, Conj currently, but got " << kernel_name;
     }
     unary_op_type_ = iter->second;
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but unary op needs 1 inputs.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 1, but got " << input_num;
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(ERROR) << "Output number is " << output_num << ", but unary op needs 1 output.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 1, but got " << output_num;
     }
     auto input_shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(input_shape);
+    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'UnaryOpGpuKernel', input is null";
       InitSizeLists();
       return true;
     }
