@@ -27,9 +27,19 @@
 #include "nnacl/intrinsics/ms_simd_avx512_instructions.h"
 #endif
 
-#if defined(ENABLE_AVX) || defined(ENABLE_SSE) || defined(ENABLE_ARM)
-#include "nnacl/intrinsics/ms_simd_instructions.h"
+#ifdef ENABLE_AVX
+#include "nnacl/intrinsics/ms_simd_avx_instructions.h"
 #endif
+
+#ifdef ENABLE_SSE
+#include "nnacl/intrinsics/ms_simd_sse_instructions.h"
+#endif
+
+#ifdef ENABLE_NEON
+#include "nnacl/intrinsics/ms_simd_neon_instructions.h"
+#endif
+
+#include "nnacl/intrinsics/ms_simd_instructions.h"
 
 #define C1NUM 1
 #define C2NUM 2
