@@ -305,6 +305,8 @@ class TestSummary:
         return tags
 
     @pytest.mark.level0
+    @pytest.mark.platform_x86_ascend_training
+    @pytest.mark.platform_arm_ascend_training
     @pytest.mark.platform_x86_gpu_training
     @pytest.mark.env_onecard
     @security_off_wrap
@@ -332,9 +334,17 @@ class TestSummary:
         expected_pca_value = np.array([2.2795506, 2.2795567, 2.2795629, 2.2795689, 2.2795507, 2.2795567, 2.2795629,
                                        2.2795688, 2.2795505, 2.2795566, 2.2795628, 2.2795689, 2.2795505, 2.2795566,
                                        2.2795627, 2.2795687])
+        expe_pca_value_asc = np.array([2.2795513, 2.2797892, 2.2800267, 2.2802642, 2.2795035, 2.2797413, 2.2799790,
+                                       2.2802165, 2.2794557, 2.2796936, 2.2799315, 2.2801689, 2.2794084, 2.2796460,
+                                       2.2798840, 2.2801217])
         expected_random_value = np.array([2.2732414, 2.2778292, 2.2829423, 2.2885174, 2.2725525, 2.2772029, 2.2822288,
                                           2.2875323, 2.2726187, 2.2771581, 2.2819989, 2.2875887, 2.2732263, 2.2774866,
                                           2.2823269, 2.2883627])
+        expe_random_value_asc = np.array([2.2728422, 2.2777682, 2.2830053, 2.2886044, 2.2725447, 2.2772817, 2.2823694,
+                                          2.2878207, 2.2726294, 2.2771712, 2.2820640, 2.2873242, 2.2731032, 2.2774446,
+                                          2.2821348, 2.2871782])
         tag_list_landscape = self._list_landscape_tags(summary_dir)
-        assert np.all(abs(expected_pca_value - tag_list_landscape[0]) < 1.e-6)
-        assert np.all(abs(expected_random_value - tag_list_landscape[1]) < 1.e-6)
+        assert np.all(abs(expected_pca_value - tag_list_landscape[0]) < 1.e-6) or \
+               np.all(abs(expe_pca_value_asc - tag_list_landscape[0]) < 1.e-6)
+        assert np.all(abs(expected_random_value - tag_list_landscape[1]) < 1.e-6) or \
+               np.all(abs(expe_random_value_asc - tag_list_landscape[1]) < 1.e-6)
