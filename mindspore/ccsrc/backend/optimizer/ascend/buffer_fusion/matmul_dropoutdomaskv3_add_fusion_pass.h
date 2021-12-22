@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_BUFFER_FUSION_PASS_BATCHMATMUL_FUSEDMULADD_FUSION_PASS_H_
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_BUFFER_FUSION_PASS_BATCHMATMUL_FUSEDMULADD_FUSION_PASS_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_BUFFER_FUSION_PASS_MATMUL_DROPOUTDOMASKV3_ADD_FUSION_PASS_H_
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_BUFFER_FUSION_PASS_MATMUL_DROPOUTDOMASKV3_ADD_FUSION_PASS_H_
 
 #include <vector>
 
@@ -31,20 +31,18 @@ namespace mindspore {
 namespace opt {
 using FusedNodeRecord = std::vector<mindspore::HashSet<AnfNodePtr>>;
 
-class BatchMatmulFusedMulAddFusionPass : public FusionBasePass {
+class MatmulDropoutDoMaskV3AddFusionPass : public FusionBasePass {
  public:
-  explicit BatchMatmulFusedMulAddFusionPass(FusionIdAllocatorPtr idAllocator)
-      : FusionBasePass("BatchMatmulFusedMulAddFusionPass", idAllocator) {
-    PassSwitchManager::GetInstance().RegistLicPass(name(), OptPassEnum::BatchMatmulFusedMulAddFusionPass);
-  }
-  ~BatchMatmulFusedMulAddFusionPass() override = default;
+  explicit MatmulDropoutDoMaskV3AddFusionPass(FusionIdAllocatorPtr idAllocator)
+      : FusionBasePass("MatmulDropoutDoMaskV3AddFusionPass", idAllocator) {}
+  ~MatmulDropoutDoMaskV3AddFusionPass() override = default;
   void MatchSingleFusionPattern(const session::KernelGraph &kernel_graph, FusedNodeRecord *candidate_fusion) override;
 
  private:
-  void MatchBatchMatmulFusedMulAdd(const CNodePtr &cnode, const session::KernelGraph &kernel_graph,
-                                   FusedNodeRecord *candidate_fusion);
+  void MatchMatmulDropoutDoMaskV3Add(const CNodePtr &cnode, const session::KernelGraph &kernel_graph,
+                                     FusedNodeRecord *candidate_fusion);
 };
 }  // namespace opt
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_BUFFER_FUSION_PASS_BATCHMATMUL_FUSEDMULADD_FUSION_PASS_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_BUFFER_FUSION_PASS_MATMUL_DROPOUTDOMASKV3_ADD_FUSION_PASS_H_

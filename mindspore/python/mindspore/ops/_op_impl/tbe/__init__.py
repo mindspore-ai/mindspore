@@ -91,6 +91,8 @@ from .conv2d_backprop_input_ds import _conv2d_backprop_input_ds_tbe
 from .confusion_mul_grad import _confusion_mul_grad_tbe
 from .dropout_do_mask import _dropout_do_mask_tbe
 from .dropout_do_mask_ds import _dropout_do_mask_ds_tbe
+from .dropout_do_mask_v3 import _dropout_do_mask_v3_tbe
+from .softmax_v2_with_dropout_do_mask_v3 import _softmax_v2_with_dropout_do_mask_v3_tbe
 from .gelu import _gelu_tbe
 from .gelu_ds import _gelu_ds_tbe
 from .gelu_grad import _gelu_grad_tbe

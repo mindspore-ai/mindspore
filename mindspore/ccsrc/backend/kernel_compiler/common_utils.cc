@@ -98,6 +98,7 @@ const std::unordered_map<FusionType, std::string> fusion_type_name_maps = {
   {FusionType::BROAD_CAST, "Broadcast"},
   {FusionType::BATCH_MATMUL, "BatchMatmul"},
   {FusionType::CONFUSION_TRANSPOSE, "confusiontranspose"},
+  {FusionType::DROPOUT_DOMASKV3D, "DropOutDoMaskV3D"},
   {FusionType::UNKNOWN_FUSION_TYPE, ""}};
 
 std::string GetFusionNameByType(const kernel::FusionType &type) {
