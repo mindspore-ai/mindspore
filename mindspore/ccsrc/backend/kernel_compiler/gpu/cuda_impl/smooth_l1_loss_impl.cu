@@ -34,7 +34,7 @@ template <>
 __global__ void SmoothL1LossKernel(const int input_size, const float beta, const half *prediction, const half *target,
                                    half *loss) {
   for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < input_size; i += blockDim.x * gridDim.x) {
-    half value = __habs(prediction[i] - target[i]);
+    half value = fabsf(prediction[i] - target[i]);
     half h_beta = __float2half(beta);
     if (value < h_beta) {
       loss[i] = __float2half(0.5) * value * value / h_beta;
