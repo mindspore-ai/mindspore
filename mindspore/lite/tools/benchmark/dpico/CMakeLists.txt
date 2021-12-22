@@ -5,7 +5,7 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/../../../../../cmake/utils.cmake)
 if(DEFINED ENV{HISI_SDK_PATH})
     set(SD3403_SDK_PATH $ENV{HISI_SDK_PATH}/sd3403_sdk/dpico_acl_adapter/3403_sdk)
 else()
-    message("error, no sdk found")
+    message(FATAL_ERROR "error, no sdk found")
 endif()
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
