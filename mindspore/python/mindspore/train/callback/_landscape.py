@@ -197,12 +197,10 @@ class SummaryLandscape:
         ...     summary_collector = SummaryCollector(summary_dir='./summary/lenet_interval_1',
         ...                                          collect_specified_data={'collect_landscape':{"landscape_size": 4,
         ...                                                                                        "unit": "step",
-        ...                                                                            "create_landscape":{"train":True,
-        ...                                                                                               "result":False
-        ...                                                                                                           },
-        ...                                                                            "num_samples": 2048,
-        ...                                                                            "intervals": [interval_1
-        ...                                                                                          ]}
+        ...                                                                          "create_landscape":{"train":True,
+        ...                                                                                             "result":False},
+        ...                                                                          "num_samples": 2048,
+        ...                                                                          "intervals": [interval_1]}
         ...                                                                    })
         ...     model.train(1, ds_train, callbacks=[summary_collector], dataset_sink_mode=False)
         ...
@@ -219,13 +217,11 @@ class SummaryLandscape:
         ...     summary_landscape = SummaryLandscape('./summary/lenet_interval_1')
         ...     # parameters of collect_landscape can be modified or unchanged
         ...     summary_landscape.gen_landscapes_with_multi_process(callback_fn,
-        ...                                                         collect_landscape={"landscape_size": 4,
-        ...                                                                            "create_landscape":{"train":True,
-        ...                                                                                               "result":True
-        ...                                                                                                           },
-        ...                                                                            "num_samples": 2048,
-        ...                                                                            "intervals": [interval_1
-        ...                                                                                          ]},
+        ...                                                        collect_landscape={"landscape_size": 4,
+        ...                                                                         "create_landscape":{"train":False,
+        ...                                                                                            "result":False},
+        ...                                                                          "num_samples": 2048,
+        ...                                                                          "intervals": [interval_1]},
         ...                                                         device_ids=[1])
     """
     def __init__(self, summary_dir):
@@ -244,6 +240,11 @@ class SummaryLandscape:
             file_path = self._model_params_file_map[str(epoch)]
             parameters.append(load_checkpoint(file_path).values())
         return parameters
+
+    def _create_epoch_group(self, intervals):
+        for i, interval in enumerate(intervals):
+            for j in interval:
+                self._epoch_group[i].append(j)
 
     def clean_ckpt(self):
         """Clean the checkpoint."""
@@ -305,14 +306,14 @@ class SummaryLandscape:
                     data[key] = value
 
             if "intervals" in collect_landscape.keys():
-                epoch_group = defaultdict(list)
-                for i, interval in enumerate(collect_landscape.get("intervals")):
-                    for j in interval:
-                        epoch_group[i].append(j)
-                data["epoch_group"] = epoch_group
+                intervals = collect_landscape.get("intervals")
+                self._create_epoch_group(intervals)
+                data["epoch_group"] = self._epoch_group
 
-            with open(json_path, 'w') as file:
-                json.dump(data, file)
+            file = os.open(json_path, os.O_WRONLY|os.O_TRUNC|os.O_CREAT, 0o600)
+            data = json.dumps(data).encode()
+            os.write(file, data)
+            os.close(file)
 
         for interval, landscape in self._list_landscapes(callback_fn=callback_fn, device_ids=device_ids):
             summary_record.add_value(PluginEnum.LANDSCAPE.value, f'landscape_{str(interval)}', landscape)
@@ -671,7 +672,8 @@ class SummaryLandscape:
         for parameters in parameter_group:
             testi = list()
             for param in parameters:
-                # Here as MindSpore ckpt has hyperparameters, we should skip them to make sure PCA calculation is correct
+                # Here as MindSpore ckpt has hyperparameters,
+                # we should skip them to make sure PCA calculation is correct
                 if ('weight' not in param.name and 'bias' not in param.name) or ('moment' in param.name):
                     continue
                 testi.append(param.data.asnumpy().copy())
@@ -775,7 +777,7 @@ class SummaryLandscape:
     def _check_unit(unit):
         """Check unit type and value."""
         check_value_type('unit', unit, str)
-        if "step" not in unit and "epoch" not in unit:
+        if unit not in ["step", "epoch"]:
             raise ValueError(f'Unit should be step or epoch, but got the: {unit}')
 
     @staticmethod
@@ -863,7 +865,7 @@ class SummaryLandscape:
                                  f'but got: {len(epochs)}. ')
             for epoch in epochs:
                 if str(epoch) not in model_params_file_map.keys():
-                    raise ValueError(f'The model_params_file_map does not exist {epoch}th epoch.')
+                    raise ValueError(f'The model_params_file_map does not exist {epoch}th checkpoint in intervals.')
 
         check_value_type('step_per_epoch', step_per_epoch, int)
         self._check_landscape_size(landscape_size)

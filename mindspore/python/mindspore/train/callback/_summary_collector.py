@@ -15,7 +15,6 @@
 """Summary collector callback."""
 
 import os
-import stat
 import re
 import json
 from json.decoder import JSONDecodeError
@@ -377,7 +376,7 @@ class SummaryCollector(Callback):
         """Check unit type and value."""
         check_value_type('unit', unit, str)
         if unit not in ["step", "epoch"]:
-            raise ValueError(f'Unit should be "step" or "epoch", but got the: {unit}')
+            raise ValueError(f'Unit should be step or epoch, but got the: {unit}')
 
     @staticmethod
     def _check_create_landscape(create_landscape):
@@ -409,21 +408,16 @@ class SummaryCollector(Callback):
         if unexpected_params:
             raise ValueError(f'For `collect_landscape` the keys {unexpected_params} are unsupported, expect'
                              f'the follow keys: {list(self._DEFAULT_SPECIFIED_DATA["collect_landscape"].keys())}')
-        if "landscape_size" in collect_landscape:
-            landscape_size = collect_landscape.get("landscape_size")
-            self._check_landscape_size(landscape_size)
-        if "unit" in collect_landscape:
-            unit = collect_landscape.get("unit")
-            self._check_unit(unit)
-        if "num_samples" in collect_landscape:
-            num_samples = collect_landscape.get("num_samples")
-            check_value_type("num_samples", num_samples, int)
-        if "create_landscape" in collect_landscape:
-            create_landscape = collect_landscape.get("create_landscape")
-            self._check_create_landscape(create_landscape)
-        if "intervals" in collect_landscape:
-            intervals = collect_landscape.get("intervals")
-            self._check_intervals(intervals)
+        landscape_size = collect_landscape.get("landscape_size", 40)
+        self._check_landscape_size(landscape_size)
+        unit = collect_landscape.get("unit", "step")
+        self._check_unit(unit)
+        num_samples = collect_landscape.get("num_samples", 2048)
+        check_value_type("num_samples", num_samples, int)
+        create_landscape = collect_landscape.get("create_landscape", {"train": True, "result": True})
+        self._check_create_landscape(create_landscape)
+        intervals = collect_landscape.get("intervals")
+        self._check_intervals(intervals)
 
     def _process_specified_data(self, specified_data, action):
         """Check specified data type and value."""
@@ -592,9 +586,10 @@ class SummaryCollector(Callback):
         }
         meta_path = os.path.join(self._ckpt_dir, 'train_metadata.json')
         try:
-            with open(meta_path, 'w') as file:
-                json.dump(data, file)
-            os.chmod(meta_path, stat.S_IRUSR)
+            file = os.open(meta_path, os.O_WRONLY|os.O_TRUNC|os.O_CREAT, 0o600)
+            data = json.dumps(data).encode()
+            os.write(file, data)
+            os.close(file)
         except OSError as e:
             logger.error("Write meta data %s failed, detail: %s" % (meta_path, str(e)))
 
