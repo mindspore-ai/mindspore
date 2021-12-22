@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_MAT_MUL_H_
-#define MINDSPORE_CORE_OPS_MAT_MUL_H_
+#ifndef MINDSPORE_CORE_OPS_FUSION_MAT_MUL_FUSION_H_
+#define MINDSPORE_CORE_OPS_FUSION_MAT_MUL_FUSION_H_
 #include <vector>
 #include <memory>
-#include <string>
+
+#include "ops/mat_mul.h"
 #include "ops/primitive_c.h"
 #include "ops/op_utils.h"
 #include "abstract/abstract_value.h"
@@ -27,31 +28,26 @@
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameMatMul = "MatMul";
+constexpr auto kNameMatMulFusion = "MatMulFusion";
 /// \brief Multiplies matrix a and matrix b. Refer to Python API @ref mindspore.ops.MatMul for more details.
-class MS_CORE_API MatMul : public PrimitiveC {
+class MS_CORE_API MatMulFusion : public MatMul {
  public:
   /// \brief Constructor.
-  MatMul() : PrimitiveC(kNameMatMul) { InitIOName({"x1", "x2"}, {"output"}); }
-  explicit MatMul(const std::string k_name) : PrimitiveC(k_name) { InitIOName({"x", "x2"}, {"output"}); }
+  MatMulFusion() : MatMul(kNameMatMulFusion) {}
   /// \brief Destructor.
-  ~MatMul() = default;
-  MS_DECLARE_PARENT(MatMul, PrimitiveC);
-  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.MatMul for the inputs.
-  void Init(bool transpose_a = false, bool transpose_b = false);
-  /// \brief Set transpose_a.
-  void set_transpose_a(bool transpose_a);
-  /// \brief Set transpose_b.
-  void set_transpose_b(bool transpose_b);
-  /// \brief Get transpose_a.
+  ~MatMulFusion() = default;
+  MS_DECLARE_PARENT(MatMulFusion, MatMul);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.MatMulFusion for the inputs.
+  void Init(bool transpose_a = false, bool transpose_b = false, const ActivationType &activation_type = NO_ACTIVATION);
+  /// \brief Method to set activation type.
   ///
-  /// \return transpose_a.
-  bool get_transpose_a() const;
-  /// \brief Get transpose_b.
+  /// \param[in] activation_type Define the activation type.
+  void set_activation_type(const ActivationType activation_type);
+  /// \brief Method to get activation type.
   ///
-  /// \return transpose_b.
-  bool get_transpose_b() const;
+  /// \return activation type.
+  ActivationType get_activation_type() const;
 };
 }  // namespace ops
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_OPS_MAT_MUL_H_
+#endif  // MINDSPORE_CORE_OPS_FUSION_MAT_MUL_FUSION_H_
