@@ -1,5 +1,47 @@
 #!/bin/bash
 
+
+function Run_TensorRT_Mpirun() {
+  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./
+  source /etc/profile
+
+  echo "start mpirun models..."
+  export ENABLE_NEW_API=true
+  data_path=${basepath}'/../../input_output/'
+  inpath=${data_path}'input'
+  outpath=${data_path}'output'
+
+  # dis_matmul_
+  echo "start mpirun dis_matmul_ ..."
+  model_name='dis_matmul_.mindir.ms'
+  model_file=${basepath}'/'${model_name}
+  input_files=${inpath}'/dis_matmul_.mindir.ms.bin'
+  output_file=${outpath}'/dis_matmul_.mindir.ms.out'
+  echo 'mpirun -np 2 ./benchmark --modelFile='${model_file}' --inDataFile='${input_files}' --benchmarkDataFile='${output_file}' --device=GPU' >> "${run_tensorrt_mpirun_log_file}"
+  mpirun -np 2 ./benchmark --modelFile=${model_file} --inDataFile=${input_files} --benchmarkDataFile=${output_file} --device=GPU >> ${run_tensorrt_mpirun_log_file}
+  if [ $? = 0 ]; then
+      run_result='TensorRT_Matmaul: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+  else
+      run_result='TensorRT_Matmaul: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+  fi
+
+
+  # wide_and_deep_
+  echo "start mpirun wide_and_deep_ ..."
+  model_name='wide_and_deep_.mindir.ms'
+  model_file=${basepath}'/'${model_name}
+  input_files=${inpath}'/wide_and_deep_.mindir.ms.bin_1,'${inpath}'/wide_and_deep_.mindir.ms.bin_2'
+  config_file=${inpath}'/wide_and_deep_.mindir.ms.config'
+  output_file=${outpath}'/wide_and_deep_.mindir.ms.out'
+  echo 'mpirun -np 2 ./benchmark --modelFile='${model_file}' --configFile='${config_file}' --inDataFile='${input_files}' --benchmarkDataFile='${output_file}' --device=GPU' >> "${run_tensorrt_mpirun_log_file}"
+  mpirun -np 2 ./benchmark --modelFile=${model_file} --inDataFile=${input_files} --configFile=${config_file} --benchmarkDataFile=${output_file} --device=GPU >> ${run_tensorrt_mpirun_log_file}
+  if [ $? = 0 ]; then
+      run_result='TensorRT_Wide_and_deep: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+  else
+      run_result='TensorRT_Wide_and_deep: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+  fi
+}
+
 # Run on NVIDIA TensorRT platform:
 function Run_TensorRT() {
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./
@@ -17,7 +59,6 @@ function Run_TensorRT() {
         # model_info     accuracy_limit      run_mode
         model_info=`echo ${line_info} | awk -F ' ' '{print $1}'`
         spec_acc_limit=`echo ${line_info} | awk -F ' ' '{print $2}'`
-        run_mode=`echo ${line_info} | awk -F ' ' '{print $3}'`
 
         # model_info detail
         model_name=`echo ${model_info} | awk -F ';' '{print $1}'`
@@ -29,9 +70,11 @@ function Run_TensorRT() {
             model_name=${model_name%.*}
         fi
 
-        # run_mode detail
-        run_mode_name=`echo ${run_mode} | awk -F ';' '{print $1}'`
-        run_mode_size=`echo ${run_mode} | awk -F ';' '{print $2}'`
+        # converter for distribution models
+        if [[ ${spec_acc_limit} == "CONVERTER" ]]; then
+            echo "Skip ${model_name} ......"
+            continue
+        fi
 
         echo "Benchmarking ${model_name} ......"
         model_file=${basepath}'/'${model_name}'.ms'
@@ -47,6 +90,7 @@ function Run_TensorRT() {
             done
         fi
         output_file=${data_path}'output/'${model_name}'.ms.out'
+
         # set accuracy limitation
         acc_limit="0.5"
         if [[ ${spec_acc_limit} != "" ]]; then
@@ -60,25 +104,14 @@ function Run_TensorRT() {
             enableFp16="true"
         fi
 
-        # converter for distribution models
-        if [[ ${run_mode_name} == "CONVERTER" ]]; then
-            continue
-        fi
-
         # different tensorrt run mode use different cuda command
-        if [[ ${run_mode_name} == "DIS" ]]; then
-            export ENABLE_NEW_API=true
-            echo 'mpirun -np '${run_mode_size}' ./benchmark --modelFile='${model_file}' --inputShapes='${input_shapes}' --inDataFile='${input_files}' --benchmarkDataFile='${output_file}' --enableFp16='${enableFp16}' --accuracyThreshold='${acc_limit}' --device=GPU' >> "${run_tensorrt_log_file}"
-            mpirun -np ${run_mode_size} ./benchmark --modelFile=${model_file} --inputShapes=${input_shapes} --inDataFile=${input_files} --benchmarkDataFile=${output_file} --enableFp16=${enableFp16} --accuracyThreshold=${acc_limit} --device=GPU >> ${run_tensorrt_log_file}
-        else
-            echo 'CUDA_VISILE_DEVICE='${cuda_device_id}' ./benchmark --modelFile='${model_file}' --inputShapes='${input_shapes}' --inDataFile='${input_files}' --benchmarkDataFile='${output_file}' --enableFp16='${enableFp16}' --accuracyThreshold='${acc_limit}' --device=GPU' >> "${run_tensorrt_log_file}"
-            CUDA_VISILE_DEVICE=${cuda_device_id} ./benchmark --modelFile=${model_file} --inputShapes=${input_shapes} --inDataFile=${input_files} --benchmarkDataFile=${output_file} --enableFp16=${enableFp16} --accuracyThreshold=${acc_limit} --device=GPU >> ${run_tensorrt_log_file}
-        fi
+        echo 'CUDA_VISILE_DEVICE='${cuda_device_id}' ./benchmark --modelFile='${model_file}' --inputShapes='${input_shapes}' --inDataFile='${input_files}' --benchmarkDataFile='${output_file}' --enableFp16='${enableFp16}' --accuracyThreshold='${acc_limit}' --device=GPU' >> "${run_tensorrt_log_file}"
+        CUDA_VISILE_DEVICE=${cuda_device_id} ./benchmark --modelFile=${model_file} --inputShapes=${input_shapes} --inDataFile=${input_files} --benchmarkDataFile=${output_file} --enableFp16=${enableFp16} --accuracyThreshold=${acc_limit} --device=GPU >> ${run_tensorrt_log_file}
 
         if [ $? = 0 ]; then
-            run_result='TensorRT'${run_mode_name}': '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+            run_result='TensorRT: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
-            run_result='TensorRT'${run_mode_name}': '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+            run_result='TensorRT: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
 
     done < ${models_tensorrt_config}
@@ -130,6 +163,8 @@ echo ${models_tensorrt_config}
 run_benchmark_result_file=${basepath}/run_benchmark_result.txt
 echo ' ' > ${run_benchmark_result_file}
 
+
+####################  run simple tensorrt models
 run_tensorrt_log_file=${basepath}/run_tensorrt_log.txt
 echo 'run tensorrt logs: ' > ${run_tensorrt_log_file}
 
@@ -147,6 +182,28 @@ echo "Run x86 TensorRT GPU ended on device ${cuda_device_id}"
 if [[ ${Run_benchmark_status} != 0 ]];then
     echo "Run_TensorRT failed"
     cat ${run_tensorrt_log_file}
+    Print_Benchmark_Result $run_benchmark_result_file
+    exit ${Run_benchmark_status}
+fi
+
+####################  run distribution tensorrt models
+run_tensorrt_mpirun_log_file=${basepath}/run_tensorrt_mpirun_log.txt
+echo 'run tensorrt mpirun logs: ' > ${run_tensorrt_mpirun_log_file}
+
+echo "Running in tensorrt with mpirun"
+Run_TensorRT_Mpirun &
+Run_TensorRT_Mpirun_PID=$!
+sleep 1
+
+wait ${Run_TensorRT_Mpirun_PID}
+Run_benchmark_status=$?
+
+# Check converter result and return value
+echo "Run x86 TensorRT GPU with mpirun ended"
+
+if [[ ${Run_benchmark_status} != 0 ]];then
+    echo "Run_TensorRT_Mpirun failed"
+    cat ${run_tensorrt_mpirun_log_file}
 fi
 
 Print_Benchmark_Result $run_benchmark_result_file
