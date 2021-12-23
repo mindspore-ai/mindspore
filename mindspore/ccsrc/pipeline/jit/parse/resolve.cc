@@ -291,6 +291,7 @@ bool TransformVectorFuncValueNode(const FuncGraphManagerPtr &manager, const Func
 // Resolve the python obj, and if the resovled node is valuenode with graphs, add the graphs to manager.
 AnfNodePtr ResolveObjectAndAddToManager(const FuncGraphManagerPtr &manager, const py::object &obj,
                                         const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
   ScopeGuard scope_guard(node->scope());
   AnfNodePtr resolved_node = nullptr;
   bool success = ResolveObjectToNode(node->func_graph(), obj, &resolved_node);
@@ -405,6 +406,7 @@ AnfNodePtr ResolveCellWithAttr(const FuncGraphManagerPtr &manager, const py::obj
   if (!data_converter::IsCellInstance(obj)) {
     AnfNodePtr resolved_node = ResolveObjectAndAddToManager(manager, obj, node);
     AnfNodePtrList inputs = {NewValueNode(prim::kPrimGetAttr), resolved_node, attr};
+    MS_EXCEPTION_IF_NULL(node->func_graph());
     AnfNodePtr res_node = node->func_graph()->NewCNode(std::move(inputs));
     TraceManager::ClearParseOrResolveDebugInfo();
     return res_node;
@@ -419,6 +421,7 @@ AnfNodePtr ResolveCellWithAttr(const FuncGraphManagerPtr &manager, const py::obj
   MS_LOG(DEBUG) << "name_space: " << new_namespace->ToString() << ", symbol: " << new_symbol->ToString();
 
   AnfNodePtrList inputs = {NewValueNode(prim::kPrimResolve), NewValueNode(new_namespace), NewValueNode(new_symbol)};
+  MS_EXCEPTION_IF_NULL(node->func_graph());
   AnfNodePtr resolved_node = node->func_graph()->NewCNode(std::move(inputs));
   TraceManager::ClearParseOrResolveDebugInfo();
   return resolved_node;
