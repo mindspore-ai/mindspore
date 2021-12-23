@@ -184,7 +184,8 @@ def pytype_to_dtype(obj):
     if isinstance(obj, typing.Type):
         return obj
     if not isinstance(obj, type):
-        raise TypeError("The argument 'obj' must be a python type object, such as int, float, str, etc. But got type {}.".format(type(obj)))
+        raise TypeError("The argument 'obj' must be a python type object, such as int, float, str, etc."
+               "But got type {}.".format(type(obj)))
     elif obj in _simple_types:
         return _simple_types[obj]
     raise NotImplementedError(f"The python type {obj} cannot be converted to MindSpore type.")

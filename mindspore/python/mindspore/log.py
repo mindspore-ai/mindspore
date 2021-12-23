@@ -272,6 +272,7 @@ def _get_env_config():
             config_dict[key] = value.strip()
     return config_dict
 
+
 def _check_directory_by_regular(target, reg=None, flag=re.ASCII, prim_name=None):
     """Check whether directory is legitimate."""
     if not isinstance(target, str):
@@ -304,6 +305,7 @@ def _make_directory(path: str):
         except PermissionError:
             raise TypeError("No write permission on the directory `{path}`.")
     return real_path
+
 
 def _verify_config(kwargs):
 

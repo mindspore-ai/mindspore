@@ -710,6 +710,7 @@ def _check_ndim_multi(logits_dim, label_dim, prim_name=None):
     if label_dim < 2:
         raise ValueError(f"{msg_prefix} 'labels' dimension should be greater than 1, but got {label_dim}.")
 
+
 @constexpr
 def _check_weights(weight_shape, label_shape, prim_name=None):
     """Internal function, used to check whether the reduced shape meets the requirements."""
@@ -1293,6 +1294,7 @@ def _check_ndim(logits_nidm, labels_ndim, prime_name=None):
     if logits_nidm != labels_ndim:
         raise ValueError(f"{msg_prefix} dimensions of 'logits' and 'labels' must be equal, but got "
                          f"dimension of 'logits' {logits_nidm} and dimension of 'labels' {labels_ndim}.")
+
 
 @constexpr
 def _check_channel_and_shape(logits, labels, prime_name=None):
