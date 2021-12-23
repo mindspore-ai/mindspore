@@ -216,6 +216,9 @@ Status ShardWriter::Commit() {
 }
 
 Status ShardWriter::SetShardHeader(std::shared_ptr<ShardHeader> header_data) {
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    header_data->GetSchemaCount() > 0,
+    "Invalid data, schema is not found in header, please use 'add_schema' to add a schema for new mindrecord files.");
   RETURN_IF_NOT_OK(header_data->InitByFiles(file_paths_));
   // set fields in mindrecord when empty
   std::vector<std::pair<uint64_t, std::string>> fields = header_data->GetFields();
