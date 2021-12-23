@@ -56,6 +56,7 @@ static const char *const kMSCache = "ms_cache";
 static const char *const kMSCacheModelPath = "cache_model_path";
 static const char *const kMSCacheVocabSize = "vocab_size";
 static const char *const kMSCacheDeviceSize = "device_cache_size";
+static const char *const kMSCacheSerializePath = "serialize_path";
 }  // namespace lite
 }  // namespace mindspore
 

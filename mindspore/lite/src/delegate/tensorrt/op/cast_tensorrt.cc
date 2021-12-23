@@ -93,13 +93,18 @@ nvinfer1::IPluginV2 *CastPluginCreater::createPlugin(const char *name,
   const nvinfer1::PluginField *fields = fc->fields;
   nvinfer1::DataType origin_datatype = static_cast<const nvinfer1::DataType *>(fields[0].data)[0];
   nvinfer1::DataType dest_datatype = static_cast<const nvinfer1::DataType *>(fields[1].data)[0];
-  return new CastPlugin(name, origin_datatype, dest_datatype);
+  return new (std::nothrow) CastPlugin(name, origin_datatype, dest_datatype);
 }
 
 nvinfer1::IPluginV2 *CastPluginCreater::deserializePlugin(const char *name, const void *serialData,
                                                           size_t serialLength) noexcept {
-  MS_LOG(ERROR) << name << " don't support deserialize";
-  return nullptr;
+  nvinfer1::DataType origin_datatype;
+  DeserializeValue(&serialData, &serialLength, &origin_datatype, sizeof(nvinfer1::DataType));
+  nvinfer1::DataType dest_datatype;
+  DeserializeValue(&serialData, &serialLength, &dest_datatype, sizeof(nvinfer1::DataType));
+  MS_LOG(DEBUG) << name << " is deserialize as origin_datatype: " << static_cast<int32_t>(origin_datatype)
+                << ", dest_datatype: " << static_cast<int32_t>(dest_datatype);
+  return new (std::nothrow) CastPlugin(name, origin_datatype, dest_datatype);
 }
 
 void CastPluginCreater::setPluginNamespace(const char *libNamespace) noexcept { name_space_ = libNamespace; }
@@ -177,9 +182,15 @@ int CastPlugin::initialize() noexcept { return 0; }
 
 void CastPlugin::terminate() noexcept {}
 
-size_t CastPlugin::getSerializationSize() const noexcept { return 0; }
+size_t CastPlugin::getSerializationSize() const noexcept {
+  // origin_datatype_ and dest_datatype_
+  return sizeof(nvinfer1::DataType) * 2;
+}
 
-void CastPlugin::serialize(void *buffer) const noexcept {}
+void CastPlugin::serialize(void *buffer) const noexcept {
+  SerializeValue(&buffer, &origin_datatype_, sizeof(nvinfer1::DataType));
+  SerializeValue(&buffer, &dest_datatype_, sizeof(nvinfer1::DataType));
+}
 
 void CastPlugin::destroy() noexcept {
   // This gets called when the network containing plugin is destroyed

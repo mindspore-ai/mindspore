@@ -52,12 +52,27 @@ TensorRTSubGraph::~TensorRTSubGraph() {
 int TensorRTSubGraph::Init(cudaStream_t stream) {
   auto ret = GetGraphInOutOps(inputs_, outputs_, &in_ops_, &out_ops_, all_ops_);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Get NPU subgraph input and output ops failed.";
+    MS_LOG(ERROR) << "Get TensorRT subgraph input and output ops failed.";
     return RET_ERROR;
   }
-  this->network_ = runtime_->GetBuilder()->createNetworkV2(
+  profile_ = runtime_->GetBuilder()->createOptimizationProfile();
+  if (profile_ == nullptr) {
+    MS_LOG(ERROR) << "createOptimizationProfile failed.";
+    return RET_ERROR;
+  }
+  serializer_ = std::make_shared<TensorRTSerializer>(serialize_file_path_);
+  if (serializer_ == nullptr) {
+    MS_LOG(ERROR) << "create Serializer failed.";
+    return RET_ERROR;
+  }
+  engine_ = serializer_->GetSerializedEngine();
+  if (engine_ != nullptr) {
+    MS_LOG(INFO) << "using serialized engine " << serialize_file_path_;
+    return RET_OK;
+  }
+  network_ = runtime_->GetBuilder()->createNetworkV2(
     1U << static_cast<uint32_t>(nvinfer1::NetworkDefinitionCreationFlag::kEXPLICIT_BATCH));
-  if (this->network_ == nullptr) {
+  if (network_ == nullptr) {
     MS_LOG(ERROR) << "New network failed.";
     return RET_ERROR;
   }
@@ -69,7 +84,6 @@ int TensorRTSubGraph::Init(cudaStream_t stream) {
   if (SetDeviceConfig(stream) != RET_OK) {
     MS_LOG(WARNING) << "set tensorrt config failed.";
   }
-  profile_ = runtime_->GetBuilder()->createOptimizationProfile();
   return RET_OK;
 }
 
@@ -90,6 +104,9 @@ int TensorRTSubGraph::BuildEngine() {
     MS_LOG(ERROR) << "Create engine failed in TensorRT network";
     return RET_ERROR;
   }
+  if (serialize_file_path_.size() > 0) {
+    serializer_->SaveSerializedEngine(engine_);
+  }
   return RET_OK;
 }
 
@@ -103,7 +120,6 @@ int TensorRTSubGraph::SetDeviceConfig(cudaStream_t stream) {
   if (device_info_->GetEnableFP16() && runtime_->GetBuilder()->platformHasFastFp16()) {
     MS_LOG(INFO) << "set fp16 flag successfully for tensorrt.";
     config_->setFlag(nvinfer1::BuilderFlag::kFP16);
-    input_hw_index_ = -1;
   }
 
   config_->setProfileStream(stream);
@@ -153,7 +169,17 @@ nvinfer1::ITensor *TensorRTSubGraph::SetTensorRTNetworkInput(const mindspore::MS
     MS_LOG(ERROR) << "Unsupported input data type " << static_cast<int>(in_tensor.DataType());
     return nullptr;
   }
+  nvinfer1::Dims input_dims = ParseInputDimsProfile(in_tensor);
+  MS_LOG(INFO) << "add network input: " << in_tensor.Name();
+  return this->network_->addInput(in_tensor.Name().c_str(), cuda_dtype, input_dims);
+}
+
+nvinfer1::Dims TensorRTSubGraph::ParseInputDimsProfile(const mindspore::MSTensor &in_tensor) {
   nvinfer1::Dims input_dims = ConvertCudaDims(in_tensor.Shape());
+  if (profile_ == nullptr) {
+    MS_LOG(ERROR) << "profile is null.";
+    return input_dims;
+  }
   if (runtime_->GetBatchSize() == 0) {
     runtime_->SetBatchSize(input_dims.d[0]);
     MS_LOG(INFO) << "batch size init as " << runtime_->GetBatchSize();
@@ -191,7 +217,7 @@ nvinfer1::ITensor *TensorRTSubGraph::SetTensorRTNetworkInput(const mindspore::MS
   }
   if (!profile_->setDimensions(in_tensor.Name().c_str(), nvinfer1::OptProfileSelector::kMIN, input_dims_min)) {
     MS_LOG(ERROR) << "setDimensions of kMIN failed for " << in_tensor.Name();
-    return nullptr;
+    return input_dims;
   }
   nvinfer1::Dims input_dims_opt = ConvertCudaDims(in_tensor.Shape());
   if (input_batchsize_index_ != -1) {
@@ -199,23 +225,32 @@ nvinfer1::ITensor *TensorRTSubGraph::SetTensorRTNetworkInput(const mindspore::MS
   }
   if (!profile_->setDimensions(in_tensor.Name().c_str(), nvinfer1::OptProfileSelector::kOPT, input_dims_opt)) {
     MS_LOG(ERROR) << "setDimensions of kOPT failed for " << in_tensor.Name();
-    return nullptr;
+    return input_dims;
   }
   nvinfer1::Dims input_dims_max = ConvertCudaDims(in_tensor.Shape());
   // input_dims_max should be the same with input network dims
   if (!profile_->setDimensions(in_tensor.Name().c_str(), nvinfer1::OptProfileSelector::kMAX, input_dims_max)) {
     MS_LOG(ERROR) << "setDimensions of kMAX failed for " << in_tensor.Name();
-    return nullptr;
+    return input_dims;
   }
-  MS_LOG(INFO) << "add network input: " << in_tensor.Name();
-  return this->network_->addInput(in_tensor.Name().c_str(), cuda_dtype, input_dims);
+  return input_dims;
 }
 
 int TensorRTSubGraph::BuildTensorRTGraph() {
   MS_ASSERT(!all_ops_.empty());
-  // Connect NetWork.
   int ret;
-
+  if (engine_ != nullptr) {
+    MS_LOG(INFO) << "using serialied engine.";
+    for (auto in_tensor : inputs_) {
+      auto dim = ParseInputDimsProfile(in_tensor);
+      if (dim.nbDims <= 0) {
+        MS_LOG(ERROR) << "input dims is invalid.";
+        return RET_ERROR;
+      }
+    }
+    return RET_OK;
+  }
+  // build engine online
   for (auto cur_op : all_ops_) {
     cur_op->SetRuntime(runtime_);
     for (auto in_tensor : cur_op->inputs()) {
@@ -260,7 +295,6 @@ int TensorRTSubGraph::BuildTensorRTGraph() {
       return RET_ERROR;
     }
   }
-
   ret = MarkOutputs();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "MarkOutputs failed in TensorRT network";
@@ -270,7 +304,6 @@ int TensorRTSubGraph::BuildTensorRTGraph() {
     "network_" + std::string(network_->getInput(0)->getName()) + "_" + std::string(network_->getOutput(0)->getName());
   network_->setName(network_name.c_str());
   this->name_ = network_name;
-
   ret = BuildEngine();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Create engine failed in TensorRT network";
@@ -402,31 +435,20 @@ int TensorRTSubGraph::ReSize() {
     return RET_ERROR;
   }
   for (size_t i = 0; i < trt_in_tensor_name_.size(); i++) {
-    // only support resize batch size
-    for (int j = 0; j < this->network_->getNbInputs(); j++) {
-      if (std::strcmp(this->network_->getInput(j)->getName(), trt_in_tensor_name_[i].c_str()) != 0) {
-        continue;
-      }
-      nvinfer1::Dims contruct_dim = this->network_->getInput(j)->getDimensions();
-      if (static_cast<size_t>(contruct_dim.nbDims) != inputs_[i].Shape().size()) {
-        MS_LOG(ERROR) << "invalid resize input.";
-        return RET_ERROR;
-      }
-      if (input_hw_index_ == -1) {
-        // only NHWC format support HW resize, otherwise only support batchsize resize
-        for (int d = 0; d < contruct_dim.nbDims; d++) {
-          if (d != input_batchsize_index_ && contruct_dim.d[d] != inputs_[i].Shape()[d]) {
-            MS_LOG(ERROR) << "only support dynamic batch size resize input.";
-            return RET_ERROR;
-          }
+    if (network_ != nullptr) {
+      for (int j = 0; j < this->network_->getNbInputs(); j++) {
+        if (trt_in_tensor_name_[i].compare(network_->getInput(j)->getName()) != 0) {
+          continue;
         }
-      } else {
-        if (contruct_dim.d[DIMENSION_4D - 1] != inputs_[i].Shape()[DIMENSION_4D - 1]) {
-          MS_LOG(ERROR) << "don't support dynamic channel resize input.";
+        nvinfer1::Dims construct_dims = this->network_->getInput(j)->getDimensions();
+        bool ret = ValidInputResizeDims(construct_dims, inputs_[i].Shape());
+        if (!ret) {
+          MS_LOG(ERROR) << "input resize shape is invalid.";
           return RET_ERROR;
         }
       }
     }
+
     MS_LOG(INFO) << "resize at input_batch_index " << input_batchsize_index_ << ", update batch size to "
                  << inputs_[i].Shape()[input_batchsize_index_];
     runtime_->SetBatchSize(inputs_[i].Shape()[input_batchsize_index_]);
@@ -469,14 +491,33 @@ int TensorRTSubGraph::ReSize() {
   return RET_OK;
 }
 
+bool TensorRTSubGraph::ValidInputResizeDims(const nvinfer1::Dims &construct_dims,
+                                            const std::vector<int64_t> &resize_input_shape) {
+  if (static_cast<size_t>(construct_dims.nbDims) != resize_input_shape.size()) {
+    MS_LOG(ERROR) << "invalid resize input.";
+    return false;
+  }
+  if (input_hw_index_ == -1) {
+    // only NHWC format support HW resize, otherwise only support batchsize resize
+    for (int d = 0; d < construct_dims.nbDims; d++) {
+      if (d != input_batchsize_index_ && construct_dims.d[d] != resize_input_shape[d]) {
+        MS_LOG(ERROR) << "only support dynamic batch size resize input.";
+        return false;
+      }
+    }
+  } else if ((input_hw_index_ == 1 && construct_dims.d[DIMENSION_3D] != resize_input_shape[DIMENSION_3D]) ||
+             (input_hw_index_ == DIMENSION_2D && construct_dims.d[1] != resize_input_shape[1])) {
+    // input may be nhwc || nchw
+    MS_LOG(ERROR) << "don't support dynamic channel resize input.";
+    return false;
+  }
+  return true;
+}
+
 int TensorRTSubGraph::Execute() {
   int ret = lite::SetCudaDevice(device_info_);
   if (ret != RET_OK) {
     return ret;
-  }
-  if (runtime_->GetBatchSize() <= 0) {
-    MS_LOG(ERROR) << "TensorRTSubGraph has invalid batch size.";
-    return RET_ERROR;
   }
   for (size_t i = 0; i < inputs_.size(); i++) {
     if (runtime_->GetAllocator()->GetMemIsValid(trt_in_tensor_name_[i])) {

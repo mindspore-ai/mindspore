@@ -24,6 +24,7 @@
 #include "include/api/kernel.h"
 #include "src/delegate/tensorrt/tensorrt_runtime.h"
 #include "src/delegate/tensorrt/tensorrt_utils.h"
+#include "src/delegate/tensorrt/tensorrt_serializer.h"
 #include "src/delegate/parameter_cache/embedding_cache_manager.h"
 #include "include/api/context.h"
 
@@ -77,6 +78,8 @@ class TensorRTSubGraph : public kernel::Kernel {
 
   void SetCacheManager(const std::shared_ptr<cache::EmbeddingCacheManager> &cache_mgr) { cache_mgr_ = cache_mgr; }
 
+  void SetSerializePath(const std::string &path) { serialize_file_path_ = std::move(path); }
+
  private:
   int BuildEngine();
 
@@ -97,6 +100,10 @@ class TensorRTSubGraph : public kernel::Kernel {
   bool CanOpCache(TensorRTOp *cur_op);
 
   int HandleCacheTensor(TensorRTOp *cur_op, const mindspore::MSTensor &in_tensor);
+
+  nvinfer1::Dims ParseInputDimsProfile(const mindspore::MSTensor &in_tensor);
+
+  bool ValidInputResizeDims(const nvinfer1::Dims &construct_dims, const std::vector<int64_t> &resize_input_shape);
 
   std::vector<TensorRTOp *> all_ops_{};
   // subgraph input nodes.
@@ -133,6 +140,10 @@ class TensorRTSubGraph : public kernel::Kernel {
   std::map<std::string, std::vector<mindspore::MSTensor>> model_input_to_cache_tensors_;
 
   std::shared_ptr<cache::EmbeddingCacheManager> cache_mgr_{nullptr};
+
+  std::shared_ptr<TensorRTSerializer> serializer_{nullptr};
+
+  std::string serialize_file_path_;
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_TENSORRT_SUBGTAPH_H_
