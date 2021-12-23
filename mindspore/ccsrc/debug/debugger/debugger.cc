@@ -440,7 +440,7 @@ void Debugger::DumpGPU(const KernelGraphPtr &kernel_graph) const {
   if (debugger_ && debugger_->DebuggerBackendEnabled()) {
     MS_EXCEPTION_IF_NULL(kernel_graph);
     (void)E2eDump::DumpParametersData(kernel_graph.get(), rank_id, debugger_.get());
-    (void)E2eDump::DumpConstantData(kernel_graph.get(), rank_id, debugger_.get());
+    E2eDump::DumpConstantData(kernel_graph.get(), rank_id, debugger_.get());
   } else {
     DumpJsonParser::GetInstance().UpdateDumpIter();
   }

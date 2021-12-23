@@ -1443,7 +1443,6 @@ void AscendSession::DumpAllGraphs(const std::vector<KernelGraphPtr> &all_graphs)
     if (json_parser.e2e_dump_enabled() || json_parser.async_dump_enabled()) {
       std::string root_dir = json_parser.path() + "/rank_" + std::to_string(rank_id_);
       std::string target_dir = root_dir + "/graphs";
-      std::string net_name = json_parser.net_name();
       std::string cst_file_dir = GenerateDumpPath(graph->root_graph_id(), rank_id_, true);
       std::string ir_file_path = target_dir + "/" + "ms_output_" + final_graph + ".ir";
       DumpIRProtoWithSrcInfo(graph, final_graph, target_dir, kDebugWholeStack);

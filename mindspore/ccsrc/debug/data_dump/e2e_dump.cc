@@ -351,10 +351,11 @@ void E2eDump::DumpConstantData(const session::KernelGraph *graph, uint32_t rank_
   if (!IsDeviceTargetGPU() || !dump_json_parser.e2e_dump_enabled()) {
     return;
   }
-  MS_LOG(INFO) << "DumpConstants. Current iteration is " << dump_json_parser.cur_dump_iter();
   uint32_t graph_id = graph->graph_id();
   std::string cst_path = GenerateDumpPath(graph_id, rank_id, true);
-  DumpConstantData(graph, cst_path, debugger);
+  if (!Common::FileExists(cst_path)) {
+    DumpConstantData(graph, cst_path, debugger);
+  }
 }
 
 void E2eDump::DumpConstantData(const session::KernelGraph *graph, const std::string &cst_dump_path,
@@ -362,8 +363,9 @@ void E2eDump::DumpConstantData(const session::KernelGraph *graph, const std::str
   // Dump constant to npy file
   MS_EXCEPTION_IF_NULL(graph);
   auto &dump_json_parser = DumpJsonParser::GetInstance();
-  uint32_t cur_iteration = dump_json_parser.cur_dump_iter();
-  if (!dump_json_parser.OutputNeedDump() || cur_iteration != 0) {
+  MS_LOG(INFO) << "DumpConstants. Current iteration is " << dump_json_parser.cur_dump_iter();
+  MS_LOG(INFO) << "Current graph id is " << graph->graph_id();
+  if (!dump_json_parser.OutputNeedDump()) {
     return;
   }
   const auto value_nodes = graph->graph_value_nodes();
