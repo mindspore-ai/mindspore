@@ -11,10 +11,14 @@ function Convert() {
       if [[ $line == \#* || $line == "" ]]; then
         continue
       fi
+      model_info=`echo ${line} | awk -F ' ' '{print $1}'`
       calib_size=`echo ${line} | awk -F ' ' '{print $3}'`
-      model_info=${line%% *}
-      model_name=${model_info%%;*}
-      extra_info=${model_info##*;}
+      model_name=`echo ${model_info} | awk -F ';' '{print $1}'`
+      input_info=`echo ${model_info} | awk -F ';' '{print $2}'`
+      input_shapes=`echo ${model_info} | awk -F ';' '{print $3}'`
+      extra_info=`echo ${model_info} | awk -F ';' '{print $5}'`
+      input_num=`echo ${input_info} | sed 's/:/;/' | awk -F ';' '{print $1}'`
+      input_names=`echo ${input_info} | sed 's/:/;/' | awk -F ';' '{print $2}'`
       model_type=${model_name##*.}
       cfg_file_name=${cfg_file##*/}
       quant_config_path="${cfg_file%/*}/quant"
@@ -46,6 +50,7 @@ function Convert() {
       output_file=$3"/"${model_name}
       quant_type=""
       config_file=""
+      spec_shapes=""
       train_model="false"
       in_dtype="DEFAULT"
       out_dtype="DEFAULT"
@@ -65,13 +70,24 @@ function Convert() {
         in_dtype="FLOAT"
         out_dtype="FLOAT"
       fi
+      if [[ ${extra_info} =~ "offline_resize" && ${input_shapes} != "" && ${input_names} != "" ]]; then
+        if [[ ${input_num} == "" ]]; then
+          input_num=1
+        fi
+        LFS="," read -r -a name_array <<< ${input_names}
+        LFS=":" read -r -a shape_array <<< ${input_shapes}
+        for i in $(seq 0 $((${input_num}-1)))
+        do
+          spec_shapes=${spec_shapes}${name_array[$i]}':'${shape_array[$i]}';'
+        done
+      fi
       # start running converter
       echo ${model_name} >> "$4"
       echo './converter_lite  --fmk='${model_fmk}' --modelFile='${model_file}' --weightFile='${weight_file}' --outputFile='${output_file}\
-        ' --inputDataType='${in_dtype}' --outputDataType='${out_dtype}' \
-         --configFile='${config_file}' --trainModel='${train_model} >> "$4"
+        ' --inputDataType='${in_dtype}' --outputDataType='${out_dtype}' --inputShape='${spec_shapes}\
+        ' --configFile='${config_file}' --trainModel='${train_model} >> "$4"
       ./converter_lite  --fmk=${model_fmk} --modelFile=${model_file} --weightFile=${weight_file} --outputFile=${output_file}\
-        --inputDataType=${in_dtype} --outputDataType=${out_dtype} \
+        --inputDataType=${in_dtype} --outputDataType=${out_dtype} --inputShape=${spec_shapes}\
         --configFile=${config_file} --trainModel=${train_model} >> "$4"
       if [ $? = 0 ]; then
           converter_result='converter '${model_type}''${quant_type}' '${model_name}' pass';echo ${converter_result} >> $5
@@ -213,6 +229,9 @@ function Run_Benchmark() {
       fi
       if [[ $6 == "arm64" && ${extra_info} =~ "need_loop" ]]; then
         benchmark_mode="calib+loop"
+      fi
+      if [[ ${extra_info} =~ "offline_resize" ]]; then
+        input_shapes=""
       fi
       # start running benchmark
       echo "---------------------------------------------------------" >> "$4"

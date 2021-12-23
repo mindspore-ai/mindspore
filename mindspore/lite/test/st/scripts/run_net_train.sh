@@ -186,7 +186,6 @@ function parse_line() {
     return $ret
 }
 
-
 # Run on x86 platform:
 function Run_x86() {
     # $1:cfgFileList;

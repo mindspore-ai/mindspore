@@ -203,7 +203,7 @@ AnfNodePtr ConvPadFusion::Process(const std::string &pattern_name, const FuncGra
     return nullptr;
   }
   if (conv_cnode->inputs().size() != kConvWithBiasLen && conv_cnode->inputs().size() != kConvNoBiasLen) {
-    MS_LOG(WARNING) << "conv node inputs error ,name:" << conv_cnode->fullname_with_scope();
+    MS_LOG(INFO) << "conv node inputs error ,name:" << conv_cnode->fullname_with_scope();
     return nullptr;
   }
   CNodePtr pad_cnode = nullptr;
@@ -214,8 +214,8 @@ AnfNodePtr ConvPadFusion::Process(const std::string &pattern_name, const FuncGra
       return nullptr;
     }
     if (IsMultiOutputTensors(func_graph, transpose_cnode)) {
-      MS_LOG(WARNING) << "transpose node is used as input by multiple cnodes, Fusion failed! ,name:"
-                      << transpose_cnode->fullname_with_scope();
+      MS_LOG(INFO) << "transpose node is used as input by multiple cnodes, Fusion failed! ,name:"
+                   << transpose_cnode->fullname_with_scope();
       return nullptr;
     }
     MS_ASSERT(transpose_cnode != nullptr);
@@ -229,19 +229,19 @@ AnfNodePtr ConvPadFusion::Process(const std::string &pattern_name, const FuncGra
   MS_CHECK_TRUE_RET(pad_cnode != nullptr, nullptr);
 
   if (IsMultiOutputTensors(func_graph, pad_cnode)) {
-    MS_LOG(WARNING) << "pad node is used as input by multiple cnodes, Fusion failed! ,name:"
-                    << pad_cnode->fullname_with_scope();
+    MS_LOG(INFO) << "pad node is used as input by multiple cnodes, Fusion failed! ,name:"
+                 << pad_cnode->fullname_with_scope();
     return nullptr;
   }
 
   if (pad_cnode->size() != kInputSizeThree) {
-    MS_LOG(WARNING) << "pad node inputs error ,name:" << pad_cnode->fullname_with_scope();
+    MS_LOG(INFO) << "pad node inputs error ,name:" << pad_cnode->fullname_with_scope();
     return nullptr;
   }
 
   if (!IsPrimitiveProper(pad_cnode)) {
-    MS_LOG(WARNING) << conv_cnode->fullname_with_scope() << " is not match with previous "
-                    << pad_cnode->fullname_with_scope() << " op. Fusion failed!";
+    MS_LOG(INFO) << conv_cnode->fullname_with_scope() << " does not match with previous "
+                 << pad_cnode->fullname_with_scope() << " op. Fusion failed!";
     return nullptr;
   }
 

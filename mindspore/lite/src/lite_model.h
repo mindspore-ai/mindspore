@@ -274,6 +274,8 @@ class LiteModel : public Model {
 
   int SubGraphVerify() const;
 
+  int SubGraphInOutVerify(const Model::SubGraph *graph) const;
+
  public:
   size_t buf_size_ = 0;
   std::vector<void *> node_bufs_;
