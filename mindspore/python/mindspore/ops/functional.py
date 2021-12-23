@@ -20,6 +20,8 @@
 from mindspore.common._register_for_tensor import tensor_operator_registry
 from mindspore.common import ms_function
 from mindspore.common import Tensor
+from mindspore._checkparam import Validator as validator
+from mindspore._checkparam import Rel
 from mindspore.nn.grad.cell_grad import _JvpInner
 from mindspore.nn.grad.cell_grad import _VjpInner
 from mindspore.ops import _constants
@@ -342,6 +344,53 @@ shard_fn = Shard()
 def shard(fn, in_axes, out_axes, device, level=0):
     return shard_fn(fn, in_axes, out_axes, device, level)
 
+def narrow(inputs, axis, start, length):
+    """
+    Returns a narrowed tensor from input tensor.
+    The dimension axis is input from start to start + length.
+
+    Args:
+        inputs (Tensor): the tensor to narrow.
+        axis (int): the axis along which to narrow.
+        start (int): the starting dimension.
+        length (int): the distance to the ending dimension.
+
+    Returns:
+        Tensor.
+
+        - output (Tensors) - The narrowed tensor.
+
+    Raises:
+        TypeError: If the input is not a tensor or tuple or list of tensors.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore.ops import functional as F
+        >>> from mindspore import Tensor
+        >>> x = Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mindspore.int32)
+        >>> output = F.narrow(x, 0, 0, 2)
+        >>> print(output)
+        [[ 1,  2,  3],
+         [ 4,  5,  6]]
+        >>> output = F.narrow(x, 1, 1, 2)
+        >>> print(output)
+        [[ 2,  3],
+         [ 5,  6],
+         [ 8,  9]]
+    """
+    validator.check_axis_in_range(axis, inputs.ndim)
+    validator.check_int_range(start, 0, inputs.shape[axis], Rel.INC_LEFT)
+    validator.check_int_range(length, 1, inputs.shape[axis] - start, Rel.INC_BOTH)
+
+    begins = [0] * inputs.ndim
+    begins[axis] = start
+    sizes = [i for i in inputs.shape]
+    sizes[axis] = length
+    return P.Slice()(inputs, begins, sizes)
+
 
 @constexpr
 def _raise_type_error():
@@ -484,5 +533,6 @@ tensor_operator_registry.register('log', log)
 tensor_operator_registry.register('floor', floor)
 # support sparse tensor operators
 tensor_operator_registry.register('csr_mul', csr_mul)
+tensor_operator_registry.register('narrow', narrow)
 __all__ = [name for name in dir() if name[0] != "_"]
 __all__.remove('Primitive')
