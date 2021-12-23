@@ -809,6 +809,13 @@ class Dataset:
             ...                       output_columns=["mod2", "mod3", "mod5", "mod7"],
             ...                       column_order=["mod7", "mod3", "col2"])
         """
+        if hasattr(self, 'operator_mixed') and getattr(self, 'operator_mixed') is True:
+            num_parallel_workers = 1
+            logger.warning(
+                "Input 'operations' of 'map' includes network computing operators like in mindspore.nn, mindspore.ops, "
+                "mindspore.numpy module and etc, which do not support multi-thread compiling, recommend to replace it "
+                "with python implemented operator like numpy etc. Here decrease 'num_parallel_workers' into 1.")
+
         return MapDataset(self, operations, input_columns, output_columns, column_order, num_parallel_workers,
                           python_multiprocessing, cache, callbacks, max_rowsize, offload)
 
@@ -5280,6 +5287,13 @@ class GeneratorDataset(MappableDataset, TextBaseDataset):
         else:
             self.source = source
         self.prepared_source = None  # source to be sent to C++
+        if hasattr(self, 'operator_mixed') and getattr(self, 'operator_mixed') is True:
+            self.num_parallel_workers = 1
+            logger.warning(
+                "Input 'source' of 'GeneratorDataset' includes network computing operators like in mindspore.nn, "
+                "mindspore.ops, mindspore.numpy module and etc, which do not support multi-thread compiling, recommend"
+                " to replace it with python implemented operator like numpy etc. Here decrease 'num_parallel_workers' "
+                "into 1.")
 
         self.python_multiprocessing = python_multiprocessing
 
