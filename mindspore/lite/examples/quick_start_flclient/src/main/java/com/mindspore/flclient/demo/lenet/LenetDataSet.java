@@ -123,10 +123,10 @@ public class LenetDataSet extends DataSet {
             labelArray = padLabelArray;
             imageArray = padImageArray;
         }
-        sampleSize = curSize + padSize;
-        batchNum = sampleSize / batchSize;
+        int padSampleSize = curSize + padSize;
+        batchNum = padSampleSize / batchSize;
         setPredictLabels(labelArray);
-        LOGGER.info("total samples:" + sampleSize);
+        LOGGER.info("total samples:" + padSampleSize);
         LOGGER.info("total batchNum:" + batchNum);
     }
 
