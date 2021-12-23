@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/ascend310/src/model_process.h"
+#include "src/runtime/kernel/ascend/src/model_process.h"
 #include <utility>
 #include <algorithm>
 #include <map>

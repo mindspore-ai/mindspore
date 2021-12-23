@@ -42,36 +42,45 @@ class AclPassImpl {
 
   bool Run(const FuncGraphPtr &func_graph);
 
- private:
+ private: /* pre or post pass */
   bool IsDeviceAscend();
+  bool IsDynamicInput();
   STATUS CommonPass(const FuncGraphPtr &func_graph);
   STATUS PreProcGraph(const FuncGraphPtr &func_graph);
   STATUS PostProcGraph(const FuncGraphPtr &func_graph);
+
+ private: /* map func graph */
   STATUS DeparseGraph(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &manager);
   STATUS RunPrimitiveMapper(const FuncGraphPtr &func_graph);
+  std::string AdjustCnodeName(const PrimitivePtr &prim);
+
+ private: /* build func graph */
   STATUS BuildGraph(const FuncGraphPtr &func_graph);
   STATUS ConvertGraphToOm(const FuncGraphPtr &func_graph, Buffer *om_data);
   ParameterPtr CreateOmParameter(const FuncGraphPtr &func_graph, const Buffer &om);
+  STATUS SetAclModelOptions(const FuncGraphPtr &func_graph);
+  std::shared_ptr<mindspore::Context> CreateModelContext();
+  void SetAclModelInitOptions(const std::shared_ptr<AscendDeviceInfo> &ascend_info);
+  void SetAclModelBuildOptions(const std::shared_ptr<AscendDeviceInfo> &ascend_info);
+
+ private: /* create custom node */
   CNodePtr CreateCustomNode(const FuncGraphPtr &func_graph);
   void SetCustomAttrs(const std::shared_ptr<ops::Custom> &prim);
   STATUS SetCustomOutputs(const FuncGraphPtr &func_graph, const CNodePtr &custom_node);
   STATUS SetMultiOutputs(const CNodePtr &new_cnode, TypeId data_type);
-  STATUS ModifyGraphByCustomNode(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &manager,
-                                 const CNodePtr &custom_node);
-  STATUS SetAclModelOptions(const FuncGraphPtr &func_graph);
   STATUS GetFuncGraphOutputInfo(const FuncGraphPtr &func_graph);
   STATUS TraceOutput(const AnfNodePtr &node);
-  std::shared_ptr<mindspore::Context> CreateModelContext();
-  void SetAclModelInitOptions(const std::shared_ptr<AscendDeviceInfo> &ascend_info);
-  void SetAclModelBuildOptions(const std::shared_ptr<AscendDeviceInfo> &ascend_info);
-  std::string AdjustCnodeName(const PrimitivePtr &prim);
-  bool IsDynamicInput();
 
+ private: /* modify graph by custom node */
+  STATUS ModifyGraphByCustomNode(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &manager,
+                                 const CNodePtr &custom_node);
+
+ private:
   std::string device_type_;
   FmkType fmk_type_;
   lite::acl::AclModelOptionCfg acl_model_option_cfg_;
-  ParameterPtr om_parameter_ = nullptr;
-  CNodePtr custom_node_ = nullptr;
+  ParameterPtr om_parameter_;
+  CNodePtr custom_node_;
   std::shared_ptr<AclModelOptions> options_;
   AnfNodePtrList graph_outputs_;
   std::vector<std::string> graph_output_names_;

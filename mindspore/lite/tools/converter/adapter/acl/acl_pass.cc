@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
-#include "tools/converter/adapter/acl_pass.h"
-#include "tools/converter/adapter/acl/acl_pass_impl.h"
+#include "tools/converter/adapter/acl/acl_pass.h"
+#ifdef ENABLE_LITE_ACL
+#include "mindspore/lite/tools/converter/adapter/acl/src/acl_pass_impl.h"
+#endif
 
 namespace mindspore {
 namespace opt {

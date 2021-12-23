@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "tools/converter/adapter/acl/acl_pass_impl.h"
+#include "tools/converter/adapter/acl/src/acl_pass_impl.h"
 #include <set>
 #include <map>
 #include "tools/common/graph_util.h"
@@ -25,7 +25,7 @@
 #include "tools/converter/optimizer_manager.h"
 #include "tools/common/string_util.h"
 #include "include/registry/pass_registry.h"
-#include "common/utils.h"
+#include "tools/converter/adapter/acl/common/utils.h"
 #include "ops/custom.h"
 #include "ops/tuple_get_item.h"
 #include "base/core_ops.h"
@@ -102,50 +102,74 @@ STATUS PreProcForOnnx(const FuncGraphPtr &func_graph) {
 AclPassImpl::AclPassImpl(const converter::Flags &config)
     : device_type_(config.device),
       fmk_type_(config.fmk),
-      acl_model_option_cfg_(std::move(config.aclModelOptionCfgParam)) {}
+      acl_model_option_cfg_(std::move(config.aclModelOptionCfgParam)),
+      om_parameter_(nullptr),
+      custom_node_(nullptr) {}
 
-ParameterPtr AclPassImpl::CreateOmParameter(const FuncGraphPtr &func_graph, const Buffer &om_data) {
-  ParameterPtr om_parameter = func_graph->add_parameter();
-  om_parameter->set_name("ACL_om_data");
-
-  auto type_ptr = TypeIdToType(kNumberTypeUInt8);
-  ShapeVector shape_vector = {static_cast<int64_t>(om_data.DataSize())};
-  auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
-  om_parameter->set_abstract(abstract_tensor);
-
-  auto param_value =
-    std::make_shared<tensor::Tensor>(kNumberTypeUInt8, ShapeVector({static_cast<int64_t>(om_data.DataSize())}));
-  auto tensor_data = param_value->data_c();
-  if (tensor_data == nullptr) {
-    MS_LOG(ERROR) << "New Tensor failed.";
-    return nullptr;
+bool AclPassImpl::IsDeviceAscend() {
+  if (kDevice.find(device_type_) != kDevice.end()) {
+    return true;
   }
-  if (param_value->Size() < om_data.DataSize()) {
-    MS_LOG(ERROR) << "Dst buff size  " << param_value->Size() << " should be greater than src buff size "
-                  << om_data.DataSize();
-    return nullptr;
-  }
-  if (memcpy_s(tensor_data, param_value->Size(), om_data.Data(), om_data.DataSize()) != EOK) {
-    MS_LOG(ERROR) << "Memcpy om data failed.";
-    return nullptr;
-  }
-  om_parameter->set_default_param(param_value);
-  return om_parameter;
+  return false;
 }
 
-// now build the whole graph, not split
-STATUS AclPassImpl::BuildGraph(const FuncGraphPtr &func_graph) {
-  Buffer om_data;
-  if (ConvertGraphToOm(func_graph, &om_data) != lite::RET_OK) {
-    MS_LOG(ERROR) << "Convert graph  to om failed.";
+bool AclPassImpl::IsDynamicInput() {
+  return !acl_model_option_cfg_.dynamic_image_size.empty() || !acl_model_option_cfg_.dynamic_batch_size.empty();
+}
+
+STATUS AclPassImpl::CommonPass(const FuncGraphPtr &func_graph) {
+  if (!lite::RunOptimizerPass(func_graph, {kRemoveRedundantOpPass})) {
+    MS_LOG(ERROR) << "Remove redundant op pass failed.";
     return lite::RET_ERROR;
   }
-  om_parameter_ = CreateOmParameter(func_graph, om_data);
-  if (om_parameter_ == nullptr) {
-    MS_LOG(ERROR) << "Convert graph  to om failed.";
+  if (IsDynamicInput()) {
+    MS_LOG(INFO) << "Dynamic input no need to run const fold pass.";
+    return lite::RET_OK;
+  }
+  if (!lite::RunOptimizerPass(func_graph, {kConstFoldPass})) {
+    MS_LOG(ERROR) << "Const fold pass failed.";
     return lite::RET_ERROR;
   }
-  MS_LOG(DEBUG) << "Build graph success.";
+  return lite::RET_OK;
+}
+
+STATUS AclPassImpl::PreProcGraph(const FuncGraphPtr &func_graph) {
+  if (CommonPass(func_graph) != lite::RET_OK) {
+    MS_LOG(ERROR) << "Common pass failed.";
+    return lite::RET_ERROR;
+  }
+  std::map<converter::FmkType, std::function<STATUS(const FuncGraphPtr &)>> fmk_proc_func = {
+    {converter::kFmkTypeMs, PreProcForMindIr},   {converter::kFmkTypeTf, PreProcForTF},
+    {converter::kFmkTypeCaffe, PreProcForCaffe}, {converter::kFmkTypeOnnx, PreProcForOnnx},
+    {converter::kFmkTypeTflite, PreProcForTF},
+  };
+  if (fmk_proc_func.find(fmk_type_) != fmk_proc_func.end()) {
+    auto func = fmk_proc_func.at(fmk_type_);
+    if (func(func_graph) != lite::RET_OK) {
+      MS_LOG(ERROR) << "Pre proc failed, fmk " << fmk_type_;
+      return lite::RET_ERROR;
+    }
+  } else {
+    MS_LOG(WARNING) << "Not support fmk type " << fmk_type_;
+  }
+  MS_LOG(DEBUG) << "Pre proc graph success.";
+  return lite::RET_OK;
+}
+
+STATUS AclPassImpl::PostProcGraph(const FuncGraphPtr &func_graph) {
+#ifdef ENABLE_ONLINE_MODEL_INFER
+  MS_LOG(DEBUG) << "Online model infer no need to change to nhwc format.";
+  return lite::RET_OK;
+#endif
+  if (fmk_type_ == converter::kFmkTypeTf) {
+    MS_LOG(DEBUG) << "Tf no need to change to nhwc format.";
+    return lite::RET_OK;
+  }
+  if (!lite::RunOptimizerPass(func_graph, {kToNHWCFormatPass})) {
+    MS_LOG(ERROR) << "To NHWC Format failed.";
+    return lite::RET_ERROR;
+  }
+  MS_LOG(DEBUG) << "Post pro graph success.";
   return lite::RET_OK;
 }
 
@@ -211,123 +235,6 @@ STATUS AclPassImpl::DeparseGraph(const FuncGraphPtr &func_graph, const FuncGraph
     return lite::RET_OK;
   }
   return lite::RET_OK;
-}
-
-bool AclPassImpl::IsDynamicInput() {
-  return !acl_model_option_cfg_.dynamic_image_size.empty() || !acl_model_option_cfg_.dynamic_batch_size.empty();
-}
-
-STATUS AclPassImpl::CommonPass(const FuncGraphPtr &func_graph) {
-  if (!lite::RunOptimizerPass(func_graph, {kRemoveRedundantOpPass})) {
-    MS_LOG(ERROR) << "Remove redundant op pass failed.";
-    return lite::RET_ERROR;
-  }
-  if (IsDynamicInput()) {
-    MS_LOG(INFO) << "Dynamic input no need to run const fold pass.";
-    return lite::RET_OK;
-  }
-  if (!lite::RunOptimizerPass(func_graph, {kConstFoldPass})) {
-    MS_LOG(ERROR) << "Const fold pass failed.";
-    return lite::RET_ERROR;
-  }
-  return lite::RET_OK;
-}
-
-STATUS AclPassImpl::PreProcGraph(const FuncGraphPtr &func_graph) {
-  if (CommonPass(func_graph) != lite::RET_OK) {
-    MS_LOG(ERROR) << "Common pass failed.";
-    return lite::RET_ERROR;
-  }
-  std::map<converter::FmkType, std::function<STATUS(const FuncGraphPtr &)>> fmk_proc_func = {
-    {converter::kFmkTypeMs, PreProcForMindIr},   {converter::kFmkTypeTf, PreProcForTF},
-    {converter::kFmkTypeCaffe, PreProcForCaffe}, {converter::kFmkTypeOnnx, PreProcForOnnx},
-    {converter::kFmkTypeTflite, PreProcForTF},
-  };
-  if (fmk_proc_func.find(fmk_type_) != fmk_proc_func.end()) {
-    auto func = fmk_proc_func.at(fmk_type_);
-    if (func(func_graph) != lite::RET_OK) {
-      MS_LOG(ERROR) << "Pre proc failed, fmk " << fmk_type_;
-      return lite::RET_ERROR;
-    }
-  } else {
-    MS_LOG(WARNING) << "Not support fmk type " << fmk_type_;
-  }
-  MS_LOG(DEBUG) << "Pre proc graph success.";
-  return lite::RET_OK;
-}
-
-STATUS AclPassImpl::PostProcGraph(const FuncGraphPtr &func_graph) {
-#ifdef ENABLE_ONLINE_MODEL_INFER
-  MS_LOG(DEBUG) << "Online model infer no need to change to nhwc format.";
-  return lite::RET_OK;
-#endif
-  if (fmk_type_ == converter::kFmkTypeTf) {
-    MS_LOG(DEBUG) << "Tf no need to change to nhwc format.";
-    return lite::RET_OK;
-  }
-  if (!lite::RunOptimizerPass(func_graph, {kToNHWCFormatPass})) {
-    MS_LOG(ERROR) << "To NHWC Format failed.";
-    return lite::RET_ERROR;
-  }
-  MS_LOG(DEBUG) << "Post pro graph success.";
-  return lite::RET_OK;
-}
-
-bool AclPassImpl::IsDeviceAscend() {
-  if (kDevice.find(device_type_) != kDevice.end()) {
-    return true;
-  }
-  return false;
-}
-
-bool AclPassImpl::Run(const FuncGraphPtr &func_graph) {
-  if (!IsDeviceAscend()) {
-    MS_LOG(INFO) << "The device is not ascend, no need to pass.";
-    return true;
-  }
-  MS_LOG(INFO) << "Acl pass run start.";
-  if (func_graph == nullptr) {
-    MS_LOG(ERROR) << "Func_graph is nullptr.";
-    return false;
-  }
-  auto manager = Manage(func_graph, true);
-  if (manager == nullptr) {
-    MS_LOG(ERROR) << "Manager is nullptr.";
-    return false;
-  }
-
-  if (PreProcGraph(func_graph) != lite::RET_OK) {
-    MS_LOG(ERROR) << "Pre proc graph failed.";
-    return false;
-  }
-
-  if (DeparseGraph(func_graph, manager) != lite::RET_OK) {
-    MS_LOG(ERROR) << "Deparse graph failed.";
-    return false;
-  }
-
-  if (BuildGraph(func_graph) != lite::RET_OK) {
-    MS_LOG(ERROR) << "Build graph failed.";
-    return false;
-  }
-
-  custom_node_ = CreateCustomNode(func_graph);
-  if (custom_node_ == nullptr) {
-    MS_LOG(ERROR) << "Create custom node failed.";
-    return false;
-  }
-  // prepare graph for export create
-  if (ModifyGraphByCustomNode(func_graph, manager, custom_node_) != lite::RET_OK) {
-    MS_LOG(ERROR) << "Modify func graph by custom failed.";
-    return false;
-  }
-
-  if (PostProcGraph(func_graph) != lite::RET_OK) {
-    MS_LOG(ERROR) << "Post proc graph failed.";
-    return false;
-  }
-  MS_LOG(INFO) << "Acl pass run end.";
-  return true;
 }
 
 STATUS AclPassImpl::ConvertGraphToOm(const FuncGraphPtr &func_graph, Buffer *om_data) {
@@ -425,6 +332,51 @@ STATUS AclPassImpl::SetAclModelOptions(const FuncGraphPtr &func_graph) {
   }
   options_->RenameInput(input_names);
   MS_LOG(INFO) << "Set acl model options success.";
+  return lite::RET_OK;
+}
+
+ParameterPtr AclPassImpl::CreateOmParameter(const FuncGraphPtr &func_graph, const Buffer &om_data) {
+  ParameterPtr om_parameter = func_graph->add_parameter();
+  om_parameter->set_name("ACL_om_data");
+
+  auto type_ptr = TypeIdToType(kNumberTypeUInt8);
+  ShapeVector shape_vector = {static_cast<int64_t>(om_data.DataSize())};
+  auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
+  om_parameter->set_abstract(abstract_tensor);
+
+  auto param_value =
+    std::make_shared<tensor::Tensor>(kNumberTypeUInt8, ShapeVector({static_cast<int64_t>(om_data.DataSize())}));
+  auto tensor_data = param_value->data_c();
+  if (tensor_data == nullptr) {
+    MS_LOG(ERROR) << "New Tensor failed.";
+    return nullptr;
+  }
+  if (param_value->Size() < om_data.DataSize()) {
+    MS_LOG(ERROR) << "Dst buff size  " << param_value->Size() << " should be greater than src buff size "
+                  << om_data.DataSize();
+    return nullptr;
+  }
+  if (memcpy_s(tensor_data, param_value->Size(), om_data.Data(), om_data.DataSize()) != EOK) {
+    MS_LOG(ERROR) << "Memcpy om data failed.";
+    return nullptr;
+  }
+  om_parameter->set_default_param(param_value);
+  return om_parameter;
+}
+
+// now build the whole graph, not split
+STATUS AclPassImpl::BuildGraph(const FuncGraphPtr &func_graph) {
+  Buffer om_data;
+  if (ConvertGraphToOm(func_graph, &om_data) != lite::RET_OK) {
+    MS_LOG(ERROR) << "Convert graph  to om failed.";
+    return lite::RET_ERROR;
+  }
+  om_parameter_ = CreateOmParameter(func_graph, om_data);
+  if (om_parameter_ == nullptr) {
+    MS_LOG(ERROR) << "Convert graph  to om failed.";
+    return lite::RET_ERROR;
+  }
+  MS_LOG(DEBUG) << "Build graph success.";
   return lite::RET_OK;
 }
 
@@ -596,6 +548,56 @@ STATUS AclPassImpl::ModifyGraphByCustomNode(const FuncGraphPtr &func_graph, cons
   }
   MS_LOG(DEBUG) << "Modify graph by custom node success.";
   return lite::RET_OK;
+}
+
+bool AclPassImpl::Run(const FuncGraphPtr &func_graph) {
+  if (!IsDeviceAscend()) {
+    MS_LOG(INFO) << "The device is not ascend, no need to pass.";
+    return true;
+  }
+  MS_LOG(INFO) << "Acl pass run start.";
+  if (func_graph == nullptr) {
+    MS_LOG(ERROR) << "Func_graph is nullptr.";
+    return false;
+  }
+  auto manager = Manage(func_graph, true);
+  if (manager == nullptr) {
+    MS_LOG(ERROR) << "Manager is nullptr.";
+    return false;
+  }
+
+  if (PreProcGraph(func_graph) != lite::RET_OK) {
+    MS_LOG(ERROR) << "Pre proc graph failed.";
+    return false;
+  }
+
+  if (DeparseGraph(func_graph, manager) != lite::RET_OK) {
+    MS_LOG(ERROR) << "Deparse graph failed.";
+    return false;
+  }
+
+  if (BuildGraph(func_graph) != lite::RET_OK) {
+    MS_LOG(ERROR) << "Build graph failed.";
+    return false;
+  }
+
+  custom_node_ = CreateCustomNode(func_graph);
+  if (custom_node_ == nullptr) {
+    MS_LOG(ERROR) << "Create custom node failed.";
+    return false;
+  }
+  // prepare graph for export create
+  if (ModifyGraphByCustomNode(func_graph, manager, custom_node_) != lite::RET_OK) {
+    MS_LOG(ERROR) << "Modify func graph by custom failed.";
+    return false;
+  }
+
+  if (PostProcGraph(func_graph) != lite::RET_OK) {
+    MS_LOG(ERROR) << "Post proc graph failed.";
+    return false;
+  }
+  MS_LOG(INFO) << "Acl pass run end.";
+  return true;
 }
 }  //  namespace opt
 }  // namespace mindspore

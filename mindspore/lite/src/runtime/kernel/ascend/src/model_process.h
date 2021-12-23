@@ -27,7 +27,7 @@
 #include "acl/acl_rt.h"
 #include "include/api/types.h"
 #include "include/errorcode.h"
-#include "src/runtime/kernel/ascend310/src/acl_model_options.h"
+#include "src/runtime/kernel/ascend/src/acl_model_options.h"
 
 namespace mindspore::kernel {
 namespace acl {

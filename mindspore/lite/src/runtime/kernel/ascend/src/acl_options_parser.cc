@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/ascend310/src/acl_options_parser.h"
+#include "src/runtime/kernel/ascend/src/acl_options_parser.h"
 #include <utility>
 #include <vector>
 #include "common/log_adapter.h"
@@ -38,28 +38,21 @@ STATUS AclOptionsParser::ParseAclOptions(const mindspore::Context *ctx, AclModel
     return lite::RET_OK;
   }
   CHECK_NULL_RETURN(device_infos[0]);
-  const char *soc_name = aclrtGetSocName();
-  if (soc_name == nullptr) {
-    MS_LOG(WARNING) << "Get soc name failed.";
-  }
-  std::string device_type = soc_name == nullptr ? "Ascend310" : soc_name;
-  if (device_type == "Ascend310") {
-    if (Parse310AclOptions(device_infos[0], acl_options) != lite::RET_OK) {
-      MS_LOG(ERROR) << "Parse 310 acl options failed.";
-      return lite::RET_ERROR;
-    }
+  if (ParseOptions(device_infos[0], acl_options) != lite::RET_OK) {
+    MS_LOG(ERROR) << "Parse acl options failed.";
+    return lite::RET_ERROR;
   }
   return lite::RET_OK;
 }
 
-STATUS AclOptionsParser::Parse310AclOptions(const std::shared_ptr<DeviceInfoContext> &device_info,
-                                            AclModelOptions *acl_options) {
-  auto ascend31o_info = device_info->Cast<Ascend310DeviceInfo>();
-  if (ascend31o_info == nullptr) {
-    MS_LOG(ERROR) << "There is no ascend310 info.";
+STATUS AclOptionsParser::ParseOptions(const std::shared_ptr<DeviceInfoContext> &device_info,
+                                      AclModelOptions *acl_options) {
+  auto ascend_info = device_info->Cast<mindspore::AscendDeviceInfo>();
+  if (ascend_info == nullptr) {
+    MS_LOG(ERROR) << "There is no ascend info.";
     return lite::RET_ERROR;
   }
-  int32_t device_id = static_cast<int32_t>(ascend31o_info->GetDeviceID());
+  int32_t device_id = static_cast<int32_t>(ascend_info->GetDeviceID());
   if (CheckDeviceId(&device_id) != lite::RET_OK) {
     MS_LOG(ERROR) << "Check device id failed, device id = " << device_id;
     return lite::RET_ERROR;

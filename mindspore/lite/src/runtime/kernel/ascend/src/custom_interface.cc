@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/ascend310/src/custom_interface.h"
+#include "src/runtime/kernel/ascend/src/custom_interface.h"
 #include <memory>
 #include "include/errorcode.h"
 #include "include/registry/register_kernel_interface.h"

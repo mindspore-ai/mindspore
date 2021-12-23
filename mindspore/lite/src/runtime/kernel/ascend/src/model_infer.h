@@ -22,9 +22,9 @@
 #include <set>
 #include <utility>
 #include <string>
-#include "src/runtime/kernel/ascend310/src/model_process.h"
-#include "src/runtime/kernel/ascend310/src/acl_env_guard.h"
-#include "src/runtime/kernel/ascend310/src/acl_model_options.h"
+#include "src/runtime/kernel/ascend/src/model_process.h"
+#include "src/runtime/kernel/ascend/src/acl_env_guard.h"
+#include "src/runtime/kernel/ascend/src/acl_model_options.h"
 #include "include/api/types.h"
 #include "include/errorcode.h"
 

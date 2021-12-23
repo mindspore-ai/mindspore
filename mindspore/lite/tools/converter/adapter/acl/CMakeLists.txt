@@ -13,7 +13,7 @@ if(MSLITE_ENABLE_RUNTIME_CONVERT)
 endif()
 
 file(GLOB ACL_SRC
-        ${CMAKE_CURRENT_SOURCE_DIR}/*.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/*.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/mapper/*.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/infer/*.cc

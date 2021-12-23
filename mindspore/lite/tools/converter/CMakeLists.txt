@@ -48,7 +48,7 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/import/primitive_adjust.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/import/mindir_adjust.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/import/mindir_control_flow_adjust.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/adapter/acl_pass.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/adapter/acl/acl_pass.cc
 
         ${SRC_DIR}/common/quant_utils.cc
         ${SRC_DIR}/common/dynamic_library_loader.cc

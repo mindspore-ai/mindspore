@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/ascend310/src/custom_kernel.h"
+#include "src/runtime/kernel/ascend/src/custom_kernel.h"
 #include <utility>
 #include "include/registry/register_kernel.h"
 #include "include/api/types.h"
 #include "include/api/data_type.h"
-#include "src/runtime/kernel/ascend310/src/model_infer.h"
-#include "src/runtime/kernel/ascend310/src/acl_options_parser.h"
+#include "src/runtime/kernel/ascend/src/model_infer.h"
+#include "src/runtime/kernel/ascend/src/acl_options_parser.h"
 #include "src/common/log_util.h"
 #include "common/log_adapter.h"
 
