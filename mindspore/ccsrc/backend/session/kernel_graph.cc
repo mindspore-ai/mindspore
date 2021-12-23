@@ -28,6 +28,7 @@
 #include "backend/kernel_compiler/kernel_build_info.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "backend/kernel_compiler/common_utils.h"
+#include "backend/optimizer/common/helper.h"
 
 namespace mindspore {
 namespace session {
@@ -138,11 +139,14 @@ std::string GetNodeGroup(const AnfNodePtr &node) {
 }
 
 void SetInternalOutputAttr(const AnfNodePtr &node) {
+  if (!opt::IsNopNode(node)) {
+    return;
+  }
   auto p = GetCNodePrimitive(node);
   if (p == nullptr) return;
   auto prim_node = NewValueNode(p->Clone());
   node->cast<CNodePtr>()->set_input(kAnfPrimitiveIndex, prim_node);
-  AnfAlgo::SetNodeAttr(kAttrIsInternalOutput, MakeValue(true), node);
+  AnfAlgo::SetNodeAttr(kAttrIsInternalOutputNopNode, MakeValue(true), node);
 }
 }  // namespace
 
