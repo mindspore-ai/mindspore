@@ -37,20 +37,25 @@ class GatherActor : public ControlActor {
   GatherActor(const std::string &name, const AID &memory_manager_aid, const std::vector<KernelWithIndex> &parameters,
               const AnfNodePtr &node);
   ~GatherActor() override = default;
+
   const mindspore::HashMap<FuncGraph *, std::vector<AID>> &output_data_with_branch_id_arrows() const {
     return output_data_with_branch_id_arrows_;
   }
 
  protected:
-  void FetchInput(OpContext<DeviceTensor> *const context) override;
   void SendOutput(OpContext<DeviceTensor> *const context) override;
   void IncreaseDynamicRefCounts(OpContext<DeviceTensor> *const context) override;
 
  private:
   friend class ControlNodeScheduler;
 
-  void FetchOutput(OpRealParameterWithBranchID *const output, OpContext<DeviceTensor> *const context);
-  void SendMemoryFreeReq(OpContext<DeviceTensor> *const context) override;
+  // Gather the input data and input partials to a new partial.
+  void GatherInput(OpContext<DeviceTensor> *const context);
+
+  void BuildOutput(OpRealParameterWithBranchID *const output, OpContext<DeviceTensor> *const context);
+
+  // The input gathered by input data and input partials, which is created in GatherInput and destroyed in SendOutput.
+  OpPartialPtr gather_input_;
 
   // There will be multiple output branches for gather actor according the funcgraph in partial.
   mindspore::HashMap<FuncGraph *, std::vector<AID>> output_data_with_branch_id_arrows_;

@@ -60,7 +60,7 @@ class ControlActor : public MemoryAwareActor {
   void Init() override;
 
   // Receive partial.
-  virtual void RunOpPartial(OpPartialPtr partial, size_t position, OpContext<DeviceTensor> *const context);
+  virtual void RunOpPartial(const OpPartialPtr &partial, size_t position, OpContext<DeviceTensor> *const context);
 
   // Receive branch id.
   virtual void RunBranchID(int branch_id, OpContext<DeviceTensor> *const context);
