@@ -909,6 +909,11 @@ class _PCA:
         else:
             u, s, _ = self._fit_few(x)
 
+        for i, _ in enumerate(s):
+            # To prevent s from being equal to 0, a small fixed noise is added.
+            # Adjust 1e-19 was found a good compromise for s.
+            if s[i] == 0:
+                s[i] = 1e-19
         u = u[:, :self._n_comps]
         u *= s[:self._n_comps]
 
