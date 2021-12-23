@@ -56,7 +56,7 @@ int LiteEntranceOpActor::PrepareOutputData() {
   outputs_data_.resize(output_data_arrows_.size());
   for (size_t i = 0; i < output_data_arrows_.size(); i++) {
     auto &arrow = output_data_arrows_[i];
-    auto data = std::make_shared<OpData<Tensor>>(this->GetAID(), inputs_data_.at(arrow->from_output_index_),
+    auto data = std::make_shared<OpData<Tensor>>(this->GetAID(), (kernel_->out_tensors()).at(arrow->from_output_index_),
                                                  static_cast<int>(arrow->to_input_index_));
     if (data == nullptr) {
       MS_LOG(ERROR) << "new output_data failed.";

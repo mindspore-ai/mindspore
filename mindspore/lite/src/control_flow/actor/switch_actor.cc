@@ -68,10 +68,6 @@ int LiteSwitchOpActor::GetSwitchAndCallNode(kernel::SubGraphKernel *subgraph_ker
     call_node_ = node;
     auto switch_node = kernel::LiteKernelUtil::GetInputsSpecificNode(node, schema::PrimitiveType_Switch);
     auto switch_layer_node = kernel::LiteKernelUtil::GetInputsSpecificNode(node, schema::PrimitiveType_SwitchLayer);
-    if (switch_node == nullptr && switch_layer_node == nullptr) {
-      continue;
-    }
-
     if (switch_node != nullptr) {
       switch_type_node_ = switch_node;
       return SetSwitchPartialNodes();

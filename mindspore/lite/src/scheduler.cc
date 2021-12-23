@@ -320,7 +320,11 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
   SetSubgraphForPartialNode();
   if (*is_control_flow_) {
-    control_flow_scheduler_->BuildBoundaryForMultipleCalledGraph(dst_kernels);
+    ret = control_flow_scheduler_->BuildBoundaryForMultipleCalledGraph(dst_kernels);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "BuildBoundaryForMultipleCalledGraph failed.";
+      return ret;
+    }
   }
   ret = RecordControlFlowLinkInfo();
   if (ret != RET_OK) {
@@ -353,7 +357,11 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
 
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
   if (*is_control_flow_) {
-    control_flow_scheduler_->SplitNonTailCallSubGraphs(dst_kernels);
+    ret = control_flow_scheduler_->SplitNonTailCallSubGraphs(dst_kernels);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "SplitNonTailCallSubGraphs failed, ret: " << ret;
+      return ret;
+    }
   }
 #endif
 
@@ -1652,14 +1660,16 @@ void Scheduler::SetSubgraphForPartialNode() {
   for (auto &pair : partial_kernel_subgraph_index_map_) {
     auto partial_kernel = static_cast<kernel::PartialFusionKernel *>((pair.first)->kernel());
     auto &subgraph_index = pair.second;
-    partial_kernel->set_subgraph_kernel(subgraph_index_subgraph_kernel_map_.at(subgraph_index));
+    partial_kernel->set_subgraph_kernels({subgraph_index_subgraph_kernel_map_.at(subgraph_index)});
   }
 }
 
 int Scheduler::RecordControlFlowLinkInfo() {
   for (auto &pair : partial_kernel_subgraph_index_map_) {
     auto partial_kernel = static_cast<kernel::PartialFusionKernel *>((pair.first)->kernel());
-    auto subgraph_kernel = partial_kernel->subgraph_kernel();
+    auto subgraph_kernels = partial_kernel->subgraph_kernels();
+    MS_CHECK_TRUE_MSG(!subgraph_kernels.empty(), RET_ERROR, "partial corresponding subgraph kernels empty.");
+    auto subgraph_kernel = subgraph_kernels.front();
     MS_CHECK_TRUE_MSG(partial_kernel->in_tensors().size() == subgraph_kernel->in_tensors().size(), RET_ERROR,
                       "partial inputs and corresponding subgraph inputs size not same.");
     for (size_t i = 0; i < partial_kernel->in_tensors().size(); ++i) {
