@@ -371,7 +371,9 @@ void ControlNodeScheduler::BuildStackActorForControlNode(const GraphCompilerInfo
     for (size_t i = 0; i < control_actor->formal_parameters_.size(); ++i) {
       const auto &parameter = control_actor->formal_parameters_[i];
       auto device_context = control_actor->device_contexts_[i];
-      if (AnfAlgo::IsCallNode(parameter.first) && (parser->IsRecursionCallNode(parameter.first))) {
+      const auto &graph =
+        (parameter.first->isa<CNode>() ? parser->FetchKernelGraphByFrontNode(parameter.first) : nullptr);
+      if (parser->IsRecursionCallNode(parameter.first) || (graph != nullptr && parser->IsRecursionKernelGraph(graph))) {
         formal_parameters.emplace_back(parameter);
         device_contexts.emplace_back(device_context);
       } else if (parameter.first->isa<ValueNode>()) {
