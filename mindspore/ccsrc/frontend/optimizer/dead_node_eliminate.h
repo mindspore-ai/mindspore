@@ -25,7 +25,7 @@ class EliminateDeadNodePass {
   EliminateDeadNodePass() = default;
   ~EliminateDeadNodePass() = default;
   bool operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &optimizer) {
-    bool enable_closure = common::GetEnv("MS_DEV_ENABLE_CLOSURE") == "1";
+    static bool enable_closure = common::GetEnv("MS_DEV_ENABLE_CLOSURE") == "1";
     MS_LOG(INFO) << "Closure enable:" << enable_closure;
     if (!enable_closure) {
       return false;
