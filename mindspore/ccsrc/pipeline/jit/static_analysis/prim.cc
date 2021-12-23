@@ -557,8 +557,8 @@ py::dict ConvertAbstractToPython(const AbstractBasePtr &abs_base, bool only_conv
     dic[ATTR_SHAPE] = arg->shape()->shape();
     dic[ATTR_DTYPE] = arg->BuildType();
     dic[ATTR_VALUE] = BuildValue(arg->BuildValue());
-  } else if (abs_base->isa<AbstractSparseTensor>()) {
-    auto arg = dyn_cast<AbstractSparseTensor>(abs_base);
+  } else if (abs_base->isa<AbstractCOOTensor>()) {
+    auto arg = dyn_cast<AbstractCOOTensor>(abs_base);
     dic[ATTR_SHAPE] = arg->shape()->shape();
     dic[ATTR_DTYPE] = arg->BuildType();
     dic[ATTR_VALUE] = BuildValue(arg->BuildValue());

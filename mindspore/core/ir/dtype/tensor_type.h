@@ -154,29 +154,29 @@ class MS_CORE_API RowTensorType final : public Object {
 using RowTensorTypePtr = std::shared_ptr<RowTensorType>;
 
 /// \brief SparseTensorType defines interface for sparse tensor data type.
-class MS_CORE_API SparseTensorType final : public Object {
+class MS_CORE_API COOTensorType final : public Object {
  public:
-  /// \brief Default constructor for SparseTensorType.
-  SparseTensorType() : Object(kObjectTypeSparseTensorType, kObjectTypeUndeterminedType) {}
+  /// \brief Default constructor for COOTensorType.
+  COOTensorType() : Object(kObjectTypeCOOTensorType, kObjectTypeUndeterminedType) {}
 
-  /// \brief Constructor for SparseTensorType.
+  /// \brief Constructor for COOTensorType.
   ///
-  /// \param[in] ele The element of SparseTensorType.
-  explicit SparseTensorType(const TypePtr &ele)
-      : Object(kObjectTypeSparseTensorType, kObjectTypeUndeterminedType, false), element_type_(ele) {}
+  /// \param[in] ele The element of COOTensorType.
+  explicit COOTensorType(const TypePtr &ele)
+      : Object(kObjectTypeCOOTensorType, kObjectTypeUndeterminedType, false), element_type_(ele) {}
 
-  /// \brief Destructor of SparseTensorType.
-  ~SparseTensorType() override = default;
-  MS_DECLARE_PARENT(SparseTensorType, Object)
+  /// \brief Destructor of COOTensorType.
+  ~COOTensorType() override = default;
+  MS_DECLARE_PARENT(COOTensorType, Object)
 
-  TypeId generic_type_id() const override { return kObjectTypeSparseTensorType; }
+  TypeId generic_type_id() const override { return kObjectTypeCOOTensorType; }
 
-  /// \brief Get the element of SparseTensorType object.
+  /// \brief Get the element of COOTensorType object.
   ///
-  /// \return The element of SparseTensorType object.
+  /// \return The element of COOTensorType object.
   const TypePtr element() const { return element_type_; }
 
-  /// \brief Set the element of SparseTensorType object.
+  /// \brief Set the element of COOTensorType object.
   ///
   /// \param[in] element_type Define the element type to be set.
   void set_element(const TypePtr &element_type) { element_type_ = element_type; }
@@ -190,7 +190,7 @@ class MS_CORE_API SparseTensorType final : public Object {
  private:
   TypePtr element_type_;
 };
-using SparseTensorTypePtr = std::shared_ptr<SparseTensorType>;
+using COOTensorTypePtr = std::shared_ptr<COOTensorType>;
 
 /// \brief CSRTensorType defines interface for sparse tensor data type.
 class MS_CORE_API CSRTensorType : public Object {

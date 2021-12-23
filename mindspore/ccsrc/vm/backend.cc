@@ -1017,7 +1017,7 @@ void MindRTBackend::ConstructOutputs(const AnfNodePtr &output_node,
   const PrimitiveSet expand_prims{
     prim::kPrimMakeTuple,
     prim::kPrimMakeCSRTensor,
-    prim::kPrimMakeSparseTensor,
+    prim::kPrimMakeCOOTensor,
     prim::kPrimMakeRowTensor,
   };
   // The MakeTuple/MakeSaprse node need expand and recurse.

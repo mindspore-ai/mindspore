@@ -15,7 +15,12 @@
  */
 
 #include "ir/tensor.h"
+
 #include <iomanip>
+#include <functional>
+#include <utility>
+#include <algorithm>
+
 #include "abstract/utils.h"
 #include "abstract/abstract_value.h"
 #include "base/complex_storage.h"
@@ -703,6 +708,35 @@ abstract::AbstractBasePtr CSRTensor::ToAbstract() {
   abs_csr_tensor->set_dense_shape(std::make_shared<abstract::AbstractTuple>(abstract_shape));
 
   return abs_csr_tensor;
+}
+
+std::string COOTensor::ToString() const {
+  std::ostringstream buf;
+  MS_EXCEPTION_IF_NULL(indices_);
+  MS_EXCEPTION_IF_NULL(values_);
+  auto dtype = values_->Dtype();
+  buf << "COOTensor(shape=" << ShapeToString(shape_) << ", dtype=" << dtype->ToString()
+      << ", indices=" << indices_->ToString() << ", values=" << values_->ToString() << ")";
+  return buf.str();
+}
+
+abstract::AbstractBasePtr COOTensor::ToAbstract() {
+  auto dtype = values_->Dtype();
+  if (!IsSubType(dtype, kNumber) && !IsSubType(dtype, kString) && !IsSubType(dtype, kTensorType)) {
+    MS_LOG(EXCEPTION) << "Expect tensor type kNumber or kString or kTensor but got: " << dtype->ToString() << ".";
+  }
+  auto abs_sparse_tensor = std::make_shared<abstract::AbstractCOOTensor>(dtype, shape_);
+
+  abs_sparse_tensor->set_indices(indices_->ToAbstract()->cast<abstract::AbstractTensorPtr>());
+  abs_sparse_tensor->set_values(values_->ToAbstract()->cast<abstract::AbstractTensorPtr>());
+
+  std::vector<abstract::AbstractBasePtr> abstract_shape;
+  std::transform(
+    shape_.begin(), shape_.end(), std::back_inserter(abstract_shape),
+    [](auto shp) -> abstract::AbstractScalarPtr { return std::make_shared<abstract::AbstractScalar>(shp); });
+  abs_sparse_tensor->set_dense_shape(std::make_shared<abstract::AbstractTuple>(abstract_shape));
+
+  return abs_sparse_tensor;
 }
 }  // namespace tensor
 }  // namespace mindspore

@@ -24,7 +24,7 @@ from .dtype import Type, int8, byte, int16, short, int32, intc, int64, intp, \
 from .dump import set_dump
 from .parameter import Parameter, ParameterTuple
 from .seed import set_seed, get_seed
-from .tensor import Tensor, RowTensor, SparseTensor, CSRTensor
+from .tensor import Tensor, RowTensor, SparseTensor, COOTensor, CSRTensor
 
 # symbols from dtype
 __all__ = [
@@ -53,7 +53,7 @@ __all__ = [
 ]
 
 __all__.extend([
-    "Tensor", "RowTensor", "SparseTensor", "CSRTensor",  # tensor
+    "Tensor", "RowTensor", "SparseTensor", "COOTensor", "CSRTensor", # tensor
     'ms_function',  # api
     'Parameter', 'ParameterTuple',  # parameter
     "dtype",

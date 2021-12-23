@@ -606,6 +606,57 @@ class MS_CORE_API CSRTensor : public MetaSparseTensor {
   TensorPtr values_;
 };
 using CSRTensorPtr = std::shared_ptr<CSRTensor>;
+
+// COOTensor entity class
+class MS_CORE_API COOTensor : public MetaSparseTensor {
+ public:
+  abstract::AbstractBasePtr ToAbstract() override;
+
+  /// \brief Create COOTensor with given data type from another tensor.
+  ///
+  /// \param[in] indices [Tensor] The indices.
+  /// \param[in] values [Tensor] The values.
+  /// \param[in] shape The shape represented by ShapeVector of the COOTensor.
+  COOTensor(const TensorPtr indices, const TensorPtr values, const ShapeVector &shape)
+      : MetaSparseTensor(values->data_type(), shape), indices_(indices), values_(values) {}
+
+  /// Destructor of COOTensor.
+  ~COOTensor() override = default;
+
+  /// \brief Gets COOTensor's indices.
+  ///
+  /// \return [TensorPtr] The indices.
+  TensorPtr GetIndices() { return indices_; }
+
+  /// \brief Gets COOTensor's values.
+  ///
+  /// \return [TensorPtr] The values.
+  TensorPtr GetValues() { return values_; }
+
+  /// \brief Compare two tensor objects to see if they have same data type, shape and data address.
+  ///
+  /// \param[in] tensor The Tensor object to be compared.
+  /// \return True if having same type, shape and data address, otherwise false.
+  bool operator==(const COOTensor &sparse_tensor) const { return &sparse_tensor == this; }
+
+  bool operator==(const Value &other) const override {
+    if (other.isa<COOTensor>()) {
+      auto &other_ = static_cast<const COOTensor &>(other);
+      return *this == other_;
+    }
+    return false;
+  }
+
+  /// \brief Get display information of this Tensor.
+  ///
+  /// \return The display information of this Tensor.
+  std::string ToString() const override;
+
+ private:
+  TensorPtr indices_;
+  TensorPtr values_;
+};
+using COOTensorPtr = std::shared_ptr<COOTensor>;
 }  // namespace tensor
 }  // namespace mindspore
 

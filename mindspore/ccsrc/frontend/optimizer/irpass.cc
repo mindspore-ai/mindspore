@@ -249,7 +249,7 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   // SparseTensor Eliminate
   sparse_tensor_eliminate_ = MakeSubstitution(
     std::make_shared<SparseTensorEliminater>(), "sparse_tensor_eliminate",
-    {prim::kPrimSparseTensorGetIndices, prim::kPrimSparseTensorGetValues, prim::kPrimSparseTensorGetDenseShape});
+    {prim::kPrimCOOTensorGetIndices, prim::kPrimCOOTensorGetValues, prim::kPrimCOOTensorGetDenseShape});
 
   // Value_Based Eliminate
   value_based_eliminate_ = MakeSubstitution(std::make_shared<ValueBasedEliminate>(), "value_based_eliminate",

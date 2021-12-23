@@ -48,7 +48,7 @@ static mindspore::HashMap<TypeId, std::string> g_type_2_lable{
   {kObjectTypeKeyword, MS_TYPE2LABLE(kObjectTypeKeyword)},
   {kObjectTypeTensorType, MS_TYPE2LABLE(kObjectTypeTensorType)},
   {kObjectTypeRowTensorType, MS_TYPE2LABLE(kObjectTypeRowTensorType)},
-  {kObjectTypeSparseTensorType, MS_TYPE2LABLE(kObjectTypeSparseTensorType)},
+  {kObjectTypeCOOTensorType, MS_TYPE2LABLE(kObjectTypeCOOTensorType)},
   {kObjectTypeCSRTensorType, MS_TYPE2LABLE(kObjectTypeCSRTensorType)},
   {kObjectTypeUndeterminedType, MS_TYPE2LABLE(kObjectTypeUndeterminedType)},
   {kObjectTypeClass, MS_TYPE2LABLE(kObjectTypeClass)},

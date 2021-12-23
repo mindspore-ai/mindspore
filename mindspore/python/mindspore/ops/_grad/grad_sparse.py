@@ -23,29 +23,29 @@ from .grad_base import bprops, bprop_getters
 # Unused parameters are placeholders.
 
 
-@bprops.register("MakeSparseTensor")
-def bprop_make_sparse_tensor(indices, values, dense_shape, out, dout):
-    """Backpropagator for primitive `MakeSparseTensor`."""
-    return zeros_like(indices), F.sparse_tensor_get_values(dout), ()
+@bprops.register("MakeCOOTensor")
+def bprop_make_coo_tensor(indices, values, dense_shape, out, dout):
+    """Backpropagator for primitive `MakeCOOTensor`."""
+    return zeros_like(indices), F.coo_tensor_get_values(dout), ()
 
 
-@bprops.register("SparseTensorGetIndices")
+@bprops.register("COOTensorGetIndices")
 def bprop_sparse_tensor_get_indices(sparse_tensor, out, dout):
-    """Backpropagator for primitive `SparseTensorGetIndices`."""
+    """Backpropagator for primitive `COOTensorGetIndices`."""
     return (zeros_like(sparse_tensor),)
 
 
-@bprops.register("SparseTensorGetValues")
+@bprops.register("COOTensorGetValues")
 def bprop_sparse_tensor_get_values(sparse_tensor, out, dout):
-    """Backpropagator for primitive `SparseTensorGetValues`."""
-    return F.make_sparse_tensor(F.sparse_tensor_get_indices(sparse_tensor),
-                                dout,
-                                F.sparse_tensor_get_dense_shape(sparse_tensor))
+    """Backpropagator for primitive `COOTensorGetValues`."""
+    return F.make_coo_tensor(F.coo_tensor_get_indices(sparse_tensor),
+                             dout,
+                             F.coo_tensor_get_dense_shape(sparse_tensor))
 
 
-@bprops.register("SparseTensorGetDenseShape")
+@bprops.register("COOTensorrGetDenseShape")
 def bprop_sparse_tensor_get_dense_shape(sparse_tensor, out, dout):
-    """Backpropagator for primitive `SparseTensorGetDenseShape`."""
+    """Backpropagator for primitive `COOTensorGetDenseShape`."""
     return (zeros_like(sparse_tensor),)
 
 

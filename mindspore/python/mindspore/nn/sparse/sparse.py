@@ -19,7 +19,7 @@ from ..cell import Cell
 
 class SparseToDense(Cell):
     """
-    Converts a sparse tensor into dense.
+    Converts a sparse tensor(COOTensor) into dense.
 
     In Python, for the ease of use, three tensors are collected into a SparseTensor class.
     MindSpore uses three independent dense tensors: indices, value and dense shape to represent the sparse tensor.
@@ -27,7 +27,7 @@ class SparseToDense(Cell):
     before being passed to the OPS below.
 
     Inputs:
-        - **sparse_tensor** (:class:`mindspore.SparseTensor`): the sparse tensor to convert.
+        - **coo_tensor** (:class:`mindspore.COOTensor`): the sparse COOTensor to convert.
 
     Outputs:
         Tensor, converted from sparse tensor.
@@ -35,24 +35,31 @@ class SparseToDense(Cell):
     Raises:
         TypeError: If `sparse_tensor.indices` is not a Tensor.
         TypeError: If `sparse_tensor.values` is not a Tensor.
-        TypeError: If `sparse_tensor.dense_shape` is not a tuple.
+        TypeError: If `sparse_tensor.shape` is not a tuple.
 
     Supported Platforms:
         ``CPU``
 
     Examples:
         >>> import mindspore as ms
-        >>> from mindspore import Tensor, SparseTensor
+        >>> from mindspore import Tensor, COOTensor
         >>> import mindspore.nn as nn
         >>> import mindspore.context as context
         >>> context.set_context(mode=context.PYNATIVE_MODE)
         >>> indices = Tensor([[0, 1], [1, 2]])
         >>> values = Tensor([1, 2], dtype=ms.int32)
         >>> dense_shape = (3, 4)
-        >>> sparse_tensor = SparseTensor(indices, values, dense_shape)
-        >>> sparse_to_dense = nn.SparseToDense()
-        >>> result = sparse_to_dense(sparse_tensor)
-        >>> print(result)
+        >>> class Net(nn.Cell):
+        ...     def __init__(self, dense_shape):
+        ...         super(Net, self).__init__()
+        ...         self.dense_shape = dense_shape
+        ...         self.op = nn.SparseToDense()
+        ...
+        ...     def construct(self, indices, values):
+        ...         x = COOTensor(indices, values, self.dense_shape)
+        ...         return self.op(x)
+        ...
+        >>> print(Net(dense_shape)(indices, values))
         [[0 1 0 0]
          [0 0 2 0]
          [0 0 0 0]]
@@ -66,7 +73,7 @@ class SparseToDense(Cell):
     def construct(self, sparse_tensor):
         return self.sparse_to_dense(sparse_tensor.indices,
                                     sparse_tensor.values,
-                                    sparse_tensor.dense_shape)
+                                    sparse_tensor.shape)
 
 
 class SparseTensorDenseMatmul(Cell):

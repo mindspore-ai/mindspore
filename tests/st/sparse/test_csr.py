@@ -270,7 +270,7 @@ def test_csr_ops():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_csrtensor_export_mindir():
+def test_csrtensor_export_and_import_mindir():
     """
     Feature: Test exporting and loading CSRTensor MindIR.
     Description: Test export and load.
@@ -308,7 +308,7 @@ def test_csrtensor_export_mindir():
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_csrops_export_mindir():
+def test_csrops_export_and_import_mindir():
     """
     Feature: Test exporting and loading CSRTensor MindIR in a net.
     Description: Test export and load.

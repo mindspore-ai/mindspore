@@ -138,6 +138,13 @@ constexpr auto kCSRTensorGetIndptr = "CSRTensorGetIndptr";
 constexpr auto kCSRTensorGetIndices = "CSRTensorGetIndices";
 constexpr auto kCSRTensorGetDenseShape = "CSRTensorGetDenseShape";
 
+// COOTensor
+constexpr auto kMakeCOOTensor = "MakeCOOTensor";
+constexpr auto kCOOTensorGetValues = "COOTensorGetValues";
+constexpr auto kCOOTensorGetIndices = "COOTensorGetIndices";
+constexpr auto kCOOTensorGetDenseShapes = "COOTensorGetDenseShape";
+constexpr auto kCOOTensorDenseMatmul = "COOTensorDenseMatmul";
+
 // Sparse ops
 constexpr auto kSparseTensorDenseMatmul = "SparseTensorDenseMatmul";
 constexpr auto kCSRDenseMul = "CSRDenseMul";
@@ -565,13 +572,12 @@ MS_CORE_API inline const PrimitivePtr kPrimRowTensorGetDenseShape =
   std::make_shared<Primitive>("RowTensorGetDenseShape");
 MS_CORE_API inline const PrimitivePtr kPrimRowTensorAdd = std::make_shared<Primitive>("RowTensorAdd");
 
-// SparseTensor
-MS_CORE_API inline const PrimitivePtr kPrimMakeSparseTensor = std::make_shared<Primitive>("MakeSparseTensor");
-MS_CORE_API inline const PrimitivePtr kPrimSparseTensorGetValues = std::make_shared<Primitive>("SparseTensorGetValues");
-MS_CORE_API inline const PrimitivePtr kPrimSparseTensorGetIndices =
-  std::make_shared<Primitive>("SparseTensorGetIndices");
-MS_CORE_API inline const PrimitivePtr kPrimSparseTensorGetDenseShape =
-  std::make_shared<Primitive>("SparseTensorGetDenseShape");
+// COOTensor
+MS_CORE_API inline const PrimitivePtr kPrimMakeCOOTensor = std::make_shared<Primitive>(kMakeCOOTensor);
+MS_CORE_API inline const PrimitivePtr kPrimCOOTensorGetValues = std::make_shared<Primitive>(kCOOTensorGetValues);
+MS_CORE_API inline const PrimitivePtr kPrimCOOTensorGetIndices = std::make_shared<Primitive>(kCOOTensorGetIndices);
+MS_CORE_API inline const PrimitivePtr kPrimCOOTensorGetDenseShape =
+  std::make_shared<Primitive>(kCOOTensorGetDenseShapes);
 
 // CSRTensor
 MS_CORE_API inline const PrimitivePtr kPrimMakeCSRTensor = std::make_shared<Primitive>(kMakeCSRTensor);
@@ -584,6 +590,7 @@ MS_CORE_API inline const PrimitivePtr kPrimCSRTensorGetDenseShape =
 // Sparse ops
 MS_CORE_API inline const PrimitivePtr kPrimSparseTensorDenseMatmul =
   std::make_shared<Primitive>(kSparseTensorDenseMatmul);
+MS_CORE_API inline const PrimitivePtr kPrimCOOTensorDenseMatmul = std::make_shared<Primitive>(kCOOTensorDenseMatmul);
 MS_CORE_API inline const PrimitivePtr kPrimCSRDenseMul = std::make_shared<Primitive>(kCSRDenseMul);
 MS_CORE_API inline const PrimitivePtr kPrimCSRReduceSum = std::make_shared<Primitive>(kCSRReduceSum);
 MS_CORE_API inline const PrimitivePtr kPrimCSRMV = std::make_shared<Primitive>(kCSRMV);

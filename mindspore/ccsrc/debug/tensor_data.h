@@ -56,7 +56,7 @@ typedef enum MsTypeId : unsigned int {
   kObjectTypeKeyword,
   kObjectTypeTensorType,
   kObjectTypeRowTensorType,
-  kObjectTypeSparseTensorType,
+  kObjectTypeCOOTensorType,
   kObjectTypeUndeterminedType,
   kObjectTypeClass,
   kObjectTypeDictionary,

@@ -1461,16 +1461,16 @@ std::string AbstractRowTensor::ToString() const {
   return buffer.str();
 }
 
-// SparseTensor
-TypePtr AbstractSparseTensor::BuildType() const {
+// COOTensor
+TypePtr AbstractCOOTensor::BuildType() const {
   MS_EXCEPTION_IF_NULL(element());
   TypePtr element_type = element()->BuildType();
-  return std::make_shared<SparseTensorType>(element_type);
+  return std::make_shared<COOTensorType>(element_type);
 }
 
-AbstractBasePtr AbstractSparseTensor::Clone() const {
+AbstractBasePtr AbstractCOOTensor::Clone() const {
   MS_EXCEPTION_IF_NULL(element());
-  auto clone = std::make_shared<AbstractSparseTensor>(element()->Clone());
+  auto clone = std::make_shared<AbstractCOOTensor>(element()->Clone());
   ShapePtr shp = shape();
   MS_EXCEPTION_IF_NULL(shp);
   clone->set_shape(shp->Clone());
@@ -1490,9 +1490,9 @@ AbstractBasePtr AbstractSparseTensor::Clone() const {
   return clone;
 }
 
-AbstractBasePtr AbstractSparseTensor::Broaden() const {
+AbstractBasePtr AbstractCOOTensor::Broaden() const {
   MS_EXCEPTION_IF_NULL(element());
-  auto broaden = std::make_shared<AbstractSparseTensor>(element()->Broaden());
+  auto broaden = std::make_shared<AbstractCOOTensor>(element()->Broaden());
   auto shp = shape();
   MS_EXCEPTION_IF_NULL(shp);
   MS_EXCEPTION_IF_NULL(indices_);
@@ -1512,9 +1512,9 @@ AbstractBasePtr AbstractSparseTensor::Broaden() const {
   return broaden;
 }
 
-AbstractBasePtr AbstractSparseTensor::BroadenWithShape() const {
+AbstractBasePtr AbstractCOOTensor::BroadenWithShape() const {
   MS_EXCEPTION_IF_NULL(element());
-  auto broaden = std::make_shared<AbstractSparseTensor>(element()->Broaden());
+  auto broaden = std::make_shared<AbstractCOOTensor>(element()->Broaden());
   auto this_shape = shape();
   MS_EXCEPTION_IF_NULL(this_shape);
   auto shp = this_shape->Clone();
@@ -1537,7 +1537,7 @@ AbstractBasePtr AbstractSparseTensor::BroadenWithShape() const {
   return broaden;
 }
 
-std::string AbstractSparseTensor::ToString() const {
+std::string AbstractCOOTensor::ToString() const {
   std::ostringstream buffer;
   BaseShapePtr shape_track = GetShapeTrack();
   MS_EXCEPTION_IF_NULL(shape_track);

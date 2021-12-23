@@ -316,8 +316,8 @@ AbstractBasePtr InferImplRowTensorAdd(const AnalysisEnginePtr &, const Primitive
   return args_spec_list[0];
 }
 
-AbstractBasePtr InferImplMakeSparseTensor(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                          const AbstractBasePtrList &args_spec_list) {
+AbstractBasePtr InferImplMakeCOOTensor(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                       const AbstractBasePtrList &args_spec_list) {
   // Inputs: two tensors and a tuple.
   constexpr auto kMakeSparseInputNum = 3;
   const std::string op_name = primitive->name();
@@ -369,39 +369,39 @@ AbstractBasePtr InferImplMakeSparseTensor(const AnalysisEnginePtr &, const Primi
                               << dense_shape_value->ToString();
     }
   }
-  auto ret = std::make_shared<AbstractSparseTensor>(values->element()->BuildType(), dense_shape_vec);
+  auto ret = std::make_shared<AbstractCOOTensor>(values->element()->BuildType(), dense_shape_vec);
   ret->set_indices(indices);
   ret->set_values(values);
   ret->set_dense_shape(dense_shape);
   return ret;
 }
 
-AbstractBasePtr InferImplSparseTensorGetValues(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                               const AbstractBasePtrList &args_spec_list) {
+AbstractBasePtr InferImplCOOTensorGetValues(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                            const AbstractBasePtrList &args_spec_list) {
   // Inputs: two tensors and a tuple.
   const std::string op_name = primitive->name();
   CheckArgsSize(op_name, args_spec_list, 1);
-  auto sparse_tensor = CheckArg<AbstractSparseTensor>(op_name, args_spec_list, 0);
+  auto sparse_tensor = CheckArg<AbstractCOOTensor>(op_name, args_spec_list, 0);
   MS_EXCEPTION_IF_NULL(sparse_tensor->values());
   return sparse_tensor->values();
 }
 
-AbstractBasePtr InferImplSparseTensorGetIndices(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                const AbstractBasePtrList &args_spec_list) {
+AbstractBasePtr InferImplCOOTensorGetIndices(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                             const AbstractBasePtrList &args_spec_list) {
   // Inputs: two tensors and a tuple.
   const std::string op_name = primitive->name();
   CheckArgsSize(op_name, args_spec_list, 1);
-  auto sparse_tensor = CheckArg<AbstractSparseTensor>(op_name, args_spec_list, 0);
+  auto sparse_tensor = CheckArg<AbstractCOOTensor>(op_name, args_spec_list, 0);
   MS_EXCEPTION_IF_NULL(sparse_tensor->indices());
   return sparse_tensor->indices();
 }
 
-AbstractBasePtr InferImplSparseTensorGetDenseShape(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                   const AbstractBasePtrList &args_spec_list) {
+AbstractBasePtr InferImplCOOTensorGetDenseShape(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                const AbstractBasePtrList &args_spec_list) {
   // Inputs: two tensors and a tuple.
   const std::string op_name = primitive->name();
   CheckArgsSize(op_name, args_spec_list, 1);
-  auto sparse_tensor = CheckArg<AbstractSparseTensor>(op_name, args_spec_list, 0);
+  auto sparse_tensor = CheckArg<AbstractCOOTensor>(op_name, args_spec_list, 0);
   MS_EXCEPTION_IF_NULL(sparse_tensor->dense_shape());
   return sparse_tensor->dense_shape();
 }

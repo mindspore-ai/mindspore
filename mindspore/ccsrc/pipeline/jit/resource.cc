@@ -239,11 +239,11 @@ BuiltInTypeMap &GetAttrMap() {
        {"indices", prim::kPrimRowTensorGetIndices},         // F.row_tensor_get_indices
        {"dense_shape", prim::kPrimRowTensorGetDenseShape},  // F.row_tensor_get_dense_shape
      }},
-    {kObjectTypeSparseTensorType,
+    {kObjectTypeCOOTensorType,
      {
-       {"values", prim::kPrimSparseTensorGetValues},           // F.sparse_tensor_get_values
-       {"indices", prim::kPrimSparseTensorGetIndices},         // F.sparse_tensor_get_indices
-       {"dense_shape", prim::kPrimSparseTensorGetDenseShape},  // F.sparse_tensor_get_dense_shape
+       {"values", prim::kPrimCOOTensorGetValues},     // F.coo_tensor_get_values
+       {"indices", prim::kPrimCOOTensorGetIndices},   // F.coo_tensor_get_indices
+       {"shape", prim::kPrimCOOTensorGetDenseShape},  // F.coo_tensor_get_dense_shape
      }},
     {kObjectTypeCSRTensorType,
      {
