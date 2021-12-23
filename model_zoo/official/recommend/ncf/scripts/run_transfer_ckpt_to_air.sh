@@ -14,9 +14,8 @@
 # limitations under the License.
 # ============================================================================
 echo "Please run the script as: "
-echo "sh scripts/run_transfer_ckpt_to_air.sh DATASET_PATH CKPT_FILE"
-echo "for example: sh scripts/run_transfer_ckpt_to_air.sh /dataset_path /ncf.ckpt"
+echo "sh scripts/run_transfer_ckpt_to_air.sh CKPT_FILE"
+echo "for example: sh scripts/run_transfer_ckpt_to_air.sh /ncf.ckpt"
 
-data_path=$1
 ckpt_file=$2
-python ./src/export.py --data_path $data_path --dataset 'ml-1m'  --eval_batch_size 160000 --output_path './output/' --eval_file_name 'eval.log' --checkpoint_file_path $ckpt_file
+python ./export.py --dataset 'ml-1m' --ckpt_file $ckpt_file
