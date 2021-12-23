@@ -33,6 +33,7 @@
 #include "tools/converter/converter_context.h"
 #include "tools/converter/parser/onnx/onnx_inputs_adjust.h"
 #include "tools/converter/parser/onnx/onnx_pad_adjust.h"
+#include "tools/converter/parser/onnx/onnx_nonzero_adjust.h"
 #include "tools/converter/parser/parser_utils.h"
 #include "tools/converter/parser/unify_format.h"
 #include "nnacl/op_base.h"
@@ -60,6 +61,11 @@ int Onnx2AnfAdjust(const std::set<FuncGraphPtr> &all_func_graphs) {
     }
     if (!OnnxPadAdjust::Adjust(func_graph)) {
       MS_LOG(ERROR) << "onnx pad adjust failed.";
+      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
+      return RET_ERROR;
+    }
+    if (!OnnxNonZeroAdjust::Adjust(func_graph)) {
+      MS_LOG(ERROR) << "onnx nonzero adjust failed.";
       ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
       return RET_ERROR;
     }

@@ -43,6 +43,8 @@ class WhereCPUKernel : public InnerKernel {
  protected:
   WhereParameter *where_param_;
   bool *condition_ = nullptr;
+  int32_t *int32_condition_ = nullptr;
+  float *fp32_condition_ = nullptr;
   void *x_ = nullptr;
   void *y_ = nullptr;
   void *output_data_ = nullptr;
