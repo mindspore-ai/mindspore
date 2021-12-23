@@ -53,7 +53,7 @@ def imshow_det_bbox(image, bboxes, labels, segm=None, class_names=None, score_th
     Returns:
         ndarray: The image with bboxes drawn on it.
 
-    Raise:
+    Raises:
         ImportError: If opencv-python is not installed.
         AssertionError: Input image is not in (H, W, C) or (C, H, W) format.
         AssertionError: Input bboxes is not in (N, 4) or (N, 5) format.
