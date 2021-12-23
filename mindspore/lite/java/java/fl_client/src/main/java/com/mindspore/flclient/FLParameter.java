@@ -140,6 +140,7 @@ public class FLParameter {
             throw new IllegalArgumentException();
         }
         this.domainName = domainName;
+        Common.setIsHttps(domainName.split("//")[0].split(":")[0]);
     }
 
     public String getClientID() {

@@ -438,19 +438,18 @@ public class SyncFLJob {
 
         flParameter.setFlName(flName);
         SyncFLJob syncFLJob = new SyncFLJob();
-        Common.setIsHttps(domainName.split("//")[0].split(":")[0]);
         switch (task) {
             case "train":
                 LOGGER.info(Common.addTag("start syncFLJob.flJobRun()"));
-                if (Common.isHttps()) {
-                    flParameter.setCertPath(certPath);
-                }
                 flParameter.setDataMap(dataMap);
                 flParameter.setTrainModelPath(trainModelPath);
                 flParameter.setInferModelPath(inferModelPath);
                 flParameter.setSslProtocol(sslProtocol);
                 flParameter.setDeployEnv(deployEnv);
                 flParameter.setDomainName(domainName);
+                if (Common.isHttps()) {
+                    flParameter.setCertPath(certPath);
+                }
                 flParameter.setUseElb(useElb);
                 flParameter.setServerNum(serverNum);
                 flParameter.setThreadNum(threadNum);
@@ -469,14 +468,14 @@ public class SyncFLJob {
                 break;
             case "getModel":
                 LOGGER.info(Common.addTag("start syncFLJob.getModel()"));
-                if (Common.isHttps()) {
-                    flParameter.setCertPath(certPath);
-                }
                 flParameter.setTrainModelPath(trainModelPath);
                 flParameter.setInferModelPath(inferModelPath);
                 flParameter.setSslProtocol(sslProtocol);
                 flParameter.setDeployEnv(deployEnv);
                 flParameter.setDomainName(domainName);
+                if (Common.isHttps()) {
+                    flParameter.setCertPath(certPath);
+                }
                 flParameter.setUseElb(useElb);
                 flParameter.setServerNum(serverNum);
                 flParameter.setServerMod(ServerMod.valueOf(serverMod));
@@ -506,17 +505,17 @@ public class SyncFLJob {
         FLParameter flParameter = FLParameter.getInstance();
         flParameter.setFlName(flName);
         SyncFLJob syncFLJob = new SyncFLJob();
-        Common.setIsHttps(domainName.split("//")[0].split(":")[0]);
         switch (task) {
             case "train":
-                if (Common.isHttps()) {
-                    flParameter.setCertPath(certPath);
-                }
+                LOGGER.info(Common.addTag("start syncFLJob.flJobRun()"));
                 flParameter.setTrainDataset(trainDataset);
                 flParameter.setTrainModelPath(trainModelPath);
                 flParameter.setTestDataset(testDataset);
                 flParameter.setInferModelPath(inferModelPath);
                 flParameter.setDomainName(domainName);
+                if (Common.isHttps()) {
+                    flParameter.setCertPath(certPath);
+                }
                 flParameter.setUseElb(useElb);
                 flParameter.setServerNum(serverNum);
                 if (ALBERT.equals(flName)) {
@@ -526,6 +525,7 @@ public class SyncFLJob {
                 syncFLJob.flJobRun();
                 break;
             case "inference":
+                LOGGER.info(Common.addTag("start syncFLJob.modelInference()"));
                 flParameter.setTestDataset(testDataset);
                 flParameter.setInferModelPath(inferModelPath);
                 if (ALBERT.equals(flName)) {
@@ -535,12 +535,13 @@ public class SyncFLJob {
                 syncFLJob.modelInference();
                 break;
             case "getModel":
-                if (Common.isHttps()) {
-                    flParameter.setCertPath(certPath);
-                }
+                LOGGER.info(Common.addTag("start syncFLJob.getModel()"));
                 flParameter.setTrainModelPath(trainModelPath);
                 flParameter.setInferModelPath(inferModelPath);
                 flParameter.setDomainName(domainName);
+                if (Common.isHttps()) {
+                    flParameter.setCertPath(certPath);
+                }
                 flParameter.setUseElb(useElb);
                 flParameter.setServerNum(serverNum);
                 syncFLJob.getModel();
