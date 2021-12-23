@@ -28,7 +28,7 @@ from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from mindspore.train import Model
 from mindspore.context import ParallelMode
 from tests.dataset_mock import MindData
-context.set_context(mode=context.PYNATIVE_MODE, save_graphs=True)
+context.set_context(mode=context.PYNATIVE_MODE)
 
 class Net(nn.Cell):
     """Net definition"""

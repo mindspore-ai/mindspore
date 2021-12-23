@@ -21,8 +21,9 @@ from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore import context
 from mindspore.common.parameter import Parameter
+from tests.security_utils import security_off_wrap
 
-context.set_context(mode=context.GRAPH_MODE, save_graphs=False)
+context.set_context(mode=context.GRAPH_MODE)
 grad_all = C.GradOperation(get_all=True)
 
 
@@ -125,7 +126,7 @@ def test_while_break_forward():
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_while_break_backward():
-    context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+    context.set_context(mode=context.GRAPH_MODE)
     x = Tensor(np.array(1), mstype.int32)
     y = Tensor(np.array(3), mstype.int32)
     forward_net = WhileBreakForwardNet(max_cycles=10)
@@ -173,7 +174,7 @@ def test_if_after_if_in_while_break_forward():
     x = Tensor(np.array(1), mstype.int32)
     y = Tensor(np.array(3), mstype.int32)
     # Graph Mode
-    context.set_context(mode=context.GRAPH_MODE, save_graphs=False)
+    context.set_context(mode=context.GRAPH_MODE)
     graph_forward_net = IfAfterIfInWhileBreakForwardNet(max_cycles=10)
     graph_mode_out = graph_forward_net(x, y)
     assert graph_mode_out == Tensor(np.array(16), mstype.int32)
@@ -184,11 +185,12 @@ def test_if_after_if_in_while_break_forward():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
+@security_off_wrap
 def test_if_after_if_in_while_break_backward():
     x = Tensor(np.array(1), mstype.int32)
     y = Tensor(np.array(3), mstype.int32)
     # Graph Mode
-    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
     graph_forward_net = IfAfterIfInWhileBreakForwardNet(max_cycles=10)
     graph_backward_net = Grad(graph_forward_net)
     graph_mode_grads = graph_backward_net(x, y)
@@ -409,8 +411,6 @@ def test_for_in_for_break():
 # raise a endless loop exception.
 @pytest.mark.skip(reason="Infer raise a endless loop exception")
 def test_while_true_break():
-    context.set_context(save_graphs=True)
-
     class WhileTrueBreakNet(nn.Cell):
         def __init__(self, t):
             super(WhileTrueBreakNet, self).__init__()
@@ -441,8 +441,6 @@ def test_while_true_break():
 # stuck in vm backend
 @pytest.mark.skip(reason="Stuck in vm backend")
 def test_continue_stuck_in_vm():
-    context.set_context(save_graphs=True)
-
     class NetWork(nn.Cell):
         def __init__(self, t):
             super().__init__()

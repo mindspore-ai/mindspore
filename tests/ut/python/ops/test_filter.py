@@ -15,9 +15,6 @@
 """ test_filter """
 
 from mindspore.nn import Cell
-from mindspore import context
-
-context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
 
 
 def is_odd(x):

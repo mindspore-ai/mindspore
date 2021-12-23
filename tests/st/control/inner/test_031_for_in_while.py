@@ -20,6 +20,7 @@ from mindspore.common.parameter import Parameter
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
+from tests.security_utils import security_off_wrap
 
 grad_all = C.GradOperation(get_all=True)
 
@@ -75,6 +76,7 @@ def test_for_in_while_01():
 
 
 @pytest.mark.skip(reason="not supported for in while")
+@security_off_wrap
 def test_for_in_while_02():
     class ForInWhileNet(nn.Cell):
         def __init__(self):
@@ -108,6 +110,7 @@ def test_for_in_while_02():
 
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(save_graphs=True)
     for_in_while_net = ForInWhileNet()
     net = GradNet(for_in_while_net)
     graph_forward_res = for_in_while_net(x)

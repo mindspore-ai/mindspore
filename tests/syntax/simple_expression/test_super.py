@@ -22,7 +22,7 @@ from mindspore import context
 from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
 
-context.set_context(mode=context.GRAPH_MODE, save_graphs=True, save_graphs_path="graph_paths")
+context.set_context(mode=context.GRAPH_MODE)
 
 
 class ArgumentNum(nn.Cell):
