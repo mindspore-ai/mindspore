@@ -111,14 +111,9 @@ int ReduceBaseCPUKernel::Prepare() {
       return RET_ERROR;
     }
     if (axes_tensor->data() == nullptr) {
-      if (reduce_param->keep_dims_) {
-        num_axes_ = in_tensors_.at(0)->shape().size();
-        for (auto i = 0; i < num_axes_; i++) {
-          axes_[i] = i;
-        }
-      } else {
-        MS_LOG(ERROR) << "while axes data is nullptr,keep_dims need true.";
-        return RET_ERROR;
+      num_axes_ = in_tensors_.at(0)->shape().size();
+      for (auto i = 0; i < num_axes_; i++) {
+        axes_[i] = i;
       }
     } else {
       MS_CHECK_FALSE(axes_tensor->Size() == 0, RET_ERROR);

@@ -116,7 +116,6 @@ public class AlbertDataSet extends DataSet {
             int idx = (int) (Math.random() * curSize);
             features.add(features.get(idx));
         }
-        sampleSize = features.size();
         batchNum = features.size() / batchSize;
         LOGGER.info("after pad samples size:" + features.size());
         LOGGER.info("after pad batch num:" + batchNum);
@@ -193,6 +192,10 @@ public class AlbertDataSet extends DataSet {
         for (String line : allLines) {
             if (line.isEmpty()) {
                 continue;
+            }
+            String[] info = line.split(">>>")
+            if (info.length > 1) {
+                line = info[1];
             }
             List<Integer> tokens = customTokenizer.tokenize(line, runType == RunType.TRAINMODE);
             Optional<Feature> feature = customTokenizer.getFeatures(tokens, "other");
