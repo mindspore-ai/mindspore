@@ -108,8 +108,6 @@ void ProfilingReporter::ReportStepPoint(const std::vector<std::shared_ptr<StepPo
     step_point.threadId = 0;
     step_point.tag = point->tag();
     (void)ReportData(device_id_, reinterpret_cast<unsigned char *>(&step_point), sizeof(step_point), "step_info");
-    MS_LOG(WARNING) << "ReportStepPoint, graph_id: " << graph_id_ << ", op_name: " << point->op_name()
-                    << ", streamId: " << GetStreamId(op_name) << ", task Id: " << GetTaskId(op_name);
   }
 }
 
