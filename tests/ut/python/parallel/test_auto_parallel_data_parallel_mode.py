@@ -63,7 +63,7 @@ def test_batch_parallel_matmul():
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     net = NetMatMul()
-    net.shard(strategy="data_parallel")
+    net.set_data_parallel()
 
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 128]), dtype=ms.float32)
@@ -80,7 +80,7 @@ def test_batch_parallel_mul():
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     net = NetMatMul()
-    net.shard(strategy="data_parallel")
+    net.set_data_parallel()
 
     x = Tensor(np.ones([128, 128]), dtype=ms.float32)
     y = Tensor(np.ones([128, 128]), dtype=ms.float32)
@@ -97,7 +97,7 @@ def test_batch_parallel_recursive():
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     net = NetRecursive()
-    net.shard(strategy="data_parallel")
+    net.set_data_parallel()
 
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 128]), dtype=ms.float32)
@@ -115,7 +115,7 @@ def test_batch_parallel_with_user_strategy():
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     net = NetMatMul(strategy=((1, 8), (8, 1)))
-    net.shard(strategy="data_parallel")
+    net.set_data_parallel()
 
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 128]), dtype=ms.float32)
