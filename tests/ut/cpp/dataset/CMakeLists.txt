@@ -16,6 +16,7 @@ SET(DE_UT_SRCS
         c_api_cache_test.cc
         c_api_dataset_ag_news_test.cc
         c_api_dataset_album_test.cc
+        c_api_dataset_amazon_review_test.cc
         c_api_dataset_cifar_test.cc
         c_api_dataset_cityscapes_test.cc
         c_api_dataset_clue_test.cc

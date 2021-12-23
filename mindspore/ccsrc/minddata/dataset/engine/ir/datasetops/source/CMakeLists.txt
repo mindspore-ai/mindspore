@@ -5,6 +5,7 @@ add_subdirectory(samplers)
 set(DATASET_ENGINE_IR_DATASETOPS_SOURCE_SRC_FILES
         ag_news_node.cc
         album_node.cc
+        amazon_review_node.cc
         celeba_node.cc
         cifar100_node.cc
         cifar10_node.cc

@@ -1153,6 +1153,72 @@ inline std::shared_ptr<AlbumDataset> MS_API Album(const std::string &dataset_dir
                                         VectorStringToChar(column_names), decode, sampler, cache);
 }
 
+/// \class AmazonReviewDataset
+/// \brief A source dataset for reading and parsing Amazon Review Polarity and Amazon Review Full datasets.
+class MS_API AmazonReviewDataset : public Dataset {
+ public:
+  /// \brief Constructor of AmazonReviewDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] usage Part of dataset of AmazonReview, can be "train", "test" or "all".
+  /// \param[in] num_samples The number of samples to be included in the dataset.
+  /// \param[in] shuffle The mode for shuffling data every epoch.
+  ///     Can be any of:
+  ///     ShuffleMode.kFalse - No shuffling is performed.
+  ///     ShuffleMode.kFiles - Shuffle files only.
+  ///     ShuffleMode.kGlobal - Shuffle both the files and samples.
+  /// \param[in] num_shards Number of shards that the dataset should be divided into.
+  /// \param[in] shard_id The shard ID within num_shards. This argument should be
+  ///     specified only when num_shards is also specified.
+  /// \param[in] cache Tensor cache to use.
+  AmazonReviewDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, int64_t num_samples,
+                      ShuffleMode shuffle, int32_t num_shards, int32_t shard_id,
+                      const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Destructor of AmazonReviewDataset.
+  ~AmazonReviewDataset() = default;
+};
+
+/// \brief Function to create a AmazonReviewDataset.
+/// \note This dataset includes polarity and full, which can be read according to your own needs.
+///     The generated dataset has three columns ["label","title","content"]. Their types are all string.
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage Part of dataset of AmazonReview, can be "train", "test" or "all" (default="all").
+/// \param[in] num_samples The number of samples to be included in the dataset
+///     (Default = 0, which means all samples).
+/// \param[in] shuffle The mode for shuffling data every epoch (Default=ShuffleMode.kGlobal).
+///     Can be any of:
+///     ShuffleMode::kFalse - No shuffling is performed.
+///     ShuffleMode::kFiles - Shuffle files only.
+///     ShuffleMode::kGlobal - Shuffle both the files and samples.
+/// \param[in] num_shards Number of shards that the dataset should be divided into (Default = 1).
+/// \param[in] shard_id The shard ID within num_shards. This argument should be
+///     specified only when num_shards is also specified (Default = 0).
+/// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
+/// \return Shared pointer to the AmazonReviewDataset.
+/// \par Example
+/// \code
+///      /* Define dataset path and MindData object */
+///      std::string folder_path = "/path/to/amazon_review_dataset_directory";
+///      std::shared_ptr<Dataset> ds = AmazonReview(folder_path, "test", 0, ShuffleMode::kGlobal);
+///
+///      /* Create iterator to read dataset */
+///      std::shared_ptr<Iterator> iter = ds->CreateIterator();
+///      std::unordered_map<std::string, mindspore::MSTensor> row;
+///      iter->GetNextRow(&row);
+///
+///      /* Note: In AmazonReview dataset, each data dictionary owns keys "label", "title", "content" */
+///      auto title = row["title"];
+/// \endcode
+inline std::shared_ptr<AmazonReviewDataset> MS_API AmazonReview(const std::string &dataset_dir,
+                                                                const std::string &usage = "all",
+                                                                int64_t num_samples = 0,
+                                                                ShuffleMode shuffle = ShuffleMode::kGlobal,
+                                                                int32_t num_shards = 1, int32_t shard_id = 0,
+                                                                const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<AmazonReviewDataset>(StringToChar(dataset_dir), StringToChar(usage), num_samples, shuffle,
+                                               num_shards, shard_id, cache);
+}
+
 /// \class CelebADataset
 /// \brief A source dataset for reading and parsing CelebA dataset.
 class MS_API CelebADataset : public Dataset {
@@ -1164,7 +1230,7 @@ class MS_API CelebADataset : public Dataset {
   ///      given, a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler()).
   /// \param[in] decode Decode the images after reading (default=false).
   /// \param[in] extensions Set of file extensions to be included in the dataset (default={}).
-  /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
+  /// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
   CelebADataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
                 const std::shared_ptr<Sampler> &sampler, bool decode, const std::set<std::vector<char>> &extensions,
                 const std::shared_ptr<DatasetCache> &cache);
