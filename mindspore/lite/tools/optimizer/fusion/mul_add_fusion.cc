@@ -207,20 +207,25 @@ AnfNodePtr MulAddFusion::Process(const std::string &pattern_name, const mindspor
     return nullptr;
   }
 
+  auto mul_input_anode = mul_cnode->input(SECOND_INPUT);
+  MS_CHECK_TRUE_RET(mul_input_anode != nullptr, nullptr);
+  if (utils::isa<ParameterPtr>(mul_input_anode)) {
+    auto param_node = mul_input_anode->cast<ParameterPtr>();
+    MS_CHECK_TRUE_RET(param_node != nullptr, nullptr);
+    mul_const_anode_ = param_node->has_default() ? mul_input_anode : mul_cnode->input(THIRD_INPUT);
+    mul_input_anode = param_node->has_default() ? mul_cnode->input(THIRD_INPUT) : mul_input_anode;
+  } else if (utils::isa<CNodePtr>(mul_input_anode)) {
+    mul_const_anode_ = mul_cnode->input(THIRD_INPUT);
+  }
   size_t add_const_idx = utils::isa<CNodePtr>(add_cnode->input(SECOND_INPUT)) ? THIRD_INPUT : SECOND_INPUT;
   add_const_anode_ = add_cnode->input(add_const_idx);
-  MS_CHECK_TRUE_RET(add_const_anode_ != nullptr, nullptr);
-  size_t mul_const_idx = utils::isa<CNodePtr>(mul_cnode->input(SECOND_INPUT)) ? THIRD_INPUT : SECOND_INPUT;
-  mul_const_anode_ = mul_cnode->input(mul_const_idx);
-  MS_CHECK_TRUE_RET(mul_const_anode_ != nullptr && !utils::isa<CNodePtr>(mul_const_anode_), nullptr);
+  MS_CHECK_TRUE_RET(mul_const_anode_ != nullptr && add_const_anode_ != nullptr, nullptr);
   bias_tensor_ = GetTensorInfo(add_const_anode_);
   scale_tensor_ = GetTensorInfo(mul_const_anode_);
   if (bias_tensor_ == nullptr || scale_tensor_ == nullptr) {
     return nullptr;
   }
 
-  auto mul_input_anode = utils::isa<CNodePtr>(mul_cnode->input(SECOND_INPUT)) ? mul_cnode->input(SECOND_INPUT)
-                                                                              : mul_cnode->input(THIRD_INPUT);
   MS_CHECK_TRUE_RET(mul_input_anode != nullptr, nullptr);
   if (FetchShapeFromAbstract(mul_input_anode->abstract(), &mul_input_shape_) != lite::RET_OK) {
     return nullptr;
