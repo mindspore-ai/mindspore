@@ -47,16 +47,24 @@ void DynamicShapeKernel::Execute() {
   auto output_addr = AnfAlgo::GetOutputAddr(cnode, 0);
   MS_EXCEPTION_IF_NULL(output_addr);
 
-  auto runtime_instance = device::KernelRuntimeManager::Instance().GetCurrentKernelRuntime();
-  MS_EXCEPTION_IF_NULL(runtime_instance);
-  auto ret = runtime_instance->SyncStream();
-  if (!ret) {
-    MS_LOG(EXCEPTION) << "Sync stream error!";
+  if (output_addr->DeviceType() == device::DeviceAddressType::kCPU) {
+    auto ret = memcpy_s(const_cast<void *>(output_addr->GetPtr()), output_addr->GetSize(),
+                        output_tensor_for_sync->data_c(), LongToSize(output_tensor_for_sync->data().nbytes()));
+    if (ret != EOK) {
+      MS_LOG(EXCEPTION) << "Execute DynamicShapeKernel memcpy_s failed!";
+    }
+  } else {
+    auto runtime_instance = device::KernelRuntimeManager::Instance().GetCurrentKernelRuntime();
+    MS_EXCEPTION_IF_NULL(runtime_instance);
+    auto ret = runtime_instance->SyncStream();
+    if (!ret) {
+      MS_LOG(EXCEPTION) << "Sync stream error!";
+    }
+    output_addr->SyncHostToDevice(output_shape, LongToSize(output_tensor_for_sync->data().nbytes()),
+                                  output_tensor_for_sync->data_type(), output_tensor_for_sync->data_c(),
+                                  output_tensor_for_sync->device_info().host_format_);
   }
 
-  output_addr->SyncHostToDevice(output_shape, LongToSize(output_tensor_for_sync->data().nbytes()),
-                                output_tensor_for_sync->data_type(), output_tensor_for_sync->data_c(),
-                                output_tensor_for_sync->device_info().host_format_);
   MS_LOG(INFO) << "Execute DynamicShapeKernel End";
 }
 

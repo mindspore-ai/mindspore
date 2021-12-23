@@ -297,6 +297,7 @@ class AnfRuntimeAlgorithm {
   static std::vector<int64_t> GetOutputMaxShape(const AnfNodePtr &anf_node, size_t index);
   static std::vector<int64_t> GetOutputMinShape(const AnfNodePtr &anf_node, size_t index);
   static bool IsNodeDynamicShape(const AnfNodePtr &node);
+  static bool IsHostKernel(const CNodePtr &node);
   static void InferShape(const CNodePtr &node, std::map<uint32_t, tensor::TensorPtr> *depend_tensors = nullptr);
   static void AddArgList(AbstractBasePtrList *args_spec_list, const AnfNodePtr &cnode_input,
                          const AnfNodePtr &real_input, size_t index);

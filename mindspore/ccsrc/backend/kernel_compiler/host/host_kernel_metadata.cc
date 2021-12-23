@@ -24,20 +24,15 @@
 
 namespace mindspore {
 namespace kernel {
-static const std::set<std::string> host_kernel = {
-  prim::kPrimDynamicShape->name(), prim::kPrimDynamicBroadcastGradientArgs->name(), prim::kPrimDynamicReshape->name()};
-
 void HostMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<KernelBuildInfo>> *kernel_info_list) {
   MS_LOG(INFO) << "HostMetadataInfo.";
   MS_EXCEPTION_IF_NULL(kernel_node);
   MS_EXCEPTION_IF_NULL(kernel_info_list);
 
-  std::string op_name = AnfAlgo::GetCNodeName(kernel_node);
-  if (host_kernel.find(op_name) == host_kernel.end()) {
-    MS_LOG(DEBUG) << "Host dose not have op [" << op_name << "]";
+  if (!AnfAlgo::IsHostKernel(kernel_node)) {
+    MS_LOG(DEBUG) << "Host dose not have op [" << kernel_node->DebugString() << "]";
     return;
   }
-
   std::vector<std::string> inputs_format{};
   std::vector<TypeId> inputs_type{};
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
