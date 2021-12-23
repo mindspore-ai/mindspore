@@ -30,7 +30,7 @@
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_MatMul;
+using mindspore::schema::PrimitiveType_MatMulFusion;
 
 namespace mindspore::kernel {
 void MatmulSparseCPUKernel::InitParameter() {

@@ -229,7 +229,7 @@ void RegAllInferFunc1() {
   g_infer_func[PrimType_LshProjection] = LshProjectionInferShape;
   g_infer_func[PrimType_LSTM] = LstmInferShape;
   g_infer_func[PrimType_L2NormalizeFusion] = CommonInferShape;
-  g_infer_func[PrimType_MatMul] = MatmulInferShape;
+  g_infer_func[PrimType_MatMulFusion] = MatmulInferShape;
   g_infer_func[PrimType_Maximum] = ArithmeticInferShape;
   g_infer_func[PrimType_MaximumGrad] = MaxMinGradInferShape;
   g_infer_func[PrimType_MaxPoolFusion] = PoolingInferShape;

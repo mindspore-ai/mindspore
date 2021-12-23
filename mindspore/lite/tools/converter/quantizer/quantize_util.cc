@@ -23,7 +23,7 @@
 #include <functional>
 #include "include/version.h"
 #include "ops/fusion/full_connection.h"
-#include "ops/mat_mul.h"
+#include "ops/fusion/mat_mul_fusion.h"
 #include "tools/converter/ops/ops_def.h"
 #include "tools/anf_exporter/anf_exporter.h"
 #include "tools/converter/quantizer/bitpacking.h"
@@ -377,7 +377,7 @@ int UpdateTensorDataAndSize(const AnfNodePtr &node, const tensor::TensorPtr &wei
 int GetMatMulPreferredDim(const PrimitivePtr &primitive, int input_index, const std::vector<int> &dims) {
   size_t last_first_index = dims.size() - 1;
   size_t last_second_index = dims.size() - 2;
-  auto matmul_prim = primitive->cast<std::shared_ptr<ops::MatMul>>();
+  auto matmul_prim = primitive->cast<std::shared_ptr<ops::MatMulFusion>>();
   MS_ASSERT(matmul_prim != nullptr);
   // For MatMul A
   if (input_index == 0) {
@@ -414,7 +414,7 @@ int CalChannels(const std::vector<int> &dims, int channel_cnt, bool *channel_at_
 }
 
 int GetPreferredDim(const PrimitivePtr &primitive, int input_index, const std::vector<int> &dims) {
-  if (primitive->name() == ops::kNameMatMul) {
+  if (primitive->name() == ops::kNameMatMulFusion) {
     return GetMatMulPreferredDim(primitive, input_index, dims);
   }
   // The first index.
@@ -441,8 +441,8 @@ void CalQuantAssitInfo(const schema::PrimitiveT &primitive, const std::vector<in
     MS_LOG(ERROR) << " shape vector is empty.";
     return;
   }
-  if (primitive.value.type == schema::PrimitiveType_MatMul && static_cast<int>(shapes.size()) == DIMENSION_2D) {
-    auto matmul_prim = primitive.value.AsMatMul();
+  if (primitive.value.type == schema::PrimitiveType_MatMulFusion && static_cast<int>(shapes.size()) == DIMENSION_2D) {
+    auto matmul_prim = primitive.value.AsMatMulFusion();
     MS_ASSERT(matmul_prim != nullptr);
     *channel_at_first = index != 1 || matmul_prim->transpose_b;
   } else if (primitive.value.type == schema::PrimitiveType_LSTM) {

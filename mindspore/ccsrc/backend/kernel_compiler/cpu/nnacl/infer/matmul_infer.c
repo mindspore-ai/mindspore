@@ -137,4 +137,4 @@ int MatmulInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   return NNACL_OK;
 }
 
-REG_INFER(MatMul, PrimType_MatMul, MatmulInferShape)
+REG_INFER(MatMul, PrimType_MatMulFusion, MatmulInferShape)

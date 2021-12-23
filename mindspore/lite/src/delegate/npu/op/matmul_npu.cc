@@ -41,7 +41,7 @@ int MatMulNPUOp::Init(const schema::Primitive *primitive, const std::vector<mind
   if (in_tensors.size() == MATMUL_INPUT_SIZE) {
     has_bias_ = true;
   }
-  auto matmul_prim = primitive->value_as_MatMul();
+  auto matmul_prim = primitive->value_as_MatMulFusion();
   if (matmul_prim == nullptr) {
     MS_LOG(ERROR) << "Get null primitive value for op ." << name_;
     return RET_ERROR;

@@ -49,7 +49,7 @@ class TensorRTSubGraph : public kernel::Kernel {
       schema::PrimitiveType_Conv2DFusion, schema::PrimitiveType_ReduceFusion, schema::PrimitiveType_Transpose,
       schema::PrimitiveType_Gather,       schema::PrimitiveType_Reshape,      schema::PrimitiveType_PowFusion,
       schema::PrimitiveType_AddFusion,    schema::PrimitiveType_DivFusion,    schema::PrimitiveType_SubFusion,
-      schema::PrimitiveType_MatMul,       schema::PrimitiveType_PowFusion,    schema::PrimitiveType_Eltwise,
+      schema::PrimitiveType_MatMulFusion, schema::PrimitiveType_PowFusion,    schema::PrimitiveType_Eltwise,
       schema::PrimitiveType_ScaleFusion,  schema::PrimitiveType_MulFusion,    schema::PrimitiveType_Minimum,
       schema::PrimitiveType_StridedSlice, schema::PrimitiveType_PadFusion,    schema::PrimitiveType_FullConnection,
       schema::PrimitiveType_Cast,         schema::PrimitiveType_ExpandDims,   schema::PrimitiveType_Resize,

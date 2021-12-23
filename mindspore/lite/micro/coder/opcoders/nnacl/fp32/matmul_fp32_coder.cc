@@ -20,7 +20,7 @@
 #include "coder/opcoders/file_collector.h"
 #include "coder/opcoders/nnacl/dequant/de_quant.h"
 
-using mindspore::schema::PrimitiveType_MatMul;
+using mindspore::schema::PrimitiveType_MatMulFusion;
 
 namespace mindspore::lite::micro::nnacl {
 int MatMulFP32Coder::InitShapeA() {
@@ -91,5 +91,5 @@ int MatMulFP32Coder::Prepare(CoderContext *const context) {
 
 int MatMulFP32Coder::DoCode(CoderContext *const context) { return MatMulFP32BaseCoder::DoCode(context); }
 
-REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_MatMul, CPUOpCoderCreator<MatMulFP32Coder>)
+REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_MatMulFusion, CPUOpCoderCreator<MatMulFP32Coder>)
 }  // namespace mindspore::lite::micro::nnacl

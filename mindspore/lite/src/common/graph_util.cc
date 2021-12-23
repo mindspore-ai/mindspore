@@ -88,8 +88,9 @@ std::vector<size_t> GetLinkedPostNodeIdx(const lite::Model *model, const size_t 
 
 // only support op_type from current schema
 bool IsPackedOp(int op_type) {
-  static const std::vector<int> packed_ops = {
-    schema::PrimitiveType_Conv2DFusion, schema::PrimitiveType_Conv2dTransposeFusion, schema::PrimitiveType_MatMul};
+  static const std::vector<int> packed_ops = {schema::PrimitiveType_Conv2DFusion,
+                                              schema::PrimitiveType_Conv2dTransposeFusion,
+                                              schema::PrimitiveType_MatMulFusion};
   return IsContain(packed_ops, op_type);
 }
 }  // namespace lite

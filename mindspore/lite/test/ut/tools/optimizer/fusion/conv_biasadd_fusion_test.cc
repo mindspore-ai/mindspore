@@ -164,7 +164,7 @@ TEST_F(ConvBiasAddFusionTest, TestDeptiwiseConvAddNode) {
 }
 
 TEST_F(ConvBiasAddFusionTest, TestBadCase_ConvAdd) {
-  auto meta_graph = BuildGraph(schema::PrimitiveType_Conv2DFusion, schema::PrimitiveType_MatMul);
+  auto meta_graph = BuildGraph(schema::PrimitiveType_Conv2DFusion, schema::PrimitiveType_MatMulFusion);
   auto func_graph = lite::AnfImporterFromMetaGraphT::Fb2Anf(meta_graph.get());
   auto anf_transform = new lite::AnfTransform();
   auto new_graph = anf_transform->Transform(func_graph);

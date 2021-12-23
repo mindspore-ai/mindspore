@@ -48,7 +48,7 @@ using std::vector;
 namespace mindspore::lite::quant {
 namespace {
 static const std::set<PrimitivePtr> has_bias_operator = {prim::kPrimConv2DFusion, prim::kPrimConv2dTransposeFusion,
-                                                         prim::kPrimMatMul, prim::kPrimFullConnection,
+                                                         prim::kPrimMatMulFusion, prim::kPrimFullConnection,
                                                          prim::kPrimLayerNormFusion};
 constexpr int kHasBiasTensorSize = 3;
 constexpr int KBiasBitNum = 32;
@@ -537,7 +537,7 @@ void FullQuantQuantizer::InitCpuConfig() {
     // Compute
     prim::kPrimConv2DFusion,
     prim::kPrimFullConnection,
-    prim::kPrimMatMul,
+    prim::kPrimMatMulFusion,
     // Memory
     prim::kPrimReshape,
     prim::kPrimTranspose,
@@ -552,7 +552,7 @@ void FullQuantQuantizer::InitCpuConfig() {
     prim::kPrimAffine,
   };
   skip_check_dtype_ops_ = {prim::kPrimTupleGetItem, prim::kPrimShape};
-  per_channel_ops_ = {prim::kPrimConv2DFusion, prim::kPrimConv2dTransposeFusion, prim::kPrimMatMul,
+  per_channel_ops_ = {prim::kPrimConv2DFusion, prim::kPrimConv2dTransposeFusion, prim::kPrimMatMulFusion,
                       prim::kPrimFullConnection, prim::kPrimLayerNormFusion};
   support_activation_ = {
     RELU, RELU6, HSWISH, SIGMOID, TANH,

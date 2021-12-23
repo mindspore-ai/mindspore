@@ -98,7 +98,7 @@ class TestSPMMFp32 : public mindspore::CommonTest {
     parameter->b_transpose_ = false;
     parameter->has_bias_ = true;
     parameter->act_type_ = ActType_No;
-    parameter->op_parameter_.type_ = schema::PrimitiveType_MatMul;
+    parameter->op_parameter_.type_ = schema::PrimitiveType_MatMulFusion;
     parameter->op_parameter_.is_train_session_ = false;
     parameter->op_parameter_.thread_num_ = 1;
     return parameter;

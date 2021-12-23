@@ -76,7 +76,7 @@ int WeightQuantizer::DoWeightQuantize(const FuncGraphPtr &func_graph, const CNod
     auto node_map = manager->node_users();
     auto node_user = node_map[input];
     auto tmp_weight_quant_type = weight_quant_type;
-    if (node_user.size() > 1 && opt::CheckPrimitiveType(cnode, prim::kPrimMatMul)) {
+    if (node_user.size() > 1 && opt::CheckPrimitiveType(cnode, prim::kPrimMatMulFusion)) {
       MS_LOG(INFO) << input->fullname_with_scope() << " is shared weight.";
       tmp_weight_quant_type = WeightQuantType::FIXED_BIT_PER_LAYER;
     }
@@ -162,7 +162,7 @@ int WeightQuantizer::DoQuantize(const FuncGraphPtr &func_graph, double init_scal
     }
     auto op_name = cnode->fullname_with_scope();
     std::set<PrimitivePtr> support_primitive_types = {prim::kPrimConv2DFusion, prim::kPrimConv2dTransposeFusion,
-                                                      prim::kPrimMatMul,       prim::kPrimFullConnection,
+                                                      prim::kPrimMatMulFusion, prim::kPrimFullConnection,
                                                       prim::kPrimLstm,         prim::kPrimGather,
                                                       prim::kPrimAdam,         prim::kPrimSGD,
                                                       prim::kPrimApplyMomentum};

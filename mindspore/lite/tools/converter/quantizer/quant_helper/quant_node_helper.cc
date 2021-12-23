@@ -147,7 +147,7 @@ QuantHelperRegister::QuantHelperRegister() {
   register_map_[schema::PrimitiveType_Concat] = new QuantNodeHelper(concat_propogator, base_determiner);
 
   register_map_[schema::PrimitiveType_Conv2DFusion] = new QuantNodeHelper(conv_propogator, conv_determiner);
-  register_map_[schema::PrimitiveType_MatMul] = new QuantNodeHelper(conv_propogator, matmul_determiner);
+  register_map_[schema::PrimitiveType_MatMulFusion] = new QuantNodeHelper(conv_propogator, matmul_determiner);
   register_map_[schema::PrimitiveType_FullConnection] = new QuantNodeHelper(conv_propogator, matmul_determiner);
 
   register_map_[schema::PrimitiveType_QuantDTypeCast] =

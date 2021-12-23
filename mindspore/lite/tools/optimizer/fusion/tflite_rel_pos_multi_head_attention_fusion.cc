@@ -91,7 +91,7 @@ std::unordered_map<std::string, VectorRef> TfliteRelPosMultiHeadAttentionFusion:
   auto key = DefineProcessInputPattern(input_k_, weight_k_, bias_k_, key_stack_params_, key_prim_, true);
   MS_CHECK_TRUE_RET(!key.empty(), {});
 
-  auto is_matmul1 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMatMul));
+  auto is_matmul1 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMatMulFusion));
   MS_CHECK_TRUE_RET(is_matmul1 != nullptr, {});
   auto logits_with_u = VectorRef({is_matmul1, query_with_bias_u, key});
 
@@ -111,7 +111,7 @@ std::unordered_map<std::string, VectorRef> TfliteRelPosMultiHeadAttentionFusion:
   auto is_param3 = std::make_shared<CondVar>(IsParamNode);
   MS_CHECK_TRUE_RET(is_param3 != nullptr, {});
   pos = VectorRef({is_transpose3, pos, is_param3});
-  auto is_matmul2 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMatMul));
+  auto is_matmul2 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMatMulFusion));
   MS_CHECK_TRUE_RET(is_matmul2 != nullptr, {});
   auto logits_with_v = VectorRef({is_matmul2, query_with_bias_v, pos});
   logits_with_v = DefineRelativeShiftPattern(logits_with_v);
@@ -134,7 +134,7 @@ std::unordered_map<std::string, VectorRef> TfliteRelPosMultiHeadAttentionFusion:
   MS_CHECK_TRUE_RET(is_softmax != nullptr, {});
   auto logits_softmax = VectorRef({is_softmax, logits_div});
   auto value = DefineProcessInputPattern(input_v_, weight_v_, bias_v_, value_stack_params_, value_prim_, true);
-  auto is_matmul3 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMatMul));
+  auto is_matmul3 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMatMulFusion));
   MS_CHECK_TRUE_RET(is_matmul3 != nullptr, {});
   auto output = VectorRef({is_matmul3, logits_softmax, value});
   auto pattern = DefineProcessOutputPattern(output, weight_o_, bias_o_);

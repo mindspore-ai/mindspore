@@ -426,7 +426,7 @@ void NormFusion::InitShapeSizeInferFuncMap() {
   shape_size_infer_registry_[schema::PrimitiveType_ExpandDims] = ExpandDimsShapeSizeInfer;
   shape_size_infer_registry_[schema::PrimitiveType_Fill] = FillShapeSizeInfer;
   shape_size_infer_registry_[schema::PrimitiveType_LayerNormFusion] = CommonShapeSizeInfer;
-  shape_size_infer_registry_[schema::PrimitiveType_MatMul] = MatMulShapeSizeInfer;
+  shape_size_infer_registry_[schema::PrimitiveType_MatMulFusion] = MatMulShapeSizeInfer;
   shape_size_infer_registry_[schema::PrimitiveType_MulFusion] = BroadcastShapeSizeInfer;
   shape_size_infer_registry_[schema::PrimitiveType_OneHot] = OneHotSizeInfer;
   shape_size_infer_registry_[schema::PrimitiveType_ReduceFusion] = CommonShapeSizeInfer;

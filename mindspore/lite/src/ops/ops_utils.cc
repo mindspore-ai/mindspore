@@ -397,8 +397,8 @@ std::unique_ptr<schema::PrimitiveT> L2NormalizeFusionPrimitiveCreator(const AnfN
   auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::L2NormalizeFusion>>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
-std::unique_ptr<schema::PrimitiveT> MatMulPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::MatMul>>(node);
+std::unique_ptr<schema::PrimitiveT> MatMulFusionPrimitiveCreator(const AnfNodePtr &node) {
+  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::MatMulFusion>>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> MaximumPrimitiveCreator(const AnfNodePtr &node) {
@@ -929,7 +929,8 @@ RegistryMSOps g_lshProjectionPrimitiveCreatorRegistry("LshProjection", LshProjec
 RegistryMSOps g_lSTMPrimitiveCreatorRegistry("LSTM", LSTMPrimitiveCreator);
 RegistryMSOps g_lSTMGradPrimitiveCreatorRegistry("LSTMGrad", LSTMGradPrimitiveCreator);
 RegistryMSOps g_l2NormalizeFusionPrimitiveCreatorRegistry("L2NormalizeFusion", L2NormalizeFusionPrimitiveCreator);
-RegistryMSOps g_matMulPrimitiveCreatorRegistry("MatMul", MatMulPrimitiveCreator);
+RegistryMSOps g_matMulFusionPrimitiveCreatorRegistry("MatMulFusion", MatMulFusionPrimitiveCreator);
+RegistryMSOps g_matMulPrimitiveCreatorRegistry("MatMul", MatMulFusionPrimitiveCreator);
 RegistryMSOps g_maximumPrimitiveCreatorRegistry("Maximum", MaximumPrimitiveCreator);
 RegistryMSOps g_maximumGradPrimitiveCreatorRegistry("MaximumGrad", MaximumGradPrimitiveCreator);
 RegistryMSOps g_maxPoolPrimitiveCreatorRegistry("MaxPool", MaxPoolFusionPrimitiveCreator);

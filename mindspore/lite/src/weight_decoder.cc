@@ -415,7 +415,7 @@ int WeightDecoder::GetMatMulPreferredDim(OpParameter *op_parameter, int input_in
 }
 
 int WeightDecoder::GetPreferredDim(OpParameter *op_parameter, int index, const std::vector<int> &dims) {
-  if (op_parameter->type_ == schema::PrimitiveType_MatMul) {
+  if (op_parameter->type_ == schema::PrimitiveType_MatMulFusion) {
     return GetMatMulPreferredDim(op_parameter, index, dims);
   }
   // The first index.

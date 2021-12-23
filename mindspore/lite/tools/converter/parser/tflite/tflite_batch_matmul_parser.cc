@@ -17,7 +17,7 @@
 #include "tools/converter/parser/tflite/tflite_batch_matmul_parser.h"
 #include <vector>
 #include <memory>
-#include "ops/mat_mul.h"
+#include "ops/fusion/mat_mul_fusion.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore {
@@ -25,7 +25,7 @@ namespace lite {
 ops::PrimitiveC *TfliteBatchMatmulParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                                 const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                                 const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = std::make_unique<ops::MatMul>();
+  auto prim = std::make_unique<ops::MatMulFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
   const auto &tflite_attr = tflite_op->builtin_options.AsBatchMatMulOptions();

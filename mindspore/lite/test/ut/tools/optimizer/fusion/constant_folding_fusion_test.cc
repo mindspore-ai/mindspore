@@ -521,8 +521,8 @@ TEST_F(ConstantFoldingFusionTest, TestRangeConstantFold) {
   ASSERT_EQ(new_meta_graph->nodes.size(), 0);
 }
 TEST_F(ConstantFoldingFusionTest, TestMatmulConstantFold) {
-  auto matmulT = new schema::MatMulT;
-  auto meta_graph = BuildGraph(schema::PrimitiveType_MatMul, matmulT);
+  auto matmulT = new schema::MatMulFusionT;
+  auto meta_graph = BuildGraph(schema::PrimitiveType_MatMulFusion, matmulT);
   auto func_graph = lite::AnfImporterFromMetaGraphT::Fb2Anf(meta_graph.get());
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();

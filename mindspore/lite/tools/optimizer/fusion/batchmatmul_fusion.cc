@@ -17,7 +17,7 @@
 #include <memory>
 #include <vector>
 #include <algorithm>
-#include "ops/mat_mul.h"
+#include "ops/fusion/mat_mul_fusion.h"
 #include "tools/common/tensor_util.h"
 #include "tools/converter/quant_param_holder.h"
 #include "tools/optimizer/common/gllo_utils.h"
@@ -94,8 +94,8 @@ STATUS GetRightMatmulInputParamter(const CNodePtr &stack_node, const ParameterPt
   return RET_OK;
 }
 
-std::shared_ptr<ops::MatMul> BuildMatMulPrim(const CNodePtr &stack_cnode) {
-  auto matmul_cvalue = std::make_shared<ops::MatMul>();
+std::shared_ptr<ops::MatMulFusion> BuildMatMulPrim(const CNodePtr &stack_cnode) {
+  auto matmul_cvalue = std::make_shared<ops::MatMulFusion>();
   if (matmul_cvalue == nullptr) {
     MS_LOG(ERROR) << "new MatMul failed";
     return nullptr;
@@ -346,7 +346,7 @@ const AnfNodePtr BatchMatMulFusion::Process(const FuncGraphPtr &func_graph, cons
       MS_LOG(ERROR) << "GetRightMatmulInputParamter failed";
       return node;
     }
-    auto prim_matmul = GetValueNode<std::shared_ptr<mindspore::ops::MatMul>>(matmul_value_node);
+    auto prim_matmul = GetValueNode<std::shared_ptr<mindspore::ops::MatMulFusion>>(matmul_value_node);
     MS_ASSERT(prim_matmul != nullptr);
     prim_matmul->set_transpose_b(true);
     matmul_inputs.push_back(rmatmul_paramter);
@@ -382,7 +382,7 @@ const AnfNodePtr BatchMatMulFusion::Process(const FuncGraphPtr &func_graph, cons
   MS_CHECK_TRUE_RET(stack_cnode->abstract() != nullptr, nullptr);
   matmul_cnode->set_abstract(stack_cnode->abstract()->Clone());
   if (right_transpose) {
-    auto matmul_primitive = GetValueNode<std::shared_ptr<ops::MatMul>>(matmul_cnode->input(0));
+    auto matmul_primitive = GetValueNode<std::shared_ptr<ops::MatMulFusion>>(matmul_cnode->input(0));
     matmul_primitive->set_transpose_b(true);
   }
   MS_LOG(INFO) << "stack node:" << stack_cnode->fullname_with_scope() << " batchmatmul fusion success";

@@ -347,7 +347,7 @@ enum PrimType {
   PrimType_LshProjection = 86,
   PrimType_LSTM = 87,
   PrimType_L2NormalizeFusion = 88,
-  PrimType_MatMul = 89,
+  PrimType_MatMulFusion = 89,
   PrimType_Maximum = 90,
   PrimType_MaximumGrad = 91,
   PrimType_MaxPoolFusion = 92,

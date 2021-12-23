@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "schema/model_v0_generated.h"
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/matmul_parameter.h"
@@ -33,7 +32,7 @@ OpParameter *PopulateMatMulParameter(const void *prim) {
     return nullptr;
   }
   memset(matmul_param, 0, sizeof(MatMulParameter));
-  matmul_param->op_parameter_.type_ = schema::PrimitiveType_MatMul;
+  matmul_param->op_parameter_.type_ = schema::PrimitiveType_MatMulFusion;
   matmul_param->b_transpose_ = value->transposeB();
   matmul_param->a_transpose_ = value->transposeA();
   matmul_param->has_bias_ = false;

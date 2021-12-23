@@ -25,7 +25,7 @@
 #include "wrapper/fp32/matmul_fp32_wrapper.h"
 #include "coder/opcoders/nnacl/dequant/de_quant.h"
 
-using mindspore::schema::PrimitiveType_MatMul;
+using mindspore::schema::PrimitiveType_MatMulFusion;
 
 namespace mindspore::lite::micro::nnacl {
 int MatMulFP32BaseCoder::ReSize() {

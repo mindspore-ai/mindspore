@@ -408,27 +408,18 @@ bool SlicePreposePass::SiblingsAreSameSlice(const NodeUsedListPtr &output_node_l
   std::vector<CNodePtr> slices;
   for (auto &output_node : *(output_node_list.get())) {
     auto cnode = output_node.first->cast<CNodePtr>();
-    if (cnode == nullptr) {
-      MS_LOG(ERROR) << "cnode is nullptr";
-      return false;
-    }
+    MS_CHECK_TRUE_MSG(cnode != nullptr, false, "cnode is nullptr");
     if (!CheckPrimitiveType(cnode, prim::kPrimSliceFusion)) {
       return false;
     }
     auto slice_node = GetSlice(cnode);
-    if (slice_node == nullptr) {
-      MS_LOG(ERROR) << "Slice is nullptr";
-      return false;
-    }
+    MS_CHECK_TRUE_MSG(slice_node != nullptr, false, "Slice is nullptr");
     slices.push_back(cnode);
   }
   MS_CHECK_TRUE_MSG(slices.size() > 0, RET_ERROR, "slices.size() is wrong");
   auto first_slice_cnode = slices.front();
   auto first_slice_node = GetSlice(first_slice_cnode);
-  if (first_slice_node == nullptr) {
-    MS_LOG(ERROR) << "GetSlice return nullptr";
-    return false;
-  }
+  MS_CHECK_TRUE_MSG(first_slice_node != nullptr, false, "GetSlice return nullptr");
   auto first_axes = first_slice_node->get_axes();
   auto first_begin = GetSliceBeginAndSize(first_slice_cnode, SliceBeginIndex);
   auto first_size = GetSliceBeginAndSize(first_slice_cnode, SliceSizeIndex);
@@ -953,7 +944,7 @@ bool SlicePreposePass::PreposeWithReshape(const FuncGraphPtr &graph, const CNode
       return false;
     }
     if (!CheckPrimitiveType(matmul_node, prim::kPrimFullConnection) &&
-        !CheckPrimitiveType(matmul_node, prim::kPrimMatMul)) {
+        !CheckPrimitiveType(matmul_node, prim::kPrimMatMulFusion)) {
       MS_LOG(DEBUG) << "not matmul->reshape->slice pattern";
       return false;
     }
@@ -1092,10 +1083,7 @@ bool SlicePreposePass::PreposeWithFullConnection(const FuncGraphPtr &graph, cons
     return false;
   }
   auto slice_node = GetSlice(slice_cnode);
-  if (slice_node == nullptr) {
-    MS_LOG(ERROR) << "slice is nullptr";
-    return false;
-  }
+  MS_CHECK_TRUE_MSG(slice_node != nullptr, false, "slice is nullptr");
   auto axes = slice_node->get_axes();
   auto begin = GetSliceBeginAndSize(slice_cnode, SliceBeginIndex);
   auto size = GetSliceBeginAndSize(slice_cnode, SliceSizeIndex);
@@ -1135,17 +1123,11 @@ bool SlicePreposePass::PreposeWithFullConnection(const FuncGraphPtr &graph, cons
   new_begin[mapped_axe[0]] = begin[0];
   new_size[mapped_axe[0]] = size[0];
   auto new_slice_vnode = CreateSliceValueNode(new_axes);
-  if (new_slice_vnode == nullptr) {
-    MS_LOG(ERROR) << "CreateSliceValueNode failed";
-    return false;
-  }
+  MS_CHECK_TRUE_MSG(new_slice_vnode != nullptr, false, "CreateSliceValueNode failed");
 
   auto manager = graph->manager();
   std::shared_ptr<FuncGraphTransaction> tr = std::make_shared<FuncGraphTransaction>(manager.get());
-  if (tr == nullptr) {
-    MS_LOG(ERROR) << "create FuncGraphTransaction failed";
-    return false;
-  }
+  MS_CHECK_TRUE_MSG(tr != nullptr, false, "create FuncGraphTransaction failed");
   auto begin_parameter = BuildIntVecParameterNode(
     graph, new_begin, slice_cnode->fullname_with_scope() + "_begin_" + std::to_string(node_name_index));
   node_name_index += 1;
@@ -1478,7 +1460,7 @@ bool SlicePreposePass::DoPrepose(const FuncGraphPtr &graph, const CNodePtr &slic
     return PreposeWithSoftmax(graph, slice_cnode, preceed_cnode);
   } else if (CheckPrimitiveType(preceed_cnode, prim::kPrimReshape)) {
     return PreposeWithReshape(graph, slice_cnode, preceed_cnode);
-  } else if (CheckPrimitiveType(preceed_cnode, prim::kPrimMatMul)) {
+  } else if (CheckPrimitiveType(preceed_cnode, prim::kPrimMatMulFusion)) {
     return PreposeWithMatmul(graph, slice_cnode, preceed_cnode);
   } else if (CheckPrimitiveType(preceed_cnode, prim::kPrimFullConnection)) {
     return PreposeWithFullConnection(graph, slice_cnode, preceed_cnode);

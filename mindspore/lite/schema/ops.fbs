@@ -106,7 +106,7 @@ union PrimitiveType {
     LshProjection,
     LSTM,
     L2NormalizeFusion,
-    MatMul,
+    MatMulFusion,
     Maximum,
     MaximumGrad,
     MaxPoolFusion,
@@ -683,9 +683,10 @@ table L2NormalizeFusion {
     activation_type: ActivationType = 0;
 }
 
-table MatMul {
+table MatMulFusion {
     transpose_a: bool = false;
     transpose_b: bool = false;
+    activation_type: ActivationType = 0;
 }
 
 table Maximum {

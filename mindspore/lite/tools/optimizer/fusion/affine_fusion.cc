@@ -28,7 +28,7 @@ namespace mindspore::opt {
 constexpr auto kInputWithBiasNum = 4;
 constexpr auto kInputBias = 3;
 const BaseRef AffineFusion::DefinePattern() const {
-  auto is_matmul = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimMatMul>);
+  auto is_matmul = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimMatMulFusion>);
   MS_CHECK_TRUE_RET(is_matmul != nullptr, {});
   auto is_splice = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimSplice>);
   MS_CHECK_TRUE_RET(is_splice != nullptr, {});
@@ -46,7 +46,7 @@ const AnfNodePtr AffineFusion::Process(const FuncGraphPtr &func_graph, const Anf
     return nullptr;
   }
   // matmul
-  if (!CheckPrimitiveType(node, prim::kPrimMatMul)) {
+  if (!CheckPrimitiveType(node, prim::kPrimMatMulFusion)) {
     MS_LOG(ERROR) << "the layer processed by affine fusion is not matmul.";
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_PARAM_INVALID);
     return nullptr;

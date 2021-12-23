@@ -87,8 +87,8 @@ int AffineFP32Coder::PrepareSpliceOp() {
 
 void *CreateMatmulPrimitive() {
   flatbuffers::FlatBufferBuilder fbb(1024);
-  auto val_offset = schema::CreateMatMul(fbb);
-  auto prim_offset = schema::CreatePrimitive(fbb, schema::PrimitiveType_MatMul, val_offset.o);
+  auto val_offset = schema::CreateMatMulFusion(fbb);
+  auto prim_offset = schema::CreatePrimitive(fbb, schema::PrimitiveType_MatMulFusion, val_offset.o);
   fbb.Finish(prim_offset);
   auto tmp_buf = fbb.GetBufferPointer();
   void *prim_buf = malloc(fbb.GetSize());

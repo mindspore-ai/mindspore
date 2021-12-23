@@ -19,14 +19,14 @@
 #include <map>
 #include <vector>
 #include "tools/converter/parser/tf/tf_node_parser_registry.h"
-#include "ops/mat_mul.h"
+#include "ops/fusion/mat_mul_fusion.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TFMatMulParser::Parse(const tensorflow::NodeDef &tf_op,
                                        const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                        std::vector<std::string> *inputs, int *output_size) {
-  auto prim = std::make_unique<ops::MatMul>();
+  auto prim = std::make_unique<ops::MatMulFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   tensorflow::AttrValue attr_value;
   if (TensorFlowUtils::FindAttrValue(tf_op, "transpose_a", &attr_value)) {
@@ -35,6 +35,7 @@ ops::PrimitiveC *TFMatMulParser::Parse(const tensorflow::NodeDef &tf_op,
   if (TensorFlowUtils::FindAttrValue(tf_op, "transpose_b", &attr_value)) {
     prim->set_transpose_b(attr_value.b());
   }
+  prim->set_activation_type(mindspore::NO_ACTIVATION);
 
   *output_size = 1;
   if (AddOpInput(tf_op, 0, inputs) != RET_OK || AddOpInput(tf_op, 1, inputs) != RET_OK) {

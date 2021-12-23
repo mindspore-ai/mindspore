@@ -58,7 +58,7 @@ BaseRef TfBidirectionGruCfFusion::DefineGruCellPattern(const BaseRef &in_ta_read
                                                        const std::vector<VarPtr> &vars) const {
   auto concat = VectorRef({GetPrim(prim::kPrimConcat), in_ta_read, switch3_true});
   auto matmul_enter = VectorRef({GetPrim(lite::kNameEnter), vars[0]});  // gate_kernel
-  auto matmul = VectorRef({GetPrim(prim::kPrimMatMul), concat, matmul_enter});
+  auto matmul = VectorRef({GetPrim(prim::kPrimMatMulFusion), concat, matmul_enter});
   auto bias_enter = VectorRef({GetPrim(lite::kNameEnter), vars[1]});  // cand_bias
   auto bias = VectorRef({GetPrim(prim::kPrimBiasAdd), matmul, bias_enter});
   auto sigmoid = VectorRef({GetPrim(prim::kPrimActivation), bias});
@@ -68,7 +68,7 @@ BaseRef TfBidirectionGruCfFusion::DefineGruCellPattern(const BaseRef &in_ta_read
   auto mul = VectorRef({GetPrim(prim::kPrimMulFusion), rt, switch3_true});
   auto concat1 = VectorRef({GetPrim(prim::kPrimConcat), in_ta_read, mul});
   auto matmul1_enter = VectorRef({GetPrim(lite::kNameEnter), vars[2]});  // cand_kernel
-  auto matmul1 = VectorRef({GetPrim(prim::kPrimMatMul), concat1, matmul1_enter});
+  auto matmul1 = VectorRef({GetPrim(prim::kPrimMatMulFusion), concat1, matmul1_enter});
   auto bias1_enter = VectorRef({GetPrim(lite::kNameEnter), vars[3]});  // cand_bias
   auto bias1 = VectorRef({GetPrim(prim::kPrimBiasAdd), matmul1, bias1_enter});
   auto tanh = VectorRef({GetPrim(prim::kPrimActivation), bias1});

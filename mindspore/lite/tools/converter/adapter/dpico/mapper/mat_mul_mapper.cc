@@ -84,6 +84,6 @@ STATUS MatMulMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *ba
   }
   return RET_OK;
 }
-REG_MAPPER(MatMul, MatMulMapper)
+REG_MAPPER(MatMulFusion, MatMulMapper)
 }  // namespace dpico
 }  // namespace mindspore
