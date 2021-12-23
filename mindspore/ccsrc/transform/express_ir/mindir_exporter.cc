@@ -607,6 +607,10 @@ bool IrExportBuilder::SetShapeToNodeProto(const TypePtr &type, const BaseShapePt
     *seq_string += type->type_name() + ",";
   } else if (type->isa<String>() || type->isa<UMonadType>() || type->isa<IOMonadType>()) {
     *seq_string += type->type_name() + ",";
+  } else if (type->isa<CSRTensorType>()) {
+    auto csr_tensor_type = type->cast<CSRTensorTypePtr>();
+    MS_EXCEPTION_IF_NULL(csr_tensor_type);
+    if (!SetShapeToNodeProto(csr_tensor_type->element(), shape, abs, attr_proto, seq_string)) return false;
   } else {
     MS_LOG(ERROR) << "Type of cnode need to be supported: " << type->type_name();
     return false;

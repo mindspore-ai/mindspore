@@ -14,12 +14,15 @@
 # ============================================================================
 """smoke tests for CSR operations"""
 
+import os
 import pytest
 import numpy as np
 
 from mindspore import Tensor, CSRTensor, ms_function, nn, context
 from mindspore.ops.operations import _csr_ops
 from mindspore.common import dtype as mstype
+from mindspore.train.serialization import export, load
+
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -145,8 +148,22 @@ def test_csr_tensor_in_while():
     assert np.allclose((values.asnumpy() + 2) * 8, out.values.asnumpy(), .0, .0)
     assert shape == out.shape
 
+    # Test Export MindIR
+    file_name = "csrtensor_with_control_while_net"
+    export(net, a, b, indptr, indices, values, file_name=file_name, file_format="MINDIR")
+    mindir_name = file_name + ".mindir"
+    assert os.path.exists(mindir_name)
 
-@pytest.mark.level1
+    graph = load(mindir_name)
+    loaded_net = nn.GraphCell(graph)
+    outputs_after_load = loaded_net(a, b, indptr, indices, values)
+    assert np.allclose(out.indptr.asnumpy(), outputs_after_load.indptr.asnumpy())
+    assert np.allclose(out.indices.asnumpy(), outputs_after_load.indices.asnumpy())
+    assert np.allclose(out.values.asnumpy(), outputs_after_load.values.asnumpy())
+    assert out.shape == outputs_after_load.shape
+
+
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_csr_tensor_in_while_cpu():
@@ -245,3 +262,105 @@ def test_csr_ops():
     assert np.allclose(graph_res[1].asnumpy(), expect2)
     assert np.allclose(graph_res[2].values.asnumpy(), expect3)
     assert np.allclose(graph_res[3].values.asnumpy(), expect3)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_csrtensor_export_mindir():
+    """
+    Feature: Test exporting and loading CSRTensor MindIR.
+    Description: Test export and load.
+    Expectation: Success.
+    """
+    class TestCSRTensor(nn.Cell):
+        def __init__(self, shape):
+            super().__init__()
+            self.shape = shape
+
+        def construct(self, indptr, indices, values):
+            return CSRTensor(indptr, indices, values, self.shape)
+
+    indptr = Tensor([0, 1, 2])
+    indices = Tensor([0, 1])
+    values = Tensor([2, 1], dtype=mstype.float32)
+    shape = (2, 4)
+    net = TestCSRTensor(shape)
+
+    file_name = "csrtensor_net"
+    export(net, indptr, indices, values, file_name=file_name, file_format="MINDIR")
+    mindir_name = file_name + ".mindir"
+    assert os.path.exists(mindir_name)
+
+    out = net(indptr, indices, values)
+    graph = load(mindir_name)
+    loaded_net = nn.GraphCell(graph)
+    outputs_after_load = loaded_net(indptr, indices, values)
+    assert np.allclose(out.indptr.asnumpy(), outputs_after_load.indptr.asnumpy())
+    assert np.allclose(out.indices.asnumpy(), outputs_after_load.indices.asnumpy())
+    assert np.allclose(out.values.asnumpy(), outputs_after_load.values.asnumpy())
+    assert out.shape == outputs_after_load.shape
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_csrops_export_mindir():
+    """
+    Feature: Test exporting and loading CSRTensor MindIR in a net.
+    Description: Test export and load.
+    Expectation: Success.
+    """
+    class TestCSRNet(nn.Cell):
+        def __init__(self, shape):
+            super().__init__()
+            self.shape = shape
+            self.csr_reducesum = _csr_ops.CSRReduceSum()
+            self.csr_mv = _csr_ops.CSRMV()
+
+        def construct(self, indptr, indices, values, dence_tensor, dense_vector):
+            csr_tensor = CSRTensor(indptr, indices, values, self.shape)
+            dense1 = self.csr_reducesum(csr_tensor, 1)
+            dense2 = self.csr_mv(csr_tensor, dense_vector)
+            dense3 = dense1 * dense2
+            sparse1 = csr_tensor * dence_tensor
+            sparse2 = dence_tensor * csr_tensor
+            return dense1, dense2, dense3, sparse1, sparse2
+
+    indptr = Tensor([0, 1, 2])
+    indices = Tensor([0, 1])
+    values = Tensor([2, 1], dtype=mstype.float32)
+    shape = (2, 4)
+    dense_tensor = Tensor([[1., 1, 1, 1], [1, 1, 1, 1]], dtype=mstype.float32)
+    dense_vector = Tensor([[1.], [1], [1], [1]], dtype=mstype.float32)
+
+    net = TestCSRNet(shape)
+    file_name = "csrops_net"
+    export(net, indptr, indices, values, dense_tensor, dense_vector, file_name=file_name, file_format="MINDIR")
+    mindir_name = file_name + ".mindir"
+    assert os.path.exists(mindir_name)
+
+    out = net(indptr, indices, values, dense_tensor, dense_vector)
+    expect0 = np.array([[2.], [1.]], dtype=np.float32)
+    expect1 = np.array([[2.], [1.]], dtype=np.float32)
+    expect2 = np.array([[4.], [1.]], dtype=np.float32)
+    expect3 = np.array([2., 1.], dtype=np.float32)
+    assert np.allclose(out[0].asnumpy(), expect0)
+    assert np.allclose(out[1].asnumpy(), expect1)
+    assert np.allclose(out[2].asnumpy(), expect2)
+    assert np.allclose(out[3].values.asnumpy(), expect3)
+    assert np.allclose(out[4].values.asnumpy(), expect3)
+
+    graph = load(mindir_name)
+    loaded_net = nn.GraphCell(graph)
+    outputs_after_load = loaded_net(indptr, indices, values, dense_tensor, dense_vector)
+    assert np.allclose(out[0].asnumpy(), outputs_after_load[0].asnumpy())
+    assert np.allclose(out[1].asnumpy(), outputs_after_load[1].asnumpy())
+    assert np.allclose(out[2].asnumpy(), outputs_after_load[2].asnumpy())
+    assert np.allclose(out[3].values.asnumpy(), outputs_after_load[3].values.asnumpy())
+    assert np.allclose(out[4].values.asnumpy(), outputs_after_load[4].values.asnumpy())
+    assert out[3].shape == outputs_after_load[3].shape
+    assert out[4].shape == outputs_after_load[4].shape
