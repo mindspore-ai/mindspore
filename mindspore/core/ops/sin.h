@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,7 @@
 
 #ifndef MINDSPORE_CORE_OPS_SIN_H_
 #define MINDSPORE_CORE_OPS_SIN_H_
-#include <map>
 #include <vector>
-#include <string>
 #include <memory>
 #include "ops/primitive_c.h"
 #include "abstract/abstract_value.h"
@@ -31,7 +29,7 @@ constexpr auto kNameSin = "Sin";
 class MS_CORE_API Sin : public PrimitiveC {
  public:
   /// \brief Constructor.
-  Sin() : PrimitiveC(kNameSin) {}
+  Sin() : PrimitiveC(kNameSin) { InitIOName({"x"}, {"output"}); }
   /// \brief Destructor.
   ~Sin() = default;
   MS_DECLARE_PARENT(Sin, PrimitiveC);
@@ -40,6 +38,7 @@ class MS_CORE_API Sin : public PrimitiveC {
 };
 AbstractBasePtr SinInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                          const std::vector<AbstractBasePtr> &input_args);
+using kPrimSinPtr = std::shared_ptr<Sin>;
 }  // namespace ops
 }  // namespace mindspore
 
