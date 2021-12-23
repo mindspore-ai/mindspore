@@ -16,7 +16,6 @@
 
 #include "nnacl/fp32_grad/softmax_grad.h"
 #include <string.h>
-#include "nnacl/fp32_grad/gemm.h"
 
 void SoftmaxGrad(const float *input_ptr, const float *yt_ptr, float *output_ptr, float *sum_data, float *sum_mul,
                  const SoftmaxParameter *parameter) {

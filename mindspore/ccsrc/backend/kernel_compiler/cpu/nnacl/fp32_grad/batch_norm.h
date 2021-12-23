@@ -17,12 +17,7 @@
 #ifndef MINDSPORE_NNACL_FP32_GRAD_BATCH_NORM_H_
 #define MINDSPORE_NNACL_FP32_GRAD_BATCH_NORM_H_
 
-#include "nnacl/op_base.h"
-
-typedef struct BNGradParameter {
-  OpParameter op_parameter_;
-  float epsilon_;
-} BNGradParameter;
+#include "nnacl/fp32_grad/batch_norm_parameter.h"
 
 #ifdef __cplusplus
 extern "C" {

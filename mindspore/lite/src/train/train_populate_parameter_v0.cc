@@ -19,18 +19,15 @@
 #include "src/ops/populate/populate_register.h"
 #include "schema/model_v0_generated.h"
 #include "nnacl/pooling_parameter.h"
-#include "nnacl/fp32_grad/softmax_grad.h"
-#include "nnacl/fp32/activation_fp32.h"
+#include "nnacl/fp32_grad/softmax_crossentropy_parameter.h"
+#include "nnacl/activation_parameter.h"
 #include "nnacl/conv_parameter.h"
 #include "nnacl/power_parameter.h"
 #include "nnacl/arithmetic.h"
 #include "nnacl/fp32_grad/optimizer.h"
-#include "nnacl/fp32_grad/batch_norm.h"
+#include "nnacl/fp32_grad/batch_norm_parameter.h"
 #include "nnacl/fp32_grad/dropout_parameter.h"
 #include "nnacl/fp32_grad/smooth_l1_loss.h"
-#include "nnacl/infer/conv2d_grad_filter_infer.h"
-#include "nnacl/infer/conv2d_grad_input_infer.h"
-#include "nnacl/infer/group_conv2d_grad_input_infer.h"
 
 namespace mindspore::kernel {
 namespace {

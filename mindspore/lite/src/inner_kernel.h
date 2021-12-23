@@ -159,6 +159,8 @@ class InnerKernel : public Kernel {
     return mindspore::lite::RET_OK;
   }
 
+  virtual int SetupVirtualBatch(int virtual_batch_multiplier, int param) { return mindspore::lite::RET_OK; }
+
   virtual bool IsEval() const { return !this->train_mode_; }
 
   virtual void SetTrainable(bool trainable = true) { this->trainable_ = trainable; }

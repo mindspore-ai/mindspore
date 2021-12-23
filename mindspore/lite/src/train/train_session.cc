@@ -26,18 +26,13 @@
 #include <map>
 #include <set>
 #include "include/errorcode.h"
-#include "src/executor.h"
 #include "src/lite_model.h"
 #include "src/lite_kernel_util.h"
-#include "src/sub_graph_kernel.h"
 #include "src/tensor.h"
 #include "src/kernel_registry.h"
 #include "src/common/prim_util.h"
 #include "src/common/tensor_util.h"
 #include "src/common/utils.h"
-#include "src/runtime/kernel/arm/fp32_grad/convolution.h"
-#include "src/runtime/kernel/arm/fp32/batchnorm_fp32.h"
-#include "src/train/loss_kernel.h"
 #include "src/train/optimizer_kernel.h"
 #include "src/train/train_utils.h"
 #include "src/train/train_export.h"
@@ -890,8 +885,9 @@ int TrainSession::ApplyGradients(const std::vector<tensor::MSTensor *> &gradient
       if (current_gradient->tensor_name() == gradient->tensor_name()) {
         found = true;
         if (current_gradient->Size() == gradient->Size()) {
-          std::copy(static_cast<char *>(gradient->data()), static_cast<char *>(gradient->data()) + gradient->Size(),
-                    static_cast<char *>(current_gradient->MutableData()));
+          std::copy(static_cast<uint8_t *>(gradient->data()),
+                    static_cast<uint8_t *>(gradient->data()) + gradient->Size(),
+                    static_cast<uint8_t *>(current_gradient->MutableData()));
         } else {
           MS_LOG(ERROR) << "gradient tensor " << gradient->tensor_name() << " has wrong size " << gradient->Size()
                         << " instead of " << current_gradient->Size();
@@ -954,14 +950,8 @@ int TrainSession::AdminSetupVirtualBatch(int virtual_batch_multiplier, float lr,
     }
 
     if (IsBN(kernel) && kernel->IsTrainable()) {
-      auto batchnorm = static_cast<kernel::BatchnormCPUKernel *>(kernel->kernel());
-      auto ret = RET_OK;
-      if (mod == kernel::WeightUpdateMode::VIRTUAL_BATCH) {
-        momentum = (momentum < 0.0f) ? (batchnorm->get_momentum() / virtual_batch_multiplier_) : momentum;
-        ret = batchnorm->set_momentum(momentum);
-      } else {
-        ret = batchnorm->RestoreDefaultMomentum();
-      }
+      auto batchnorm = static_cast<kernel::InnerKernel *>(kernel->kernel());
+      auto ret = batchnorm->SetupVirtualBatch(virtual_batch_multiplier_, momentum);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << kernel->name() << " failed to set momentum";
         return RET_ERROR;

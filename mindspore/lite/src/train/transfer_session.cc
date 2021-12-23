@@ -28,12 +28,8 @@
 #include "src/tensor.h"
 #include "src/train/loss_kernel.h"
 #include "src/train/optimizer_kernel.h"
-#include "src/sub_graph_kernel.h"
 #include "src/train/train_populate_parameter.h"
 #include "src/executor.h"
-#include "src/kernel_registry.h"
-#include "src/runtime/kernel/arm/fp32_grad/convolution.h"
-#include "nnacl/fp32/pack_fp32.h"
 #include "src/train/train_export.h"
 #include "src/train/train_utils.h"
 
@@ -141,13 +137,22 @@ int TransferSession::RunGraph(const KernelCallBack &before, const KernelCallBack
   for (auto &backbone_head_pair : backbone_head_map_) {
     auto input = backbone_head_pair.first;
     auto output = backbone_head_pair.second;
-    char *input_data = reinterpret_cast<char *>(input->MutableData());
-    char *output_data = reinterpret_cast<char *>(output->MutableData());
+    float *input_data = reinterpret_cast<float *>(input->MutableData());
+    float *output_data = reinterpret_cast<float *>(output->MutableData());
     if (nchw2nhwc_) {
-      int plane = input->shape().at(1) * input->shape().at(2);
       int batch = input->shape().at(0);
+      int plane = input->shape().at(1) * input->shape().at(2);
       int channel = input->shape().at(3);
-      PackNCHWToNHWCFp32(output_data, input_data, batch, plane, channel, 0, 1);
+      int img_size = plane * channel;
+      for (int b = 0; b < batch; b++) {
+        float *in = input_data + b * img_size;
+        float *out = output_data + b * img_size;
+        for (int p = 0; p < plane; p++) {
+          for (int c = 0; c < channel; c++) {
+            in[p * channel + c] = out[c * plane + p];
+          }
+        }
+      }
     } else {
       std::copy(output_data, output_data + output->Size(), input_data);
     }

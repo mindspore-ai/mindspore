@@ -17,19 +17,19 @@
 #include <algorithm>
 #include "src/ops/populate/populate_register.h"
 #include "src/ops/populate/default_populate.h"
-#include "src/ops/populate/strided_slice_populate.h"
+#include "nnacl/strided_slice_parameter.h"
 #include "nnacl/arithmetic.h"
 #include "nnacl/conv_parameter.h"
 #include "nnacl/lstm_parameter.h"
 #include "nnacl/pooling_parameter.h"
 #include "nnacl/power_parameter.h"
-#include "nnacl/fp32/activation_fp32.h"
-#include "nnacl/fp32_grad/softmax_grad.h"
+#include "nnacl/activation_parameter.h"
+#include "nnacl/fp32_grad/softmax_crossentropy_parameter.h"
 #include "nnacl/fp32_grad/optimizer.h"
-#include "nnacl/fp32_grad/batch_norm.h"
+#include "nnacl/fp32_grad/batch_norm_parameter.h"
 #include "nnacl/fp32_grad/dropout_parameter.h"
 #include "nnacl/fp32_grad/smooth_l1_loss.h"
-#include "nnacl/fp32_grad/resize_grad.h"
+#include "nnacl/fp32_grad/resize_grad_parameter.h"
 
 using mindspore::lite::Registry;
 

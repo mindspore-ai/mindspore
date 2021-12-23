@@ -14,20 +14,23 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_FP32_GRAD_RESIZE_GRAD_H_
-#define MINDSPORE_NNACL_FP32_GRAD_RESIZE_GRAD_H_
+#ifndef MINDSPORE_NNACL_FP32_GRAD_SOFTMAX_CROSSENTROPY_PARAMETER_H_
+#define MINDSPORE_NNACL_FP32_GRAD_SOFTMAX_CROSSENTROPY_PARAMETER_H_
 
-#include "nnacl/fp32_grad/resize_grad_parameter.h"
+#include "nnacl/op_base.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+typedef struct SoftmaxCrossEntropyParameter {
+  // primitive parameter
+  OpParameter op_parameter_;
+  int n_dim_;
 
-int ResizeNearestNeighborGrad(const float *in_addr, float *out_addr, int batch_size, int channel, int format,
-                              const ResizeGradParameter *param);
-int ResizeBiLinearGrad(const float *in_addr, float *out_addr, int batch_size, int channel, int format,
-                       const ResizeGradParameter *param);
-#ifdef __cplusplus
-}
-#endif
-#endif  //  MINDSPORE_NNACL_FP32_GRAD_RESIZE_GRAD_H_
+  // shape correlative
+  int input_shape_[5];
+
+  // other parameter
+  int32_t batch_size_;
+  unsigned int number_of_classes_;
+  bool is_grad_;
+} SoftmaxCrossEntropyParameter;
+
+#endif  // MINDSPORE_NNACL_FP32_GRAD_SOFTMAX_CROSSENTROPY_PARAMETER_H_
