@@ -2255,7 +2255,7 @@ class Exp(PrimitiveWithInfer):
         return None
 
 
-class Expm1(PrimitiveWithInfer):
+class Expm1(Primitive):
     r"""
     Returns exponential then minus 1 of a tensor element-wise.
 
@@ -2289,12 +2289,6 @@ class Expm1(PrimitiveWithInfer):
         """Initialize Expm1."""
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
 
-    def infer_shape(self, x_shape):
-        return x_shape
-
-    def infer_dtype(self, x_type):
-        validator.check_tensor_dtype_valid("x", x_type, [mstype.float16, mstype.float32], self.name)
-        return x_type
 
 
 class HistogramFixedWidth(PrimitiveWithInfer):
