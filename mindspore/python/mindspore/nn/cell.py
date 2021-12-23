@@ -417,7 +417,7 @@ class Cell(Cell_):
 
         return all_prims
 
-    def shard(self, strategy):
+    def set_data_parallel(self):
         """
         For all primitive ops in this cell(including ops of cells that wrapped by this cell),
         if parallel strategy is not specified, then instead of auto-searching, data parallel
@@ -426,19 +426,14 @@ class Cell(Cell_):
         Note:
             Only effective while using auto_parallel_context = ParallelMode.AUTO_PARALLEL.
 
-        Args:
-            strategy(str): The parallel strategy. Support: data_parallel.
-
-        Raises:
-            ValueError: if strategy is not in support list.
+        Examples:
+            >>> import mindspore.nn as nn
+            >>> net = nn.Dense(3, 4)
+            >>> net.set_data_parallel()
         """
-        strategy_gen_modes = ["data_parallel"]
-        if strategy not in strategy_gen_modes:
-            raise ValueError(f"unexpected input {strategy}, must be one of {strategy_gen_modes}")
-
         all_prims = self._get_prims_recursively()
         for prim in all_prims:
-            prim.add_prim_attr("strategy_gen_mode", strategy)
+            prim.add_prim_attr("strategy_gen_mode", "data_parallel")
 
     class CellGuard:
         def __enter__(self):
