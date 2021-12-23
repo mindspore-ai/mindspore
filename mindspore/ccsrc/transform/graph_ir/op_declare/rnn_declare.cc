@@ -112,7 +112,7 @@ ATTR_MAP(DynamicGRUV2) = {{"direction", ATTR_DESC(direction, AnyTraits<std::stri
                           {"cell_clip", ATTR_DESC(cell_clip, AnyTraits<float>())},
                           {"num_proj", ATTR_DESC(num_proj, AnyTraits<int64_t>())},
                           {"time_major", ATTR_DESC(time_major, AnyTraits<bool>())},
-                          {"activation", ATTR_DESC(direction, AnyTraits<std::string>())},
+                          {"activation", ATTR_DESC(activation, AnyTraits<std::string>())},
                           {"gate_order", ATTR_DESC(gate_order, AnyTraits<std::string>())},
                           {"reset_after", ATTR_DESC(reset_after, AnyTraits<bool>())},
                           {"is_training", ATTR_DESC(is_training, AnyTraits<bool>())}};

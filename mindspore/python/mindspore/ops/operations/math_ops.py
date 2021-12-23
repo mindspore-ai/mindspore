@@ -4780,7 +4780,7 @@ class Atanh(Primitive):
     Inputs:
         - **x** (Tensor): The shape of tensor is
           :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-           The data type should be one of the following types: float16, float32.
+          The data type should be one of the following types: float16, float32.
 
     Outputs:
         A Tensor, has the same type as the input.
