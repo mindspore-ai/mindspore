@@ -193,7 +193,7 @@ public class AlbertDataSet extends DataSet {
             if (line.isEmpty()) {
                 continue;
             }
-            String[] info = line.split(">>>")
+            String[] info = line.split(">>>");
             if (info.length > 1) {
                 line = info[1];
             }
