@@ -76,7 +76,7 @@ int MatMulScaleFusion::CalNewScaleImpl(float *curr_weight_data, std::vector<int6
 }
 
 bool MatMulScaleFusion::CheckPrevCnodeProper(const CNodePtr &prev_cnode) const {
-  if (!CheckPrimitiveType(prev_cnode, prim::kPrimMatMul)) {
+  if (!CheckPrimitiveType(prev_cnode, prim::kPrimMatMulFusion)) {
     MS_LOG(INFO) << prev_cnode->fullname_with_scope() << "is not matmul node";
     return false;
   }
@@ -106,7 +106,7 @@ bool MatMulScaleFusion::CheckPrevCnodeProper(const CNodePtr &prev_cnode) const {
 }
 
 const BaseRef MatMulScaleFusion::DefinePattern() const {
-  auto is_fc = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimMatMul>);
+  auto is_fc = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimMatMulFusion>);
   MS_CHECK_TRUE_RET(is_fc != nullptr, {});
   auto is_scale = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimScaleFusion>);
   MS_CHECK_TRUE_RET(is_scale != nullptr, {});

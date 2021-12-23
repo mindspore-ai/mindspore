@@ -46,7 +46,7 @@ void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, const std::vec
                                     schema::v0::PrimitiveType_DeDepthwiseConv2D, schema::v0::PrimitiveType_MatMul};
 #else
   static std::set<int> packed_op = {schema::PrimitiveType_Conv2DFusion, schema::PrimitiveType_Conv2dTransposeFusion,
-                                    schema::PrimitiveType_MatMul};
+                                    schema::PrimitiveType_MatMulFusion};
 #endif
 
   // simulating benchmark: session::LiteSession::CreateSession() -> session->Init()
@@ -213,7 +213,7 @@ void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, std::tuple<std
   auto primitive_type = static_cast<schema::PrimitiveType>(op_parameter->type_);
   static std::set<schema::PrimitiveType> packed_op = {
     schema::PrimitiveType_Conv2DFusion, schema::PrimitiveType_Conv2dTransposeFusion, schema::PrimitiveType_Conv2DFusion,
-    schema::PrimitiveType_Conv2dTransposeFusion, schema::PrimitiveType_MatMul};
+    schema::PrimitiveType_Conv2dTransposeFusion, schema::PrimitiveType_MatMulFusion};
 
   // simulating benchmark: session::LiteSession::CreateSession() -> session->Init()
   MS_LOG(DEBUG) << "initialize OpenCLRuntime and OpenCLAllocator";

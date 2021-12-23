@@ -149,7 +149,7 @@ Status NPUDelegate::Init() {
     {schema::PrimitiveType_FullConnection, GetNPUOp<FullconnectionNPUOp>},
     {schema::PrimitiveType_Gather, GetNPUOp<GatherNPUOp>},
     {schema::PrimitiveType_InstanceNorm, GetNPUOp<InstanceNormNPUOp>},
-    {schema::PrimitiveType_MatMul, GetNPUOp<MatMulNPUOp>},
+    {schema::PrimitiveType_MatMulFusion, GetNPUOp<MatMulNPUOp>},
     {schema::PrimitiveType_PadFusion, GetNPUOp<PadNPUOp>},
     {schema::PrimitiveType_ReduceFusion, GetNPUOp<ReduceNPUOp>},
     {schema::PrimitiveType_Reshape, GetNPUOp<ReshapeNPUOp>},

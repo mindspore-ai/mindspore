@@ -442,7 +442,7 @@ int OpenCLSubGraph::Prepare() {
     }
     if (desc_.provider == kBuiltin) {
       auto opencl_kernel = reinterpret_cast<kernel::OpenCLKernel *>(node->kernel());
-      std::set<int> pre_init_weight_list = {schema::PrimitiveType_MatMul, schema::PrimitiveType_BiasAdd};
+      std::set<int> pre_init_weight_list = {schema::PrimitiveType_MatMulFusion, schema::PrimitiveType_BiasAdd};
       if (pre_init_weight_list.find(opencl_kernel->type()) != pre_init_weight_list.end()) {
         auto ret = opencl_kernel->InitWeights();
         if (ret != RET_OK) {

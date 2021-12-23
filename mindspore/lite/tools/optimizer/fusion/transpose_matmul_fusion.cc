@@ -67,7 +67,7 @@ bool TransposeMatMulFusion::Run(const FuncGraphPtr &func_graph) {
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
-    if (!CheckPrimitiveType(node, prim::kPrimMatMul)) {
+    if (!CheckPrimitiveType(node, prim::kPrimMatMulFusion)) {
       continue;
     }
     if (IsMarkedTrainOp(cnode)) {

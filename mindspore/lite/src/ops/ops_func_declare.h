@@ -96,7 +96,7 @@
 #include "ops/lrn.h"
 #include "ops/lsh_projection.h"
 #include "ops/lstm.h"
-#include "ops/mat_mul.h"
+#include "ops/fusion/mat_mul_fusion.h"
 #include "ops/max_pool.h"
 #include "ops/maximum.h"
 #include "ops/switch_layer.h"
@@ -350,7 +350,7 @@ FUNC_MSOP2SCHEMAOP_DECLARE(LshProjection)
 FUNC_MSOP2SCHEMAOP_DECLARE(LSTM)
 FUNC_MSOP2SCHEMAOP_DECLARE(LSTMGrad)
 FUNC_MSOP2SCHEMAOP_DECLARE(L2NormalizeFusion)
-FUNC_MSOP2SCHEMAOP_DECLARE(MatMul)
+FUNC_MSOP2SCHEMAOP_DECLARE(MatMulFusion)
 FUNC_MSOP2SCHEMAOP_DECLARE(Maximum)
 FUNC_MSOP2SCHEMAOP_DECLARE(MaximumGrad)
 FUNC_MSOP2SCHEMAOP_DECLARE(MaxPoolFusion)

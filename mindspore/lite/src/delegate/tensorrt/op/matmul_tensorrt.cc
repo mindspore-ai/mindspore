@@ -38,8 +38,8 @@ int MatMulTensorRT::IsSupport(const mindspore::schema::Primitive *primitive,
 }
 
 int MatMulTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
-  if (type_ == schema::PrimitiveType_MatMul) {
-    auto primitive = this->GetPrimitive()->value_as_MatMul();
+  if (type_ == schema::PrimitiveType_MatMulFusion) {
+    auto primitive = this->GetPrimitive()->value_as_MatMulFusion();
     transpose_a_ = primitive->transpose_a() ? nvinfer1::MatrixOperation::kTRANSPOSE : nvinfer1::MatrixOperation::kNONE;
     transpose_b_ = primitive->transpose_b() ? nvinfer1::MatrixOperation::kTRANSPOSE : nvinfer1::MatrixOperation::kNONE;
   } else if (type_ == schema::PrimitiveType_FullConnection) {

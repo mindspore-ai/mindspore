@@ -34,7 +34,7 @@ STATUS MatMulBiasAddFusionPass::Run(MetaGraphT *graph) { return FusionPass::Run(
 STATUS MatMulBiasAddFusionPass::DefinePattern() {
   auto mul_op = std::make_shared<PatternOp>();
   mul_op->id = MulName;
-  mul_op->types = {schema::PrimitiveType_MatMul};
+  mul_op->types = {schema::PrimitiveType_MatMulFusion};
   auto bias_op = std::make_shared<PatternOp>();
   bias_op->id = BiasName;
   bias_op->types = {schema::PrimitiveType_BiasAdd};

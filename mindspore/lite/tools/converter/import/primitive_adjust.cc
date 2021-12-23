@@ -55,7 +55,7 @@
 #include "ops/grad/max_pool_grad.h"
 #include "ops/gelu.h"
 #include "ops/leaky_relu.h"
-#include "ops/mat_mul.h"
+#include "ops/fusion/mat_mul_fusion.h"
 #include "ops/reduce_all.h"
 #include "ops/reduce_asum.h"
 #include "ops/reduce_max.h"
@@ -128,6 +128,7 @@ namespace {
 constexpr auto kNameArgMaxWithValue = "ArgMaxWithValue";
 constexpr auto kNameArgMinWithValue = "ArgMinWithValue";
 constexpr auto kNameBatchMatMul = "BatchMatMul";
+constexpr auto kNameMatMul = "MatMul";
 constexpr auto kNameFusedBatchNormEx = "FusedBatchNormEx";
 constexpr auto kNameFusedBatchNormGradEx = "FusedBatchNormGradEx";
 constexpr auto kNameFusedBatchNormGradCPU = "FusedBatchNormGradCPU";
@@ -609,7 +610,8 @@ REGIST_PRIMITIVE_ADJUST(kNameAvgPool, MoveAttrPool)
 REGIST_PRIMITIVE_ADJUST(kNameAvgPoolGrad, MoveAttrPoolGrad)
 REGIST_PRIMITIVE_ADJUST(kNameAvgPoolGradGpu, MoveAttrPoolGrad)
 REGIST_PRIMITIVE_ADJUST(kNameAvgPoolGradCpu, MoveAttrPoolGrad)
-REGIST_PRIMITIVE_ADJUST(kNameBatchMatMul, MoveAttrMapCommon<ops::MatMul>)
+REGIST_PRIMITIVE_ADJUST(kNameBatchMatMul, MoveAttrMapCommon<ops::MatMulFusion>)
+REGIST_PRIMITIVE_ADJUST(kNameMatMul, MoveAttrMapCommon<ops::MatMulFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameBatchNorm, MoveAttrMapCommon<ops::FusedBatchNorm>)
 REGIST_PRIMITIVE_ADJUST(kNameConv2DBackpropFilter, MoveAttrMapCommon<ops::Conv2DBackpropFilterFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameConv2DBackpropInput, MoveAttrMapCommon<ops::Conv2DBackpropInputFusion>)

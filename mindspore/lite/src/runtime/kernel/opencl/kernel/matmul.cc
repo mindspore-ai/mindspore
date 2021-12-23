@@ -26,7 +26,7 @@ using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_MatMul;
+using mindspore::schema::PrimitiveType_MatMulFusion;
 
 namespace mindspore::kernel {
 bool IsUseStrassenMatmul(const std::vector<lite::Tensor *> &in_tensors_) {
@@ -463,6 +463,6 @@ kernel::InnerKernel *OpenCLMatMulKernelCreator(const std::vector<lite::Tensor *>
   return kernel;
 }
 
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_MatMul, OpenCLMatMulKernelCreator)
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_MatMul, OpenCLMatMulKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_MatMulFusion, OpenCLMatMulKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_MatMulFusion, OpenCLMatMulKernelCreator)
 }  // namespace mindspore::kernel

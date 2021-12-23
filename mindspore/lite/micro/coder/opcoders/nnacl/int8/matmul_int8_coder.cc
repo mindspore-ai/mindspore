@@ -16,7 +16,7 @@
 
 #include "coder/opcoders/nnacl/int8/matmul_int8_coder.h"
 #include "coder/opcoders/op_coder.h"
-using mindspore::schema::PrimitiveType_MatMul;
+using mindspore::schema::PrimitiveType_MatMulFusion;
 namespace mindspore::lite::micro::nnacl {
 int MatMulInt8Coder::Prepare(CoderContext *const context) {
   MS_CHECK_TRUE_RET(input_tensors_.size() >= 2, RET_ERROR);
@@ -55,5 +55,5 @@ int MatMulInt8Coder::DoCode(CoderContext *const context) {
   return RET_OK;
 }
 
-REG_OPERATOR_CODER(kAllTargets, kNumberTypeInt8, PrimitiveType_MatMul, CPUOpCoderCreator<MatMulInt8Coder>)
+REG_OPERATOR_CODER(kAllTargets, kNumberTypeInt8, PrimitiveType_MatMulFusion, CPUOpCoderCreator<MatMulInt8Coder>)
 }  // namespace mindspore::lite::micro::nnacl

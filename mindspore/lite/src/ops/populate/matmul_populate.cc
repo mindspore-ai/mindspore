@@ -15,14 +15,14 @@
  */
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/matmul_parameter.h"
-using mindspore::schema::PrimitiveType_MatMul;
+using mindspore::schema::PrimitiveType_MatMulFusion;
 
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateMatMulParameter(const void *prim) {
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   auto primitive = static_cast<const schema::Primitive *>(prim);
-  auto value = primitive->value_as_MatMul();
+  auto value = primitive->value_as_MatMulFusion();
   MS_CHECK_TRUE_RET(value != nullptr, nullptr);
 
   auto *param = reinterpret_cast<MatMulParameter *>(malloc(sizeof(MatMulParameter)));
@@ -35,10 +35,10 @@ OpParameter *PopulateMatMulParameter(const void *prim) {
   param->b_transpose_ = value->transpose_b();
   param->a_transpose_ = value->transpose_a();
   param->has_bias_ = false;
-  param->act_type_ = ActType_No;
+  param->act_type_ = static_cast<ActType>(value->activation_type());
 
   return reinterpret_cast<OpParameter *>(param);
 }
-REG_POPULATE(PrimitiveType_MatMul, PopulateMatMulParameter, SCHEMA_CUR)
+REG_POPULATE(PrimitiveType_MatMulFusion, PopulateMatMulParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

@@ -27,7 +27,7 @@ const size_t kWeightShapeSize = 2;
 
 namespace {
 VectorRef DefineEmbedding(const BaseRef &input, const BaseRef &weight, const BaseRef &bias) {
-  auto is_matmul = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMatMul));
+  auto is_matmul = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMatMulFusion));
   MS_CHECK_TRUE_RET(is_matmul != nullptr, {});
   auto dense = VectorRef({is_matmul, input, weight, bias});
   auto is_reshape = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReshape));
@@ -68,7 +68,7 @@ VectorRef MultiHeadAttentionFusion::DefineMPWithMaskPattern() const {
   MS_CHECK_TRUE_RET(!k_embedding.empty(), {});
   auto v_embedding = DefineEmbedding(input_v_, weight_v_, bias_v_);
   MS_CHECK_TRUE_RET(!v_embedding.empty(), {});
-  auto is_matmul1 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMatMul));
+  auto is_matmul1 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMatMulFusion));
   MS_CHECK_TRUE_RET(is_matmul1 != nullptr, {});
   auto q2k = VectorRef({is_matmul1, q_embedding, k_embedding});
   auto is_mul = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMulFusion));
@@ -84,7 +84,7 @@ VectorRef MultiHeadAttentionFusion::DefineMPWithMaskPattern() const {
   auto is_softmax = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimSoftmax));
   MS_CHECK_TRUE_RET(is_softmax != nullptr, {});
   auto softmax = VectorRef({is_softmax, q2k_normed_masked});
-  auto is_matmul2 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMatMul));
+  auto is_matmul2 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMatMulFusion));
   MS_CHECK_TRUE_RET(is_matmul2 != nullptr, {});
   auto softmax2v = VectorRef({is_matmul2, softmax, v_embedding});
   auto is_transpose = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTranspose));
@@ -97,7 +97,7 @@ VectorRef MultiHeadAttentionFusion::DefineMPWithMaskPattern() const {
   auto is_var = std::make_shared<Var>();
   MS_CHECK_TRUE_RET(is_var != nullptr, {});
   auto softmax2v_transposed_reshaped = VectorRef({is_reshape, softmax2v_transposed, is_var});
-  auto is_matmul3 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMatMul));
+  auto is_matmul3 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMatMulFusion));
   MS_CHECK_TRUE_RET(is_matmul3 != nullptr, {});
   return VectorRef({is_matmul3, softmax2v_transposed_reshaped, weight_o_, bias_o_});
 }
@@ -114,7 +114,7 @@ VectorRef DefineDensePattern(const BaseRef &input, const BaseRef &weight, const 
   auto is_param2 = std::make_shared<CondVar>(IsParamNode);
   MS_CHECK_TRUE_RET(is_param2 != nullptr, {});
   auto reshape1 = VectorRef({is_reshape1, transpose, is_param2});
-  auto is_matmul = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMatMul));
+  auto is_matmul = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMatMulFusion));
   MS_CHECK_TRUE_RET(is_matmul != nullptr, {});
   auto matmul = VectorRef({is_matmul, reshape1, weight});
   auto is_reshape2 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReshape));
@@ -211,7 +211,7 @@ VectorRef MultiHeadAttentionFusion::DefineMPWithoutMaskPattern() const {
 
   auto key = DefineProcessInputPattern(input_k_, weight_k_, bias_k_, reshape_k_);
   MS_CHECK_TRUE_RET(!key.empty(), {});
-  auto is_matmul1 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMatMul));
+  auto is_matmul1 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMatMulFusion));
   MS_CHECK_TRUE_RET(is_matmul1 != nullptr, {});
   auto query_mul_key = VectorRef({is_matmul1, query_div, key});
   auto is_softmax = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimSoftmax));
@@ -220,7 +220,7 @@ VectorRef MultiHeadAttentionFusion::DefineMPWithoutMaskPattern() const {
 
   auto value = DefineProcessInputPattern(input_v_, weight_v_, bias_v_, reshape_v_);
   MS_CHECK_TRUE_RET(!value.empty(), {});
-  auto is_matmul2 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMatMul));
+  auto is_matmul2 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMatMulFusion));
   MS_CHECK_TRUE_RET(is_matmul2 != nullptr, {});
   auto softmax_mul_val = VectorRef({is_matmul2, softmax, value});
 

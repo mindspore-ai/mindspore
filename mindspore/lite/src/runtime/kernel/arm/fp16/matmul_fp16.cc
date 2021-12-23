@@ -25,7 +25,7 @@ using mindspore::lite::kHWDimNumber;
 using mindspore::lite::kNCHWDimNumber;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_MatMul;
+using mindspore::schema::PrimitiveType_MatMulFusion;
 
 namespace mindspore::kernel {
 void MatmulFP16CPUKernel::InitAShape() {
@@ -192,5 +192,5 @@ int MatmulFP16CPUKernel::Eval() {
   return RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_MatMul, LiteKernelCreator<MatmulFP16CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_MatMulFusion, LiteKernelCreator<MatmulFP16CPUKernel>)
 }  // namespace mindspore::kernel

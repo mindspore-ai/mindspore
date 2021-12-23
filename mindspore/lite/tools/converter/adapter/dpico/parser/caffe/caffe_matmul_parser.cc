@@ -17,12 +17,12 @@
 #include "parser/caffe/caffe_matmul_parser.h"
 #include <memory>
 #include "common/op_attr.h"
-#include "ops/mat_mul.h"
+#include "ops/fusion/mat_mul_fusion.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *CaffeMatmulParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
-  auto prim = std::make_unique<ops::MatMul>();
+  auto prim = std::make_unique<ops::MatMulFusion>();
   if (prim == nullptr) {
     MS_LOG(ERROR) << "prim is nullptr.";
     return nullptr;
@@ -41,6 +41,7 @@ ops::PrimitiveC *CaffeMatmulParser::Parse(const caffe::LayerParameter &proto, co
   }
   prim->set_transpose_a(false);
   prim->set_transpose_b(true);
+  prim->set_activation_type(mindspore::NO_ACTIVATION);
   return prim.release();
 }
 

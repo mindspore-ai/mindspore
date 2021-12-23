@@ -16,13 +16,13 @@
 
 #include "tools/converter/parser/onnx/onnx_matmul_parser.h"
 #include <memory>
-#include "ops/mat_mul.h"
+#include "ops/fusion/mat_mul_fusion.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *OnnxMatmulParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto prim = std::make_unique<ops::MatMul>();
+  auto prim = std::make_unique<ops::MatMulFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   float alpha = 1.0f;
   float beta = 1.0f;
@@ -42,7 +42,7 @@ ops::PrimitiveC *OnnxMatmulParser::Parse(const onnx::GraphProto &onnx_graph, con
     MS_LOG(ERROR) << "not support alpha * A * B + beta * C";
     return nullptr;
   }
-
+  prim->set_activation_type(mindspore::NO_ACTIVATION);
   return prim.release();
 }
 

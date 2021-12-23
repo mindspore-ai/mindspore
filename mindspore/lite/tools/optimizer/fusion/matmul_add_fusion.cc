@@ -29,7 +29,7 @@ bool CheckAndGetMatMulIndex(const CNodePtr &cnode, size_t *index) {
   }
   size_t matmul_index = 0;
   for (size_t i = 1; i < cnode->size(); ++i) {
-    if (CheckPrimitiveType(cnode->input(i), prim::kPrimMatMul)) {
+    if (CheckPrimitiveType(cnode->input(i), prim::kPrimMatMulFusion)) {
       auto matmul_cnode = cnode->input(i)->cast<CNodePtr>();
       MS_CHECK_TRUE_RET(matmul_cnode != nullptr, false);
       if (matmul_cnode->size() > kInputSizeThree) {

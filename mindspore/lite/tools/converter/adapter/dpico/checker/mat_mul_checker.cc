@@ -108,6 +108,6 @@ bool MatMulChecker::Check(CNodePtr op, int32_t output_num, mindspore::Format for
 }
 
 OpCheckerRegistrar g_GemmChecker("Gemm", new MatMulChecker());
-OpCheckerRegistrar g_MatMulChecker("MatMul", new MatMulChecker());
+OpCheckerRegistrar g_MatMulChecker("MatMulFusion", new MatMulChecker());
 }  // namespace dpico
 }  // namespace mindspore

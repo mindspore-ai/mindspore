@@ -21,9 +21,9 @@ namespace mindspore::lite::opencl::test {
 class TestOpenCL_MatMul : public CommonTest {};
 
 namespace {
-// PrimitiveType_MatMul: src/ops/populate/matmul_populate.cc
+// PrimitiveType_MatMulFusion: src/ops/populate/matmul_populate.cc
 OpParameter *CreateParameter(bool a_transpose = false, bool b_transpose = true) {
-  auto *param = test::CreateParameter<MatMulParameter>(schema::PrimitiveType_MatMul);
+  auto *param = test::CreateParameter<MatMulParameter>(schema::PrimitiveType_MatMulFusion);
   param->a_transpose_ = a_transpose;
   param->b_transpose_ = b_transpose;
   param->has_bias_ = false;

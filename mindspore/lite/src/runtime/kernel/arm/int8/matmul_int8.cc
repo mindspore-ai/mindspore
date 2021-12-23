@@ -23,7 +23,7 @@
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_MatMul;
+using mindspore::schema::PrimitiveType_MatMulFusion;
 
 namespace mindspore::kernel {
 int MatmulInt8CPUKernel::Prepare() {
@@ -66,5 +66,5 @@ int MatmulInt8CPUKernel::ReSize() {
   return RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_MatMul, LiteKernelCreator<MatmulInt8CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_MatMulFusion, LiteKernelCreator<MatmulInt8CPUKernel>)
 }  // namespace mindspore::kernel
