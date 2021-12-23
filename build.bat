@@ -56,11 +56,11 @@ IF "%1%" == "lite" (
     rd /s /q "%BASE_PATH%\output"
     (git log -1 | findstr "^commit") > %BUILD_PATH%\.commit_id
     IF defined VisualStudioVersion (
-        cmake -DBUILD_MINDDATA=off -DMSLITE_ENABLE_TRAIN=off ^
+        cmake -DMSLITE_MINDDATA_IMPLEMENT=off -DMSLITE_ENABLE_TRAIN=off ^
             -DMS_VERSION_MAJOR=%VERSION_MAJOR% -DMS_VERSION_MINOR=%VERSION_MINOR% -DMS_VERSION_REVISION=%VERSION_REVISION% ^
             -DCMAKE_BUILD_TYPE=Release -G "Ninja" "%BASE_PATH%/mindspore/lite"
     ) ELSE (
-        cmake -DBUILD_MINDDATA=off -DMSLITE_ENABLE_TRAIN=off ^
+        cmake -DMSLITE_MINDDATA_IMPLEMENT=off -DMSLITE_ENABLE_TRAIN=off ^
             -DMS_VERSION_MAJOR=%VERSION_MAJOR% -DMS_VERSION_MINOR=%VERSION_MINOR% -DMS_VERSION_REVISION=%VERSION_REVISION% ^
             -DCMAKE_BUILD_TYPE=Release -G "CodeBlocks - MinGW Makefiles" "%BASE_PATH%/mindspore/lite"
     )

@@ -8,6 +8,7 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 endif()
 set(_ms_tmp_CMAKE_CXX_FLAGS_F ${CMAKE_CXX_FLAGS})
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
+set(TOP_DIR ${CMAKE_SOURCE_DIR})
 
 include(cmake/utils.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/external_libs/eigen.cmake)

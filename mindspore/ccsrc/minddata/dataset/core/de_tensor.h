@@ -21,7 +21,7 @@
 #include <memory>
 #include "include/api/status.h"
 #include "include/api/types.h"
-#ifdef ENABLE_ANDROID
+#if defined(ENABLE_ANDROID) || defined(ENABLE_LITE_TENSOR)
 #include "mindspore/lite/src/cxx_api/tensor/tensor_impl.h"
 #else
 #include "mindspore/core/ir/api_tensor_impl.h"

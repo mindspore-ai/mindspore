@@ -143,3 +143,6 @@ else()
 endif()
 
 add_dependencies(engine-cache-client generated_engine_files)
+if(MSLITE_ENABLE_CLOUD_MIND_DATA)
+  add_dependencies(engine-cache-client fbs_src)
+endif()

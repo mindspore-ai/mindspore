@@ -34,8 +34,11 @@ set_target_properties(_c_mindrecord PROPERTIES
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     target_link_libraries(_c_mindrecord PRIVATE mindspore::sqlite mindspore mindspore_gvar mindspore::protobuf)
 else()
-    target_link_libraries(_c_mindrecord PRIVATE mindspore::sqlite ${PYTHON_LIB} ${SECUREC_LIBRARY} mindspore
+    target_link_libraries(_c_mindrecord PRIVATE mindspore::sqlite ${PYTHON_LIB} ${SECUREC_LIBRARY}
                                                 mindspore_gvar mindspore::protobuf)
+    if(NOT MSLITE_ENABLE_CLOUD_MIND_DATA)
+        target_link_libraries(_c_mindrecord PRIVATE mindspore)
+    endif()
 endif()
 
 if(USE_GLOG)
@@ -48,6 +51,6 @@ else()
     endif()
 endif()
 
-if(NOT CMAKE_SYSTEM_NAME MATCHES "Darwin")
+if(NOT CMAKE_SYSTEM_NAME MATCHES "Darwin" AND NOT MSLITE_ENABLE_CLOUD_MIND_DATA)
     set_target_properties(_c_mindrecord PROPERTIES INSTALL_RPATH ${MINDSPORE_RPATH})
 endif()

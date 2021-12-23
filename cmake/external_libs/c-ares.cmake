@@ -16,7 +16,7 @@ mindspore_add_pkg(c-ares
         -DCARES_STATIC:BOOL=ON
         -DCARES_STATIC_PIC:BOOL=ON
         -DHAVE_LIBNSL:BOOL=OFF
-        PATCHES ${CMAKE_SOURCE_DIR}/third_party/patch/c-ares/CVE-2021-3672.patch)
+        PATCHES ${TOP_DIR}/third_party/patch/c-ares/CVE-2021-3672.patch)
 
 include_directories(${c-ares_INC})
 add_library(mindspore::cares ALIAS c-ares::cares)

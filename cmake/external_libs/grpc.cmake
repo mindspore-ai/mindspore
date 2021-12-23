@@ -55,7 +55,7 @@ mindspore_add_pkg(grpc
         EXE grpc_cpp_plugin
         URL ${REQ_URL}
         MD5 ${MD5}
-        PATCHES ${CMAKE_SOURCE_DIR}/third_party/patch/grpc/grpc.patch001
+        PATCHES ${TOP_DIR}/third_party/patch/grpc/grpc.patch001
         CMAKE_OPTION -DCMAKE_BUILD_TYPE:STRING=Release
         -DBUILD_SHARED_LIBS=ON
         -DgRPC_INSTALL:BOOL=ON

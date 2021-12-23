@@ -39,7 +39,7 @@ else()
             CMAKE_OPTION -DCMAKE_BUILD_TYPE=Release -DSPM_USE_BUILTIN_PROTOBUF=OFF -DSPM_ENABLE_SHARED=OFF
                 -DPROTOBUF_INC=${protobuf_INC}
             MD5 ${MD5}
-            PATCHES ${CMAKE_SOURCE_DIR}/third_party/patch/sentencepiece/sentencepiece.patch001
+            PATCHES ${TOP_DIR}/third_party/patch/sentencepiece/sentencepiece.patch001
             )
     endif()
 endif()
