@@ -110,6 +110,9 @@ class MS_API BenchmarkUnifiedApi : public BenchmarkBase {
   void UpdateDistributionName(const std::shared_ptr<mindspore::Context> &context, std::string *name);
 
  private:
+  void UpdateConfigInfo();
+
+ private:
 #ifdef ENABLE_OPENGL_TEXTURE
   mindspore::OpenGL::OpenGLRuntime gl_runtime_;
 #endif
