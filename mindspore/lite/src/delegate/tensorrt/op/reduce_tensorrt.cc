@@ -135,6 +135,7 @@ uint32_t ReduceTensorRT::GetAxis() {
     MS_LOG(WARNING) << "not int data type";
   }
   int *axis_data = reinterpret_cast<int *>(axis_tensor.MutableData());
+  CHECK_NULL_RETURN(axis_data);
   for (int i = 0; i < axis_tensor.ElementNum(); i++) {
     int format_axis_data = (*axis_data == -1) ? in_tensors_[0].Shape().size() - 1 : *axis_data;
     MS_LOG(DEBUG) << op_name_ << " reduceAxis at index : " << *axis_data;

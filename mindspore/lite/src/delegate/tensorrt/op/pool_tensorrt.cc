@@ -136,7 +136,7 @@ int PoolTensorRT::ParseParams() {
       }
 
       auto padding = pool_primitive->pad();
-      if (padding == nullptr) {
+      if (padding == nullptr || padding->size() != DIMENSION_4D) {
         MS_LOG(ERROR) << "get padding failed: " << op_name_;
         return RET_ERROR;
       }

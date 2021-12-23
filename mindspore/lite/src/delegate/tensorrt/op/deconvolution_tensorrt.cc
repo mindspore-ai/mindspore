@@ -130,13 +130,15 @@ void DeconvolutionTensorRT::SetAttributes(const schema::Conv2dTransposeFusion *m
                                           nvinfer1::IDeconvolutionLayer *decon_layer) {
   // kernel_size
   auto kernel_size = ms_op->kernel_size();
-  auto kernel_size_val = std::vector<int64_t>(kernel_size->begin(), kernel_size->end());
-  nvinfer1::Dims kernel_size_dims = lite::ConvertCudaDims(kernel_size_val);
-  if (kernel_size_dims.nbDims == -1) {
-    MS_LOG(ERROR) << "ConvertCudaDims failed for " << op_name_;
-    return;
+  if (kernel_size != nullptr) {
+    auto kernel_size_val = std::vector<int64_t>(kernel_size->begin(), kernel_size->end());
+    nvinfer1::Dims kernel_size_dims = lite::ConvertCudaDims(kernel_size_val);
+    if (kernel_size_dims.nbDims == -1) {
+      MS_LOG(ERROR) << "ConvertCudaDims failed for " << op_name_;
+      return;
+    }
+    decon_layer->setKernelSizeNd(kernel_size_dims);
   }
-  decon_layer->setKernelSizeNd(kernel_size_dims);
 
   // nbOutputMaps
   int32_t nbOutputMaps = static_cast<int32_t>(ms_op->out_channel());
@@ -144,13 +146,15 @@ void DeconvolutionTensorRT::SetAttributes(const schema::Conv2dTransposeFusion *m
 
   // stride
   auto stride = ms_op->stride();
-  auto stride_val = std::vector<int64_t>(stride->begin(), stride->end());
-  nvinfer1::Dims stride_dims = lite::ConvertCudaDims(stride_val);
-  if (stride_dims.nbDims == -1) {
-    MS_LOG(ERROR) << "ConvertCudaDims failed for " << op_name_;
-    return;
+  if (stride != nullptr) {
+    auto stride_val = std::vector<int64_t>(stride->begin(), stride->end());
+    nvinfer1::Dims stride_dims = lite::ConvertCudaDims(stride_val);
+    if (stride_dims.nbDims == -1) {
+      MS_LOG(ERROR) << "ConvertCudaDims failed for " << op_name_;
+      return;
+    }
+    decon_layer->setStrideNd(stride_dims);
   }
-  decon_layer->setStrideNd(stride_dims);
 
   // nbGroups
   int32_t nbGroups = static_cast<int32_t>(ms_op->group());

@@ -147,6 +147,10 @@ std::shared_ptr<ge::Tensor> ConverterToNPUTensor(mindspore::MSTensor src, bool i
     if (src.DataType() == DataType::kNumberTypeFloat16) {
 #ifdef ENABLE_ARM64
       auto fp32_data = malloc(src.ElementNum() * sizeof(float));
+      if (fp32_data == nullptr) {
+        MS_LOG(ERROR) << "malloc failed for fp32 data";
+        return nullptr;
+      }
       Float16ToFloat32(reinterpret_cast<float16_t *>(src.MutableData()), reinterpret_cast<float *>(fp32_data),
                        src.ElementNum());
       ge_tensor->SetData(reinterpret_cast<const uint8_t *>(fp32_data), src.ElementNum() * sizeof(float));
