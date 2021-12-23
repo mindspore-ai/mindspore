@@ -46,6 +46,8 @@ Graph::NodeType ApplyStrToTensor(Graph::NodeType Node);
 
 Status DevicesMemoryControl(const size_t num_device, const double device_memory, const std::shared_ptr<Graph> &graph);
 
+StrategyRec GetOneLoopStrategy(size_t op_inputs_num, StrategyRec old_str, StrategyRec new_str);
+
 size_t GetDataTypeSize(const TensorType &type);
 }  // namespace parallel
 }  // namespace mindspore

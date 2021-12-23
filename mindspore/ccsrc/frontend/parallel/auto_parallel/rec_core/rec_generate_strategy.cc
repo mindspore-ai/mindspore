@@ -576,7 +576,7 @@ Strategys PrepareStrategy(const std::shared_ptr<Graph> &graph, const std::vector
     return PrepareMatMul(graph, ops, iter_graph, iter_ops);
   } else if (type == LAYER_NORM) {
     return PrepareAxisRelatedStrategy(graph, ops, iter_graph, iter_ops);
-  } else if ((type == SPARSE_SOFTMAX_CROSS_ENTROPY_WITH_LOGITS) || (type == DROPOUT) || (type == BATCH_MATMUL)) {
+  } else if (type == SPARSE_SOFTMAX_CROSS_ENTROPY_WITH_LOGITS) {
     return MakeDataParallelStrategy(graph, ops, iter_graph, iter_ops);
   } else if (type == VIRTUAL_DATA_SET) {
     if (ParallelContext::GetInstance()->full_batch()) {
@@ -866,9 +866,7 @@ Dimensions PrepareIncompingArithmeticOpeartorInputStrategy(const std::vector<std
 Dimensions PrepareIncomingOperatorInputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                                                 const size_t incoming_op_index) {
   Dimensions s;
-  if (ops[incoming_op_index]->type() == RESHAPE || ops[incoming_op_index]->type() == TRANSPOSE) {
-    return s;
-  }
+
   if (ops[incoming_op_index]->type() == GATHERV2) {
     auto pos = ops[incoming_op_index]->name().find("Info");
     if (pos == std::string::npos) {
