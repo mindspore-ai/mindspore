@@ -33,7 +33,6 @@ from .validators import check_allpass_biquad, check_amplitude_to_db, check_band_
     check_treble_biquad, check_vol
 
 
-
 class AudioTensorOperation(TensorOperation):
     """
     Base class of Audio Tensor Ops.
@@ -88,12 +87,13 @@ class AmplitudeToDB(AudioTensorOperation):
     Args:
         stype (ScaleType, optional): Scale of the input tensor (default=ScaleType.POWER).
             It can be one of ScaleType.MAGNITUDE or ScaleType.POWER.
-        ref_value (float, optional): Param for generate db_multiplier.
-        amin (float, optional): Lower bound to clamp the input waveform. It must be greater than zero.
+        ref_value (float, optional): Param for generate db_multiplier (default=1.0).
+        amin (float, optional): Lower bound to clamp the input waveform. It must be greater than zero (default=1e-10).
         top_db (float, optional): Minimum cut-off decibels. The range of values is non-negative.
             Commonly set at 80 (default=80.0).
     Examples:
         >>> import numpy as np
+        >>> from mindspore.dataset.audio import ScaleType
         >>>
         >>> waveform = np.random.random([1, 400//2+1, 30])
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
@@ -336,6 +336,7 @@ class ComputeDeltas(AudioTensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>> from mindspore.dataset.audio import BorderType
         >>>
         >>> waveform = np.random.random([1, 400//2+1, 30])
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
@@ -594,12 +595,13 @@ class Fade(AudioTensorOperation):
         RuntimeError: If fade_out_len exceeds waveform length.
 
     Examples:
-          >>> import numpy as np
-          >>>
-          >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03, 9.246826171875e-03, 1.0894775390625e-02]])
-          >>> dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
-          >>> transforms = [audio.Fade(fade_in_len=3, fade_out_len=2, fade_shape=FadeShape.LINEAR)]
-          >>> dataset = dataset.map(operations=transforms, input_columns=["audio"])
+        >>> import numpy as np
+        >>> from mindspore.dataset.audio import FadeShape
+        >>>
+        >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03, 9.246826171875e-03, 1.0894775390625e-02]])
+        >>> dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
+        >>> transforms = [audio.Fade(fade_in_len=3, fade_out_len=2, fade_shape=FadeShape.LINEAR)]
+        >>> dataset = dataset.map(operations=transforms, input_columns=["audio"])
     """
 
     @check_fade
@@ -870,7 +872,7 @@ class MuLawEncoding(AudioTensorOperation):
     Examples:
         >>> import numpy as np
         >>>
-        >>> waveform = np.random.random([0.1, 0.3, 0.4])
+        >>> waveform = np.random.random([1, 3, 4])
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.MuLawEncoding()]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
@@ -1039,6 +1041,8 @@ class Spectrogram(TensorOperation):
         onesided (bool, optional): Controls whether to return half of results to avoid redundancy (default=True).
 
     Examples:
+        >>> import numpy as np
+        >>>
         >>> waveform = np.random.random([5, 10, 20])
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.Spectrogram()]
@@ -1178,6 +1182,7 @@ class Vol(AudioTensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>> from mindspore.dataset.audio import GainType
         >>>
         >>> waveform = np.random.random([20, 30])
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
