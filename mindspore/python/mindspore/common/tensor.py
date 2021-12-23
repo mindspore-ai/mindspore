@@ -819,6 +819,44 @@ class Tensor(Tensor_):
         perm = tuple(range(self.ndim-1, -1, -1))
         return reshape_op(trans_op(self, perm), (-1,))
 
+    def narrow(self, axis, start, length):
+        """
+        Returns a narrowed tensor from input tensor.
+        The dimension axis is input from start to start + length.
+
+        Args:
+            axis (int): the axis along which to narrow.
+            start (int): the starting dimension.
+            length (int): the distance to the ending dimension.
+
+        Returns:
+            Tensor.
+
+            - output (Tensors) - The narrowed tensor.
+
+        Raises:
+            TypeError: If the input is not a tensor or tuple or list of tensors.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore
+            >>> from mindspore import Tensor
+            >>> x = Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mindspore.int32)
+            >>> output = x.narrow(0, 0, 2)
+            >>> print(output)
+            [[ 1,  2,  3],
+             [ 4,  5,  6]]
+            >>> output = x.narrow(1, 1, 2)
+            >>> print(output)
+            [[ 2,  3],
+             [ 5,  6],
+             [ 8,  9]]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('narrow')()(self, axis, start, length)
+
     def swapaxes(self, axis1, axis2):
         """
         Interchange two axes of a tensor.
