@@ -144,10 +144,7 @@ class DataPreProcessParser:
 
         with open(self._source_file_name, 'rb') as ai_cpu_data:
             content = ai_cpu_data.read()
-            if content[0:2].hex().upper() == "5A5A":
-                ai_cpu_total_time_summary, result_list = self.parser_binary_file(content)
-            else:
-                raise Exception("The data of profiler needs to be parsed using MindSpore r1.5 version")
+            ai_cpu_total_time_summary, result_list = self.parser_binary_file(content)
 
         os.chmod(self._source_file_name, stat.S_IREAD)
 
