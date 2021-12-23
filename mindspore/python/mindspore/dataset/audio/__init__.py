@@ -26,4 +26,4 @@ Common imported modules in corresponding API examples are as follows:
     import mindspore.dataset.audio.transforms as audio
 """
 from . import transforms
-from . import utils
+from .utils import *
