@@ -22,24 +22,12 @@
 
 namespace mindspore {
 std::ostream &operator<<(std::ostream &out, const std::shared_ptr<EnvInstance> &objPtr) {
-  out << "(";
-  MS_EXCEPTION_IF_NULL(objPtr);
-  for (auto &iter : objPtr->contents_) {
-    out << iter.first << ":" << iter.second << ";";
-  }
-  out << ")";
+  out << "()";
   return out;
 }
 
-bool EnvInstance::operator==(const EnvInstance &other) const {
-  if (Len() != other.Len()) {
-    return false;
-  }
-  bool equal = std::all_of(contents_.begin(), contents_.end(), [&other](const auto &item) {
-    return other.contents_.find(item.first) != other.contents_.end();
-  });
-  return equal;
-}
+bool EnvInstance::operator==(const EnvInstance &other) const { return true; }
+
 bool EnvInstance::operator==(const Value &other) const {
   if (other.isa<EnvInstance>()) {
     auto other_env_inst = static_cast<const EnvInstance *>(&other);
