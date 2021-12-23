@@ -30,6 +30,9 @@ from .wrap import *
 from .grad import Jvp, Vjp
 from .sparse import *
 from .reinforcement import *
+from .transformer import AttentionMask, VocabEmbedding, MultiHeadAttention, FeedForward, TransformerEncoder, \
+    TransformerDecoder, TransformerEncoderLayer, TransformerDecoderLayer, Transformer, TransformerOpParallelConfig, \
+    EmbeddingOpParallelConfig, TransformerRecomputeConfig, MoEConfig, OpParallelConfig
 
 __all__ = ["Cell", "GraphCell"]
 __all__.extend(layer.__all__)
@@ -42,5 +45,6 @@ __all__.extend(sparse.__all__)
 __all__.extend(learning_rate_schedule.__all__)
 __all__.extend(dynamic_lr.__all__)
 __all__.extend(reinforcement.__all__)
+__all__.extend(transformer.__all__)
 
 __all__.sort()
