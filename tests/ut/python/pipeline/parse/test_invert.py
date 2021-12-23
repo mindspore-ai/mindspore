@@ -53,11 +53,11 @@ def test_invert_int_tensor():
     context.set_context(mode=context.PYNATIVE_MODE)
     with pytest.raises(TypeError) as err:
         net(input_x)
-    assert "For 'LogicalNot or '~' operator', the type of 'x' should be Tensor[Bool], " \
-           "but got Tensor[Int32]" in str(err.value)
+    assert "For primitive[LogicalNot], the input argument[x] must be a type of { Tensor[Bool],}, " \
+           "but got Int32." in str(err.value)
 
     context.set_context(mode=context.GRAPH_MODE)
     with pytest.raises(TypeError) as err:
         net(input_x)
-    assert "For 'LogicalNot or '~' operator', the type of 'x' should be Tensor[Bool], " \
-           "but got Tensor[Int32]" in str(err.value)
+    assert "For primitive[LogicalNot], the input argument[x] must be a type of { Tensor[Bool],}, " \
+           "but got Int32." in str(err.value)

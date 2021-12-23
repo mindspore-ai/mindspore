@@ -3873,7 +3873,7 @@ class LessEqual(_LogicBinaryOp):
     """
 
 
-class LogicalNot(PrimitiveWithInfer):
+class LogicalNot(Primitive):
     """
     Computes the "logical NOT" of a tensor element-wise.
 
@@ -3907,18 +3907,6 @@ class LogicalNot(PrimitiveWithInfer):
         """Initialize LogicalNot"""
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
 
-    def infer_shape(self, x_shape):
-        return x_shape
-
-    def infer_dtype(self, x_dtype):
-        validator.check_tensor_dtype_valid("x", x_dtype, [mstype.bool_], self.name + " or '~' operator")
-        return mstype.tensor_type(mstype.bool_)
-
-    def infer_value(self, x):
-        if x is not None:
-            x = x.asnumpy()
-            return Tensor(np.logical_not(x))
-        return None
 
 
 class LogicalAnd(_LogicBinaryOp):

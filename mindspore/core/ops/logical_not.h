@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,9 +37,9 @@ class MS_CORE_API LogicalNot : public PrimitiveC {
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.LogicalNot for the inputs.
   void Init() {}
 };
-
 AbstractBasePtr LogicalNotInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                 const std::vector<AbstractBasePtr> &input_args);
+using kPrimLogicalNotPtr = std::shared_ptr<LogicalNot>;
 }  // namespace ops
 }  // namespace mindspore
 
