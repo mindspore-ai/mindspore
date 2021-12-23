@@ -35,6 +35,7 @@ echo 'run common ut tests'
 ./lite-test --gtest_filter="ConvActFusionInoutTest*"
 ./lite-test --gtest_filter="ConvBiasFusionInoutTest*"
 ./lite-test --gtest_filter="ConcatActFusionInoutTest*"
+./lite-test --gtest_filter="MatmulMulFusionInoutTest*"
 # test cases of framework
 
 # test cases of FP32 OP

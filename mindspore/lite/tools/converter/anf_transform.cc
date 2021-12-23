@@ -47,6 +47,7 @@
 #include "tools/optimizer/fusion/glu_fusion.h"
 #include "tools/optimizer/fusion/tflite_rel_pos_multi_head_attention_fusion.h"
 #include "tools/optimizer/fusion/matmul_add_fusion.h"
+#include "tools/optimizer/fusion/matmul_mul_fusion.h"
 #include "tools/optimizer/fusion/mul_add_fusion.h"
 #include "tools/optimizer/fusion/tf_gelu_fusion.h"
 #include "tools/optimizer/fusion/onnx_gelu_fusion.h"
@@ -208,6 +209,7 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const converter::
   fusion_pm->AddPass(std::make_shared<opt::ConvConvFusion>());
   fusion_pm->AddPass(std::make_shared<opt::ConvPadFusion>());
   fusion_pm->AddPass(std::make_shared<opt::MatMulAddFusion>());
+  fusion_pm->AddPass(std::make_shared<opt::MatMulMulFusion>());
   fusion_pm->AddPass(std::make_shared<opt::TransposeMatMulFusion>());
   fusion_pm->AddPass(std::make_shared<opt::MulAddFusion>());
   fusion_pm->AddPass(std::make_shared<opt::ScaleActivationFusion>());
