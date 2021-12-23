@@ -53,7 +53,7 @@ def minimize(func, x0, args=(), *, method, tol=None, options=None):
 
     This API for this function matches SciPy with some minor deviations:
 
-    - Gradients of ``fun`` are calculated automatically using MindSpore's autodiff
+    - Gradients of ``func`` are calculated automatically using MindSpore's autodiff
       support when required.
     - The ``method`` argument is required. You must specify a solver.
     - Various optional arguments in the SciPy interface have not yet been
@@ -69,18 +69,18 @@ def minimize(func, x0, args=(), *, method, tol=None, options=None):
         On GPU, the supported dtypes is float32.
 
     Args:
-      fun (Callable): the objective function to be minimized, :math:`fun(x, *args) -> float`,
+      func (Callable): the objective function to be minimized, :math:`fun(x, *args) -> float`,
         where `x` is a 1-D array with shape :math:`(n,)` and `args` is a tuple
         of the fixed parameters needed to completely specify the function.
         `fun` must support differentiation.
       x0 (Tensor): initial guess. Array of real elements of size :math:`(n,)`, where `n` is
         the number of independent variables.
-      args (Tuple): extra arguments passed to the objective function.
+      args (Tuple): extra arguments passed to the objective function. Default: ().
       method (str): solver type. Currently only `"BFGS"` is supported.
       tol (float, optional): tolerance for termination. For detailed control, use solver-specific
         options.
       options (Mapping[str, Any], optional): a dictionary of solver options. All methods accept the following
-        generic options:
+        generic options, Default: None.
 
         - maxiter (int): Maximum number of iterations to perform. Depending on the
           method each iteration may use several function evaluations.

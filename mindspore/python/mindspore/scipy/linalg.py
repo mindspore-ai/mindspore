@@ -160,10 +160,10 @@ def inv(a, overwrite_a=False, check_finite=True):
 
     Args:
         a (Tensor): Square matrix to be inverted.
-        overwrite_a (bool, optional): Discard data in `a` (may improve performance). Default is False.
+        overwrite_a (bool, optional): Discard data in `a` (may improve performance). Default: False.
         check_finite (bool, optional): Whether to check that the input matrix contains only finite numbers.
             Disabling may give a performance gain, but may result in problems (crashes, non-termination)
-            if the inputs do contain infinities or NaNs.
+            if the inputs do contain infinities or NaNs. Default: True.
 
     Returns:
         Tensor, Inverse of the matrix `a`.
@@ -335,7 +335,7 @@ def eigh(a, b=None, lower=True, eigvals_only=False, overwrite_a=False,
         a (Tensor): A :math:`(M, M)` complex Hermitian or real symmetric matrix whose eigenvalues and
             eigenvectors will be computed.
         b (Tensor, optional): A :math:`(M, M)` complex Hermitian or real symmetric definite positive matrix in.
-            If omitted, identity matrix is assumed.
+            If omitted, identity matrix is assumed. Default: None.
         lower (bool, optional): Whether the pertinent Tensor data is taken from the lower or upper
             triangle of `a` and, if applicable, `b`. Default: True.
         eigvals_only (bool, optional): Whether to calculate only eigenvalues and no eigenvectors.
@@ -345,18 +345,18 @@ def eigh(a, b=None, lower=True, eigvals_only=False, overwrite_a=False,
                 1 =>     a @ v = w @ b @ v
                 2 => a @ b @ v = w @ v
                 3 => b @ a @ v = w @ v
-            This keyword is ignored for standard problems.
+            This keyword is ignored for standard problems. Default: 1.
         overwrite_a (bool, optional): Whether to overwrite data in `a` (may improve performance). Default: False.
-        overwrite_b (bool, optional): Whether to overwrite data in `b` (may improve performance). Default is False.
+        overwrite_b (bool, optional): Whether to overwrite data in `b` (may improve performance). Default: False.
         check_finite (bool, optional): Whether to check that the input matrices contain only finite numbers.
             Disabling may give a performance gain, but may result in problems (crashes, non-termination)
-            if the inputs do contain infinities or NaNs.
+            if the inputs do contain infinities or NaNs. Default: True.
         turbo (bool, optional): use divide and conquer algorithm (faster but expensive in memory, only
             for generalized eigenvalue problem and if full set of eigenvalues are requested.).
-            Has no significant effect if eigenvectors are not requested.
-            eigvals (tuple, optional): Indexes of the smallest and largest (in ascending order) eigenvalues
+            Has no significant effect if eigenvectors are not requested. Default: True.
+        eigvals (tuple, optional): Indexes of the smallest and largest (in ascending order) eigenvalues
             and corresponding eigenvectors to be returned: :math:`0 <= lo <= hi <= M-1`. If omitted, all eigenvalues
-            and eigenvectors are returned.
+            and eigenvectors are returned. Default: None.
 
     Returns:
          - Tensor with shape :math:`(N,)`, The :math:`N (1<=N<=M)` selected eigenvalues, in ascending order,
@@ -446,7 +446,7 @@ def check_lu_shape(in_lu, b):
 def lu_factor(a, overwrite_a=False, check_finite=True):
     """
     Compute pivoted LU decomposition of a matrix.
-    The decomposition is::
+    The decomposition is:
 
     .. math::
         A = P L U
@@ -455,10 +455,10 @@ def lu_factor(a, overwrite_a=False, check_finite=True):
 
     Args:
         a (Tensor): square matrix of :math:`(M, M)` to decompose.
-        overwrite_a (bool, optional): Whether to overwrite data in `A` (may increase performance).
+        overwrite_a (bool, optional): Whether to overwrite data in `A` (may increase performance). Default: False.
         check_finite (bool, optional): Whether to check that the input matrix contains only finite numbers.
             Disabling may give a performance gain, but may result in problems
-            (crashes, non-termination) if the inputs do contain infinities or NaNs.
+            (crashes, non-termination) if the inputs do contain infinities or NaNs. Default: True.
 
     Returns:
         Tensor, a square matrix of :math:`(N, N)` containing `U` in its upper triangle, and `L` in its lower triangle.
@@ -493,8 +493,9 @@ def lu(a, permute_l=False, overwrite_a=False, check_finite=True):
     """
     Compute pivoted LU decomposition of a matrix.
 
-    The decomposition is::
+    The decomposition is:
 
+    .. math::
         A = P L U
 
     where P is a permutation matrix, L lower triangular with unit
@@ -502,11 +503,11 @@ def lu(a, permute_l=False, overwrite_a=False, check_finite=True):
 
     Args:
         a (Tensor): a :math:`(M, N)` matrix to decompose.
-        permute_l (bool, optional): Perform the multiplication :math:`P*L` (Default: do not permute).
-        overwrite_a (bool, optional): Whether to overwrite data in a (may improve performance).
+        permute_l (bool, optional): Perform the multiplication :math:`P*L` (Default: do not permute). Default: False.
+        overwrite_a (bool, optional): Whether to overwrite data in a (may improve performance). Default: False.
         check_finite (bool, optional):  Whether to check that the input matrix contains
             only finite numbers. Disabling may give a performance gain, but may result
-            in problems (crashes, non-termination) if the inputs do contain infinities or NaNs.
+            in problems (crashes, non-termination) if the inputs do contain infinities or NaNs. Default: True.
 
     Returns:
         **If permute_l == False**

@@ -198,12 +198,12 @@ def gmres(A, b, x0=None, *, tol=1e-5, atol=0.0, restart=20, maxiter=None,
         b (Tensor): Right hand side of the linear system representing a single vector.
             Can be stored as a Tensor.
         x0 (Tensor, optional): Starting guess for the solution. Must have the same structure
-            as `b`. If this is unspecified, zeroes are used.
+            as `b`. If this is unspecified, zeroes are used. Default: None.
         tol (float, optional): Tolerances for convergence,
             :math:`norm(residual) <= max(tol*norm(b), atol)`. We do not implement SciPy's
             "legacy" behavior, so MindSpore's tolerance will differ from SciPy unless you
-            explicitly pass `atol` to SciPy's `gmres`.
-        atol (float, optional): The same as `tol`.
+            explicitly pass `atol` to SciPy's `gmres`. Default: 1e-5.
+        atol (float, optional): The same as `tol`. Default: 0.0.
         restart (integer, optional): Size of the Krylov subspace ("number of iterations")
             built between restarts. GMRES works by approximating the true solution x as its
             projection into a Krylov space of this dimension - this parameter
@@ -215,11 +215,11 @@ def gmres(A, b, x0=None, *, tol=1e-5, atol=0.0, restart=20, maxiter=None,
         maxiter (int): Maximum number of times to rebuild the size-`restart`
             Krylov space starting from the solution found at the last iteration. If GMRES
             halts or is very slow, decreasing this parameter may help.
-            Default: infinite.
+            Default: None.
         M (Union[Tensor, function]): Preconditioner for A.  The preconditioner should approximate the
             inverse of A.  Effective preconditioning dramatically improves the
             rate of convergence, which implies that fewer iterations are needed
-            to reach a given error tolerance.
+            to reach a given error tolerance. Default: None.
         solve_method (str): There are two kinds of solve methods,'incremental' or 'batched'. Default: "batched".
 
             - incremental: builds a QR decomposition for the Krylov subspace incrementally during
@@ -237,13 +237,13 @@ def gmres(A, b, x0=None, *, tol=1e-5, atol=0.0, restart=20, maxiter=None,
 
     Examples:
         >>> import numpy as onp
+        >>> import mindspore.numpy as mnp
         >>> from mindspore.common import Tensor
-        >>> from mindspore.numpy as mnp
         >>> from mindspore.scipy.sparse.linalg import gmres
         >>> A = Tensor(mnp.array([[3, 2, 0], [1, -1, 0], [0, 5, 1]], dtype=mnp.float32))
-        >>> b = Tensor(onp.array([2, 4, -1], dtype=mnp.float32))
+        >>> b = Tensor(mnp.array([2, 4, -1], dtype=mnp.float32))
         >>> x, exitCode = gmres(A, b)
-        >>> print(exitCode)            # 0 indicates successful convergence
+        >>> exitCode            # 0 indicates successful convergence
         0
         >>> onp.allclose(mnp.dot(A,x).asnumpy(), b.asnumpy())
         True
@@ -337,17 +337,17 @@ def cg(A, b, x0=None, *, tol=1e-5, atol=0.0, maxiter=None, M=None):
             As function, `A` must return Tensor with the same structure and shape as its input matrix.
         b (Tensor): Right hand side of the linear system representing a single vector. Can be
             stored as a Tensor.
-        x0 (Tensor): Starting guess for the solution. Must have the same structure as `b`.
+        x0 (Tensor): Starting guess for the solution. Must have the same structure as `b`. Default: None.
         tol (float, optional): Tolerances for convergence, :math:`norm(residual) <= max(tol*norm(b), atol)`.
             We do not implement SciPy's "legacy" behavior, so MindSpore's tolerance will
-            differ from SciPy unless you explicitly pass `atol` to SciPy's `cg`.
-        atol (float, optional): The same as `tol`.
+            differ from SciPy unless you explicitly pass `atol` to SciPy's `cg`. Default: 1e-5.
+        atol (float, optional): The same as `tol`. Default: 0.0.
         maxiter (int): Maximum number of iterations.  Iteration will stop after maxiter
-            steps even if the specified tolerance has not been achieved.
+            steps even if the specified tolerance has not been achieved. Default: None.
         M (Union[Tensor, function]): Preconditioner for A.  The preconditioner should approximate the
             inverse of A. Effective preconditioning dramatically improves the
             rate of convergence, which implies that fewer iterations are needed
-            to reach a given error tolerance.
+            to reach a given error tolerance. Default: None.
 
     Returns:
         - Tensor, The converged solution. Has the same structure as `b`.

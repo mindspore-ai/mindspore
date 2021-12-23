@@ -309,16 +309,16 @@ def line_search(f, xk, pk, gfk=None, old_fval=None, old_old_fval=None, c1=1e-4,
     Algorithm 3.5 from Wright and Nocedal, 'Numerical Optimization', 1999, pg. 59-61
 
     Args:
-        fun (function): function of the form f(x) where x is a flat Tensor and returns a real
+        f (function): function of the form f(x) where x is a flat Tensor and returns a real
             scalar. The function should be composed of operations with vjp defined.
         xk (Tensor): initial guess.
         pk (Tensor): direction to search in. Assumes the direction is a descent direction.
-        gfk (Tensor): initial value of value_and_gradient as position.
-        old_fval (Tensor): The same as `gfk`.
-        old_old_fval (Tensor): unused argument, only for scipy API compliance.
-        c1 (float): Wolfe criteria constant, see ref.
-        c2 (float): The same as `c1`.
-        maxiter (int): maximum number of iterations to search
+        gfk (Tensor): initial value of value_and_gradient as position. Default: None.
+        old_fval (Tensor): The same as `gfk`. Default: None.
+        old_old_fval (Tensor): unused argument, only for scipy API compliance. Default: None.
+        c1 (float): Wolfe criteria constant, see ref. Default: 1e-4.
+        c2 (float): The same as `c1`. Default: 0.9.
+        maxiter (int): maximum number of iterations to search. Default: 20.
 
     Returns:
         LineSearchResults
