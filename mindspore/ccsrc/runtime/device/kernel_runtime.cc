@@ -550,12 +550,13 @@ void KernelRuntime::RunOpAssignOutputNodeMemory(const ValuePtr &pre_output_value
 
 void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph &graph) {
   MS_EXCEPTION_IF_NULL(mem_manager_);
-  MS_LOG(INFO) << "AssignStaticMemoryInput start for graph " << graph.graph_id();
+  auto graph_id = graph.graph_id();
+  MS_LOG(INFO) << "AssignStaticMemoryInput start for graph " << graph_id;
   auto graph_inputs = GetGraphInputs(graph);
   auto graph_valid_input = graph.valid_inputs();
   graph_inputs.insert(graph_inputs.end(), graph.child_graph_result().begin(), graph.child_graph_result().end());
   std::vector<AnfNodePtr> need_alloc_nodes;
-  auto add_need_alloc_nodes = [&need_alloc_nodes, graph, this](const AnfNodePtr &node) {
+  auto add_need_alloc_nodes = [&need_alloc_nodes, graph_id, this](const AnfNodePtr &node) {
     MS_EXCEPTION_IF_NULL(node);
     if (!node->isa<Parameter>()) {
       return;
@@ -564,7 +565,7 @@ void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph &graph) {
       return;
     }
     auto input_param = node->cast<ParameterPtr>();
-    if (input_param != nullptr && !input_param->IsUsedByRealKernelInGraph(graph.graph_id())) {
+    if (input_param != nullptr && !input_param->IsUsedByRealKernelInGraph(graph_id)) {
       return;
     }
     need_alloc_nodes.push_back(node);
