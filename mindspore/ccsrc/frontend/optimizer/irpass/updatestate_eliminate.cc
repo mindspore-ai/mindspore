@@ -952,6 +952,8 @@ AnfNodePtr SwitchCallMonadParameterEliminater::operator()(const OptimizerPtr &, 
     for (size_t i = args_start_index; i < switch_call->inputs().size(); i++) {
       new_node->add_input(switch_call->input(i));
     }
+    // partial's abstract is same with first input.
+    new_node->set_abstract(new_node->input(1)->abstract());
     return new_node;
   };
   fg1_node = build_partial(fg1_node);
@@ -959,6 +961,8 @@ AnfNodePtr SwitchCallMonadParameterEliminater::operator()(const OptimizerPtr &, 
   auto cond = switch_cnode->input(condition_index);
   auto new_switch_cnode = fg->NewCNode({NewValueNode(prim::kPrimSwitch), cond, fg1_node, fg2_node});
   auto new_switch_call = fg->NewCNode({new_switch_cnode});
+  new_switch_cnode->set_abstract(switch_node->abstract());
+  new_switch_call->set_abstract(switch_call->abstract());
   return new_switch_call;
 }
 }  // namespace mindspore::opt::irpass

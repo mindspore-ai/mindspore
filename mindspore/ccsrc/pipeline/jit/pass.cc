@@ -30,6 +30,7 @@
 #include "frontend/optimizer/opt.h"
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/cse_pass.h"
+#include "frontend/optimizer/dead_node_eliminate.h"
 #include "frontend/optimizer/clean.h"
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/graph_transform.h"
@@ -393,6 +394,7 @@ OptPassGroupMap GetOptPassesAfterCconv(const opt::irpass::OptimizeIRPassLib &irp
                          {"updatestate_assign_eliminate", updatestate_assign_eliminate},
                          {"updatestate_loads_eliminate", updatestate_loads_eliminate},
                          {"cse", opt::OptPassConfig(opt::CSEPass(false))},
+                         {"dead_node_eliminate", opt::OptPassConfig(opt::EliminateDeadNodePass())},
                          {"renormalize", opt::OptPassConfig::Renormalize()}});
 
   return map_a;
