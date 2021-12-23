@@ -23,6 +23,7 @@ from ...common import dtype as mstype
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
 from ..operations import _grad_ops as G
 from ..operations import _inner_ops as inner
+from ..operations import _rl_inner_ops as rl_ops
 from ... import context
 from .._utils.utils import range_op, get_1d_shape
 
@@ -951,6 +952,37 @@ def get_bprop_lstm(self):
 
     if context.get_context('device_target') == "CPU":
         return bprop_cpu
+
+    return bprop
+
+
+@bprop_getters.register(rl_ops.CudnnGRU)
+def get_bprop_gru(self):
+    """Grad definition for `GRU` operation."""
+    gru_grad_data = G.GruGradData(
+        input_size=self.input_size,
+        hidden_size=self.hidden_size,
+        num_layers=self.num_layers,
+        has_bias=self.has_bias,
+        bidirectional=self.bidirectional,
+        dropout=self.dropout
+    )
+
+    gru_grad_weight = G.GruGradWeight(
+        input_size=self.input_size,
+        hidden_size=self.hidden_size,
+        num_layers=self.num_layers,
+        has_bias=self.has_bias,
+        bidirectional=self.bidirectional,
+        dropout=self.dropout
+    )
+
+    def bprop(x, hx, w, out, dout):
+        y, _, reserve, state = out
+        dy, dhy, _, _ = dout
+        dx, dhx = gru_grad_data(y, dy, dhy, w, hx, reserve, state)
+        dw = gru_grad_weight(F.depend(x, dx), hx, y, reserve, state)
+        return dx, dhx, dw
 
     return bprop
 
