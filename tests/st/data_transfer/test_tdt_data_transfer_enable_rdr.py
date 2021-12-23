@@ -18,6 +18,7 @@ import json
 import pytest
 
 import mindspore.context as context
+from tests.security_utils import security_off_wrap
 from .test_tdt_data_transfer import test_tdt_consume_beyond_produce
 
 # create config file for RDR
@@ -35,12 +36,14 @@ def test_train(device_type):
         context.set_context(env_config_path=config_file)
         test_tdt_consume_beyond_produce()
 
+@security_off_wrap
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 def test_train_with_Ascend():
     test_train("Ascend")
 
+@security_off_wrap
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
