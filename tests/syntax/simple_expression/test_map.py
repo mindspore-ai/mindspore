@@ -165,6 +165,6 @@ def test_map_param_cast():
     input_me_x = Tensor(np.random.randn(2, 3, 4, 5).astype(np.float64))
 
     net = MapNet()
-    with pytest.raises(Exception, match="Data type conversion of parameter is not supported"):
+    with pytest.raises(Exception, match="Data type conversion of 'Parameter' is not supported"):
         ret = net(input_me_x)
         print("ret:", ret)

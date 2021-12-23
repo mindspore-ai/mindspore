@@ -57,6 +57,19 @@ AbstractBasePtr InferImplTupleOrListEqual(const std::string &op_name, const Abst
   return std::make_shared<AbstractScalar>(*x_value == *y_value);
 }
 
+void CheckSlideInput(const ValuePtr &arg_value) {
+  MS_EXCEPTION_IF_NULL(arg_value);
+  auto value_type = arg_value->type();
+  std::string str_type;
+  if (value_type) {
+    str_type = value_type->ToString();
+  } else {
+    str_type = "AnyValue";
+  }
+  MS_LOG(EXCEPTION) << "The type of inputs in range operator only support int64 number. "
+                    << "But get a " << str_type << " number.";
+}
+
 void CalcSlidePara(const AbstractBasePtrList &args_spec_list, SlideInfo *slide) {
   int64_t arg1 = 0;
   int64_t arg2 = 0;
@@ -64,8 +77,7 @@ void CalcSlidePara(const AbstractBasePtrList &args_spec_list, SlideInfo *slide) 
     MS_EXCEPTION_IF_NULL(args_spec_list[0]);
     auto arg_value = args_spec_list[0]->BuildValue();
     if (!arg_value->isa<Int64Imm>()) {
-      MS_LOG(EXCEPTION) << "The type of inputs in range operator only support int64 number. "
-                        << "But get a " << arg_value->type() << " number.";
+      CheckSlideInput(arg_value);
     }
     arg1 = GetValue<int64_t>(arg_value);
   }
@@ -74,8 +86,7 @@ void CalcSlidePara(const AbstractBasePtrList &args_spec_list, SlideInfo *slide) 
     MS_EXCEPTION_IF_NULL(args_spec_list[1]);
     auto arg_value = args_spec_list[1]->BuildValue();
     if (!arg_value->isa<Int64Imm>()) {
-      MS_LOG(EXCEPTION) << "The type of inputs in range operator only support int64 number. "
-                        << "But get a " << arg_value->type() << " number.";
+      CheckSlideInput(arg_value);
     }
     arg2 = GetValue<int64_t>(arg_value);
   }
@@ -84,8 +95,7 @@ void CalcSlidePara(const AbstractBasePtrList &args_spec_list, SlideInfo *slide) 
     MS_EXCEPTION_IF_NULL(args_spec_list[2]);
     auto arg_value = args_spec_list[2]->BuildValue();
     if (!arg_value->isa<Int64Imm>()) {
-      MS_LOG(EXCEPTION) << "The type of inputs in range operator only support int64 number. "
-                        << "But get a " << arg_value->type() << " number.";
+      CheckSlideInput(arg_value);
     }
     slide->step = GetValue<int64_t>(arg_value);
     slide->start = arg1;
@@ -437,8 +447,15 @@ AbstractBasePtr InferImplTupleDiv(const AnalysisEnginePtr &, const PrimitivePtr 
 
   for (size_t i = 0; i < div_shape_data.size(); i++) {
     if (div_shape_data[i]->cast<Int64ImmPtr>() == nullptr) {
+      auto value_type = div_shape_data[i]->type();
+      std::string str_type;
+      if (value_type) {
+        str_type = value_type->ToString();
+      } else {
+        str_type = "AnyValue";
+      }
       MS_LOG(EXCEPTION) << "The data type of inputs of 'tuple_div' operator should be an int64 number, but got a "
-                        << div_shape_data[i]->type() << " number " << div_shape_data[i]->ToString() << ".";
+                        << str_type << " number " << div_shape_data[i]->ToString() << ".";
     }
     int64_t shapex_value = GetValue<int64_t>(shape_x_data[i]);
     int64_t div_value = GetValue<int64_t>(div_shape_data[i]);
@@ -545,8 +562,13 @@ AbstractBasePtr InferImplMakeSlice(const AnalysisEnginePtr &, const PrimitivePtr
         slice_args.push_back(scalar_index->ToAbstract());
       } else {
         auto type = scalar_value->type();
-        MS_EXCEPTION(TypeError) << "Slice indices must be integers or bool. But got a " << type->ToString()
-                                << " number.";
+        std::string str_type;
+        if (type) {
+          str_type = type->ToString();
+        } else {
+          str_type = "AnyValue";
+        }
+        MS_EXCEPTION(TypeError) << "Slice indices must be integers or bool. But got a " << str_type << " number.";
       }
     } else if (args_spec_list[index]->isa<AbstractTensor>()) {
       auto arg = args_spec_list[index]->cast<AbstractTensorPtr>();
@@ -608,7 +630,7 @@ AbstractBasePtr InferImplMakeRange(const AnalysisEnginePtr &, const PrimitivePtr
   if (slide.start <= slide.stop) {
     if (slide.step <= 0) {
       MS_LOG(EXCEPTION) << "For 'range', while the argument 'start' " << slide.start
-                        << " less than or equal to the argument 'stop' " << slide.stop << ", "
+                        << " is less than or equal to the argument 'stop' " << slide.stop << ", "
                         << "the argument 'step' must be more than 0, but the argument 'step' is " << slide.step << ".";
     }
 
@@ -621,9 +643,9 @@ AbstractBasePtr InferImplMakeRange(const AnalysisEnginePtr &, const PrimitivePtr
     }
   } else {
     if (slide.step >= 0) {
-      MS_LOG(EXCEPTION) << "For 'range', while the argument 'start' " << slide.start << " more than the argument 'stop'"
-                        << " " << slide.stop << ", the argument 'step' must be less than 0, but the argument 'step' is "
-                        << slide.step << ".";
+      MS_LOG(EXCEPTION) << "For 'range', while the argument 'start' " << slide.start << " is more than the argument "
+                        << "'stop' " << slide.stop << ", the argument 'step' must be less than 0, "
+                        << "but the argument 'step' is " << slide.step << ".";
     }
 
     for (int64_t i = slide.start; i > slide.stop; i += slide.step) {

@@ -43,18 +43,23 @@ FuncGraphPtr ZipOperation::GenerateFuncGraph(const AbstractBasePtrList &args_spe
     MS_LOG(EXCEPTION) << "The zip operator must have at least 1 argument, but the size of arguments is 0.";
   }
 
-  auto all_is_sequence =
-    std::all_of(args_spec_list.begin(), args_spec_list.end(), [](const AbstractBasePtr &abs) -> bool {
-      MS_EXCEPTION_IF_NULL(abs);
-      return abs->isa<AbstractSequence>();
-    });
-  if (!all_is_sequence) {
-    std::ostringstream oss;
-    int64_t idx = 0;
-    for (auto &item : args_spec_list) {
-      oss << "the " << ++idx << " argument is: " << item->ToString() << "\n";
+  for (size_t idx = 0; idx < args_spec_list.size(); idx++) {
+    auto abs = args_spec_list[idx];
+    if (!abs->isa<AbstractSequence>()) {
+      std::string error_index;
+      if (idx == 0) {
+        error_index = "first";
+      } else if (idx == 1) {
+        error_index = "second";
+      } else if (idx == 2) {
+        error_index = "third";
+      } else {
+        error_index = std::to_string(idx) + "th";
+      }
+      MS_LOG(EXCEPTION) << "For 'zip', the all inputs must be list or tuple, but the " << error_index
+                        << " argument is not list or tuple.\nThe " << error_index
+                        << " argument detail: " << args_spec_list[idx]->ToString() << ".";
     }
-    MS_LOG(EXCEPTION) << "The all inputs of zip operator must be sequence. But " << oss.str();
   }
 
   auto min_abs = std::min_element(

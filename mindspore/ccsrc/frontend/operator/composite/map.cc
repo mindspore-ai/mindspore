@@ -65,6 +65,23 @@ FuncGraphPtr Map::GenerateLeafFunc(const size_t &args_size) {
   return ptrGraph;
 }
 
+std::vector<std::string> Map::GetMapInputIndex(size_t num) {
+  std::string error_index;
+  std::string next_index;
+  if (num == 1) {
+    // The first element in Map is func_graph
+    error_index = "first";
+    next_index = "second";
+  } else if (num == 2) {
+    error_index = "second";
+    next_index = "third";
+  } else {
+    error_index = std::to_string(num) + "th";
+    next_index = std::to_string(num + 1) + "th";
+  }
+  return {error_index, next_index};
+}
+
 AnfNodePtr Map::FullMakeList(const std::shared_ptr<List> &type, const FuncGraphPtr &func_graph,
                              const AnfNodePtr &fn_arg, const ArgsPairList &arg_pairs) {
   MS_EXCEPTION_IF_NULL(func_graph);
@@ -73,21 +90,24 @@ AnfNodePtr Map::FullMakeList(const std::shared_ptr<List> &type, const FuncGraphP
   std::size_t size = type->elements().size();
   size_t num = 0;
   std::ostringstream oss;
-  bool is_not_same =
-    std::any_of(arg_pairs.begin(), arg_pairs.end(), [&num, size, &oss](const std::pair<AnfNodePtr, TypePtr> &item) {
-      num++;
-      auto lhs = std::dynamic_pointer_cast<List>(item.second);
-      if (lhs == nullptr) {
-        MS_LOG(EXCEPTION) << "The " << (num - 1) << "th element in Map has wrong type, expected a List, but got "
-                          << item.second->ToString() << ".";
-      }
-      if (lhs->elements().size() != size) {
-        oss << "The length of " << (num - 1) << "th List in Map is " << size << ", but the length of " << num
-            << "th List in Map is " << lhs->elements().size() << ".\n";
-        return true;
-      }
-      return false;
-    });
+  bool is_not_same = false;
+  for (auto &item : arg_pairs) {
+    num++;
+    auto lhs = std::dynamic_pointer_cast<List>(item.second);
+    std::vector<std::string> indexes = GetMapInputIndex(num);
+    std::string error_index = indexes[0];
+    std::string next_index = indexes[1];
+    if (lhs == nullptr) {
+      MS_LOG(EXCEPTION) << "The " << error_index << " element in Map has wrong type, expected a List, but got "
+                        << item.second->ToString() << ".";
+    }
+    if (lhs->elements().size() != size) {
+      oss << "\nThe length of the " << error_index << " element in Map is " << size << ", but the length of the "
+          << next_index << " element in Map is " << lhs->elements().size() << ".\n";
+      is_not_same = true;
+      break;
+    }
+  }
   if (is_not_same) {
     MS_LOG(EXCEPTION) << "The length of lists in Map must be the same. " << oss.str();
   }
@@ -133,21 +153,24 @@ AnfNodePtr Map::FullMakeTuple(const std::shared_ptr<Tuple> &type, const FuncGrap
   size_t size = type->elements().size();
   size_t num = 0;
   std::ostringstream oss;
-  bool is_not_same =
-    std::any_of(arg_pairs.begin(), arg_pairs.end(), [&num, size, &oss](const std::pair<AnfNodePtr, TypePtr> &item) {
-      num++;
-      auto lhs = std::dynamic_pointer_cast<Tuple>(item.second);
-      if (lhs == nullptr) {
-        MS_LOG(EXCEPTION) << "The " << (num - 1) << "th element in Map has wrong type, expected a Tuple, but got "
-                          << item.second->ToString() << ".";
-      }
-      if (lhs->elements().size() != size) {
-        oss << "The length of " << (num - 1) << "th Tuple in Map is " << size << ", but the length of " << num
-            << "th Tuple in Map is " << lhs->elements().size() << ".\n";
-        return true;
-      }
-      return false;
-    });
+  bool is_not_same = false;
+  for (auto &item : arg_pairs) {
+    num++;
+    auto lhs = std::dynamic_pointer_cast<Tuple>(item.second);
+    std::vector<std::string> indexes = GetMapInputIndex(num);
+    std::string error_index = indexes[0];
+    std::string next_index = indexes[1];
+    if (lhs == nullptr) {
+      MS_LOG(EXCEPTION) << "The " << error_index << " element in Map has wrong type, expected a Tuple, but got "
+                        << item.second->ToString() << ".";
+    }
+    if (lhs->elements().size() != size) {
+      oss << "\nThe length of the " << error_index << " element in Map is " << size << ", but the length of the "
+          << next_index << " element in Map is " << lhs->elements().size() << ".\n";
+      is_not_same = true;
+      break;
+    }
+  }
   if (is_not_same) {
     MS_LOG(EXCEPTION) << "The length of tuples in Map must be the same. " << oss.str();
   }
@@ -259,8 +282,18 @@ AnfNodePtr Map::Make(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg, c
       oss << "There are " << (arg_pairs.size() + 1) << " inputs of `" << name_ << "`, corresponding type info:\n"
           << trace::GetDebugInfo(func_graph->debug_info()) << ".\n";
       int64_t idx = 0;
+      std::string str_index = "first";
       for (auto &item : arg_pairs) {
-        oss << "The type of " << (++idx + 1) << "th argument in Map is: " << item.second->ToString() << ".\n";
+        if (idx == 0) {
+          // The first element in HyperMap is func_graph
+          str_index = "second";
+        } else if (idx == 1) {
+          str_index = "third";
+        } else {
+          str_index = std::to_string(idx + 2) + "th";
+        }
+        ++idx;
+        oss << "The type of the " << str_index << " argument in Map is: " << item.second->ToString() << ".\n";
       }
       MS_LOG(EXCEPTION) << "The types of arguments in Map must be consistent, "
                         << "but the types of arguments are inconsistent.\n"

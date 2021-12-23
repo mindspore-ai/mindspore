@@ -80,6 +80,6 @@ def test_zip_operation_args_type():
 
     x = Tensor.from_numpy(np.ones([1], np.float32))
     net = AssignInZipLoop()
-    with pytest.raises(Exception, match="The all inputs of zip operator must be sequence"):
+    with pytest.raises(Exception, match="For 'zip', the all inputs must be list or tuple."):
         out = net(x)
         assert np.all(out.asnumpy() == 1)
