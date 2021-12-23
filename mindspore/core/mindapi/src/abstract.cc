@@ -52,6 +52,27 @@ void AbstractBase::set_value(const ValuePtr &value) {
   ToRef<AbstractBaseImpl>(impl_).set_value(value_impl);
 }
 
+using AbstractScalarImpl = mindspore::abstract::AbstractScalar;
+
+MIND_API_BASE_IMPL(AbstractScalar, AbstractScalarImpl, AbstractBase);
+
+AbstractScalar::AbstractScalar(const ValuePtr &value, const TypePtr &type)
+    : AbstractBase(std::make_shared<AbstractScalarImpl>(ToImpl<ValueImpl>(value), ToImpl<TypeImpl>(type))) {}
+
+AbstractScalar::AbstractScalar(const TypePtr &type)
+    : AbstractBase(std::make_shared<AbstractScalarImpl>(ToImpl<TypeImpl>(type))) {}
+
+AbstractScalar::AbstractScalar(const ValuePtr &value)
+    : AbstractBase(std::make_shared<AbstractScalarImpl>(ToImpl<ValueImpl>(value))) {}
+
+AbstractScalar::AbstractScalar(int64_t value) : AbstractBase(std::make_shared<AbstractScalarImpl>(value)) {}
+
+AbstractScalar::AbstractScalar(float value) : AbstractBase(std::make_shared<AbstractScalarImpl>(value)) {}
+
+AbstractScalar::AbstractScalar(bool value) : AbstractBase(std::make_shared<AbstractScalarImpl>(value)) {}
+
+AbstractScalar::AbstractScalar(const std::string &value) : AbstractBase(std::make_shared<AbstractScalarImpl>(value)) {}
+
 using AbstractTensorImpl = mindspore::abstract::AbstractTensor;
 
 MIND_API_BASE_IMPL(AbstractTensor, AbstractTensorImpl, AbstractBase);
