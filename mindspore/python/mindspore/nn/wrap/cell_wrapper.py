@@ -529,6 +529,9 @@ class PipelineCell(Cell):
         network (Cell): The target network to wrap.
         micro_size (int): MicroBatch size.
 
+    Supported Platforms:
+    ``Ascend`` ``GPU``
+
     Examples:
         >>> net = Net()
         >>> net = PipelineCell(net, 4)
