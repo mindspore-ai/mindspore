@@ -156,6 +156,8 @@ class AscendStreamAssign {
   void GetAllGraphID(const NotNull<KernelGraphPtr> &graph_ptr, std::vector<uint32_t> *graphs_id);
   void GraphLoopSync(const NotNull<KernelGraphPtr> &root_graph, uint32_t graph_id);
 
+  void InsertEventForMicroBatchIndependent(const NotNull<KernelGraphPtr> &graph_ptr);
+
   bool independent_stream_activated_{false};
   bool hcom_stream_activated_{false};
   bool loop_sink_{false};
