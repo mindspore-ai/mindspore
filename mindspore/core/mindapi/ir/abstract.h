@@ -17,6 +17,8 @@
 #ifndef MINDSPORE_CORE_MINDAPI_IR_ABSTRACT_H_
 #define MINDSPORE_CORE_MINDAPI_IR_ABSTRACT_H_
 
+#include <cstdint>
+#include <string>
 #include "mindapi/base/base.h"
 #include "mindapi/ir/common.h"
 #include "mindapi/ir/shape.h"
@@ -54,6 +56,50 @@ class MIND_API AbstractBase : public Base {
   /// \param[in] value The value to be set.
   void set_value(const ValuePtr &value);
 };
+
+/// \brief AbstractScalar describes a scalar's type and value.
+class MIND_API AbstractScalar : public AbstractBase {
+ public:
+  MIND_API_BASE_MEMBER(AbstractScalar);
+
+  /// \brief Constructs an AbstractScalar with the given value and type.
+  ///
+  /// \param[in] value The value.
+  /// \param[in] type The type.
+  AbstractScalar(const ValuePtr &value, const TypePtr &type);
+
+  /// \brief Constructs an AbstractScalar with the given type.
+  ///
+  /// \param[in] type The type.
+  explicit AbstractScalar(const TypePtr &type);
+
+  /// \brief Constructs an AbstractScalar with the given value.
+  ///
+  /// \param[in] value The value.
+  explicit AbstractScalar(const ValuePtr &value);
+
+  /// \brief Constructs an AbstractScalar with an int64 value.
+  ///
+  /// \param[in] value The int64 value.
+  explicit AbstractScalar(int64_t value);
+
+  /// \brief Constructs an AbstractScalar with a float value.
+  ///
+  /// \param[in] value The float value.
+  explicit AbstractScalar(float value);
+
+  /// \brief Constructs an AbstractScalar with a bool value.
+  ///
+  /// \param[in] value The boolean value.
+  explicit AbstractScalar(bool value);
+
+  /// \brief Constructs an AbstractScalar with a string value.
+  ///
+  /// \param[in] value The string value.
+  explicit AbstractScalar(const std::string &value);
+};
+
+using AbstractScalarPtr = SharedPtr<AbstractScalar>;
 
 /// \brief AbstractTensor describes a tensor's type, shape and value.
 class MIND_API AbstractTensor : public AbstractBase {
