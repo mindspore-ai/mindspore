@@ -54,7 +54,8 @@ enum OperatorType {
   kRecExpandDims,
   kRecStridedSlice,
   kRecArgWithValue,
-  kRecUnsortedSegmentOp
+  kRecUnsortedSegmentOp,
+  kRecBatchMatMul
 };
 
 enum InfoType { kApplication, kConstant };
