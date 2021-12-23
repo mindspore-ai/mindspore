@@ -173,6 +173,12 @@ size_t SetOutputValue(const CNodePtr &cnode, const std::vector<std::vector<int64
     *(data_ptr + i) = output[i];
   }
 
+  auto runtime_instance = device::KernelRuntimeManager::Instance().GetCurrentKernelRuntime();
+  MS_EXCEPTION_IF_NULL(runtime_instance);
+  auto ret = runtime_instance->SyncStream();
+  if (!ret) {
+    MS_LOG(EXCEPTION) << "Sync stream error!";
+  }
   if (!out_addr->SyncHostToDevice(out_shape, LongToSize(tensor_for_sync->data().nbytes()), tensor_for_sync->data_type(),
                                   tensor_for_sync->data_c(), tensor_for_sync->device_info().host_format_)) {
     MS_LOG(EXCEPTION) << "Output Value SyncHostToDevice failed.";
