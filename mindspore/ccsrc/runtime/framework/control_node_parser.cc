@@ -16,6 +16,7 @@
 
 #include "runtime/framework/control_node_parser.h"
 #include "runtime/framework/actor/actor_common.h"
+#include "utils/func_graph_analyzer.h"
 #include "utils/convert_utils.h"
 #include "abstract/utils.h"
 #include "ir/tensor.h"
@@ -1541,21 +1542,18 @@ void ControlNodeParser::ParseFrontToBackendParameter(const std::vector<KernelGra
 }
 
 void ControlNodeParser::ParseCallNodeToFuncGraph(const std::vector<AnfNodePtr> &control_nodes) {
-  AnfNodePtr make_tuple;
+  auto func_graph_analyzer = std::make_shared<FuncGraphAnalyzer>(root_func_graph_);
+  func_graph_analyzer->Run();
+
   for (const auto &control_node : control_nodes) {
     MS_EXCEPTION_IF_NULL(control_node);
-    if (AnfAlgo::CheckPrimitiveType(control_node, prim::kPrimMakeTuple)) {
-      make_tuple = control_node;
-      break;
+    if (!AnfAlgo::IsCallNode(control_node)) {
+      continue;
     }
-  }
 
-  for (const auto &control_node : control_nodes) {
-    MS_EXCEPTION_IF_NULL(control_node);
-
-    if (AnfAlgo::IsCallNode(control_node)) {
-      std::stack<size_t> output_indexs;
-      call_node_to_func_graphs_[control_node] = GetFuncGraphbyCallNode(control_node, &output_indexs, make_tuple);
+    auto func_graphs = func_graph_analyzer->GetCallerFuncGraphs(control_node);
+    for (auto func_graph : func_graphs) {
+      call_node_to_func_graphs_[control_node].emplace(func_graph);
     }
   }
 }
