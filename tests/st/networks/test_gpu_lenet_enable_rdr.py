@@ -4,6 +4,7 @@ import json
 import pytest
 
 import mindspore.context as context
+from tests.security_utils import security_off_wrap
 from .test_gpu_lenet import test_train_lenet, test_train_and_eval_lenet
 
 # create config file for RDR
@@ -29,12 +30,14 @@ def test_train_and_eval():
         # train and eval with GPU
         test_train_and_eval_lenet()
 
+@security_off_wrap
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_train_with_GPU():
     test_train("GPU")
 
+@security_off_wrap
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard

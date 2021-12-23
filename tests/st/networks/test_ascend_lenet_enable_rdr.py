@@ -4,6 +4,7 @@ import json
 import pytest
 
 import mindspore.context as context
+from tests.security_utils import security_off_wrap
 from .test_network_main import test_lenet
 
 # create config file for RDR
@@ -21,6 +22,7 @@ def test_train(device_type):
         context.set_context(env_config_path=config_file)
         test_lenet()
 
+@security_off_wrap
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
