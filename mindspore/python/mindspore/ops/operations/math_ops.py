@@ -5031,6 +5031,68 @@ class BitwiseXor(_BitwiseBinaryOp):
     """
 
 
+class BesselI0(Primitive):
+    """
+    Computes BesselI0 of input element-wise.
+
+    Inputs:
+        - **x** (Tensor) - The shape of tensor is
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+          Data type must be float16, float32 or float64.
+
+    Outputs:
+        Tensor, has the same shape as `x`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor of float16, float32.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> bessel_i0 = ops.BesselI0()
+        >>> x = Tensor(np.array([0.24, 0.83, 0.31, 0.09]), mindspore.float32)
+        >>> output = bessel_i0(x)
+        >>> print(output)
+        [1.014452  1.179784  1.0241697 1.0020261]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize BesselI0"""
+
+
+class BesselI1(Primitive):
+    """
+    Computes BesselI1 of input element-wise.
+
+    Inputs:
+        - **x** (Tensor) - The shape of tensor is
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+          Data type must be float16, float32 or float64.
+
+    Outputs:
+        Tensor, has the same shape as `x`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor of float16, float32.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> bessel_i1 = ops.BesselI1()
+        >>> x = Tensor(np.array([0.24, 0.83, 0.31, 0.09]), mindspore.float32)
+        >>> output = bessel_i1(x)
+        >>> print(output)
+        [0.1208661  0.45177728 0.1568694  0.04504559]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize BesselI1"""
+
+
 class BesselI0e(Primitive):
     r"""
     Computes BesselI0e of input element-wise.
