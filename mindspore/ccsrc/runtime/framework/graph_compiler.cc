@@ -618,19 +618,30 @@ void GraphCompiler::GetSingleOpRunInfoAndGraphInfo(const CNodePtr &kernel, const
   *run_info = session_->GetSingleOpRunInfo(kernel, *graph_info, tensor_info, graph_output_info);
 }
 
-void GraphCompiler::CalculateRefCount(const KernelGraphPtr &graph, std::map<KernelWithIndex, size_t> *ref_count,
-                                      std::map<AnfNodePtr, size_t> *forward_output_refcount) const {
+void GraphCompiler::CalculateRefCount(const KernelGraphPtr &graph, std::map<KernelWithIndex, size_t> *ref_count) const {
   MS_EXCEPTION_IF_NULL(session_);
   session_->GetRefCount(graph.get(), ref_count);
-  session_->GetForwardOutputRefCount(graph.get(), forward_output_refcount);
+}
+
+void GraphCompiler::CalculateForwardOpOutputCount(const KernelGraphPtr &graph,
+                                                  std::map<std::string, size_t> *forward_op_output_refcount) const {
+  MS_EXCEPTION_IF_NULL(session_);
+  forward_op_output_refcount->clear();
+  session_->GetForwardOpOutputRefCount(graph.get(), forward_op_output_refcount);
 }
 
 void GraphCompiler::UpdateRefCount(const std::set<KernelWithIndex> &input_kernels_with_index,
                                    std::map<KernelWithIndex, size_t> *ref_count,
-                                   std::map<AnfNodePtr, size_t> *forward_output_refcount,
                                    std::map<KernelWithIndex, tensor::TensorPtr> *op_output_map) const {
   MS_EXCEPTION_IF_NULL(session_);
-  session_->HandleOpInputs(input_kernels_with_index, ref_count, forward_output_refcount, op_output_map);
+  session_->HandleOpInputs(input_kernels_with_index, ref_count, op_output_map);
+}
+
+void GraphCompiler::UpdateForwardOpOutputRefCount(const std::vector<tensor::TensorPtr> &input_tensor,
+                                                  std::map<std::string, size_t> *forward_op_output_refcount) const {
+  MS_EXCEPTION_IF_NULL(session_);
+  MS_EXCEPTION_IF_NULL(forward_op_output_refcount);
+  session_->ReleaseForwardOpOutput(input_tensor, forward_op_output_refcount);
 }
 
 void GraphCompiler::RecoverGraphOutput(const AnfNodePtr &kernel, const VectorRef &op_outputs,

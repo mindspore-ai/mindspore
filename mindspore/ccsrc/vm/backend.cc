@@ -813,14 +813,14 @@ void MindRTBackend::RunGraphBySingleOp(const std::vector<KernelGraphPtr> &graphs
                                             &graph_output_info.output_indexes);
 
     std::map<KernelWithIndex, size_t> cnode_ref_count;
-    std::map<AnfNodePtr, size_t> forward_output_refcount;
     auto iter = cnode_ref_counts_.find(graph->graph_id());
     if (iter == cnode_ref_counts_.end()) {
-      graph_compiler_->CalculateRefCount(graph, &cnode_ref_count, &forward_output_refcount);
+      graph_compiler_->CalculateRefCount(graph, &cnode_ref_count);
       (void)cnode_ref_counts_.emplace(graph->graph_id(), cnode_ref_count);
     } else {
       cnode_ref_count = iter->second;
     }
+    graph_compiler_->CalculateForwardOpOutputCount(graph, &forward_op_output_ref_counts_);
 
     // Clear bucket resources every step
     if (graph->is_bprop()) {
@@ -848,8 +848,7 @@ void MindRTBackend::RunGraphBySingleOp(const std::vector<KernelGraphPtr> &graphs
         SyncLazyTasks();
       }
 
-      graph_compiler_->UpdateRefCount(input_tensor_info.input_kernel, &cnode_ref_count, &forward_output_refcount,
-                                      &op_output_map);
+      graph_compiler_->UpdateRefCount(input_tensor_info.input_kernel, &cnode_ref_count, &op_output_map);
 
       graph_output_info.graph_output_tensors.clear();
       graph_compiler_->RecoverGraphOutput(kernel, op_outputs, cnode_ref_count, &op_output_map, &graph_output_info);
@@ -1227,6 +1226,13 @@ void MindRTBackend::RunSingleOpGraph(const KernelGraphPtr &graph,
         kernel_mod->ReleaseResource();
       }
     }
+  }
+
+  // Update forward op output ref counts, release it
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (!ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER)) {
+    graph_compiler_->UpdateForwardOpOutputRefCount(input_tensors, &forward_op_output_ref_counts_);
   }
 }
 

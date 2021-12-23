@@ -973,7 +973,6 @@ void TopCellInfo::ClearDeviceMemory() {
     MS_LOG(DEBUG) << "No need to clear device address when run in CPU device.";
     return;
   }
-  k_pynative_cell_ptr_ = nullptr;
   // Get all tensors obj in value node of running graph
   std::vector<tensor::TensorPtr> tensors_in_bprop_graph;
   MS_EXCEPTION_IF_NULL(resource_);
@@ -1011,7 +1010,7 @@ void TopCellInfo::Clear() {
   k_pynative_cell_ptr_ = nullptr;
   graph_info_map_.clear();
   sub_cell_list_.clear();
-  outputs_id_.clear();
+  forward_op_output_id_.clear();
   op_info_with_tensor_id_.clear();
   tensor_id_with_tensor_object_.clear();
   op_info_with_ms_func_forward_tensors_.clear();
@@ -2001,7 +2000,7 @@ void GradExecutor::SaveForwardTensorInfoInBpropGraph(const pipeline::ResourcePtr
       continue;
     }
     tensor_id_with_tensor_object[tensor->id()].emplace_back(tensor);
-    top_cell()->outputs_id().insert(tensor->id());
+    top_cell()->forward_op_output_id().insert(tensor->id());
     MS_LOG(DEBUG) << "Save forward tensor " << tensor.get() << " id " << tensor->id()
                   << " device address: " << tensor->device_address() << " shape and dtype "
                   << tensor->GetShapeAndDataTypeInfo();
@@ -3042,6 +3041,7 @@ void GradExecutor::RunGradGraph(py::object *ret, const py::object &cell, const p
   const auto &backend = MsContext::GetInstance()->backend_policy();
   MS_LOG(DEBUG) << "Eval run " << backend;
   grad_is_running_ = true;
+  top_cell()->set_k_pynative_cell_ptr(nullptr);
   BaseRef value = (*run)(arg_list);
   grad_is_running_ = false;
   MS_LOG(DEBUG) << "Eval run end " << value.ToString();

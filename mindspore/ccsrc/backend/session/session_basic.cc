@@ -1328,27 +1328,37 @@ void SessionBasic::GetRefCount(const KernelGraph *graph, std::map<KernelWithInde
   }
 }
 
-void SessionBasic::GetForwardOutputRefCount(const KernelGraph *graph,
-                                            std::map<AnfNodePtr, size_t> *forward_output_refcount) {
-  if (!pynative::PynativeExecutor::GetInstance()->grad_flag()) {
+void SessionBasic::GetForwardOpOutputRefCount(const KernelGraph *graph,
+                                              std::map<std::string, size_t> *forward_op_output_refcount) {
+  if (!pynative::PynativeExecutor::GetInstance()->grad_executor()->grad_is_running()) {
     return;
   }
-  const auto &forward_value_nodes_id = pynative::PynativeExecutor::GetInstance()->grad_executor()->forward_outputs_id();
-  for (const auto &kernel : graph->execution_order()) {
-    for (size_t i = 1; i < kernel->inputs().size(); i += 1) {
-      const auto &input = kernel->input(i);
-      if (!input->isa<ValueNode>()) {
-        continue;
-      }
-      auto value_node = input->cast<ValueNodePtr>();
-      auto value = GetValueNode(value_node);
-      MS_EXCEPTION_IF_NULL(value);
-      if (value->isa<tensor::Tensor>()) {
-        auto tensor = value->cast<tensor::TensorPtr>();
-        MS_EXCEPTION_IF_NULL(tensor);
-        if (forward_value_nodes_id.find(tensor->id()) != forward_value_nodes_id.end()) {
-          (*forward_output_refcount)[input] += 1;
-        }
+  const auto &graph_value_nodes = graph->graph_value_nodes();
+  std::vector<tensor::TensorPtr> tensor_value_list;
+  for (const auto &v : graph_value_nodes) {
+    const auto &value = GetValueNode(v);
+    MS_EXCEPTION_IF_NULL(value);
+    TensorValueToTensor(value, &tensor_value_list);
+  }
+  const auto &forward_op_output_id = pynative::PynativeExecutor::GetInstance()->grad_executor()->forward_op_output_id();
+  for (const auto &t : tensor_value_list) {
+    if (forward_op_output_id.find(t->id()) != forward_op_output_id.end()) {
+      (*forward_op_output_refcount)[t->id()] += 1;
+    }
+  }
+  MS_LOG(DEBUG) << "Total value nodes in graph size " << graph_value_nodes.size() << ", total tensor value node size "
+                << tensor_value_list.size() << ", forward op output tensor size " << forward_op_output_refcount->size();
+}
+
+void SessionBasic::ReleaseForwardOpOutput(const std::vector<tensor::TensorPtr> &input_tensors,
+                                          std::map<std::string, size_t> *forward_op_output_refcount) {
+  MS_EXCEPTION_IF_NULL(forward_op_output_refcount);
+  for (const auto &tensor : input_tensors) {
+    auto it = forward_op_output_refcount->find(tensor->id());
+    if (it != forward_op_output_refcount->end()) {
+      if (--(it->second) == 0) {
+        tensor->set_device_address(nullptr);
+        forward_op_output_refcount->erase(it);
       }
     }
   }
@@ -1356,32 +1366,12 @@ void SessionBasic::GetForwardOutputRefCount(const KernelGraph *graph,
 
 void SessionBasic::HandleOpInputs(const std::set<KernelWithIndex> &input_kernel,
                                   std::map<KernelWithIndex, size_t> *ref_count,
-                                  std::map<AnfNodePtr, size_t> *forward_output_refcount,
                                   std::map<KernelWithIndex, tensor::TensorPtr> *op_output_map) {
   MS_EXCEPTION_IF_NULL(ref_count);
-  MS_EXCEPTION_IF_NULL(forward_output_refcount);
   MS_EXCEPTION_IF_NULL(op_output_map);
   for (auto &kernel_with_index : input_kernel) {
     if (!kernel_with_index.first->isa<CNode>()) {
       continue;
-    }
-
-    // Release forward output
-    auto cnode = kernel_with_index.first->cast<CNodePtr>();
-    for (size_t i = 1; i < cnode->inputs().size(); i += 1) {
-      const auto &input = cnode->input(i);
-      auto it = forward_output_refcount->find(input);
-      if (it != forward_output_refcount->end()) {
-        if (--(it->second) == 0) {
-          auto value_node = input->cast<ValueNodePtr>();
-          auto value = GetValueNode(value_node);
-          MS_EXCEPTION_IF_NULL(value);
-          auto tensor = value->cast<tensor::TensorPtr>();
-          MS_EXCEPTION_IF_NULL(tensor);
-          tensor->set_device_address(nullptr);
-          forward_output_refcount->erase(it);
-        }
-      }
     }
 
     // Release previous output
@@ -2400,15 +2390,10 @@ void SessionBasic::RunOpsInGraphImpl(const GraphId &graph_id, const std::vector<
   graph_output_info.graph_outputs = outputs;
   CreateOutputPlaceholder(kernel_graph, inputs, graph_output_info.graph_outputs, &graph_output_info.output_indexes);
   std::map<KernelWithIndex, size_t> cnode_refcount;
-  std::map<AnfNodePtr, size_t> forward_output_refcount;
+  std::map<std::string, size_t> forward_op_output_refcount;
   GetRefCount(kernel_graph.get(), &cnode_refcount);
-  GetForwardOutputRefCount(kernel_graph.get(), &forward_output_refcount);
+  GetForwardOpOutputRefCount(kernel_graph.get(), &forward_op_output_refcount);
   BuildOpsInGraph(graph_id, parameter_index, inputs, cnode_refcount);
-
-  // Clear bucket resources every step
-  if (kernel_graph->is_bprop()) {
-    ClearAllBucket(graph_id);
-  }
 
   std::map<KernelWithIndex, tensor::TensorPtr> op_output_map;
   for (const auto &kernel : kernel_graph->execution_order()) {
@@ -2426,13 +2411,19 @@ void SessionBasic::RunOpsInGraphImpl(const GraphId &graph_id, const std::vector<
                     input_tensor_info.input_tensors_mask);
     graph_output_info.graph_output_tensors.clear();
     // Handle inputs and outputs of current op
-    HandleOpInputs(input_tensor_info.input_kernel, &cnode_refcount, &forward_output_refcount, &op_output_map);
+    ReleaseForwardOpOutput(input_tensor_info.input_tensors, &forward_op_output_refcount);
+    HandleOpInputs(input_tensor_info.input_kernel, &cnode_refcount, &op_output_map);
     HandleOpOutputs(kernel, op_outputs, cnode_refcount, &op_output_map, &graph_output_info);
     // Save grad node to Bucket
     if (kernel_graph->is_bprop()) {
       AddGradAddrToBucket(graph_id, graph_output_info.graph_output_tensors);
     }
   }
+  // Clear bucket resources every step
+  if (kernel_graph->is_bprop()) {
+    ClearAllBucket(graph_id);
+  }
+
   MS_LOG(INFO) << "Finish!";
 }
 
