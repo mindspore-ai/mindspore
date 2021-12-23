@@ -365,11 +365,10 @@ void SetWeightFormat(const AnfNodePtr &real_input_node, std::vector<string> outp
   if (real_input_node->isa<CNode>()) {
     return;
   }
-  if (AnfAlgo::OutputAddrExist(real_input_node, 0)) {
-    auto output_addr = AnfAlgo::GetOutputAddr(real_input_node, 0);
-    if (output_addr->GetPtr() != nullptr) {
-      return;
-    }
+
+  if (AnfAlgo::OutputAddrExist(real_input_node, 0) &&
+      AnfAlgo::GetOutputDeviceDataType(real_input_node, 0) != kTypeUnknown) {
+    return;
   }
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
