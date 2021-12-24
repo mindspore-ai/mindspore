@@ -58,7 +58,10 @@ bool EnvResetKernel::Init(const CNodePtr &cnode) {
   return true;
 }
 
-void EnvResetKernel::InitSizeLists() { output_size_list_.push_back(env_->StateSizeInBytes()); }
+void EnvResetKernel::InitSizeLists() {
+  output_size_list_.push_back(env_->StateSizeInBytes());
+  workspace_size_list_.push_back(env_->WorkspaceSizeInBytes());
+}
 
 bool EnvResetKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                             const std::vector<AddressPtr> &outputs, void *stream) {

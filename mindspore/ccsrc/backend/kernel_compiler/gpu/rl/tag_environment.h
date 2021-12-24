@@ -52,7 +52,7 @@ class TagEnvironment : public Environment {
  private:
   // The GameSetting and AgentState are used in C-like compiling environment, use C style resource managerment.
   bool InitGameSetting(const CNodePtr &cnode, GameSetting *setting_host);
-  bool InitAgentState(int predator_num, int prey_num, AgentState *agent_state);
+  bool InitAgentState(AgentState *agent_state);
   bool FinalizeAgentState(const AgentState &agent_state);
 
   int env_num_ = 0;
@@ -64,7 +64,7 @@ class TagEnvironment : public Environment {
 
   enum StepKernelType { kBindBlock = 0, kCrossBlock };
   void StepKernelProfiling(const int *action, float *state, float *reward, bool *done, float *team_reward,
-                           cudaStream_t stream);
+                           int *distance, cudaStream_t stream);
   int enable_profiling_ = true;
   StepKernelType optimal_kernel_ = kBindBlock;
 };
