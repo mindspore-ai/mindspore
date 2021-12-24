@@ -30,6 +30,7 @@
 #include "backend/kernel_compiler/ascend_kernel_mod.h"
 #include "runtime/device/ascend/ascend_bucket.h"
 #include "common/util/error_manager/error_manager.h"
+#include "runtime/device/ascend/ascend_memory_adapter.h"
 
 #ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
@@ -474,6 +475,15 @@ void AscendDeviceContext::AllocateGraphMemory(const NotNull<KernelGraphPtr> &roo
   mem_manager_->ResetDynamicMemory();
   runtime_instance_->AssignDynamicMemory(*root_graph.get());
   runtime_instance_->UpdateRefNodeOutputMem(*root_graph.get());
+
+  MS_LOG(INFO) << "Status record: end memory alloc. graph id: " << root_graph->graph_id()
+               << ", Memory Statistics: " << device::ascend::AscendMemAdapter::GetInstance().DevMemStatistics();
+  MS_LOG(INFO) << "The dynamic memory pool total size is: "
+               << device::ascend::AscendMemoryPool::GetInstance().TotalMemStatistics() / kMBToByte
+               << "M, total used size is "
+               << device::ascend::AscendMemoryPool::GetInstance().TotalUsedMemStatistics() / kMBToByte
+               << "M, used peak size is "
+               << device::ascend::AscendMemoryPool::GetInstance().UsedMemPeakStatistics() / kMBToByte << "M.";
 
 #ifndef ENABLE_SECURITY
   if (MemoryProfiling::GetInstance().IsMemoryProfilingInitialized()) {
