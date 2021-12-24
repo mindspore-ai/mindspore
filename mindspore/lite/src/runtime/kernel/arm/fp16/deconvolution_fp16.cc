@@ -60,7 +60,7 @@ void DeConvolutionFp16CPUKernel::PackWeight() {
   auto kernel_h = weight_tensor->Height();
   auto kernel_w = weight_tensor->Width();
   void *origin_weight = (op_parameter_->is_train_session_) ? weight_tensor->data() : origin_weight_;
-  MS_ASSERT(origin_weight != nullptr);
+  CHECK_NULL_RETURN_VOID(origin_weight);
   PackNHWCFp16ToC8HWN8Fp16(reinterpret_cast<float16_t *>(origin_weight), reinterpret_cast<float16_t *>(packed_weight_),
                            input_channel, kernel_w * kernel_h, output_channel);
 }

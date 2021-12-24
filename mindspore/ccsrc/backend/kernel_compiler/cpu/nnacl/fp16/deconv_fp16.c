@@ -18,6 +18,8 @@
 
 int DeConvPostFp16(const float16_t *src, float16_t *tmp, const float16_t *bias, float16_t *dst, int output_channel,
                    const ConvParameter *conv_param) {
+  NNACL_CHECK_ZERO_RETURN_ERR(conv_param->dilation_h_);
+  NNACL_CHECK_ZERO_RETURN_ERR(conv_param->dilation_w_);
   /* row8x8-major(ih*iw x oc*kh*kw)  ->  row8-major(oh*ow x oc) */
   size_t input_plane = conv_param->input_w_ * conv_param->input_h_;
   size_t kernel_plane = conv_param->kernel_w_ * conv_param->kernel_h_;

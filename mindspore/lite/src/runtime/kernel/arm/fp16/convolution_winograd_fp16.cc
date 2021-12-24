@@ -242,6 +242,7 @@ int ConvolutionWinogradFP16CPUKernel::Run() {
   }
   if (RepackWeight() != RET_OK) {
     MS_LOG(ERROR) << "Repack weight failed.";
+    FreeTmpBuffer();
     return RET_ERROR;
   }
   ret = ParallelLaunch(this->ms_context_, ConvolutionWinogradFp16Impl, this, thread_count_);

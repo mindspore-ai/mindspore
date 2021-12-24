@@ -21,6 +21,7 @@
 #include "nnacl/crop_parameter.h"
 
 void Fp16Crop(const float16_t *input, float16_t *output, int task_id, const CropParameter *para) {
+  NNACL_CHECK_ZERO_RETURN(para->thread_count_);
   int input_dim = para->input_dim_;
   switch (input_dim) {
     case 1:
