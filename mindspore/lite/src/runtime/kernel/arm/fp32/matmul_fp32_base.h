@@ -99,6 +99,8 @@ class MatmulFp32BaseCPUKernel : public InnerKernel {
   MatrixPackFun matrix_a_pack_fun_ = nullptr;
   MatrixPackFun matrix_b_pack_fun_ = nullptr;
   bool batch_split_ = false;
+  bool out_need_aligned_ = false;
+  int col_step_ = 0;
 #if defined(ENABLE_AVX) || defined(ENABLE_AVX512)
   GemmFun gemmCalFun = nullptr;
   GemvFun gemvCalFun = nullptr;
