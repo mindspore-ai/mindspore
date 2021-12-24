@@ -100,6 +100,7 @@ std::vector<PrimitivePtr> GraphKernelCluster::GetClusterableOpList() {
     {kGPUDevice, OpLevel_0, prim::kPrimSign},
     {kGPUDevice, OpLevel_0, prim::kPrimSin},
     {kGPUDevice, OpLevel_0, prim::kPrimStridedSlice},
+    {kGPUDevice, OpLevel_1, prim::kPrimCumSum},
     // cpu
     {kCPUDevice, OpLevel_0, prim::kPrimLogicalNot},
     {kCPUDevice, OpLevel_0, prim::kPrimMod},
