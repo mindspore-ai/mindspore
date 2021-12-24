@@ -17,7 +17,7 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_SPLIT_UMONAD_H_
 
 #include "backend/optimizer/common/optimizer.h"
-#include "backend/optimizer/graph_kernel/graph_kernel_expander.h"
+#include "backend/optimizer/graph_kernel/adapter/graph_kernel_expander_with_py.h"
 namespace mindspore::graphkernel {
 class SplitAssign : public opt::PatternProcessPass {
  public:

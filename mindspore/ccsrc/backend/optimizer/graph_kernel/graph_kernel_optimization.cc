@@ -29,7 +29,7 @@
 #include "backend/optimizer/graph_kernel/eliminate_redundant_output.h"
 #include "backend/optimizer/graph_kernel/insert_pad.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_splitter.h"
-#include "backend/optimizer/graph_kernel/graph_kernel_expander.h"
+#include "backend/optimizer/graph_kernel/adapter/graph_kernel_expander_with_py.h"
 #include "backend/optimizer/graph_kernel/cast_matmul_fusion.h"
 #include "backend/optimizer/graph_kernel/raise_reduction_precision.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_cse.h"
