@@ -818,6 +818,18 @@ void OnnxExporter::ExportPrimReduce(const FuncGraphPtr &, const CNodePtr &node,
   } else {
     MS_LOG(EXCEPTION) << "Need to insert op convert variable from tuple to attributes for " << name;
   }
+  auto reduce_op = node->input(kZeroNum);
+  auto op_value = dyn_cast<ValueNode>(reduce_op);
+  auto prim = dyn_cast<Primitive>(op_value->value());
+  auto keep_dims = GetValue<bool>(prim->GetAttr("keep_dims"));
+  onnx::AttributeProto *attr_proto = node_proto->add_attribute();
+  attr_proto->set_name("keepdims");
+  attr_proto->set_type(onnx::AttributeProto_AttributeType_INT);
+  if (keep_dims) {
+    attr_proto->set_i(static_cast<::google::protobuf::int64>(kOneNum));
+  } else {
+    attr_proto->set_i(static_cast<::google::protobuf::int64>(kZeroNum));
+  }
 }
 
 void OnnxExporter::ExportPrimTranspose(const FuncGraphPtr &, const CNodePtr &node,
