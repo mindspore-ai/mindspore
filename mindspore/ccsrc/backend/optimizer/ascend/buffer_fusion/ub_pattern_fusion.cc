@@ -393,34 +393,19 @@ void SetFusionOpRefInfos(session::KernelGraph *kernel_graph, const std::vector<A
 
 bool CheckCircle(const session::KernelGraph &kernel_graph, const BufferFusionInfo_t &fusion_info) {
   bool has_circle = false;
+  mindspore::HashSet<AnfNodePtr> visited_nodes;
   for (auto &inp : fusion_info.inputs_list) {
     MS_EXCEPTION_IF_NULL(inp);
     if (!inp->isa<CNode>() || AnfAlgo::CheckPrimitiveType(inp, prim::kPrimLoad)) {
       continue;
     }
 
-    if (IsDepend(kernel_graph, inp, fusion_info.anf_nodes)) {
+    if (IsDepend(kernel_graph, inp, fusion_info.anf_nodes, &visited_nodes)) {
       has_circle = true;
       break;
     }
   }
   return has_circle;
-}
-
-void RemoveCircle(const session::KernelGraph &kernel_graph,
-                  mindspore::HashMap<int64_t, BufferFusionInfo_t> *buffer_fusion_infos) {
-  MS_EXCEPTION_IF_NULL(buffer_fusion_infos);
-  std::vector<int64_t> fusion_ids;
-  for (auto &[fusion_id, fusion_info] : *buffer_fusion_infos) {
-    bool has_circle = CheckCircle(kernel_graph, fusion_info);
-    if (has_circle) {
-      (void)fusion_ids.emplace_back(fusion_id);
-    }
-  }
-
-  for (auto &fusion_id : fusion_ids) {
-    buffer_fusion_infos->erase(fusion_id);
-  }
 }
 }  // namespace
 
@@ -431,8 +416,6 @@ void UbPatternFusion::GetBufferFusionInfo(session::KernelGraph *kernel_graph,
   GetFusionScopeComputeNodeList(kernel_graph, buffer_fusion_infos);
   GetFusionScopeInputNodeList(*kernel_graph, buffer_fusion_infos);
   GetFusionScopeOutputNodeList(kernel_graph, buffer_fusion_infos);
-  // Remove the fusion infos which will produce a circle if do fusion
-  RemoveCircle(*kernel_graph, buffer_fusion_infos);
   SetOutputUsedNumAttr(*kernel_graph, *buffer_fusion_infos);
 
   for (auto &buffer_fusion_info : *buffer_fusion_infos) {
