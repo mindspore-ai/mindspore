@@ -83,7 +83,7 @@
 #include "tools/optimizer/fusion/transpose_fusion.h"
 #include "tools/optimizer/format/to_nchw_format.h"
 #include "tools/optimizer/format/to_nhwc_format.h"
-#include "tools/converter/adapter/acl_pass.h"
+#include "tools/converter/adapter/acl/acl_pass.h"
 #include "tools/converter/quantizer/parameter_tunner.h"
 #include "tools/converter/quantizer/debug_info_manager.h"
 

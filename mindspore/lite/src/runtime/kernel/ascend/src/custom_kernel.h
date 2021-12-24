@@ -20,8 +20,8 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "src/runtime/kernel/ascend310/src/acl_model_options.h"
-#include "src/runtime/kernel/ascend310/src/model_infer.h"
+#include "src/runtime/kernel/ascend/src/acl_model_options.h"
+#include "src/runtime/kernel/ascend/src/model_infer.h"
 #include "include/api/types.h"
 #include "include/api/context.h"
 #include "include/api/kernel.h"

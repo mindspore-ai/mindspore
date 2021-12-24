@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/ascend310/src/model_infer.h"
+#include "src/runtime/kernel/ascend/src/model_infer.h"
 #include "common/log_adapter.h"
 #include "acl/acl.h"
 

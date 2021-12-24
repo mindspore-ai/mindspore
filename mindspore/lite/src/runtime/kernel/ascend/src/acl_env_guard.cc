@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/ascend310/src/acl_env_guard.h"
+#include "src/runtime/kernel/ascend/src/acl_env_guard.h"
 #include "common/log_adapter.h"
 #include "acl/acl.h"
 

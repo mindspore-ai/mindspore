@@ -21,7 +21,7 @@
 #include <string>
 #include "include/api/context.h"
 #include "include/errorcode.h"
-#include "src/runtime/kernel/ascend310/src/acl_model_options.h"
+#include "src/runtime/kernel/ascend/src/acl_model_options.h"
 
 namespace mindspore::kernel {
 namespace acl {
@@ -32,7 +32,7 @@ class AclOptionsParser {
   STATUS ParseAclOptions(const mindspore::Context *ctx, AclModelOptions *acl_options);
 
  private:
-  STATUS Parse310AclOptions(const std::shared_ptr<DeviceInfoContext> &device_info, AclModelOptions *acl_options);
+  STATUS ParseOptions(const std::shared_ptr<DeviceInfoContext> &device_info, AclModelOptions *acl_options);
   STATUS CheckDeviceId(int32_t *device_id);
 };
 }  // namespace acl

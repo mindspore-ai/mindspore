@@ -288,7 +288,7 @@ add_dependencies(lite_src_mid fbs_src)
 
 if(MSLITE_ENABLE_ACL)
     include_directories(${TOP_DIR}/graphengine/inc/external)
-    add_subdirectory(runtime/kernel/ascend310)
+    add_subdirectory(runtime/kernel/ascend)
     link_directories(${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
 endif()
 
@@ -474,6 +474,6 @@ if(ENABLE_MODEL_OBF)
 endif()
 
 if(MSLITE_ENABLE_ACL)
-    target_link_libraries(mindspore-lite ascend310_kernel_mid)
-    target_link_libraries(mindspore-lite_static ascend310_kernel_mid)
+    target_link_libraries(mindspore-lite ascend_kernel_mid)
+    target_link_libraries(mindspore-lite_static ascend_kernel_mid)
 endif()
