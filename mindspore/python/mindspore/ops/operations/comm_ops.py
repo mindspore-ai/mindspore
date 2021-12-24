@@ -662,6 +662,9 @@ class NeighborExchange(Primitive):
         recv_type (type): Data type which received from recv_rank_ids
         group (str):
 
+    Supported Platforms:
+        ``Ascend``
+
     Example:
         >>> # This example should be run with 2 devices. Refer to the tutorial > Distributed Training on mindspore.cn
         >>> import os
@@ -731,6 +734,9 @@ class AlltoAll(PrimitiveWithInfer):
 
     Raises:
         TypeError: If group is not a string.
+
+    Supported Platforms:
+        ``Ascend``
 
     Example:
         >>> # This example should be run with 8 devices. Refer to the tutorial > Distributed Training on mindspore.cn
@@ -817,6 +823,9 @@ class NeighborExchangeV2(Primitive):
                                [top, bottom, left, right].
         data_format (str): Data format, only support NCHW now.
         group (str): The communication group to work on. Default: "GlobalComm.WORLD_COMM_GROUP".
+
+    Supported Platforms:
+        ``Ascend``
 
     Example:
         >>> # This example should be run with 2 devices. Refer to the tutorial > Distributed Training on mindspore.cn
