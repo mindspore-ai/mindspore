@@ -112,20 +112,25 @@ class TbeKernelCompileManager {
   void SaveIOSizeInfo(const nlohmann::json &json, const std::string &json_name,
                       const std::vector<AnfNodePtr> &output_nodes = {});
   void ClearOldTask();
-  void LoadPreBuildResult(const std::vector<CNodePtr> &nodes);
+  void UpdateFusionTypeAndOutputDataDesc(const std::vector<CNodePtr> &nodes);
   JsonNameMap GetAllSuccessFusion();
   void GenKernelMod(const std::vector<CNodePtr> &anf_nodes);
   void DistributeCompileTask(const std::vector<CNodePtr> &anf_nodes, const std::string &job_type);
+  void DistributePreBuildTask(const std::vector<CNodePtr> &node_list);
 
   // init flag
   static bool tbe_init_flag_;
   // tune flag
   static bool is_tune_flag_;
+  // need rebuild when is_tune_flag_ is true, or op_debug_level_ is one of [1, 2, 4]
+  static bool is_need_rebuild_;
   // single op had build
   std::set<std::string> single_processed_kernels_;
+  // single op had pre build
+  std::set<std::string> pre_build_single_processed_kernels_;
   // fusion op had build
   std::set<std::string> fusion_processed_kernels_;
-  // if op_debug_level is "1", skip tbe compile cache and rebuild again.
+  // if op_debug_level is one of [1, 2, 4], skip tbe compile cache and rebuild again.
   std::string op_debug_level_;
   // id_node pair for node trace
   std::map<int, CNodePtr> job_id_to_node_;
@@ -133,6 +138,8 @@ class TbeKernelCompileManager {
   std::map<int, TaskInfo> task_map_;
   // pre build result
   std::map<std::string, PreBuildResult> prebuild_res_map_;
+  // using full_name to find json_name when update fusion type and out data desc
+  std::map<std::string, std::string> pre_build_full_name_to_json_name_;
   // save io size for kernel mod
   std::map<std::string, KernelIOSizeInfo> kernel_io_size_info_;
   // using full_name to find json_name when gen kernel mod

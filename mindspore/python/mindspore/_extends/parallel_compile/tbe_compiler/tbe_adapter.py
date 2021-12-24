@@ -15,6 +15,7 @@
 """tbe adapter to adapt te/topi/auto-tune python api """
 import json
 import os
+import shutil
 import sys
 import traceback
 from datetime import datetime
@@ -100,6 +101,22 @@ def _cann_kb_unload(job: TbeJob):
     kb_type = None
     res = cann_kb_unload(soc_version, core_num, kb_type)
     return res
+
+
+def _remove_cache(job: TbeJob):
+    """
+    :param job: remove cache file:[*.json, *.o, *.info, *.cce] when "op_debug_level" is "0"
+                op_debug_level: representation the env MS_COMPILER_OP_LEVEL
+    :return:
+    """
+    op_debug_level = job.content["SocInfo"]["op_debug_level"]
+    op_debug_dir = job.content["SocInfo"]["op_debug_dir"]
+    if op_debug_level != "0":
+        return
+    root_path = os.path.abspath(op_debug_dir)
+    if os.path.exists(root_path):
+        real_path = os.path.join(root_path, "kernel_meta/")
+        shutil.rmtree(real_path)
 
 
 def __directory_creation(path, concat_path):
@@ -663,4 +680,5 @@ def tbe_finalize(auto_tiling_mode, offline_tune, job: TbeJob):
         job.error("Cann kb unload failed")
         return False
     clear_fusion_params()
+    _remove_cache(job)
     return True
