@@ -242,7 +242,7 @@ class Optimizer(Cell):
     def unique(self):
         """
         Whether to make the gradients unique in optimizer. Generally, it is used in sparse networks. Set to True if the
-        the gradients of the optimizer are sparse. Set to False if the forward network has made the parameters unique,
+        gradients of the optimizer are sparse. Set to False if the forward network has made the parameters unique,
         that is, the gradients of the optimizer is no longer sparse.
         The default value is True when it is not set.
         """

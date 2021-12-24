@@ -29,7 +29,7 @@ class RootMeanSquareDistance(Metric):
     .. math::
         {\text{dis}}\left (v, S(A)\right ) = \underset{s_{A}  \in S(A)}{\text{min }}\rVert v - s_{A} \rVert
 
-    The Root Mean Square Surface Distance form set(B) to set(A) is:
+    The Root Mean Square Surface Distance from set(B) to set(A) is:
 
     .. math::
         RmsSurDis(B \rightarrow A) = \sqrt{\frac{\sum_{s_{B}  \in S(B)}^{} {\text{dis}^2  \left ( s_{B}, S(A)
@@ -37,7 +37,7 @@ class RootMeanSquareDistance(Metric):
 
     Where the \|\|\*\|\| denotes a distance measure. \|\*\| denotes the number of elements.
 
-    The Root Mean Square Surface Distance form set(B) to set(A) and from set(A) to set(B) is:
+    The Root Mean Square Surface Distance from set(B) to set(A) and from set(A) to set(B) is:
 
     .. math::
         RmsSurDis(A \leftrightarrow B) = \sqrt{\frac{\sum_{s_{A}  \in S(A)}^{} {\text{dis}  \left ( s_{A},
@@ -49,7 +49,7 @@ class RootMeanSquareDistance(Metric):
                 "euclidean", "chessboard" or "taxicab". Default: "euclidean".
         symmetric (bool):  Whether to calculate the symmetric average root mean square distance between
                 y_pred and y. If False, only calculates :math:`RmsSurDis(y_pred, y)` surface distance,
-                otherwise, the mean of  distance form `y_pred` to `y` and from `y` to `y_pred`, i.e.
+                otherwise, the mean of  distance from `y_pred` to `y` and from `y` to `y_pred`, i.e.
                 :math:`RmsSurDis(A \leftrightarrow B)` will be returned. Default: False.
 
     Supported Platforms:
