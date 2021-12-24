@@ -1908,7 +1908,7 @@ void SessionBasic::SetSummaryNodes(KernelGraph *graph) {
       }
       auto node = cnode->input(kSummaryGetItem);
       MS_EXCEPTION_IF_NULL(node);
-      auto item_with_index = AnfAlgo::VisitKernelWithReturnType(node, 0, true);
+      auto item_with_index = AnfAlgo::VisitKernelWithReturnType(node, 0, false);
       MS_EXCEPTION_IF_NULL(item_with_index.first);
       if (!AnfUtils::IsRealKernel(item_with_index.first)) {
         MS_LOG(EXCEPTION) << "Unexpected node:" << item_with_index.first->DebugString();
@@ -1943,7 +1943,7 @@ void SessionBasic::Summary(KernelGraph *graph) {
   for (auto &output_item : summary_outputs) {
     auto node = output_item.second.first;
     size_t index = IntToSize(output_item.second.second);
-    auto address = AnfAlgo::GetOutputAddr(node, index);
+    auto address = AnfAlgo::GetOutputAddr(node, index, false);
     auto shape = AnfAlgo::GetOutputInferShape(node, index);
     TypeId type_id = AnfAlgo::GetOutputInferDataType(node, index);
     std::vector<int64_t> temp_shape;
