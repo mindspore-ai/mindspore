@@ -30,7 +30,7 @@ void ConvolutionDepthwise3x3Fp16CPUKernel::PackWeight() {
   auto weight_tensor = in_tensors_.at(kWeightIndex);
   int channel = weight_tensor->Batch();
   void *origin_weight = (op_parameter_->is_train_session_) ? weight_tensor->data() : origin_weight_;
-  MS_ASSERT(origin_weight != nullptr);
+  CHECK_NULL_RETURN_VOID(origin_weight);
   PackWeightConvDw3x3Fp16(reinterpret_cast<float16_t *>(origin_weight), reinterpret_cast<float16_t *>(packed_weight_),
                           channel);
 }

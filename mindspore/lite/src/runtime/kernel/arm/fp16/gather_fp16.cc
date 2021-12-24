@@ -29,34 +29,15 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Gather;
 
 namespace mindspore::kernel {
-namespace {
-constexpr int kSecondInput = 2;
-}
-GatherFp16CPUKernel::~GatherFp16CPUKernel() {
-  if (input_data_) {
-    ms_context_->allocator->Free(input_data_);
-    input_data_ = nullptr;
-  }
-}
-
 int GatherFp16CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 3);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
-  auto input_tensor = in_tensors_.at(0);
-  CHECK_NULL_RETURN(input_tensor);
-  if (input_tensor->data_type() == kNumberTypeFloat32 && input_tensor->data() != nullptr) {
-    const_input_ = true;
-    input_data_ =
-      reinterpret_cast<float16_t *>(ms_context_->allocator->Malloc(input_tensor->ElementsNum() * sizeof(float16_t)));
-    if (input_data_ == nullptr) {
-      MS_LOG(ERROR) << "Malloc failed";
-      return RET_ERROR;
-    }
-    Float32ToFloat16(reinterpret_cast<float *>(input_tensor->data()), input_data_, input_tensor->ElementsNum());
-  }
-  CHECK_NULL_RETURN(in_tensors_.at(kSecondInput)->data());
-  (reinterpret_cast<GatherParameter *>(op_parameter_))->axis_ =
-    *(reinterpret_cast<int *>(in_tensors_.at(kSecondInput)->data()));
+  CHECK_NULL_RETURN(in_tensors_[FIRST_INPUT]);
+  CHECK_NULL_RETURN(in_tensors_[SECOND_INPUT]);
+  CHECK_NULL_RETURN(in_tensors_[THIRD_INPUT]);
+  CHECK_NULL_RETURN(out_tensors_[kOutputIndex]);
+  CHECK_NULL_RETURN(in_tensors_[THIRD_INPUT]->data());
+  (reinterpret_cast<GatherParameter *>(op_parameter_))->axis_ = *(static_cast<int *>(in_tensors_[THIRD_INPUT]->data()));
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -89,9 +70,7 @@ int GatherFp16CPUKernel::DoGather(int task_id) {
   }
   auto thread_stride = stride * task_id;
   int8_t *int8_in = nullptr;
-  if (input_tensor->data_type() == kNumberTypeFloat32) {
-    int8_in = reinterpret_cast<int8_t *>(input_data_);
-  } else if (input_tensor->data_type() == kNumberTypeFloat16) {
+  if (input_tensor->data_type() == kNumberTypeFloat16) {
     int8_in = reinterpret_cast<int8_t *>(input_tensor->data());
   } else {
     MS_LOG(ERROR) << "input data type error";
@@ -121,10 +100,6 @@ void GatherFp16CPUKernel::FreeIndicesData() {
     ms_context_->allocator->Free(indices_data_);
     indices_data_ = nullptr;
   }
-  if (!const_input_ && input_data_) {
-    ms_context_->allocator->Free(input_data_);
-    input_data_ = nullptr;
-  }
 }
 
 int GatherFp16CPUKernel::Run() {
@@ -135,20 +110,6 @@ int GatherFp16CPUKernel::Run() {
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "AssignIndicesData failed, error_code[" << ret << "]";
     return ret;
-  }
-  if (!const_input_) {
-    auto input_tensor = in_tensors_.at(0);
-    CHECK_NULL_RETURN(input_tensor->data());
-    if (input_tensor->data_type() == kNumberTypeFloat32) {
-      input_data_ =
-        reinterpret_cast<float16_t *>(ms_context_->allocator->Malloc(input_tensor->ElementsNum() * sizeof(float16_t)));
-      if (input_data_ == nullptr) {
-        MS_LOG(ERROR) << "Malloc data failed";
-        FreeIndicesData();
-        return RET_ERROR;
-      }
-      Float32ToFloat16(reinterpret_cast<float *>(input_tensor->data()), input_data_, input_tensor->ElementsNum());
-    }
   }
   ret = ParallelLaunch(this->ms_context_, GatherRunFp16, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {

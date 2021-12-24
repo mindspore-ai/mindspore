@@ -43,6 +43,9 @@ int DeConvPostFp16(const float16_t *src, float16_t *tmp, const float16_t *bias, 
   int dst_kh_stride = conv_param->dilation_h_ * conv_param->output_w_ * C8NUM;
   int dst_kw_stride = conv_param->dilation_w_ * C8NUM;
 
+  NNACL_CHECK_ZERO_RETURN_ERR(conv_param->dilation_h_);
+  NNACL_CHECK_ZERO_RETURN_ERR(conv_param->dilation_w_);
+
   for (int c = 0; c < oc8; c += 8) {
     float16_t *dst_ptr = tmp + c * output_plane;
     const float16_t *src_ptr = src + c * in_plane16 * kernel_plane;
@@ -88,10 +91,10 @@ int DeConvPostFp16(const float16_t *src, float16_t *tmp, const float16_t *bias, 
               dst_kw_index[i] += src_kw_index[i];
             }
 #endif
-          } /*kw*/
-        }   /*kh*/
-      }     /*iw*/
-    }       /*ih*/
+          }  // kw
+        }    // kh
+      }      // iw
+    }        // ih
 
     /* add bias for current oh*ow*C8
      * write to output data ptr in nhwc format */
@@ -105,6 +108,6 @@ int DeConvPostFp16(const float16_t *src, float16_t *tmp, const float16_t *bias, 
       vst1q_f16(pack_tmp_data, data_v);
       pack_tmp_data += C8NUM;
     }
-  } /*oc8*/
+  }  // oc8
   return NNACL_OK;
 }

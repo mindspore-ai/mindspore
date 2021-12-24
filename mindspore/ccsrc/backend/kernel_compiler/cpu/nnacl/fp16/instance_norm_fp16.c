@@ -22,8 +22,10 @@ int InstanceNormFp16(const float16_t *src_data, float16_t *dst_data, const float
                      const float16_t *beta_data, const InstanceNormParameter *param, size_t task_id) {
   NNACL_CHECK_NULL_RETURN_ERR(src_data);
   NNACL_CHECK_NULL_RETURN_ERR(dst_data);
+  NNACL_CHECK_ZERO_RETURN_ERR(param->op_parameter_.thread_num_);
   int channel = param->channel_;
   int hw_plane = param->inner_size_;
+  NNACL_CHECK_ZERO_RETURN_ERR(hw_plane);
   int channel_step = UP_DIV(channel, param->op_parameter_.thread_num_);
   int channel_begin = task_id * channel_step;
   int channel_end = MSMIN(channel_begin + channel_step, channel);
@@ -86,8 +88,10 @@ int InstanceNormNC8HW8Fp16(const float16_t *src_data, float16_t *dst_data, const
                            const float16_t *beta_data, const InstanceNormParameter *param, size_t task_id) {
   NNACL_CHECK_NULL_RETURN_ERR(src_data);
   NNACL_CHECK_NULL_RETURN_ERR(dst_data);
+  NNACL_CHECK_ZERO_RETURN_ERR(param->op_parameter_.thread_num_);
   int channel = param->channel_;
   int hw_plane = param->inner_size_;
+  NNACL_CHECK_ZERO_RETURN_ERR(hw_plane);
   int channel_step = UP_DIV(UP_DIV(channel, C8NUM), param->op_parameter_.thread_num_) * C8NUM;
   int channel_begin = (int)(task_id)*channel_step;
   int channel_end = MSMIN(channel_begin + channel_step, channel);

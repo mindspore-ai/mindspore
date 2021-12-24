@@ -294,6 +294,7 @@ int Convolution1x1FP16CPUKernel::Run() {
   }
   if (RepackWeight() != RET_OK) {
     MS_LOG(ERROR) << "Repack weight failed.";
+    ctx_->allocator->Free(pack_input_);
     return RET_ERROR;
   }
 

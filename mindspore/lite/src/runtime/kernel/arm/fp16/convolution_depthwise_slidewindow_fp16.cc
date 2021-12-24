@@ -57,7 +57,7 @@ int ConvolutionDepthwiseSWFp16CPUKernel::InitPackedInputOutput() {
 void ConvolutionDepthwiseSWFp16CPUKernel::PackWeight() {
   auto weight_tensor = in_tensors_.at(kWeightIndex);
   void *origin_weight = (op_parameter_->is_train_session_) ? weight_tensor->data() : origin_weight_;
-  MS_ASSERT(origin_weight != nullptr);
+  NNACL_CHECK_NULL_RETURN_VOID(origin_weight);
   PackNCHWFp16ToNC8HW8Fp16(reinterpret_cast<float16_t *>(origin_weight), reinterpret_cast<float16_t *>(packed_weight_),
                            1, weight_tensor->Height() * weight_tensor->Width(), weight_tensor->Batch());
 }
@@ -171,6 +171,7 @@ int ConvolutionDepthwiseSWFp16CPUKernel::Run() {
   }
   if (RepackWeight() != RET_OK) {
     MS_LOG(ERROR) << "Repack weight failed.";
+    FreePackedInputOutput();
     return RET_ERROR;
   }
   ret = ParallelLaunch(this->ms_context_, ConvDwSWFp16Run, this, conv_param_->thread_num_);

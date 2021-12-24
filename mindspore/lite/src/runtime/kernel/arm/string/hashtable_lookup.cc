@@ -26,6 +26,8 @@ using mindspore::schema::PrimitiveType_HashtableLookup;
 
 namespace mindspore::kernel {
 int HashtableLookupCPUKernel::Prepare() {
+  CHECK_LESS_RETURN(in_tensors_.size(), C3NUM);
+  CHECK_LESS_RETURN(out_tensors_.size(), C2NUM);
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -39,11 +41,16 @@ static int CmpKeyFunc(const void *lhs, const void *rhs) {
 }
 
 int HashtableLookupCPUKernel::Run() {
-  auto input_tensor = in_tensors_.at(0);
-  auto keys_tensor = in_tensors_.at(1);
-  auto values_tensor = in_tensors_.at(2);
-  auto output_tensor = out_tensors_.at(0);
-  auto hits_tensor = out_tensors_.at(1);
+  auto input_tensor = in_tensors_[FIRST_INPUT];
+  auto keys_tensor = in_tensors_[SECOND_INPUT];
+  auto values_tensor = in_tensors_[THIRD_INPUT];
+  auto output_tensor = out_tensors_[FIRST_INPUT];
+  auto hits_tensor = out_tensors_[SECOND_INPUT];
+  CHECK_NULL_RETURN(input_tensor);
+  CHECK_NULL_RETURN(keys_tensor);
+  CHECK_NULL_RETURN(values_tensor);
+  CHECK_NULL_RETURN(output_tensor);
+  CHECK_NULL_RETURN(hits_tensor);
 
   int rows = GetStringCount(values_tensor);
   if (rows < 0) {

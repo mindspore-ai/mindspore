@@ -22,6 +22,7 @@
 #include "include/errorcode.h"
 #include "nnacl/fp16/lstm_fp16.h"
 #include "nnacl/fp16/cast_fp16.h"
+#include "nnacl/errorcode.h"
 
 using mindspore::kernel::KERNEL_ARCH;
 using mindspore::lite::KernelRegistrar;
@@ -73,9 +74,11 @@ int LstmFp16CPUKernel::InitParam() {
 
   auto weight_i = in_tensors_.at(1);
   std::vector<int> w_shape = weight_i->shape();
+  NNACL_CHECK_ZERO_RETURN_ERR(gate_num);
   lstm_param_->hidden_size_ = w_shape.at(1) / gate_num;
 
-  lstm_param_->output_step_ = lstm_param_->bidirectional_ ? 2 * lstm_param_->batch_ * lstm_param_->hidden_size_
+  constexpr int twice = 2;
+  lstm_param_->output_step_ = lstm_param_->bidirectional_ ? twice * lstm_param_->batch_ * lstm_param_->hidden_size_
                                                           : lstm_param_->batch_ * lstm_param_->hidden_size_;
   weight_batch_ = lstm_param_->bidirectional_ ? 2 * gate_num : gate_num;
   lstm_param_->input_row_align_ = UP_ROUND(lstm_param_->seq_len_ * lstm_param_->batch_, C16NUM);
