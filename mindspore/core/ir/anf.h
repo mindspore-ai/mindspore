@@ -301,7 +301,7 @@ class MS_CORE_API AnfNode : public Base {
     user_data_.set<T>(T::key, value);
   }
 
-  /// \brief Set user data.
+  /// \brief Get user data.
   ///
   /// \param[in] key The key of user data.
   /// \return Pointer to user data.
@@ -1200,6 +1200,18 @@ struct GraphSegment {
   uint32_t graph_id_{0};
 };
 using GraphSegmentPtr = std::shared_ptr<GraphSegment>;
+
+constexpr auto kElementsUseFlagsKey = "elements_use_flags";
+inline std::shared_ptr<std::vector<bool>> GetSequenceNodeElementsUseFlags(const AnfNodePtr &node) {
+  return node->template user_data<std::vector<bool>>(kElementsUseFlagsKey);
+}
+
+inline void SetSequenceNodeElementsUseFlags(const AnfNodePtr &node, const std::shared_ptr<std::vector<bool>> &flags) {
+  node->set_user_data(kElementsUseFlagsKey, flags);
+}
+
+void SetSequenceElementsUseFlags(const AbstractBasePtr &abs, bool new_flag);
+void SetSequenceElementsUseFlagsRecursively(const AbstractBasePtr &abs, bool new_flag);
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_IR_ANF_H_

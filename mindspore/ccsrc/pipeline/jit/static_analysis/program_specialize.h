@@ -64,6 +64,8 @@ class ProgramSpecializer {
 
   const AnalysisContextPtr &top_context() { return top_context_; }
 
+  std::vector<AbstractSequencePtr> &sequence_abstract_list() { return sequence_abstract_list_; }
+
  private:
   std::shared_ptr<AnalysisEngine> engine_;
   mindspore::HashSet<AnfNodePtr> seen_;
@@ -71,6 +73,8 @@ class ProgramSpecializer {
   std::unordered_map<AnalysisContextPtr, std::shared_ptr<FuncGraphSpecializer>, ContextHasher, ContextEqual>
     specializations_;
   AnalysisContextPtr top_context_;
+  // The list to purify tuple/list elements.
+  std::vector<AbstractSequencePtr> sequence_abstract_list_;
 };
 
 class FuncGraphSpecializer : public std::enable_shared_from_this<FuncGraphSpecializer> {
@@ -98,6 +102,8 @@ class FuncGraphSpecializer : public std::enable_shared_from_this<FuncGraphSpecia
   void SecondPass();
   void ProcessNode(const AnfNodePtr &node);
   void ProcessCNode(const CNodePtr &node);
+
+  void EliminateUnusedSequenceItem(const CNodePtr &cnode);
 
   const NodeToNodeMap &cloned_nodes() const { return cloner_->cloned_nodes(); }
 

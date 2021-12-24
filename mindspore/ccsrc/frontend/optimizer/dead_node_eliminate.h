@@ -25,6 +25,12 @@ class EliminateDeadNodePass {
   EliminateDeadNodePass() = default;
   ~EliminateDeadNodePass() = default;
   bool operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &optimizer) {
+    static const auto eliminate_unused_element = common::GetEnv("MS_DEV_ELIMINATE_SEQUENCE_UNUSED_ELEMENT");
+    static const auto enable_eliminate_unused_element = (eliminate_unused_element == "1");
+    if (enable_eliminate_unused_element) {
+      return false;
+    }
+
     static bool enable_closure = common::GetEnv("MS_DEV_ENABLE_CLOSURE") == "1";
     MS_LOG(INFO) << "Closure enable:" << enable_closure;
     if (!enable_closure) {

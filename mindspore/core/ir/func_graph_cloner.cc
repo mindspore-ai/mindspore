@@ -140,7 +140,7 @@ void Cloner::CloneValueNode(const AnfNodePtr &node) {
   repl_node_[node] = std::move(new_const);
 }
 
-void Cloner::CloneValueNode(const AnfNodePtr &node, const FuncGraphPtr &target) {
+void Cloner::CloneFuncGraphValueNode(const AnfNodePtr &node, const FuncGraphPtr &target) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(target);
   auto debug_info = CloneNodeDebugInfo(node->debug_info(), relation_);
@@ -232,7 +232,7 @@ void Cloner::CloneFuncGraphValueNodes(const FuncGraphPtr &func_graph, const Func
     auto parent = cnode.first->first->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(parent);
     const auto &valuenode = parent->input(cnode.first->second);
-    CloneValueNode(valuenode, target_func_graph);
+    CloneFuncGraphValueNode(valuenode, target_func_graph);
   }
 }
 

@@ -213,7 +213,7 @@ using AnfNodeConfigMap =
   std::unordered_map<AnfNodeConfigPtr, AnfNodeConfigPtr, AnfNodeConfigHasher, AnfNodeConfigEqual>;
 
 struct AnalysisResult {
-  EvalResultPtr inferred;
+  EvalResultPtr eval_result;
   AnalysisContextPtr context;
 };
 

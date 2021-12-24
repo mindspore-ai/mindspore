@@ -643,4 +643,54 @@ bool IsOneOfPrimitiveCNode(const AnfNodePtr &node, const PrimitiveSet &prim_set)
   }
   return IsOneOfPrimitive(cnode->input(0), prim_set);
 }
+
+// Set the sequence nodes' elements use flags all true.
+void SetSequenceElementsUseFlags(const AbstractBasePtr &abs, bool new_flag) {
+  static const auto eliminate_unused_element = common::GetEnv("MS_DEV_ELIMINATE_SEQUENCE_UNUSED_ELEMENT");
+  static const auto enable_eliminate_unused_element = (eliminate_unused_element == "1");
+  if (!enable_eliminate_unused_element) {
+    return;
+  }
+
+  auto sequence_abs = dyn_cast<abstract::AbstractSequence>(abs);
+  if (sequence_abs == nullptr) {
+    return;
+  }
+  if (sequence_abs->sequence_nodes().empty()) {
+    return;
+  }
+  for (auto &weak_node : sequence_abs->sequence_nodes()) {
+    auto sequence_node = weak_node.lock();
+    if (sequence_node == nullptr) {
+      MS_LOG(DEBUG) << "The node in sequence_nodes is free.";
+      continue;
+    }
+    auto flags = GetSequenceNodeElementsUseFlags(sequence_node);
+    if (flags != nullptr) {
+      auto &all_flags = (*flags);
+      std::transform(all_flags.begin(), all_flags.end(), all_flags.begin(),
+                     [&new_flag](bool) -> bool { return new_flag; });
+    }
+  }
+}
+
+// Set the sequence nodes' elements use flags all true recursively.
+void SetSequenceElementsUseFlagsRecursively(const AbstractBasePtr &abs, bool new_flag) {
+  static const auto eliminate_unused_element = common::GetEnv("MS_DEV_ELIMINATE_SEQUENCE_UNUSED_ELEMENT");
+  static const auto enable_eliminate_unused_element = (eliminate_unused_element == "1");
+  if (!enable_eliminate_unused_element) {
+    return;
+  }
+
+  SetSequenceElementsUseFlags(abs, new_flag);
+
+  // Check its elements if it's sequence node.
+  auto sequence_abs = dyn_cast<abstract::AbstractSequence>(abs);
+  if (sequence_abs == nullptr) {
+    return;
+  }
+  for (auto &element : sequence_abs->elements()) {
+    SetSequenceElementsUseFlagsRecursively(element, new_flag);
+  }
+}
 }  // namespace mindspore

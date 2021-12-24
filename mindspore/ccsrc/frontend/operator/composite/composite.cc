@@ -244,7 +244,14 @@ AnfNodePtr HyperMap::FullMake(const std::shared_ptr<Tuple> &type, const FuncGrap
       inputs.emplace_back(call_node);
     }
   }
-  return func_graph->NewCNodeInOrder(inputs);
+
+  if (inputs.size() > 1) {
+    return func_graph->NewCNodeInOrder(inputs);
+  }
+  // Empty tuple.
+  auto empty_tuple_value = std::make_shared<ValueTuple>(ValuePtrList());
+  auto empty_tuple = NewValueNode(empty_tuple_value);
+  return empty_tuple;
 }
 
 AnfNodePtr HyperMap::FullMake(const std::shared_ptr<Class> &type, const FuncGraphPtr &func_graph,
@@ -452,86 +459,119 @@ bool CheckTailGradFristSequence(const abstract::AbstractSequencePtr &sequeue, bo
            CheckSequenceAllTensor((*sequeue)[1]->cast<abstract::AbstractTuplePtr>())));
 }
 
+namespace {
+void GenerateSequenceFuncGraphByPosition(const FuncGraphPtr &res, const abstract::AbstractSequencePtr &sequeue,
+                                         const abstract::AbstractSequencePtr &pos, bool enable_tuple_grad) {
+  if (pos == nullptr) {
+    MS_LOG(EXCEPTION) << "Return grad by position, but the grad_position is empty!";
+  }
+  AnfNodePtr tuple_parameter = res->add_parameter();
+  std::vector<AnfNodePtr> pos_elements;
+  PrimitivePtr pos_op = nullptr;
+  if (pos->isa<AbstractTuple>()) {
+    pos_elements.push_back(NewValueNode(prim::kPrimMakeTuple));
+    pos_op = prim::kPrimTupleGetItem;
+  } else {
+    pos_elements.push_back(NewValueNode(prim::kPrimMakeList));
+    pos_op = prim::kPrimListGetItem;
+  }
+  AnfNodePtr pos_value = nullptr;
+  AnfNodePtr pos_value_adjust = nullptr;
+  auto pos_parameter = res->add_parameter();
+  if (pos->size() == 1) {
+    pos_value = res->NewCNode({NewValueNode(pos_op), pos_parameter, NewValueNode(SizeToLong(0))});
+    pos_value_adjust = res->NewCNode({NewValueNode(prim::kPrimScalarAdd), pos_value, NewValueNode(SizeToLong(1))});
+    if (CheckTailGradFristSequence(sequeue, enable_tuple_grad)) {
+      res->set_output(res->NewCNode({NewValueNode(pos_op), tuple_parameter, pos_value_adjust}));
+    } else {
+      res->set_output(NewValueNode(std::make_shared<ValueTuple>(std::vector<ValuePtr>{})));
+    }
+  } else {
+    for (size_t i = 0; i < pos->size(); ++i) {
+      pos_value = res->NewCNode({NewValueNode(pos_op), pos_parameter, NewValueNode(SizeToLong(i))});
+      pos_value_adjust = res->NewCNode({NewValueNode(prim::kPrimScalarAdd), pos_value, NewValueNode(SizeToLong(1))});
+      pos_elements.push_back(res->NewCNodeInOrder({NewValueNode(pos_op), tuple_parameter, pos_value_adjust}));
+    }
+    if (pos_elements.size() > 1) {
+      res->set_output(res->NewCNodeInOrder(pos_elements));
+    } else if (pos->isa<AbstractTuple>()) {  // Empty tuple.
+      auto empty_tuple_value = std::make_shared<ValueTuple>(ValuePtrList());
+      auto empty_tuple = NewValueNode(empty_tuple_value);
+      res->set_output(empty_tuple);
+    } else {  // Empty list.
+      auto empty_list_value = std::make_shared<ValueList>(ValuePtrList());
+      auto empty_list = NewValueNode(empty_list_value);
+      res->set_output(empty_list);
+    }
+  }
+}
+}  // namespace
+
 FuncGraphPtr Tail::GenerateSequenceFuncGraph(const abstract::AbstractSequencePtr &sequeue,
                                              const abstract::AbstractSequencePtr &pos) const {
   MS_EXCEPTION_IF_NULL(sequeue);
 
-  FuncGraphPtr ret = std::make_shared<FuncGraph>();
-  ret->set_flag(FUNC_GRAPH_FLAG_CORE, true);
-  ret->debug_info()->set_name("tail");
-  AnfNodePtr ptrTup = ret->add_parameter();
-
-  std::vector<AnfNodePtr> elems;
-  PrimitivePtr op = nullptr;
-  if (sequeue->isa<AbstractTuple>()) {
-    elems.push_back(NewValueNode(prim::kPrimMakeTuple));
-    op = prim::kPrimTupleGetItem;
-  } else {
-    elems.push_back(NewValueNode(prim::kPrimMakeList));
-    op = prim::kPrimListGetItem;
-  }
+  FuncGraphPtr res = std::make_shared<FuncGraph>();
+  res->set_flag(FUNC_GRAPH_FLAG_CORE, true);
+  res->debug_info()->set_name("tail");
 
   if (tail_type_ == kGradFirst) {
-    if (CheckTailGradFristSequence(sequeue, enable_tuple_grad_)) {
-      ret->set_output(ret->NewCNode({NewValueNode(op), ptrTup, NewValueNode(SizeToLong(1))}));
+    AnfNodePtr tuple_parameter = res->add_parameter();
+    PrimitivePtr getitem_op = nullptr;
+    if (sequeue->isa<AbstractTuple>()) {
+      getitem_op = prim::kPrimTupleGetItem;
     } else {
-      ret->set_output(NewValueNode(std::make_shared<ValueTuple>(std::vector<ValuePtr>{})));
+      getitem_op = prim::kPrimListGetItem;
     }
-
-    return ret;
+    if (CheckTailGradFristSequence(sequeue, enable_tuple_grad_)) {
+      res->set_output(res->NewCNode({NewValueNode(getitem_op), tuple_parameter, NewValueNode(SizeToLong(1))}));
+    } else {
+      res->set_output(NewValueNode(std::make_shared<ValueTuple>(ValuePtrList())));
+    }
+    return res;
   }
 
   if (tail_type_ == kGradByPosition) {
-    if (pos == nullptr) {
-      MS_LOG(EXCEPTION) << "Return grad by position, but the grad_position is empty!";
-    }
-    std::vector<AnfNodePtr> pos_elems;
-    PrimitivePtr pos_op = nullptr;
-    if (pos->isa<AbstractTuple>()) {
-      pos_elems.push_back(NewValueNode(prim::kPrimMakeTuple));
-      pos_op = prim::kPrimTupleGetItem;
-    } else {
-      pos_elems.push_back(NewValueNode(prim::kPrimMakeList));
-      pos_op = prim::kPrimListGetItem;
-    }
-    AnfNodePtr pos_value = nullptr;
-    AnfNodePtr pos_value_adjust = nullptr;
-    auto ptrpos = ret->add_parameter();
-    if (pos->size() == 1) {
-      pos_value = ret->NewCNode({NewValueNode(pos_op), ptrpos, NewValueNode(SizeToLong(0))});
-      pos_value_adjust = ret->NewCNode({NewValueNode(prim::kPrimScalarAdd), pos_value, NewValueNode(SizeToLong(1))});
-      if (CheckTailGradFristSequence(sequeue, enable_tuple_grad_)) {
-        ret->set_output(ret->NewCNode({NewValueNode(op), ptrTup, pos_value_adjust}));
-      } else {
-        ret->set_output(NewValueNode(std::make_shared<ValueTuple>(std::vector<ValuePtr>{})));
-      }
-      return ret;
-    } else {
-      for (size_t i = 0; i < pos->size(); ++i) {
-        pos_value = ret->NewCNode({NewValueNode(pos_op), ptrpos, NewValueNode(SizeToLong(i))});
-        pos_value_adjust = ret->NewCNode({NewValueNode(prim::kPrimScalarAdd), pos_value, NewValueNode(SizeToLong(1))});
-        pos_elems.push_back(ret->NewCNodeInOrder({NewValueNode(op), ptrTup, pos_value_adjust}));
-      }
-    }
-    ret->set_output(ret->NewCNodeInOrder(pos_elems));
-    return ret;
+    GenerateSequenceFuncGraphByPosition(res, sequeue, pos, enable_tuple_grad_);
+    return res;
   }
 
+  AnfNodePtr tuple_parameter = res->add_parameter();
+  std::vector<AnfNodePtr> elements;
+  PrimitivePtr op = nullptr;
+  if (sequeue->isa<AbstractTuple>()) {
+    elements.push_back(NewValueNode(prim::kPrimMakeTuple));
+    op = prim::kPrimTupleGetItem;
+  } else {
+    elements.push_back(NewValueNode(prim::kPrimMakeList));
+    op = prim::kPrimListGetItem;
+  }
   for (size_t i = 1; i < sequeue->size(); ++i) {
     if (tail_type_ == kGradAll) {
       MS_EXCEPTION_IF_NULL((*sequeue)[i]);
       if ((*sequeue)[i]->isa<abstract::AbstractUndetermined>() ||
           (MsContext::GetInstance()->get_param<bool>(MS_CTX_GRAD_FOR_SCALAR) && (*sequeue)[i]->BuildType() != nullptr &&
            (*sequeue)[i]->BuildType()->isa<Number>())) {
-        elems.push_back(ret->NewCNodeInOrder({NewValueNode(op), ptrTup, NewValueNode(SizeToLong(i))}));
+        elements.push_back(res->NewCNodeInOrder({NewValueNode(op), tuple_parameter, NewValueNode(SizeToLong(i))}));
       }
     } else {
-      elems.push_back(ret->NewCNodeInOrder({NewValueNode(op), ptrTup, NewValueNode(SizeToLong(i))}));
+      elements.push_back(res->NewCNodeInOrder({NewValueNode(op), tuple_parameter, NewValueNode(SizeToLong(i))}));
     }
   }
-
-  ret->set_output(ret->NewCNodeInOrder(elems));
-  return ret;
+  if (elements.size() > 1) {
+    res->set_output(res->NewCNodeInOrder(elements));
+    return res;
+  } else if (sequeue->isa<AbstractTuple>()) {  // Empty tuple.
+    auto empty_tuple_value = std::make_shared<ValueTuple>(ValuePtrList());
+    auto empty_tuple = NewValueNode(empty_tuple_value);
+    res->set_output(empty_tuple);
+    return res;
+  } else {  // Empty list.
+    auto empty_list_value = std::make_shared<ValueList>(ValuePtrList());
+    auto empty_list = NewValueNode(empty_list_value);
+    res->set_output(empty_list);
+    return res;
+  }
 }
 
 FuncGraphPtr Tail::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {

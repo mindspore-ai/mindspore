@@ -203,6 +203,7 @@ using AnfNodePtr = std::shared_ptr<AnfNode>;
 using AnfNodePtrList = std::vector<AnfNodePtr>;
 using AnfNodeSet = OrderedSet<AnfNodePtr>;
 using AnfNodeWeakPtr = std::weak_ptr<AnfNode>;
+using AnfNodeWeakPtrList = std::vector<AnfNodeWeakPtr>;
 
 class FuncGraph;
 using FuncGraphPtr = std::shared_ptr<FuncGraph>;

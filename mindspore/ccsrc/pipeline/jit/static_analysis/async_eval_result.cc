@@ -239,30 +239,30 @@ AbstractBasePtr AnalysisResultCacheMgr::GetSwitchValue(const AnfNodeConfigPtr &c
   return async_eval_result->GetResult();
 }
 
-void AnalysisResultCacheMgr::SetCacheValue(const AnfNodeConfigPtr &conf, const AbstractBasePtr &arg,
+void AnalysisResultCacheMgr::SetCacheValue(const AnfNodeConfigPtr &conf, const AbstractBasePtr &current_abs,
                                            AnalysisConfigAsyncResultCache *cache) {
   MS_EXCEPTION_IF_NULL(conf);
   MS_EXCEPTION_IF_NULL(cache);
-  if (arg == nullptr) {
+  if (current_abs == nullptr) {
     MS_LOG(EXCEPTION) << conf->ToString() << " value is nullptr";
   }
   std::lock_guard<std::mutex> lock(lock_);
   AsyncAbstractPtr async_eval_result = cache->get(conf);
   if (async_eval_result == nullptr) {
     async_eval_result = std::make_shared<AsyncAbstract>();
-    async_eval_result->set_result(arg);
+    async_eval_result->set_result(current_abs);
     cache->set(conf, async_eval_result);
   } else {
-    auto ab1 = async_eval_result->TryGetResult();
-    AbstractBasePtrList absList;
-    if (ab1 != nullptr) {
-      absList.push_back(arg);
-      absList.push_back(ab1);
+    auto previous_abs = async_eval_result->TryGetResult();
+    AbstractBasePtrList abstract_list;
+    if (previous_abs != nullptr) {
+      abstract_list.push_back(previous_abs);
+      abstract_list.push_back(current_abs);
       // Join two branches's result
-      auto joined_result = AnalysisEngine::ProcessEvalResults(absList, conf->node());
+      auto joined_result = AnalysisEngine::ProcessEvalResults(abstract_list, conf->node());
       async_eval_result->set_result(joined_result->abstract());
     } else {
-      async_eval_result->set_result(arg);
+      async_eval_result->set_result(current_abs);
     }
   }
 }

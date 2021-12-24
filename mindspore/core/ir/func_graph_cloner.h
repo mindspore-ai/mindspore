@@ -88,7 +88,7 @@ class Cloner {
   void SetDefaults();
   void CloneNode(const AnfNodePtr &node, const FuncGraphPtr &target);
   void CloneValueNode(const AnfNodePtr &node);
-  void CloneValueNode(const AnfNodePtr &node, const FuncGraphPtr &target);
+  void CloneFuncGraphValueNode(const AnfNodePtr &node, const FuncGraphPtr &target);
   void CloneCNode(const AnfNodePtr &node, const FuncGraphPtr &target);
   void CloneParameter(const AnfNodePtr &node, const FuncGraphPtr &target, bool is_add = false);
   void CloneValueNodes(const FuncGraphPtr &func_graph);

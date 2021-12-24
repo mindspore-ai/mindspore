@@ -517,7 +517,7 @@ TypePtr CheckTypeList(const TypePtr &predicate, const TypePtrList &args_type_lis
   }
   return TypeJoin(args_type_list);
 }
-}  // end anonymous namespace
+}  // namespace
 
 py::dict ConvertAbstractToPython(const AbstractBasePtr &abs_base, bool only_convert_value) {
   MS_EXCEPTION_IF_NULL(abs_base);
@@ -648,7 +648,7 @@ AbstractBasePtr PyInferRes2Abstract(const PrimitivePyPtr &prim_py, const py::dic
   CheckCustomPrimOutputInferResult(prim_py, res_spec);
   return res_spec;
 }
-}  // end anonymous namespace
+}  // namespace
 
 EvalResultPtr StandardPrimEvaluator::RunPyInferValue(const AnalysisEnginePtr &engine, const AbstractBasePtr &abs_base,
                                                      const AbstractBasePtrList &args) {
@@ -761,6 +761,14 @@ EvalResultPtr PythonPrimEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abs
   if (eval_result != nullptr) {
     auto abs = eval_result->abstract()->Clone();
     auto attr = eval_result->attribute();
+
+    // To check tuple/list operations with a white list of Python primitive.
+    if (prim_py_->name() == prim::kPrimStack->name()) {
+      // Set all used flags of tuple as true.
+      for (auto &arg : args) {
+        SetSequenceElementsUseFlags(arg, true);
+      }
+    }
     return std::make_shared<EvalResult>(abs, attr);
   }
 
@@ -774,6 +782,14 @@ EvalResultPtr PythonPrimEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abs
   MS_LOG(DEBUG) << "Python InferTensor result spec: " << res_spec->ToString() << ".";
   auto infer_result = std::make_shared<EvalResult>(res_spec, std::make_shared<AttrValueMap>(added_attrs));
   evaluator_cache_mgr_->SetValue(args, infer_result);
+
+  // To check tuple/list operations with a white list of Python primitive.
+  if (prim_py_->name() == prim::kPrimStack->name()) {
+    // Set all used flags of tuple as true.
+    for (auto &arg : args) {
+      SetSequenceElementsUseFlags(arg, true);
+    }
+  }
   return infer_result;
 }
 
@@ -1103,7 +1119,7 @@ EvalResultPtr StaticGetter(const AnalysisEnginePtr &engine, const AbstractBasePt
     return GetEvaluatedValueForNameSpaceString(engine, args_spec_list, out_conf);
   }
 }
-}  // end anonymous namespace
+}  // namespace
 
 namespace {
 class EmbedEvaluator : public SymbolicPrimEvaluator {
@@ -1452,6 +1468,54 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
   }
 };
 
+class MakeTupleEvaluator : public TransitionPrimEvaluator {
+ public:
+  MakeTupleEvaluator() : TransitionPrimEvaluator("MakeTupleEvaluator") {}
+  ~MakeTupleEvaluator() override = default;
+  MS_DECLARE_PARENT(MakeTupleEvaluator, TransitionPrimEvaluator);
+  EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list, const ConfigPtr &,
+                         const AnfNodeConfigPtr &out_conf) override {
+    if (args_spec_list.empty()) {
+      MS_LOG(WARNING) << "For MakeTuple, the inputs should not be empty.";
+    }
+    static const auto eliminate_unused_element = common::GetEnv("MS_DEV_ELIMINATE_SEQUENCE_UNUSED_ELEMENT");
+    static const auto enable_eliminate_unused_element = (eliminate_unused_element == "1");
+    if (enable_eliminate_unused_element) {
+      SetSequenceNodeElementsUseFlags(out_conf->node(), std::make_shared<std::vector<bool>>(args_spec_list.size()));
+    }
+    AnfNodeWeakPtrList sequence_nodes =
+      (enable_eliminate_unused_element ? AnfNodeWeakPtrList({AnfNodeWeakPtr(out_conf->node())}) : AnfNodeWeakPtrList());
+    auto abs = std::make_shared<AbstractTuple>(args_spec_list, sequence_nodes);
+    auto res = std::make_shared<EvalResult>(abs, std::make_shared<AttrValueMap>());
+    evaluator_cache_mgr_->SetValue(args_spec_list, res);
+    return res;
+  }
+};
+
+class MakeListEvaluator : public TransitionPrimEvaluator {
+ public:
+  MakeListEvaluator() : TransitionPrimEvaluator("MakeListEvaluator") {}
+  ~MakeListEvaluator() override = default;
+  MS_DECLARE_PARENT(MakeListEvaluator, TransitionPrimEvaluator);
+  EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list, const ConfigPtr &,
+                         const AnfNodeConfigPtr &out_conf) override {
+    if (args_spec_list.empty()) {
+      MS_LOG(WARNING) << "For MakeList, the inputs should not be empty.";
+    }
+    static const auto eliminate_unused_element = common::GetEnv("MS_DEV_ELIMINATE_SEQUENCE_UNUSED_ELEMENT");
+    static const auto enable_eliminate_unused_element = (eliminate_unused_element == "1");
+    if (enable_eliminate_unused_element) {
+      SetSequenceNodeElementsUseFlags(out_conf->node(), std::make_shared<std::vector<bool>>(args_spec_list.size()));
+    }
+    AnfNodeWeakPtrList sequence_nodes =
+      (enable_eliminate_unused_element ? AnfNodeWeakPtrList({AnfNodeWeakPtr(out_conf->node())}) : AnfNodeWeakPtrList());
+    auto abs = std::make_shared<AbstractList>(args_spec_list, sequence_nodes);
+    auto res = std::make_shared<EvalResult>(abs, std::make_shared<AttrValueMap>());
+    evaluator_cache_mgr_->SetValue(args_spec_list, res);
+    return res;
+  }
+};
+
 class PartialEvaluator : public Evaluator {
  public:
   PartialEvaluator() : Evaluator("PartialEvaluator") {}
@@ -1597,6 +1661,8 @@ void InitPrimEvaluatorConstructors() {
   constructor[prim::kPrimCreateInstance] = std::make_shared<CreateInstanceEvaluator>();
   constructor[prim::kPrimPartial] = std::make_shared<PartialEvaluator>();
   constructor[prim::kPrimPyInterpret] = std::make_shared<PyInterpretEvaluator>();
+  constructor[prim::kPrimMakeTuple] = std::make_shared<MakeTupleEvaluator>();
+  constructor[prim::kPrimMakeList] = std::make_shared<MakeListEvaluator>();
 }
 }  // namespace
 

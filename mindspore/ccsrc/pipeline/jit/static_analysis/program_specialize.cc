@@ -67,7 +67,12 @@ FuncGraphPtr ProgramSpecializer::Run(const FuncGraphPtr &fg, const AnalysisConte
     top_context_ = context;
     MS_LOG(INFO) << "Specialize set top func graph context: " << context->ToString();
   }
-  return SpecializeFuncGraph(fg, context);
+  auto res = SpecializeFuncGraph(fg, context);
+  // Call PurifyElements() to purify tuple/list elements.
+  for (auto &sequence_abs : sequence_abstract_list_) {
+    sequence_abs->PurifyElements();
+  }
+  return res;
 }
 
 FuncGraphPtr ProgramSpecializer::SpecializeFuncGraph(const FuncGraphPtr &fg, const AnalysisContextPtr &context) {
@@ -80,10 +85,10 @@ FuncGraphPtr ProgramSpecializer::SpecializeFuncGraph(const FuncGraphPtr &fg, con
   }
 
   std::shared_ptr<FuncGraphSpecializer> fg_spec = std::make_shared<FuncGraphSpecializer>(this, fg, context);
-  FuncGraphPtr fg2 = fg_spec->specialized_func_graph();
+  FuncGraphPtr specialized_func_graph = fg_spec->specialized_func_graph();
   specializations_[context->SpecializeKey()] = fg_spec;
   fg_spec->Run();
-  return fg2;
+  return specialized_func_graph;
 }
 
 std::shared_ptr<FuncGraphSpecializer> ProgramSpecializer::GetFuncGraphSpecializer(const AnalysisContextPtr &context) {
@@ -290,6 +295,133 @@ void FuncGraphSpecializer::SecondPass() {
   }
 }
 
+namespace {
+// Update elements use flags for MakeTuple/tuple node,
+// and update the node's AbstractSequence 'sequence_nodes' info.
+void UpdateSequenceNode(const AnfNodePtr &new_node, const AnfNodePtr &old_node, const AbstractBasePtr &old_abs) {
+  if (new_node == old_node) {
+    return;
+  }
+  AbstractSequencePtr old_sequence_abs = dyn_cast<AbstractSequence>(old_abs);
+  if (old_sequence_abs == nullptr || old_sequence_abs->sequence_nodes().empty()) {
+    MS_LOG(DEBUG) << "No sequence node in old abs, " << old_node->DebugString() << " --> " << new_node->DebugString();
+    return;
+  }
+
+  for (auto &weak_node : old_sequence_abs->sequence_nodes()) {
+    auto sequence_node = weak_node.lock();
+    if (sequence_node == nullptr) {
+      MS_LOG(DEBUG) << "The sequence_nodes is free. " << old_node->DebugString() << " --> " << new_node->DebugString();
+      continue;
+    }
+    if (sequence_node != old_node) {
+      continue;
+    }
+
+    // Update new node's flags with old one, and update old sequence abstract's source node.
+    auto flags = GetSequenceNodeElementsUseFlags(old_node);
+    MS_LOG(DEBUG) << "Update sequence node, " << old_node->DebugString() << " --> " << new_node->DebugString()
+                  << ", elements_use_flags: " << (*flags);
+    SetSequenceNodeElementsUseFlags(new_node, flags);
+    old_sequence_abs->update_sequence_node(sequence_node, new_node);
+
+    // Update new sequence abstract if it's not equal to old one.
+    const AbstractBasePtr &new_abs = new_node->abstract();
+    if (old_abs == new_abs) {
+      continue;
+    }
+    AbstractSequencePtr new_sequence_abs = dyn_cast<AbstractSequence>(new_abs);
+    if (new_sequence_abs == nullptr) {
+      MS_LOG(EXCEPTION) << "New node should be sequence type as well, but got " << new_abs->ToString();
+    }
+    if (new_sequence_abs->sequence_nodes().empty()) {
+      new_sequence_abs->set_sequence_nodes({AnfNodeWeakPtr(new_node)});
+    } else {
+      new_sequence_abs->insert_sequence_node(new_node);
+    }
+  }
+}
+
+// Purify specific input of a CNode.
+template <typename T>
+void PurifySequenceValueNode(const CNodePtr &cnode, size_t index) {
+  const auto &old_input = cnode->input(index);
+  auto sequence_value = GetValueNode<std::shared_ptr<T>>(old_input);
+  if (sequence_value == nullptr) {
+    return;
+  }
+  auto flags = GetSequenceNodeElementsUseFlags(old_input);
+  if (flags == nullptr) {
+    return;
+  }
+  ValuePtrList elements;
+  for (size_t i = 0; i < (*flags).size(); ++i) {
+    if (!(*flags)[i]) {
+      auto zero = MakeValue(0);
+      elements.emplace_back(zero);
+      MS_LOG(INFO) << "Erase elements[" << i << "] as zero for " << old_input->DebugString() << ", which is inputs["
+                   << index << "] of " << cnode->DebugString();
+    } else {
+      elements.emplace_back(sequence_value->value()[i]);
+    }
+  }
+  auto new_sequence_value = std::make_shared<T>(elements);
+  auto new_input = NewValueNode(new_sequence_value);
+  auto new_input_abs = new_sequence_value->ToAbstract();
+  AbstractSequencePtr new_sequence_abs = dyn_cast<AbstractSequence>(new_input_abs);
+  MS_EXCEPTION_IF_NULL(new_sequence_abs);
+  new_sequence_abs->set_sequence_nodes({AnfNodeWeakPtr(new_input)});
+  new_input->set_abstract(new_sequence_abs);
+  // Always reset tuple value node's use flags as non-use.
+  SetSequenceNodeElementsUseFlags(new_input, std::make_shared<std::vector<bool>>(new_sequence_abs->elements().size()));
+  MS_LOG(DEBUG) << "Update ValueTuple/ValueList, " << old_input->DebugString() << " --> " << new_input->DebugString()
+                << ", which is inputs[" << index << "] of " << cnode->DebugString();
+  cnode->set_input(index, new_input);
+}
+}  // namespace
+
+// Eliminate the unused items of Tuple/List.
+void FuncGraphSpecializer::EliminateUnusedSequenceItem(const CNodePtr &cnode) {
+  if (cnode == nullptr || cnode->abstract() == nullptr) {
+    MS_LOG(EXCEPTION) << "The parameter \'node\' and its abstract should not be null.";
+  }
+  const AbstractBasePtr abs = cnode->abstract();
+  AbstractSequencePtr sequence_abs = dyn_cast<AbstractSequence>(abs);
+  if (sequence_abs == nullptr || sequence_abs->sequence_nodes().empty()) {
+    return;
+  }
+  // Not call PurifyElements() here, just add to list.
+  specializer_->sequence_abstract_list().emplace_back(sequence_abs);
+  // Purify MakeTuple/MakeList CNode.
+  if (IsPrimitiveCNode(cnode, prim::kPrimMakeTuple) || IsPrimitiveCNode(cnode, prim::kPrimMakeList)) {
+    auto flags = GetSequenceNodeElementsUseFlags(cnode);
+    if (flags != nullptr) {
+      std::vector<AnfNodePtr> inputs;
+      inputs.emplace_back(cnode->input(0));
+      for (size_t i = 0; i < (*flags).size(); ++i) {
+        if (!(*flags)[i]) {
+          auto zero_value = NewValueNode(MakeValue(0));
+          zero_value->set_abstract(std::make_shared<abstract::AbstractScalar>(std::make_shared<Int32Imm>(0)));
+          inputs.emplace_back(zero_value);
+          MS_LOG(INFO) << "Erase inputs[" << i << "] as zero for " << cnode->DebugString();
+        } else {
+          inputs.emplace_back(cnode->input(i + 1));
+        }
+      }
+      cnode->set_inputs(std::move(inputs));
+      cnode->set_abstract(sequence_abs);
+    }
+  }
+  // Purify each Tuple/List ValueNode in CNode.
+  for (size_t i = 1; i < cnode->inputs().size(); ++i) {
+    if (IsValueNode<ValueTuple>(cnode->input(i))) {
+      PurifySequenceValueNode<ValueTuple>(cnode, i);
+    } else if (IsValueNode<ValueList>(cnode->input(i))) {
+      PurifySequenceValueNode<ValueList>(cnode, i);
+    }
+  }
+}
+
 void FuncGraphSpecializer::ProcessNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   ScopeGuard scope_guard(node->scope());
@@ -304,7 +436,11 @@ void FuncGraphSpecializer::ProcessNode(const AnfNodePtr &node) {
                       << ", specialized_func_graph_: " << specialized_func_graph_->ToString();
     return;
   }
-  new_node->set_abstract(GetEvaluatedValue(conf));
+  try {
+    new_node->set_abstract(GetEvaluatedValue(conf));
+  } catch (const std::exception &) {
+    MS_LOG(EXCEPTION) << "Fail to get abstract value with " << conf->ToString() << ", for " << new_node->DebugString();
+  }
   if (new_node->isa<CNode>() && new_node->abstract()->isa<PartialAbstractClosure>()) {
     auto partial_abstract = dyn_cast<PartialAbstractClosure>(new_node->abstract());
     if (partial_abstract->node() == node) {
@@ -315,35 +451,47 @@ void FuncGraphSpecializer::ProcessNode(const AnfNodePtr &node) {
                 << ", func_graph_: " << func_graph_->ToString()
                 << ", specialized_func_graph_: " << specialized_func_graph_->ToString();
 
-  if (node->isa<CNode>()) {
-    auto attrs = conf->ObtainEvalResult()->attribute();
-    auto c_old = node->cast<CNodePtr>();
-    auto c_new = new_node->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(c_new);
-    auto new_inputs = c_new->inputs();
-    auto old_inputs = c_old->inputs();
-    for (size_t i = 0; i < old_inputs.size(); ++i) {
-      auto node_input = old_inputs[i];
-      AnfNodeConfigPtr iconf = MakeConfig(node_input);
-      AbstractBasePtr ival = GetEvaluatedValue(iconf);
-      // First try to check if node_input can be replaced by a ValueNode. If cannot, then try to check if
-      // can be replaced by another CNode from anfnode_config_map, otherwise use the replicated node.
-      AnfNodePtr replace_node = BuildPossibleValueNode(iconf->node(), ival, attrs, node);
-      if (replace_node == nullptr) {
-        replace_node = BuildReplacedNode(iconf);
-        replace_node->set_abstract(ival);
-        MS_LOG(DEBUG) << "Set replaced: " << replace_node->ToString() << ", to abstract: " << ival->ToString();
-      } else {
-        MS_LOG(DEBUG) << "Build possible value node for node: " << node_input->DebugString()
-                      << ", ival: " << ival->ToString() << ", replace_node: " << replace_node->ToString();
-      }
-      if (new_inputs[i] != replace_node) {
-        new_inputs[i] = replace_node;
-        MS_LOG(DEBUG) << "Set new_input[" << i << "] = " << replace_node->DebugString();
-      }
-    }
-    c_new->set_inputs(new_inputs);
+  if (!node->isa<CNode>()) {
+    return;
   }
+  static const auto eliminate_unused_element = common::GetEnv("MS_DEV_ELIMINATE_SEQUENCE_UNUSED_ELEMENT");
+  static const auto enable_eliminate_unused_element = (eliminate_unused_element == "1");
+  auto attrs = conf->ObtainEvalResult()->attribute();
+  auto c_old = node->cast<CNodePtr>();
+  auto c_new = new_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(c_new);
+  auto new_inputs = c_new->inputs();
+  auto old_inputs = c_old->inputs();
+  for (size_t i = 0; i < old_inputs.size(); ++i) {
+    auto node_input = old_inputs[i];
+    AnfNodeConfigPtr input_conf = MakeConfig(node_input);
+    AbstractBasePtr abs;
+    try {
+      abs = GetEvaluatedValue(input_conf);
+    } catch (const std::exception &) {
+      MS_LOG(EXCEPTION) << "Fail to get input's abstract value, with input config: " << input_conf->ToString()
+                        << ", in old node: " << c_old->DebugString();
+    }
+    // First try to check if node_input can be replaced by a ValueNode. If cannot, then try to check if
+    // can be replaced by another CNode from anfnode_config_map, otherwise use the replicated node.
+    AnfNodePtr replace_node = BuildPossibleValueNode(node_input, abs, attrs, node);
+    if (replace_node == nullptr) {
+      replace_node = BuildReplacedNode(input_conf);
+      replace_node->set_abstract(abs);
+      MS_LOG(DEBUG) << "Set replaced: " << replace_node->ToString() << ", to abstract: " << abs->ToString();
+    } else {
+      MS_LOG(DEBUG) << "Build possible value node for node: " << node_input->DebugString()
+                    << ", abs: " << abs->ToString() << ", replace_node: " << replace_node->ToString();
+    }
+    if (enable_eliminate_unused_element) {
+      UpdateSequenceNode(replace_node, node_input, abs);
+    }
+    if (new_inputs[i] != replace_node) {
+      new_inputs[i] = replace_node;
+      MS_LOG(DEBUG) << "Set new_input[" << i << "] = " << replace_node->DebugString();
+    }
+  }
+  c_new->set_inputs(new_inputs);
 }
 
 AnfNodePtr FuncGraphSpecializer::BuildReplacedNode(const AnfNodeConfigPtr &conf) {
@@ -506,10 +654,10 @@ AnfNodePtr FuncGraphSpecializer::BuildSpecializedNodeInner(const AnfNodePtr &fun
                   << ", " << func->ToString();
     return func;
   }
-  FuncGraphPtr v = specializer_->SpecializeFuncGraph(context->func_graph(), context);
-  MS_EXCEPTION_IF_NULL(v);
-  v->set_flag(kFuncGraphFlagUndetermined, false);
-  return BuildValueNode(v, abs);
+  FuncGraphPtr func_graph = specializer_->SpecializeFuncGraph(context->func_graph(), context);
+  MS_EXCEPTION_IF_NULL(func_graph);
+  func_graph->set_flag(kFuncGraphFlagUndetermined, false);
+  return BuildValueNode(func_graph, abs);
 }
 
 AnalysisContextPtr FuncGraphSpecializer::MakeContext(const AnalysisEnginePtr &engine,
@@ -643,20 +791,21 @@ std::pair<AbstractBasePtrList, AbstractBasePtr> FuncGraphSpecializer::BuildFromB
   return std::make_pair(AbstractBasePtrList(), nullptr);
 }
 
-void FuncGraphSpecializer::ProcessCNode(const CNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  if (specializer_->seen().count(node) > 0) {
+void FuncGraphSpecializer::ProcessCNode(const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (specializer_->seen().count(cnode) > 0) {
     return;
   }
-  specializer_->AddSeen(node);
-  auto new_inputs = node->inputs();
+  specializer_->AddSeen(cnode);
+
+  auto new_inputs = cnode->inputs();
   if (new_inputs.empty()) {
     MS_LOG(EXCEPTION) << "Inputs of CNode is empty";
   }
   AnfNodePtr func = new_inputs[0];
   MS_EXCEPTION_IF_NULL(func);
   constexpr auto recursive_level = 2;
-  MS_LOG(DEBUG) << "Handle node: " << node->DebugString(recursive_level);
+  MS_LOG(DEBUG) << "Handle node: " << cnode->DebugString(recursive_level);
 
   // First element is func so arg start from 1
   std::vector<AnfNodePtr> args(new_inputs.begin() + 1, new_inputs.end());
@@ -685,7 +834,7 @@ void FuncGraphSpecializer::ProcessCNode(const CNodePtr &node) {
     MS_EXCEPTION_IF_NULL(func->func_graph());
     if (status == kSpecializePoly ||
         (func->isa<Parameter>() && func->func_graph()->has_flag(FUNC_GRAPH_FLAG_SPECIALIZE_PARAMETER))) {
-      auto wrapped_node = BuildSpecializedParameterNode(node);
+      auto wrapped_node = BuildSpecializedParameterNode(cnode);
       MS_LOG(DEBUG) << "Partial closure is handled, wrapped_node: " << wrapped_node->DebugString(recursive_level);
       new_inputs[0] = wrapped_node;
     }
@@ -723,7 +872,13 @@ void FuncGraphSpecializer::ProcessCNode(const CNodePtr &node) {
   }
 
   // Set the updated inputs.
-  node->set_inputs(new_inputs);
+  cnode->set_inputs(new_inputs);
+
+  static const auto eliminate_unused_element = common::GetEnv("MS_DEV_ELIMINATE_SEQUENCE_UNUSED_ELEMENT");
+  static const auto enable_eliminate_unused_element = (eliminate_unused_element == "1");
+  if (enable_eliminate_unused_element) {
+    EliminateUnusedSequenceItem(cnode);
+  }
 }
 
 namespace {
@@ -756,7 +911,7 @@ bool IsPolyFunc(const AbstractFunctionPtr &func, const AbstractBasePtrList &argv
   }
   return false;
 }
-}  // end anonymous namespace
+}  // namespace
 
 SpecializeStatusCode FuncGraphSpecializer::AcquireUniqueEvalVal(const AbstractFunctionPtr &func,
                                                                 const EvaluatorPtr &eval,
