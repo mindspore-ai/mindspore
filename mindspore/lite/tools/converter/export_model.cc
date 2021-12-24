@@ -28,6 +28,7 @@
 #include "tools/converter/graphdef_transform.h"
 #include "tools/converter/optimizer_manager.h"
 #include "tools/optimizer/graph/control_flow_pass.h"
+#include "tools/optimizer/graph/clip_convert_activation_pass.h"
 #include "nnacl/op_base.h"
 #include "src/common/log_util.h"
 
@@ -201,7 +202,11 @@ STATUS ExportModel(const FuncGraphPtr &graph, const converter::Flags *flags) {
     MS_LOG(ERROR) << "Clone funcGraph failed.";
     return RET_ERROR;
   }
-  (void)Manage(mirror_graph, true);
+  auto manager = Manage(mirror_graph, true);
+  CHECK_NULL_RETURN(manager);
+  auto clip_transfer = std::make_shared<opt::ClipConvertActivationPass>();
+  CHECK_NULL_RETURN(clip_transfer);
+  (void)clip_transfer->Run(mirror_graph);
   if (!RunOptimizerPass(mirror_graph, {"ToNHWCFormat", "InferShapePass", "DecreaseTransposeAlgo"})) {
     MS_LOG(ERROR) << "Run transpose opt pass failed.";
     return RET_ERROR;
