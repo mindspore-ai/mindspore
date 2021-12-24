@@ -330,7 +330,10 @@ kernel::InnerKernel *CpuDeConvFp32KernelCreator(const std::vector<lite::Tensor *
 
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);
   kernel::InnerKernel *kernel = nullptr;
-  if (conv_param->group_ == 1) {
+  if (conv_param->group_ == 1 && conv_param->input_channel_ == 1 && conv_param->output_channel_ == 1) {
+    kernel = new (std::nothrow) kernel::DeconvolutionDepthwiseCPUKernel(op_parameter, inputs, outputs,
+                                                                        static_cast<const lite::InnerContext *>(ctx));
+  } else if (conv_param->group_ == 1) {
     kernel =
       CpuNormDeconvFp32KernelCreator(inputs, outputs, op_parameter, static_cast<const lite::InnerContext *>(ctx));
   } else if (conv_param->group_ == conv_param->input_channel_ && conv_param->group_ == conv_param->output_channel_) {
