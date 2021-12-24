@@ -1329,7 +1329,7 @@ void SessionBasic::GetRefCount(const KernelGraph *graph, std::map<KernelWithInde
 }
 
 void SessionBasic::GetForwardOpOutputRefCount(const KernelGraph *graph,
-                                              std::map<std::string, size_t> *forward_op_output_refcount) {
+                                              std::multiset<std::string> *forward_op_output_tensor_id) {
   if (!pynative::PynativeExecutor::GetInstance()->grad_executor()->grad_is_running()) {
     return;
   }
@@ -1341,25 +1341,25 @@ void SessionBasic::GetForwardOpOutputRefCount(const KernelGraph *graph,
     TensorValueToTensor(value, &tensor_value_list);
   }
   const auto &forward_op_output_id = pynative::PynativeExecutor::GetInstance()->grad_executor()->forward_op_output_id();
+  MS_LOG(DEBUG) << "Total forward op out put size " << forward_op_output_id.size();
   for (const auto &t : tensor_value_list) {
     if (forward_op_output_id.find(t->id()) != forward_op_output_id.end()) {
-      (*forward_op_output_refcount)[t->id()] += 1;
+      (*forward_op_output_tensor_id).emplace(t->id());
     }
   }
   MS_LOG(DEBUG) << "Total value nodes in graph size " << graph_value_nodes.size() << ", total tensor value node size "
-                << tensor_value_list.size() << ", forward op output tensor size " << forward_op_output_refcount->size();
+                << tensor_value_list.size() << ", forward op output tensor size "
+                << forward_op_output_tensor_id->size();
 }
 
 void SessionBasic::ReleaseForwardOpOutput(const std::vector<tensor::TensorPtr> &input_tensors,
-                                          std::map<std::string, size_t> *forward_op_output_refcount) {
-  MS_EXCEPTION_IF_NULL(forward_op_output_refcount);
+                                          std::multiset<std::string> *forward_op_output_tensor_id) {
+  MS_EXCEPTION_IF_NULL(forward_op_output_tensor_id);
   for (const auto &tensor : input_tensors) {
-    auto it = forward_op_output_refcount->find(tensor->id());
-    if (it != forward_op_output_refcount->end()) {
-      if (--(it->second) == 0) {
-        tensor->set_device_address(nullptr);
-        forward_op_output_refcount->erase(it);
-      }
+    auto it = forward_op_output_tensor_id->find(tensor->id());
+    if (it != forward_op_output_tensor_id->end()) {
+      tensor->set_device_address(nullptr);
+      forward_op_output_tensor_id->erase(it);
     }
   }
 }
@@ -2390,9 +2390,9 @@ void SessionBasic::RunOpsInGraphImpl(const GraphId &graph_id, const std::vector<
   graph_output_info.graph_outputs = outputs;
   CreateOutputPlaceholder(kernel_graph, inputs, graph_output_info.graph_outputs, &graph_output_info.output_indexes);
   std::map<KernelWithIndex, size_t> cnode_refcount;
-  std::map<std::string, size_t> forward_op_output_refcount;
+  std::multiset<std::string> forward_op_output_tensor_id;
   GetRefCount(kernel_graph.get(), &cnode_refcount);
-  GetForwardOpOutputRefCount(kernel_graph.get(), &forward_op_output_refcount);
+  GetForwardOpOutputRefCount(kernel_graph.get(), &forward_op_output_tensor_id);
   BuildOpsInGraph(graph_id, parameter_index, inputs, cnode_refcount);
 
   std::map<KernelWithIndex, tensor::TensorPtr> op_output_map;
@@ -2411,7 +2411,7 @@ void SessionBasic::RunOpsInGraphImpl(const GraphId &graph_id, const std::vector<
                     input_tensor_info.input_tensors_mask);
     graph_output_info.graph_output_tensors.clear();
     // Handle inputs and outputs of current op
-    ReleaseForwardOpOutput(input_tensor_info.input_tensors, &forward_op_output_refcount);
+    ReleaseForwardOpOutput(input_tensor_info.input_tensors, &forward_op_output_tensor_id);
     HandleOpInputs(input_tensor_info.input_kernel, &cnode_refcount, &op_output_map);
     HandleOpOutputs(kernel, op_outputs, cnode_refcount, &op_output_map, &graph_output_info);
     // Save grad node to Bucket

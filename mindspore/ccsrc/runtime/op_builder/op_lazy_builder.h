@@ -33,12 +33,13 @@ class OpLazyBuilderContext {
  public:
   OpLazyBuilderContext(GraphCompilerInfo *graph_compiler_info, KernelGraphPtr graph,
                        std::vector<session::KernelWithIndex> output_nodes, const session::OpRunInfo &op_run_info,
-                       device::DeviceContext *device_context)
+                       device::DeviceContext *device_context, bool is_pynative_infer)
       : graph_compiler_info_(graph_compiler_info),
         graph_(std::move(graph)),
         output_nodes_(std::move(output_nodes)),
         op_run_info_(op_run_info),
-        device_context_(device_context) {}
+        device_context_(device_context),
+        is_pyantive_infer_(is_pynative_infer) {}
   ~OpLazyBuilderContext() = default;
 
   GraphCompilerInfo *graph_compiler_info() const { return graph_compiler_info_; }
@@ -46,6 +47,7 @@ class OpLazyBuilderContext {
   const std::vector<session::KernelWithIndex> &output_nodes() const { return output_nodes_; }
   const session::OpRunInfo &op_run_info() const { return op_run_info_; }
   device::DeviceContext *device_context() const { return device_context_; }
+  bool is_pynative_infer() const { return is_pyantive_infer_; }
 
  private:
   GraphCompilerInfo *graph_compiler_info_;
@@ -53,6 +55,7 @@ class OpLazyBuilderContext {
   std::vector<session::KernelWithIndex> output_nodes_;
   session::OpRunInfo op_run_info_;
   device::DeviceContext *device_context_;
+  bool is_pyantive_infer_{false};
 };
 
 class OpTask {
