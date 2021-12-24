@@ -46,6 +46,7 @@ using mindspore::tensor::TensorPy;
 
 namespace mindspore {
 std::string GetKernelNodeName(const AnfNodePtr &anf_node) {
+  MS_EXCEPTION_IF_NULL(anf_node);
   std::string kernel_name = anf_node->fullname_with_scope();
   if (kernel_name.empty()) {
     kernel_name = anf_node->ToString();
@@ -57,6 +58,7 @@ std::string GetKernelNodeName(const AnfNodePtr &anf_node) {
 // ============================================= MindSpore IR Exporter =============================================
 
 std::string AnfExporter::GetNodeType(const AnfNodePtr &nd) {
+  MS_EXCEPTION_IF_NULL(nd);
   ValuePtr tensor_value = nullptr;
   auto abstract = nd->abstract();
   if (abstract != nullptr && abstract->isa<abstract::AbstractTensor>()) {
@@ -479,6 +481,9 @@ void AnfExporter::OutputStatementComment(std::ofstream &ofs, const CNodePtr &nod
 
 void AnfExporter::OutputCNodeText(std::ofstream &ofs, const CNodePtr &cnode, const FuncGraphPtr &func_graph, int *idx,
                                   std::map<AnfNodePtr, int> *const apply_map) {
+  if (cnode == nullptr || func_graph == nullptr || idx == nullptr || apply_map == nullptr) {
+    return;
+  }
   auto &inputs = cnode->inputs();
   std::string op_text = GetAnfNodeText(func_graph, inputs[0], *apply_map);
   std::string fv_text = (cnode->func_graph() != func_graph) ? ("$(" + cnode->func_graph()->ToString() + "):") : "";

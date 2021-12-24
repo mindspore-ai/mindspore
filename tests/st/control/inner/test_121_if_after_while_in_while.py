@@ -22,6 +22,7 @@ from mindspore.ops import composite as C
 from mindspore.ops import functional as F
 from mindspore import context
 from mindspore.common.parameter import Parameter
+from tests.security_utils import security_off_wrap
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -132,11 +133,13 @@ class BackwardNetNoAssign(nn.Cell):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
+@security_off_wrap
 def test_backward_no_assign():
     x = Tensor(np.array(1), mstype.int32)
     y = Tensor(np.array(3), mstype.int32)
     # Graph Mode
     context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(save_graphs=True)
     graph_forward_net = ForwardNetNoAssign(max_cycles=3)
     graph_backward_net = BackwardNetNoAssign(graph_forward_net)
     graph_mode_grads = graph_backward_net(x, y)

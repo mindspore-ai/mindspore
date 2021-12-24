@@ -39,6 +39,7 @@ void AnalysisSchedule::Schedule() {
 }
 
 void AnalysisSchedule::Yield(const AsyncInferTask *async_infer_task) {
+  MS_EXCEPTION_IF_NULL(async_infer_task);
   {
     std::lock_guard<std::mutex> activeLock(activate_thread_lock_);
     if (async_infer_task->ready() == 0) {

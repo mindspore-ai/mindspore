@@ -36,7 +36,7 @@ class Tensor(Tensor_):
     Tensor is a data structure that stores an n-dimensional array.
 
     Args:
-        input_data (Union[Tensor, float, int, bool, tuple, list, numpy.ndarray]): The data to be stroed. It can be
+        input_data (Union[Tensor, float, int, bool, tuple, list, numpy.ndarray]): The data to be stored. It can be
             another Tensor, Python number or NumPy ndarray. Default: None.
         dtype (:class:`mindspore.dtype`): Used to indicate the data type of the output Tensor. The argument should
             be defined in `mindspore.dtype`. If it is None, the data type of the output Tensor will be the same
