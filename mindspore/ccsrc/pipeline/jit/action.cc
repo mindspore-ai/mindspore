@@ -88,6 +88,29 @@ bool IsDynamicShapeGraph(FuncGraphPtr func_graph) {
                      [](const AnfNodePtr &node) { return AnfAlgo::IsNodeDynamicShape(node); });
 }
 
+bool EnableMindRTForAscendSubGraph(const FuncGraphManagerPtr manager, FuncGraphPtr func_graph) {
+  MS_EXCEPTION_IF_NULL(manager);
+  MS_EXCEPTION_IF_NULL(func_graph);
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  std::string device_target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  auto task_sink = context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
+  std::string backend = context_ptr->backend_policy();
+  if (!func_graph->ContainMultiTarget() && task_sink &&
+      context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
+    auto graphs = manager->func_graphs();
+    bool exist_while =
+      std::any_of(graphs.cbegin(), graphs.cend(), [](const FuncGraphPtr &fg) { return fg->recursive(); });
+    if (device_target == kAscendDevice && backend != kMsVm && !exist_while) {
+      return true;
+    }
+  }
+  if (device_target == kAscendDevice && func_graph->ContainMultiTarget() && !IsDynamicShapeGraph(func_graph)) {
+    return true;
+  }
+  return false;
+}
+
 // Disable mindRT in the control flow scenario.
 void ResetMindRTEnable(const ResourcePtr &res) {
   MS_EXCEPTION_IF_NULL(res);
@@ -111,25 +134,8 @@ void ResetMindRTEnable(const ResourcePtr &res) {
       MS_LOG(INFO) << "Enable Ascend MindRT";
       // No control flow && control flow without while need multigraph-sink, so enable mindrt.
       // Temporary changes: After MindRT supports control flow, the sinking mode is judged in MindRT.
-      if (!common::kEnableAscendSubGraphMindRT) {
-        auto task_sink = context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
-        std::string device_target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-        std::string backend = context_ptr->backend_policy();
-        if (!func_graph->ContainMultiTarget() && task_sink &&
-            context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
-          auto graphs = manager->func_graphs();
-          bool exist_while =
-            std::any_of(graphs.cbegin(), graphs.cend(), [](const FuncGraphPtr &fg) { return fg->recursive(); });
-          if (device_target == kAscendDevice && backend != kMsVm && !exist_while) {
-            return;
-          }
-        }
-      } else {
-        // Exception scenarios: dynamic shape and heterogeneous
-        std::string device_target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-        if (!IsDynamicShapeGraph(func_graph) || !func_graph->ContainMultiTarget() || (device_target != kAscendDevice)) {
-          return;
-        }
+      if (EnableMindRTForAscendSubGraph(manager, func_graph)) {
+        return;
       }
     }
 
