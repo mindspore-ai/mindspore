@@ -41,6 +41,46 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
     EXPECT_NE(_mstensor1.DataSize(), _mstensor2.DataSize()); \
   } while (false)
 
+/// Feature: C++ text.Vocab class.
+/// Description: test Lookup() ReverseLookup() methods of text::Vocab.
+/// Expectation: success.
+TEST_F(MindDataTestPipeline, TestVocabLookupAndReverseLookup) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVocabLookupAndReverseLookup.";
+  // Create a vocab from vector
+  std::vector<std::string> list = {"home", "IS", "behind", "the", "world", "ahead", "!"};
+  std::shared_ptr<Vocab> vocab = std::make_shared<Vocab>();
+  Status s = Vocab::BuildFromVector(list, {"<pad>", "<unk>"}, true, &vocab);
+  EXPECT_EQ(s, Status::OK());
+
+  // lookup, convert token to id
+  auto single_index = vocab->Lookup("home");
+  EXPECT_EQ(single_index, 2);
+  single_index = vocab->Lookup("hello");
+  EXPECT_EQ(single_index, -1);
+
+  // lookup multiple tokens
+  auto multi_indexs = vocab->Lookup(std::vector<std::string>{"<pad>", "behind"});
+  std::vector<int32_t> expected_multi_indexs = {0, 4};
+  EXPECT_EQ(multi_indexs, expected_multi_indexs);
+  multi_indexs = vocab->Lookup(std::vector<std::string>{"<pad>", "apple"});
+  expected_multi_indexs = {0, -1};
+  EXPECT_EQ(multi_indexs, expected_multi_indexs);
+
+  // reverse lookup, convert id to token
+  auto single_word = vocab->ReverseLookup(2);
+  EXPECT_EQ(single_word, "home");
+  single_word = vocab->ReverseLookup(-1);
+  EXPECT_EQ(single_word, "");
+
+  // reverse lookup multiple ids
+  auto multi_words = vocab->ReverseLookup(std::vector<int32_t>{0, 4});
+  std::vector<std::string> expected_multi_words = {"<pad>", "behind"};
+  EXPECT_EQ(multi_words, expected_multi_words);
+  multi_words = vocab->ReverseLookup(std::vector<int32_t>{0, 99});
+  expected_multi_words = {"<pad>", ""};
+  EXPECT_EQ(multi_words, expected_multi_words);
+}
+
 TEST_F(MindDataTestPipeline, TestVocabLookupOp) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVocabLookupOp.";
 

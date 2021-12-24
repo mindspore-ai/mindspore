@@ -97,6 +97,22 @@ class Vocab {
   // @return WordIdType, word_id
   WordIdType Lookup(const WordType &word) const;
 
+  // Lookup the ids of a vector of words, if word doesn't exist in vocab, return default_id
+  // @param const WordType word - word to look up
+  // @param WordIdType default_id - word id to return to user when its not in the vocab
+  // @return WordIdType, word_id
+  std::vector<WordIdType> Lookup(const std::vector<WordType> &words) const;
+
+  // Find the word of a id, if word doesn't exist in vocab, return empty string
+  // @param const WordIdType id - id to reverse look up
+  // @return WordType, word
+  WordType ReverseLookup(const WordIdType &id);
+
+  // Find the words of a vector of ids, if word doesn't exist in vocab, return empty string
+  // @param const WordIdType id - id to reverse look up
+  // @return WordType, word
+  std::vector<WordType> ReverseLookup(const std::vector<WordIdType> &ids);
+
   // constructor, shouldn't be called directly, can't be private due to std::make_unique()
   // @param std::unordered_map<WordType, WordIdType> map - sanitized word2id map
   explicit Vocab(std::unordered_map<WordType, WordIdType> map);
@@ -114,9 +130,11 @@ class Vocab {
   ~Vocab() = default;
 
   static const WordIdType kNoTokenExists;
+  static const WordType kNoIdExists;
 
  private:
   std::unordered_map<WordType, WordIdType> word2id_;
+  std::unordered_map<WordIdType, WordType> id2word_;
 };
 
 }  // namespace dataset

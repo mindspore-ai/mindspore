@@ -14,6 +14,7 @@
 # ==============================================================================
 
 import numpy as np
+import pytest
 
 import mindspore.dataset as ds
 import mindspore.dataset.text as text
@@ -26,6 +27,84 @@ VOCAB_FILE = "../data/dataset/testVocab/vocab_list.txt"
 SIMPLE_VOCAB_FILE = "../data/dataset/testVocab/simple_vocab_list.txt"
 
 
+def test_get_vocab():
+    """
+    Feature: Python text.Vocab class
+    Description: test vocab() method of text.Vocab
+    Expectation: success.
+    """
+    logger.info("test tokens_to_ids")
+    vocab = text.Vocab.from_list(["w1", "w2", "w3"], special_tokens=["<unk>"], special_first=True)
+    vocab_ = vocab.vocab()
+    assert "<unk>" in vocab_ and "w1" in vocab_ and "w2" in vocab_ and "w3" in vocab_
+
+
+def test_vocab_tokens_to_ids():
+    """
+    Feature: Python text.Vocab class
+    Description: test tokens_to_ids() method of text.Vocab
+    Expectation: success.
+    """
+    logger.info("test tokens_to_ids")
+    vocab = text.Vocab.from_list(["w1", "w2", "w3"], special_tokens=["<unk>"], special_first=True)
+
+    ids = vocab.tokens_to_ids(["w1", "w3"])
+    assert ids == [1, 3]
+
+    ids = vocab.tokens_to_ids(["w1", "w4"])
+    assert ids == [1, -1]
+
+    ids = vocab.tokens_to_ids("<unk>")
+    assert ids == 0
+
+    ids = vocab.tokens_to_ids("hello")
+    assert ids == -1
+
+
+def test_vocab_ids_to_tokens():
+    """
+    Feature: Python text.Vocab class
+    Description: test ids_to_tokens() method of text.Vocab
+    Expectation: success.
+    """
+    logger.info("test ids_to_tokens")
+    vocab = text.Vocab.from_list(["w1", "w2", "w3"], special_tokens=["<unk>"], special_first=True)
+
+    tokens = vocab.ids_to_tokens([2, 3])
+    assert tokens == ["w2", "w3"]
+
+    tokens = vocab.ids_to_tokens([2, 7])
+    assert tokens == ["w2", ""]
+
+    tokens = vocab.ids_to_tokens(0)
+    assert tokens == "<unk>"
+
+    tokens = vocab.ids_to_tokens(7)
+    assert tokens == ""
+
+
+def test_vocab_exception():
+    """
+    Feature: Python text.Vocab class
+    Description: test exceptions of text.Vocab
+    Expectation: raise TypeError when input is wrong.
+    """
+    with pytest.raises(TypeError):
+        text.Vocab(1)
+
+    vocab = text.Vocab.from_list(["w1", "w2", "w3"], special_tokens=["<unk>"], special_first=True)
+
+    with pytest.raises(TypeError):
+        vocab.ids_to_tokens("abc")
+    with pytest.raises(TypeError):
+        vocab.ids_to_tokens([2, 1.2, "abc"])
+
+    with pytest.raises(TypeError):
+        vocab.tokens_to_ids([1, "w3"])
+    with pytest.raises(TypeError):
+        vocab.tokens_to_ids(999)
+
+
 def test_lookup_callable():
     """
     Test lookup is callable
@@ -35,6 +114,7 @@ def test_lookup_callable():
     lookup = text.Lookup(vocab)
     word = "迎"
     assert lookup(word) == 3
+
 
 def test_from_list_tutorial():
     vocab = text.Vocab.from_list("home IS behind the world ahead !".split(" "), ["<pad>", "<unk>"], True)

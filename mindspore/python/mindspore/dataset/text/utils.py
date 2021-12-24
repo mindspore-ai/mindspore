@@ -22,21 +22,68 @@ from enum import IntEnum
 import numpy as np
 
 import mindspore._c_dataengine as cde
-from .validators import check_from_file, check_from_list, check_from_dict, check_from_dataset, \
+from .validators import check_vocab, check_from_file, check_from_list, check_from_dict, check_from_dataset, \
     check_from_dataset_sentencepiece, check_from_file_sentencepiece, check_save_model, \
-    check_from_file_vectors
+    check_from_file_vectors, check_tokens_to_ids, check_ids_to_tokens
 
 __all__ = [
     "Vocab", "SentencePieceVocab", "to_str", "to_bytes", "Vectors", "FastText", "GloVe", "CharNGram"
 ]
 
 
-class Vocab(cde.Vocab):
+class Vocab:
     """
-    Vocab object that is used to lookup a word.
+    Vocab object that is used to save pairs of words and ids.
 
-    It contains a map that maps each word(str) to an id (int).
+    It contains a map that maps each word(str) to an id(int) or reverse.
     """
+
+    @check_vocab
+    def __init__(self, vocab):
+        self.c_vocab = vocab
+
+    def vocab(self):
+        return self.c_vocab.vocab()
+
+    @check_tokens_to_ids
+    def tokens_to_ids(self, tokens):
+        """
+        Converts a token string or a sequence of tokens in a single integer id or a sequence of ids.
+        If token does not exist, return id with value -1.
+
+        Args:
+            tokens(Union[str, list[str]]): One or several token(s) to convert to token id(s).
+
+        Returns:
+            The token id or list of token ids.
+
+        Examples:
+            >>> vocab = text.Vocab.from_list(["w1", "w2", "w3"], special_tokens=["<unk>"], special_first=True)
+            >>> ids = vocab.tokens_to_ids(["w1", "w3"])
+        """
+        if isinstance(tokens, str):
+            tokens = [tokens]
+        return self.c_vocab.tokens_to_ids(tokens)
+
+    @check_ids_to_tokens
+    def ids_to_tokens(self, ids):
+        """
+        Converts a single index or a sequence of indices in a token or a sequence of tokens.
+        If id does not exist, return empty string.
+
+        Args:
+            ids(Union[int, list[int]]): The token id (or token ids) to convert to tokens.
+
+        Returns:
+            The decoded token(s).
+
+        Examples:
+            >>> vocab = text.Vocab.from_list(["w1", "w2", "w3"], special_tokens=["<unk>"], special_first=True)
+            >>> token = vocab.ids_to_tokens(0)
+        """
+        if isinstance(ids, int):
+            ids = [ids]
+        return self.c_vocab.ids_to_tokens(ids)
 
     @classmethod
     @check_from_dataset
@@ -76,7 +123,8 @@ class Vocab(cde.Vocab):
             ...                                 special_first=True)
             >>> dataset = dataset.map(operations=text.Lookup(vocab, "<unk>"), input_columns=["text"])
         """
-        return dataset.build_vocab(columns, freq_range, top_k, special_tokens, special_first)
+        c_vocab = dataset.build_vocab(columns, freq_range, top_k, special_tokens, special_first)
+        return Vocab(c_vocab)
 
     @classmethod
     @check_from_list
@@ -99,7 +147,8 @@ class Vocab(cde.Vocab):
         """
         if special_tokens is None:
             special_tokens = []
-        return super().from_list(word_list, special_tokens, special_first)
+        c_vocab = cde.Vocab.from_list(word_list, special_tokens, special_first)
+        return Vocab(c_vocab)
 
     @classmethod
     @check_from_file
@@ -128,7 +177,8 @@ class Vocab(cde.Vocab):
             vocab_size = -1
         if special_tokens is None:
             special_tokens = []
-        return super().from_file(file_path, delimiter, vocab_size, special_tokens, special_first)
+        c_vocab = cde.Vocab.from_file(file_path, delimiter, vocab_size, special_tokens, special_first)
+        return Vocab(c_vocab)
 
     @classmethod
     @check_from_dict
@@ -146,8 +196,8 @@ class Vocab(cde.Vocab):
         Examples:
             >>> vocab = text.Vocab.from_dict({"home": 3, "behind": 2, "the": 4, "world": 5, "<unk>": 6})
         """
-
-        return super().from_dict(word_dict)
+        c_vocab = cde.Vocab.from_dict(word_dict)
+        return Vocab(c_vocab)
 
 
 class SentencePieceVocab(cde.SentencePieceVocab):
