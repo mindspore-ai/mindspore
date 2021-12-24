@@ -20,8 +20,6 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "abstract/utils.h"
 #include "utils/trace_base.h"
-#include "utils/ms_context.h"
-#include "runtime/device/ascend/ascend_device_address.h"
 
 namespace mindspore {
 namespace kernel {
@@ -106,12 +104,8 @@ void DynamicReshapeKernel::Execute() {
       MS_LOG(EXCEPTION) << "Execute DynamicReshapeKernel memcpy_s failed";
     }
   } else {
-    auto ms_context = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(ms_context);
-    auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-    auto temp_device_address = std::make_shared<device::ascend::AscendDeviceAddress>(
-      address_x->GetMutablePtr(), input_size_byte, address_x->format(), address_x->type_id(), kAscendDevice, device_id);
-    if (!output_addr->SyncDeviceToDevice(temp_device_address.get())) {
+    if (!output_addr->AsyncDeviceToDevice(output_shapes, input_size_byte, address_x->type_id(), address_x->GetPtr(),
+                                          address_x->format())) {
       MS_LOG(EXCEPTION) << "Host Reshape sync device to device failed.";
     }
     MS_LOG(INFO) << "Execute host ReshapeKernel End";
