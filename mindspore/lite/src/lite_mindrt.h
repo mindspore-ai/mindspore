@@ -72,14 +72,17 @@ class LiteOpActor : public OpActor<lite::Tensor> {
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
   // call this function after CompileArrow
   virtual std::set<kernel::LiteKernel *> GetPartialKernels() const {
-    std::set ret{partial_node_};
+    if (partial_node_ == nullptr) {
+      return {};
+    }
+    std::set<kernel::LiteKernel *> ret{partial_node_};
     return ret;
   }
 #endif
 
  protected:
-  void SetInputShape();
-  int InitInputData();
+  virtual void SetInputShape();
+  virtual void InitInputData();
   void SetOutputData(OpContext<Tensor> *context);
   virtual void AsyncOutput(OpContext<Tensor> *context);
 
@@ -92,15 +95,6 @@ class LiteOpActor : public OpActor<lite::Tensor> {
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
   virtual int UpdateActorOutput();
 #endif
-
-  kernel::LiteKernel *kernel_;
-  std::vector<size_t> results_index_{};
-  std::vector<OpDataPtr<Tensor>> outputs_data_{};
-  std::vector<Tensor *> inputs_data_{};
-  std::unordered_map<Tensor *, Tensor *> *isolate_input_map_ = nullptr; /* real obj in session */
-  lite::InnerContext *ctx_ = nullptr;
-
- private:
   void MoveTensorInputData(Tensor *dst_tensor, Tensor *src_tensor);
   void MoveInputData(Tensor *dst_tensor, Tensor *src_tensor);
   void SetInputData(Tensor *dst_tensor, Tensor *src_tensor);
@@ -111,6 +105,15 @@ class LiteOpActor : public OpActor<lite::Tensor> {
   void MoveTensorListInputData(TensorList *dst_tensor, TensorList *src_tensor);
   int CastTensorListInputData(TensorList *dst_tensor, TensorList *src_tensor);
 #endif
+
+  kernel::LiteKernel *kernel_;
+  std::vector<size_t> results_index_{};
+  std::vector<OpDataPtr<Tensor>> outputs_data_{};
+  std::vector<Tensor *> inputs_data_{};
+  std::unordered_map<Tensor *, Tensor *> *isolate_input_map_ = nullptr; /* real obj in session */
+  lite::InnerContext *ctx_ = nullptr;
+
+ private:
   int CreateCommonArrow(const std::unordered_map<void *, std::set<std::pair<AID, size_t>>> &receivers_map,
                         const std::set<void *> &subgraph_inputs_set, const std::set<void *> &receiver_tensors,
                         const size_t &output_index, std::unordered_map<AID, std::set<size_t>> *receiver_index_set);

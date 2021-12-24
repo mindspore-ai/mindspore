@@ -35,8 +35,11 @@ class LiteKernelUtil {
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
   static bool IsSwitchTypeCall(LiteKernel *kernel);
   static bool IsNonTailCall(LiteKernel *node);
+  static bool IsTailCall(LiteKernel *node);
   static std::vector<LiteKernel *> GetCallInputPartials(LiteKernel *call_node);
   static LiteKernel *GetPartialOutputCall(LiteKernel *partial_node);
+  static bool IsNonTailCallSubGraph(kernel::SubGraphKernel *subgraph_kernel);
+  static bool IsTailCallSubGraph(kernel::SubGraphKernel *subgraph_kernel);
 #endif
   static LiteKernel *GetInputsSpecificNode(const LiteKernel *kernel, const schema::PrimitiveType &primitive_type);
   static bool InputsContainsSpecificNode(const LiteKernel *kernel, const schema::PrimitiveType &primitive_type);

@@ -230,6 +230,35 @@ bool LiteKernelUtil::IsNonTailCall(kernel::LiteKernel *node) {
          !(reinterpret_cast<CallParameter *>(node->op_parameter())->is_tail_call);
 }
 
+bool LiteKernelUtil::IsTailCall(kernel::LiteKernel *node) {
+  return node->type() == schema::PrimitiveType_Call &&
+         (reinterpret_cast<CallParameter *>(node->op_parameter())->is_tail_call);
+}
+
+bool LiteKernelUtil::IsNonTailCallSubGraph(kernel::SubGraphKernel *subgraph_kernel) {
+  if (subgraph_kernel == nullptr) {
+    return false;
+  }
+  auto nodes = subgraph_kernel->nodes();
+  return std::any_of(nodes.begin(), nodes.end(),
+                     [](kernel::LiteKernel *node) { return kernel::LiteKernelUtil::IsNonTailCall(node); });
+}
+
+bool LiteKernelUtil::IsTailCallSubGraph(kernel::SubGraphKernel *subgraph_kernel) {
+  if (subgraph_kernel == nullptr) {
+    return false;
+  }
+  if (IsNonTailCallSubGraph(subgraph_kernel)) {
+    return false;
+  }
+  auto output_nodes = subgraph_kernel->out_nodes();
+  if (std::any_of(output_nodes.begin(), output_nodes.end(),
+                  [](kernel::LiteKernel *node) { return IsTailCall(node); })) {
+    return true;
+  }
+  return false;
+}
+
 std::vector<LiteKernel *> LiteKernelUtil::GetCallInputPartials(LiteKernel *call_node) {
   if (call_node->type() != schema::PrimitiveType_Call) {
     MS_LOG(ERROR) << "input node is not call node.";

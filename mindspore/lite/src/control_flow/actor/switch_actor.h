@@ -38,6 +38,13 @@ class LiteSwitchOpActor : public LiteOpActor {
   void RunOpData(OpData<Tensor> *inputs, OpContext<Tensor> *context = nullptr) override;
   int CompileArrow(const std::unordered_map<void *, std::set<std::pair<AID, size_t>>> &receivers_map) override;
   int PrepareOutputData() override;
+  std::set<kernel::LiteKernel *> GetPartialKernels() const override {
+    std::set<kernel::LiteKernel *> ret{};
+    for (auto &item : partial_nodes_) {
+      ret.insert(item);
+    }
+    return ret;
+  }
 
  protected:
   int UpdateActorOutput() override;
