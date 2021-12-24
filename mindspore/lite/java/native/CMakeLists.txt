@@ -74,7 +74,6 @@ set(JNI_SRC
         ${NEW_NATIVE_DIR}/model.cpp
         ${NEW_NATIVE_DIR}/ms_context.cpp
         ${NEW_NATIVE_DIR}/ms_tensor.cpp
-        ${NEW_NATIVE_DIR}/train_config.cpp
         ${NEW_NATIVE_DIR}/version.cpp
   )
 
@@ -91,7 +90,10 @@ endif()
 
 if(SUPPORT_TRAIN)
     set(LITE_TRAIN_SO_NAME mindspore-lite-train minddata-lite)
-    set(JNI_TRAIN_SRC ${CMAKE_CURRENT_SOURCE_DIR}/runtime/train_session.cpp)
+    set(JNI_TRAIN_SRC
+        ${CMAKE_CURRENT_SOURCE_DIR}/runtime/train_session.cpp
+        ${NEW_NATIVE_DIR}/train_config.cpp
+    )
     add_library(mindspore-lite-train-jni SHARED ${JNI_TRAIN_SRC})
     if(PLATFORM_ARM64 OR PLATFORM_ARM32)
         find_library(log-lib log)

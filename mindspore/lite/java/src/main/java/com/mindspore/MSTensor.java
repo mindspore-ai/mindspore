@@ -17,11 +17,13 @@
 package com.mindspore;
 
 import java.nio.ByteBuffer;
+import java.util.List;
 
 public class MSTensor {
     static {
         System.loadLibrary("mindspore-lite-jni");
     }
+
     private long tensorPtr;
 
     /**
@@ -46,8 +48,9 @@ public class MSTensor {
      * @param tensorName tensor name
      * @param buffer     tensor buffer
      */
-    public MSTensor(String tensorName, ByteBuffer buffer) {
-        this.tensorPtr = createTensor(tensorName, buffer);
+    public static MSTensor createTensor(String tensorName, int dataType, int[] tensorShape, ByteBuffer buffer) {
+        long tensorPtr = createTensorByNative(tensorName, dataType, tensorShape, buffer);
+        return new MSTensor(tensorPtr);
     }
 
     /**
@@ -111,6 +114,9 @@ public class MSTensor {
      * @return whether set data success.
      */
     public boolean setData(byte[] data) {
+        if (data == null) {
+            return false;
+        }
         return this.setData(this.tensorPtr, data, data.length);
     }
 
@@ -164,7 +170,8 @@ public class MSTensor {
         return tensorPtr;
     }
 
-    private native long createTensor(String tensorName, ByteBuffer buffer);
+    private static native long createTensorByNative(String tensorName, int dataType, int[] tesorShape,
+                                                    ByteBuffer buffer);
 
     private native int[] getShape(long tensorPtr);
 
