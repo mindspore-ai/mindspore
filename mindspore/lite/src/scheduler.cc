@@ -1383,10 +1383,10 @@ int Scheduler::ScheduleSubGraphToKernels(size_t subgraph_index, std::vector<kern
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
         kernel = ScheduleNodeToKernel(node, prefer_data_type);
         auto partial_subgraph_index = GetPartialGraphIndex(primitive, schema_version_);
+        control_flow_scheduler_->RecordSubgraphCaller(partial_subgraph_index, kernel);
         if (SubGraphHasScheduled(partial_subgraph_index)) {
           partial_kernel_subgraph_index_map_[kernel] = partial_subgraph_index;
           MS_CHECK_TRUE_MSG(control_flow_scheduler_ != nullptr, RET_ERROR, "control flow scheduler is nullptr.");
-          control_flow_scheduler_->RecordPartialNodeCallMoreThanOnce(kernel);
           MS_LOG(INFO) << "subgraph has scheduled. ";
         } else {
           SubGraphMarkScheduled(partial_subgraph_index);
@@ -1666,7 +1666,8 @@ void Scheduler::SetSubgraphForPartialNode() {
 
 int Scheduler::RecordControlFlowLinkInfo() {
   for (auto &pair : partial_kernel_subgraph_index_map_) {
-    auto partial_kernel = static_cast<kernel::PartialFusionKernel *>((pair.first)->kernel());
+    auto partial_kernel = reinterpret_cast<kernel::PartialFusionKernel *>((pair.first)->kernel());
+    MS_CHECK_TRUE_MSG(partial_kernel != nullptr, RET_ERROR, "cast to partial kernel failed.");
     auto subgraph_kernels = partial_kernel->subgraph_kernels();
     MS_CHECK_TRUE_MSG(!subgraph_kernels.empty(), RET_ERROR, "partial corresponding subgraph kernels empty.");
     auto subgraph_kernel = subgraph_kernels.front();

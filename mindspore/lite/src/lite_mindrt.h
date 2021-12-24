@@ -85,6 +85,7 @@ class LiteOpActor : public OpActor<lite::Tensor> {
   virtual void InitInputData();
   void SetOutputData(OpContext<Tensor> *context);
   virtual void AsyncOutput(OpContext<Tensor> *context);
+  void SetTensorShape(Tensor *dst, Tensor *src);
 
   int CompileArrowThroughOutputTensors(
     const std::unordered_map<void *, std::set<std::pair<AID, size_t>>> &receivers_map);
@@ -94,6 +95,7 @@ class LiteOpActor : public OpActor<lite::Tensor> {
   virtual int PrepareOutputData();
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
   virtual int UpdateActorOutput();
+  void SetTensorListShape(Tensor *dst, Tensor *src);
 #endif
   void MoveTensorInputData(Tensor *dst_tensor, Tensor *src_tensor);
   void MoveInputData(Tensor *dst_tensor, Tensor *src_tensor);

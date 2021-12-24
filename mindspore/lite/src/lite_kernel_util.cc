@@ -391,6 +391,11 @@ void LiteKernelUtil::FindAllInoutKernels(const std::vector<kernel::LiteKernel *>
   }
 }
 
+bool LiteKernelUtil::IsOutputSubGraph(kernel::SubGraphKernel *subgraph_kernel) {
+  return std::all_of(subgraph_kernel->out_tensors().begin(), subgraph_kernel->out_tensors().end(),
+                     [](lite::Tensor *tensor) { return tensor->IsGraphOutput(); });
+}
+
 namespace {
 kernel::SubGraphKernel *CreateCustomSubGraph(std::vector<kernel::LiteKernel *> &&input_kernels,
                                              std::vector<kernel::LiteKernel *> &&output_kernels,

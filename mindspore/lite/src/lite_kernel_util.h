@@ -53,6 +53,7 @@ class LiteKernelUtil {
                                           lite::Tensor *new_tensor);
   static int ReplaceSubGraphNodesOutTensor(kernel::LiteKernel *kernel, const lite::Tensor *old_tensor,
                                            lite::Tensor *new_tensor);
+  static bool IsOutputSubGraph(kernel::SubGraphKernel *subgraph_kernel);
 
  private:
   static std::set<lite::Tensor *> AllOutTensor(const std::vector<LiteKernel *> &kernels);

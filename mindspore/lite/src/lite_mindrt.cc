@@ -489,28 +489,35 @@ void LiteOpActor::SetInputShape() {
     if (input_tensor->shape() == inputs_data_[i]->shape()) {
       continue;
     }
-    MS_LOG(DEBUG) << "inputs_data_[" << i << "].shape: " << inputs_data_[i]->shape() << " vs kernel_->in_tensors()["
-                  << i << "].shape: " << kernel_->in_tensors()[i]->shape() << " are not equal.";
-    MS_LOG(DEBUG) << "this->kernel_->name(): " << this->kernel_->name();
 
     if (input_tensor->data_type() == kObjectTypeTensorType) {
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
-      auto input_tensorlist = reinterpret_cast<TensorList *>(input_tensor);
-      auto input_data_tensorlist = reinterpret_cast<TensorList *>(inputs_data_[i]);
-      input_tensorlist->FreeTensorListData();
-      input_tensorlist->set_element_shape(input_data_tensorlist->element_shape());
-      input_tensorlist->set_shape(input_data_tensorlist->shape());
-      std::vector<std::vector<int>> tensor_shape{};
-      std::transform(input_data_tensorlist->tensors().begin(), input_data_tensorlist->tensors().end(),
-                     std::back_inserter(tensor_shape), [](const Tensor *tensor_item) { return tensor_item->shape(); });
-      input_tensorlist->MallocTensorListData(input_data_tensorlist->tensors_data_type(), tensor_shape);
+      SetTensorListShape(input_tensor, inputs_data_[i]);
 #endif
     } else {
-      input_tensor->set_shape(inputs_data_[i]->shape());
-      input_tensor->set_format(inputs_data_[i]->format());
+      SetTensorShape(input_tensor, inputs_data_[i]);
     }
   }
 }
+
+void LiteOpActor::SetTensorShape(Tensor *dst, Tensor *src) {
+  dst->set_shape(src->shape());
+  dst->set_format(src->format());
+}
+
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
+void LiteOpActor::SetTensorListShape(Tensor *dst, Tensor *src) {
+  auto input_tensorlist = reinterpret_cast<TensorList *>(dst);
+  auto input_data_tensorlist = reinterpret_cast<TensorList *>(src);
+  input_tensorlist->FreeTensorListData();
+  input_tensorlist->set_element_shape(input_data_tensorlist->element_shape());
+  input_tensorlist->set_shape(input_data_tensorlist->shape());
+  std::vector<std::vector<int>> tensor_shape{};
+  std::transform(input_data_tensorlist->tensors().begin(), input_data_tensorlist->tensors().end(),
+                 std::back_inserter(tensor_shape), [](const Tensor *tensor_item) { return tensor_item->shape(); });
+  input_tensorlist->MallocTensorListData(input_data_tensorlist->tensors_data_type(), tensor_shape);
+}
+#endif
 
 void LiteOpActor::InitInputData() {
   SetInputShape();

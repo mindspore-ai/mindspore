@@ -171,52 +171,6 @@ FuncGraphPtr MindIRControlFlowAdjust::AddAfterFuncGraph(const FuncGraphPtr &fg,
   return after_fg;
 }
 
-int MindIRControlFlowAdjust::AddAfterFgForInlinedFg(const std::set<FuncGraphPtr> &all_func_graphs,
-                                                    const FuncGraphPtr &main_fg) {
-  // get all inline fg
-  std::vector<FuncGraphPtr> all_inline_fgs{};
-  for (auto &graph : all_func_graphs) {
-    if (HasCallAfter(graph)) {
-      continue;
-    }
-    all_inline_fgs.push_back(graph);
-  }
-
-  // checkout all inline fg
-  MS_CHECK_TRUE_MSG(!all_inline_fgs.empty(), RET_ERROR, "graph is not right.");
-  // only one graph no need insert partial call.
-  if (all_inline_fgs.size() == 1) {
-    MS_LOG(DEBUG) << "no need add after fg.";
-    return RET_OK;
-  }
-  auto first_fg_output = GetFgOutput(all_inline_fgs.front());
-  auto inline_fg_output_size = first_fg_output.size();
-  for (auto &graph : all_inline_fgs) {
-    if (graph == nullptr) {
-      MS_LOG(ERROR) << "GetPartialFg failed.";
-      return RET_NULL_PTR;
-    }
-    if (GetFgOutput(graph).size() != inline_fg_output_size) {
-      MS_LOG(ERROR) << "graph is not right, inline fg output size is not same.";
-      return RET_ERROR;
-    }
-  }
-
-  auto after_fg = AddAfterFuncGraph(main_fg, first_fg_output);
-  if (after_fg == nullptr) {
-    MS_LOG(ERROR) << "AddAfterFuncGraph failed.";
-    return RET_ERROR;
-  }
-
-  for (auto &graph : all_inline_fgs) {
-    if (ModifyFgToCallAfterFg(graph, after_fg) != RET_OK) {
-      MS_LOG(ERROR) << "inline fg add call after fg failed.";
-      return RET_ERROR;
-    }
-  }
-  return RET_OK;
-}
-
 int MindIRControlFlowAdjust::MoveCallInputsToPartialFusionInputs(const std::set<FuncGraphPtr> &all_func_graphs) {
   for (auto &graph : all_func_graphs) {
     auto node_list = TopoSort(graph->get_return());
@@ -378,11 +332,6 @@ bool MindIRControlFlowAdjust::Run(const FuncGraphPtr &func_graph) {
   ret = InsertPartialFusionForRawCall(all_func_graphs);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "InsertPartialFusionForRawCall failed.";
-    return false;
-  }
-  ret = AddAfterFgForInlinedFg(all_func_graphs, func_graph);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "AddAfterFgForInlinedFg failed.";
     return false;
   }
   ret = ResetFuncGraph(func_graph, all_func_graphs);
