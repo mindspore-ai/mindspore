@@ -20,8 +20,43 @@
 #include "tools/converter/quantizer/fse_decoder.h"
 
 namespace mindspore::lite {
+namespace {
 constexpr int kBit8 = 8;
 constexpr int kBit32 = 32;
+bool HasInitQuantParam(const std::vector<LiteQuantParam> &quant_params) {
+  if (quant_params.empty()) {
+    return false;
+  }
+  if (std::all_of(quant_params.cbegin(), quant_params.cend(),
+                  [](const LiteQuantParam &quant_param) { return quant_param.inited; })) {
+    return true;
+  }
+  return false;
+}
+
+bool CheckNeedWeightQuant(OpParameter *op_parameter, const std::vector<Tensor *> &in_tensors) {
+  if (op_parameter->quant_type_ == schema::QuantType_QUANT_WEIGHT) {
+    return true;
+  }
+  // compatible with r1.1
+  if (op_parameter->quant_type_ == schema::QuantType_QUANT_NONE) {
+    const size_t min_quant_size = 2;
+    if (in_tensors.size() < min_quant_size) {
+      return false;
+    }
+    for (auto tensor : in_tensors) {
+      if (!tensor->IsConst() && HasInitQuantParam(tensor->quant_params())) {
+        MS_LOG(DEBUG) << tensor->tensor_name()
+                      << " is a non-const tensor, but there are quantization parameters, which may belong to full "
+                         "quantization.";
+        return false;
+      }
+    }
+    return true;
+  }
+  return false;
+}
+}  // namespace
 std::vector<bool> StringToBitVector(const std::string &str) {
   std::vector<bool> vec(str.size() * kBit8);
   size_t index = 0;
@@ -355,7 +390,7 @@ int WeightDecoder::UnPack(const SchemaTensorWrapper &src_tensor, lite::Tensor *d
 
 int WeightDecoder::DequantNode(OpParameter *op_parameter, const std::vector<Tensor *> &in_tensors,
                                TypeId dst_data_type) {
-  if (op_parameter->quant_type_ != schema::QuantType_QUANT_WEIGHT) {
+  if (!CheckNeedWeightQuant(op_parameter, in_tensors)) {
     return RET_OK;
   }
   int index = 0;

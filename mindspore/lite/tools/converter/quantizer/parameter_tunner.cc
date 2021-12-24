@@ -141,7 +141,7 @@ int ParameterOptimizer::WeightQuantModelInference(const FuncGraphPtr &func_graph
         break;
       }
     }
-
+    MS_CHECK_TRUE_MSG(weight_quant_size > 0, RET_ERROR, "weight quant size must large 0");
     auto compress_ratio = 1.0 * origin_model_size / weight_quant_size;
     std::cout << " round:" << round << " scale:" << scale << " cos_sim:" << cos_sim << " mean_error:" << mean_error
               << " ratio:" << compress_ratio << std::endl;

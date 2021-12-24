@@ -56,6 +56,7 @@ class FullQuantQuantizer : public Quantizer {
 
  private:
   bool OpInputDataHandle(OperationType type, const string &op_name, std::vector<float> *data);
+
   bool OpOutputChMeanDataHandle(OperationType type, const string &op_name, std::vector<float> *data);
 
   int PreProcess(const FuncGraphPtr &func_graph);
@@ -65,8 +66,6 @@ class FullQuantQuantizer : public Quantizer {
   int DoInference(CollectType collect_type);
 
   int UpdateDivergeInterval();
-
-  int ComputeThreshold();
 
   int QuantNodeSimpleOp(const CNodePtr &cnode);
 
@@ -129,6 +128,9 @@ class FullQuantQuantizer : public Quantizer {
   std::map<std::string, std::vector<float>> op_bias_diff_map_;            // only use by int8 model
   std::mutex mutex_op_input_;
   std::mutex mutex_op_output_;
+
+  // key is tensor_name
+  std::map<std::string, std::vector<schema::QuantParamT>> weight_quant_params_bak;
 };
 }  // namespace mindspore::lite::quant
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_FULL_QUANT_QUANTIZER_H

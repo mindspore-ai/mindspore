@@ -26,16 +26,20 @@ int DataDistribution::RecordMaxMinValueArray(const std::vector<float> &data) {
   if (data.empty()) {
     return RET_ERROR;
   }
-  float max_num = data.at(0);
   float min_num = data.at(0);
+  float max_num = data.at(0);
   for (float val : data) {
-    max_num = std::max(val, max_num);
     min_num = std::min(val, min_num);
+    max_num = std::max(val, max_num);
   }
-  real_max_ = std::max(max_num, real_max_);
   real_min_ = std::min(min_num, real_min_);
-  this->max_datas_.emplace_back(max_num);
-  this->min_datas_.emplace_back(min_num);
+  real_max_ = std::max(max_num, real_max_);
+  auto quantile_min = Quantile(data, 0.0001);
+  auto quantile_max = Quantile(data, 0.9999);
+  MS_LOG(DEBUG) << "real_min_:" << real_min_ << " real_max_:" << real_max_ << "quantile_min:" << quantile_min
+                << " quantile_max:" << quantile_max;
+  this->min_datas_.emplace_back(quantile_min);
+  this->max_datas_.emplace_back(quantile_max);
   return RET_OK;
 }
 
@@ -166,8 +170,17 @@ int DataDistribution::ComputeThreshold() {
 double DataDistribution::CalculateMinMaxScale() { return CalculateScaleAndZp(this->real_min_, this->real_max_); }
 
 double DataDistribution::CalculateRemovalOutlierScale() {
-  this->percent_result_ = OutlierMethod(min_datas_, max_datas_);
+  this->percent_result_ = CalQuantileMinMax(min_datas_, max_datas_);
   return CalculateScaleAndZp(percent_result_.first, percent_result_.second);
+}
+
+std::pair<float, float> DataDistribution::CalQuantileMinMax(const std::vector<float> &min_datas,
+                                                            const std::vector<float> &max_datas) {
+  MS_ASSERT(!min_datas.empty());
+  MS_ASSERT(!max_datas.empty());
+  auto avg_min = accumulate(min_datas.begin(), min_datas.end(), 0.0) / min_datas.size();
+  auto avg_max = accumulate(max_datas.begin(), max_datas.end(), 0.0) / max_datas.size();
+  return {avg_min, avg_max};
 }
 
 double DataDistribution::CalculateScaleAndZp(float min_value, float max_value) {

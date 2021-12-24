@@ -135,7 +135,8 @@ int FSEDecoder::DeCompress(const SchemaTensorWrapper &src_tensor, Tensor *dst_te
     return RET_ERROR;
   }
   bs.SetChunkCount(*(reinterpret_cast<uint32_t *>(&data8[i])));
-  bs.SetCurrChunkIndex(bs.GetChunkCount() - 2);
+  const int offset = 2;
+  bs.SetCurrChunkIndex(bs.GetChunkCount() - offset);
   i += sizeof(uint32_t);
   if (i > total_size) {
     MS_LOG(ERROR) << "index over total size"

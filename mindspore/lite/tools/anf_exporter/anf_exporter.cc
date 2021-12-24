@@ -141,9 +141,9 @@ static STATUS CompressTensor(schema::TensorT *tensor_input, const std::unique_pt
           return RET_ERROR;
         }
       } else if (bit_num <= kBitNum8) {
-        repetition_packed = PackRepetition<int8_t>(bit_num, tensor_input);
+        repetition_packed = quant::PackRepetition<int8_t>(bit_num, tensor_input);
       } else {
-        repetition_packed = PackRepetition<int16_t>(bit_num, tensor_input);
+        repetition_packed = quant::PackRepetition<int16_t>(bit_num, tensor_input);
       }
     }
     if (bit_num != kBitNum8 && bit_num != kBitNum16 && !repetition_packed &&
