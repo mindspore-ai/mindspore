@@ -26,7 +26,7 @@
 #include "utils/ms_utils_secure.h"
 #include "tools/optimizer/common/format_utils.h"
 #include "nnacl/op_base.h"
-#include "tools/anf_exporter/anf_exporter.h"
+#include "tools/common/node_util.h"
 #include "src/ops/ops_utils.h"
 #include "src/ops/populate/populate_register.h"
 

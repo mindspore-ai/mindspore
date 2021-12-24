@@ -247,11 +247,9 @@ om_generated_path=${basepath}/om_generated
 
 # Write converter result to temp file
 run_converter_log_file=${basepath}/run_converter_log.txt
-rm ${run_converter_log_file}
 echo ' ' > ${run_converter_log_file}
 
 run_converter_result_file=${basepath}/run_converter_result.txt
-rm ${run_converter_result_file}
 echo ' ' > ${run_converter_result_file}
 
 # Run converter

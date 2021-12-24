@@ -76,13 +76,15 @@ class DataDistribution {
   double CalculateKLScale();
   double CalculateScaleAndZp(float min_value, float max_value);
 
+  std::pair<float, float> CalQuantileMinMax(const std::vector<float> &min_datas, const std::vector<float> &max_datas);
+
  private:
   std::vector<float> histogram_;
   CNodePtr cnode_;
   int bin_num_ = 0;
   float interval_ = 0;
-  float real_max_ = 0.0f;
-  float real_min_ = 0.0f;
+  float real_max_ = FLT_MIN;
+  float real_min_ = FLT_MAX;
   float best_T_ = 0.0f;
   size_t bit_num_ = 0;
   float encode_min_ = 0.0f;

@@ -562,6 +562,28 @@ int DebugInfoManager::SaveQuantParam(const std::string &file_path) {
   return RET_OK;
 }
 
+int DebugInfoManager::GetClipAndCos() {
+  for (auto &info : compared_info_) {
+    auto iter = origin_info_.find(info.primary_key);
+    if (iter == origin_info_.end()) {
+      continue;
+    }
+    if (iter->second.tensor_data.data_type != info.tensor_data.data_type ||
+        iter->second.tensor_data.size != info.tensor_data.size ||
+        iter->second.tensor_data.elements_num != info.tensor_data.elements_num) {
+      MS_LOG(ERROR) << info.primary_key << " "
+                    << " data is not match origin";
+      FreeBuffer();
+      return RET_ERROR;
+    }
+    info.cos_similarity = mindspore::lite::GetCosSimilarity(iter->second.tensor_data.data, info.tensor_data.data,
+                                                            info.tensor_data.elements_num, info.tensor_data.data_type);
+    info.clip = mindspore::lite::GetClipRate(iter->second.tensor_data.data, info.tensor_data.data,
+                                             info.tensor_data.elements_num, info.tensor_data.data_type);
+  }
+  return RET_OK;
+}
+
 int DebugInfoManager::CompareOriginWithQuant(const quant::SessionModel &origin, const quant::SessionModel &quant,
                                              const std::map<std::string, OpParameter *> &op_parameters,
                                              const std::string &debug_info_save_path,
@@ -617,24 +639,10 @@ int DebugInfoManager::CompareOriginWithQuant(const quant::SessionModel &origin, 
       FreeBuffer();
       return ret;
     }
-    for (auto &info : compared_info_) {
-      auto iter = origin_info_.find(info.primary_key);
-      if (iter == origin_info_.end()) {
-        continue;
-      }
-      if (iter->second.tensor_data.data_type != info.tensor_data.data_type ||
-          iter->second.tensor_data.size != info.tensor_data.size ||
-          iter->second.tensor_data.elements_num != info.tensor_data.elements_num) {
-        MS_LOG(ERROR) << info.primary_key << " "
-                      << " data is not match origin";
-        FreeBuffer();
-        return RET_ERROR;
-      }
-      info.cos_similarity =
-        mindspore::lite::GetCosSimilarity(iter->second.tensor_data.data, info.tensor_data.data,
-                                          info.tensor_data.elements_num, info.tensor_data.data_type);
-      info.clip = mindspore::lite::GetClipRate(iter->second.tensor_data.data, info.tensor_data.data,
-                                               info.tensor_data.elements_num, info.tensor_data.data_type);
+    ret = GetClipAndCos();
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Get clip and cos failed.";
+      return ret;
     }
     auto info_save_path = debug_info_save_path + FILE_SEPARATOR + "round" + "_" + std::to_string(round) + ".csv";
     ret = SaveInfo(info_save_path);

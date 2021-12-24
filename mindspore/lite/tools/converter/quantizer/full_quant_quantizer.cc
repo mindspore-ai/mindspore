@@ -307,7 +307,14 @@ int FullQuantQuantizer::IsSupportWeightQuant(const CNodePtr &cnode, const AnfNod
   }
   // support for share weight.
   if (type_id == kNumberTypeInt8) {
-    return RET_NO_CHANGE;
+    auto iter = weight_quant_params_bak.find(input_node->fullname_with_scope());
+    if (iter == weight_quant_params_bak.end()) {
+      return RET_ERROR;
+    } else {
+      auto quant_param_holder = GetCNodeQuantHolder(primitive);
+      quant_param_holder->set_input_quant_param(input_index - 1, iter->second);
+      return RET_NO_CHANGE;
+    }
   }
   // Only data the data type is fp32 can be quant.
   if (type_id != kNumberTypeFloat32) {
@@ -378,7 +385,6 @@ int FullQuantQuantizer::QuantNodeSimpleOp(const CNodePtr &cnode) {
   auto op_name = cnode->fullname_with_scope();
   auto primitive_quant_holder = GetCNodeQuantHolder(primitive);
   MS_CHECK_TRUE_MSG(primitive_quant_holder != nullptr, RET_NULL_PTR, "primitive_quant_holder is nullptr.");
-  size_t activation_input_index = 0;
   int ret;
   for (size_t i = 1; i < cnode->inputs().size(); i++) {
     auto input_node = cnode->input(i);
@@ -386,7 +392,7 @@ int FullQuantQuantizer::QuantNodeSimpleOp(const CNodePtr &cnode) {
     bool is_graph_input = IsGraphInput(input_node);
     if (is_graph_input) {
       // do input quant
-      auto &info = (*inputs_diverg_info)[op_name][activation_input_index++];
+      auto &info = (*inputs_diverg_info)[op_name][i - 1];
       ret = SetInOutQuantParam(input_node, info, primitive, true, i - 1);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << input_node->fullname_with_scope() << " Set activation quant failed.";
@@ -406,10 +412,9 @@ int FullQuantQuantizer::QuantNodeSimpleOp(const CNodePtr &cnode) {
       if (input_primitive_quant_holder->IsOutputQuantParamsInited()) {
         auto quant_param = input_primitive_quant_holder->get_output_quant_params().front();
         primitive_quant_holder->set_input_quant_param(i - 1, quant_param);
-        activation_input_index++;
       } else {
         // do input quant
-        auto &info = (*inputs_diverg_info)[op_name][activation_input_index++];
+        auto &info = (*inputs_diverg_info)[op_name][i - 1];
         ret = SetInOutQuantParam(input_node, info, primitive, true, i - 1);
         if (ret != RET_OK) {
           MS_LOG(ERROR) << input_node->fullname_with_scope() << " Set activation quant failed.";
@@ -424,6 +429,9 @@ int FullQuantQuantizer::QuantNodeSimpleOp(const CNodePtr &cnode) {
         MS_LOG(ERROR) << input_node->fullname_with_scope() << " Do parameter node quant failed.";
         return ret;
       }
+      // support shared weight
+      weight_quant_params_bak[input_node->fullname_with_scope()] =
+        primitive_quant_holder->get_input_quant_params()[i - 1];
     } else if (input_node->isa<mindspore::ValueNode>()) {
       ret = DoValueNodeQuant(cnode, input_node->cast<ValueNodePtr>(), i);
       if (ret == RET_NO_CHANGE) {
@@ -432,6 +440,9 @@ int FullQuantQuantizer::QuantNodeSimpleOp(const CNodePtr &cnode) {
         MS_LOG(ERROR) << input_node->fullname_with_scope() << " Do value node quant failed.";
         return ret;
       }
+      // support shared weight
+      weight_quant_params_bak[input_node->fullname_with_scope()] =
+        primitive_quant_holder->get_input_quant_params()[i - 1];
     } else {
       MS_LOG(ERROR) << input_node->fullname_with_scope() << ":" << input_node->type_name() << " is not support type";
       return RET_ERROR;
@@ -891,8 +902,6 @@ int FullQuantQuantizer::BiasCorrection(const FuncGraphPtr &func_graph, const CNo
   return RET_OK;
 }
 
-int FullQuantQuantizer::ComputeThreshold() { return this->calibrator_->ComputeThreshold(); }
-
 int FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
   MS_LOG(INFO) << "start to parse config file";
   if (flags_.dataPreProcessParam.calibrate_path.empty()) {
@@ -937,7 +946,7 @@ int FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
       return status;
     }
     MS_LOG(INFO) << "compute the best threshold";
-    status = ComputeThreshold();
+    status = this->calibrator_->ComputeThreshold();
     if (status != RET_OK) {
       MS_LOG(ERROR) << "compute threshold failed.";
       return status;
@@ -974,7 +983,8 @@ int FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
       MS_LOG(INFO) << "do bias correction";
       status = BiasCorrection(func_graph);
       if (status != RET_OK) {
-        MS_LOG(WARNING) << "BiasCorrection failed.";
+        MS_LOG(ERROR) << "BiasCorrection failed.";
+        return status;
       }
     }
   }

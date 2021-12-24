@@ -138,6 +138,9 @@ class DebugInfoManager {
   void PrintQuantParam();
 
   int SaveQuantParam(const std::string &file_path);
+
+  int GetClipAndCos();
+
   template <typename T>
   void GetStatByTensor(const T *tensor_data, size_t element_num, QuantDebugInfo *infos) {
     MS_ASSERT(infos != nullptr);

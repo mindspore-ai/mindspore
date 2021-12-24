@@ -198,7 +198,9 @@ int CalWeightQuantBias(const float *raw_datas, size_t elem_count, const std::vec
     quant_params->at(bucket_index).varCorr = 1;
     if (var_raws[bucket_index] != 0 && var_dequants[bucket_index] != 0) {
       auto temp_var_corr = var_raws[bucket_index] / var_dequants[bucket_index];
-      if (temp_var_corr > 0 && temp_var_corr < 10) {
+      const int min_var_corr = 0;
+      const int max_var_corr = 10;
+      if (temp_var_corr > min_var_corr && temp_var_corr < max_var_corr) {
         quant_params->at(bucket_index).varCorr = temp_var_corr;
       } else {
         MS_LOG(WARNING) << "unexpected var_corr: " << temp_var_corr;
