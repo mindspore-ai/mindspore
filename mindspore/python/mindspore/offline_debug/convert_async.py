@@ -21,6 +21,7 @@ import sys
 from pathlib import Path
 from importlib import import_module
 from collections import namedtuple
+import multiprocessing
 
 
 class ConvertToolLoader:
@@ -186,14 +187,11 @@ class AsyncDumpConverter:
             setattr(convert_obj, 'progress', progress)
         multi_process_file_list, big_file_list = self._get_file_list(files, convert_obj)
         if multi_process_file_list:
-            if hasattr(convert_obj, 'multi_process'):
-                ret_mp = getattr(convert_obj.multi_process, '_do_multi_process')(multi_process_file_list)
-            else:
-                ret_mp = getattr(convert_obj, '_do_multi_process')(multi_process_file_list)
+            ret_mp = self._process_in_multi_process(multi_process_file_list, convert_obj)
             if ret_mp != self.convert_tool.compare_none_error:
                 return_code = ret_mp
         if big_file_list:
-            ret_bf = self._process_big_file(big_file_list, convert_obj)
+            ret_bf = self._process_in_single_process(big_file_list, convert_obj)
             if ret_bf != self.convert_tool.compare_none_error:
                 return_code = ret_bf
         if return_code != self.convert_tool.compare_none_error:
@@ -223,20 +221,57 @@ class AsyncDumpConverter:
                     multi_process_file_list.append(cur_path)
         return multi_process_file_list, big_file_list
 
-    def _process_big_file(self, big_file_list, convert_obj):
+    def _process_in_single_process(self, big_file_list, convert_obj):
         """
-        Process big file in multi_process.
+        Process big file in single process.
         """
         return_code = self.convert_tool.compare_none_error
         for big_file in big_file_list:
-            if hasattr(convert_obj, '_convert_format_for_one_file'):
-                ret_bf, _ = getattr(convert_obj, '_convert_format_for_one_file')(big_file)
-            else:
-                ret_bf, _ = getattr(convert_obj, 'convert_format_for_one_file')(big_file)
-            if hasattr(convert_obj, 'multi_process'):
-                getattr(convert_obj.multi_process, '_handle_result_callback')([ret_bf, big_file])
-            else:
-                getattr(convert_obj, '_handle_result_callback')([ret_bf, big_file])
+            ret_bf, _ = self._process_func(convert_obj)(big_file)
+            self._result_callback_func(convert_obj)([ret_bf, big_file])
             if ret_bf != self.convert_tool.compare_none_error:
                 return_code = ret_bf
         return return_code
+
+    def _process_in_multi_process(self, file_list, convert_obj):
+        """
+        Process files in multi process.
+        """
+        cpu_count = int((multiprocessing.cpu_count() + 1) / 2)
+        ctx = multiprocessing.get_context('forkserver')
+        pool = ctx.Pool(cpu_count)
+        all_task = []
+        for cur_path in file_list:
+            task = pool.apply_async(self._process_func(convert_obj),
+                                    args=(cur_path,),
+                                    callback=self._result_callback_func(convert_obj))
+            all_task.append(task)
+        pool.close()
+        pool.join()
+        Result = namedtuple('Result', ['ret_code', 'msg'])
+        for task in all_task:
+            result = Result._make(task.get())
+            cur_ret = result.ret_code
+            if cur_ret != self.convert_tool.compare_none_error:
+                return cur_ret
+        return self.convert_tool.compare_none_error
+
+    def _process_func(self, convert_obj):
+        """
+        get function to process format transformation.
+        """
+        if hasattr(convert_obj, '_convert_format_for_one_file'):
+            func = getattr(convert_obj, '_convert_format_for_one_file')
+        else:
+            func = getattr(convert_obj, 'convert_format_for_one_file')
+        return func
+
+    def _result_callback_func(self, convert_obj):
+        """
+        get result callback function.
+        """
+        if hasattr(convert_obj, 'multi_process'):
+            func = getattr(convert_obj.multi_process, '_handle_result_callback')
+        else:
+            func = getattr(convert_obj, '_handle_result_callback')
+        return func
