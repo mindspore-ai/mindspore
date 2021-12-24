@@ -65,12 +65,11 @@ tensor::TensorPtr TensorConstructUtils::CreateOnesTensor(const TypePtr &type_ptr
   };
 
   const auto &tensor_type = tensor->data_type();
-  if (type_dict.count(tensor_type)) {
-    type_dict[tensor_type]();
-    return tensor;
-  } else {
+  if (!type_dict.count(tensor_type)) {
     MS_LOG(EXCEPTION) << "unsupported data type: " << tensor_type;
   }
+  type_dict[tensor_type]();
+  return tensor;
 }
 
 tensor::TensorPtr TensorConstructUtils::CreateTensor(const TypePtr &type_ptr, const std::vector<int64_t> &shape,
