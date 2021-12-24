@@ -30,7 +30,8 @@ class LossMonitor(Callback):
         If per_print_times is 0, do not print loss.
 
     Args:
-        per_print_times (int): How many steps to print once loss. Default: 1.
+        per_print_times (int): How many steps to print once loss. During sink mode, it will print loss in the
+        nearest step. Default: 1.
 
     Raises:
         ValueError: If per_print_times is not an integer or less than zero.
@@ -42,6 +43,7 @@ class LossMonitor(Callback):
             raise ValueError("The argument 'per_print_times' must be int and >= 0, "
                              "but got {}".format(per_print_times))
         self._per_print_times = per_print_times
+        self._last_print_time = 0
 
     def step_end(self, run_context):
         """
@@ -65,5 +67,6 @@ class LossMonitor(Callback):
         if isinstance(loss, float) and (np.isnan(loss) or np.isinf(loss)):
             raise ValueError("epoch: {} step: {}. Invalid loss, terminating training.".format(
                 cb_params.cur_epoch_num, cur_step_in_epoch))
-        if self._per_print_times != 0 and cb_params.cur_step_num % self._per_print_times == 0:
+        if self._per_print_times != 0 and (cb_params.cur_step_num - self._last_print_time) >= self._per_print_times:
+            self._last_print_time = cb_params.cur_step_num
             print("epoch: %s step: %s, loss is %s" % (cb_params.cur_epoch_num, cur_step_in_epoch, loss), flush=True)

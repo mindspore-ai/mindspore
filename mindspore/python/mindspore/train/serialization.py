@@ -295,7 +295,8 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
 
     ckpt_file_name = os.path.realpath(ckpt_file_name)
     if async_save:
-        thr = Thread(target=_exec_save, args=(ckpt_file_name, data_list, enc_key, enc_mode), name="asyn_save_ckpt")
+        data_copy = copy.deepcopy(data_list)
+        thr = Thread(target=_exec_save, args=(ckpt_file_name, data_copy, enc_key, enc_mode), name="asyn_save_ckpt")
         thr.start()
     else:
         _exec_save(ckpt_file_name, data_list, enc_key, enc_mode)
