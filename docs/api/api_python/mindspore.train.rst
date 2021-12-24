@@ -4,7 +4,7 @@ mindspore.train
 mindspore.train.summary
 ------------------------
 
-用户可以通过SummaryRecord来自定义回调函数或者在自定义训练循环中将需要的数据存储为summary文件和lineage文件，然后使用MindInsight进行可视化分析。
+使用SummaryRecord将需要的数据存储为summary文件和lineage文件，使用方法包括自定义回调函数和自定义训练循环。保存的summary文件使用MindInsight进行可视化分析。
 
 .. include:: mindspore.train/mindspore.train.summary.SummaryRecord.rst
 
