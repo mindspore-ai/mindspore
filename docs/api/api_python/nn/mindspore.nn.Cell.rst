@@ -376,6 +376,18 @@
         - **fusion_type** (int) – Parameter的 `comm_fusion` 属性的设置值。
         - **recurse** (bool) – 是否递归地设置子Cell的可训练参数。默认值：True。
 
+    .. py:method:: set_data_parallel()
+
+        递归设置该Cell中的所有算子的并行策略为数据并行。
+
+        .. note:: 仅在全自动并行(AUTO_PARALLEL)模式下生效。
+
+        **样例：**
+
+        >>> import mindspore.nn as nn
+        >>> net = nn.Dense(3, 4)
+        >>> net.set_data_parallel()
+
     .. py:method:: set_grad(requires_grad=True)
 
         Cell的梯度设置。在PyNative模式下，该参数指定Cell是否需要梯度。如果为True，则在执行正向网络时，将生成需要计算梯度的反向网络。
