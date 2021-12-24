@@ -16,9 +16,10 @@
 
 #include "nnacl/fp16/batchnorm_fp16.h"
 #include <math.h>
+#include "nnacl/intrinsics/ms_simd_instructions_fp16.h"
 
-void BatchNormFp16(const float16_t *input, const void *mean, const void *variance, const BatchNormParameter *param,
-                   int task_id, float16_t *output) {
+void BatchNormFp16(const float16_t *input, const float16_t *mean, const float16_t *variance,
+                   const BatchNormParameter *param, int task_id, float16_t *output) {
   NNACL_CHECK_ZERO_RETURN(param->op_parameter_.thread_num_);
   int units_per_thread = UP_DIV(param->unit_, param->op_parameter_.thread_num_);
   int completed_units = task_id * units_per_thread;
@@ -26,18 +27,29 @@ void BatchNormFp16(const float16_t *input, const void *mean, const void *varianc
   int cur_offset = completed_units * param->channel_;
 
   for (int i = 0; i < cur_unit; i++) {
-    for (int c = 0; c < param->channel_; c++) {
-      float16_t variance_sqrt = sqrtf(((const float16_t *)variance)[c] + param->epsilon_);
-      if (variance_sqrt != 0) {
-        output[cur_offset + c] = (input[cur_offset + c] - ((const float16_t *)mean)[c]) / variance_sqrt;
-      }
+    const float16_t *unit_input = input + cur_offset;
+    float16_t *unit_output = output + cur_offset;
+    int c = 0;
+#ifdef ENABLE_ARM
+    for (; c <= param->channel_ - C8NUM; c += C8NUM) {
+      MS_FLOAT16X8 input_8 = MS_LDQ_F16(unit_input + c);
+      MS_FLOAT16X8 mean_8 = MS_LDQ_F16(mean + c);
+      MS_FLOAT16X8 variance_8 = MS_LDQ_F16(variance + c);
+      MS_FLOAT16X8 variance_sqrt = MS_SQRTFX8_F16(MS_ADDQ_F16(variance_8, MS_MOVQ_F16(param->epsilon_)));
+      MS_FLOAT16X8 output_8 = MS_DIVQ_F16(MS_SUBQ_F16(input_8, mean_8), variance_sqrt);
+      MS_STQ_F16(unit_output + c, output_8);
+    }
+#endif
+    for (; c < param->channel_; c++) {
+      float16_t variance_sqrt = sqrtf(variance[c] + param->epsilon_);
+      unit_output[c] = (unit_input[c] - mean[c]) / variance_sqrt;
     }
     cur_offset += param->channel_;
   }
 }
 
-void FusedBatchNormFp16(const void *input, const void *scale, const void *offset, const void *mean,
-                        const void *variance, const BatchNormParameter *param, int task_id, void *output) {
+void FusedBatchNormFp16(const float16_t *input, const float16_t *scale, const float16_t *offset, const float16_t *mean,
+                        const float16_t *variance, const BatchNormParameter *param, int task_id, float16_t *output) {
   NNACL_CHECK_ZERO_RETURN(param->op_parameter_.thread_num_);
   int units_per_thread = UP_DIV(param->unit_, param->op_parameter_.thread_num_);
   int completed_units = task_id * units_per_thread;
@@ -45,14 +57,26 @@ void FusedBatchNormFp16(const void *input, const void *scale, const void *offset
   int cur_offset = completed_units * param->channel_;
 
   for (int i = 0; i < cur_unit; i++) {
-    for (int c = 0; c < param->channel_; c++) {
-      float16_t variance_sqrt = sqrtf(((const float16_t *)variance)[c] + param->epsilon_);
-      if (variance_sqrt != 0) {
-        float16_t norm_val =
-          (((const float16_t *)input)[cur_offset + c] - ((const float16_t *)mean)[c]) / variance_sqrt;
-        ((float16_t *)output)[cur_offset + c] =
-          norm_val * ((const float16_t *)scale)[c] + ((const float16_t *)offset)[c];
-      }
+    const float16_t *unit_input = input + cur_offset;
+    float16_t *unit_output = output + cur_offset;
+    int c = 0;
+#ifdef ENABLE_ARM
+    for (; c <= param->channel_ - C8NUM; c += C8NUM) {
+      MS_FLOAT16X8 input_8 = MS_LDQ_F16(unit_input + c);
+      MS_FLOAT16X8 scale_8 = MS_LDQ_F16(scale + c);
+      MS_FLOAT16X8 offset_8 = MS_LDQ_F16(offset + c);
+      MS_FLOAT16X8 mean_8 = MS_LDQ_F16(mean + c);
+      MS_FLOAT16X8 variance_8 = MS_LDQ_F16(variance + c);
+      MS_FLOAT16X8 variance_sqrt = MS_SQRTFX8_F16(MS_ADDQ_F16(variance_8, MS_MOVQ_F16(param->epsilon_)));
+      MS_FLOAT16X8 norm_val = MS_DIVQ_F16(MS_SUBQ_F16(input_8, mean_8), variance_sqrt);
+      MS_FLOAT16X8 output_8 = MS_ADDQ_F16(MS_MULQ_F16(norm_val, scale_8), offset_8);
+      MS_STQ_F16(unit_output + c, output_8);
+    }
+#endif
+    for (; c < param->channel_; c++) {
+      float16_t variance_sqrt = sqrtf(variance[c] + param->epsilon_);
+      float16_t norm_val = (unit_input[c] - mean[c]) / variance_sqrt;
+      unit_output[c] = norm_val * scale[c] + offset[c];
     }
     cur_offset += param->channel_;
   }

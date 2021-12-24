@@ -137,11 +137,12 @@ int FusedBatchnormCPUKernel::Eval() {
 
 int FusedBatchnormCPUKernel::DoExecute(int task_id) {
   auto param = reinterpret_cast<BatchNormParameter *>(op_parameter_);
-  auto in_data = in_tensors_.at(FIRST_INPUT)->data();
-  auto out_data = out_tensors_.at(FIRST_INPUT)->data();
+  auto in_data = reinterpret_cast<float *>(in_tensors_.at(FIRST_INPUT)->data());
+  auto out_data = reinterpret_cast<float *>(out_tensors_.at(FIRST_INPUT)->data());
   CHECK_NULL_RETURN(in_data);
   CHECK_NULL_RETURN(out_data);
-  FusedBatchNormFp32(in_data, scale_, offset_, mean_, variance_, param, task_id, out_data);
+  FusedBatchNormFp32(in_data, reinterpret_cast<float *>(scale_), reinterpret_cast<float *>(offset_),
+                     reinterpret_cast<float *>(mean_), reinterpret_cast<float *>(variance_), param, task_id, out_data);
   return RET_OK;
 }
 
