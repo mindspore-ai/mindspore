@@ -72,10 +72,14 @@ void MemoryManagerActor::AllocateMemory(const std::vector<DeviceTensor *> *alloc
     if (device_tensor->GetPtr() != nullptr) {
       continue;
     }
-    // Allocate memory through the device context.
-    if (!device_context->AllocateMemory(device_tensor, device_tensor->GetSize())) {
+    try {
+      // Allocate memory through the device context.
+      if (!device_context->AllocateMemory(device_tensor, device_tensor->GetSize())) {
+        SetOpContextMemoryAllocFail(from_aid.Name(), device_context, device_tensor->GetSize(), op_context);
+        return;
+      }
+    } catch (const std::exception &e) {
       SetOpContextMemoryAllocFail(from_aid.Name(), device_context, device_tensor->GetSize(), op_context);
-      return;
     }
   }
 
@@ -137,10 +141,14 @@ void MemoryManagerActor::AllocateBatchMemory(const std::vector<DeviceTensor *> *
       continue;
     }
 
-    // Allocate memory through the device context.
-    if (!device_context->AllocateMemory(device_tensor, device_tensor->GetSize())) {
+    try {
+      // Allocate memory through the device context.
+      if (!device_context->AllocateMemory(device_tensor, device_tensor->GetSize())) {
+        SetOpContextMemoryAllocFail(from_aid.Name(), device_context, device_tensor->GetSize(), op_context);
+        return;
+      }
+    } catch (const std::exception &e) {
       SetOpContextMemoryAllocFail(from_aid.Name(), device_context, device_tensor->GetSize(), op_context);
-      return;
     }
   }
 
