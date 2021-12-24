@@ -44,7 +44,7 @@ class StackActor : public ControlActor {
   // The input data and partial of the stack actor needs to be pushed into the stack according to the input index,
   // so it is implemented separately.
   void RunOpData(OpData<DeviceTensor> *const input_data, OpContext<DeviceTensor> *const context) override;
-  void RunOpPartial(OpPartialPtr partial, size_t position, OpContext<DeviceTensor> *const context) override;
+  void RunOpPartial(const OpPartialPtr &partial, size_t position, OpContext<DeviceTensor> *const context) override;
   void RunOpControl(AID *const input_control, OpContext<DeviceTensor> *const context) override;
 
  protected:

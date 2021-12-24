@@ -45,7 +45,7 @@ class EntranceActor : public ControlActor {
 
   void RunOpControl(AID *const input_control, OpContext<DeviceTensor> *const context) override;
 
-  void RunOpRealParameterWithBranchID(OpRealParameterWithBranchID real_parameter_with_branch_id,
+  void RunOpRealParameterWithBranchID(const OpRealParameterWithBranchID &real_parameter_with_branch_id,
                                       OpContext<DeviceTensor> *const context);
 
   // Clear the data which are generated in the loop body execution.

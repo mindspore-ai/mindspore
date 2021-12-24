@@ -21,49 +21,137 @@ namespace mindspore {
 namespace runtime {
 GatherActor::GatherActor(const std::string &name, const AID &memory_manager_aid,
                          const std::vector<KernelWithIndex> &parameters, const AnfNodePtr &node)
-    : ControlActor(name, KernelTransformType::kGatherActor, memory_manager_aid, parameters, node) {
+    : ControlActor(name, KernelTransformType::kGatherActor, memory_manager_aid, parameters, node),
+      gather_input_(nullptr) {
   device_contexts_.resize(parameters.size());
 }
 
-void GatherActor::FetchInput(OpContext<DeviceTensor> *const context) {
+void GatherActor::SendOutput(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
-  ControlActor::FetchInput(context);
+  MS_EXCEPTION_IF_NULL(gather_input_);
+
+  // 1.Send data with branch id.
+  const auto &iter = output_data_with_branch_id_arrows_.find(gather_input_->func_graph_);
+  if (iter != output_data_with_branch_id_arrows_.end()) {
+    OpRealParameterWithBranchID output;
+    BuildOutput(&output, context);
+    for (const auto &data_with_branch_id_arrow : iter->second) {
+      ActorDispatcher::Send(data_with_branch_id_arrow, &EntranceActor::RunOpRealParameterWithBranchID, output, context);
+    }
+  }
+
+  // 2.Send branch id.
+  for (const auto &branch_id_arrow : output_branch_id_arrows_) {
+    ActorDispatcher::Send(branch_id_arrow, &ControlActor::RunBranchID, output_branch_id_, context);
+  }
+
+  // 3.Send data and control in base class. Control arrow needs to be sent after the real parameter data and branch id.
+  AbstractActor::SendOutput(context);
+
+  // 4.Send Partial.
+  for (const auto &partial_arrow : output_partial_arrows_) {
+    MS_EXCEPTION_IF_NULL(partial_arrow);
+    if (IntToSize(partial_arrow->from_output_index_) >= input_partials_.size()) {
+      std::string error_info = "Invalid partial input:" + std::to_string(partial_arrow->from_output_index_) +
+                               " current:" + std::to_string(input_partials_.size()) + " for actor:" + GetAID().Name();
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+    }
+    // The first partial maybe the local partial in the partial node, so the output need use the gather input partial.
+    if (partial_arrow->from_output_index_ == 0) {
+      ActorDispatcher::Send(partial_arrow->to_op_id_, &ControlActor::RunOpPartial, gather_input_,
+                            IntToSize(partial_arrow->to_input_index_), context);
+    } else {
+      ActorDispatcher::Send(partial_arrow->to_op_id_, &ControlActor::RunOpPartial,
+                            input_partials_[partial_arrow->from_output_index_],
+                            IntToSize(partial_arrow->to_input_index_), context);
+    }
+  }
+
+  // 5.Destroy the gathehr input.
+  gather_input_ = nullptr;
+}
+
+void GatherActor::IncreaseDynamicRefCounts(OpContext<DeviceTensor> *const context) {
+  MS_EXCEPTION_IF_NULL(context);
+  // Build the gather input.
+  GatherInput(context);
+
+  // Increase dynamic ref count by the output data with branch id.
+  MS_EXCEPTION_IF_NULL(gather_input_);
+  const auto &iter = output_data_with_branch_id_arrows_.find(gather_input_->func_graph_);
+  if (iter != output_data_with_branch_id_arrows_.end()) {
+    for (size_t i = 0; i < iter->second.size(); ++i) {
+      // The device tensors of gather input are equivalent to output, so use the gather input directly to improve the
+      // performance.
+      IncreaseDynamicRefCount(gather_input_);
+    }
+  }
+
+  // Increase dynamic ref count by the output data.
+  for (auto &output_data : output_data_) {
+    MS_EXCEPTION_IF_NULL(output_data);
+    IncreaseDynamicRefCount(output_data.get());
+  }
+
+  // Increase dynamic ref count by the output partial.
+  for (const auto &partial_arrow : output_partial_arrows_) {
+    MS_EXCEPTION_IF_NULL(partial_arrow);
+    if (IntToSize(partial_arrow->from_output_index_) >= input_partials_.size()) {
+      std::string error_info = "Invalid partial input:" + std::to_string(partial_arrow->from_output_index_) +
+                               " current:" + std::to_string(input_partials_.size()) + " for actor:" + GetAID().Name();
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+    }
+    // The first partial maybe the local partial, so need use the gather input partial.
+    if (partial_arrow->from_output_index_ == 0) {
+      IncreaseDynamicRefCount(gather_input_);
+    } else {
+      IncreaseDynamicRefCount(input_partials_[partial_arrow->from_output_index_]);
+    }
+  }
+}
+
+void GatherActor::GatherInput(OpContext<DeviceTensor> *const context) {
+  MS_EXCEPTION_IF_NULL(context);
   if (input_partials_.empty()) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The input partials is empty.");
   }
 
+  MS_EXCEPTION_IF_NULL(input_partials_[0]);
+  gather_input_ = std::make_shared<OpPartial>();
+  // The first input partial is the base of gather inputs.
+  gather_input_->func_graph_ = input_partials_[0]->func_graph_;
+  gather_input_->device_tensors_ = input_partials_[0]->device_tensors_;
+  gather_input_->partials_ = input_partials_[0]->partials_;
+
   // The gather actor needs to put the inputs into the first partial in order. In order to keep the index consistent,
   // the inputs need to be delayed in sequence. The offset indicates the number of delays, that is, the number of
   // inputs in the first partial.
-  size_t offset = input_partials_[0]->device_tensors_.size() + input_partials_[0]->partials_.size();
+  size_t offset = gather_input_->device_tensors_.size() + gather_input_->partials_.size();
 
-  // Put other real parameters in the first partial.
-  for (size_t i = 1; i < input_device_tensors_.size(); ++i) {
+  // Put all the real parameters in the first partial.
+  for (size_t i = 0; i < input_device_tensors_.size(); ++i) {
     const auto &device_tensor = input_device_tensors_[i];
     if (device_tensor != nullptr) {
-      input_partials_[0]->device_tensors_.emplace_back(i + offset, device_tensor);
+      gather_input_->device_tensors_.emplace_back(i + offset, device_tensor);
     }
   }
 
   // Put other partials in the first partial.
   for (size_t i = 1; i < input_partials_.size(); ++i) {
     if (input_partials_[i] != nullptr && input_partials_[i]->func_graph_ != nullptr) {
-      auto output_partial = std::make_shared<OpPartial>();
-      *output_partial = *input_partials_[i];
-      input_partials_[0]->partials_.emplace_back(i + offset, output_partial);
+      gather_input_->partials_.emplace_back(i + offset, input_partials_[i]);
     }
   }
 }
 
-void GatherActor::FetchOutput(OpRealParameterWithBranchID *const output, OpContext<DeviceTensor> *const context) {
+void GatherActor::BuildOutput(OpRealParameterWithBranchID *const output, OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(output);
   MS_EXCEPTION_IF_NULL(context);
-  if (input_partials_.empty()) {
-    SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The input partials is empty.");
-  }
+  MS_EXCEPTION_IF_NULL(gather_input_);
+  // Copy the data from the gather input to the output.
   output->branch_id_ = output_branch_id_;
-  output->device_tensors_ = input_partials_[0]->device_tensors_;
-  output->partials_ = input_partials_[0]->partials_;
+  output->device_tensors_ = gather_input_->device_tensors_;
+  output->partials_ = gather_input_->partials_;
 
   // The first input of gather actor is the target funcgraph, which will not be sent to the entrance actor as
   // an real parameter, so the subsequent index needs to be reduced by one.
@@ -82,63 +170,6 @@ void GatherActor::FetchOutput(OpRealParameterWithBranchID *const output, OpConte
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
     }
     partial.first--;
-  }
-}
-
-void GatherActor::SendOutput(OpContext<DeviceTensor> *const context) {
-  MS_EXCEPTION_IF_NULL(context);
-  if (input_partials_.empty()) {
-    SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The input partials is empty.");
-  }
-  // Send data with branch id.
-  const auto &iter = output_data_with_branch_id_arrows_.find(input_partials_[0]->func_graph_);
-  if (iter != output_data_with_branch_id_arrows_.end()) {
-    // Build the output data struct.
-    OpRealParameterWithBranchID output;
-    FetchOutput(&output, context);
-
-    for (const auto &data_with_branch_id_arrow : iter->second) {
-      ActorDispatcher::Send(data_with_branch_id_arrow, &EntranceActor::RunOpRealParameterWithBranchID, output, context);
-    }
-  }
-
-  // Control arrow needs to be sent after the real parameter data and branch id.
-  ControlActor::SendOutput(context);
-}
-
-void GatherActor::IncreaseDynamicRefCounts(OpContext<DeviceTensor> *const context) {
-  MS_EXCEPTION_IF_NULL(context);
-  ControlActor::IncreaseDynamicRefCounts(context);
-
-  if (input_partials_.empty()) {
-    SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The input partials is empty.");
-  }
-  // Increase dynamic ref count by the output data with branch id.
-  const auto &iter = output_data_with_branch_id_arrows_.find(input_partials_[0]->func_graph_);
-  if (iter != output_data_with_branch_id_arrows_.end()) {
-    // Build the output data struct.
-    OpRealParameterWithBranchID output;
-    FetchOutput(&output, context);
-
-    for (size_t i = 0; i < iter->second.size(); ++i) {
-      IncreaseDynamicRefCount(output);
-    }
-  }
-}
-
-void GatherActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
-  MS_EXCEPTION_IF_NULL(context);
-  if (input_partials_.empty()) {
-    SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The input partials is empty.");
-  }
-
-  // All inputs in gather actor will be gathered to the first input partial. When the ref count is released,
-  // only the device tensor in the first input partial needs to be released.
-  auto partial_device_tensors = GetAllDeviceTensors(input_partials_[0]);
-  if (partial_device_tensors.size() > 0) {
-    memory_free_lists_.push(partial_device_tensors);
-    ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &(memory_free_lists_.back()),
-                          device_contexts_[0], context, GetAID());
   }
 }
 }  // namespace runtime

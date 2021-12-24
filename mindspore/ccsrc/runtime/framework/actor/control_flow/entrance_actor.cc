@@ -39,7 +39,7 @@ void EntranceActor::RunOpControl(AID *const input_control, OpContext<DeviceTenso
   }
 }
 
-void EntranceActor::RunOpRealParameterWithBranchID(OpRealParameterWithBranchID real_parameter_with_branch_id,
+void EntranceActor::RunOpRealParameterWithBranchID(const OpRealParameterWithBranchID &real_parameter_with_branch_id,
                                                    OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   auto &sequential_num = context->sequential_num_;
@@ -246,7 +246,7 @@ void EntranceActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The real parameter with branch id is empty.");
     }
     auto &real_parameters_with_branch_id = iter->second.front();
-    auto partial_device_tensors = GetAllDeviceTensors(real_parameters_with_branch_id);
+    const auto &partial_device_tensors = GetAllDeviceTensors(real_parameters_with_branch_id);
     (void)std::copy(partial_device_tensors.begin(), partial_device_tensors.end(), std::back_inserter(memory_free_list));
   }
 

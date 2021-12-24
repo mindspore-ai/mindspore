@@ -50,7 +50,7 @@ std::vector<DeviceTensor *> ControlActor::GetAllDeviceTensors(const OpPartialPtr
 
   // Foreach the op partial to fetch the device tensors.
   for (auto &partial : op_partial->partials_) {
-    auto ret_inner = GetAllDeviceTensors(partial.second);
+    const auto &ret_inner = GetAllDeviceTensors(partial.second);
     (void)std::copy(ret_inner.begin(), ret_inner.end(), std::back_inserter(ret));
   }
 
@@ -65,7 +65,7 @@ std::vector<DeviceTensor *> ControlActor::GetAllDeviceTensors(const OpRealParame
 
   // Foreach the op partial to fetch the device tensors.
   for (auto &partial : op_real_parameter.partials_) {
-    auto ret_inner = GetAllDeviceTensors(partial.second);
+    const auto &ret_inner = GetAllDeviceTensors(partial.second);
     (void)std::copy(ret_inner.begin(), ret_inner.end(), std::back_inserter(ret));
   }
   return ret;
@@ -79,7 +79,7 @@ void ControlActor::IncreaseDynamicRefCount(const OpData<DeviceTensor> *op_data) 
 
 void ControlActor::IncreaseDynamicRefCount(const OpPartialPtr &op_partial) {
   MS_EXCEPTION_IF_NULL(op_partial);
-  auto partial_device_tensors = GetAllDeviceTensors(op_partial);
+  const auto &partial_device_tensors = GetAllDeviceTensors(op_partial);
   for (auto &partial_device_tensor : partial_device_tensors) {
     MS_EXCEPTION_IF_NULL(partial_device_tensor);
     partial_device_tensor->IncreaseDynamicRefCount(GetAID().Name());
@@ -87,7 +87,7 @@ void ControlActor::IncreaseDynamicRefCount(const OpPartialPtr &op_partial) {
 }
 
 void ControlActor::IncreaseDynamicRefCount(const OpRealParameterWithBranchID &op_real_parameter) {
-  auto partial_device_tensors = GetAllDeviceTensors(op_real_parameter);
+  const auto &partial_device_tensors = GetAllDeviceTensors(op_real_parameter);
   for (auto &partial_device_tensor : partial_device_tensors) {
     MS_EXCEPTION_IF_NULL(partial_device_tensor);
     partial_device_tensor->IncreaseDynamicRefCount(GetAID().Name());
@@ -116,12 +116,10 @@ void ControlActor::Run(OpContext<DeviceTensor> *const context) {
   SendOutput(context);
 }
 
-void ControlActor::RunOpPartial(OpPartialPtr partial, size_t position, OpContext<DeviceTensor> *const context) {
+void ControlActor::RunOpPartial(const OpPartialPtr &partial, size_t position, OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   auto &sequential_num = context->sequential_num_;
-  auto self_partial = std::make_shared<OpPartial>();
-  *self_partial = *partial;
-  input_op_partials_[sequential_num].emplace_back(position, self_partial);
+  input_op_partials_[sequential_num].emplace_back(position, partial);
 
   auto is_run = CheckRunningCondition(context);
   MS_LOG(DEBUG) << "Actor(" << GetAID().Name()
@@ -182,7 +180,7 @@ void ControlActor::FetchInput(OpContext<DeviceTensor> *const context) {
     }
   }
 
-  // Fetch input device tensor from device store.
+  // Fetch input device tensor from local device tensor.
   for (auto &local_device_tensor : local_device_tensors_) {
     MS_EXCEPTION_IF_NULL(local_device_tensor.second);
     if (local_device_tensor.first >= input_device_tensors_.size()) {
@@ -194,12 +192,12 @@ void ControlActor::FetchInput(OpContext<DeviceTensor> *const context) {
     input_device_tensors_[local_device_tensor.first] = local_device_tensor.second;
   }
 
-  // Fetch input device tensor from device store.
+  // Fetch input device tensor from device tensor store.
   for (auto &device_tensor_store_key : device_tensor_store_keys_) {
-    auto device_context = device_contexts_[device_tensor_store_key.first];
-    MS_EXCEPTION_IF_NULL(device_context);
     auto device_tensors = DeviceTensorStore::GetInstance().Fetch(device_tensor_store_key.second.get());
     if (device_tensors.empty()) {
+      auto &device_context = device_contexts_[device_tensor_store_key.first];
+      MS_EXCEPTION_IF_NULL(device_context);
       std::string error_info =
         GetAID().Name() + " get device tensor store failed: " + device_tensor_store_key.second->DebugString() +
         ", device type:" + std::to_string(static_cast<int>(device_context->GetDeviceAddressType()));
@@ -296,7 +294,7 @@ void ControlActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
 
   if (input_op_partials_.count(sequential_num) > 0) {
     for (auto &input_partial_pair : input_op_partials_[sequential_num]) {
-      auto partial_device_tensors = GetAllDeviceTensors(input_partial_pair.second);
+      const auto &partial_device_tensors = GetAllDeviceTensors(input_partial_pair.second);
       (void)std::copy(partial_device_tensors.begin(), partial_device_tensors.end(),
                       std::back_inserter(memory_free_list));
     }

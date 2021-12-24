@@ -110,7 +110,7 @@ void StackActor::RunOpControl(AID *const input_control, OpContext<DeviceTensor> 
   }
 }
 
-void StackActor::RunOpPartial(OpPartialPtr partial, size_t position, OpContext<DeviceTensor> *const context) {
+void StackActor::RunOpPartial(const OpPartialPtr &partial, size_t position, OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   auto self_partial = std::make_shared<OpPartial>();
   *self_partial = *partial;
@@ -308,7 +308,7 @@ void StackActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
 
   if (input_op_partials_.count(sequential_num) > 0) {
     for (auto &input_partial_pair : input_op_partials_[sequential_num]) {
-      auto partial_device_tensors = GetAllDeviceTensors(input_partial_pair.second);
+      const auto &partial_device_tensors = GetAllDeviceTensors(input_partial_pair.second);
       (void)std::copy(partial_device_tensors.begin(), partial_device_tensors.end(),
                       std::back_inserter(memory_free_list));
     }
@@ -325,7 +325,7 @@ void StackActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
   if ((input_stack_partials_num_ != 0) && (input_stack_partials_.count(sequential_num) > 0)) {
     for (auto &stack_partial_pair : input_stack_partials_[sequential_num]) {
       if (!stack_partial_pair.second.empty()) {
-        auto partial_device_tensors = GetAllDeviceTensors(stack_partial_pair.second.top());
+        const auto &partial_device_tensors = GetAllDeviceTensors(stack_partial_pair.second.top());
         (void)std::copy(partial_device_tensors.begin(), partial_device_tensors.end(),
                         std::back_inserter(memory_free_list));
       }
