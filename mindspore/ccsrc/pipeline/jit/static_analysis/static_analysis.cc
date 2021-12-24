@@ -288,6 +288,7 @@ EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConf
       const auto &resolved_func = async_abs_func->GetUnique();
       resolved_atom = resolved_func->cast<AbstractFuncAtomPtr>();
       MS_EXCEPTION_IF_NULL(resolved_atom);
+      MS_LOG(DEBUG) << "Resolved AsyncAbstractFuncAtom is: " << resolved_atom->ToString();
     }
     auto evaluator = this->GetEvaluatorFor(resolved_atom);
     evaluator->set_bound_node(cnode);
@@ -800,6 +801,45 @@ void ExecEvaluator(EvaluatorPtr eval, AnalysisEnginePtr engine, ConfigPtrList ar
   AnalysisSchedule::GetInstance().DecreaseThreadCount();
 }
 
+AbstractBasePtr BuildAsyncAbstractRecursively(const AbstractBasePtr &orig_abs,
+                                              const std::vector<AsyncAbstractPtr> &pending_async_abstract_list,
+                                              const std::vector<std::size_t> &index) {
+  if (orig_abs->isa<AbstractSequence>()) {
+    const auto &orig_abstract_seq = orig_abs->cast<AbstractSequencePtr>();
+    MS_EXCEPTION_IF_NULL(orig_abstract_seq);
+    const auto &orig_elements = orig_abstract_seq->elements();
+    AbstractBasePtrList new_elements;
+    for (size_t i = 0; i < orig_elements.size(); ++i) {
+      if (orig_elements[i]->isa<AbstractFuncAtom>()) {
+        AbstractFuncAtomPtrList abs_func_list{orig_elements[i]->cast<AbstractFuncAtomPtr>()};
+        for (size_t j = 0; j < pending_async_abstract_list.size(); ++j) {
+          std::vector<std::size_t> new_index(index);
+          new_index.push_back(i);
+          auto async_func = AsyncAbstractFuncAtom::MakeShared(pending_async_abstract_list[j], new_index);
+          abs_func_list.push_back(async_func);
+        }
+        new_elements.push_back(AbstractFunction::MakeAbstractFunction(abs_func_list));
+      } else if (orig_elements[i]->isa<AbstractSequence>()) {
+        std::vector<std::size_t> new_index(index);
+        new_index.push_back(i);
+        new_elements.push_back(BuildAsyncAbstractRecursively(orig_elements[i], pending_async_abstract_list, new_index));
+      } else {
+        new_elements.push_back(orig_elements[i]);
+      }
+    }
+    AbstractBasePtr new_abs;
+    if (orig_abs->isa<AbstractTuple>()) {
+      new_abs = std::make_shared<AbstractTuple>(new_elements);
+    } else if (orig_abs->isa<AbstractList>()) {
+      new_abs = std::make_shared<AbstractList>(new_elements);
+    } else {
+      MS_LOG(EXCEPTION) << "FirstResult is not AbstractTuple or AbstractList, but: " << orig_abs->ToString();
+    }
+    return new_abs;
+  }
+  MS_LOG(EXCEPTION) << "Orig abstract is not AbstractTuple or AbstractList, but: " << orig_abs->ToString();
+}
+
 void BuildPossibleSpecs(const AbstractBasePtr &first_result,
                         const std::vector<AsyncAbstractPtr> &branch_async_abstract_list,
                         AbstractBasePtrList *out_specs) {
@@ -816,34 +856,12 @@ void BuildPossibleSpecs(const AbstractBasePtr &first_result,
   }
   if (first_result->isa<AbstractFunction>()) {
     for (std::size_t j = 0; j < pending_async_abstract_list.size(); ++j) {
-      auto async_func = AsyncAbstractFuncAtom::MakeShared(pending_async_abstract_list[j], 0);
+      auto async_func = AsyncAbstractFuncAtom::MakeShared(pending_async_abstract_list[j], std::vector<size_t>{0});
       out_specs->push_back(async_func);
     }
   } else if (first_result->isa<AbstractSequence>()) {
-    const auto &orig_abstract_seq = first_result->cast<AbstractSequencePtr>();
-    MS_EXCEPTION_IF_NULL(orig_abstract_seq);
-    const auto &orig_elements = orig_abstract_seq->elements();
-    AbstractBasePtrList new_elements;
-    for (size_t i = 0; i < orig_elements.size(); ++i) {
-      if (orig_elements[i]->isa<AbstractFuncAtom>()) {
-        AbstractFuncAtomPtrList abs_func_list{orig_elements[i]->cast<AbstractFuncAtomPtr>()};
-        for (size_t j = 0; j < pending_async_abstract_list.size(); ++j) {
-          auto async_func = AsyncAbstractFuncAtom::MakeShared(pending_async_abstract_list[j], i);
-          abs_func_list.push_back(async_func);
-        }
-        new_elements.push_back(AbstractFunction::MakeAbstractFunction(abs_func_list));
-      } else {
-        new_elements.push_back(orig_elements[i]);
-      }
-    }
-    AbstractBasePtr new_first_result;
-    if (first_result->isa<AbstractTuple>()) {
-      new_first_result = std::make_shared<AbstractTuple>(new_elements);
-    } else if (first_result->isa<AbstractList>()) {
-      new_first_result = std::make_shared<AbstractList>(new_elements);
-    } else {
-      MS_LOG(EXCEPTION) << "FirstResult is not AbstractTuple or AbstractList, but: " << first_result->ToString();
-    }
+    const auto &new_first_result =
+      BuildAsyncAbstractRecursively(first_result, pending_async_abstract_list, std::vector<size_t>());
     MS_LOG(DEBUG) << GetInferThread() << " Try to replace old first with new one, old: " << first_result->ToString()
                   << ", new: " << new_first_result->ToString();
     std::replace_if(

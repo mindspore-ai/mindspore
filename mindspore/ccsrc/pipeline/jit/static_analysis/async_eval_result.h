@@ -238,12 +238,13 @@ class AsyncAbstract : public std::enable_shared_from_this<AsyncAbstract> {
 // Wrap AsyncAbstract, so it can work with Join method of AbstractFunction.
 class AsyncAbstractFuncAtom : public AbstractFuncAtom {
  public:
-  AsyncAbstractFuncAtom(const AsyncAbstractPtr &async_abstract, std::size_t index)
+  AsyncAbstractFuncAtom(const AsyncAbstractPtr &async_abstract, const std::vector<std::size_t> &index)
       : async_abstract_(async_abstract), index_(index) {}
   ~AsyncAbstractFuncAtom() = default;
   MS_DECLARE_PARENT(AsyncAbstractFuncAtom, AbstractFuncAtom);
 
-  static std::shared_ptr<AsyncAbstractFuncAtom> MakeShared(const AsyncAbstractPtr &async_abstract, std::size_t index) {
+  static std::shared_ptr<AsyncAbstractFuncAtom> MakeShared(const AsyncAbstractPtr &async_abstract,
+                                                           const std::vector<std::size_t> &index) {
     MS_EXCEPTION_IF_NULL(async_abstract);
     auto ret = std::make_shared<AsyncAbstractFuncAtom>(async_abstract, index);
     MS_EXCEPTION_IF_NULL(ret);
@@ -262,7 +263,11 @@ class AsyncAbstractFuncAtom : public AbstractFuncAtom {
   }
 
   std::size_t hash() const override {
-    return hash_combine(std::hash<AsyncAbstract *>{}(async_abstract_.get()), std::hash<std::size_t>{}(index_));
+    std::size_t hash_index = 0;
+    for (const auto i : index_) {
+      hash_index = hash_combine(hash_index, std::hash<std::size_t>{}(i));
+    }
+    return hash_combine(std::hash<AsyncAbstract *>{}(async_abstract_.get()), hash_index);
   }
 
   AbstractFunctionPtr GetUnique() override;
@@ -274,7 +279,7 @@ class AsyncAbstractFuncAtom : public AbstractFuncAtom {
   AbstractFunctionPtr resolved_{nullptr};
   // Before resolved, use the following two items to track.
   const AsyncAbstractPtr async_abstract_;
-  const std::size_t index_;
+  const std::vector<std::size_t> index_;
 };
 using AsyncAbstractFuncAtomPtr = std::shared_ptr<AsyncAbstractFuncAtom>;
 
