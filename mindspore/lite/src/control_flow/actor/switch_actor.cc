@@ -282,15 +282,10 @@ void LiteSwitchOpActor::RunOpData(OpData<Tensor> *inputs, OpContext<Tensor> *con
     return;
   }
 
-  int ret = InitInputData();
-  if (ret != RET_OK) {
-    input_op_datas_.erase(op_uuid);
-    context->SetFailed(ret);
-    return;
-  }
+  InitInputData();
 
-  ret = RunKernel(*(reinterpret_cast<const KernelCallBack *>(context->kernel_call_back_before_)),
-                  *(reinterpret_cast<const KernelCallBack *>(context->kernel_call_back_after_)));
+  auto ret = RunKernel(*(reinterpret_cast<const KernelCallBack *>(context->kernel_call_back_before_)),
+                       *(reinterpret_cast<const KernelCallBack *>(context->kernel_call_back_after_)));
   if (ret != RET_OK) {
     input_op_datas_.erase(op_uuid);
     context->SetFailed(ret);

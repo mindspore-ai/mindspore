@@ -40,15 +40,10 @@ void LiteOpActor::RunOpData(OpData<lite::Tensor> *inputs, OpContext<lite::Tensor
     return;
   }
 
-  auto ret = InitInputData();
-  if (ret != RET_OK) {
-    input_op_datas_.erase(op_uuid);
-    context->SetFailed(ret);
-    return;
-  }
+  InitInputData();
 
-  ret = RunKernel(*(reinterpret_cast<const KernelCallBack *>(context->kernel_call_back_before_)),
-                  *(reinterpret_cast<const KernelCallBack *>(context->kernel_call_back_after_)));
+  auto ret = RunKernel(*(reinterpret_cast<const KernelCallBack *>(context->kernel_call_back_before_)),
+                       *(reinterpret_cast<const KernelCallBack *>(context->kernel_call_back_after_)));
   if (ret != RET_OK) {
     input_op_datas_.erase(op_uuid);
     context->SetFailed(ret);
@@ -517,7 +512,7 @@ void LiteOpActor::SetInputShape() {
   }
 }
 
-int LiteOpActor::InitInputData() {
+void LiteOpActor::InitInputData() {
   SetInputShape();
 
   for (size_t i = 0; i < inputs_data_.size(); ++i) {
@@ -541,7 +536,7 @@ int LiteOpActor::InitInputData() {
       MoveInputData(dst_tensor, src_tensor);
     }
   }
-  return RET_OK;
+  return;
 }
 
 void LiteOpActor::AsyncOutput(OpContext<Tensor> *context) {
@@ -585,45 +580,27 @@ std::vector<std::shared_ptr<LiteOpActor>> CreateOpActor(const std::vector<kernel
   for (auto &kernel : kernels) {
     /* make subgraph name (actor name) unique */
     kernel->set_name(kernel->name() + "_" + to_string(actor_count++));
+    std::shared_ptr<LiteOpActor> actor = nullptr;
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
     if ((kernel::LiteKernelUtil::IsSwitchTypeCall(kernel))) {
-      auto switch_actor = std::make_shared<LiteSwitchOpActor>(kernel, ctx);
-      if (switch_actor == nullptr) {
-        MS_LOG(ERROR) << "create LiteSwitchOpActor failed: " << kernel->name();
-        actors.clear();
-        return actors;
-      }
-      switch_actor->set_thread_pool(thread_pool);
-      actors.push_back(switch_actor);
+      actor = std::make_shared<LiteSwitchOpActor>(kernel, ctx);
     } else if (kernel->subgraph_type() == kernel::kEntranceSubGraph) {
-      auto entrance_actor = std::make_shared<LiteEntranceOpActor>(kernel, ctx);
-      if (entrance_actor == nullptr) {
-        MS_LOG(ERROR) << "create LiteEntranceOpActor failed: " << kernel->name();
-        actors.clear();
-        return actors;
-      }
-      actors.push_back(entrance_actor);
+      actor = std::make_shared<LiteEntranceOpActor>(kernel, ctx);
     } else if (kernel->subgraph_type() == kernel::kExitSubGraph) {
-      auto exit_actor = std::make_shared<LiteExitOpActor>(kernel, ctx);
-      if (exit_actor == nullptr) {
-        MS_LOG(ERROR) << "create LiteExitOpActor failed: " << kernel->name();
-        actors.clear();
-        return actors;
-      }
-      actors.push_back(exit_actor);
+      actor = std::make_shared<LiteExitOpActor>(kernel, ctx);
     } else {
 #endif
-      auto actor = std::make_shared<LiteOpActor>(kernel, ctx);
-      if (actor == nullptr) {
-        MS_LOG(ERROR) << "create LiteOpActor failed: " << kernel->name();
-        actors.clear();
-        return actors;
-      }
-      actor->set_thread_pool(thread_pool);
-      actors.push_back(actor);
+      actor = std::make_shared<LiteOpActor>(kernel, ctx);
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
     }
 #endif
+    if (actor == nullptr) {
+      MS_LOG(ERROR) << "create LiteOpActor failed: " << kernel->name();
+      actors.clear();
+      return actors;
+    }
+    actor->set_thread_pool(thread_pool);
+    actors.push_back(actor);
   }
 
   for (auto &actor : actors) {

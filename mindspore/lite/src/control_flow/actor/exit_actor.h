@@ -35,6 +35,8 @@ class LiteExitOpActor : public LiteOpActor {
  protected:
   void AsyncOutput(OpContext<Tensor> *context) override;
   int PrepareOutputData() override;
+  void InitInputData() override;
+  void SetInputShape() override;
 
  private:
   struct MappingInfo {
