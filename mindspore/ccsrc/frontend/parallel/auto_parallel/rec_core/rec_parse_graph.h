@@ -30,16 +30,19 @@
 namespace mindspore {
 namespace parallel {
 static const std::set<OperatorType> ElementWiseOpType = {
-  OperatorType::kRecReLU,      OperatorType::kRecLog,        OperatorType::kRecExp,          OperatorType::kRecAdd,
-  OperatorType::kRecElmWiseOp, OperatorType::kRecBiasAdd,    OperatorType::kRecSub,          OperatorType::kRecMul,
-  OperatorType::kRecDiv,       OperatorType::kRecSqueeze,    OperatorType::kRecReduce,       OperatorType::kRecCast,
-  OperatorType::kRecReshape,   OperatorType::kRecGatherV2,   OperatorType::kRecArgWithValue, OperatorType::kRecSoftmax,
-  OperatorType::kRecOneHot,    OperatorType::kRecExpandDims, OperatorType::kRecStridedSlice};
+  OperatorType::kRecReLU,         OperatorType::kRecLog,        OperatorType::kRecExp,
+  OperatorType::kRecAdd,          OperatorType::kRecElmWiseOp,  OperatorType::kRecBiasAdd,
+  OperatorType::kRecSub,          OperatorType::kRecMul,        OperatorType::kRecDiv,
+  OperatorType::kRecSqueeze,      OperatorType::kRecReduce,     OperatorType::kRecCast,
+  OperatorType::kRecReshape,      OperatorType::kRecGatherV2,   OperatorType::kRecArgWithValue,
+  OperatorType::kRecSoftmax,      OperatorType::kRecOneHot,     OperatorType::kRecExpandDims,
+  OperatorType::kRecStridedSlice, OperatorType::kRecBatchMatMul};
 
 static const std::set<OperatorType> StrictElementWiseOpType = {OperatorType::kRecElmWiseOp, OperatorType::kRecCast};
 
 const std::map<std::string, OperatorType> DictOpType{
   {MATMUL, OperatorType::kRecMatMul},
+  {BATCH_MATMUL, OperatorType::kRecBatchMatMul},
   {CONV2D, OperatorType::kRecConvolution},
   {MAXPOOL, OperatorType::kRecPooling},
   {MAXPOOLV2, OperatorType::kRecPooling},
@@ -75,6 +78,7 @@ const std::map<std::string, OperatorType> DictOpType{
   {SIGMOID_CROSS_ENTROPY_WITH_LOGITS, OperatorType::kRecReLU},
   {"HSigmoid", OperatorType::kRecReLU},
   {GELU, OperatorType::kRecReLU},
+  {FAST_GELU, OperatorType::kRecReLU},
   {TANH, OperatorType::kRecReLU},
   {SOFTPLUS, OperatorType::kRecReLU},
   {SOFTSIGN, OperatorType::kRecReLU},
