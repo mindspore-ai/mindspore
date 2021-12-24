@@ -138,6 +138,7 @@ class AscendDeviceContext : public DeviceContext {
   static bool IsGraphMode();
   bool PySyncRuning() const;
   bool MemoryCopyAsync(const CNodePtr &node, const vector<AddressPtr> &inputs, const vector<AddressPtr> &outputs) const;
+  void GenKernelEvents(const NotNull<KernelGraphPtr> &root_graph) const;
 
   void ReportErrorMessage() const;
   void ReportWarningMessage() const;
@@ -170,6 +171,9 @@ class AscendDeviceContext : public DeviceContext {
                          const std::vector<AddressPtr> &outputs) const;
   void *compute_stream_;
   void *communication_stream_;
+  void *GetKernelStream(const CNodePtr &node) const;
+  bool GetKernelRealInputs(const CNodePtr &kernel, const vector<AddressPtr> &inputs,
+                           std::vector<AddressPtr> *real_inputs) const;
 };
 }  // namespace ascend
 }  // namespace device

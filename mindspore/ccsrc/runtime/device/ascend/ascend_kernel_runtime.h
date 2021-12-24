@@ -44,6 +44,8 @@ class AscendKernelRuntime : public KernelRuntime {
   bool LoadData(const session::KernelGraph &graph) override;
   bool GenTask(const session::KernelGraph &graph);
   void GenKernelEvents(const session::KernelGraph &graph) override;
+  std::pair<vector<std::function<void()>>, vector<std::function<void()>>> GetKernelEventFuncs(
+    const CNodePtr &kernel) const;
   void SetKernelModStream(const std::vector<CNodePtr> &kernels, std::vector<size_t> *last_stream_nodes);
   void ProcessBoundaryEvent(const std::vector<CNodePtr> &kernels,
                             std::map<AnfNodePtr, std::vector<std::function<void()>>> *kernel_run_events,

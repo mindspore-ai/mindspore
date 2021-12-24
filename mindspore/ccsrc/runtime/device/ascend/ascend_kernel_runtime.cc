@@ -877,6 +877,33 @@ void AscendKernelRuntime::GenKernelEvents(const session::KernelGraph &graph) {
   graph_kernel_events_map_[graph.graph_id()] = std::move(kernel_events);
 }
 
+std::pair<vector<std::function<void()>>, vector<std::function<void()>>> AscendKernelRuntime::GetKernelEventFuncs(
+  const CNodePtr &kernel) const {
+  std::map<AnfNodePtr, std::vector<std::function<void()>>> kernels_pre_event_funcs;
+  std::map<AnfNodePtr, std::vector<std::function<void()>>> kernels_post_event_funcs;
+  std::vector<std::function<void()>> kernel_pre_event_funcs;
+  std::vector<std::function<void()>> kernel_post_event_funcs;
+
+  auto graph_id = AnfAlgo::GetGraphId(kernel.get());
+  auto events_iter = graph_kernel_events_map_.find(graph_id);
+  if (events_iter != graph_kernel_events_map_.end()) {
+    kernels_pre_event_funcs = events_iter->second.first;
+    kernels_post_event_funcs = events_iter->second.second;
+  }
+
+  auto pre_event_funcs_iter = kernels_pre_event_funcs.find(kernel);
+  if (pre_event_funcs_iter != kernels_pre_event_funcs.end()) {
+    kernel_pre_event_funcs = pre_event_funcs_iter->second;
+  }
+
+  auto post_event_funcs_iter = kernels_post_event_funcs.find(kernel);
+  if (post_event_funcs_iter != kernels_post_event_funcs.end()) {
+    kernel_post_event_funcs = post_event_funcs_iter->second;
+  }
+
+  return std::make_pair(kernel_pre_event_funcs, kernel_post_event_funcs);
+}
+
 void AscendKernelRuntime::ProcessBoundaryEvent(
   const std::vector<CNodePtr> &kernels, std::map<AnfNodePtr, std::vector<std::function<void()>>> *kernel_run_events,
   const std::vector<size_t> &last_stream_nodes) {
