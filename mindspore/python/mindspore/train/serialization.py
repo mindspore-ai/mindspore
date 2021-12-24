@@ -1493,8 +1493,13 @@ def load_distributed_checkpoint(network, checkpoint_filenames, predict_strategy=
     Args:
         network (Cell): Network for distributed predication.
         checkpoint_filenames (list[str]): The name of Checkpoint files in order of rank id.
-        predict_strategy (dict): Strategy of predication process. Default: None.
-        train_strategy_filename (str): Train strategy proto file name. Default: None.
+        predict_strategy (dict): Strategy of predication process. It means that using one device to predict
+                                 when setting predict_strategy as None. Default: None.
+        train_strategy_filename (str): The filename of training strategy protocol buffer file.
+                                       When train_strategy_filename is None, the training strategy file will be
+                                       obtained from context.get_auto_parallel_context("strategy_ckpt_load_file").
+                                       Therefore, the training strategy file needs to be specified
+                                       in at least one of them. Default: None.
         strict_load (bool): Whether to strict load the parameter into net. If False, it will load parameter
                             into net when parameter name's suffix in checkpoint file is the same as the
                             parameter in the network. When the types are inconsistent perform type conversion
