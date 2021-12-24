@@ -103,9 +103,13 @@ public class LenetClient extends Client {
 
     @Override
     public List<Integer> getInferResult(List<Callback> inferCallbacks) {
+        DataSet inferDataSet = dataSets.getOrDefault(RunType.INFERMODE, null);
+        if (inferDataSet == null) {
+            return new ArrayList<>();
+        }
         for (Callback callBack : inferCallbacks) {
             if (callBack instanceof PredictCallback) {
-                return ((PredictCallback) callBack).getPredictResults();
+                return ((PredictCallback) callBack).getPredictResults().subList(0, inferDataSet.sampleSize);
             }
         }
         LOGGER.severe("don not find accuracy related callback");
