@@ -94,13 +94,13 @@
         使用PyNative模式或CPU处理器时，模型评估流程将以非下沉模式执行。
 
         .. note::
-            如果 `dataset_sink_mode` 配置为True，数据将被送到处理器中。如果处理器是Ascend，数据特征将被逐一传输，每次数据传输的限制是256M。如果 `dataset_sink_mode` 配置为True，数据集仅能在当前模型中使用，而不能被其他模型使用。该接口会构建并执行计算图，如果使用前先执行了 `Model.build` ，那么它会直接执行计算图而不构建。
+            如果 `dataset_sink_mode` 配置为True，数据将被送到处理器中。如果处理器是Ascend，数据特征将被逐一传输，每次数据传输的上限是256M。如果 `dataset_sink_mode` 配置为True，数据集仅能在当前模型中使用。该接口会构建并执行计算图，如果使用前先执行了 `Model.build` ，那么它会直接执行计算图而不构建。
 
         **参数：**
 
         - **valid_dataset** (Dataset) – 评估模型的数据集。
         - **callbacks** (Optional[list(Callback), Callback]) - 评估过程中需要执行的回调对象或回调对象列表。默认值：None。
-        - **dataset_sink_mode** (bool) - 是否通过数据通道获取数据。默认值：True。
+        - **dataset_sink_mode** (bool) - 数据是否直接下沉至处理器进行处理。默认值：True。
 
         **返回：**
 
@@ -142,7 +142,7 @@
 
         **异常：**
 
-        - **RuntimeError** – 如果不是图模式（GRAPH_MODE）。
+        - **RuntimeError** – 非图模式（GRAPH_MODE）将会抛出该异常。
 
         **样例：**
 
@@ -162,7 +162,7 @@
 
     .. py:method:: infer_train_layout(train_dataset, dataset_sink_mode=True, sink_size=-1)
 
-        在 `AUTO_PARALLEL` 或 `SEMI_AUTO_PARALLEL` 模式下为训练网络生成参数layout，当前只有数据下沉模式可支持使用。
+        在 `AUTO_PARALLEL` 或 `SEMI_AUTO_PARALLEL` 模式下为训练网络生成参数layout，当前仅支持在数据下沉模式下使用。
 
         .. warning:: 这是一个实验性的原型，可能会被改变和/或删除。
 
@@ -171,7 +171,7 @@
         **参数：**
 
         - **train_dataset** (Dataset) – 一个训练数据集迭代器。如果没有损失函数（loss_fn），返回一个包含多个数据的元组（data1, data2, data3, ...）并传递给网络。否则，返回一个元组（data, label），数据和标签将被分别传递给网络和损失函数。
-        - **dataset_sink_mode** (bool) – 决定是否以数据集下沉模式进行训练。默认值：True。配置项是PyNative模式或CPU时，训练模型流程使用的是数据不下沉（non-sink）模式。默认值：True。
+        - **dataset_sink_mode** (bool) – 决定是否以数据集下沉模式进行训练。默认值：True。PyNative模式下或处理器为CPU时，训练模型流程使用的是数据不下沉（non-sink）模式。默认值：True。
         - **sink_size** (int) – 控制每次数据下沉的数据量，如果 `sink_size` =-1，则每一次epoch下沉完整数据集。如果 `sink_size` >0，则每一次epoch下沉数据量为 `sink_size` 的数据集。如果 `dataset_sink_mode` 为False，则设置 `sink_size` 为无效。默认值：-1。
 
         **返回：**
@@ -210,7 +210,7 @@
 
         **返回：**
 
-        返回预测结果，类型是张量或数组。
+        返回预测结果，类型是Tensor或Tensor元组。
 
         **样例:**
 
@@ -237,14 +237,14 @@
         使用PYNATIVE_MODE模式或CPU处理器时，模型训练流程将以非下沉模式执行。
 
         .. note::
-            如果 `dataset_sink_mode` 配置为True，数据将被送到处理器中。如果处理器是Ascend，数据特征将被逐一传输，每次数据传输的限制是256M。如果 `dataset_sink_mode` 配置为True，仅在每个epoch结束时调用Callback实例的step_end方法。如果 `dataset_sink_mode` 配置为True，数据集仅能在当前模型中使用，而不能被其他模型使用。如果 `sink_size` 大于零，每次epoch可以无限次遍历数据集，直到遍历数据量等于 `sink_size` 为止。然后下次epoch是从上一次遍历的最后位置继续开始遍历。该接口会构建并执行计算图，如果使用前先执行了 `Model.build` ，那么它会直接执行计算图而不构建。
+            如果 `dataset_sink_mode` 配置为True，数据将被送到处理器中。如果处理器是Ascend，数据特征将被逐一传输，每次数据传输的上限是256M。如果 `dataset_sink_mode` 配置为True，仅在每个epoch结束时调用Callback实例的step_end方法。如果 `dataset_sink_mode` 配置为True，数据集仅能在当前模型中使用。如果 `sink_size` 大于零，每次epoch可以无限次遍历数据集，直到遍历数据量等于 `sink_size` 为止。每次epoch将从上一次遍历的最后位置继续开始遍历。该接口会构建并执行计算图，如果使用前先执行了 `Model.build` ，那么它会直接执行计算图而不构建。
 
         **参数：**
 
         - **epoch** (int) – 训练执行轮次。通常每个epoch都会使用全量数据集进行训练。当 `dataset_sink_mode` 设置为True且 `sink_size` 大于零时，则每个epoch训练次数为 `sink_size` 而不是数据集的总步数。
         - **train_dataset** (Dataset) – 一个训练数据集迭代器。如果定义了 `loss_fn` ，则数据和标签会被分别传给 `network` 和 `loss_fn` ，此时数据集需要返回一个元组（data, label）。如果数据集中有多个数据或者标签，可以设置 `loss_fn` 为None，并在 `network` 中实现损失函数计算，此时数据集返回的所有数据组成的元组（data1, data2, data3, ...）会传给 `network` 。
         - **callback** (Optional[list[Callback], Callback]) – 训练过程中需要执行的回调对象或者回调对象列表。默认值：None。
-        - **dataset_sink_mode** (bool) – 是否通过数据通道获取数据。使用PYNATIVE_MODE模式或CPU处理器时，模型训练流程将以非下沉模式执行。默认值：True。
+        - **dataset_sink_mode** (bool) – 数据是否直接下沉至处理器进行处理。使用PYNATIVE_MODE模式或CPU处理器时，模型训练流程将以非下沉模式执行。默认值：True。
         - **sink_size** (int) – 控制每次数据下沉的数据量。`dataset_sink_mode` 为False时 `sink_size` 无效。如果sink_size=-1，则每一次epoch下沉完整数据集。如果sink_size>0，则每一次epoch下沉数据量为sink_size的数据集。默认值：-1。
 
         **样例:**

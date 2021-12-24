@@ -106,7 +106,7 @@ MindSpore上下文，用于配置当前执行环境，包括执行模式、执�
 
     - **pynative_synchronize** (bool) - 表示是否在PyNative模式下启动设备同步执行。默认值：False。设置为False时，将在设备上异步执行算子。当算子执行出错时，将无法定位特定错误脚本代码的位置。当设置为True时，将在设备上同步执行算子。这将降低程序的执行性能。此时，当算子执行出错时，可以根据错误的调用栈来定位错误脚本代码的位置。
     - **mode** (int) - 表示在GRAPH_MODE(0)或PYNATIVE_MODE(1)模式中的运行。默认值：GRAPH_MODE(0)。GRAPH_MODE或PYNATIVE_MODE可以通过 `mode` 属性设置，两种模式都支持所有后端。默认模式为GRAPH_MODE。
-    - **enable_graph_kernel** (bool) - 表示是否启用图算融合去优化网络执行性能。默认值：False。表示是否启用图算融合去优化网络执行性能。如果 `enable_graph_kernel` 设置为True，则可以启用加速。有关图算融合的详细信息，请查看 `使能图算融合 <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/enable_graph_kernel_fusion.html>`_ 。
+    - **enable_graph_kernel** (bool) - 表示是否启用图算融合去优化网络执行性能。默认值：False。如果 `enable_graph_kernel` 设置为True，则可以启用加速。有关图算融合的详细信息，请查看 `使能图算融合 <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/enable_graph_kernel_fusion.html>`_ 。
     - **graph_kernel_flags** (str) - 图算融合的优化选项，当与enable_graph_kernel冲突时，它的优先级更高。其仅适用于有经验的用户。例如，context.set_context(graph_kernel_flags="--opt_level=2 --dump_as_text")。一些常用选项：
 
       - **opt_level**：设置优化级别。默认值：2。当opt_level的值大于0时，启动图算融合。可选值包括：
@@ -171,7 +171,7 @@ MindSpore上下文，用于配置当前执行环境，包括执行模式、执�
 
 .. py:function:: mindspore.context.get_context(attr_key)
 
-    根据输入key获取上下文中的属性值。如果某些属性没有设置，则会自动获取这些属性。
+    根据输入key获取上下文中的属性值。如果某些属性没有设置，则会自动获取这些属性的默认值。
 
     **参数：**
 
@@ -197,7 +197,7 @@ MindSpore上下文，用于配置当前执行环境，包括执行模式、执�
     应在mindspore.communication.init之前配置自动并行。
 
     .. note::
-        配置时，必须输入配置的名称。如果某个程序具有不同并行模式下的任务，则需要再为下一个任务设置新的并行模式之前，调用reset_auto_parallel_context()接口来重置配置。若要设置或更改并行模式，必须在创建任何Initializer之前调用接口，否则，在编译网络时，可能会出现RuntimeError。
+        配置时，必须输入配置的名称。如果某个程序具有不同并行模式下的任务，需要提前调用reset_auto_parallel_context()为下一个任务设置新的并行模式。若要设置或更改并行模式，必须在创建任何Initializer之前调用接口，否则，在编译网络时，可能会出现RuntimeError。
 
     某些配置适用于特定的并行模式，有关详细信息，请参见下表：
 
