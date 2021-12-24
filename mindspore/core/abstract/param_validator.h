@@ -45,7 +45,8 @@ void CheckShapeSame(const std::string &op, const AbstractTensorPtr &tensor_base,
 
 TypePtr CheckDtypeSame(const std::string &op, const AbstractTensorPtr &tensor_base, const AbstractTensorPtr &tensor);
 
-int64_t CheckAxis(const std::string &op, const std::string &arg_name, const ValuePtr &axis, int64_t min, int64_t max);
+int64_t CheckAxis(const std::string &op, const std::string &arg_name, const ValuePtr &axis, int64_t min, int64_t max,
+                  const std::string &rank_name);
 
 void CheckArgsSize(const std::string &op, const AbstractBasePtrList &args_spec_list, size_t size_expect);
 

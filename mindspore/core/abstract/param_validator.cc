@@ -162,7 +162,7 @@ TypePtr CheckDtypeSame(const std::string &op, const AbstractTensorPtr &tensor_ba
 }
 
 int64_t CheckAxis(const std::string &op, const std::string &args_name, const ValuePtr &axis, int64_t minimum,
-                  int64_t max) {
+                  int64_t max, const std::string &rank_name) {
   if (axis == nullptr) {
     MS_LOG(EXCEPTION) << op << " evaluator axis is null";
   }
@@ -171,8 +171,9 @@ int64_t CheckAxis(const std::string &op, const std::string &args_name, const Val
   }
   int64_t axis_value = GetValue<int64_t>(axis);
   if (axis_value >= max || axis_value < minimum) {
-    MS_LOG(EXCEPTION) << "The primitive[" << op << "]'s \'" << args_name << "\' value should be in the range ["
-                      << minimum << ", " << max << "), but got " << axis_value;
+    MS_LOG(EXCEPTION) << "For primitive[" << op << "], " << rank_name << "'s rank is " << max << ", while the "
+                      << "\'" << args_name << "\' value should be in the range [" << minimum << ", " << max
+                      << "), but got " << axis_value;
   }
   if (axis_value < 0) {
     axis_value = axis_value + SizeToLong(max);
