@@ -15,6 +15,7 @@
 """Summary collector callback."""
 
 import os
+import stat
 import re
 import json
 from json.decoder import JSONDecodeError
@@ -586,10 +587,9 @@ class SummaryCollector(Callback):
         }
         meta_path = os.path.join(self._ckpt_dir, 'train_metadata.json')
         try:
-            file = os.open(meta_path, os.O_WRONLY|os.O_TRUNC|os.O_CREAT, 0o600)
-            data = json.dumps(data).encode()
-            os.write(file, data)
-            os.close(file)
+            with open(meta_path, 'w') as file:
+                json.dump(data, file)
+            os.chmod(meta_path, stat.S_IRUSR)
         except OSError as e:
             logger.error("Write meta data %s failed, detail: %s" % (meta_path, str(e)))
 
