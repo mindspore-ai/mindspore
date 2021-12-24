@@ -15,8 +15,10 @@
  */
 #include "backend/kernel_compiler/akg/akg_kernel_json_decoder.h"
 
+#include <memory>
 #include "backend/kernel_compiler/akg/akg_kernel_json_generator.h"
 #include "backend/kernel_compiler/common_utils.h"
+#include "backend/optimizer/graph_kernel/adapter/fake_abstract_shape.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "debug/anf_ir_dump.h"
 #include "frontend/operator/ops.h"
@@ -50,62 +52,6 @@ using graphkernel::kJsonKeyValue;
 
 constexpr auto kIsFeatureMapOutput = "IsFeatureMapOutput";
 constexpr auto kIsFeatureMapInputList = "IsFeatureMapInputList";
-
-class AbstractShapeCreator {
- public:
-  using AbstractShapeTransferFunc = std::function<ShapeVector(const ShapeVector &)>;
-  /**
-   * Get an abstract shape.
-   * For a given device_shape and format, the available abstract_shape is not unique,
-   * this interface only returns a legal abstract_shape without considering padding
-   * so that the AnfAlgo's get device shape interface can get the right device_shape.
-   */
-  static ShapeVector GetFakeAbstractShape(const ShapeVector &device_shape, const std::string &format) {
-    const std::map<std::string, AbstractShapeTransferFunc> fmap{
-      {kOpFormat_NCHW, NchwAbstractShape},
-      {kOpFormat_NHWC, NhwcAbstractShape},
-      {kOpFormat_FRAC_NZ, FractalNzAbstractShape},
-    };
-    if (format == kOpFormat_ND || format == kOpFormat_DEFAULT) {
-      return device_shape;
-    }
-    auto iter = fmap.find(format);
-    if (iter == fmap.end()) {
-      MS_LOG(WARNING) << "Unexpected format[" << format << "]";
-      return device_shape;
-    }
-    return iter->second(device_shape);
-  }
-
- private:
-  static ShapeVector NchwAbstractShape(const ShapeVector &device_shape) { return device_shape; }
-  static ShapeVector NhwcAbstractShape(const ShapeVector &device_shape) {
-    if (device_shape.size() != 4) {
-      MS_LOG(EXCEPTION) << "Shape size of NHWC should be 4, but got " << device_shape.size();
-    }
-    return {device_shape[0], device_shape[3], device_shape[1], device_shape[2]};
-  }
-  static ShapeVector FractalNzAbstractShape(const ShapeVector &device_shape) {
-    if (device_shape.size() == 1 && (device_shape[0] == 1 || static_cast<size_t>(device_shape[0]) % kCubeSize == 0)) {
-      return device_shape;
-    }
-    if (device_shape.size() < 4) {
-      MS_LOG(EXCEPTION) << "Shape size of FRACTAL_NZ should >= 4, but got " << device_shape.size();
-    }
-    ShapeVector shape;
-    size_t dims = device_shape.size();
-    size_t batch = dims - 4;
-    for (size_t i = 0; i < batch; ++i) {
-      shape.push_back(device_shape[i]);
-    }
-    int64_t m = device_shape[dims - 3] * device_shape[dims - 2];
-    int64_t n = device_shape[dims - 4] * device_shape[dims - 1];
-    shape.push_back(m);
-    shape.push_back(n);
-
-    return shape;
-  }
-};
 
 class CNodeDecoder {
  public:
@@ -280,7 +226,7 @@ class CNodeDecoder {
   }
 
   void CreateAbstract() const {
-    auto shape = AbstractShapeCreator::GetFakeAbstractShape(output_shapes_[0], output_formats_[0]);
+    auto shape = graphkernel::GetFakeAbstractShape(output_shapes_[0], output_formats_[0]);
     auto abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(output_types_[0]), shape);
     cnode_->set_abstract(abstract);
   }
@@ -341,10 +287,6 @@ class CNodeDecoder {
 };
 }  // namespace
 
-ShapeVector GetFakeAbstractShape(const ShapeVector &device_shape, const std::string &format) {
-  return AbstractShapeCreator::GetFakeAbstractShape(device_shape, format);
-}
-
 ParameterPtr AkgKernelJsonDecoder::DecodeParameter(const nlohmann::json &parameter_json,
                                                    const FuncGraphPtr &func_graph) {
   MS_LOG(DEBUG) << "start decode parameter, " << parameter_json;
@@ -353,7 +295,7 @@ ParameterPtr AkgKernelJsonDecoder::DecodeParameter(const nlohmann::json &paramet
   new_parameter->set_name(name);
   std::string format = parameter_json[kJsonKeyFormat];
   TypeId dtype = StringToTypeId(parameter_json[kJsonKeyDataType]);
-  ShapeVector shape = AbstractShapeCreator::GetFakeAbstractShape(parameter_json[kJsonKeyShape], format);
+  ShapeVector shape = graphkernel::GetFakeAbstractShape(parameter_json[kJsonKeyShape], format);
   auto abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(dtype), shape);
   new_parameter->set_abstract(abstract);
   auto kernel_info = std::make_shared<device::KernelInfo>();

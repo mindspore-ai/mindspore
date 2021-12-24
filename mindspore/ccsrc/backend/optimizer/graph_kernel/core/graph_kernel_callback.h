@@ -17,11 +17,13 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_CORE_GRAPH_KERNEL_CALLBACK_H_
 #include <string>
 #include <memory>
+#include <vector>
 #include <functional>
 
 #include "ir/anf.h"
 #include "ir/dtype/type_id.h"
 #include "utils/shape_utils.h"
+#include "backend/optimizer/graph_kernel/model/node.h"
 
 namespace mindspore::graphkernel {
 class Callback {
@@ -126,6 +128,21 @@ class Callback {
    * @param[in] node the GraphKernel CNode.
    */
   virtual void SetGraphKernelNodeKernelInfo(const AnfNodePtr &node) = 0;
+
+  /**
+   * @brief Set KernelInfo for a basic node.
+   *
+   * @param node         the AnfNodePtr
+   * @param outputs_info the output info list
+   */
+  virtual void SetBasicNodeKernelInfo(const AnfNodePtr &node, const std::vector<inner::NodeBase> &outputs_info) = 0;
+
+  /**
+   * @brief Set empty KernelInfo.
+   *
+   * @param node the AnfNodePtr
+   */
+  virtual void SetEmptyKernelInfo(const AnfNodePtr &node) = 0;
 
  private:
   friend class CallbackImplRegister;

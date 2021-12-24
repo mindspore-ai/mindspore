@@ -23,6 +23,7 @@
 #include "utils/ms_context.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/kernel_compiler/common_utils.h"
+#include "backend/optimizer/graph_kernel/adapter/fake_abstract_shape.h"
 
 namespace mindspore::graphkernel {
 // register the callback object
@@ -140,5 +141,62 @@ void CallbackImpl::SetGraphKernelNodeKernelInfo(const AnfNodePtr &node) {
   graph_info_builder.SetFusionType(kernel::FusionType::OPAQUE);
   auto graph_selected_info = graph_info_builder.Build();
   AnfAlgo::SetSelectKernelBuildInfo(graph_selected_info, node.get());
+}
+
+void CallbackImpl::SetBasicNodeKernelInfo(const AnfNodePtr &node, const std::vector<inner::NodeBase> &outputs_info) {
+  node->set_kernel_info(std::make_shared<device::KernelInfo>());
+  std::vector<std::string> input_formats;
+  std::vector<TypeId> input_types;
+  auto cnode = node->cast<CNodePtr>();
+  if (cnode != nullptr) {
+    auto &inputs = cnode->inputs();
+    for (size_t i = 1; i < inputs.size(); ++i) {
+      auto kernel_with_index = AnfAlgo::VisitKernel(inputs[i], 0);
+      auto input_format = AnfAlgo::GetOutputFormat(kernel_with_index.first, kernel_with_index.second);
+      input_formats.push_back(input_format);
+      auto input_type = AnfAlgo::GetOutputDeviceDataType(kernel_with_index.first, kernel_with_index.second);
+      input_types.push_back(input_type);
+    }
+  }
+
+  std::vector<std::string> output_formats;
+  std::vector<TypeId> output_types;
+  AbstractBasePtrList abs_list;
+  bool has_fake_abstract = false;
+  for (size_t i = 0; i < outputs_info.size(); ++i) {
+    output_formats.push_back(outputs_info[i].format);
+    output_types.push_back(outputs_info[i].type);
+    ShapeVector abs_shape;
+    if (outputs_info[i].format != kOpFormat_DEFAULT) {
+      abs_shape = GetFakeAbstractShape(outputs_info[i].shape, outputs_info[i].format);
+      has_fake_abstract = true;
+    } else {
+      abs_shape = outputs_info[i].shape;
+    }
+    auto abs_tensor = std::make_shared<abstract::AbstractTensor>(TypeIdToType(outputs_info[i].type), abs_shape);
+    abs_list.push_back(abs_tensor);
+  }
+  if (has_fake_abstract) {
+    if (abs_list.size() == 1) {
+      node->set_abstract(abs_list[0]);
+    } else {
+      node->set_abstract(std::make_shared<abstract::AbstractTuple>(abs_list));
+    }
+  }
+
+  kernel::KernelBuildInfo::KernelBuildInfoBuilder info_builder;
+  info_builder.SetInputsFormat(input_formats);
+  info_builder.SetInputsDeviceType(input_types);
+  info_builder.SetOutputsFormat(output_formats);
+  info_builder.SetOutputsDeviceType(output_types);
+  info_builder.SetProcessor(kernel::GetProcessorFromContext());
+  info_builder.SetKernelType(KernelType::AKG_KERNEL);
+  info_builder.SetFusionType(kernel::FusionType::OPAQUE);
+  auto selected_info = info_builder.Build();
+  AnfAlgo::SetSelectKernelBuildInfo(selected_info, node.get());
+}
+
+void CallbackImpl::SetEmptyKernelInfo(const AnfNodePtr &node) {
+  node->set_kernel_info(std::make_shared<device::KernelInfo>());
 }
 }  // namespace mindspore::graphkernel
