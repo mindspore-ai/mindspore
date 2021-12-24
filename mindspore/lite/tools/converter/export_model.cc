@@ -30,6 +30,7 @@
 #include "tools/converter/optimizer_manager.h"
 #include "tools/converter/parser/parser_utils.h"
 #include "tools/optimizer/graph/control_flow_pass.h"
+#include "tools/optimizer/graph/clip_convert_activation_pass.h"
 #include "nnacl/op_base.h"
 #include "src/common/log_util.h"
 
@@ -234,6 +235,9 @@ STATUS ExportModel(const FuncGraphPtr &graph, const converter::Flags *flags) {
   for (auto &func_graph : all_func_graphs) {
     manager->AddFuncGraph(func_graph);
   }
+  auto clip_transfer = std::make_shared<opt::ClipConvertActivationPass>();
+  CHECK_NULL_RETURN(clip_transfer);
+  (void)clip_transfer->Run(mirror_graph);
   if (!RunOptimizerPass(mirror_graph, {"ToNHWCFormat", "InferShapePass", "SpecialNodePostProcess"})) {
     MS_LOG(ERROR) << "Run transpose opt pass failed.";
     return RET_ERROR;
