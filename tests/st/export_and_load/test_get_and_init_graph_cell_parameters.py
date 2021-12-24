@@ -94,18 +94,3 @@ def test_get_and_init_graph_cell_parameters_in_graph_mode():
     """
     context.set_context(mode=context.GRAPH_MODE)
     get_and_init_graph_cell_parameters()
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_get_and_init_graph_cell_parameters_in_pynative_mode():
-    """
-    Description: load mind ir and update parameters in pynative mode.
-    Expectation: generate a graph with updated parameters.
-    """
-    context.set_context(mode=context.PYNATIVE_MODE)
-    get_and_init_graph_cell_parameters()

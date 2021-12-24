@@ -196,6 +196,7 @@ class ForwardBGCF(nn.Cell):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 def test_export_bgcf():
+    context.set_context(mode=context.GRAPH_MODE)
     num_user, num_item = 7068, 3570
     network = BGCF([64, num_user, num_item], 64, "tanh",
                    [0.0, 0.0, 0.0], num_user, num_item, 64)

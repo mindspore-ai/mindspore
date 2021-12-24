@@ -972,6 +972,8 @@ def _spilt_save(net_dict, model, file_name, is_encrypt, **kwargs):
 
 def _save_mindir(net, file_name, *inputs, **kwargs):
     """Save MindIR format file."""
+    if context._get_mode() == context.PYNATIVE_MODE:
+        raise RuntimeError("MindIR export is not support in the Pynative mode, please convert to the Graph Mode.")
     model = mindir_model()
 
     phase_name = "predict" if net._auto_parallel_mode else "export.mindir"

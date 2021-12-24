@@ -99,7 +99,7 @@ def test_init_graph_cell_parameters_with_wrong_value_shape():
     Description: load mind ir and update parameters with wrong tensor shape.
     Expectation: raise a ValueError indicating the update value shape error.
     """
-    context.set_context(mode=context.PYNATIVE_MODE)
+    context.set_context(mode=context.GRAPH_MODE)
     net = Net()
     mindir_name = "net_2.mindir"
     export(net, input_a, input_b, file_name=mindir_name[:-7], file_format='MINDIR')
