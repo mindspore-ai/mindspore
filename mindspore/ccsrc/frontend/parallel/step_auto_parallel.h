@@ -47,6 +47,8 @@ void ConstructCostGraphEdges(const std::vector<AnfNodePtr> &all_nodes);
 
 void AugmentCostGraph(const std::vector<AnfNodePtr> &all_nodes);
 
+Status IgnoreOperatorsInCostGraph();
+
 Status ParallelStrategySearch(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root);
 
 Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root);

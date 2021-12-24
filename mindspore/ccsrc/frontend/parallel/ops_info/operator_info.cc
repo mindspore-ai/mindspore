@@ -1770,10 +1770,7 @@ void OperatorInfo::set_swc_index(int64_t swc, int64_t depth) {
   swc_index_ = swc;
 }
 
-CNodePtr OperatorInfo::cnode() {
-  MS_EXCEPTION_IF_NULL(cnode_);
-  return cnode_;
-}
+std::vector<CNodePtr> OperatorInfo::cnodes() { return cnodes_; }
 
 double OperatorInfo::GetForwardMemoryCostFromCNode() {
   return operator_cost()->GetForwardComputationCost(inputs_tensor_info_, outputs_tensor_info_, 0);
