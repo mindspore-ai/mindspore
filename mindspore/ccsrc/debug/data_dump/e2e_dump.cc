@@ -404,10 +404,8 @@ void E2eDump::DumpSetup(const session::KernelGraph *graph) {
   }
 }
 
-void E2eDump::UpdateIterGPUDump() {
-  if (!IsDeviceTargetGPU()) {
-    return;
-  }
+void E2eDump::UpdateIterMindRTDump() {
+  // update dump iter for GPU and kernel by kernel ascend dump.
   DumpJsonParser::GetInstance().UpdateDumpIter();
 }
 
@@ -491,7 +489,7 @@ void E2eDump::DumpData(const session::KernelGraph *graph, uint32_t rank_id, cons
 bool E2eDump::DumpSingleNodeData(const CNodePtr &node, uint32_t graph_id, uint32_t rank_id, const Debugger *debugger) {
   bool success = false;
   auto &dump_json_parser = DumpJsonParser::GetInstance();
-  if (dump_json_parser.GetIterDumpFlag()) {
+  if (dump_json_parser.DumpEnabledForIter()) {
     std::string dump_path = GenerateDumpPath(graph_id, rank_id);
     DumpInputSingleNode(node, dump_path, debugger);
     DumpOutputSingleNode(node, dump_path, debugger);
@@ -504,7 +502,7 @@ bool E2eDump::DumpParametersData(const session::KernelGraph *graph, uint32_t ran
   bool success = false;
   uint32_t graph_id = graph->graph_id();
   auto &dump_json_parser = DumpJsonParser::GetInstance();
-  if (dump_json_parser.GetIterDumpFlag()) {
+  if (dump_json_parser.DumpEnabledForIter()) {
     MS_LOG(INFO) << "DumpParameters. Current iteration is " << dump_json_parser.cur_dump_iter();
     MS_LOG(INFO) << "Current graph id is " << graph_id;
     std::string dump_path = GenerateDumpPath(graph_id, rank_id);

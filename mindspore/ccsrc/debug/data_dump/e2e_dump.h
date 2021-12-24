@@ -40,7 +40,7 @@ class E2eDump {
   ~E2eDump() = default;
   static void DumpSetup(const session::KernelGraph *graph);
 
-  static void UpdateIterGPUDump();
+  static void UpdateIterMindRTDump();
 
   static void DumpRunIter(const KernelGraphPtr &graph_ptr, uint32_t rank_id = 0);
 

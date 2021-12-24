@@ -84,6 +84,7 @@ Debugger::Debugger()
       initial_suspend_(true),
       enable_heartbeat_(false),
       not_dataset_graph_sum_(0),
+      ascend_kernel_by_kernel_(false),
       version_("") {
   CheckDebuggerEnabledParam();
   auto ms_context = MsContext::GetInstance();
@@ -314,8 +315,8 @@ void Debugger::UpdateGraphIterMap(uint32_t graph_id, int32_t iter_num) {
 }
 
 void Debugger::SetCurrentAndPrevRootGraph(uint32_t root_graph_id) {
-  // for GPU root graphs are set in PreExecuteGraphDebugger.
-  if (device_target_ != kAscendDevice) {
+  // for GPU and ascend MindRT root graphs are set in PreExecuteGraphDebugger.
+  if (device_target_ != kAscendDevice || MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
     return;
   }
   prev_root_graph_id_ = cur_root_graph_id_;
@@ -430,9 +431,9 @@ uint32_t Debugger::GetRankID() {
   return rank_id;
 }
 
-void Debugger::DumpGPU(const KernelGraphPtr &kernel_graph) const {
-  // only for GPU mindrt
-  if (device_target_ != kGPUDevice) {
+void Debugger::Dump(const KernelGraphPtr &kernel_graph) const {
+  // only for GPU and kernel by kernel ascend (mindRT).
+  if (!(ascend_kernel_by_kernel_ || device_target_ == kGPUDevice)) {
     return;
   }
   uint32_t rank_id = GetRankID();
@@ -463,7 +464,7 @@ void Debugger::DumpSetup(const KernelGraphPtr &kernel_graph) const {
 void Debugger::DumpInGraphCompiler(const KernelGraphPtr &kernel_graph) {
   // This function will be called for new GPU runtime using MindRTBackend
   auto &json_parser = DumpJsonParser::GetInstance();
-  if (json_parser.e2e_dump_enabled()) {
+  if (json_parser.e2e_dump_enabled() || json_parser.async_dump_enabled()) {
     uint32_t rank_id = GetRankID();
     kernel_graph->set_root_graph_id(kernel_graph->graph_id());
     std::string final_graph = "trace_code_graph_" + std::to_string(kernel_graph->graph_id());
@@ -490,10 +491,10 @@ void Debugger::PostExecuteGraphDebugger() {
     }
   }
   // debug used for dump
-  if (debugger_ && debugger_->CheckDebuggerDumpEnabled() && device_target_ == kGPUDevice) {
+  if (debugger_ && debugger_->CheckDebuggerDumpEnabled()) {
     // Dump Parameters and consts
     for (auto graph : graph_ptr_step_vec_) {
-      debugger_->DumpGPU(graph);
+      debugger_->Dump(graph);
       if (!debugger_->debugger_enabled()) {
         debugger_->ClearCurrentData();
       }
@@ -502,7 +503,9 @@ void Debugger::PostExecuteGraphDebugger() {
   if (debugger_) {
     debugger_->PostExecute();
   }
-  E2eDump::UpdateIterGPUDump();
+  if (ascend_kernel_by_kernel_ || device_target_ == kGPUDevice) {
+    E2eDump::UpdateIterMindRTDump();
+  }
 }
 
 void Debugger::PostExecute() {
@@ -1397,7 +1400,7 @@ void Debugger::LoadSingleAnfnode(const AnfNodePtr &anf_node, const size_t output
     return;
   }
   // When MindRT is used, only ValueNodes and ParameterWeights can be loaded from device to host
-  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT) && (device_target_ == kGPUDevice)) {
+  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
     if (!anf_node->isa<ValueNode>() &&
         !(anf_node->isa<Parameter>() && AnfAlgo::IsParameterWeight(anf_node->cast<ParameterPtr>()))) {
       return;
@@ -1509,6 +1512,41 @@ void Debugger::LoadGraphOutputs() {
       }
     }
     exec_order = exec_order + 1;
+  }
+}
+
+void Debugger::LoadNodeOutputs(const CNodePtr &node, uint32_t exec_order, uint32_t root_graph_id) {
+  if (device_target_ != kAscendDevice) {
+    return;
+  }
+
+  MS_EXCEPTION_IF_NULL(node);
+  std::string kernel_name = GetKernelNodeName(node);
+  auto output_size = AnfAlgo::GetOutputTensorNum(node);
+  if (partial_memory_) {
+    if (!debug_services_->IsWatchPoint(kernel_name, node)) {
+      return;
+    }
+  }
+  for (size_t j = 0; j < output_size; ++j) {
+    if (!AnfAlgo::OutputAddrExist(node, j)) {
+      MS_LOG(INFO) << "Cannot find output addr for slot " << j << " for " << kernel_name;
+      continue;
+    }
+    auto addr = AnfAlgo::GetOutputAddr(node, j);
+    MS_EXCEPTION_IF_NULL(addr);
+    auto type = AnfAlgo::GetOutputInferDataType(node, j);
+    if (!IsTypeDebuggerSupported(type)) {
+      return;
+    }
+    auto format = kOpFormat_DEFAULT;
+    string tensor_name = kernel_name + ':' + std::to_string(j);
+    ShapeVector int_shapes = trans::GetRuntimePaddingShape(node, j);
+    auto ret = addr->LoadMemToHost(tensor_name, exec_order, format, int_shapes, type, j, false, root_graph_id);
+    if (!ret) {
+      MS_LOG(ERROR) << "LoadMemToHost:"
+                    << ", tensor_name:" << tensor_name << ", host_format:" << format << ".!";
+    }
   }
 }
 

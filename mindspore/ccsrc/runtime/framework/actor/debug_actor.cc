@@ -45,8 +45,8 @@ void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchInfo *launch_in
     ActorDispatcher::Send(*from_aid, &DebugAwareActor::OnDebugFinish, op_context);
     return;
   }
-
   const auto &cnode = node->cast<CNodePtr>();
+  MS_LOG(DEBUG) << "kernel by kernel debug for node: " << cnode->fullname_with_scope() << ".";
   if (device_context->GetDeviceAddressType() == device::DeviceAddressType::kCPU) {
 #ifndef ENABLE_SECURITY
     if (DumpJsonParser::GetInstance().GetIterDumpFlag()) {
@@ -69,6 +69,22 @@ void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchInfo *launch_in
     }
     exec_order_ += 1;
 #endif
+  } else if (device_context->GetDeviceAddressType() == device::DeviceAddressType::kAscend) {
+#ifdef ENABLE_DEBUGGER
+    auto debugger = Debugger::GetInstance();
+    if (debugger != nullptr) {
+      debugger->SetAscendKernelByKernelFlag(true);
+      if (debugger->CheckDebuggerEnabled()) {
+        std::string error_info = "Debugger is not supported with kernel-by-kernel ascend.";
+        SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*op_context), error_info);
+      }
+      bool read_data = CheckReadData(cnode);
+      if (read_data) {
+        ReadDataAndDumpAscend(cnode, exec_order_);
+      }
+    }
+    exec_order_ += 1;
+#endif
   }
 
   // Call back to the from actor to process after debug finished.
@@ -81,6 +97,7 @@ void DebugActor::DebugForGraph(const KernelGraphPtr &graph, const DeviceContext 
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(op_context);
   MS_EXCEPTION_IF_NULL(from_aid);
+  MS_LOG(DEBUG) << "Super kernel debug for graph: " << graph->graph_id() << ".";
 #ifdef ENABLE_DEBUGGER
   LoadDataForDump(graph);
 #endif
@@ -92,6 +109,7 @@ void DebugActor::DebugOnStepBegin(std::vector<KernelGraphPtr> graphs, std::vecto
                                   OpContext<DeviceTensor> *const op_context, const AID *from_aid) {
   MS_EXCEPTION_IF_NULL(op_context);
   MS_EXCEPTION_IF_NULL(from_aid);
+  MS_LOG(DEBUG) << "Debug on step begin.";
 #ifdef ENABLE_DEBUGGER
   if (!graphs.empty()) {
     // First graph is the dataset graph when dataset_sink_mode = True
@@ -125,7 +143,7 @@ void DebugActor::DebugOnStepBegin(std::vector<KernelGraphPtr> graphs, std::vecto
 void DebugActor::DebugOnStepEnd(OpContext<DeviceTensor> *const op_context, const AID *from_aid) {
   MS_EXCEPTION_IF_NULL(op_context);
   MS_EXCEPTION_IF_NULL(from_aid);
-
+  MS_LOG(DEBUG) << "Debug on step end.";
 #ifndef ENABLE_SECURITY
   if (DumpJsonParser::GetInstance().GetIterDumpFlag()) {
     CPUE2eDump::DumpParametersData();

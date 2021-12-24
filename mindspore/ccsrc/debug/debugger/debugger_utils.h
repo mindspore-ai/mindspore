@@ -40,6 +40,8 @@ bool CheckReadData(const CNodePtr &cnode);
 
 void ReadDataAndDump(const CNodePtr &cnode, const KernelLaunchInfo *launch_info_, uint32_t exec_order_);
 
+void ReadDataAndDumpAscend(const CNodePtr &cnode, uint32_t exec_order_);
+
 std::string CheckDatasetSinkMode(const KernelGraphPtr &graph_ptr);
 
 void LoadDataForDump(const KernelGraphPtr &graph_ptr);

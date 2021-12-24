@@ -370,7 +370,12 @@ GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNod
   auto backend_node = graph->output();
   MS_EXCEPTION_IF_NULL(backend_node);
   graph->CacheGraphOutputToFrontNodeWithIndex({backend_node}, outputs);
-  graph->set_root_graph_id(graph_id);
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  std::string device_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  if (device_target == kGPUDevice) {
+    graph->set_root_graph_id(graph_id);
+  }
   AnfAlgo::UpdateGraphValidRefPair(graph);
 
   return graph_id;
