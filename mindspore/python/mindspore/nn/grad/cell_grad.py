@@ -62,20 +62,20 @@ class _JvpFirstGradSingleValue(Cell):
 
 class Jvp(Cell):
     """
-    Compute the jacobian-vector-product of the given network. Jvp is equivalent to forward mode autodiff.
+    Compute the jacobian-vector-product of the given fn. Jvp is equivalent to forward mode autodiff.
 
     Args:
-        network (Cell): The network that takes Tensor inputs and returns a tuple of Tensors or a Tensor.
+        fn (Cell): The fn that takes Tensor inputs and returns a tuple of Tensors or a Tensor.
 
     Inputs:
-        - **inputs** (Tensors) - The inputs to `net`.
+        - **inputs** (Tensors) - The inputs to `fn`.
         - **v** (Tensors or Tuple of Tensors) - The vector for which the Jacobian vector product is computed.
-          Must have the same size as the input of `network`.
+          Must have the same size as the input of `fn`.
 
     Outputs:
         A tuple with 2 Tensors or Tuple of Tensors:
 
-        - **net_output** (Tensors or Tuple of Tensors) - The output of `network(inputs)`.
+        - **net_output** (Tensors or Tuple of Tensors) - The output of `fn(inputs)`.
         - **jvp** (Tensors or Tuple of Tensors) - The result of the jacobian vector product.
 
     Supported Platforms:
@@ -175,21 +175,21 @@ class _JvpInner(Cell):
 
 class Vjp(Cell):
     """
-    Computes the dot product between a vector `v` and the Jacobian of the given network at the point
+    Computes the dot product between a vector `v` and the Jacobian of the given fn at the point
     given by the inputs.
 
     Args:
-        network (Cell): The network that takes Tensor inputs and returns a tuple of Tensors or a Tensor.
+        fn (Cell): The fn that takes Tensor inputs and returns a tuple of Tensors or a Tensor.
 
     Inputs:
-        - **inputs** (Tensors) - The inputs to `net`. Must be a tuple or a list.
+        - **inputs** (Tensors) - The inputs to `fn`. Must be a tuple or a list.
         - **v** (Tensors or Tuple of Tensors) - The vector for which the vector Jacobian product is computed.
-          Must have the same size as the output of `network`.
+          Must have the same size as the output of `fn`.
 
     Outputs:
         A tuple with 2 Tensors or Tuple of Tensors:
 
-        - **net_output** (Tensors or Tuple of Tensors) - The output of `network(inputs)`.
+        - **net_output** (Tensors or Tuple of Tensors) - The output of `fn(inputs)`.
         - **vjp** (Tensors or Tuple of Tensors) - The result of the dot product.
 
     Supported Platforms:
