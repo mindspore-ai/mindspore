@@ -207,6 +207,10 @@ public class SyncFLJob {
     private FLClientStatus startFLJob(FLLiteClient flLiteClient) {
         FLClientStatus curStatus = flLiteClient.startFLJob();
         while (curStatus == FLClientStatus.WAIT) {
+            if (checkStopJobFlag()) {
+                curStatus = FLClientStatus.FAILED;
+                break;
+            }
             waitSomeTime();
             curStatus = flLiteClient.startFLJob();
         }
@@ -216,6 +220,10 @@ public class SyncFLJob {
     private FLClientStatus updateModel(FLLiteClient flLiteClient) {
         FLClientStatus curStatus = flLiteClient.updateModel();
         while (curStatus == FLClientStatus.WAIT) {
+            if (checkStopJobFlag()) {
+                curStatus = FLClientStatus.FAILED;
+                break;
+            }
             waitSomeTime();
             curStatus = flLiteClient.updateModel();
         }
@@ -225,6 +233,10 @@ public class SyncFLJob {
     private FLClientStatus getModel(FLLiteClient flLiteClient) {
         FLClientStatus curStatus = flLiteClient.getModel();
         while (curStatus == FLClientStatus.WAIT) {
+            if (checkStopJobFlag()) {
+                curStatus = FLClientStatus.FAILED;
+                break;
+            }
             waitSomeTime();
             curStatus = flLiteClient.getModel();
         }

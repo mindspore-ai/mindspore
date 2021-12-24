@@ -420,12 +420,6 @@ public class StartFLJob {
             return FLClientStatus.FAILED;
         }
 
-        if (flJob.featureMapLength() <= 0) {
-            LOGGER.severe(Common.addTag("[startFLJob] the feature size get from server is zero"));
-            retCode = ResponseCode.SystemError;
-            return FLClientStatus.FAILED;
-        }
-
         retCode = flJob.retcode();
         LOGGER.info(Common.addTag("[startFLJob] ==========the response message of startFLJob is:================"));
         LOGGER.info(Common.addTag("[startFLJob] return retCode: " + retCode));
@@ -440,6 +434,11 @@ public class StartFLJob {
 
         switch (responseRetCode) {
             case (ResponseCode.SUCCEED):
+                if (flJob.featureMapLength() <= 0) {
+                    LOGGER.severe(Common.addTag("[startFLJob] the feature size get from server is zero"));
+                    retCode = ResponseCode.SystemError;
+                    return FLClientStatus.FAILED;
+                }
                 localFLParameter.setServerMod(flPlanConfig.serverMode());
                 if (flPlanConfig.lr() != 0) {
                     lr = flPlanConfig.lr();
