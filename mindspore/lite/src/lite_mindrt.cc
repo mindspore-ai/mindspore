@@ -272,7 +272,14 @@ int LiteOpActor::CreateCommonArrow(const std::unordered_map<void *, std::set<std
       output_data_arrows_.push_back(arrow);
     }
   }
+  return RET_OK;
+}
 
+int LiteOpActor::CreateEmptyArrow(const size_t &output_index) {
+  AID non;
+  auto arrow = std::make_shared<DataArrow>(output_index, non, output_index);
+  MS_CHECK_TRUE_MSG(arrow != nullptr, RET_ERROR, "create arrow failed.");
+  output_data_arrows_.push_back(arrow);
   return RET_OK;
 }
 
@@ -286,7 +293,12 @@ int LiteOpActor::CompileArrowThroughOutputTensors(
   for (size_t i = 0; i < output_tensors_size; ++i) {
     auto receiver_tensors = ctx_->GetLinkInfo(output_tensors[i]);
     if (receiver_tensors.empty()) {
-      MS_LOG(DEBUG) << "may be graph output.";
+      MS_LOG(DEBUG) << "create when running.";
+      auto ret = CreateEmptyArrow(i);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "CreateEmptyArrow failed, output tensor name: " << output_tensors[i]->tensor_name();
+        return ret;
+      }
       continue;
     }
     auto ret = CreateCommonArrow(receivers_map, subgraph_inputs_set, receiver_tensors, i, &receiver_index_set);

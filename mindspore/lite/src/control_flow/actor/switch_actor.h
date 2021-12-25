@@ -68,7 +68,6 @@ class LiteSwitchOpActor : public LiteOpActor {
   std::vector<kernel::LiteKernel *> partial_nodes_{};
   kernel::LiteKernel *switch_type_node_ = nullptr;
   kernel::LiteKernel *call_node_ = nullptr;
-  std::vector<lite::Tensor *> output_tensors_{};
 
   // each element is a set of output data which is going to be send to the next target actor.
   std::vector<std::vector<OpDataPtr<Tensor>>> all_branchs_output_data_;

@@ -81,14 +81,15 @@ int LiteSwitchOpActor::GetSwitchAndCallNode(kernel::SubGraphKernel *subgraph_ker
 }
 
 void LiteSwitchOpActor::AppendOutputTensors() {
+  auto output_tensors = kernel_->out_tensors();
   for (auto &partial_node : partial_nodes_) {
     for (auto &tensor : partial_node->in_tensors()) {
-      if (std::find(output_tensors_.begin(), output_tensors_.end(), tensor) == output_tensors_.end()) {
-        output_tensors_.push_back(tensor);
+      if (std::find(output_tensors.begin(), output_tensors.end(), tensor) == output_tensors.end()) {
+        output_tensors.push_back(tensor);
       }
     }
   }
-  kernel_->set_out_tensors(output_tensors_);
+  kernel_->set_out_tensors(output_tensors);
 }
 
 int LiteSwitchOpActor::ModifySubgraphKernel() {
@@ -126,7 +127,7 @@ int LiteSwitchOpActor::UpdateActorOutput() {
       ++iter;
     }
   }
-  output_tensors_ = output_tensors;
+  kernel_->set_out_tensors(output_tensors);
   return RET_OK;
 }
 
@@ -143,7 +144,7 @@ int LiteSwitchOpActor::CompileArrow(const std::unordered_map<void *, std::set<st
     return ret;
   }
 
-  if (!output_tensors_.empty()) {
+  if (!kernel_->out_tensors().empty()) {
     CompileArrowThroughOutputTensors(receivers_map);
   }
 
