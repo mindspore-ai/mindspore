@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,57 @@ bool ResizeNearestNeighbor::get_align_corners() const {
   auto value_ptr = GetAttr(kAlignCorners);
   return GetValue<bool>(value_ptr);
 }
-REGISTER_PRIMITIVE_C(kNameResizeNearestNeighbor, ResizeNearestNeighbor);
+
+namespace {
+abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+  auto x_shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, 0);
+  auto x_shape = x_shape_ptr->shape();
+  ValuePtr size_ptr;
+  if (x_shape_ptr->IsDynamic()) {
+    size_ptr = input_args[1]->BuildValue();
+  } else {
+    size_ptr = primitive->GetAttr(kSize);
+  }
+  auto size_v = CheckAndConvertUtils::CheckIntOrTupleInt("size", size_ptr, prim_name);
+  (void)CheckAndConvertUtils::CheckPositiveVector("size", size_v, prim_name);
+  const int64_t shape_size = 4;
+  const int64_t size_size = 2;
+  (void)CheckAndConvertUtils::CheckInteger("the dimension of input_x", SizeToLong(x_shape.size()), kEqual, shape_size,
+                                           prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("the dimension of size", SizeToLong(size_v.size()), kEqual, size_size,
+                                           prim_name);
+  x_shape.erase(x_shape.begin() + size_size, x_shape.end());
+  x_shape.insert(x_shape.end(), size_v.begin(), size_v.end());
+  if (x_shape_ptr->IsDynamic()) {
+    auto x_min_shape = x_shape_ptr->min_shape();
+    auto x_max_shape = x_shape_ptr->max_shape();
+    x_min_shape.erase(x_min_shape.begin() + size_size, x_min_shape.end());
+    x_min_shape.insert(x_min_shape.end(), size_v.begin(), size_v.end());
+    x_max_shape.erase(x_max_shape.begin() + size_size, x_max_shape.end());
+    x_max_shape.insert(x_max_shape.end(), size_v.begin(), size_v.end());
+    return std::make_shared<abstract::Shape>(x_shape, x_min_shape, x_max_shape);
+  }
+  return std::make_shared<abstract::Shape>(x_shape);
+}
+
+TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  auto valid_types = common_valid_types;
+  valid_types.insert(kComplex128);
+  valid_types.insert(kComplex64);
+  return CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), valid_types, prim->name());
+}
+}  // namespace
+AbstractBasePtr ResizeNearestNeighborInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                           const std::vector<AbstractBasePtr> &input_args) {
+  auto prim_name = primitive->name();
+  const int64_t input_num = 1;
+  (void)CheckAndConvertUtils::CheckInteger("infer", SizeToLong(CheckAndConvertUtils::GetRemoveMonadAbsNum(input_args)),
+                                           kEqual, input_num, prim_name);
+  return abstract::MakeAbstract(InferShape(primitive, input_args), InferType(primitive, input_args));
+}
+REGISTER_PRIMITIVE_EVAL_IMPL(ResizeNearestNeighbor, prim::kPrimResizeNearestNeighbor, ResizeNearestNeighborInfer,
+                             nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

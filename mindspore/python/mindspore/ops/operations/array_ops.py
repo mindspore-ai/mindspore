@@ -3807,7 +3807,7 @@ class ScatterNd(PrimitiveWithInfer):
                 'value': None}
 
 
-class ResizeNearestNeighbor(PrimitiveWithInfer):
+class ResizeNearestNeighbor(Primitive):
     r"""
     Resizes the input tensor by using the nearest neighbor algorithm.
 
@@ -3853,14 +3853,6 @@ class ResizeNearestNeighbor(PrimitiveWithInfer):
         for i, value in enumerate(size):
             validator.check_non_negative_int(value, f'{i}th value of size', self.name)
         self.init_prim_io_names(inputs=['image_in'], outputs=['image_out'])
-
-    def infer_shape(self, x_shape):
-        validator.check('the dimension of input_x', len(x_shape), '', 4, Rel.EQ, self.name)
-        return tuple(x_shape)[:-2] + tuple(super().get_attr_dict()['size'])
-
-    def infer_dtype(self, x_dtype):
-        validator.check_tensor_dtype_valid("x", x_dtype, mstype.number_type, self.name)
-        return x_dtype
 
 
 class GatherNd(Primitive):

@@ -22,6 +22,7 @@ from mindspore._checkparam import Validator as validator
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops.primitive import constexpr
 from mindspore.ops import functional as F
+from mindspore.ops.operations._inner_ops import DynamicResizeNearestNeighbor
 from .. import operations as P
 
 
@@ -39,6 +40,9 @@ def _check_validate_keepdims(keep_dims, name):
     keep_dims = validator.check_value_type('keep_dims', keep_dims, [bool], name)
     return keep_dims
 
+@constexpr
+def is_const(x):
+    return x is not None
 
 def count_nonzero(x, axis=(), keep_dims=False, dtype=mstype.int32):
     r"""
@@ -901,3 +905,51 @@ def cummin(x, axis):
         out1 = transpose(out1, prem)
         out2 = transpose(out2, prem)
     return [out1, out2]
+
+
+def resize_nearest_neighbor(input_x, size, align_corners=False):
+    r"""
+    Resizes the input tensor by using the nearest neighbor algorithm.
+
+    Resizes the input tensor to a given size by using the nearest neighbor algorithm. The nearest
+    neighbor algorithm selects the value of the nearest point and does not consider the
+    values of neighboring points at all, yielding a piecewise-constant interpolant.
+
+    Args:
+        input_x (Tensor) - The input tensor. The shape of the tensor is :math:`(N, C, H, W)`.
+        size (Union[Tensor, tuple, list]): The target size. The dimension of size must be 2.
+        align_corners (bool): Whether the centers of the 4 corner pixels of the input
+                              and output tensors are aligned. Default: False.
+
+    Outputs:
+        Tensor, the shape of the output tensor is  :math:`(N, C, NEW\_H, NEW\_W)`.
+        The data type is the same as the `input_x`.
+
+    Raises:
+        TypeError: If `input_x` is not a Tensor.
+        TypeError: If `size` is neither tuple nor list.
+        TypeError: If `align_corners` is not a bool.
+        ValueError: If length of `size` is not equal to 2.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_tensor = Tensor(np.array([[[[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]]]), mindspore.float32)
+        >>> output = ops.ResizeNearestNeighbor(input_tensor, (2, 2))
+        >>> print(output)
+        [[[[-0.1  0.3]
+           [ 0.4  0.5]]]]
+    """
+    if size is None:
+        raise ValueError(f'For ResizeNearestNeighbor, size could not be None.')
+    if isinstance(size, (tuple, list)):
+        resize = P.ResizeNearestNeighbor(size, align_corners)
+        return resize(input_x)
+    if is_const(size):
+        size = size.asnumpy()
+        resize = P.ResizeNearestNeighbor(size, align_corners)
+        return resize(input_x)
+
+    resize = DynamicResizeNearestNeighbor(align_corners)
+    return resize(input_x, size)
