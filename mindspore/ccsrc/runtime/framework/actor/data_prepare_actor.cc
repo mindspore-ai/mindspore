@@ -146,7 +146,8 @@ void PrepareDataForValue(const ValuePtr &value, const KernelWithIndex &node_with
     type = kNumberTypeInt32;
     (reinterpret_cast<int32_t *>(host_addr.get()))[0] = GetValue<int32_t>(value);
   } else {
-    MS_LOG(EXCEPTION) << "Invalid value:" << value->ToString();
+    std::string error_info = "Invalid value:" + value->ToString();
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
   }
 
   auto type_size = GetTypeByte(TypeIdToType(type));
