@@ -39,12 +39,11 @@ class ControlFlowScheduler {
       : context_(ctx), ms_context_(ms_ctx), src_tensors_(src_tensors) {}
   ~ControlFlowScheduler() = default;
   int SplitNonTailCallSubGraphs(std::vector<kernel::LiteKernel *> *dst_kernels);
-  void RecordPartialNodeCallMoreThanOnce(kernel::LiteKernel *partial_node);
+  void RecordSubgraphCaller(const size_t &subgraph_index, kernel::LiteKernel *partial_node);
   // we insert entrance subgraph kernel and exit subgraph kernel define the boundary of the subgraph.
   int BuildBoundaryForMultipleCalledGraph(std::vector<kernel::LiteKernel *> *dst_kernels);
 
  private:
-  bool IsNonTailCallSubGraph(kernel::SubGraphKernel *subgraph_kernel);
   int SplitSingleNonTailCallSubGraph(kernel::SubGraphKernel *subgraph_kernel,
                                      std::vector<kernel::LiteKernel *> *subgraph_kernels);
   std::set<kernel::LiteKernel *> GetNonTailCallSubGraphs(std::vector<kernel::LiteKernel *> *dst_kernels);
@@ -64,11 +63,8 @@ class ControlFlowScheduler {
   std::vector<Tensor *> *src_tensors_ = nullptr;
   std::queue<kernel::LiteKernel *> to_process_q_{};
   std::vector<kernel::LiteKernel *> non_tail_calls_{};
-  // key is partial node, value is the corresponding call node.
-  std::set<kernel::LiteKernel *> more_than_once_called_partial_nodes_{};
-  // record subgraph which has been inserted entrance and exit subgraph node, the key is subgraph kernel, the value is
-  // the exit kernel.
-  std::unordered_map<kernel::LiteKernel *, kernel::LiteKernel *> subgraph_kernel_and_exit_kernel_{};
+  // key is subgraph index, value is the corresponding partial nodes.
+  std::unordered_map<size_t, std::set<kernel::LiteKernel *>> more_than_once_called_partial_nodes_{};
 };
 
 using ControlFlowSchedulerPtr = std::shared_ptr<ControlFlowScheduler>;

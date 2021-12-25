@@ -38,7 +38,6 @@ class MindIRControlFlowAdjust {
   int ModifyFgToCallAfterFg(const FuncGraphPtr &fg, const FuncGraphPtr &after_fg);
   bool HasCallAfter(const FuncGraphPtr &partial_fg);
   FuncGraphPtr AddAfterFuncGraph(const FuncGraphPtr &fg, const std::vector<AnfNodePtr> &one_of_inline_fg_output);
-  int AddAfterFgForInlinedFg(const std::set<FuncGraphPtr> &all_func_graphs, const FuncGraphPtr &main_fg);
   int InsertPartialFusionForRawCall(const std::set<FuncGraphPtr> &all_func_graphs);
   int ResetFuncGraph(const FuncGraphPtr &fg, std::set<FuncGraphPtr> all_func_graphs);
   int MoveCallInputsToPartialFusionInputs(const std::set<FuncGraphPtr> &all_func_graphs);

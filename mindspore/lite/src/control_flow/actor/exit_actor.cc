@@ -72,25 +72,13 @@ void LiteExitOpActor::SetInputShape() {
     if (output_tensor->shape() == inputs_data_[i]->shape()) {
       continue;
     }
-    MS_LOG(DEBUG) << "inputs_data_[" << i << "].shape: " << inputs_data_[i]->shape() << " vs kernel_->out_tensors()["
-                  << i << "].shape: " << kernel_->out_tensors()[i]->shape() << " are not equal.";
-    MS_LOG(DEBUG) << "this->kernel_->name(): " << this->kernel_->name();
 
     if (output_tensor->data_type() == kObjectTypeTensorType) {
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
-      auto input_tensorlist = reinterpret_cast<TensorList *>(output_tensor);
-      auto input_data_tensorlist = reinterpret_cast<TensorList *>(inputs_data_[i]);
-      input_tensorlist->FreeTensorListData();
-      input_tensorlist->set_element_shape(input_data_tensorlist->element_shape());
-      input_tensorlist->set_shape(input_data_tensorlist->shape());
-      std::vector<std::vector<int>> tensor_shape{};
-      std::transform(input_data_tensorlist->tensors().begin(), input_data_tensorlist->tensors().end(),
-                     std::back_inserter(tensor_shape), [](const Tensor *tensor_item) { return tensor_item->shape(); });
-      input_tensorlist->MallocTensorListData(input_data_tensorlist->tensors_data_type(), tensor_shape);
+      SetTensorListShape(output_tensor, inputs_data_[i]);
 #endif
     } else {
-      output_tensor->set_shape(inputs_data_[i]->shape());
-      output_tensor->set_format(inputs_data_[i]->format());
+      SetTensorShape(output_tensor, inputs_data_[i]);
     }
   }
 }
