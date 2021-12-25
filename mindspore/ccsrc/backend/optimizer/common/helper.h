@@ -132,6 +132,8 @@ std::vector<int64_t> Convert2Long(const std::vector<size_t> &v);
 
 // check whether node depends on either of nodes or not
 bool IsDepend(const FuncGraph &graph, const AnfNodePtr &node, const std::vector<AnfNodePtr> &nodes);
+bool IsDepend(const FuncGraph &graph, const AnfNodePtr &node, const std::vector<AnfNodePtr> &nodes,
+              mindspore::HashSet<AnfNodePtr> *visited_nodes);
 
 bool UnVisited(const BaseRef &n);
 

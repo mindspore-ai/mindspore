@@ -71,19 +71,25 @@ std::vector<int64_t> Convert2Long(const std::vector<size_t> &v) {
 }
 
 bool IsDepend(const FuncGraph &graph, const AnfNodePtr &node, const std::vector<AnfNodePtr> &nodes) {
+  mindspore::HashSet<AnfNodePtr> visited_nodes;
+  return IsDepend(graph, node, nodes, &visited_nodes);
+}
+
+bool IsDepend(const FuncGraph &graph, const AnfNodePtr &node, const std::vector<AnfNodePtr> &nodes,
+              mindspore::HashSet<AnfNodePtr> *visited_nodes) {
   MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(visited_nodes);
   FuncGraphManagerPtr manager = graph.manager();
   MS_EXCEPTION_IF_NULL(manager);
 
-  mindspore::HashSet<AnfNodePtr> seen_node;
   std::deque<AnfNodePtr> todo{node};
   while (!todo.empty()) {
     AnfNodePtr nd = todo.front();
     todo.pop_front();
-    if (seen_node.count(nd) > 0 || !manager->all_nodes().contains(nd)) {
+    if (visited_nodes->count(nd) > 0 || !manager->all_nodes().contains(nd)) {
       continue;
     }
-    (void)seen_node.insert(nd);
+    (void)visited_nodes->insert(nd);
 
     if (std::any_of(nodes.begin(), nodes.end(), [&nd](const AnfNodePtr &item) { return nd == item; })) {
       return true;
