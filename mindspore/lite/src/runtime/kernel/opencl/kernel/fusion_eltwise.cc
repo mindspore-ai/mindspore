@@ -518,7 +518,7 @@ std::string FusionEltwiseOpenCLKernel::GetFormatVarName(std::string name) {
       std::replace_if(
         name.begin(), name.end(), [](char c) { return !std::isalnum(c); }, '_');
     }
-    auto new_name = "tmp" + name + "_" + std::to_string(var_names_.size());
+    auto new_name = "tmp_" + name + "_" + std::to_string(var_names_.size());
     var_names_.emplace(name, new_name);
     return simplify_var_name_ ? new_name : name;
   }
