@@ -18,6 +18,7 @@ package com.mindspore.flclient.model;
 
 import com.mindspore.flclient.Common;
 import com.mindspore.flclient.FLClientStatus;
+import com.mindspore.flclient.LocalFLParameter;
 import com.mindspore.lite.LiteSession;
 import com.mindspore.lite.MSTensor;
 import com.mindspore.lite.TrainSession;
@@ -199,9 +200,14 @@ public abstract class Client {
     }
 
     private Status runModel(int epochs, List<Callback> callbacks, DataSet dataSet) {
+        LocalFLParameter localFLParameter = LocalFLParameter.getInstance();
         long startTime = System.currentTimeMillis();
         for (int i = 0; i < epochs; i++) {
             for (int j = 0; j < dataSet.batchNum; j++) {
+                if (localFLParameter.isStopJobFlag()) {
+                    logger.info(Common.addTag("the stopJObFlag is set to true, the job will be stop"));
+                    return Status.FAILED;
+                }
                 fillModelInput(dataSet, j);
                 boolean isSuccess = trainSession.runGraph();
                 if (!isSuccess) {
