@@ -53,6 +53,8 @@ struct BufferFusionInfo_t {
   std::vector<AnfNodePtr> inputs_list;
   std::vector<AnfNodePtr> outputs_list;
   kernel::KernelBuildInfoPtr kernel_build_info;
+  bool all_inputs_to_first_node = true;
+  bool all_outputs_from_last_node = true;
 };
 
 class FusionBasePass : public PassWithSwitch {
