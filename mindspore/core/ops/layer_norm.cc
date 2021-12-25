@@ -61,10 +61,12 @@ AbstractBasePtr LayerNormInfer(const abstract::AnalysisEnginePtr &, const Primit
 
   // begin_norm_axis and begin_params_axis should be smaller than the size of input_x and >= -1
   ValuePtr bna_ptr = primitive->GetAttr("begin_norm_axis");
-  int64_t begin_norm_axis = abstract::CheckAxis(op_name, "begin_norm_axis", bna_ptr, -1, SizeToLong(input_rank));
+  int64_t begin_norm_axis =
+    abstract::CheckAxis(op_name, "begin_norm_axis", bna_ptr, -1, SizeToLong(input_rank), "input_x");
 
   ValuePtr bpa_ptr = primitive->GetAttr("begin_params_axis");
-  int64_t begin_params_axis = abstract::CheckAxis(op_name, "begin_params_axis", bpa_ptr, -1, SizeToLong(input_rank));
+  int64_t begin_params_axis =
+    abstract::CheckAxis(op_name, "begin_params_axis", bpa_ptr, -1, SizeToLong(input_rank), "input_x");
 
   // the beta and gama shape should be x_shape[begin_params_axis:]
   auto valid_types = {kFloat16, kFloat32};
