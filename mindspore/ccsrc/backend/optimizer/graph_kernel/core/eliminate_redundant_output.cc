@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "backend/optimizer/graph_kernel/eliminate_redundant_output.h"
+#include "backend/optimizer/graph_kernel/core/eliminate_redundant_output.h"
 
 #include <memory>
 #include <algorithm>
@@ -22,13 +22,10 @@
 #include <utility>
 
 #include "base/core_ops.h"
+#include "ir/anf.h"
 #include "ir/graph_utils.h"
-#include "backend/optimizer/common/helper.h"
-#include "backend/session/anf_runtime_algorithm.h"
-#include "debug/anf_ir_dump.h"
-#include "backend/kernel_compiler/common_utils.h"
-#include "backend/optimizer/graph_kernel/graph_kernel_helper.h"
-#include "backend/optimizer/graph_kernel/update_state_formatter.h"
+#include "utils/anf_utils.h"
+#include "backend/optimizer/graph_kernel/core/graph_kernel_callback.h"
 #include "backend/optimizer/graph_kernel/core/graph_builder.h"
 
 namespace mindspore::graphkernel {
@@ -48,7 +45,7 @@ void SetIndex(const AnfNodePtr &getitem_node, size_t index) {
   auto idx_node = NewValueNode(MakeValue<int64_t>(SizeToLong(index)));
   auto abstract = std::make_shared<abstract::AbstractScalar>(std::make_shared<Int64Imm>(index));
   idx_node->set_abstract(abstract);
-  idx_node->set_kernel_info(std::make_shared<device::KernelInfo>());
+  Callback::Instance()->SetEmptyKernelInfo(idx_node);
   getitem->set_input(kInputNodeOutputIndexInTupleGetItem, idx_node);
 }
 }  // namespace
@@ -57,7 +54,7 @@ bool GetGraphKernelGetitemList(const FuncGraphManagerPtr &mng, const AnfNodePtr 
                                bool merge_repeated_getitem) {
   MS_EXCEPTION_IF_NULL(mng);
   MS_EXCEPTION_IF_NULL(getitem_list);
-  auto func_graph = AnfAlgo::GetCNodeFuncGraphPtr(node);
+  auto func_graph = GetCNodeFuncGraph(node);
   MS_EXCEPTION_IF_NULL(func_graph);
   auto output = func_graph->output();
   if (!IsPrimitiveCNode(output, prim::kPrimMakeTuple)) {
@@ -91,8 +88,7 @@ AnfNodePtrList FindGraphKernelsWithMultiOutput(const FuncGraphPtr &func_graph) {
   auto todos = TopoSort(func_graph->get_return());
   AnfNodePtrList result;
   std::copy_if(todos.begin(), todos.end(), std::back_inserter(result), [](const AnfNodePtr &node) {
-    return AnfAlgo::IsGraphKernel(node) &&
-           IsPrimitiveCNode(AnfAlgo::GetCNodeFuncGraphPtr(node)->output(), prim::kPrimMakeTuple);
+    return AnfUtils::IsGraphKernel(node) && IsPrimitiveCNode(GetCNodeFuncGraph(node)->output(), prim::kPrimMakeTuple);
   });
   return result;
 }
@@ -128,7 +124,7 @@ class UnifyRepeatedOutput : public opt::Pass {
     auto todos = FindGraphKernelsWithMultiOutput(func_graph);
     bool changed = false;
     for (auto node : todos) {
-      if (CheckRepeatedOutput(AnfAlgo::GetCNodeFuncGraphPtr(node))) {
+      if (CheckRepeatedOutput(GetCNodeFuncGraph(node))) {
         changed = true;
         AnfNodePtrList getitem_list;
         GetGraphKernelGetitemList(mng, node, &getitem_list, false);
@@ -223,7 +219,7 @@ void EliminateHangingOutput::UpdateGetitemIndex(const AnfNodePtr &getitem, size_
 }
 
 AnfNodePtr EliminateHangingOutput::ReplaceMakeTuple(const AnfNodePtr &node, const AnfNodePtrList &getitems) const {
-  auto func_graph = AnfAlgo::GetCNodeFuncGraphPtr(node);
+  auto func_graph = GetCNodeFuncGraph(node);
   MS_EXCEPTION_IF_NULL(func_graph);
   auto old_maketuple = func_graph->output()->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(old_maketuple);
@@ -246,12 +242,13 @@ AnfNodePtr EliminateHangingOutput::ReplaceMakeTuple(const AnfNodePtr &node, cons
   if (new_maketuple_inputs.size() == 1) {
     MS_LOG(EXCEPTION) << "Input of MakeTuple could not be empty";
   }
-  if (new_maketuple_inputs.size() == 2) {
+  constexpr size_t maketuple_one_input_size = 2;
+  if (new_maketuple_inputs.size() == maketuple_one_input_size) {
     func_graph->set_output(new_maketuple_inputs.back());
   } else {
     auto make_tuple = func_graph->NewCNode(new_maketuple_inputs);
     make_tuple->set_abstract(std::make_shared<abstract::AbstractTuple>(abstract_list));
-    make_tuple->set_kernel_info(std::make_shared<device::KernelInfo>());
+    Callback::Instance()->SetEmptyKernelInfo(make_tuple);
     func_graph->set_output(make_tuple);
   }
 
@@ -272,7 +269,7 @@ bool EliminateHangingOutput::Run(const FuncGraphPtr &func_graph) {
     GetGraphKernelGetitemList(mng, node, &getitems, false);
     auto new_node = ReplaceMakeTuple(node, getitems);
     if (new_node != nullptr) {
-      if (!IsPrimitiveCNode(AnfAlgo::GetCNodeFuncGraphPtr(new_node)->output(), prim::kPrimMakeTuple)) {
+      if (!IsPrimitiveCNode(GetCNodeFuncGraph(new_node)->output(), prim::kPrimMakeTuple)) {
         // only one output, remove the getitem.
         auto i = std::find_if(getitems.begin(), getitems.end(), [](const AnfNodePtr &node) { return node != nullptr; });
         if (i != getitems.end()) {

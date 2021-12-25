@@ -24,7 +24,7 @@
 #include "backend/kernel_compiler/common_utils.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_helper.h"
 #include "backend/optimizer/graph_kernel/core/graph_kernel_utils.h"
-#include "backend/optimizer/graph_kernel/eliminate_redundant_output.h"
+#include "backend/optimizer/graph_kernel/core/eliminate_redundant_output.h"
 
 namespace mindspore::graphkernel {
 AnfNodePtrList GetUpdateStateList(const FuncGraphPtr &func_graph) {
