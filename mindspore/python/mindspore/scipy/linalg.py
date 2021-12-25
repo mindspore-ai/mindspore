@@ -61,19 +61,20 @@ def block_diag(*arrs):
         >>> C = Tensor(onp.array([[7]]))
         >>> P = Tensor(onp.zeros((2, ), dtype='int32'))
         >>> block_diag(A, B, C)
+        Tensor(shape=[5, 6], dtype=Int64, value=
         [[1, 0, 0, 0, 0, 0],
          [0, 1, 0, 0, 0, 0],
          [0, 0, 3, 4, 5, 0],
          [0, 0, 6, 7, 8, 0],
-         [0, 0, 0, 0, 0, 7]]
+         [0, 0, 0, 0, 0, 7]])
         >>> block_diag(A, P, B, C)
-        [[1, 0, 0, 0, 0, 0],
-         [0, 1, 0, 0, 0, 0],
-         [0, 0, 0, 0, 0, 0],
-         [0, 0, 0, 0, 0, 0],
-         [0, 0, 3, 4, 5, 0],
-         [0, 0, 6, 7, 8, 0],
-         [0, 0, 0, 0, 0, 7]]
+        Tensor(shape=[6, 8], dtype=Int64, value=
+        [[1, 0, 0 ... 0, 0, 0],
+         [0, 1, 0 ... 0, 0, 0],
+         [0, 0, 0 ... 0, 0, 0],
+         [0, 0, 0 ... 4, 5, 0],
+         [0, 0, 0 ... 7, 8, 0],
+         [0, 0, 0 ... 0, 0, 7]])
     """
     if not arrs:
         return mnp.zeros((1, 0))
@@ -326,9 +327,12 @@ def eigh(a, b=None, lower=True, eigvals_only=False, overwrite_a=False,
     Find eigenvalues Tensor `w` and optionally eigenvectors Tensor `v` of Tensor `a`,
     where `b` is positive definite such that for every eigenvalue `λ` (i-th entry of w) and
     its eigenvector `vi` (i-th column of `v`) satisfies:
+
+    .. math::
         a @ vi = λ * b @ vi
         vi.conj().T @ a @ vi = λ
         vi.conj().T @ b @ vi = 1
+
     In the standard problem, `b` is assumed to be the identity matrix.
 
     Args:
@@ -342,9 +346,12 @@ def eigh(a, b=None, lower=True, eigvals_only=False, overwrite_a=False,
             Default: False.
         _type (int, optional): For the generalized problems, this keyword specifies the problem type
             to be solved for `w` and `v` (only takes 1, 2, 3 as possible inputs):
+
+            .. math::
                 1 =>     a @ v = w @ b @ v
                 2 => a @ b @ v = w @ v
                 3 => b @ a @ v = w @ v
+
             This keyword is ignored for standard problems. Default: 1.
         overwrite_a (bool, optional): Whether to overwrite data in `a` (may improve performance). Default: False.
         overwrite_b (bool, optional): Whether to overwrite data in `b` (may improve performance). Default: False.
@@ -370,15 +377,15 @@ def eigh(a, b=None, lower=True, eigvals_only=False, overwrite_a=False,
 
     Supported Platforms:
         ``CPU`` ``GPU``
-
+onp.array(
     Examples:
-        >>> import numpy as onp
+        >>> import mindspore.numpy as mnp
         >>> from mindspore.common import Tensor
         >>> from mindspore.scipy.linalg import eigh
-        >>> A = Tensor(onp.array([[6, 3, 1, 5], [3, 0, 5, 1], [1, 5, 6, 2], [5, 1, 2, 2]]))
+        >>> A = Tensor([[6., 3., 1., 5.], [3., 0., 5., 1.], [1., 5., 6., 2.], [5., 1., 2., 2.]])
         >>> w, v = eigh(A)
-        >>> onp.allclose(A @ v - v @ onp.diag(w), onp.zeros((4, 4)))
-        True
+        >>> mnp.sum(mnp.dot(A, v) - mnp.dot(v, mnp.diag(w))) < 1e-10
+        Tensor(shape=[], dtype=Bool, value= True)
     """
     eigh_net = EighNet(not eigvals_only, lower=True)
     return eigh_net(a)

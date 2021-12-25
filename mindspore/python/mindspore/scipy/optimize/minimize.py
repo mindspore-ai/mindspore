@@ -64,10 +64,6 @@ def minimize(func, x0, args=(), *, method, tol=None, options=None):
     It does not yet support differentiation or arguments in the form of
     multi-dimensional Tensor, but support for both is planned.
 
-    Note:
-        On CPU, the supported dtypes is float32.
-        On GPU, the supported dtypes is float32.
-
     Args:
       func (Callable): the objective function to be minimized, :math:`fun(x, *args) -> float`,
         where `x` is a 1-D array with shape :math:`(n,)` and `args` is a tuple
@@ -78,7 +74,7 @@ def minimize(func, x0, args=(), *, method, tol=None, options=None):
       args (Tuple): extra arguments passed to the objective function. Default: ().
       method (str): solver type. Currently only `"BFGS"` is supported.
       tol (float, optional): tolerance for termination. For detailed control, use solver-specific
-        options.
+        options. Default: None.
       options (Mapping[str, Any], optional): a dictionary of solver options. All methods accept the following
         generic options, Default: None.
 
@@ -101,7 +97,7 @@ def minimize(func, x0, args=(), *, method, tol=None, options=None):
         >>>     return (x ** 2 + y - 11.) ** 2 + (x + y ** 2 - 7.) ** 2
         >>> res = minimize(func, x0, method='BFGS', options=dict(maxiter=None, gtol=1e-6))
         >>> res.x
-        [3. 2.]
+        Tensor(shape=[2], dtype=Float32, value= [ 3.00000000e+00,  2.00000000e+00])
     """
     if options is None:
         options = {}
