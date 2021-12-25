@@ -1183,6 +1183,15 @@ Strategys CheckBroadcast(const std::vector<std::shared_ptr<OperatorInfo>> &ops, 
   } else {  // Broadcasting can be ignored or No broadcasting needs to be applied.
     stra = CheckDivisible(ops, iter_ops, s);
   }
+  // Strategy protection to avoid that partition number is larger than the shape of related dimension.
+  for (size_t i = 0; i < ops[iter_ops]->inputs_tensor_info().size(); i++) {
+    for (size_t j = 0; j < ops[iter_ops]->inputs_tensor_info()[i].shape().size(); j++) {
+      if (stra[i][j] > ops[iter_ops]->inputs_tensor_info()[i].shape()[j] ||
+          ops[iter_ops]->inputs_tensor_info()[i].shape()[j] % stra[i][j] != 0) {
+        stra[i][j] = 1;
+      }
+    }
+  }
 
   return stra;
 }
