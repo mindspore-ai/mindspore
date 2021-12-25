@@ -5978,3 +5978,51 @@ class CholeskyInverse(Primitive):
         """Initialize CholeskyInverse"""
         validator.check_value_type("upper", upper, [bool], self.name)
         self.upper = upper
+
+
+class Cross(Primitive):
+    """
+    Returns the cross product of vectors in dimension `dim` of x1 and x2.
+    x1 and x2 must have the same shape and the same type, and the size of their `dim` dimension should be 3.
+    If `dim` is not given, it defaults to the first dimension found with the size 3.
+
+    Args:
+        dim (int): The default value is -65530.
+
+    Inputs:
+        - **x1** (Tensor) - x1 is a tensor.
+          x1 and x2 must have the same shape and the same type, and the size of their `dim` dimension should be 3.
+        - **x2** (Tensor) - x2 is a tensor.
+
+    Outputs:
+        Tensor, has the same shape and type as input.
+
+    Raises:
+        TypeError: If `x1` is not a Tensor.
+        TypeError: If `x2` is not a Tensor.
+        TypeError: If the type of `x1` is not the same as that of `x2`.
+        ValueError: If `x1` and `x2` not have the same size, and the size of their `dim` dimension not be 3.
+        ValueError: If `x1` and `x2` not have the same shape.
+        ValueError: If `dim` is out of range, `dim` should be [-len(x1.shape), len(x1.shape)-1].
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> from mindspore.common import dtype as mstype
+        >>> import mindspore.ops as ops
+        >>> cross = ops.Cross(dim = 0)
+        >>> x1 = Tensor([1, 2, 3], mstype.int8)
+        >>> x2 = Tensor([1, 2, 3], mstype.int8)
+        >>> output = cross(x1, x2)
+        >>> print(output)
+        [0, 0, 0]
+    """
+
+    @prim_attr_register
+    def __init__(self, dim=-65530):
+        validator.check_value_type('dim', dim, [int], self.name)
+        self.init_prim_io_names(inputs=['x1', 'x2'], outputs=['y'])

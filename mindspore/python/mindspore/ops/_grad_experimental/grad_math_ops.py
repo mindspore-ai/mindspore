@@ -312,3 +312,14 @@ def get_bprop_ger(self):
         return dx, dy
 
     return bprop
+
+
+@bprop_getters.register(P.Cross)
+def get_bprop_cross(self):
+    """Grad definition for 'Cross' operation"""
+    cross = P.Cross(dim=self.dim)
+
+    def bprop(input1, input2, out, dout):
+        return cross(input2, dout), cross(dout, input1)
+
+    return bprop
