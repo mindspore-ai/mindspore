@@ -180,18 +180,7 @@ void UpdateRefCount(const AnfNodePtr &node, size_t output_idx, bool is_max_ref_c
 AnfNodePtr FetchFrontNodeByBackendNode(const AnfNodePtr &backend_node, const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(backend_node);
   MS_EXCEPTION_IF_NULL(graph);
-
-  // Internal parameter ---> front node.
-  auto front_node_with_index = graph->GetFrontNodeByInternalParameter(backend_node);
-  if (front_node_with_index.first != nullptr) {
-    return front_node_with_index.first;
-  }
-
-  auto front_node = graph->GetFrontAnfByBackendAnf(backend_node);
-  // PyNative forward graph does not has front node, using backend node instead.
-  if (front_node == nullptr) {
-    front_node = backend_node;
-  }
+  auto front_node = AnfAlgo::FetchFrontNodeByBackendNode(backend_node, *graph);
   return front_node;
 }
 

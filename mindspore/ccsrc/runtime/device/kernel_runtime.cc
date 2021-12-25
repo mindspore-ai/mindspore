@@ -562,7 +562,11 @@ void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph &graph) {
       return;
     }
     if (NodeOutputDeviceAddressExist(node, 0)) {
-      return;
+      const auto &address = AnfAlgo::GetOutputAddr(node, 0);
+      MS_EXCEPTION_IF_NULL(address);
+      if (address->GetPtr() != nullptr) {
+        return;
+      }
     }
     auto input_param = node->cast<ParameterPtr>();
     if (input_param != nullptr && !input_param->IsUsedByRealKernelInGraph(graph_id)) {
@@ -646,6 +650,9 @@ void KernelRuntime::GetDeviceAddress(const AnfNodePtr &item,
     TypeId output_type_id = AnfAlgo::GetOutputDeviceDataType(item, index);
     *device_address =
       CreateDeviceAddress(nullptr, tensor_size, AnfAlgo::GetOutputFormat(item, index), output_type_id, {item, index});
+  }
+  if (*device_address != nullptr && (*device_address)->GetPtr() == nullptr) {
+    auto tensor_size = AnfAlgo::GetOutputTensorMemSize(item, index);
     (*device_address)->set_host_shape(trans::GetRuntimePaddingShape(item, index));
     MS_LOG(INFO) << "Assign Static Memory for Input node, size:" << tensor_size
                  << " node:" << item->fullname_with_scope() << " index: " << index;
