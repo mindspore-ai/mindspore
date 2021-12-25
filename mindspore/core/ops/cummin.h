@@ -28,7 +28,7 @@
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameCummin = "kCummin";
+constexpr auto kNameCummin = "Cummin";
 class Cummin : public PrimitiveC {
  public:
   Cummin() : PrimitiveC(kNameCummin) { InitIOName({"x"}, {"y"}); }
