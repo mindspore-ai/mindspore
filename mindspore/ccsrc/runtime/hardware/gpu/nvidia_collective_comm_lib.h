@@ -109,7 +109,35 @@ class EXPORT_NCCL_WRAPPER NvidiaCollectiveCommLib : public CollectiveCommunicati
 };
 }  // namespace gpu
 
+// This method 'communication_lib_instance' is already registered in collective_comm_lib_loader.h
 extern "C" EXPORT_NCCL_WRAPPER CollectiveCommunicationLib *communication_lib_instance();
+
+extern "C" EXPORT_NCCL_WRAPPER ncclResult_t AllReduce(const void *, void *, size_t, ncclDataType_t, ncclRedOp_t,
+                                                      const std::string &, cudaStream_t);
+extern "C" EXPORT_NCCL_WRAPPER ncclResult_t AllGather(const void *, void *, size_t, ncclDataType_t, const std::string &,
+                                                      cudaStream_t);
+extern "C" EXPORT_NCCL_WRAPPER ncclResult_t ReduceScatter(const void *, void *, size_t, ncclDataType_t, ncclRedOp_t,
+                                                          const std::string &, cudaStream_t);
+extern "C" EXPORT_NCCL_WRAPPER ncclResult_t Broadcast(const void *, void *, size_t, ncclDataType_t, int,
+                                                      const std::string &, cudaStream_t);
+extern "C" EXPORT_NCCL_WRAPPER ncclResult_t Send(const void *, size_t, ncclDataType_t, int, const std::string &,
+                                                 cudaStream_t);
+extern "C" EXPORT_NCCL_WRAPPER ncclResult_t Recv(void *, size_t, ncclDataType_t, int, const std::string &,
+                                                 cudaStream_t);
+extern "C" EXPORT_NCCL_WRAPPER ncclResult_t GroupStart();
+extern "C" EXPORT_NCCL_WRAPPER ncclResult_t GroupEnd();
 }  // namespace device
 }  // namespace mindspore
+
+ORIGIN_METHOD(AllReduce, ncclResult_t, const void *, void *, size_t, ncclDataType_t, ncclRedOp_t, const std::string &,
+              cudaStream_t)
+ORIGIN_METHOD(AllGather, ncclResult_t, const void *, void *, size_t, ncclDataType_t, const std::string &, cudaStream_t)
+ORIGIN_METHOD(ReduceScatter, ncclResult_t, const void *, void *, size_t, ncclDataType_t, ncclRedOp_t,
+              const std::string &, cudaStream_t)
+ORIGIN_METHOD(Broadcast, ncclResult_t, const void *, void *, size_t, ncclDataType_t, int, const std::string &,
+              cudaStream_t)
+ORIGIN_METHOD(Send, ncclResult_t, const void *, size_t, ncclDataType_t, int, const std::string &, cudaStream_t)
+ORIGIN_METHOD(Recv, ncclResult_t, void *, size_t, ncclDataType_t, int, const std::string &, cudaStream_t)
+ORIGIN_METHOD(GroupStart, ncclResult_t)
+ORIGIN_METHOD(GroupEnd, ncclResult_t)
 #endif  // MINDSPORE_CCSRC_RUNTIME_HARDWARE_CPU_NVIDIA_COLLECTIVE_COMM_LIB_H_
