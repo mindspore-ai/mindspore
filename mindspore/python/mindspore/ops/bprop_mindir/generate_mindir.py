@@ -59,8 +59,8 @@ if __name__ == "__main__":
     bprop_mindir_src_dir = None
     if not mindspore_path is None:
         mindspore_path = mindspore_path.rstrip('/')
-        bprop_src_dir = mindspore_path + "/mindspore/ops/_grad"
-        bprop_mindir_src_dir = mindspore_path + "/mindspore/ops/bprop_mindir"
+        bprop_src_dir = mindspore_path + "/mindspore/python/mindspore/ops/_grad"
+        bprop_mindir_src_dir = mindspore_path + "/mindspore/python/mindspore/ops/bprop_mindir"
 
     copy_flag = not bprop_src_dir is None and bprop_src_dir != bprop_installed_dir
     # If the specified bprop source directory is not on the mindspore installed path,
