@@ -68,6 +68,7 @@ int GruFp16CPUKernel::InitParam() {
   auto weight_g = in_tensors_.at(1);
   MS_ASSERT(weight_g != nullptr);
   std::vector<int> w_shape = weight_g->shape();
+  NNACL_CHECK_ZERO_RETURN_ERR(gate_num);
   gru_param_->hidden_size_ = w_shape.at(1) / gate_num;
   weight_batch_ = gru_param_->bidirectional_ ? 2 * gate_num : gate_num;
   gru_param_->output_step_ = gru_param_->bidirectional_ ? 2 * gru_param_->batch_ * gru_param_->hidden_size_

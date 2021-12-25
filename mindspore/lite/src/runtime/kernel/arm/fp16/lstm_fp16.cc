@@ -73,6 +73,7 @@ int LstmFp16CPUKernel::InitParam() {
 
   auto weight_i = in_tensors_.at(1);
   std::vector<int> w_shape = weight_i->shape();
+  NNACL_CHECK_ZERO_RETURN_ERR(gate_num);
   lstm_param_->hidden_size_ = w_shape.at(1) / gate_num;
 
   lstm_param_->output_step_ = lstm_param_->bidirectional_ ? 2 * lstm_param_->batch_ * lstm_param_->hidden_size_

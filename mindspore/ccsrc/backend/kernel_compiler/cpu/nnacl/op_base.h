@@ -22,6 +22,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <limits.h>
+#include "nnacl/errorcode.h"
 #if defined(ENABLE_AVX) || defined(ENABLE_SSE) || defined(ENABLE_ARM)
 #include "nnacl/intrinsics/ms_simd_instructions.h"
 #endif

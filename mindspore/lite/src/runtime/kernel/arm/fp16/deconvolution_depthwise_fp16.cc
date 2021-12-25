@@ -85,6 +85,8 @@ int DeconvolutionDepthwiseFp16CPUKernel::MallocWeightBiasData() {
   bias_data_ = malloc(C8NUM * OC8 * sizeof(float16_t));
   if (bias_data_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
+    free(packed_weight_);
+    packed_weight_ = nullptr;
     return RET_ERROR;
   }
   memset(bias_data_, 0, C8NUM * OC8 * sizeof(float16_t));
@@ -95,7 +97,7 @@ int DeconvolutionDepthwiseFp16CPUKernel::MallocWeightBiasData() {
 void DeconvolutionDepthwiseFp16CPUKernel::PackWeight() {
   auto weight_tensor = in_tensors_.at(kWeightIndex);
   void *origin_weight = (op_parameter_->is_train_session_) ? weight_tensor->data() : origin_weight_;
-  MS_ASSERT(origin_weight != nullptr);
+  NNACL_CHECK_NULL_RETURN_VOID(origin_weight);
   PackNCHWFp16ToNC8HW8Fp16(reinterpret_cast<float16_t *>(origin_weight), reinterpret_cast<float16_t *>(packed_weight_),
                            1, weight_tensor->Height() * weight_tensor->Width(), weight_tensor->Batch());
 }
@@ -171,6 +173,13 @@ int DeconvolutionDepthwiseFp16CPUKernel::Run() {
     return RET_ERROR;
   }
 
+  auto input_tensor = in_tensors_.at(kInputIndex);
+  auto output_tensor = out_tensors_.at(kOutputIndex);
+  auto *input_ptr = reinterpret_cast<float16_t *>(input_tensor->data());
+  auto *output_ptr = reinterpret_cast<float16_t *>(output_tensor->data());
+  CHECK_NULL_RETURN(input_ptr);
+  CHECK_NULL_RETURN(output_ptr);
+
   auto ret = InitPackedInputOutput();
   if (ret != 0) {
     MS_LOG(ERROR) << "Deconvolution depthwise fp16 InitPackedInputOutput failed.";
@@ -179,15 +188,9 @@ int DeconvolutionDepthwiseFp16CPUKernel::Run() {
   }
   if (RepackWeight() != RET_OK) {
     MS_LOG(ERROR) << "Repack weight failed.";
+    FreePackedInputOutput();
     return RET_ERROR;
   }
-
-  auto input_tensor = in_tensors_.at(kInputIndex);
-  auto output_tensor = out_tensors_.at(kOutputIndex);
-  auto *input_ptr = reinterpret_cast<float16_t *>(input_tensor->data());
-  auto *output_ptr = reinterpret_cast<float16_t *>(output_tensor->data());
-  CHECK_NULL_RETURN(input_ptr);
-  CHECK_NULL_RETURN(output_ptr);
 
   if (need_align_) {
     PackNHWCToNHWC8Fp16(input_ptr, packed_input_, conv_param_->input_batch_,

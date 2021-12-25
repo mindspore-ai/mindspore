@@ -33,7 +33,7 @@ void ConvolutionFP16CPUKernel::PackWeight() {
   int out_channel = filter_tensor->Batch();
   int kernel_plane = filter_tensor->Height() * filter_tensor->Width();
   void *weight_origin = (op_parameter_->is_train_session_) ? filter_tensor->data() : origin_weight_;
-  MS_ASSERT(weight_origin != nullptr);
+  CHECK_NULL_RETURN_VOID(weight_origin);
   RowMajor2Col8MajorFp16(weight_origin, reinterpret_cast<float16_t *>(packed_weight_), out_channel,
                          in_channel * kernel_plane, false);
 }
@@ -178,6 +178,7 @@ int ConvolutionFP16CPUKernel::Run() {
   }
   if (RepackWeight() != RET_OK) {
     MS_LOG(ERROR) << "Repack weight failed.";
+    FreeTmpBuffer();
     return RET_ERROR;
   }
   ret = ParallelLaunch(this->ms_context_, ConvolutionFp16Impl, this, thread_count_);
