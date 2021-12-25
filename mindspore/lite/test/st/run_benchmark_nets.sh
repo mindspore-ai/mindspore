@@ -49,7 +49,7 @@ if [[ $backend == "all" || $backend == "arm32_cpu" || $backend == "arm32_fp32" |
     fi
 fi
 
-if [[ $backend == "all" || $backend == "gpu" ]]; then
+if [[ $backend == "all" || $backend == "gpu" || $backend == "gpu_gl_texture" ]]; then
     sh $cur_path/scripts/run_benchmark_gpu.sh -r $release_path -m $models_path -d $device_id -e $backend -p $fail_not_return
     gpu_status=$?
     if [[ $gpu_status -ne 0 ]]; then
