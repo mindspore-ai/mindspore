@@ -297,7 +297,10 @@ kernel::InnerKernel *CpuDeConvFp16KernelCreator(const std::vector<lite::Tensor *
 
   kernel::InnerKernel *kernel = nullptr;
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);
-  if (conv_param->group_ == 1) {
+  if (conv_param->group_ == 1 && conv_param->input_channel_ == 1 && conv_param->output_channel_ == 1) {
+    kernel = new (std::nothrow)
+      DeconvolutionDepthwiseFp16CPUKernel(op_parameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
+  } else if (conv_param->group_ == 1) {
     if ((conv_param->stride_h_ != 1 || conv_param->stride_w_ != 1) &&
 #ifndef ENABLE_ARM32
         (conv_param->kernel_h_ / conv_param->stride_h_ > C2NUM ||
