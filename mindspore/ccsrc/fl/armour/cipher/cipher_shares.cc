@@ -217,6 +217,5 @@ void CipherShares::ClearShareSecrets() {
   fl::server::DistributedMetadataStore::GetInstance().ResetMetadata(fl::server::kCtxClientsEncryptedShares);
   fl::server::DistributedMetadataStore::GetInstance().ResetMetadata(fl::server::kCtxGetSecretsClientList);
 }
-
 }  // namespace armour
 }  // namespace mindspore

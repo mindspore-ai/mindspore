@@ -285,7 +285,9 @@ bool CipherMetaStorage::UpdateClientKeyToServer(const char *list_name,
 
 bool CipherMetaStorage::UpdateStableClientKeyToServer(const char *list_name,
                                                       const schema::RequestExchangeKeys *exchange_keys_req) {
-  std::string fl_id = exchange_keys_req->fl_id()->str();
+  auto fbs_fl_id = exchange_keys_req->fl_id();
+  MS_EXCEPTION_IF_NULL(fbs_fl_id);
+  std::string fl_id = fbs_fl_id->str();
   auto fbs_spk = exchange_keys_req->s_pk();
   if (fbs_spk == nullptr) {
     MS_LOG(ERROR) << "Public key from exchange_keys_req is null";
@@ -303,15 +305,14 @@ bool CipherMetaStorage::UpdateStableClientKeyToServer(const char *list_name,
   }
 
   auto fbs_pw_iv = exchange_keys_req->pw_iv();
+  auto fbs_pw_salt = exchange_keys_req->pw_salt();
   std::vector<char> pw_iv;
+  std::vector<char> pw_salt;
   if (fbs_pw_iv == nullptr) {
     MS_LOG(WARNING) << "pw_iv in exchange_keys_req is nullptr";
   } else {
     pw_iv.assign(fbs_pw_iv->begin(), fbs_pw_iv->end());
   }
-
-  auto fbs_pw_salt = exchange_keys_req->pw_salt();
-  std::vector<char> pw_salt;
   if (fbs_pw_salt == nullptr) {
     MS_LOG(WARNING) << "pw_salt in exchange_keys_req is nullptr";
   } else {
@@ -320,7 +321,7 @@ bool CipherMetaStorage::UpdateStableClientKeyToServer(const char *list_name,
 
   // update new item to memory server.
   fl::KeysPb keys;
-  keys.add_key()->assign(spk.begin(), spk.end());
+  (void)keys.add_key()->assign(spk.begin(), spk.end());
   keys.set_pw_iv(pw_iv.data(), pw_iv.size());
   keys.set_pw_salt(pw_salt.data(), pw_salt.size());
   fl::PairClientKeys pair_client_keys_pb;

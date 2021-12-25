@@ -90,16 +90,9 @@ bool CipherReconStruct::CombineMask(std::vector<Share *> *shares_tmp,
         // reconstruct individual noise
         MS_LOG(INFO) << "start reconstruct individual noise.";
         std::vector<float> noise;
-        auto it = client_ivs.find(fl_id);
-        if (it == client_ivs.end()) {
-          MS_LOG(ERROR) << "cannot get ivs for client: " << fl_id;
-          return false;
-        }
-        if (it->second.size() != IV_NUM) {
-          MS_LOG(ERROR) << "get " << it->second.size() << " ivs, the iv num required is: " << IV_NUM;
-          return false;
-        }
-        std::vector<uint8_t> ind_iv = it->second[0];
+
+        std::vector<uint8_t> ind_iv = GetIndiIV(fl_id, client_ivs);
+
         if (Masking::GetMasking(&noise, SizeToInt(cipher_init_->featuremap_), (const uint8_t *)secret, SECRET_MAX_LEN,
                                 ind_iv.data(), SizeToInt(ind_iv.size())) < 0) {
           MS_LOG(ERROR) << "Get Masking failed";
@@ -128,6 +121,21 @@ bool CipherReconStruct::CombineMask(std::vector<Share *> *shares_tmp,
   }
 #endif
   return retcode;
+}
+
+std::vector<uint8_t> CipherReconStruct::GetIndiIV(
+  const std::string fl_id, const std::map<std::string, std::vector<std::vector<uint8_t>>> &client_ivs) const {
+  auto it = client_ivs.find(fl_id);
+  if (it == client_ivs.end()) {
+    MS_LOG(ERROR) << "cannot get ivs for client: " << fl_id;
+    return {};
+  }
+  if (it->second.size() != IV_NUM) {
+    MS_LOG(ERROR) << "get " << it->second.size() << " ivs, the iv num required is: " << IV_NUM;
+    return {};
+  }
+  std::vector<uint8_t> ind_iv = it->second[0];
+  return ind_iv;
 }
 
 bool CipherReconStruct::ReconstructSecretsGenNoise(const std::vector<string> &client_list) {
@@ -435,7 +443,7 @@ bool CipherReconStruct::GetSuvNoise(const std::vector<std::string> &clients_shar
   return true;
 }
 
-bool CipherReconStruct::GetSymbol(const std::string &str1, const std::string &str2) {
+bool CipherReconStruct::GetSymbol(const std::string &str1, const std::string &str2) const {
   if (str1 > str2) {
     return true;
   } else {
