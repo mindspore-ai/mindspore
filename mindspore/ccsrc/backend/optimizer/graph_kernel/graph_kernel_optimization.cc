@@ -26,7 +26,7 @@
 #include "backend/optimizer/graph_kernel/add_stitch_atomic_clean_gpu.h"
 #include "backend/optimizer/graph_kernel/arithmetic_simplify.h"
 #include "backend/optimizer/graph_kernel/core/graph_kernel_cluster.h"
-#include "backend/optimizer/graph_kernel/eliminate_redundant_output.h"
+#include "backend/optimizer/graph_kernel/core/eliminate_redundant_output.h"
 #include "backend/optimizer/graph_kernel/insert_pad.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_splitter.h"
 #include "backend/optimizer/graph_kernel/adapter/graph_kernel_expander_with_py.h"
