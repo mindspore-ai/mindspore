@@ -333,6 +333,7 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
     ir_fusion_pm->AddPass(std::make_shared<GetitemTuple>());
     ir_fusion_pm->AddPass(std::make_shared<EraseVisitAttr>());
   }
+  ir_fusion_pm->AddPass(std::make_shared<CommonSubexpressionElimination>());
   ir_fusion_pm->AddPass(std::make_shared<InsertTensorMoveForHcclOp>());
   ir_fusion_pm->AddPass(std::make_shared<InsertTranspose>());
   ir_fusion_pm->AddPass(std::make_shared<GetitemTuple>());
