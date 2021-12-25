@@ -231,7 +231,7 @@ std::vector<char> AscendDeviceInfo::GetDynamicBatchSizeChar() const {
   return StringToChar(ref);
 }
 
-void AscendDeviceInfo::SetDynamicImageSize(const std::vector<char> &dynamic_image_size) { return; }
+void AscendDeviceInfo::SetDynamicImageSize(const std::vector<char> &) { return; }
 
 std::vector<char> AscendDeviceInfo::GetDynamicImageSizeChar() const { return std::vector<char>(); }
 

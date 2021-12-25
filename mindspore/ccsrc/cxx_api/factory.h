@@ -27,25 +27,13 @@ namespace mindspore {
 inline enum DeviceType g_device_target = kInvalidDeviceType;
 
 static inline LogStream &operator<<(LogStream &stream, DeviceType device_type) {
-  switch (device_type) {
-    case kAscend:
-      stream << "Ascend";
-      break;
-    case kAscend910:
-      stream << "Ascend910";
-      break;
-    case kAscend310:
-      stream << "Ascend310";
-      break;
-    case kGPU:
-      stream << "GPU";
-      break;
-    case kCPU:
-      stream << "CPU";
-      break;
-    default:
-      stream << "[InvalidDeviceType: " << static_cast<int>(device_type) << "]";
-      break;
+  std::map<DeviceType, std::string> type_str_map = {
+    {kAscend, "Ascend"}, {kAscend910, "Ascend910"}, {kAscend310, "Ascend310"}, {kGPU, "GPU"}, {kCPU, "CPU"}};
+  auto it = type_str_map.find(device_type);
+  if (it != type_str_map.end()) {
+    stream << it->second;
+  } else {
+    stream << "[InvalidDeviceType: " << static_cast<int>(device_type) << "]";
   }
   return stream;
 }

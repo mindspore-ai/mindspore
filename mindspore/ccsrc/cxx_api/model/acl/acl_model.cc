@@ -120,7 +120,7 @@ Status AclModel::Resize(const std::vector<MSTensor> &inputs, const std::vector<s
 
   if (model_context_ == nullptr) {
     model_context_ = std::make_shared<Context>();
-    model_context_->MutableDeviceInfo().emplace_back(std::make_shared<AscendDeviceInfo>());
+    (void)model_context_->MutableDeviceInfo().emplace_back(std::make_shared<AscendDeviceInfo>());
   }
 
   std::string input_shape_option;
