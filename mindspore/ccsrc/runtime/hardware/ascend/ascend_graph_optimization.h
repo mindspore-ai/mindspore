@@ -37,10 +37,6 @@ class AscendGraphOptimization {
     static AscendGraphOptimization instance;
     return instance;
   }
-  AscendGraphOptimization() = default;
-  ~AscendGraphOptimization() = default;
-  AscendGraphOptimization(const AscendGraphOptimization &) = delete;
-  AscendGraphOptimization &operator=(const AscendGraphOptimization &) = delete;
 
   void OptimizeGraph(const KernelGraphPtr &graph);
   void OptimizeSingleOpGraph(const KernelGraphPtr &graph);
@@ -48,6 +44,10 @@ class AscendGraphOptimization {
   void UnifyMindIR(const KernelGraphPtr &graph);
 
  private:
+  AscendGraphOptimization() = default;
+  ~AscendGraphOptimization() = default;
+  AscendGraphOptimization(const AscendGraphOptimization &) = delete;
+  AscendGraphOptimization &operator=(const AscendGraphOptimization &) = delete;
   // Graph Optimized level-2 interface
   void OptimizeGraphWithoutDeviceInfo(const KernelGraphPtr &graph);
   void OptimizeGraphWithDeviceInfo(const KernelGraphPtr &graph);

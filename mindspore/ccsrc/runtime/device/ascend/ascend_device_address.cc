@@ -471,11 +471,6 @@ bool AscendDeviceAddress::SyncDeviceToDeviceWithDiffFormatType(const DeviceSync 
 
   auto src_device_address = dynamic_cast<const AscendDeviceAddress *>(src_device_addr);
   MS_EXCEPTION_IF_NULL(src_device_address);
-  if (size_ < src_device_address->GetSize()) {
-    MS_LOG(ERROR) << "Src size is greater than det size, src size is: " << src_device_address->GetSize()
-                  << ", dst size is: " << size_;
-    return false;
-  }
   BindDevice();
   auto host_shape = src_device_address->host_shape();
   if (host_shape.empty()) {
