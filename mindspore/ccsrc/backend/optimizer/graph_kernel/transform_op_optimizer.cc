@@ -232,7 +232,7 @@ class TransformOp {
     if (perm.empty()) {
       MS_LOG(EXCEPTION) << "unsupported format: " << format_a_ << " to " << format_b_;
     }
-    auto op = inner::OpRegistry::Instance().NewOp("Transpose", "new_trans");
+    auto op = inner::OpRegistry::Instance().NewOp("Transpose");
     op->SetAttr("perm", MakeValue(perm));
     return op;
   }

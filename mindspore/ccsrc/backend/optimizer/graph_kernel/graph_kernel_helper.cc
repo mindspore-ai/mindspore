@@ -458,8 +458,8 @@ inner::LiteGraphPtr AnfGraph2LiteGraph(const FuncGraphPtr &func_graph) {
     return inner::NodeBase({shape, type, format});
   };
   // set inputs
-  for (size_t i = 0; i < params.size(); i++) {
-    node_map[params[i]] = gb.Parameter(ExtractBuildInfo(params[i]), std::string("input_") + std::to_string(i));
+  for (auto &p : params) {
+    node_map[p] = gb.Parameter(ExtractBuildInfo(p));
   }
   // set ops
   for (auto node : todos) {

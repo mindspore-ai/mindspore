@@ -17,12 +17,7 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_MODEL_LITE_GRAPH_H_
 
 #include <memory>
-#include <vector>
-#include <list>
-#include <stack>
 #include <string>
-#include "utils/hash_map.h"
-#include "utils/hash_set.h"
 #include "backend/optimizer/graph_kernel/model/node.h"
 #include "backend/optimizer/graph_kernel/model/op_node.h"
 
@@ -39,12 +34,15 @@ class LiteGraph {
 
   const NodePtrList &GetOrderedNodes();
 
-  std::string Dump() const;
+  std::string ToString(bool reset_node_name = false) const;
   const std::string &name() const { return name_; }
   const NodePtrList &ops() const { return ops_; }
   const NodePtrList &inputs() const { return inputs_; }
-  const NodePtr &output() const { return output_; }
+  const NodePtr &output(size_t i) const { return output_->input(i); }
   const NodePtrList &GetOutputs() const { return output_->inputs(); }
+
+  void SetOutput(size_t i, const NodePtr &node) { output_->SetInput(i, node); }
+  void SetOutputs(const NodePtrList &nodes) { output_->SetInputs(nodes); }
 
  protected:
   std::string name_;
@@ -53,7 +51,10 @@ class LiteGraph {
   NodePtr output_;
 
  private:
-  int name_id_{0};
+  std::string ParamName() const { return "input_" + std::to_string(param_id_++); }
+  std::string NodeName() const { return "output_" + std::to_string(node_id_++); }
+  mutable int param_id_{0};
+  mutable int node_id_{0};
 };
 using LiteGraphPtr = std::shared_ptr<LiteGraph>;
 
@@ -61,27 +62,28 @@ class LiteGraph::GraphBuilder {
  public:
   explicit GraphBuilder(const std::string &name = "") { graph_ = std::make_shared<LiteGraph>(name); }
 
-  NodePtr Parameter(const NodeBase &baseinfo, std::string name = "") {
-    if (name.empty()) name = NewName();
-    auto para = std::make_shared<ParamNode>(name, baseinfo);
+  // Create a parameter of graph
+  NodePtr Parameter(const NodeBase &baseinfo) {
+    auto para = std::make_shared<ParamNode>(baseinfo);
+    para->SetDebugName(graph_->ParamName());
     graph_->inputs_.push_back(para);
     return para;
   }
-  NodePtr Value(const tensor::TensorPtr &data, const std::string &name = "") {
-    return std::make_shared<ConstTensorNode>(data, name);
-  }
+
+  // Create a const value node
+  NodePtr Value(const tensor::TensorPtr &data) { return std::make_shared<ConstTensorNode>(data); }
 
   void SetOutputs(const NodePtrList &nodes) { graph_->output_->SetInputs(nodes); }
 
-  NodePtr Emit(const std::string &op, const NodePtrList &inputs, const DAttrs &attrs = {}, std::string node_name = "");
-  NodePtr Op(const std::string &op, const NodeBase &baseinfo, const NodePtrList &inputs, const DAttrs &attrs = {},
-             std::string node_name = "");
+  // Emit op, auto inferring the baseinfo of Node.
+  NodePtr Emit(const std::string &op, const NodePtrList &inputs, const DAttrs &attrs = {});
+
+  // Create op node with given baseinfo.
+  NodePtr Op(const std::string &op, const NodeBase &baseinfo, const NodePtrList &inputs, const DAttrs &attrs = {});
   LiteGraphPtr Get() { return graph_; }
 
  private:
-  PrimOpPtr CreateOp(const std::string &id, const std::string &name);
-  std::string NewName(std::string prefix = "output_") { return prefix + std::to_string(graph_->name_id_++); }
-
+  PrimOpPtr CreateOp(const std::string &op);
   LiteGraphPtr graph_;
 };
 }  // namespace mindspore::graphkernel::inner

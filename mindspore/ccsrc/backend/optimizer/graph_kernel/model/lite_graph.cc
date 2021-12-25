@@ -18,11 +18,10 @@
 #include <memory>
 #include <algorithm>
 #include <functional>
-#include <map>
 #include <set>
 #include <utility>
 #include <string>
-#include <iostream>
+#include <sstream>
 
 #include "utils/hash_map.h"
 #include "backend/optimizer/graph_kernel/model/node.h"
@@ -30,22 +29,31 @@
 #include "backend/optimizer/graph_kernel/model/op_register.h"
 
 namespace mindspore::graphkernel::inner {
-std::string LiteGraph::Dump() const {
+std::string LiteGraph::ToString(bool reset_node_name) const {
+  if (reset_node_name) {
+    param_id_ = node_id_ = 0;
+    for (auto &inp : inputs_) {
+      inp->SetDebugName(ParamName());
+    }
+    for (auto &node : ops_) {
+      node->SetDebugName(NodeName());
+    }
+  }
   std::ostringstream os;
   os << name_ << "(";
   for (size_t i = 0; i < inputs_.size(); i++) {
-    os << inputs_[i]->name();
+    os << inputs_[i]->debug_name();
     if (i != inputs_.size() - 1) os << ", ";
   }
   os << ") -> ";
   auto &outputs = GetOutputs();
   for (size_t i = 0; i < outputs.size(); i++) {
-    os << outputs[i]->name();
+    os << outputs[i]->debug_name();
     if (i != outputs.size() - 1) os << ", ";
   }
   os << " {\n";
-  for (NodePtr op : ops_) {
-    os << "  " << *op << "\n";
+  for (const NodePtr &op : ops_) {
+    os << "  " << op->ToString() << "\n";
   }
   os << "}";
   return os.str();
@@ -55,6 +63,7 @@ const NodePtrList &LiteGraph::GetOrderedNodes() {
   mindspore::HashMap<NodePtr, size_t> outdegrees;
   std::function<void(NodePtr)> dfs;
   std::set<NodePtr> visited;
+  // record the out degree of each nodes by Dfs.
   dfs = [&dfs, &outdegrees, &visited](const NodePtr &node) {
     (void)visited.insert(node);
     for (auto &input : node->inputs()) {
@@ -69,6 +78,8 @@ const NodePtrList &LiteGraph::GetOrderedNodes() {
   dfs(output_);
   NodePtrList res;
   NodePtrList stack;
+
+  // toposort algorithm with out degree
   stack.push_back(output_);
   while (!stack.empty()) {
     auto cur = stack.back();
@@ -86,20 +97,19 @@ const NodePtrList &LiteGraph::GetOrderedNodes() {
   if (!outdegrees.empty()) {
     MS_LOG(ERROR) << "Circle was found:";
     for (auto &node : outdegrees) {
-      MS_LOG(ERROR) << "  " << *(node.first);
+      MS_LOG(ERROR) << "  " << node.first->debug_name();
     }
     MS_LOG(EXCEPTION) << "Circle size: " << outdegrees.size();
   }
   std::reverse(res.begin(), res.end());
-  res.pop_back();  // erase the output node
+  // remove the "OutputNode"
+  res.pop_back();
   ops_ = std::move(res);
   return ops_;
 }
 
-NodePtr LiteGraph::GraphBuilder::Emit(const std::string &op, const NodePtrList &inputs, const DAttrs &attrs,
-                                      std::string node_name) {
-  if (node_name.empty()) node_name = NewName();
-  PrimOpPtr op_ptr = CreateOp(op, node_name);
+NodePtr LiteGraph::GraphBuilder::Emit(const std::string &op, const NodePtrList &inputs, const DAttrs &attrs) {
+  PrimOpPtr op_ptr = CreateOp(op);
   auto baseinfo = op_ptr->Infer(inputs, attrs);
   op_ptr->SetInputs(inputs);
   op_ptr->SetAttrs(attrs);
@@ -108,16 +118,17 @@ NodePtr LiteGraph::GraphBuilder::Emit(const std::string &op, const NodePtrList &
 }
 
 NodePtr LiteGraph::GraphBuilder::Op(const std::string &op, const NodeBase &baseinfo, const NodePtrList &inputs,
-                                    const DAttrs &attrs, std::string node_name) {
-  if (node_name.empty()) node_name = NewName();
-  PrimOpPtr op_ptr = CreateOp(op, node_name);
+                                    const DAttrs &attrs) {
+  PrimOpPtr op_ptr = CreateOp(op);
   op_ptr->SetInputs(inputs);
   op_ptr->SetAttrs(attrs);
   op_ptr->SetBaseInfo(baseinfo);
   return graph_->Add(op_ptr);
 }
 
-PrimOpPtr LiteGraph::GraphBuilder::CreateOp(const std::string &op, const std::string &node_name) {
-  return OpRegistry::Instance().NewOp(op, node_name);
+PrimOpPtr LiteGraph::GraphBuilder::CreateOp(const std::string &op) {
+  auto node = OpRegistry::Instance().NewOp(op);
+  node->SetDebugName(graph_->NodeName());
+  return node;
 }
 }  // namespace mindspore::graphkernel::inner
