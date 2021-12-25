@@ -69,9 +69,9 @@ def imshow_det_bbox(image, bboxes, labels, segm=None, class_names=None, score_th
         >>> import mindspore.dataset as ds
         >>> from mindspore.dataset.utils.browse_dataset import imshow_det_bbox
         >>>
-        >>> # Read VOC data
+        >>> # Read Detection dataset, such as VOC2012.
         >>> voc_dataset_dir = "/path/to/voc_dataset_directory"
-        >>> dataset = ds.VOCDataset(voc_dataset_dir, task="Detection", shuffle=False, decode=True, num_samples=3)
+        >>> dataset = ds.VOCDataset(voc_dataset_dir, task="Detection", shuffle=False, decode=True, num_samples=5)
         >>> dataset_iter = dataset.create_dict_iterator(output_numpy=True, num_epochs=1)
         >>>
         >>> # draw dataset
@@ -79,22 +79,20 @@ def imshow_det_bbox(image, bboxes, labels, segm=None, class_names=None, score_th
         ...     image = data["image"]
         ...     bbox = data["bbox"]
         ...     label = data["label"]
-        ...     # read your image masks if needed
-        ...     masks = np.zeros((4, image.shape[0], image.shape[1]))
-        ...     masks[0][0:500, 0:500] = 1
-        ...     masks[1][1000:1500, 1000:1500] = 2
-        ...     masks[2][0:500, 0:500] = 3
-        ...     masks[3][1000:1500, 1000:1500] = 4
-        ...     segm = masks
         ...     # draw image with bboxes
-        ...     imshow_det_bbox(image, bbox, label, segm,
+        ...     imshow_det_bbox(image, bbox, label,
         ...                     class_names=['aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus', 'car', 'cat',
         ...                                  'chair', 'cow', 'diningtable', 'dog', 'horse', 'motorbike', 'person',
         ...                                  'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor'],
         ...                     win_name="my_window",
-        ...                     wait_time=5,
-        ...                     show=False,
+        ...                     wait_time=5000,
+        ...                     show=True,
         ...                     out_file="voc_dataset_{}.jpg".format(str(index)))
+
+    Examples using `imshow_det_bbox` on VOC2012:
+
+    .. image:: api_img/browse_dataset.png
+
     """
 
     try:
