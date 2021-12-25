@@ -20,11 +20,11 @@
 #include <curand_kernel.h>
 
 constexpr int kFeatureNum = 4;
+constexpr int kPartiallyObsFeatureNum = 6;
 
 struct GameSetting {
   int seed;
   int predator_num;
-  int prey_num;
   int max_timestep;
   int map_length;
   int map_width;
@@ -32,6 +32,7 @@ struct GameSetting {
   float catch_reward;
   float caught_penalty;
   float step_cost;
+  bool partially_observation;
   int index_to_action[10] = {0, 0, 1, 0, -1, 0, 0, 1, 0, -1};
 };
 
@@ -43,7 +44,6 @@ struct AgentState {
   curandState *rand_state;
   bool *still_in_game;
   int *time_step;
-  int *prey_left;
 };
 
 void InitEnv(const int env_num, const int agent_num, const GameSetting *setting, AgentState *state,
@@ -53,7 +53,7 @@ void ResetEnv(const int env_num, const int agent_num, const GameSetting *setting
 void StepBindBlock(const int env_num, const int agent_num, const GameSetting *setting, AgentState *agent_state,
                    const int *action, float *state, float *reward, bool *done, cudaStream_t stream);
 void StepCrossBlock(const int env_num, const int agent_num, const GameSetting *setting, AgentState *agent_state,
-                    const int *action, float *state, float *reward, bool *done, float *team_reward,
+                    const int *action, float *state, float *reward, bool *done, float *team_reward, int *distance,
                     cudaStream_t stream);
 void AgentStateCopy(const int env_num, const int agent_num, AgentState *dst, AgentState *src, cudaStream_t stream);
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMP_TAG_ENV_IMPL_H_
