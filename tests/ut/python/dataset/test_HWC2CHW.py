@@ -42,6 +42,12 @@ def test_HWC2CHW_callable():
     img1 = c_vision.HWC2CHW()(img)
     assert img1.shape == (3, 50, 50)
 
+    # test one tensor with 5 channels
+    img2 = np.zeros([50, 50, 5])
+    assert img2.shape == (50, 50, 5)
+    img3 = c_vision.HWC2CHW()(img2)
+    assert img3.shape == (5, 50, 50)
+
     # test input multiple tensors
     with pytest.raises(RuntimeError) as info:
         imgs = [img, img]
@@ -51,6 +57,28 @@ def test_HWC2CHW_callable():
     with pytest.raises(RuntimeError) as info:
         _ = c_vision.HWC2CHW()(img, img)
     assert "The op is OneToOne, can only accept one tensor as input." in str(info.value)
+
+
+def test_HWC2CHW_multi_channels():
+    """
+    Feature: Test HWC2CHW feature
+    Description: The input is a HWC format array with 5 channels
+    Expectation: success
+    """
+    logger.info("Test HWC2CHW with data of 5 channels")
+
+    # create numpy array in HWC format with shape (4, 2, 5) like a fake image with 5 channels
+    raw_data = np.random.rand(4, 2, 5).astype(np.float32)
+    expect_output = np.transpose(raw_data, (2, 0, 1))
+
+    # NumpySliceDataset support accept data stored in list, tuple etc, here only one row data in list.
+    input_data = np.array([raw_data])
+    dataset = ds.NumpySlicesDataset(input_data, column_names=["col1"], shuffle=False)
+
+    hwc2chw = c_vision.HWC2CHW()
+    dataset = dataset.map(hwc2chw, input_columns=["col1"])
+    for item in dataset.create_tuple_iterator(output_numpy=True):
+        assert np.allclose(item[0], expect_output)
 
 
 def test_HWC2CHW(plot=False):
@@ -147,6 +175,7 @@ def test_HWC2CHW_comp(plot=False):
 
 if __name__ == '__main__':
     test_HWC2CHW_callable()
+    test_HWC2CHW_multi_channels()
     test_HWC2CHW(True)
     test_HWC2CHW_md5()
     test_HWC2CHW_comp(True)
