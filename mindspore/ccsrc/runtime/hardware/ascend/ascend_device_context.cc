@@ -407,11 +407,18 @@ void AscendDeviceContext::UpdateExecOrder(const KernelGraphPtr &graph) const {
   node_atomics_.clear();
 }
 
+void AscendDeviceContext::GenKernelEvents(const NotNull<KernelGraphPtr> &root_graph) const {
+  MS_LOG(INFO) << "Start GenKernelEvents for graph " << root_graph->graph_id();
+  MS_EXCEPTION_IF_NULL(runtime_instance_);
+  runtime_instance_->GenKernelEvents(*root_graph.get());
+  MS_LOG(INFO) << "Finish!";
+}
+
 void AscendDeviceContext::PreprocessBeforeRunGraph(const KernelGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_LOG(INFO) << "PreprocessBeforeRunGraph Start for graph " << graph->graph_id();
-  device::ascend::InsertAtomicCleanOps(graph->execution_order(), &node_atomics_);
   if (graph->is_executing_sink()) {
+    device::ascend::InsertAtomicCleanOps(graph->execution_order(), &node_atomics_);
     UpdateExecOrder(graph);
     device::KernelAdjust::GetInstance().InsertDeviceLoopCtrl(graph);
     device::KernelAdjust::GetInstance().ProcessLoopSink(graph);
@@ -419,8 +426,13 @@ void AscendDeviceContext::PreprocessBeforeRunGraph(const KernelGraphPtr &graph) 
     CreateKernel(graph->execution_order());
     AllocateGraphMemory(NOT_NULL(graph));
     LoadModel(NOT_NULL(graph));
+    AssignOutputNopNodeDeviceAddress(graph);
+  } else {
+    PreprocessBeforeRunSingleOpGraph(graph);
+    AscendStreamAssign::GetInstance().AssignStream(NOT_NULL(graph));
+    GenKernelEvents(NOT_NULL(graph));
   }
-  AssignOutputNopNodeDeviceAddress(graph);
+
   MS_LOG(INFO) << "PreprocessBeforeRunGraph success.";
 }
 
@@ -696,6 +708,7 @@ bool AscendDeviceContext::PySyncRuning() const {
 
 bool AscendDeviceContext::MemoryCopyAsync(const CNodePtr &node, const vector<AddressPtr> &inputs,
                                           const vector<AddressPtr> &outputs) const {
+  MS_LOG(DEBUG) << "Launch MemoryCopyAsync instead for kernel " << node->fullname_with_scope();
   if (inputs.size() != 1 || outputs.size() != 1) {
     MS_LOG(ERROR) << "Kernel " << node->fullname_with_scope() << " input output size should be 1 but"
                   << " input size is:" << inputs.size() << " output size is:" << outputs.size();
@@ -703,43 +716,33 @@ bool AscendDeviceContext::MemoryCopyAsync(const CNodePtr &node, const vector<Add
   }
 
   aclError status = aclrtMemcpyAsync(outputs[0]->addr, outputs[0]->size, inputs[0]->addr, inputs[0]->size,
-                                     ACL_MEMCPY_DEVICE_TO_DEVICE, compute_stream_);
+                                     ACL_MEMCPY_DEVICE_TO_DEVICE, GetKernelStream(node));
   if (status != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "MemCpyAsync op aclrtMemcpyAsync failed, ret:" << status;
     return false;
   }
-  return PySyncRuning();
+  return true;
 }
 
-bool AscendDeviceContext::LaunchKernel(const CNodePtr &kernel, const vector<AddressPtr> &inputs,
-                                       const vector<AddressPtr> &workspace, const vector<AddressPtr> &outputs,
-                                       bool is_dynamic_shape) const {
-  MS_EXCEPTION_IF_NULL(kernel);
-  MS_LOG(DEBUG) << "Launch kernel: " << kernel->fullname_with_scope();
-  BindDeviceToCurrentThread();
-
-  if (!LaunchAtomicClean(kernel, workspace, outputs)) {
-    MS_LOG(ERROR) << "Launch AtomicClean failed, pre kernel full name: " << kernel->fullname_with_scope();
-    return false;
-  }
-
-  auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
+void *AscendDeviceContext::GetKernelStream(const CNodePtr &node) const {
+  auto kernel_mod = AnfAlgo::GetKernelMod(node);
   MS_EXCEPTION_IF_NULL(kernel_mod);
-
-  if (is_dynamic_shape) {
-    kernel::AscendKernelMod *ascend_kernel = dynamic_cast<kernel::AscendKernelMod *>(kernel_mod);
-    MS_EXCEPTION_IF_NULL(ascend_kernel);
-    ascend_kernel->InitDynamicKernel(kernel, compute_stream_);
-    auto dynamic_kernel = ascend_kernel->DynamicKernel();
-    MS_EXCEPTION_IF_NULL(dynamic_kernel);
-    dynamic_kernel->InferShape();
-    dynamic_kernel->UpdateArgs();
-    dynamic_kernel->Execute();
-    dynamic_kernel->PostExecute();
-    return PySyncRuning();
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
+    return compute_stream_;
+  } else {
+    auto stream = kernel_mod->GetStream();
+    if (stream == nullptr) {
+      stream = compute_stream_;
+      MS_LOG(INFO) << "Assign default compute stream for node " << node->fullname_with_scope();
+    }
+    return stream;
   }
+}
 
-  std::vector<AddressPtr> real_inputs;
+bool AscendDeviceContext::GetKernelRealInputs(const CNodePtr &kernel, const vector<AddressPtr> &inputs,
+                                              std::vector<AddressPtr> *real_inputs) const {
   auto input_num = AnfAlgo::GetInputTensorNum(kernel);
   if (input_num != inputs.size()) {
     MS_LOG(ERROR) << "Input num is " << input_num << " but input address num is " << inputs.size();
@@ -752,17 +755,72 @@ bool AscendDeviceContext::LaunchKernel(const CNodePtr &kernel, const vector<Addr
       MS_LOG(ERROR) << "Total input num is " << input_num << " but get real_index " << real_index;
       return false;
     }
-    real_inputs.push_back(inputs[real_index]);
+    real_inputs->push_back(inputs[real_index]);
+  }
+  return true;
+}
+
+bool AscendDeviceContext::LaunchKernel(const CNodePtr &kernel, const vector<AddressPtr> &inputs,
+                                       const vector<AddressPtr> &workspace, const vector<AddressPtr> &outputs,
+                                       bool is_dynamic_shape) const {
+  MS_EXCEPTION_IF_NULL(kernel);
+  MS_LOG(DEBUG) << "Launch kernel: " << kernel->fullname_with_scope();
+  BindDeviceToCurrentThread();
+
+  auto event_funcs = runtime_instance_->GetKernelEventFuncs(kernel);
+
+  std::vector<AddressPtr> real_inputs;
+  bool ret = GetKernelRealInputs(kernel, inputs, &real_inputs);
+  if (!ret) {
+    MS_LOG(ERROR) << "Get real input fail for kernel " << kernel->fullname_with_scope();
+    return false;
+  }
+  auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
+  MS_EXCEPTION_IF_NULL(kernel_mod);
+
+  // start launch
+  std::lock_guard<std::mutex> locker(launch_mutex_);
+
+  // launch pre events
+  MS_LOG(DEBUG) << "Launch pre-events for kernel " << kernel->fullname_with_scope();
+  for (auto &pre_event_func : event_funcs.first) {
+    pre_event_func();
   }
 
-  std::lock_guard<std::mutex> locker(launch_mutex_);
-  if (nop_op_to_memcpy_.find(kernel) != nop_op_to_memcpy_.end()) {
-    return MemoryCopyAsync(kernel, real_inputs, outputs);
-  }
-  auto ret = kernel_mod->Launch(real_inputs, workspace, outputs, compute_stream_);
-  if (!ret) {
-    MS_LOG(ERROR) << "Launch kernel failed, kernel full name: " << kernel->fullname_with_scope();
+  // launch atomic clean
+  if (!LaunchAtomicClean(kernel, workspace, outputs)) {
+    MS_LOG(ERROR) << "Launch AtomicClean failed, pre kernel full name: " << kernel->fullname_with_scope();
     return false;
+  }
+
+  // launch kernel
+  if (nop_op_to_memcpy_.find(kernel) != nop_op_to_memcpy_.end()) {
+    MemoryCopyAsync(kernel, real_inputs, outputs);
+  } else {
+    MS_LOG(DEBUG) << "Launch kernel " << kernel->fullname_with_scope();
+    if (is_dynamic_shape) {
+      kernel::AscendKernelMod *ascend_kernel = dynamic_cast<kernel::AscendKernelMod *>(kernel_mod);
+      MS_EXCEPTION_IF_NULL(ascend_kernel);
+      ascend_kernel->InitDynamicKernel(kernel, GetKernelStream(kernel));
+      auto dynamic_kernel = ascend_kernel->DynamicKernel();
+      MS_EXCEPTION_IF_NULL(dynamic_kernel);
+      dynamic_kernel->InferShape();
+      dynamic_kernel->UpdateArgs();
+      dynamic_kernel->Execute();
+      dynamic_kernel->PostExecute();
+    } else {
+      ret = kernel_mod->Launch(real_inputs, workspace, outputs, GetKernelStream(kernel));
+      if (!ret) {
+        MS_LOG(ERROR) << "Launch kernel failed, kernel full name: " << kernel->fullname_with_scope();
+        return false;
+      }
+    }
+  }
+
+  // launch post event
+  MS_LOG(DEBUG) << "Launch post-events for kernel " << kernel->fullname_with_scope();
+  for (auto &post_event_func : event_funcs.second) {
+    post_event_func();
   }
 
   return PySyncRuning();
@@ -780,6 +838,7 @@ bool AscendDeviceContext::LaunchAtomicClean(const CNodePtr &node, const std::vec
   if (iter == node_atomics_persistent_cache_.end()) {
     return true;
   }
+  MS_LOG(DEBUG) << "Launch atomic clean for kernel " << node->fullname_with_scope();
   auto atomic_node = iter->second.at(0);
   vector<AddressPtr> atomic_inputs;
   // The output addr need to clean
@@ -810,7 +869,7 @@ bool AscendDeviceContext::LaunchAtomicClean(const CNodePtr &node, const std::vec
   // Launch Atomic Node
   auto kernel_mod = AnfAlgo::GetKernelMod(atomic_node);
   MS_EXCEPTION_IF_NULL(kernel_mod);
-  return kernel_mod->Launch(atomic_inputs, {}, {}, compute_stream_);
+  return kernel_mod->Launch(atomic_inputs, {}, {}, GetKernelStream(atomic_node));
 }
 
 MS_REGISTER_DEVICE(kAscendDevice, AscendDeviceContext);
