@@ -549,6 +549,20 @@ LiteModel *LiteImportFromPath(const char *model_path) {
   return model;
 }
 
+bool LiteModel::CheckQuantAllInit(
+  const flatbuffers::Vector<flatbuffers::Offset<mindspore::schema::QuantParam>> *quant_params) {
+  if (quant_params == nullptr) {
+    return false;
+  }
+  for (size_t i = 0; i < quant_params->size(); i++) {
+    auto quant_param = quant_params->Get(i);
+    if (quant_param != nullptr && quant_param->inited() == false) {
+      return false;
+    }
+  }
+  return true;
+}
+
 Model *ImportFromPath(const char *model_path) { return LiteImportFromPath(model_path); }
 
 Model *ImportFromBuffer(const char *model_buf, size_t size, bool take_buf) {
