@@ -451,7 +451,6 @@ public class CipherClient {
         int pwIvFbs = RequestExchangeKeys.createPwIvVector(fbBuilder, pwIv);
         int pwSaltFbs = RequestExchangeKeys.createPwSaltVector(fbBuilder, thisPwSalt);
 
-        // for pkiVerify mode
         int exchangeKeysRoot;
         byte[] cPK = cKey.get(0);
         byte[] sPK = sKey.get(0);
@@ -464,6 +463,24 @@ public class CipherClient {
         int time = fbBuilder.createString(dateTime);
         String clientID = flParameter.getClientID();
 
+        // for pkiVerify mode
+        int certificatesInt = 0;
+        int signed = 0;
+        if (flParameter.isPkiVerify()) {
+            // waiting for certificates to take effect
+            int waitTakeEffectTime = 5000;
+            Common.sleep(waitTakeEffectTime);
+            int nSize = 2;  // exchange equipment certificate and service equipment
+            String[] pemCertificateChains = transformX509ArrayToPemArray(CertVerify.getX509CertificateChain(clientID));
+            int[] pemList = new int[nSize];
+            for (int i = 0; i < nSize; i++) {
+                pemList[i] = fbBuilder.createString(pemCertificateChains[i]);
+            }
+            certificatesInt = RequestExchangeKeys.createCertificateChainVector(fbBuilder, pemList);
+            byte[] signature = signPkAndTime(clientID, cPK, sPK, dateTime, iteration);
+            signed = RequestExchangeKeys.createSignatureVector(fbBuilder, signature);
+        }
+
         // start build
         RequestExchangeKeys.startRequestExchangeKeys(fbBuilder);
         RequestExchangeKeys.addFlId(fbBuilder, id);
@@ -475,22 +492,10 @@ public class CipherClient {
         RequestExchangeKeys.addPwIv(fbBuilder, pwIvFbs);
         RequestExchangeKeys.addPwSalt(fbBuilder, pwSaltFbs);
         if (flParameter.isPkiVerify()) {
-            // waiting for certificates to take effect
-            int waitTakeEffectTime = 5000;
-            Common.sleep(waitTakeEffectTime);
-            int nSize = 2;  // exchange equipment certificate and service equipment
-            String[] pemCertificateChains = transformX509ArrayToPemArray(CertVerify.getX509CertificateChain(clientID));
-            int[] pemList = new int[nSize];
-            for (int i = 0; i < nSize; i++) {
-                pemList[i] = fbBuilder.createString(pemCertificateChains[i]);
-            }
-            int certificatesInt = RequestExchangeKeys.createCertificateChainVector(fbBuilder, pemList);
-            byte[] signature = signPkAndTime(clientID, cPK, sPK, dateTime, iteration);
-            int signed = RequestExchangeKeys.createSignatureVector(fbBuilder, signature);
-
             RequestExchangeKeys.addSignature(fbBuilder, signed);
             RequestExchangeKeys.addCertificateChain(fbBuilder, certificatesInt);
         }
+        
         exchangeKeysRoot = RequestExchangeKeys.endRequestExchangeKeys(fbBuilder);
         fbBuilder.finish(exchangeKeysRoot);
         byte[] msg = fbBuilder.sizedByteArray();
@@ -735,7 +740,7 @@ public class CipherClient {
         }
         long remoteTimeStamp = Long.parseLong(timestamp);
         long validIterInterval = flParameter.getValidInterval();
-        if (currentTimeStamp - remoteTimeStamp > validIterInterval || currentTimeStamp < remoteTimeStamp) {
+        if (Math.abs(currentTimeStamp - remoteTimeStamp) > validIterInterval) {
             LOGGER.severe(Common.addTag("[PairWiseMask] timeStamp check failed! The difference between" +
                     " remote timestamp and current timestamp is beyond valid iteration interval!"));
             return FLClientStatus.FAILED;
