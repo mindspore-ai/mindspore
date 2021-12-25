@@ -405,14 +405,14 @@ void PrimitivePyAdapter::AddPyAttr(const py::str &name, const py::object &obj) {
   std::string attr_name = name;
   ValuePtr converted_ret = nullptr;
   if (py::isinstance<py::module>(obj)) {
-    MS_LOG(EXCEPTION) << "Call 'add_attr' to add attribute to prim failed,"
-                      << " not support py::module to be attribute value; prim name: " << this->name_
+    MS_LOG(EXCEPTION) << "Call 'add_attr' to add attribute to primitive failed,"
+                      << " not support py::module to be attribute value; primitive name: " << this->name_
                       << ", attribute name: " << attr_name << " attribute value: " << py::str(obj);
   }
   bool converted = parse::ConvertData(obj, &converted_ret);
   if (!converted) {
-    MS_LOG(EXCEPTION) << "Call 'add_attr' to add attribute to prim failed,"
-                      << " convert python obj to MindSpore obj failed; prim name: " << this->name_
+    MS_LOG(EXCEPTION) << "Call 'add_attr' to add attribute to primitive failed,"
+                      << " convert python obj to MindSpore obj failed; primitive name: " << this->name_
                       << ", attribute name:" << attr_name << ", attribute value:" << py::str(obj)
                       << ", attribute type:" << py::cast<std::string>(obj.attr("__class__").attr("__name__"));
   }
@@ -423,14 +423,14 @@ void PrimitivePyAdapter::AddPyAttr(const py::str &name, const py::object &obj) {
   if (attr_name == "primitive_target") {
     MS_EXCEPTION_IF_NULL(converted_ret);
     if (!converted_ret->isa<StringImm>()) {
-      MS_LOG(EXCEPTION) << "Call 'add_attr' to add attribute to prim '" << this->name_
+      MS_LOG(EXCEPTION) << "Call 'add_attr' to add attribute to primitive '" << this->name_
                         << "' failed, value of attribute 'primitive_target' must be CPU|GPU|Ascend but got "
                         << py::str(obj);
     }
     auto target = GetValue<std::string>(converted_ret);
     if (!target.empty() && target != kCPUDevice && target != kGPUDevice && target != kAscendDevice &&
         target != "Device") {
-      MS_LOG(EXCEPTION) << "Call 'add_attr' to add attribute to prim '" << this->name_
+      MS_LOG(EXCEPTION) << "Call 'add_attr' to add attribute to primitive '" << this->name_
                         << "' failed, value of attribute 'primitive_target' must be CPU|GPU|Ascend but got "
                         << py::str(obj);
     }
