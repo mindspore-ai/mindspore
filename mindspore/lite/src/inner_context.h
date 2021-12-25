@@ -78,6 +78,10 @@ struct InnerContext : public Context {
 
   void SetAllLinkInfo(const std::unordered_map<void *, std::set<void *>> &all_link_info);
 
+  void ReplaceLinkInfoReceiverWithNewOne(void *new_receiver, void *old_receiver);
+
+  void ReplaceLinkInfoSenderWithNewOne(void *new_sender, void *old_sender);
+
  private:
   bool IsAllDeviceTypeValid() const;
 
