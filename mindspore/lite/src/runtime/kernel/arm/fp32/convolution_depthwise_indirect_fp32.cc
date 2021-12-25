@@ -34,6 +34,7 @@ ConvolutionDepthwiseIndirectCPUKernel::~ConvolutionDepthwiseIndirectCPUKernel() 
 }
 
 int ConvolutionDepthwiseIndirectCPUKernel::Prepare() {
+  UpdateOriginWeightAndBias();
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   if (op_parameter_->is_train_session_) {
