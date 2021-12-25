@@ -26,6 +26,7 @@
 #include "backend/kernel_compiler/gpu/kernel_constants.h"
 #include "runtime/device/gpu/distribution/collective_init.h"
 #include "runtime/hardware/gpu/nvidia_collective_comm_lib.h"
+#include "runtime/hardware/collective/collective_comm_lib_loader.h"
 
 namespace mindspore {
 namespace kernel {
@@ -53,6 +54,8 @@ class NcclGpuKernel : public GpuKernel {
  protected:
   ncclDataType_t nccl_dtype(const TypeId &type_id) { return kNcclDtypeMap[TypeIdLabel(type_id)]; }
 
+  bool LoadNvidiaCommLib();
+
   // The capsulation of the collective communication operation APIs for compatibility.
   // Caller does not need to judge the return value because exception will be thrown inside these methods with kernel
   // info.
@@ -72,6 +75,7 @@ class NcclGpuKernel : public GpuKernel {
   bool GroupEnd();
 
   const void *collective_handle_;
+  void *nvidia_collective_handle_;
   std::string group_name_;
   ncclDataType_t nccl_data_type_;
   bool use_mpi_;

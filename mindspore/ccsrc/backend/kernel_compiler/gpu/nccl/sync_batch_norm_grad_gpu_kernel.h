@@ -125,6 +125,10 @@ class SyncBatchNormGradGpuKernel : public NcclGpuKernel {
     if (use_mpi_) {
       collective_handle_ = device::gpu::CollectiveInitializer::instance().collective_handle();
       MS_EXCEPTION_IF_NULL(collective_handle_);
+    } else {
+      if (!LoadNvidiaCommLib()) {
+        return false;
+      }
     }
     // Get group size
     device_count_ = device::gpu::CollectiveInitializer::instance().GetGroupSize(group_name_);

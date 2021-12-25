@@ -222,6 +222,45 @@ bool NvidiaCollectiveCommLib::CheckNCCLReduceType(CollectiveOpReduceType reduce_
 }  // namespace gpu
 
 using NvidiaCollectiveCommLib = mindspore::device::gpu::NvidiaCollectiveCommLib;
+
 CollectiveCommunicationLib *communication_lib_instance() { return &NvidiaCollectiveCommLib::GetInstance(); }
+
+ncclResult_t AllGather(const void *send_buff, void *recv_buff, size_t send_count, ncclDataType_t data_type,
+                       const std::string &group_name, cudaStream_t stream) {
+  return NvidiaCollectiveCommLib::GetInstance().AllGather(send_buff, recv_buff, send_count, data_type, group_name,
+                                                          stream);
+}
+
+ncclResult_t AllReduce(const void *send_buff, void *recv_buff, size_t send_count, ncclDataType_t data_type,
+                       ncclRedOp_t reduce_op, const std::string &group_name, cudaStream_t stream) {
+  return NvidiaCollectiveCommLib::GetInstance().AllReduce(send_buff, recv_buff, send_count, data_type, reduce_op,
+                                                          group_name, stream);
+}
+
+ncclResult_t Broadcast(const void *send_buff, void *recv_buff, size_t send_count, ncclDataType_t data_type,
+                       uint32_t root_rank, const std::string &group_name, cudaStream_t stream) {
+  return NvidiaCollectiveCommLib::GetInstance().Broadcast(send_buff, recv_buff, send_count, data_type, root_rank,
+                                                          group_name, stream);
+}
+
+ncclResult_t ReduceScatter(const void *send_buff, void *recv_buff, size_t recv_count, ncclDataType_t data_type,
+                           ncclRedOp_t reduce_op, const std::string &group_name, cudaStream_t stream) {
+  return NvidiaCollectiveCommLib::GetInstance().ReduceScatter(send_buff, recv_buff, recv_count, data_type, reduce_op,
+                                                              group_name, stream);
+}
+
+ncclResult_t Send(const void *send_buff, size_t count, ncclDataType_t data_type, uint32_t peer,
+                  const std::string &group_name, cudaStream_t stream) {
+  return NvidiaCollectiveCommLib::GetInstance().Send(send_buff, count, data_type, peer, group_name, stream);
+}
+
+ncclResult_t Recv(void *recv_buff, size_t count, ncclDataType_t data_type, uint32_t peer, const std::string &group_name,
+                  cudaStream_t stream) {
+  return NvidiaCollectiveCommLib::GetInstance().Recv(recv_buff, count, data_type, peer, group_name, stream);
+}
+
+ncclResult_t GroupStart() { return NvidiaCollectiveCommLib::GetInstance().GroupStart(); }
+
+ncclResult_t GroupEnd() { return NvidiaCollectiveCommLib::GetInstance().GroupEnd(); }
 }  // namespace device
 }  // namespace mindspore
