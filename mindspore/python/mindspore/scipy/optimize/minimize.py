@@ -123,6 +123,6 @@ def minimize(func, x0, args=(), *, method, tol=None, options=None):
                                hess_inv=results.H_k,
                                nfev=results.nfev,
                                njev=results.ngev,
-                               nit=results.k), results
+                               nit=results.k)
 
     raise ValueError("Method {} not recognized".format(method))
