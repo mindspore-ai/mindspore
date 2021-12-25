@@ -52,6 +52,7 @@ message ValueInfoProto {
   repeated TensorProto tensor = 2;
   optional string doc_string = 3;
   optional string denotation = 4;
+  optional AttributeProto attr_info = 5; // graph input info for other type
 }
 
 
@@ -150,6 +151,8 @@ message TensorProto {
   repeated uint64 uint64_data = 11;
   optional ExternalDataProto external_data = 12;
   optional string ref_key = 13;
+  repeated int64 min_dims = 14;
+  repeated int64 max_dims = 15;
 }
 
 message ParallelProto {
