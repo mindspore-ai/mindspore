@@ -206,9 +206,7 @@ void TbeKernelSelect::FilterInVaildKernelInfo(const OpInfo &op_info) {
     kernel_info_list.emplace_back(*iter);
   }
   if (kernel_info_list.empty()) {
-    MS_LOG(WARNING) << "After tbe check supported, all valid AI CORE kernel infos were filtered out."
-                       "It will try to find in AI CPU kernel infos. Node:"
-                    << full_name_;
+    MS_LOG(DEBUG) << "After tbe check supported, all valid AI CORE kernel infos were filtered out. Node:" << full_name_;
   }
   (*kernel_info_list_) = kernel_info_list;
 }
