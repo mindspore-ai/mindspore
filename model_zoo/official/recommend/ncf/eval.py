@@ -81,7 +81,7 @@ def test_eval():
 
 
 if __name__ == '__main__':
-    devid = int(os.getenv('DEVICE_ID'))
+    devid = int(os.getenv('DEVICE_ID', '0'))
     context.set_context(mode=context.GRAPH_MODE,
                         device_target="Davinci",
                         save_graphs=True,

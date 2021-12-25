@@ -36,7 +36,6 @@ do
      --dataset 'ml-1m'  \
      --train_epochs 50 \
      --output_path './output/' \
-     --eval_file_name 'eval.log' \
      --loss_file_name 'loss.log'  \
      --checkpoint_path './checkpoint/' \
      --device_target="Ascend" \
