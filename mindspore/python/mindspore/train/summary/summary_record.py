@@ -128,7 +128,8 @@ class SummaryRecord:
               - npy: export tensor as npy file.
 
     Raises:
-        TypeError: If the parameter type is incorrect.
+        TypeError: `max_file_size` is not int or `file_prefix` and `file_suffix` is not string.
+        ValueError: The Summary is not supported, please without `-s on` and recompile source.
 
     Examples:
         >>> from mindspore.train.summary import SummaryRecord
@@ -211,14 +212,18 @@ class SummaryRecord:
 
     def set_mode(self, mode):
         """
-        Set the training phase. Different training phases affect data recording.
+        Set the model running phase. Different phases affect data recording.
 
         Args:
             mode (str): The mode to be set, which should be 'train' or 'eval'. When the mode is 'eval',
                 summary_record will not record the data of summary operators.
 
+                - train：the model running phase is train mode.
+                - eval：the model running phase is eval mode，When the mode is 'eval',
+                  summary_record will not record the data of summary operators.
+
         Raises:
-            ValueError: When the mode is not recognized.
+            ValueError: `mode` is not in the optional value.
 
         Examples:
             >>> from mindspore.train.summary import SummaryRecord
@@ -236,7 +241,18 @@ class SummaryRecord:
         Add value to be recorded later.
 
         Args:
-            plugin (str): The value of the plugin.
+            plugin (str): The plugin of the value.
+
+                - graph: the value is a computational graph.
+                - scalar: the value is a scalar.
+                - image: the value is an image.
+                - tensor: the value is a tensor.
+                - histogram: the value is a histogram.
+                - train_lineage: the value is a lineage data for the training phase.
+                - eval_lineage: the value is a lineage data for the evaluation phase.
+                - dataset_graph: the value is a dataset graph.
+                - custom_lineage_data: the value is a customized lineage data.
+
             name (str): The value of the name.
             value (Union[Tensor, GraphProto, TrainLineage, EvaluationLineage, DatasetGraph, UserDefinedInfo]): \
                 The value to store.
@@ -253,9 +269,11 @@ class SummaryRecord:
                   see mindspore/ccsrc/lineage.proto.
                 - The data type of value should be a 'UserDefinedInfo' object when the plugin is 'custom_lineage_data',
                   see mindspore/ccsrc/lineage.proto.
+
         Raises:
-            ValueError: If the parameter value is invalid.
-            TypeError: If the parameter type is error.
+            ValueError: `plugin` is not in the optional value。
+            TypeError: `name` is not non-empty string，or the data type of value is not 'Tensor' object when the plugin
+                is 'scalar', 'image', 'tensor' or 'histogram'.
 
         Examples:
             >>> from mindspore import Tensor
@@ -299,14 +317,14 @@ class SummaryRecord:
             train_network (Cell): The spare network for saving graph.
                 Default: None, it means just do not save the graph summary when the original network graph is None.
             plugin_filter (Optional[Callable[[str], bool]]): The filter function, \
-                which is used to filter out plugins from being written by returning False. Default: None.
+                which is used to filter out which plugin should be written. Default: None.
 
         Returns:
             bool, whether the record process is successful or not.
 
         Raises:
-            TypeError: If the parameter type is error.
-            RuntimeError: If the disk space is insufficient.
+            TypeError: `step` is not int，or `train_network` is not `mindspore.nn.Cell \
+            <https://www.mindspore.cn/docs/api/en/master/api_python/nn/mindspore.nn.Cell.html#mindspore-nn-cell>`_ 。
 
         Examples:
             >>> from mindspore.train.summary import SummaryRecord
@@ -387,7 +405,7 @@ class SummaryRecord:
 
     def flush(self):
         """
-        Flush the event file to disk.
+        Flush the buffer and write files to disk.
 
         Call it to make sure that all pending events have been written to disk.
 
@@ -404,7 +422,7 @@ class SummaryRecord:
 
     def close(self):
         """
-        Flush all events and close summary records. Please use the statement to autoclose.
+        Flush the buffer and write files to disk and close summary records. Please use the statement to autoclose.
 
         Examples:
             >>> from mindspore.train.summary import SummaryRecord
