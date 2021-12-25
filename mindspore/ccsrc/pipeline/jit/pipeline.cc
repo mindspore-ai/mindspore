@@ -170,6 +170,15 @@ bool CheckArgValid(const py::handle &arg) {
     return std::all_of(dict_arg.begin(), dict_arg.end(), [](const auto &pair) { return CheckArgValid(pair.second); });
   }
 
+  if (py::isinstance<Tensor>(arg)) {
+    auto tensor = py::cast<TensorPtr>(arg);
+    if (tensor->data_type() == kNumberTypeBool) {
+      MS_LOG(WARNING) << "The data types of Tensor:" << py::str(arg)
+                      << " is bool, which may cause SelectKernelInfo failure for operator [AddN]. "
+                         "For more details, please refer to the FAQ at https://www.mindspore.cn.";
+    }
+  }
+
   return py::isinstance<py::int_>(arg) || py::isinstance<py::float_>(arg) || py::isinstance<py::none>(arg) ||
          py::isinstance<Number>(arg) ||
          ((py::isinstance<Tensor>(arg) || py::isinstance<CSRTensor>(arg)) && !py::hasattr(arg, "__parameter__"));
