@@ -85,6 +85,8 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 
   void SetCurrentAndPrevRootGraph(uint32_t root_graph_id);
 
+  void SetAscendKernelByKernelFlag(bool value) { ascend_kernel_by_kernel_ = value; }
+
   void StoreRunGraphIdList(uint32_t graph_id);
 
   // analyze tensors and wait for command
@@ -95,7 +97,7 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 
   static uint32_t GetRankID();
 
-  void DumpGPU(const KernelGraphPtr &kernel_graph) const;
+  void Dump(const KernelGraphPtr &kernel_graph) const;
 
   void DumpSingleNode(const CNodePtr &node, uint32_t graph_id);
 
@@ -149,6 +151,8 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   void ClearCurrentData();
 
   void LoadGraphOutputs();
+
+  void LoadNodeOutputs(const CNodePtr &node, uint32_t exec_order, uint32_t root_graph_id);
 
   void CheckDatasetSinkMode(const KernelGraphPtr &graph_ptr);
 
@@ -313,6 +317,7 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   static std::shared_ptr<Debugger> debugger_;
   uint32_t not_dataset_graph_sum_;
   std::list<uint32_t> rungraph_id_list_;
+  bool ascend_kernel_by_kernel_;
   std::string version_;
 };
 

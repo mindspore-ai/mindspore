@@ -61,6 +61,7 @@ class DumpJsonParser {
   void UpdateDumpIter() { ++cur_dump_iter_; }
   bool FileFormatIsNpy() const { return file_format_ == JsonFileFormat::FORMAT_NPY; }
   bool GetIterDumpFlag() const;
+  bool DumpEnabledForIter() const;
   bool InputNeedDump() const;
   bool OutputNeedDump() const;
   std::string GetOpOverflowBinPath(uint32_t graph_id) const;

@@ -639,6 +639,7 @@ bool AscendDeviceAddress::DumpMemToFile(const std::string &filepath, const std::
     auto ret_rt_memcpy = aclrtMemcpy(host_tmp.data(), size_, ptr_, size_, ACL_MEMCPY_DEVICE_TO_HOST);
     if (ret_rt_memcpy != RT_ERROR_NONE) {
       MS_LOG(ERROR) << "SyncDeviceToHost: aclrtMemcpy mem size[" << size_ << "] fail, ret[" << ret_rt_memcpy << "]";
+      return false;
     }
     std::string path = filepath + '.' + format_;
     MS_LOG(INFO) << "E2E Dump path is " << path;
