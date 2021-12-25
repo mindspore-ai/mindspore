@@ -21,6 +21,7 @@ import mindspore._c_dataengine as cde
 import mindspore.common.dtype as mstype
 from mindspore._c_expression import typing
 
+import mindspore.dataset.text as text
 from ..core.validator_helpers import parse_user_args, type_check, type_check_list, check_uint32, \
     INT32_MAX, check_value, check_positive, check_pos_int32, check_filename, check_non_negative_int32
 
@@ -48,7 +49,8 @@ def check_lookup(method):
         if unknown_token is not None:
             type_check(unknown_token, (str,), "unknown_token")
 
-        type_check(vocab, (cde.Vocab,), "vocab is not an instance of cde.Vocab.")
+        type_check(vocab, (text.Vocab,), "vocab is not an instance of text.Vocab.")
+        type_check(vocab.c_vocab, (cde.Vocab,), "vocab.c_vocab is not an instance of cde.Vocab.")
         type_check(data_type, (typing.Type,), "data_type")
 
         return method(self, *args, **kwargs)
@@ -69,6 +71,55 @@ def check_from_file(method):
         if vocab_size is not None:
             check_positive(vocab_size, "vocab_size")
         type_check(special_first, (bool,), special_first)
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_vocab(method):
+    """A wrapper that wraps a parameter checker to the original function."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [vocab], _ = parse_user_args(method, *args, **kwargs)
+        if not isinstance(vocab, cde.Vocab):
+            type_error = "Input vocab is not an instance of cde.Vocab, got type {0}. ".format(type(vocab))
+            suggestion = "Use Vocab.from_dataset(), Vocab.from_list(), Vocab.from_file() or Vocab.from_dict() " \
+                         "to build a vocab."
+            raise TypeError(type_error + suggestion)
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_tokens_to_ids(method):
+    """A wrapper that wraps a parameter checker to the original function."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [tokens], _ = parse_user_args(method, *args, **kwargs)
+        type_check(tokens, (str, list), "tokens")
+        if isinstance(tokens, list):
+            param_names = ["tokens[{0}]".format(i) for i in range(len(tokens))]
+            type_check_list(tokens, (str,), param_names)
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_ids_to_tokens(method):
+    """A wrapper that wraps a parameter checker to the original function."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [ids], _ = parse_user_args(method, *args, **kwargs)
+        type_check(ids, (int, list), "ids")
+        if isinstance(ids, list):
+            param_names = ["ids[{0}]".format(i) for i in range(len(ids))]
+            type_check_list(ids, (int,), param_names)
 
         return method(self, *args, **kwargs)
 
@@ -201,8 +252,8 @@ def check_wordpiece_tokenizer(method):
             parse_user_args(method, *args, **kwargs)
         if vocab is None:
             raise ValueError("vocab is not provided.")
-        if not isinstance(vocab, cde.Vocab):
-            raise TypeError("Wrong input type for vocab, should be Vocab object.")
+        if not isinstance(vocab, text.Vocab):
+            raise TypeError("Wrong input type for vocab, should be text.Vocab object.")
         if not isinstance(suffix_indicator, str):
             raise TypeError("Wrong input type for suffix_indicator, should be string.")
         if not isinstance(unknown_token, str):
@@ -277,8 +328,8 @@ def check_bert_tokenizer(method):
          preserve_unused_token, with_offsets], _ = parse_user_args(method, *args, **kwargs)
         if vocab is None:
             raise ValueError("vacab is not provided.")
-        if not isinstance(vocab, cde.Vocab):
-            raise TypeError("Wrong input type for vocab, should be Vocab object.")
+        if not isinstance(vocab, text.Vocab):
+            raise TypeError("Wrong input type for vocab, should be text.Vocab object.")
         if not isinstance(suffix_indicator, str):
             raise TypeError("Wrong input type for suffix_indicator, should be string.")
         if not isinstance(max_bytes_per_token, int):

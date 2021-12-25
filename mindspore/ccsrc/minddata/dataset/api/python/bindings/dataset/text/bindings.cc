@@ -45,11 +45,37 @@ PYBIND_REGISTER(Vocab, 0, ([](const py::module *m) {
                         THROW_IF_ERROR(Vocab::BuildFromFile(path, dlm, vocab_size, special_tokens, special_first, &v));
                         return v;
                       })
-                    .def_static("from_dict", [](const py::dict &words) {
-                      std::shared_ptr<Vocab> v;
-                      THROW_IF_ERROR(Vocab::BuildFromPyDict(words, &v));
-                      return v;
-                    });
+                    .def_static("from_dict",
+                                [](const py::dict &words) {
+                                  std::shared_ptr<Vocab> v;
+                                  THROW_IF_ERROR(Vocab::BuildFromPyDict(words, &v));
+                                  return v;
+                                })
+                    .def("tokens_to_ids",
+                         [](Vocab &self, const std::vector<std::string> words) {
+                           auto ids = self.Lookup(words);
+                           py::object ret;
+                           if (ids.size() == 1) {
+                             ret = py::int_(ids[0]);
+                           } else {
+                             py::list ids_list = py::cast(ids);
+                             ret = py::object(ids_list);
+                           }
+                           return ret;
+                         })
+                    .def("ids_to_tokens",
+                         [](Vocab &self, const std::vector<int32_t> ids) {
+                           auto words = self.ReverseLookup(ids);
+                           py::object ret;
+                           if (words.size() == 1) {
+                             ret = py::str(words[0]);
+                           } else {
+                             py::list words_list = py::cast(words);
+                             ret = py::object(words_list);
+                           }
+                           return ret;
+                         })
+                    .def("vocab", [](Vocab &self) { return self.vocab(); });
                 }));
 
 PYBIND_REGISTER(SentencePieceVocab, 0, ([](const py::module *m) {

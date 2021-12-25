@@ -280,7 +280,7 @@ class Lookup(TextTensorOperation):
         self.data_type = data_type
 
     def parse(self):
-        return cde.LookupOperation(self.vocab, self.unknown_token, str(mstype_to_detype(self.data_type)))
+        return cde.LookupOperation(self.vocab.c_vocab, self.unknown_token, str(mstype_to_detype(self.data_type)))
 
 
 class Ngram(TextTensorOperation):
@@ -550,7 +550,7 @@ class WordpieceTokenizer(TextTensorOperation):
         self.with_offsets = with_offsets
 
     def parse(self):
-        return cde.WordpieceTokenizerOperation(self.vocab, self.suffix_indicator, self.max_bytes_per_token,
+        return cde.WordpieceTokenizerOperation(self.vocab.c_vocab, self.suffix_indicator, self.max_bytes_per_token,
                                                self.unknown_token, self.with_offsets)
 
 
@@ -736,7 +736,7 @@ if platform.system().lower() != 'windows':
             self.with_offsets = with_offsets
 
         def parse(self):
-            return cde.BertTokenizerOperation(self.vocab, self.suffix_indicator, self.max_bytes_per_token,
+            return cde.BertTokenizerOperation(self.vocab.c_vocab, self.suffix_indicator, self.max_bytes_per_token,
                                               self.unknown_token, self.lower_case, self.keep_whitespace,
                                               self.normalization_form, self.preserve_unused_token, self.with_offsets)
 

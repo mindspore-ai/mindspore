@@ -38,6 +38,35 @@ WordIdType Vocab::Lookup(const WordType &word) const {
   return itr == word2id_.end() ? kNoTokenExists : itr->second;
 }
 
+std::vector<WordIdType> Vocab::Lookup(const std::vector<WordType> &words) const {
+  std::vector<WordIdType> ids;
+  std::transform(words.begin(), words.end(), std::back_inserter(ids), [this](auto w) { return Lookup(w); });
+  return ids;
+}
+
+WordType Vocab::ReverseLookup(const WordIdType &id) {
+  // lazy initialization, since I think it's not common use but waste memory
+  if (id2word_.empty()) {
+    for (const auto [word_, id_] : word2id_) {
+      id2word_[id_] = word_;
+    }
+  }
+  auto itr = id2word_.find(id);
+  return itr == id2word_.end() ? kNoIdExists : itr->second;
+}
+
+std::vector<WordType> Vocab::ReverseLookup(const std::vector<WordIdType> &ids) {
+  // lazy initialization, since I think it's not common use but waste memory
+  if (id2word_.empty()) {
+    for (const auto [word_, id_] : word2id_) {
+      id2word_[id_] = word_;
+    }
+  }
+  std::vector<WordType> words;
+  std::transform(ids.begin(), ids.end(), std::back_inserter(words), [this](auto i) { return ReverseLookup(i); });
+  return words;
+}
+
 #ifdef ENABLE_PYTHON
 Status Vocab::BuildFromPyList(const py::list &words, const py::list &special_tokens, bool prepend_special,
                               std::shared_ptr<Vocab> *vocab) {
@@ -240,6 +269,7 @@ Status Vocab::BuildFromFile(const std::string &path, const std::string &delimite
 }
 
 const WordIdType Vocab::kNoTokenExists = -1;
+const WordType Vocab::kNoIdExists = std::string();
 
 }  // namespace dataset
 }  // namespace mindspore
