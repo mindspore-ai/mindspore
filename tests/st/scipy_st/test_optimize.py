@@ -70,7 +70,7 @@ def test_bfgs(dtype, func_x0):
     ms_res = msp.optimize.minimize(func(mnp), x0_tensor, method='BFGS',
                                    options=dict(maxiter=None, gtol=1e-6))
     scipy_res = osp.optimize.minimize(func(onp), x0, method='BFGS')
-    match_array(ms_res[0].x.asnumpy(), scipy_res.x, error=5, err_msg=str(ms_res[1]))
+    match_array(ms_res.x.asnumpy(), scipy_res.x, error=5, err_msg=str(ms_res))
 
 
 @pytest.mark.level0
@@ -91,7 +91,7 @@ def test_bfgs_fixes4594(dtype):
         return mnp.mean((mnp.dot(A, x)) ** 2)
 
     results = msp.optimize.minimize(func, Tensor(onp.ones(n, dtype=dtype)), method='BFGS',
-                                    options=dict(maxiter=None, gtol=1e-6))[0].x
+                                    options=dict(maxiter=None, gtol=1e-6)).x
     onp.testing.assert_allclose(results.asnumpy(), onp.zeros(n, dtype=dtype), rtol=1e-6, atol=1e-6)
 
 
@@ -108,14 +108,13 @@ def test_bfgs_graph(dtype, func_x0):
     Expectation: the result match scipy
     """
     context.set_context(mode=context.GRAPH_MODE)
-
     func, x0 = func_x0
     x0 = x0.astype(dtype)
     x0_tensor = Tensor(x0)
     ms_res = msp.optimize.minimize(func(mnp), x0_tensor, method='BFGS',
-                                   options=dict(maxiter=None, gtol=1e-6))[0].x
-    scipy_res = osp.optimize.minimize(func(onp), x0, method='BFGS').x
-    match_array(ms_res.asnumpy(), scipy_res, error=5)
+                                   options=dict(maxiter=None, gtol=1e-6))
+    scipy_res = osp.optimize.minimize(func(onp), x0, method='BFGS')
+    match_array(ms_res.x.asnumpy(), scipy_res.x, error=5, err_msg=str(ms_res))
 
 
 def _scalar_func_1(np):
@@ -161,6 +160,7 @@ def test_scalar_search(maxiter, func, x, p):
     Description: test cases for 1-d function
     Expectation: the result match scipy
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     osp_f, osp_fp = func(onp)
     osp_x, osp_p = onp.array(x), onp.array(p)
     osp_res = osp_line_search(osp_f, osp_fp, osp_x, osp_p, maxiter=maxiter)
@@ -214,6 +214,7 @@ def test_line_search(maxiter, func, x, p):
     Description: test cases for n-d function in PYNATIVE mode
     Expectation: the result match scipy
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     A = [[1.76405235, 0.40015721, 0.97873798, 2.2408932, 1.86755799],
          [-0.97727788, 0.95008842, -0.15135721, -0.10321885, 0.4105985],
          [0.14404357, 1.45427351, 0.76103773, 0.12167502, 0.44386323],
