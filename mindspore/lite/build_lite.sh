@@ -110,7 +110,16 @@ build_lite_x86_64_jni_and_jar() {
 
     # build jar
     ${LITE_JAVA_PATH}/java/gradlew clean -p ${LITE_JAVA_PATH}/
-    ${LITE_JAVA_PATH}/java/gradlew releaseJar -p ${LITE_JAVA_PATH}/
+    if [[ "${ENABLE_ASAN}" == "ON" || "${ENABLE_ASAN}" == "on" ]] ; then
+      ${LITE_JAVA_PATH}/java/gradlew releaseJar -p ${LITE_JAVA_PATH}/ -x test
+    else
+      if [[ "${MSLITE_ENABLE_TESTCASES}" == "ON" || "${MSLITE_ENABLE_TESTCASES}" == "on" ]] ; then
+          export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${LITE_JAVA_PATH}/native/libs/linux_x86/
+          ${LITE_JAVA_PATH}/java/gradlew releaseJar -p ${LITE_JAVA_PATH}/
+      else
+           ${LITE_JAVA_PATH}/java/gradlew releaseJar -p ${LITE_JAVA_PATH}/ -x test
+      fi
+    fi
     cp ${LITE_JAVA_PATH}/build/lib/jar/*.jar ${BASEPATH}/output/tmp/${pkg_name}/runtime/lib/
 
     # package
@@ -415,7 +424,7 @@ build_aar() {
     ${LITE_JAVA_PATH}/java/gradlew build -p ${LITE_JAVA_PATH}/java/common
     # build new java api module
     ${LITE_JAVA_PATH}/java/gradlew clean -p ${LITE_JAVA_PATH}/
-    ${LITE_JAVA_PATH}/java/gradlew build -p ${LITE_JAVA_PATH}/
+    ${LITE_JAVA_PATH}/java/gradlew build -p ${LITE_JAVA_PATH}/ -x test
 
     # build aar
     local npu_bak=${MSLITE_ENABLE_NPU}

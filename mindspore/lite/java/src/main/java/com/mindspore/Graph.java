@@ -36,8 +36,8 @@ public class Graph {
      * @param file model file.
      * @return load status.
      */
-    public boolean Load(String file) {
-        this.graphPtr = load(file);
+    public boolean load(String file) {
+        this.graphPtr = loadModel(file);
         return this.graphPtr != 0L;
     }
 
@@ -58,7 +58,7 @@ public class Graph {
         graphPtr = 0;
     }
 
-    private native long load(String file);
+    private native long loadModel(String file);
 
     private native boolean free(long graphPtr);
 }

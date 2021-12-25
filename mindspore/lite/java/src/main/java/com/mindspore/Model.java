@@ -47,6 +47,9 @@ public class Model {
      * @return build status.
      */
     public boolean build(Graph graph, MSContext context, TrainCfg cfg) {
+        if (graph == null || context == null || cfg == null) {
+            return false;
+        }
         modelPtr = this.buildByGraph(graph.getGraphPtr(), context.getMSContextPtr(), cfg.getTrainCfgPtr());
         return modelPtr != 0;
     }
@@ -63,6 +66,9 @@ public class Model {
      */
     public boolean build(final MappedByteBuffer buffer, int modelType, MSContext context, char[] dec_key,
                          String dec_mode) {
+        if (context == null) {
+            return false;
+        }
         modelPtr = this.buildByBuffer(buffer, modelType, context.getMSContextPtr(), dec_key, dec_mode);
         return modelPtr != 0;
     }
@@ -76,6 +82,9 @@ public class Model {
      * @return model build status.
      */
     public boolean build(final MappedByteBuffer buffer, int modelType, MSContext context) {
+        if (context == null) {
+            return false;
+        }
         modelPtr = this.buildByBuffer(buffer, modelType, context.getMSContextPtr(), null, "");
         return modelPtr != 0;
     }
@@ -92,6 +101,9 @@ public class Model {
      * @return model build status.
      */
     public boolean build(String modelPath, int modelType, MSContext context, char[] dec_key, String dec_mode) {
+        if (context == null) {
+            return false;
+        }
         modelPtr = this.buildByPath(modelPath, modelType, context.getMSContextPtr(), dec_key, dec_mode);
         return modelPtr != 0;
     }
@@ -105,6 +117,9 @@ public class Model {
      * @return build status.
      */
     public boolean build(String modelPath, int modelType, MSContext context) {
+        if (context == null) {
+            return false;
+        }
         modelPtr = this.buildByPath(modelPath, modelType, context.getMSContextPtr(), null, "");
         return modelPtr != 0;
     }
@@ -135,6 +150,9 @@ public class Model {
      * @return Whether the resize is successful.
      */
     public boolean resize(List<MSTensor> inputs, int[][] dims) {
+        if (inputs == null || dims == null) {
+            return false;
+        }
         long[] inputsArray = new long[inputs.size()];
         for (int i = 0; i < inputs.size(); i++) {
             inputsArray[i] = inputs.get(i).getMSTensorPtr();
@@ -230,6 +248,9 @@ public class Model {
      * @return Whether the model features is successfully update.
      */
     public boolean updateFeatureMaps(List<MSTensor> features) {
+        if (features == null) {
+            return false;
+        }
         long[] inputsArray = new long[features.size()];
         for (int i = 0; i < features.size(); i++) {
             inputsArray[i] = features.get(i).getMSTensorPtr();
