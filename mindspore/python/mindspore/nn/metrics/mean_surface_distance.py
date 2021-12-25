@@ -30,7 +30,7 @@ class MeanSurfaceDistance(Metric):
     .. math::
         {\text{dis}}\left (v, S(A)\right ) = \underset{s_{A}  \in S(A)}{\text{min }}\rVert v - s_{A} \rVert \
 
-    The Average Surface Distance form set(B) to set(A) is given by:
+    The Average Surface Distance from set(B) to set(A) is given by:
 
     .. math::
         AvgSurDis(B\rightarrow A) = \frac{\sum_{s_{B}  \in S(B)}^{} {\text{dis}  \
@@ -38,7 +38,7 @@ class MeanSurfaceDistance(Metric):
 
     Where the \|\|\*\|\| denotes a distance measure. \|\*\| denotes the number of elements.
 
-    The mean of surface distance form set(B) to set(A) and from set(A) to set(B) is:
+    The mean of surface distance from set(B) to set(A) and from set(A) to set(B) is:
 
     .. math::
         MeanSurDis(A \leftrightarrow B) = \frac{\sum_{s_{A}  \in S(A)}^{} {\text{dis}  \left ( s_{A}, S(B) \right )}
@@ -50,7 +50,7 @@ class MeanSurfaceDistance(Metric):
                           Default: "euclidean".
         symmetric (bool): Whether to calculate the Mean Surface Distance between y_pred and y.
                           If False, it only calculates :math: `AvgSurDis(y_pred\rightarrow y)`,
-                          otherwise, the mean of  distance form `y_pred` to `y` and from `y` to `y_pred`, i.e.
+                          otherwise, the mean of  distance from `y_pred` to `y` and from `y` to `y_pred`, i.e.
                           :math: `MeanSurDis(A \leftrightarrow B)`, will be returned. Default: False.
 
     Supported Platforms:

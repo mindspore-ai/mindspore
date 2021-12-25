@@ -99,7 +99,7 @@ class FTRL(Optimizer):
         \end{array}
 
     :math:`m` represents accumulators, :math:`g` represents `grads`, :math:`t` represents the current step,
-    :math:`u` represents the linear coefficient to be updated,, :math:`p` represents `lr_power`, :math:`\alpha`
+    :math:`u` represents the linear coefficient to be updated, :math:`p` represents `lr_power`, :math:`\alpha`
     represents `learning_rate`, :math:`\omega` represents `params`.
 
     Note:

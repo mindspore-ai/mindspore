@@ -166,6 +166,7 @@ class ConfusionMatrixMetric(Metric):
                            "fall out", "false discovery rate", "false omission rate", "prevalence threshold",
                            "threat score", "accuracy", "balanced accuracy", "f1 score",
                            "matthews correlation coefficient", "fowlkes mallows index", "informedness", "markedness"].
+                           Default: "sensitivity".
         calculation_method (bool): If true, the measurement for each sample will be calculated first.
                            If not, the confusion matrix of all samples will be accumulated first.
                            As for classification task, 'calculation_method' should be False. Default: False.
