@@ -125,8 +125,10 @@ def _get_filename_from_trace(trace):
     filename = strings[1].rstrip(',').strip('"')
     return filename
 
-# The first path is the current path or empty.
-sys_path = sys.path[1:]
+sys_path = list(sys.path)
+cwd = os.getcwd()
+if cwd in sys_path:
+    sys_path.remove(cwd)
 def _in_sys_path(file_path):
     for path in sys_path:
         if file_path.startswith(path):
