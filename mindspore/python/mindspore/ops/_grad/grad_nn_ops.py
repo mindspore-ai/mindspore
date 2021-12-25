@@ -27,6 +27,7 @@ from ..operations import _rl_inner_ops as rl_ops
 from ... import context
 from .._utils.utils import range_op, get_1d_shape
 
+
 @bprop_getters.register(P.BiasAdd)
 def get_bprop_bias_add(self):
     """Grad definition for `BiasAdd` operation."""
@@ -330,6 +331,7 @@ def get_bprop_adaptive_avg_pool2d_grad(self):
         return (dx,)
 
     return bprop
+
 
 @bprop_getters.register(P.AvgPool3D)
 def get_bprop_avg_pool_3d_grad(self):

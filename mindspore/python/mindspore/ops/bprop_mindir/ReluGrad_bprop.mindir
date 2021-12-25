@@ -1,5 +1,5 @@
 
-0.1.0	MindSpore*1.6.0:œ
+0.1.0	MindSpore*1.6.0.20220112:œ
 ß
 bprop.18:dout
 
@@ -18,4 +18,4 @@ bprop.18:ybprop.18:[CNode]19:2bprop.18:[CNode]19:2"!S-Prim-hyper_map[zeros_l
 bprop.18:y*
 bprop.18:out*
 bprop.18:dout2
-bprop.18:[CNode]20:3:@eb722f0a05359151f2578b4ad7b0d067988045071352718c64ca6cf29bc5008aP
+bprop.18:[CNode]20:3:@bd5c2beacc0ba2eed5f983eeea340dcc433de735d4f8c434e57739a943fcd904P

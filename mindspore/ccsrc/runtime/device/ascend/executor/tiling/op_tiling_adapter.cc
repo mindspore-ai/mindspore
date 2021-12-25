@@ -51,6 +51,8 @@ std::string OpTilingCalculateAdapter::GetRealOpType(const std::string &op_type) 
     {"IOU", "Iou"},
     {"DynamicBroadcastTo", "BroadcastTo"},
     {"DynamicResizeNearestNeighbor", "ResizeNearestNeighborV2"},
+    {"ParallelResizeBilinear", "SyncResizeBilinearV2"},
+    {"ParallelResizeBilinearGrad", "SyncResizeBilinearV2Grad"},
   };
   auto iter = kOpTypeMap.find(op_type);
   if (iter == kOpTypeMap.end()) {

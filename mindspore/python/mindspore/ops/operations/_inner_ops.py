@@ -1663,3 +1663,42 @@ class PsROIPooling(PrimitiveWithInfer):
     def infer_dtype(self, inputs_type, rois_type):
         map_type = mstype.tensor_type(mstype.int32)
         return inputs_type, map_type
+
+
+class ParallelResizeBilinear(PrimitiveWithInfer):
+    """ParallelResizeBilinear ops"""
+
+    @prim_attr_register
+    def __init__(self, ori_image_size, split_size, src_start_w, dst_start_w, align_corners):
+        """Initialize ParallelResizeBilinear."""
+        validator.check_value_type("ori_image_size", ori_image_size, [list, tuple], self.name)
+        validator.check_value_type("split_size", split_size, [list, tuple], self.name)
+        validator.check_int(len(split_size), 2, Rel.EQ, "len of split_size", self.name)
+        validator.check_value_type("src_start_w", src_start_w, [int], self.name)
+        validator.check_value_type("dst_start_w", dst_start_w, [int], self.name)
+        validator.check_value_type("align_corners", align_corners, [bool], self.name)
+        self.ori_image_size = list(ori_image_size)
+        self.split_size = list(split_size)
+        self.src_start_w = src_start_w
+        self.dst_start_w = dst_start_w
+        self.align_corners = align_corners
+        self.half_pixel_centers = False
+        self.add_prim_attr('ori_image_size', self.ori_image_size)
+        self.add_prim_attr('split_size', self.split_size)
+        self.add_prim_attr('src_start_w', self.src_start_w)
+        self.add_prim_attr('dst_start_w', self.dst_start_w)
+        self.add_prim_attr('align_corners', self.align_corners)
+        self.add_prim_attr('half_pixel_centers', self.half_pixel_centers)
+
+    def __infer__(self, x, size):
+        size_val = size['value']
+        x_shape = x['shape']
+        x_dtype = x['dtype']
+        validator.check_tensor_dtype_valid("x_dtype", x_dtype, [mstype.float16, mstype.float32], self.name)
+        if size_val is None:
+            raise ValueError("size should be const input")
+        output_shape = [x_shape[0], x_shape[1], self.split_size[0], self.split_size[1]]
+
+        return {'shape': output_shape,
+                'dtype': x_dtype,
+                'value': None}

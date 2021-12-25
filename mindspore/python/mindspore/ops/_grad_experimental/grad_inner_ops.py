@@ -49,6 +49,7 @@ def get_bprop_roll(self):
 
     return bprop
 
+
 @bprop_getters.register(inner.DynamicResizeNearestNeighbor)
 def get_bprop_dynamic_resize_nearest_neighbor(self):
     """Generate bprop for DynamicResizeNearestNeighbor"""
@@ -60,5 +61,18 @@ def get_bprop_dynamic_resize_nearest_neighbor(self):
         # 2 and 3 represent the height and width
         shp = (shp[2], shp[3])
         return (op(dout, shp), zeros_like(size))
+
+    return bprop
+
+
+@bprop_getters.register(inner.ParallelResizeBilinear)
+def get_bprop_parallel_resize_bilinear(self):
+    """Grad definition for `ParallelResizeBilinear` operation."""
+    grad = G.ParallelResizeBilinearGrad(self.ori_image_size, self.src_start_w, self.dst_start_w,
+                                        self.align_corners)
+
+    def bprop(x, size, out, dout):
+        dx = grad(dout, x, size)
+        return dx, zeros_like(size)
 
     return bprop

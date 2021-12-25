@@ -1,5 +1,5 @@
 
-0.1.0	MindSpore*1.6.0:º
+0.1.0	MindSpore*1.6.0.20220112:º
 ‹
 bprop.7:indicesbprop.7:[CNode]8:1bprop.7:[CNode]8:1"!S-Prim-hyper_map[zeros_like_leaf]:-Default/S-Prim-hyper_map[zeros_like_leaf]-op5
 ‰
@@ -19,4 +19,4 @@
 bprop.7:off_value*
 bprop.7:out*
 bprop.7:dout2
-bprop.7:[CNode]12:5:@eb722f0a05359151f2578b4ad7b0d067988045071352718c64ca6cf29bc5008aP
+bprop.7:[CNode]12:5:@bd5c2beacc0ba2eed5f983eeea340dcc433de735d4f8c434e57739a943fcd904P
