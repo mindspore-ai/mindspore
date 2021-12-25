@@ -17,6 +17,7 @@
 #include "src/runtime/kernel/arm/fp16/fused_batchnorm_fp16.h"
 #include "nnacl/fp16/batchnorm_fp16.h"
 #include "nnacl/fp16/cast_fp16.h"
+#include "nnacl/fp16/scale_fp16.h"
 #include "src/kernel_registry.h"
 
 using mindspore::lite::KernelRegistrar;
@@ -34,6 +35,35 @@ constexpr static int kOutScaleIdx = 1;
 constexpr static int kOutOffsetIdx = 2;
 constexpr static int kOutCurrentMeanIdx = 3;
 constexpr static int kOutCurrentVarIdx = 4;
+
+// new scale: -scale / sqrt(variance + eps)
+// new bias: -scale * mean / sqrt(variance + eps) + bias
+int FusedBatchnormFp16CPUKernel::Batchnorm2Scale(const void *scale_data, const void *bias_data, const void *mean_data,
+                                                 const void *var_data, float eps, int kernel_num) {
+  auto ret = InitScaleParam();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Init scale parameter when converting fused_batchnorm to scale.";
+    return RET_ERROR;
+  }
+
+  scale_ = malloc(in_tensors_.at(SECOND_INPUT)->Size());
+  CHECK_NULL_RETURN(scale_);
+  auto fp16_scale = reinterpret_cast<float16_t *>(scale_);
+  for (int i = 0; i < kernel_num; i++) {
+    fp16_scale[i] = (reinterpret_cast<const float16_t *>(scale_data))[i] /
+                    sqrtf((reinterpret_cast<const float16_t *>(var_data))[i] + eps);
+  }
+
+  offset_ = malloc(in_tensors_.at(THIRD_INPUT)->Size());
+  CHECK_NULL_RETURN(offset_);
+  auto fp16_offset = reinterpret_cast<float16_t *>(offset_);
+  for (int i = 0; i < kernel_num; i++) {
+    fp16_offset[i] = (reinterpret_cast<const float16_t *>(bias_data))[i] -
+                     (reinterpret_cast<const float16_t *>(mean_data))[i] * fp16_scale[i];
+  }
+  is_scale_ = true;
+  return RET_OK;
+}
 
 void FusedBatchnormFp16CPUKernel::CalcMeanVar(float16_t *in, float16_t *scale, float16_t *offset, float16_t *save_mean,
                                               float16_t *save_variance) {
@@ -73,10 +103,17 @@ int FusedBatchnormFp16CPUKernel::DoExecute(int task_id) {
                 reinterpret_cast<float16_t *>(in_tensors_.at(kInCurrentMeanIdx)->data()),
                 reinterpret_cast<float16_t *>(in_tensors_.at(kInCurrentVarIdx)->data()));
   }
-  FusedBatchNormFp16(reinterpret_cast<float16_t *>(in_tensors_.at(0)->data()), reinterpret_cast<float16_t *>(scale_),
-                     reinterpret_cast<float16_t *>(offset_), reinterpret_cast<float16_t *>(mean_),
-                     reinterpret_cast<float16_t *>(variance_), param, task_id,
-                     reinterpret_cast<float16_t *>(out_tensors_.at(0)->data()));
+
+  if (is_scale_) {
+    DoScaleFp16(reinterpret_cast<float16_t *>(in_tensors_.at(0)->data()),
+                reinterpret_cast<float16_t *>(out_tensors_.at(0)->data()), reinterpret_cast<float16_t *>(scale_),
+                reinterpret_cast<float16_t *>(offset_), task_id, scale_param_);
+  } else {
+    FusedBatchNormFp16(reinterpret_cast<float16_t *>(in_tensors_.at(0)->data()), reinterpret_cast<float16_t *>(scale_),
+                       reinterpret_cast<float16_t *>(offset_), reinterpret_cast<float16_t *>(mean_),
+                       reinterpret_cast<float16_t *>(variance_), param, task_id,
+                       reinterpret_cast<float16_t *>(out_tensors_.at(0)->data()));
+  }
   return RET_OK;
 }
 
