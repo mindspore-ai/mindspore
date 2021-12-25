@@ -362,8 +362,9 @@ def cg(A, b, x0=None, *, tol=1e-5, atol=0.0, maxiter=None, M=None):
         >>> from mindspore.scipy.sparse.linalg import cg
         >>> A = Tensor(onp.array([[1, 2], [2, 1]], dtype='float32'))
         >>> b = Tensor(onp.array([1, -1], dtype='float32'))
-        >>> cg(A, b)
-        [-1.  1.]
+        >>> result, _ = cg(A, b)
+        >>> result
+        Tensor(shape=[2], dtype=Float32, value= [-1.00000000e+00,  1.00000000e+00])
     """
     if x0 is None:
         x0 = mnp.zeros_like(b)
