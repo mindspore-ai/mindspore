@@ -802,6 +802,8 @@ void MindRTBackend::RunGraphBySingleOp(const std::vector<KernelGraphPtr> &graphs
                                        const std::vector<std::vector<tensor::TensorPtr>> &inputs, VectorRef *outputs) {
   SyncLazyTasks();
   MS_EXCEPTION_IF_NULL(graph_compiler_);
+  auto &op_lazy_builder = runtime::OpLazyBuilder::GetInstance();
+  op_lazy_builder.Register([this]() { LazyExecuteTaskCallback(); });
   for (size_t graph_index = 0; graph_index < graphs.size(); ++graph_index) {
     const auto &graph = graphs[graph_index];
     MS_EXCEPTION_IF_NULL(graph);
@@ -820,7 +822,7 @@ void MindRTBackend::RunGraphBySingleOp(const std::vector<KernelGraphPtr> &graphs
     } else {
       cnode_ref_count = iter->second;
     }
-    graph_compiler_->CalculateForwardOpOutputCount(graph, &forward_op_output_ref_counts_);
+    graph_compiler_->CalculateForwardOpOutputCount(graph, &forward_op_output_tensor_id_);
 
     // Clear bucket resources every step
     if (graph->is_bprop()) {
@@ -1232,7 +1234,7 @@ void MindRTBackend::RunSingleOpGraph(const KernelGraphPtr &graph,
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if (!ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER)) {
-    graph_compiler_->UpdateForwardOpOutputRefCount(input_tensors, &forward_op_output_ref_counts_);
+    graph_compiler_->UpdateForwardOpOutputRefCount(input_tensors, &forward_op_output_tensor_id_);
   }
 }
 
@@ -1252,6 +1254,10 @@ void MindRTBackend::CompileSingleOpGraphs(const std::vector<std::shared_ptr<runt
   MS_EXCEPTION_IF_NULL(build_tasks[0]);
   auto &task_context = build_tasks[0]->context();
   MS_EXCEPTION_IF_NULL(task_context);
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, task_context->is_pynative_infer());
+
   auto device_context = task_context->device_context();
   graph_compiler_->BuildSingleOpGraphs(graphs, device_context);
 
@@ -1272,8 +1278,8 @@ void MindRTBackend::LazyExecuteTaskCallback() {
   try {
     MS_LOG(DEBUG) << "Start";
     auto ms_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ms_context);
     auto infer_flag = ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER);
-    ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, true);
 
     CompileSingleOpGraphs(op_lazy_builder.GetOpBuildTasks());
     op_lazy_builder.ClearOpBuildTasks();
@@ -1283,6 +1289,7 @@ void MindRTBackend::LazyExecuteTaskCallback() {
     while (!op_run_tasks.empty()) {
       auto &op_run_task = op_run_tasks.front();
       const auto &context = op_run_task->context();
+      ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, context->is_pynative_infer());
       RunSingleOpGraph(context->graph(), context->output_nodes(), context->op_run_info(),
                        context->graph_compiler_info(), context->device_context());
       ClearGraphDeviceAddress(context->graph(), context->device_context(), false);
@@ -1354,8 +1361,12 @@ void MindRTBackend::RunOpInternal(bool single_op_cache_hit, GraphCompilerInfo *g
     }
   } else {
     UpdateOutput(output_nodes, outputs);
-    auto run_op_context = std::make_shared<runtime::OpLazyBuilderContext>(
-      graph_compiler_info, graph, output_nodes, *op_run_info, graph_compiler_info->device_contexts_.front());
+    auto ms_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ms_context);
+    auto infer_flag = ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER);
+    auto run_op_context =
+      std::make_shared<runtime::OpLazyBuilderContext>(graph_compiler_info, graph, output_nodes, *op_run_info,
+                                                      graph_compiler_info->device_contexts_.front(), infer_flag);
     if (!single_op_cache_hit) {
       op_lazy_builder.PushOpBuildTask(std::make_shared<runtime::OpBuildTask>(run_op_context));
     }

@@ -26,6 +26,9 @@ namespace device {
 static const char kPersistentParamMem[] = "Persistent mem";
 static const char kCommonMem[] = "Common mem";
 const size_t kGBToByte = 1073741824;
+// The smallest memory request size, if it is smaller than this size, the device memory request may fail
+// Set experience value to 10M
+const size_t kMinimumAllocMem = 10485760;
 
 DynamicMemPoolBestFit::~DynamicMemPoolBestFit() {
   persistent_mem_->clear();
@@ -216,6 +219,12 @@ size_t DynamicMemPoolBestFit::CalMemBlockAllocSize(size_t size, bool from_persis
   if (device_free_mem_size < size) {
     MS_LOG(WARNING) << "Memory not enough: current free memory size[" << device_free_mem_size
                     << "] is smaller than required size[" << size << "].";
+    return 0;
+  }
+  // The memory of the device is too small, which may cause the new application to fail.
+  if (device_free_mem_size < kMinimumAllocMem) {
+    MS_LOG(WARNING) << "Device memory size [" << device_free_mem_size << "] is smaller than minimum alloc size ["
+                    << kMinimumAllocMem << "].";
     return 0;
   }
   auto alloc_mem_size = MemAllocUnitSize(from_persistent_mem);
