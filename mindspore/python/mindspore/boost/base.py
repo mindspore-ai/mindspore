@@ -29,7 +29,7 @@ from mindspore.train.serialization import load_checkpoint
 from .less_batch_normalization import CommonHeadLastFN
 
 
-__all__ = ["OptimizerProcess", "ParameterProcess", "get_local_pca_mat_path", "load_local_pca_mat"]
+__all__ = ["OptimizerProcess", "ParameterProcess"]
 
 
 class OptimizerProcess:
@@ -275,7 +275,7 @@ class ParameterProcess:
         return group_params
 
 
-def get_local_pca_mat_path(weight_load_dir, pca_mat_path, n_component, device_number):
+def _get_local_pca_mat_path(weight_load_dir, pca_mat_path, n_component, device_number):
     """
     get local pca mat path.
 
@@ -296,6 +296,10 @@ def get_local_pca_mat_path(weight_load_dir, pca_mat_path, n_component, device_nu
 
         full_pca_mat_path = os.path.join(weight_load_dir, "pca_mat_temp.npy")
         pca_mat_exist = False
+
+    save_pca_end_path = os.path.join(os.path.dirname(full_pca_mat_path), "save_pca_end.txt")
+    if os.path.exists(save_pca_end_path):
+        os.remove(save_pca_end_path)
 
     rank = _get_global_rank()
     local_pca_mat_path = full_pca_mat_path[:-4] + "_rank_" + str(rank) + ".npy"
@@ -341,18 +345,70 @@ def _load_weights(weight_load_dir):
     return param_mat
 
 
-def _compute_pca_mat(data, n_component):
+def _compute_pca_mat(data, n_component, randomized=True):
     """
     compute pca mat.
 
     Args:
-        data : array-like of shape (n_samples, n_features)
+        data (array): array-like of shape (n_samples, n_features)
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
+        n_component (int): pca component.
+        randomized (bool) if use randomized svd.
+    """
+    if data.shape[0] < n_component:
+        raise ValueError("The samples: {} is less than: n_component {}.".format(data.shape[0], n_component))
+
+    if randomized:
+        components = _randomized_svd(data, n_component)
+    else:
+        components = _full_svd(data, n_component)
+
+    return components
+
+
+def _randomized_svd(data, n_component, n_oversample=10, n_iter=1):
+    """
+    compute pca mat use randomized svd.
+
+    Args:
+        data (array): array-like of shape (n_samples, n_features)
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
+        n_component (int): pca component.
+        n_oversample (int): oversample num
+        n_iter (int): iteration count
+    """
+    mean = np.mean(data, axis=0)
+    data -= mean
+    n_random = n_component + n_oversample
+    n_samples, n_features = data.shape
+    transpose = n_samples < n_features
+    if transpose:
+        data = data.T
+    q_mat = _randomized_range_finder(data, n_random, n_iter)
+    b_mat = q_mat.T @ data
+    u_hat, _, vt_mat = la.svd(b_mat, full_matrices=False)
+    del b_mat
+    u_mat = np.dot(q_mat, u_hat)
+    u_mat, vt_mat = _svd_flip(u_mat, vt_mat, transpose)
+    if transpose:
+        components = u_mat[:, :n_component].T
+    else:
+        components = vt_mat[:n_component, :]
+    return components
+
+
+def _full_svd(data, n_component):
+    """
+    compute pca mat use full svd.
+
+    Args:
+        data (array): array-like of shape (n_samples, n_features)
             Training data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
         n_component (int): pca component.
     """
-    if data.shape[0] < n_component:
-        raise ValueError("The samples: {} is less than: n_component {}.".format(data.shape[0], n_component))
     mean = np.mean(data, axis=0)
     data -= mean
     u, _, v = la.svd(data, full_matrices=False)
@@ -361,18 +417,46 @@ def _compute_pca_mat(data, n_component):
     return components
 
 
-def _svd_flip(u, v):
+def _randomized_range_finder(data, size, n_iter=1):
+    """
+    compute pca mat use randomized svd.
+
+    Args:
+        data (array): array-like of shape (n_samples, n_features)
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
+        size (int): n_component + n_oversample.
+        n_iter (int): iteration count
+    """
+    q_mat = np.random.normal(size=(data.shape[1], size))
+
+    for _ in range(n_iter):
+        q_mat, _ = la.lu(data @ q_mat, permute_l=True)
+        q_mat, _ = la.lu(data.T @ q_mat, permute_l=True)
+
+    q_mat, _ = la.qr(data @ q_mat, mode="economic")
+    return q_mat
+
+
+def _svd_flip(u, v, transpose=True):
     """
     svd flip.
 
     Args:
         u (ndarray): the output of `linalg.svd`.
         v (ndarray): the output of `linalg.svd`.
+        transpose (bool): if data is transposed.
     """
-    max_abs_cols = np.argmax(np.abs(u), axis=0)
-    signs = np.sign(u[max_abs_cols, range(u.shape[1])])
-    u *= signs
-    v *= signs[:, np.newaxis]
+    if not transpose:
+        max_abs_cols = np.argmax(np.abs(u), axis=0)
+        signs = np.sign(u[max_abs_cols, range(u.shape[1])])
+        u *= signs
+        v *= signs[:, np.newaxis]
+    else:
+        max_abs_rows = np.argmax(np.abs(v), axis=1)
+        signs = np.sign(v[range(v.shape[0]), max_abs_rows])
+        u *= signs
+        v *= signs[:, np.newaxis]
     return u, v
 
 
@@ -392,31 +476,26 @@ def _save_local_pca_mat(pca_mat, full_pca_mat_path, n_component):
         end_index = (rank_id + 1) * local_dim
         pca_start_index = min(n_component, start_index)
         pca_end_index = min(n_component, end_index)
-        p_local = np.zeros([local_dim + 1, pca_mat.shape[1]])
+        p_local = np.zeros([local_dim, pca_mat.shape[1]])
         if pca_start_index != pca_end_index:
             p_local[0: pca_end_index - pca_start_index, :] = pca_mat[pca_start_index: pca_end_index, :]
         local_pca_mat_path = full_pca_mat_path[:-4] + "_rank_" + str(rank_id) + ".npy"
         np.save(local_pca_mat_path, p_local)
+    save_pca_end_path = os.path.join(os.path.dirname(full_pca_mat_path), "save_pca_end.txt")
+    os.mknod(save_pca_end_path)
 
 
-def load_local_pca_mat(local_pca_mat_path, n_component):
+def _load_local_pca_mat(local_pca_mat_path):
     """
     load pca mat.
 
     Args:
         local_pca_mat_path (str): local pca mat file path.
-        n_component (int): pca component.
     """
-    rank_size = get_group_size()
-    local_dim = math.ceil(n_component / rank_size)
+    save_pca_end_path = os.path.join(os.path.dirname(local_pca_mat_path), "save_pca_end.txt")
     while True:
-        if os.path.exists(local_pca_mat_path):
+        if os.path.exists(save_pca_end_path):
             break
         time.sleep(5)
-    while True:
-        pca_mat = np.load(local_pca_mat_path)
-        if pca_mat.shape[0] == local_dim + 1:
-            break
-        time.sleep(5)
-    pca_mat = pca_mat[:-1, :]
+    pca_mat = np.load(local_pca_mat_path)
     return pca_mat
