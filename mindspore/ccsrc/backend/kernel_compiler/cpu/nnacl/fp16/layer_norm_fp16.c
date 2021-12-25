@@ -72,6 +72,7 @@ int LayerNormFp16(const float16_t *src_data, const float16_t *gamma_data, const 
   }
   NNACL_CHECK_ZERO_RETURN_ERR(param->params_inner_size_);
   NNACL_CHECK_ZERO_RETURN_ERR(param->params_outer_size_);
+  NNACL_CHECK_ZERO_RETURN_ERR(param->op_parameter_.thread_num_);
   int step = UP_DIV(param->norm_outer_size_, param->op_parameter_.thread_num_);
   int thread_end = MSMIN((task_id + 1) * step, param->norm_outer_size_);
   for (int i = task_id * step; i < thread_end; i++) {

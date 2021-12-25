@@ -146,8 +146,13 @@ int GroupConvolutionFP16CPUKernel::Prepare() {
       MS_LOG(ERROR) << "GetSingleConv for fp16 group conv failed.";
       return lite::RET_ERROR;
     }
-    group_convs_.emplace_back(new (std::nothrow) ConvolutionDelegateFP16CPUKernel(
-      reinterpret_cast<OpParameter *>(new_conv_param), new_inputs, new_outputs, ctx_));
+    auto kernel = new (std::nothrow)
+      ConvolutionDelegateFP16CPUKernel(reinterpret_cast<OpParameter *>(new_conv_param), new_inputs, new_outputs, ctx_);
+    if (kernel == nullptr) {
+      MS_LOG(ERROR) << "Create kernel failed.";
+      return lite::RET_ERROR;
+    }
+    group_convs_.push_back(kernel);
   }
   return GroupConvolutionBaseCPUKernel::Prepare();
 }

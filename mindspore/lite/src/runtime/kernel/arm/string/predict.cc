@@ -31,6 +31,8 @@ constexpr int LABEL_INDEX = 2;
 constexpr int WEIGHT_INDEX = 3;
 }  // namespace
 int PredictCPUKernel::Prepare() {
+  CHECK_LESS_RETURN(in_tensors_.size(), C4NUM);
+  CHECK_LESS_RETURN(out_tensors_.size(), C2NUM);
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -41,16 +43,19 @@ int PredictCPUKernel::ReSize() { return RET_OK; }
 
 std::vector<LabelInfo> PredictCPUKernel::GetLabelInfo() {
   std::vector<LabelInfo> label_info_vec;
-  auto input_tensor = in_tensors_.at(INPUT_INDEX);
-  auto keys_tensor = in_tensors_.at(KEY_INDEX);
-  auto labels_tensor = in_tensors_.at(LABEL_INDEX);
-  auto weights_tensor = in_tensors_.at(WEIGHT_INDEX);
+  auto input_tensor = in_tensors_[INPUT_INDEX];
+  auto keys_tensor = in_tensors_[KEY_INDEX];
+  auto labels_tensor = in_tensors_[LABEL_INDEX];
+  auto weights_tensor = in_tensors_[WEIGHT_INDEX];
+  if (input_tensor == nullptr || keys_tensor == nullptr || labels_tensor == nullptr || weights_tensor == nullptr) {
+    return label_info_vec;
+  }
 
-  int32_t *input = reinterpret_cast<int32_t *>(input_tensor->MutableData());
-  int32_t *key_begin = reinterpret_cast<int32_t *>(keys_tensor->MutableData());
+  int32_t *input = reinterpret_cast<int32_t *>(input_tensor->data());
+  int32_t *key_begin = reinterpret_cast<int32_t *>(keys_tensor->data());
   int32_t *key_end = key_begin + keys_tensor->ElementsNum();
-  int32_t *labels = reinterpret_cast<int32_t *>(labels_tensor->MutableData());
-  float *weights = reinterpret_cast<float *>(weights_tensor->MutableData());
+  int32_t *labels = reinterpret_cast<int32_t *>(labels_tensor->data());
+  float *weights = reinterpret_cast<float *>(weights_tensor->data());
 
   int32_t input_elements_num = input_tensor->ElementsNum();
   int32_t items = labels_tensor->shape().at(1);
@@ -82,10 +87,12 @@ int PredictCPUKernel::Run() {
   std::vector<LabelInfo> label_info_vec = GetLabelInfo();
   std::sort(label_info_vec.begin(), label_info_vec.end(), LabelInfoCmp);
 
-  auto output_label_tensor = out_tensors_.at(0);
-  auto output_weight_tensor = out_tensors_.at(1);
-  auto output_label = reinterpret_cast<int32_t *>(output_label_tensor->MutableData());
-  auto output_weight = reinterpret_cast<float *>(output_weight_tensor->MutableData());
+  auto output_label_tensor = out_tensors_[FIRST_INPUT];
+  auto output_weight_tensor = out_tensors_[SECOND_INPUT];
+  CHECK_NULL_RETURN(output_label_tensor);
+  CHECK_NULL_RETURN(output_weight_tensor);
+  auto output_label = reinterpret_cast<int32_t *>(output_label_tensor->data());
+  auto output_weight = reinterpret_cast<float *>(output_weight_tensor->data());
   auto param = reinterpret_cast<PredictParameter *>(op_parameter_);
   for (int i = 0; i < output_label_tensor->ElementsNum(); i++) {
     if (static_cast<size_t>(i) >= label_info_vec.size() || label_info_vec[i].weight < param->weight_threshold) {

@@ -26,7 +26,7 @@ namespace mindspore::kernel {
 void ConvolutionDepthwiseFp16CPUKernel::PackWeight() {
   auto weight_tensor = in_tensors_.at(kWeightIndex);
   void *origin_weight = (op_parameter_->is_train_session_) ? weight_tensor->data() : origin_weight_;
-  MS_ASSERT(origin_weight != nullptr);
+  CHECK_NULL_RETURN_VOID(origin_weight);
   PackNCHWToNHWCFp16(reinterpret_cast<float16_t *>(origin_weight), reinterpret_cast<float16_t *>(packed_weight_), 1,
                      weight_tensor->Height() * weight_tensor->Width(), weight_tensor->Batch(), 0, 0);
 }

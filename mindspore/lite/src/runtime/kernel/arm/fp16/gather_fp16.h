@@ -30,7 +30,7 @@ class GatherFp16CPUKernel : public InnerKernel {
   GatherFp16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                       const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
       : InnerKernel(parameter, inputs, outputs, ctx) {}
-  ~GatherFp16CPUKernel() override;
+  ~GatherFp16CPUKernel() = default;
 
   int Prepare() override;
   int ReSize() override;
@@ -41,8 +41,6 @@ class GatherFp16CPUKernel : public InnerKernel {
   int *indices_data_ = nullptr;
   int AssignIndicesData(bool isIndicesInt32, int indices_num, const lite::Tensor *indices_tensor);
   void FreeIndicesData();
-  float16_t *input_data_ = nullptr;
-  bool const_input_ = false;
   bool is_indices_int32_ = false;
 };
 }  // namespace mindspore::kernel

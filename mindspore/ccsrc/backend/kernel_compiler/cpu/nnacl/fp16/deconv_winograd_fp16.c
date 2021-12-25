@@ -344,9 +344,7 @@ int PackDeConvWgDataFp16(const float16_t *nhwc_weight, DeConvComputeUnit *unit, 
 
 void DeconvWgFp16(const float16_t *nhwc_input_, float16_t *tile_in, float16_t *tile_out, int start_index,
                   int calculate_count, const ConvParameter *conv_param, DeConvParam *deconv_param, int task_id) {
-  if (deconv_param->in_tile_w_count_ == 0) {
-    return;
-  }
+  NNACL_CHECK_ZERO_RETURN(deconv_param->in_tile_w_count_);
   /* pack tile input */
   int tile_in_unit_stride = deconv_param->ic_up_ * DECONV_WINOGRAD_DEFAULT_TILE;
   float16x4_t zero = vdup_n_f16(0.0f);
@@ -411,6 +409,7 @@ void DeconvWgFp16(const float16_t *nhwc_input_, float16_t *tile_in, float16_t *t
 
 void DeconvWgPostFp16(const float16_t *tile_out, float16_t *nc4hw4_output, const ConvParameter *conv_param,
                       const DeConvParam *deconv_param, int calculate_count, int tile_index) {
+  NNACL_CHECK_ZERO_RETURN(deconv_param->in_tile_w_count_);
   /* merge */
   int src_unit_stride = deconv_param->oc_up_ * DECONV_WINOGRAD_DEFAULT_TILE;
 

@@ -21,6 +21,7 @@
 #include "nnacl/fp16/gru_fp16.h"
 #include "nnacl/fp16/cast_fp16.h"
 #include "nnacl/fp16/lstm_fp16.h"
+#include "nnacl/errorcode.h"
 
 using mindspore::kernel::KERNEL_ARCH;
 using mindspore::lite::KernelRegistrar;
@@ -68,9 +69,11 @@ int GruFp16CPUKernel::InitParam() {
   auto weight_g = in_tensors_.at(1);
   MS_ASSERT(weight_g != nullptr);
   std::vector<int> w_shape = weight_g->shape();
+  NNACL_CHECK_ZERO_RETURN_ERR(gate_num);
   gru_param_->hidden_size_ = w_shape.at(1) / gate_num;
-  weight_batch_ = gru_param_->bidirectional_ ? 2 * gate_num : gate_num;
-  gru_param_->output_step_ = gru_param_->bidirectional_ ? 2 * gru_param_->batch_ * gru_param_->hidden_size_
+  constexpr int twice = 2;
+  weight_batch_ = gru_param_->bidirectional_ ? twice * gate_num : gate_num;
+  gru_param_->output_step_ = gru_param_->bidirectional_ ? twice * gru_param_->batch_ * gru_param_->hidden_size_
                                                         : gru_param_->batch_ * gru_param_->hidden_size_;
 
   gru_param_->input_row_align_ = UP_ROUND(gru_param_->seq_len_ * gru_param_->batch_, C16NUM);
@@ -189,8 +192,8 @@ int GruFp16CPUKernel::InitStateWeightBias() {
 }
 
 int GruFp16CPUKernel::Prepare() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 5);
-  CHECK_LESS_RETURN(out_tensors_.size(), 2);
+  CHECK_LESS_RETURN(in_tensors_.size(), C5NUM);
+  CHECK_LESS_RETURN(out_tensors_.size(), C2NUM);
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -270,7 +273,7 @@ int GruFp16CPUKernel::Run() {
   CHECK_NULL_RETURN(hidden_state->data());
   memcpy(output_hidden_state->data(), hidden_state->data(), hidden_state->ElementsNum() * sizeof(float16_t));
   int check_seq_len = gru_param_->seq_len_;
-  if (in_tensors_.size() == 6) {
+  if (in_tensors_.size() == C6NUM) {
     MS_ASSERT(in_tensors_.at(5) != nullptr);
     int *seq_len = reinterpret_cast<int *>(in_tensors_.at(5)->data());
     MS_ASSERT(seq_len != nullptr);
