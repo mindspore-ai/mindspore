@@ -26,6 +26,7 @@
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
 #include "backend/kernel_compiler/gpu/cuda_impl/random_op_impl.cuh"
 #include "include/curand.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace kernel {
@@ -70,9 +71,8 @@ class RandomOpGpuKernel : public GpuKernel {
     }
 
     curandState *devStates = nullptr;
-    // Operator StandardNormal and CudnnUniformReal use curand
-    // so they do not need workspace memory.
-    if (random_op_type_ >= RANDOM_OP_UNIFORM_INT && random_op_type_ <= RANDOM_OP_UNIFORM_REAL) {
+    // Operator CudnnUniformReal does not need workspace memory.
+    if (random_op_type_ != RANDOM_OP_CUDNN_UNIFORM_REAL) {
       void *workspace_addr = GetDeviceAddress<void *>(workspace, 0);
       devStates = reinterpret_cast<curandState *>(workspace_addr);
     }
@@ -80,28 +80,37 @@ class RandomOpGpuKernel : public GpuKernel {
 
     switch (random_op_type_) {
       case RANDOM_OP_NORMAL: {
-        float *mask_f = GetDeviceAddress<float>(outputs, 0);
-        std::random_device rd;
-        int RNG_seed = static_cast<int>(rd());
-        if (seed2_ != 0) {
-          RNG_seed = seed2_;
-        } else if (seed_ != 0) {
-          RNG_seed = seed_;
+        // To speed up the sampling, we use cudnn for sampling in the graph mode.
+        // Meanwhile, to keep the same seed logic, we still use the naive sampling function in pynative mode.
+        if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
+          StandardNormal(seed_, seed2_, devStates, output_addr, outputs[0]->size / sizeof(T),
+                         reinterpret_cast<cudaStream_t>(stream_ptr));
+        } else {
+          float *mask_f = GetDeviceAddress<float>(outputs, 0);
+          if (!states_init_) {
+            int RNG_seed = 0;
+            std::random_device rd;
+            if (seed2_ != 0) {
+              RNG_seed = seed2_;
+            } else if (seed_ != 0) {
+              RNG_seed = seed_;
+            } else {
+              RNG_seed = static_cast<int>(rd());
+            }
+            CHECK_CURAND_RET_WITH_EXCEPT(curandCreateGenerator(&mask_generator_, CURAND_RNG_PSEUDO_PHILOX4_32_10),
+                                         "Failed to create generator");
+            CHECK_CURAND_RET_WITH_EXCEPT(curandSetPseudoRandomGeneratorSeed(mask_generator_, RNG_seed),
+                                         "Failed to SetPseudoRandomGeneratorSeed");
+            MS_EXCEPTION_IF_NULL(mask_generator_);
+            states_init_ = true;
+          }
+          CHECK_CURAND_RET_WITH_EXCEPT(curandSetStream(mask_generator_, reinterpret_cast<cudaStream_t>(stream_ptr)),
+                                       "Failed to set stream for generator");
+          // curandGen only support float or double for mask.
+          CHECK_CURAND_RET_WITH_EXCEPT(
+            curandGenerateNormal(mask_generator_, mask_f, outputs[0]->size / sizeof(float), 0.0, 1.0),
+            "Failed to generate uniform");
         }
-        if (!states_init_) {
-          CHECK_CURAND_RET_WITH_EXCEPT(curandCreateGenerator(&mask_generator_, CURAND_RNG_PSEUDO_PHILOX4_32_10),
-                                       "Failed to create generator");
-          states_init_ = true;
-        }
-        CHECK_CURAND_RET_WITH_EXCEPT(curandSetPseudoRandomGeneratorSeed(mask_generator_, RNG_seed),
-                                     "Failed to SetPseudoRandomGeneratorSeed");
-        MS_EXCEPTION_IF_NULL(mask_generator_);
-        CHECK_CURAND_RET_WITH_EXCEPT(curandSetStream(mask_generator_, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                                     "Failed to set stream for generator");
-        // curandGen only support float or double for mask.
-        CHECK_CURAND_RET_WITH_EXCEPT(
-          curandGenerateNormal(mask_generator_, mask_f, outputs[0]->size / sizeof(float), 0.0, 1.0),
-          "Failed to generate normal");
         break;
       }
       case RANDOM_OP_UNIFORM_INT: {
