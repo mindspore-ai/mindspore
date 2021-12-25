@@ -494,17 +494,9 @@ int LiteSession::IsolateOutputTensor() {
 }
 
 void LiteSession::UpdateLinkInfoForIsolateOutput() {
-  auto link_info = context_->GetAllLinkInfo();
   for (auto &item : isolate_graph_output_map_) {
-    for (auto &info : link_info) {
-      auto &receivers = info.second;
-      if (receivers.find(item.second) != receivers.end()) {
-        receivers.erase(item.second);
-        receivers.insert(item.first);
-      }
-    }
+    context_->ReplaceLinkInfoReceiverWithNewOne(item.first, item.second);
   }
-  context_->SetAllLinkInfo(link_info);
   return;
 }
 

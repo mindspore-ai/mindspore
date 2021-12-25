@@ -133,10 +133,7 @@ int LiteOpActor::IsolateInputData(std::vector<std::shared_ptr<LiteOpActor>> *act
     }
 
     // for case that subgraph input is subgraph output, replace old_tensor with new_tensor
-    auto receiver_set = ctx_->GetLinkInfo(old_tensor);
-    for (auto item : receiver_set) {
-      ctx_->SetLinkInfo(new_tensor, item);
-    }
+    ctx_->ReplaceLinkInfoSenderWithNewOne(new_tensor, old_tensor);
 
     // keep new link info for isolate input data case.
     ctx_->SetLinkInfo(old_tensor, new_tensor);
@@ -144,6 +141,11 @@ int LiteOpActor::IsolateInputData(std::vector<std::shared_ptr<LiteOpActor>> *act
     /* set subgraph input for copy data */
     kernel_->set_in_tensor(new_tensor, i);
   }
+
+  for (auto &item : *isolate_input_map_) {
+    ctx_->ReplaceLinkInfoReceiverWithNewOne(item.first, item.second);
+  }
+
   return RET_OK;
 }
 

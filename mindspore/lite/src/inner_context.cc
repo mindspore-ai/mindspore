@@ -376,6 +376,23 @@ void InnerContext::SetAllLinkInfo(const std::unordered_map<void *, std::set<void
   link_info_ = all_link_info;
 }
 
+void InnerContext::ReplaceLinkInfoReceiverWithNewOne(void *new_receiver, void *old_receiver) {
+  for (auto &info : link_info_) {
+    auto &receivers = info.second;
+    if (receivers.find(old_receiver) != receivers.end()) {
+      receivers.insert(new_receiver);
+      receivers.erase(old_receiver);
+    }
+  }
+}
+
+void InnerContext::ReplaceLinkInfoSenderWithNewOne(void *new_sender, void *old_sender) {
+  auto receiver_set = this->GetLinkInfo(old_sender);
+  for (auto item : receiver_set) {
+    this->SetLinkInfo(new_sender, item);
+  }
+}
+
 int ParallelLaunch(const Context *context, const Func &func, Content content, int task_num) {
   ThreadPool *pool = static_cast<const lite::InnerContext *>(context)->thread_pool();
   if (pool == nullptr) {
