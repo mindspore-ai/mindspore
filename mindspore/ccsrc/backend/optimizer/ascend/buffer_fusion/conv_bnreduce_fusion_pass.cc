@@ -41,7 +41,7 @@ void ConvBnReduceFusionPass::MatchConvBnreduce(const CNodePtr &cnode, const sess
 void ConvBnReduceFusionPass::MatchSingleFusionPattern(const session::KernelGraph &kernel_graph,
                                                       FusedNodeRecord *candidate_fusion) {
   MS_EXCEPTION_IF_NULL(candidate_fusion);
-  std::vector<AnfNodePtr> node_list = TopoSort(kernel_graph.get_return());
+  const auto &node_list = TopoSort(kernel_graph.get_return());
   for (auto &node : node_list) {
     if (!AnfUtils::IsRealCNodeKernel(node) || fusion_id_allocator->HasFusionIdAttr(node) ||
         AnfAlgo::CheckPrimitiveType(node, prim::kPrimReturn)) {

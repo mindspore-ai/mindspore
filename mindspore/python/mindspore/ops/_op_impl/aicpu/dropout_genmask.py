@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
-"""InitDataSetQueue op"""
+"""DropoutGenMask op"""
 from mindspore.ops.op_info_register import op_info_register, AiCPURegOp, DataType
 
 dropout_genmask_op_info = AiCPURegOp("DropoutGenMask") \
@@ -28,5 +28,5 @@ dropout_genmask_op_info = AiCPURegOp("DropoutGenMask") \
 
 @op_info_register(dropout_genmask_op_info)
 def _dropout_genmask_aicpu():
-    """Dropout AiCPU register"""
+    """DropoutGenMask AiCPU register"""
     return

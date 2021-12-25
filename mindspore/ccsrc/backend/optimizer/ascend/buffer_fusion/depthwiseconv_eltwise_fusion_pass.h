@@ -16,8 +16,6 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_BUFFER_FUSION_PASS_DEPTHWISECONV_ELTWISE_FUSION_PASS_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_BUFFER_FUSION_PASS_DEPTHWISECONV_ELTWISE_FUSION_PASS_H_
 
-#include <vector>
-
 #include "utils/hash_set.h"
 #include "backend/optimizer/ascend/buffer_fusion/fusion_base_pass.h"
 #include "ir/anf.h"
@@ -29,8 +27,6 @@
 
 namespace mindspore {
 namespace opt {
-using FusedNodeRecord = std::vector<mindspore::HashSet<AnfNodePtr>>;
-
 class DepthwiseConvEltwiseFusionPass : public FusionBasePass {
  public:
   explicit DepthwiseConvEltwiseFusionPass(FusionIdAllocatorPtr idAllocator)

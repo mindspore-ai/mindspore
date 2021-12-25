@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 #include "backend/optimizer/ascend/buffer_fusion/conv_single_in_fusion_pass.h"
-#include <vector>
-#include <memory>
 #include "utils/hash_set.h"
 #include "backend/kernel_compiler/kernel_fusion.h"
 #include "debug/anf_ir_dump.h"
@@ -57,7 +55,7 @@ void ConvSingleInFusionPass::MatchConvSingleInEltwise(const CNodePtr &cnode, con
 void ConvSingleInFusionPass::MatchSingleFusionPattern(const session::KernelGraph &kernel_graph,
                                                       FusedNodeRecord *candidate_fusion) {
   MS_EXCEPTION_IF_NULL(candidate_fusion);
-  std::vector<AnfNodePtr> node_list = TopoSort(kernel_graph.get_return());
+  const auto &node_list = TopoSort(kernel_graph.get_return());
   for (auto &node : node_list) {
     if (!AnfUtils::IsRealCNodeKernel(node) || fusion_id_allocator->HasFusionIdAttr(node) ||
         AnfAlgo::CheckPrimitiveType(node, prim::kPrimReturn)) {
