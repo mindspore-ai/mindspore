@@ -299,7 +299,7 @@ bool RankCpuKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const std::
       });
     }
   }
-  (void)common::ThreadPool::GetInstance().SyncRun(tasks);
+  ParallelLaunch(tasks);
   return true;
 }
 }  // namespace kernel

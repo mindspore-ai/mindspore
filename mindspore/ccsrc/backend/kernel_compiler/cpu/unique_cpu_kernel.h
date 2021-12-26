@@ -128,7 +128,7 @@ class UniqueCPUKernel : public CPUKernel {
       (void)tasks.emplace_back(task);
       current_offset += data_size;
     }
-    (void)common::ThreadPool::GetInstance().SyncRun(tasks);
+    ParallelLaunch(tasks);
   }
 
   template <typename DataType, typename IndexType>
@@ -231,7 +231,7 @@ class UniqueCPUKernel : public CPUKernel {
       (void)tasks.emplace_back(task);
       current_offset += segments[i]->input_size_;
     }
-    (void)common::ThreadPool::GetInstance().SyncRun(tasks);
+    ParallelLaunch(tasks);
     MS_LOG(DEBUG) << "End";
   }
 
@@ -303,7 +303,7 @@ class UniqueCPUKernel : public CPUKernel {
       };
       (void)tasks.emplace_back(task);
     }
-    (void)common::ThreadPool::GetInstance().SyncRun(tasks);
+    ParallelLaunch(tasks);
     MS_LOG(DEBUG) << "End";
   }
 
@@ -359,7 +359,7 @@ class UniqueCPUKernel : public CPUKernel {
       };
       (void)tasks.emplace_back(task);
     }
-    (void)common::ThreadPool::GetInstance().SyncRun(tasks);
+    ParallelLaunch(tasks);
     MS_LOG(DEBUG) << "End";
   }
 

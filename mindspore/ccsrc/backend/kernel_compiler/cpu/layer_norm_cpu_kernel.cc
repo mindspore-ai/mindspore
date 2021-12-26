@@ -120,7 +120,7 @@ void LayerNormCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, con
     };
     (void)tasks.emplace_back(block);
   }
-  (void)common::ThreadPool::GetInstance().SyncRun(tasks);
+  ParallelLaunch(tasks);
 }
 }  // namespace kernel
 }  // namespace mindspore

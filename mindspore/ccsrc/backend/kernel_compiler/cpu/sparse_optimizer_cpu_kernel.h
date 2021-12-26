@@ -135,7 +135,7 @@ class SparseOptimizerCPUKernel : public CPUKernel {
       (void)tasks.emplace_back(task);
       start += once_compute_size;
     }
-    (void)common::ThreadPool::GetInstance().SyncRun(tasks);
+    ParallelLaunch(tasks);
   }
 
  private:
@@ -197,7 +197,7 @@ class SparseOptimizerCPUKernel : public CPUKernel {
       (void)tasks.emplace_back(task);
       current_indices_offset += indices_size;
     }
-    (void)common::ThreadPool::GetInstance().SyncRun(tasks);
+    ParallelLaunch(tasks);
   }
 
   template <typename T>
@@ -279,7 +279,7 @@ class SparseOptimizerCPUKernel : public CPUKernel {
       (void)tasks.emplace_back(task);
       current_indices_offset += segments[i]->indices_size_;
     }
-    (void)common::ThreadPool::GetInstance().SyncRun(tasks);
+    ParallelLaunch(tasks);
   }
 
   template <typename T>
@@ -407,7 +407,7 @@ class SparseOptimizerCPUKernel : public CPUKernel {
       (void)tasks.emplace_back(task);
       current_indices_offset += buckets[i]->indices_size_;
     }
-    (void)common::ThreadPool::GetInstance().SyncRun(tasks);
+    ParallelLaunch(tasks);
   }
 
   template <typename T>

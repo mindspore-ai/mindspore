@@ -113,7 +113,7 @@ bool SortCpuKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const std::
       (void)tasks.emplace_back(task);
     }
   }
-  (void)common::ThreadPool::GetInstance().SyncRun(tasks);
+  ParallelLaunch(tasks);
   return true;
 }
 }  // namespace kernel

@@ -168,7 +168,7 @@ void ScatterNdUpdateCPUKernel::LaunchKernel(const std::vector<AddressPtr> &input
     (void)tasks.emplace_back(task);
     start += once_compute_size;
   }
-  (void)common::ThreadPool::GetInstance().SyncRun(tasks);
+  ParallelLaunch(tasks);
 }
 }  // namespace kernel
 }  // namespace mindspore
