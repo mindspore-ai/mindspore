@@ -31,6 +31,23 @@ int MatMulNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector
   return RET_OK;
 }
 
+int MatMulNPUOp::SetActivation(const ge::Operator *input) {
+  act_op_ = new (std::nothrow) hiai::op::Activation(name_ + "_act");
+  if (act_op_ == nullptr) {
+    MS_LOG(ERROR) << "New activation npu operator for op " << name_ << " failed.";
+    return RET_ERROR;
+  }
+  act_op_->set_input_x(*input);
+
+  auto act_mode = ConverterToNPUActivationMode(act_type_);
+  if (act_mode == ACTIVATION_INVALID) {
+    MS_LOG(ERROR) << "Unsupported activation type for matmul op " << name_;
+    return RET_ERROR;
+  }
+  act_op_->set_attr_mode(act_mode);
+  return RET_OK;
+}
+
 int MatMulNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                       const std::vector<mindspore::MSTensor> &out_tensors) {
   matmul_ = new (std::nothrow) hiai::op::MatMul(name_);
@@ -48,6 +65,7 @@ int MatMulNPUOp::Init(const schema::Primitive *primitive, const std::vector<mind
   }
   matmul_->set_attr_transpose_x1(matmul_prim->transpose_a());
   matmul_->set_attr_transpose_x2(matmul_prim->transpose_b());
+  act_type_ = matmul_prim->activation_type();
   return RET_OK;
 }
 
@@ -84,14 +102,30 @@ int MatMulNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors
     bias_->set_attr_value(bias_tensor);
     add_op_->set_input_x2(*bias_);
   }
+  if (act_type_ != schema::ActivationType_NO_ACTIVATION) {
+    int ret = RET_ERROR;
+    if (has_bias_ == true) {
+      ret = SetActivation(add_op_);
+    } else {
+      ret = SetActivation(matmul_);
+    }
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "New activation npu operator for op " << name_ << " failed.";
+      return ret;
+    }
+  }
   return RET_OK;
 }
 
 ge::Operator *MatMulNPUOp::GetNPUOp() {
-  if (has_bias_) {
-    return add_op_;
+  if (act_type_ == schema::ActivationType_NO_ACTIVATION) {
+    if (has_bias_) {
+      return add_op_;
+    }
+    return matmul_;
+  } else {
+    return act_op_;
   }
-  return matmul_;
 }
 
 MatMulNPUOp::~MatMulNPUOp() {
@@ -106,6 +140,10 @@ MatMulNPUOp::~MatMulNPUOp() {
   if (bias_ != nullptr) {
     delete bias_;
     bias_ = nullptr;
+  }
+  if (act_op_ != nullptr) {
+    delete act_op_;
+    act_op_ = nullptr;
   }
 }
 }  // namespace mindspore
