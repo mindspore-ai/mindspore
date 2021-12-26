@@ -2178,7 +2178,8 @@ py::object ForwardExecutor::RunOpInMs(const OpExecInfoPtr &op_exec_info, Pynativ
                                     static_cast<int>(op_exec_info->next_input_index),
                                     graph_info,
                                     tensors_mask,
-                                    input_tensors};
+                                    input_tensors,
+                                    cur_target};
 #else
   session::OpRunInfo op_run_info = {false,
                                     op_exec_info->op_name,
@@ -2191,7 +2192,8 @@ py::object ForwardExecutor::RunOpInMs(const OpExecInfoPtr &op_exec_info, Pynativ
                                     op_exec_info->next_input_index,
                                     graph_info,
                                     tensors_mask,
-                                    input_tensors};
+                                    input_tensors,
+                                    cur_target};
 #endif
 
   VectorRef outputs;
