@@ -99,6 +99,8 @@ class SubGraphKernel : public LiteKernel {
 
   std::string ToString() const override;
 
+  void set_nodes(const std::vector<LiteKernel *> &node) { this->nodes_ = node; }
+
   std::vector<LiteKernel *> &nodes() { return this->nodes_; }
 
   void DropNode(LiteKernel *node);

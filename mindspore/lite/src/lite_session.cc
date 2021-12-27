@@ -554,6 +554,8 @@ int LiteSession::CompileGraph(Model *model) {
   }
   InitGraphInOutTensorsMap(model);
 
+  non_tail_call_kernels_ = scheduler.NonTailCallNodes();
+
   ret = PrepareKernels(model);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Prepare kernels failed: " << ret;
@@ -642,22 +644,15 @@ int LiteSession::PrepareKernels(const Model *model) {
   kernel::LiteKernelUtil::FindAllInoutKernels(this->kernels_);
 
   // init init_ref_count for subgraphs and kernels
-  for (auto *kernel : this->kernels_) {
-    kernel->InitOutTensorInitRefCount();
-#ifndef DELEGATE_CLIP
-    if (kernel->desc().arch == kernel::kDelegate) {
-      continue;
-    }
-#endif
-    if (IsIsolatedSubGraph(kernel)) {
-      static_cast<kernel::SubGraphKernel *>(kernel)->InitInputTensorInitRefCount();
-    }
+  auto ret = SetTensorInitRefCount(model);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "SetTensorInitRefCount failed.";
+    return ret;
   }
-  AdjustModelOutputTensorInitRefCount(model);
 
   for (auto kernel : this->kernels_) {
     if (kernel->desc().arch == kernel::kDelegate) {
-      auto ret = SetAllocatorForDelegateKernels(kernel);
+      ret = SetAllocatorForDelegateKernels(kernel);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "Prepare kernel " << kernel->name() << " failed: " << ret;
         return ret;
@@ -671,14 +666,14 @@ int LiteSession::PrepareKernels(const Model *model) {
         return RET_ERROR;
       }
       for (auto &node : subgraph_kernel->nodes()) {
-        auto ret = node->Prepare();
+        ret = node->Prepare();
         if (ret != RET_OK) {
           MS_LOG(ERROR) << "node: " << node->name() << " prepare failed.";
           return ret;
         }
       }
     }
-    auto ret = kernel->Prepare();
+    ret = kernel->Prepare();
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Prepare kernel " << kernel->name() << " failed: " << ret;
       return ret;
@@ -686,6 +681,50 @@ int LiteSession::PrepareKernels(const Model *model) {
   }
   return RET_OK;
 }
+
+int LiteSession::SetTensorInitRefCount(const Model *model) {
+  for (auto *kernel : this->kernels_) {
+    kernel->InitOutTensorInitRefCount();
+#ifndef DELEGATE_CLIP
+    if (kernel->desc().arch == kernel::kDelegate) {
+      continue;
+    }
+#endif
+    if (IsIsolatedSubGraph(kernel)) {
+      static_cast<kernel::SubGraphKernel *>(kernel)->InitInputTensorInitRefCount();
+    }
+  }
+  AdjustModelOutputTensorInitRefCount(model);
+
+  if (!non_tail_call_kernels_.empty()) {
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
+    return SetNonTaiCallSubgraphOutputInitRefCount(non_tail_call_kernels_);
+#endif
+  }
+  return RET_OK;
+}
+
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
+int LiteSession::SetNonTaiCallSubgraphOutputInitRefCount(
+  const std::vector<kernel::LiteKernel *> &non_tail_call_kernels) {
+  for (auto call_kernel : non_tail_call_kernels_) {
+    auto call_output = call_kernel->out_tensors();
+    auto all_out_subgraphs = kernel::LiteKernelUtil::GetCallInputPartialsCorrespondingOutputSubgraph(call_kernel);
+    for (auto subgraph : all_out_subgraphs) {
+      if (subgraph->out_tensors().size() != call_output.size()) {
+        MS_LOG(ERROR) << "non tail call outputs size is " << call_output.size()
+                      << " , which is not same as subgraph : " << subgraph->name()
+                      << " output size: " << subgraph->out_tensors().size();
+        return RET_ERROR;
+      }
+      for (size_t i = 0; i < call_output.size(); ++i) {
+        subgraph->out_tensors()[i]->set_init_ref_count(call_output[i]->init_ref_count());
+      }
+    }
+  }
+  return RET_OK;
+}
+#endif
 
 std::vector<mindspore::tensor::MSTensor *> LiteSession::GetInputs() const { return this->input_vec_; }
 

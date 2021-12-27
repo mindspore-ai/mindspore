@@ -50,7 +50,7 @@ int ControlFlowScheduler::SplitNonTailCallSubGraphs(std::vector<kernel::LiteKern
     AppendToProcessQ(&new_subgraphs, &all_non_tail_subgraphs);
   }
 
-  RemoveUselessKernels(dst_kernels, all_non_tail_subgraphs);
+  RemoveUselessKernels(dst_kernels, &all_non_tail_subgraphs);
 
   return RecordNonTailCallLinkInfo();
 }
@@ -119,14 +119,24 @@ int ControlFlowScheduler::SplitSingleNonTailCallSubGraph(kernel::SubGraphKernel 
 }
 
 void ControlFlowScheduler::RemoveUselessKernels(std::vector<kernel::LiteKernel *> *dst_kernels,
-                                                const std::set<kernel::LiteKernel *> &useless_kernels) {
+                                                std::set<kernel::LiteKernel *> *useless_kernels) {
   for (auto iter = dst_kernels->begin(); iter != dst_kernels->end();) {
-    if (useless_kernels.find(*iter) != useless_kernels.end()) {
+    if (useless_kernels->find(*iter) != useless_kernels->end()) {
       iter = dst_kernels->erase(iter);
     } else {
       iter++;
     }
   }
+
+  for (auto &kernel : *useless_kernels) {
+    auto subgraph_kernel = reinterpret_cast<kernel::SubGraphKernel *>(kernel);
+    if (subgraph_kernel == nullptr) {
+      continue;
+    }
+    subgraph_kernel->set_nodes({});
+    delete subgraph_kernel;
+  }
+
   return;
 }
 

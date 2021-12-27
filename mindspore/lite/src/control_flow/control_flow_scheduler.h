@@ -42,13 +42,14 @@ class ControlFlowScheduler {
   void RecordSubgraphCaller(const size_t &subgraph_index, kernel::LiteKernel *partial_node);
   // we insert entrance subgraph kernel and exit subgraph kernel define the boundary of the subgraph.
   int BuildBoundaryForMultipleCalledGraph(std::vector<kernel::LiteKernel *> *dst_kernels);
+  std::vector<kernel::LiteKernel *> GetNonTailCalls() const { return non_tail_calls_; }
 
  private:
   int SplitSingleNonTailCallSubGraph(kernel::SubGraphKernel *subgraph_kernel,
                                      std::vector<kernel::LiteKernel *> *subgraph_kernels);
   std::set<kernel::LiteKernel *> GetNonTailCallSubGraphs(std::vector<kernel::LiteKernel *> *dst_kernels);
   void RemoveUselessKernels(std::vector<kernel::LiteKernel *> *dst_kernels,
-                            const std::set<kernel::LiteKernel *> &useless_kernels);
+                            std::set<kernel::LiteKernel *> *useless_kernels);
   void AppendToProcessQ(std::vector<kernel::LiteKernel *> *new_subgraphs,
                         std::set<kernel::LiteKernel *> *all_non_tail_subgraphs);
   // link partial output to call output.
