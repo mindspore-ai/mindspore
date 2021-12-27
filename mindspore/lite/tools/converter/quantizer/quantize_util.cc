@@ -46,7 +46,79 @@ constexpr int kSingleDirBiasTensorSize = 4;
 constexpr int kLstmBiasShapeSize = 2;
 constexpr int kLstmBiasIndex = 3;
 constexpr size_t kBitNumPerByte = 8;
+
+int ComputeBiasDataAndQuantParam(const std::vector<double> &bias_scales, const std::vector<double> &input_scales,
+                                 const float *raw_datas, const QuantParamHolderPtr &quant_param_holder,
+                                 std::vector<schema::QuantParamT> *quant_params, std::vector<int32_t> *quant_datas) {
+  MS_ASSERT(raw_datas != nullptr && quant_param_holder != nullptr);
+  MS_ASSERT(quant_params != nullptr && quant_datas != nullptr);
+  double bias_scale_tmp;
+  const constexpr double quanted_bias_abs_limit = 0.5 * INT32_MAX;
+  MS_CHECK_TRUE_MSG(quant_param_holder->get_input_quant_params().size() > 1, RET_ERROR, "invalid access.");
+  auto weight_quant_params = quant_param_holder->get_input_quant_params().at(1);
+  auto shape_size = quant_datas->size();
+  if (bias_scales.size() == shape_size) {
+    for (size_t i = 0; i < shape_size; i++) {
+      bias_scale_tmp = bias_scales[i];
+      if (fabs(bias_scale_tmp) <= 0.0f) {
+        MS_LOG(ERROR) << "divisor 'bias_scale_tmp' cannot be 0.";
+        return RET_ERROR;
+      }
+      if (std::abs(raw_datas[i] / bias_scale_tmp) >= quanted_bias_abs_limit) {
+        MS_LOG(DEBUG) << "quanted bias over flow, maybe the scale of weight: " << weight_quant_params[i].scale
+                      << " is too small, need to update";
+        // update filter scale and zp
+        double activate_scale = input_scales[0];
+        double filter_scale = std::abs(raw_datas[i]) / (activate_scale * quanted_bias_abs_limit);
+        weight_quant_params[i].scale = filter_scale;
+        weight_quant_params[i].zeroPoint = 0;
+        quant_param_holder->set_input_quant_param(1, weight_quant_params);
+        bias_scale_tmp = std::abs(raw_datas[i]) / quanted_bias_abs_limit;
+        quant_params->at(i).scale = bias_scale_tmp;
+        MS_LOG(DEBUG) << "new filter scale: " << filter_scale;
+      }
+      auto quant_data = (int32_t)std::round(raw_datas[i] / bias_scale_tmp);
+      quant_datas->at(i) = quant_data;
+    }
+    return RET_OK;
+  } else if (bias_scales.size() == 1) {
+    // for fc, per tensor quant
+    bias_scale_tmp = quant_params->front().scale;
+    float max_raw_data = 0.0f;
+    for (size_t i = 0; i < shape_size; i++) {
+      if (std::abs(raw_datas[i]) > max_raw_data) {
+        max_raw_data = std::abs(raw_datas[i]);
+      }
+    }
+    if (fabs(bias_scale_tmp) <= 0.0f) {
+      MS_LOG(ERROR) << "divisor 'bias_scale_tmp' cannot be 0.";
+      return RET_ERROR;
+    }
+    if (std::abs(max_raw_data / bias_scale_tmp) >= quanted_bias_abs_limit) {
+      MS_LOG(DEBUG) << "quanted bias over flow, maybe the scale of weight: " << weight_quant_params[0].scale
+                    << " is too small, need to update";
+      double activate_scale = input_scales[0];
+      MS_CHECK_TRUE_MSG(activate_scale != 0, RET_ERROR, "activate_scale == 0");
+      double filter_scale = std::abs(max_raw_data) / (activate_scale * quanted_bias_abs_limit);
+      weight_quant_params[0].scale = filter_scale;
+      weight_quant_params[0].zeroPoint = 0;
+      quant_param_holder->set_input_quant_param(1, weight_quant_params);
+      bias_scale_tmp = max_raw_data / quanted_bias_abs_limit;
+      quant_params->front().scale = bias_scale_tmp;
+      MS_LOG(DEBUG) << "new filter scale: " << filter_scale;
+    }
+    for (size_t i = 0; i < shape_size; i++) {
+      auto quant_data = (int32_t)std::round(raw_datas[i] / bias_scale_tmp);
+      quant_datas->at(i) = quant_data;
+    }
+    return RET_OK;
+  }
+  MS_LOG(ERROR) << "unexpected input_scales size: " << input_scales.size()
+                << " weight_scales size: " << weight_quant_params.size();
+  return RET_ERROR;
+}
 }  // namespace
+
 QuantParamHolderPtr GetCNodeQuantHolder(const PrimitivePtr &primitive) {
   MS_CHECK_TRUE_RET(primitive != nullptr, nullptr);
   QuantParamHolderPtr quant_params_holder = nullptr;
@@ -458,5 +530,93 @@ std::string BoolVectorToString(const std::vector<bool> &bool_vec) {
     }
   }
   return str;
+}
+
+int DoParameterBiasQuant(const ParameterPtr &bias, const PrimitivePtr &primitive) {
+  CHECK_NULL_RETURN(bias);
+  CHECK_NULL_RETURN(primitive);
+  auto bias_default_param = bias->default_param();
+  auto bias_param = bias_default_param->cast<tensor::TensorPtr>();
+  MS_ASSERT(bias_parameter != nullptr);
+  auto quant_param_holder = GetCNodeQuantHolder(primitive);
+  MS_CHECK_TRUE_MSG(quant_param_holder != nullptr, RET_NULL_PTR, "quant_param_holder is nullptr.");
+  auto active_weight_quant_params = quant_param_holder->get_input_quant_params();
+
+  auto active_params = active_weight_quant_params.at(FIRST_INPUT);
+  auto weight_params = active_weight_quant_params.at(SECOND_INPUT);
+
+  vector<double> input_scales;
+  vector<double> filter_scales;
+  vector<double> bias_scales;
+  size_t sizeX = active_params.size();
+  for (size_t i = 0; i < sizeX; i++) {
+    input_scales.emplace_back(active_params[i].scale);
+  }
+  size_t sizeY = weight_params.size();
+  if (sizeX != sizeY) {
+    if (sizeX > 1 && sizeY > 1) {
+      MS_LOG(ERROR) << "input and filter's scale count cannot match!";
+      return RET_ERROR;
+    }
+  }
+  for (size_t i = 0; i < sizeY; i++) {
+    filter_scales.emplace_back(weight_params[i].scale);
+  }
+  size_t size = std::max(sizeX, sizeY);
+  for (size_t i = 0; i < size; i++) {
+    auto scaleX = sizeX > 1 ? input_scales[i] : input_scales[0];
+    auto scaleY = sizeY > 1 ? filter_scales[i] : filter_scales[0];
+    bias_scales.push_back(scaleX * scaleY);
+  }
+  MS_ASSERT(!bias_scales.empty());
+  size_t shape_size = bias_param->DataSize();
+
+  // set bias quant param
+  std::vector<schema::QuantParamT> quant_params;
+  for (double bias_scale : bias_scales) {
+    schema::QuantParamT quant_param;
+    if (bias_scale == 0) {
+      MS_LOG(WARNING) << "bias_scale == 0";
+      quant_param.scale = 1;
+    } else {
+      quant_param.scale = bias_scale;
+    }
+    quant_param.numBits = k32Bit;
+    quant_param.zeroPoint = 0;
+    quant_param.inited = true;
+    quant_params.emplace_back(quant_param);
+  }
+  // quant bias data
+  std::vector<int32_t> quant_datas(shape_size);
+
+  auto *raw_datas = static_cast<float *>(bias_param->data_c());
+  if (ComputeBiasDataAndQuantParam(bias_scales, input_scales, raw_datas, quant_param_holder, &quant_params,
+                                   &quant_datas) != RET_OK) {
+    MS_LOG(ERROR) << "compute bias data failed.";
+    return RET_ERROR;
+  }
+  quant_param_holder->set_input_quant_param(THIRD_INPUT, quant_params);
+  auto ret = SetTensorData(bias_param, quant_datas.data(), shape_size * sizeof(int32_t));
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "set tensor data failed.";
+    return RET_ERROR;
+  }
+  // set dtype
+  auto abstractBase = bias->abstract();
+  if (abstractBase == nullptr) {
+    MS_LOG(ERROR) << "Abstract of parameter is nullptr, " << bias->name();
+    return RET_ERROR;
+  }
+  if (!utils::isa<abstract::AbstractTensorPtr>(abstractBase)) {
+    MS_LOG(ERROR) << "Abstract of parameter should be anstract tensor, " << bias->name();
+    return RET_ERROR;
+  }
+  auto abstractTensor = utils::cast<abstract::AbstractTensorPtr>(abstractBase);
+  if (abstractTensor == nullptr || abstractTensor->element() == nullptr) {
+    MS_LOG(ERROR) << "abstractTensor is nullptr" << bias->name();
+    return RET_NULL_PTR;
+  }
+  abstractTensor->element()->set_type(TypeIdToType(kNumberTypeInt32));
+  return RET_OK;
 }
 }  // namespace mindspore::lite::quant

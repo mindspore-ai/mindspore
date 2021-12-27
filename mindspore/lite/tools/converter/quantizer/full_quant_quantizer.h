@@ -39,11 +39,6 @@
 #include "src/common/quant_utils.h"
 
 namespace mindspore::lite::quant {
-enum OperationType {
-  STORE,
-  FETCH,
-};
-
 class FullQuantQuantizer : public Quantizer {
  public:
   explicit FullQuantQuantizer(const converter::Flags &flags) : Quantizer(flags) {
@@ -55,45 +50,20 @@ class FullQuantQuantizer : public Quantizer {
   int DoQuantize(FuncGraphPtr func_graph) override;
 
  private:
-  bool OpInputDataHandle(OperationType type, const string &op_name, std::vector<float> *data);
-
-  bool OpOutputChMeanDataHandle(OperationType type, const string &op_name, std::vector<float> *data);
-
   int PreProcess(const FuncGraphPtr &func_graph);
-
-  int CheckFp32TensorVec(const std::string &node_name, const std::vector<mindspore::tensor::MSTensor *> &tensor_vec);
-
   int DoInference(CollectType collect_type);
-
   int UpdateDivergeInterval();
-
   int QuantNodeSimpleOp(const CNodePtr &cnode);
-
   int QuantNode(const FuncGraphPtr &func_graph);
-
   int SetInOutQuantParam(const AnfNodePtr &input_node, const std::unique_ptr<DataDistribution> &info,
                          const PrimitivePtr &primitive, bool is_input, size_t index) const;
-
   int DoParameterWeightQuant(const ParameterPtr &weight, const PrimitivePtr &primitive, bool per_channel,
                              int input_index) const;
-
   int DoValueNodeWeightQuant(const ValueNodePtr &weight, const PrimitivePtr &primitive, bool per_channel,
                              int input_index) const;
-
   int DoParameterNodeQuant(const CNodePtr &cnode, const ParameterPtr &input_node, size_t input_index);
-
   int DoValueNodeQuant(const CNodePtr &cnode, const ValueNodePtr &input_node, size_t input_index);
-
   int IsSupportWeightQuant(const CNodePtr &cnode, const AnfNodePtr &input_node, size_t input_index);
-
-  int DoParameterBiasQuant(const ParameterPtr &bias, const PrimitivePtr &primitive);
-  int Int8Inference();
-  int BiasCorrection(const FuncGraphPtr &func_graph);
-  int BiasCorrection(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
-  KernelCallBack GetBeforeCallBack(bool int8_op);
-  KernelCallBack GetAfterCallBack(bool int8_op);
-  KernelCallBack GetInt8AfterCallBack();
-  KernelCallBack GetFloatAfterCallBack();
   void InitQMinMax();
   void InitCpuConfig();
   void InitKirinConfig();
@@ -117,17 +87,9 @@ class FullQuantQuantizer : public Quantizer {
   std::set<PrimitivePtr> per_channel_ops_;
   std::set<mindspore::ActivationType> support_activation_;
 
-  std::unique_ptr<Calibrator> calibrator_{nullptr};
+  std::shared_ptr<Calibrator> calibrator_{nullptr};
   session::LiteSession *fp32_session_{nullptr};
   Model *fp32_model_{nullptr};
-  session::LiteSession *int8_session_{nullptr};
-  Model *int8_model_{nullptr};
-
-  std::map<std::string, std::vector<float>> fp32_op_input_map_;           // concurrency
-  std::map<std::string, std::vector<float>> fp32_op_output_ch_mean_map_;  // concurrency
-  std::map<std::string, std::vector<float>> op_bias_diff_map_;            // only use by int8 model
-  std::mutex mutex_op_input_;
-  std::mutex mutex_op_output_;
 
   // key is tensor_name
   std::map<std::string, std::vector<schema::QuantParamT>> weight_quant_params_bak;
