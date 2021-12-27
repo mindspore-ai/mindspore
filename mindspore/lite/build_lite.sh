@@ -258,9 +258,9 @@ build_lite() {
     cmake ${LITE_CMAKE_ARGS} -DBUILD_FIRST=ON "${BASEPATH}/mindspore/lite"
 
     if [[ "$(uname)" == "Darwin" && "${local_lite_platform}" != "x86_64" ]]; then
-        xcodebuild ONLY_ACTIVE_ARCH=NO -configuration Release -scheme mindspore-lite_static -target mindspore-lite_static -sdk iphoneos -quiet
+        xcodebuild ONLY_ACTIVE_ARCH=NO -configuration Release -scheme mindspore-lite_static -target mindspore-lite_static -sdk iphoneos -quiet -UseModernBuildSystem=YES
     elif [[ "$(uname)" == "Darwin" && "${local_lite_platform}" == "x86_64" ]]; then
-        xcodebuild ONLY_ACTIVE_ARCH=NO -configuration Release -scheme mindspore-lite_static -target mindspore-lite_static -sdk iphonesimulator -quiet
+        xcodebuild ONLY_ACTIVE_ARCH=NO -configuration Release -scheme mindspore-lite_static -target mindspore-lite_static -sdk iphonesimulator -quiet -UseModernBuildSystem=YES
     else
       make -j$THREAD_NUM && make install
       cp -r ${BASEPATH}/output/tmp/mindspore*/runtime ${BASEPATH}/mindspore/lite/tools/benchmark
