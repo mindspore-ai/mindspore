@@ -660,7 +660,7 @@ class NeighborExchange(Primitive):
         recv_shapes (tuple(list(int))): Data shape which received from recv_rank_ids.
         send_shapes (tuple(list(int))): Data shape which send to the send_rank_ids.
         recv_type (type): Data type which received from recv_rank_ids
-        group (str):
+        group (str): The communication group to work on. Default: "GlobalComm.WORLD_COMM_GROUP".
 
     Supported Platforms:
         ``Ascend``
