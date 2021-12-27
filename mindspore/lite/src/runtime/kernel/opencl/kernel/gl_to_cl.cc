@@ -86,7 +86,7 @@ int GLToCLOpenCLKernel::Prepare() {
 
 int GLToCLOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
-  MS_LOG(INFO) << "Create Opencl image from OpenGL texture";
+
   cl::Context *context = ocl_runtime_->Context();
   auto dst_mem_type = out_mem_type_;
   cl_int status;
@@ -94,7 +94,7 @@ int GLToCLOpenCLKernel::Run() {
     auto in_tensor = in_tensors_.front();
     auto data_type = in_tensor->data_type();
     if (data_type != kNumberTypeGLUInt) {
-      MS_LOG(WARNING) << "Unsupported data type " << data_type;
+      MS_LOG(ERROR) << "Unsupported data type " << data_type;
       return RET_ERROR;
     }
     cl_GLuint *gl_texture_id = reinterpret_cast<cl_GLuint *>(in_tensor->data());
@@ -138,7 +138,6 @@ int GLToCLOpenCLKernel::Run() {
     }
   }
 
-  MS_LOG(INFO) << "Run GLTexture to OpenCl Memory success";
   return RET_OK;
 }
 

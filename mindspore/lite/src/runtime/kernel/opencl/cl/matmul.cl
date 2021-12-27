@@ -1,9 +1,12 @@
 #pragma OPENCL EXTENSION cl_khr_fp16 : enable
 #define C4NUM 4
 #define UP_DIV(x, y) (((x) + (y) - (1)) / (y))
+
+#define DO_TANH(data) data = tanh(clamp(data, (FLT)(-10.0f), (FLT)(10.0f)));
+
 __constant sampler_t smp_zero = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP | CLK_FILTER_NEAREST;
 __kernel void MatMul_2d(__read_only image2d_t input, __write_only image2d_t output, __global FLT16 *weight,
-                        __read_only image2d_t bias, int4 in_shape, int4 out_shape) {
+                        __read_only image2d_t bias, int4 in_shape, int4 out_shape, int act_type) {
   int gidx = get_global_id(0);  // CO4
   int gidz = get_global_id(2);  // N
   int lidx = get_local_id(0);
@@ -29,12 +32,23 @@ __kernel void MatMul_2d(__read_only image2d_t input, __write_only image2d_t outp
     result += temp[lidx][2];
     result += temp[lidx][3];
     result += READ_IMAGE(bias, smp_zero, (int2)(gidx, 0));
+
+    if (act_type == ActivationType_RELU) {
+      result = max(result, (FLT4)(0.0f));
+    } else if (act_type == ActivationType_RELU6) {
+      result = clamp(result, (FLT4)(0.0f), (FLT4)(6.0f));
+    } else if (act_type == ActivationType_TANH) {
+      DO_TANH(result);
+    } else if (act_type == ActivationType_SIGMOID) {
+      result = (FLT4)(1.f) / ((FLT4)(1.f) + exp(-result));
+    }
+
     WRITE_IMAGE(output, (int2)(gidx, gidz), result);
   }
 }
 
 __kernel void MatMul_4d(__read_only image2d_t input, __write_only image2d_t output, __global FLT16 *weight,
-                        __read_only image2d_t bias, int4 in_shape, int4 out_shape) {
+                        __read_only image2d_t bias, int4 in_shape, int4 out_shape, int act_type) {
   int gidx = get_global_id(0);  // CO4
   int gidy = get_global_id(1);  // N * H * 4
   int gidz = get_global_id(2);  // W
@@ -64,13 +78,24 @@ __kernel void MatMul_4d(__read_only image2d_t input, __write_only image2d_t outp
     result += temp[lidx][2];
     result += temp[lidx][3];
     result += READ_IMAGE(bias, smp_zero, (int2)(gidx, 0));
+
+    if (act_type == ActivationType_RELU) {
+      result = max(result, (FLT4)(0.0f));
+    } else if (act_type == ActivationType_RELU6) {
+      result = clamp(result, (FLT4)(0.0f), (FLT4)(6.0f));
+    } else if (act_type == ActivationType_TANH) {
+      DO_TANH(result);
+    } else if (act_type == ActivationType_SIGMOID) {
+      result = (FLT4)(1.f) / ((FLT4)(1.f) + exp(-result));
+    }
+
     WRITE_IMAGE(output, (int2)(gidz * co4 + gidx, nh_index), result);
   }
 }
 
 __kernel void MatMulActWeightTransposeB_4d(__read_only image2d_t input, __write_only image2d_t output,
                                            __read_only image2d_t weight, __read_only image2d_t bias, int4 in_shape,
-                                           int4 out_shape) {
+                                           int4 out_shape, int act_type) {
   int gidx = get_global_id(0);  // CO4
   int gidy = get_global_id(1);  // N * H * 4
   int gidz = get_global_id(2);  // W
@@ -103,13 +128,24 @@ __kernel void MatMulActWeightTransposeB_4d(__read_only image2d_t input, __write_
     result += temp[lidx][2];
     result += temp[lidx][3];
     result += READ_IMAGE(bias, smp_zero, (int2)(gidx, 0));
+
+    if (act_type == ActivationType_RELU) {
+      result = max(result, (FLT4)(0.0f));
+    } else if (act_type == ActivationType_RELU6) {
+      result = clamp(result, (FLT4)(0.0f), (FLT4)(6.0f));
+    } else if (act_type == ActivationType_TANH) {
+      DO_TANH(result);
+    } else if (act_type == ActivationType_SIGMOID) {
+      result = (FLT4)(1.f) / ((FLT4)(1.f) + exp(-result));
+    }
+
     WRITE_IMAGE(output, (int2)(gidz * co4 + gidx, nh_index), result);
   }
 }
 
 __kernel void MatMulActWeight_4d(__read_only image2d_t input, __write_only image2d_t output,
                                  __read_only image2d_t weight, __read_only image2d_t bias, int4 in_shape,
-                                 int4 out_shape) {
+                                 int4 out_shape, int act_type) {
   int gidx = get_global_id(0);  // CO4
   int gidy = get_global_id(1);  // N * H * 4
   int gidz = get_global_id(2);  // W
@@ -142,6 +178,17 @@ __kernel void MatMulActWeight_4d(__read_only image2d_t input, __write_only image
     result += temp[lidx][2];
     result += temp[lidx][3];
     result += READ_IMAGE(bias, smp_zero, (int2)(gidx, 0));
+
+    if (act_type == ActivationType_RELU) {
+      result = max(result, (FLT4)(0.0f));
+    } else if (act_type == ActivationType_RELU6) {
+      result = clamp(result, (FLT4)(0.0f), (FLT4)(6.0f));
+    } else if (act_type == ActivationType_TANH) {
+      DO_TANH(result);
+    } else if (act_type == ActivationType_SIGMOID) {
+      result = (FLT4)(1.f) / ((FLT4)(1.f) + exp(-result));
+    }
+
     WRITE_IMAGE(output, (int2)(gidz * co4 + gidx, nh_index), result);
   }
 }

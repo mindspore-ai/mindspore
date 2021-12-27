@@ -90,7 +90,7 @@ int MatMulOpenCLKernel::Prepare() {
   }
   std::map<int, std::string> dims2str = {{2, "_2d"}, {3, "_4d"}, {4, "_4d"}};
   kernel_name += dims2str[dims];
-  std::string source = matmul_source;
+  std::string source = GetActDefines() + matmul_source;
   const std::string program_name = "MatMul";
   if (!ocl_runtime_->LoadSource(program_name, source)) {
     MS_LOG(ERROR) << "Load source failed.";
@@ -378,6 +378,11 @@ int MatMulOpenCLKernel::SetConstArgs() {
     return RET_ERROR;
   }
   if (ocl_runtime_->SetKernelArg(kernel_, arg_count++, out_shape) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  auto param = reinterpret_cast<MatMulParameter *>(op_parameter_);
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_count++, param->act_type_) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }
