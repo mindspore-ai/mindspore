@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,26 @@
  * limitations under the License.
  */
 
-#include "ops/logical_not.h"
-
+#include <map>
+#include <string>
 #include <set>
+#include <vector>
+#include <memory>
 
+#include "ops/logical_not.h"
 #include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {
 namespace {
 abstract::ShapePtr LogicalNotInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  return std::make_shared<abstract::Shape>(in_shape);
+  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+  auto in_shape = shape_map[kShape];
+  auto min_shape = shape_map[kMinShape];
+  auto max_shape = shape_map[kMaxShape];
+  return std::make_shared<abstract::Shape>(in_shape, min_shape, max_shape);
 }
 
 TypePtr LogicalNotInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
@@ -35,14 +42,21 @@ TypePtr LogicalNotInferType(const PrimitivePtr &prim, const std::vector<Abstract
   MS_EXCEPTION_IF_NULL(input_args[0]);
   auto infer_dtype = input_args[0]->BuildType();
   std::set<TypePtr> local_bool = {kBool};
-  return CheckAndConvertUtils::CheckTensorTypeValid("x", infer_dtype, local_bool, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", infer_dtype, local_bool, op_name);
+  return infer_dtype;
 }
 }  // namespace
+
 AbstractBasePtr LogicalNotInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                 const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(LogicalNotInferType(primitive, input_args),
-                                                    LogicalNotInferShape(primitive, input_args)->shape());
+  MS_EXCEPTION_IF_NULL(primitive);
+  const int64_t input_num = 1;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, primitive->name());
+  auto infer_type = LogicalNotInferType(primitive, input_args);
+  auto infer_shape = LogicalNotInferShape(primitive, input_args);
+  return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_PRIMITIVE_C(kNameLogicalNot, LogicalNot);
+
+REGISTER_PRIMITIVE_EVAL_IMPL(LogicalNot, prim::kPrimLogicalNot, LogicalNotInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore
