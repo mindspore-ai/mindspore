@@ -142,6 +142,12 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
     return optimizer;
   }
 
+  static std::shared_ptr<Optimizer> MakeEmptyOptimizer(const pipeline::ResourceBasePtr resource_ptr) {
+    OptimizerPtr optimizer = std::make_shared<Optimizer>("empty", resource_ptr, false);
+    optimizer->Init(OptPassGroupMap{}, false);
+    return optimizer;
+  }
+
   FuncGraphPtr step(FuncGraphPtr func_graph, bool use_profile = true) {
     if (!is_enable_) {
       return func_graph;
@@ -240,6 +246,9 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
 
   bool traverse_nodes_first() { return traverse_nodes_first_; }
 
+  bool is_first_order_j() { return is_first_order_j_; }
+  void set_is_first_order_j(bool is_first_order_j) { is_first_order_j_ = is_first_order_j; }
+
   struct {
     int64_t counter;
     std::string name;
@@ -257,6 +266,8 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
   bool is_enable_;
   bool is_untyped_generated_;
   bool traverse_nodes_first_;
+  // A flag to indicate if it's the first order J or innermost J in GraphMode.
+  bool is_first_order_j_{true};
 };
 }  // namespace opt
 }  // namespace mindspore

@@ -28,6 +28,7 @@
 #include "pipeline/jit/parse/parse.h"
 #include "debug/draw.h"
 #include "frontend/operator/ops.h"
+#include "frontend/optimizer/optimizer.h"
 
 namespace mindspore {
 namespace ad {
@@ -44,7 +45,7 @@ class TestAD : public UT::Common {
     FuncGraphPtr g = getPyFun(testCase);
     resourcePtr->manager()->RemoveRoots();
     resourcePtr->manager()->AddFuncGraph(g, true);
-    FuncGraphPtr dg = Grad(g, resourcePtr);
+    FuncGraphPtr dg = Grad(g, opt::Optimizer::MakeEmptyOptimizer(resourcePtr));
     AssertExpect(testCase, dg);
   }
 
@@ -188,8 +189,8 @@ TEST_F(TestAD, test_prim_switch) {
 
 TEST_F(TestAD, test_grad_cache) {
   FuncGraphPtr g = getPyFun("test_null");
-  FuncGraphPtr dg1 = Grad(g, resourcePtr);
-  FuncGraphPtr dg2 = Grad(g, resourcePtr);
+  FuncGraphPtr dg1 = Grad(g, opt::Optimizer::MakeEmptyOptimizer(resourcePtr));
+  FuncGraphPtr dg2 = Grad(g, opt::Optimizer::MakeEmptyOptimizer(resourcePtr));
   ASSERT_TRUE(dg1 == dg2);
 }
 
