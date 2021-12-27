@@ -1181,7 +1181,7 @@ void RDRRecordGraph(const size_t action_index, const size_t action_size, const s
 
 #ifdef ENABLE_DUMP_IR
 void RecordIR(const size_t action_index, const size_t action_size, const std::string &action_name,
-              const FuncGraphPtr graph, const std::string &phase, FuncGraphPtr *user_graph) {
+              const FuncGraphPtr graph, FuncGraphPtr *user_graph) {
   if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG) && graph != nullptr) {
     *user_graph = graph;
     std::string base_name = GetBaseNameForIR(SizeToLong(action_index), action_name);
@@ -1201,8 +1201,7 @@ void RecordIR(const size_t action_index, const size_t action_size, const std::st
 #endif
 
 #ifndef ENABLE_SECURITY
-void SaveGraphForReadability(const std::string &action_name, const FuncGraphPtr graph, const std::string &phase,
-                             const ResourcePtr resource) {
+void SaveGraphForReadability(const std::string &action_name, const FuncGraphPtr graph, const ResourcePtr resource) {
   if (graph != nullptr && action_name.find("optimize") != string::npos) {
 #ifdef ENABLE_DUMP_IR
     if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
@@ -1252,10 +1251,10 @@ void Pipeline::Run(const std::string &phase) {
 #ifdef ENABLE_DUMP_IR
       std::string filename = GetBaseNameForIR(SizeToLong(i), action.first);
       RDRRecordGraph(i, actions_.size(), filename, graph);
-      RecordIR(i, actions_.size(), action.first, graph, phase, &user_graph);
+      RecordIR(i, actions_.size(), action.first, graph, &user_graph);
 #endif
 #ifndef ENABLE_SECURITY
-      SaveGraphForReadability(action.first, graph, phase, resource_);
+      SaveGraphForReadability(action.first, graph, resource_);
 #endif
       i++;
 #ifdef ENABLE_TIMELINE
