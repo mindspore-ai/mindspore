@@ -24,7 +24,7 @@
 #include "utils/log_adapter.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "debug/anf_ir_dump.h"
-#include "backend/optimizer/graph_kernel/graph_kernel_helper.h"
+#include "backend/optimizer/graph_kernel/core/graph_kernel_utils.h"
 
 namespace mindspore::graphkernel {
 namespace {
@@ -326,7 +326,7 @@ bool ReorderOps::ReorderCastTypeInsensitive(const FuncGraphPtr &func_graph) {
   // Limitation: Assuming the type insensitive node will not change the type of input nodes, otherwise it can be seen
   //   as another cast node in some sense, such as LessEqual operator, which performs on two inputs and output a
   //   a boolean result.
-  auto mng = GetFuncGraphManager(func_graph);
+  auto mng = GkUtils::GetFuncGraphManager(func_graph);
   bool changed = false;
   auto todos = TopoSort(func_graph->get_return());
   for (const auto &anf_node : todos) {

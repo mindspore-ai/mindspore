@@ -203,7 +203,7 @@ bool StitchAtomicCleanInsertter::Run(const FuncGraphPtr &func_graph) {
   }
 
   if (changed) {
-    UpdateMng(mng, func_graph);
+    GkUtils::UpdateFuncGraphManager(mng, func_graph);
   }
 
   return changed;

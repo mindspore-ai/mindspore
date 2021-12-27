@@ -39,7 +39,7 @@
 #include "backend/optimizer/graph_kernel/optimize_assign.h"
 #include "backend/optimizer/graph_kernel/split_umonad.h"
 #include "backend/optimizer/graph_kernel/reorder_ops.h"
-#include "backend/optimizer/graph_kernel/update_state_formatter.h"
+#include "backend/optimizer/graph_kernel/core/update_state_formatter.h"
 #include "backend/optimizer/graph_kernel/axis_normalizer.h"
 #include "backend/optimizer/graph_kernel/decrease_compute_precision.h"
 #include "backend/optimizer/graph_kernel/decrease_transfer_precision.h"
