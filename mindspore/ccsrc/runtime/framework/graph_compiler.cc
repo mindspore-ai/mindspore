@@ -451,6 +451,10 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
   // 'KernelMod' is real executive object of kernel.
   device_context->CreateKernel(graph->execution_order());
 
+#ifndef ENABLE_SECURITY
+  session_->SetSummaryNodes(graph.get());
+#endif
+
   // Adjust kernel graph before run graph.
   device_context->PreprocessBeforeRunGraph(graph);
 
@@ -461,9 +465,6 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
 
   MS_EXCEPTION_IF_NULL(session_);
   session_->InitAllBucket(graph, device_context);
-#ifndef ENABLE_SECURITY
-  session_->SetSummaryNodes(graph.get());
-#endif
   SetSummaryNodesRefCount(graph.get());
 #ifdef ENABLE_DUMP_IR
   // Dump .pb graph after graph optimization.
