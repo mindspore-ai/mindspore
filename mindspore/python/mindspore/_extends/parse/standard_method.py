@@ -438,6 +438,7 @@ def argmax(x, axis=None):
     Args:
         axis (int, optional): By default, the index is into
             the flattened array, otherwise along the specified axis.
+            Defaults to None.
 
     Returns:
         Tensor, array of indices into the array. It has the same
@@ -474,6 +475,7 @@ def argmin(x, axis=None):
         a (Union[int, float, bool, list, tuple, Tensor]): Input array.
         axis (int, optional): By default, the index is into
             the flattened array, otherwise along the specified axis.
+            Defaults to None.
 
     Returns:
         Tensor, array of indices into the array. It has the same
@@ -851,8 +853,8 @@ def take(x, indices, axis=None, mode='clip'):
         a (Tensor): Source array with shape `(Ni…, M, Nk…)`.
         indices (Tensor): The indices with shape `(Nj...)` of the values to extract.
         axis (int, optional): The axis over which to select values. By default,
-            the flattened input array is used.
-        mode ('raise', 'wrap', 'clip', optional):
+            the flattened input array is used. Defaults to None.
+        mode ('raise', 'wrap', 'clip', optional): Defaults to "clip".
 
             - edge: Pads with the edge values of `arr`.
             - raise: Raises an error;

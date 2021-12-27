@@ -117,10 +117,10 @@ def count_nonzero(x, axis=None, keepdims=False):
         x (Tensor): The tensor for which to count non-zeros.
         axis (Union[int,tuple], optional): Axis or tuple of axes along which to
             count non-zeros. Default is None, meaning that non-zeros will be counted
-            along a flattened version of `x`.
+            along a flattened version of `x`. Default: `None`.
         keepdims (bool, optional): If this is set to True, the axes that are counted
             are left in the result as dimensions with size one. With this option,
-            the result will broadcast correctly against `x`.
+            the result will broadcast correctly against `x`. Default: `False`.
 
     Returns:
         Tensor, indicating number of non-zero values in the `x` along a given axis.
@@ -500,7 +500,7 @@ def float_power(x1, x2, dtype=None):
 
     Args:
         x1 (Tensor): the bases.
-        x2 (Tensor): the exponenets.
+        x2 (Tensor): the exponents.
         dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
             output Tensor.
 
@@ -1906,14 +1906,14 @@ def diff(a, n=1, axis=-1, prepend=None, append=None):
     Args:
         a (Tensor): Input tensor.
         n (int, optional): The number of times values are differenced. If zero,
-            the input is returned as-is.
+            the input is returned as-is. Default: 1.
         axis (int, optional): The axis along which the difference is taken, default
-            is the last axis.
+            is the last axis. Default: -1.
         prepend/append (Tensor, optional): Values to prepend or append to a along
             `axis` prior to performing the difference. Scalar values are expanded to
             arrays with length 1 in the direction of `axis` and the shape of the input
             array in along all other axes. Otherwise the dimension and shape must
-            match `a` except along axis.
+            match `a` except along axis. Default: `None`.
 
     Returns:
         The n-th differences. The shape of the output is the same as a except along
@@ -2333,6 +2333,7 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None, aweights=N
             to observation vectors. The default value is ``None``.
         dtype (Union[:class:`mindspore.dtype`, str], optional): Data-type of the
             result. By default, the return data-type will have mstype.float32 precision.
+            Default is ``None``.
 
     Returns:
         Tensor, the covariance matrix of the variables.
@@ -2915,6 +2916,7 @@ def cross(a, b, axisa=- 1, axisb=- 1, axisc=- 1, axis=None):
             the last axis.
         axis (int, optional): If defined, the axis of `a`, `b` and `c` that defines the
             vector(s) and cross product(s). Overrides `axisa`, `axisb` and `axisc`.
+            Defaults to None.
 
     Returns:
         Tensor, vector cross product(s).
@@ -3115,7 +3117,7 @@ def cumsum(a, axis=None, dtype=None):
         dtype (:class:`mindspore.dtype`, optional): If not specified, stay the same as `a`,
             unless `a` has an integer dtype with a precision less than that of the
             default platform integer. In that case, the default platform integer
-            is used.
+            is used. Default: `None`.
 
     Returns:
         Tensor.
@@ -3859,12 +3861,13 @@ def corrcoef(x, y=None, rowvar=True, dtype=None):
             multiple variables and observations. Each row of `x` represents a variable,
             and each column a single observation of all those variables. Also see rowvar below.
         y (Union[int, float, bool, tuple, list, Tensor], optional): An additional set
-            of variables and observations.
+            of variables and observations. Default: `None`.
         rowvar (bool, optional): If rowvar is `True` (default), then each row represents
             a variable, with observations in the columns. Otherwise, the relationship
             is transposed: each column represents a variable, while the rows contain observations.
+            Default: `None`.
         dtype (:class:`mindspore.dtype`, optional): Data-type of the result. By default,
-            the return data-type will have at least float32 precision.
+            the return data-type will have at least float32 precision. Default: `None`.
 
     Returns:
         Tensor, The correlation coefficient matrix of the variables.
@@ -4218,6 +4221,7 @@ def argmax(a, axis=None):
         a (Union[int, float, bool, list, tuple, Tensor]): Input array.
         axis (int, optional): By default, the index is into
             the flattened array, otherwise along the specified axis.
+            Default: `None`.
 
     Returns:
         Tensor, array of indices into the array. It has the same
@@ -4254,6 +4258,7 @@ def argmin(a, axis=None):
         a (Union[int, float, bool, list, tuple, Tensor]): Input array.
         axis (int, optional): By default, the index is into
             the flattened array, otherwise along the specified axis.
+            Default: `None`.
 
     Returns:
         Tensor, array of indices into the array. It has the same
@@ -4628,9 +4633,9 @@ def bincount(x, weights=None, minlength=0, length=None):
     Examples:
         >>> import mindspore.numpy as np
         >>> print(np.bincount(np.arange(5)))
-        [1 1 1 1 1]
+        [1. 1. 1. 1. 1.]
         >>> print(np.bincount(np.array([0, 1, 1, 3, 2, 1, 7])))
-        [1 3 1 1 0 0 0 1]
+        [1. 3. 1. 1. 0. 0. 0. 1.]
         >>> w = np.array([0.3, 0.5, 0.2, 0.7, 1., -0.6]) # weights
         >>> x = np.array([0, 1, 1, 2, 2, 2])
         >>> print(np.bincount(x,  weights=w))
@@ -5316,7 +5321,7 @@ def unwrap(p, discont=3.141592653589793, axis=-1):
     """
     Unwraps by changing deltas between values to ``2*pi`` complement.
     Unwraps radian phase `p` by changing absolute jumps greater than `discont` to their
-    `2*pi` complement along the given axis.
+    ``2*pi`` complement along the given axis.
 
     Note:
         For absolute jumps that are within a very close range to pi, unwrapping may be done
@@ -5372,8 +5377,8 @@ def cumprod(a, axis=None, dtype=None):
     Args:
         a (Union[int, float, bool, list, tuple, Tensor]): Input tensor.
         axis (int, optional): Axis along which the cumulative product is computed.
-            By default the input is flattened.
-        dtype (:class:`mindspore.dtype`, optional): Default: :class:`None`. Overrides the dtype of the
+            By default the input is flattened. Default: `None`.
+        dtype (:class:`mindspore.dtype`, optional): Default: `None`. Overrides the dtype of the
             output Tensor.
 
     Returns:

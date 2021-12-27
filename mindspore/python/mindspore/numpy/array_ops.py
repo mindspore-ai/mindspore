@@ -121,7 +121,7 @@ def transpose(a, axes=None):
 
     Raises:
         TypeError: If input arguments have types not specified above.
-        ValueError: If the number of `axes` is not euqal to a.ndim.
+        ValueError: If the number of `axes` is not equal to a.ndim.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -963,8 +963,7 @@ def unique(x, return_inverse=False):
 
     Returns:
         Tensor or tuple of Tensors.
-        - If `return_inverse` is `False`, just return the unique tensor.
-        - If `return_inverse` is `True`, return tuple of tensors.
+        If `return_inverse` is `False`, return the unique tensor, otherwise return tuple of tensors.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1050,7 +1049,7 @@ def roll(a, shift, axis=None):
             for all given axes.
         axis (Union[int, tuple(int)], optional): Axis or axes along which elements
             are shifted. By default, the array is flattened before shifting, after
-            which the original shape is restored.
+            which the original shape is restored. Default: None.
 
     Returns:
         Tensor, with the same shape as a.
@@ -1844,9 +1843,9 @@ def take(a, indices, axis=None, mode='clip'):
         a (Tensor): Source array with shape `(Ni…, M, Nk…)`.
         indices (Tensor): The indices with shape `(Nj...)` of the values to extract.
         axis (int, optional): The axis over which to select values. By default,
-            the flattened input array is used.
+            the flattened input array is used. Defaults to None.
         mode ('raise', 'wrap', 'clip', optional): Specifies how out-of-bounds
-            indices will behave.
+            indices will behave. Defaults to "clip".
 
             'raise' – raise an error;
 
@@ -1892,7 +1891,7 @@ def repeat(a, repeats, axis=None):
         repeats (int or sequence of ints): The number of repetitions for each element.
             `repeats` is broadcasted to fit the shape of the given axis.
         axis (int, optional): The axis along which to repeat values. By default,
-            use the flattened input array, and return a flat output array.
+            use the flattened input array, and return a flat output array. Defaults to None.
 
     Returns:
         Tensor, output array which has the same shape as `a`, except along the given
@@ -2405,7 +2404,7 @@ def unravel_index(indices, shape, order='C'):
             are indices into the flattened version of an array of dimensions shape.
         shape (tuple of integers): The shape of the array to use for unraveling indices.
         order (Union['C', 'F'], optional): Determines whether the indices should be viewed as
-            indexing in row-major (C-style) or column-major (Fortran-style) order.
+            indexing in row-major (C-style) or column-major (Fortran-style) order. Defaults to "C".
 
     Returns:
         Tensor, each array in the tuple has the same shape as the indices array.

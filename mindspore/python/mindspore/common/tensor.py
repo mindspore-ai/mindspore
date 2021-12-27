@@ -1711,7 +1711,7 @@ class Tensor(Tensor_):
             indices (Tensor): The indices with shape `(Nj...)` of the values to extract.
             axis (int, optional): The axis over which to select values. By default,
                 the flattened input tensor is used. Default: `None`.
-            mode ('raise', 'wrap', 'clip', optional):
+            mode ('raise', 'wrap', 'clip', optional): Default: "clip".
 
                 'raise' – Raises an error;
 
@@ -2173,9 +2173,12 @@ class RowTensor:
 
     For example, if indices is [0], values is [[1, 2]], dense_shape is
     (3, 2), then the dense representation of the row tensor will be:
-    [[1, 2],
-     [0, 0],
-     [0, 0]]
+
+    .. code-block::
+
+        [[1, 2],
+         [0, 0],
+         [0, 0]]
 
     RowTensor can only be used in the `Cell`'s construct method.
 
@@ -2244,9 +2247,12 @@ class SparseTensor:
 
     For example, if indices is [[0, 1], [1, 2]], values is [1, 2], dense_shape is
     (3, 4), then the dense representation of the sparse tensor will be:
-    [[0, 1, 0, 0],
-     [0, 0, 2, 0],
-     [0, 0, 0, 0]]
+
+    .. code-block::
+
+        [[0, 1, 0, 0],
+         [0, 0, 2, 0],
+         [0, 0, 0, 0]]
 
     Note:
         SparseTensor is not supported in Pynative mode at the moment.
