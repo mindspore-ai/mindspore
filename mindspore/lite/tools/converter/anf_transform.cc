@@ -43,6 +43,7 @@
 #include "tools/optimizer/fusion/tflite_lstm_cell_fusion.h"
 #include "tools/optimizer/fusion/tf_lstm_cell_fusion.h"
 #include "tools/optimizer/fusion/tf_bidirection_gru_fusion.h"
+#include "tools/optimizer/fusion/tensor_dot_fusion.h"
 #include "tools/optimizer/fusion/multi_head_attention_fusion.h"
 #include "tools/optimizer/fusion/glu_fusion.h"
 #include "tools/optimizer/fusion/tflite_rel_pos_multi_head_attention_fusion.h"
@@ -215,6 +216,7 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const converter::
   fusion_pm->AddPass(std::make_shared<opt::ScaleActivationFusion>());
   fusion_pm->AddPass(std::make_shared<opt::ScaleScaleFusion>());
   fusion_pm->AddPass(std::make_shared<opt::FullConnectedFusion>());
+  fusion_pm->AddPass(std::make_shared<opt::TensorDotFusion>());
   optimizer->AddPassManager(fusion_pm);
   if (optimizer->Optimize(old_graph) == nullptr) {
     MS_LOG(ERROR) << "run op fusion failed.";
