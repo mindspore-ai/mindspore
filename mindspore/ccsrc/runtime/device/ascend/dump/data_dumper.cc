@@ -23,6 +23,7 @@
 #include "utility"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "utils/convert_utils_base.h"
+#include "runtime/dev.h"
 #include "runtime/mem.h"
 #include "acl/acl_rt.h"
 #include "runtime/kernel.h"
@@ -325,9 +326,15 @@ void DataDumper::OpDebugRegister() {
     return;
   }
 
-  rtError_t rt_ret = rtMalloc(&op_debug_buffer_addr_, kOpDebugHostMemSize, RT_MEMORY_TS);
+  int64_t value = 0;
+  rtError_t rt_ret = rtGetRtCapability(FEATURE_TYPE_MEMORY, MEMORY_INFO_TS_LIMITED, &value);
   if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "[DataDump] Call rtMalloc failed, ret = " << rt_ret;
+    MS_LOG(EXCEPTION) << "[DataDump] Call rt api rtGetRtCapability failed, ret = " << rt_ret;
+  }
+  auto memory_type = (value == static_cast<int64_t>(RT_CAPABILITY_SUPPORT)) ? RT_MEMORY_TS : RT_MEMORY_HBM;
+  rt_ret = rtMalloc(&op_debug_buffer_addr_, kOpDebugHostMemSize, memory_type);
+  if (rt_ret != RT_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "[DataDump] Call rt api rtMalloc failed, ret = " << rt_ret;
   }
 
   rt_ret = rtMalloc(&op_debug_dump_args_, kOpDebugDevMemSize, RT_MEMORY_HBM);
