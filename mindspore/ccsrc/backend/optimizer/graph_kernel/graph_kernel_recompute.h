@@ -88,7 +88,7 @@ class AutoRecompute {
   MemorySize lifetime_threshold_{0};
   MemorySize local_peak_threshold_{0};
 
-  void RecomputeCandidatesLog(const std::vector<Candidate> &candidates);
+  void RecomputeCandidatesLog(const std::vector<Candidate> &candidates) const;
 };
 
 class GraphKernelRecompute : public opt::Pass {

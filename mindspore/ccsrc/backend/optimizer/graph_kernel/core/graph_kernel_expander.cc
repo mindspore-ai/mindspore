@@ -149,7 +149,7 @@ AnfNodePtr DefaultExpander::Run(const AnfNodePtr &node) {
   return graph_kernel_node;
 }
 
-ExpanderPtr GraphKernelExpander::GetExpander(const AnfNodePtr &node) { return std::make_shared<DefaultExpander>(); }
+ExpanderPtr GraphKernelExpander::GetExpander(const AnfNodePtr &) { return std::make_shared<DefaultExpander>(); }
 
 bool GraphKernelExpander::DoExpand(const FuncGraphPtr &func_graph) {
   bool changed = false;

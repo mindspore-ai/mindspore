@@ -974,7 +974,7 @@ nlohmann::json AkgKernelJsonGenerator::CreateOutputsJson(const std::vector<AnfNo
       }
       output_desc_json[kJsonKeyShape] = output_shape;
     }
-    outputs_json.emplace_back(output_desc_json);
+    (void)outputs_json.emplace_back(output_desc_json);
   }
   return outputs_json;
 }

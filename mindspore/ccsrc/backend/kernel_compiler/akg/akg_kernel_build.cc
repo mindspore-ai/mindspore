@@ -562,7 +562,7 @@ void AkgKernelBuilder::LoadCache() {
       continue;
     }
     auto kernel_name = kernel_json.substr(0, kernel_json.length() - SUFFIX_LENS);
-    bin_map->Insert(kernel_name, kernel_dir + kernel_json);
+    (void)bin_map->Insert(kernel_name, kernel_dir + kernel_json);
   }
   has_load = true;
   return;

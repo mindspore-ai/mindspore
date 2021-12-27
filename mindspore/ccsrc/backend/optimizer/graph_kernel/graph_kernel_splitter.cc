@@ -867,7 +867,7 @@ class CostModelSplitSchemer : public SplitSchemer {
         if (iter != node_group_.end()) {
           auto group_id = iter->second;
           node_group_[node] = group_id;
-          split_plan_[group_id].emplace_back(node);
+          (void)split_plan_[group_id].emplace_back(node);
           found = true;
           break;
         }

@@ -757,8 +757,9 @@ bool ParallelOpFusion::CreateParallelOpSubGraphs(const std::vector<ParallelInfo>
 
 std::set<AnfNodePtr> CollectCapturedNodes(const std::vector<ParallelInfo> &infos) {
   std::set<AnfNodePtr> captured;
-  std::for_each(infos.cbegin(), infos.cend(),
-                [&captured](const ParallelInfo &info) { captured.insert(info.nodes().begin(), info.nodes().end()); });
+  (void)std::for_each(infos.cbegin(), infos.cend(), [&captured](const ParallelInfo &info) {
+    captured.insert(info.nodes().begin(), info.nodes().end());
+  });
   return captured;
 }
 
@@ -769,16 +770,16 @@ std::vector<std::vector<AnfNodePtrList>> GetParallelGroupsByBfs(const OrderedMap
   std::queue<AnfNodePtr> node_que;
   std::unordered_map<AnfNodePtr, int> outdegrees;
   for (const auto &[node, ref] : node_rels) {
-    outdegrees[node] = ref.nexts.size();
+    outdegrees[node] = SizeToInt(ref.nexts.size());
     if (outdegrees[node] == 0) {
       node_que.push(node);
     }
   }
 
-  int total_node_num = node_rels.size();
+  int total_node_num = SizeToInt(node_rels.size());
   while (!node_que.empty()) {
     std::vector<AnfNodePtrList> group;
-    int node_size = node_que.size();
+    int node_size = SizeToInt(node_que.size());
     while (node_size--) {
       auto node = node_que.front();
       node_que.pop();
@@ -832,7 +833,7 @@ bool ParallelOpFusion::Run(const FuncGraphPtr &graph) {
     auto groups_bfs = GetParallelGroupsByBfs(node_rels, exclued_nodes);
     auto bfs_parallel_infos = SearchFusableParallelCNodes(groups_bfs);
 
-    parallel_infos.insert(parallel_infos.end(), bfs_parallel_infos.begin(), bfs_parallel_infos.end());
+    (void)parallel_infos.insert(parallel_infos.end(), bfs_parallel_infos.begin(), bfs_parallel_infos.end());
   }
 
   // Create core-fuse subgraph and change origin graph.
