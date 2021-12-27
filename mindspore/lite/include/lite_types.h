@@ -27,10 +27,11 @@ typedef enum {
 
 /// \brief DeviceType defined for holding user's preferred backend.
 typedef enum {
-  DT_CPU,   /**< CPU device type */
-  DT_GPU,   /**< GPU device type */
-  DT_NPU,   /**< NPU device type */
-  DT_ASCEND /**< ASCEND device type */
+  DT_CPU,    /**< CPU device type */
+  DT_GPU,    /**< GPU device type */
+  DT_NPU,    /**< NPU device type */
+  DT_ASCEND, /**< ASCEND device type */
+  DT_END     /**< NO device type */
 } DeviceType;
 
 typedef enum {

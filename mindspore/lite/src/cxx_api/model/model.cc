@@ -15,13 +15,13 @@
  */
 
 #include "include/api/model.h"
+#include <mutex>
 #ifdef GPU_TENSORRT
 #include <cuda_runtime.h>
 #endif
 #ifdef ENABLE_LITE_ACL
 #include "acl/acl_base.h"
 #endif
-#include <mutex>
 #include "include/api/callback/callback.h"
 #include "include/api/context.h"
 #include "include/api/dual_abi_helper.h"
@@ -164,7 +164,7 @@ bool Model::CheckModelSupport(enum DeviceType device_type, ModelType model_type)
     int driver_version = 0;
     int ret = cudaDriverGetVersion(&driver_version);
     if (ret != cudaSuccess || driver_version == 0) {
-      MS_LOG(WARNING) << "No nvidia GPU driver.";
+      MS_LOG(ERROR) << "No nvidia GPU driver.";
       return false;
     }
     return true;
@@ -174,12 +174,12 @@ bool Model::CheckModelSupport(enum DeviceType device_type, ModelType model_type)
   if (device_type == kAscend || device_type == kAscend310) {
     const char *soc_name_c = aclrtGetSocName();
     if (soc_name_c == nullptr) {
-      MS_LOG(WARNING) << "aclrtGetSocName failed.";
+      MS_LOG(ERROR) << "aclrtGetSocName failed.";
       return false;
     }
     std::string soc_name(soc_name_c);
     if (soc_name.find("910") != std::string::npos) {
-      MS_LOG(WARNING) << "Device not support, aclrtGetSocName: " << soc_name;
+      MS_LOG(ERROR) << "Device not support, aclrtGetSocName: " << soc_name;
       return false;
     }
     return true;
