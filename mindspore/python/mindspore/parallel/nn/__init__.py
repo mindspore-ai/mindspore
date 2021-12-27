@@ -17,15 +17,12 @@ NOTE:
     Transformer Networks.
     This is an experimental interface that is subject to change or deletion.
 """
-from .transformer import *
-from .moe import *
-from .layers import FixedSparseAttention
-from .loss import CrossEntropyLoss
-from .op_parallel_config import OpParallelConfig
+from mindspore import log
+# pylint: disable=W0614,W0401,W0611
+from mindspore.nn.transformer import AttentionMask, VocabEmbedding, MultiHeadAttention, FeedForward, \
+    TransformerEncoder, TransformerDecoder, TransformerEncoderLayer, TransformerDecoderLayer, Transformer, \
+    TransformerOpParallelConfig, \
+    EmbeddingOpParallelConfig, TransformerRecomputeConfig, MoEConfig, FixedSparseAttention, CrossEntropyLoss, \
+    OpParallelConfig
 
-__all__ = []
-__all__.extend(transformer.__all__)
-__all__.extend(loss.__all__)
-__all__.extend(op_parallel_config.__all__)
-__all__.extend(layers.__all__)
-__all__.extend(moe.__all__)
+log.warning("'mindspore.parallel.nn' will be deprecated in the future. Please use 'mindspore.nn.transformer' instead.")

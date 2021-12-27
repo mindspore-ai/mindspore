@@ -13,11 +13,22 @@
 # limitations under the License.
 # ============================================================================
 """
-Note:
-    Transformer Networks. This is interface that is subject to change or deletion.
+NOTE:
+    Transformer Networks.
+    This is an experimental interface that is subject to change or deletion.
 """
-# pylint: disable=W0614,W0401,W0611
-from mindspore.nn.transformer.transformer import AttentionMask, VocabEmbedding, MultiHeadAttention, FeedForward, \
-    TransformerEncoder, TransformerDecoder, TransformerEncoderLayer, TransformerDecoderLayer, Transformer, \
-    TransformerOpParallelConfig, \
+# pylint: disable=W0614,W0401
+from .transformer import AttentionMask, VocabEmbedding, MultiHeadAttention, FeedForward, TransformerEncoder, \
+    TransformerDecoder, TransformerEncoderLayer, TransformerDecoderLayer, Transformer, TransformerOpParallelConfig, \
     EmbeddingOpParallelConfig, TransformerRecomputeConfig
+from .moe import MoEConfig
+from .layers import FixedSparseAttention
+from .loss import CrossEntropyLoss
+from .op_parallel_config import OpParallelConfig
+
+__all__ = []
+__all__.extend(transformer.__all__)
+__all__.extend(loss.__all__)
+__all__.extend(op_parallel_config.__all__)
+__all__.extend(layers.__all__)
+__all__.extend(moe.__all__)
