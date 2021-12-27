@@ -426,12 +426,12 @@ AnfNodePtr FuncGraphSpecializer::BuildSpecializedNode(const AnfNodePtr &func, co
       const auto error_dead_node = std::make_shared<AbstractError>(kDeadNode, func);
       repl = BuildValueNode(kDeadNode, error_dead_node);
       constexpr auto recursive_level = 2;
-      MS_LOG(INFO) << "DEAD for func: " << func->DebugString(recursive_level) << ", abstract: " << abs->ToString();
+      MS_LOG(DEBUG) << "DEAD for func: " << func->DebugString(recursive_level) << ", abstract: " << abs->ToString();
     } else if (errcode == kSpecializePoly) {
       const auto error_poly_node = std::make_shared<AbstractError>(kPolyNode, func);
       repl = BuildValueNode(kPolyNode, error_poly_node);
       constexpr auto recursive_level = 2;
-      MS_LOG(INFO) << "POLY for func: " << func->DebugString(recursive_level) << ", abstract: " << abs->ToString();
+      MS_LOG(DEBUG) << "POLY for func: " << func->DebugString(recursive_level) << ", abstract: " << abs->ToString();
     } else {
       MS_LOG(EXCEPTION) << "Failed to build specialized func, func: " << func->DebugString()
                         << ", abstract: " << abs->ToString();
@@ -683,7 +683,7 @@ void FuncGraphSpecializer::ProcessCNode(const CNodePtr &node) {
     if (status == kSpecializePoly ||
         (func->isa<Parameter>() && func->func_graph()->has_flag(FUNC_GRAPH_FLAG_SPECIALIZE_PARAMETER))) {
       auto wrapped_node = BuildSpecializedParameterNode(node);
-      MS_LOG(INFO) << "Partial closure is handled, wrapped_node: " << wrapped_node->DebugString(recursive_level);
+      MS_LOG(DEBUG) << "Partial closure is handled, wrapped_node: " << wrapped_node->DebugString(recursive_level);
       new_inputs[0] = wrapped_node;
     }
   }
@@ -797,9 +797,9 @@ SpecializeStatusCode FuncGraphSpecializer::AcquireUniqueEvalVal(const AbstractFu
       MS_LOG(DEBUG) << "Build for generalized argvals successfully.";
       return kSpecializeSuccess;
     }
-    MS_LOG(INFO) << "Find POLY code, it may be unused code or unresolved polymorphism, "
-                 << "func: " << func->ToString() << ", choices.size: " << choices.size()
-                 << ", argvals.size: " << argvals.size();
+    MS_LOG(DEBUG) << "Find POLY code, it may be unused code or unresolved polymorphism, "
+                  << "func: " << func->ToString() << ", choices.size: " << choices.size()
+                  << ", argvals.size: " << argvals.size();
     return kSpecializePoly;
   }
 }

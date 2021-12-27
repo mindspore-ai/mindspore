@@ -171,7 +171,7 @@ class InlinerBase : public AnfVisitor {
       }
     }
     // Or, just make a clone for not single used fg.
-    MS_LOG(INFO) << "Run InlineClone in inline pass, subgraph number may increase.";
+    MS_LOG(DEBUG) << "Run InlineClone in inline pass, subgraph number may increase.";
     return InlineClone(fg, node->func_graph(), args, inputs[0]->scope());
   }
 
