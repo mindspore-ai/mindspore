@@ -5,12 +5,13 @@ mindspore.nn.LeakyReLU
 
    Leaky ReLU激活函数。
 
-   LeakyReLU与ReLU相似，但LeakyReLU有一个斜率，使其在x<0时不等于0，该激活函数定义如下：
+   该激活函数定义如下：
 
    .. math::
       \text{leaky_relu}(x) = \begin{cases}x, &\text{if } x \geq 0; \cr
-      \text{alpha} * x, &\text{otherwise.}\end{cases}
+      {\alpha} * x, &\text{otherwise.}\end{cases}
 
+   其中，:math:`\alpha` 表示 `alpha` 参数。
 
    更多细节详见 `Rectifier Nonlinearities Improve Neural Network Acoustic Models <https://ai.stanford.edu/~amaas/papers/relu_hybrid_icml2013_final.pdf>`_。
 
@@ -20,11 +21,11 @@ mindspore.nn.LeakyReLU
 
    **输入：**
 
-   **x** （Tensor） - LeakyReLU的输入。shape为 :math:`(N, *)` ，其中 :math:`*` 表示任意的附加维度数。
+   **x** （Tensor） - 计算LeakyReLU的任意维度的Tensor。
 
    **输出：**
 
-   Tensor，shape和数据类型与 `x` 的相同。
+   Tensor，数据类型和shape与 `x` 相同。
 
    **异常：**
 
@@ -36,9 +37,9 @@ mindspore.nn.LeakyReLU
 
    **样例：**
 
-	>>> x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
-	>>> leaky_relu = nn.LeakyReLU()
-	>>> output = leaky_relu(x)
-	>>> print(output)
-	[[-0.2  4.  -1.6]
-	 [ 2.  -1.   9. ]]
+    >>> x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
+    >>> leaky_relu = nn.LeakyReLU()
+    >>> output = leaky_relu(x)
+    >>> print(output)
+    [[-0.2  4.  -1.6]
+     [ 2.  -1.   9. ]]
