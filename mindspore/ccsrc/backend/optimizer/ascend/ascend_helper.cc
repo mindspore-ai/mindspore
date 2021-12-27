@@ -16,7 +16,7 @@
 
 #include "backend/optimizer/ascend/ascend_helper.h"
 #include <set>
-#include "common/trans.h"
+#include "utils/ms_device_shape_transfer.h"
 #include "utils/ms_utils.h"
 #include "utils/check_convert_utils.h"
 #include "backend/optimizer/common/helper.h"

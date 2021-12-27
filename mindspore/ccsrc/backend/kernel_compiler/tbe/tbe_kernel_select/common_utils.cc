@@ -18,7 +18,7 @@
 #include <set>
 #include <string>
 #include "base/base.h"
-#include "common/trans.h"
+#include "utils/ms_device_shape_transfer.h"
 #include "backend/session/anf_runtime_algorithm.h"
 
 namespace mindspore {

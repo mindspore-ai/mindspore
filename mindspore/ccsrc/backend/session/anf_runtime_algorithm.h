@@ -340,7 +340,7 @@ class AnfRuntimeAlgorithm {
   // Get the output number according to abstract, when there is a tuple in abstract, it needs to get recursively.
   static size_t GetOutputNumByAbstract(const AbstractBasePtr &node_abstract);
   // Get attr groups
-  static int64_t GetAttrGroups(const AnfNodePtr &node, const size_t index);
+  static int64_t GetAttrGroups(const AnfNodePtr &node, size_t index);
 
   static inline bool IsAllgather(const CNodePtr &cnode) { return GetCNodeName(cnode) == kAllGatherOpName; }
 

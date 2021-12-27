@@ -30,7 +30,7 @@
 #include "backend/kernel_compiler/common_utils.h"
 #include "runtime/device/gpu/gpu_common.h"
 #include "runtime/hardware/gpu/optimizer.h"
-#include "common/trans.h"
+#include "utils/ms_device_shape_transfer.h"
 #include "utils/context/graph_kernel_flags.h"
 #include "runtime/device/gpu/gpu_bucket.h"
 #include "profiler/device/gpu/gpu_profiling.h"

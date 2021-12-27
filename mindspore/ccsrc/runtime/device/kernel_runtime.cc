@@ -22,7 +22,7 @@
 #include "backend/optimizer/common/helper.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/session/kernel_graph.h"
-#include "common/trans.h"
+#include "utils/ms_device_shape_transfer.h"
 #include "debug/data_dump/dump_json_parser.h"
 #include "frontend/operator/ops.h"
 #include "ir/value.h"

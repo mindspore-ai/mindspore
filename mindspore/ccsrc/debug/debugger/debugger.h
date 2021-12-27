@@ -25,7 +25,7 @@
 #include "backend/session/kernel_graph.h"
 #include "debug/debugger/grpc_client.h"
 #include "debug/debug_services.h"
-#include "common/trans.h"
+#include "utils/ms_device_shape_transfer.h"
 #ifdef ENABLE_D
 #include "debug/dump_data_builder.h"
 #endif

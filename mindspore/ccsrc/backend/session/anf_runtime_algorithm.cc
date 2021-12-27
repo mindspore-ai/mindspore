@@ -30,7 +30,7 @@
 #include "backend/optimizer/common/helper.h"
 #include "backend/kernel_compiler/kernel.h"
 #include "backend/kernel_compiler/kernel_build_info.h"
-#include "common/trans.h"
+#include "utils/ms_device_shape_transfer.h"
 #include "abstract/param_validator.h"
 #include "pipeline/jit/static_analysis/static_analysis.h"
 #include "utils/trace_base.h"
@@ -590,9 +590,10 @@ size_t AnfRuntimeAlgorithm::GetOutputTensorMemSize(const AnfNodePtr &node, size_
   size_t type_size = GetTypeByte(TypeIdToType(output_type_id));
   std::vector<size_t> shape = AnfAlgo::GetOutputDeviceShape(node, output_index);
   auto format = AnfAlgo::GetOutputFormat(node, output_index);
+  auto dtype = AnfAlgo::GetOutputDeviceDataType(node, output_index);
   if (shape.empty() && format != kOpFormat_DEFAULT) {
     shape = trans::PaddingShape(shape, format, AnfAlgo::GetOutputReshapeType(node, output_index));
-    shape = trans::TransShapeToDevice(shape, format, node, output_index);
+    shape = trans::TransShapeToDevice(shape, format, node, output_index, dtype);
   }
   // scalar's output shape is a empty vector
   size_t tensor_size = std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
@@ -821,7 +822,8 @@ std::vector<int64_t> AnfRuntimeAlgorithm::GetOutputDeviceShapeForTbeBuild(const 
   if (trans::IsNeedPadding(format, infer_shape.size())) {
     infer_shape = trans::PaddingShape(infer_shape, format, GetOutputReshapeType(node, output_idx));
   }
-  return trans::TransShapeToDevice(infer_shape, format, node, output_idx);
+  auto dtype = GetOutputDeviceDataType(node, output_idx);
+  return trans::TransShapeToDevice(infer_shape, format, node, output_idx, dtype);
 }
 
 std::vector<size_t> AnfRuntimeAlgorithm::GetOutputDeviceShape(const AnfNodePtr &node, size_t output_idx) {
@@ -834,7 +836,8 @@ std::vector<size_t> AnfRuntimeAlgorithm::GetOutputDeviceShape(const AnfNodePtr &
   if (trans::IsNeedPadding(format, infer_shape.size())) {
     infer_shape = trans::PaddingShape(infer_shape, format, GetOutputReshapeType(node, output_idx));
   }
-  return trans::TransShapeToDevice(infer_shape, format, node, output_idx);
+  auto dtype = GetOutputDeviceDataType(node, output_idx);
+  return trans::TransShapeToDevice(infer_shape, format, node, output_idx, dtype);
 }
 
 std::vector<size_t> AnfRuntimeAlgorithm::GetInputDeviceShape(const AnfNodePtr &node, size_t input_idx) {
@@ -847,7 +850,8 @@ std::vector<size_t> AnfRuntimeAlgorithm::GetInputDeviceShape(const AnfNodePtr &n
   if (trans::IsNeedPadding(format, infer_shape.size())) {
     infer_shape = trans::PaddingShape(infer_shape, format, GetInputReshapeType(node, input_idx));
   }
-  return trans::TransShapeToDevice(infer_shape, format, node, input_idx, false);
+  auto dtype = GetInputDeviceDataType(node, input_idx);
+  return trans::TransShapeToDevice(infer_shape, format, node, input_idx, dtype, false);
 }
 
 std::string AnfRuntimeAlgorithm::GetInputReshapeType(const AnfNodePtr &node, size_t input_idx) {
@@ -2089,7 +2093,8 @@ std::vector<size_t> AnfRuntimeAlgorithm::GetInputRealDeviceShapeIfExist(const An
     auto max_shape = GetInputMaxShape(anf_node, index);
     std::transform(max_shape.begin(), max_shape.end(), device_shape.begin(), IntToSize);
     auto format = GetInputFormat(anf_node, index);
-    (void)trans::TransShapeToDevice(device_shape, format, anf_node, index, false);
+    auto dtype = GetInputDeviceDataType(anf_node, index);
+    (void)trans::TransShapeToDevice(device_shape, format, anf_node, index, dtype, false);
   }
   return device_shape;
 }
@@ -2101,7 +2106,8 @@ std::vector<size_t> AnfRuntimeAlgorithm::GetOutputRealDeviceShapeIfExist(const A
     auto max_shape = GetOutputMaxShape(anf_node, index);
     std::transform(max_shape.begin(), max_shape.end(), device_shape.begin(), IntToSize);
     auto format = GetOutputFormat(anf_node, index);
-    (void)trans::TransShapeToDevice(device_shape, format, anf_node, index);
+    auto dtype = GetOutputDeviceDataType(anf_node, index);
+    (void)trans::TransShapeToDevice(device_shape, format, anf_node, index, dtype);
   }
   return device_shape;
 }
@@ -2542,7 +2548,7 @@ void AnfRuntimeAlgorithm::UpdateGraphValidRefPair(const KernelGraphPtr &graph) {
   graph->set_ref_out_in_map(new_ref_map);
 }
 
-int64_t AnfRuntimeAlgorithm::GetAttrGroups(const AnfNodePtr &node, const size_t index) {
+int64_t AnfRuntimeAlgorithm::GetAttrGroups(const AnfNodePtr &node, size_t index) {
   if (node == nullptr) {
     return 1;
   }

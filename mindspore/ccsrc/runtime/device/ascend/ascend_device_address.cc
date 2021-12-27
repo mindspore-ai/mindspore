@@ -33,7 +33,7 @@
 #include "ir/tensor.h"
 #include "abstract/utils.h"
 #include "utils/utils.h"
-#include "common/trans.h"
+#include "utils/ms_device_shape_transfer.h"
 #ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
 #endif
@@ -234,8 +234,7 @@ bool AscendDeviceAddress::SyncDeviceToHost(const ShapeVector &shape, size_t size
   BindDevice();
   SyncStream();
   bool sync_ok = false;
-  std::vector<size_t> host_shape;
-  (void)std::transform(shape.begin(), shape.end(), std::back_inserter(host_shape), LongToSize);
+  ShapeVector host_shape = shape;
   if (host_shape.empty()) {
     host_shape.emplace_back(1);
   }
@@ -272,20 +271,20 @@ bool AscendDeviceAddress::SyncDeviceToHost(const ShapeVector &shape, size_t size
   return sync_ok;
 }
 
-std::vector<size_t> AscendDeviceAddress::GetDeviceShape(std::vector<size_t> *host_shape) const {
+ShapeVector AscendDeviceAddress::GetDeviceShape(ShapeVector *host_shape) const {
   MS_EXCEPTION_IF_NULL(host_shape);
-  std::vector<size_t> device_shape;
+  ShapeVector device_shape;
   auto node_index = GetNodeIndex();
   if (format_ == kOpFormat_FRAC_NZ || format_ == kOpFormat_NCDHW) {
-    device_shape = trans::TransShapeToDevice(*host_shape, format_, node_index.first, node_index.second);
+    device_shape = trans::TransShapeToDevice(*host_shape, format_, node_index.first, node_index.second, type_id_);
   } else {
     if (host_shape_.empty()) {
       *host_shape = trans::PaddingShape(*host_shape, format_);
     } else {
       host_shape->clear();
-      (void)std::transform(host_shape_.begin(), host_shape_.end(), std::back_inserter(*host_shape), LongToSize);
+      *host_shape = host_shape_;
     }
-    device_shape = trans::TransShapeToDevice(*host_shape, format_, node_index.first, node_index.second);
+    device_shape = trans::TransShapeToDevice(*host_shape, format_, node_index.first, node_index.second, type_id_);
   }
   return device_shape;
 }
@@ -327,7 +326,7 @@ bool AscendDeviceAddress::SyncDeviceToHostAndConvertFormatBasedOnTransData(const
     auto host = std::vector<uint8_t>(size);
     SyncMemory(host.data(), output_addr_vec[0], size, ACL_MEMCPY_DEVICE_TO_HOST);
     auto shape_size = abstract::ShapeSize(host_shape);
-    const trans::TypeIdArgs type_args{host.data(), shape_size, type_id_, type, size};
+    const trans::TypeIdArgs type_args{host.data(), SizeToLong(shape_size), type_id_, type, size};
     sync_ok = trans::TransDataType(type_args, host_ptr);
     if (!sync_ok) {
       MS_LOG(ERROR) << "Trans data type failed.";
@@ -344,19 +343,20 @@ bool AscendDeviceAddress::SyncDeviceToHostAndConvertFormat(const ShapeVector &sh
   MS_LOG(INFO) << "SyncDeviceToHostAndConvertFormat, Device(format:" << format_ << ", type_id:" << TypeIdLabel(type_id_)
                << ", size:" << size_ << "), Host(type_id:" << TypeIdLabel(type) << ", size:" << size << ")";
   bool sync_ok = false;
-  std::vector<size_t> host_shape;
-  (void)std::transform(shape.begin(), shape.end(), std::back_inserter(host_shape), LongToSize);
+  ShapeVector host_shape = shape;
   if (host_shape.empty()) {
     host_shape.emplace_back(1);
   }
-  std::vector<size_t> device_shape = GetDeviceShape(&host_shape);
+  auto device_shape = GetDeviceShape(&host_shape);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode &&
       type_id_name_map.find(type_id_) != type_id_name_map.end()) {
     std::pair<std::string, std::string> type_format = std::make_pair(type_id_name_map.at(type_id_), format_);
     if (use_trans_data.find(type_format) != use_trans_data.end()) {
-      sync_ok = SyncDeviceToHostAndConvertFormatBasedOnTransData(host_shape, size, type, host_ptr);
+      std::vector<size_t> st_shape;
+      (void)std::transform(host_shape.begin(), host_shape.end(), std::back_inserter(st_shape), LongToSize);
+      sync_ok = SyncDeviceToHostAndConvertFormatBasedOnTransData(st_shape, size, type, host_ptr);
       return sync_ok;
     }
   }
@@ -401,8 +401,7 @@ bool AscendDeviceAddress::SyncHostToDevice(const ShapeVector &shape, size_t size
   }
   BindDevice();
   bool sync_ok = false;
-  std::vector<size_t> host_shape;
-  (void)std::transform(shape.begin(), shape.end(), std::back_inserter(host_shape), LongToSize);
+  ShapeVector host_shape = shape;
   if (host_shape.empty()) {
     host_shape.emplace_back(1);
   }
@@ -537,18 +536,17 @@ bool AscendDeviceAddress::ConvertFormatAndSyncHostToDevice(const ShapeVector &sh
   bool sync_ok = false;
   MS_LOG(INFO) << "ConvertFormatAndSyncHostToDevice, Device(format:" << format_ << ", type_id:" << TypeIdLabel(type_id_)
                << ", size:" << size_ << "), Host(type_id:" << TypeIdLabel(type) << ", size:" << size << ")";
-  std::vector<size_t> host_shape;
-  (void)std::transform(shape.begin(), shape.end(), std::back_inserter(host_shape), LongToSize);
+  ShapeVector host_shape = shape;
   if (host_shape.empty()) {
     host_shape.emplace_back(1);
   }
   auto node_index = GetNodeIndex();
-  std::vector<size_t> device_shape;
+  std::vector<int64_t> device_shape;
   if (format_ == kOpFormat_FRAC_NZ) {
-    device_shape = trans::TransShapeToDevice(host_shape, format_, node_index.first, node_index.second);
+    device_shape = trans::TransShapeToDevice(host_shape, format_, node_index.first, node_index.second, type_id_);
   } else {
     host_shape = trans::PaddingShape(host_shape, format_);
-    device_shape = trans::TransShapeToDevice(host_shape, format_, node_index.first, node_index.second);
+    device_shape = trans::TransShapeToDevice(host_shape, format_, node_index.first, node_index.second, type_id_);
   }
   if (type_id_ != type) {
     auto shape_size = abstract::ShapeSize(host_shape);

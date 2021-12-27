@@ -57,7 +57,7 @@
 #include "backend/optimizer/pass/getitem_tuple.h"
 #include "backend/optimizer/pass/optimize_updatestate.h"
 #include "backend/optimizer/gpu/adjust_depend_for_parallel_optimizer_recompute_all_gather_fusion.h"
-#include "common/trans.h"
+#include "utils/ms_device_shape_transfer.h"
 #include "debug/anf_ir_dump.h"
 #include "debug/dump_proto.h"
 #ifdef ENABLE_DEBUGGER
@@ -310,7 +310,7 @@ size_t UpdateGraphInputAbstract(const AnfNodePtr input_node, const tensor::Tenso
   if (input_param != nullptr && input_param->has_dynamic_shape()) {
     auto tensor_shape = tensor->shape();
     std::vector<size_t> shape_tmp;
-    (void)std::transform(tensor_shape.begin(), tensor_shape.end(), std::back_inserter(shape_tmp), IntToSize);
+    (void)std::transform(tensor_shape.begin(), tensor_shape.end(), std::back_inserter(shape_tmp), LongToSize);
     AnfAlgo::SetOutputInferTypeAndShape({AnfAlgo::GetOutputInferDataType(input_node, 0)}, {shape_tmp},
                                         input_node.get());
     size = abstract::ShapeSize(shape_tmp) * abstract::TypeIdSize(tensor->data_type());

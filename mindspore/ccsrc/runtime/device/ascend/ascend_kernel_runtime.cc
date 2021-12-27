@@ -26,7 +26,7 @@
 #include "utils/ms_context.h"
 #include "utils/context/context_extends.h"
 #include "utils/mpi/mpi_config.h"
-#include "common/trans.h"
+#include "utils/ms_device_shape_transfer.h"
 #include "runtime/rt.h"
 #include "acl/acl_rt.h"
 #include "runtime/device/ascend/ascend_stream_manager.h"

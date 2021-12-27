@@ -18,7 +18,7 @@
 #include <vector>
 #include <algorithm>
 
-#include "common/trans.h"
+#include "utils/ms_device_shape_transfer.h"
 #include "utils/ms_context.h"
 #include "debug/anf_ir_utils.h"
 #include "debug/data_dump/dump_json_parser.h"

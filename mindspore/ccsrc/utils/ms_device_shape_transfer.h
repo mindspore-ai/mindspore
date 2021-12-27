@@ -39,7 +39,7 @@
 #include "utils/utils.h"
 
 namespace mindspore {
-namespace TEMP {
+namespace trans {
 constexpr int64_t kAlign16 = 16;
 enum kAxis4D : int { kN = 0, kC, kH, kW, kNchwDims };
 enum Axis5D : int {
@@ -253,6 +253,77 @@ class FormatTransfer {
 };
 
 /**
+ * Range trans function
+ * */
+class ShapeRangeTransfer {
+ public:
+  ShapeRangeTransfer() = default;
+  ~ShapeRangeTransfer() = default;
+  RangePair GetRealRange(const RangePair &ori_range, const std::string &format, const TypeId &type);
+
+ private:
+  static RangePair NHWCRange(const RangePair &ori_range, const TypeId &);
+  static RangePair HWCNRange(const RangePair &ori_range, const TypeId &);
+  static RangePair NC1HWC04Range(const RangePair &ori_range, const TypeId &);
+  static RangePair FRAC_ZC04Range(const RangePair &ori_range, const TypeId &);
+  static RangePair FRAC_ZN_LSTMRange(const RangePair &ori_range, const TypeId &);
+  static RangePair FRAC_ZRange(const RangePair &ori_range, const TypeId &type);
+  static RangePair FRAC_NZRange(const RangePair &ori_range, const TypeId &type);
+  static RangePair NC1HWC0Range(const RangePair &ori_range, const TypeId &type);
+  static RangePair NDC1HWC0Range(const RangePair &ori_range, const TypeId &type);
+  static RangePair C1HWNCOC0Range(const RangePair &ori_range, const TypeId &type);
+  static RangePair FRAC_Z_3DRange(const RangePair &ori_range, const TypeId &type);
+};
+
+/**
+ * If you want extend format, make sure it has a data trans function at host in class
+ * 'FormatTransfer.format_trans_fp_map'
+ * */
+static const std::set<std::string> kFormatWithTransFunc = {
+  kOpFormat_HWCN,     kOpFormat_NHWC,      kOpFormat_FRAC_Z,      kOpFormat_FRAC_NZ,      kOpFormat_NC1HWC0,
+  kOpFormat_NDC1HWC0, kOpFormat_C1HWNCoC0, kOpFormat_NC1HWC0_C04, kOpFormat_FRACTAL_Z_3D, kOpFormat_FRACTAL_Z_C04};
+
+/**
+ * Interface of datatype trans
+ * */
+bool TransDataType(const TypeIdArgs &args, void *result);
+
+/**
+ * Interface of data format trans from host to device
+ * */
+bool TransFormat(const FormatArgs &args, void *result, const AnfNodePtr &node, size_t index);
+
+/**
+ * Interface of data format trans from host to device
+ * */
+bool TransFormatFromDeviceToHost(const FormatArgs &args, void *result, int64_t groups = 1);
+
+/**
+ * Interface of data format trans from device to host
+ * */
+bool TransFormatFromDeviceToHost(const FormatArgs &args, void *result, const AnfNodePtr &node, size_t index);
+
+/**
+ * 4D reshape type trans, trans reshape_type from string to int
+ * */
+void StringToAxisVector4D(const std::string &reshape_type_str, std::vector<Axis> *reshape_type_vec);
+
+/**
+ * 5D reshape type trans, trans reshape_type from string to int
+ * */
+void StringToAxisVector5D(const std::string &reshape_type_str, std::vector<Axis5D> *reshape_type_vec);
+
+/**
+ * Get shape after padding
+ * */
+ShapeVector GetRuntimePaddingShape(const AnfNodePtr &node, size_t index);
+
+/**
+ *  If need padding
+ * */
+bool IsNeedPadding(const std::string &format, size_t shape_size);
+
+/**
  * Padding shape to 5D by default mode
  * */
 template <typename T>
@@ -317,7 +388,90 @@ std::vector<T> PaddingShapeTo4dDefault(const std::vector<T> &shape) {
   }
   return shape_4d;
 }
-}  // namespace TEMP
+
+/**
+ * Padding shape to 5D according to reshape type
+ * */
+template <typename T>
+std::vector<T> PaddingShapeTo5d(const std::vector<T> &shape, const std::string &padding_str = {""}) {
+  std::vector<Axis5D> padding_axis;
+  StringToAxisVector5D(padding_str, &padding_axis);
+  if (padding_axis.empty() || shape.size() != padding_axis.size()) {
+    return PaddingShapeTo5dDefault(shape);
+  }
+  std::vector<T> shape_5d(kNcdhw, 1);
+  for (size_t index = 0; index < padding_axis.size(); index++) {
+    shape_5d[padding_axis[index]] = shape[index];
+  }
+  return shape_5d;
+}
+
+/**
+ * Padding shape to 4D according to reshape type
+ * */
+template <typename T>
+std::vector<T> PaddingShapeTo4d(const std::vector<T> &shape, const std::string &padding_str = {""}) {
+  std::vector<Axis> padding_axis;
+  StringToAxisVector4D(padding_str, &padding_axis);
+  if (padding_axis.empty() || shape.size() != padding_axis.size()) {
+    return PaddingShapeTo4dDefault(shape);
+  }
+  std::vector<T> shape_4d(kNchwDims, 1);
+  for (size_t index = 0; index < padding_axis.size(); index++) {
+    shape_4d[padding_axis[index]] = shape[index];
+  }
+  return shape_4d;
+}
+
+/**
+ * Interface of padding shape
+ * */
+template <typename T>
+std::vector<T> PaddingShape(const std::vector<T> &shape, const std::string &format,
+                            const std::string &pad_index = {""}) {
+  std::vector<T> host_shape;
+  if (k3DFormatSet.find(format) != k3DFormatSet.end()) {
+    if (shape.size() >= kNcdhw) {
+      return shape;
+    }
+    host_shape = PaddingShapeTo5d(shape, pad_index);
+  } else {
+    host_shape = PaddingShapeTo4d(shape, pad_index);
+  }
+  return host_shape;
+}
+
+/**
+ * Interface of device shape trance
+ * */
+template <typename T>
+std::vector<T> TransShapeToDevice(const std::vector<T> &shape, const std::string &format, const AnfNodePtr &node,
+                                  size_t index, TypeId type, bool is_output = true) {
+  ShapeVector shape_before;
+  std::transform(shape.begin(), shape.end(), std::back_inserter(shape_before),
+                 [](T num) { return static_cast<int64_t>(num); });
+  DeviceShapeTransfer deviceShapeTransfer;
+  auto res = deviceShapeTransfer.GetDeviceShapeByFormat(shape_before, format, node, index, type, is_output);
+  std::vector<T> out_shape;
+  std::transform(res.begin(), res.end(), std::back_inserter(out_shape),
+                 [](int64_t num) { return static_cast<T>(num); });
+  return out_shape;
+}
+
+template <typename T>
+std::vector<T> TransShapeToDevice(const std::vector<T> &shape, const std::string &format, TypeId type,
+                                  int64_t groups = 1, const ShapeVector &input_hidden_size = {kAlign16, kAlign16}) {
+  ShapeVector shape_before;
+  std::transform(shape.begin(), shape.end(), std::back_inserter(shape_before),
+                 [](T num) { return static_cast<int64_t>(num); });
+  DeviceShapeTransfer deviceShapeTransfer;
+  auto res = deviceShapeTransfer.GetDeviceShapeByFormat(shape_before, format, type, groups, input_hidden_size);
+  std::vector<T> out_shape;
+  std::transform(res.begin(), res.end(), std::back_inserter(out_shape),
+                 [](int64_t num) { return static_cast<T>(num); });
+  return out_shape;
+}
+}  // namespace trans
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CCSRC_UTILS_MS_DEVICE_SHAPE_TRANSFER_H_

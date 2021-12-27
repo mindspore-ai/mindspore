@@ -23,7 +23,7 @@
 #include <algorithm>
 #include "backend/session/anf_runtime_algorithm.h"
 #include "utils/log_adapter.h"
-#include "common/trans.h"
+#include "utils/ms_device_shape_transfer.h"
 
 /*
     DropoutGenMask：
@@ -107,15 +107,11 @@ std::vector<int64_t> CalGenMaskOutputShape(const std::vector<int64_t> &shape) {
   return {ret};
 }
 
-std::vector<int64_t> CalGenMaskV3OutputShape(const std::vector<int64_t> &shape) {
+std::vector<int64_t> CalGenMaskV3OutputShape(const std::vector<int64_t> &shape, TypeId type) {
   // [*dim, M, N] -> [*dim, N/16, M/16, 16, 16] if M%16=0 and N%16=0
   if (shape.size() >= 2 && shape[shape.size() - 1] % kCubeSize == 0 && shape[shape.size() - 2] % kCubeSize == 0) {
-    std::vector<size_t> nd_shape;
-    std::transform(shape.begin(), shape.end(), std::back_inserter(nd_shape), LongToSize);
-    auto fnz_shape = trans::TransShapeToDevice(nd_shape, kOpFormat_FRAC_NZ);
-    std::vector<int64_t> out_shape;
-    std::transform(fnz_shape.begin(), fnz_shape.end(), std::back_inserter(out_shape), SizeToLong);
-    return out_shape;
+    auto fnz_shape = trans::TransShapeToDevice(shape, kOpFormat_FRAC_NZ, type);
+    return fnz_shape;
   }
   return shape;
 }
@@ -193,8 +189,8 @@ CNodePtr CreateDropoutGenMaskCNode(const FuncGraphPtr &func_graph, const CNodePt
     MS_EXCEPTION_IF_NULL(gen_mask_shape);
     gen_mask_abstract = std::make_shared<abstract::AbstractTensor>(kUInt8, gen_mask_shape);
   } else {
-    auto gen_mask_shape =
-      use_v3 ? CalGenMaskV3OutputShape(input_shape->shape()) : CalGenMaskOutputShape(input_shape->shape());
+    auto gen_mask_shape = use_v3 ? CalGenMaskV3OutputShape(input_shape->shape(), kNumberTypeUInt8)
+                                 : CalGenMaskOutputShape(input_shape->shape());
     gen_mask_abstract = std::make_shared<abstract::AbstractTensor>(kUInt8, gen_mask_shape);
   }
   MS_EXCEPTION_IF_NULL(gen_mask_abstract);
@@ -417,7 +413,8 @@ const AnfNodePtr DropoutGradUnifyMindIR::Process(const FuncGraphPtr &func_graph,
     auto mask_abstract = mask_input->abstract();
     MS_EXCEPTION_IF_NULL(mask_abstract);
     auto grad_shape_vec = grad_input_shape->shape();
-    auto mask_shape = use_v3 ? CalGenMaskV3OutputShape(grad_shape_vec) : CalGenMaskOutputShape(grad_shape_vec);
+    auto mask_shape =
+      use_v3 ? CalGenMaskV3OutputShape(grad_shape_vec, kNumberTypeUInt8) : CalGenMaskOutputShape(grad_shape_vec);
     mask_abstract = std::make_shared<abstract::AbstractTensor>(kUInt8, mask_shape);
     mask_input->set_abstract(mask_abstract);
     // update kernel info

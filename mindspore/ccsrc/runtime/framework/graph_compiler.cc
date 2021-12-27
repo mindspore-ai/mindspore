@@ -22,7 +22,7 @@
 #include "runtime/framework/graph_scheduler.h"
 #include "runtime/op_builder/op_lazy_builder.h"
 #include "runtime/device/device_address.h"
-#include "common/trans.h"
+#include "utils/ms_device_shape_transfer.h"
 #include "utils/convert_utils.h"
 #include "utils/context/graph_kernel_flags.h"
 #include "utils/ms_context.h"

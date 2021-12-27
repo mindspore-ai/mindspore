@@ -22,7 +22,6 @@
 #include "abstract/utils.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/kernel_compiler/common_utils.h"
-#include "common/trans.h"
 #include "runtime/mem.h"
 #include "acl/acl_rt.h"
 #include "runtime/device/kernel_runtime.h"

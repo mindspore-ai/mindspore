@@ -29,7 +29,7 @@
 #include "backend/kernel_compiler/common_utils.h"
 #include "base/core_ops.h"
 #include "base/base_ref_utils.h"
-#include "common/trans.h"
+#include "utils/ms_device_shape_transfer.h"
 #include "utils/config_manager.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/session/executor_manager.h"
@@ -173,10 +173,6 @@ BaseRef GetNodeOutputTensorFromInputs(const session::KernelWithIndex &node_outpu
   return nullptr;
 }
 
-int64_t ShapeSize(const std::vector<int64_t> &shape) {
-  return std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int64_t>());
-}
-
 BaseRef CreateNodeOutputTensor(const session::KernelWithIndex &node_output_pair, const KernelGraphPtr &graph,
                                const std::vector<tensor::TensorPtr> &input_tensors,
                                std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node) {
@@ -197,7 +193,7 @@ BaseRef CreateNodeOutputTensor(const session::KernelWithIndex &node_output_pair,
   (void)std::copy(shape.begin(), shape.end(), std::back_inserter(temp_shape));
   if (AnfAlgo::IsDynamicShape(node)) {
     auto max_shape = AnfAlgo::GetOutputMaxShape(node, output_index);
-    temp_shape = ShapeSize(max_shape) > ShapeSize(temp_shape) ? max_shape : temp_shape;
+    temp_shape = abstract::ShapeSize(max_shape) > abstract::ShapeSize(temp_shape) ? max_shape : temp_shape;
   }
   tensor::TensorPtr tensor;
   bool is_internal_output = graph->IsInternalOutput(node, output_index);

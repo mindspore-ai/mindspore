@@ -74,7 +74,7 @@ class AscendDeviceAddress : public DeviceAddress {
                                             const std::string &format) const;
   bool SyncDeviceToDeviceWithDiffFormatType(const DeviceSync *src_device_addr) const;
   void SyncStream() const;
-  std::vector<size_t> GetDeviceShape(std::vector<size_t> *host_shape) const;
+  ShapeVector GetDeviceShape(ShapeVector *host_shape) const;
   std::shared_ptr<LaunchKernel> CreateLaunchTransData(const std::vector<size_t> &host_shape,
                                                       const std::string &ori_format,
                                                       const std::string &dst_format) const;

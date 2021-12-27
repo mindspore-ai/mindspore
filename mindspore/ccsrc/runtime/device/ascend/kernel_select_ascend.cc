@@ -30,7 +30,7 @@
 #include "backend/kernel_compiler/tbe/tbe_dynaminc_shape_util.h"
 #include "backend/optimizer/common/helper.h"
 #include "backend/session/anf_runtime_algorithm.h"
-#include "common/trans.h"
+#include "utils/ms_device_shape_transfer.h"
 #include "debug/anf_ir_dump.h"
 #include "frontend/operator/ops.h"
 #include "utils/ms_context.h"
@@ -374,8 +374,7 @@ void SetWeightFormat(const AnfNodePtr &real_input_node, std::vector<string> outp
   MS_EXCEPTION_IF_NULL(context_ptr);
   bool disable_convert = real_input_node->isa<Parameter>() || real_input_node->isa<ValueNode>();
   if (disable_convert && context_ptr->get_param<bool>(MS_CTX_ENABLE_LOOP_SINK)) {
-    disable_convert =
-      trans::kTransFormatMapOfHostToDevice.find(output_format[0]) == trans::kTransFormatMapOfHostToDevice.end();
+    disable_convert = trans::kFormatWithTransFunc.find(output_format[0]) == trans::kFormatWithTransFunc.end();
   }
   // if not find in host convert format map means the host has not registered the convert function of this format
   if (output_format[0] != kOpFormat_DEFAULT && disable_convert) {
