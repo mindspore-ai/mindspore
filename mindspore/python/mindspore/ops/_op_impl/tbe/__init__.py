@@ -369,6 +369,7 @@ from .binary_cross_entropy import _binary_cross_entropy_tbe
 from .binary_cross_entropy_grad import _binary_cross_entropy_grad_tbe
 from .bce_with_logits_loss import _bce_with_logits_loss_op_tbe
 from .sin import _sin_tbe
+from .sin_ds import _sin_ds_tbe
 from .cos_ds import _cos_ds_tbe
 from .cos import _cos_tbe
 from .tan import _tan_tbe
