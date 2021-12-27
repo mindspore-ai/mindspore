@@ -491,6 +491,8 @@ def lu_factor(a, overwrite_a=False, check_finite=True):
         [2, 0, 3, 1]
     """
     del overwrite_a, check_finite
+    if len(a.shape) < 2 or (a.shape[-1] != a.shape[-2]):
+        raise ValueError("input of lu matrix must be square.")
     msp_lu = LU()
     m_lu, pivots, _ = msp_lu(a)
     return m_lu, pivots
