@@ -855,7 +855,7 @@ class Tensor(Tensor_):
              [ 8,  9]]
         """
         self._init_check()
-        return tensor_operator_registry.get('narrow')()(self, axis, start, length)
+        return tensor_operator_registry.get('narrow')(self, axis, start, length)
 
     def swapaxes(self, axis1, axis2):
         """
