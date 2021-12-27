@@ -51,7 +51,7 @@ class CrossEntropyLoss(Cell):
     Examples:
         >>> import numpy as np
         >>> from mindspore import dtype as mstype
-        >>> from mindspore.parallel.nn import CrossEntropyLoss
+        >>> from mindspore.nn.transformer import CrossEntropyLoss
         >>> from mindspore import Tensor
         >>> loss = CrossEntropyLoss()
         >>> logits = Tensor(np.array([[3, 5, 6, 9, 12, 33, 42, 12, 32, 72]]), mstype.float32)

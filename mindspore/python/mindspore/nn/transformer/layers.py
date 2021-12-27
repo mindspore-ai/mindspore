@@ -528,7 +528,7 @@ class FixedSparseAttention(nn.Cell):
     Examples:
         >>> import numpy as np
         >>> from mindspore import dtype as mstype
-        >>> from mindspore.parallel.nn import FixedSparseAttention
+        >>> from mindspore.nn.transformer import FixedSparseAttention
         >>> from mindspore import Tensor
         >>> model = FixedSparseAttention(batch_size=2,
         ...                              num_heads=8,
