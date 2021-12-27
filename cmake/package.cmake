@@ -148,7 +148,7 @@ endif()
 
 if(ENABLE_CPU)
     if(CMAKE_SYSTEM_NAME MATCHES "Linux")
-        install(FILES ${onednn_LIBPATH}/libdnnl.so.2.2
+        install(FILES ${onednn_LIBPATH}/libdnnl.so.2.4
           DESTINATION ${INSTALL_LIB_DIR} RENAME libdnnl.so.2 COMPONENT mindspore)
     elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
         file(GLOB_RECURSE DNNL_LIB_LIST ${onednn_LIBPATH}/libdnnl*${CMAKE_SHARED_LIBRARY_SUFFIX}*)
