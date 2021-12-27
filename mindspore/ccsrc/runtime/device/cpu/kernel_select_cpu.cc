@@ -44,24 +44,6 @@ bool IsInputNotCNode(const CNodePtr &kernel_node, size_t input_index) {
   return false;
 }
 
-void UpdatePrevNotCNodeFormatDtype(const KernelAttr &kernel_attr, const std::vector<size_t> &input_not_cnode_indexes,
-                                   const CNodePtr &kernel_node) {
-  for (auto &input_index : input_not_cnode_indexes) {
-    auto input_node = AnfAlgo::VisitKernel(kernel_node->input(input_index + 1), 0).first;
-    MS_EXCEPTION_IF_NULL(input_node);
-    if (input_node->isa<Parameter>() && AnfAlgo::IsParameterWeight(input_node->cast<ParameterPtr>())) {
-      MS_EXCEPTION_IF_NULL(input_node);
-      std::vector<TypeId> output_types;
-      output_types.emplace_back(kernel_attr.GetInputAttr(input_index).first);
-      auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
-      MS_EXCEPTION_IF_NULL(builder);
-      builder->SetOutputsFormat({kOpFormat_DEFAULT});
-      builder->SetOutputsDeviceType(output_types);
-      AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), input_node.get());
-    }
-  }
-}
-
 void GetOutputDtypes(const CNodePtr &kernel_node, std::vector<TypeId> *output_types) {
   size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
   for (size_t output_index = 0; output_index < output_num; ++output_index) {
@@ -487,7 +469,6 @@ void SetKernelInfo(const CNodePtr &kernel_node) {
   if (matched.first || input_types.size() == input_not_cnode_indexes.size()) {
     MS_LOG(INFO) << "Input format and dtype is matched";
     GetOutputFormatsAndDtypes(kernel_node, selected_kernel_attr, &selected_output_formats, &selected_output_types);
-    UpdatePrevNotCNodeFormatDtype(selected_kernel_attr, input_not_cnode_indexes, kernel_node);
     for (size_t index = 0; index < selected_kernel_attr.GetInputSize(); index++) {
       input_types[index] = selected_kernel_attr.GetInputAttr(index).first;
       input_formats.emplace_back(selected_kernel_attr.GetInputAttr(index).second);
