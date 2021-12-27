@@ -1259,7 +1259,7 @@ OpRunInfo SessionBasic::GetSingleOpRunInfo(const CNodePtr &cnode, const GraphInf
                            .abstract = abstract,
                            .is_dynamic_shape = shape->IsDynamic(),
                            .is_auto_mixed_precision = false,
-                           .lazy_build = true,
+                           .lazy_build = !shape->IsDynamic(),
                            .next_op_name = std::string(),
                            .next_input_index = 0,
                            .graph_info = graph_info,
