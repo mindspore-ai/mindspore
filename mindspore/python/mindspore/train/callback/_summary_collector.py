@@ -544,10 +544,9 @@ class SummaryCollector(Callback):
             intervals = collect_landscape.get('intervals')
             collect_interval = False
             for interval in intervals:
-                if "cur_epoch_num" in cb_params:
-                    if cb_params.cur_epoch_num in interval:
-                        collect_interval = True
-                        break
+                if "cur_epoch_num" in cb_params and cb_params.cur_epoch_num in interval:
+                    collect_interval = True
+                    break
 
         if collect_landscape and collect_landscape.get('unit', 'step') == 'epoch' and collect_interval:
             self._save_model_params_for_landscape(cb_params)
