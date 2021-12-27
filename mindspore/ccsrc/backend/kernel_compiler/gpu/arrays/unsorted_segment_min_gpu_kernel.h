@@ -49,13 +49,14 @@ class UnsortedSegmentMinGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     auto input_shapes = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
     auto segment_ids_shapes = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 1);
     auto output_shapes = AnfAlgo::GetOutputRealDeviceShapeIfExist(kernel_node, 0);
-    is_null_input_ =
-      CHECK_NULL_INPUT(input_shapes) || CHECK_NULL_INPUT(segment_ids_shapes) || CHECK_NULL_INPUT(output_shapes);
+    is_null_input_ = CHECK_SHAPE_NULL(input_shapes, kernel_name, "input") ||
+                     CHECK_SHAPE_NULL(segment_ids_shapes, kernel_name, "segment_ids") ||
+                     CHECK_SHAPE_NULL(output_shapes, kernel_name, "output");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'UnsortedSegmentMinGpuKernel', input or output is null";
       InitSizeLists();
       return true;
     }
@@ -67,9 +68,8 @@ class UnsortedSegmentMinGpuKernel : public GpuKernel {
       MS_LOG(INFO) << "UnsortedSegmentMin Kernel Input count is 2";
     }
     if (output_shapes.size() < 1) {
-      MS_LOG(EXCEPTION)
-        << "For UnsortedSegmentMin, output shape incorrect rank. Expect Rank at least rank 1, got Rank: "
-        << output_shapes.size() << ".";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of output cannot be less than 1, but got "
+                        << output_shapes.size();
     }
     num_segments_ = output_shapes[0];
     input_size_ = 1;
@@ -96,7 +96,6 @@ class UnsortedSegmentMinGpuKernel : public GpuKernel {
     InitSizeLists();
     return true;
   }
-
   void ResetResource() noexcept override {
     num_segments_ = 1;
     inner_size_ = 1;

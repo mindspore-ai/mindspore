@@ -1012,7 +1012,7 @@ bool AkgKernelJsonGenerator::CollectFusedJsonWithSingleKernel(const CNodePtr &c_
     const auto &tnode = inputs[i];
     auto tensor = GetValueNode<tensor::TensorPtr>(tnode);
     if (tensor) {
-      (void)value_nodes.insert(tnode);
+      value_nodes.insert(tnode);
     }
   }
 
@@ -1020,7 +1020,7 @@ bool AkgKernelJsonGenerator::CollectFusedJsonWithSingleKernel(const CNodePtr &c_
     auto parameter = fg->add_parameter();
     parameter->set_abstract(vnode->abstract());
     parameter->set_kernel_info(vnode->kernel_info_ptr());
-    (void)mng->Replace(vnode, parameter);
+    mng->Replace(vnode, parameter);
   }
 
   node_list.push_back(out_cnode);
@@ -1030,7 +1030,7 @@ bool AkgKernelJsonGenerator::CollectFusedJsonWithSingleKernel(const CNodePtr &c_
     for (int64_t idx = 0; idx < output_num; idx++) {
       auto gt =
         out_cnode->func_graph()->NewCNode({NewValueNode(prim::kPrimTupleGetItem), out_cnode, NewValueNode(idx)});
-      (void)output_list.emplace_back(std::move(gt));
+      output_list.emplace_back(std::move(gt));
     }
   } else {
     output_list.push_back(out_cnode);

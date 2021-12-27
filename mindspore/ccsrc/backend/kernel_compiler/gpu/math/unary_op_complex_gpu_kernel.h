@@ -64,29 +64,28 @@ class UnaryOpComplexGpuKernel : public GpuKernel {
         break;
       }
       default: {
-        MS_LOG(EXCEPTION) << "Unary operation " << unary_op_type_ << " is not supported.";
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", only support these types: Real, Imag, Conj currently, "
+                          << "but got " << unary_op_type_;
       }
     }
 
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     GetOpType(kernel_node);
     std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but unary op needs 1 inputs.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 1, but got " << input_num;
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(ERROR) << "Output number is " << output_num << ", but unary op needs 1 output.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 3, but got " << output_num;
     }
     auto input_shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(input_shape);
+    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "UnaryOpGpuKernel input is null";
       InitSizeLists();
       return true;
     }
@@ -123,8 +122,8 @@ class UnaryOpComplexGpuKernel : public GpuKernel {
       unary_op_type_ = iter->second;
       return;
     }
-
-    MS_LOG(EXCEPTION) << "operation " << kernel_name << " is not supported.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", only support these types: Real, Imag, Conj currently, but got "
+                      << kernel_name;
   }
 
  private:

@@ -121,7 +121,7 @@ bool DatasetIteratorKernel::ReadDevice(void **addr, size_t *len) {
 #ifdef ENABLE_DUMP_IR
         mindspore::RDR::TriggerAll();
 #endif
-        MS_LOG(EXCEPTION) << "Get data timeout";
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', get data timeout";
       }
     }
 #ifndef ENABLE_SECURITY
@@ -130,7 +130,7 @@ bool DatasetIteratorKernel::ReadDevice(void **addr, size_t *len) {
       profiling_op_->RecordData(queue_size, start_time_stamp, end_time_stamp);
     }
 #endif
-    MS_LOG(ERROR) << "Get data failed, errcode " << ret;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', get data failed, errcode " << ret;
     return false;
   }
   return true;
@@ -141,7 +141,7 @@ bool DatasetIteratorKernel::Launch(const std::vector<AddressPtr> &, const std::v
   if (handle_ == HandleMgr::INVALID_HANDLE) {
     handle_ = GpuBufferMgr::GetInstance().Open(0, queue_name_, output_size_list_);
     if (handle_ == HandleMgr::INVALID_HANDLE) {
-      MS_LOG(EXCEPTION) << "Gpu Queue(" << queue_name_ << ") Open Failed";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', gpu Queue(" << queue_name_ << ") Open Failed";
     }
   }
 
@@ -151,7 +151,7 @@ bool DatasetIteratorKernel::Launch(const std::vector<AddressPtr> &, const std::v
     return false;
   }
   if (total_bytes_ != len) {
-    MS_LOG(ERROR) << "Dataset front error. read: " << len << ", expect: " << total_bytes_ << ", ";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', dataset front error, read: " << len << ", expect: " << total_bytes_;
     return false;
   }
 

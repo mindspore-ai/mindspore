@@ -61,12 +61,13 @@ bool DatasetInitKernel::Launch(const std::vector<AddressPtr> &, const std::vecto
   size_t len = total_bytes_ * buffer_q_capacity_;
 
   if (!device::gpu::GPUMemoryAllocator::GetInstance().AllocBufferQueueMem(len, &addr)) {
-    MS_LOG(EXCEPTION) << "Memory not enough: failed to allocate GPU buffer queue memory[" << len << "].";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memory not enough: failed to allocate GPU buffer queue memory["
+                      << len << "].";
   }
 
   auto status = GpuBufferMgr::GetInstance().Create(0, queue_name_, addr, shapes_, buffer_q_capacity_);
   if (status) {
-    MS_LOG(EXCEPTION) << "Init Dataset Failed. len: " << len << ", status:" << status;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', init Dataset Failed. len: " << len << ", status:" << status;
   }
 
   return true;

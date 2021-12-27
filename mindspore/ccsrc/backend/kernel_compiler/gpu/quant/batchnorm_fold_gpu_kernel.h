@@ -99,18 +99,17 @@ class BatchNormFoldGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     InitResource();
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 4) {
-      MS_LOG(ERROR) << "Input number is " << input_num << " but BatchNormFold GpuKernel OP needs 4 input.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 4, but got " << input_num;
     }
 
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 4) {
-      MS_LOG(ERROR) << "Output number is " << output_num << ", but BatchNormFold GpuKernel OP needs 4 output.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 4, but got " << output_num;
     }
 
     auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
@@ -122,16 +121,14 @@ class BatchNormFoldGpuKernel : public GpuKernel {
     freeze_bn_ = static_cast<int>(GetValue<int64_t>(prim->GetAttr("freeze_bn")));
 
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(input_shape);
+    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'BatchNormFoldGpuKernel', input is null";
       InitSizeLists();
       return true;
     }
     if (input_shape.size() != 4) {
-      MS_LOG(ERROR) << "Input shape is " << input_shape.size()
-                    << ", but BatchNormFold GpuKernel OP needs 4DTensor input.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input should be 4, but got "
+                        << input_shape.size();
     }
     CheckTensorSize({input_shape});
     batch_ = input_shape[0];

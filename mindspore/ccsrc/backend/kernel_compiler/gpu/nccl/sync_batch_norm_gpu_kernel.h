@@ -78,6 +78,7 @@ class SyncBatchNormGpuKernel : public NcclGpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     auto root_rank = AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr(kAttrRootRank);
     if (root_rank) {
       root_ = static_cast<int>(GetValue<int64_t>(root_rank));
@@ -86,24 +87,22 @@ class SyncBatchNormGpuKernel : public NcclGpuKernel {
     group_name_ = GetAttr<std::string>(kernel_node, kAttrGroup);
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 5) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but SyncBatchNorm needs 5 inputs.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 5, but got " << input_num;
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 5) {
-      MS_LOG(ERROR) << "Output number is " << output_num << ", but SyncBatchNorm needs 5 output.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 5, but got " << output_num;
     }
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    if (CHECK_NULL_INPUT(input_shape)) {
-      MS_LOG(WARNING) << "SyncBatchNorm input is null";
+    bool is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
+    if (is_null_input_) {
       InitSizeLists();
       return true;
     }
     auto input_shape_dims = input_shape.size();
     if (input_shape_dims != 4 && input_shape_dims != 2) {
-      MS_LOG(EXCEPTION) << "Tensor shape is " << input_shape.size()
-                        << ", SyncBatchNormGpuKernel input should be 2D or 4D";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input only should be 2 or 4, but got "
+                        << input_shape_dims;
     }
     input_size_ = 1;
     for (auto dim : input_shape) {
