@@ -48,6 +48,7 @@
 #include "utils/ms_context.h"
 #include "utils/symbolic.h"
 #include "mindspore/core/utils/parallel_node_check.h"
+#include "mindspore/ccsrc/pybind_api/ir/primitive_py.h"
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
 #include "ps/util.h"
 #include "ps/ps_context.h"
@@ -203,12 +204,20 @@ void InsertNode(const Operator &op, const CNodePtr &node, size_t index, const An
                 const FuncGraphPtr &root = nullptr) {
   // insert new node before the node
   FuncGraphManagerPtr manager = func_graph->manager();
+  auto node_user_map = manager->node_users();
   MS_EXCEPTION_IF_NULL(manager);
   ScopePtr scope = node->scope();
   MS_EXCEPTION_IF_NULL(scope);
   std::vector<AnfNodePtr> node_input;
+  AnfNodePtr pre_node_ = pre_node;
   if (root && !param_name.empty()) {
-    node_input = CreateMirrorInput(root, op, pre_node, instance_name, param_name);
+    TypePtr next_node_dtype = FindChildCastWithFP32ToFP16(node, node_user_map);
+    if (next_node_dtype) {
+      MS_LOG(INFO) << "Inserting Cast from float32 to float16 for node " << node->fullname_with_scope() << " for saving"
+                   << " communication.";
+      pre_node_ = CreateFP16Cast(node, pre_node, node_user_map, next_node_dtype);
+    }
+    node_input = CreateMirrorInput(root, op, pre_node_, instance_name, param_name);
   } else {
     node_input = CreateInput(op, pre_node, instance_name);
   }
