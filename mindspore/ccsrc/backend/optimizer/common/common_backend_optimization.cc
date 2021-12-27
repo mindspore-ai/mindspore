@@ -137,7 +137,7 @@ void AddDynamicShapeAttrPass(const std::shared_ptr<session::KernelGraph> &kernel
 
 void EliminateIllegalDataTypePass(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  MS_LOG(INFO) << "start eliminate illegal data type for kernel graph id:" << kernel_graph->graph_id();
+  MS_LOG(INFO) << "Start eliminate illegal data type for kernel graph id:" << kernel_graph->graph_id();
 #ifdef ENABLE_DUMP_IR
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);

@@ -374,11 +374,12 @@ BaseRef CreateNodeOutputPlaceholder(const session::KernelWithIndex &node_output_
     return value_node->value();
   }
   if (node->isa<Parameter>()) {
-    for (size_t input_idx = 0; input_idx < graph->inputs().size(); input_idx++) {
+    const auto &input_nodes = graph->input_nodes();
+    for (size_t input_idx = 0; input_idx < input_nodes.size(); ++input_idx) {
       if (input_idx >= input_tensors.size()) {
         MS_LOG(EXCEPTION) << "Input idx:" << input_idx << " is out of range:" << input_tensors.size();
       }
-      if (graph->inputs()[input_idx] == node) {
+      if (input_nodes[input_idx] == node) {
         return input_tensors[input_idx];
       }
     }
@@ -1270,8 +1271,10 @@ OpRunInfo SessionBasic::GetSingleOpRunInfo(const CNodePtr &cnode, const GraphInf
 
 void SessionBasic::GetParameterIndex(const KernelGraph *graph, const std::vector<tensor::TensorPtr> &inputs,
                                      std::map<AnfNodePtr, size_t> *parameter_index) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(parameter_index);
   size_t index = 0;
-  for (const auto &input_node : graph->inputs()) {
+  for (const auto &input_node : graph->input_nodes()) {
     auto params = AnfAlgo::GetAllOutput(input_node);
     for (const auto &param : params) {
       if (index >= inputs.size()) {
