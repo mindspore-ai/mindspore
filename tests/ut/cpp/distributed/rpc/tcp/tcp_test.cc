@@ -257,26 +257,6 @@ TEST_F(TCPTest, send1Msg) {
   shutdownTcpServer(pid1);
   pid1 = 0;
 }
-
-/// Feature: test max message body check..
-/// Description: send a message with body exceeding the limit of max message body.
-/// Expectation: drop the invalid message.
-TEST_F(TCPTest, sendInvalidMsg) {
-  g_recv_num = 0;
-  pid1 = startTcpServer(args);
-  bool ret = CheckRecvNum(1, 5);
-  ASSERT_FALSE(ret);
-
-  std::string from = "tcp://" + m_localIP + ":2223";
-  std::string to = "tcp://" + m_localIP + ":2225";
-  SendMsg(from, to, 1024 * 1024 * pid_num + 1);
-  ret = CheckRecvNum(1, 5);
-  ASSERT_FALSE(ret);
-
-  Unlink(to);
-  shutdownTcpServer(pid1);
-  pid1 = 0;
-}
 }  // namespace rpc
 }  // namespace distributed
 }  // namespace mindspore
