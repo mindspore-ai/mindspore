@@ -758,6 +758,39 @@ class MS_API SlidingWindowCmn final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief Create a spectral centroid from an audio signal.
+class MS_API SpectralCentroid : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz).
+  /// \param[in] n_fft Size of FFT, creates n_fft / 2 + 1 bins (Default: 400).
+  /// \param[in] win_length Window size (Default: 0, will use n_fft).
+  /// \param[in] hop_length Length of hop between STFT windows (Default: 0, will use win_length / 2).
+  /// \param[in] pad Two sided padding of signal (Default: 0).
+  /// \param[in] window Window function that is applied/multiplied to each frame/window,
+  ///     which can be WindowType::kBartlett, WindowType::kBlackman, WindowType::kHamming,
+  ///     WindowType::kHann or WindowType::kKaiser (Default: WindowType::kHann).
+  SpectralCentroid(int sample_rate, int32_t n_fft = 400, int32_t win_length = 0, int32_t hop_length = 0,
+                   int32_t pad = 0, WindowType window = WindowType::kHann);
+
+  ~SpectralCentroid() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  int32_t sample_rate_;
+  int32_t n_fft_;
+  int32_t win_length_;
+  int32_t hop_length_;
+  int32_t pad_;
+  WindowType window_;
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief Create a spectrogram from an audio signal.
 class MS_API Spectrogram : public TensorTransform {
  public:

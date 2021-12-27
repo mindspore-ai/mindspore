@@ -655,3 +655,32 @@ def check_compute_deltas(method):
         return method(self, *args, **kwargs)
 
     return new_method
+
+
+def check_spectral_centroid(method):
+    """Wrapper method to check the parameters of SpectralCentroid."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [sample_rate, n_fft, win_length, hop_length, pad, window], _ = parse_user_args(method, *args, **kwargs)
+        type_check(sample_rate, (int,), "sample_rate")
+        check_non_negative_int32(sample_rate, "sample_rate")
+        type_check(pad, (int,), "pad")
+        check_non_negative_int32(pad, "pad")
+        type_check(window, (WindowType,), "window")
+        type_check(n_fft, (int,), "n_fft")
+        check_pos_int32(n_fft, "n_fft")
+        if win_length is not None:
+            type_check(win_length, (int,), "win_length")
+            check_pos_int32(win_length, "win_length")
+            if win_length > n_fft:
+                raise ValueError(
+                    "Input win_length should be no more than n_fft, but got win_length: {0} and n_fft: {1}.".format(
+                        win_length, n_fft))
+        if hop_length is not None:
+            type_check(hop_length, (int,), "hop_length")
+            check_pos_int32(hop_length, "hop_length")
+
+        return method(self, *args, **kwargs)
+
+    return new_method
