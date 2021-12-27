@@ -24,11 +24,18 @@ extern "C" {
 
 int GetRunWorkspaceSize(const LstmParameter *lstm_param);
 
-void PackLstmWeightTranspose(float *dst, const float *src, int batch, int col, int row, int row_align);
+void PackLstmWeightTranspose(float *dst, const float *src, int batch, int col, int row, int row_align,
+                             const int *order);
+
+void ReorderLstmWeights(float *dst, float *src, int nof_martices, int col, int row, const int *order);
+
+void LstmGradStepUnitInit(float *output_gate, float *cell_state, float *dY, float *dC, float *dH, float *workspace,
+                          const LstmParameter *lstm_param);
 
 void LstmGradStepUnit(float *packed_input, float *output, float *input_gate, float *forget_gate, float *cell_gate,
                       float *output_gate, float *hidden_state, float *cell_state, float *dC, float *dH, float *dY,
-                      float *last_cell, float *weights, float *workspace, const LstmParameter *lstm_param);
+                      float *dW, float *dX, float *cell_state_minus1, float *weights, float *workspace,
+                      const LstmParameter *lstm_param);
 
 #ifdef __cplusplus
 }

@@ -120,7 +120,6 @@ int LstmCPUKernel::InitStateWeightBias() {
   // weight -- row: hidden_size; col: hidden_size, need transpose
   // result -- row: batch; col: hidden_size
   int weight_i_size = gate_num * lstm_param_->hidden_size_ * lstm_param_->input_size_;
-  // int weight_h_size = gate_num * lstm_param_->hidden_size_ * lstm_param_->hidden_size_;
   int h_index = (in_tensors_.size() == mindir_input_tensors) ? combined_weights_index : onnx_weight_h_index;
   auto weight_h = in_tensors_.at(h_index);
   auto weight_h_data = (reinterpret_cast<float *>(weight_h->data()));
@@ -258,20 +257,6 @@ int LstmCPUKernel::ReSize() {
     return RET_ERROR;
   }
 
-  FreeTmpBuffer();
-  ret = InitInputWeightBias();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "LstmCPUKernel InitInputWeightBias error.";
-    FreeTmpBuffer();
-    return RET_ERROR;
-  }
-
-  ret = InitStateWeightBias();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "LstmCPUKernel InitStateWeightBias error.";
-    FreeTmpBuffer();
-    return RET_ERROR;
-  }
   return RET_OK;
 }
 
@@ -411,14 +396,7 @@ void LstmCPUKernel::RecordPreState(float *cell_state_minus1, int step) {
   float *states = reinterpret_cast<float *>(out_tensors_[out_intermediate_states_index]->data());
   auto state_size = lstm_param_->batch_ * lstm_param_->hidden_size_;
   auto stride = step * state_size;
-  auto seq_stride = (lstm_param_->seq_len_ + 1) * state_size;
-  std::cout << "RECORD pre state. step: " << step << std::endl;
-  std::cout << "batch: " << lstm_param_->batch_ << "hidden_size" << lstm_param_->hidden_size_
-            << " seq_len_: " << lstm_param_->seq_len_ << std::endl;
-  std::cout << "state_size: " << state_size << " stride: " << stride << " seq_stride " << seq_stride << std::endl;
-  for (int ix = 0; ix < state_size; ix++) {
-    std::cout << "index: " << ix << " CS_minus1: " << cell_state_minus1[ix] << std::endl;
-  }
+  auto seq_stride = lstm_param_->seq_len_ * state_size;
   stride += (no_of_recorde_values - 1) * seq_stride;
   memcpy(states + stride, cell_state_minus1, state_size * sizeof(float));
 }
@@ -429,16 +407,6 @@ void LstmCPUKernel::RecordStates(float *hidden_state, float *cell_state, float *
   auto state_size = lstm_param_->batch_ * lstm_param_->hidden_size_;
   auto stride = step * state_size;
   auto seq_stride = lstm_param_->seq_len_ * state_size;
-  std::cout << "RECORD step: " << step << std::endl;
-  std::cout << "batch: " << lstm_param_->batch_ << "hidden_size" << lstm_param_->hidden_size_
-            << " seq_len_: " << lstm_param_->seq_len_ << std::endl;
-  std::cout << "state_size: " << state_size << " stride: " << stride << " seq_stride " << seq_stride << std::endl;
-  for (int ix = 0; ix < state_size; ix++) {
-    std::cout << "index: " << ix << " HS: " << hidden_state[ix] << " CS: " << cell_state[ix]
-              << " IG: " << input_gate[ix] << " OG: " << output_gate[ix] << " FG: " << forget_gate[ix]
-              << " CG: " << cell_gate[ix] << std::endl;
-  }
-
   memcpy(states + stride, hidden_state, state_size * sizeof(float));
   stride += seq_stride;
   memcpy(states + stride, cell_state, state_size * sizeof(float));
@@ -506,7 +474,21 @@ int LstmCPUKernel::Run() {
   CHECK_NULL_RETURN(output_cell_state->data());
   memcpy(output_cell_state->data(), cell_state->data(), cell_state->ElementsNum() * sizeof(float));
 
-  auto ret = MallocRunBuffer();
+  auto ret = InitInputWeightBias();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "LstmCPUKernel InitInputWeightBias error.";
+    FreeTmpBuffer();
+    return RET_ERROR;
+  }
+
+  ret = InitStateWeightBias();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "LstmCPUKernel InitStateWeightBias error.";
+    FreeTmpBuffer();
+    return RET_ERROR;
+  }
+
+  ret = MallocRunBuffer();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "LstmCPUKernel MallocRunBuffer error.";
     FreeRunBuffer();
@@ -520,6 +502,7 @@ int LstmCPUKernel::Run() {
   ret = InnerExecute(output_ptr, input_ptr, reinterpret_cast<float *>(output_hidden_state->data()),
                      reinterpret_cast<float *>(output_cell_state->data()));
   FreeRunBuffer();
+  FreeTmpBuffer();
   return ret;
 }
 
