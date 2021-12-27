@@ -367,7 +367,8 @@ void DataDumper::OpDebugUnregister() {
   MS_LOG(INFO) << "[DataDump] Start.";
   rtError_t rt_ret = rtDebugUnRegister(model_handle_());
   if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "[DataDump] Call rtDebugUnRegister failed, ret = " << rt_ret;
+    MS_LOG(ERROR) << "[DataDump] Call rtDebugUnRegister failed, ret = " << rt_ret;
+    return;
   }
 }
 #endif

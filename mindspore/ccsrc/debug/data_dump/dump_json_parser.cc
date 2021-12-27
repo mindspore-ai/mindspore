@@ -476,7 +476,10 @@ void DumpJsonParser::ParseInputOutput(const nlohmann::json &content) {
 
 void DumpJsonParser::ParseKernels(const nlohmann::json &content) {
   CheckJsonArrayType(content, kKernels);
-
+  if (dump_mode_ != DUMP_KERNEL) {
+    MS_LOG(INFO) << "Dump config field <" << kKernels << "> is not used as the dump mode is not 1.";
+    return;
+  }
   for (const auto &kernel : content) {
     auto kernel_str = kernel.dump();
     kernel_str.erase(std::remove(kernel_str.begin(), kernel_str.end(), '\"'), kernel_str.end());
@@ -596,6 +599,8 @@ bool DumpJsonParser::NeedDump(const std::string &op_full_name) const {
         need_dump = true;
       }
       break;
+    default:
+      break;
   }
   return need_dump;
 }
@@ -610,7 +615,7 @@ void DumpJsonParser::MatchKernel(const std::string &kernel_name) {
 }
 
 void DumpJsonParser::PrintUnusedKernel() {
-  if (!e2e_dump_enabled_ && !async_dump_enabled_) {
+  if ((!e2e_dump_enabled_ && !async_dump_enabled_) || dump_mode_ != DUMP_KERNEL) {
     return;
   }
   for (const auto &iter : kernels_) {
