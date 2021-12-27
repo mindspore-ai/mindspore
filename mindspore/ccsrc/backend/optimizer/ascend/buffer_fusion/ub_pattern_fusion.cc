@@ -171,7 +171,7 @@ void ReplaceInputNodeInOtherFusionScope(mindspore::HashMap<int64_t, BufferFusion
     auto itr = std::find((*buffer_fusion_infos)[id].inputs_list.begin(), (*buffer_fusion_infos)[id].inputs_list.end(),
                          output_item);
     if (itr != (*buffer_fusion_infos)[id].inputs_list.end()) {
-      MS_LOG(DEBUG) << "replace input of other pattern, id = " << id;
+      MS_LOG(DEBUG) << "Replace input of other pattern, id = " << id;
       *itr = replace_item;
     }
   }
@@ -255,11 +255,11 @@ bool TupleGetitemNodeCompare(const AnfNodePtr &node1, const AnfNodePtr &node2) {
   MS_EXCEPTION_IF_NULL(getitem1);
   MS_EXCEPTION_IF_NULL(getitem2);
   if (getitem1->size() < kTupleGetItemInputSize) {
-    MS_LOG(EXCEPTION) << "node's input size less than " << kTupleGetItemInputSize << ", getitem1["
+    MS_LOG(EXCEPTION) << "Node's input size less than " << kTupleGetItemInputSize << ", getitem1["
                       << getitem1->DebugString() << "]";
   }
   if (getitem2->size() < kTupleGetItemInputSize) {
-    MS_LOG(EXCEPTION) << "node's input size less than " << kTupleGetItemInputSize << ", getitem1["
+    MS_LOG(EXCEPTION) << "Node's input size less than " << kTupleGetItemInputSize << ", getitem1["
                       << getitem2->DebugString() << "]";
   }
   auto output_idx1 = GetValue<int64_t>(GetValueNode(getitem1->input(kIndex2)));
@@ -448,7 +448,7 @@ bool UbPatternFusion::FuseBufferFusionPattern(session::KernelGraph *kernel_graph
   auto id_names = build_manager.TbeFusionOpCompile(fusion_scope_infos);
   std::set<int64_t> fusion_ids;
   for (auto &buffer_fusion_info : buffer_fusion_infos) {
-    MS_LOG(DEBUG) << "anf node size: " << buffer_fusion_info.second.anf_nodes.size()
+    MS_LOG(DEBUG) << "Anf node size: " << buffer_fusion_info.second.anf_nodes.size()
                   << ", inputs_list size: " << buffer_fusion_info.second.inputs_list.size()
                   << ", outputs list size: " << buffer_fusion_info.second.outputs_list.size();
     fusion_ids.insert(buffer_fusion_info.first);
@@ -457,11 +457,11 @@ bool UbPatternFusion::FuseBufferFusionPattern(session::KernelGraph *kernel_graph
   for (auto &fusion_id : fusion_ids) {
     // Get kernel mod when supporting tbe
     if (id_names.find(fusion_id) == id_names.end()) {
-      MS_LOG(DEBUG) << "fusion id: " << fusion_id << ", fusion op compiling failed";
+      MS_LOG(DEBUG) << "Fusion id: " << fusion_id << ", fusion op compiling failed";
       continue;
     }
     if (CheckCircle(*kernel_graph, buffer_fusion_infos[fusion_id])) {
-      MS_LOG(DEBUG) << "fusion id: " << fusion_id << " will cause graph circle, pass this fusion.";
+      MS_LOG(DEBUG) << "Fusion id: " << fusion_id << " will cause graph circle, pass this fusion.";
     } else {
       change = ReplaceFusionOp(&buffer_fusion_infos, fusion_id, kernel_graph);
     }
@@ -493,7 +493,7 @@ bool UbPatternFusion::ReplaceFusionOp(mindspore::HashMap<int64_t, BufferFusionIn
     }
   }
   if (types.empty() || shapes.empty()) {
-    MS_LOG(WARNING) << "buffer_fusion_info.outputs_list is empty";
+    MS_LOG(WARNING) << "The outputs_list of buffer_fusion_info is empty.";
     return false;
   }
   AnfAlgo::SetOutputInferTypeAndShape(types, shapes, buffer_fusion.get());

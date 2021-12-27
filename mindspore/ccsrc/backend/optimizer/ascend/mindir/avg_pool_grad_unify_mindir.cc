@@ -52,7 +52,7 @@ int64_t windowed_output_size(const AnfNodePtr &node, int64_t input_size, int64_t
   *pad_before = 0;
   *pad_after = 0;
   if (stride == 0) {
-    MS_LOG(EXCEPTION) << "The stride of AvgPoolGrad should not be 0" << trace::DumpSourceLines(node);
+    MS_LOG(EXCEPTION) << "The stride of AvgPoolGrad should not be 0." << trace::DumpSourceLines(node);
     return 0;
   }
   if (pad_mode == PadMode::VALID) {
@@ -63,7 +63,7 @@ int64_t windowed_output_size(const AnfNodePtr &node, int64_t input_size, int64_t
     *pad_before = pad_need / 2;
     *pad_after = pad_need - *pad_before;
   } else {
-    MS_LOG(EXCEPTION) << "The pad mode of AvgPoolGrad should be SAME or VALID, but got PAD. trace: "
+    MS_LOG(EXCEPTION) << "The pad mode of AvgPoolGrad should be SAME or VALID, but got PAD."
                       << trace::DumpSourceLines(node);
   }
   return output;
@@ -144,7 +144,7 @@ ValueNodePtr CreateMeanMatrixValueNode(const FuncGraphPtr &func_graph, const Anf
     auto dst_size = LongToSize(output_shape[kDim2]) * LongToSize(output_shape[kDim3]) * kFloat32Len;
     auto ret = memcpy_s(&output[LongToSize(i) * hw_output.size()], dst_size, &hw_output[0], src_size);
     if (ret != 0) {
-      MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+      MS_LOG(EXCEPTION) << "Call memcpy_s error, errorno(" << ret << ")";
       return nullptr;
     }
   }
