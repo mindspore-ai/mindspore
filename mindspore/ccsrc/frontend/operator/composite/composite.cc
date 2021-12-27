@@ -432,6 +432,7 @@ REGISTER_PYBIND_DEFINE(HyperMap_, ([](const py::module *m) {
                        }));
 
 bool CheckSequenceAllTensor(const abstract::AbstractTuplePtr &tuple) {
+  MS_EXCEPTION_IF_NULL(tuple);
   for (size_t i = 0; i < tuple->size(); ++i) {
     if (!(*tuple)[i]->isa<abstract::AbstractUndetermined>() &&
         !((*tuple)[i]->isa<abstract::AbstractTuple>() &&
@@ -443,6 +444,7 @@ bool CheckSequenceAllTensor(const abstract::AbstractTuplePtr &tuple) {
 }
 
 bool CheckTailGradFristSequence(const abstract::AbstractSequencePtr &sequeue, bool enable_tuple_grad) {
+  MS_EXCEPTION_IF_NULL(sequeue);
   return sequeue->size() > 1 && (*sequeue)[1] != nullptr &&
          ((*sequeue)[1]->isa<abstract::AbstractUndetermined>() ||
           (MsContext::GetInstance()->get_param<bool>(MS_CTX_GRAD_FOR_SCALAR) && (*sequeue)[1]->BuildType() != nullptr &&

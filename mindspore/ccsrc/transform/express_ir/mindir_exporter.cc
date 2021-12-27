@@ -602,8 +602,8 @@ bool IrExportBuilder::SetShapeToNodeProto(const AbstractBasePtr &abs, mind_ir::A
   } else if (type->isa<String>() || type->isa<UMonadType>() || type->isa<IOMonadType>()) {
     *seq_string += type->type_name() + ",";
   } else if (type->isa<CSRTensorType>()) {
-    auto cst_tensor_abs = abs->cast<abstract::AbstractCSRTensorPtr>();
-    if (!SetShapeToNodeProto(cst_tensor_abs->element(), attr_proto, seq_string)) {
+    auto csr_tensor_abs = abs->cast<abstract::AbstractCSRTensorPtr>();
+    if (!SetShapeToNodeProto(csr_tensor_abs->element(), attr_proto, seq_string)) {
       return false;
     }
   } else {
