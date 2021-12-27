@@ -21,7 +21,6 @@
 #include <cusolverDn.h>
 #include <cuda_runtime.h>
 #include <vector>
-#include <string>
 #include <complex>
 #include <algorithm>
 #include <type_traits>
@@ -53,14 +52,13 @@ struct Complex_traits<Complex<T>> {
 template <typename T>
 class EighcGpuKernel : public GpuKernel {
  public:
-  EighcGpuKernel() : is_null_input_(false) {}
+  EighcGpuKernel() = default;
   ~EighcGpuKernel() = default;
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
 
   bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     blas_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCublasHandle();
     dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
     auto A_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
@@ -72,10 +70,13 @@ class EighcGpuKernel : public GpuKernel {
       jobz_ = CUSOLVER_EIG_MODE_NOVECTOR;
     }
     cusolver_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCusolverDnHandle();
-    is_null_input_ = CHECK_SHAPE_NULL(A_shape, kernel_name_, "input");
+    bool is_null_input = CHECK_NULL_INPUT(A_shape);
+    if (is_null_input) {
+      MS_LOG(EXCEPTION) << "For 'EighValue GpuKernel', input is null";
+    }
     if (A_shape.size() != kShape2dDims || A_shape[1] != A_shape[1]) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of input should be square matrix, but got ["
-                        << A_shape[0] << " X " << A_shape[1] << "]";
+      MS_LOG(EXCEPTION) << "wrong array shape, A should be a square matrix, but got [" << A_shape[0] << " X "
+                        << A_shape[1] << "]";
     }
     m_ = A_shape[0];
     InitSizeLists();
@@ -84,9 +85,6 @@ class EighcGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    if (is_null_input_) {
-      return true;
-    }
     CHECK_CUBLAS_RET_WITH_ERROR(cublasSetStream(blas_handle_, reinterpret_cast<cudaStream_t>(stream_ptr)),
                                 "cublasSetStream failed");
     CHECK_CUSOLVER_RET_WITH_ERROR(cusolverDnSetStream(cusolver_handle_, reinterpret_cast<cudaStream_t>(stream_ptr)),
@@ -138,7 +136,7 @@ class EighcGpuKernel : public GpuKernel {
     }
     d_work = device::gpu::GPUMemoryAllocator::GetInstance().AllocTensorMem(sizeof(T) * lwork);
     if (!d_work) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', GPU memory alloca failed.";
+      MS_LOG(EXCEPTION) << "GPU memory alloca failed.";
     }
     if constexpr (std::is_same_v<T, Complex<float>>) {
       cusolverDnCheevd(cusolver_handle_, jobz_, uplo_, m_, reinterpret_cast<cuComplex *>(w_v_addr), lda_, w_w_addr,
@@ -200,7 +198,6 @@ class EighcGpuKernel : public GpuKernel {
   std::vector<size_t> output_size_list_{};
   std::vector<size_t> workspace_size_list_{};
   using D = typename Complex_traits<T>::value_type;
-  bool is_null_input_;
 };
 }  // namespace kernel
 }  // namespace mindspore

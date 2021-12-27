@@ -49,21 +49,23 @@ class EqualCountGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 2, but got " << input_num;
+      MS_LOG(ERROR) << "Input number is " << input_num << ", but equalcount needs 2 inputs.";
+      return false;
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 1, but got " << output_num;
+      MS_LOG(ERROR) << "Output number is " << output_num << ", but equalcount needs 1 output.";
+      return false;
     }
 
     output_size_ = sizeof(T);
     input_size_ = sizeof(T);
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
+    is_null_input_ = CHECK_NULL_INPUT(input_shape);
     if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'EqualcountGpuKernel', input is null";
       InitSizeLists();
       return true;
     }

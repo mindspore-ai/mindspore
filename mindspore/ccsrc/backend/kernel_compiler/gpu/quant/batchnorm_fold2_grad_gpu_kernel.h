@@ -94,25 +94,26 @@ class BatchNormFold2GradGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     InitResource();
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != INPUT_NUM) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be " << INPUT_NUM << ", but got "
-                        << input_num;
+      MS_LOG(ERROR) << "Argument number is " << input_num << ", but BatchNormFold2GradGpuKernel needs " << INPUT_NUM
+                    << " inputs.";
+      return false;
     }
 
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
+    is_null_input_ = CHECK_NULL_INPUT(input_shape);
     if (is_null_input_) {
+      MS_LOG(WARNING) << "BatchNormFold2GradGpuKernel input is null";
       InitSizeLists();
       return true;
     }
 
     if (input_shape.size() != 4) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input should be 4, but got "
-                        << input_shape.size();
+      MS_LOG(ERROR) << "BatchNormFold2GradGpuKernel input shape needs (N,C,H,W).";
+      return false;
     }
     batch_size_ = input_shape[0];
     channel_ = input_shape[1];

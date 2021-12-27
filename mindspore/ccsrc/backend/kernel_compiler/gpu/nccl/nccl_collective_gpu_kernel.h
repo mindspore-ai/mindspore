@@ -71,15 +71,13 @@ class NcclCollectiveGpuKernel : public NcclGpuKernel {
         break;
       }
       default: {
-        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", only support these types: AllReduce, AllGather, Broadcast, "
-                          << "ReduceScatter currently, but got " << nccl_kernel_type_;
+        MS_LOG(EXCEPTION) << "Kernel type " << nccl_kernel_type_ << " is not supported.";
       }
     }
     return true;
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     MS_EXCEPTION_IF_NULL(kernel_node);
     kernel_node_ = kernel_node;
     nccl_data_type_ = nccl_dtype(AnfAlgo::GetInputDeviceDataType(kernel_node, 0));
@@ -89,8 +87,9 @@ class NcclCollectiveGpuKernel : public NcclGpuKernel {
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     for (size_t i = 0; i < input_num; ++i) {
       auto shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, i);
-      is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name_, "input");
+      is_null_input_ = CHECK_NULL_INPUT(shape);
       if (is_null_input_) {
+        MS_LOG(WARNING) << "For 'NcclCollectiveGpuKernel', input is null";
         InitSizeLists();
         return true;
       }
@@ -104,8 +103,9 @@ class NcclCollectiveGpuKernel : public NcclGpuKernel {
     }
     for (size_t i = 0; i < output_num; ++i) {
       auto shape = AnfAlgo::GetOutputRealDeviceShapeIfExist(kernel_node, i);
-      is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name_, "output");
+      is_null_input_ = CHECK_NULL_INPUT(shape);
       if (is_null_input_) {
+        MS_LOG(WARNING) << "For 'NcclCollectiveGpuKernel', output is null";
         InitSizeLists();
         return true;
       }
@@ -201,8 +201,7 @@ class NcclCollectiveGpuKernel : public NcclGpuKernel {
     std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     auto iter = kNcclTypeMap.find(kernel_name);
     if (iter == kNcclTypeMap.end()) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", only support these types: AllReduce, AllGather, Broadcast, "
-                        << "ReduceScatter currently, but got " << kernel_name;
+      MS_LOG(EXCEPTION) << "Kernel " << kernel_name << " is not supported.";
     } else {
       nccl_kernel_type_ = iter->second;
     }
@@ -221,8 +220,7 @@ class NcclCollectiveGpuKernel : public NcclGpuKernel {
       } else if (type == "prod") {
         nccl_reduce_type_ = ncclProd;
       } else {
-        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", only support these types: sum, max, min, prod currently, "
-                          << "but got " << type;
+        MS_LOG(EXCEPTION) << "Nccl reduce type " << type << " is not supported.";
       }
     }
 

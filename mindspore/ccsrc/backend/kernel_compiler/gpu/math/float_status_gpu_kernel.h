@@ -77,11 +77,13 @@ class FloatStatusGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
-    (void)CheckParam(kernel_node);
+    if (!CheckParam(kernel_node)) {
+      return false;
+    }
     auto shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name, "input");
+    is_null_input_ = CHECK_NULL_INPUT(shape);
     if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'FloatStatusGpuKernel', input is null";
       InitSizeLists();
       return true;
     }
@@ -89,10 +91,10 @@ class FloatStatusGpuKernel : public GpuKernel {
     for (size_t x : shape) {
       input_size_ = input_size_ * x;
     }
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     auto iter = kOpTypeMap.find(kernel_name);
     if (iter == kOpTypeMap.end()) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << ", only support these types: FloatStatus, IsInf, IsNan, IsFinite "
-                        << "currently, but got " << kernel_name;
+      MS_LOG(EXCEPTION) << "FloatStatus kernel " << kernel_name << " is not supported.";
     }
     kernel_name_ = iter->second;
 
@@ -112,16 +114,18 @@ class FloatStatusGpuKernel : public GpuKernel {
   }
 
  private:
-  void CheckParam(const CNodePtr &kernel_node) {
-    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+  bool CheckParam(const CNodePtr &kernel_node) {
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 1, but got " << input_num;
+      MS_LOG(ERROR) << "Input number is " << input_num << ", but FloatStatusGpuKernel needs 1 output.";
+      return false;
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 1, but got " << output_num;
+      MS_LOG(ERROR) << "Output number is " << output_num << ", but FloatStatusGpuKernel needs 1 output.";
+      return false;
     }
+    return true;
   }
 
   std::vector<size_t> input_size_list_;
