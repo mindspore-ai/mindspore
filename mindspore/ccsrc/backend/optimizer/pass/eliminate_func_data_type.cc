@@ -89,12 +89,12 @@ void EliminateFuncDataType::Init() {
 
 const AnfNodePtr EliminateFuncDataType::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                 const EquivPtr &) const {
-  static uint32_t graph_id = UINT32_MAX;
+  static uint32_t parameter_already_processed_graph_id = UINT32_MAX;
   // Case 1: for parameter node which has func data type, replace it with constant.
   MS_EXCEPTION_IF_NULL(func_graph);
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  if (kernel_graph->graph_id() != graph_id) {
+  if (kernel_graph->graph_id() != parameter_already_processed_graph_id) {
     auto manage = kernel_graph->manager();
     MS_EXCEPTION_IF_NULL(manage);
     auto tr = manage->Transact();
@@ -116,7 +116,7 @@ const AnfNodePtr EliminateFuncDataType::Process(const FuncGraphPtr &func_graph, 
     }
     tr.Commit();
     kernel_graph->set_parameters(std::move(new_params));
-    graph_id = kernel_graph->graph_id();
+    parameter_already_processed_graph_id = kernel_graph->graph_id();
   }
   // Case 2: for non-parameter node which has func data type, replace its abstract with constant.
   MS_EXCEPTION_IF_NULL(node);

@@ -208,6 +208,7 @@ TensorPtr CreateOutputTensor(const AnfNodePtr &output_node, size_t output_index)
   const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(output_node, output_index, false);
   MS_EXCEPTION_IF_NULL(device_tensor);
   tensor->set_device_address(device_tensor);
+  tensor->set_sync_status(kNeedSyncDeviceToHost);
 
   // MindRT is disabled in the multi graphs scenario
   // Delete tensor->data_sync() when MindRT is enabled in all scenes.

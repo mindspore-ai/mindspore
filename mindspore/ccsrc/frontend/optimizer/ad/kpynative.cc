@@ -22,6 +22,7 @@
 #include <utility>
 #include <vector>
 #include <algorithm>
+#include <unordered_map>
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
 #include "ir/anf.h"
