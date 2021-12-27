@@ -73,6 +73,7 @@ struct OpRunInfo {
   std::string graph_info;
   std::vector<int64_t> tensor_mask;
   std::vector<tensor::TensorPtr> input_tensors;
+  std::string device_target = "Unknown";
 };
 
 struct InputTensorInfo {
