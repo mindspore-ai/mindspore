@@ -21,7 +21,7 @@
 namespace mindspore::opt {
 
 STATUS UnusedNodeRemovePass::ProcessGraph(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *has_visited) {
-  MS_ASSERT(func_graph != nullptr);
+  MS_ASSERT(func_graph != nullptr && has_visited != nullptr);
   if (has_visited->find(func_graph) != has_visited->end()) {
     return lite::RET_OK;
   }
