@@ -181,9 +181,14 @@ void UpdateRefNodeOutputDeviceAddress(const KernelGraphPtr &graph) {
     // Just compare shared_ptr of two DeviceAddress.
     // The ptr of DeviceAddress may still be nullptr.
     if (input_addr != ref_node_output_addr) {
-      // The output of RefNode will not be used by subsequent Node.
-      // So update the DeviceAddress of the kernel directly instead of updating the ptr of the DeviceAddress.
-      AnfAlgo::SetOutputAddr(input_addr, output_index, ref_node.get());
+      // AnfAlgo::SetOutputAddr cannot update the device_address of frontend Tensor
+      // if the output of RefNode is used by subsequent nodes.
+      // Because the frontend Tensor is copied from backend Tensor and the shared_ptr of Tensor is different.
+      if (input_addr->GetMutablePtr() == nullptr) {
+        AnfAlgo::SetOutputAddr(input_addr, output_index, ref_node.get());
+      } else {
+        ref_node_output_addr->set_ptr(input_addr->GetMutablePtr());
+      }
     }
   }
 }
