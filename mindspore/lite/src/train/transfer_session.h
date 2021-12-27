@@ -77,6 +77,10 @@ class TransferSession : public lite::TrainSession {
   bool nchw2nhwc_ = false;
   size_t size_backbone_;
 };
+
+lite::LiteSession *CreateTransferSessionInt(const char *model_buf_backbone, size_t size_backbone,
+                                            const char *model_buf_head, size_t size_head, const lite::Context *context,
+                                            bool train_mode, const lite::TrainCfg *cfg);
 }  // namespace lite
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_TRAIN_TRANSFER_SESSION_H_

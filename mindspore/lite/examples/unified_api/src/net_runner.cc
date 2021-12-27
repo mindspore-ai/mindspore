@@ -207,6 +207,8 @@ int NetRunner::TrainLoop() {
   Measurement measure(epochs_);
 
   if (virtual_batch_ > 0) {
+    auto status = model_->SetupVirtualBatch(virtual_batch_);
+    MS_ASSERT(status == mindspore::kSuccess);
     model_->Train(epochs_, train_ds_, {&rescale, &lm, &cs, &measure});
   } else {
     struct mindspore::StepLRLambda step_lr_lambda(1, kGammaFactor);
@@ -237,7 +239,7 @@ int NetRunner::Main() {
 
 void NetRunner::Usage() {
   std::cout << "Usage: net_runner -f <.ms model file> -d <data_dir> [-e <num of training epochs>] "
-            << "[-v (verbose mode)] [-s <save checkpoint every X iterations>]" << std::endl;
+            << "[-b <virtual batch size>] [-v (verbose mode)] [-s <save checkpoint every X iterations>]" << std::endl;
 }
 
 bool NetRunner::ReadArgs(int argc, char *argv[]) {

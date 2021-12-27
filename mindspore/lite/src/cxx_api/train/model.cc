@@ -106,4 +106,36 @@ Status Model::Evaluate(std::shared_ptr<dataset::Dataset> ds, std::vector<TrainCa
   return (ret == mindspore::lite::RET_OK) ? kSuccess : kLiteError;
 }
 
+Status Model::BuildTransferLearning(GraphCell backbone, GraphCell head, const std::shared_ptr<Context> &context,
+                                    const std::shared_ptr<TrainCfg> &train_cfg) {
+  std::stringstream err_msg;
+  if (impl_ == nullptr) {
+    impl_ = std::shared_ptr<ModelImpl>(new (std::nothrow) ModelImpl());
+    if (impl_ == nullptr) {
+      MS_LOG(ERROR) << "Model implement is null.";
+      return kLiteFileError;
+    }
+  }
+
+  if (backbone.GetGraph() == nullptr || head.GetGraph() == nullptr) {
+    err_msg << "Invalid null graph.";
+    MS_LOG(ERROR) << err_msg.str();
+    return Status(kLiteNullptr, err_msg.str());
+  }
+  if (context == nullptr) {
+    err_msg << "Invalid null context.";
+    MS_LOG(ERROR) << err_msg.str();
+    return Status(kLiteNullptr, err_msg.str());
+  }
+  impl_->SetContext(context);
+  impl_->SetGraph(head.GetGraph());
+  impl_->SetConfig(train_cfg);
+
+  Status ret = impl_->BuildTransferLearning(backbone.GetGraph(), head.GetGraph());
+  if (ret != kSuccess) {
+    return ret;
+  }
+  return kSuccess;
+}
+
 }  // namespace mindspore

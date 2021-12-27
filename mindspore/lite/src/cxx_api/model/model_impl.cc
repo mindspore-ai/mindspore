@@ -650,6 +650,32 @@ Status ModelImpl::UpdateWeights(const std::vector<MSTensor> &new_weights) {
   return static_cast<StatusCode>(ret);
 }
 
+Status ModelImpl::SetupVirtualBatch(int virtual_batch_multiplier, float lr, float momentum) {
+  if (session_ == nullptr) {
+    MS_LOG(ERROR) << "Session is null.";
+    return kLiteNullptr;
+  }
+  auto ret = session_->SetupVirtualBatch(virtual_batch_multiplier, lr, momentum);
+  return static_cast<StatusCode>(ret);
+}
+
+Status ModelImpl::SetLearningRate(float learning_rate) {
+  if (session_ == nullptr) {
+    MS_LOG(ERROR) << "Session is null.";
+    return kLiteNullptr;
+  }
+  auto ret = session_->SetLearningRate(learning_rate);
+  return static_cast<StatusCode>(ret);
+}
+
+float ModelImpl::GetLearningRate() {
+  if (session_ == nullptr) {
+    MS_LOG(WARNING) << "Session is null.";
+    return 0.0;
+  }
+  return session_->GetLearningRate();
+}
+
 lite::LiteSession *ModelImpl::CreateLiteSession(lite::InnerContext *context) {
   auto session = new (std::nothrow) lite::LiteSession();
   if (session == nullptr) {
@@ -669,4 +695,5 @@ lite::LiteSession *ModelImpl::CreateLiteSession(lite::InnerContext *context) {
   }
   return session;
 }
+
 }  // namespace mindspore

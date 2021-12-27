@@ -249,14 +249,14 @@ int ParameterOptimizer::GridSearchForScale(const FuncGraphPtr &func_graph, conve
     delete origin_model;
     return RET_OK;
   }
-  int babysitting_rounds = 25;
-  step = (min_max.max - min_max.min) / babysitting_rounds;
+  int baby_step_rounds = 25;
+  step = (min_max.max - min_max.min) / baby_step_rounds;
 
-  param.rounds = babysitting_rounds;
+  param.rounds = baby_step_rounds;
   param.start_scale = start_scale;
   param.step = step;
   param.thread_num = flags->commonQuantParam.thread_num;
-  std::cout << "==========Search with babysitting step==============\n";
+  std::cout << "==========Search with baby step==============\n";
   ret = WeightQuantModelInference(func_graph, flags, origin_session, origin_model_size, param, init_scale,
                                   &candidate_scales, true);
   if (ret != RET_OK) {

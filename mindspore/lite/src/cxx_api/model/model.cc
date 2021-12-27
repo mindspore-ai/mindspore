@@ -365,4 +365,28 @@ std::vector<Metrics *> Model::GetMetrics() {
   return impl_->GetMetrics();
 }
 
+Status Model::SetupVirtualBatch(int virtual_batch_multiplier, float lr, float momentum) {
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "Model implement is null.";
+    return kLiteUninitializedObj;
+  }
+  return impl_->SetupVirtualBatch(virtual_batch_multiplier, lr, momentum);
+}
+
+Status Model::SetLearningRate(float learning_rate) {
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "Model implement is null.";
+    return kLiteUninitializedObj;
+  }
+  return impl_->SetLearningRate(learning_rate);
+}
+
+float Model::GetLearningRate() {
+  if (impl_ == nullptr) {
+    MS_LOG(WARNING) << "Model implement is null.";
+    return 0.0;
+  }
+  return impl_->GetLearningRate();
+}
+
 }  // namespace mindspore
