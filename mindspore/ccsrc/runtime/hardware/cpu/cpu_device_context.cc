@@ -114,6 +114,17 @@ void CPUDeviceContext::FreeMemory(DeviceAddress *const &address) const {
   address->ptr_ = nullptr;
 }
 
+void *CPUDeviceContext::AllocateMemory(size_t size) const {
+  MS_EXCEPTION_IF_NULL(mem_manager_);
+  return mem_manager_->MallocMemFromMemPool(size, false);
+}
+
+void CPUDeviceContext::FreeMemory(void *const ptr) const {
+  MS_EXCEPTION_IF_NULL(ptr);
+  MS_EXCEPTION_IF_NULL(mem_manager_);
+  mem_manager_->FreeMemFromMemPool(ptr);
+}
+
 DeviceAddressPtr CPUDeviceContext::CreateDeviceAddress(void *const device_ptr, size_t device_size, const string &format,
                                                        TypeId type_id) const {
   return std::make_shared<CPUDeviceAddress>(device_ptr, device_size, format, type_id, device_context_key_.device_name_,

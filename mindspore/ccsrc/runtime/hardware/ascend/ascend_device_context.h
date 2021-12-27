@@ -80,6 +80,9 @@ class AscendDeviceContext : public DeviceContext {
   // Relevant function to allocate and free device memory.
   bool AllocateMemory(DeviceAddress *const &address, size_t size) const override;
   void FreeMemory(DeviceAddress *const &address) const override;
+  // Relevant function to allocate and free device memory of raw ptr.
+  void *AllocateMemory(size_t size) const override;
+  void FreeMemory(void *const ptr) const override;
 
   // Allocate continuous device memory end to end into 'addr_list'.
   // Communication operators may need continuous memory for input and output
