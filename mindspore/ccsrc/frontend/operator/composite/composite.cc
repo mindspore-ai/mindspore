@@ -108,21 +108,23 @@ AnfNodePtr HyperMap::FullMake(const FuncGraphPtr &func_graph, const AnfNodePtr &
   return func_graph->NewCNodeInOrder(inputs);
 }
 
-std::vector<std::string> HyperMap::GetHyperMapInputIndex(size_t num) {
+std::pair<std::string, std::string> HyperMap::GetHyperMapInputIndex(size_t num) {
   std::string error_index;
   std::string next_index;
-  if (num == 1) {
+  const size_t first_index = 1;
+  const size_t second_index = 2;
+  if (num == first_index) {
     // The first element in HyperMap is func_graph
     error_index = "first";
     next_index = "second";
-  } else if (num == 2) {
+  } else if (num == second_index) {
     error_index = "second";
     next_index = "third";
   } else {
     error_index = std::to_string(num) + "th";
     next_index = std::to_string(num + 1) + "th";
   }
-  return {error_index, next_index};
+  return std::pair<std::string, std::string>(error_index, next_index);
 }
 
 AnfNodePtr HyperMap::FullMake(const std::shared_ptr<List> &type, const FuncGraphPtr &func_graph,
@@ -137,9 +139,7 @@ AnfNodePtr HyperMap::FullMake(const std::shared_ptr<List> &type, const FuncGraph
   for (auto &item : arg_map) {
     num++;
     auto lhs = std::static_pointer_cast<List>(item.second);
-    std::vector<std::string> indexes = GetHyperMapInputIndex(num);
-    std::string error_index = indexes[0];
-    std::string next_index = indexes[1];
+    auto [error_index, next_index] = GetHyperMapInputIndex(num);
     if (lhs == nullptr) {
       MS_LOG(EXCEPTION) << "The " << error_index << " element in HyperMap has wrong type, expected a List, but got "
                         << item.second->ToString() << ".";
@@ -199,9 +199,7 @@ AnfNodePtr HyperMap::FullMake(const std::shared_ptr<Tuple> &type, const FuncGrap
   for (auto &item : arg_map) {
     num++;
     auto lhs = std::static_pointer_cast<Tuple>(item.second);
-    std::vector<std::string> indexes = GetHyperMapInputIndex(num);
-    std::string error_index = indexes[0];
-    std::string next_index = indexes[1];
+    auto [error_index, next_index] = GetHyperMapInputIndex(num);
     if (lhs == nullptr) {
       MS_LOG(EXCEPTION) << "The " << error_index << " element in HyperMap has wrong type, expected a Tuple, but got "
                         << item.second->ToString() << ".";
@@ -317,6 +315,7 @@ AnfNodePtr HyperMap::Make(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_a
           << trace::GetDebugInfo(func_graph->debug_info()) << "\n";
       int64_t idx = 0;
       std::string str_index = "first";
+      const size_t diff_index = 2;
       for (auto &item : arg_map) {
         // The first element in HyperMap is func_graph
         if (idx == 0) {
@@ -324,7 +323,7 @@ AnfNodePtr HyperMap::Make(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_a
         } else if (idx == 1) {
           str_index = "third";
         } else {
-          str_index = std::to_string(idx + 2) + "th";
+          str_index = std::to_string(idx + diff_index) + "th";
         }
         ++idx;
         oss << "The type of the " << str_index << " argument in HyperMap is " << item.second->ToString() << ".\n";

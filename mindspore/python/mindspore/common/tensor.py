@@ -118,7 +118,7 @@ class Tensor(Tensor_):
         # If input_data is tuple/list/numpy.ndarray, it's support in check_type method.
         if init is None:
             validator.check_value_type('input_data', input_data,
-                                       (Tensor_, np.ndarray, list, tuple, float, int, bool, complex), 'Tensor')
+                                       (Tensor_, np.ndarray, np.str_, list, tuple, float, int, bool, complex), 'Tensor')
             valid_dtypes = (np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64,
                             np.float16, np.float32, np.float64, np.bool_, np.str_, np.complex64, np.complex128)
             if isinstance(input_data, np.ndarray) and input_data.dtype not in valid_dtypes and \
