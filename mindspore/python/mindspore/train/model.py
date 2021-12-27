@@ -254,9 +254,9 @@ class Model:
 
     def _check_kwargs(self, kwargs):
         for arg in kwargs:
-            if arg not in ['loss_scale_manager', 'keep_batchnorm_fp32', 'boost_config_dict']:
+            if arg not in ['loss_scale_manager', 'keep_batchnorm_fp32', 'boost_config_dict', 'acc_level']:
                 raise ValueError(f"The argument in 'kwargs' should be 'loss_scale_manager' or "
-                                 f"'keep_batchnorm_fp32' or 'boost_config_dict', but got '{arg}'.")
+                                 f"'keep_batchnorm_fp32' or 'boost_config_dict' or 'acc_level', but got '{arg}'.")
 
     def _check_reuse_dataset(self, dataset):
         if not hasattr(dataset, '__model_hash__'):
@@ -270,6 +270,9 @@ class Model:
         boost_config_dict = ""
         if 'boost_config_dict' in kwargs:
             boost_config_dict = kwargs['boost_config_dict']
+        if 'acc_level' in kwargs:
+            self._boost_level = kwargs['acc_level']
+            logger.warning("Next version acc_level will be removed, please replace with boost_level")
         processor = AutoBoost(self._boost_level, boost_config_dict)
         if processor.level not in ["O1", "O2"]:
             return
