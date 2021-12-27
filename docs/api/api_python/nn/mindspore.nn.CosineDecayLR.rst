@@ -8,8 +8,8 @@ mindspore.nn.CosineDecayLR
     对于当前step，decayed_learning_rate[current_step]的计算公式为：
 
     .. math::
-        decayed\_learning\_rate[current\_step] = min\_lr + 0.5 * (max\_lr - min\_lr) *
-        (1 + cos(\frac{current\_step}{decay\_steps}\pi))
+        decayed\_learning\_rate[current\_step] = &min\_lr + 0.5 * (max\_lr - min\_lr) *\\
+        &(1 + cos(\frac{current\_step}{decay\_steps}\pi))
 
 
     **参数：**

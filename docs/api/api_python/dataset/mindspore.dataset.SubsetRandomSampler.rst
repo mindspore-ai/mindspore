@@ -20,7 +20,7 @@ mindspore.dataset.SubsetRandomSampler
 
     **异常：**
 
-    - **TypeError：** `indices` 的类型不是数字。
+    - **TypeError：** `indices` 的类型不是整数。
     - **TypeError：** `num_samples` 不是整数值。
     - **ValueError：** `num_samples` 为负值。
 

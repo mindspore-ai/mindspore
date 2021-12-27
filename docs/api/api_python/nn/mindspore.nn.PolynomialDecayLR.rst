@@ -8,8 +8,9 @@ mindspore.nn.PolynomialDecayLR
     对于当前step，计算decayed_learning_rate[current_step]的公式为：
 
     .. math::
-        decayed\_learning\_rate[current\_step] = (learning\_rate - end\_learning\_rate) *
-        (1 - tmp\_step / tmp\_decay\_steps)^{power} + end\_learning\_rate
+        decayed\_learning\_rate[current\_step] = &(learning\_rate - end\_learning\_rate) *\\
+        &(1 - tmp\_step / tmp\_decay\_steps)^{power}\\
+        &+ end\_learning\_rate
 
     其中，
 
