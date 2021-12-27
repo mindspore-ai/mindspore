@@ -15,8 +15,10 @@
 
 """inner_ops"""
 
+from mindspore.ops import operations as P
 from .._grad.grad_base import bprop_getters
 from ..operations import _inner_ops as inner
+from ..operations import _grad_ops as G
 from .. import functional as F
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
 
@@ -44,5 +46,19 @@ def get_bprop_roll(self):
     def bprop(x_input, out, dout):
         dx = roll_grad(dout)
         return (dx,)
+
+    return bprop
+
+@bprop_getters.register(inner.DynamicResizeNearestNeighbor)
+def get_bprop_dynamic_resize_nearest_neighbor(self):
+    """Generate bprop for DynamicResizeNearestNeighbor"""
+    op = G.ResizeNearestNeighborGrad(self.align_corners)
+    shape_op = P.Shape()
+
+    def bprop(inputs, size, out, dout):
+        shp = shape_op(inputs)
+        # 2 and 3 represent the height and width
+        shp = (shp[2], shp[3])
+        return (op(dout, shp), zeros_like(size))
 
     return bprop
