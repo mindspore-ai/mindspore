@@ -57,15 +57,13 @@ class BroadcastComplexOpGpuKernel : public GpuKernel {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     GetOpType(kernel_node);
     auto shape1 = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
     auto shape2 = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 1);
     auto shape3 = AnfAlgo::GetOutputRealDeviceShapeIfExist(kernel_node, 0);
     need_broadcast_ = AnfAlgo::IsTensorBroadcast(shape1, shape2);
     if (need_broadcast_ && shape1.size() > MAX_DIMS) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input cannot be greater than " << MAX_DIMS
-                        << ", but got " << shape1.size();
+      MS_LOG(EXCEPTION) << "Broadcast operation not support dim greater than " << MAX_DIMS;
     }
 
     lhs_shape_.resize(MAX_DIMS, 1);
@@ -130,9 +128,7 @@ class BroadcastComplexOpGpuKernel : public GpuKernel {
       return;
     }
 
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << ", only support these types: RealDiv, Mul, Sub, Add, Div or Complex currently, but got "
-                      << kernel_name;
+    MS_LOG(EXCEPTION) << "operation " << kernel_name << " is not supported.";
   }
 
   BroadcastOpType op_type_;

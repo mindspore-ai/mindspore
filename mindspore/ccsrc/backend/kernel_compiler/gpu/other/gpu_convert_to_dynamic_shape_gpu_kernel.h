@@ -62,17 +62,18 @@ class GpuConvertToDynamicShapeGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     MS_EXCEPTION_IF_NULL(kernel_node);
     kernel_node_ = kernel_node;
     size_t input_count = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_count != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 1, but got " << input_count;
+      MS_LOG(ERROR) << input_count << "inputs were provided, but GpuConvertToDynamicShapeGpuKernel expects 1.";
+      return false;
     }
 
     input_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_SHAPE_NULL(input_shape_, kernel_name, "input");
+    is_null_input_ = CHECK_NULL_INPUT(input_shape_);
     if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'GpuConvertToDynamicShapeGpuKernel', input is null";
       InitSizeLists();
       return true;
     }

@@ -19,7 +19,6 @@
 #include <cublas_v2.h>
 #include <cuda_runtime_api.h>
 #include <vector>
-#include <string>
 #include <algorithm>
 #include "backend/kernel_compiler/gpu/cuda_impl/eye_impl.cuh"
 #include "backend/kernel_compiler/gpu/cuda_impl/matrix_split_impl.cuh"
@@ -63,7 +62,6 @@ class CholeskyGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     lower_ = static_cast<bool>(GetAttr<bool>(kernel_node, kLower));
     split_dim_ = static_cast<int>(GetAttr<int64_t>(kernel_node, kSplitDim));
@@ -79,17 +77,19 @@ class CholeskyGpuKernel : public GpuKernel {
 
     auto in_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputIndex);
 
-    is_null_input_ = CHECK_SHAPE_NULL(in_shape, kernel_name_, "input");
+    is_null_input_ = CHECK_NULL_INPUT(in_shape);
+    if (is_null_input_) {
+      MS_LOG(EXCEPTION) << "For 'CholeskyGpuKernel', input is null";
+    }
 
     if (split_dim_ == 0) {
-      (void)InitNoSplitDim(in_shape);
+      return InitNoSplitDim(in_shape);
     }
-    (void)InitSplitDim(in_shape);
-    return true;
+    return InitSplitDim(in_shape);
   }
 
  protected:
-  void InitNoSplitDim(const std::vector<size_t> &in_shape) {
+  bool InitNoSplitDim(const std::vector<size_t> &in_shape) {
     if (in_shape.size() == kCholeskyDefaultShape) {
       batch_ = 1;
       cho_row_ = in_shape.at(kDim0);
@@ -103,10 +103,12 @@ class CholeskyGpuKernel : public GpuKernel {
       cho_row_ = in_shape.at(kDim1);
       cho_col_ = in_shape.at(kDim2);
     } else {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input only should be 2 or 3";
+      MS_LOG(ERROR) << "Input Only support Rank 2 OR 3";
+      return false;
     }
     if (cho_row_ != cho_col_) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of input should be square matrix";
+      MS_LOG(ERROR) << "Cholesky need square matrix as input.";
+      return false;
     }
     // set matrix row or col to be lead dimension
     m_ = SizeToInt(in_shape.at(kDim1));
@@ -114,17 +116,19 @@ class CholeskyGpuKernel : public GpuKernel {
     ldb_ = m_;
     h_array_.resize(batch_);
     InitSizeLists();
+    return true;
   }
 
-  void InitSplitDim(const std::vector<size_t> &in_shape) {
+  bool InitSplitDim(const std::vector<size_t> &in_shape) {
     if (in_shape.size() != kCholeskyNormalShape) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input should be " << kCholeskyNormalShape
-                        << ", but got " << in_shape.size();
+      MS_LOG(ERROR) << "Cholesky Split Matrix Need Input Rank as 2.";
+      return false;
     }
     cho_row_ = in_shape.at(kDim0);
     cho_col_ = in_shape.at(kDim1);
     if (cho_row_ != cho_col_) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of input should be square matrix";
+      MS_LOG(ERROR) << "Cholesky Split Matrix Need Square Matrix as Input.";
+      return false;
     }
 
     if (SizeToInt(cho_row_) <= split_dim_) {
@@ -135,6 +139,7 @@ class CholeskyGpuKernel : public GpuKernel {
       ldb_ = m_;
       h_array_.resize(batch_);
       InitSizeLists();
+      return true;
     }
 
     use_split_matrix_ = true;
@@ -150,6 +155,7 @@ class CholeskyGpuKernel : public GpuKernel {
     ldb_ = m_;
     h_array_.resize(batch_);
     InitSizeLists();
+    return true;
   }
 
   void InitSizeLists() override {
@@ -200,7 +206,7 @@ class CholeskyGpuKernel : public GpuKernel {
         kernel_node_, cusolverDnDpotrfBatched(handle_, uplo_, m_, d_array_addr, lda_, d_info_array_addr, batch_),
         "cusolver cholesky batched Fail");
     } else {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the data type only should be float or double, right now.";
+      MS_LOG(EXCEPTION) << "cholesky factorization do not support other data type but only float or double, right now.";
     }
     size_t output_elements = outputs.at(kDim0)->size / unit_size_;
     // copy results from written input's matrix to output's matrix by up or lower flag.
@@ -237,7 +243,7 @@ class CholeskyGpuKernel : public GpuKernel {
         kernel_node_, cusolverDnDpotrfBatched(handle_, uplo_, m_, d_array_addr, lda_, d_info_array_addr, batch_),
         "cusolver cholesky batched Fail");
     } else {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the data type only should be float or double, right now.";
+      MS_LOG(EXCEPTION) << "cholesky factorization do not support other data type but only float or double, right now.";
     }
 
     TriangleMatrixCopy(d_batch_input_addr, output_addr, uplo_, outputs[0]->size / sizeof(T), ldb_, m_,

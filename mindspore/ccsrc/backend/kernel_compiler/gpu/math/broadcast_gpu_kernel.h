@@ -70,22 +70,20 @@ class BroadcastOpGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     GetOpType(kernel_node);
     auto shape1 = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
     auto shape2 = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 1);
     auto shape3 = AnfAlgo::GetOutputRealDeviceShapeIfExist(kernel_node, 0);
-    is_null_input_ = CHECK_SHAPE_NULL(shape1, kernel_name_, "input") ||
-                     CHECK_SHAPE_NULL(shape2, kernel_name_, "input") ||
-                     CHECK_SHAPE_NULL(shape3, kernel_name_, "output");
+    is_null_input_ = CHECK_NULL_INPUT(shape1) || CHECK_NULL_INPUT(shape2) || CHECK_NULL_INPUT(shape3);
     if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'BroadcastGpuKernel', input or output is null";
       InitSizeLists();
       return true;
     }
     need_broadcast_ = AnfAlgo::IsTensorBroadcast(shape1, shape2);
     if (need_broadcast_ && shape1.size() > MAX_DIMS) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input cannot be greater than " << MAX_DIMS
-                        << ", but got " << shape1.size();
+      MS_LOG(EXCEPTION) << "Broadcast operation not support dim greater than: " << MAX_DIMS << ", actual size is "
+                        << shape1.size();
     }
 
     lhs_shape_.resize(MAX_DIMS, 1);
@@ -96,8 +94,7 @@ class BroadcastOpGpuKernel : public GpuKernel {
         if (i < MAX_DIMS) {
           output_shape_[i] = shape3[i];
         } else {
-          MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the index of output should be less than " << MAX_DIMS
-                            << ", but got " << i;
+          MS_LOG(EXCEPTION) << "Output index: " << i << " should be less than " << MAX_DIMS;
         }
       }
       output_num_ *= shape3[i];
@@ -109,8 +106,7 @@ class BroadcastOpGpuKernel : public GpuKernel {
           lhs_shape_[j + lhs_offset] = shape1[j];
         } else {
           auto index = j + lhs_offset;
-          MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the index of input cannot be " << index << ", but got "
-                            << index;
+          MS_LOG(EXCEPTION) << "Invalid input1 index: " << index;
         }
       }
       input1_num_ *= shape1[j];
@@ -122,8 +118,7 @@ class BroadcastOpGpuKernel : public GpuKernel {
           rhs_shape_[k + rhs_offset] = shape2[k];
         } else {
           auto index = k + rhs_offset;
-          MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the index of input cannot be " << index << ", but got "
-                            << index;
+          MS_LOG(EXCEPTION) << "Invalid input2 index: " << index;
         }
       }
       input2_num_ *= shape2[k];
@@ -206,10 +201,7 @@ class BroadcastOpGpuKernel : public GpuKernel {
       return;
     }
 
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << ", only support these types: Maximum, Minimum, Pow, RealDiv, Mul, Sub, Add, Div, DivNoNan, "
-                         "Mod, FloorDiv, AbsGrad, FloorMod, Atan2, TruncateDiv or TruncateMod currently, but got "
-                      << kernel_name;
+    MS_LOG(EXCEPTION) << "operation " << kernel_name << " is not supported.";
   }
 
   BroadcastOpType op_type_;
