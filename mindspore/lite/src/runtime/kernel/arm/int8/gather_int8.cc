@@ -63,24 +63,38 @@ int GatherInt8CPUKernel::DoGather(int task_id) {
   auto indices_tensor = in_tensors_.at(1);
   auto out_tensor = out_tensors_.at(0);
 
-  auto input_ptr = reinterpret_cast<int8_t *>(input_tensor->MutableData());
+  auto input_ptr = reinterpret_cast<int8_t *>(input_tensor->data());
   CHECK_NULL_RETURN(input_ptr);
-  auto output_ptr = reinterpret_cast<int8_t *>(out_tensor->MutableData());
+  auto output_ptr = reinterpret_cast<int8_t *>(out_tensor->data());
   CHECK_NULL_RETURN(output_ptr);
-  auto indices_ptr = reinterpret_cast<int32_t *>(indices_tensor->MutableData());
-  CHECK_NULL_RETURN(indices_ptr);
-
   auto in_shape = input_tensor->shape();
   int in_rank = in_shape.size();
+  const int limit = in_shape.at(axis_);
+  MS_CHECK_LT(axis_, in_rank, RET_ERROR);
   int indices_element_size = indices_tensor->ElementsNum();
   MS_CHECK_GT(indices_element_size, 0, RET_ERROR);
-  MS_CHECK_LT(axis_, in_rank, RET_ERROR);
-  const int limit = in_shape.at(axis_);
-  for (int i = 0; i < indices_element_size; ++i) {
-    if (indices_ptr[i] >= limit) {
-      MS_LOG(ERROR) << " indice data: " << indices_ptr[i] << " is not in [ 0, " << limit - 1 << " ]";
-      return RET_ERROR;
+
+  if (indices_tensor->data_type() == kNumberTypeInt32) {
+    auto indices_ptr = reinterpret_cast<int32_t *>(indices_tensor->data());
+    CHECK_NULL_RETURN(indices_ptr);
+    for (int i = 0; i < indices_element_size; ++i) {
+      if (indices_ptr[i] >= limit) {
+        MS_LOG(ERROR) << " indice data: " << indices_ptr[i] << " is not in [ 0, " << limit - 1 << " ]";
+        return RET_ERROR;
+      }
     }
+  } else if (indices_tensor->data_type() == kNumberTypeInt64) {
+    auto indices_ptr = reinterpret_cast<int64_t *>(indices_tensor->data());
+    CHECK_NULL_RETURN(indices_ptr);
+    for (int i = 0; i < indices_element_size; ++i) {
+      if (indices_ptr[i] >= limit) {
+        MS_LOG(ERROR) << " indice data: " << indices_ptr[i] << " is not in [ 0, " << limit - 1 << " ]";
+        return RET_ERROR;
+      }
+    }
+  } else {
+    MS_LOG(ERROR) << "Unsupported data type:" << indices_tensor->data_type();
+    return RET_ERROR;
   }
 
   int outer_size = 1;
@@ -99,7 +113,13 @@ int GatherInt8CPUKernel::DoGather(int task_id) {
 
   input_ptr += thread_stride * inner_size * limit;
   output_ptr += thread_stride * inner_size * indices_element_size;
-  return GatherInt8(input_ptr, output_ptr, count, inner_size, limit, indices_ptr, indices_element_size, param_);
+  if (indices_tensor->data_type() == kNumberTypeInt32) {
+    return GatherInt8Int32Index(input_ptr, output_ptr, count, inner_size, limit,
+                                reinterpret_cast<int32_t *>(indices_tensor->data()), indices_element_size, param_);
+  } else {
+    return GatherInt8Int64Index(input_ptr, output_ptr, count, inner_size, limit,
+                                reinterpret_cast<int64_t *>(indices_tensor->data()), indices_element_size, param_);
+  }
 }
 
 int GatherInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {

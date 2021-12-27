@@ -19,8 +19,32 @@
 #include "nnacl/int8/quantize.h"
 #include "nnacl/errorcode.h"
 
-int GatherInt8(int8_t *in_data, int8_t *out_data, int outer_size, int inner_size, int limit, const int *indices,
-               int indices_element_size, GatherQuantArg para) {
+int GatherInt8Int32Index(const int8_t *in_data, int8_t *out_data, int outer_size, int inner_size, int limit,
+                         const int *indices, int indices_element_size, GatherQuantArg para) {
+  double alpha = para.alpha_;
+  int z1 = para.zp_in_;
+  int z2 = para.zp_out_;
+  int i, m, j;
+  for (m = 0; m < outer_size; ++m) {
+    const int8_t *inputm = in_data + inner_size * m * limit;
+    int8_t *outputm = out_data + inner_size * m * indices_element_size;
+    for (i = 0; i < indices_element_size; ++i) {
+      if (indices[i] < 0 || indices[i] > limit) {
+        return NNACL_ERR;
+      }
+      for (j = 0; j < inner_size; ++j) {
+        int32_t tmp = round(alpha * (inputm[indices[i] * inner_size + j] - z1)) + z2;
+        tmp = tmp > 127 ? 127 : tmp;
+        tmp = tmp < -128 ? -128 : tmp;
+        outputm[i * inner_size + j] = (int8_t)tmp;
+      }
+    }
+  }
+  return NNACL_OK;
+}
+
+int GatherInt8Int64Index(const int8_t *in_data, int8_t *out_data, int outer_size, int inner_size, int limit,
+                         const int64_t *indices, int indices_element_size, GatherQuantArg para) {
   double alpha = para.alpha_;
   int z1 = para.zp_in_;
   int z2 = para.zp_out_;

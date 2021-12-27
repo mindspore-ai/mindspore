@@ -23,8 +23,11 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-int GatherInt8(int8_t *in_data, int8_t *out_data, int outer_size, int inner_size, int limit, const int *indices,
-               int indices_element_size, GatherQuantArg para);
+int GatherInt8Int32Index(const int8_t *in_data, int8_t *out_data, int outer_size, int inner_size, int limit,
+                         const int *indices, int indices_element_size, GatherQuantArg para);
+
+int GatherInt8Int64Index(const int8_t *in_data, int8_t *out_data, int outer_size, int inner_size, int limit,
+                         const int64_t *indices, int indices_element_size, GatherQuantArg para);
 #ifdef __cplusplus
 }
 #endif
