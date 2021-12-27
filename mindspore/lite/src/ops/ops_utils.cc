@@ -958,6 +958,7 @@ RegistryMSOps g_powFusionPrimitiveCreatorRegistry("PowFusion", PowFusionPrimitiv
 RegistryMSOps g_pReLUFusionPrimitiveCreatorRegistry("PReLUFusion", PReLUFusionPrimitiveCreator);
 RegistryMSOps g_RandomStandardNormalPrimitiveCreatorRegistry("RandomStandardNormal",
                                                              RandomStandardNormalPrimitiveCreator);
+RegistryMSOps g_StandardNormalPrimitiveCreatorRegistry("StandardNormal", RandomStandardNormalPrimitiveCreator);
 RegistryMSOps g_raggedRangePrimitiveCreatorRegistry("RaggedRange", RaggedRangePrimitiveCreator);
 RegistryMSOps g_rangePrimitiveCreatorRegistry("Range", RangePrimitiveCreator);
 RegistryMSOps g_rankPrimitiveCreatorRegistry("Rank", RankPrimitiveCreator);

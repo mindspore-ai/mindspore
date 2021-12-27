@@ -1227,7 +1227,7 @@ bool TrainSession::IsInPlaceTensor(kernel::LiteKernel *kernel, uint32_t idx,
     auto out_tensor = kernel->out_tensors().at(idx);
     for (size_t i = 0; i < kernel->in_tensors().size(); i++) {
       auto tensor = kernel->in_tensors().at(i);
-      if ((tensor->category() == lite::Category::VAR) &&
+      if ((tensor->category() == lite::Category::VAR) && (ref_count.find(tensor) != ref_count.end()) &&
           (tensor->init_ref_count() == 1 || (tensor->init_ref_count() > 1 && ref_count.at(tensor) == 1)) &&
           (out_tensor->Size() == tensor->Size())) {
         *input_idx = static_cast<uint32_t>(i);

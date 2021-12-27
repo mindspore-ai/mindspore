@@ -36,6 +36,7 @@ using mindspore::lite::Registry;
 namespace mindspore {
 namespace kernel {
 namespace {
+constexpr int kInputIndexOne = 1;
 constexpr int kInputIndexTwo = 2;
 constexpr int kInputIndexThree = 3;
 }  // namespace
@@ -282,8 +283,8 @@ OpParameter *PopulateConvolutionGradFilterParameter(const void *prim) {
 
   param->kernel_h_ = value->kernel_size()->Get(0);
   param->kernel_w_ = value->kernel_size()->Get(1);
-  param->stride_h_ = value->stride()->Get((value->stride()->size()) - 2);
-  param->stride_w_ = value->stride()->Get((value->stride()->size()) - 1);
+  param->stride_h_ = value->stride()->Get((value->stride()->size()) - kInputIndexTwo);
+  param->stride_w_ = value->stride()->Get((value->stride()->size()) - kInputIndexOne);
   param->dilation_h_ = value->dilation()->Get(0);
   param->dilation_w_ = value->dilation()->Get(1);
   param->pad_u_ = value->pad_list()->Get(0);
@@ -331,8 +332,8 @@ OpParameter *PopulateConvolutionGradInputParameter(const void *prim) {
 
   param->kernel_h_ = value->kernel_size()->Get(0);
   param->kernel_w_ = value->kernel_size()->Get(1);
-  param->stride_h_ = value->stride()->Get((value->stride()->size()) - 2);
-  param->stride_w_ = value->stride()->Get((value->stride()->size()) - 1);
+  param->stride_h_ = value->stride()->Get((value->stride()->size()) - kInputIndexTwo);
+  param->stride_w_ = value->stride()->Get((value->stride()->size()) - kInputIndexOne);
   param->dilation_h_ = value->dilation()->Get(0);
   param->dilation_w_ = value->dilation()->Get(1);
   param->pad_u_ = value->pad_list()->Get(0);
