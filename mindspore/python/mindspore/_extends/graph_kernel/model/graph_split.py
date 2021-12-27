@@ -14,6 +14,7 @@
 # ===========================================================================
 """Cost model splitter"""
 from functools import reduce as prod_reduce
+from functools import partial
 from mindspore import log as logger
 from .model import PrimLib, Graph, Tensor, Operator
 from .model import DataFormat as DF
@@ -857,7 +858,7 @@ class GraphSplitGpu(GraphSplitByPattern):
                     fused.append(a)
             return fused, True
 
-        def _gather_output(dom):
+        def _gather_output(dom, reduce_fusion=False):
             gather_prims = ("Gather", "GatherNd")
             if not dom.dom_op().prim in gather_prims:
                 return None
@@ -865,8 +866,7 @@ class GraphSplitGpu(GraphSplitByPattern):
             def _reduce_exclude(op, axis_list):
                 """ Whether this operator should be excluded.
                 Excluding condition:
-                1. Reduce the last axis.
-                2. There are at least one same axis between reduce axes and axis_list.
+                1. There are at least one same axis between reduce axes and axis_list.
 
                 Args:
                     op (Operator): Target reduce operator.
@@ -885,7 +885,7 @@ class GraphSplitGpu(GraphSplitByPattern):
                     if op.inputs[0].shape[ax] == 1:
                         continue
                     fix_axis.append(ax)
-                return (in_shape_len - 1 in fix_axis) or bool(set(fix_axis) & set(axis_list))
+                return bool(set(fix_axis) & set(axis_list))
 
             def _bfs_visit(start_op, start_prims, total_ops, end_ops, gather_axis):
                 consisten_shape = start_op.output.shape
@@ -894,7 +894,7 @@ class GraphSplitGpu(GraphSplitByPattern):
 
                 def _early_stop(cur_op):
                     if cur_op in end_ops:
-                        # If reduce last axis or reduce the gather axis, stop early for not fusion.
+                        # If reduce the gather axis, stop early for not fusion.
                         if cur_op.prim == "ReduceSum" and _reduce_exclude(cur_op, gather_axis):
                             return True
                     else:
@@ -919,9 +919,16 @@ class GraphSplitGpu(GraphSplitByPattern):
                 return True
 
             def _shape_consistent(start_prims, end_prims, source, target):
-                """Check whether it is always shape consistent from source nodes to target nodes."""
+                """
+                Check whether it is always shape consistent from source nodes to target nodes.
+                Excluding condition:
+                    When fusing ReduceSum, first check if TensorScatterAdd and/or UnsortedSegmentSum
+                    has already been fused, if so, stop ReduceSum fusion.
+                """
                 total_ops = source.ops + target.ops
-
+                op_prims_set = {op.prim for op in total_ops}
+                if reduce_fusion and (len({"TensorScatterAdd", "UnsortedSegmentSum"} & op_prims_set) >= 1):
+                    return False
                 start_ops = []
                 for op in source.ops:
                     if op.prim in start_prims:
@@ -944,7 +951,8 @@ class GraphSplitGpu(GraphSplitByPattern):
                         return False
                 return True
 
-            appected_areas = {"TensorScatterAdd", "UnsortedSegmentSum", "ReduceSum"}
+            appected_areas = {"ReduceSum"} if reduce_fusion else {"TensorScatterAdd", "UnsortedSegmentSum"}
+
             for a, _ in dom.out_relations.items():
                 if _shape_consistent(gather_prims, appected_areas, dom, a) and dom.check_acyclic(a):
                     return [a], False
@@ -987,7 +995,8 @@ class GraphSplitGpu(GraphSplitByPattern):
                 changed = self.fuse(_broadcast_width) or changed
                 changed = self.fuse(_strided_slice) or changed
                 changed = self.fuse(_broadcast_opaque) or changed
-                changed = self.fuse(_gather_output) or changed
+                changed = self.fuse(partial(_gather_output, reduce_fusion=False)) or changed
+                changed = self.fuse(partial(_gather_output, reduce_fusion=True)) or changed
                 changed = self.fuse(_reduce_output) or changed
                 if self.enable_stitch_fusion:
                     changed = self.fuse(_reduce_stitch) or changed

@@ -51,6 +51,7 @@
 #include "backend/optimizer/graph_kernel/rewrite_output_shape.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_recompute.h"
 #include "backend/optimizer/graph_kernel/reduce_fake_out_mem.h"
+#include "backend/optimizer/graph_kernel/depend_elimination.h"
 
 namespace mindspore::graphkernel {
 using opt::CommonSubexpressionElimination;
@@ -64,6 +65,9 @@ inline unsigned int GetPassLevelByFlag(bool flag) { return flag ? OptLevel_1 : O
 
 PassManagerPtr GraphKernelOptimizer::PreProcess() const {
   auto pm = std::make_shared<GraphKernelPassManager>(0, "preprocess");
+  // Do DependElimination all passes of graphkernel
+  pm->AddPass(std::make_shared<DependElimination>(), OptLevel_1);
+
   // Do cse before all passes of graphkernel
   pm->AddPass(std::make_shared<CommonSubexpressionElimination>("cse1"), OptLevel_1);
 
