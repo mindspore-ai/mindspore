@@ -406,11 +406,8 @@ void SetFusionOpRefInfos(session::KernelGraph *kernel_graph, const std::vector<A
 }
 
 // As shown in the following graph, if A, B, and C are combined into E,
-//  A
-// / \
-// B  D
-// \ /
-//  C
+//  A -> B -> C
+//    -> D ->
 //
 // then E and D form a cycle.
 //   _
