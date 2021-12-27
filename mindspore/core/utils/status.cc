@@ -142,9 +142,8 @@ std::vector<char> Status::ToCString() const {
   }
   if (!data_->status_msg.empty()) {
     return StringToChar(data_->status_msg);
-  } else {
-    return CodeAsCString(data_->status_code);
   }
+  return CodeAsCString(data_->status_code);
 }
 
 int Status::GetLineOfCode() const {
