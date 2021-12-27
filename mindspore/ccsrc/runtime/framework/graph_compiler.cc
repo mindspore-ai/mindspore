@@ -218,6 +218,9 @@ void CreateKernelWorkspaceDeviceAddress(const DeviceContext *device_context, con
     MS_EXCEPTION_IF_NULL(kernel_mod);
     auto workspace_sizes = kernel_mod->GetWorkspaceSizeList();
     for (size_t i = 0; i < workspace_sizes.size(); ++i) {
+      if (AnfAlgo::WorkspaceAddrExist(kernel, i)) {
+        break;
+      }
       auto device_address = device_context->CreateDeviceAddress(nullptr, workspace_sizes[i], "", kTypeUnknown);
       MS_LOG(DEBUG) << "Create addr for node:" << AnfAlgo::GetNodeDebugString(kernel) << " addr:" << device_address;
       AnfAlgo::SetWorkspaceAddr(device_address, i, kernel.get());
