@@ -2611,15 +2611,6 @@ class Maximum(_MathBinaryOp):
         Float32
     """
 
-    def infer_value(self, x, y):
-        if x is not None and y is not None:
-            x = x.asnumpy()
-            y = y.asnumpy()
-            out = np.maximum(x, y)
-            out = np.array(out, x.dtype)
-            return Tensor(out)
-        return None
-
 
 class RealDiv(_MathBinaryOp):
     """

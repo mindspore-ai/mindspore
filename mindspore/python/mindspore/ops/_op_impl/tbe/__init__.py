@@ -248,6 +248,7 @@ from .select import _select_tbe
 from .pow import _pow_tbe
 from .pow_ds import _pow_ds_tbe
 from .maximum import _maximum_tbe
+from .maximum_ds import _maximum_ds_tbe
 from .minimum import _minimum_tbe
 from .minimum_ds import _minimum_ds_tbe
 from .minimum_grad import _minimum_grad_tbe
