@@ -143,11 +143,33 @@ void ValidateValueNode(const AnfNodePtr &node) {
   }
 }
 
+void CheckValueTuple(const AnfNodePtr &node) {
+  const auto &value_node = node->cast<ValueNodePtr>();
+  MS_EXCEPTION_IF_NULL(value_node);
+  const auto value = value_node->value();
+  MS_EXCEPTION_IF_NULL(value);
+  const auto value_tuple = value->cast<ValueTuplePtr>();
+  MS_EXCEPTION_IF_NULL(value_tuple);
+  const auto tuple_values = value_tuple->value();
+  for (size_t i = 0; i < tuple_values.size(); ++i) {
+    const auto input_node = NewValueNode(tuple_values[i]);
+    ValidateOperation(input_node);
+    ValidateValueNode(input_node);
+  }
+}
+
 void Validate(const FuncGraphPtr &fg) {
   FuncGraphManagerPtr mgr = Manage(fg, false);
   MS_EXCEPTION_IF_NULL(mgr);
   AnfNodeSet &all_nodes = mgr->all_nodes();
-  for (const auto &node : all_nodes) {
+  for (auto &node : all_nodes) {
+    if (IsPrimitiveCNode(node, prim::kPrimDepend)) {
+      node = node->cast<CNodePtr>()->input(1);
+    }
+    if (IsValueNode<ValueTuple>(node)) {
+      CheckValueTuple(node);
+      continue;
+    }
     ValidateOperation(node);
     ValidateValueNode(node);
   }
