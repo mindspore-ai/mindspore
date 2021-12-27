@@ -15,7 +15,13 @@ cp ${BUILD_DIR}/test/lite-test ./
 cp ${BUILD_DIR}/googletest/googlemock/gtest/libgtest.so ./
 cp ${BUILD_DIR}/googletest/googlemock/gtest/libgmock.so ./
 ls -l *.so*
-export LD_LIBRARY_PATH=./:${TENSORRT_PATH}/lib:${CUDA_HOME}/lib64:${LD_LIBRARY_PATH}
+if [[ "X${CUDA_HOME}" != "X" ]]; then
+  export LD_LIBRARY_PATH=${CUDA_HOME}/lib64:${LD_LIBRARY_PATH}
+fi
+if [[ "X${TENSORRT_PATH}" != "X" ]]; then
+  export LD_LIBRARY_PATH=${TENSORRT_PATH}/lib:${LD_LIBRARY_PATH}
+fi
+export LD_LIBRARY_PATH=./:${LD_LIBRARY_PATH}
 
 cp -r ${CUR_DIR}/ut/test_data/* ./
 cp -r ${CUR_DIR}/ut/src/runtime/kernel/arm/test_data/* ./

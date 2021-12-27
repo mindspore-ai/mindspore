@@ -270,7 +270,7 @@ int DoQuantizeFp16ToUInt8(const float16_t *real_values, uint8_t *quant_values, f
   }
 
   for (int i = 0; i < size; ++i) {
-    if (isinf(real_values[i])) {
+    if (isinf((float)real_values[i])) {
       quant_values[i] = 255;
       continue;
     }
