@@ -304,6 +304,10 @@ class IncorporateEnvGetitem : public AnfVisitor {
   ~IncorporateEnvGetitem() override = default;
 
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
+    static bool enable_closure = common::GetEnv("MS_DEV_ENABLE_CLOSURE") == "1";
+    if (enable_closure) {
+      return nullptr;
+    }
     is_match_ = false;
     auto IsGCNode = [](const AnfNodePtr &node) -> bool {
       auto cnode = node->cast<CNodePtr>();
@@ -357,6 +361,10 @@ class IncorporateEnvGetitemSwitch : public AnfVisitor {
   ~IncorporateEnvGetitemSwitch() override = default;
 
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
+    static bool enable_closure = common::GetEnv("MS_DEV_ENABLE_CLOSURE") == "1";
+    if (enable_closure) {
+      return nullptr;
+    }
     is_match_ = false;
     auto IsSwNode = [](const AnfNodePtr &node) -> bool {
       auto cnode = node->cast<CNodePtr>();
@@ -418,6 +426,10 @@ class IncorporateEnvGetitemSwitchLayer : public AnfVisitor {
   ~IncorporateEnvGetitemSwitchLayer() override = default;
 
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
+    static bool enable_closure = common::GetEnv("MS_DEV_ENABLE_CLOSURE") == "1";
+    if (enable_closure) {
+      return nullptr;
+    }
     is_match_ = false;
     AnfVisitor::Match(prim::kPrimEnvGetItem, {IsCNode, IsValueNode<SymbolicKeyInstance>, IsNode})(node);
     if (!is_match_ || node->func_graph() == nullptr) {

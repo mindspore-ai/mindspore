@@ -1070,6 +1070,10 @@ class IncorporateGetitemSet : public OptimizerCaller {
   ~IncorporateGetitemSet() = default;
 
   AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) override {
+    static bool enable_closure = common::GetEnv("MS_DEV_ENABLE_CLOSURE") == "1";
+    if (enable_closure) {
+      return nullptr;
+    }
     AnfNodePtr new_node;
     for (auto &eliminater : eliminaters_) {
       new_node = (*eliminater)(optimizer, node);
