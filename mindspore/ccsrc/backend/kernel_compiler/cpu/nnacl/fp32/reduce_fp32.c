@@ -23,261 +23,133 @@
 #include "nnacl/reduce_parameter.h"
 #endif
 
-int ReduceMean(int outer_size, int inner_size, int axis_size, const float *src_data, float *dst_data, int tid,
-               int thread_num) {
-  if (src_data == NULL || dst_data == NULL) {
-    return NNACL_NULL_PTR;
+// 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
+#define ReduceCoreCalc(block_size, block_num, op_name, op_type, outer_src, outer_dst, k)      \
+  for (int block_max_size = inner_size - block_num + 1; k < block_max_size; k += block_num) { \
+    const op_type *inner_src = outer_src + k;                                                 \
+    op_type *inner_dst = outer_dst + k;                                                       \
+    op_name##PreDeal(block_size, block_num);                                                  \
+    for (int i = 0; i < axis_size; i++) {                                                     \
+      op_name##MidCalc(block_size, block_num);                                                \
+    }                                                                                         \
+    op_name##PostDeal(block_size, block_num);                                                 \
   }
-  if (thread_num == 0) {
-    return NNACL_PARAM_INVALID;
-  }
-  int i, j, k;
-  for (j = tid; j < outer_size; j += thread_num) {
-    const float *outer_src = src_data + j * axis_size * inner_size;
-    float *outer_dst = dst_data + j * inner_size;
-    for (k = 0; k < inner_size; k++) {
-      const float *inner_src = outer_src + k;
-      float *inner_dst = outer_dst + k;
-      float tmp = 0.0f;
-      for (i = 0; i < axis_size; i++) {
-        tmp += inner_src[i * inner_size];
-      }
-      *inner_dst = tmp / (float)axis_size;
-    }
-  }
-  return NNACL_OK;
-}
 
-int IntReduceMean(int outer_size, int inner_size, int axis_size, const int *src_data, int *dst_data, int tid,
-                  int thread_num) {
-  if (axis_size == 0) {
-    return NNACL_ERR;
+#define RegReduceOp(op_name, op_type)                                                                             \
+  int op_name(int outer_size, int inner_size, int axis_size, const op_type *src_data, op_type *dst_data, int tid, \
+              int thread_num) {                                                                                   \
+    MS_CHECK_TRUE_RET(src_data != NULL && dst_data != NULL, NNACL_NULL_PTR);                                      \
+    MS_CHECK_TRUE_RET(thread_num > 0, NNACL_PARAM_INVALID);                                                       \
+    for (int j = tid; j < outer_size; j += thread_num) {                                                          \
+      const op_type *outer_src = src_data + j * axis_size * inner_size;                                           \
+      op_type *outer_dst = dst_data + j * inner_size;                                                             \
+      int k = 0;                                                                                                  \
+      MS_SIMD_RUN(ReduceCoreCalc, op_name, op_type, outer_src, outer_dst, k);                                     \
+    }                                                                                                             \
+    return NNACL_OK;                                                                                              \
   }
-  if (src_data == NULL || dst_data == NULL) {
-    return NNACL_NULL_PTR;
-  }
-  if (thread_num == 0) {
-    return NNACL_PARAM_INVALID;
-  }
-  NNACL_CHECK_ZERO_RETURN_ERR(axis_size);
-  int i, j;
-#ifdef ENABLE_NEON
-  int block_mod = inner_size % C4NUM;
-  int block_c4 = inner_size - block_mod;
-#endif
-  for (j = tid; j < outer_size; j += thread_num) {
-    const int *outer_src = src_data + j * axis_size * inner_size;
-    int *outer_dst = dst_data + j * inner_size;
-    int k = 0;
-#ifdef ENABLE_NEON
-    for (; k < block_c4; k += C4NUM) {
-      const int *inner_src = outer_src + k;
-      int *inner_dst = outer_dst + k;
-      int32x4_t tmp = {0, 0, 0, 0};
-      for (i = 0; i < axis_size; i++) {
-        tmp = vaddq_s32(tmp, vld1q_s32(inner_src + i * inner_size));
-      }
-      tmp[0] /= axis_size;
-      tmp[1] /= axis_size;
-      tmp[2] /= axis_size;
-      tmp[3] /= axis_size;
-      vst1q_s32(inner_dst, tmp);
-    }
-#endif
-    for (; k < inner_size; k++) {
-      const int *inner_src = outer_src + k;
-      int *inner_dst = outer_dst + k;
-      int tmp = 0;
-      for (i = 0; i < axis_size; i++) {
-        tmp += inner_src[i * inner_size];
-      }
-      *inner_dst = tmp / axis_size;
-    }
-  }
-  return NNACL_OK;
-}
 
-int ReduceSum(int outer_size, int inner_size, int axis_size, const float *src_data, float *dst_data, int tid,
-              int thread_num) {
-  if (src_data == NULL || dst_data == NULL) {
-    return NNACL_NULL_PTR;
-  }
-  if (thread_num == 0) {
-    return NNACL_PARAM_INVALID;
-  }
-  int i, j;
-#ifdef ENABLE_NEON
-  int block_mod = inner_size % C4NUM;
-  int block_c4 = inner_size - block_mod;
-#endif
-  for (j = tid; j < outer_size; j += thread_num) {
-    const float *outer_src = src_data + j * axis_size * inner_size;
-    float *outer_dst = dst_data + j * inner_size;
-    int k = 0;
-#ifdef ENABLE_NEON
-    for (; k < block_c4; k += C4NUM) {
-      const float *inner_src = outer_src + k;
-      float *inner_dst = outer_dst + k;
-      float32x4_t tmp = {0, 0, 0, 0};
-      for (i = 0; i < axis_size; i++) {
-        tmp = vaddq_f32(tmp, vld1q_f32(inner_src + i * inner_size));
-      }
-      vst1q_f32(inner_dst, tmp);
-    }
-#endif
-    for (; k < inner_size; k++) {
-      const float *inner_src = outer_src + k;
-      float *inner_dst = outer_dst + k;
-      float tmp = 0.0f;
-      for (i = 0; i < axis_size; i++) {
-        tmp += inner_src[i * inner_size];
-      }
-      *inner_dst = tmp;
-    }
-  }
-  return NNACL_OK;
-}
+// ReduceSum
+// (c style) ReduceSumPreDeal : float tmp = 0;
+#define ReduceSumPreDeal(block_size, block_num) MS_FLOAT_32xN(block_num) tmp = MS_MOVN_F32(block_size, 0);
+// (c style) ReduceSumMidCalc : tmp = tmp + *(inner_src + i * inner_size);
+#define ReduceSumMidCalc(block_size, block_num) \
+  tmp = MS_ADD_F32(block_size, tmp, MS_LD_F32(block_size, inner_src + i * inner_size));
+// (c style) ReduceSumPostDeal : *inner_dst = tmp;
+#define ReduceSumPostDeal(block_size, block_num) MS_ST_F32(block_size, inner_dst, tmp);
+RegReduceOp(ReduceSum, float);
 
-int IntReduceSum(int outer_size, int inner_size, int axis_size, const int *src_data, int *dst_data, int tid,
-                 int thread_num) {
-  if (src_data == NULL || dst_data == NULL) {
-    return NNACL_NULL_PTR;
-  }
-  if (thread_num == 0) {
-    return NNACL_PARAM_INVALID;
-  }
-  int i, j;
-#ifdef ENABLE_NEON
-  int block_mod = inner_size % C4NUM;
-  int block_c4 = inner_size - block_mod;
-#endif
-  for (j = tid; j < outer_size; j += thread_num) {
-    const int *outer_src = src_data + j * axis_size * inner_size;
-    int *outer_dst = dst_data + j * inner_size;
-    int k = 0;
-#ifdef ENABLE_NEON
-    for (; k < block_c4; k += C4NUM) {
-      const int *inner_src = outer_src + k;
-      int *inner_dst = outer_dst + k;
-      int32x4_t tmp = {0, 0, 0, 0};
-      for (i = 0; i < axis_size; i++) {
-        tmp = vaddq_s32(tmp, vld1q_s32(inner_src + i * inner_size));
-      }
-      vst1q_s32(inner_dst, tmp);
-    }
-#endif
-    for (; k < inner_size; k++) {
-      const int *inner_src = outer_src + k;
-      int *inner_dst = outer_dst + k;
-      int tmp = 0;
-      for (i = 0; i < axis_size; i++) {
-        tmp += inner_src[i * inner_size];
-      }
-      *inner_dst = tmp;
-    }
-  }
-  return NNACL_OK;
-}
+// ReduceMean
+// (c style) ReduceMeanPreDeal : int tmp = 0;
+#define ReduceMeanPreDeal(block_size, block_num) MS_FLOAT_32xN(block_num) tmp = MS_MOVN_F32(block_size, 0);
+// (c style) ReduceMeanMidCalc : tmp = tmp + *(inner_src + i * inner_size);
+#define ReduceMeanMidCalc(block_size, block_num) \
+  tmp = MS_ADD_F32(block_size, tmp, MS_LD_F32(block_size, inner_src + i * inner_size));
+// (c style) ReduceMeanPostDeal : *inner_dst = tmp / axis_size;
+#define ReduceMeanPostDeal(block_size, block_num) \
+  MS_ST_F32(block_size, inner_dst, MS_DIV_N_F32(block_size, tmp, axis_size));
+RegReduceOp(ReduceMean, float);
 
-int ReduceMax(int outer_size, int inner_size, int axis_size, const float *src_data, float *dst_data, int tid,
-              int thread_num) {
-  if (src_data == NULL || dst_data == NULL) {
-    return NNACL_NULL_PTR;
-  }
-  if (thread_num == 0) {
-    return NNACL_PARAM_INVALID;
-  }
-  int i, j, k;
-  for (j = tid; j < outer_size; j += thread_num) {
-    const float *outer_src = src_data + j * axis_size * inner_size;
-    float *outer_dst = dst_data + j * inner_size;
-    for (k = 0; k < inner_size; k++) {
-      const float *inner_src = outer_src + k;
-      float *inner_dst = outer_dst + k;
-      float tmp = -FLT_MAX;
-      for (i = 0; i < axis_size; i++) {
-        tmp = tmp > inner_src[i * inner_size] ? tmp : inner_src[i * inner_size];
-      }
-      *inner_dst = tmp;
-    }
-  }
-  return NNACL_OK;
-}
+// ReduceMin
+// (c style) ReduceMinPreDeal : float tmp = FLT_MAX;
+#define ReduceMinPreDeal(block_size, block_num) MS_FLOAT_32xN(block_num) tmp = MS_MOVN_F32(block_size, FLT_MAX);
+// (c style) ReduceMinMidCalc : tmp = fminf(tmp, *(inner_src + i * inner_size));
+#define ReduceMinMidCalc(block_size, block_num) \
+  tmp = MS_MIN_F32(block_size, tmp, MS_LD_F32(block_size, inner_src + i * inner_size));
+// (c style) ReduceMinPostDeal : *inner_dst = tmp;
+#define ReduceMinPostDeal(block_size, block_num) MS_ST_F32(block_size, inner_dst, tmp);
+RegReduceOp(ReduceMin, float);
 
-int IntReduceMax(int outer_size, int inner_size, int axis_size, const int *src_data, int *dst_data, int tid,
-                 int thread_num) {
-  if (src_data == NULL || dst_data == NULL) {
-    return NNACL_NULL_PTR;
-  }
-  if (thread_num == 0) {
-    return NNACL_PARAM_INVALID;
-  }
-  int i, j, k;
-  for (j = tid; j < outer_size; j += thread_num) {
-    const int *outer_src = src_data + j * axis_size * inner_size;
-    int *outer_dst = dst_data + j * inner_size;
-    for (k = 0; k < inner_size; k++) {
-      const int *inner_src = outer_src + k;
-      int *inner_dst = outer_dst + k;
-      int tmp = -INT_MAX;
-      for (i = 0; i < axis_size; i++) {
-        tmp = tmp > inner_src[i * inner_size] ? tmp : inner_src[i * inner_size];
-      }
-      *inner_dst = tmp;
-    }
-  }
-  return NNACL_OK;
-}
+// ReduceMax
+// (c style) ReduceMaxPreDeal : float tmp = FLT_MIN;
+#define ReduceMaxPreDeal(block_size, block_num) MS_FLOAT_32xN(block_num) tmp = MS_MOVN_F32(block_size, FLT_MIN);
+// (c style) ReduceMaxMidCalc : tmp = fmaxf(tmp, *(inner_src + i * inner_size));
+#define ReduceMaxMidCalc(block_size, block_num) \
+  tmp = MS_MAX_F32(block_size, tmp, MS_LD_F32(block_size, inner_src + i * inner_size));
+// (c style) ReduceMaxPostDeal : *inner_dst = tmp;
+#define ReduceMaxPostDeal(block_size, block_num) MS_ST_F32(block_size, inner_dst, tmp);
+RegReduceOp(ReduceMax, float);
 
-int ReduceMin(int outer_size, int inner_size, int axis_size, const float *src_data, float *dst_data, int tid,
-              int thread_num) {
-  if (src_data == NULL || dst_data == NULL) {
-    return NNACL_NULL_PTR;
-  }
-  if (thread_num == 0) {
-    return NNACL_PARAM_INVALID;
-  }
-  int i, j, k;
-  for (j = tid; j < outer_size; j += thread_num) {
-    const float *outer_src = src_data + j * axis_size * inner_size;
-    float *outer_dst = dst_data + j * inner_size;
-    for (k = 0; k < inner_size; k++) {
-      const float *inner_src = outer_src + k;
-      float *inner_dst = outer_dst + k;
-      float tmp = FLT_MAX;
-      for (i = 0; i < axis_size; i++) {
-        tmp = tmp < inner_src[i * inner_size] ? tmp : inner_src[i * inner_size];
-      }
-      *inner_dst = tmp;
-    }
-  }
-  return NNACL_OK;
-}
+// ReduceProd
+// (c style) ReduceProdPreDeal : float tmp = 1.0f;
+#define ReduceProdPreDeal(block_size, block_num) MS_FLOAT_32xN(block_num) tmp = MS_MOVN_F32(block_size, 1.0f);
+// (c style) ReduceProdMidCalc : tmp = tmp * (*(inner_src + i * inner_size));
+#define ReduceProdMidCalc(block_size, block_num) \
+  tmp = MS_MUL_F32(block_size, tmp, MS_LD_F32(block_size, inner_src + i * inner_size));
+// (c style) ReduceProdPostDeal : *inner_dst = tmp;
+#define ReduceProdPostDeal(block_size, block_num) MS_ST_F32(block_size, inner_dst, tmp);
+RegReduceOp(ReduceProd, float);
 
-int IntReduceMin(int outer_size, int inner_size, int axis_size, const int *src_data, int *dst_data, int tid,
-                 int thread_num) {
-  if (src_data == NULL || dst_data == NULL) {
-    return NNACL_NULL_PTR;
-  }
-  if (thread_num == 0) {
-    return NNACL_PARAM_INVALID;
-  }
-  int i, j, k;
-  for (j = tid; j < outer_size; j += thread_num) {
-    const int *outer_src = src_data + j * axis_size * inner_size;
-    int *outer_dst = dst_data + j * inner_size;
-    for (k = 0; k < inner_size; k++) {
-      const int *inner_src = outer_src + k;
-      int *inner_dst = outer_dst + k;
-      int tmp = INT32_MAX;
-      for (i = 0; i < axis_size; i++) {
-        tmp = tmp < inner_src[i * inner_size] ? tmp : inner_src[i * inner_size];
-      }
-      *inner_dst = tmp;
-    }
-  }
-  return NNACL_OK;
-}
+// ReduceSumSquare
+// (c style) ReduceSumSquarePreDeal : float tmp = 0;
+#define ReduceSumSquarePreDeal(block_size, block_num) MS_FLOAT_32xN(block_num) tmp = MS_MOVN_F32(block_size, 0);
+// (c style) ReduceSumSquareMidCalc : float val = *(inner_src + i * inner_size); tmp = tmp + val * val;
+#define ReduceSumSquareMidCalc(block_size, block_num) \
+  tmp = MS_ADD_F32(block_size, tmp, MS_MUL_SQUARE_F32(block_size, MS_LD_F32(block_size, inner_src + i * inner_size)));
+// (c style) ReduceSumSquarePostDeal : *inner_dst = tmp;
+#define ReduceSumSquarePostDeal(block_size, block_num) MS_ST_F32(block_size, inner_dst, tmp);
+RegReduceOp(ReduceSumSquare, float);
+
+// IntReduceSum
+// (c style) IntReduceSumPreDeal : int tmp = 0;
+#define IntReduceSumPreDeal(block_size, block_num) MS_INT_32xN(block_num) tmp = MS_MOVN_EPI32(block_size, 0);
+// (c style) IntReduceSumMidCalc : tmp = tmp + *(inner_src + i * inner_size);
+#define IntReduceSumMidCalc(block_size, block_num) \
+  tmp = MS_ADD_EPI32(block_size, tmp, MS_LD_EPI32(block_size, inner_src + i * inner_size));
+// (c style) IntReduceSumPostDeal : *inner_dst = tmp;
+#define IntReduceSumPostDeal(block_size, block_num) MS_ST_EPI32(block_size, inner_dst, tmp);
+RegReduceOp(IntReduceSum, int);
+
+// IntReduceMean
+// (c style) IntReduceSumPreDeal : int tmp = 0;
+#define IntReduceMeanPreDeal(block_size, block_num) MS_INT_32xN(block_num) tmp = MS_MOVN_EPI32(block_size, 0);
+// (c style) IntReduceSumMidCalc : tmp = tmp + *(inner_src + i * inner_size);
+#define IntReduceMeanMidCalc(block_size, block_num) \
+  tmp = MS_ADD_EPI32(block_size, tmp, MS_LD_EPI32(block_size, inner_src + i * inner_size));
+// (c style) IntReduceSumPostDeal : *inner_dst = tmp / axis_size;
+#define IntReduceMeanPostDeal(block_size, block_num) \
+  MS_ST_EPI32(block_size, inner_dst, MS_DIV_N_EPI32(block_size, tmp, axis_size));
+RegReduceOp(IntReduceMean, int);
+
+// IntReduceMin
+// (c style) IntReduceMinPreDeal : int tmp = INT32_MAX;
+#define IntReduceMinPreDeal(block_size, block_num) MS_INT_32xN(block_num) tmp = MS_MOVN_EPI32(block_size, INT32_MAX);
+// (c style) IntReduceMinMidCalc : tmp = fminf(tmp, *(inner_src + i * inner_size));
+#define IntReduceMinMidCalc(block_size, block_num) \
+  tmp = MS_MIN_EPI32(block_size, tmp, MS_LD_EPI32(block_size, inner_src + i * inner_size));
+// (c style) IntReduceMinPostDeal : *inner_dst = tmp;
+#define IntReduceMinPostDeal(block_size, block_num) MS_ST_EPI32(block_size, inner_dst, tmp);
+RegReduceOp(IntReduceMin, int);
+
+// IntReduceMax
+// (c style) IntReduceMinPreDeal : int tmp = INT32_MIN;
+#define IntReduceMaxPreDeal(block_size, block_num) MS_INT_32xN(block_num) tmp = MS_MOVN_EPI32(block_size, INT32_MIN);
+// (c style) IntReduceMinMidCalc : tmp = fmax+f(tmp, *(inner_src + i * inner_size));
+#define IntReduceMaxMidCalc(block_size, block_num) \
+  tmp = MS_MAX_EPI32(block_size, tmp, MS_LD_EPI32(block_size, inner_src + i * inner_size));
+// (c style) IntReduceMinPostDeal : *inner_dst = tmp;
+#define IntReduceMaxPostDeal(block_size, block_num) MS_ST_EPI32(block_size, inner_dst, tmp);
+RegReduceOp(IntReduceMax, int);
 
 int ReduceAll(int outer_size, int inner_size, int axis_size, const bool *src_data, bool *dst_data, int tid,
               int thread_num) {
@@ -297,31 +169,6 @@ int ReduceAll(int outer_size, int inner_size, int axis_size, const bool *src_dat
       bool tmp = true;
       for (i = 0; i < axis_size; i++) {
         tmp = tmp && inner_src[i * inner_size];
-      }
-      *inner_dst = tmp;
-    }
-  }
-  return NNACL_OK;
-}
-
-int ReduceProd(int outer_size, int inner_size, int axis_size, const float *src_data, float *dst_data, int tid,
-               int thread_num) {
-  if (src_data == NULL || dst_data == NULL) {
-    return NNACL_NULL_PTR;
-  }
-  if (thread_num == 0) {
-    return NNACL_PARAM_INVALID;
-  }
-  int i, j, k;
-  for (j = tid; j < outer_size; j += thread_num) {
-    const float *outer_src = src_data + j * axis_size * inner_size;
-    float *outer_dst = dst_data + j * inner_size;
-    for (k = 0; k < inner_size; k++) {
-      const float *inner_src = outer_src + k;
-      float *inner_dst = outer_dst + k;
-      float tmp = 1.0f;
-      for (i = 0; i < axis_size; i++) {
-        tmp *= inner_src[i * inner_size];
       }
       *inner_dst = tmp;
     }
@@ -357,31 +204,6 @@ int IntReduceProd(int outer_size, int inner_size, int axis_size, const int *src_
   return NNACL_OK;
 }
 
-int ReduceSumSquare(int outer_size, int inner_size, int axis_size, const float *src_data, float *dst_data, int tid,
-                    int thread_num) {
-  if (src_data == NULL || dst_data == NULL) {
-    return NNACL_NULL_PTR;
-  }
-  if (thread_num == 0) {
-    return NNACL_PARAM_INVALID;
-  }
-  int i, j, k;
-  for (j = tid; j < outer_size; j += thread_num) {
-    const float *outer_src = src_data + j * axis_size * inner_size;
-    float *outer_dst = dst_data + j * inner_size;
-    for (k = 0; k < inner_size; k++) {
-      const float *inner_src = outer_src + k;
-      float *inner_dst = outer_dst + k;
-      float tmp = 0.0f;
-      for (i = 0; i < axis_size; i++) {
-        tmp += inner_src[i * inner_size] * inner_src[i * inner_size];
-      }
-      *inner_dst = tmp;
-    }
-  }
-  return NNACL_OK;
-}
-
 #ifdef ENABLE_NNACL_INFER_SHAPE
 int ReduceInferShape(int **in_shape, size_t *dim_size, int *out_shape, int *in_format, int *out_format,
                      int *in_datatype, int *out_datatype, OpParameter *param) {
@@ -392,15 +214,11 @@ int ReduceInferShape(int **in_shape, size_t *dim_size, int *out_shape, int *in_f
   int num_axes = reduce_parameter->num_axes_;
   int *in_shape0 = in_shape[0];
   int rank = dim_size[0];
-  if (rank <= 0 || rank > REDUCE_MAX_AXES_NUM) {
-    return NNACL_PARAM_INVALID;
-  }
+  MS_CHECK_TRUE_RET(rank > 0 && rank <= REDUCE_MAX_AXES_NUM, NNACL_PARAM_INVALID);
   int axes[REDUCE_MAX_AXES_NUM];
   int actual_axes_num = num_axes;
   for (int i = 0; i < num_axes; ++i) {
-    if (reduce_parameter->axes_[i] < -rank || reduce_parameter->axes_[i] >= rank) {
-      return NNACL_PARAM_INVALID;
-    }
+    MS_CHECK_TRUE_RET(reduce_parameter->axes_[i] >= -rank && reduce_parameter->axes_[i] < rank, NNACL_PARAM_INVALID);
     if (reduce_parameter->axes_[i] < 0) {
       axes[i] = reduce_parameter->axes_[i] + rank;
     } else {
@@ -408,9 +226,7 @@ int ReduceInferShape(int **in_shape, size_t *dim_size, int *out_shape, int *in_f
     }
   }
   if (reduce_parameter->reduce_to_end_) {
-    if (num_axes != 1) {
-      return NNACL_PARAM_INVALID;
-    }
+    MS_CHECK_TRUE_RET(num_axes == 1, NNACL_PARAM_INVALID);
     int begin_axis = axes[0];
     num_axes = rank - begin_axis;
     for (int i = begin_axis + 1; i < rank; ++i) {
