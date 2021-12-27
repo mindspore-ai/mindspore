@@ -19,7 +19,6 @@ import types
 import sys
 import os
 import time
-import traceback
 import ast
 import importlib
 from collections import OrderedDict
@@ -119,17 +118,13 @@ def _check_all_tensor(sequence):
     return True
 
 
-def _get_filename_from_trace(trace):
-    # format: File "xxx.py", line x, in <module>
-    strings = trace.strip().split(' ')
-    filename = strings[1].rstrip(',').strip('"')
-    return filename
-
 sys_path = list(sys.path)
-cwd = os.getcwd()
-if cwd in sys_path:
-    sys_path.remove(cwd)
-
+# Get the entry script path.
+if sys.argv and sys.argv[0] != '':
+    entry_script_path = os.path.realpath(sys.argv[0])
+    entry_script_path_dir = os.path.split(entry_script_path)[0]
+    if entry_script_path_dir in sys_path:
+        sys_path.remove(entry_script_path_dir)
 def _in_sys_path(file_path):
     for path in sys_path:
         if file_path.startswith(path):
@@ -174,6 +169,7 @@ def __get_compile_cache_dep_files(file_path, compile_cache_dep_files, pkg):
                 dep_file_path = module.__file__
             else:
                 continue
+            # Exclude the installed modules.
             if not _in_sys_path(dep_file_path) and not dep_file_path in compile_cache_dep_files:
                 logger.debug(f"dependent file path: {dep_file_path}")
                 compile_cache_dep_files.append(dep_file_path)
@@ -182,22 +178,13 @@ def __get_compile_cache_dep_files(file_path, compile_cache_dep_files, pkg):
 
 def _get_compile_cache_dep_files():
     """Get the dependency files of the network"""
-    tb = traceback.format_stack()
-    compile_cache_dep_files = []
-    filename = None
-    # Get the entry script file.
-    entry_id = 0
-    while entry_id < len(tb) and _in_sys_path(_get_filename_from_trace(tb[entry_id])):
-        logger.debug(f"trace: {tb[entry_id]}")
-        entry_id += 1
-    if entry_id < len(tb):
-        filename = _get_filename_from_trace(tb[entry_id])
-    if filename is None:
+    if entry_script_path is None:
+        logger.warning("Can not get the entry script file path.")
         return []
-    file_path = os.path.realpath(filename)
-    logger.debug(f"entry script file path: {file_path}")
-    compile_cache_dep_files.append(file_path)
-    __get_compile_cache_dep_files(file_path, compile_cache_dep_files, None)
+    compile_cache_dep_files = []
+    logger.debug(f"entry script file path: {entry_script_path}")
+    compile_cache_dep_files.append(entry_script_path)
+    __get_compile_cache_dep_files(entry_script_path, compile_cache_dep_files, None)
     return compile_cache_dep_files
 
 
