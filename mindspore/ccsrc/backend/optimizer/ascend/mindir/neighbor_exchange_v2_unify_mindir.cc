@@ -291,8 +291,7 @@ CNodePtr CreateAllToAllvNode(const FuncGraphPtr &graph, const CNodePtr &neighbor
       CreateMultipleOutputsOfAnfNode(graph, split_nodes[i], static_cast<size_t>(split_num[i]), &output);
       if (output.empty()) {
         MS_LOG(EXCEPTION) << "The node " << split_nodes[i]->DebugString()
-                          << " should have at least one output, but got 0. trace: "
-                          << trace::DumpSourceLines(split_nodes[i]);
+                          << " should have at least one output, but got 0." << trace::DumpSourceLines(split_nodes[i]);
       }
     }
     split_outputs.emplace_back(output);

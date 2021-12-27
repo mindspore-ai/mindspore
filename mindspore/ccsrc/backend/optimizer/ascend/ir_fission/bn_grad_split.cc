@@ -146,7 +146,7 @@ const AnfNodePtr BnGradSplit::Process(const FuncGraphPtr &func_graph, const AnfN
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
   if (!GetBoolAttr(cnode, kAttrIsTraining)) {
-    MS_LOG(INFO) << "is training should be true if do fusion";
+    MS_LOG(INFO) << "Attr is_training should be true if do fusion";
     return nullptr;
   }
   return BNGradSplitForTBE(func_graph, cnode);

@@ -104,7 +104,7 @@ const AnfNodePtr SingleBatchNormFission::Process(const FuncGraphPtr &func_graph,
     return nullptr;
   }
   if (!GetBoolAttr(cnode, kAttrIsTraining)) {
-    MS_LOG(INFO) << "is training should be true if do fusion";
+    MS_LOG(INFO) << "Attr is_training should be true if do fusion";
     return nullptr;
   }
   AnfNodePtr bn_training_reduce = CreateBNTrainingReduce(func_graph, node);

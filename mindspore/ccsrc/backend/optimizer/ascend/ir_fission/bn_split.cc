@@ -107,7 +107,7 @@ AnfNodePtr BnSplit::SplitBatchNormForTBE(const FuncGraphPtr &func_graph, const A
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   if (AnfAlgo::GetInputTensorNum(cnode) < kBnInputTensorNum) {
-    MS_LOG(INFO) << "op[" << cnode->DebugString() << "] has less input than " << kBnInputTensorNum << " inputs.";
+    MS_LOG(INFO) << "Op[" << cnode->DebugString() << "] has less input than " << kBnInputTensorNum << " inputs.";
     return nullptr;
   }
   // Create BNTrainingReduce node and get outputs of BNTrainingReduce
@@ -117,7 +117,7 @@ AnfNodePtr BnSplit::SplitBatchNormForTBE(const FuncGraphPtr &func_graph, const A
     return nullptr;
   }
   if (bn_training_reduce_outputs.size() != kBN1OutputNum) {
-    MS_LOG(EXCEPTION) << "make outputs of op BNTrainingReduce fail" << trace::DumpSourceLines(node);
+    MS_LOG(EXCEPTION) << "Make outputs of op BNTrainingReduce fail" << trace::DumpSourceLines(node);
   }
 
   // Create BNTrainingUpdate node
@@ -131,7 +131,7 @@ AnfNodePtr SyncBnSplit::SyncBNSplitForTBE(const FuncGraphPtr &func_graph, const 
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   if (AnfAlgo::GetInputTensorNum(cnode) < kBnInputTensorNum) {
-    MS_LOG(INFO) << "op[" << cnode->DebugString() << "] has less input than " << kBnInputTensorNum << " inputs.";
+    MS_LOG(INFO) << "Op[" << cnode->DebugString() << "] has less input than " << kBnInputTensorNum << " inputs.";
     return nullptr;
   }
   // Create BNTrainingReduce node and get outputs of BNTrainingReduce
@@ -141,7 +141,7 @@ AnfNodePtr SyncBnSplit::SyncBNSplitForTBE(const FuncGraphPtr &func_graph, const 
     return nullptr;
   }
   if (bn_training_reduce_outputs.size() != kBN1OutputNum) {
-    MS_LOG(EXCEPTION) << "make outputs of op BNTrainingReduce fail" << trace::DumpSourceLines(node);
+    MS_LOG(EXCEPTION) << "Make outputs of op BNTrainingReduce fail" << trace::DumpSourceLines(node);
   }
 
   std::vector<AnfNodePtr> allreduce_mul_outputs;
@@ -166,7 +166,7 @@ AnfNodePtr CreateValueNodeOfDeviceNumReciprocal(const FuncGraphPtr &graph, const
     MS_LOG(EXCEPTION) << "The device_num attr of node [" << sync_bn_cnode->DebugString() << "] should not be 0."
                       << trace::DumpSourceLines(sync_bn_cnode);
   }
-  MS_LOG(INFO) << "device_num value: " << device_num;
+  MS_LOG(INFO) << "Got device_num value: " << device_num;
   const float device_num_reciprocal = 1.0 / device_num;
 
   std::vector<int64_t> device_num_shape = {};
@@ -256,7 +256,7 @@ const BaseRef BnSplit::DefinePattern() const {
 
 const AnfNodePtr BnSplit::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const {
   if (!GetBoolAttr(node, kAttrIsTraining)) {
-    MS_LOG(INFO) << "is training should be true if do fusion";
+    MS_LOG(INFO) << "Attr is_training should be true if do fusion";
     return nullptr;
   }
   return SplitBatchNormForTBE(func_graph, node);
