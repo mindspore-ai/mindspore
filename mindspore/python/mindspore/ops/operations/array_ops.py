@@ -2072,7 +2072,9 @@ class UnsortedSegmentSum(PrimitiveWithInfer):
     .. image:: api_img/UnsortedSegmentSum.png
 
     Note:
-        If the segment_id i is absent in the segment_ids, then output[i] will be filled with 0.
+        - If the segment_id i is absent in the segment_ids, then output[i] will be filled with 0.
+        - On Ascend, if the value of segment_id is less than 0 or greater than the length of the input data shape, an
+          execution error will occur.
 
     If the sum of the given segment_ids :math:`i` is empty, then :math:`\text{output}[i] = 0`. If the given segment_ids
     is negative, the value will be ignored. 'num_segments' must be equal to the number of different segment_ids.
