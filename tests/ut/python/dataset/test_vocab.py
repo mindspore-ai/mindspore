@@ -87,17 +87,21 @@ def test_vocab_exception():
     """
     Feature: Python text.Vocab class
     Description: test exceptions of text.Vocab
-    Expectation: raise TypeError when input is wrong.
+    Expectation: raise RuntimeError when vocab is not initialized, raise TypeError when input is wrong.
     """
-    with pytest.raises(TypeError):
-        text.Vocab(1)
+    vocab = text.Vocab()
+    with pytest.raises(RuntimeError):
+        vocab.ids_to_tokens(2)
+    with pytest.raises(RuntimeError):
+        vocab.tokens_to_ids(["w3"])
 
     vocab = text.Vocab.from_list(["w1", "w2", "w3"], special_tokens=["<unk>"], special_first=True)
-
     with pytest.raises(TypeError):
         vocab.ids_to_tokens("abc")
     with pytest.raises(TypeError):
         vocab.ids_to_tokens([2, 1.2, "abc"])
+    with pytest.raises(ValueError):
+        vocab.ids_to_tokens(-2)
 
     with pytest.raises(TypeError):
         vocab.tokens_to_ids([1, "w3"])

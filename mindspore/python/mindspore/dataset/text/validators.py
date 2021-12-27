@@ -77,21 +77,14 @@ def check_from_file(method):
     return new_method
 
 
-def check_vocab(method):
-    """A wrapper that wraps a parameter checker to the original function."""
+def check_vocab(c_vocab):
+    """Check the c_vocab of Vocab is initialized or not"""
 
-    @wraps(method)
-    def new_method(self, *args, **kwargs):
-        [vocab], _ = parse_user_args(method, *args, **kwargs)
-        if not isinstance(vocab, cde.Vocab):
-            type_error = "Input vocab is not an instance of cde.Vocab, got type {0}. ".format(type(vocab))
-            suggestion = "Use Vocab.from_dataset(), Vocab.from_list(), Vocab.from_file() or Vocab.from_dict() " \
-                         "to build a vocab."
-            raise TypeError(type_error + suggestion)
-
-        return method(self, *args, **kwargs)
-
-    return new_method
+    if not isinstance(c_vocab, cde.Vocab):
+        error = "The Vocab has not built yet, got type {0}. ".format(type(c_vocab))
+        suggestion = "Use Vocab.from_dataset(), Vocab.from_list(), Vocab.from_file() or Vocab.from_dict() " \
+                     "to build a Vocab."
+        raise RuntimeError(error + suggestion)
 
 
 def check_tokens_to_ids(method):
@@ -117,9 +110,12 @@ def check_ids_to_tokens(method):
     def new_method(self, *args, **kwargs):
         [ids], _ = parse_user_args(method, *args, **kwargs)
         type_check(ids, (int, list), "ids")
+        if isinstance(ids, int):
+            check_value(ids, (0, INT32_MAX), "ids")
         if isinstance(ids, list):
-            param_names = ["ids[{0}]".format(i) for i in range(len(ids))]
-            type_check_list(ids, (int,), param_names)
+            for index, id_ in enumerate(ids):
+                type_check(id_, (int,), "ids[{}]".format(index))
+                check_value(id_, (0, INT32_MAX), "ids[{}]".format(index))
 
         return method(self, *args, **kwargs)
 
