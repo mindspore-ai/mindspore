@@ -22,9 +22,8 @@ bool Named::operator==(const Value &other) const {
   if (other.isa<Named>()) {
     auto other_named = static_cast<const Named &>(other);
     return *this == other_named;
-  } else {
-    return false;
   }
+  return false;
 }
 
 abstract::AbstractBasePtr None::ToAbstract() { return std::make_shared<abstract::AbstractNone>(); }
