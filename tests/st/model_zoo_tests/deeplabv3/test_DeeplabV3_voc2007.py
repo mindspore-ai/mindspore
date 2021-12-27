@@ -37,9 +37,9 @@ def test_DeeplabV3_voc2007():
                            os.path.join(cur_model_path, "scripts/run_distribute_train_s16_r1.sh"))
 
     old_list = ['model.train(args.train_epochs',
-                'callbacks=cbs']
+                'callbacks=cbs', ', save_graphs=False,']
     new_list = ['model.train(30',
-                'callbacks=cbs, sink_size=2']
+                'callbacks=cbs, sink_size=2', ',']
     utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "train.py"))
 
     exec_network_shell = "cd {}/scripts; sh run_distribute_train_s16_r1.sh {}".format(

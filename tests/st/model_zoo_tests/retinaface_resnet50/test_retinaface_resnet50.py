@@ -27,6 +27,9 @@ def test_retinaface_resnet50():
     model_name = "retinaface_resnet50"
     utils.copy_files(model_path, cur_path, model_name)
     cur_model_path = os.path.join(cur_path, model_name)
+    old_list = [", save_graphs=False)"]
+    new_list = [")"]
+    utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "train.py"))
     train_data_path = os.path.join(utils.data_root, "widerface/label.txt")
     pretrain_ckpt_path = os.path.join(utils.ckpt_root, "resnet/resnet-90_4p.ckpt")
     weight_ckpt_path = os.path.join(utils.ckpt_root, "retinaface_resnet/retinaface_res50_epoch_0.ckpt")
