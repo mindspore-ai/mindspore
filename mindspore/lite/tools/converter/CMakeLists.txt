@@ -80,6 +80,9 @@ if(MSLITE_ENABLE_ACL)
 endif()
 
 set(API_SRC ${SRC_DIR}/cxx_api/context.cc)
+if(MSLITE_ENABLE_ACL)
+    list(APPEND API_SRC ${SRC_DIR}/cxx_api/kernel.cc)
+endif()
 set(LITE_SRC ${API_SRC}
         ${SRC_DIR}/ops/ops_def.cc
         ${SRC_DIR}/ops/ops_utils.cc
@@ -231,6 +234,7 @@ target_link_libraries(converter_lite PRIVATE
 if(MSLITE_ENABLE_ACL)
     target_link_libraries(converter_lite PRIVATE
             lite_acl_mid
+            ascend_kernel_mid
             mindspore_shared_lib)
 endif()
 

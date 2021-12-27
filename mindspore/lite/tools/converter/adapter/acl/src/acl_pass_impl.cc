@@ -24,8 +24,9 @@
 #include "tools/converter/parser/parser_utils.h"
 #include "tools/converter/optimizer_manager.h"
 #include "tools/common/string_util.h"
-#include "include/registry/pass_registry.h"
 #include "tools/converter/adapter/acl/common/utils.h"
+#include "tools/converter/adapter/acl/src/acl_model_process.h"
+#include "include/registry/pass_registry.h"
 #include "ops/custom.h"
 #include "ops/tuple_get_item.h"
 #include "base/core_ops.h"
@@ -102,7 +103,7 @@ STATUS PreProcForOnnx(const FuncGraphPtr &func_graph) {
 AclPassImpl::AclPassImpl(const converter::Flags &config)
     : device_type_(config.device),
       fmk_type_(config.fmk),
-      acl_model_option_cfg_(std::move(config.aclModelOptionCfgParam)),
+      user_options_cfg_(std::move(config.aclModelOptionCfgParam)),
       om_parameter_(nullptr),
       custom_node_(nullptr) {}
 
@@ -114,7 +115,7 @@ bool AclPassImpl::IsDeviceAscend() {
 }
 
 bool AclPassImpl::IsDynamicInput() {
-  return !acl_model_option_cfg_.dynamic_image_size.empty() || !acl_model_option_cfg_.dynamic_batch_size.empty();
+  return !user_options_cfg_.dynamic_image_size.empty() || !user_options_cfg_.dynamic_batch_size.empty();
 }
 
 STATUS AclPassImpl::CommonPass(const FuncGraphPtr &func_graph) {
@@ -255,41 +256,41 @@ STATUS AclPassImpl::ConvertGraphToOm(const FuncGraphPtr &func_graph, Buffer *om_
 }
 
 void AclPassImpl::SetAclModelInitOptions(const std::shared_ptr<AscendDeviceInfo> &ascend_info) {
-  if (!acl_model_option_cfg_.fusion_switch_config_file_path.empty()) {
-    ascend_info->SetFusionSwitchConfigPath(acl_model_option_cfg_.fusion_switch_config_file_path);
+  if (!user_options_cfg_.fusion_switch_config_file_path.empty()) {
+    ascend_info->SetFusionSwitchConfigPath(user_options_cfg_.fusion_switch_config_file_path);
   }
-  if (!acl_model_option_cfg_.op_select_impl_mode.empty()) {
-    ascend_info->SetOpSelectImplMode(acl_model_option_cfg_.op_select_impl_mode);
+  if (!user_options_cfg_.op_select_impl_mode.empty()) {
+    ascend_info->SetOpSelectImplMode(user_options_cfg_.op_select_impl_mode);
   }
-  if (!acl_model_option_cfg_.buffer_optimize.empty()) {
-    ascend_info->SetBufferOptimizeMode(acl_model_option_cfg_.buffer_optimize);
+  if (!user_options_cfg_.buffer_optimize.empty()) {
+    ascend_info->SetBufferOptimizeMode(user_options_cfg_.buffer_optimize);
   }
 }
 
 void AclPassImpl::SetAclModelBuildOptions(const std::shared_ptr<AscendDeviceInfo> &ascend_info) {
-  if (acl_model_option_cfg_.output_type != DataType::kInvalidType) {
-    ascend_info->SetOutputType(acl_model_option_cfg_.output_type);
+  if (user_options_cfg_.output_type != DataType::kInvalidType) {
+    ascend_info->SetOutputType(user_options_cfg_.output_type);
   }
-  if (acl_model_option_cfg_.input_shape_map.size() > 0) {
-    ascend_info->SetInputShapeMap(acl_model_option_cfg_.input_shape_map);
+  if (user_options_cfg_.input_shape_map.size() > 0) {
+    ascend_info->SetInputShapeMap(user_options_cfg_.input_shape_map);
   }
-  if (acl_model_option_cfg_.dynamic_batch_size.size() > 0) {
-    ascend_info->SetDynamicBatchSize(acl_model_option_cfg_.dynamic_batch_size);
+  if (user_options_cfg_.dynamic_batch_size.size() > 0) {
+    ascend_info->SetDynamicBatchSize(user_options_cfg_.dynamic_batch_size);
   }
-  if (!acl_model_option_cfg_.dynamic_image_size.empty()) {
-    ascend_info->SetDynamicImageSize(acl_model_option_cfg_.dynamic_image_size);
+  if (!user_options_cfg_.dynamic_image_size.empty()) {
+    ascend_info->SetDynamicImageSize(user_options_cfg_.dynamic_image_size);
   }
-  if (!acl_model_option_cfg_.input_format.empty()) {
-    ascend_info->SetInputFormat(acl_model_option_cfg_.input_format);
+  if (!user_options_cfg_.input_format.empty()) {
+    ascend_info->SetInputFormat(user_options_cfg_.input_format);
   }
-  if (!acl_model_option_cfg_.input_shape.empty()) {
-    ascend_info->SetInputShape(acl_model_option_cfg_.input_shape);
+  if (!user_options_cfg_.input_shape.empty()) {
+    ascend_info->SetInputShape(user_options_cfg_.input_shape);
   }
-  if (!acl_model_option_cfg_.precision_mode.empty()) {
-    ascend_info->SetPrecisionMode(acl_model_option_cfg_.precision_mode);
+  if (!user_options_cfg_.precision_mode.empty()) {
+    ascend_info->SetPrecisionMode(user_options_cfg_.precision_mode);
   }
-  if (!acl_model_option_cfg_.insert_op_config_file_path.empty()) {
-    ascend_info->SetInsertOpConfigPath(acl_model_option_cfg_.insert_op_config_file_path);
+  if (!user_options_cfg_.insert_op_config_file_path.empty()) {
+    ascend_info->SetInsertOpConfigPath(user_options_cfg_.insert_op_config_file_path);
   }
 }
 
@@ -302,7 +303,7 @@ std::shared_ptr<mindspore::Context> AclPassImpl::CreateModelContext() {
   if (ascend_info == nullptr) {
     return nullptr;
   }
-  ascend_info->SetDeviceID(acl_model_option_cfg_.device_id);
+  ascend_info->SetDeviceID(user_options_cfg_.device_id);
   SetAclModelInitOptions(ascend_info);
   SetAclModelBuildOptions(ascend_info);
 
@@ -364,6 +365,35 @@ ParameterPtr AclPassImpl::CreateOmParameter(const FuncGraphPtr &func_graph, cons
   return om_parameter;
 }
 
+STATUS AclPassImpl::CreateGraphAippInput(const FuncGraphPtr &func_graph, const Buffer &om_data) {
+  auto model_process = lite::AclModelProcess(om_data, user_options_cfg_);
+  if (model_process.Load() != lite::RET_OK) {
+    MS_LOG(ERROR) << "Load om failed.";
+    return lite::RET_ERROR;
+  }
+  std::vector<std::vector<int64_t>> inputs_shape;
+  if (model_process.GetInputsShape(&inputs_shape) != lite::RET_OK) {
+    MS_LOG(ERROR) << "Get inputs shape failed.";
+    return lite::RET_ERROR;
+  }
+  if (model_process.UnLoad() != lite::RET_OK) {
+    MS_LOG(ERROR) << "UnLoad om failed.";
+    return lite::RET_ERROR;
+  }
+  // create aipp parameter
+  for (size_t i = 0; i < inputs_shape.size(); i++) {
+    ParameterPtr aipp_parameter = func_graph->add_parameter();
+    CHECK_NULL_RETURN(aipp_parameter);
+    aipp_parameter->set_name("aipp" + std::to_string(i));
+    auto type_ptr = TypeIdToType(kNumberTypeUInt8);
+    auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, inputs_shape[i]);
+    aipp_parameter->set_abstract(abstract_tensor);
+    aipp_parameter->set_default_param(nullptr);
+    graph_aipp_inputs_.emplace_back(aipp_parameter);
+  }
+  return lite::RET_OK;
+}
+
 // now build the whole graph, not split
 STATUS AclPassImpl::BuildGraph(const FuncGraphPtr &func_graph) {
   Buffer om_data;
@@ -375,6 +405,12 @@ STATUS AclPassImpl::BuildGraph(const FuncGraphPtr &func_graph) {
   if (om_parameter_ == nullptr) {
     MS_LOG(ERROR) << "Convert graph  to om failed.";
     return lite::RET_ERROR;
+  }
+  if (!user_options_cfg_.insert_op_config_file_path.empty()) {
+    if (CreateGraphAippInput(func_graph, om_data) != lite::RET_OK) {
+      MS_LOG(ERROR) << "Create aipp input failed.";
+      return lite::RET_ERROR;
+    }
   }
   MS_LOG(DEBUG) << "Build graph success.";
   return lite::RET_OK;
@@ -517,6 +553,21 @@ CNodePtr AclPassImpl::CreateCustomNode(const FuncGraphPtr &func_graph) {
   return custom_node;
 }
 
+STATUS AclPassImpl::ReplaceInputsByAippInputs(const FuncGraphPtr &func_graph) {
+  auto graph_inputs = func_graph->get_inputs();
+  if (graph_aipp_inputs_.size() != graph_inputs.size()) {
+    MS_LOG(ERROR) << "Input size of aipp " << graph_aipp_inputs_.size() << " and input size of func graph "
+                  << graph_inputs.size() << " are not equal.";
+    return lite::RET_ERROR;
+  }
+  for (size_t i = 0; i < graph_inputs.size(); ++i) {
+    auto aipp_abstract = graph_aipp_inputs_[i]->abstract();
+    CHECK_NULL_RETURN(aipp_abstract);
+    graph_inputs[i]->set_abstract(aipp_abstract->Clone());
+  }
+  return lite::RET_OK;
+}
+
 STATUS AclPassImpl::ModifyGraphByCustomNode(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &manager,
                                             const CNodePtr &custom_node) {
   if (graph_outputs_.size() == 1) {
@@ -544,6 +595,12 @@ STATUS AclPassImpl::ModifyGraphByCustomNode(const FuncGraphPtr &func_graph, cons
         MS_LOG(ERROR) << "Replace node failed for output " << j;
         return lite::RET_ERROR;
       }
+    }
+  }
+  if (!graph_aipp_inputs_.empty()) {
+    if (ReplaceInputsByAippInputs(func_graph) != lite::RET_OK) {
+      MS_LOG(ERROR) << "Replace inputs by aipp inputs failed.";
+      return lite::RET_ERROR;
     }
   }
   MS_LOG(DEBUG) << "Modify graph by custom node success.";

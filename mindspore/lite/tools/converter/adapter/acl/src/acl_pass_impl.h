@@ -58,6 +58,7 @@ class AclPassImpl {
   STATUS BuildGraph(const FuncGraphPtr &func_graph);
   STATUS ConvertGraphToOm(const FuncGraphPtr &func_graph, Buffer *om_data);
   ParameterPtr CreateOmParameter(const FuncGraphPtr &func_graph, const Buffer &om);
+  STATUS CreateGraphAippInput(const FuncGraphPtr &func_graph, const Buffer &om_data);
   STATUS SetAclModelOptions(const FuncGraphPtr &func_graph);
   std::shared_ptr<mindspore::Context> CreateModelContext();
   void SetAclModelInitOptions(const std::shared_ptr<AscendDeviceInfo> &ascend_info);
@@ -74,15 +75,17 @@ class AclPassImpl {
  private: /* modify graph by custom node */
   STATUS ModifyGraphByCustomNode(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &manager,
                                  const CNodePtr &custom_node);
+  STATUS ReplaceInputsByAippInputs(const FuncGraphPtr &func_graph);
 
  private:
   std::string device_type_;
   FmkType fmk_type_;
-  lite::acl::AclModelOptionCfg acl_model_option_cfg_;
+  lite::acl::AclModelOptionCfg user_options_cfg_;
   ParameterPtr om_parameter_;
   CNodePtr custom_node_;
   std::shared_ptr<AclModelOptions> options_;
   AnfNodePtrList graph_outputs_;
+  AnfNodePtrList graph_aipp_inputs_;
   std::vector<std::string> graph_output_names_;
   std::vector<std::vector<int64_t>> graph_output_dims_;
 };
