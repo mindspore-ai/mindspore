@@ -75,7 +75,7 @@ from .validators import check_batch, check_shuffle, check_map, check_filter, che
     check_yes_no_dataset, check_speech_commands_dataset, check_tedlium_dataset, check_svhn_dataset, \
     check_stl10_dataset, check_yelp_review_dataset, check_penn_treebank_dataset, check_iwslt2016_dataset, \
     check_iwslt2017_dataset, check_sogou_news_dataset, check_yahoo_answers_dataset, check_udpos_dataset,\
-    check_conll2000_dataset, check_amazon_review_dataset
+    check_conll2000_dataset, check_amazon_review_dataset, check_semeion_dataset
 from ..core.config import get_callback_timeout, _init_device_info, get_enable_shared_mem, get_num_parallel_workers, \
     get_prefetch_size
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
@@ -9428,6 +9428,126 @@ class YesNoDataset(MappableDataset):
 
     def parse(self, children=None):
         return cde.YesNoNode(self.dataset_dir, self.sampler)
+
+
+class SemeionDataset(MappableDataset):
+    """
+    A source dataset for reading and parsing Semeion dataset.
+
+    The generated dataset has two columns :py:obj:`[image, label]`.
+    The tensor of column :py:obj:`image` is of the uint8 type.
+    The tensor of column :py:obj:`label` is a scalar of the uint32 type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        num_samples (int, optional): The number of samples to be included in the dataset
+            (default=None, will read all images).
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, number set in the config).
+        shuffle (bool, optional): Whether to perform shuffle on the dataset (default=None, expected
+            order behavior shown in the table).
+        sampler (Sampler, optional): Object used to choose samples from the
+            dataset (default=None, expected order behavior shown in the table).
+        num_shards (int, optional): Number of shards that the dataset will be divided
+            into (default=None). When this argument is specified, `num_samples` reflects
+            the maximum sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument can only be specified when num_shards is also specified.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing
+            (default=None, which means no cache is used).
+
+    Raises:
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If sampler and shuffle are specified at the same time.
+        RuntimeError: If sampler and sharding are specified at the same time.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+
+    Note:
+        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+          The table below shows what input arguments are allowed and their expected behavior.
+
+    .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
+       :widths: 25 25 50
+       :header-rows: 1
+
+       * - Parameter `sampler`
+         - Parameter `shuffle`
+         - Expected Order Behavior
+       * - None
+         - None
+         - random order
+       * - None
+         - True
+         - random order
+       * - None
+         - False
+         - sequential order
+       * - Sampler object
+         - None
+         - order defined by sampler
+       * - Sampler object
+         - True
+         - not allowed
+       * - Sampler object
+         - False
+         - not allowed
+
+    Examples:
+        >>> semeion_dataset_dir = "/path/to/semeion_dataset_directory"
+        >>>
+        >>> # 1) Get all samples from SEMEION dataset in sequence
+        >>> dataset = ds.SemeionDataset(dataset_dir=semeion_dataset_dir, shuffle=False)
+        >>>
+        >>> # 2) Randomly select 10 samples from SEMEION dataset
+        >>> dataset = ds.SemeionDataset(dataset_dir=semeion_dataset_dir, num_samples=10, shuffle=True)
+        >>>
+        >>> # 3) Get samples from SEMEION dataset for shard 0 in a 2-way distributed training
+        >>> dataset = ds.SemeionDataset(dataset_dir=semeion_dataset_dir, num_shards=2, shard_id=0)
+        >>>
+        >>> # In SEMEION dataset, each dictionary has keys: image, label.
+
+    About SEMEION dataset:
+
+    The dataset was created by Tactile Srl, Brescia, Italy (http://www.tattile.it) and donated in 1994
+    to Semeion Research Center of Sciences of Communication, Rome, Italy (http://www.semeion.it),
+    for machine learning research.
+
+    This dataset consists of 1593 records (rows) and 256 attributes (columns). Each record represents
+    a handwritten digit, originally scanned with a resolution of 256 grey scale. Each pixel of the each
+    original scanned image was first stretched, and after scaled between 0 and 1
+    (setting to 0 every pixel whose value was under the value 127 of the grey scale (127 included)
+    and setting to 1 each pixel whose original value in the grey scale was over 127). Finally, each binary image
+    was scaled again into a 16x16 square box (the final 256 binary attributes).
+
+    .. code-block::
+
+        .
+        └── semeion_dataset_dir
+            └──semeion.data
+            └──semeion.names
+
+    Citation:
+
+    .. code-block::
+
+        @article{
+          title={The Theory of Independent Judges, in Substance Use & Misuse 33(2)1998, pp 439-461},
+          author={M Buscema, MetaNet},
+        }
+    """
+
+    @check_semeion_dataset
+    def __init__(self, dataset_dir, num_samples=None, num_parallel_workers=None, shuffle=None,
+                 sampler=None, num_shards=None, shard_id=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, sampler=sampler, num_samples=num_samples,
+                         shuffle=shuffle, num_shards=num_shards, shard_id=shard_id, cache=cache)
+
+        self.dataset_dir = dataset_dir
+
+    def parse(self, children=None):
+        return cde.SemeionNode(self.dataset_dir, self.sampler)
 
 
 class TedliumDataset(MappableDataset):
