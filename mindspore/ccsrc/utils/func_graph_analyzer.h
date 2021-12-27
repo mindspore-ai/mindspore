@@ -25,20 +25,24 @@ namespace mindspore {
 class ValueManager;
 class FuncClosure {
  public:
-  FuncClosure(const FuncGraphPtr &func_graph, const std::vector<AnfNodePtr> &bind_args)
-      : func_graph_(func_graph), bind_args_(bind_args) {}
+  FuncClosure(const FuncGraphPtr &func_graph, const std::vector<size_t> &arg_indexes,
+              const std::vector<CNodePtr> &arg_users)
+      : func_graph_(func_graph), arg_indexes_(arg_indexes), arg_users_(arg_users) {}
   ~FuncClosure() = default;
 
   bool operator==(const FuncClosure &other) const {
-    return func_graph_ == other.func_graph_ && bind_args_ == other.bind_args_;
+    return func_graph_ == other.func_graph_ && arg_users_ == other.arg_users_ && arg_indexes_ == other.arg_indexes_;
   }
 
   bool ExistInList(const std::vector<std::shared_ptr<FuncClosure>> &list) const;
 
+  std::vector<AnfNodePtr> GetArgs() const;
+
   std::string ToString() const;
 
   FuncGraphPtr func_graph_;
-  std::vector<AnfNodePtr> bind_args_;
+  std::vector<size_t> arg_indexes_;
+  std::vector<CNodePtr> arg_users_;
 };
 using FuncClosurePtr = std::shared_ptr<FuncClosure>;
 

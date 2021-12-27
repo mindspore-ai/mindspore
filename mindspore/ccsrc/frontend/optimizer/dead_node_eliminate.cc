@@ -91,7 +91,7 @@ class ContextManager {
 void VisitNode(const AnfNodePtr &node, const FuncGraphAnalyzer &analyzer, std::vector<int64_t> index_stack, size_t seen,
                ContextManager *context_manager) {
   if (IS_OUTPUT_ON(DEBUG)) {
-    MS_LOG(WARNING) << "Visit node:" << node->DebugString();
+    MS_LOG(DEBUG) << "Visit node: " << node->DebugString();
     for (size_t i = 0; i < index_stack.size(); i++) {
       MS_LOG(DEBUG) << "index_stack[" << i << "]: " << index_stack[i];
     }
@@ -256,7 +256,7 @@ std::pair<ValuePtr, abstract::AbstractBasePtr> EraseValue(const ValuePtr &value,
     auto value_i = new_elements[i];
     auto abs_i = new_abstracts[i];
     // Avoid repeatedly erase.
-    MS_LOG(WARNING) << "value_i:[" << i << "]: " << value_i->ToString();
+    MS_LOG(DEBUG) << "value_i[" << i << "]: " << value_i->ToString();
     if (value_i->isa<Scalar>()) {
       continue;
     }
@@ -293,6 +293,107 @@ bool EraseValueTuple(const AnfNodePtr &node, const std::set<std::vector<int64_t>
   return false;
 }
 
+std::vector<size_t> GetUnusedParameters(const FuncGraphPtr &func_graph) {
+  const auto &manager_node_users = func_graph->manager()->node_users();
+  const auto &parameters = func_graph->parameters();
+  std::vector<size_t> unused_parameter_indexes;
+  // Traverse to find all unused parameters.
+  size_t index = 0;
+  for (const auto &parameter : parameters) {
+    const auto &node_users_it = manager_node_users.find(parameter);
+    if (node_users_it == manager_node_users.end() || node_users_it->second.empty()) {
+      unused_parameter_indexes.emplace_back(index);
+    }
+    index++;
+  }
+  return unused_parameter_indexes;
+}
+
+bool EraseArg(size_t user_index, const CNodePtr &arg_user, const FuncGraphManagerPtr &manager) {
+  const auto &arg = arg_user->input(user_index);
+  if (IsScalarValueNode(arg)) {
+    return false;
+  }
+  MS_LOG(WARNING) << "Erase unused arg: " << arg->DebugString();
+  auto new_tensor = NewValueNode(MakeValue(0));
+  auto abs = std::make_shared<abstract::AbstractScalar>(std::make_shared<Int32Imm>(0));
+  new_tensor->set_abstract(abs);
+  manager->SetEdge(arg_user, user_index, new_tensor);
+  return true;
+}
+
+bool EraseClosureArg(const FuncGraphPtr &fg, const FuncClosurePtr &closure, const CNodePtr &call,
+                     std::vector<size_t> unused_parameters) {
+  if (closure->func_graph_ != fg) {
+    return false;
+  }
+  auto arg_indexes = closure->arg_indexes_;
+  // Add call node args to all args.
+  auto arg_users = closure->arg_users_;
+  for (size_t i = 1; i < call->inputs().size(); i++) {
+    arg_indexes.push_back(i);
+    arg_users.push_back(call);
+  }
+  if (arg_indexes.size() != fg->parameters().size()) {
+    MS_LOG(EXCEPTION) << "Args size: " << arg_indexes.size()
+                      << " is not equal to parameters size: " << fg->parameters().size()
+                      << ". call: " << call->DebugString() << ", fg: " << fg->ToString();
+  }
+  bool change = false;
+  std::for_each(unused_parameters.begin(), unused_parameters.end(),
+                [&arg_indexes, &arg_users, &fg, &change](auto index) {
+                  change = EraseArg(arg_indexes[index], arg_users[index], fg->manager()) || change;
+                });
+  return change;
+}
+
+// If the parameter is a function parameter, the arg will be converted to a DeadNod after renormalize, so the arg need
+// to be erased.
+bool EraseUnusedArgs(const std::vector<AnfNodePtr> &value_nodes, const FuncGraphAnalyzer &analyzer,
+                     const FuncGraphPtr &root_graph) {
+  bool change = false;
+  for (const auto &node : value_nodes) {
+    MS_LOG(DEBUG) << "node:" << node->DebugString();
+    auto fg = GetValueNode<FuncGraphPtr>(node);
+    // If valuenode<FuncGraph> is eliminated before, the fg's manager is nullptr, so check and continue here.
+    if (fg->manager() == nullptr) {
+      continue;
+    }
+    MS_EXCEPTION_IF_NULL(fg);
+    auto unused_parameters = GetUnusedParameters(fg);
+    if (unused_parameters.empty()) {
+      continue;
+    }
+    const auto &callers = analyzer.GetFuncGraphCallers(fg);
+    MS_LOG(DEBUG) << "callers size: " << callers.size();
+    for (const auto &call : callers) {
+      MS_LOG(DEBUG) << "call: " << call->DebugString();
+      const auto &closures = analyzer.GetCallClosures(call);
+      std::for_each(closures.begin(), closures.end(), [&fg, &call, &unused_parameters, &change](const auto &closure) {
+        change = EraseClosureArg(fg, closure, call, unused_parameters) || change;
+      });
+    }
+  }
+  return change;
+}
+
+std::shared_ptr<HashMap<std::string, std::vector<AnfNodePtr>>> SearchVisitNodes(const FuncGraphPtr &func_graph) {
+  auto ret = std::make_shared<HashMap<std::string, std::vector<AnfNodePtr>>>();
+  const auto &all_nodes = TopoSort(func_graph->return_node(), SuccDeeperSimple, AlwaysInclude);
+  for (const auto &node : all_nodes) {
+    if (IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
+      (*ret)["tuple_getitem"].emplace_back(node);
+    } else if (IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
+      (*ret)["make_tuple"].emplace_back(node);
+    } else if (IsValueNode<ValueTuple>(node)) {
+      (*ret)["value_tuple"].emplace_back(node);
+    } else if (IsValueNode<FuncGraph>(node)) {
+      (*ret)["graph_value_node"].emplace_back(node);
+    }
+  }
+  return ret;
+}
+
 bool EliminateDeadNode(const FuncGraphPtr &func_graph) {
   // Travers all tuple getitem nodes to visit.
   FuncGraphAnalyzer analyzer(func_graph);
@@ -308,21 +409,9 @@ bool EliminateDeadNode(const FuncGraphPtr &func_graph) {
   bool cycle_change = true;
   while (cycle_change) {
     ContextManager context_manager;
-    std::vector<AnfNodePtr> tuple_getitem_nodes;
-    std::vector<AnfNodePtr> make_tuple_nodes;
-    std::vector<AnfNodePtr> value_tuples;
-    const auto &all_nodes = TopoSort(func_graph->return_node(), SuccDeeperSimple, AlwaysInclude);
-    for (const auto &node : all_nodes) {
-      if (IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
-        tuple_getitem_nodes.emplace_back(node);
-      } else if (IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
-        make_tuple_nodes.emplace_back(node);
-      } else if (IsValueNode<ValueTuple>(node)) {
-        value_tuples.emplace_back(node);
-      }
-    }
+    auto visited_nodes = SearchVisitNodes(func_graph);
     // Visit from all tuple_getitem.
-    for (const auto &tuple_getitem : tuple_getitem_nodes) {
+    for (const auto &tuple_getitem : (*visited_nodes)["tuple_getitem"]) {
       VisitNode(tuple_getitem, analyzer, index_stack, seen, &context_manager);
     }
     // Visit from root graph output.
@@ -332,31 +421,30 @@ bool EliminateDeadNode(const FuncGraphPtr &func_graph) {
     }
     // Check all make tuple's input
     cycle_change = false;
-    for (const auto &make_tuple : make_tuple_nodes) {
-      MS_LOG(WARNING) << "Check make_tuple:" << make_tuple->DebugString();
+    for (const auto &make_tuple : (*visited_nodes)["make_tuple"]) {
+      MS_LOG(DEBUG) << "Check make_tuple:" << make_tuple->DebugString();
       auto make_tuple_cnode = make_tuple->cast<CNodePtr>();
       for (size_t i = 1; i < make_tuple_cnode->size(); i++) {
         // If make_tuple was not visited ,it may be a make tuple of swith_layer or addn and some other ops.
         auto input_edge_visited = context_manager.IndexVisited(make_tuple_cnode, i - 1);
         // Can use `context_manager.contexts_.find(make_tuple_cnode) != context_manager.contexts_.end()`.
         auto make_tuple_visited = make_tuple_cnode->seen_ == seen;
-        MS_LOG(WARNING) << "Check [" << i - 1 << "]:"
-                        << ", input_edge_visited: " << input_edge_visited
-                        << ", make_tuple_visited: " << make_tuple_visited;
-
         if (!input_edge_visited && make_tuple_visited) {
           cycle_change = EraseMakeTupleInput(func_graph, make_tuple_cnode, i) || cycle_change;
         }
       }
     }
     // Check all value tuple
-    for (const auto &value_tuple : value_tuples) {
+    for (const auto &value_tuple : (*visited_nodes)["value_tuple"]) {
       auto it = context_manager.contexts_.find(value_tuple);
       if (it == context_manager.contexts_.end()) {
         continue;
       }
       cycle_change = EraseValueTuple(value_tuple, it->second->index_stacks_) || cycle_change;
     }
+    // Erase unused parameter's arg.
+    cycle_change = EraseUnusedArgs((*visited_nodes)["graph_value_node"], analyzer, func_graph) || cycle_change;
+    // Erase circle graphs: caller[fg1] = fg2, caller[fg2] = fg1, fg1 and fg2 are redudunt.
     change = change || cycle_change;
   }
   return change;

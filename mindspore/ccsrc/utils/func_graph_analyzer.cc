@@ -88,7 +88,7 @@ class ValueManager : public std::enable_shared_from_this<ValueManager> {
     MS_EXCEPTION_IF_NULL(call_cnode);
     auto closures = GetCallClosures(call, fg);
     for (const auto &closure : closures) {
-      auto args = closure->bind_args_;
+      auto args = closure->GetArgs();
       (void)std::copy(call_cnode->inputs().begin() + 1, call_cnode->inputs().end(), std::back_inserter(args));
       if (parameters.size() != args.size()) {
         MS_LOG(EXCEPTION) << "Parameters size and args size are not equal, parameters size: " << parameters.size()
@@ -317,9 +317,13 @@ std::vector<FuncClosurePtr> PartialValueGetter::GetFuncGraphs() {
   auto partial = anf_node_->cast<CNodePtr>();
   std::vector<FuncClosurePtr> closures;
   for (const auto &closure : input_closures) {
-    auto args = closure->bind_args_;
-    std::copy(partial->inputs().begin() + arg_start_idx, partial->inputs().end(), std::back_inserter(args));
-    closures.emplace_back(std::make_shared<FuncClosure>(closure->func_graph_, args));
+    auto arg_indexes = closure->arg_indexes_;
+    auto arg_users = closure->arg_users_;
+    for (size_t i = arg_start_idx; i < partial->inputs().size(); i++) {
+      arg_indexes.emplace_back(i);
+      arg_users.emplace_back(partial);
+    }
+    closures.emplace_back(std::make_shared<FuncClosure>(closure->func_graph_, arg_indexes, arg_users));
   }
   return closures;
 }
@@ -489,8 +493,8 @@ ValueGetterPtr DirectValueGetter::Visit(int64_t index, const std::shared_ptr<Has
 }
 std::vector<FuncClosurePtr> DirectValueGetter::GetFuncGraphs() {
   if (func_graphs_.empty()) {
-    func_graphs_.emplace_back(
-      std::make_shared<FuncClosure>(GetValueNode<FuncGraphPtr>(anf_node_), std::vector<AnfNodePtr>()));
+    func_graphs_.emplace_back(std::make_shared<FuncClosure>(GetValueNode<FuncGraphPtr>(anf_node_),
+                                                            std::vector<size_t>(), std::vector<CNodePtr>()));
   }
   return func_graphs_;
 }
@@ -550,11 +554,19 @@ bool FuncClosure::ExistInList(const std::vector<std::shared_ptr<FuncClosure>> &l
   return std::any_of(list.begin(), list.end(), [this](const auto &list_item) { return *list_item == *this; });
 }
 
+std::vector<AnfNodePtr> FuncClosure::GetArgs() const {
+  std::vector<AnfNodePtr> args;
+  for (size_t i = 0; i < arg_indexes_.size(); i++) {
+    args.emplace_back(arg_users_[i]->input(arg_indexes_[i]));
+  }
+  return args;
+}
+
 std::string FuncClosure::ToString() const {
   std::ostringstream buffer;
   buffer << "\nfg:," << func_graph_->ToString();
-  for (size_t i = 0; i < bind_args_.size(); i++) {
-    buffer << "\narg[" << i << "]:" << bind_args_[i]->ToString();
+  for (size_t i = 0; i < arg_users_.size(); i++) {
+    buffer << "\narg[" << i << "]:" << arg_users_[i]->input(arg_indexes_[i])->ToString();
   }
   buffer << "\n===================================================";
   return buffer.str();
@@ -587,6 +599,7 @@ void FuncGraphAnalyzer::Run() {
 }
 
 std::vector<CNodePtr> FuncGraphAnalyzer::GetFuncGraphCallers(const FuncGraphPtr &func_graph) const {
+  MS_EXCEPTION_IF_NULL(func_graph);
   auto it = value_manager_->func_graph_real_users_.find(func_graph);
   if (it == value_manager_->func_graph_real_users_.end()) {
     MS_LOG(INFO) << "Find func graph:" << func_graph->ToString() << " failed.";
@@ -639,14 +652,13 @@ void FuncGraphAnalyzer::DumpFuncGraphRealUsers() const {
 bool FuncGraphAnalyzer::ExistClosure() const {
   for (const auto &[call, closures] : value_manager_->caller_closures_) {
     for (const auto &closure : closures) {
-      if (closure->bind_args_.empty()) {
+      if (closure->arg_indexes_.empty()) {
         continue;
       }
-      const auto &last_arg = closure->bind_args_.back();
+      const auto &last_arg_user = closure->arg_users_.back();
       const auto &graph_manager = call->func_graph()->manager();
-      const auto &one_node_user = graph_manager->node_users()[last_arg].back().first;
       // Partial's arg and call are in same graph, this is not closure.
-      if (one_node_user->func_graph() != call->func_graph()) {
+      if (last_arg_user->func_graph() != call->func_graph()) {
         return true;
       }
     }
