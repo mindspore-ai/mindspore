@@ -76,6 +76,37 @@ NPUDelegate::~NPUDelegate() {
   }
 }
 
+Status NPUDelegate::AddPasses() {
+  auto transform_pass = new (std::nothrow) NPUTransformPass();
+  if (transform_pass == nullptr) {
+    MS_LOG(ERROR) << "New NPUTransformPass failed.";
+    return mindspore::kLiteNullptr;
+  }
+  pass_manager_->AddPass(transform_pass);
+
+  auto insert_transform_pass = new (std::nothrow) NPUInsertTransformPass();
+  if (insert_transform_pass == nullptr) {
+    MS_LOG(ERROR) << "New NPUInsertTransformPass failed.";
+    return mindspore::kLiteNullptr;
+  }
+  pass_manager_->AddPass(insert_transform_pass);
+
+  auto fusion_pass = new (std::nothrow) NPUFusionPass();
+  if (fusion_pass == nullptr) {
+    MS_LOG(ERROR) << "New NPUFusionPass failed.";
+    return mindspore::kLiteNullptr;
+  }
+  pass_manager_->AddPass(fusion_pass);
+
+  auto infer_format_pass = new (std::nothrow) NPUInferFormatPass();
+  if (infer_format_pass == nullptr) {
+    MS_LOG(ERROR) << "New NPUInferFormatPass failed.";
+    return mindspore::kLiteNullptr;
+  }
+  pass_manager_->AddPass(infer_format_pass);
+  return mindspore::kSuccess;
+}
+
 Status NPUDelegate::Init() {
   npu_manager_ = new (std::nothrow) NPUManager(frequency_);
   if (npu_manager_ == nullptr) {
@@ -95,14 +126,12 @@ Status NPUDelegate::Init() {
     MS_LOG(ERROR) << "New npu pass manager failed.";
     return mindspore::kLiteNullptr;
   }
-  auto transform_pass = new (std::nothrow) NPUTransformPass();
-  pass_manager_->AddPass(transform_pass);
-  auto insert_transform_pass = new (std::nothrow) NPUInsertTransformPass();
-  pass_manager_->AddPass(insert_transform_pass);
-  auto fusion_pass = new (std::nothrow) NPUFusionPass();
-  pass_manager_->AddPass(fusion_pass);
-  auto infer_format_pass = new (std::nothrow) NPUInferFormatPass();
-  pass_manager_->AddPass(infer_format_pass);
+
+  auto ret = AddPasses();
+  if (ret != mindspore::kSuccess) {
+    MS_LOG(ERROR) << "add passes for npu pass manager failed.";
+    return ret;
+  }
 
   op_func_lists_.clear();
   op_func_lists_ = {

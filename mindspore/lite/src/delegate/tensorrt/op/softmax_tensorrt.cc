@@ -69,11 +69,11 @@ nvinfer1::ISoftMaxLayer *SoftMaxTensorRT::AddSoftMaxOp(nvinfer1::INetworkDefinit
     return nullptr;
   }
   auto axis = softmax_op_->axis();
-  auto axis_val = std::vector<int64_t>(axis->begin(), axis->end());
-  if (axis_val.size() != 1) {
-    MS_LOG(WARNING) << "axis needs check";
+  if (axis == nullptr || axis->size() != 1) {
+    MS_LOG(ERROR) << "axis needs check";
+    return nullptr;
   }
-
+  auto axis_val = std::vector<int64_t>(axis->begin(), axis->end());
   if (axis_val[0] >= tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims) {
     MS_LOG(ERROR) << "axis is larger than input tensor dims.";
     return nullptr;

@@ -93,6 +93,10 @@ int ResizeTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
 int ResizeTensorRT::SetOutputDims(nvinfer1::ITensor *resize_in_tensor, nvinfer1::IResizeLayer *resize_layer) {
   if (in_tensors_.size() == 1 && !dynamic_shape_params_.support_dynamic_) {
     nvinfer1::Dims new_dims = resize_in_tensor->getDimensions();  // nchw
+    if (new_dims.nbDims != DIMENSION_4D) {
+      MS_LOG(ERROR) << op_name_ << " resize has new height and width value, but input dim is " << new_dims.nbDims;
+      return RET_ERROR;
+    }
     new_dims.d[kNCHW_H] = resize_op_->new_height();
     new_dims.d[kNCHW_W] = resize_op_->new_width();
     resize_layer->setOutputDimensions(new_dims);  // static shape
@@ -117,26 +121,15 @@ int ResizeTensorRT::SetOutputDims(nvinfer1::ITensor *resize_in_tensor, nvinfer1:
     } else {
       std::vector<float> out_shape;
       ParseValueFromShapeTensor(shape_value_tensor, &out_shape);
-      if (out_shape.size() == DIMENSION_2D &&
-          tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == DIMENSION_4D) {
-        // out_shape: origin_n, out_shape[0], out_shape[1], origin_c
-        out_shape.insert(out_shape.begin(),
-                         tensorrt_in_tensors_[0].trt_tensor_->getDimensions().d[0]);  // batch size is dynamic
-        out_shape.push_back(in_tensors_[0].Shape()[kNHWC_C]);                         // channel is const
-      }
       if (SameDims(out_shape, out_tensors_[0].Shape())) {
         // static dims
         if (out_shape.size() == DIMENSION_4D) {
+          // convert nhwc to nchw
           auto channel = out_shape[out_shape.size() - 1];
           out_shape.insert(out_shape.begin() + 1, channel);
           out_shape.erase(out_shape.begin() + out_shape.size() - 1);
         }
-        auto dims = ConvertCudaDims(out_shape);
-        if (dims.nbDims == -1) {
-          MS_LOG(ERROR) << "ConvertCudaDims failed for " << op_name_;
-          return RET_ERROR;
-        }
-        resize_layer->setOutputDimensions(dims);
+        resize_layer->setOutputDimensions(ConvertCudaDims(out_shape));
       } else if (IsScaleOutputDim(in_tensors_[0].Shape(), out_tensors_[0].Shape(), out_shape)) {
         // scale dims
         if (out_shape.size() != DIMENSION_4D) {
@@ -198,6 +191,13 @@ void ResizeTensorRT::ParseValueFromShapeTensor(const mindspore::MSTensor &shape_
       MS_LOG(WARNING) << op_name_
                       << " more datatype need to check: " << static_cast<int>(shape_value_tensor.DataType());
       break;
+  }
+  if (out_shape->size() == DIMENSION_2D &&
+      tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == DIMENSION_4D) {
+    // out_shape: origin_n, out_shape[0], out_shape[1], origin_c
+    out_shape->insert(out_shape->begin(),
+                      tensorrt_in_tensors_[0].trt_tensor_->getDimensions().d[0]);  // batch size is dynamic
+    out_shape->push_back(in_tensors_[0].Shape()[kNHWC_C]);                         // channel is const
   }
 }
 

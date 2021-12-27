@@ -42,6 +42,8 @@ class NPUDelegate : public Delegate {
   kernel::Kernel *CreateNPUGraph(const std::vector<NPUOp *> &ops, DelegateModel<schema::Primitive> *model,
                                  KernelIter from, KernelIter end);
 
+  Status AddPasses();
+
   NPUManager *npu_manager_ = nullptr;
   NPUPassManager *pass_manager_ = nullptr;
   std::map<schema::PrimitiveType, NPUGetOp> op_func_lists_;

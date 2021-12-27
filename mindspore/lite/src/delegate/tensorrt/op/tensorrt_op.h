@@ -24,6 +24,7 @@
 #include "src/common/log_adapter.h"
 #include "include/errorcode.h"
 #include "src/delegate/tensorrt/tensorrt_utils.h"
+#include "src/common/log_util.h"
 
 namespace mindspore::lite {
 constexpr int INPUT_SIZE2 = 2;

@@ -27,6 +27,7 @@ int ConvolutionNPUOp::IsSupport(const schema::Primitive *primitive, const std::v
     MS_LOG(ERROR) << "Get null primitive value for op ." << name_;
     return RET_ERROR;
   }
+  CHECK_NULL_RETURN(conv_prim->stride());
   auto stride_h = static_cast<int>(*(conv_prim->stride()->begin()));
   auto stride_w = static_cast<int>(*(conv_prim->stride()->begin() + 1));
   auto in_shape = in_tensors[0].Shape();  // default format: nhwc, RunPass not called
@@ -39,8 +40,10 @@ int ConvolutionNPUOp::IsSupport(const schema::Primitive *primitive, const std::v
 
 int ConvolutionNPUOp::SetConvParam(const schema::Conv2DFusion *conv_prim) {
   auto group = static_cast<int>(conv_prim->group());
+  CHECK_NULL_RETURN(conv_prim->stride());
   auto stride_h = static_cast<int>(*(conv_prim->stride()->begin()));
   auto stride_w = static_cast<int>(*(conv_prim->stride()->begin() + 1));
+  CHECK_NULL_RETURN(conv_prim->dilation());
   auto dilation_h = static_cast<int>(*(conv_prim->dilation()->begin()));
   auto dilation_w = static_cast<int>(*(conv_prim->dilation()->begin() + 1));
   conv_->set_attr_strides(ge::AttrValue::LIST_INT({stride_h, stride_w}));
@@ -55,6 +58,7 @@ int ConvolutionNPUOp::SetConvParam(const schema::Conv2DFusion *conv_prim) {
     conv_->set_attr_pads(ge::AttrValue::LIST_INT({0, 0, 0, 0}));
   } else {
     conv_->set_attr_pad_mode(ge::AttrValue::STR{"SPECIFIC"});
+    CHECK_NULL_RETURN(conv_prim->pad_list());
     auto pad_u = static_cast<int>(*(conv_prim->pad_list()->begin() + PAD_UP));
     auto pad_d = static_cast<int>(*(conv_prim->pad_list()->begin() + PAD_DOWN));
     auto pad_l = static_cast<int>(*(conv_prim->pad_list()->begin() + PAD_LEFT));

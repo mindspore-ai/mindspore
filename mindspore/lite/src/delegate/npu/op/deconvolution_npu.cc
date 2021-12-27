@@ -41,8 +41,10 @@ int DeconvolutionNPUOp::SetDeconvParam(const schema::Conv2dTransposeFusion *conv
   CHECK_NULL_RETURN(deconv_);
 
   auto group = static_cast<int>(conv_prim->group());
+  CHECK_NULL_RETURN(conv_prim->stride());
   auto stride_h = static_cast<int>(*(conv_prim->stride()->begin()));
   auto stride_w = static_cast<int>(*(conv_prim->stride()->begin() + 1));
+  CHECK_NULL_RETURN(conv_prim->dilation());
   auto dilation_h = static_cast<int>(*(conv_prim->dilation()->begin()));
   auto dilation_w = static_cast<int>(*(conv_prim->dilation()->begin() + 1));
   deconv_->set_attr_strides(ge::AttrValue::LIST_INT({stride_h, stride_w}));
@@ -57,6 +59,7 @@ int DeconvolutionNPUOp::SetDeconvParam(const schema::Conv2dTransposeFusion *conv
     deconv_->set_attr_pads(ge::AttrValue::LIST_INT({0, 0, 0, 0}));
   } else {
     deconv_->set_attr_pad_mode(ge::AttrValue::STR{"SPECIFIC"});
+    CHECK_NULL_RETURN(conv_prim->pad_list());
     auto pad_u = static_cast<int>(*(conv_prim->pad_list()->begin() + PAD_UP));
     auto pad_d = static_cast<int>(*(conv_prim->pad_list()->begin() + PAD_DOWN));
     auto pad_l = static_cast<int>(*(conv_prim->pad_list()->begin() + PAD_LEFT));

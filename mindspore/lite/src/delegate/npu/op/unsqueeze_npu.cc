@@ -41,6 +41,7 @@ int UnsqueezeNPUOp::Init(const schema::Primitive *primitive, const std::vector<m
     MS_LOG(ERROR) << "Get null primitive value for op ." << name_;
     return RET_ERROR;
   }
+  CHECK_NULL_RETURN(unsqueeze_prim->axis());
   axis_ = std::vector<int>(unsqueeze_prim->axis()->begin(), unsqueeze_prim->axis()->end());
   int size = axis_.size();
   ge::TensorDesc desc(ge::Shape({size}), ge::FORMAT_NCHW, ge::DT_INT32);
