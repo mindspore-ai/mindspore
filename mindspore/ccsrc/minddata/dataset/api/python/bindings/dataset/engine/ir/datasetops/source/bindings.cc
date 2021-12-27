@@ -26,6 +26,7 @@
 
 // IR leaf nodes
 #include "minddata/dataset/engine/ir/datasetops/source/ag_news_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/amazon_review_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/celeba_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/cifar100_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/cifar10_node.h"
@@ -87,6 +88,18 @@ PYBIND_REGISTER(AGNewsNode, 2, ([](const py::module *m) {
                                                                   usage, num_shards, shard_id, nullptr);
                       THROW_IF_ERROR(ag_news->ValidateParams());
                       return ag_news;
+                    }));
+                }));
+
+PYBIND_REGISTER(AmazonReviewNode, 2, ([](const py::module *m) {
+                  (void)py::class_<AmazonReviewNode, DatasetNode, std::shared_ptr<AmazonReviewNode>>(
+                    *m, "AmazonReviewNode", "to create an AmazonReviewNode")
+                    .def(py::init([](std::string dataset_dir, std::string usage, int64_t num_samples, int32_t shuffle,
+                                     int32_t num_shards, int32_t shard_id) {
+                      std::shared_ptr<AmazonReviewNode> amazon_review = std::make_shared<AmazonReviewNode>(
+                        dataset_dir, usage, num_samples, toShuffleMode(shuffle), num_shards, shard_id, nullptr);
+                      THROW_IF_ERROR(amazon_review->ValidateParams());
+                      return amazon_review;
                     }));
                 }));
 

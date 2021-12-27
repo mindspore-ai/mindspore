@@ -78,6 +78,7 @@ constexpr char kZipNode[] = "Zip";
 // Names for leaf IR node
 constexpr char kAGNewsNode[] = "AGNewsDataset";
 constexpr char kAlbumNode[] = "AlbumDataset";
+constexpr char kAmazonReviewNode[] = "AmazonReviewDataset";
 constexpr char kCelebANode[] = "CelebADataset";
 constexpr char kCifar100Node[] = "Cifar100Dataset";
 constexpr char kCifar10Node[] = "Cifar10Dataset";
