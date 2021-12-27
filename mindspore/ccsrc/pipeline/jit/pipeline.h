@@ -24,6 +24,7 @@
 #include <map>
 #include <mutex>
 #include <unordered_map>
+#include <list>
 
 #include "pybind11/pybind11.h"
 
@@ -128,9 +129,11 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   std::map<std::string, std::pair<PrimitivePyAdapterPtr, std::string>> FetchInfoForQuantExport(
     const std::string &phase);
 
+  // Generate a key for mapping function graph
+  py::object GenerateArgumentsKey(const py::tuple &args, bool enable_tuple_broaden = false);
+
  private:
   GraphExecutorPy();
-  void ConvertObjectToTensors(const py::dict &dict, std::map<std::string, tensor::TensorPtr> *tensors);
   void GetWeightInfo(const CNodePtr &root_node, const AnfNodePtr &weight_node,
                      std::map<std::string, std::pair<PrimitivePyAdapterPtr, std::string>> *fake_quant_table);
   void GetGeBackendPolicy() const;
@@ -153,15 +156,13 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   bool enable_tuple_broaden_{false};
   py::list compile_cache_dep_files_;
   py::dict weights_;
+  std::map<PyObject *, AbstractBasePtr> cur_convert_input_;
 };
 using GraphExecutorPyPtr = std::shared_ptr<GraphExecutorPy>;
 
 std::string GetJitLevel();
 
 void CheckArgsValid(const py::tuple &args);
-// Generate a key for mapping function graph
-py::object GenerateArgumentsKey(const std::unordered_map<std::string, py::object> &args,
-                                bool enable_tuple_broaden = false);
 py::bool_ VerifyInputSignature(const py::list &input_signature, const py::tuple &inputs);
 
 bool InitDistribute(const std::map<std::string, std::string> &options);
