@@ -1880,6 +1880,8 @@ void DfGraphConvertor::SaveParamFormat(const CNodePtr node) {
           } else {
             CheckAndConvertUtils::GetFormatStringVal(prim, &format);
           }
+        } else if (attr.second->isa<StringImm>()) {
+          format = attr.second->ToString();
         }
         if (format != "NCDHW" && format != "NHWC") {
           break;
