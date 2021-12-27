@@ -88,6 +88,10 @@ class KernelRuntime {
   uint8_t *MallocCommunicationMemFromMemPool(size_t size) {
     return mem_manager_->MallocCommunicationMemFromMemPool(size);
   }
+  bool MallocContinuousMemFromMemPool(const DeviceAddressPtrList &addr_list, size_t total_size,
+                                      std::vector<size_t> size_list) {
+    return mem_manager_->MallocContinuousMemFromMemPool(addr_list, total_size, size_list);
+  }
   static void GenLaunchArgs(const mindspore::kernel::KernelMod &kernel_mod, const AnfNodePtr &kernel,
                             KernelLaunchInfo *kernel_launch_info);
 

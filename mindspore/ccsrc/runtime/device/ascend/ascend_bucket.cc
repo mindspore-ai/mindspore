@@ -29,66 +29,22 @@
 #include "utils/profile.h"
 
 namespace mindspore::device::ascend {
-void AscendBucket::AllocateAllReduceAddr() {
-  // Check bucket is full
-  if (grad_tensor_list_.size() != bucket_size_) {
-    MS_LOG(EXCEPTION) << "grad tensor list size:" << grad_tensor_list_.size()
-                      << " is not equal to bucket size:" << bucket_size_;
-  }
+DeviceAddressPtr AscendBucket::CreateDeviceAddress(size_t size) const {
+  return std::make_shared<AscendDeviceAddress>(nullptr, size);
+}
 
-  size_t total_size = 0;
-  std::vector<size_t> origin_size_list;
-  for (auto &tensor : grad_tensor_list_) {
-    MS_EXCEPTION_IF_NULL(tensor);
-    tensor_type_list_.emplace_back(tensor->data_type());
-    DeviceAddressPtr device_address = std::dynamic_pointer_cast<DeviceAddress>(tensor->device_address());
-    MS_EXCEPTION_IF_NULL(device_address);
-    auto origin_size = device_address->GetSize();
-    auto align_size = MemoryManager::GetCommonAlignSize(origin_size);
-    origin_size_list.emplace_back(origin_size);
-    (void)align_size_list_.emplace_back(align_size);
-    total_size += align_size;
-    memcpy_input_addrs_.emplace_back(std::make_shared<kernel::Address>(
-      static_cast<uint8_t *>(device_address->GetMutablePtr()), device_address->GetSize()));
-  }
+size_t AscendBucket::GetAlignSize(size_t size) const { return MemoryManager::GetCommonAlignSize(size); }
 
-  total_size_ = total_size;
-
+void AscendBucket::AllocateContinousMemory(const std::vector<DeviceAddressPtr> &to_allocate_address, size_t total_size,
+                                           const std::vector<size_t> &size_list) const {
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetCurrentKernelRuntime();
   MS_EXCEPTION_IF_NULL(runtime_instance);
-  // AllReduce input output addr need to clear zero
-  ar_input_addr_ = runtime_instance->MallocCommunicationMemFromMemPool(total_size);
-  ar_output_addr_ = runtime_instance->MallocCommunicationMemFromMemPool(total_size);
-
-  // generate memecpy output addr
-  uint8_t *memcpy_output = ar_input_addr_;
-  if (origin_size_list.size() < bucket_size_ || align_size_list_.size() < bucket_size_) {
-    MS_LOG(EXCEPTION) << "Invalid bucket_size_:" << bucket_size_ << " origin_size_list.size:" << origin_size_list.size()
-                      << " align_size_list.size:" << align_size_list_.size();
-  }
-  for (size_t i = 0; i < bucket_size_; ++i) {
-    memcpy_output_addrs_.emplace_back(std::make_shared<kernel::Address>(memcpy_output, origin_size_list[i]));
-    memcpy_output += align_size_list_[i];
+  if (!runtime_instance->MallocContinuousMemFromMemPool(to_allocate_address, total_size, size_list)) {
+    MS_LOG(EXCEPTION) << "Allocate memory for AllReduce input failed";
   }
 }
 
-void AscendBucket::FreeDeviceMem(void *dev_ptr) { AscendMemoryPool::GetInstance().FreeTensorMem(dev_ptr); }
-
 void AscendBucket::FreeAllDeviceMem() {
-  if (ar_input_addr_ != nullptr) {
-    uint8_t *origin_dev_addr = ar_input_addr_ - kMemAlignSize;
-    FreeDeviceMem(origin_dev_addr);
-    ar_input_addr_ = nullptr;
-  }
-  if (ar_output_addr_ != nullptr) {
-    uint8_t *origin_dev_addr = ar_output_addr_ - kMemAlignSize;
-    FreeDeviceMem(origin_dev_addr);
-    ar_output_addr_ = nullptr;
-  }
-  // clear launch mul device Memory
-  if (launch_mul_ != nullptr) {
-    launch_mul_->FreeLaunchDeviceMem();
-  }
   // clear launch atomic clean device Memory
   if (launch_atomic_clean_ != nullptr) {
     launch_atomic_clean_->FreeLaunchDeviceMem();
@@ -149,8 +105,15 @@ void AscendBucket::LaunchAllReduce() {
   auto hccl_count = total_size_ / type_size;
 
   HcclReduceOp op_type = HcclReduceOp::HCCL_REDUCE_SUM;
-  auto hccl_result = hccl::HcclAdapter::GetInstance().HcclAllReduce(ar_input_addr_, ar_output_addr_, hccl_count,
-                                                                    iter->second, op_type, stream_);
+  if (ar_input_address_list_.empty() || ar_output_address_list_.empty()) {
+    MS_LOG(EXCEPTION) << "Fused AllReduce input address size is:" << ar_input_address_list_.size()
+                      << " output address size is:" << ar_output_address_list_.size();
+  }
+  MS_EXCEPTION_IF_NULL(ar_input_address_list_[0]);
+  MS_EXCEPTION_IF_NULL(ar_output_address_list_[0]);
+  auto hccl_result = hccl::HcclAdapter::GetInstance().HcclAllReduce(ar_input_address_list_[0]->GetMutablePtr(),
+                                                                    ar_output_address_list_[0]->GetMutablePtr(),
+                                                                    hccl_count, iter->second, op_type, stream_);
   if (hccl_result != HCCL_SUCCESS) {
     MS_LOG(EXCEPTION) << "HCCL AllReduce failed, ret:" << hccl_result;
   }
@@ -162,18 +125,13 @@ void AscendBucket::CleanAllReduceInputAddr() {
     MS_EXCEPTION_IF_NULL(launch_atomic_clean_);
   }
   // set atomic clean input addr
-  launch_atomic_clean_->SetInputAddr(ar_input_addr_);
+  if (ar_input_address_list_.empty()) {
+    MS_LOG(EXCEPTION) << "AllReduce input address not found";
+  }
+  MS_EXCEPTION_IF_NULL(ar_input_address_list_[0]);
+  launch_atomic_clean_->SetInputAddr(static_cast<uint8_t *>(ar_input_address_list_[0]->GetMutablePtr()));
   // launch atomic clean
   launch_atomic_clean_->LaunchOpKernel();
-}
-
-std::shared_ptr<LaunchKernel> AscendBucket::CreateLaunchMul() {
-  if (tensor_type_list_.empty()) {
-    MS_LOG(ERROR) << "tensor_type_list_ is empty";
-  }
-  auto launch_mul = std::make_shared<AscendLaunchMul>(stream_, tensor_type_list_[0], total_size_);
-  MS_EXCEPTION_IF_NULL(launch_mul);
-  return launch_mul;
 }
 
 std::shared_ptr<LaunchKernel> AscendBucket::CreateLaunchAtomicClean() {

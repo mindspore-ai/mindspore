@@ -825,11 +825,6 @@ void MindRTBackend::RunGraphBySingleOp(const std::vector<KernelGraphPtr> &graphs
     }
     graph_compiler_->CalculateForwardOpOutputCount(graph, &forward_op_output_tensor_id_);
 
-    // Clear bucket resources every step
-    if (graph->is_bprop()) {
-      graph_compiler_->ClearAllBucket(graph->graph_id());
-    }
-
     for (const auto &kernel : graph->execution_order()) {
       InputTensorInfo input_tensor_info;
       VectorRef op_outputs;
@@ -862,6 +857,10 @@ void MindRTBackend::RunGraphBySingleOp(const std::vector<KernelGraphPtr> &graphs
       }
     }
     SyncLazyTasks();
+    // Clear bucket resources every step
+    if (graph->is_bprop()) {
+      graph_compiler_->ClearAllBucket(graph->graph_id());
+    }
   }
 }
 
