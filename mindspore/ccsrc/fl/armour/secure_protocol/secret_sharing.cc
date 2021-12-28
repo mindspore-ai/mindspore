@@ -127,7 +127,7 @@ int SecretSharing::CheckShares(Share *share_i, BIGNUM *x_i, BIGNUM *y_i, BIGNUM 
   return 0;
 }
 
-int SecretSharing::CheckSum(BIGNUM *sum) {
+int SecretSharing::CheckSum(BIGNUM *sum) const {
   int ret = 0;
   if (sum == nullptr) {
     MS_LOG(ERROR) << "new bn object failed";
@@ -153,14 +153,14 @@ int SecretSharing::LagrangeCal(BIGNUM *nums_j, BIGNUM *x_m, BIGNUM *x_j, BIGNUM 
   return 0;
 }
 
-int SecretSharing::InputCheck(size_t k, const std::vector<Share *> &shares, uint8_t *secret, size_t *length) {
+int SecretSharing::InputCheck(size_t k, const std::vector<Share *> &shares, uint8_t *secret, size_t *length) const {
   if (secret == nullptr || length == nullptr || k < 1 || shares.size() < k || this->bn_prim_ == nullptr) {
     return -1;
   }
   return 0;
 }
 
-void SecretSharing::ReleaseNum(BIGNUM *bigNum) {
+void SecretSharing::ReleaseNum(BIGNUM *bigNum) const {
   if (bigNum != nullptr) {
     BN_clear_free(bigNum);
   }
