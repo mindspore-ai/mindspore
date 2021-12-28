@@ -245,8 +245,8 @@ class _DynamicLSTMCPUGPU(Cell):
                     ))
             output, h_n, c_n, _, _ = P.LSTM(input_size, hidden_size, 1, has_bias, False, 0.0)(
                 x,
-                h_0[0].view(1, *h_0[0].shape),
-                h_0[1].view(1, *h_0[1].shape),
+                P.ExpandDims()(h_0[0], 0),
+                P.ExpandDims()(h_0[1], 0),
                 weights
             )
         return output, (h_n, c_n)

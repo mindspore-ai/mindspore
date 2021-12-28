@@ -37,13 +37,14 @@ class StridedSliceCPUKernel : public CPUKernel {
 
  private:
   enum ParallelStrategy { kOnSplitAxis, kOnOuter };
-  void InitSliceParam(const std::vector<int64_t> &begin, const std::vector<int64_t> &end,
-                      const std::vector<int64_t> &stride);
+  void InitSliceParam(const CNodePtr &kernel_node, std::vector<int64_t> *begin, std::vector<int64_t> *end,
+                      std::vector<int64_t> *stride);
   bool MatchParallelPattern();
   void InitParallelParam();
   void ParallelRun(const uint8_t *input_addr, uint8_t *output_addr, int thread_num);
   int RunTaskOnOuter(const uint8_t *input_addr, uint8_t *output_addr, int start_pos);
   int RunTaskOnSplitAxis(const uint8_t *input_addr, uint8_t *output_addr, int start_pos);
+  void ParseMasks(const CNodePtr &kernel_node);
 
   TypeId dtype_;
   int data_size_{4};

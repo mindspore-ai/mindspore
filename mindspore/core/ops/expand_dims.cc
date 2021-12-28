@@ -50,8 +50,6 @@ AbstractBasePtr ExpandDimsInfer(const abstract::AnalysisEnginePtr &, const Primi
   // Infer type
   const size_t x_index = 0;
   auto x_type = CheckAndConvertUtils::GetTensorInputType(prim_name, input_args, x_index);
-  std::set<TypePtr> valid_x_type = {kTensorType};
-  (void)CheckAndConvertUtils::CheckSubClass("x_type", x_type, valid_x_type, prim_name);
   return std::make_shared<abstract::AbstractTensor>(x_type, out_shape);
 }
 REGISTER_PRIMITIVE_C(kNameExpandDims, ExpandDims);

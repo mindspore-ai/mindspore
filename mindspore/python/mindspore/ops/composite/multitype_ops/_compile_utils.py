@@ -297,6 +297,13 @@ def tensor_index_by_slice(data, slice_index):
     if is_dynamic:
         return tensor_index_by_dyn_slice(data, slice_index)
     begin_strides, end_strides, step_strides = const_utils.get_stride_info_from_slice(data_shape, slice_index)
+    begin_mask = 1 if slice_get_item(slice_index, "start") is None else 0
+    end_mask = 1 if slice_get_item(slice_index, "stop") is None else 0
+    for i in range(1, len(data_shape)):
+        begin_mask += 2**i
+        end_mask += 2**i
+    if begin_mask or end_mask:
+        return P.StridedSlice(begin_mask, end_mask, 0, 0, 0)(data, begin_strides, end_strides, step_strides)
     return F.strided_slice(data, begin_strides, end_strides, step_strides)
 
 
@@ -351,7 +358,12 @@ def _tensor_index_by_integer(data, int_index):
     transformed_number = const_utils.check_range(int_index, data_shape[0])
     begin_strides, end_strides, step_strides = const_utils.get_stride_info_from_integer(data_shape, transformed_number)
     shrink_axis_mask = 1
-    return P.StridedSlice(0, 0, 0, 0, shrink_axis_mask)(data, begin_strides, end_strides, step_strides)
+    begin_mask = 0
+    end_mask = 0
+    for i in range(1, len(data_shape)):
+        begin_mask += 2**i
+        end_mask += 2**i
+    return P.StridedSlice(begin_mask, end_mask, 0, 0, shrink_axis_mask)(data, begin_strides, end_strides, step_strides)
 
 
 def tensor_index_by_tensor(data, tensor_index):
@@ -457,6 +469,20 @@ def get_slice_stride(slice_index, dim_size):
     return start, stop, step
 
 
+def cal_tuple_slice_mask(data_shape, tuple_index):
+    """calculate the strided_slice begin and end mask"""
+    begin_mask = 0
+    end_mask = 0
+    for i, slice_index in enumerate(tuple_index):
+        if isinstance(slice_index, slice):
+            begin_mask += 2**i if slice_get_item(slice_index, "start") is None else 0
+            end_mask += 2**i if slice_get_item(slice_index, "stop") is None else 0
+    for i in range(len(tuple_index), len(data_shape)):
+        begin_mask += 2**i
+        end_mask += 2**i
+    return begin_mask, end_mask
+
+
 def _tensor_getitem_by_tuple_slice(data, tuple_index):
     """Tensor getitem by a tuple of slice"""
     data_shape = F.shape(data)
@@ -470,7 +496,9 @@ def _tensor_getitem_by_tuple_slice(data, tuple_index):
     if not is_dynamic:
         begin_strides, end_strides, step_strides, shrink_axis_mask = const_utils.get_stride_info_from_tuple(
             data_shape, tuple_index)
-        return P.StridedSlice(0, 0, 0, 0, shrink_axis_mask)(data, begin_strides, end_strides, step_strides)
+        begin_mask, end_mask = cal_tuple_slice_mask(data_shape, tuple_index)
+        strided_slice_op = P.StridedSlice(begin_mask, end_mask, 0, 0, shrink_axis_mask)
+        return strided_slice_op(data, begin_strides, end_strides, step_strides)
 
     data_shape = F.dyn_shape(data)
     begin_strides, end_strides, step_strides = [], [], []

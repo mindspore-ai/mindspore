@@ -56,11 +56,6 @@ void GetAndCheckAttrMask(const PrimitivePtr &primitive, std::vector<int64_t> *be
   auto new_axis_mask = GetValue<int64_t>(primitive->GetAttr(kNewAxisMask));
   auto shrink_axis_mask = GetValue<int64_t>(primitive->GetAttr(kShrinkAxisMask));
 
-  if (slice_dynamic) {
-    if (begin_mask != 0 || end_mask != 0 || ellipsis_mask != 0 || new_axis_mask != 0 || shrink_axis_mask != 0) {
-      MS_EXCEPTION(ValueError) << "When slice dynamic, mask is currently not supported.";
-    }
-  }
   *begin_pos = TenToTwo(begin_mask);
   *end_pos = TenToTwo(end_mask);
   *ellipsis_pos = TenToTwo(ellipsis_mask);
@@ -236,7 +231,7 @@ std::vector<int64_t> ComputeInferShape(const PrimitivePtr &primitive, const std:
         continue;
       }
       if (j < shrink_axis_pos.size() && shrink_axis_pos[j] == 1) {
-        if ((-x_shape[i] <= start && start < x_shape[i]) || strides < 0) {
+        if (!(-x_shape[i] <= start && start < x_shape[i]) || strides < 0) {
           MS_EXCEPTION(ValueError) << "when shrink axis, the stride cannot be negative number";
         }
         j += 1;

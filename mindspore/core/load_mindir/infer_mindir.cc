@@ -36,11 +36,13 @@ class MindIREngine {
 
   bool InferShape(const AbstractBasePtrList &args);
 
+  void SetException(bool flag) { raise_exception_ = flag; }
+
  private:
   using AbstractBasePtrListPtr = std::shared_ptr<AbstractBasePtrList>;
 
   void Init(const AbstractBasePtrList &args);
-  static AbstractBasePtr InferPrimitiveShape(const PrimitivePtr &prim, const AbstractBasePtrList &args_spec_list);
+  AbstractBasePtr InferPrimitiveShape(const PrimitivePtr &prim, const AbstractBasePtrList &args_spec_list);
   void EvalCommonPrimitive(const PrimitivePtr &prim, const CNodePtr &node, const AbstractBasePtrListPtr &args);
   void EvalPartialPrimitive(const CNodePtr &node, const AbstractBasePtrListPtr &args);
   void EvalReturnPrimitive(const CNodePtr &node);
@@ -68,6 +70,7 @@ class MindIREngine {
   std::deque<AnfNodePtr> ready_;
   std::set<AnfNodePtr> todo_;
   NodeUsersMap nodeuser_map_;
+  bool raise_exception_ = false;
 };
 
 // Infer the root function graph.
@@ -165,11 +168,21 @@ AbstractBasePtr MindIREngine::InferPrimitiveShape(const PrimitivePtr &prim, cons
         return ret_backend->second.infer_shape_impl_(nullptr, prim, args_spec_list);
       }
     }
-    MS_LOG(WARNING) << "Get infer shape function failed, primitive name:" << prim->name()
-                    << " primitive type:" << prim->type_name() << " It will keep the prevalue witch danger.";
+    if (raise_exception_) {
+      MS_LOG(EXCEPTION) << "Get infer shape function failed, primitive name:" << prim->name()
+                        << " primitive type:" << prim->type_name() << " It will keep the prevalue witch danger.";
+    } else {
+      MS_LOG(WARNING) << "Get infer shape function failed, primitive name:" << prim->name()
+                      << " primitive type:" << prim->type_name() << " It will keep the prevalue witch danger.";
+    }
   } catch (const std::exception &ex) {
-    MS_LOG(WARNING) << "Catch primitive:" << prim->ToString() << " InferPrimitiveShape exception:" << ex.what()
-                    << " It will keep the prevalue witch danger.";
+    if (raise_exception_) {
+      MS_LOG(EXCEPTION) << "Catch primitive:" << prim->ToString() << " InferPrimitiveShape exception:" << ex.what()
+                        << " It will keep the prevalue witch danger.";
+    } else {
+      MS_LOG(WARNING) << "Catch primitive:" << prim->ToString() << " InferPrimitiveShape exception:" << ex.what()
+                      << " It will keep the prevalue witch danger.";
+    }
   }
   return nullptr;
 }
@@ -508,8 +521,9 @@ void MindIREngine::InferCNode(const AnfNodePtr &node) {
   }
 }
 }  // namespace
-bool InferMindir(const FuncGraphPtr &root, const AbstractBasePtrList &args) {
+bool InferMindir(const FuncGraphPtr &root, const AbstractBasePtrList &args, bool raise_exception) {
   auto engine = std::make_shared<MindIREngine>(root);
+  engine->SetException(raise_exception);
   return engine->InferShape(args);
 }
 }  // namespace mindspore
