@@ -615,16 +615,14 @@ class Profiler:
         point_info_file_path = validate_and_normalize_path(point_info_file_path)
 
         if self._device_target and self._device_target == 'GPU':
-            input_file_path = os.path.join(
-                self._output_path,
-                f'step_trace_profiling_{self._dev_id}.txt'
-            )
+            input_file_path = os.path.join(self._output_path, f'step_trace_profiling_{self._dev_id}.txt')
+            input_file_path = validate_and_normalize_path(input_file_path)
             parser = GpuStepTraceParser(input_dir=input_file_path,
                                         output_file_path=step_trace_intermediate_file_path,
                                         is_training_mode=is_training_mode_flag,
                                         is_gpu_kernel_async_launch=is_gpu_kernel_async_launch_flag)
             parser.parse_and_save()
-            point_info = parser.record_point_info(input_file_path, point_info_file_path)
+            point_info = parser.record_point_info(point_info_file_path)
         else:
             # whether keep the first step
             skip_first_step_flag = framework_parser.check_op_name(INIT_OP_NAME)
@@ -635,12 +633,11 @@ class Profiler:
             source_path = validate_and_normalize_path(source_path)
             parser = AscendStepTraceParser(input_dir=source_path,
                                            output_file_path=step_trace_intermediate_file_path,
-                                           job_id=self._job_id_env,
                                            skip_first_step=skip_first_step_flag,
                                            is_training_mode=is_training_mode_flag)
-            parser.update_tag_op_type_map(point_info)
+            parser.set_task_id_op_name_dict(framework_parser.to_task_id_full_op_name_dict())
             parser.parse_and_save()
-            point_info = parser.record_point_info(point_info, point_info_file_path)
+            point_info = parser.record_point_info(point_info_file_path)
         # print parser result
         parser.show()
         logger.info("Finish saving the intermediate result: %s", step_trace_intermediate_file_path)

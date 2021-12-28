@@ -301,8 +301,23 @@ def get_field_value(row_info, field_name, header, time_type='realtime'):
 
     return value
 
+
 def get_options(options):
     if options is None:
         options = {}
 
     return options
+
+
+def combine_stream_task_id(stream_id, task_id):
+    """
+    When the Task ID is less than the threshold, it will be reuse in different streams,
+    only the stream ID and task ID combined are unique values.
+    """
+    # if the task id is less than the task id threshold, The combination of
+    # task id and Stream id represents one operator, else the task id represents
+    # one operator
+    task_id_threshold = 25000
+    if task_id < task_id_threshold:
+        return f'{stream_id}_{task_id}'
+    return str(task_id)

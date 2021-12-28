@@ -57,7 +57,7 @@ AI_CPU_STRUCT = dict(
     dispatch_time=StructType.UINT32,
     total_time=StructType.UINT32,
     FFTS_thread_id=StructType.UINT16,
-    version=StructType.UCHAR
+    version=StructType.UINT8
 )
 
 

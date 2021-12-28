@@ -34,8 +34,6 @@ ProfilerTask::~ProfilerTask() {}
 
 void ProfilerTask::Distribute() {
   MS_LOG(INFO) << "ProfilerTask Distribute start.";
-  MS_LOG(INFO) << "log id = " << task_info_->log_id() << ", notify = " << task_info_->notify()
-               << ", flat = " << task_info_->flat();
   uint32_t model_id = 0;
   rtError_t rt_model_ret = rtModelGetId(model_handle_, &model_id);
   if (rt_model_ret != RT_ERROR_NONE) {
@@ -43,14 +41,27 @@ void ProfilerTask::Distribute() {
   }
   uint64_t new_model_id = 0;
   new_model_id = static_cast<uint64_t>(model_id);
-  uint64_t first_id = 0;
+  // The first step index, here keep same with ge
+  uint64_t first_step_index = 1;
   if (task_info_->log_id() > static_cast<size_t>(std::numeric_limits<uint16_t>::max())) {
     MS_LOG(EXCEPTION) << "Invalid log id " << task_info_->log_id() << " over max uint16_t.";
   }
-  rtError_t rt_ret = rtProfilerTraceEx(first_id, new_model_id, static_cast<uint16_t>(task_info_->log_id()), stream_);
+  rtError_t rt_ret =
+    rtProfilerTraceEx(first_step_index, new_model_id, static_cast<uint16_t>(task_info_->log_id()), stream_);
   if (rt_ret != RT_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Call rt api rtProfilerTraceEx failed, ret: " << rt_ret;
   }
+
+  uint32_t task_id = 0;
+  uint32_t stream_id = 0;
+  rtError_t task_ret = rtModelGetTaskId(model_handle_, &task_id, &stream_id);
+  if (task_ret != RT_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "Call rt api rtModelGetTaskId failed, ret: " << task_ret;
+  }
+
+  MS_LOG(INFO) << "[Profiling] Report step point, model id:" << new_model_id << ", stream id: " << stream_id
+               << ", task id: " << task_id << ", tag: " << task_info_->log_id();
+
   MS_LOG(INFO) << "DistributeTask end.";
 }
 

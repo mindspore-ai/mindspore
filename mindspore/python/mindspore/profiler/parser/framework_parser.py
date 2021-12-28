@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ from mindspore.profiler.parser.framework_struct import TENSOR_DATA_STRUCT
 from mindspore.profiler.parser.framework_struct import STEP_INFO_STRUCT
 from mindspore.profiler.parser.framework_enum import VmDataType, VmFormat, FileDataType
 from mindspore.profiler.common.struct_type import StructType
-
+from mindspore.profiler.common.util import combine_stream_task_id
 from mindspore.profiler.common.exceptions.exceptions import ProfilerDirNotFoundException
 from mindspore.profiler.common.exceptions.exceptions import ProfilerFileNotFoundException
 from mindspore.profiler.common.exceptions.exceptions import ProfilerParamValueErrorException
@@ -248,7 +248,7 @@ class FrameworkParser:
         # The first byte is type flag, 0 means data is string, 1 means data is hash value
         cursor = 0
         data_size = len(item_binary_data)
-        flag = struct.unpack(StructType.UCHAR.value, item_binary_data[cursor:cursor + 1])[0]
+        flag = struct.unpack(StructType.UINT8.value, item_binary_data[cursor:cursor + 1])[0]
 
         # skip rsv data, rsv has 7 bytes
         skip_size = 8
@@ -299,7 +299,7 @@ class FrameworkParser:
         """The task desc info is a list[task_desc], task_desc is a dict, key is same as TASK_DESC_STRUCT."""
         task_id_full_op_name = {}
         for task_desc in task_desc_info:
-            task_id = self._combine_stream_task_id(task_desc['streamId'], task_desc['taskId'])
+            task_id = combine_stream_task_id(task_desc['streamId'], task_desc['taskId'])
             task_id_full_op_name[task_id] = task_desc['opName']
         return task_id_full_op_name
 
@@ -307,7 +307,7 @@ class FrameworkParser:
         """step_point_data is a list[step_data], step data is a dict, key is same as STEP_INFO_STRUCT."""
         point_info = {}
         for step_point in step_point_data:
-            task_id = self._combine_stream_task_id(step_point['streamId'], step_point['taskId'])
+            task_id = combine_stream_task_id(step_point['streamId'], step_point['taskId'])
             tag = step_point['tag']
             full_op_name = task_id_full_op_name_dict[task_id]
             point_info[tag] = full_op_name
@@ -317,7 +317,7 @@ class FrameworkParser:
         """prof_tensor_data is a list[tensor_data], tensor_data is a dict, key is same as TENSOR_DATA_STRUCT."""
         task_id_op_attr_dict = defaultdict(list)
         for tensor_data in prof_tensor_data:
-            task_id = self._combine_stream_task_id(tensor_data['streamId'], tensor_data['taskId'])
+            task_id = combine_stream_task_id(tensor_data['streamId'], tensor_data['taskId'])
             for tensor_attr in tensor_data['tensorData']:
                 tensor_type = 'input' if tensor_attr['tensorType'] == 0 else 'output'
                 tensor_format = VmFormat.get_format_name(tensor_attr['format'])
@@ -353,7 +353,7 @@ class FrameworkParser:
             task_id = task_desc['taskId']
             full_op_name = task_desc['opName']
             subgraph = self._get_subgraph_name(full_op_name)
-            combined_task_id = self._combine_stream_task_id(task_desc['streamId'], task_id)
+            combined_task_id = combine_stream_task_id(task_desc['streamId'], task_id)
             op_data = OpData(task_id=task_id,
                              stream_id=task_desc['streamId'],
                              block_dim=task_desc['blockDims'],
@@ -361,7 +361,7 @@ class FrameworkParser:
                              op_name=full_op_name.split('/')[-1],
                              op_type=task_desc['opType'],
                              subgraph=subgraph,
-                             op_info=json.dumps(task_id_op_attr_dict[combined_task_id]))
+                             op_info=json.dumps(task_id_op_attr_dict.get(combined_task_id, {})))
             all_op_data.append(op_data)
         return all_op_data
 
@@ -387,17 +387,3 @@ class FrameworkParser:
         if subgraph_name in ['Default', 'Gradients']:
             return subgraph_name
         return None
-
-    @staticmethod
-    def _combine_stream_task_id(stream_id, task_id):
-        """
-        When the Task ID is less than the threshold, it will be reuse in different streams,
-        only the stream ID and task ID combined are unique values.
-        """
-        # if the task id is less than the task id threshold, The combination of
-        # task id and Stream id represents one operator, else the task id represents
-        # one operator
-        task_id_threshold = 25000
-        if task_id < task_id_threshold:
-            return f'{stream_id}_{task_id}'
-        return str(task_id)

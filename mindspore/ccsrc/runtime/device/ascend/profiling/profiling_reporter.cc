@@ -23,6 +23,9 @@
 namespace mindspore {
 namespace device {
 namespace ascend {
+constexpr uint32_t kProfilingModelStartLogId = 0;
+constexpr uint32_t kProfilingModelEndLogId = 1;
+
 static std::map<enum KernelType, MsprofGeTaskType> KernelType2TaskTypeEnum{{TBE_KERNEL, MSPROF_GE_TASK_TYPE_AI_CORE},
                                                                            {AKG_KERNEL, MSPROF_GE_TASK_TYPE_AI_CORE},
                                                                            {AICPU_KERNEL, MSPROF_GE_TASK_TYPE_AI_CPU}};
@@ -70,15 +73,6 @@ void ProfilingReporter::ReportTasks() {
   for (const auto &node : cnode_list_) {
     MS_EXCEPTION_IF_NULL(node);
     KernelType kernel_type = AnfAlgo::GetKernelType(node);
-    // Note: some kernel stream id or task id will conflict, such as RT_KERNEL,
-    // and CPU_KERNEL does not have stream id, task id.
-    if (kernel_type != TBE_KERNEL && kernel_type != AKG_KERNEL && kernel_type != AICPU_KERNEL &&
-        kernel_type != HCCL_KERNEL) {
-      MS_LOG(INFO) << "This node is not TBE_KERNEL, AKG_KERNEL, AICPU_KERNEL, HCCL_KERNEL, will skip, node name:"
-                   << node->fullname_with_scope();
-      ++task_index;
-      continue;
-    }
     auto stream_id = stream_ids_[task_index];
     auto task_id = task_ids_[task_index];
     (void)ReportTask(node, stream_id, task_id, kernel_type);
@@ -90,17 +84,20 @@ void ProfilingReporter::ReportTasks() {
   MS_LOG(INFO) << "Profiling report task data finish.";
 }
 
+// This function only report model start and model end.
 void ProfilingReporter::ReportStepPoint(const std::vector<std::shared_ptr<StepPointDesc>> &points) {
-  MS_LOG(INFO) << "Profiling start to report step point data.";
+  MS_LOG(INFO) << "Profiling start to report model start and end point data.";
   if (!CheckStreamTaskValid()) {
     return;
   }
-
   ConstructNodeNameIndexMap();
   for (const auto &point : points) {
+    if (point->tag() != kProfilingModelStartLogId && point->tag() != kProfilingModelEndLogId) {
+      continue;
+    }
+    auto op_name = point->op_name();
     MsprofGeProfStepData step_point{};
     step_point.modelId = graph_id_;
-    auto op_name = point->op_name();
     step_point.streamId = GetStreamId(op_name);
     step_point.taskId = GetTaskId(op_name);
     step_point.timeStamp = 0;
@@ -108,7 +105,30 @@ void ProfilingReporter::ReportStepPoint(const std::vector<std::shared_ptr<StepPo
     step_point.threadId = 0;
     step_point.tag = point->tag();
     (void)ReportData(device_id_, reinterpret_cast<unsigned char *>(&step_point), sizeof(step_point), "step_info");
+
+    auto cnode = GetCNode(op_name);
+    MS_EXCEPTION_IF_NULL(cnode);
+    auto kernel_mod = AnfAlgo::GetKernelMod(cnode);
+    MS_EXCEPTION_IF_NULL(kernel_mod);
+    // The tag of this function should report all tags, it will be saved to ts_track.data.<device_id>.slice_<index>
+    // The first step index set to 1, here keep same with ge
+    rtProfilerTraceEx(1, graph_id_, point->tag(), kernel_mod->GetStream());
+
+    MS_LOG(INFO) << "Report step point, graph id: " << graph_id_ << ", op name: " << point->op_name()
+                 << ", stream id: " << GetStreamId(op_name) << ", task id: " << GetTaskId(op_name)
+                 << ", tag: " << point->tag();
   }
+}
+
+const CNodePtr ProfilingReporter::GetCNode(const std::string &name) const {
+  for (const CNodePtr &cnode : cnode_list_) {
+    MS_EXCEPTION_IF_NULL(cnode);
+    std::string fullname = cnode->fullname_with_scope();
+    if (fullname.find(name) != std::string::npos && fullname.find("Push") != std::string::npos) {
+      return cnode;
+    }
+  }
+  return nullptr;
 }
 
 uint32_t ProfilingReporter::GetStreamId(const string &node_name) {

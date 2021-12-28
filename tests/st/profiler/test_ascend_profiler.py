@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import os
-import shutil
+"""Test ascend profiling."""
 import glob
+import tempfile
 import numpy as np
 import pytest
 import mindspore.context as context
@@ -44,12 +44,11 @@ y = np.random.randn(1, 3, 3, 4).astype(np.float32)
 @pytest.mark.env_onecard
 @security_off_wrap
 def test_ascend_profiling():
-    if os.path.isdir("./data_ascend_profiler"):
-        shutil.rmtree("./data_ascend_profiler")
+    """Test ascend profiling"""
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    profiler = Profiler(output_path="./data_ascend_profiler", is_detail=True, is_show_op_path=False, subgraph="all")
-    add = Net()
-    add(Tensor(x), Tensor(y))
-    profiler.analyse()
-    assert len(glob.glob("./data_ascend_profiler/profiler*/JOB*/data/Framework*")) == 6 or \
-        len(glob.glob("./data_ascend_profiler/profiler*/*PROF*/device_*/data/Framework*")) == 6
+    with tempfile.TemporaryDirectory() as tmpdir:
+        profiler = Profiler(output_path=tmpdir)
+        add = Net()
+        add(Tensor(x), Tensor(y))
+        profiler.analyse()
+        assert len(glob.glob(f"{tmpdir}/profiler*/*PROF*/device_*/data/Framework*")) == 4

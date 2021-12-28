@@ -24,8 +24,8 @@
 #include "securec/include/securec.h"
 #include "utils/log_adapter.h"
 #include "backend/session/anf_runtime_algorithm.h"
-#include "runtime/device/ascend/profiling/prof_common.h"
 #include "runtime/device/ascend/profiling/profiling_manager.h"
+#include "toolchain/prof_common.h"
 #include "toolchain/prof_reporter.h"
 
 namespace mindspore {
@@ -75,6 +75,7 @@ class ProfilingReporter {
   void ConstructNodeNameIndexMap();
   uint32_t GetStreamId(const string &node_name);
   uint32_t GetTaskId(const string &node_name);
+  const CNodePtr GetCNode(const std::string &name) const;
 
   void ReportData(int32_t device_id, unsigned char *data, size_t data_size, const std::string &tag_name);
   void ReportTask(const CNodePtr &node, uint32_t stream_id, uint32_t task_id, KernelType kernel_type);
