@@ -159,6 +159,7 @@ Status TensorRTDelegate::Init() {
 Status TensorRTDelegate::BuildSubGraph(DelegateModel<schema::Primitive> *model) {
   KernelIter from, end;
   std::vector<TensorRTOp *> tensorrt_ops;
+  int tensorrt_subgraph_index = 0;
   for (KernelIter iter = model->BeginKernelIterator(); iter != model->EndKernelIterator(); iter++) {
     kernel::Kernel *kernel = *iter;
     auto tensorrt_op = FindTensorRTOp(kernel, model->GetPrimitive(kernel));
@@ -180,18 +181,19 @@ Status TensorRTDelegate::BuildSubGraph(DelegateModel<schema::Primitive> *model) 
       end = iter;
     } else {
       if (tensorrt_ops.size() > 0) {
-        auto tensorrt_subgraph = CreateTensorRTGraph(tensorrt_ops, model, from, end);
+        auto tensorrt_subgraph = CreateTensorRTGraph(tensorrt_ops, model, from, end, tensorrt_subgraph_index);
         if (tensorrt_subgraph == nullptr) {
           MS_LOG(ERROR) << "Create TensorRT Graph failed.";
           return mindspore::kLiteNullptr;
         }
+        tensorrt_subgraph_index++;
         iter = model->Replace(from, end + 1, tensorrt_subgraph);
         tensorrt_ops.clear();
       }
     }
   }
   if (tensorrt_ops.size() > 0) {
-    auto tensorrt_subgraph = CreateTensorRTGraph(tensorrt_ops, model, from, end);
+    auto tensorrt_subgraph = CreateTensorRTGraph(tensorrt_ops, model, from, end, tensorrt_subgraph_index);
     if (tensorrt_subgraph == nullptr) {
       MS_LOG(ERROR) << "Create TensorRT Graph failed.";
       return mindspore::kLiteNullptr;
@@ -260,7 +262,7 @@ TensorRTOp *TensorRTDelegate::FindTensorRTOp(kernel::Kernel *kernel, const schem
 
 TensorRTSubGraph *TensorRTDelegate::CreateTensorRTGraph(const std::vector<TensorRTOp *> &ops,
                                                         DelegateModel<schema::Primitive> *model, KernelIter from,
-                                                        KernelIter end) {
+                                                        KernelIter end, int index) {
   auto in_tensors = GraphInTensors<TensorRTOp>(ops, model, from, end);
   auto out_tensors = GraphOutTensors<TensorRTOp>(ops, model, from, end);
   auto *tensorrt_graph = new (std::nothrow) TensorRTSubGraph(ops, in_tensors, out_tensors, context_, device_info_,
@@ -270,6 +272,10 @@ TensorRTSubGraph *TensorRTDelegate::CreateTensorRTGraph(const std::vector<Tensor
     return nullptr;
   }
   tensorrt_graph->SetCacheManager(cache_mgr_);
+  if (serialize_path_.size() > 0) {
+    tensorrt_graph->SetSerializePath(serialize_path_ + "_trt" + std::to_string(GetRankID()) + ".bin_" +
+                                     std::to_string(index));
+  }
 
   // 1. For every op, find pre and next ops
   FindPreNextOps<TensorRTOp>(ops);

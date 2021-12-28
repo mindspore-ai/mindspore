@@ -76,13 +76,13 @@ const nvinfer1::PluginFieldCollection *EqualPluginCreater::getFieldNames() noexc
 
 nvinfer1::IPluginV2 *EqualPluginCreater::createPlugin(const char *name,
                                                       const nvinfer1::PluginFieldCollection *fc) noexcept {
-  return new EqualPlugin(name);
+  return new (std::nothrow) EqualPlugin(name);
 }
 
 nvinfer1::IPluginV2 *EqualPluginCreater::deserializePlugin(const char *name, const void *serialData,
                                                            size_t serialLength) noexcept {
-  MS_LOG(ERROR) << name << " don't support deserialize";
-  return nullptr;
+  MS_LOG(DEBUG) << name << " deserialize";
+  return new (std::nothrow) EqualPlugin(name);
 }
 
 void EqualPluginCreater::setPluginNamespace(const char *libNamespace) noexcept { name_space_ = libNamespace; }

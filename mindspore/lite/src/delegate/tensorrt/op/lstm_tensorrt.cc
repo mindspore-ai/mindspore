@@ -453,8 +453,16 @@ nvinfer1::ITensor *LSTMTensorRT::AddLSTMOneLoop(const LstmState &input_state, co
 
 int LSTMTensorRT::Prepare(void **network_tensor_bindings, nvinfer1::ICudaEngine *engine) {
   if (op_binding_tensor_.size() == 0) {
-    MS_LOG(ERROR) << "add lstm inputs failed " << op_name_;
-    return RET_ERROR;
+    MS_LOG(DEBUG) << "unsing serialized engine, add input tensor for " << op_name_;
+    mindspore::MSTensor &hidden_in_init = in_tensors_[HIDDEN_IN_TENSOR_INIT];
+    mindspore::MSTensor &cell_in_init = in_tensors_[CELL_IN_TENSOR_INIT];
+    op_binding_tensor_.push_back(BindingHelper{hidden_in_init.Name(), hidden_in_init.MutableData(),
+                                               nvinfer1::DataType::kFLOAT, hidden_in_init.DataSize()});
+    op_binding_tensor_.push_back(BindingHelper{cell_in_init.Name(), cell_in_init.MutableData(),
+                                               nvinfer1::DataType::kFLOAT, cell_in_init.DataSize()});
+    params_.sequence_size_ = in_tensors_[0].Shape()[0];
+    op_binding_tensor_.push_back(
+      BindingHelper{(op_name_ + "_seq_input"), &params_.sequence_size_, nvinfer1::DataType::kINT32, sizeof(int)});
   }
   for (auto tensor : op_binding_tensor_) {
     auto device_ptr = runtime_->GetAllocator()->MallocDeviceMem(tensor.name_, tensor.size_, tensor.data_type_);

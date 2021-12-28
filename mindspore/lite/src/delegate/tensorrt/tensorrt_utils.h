@@ -105,7 +105,12 @@ nvinfer1::ReduceOperation ConvertTRTReduceMode(schema::ReduceMode mode);
 
 nvinfer1::ITensor *PreprocessInputs2SameDim(nvinfer1::INetworkDefinition *network,
                                             const ITensorHelper &input_tensor_helper);
+
 int GetDimsVolume(const nvinfer1::Dims &dims);
+
+void SerializeValue(void **buffer, const void *value, size_t cpy_size);
+
+void DeserializeValue(void const **buffer, size_t *buffer_size, void *value, size_t cpy_size);
 
 template <typename T1, typename T2>
 bool SameDims(const std::vector<T1> &shape1, const std::vector<T2> &shape2) {

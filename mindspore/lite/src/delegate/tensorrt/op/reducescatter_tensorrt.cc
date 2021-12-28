@@ -97,12 +97,15 @@ nvinfer1::IPluginV2 *ReduceScatterPluginCreater::createPlugin(const char *name,
   schema::ReduceMode red_mode = static_cast<const schema::ReduceMode *>(fields[0].data)[0];
   int rank = static_cast<const int *>(fields[1].data)[0];
   MS_LOG(DEBUG) << "createPlugin: " << name << " of rank: " << rank;
-  return new ReduceScatterPlugin(name, red_mode, rank);
+  return new (std::nothrow) ReduceScatterPlugin(name, red_mode, rank);
 }
 nvinfer1::IPluginV2 *ReduceScatterPluginCreater::deserializePlugin(const char *name, const void *serialData,
                                                                    size_t serialLength) noexcept {
-  MS_LOG(ERROR) << name << " don't support deserialize";
-  return nullptr;
+  int rank = GetGPUGroupSize();
+  schema::ReduceMode red_mode;
+  DeserializeValue(&serialData, &serialLength, &red_mode, sizeof(schema::ReduceMode));
+  MS_LOG(DEBUG) << name << " is deserialize as rank: " << rank << ", red_mode: " << red_mode;
+  return new (std::nothrow) ReduceScatterPlugin(name, red_mode, rank);
 }
 void ReduceScatterPluginCreater::setPluginNamespace(const char *libNamespace) noexcept { name_space_ = libNamespace; }
 
@@ -174,9 +177,11 @@ int ReduceScatterPlugin::initialize() noexcept { return 0; }
 
 void ReduceScatterPlugin::terminate() noexcept {}
 
-size_t ReduceScatterPlugin::getSerializationSize() const noexcept { return 0; }
+size_t ReduceScatterPlugin::getSerializationSize() const noexcept { return sizeof(schema::ReduceMode); }
 
-void ReduceScatterPlugin::serialize(void *buffer) const noexcept {}
+void ReduceScatterPlugin::serialize(void *buffer) const noexcept {
+  SerializeValue(&buffer, &red_mode_, sizeof(schema::ReduceMode));
+}
 
 void ReduceScatterPlugin::destroy() noexcept {
   // This gets called when the network containing plugin is destroyed

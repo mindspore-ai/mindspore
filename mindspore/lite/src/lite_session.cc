@@ -782,6 +782,7 @@ int LiteSession::ContextInit(InnerContext *context) {
 int LiteSession::CreateTensorRTDelegate() {
 #if GPU_TENSORRT
   std::string cache_model_path;
+  std::string serialize_path;
   size_t vocab_size = 0;
   size_t device_cache_size = 0;
   if (config_info_ != nullptr) {
@@ -808,10 +809,16 @@ int LiteSession::CreateTensorRTDelegate() {
           device_cache_size = device_cache_size_opt.Get();
         }
       }
+
+      auto serialize_path_iter = ms_cache.find(kMSCacheSerializePath);
+      if (serialize_path_iter != ms_cache.end()) {
+        serialize_path = serialize_path_iter->second;
+      }
     }
   }
 
-  delegate_ = std::make_shared<TensorRTDelegate>(ms_context_, cache_model_path, vocab_size, device_cache_size);
+  delegate_ =
+    std::make_shared<TensorRTDelegate>(ms_context_, cache_model_path, vocab_size, device_cache_size, serialize_path);
   if (delegate_ == nullptr) {
     MS_LOG(ERROR) << "New tensorrt delegate_ failed";
     return RET_ERROR;

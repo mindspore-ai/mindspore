@@ -487,7 +487,23 @@ nvinfer1::ITensor *PreprocessInputs2SameDim(nvinfer1::INetworkDefinition *networ
   }
   return output;
 }
+
 int GetDimsVolume(const nvinfer1::Dims &dims) {
   return std::accumulate(dims.d, dims.d + dims.nbDims, 1, std::multiplies<int64_t>());
+}
+
+void SerializeValue(void **buffer, const void *value, size_t cpy_size) {
+  std::memcpy(*buffer, value, cpy_size);
+  *buffer = static_cast<char *>(*buffer) + cpy_size;
+}
+
+void DeserializeValue(void const **buffer, size_t *buffer_size, void *value, size_t cpy_size) {
+  if (cpy_size > *buffer_size) {
+    MS_LOG(ERROR) << "invalid desirialize size, buffer size: " << *buffer_size << ", value size: " << cpy_size;
+    return;
+  }
+  std::memcpy(value, *buffer, cpy_size);
+  *buffer = static_cast<const char *>(*buffer) + cpy_size;
+  *buffer_size -= cpy_size;
 }
 }  // namespace mindspore::lite

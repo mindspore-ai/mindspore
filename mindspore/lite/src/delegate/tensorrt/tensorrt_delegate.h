@@ -36,11 +36,12 @@ typedef TensorRTOp *(*TensorRTGetOp)(const schema::Primitive *primitive,
 class TensorRTDelegate : public Delegate {
  public:
   explicit TensorRTDelegate(mindspore::Context *context, const std::string &cache_model_path, size_t vocab_size,
-                            size_t device_cache_size)
+                            size_t device_cache_size, const std::string &serialize_path)
       : context_(context),
         cache_model_path_(cache_model_path),
         vocab_size_(vocab_size),
-        device_cache_size_(device_cache_size) {}
+        device_cache_size_(device_cache_size),
+        serialize_path_(serialize_path) {}
 
   ~TensorRTDelegate() override;
 
@@ -54,7 +55,7 @@ class TensorRTDelegate : public Delegate {
   TensorRTOp *FindTensorRTOp(kernel::Kernel *kernel, const schema::Primitive *primitive);
 
   TensorRTSubGraph *CreateTensorRTGraph(const std::vector<TensorRTOp *> &ops, DelegateModel<schema::Primitive> *model,
-                                        KernelIter from, KernelIter end);
+                                        KernelIter from, KernelIter end, int index);
 
   std::unordered_map<schema::PrimitiveType, TensorRTGetOp> op_func_lists_;
 
@@ -71,6 +72,7 @@ class TensorRTDelegate : public Delegate {
   size_t vocab_size_;
   size_t device_cache_size_;
   std::shared_ptr<cache::EmbeddingCacheManager> cache_mgr_{nullptr};
+  const std::string serialize_path_;
 
   cudaStream_t stream_;
 };

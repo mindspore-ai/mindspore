@@ -15,8 +15,8 @@
  */
 
 #include "src/delegate/tensorrt/op/allgather_tensorrt.h"
-#include "NvInferRuntimeCommon.h"
 #include <numeric>
+#include "NvInferRuntimeCommon.h"
 
 namespace mindspore::lite {
 const char *ALLGATHER_PLUGIN_VERSION{"1"};
@@ -90,12 +90,13 @@ nvinfer1::IPluginV2 *AllGatherPluginCreater::createPlugin(const char *name,
   const nvinfer1::PluginField *fields = fc->fields;
   int rank = static_cast<const int *>(fields[0].data)[0];
   MS_LOG(DEBUG) << "createPlugin: " << name << " of rank: " << rank;
-  return new AllGatherPlugin(name, rank);
+  return new (std::nothrow) AllGatherPlugin(name, rank);
 }
 nvinfer1::IPluginV2 *AllGatherPluginCreater::deserializePlugin(const char *name, const void *serialData,
                                                                size_t serialLength) noexcept {
-  MS_LOG(ERROR) << name << " don't support deserialize";
-  return nullptr;
+  int rank = GetGPUGroupSize();
+  MS_LOG(DEBUG) << name << " is deserialize as rank: " << rank;
+  return new (std::nothrow) AllGatherPlugin(name, rank);
 }
 void AllGatherPluginCreater::setPluginNamespace(const char *libNamespace) noexcept { name_space_ = libNamespace; }
 
