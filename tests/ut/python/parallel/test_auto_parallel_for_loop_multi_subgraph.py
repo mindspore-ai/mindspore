@@ -25,6 +25,7 @@ from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore.parallel._cost_model_context import _set_multi_subgraphs
 from mindspore.parallel._utils import _reset_op_id as reset_op_id
+from mindspore.parallel._cost_model_context import _set_algo_single_loop
 
 
 class SubNet(nn.Cell):
@@ -122,6 +123,7 @@ class TrainStepWarp(nn.Cell):
 
 def test_double_subgraphs():
     context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0)
+    _set_algo_single_loop(True)
     net = TrainStepWarp(NetWithLoss(Net()))
     _set_multi_subgraphs()
     net.set_auto_parallel()
