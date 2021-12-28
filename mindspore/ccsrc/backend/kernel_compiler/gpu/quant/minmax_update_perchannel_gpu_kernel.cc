@@ -35,14 +35,15 @@ const std::vector<size_t> &MinMaxUpdatePerChannelGpuKernel::GetWorkspaceSizeList
 }
 
 bool MinMaxUpdatePerChannelGpuKernel::Init(const CNodePtr &kernel_node) {
+  auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_num != 3) {
-    MS_LOG(EXCEPTION) << "Input number is " << input_num << ", but FakeQuant GpuKernel OP needs 3 output.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 3, but got " << input_num;
   }
 
   size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
   if (output_num != 2) {
-    MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but FakeQuant GpuKernel OP needs 1 output.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 2, but got " << output_num;
   }
 
   auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
@@ -52,14 +53,13 @@ bool MinMaxUpdatePerChannelGpuKernel::Init(const CNodePtr &kernel_node) {
 
   // init size
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  is_null_input_ = CHECK_NULL_INPUT(input_shape);
+  is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
   if (is_null_input_) {
-    MS_LOG(WARNING) << "For 'MinMaxUpdatePerchannelGpuKernel', input is null";
     InitSizeLists();
     return true;
   }
   if (input_shape.empty()) {
-    MS_LOG(EXCEPTION) << "For 'MinMaxUpdatePerchannelGpuKernel', input_shape is empty.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', input cannot be empty, but got empty";
   }
   num_channels_ = SizeToInt(input_shape[0]);
   for (size_t i = 0; i < input_shape.size(); ++i) {

@@ -40,22 +40,22 @@ const std::vector<size_t> &FakeLearnedScaleQuantPerChannelGradGpuKernel::GetWork
 }
 
 bool FakeLearnedScaleQuantPerChannelGradGpuKernel::Init(const CNodePtr &kernel_node) {
+  auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
   kernel_node_ = kernel_node;
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_num != 4) {
-    MS_LOG(EXCEPTION) << "Input number is " << input_num
-                      << ", but FakeLearnedScaleQuantPerChannelGrad GpuKernel OP needs 4 input.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 4, but got " << input_num;
   }
 
   size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
   if (output_num != 2) {
-    MS_LOG(EXCEPTION) << "Output number is " << output_num
-                      << ", but FakeLearnedScaleQuantPerChannelGrad GpuKernel OP needs 2 output.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 2, but got " << output_num;
   }
 
   quant_delay_ = static_cast<int>(GetValue<int64_t>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("quant_delay")));
   if (quant_delay_ < 0) {
-    MS_LOG(EXCEPTION) << "Attr \'quant_delay_\' " << quant_delay_ << " is less than 0, require larger than 0.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the value of quant_delay_ cannot be less than 0, but got "
+                      << quant_delay_;
   }
 
   neg_trunc_ = GetValue<bool>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("neg_trunc"));

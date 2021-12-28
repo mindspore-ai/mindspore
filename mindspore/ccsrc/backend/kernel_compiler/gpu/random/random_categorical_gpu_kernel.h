@@ -92,28 +92,26 @@ class RandomCategoricalGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     MS_EXCEPTION_IF_NULL(kernel_node);
     kernel_node_ = kernel_node;
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 3) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but RandomCategorical needs 3 inputs.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 3, but got " << input_num;
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(ERROR) << "Output number is " << output_num << ", but RandomCategorical has 1 output.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 1, but got " << output_num;
     }
     auto logits_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(logits_shape);
+    is_null_input_ = CHECK_SHAPE_NULL(logits_shape, kernel_name, "logits");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'RandomCategoricalGpuKernel', input is null";
       InitSizeLists();
       return true;
     }
     if (logits_shape.size() != 2) {
-      MS_LOG(ERROR) << "logits's dims is " << logits_shape.size() << ", but it should be only 2-D.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of logits should be 2, but got "
+                        << logits_shape.size();
     }
     batch_size_ = logits_shape[0];
     num_classes_ = logits_shape[1];

@@ -73,30 +73,27 @@ class RandomChoiceWithMaskGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     MS_EXCEPTION_IF_NULL(kernel_node);
     uint32_t time_interval = std::chrono::system_clock::now().time_since_epoch().count();
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but RandomChoiceWithMask needs 1 input.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 1, but got " << input_num;
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 2) {
-      MS_LOG(ERROR) << "Output number is " << output_num << ", but RandomChoiceWithMask has 2 outputs.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 2, but got " << output_num;
     }
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(input_shape);
+    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'RandomChoiceWithMaskGpuKernel', input is null";
       InitSizeLists();
       return true;
     }
     input_shape_size_ = input_shape.size();
     if (input_shape_size_ < 1 || input_shape_size_ > MAX_DIMENSION) {
-      MS_LOG(ERROR) << "Input is " << input_shape_size_
-                    << "-D, but RandomChoiceWithMask supports only 1-D to 5-D inputs.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input should be in (1, 5), but got "
+                        << input_shape_size_;
     }
     // convert size_t to int
     for (auto i = 0; i < input_shape_size_; i++) {

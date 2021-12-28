@@ -35,19 +35,20 @@ class DiscountedReturnGpuKernel : public GpuKernel {
   ~DiscountedReturnGpuKernel() = default;
 
   bool Init(const CNodePtr &kernel_node) override {
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     MS_EXCEPTION_IF_NULL(kernel_node);
     gamma_ = AnfAlgo::GetNodeAttr<float>(kernel_node, kGammaAttrName);
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != kInputNum) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but DiscountedReturnGpuKernel needs " << kInputNum;
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be " << kInputNum << ", but got "
+                        << input_num;
     }
 
     const std::vector<size_t> &reward_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
     const std::vector<size_t> &done_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
     if (reward_shape.size() == 0) {
-      MS_LOG(ERROR) << "Reward is " << reward_shape.size()
-                    << "-D, but DiscountedReturnGpuKernel supports 1-D and above.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of reward cannot be 0, but got "
+                        << reward_shape.size();
     }
 
     // Reshape reward to [timestep, env, else], done to [timestep, env], last_value to [env, else].

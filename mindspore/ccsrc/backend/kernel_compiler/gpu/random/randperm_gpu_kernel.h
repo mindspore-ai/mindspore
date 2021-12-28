@@ -20,6 +20,7 @@
 #include <cstdint>
 #include <random>
 #include <vector>
+#include <string>
 
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
@@ -52,7 +53,8 @@ class RandpermGpuKernel : public GpuKernel {
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaDeviceSynchronize(), "cudaDeviceSyncFailed in RandpermGpuKernel");
 
     if (static_cast<size_t>(n) > max_length_) {
-      MS_LOG(EXCEPTION) << "RandpermGpuKernel: n (" << n << ") cannot exceed max_length_ (" << max_length_ << ")";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', n (" << n << ") cannot exceed max_length_ (" << max_length_
+                        << ")";
     }
 
     // might not be a significant performance gain if this kernel is executed in cuda,
@@ -71,22 +73,21 @@ class RandpermGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     size_t input_count = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_count != 1) {
-      MS_LOG(ERROR) << input_count << " inputs were provided, but RandpermGpuKernel expects 1.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 1, but got " << input_count;
     }
 
     size_t output_count = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_count != 1) {
-      MS_LOG(ERROR) << "Number of outputs is " << output_count << ", but should be 1 for RandpermGpuKernel.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_count;
     }
 
     max_length_ = static_cast<size_t>(GetAttr<int64_t>(kernel_node, "max_length"));
     if (max_length_ < 1) {
-      MS_LOG(ERROR) << "For 'RandpermGpuKernel', the max_length cannot be less than 1, but got " << max_length_;
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of max_length cannot be less than 1, but got "
+                        << max_length_;
     }
     pad_ = static_cast<T>(GetAttr<int64_t>(kernel_node, "pad"));
 
