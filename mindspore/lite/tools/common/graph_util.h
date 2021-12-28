@@ -56,8 +56,6 @@ STATUS AddTensor2Node(schema::MetaGraphT *graphT, uint32_t nodeIdx, std::unique_
 STATUS ReplaceTensorOfNode(schema::MetaGraphT *graphT, uint32_t nodeIdx, uint32_t inTensorIdx,
                            std::unique_ptr<schema::TensorT> tensor);
 
-int DoBitPack(const int &bit_num, schema::TensorT *tensor_input);
-
 NodeIter InsertNode(schema::MetaGraphT *graphT, uint32_t existNodeIdx, InsertPlace place, size_t inoutIndex,
                     std::unique_ptr<schema::CNodeT> toAddNode, STATUS *errorCode, int *insert_num,
                     const OpDefCopyer &opDefCopyer = GetSimpleOpCopyer());

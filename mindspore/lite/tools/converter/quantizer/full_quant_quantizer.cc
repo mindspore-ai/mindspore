@@ -607,7 +607,7 @@ int FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
       MS_LOG(INFO) << "do bias correction";
       BiasCorrectionStrategy strategy(flags_, calibrator_, fp32_session_, fp32_model_, activation_q_min_,
                                       activation_q_max_);
-      status = strategy.DoBiasCorrection(func_graph);
+      status = strategy.DoCPUBiasCorrection(func_graph);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "bias_correction failed.";
         return status;

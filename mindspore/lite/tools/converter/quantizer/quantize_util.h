@@ -98,6 +98,13 @@ std::vector<int> ConvertShapeVectorToInt32(const ShapeVector &dims);
 
 int DoParameterBiasQuant(const ParameterPtr &bias, const PrimitivePtr &primitive);
 
+int DeQuantData(mindspore::tensor::MSTensor *tensor, std::vector<double> *dequant_data, int preferred_dim = 0);
+
+int DeQuantData(const int8_t *tensor_data, int64_t elements_num, std::vector<lite::LiteQuantParam> quant_params,
+                std::vector<double> *dequant_data, int preferred_dim);
+
+int DoBitPack(const size_t &bit_num, schema::TensorT *tensor_input);
+
 template <typename T>
 int FixedBitQuantFilter(const AnfNodePtr &parameter, const tensor::TensorPtr &weight, const PrimitivePtr &primitive,
                         QuantType quant_type, int quant_max, int quant_min, size_t bit_num,

@@ -49,18 +49,56 @@ class BiasCorrectionStrategy {
       delete int8_model_;
     }
   }
-  int DoBiasCorrection(const FuncGraphPtr &func_graph);
+  int DoCPUBiasCorrection(const FuncGraphPtr &quant_func_graph);
 
  private:
-  int DoCNodeBiasCorrection(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
+  int CreateQuantModel(const FuncGraphPtr &quant_func_graph);
+  int DoCNodeBiasCorrection(const FuncGraphPtr &quant_func_graph, const CNodePtr &cnode);
   int Int8Inference();
   bool OpInputDataHandle(OperationType type, const string &op_name, std::vector<float> *data);
   bool OpOutputChMeanDataHandle(OperationType type, const string &op_name, std::vector<float> *data);
   KernelCallBack GetBeforeCallBack(bool int8_op);
+  KernelCallBack GetFloatBeforeCallBack();
+  KernelCallBack GetInt8BeforeCallBack();
   KernelCallBack GetAfterCallBack(bool int8_op);
   KernelCallBack GetInt8AfterCallBack();
   KernelCallBack GetFloatAfterCallBack();
-  int CheckFp32TensorVec(const std::string &node_name, const std::vector<mindspore::tensor::MSTensor *> &tensor_vec);
+
+  template <typename T>
+  int CalculatePerChannelMeans(const T *tensor_data, size_t elem_count, std::vector<int> shapes,
+                               std::vector<float> *per_channel_mean) {
+    //  const auto *tensor_data = static_cast<const float *>(tensor->data());
+    //  size_t elem_count = tensor->ElementsNum();
+    MS_CHECK_GT(elem_count, 0, false);
+    //  auto shapes = tensor->shape();
+    if (shapes.size() != DIMENSION_4D) {
+      MS_LOG(ERROR) << "unexpected shape size: " << shapes.size();
+      return RET_ERROR;
+    }
+    // suppose the activation format: NHWC
+    auto channels = shapes[FOURTH_INPUT];
+    if (channels == 0) {
+      MS_LOG(ERROR) << "unexpected channels: 0";
+      return RET_ERROR;
+    }
+    per_channel_mean->resize(channels);
+    auto bucket_size = elem_count / channels;
+    for (int i = 0; i < channels; i++) {
+      float sum = 0;
+      for (size_t j = 0; j < bucket_size; j++) {
+        auto index = j * channels + i;
+        if (index >= elem_count) {
+          MS_LOG(ERROR) << "over flow!";
+          return RET_ERROR;
+        }
+        sum += tensor_data[index];
+      }
+      MS_CHECK_GT(bucket_size, 0, false);
+      sum = sum / bucket_size;
+      per_channel_mean->at(i) = sum;
+    }
+    return RET_OK;
+  }
 
  private:
   converter::Flags flags_;
@@ -75,7 +113,7 @@ class BiasCorrectionStrategy {
 
   std::map<std::string, std::vector<float>> fp32_op_input_map_;           // concurrency
   std::map<std::string, std::vector<float>> fp32_op_output_ch_mean_map_;  // concurrency
-  std::map<std::string, std::vector<float>> op_bias_diff_map_;            // only use by int8 model
+  std::map<std::string, std::vector<float>> op_bias_diff_sum_map_;        // Record the sum of diffs in tensor
   std::mutex mutex_op_input_;
   std::mutex mutex_op_output_;
 };
