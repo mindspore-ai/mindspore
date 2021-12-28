@@ -51,10 +51,10 @@ def check_rank_num(rank_num):
     """
     if isinstance(rank_num, (int)):
         if rank_num > MAX_RANK_NUM or rank_num <= 0:
-            raise ValueError("For 'create_group', the argument 'rank_num' should be greater than 0 and less than {}, "
-                             "but got 'rank_num' value : {}.".format(MAX_RANK_NUM, rank_num))
+            raise ValueError("For 'create_group', the size of argument 'rand_ids' should be greater than 0 and"
+                             "less than {}, but got the size of 'rank_ids' : {}.".format(MAX_RANK_NUM, rank_num))
     else:
-        raise TypeError("For 'create_group', the argument 'rank_num' must be type of int, "
+        raise TypeError("The argument 'rank_num' must be type of int, "
                         "but got 'rank_num' type : {}.".format(type(rank_num)))
 
 
@@ -116,12 +116,12 @@ def create_group(group, rank_num, rank_ids):
     check_rank_num(rank_num)
     if isinstance(rank_ids, (list)):
         if rank_num != len(rank_ids):
-            raise ValueError("For 'create_group', the argument 'rank_num' number should be equal to the length "
+            raise ValueError("The argument 'rank_num' number should be equal to the length "
                              "of rank_ids, but got 'rank_num' value : {} and 'rank_ids' value : {}."
                              .format(rank_num, rank_ids))
         for rank_id in rank_ids:
             if not isinstance(rank_id, (int)) or rank_id < 0:
-                raise ValueError("For 'create_group', the elements of argument 'rank_ids' must be "
+                raise ValueError("The elements of argument 'rank_ids' must be "
                                  "unsigned integer, but got the type : {}".format(type(rank_id)))
         c_array_rank_ids = c_array(ctypes.c_uint, rank_ids)
         c_rank_num = ctypes.c_uint(rank_num)
