@@ -2205,7 +2205,7 @@ void GemmIsNotPack(const float *a, const float *b, float *c, const float *bias, 
 #if defined(ENABLE_SSE) || defined(ENABLE_ARM)
   for (; index < row - C4NUM; index += C4NUM) {
     MS_FLOAT32X4 a_data = MS_LDQ_F32(a + index);
-    MS_STQ_F32(c + index, b_data4 * a_data + bias_data4);
+    MS_STQ_F32(c + index, MS_ADD128_F32(MS_MUL128_F32(b_data4, a_data), bias_data4));
   }
 #endif
 
