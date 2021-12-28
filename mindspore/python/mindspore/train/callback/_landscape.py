@@ -16,6 +16,7 @@
 import os
 import time
 import json
+import stat
 import shutil
 import numbers
 
@@ -309,11 +310,9 @@ class SummaryLandscape:
                 intervals = collect_landscape.get("intervals")
                 self._create_epoch_group(intervals)
                 data["epoch_group"] = self._epoch_group
-
-            file = os.open(json_path, os.O_WRONLY|os.O_TRUNC|os.O_CREAT, 0o600)
-            data = json.dumps(data).encode()
-            os.write(file, data)
-            os.close(file)
+            with open(json_path, 'w') as file:
+                json.dump(data, file)
+            os.chmod(json_path, stat.S_IRUSR)
 
         for interval, landscape in self._list_landscapes(callback_fn=callback_fn, device_ids=device_ids):
             summary_record.add_value(PluginEnum.LANDSCAPE.value, f'landscape_{str(interval)}', landscape)
@@ -352,17 +351,7 @@ class SummaryLandscape:
 
             if create_landscape['train']:
                 for i, epochs in enumerate(self._epoch_group.values()):
-                    #Each epoch_group have at least three epochs.
-                    if len(epochs) < 3:
-                        logger.error(f"This group epochs(%s) length is less 3, will ignore." % (epochs))
-                        continue
-                    if create_landscape['result']:
-                        msg = f"Start to create the {i+1}/{len(self._epoch_group)+1} landscapes," \
-                              f"epochs is {epochs}, decomposition is PCA."
-                    else:
-                        msg = f"Start to create the {i+1}/{len(self._epoch_group)} landscapes," \
-                              f"epochs is {epochs}, decomposition is PCA."
-                    logger.info(msg)
+                    self._log_message(create_landscape, index=i, interval=epochs)
                     kwargs['epochs'] = epochs
                     mid_time = time.time()
                     landscape_data = self._create_landscape_by_pca(**kwargs)
@@ -375,15 +364,7 @@ class SummaryLandscape:
 
             if create_landscape['result']:
                 final_epochs = [list(self._epoch_group.values())[-1][-1]]
-                if create_landscape['train']:
-                    msg = f"Start to create the {len(self._epoch_group)+1}/{len(self._epoch_group)+1} landscapes," \
-                          f"epochs is {final_epochs}, decomposition is Random. "
-                else:
-                    msg = f"Start to create the {1}/{1} landscapes, " \
-                          f"epochs is {final_epochs}, decomposition is Random."
-                logger.info(msg)
-
-
+                self._log_message(create_landscape, final_epochs=final_epochs)
                 kwargs['epochs'] = final_epochs
                 mid_time_2 = time.time()
                 landscape_data = self._create_landscape_by_random(**kwargs)
@@ -394,6 +375,24 @@ class SummaryLandscape:
                 landscape_msg = landscape_data.transform_to_loss_landscape_msg(landscape_data)
                 yield final_epochs, landscape_msg
         logger.info("Total use time: %s s." % (round(time.time() - start, 6)))
+
+    def _log_message(self, create_landscape, index=None, interval=None, final_epochs=None):
+        """Generate drawing information using log."""
+        if final_epochs is None:
+            if create_landscape['result']:
+                msg = f"Start to create the {index + 1}/{len(self._epoch_group) + 1} landscapes, " \
+                      f"checkpoint is {interval}, decomposition is PCA."
+            else:
+                msg = f"Start to create the {index + 1}/{len(self._epoch_group)} landscapes, " \
+                      f"checkpoint is {interval}, decomposition is PCA."
+        else:
+            if create_landscape['train']:
+                msg = f"Start to create the {len(self._epoch_group) + 1}/{len(self._epoch_group) + 1} landscapes, " \
+                      f"checkpoint is {final_epochs}, decomposition is Random. "
+            else:
+                msg = f"Start to create the {1}/{1} landscapes, " \
+                      f"checkpoint is {final_epochs}, decomposition is Random."
+        logger.info(msg)
 
     @staticmethod
     def _set_context(device_id):
