@@ -62,14 +62,16 @@ int LSTMGradCPUKernel::LstmBackpropUnidirectional(float *output, bool is_backwar
   auto dC_tensor = in_tensors_.at(dC_index); /* [1, Batch, hidden_size ] */
   auto dH_tensor = in_tensors_.at(dH_index); /* [1, Batch, hidden_size ] */
   auto dy_tensor = in_tensors_.at(dy_index);
-  auto cell_tensor = in_tensors_.at(cell_state_index); /* [1, Batch, hidden_size ] */
+  auto dW_tensor = out_tensors_.at(dW_out_index);
+  auto dX_tensor = out_tensors_.at(dX_out_index);
   auto weights_tensor = in_tensors_.at(weights_index); /* [all weights + biases, 1, 1] */
   auto intermediate_tensor = in_tensors_.at(intermediate_data_index);
   auto input_tensor = in_tensors_.at(input_index);
   MS_ASSERT(dy_tensor != nullptr);
   MS_ASSERT(dC_tensor != nullptr);
   MS_ASSERT(dH_tensor != nullptr);
-  MS_ASSERT(cell_tensor != nullptr);
+  MS_ASSERT(dW_tensor != nullptr);
+  MS_ASSERT(dX_tensor != nullptr);
   MS_ASSERT(weights_tensor != nullptr);
   MS_ASSERT(intermediate_tensor != nullptr);
   MS_ASSERT(input_tensor != nullptr);
@@ -77,8 +79,10 @@ int LSTMGradCPUKernel::LstmBackpropUnidirectional(float *output, bool is_backwar
   auto dC = reinterpret_cast<float *>(dC_tensor->data());
   auto dH = reinterpret_cast<float *>(dH_tensor->data());
   auto dY = reinterpret_cast<float *>(dy_tensor->data());
+  auto dW = reinterpret_cast<float *>(dW_tensor->data());
+  auto dX = reinterpret_cast<float *>(dX_tensor->data());
   auto weights = reinterpret_cast<float *>(weights_tensor->data());
-  auto last_cell = reinterpret_cast<float *>(cell_tensor->data());
+
   auto input = reinterpret_cast<float *>(input_tensor->data());
 
   auto state_size = lstm_param_->batch_ * lstm_param_->hidden_size_;
@@ -90,6 +94,9 @@ int LSTMGradCPUKernel::LstmBackpropUnidirectional(float *output, bool is_backwar
   float *forget_gate = intermediate_data + seq_stride * 4;
   float *cell_gate = intermediate_data + seq_stride * 5;
   float *cell_state_minus1 = intermediate_data + seq_stride * 6;
+
+  memset(dW_tmp_, 0, dW_tensor->Size());  // dW_tmp is summed in the loop
+  bool first_time = true;
   for (int t = lstm_param_->seq_len_ - 1; t >= 0; t--) {
     int real_t = is_backward ? lstm_param_->seq_len_ - t - 1 : t;
     auto stride = real_t * state_size;
@@ -102,13 +109,29 @@ int LSTMGradCPUKernel::LstmBackpropUnidirectional(float *output, bool is_backwar
     float *cell_state_minus1_t = cell_state_minus1 + stride;
     float *output_ptr = output + real_t * lstm_param_->output_step_;
     float *input_ptr = input + real_t * lstm_param_->batch_ * lstm_param_->input_size_;
-
-    std::cout << "seq_len: " << lstm_param_->seq_len_ << " t: " << t << " real_t: " << real_t << " cell_state "
-              << cell_state[0] << " last_cell " << last_cell[0] << std::endl;
+    float *dX_t = dX + real_t * lstm_param_->batch_ * lstm_param_->input_size_;
+    float *dY_t = nullptr;
+    if (first_time) {
+      dY_t = dY + real_t * lstm_param_->batch_ * lstm_param_->hidden_size_;
+      LstmGradStepUnitInit(output_gate_t, cell_state_t, dY_t, dC, dH, workspace_, lstm_param_);
+      first_time = false;
+    }
+    dY_t = (real_t > 0) ? dY + (real_t - 1) * lstm_param_->batch_ * lstm_param_->hidden_size_ : nullptr;
     LstmGradStepUnit(input_ptr, output_ptr, input_gate_t, forget_gate_t, cell_gate_t, output_gate_t, hidden_state_t,
-                     cell_state_t, dC, dH, dY, cell_state_minus1_t, weights, workspace_, lstm_param_);
+                     cell_state_t, dC, dH, dY_t, dW_tmp_, dX_t, cell_state_minus1_t, weights, workspace_, lstm_param_);
   }
+  ReorderLstmWeightGrad(dW, dW_tmp_);
   return RET_OK;
+}
+
+void LSTMGradCPUKernel::ReorderLstmWeightGrad(float *dst, float *src) {
+  ReorderLstmWeights(dst, src, weight_batch_, lstm_param_->hidden_size_, lstm_param_->input_size_, weights_order_IOFG);
+  src += weight_batch_ * lstm_param_->hidden_size_ * lstm_param_->input_size_;
+  dst += weight_batch_ * lstm_param_->hidden_size_ * lstm_param_->input_size_;
+  ReorderLstmWeights(dst, src, weight_batch_, lstm_param_->hidden_size_, lstm_param_->hidden_size_, weights_order_IOFG);
+  src += weight_batch_ * lstm_param_->hidden_size_ * lstm_param_->hidden_size_;
+  dst += weight_batch_ * lstm_param_->hidden_size_ * lstm_param_->hidden_size_;
+  ReorderLstmWeights(dst, src, weight_batch_, 1, lstm_param_->hidden_size_, weights_order_IOFG);
 }
 
 int LSTMGradCPUKernel::DoGrad(int thread_id) { return RET_OK; }
@@ -251,6 +274,18 @@ int LSTMGradCPUKernel::MallocRunBuffer() {
     MS_LOG(ERROR) << "LstmCPUKernel malloc run workspace error.";
     return RET_ERROR;
   }
+  auto dW_tensor = out_tensors_.at(dW_out_index);
+  MS_ASSERT(dW_tensor != nullptr);
+  auto dW_size = dW_tensor->Size();
+  if ((dW_size == 0) || (dW_size > LSTMGRAD_MAX_WEIGHTS_SIZE)) {
+    MS_LOG(ERROR) << "LstmCPUKernel malloc run dW_tmp size error.";
+    return RET_ERROR;
+  }
+  dW_tmp_ = reinterpret_cast<float *>(malloc(dW_size));
+  if (dW_tmp_ == nullptr) {
+    MS_LOG(ERROR) << "LstmCPUKernel malloc run dW_tmp alloc error.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
@@ -259,18 +294,22 @@ void LSTMGradCPUKernel::FreeRunBuffer() {
     free(workspace_);
     workspace_ = nullptr;
   }
+  if (dW_tmp_ != nullptr) {
+    free(dW_tmp_);
+    dW_tmp_ = nullptr;
+  }
 }
 
 int LSTMGradCPUKernel::PackWeights() {
   auto weight_i_data = InputWeightPtr();
   CHECK_NULL_RETURN(weight_i_data);
   PackLstmWeightTranspose(weight_i_ptr_, weight_i_data, weight_batch_, lstm_param_->hidden_size_,
-                          lstm_param_->input_size_, input_size_align_);
+                          lstm_param_->input_size_, input_size_align_, weights_order_IFOG);
 
   auto weight_h_data = StateWeightPtr();
   CHECK_NULL_RETURN(weight_h_data);
   PackLstmWeightTranspose(weight_h_ptr_, weight_h_data, weight_batch_, lstm_param_->hidden_size_,
-                          lstm_param_->hidden_size_, lstm_param_->state_col_align_);
+                          lstm_param_->hidden_size_, lstm_param_->state_col_align_, weights_order_IFOG);
   return RET_OK;
 }
 

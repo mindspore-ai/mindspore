@@ -24,6 +24,7 @@
 namespace mindspore {
 namespace kernel {
 constexpr int LSTMGRAD_MAX_WORKSPACE_SIZE = 100000;
+constexpr int LSTMGRAD_MAX_WEIGHTS_SIZE = 100000;
 class LSTMGradCPUKernel : public InnerKernel {
  public:
   explicit LSTMGradCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
@@ -52,6 +53,7 @@ class LSTMGradCPUKernel : public InnerKernel {
   float *StateBiasPtr();
   int AllocateWeights();
   int PackWeights();
+  void ReorderLstmWeightGrad(float *dst, float *src);
 
   int thread_count_;
   static const int input_index = 0;
@@ -61,13 +63,20 @@ class LSTMGradCPUKernel : public InnerKernel {
   static const int dH_index = 8;
   static const int dC_index = 9;
   static const int intermediate_data_index = 10;
+  static const int dX_out_index = 0;
+  static const int dH_out_index = 1;
+  static const int dC_out_index = 2;
+  static const int dW_out_index = 3;
   static const int num_of_gates = 4;
+  const int weights_order_IFOG[2 * 4] = {0, 2, 3, 1, 4, 6, 7, 4};  // IFGO order to IOFG order
+  const int weights_order_IOFG[2 * 4] = {0, 3, 1, 2, 4, 7, 5, 6};  // IOFG order to IFGO order
 
   int input_size_align_ = 1;
   float *weight_i_ptr_ = nullptr;
   float *weight_h_ptr_ = nullptr;
   float *input_bias_ = nullptr;
   float *state_bias_ = nullptr;
+  float *dW_tmp_ = nullptr;
   float *workspace_ = nullptr;
 
   int64_t weight_size_ = 0;
