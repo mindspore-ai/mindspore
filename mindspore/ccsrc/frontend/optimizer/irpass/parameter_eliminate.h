@@ -45,8 +45,6 @@ class ParameterEliminator {
       if (fg == nullptr) {
         break;
       }
-      auto manager = fg->manager();
-      MS_EXCEPTION_IF_NULL(manager);
       const auto &erase_indexes = EraseUnusedParameters(fg, manager);
       for (auto caller : callers) {
         // Erase the corresponding args.
