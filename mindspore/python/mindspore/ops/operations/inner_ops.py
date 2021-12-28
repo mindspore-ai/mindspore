@@ -254,6 +254,7 @@ class LambApplyOptimizerAssign(PrimitiveWithInfer):
     Supported Platforms:
         ``Ascend``
     """
+
     @prim_attr_register
     def __init__(self):
         """Initialize LambApplyOptimizerAssign"""
@@ -316,6 +317,7 @@ class LambApplyWeightAssign(PrimitiveWithInfer):
     Supported Platforms:
         ``Ascend``
     """
+
     @prim_attr_register
     def __init__(self):
         """Initialize LambApplyWeightAssign"""
@@ -558,3 +560,132 @@ class FusedCastAdamWeightDecay(PrimitiveWithInfer):
                 "decay": decay_dtype}
         validator.check_scalar_or_tensor_types_same(args, [mstype.float32], self.name, True)
         return var_dtype, m_dtype, v_dtype
+
+
+class FusedAdaFactor(PrimitiveWithInfer):
+    r"""
+    Updates gradients by the Adaptive Learning Rates with Sublinear Memory Cost (Adafactor) algorithm.
+
+    The Adafactor algorithm is proposed in `Adafactor: Adafactor: Adaptive Learning Rates with Sublinear Memory
+    Cost <https://arxiv.org/abs/1804.04235>`_.
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
+    Adafactor for weight vector are as follows,
+
+    .. math::
+        \begin{array}{l} \\
+        \alpha_{t}=\max \left(\epsilon_{2}, \operatorname{RMS}\left(X_{t-1}\right)\right) \rho_{t} \\
+        G_{t}=\nabla f_{t}\left(X_{t-1}\right) \\
+        \hat{V}_{t}=\hat{\beta}_{2} \hat{V}_{t-1}+\left(1-\hat{\beta}_{2_{t}}\right)\left(G_{t}^{2}+ \\
+        \epsilon_{1} 1_{n}\right) \\
+        U_{t}=G_{t} / \sqrt{\hat{V}_{t}} \\
+        \hat{U}_{t}=U_{t} / \max \left(1, \operatorname{RMS}\left(U_{t}\right) / d\right) \\
+        X_{t}=X_{t-1}-\alpha_{t} \hat{U}_{t}
+        \end{array}
+
+    Adafactor for weight matrices are as follows,
+
+    .. math::
+        \begin{array}{l} \\
+        \alpha_{t}=\max \left(\epsilon_{2}, \operatorname{RMS}\left(X_{t-1}\right)\right) \rho_{t} \\
+        G_{t}=\nabla f_{t}\left(X_{t-1}\right) \\
+        R_{t}=\hat{\beta}_{2 t} R_{t-1}+\left(1-\hat{\beta}_{2 t}\right)\left(G_{t}^{2}+ \\
+        \epsilon_{1} 1_{n} 1_{m}^{\top}\right) 1_{m} \\
+        C_{t}=\hat{\beta}_{2 t} C_{t-1}+\left(1-\hat{\beta}_{2 t}\right) 1_{n}^{\top}\left(G_{t}^{2}+ \\
+        \epsilon_{1} 1_{n} 1_{m}^{\top}\right) \\
+        \hat{V}_{t}=R_{t} C_{t} / 1_{n}^{\top} R_{t} \\
+        U_{t}=G_{t} / \sqrt{\hat{V}_{t}} \\
+        \hat{U}_{t}=U_{t} / \max \left(1, \operatorname{RMS}\left(U_{t}\right) / d\right) \\
+        X_{t}=X_{t-1}-\alpha_{t} U_{t}
+        \end{array}
+
+    Where RMS is:
+
+    .. math::
+        \operatorname{RMS}\left(U_{t}\right)=\operatorname{RMS}_{x \in X}\left(u_{x t}\right)= \\
+        \sqrt{\operatorname{Mean}_{x \in X}\left(\frac{\left(g_{x t}\right)^{2}}{\hat{v}_{x t}}\right)}
+
+    :math:`x` is each individual parameter,
+    :math:`t` is assumed to be the current number of steps,
+    :math:`a_{t}` is the learning rate,
+    :math:`f(X)` is the loss function,
+    :math:`\epsilon1` and :math:`\epsilon2` is a small positive number to prevent errors,
+    :math:`d` is the clipping threshold,
+    :math:`\beta_{2}` is the moment decay,
+    :math:`\rho` is the relative step size,
+    :math:`R` is the running averages of the row sums of the squared gradient,
+    :math:`C` is the running averages of the column sums of the squared gradient.
+
+    Args:
+        enable_weight_decay (bool): If True, enable weight decay. default: False
+        enable_first_moment (bool): If True, enable first moment. default: False
+        enable_scale_parameter (bool): If True, enable scale learning rate using parameter. default: False
+
+    Inputs:
+        - **epsilon** (Tensor) - input epsilon pair.
+        - **clip_threshold** (float) - The threshold of root mean square of final gradient update.
+        - **beta1** (float) - The exponential decay rate for the 1nd moment estimations.
+        - **beta2** (float) - The exponential decay rate for the 2nd moment estimations.
+        - **weight_decay** (float) - The weight decay value, must be a scalar tensor with float data type.
+        - **learning_rate** (float) - The learning rate value.
+        - **gradient** (Tensor) - Gradient.
+        - **param** (Tensor) - Weights to be updated.
+        - **exp_avg** (Tensor) - The exponential moving average of 1st moment optimizer state.
+        - **exp_avg_sq_row** (Tensor) - The exponential moving average of square of gradient square row factor.
+        - **exp_avg_sq_col** (Tensor) - The exponential moving average of square of gradient square col factor.
+        - **exp_avg_sq** (Tensor) - The exponential moving average of square of gradient square.
+
+    Outputs:
+        - **dummy_param** (Tensor) - The same shape and data type as `param`.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> import mindspore.context as context
+        >>> import mindspore.nn as nn
+        >>> import mindspore.ops as ops
+        >>> from mindspore import Tensor, Parameter
+        >>> from mindspore import dtype as mstype
+        >>> param_shape = [2, 3, 2]
+        >>> class Net(nn.Cell):
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.opt = ops.FusedAdaFactor()
+        ...         self.param = Parameter(Tensor(np.ones(param_shape), mstype.float32), name="param")
+        ...         self.exp_avg = Parameter(Tensor(np.zeros(param_shape), mstype.float32), name="exp_avg")
+        ...         self.exp_avg_sq = Parameter(Tensor(np.zeros(param_shape), mstype.float32), name="exp_avg_sq")
+        ...         self.exp_avg_sq_row = Parameter(Tensor(np.zeros([2, 3]), mstype.float32), name="exp_avg_sq_row")
+        ...         self.exp_avg_sq_col = Parameter(Tensor(np.zeros([2, 2]), mstype.float32), name="exp_avg_sq_col")
+        ...
+        ...     def construct(self, epsilon, clip_threshold, beta1, beta2, weight_decay, lr, grad):
+        ...         out = self.opt(epsilon, clip_threshold, beta1, beta2, weight_decay, lr, grad, self.param,
+        ...                        self.exp_avg, self.exp_avg_sq_row, self.exp_avg_sq_col, self.exp_avg_sq)
+        ...         return out
+        >>> context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+        >>> net = Net()
+        >>> gradient = Tensor(np.ones(param_shape), mstype.float32)
+        >>> net((1e-30, 1e-3), 1.0, 0.9, 0.8, 1e-2, 0.03, gradient)
+        >>> print(net.param.asnumpy())
+    """
+
+    @prim_attr_register
+    def __init__(self, enable_scale_parameter=False, enable_first_moment=False, enable_weight_decay=False):
+        self.add_prim_attr('side_effect_mem', True)
+        validator.check_value_type("enable_scale_parameter", enable_scale_parameter, [bool], self.name)
+        validator.check_value_type("enable_first_moment", enable_first_moment, [bool], self.name)
+        validator.check_value_type("enable_weight_decay", enable_weight_decay, [bool], self.name)
+
+    def infer_shape(self, epsilon_shape, clip_threshold_shape, beta1_shape, beta2t_shape, weight_decay_shape,
+                    learning_rate_shape, grad_shape, param_shape, exp_avg_shape, exp_avg_sq_row_shape,
+                    exp_avg_sq_col_shape, exp_avg_sq_shape):
+        validator.check("grad_shape", grad_shape, "param_shape", param_shape, Rel.EQ, self.name)
+        return param_shape
+
+    def infer_dtype(self, epsilon_type, clip_threshold_type, beta1_type, beta2t_type, weight_decay_type,
+                    learning_rate_type, grad_type, param_type, exp_avg_type, exp_avg_sq_row_type,
+                    exp_avg_sq_col_type, exp_avg_sq_type):
+        return param_type

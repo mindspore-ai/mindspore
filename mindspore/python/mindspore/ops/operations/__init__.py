@@ -44,7 +44,7 @@ from .debug_ops import (ImageSummary, InsertGradientOf, HookBackward, ScalarSumm
 from .control_ops import GeSwitch, Merge
 from .inner_ops import (ScalarCast, Randperm, NoRepeatNGram, LambApplyOptimizerAssign, LambApplyWeightAssign,
                         MakeRefKey,
-                        FusedWeightScaleApplyMomentum, FusedCastAdamWeightDecay)
+                        FusedWeightScaleApplyMomentum, FusedCastAdamWeightDecay, FusedAdaFactor)
 
 from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AccumulateNV2, AssignAdd, AssignSub, Atan2, BatchMatMul,
                        BitwiseAnd, BitwiseOr, Ger,
@@ -177,6 +177,7 @@ __all__ = [
     'FusedSparseAdam',
     'FusedSparseLazyAdam',
     'AdamNoUpdateParam',
+    'FusedAdaFactor',
     'Softplus',
     'Softmax',
     'Softsign',
