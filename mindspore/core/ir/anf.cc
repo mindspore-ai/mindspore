@@ -331,57 +331,6 @@ EffectInfo GetPrimEffectInfo(const PrimitivePtr &prim) {
   return {EffectInfo::kDetected, mem, io, false};
 }
 
-MonadState GetMonadState(const AnfNodePtr &node, const AnfNodePtr &skip_input) {
-  if (node == nullptr) {
-    return {};
-  }
-  MonadState state;
-  size_t seen = NewSeenGeneration();
-  std::queue<AnfNodePtr> que;
-  que.push(node);
-  while (!que.empty()) {
-    auto n = que.front();
-    que.pop();
-
-    // check whether this node has been matched or should be skipped.
-    if (n == nullptr || n->seen_ == seen || n == skip_input) {
-      continue;
-    }
-    n->seen_ = seen;
-
-    // check whether this node has monad abstract.
-    if (state.u == nullptr && HasAbstractUMonad(n)) {
-      state.u = n;
-    } else if (state.io == nullptr && HasAbstractIOMonad(n)) {
-      state.io = n;
-    } else {
-      auto cnode = dyn_cast<CNode>(n);
-      if (cnode != nullptr) {
-        for (auto it = cnode->inputs().rbegin(); it != cnode->inputs().rend(); ++it) {
-          que.push(*it);
-        }
-      }
-      continue;
-    }
-
-    if (state.u != nullptr && state.io != nullptr) {
-      return state;
-    }
-  }
-  return state;
-}
-
-bool IsStateEquivalent(const MonadState &state1, const MonadState &state2) {
-  return (state1.u == nullptr || state2.u == nullptr || state1.u == state2.u) &&
-         (state1.io == nullptr || state2.io == nullptr || state1.io == state2.io);
-}
-
-bool IsStateStrictEquivalent(const AnfNodePtr &outer, const AnfNodePtr &inner) {
-  MonadState state_matmul = GetMonadState(inner);
-  MonadState state_node = GetMonadState(outer, inner);
-  return IsStateEquivalent(state_matmul, state_node);
-}
-
 std::set<CNodePtr> GetLoadInputs(const AnfNodePtr &node) {
   std::set<CNodePtr> loads;
   auto cnode = dyn_cast<CNode>(node);
