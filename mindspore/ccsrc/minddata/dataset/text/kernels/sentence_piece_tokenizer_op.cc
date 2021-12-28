@@ -18,6 +18,7 @@
 #include <memory>
 #include <vector>
 
+#include "utils/file_utils.h"
 #include "utils/ms_utils.h"
 #include "minddata/dataset/util/path.h"
 
@@ -86,26 +87,14 @@ Status SentencePieceTokenizerOp::Compute(const std::shared_ptr<Tensor> &input, s
 }
 
 Status SentencePieceTokenizerOp::GetModelRealPath(const std::string &model_path, const std::string &filename) {
-  char real_path[PATH_MAX] = {0};
-  if (file_path_.size() >= PATH_MAX) {
+  auto realpath = FileUtils::GetRealPath(model_path.data());
+  if (!realpath.has_value()) {
     RETURN_STATUS_UNEXPECTED(
-      "SentencePieceTokenizer: Sentence piece model path is invalid for path length longer than 4096.");
+      "SentencePieceTokenizer: Sentence piece model path is not existed or permission denied. Model path: " +
+      model_path);
   }
-#if defined(_WIN32) || defined(_WIN64)
-  if (_fullpath(real_path, common::SafeCStr(model_path), PATH_MAX) == nullptr) {
-    RETURN_STATUS_UNEXPECTED(
-      "SentencePieceTokenizer: Sentence piece model path is invalid for path length longer than 4096.");
-  }
-#else
-  if (realpath(common::SafeCStr(model_path), real_path) == nullptr) {
-    RETURN_STATUS_UNEXPECTED(
-      "SentencePieceTokenizer: "
-      "Sentence piece model path: " +
-      model_path + " is not existed or permission denied.");
-  }
-#endif
-  std::string abs_path = real_path;
-  file_path_ = (Path(abs_path) / Path(filename)).ToString();
+
+  file_path_ = (Path(realpath.value()) / Path(filename)).ToString();
   return Status::OK();
 }
 
