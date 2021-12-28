@@ -22,7 +22,7 @@ sub = P.Sub()
 confusion_softmax_grad = Primitive('ConfusionSoftmaxGrad')
 make_tuple = Primitive('MakeTuple')
 tuple_getitem = Primitive(Constants.kTupleGetItem)
-axis = 2
+axis = -1
 
 
 class FnDict:
