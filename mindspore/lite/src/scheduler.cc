@@ -1716,4 +1716,14 @@ int Scheduler::ConstructControlFlowMainGraph(std::vector<kernel::LiteKernel *> *
   return RET_OK;
 }
 #endif
+
+std::vector<kernel::LiteKernel *> Scheduler::NonTailCallNodes() {
+  std::vector<kernel::LiteKernel *> ret{};
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
+  if (*is_control_flow_) {
+    ret = control_flow_scheduler_->GetNonTailCalls();
+  }
+#endif
+  return ret;
+}
 }  // namespace mindspore::lite

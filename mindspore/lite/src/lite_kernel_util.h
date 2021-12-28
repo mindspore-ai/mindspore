@@ -40,6 +40,7 @@ class LiteKernelUtil {
   static LiteKernel *GetPartialOutputCall(LiteKernel *partial_node);
   static bool IsNonTailCallSubGraph(kernel::SubGraphKernel *subgraph_kernel);
   static bool IsTailCallSubGraph(kernel::SubGraphKernel *subgraph_kernel);
+  static std::vector<LiteKernel *> GetCallInputPartialsCorrespondingOutputSubgraph(LiteKernel *call_node);
 #endif
   static LiteKernel *GetInputsSpecificNode(const LiteKernel *kernel, const schema::PrimitiveType &primitive_type);
   static bool InputsContainsSpecificNode(const LiteKernel *kernel, const schema::PrimitiveType &primitive_type);

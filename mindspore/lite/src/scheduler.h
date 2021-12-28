@@ -62,6 +62,7 @@ class Scheduler {
   void SetConfig(const std::map<std::string, std::map<std::string, std::string>> *config_info) {
     config_info_ = config_info;
   }
+  std::vector<kernel::LiteKernel *> NonTailCallNodes();
 
  private:
   int SchedulePreProcess();

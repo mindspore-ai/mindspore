@@ -48,11 +48,8 @@ namespace lite {
 class LiteSession : public session::LiteSession {
  public:
   LiteSession();
-
   ~LiteSession() override;
-
   static session::LiteSession *CreateSession(const std::string &model_path, const lite::Context *context);
-
   int LoadModelAndCompileByBuf(const char *model_buf, mindspore::ModelType model_type, const size_t &buf_size);
   int LoadModelAndCompileByBuf(const char *model_buf, mindspore::ModelType model_type, const size_t &buf_size,
                                const std::shared_ptr<mindspore::Context> &ms_context);
@@ -60,7 +57,6 @@ class LiteSession : public session::LiteSession {
   int LoadModelAndCompileByPath(const std::string &model_path, mindspore::ModelType model_type);
   int LoadModelAndCompileByPath(const std::string &model_path, mindspore::ModelType model_type,
                                 const std::shared_ptr<mindspore::Context> &ms_context);
-
   static mindspore::ModelType LoadModelByBuff(const char *model_buf, const size_t &buf_size, char **lite_buf,
                                               size_t *size, mindspore::ModelType model_type);
   static mindspore::ModelType LoadModelByBuff(const char *model_buf, const size_t &buf_size, char **lite_buf,
@@ -69,100 +65,64 @@ class LiteSession : public session::LiteSession {
   static const char *LoadModelByPath(const std::string &file, mindspore::ModelType model_type, size_t *size);
   static const char *LoadModelByPath(const std::string &file, mindspore::ModelType model_type, size_t *size,
                                      const std::shared_ptr<mindspore::Context> &ms_context);
-
   virtual int Init(InnerContext *context);
-
   void BindThread(bool if_bind) override;
-
   int CompileGraph(Model *model) override;
-
   std::vector<mindspore::tensor::MSTensor *> GetInputs() const override;
-
   mindspore::tensor::MSTensor *GetInputsByTensorName(const std::string &name) const override;
-
   int RunGraph(const KernelCallBack &before = nullptr, const KernelCallBack &after = nullptr) override;
-
   std::vector<mindspore::tensor::MSTensor *> GetOutputsByNodeName(const std::string &node_name) const override;
-
   std::vector<std::string> GetOutputTensorNames() const override;
-
   mindspore::tensor::MSTensor *GetOutputByTensorName(const std::string &tensor_name) const override;
-
   std::unordered_map<std::string, mindspore::tensor::MSTensor *> GetOutputs() const override;
-
 #ifdef ENABLE_OPENGL_TEXTURE
   int BindGLTexture2DMemory(const std::map<std::string, GLuint> &inputGLTexture,
                             std::map<std::string, GLuint> *outputGLTexture) override;
 #endif
   int Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs,
              const std::vector<std::vector<int>> &dims) override;
-
   void InitExecutionConfig(std::map<std::string, TypeId> *config) { execution_plan_ = config; }
-
   void set_model(Model *model) { this->model_ = model; }
-
   const std::vector<kernel::LiteKernel *> &get_kernels() const { return this->kernels_; }
-
   const Delegate *get_delegate() const { return this->delegate_.get(); }
-
   void SetConfigInfo(const std::map<std::string, std::map<std::string, std::string>> *config_info) {
     config_info_ = config_info;
   }
-
   const std::vector<Tensor *> &GetTensors() const { return this->tensors_; }
 
  protected:
   static void ConvertTensorsQuantParam(const schema::Tensor *src_tensor, lite::Tensor *dst_tensor);
-
   int ConvertTensorsData(const lite::LiteModel *model, size_t tensor_index, lite::Tensor *dst_tensor);
-
   lite::Tensor *ConvertTensor(const schema::Tensor &src_tensor);
-
   int ConvertTensors(const lite::Model *model);
-
   void InitGraphInOutTensorsMap(const lite::Model *model);
-
   void InitGraphInputTensors(const lite::Model *model);
-
   void InitGraphInputMSTensors();
-
   void InitGraphOutputTensors(const lite::Model *model);
-
   void InitGraphInputMap(const lite::Model *model);
-
   void InitGraphOutputNodeMap(const lite::Model *model);
-
   void InitGraphOutputTensorMap(const lite::Model *model);
-
   void AdjustModelOutputTensorInitRefCount(const lite::Model *model);
-
   int ResizeInputs(const std::vector<mindspore::tensor::MSTensor *> &inputs, const std::vector<std::vector<int>> &dims);
-
   int SetAllocatorForDelegateKernels(const kernel::LiteKernel *kernel);
-
   int PrepareKernels(const Model *model);
-
+  int SetTensorInitRefCount(const Model *model);
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
+  int SetNonTaiCallSubgraphOutputInitRefCount(const std::vector<kernel::LiteKernel *> &non_tail_call_kernels);
+#endif
   static int ReSizeKernels(
     const std::vector<kernel::LiteKernel *> &kernels,
     const std::unordered_map<Tensor *, Tensor *> isolate_input_map = std::unordered_map<Tensor *, Tensor *>());
-
   static void FreePackOpWeight(const std::vector<kernel::LiteKernel *> &kernels);
 
  private:
   int PreCheck(Model *model);
-
   int InitExecutor();
-
   void ResetInputsShape(const std::vector<std::vector<int>> &dims);
-
   int ContextInit(InnerContext *context);
-
   int CreateTensorRTDelegate();
-
   int CreateNPUDelegate();
-
   int DelegateInit();
-
   int InitGPURuntime();
 
  private:
@@ -215,6 +175,7 @@ class LiteSession : public session::LiteSession {
   int delegate_device_type_ = -1;  // -1: not specified; 0: CPU; 1: GPU; 2: NPU
   std::map<std::string, TypeId> *execution_plan_ = nullptr;
   const std::map<std::string, std::map<std::string, std::string>> *config_info_ = nullptr;
+  std::vector<kernel::LiteKernel *> non_tail_call_kernels_;
 };
 }  // namespace lite
 }  // namespace mindspore

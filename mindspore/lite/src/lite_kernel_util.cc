@@ -28,6 +28,7 @@
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
 #include "src/control_flow/entrance_subgraph_kernel.h"
 #include "src/control_flow/exit_subgraph_kernel.h"
+#include "src/runtime/kernel/arm/base/partial_fusion.h"
 #endif
 
 namespace mindspore::kernel {
@@ -293,6 +294,21 @@ std::vector<LiteKernel *> LiteKernelUtil::GetCallInputPartials(LiteKernel *call_
     }
   }
   return partial_nodes;
+}
+
+std::vector<LiteKernel *> LiteKernelUtil::GetCallInputPartialsCorrespondingOutputSubgraph(LiteKernel *call_node) {
+  auto partial_nodes = GetCallInputPartials(call_node);
+  std::vector<kernel::LiteKernel *> all_subgraphs{};
+  for (auto partial_node : partial_nodes) {
+    auto partial_kernel = reinterpret_cast<kernel::PartialFusionKernel *>(partial_node->kernel());
+    if (partial_kernel == nullptr) {
+      MS_LOG(ERROR) << "cast to partial kernel failed.";
+      return all_subgraphs;
+    }
+    // only get the output subgraph, the last subgraph is the output subgraph.
+    all_subgraphs.push_back(partial_kernel->subgraph_kernels().back());
+  }
+  return all_subgraphs;
 }
 
 LiteKernel *LiteKernelUtil::GetPartialOutputCall(LiteKernel *partial_node) {
