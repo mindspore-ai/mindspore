@@ -96,6 +96,8 @@ int GetPreferredDim(const PrimitivePtr &primitive, int input_index, const std::v
 
 std::vector<int> ConvertShapeVectorToInt32(const ShapeVector &dims);
 
+int DoParameterBiasQuant(const ParameterPtr &bias, const PrimitivePtr &primitive);
+
 template <typename T>
 int FixedBitQuantFilter(const AnfNodePtr &parameter, const tensor::TensorPtr &weight, const PrimitivePtr &primitive,
                         QuantType quant_type, int quant_max, int quant_min, size_t bit_num,

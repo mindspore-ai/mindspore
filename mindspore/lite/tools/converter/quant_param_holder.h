@@ -120,12 +120,6 @@ class QuantParamHolder : public Value {
 
   std::vector<std::vector<schema::QuantParamT>> get_output_quant_params() const { return this->output_quant_params_; }
 
-  // deprecated
-  void ClearInputOutputQuantParam() {
-    input_quant_params_.clear();
-    output_quant_params_.clear();
-  }
-
   bool IsInputQuantParamsInited() {
     if (this->input_quant_params_.empty()) {
       return false;
