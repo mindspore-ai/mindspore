@@ -656,7 +656,6 @@ bool FuncGraphAnalyzer::ExistClosure() const {
         continue;
       }
       const auto &last_arg_user = closure->arg_users_.back();
-      const auto &graph_manager = call->func_graph()->manager();
       // Partial's arg and call are in same graph, this is not closure.
       if (last_arg_user->func_graph() != call->func_graph()) {
         return true;
@@ -668,3 +667,4 @@ bool FuncGraphAnalyzer::ExistClosure() const {
 
 bool FuncGraphAnalyzer::HasIncorporateCall() const { return value_manager_->has_incorporate_call_; }
 }  // namespace mindspore
+// namespace mindspore
