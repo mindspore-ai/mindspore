@@ -35,6 +35,9 @@ from .validators import check_gnn_graphdata, check_gnn_get_all_nodes, check_gnn_
 class SamplingStrategy(IntEnum):
     """
     Specifies the sampling strategy when execute `get_sampled_neighbors`.
+
+    - RANDOM: Random sampling with replacement.
+    - EDGE_WEIGHT: Sampling with edge weight as probability.
     """
     RANDOM = 0
     EDGE_WEIGHT = 1
@@ -49,6 +52,10 @@ DE_C_INTER_SAMPLING_STRATEGY = {
 class OutputFormat(IntEnum):
     """
     Specifies the output storage format when execute `get_all_neighbors`.
+
+    - NORMAL: Normal format.
+    - COO: COO format.
+    - CSR: CSR format.
     """
     NORMAL = 0
     COO = 1
