@@ -17,6 +17,7 @@ from ..ops import PrimitiveWithInfer, prim_attr_register
 from .._checkparam import Validator as validator
 from ..common import dtype as mstype
 from .. import nn
+from ..ops import functional as F
 
 
 class SolveTriangular(PrimitiveWithInfer):
@@ -224,6 +225,10 @@ class EighNet(nn.Cell):
         self.eigh = Eigh(bv, lower)
 
     def construct(self, A):
+        if F.dtype(A) in (mstype.int8, mstype.int32, mstype.int16):
+            A = F.cast(A, mstype.float32)
+        elif F.dtype(A) == mstype.int64:
+            A = F.cast(A, mstype.float64)
         r = self.eigh(A)
         if self.bv:
             return (r[0], r[1])
