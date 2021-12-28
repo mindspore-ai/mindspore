@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace kernel {
-GetNextProfiling::GetNextProfiling(const std::string &path) : profiling_path_(path) {}
+GetNextProfiling::GetNextProfiling(const std::string &path) : profiling_path_(path), kernel_name_("GetNextProfiling") {}
 
 void GetNextProfiling::GetDeviceId() {
   auto context_ptr = MsContext::GetInstance();
@@ -44,13 +44,13 @@ void GetNextProfiling::Init() {
 void GetNextProfiling::SaveProfilingData() {
   std::ofstream handle(file_name_, std::ios::trunc);
   if (!handle.is_open()) {
-    MS_LOG(ERROR) << "Open get-next profiling file failed.";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', open get-next profiling file failed.";
     return;
   }
   for (uint32_t index = 0; index < queue_size_.size(); index++) {
     if (index > time_stamp_.size() - 1) {
       handle.close();
-      MS_LOG(EXCEPTION) << "index exceeds time_stamp_ size.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', index exceeds time_stamp_ size.";
     }
     handle << Name() << " " << time_stamp_[index].first << " " << time_stamp_[index].second << " " << queue_size_[index]
            << std::endl;
@@ -62,7 +62,7 @@ void GetNextProfiling::SaveProfilingData() {
 
 void GetNextProfiling::ChangeFileMode() {
   if (chmod(common::SafeCStr(file_name_), S_IRUSR | S_IWUSR) == -1) {
-    MS_LOG(ERROR) << "Modify file:" << file_name_ << " to rw fail.";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', modify file:" << file_name_ << " to rw fail.";
     return;
   }
 }

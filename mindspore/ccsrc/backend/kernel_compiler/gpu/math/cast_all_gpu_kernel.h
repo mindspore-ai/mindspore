@@ -66,14 +66,14 @@ class CastAllGpuFwdKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     num_input_ = GetAttr<size_t>(kernel_node, "n");
     size_ = std::make_unique<size_t[]>(num_input_);
     for (size_t i = 0; i < num_input_; i++) {
       auto shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, i);
-      is_null_input_ = CHECK_NULL_INPUT(shape);
+      is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name, "input");
       if (is_null_input_) {
-        MS_LOG(WARNING) << "For 'CastAllGpuKernel', input is null";
         InitSizeLists();
         return true;
       }

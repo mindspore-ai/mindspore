@@ -51,11 +51,12 @@ class SquareSumAllGpuFwdKernel : public GpuKernel {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(input_shape);
+    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
     if (is_null_input_) {
-      MS_LOG(ERROR) << "SquareSumAllGpuFwdKernel input is null";
-      return false;
+      InitSizeLists();
+      return true;
     }
     for (size_t i = 0; i < input_shape.size(); i++) {
       input_size_ *= input_shape[i];

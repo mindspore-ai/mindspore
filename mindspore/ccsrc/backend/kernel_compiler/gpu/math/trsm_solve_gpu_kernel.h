@@ -118,28 +118,30 @@ class TrsmGpuKernel : public GpuKernel {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     blas_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCublasHandle();
     auto A_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto b_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    is_null_input_ = CHECK_NULL_INPUT(A_shape) || CHECK_NULL_INPUT(b_shape);
+    is_null_input_ =
+      CHECK_SHAPE_NULL(A_shape, kernel_name, "input_A") || CHECK_SHAPE_NULL(b_shape, kernel_name, "input_b");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'TrsmGpuKernel', input is null";
       InitSizeLists();
       return true;
     }
 
     if (A_shape[kDim0] != A_shape[kDim1]) {
-      MS_LOG(EXCEPTION) << "wrong array shape, A should be a squre matrix, but got [" << A_shape[kDim0] << " X "
-                        << A_shape[kDim1] << "]";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the shape of input should be square matrix, but got ["
+                        << A_shape[kDim0] << " X " << A_shape[kDim1] << "]";
     }
     m_ = A_shape[kDim0];
 
     if (b_shape.size() != kAVectorxDimNum && b_shape.size() != kAMatrixDimNum) {
-      MS_LOG(EXCEPTION) << "wrong array shape, b should be 1D or 2D, but got [" << b_shape.size() << "] dimensions";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input should be 1 or 2, but got "
+                        << b_shape.size();
     }
     if (b_shape[kDim0] != m_) {
-      MS_LOG(EXCEPTION) << "wrong array shape, b should match the shape of A, excepted [" << m_ << "] but got ["
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the shape of input should be [" << m_ << "], but got ["
                         << b_shape[kDim0] << "]";
     }
     if (b_shape.size() == kAVectorxDimNum || (b_shape.size() == kAMatrixDimNum && b_shape[kDim1] == 1)) {
@@ -158,7 +160,7 @@ class TrsmGpuKernel : public GpuKernel {
     } else if (trans == "T") {
       trans_ = CUBLAS_OP_N;
     } else {
-      MS_LOG(EXCEPTION) << "trans should be in [N, T], but got [" << trans << "]";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', trans should be in [N, T], but got [" << trans << "]";
     }
 
     bool lower = AnfAlgo::GetNodeAttr<bool>(kernel_node, "lower");

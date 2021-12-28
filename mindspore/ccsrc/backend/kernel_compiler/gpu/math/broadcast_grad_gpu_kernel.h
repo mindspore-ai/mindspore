@@ -69,20 +69,23 @@ class BroadcastOpGradGpuKernel : public GpuKernel {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     GetOpType(kernel_node);
     auto shape1 = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto shape2 = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     auto shape3 = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
-    is_null_input_ = CHECK_NULL_INPUT(shape1) || CHECK_NULL_INPUT(shape2) || CHECK_NULL_INPUT(shape3);
+    is_null_input_ = CHECK_SHAPE_NULL(shape1, kernel_name_, "input_1") ||
+                     CHECK_SHAPE_NULL(shape2, kernel_name_, "input_2") ||
+                     CHECK_SHAPE_NULL(shape3, kernel_name_, "input_3");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'BroadcastGradGpuKernel', input or output is null";
       InitSizeLists();
       return true;
     }
     need_broadcast_ = AnfAlgo::IsTensorBroadcast(shape1, shape2);
     if (need_broadcast_ && shape1.size() > kMaxShapeSize) {
-      MS_LOG(EXCEPTION) << "Broadcast operation not support dim greater than " << kMaxShapeSize;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input cannot be greater than "
+                        << kMaxShapeSize << ", but got " << shape1.size();
     }
 
     for (size_t i = 0; i < shape3.size(); i++) {
@@ -98,8 +101,8 @@ class BroadcastOpGradGpuKernel : public GpuKernel {
           x1_shape_[i + x1_offset] = shape1[i];
         } else {
           auto index = i + x1_offset;
-          MS_LOG(EXCEPTION) << "For 'BroadcastOpGrad', the dimension of input cannot be greater than " << kMaxShapeSize
-                            << ", but got " << (index + 1);
+          MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input cannot be greater than "
+                            << kMaxShapeSize << ", but got " << (index + 1);
         }
       }
       input1_num_ *= shape1[i];
@@ -111,7 +114,8 @@ class BroadcastOpGradGpuKernel : public GpuKernel {
           x2_shape_[i + x2_offset] = shape2[i];
         } else {
           auto index = i + x2_offset;
-          MS_LOG(EXCEPTION) << "Invalid input2 index: " << index;
+          MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input cannot be greater than "
+                            << kMaxShapeSize << ", but got " << (index + 1);
         }
       }
       input2_num_ *= shape2[i];
@@ -162,7 +166,8 @@ class BroadcastOpGradGpuKernel : public GpuKernel {
 
     auto iter = kBroadcastTypeMap.find(kernel_name);
     if (iter == kBroadcastTypeMap.end()) {
-      MS_LOG(EXCEPTION) << "operation " << kernel_name << " is not supported.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                        << ", only support these types: MaximumGrad or MinimumGrad currently, but got " << kernel_name;
     } else {
       op_type_ = iter->second;
     }

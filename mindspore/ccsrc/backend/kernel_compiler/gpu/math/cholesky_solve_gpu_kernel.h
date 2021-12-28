@@ -19,6 +19,7 @@
 #include <cublas_v2.h>
 #include <cuda_runtime_api.h>
 #include <vector>
+#include <string>
 #include <algorithm>
 #include "backend/kernel_compiler/gpu/cuda_impl/triangle_matrix_copy_impl.cuh"
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
@@ -41,7 +42,7 @@ class CholeskySolveGpuKernel : public GpuKernel {
  public:
   using pointer = T *;
 
-  CholeskySolveGpuKernel() = default;
+  CholeskySolveGpuKernel() : is_null_input_(false) {}
   ~CholeskySolveGpuKernel() = default;
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
@@ -49,6 +50,9 @@ class CholeskySolveGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     CHECK_CUSOLVER_RET_WITH_ERROR(cusolverDnSetStream(handle_, reinterpret_cast<cudaStream_t>(stream_ptr)),
                                   "cusolverDnSetStream failed");
     auto input_a_addr = GetDeviceAddress<T>(inputs, kDim0);
@@ -81,7 +85,7 @@ class CholeskySolveGpuKernel : public GpuKernel {
                                                              d_b_array_addr, ldb_, d_info_array_addr, batch_),
                                      "cusolver cholesky solve batched Fail");
     } else {
-      MS_LOG(EXCEPTION) << "cholesky solve do not support other data type but only float or double, right now.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the data type only should be float or double, right now.";
     }
     size_t output_elements = outputs.at(kDim0)->size / unit_size_;
     // copy results from written input's matrix to output's matrix.
@@ -90,6 +94,7 @@ class CholeskySolveGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     lower_ = static_cast<bool>(GetAttr<bool>(kernel_node, kLower));
     // gpu input is col major default, so need to change row major.
@@ -103,10 +108,14 @@ class CholeskySolveGpuKernel : public GpuKernel {
     handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCusolverDnHandle();
     auto in_a_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kDim0);
     auto in_b_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kDim1);
-    if (CHECK_NULL_INPUT(in_a_shape) || CHECK_NULL_INPUT(in_b_shape)) {
-      MS_LOG(EXCEPTION) << "For 'CholeskySolveGpuKernel', input is null";
+    is_null_input_ =
+      CHECK_SHAPE_NULL(in_a_shape, kernel_name_, "input_a") || CHECK_SHAPE_NULL(in_b_shape, kernel_name_, "input_b");
+    if (is_null_input_) {
+      InitSizeLists();
+      return true;
     }
-    return InitDim(in_a_shape, in_b_shape);
+    (void)InitDim(in_a_shape, in_b_shape);
+    return true;
   }
 
  protected:
@@ -127,7 +136,7 @@ class CholeskySolveGpuKernel : public GpuKernel {
   }
 
  private:
-  bool InitDim(const std::vector<size_t> &in_a_shape, const std::vector<size_t> &in_b_shape) {
+  void InitDim(const std::vector<size_t> &in_a_shape, const std::vector<size_t> &in_b_shape) {
     if (in_a_shape.size() == kCholeskyDefaultShape) {
       batch_ = 1;
       cho_row_ = in_a_shape.at(kDim0);
@@ -141,17 +150,14 @@ class CholeskySolveGpuKernel : public GpuKernel {
       cho_row_ = in_a_shape.at(kDim1);
       cho_col_ = in_a_shape.at(kDim2);
     } else {
-      MS_LOG(ERROR) << "Input Only support Rank 2 OR 3";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input only should be 2 or 3";
     }
     if (cho_row_ != cho_col_) {
-      MS_LOG(ERROR) << "Cholesky need square matrix as input.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of input should be square matrix";
     }
     size_t b_row = in_b_shape.size() == kCholeskyBatchedShape ? in_b_shape.at(kDim1) : in_b_shape.at(kDim0);
     if (cho_row_ != b_row) {
-      MS_LOG(ERROR) << "Cholesky right hand matrix is not equal to left matrix.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', right hand matrix should be equal to left matrix";
     }
     m_ = SizeToInt(in_a_shape.at(kDim1));
     lda_ = m_;
@@ -159,7 +165,6 @@ class CholeskySolveGpuKernel : public GpuKernel {
     h_a_array_.resize(batch_);
     h_b_array_.resize(batch_);
     InitSizeLists();
-    return true;
   }
   size_t cho_row_{0};
   size_t cho_col_{0};
@@ -177,6 +182,7 @@ class CholeskySolveGpuKernel : public GpuKernel {
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
+  bool is_null_input_;
 };
 }  // namespace kernel
 }  // namespace mindspore

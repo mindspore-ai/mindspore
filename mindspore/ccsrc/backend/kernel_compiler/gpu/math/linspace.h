@@ -49,37 +49,34 @@ class LinSpaceGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 3) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but DynamicLinSpace needs 3 inputs.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 3, but got " << input_num;
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(ERROR) << "Output number is " << output_num << ", but DynamicLinSpace needs 1 output.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 1, but got " << output_num;
     }
     auto input_1 = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
     auto input_2 = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 1);
     auto value_count = AnfAlgo::GetOutputRealDeviceShapeIfExist(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(input_1) || CHECK_NULL_INPUT(input_2) || CHECK_NULL_INPUT(value_count);
+    is_null_input_ = CHECK_SHAPE_NULL(input_1, kernel_name, "start") ||
+                     CHECK_SHAPE_NULL(input_2, kernel_name, "stop") ||
+                     CHECK_SHAPE_NULL(value_count, kernel_name, "output");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'LinspaceGpuKernel', input is null";
       InitSizeLists();
       return true;
     }
     // error checking input data
     if ((input_1.size() != 0) || (input_2.size() != 0)) {
-      MS_LOG(ERROR) << "For LinShape "
-                    << "both start and end must be 0-D Tensors. Got " << input_1.size() << " and " << input_2.size()
-                    << ".";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', both start and end should be 0-D Tensors, but got dimension "
+                        << "of start: " << input_1.size() << " and dimension of end: " << input_2.size();
     }
 
     if (value_count.size() != 1) {
-      MS_LOG(ERROR) << "For LinShape, output shape incorrect rank. Expect Rank: 1, got Rank: " << value_count.size()
-                    << ".";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of output should be 1, but got "
+                        << value_count.size();
     }
     value_count_ = value_count[0];
     InitSizeLists();

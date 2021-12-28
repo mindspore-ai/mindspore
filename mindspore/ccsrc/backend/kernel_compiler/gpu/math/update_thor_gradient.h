@@ -19,6 +19,7 @@
 #include <cublas_v2.h>
 #include <cuda_runtime_api.h>
 #include <vector>
+#include <string>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
 #include "backend/kernel_compiler/gpu/kernel_constants.h"
@@ -98,7 +99,8 @@ class UpdateThorGradientGpuKernel : public GpuKernel {
                                    CUDA_R_32F, algo_),
         "cublasSgemm Call Fail");
     } catch (const std::exception &e) {
-      MS_LOG(EXCEPTION) << "Encountered an exception: " << e.what() << "when invoke cubals cublasGemmStridedBatchedEx";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", encountered an exception: " << e.what()
+                        << " when invoke cubals cublasGemmStridedBatchedEx";
     }
 
     auto r_input_addr = workspace1_addr;
@@ -147,9 +149,7 @@ class UpdateThorGradientGpuKernel : public GpuKernel {
   bool Init(const CNodePtr &kernel_node) override {
     kernel_node_ = kernel_node;
     handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCublasHandle();
-    if (!SetProperty(kernel_node)) {
-      return false;
-    }
+    (void)SetProperty(kernel_node);
     InitSizeLists();
     return true;
   }
@@ -188,22 +188,20 @@ class UpdateThorGradientGpuKernel : public GpuKernel {
   }
 
  private:
-  bool SetProperty(const CNodePtr &kernel_node) {
+  void SetProperty(const CNodePtr &kernel_node) {
     auto matrix_a_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto gradient_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     auto matrix_g_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
-    is_null_input_ =
-      CHECK_NULL_INPUT(matrix_a_shape) || CHECK_NULL_INPUT(gradient_shape) || CHECK_NULL_INPUT(matrix_g_shape);
+    is_null_input_ = CHECK_SHAPE_NULL(matrix_a_shape, kernel_name_, "matrix_a") ||
+                     CHECK_SHAPE_NULL(gradient_shape, kernel_name_, "gradient") ||
+                     CHECK_SHAPE_NULL(matrix_g_shape, kernel_name_, "matrix_g");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'UpdateThorGradientGpuKernel', input is null";
-      InitSizeLists();
-      return true;
+      return;
     }
 
     split_dim = LongToSize(GetAttr<int64_t>(kernel_node, "split_dim"));
     if (split_dim == 0) {
-      MS_LOG(ERROR) << "Divide by zero, split_dim can not be zero.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", divide by zero, split_dim cannot be 0, but got " << split_dim;
     }
     gradient_size.batch_h = gradient_shape[0] / split_dim;
     gradient_size.batch_w = gradient_shape[1] / split_dim;
@@ -244,7 +242,6 @@ class UpdateThorGradientGpuKernel : public GpuKernel {
     gradient_size.ori_w = gradient_shape[1];
     gradient_size.ori_h = gradient_shape[0];
     gradient_size.dtype = GetCudaDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 1)));
-    return true;
   }
 
   size_t split_dim;

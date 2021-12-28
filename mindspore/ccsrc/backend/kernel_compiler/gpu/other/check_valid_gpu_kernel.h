@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_KERNEL_GPU_OTHER_CHECK_VALID_GPU_KERNEL_H
 
 #include <vector>
+#include <string>
 #include "backend/kernel_compiler/gpu/cuda_impl/check_valid_impl.cuh"
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
@@ -28,7 +29,6 @@ template <typename T, typename S>
 class CheckValidGpuKernel : public GpuKernel {
  public:
   CheckValidGpuKernel() : anchor_boxes_size_(0), img_metas_size_(0), valid_size_(0), is_null_input_(false) {}
-
   ~CheckValidGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
@@ -48,7 +48,7 @@ class CheckValidGpuKernel : public GpuKernel {
     const size_t coordinate = 4;
     const size_t block_size = inputs[0]->size / sizeof(T);
     if ((block_size % coordinate) != 0) {
-      MS_LOG(ERROR) << "The size of the box must be a multiple of 4.";
+      MS_LOG(ERROR) << "For '" << kernel_name_ << ", the size of the box should be a multiple of 4.";
       return false;
     }
 
@@ -58,11 +58,11 @@ class CheckValidGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     MS_EXCEPTION_IF_NULL(kernel_node);
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but CheckValid needs 2 inputs.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 2, but got " << input_num;
     }
     anchor_boxes_size_ = sizeof(T);
     img_metas_size_ = sizeof(T);
@@ -71,10 +71,10 @@ class CheckValidGpuKernel : public GpuKernel {
     auto anchor_boxes_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto img_metas_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     auto valid_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-    is_null_input_ =
-      CHECK_NULL_INPUT(anchor_boxes_shape) || CHECK_NULL_INPUT(img_metas_shape) || CHECK_NULL_INPUT(valid_shape);
+    is_null_input_ = CHECK_SHAPE_NULL(anchor_boxes_shape, kernel_name_, "bboxes") ||
+                     CHECK_SHAPE_NULL(img_metas_shape, kernel_name_, "img_metas") ||
+                     CHECK_SHAPE_NULL(valid_shape, kernel_name_, "output");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'CheckValidGpuKernel', input or output is null";
       InitSizeLists();
       return true;
     }

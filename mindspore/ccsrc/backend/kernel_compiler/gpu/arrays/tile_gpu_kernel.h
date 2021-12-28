@@ -59,25 +59,26 @@ class TileGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
-      MS_LOG(EXCEPTION) << "Input number is " << input_num << ", but Tile needs 1 input.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 1, but got " << input_num;
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but Tile has 1 output.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 1, but got " << output_num;
     }
     input_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     output_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(input_shape_) || CHECK_NULL_INPUT(output_shape_);
+    is_null_input_ =
+      CHECK_SHAPE_NULL(input_shape_, kernel_name, "input") || CHECK_SHAPE_NULL(output_shape_, kernel_name, "output");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'TileGpuKernel', input or output is null";
       InitSizeLists();
       return true;
     }
     if (output_shape_.size() < 1) {
-      MS_LOG(EXCEPTION) << "For 'TileGpuKernel', the rank of output cannot be less than 1, but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of output cannot be less than 1, but got "
                         << output_shape_.size();
     }
     input_size_ = 1;
@@ -87,8 +88,8 @@ class TileGpuKernel : public GpuKernel {
 
     output_size_ = 1;
     if (output_shape_.size() > TILE_MAX_DIMENSION) {
-      MS_LOG(EXCEPTION) << "Output is " << output_shape_.size() << "-D, but Tile supports up to " << TILE_MAX_DIMENSION
-                        << "-D.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of output cannot be greater than "
+                        << TILE_MAX_DIMENSION << ", but got " << output_shape_.size();
     }
     shape_size_ = output_shape_.size();
     for (size_t i = 0; i < output_shape_.size(); i++) {

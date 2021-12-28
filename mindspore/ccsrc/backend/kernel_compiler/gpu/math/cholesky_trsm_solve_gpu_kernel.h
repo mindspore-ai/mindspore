@@ -19,6 +19,7 @@
 #include <cublas_v2.h>
 #include <cuda_runtime_api.h>
 #include <vector>
+#include <string>
 #include <algorithm>
 #include "backend/kernel_compiler/gpu/cuda_impl/eye_impl.cuh"
 #include "backend/kernel_compiler/gpu/cuda_impl/matrix_split_impl.cuh"
@@ -67,13 +68,13 @@ class CholeskyTrsmGpuKernel : public GpuKernel {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCusolverDnHandle();
     blas_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCublasHandle();
     auto in_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(in_shape);
+    is_null_input_ = CHECK_SHAPE_NULL(in_shape, kernel_name_, "input");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'CholeskyTrsmSolveGpuKernel', input is null";
       InitSizeLists();
       return true;
     }
@@ -84,12 +85,10 @@ class CholeskyTrsmGpuKernel : public GpuKernel {
       }
     } else {
       if (in_shape.size() != 2) {
-        MS_LOG(ERROR) << "CholeskyTrsm Split Matrix Need Input Rank as 2.";
-        return false;
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input only should be 2";
       }
       if (in_shape[0] != in_shape[1]) {
-        MS_LOG(ERROR) << "CholeskyTrsm Split Matrix Need Square Matrix as Input.";
-        return false;
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of input should be square matrix";
       }
       InitDimOthers(kernel_node, in_shape);
     }
@@ -201,17 +200,19 @@ class CholeskyTrsmGpuKernel : public GpuKernel {
     if (in_shape.size() == 2) {
       batch_ = 1;
       if (in_shape[0] != in_shape[1]) {
-        MS_LOG(ERROR) << "CholeskyTrsm shape0: " << in_shape[0] << ", is not equal to shape1: " << in_shape[1];
+        MS_LOG(ERROR) << "For '" << kernel_name_ << "', shape0 should be equal to " << in_shape[1] << ", but got "
+                      << in_shape[0];
         return false;
       }
     } else if (in_shape.size() == 3) {
       batch_ = SizeToInt(in_shape[0]);
       if (in_shape[1] != in_shape[2]) {
-        MS_LOG(ERROR) << "CholeskyTrsm shape1: " << in_shape[1] << ", is not equal to shape2: " << in_shape[2];
+        MS_LOG(ERROR) << "For '" << kernel_name_ << "', shape1 should be equal to " << in_shape[2] << ", but got "
+                      << in_shape[1];
         return false;
       }
     } else {
-      MS_LOG(ERROR) << "Input Only support Rank 2 OR 3";
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of input only should be 2 or 3";
       return false;
     }
 
