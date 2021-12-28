@@ -79,6 +79,7 @@ constexpr char kZipNode[] = "Zip";
 constexpr char kAGNewsNode[] = "AGNewsDataset";
 constexpr char kAlbumNode[] = "AlbumDataset";
 constexpr char kAmazonReviewNode[] = "AmazonReviewDataset";
+constexpr char kCaltech256Node[] = "Caltech256Dataset";
 constexpr char kCelebANode[] = "CelebADataset";
 constexpr char kCifar100Node[] = "Cifar100Dataset";
 constexpr char kCifar10Node[] = "Cifar10Dataset";

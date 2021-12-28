@@ -27,6 +27,7 @@
 // IR leaf nodes
 #include "minddata/dataset/engine/ir/datasetops/source/ag_news_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/amazon_review_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/caltech256_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/celeba_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/cifar100_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/cifar10_node.h"
@@ -79,7 +80,6 @@ namespace dataset {
 
 // PYBIND FOR LEAF NODES
 // (In alphabetical order)
-
 PYBIND_REGISTER(AGNewsNode, 2, ([](const py::module *m) {
                   (void)py::class_<AGNewsNode, DatasetNode, std::shared_ptr<AGNewsNode>>(*m, "AGNewsNode",
                                                                                          "to create an AGNewsNode")
@@ -101,6 +101,17 @@ PYBIND_REGISTER(AmazonReviewNode, 2, ([](const py::module *m) {
                         dataset_dir, usage, num_samples, toShuffleMode(shuffle), num_shards, shard_id, nullptr);
                       THROW_IF_ERROR(amazon_review->ValidateParams());
                       return amazon_review;
+                    }));
+                }));
+
+PYBIND_REGISTER(Caltech256Node, 2, ([](const py::module *m) {
+                  (void)py::class_<Caltech256Node, DatasetNode, std::shared_ptr<Caltech256Node>>(
+                    *m, "Caltech256Node", "to create a Caltech256Node")
+                    .def(py::init([](std::string dataset_dir, bool decode, py::handle sampler) {
+                      auto caltech256 =
+                        std::make_shared<Caltech256Node>(dataset_dir, decode, toSamplerObj(sampler), nullptr);
+                      THROW_IF_ERROR(caltech256->ValidateParams());
+                      return caltech256;
                     }));
                 }));
 

@@ -90,6 +90,7 @@
 // IR leaf nodes disabled for android
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/engine/ir/datasetops/source/amazon_review_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/caltech256_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/celeba_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/cifar100_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/cifar10_node.h"
@@ -911,6 +912,29 @@ AmazonReviewDataset::AmazonReviewDataset(const std::vector<char> &dataset_dir, c
                                          const std::shared_ptr<DatasetCache> &cache) {
   auto ds = std::make_shared<AmazonReviewNode>(CharToString(dataset_dir), CharToString(usage), num_samples, shuffle,
                                                num_shards, shard_id, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+
+Caltech256Dataset::Caltech256Dataset(const std::vector<char> &dataset_dir, bool decode,
+                                     const std::shared_ptr<Sampler> &sampler,
+                                     const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
+  auto ds = std::make_shared<Caltech256Node>(CharToString(dataset_dir), decode, sampler_obj, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+
+Caltech256Dataset::Caltech256Dataset(const std::vector<char> &dataset_dir, bool decode, const Sampler *sampler,
+                                     const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
+  auto ds = std::make_shared<Caltech256Node>(CharToString(dataset_dir), decode, sampler_obj, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+
+Caltech256Dataset::Caltech256Dataset(const std::vector<char> &dataset_dir, bool decode,
+                                     const std::reference_wrapper<Sampler> sampler,
+                                     const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler.get().Parse();
+  auto ds = std::make_shared<Caltech256Node>(CharToString(dataset_dir), decode, sampler_obj, cache);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
 

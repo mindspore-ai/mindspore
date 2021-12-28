@@ -281,7 +281,7 @@ Status ImageFolderOp::CountRowsAndClasses(const std::string &path, const std::se
                                " does not exist or permission denied");
     }
     while (dir_itr->HasNext()) {
-      if (exts.empty() || exts.find(subdir.Extension()) != exts.end()) {
+      if (exts.empty() || exts.find(dir_itr->Next().Extension()) != exts.end()) {
         ++row_cnt;
       }
     }

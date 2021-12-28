@@ -74,8 +74,9 @@ from .validators import check_batch, check_shuffle, check_map, check_filter, che
     check_photo_tour_dataset, check_ag_news_dataset, check_dbpedia_dataset, check_lj_speech_dataset, \
     check_yes_no_dataset, check_speech_commands_dataset, check_tedlium_dataset, check_svhn_dataset, \
     check_stl10_dataset, check_yelp_review_dataset, check_penn_treebank_dataset, check_iwslt2016_dataset, \
-    check_iwslt2017_dataset, check_sogou_news_dataset, check_yahoo_answers_dataset, check_udpos_dataset,\
-    check_conll2000_dataset, check_amazon_review_dataset, check_semeion_dataset
+    check_iwslt2017_dataset, check_sogou_news_dataset, check_yahoo_answers_dataset, check_udpos_dataset, \
+    check_conll2000_dataset, check_amazon_review_dataset, check_semeion_dataset, check_caltech101_dataset, \
+    check_caltech256_dataset
 from ..core.config import get_callback_timeout, _init_device_info, get_enable_shared_mem, get_num_parallel_workers, \
     get_prefetch_size
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
@@ -4822,7 +4823,7 @@ def _check_shm_usage(num_worker, queue_size, max_rowsize, num_queues=1):
     threshold_ratio = 0.8
     if platform.system().lower() not in {"windows", "darwin"}:
         shm_estimate_usage = _get_device_num() * num_worker * num_queues * \
-            (queue_size + 2) * max_rowsize * 1024 * 1024
+                             (queue_size + 2) * max_rowsize * 1024 * 1024
         try:
             shm_available = psutil.disk_usage('/dev/shm').free
             if shm_estimate_usage >= threshold_ratio * shm_available:
@@ -6553,6 +6554,362 @@ class VOCDataset(MappableDataset):
             for pair in self._class_indexing:
                 self.class_indexing[pair[0]] = pair[1][0]
         return self.class_indexing
+
+
+class _Caltech101Dataset:
+    """
+    Mainly for loading Caltech101 Dataset, and return two rows each time.
+    """
+
+    def __init__(self, dataset_dir, target_type="category", decode=False):
+        self.dataset_dir = os.path.realpath(dataset_dir)
+        self.image_dir = os.path.join(self.dataset_dir, "101_ObjectCategories")
+        self.annotation_dir = os.path.join(self.dataset_dir, "Annotations")
+        self.target_type = target_type
+        if self.target_type == "category":
+            self.column_names = ["image", "category"]
+        elif self.target_type == "annotation":
+            self.column_names = ["image", "annotation"]
+        else:
+            self.column_names = ["image", "category", "annotation"]
+        self.decode = decode
+        self.classes = sorted(os.listdir(self.image_dir))
+        if "BACKGROUND_Google" in self.classes:
+            self.classes.remove("BACKGROUND_Google")
+        name_map = {"Faces": "Faces_2",
+                    "Faces_easy": "Faces_3",
+                    "Motorbikes": "Motorbikes_16",
+                    "airplanes": "Airplanes_Side_2"}
+        self.annotation_classes = [name_map[class_name] if class_name in name_map else class_name
+                                   for class_name in self.classes]
+        self.image_index = []
+        self.image_label = []
+        for i, image_class in enumerate(self.classes):
+            sub_dir = os.path.join(self.image_dir, image_class)
+            if not os.path.isdir(sub_dir) or not os.access(sub_dir, os.R_OK):
+                continue
+            num_images = len(os.listdir(sub_dir))
+            self.image_index.extend(range(1, num_images + 1))
+            self.image_label.extend(num_images * [i])
+
+    def __getitem__(self, index):
+        image_file = os.path.join(self.image_dir, self.classes[self.image_label[index]],
+                                  "image_{:04d}.jpg".format(self.image_index[index]))
+        if not os.path.exists(image_file):
+            raise ValueError("The image file {} does not exist or permission denied!".format(image_file))
+        if self.decode:
+            image = np.asarray(Image.open(image_file).convert("RGB"))
+        else:
+            image = np.fromfile(image_file, dtype=np.uint8)
+
+        if self.target_type == "category":
+            return image, self.image_label[index]
+        annotation_file = os.path.join(self.annotation_dir, self.annotation_classes[self.image_label[index]],
+                                       "annotation_{:04d}.mat".format(self.image_index[index]))
+        if not os.path.exists(annotation_file):
+            raise ValueError("The annotation file {} does not exist or permission denied!".format(annotation_file))
+        annotation = loadmat(annotation_file)["obj_contour"]
+
+        if self.target_type == "annotation":
+            return image, annotation
+        return image, self.image_label[index], annotation
+
+    def __len__(self):
+        return len(self.image_index)
+
+
+class Caltech101Dataset(GeneratorDataset):
+    """
+    A source dataset that reads and parses Caltech101 dataset.
+
+    The columns of the generated dataset depend on the value of `target_type`.
+    When `target_type` is `category`, the columns are :py:obj:`[image, category]`.
+    When `target_type` is `annotation`, the columns are :py:obj:`[image, annotation]`.
+    When `target_type` is `all`, the columns are :py:obj:`[image, category, annotation]`.
+    The tensor of column :py:obj:`image` is of the uint8 type.
+    The tensor of column :py:obj:`category` is of the uint32 type.
+    The tensor of column :py:obj:`annotation` is a 2-dimensional ndarray that stores the contour of the image
+    and consists of a series of points.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset. This root directory contains two
+            subdirectories, one is called 101_ObjectCategories, which stores images,
+            and the other is called Annotations, which stores annotations.
+        target_type (str, optional): Target of the image. If target_type is "category", return category represents
+            the target class. If target_type is "annotation", return annotation.
+            If target_type is "all", return category and annotation (default=None, means "category").
+        num_samples (int, optional): The number of images to be included in the dataset
+            (default=None, all images).
+        num_parallel_workers (int, optional): Number of workers to read the data (default=1).
+        shuffle (bool, optional): Whether or not to perform shuffle on the dataset
+            (default=None, expected order behavior shown in the table).
+        decode (bool, optional): Whether or not to decode the images after reading (default=False).
+        sampler (Sampler, optional): Object used to choose samples from the
+            dataset (default=None, expected order behavior shown in the table).
+        num_shards (int, optional): Number of shards that the dataset will be divided
+            into (default=None). When this argument is specified, `num_samples` reflects
+            the maximum sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument can only be specified when num_shards is also specified.
+
+    Raises:
+        RuntimeError: If dataset_dir does not contain data files.
+        RuntimeError: If target_type is not set correctly.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If sampler and shuffle are specified at the same time.
+        RuntimeError: If sampler and sharding are specified at the same time.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+
+    Note:
+        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+          The table below shows what input arguments are allowed and their expected behavior.
+
+    .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
+       :widths: 25 25 50
+       :header-rows: 1
+
+       * - Parameter `sampler`
+         - Parameter `shuffle`
+         - Expected Order Behavior
+       * - None
+         - None
+         - random order
+       * - None
+         - True
+         - random order
+       * - None
+         - False
+         - sequential order
+       * - Sampler object
+         - None
+         - order defined by sampler
+       * - Sampler object
+         - True
+         - not allowed
+       * - Sampler object
+         - False
+         - not allowed
+
+    Examples:
+        >>> caltech101_dataset_directory = "/path/to/caltech101_dataset_directory"
+        >>>
+        >>> # 1) Read all samples (image files) in caltech101_dataset_directory with 8 threads
+        >>> dataset = ds.Caltech101Dataset(dataset_dir=caltech101_dataset_directory, num_parallel_workers=8)
+        >>>
+        >>> # 2) Read all samples (image files) with the target_type "annotation"
+        >>> dataset = ds.Caltech101Dataset(dataset_dir=caltech101_dataset_directory, target_type="annotation")
+
+    About Caltech101Dataset:
+
+    Pictures of objects belonging to 101 categories. About 40 to 800 images per category.
+    Most categories have about 50 images. Collected in September 2003 by Fei-Fei Li, Marco Andreetto,
+    and Marc 'Aurelio Ranzato. The size of each image is roughly 300 x 200 pixels.
+    The official provides the contour data of each object in each picture, which is the annotation.
+
+    .. code-block::
+
+        .
+        └── caltech101_dataset_directory
+            ├── 101_ObjectCategories
+            │    ├── Faces
+            │    │    ├── image_0001.jpg
+            │    │    ├── image_0002.jpg
+            │    │    ...
+            │    ├── Faces_easy
+            │    │    ├── image_0001.jpg
+            │    │    ├── image_0002.jpg
+            │    │    ...
+            │    ├── ...
+            └── Annotations
+                 ├── Airplanes_Side_2
+                 │    ├── annotation_0001.mat
+                 │    ├── annotation_0002.mat
+                 │    ...
+                 ├── Faces_2
+                 │    ├── annotation_0001.mat
+                 │    ├── annotation_0002.mat
+                 │    ...
+                 ├── ...
+
+    Citation:
+
+    .. code-block::
+
+        @article{FeiFei2004LearningGV,
+        author    = {Li Fei-Fei and Rob Fergus and Pietro Perona},
+        title     = {Learning Generative Visual Models from Few Training Examples:
+                    An Incremental Bayesian Approach Tested on 101 Object Categories},
+        journal   = {Computer Vision and Pattern Recognition Workshop},
+        year      = {2004},
+        url       = {http://www.vision.caltech.edu/Image_Datasets/Caltech101/},
+        }
+    """
+
+    @check_caltech101_dataset
+    def __init__(self, dataset_dir, target_type=None, num_samples=None, num_parallel_workers=1,
+                 shuffle=None, decode=False, sampler=None, num_shards=None, shard_id=None):
+        self.dataset_dir = dataset_dir
+        self.target_type = replace_none(target_type, "category")
+        self.decode = replace_none(decode, False)
+        dataset = _Caltech101Dataset(self.dataset_dir, self.target_type, self.decode)
+        super().__init__(dataset, column_names=dataset.column_names, num_samples=num_samples,
+                         num_parallel_workers=num_parallel_workers, shuffle=shuffle, sampler=sampler,
+                         num_shards=num_shards, shard_id=shard_id)
+
+    def get_class_indexing(self):
+        """
+        Get the class index.
+
+        Returns:
+            dict, a str-to-int mapping from label name to index.
+        """
+        class_dict = {'Faces': 0, 'Faces_easy': 1, 'Leopards': 2, 'Motorbikes': 3, 'accordion': 4, 'airplanes': 5,
+                      'anchor': 6, 'ant': 7, 'barrel': 8, 'bass': 9, 'beaver': 10, 'binocular': 11, 'bonsai': 12,
+                      'brain': 13, 'brontosaurus': 14, 'buddha': 15, 'butterfly': 16, 'camera': 17, 'cannon': 18,
+                      'car_side': 19, 'ceiling_fan': 20, 'cellphone': 21, 'chair': 22, 'chandelier': 23,
+                      'cougar_body': 24, 'cougar_face': 25, 'crab': 26, 'crayfish': 27, 'crocodile': 28,
+                      'crocodile_head': 29, 'cup': 30, 'dalmatian': 31, 'dollar_bill': 32, 'dolphin': 33,
+                      'dragonfly': 34, 'electric_guitar': 35, 'elephant': 36, 'emu': 37, 'euphonium': 38, 'ewer': 39,
+                      'ferry': 40, 'flamingo': 41, 'flamingo_head': 42, 'garfield': 43, 'gerenuk': 44, 'gramophone': 45,
+                      'grand_piano': 46, 'hawksbill': 47, 'headphone': 48, 'hedgehog': 49, 'helicopter': 50, 'ibis': 51,
+                      'inline_skate': 52, 'joshua_tree': 53, 'kangaroo': 54, 'ketch': 55, 'lamp': 56, 'laptop': 57,
+                      'llama': 58, 'lobster': 59, 'lotus': 60, 'mandolin': 61, 'mayfly': 62, 'menorah': 63,
+                      'metronome': 64, 'minaret': 65, 'nautilus': 66, 'octopus': 67, 'okapi': 68, 'pagoda': 69,
+                      'panda': 70, 'pigeon': 71, 'pizza': 72, 'platypus': 73, 'pyramid': 74, 'revolver': 75,
+                      'rhino': 76, 'rooster': 77, 'saxophone': 78, 'schooner': 79, 'scissors': 80, 'scorpion': 81,
+                      'sea_horse': 82, 'snoopy': 83, 'soccer_ball': 84, 'stapler': 85, 'starfish': 86,
+                      'stegosaurus': 87, 'stop_sign': 88, 'strawberry': 89, 'sunflower': 90, 'tick': 91,
+                      'trilobite': 92, 'umbrella': 93, 'watch': 94, 'water_lilly': 95, 'wheelchair': 96, 'wild_cat': 97,
+                      'windsor_chair': 98, 'wrench': 99, 'yin_yang': 100}
+        return class_dict
+
+
+class Caltech256Dataset(MappableDataset):
+    """
+    A source dataset that reads and parses Caltech256 dataset.
+
+    The generated dataset has two columns: :py:obj:`[image, label]`.
+    The tensor of column :py:obj:`image` is of the uint8 type.
+    The tensor of column :py:obj:`label` is of the uint32 type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        num_samples (int, optional): The number of images to be included in the dataset
+            (default=None, all images).
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, set in the config).
+        shuffle (bool, optional): Whether or not to perform shuffle on the dataset
+            (default=None, expected order behavior shown in the table).
+        decode (bool, optional): Whether or not to decode the images after reading (default=False).
+        sampler (Sampler, optional): Object used to choose samples from the
+            dataset (default=None, expected order behavior shown in the table).
+        num_shards (int, optional): Number of shards that the dataset will be divided
+            into (default=None). When this argument is specified, `num_samples` reflects
+            the maximum sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument can only be specified when num_shards is also specified.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
+            (default=None, which means no cache is used).
+
+    Raises:
+        RuntimeError: If dataset_dir does not contain data files.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If sampler and shuffle are specified at the same time.
+        RuntimeError: If sampler and sharding are specified at the same time.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+
+    Note:
+        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+          The table below shows what input arguments are allowed and their expected behavior.
+
+    .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
+       :widths: 25 25 50
+       :header-rows: 1
+
+       * - Parameter `sampler`
+         - Parameter `shuffle`
+         - Expected Order Behavior
+       * - None
+         - None
+         - random order
+       * - None
+         - True
+         - random order
+       * - None
+         - False
+         - sequential order
+       * - Sampler object
+         - None
+         - order defined by sampler
+       * - Sampler object
+         - True
+         - not allowed
+       * - Sampler object
+         - False
+         - not allowed
+
+    Examples:
+        >>> caltech256_dataset_dir = "/path/to/caltech256_dataset_directory"
+        >>>
+        >>> # 1) Read all samples (image files) in caltech256_dataset_dir with 8 threads
+        >>> dataset = ds.Caltech256Dataset(dataset_dir=caltech256_dataset_dir, num_parallel_workers=8)
+
+    About Caltech256Dataset:
+
+    Caltech-256 is an object recognition dataset containing 30,607 real-world images, of different sizes,
+    spanning 257 classes (256 object classes and an additional clutter class).
+    Each class is represented by at least 80 images. The dataset is a superset of the Caltech-101 dataset.
+
+    .. code-block::
+
+        .
+        └── caltech256_dataset_directory
+             ├── 001.ak47
+             │    ├── 001_0001.jpg
+             │    ├── 001_0002.jpg
+             │    ...
+             ├── 002.american-flag
+             │    ├── 002_0001.jpg
+             │    ├── 002_0002.jpg
+             │    ...
+             ├── 003.backpack
+             │    ├── 003_0001.jpg
+             │    ├── 003_0002.jpg
+             │    ...
+             ├── ...
+
+    Citation:
+
+    .. code-block::
+
+        @article{griffin2007caltech,
+        title     = {Caltech-256 object category dataset},
+        added-at  = {2021-01-21T02:54:42.000+0100},
+        author    = {Griffin, Gregory and Holub, Alex and Perona, Pietro},
+        biburl    = {https://www.bibsonomy.org/bibtex/21f746f23ff0307826cca3e3be45f8de7/s364315},
+        interhash = {bfe1e648c1778c04baa60f23d1223375},
+        intrahash = {1f746f23ff0307826cca3e3be45f8de7},
+        publisher = {California Institute of Technology},
+        timestamp = {2021-01-21T02:54:42.000+0100},
+        year      = {2007}
+        }
+    """
+
+    @check_caltech256_dataset
+    def __init__(self, dataset_dir, num_samples=None, num_parallel_workers=None, shuffle=None, decode=False,
+                 sampler=None, num_shards=None, shard_id=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, sampler=sampler, num_samples=num_samples,
+                         shuffle=shuffle, num_shards=num_shards, shard_id=shard_id, cache=cache)
+
+        self.dataset_dir = dataset_dir
+        self.decode = replace_none(decode, False)
+
+    def parse(self, children=None):
+        return cde.Caltech256Node(self.dataset_dir, self.decode, self.sampler)
 
 
 class CocoDataset(MappableDataset):

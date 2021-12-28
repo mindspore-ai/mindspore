@@ -1219,6 +1219,93 @@ inline std::shared_ptr<AmazonReviewDataset> MS_API AmazonReview(const std::strin
                                                num_shards, shard_id, cache);
 }
 
+/// \class Caltech256Dataset
+/// \brief A source dataset for reading and parsing Caltech256 dataset.
+class MS_API Caltech256Dataset : public Dataset {
+ public:
+  /// \brief Constructor of Caltech256Dataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] decode Decode the images after reading.
+  /// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  Caltech256Dataset(const std::vector<char> &dataset_dir, bool decode, const std::shared_ptr<Sampler> &sampler,
+                    const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Constructor of Caltech256Dataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] decode Decode the images after reading.
+  /// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  Caltech256Dataset(const std::vector<char> &dataset_dir, bool decode, const Sampler *sampler,
+                    const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Constructor of Caltech256Dataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] decode Decode the images after reading.
+  /// \param[in] sampler Sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  Caltech256Dataset(const std::vector<char> &dataset_dir, bool decode, const std::reference_wrapper<Sampler> sampler,
+                    const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Destructor of Caltech256Dataset.
+  ~Caltech256Dataset() = default;
+};
+
+/// \brief Function to create a Caltech256Dataset.
+/// \note The generated dataset has two columns ["image", "label"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
+///     given, a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler()).
+/// \param[in] decode Decode the images after reading (default=false).
+/// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
+/// \return Shared pointer to the Caltech256Dataset.
+/// \par Example
+/// \code
+///      /* Define dataset path and MindData object */
+///      std::string dataset_path = "/path/to/caltech256_dataset_directory";
+///      std::shared_ptr<Dataset> ds = Caltech256(dataset_path, true, std::make_shared<RandomSampler>(false, 10));
+///
+///      /* Create iterator to read dataset */
+///      std::shared_ptr<Iterator> iter = ds->CreateIterator();
+///      std::unordered_map<std::string, mindspore::MSTensor> row;
+///      iter->GetNextRow(&row);
+///
+///      /* Note: In Caltech256 dataset, each data dictionary has keys "image" and "label" */
+///      auto image = row["image"];
+/// \endcode
+inline std::shared_ptr<Caltech256Dataset> MS_API
+Caltech256(const std::string &dataset_dir, const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
+           bool decode = false, const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<Caltech256Dataset>(StringToChar(dataset_dir), decode, sampler, cache);
+}
+
+/// \brief Function to create a Caltech256Dataset
+/// \note The generated dataset has two columns ["image", "label"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+/// \param[in] decode Decode the images after reading (default=false).
+/// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
+/// \return Shared pointer to the Caltech256Dataset.
+inline std::shared_ptr<Caltech256Dataset> MS_API Caltech256(const std::string &dataset_dir, const Sampler *sampler,
+                                                            bool decode = false,
+                                                            const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<Caltech256Dataset>(StringToChar(dataset_dir), decode, sampler, cache);
+}
+
+/// \brief Function to create a Caltech256Dataset.
+/// \note The generated dataset has two columns ["image", "label"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] sampler Sampler object used to choose samples from the dataset.
+/// \param[in] decode Decode the images after reading (default=false).
+/// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
+/// \return Shared pointer to the Caltech256Dataset.
+inline std::shared_ptr<Caltech256Dataset> MS_API Caltech256(const std::string &dataset_dir,
+                                                            const std::reference_wrapper<Sampler> sampler,
+                                                            bool decode = false,
+                                                            const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<Caltech256Dataset>(StringToChar(dataset_dir), decode, sampler, cache);
+}
+
 /// \class CelebADataset
 /// \brief A source dataset for reading and parsing CelebA dataset.
 class MS_API CelebADataset : public Dataset {
@@ -2864,7 +2951,7 @@ class MS_API LJSpeechDataset : public Dataset {
 };
 
 /// \brief Function to create a LJSpeech Dataset.
-/// \notes The generated dataset has four columns ["waveform", "sample_rate", "transcription",
+/// \note The generated dataset has four columns ["waveform", "sample_rate", "transcription",
 ///     "normalized_transcription"].
 /// \param[in] dataset_dir Path to the root directory that contains the dataset.
 /// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
@@ -2878,7 +2965,7 @@ LJSpeech(const std::string &dataset_dir, const std::shared_ptr<Sampler> &sampler
 }
 
 /// \brief Function to create a LJSpeech Dataset.
-/// \notes The generated dataset has four columns ["waveform", "sample_rate", "transcription",
+/// \note The generated dataset has four columns ["waveform", "sample_rate", "transcription",
 ///     "normalized_transcription"].
 /// \param[in] dataset_dir Path to the root directory that contains the dataset.
 /// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
@@ -2890,7 +2977,7 @@ inline std::shared_ptr<LJSpeechDataset> MS_API LJSpeech(const std::string &datas
 }
 
 /// \brief Function to create a LJSpeech Dataset.
-/// \notes The generated dataset has four columns ["waveform", "sample_rate", "transcription",
+/// \note The generated dataset has four columns ["waveform", "sample_rate", "transcription",
 ///     "normalized_transcription"].
 /// \param[in] dataset_dir Path to the root directory that contains the dataset.
 /// \param[in] sampler Sampler object used to choose samples from the dataset.
