@@ -170,3 +170,33 @@ def test_print_cnode_3():
 
     res = print_func()
     print("res: ", res)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_print_validate_tuple():
+    """
+    Feature: JIT Fallback
+    Description: Support print.
+    Expectation: No exception.
+    """
+    @ms_function
+    def print_func():
+        x = Tensor(np.array([1, 2, 3, 4, 5]))
+        y = Tensor(np.array([1, 2, 3, 4, 5]))
+        tensor_sum = x + y
+        print("tensor_sum: ", tensor_sum)
+        np_x = np.array([1, 2, 3, 4, 5])
+        np_y = np.array([1, 2, 3, 4, 5])
+        np_sum = np_x + np_y
+        print("np_sum: ", np_sum)
+        return tensor_sum, np_sum
+
+    with pytest.raises(RuntimeError) as err:
+        res1, res2 = print_func()
+        print("res1: ", res1)
+        print("res2: ", res2)
+    assert "Should not use Python object in runtime" in str(err.value)
