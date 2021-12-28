@@ -24,7 +24,6 @@
 #include "frontend/operator/ops.h"
 #include "utils/symbolic.h"
 #include "utils/ms_exception.h"
-#include "ir/tensor.h"
 #include "ir/func_graph_cloner.h"
 #include "pipeline/jit/parse/data_converter.h"
 #include "pipeline/jit/static_analysis/evaluator.h"
@@ -1059,9 +1058,8 @@ AbstractBasePtr ToAbstract(const ValuePtr &value, const AnalysisContextPtr &cont
   if (value->isa<Primitive>()) {
     auto prim = value->cast<PrimitivePtr>();
     return MakeAbstractClosure(prim, anf_node);
-  } else {
-    return value->ToAbstract();
   }
+  return value->ToAbstract();
 }
 
 AbstractBasePtr FromValueInside(const ValuePtr &value, bool broaden) {

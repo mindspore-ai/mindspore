@@ -189,11 +189,9 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
   if (eval_result != nullptr) {
     MS_LOG(ERROR) << ToString() << ArgsToString(args_abs_list) << " entered again. There is something wrong.";
     return eval_result;
-  } else {
-    MS_LOG(DEBUG) << ToString() << " entered first.";
   }
+  MS_LOG(DEBUG) << ToString() << " entered first.";
   MS_EXCEPTION_IF_NULL(engine);
-
   // Increase & Check the func graph call depth.
   IncreaseFunctionCallDepth();
   const uint32_t max_depth = MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_MAX_CALL_DEPTH);
@@ -213,6 +211,7 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
 
   FuncGraphPtr fg = GetFuncGraph(engine, args_abs_list);
   MS_EXCEPTION_IF_NULL(fg);
+  MS_EXCEPTION_IF_NULL(parent_context_);
   auto context = parent_context_->NewContext(fg, args_abs_list);
   trace::TraceGraphEvalEnter(context, out_conf);
 
@@ -223,7 +222,6 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
                             << "FunctionGraph : " << fg->ToString()
                             << "\nNodeInfo: " << trace::GetDebugInfo(fg->debug_info());
   }
-  MS_EXCEPTION_IF_NULL(parent_context_);
   MS_LOG(DEBUG) << GetInferThread() << "@" << fg->ToString() << ArgsToString(args_abs_list) << " { ";
   if (parent_context_->func_graph() != nullptr) {
     MS_LOG(DEBUG) << GetInferThread() << "graph_: " << AnalysisSchedule::thread_id() << ":"
@@ -391,7 +389,6 @@ EvalResultPtr Evaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args
                   << "] set cache. result: " << eval_result->abstract()->ToString();
     evaluator_cache_mgr_->SetValue(args_spec_list, eval_result);
   } else {
-    MS_EXCEPTION_IF_NULL(eval_result);
     MS_EXCEPTION_IF_NULL(eval_result->abstract());
     MS_LOG(DEBUG) << "[" << this << "/" << evaluator_name
                   << "] cache hit. result: " << eval_result->abstract()->ToString() << ", args: " << args_spec_list;
