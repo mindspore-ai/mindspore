@@ -33,6 +33,7 @@ void EnvironGetCPUKernel::InitKernel(const CNodePtr &node) {
   }
 
   value_type_attr_ = TypeId(AnfAlgo::GetNodeAttr<int>(node, kEnvValueTypeAttr));
+  MS_LOG(INFO) << "The EnvironGet kernel " << node->fullname_with_scope() << " value type: " << value_type_attr_;
   handle_size_ = sizeof(int64_t);
   key_size_ = sizeof(int64_t);
 
@@ -67,6 +68,9 @@ bool EnvironGetCPUKernel::Launch(const std::vector<AddressPtr> &inputs, const st
 
   // Get env and value by handle and key.
   const auto &env = EnvironMgr::GetInstance().Get(host_handle);
+  if (env == nullptr) {
+    MS_LOG(EXCEPTION) << "Get the env failed, handle: " << host_handle << ", key: " << host_key;
+  }
   MS_EXCEPTION_IF_NULL(env);
   const auto &env_value = env->Get(host_key);
   // Default value.

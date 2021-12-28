@@ -27,10 +27,6 @@
 #include "backend/session/kernel_graph.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/optimizer/common/common_backend_optimization.h"
-#ifdef ENABLE_DUMP_IR
-#include "debug/anf_ir_dump.h"
-#include "debug/dump_proto.h"
-#endif
 
 namespace mindspore {
 namespace device {
