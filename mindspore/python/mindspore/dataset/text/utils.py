@@ -38,11 +38,21 @@ class Vocab:
     It contains a map that maps each word(str) to an id(int) or reverse.
     """
 
-    @check_vocab
-    def __init__(self, vocab):
-        self.c_vocab = vocab
+    def __init__(self):
+        self.c_vocab = None
 
     def vocab(self):
+        """
+        Get the vocabory table in dict type.
+
+        Returns:
+            A vocabulary consisting of word and id pairs.
+
+        Examples:
+            >>> vocab = text.Vocab.from_list(["word_1", "word_2", "word_3", "word_4"])
+            >>> vocabory_dict = vocab.vocab()
+        """
+        check_vocab(self.c_vocab)
         return self.c_vocab.vocab()
 
     @check_tokens_to_ids
@@ -61,6 +71,7 @@ class Vocab:
             >>> vocab = text.Vocab.from_list(["w1", "w2", "w3"], special_tokens=["<unk>"], special_first=True)
             >>> ids = vocab.tokens_to_ids(["w1", "w3"])
         """
+        check_vocab(self.c_vocab)
         if isinstance(tokens, str):
             tokens = [tokens]
         return self.c_vocab.tokens_to_ids(tokens)
@@ -81,6 +92,7 @@ class Vocab:
             >>> vocab = text.Vocab.from_list(["w1", "w2", "w3"], special_tokens=["<unk>"], special_first=True)
             >>> token = vocab.ids_to_tokens(0)
         """
+        check_vocab(self.c_vocab)
         if isinstance(ids, int):
             ids = [ids]
         return self.c_vocab.ids_to_tokens(ids)
@@ -123,8 +135,9 @@ class Vocab:
             ...                                 special_first=True)
             >>> dataset = dataset.map(operations=text.Lookup(vocab, "<unk>"), input_columns=["text"])
         """
-        c_vocab = dataset.build_vocab(columns, freq_range, top_k, special_tokens, special_first)
-        return Vocab(c_vocab)
+        vocab = Vocab()
+        vocab.c_vocab = dataset.build_vocab(columns, freq_range, top_k, special_tokens, special_first)
+        return vocab
 
     @classmethod
     @check_from_list
@@ -147,8 +160,9 @@ class Vocab:
         """
         if special_tokens is None:
             special_tokens = []
-        c_vocab = cde.Vocab.from_list(word_list, special_tokens, special_first)
-        return Vocab(c_vocab)
+        vocab = Vocab()
+        vocab.c_vocab = cde.Vocab.from_list(word_list, special_tokens, special_first)
+        return vocab
 
     @classmethod
     @check_from_file
@@ -177,8 +191,9 @@ class Vocab:
             vocab_size = -1
         if special_tokens is None:
             special_tokens = []
-        c_vocab = cde.Vocab.from_file(file_path, delimiter, vocab_size, special_tokens, special_first)
-        return Vocab(c_vocab)
+        vocab = Vocab()
+        vocab.c_vocab = cde.Vocab.from_file(file_path, delimiter, vocab_size, special_tokens, special_first)
+        return vocab
 
     @classmethod
     @check_from_dict
@@ -196,8 +211,9 @@ class Vocab:
         Examples:
             >>> vocab = text.Vocab.from_dict({"home": 3, "behind": 2, "the": 4, "world": 5, "<unk>": 6})
         """
-        c_vocab = cde.Vocab.from_dict(word_dict)
-        return Vocab(c_vocab)
+        vocab = Vocab()
+        vocab.c_vocab = cde.Vocab.from_dict(word_dict)
+        return vocab
 
 
 class SentencePieceVocab(cde.SentencePieceVocab):
