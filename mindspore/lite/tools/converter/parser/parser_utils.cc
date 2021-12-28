@@ -46,8 +46,8 @@ std::unordered_map<std::string, size_t> weight_indexs = {{ops::kNameConv2DFusion
 }  // namespace
 
 void GetAllFuncGraph(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *all_func_graphs) {
-  MS_ASSERT(all_func_graphs);
-  MS_ASSERT(func_graph);
+  MS_ASSERT(all_func_graphs != nullptr);
+  MS_ASSERT(func_graph != nullptr);
   if (all_func_graphs->find(func_graph) == all_func_graphs->end()) {
     all_func_graphs->insert(func_graph);
   } else {
