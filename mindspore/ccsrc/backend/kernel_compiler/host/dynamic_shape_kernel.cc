@@ -55,6 +55,12 @@ void DynamicShapeKernel::Execute() {
       MS_LOG(EXCEPTION) << "Execute DynamicShapeKernel memcpy_s failed!";
     }
   } else {
+    auto runtime_instance = device::KernelRuntimeManager::Instance().GetCurrentKernelRuntime();
+    MS_EXCEPTION_IF_NULL(runtime_instance);
+    auto ret = runtime_instance->SyncStream();
+    if (!ret) {
+      MS_LOG(EXCEPTION) << "Sync stream error!";
+    }
     output_addr->SyncHostToDevice(output_shape, LongToSize(output_tensor_for_sync->data().nbytes()),
                                   output_tensor_for_sync->data_type(), output_tensor_for_sync->data_c(),
                                   output_tensor_for_sync->device_info().host_format_);
