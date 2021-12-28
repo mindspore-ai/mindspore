@@ -84,7 +84,8 @@ void LoopCountActor::SendOutput(OpContext<DeviceTensor> *const context) {
 
   // Send to DataPrepareActor to trigger next step running.
   std::vector<std::vector<TensorPtr>> input_tensors;
-  ActorDispatcher::Send(data_prepare_aid_, &DataPrepareActor::PrepareData, input_tensors, context);
+  ActorDispatcher::Send(data_prepare_aid_, &DataPrepareActor::PrepareData, input_tensors, context,
+                        GraphExecutionStrategy::kPipeline);
 }
 }  // namespace runtime
 }  // namespace mindspore

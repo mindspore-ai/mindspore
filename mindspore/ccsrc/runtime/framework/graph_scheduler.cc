@@ -361,7 +361,7 @@ void GraphScheduler::Run(ActorSet *const actor_set, const std::vector<DeviceCont
   op_context.results_ = &result;
 
   if ((strategy == GraphExecutionStrategy::kStep) && IsSingleOpActorSet(actor_set)) {
-    actor_set->data_prepare_actor_->PrepareData(input_tensors, &op_context);
+    actor_set->data_prepare_actor_->PrepareData(input_tensors, &op_context, GraphExecutionStrategy::kStep);
     MS_EXCEPTION_IF_NULL(actor_set->kernel_actors_[0]);
     actor_set->kernel_actors_[0]->RunOpControlWithInputTensor(nullptr, &op_context, &input_tensors_with_value_node);
     return;
@@ -377,7 +377,7 @@ void GraphScheduler::Run(ActorSet *const actor_set, const std::vector<DeviceCont
   ActorDispatcher::is_multi_thread_execution(actor_set->is_multi_thread_execution_);
   double start_time = GetTime();
   ActorDispatcher::Send(actor_set->data_prepare_actor_->GetAID(), &DataPrepareActor::PrepareData, input_tensors,
-                        &op_context);
+                        &op_context, GraphExecutionStrategy::kPipeline);
 
   // Get the run result.
   auto result_future = result[0].GetFuture();
