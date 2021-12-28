@@ -70,7 +70,7 @@ class EmbeddingOpParallelConfig(_Config):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> from mindspore.parallel.nn import EmbeddingOpParallelConfig
+        >>> from mindspore.nn.transformer import EmbeddingOpParallelConfig
         >>> config=EmbeddingOpParallelConfig(data_parallel=1, model_parallel=1, vocab_emb_dp=True)
     """
 
@@ -113,7 +113,7 @@ class EmbeddingOpParallelConfig(_Config):
                 ``Ascend`` ``GPU``
 
             Examples:
-                >>> from mindspore.parallel.nn import EmbeddingOpParallelConfig
+                >>> from mindspore.nn.transformer import EmbeddingOpParallelConfig
                 >>> config=EmbeddingOpParallelConfig(data_parallel=1, model_parallel=1, vocab_emb_dp=True)
                 >>> parallel_config = config.dp_mp_config
         """
@@ -137,7 +137,7 @@ class TransformerRecomputeConfig(_Config):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> from mindspore.parallel.nn import TransformerRecomputeConfig
+        >>> from mindspore.nn.transformer import TransformerRecomputeConfig
         >>> config=TransformerRecomputeConfig(recompute=True, parallel_optimizer_comm_recompute=True, \
         mp_comm_recompute=True, recompute_slice_activation=True)
     """
@@ -224,7 +224,7 @@ class TransformerOpParallelConfig(_Config):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> from mindspore.parallel.nn import TransformerRecomputeConfig
+        >>> from mindspore.nn.transformer import TransformerRecomputeConfig
         >>> recompute_config=TransformerRecomputeConfig(recompute=True, parallel_optimizer_comm_recompute=True, \
         mp_comm_recompute=True, recompute_slice_activation=True)
         >>> config=TransformerOpParallelConfig(data_parallel=1, model_parallel=1, recompute=recompute_config)
@@ -336,7 +336,7 @@ class TransformerOpParallelConfig(_Config):
                 ``Ascend`` ``GPU``
 
             Examples:
-                >>> from mindspore.parallel.nn import TransformerOpParallelConfig
+                >>> from mindspore.nn.transformer import TransformerOpParallelConfig
                 >>> config=TransformerOpParallelConfig(data_parallel=1, model_parallel=1, vocab_emb_dp=True)
                 >>> parallel_config = config.dp_mp_config
         """
@@ -393,7 +393,7 @@ class FeedForward(Cell):
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore.parallel.nn import FeedForward
+        >>> from mindspore.nn.transformer import FeedForward
         >>> from mindspore import dtype as mstype
         >>> from mindspore import Tensor
         >>> model = FeedForward(hidden_size=15, ffn_hidden_size=30, dropout_rate=0.1)
@@ -514,7 +514,7 @@ class AttentionMask(Cell):
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore.parallel.nn import AttentionMask
+        >>> from mindspore.nn.transformer import AttentionMask
         >>> from mindspore import Tensor
         >>> mask = AttentionMask(seq_length=4)
         >>> mask_array = np.array([[1, 1, 1, 0]], np.float32)
@@ -604,7 +604,7 @@ class VocabEmbedding(Cell):
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore.parallel.nn import VocabEmbedding
+        >>> from mindspore.nn.transformer import VocabEmbedding
         >>> from mindspore import Tensor
         >>> from mindspore import dtype as mstype
         >>> model = VocabEmbedding(vocab_size=30, embedding_size=30)
@@ -719,7 +719,7 @@ class MultiHeadAttention(Cell):
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore.parallel.nn import MultiHeadAttention
+        >>> from mindspore.nn.transformer import MultiHeadAttention
         >>> from mindspore import dtype as mstype
         >>> from mindspore import Tensor
         >>> model = MultiHeadAttention(batch_size=2, hidden_size=15, src_seq_length=20, tgt_seq_length=20,
@@ -1196,7 +1196,7 @@ class TransformerEncoderLayer(Cell):
     Examples:
         >>> import numpy as np
         >>> from mindspore import dtype as mstype
-        >>> from mindspore.parallel.nn import TransformerEncoderLayer
+        >>> from mindspore.nn.transformer import TransformerEncoderLayer
         >>> from mindspore import Tensor
         >>> model = TransformerEncoderLayer(batch_size=2, hidden_size=8, ffn_hidden_size=64, seq_length=16,
         ...                                 num_heads=2)
@@ -1517,7 +1517,7 @@ class TransformerDecoderLayer(Cell):
     Examples:
         >>> import numpy as np
         >>> from mindspore import dtype as mstype
-        >>> from mindspore.parallel.nn import TransformerDecoderLayer
+        >>> from mindspore.nn.transformer import TransformerDecoderLayer
         >>> from mindspore import Tensor
         >>> model = TransformerDecoderLayer(batch_size=2, hidden_size=64, ffn_hidden_size=64, num_heads=2,
         ...                                 src_seq_length=20, tgt_seq_length=10)
@@ -1925,7 +1925,7 @@ class TransformerEncoder(Cell):
     Examples:
         >>> import numpy as np
         >>> from mindspore import dtype as mstype
-        >>> from mindspore.parallel.nn import TransformerEncoder
+        >>> from mindspore.nn.transformer import TransformerEncoder
         >>> from mindspore import Tensor
         >>> model = TransformerEncoder(batch_size=2, num_layers=2, hidden_size=8, ffn_hidden_size=64, seq_length=16,
         ...                            num_heads=2)
@@ -2138,7 +2138,7 @@ class TransformerDecoder(Cell):
     Examples:
         >>> import numpy as np
         >>> from mindspore import dtype as mstype
-        >>> from mindspore.parallel.nn import TransformerDecoder
+        >>> from mindspore.nn.transformer import TransformerDecoder
         >>> from mindspore import Tensor
         >>> model = TransformerDecoder(batch_size=2, num_layers=1, hidden_size=64, ffn_hidden_size=64,
         ...                            num_heads=2, src_seq_length=20, tgt_seq_length=10)
@@ -2353,7 +2353,7 @@ class Transformer(Cell):
     Examples:
         >>> import numpy as np
         >>> from mindspore import dtype as mstype
-        >>> from mindspore.parallel.nn import Transformer
+        >>> from mindspore.nn.transformer import Transformer
         >>> from mindspore import Tensor
         >>> model = Transformer(batch_size=2, encoder_layers=1, decoder_layers=2, hidden_size=64, ffn_hidden_size=64,
         ...         src_seq_length=20, tgt_seq_length=10)
