@@ -147,6 +147,8 @@ def _check_3d_int_or_tuple(arg_name, arg_value, prim_name, allow_five=False, ret
 def check_number(arg_value, value, rel, arg_type=int, arg_name=None, prim_name=None):
     """
     Check argument integer.
+
+    Usage:
     - number = check_number(number, 0, Rel.GE, "number", None) # number >= 0
     """
     rel_fn = Rel.get_fns(rel)

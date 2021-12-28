@@ -446,6 +446,7 @@ def _check_shape_value_on_axis_divided_by_target_value(input_shape, dim, param_n
                          f"but got {input_shape[dim]}")
     return True
 
+
 class _MicroBatch(Cell):
     """
     transform mini-batch to micro-batch in pipeline parallel.
