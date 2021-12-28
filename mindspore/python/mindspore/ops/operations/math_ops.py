@@ -1536,7 +1536,7 @@ class AddN(Primitive):
 
     Inputs:
         - **x** (Union(tuple[Tensor], list[Tensor])) - The input tuple or list
-          is made up of multiple tensors whose dtype is number or bool to be added together.
+          is made up of multiple tensors whose dtype is number to be added together.
 
     Outputs:
         Tensor, has the same shape and dtype as each entry of the `x`.
