@@ -198,7 +198,12 @@ class CheckpointConfig:
 
     @property
     def save_checkpoint_steps(self):
-        """Get the value of _save_checkpoint_steps."""
+        """
+        Get the value of steps to save checkpoint.
+
+        Returns:
+            Int, steps to save checkpoint.
+        """
         return self._save_checkpoint_steps
 
     @property
@@ -208,46 +213,91 @@ class CheckpointConfig:
 
     @property
     def keep_checkpoint_max(self):
-        """Get the value of _keep_checkpoint_max."""
+        """
+        Get the value of maximum number of checkpoint files can be saved.
+
+        Returns:
+            Int, Maximum number of checkpoint files can be saved.
+        """
         return self._keep_checkpoint_max
 
     @property
     def keep_checkpoint_per_n_minutes(self):
-        """Get the value of _keep_checkpoint_per_n_minutes."""
+        """
+        Get the value of save the checkpoint file every n minutes.
+
+        Returns:
+            Int, save the checkpoint file every n minutes.
+        """
         return self._keep_checkpoint_per_n_minutes
 
     @property
     def integrated_save(self):
-        """Get the value of _integrated_save."""
+        """
+        Get the value of whether to merge and save the split Tensor in the automatic parallel scenario.
+
+        Returns:
+            Bool, whether to merge and save the split Tensor in the automatic parallel scenario.
+        """
         return self._integrated_save
 
     @property
     def async_save(self):
-        """Get the value of _async_save."""
+        """
+        Get the value of whether asynchronous execution saves the checkpoint to a file.
+
+        Returns:
+            Bool, whether asynchronous execution saves the checkpoint to a file.
+        """
         return self._async_save
 
     @property
     def saved_network(self):
-        """Get the value of _saved_network"""
+        """
+        Get the value of network to be saved in checkpoint file.
+
+        Returns:
+            Cell, network to be saved in checkpoint file.
+        """
         return self._saved_network
 
     @property
     def enc_key(self):
-        """Get the value of _enc_key"""
+        """
+        Get the value of byte type key used for encryption.
+
+        Returns:
+            (None, bytes), byte type key used for encryption.
+        """
         return self._enc_key
 
     @property
     def enc_mode(self):
-        """Get the value of _enc_mode"""
+        """
+        Get the value of the encryption mode.
+
+        Returns:
+            str, encryption mode.
+        """
         return self._enc_mode
 
     @property
     def append_dict(self):
-        """Get the value of append_dict."""
+        """
+        Get the value of information dict saved to checkpoint file.
+
+        Returns:
+            Dict, the information saved to checkpoint file.
+        """
         return self._append_dict
 
     def get_checkpoint_policy(self):
-        """Get the policy of checkpoint."""
+        """
+        Get the policy of checkpoint.
+
+        Returns:
+            Dict, the information of checkpoint policy.
+        """
         checkpoint_policy = {'save_checkpoint_steps': self.save_checkpoint_steps,
                              'save_checkpoint_seconds': self.save_checkpoint_seconds,
                              'keep_checkpoint_max': self.keep_checkpoint_max,

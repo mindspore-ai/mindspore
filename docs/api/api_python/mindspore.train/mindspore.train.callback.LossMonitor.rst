@@ -21,4 +21,4 @@
 
         **参数：**
 
-        - **run_context** (RunContext) - 包含模型的一些基本信息。
+        - **run_context** (RunContext) - 包含模型的相关信息。

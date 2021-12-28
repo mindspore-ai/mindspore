@@ -1,11 +1,11 @@
 .. py:class:: mindspore.train.callback.Callback
 
-    用于构建回调函数的基类。回调函数是一个上下文管理器，在运行模型时被调用。
-    可以使用此机制进行初始化和释放资源等操作。
+    用于构建Callback函数的基类。Callback函数是一个上下文管理器，在运行模型时被调用。
+    可以使用此机制进行一些自定义操作。
 
-    回调函数可以在step或epoch中的执行一些操作。
-
-    它保存模型相关信息。例如 `network` 、 `train_network` 、 `epoch_num` 、 `batch_num` 、 `loss_fn` 、 `optimizer` 、 `parallel_mode` 、 `device_number` 、 `list_callback` 、 `cur_epoch_num` 、 `cur_step_num` 、 `dataset_sink_mode` 、 `net_outputs` 等。
+    Callback函数可以在step或epoch开始前或结束后执行一些操作。
+    要创建自定义Callback，需要继承Callback基类并重载它相应的方法，有关自定义Callback的详细信息，请查看
+    `Callback <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/custom_debugging_info.html>`_。
 
     **样例：**
 
