@@ -193,7 +193,7 @@ void StridedSliceCPUKernel::ParallelRun(const uint8_t *input_addr, uint8_t *outp
       std::bind(execute_func, this, input_addr, output_addr, thread_index * cal_num_per_thread_));
     thread_index++;
   }
-  (void)common::ThreadPool::GetInstance().SyncRun(tasks);
+  ParallelLaunch(tasks);
 }
 
 bool StridedSliceCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,

@@ -201,7 +201,7 @@ bool RollingCpuKernel<T, S>::Launch(const std::vector<AddressPtr> &inputs, const
       });
     }
   }
-  (void)common::ThreadPool::GetInstance().SyncRun(tasks);
+  ParallelLaunch(tasks);
   return true;
 }
 }  // namespace kernel

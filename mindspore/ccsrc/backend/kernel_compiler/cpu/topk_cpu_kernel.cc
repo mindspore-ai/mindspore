@@ -86,7 +86,7 @@ void TopKCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const st
       return common::SUCCESS;
     });
   }
-  (void)common::ThreadPool::GetInstance().SyncRun(tasks);
+  ParallelLaunch(tasks);
 }
 
 void TopKCPUKernel::InitKernel(const CNodePtr &kernel_node) {
