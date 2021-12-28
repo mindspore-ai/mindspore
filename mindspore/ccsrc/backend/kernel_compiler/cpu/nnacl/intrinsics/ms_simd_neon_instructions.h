@@ -23,6 +23,7 @@
 #define MS_FLOAT32X4 float32x4_t
 #define MS_INT32X4 int32x4_t
 #define MS_UINT32X4 uint32x4_t
+#define MS_MASK128_TYPE MS_UINT32X4
 #define MS_LDQ_F32 vld1q_f32
 #define MS_LD128_F32 vld1q_f32
 #define MS_LDQ_EPI32 vld1q_s32
@@ -36,6 +37,7 @@
 #define MS_MOVQ_EPI32 vmovq_n_s32
 #define MS_MOV128_EPI32 vmovq_n_s32
 #define MS_SUBQ_F32 vsubq_f32
+#define MS_SUB128_F32 vsubq_f32
 #define MS_MLAQ_F32(src1, src2, src3) vmlaq_f32(src1, src2, src3)
 #define MS_STQ_F32 vst1q_f32
 #define MS_ST128_F32 vst1q_f32
@@ -75,9 +77,14 @@ static inline float32x4_t vrecp(float32x4_t v) {
 #define MS_CMPLEQ_F32(src1, src2) vcleq_f32(src1, src2)
 #define MS_CMPGTQ_F32(src1, src2) vcgtq_f32(src1, src2)
 #define MS_CMPGTQ_EPI32(src1, src2) vcgtq_s32(src1, src2)
+#define MS_CMPLE128_F32(src1, src2) vcleq_f32(src1, src2)
+#define MS_CMPGT128_F32(src1, src2) vcgtq_f32(src1, src2)
+#define MS_CMPGT128_EPI32(src1, src2) vcgtq_s32(src1, src2)
 // Note: Compared with X86, the vbslq_f32 parameters are the opposite with _mm_blendv_f32
 #define MS_BLENDQ_F32(src1, src2, src3) vbslq_f32(src3, src2, src1)
 #define MS_BLENDQ_EPI32(src1, src2, src3) vbslq_s32(src3, src2, src1)
+#define MS_BLEND128_F32(src1, src2, src3) vbslq_f32(src3, src2, src1)
+#define MS_BLEND128_EPI32(src1, src2, src3) vbslq_s32(src3, src2, src1)
 #define MS_CAST_F32_S32(src) vreinterpretq_f32_s32(src)
 
 static inline int32x4_t MS_DIV128_EPI32(int32x4_t src1, int32x4_t src2) {

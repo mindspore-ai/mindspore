@@ -25,7 +25,7 @@ int ReluGrad(const float *src0, const float *src1, size_t length, float *dst) {
   int i = 0;
 #ifdef ENABLE_ARM
   float32x4_t zero_4 = vdupq_n_f32(0.0f);
-  for (; i < (int)length - 4; i += 4) {
+  for (; i < (int)length - C4NUM; i += C4NUM) {
     float32x4_t src1_4 = vld1q_f32(src1 + i);
     float32x4_t src0_4 = vld1q_f32(src0 + i);
     uint32x4_t mask_4 = vcleq_f32(src1_4, zero_4);
@@ -44,7 +44,7 @@ int Relu6Grad(const float *src0, const float *src1, size_t length, float *dst) {
 #ifdef ENABLE_ARM
   float32x4_t zero_4 = vdupq_n_f32(0.0f);
   float32x4_t six_4 = vdupq_n_f32(6.0f);
-  for (; i < (int)length - 4; i += 4) {
+  for (; i < (int)length - C4NUM; i += C4NUM) {
     float32x4_t src1_4 = vld1q_f32(src1 + i);
     float32x4_t src0_4 = vld1q_f32(src0 + i);
     float32x4_t max_4 = vmaxq_f32(src1_4, zero_4);
@@ -116,7 +116,7 @@ int SoftplusGrad(const float *src0, const float *src1, int length, float *dst) {
   int i = 0;
 #if defined(ENABLE_AVX)
   for (; i <= length - C8NUM; i += C8NUM) {
-    simd_exp_avx(MS_SUB256_F32(MS_MOV256_F32(0.0f), (MS_LD256_F32(src1 + i))), dst + i);
+    simd_exp256(MS_SUB256_F32(MS_MOV256_F32(0.0f), (MS_LD256_F32(src1 + i))), dst + i);
     MS_ST256_F32(dst + i,
                  MS_DIV256_F32(MS_LD256_F32(src0 + i), MS_ADD256_F32(MS_MOV256_F32(1.0f), MS_LD256_F32(dst + i))));
   }
@@ -124,13 +124,13 @@ int SoftplusGrad(const float *src0, const float *src1, int length, float *dst) {
 
 #if defined(ENABLE_ARM) || defined(ENABLE_SSE)
   for (; i <= length - C4NUM; i += C4NUM) {
-    simd_exp(MS_SUBQ_F32(MS_MOVQ_F32(0.0f), MS_LDQ_F32(src1 + i)), dst + i);
+    simd_exp128(MS_SUBQ_F32(MS_MOVQ_F32(0.0f), MS_LDQ_F32(src1 + i)), dst + i);
     MS_STQ_F32(dst + i, MS_DIVQ_F32(MS_LDQ_F32(src0 + i), MS_ADDQ_F32(MS_MOVQ_F32(1.0f), MS_LDQ_F32(dst + i))));
   }
 #endif
 
   for (; i < length; ++i) {
-    single_exp(-src1[i], dst + i);
+    simd_exp32(-src1[i], dst + i);
     dst[i] = src0[i] / (1.0f + dst[i]);
   }
   return NNACL_OK;
