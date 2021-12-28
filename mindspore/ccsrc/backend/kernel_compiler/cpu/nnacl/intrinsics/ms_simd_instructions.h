@@ -34,6 +34,8 @@
 #include "nnacl/intrinsics/ms_simd_neon_instructions.h"
 #endif
 
+#define MS_EXPAND(...) __VA_ARGS__
+
 // Scaler
 #define MS_FLOAT32X1 float
 #define MS_INT32X1 int
@@ -59,68 +61,68 @@
 #define MS_INT_32xN(byte_num) MS_INT32##X##byte_num
 
 // move (float/int) data
-#define MS_MOVN_F32(byte_num, ...) MS_MOV##byte_num##_F32(__VA_ARGS__)
-#define MS_MOVN_EPI32(byte_num, ...) MS_MOV##byte_num##_EPI32(__VA_ARGS__)
+#define MS_MOVN_F32(byte_num, ...) MS_EXPAND(MS_MOV##byte_num##_F32(__VA_ARGS__))
+#define MS_MOVN_EPI32(byte_num, ...) MS_EXPAND(MS_MOV##byte_num##_EPI32(__VA_ARGS__))
 
 // load (float/int) data
-#define MS_LD_F32(bit_num, ...) MS_LD##bit_num##_F32(__VA_ARGS__)
-#define MS_LD_EPI32(bit_num, ...) MS_LD##bit_num##_EPI32(__VA_ARGS__)
+#define MS_LD_F32(bit_num, ...) MS_EXPAND(MS_LD##bit_num##_F32(__VA_ARGS__))
+#define MS_LD_EPI32(bit_num, ...) MS_EXPAND(MS_LD##bit_num##_EPI32(__VA_ARGS__))
 
 // stored (float/int) data
-#define MS_ST_F32(bit_num, ...) MS_ST##bit_num##_F32(__VA_ARGS__)
-#define MS_ST_EPI32(bit_num, ...) MS_ST##bit_num##_EPI32(__VA_ARGS__)
+#define MS_ST_F32(bit_num, ...) MS_EXPAND(MS_ST##bit_num##_F32(__VA_ARGS__))
+#define MS_ST_EPI32(bit_num, ...) MS_EXPAND(MS_ST##bit_num##_EPI32(__VA_ARGS__))
 
 // add (float/int) op
-#define MS_ADD_F32(bit_num, ...) MS_ADD##bit_num##_F32(__VA_ARGS__)
-#define MS_ADD_EPI32(bit_num, ...) MS_ADD##bit_num##_EPI32(__VA_ARGS__)
+#define MS_ADD_F32(bit_num, ...) MS_EXPAND(MS_ADD##bit_num##_F32(__VA_ARGS__))
+#define MS_ADD_EPI32(bit_num, ...) MS_EXPAND(MS_ADD##bit_num##_EPI32(__VA_ARGS__))
 
 // div (float/int) op
-#define MS_DIV_F32(bit_num, ...) MS_DIV##bit_num##_F32(__VA_ARGS__)
-#define MS_DIV_EPI32(bit_num, ...) MS_DIV##bit_num##_EPI32(__VA_ARGS__)
+#define MS_DIV_F32(bit_num, ...) MS_EXPAND(MS_DIV##bit_num##_F32(__VA_ARGS__))
+#define MS_DIV_EPI32(bit_num, ...) MS_EXPAND(MS_DIV##bit_num##_EPI32(__VA_ARGS__))
 
 // div (float/int) op
-#define MS_DIV_N_F32(bit_num, val1, val2) MS_DIV##bit_num##_F32(val1, MS_MOV##bit_num##_F32(val2))
-#define MS_DIV_N_EPI32(bit_num, val1, val2) MS_DIV##bit_num##_EPI32(val1, MS_MOV##bit_num##_EPI32(val2))
+#define MS_DIV_N_F32(bit_num, val1, val2) MS_EXPAND(MS_DIV##bit_num##_F32(val1, MS_MOV##bit_num##_F32(val2)))
+#define MS_DIV_N_EPI32(bit_num, val1, val2) MS_EXPAND(MS_DIV##bit_num##_EPI32(val1, MS_MOV##bit_num##_EPI32(val2)))
 
 // min (float/int) op
-#define MS_MIN_F32(bit_num, ...) MS_MIN##bit_num##_F32(__VA_ARGS__)
-#define MS_MIN_EPI32(bit_num, ...) MS_MIN##bit_num##_EPI32(__VA_ARGS__)
+#define MS_MIN_F32(bit_num, ...) MS_EXPAND(MS_MIN##bit_num##_F32(__VA_ARGS__))
+#define MS_MIN_EPI32(bit_num, ...) MS_EXPAND(MS_MIN##bit_num##_EPI32(__VA_ARGS__))
 
 // max (float/int) op
-#define MS_MAX_F32(bit_num, ...) MS_MAX##bit_num##_F32(__VA_ARGS__)
-#define MS_MAX_EPI32(bit_num, ...) MS_MAX##bit_num##_EPI32(__VA_ARGS__)
+#define MS_MAX_F32(bit_num, ...) MS_EXPAND(MS_MAX##bit_num##_F32(__VA_ARGS__))
+#define MS_MAX_EPI32(bit_num, ...) MS_EXPAND(MS_MAX##bit_num##_EPI32(__VA_ARGS__))
 
 // mul (float/int) op
-#define MS_MUL_F32(bit_num, ...) MS_MUL##bit_num##_F32(__VA_ARGS__)
-#define MS_MUL_EPI32(bit_num, ...) MS_MUL##bit_num##_EPI32(__VA_ARGS__)
+#define MS_MUL_F32(bit_num, ...) MS_EXPAND(MS_MUL##bit_num##_F32(__VA_ARGS__))
+#define MS_MUL_EPI32(bit_num, ...) MS_EXPAND(MS_MUL##bit_num##_EPI32(__VA_ARGS__))
 
 // square (float/int) op
-#define MS_MUL_SQUARE_F32(bit_num, val) (MS_MUL##bit_num##_F32(val, val))
-#define MS_MUL_SQUARE_EPI32(bit_num, val) (MS_MUL##bit_num##_EPI32(val, val))
+#define MS_MUL_SQUARE_F32(bit_num, val) MS_EXPAND((MS_MUL##bit_num##_F32(val, val)))
+#define MS_MUL_SQUARE_EPI32(bit_num, val) MS_EXPAND((MS_MUL##bit_num##_EPI32(val, val)))
 
 // enable avx512
 #if defined(ENABLE_AVX512)
-#define MS_SIMD_RUN_AVX512(function, ...) function(512, 16, __VA_ARGS__)
+#define MS_SIMD_RUN_AVX512(function, ...) MS_EXPAND(function(512, 16, __VA_ARGS__))
 #else
 #define MS_SIMD_RUN_AVX512(function, ...)
 #endif
 
 // enable avx256
 #if defined(ENABLE_AVX)
-#define MS_SIMD_RUN_AVX(function, ...) function(256, 8, __VA_ARGS__)
+#define MS_SIMD_RUN_AVX(function, ...) MS_EXPAND(function(256, 8, __VA_ARGS__))
 #else
 #define MS_SIMD_RUN_AVX(function, ...)
 #endif
 
 // enable neon/sse
 #if defined(ENABLE_NEON) || defined(ENABLE_SSE)
-#define MS_SIMD_RUN_SSEORNEON128(function, ...) function(128, 4, __VA_ARGS__)
+#define MS_SIMD_RUN_SSEORNEON128(function, ...) MS_EXPAND(function(128, 4, __VA_ARGS__))
 #else
 #define MS_SIMD_RUN_SSEORNEON128(function, ...)
 #endif
 
 // scalar (c style data)
-#define MS_SIMD_RUN_SCALAR(function, ...) function(32, 1, __VA_ARGS__)
+#define MS_SIMD_RUN_SCALAR(function, ...) MS_EXPAND(function(32, 1, __VA_ARGS__))
 
 #define MS_SIMD_RUN(function, ...)                 \
   MS_SIMD_RUN_AVX512(function, __VA_ARGS__);       \
