@@ -46,6 +46,7 @@ from .hsigmoid import _hsigmoid_cpu
 from .hsigmoid_grad import _hsigmoid_grad_cpu
 from .hswish import _hswish_cpu
 from .hswish_grad import _hswish_grad_cpu
+from .identity_n import _identity_n_cpu
 from .is_finite import _is_finite_cpu
 from .layer_norm import _layer_norm_cpu
 from .layer_norm_grad import _layer_norm_grad_cpu

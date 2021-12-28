@@ -26,6 +26,7 @@ from ..operations.array_ops import MatrixDiagV3
 from ..operations.array_ops import MatrixDiagPartV3
 from ..operations.array_ops import MatrixSetDiagV3
 from ..operations.array_ops import Triu
+from ..operations.array_ops import IdentityN
 from ..operations.array_ops import CheckNumerics
 from ..operations.array_ops import SegmentMax
 from ..operations.array_ops import SegmentMin
@@ -248,6 +249,16 @@ def get_bprop_split_v(self):
     def bprop(x_input, output, dout):
         dx = concat_op(dout)
         return (dx,)
+
+    return bprop
+
+
+@bprop_getters.register(IdentityN)
+def get_bprop_identity_n(self):
+    """Generate bprop for IdentityN"""
+
+    def bprop(x, out, dout):
+        return (dout,)
 
     return bprop
 

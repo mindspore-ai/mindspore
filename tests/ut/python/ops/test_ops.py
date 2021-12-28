@@ -42,6 +42,7 @@ from mindspore.ops.operations.array_ops import CheckNumerics
 from mindspore.ops.operations.array_ops import SegmentMax
 from mindspore.ops.operations.array_ops import SegmentMin
 from mindspore.ops.operations.array_ops import SegmentSum
+from mindspore.ops.operations.array_ops import IdentityN
 from mindspore.ops.operations.random_ops import NonDeterministicInts
 from mindspore.ops.operations.random_ops import TruncatedNormal
 from mindspore.ops.operations.other_ops import SampleDistortedBoundingBoxV2
@@ -1546,6 +1547,11 @@ test_case_math_ops = [
     ('identity', {
         'block': ops.functional.identity,
         'desc_inputs': [[2, 2]],
+        'skip': ['backward']}),
+    ('IdentityN', {
+        'block': IdentityN(),
+        'desc_inputs': [(Tensor(np.random.rand(3, 16), mstype.float32),
+                         Tensor(np.random.rand(3), mstype.int32))],
         'skip': ['backward']}),
     ('MatMul_1', {
         'block': P.MatMul(transpose_a=False, transpose_b=False),
