@@ -73,7 +73,7 @@ bool ReduceFakeOutMem::Run(const FuncGraphPtr &func_graph) {
       auto out_cnode = out->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(out_cnode);
       if (AnfAlgo::HasNodeAttr(kFakeOut, out_cnode) && AnfAlgo::GetNodeAttr<bool>(out_cnode, kFakeOut)) {
-        fake_real_indices.insert(i);
+        (void)fake_real_indices.insert(i);
       }
     }
 

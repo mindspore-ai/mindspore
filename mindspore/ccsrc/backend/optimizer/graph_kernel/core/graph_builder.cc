@@ -47,7 +47,7 @@ AnfNodePtrList FindOutputs(const AnfNodePtrList &nodes, const AnfNodePtrToAnfNod
     // if any user of the `node` is not in the nodes list, the `node` is an output.
     if (std::any_of(std::begin(node_users), std::end(node_users),
                     [&eqv](const std::pair<AnfNodePtr, int> &u) { return eqv.find(u.first) == eqv.end(); })) {
-      output.emplace_back(node);
+      (void)output.emplace_back(node);
     }
   }
   return output;
@@ -77,7 +77,7 @@ bool InlineInnerFuncGraph(const FuncGraphPtr &fg) {
     if (graph_kernel_g == nullptr) continue;
     AnfNodePtrList inp(n->inputs().begin() + 1, n->inputs().end());
     auto out = InlineClone(graph_kernel_g, fg, inp, n->input(0)->scope());
-    mng->Replace(n, out);
+    (void)mng->Replace(n, out);
     changed = true;
   }
   return changed;
@@ -94,11 +94,11 @@ void EliminateMakeTuple(const FuncGraphPtr &fg) {
     auto new_out = fg->NewCNode(new_args);
     auto mng = fg->manager();
     MS_EXCEPTION_IF_NULL(mng);
-    mng->Replace(out_cnode, new_out);
+    (void)mng->Replace(out_cnode, new_out);
   }
   AbstractBasePtrList abs_list;
-  std::transform(new_args.begin() + 1, new_args.end(), std::back_inserter(abs_list),
-                 [](const AnfNodePtr &node) { return node->abstract(); });
+  (void)std::transform(new_args.begin() + 1, new_args.end(), std::back_inserter(abs_list),
+                       [](const AnfNodePtr &node) { return node->abstract(); });
   fg->output()->set_abstract(std::make_shared<abstract::AbstractTuple>(abs_list));
 }
 
@@ -113,7 +113,7 @@ bool ConvertNonscalarTensorToParameter(const FuncGraphPtr &fg, AnfNodePtrList *i
       if (tensor == nullptr || tensor->DataSize() == 1) {
         continue;
       }
-      value_nodes.insert(tnode);
+      (void)value_nodes.insert(tnode);
     }
   }
   if (value_nodes.empty()) return false;
@@ -123,7 +123,7 @@ bool ConvertNonscalarTensorToParameter(const FuncGraphPtr &fg, AnfNodePtrList *i
     auto parameter = fg->add_parameter();
     parameter->set_abstract(vnode->abstract());
     parameter->set_kernel_info(vnode->kernel_info_ptr());
-    mng->Replace(vnode, parameter);
+    (void)mng->Replace(vnode, parameter);
     inputs_ptr->push_back(vnode);
   }
   return true;
@@ -148,7 +148,7 @@ void ReplaceNewFuseCNode(const FuncGraphPtr &func_graph, const AnfNodePtr &new_f
   MS_EXCEPTION_IF_NULL(mng);
   // single out
   if (outputs.size() == 1) {
-    mng->Replace(outputs[0], new_fuse_cnode);
+    (void)mng->Replace(outputs[0], new_fuse_cnode);
     return;
   }
 
@@ -162,7 +162,7 @@ void ReplaceNewFuseCNode(const FuncGraphPtr &func_graph, const AnfNodePtr &new_f
       gt_inputs.back()->set_abstract(gt_idx->ToAbstract());
       auto new_out = func_graph->NewCNode(gt_inputs);
       new_out->set_abstract(outputs[out_idx]->abstract());
-      mng->Replace(outputs[out_idx], new_out);
+      (void)mng->Replace(outputs[out_idx], new_out);
       continue;
     }
 
@@ -181,7 +181,7 @@ void ReplaceNewFuseCNode(const FuncGraphPtr &func_graph, const AnfNodePtr &new_f
       gt_inputs.back()->set_abstract(gt_idx->ToAbstract());
       auto new_getitem_node = func_graph->NewCNode(gt_inputs);
       new_getitem_node->set_abstract(getitem_node->abstract());
-      mng->Replace(getitem_node, new_getitem_node);
+      (void)mng->Replace(getitem_node, new_getitem_node);
     }
 
     offset += real_outs.size() - 1;
@@ -264,10 +264,10 @@ std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> BuildSingleGraphFromNod
     fg->set_manager(mng);
   }
 
-  InlineInnerFuncGraph(fg);
+  (void)InlineInnerFuncGraph(fg);
   // eliminate tuple of tuple, and set Abstract for output MakeTuple
   EliminateMakeTuple(fg);
-  ConvertNonscalarTensorToParameter(fg, &inputs);
+  (void)ConvertNonscalarTensorToParameter(fg, &inputs);
 
   return std::make_tuple(fg, inputs, outputs);
 }

@@ -32,28 +32,28 @@ GRAPH_KERNEL_CALLBACK_REGISTER(CallbackImpl);
 ShapeVector CallbackImpl::GetInputShape(const AnfNodePtr &node, size_t i) {
   auto vec = AnfAlgo::GetInputDeviceShape(node, i);
   ShapeVector ret;
-  std::transform(vec.begin(), vec.end(), std::back_inserter(ret), SizeToLong);
+  (void)std::transform(vec.begin(), vec.end(), std::back_inserter(ret), SizeToLong);
   return ret;
 }
 
 ShapeVector CallbackImpl::GetOutputShape(const AnfNodePtr &node, size_t i) {
   auto vec = AnfAlgo::GetOutputDeviceShape(node, i);
   ShapeVector ret;
-  std::transform(vec.begin(), vec.end(), std::back_inserter(ret), SizeToLong);
+  (void)std::transform(vec.begin(), vec.end(), std::back_inserter(ret), SizeToLong);
   return ret;
 }
 
 ShapeVector CallbackImpl::GetInputInferShape(const AnfNodePtr &node, size_t i) {
   auto vec = AnfAlgo::GetPrevNodeOutputInferShape(node, i);
   ShapeVector ret;
-  std::transform(vec.begin(), vec.end(), std::back_inserter(ret), SizeToLong);
+  (void)std::transform(vec.begin(), vec.end(), std::back_inserter(ret), SizeToLong);
   return ret;
 }
 
 ShapeVector CallbackImpl::GetOutputInferShape(const AnfNodePtr &node, size_t i) {
   auto vec = AnfAlgo::GetOutputInferShape(node, i);
   ShapeVector ret;
-  std::transform(vec.begin(), vec.end(), std::back_inserter(ret), SizeToLong);
+  (void)std::transform(vec.begin(), vec.end(), std::back_inserter(ret), SizeToLong);
   return ret;
 }
 

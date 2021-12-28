@@ -53,7 +53,7 @@ class TsaChecker : public AtomicAddChecker {
   }
 };
 
-std::pair<AnfNodePtr, size_t> TsaAtomicAddToFirstTensor::FindTsaFirstRealInputInGraph(const KernelGraphPtr &main_graph,
+std::pair<AnfNodePtr, size_t> TsaAtomicAddToFirstTensor::FindTsaFirstRealInputInGraph(const KernelGraphPtr &,
                                                                                       const CNodePtr &tsa_node,
                                                                                       const AnfNodePtr &node) {
   auto cnode = node->cast<CNodePtr>();
@@ -164,7 +164,7 @@ void TsaAtomicAddToFirstTensor::CorrectKernelBuildInfo(
 
   std::set<size_t> reduce_real_indices;
   for (auto &info : outer_infos) {
-    reduce_real_indices.insert(std::get<0>(info).reduce_real_output_index);
+    (void)reduce_real_indices.insert(std::get<0>(info).reduce_real_output_index);
   }
 
   for (size_t i = 0; i < origin_outputs_format.size(); ++i) {
@@ -212,8 +212,8 @@ void TsaAtomicAddToFirstTensor::ProcessOriginCNode(
   for (const auto &[atomic_add_info, outer_node, tsa_first_input_index] : outer_nodes) {
     composite_node->cast<CNodePtr>()->set_input(tsa_first_input_index + 1, outer_node);
     auto parameter = sub_graph->parameters()[tsa_first_input_index];
-    parameters_infos.emplace_back(atomic_add_info, parameter);
-    info_and_tsa_outers.emplace_back(atomic_add_info, outer_node);
+    (void)parameters_infos.emplace_back(atomic_add_info, parameter);
+    (void)info_and_tsa_outers.emplace_back(atomic_add_info, outer_node);
   }
 
   CreateInplaceAssignNodeAndCorrectReturn(sub_graph, parameters_infos);
@@ -239,8 +239,8 @@ void TsaAtomicAddToFirstTensor::ProcessTsa(const KernelGraphPtr &main_graph, con
   std::vector<std::pair<AtomicAddInfo, AnfNodePtr>> info_and_outer_nodes;
   for (auto atomic_add_info : atomic_add_infos) {
     auto outer = GetOrCreateNewTsaFirstNode(main_graph, atomic_add_info, anf_node);
-    info_and_outer_nodes_with_index.emplace_back(atomic_add_info, outer.first, outer.second);
-    info_and_outer_nodes.emplace_back(atomic_add_info, outer.first);
+    (void)info_and_outer_nodes_with_index.emplace_back(atomic_add_info, outer.first, outer.second);
+    (void)info_and_outer_nodes.emplace_back(atomic_add_info, outer.first);
   }
 
   // Insert extra input(broadcast node output) to composite node, and make origin TensorScatterAdd inplaceassign to it.

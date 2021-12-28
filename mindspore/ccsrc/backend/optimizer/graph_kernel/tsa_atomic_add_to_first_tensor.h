@@ -57,7 +57,7 @@ class TsaAtomicAddToFirstTensor : public AtomicCleanInsertter {
   std::pair<AnfNodePtr, size_t> GetOrCreateNewTsaFirstNode(const KernelGraphPtr &main_graph,
                                                            const AtomicAddInfo &atomic_add_info,
                                                            const AnfNodePtr &node);
-  std::pair<AnfNodePtr, size_t> FindTsaFirstRealInputInGraph(const KernelGraphPtr &main_graph, const CNodePtr &tsa_node,
+  std::pair<AnfNodePtr, size_t> FindTsaFirstRealInputInGraph(const KernelGraphPtr &, const CNodePtr &tsa_node,
                                                              const AnfNodePtr &node);
 
   size_t tsa_first_input_index_{0};  // sub-graph parameter index.

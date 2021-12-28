@@ -71,7 +71,7 @@ void Dfs(const AnfNodePtr &current, const VisitFunc &visit_func, const NextFunc 
   if (visited->count(current) > 0) {
     return;
   }
-  visited->insert(current);
+  (void)visited->insert(current);
   if (visit_func(current) != VisitType::FOLLOW) {
     return;
   }
@@ -107,8 +107,8 @@ OrderedMap<AnfNodePtr, AnfNodePtrList> CollectLinkPaths(const std::map<AnfNodePt
   auto TmpNextFunc = [&mng](const AnfNodePtr &n) -> AnfNodePtrList {
     auto users = mng->node_users()[n];
     AnfNodePtrList nexts;
-    std::transform(users.cbegin(), users.cend(), std::back_inserter(nexts),
-                   [](const std::pair<AnfNodePtr, int> &user) { return user.first; });
+    (void)std::transform(users.cbegin(), users.cend(), std::back_inserter(nexts),
+                         [](const std::pair<AnfNodePtr, int> &user) { return user.first; });
     return nexts;
   };
 
@@ -118,7 +118,7 @@ OrderedMap<AnfNodePtr, AnfNodePtrList> CollectLinkPaths(const std::map<AnfNodePt
     }
     auto cur_node = cur_stack.top();
     if (link_paths.find(cur_node) == link_paths.end()) {
-      link_paths.insert({cur_node, AnfNodePtrList()});
+      (void)link_paths.emplace(cur_node, AnfNodePtrList());
     }
     link_paths[cur_node].push_back(next);
     cur_stack.push(next);
@@ -149,7 +149,7 @@ OrderedSet<AnfNodePtr> GetLongTermNodes(const AnfNodePtrList &nodes, const AnfNo
     auto real_node = AnfAlgo::VisitKernelWithReturnType(node, 0).first;
     // Parameter or value have long term tensors.
     if (!utils::isa<CNodePtr>(real_node)) {
-      long_term_nodes.insert(node);
+      (void)long_term_nodes.insert(node);
       continue;
     }
 
@@ -159,7 +159,7 @@ OrderedSet<AnfNodePtr> GetLongTermNodes(const AnfNodePtrList &nodes, const AnfNo
           auto end_topo = topo_indices.find(end_node);
           return user_topo->second >= end_topo->second;
         })) {
-      long_term_nodes.insert(node);
+      (void)long_term_nodes.insert(node);
     }
   }
   return long_term_nodes;
@@ -215,7 +215,7 @@ AnfNodePtrList AutoRecompute::Filter(const AnfNodePtr &source_node, const AnfNod
   OrderedSet<AnfNodePtr> long_term_inputs = GetLongTermNodes(node_inputs, end_node, topo_indice_, mng);
 
   AnfNodePtrList check_inputs;
-  if (IsPrimitiveCNode(end_node->cast<CNodePtr>()->input(edge_pos), prim::kPrimTupleGetItem)) {
+  if (IsPrimitiveCNode(end_node->cast<CNodePtr>()->input(IntToSize(edge_pos)), prim::kPrimTupleGetItem)) {
     auto out_index = GetSourceLinkOutPos(end_node, edge_pos);
     auto sub_graph = AnfAlgo::GetCNodeFuncGraphPtr(source_node);
     auto out = sub_graph->output();
@@ -224,7 +224,7 @@ AnfNodePtrList AutoRecompute::Filter(const AnfNodePtr &source_node, const AnfNod
     }
 
     // Find subgraph's input according to edge node.
-    auto start_node = out->cast<CNodePtr>()->input(out_index + 1);
+    auto start_node = out->cast<CNodePtr>()->input(IntToSize(out_index + 1));
     AnfNodePtrList sub_input_parameters;
     std::queue<AnfNodePtr> node_q;
     node_q.push(start_node);
@@ -290,7 +290,7 @@ std::tuple<OrderedSet<AnfNodePtr>, OutPosLinkMap, MemorySize> AutoRecompute::Get
       continue;
     }
     user_edge_pos[user].push_back(index);
-    direct_users.insert(user);
+    (void)direct_users.insert(user);
     // Update maximum topo value.
     if (topo_indice_[user] > max_topo_user_index) {
       max_topo_user_index = topo_indice_[user];
@@ -327,8 +327,8 @@ OutPosLinkList AutoRecompute::JudegeTargetAndCaptureSource(const AnfNodePtr &nod
     for (const auto &[source, paths] : link_paths) {
       for (auto target : paths) {
         if (target != source) {
-          target_link_infos.emplace_back(target, user_edge_pos[target], EdgeLifeTimeType::LongTerm);
-          long_term_users.insert(target);
+          (void)target_link_infos.emplace_back(target, user_edge_pos[target], EdgeLifeTimeType::LongTerm);
+          (void)long_term_users.insert(target);
         }
       }
     }
@@ -338,7 +338,7 @@ OutPosLinkList AutoRecompute::JudegeTargetAndCaptureSource(const AnfNodePtr &nod
   // If the short term user is graph kernel composite node, it may be absorb and reduce the local peak memory.
   for (auto user : direct_users) {
     if (long_term_users.count(user) == 0 && AnfAlgo::IsGraphKernel(user)) {
-      target_link_infos.emplace_back(user, user_edge_pos[user], EdgeLifeTimeType::ShortTerm);
+      (void)target_link_infos.emplace_back(user, user_edge_pos[user], EdgeLifeTimeType::ShortTerm);
     }
   }
   return target_link_infos;
@@ -363,7 +363,7 @@ int AutoRecompute::GetSourceLinkOutPos(const AnfNodePtr &target, int pos) {
   // If the input is get-item, than use get-item's index, otherwise zero.
   auto cnode = target->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  auto prenode = cnode->input(pos);
+  auto prenode = cnode->input(IntToSize(pos));
   if (!IsPrimitiveCNode(prenode, prim::kPrimTupleGetItem)) {
     return 0;
   }
@@ -418,7 +418,7 @@ void AutoRecompute::FindCandidates(const FuncGraphPtr &func_graph) {
   auto topo_nodes = TopoSort(func_graph->get_return());
   // Topo indice is use to early stop in predecessor check.
   for (size_t i = 0; i < topo_nodes.size(); ++i) {
-    topo_indice_.insert({topo_nodes[i], i});
+    (void)topo_indice_.emplace(topo_nodes[i], i);
   }
 
   // Candidate condition:
@@ -439,14 +439,14 @@ void AutoRecompute::FindCandidates(const FuncGraphPtr &func_graph) {
       MemorySize threshold = SelectThreshold(edge_life_time_type);
       for (auto gt_in_pos : gt_in_pos_vec) {
         MemorySize out_tensor_size =
-          static_cast<MemorySize>(AnfAlgo::GetOutputTensorMemSize(node, GetSourceLinkOutPos(gt, gt_in_pos)));
+          static_cast<MemorySize>(AnfAlgo::GetOutputTensorMemSize(node, IntToSize(GetSourceLinkOutPos(gt, gt_in_pos))));
         MemorySize absorb_input_tensor_size = 0;
         for (auto input : Filter(node, gt, gt_in_pos, mng)) {
           absorb_input_tensor_size += static_cast<MemorySize>(AnfAlgo::GetOutputTensorMemSize(input, 0));
         }
         auto gt_cnode = gt->cast<CNodePtr>();
         MS_EXCEPTION_IF_NULL(gt_cnode);
-        auto edge = gt_cnode->input(gt_in_pos);
+        auto edge = gt_cnode->input(IntToSize(gt_in_pos));
         if (out_tensor_size < absorb_input_tensor_size) {
           continue;
         }
@@ -473,7 +473,7 @@ void AutoRecompute::FindCandidates(const FuncGraphPtr &func_graph) {
   RecomputeCandidatesLog(candidates_);
 }
 
-void AutoRecompute::RecomputeCandidatesLog(const std::vector<Candidate> &candidates) {
+void AutoRecompute::RecomputeCandidatesLog(const std::vector<Candidate> &candidates) const {
   MS_LOG(INFO) << "Recompute candidates: ";
   for (auto candidate : candidates) {
     MS_LOG(INFO) << "  └─ GS: " << candidate.source_graph->fullname_with_scope();
@@ -500,7 +500,7 @@ std::pair<FuncGraphPtr, AnfNodePtrList> GraphKernelRecompute::CloneGraph(const C
   AnfNodePtrList new_outputs;
   for (auto &edge : recompute_edges) {
     auto idx = GetGetitemIndex(edge);
-    new_outputs.push_back(GetOutput(new_funcgraph, idx));
+    new_outputs.push_back(GetOutput(new_funcgraph, LongToSize(idx)));
   }
   if (new_outputs.size() + 1 == output_node->size()) {
     return {new_funcgraph, inputs};
@@ -537,7 +537,7 @@ void GraphKernelRecompute::LinkIntoTargetFuncGraph(const Candidate &candidate, c
     auto iter = std::find(candidate.recompute_edges.begin(), candidate.recompute_edges.end(), gt_node->input(i + 1));
     if (iter != candidate.recompute_edges.end()) {
       auto out_index = iter - candidate.recompute_edges.begin();
-      mng->Replace(params[i], GetOutput(cloned_func, out_index));
+      (void)mng->Replace(params[i], GetOutput(cloned_func, LongToSize(out_index)));
     } else {
       new_parameters.push_back(params[i]);
       new_inputs.push_back(gt_node->input(i + 1));
@@ -550,11 +550,11 @@ void GraphKernelRecompute::LinkIntoTargetFuncGraph(const Candidate &candidate, c
     auto iter = std::find(new_inputs.begin(), new_inputs.end(), cloned_inputs[i]);
     if (iter != new_inputs.end()) {
       auto idx = iter - new_inputs.begin();
-      cloned_func->manager()->Replace(cloned_func_params[i], new_parameters[idx]);
+      (void)cloned_func->manager()->Replace(cloned_func_params[i], new_parameters[LongToSize(idx)]);
     } else {
       new_parameters.push_back(gt->add_parameter());
       new_inputs.push_back(cloned_inputs[i]);
-      cloned_func->manager()->Replace(cloned_func_params[i], new_parameters.back());
+      (void)cloned_func->manager()->Replace(cloned_func_params[i], new_parameters.back());
     }
   }
 
@@ -565,7 +565,7 @@ void GraphKernelRecompute::LinkIntoTargetFuncGraph(const Candidate &candidate, c
     }
   }
   AnfNodePtrList new_node_inputs = {gt_node->input(0)};
-  new_node_inputs.insert(new_node_inputs.end(), new_inputs.begin(), new_inputs.end());
+  (void)new_node_inputs.insert(new_node_inputs.end(), new_inputs.begin(), new_inputs.end());
   gt->set_parameters(new_parameters);
   gt_node->set_inputs(new_node_inputs);
   AnfNodePtrList outputs;

@@ -99,7 +99,7 @@ void *CpuKernelManager::GetFunction(const std::string &kernel_name) {
   }
   KernelMeta *bin_map = KernelMeta::GetInstance();
   auto fn_so = bin_map->kernel_meta_path();
-  fn_so.append(fn + ".so");
+  (void)fn_so.append(fn + ".so");
   auto handle = dlopen(fn_so.c_str(), RTLD_LAZY | RTLD_LOCAL);
   if (handle == nullptr) {
     MS_LOG(ERROR) << "Load " << fn_so << " failed. kernel: " << kernel_name;
@@ -132,7 +132,7 @@ bool CpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
   (void)std::transform(std::begin(outputs), std::end(outputs), std::back_inserter(runtimeargs),
                        [](const AddressPtr &output) -> void * { return output->addr; });
   static AkgCallBack akg_callback;
-  runtimeargs.emplace_back(reinterpret_cast<void *>(&akg_callback));
+  (void)runtimeargs.emplace_back(reinterpret_cast<void *>(&akg_callback));
   using AkgCpuKernelFunction = void (*)(void *);
   reinterpret_cast<AkgCpuKernelFunction>(launch_func_)(reinterpret_cast<void *>(runtimeargs.data()));
   return true;
