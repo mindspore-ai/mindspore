@@ -918,6 +918,24 @@ bool KernelGraph::RemoveValueNodeFromGraph(const ValueNodePtr &value_node) {
   return graph_value_nodes_.erase(value_node) != 0;
 }
 
+void KernelGraph::SetOutputNodeToTensor(const KernelMapTensor &node_to_tensor) {
+  output_node_to_tensor_ = node_to_tensor;
+  for (const auto &item : output_node_to_tensor_) {
+    auto node = item.first.first;
+    auto out_index = item.first.second;
+    if (!opt::IsNopNode(node)) {
+      continue;
+    }
+    while (opt::IsNopNode(node)) {
+      const auto kernel_with_index = AnfAlgo::GetPrevNodeOutput(node, 0);
+      node = kernel_with_index.first;
+      out_index = kernel_with_index.second;
+    }
+    KernelWithIndex real_output{node, out_index};
+    nop_node_output_map_.emplace(real_output, item.first);
+  }
+}
+
 void KernelGraph::ReplaceGraphInput(const AnfNodePtr &old_parameter, const AnfNodePtr &new_parameter) {
   // update graph inputs
   MS_EXCEPTION_IF_NULL(old_parameter);
