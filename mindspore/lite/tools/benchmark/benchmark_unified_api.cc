@@ -449,7 +449,9 @@ int BenchmarkUnifiedApi::RunBenchmark() {
     std::cout << "ms_model_.Build failed while running ", model_name.c_str();
     return RET_ERROR;
   }
-  delete[] graph_buf;
+  if (!flags_->dump_tensor_data_ && !flags_->print_tensor_data_) {
+    delete[] graph_buf;
+  }
   if (!flags_->resize_dims_.empty()) {
     std::vector<std::vector<int64_t>> resize_dims;
     (void)std::transform(flags_->resize_dims_.begin(), flags_->resize_dims_.end(), std::back_inserter(resize_dims),
