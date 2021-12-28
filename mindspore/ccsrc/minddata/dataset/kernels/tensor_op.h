@@ -177,6 +177,7 @@ constexpr char kOverdriveOp[] = "OverdriveOp";
 constexpr char kPhaserOp[] = "PhaserOp";
 constexpr char kRiaaBiquadOp[] = "RiaaBiquadOp";
 constexpr char kSlidingWindowCmnOp[] = "SlidingWindowCmnOp";
+constexpr char kSpectralCentroidOp[] = "SpectralCentroidOp";
 constexpr char kSpectrogramOp[] = "SpectrogramOp";
 constexpr char kTimeMaskingOp[] = "TimeMaskingOp";
 constexpr char kTimeStretchOp[] = "TimeStretchOp";

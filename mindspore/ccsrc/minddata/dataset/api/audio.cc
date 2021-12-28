@@ -47,6 +47,7 @@
 #include "minddata/dataset/audio/ir/kernels/phaser_ir.h"
 #include "minddata/dataset/audio/ir/kernels/riaa_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/sliding_window_cmn_ir.h"
+#include "minddata/dataset/audio/ir/kernels/spectral_centroid_ir.h"
 #include "minddata/dataset/audio/ir/kernels/spectrogram_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_masking_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_stretch_ir.h"
@@ -583,6 +584,32 @@ struct Spectrogram::Data {
   BorderType pad_mode_;
   bool onesided_;
 };
+
+// SpectralCentroid Transform Operation.
+struct SpectralCentroid::Data {
+  Data(int32_t sample_rate, int32_t n_fft, int32_t win_length, int32_t hop_length, int32_t pad, WindowType window)
+      : sample_rate_(sample_rate),
+        n_fft_(n_fft),
+        win_length_(win_length),
+        hop_length_(hop_length),
+        pad_(pad),
+        window_(window) {}
+  int32_t sample_rate_;
+  int32_t n_fft_;
+  int32_t win_length_;
+  int32_t hop_length_;
+  int32_t pad_;
+  WindowType window_;
+};
+
+SpectralCentroid::SpectralCentroid(int32_t sample_rate, int32_t n_fft, int32_t win_length, int32_t hop_length,
+                                   int32_t pad, WindowType window)
+    : data_(std::make_shared<Data>(sample_rate, n_fft, win_length, hop_length, pad, window)) {}
+
+std::shared_ptr<TensorOperation> SpectralCentroid::Parse() {
+  return std::make_shared<SpectralCentroidOperation>(data_->sample_rate_, data_->n_fft_, data_->win_length_,
+                                                     data_->hop_length_, data_->pad_, data_->window_);
+}
 
 Spectrogram::Spectrogram(int32_t n_fft, int32_t win_length, int32_t hop_length, int32_t pad, WindowType window,
                          float power, bool normalized, bool center, BorderType pad_mode, bool onesided)

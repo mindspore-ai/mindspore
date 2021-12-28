@@ -51,6 +51,7 @@
 #include "minddata/dataset/audio/ir/kernels/phaser_ir.h"
 #include "minddata/dataset/audio/ir/kernels/riaa_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/sliding_window_cmn_ir.h"
+#include "minddata/dataset/audio/ir/kernels/spectral_centroid_ir.h"
 #include "minddata/dataset/audio/ir/kernels/spectrogram_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_masking_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_stretch_ir.h"
@@ -449,6 +450,19 @@ PYBIND_REGISTER(WindowType, 0, ([](const py::module *m) {
                     .value("DE_KAISER", WindowType::kKaiser)
                     .export_values();
                 }));
+
+PYBIND_REGISTER(
+  SpectralCentroidOperation, 1, ([](const py::module *m) {
+    (void)
+      py::class_<audio::SpectralCentroidOperation, TensorOperation, std::shared_ptr<audio::SpectralCentroidOperation>>(
+        *m, "SpectralCentroidOperation")
+        .def(py::init([](int sample_rate, int n_fft, int win_length, int hop_length, int pad, WindowType window) {
+          auto spectral_centroid =
+            std::make_shared<audio::SpectralCentroidOperation>(sample_rate, n_fft, win_length, hop_length, pad, window);
+          THROW_IF_ERROR(spectral_centroid->ValidateParams());
+          return spectral_centroid;
+        }));
+  }));
 
 PYBIND_REGISTER(
   SpectrogramOperation, 1, ([](const py::module *m) {

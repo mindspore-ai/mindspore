@@ -29,8 +29,8 @@ from .validators import check_allpass_biquad, check_amplitude_to_db, check_band_
     check_contrast, check_db_to_amplitude, check_dc_shift, check_deemph_biquad, check_detect_pitch_frequency, \
     check_dither, check_equalizer_biquad, check_fade, check_flanger, check_gain, check_highpass_biquad, \
     check_lfilter, check_lowpass_biquad, check_magphase, check_masking, check_mu_law_coding, check_overdrive, \
-    check_phaser, check_riaa_biquad, check_sliding_window_cmn, check_spectrogram, check_time_stretch, \
-    check_treble_biquad, check_vol
+    check_phaser, check_riaa_biquad, check_sliding_window_cmn, check_spectral_centroid, check_spectrogram, \
+    check_time_stretch, check_treble_biquad, check_vol
 
 
 class AudioTensorOperation(TensorOperation):
@@ -1017,6 +1017,43 @@ DE_C_WINDOW_TYPE = {WindowType.BARTLETT: cde.WindowType.DE_BARTLETT,
                     WindowType.HAMMING: cde.WindowType.DE_HAMMING,
                     WindowType.HANN: cde.WindowType.DE_HANN,
                     WindowType.KAISER: cde.WindowType.DE_KAISER}
+
+
+class SpectralCentroid(TensorOperation):
+    """
+    Create a spectral centroid from an audio signal.
+
+    Args:
+        sample_rate (int): Sampling rate of the waveform, e.g. 44100 (Hz).
+        n_fft (int, optional): Size of FFT, creates n_fft // 2 + 1 bins (default=400).
+        win_length (int, optional): Window size (default=None, will use n_fft).
+        hop_length (int, optional): Length of hop between STFT windows (default=None, will use win_length // 2).
+        pad (int, optional): Two sided padding of signal (default=0).
+        window (WindowType, optional): Window function that is applied/multiplied to each frame/window,
+            which can be WindowType.BARTLETT, WindowType.BLACKMAN, WindowType.HAMMING, WindowType.HANN
+            or WindowType.KAISER (default=WindowType.HANN).
+
+    Examples:
+        >>> import numpy as np
+        >>>
+        >>> waveform = np.random.random([5, 10, 20])
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
+        >>> transforms = [audio.SpectralCentroid(44100)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+    """
+
+    @check_spectral_centroid
+    def __init__(self, sample_rate, n_fft=400, win_length=None, hop_length=None, pad=0, window=WindowType.HANN):
+        self.sample_rate = sample_rate
+        self.pad = pad
+        self.window = window
+        self.n_fft = n_fft
+        self.win_length = win_length if win_length else n_fft
+        self.hop_length = hop_length if hop_length else self.win_length // 2
+
+    def parse(self):
+        return cde.SpectralCentroidOperation(self.sample_rate, self.n_fft, self.win_length, self.hop_length,
+                                             self.pad, DE_C_WINDOW_TYPE[self.window])
 
 
 class Spectrogram(TensorOperation):

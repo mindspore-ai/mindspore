@@ -1176,12 +1176,9 @@ TEST_F(MindDataTestExecute, TestPhaserBasicWithEager) {
 /// Expectation: throw exception correctly
 TEST_F(MindDataTestExecute, TestPhaserInputArgWithEager) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestPhaserInputArgWithEager";
-  std::vector<double> labels = {
-    0.271, 1.634, 9.246, 0.108,
-    1.138, 1.156, 3.394, 1.55,
-    3.614, 1.8402, 0.718, 4.599,
-    5.64, 2.510620117187500000e-02, 1.38, 5.825,
-    4.1906, 5.28, 1.052, 9.36};
+  std::vector<double> labels = {0.271, 1.634, 9.246,  0.108, 1.138, 1.156, 3.394,
+                                1.55,  3.614, 1.8402, 0.718, 4.599, 5.64,  2.510620117187500000e-02,
+                                1.38,  5.825, 4.1906, 5.28,  1.052, 9.36};
   std::shared_ptr<Tensor> input;
   ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({4, 5}), &input));
 
@@ -1995,11 +1992,11 @@ TEST_F(MindDataTestExecute, TestCharNGramParam) {
 
   // Create expected output.
   std::shared_ptr<Tensor> de_expected01;
-  std::vector<float> expected01 = {-0.840079,-0.0270003,-0.833472,0.588367,-0.210012};
+  std::vector<float> expected01 = {-0.840079, -0.0270003, -0.833472, 0.588367, -0.210012};
   ASSERT_OK(Tensor::CreateFromVector(expected01, &de_expected01));
   auto ms_expected01 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected01));
   std::shared_ptr<Tensor> de_expected02;
-  std::vector<float> expected02 = {-1.34122,0.0442693,-0.48697,0.662939,-0.367669};
+  std::vector<float> expected02 = {-1.34122, 0.0442693, -0.48697, 0.662939, -0.367669};
   ASSERT_OK(Tensor::CreateFromVector(expected02, &de_expected02));
   auto ms_expected02 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected02));
 
@@ -2059,7 +2056,7 @@ TEST_F(MindDataTestExecute, TestToVectorsParamForCharNGram) {
   ASSERT_OK(Tensor::CreateFromVector(expected02, &de_expected02));
   auto ms_expected02 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected02));
   std::shared_ptr<Tensor> de_expected03;
-  std::vector<float> expected03 = {-0.840079,-0.0270003,-0.833472,0.588367,-0.210012};
+  std::vector<float> expected03 = {-0.840079, -0.0270003, -0.833472, 0.588367, -0.210012};
   ASSERT_OK(Tensor::CreateFromVector(expected03, &de_expected03));
   auto ms_expected03 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected03));
 
@@ -2229,10 +2226,43 @@ TEST_F(MindDataTestExecute, TestSpectrogramEager) {
   std::vector<double> waveform = {1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1};
   ASSERT_OK(Tensor::CreateFromVector(waveform, TensorShape({1, (long)waveform.size()}), &test_input_tensor));
   auto input_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(test_input_tensor));
-  std::shared_ptr<TensorTransform> spectrogram = std::make_shared<audio::Spectrogram>(8, 8, 4, 0, WindowType::kHann,
-                                                                                      2., false, true,
-                                                                                      BorderType::kReflect, true);
+  std::shared_ptr<TensorTransform> spectrogram =
+    std::make_shared<audio::Spectrogram>(8, 8, 4, 0, WindowType::kHann, 2., false, true, BorderType::kReflect, true);
   auto transform = Execute({spectrogram});
   Status rc = transform({input_tensor}, &input_tensor);
   ASSERT_TRUE(rc.IsOk());
+}
+
+/// Feature: SpectralCentroid.
+/// Description: test SpectralCentroid in eager mode.
+/// Expectation: the data is processed successfully.
+TEST_F(MindDataTestExecute, TestSpectralCentroidEager) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-SpectralCentroidEager.";
+  std::shared_ptr<Tensor> test_input_tensor;
+  std::vector<double> waveform = {1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1};
+  ASSERT_OK(Tensor::CreateFromVector(waveform, TensorShape({1, (long)waveform.size()}), &test_input_tensor));
+  auto input_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(test_input_tensor));
+  std::shared_ptr<TensorTransform> spectral_centroid =
+    std::make_shared<audio::SpectralCentroid>(44100, 8, 8, 4, 1, WindowType::kHann);
+  auto transform = Execute({spectral_centroid});
+  Status rc = transform({input_tensor}, &input_tensor);
+  ASSERT_TRUE(rc.IsOk());
+}
+
+/// Feature: SpectralCentroid.
+/// Description: test wrong input args of SpectralCentroid in eager mode.
+/// Expectation: Expectation: throw exception correctly
+TEST_F(MindDataTestExecute, TestSpectralCentroidWithWrongArg) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestSpectralCentroidWithWrongArg.";
+  std::shared_ptr<Tensor> test_input_tensor;
+  std::vector<double> waveform = {1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1};
+  ASSERT_OK(Tensor::CreateFromVector(waveform, TensorShape({1, (long)waveform.size()}), &test_input_tensor));
+  auto input_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(test_input_tensor));
+  // Check sample_rate
+  MS_LOG(INFO) << "sample_rate is zero.";
+  std::shared_ptr<TensorTransform> spectral_centroid =
+    std::make_shared<audio::SpectralCentroid>(0, 8, 8, 4, 1, WindowType::kHann);
+  auto transform = Execute({spectral_centroid});
+  Status rc = transform({input_tensor}, &input_tensor);
+  EXPECT_FALSE(rc.IsOk());
 }

@@ -33,6 +33,7 @@ add_library(audio-ir-kernels OBJECT
         phaser_ir.cc
         riaa_biquad_ir.cc
         sliding_window_cmn_ir.cc
+        spectral_centroid_ir.cc
         spectrogram_ir.cc
         time_masking_ir.cc
         time_stretch_ir.cc

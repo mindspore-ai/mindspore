@@ -333,6 +333,19 @@ Status Spectrogram(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor>
                    int n_fft, int hop_length, int win_length, float power, bool normalized, bool center,
                    BorderType pad_mode, bool onesided);
 
+/// \brief Transform audio signal into spectrogram.
+/// \param[in] input Tensor of shape <..., time>.
+/// \param[out] output Tensor of shape <..., time>.
+/// \param[in] sample_rate The sample rate of input tensor.
+/// \param[in] n_fft Size of FFT, creates n_fft / 2 + 1 bins.
+/// \param[in] win_length Window size.
+/// \param[in] hop_length Length of hop between STFT windows.
+/// \param[in] pad Two sided padding of signal.
+/// \param[in] window A function to create a window tensor that is applied/multiplied to each frame/window.
+/// \return Status code.
+Status SpectralCentroid(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int sample_rate,
+                        int n_fft, int win_length, int hop_length, int pad, WindowType window);
+
 /// \brief Stretch STFT in time at a given rate, without changing the pitch.
 /// \param input: Tensor of shape <..., freq, time>.
 /// \param rate: Stretch factor.

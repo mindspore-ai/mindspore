@@ -1511,6 +1511,84 @@ Status Spectrogram(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor>
   }
 }
 
+template <typename T>
+Status SpectralCentroidImpl(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int sample_rate,
+                            int n_fft, int win_length, int hop_length, int pad, WindowType window) {
+  std::shared_ptr<Tensor> output_tensor;
+  std::shared_ptr<Tensor> spectrogram_tensor;
+  if (input->type() == DataType::DE_FLOAT64) {
+    SpectrogramImpl<double>(input, &spectrogram_tensor, pad, window, n_fft, hop_length, win_length, 1.0, false, true,
+                            BorderType::kReflect, true);
+  } else {
+    SpectrogramImpl<float>(input, &spectrogram_tensor, pad, window, n_fft, hop_length, win_length, 1.0, false, true,
+                           BorderType::kReflect, true);
+  }
+  std::shared_ptr<Tensor> freqs;
+  // sample_rate / TWO is half of sample_rate and n_fft / TWO is half of n_fft
+  RETURN_IF_NOT_OK(Linspace<T>(&freqs, 0, sample_rate / TWO, 1 + n_fft / TWO));
+  auto itr_freq = freqs->begin<T>();
+  int num = freqs->Size();
+  TensorShape spectrogram_shape = spectrogram_tensor->shape();
+  int waveform = spectrogram_shape[-1];
+  int channals = spectrogram_shape[-2];
+  std::vector output_shape = spectrogram_shape.AsVector();
+  output_shape[output_shape.size() - TWO] = 1;
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape{output_shape}, input->type(), &output_tensor));
+  Eigen::MatrixXd freqs_r = Eigen::MatrixXd::Zero(num, 1);
+  for (int i = 0; i < num; ++i) {
+    freqs_r(i, 0) = *itr_freq;
+    itr_freq++;
+  }
+  int k_num = spectrogram_tensor->Size() / (waveform * channals);
+  std::vector<Eigen::MatrixXd> specgram;
+  std::vector<Eigen::MatrixXd> specgram_result;
+  std::vector<Eigen::MatrixXd> specgram_sum;
+  Eigen::MatrixXd tmp = Eigen::MatrixXd::Zero(channals, waveform);
+  auto itr_spectrogram = spectrogram_tensor->begin<T>();
+  for (int k = 0; k < k_num; k++) {
+    for (int i = 0; i < channals; ++i) {
+      for (int j = 0; j < waveform; ++j) {
+        tmp(i, j) = *itr_spectrogram;
+        itr_spectrogram++;
+      }
+    }
+    specgram.push_back(tmp);
+    specgram_sum.push_back(specgram[k].colwise().sum());
+  }
+  for (int k = 0; k < k_num; k++) {
+    for (int i = 0; i < channals; ++i) {
+      for (int j = 0; j < waveform; ++j) {
+        tmp(i, j) = freqs_r(i, 0) * specgram[k](i, j);
+      }
+    }
+    specgram_result.push_back((tmp).colwise().sum());
+  }
+  auto itr_output = output_tensor->begin<T>();
+  for (int k = 0; k < k_num; k++) {
+    for (int i = 0; i < waveform; ++i) {
+      *itr_output = specgram_result[k](0, i) / specgram_sum[k](0, i);
+      itr_output++;
+    }
+  }
+  *output = output_tensor;
+  return Status::OK();
+}
+
+Status SpectralCentroid(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int sample_rate,
+                        int n_fft, int win_length, int hop_length, int pad, WindowType window) {
+  RETURN_IF_NOT_OK(ValidateLowRank("SpectralCentroid", input, kMinAudioDim, "<..., time>"));
+  RETURN_IF_NOT_OK(ValidateTensorNumeric("SpectralCentroid", input));
+
+  std::shared_ptr<Tensor> input_tensor;
+  if (input->type() != DataType::DE_FLOAT64) {
+    RETURN_IF_NOT_OK(TypeCast(input, &input_tensor, DataType(DataType::DE_FLOAT32)));
+    return SpectralCentroidImpl<float>(input_tensor, output, sample_rate, n_fft, win_length, hop_length, pad, window);
+  } else {
+    input_tensor = input;
+    return SpectralCentroidImpl<double>(input_tensor, output, sample_rate, n_fft, win_length, hop_length, pad, window);
+  }
+}
+
 Status ComputeDeltas(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t win_length,
                      const BorderType &mode) {
   RETURN_IF_NOT_OK(ValidateLowRank("ComputeDeltas", input, kDefaultAudioDim, "<..., freq, time>"));
