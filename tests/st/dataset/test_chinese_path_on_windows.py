@@ -25,12 +25,6 @@ import mindspore.dataset as ds
 import mindspore.dataset.vision.c_transforms as vision
 from mindspore.mindrecord import FileWriter, SUCCESS
 
-FILES_NUM = 4
-CV_MINDRECORD_FILE = "../data/test.mindrecord"
-CV_DIR_NAME_CN = "../data/数据集/train/"
-FILE_NAME = "test.mindrecord"
-FILE_NAME2 = "./训练集/test.mindrecord"
-
 def add_and_remove_cv_file(mindrecord):
     """add/remove cv file"""
     try:
@@ -92,6 +86,11 @@ def test_chinese_path_on_windows():
     Description: None
     Expectation: raise axception
     """
+    mindrecord_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    cv_mindrecord_file = "../data/" + mindrecord_file_name
+    cv_dir_name_cn = "../data/数据集/train/"
+    file_name = mindrecord_file_name
+    file_name2 = "./训练集/" + mindrecord_file_name
 
     if platform.system().lower() != "windows":
         pass
@@ -100,7 +99,7 @@ def test_chinese_path_on_windows():
 
     # current dir in english, mindrecord path in english
     dir_path = "./"
-    mindrecord_path = CV_MINDRECORD_FILE
+    mindrecord_path = cv_mindrecord_file
 
     add_and_remove_cv_file(dir_path + mindrecord_path)
 
@@ -112,7 +111,7 @@ def test_chinese_path_on_windows():
 
     # current dir in english, mindrecord path in chinese
     dir_path = "./"
-    mindrecord_path = CV_DIR_NAME_CN + "/" + FILE_NAME
+    mindrecord_path = cv_dir_name_cn + "/" + file_name
 
     add_and_remove_cv_file(dir_path + mindrecord_path)
 
@@ -123,8 +122,8 @@ def test_chinese_path_on_windows():
     add_and_remove_cv_file(dir_path + mindrecord_path)
 
     # current dir in chinese, mindrecord path in english
-    dir_path = CV_DIR_NAME_CN
-    mindrecord_path = FILE_NAME
+    dir_path = cv_dir_name_cn
+    mindrecord_path = file_name
 
     add_and_remove_cv_file(dir_path + mindrecord_path)
 
@@ -135,8 +134,8 @@ def test_chinese_path_on_windows():
     add_and_remove_cv_file(dir_path + mindrecord_path)
 
     # current dir in chinese, mindrecord path in chinese
-    dir_path = CV_DIR_NAME_CN
-    mindrecord_path = FILE_NAME2
+    dir_path = cv_dir_name_cn
+    mindrecord_path = file_name2
 
     add_and_remove_cv_file(dir_path + mindrecord_path)
 

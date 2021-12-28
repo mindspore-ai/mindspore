@@ -163,12 +163,14 @@ std::string FileUtils::UTF_8ToGB2312(const char *text) {
     out = text;
     return out;
   }
-  char buf[4];
+  char buf[4] = {0};
   int len = strlen(text);
   char *new_text = const_cast<char *>(text);
-  char *rst = new char[len + (len >> 2) + 2];
-  memset_s(buf, 4, 0, 4);
-  memset_s(rst, len + (len >> 2) + 2, 0, len + (len >> 2) + 2);
+  std::unique_ptr<char[]> rst(new char[len + (len >> 2) + 2]);
+  auto ret2 = memset_s(rst.get(), len + (len >> 2) + 2, 0, len + (len >> 2) + 2);
+  if (ret2 != 0) {
+    return "";
+  }
 
   int i = 0;
   int j = 0;
@@ -191,9 +193,7 @@ std::string FileUtils::UTF_8ToGB2312(const char *text) {
   }
 
   rst[j] = '\0';
-  out = rst;
-  delete[] rst;
-  rst = nullptr;
+  out = rst.get();
   return out;
 }
 
@@ -208,24 +208,21 @@ std::string FileUtils::GB2312ToUTF_8(const char *gb2312) {
   }
 
   int len = MultiByteToWideChar(CP_ACP, 0, gb2312, -1, nullptr, 0);
-  wchar_t *wstr = new wchar_t[len + 1];
-  memset_s(wstr, len + 1, 0, len + 1);
-  MultiByteToWideChar(CP_ACP, 0, gb2312, -1, wstr, len);
-  len = WideCharToMultiByte(CP_UTF8, 0, wstr, -1, nullptr, 0, nullptr, nullptr);
-
-  char *str = new char[len + 1];
-  memset_s(str, len + 1, 0, len + 1);
-  WideCharToMultiByte(CP_UTF8, 0, wstr, -1, str, len, nullptr, nullptr);
-  std::string str_temp(str);
-
-  if (wstr != nullptr) {
-    delete[] wstr;
-    wstr = nullptr;
+  std::unique_ptr<wchar_t[]> wstr(new wchar_t[len + 1]);
+  auto ret = memset_s(wstr.get(), len + 1, 0, len + 1);
+  if (ret != 0) {
+    return "";
   }
-  if (str != nullptr) {
-    delete[] str;
-    str = nullptr;
+  MultiByteToWideChar(CP_ACP, 0, gb2312, -1, wstr.get(), len);
+  len = WideCharToMultiByte(CP_UTF8, 0, wstr.get(), -1, nullptr, 0, nullptr, nullptr);
+
+  std::unique_ptr<char[]> str(new char[len + 1]);
+  auto ret2 = memset_s(str.get(), len + 1, 0, len + 1);
+  if (ret2 != 0) {
+    return "";
   }
+  WideCharToMultiByte(CP_UTF8, 0, wstr.get(), -1, str.get(), len, nullptr, nullptr);
+  std::string str_temp(str.get());
 
   return str_temp;
 }
