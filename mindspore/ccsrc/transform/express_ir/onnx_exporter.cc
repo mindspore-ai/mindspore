@@ -806,8 +806,8 @@ void OnnxExporter::ExportPrimReduce(const FuncGraphPtr &, const CNodePtr &node,
     if (int_ptr == nullptr) {
       auto tuple_ptr = dyn_cast<ValueTuple>(axis_value);
       if (tuple_ptr == nullptr) {
-        MS_LOG(EXCEPTION) << "Got null pointer, the " << name
-                          << "Operator in your model is not support for exporting onnx.";
+        MS_LOG(EXCEPTION) << "Got null pointer, currently the " << name
+                          << " operator in your model is not support for exporting onnx.";
       }
       for (size_t i = 0; i < tuple_ptr->size(); ++i) {
         attr_proto->add_ints(GetValue<int64_t>((*tuple_ptr)[i]));
@@ -977,6 +977,10 @@ void OnnxExporter::ExportPrimResizeNearestNeighbor(const FuncGraphPtr &, const C
   std::vector<int64_t> resize_size;
 
   auto tuple_ptr = dyn_cast<ValueTuple>(prim->GetAttr("size"));
+  if (tuple_ptr == nullptr) {
+    MS_LOG(EXCEPTION) << "Got null pointer, currently the " << prim->name()
+                      << " operator in your model is not support for exporting onnx.";
+  }
 
   for (size_t i = 0; i < x_shape->shape().size() - kTwoNum; i++) {
     resize_size.push_back(x_shape->shape()[i]);

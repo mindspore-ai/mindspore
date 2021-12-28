@@ -963,7 +963,8 @@ def args_type_check(*type_args, **type_kwargs):
             for name, value in argument_dict.items():
                 if name in bound_types:
                     if value is not None and not isinstance(value, bound_types[name]):
-                        raise TypeError('The argument {} must be {}'.format(name, bound_types[name]))
+                        raise TypeError("The argument {} must be {}, but got {}"
+                                        .format(name, bound_types[name], type(value)))
             return func(*args, **kwargs)
 
         return wrapper

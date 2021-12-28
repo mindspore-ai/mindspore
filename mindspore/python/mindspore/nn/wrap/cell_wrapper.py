@@ -703,7 +703,7 @@ class ParameterUpdate(Cell):
     def __init__(self, param):
         super(ParameterUpdate, self).__init__(auto_prefix=False)
         if not isinstance(param, Parameter):
-            raise TypeError("For 'ParameterUpdate', 'param' must be 'Parameter', but got {}.".format(param))
+            raise TypeError("For 'ParameterUpdate', 'param' must be 'Parameter', but got {}.".format(type(param)))
         self._param = param
 
     def construct(self, x):
