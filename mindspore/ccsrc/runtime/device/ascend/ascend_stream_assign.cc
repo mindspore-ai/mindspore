@@ -253,6 +253,8 @@ void AscendStreamAssign::AssignStream(const NotNull<KernelGraphPtr> &graph_ptr) 
   if (!IsTaskSink()) {
     auto kernels = graph_ptr->execution_order();
     AssignStreamForNonTaskSink(kernels);
+    MS_LOG(INFO) << "After finish stream assign";
+    graph_ptr->PrintGraphExecuteOrder();
     return;
   }
   if (!graph_ptr->is_dynamic_shape()) {

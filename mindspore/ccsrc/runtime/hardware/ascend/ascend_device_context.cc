@@ -19,6 +19,7 @@
 #include <set>
 #include <unordered_map>
 #include "acl/acl_rt.h"
+#include "runtime/dev.h"
 #include "backend/optimizer/ascend/ascend_backend_optimization.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_optimization.h"
 #include "utils/context/graph_kernel_flags.h"
@@ -69,6 +70,7 @@ using KernelGraph = mindspore::session::KernelGraph;
 const char kMsVm[] = "vm";
 constexpr size_t kAtomicCleanInputSize = 2;
 constexpr auto kUnknowErrorString = "Unknown error occurred";
+constexpr auto kAscend910 = "ascend910";
 namespace {
 CNodePtr GetNextLabelSet(const std::vector<CNodePtr> &kernel_nodes, uint32_t index) {
   size_t node_sizes = kernel_nodes.size();
@@ -197,6 +199,16 @@ void InitMemReuseExecOrder(KernelGraph *kernel_graph) {
   kernel_graph->set_mem_reuse_exec_order(mem_reuse_order);
   UnfoldRecursiveExecOrder(kernel_graph);
 }
+
+static std::string GetSocVersion() {
+  constexpr int kSocVersionLen = 50;
+  char soc_version[kSocVersionLen] = {0};
+  auto ret = rtGetSocVersion(soc_version, kSocVersionLen);
+  if (ret != RT_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "Get SocVersion failed.";
+  }
+  return soc_version;
+}
 }  // namespace
 #ifndef ENABLE_SECURITY
 void DumpInit(uint32_t device_id) {
@@ -274,6 +286,12 @@ void AscendDeviceContext::DumpAllGraphs(const std::vector<KernelGraphPtr> &all_g
 
 void AscendDeviceContext::Initialize() {
   MS_LOG(INFO) << "Status record: Enter Initialize...";
+  auto soc_version = GetSocVersion();
+  std::transform(soc_version.begin(), soc_version.end(), soc_version.begin(), ::tolower);
+  if (soc_version.find(kAscend910) == std::string::npos) {
+    MS_LOG(INFO) << "The device version is " << soc_version << ", do not need to be initialized by device context.";
+    return;
+  }
   if (initialized_) {
     MS_EXCEPTION_IF_NULL(runtime_instance_);
     runtime_instance_->SetContext();
@@ -424,6 +442,10 @@ void AscendDeviceContext::PreprocessBeforeRunGraph(const KernelGraphPtr &graph) 
     device::KernelAdjust::GetInstance().InsertDeviceLoopCtrl(graph);
     device::KernelAdjust::GetInstance().ProcessLoopSink(graph);
     AscendStreamAssign::GetInstance().AssignStream(NOT_NULL(graph));
+#ifndef ENABLE_SECURITY
+    // Insert profiling point, this function must be executed after assign stream.
+    device::KernelAdjust::GetInstance().Profiling(NOT_NULL(graph.get()));
+#endif
     CreateKernel(graph->execution_order());
     AllocateGraphMemory(NOT_NULL(graph));
     LoadModel(NOT_NULL(graph));
