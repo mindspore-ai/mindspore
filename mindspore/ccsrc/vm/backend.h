@@ -195,7 +195,7 @@ class MindRTBackend : public Backend {
   std::map<GraphId, std::map<KernelWithIndex, size_t>> cnode_ref_counts_;
 
   // Cache forward op output value node tensor ref count of kernels for back propagation graph in PyNative mode.
-  std::multiset<std::string> forward_op_output_tensor_id_;
+  std::map<std::string, size_t> forward_op_output_tensor_id_;
 
   FuncGraph *root_graph_;
   GraphPartitionPtr graph_partition_;
