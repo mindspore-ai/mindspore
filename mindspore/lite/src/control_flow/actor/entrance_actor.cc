@@ -48,23 +48,7 @@ void LiteEntranceOpActor::InitInputData() {
   for (size_t i = 0; i < inputs_data_.size(); ++i) {
     auto dst_tensor = kernel_->out_tensors()[i + 1];
     auto src_tensor = inputs_data_[i];
-    if (dst_tensor->init_ref_count() == 0) {
-      src_tensor->DecRefCount();
-      continue;
-    }
-
-    if (NeedCastData(dst_tensor, src_tensor)) {
-      CastInputData(dst_tensor, src_tensor);
-      continue;
-    }
-
-    /* same data-type  */
-    if (src_tensor->allocator() == nullptr || src_tensor->IsGraphInput()) {
-      // delegate graph kernel output tensor
-      SetInputData(dst_tensor, src_tensor);
-    } else {
-      MoveInputData(dst_tensor, src_tensor);
-    }
+    MoveInputData(dst_tensor, src_tensor);
   }
   return;
 }
@@ -76,9 +60,7 @@ void LiteEntranceOpActor::SetInputShape() {
       continue;
     }
     if (output_tensor->data_type() == kObjectTypeTensorType) {
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
       SetTensorListShape(output_tensor, inputs_data_[i]);
-#endif
     } else {
       SetTensorShape(output_tensor, inputs_data_[i]);
     }

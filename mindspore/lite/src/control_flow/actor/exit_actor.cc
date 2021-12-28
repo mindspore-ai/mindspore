@@ -49,19 +49,7 @@ void LiteExitOpActor::InitInputData() {
       src_tensor->DecRefCount();
       continue;
     }
-
-    if (NeedCastData(dst_tensor, src_tensor)) {
-      CastInputData(dst_tensor, src_tensor);
-      continue;
-    }
-
-    /* same data-type  */
-    if (src_tensor->allocator() == nullptr || src_tensor->IsGraphInput()) {
-      // delegate graph kernel output tensor
-      SetInputData(dst_tensor, src_tensor);
-    } else {
-      MoveInputData(dst_tensor, src_tensor);
-    }
+    MoveInputData(dst_tensor, src_tensor);
   }
   return;
 }
@@ -74,9 +62,7 @@ void LiteExitOpActor::SetInputShape() {
     }
 
     if (output_tensor->data_type() == kObjectTypeTensorType) {
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
       SetTensorListShape(output_tensor, inputs_data_[i]);
-#endif
     } else {
       SetTensorShape(output_tensor, inputs_data_[i]);
     }
@@ -122,6 +108,9 @@ void LiteExitOpActor::AsyncOutput(OpContext<Tensor> *context) {
   }
 
   for (size_t i = 0; i < output_data_arrows_.size(); i++) {
+    if (output_data_arrows_[i]->to_op_id_ != to_op_id) {
+      continue;
+    }
     auto data = outputs_data_.at(i);
     Async(to_op_id, &mindspore::OpActor<Tensor>::RunOpData, data.get(), context);
   }
