@@ -1128,6 +1128,13 @@ void ControlNodeScheduler::LinkDataArrowByKernelGraph(const KernelGraphPtr &grap
       if (from_node_with_index.first == nullptr) {
         from_node_with_index = tuple_node_with_index;
       }
+
+      if (AnfAlgo::CheckPrimitiveType(from_node_with_index.first, prim::kPrimTupleGetItem)) {
+        MS_LOG(WARNING) << "Input node:" << from_node_with_index.first->DebugString()
+                        << " for graph:" << graph->ToString() << " is a tuple get item";
+        from_node_with_index = FetchRealNodeByGetItem(from_node_with_index);
+      }
+
       // If the formal parameter is a tuple type, the parameter of the kernel graph will not directly correspond
       // to the front parameter, but the node in the internal parameter.
       const auto &from_node = from_node_with_index.first;

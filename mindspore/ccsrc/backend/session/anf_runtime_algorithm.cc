@@ -206,7 +206,7 @@ std::vector<KernelWithIndex> GetAllOutputWithIndexInner(const AnfNodePtr &node) 
   }
 
   // If the node is a call, the outputs num should get from the abstract.
-  if (AnfAlgo::IsCallNode(node)) {
+  if (AnfAlgo::IsCallNode(node) || AnfAlgo::CheckPrimitiveType(node, prim::kPrimTupleGetItem)) {
     auto abstract = node->abstract();
     MS_EXCEPTION_IF_NULL(abstract);
     outputs_num = AnfAlgo::GetOutputNumByAbstract(abstract);
@@ -315,7 +315,7 @@ KernelWithIndex AnfRuntimeAlgorithm::VisitKernelWithReturnType(const AnfNodePtr 
     return KernelWithIndex(anf_node, index);
   }
   if (!anf_node->isa<CNode>()) {
-    return KernelWithIndex(anf_node, 0);
+    return KernelWithIndex(anf_node, index);
   }
   auto cnode = anf_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
@@ -2589,6 +2589,46 @@ int64_t AnfRuntimeAlgorithm::GetAttrGroups(const AnfNodePtr &node, size_t index)
     return param->fracz_group();
   }
   return 1;
+}
+
+AnfNodePtr AnfRuntimeAlgorithm::GetTupleIndexes(const AnfNodePtr &node, std::vector<size_t> *index_stack) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(index_stack);
+
+  if (IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
+    auto tuple_getitem = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(tuple_getitem);
+    // Get cur index
+    auto output_index_value_node = tuple_getitem->input(kInputNodeOutputIndexInTupleGetItem);
+    MS_EXCEPTION_IF_NULL(output_index_value_node);
+    auto value_node = output_index_value_node->cast<ValueNodePtr>();
+    MS_EXCEPTION_IF_NULL(value_node);
+    auto output_idx = LongToSize(GetValue<int64_t>(value_node->value()));
+    index_stack->push_back(output_idx);
+    auto real_input = tuple_getitem->input(kRealInputNodeIndexInTupleGetItem);
+    return GetTupleIndexes(real_input, index_stack);
+  }
+  if (IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
+    // If make_tuple in make_tuple, visit may start with inner tuple_getitem.
+    if (index_stack->empty()) {
+      MS_LOG(WARNING) << "Visit make tuple: " << node->DebugString()
+                      << ", but index are empty, visit should not start with inner tuple_getitem.";
+      return nullptr;
+    }
+    auto make_tuple = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(make_tuple);
+    auto output_idx = index_stack->back();
+    index_stack->pop_back();
+    return GetTupleIndexes(make_tuple->input(1 + output_idx), index_stack);
+  }
+  if (IsPrimitiveCNode(node, prim::kPrimDepend)) {
+    return GetTupleIndexes(node->cast<CNodePtr>()->input(kRealInputIndexInDepend), index_stack);
+  }
+  if (IsPrimitiveCNode(node, prim::kPrimLoad)) {
+    return GetTupleIndexes(node->cast<CNodePtr>()->input(1), index_stack);
+  }
+  MS_LOG(DEBUG) << "Get real node:" << node->DebugString();
+  return node;
 }
 }  // namespace session
 }  // namespace mindspore
