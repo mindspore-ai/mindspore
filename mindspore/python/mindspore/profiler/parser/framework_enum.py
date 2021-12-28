@@ -31,24 +31,24 @@ class FileDataType(Enum):
 
 class VmDataType(IntEnum):
     """Definition of vm data type."""
-    NUMBER_TYPE_BEGIN = 30
-    BOOL = 31
-    INT = 32
-    INT8 = 33
-    INT16 = 34
-    INT32 = 35
-    INT64 = 36
-    UINT = 37
-    UINT8 = 38
-    UINT16 = 39
-    UINT32 = 40
-    UINT64 = 41
-    FLOAT = 42
-    FLOAT16 = 43
-    FLOAT32 = 44
-    FLOAT64 = 45
-    COMPLEX = 46
-    NUMBER_TYPE_END = 47
+    NUMBER_TYPE_BEGIN = 29
+    BOOL = 30
+    INT = 31
+    INT8 = 32
+    INT16 = 33
+    INT32 = 34
+    INT64 = 35
+    UINT = 36
+    UINT8 = 37
+    UINT16 = 38
+    UINT32 = 39
+    UINT64 = 40
+    FLOAT = 41
+    FLOAT16 = 42
+    FLOAT32 = 43
+    FLOAT64 = 44
+    COMPLEX = 45
+    NUMBER_TYPE_END = 46
 
     @classmethod
     def get_data_type_name(cls, num):
