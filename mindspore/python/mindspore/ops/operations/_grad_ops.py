@@ -1759,6 +1759,40 @@ class ROIAlignGrad(PrimitiveWithInfer):
     def infer_dtype(self, ydiff_type, rois_type):
         return ydiff_type
 
+class PsROIPoolingGrad(PrimitiveWithInfer):
+    """
+    PsROIPoolingGrad operator.
+    """
+
+    @prim_attr_register
+    def __init__(self, batch_size, channels, height, width, num_rois,
+                 pooled_height, pooled_width, spatial_scale, out_dim):
+
+        """Initialize PsROIPoolingGrad"""
+        validator.check_value_type("batch_size", batch_size, [int], self.name)
+        validator.check_value_type("channels", channels, [int], self.name)
+        validator.check_value_type("height", height, [int], self.name)
+        validator.check_value_type("width", width, [int], self.name)
+        validator.check_value_type("num_rois", num_rois, [int], self.name)
+        validator.check_value_type("pooled_height", pooled_height, [int], self.name)
+        validator.check_value_type("pooled_width", pooled_width, [int], self.name)
+        validator.check_value_type("spatial_scale", spatial_scale, [float], self.name)
+        validator.check_value_type("out_dim", out_dim, [int], self.name)
+        self.batch_size = batch_size
+        self.channels = channels
+        self.height = height
+        self.width = width
+        self.num_rois = num_rois
+        self.pooled_height = pooled_height
+        self.pooled_width = pooled_width
+        self.spatial_scale = spatial_scale
+        self.out_dim = out_dim
+
+    def infer_shape(self, ydiff_shape, rois_shape, mapping_channel_shape):
+        return [self.batch_size, self.channels, self.height, self.width]
+
+    def infer_dtype(self, ydiff_type, rois_type, mapping_channel_type):
+        return ydiff_type
 
 class SigmoidGrad(PrimitiveWithInfer):
     """Gets the gradient of Sigmoid operation."""

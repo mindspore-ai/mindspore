@@ -1586,3 +1586,75 @@ class DynamicResizeNearestNeighbor(Primitive):
         """Initialize ResizeNearestNeighbor"""
         validator.check_value_type("align_corners", align_corners, [bool], self.name)
         self.init_prim_io_names(inputs=['image_in'], outputs=['image_out'])
+
+
+class PsROIPooling(PrimitiveWithInfer):
+    r"""
+    Position Sensitive ROI-Pooling
+    Inputs:
+        - feature(Tensor)
+        - rois(Tensor)
+
+        - **features** (Tensor) - The input features, whose shape must be :math:`(N, C, H, W)`.
+        - **rois** (Tensor) - The shape is :math:`(rois\_n, 5)`. With data type of float16 or float32.
+          `rois_n` represents the number of RoI. The size of the second dimension must be `5` and the `5` colunms
+          are :math:`(image\_index, top\_left\_x, top\_left\_y, bottom\_right\_x, bottom\_right\_y)`.
+          `image_index` represents the index of image. `top_left_x` and `top_left_y` represent the `x, y`
+          coordinates of the top left corner of corresponding RoI, respectively. `bottom_right_x` and `bottom_right_y`
+          represent the `x, y` coordinates of the bottom right corner of corresponding RoI, respectively.
+
+    Outputs:
+        - out shape(rois_num, out_channel, pool_height, pool_width), the result after pooling.
+        - channel_map shape(rois_num, out_channel, pool_height, pool_width), use for back forward to compute grad
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops.operations import _inner_ops as inner
+        >>> features = np.random.randn(4, 21 * 7 * 7, 80, 48)
+        >>> features = Tensor.from_numpy(features).astype(mindspore.float32)
+        >>> rois = Tensor.from_numpy(
+        >>>     np.array([
+        >>>        [0.0000, 150.3563, 200.1320, 579.3563, 602.3452],
+        >>>        [1.0000, 657.1263, 302.8564, 762.4214, 567.9854],
+        >>>        [2.0000, 321.3122, 232.2410, 679.0281, 587.6346],
+        >>>        [3.0000, 664.1630, 387.4919, 778.7322, 562.7321],
+        >>>     ])).astype(mindspore.float32)
+        >>> psRoIPooling = inner.PsROIPooling(pooled_height=7, pooled_width=7, num_rois=4,
+        >>>                                  spatial_scale=1.0/16, out_dim=21,
+        >>>                                  group_size=7)
+        >>> out, channel_map = psRoIPooling(features, rois)
+        >>> print(out.shape)
+            [4, 21, 7, 7]
+        >>> print(channel_map.shape)
+            [4, 21, 7, 7]
+    """
+
+    @prim_attr_register
+    def __init__(self, pooled_height, pooled_width, num_rois, spatial_scale, out_dim, group_size):
+
+        """Initialize PsROIPooling"""
+        validator.check_value_type("pooled_height", pooled_height, [int], self.name)
+        validator.check_value_type("pooled_width", pooled_width, [int], self.name)
+        validator.check_value_type("num_rois", pooled_width, [int], self.name)
+        validator.check_value_type("spatial_scale", spatial_scale, [float], self.name)
+        validator.check_value_type("out_dim", out_dim, [int], self.name)
+        validator.check_value_type("group_size", group_size, [int], self.name)
+        self.pooled_height = pooled_height
+        self.pooled_width = pooled_width
+        self.num_rois = num_rois
+        self.spatial_scale = spatial_scale
+        self.out_dim = out_dim
+        self.group_size = group_size
+
+    def infer_shape(self, inputs_shape, rois_shape):
+        output_shape = [self.num_rois, self.out_dim, self.pooled_height, self.pooled_width]
+        output_map_shape = [self.num_rois, self.out_dim, self.pooled_height, self.pooled_width]
+        return output_shape, output_map_shape
+
+    def infer_dtype(self, inputs_type, rois_type):
+        map_type = mstype.tensor_type(mstype.int32)
+        return inputs_type, map_type

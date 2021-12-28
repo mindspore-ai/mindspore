@@ -19,6 +19,7 @@ from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops.primitive import constexpr
 from .grad_base import bprop_getters
+from ..operations import _grad_ops as G
 from ..operations import _inner_ops as inner
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
 
@@ -118,4 +119,38 @@ def get_bprop(self):
         dk = P.Transpose()(dk, (1, 0, 3, 2))
         all_d = (dq, dk, zeros_like(local_mask), zeros_like(global_mask))
         return all_d
+    return bprop
+
+@bprop_getters.register(inner.PsROIPooling)
+def get_bprop_ps_roi_pooling(self):
+    """Grad definition for `PsROIPooling` operation."""
+    shape_op = P.Shape()
+    pooled_height = self.pooled_height
+    pooled_width = self.pooled_width
+    spatial_scale = self.spatial_scale
+    out_dim = self.out_dim
+    num_rois = self.num_rois
+
+    def bprop(inputs, rois, out, dout):
+        mapping_channel = out[1]
+        inputs_shape = shape_op(inputs)
+        batch_size = inputs_shape[0]
+        channels = inputs_shape[1]
+        height = inputs_shape[2]
+        width = inputs_shape[3]
+
+        dx = G.PsROIPoolingGrad(
+            batch_size,
+            channels,
+            height,
+            width,
+            num_rois,
+            pooled_height,
+            pooled_width,
+            spatial_scale,
+            out_dim
+        )(dout[0], rois, mapping_channel)
+
+        return dx, zeros_like(rois)
+
     return bprop
