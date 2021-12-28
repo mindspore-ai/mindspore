@@ -23,6 +23,7 @@
 #include "runtime/framework/actor/control_flow/entrance_actor.h"
 #include "mindrt/include/async/async.h"
 #include "utils/log_adapter.h"
+#include "backend/kernel_compiler/environ_manager.h"
 
 namespace mindspore {
 namespace runtime {
@@ -75,6 +76,9 @@ void LoopCountActor::SendOutput(OpContext<DeviceTensor> *const context) {
   for (auto &entrance_aid : entrance_aids_) {
     ActorDispatcher::Send(entrance_aid, &EntranceActor::ClearDataOnStepEnd, from_aid, context);
   }
+
+  // Clear the global data which are generated in the kernel running.
+  kernel::EnvironMgr::GetInstance().Clear();
 
   // The LoopCountActor exits.
   if (current_count_ == loop_count_) {

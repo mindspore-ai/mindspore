@@ -45,6 +45,9 @@ class GPUDeviceContext : public DeviceContext {
   void FreeMemory(DeviceAddress *const &address) const override;
   bool AllocateContinuousMemory(const std::vector<DeviceAddressPtr> &addr_list, size_t total_size,
                                 const std::vector<size_t> &size_list) const override;
+  // Relevant function to allocate and free device memory of raw ptr.
+  void *AllocateMemory(size_t size) const override;
+  void FreeMemory(void *const ptr) const override;
 
   DeviceAddressPtr CreateDeviceAddress(void *const device_ptr, size_t device_size, const string &format,
                                        TypeId type_id) const override;

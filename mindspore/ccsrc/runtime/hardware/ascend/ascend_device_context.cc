@@ -565,6 +565,19 @@ bool AscendDeviceContext::AllocateContinuousMemory(const std::vector<DeviceAddre
   return mem_manager_->MallocContinuousMemFromMemPool(addr_list, total_size, size_list);
 }
 
+void *AscendDeviceContext::AllocateMemory(size_t size) const {
+  MS_EXCEPTION_IF_NULL(runtime_instance_);
+  MS_EXCEPTION_IF_NULL(mem_manager_);
+  runtime_instance_->SetContext();
+  return mem_manager_->MallocMemFromMemPool(size, false);
+}
+
+void AscendDeviceContext::FreeMemory(void *const ptr) const {
+  MS_EXCEPTION_IF_NULL(ptr);
+  MS_EXCEPTION_IF_NULL(mem_manager_);
+  mem_manager_->FreeMemFromMemPool(ptr);
+}
+
 bool AscendDeviceContext::ExecuteGraph(const KernelGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
   const uint64_t kUSecondInSecond = 1000000;

@@ -69,9 +69,12 @@ class DeviceContext {
     return default_partition_segments;
   }
 
-  // Relevant function to allocate and free device memory.
+  // Relevant function to allocate and free device memory of DeviceAddress.
   virtual bool AllocateMemory(DeviceAddress *const &address, size_t size) const = 0;
   virtual void FreeMemory(DeviceAddress *const &address) const = 0;
+  // Relevant function to allocate and free device memory of raw ptr.
+  virtual void *AllocateMemory(size_t size) const = 0;
+  virtual void FreeMemory(void *const ptr) const = 0;
 
   // Allocate continuous device memory end to end into 'addr_list'.
   // Communication operators may need continuous memory for input and output

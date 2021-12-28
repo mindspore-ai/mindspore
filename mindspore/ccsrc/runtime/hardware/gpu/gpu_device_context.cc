@@ -205,6 +205,20 @@ bool GPUDeviceContext::AllocateContinuousMemory(const std::vector<DeviceAddressP
   return mem_manager_->MallocContinuousMemFromMemPool(addr_list, total_size, size_list);
 }
 
+void *GPUDeviceContext::AllocateMemory(size_t size) const {
+  MS_EXCEPTION_IF_NULL(mem_manager_);
+  if (!BindDeviceToCurrentThread()) {
+    return nullptr;
+  }
+  return mem_manager_->MallocMemFromMemPool(size, false);
+}
+
+void GPUDeviceContext::FreeMemory(void *const ptr) const {
+  MS_EXCEPTION_IF_NULL(mem_manager_);
+  MS_EXCEPTION_IF_NULL(ptr);
+  mem_manager_->FreeMemFromMemPool(ptr);
+}
+
 DeviceAddressPtr GPUDeviceContext::CreateDeviceAddress(void *const device_ptr, size_t device_size, const string &format,
                                                        TypeId type_id) const {
   return std::make_shared<GPUDeviceAddress>(device_ptr, device_size, format, type_id, device_context_key_.device_name_,
