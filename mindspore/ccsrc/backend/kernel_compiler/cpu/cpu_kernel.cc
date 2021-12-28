@@ -25,6 +25,7 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr size_t kDefaultKernelSpinCount = 3000;
 
 void CpuDynamicKernel::UpdateArgs() {
   if (!is_input_dynamic_shape_ && is_output_dynamic_shape_ && !have_depends()) {
@@ -74,8 +75,9 @@ void CPUKernel::Init(const CNodePtr &kernel_node) {
 void CPUKernelUtils::ExpandDimsTo4(std::vector<size_t> *shape) {
   MS_EXCEPTION_IF_NULL(shape);
   auto len = shape->size();
-  if (len < 4) {
-    for (size_t i = 0; i < 4 - len; ++i) {
+  const size_t expect_dims = 4;
+  if (len < expect_dims) {
+    for (size_t i = 0; i < expect_dims - len; ++i) {
       (void)shape->insert(shape->begin(), 1);
     }
   }
@@ -174,6 +176,7 @@ ActorThreadPool *GetActorMgrInnerThreadPool() {
     thread_pool = actor_manager->GetActorThreadPool();
     MS_EXCEPTION_IF_NULL(thread_pool);
   }
+  thread_pool->SetKernelThreadMaxSpinCount(kDefaultKernelSpinCount);
   return thread_pool;
 }
 

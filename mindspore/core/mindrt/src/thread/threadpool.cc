@@ -344,6 +344,14 @@ int ThreadPool::SetProcessAffinity(BindMode bind_mode) const {
   return THREAD_OK;
 }
 
+void ThreadPool::SetKernelThreadMaxSpinCount(int spin_count) {
+  size_t num = workers_.size() - 1;
+  for (size_t i = num; i >= actor_thread_num_; i--) {
+    THREAD_RETURN_IF_NULL(workers_[i]);
+    workers_[i]->SetMaxSpinCount(spin_count);
+  }
+}
+
 void ThreadPool::SetSpinCountMaxValue() {
   for (auto worker : workers_) {
     THREAD_RETURN_IF_NULL(worker);
