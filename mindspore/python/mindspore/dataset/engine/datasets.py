@@ -29,7 +29,7 @@ import stat
 import time
 import uuid
 import multiprocessing
-from multiprocessing.pool import RUN
+from multiprocessing.pool import RUN, TERMINATE
 from multiprocessing.util import Finalize
 import queue
 from enum import Enum
@@ -2260,9 +2260,9 @@ class BatchDataset(Dataset):
         self.python_multiprocessing = python_multiprocessing
         self.process_pool = None
         self.hook = None
-        self.pids = []
         self.eot = None
         self.watch_dog = None
+        self.workers = []
         self.max_rowsize = max_rowsize
 
     def parse(self, children=None):
@@ -2344,7 +2344,7 @@ class BatchDataset(Dataset):
             # obtain process id from multiprocessing.pool
             for pool in self.process_pool._pool:  # pylint: disable=W0212
                 process_id[op_id][1].add(pool.pid)
-                self.pids.append(pool.pid)
+                self.workers.append(pool)
             with _LOCK:
                 _OP_PROCESS.update(process_id)
 
@@ -2366,7 +2366,7 @@ class BatchDataset(Dataset):
     def _launch_watch_dog(self):
         if platform.system().lower() != 'windows':
             self.eot = threading.Event()
-            self.watch_dog = threading.Thread(target=_watch_dog, args=(self.eot, self.pids))
+            self.watch_dog = threading.Thread(target=_watch_dog, args=(self.eot, self.workers, self.process_pool))
             self.watch_dog.daemon = True
             self.watch_dog.start()
 
@@ -2580,24 +2580,49 @@ def wait_pid():
         pass
 
 
+# Terminate subprocess launched by multiprocessing.pool
+def _terminate_process(workers):
+    for w in workers:
+        if w.exitcode is None:
+            w.terminate()
+    for w in workers:
+        if w._closed is False:  # pylint: disable=W0212
+            w.join()
+
+
+# Monitor the exit number of subprocesses
+def _monitor_subprocess_exit(workers):
+    subprocess_exit_num = 0
+    for w in workers:
+        if w.exitcode is not None:
+            subprocess_exit_num += 1
+    return subprocess_exit_num
+
+
 # Dataset need _watch_dog thread to monitoring fork multi-processing,
 # and thread can't be a member function otherwise python won't collect and release resources.
-def _watch_dog(eot, pids):
+def _watch_dog(eot, workers, pool=None):
     """
     This thread is for monitoring subprocesses forked by GeneratorDataset/map/batch
     """
+    if not isinstance(workers, list):
+        raise TypeError("[Internal Error] The 2rd parameter of watch dog thread should be list of process, "\
+                        "but got {}.".format(type(workers)))
+    if pool is not None and not isinstance(pool, multiprocessing.pool.Pool):
+        raise TypeError("[Internal Error] The 3rd parameter of watch dog thread should be multiprocessing.Pool, "\
+                        "but got {}".format(type(pool)))
     while not eot.is_set():
         subprocess_exit_num = 0
         # Monitoring and count how many subprocesses already exit
-        for pid in pids:
-            try:
-                p = psutil.Process(pid)
-                if p.status() == psutil.STATUS_ZOMBIE:
-                    subprocess_exit_num += 1
-            except psutil.NoSuchProcess:
-                subprocess_exit_num += 1
+        subprocess_exit_num = _monitor_subprocess_exit(workers)
         # If find subprocess exit, we will wait for 30s and do some waitpid operations
         if subprocess_exit_num > 0:
+            if pool is not None:
+                # Python multiprocessing.pool has a bug, if sub process of pool is killed, pool will launch
+                # a new sub process, so we have to set worker_handler._state to TERMINATE to stop relaunching.
+                if pool._state == RUN:  # pylint: disable=W0212
+                    pool._state = TERMINATE  # pylint: disable=W0212
+                    pool._worker_handler._state = TERMINATE  # pylint: disable=W0212
             start = time.time()
             while time.time() - start < 30:
                 # We need to distinguishing get_dataset_size or train finished normally and hang scenario.
@@ -2610,6 +2635,10 @@ def _watch_dog(eot, pids):
                 wait_pid()
             # multiprocessing.queue may hang in .get() forever when put() process was killed.
             # We have to exit main process otherwise main process will hang.
+            if pool is not None:
+                _terminate_process(pool._pool)  # pylint: disable=W0212
+            else:
+                _terminate_process(workers)
             logger.critical("The subprocess of dataset may exit unexpected or be killed, "
                             "main process will exit.")
             os.kill(os.getpid(), signal.SIGTERM)
@@ -2843,9 +2872,9 @@ class MapDataset(TextBaseDataset, Dataset):
         self.python_multiprocessing = python_multiprocessing
         self.process_pool = None
         self.hook = None
-        self.pids = []
         self.eot = None
         self.watch_dog = None
+        self.workers = []
 
         self.callbacks = to_list(callbacks)
         self.max_rowsize = max_rowsize
@@ -2912,7 +2941,7 @@ class MapDataset(TextBaseDataset, Dataset):
                 process_id = {op_id: [self.num_parallel_workers, set()]}
                 for pool in self.process_pool._pool:  # pylint: disable=W0212
                     process_id[op_id][1].add(pool.pid)
-                    self.pids.append(pool.pid)
+                    self.workers.append(pool)
                 with _LOCK:
                     _OP_PROCESS.update(process_id)
                 for op in self.operations:
@@ -2945,7 +2974,7 @@ class MapDataset(TextBaseDataset, Dataset):
     def _launch_watch_dog(self):
         if platform.system().lower() != 'windows':
             self.eot = threading.Event()
-            self.watch_dog = threading.Thread(target=_watch_dog, args=(self.eot, self.pids))
+            self.watch_dog = threading.Thread(target=_watch_dog, args=(self.eot, self.workers, self.process_pool))
             self.watch_dog.daemon = True
             self.watch_dog.start()
 
@@ -4914,7 +4943,7 @@ class SamplerFn:
             self.workers.append(worker)
         if multi_process is True and platform.system().lower() != 'windows':
             self.eot = threading.Event()
-            self.watch_dog = threading.Thread(target=_watch_dog, args=(self.eot, self.pids))
+            self.watch_dog = threading.Thread(target=_watch_dog, args=(self.eot, self.workers))
             self.watch_dog.daemon = True
             self.watch_dog.start()
 
@@ -4980,7 +5009,7 @@ class SamplerFn:
             yield _convert_row(result)
 
     def _stop_subprocess(self):
-        # Only the main process can call join
+        """Only the main process can call join."""
         if self.need_join is True and self.ppid == os.getpid():
             self.eof.set()
             self.need_join = False
