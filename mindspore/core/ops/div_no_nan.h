@@ -30,7 +30,7 @@ constexpr auto kNameDivNoNan = "DivNoNan";
 
 class DivNoNan : public PrimitiveC {
  public:
-  DivNoNan() : PrimitiveC(prim::kPrimDiag->name()) { InitIOName({"x1", "x2"}, {"y"}); }
+  DivNoNan() : PrimitiveC(kNameDivNoNan) { InitIOName({"x1", "x2"}, {"y"}); }
   ~DivNoNan() = default;
   MS_DECLARE_PARENT(DivNoNan, PrimitiveC);
 };
