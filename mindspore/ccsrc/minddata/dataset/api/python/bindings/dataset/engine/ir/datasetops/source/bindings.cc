@@ -49,6 +49,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/mnist_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/penn_treebank_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/random_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/semeion_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/speech_commands_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/stl10_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/tedlium_node.h"
@@ -471,6 +472,16 @@ PYBIND_REGISTER(SBUNode, 2, ([](const py::module *m) {
                       auto sbu = std::make_shared<SBUNode>(dataset_dir, decode, toSamplerObj(sampler), nullptr);
                       THROW_IF_ERROR(sbu->ValidateParams());
                       return sbu;
+                    }));
+                }));
+
+PYBIND_REGISTER(SemeionNode, 2, ([](const py::module *m) {
+                  (void)py::class_<SemeionNode, DatasetNode, std::shared_ptr<SemeionNode>>(*m, "SemeionNode",
+                                                                                           "to create a SemeionNode")
+                    .def(py::init([](std::string dataset_dir, py::handle sampler) {
+                      auto semeion = std::make_shared<SemeionNode>(dataset_dir, toSamplerObj(sampler), nullptr);
+                      THROW_IF_ERROR(semeion->ValidateParams());
+                      return semeion;
                     }));
                 }));
 
