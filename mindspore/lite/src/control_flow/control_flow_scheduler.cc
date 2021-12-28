@@ -136,6 +136,7 @@ void ControlFlowScheduler::RemoveUselessKernels(std::vector<kernel::LiteKernel *
     subgraph_kernel->set_nodes({});
     delete subgraph_kernel;
   }
+  useless_kernels->clear();
 
   return;
 }
@@ -229,7 +230,6 @@ kernel::SubGraphKernel *ControlFlowScheduler::CreateExitSubGraph(kernel::SubGrap
       MS_LOG(ERROR) << "new Tensor failed.";
       return nullptr;
     }
-
     src_tensors_->push_back(new_tensor);
     new_output_tensors.push_back(new_tensor);
     kernel::LiteKernelUtil::ReplaceSubGraphNodesOutTensor(subgraph, old_tensor, new_tensor);
@@ -265,6 +265,7 @@ int ControlFlowScheduler::BuildBoundaryForMultipleCalledGraph(std::vector<kernel
       return RET_NULL_PTR;
     }
     link_tensor->set_tensor_name(subgraph->name() + "_link_tensor");
+    link_tensor->set_category(Category::CONST_TENSOR);
     src_tensors_->push_back(link_tensor);
 
     auto entrance_subgraph = CreateEntranceSubGraph(subgraph, link_tensor);

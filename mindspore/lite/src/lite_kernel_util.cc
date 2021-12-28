@@ -306,7 +306,13 @@ std::vector<LiteKernel *> LiteKernelUtil::GetCallInputPartialsCorrespondingOutpu
       return all_subgraphs;
     }
     // only get the output subgraph, the last subgraph is the output subgraph.
-    all_subgraphs.push_back(partial_kernel->subgraph_kernels().back());
+    auto partial_subgraphs = partial_kernel->subgraph_kernels();
+    all_subgraphs.push_back(partial_subgraphs.back());
+    // exit graph's input graph also need set same output tensor init refcount.
+    if (partial_subgraphs.size() > 1 && partial_subgraphs.back()->subgraph_type() == kExitSubGraph) {
+      auto last_index = partial_subgraphs.size() - 1;
+      all_subgraphs.push_back(partial_subgraphs[last_index - 1]);
+    }
   }
   return all_subgraphs;
 }
