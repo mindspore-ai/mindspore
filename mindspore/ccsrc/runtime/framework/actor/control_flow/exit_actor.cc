@@ -146,6 +146,10 @@ void ExitActor::CopyDeviceAddress(OpContext<DeviceTensor> *const context) {
     MS_EXCEPTION_IF_NULL(input_device_tensor);
     const KernelWithIndex &node_with_index = input_device_tensor->GetNodeIndex();
     MS_EXCEPTION_IF_NULL(node_with_index.first);
+    if (HasAbstractRef(node_with_index.first)) {
+      new_device_tensors.emplace_back(input_device_tensor);
+      continue;
+    }
     MS_EXCEPTION_IF_NULL(device_contexts_[i]);
     // Create the new device tensor to take over the input_device_tensors which are the outputs of kernel graphs.
     auto new_device_tensor = device_contexts_[i]->CreateDeviceAddress(
