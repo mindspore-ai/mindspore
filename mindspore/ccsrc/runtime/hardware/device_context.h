@@ -27,6 +27,10 @@
 #include "backend/session/kernel_graph.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/optimizer/common/common_backend_optimization.h"
+#ifdef ENABLE_DUMP_IR
+#include "debug/anf_ir_dump.h"
+#include "debug/dump_proto.h"
+#endif
 
 namespace mindspore {
 namespace device {
@@ -154,10 +158,6 @@ class DeviceContext {
 
   // Return collective communication object for caller to access
   CollectiveCommunicationLib *collective_comm_lib() const { return collective_comm_lib_; }
-
-  // TODO(jiaorui): will be delete
-  // Dump all graphs.
-  virtual void DumpAllGraphs(const std::vector<KernelGraphPtr> &all_graphs) const {}
 
   void EnableRuntimeCache(const KernelGraphPtr &graph) const {
     auto node_list = graph->TopoSort(graph->get_return());
