@@ -65,21 +65,23 @@ FuncGraphPtr Map::GenerateLeafFunc(const size_t &args_size) {
   return ptrGraph;
 }
 
-std::vector<std::string> Map::GetMapInputIndex(size_t num) {
+std::pair<std::string, std::string> Map::GetMapInputIndex(size_t num) {
   std::string error_index;
   std::string next_index;
-  if (num == 1) {
+  const size_t first_index = 1;
+  const size_t second_index = 2;
+  if (num == first_index) {
     // The first element in Map is func_graph
     error_index = "first";
     next_index = "second";
-  } else if (num == 2) {
+  } else if (num == second_index) {
     error_index = "second";
     next_index = "third";
   } else {
     error_index = std::to_string(num) + "th";
     next_index = std::to_string(num + 1) + "th";
   }
-  return {error_index, next_index};
+  return std::pair<std::string, std::string>(error_index, next_index);
 }
 
 AnfNodePtr Map::FullMakeList(const std::shared_ptr<List> &type, const FuncGraphPtr &func_graph,
@@ -94,9 +96,7 @@ AnfNodePtr Map::FullMakeList(const std::shared_ptr<List> &type, const FuncGraphP
   for (auto &item : arg_pairs) {
     num++;
     auto lhs = std::dynamic_pointer_cast<List>(item.second);
-    std::vector<std::string> indexes = GetMapInputIndex(num);
-    std::string error_index = indexes[0];
-    std::string next_index = indexes[1];
+    auto [error_index, next_index] = GetMapInputIndex(num);
     if (lhs == nullptr) {
       MS_LOG(EXCEPTION) << "The " << error_index << " element in Map has wrong type, expected a List, but got "
                         << item.second->ToString() << ".";
@@ -157,9 +157,7 @@ AnfNodePtr Map::FullMakeTuple(const std::shared_ptr<Tuple> &type, const FuncGrap
   for (auto &item : arg_pairs) {
     num++;
     auto lhs = std::dynamic_pointer_cast<Tuple>(item.second);
-    std::vector<std::string> indexes = GetMapInputIndex(num);
-    std::string error_index = indexes[0];
-    std::string next_index = indexes[1];
+    auto [error_index, next_index] = GetMapInputIndex(num);
     if (lhs == nullptr) {
       MS_LOG(EXCEPTION) << "The " << error_index << " element in Map has wrong type, expected a Tuple, but got "
                         << item.second->ToString() << ".";
