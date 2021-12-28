@@ -65,7 +65,7 @@ Status ShardHeader::CheckFileStatus(const std::string &path) {
     realpath.has_value(),
     "Invalid file, failed to get the realpath of mindrecord files. Please check file path: " + path);
   std::ifstream fin(realpath.value(), std::ios::in | std::ios::binary);
-  CHECK_FAIL_RETURN_UNEXPECTED(fin,
+  CHECK_FAIL_RETURN_UNEXPECTED(fin.is_open(),
                                "Invalid file, failed to open files for loading mindrecord files. Please check file "
                                "path, permission and open file limit: " +
                                  path);
@@ -91,9 +91,15 @@ Status ShardHeader::CheckFileStatus(const std::string &path) {
 Status ShardHeader::ValidateHeader(const std::string &path, std::shared_ptr<json> *header_ptr) {
   RETURN_UNEXPECTED_IF_NULL(header_ptr);
   RETURN_IF_NOT_OK(CheckFileStatus(path));
+
+  auto realpath = FileUtils::GetRealPath(path.data());
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    realpath.has_value(),
+    "Invalid file, failed to get the realpath of mindrecord files. Please check file path: " + path);
+
   // read header size
   json json_header;
-  std::ifstream fin(common::SafeCStr(path), std::ios::in | std::ios::binary);
+  std::ifstream fin(realpath.value(), std::ios::in | std::ios::binary);
   CHECK_FAIL_RETURN_UNEXPECTED(fin.is_open(),
                                "Invalid file, failed to open files for loading mindrecord files. Please check file "
                                "path, permission and open file limit: " +

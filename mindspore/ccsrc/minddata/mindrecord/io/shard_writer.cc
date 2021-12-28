@@ -46,23 +46,23 @@ Status ShardWriter::GetFullPathFromFileName(const std::vector<std::string> &path
     CHECK_FAIL_RETURN_UNEXPECTED(CheckIsValidUtf8(path),
                                  "Invalid file, mindrecord file name: " + path +
                                    " contains invalid uft-8 character. Please rename mindrecord file name.");
-    char resolved_path[PATH_MAX] = {0};
-    char buf[PATH_MAX] = {0};
-    CHECK_FAIL_RETURN_UNEXPECTED(strncpy_s(buf, PATH_MAX, common::SafeCStr(path), path.length()) == EOK,
-                                 "[Internal ERROR] Failed to call securec func [strncpy_s], path: " + path);
-#if defined(_WIN32) || defined(_WIN64)
-    RETURN_UNEXPECTED_IF_NULL(_fullpath(resolved_path, dirname(&(buf[0])), PATH_MAX));
-    RETURN_UNEXPECTED_IF_NULL(_fullpath(resolved_path, common::SafeCStr(path), PATH_MAX));
-#else
-    CHECK_FAIL_RETURN_UNEXPECTED(
-      realpath(dirname(&(buf[0])), resolved_path) != nullptr,
-      "Invalid file, failed to get the realpath of mindrecord files. Please check file path: " +
-        std::string(resolved_path));
-    if (realpath(common::SafeCStr(path), resolved_path) == nullptr) {
-      MS_LOG(DEBUG) << "Succeed to check path: " << common::SafeCStr(path);
+    // get realpath
+    std::optional<std::string> dir = "";
+    std::optional<std::string> local_file_name = "";
+    FileUtils::SplitDirAndFileName(path, &dir, &local_file_name);
+    if (!dir.has_value()) {
+      dir = ".";
     }
-#endif
-    file_paths_.emplace_back(string(resolved_path));
+
+    auto realpath = FileUtils::GetRealPath(dir.value().data());
+    CHECK_FAIL_RETURN_UNEXPECTED(
+      realpath.has_value(),
+      "Invalid dir, failed to get the realpath of mindrecord file dir. Please check path: " + dir.value());
+
+    std::optional<std::string> whole_path = "";
+    FileUtils::ConcatDirAndFileName(&realpath, &local_file_name, &whole_path);
+
+    file_paths_.emplace_back(whole_path.value());
   }
   return Status::OK();
 }

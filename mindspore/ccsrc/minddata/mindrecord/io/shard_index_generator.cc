@@ -185,7 +185,16 @@ Status ShardIndexGenerator::CheckDatabase(const std::string &shard_address, sqli
       ".\nIf you do not want to keep the files, set the 'overwrite' parameter to True and try again.");
   }
   fin.close();
-  if (sqlite3_open_v2(common::SafeCStr(whole_path.value()), db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, nullptr)) {
+
+  std::string whole_path_utf8 = "";
+#if defined(_WIN32) || defined(_WIN64)
+  whole_path_utf8 = FileUtils::GB2312ToUTF_8(whole_path.value().data());
+#endif
+  if (whole_path_utf8.empty()) {
+    whole_path_utf8 = whole_path.value();
+  }
+
+  if (sqlite3_open_v2(whole_path_utf8.data(), db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, nullptr)) {
     RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to open mindrecord meta file: " + shard_address + ", " +
                              sqlite3_errmsg(*db));
   }
