@@ -20,4 +20,5 @@ Note:
 from mindspore.nn.transformer.transformer import AttentionMask, VocabEmbedding, MultiHeadAttention, FeedForward, \
     TransformerEncoder, TransformerDecoder, TransformerEncoderLayer, TransformerDecoderLayer, Transformer, \
     TransformerOpParallelConfig, \
-    EmbeddingOpParallelConfig, TransformerRecomputeConfig
+    EmbeddingOpParallelConfig, TransformerRecomputeConfig, \
+    default_transformer_config, default_embedding_parallel_config
