@@ -175,13 +175,12 @@ class Dropout(Cell):
 
 class Flatten(Cell):
     r"""
-    Flatten layer for the input.
-
-    Flattens a tensor without changing dimension of batch size on the 0-th axis.
+    Flatten the dimensions other than the 0th dimension of the input Tensor.
 
     Inputs:
-        - **x** (Tensor) - Tensor of shape :math:`(N, \ldots)` to be flattened. The data type is Number.
-          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions
+        - **x** (Tensor) - The input Tensor to be flattened. The data type is
+          `number <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_ .
+          The shape is :math:`(N, *)` , where :math:`*` means any number of additional dimensions
           and the shape can't be ().
 
     Outputs:
@@ -1005,19 +1004,23 @@ def tril(x_shape, x_dtype, k):
 
 class Tril(Cell):
     """
-    Returns a tensor with elements above the kth diagonal zeroed.
+    Returns a tensor, the elements above the specified main diagonal are set to zero.
 
-    The lower triangular part of the matrix is defined as the elements on and below the diagonal.
+    Divide the matrix elements into upper and lower triangles along the main diagonal (including diagonals).
 
-    The parameter `k` controls the diagonal to be considered.
-    If diagonal = 0, all elements on and below the main diagonal are retained.
-    Positive values include as many diagonals above the main diagonal, and similarly,
-    negative values exclude as many diagonals below the main diagonal.
+    The parameter `k` controls the choice of diagonal.
+    If `k` = 0, split along the main diagonal and keep all the elements of the lower triangle.
+    If `k` > 0, select the diagonal `k` along the main diagonal upwards, and keep all the elements of the lower
+    triangle.
+    If `k` < 0, select the diagonal `k` along the main diagonal down, and keep all the elements of the lower
+    triangle.
 
     Inputs:
-        - **x** (Tensor) - The input tensor. The data type is Number.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-        - **k** (Int) - The index of diagonal. Default: 0
+        - **x** (Tensor) - The input tensor. The data type is
+        `number <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+        - **k** (Int) - The index of diagonal. Default: 0. If the dimensions of the input matrix are d1 and d2,
+        the range of k should be in [-min(d1, d2)+1, min(d1, d2)-1], and the output value will be the same as the
+        input `x` when `k` is out of range.
 
     Outputs:
         Tensor, has the same shape and type as input `x`.
@@ -1030,6 +1033,7 @@ class Tril(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> # case1: k = 0
         >>> x = Tensor(np.array([[ 1,  2,  3,  4],
         ...                      [ 5,  6,  7,  8],
         ...                      [10, 11, 12, 13],
@@ -1041,6 +1045,7 @@ class Tril(Cell):
          [ 5  6  0  0]
          [10 11 12  0]
          [14 15 16 17]]
+        >>> # case2: k = 1
         >>> x = Tensor(np.array([[ 1,  2,  3,  4],
         ...                      [ 5,  6,  7,  8],
         ...                      [10, 11, 12, 13],
@@ -1052,6 +1057,7 @@ class Tril(Cell):
          [ 5  6  7  0]
          [10 11 12 13]
          [14 15 16 17]]
+        >>> # case3: k = 2
         >>> x = Tensor(np.array([[ 1,  2,  3,  4],
         ...                      [ 5,  6,  7,  8],
         ...                      [10, 11, 12, 13],
@@ -1063,6 +1069,7 @@ class Tril(Cell):
          [ 5  6  7  8]
          [10 11 12 13]
          [14 15 16 17]]
+        >>> # case4: k = -1
         >>> x = Tensor(np.array([[ 1,  2,  3,  4],
         ...                      [ 5,  6,  7,  8],
         ...                      [10, 11, 12, 13],

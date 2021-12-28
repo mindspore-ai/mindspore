@@ -97,11 +97,10 @@ class CELU(Cell):
 
 class Softmax(Cell):
     r"""
-    Softmax activation function.
+    Softmax activation function. It is a two-category function :class:`mindspore.nn.Sigmoid` in the promotion of
+    multi-classification, the purpose is to show the results of multi-classification in the form of probability.
 
-    Applies the Softmax function to an n-dimensional input Tensor.
-
-    The input is a Tensor of logits transformed with exponential function and then
+    Calculate the value of the exponential function for the elements of the input Tensor on the `axis`, and then
     normalized to lie in range [0, 1] and sum up to 1.
 
     Softmax is defined as:
@@ -112,7 +111,8 @@ class Softmax(Cell):
     where :math:`x_{i}` is the :math:`i`-th slice in the given dimension of the input Tensor.
 
     Args:
-        axis (Union[int, tuple[int]]): The axis to apply Softmax operation, -1 means the last dimension. Default: -1.
+        axis (Union[int, tuple[int]]): The axis to apply Softmax operation, if the dimension of input `x` is x.ndim,
+        the range of axis is `[-x.ndim, x.ndim)`, -1 means the last dimension. Default: -1.
 
     Inputs:
         - **x** (Tensor) - The input of Softmax with data type of float16 or float32.
@@ -130,11 +130,13 @@ class Softmax(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> # axis = -1(default), and the sum of return value is 1.0.
         >>> x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
         >>> softmax = nn.Softmax()
         >>> output = softmax(x)
         >>> print(output)
         [0.03168 0.01166 0.0861  0.636   0.2341 ]
+        >>> assert(1.0 == output.sum())
     """
 
     def __init__(self, axis=-1):
@@ -207,19 +209,20 @@ class ELU(Cell):
     .. math::
         E_{i} =
         \begin{cases}
-        x, &\text{if } x \geq 0; \cr
-        \text{alpha} * (\exp(x_i) - 1), &\text{otherwise.}
+        x_i, &\text{if } x_i \geq 0; \cr
+        \alpha * (\exp(x_i) - 1), &\text{otherwise.}
         \end{cases}
+
+    where :math:`x_i` represents the element of the input and :math:`\alpha` represents the `alpha` parameter.
 
     The picture about ELU looks like this `ELU <https://en.wikipedia.org/wiki/
     Activation_function#/media/File:Activation_elu.svg>`_.
 
     Args:
-        alpha (float): The coefficient of negative factor whose type is float. Default: 1.0.
+        alpha (float): The alpha value of ELU, the data type is float. Default: 1.0.
 
     Inputs:
-        - **x** (Tensor) - The input of ELU with data type of float16 or float32.
-          The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
+        - **x** (Tensor) - The input of ELU is a Tensor of any dimension with data type of float16 or float32.
 
     Outputs:
         Tensor, with the same type and shape as the `x`.
@@ -263,11 +266,10 @@ class ReLU(Cell):
     will be suppressed and the active neurons will stay the same.
 
     The picture about ReLU looks like this `ReLU <https://en.wikipedia.org/wiki/
-    Activation_function#/media/File:Activation_rectified_linear.svg>`_.
+    Activation_function#/media/File:Activation_rectified_linear.svg>`_ .
 
     Inputs:
-        - **x** (Tensor) - The input of ReLU. The data type is Number.
-          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+        - **x** (Tensor) - The input of ReLU is a Tensor of any dimension. The data type is `number <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_ .
 
     Outputs:
         Tensor, with the same type and shape as the `x`.
@@ -343,12 +345,13 @@ class LeakyReLU(Cell):
     r"""
     Leaky ReLU activation function.
 
-    LeakyReLU is similar to ReLU, but LeakyReLU has a slope that makes it not equal to 0 at x < 0.
     The activation function is defined as:
 
     .. math::
             \text{leaky_relu}(x) = \begin{cases}x, &\text{if } x \geq 0; \cr
-            \text{alpha} * x, &\text{otherwise.}\end{cases}
+            {\alpha} * x, &\text{otherwise.}\end{cases}
+
+    where :math:`\alpha` represents the `alpha` parameter.
 
     See https://ai.stanford.edu/~amaas/papers/relu_hybrid_icml2013_final.pdf
 
@@ -356,8 +359,7 @@ class LeakyReLU(Cell):
         alpha (Union[int, float]): Slope of the activation function at x < 0. Default: 0.2.
 
     Inputs:
-        - **x** (Tensor) - The input of LeakyReLU.
-          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+        - **x** (Tensor) - The input of LeakyReLU is a Tensor of any dimension.
 
     Outputs:
         Tensor, has the same type and shape as the `x`.

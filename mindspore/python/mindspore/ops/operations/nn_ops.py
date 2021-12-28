@@ -716,7 +716,10 @@ class ReLUV2(Primitive):
 
 class Elu(PrimitiveWithInfer):
     r"""
-    Computes exponential linear:
+    Exponential Linear Uint activation function.
+
+    Applies the exponential linear unit function element-wise.
+    The activation function is defined as:
 
     .. math::
 
@@ -726,15 +729,14 @@ class Elu(PrimitiveWithInfer):
             x & \text{if } x \gt 0\\
         \end{array}\right.
 
-    The data type of input tensor must be float.
+    The picture about ELU looks like this `ELU <https://en.wikipedia.org/wiki/
+    Activation_function#/media/File:Activation_elu.svg>`_ .
 
     Args:
-        alpha (float): The coefficient of negative factor whose type is float,
-            only support '1.0' currently. Default: 1.0.
+        alpha (float): The alpha value of ELU, the data type is float. Only support '1.0' currently. Default: 1.0.
 
     Inputs:
-        - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
-          additional dimensions, with float16 or float32 data type.
+        - **input_x** (Tensor) - The input of ELU is a Tensor of any dimension with data type of float16 or float32.
 
     Outputs:
         Tensor, has the same shape and data type as `input_x`.
@@ -2111,10 +2113,8 @@ class Conv2DTranspose(Conv2DBackpropInput):
 
 class BiasAdd(Primitive):
     r"""
-    Returns sum of input and bias tensor.
-
-    Adds the 1-D bias tensor to the input tensor, and broadcasts the shape on all axis
-    except for the channel axis.
+    Returns the sum of the input Tensor and the bias Tensor. Before adding, the bias Tensor will be broadcasted to be
+    consistent with the shape of the input Tensor.
 
     Args:
         data_format (str): The format of input and output data. It should be 'NHWC', 'NCHW' or 'NCDHW'.
@@ -2123,16 +2123,19 @@ class BiasAdd(Primitive):
     Inputs:
         - **input_x** (Tensor) - The input tensor. The shape can be 2-5 dimensions.
           The data type should be float16 or float32.
-        - **bias** (Tensor) - The bias tensor, with shape :math:`(C)`. The shape of
-          `bias` must be the same as `input_x`'s channel dimension. The data type should be float16 or float32.
+        - **bias** (Tensor) - The bias tensor, with shape :math:`(C)`. C must be the same as channel dimension C of
+        `input_x`. The data type should be float16 or float32.
 
     Outputs:
         Tensor, with the same shape and data type as `input_x`.
 
     Raises:
         TypeError: If `data_format` is not a str.
+        ValueError: If value of `data_format` is not in the range of ['NHWC','NCHW','NCDHW'].
         TypeError: If `input_x` or `bias` is not a Tensor.
         TypeError: If dtype of `input_x` or `bias` is neither float16 nor float32.
+        TypeError: If dtype of `input_x` or `bias` is inconsistent.
+        TypeError: If dimension of `input_x` is not in the range [2, 5].
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3151,15 +3154,13 @@ class L2Normalize(PrimitiveWithInfer):
     This operator will normalize the input using the given axis. The function is shown as follows:
 
     .. math::
-        \displaylines{{\text{output} = \frac{x}{\sqrt{\text{max}(\parallel x_i \parallel^p , \epsilon)} } } \\
-        {\parallel x_i \parallel^p = (\sum_{i}^{}\left | x_i  \right | ^p  )^{1/p}} }
+        \displaylines{{\text{output} = \frac{x}{\sqrt{\text{max}( \sum_{i}^{}\left | x_i  \right | ^2, \epsilon)}}}}
 
-    where :math:`\epsilon` is epsilon and :math:`\sum_{i}^{}\left | x_i  \right | ^p` calculates
-    along the dimension `axis`.
+    where :math:`\epsilon` is epsilon and :math:`\sum_{i}^{}\left | x_i  \right | ^2` calculate the sum of squares of
+    the input `x` along the dimension `axis`.
 
     Args:
-        axis (Union[list(int), tuple(int), int]): The starting axis for the input to apply the L2 Normalization.
-                                                  Default: 0.
+        axis (Union[list(int), tuple(int), int]): Specify the axis for calculating the L2 norm. Default: 0.
         epsilon (float): A small value added for numerical stability. Default: 1e-4.
 
     Inputs:
@@ -3174,6 +3175,7 @@ class L2Normalize(PrimitiveWithInfer):
         TypeError: If `epsilon` is not a float.
         TypeError: If `x` is not a Tensor.
         TypeError: If dtype of `x` is neither float16 nor float32.
+        ValueError: If dimension of `x` is not greater than 0.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
