@@ -100,7 +100,12 @@ OffloadToManualOffloadMode = {
 
 
 class Shuffle(str, Enum):
-    """Specify the shuffle mode."""
+    """Specify the shuffle mode.
+
+    - GLOBAL: Shuffle both the files and samples.
+    - FILES: Shuffle files only.
+    - INFILE: Shuffle data within each file.
+    """
     GLOBAL: str = "global"
     FILES: str = "files"
     INFILE: str = "infile"
