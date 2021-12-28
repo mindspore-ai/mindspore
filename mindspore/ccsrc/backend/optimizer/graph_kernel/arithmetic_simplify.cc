@@ -619,11 +619,11 @@ void ReorganizeEmptyGraph(const inner::LiteGraphPtr &litegraph) {
       inner::LiteGraph::GraphBuilder gb;
       std::vector<int64_t> new_shape = {1};
       auto op_ptr = gb.Emit("BroadcastTo", {outputs[i]}, {{"shape", MakeValue(new_shape)}});
-      litegraph->output()->SetInput(i, op_ptr);
+      litegraph->SetOutput(i, op_ptr);
     } else if (outputs[i]->NodeType() == inner::NType::Parameter) {
       inner::LiteGraph::GraphBuilder gb;
       auto op_ptr = gb.Emit("Reshape", {outputs[i]}, {{"shape", MakeValue(outputs[i]->shape)}});
-      litegraph->output()->SetInput(i, op_ptr);
+      litegraph->SetOutput(i, op_ptr);
     }
   }
   return;

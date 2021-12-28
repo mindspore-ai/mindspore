@@ -14,30 +14,25 @@
  * limitations under the License.
  */
 #include "backend/optimizer/graph_kernel/model/node.h"
-
-#include <memory>
-#include <algorithm>
-#include <functional>
 #include <sstream>
-#include <vector>
-#include <iostream>
-#include <string>
-
-#include "utils/hash_map.h"
-#include "ir/dtype/type_id.h"
-#include "ir/value.h"
-#include "ir/tensor.h"
-#include "utils/shape_utils.h"
-#include "utils/utils.h"
+#include <utility>
 
 namespace mindspore::graphkernel::inner {
-void Node::DumpTensor(std::ostringstream &os) const {
-  os << name_ << "[";
+void Node::SetBaseInfo(NodeBase baseinfo) {
+  this->shape = std::move(baseinfo.shape);
+  this->type = std::move(baseinfo.type);
+  this->format = std::move(baseinfo.format);
+}
+
+std::string Node::ToString() const {
+  std::ostringstream oss;
+  oss << debug_name() << "[";
   for (size_t i = 0; i < shape.size(); i++) {
-    os << shape[i];
-    if (i + 1 < shape.size()) os << ",";
+    oss << shape[i];
+    if (i + 1 < shape.size()) oss << ",";
   }
-  os << "]{" << TypeIdToString(type) << "x" << format << "}";
+  oss << "]{" << TypeIdToString(type) << "x" << format << "}";
+  return oss.str();
 }
 
 void Node::AddInput(const NodePtr &new_input) {
@@ -73,11 +68,20 @@ void Node::SetInputs(const NodePtrList &inputs) {
 
 void Node::ReplaceWith(const NodePtr &other_node) {
   if (this->users_.empty()) return;
-  // copy the users before traversal
+  // the users_ will be changed, so we copy the users before traversal
   auto users = this->users_;
   for (auto &user : users) {
     for (auto idx : user.second) {
       user.first->SetInput(idx, other_node);
+    }
+  }
+}
+
+void Node::RemoveUser(Node *user, size_t index) {
+  if (auto iter = users_.find(user); iter != users_.end()) {
+    iter->second.erase(index);
+    if (iter->second.empty()) {
+      users_.erase(iter);
     }
   }
 }

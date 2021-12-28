@@ -16,16 +16,14 @@
 #include "backend/optimizer/graph_kernel/model/op_node.h"
 
 #include <math.h>
-#include <sstream>
-#include <memory>
+#include <algorithm>
 #include <set>
-#include <string>
+#include <sstream>
 #include <vector>
 #include <functional>
 #include <numeric>
 
 #include "utils/hash_map.h"
-#include "utils/hash_set.h"
 #include "backend/optimizer/graph_kernel/model/node.h"
 
 namespace mindspore::graphkernel::inner {
@@ -89,30 +87,36 @@ NodeBase PrimOp::Infer(const NodePtrList &inputs, const DAttrs &attrs) {
   return nodebase;
 }
 
-void PrimOp::Dump(std::ostringstream &os) const {
-  DumpTensor(os);
-  os << " = " << this->op_ << "(";
+std::string PrimOp::ToString() const {
+  std::ostringstream oss;
+  oss << Node::ToString();
+  oss << " = " << this->op_ << "(";
   for (size_t i = 0; i < inputs_.size(); i++) {
-    inputs_[i]->DumpTensor(os);
-    if (i != inputs_.size() - 1) os << ", ";
+    if (inputs_[i]->NodeType() == NType::Primitive) {
+      oss << inputs_[i]->Node::ToString();
+    } else {
+      oss << inputs_[i]->ToString();
+    }
+    if (i != inputs_.size() - 1) oss << ", ";
   }
-  os << ")";
-  std::ostringstream attr_os;
+  oss << ")";
+  std::ostringstream attr_oss;
   bool has_attr = false;
   std::set<std::string> black_list = {"IsFeatureMapInputList", "IsFeatureMapOutput", "output_names", "input_names"};
   for (auto attr : attrs_) {
     if (attr.second != nullptr && black_list.count(attr.first) == 0) {
       if (has_attr) {
-        attr_os << ", ";
+        attr_oss << ", ";
       } else {
         has_attr = true;
       }
-      attr_os << attr.first << ": " << attr.second->ToString();
+      attr_oss << attr.first << ": " << attr.second->ToString();
     }
   }
   if (has_attr) {
-    os << "  // attr {" << attr_os.str() << "}";
+    oss << "  // attr {" << attr_oss.str() << "}";
   }
+  return oss.str();
 }
 
 template <typename TM, typename TD>
@@ -293,6 +297,7 @@ DFormat ElemwiseOp::InferFormat(const NodePtrList &inputs, const DAttrs &attrs) 
 
 NodeBase ElemwiseOp::Infer(const NodePtrList &inputs, const DAttrs &attrs) {
   auto nodebase = PrimOp::Infer(inputs, attrs);
+  // change the compute_type to BROADCAST if the result shape is greater than the input shapes.
   auto IsBroadcast = [this](const NodePtrList &inputs) -> bool {
     for (auto &ref : inputs) {
       if (ref->shape.size() != this->shape.size()) return true;
@@ -393,17 +398,21 @@ DShape Conv2dOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
   };
   auto shape0 = inputs[0]->shape;
   auto shape1 = inputs[1]->shape;
-  check_nd(shape0, 4);
-  check_nd(shape1, 4);
+  constexpr auto dim_len = 4;
+  check_nd(shape0, dim_len);
+  check_nd(shape1, dim_len);
   CHECK_ATTR(attrs, "format");
   if (inputs[0]->format != kOpFormat_NHWC && inputs[1]->format != kOpFormat_NHWC &&
       GetValue<std::string>(attrs.find("format")->second) != kOpFormat_NHWC) {
     MS_LOG(EXCEPTION) << "check NHWC format failed";
   }
-  auto n = shape0[0];
-  auto h = shape0[1];
-  auto w = shape0[2];
-  auto out_channel = shape1[0];
+  constexpr auto axis_n = 0;
+  constexpr auto axis_h = 1;
+  constexpr auto axis_w = 2;
+  auto n = shape0[axis_n];
+  auto h = shape0[axis_h];
+  auto w = shape0[axis_w];
+  auto out_channel = shape1[axis_n];
   CHECK_ATTR(attrs, "pad_list");
   CHECK_ATTR(attrs, "pad_mode");
   CHECK_ATTR(attrs, "kernel_size");
@@ -414,7 +423,6 @@ DShape Conv2dOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
   auto kernel_size = GetListInt(attrs.find("kernel_size")->second);
   auto stride = GetListInt(attrs.find("stride")->second);
   auto dilation = GetListInt(attrs.find("dilation")->second);
-  constexpr auto dim_len = 4;
   check_nd(pad_list, dim_len);
   constexpr auto kernel_len = 2;
   check_nd(kernel_size, kernel_len);
@@ -464,6 +472,7 @@ DShape TransposeOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
 }
 
 DFormat TransposeOp::InferFormat(const NodePtrList &inputs, const DAttrs &attrs) {
+  // only support NCHW/NHWC now
   if (inputs[0]->shape.size() != 4) return kOpFormat_DEFAULT;
   CHECK_ATTR(attrs, "perm");
   auto perm = GetListInt(attrs.find("perm")->second);
