@@ -24,6 +24,8 @@
 #include "runtime/device/device_address.h"
 #include "common/trans.h"
 #include "utils/convert_utils.h"
+#include "utils/context/graph_kernel_flags.h"
+#include "utils/ms_context.h"
 #include "ir/tensor.h"
 #include "backend/optimizer/common/helper.h"
 #include "base/base_ref_utils.h"
@@ -425,6 +427,9 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
   const auto &ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
+    // graphkernel not support pynative mode now, so when users open graphkernel
+    // in pynative mode should print a warning log to reminder users by using GetInstance func.
+    graphkernel::GraphKernelFlags::GetInstance();
     MS_EXCEPTION_IF_NULL(session_);
     session_->InitAllBucket(graph, device_context);
     return graph->graph_id();
