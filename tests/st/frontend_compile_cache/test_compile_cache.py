@@ -160,3 +160,23 @@ def test_compile_cache_auto_detect():
     """
     run_twice_with_different_networks("run_lenet.py", "run_network_with_weights.py", "./lenet_auto_detect",
                                       "auto_detect_first.txt", "auto_detect_second.txt")
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
+def test_compile_cache_lenet_change_dir():
+    """
+    Feature: Compile cache.
+    Description: Test whether the regular compile cache function can run successfully when changing
+    the current work directory.
+    Expectation: success.
+    """
+    cwd = os.getcwd()
+    new_path = cwd + '/tmp'
+    shutil.rmtree(new_path, ignore_errors=True)
+    os.mkdir(new_path)
+    os.chdir(new_path)
+    run_twice_with_same_network("../run_lenet.py", "../lenet", "../lenet_first.txt", "../lenet_second.txt")
+    shutil.rmtree(new_path, ignore_errors=True)
