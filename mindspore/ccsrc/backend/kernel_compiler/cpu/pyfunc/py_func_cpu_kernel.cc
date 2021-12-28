@@ -237,7 +237,7 @@ void PyFuncCpuKernel::BuildFuncInfo(const CNodePtr &kernel_node) {
   if (AnfAlgo::HasNodeAttr("in_types", kernel_node)) {
     const auto &in_type_ptrs = AnfAlgo::GetNodeAttr<std::vector<TypePtr>>(kernel_node, "in_types");
     (void)std::for_each(in_type_ptrs.begin(), in_type_ptrs.end(),
-                        [&in_types](auto p) { in_types.emplace_back(p->type_id()); });
+                        [&in_types](auto p) { (void)in_types.emplace_back(p->type_id()); });
   } else {
     in_types = AnfAlgo::GetAllInputDeviceTypes(kernel_node);
   }
@@ -245,7 +245,7 @@ void PyFuncCpuKernel::BuildFuncInfo(const CNodePtr &kernel_node) {
   if (AnfAlgo::HasNodeAttr("out_types", kernel_node)) {
     const auto &out_type_ptrs = AnfAlgo::GetNodeAttr<std::vector<TypePtr>>(kernel_node, "out_types");
     (void)std::for_each(out_type_ptrs.begin(), out_type_ptrs.end(),
-                        [&out_types](auto p) { out_types.emplace_back(p->type_id()); });
+                        [&out_types](auto p) { (void)out_types.emplace_back(p->type_id()); });
   } else {
     out_types = AnfAlgo::GetAllOutputDeviceTypes(kernel_node);
   }
