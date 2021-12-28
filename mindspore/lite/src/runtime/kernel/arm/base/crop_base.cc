@@ -30,14 +30,22 @@ namespace mindspore::kernel {
 int CropBaseCPUKernel::Prepare() { return RET_OK; }
 
 int CropBaseCPUKernel::ReSize() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   auto *input_tensor = in_tensors_.at(kInputIndex);
+  CHECK_NULL_RETURN(input_tensor);
   auto *out_tensor = out_tensors_.at(kOutputIndex);
+  CHECK_NULL_RETURN(out_tensor);
+
   input_shape_ = input_tensor->shape();
+  CHECK_NULL_RETURN(input_shape_.data());
   output_shape_ = out_tensor->shape();
+  CHECK_NULL_RETURN(output_shape_.data());
   size_t input_dim = input_shape_.size();
+  CHECK_NULL_RETURN(crop_para_);
   crop_para_->in_shape_ = input_shape_.data();
   crop_para_->out_shape_ = output_shape_.data();
-  MS_ASSERT(input_dim <= CROP_OFFSET_MAX_SIZE);
+  MS_CHECK_LE(input_dim, CROP_OFFSET_MAX_SIZE, RET_ERROR);
   crop_para_->input_dim_ = input_dim;
   if (PadOffset(input_dim, crop_para_) != RET_OK) {
     MS_LOG(ERROR) << "Pad offset failed.";

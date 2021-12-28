@@ -53,7 +53,7 @@ class OneHotCPUKernel : public InnerKernel {
   float on_value_ = 0.;
   float off_value_ = 0.;
 #endif
-  OneHotParameter *one_hot_param_;
+  OneHotParameter *one_hot_param_ = nullptr;
 };
 }  // namespace mindspore::kernel
 

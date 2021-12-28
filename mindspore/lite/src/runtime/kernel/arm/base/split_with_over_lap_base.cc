@@ -63,12 +63,14 @@ int SplitWithOverlapBaseCPUKernel::CalculateSplitedShapes(const std::vector<int>
 int SplitWithOverlapBaseCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(param_);
   CHECK_LESS_RETURN(param_->num_split_, MIN_NUM_SPLIT);
   return ReSize();
 }
 
 int SplitWithOverlapBaseCPUKernel::ReSize() {
   auto in_tensor = in_tensors_.front();
+  CHECK_NULL_RETURN(in_tensor);
   auto input_shape = in_tensor->shape();
 
   start_indices_.clear();

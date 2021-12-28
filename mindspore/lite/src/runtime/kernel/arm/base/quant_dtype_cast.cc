@@ -39,11 +39,11 @@ int QuantDTypeCastCPUKernel::Prepare() {
     return RET_PARAM_INVALID;
   }
   auto in_tensor = in_tensors_.front();
-  MS_ASSERT(in_tensor);
+  CHECK_NULL_RETURN(in_tensor);
   auto out_tensor = out_tensors_.front();
-  MS_ASSERT(out_tensor);
+  CHECK_NULL_RETURN(out_tensor);
   auto param = reinterpret_cast<QuantDTypeCastParameter *>(op_parameter_);
-  MS_ASSERT(param);
+  CHECK_NULL_RETURN(param);
   src_dtype = in_tensor->data_type();
   dst_dtype = param->dstT;
   if (out_tensor->data_type() != dst_dtype) {
@@ -59,7 +59,6 @@ int QuantDTypeCastCPUKernel::Prepare() {
 
 int QuantDTypeCastCPUKernel::ReSize() {
   auto in_tensor = in_tensors_.front();
-  MS_ASSERT(in_tensor != nullptr);
   num_unit_ = static_cast<int>(in_tensor->ElementsNum());
   thread_n_num_ = MSMIN(thread_num_, num_unit_);
   MS_CHECK_GT(thread_n_num_, 0, RET_ERROR);

@@ -30,6 +30,7 @@ namespace mindspore::kernel {
 int ArgMinMaxCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(arg_param_);
   arg_param_->data_type_ = kNumberTypeFloat32;
   if (!InferShapeDone()) {
     return RET_OK;
@@ -38,6 +39,7 @@ int ArgMinMaxCPUKernel::Prepare() {
 }
 
 int ArgMinMaxCPUKernel::ReSize() {
+  CHECK_NULL_RETURN(in_tensors_.at(0));
   auto in_shape = in_tensors_.at(0)->shape();
   auto dims_size = in_shape.size();
   int axis = arg_param_->axis_ < 0 ? arg_param_->axis_ + dims_size : arg_param_->axis_;
@@ -50,6 +52,7 @@ int ArgMinMaxCPUKernel::ReSize() {
   arg_param_->topk_ = MSMIN(arg_param_->topk_, in_shape.at(axis));
   CHECK_NULL_RETURN(in_shape.data());
   ComputeStrides(in_shape.data(), arg_param_->in_strides_, in_shape.size());
+  CHECK_NULL_RETURN(out_tensors_.at(0));
   auto out_shape = out_tensors_.at(0)->shape();
   CHECK_NULL_RETURN(out_shape.data());
   ComputeStrides(out_shape.data(), arg_param_->out_strides_, out_shape.size());
@@ -91,7 +94,6 @@ int ArgMinMaxCPUKernel::Run() {
   } else if (input->data_type() == kNumberTypeFloat16) {
     ArgMinMaxFp16(reinterpret_cast<float16_t *>(input_data), reinterpret_cast<void *>(output_data),
                   reinterpret_cast<float16_t *>(output_value), shape.data(), arg_param_);
-
 #endif
   } else {
     MS_LOG(ERROR) << "unsupported data type!";

@@ -88,7 +88,7 @@ lite::Tensor *CreateConstTensor(const lite::Tensor *tensor, const std::vector<in
 
 lite::Tensor *CreateVarTensor(const TensorInfo &tensor_info, bool inferred) {
   auto tensor = new (std::nothrow) lite::Tensor();
-  if (!tensor) {
+  if (tensor == nullptr) {
     MS_LOG(ERROR) << "new tensor failed.";
     return nullptr;
   }
@@ -170,7 +170,10 @@ int GroupConvCreator::NewConstTensor(std::vector<lite::Tensor *> *tensors, int g
 
 void GroupConvCreator::SetShapeOfTensors() {
   int new_in_channel = origin_inputs_.at(kWeightIndex)->Channel();
-  int new_out_channel;
+  int new_out_channel = 0;
+  if (conv_param_ == nullptr) {
+    return;
+  }
   if (conv_param_->group_ == 0) {
     MS_LOG(ERROR) << "Divisor 'group' cannot be 0.";
     return;

@@ -98,11 +98,11 @@ int ResizeBaseCPUKernel::CheckInputsOuputs() {
 }
 
 int ResizeBaseCPUKernel::Prepare() {
-  auto ret = CheckParameters();
+  auto ret = CheckInputsOuputs();
   if (ret != RET_OK) {
     return ret;
   }
-  ret = CheckInputsOuputs();
+  ret = CheckParameters();
   if (ret != RET_OK) {
     return ret;
   }

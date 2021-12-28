@@ -41,7 +41,7 @@ class StridedSliceCPUKernel : public InnerKernel {
   int FastRunImpl(int task_id);
 
  private:
-  StridedSliceParameter *param_;
+  StridedSliceParameter *param_ = nullptr;
   uint8_t *input_ptr_ = nullptr;
   uint8_t *output_ptr_ = nullptr;
   int split_axis_{-1};
