@@ -31,9 +31,6 @@
 #include "runtime/framework/graph_scheduler.h"
 #include "actor/actormgr.h"
 #include "common/thread_pool.h"
-#if defined(__x86_64__) || defined(__amd64__) || defined(_M_IX86) || defined(_M_X64)
-#define PLATFORM_86
-#endif
 
 using mindspore::kernel::Address;
 using mindspore::kernel::AddressPtr;

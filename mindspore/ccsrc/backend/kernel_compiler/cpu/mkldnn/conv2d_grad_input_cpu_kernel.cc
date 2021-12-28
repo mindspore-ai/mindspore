@@ -18,7 +18,6 @@
 #include <string>
 #include <map>
 #include <algorithm>
-#include "backend/kernel_compiler/cpu/mkldnn/mkl_kernel_engine.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 #include "utils/ms_utils.h"
 
@@ -99,13 +98,12 @@ void Conv2dGradInputCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     dnnl::convolution_forward::desc(dnnl::prop_kind::forward_training, dnnl::algorithm::convolution_auto, src_desc,
                                     weights_desc, dst_desc, strides, dilates, padding_l, padding_r);
 
-  auto forward_prim_desc = dnnl::convolution_forward::primitive_desc(forward_desc, MKLKernelEngine::Get().engine());
+  auto forward_prim_desc = dnnl::convolution_forward::primitive_desc(forward_desc, engine_);
 
   dnnl::convolution_backward_data::desc backward_desc = dnnl::convolution_backward_data::desc(
     dnnl::algorithm::convolution_auto, src_desc, weights_desc, dst_desc, strides, dilates, padding_l, padding_r);
 
-  auto backward_prim_desc =
-    dnnl::convolution_backward_data::primitive_desc(backward_desc, MKLKernelEngine::Get().engine(), forward_prim_desc);
+  auto backward_prim_desc = dnnl::convolution_backward_data::primitive_desc(backward_desc, engine_, forward_prim_desc);
   primitive_ = std::make_shared<dnnl::convolution_backward_data>(backward_prim_desc);
 
   AddArgument(DNNL_ARG_DIFF_SRC, src_desc);

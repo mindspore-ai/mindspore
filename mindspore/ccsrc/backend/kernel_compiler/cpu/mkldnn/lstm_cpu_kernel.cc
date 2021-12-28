@@ -17,12 +17,7 @@
 #include "backend/kernel_compiler/cpu/mkldnn/lstm_cpu_kernel.h"
 #include <string>
 #include "utils/ms_utils.h"
-#include "backend/kernel_compiler/cpu/mkldnn/mkl_kernel_engine.h"
 #include "runtime/device/cpu/cpu_device_address.h"
-#ifdef PLATFORM_86
-#include <pmmintrin.h>
-#endif
-
 namespace mindspore {
 namespace kernel {
 namespace {
@@ -54,14 +49,10 @@ void LstmCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
 }
 
 void LstmCPUKernel::InitKernel(const CNodePtr &kernel_node) {
-#ifdef PLATFORM_86
-  _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
-  _MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_ON);
-#endif
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   CheckParam(kernel_node);
-  auto eng = MKLKernelEngine::Get().engine();
+  auto eng = engine_;
   dnnl::rnn_direction direction = dnnl::rnn_direction::unidirectional;
   if (bidirectional_) {
     direction = dnnl::rnn_direction::bidirectional_concat;
@@ -153,7 +144,7 @@ bool LstmCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const 
                            const std::vector<kernel::AddressPtr> &outputs) {
   using dt = dnnl::memory::data_type;
   using tag = dnnl::memory::format_tag;
-  auto eng = MKLKernelEngine::Get().engine();
+  auto eng = engine_;
   auto user_weights_memory = dnnl::memory(dnnl::memory::desc{{weights_dims_}, dt::f32, tag::ldgoi}, eng);
   auto user_weights_h_memory = dnnl::memory(dnnl::memory::desc{{weights_h_dims_}, dt::f32, tag::ldgoi}, eng);
   auto weights_memory = dnnl::memory(prim_desc_.weights_layer_desc(), eng);

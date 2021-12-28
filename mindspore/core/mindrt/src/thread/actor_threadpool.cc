@@ -34,6 +34,11 @@ void ActorWorker::RunWithSpin() {
   static std::atomic_int index = {0};
   (void)pthread_setname_np(pthread_self(), ("ActorThread_" + std::to_string(index++)).c_str());
 #endif
+#ifdef PLATFORM_86
+  // Some CPU kernels need set the flush zero mode to improve performance.
+  _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
+  _MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_ON);
+#endif
   while (alive_) {
     // only run either local KernelTask or PoolQueue ActorTask
     if (RunLocalKernelTask() || RunQueueActorTask()) {

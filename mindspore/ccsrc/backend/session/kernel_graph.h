@@ -286,6 +286,7 @@ class KernelGraph : public FuncGraph {
     }
   }
   void RemoveNodeFromGraph(const AnfNodePtr &node);
+  void EnableRuntimeCache();
   void UpdateGraphDynamicAttr();
   void SetGraphDynamicAttr(bool is_dynamic_shape) { is_dynamic_shape_ = is_dynamic_shape; }
   bool is_dynamic_shape() const { return is_dynamic_shape_; }

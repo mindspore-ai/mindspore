@@ -17,7 +17,6 @@
 #include <string>
 #include <algorithm>
 #include "utils/ms_utils.h"
-#include "backend/kernel_compiler/cpu/mkldnn/mkl_kernel_engine.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 
 namespace mindspore {
@@ -84,7 +83,7 @@ void PoolingCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     desc = dnnl::pooling_forward::desc(dnnl::prop_kind::forward_training, dnnl::algorithm::pooling_avg, src_desc,
                                        dst_desc, strides_dims, kernels_dims, padding_l, padding_r);
   }
-  auto prim_desc = dnnl::pooling_forward::primitive_desc(desc, MKLKernelEngine::Get().engine());
+  auto prim_desc = dnnl::pooling_forward::primitive_desc(desc, engine_);
   workspace_size_ = prim_desc.workspace_desc().get_size();
   primitive_ = std::make_shared<dnnl::pooling_forward>(prim_desc);
   AddArgument(DNNL_ARG_SRC, src_desc);

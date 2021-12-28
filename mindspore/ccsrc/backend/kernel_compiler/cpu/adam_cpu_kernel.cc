@@ -26,6 +26,7 @@ namespace {
 constexpr size_t kAdamInputsNum = 10;
 constexpr size_t kAdamOutputsNum = 3;
 constexpr size_t kScalarIndex = 0;
+constexpr float kAdamBlock = 1000;
 }  // namespace
 
 template <typename T>
@@ -60,7 +61,7 @@ void AdamCPUKernel::LaunchAdam(const std::vector<kernel::AddressPtr> &inputs, co
       }
     }
   };
-  ParallelLaunchAutoSearch(task, lens, this, &parallel_search_info_);
+  ParallelLaunch(task, lens, kAdamBlock, this);
 }
 
 void AdamCPUKernel::LaunchAdamNnacl(const std::vector<kernel::AddressPtr> &inputs,
@@ -89,7 +90,7 @@ void AdamCPUKernel::LaunchAdamNnacl(const std::vector<kernel::AddressPtr> &input
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', AdamFp32 failed. Error no: " << ret;
     }
   };
-  ParallelLaunchAutoSearch(task, lens, this, &parallel_search_info_);
+  ParallelLaunch(task, lens, kAdamBlock, this);
 }
 
 void AdamCPUKernel::InitKernel(const CNodePtr &kernel_node) {

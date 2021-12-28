@@ -19,7 +19,6 @@
 #include <limits>
 #include <functional>
 #include <cmath>
-#include "backend/kernel_compiler/cpu/mkldnn/mkl_kernel_engine.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 #include "utils/ms_utils.h"
 
@@ -62,7 +61,7 @@ void SparseSoftmaxCrossEntropyWithLogitsCPUKernel::InitKernel(const CNodePtr &ke
   dnnl::memory::desc mem_desc(mem_dims, dnnl::memory::data_type::f32, dnnl::memory::format_tag::nc);
 
   dnnl::softmax_forward::desc desc = dnnl::softmax_forward::desc(dnnl::prop_kind::forward_training, mem_desc, 1);
-  auto prim_desc = dnnl::softmax_forward::primitive_desc(desc, MKLKernelEngine::Get().engine());
+  auto prim_desc = dnnl::softmax_forward::primitive_desc(desc, engine_);
   primitive_ = std::make_shared<dnnl::softmax_forward>(prim_desc);
 
   AddArgument(DNNL_ARG_SRC, mem_desc);

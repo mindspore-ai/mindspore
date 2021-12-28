@@ -26,6 +26,7 @@ from collections import Counter
 import numpy as np
 
 from mindspore import log as logger
+from mindspore import context
 from mindspore.common.initializer import Zero
 from .. import signature as sig
 from .._utils import get_broadcast_shape, is_shape_unknown
@@ -3304,6 +3305,11 @@ class StridedSlice(PrimitiveWithInfer):
                  shrink_axis_mask=0):
         """Initialize StridedSlice"""
         self.init_prim_io_names(inputs=['x', 'begin', 'end', 'strides'], outputs=['output'])
+
+        # auto parallel haven't support begin_mask and end_mask
+        if context.get_auto_parallel_context("parallel_mode") in ["semi_auto_parallel", "auto_parallel"]:
+            begin_mask = 0
+            end_mask = 0
         validator.check_non_negative_int(begin_mask, 'begin_mask', self.name)
         validator.check_non_negative_int(end_mask, 'end_mask', self.name)
         validator.check_non_negative_int(ellipsis_mask, 'ellipsis_mask', self.name)

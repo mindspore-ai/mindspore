@@ -265,10 +265,8 @@ void GraphScheduler::Initialize() {
     MS_LOG(EXCEPTION) << "Actor manager init failed.";
   }
   common::SetOMPThreadNum();
-  auto OMP_thread_num_used = common::GetEnv("OMP_NUM_THREADS");
   MS_LOG(INFO) << "The actor thread number: " << actor_thread_num
-               << ", the kernel thread number: " << (actor_and_kernel_thread_num - actor_thread_num)
-               << ", the used OMP thread number: " << OMP_thread_num_used;
+               << ", the kernel thread number: " << (actor_and_kernel_thread_num - actor_thread_num);
 
   BuildAndScheduleGlobalActor();
 }

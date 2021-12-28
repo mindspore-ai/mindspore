@@ -1,5 +1,10 @@
 set(onednn_CXXFLAGS "-D_FORTIFY_SOURCE=2 -O2")
 set(onednn_CFLAGS "-D_FORTIFY_SOURCE=2 -O2")
+if(USE_MS_THREADPOOL_FOR_DNNL)
+    set(USE_MS_THREADPOOL "-DDNNL_CPU_RUNTIME=THREADPOOL")
+else()
+    set(USE_MS_THREADPOOL "")
+endif()
 if(CMAKE_SYSTEM_NAME MATCHES "Windows")
     mindspore_add_pkg(onednn
         VER 2.2
@@ -22,7 +27,7 @@ else()
         URL ${REQ_URL}
         MD5 ${MD5}
         CMAKE_OPTION -DDNNL_ARCH_OPT_FLAGS='' -DDNNL_BUILD_EXAMPLES=OFF -DDNNL_BUILD_TESTS=OFF
-            -DDNNL_ENABLE_CONCURRENT_EXEC=ON)
+            ${USE_MS_THREADPOOL} -DDNNL_ENABLE_CONCURRENT_EXEC=ON)
 endif()
 
 include_directories(${onednn_INC})

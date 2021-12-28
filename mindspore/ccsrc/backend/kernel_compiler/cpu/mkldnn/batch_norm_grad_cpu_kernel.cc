@@ -15,7 +15,6 @@
  */
 
 #include "backend/kernel_compiler/cpu/mkldnn/batch_norm_grad_cpu_kernel.h"
-#include "backend/kernel_compiler/cpu/mkldnn/mkl_kernel_engine.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 #include "utils/ms_utils.h"
 
@@ -67,13 +66,13 @@ void BatchNormGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   // fused Batch Normalization forward description
   dnnl::batch_normalization_forward::desc desc =
     dnnl::batch_normalization_forward::desc(prop_kind, x_desc, epsilon, normalization_flags);
-  auto forward_prim_desc = dnnl::batch_normalization_forward::primitive_desc(desc, MKLKernelEngine::Get().engine());
+  auto forward_prim_desc = dnnl::batch_normalization_forward::primitive_desc(desc, engine_);
 
   // fused Batch Normalization backward description
   dnnl::batch_normalization_backward::desc backward_desc =
     dnnl::batch_normalization_backward::desc(dnnl::prop_kind::backward, x_desc, x_desc, epsilon, normalization_flags);
-  auto backward_prim_desc = dnnl::batch_normalization_backward::primitive_desc(
-    backward_desc, MKLKernelEngine::Get().engine(), forward_prim_desc);
+  auto backward_prim_desc =
+    dnnl::batch_normalization_backward::primitive_desc(backward_desc, engine_, forward_prim_desc);
   primitive_ = std::make_shared<dnnl::batch_normalization_backward>(backward_prim_desc);
   AddArgument(DNNL_ARG_SRC, x_desc);
   AddArgument(DNNL_ARG_MEAN, forward_prim_desc.mean_desc());

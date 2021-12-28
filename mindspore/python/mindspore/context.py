@@ -318,6 +318,12 @@ class _Context:
                              "have permission to read it.".format(env_config_path))
         self.set_param(ms_ctx_param.env_config_path, env_config_path)
 
+    def set_runtime_num_threads(self, runtime_num_threads):
+        """Check and set runtime_num_threads."""
+        if runtime_num_threads <= 0:
+            raise ValueError("The num of cpu thread must bigger than 0.")
+        self.set_param(ms_ctx_param.runtime_num_threads, runtime_num_threads)
+
     setters = {
         'mode': set_mode,
         'save_graphs_path': set_save_graphs_path,
@@ -331,7 +337,8 @@ class _Context:
         'mempool_block_size': set_mempool_block_size,
         'print_file_path': set_print_file_path,
         'env_config_path': set_env_config_path,
-        'backend_policy': set_backend_policy
+        'backend_policy': set_backend_policy,
+        'runtime_num_threads': set_runtime_num_threads
     }
 
     @property
@@ -607,7 +614,7 @@ def _check_target_specific_cfgs(device, arg_key):
                  enable_profiling=bool, profiling_options=str, enable_auto_mixed_precision=bool,
                  enable_graph_kernel=bool, reserve_class_name_in_scope=bool, check_bprop=bool,
                  max_device_memory=str, print_file_path=str, enable_sparse=bool, max_call_depth=int,
-                 env_config_path=str, graph_kernel_flags=str, save_compile_cache=bool,
+                 env_config_path=str, graph_kernel_flags=str, save_compile_cache=bool, runtime_num_threads=int,
                  load_compile_cache=bool, grad_for_scalar=bool, pynative_synchronize=bool, mempool_block_size=str,
                  backend_policy=str)
 def set_context(**kwargs):
@@ -678,6 +685,8 @@ def set_context(**kwargs):
     |                         |  grad_for_scalar             |  CPU/GPU/Ascend            |
     |                         +------------------------------+----------------------------+
     |                         |  enable_compile_cache        |  CPU/GPU/Ascend            |
+    |                         +------------------------------+----------------------------+
+    |                         |  runtime_num_threads         |  CPU/GPU/Ascend            |
     |                         +------------------------------+----------------------------+
     |                         |  compile_cache_path          |  CPU/GPU/Ascend            |
     |                         +------------------------------+----------------------------+
@@ -822,6 +831,8 @@ def set_context(**kwargs):
         backend_policy (str): Used to choose a backend. ("ge", "vm" or "ms").
             Through context.set_context(backend_policy="ms")
             Default: The value must be in ['ge', 'vm', 'ms'].
+        runtime_num_threads(int): The thread pool number of cpu kernel and actor used in runtime,
+            which must bigger than 0.
     Raises:
         ValueError: If input key is not an attribute in context.
 
@@ -851,6 +862,7 @@ def set_context(**kwargs):
         >>> context.set_context(grad_for_scalar=True)
         >>> context.set_context(enable_compile_cache=True, compile_cache_path="./cache.ms")
         >>> context.set_context(pynative_synchronize=True)
+        >>> context.set_context(runtime_num_threads=10)
     """
     ctx = _context()
     # set device target first

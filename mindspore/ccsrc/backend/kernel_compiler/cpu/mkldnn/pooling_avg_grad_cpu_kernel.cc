@@ -19,7 +19,6 @@
 #include <utility>
 #include <algorithm>
 #include "utils/ms_utils.h"
-#include "backend/kernel_compiler/cpu/mkldnn/mkl_kernel_engine.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 
 namespace mindspore {
@@ -69,13 +68,12 @@ void AvgPoolingGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   dnnl::pooling_forward::desc desc =
     dnnl::pooling_forward::desc(dnnl::prop_kind::forward_training, dnnl::algorithm::pooling_avg, src_desc, dst_desc,
                                 strides_dims, kernels_dims, padding_l, padding_r);
-  auto prim_desc = dnnl::pooling_forward::primitive_desc(desc, MKLKernelEngine::Get().engine());
+  auto prim_desc = dnnl::pooling_forward::primitive_desc(desc, engine_);
 
   // pooling_avg backward description
   dnnl::pooling_backward::desc backward_desc = dnnl::pooling_backward::desc(
     dnnl::algorithm::pooling_avg, src_desc, dst_desc, strides_dims, kernels_dims, padding_l, padding_r);
-  auto backward_prim_desc =
-    dnnl::pooling_backward::primitive_desc(backward_desc, MKLKernelEngine::Get().engine(), prim_desc);
+  auto backward_prim_desc = dnnl::pooling_backward::primitive_desc(backward_desc, engine_, prim_desc);
 
   primitive_ = std::make_shared<dnnl::pooling_backward>(backward_prim_desc);
   AddArgument(DNNL_ARG_SRC, src_desc);

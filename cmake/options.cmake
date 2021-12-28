@@ -28,6 +28,11 @@ option(ENABLE_SYM_FILE "enable sym file" OFF)
 option(BUILD_DEV_MODE "MindSpore build nightly dev mode" OFF)
 option(ENABLE_FAST_HASH_TABLE "Enable use fast hash table instead of std ones" ON)
 option(USE_LLVM "use llvm" OFF)
+option(USE_MS_THREADPOOL_FOR_DNNL "use ms threadpool for onednn ops" ON)
+
+if(CMAKE_SYSTEM_NAME MATCHES "Windows")
+    set(USE_MS_THREADPOOL_FOR_DNNL OFF)
+endif()
 
 if(NOT ENABLE_D AND NOT ENABLE_TESTCASES AND NOT ENABLE_ACL)
     set(ENABLE_GLIBCXX ON)
@@ -160,4 +165,8 @@ endif()
 
 if(USE_LLVM)
     add_compile_definitions(USE_LLVM)
+endif()
+
+if(USE_MS_THREADPOOL_FOR_DNNL)
+    add_compile_definitions(USE_MS_THREADPOOL_FOR_DNNL)
 endif()

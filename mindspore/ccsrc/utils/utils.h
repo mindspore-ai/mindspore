@@ -716,8 +716,6 @@ const std::set<std::string> kPosteriorOperatorSet = {kPullOpName};
 const std::set<std::string> kOpCacheBlackList = {kUniformCandidateSamplerOpName, kInitDatasetQueueOpName,
                                                  kGetNextOpName};
 
-const std::set<std::string> kOpNeedSetFlushZeroModeList = {kLSTMOpName, kLSTMGradOpName};
-
 const std::set<std::string> kOpNotSupportMultiThreadExecList = {kAvgPoolOpName, kAvgPoolGradOpName, kMaxPoolOpName,
                                                                 kBatchNorm, kBatchNormGradOpName};
 
