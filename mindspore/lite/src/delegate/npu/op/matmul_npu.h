@@ -42,11 +42,15 @@ class MatMulNPUOp : public NPUOp {
 
   ge::Operator *GetNPUOp() override;
 
+  int SetActivation(const ge::Operator *input);
+
  private:
   bool has_bias_ = false;
   hiai::op::MatMul *matmul_ = nullptr;
   hiai::op::Add *add_op_ = nullptr;
   hiai::op::Const *bias_ = nullptr;
+  hiai::op::Activation *act_op_ = nullptr;
+  schema::ActivationType act_type_ = schema::ActivationType_NO_ACTIVATION;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_MATMUL_NPU_H_
