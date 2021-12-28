@@ -131,27 +131,40 @@ const AnfNodePtr TensorDotFusion::Process(const FuncGraphPtr &func_graph, const 
   }
   auto reshape_1_cnode = node->cast<CNodePtr>();
   MS_CHECK_TRUE_RET(reshape_1_cnode != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(reshape_1_cnode->input(1) != nullptr, nullptr);
   auto matmul_cnode = reshape_1_cnode->input(1)->cast<CNodePtr>();
   MS_CHECK_TRUE_RET(matmul_cnode != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(reshape_1_cnode->input(kInputIndexTwo) != nullptr, nullptr);
+  auto concat_cnode = reshape_1_cnode->input(kInputIndexTwo)->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(matmul_cnode != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(matmul_cnode->input(1) != nullptr, nullptr);
   auto reshape_2_cnode = matmul_cnode->input(1)->cast<CNodePtr>();
   MS_CHECK_TRUE_RET(reshape_2_cnode != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(reshape_2_cnode->input(kInputIndexTwo) != nullptr, nullptr);
   auto stack_cnode = reshape_2_cnode->input(kInputIndexTwo)->cast<CNodePtr>();
   MS_CHECK_TRUE_RET(stack_cnode != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(reshape_2_cnode->input(1) != nullptr, nullptr);
   auto trans_cnode = reshape_2_cnode->input(1)->cast<CNodePtr>();
   MS_CHECK_TRUE_RET(trans_cnode != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(stack_cnode->input(kInputIndexTwo) != nullptr, nullptr);
   auto reduce_1_cnode = stack_cnode->input(kInputIndexTwo)->cast<CNodePtr>();
   MS_CHECK_TRUE_RET(reduce_1_cnode != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(stack_cnode->input(1) != nullptr, nullptr);
   auto reduce_2_cnode = stack_cnode->input(1)->cast<CNodePtr>();
   MS_CHECK_TRUE_RET(reduce_2_cnode != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(reduce_1_cnode->input(1) != nullptr, nullptr);
   auto gather_2_cnode = reduce_1_cnode->input(1)->cast<CNodePtr>();
   MS_CHECK_TRUE_RET(gather_2_cnode != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(reduce_2_cnode->input(1) != nullptr, nullptr);
   auto gather_1_cnode = reduce_2_cnode->input(1)->cast<CNodePtr>();
   MS_CHECK_TRUE_RET(gather_1_cnode != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(gather_1_cnode->input(1) != nullptr, nullptr);
   auto shape_cnode = gather_1_cnode->input(1)->cast<CNodePtr>();
   MS_CHECK_TRUE_RET(shape_cnode != nullptr, nullptr);
 
   std::vector<int> gather_1_index;
   std::vector<int> gather_2_index;
+  std::vector<int> concat_value;
   auto status = GetIndexValue(gather_1_cnode, &gather_1_index, kInputIndexTwo);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "get gather cnode index failed.";
@@ -162,10 +175,25 @@ const AnfNodePtr TensorDotFusion::Process(const FuncGraphPtr &func_graph, const 
     MS_LOG(ERROR) << "get gather cnode index failed.";
     return nullptr;
   }
+  if (utils::isa<ParameterPtr>(concat_cnode->input(kInputIndexTwo)) &&
+      utils::isa<ValueNodePtr>(concat_cnode->input(kInputIndexTwo))) {
+    return nullptr;
+  }
+  status = GetIndexValue(concat_cnode, &concat_value, kInputIndexTwo);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "get gather cnode index failed.";
+    return nullptr;
+  }
   auto manage = Manage(func_graph);
   MS_CHECK_TRUE_RET(manage != nullptr, nullptr);
+  // For special shapes, it can be directly converted into matmul operator and reshape operator.
+  if (gather_1_index.size() == 1 && gather_2_index.size() == 1 && concat_value.size() == 0) {
+    manage->SetEdge(matmul_cnode, 1, shape_cnode->input(1));
+    manage->Replace(concat_cnode, gather_1_cnode);
+    return nullptr;
+  }
   // For special shapes, it can be directly converted into matmul operator
-  if (gather_1_index.size() == 1 && gather_2_index.size() == 1) {
+  if (gather_1_index.size() == 1 && gather_2_index.size() == 1 && concat_value.size() == 1) {
     manage->SetEdge(matmul_cnode, 1, shape_cnode->input(1));
     manage->Replace(reshape_1_cnode, matmul_cnode);
     return nullptr;
