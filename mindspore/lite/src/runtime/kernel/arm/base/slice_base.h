@@ -38,7 +38,7 @@ class SliceCPUKernel : public InnerKernel {
   int SliceParallelRun(int thread_id);
 
  protected:
-  SliceParameter *param_;
+  SliceParameter *param_ = nullptr;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_SLICE_BASE_H_

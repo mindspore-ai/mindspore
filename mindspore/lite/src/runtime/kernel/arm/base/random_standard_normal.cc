@@ -28,7 +28,10 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_RandomStandardNormal;
 
 namespace mindspore::kernel {
-int RandomStandardNormalCPUKernel::Init() { return RET_OK; }
+int RandomStandardNormalCPUKernel::Init() {
+  CHECK_NULL_RETURN(param_);
+  return RET_OK;
+}
 
 int RandomStandardNormalCPUKernel::ReSize() { return RET_OK; }
 
@@ -45,7 +48,7 @@ int RandomStandardNormalCPUKernel::Run() {
   std::normal_distribution<double> nums(0, 1.0);
   auto all_data_nums = out_tensors_[0]->ElementsNum();
   auto out_data = out_tensors_[0]->data();
-  MS_ASSERT(out_data != nullptr);
+  CHECK_NULL_RETURN(out_data);
   auto output = reinterpret_cast<float *>(out_data);
 
   std::generate_n(output, all_data_nums, [&]() { return nums(engine); });

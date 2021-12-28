@@ -45,8 +45,13 @@ class PriorBoxCPUKernel : public InnerKernel {
 
  private:
   std::vector<float> output_;
-  PriorBoxParameter *prior_box_param_;
+  PriorBoxParameter *prior_box_param_ = nullptr;
   int GeneratePriorBox();
+  int InitOutput(const std::vector<float> &different_aspect_ratios);
+  int fmap_h_ = 0;
+  int fmap_w_ = 0;
+  float step_h_ = 0.f;
+  float step_w_ = 0.f;
 };
 }  // namespace mindspore::kernel
 

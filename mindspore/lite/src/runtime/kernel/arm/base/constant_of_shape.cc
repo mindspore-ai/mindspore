@@ -67,8 +67,10 @@ int ConstantOfShapeCPUKernel::DoExecute(int task_id) {
 }
 
 int ConstantOfShapeCPUKernel::Run() {
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   auto output = out_tensors_.front();
   CHECK_NULL_RETURN(output);
+  CHECK_NULL_RETURN(param_);
   param_->data_type_ = output->data_type();
   param_->element_size_ = output->ElementsNum();
   if (param_->element_size_ == 0) {
