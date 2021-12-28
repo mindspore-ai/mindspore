@@ -582,7 +582,7 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src)
 add_subdirectory(${CCSRC_DIR}/backend/kernel_compiler/cpu/nnacl build)
 
 if(MSLITE_ENABLE_TOOLS)
-    if(NOT BUILD_FIRST)
+    if(NOT MSLITE_COMPILE_TWICE)
         add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/tools/benchmark)
     endif()
     if(SUPPORT_TRAIN)

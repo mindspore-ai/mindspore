@@ -171,14 +171,18 @@ build_lite() {
       TOOLCHAIN_NAME="himix200"
       MSLITE_REGISTRY_DEVICE=Hi3516D
       check_Hi35xx
+      MSLITE_COMPILE_TWICE=ON
     elif [[ "${MSLITE_REGISTRY_DEVICE}" == "Hi3559A" && "${local_lite_platform}" == "arm64" ]]; then
       TOOLCHAIN_NAME="himix100"
       check_Hi35xx
+      MSLITE_COMPILE_TWICE=ON
     elif [[ "${MSLITE_REGISTRY_DEVICE}" == "SD3403" && "${local_lite_platform}" == "arm64" ]]; then
       TOOLCHAIN_NAME="mix210"
+      MSLITE_COMPILE_TWICE=ON
     elif [[ "${MSLITE_REGISTRY_DEVICE}" == "Hi3519A" && "${local_lite_platform}" == "arm32" ]]; then
       TOOLCHAIN_NAME="himix200"
       check_Hi35xx
+      MSLITE_COMPILE_TWICE=ON
     elif [[ ("${MSLITE_ENABLE_NNIE}" == "on" || "${MSLITE_REGISTRY_DEVICE}" == "Hi3516D") && "${local_lite_platform}" == "x86_64" ]]; then
       MSLITE_REGISTRY_DEVICE=Hi3516D
     fi
@@ -256,12 +260,15 @@ build_lite() {
     if [[ "X$MSLITE_REGISTRY_DEVICE" != "X" ]]; then
       LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DMSLITE_REGISTRY_DEVICE=${MSLITE_REGISTRY_DEVICE}"
     fi
+    if [[ "X$MSLITE_COMPILE_TWICE" != "X" ]]; then
+      LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DMSLITE_COMPILE_TWICE=${MSLITE_COMPILE_TWICE}"
+    fi
     if [[ "${local_lite_platform}" == "arm64" || "${local_lite_platform}" == "arm32" ]]; then
       echo "default link libc++_static.a, export MSLITE_ANDROID_STL=c++_shared to link libc++_shared.so"
     fi
 
-    echo "cmake ${LITE_CMAKE_ARGS} -DBUILD_FIRST=ON ${BASEPATH}/mindspore/lite"
-    cmake ${LITE_CMAKE_ARGS} -DBUILD_FIRST=ON "${BASEPATH}/mindspore/lite"
+    echo "cmake ${LITE_CMAKE_ARGS} ${BASEPATH}/mindspore/lite"
+    cmake ${LITE_CMAKE_ARGS} "${BASEPATH}/mindspore/lite"
 
     if [[ "$(uname)" == "Darwin" && "${local_lite_platform}" != "x86_64" ]]; then
         xcodebuild ONLY_ACTIVE_ARCH=NO -configuration Release -scheme mindspore-lite_static -target mindspore-lite_static -sdk iphoneos -quiet -UseModernBuildSystem=YES
@@ -269,10 +276,20 @@ build_lite() {
         xcodebuild ONLY_ACTIVE_ARCH=NO -configuration Release -scheme mindspore-lite_static -target mindspore-lite_static -sdk iphonesimulator -quiet -UseModernBuildSystem=YES
     else
       make -j$THREAD_NUM && make install
-      cp -r ${BASEPATH}/output/tmp/mindspore*/runtime ${BASEPATH}/mindspore/lite/tools/benchmark
-      cmake ${LITE_CMAKE_ARGS} -DBUILD_FIRST=off "${BASEPATH}/mindspore/lite"
-      cmake --build "${BASEPATH}/mindspore/lite/build" --target benchmark -j$THREAD_NUM
-      make install && make package
+      if [[ "X$MSLITE_COMPILE_TWICE" == "XON" ]]; then
+        if [[ "X$MSLITE_ENABLE_TOOLS" != "X" ]]; then
+          MSLITE_ENABLE_TOOLS=$(echo $MSLITE_ENABLE_TOOLS | tr '[a-z]' '[A-Z]')
+        fi
+        if [[ "X$MSLITE_ENABLE_TOOLS" != "XOFF" ]]; then
+          LITE_CMAKE_ARGS=`echo $LITE_CMAKE_ARGS | sed 's/-DMSLITE_COMPILE_TWICE=ON/-DMSLITE_COMPILE_TWICE=OFF/g'`
+          cp -r ${BASEPATH}/output/tmp/mindspore*/runtime ${BASEPATH}/mindspore/lite/tools/benchmark
+          echo "cmake ${LITE_CMAKE_ARGS} ${BASEPATH}/mindspore/lite"
+          cmake ${LITE_CMAKE_ARGS} "${BASEPATH}/mindspore/lite"
+          cmake --build "${BASEPATH}/mindspore/lite/build" --target benchmark -j$THREAD_NUM
+          make install
+        fi
+      fi
+      make package
       if [[ "${local_lite_platform}" == "x86_64" ]]; then
         if [ "${JAVA_HOME}" ]; then
             echo -e "\e[31mJAVA_HOME=$JAVA_HOME  \e[0m"
