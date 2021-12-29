@@ -40,8 +40,12 @@ int NonZeroCPUKernel::ReSize() { return RET_OK; }
 int NonZeroCPUKernel::Run() {
   auto in_tensor = in_tensors_.front();
   auto out_tensor = out_tensors_.front();
+  CHECK_NULL_RETURN(in_tensor);
+  CHECK_NULL_RETURN(out_tensor);
   auto input_data = reinterpret_cast<bool *>(in_tensor->MutableData());
   auto output_data = reinterpret_cast<int *>(out_tensor->MutableData());
+  CHECK_NULL_RETURN(input_data);
+  CHECK_NULL_RETURN(output_data);
   auto input_dim_size = in_tensor->shape().size();
   if (out_tensor->shape().size() != 2) {
     MS_LOG(ERROR) << "out tensor shape size must be equal to 2!";

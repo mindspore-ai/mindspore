@@ -163,9 +163,13 @@ int L2NormTrailingAxisRun(const void *cdata, int task_id, float, float) {
 }
 
 int L2NormCPUKernel::Run() {
+  CHECK_NULL_RETURN(in_tensors_.at(kInputIndex));
+  CHECK_NULL_RETURN(out_tensors_.at(kOutputIndex));
   auto input_shape = in_tensors().at(kInputIndex)->shape();
   input_ptr_ = reinterpret_cast<float *>(in_tensors_.at(kInputIndex)->MutableData());
   output_ptr_ = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->MutableData());
+  CHECK_NULL_RETURN(input_ptr_);
+  CHECK_NULL_RETURN(output_ptr_);
   int ret;
   if (l2_norm_param_->axis_num_ == 0 || l2_norm_param_->axis_num_ == input_shape.size()) {
     // all axis
