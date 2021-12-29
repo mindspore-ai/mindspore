@@ -475,6 +475,7 @@ from .scatter_sub import _scatter_sub_tbe
 from .scatter_mul import _scatter_mul_tbe
 from .scatter_div import _scatter_div_tbe
 from .mod import _mod_tbe
+from .mod_ds import _mod_ds_tbe
 from .max_pool_grad_grad import _max_pool_grad_grad_tbe
 from .max_pool_grad_grad_with_argmax import _max_pool_grad_grad_with_argmax_tbe
 from .tensor_move import _tensor_move_tbe
