@@ -35,7 +35,6 @@ void LiteExitOpActor::RunOpData(OpData<Tensor> *inputs, OpContext<Tensor> *conte
   InitInputData();
   input_op_datas_.erase(op_uuid);
   AsyncOutput(context);
-  SetOutputData(context);
   return;
 }
 
@@ -107,8 +106,12 @@ void LiteExitOpActor::AsyncOutput(OpContext<Tensor> *context) {
     return;
   }
 
+  if (to_op_id.Name() == "") {
+    SetOutputData(context);
+  }
+
   for (size_t i = 0; i < output_data_arrows_.size(); i++) {
-    if (output_data_arrows_[i]->to_op_id_ != to_op_id) {
+    if (output_data_arrows_[i]->to_op_id_ != to_op_id && output_data_arrows_[i]->to_op_id_.Name() != "") {
       continue;
     }
     auto data = outputs_data_.at(i);

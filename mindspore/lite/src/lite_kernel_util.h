@@ -46,6 +46,7 @@ class LiteKernelUtil {
   static bool InputsContainsSpecificNode(const LiteKernel *kernel, const schema::PrimitiveType &primitive_type);
   // find in_kernels_ and out_kernels of kernel, sub_graph and nodes_ in sub_graph
   static void FindAllInoutKernels(const std::vector<LiteKernel *> &kernels);
+  static void FindAllInoutKernelsInSubgraphKernel(const std::vector<LiteKernel *> &kernels);
   static SubGraphKernel *CreateSubGraphKernel(const std::vector<LiteKernel *> &kernels,
                                               const std::vector<lite::Tensor *> *in_tensors,
                                               const std::vector<lite::Tensor *> *out_tensors, SubGraphType type,

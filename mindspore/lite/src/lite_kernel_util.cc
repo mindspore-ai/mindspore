@@ -413,6 +413,24 @@ void LiteKernelUtil::FindAllInoutKernels(const std::vector<kernel::LiteKernel *>
   }
 }
 
+void LiteKernelUtil::FindAllInoutKernelsInSubgraphKernel(const std::vector<LiteKernel *> &kernels) {
+  std::vector<kernel::LiteKernel *> all_kernels;
+  for (auto kernel : kernels) {
+#ifndef DELEGATE_CLIP
+    if (kernel->desc().arch == kernel::kDelegate) {
+      all_kernels.push_back(kernel);
+      continue;
+    }
+#endif
+    auto sub_graph = reinterpret_cast<kernel::SubGraphKernel *>(kernel);
+    MS_ASSERT(sub_graph != nullptr);
+    auto kernel_in_subgraph = sub_graph->nodes();
+    all_kernels.insert(all_kernels.end(), kernel_in_subgraph.begin(), kernel_in_subgraph.end());
+  }
+
+  kernel::LiteKernelUtil::FindAllInoutKernels(all_kernels);
+}
+
 bool LiteKernelUtil::IsOutputSubGraph(kernel::SubGraphKernel *subgraph_kernel) {
   return std::all_of(subgraph_kernel->out_tensors().begin(), subgraph_kernel->out_tensors().end(),
                      [](lite::Tensor *tensor) { return tensor->IsGraphOutput(); });
