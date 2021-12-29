@@ -619,4 +619,65 @@ int DoParameterBiasQuant(const ParameterPtr &bias, const PrimitivePtr &primitive
   abstractTensor->element()->set_type(TypeIdToType(kNumberTypeInt32));
   return RET_OK;
 }
+
+int DeQuantData(const int8_t *tensor_data, int64_t elements_num, std::vector<lite::LiteQuantParam> quant_params,
+                std::vector<double> *dequant_data, int preferred_dim) {
+  if (quant_params.size() != 1) {
+    MS_LOG(ERROR) << "unexpected quant_params size: " << quant_params.size() << " only support per-layer now.";
+    return RET_ERROR;
+  }
+  auto scale = quant_params[0].scale;
+  auto zp = quant_params[0].zeroPoint;
+  dequant_data->resize(elements_num);
+  for (int64_t i = 0; i < elements_num; i++) {
+    dequant_data->at(i) = scale * (tensor_data[i] - zp);
+  }
+  return RET_OK;
+}
+
+int DeQuantData(mindspore::tensor::MSTensor *tensor, std::vector<double> *dequant_data, int preferred_dim) {
+  return DeQuantData(static_cast<int8_t *>(tensor->data()), tensor->ElementsNum(), tensor->quant_params(), dequant_data,
+                     preferred_dim);
+}
+
+int DoBitPack(const size_t &bit_num, schema::TensorT *tensor_input) {
+  if (bit_num > 0 && bit_num < k8Bit) {
+    std::vector<int8_t> origin_data(tensor_input->data.size());
+    auto status = memcpy_s(origin_data.data(), origin_data.size() * sizeof(int8_t), tensor_input->data.data(),
+                           tensor_input->data.size() * sizeof(uint8_t));
+    if (status != EOK) {
+      MS_LOG(ERROR) << tensor_input->name << " memcpy failed. " << status;
+      return RET_ERROR;
+    }
+    std::vector<uint8_t> pack_data{};
+    BitPack::BitPacking<int8_t, uint8_t>(bit_num, origin_data, &pack_data);
+    tensor_input->data.resize(pack_data.size() * sizeof(uint8_t));
+    status = memcpy_s(tensor_input->data.data(), tensor_input->data.size() * sizeof(uint8_t), pack_data.data(),
+                      pack_data.size() * sizeof(uint8_t));
+    if (status != EOK) {
+      MS_LOG(ERROR) << "memcpy_s failed. " << status;
+      return RET_ERROR;
+    }
+  } else if (bit_num > k8Bit && bit_num < k16Bit) {
+    auto shape_size =
+      std::accumulate(tensor_input->dims.begin(), tensor_input->dims.end(), size_t(1), std::multiplies<size_t>());
+    std::vector<int16_t> origin_data(shape_size);
+    auto status = memcpy_s(origin_data.data(), origin_data.size() * sizeof(int16_t), tensor_input->data.data(),
+                           tensor_input->data.size() * sizeof(uint8_t));
+    if (status != EOK) {
+      MS_LOG(ERROR) << "memcpy failed. " << status;
+      return RET_ERROR;
+    }
+    std::vector<uint16_t> pack_data{};
+    BitPack::BitPacking<int16_t, uint16_t>(bit_num, origin_data, &pack_data);
+    tensor_input->data.resize(pack_data.size() * sizeof(uint16_t));
+    status = memcpy_s(tensor_input->data.data(), tensor_input->data.size() * sizeof(uint8_t), pack_data.data(),
+                      pack_data.size() * sizeof(uint16_t));
+    if (status != EOK) {
+      MS_LOG(ERROR) << "memcpy_s failed. " << status;
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
+}
 }  // namespace mindspore::lite::quant

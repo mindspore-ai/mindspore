@@ -33,7 +33,6 @@
 namespace mindspore {
 namespace lite {
 namespace {
-enum QuantBitNum { QuantBitNum_INT8 = 8, QuantBitNum_INT16 = 16 };
 const int kZeroPointGap = 128;
 }  // namespace
 int SetFuncGraphOutput(const FuncGraphPtr &graph, const std::vector<AnfNodePtr> &outputs) {
@@ -111,47 +110,6 @@ STATUS ReplaceTensorOfNode(schema::MetaGraphT *graphT, uint32_t nodeIdx, uint32_
     return RET_PARAM_INVALID;
   }
   graphT->allTensors.at(inTensorIdx).swap(tensor);
-  return RET_OK;
-}
-
-int DoBitPack(const int &bit_num, schema::TensorT *tensor_input) {
-  if (bit_num > 0 && bit_num < 8) {
-    std::vector<int8_t> origin_data(tensor_input->data.size());
-    auto status = memcpy_s(origin_data.data(), origin_data.size() * sizeof(int8_t), tensor_input->data.data(),
-                           tensor_input->data.size() * sizeof(uint8_t));
-    if (status != EOK) {
-      MS_LOG(ERROR) << "memcpy failed. " << status;
-      return RET_ERROR;
-    }
-    std::vector<uint8_t> pack_data{};
-    BitPack::BitPacking<int8_t, uint8_t>(bit_num, origin_data, &pack_data);
-    tensor_input->data.resize(pack_data.size() * sizeof(uint8_t));
-    status = memcpy_s(tensor_input->data.data(), tensor_input->data.size() * sizeof(uint8_t), pack_data.data(),
-                      pack_data.size() * sizeof(uint8_t));
-    if (status != EOK) {
-      MS_LOG(ERROR) << "memcpy_s failed. " << status;
-      return RET_ERROR;
-    }
-  } else if (bit_num > QuantBitNum_INT8 && bit_num < QuantBitNum_INT16) {
-    auto shape_size =
-      std::accumulate(tensor_input->dims.begin(), tensor_input->dims.end(), size_t(1), std::multiplies<size_t>());
-    std::vector<int16_t> origin_data(shape_size);
-    auto status = memcpy_s(origin_data.data(), origin_data.size() * sizeof(int16_t), tensor_input->data.data(),
-                           tensor_input->data.size() * sizeof(uint8_t));
-    if (status != EOK) {
-      MS_LOG(ERROR) << "memcpy failed. " << status;
-      return RET_ERROR;
-    }
-    std::vector<uint16_t> pack_data{};
-    BitPack::BitPacking<int16_t, uint16_t>(bit_num, origin_data, &pack_data);
-    tensor_input->data.resize(pack_data.size() * sizeof(uint16_t));
-    status = memcpy_s(tensor_input->data.data(), tensor_input->data.size() * sizeof(uint8_t), pack_data.data(),
-                      pack_data.size() * sizeof(uint16_t));
-    if (status != EOK) {
-      MS_LOG(ERROR) << "memcpy_s failed. " << status;
-      return RET_ERROR;
-    }
-  }
   return RET_OK;
 }
 

@@ -199,7 +199,7 @@ STATUS TensorQuantPass::Run(schema::MetaGraphT *graph) {
         return RET_ERROR;
       }
       int bit_num = tensor->quantParams.front()->numBits;
-      if (DoBitPack(bit_num, tensor.get()) != RET_OK) {
+      if (quant::DoBitPack(bit_num, tensor.get()) != RET_OK) {
         MS_LOG(ERROR) << "bit pack failed.";
         return RET_ERROR;
       }
@@ -212,7 +212,7 @@ STATUS TensorQuantPass::Run(schema::MetaGraphT *graph) {
         quantParam->dstDtype == TypeId::kNumberTypeFloat32 || quantParam->dstDtype == TypeId::kNumberTypeFloat) {
       status = ComputeDataToInt8(tensor);
       int bit_num = tensor->quantParams.front()->numBits;
-      if (DoBitPack(bit_num, tensor.get()) != RET_OK) {
+      if (quant::DoBitPack(bit_num, tensor.get()) != RET_OK) {
         MS_LOG(ERROR) << "bit pack failed.";
         return RET_ERROR;
       }

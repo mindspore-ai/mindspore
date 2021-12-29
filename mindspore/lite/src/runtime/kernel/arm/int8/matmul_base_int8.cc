@@ -465,7 +465,7 @@ int MatmulBaseInt8CPUKernel::RunArm64Sdot() {
     batch_input_ptr_ = a_ptr + i * param_->row_ * param_->deep_;
     auto ret = ParallelLaunch(this->ms_context_, Arm64SdotPreRun, this, op_parameter_->thread_num_);
     if (ret != RET_OK) {
-      MS_LOG(ERROR) << "RunArm64Sdot error: [" << ret << "]";
+      MS_LOG(ERROR) << "Arm64SdotPreRun error: [" << ret << "]";
       return ret;
     }
 
@@ -476,7 +476,7 @@ int MatmulBaseInt8CPUKernel::RunArm64Sdot() {
 
     ret = ParallelLaunch(this->ms_context_, Arm64SdotRun, this, thread_count_);
     if (ret != RET_OK) {
-      MS_LOG(ERROR) << "RunArm64Sdot error: [" << ret << "]";
+      MS_LOG(ERROR) << "Arm64SdotRun error: [" << ret << "]";
       return ret;
     }
   }
