@@ -6909,7 +6909,7 @@ class CelebADataset(MappableDataset):
     CelebA has large diversities, large quantities, and rich annotations, including
 
     * 10,177 number of identities,
-    * 202,599 number of face images, and
+    * 202,599 number of face images,
     * 5 landmark locations, 40 binary attributes annotations per image.
 
     The dataset can be employed as the training and test sets for the following computer
