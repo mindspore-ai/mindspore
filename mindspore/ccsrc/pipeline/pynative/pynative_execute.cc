@@ -3491,6 +3491,7 @@ void PynativeExecutor::ExitCell() {
 bool PynativeExecutor::IsTopCell() const { return cell_depth_ == 0; }
 
 void PynativeExecutor::ExecuteAllTask() {
+  mindspore::ScopedLongRunning long_running;
   session::PynativeTaskManager::GetInstance().ExecuteRemainingTasks();
   for (auto &item : kMindRtBackends) {
     MS_EXCEPTION_IF_NULL(item.second);
