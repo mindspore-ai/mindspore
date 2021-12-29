@@ -83,7 +83,7 @@ void GPUDeviceContext::Initialize() {
   // Initialize memory pool.
   mem_manager_ = std::make_shared<GPUMemoryManager>();
   MS_EXCEPTION_IF_NULL(mem_manager_);
-  mem_manager_->MallocDeviceMemory();
+  mem_manager_->Initialize();
 
   // Initialize NCCL.
   if (CollectiveInitializer::instance().collective_inited()) {
@@ -159,7 +159,7 @@ void GPUDeviceContext::Destroy() {
 
   // Release device memory
   if (mem_manager_ != nullptr) {
-    mem_manager_->FreeDeviceMemory();
+    mem_manager_->Finalize();
     mem_manager_ = nullptr;
   }
 }

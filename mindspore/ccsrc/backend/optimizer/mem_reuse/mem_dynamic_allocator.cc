@@ -25,10 +25,10 @@ namespace mindspore {
 namespace device {
 static const char kPersistentParamMem[] = "Persistent mem";
 static const char kCommonMem[] = "Common mem";
-const size_t kGBToByte = 1073741824;
+constexpr size_t kGBToByte = 1024 << 20;
 // The smallest memory request size, if it is smaller than this size, the device memory request may fail
 // Set experience value to 10M
-const size_t kMinimumAllocMem = 10485760;
+const size_t kMinimumAllocMem = 10 << 20;
 
 DynamicMemPoolBestFit::~DynamicMemPoolBestFit() {
   persistent_mem_->clear();
@@ -59,7 +59,10 @@ std::vector<DeviceMemPtr> DynamicMemPoolBestFit::AllocContinuousTensorMem(size_t
   }
   std::lock_guard<std::mutex> locker(mutex_);
   // Remove the pre-alloc memory.
-  const auto &mem_block = FindMemBlock(device_addr, common_mem_);
+  auto mem_block = FindMemBlock(device_addr, common_mem_);
+  if (mem_block == nullptr) {
+    mem_block = FindMemBlock(device_addr, persistent_mem_);
+  }
   MS_EXCEPTION_IF_NULL(mem_block);
   const auto &iter = mem_block->block_all_mem_buf_map_.find(device_addr);
   if (iter == mem_block->block_all_mem_buf_map_.end()) {
@@ -135,7 +138,7 @@ void DynamicMemPoolBestFit::SetMemAllocUintSize(size_t size) {
   MS_LOG(INFO) << "Set mem alloc unit size " << size;
 }
 
-void DynamicMemPoolBestFit::SetMempoolBlockSize(size_t available_device_mem_size) {
+void DynamicMemPoolBestFit::SetMemPoolBlockSize(size_t available_device_mem_size) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   float mem_block_size = ms_context->get_param<float>(MS_CTX_MEMPOOL_BLOCK_SIZE);

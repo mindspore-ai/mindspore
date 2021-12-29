@@ -288,7 +288,6 @@ void KernelRuntime::ResetNodeAddress(const session::KernelGraph &kernel_graph) {
       auto tensor_size = AnfAlgo::GetOutputTensorMemSize(input_node, index);
       auto device_address = CreateDeviceAddress(nullptr, tensor_size, AnfAlgo::GetOutputFormat(input_node, index),
                                                 output_type_id, {input_node, index});
-      device_address->set_from_persistent_mem(input_node->isa<Parameter>());
       AnfAlgo::SetOutputAddr(device_address, index, input_node.get());
     }
 

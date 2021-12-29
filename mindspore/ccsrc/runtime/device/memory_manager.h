@@ -37,8 +37,8 @@ class MemoryManager : public MemHandler {
   MemoryManager() = default;
   virtual ~MemoryManager() = default;
 
-  virtual void MallocDeviceMemory() = 0;
-  virtual void FreeDeviceMemory() = 0;
+  virtual void Initialize() = 0;
+  virtual void Finalize() = 0;
   virtual void ResetDynamicMemory() {}
   virtual void ClearGlobalIdleMem() {}
 

@@ -46,9 +46,9 @@ bool GPUMemoryAllocator::Init() {
   // In gpu mode, recommend 1/16 reserved for other cuda functions
   if (available_device_memory_ > total_size) {
     size_t recommend_mem_size_for_others = FloatToSize(total_size * kReservedMemoryRatio);
-    SetMempoolBlockSize(std::min(available_device_memory_, total_size - recommend_mem_size_for_others));
+    SetMemPoolBlockSize(std::min(available_device_memory_, total_size - recommend_mem_size_for_others));
   } else {
-    SetMempoolBlockSize(std::min(available_device_memory_, total_size));
+    SetMemPoolBlockSize(std::min(available_device_memory_, total_size));
   }
   return true;
 }

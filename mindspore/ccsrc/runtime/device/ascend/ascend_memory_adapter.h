@@ -22,7 +22,6 @@
 #include <memory>
 #include <vector>
 #include "utils/ms_context.h"
-#include "runtime/device/ascend/ascend_memory_pool.h"
 
 namespace mindspore {
 namespace device {

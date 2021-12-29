@@ -27,6 +27,8 @@ namespace ascend {
 // The minimum unit size (8MB) of memory block used for dynamic extend in graph mode.
 static const size_t ASCEND_DYNAMIC_MEM_ALLOC_UNIT_SIZE_FOR_GRAPH = 8 << 20;
 
+void AscendMemoryPool::Init() { SetMemPoolBlockSize(AscendMemAdapter::GetInstance().GetMsUsedHbmSize()); }
+
 size_t AscendMemoryPool::CalMemBlockAllocSize(size_t size, bool from_persistent_mem) {
   auto device_free_mem_size = free_mem_size();
   if (device_free_mem_size < size) {
@@ -42,23 +44,27 @@ size_t AscendMemoryPool::CalMemBlockAllocSize(size_t size, bool from_persistent_
                        "details can be found in MindSpore's FAQ with keyword 'Out of Memory'.";
     return 0;
   }
-  size_t alloc_mem_size = MemAllocUnitSize(from_persistent_mem);
+  size_t alloc_mem_size;
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   const bool pynative_mode = (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode);
+  const bool task_sink = ms_context->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
   if (pynative_mode) {
+    alloc_mem_size = MemAllocUnitSize(from_persistent_mem);
     // Growing at twice of alloc size
     MS_LOG(DEBUG) << "Get unit block size " << alloc_mem_size;
     constexpr size_t kDouble = 2;
     while (alloc_mem_size < size) {
       alloc_mem_size = alloc_mem_size * kDouble;
     }
-  } else {
+  } else if (task_sink) {
     // The graph mode controls itself independently
     alloc_mem_size = ASCEND_DYNAMIC_MEM_ALLOC_UNIT_SIZE_FOR_GRAPH;
     while (alloc_mem_size < size) {
       alloc_mem_size = alloc_mem_size + ASCEND_DYNAMIC_MEM_ALLOC_UNIT_SIZE_FOR_GRAPH;
     }
+  } else {
+    alloc_mem_size = device_free_mem_size;
   }
   alloc_mem_size = std::min(alloc_mem_size, device_free_mem_size);
   return alloc_mem_size;

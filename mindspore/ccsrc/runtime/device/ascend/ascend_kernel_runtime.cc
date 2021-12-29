@@ -286,7 +286,7 @@ void AscendKernelRuntime::ReleaseDeviceRes() {
   // DestroyHccl must be called before FreeDeviceMemory
   (void)DestroyHccl();
   if (mem_manager_ != nullptr) {
-    mem_manager_->FreeDeviceMemory();
+    mem_manager_->Finalize();
   }
   mindspore::kernel::AicpuOpKernelLoad::GetInstance().FreeDeviceMemory();
 
@@ -346,7 +346,7 @@ bool AscendKernelRuntime::Init() {
 #endif
     mem_manager_ = std::make_shared<AscendMemoryManager>();
     MS_EXCEPTION_IF_NULL(mem_manager_);
-    mem_manager_->MallocDeviceMemory();
+    mem_manager_->Initialize();
 
     // Set callback func when exception error
     auto rt_ret = rtRegTaskFailCallbackByModule(kModuleName, TaskFailCallback);
