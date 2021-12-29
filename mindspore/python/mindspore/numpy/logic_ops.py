@@ -470,6 +470,7 @@ def isclose(a, b, rtol=1e-05, atol=1e-08, equal_nan=False):
         atol (numbers.Number): The absolute tolerance parameter (see Note).
         equal_nan (bool): Whether to compare ``NaN`` as equal. If True, ``NaN`` in
             `a` will be considered equal to ``NaN`` in `b` in the output tensor.
+            Default: `False`.
 
     Returns:
         A ``bool`` tensor of where `a` and `b` are equal within the given tolerance.
@@ -755,7 +756,7 @@ def array_equal(a1, a2, equal_nan=False):
 
     Args:
         a1/a2 (Union[int, float, bool, list, tuple, Tensor]): Input arrays.
-        equal_nan (bool): Whether to compare NaN's as equal.
+        equal_nan (bool): Whether to compare NaN's as equal. Default: `False`.
 
     Returns:
         Scalar bool tensor, value is `True` if inputs are equal, `False` otherwise.

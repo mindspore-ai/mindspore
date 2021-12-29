@@ -2448,7 +2448,7 @@ def pad(arr, pad_width, mode="constant", stat_length=None, constant_values=0,
         ValueError: if `mode` cannot be recognized, or if `pad_width`, `stat_length`,
             `constant_values`, `end_values` cannot broadcast to :class:`(arr.ndim, 2)`,
             or if keyword arguments got unexpected inputs.
-        NotImplementedError: if mode is function or '/median'/.
+        NotImplementedError: if mode is function or \'median\'.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
