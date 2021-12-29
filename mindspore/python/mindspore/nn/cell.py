@@ -955,7 +955,7 @@ class Cell(Cell_):
             `init_parameters_data`, do not save these results.
 
         Args:
-            auto_parallel_mode (bool): If running in auto_parallel_mode.
+            auto_parallel_mode (bool): If running in auto_parallel_mode. Default: False.
 
         Returns:
             Dict[Parameter, Parameter], returns a dict of original parameter and replaced parameter.

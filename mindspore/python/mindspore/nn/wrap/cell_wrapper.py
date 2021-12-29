@@ -531,7 +531,7 @@ class PipelineCell(Cell):
         micro_size (int): MicroBatch size.
 
     Supported Platforms:
-    ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> net = Net()
