@@ -96,38 +96,42 @@ py::tuple check_bprop_out(const py::object &grads_obj, const py::tuple &py_args,
   } else {
     grads = py::cast<py::tuple>(grads_obj);
   }
+  if (!MsContext::GetInstance()->get_param<bool>(MS_CTX_CHECK_BPROP_FLAG)) {
+    return grads;
+  }
   constexpr int filter_args_size = 2;
   if (grads.size() != py_args.size() - filter_args_size) {
-    MS_EXCEPTION(TypeError) << "For user defined bprop of net '" << bprop_cls_name
-                            << "', the gradients number: " << grads.size()
-                            << " is not equal to the args number: " << (py_args.size() - filter_args_size) << ".";
+    MS_EXCEPTION(TypeError) << "For user defined method 'bprop' of net '" << bprop_cls_name
+                            << "', the number of return values(gradients) should be equal to the number of input "
+                               "arguments except 'out' and 'dout', which is: "
+                            << (py_args.size() - filter_args_size) << ", but got:" << grads.size() << ".";
   }
-  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_CHECK_BPROP_FLAG)) {
-    for (size_t i = 0; i < grads.size(); i++) {
-      if (py::isinstance<tensor::Tensor>(py_args[i])) {
-        if (!py::isinstance<tensor::Tensor>(grads[i])) {
-          MS_EXCEPTION(ValueError) << "For user defined bprop of net '" << bprop_cls_name << "', the gradient of the "
-                                   << i << "th arg should be Tensor, but got "
-                                   << py::cast<std::string>(grads[i].attr("__class__").attr("__name__"))
-                                   << ", and the value is " << py::cast<py::str>(grads[i]) << ".";
-        }
+  for (size_t i = 0; i < grads.size(); i++) {
+    if (py::isinstance<tensor::Tensor>(py_args[i])) {
+      if (!py::isinstance<tensor::Tensor>(grads[i])) {
+        MS_EXCEPTION(ValueError) << "For user defined method 'bprop' of net '" << bprop_cls_name << "', the " << i
+                                 << "th return value(gradient of the " << i << "th argument) should be Tensor, but got "
+                                 << py::cast<std::string>(grads[i].attr("__class__").attr("__name__"))
+                                 << ", and the value is " << py::cast<py::str>(grads[i]) << ".";
+      }
 
-        py::object arg_dtype = py_args[i].attr("dtype");
-        py::object grad_dtype = grads[i].attr("dtype");
-        py::tuple arg_shape = py_args[i].attr("shape");
-        py::tuple grad_shape = grads[i].attr("shape");
-        if (!grad_dtype.equal(arg_dtype)) {
-          MS_EXCEPTION(TypeError) << "For user defined bprop of net '" << bprop_cls_name << "', the gradient of the "
-                                  << i << "th arg should have the same dtype as the " << i << "th arg, but the " << i
-                                  << "th arg dtype is: " << py::cast<py::str>(arg_dtype)
-                                  << ", the gradient dtype is: " << py::cast<py::str>(grad_dtype) << ".";
-        }
-        if (!grad_shape.equal(arg_shape)) {
-          MS_EXCEPTION(ValueError) << "For user defined bprop of net '" << bprop_cls_name << "', the gradient of the "
-                                   << i << "th arg should have the same shape as the " << i << "th arg, but the " << i
-                                   << "th arg shape is: " << py::cast<py::str>(arg_shape)
-                                   << ", the gradient shape is: " << py::cast<py::str>(grad_shape) << ".";
-        }
+      py::object arg_dtype = py_args[i].attr("dtype");
+      py::object grad_dtype = grads[i].attr("dtype");
+      py::tuple arg_shape = py_args[i].attr("shape");
+      py::tuple grad_shape = grads[i].attr("shape");
+      if (!grad_dtype.equal(arg_dtype)) {
+        MS_EXCEPTION(TypeError) << "For user defined method 'bprop' of net '" << bprop_cls_name << "', the " << i
+                                << "th return value(gradient of the " << i
+                                << "th argument) should have the same dtype as the " << i
+                                << "th argument, which is:" << py::cast<py::str>(arg_dtype)
+                                << ", but got: " << py::cast<py::str>(grad_dtype) << ".";
+      }
+      if (!grad_shape.equal(arg_shape)) {
+        MS_EXCEPTION(ValueError) << "For user defined method 'bprop' of net '" << bprop_cls_name << "', the " << i
+                                 << "th return value(gradient of the " << i
+                                 << "th argument) should have the same shape as the " << i
+                                 << "th argument, which is:" << py::cast<py::str>(arg_shape)
+                                 << ", but got: " << py::cast<py::str>(grad_shape) << ".";
       }
     }
   }
