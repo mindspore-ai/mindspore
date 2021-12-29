@@ -29,7 +29,7 @@ from mindspore import log as logger
 from mindspore._extends.remote import kernel_build_server
 from .tensor import Tensor as MsTensor
 from .tensor import CSRTensor as MsCSRTensor
-from .._c_expression import generate_arguments_key, GraphExecutor_, Tensor, MetaTensor, CSRTensor, PynativeExecutor_
+from .._c_expression import GraphExecutor_, Tensor, MetaTensor, CSRTensor, PynativeExecutor_
 from .._c_expression import verify_inputs_signature, init_exec_dataset, _set_dataset_mode_config, init_pipeline
 from ..parallel._ps_context import _is_role_pserver, _is_role_sched
 from ..parallel._utils import _get_device_num, _get_global_rank, _need_to_full, _check_full_batch, _to_full_tensor, \
@@ -40,30 +40,6 @@ from .._checkparam import Validator
 ms_compile_cache = {}
 
 BROADCAST_PHASE = "_broadcast_"
-
-
-def _convert_function_arguments(fn, *args):
-    """
-    Process the fn default parameters.
-
-    Args:
-        fn (Function): The function to be parsed.
-        args (tuple): The parameters of the function.
-    """
-    arguments_dict = OrderedDict()
-    parse_method = None
-    if isinstance(fn, (types.FunctionType, types.MethodType)):
-        parse_method = fn.__name__
-        index = 0
-        for value in args:
-            arguments_dict[f'arg{index}'] = value
-            index = index + 1
-        logger.debug("fn(%r) full parameters dict is: %r", fn, arguments_dict)
-        converted = True
-    else:
-        logger.warning("Find error: fn isn't function or method")
-        converted = False
-    return converted, arguments_dict, parse_method
 
 
 def _wrap_func(fn):
@@ -125,6 +101,8 @@ if sys.argv and sys.argv[0] != '':
     entry_script_path_dir = os.path.split(entry_script_path)[0]
     if entry_script_path_dir in sys_path:
         sys_path.remove(entry_script_path_dir)
+
+
 def _in_sys_path(file_path):
     for path in sys_path:
         if file_path.startswith(path):
@@ -207,10 +185,14 @@ class _MindsporeFunctionExecutor:
     """
 
     def __init__(self, fn, ms_create_time, input_signature=None, obj=None):
+        init_pipeline()
+        if not isinstance(fn, (types.FunctionType, types.MethodType)):
+            raise RuntimeError('fn {} is not function or method'.format(fn))
+
         self.fn = fn
         self.input_signature = input_signature
         self.obj = None
-        if hasattr(obj, fn.__name__):
+        if obj and hasattr(obj, fn.__name__):
             self.obj = obj
         self._graph_executor = GraphExecutor_.get_instance()
         self._create_time = ms_create_time
@@ -227,7 +209,7 @@ class _MindsporeFunctionExecutor:
         init_phase = "init_subgraph" + graph_name[graph_name.find("."):]
         _exec_init_graph(self.obj, init_phase)
 
-    def compile(self, args_list, arg_names, method_name):
+    def compile(self, args_list, method_name):
         """Returns pipeline for the given args."""
         # Verify the signature for both function and method
         if self.input_signature is not None:
@@ -240,9 +222,8 @@ class _MindsporeFunctionExecutor:
             if not is_valid_input:
                 raise ValueError("Inputs is incompatible with input signature!")
 
-        dic = dict(zip(arg_names, args_list))
         generate_name = self.fn.__module__ + "." + self.fn.__name__ + "." + self.fn.__code__.co_filename + "." + \
-            str(self.fn.__code__.co_firstlineno) + '.' + str(id(self.fn))
+                        str(self.fn.__code__.co_firstlineno) + '.' + str(id(self.fn))
         if _pynative_executor.grad_flag():
             generate_name = generate_name + ".grad"
         self.fn.__parse_method__ = method_name
@@ -263,7 +244,7 @@ class _MindsporeFunctionExecutor:
         else:
             self.enable_tuple_broaden = False
         self._graph_executor.set_enable_tuple_broaden(self.enable_tuple_broaden)
-        key = generate_arguments_key(dic, self.enable_tuple_broaden)
+        key = self._graph_executor.generate_arguments_key(args_list, self.enable_tuple_broaden)
         phase = generate_name + '.' + str(key)
         if phase in ms_compile_cache.keys():
             return phase
@@ -282,18 +263,11 @@ class _MindsporeFunctionExecutor:
 
     @_wrap_func
     def __call__(self, *args):
-        init_pipeline()
-        converted, arguments_dict, parse_method = _convert_function_arguments(self.fn, *args)
-        if not converted:
-            raise RuntimeError('Process function parameter is failure')
-
-        args_list = tuple(arguments_dict.values())
-        arg_names = tuple(arguments_dict.keys())
+        args_list = args
         if self.obj is not None:
             args_list = args_list[1:]
-            arg_names = arg_names[1:]
 
-        phase = self.compile(args_list, arg_names, parse_method)
+        phase = self.compile(args_list, self.fn.__name__)
 
         if context.get_context("precompile_only"):
             return None
@@ -388,21 +362,6 @@ def ms_function(fn=None, obj=None, input_signature=None):
     if fn is not None:
         return wrap_mindspore(fn)
     return wrap_mindspore
-
-
-def _generate_pip_args(obj, *args, method="construct"):
-    """Generate arguments for pipeline."""
-    if hasattr(obj, method):
-        fn = getattr(obj, method)
-    else:
-        raise AttributeError('The process method is not exist')
-    converted, arguments_dict, parse_method = _convert_function_arguments(fn, *args)
-    if not converted:
-        raise RuntimeError('Process method parameter is failure')
-    args_list = tuple(arguments_dict.values())
-    args_names = tuple(arguments_dict.keys())
-    obj.__parse_method__ = parse_method
-    return args_names, args_list
 
 
 def _get_auto_split_param_names(parameter_layout_dict):
@@ -630,15 +589,14 @@ class _CellGraphExecutor:
             Str, the full phase of the cell.
             Bool, if the graph has been compiled before, return False, else return True.
         """
-
-        args_names, args_list = _generate_pip_args(obj, *args)
-        dic = dict(zip(args_names, args_list))
+        obj.__parse_method__ = obj.construct.__name__
+        args_list = args
         if hasattr(obj, "enable_tuple_broaden"):
             self.enable_tuple_broaden = obj.enable_tuple_broaden
         else:
             self.enable_tuple_broaden = False
         self._graph_executor.set_enable_tuple_broaden(self.enable_tuple_broaden)
-        key = generate_arguments_key(dic, self.enable_tuple_broaden)
+        key = self._graph_executor.generate_arguments_key(args_list, self.enable_tuple_broaden)
         obj.arguments_key = str(key)
         phase = phase + '.' + str(obj.create_time) + '.' + str(id(obj)) + '.' + obj.arguments_key
 
@@ -653,8 +611,7 @@ class _CellGraphExecutor:
 
         is_sink_mode = args and isinstance(args[0], Tensor) and args[0].virtual_flag
         if auto_parallel_mode and _need_to_full() and not is_sink_mode and obj.auto_parallel_compile_and_run():
-            args_full = _to_full_tensor(args, _get_device_num(), _get_global_rank())
-            _, args_list = _generate_pip_args(obj, *args_full)
+            args_list = _to_full_tensor(args, _get_device_num(), _get_global_rank())
 
         enable_ge = context.get_context("enable_ge")
         self._graph_executor.set_weights_values(obj.parameters_dict())
@@ -743,12 +700,8 @@ class _CellGraphExecutor:
     def _exec_pip(self, obj, *args, phase=''):
         """Execute the generated pipeline."""
         fn = obj.construct
-        converted, arguments_dict, parse_method = _convert_function_arguments(fn, *args)
-        if not converted:
-            raise RuntimeError('Process method parameter is failure')
-        args_list = tuple(arguments_dict.values())
-        obj.__parse_method__ = parse_method
-        return self._graph_executor(args_list, phase)
+        obj.__parse_method__ = fn.__name__
+        return self._graph_executor(args, phase)
 
     def run(self, obj, *args, phase='predict'):
         """

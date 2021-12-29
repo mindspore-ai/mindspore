@@ -115,11 +115,11 @@ PYBIND11_MODULE(_c_expression, m) {
          "Set values of weights.")
     .def("get_optimize_graph_proto", &GraphExecutorPy::GetOptimizeGraphProto, py::arg("phase") = py::str(""),
          "Get the optimize graph proto string.")
-    .def("set_jit_config", &GraphExecutorPy::SetJitConfig, py::arg("jit_config") = py::dict(), "Set the jit config.");
+    .def("set_jit_config", &GraphExecutorPy::SetJitConfig, py::arg("jit_config") = py::dict(), "Set the jit config.")
+    .def("generate_arguments_key", &GraphExecutorPy::GenerateArgumentsKey, "Generate unique key of argument.");
 
   (void)py::class_<EnvInstance, std::shared_ptr<EnvInstance>>(m, "EnvInstance_").def(py::init());
 
-  (void)m.def("generate_arguments_key", &mindspore::pipeline::GenerateArgumentsKey, "Generate unique key of argument.");
   (void)m.def("real_run_op", &mindspore::pynative::RealRunOp, "Run op pynatively.");
   (void)m.def("reset_op_id", &mindspore::pipeline::ResetOpId, "Reset Operator Id");
   (void)m.def("init_hccl", &mindspore::pipeline::InitHccl, "Init Hccl");

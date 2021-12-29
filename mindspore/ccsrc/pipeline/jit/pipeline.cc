@@ -476,33 +476,39 @@ void CheckArgsValid(const py::tuple &args) {
   }
 }
 
-py::object GenerateArgumentsKey(const std::unordered_map<std::string, py::object> &args, bool enable_tuple_broaden) {
+py::object GraphExecutorPy::GenerateArgumentsKey(const py::tuple &args, bool enable_tuple_broaden) {
   MS_LOG(DEBUG) << "GenerateArgumentsKey args size:" << args.size();
+
   abstract::AbstractBasePtrList args_spec;
-
-  for (const auto &arg : args) {
-    if (py::isinstance<py::module>(arg.second)) {
-      MS_LOG(EXCEPTION) << "GenerateArgumentsKey failed, argument input should not be py::module";
-    }
+  cur_convert_input_.clear();
+  std::size_t size = args.size();
+  for (std::size_t i = 0; i < size; i++) {
     ValuePtr converted = nullptr;
-    if (!parse::ConvertData(arg.second, &converted)) {
-      MS_LOG(EXCEPTION) << "GenerateArgumentsKey convert arg failed";
+    if (!parse::ConvertData(args[i], &converted)) {
+      MS_EXCEPTION(TypeError)
+        << "The inputs types of the outermost network support bool, int, float, None, tensor, "
+           "mstype.Number(mstype.bool, mstype.int, mstype.float, mstype.uint), "
+           "and tuple or list containing only these types, and dict whose values are these types, but the "
+        << i << "th arg type is " << args[i].get_type() << ", value is '" << py::str(args[i]) << "'.";
     }
-    args_spec.push_back(ArgsToAbstract(converted, enable_tuple_broaden));
+    AbstractBasePtr ptr = ArgsToAbstract(converted, enable_tuple_broaden);
+    args_spec.push_back(ptr);
+    cur_convert_input_.emplace(args[i].ptr(), ptr);
   }
 
-  uint64_t key;
+  // If cache matched no need CheckArgsValid
   auto iter = g_args_cache.find(args_spec);
-  if (iter == g_args_cache.end()) {
-    static uint64_t key_counter = 0;
-    key = key_counter;
-    ++key_counter;
-    g_args_cache[args_spec] = key;
-    MS_LOG(INFO) << "Generate a new compile key for new args, key: " << key;
-  } else {
-    key = iter->second;
+  if (iter != g_args_cache.end()) {
+    return py::int_(iter->second);
   }
-  return py::int_(key);
+
+  // Check if the args of function or net is valid.
+  CheckArgsValid(args);
+
+  static uint64_t key_counter = 0;
+  g_args_cache[args_spec] = key_counter;
+  MS_LOG(INFO) << "Generate a new compile key for new args, key: " << key_counter;
+  return py::int_(key_counter++);
 }
 
 py::bool_ VerifyInputSignature(const py::list &input_signature, const py::tuple &inputs) {
@@ -981,13 +987,6 @@ bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple
     MS_LOG(ERROR) << "The `phase` must be string.";
     return false;
   }
-  // Check if the function or net is valid.
-  if (py::isinstance<py::none>(source_obj)) {
-    MS_LOG(ERROR) << "The source object to compile should not be None.";
-    return false;
-  }
-  // Check if the args of function or net is valid.
-  CheckArgsValid(args);
 
   auto phase = py::cast<std::string>(phase_obj);
   MS_LOG(INFO) << "Start compiling, phase: " << phase;
@@ -1023,6 +1022,13 @@ bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple
   std::size_t size = args.size();
   for (std::size_t i = 0; i < size; i++) {
     ValuePtr converted = nullptr;
+    // In some parallel mode need full_tensor which cause the args of GenerateArgumentsKey not same to compile,
+    // So can't use cur_convert_input_ directly.
+    auto iter = cur_convert_input_.find(args[i].ptr());
+    if (iter != cur_convert_input_.end()) {
+      args_spec.push_back(iter->second);
+      continue;
+    }
     bool succ = parse::ConvertData(args[i], &converted);
     if (!succ) {
       MS_LOG(EXCEPTION) << "Fail to convert the " << i << "th argument, args[" << i << "]: " << py::str(args[i]);
@@ -1290,10 +1296,6 @@ void ProcessVmArgInner(const py::tuple &args, const ResourcePtr &res, VectorRef 
   bool arg_list_inited = !arg_list->empty();
   for (std::size_t i = 0; i < size; i++) {
     py::object arg = args[i];
-    auto ms_context = MsContext::GetInstance();
-    if (ms_context->backend_policy() == kMsConvert && py::isinstance<py::array>(arg)) {
-      MS_LOG(EXCEPTION) << "The " << i << "th arg is numpy array, not tensor.";
-    }
     ValuePtr converted = nullptr;
     bool succ = parse::ConvertData(arg, &converted);
     if (!succ) {
@@ -1369,15 +1371,6 @@ py::object GraphExecutorPy::Run(const py::tuple &args, const py::object &phase_o
   auto ret_val = std::make_shared<py::object>();
   if (info_.count(phase) != 0 && info_[phase]->func_graph != nullptr) {
     if (IsGraphOutputValueNodeOrParameter(info_[phase]->func_graph->output(), args, ret_val)) {
-      // Check the input arg must be Tensor when backend is "ms".
-      if (MsContext::GetInstance()->backend_policy() == kMsConvert) {
-        for (std::size_t i = 0; i < size; i++) {
-          ValuePtr converted = nullptr;
-          if (!parse::ConvertData(args[i], &converted)) {
-            MS_LOG(EXCEPTION) << "The " << i << "th arg convert failed.";
-          }
-        }
-      }
       return *ret_val;
     }
   }
