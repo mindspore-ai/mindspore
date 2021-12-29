@@ -22,13 +22,11 @@
 
 #include "ir/anf.h"
 #include "ir/meta_func_graph.h"
-#include "pipeline/jit/resource.h"
+#include "frontend/optimizer/optimizer.h"
 
 namespace mindspore {
 namespace ad {
-using ResourcePtr = std::shared_ptr<pipeline::Resource>;
-
-FuncGraphPtr Grad(const FuncGraphPtr &func_graph, const pipeline::ResourceBasePtr &resources, bool is_top = true);
+FuncGraphPtr Grad(const FuncGraphPtr &func_graph, const opt::OptimizerPtr &optimizer, bool is_top = true);
 FuncGraphPtr Kprim(const ValueNodePtr &value_node, const pipeline::ResourceBasePtr &resources);
 MetaFuncGraphPtr Kmeta(const PrimitivePtr &prim, const pipeline::ResourceBasePtr &);
 void CleanRes();

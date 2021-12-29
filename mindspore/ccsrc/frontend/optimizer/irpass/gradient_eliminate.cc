@@ -83,7 +83,8 @@ void CheckSwitchWithSideEffect(const FuncGraphPtr &fg) {
   }
 }
 
-AnfNodePtr ExpandJ(const ValueNodePtr &vnode, const pipeline::ResourceBasePtr &resource) {
+AnfNodePtr ExpandJ(const ValueNodePtr &vnode, const OptimizerPtr &optimizer) {
+  AnfNodePtr expanded_node = nullptr;
   if (IsValueNode<FuncGraph>(vnode)) {
     ScopeGuard scope_guard(vnode->scope());
     auto func_graph = GetValueNode<FuncGraphPtr>(vnode);
@@ -92,13 +93,15 @@ AnfNodePtr ExpandJ(const ValueNodePtr &vnode, const pipeline::ResourceBasePtr &r
     CheckSwitchWithSideEffect(func_graph);
     MS_EXCEPTION_IF_NULL(func_graph);
     MS_LOG(DEBUG) << "Funcgraph: " << func_graph->ToString() << " will expandJ now";
-    auto newfg = ad::Grad(func_graph, resource);
-    return NewValueNode(newfg);
+    auto newfg = ad::Grad(func_graph, optimizer);
+    expanded_node = NewValueNode(newfg);
+  } else if (IsValueNode<Primitive>(vnode)) {
+    expanded_node = ExpandJPrimitive(vnode, optimizer->resource());
+  } else {
+    return nullptr;
   }
-  if (IsValueNode<Primitive>(vnode)) {
-    return ExpandJPrimitive(vnode, resource);
-  }
-  return nullptr;
+  optimizer->set_is_first_order_j(false);
+  return expanded_node;
 }
 }  // namespace internal
 
@@ -122,7 +125,7 @@ bool ExpandJPrim::operator()(const FuncGraphPtr &func_graph, const OptimizerPtr 
   bool change = false;
   auto manager = optimizer->manager();
   for (auto &j_node : todo) {
-    auto expanded_j = internal::ExpandJ(j_node->input(1)->cast<ValueNodePtr>(), optimizer->resource());
+    auto expanded_j = internal::ExpandJ(j_node->input(1)->cast<ValueNodePtr>(), optimizer);
     manager->Replace(j_node, expanded_j);
     change = true;
   }

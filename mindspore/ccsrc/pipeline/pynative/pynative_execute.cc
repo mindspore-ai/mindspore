@@ -3167,7 +3167,7 @@ void GradExecutor::MakeNestedCnode(const py::object &cell, const py::tuple &forw
   r->manager()->AddFuncGraph(first_grad_fg);
   set_eliminate_forward(false);
   first_grad_fg->transforms().erase(kGrad);
-  FuncGraphPtr second_grad_fg = ad::Grad(first_grad_fg, r);
+  FuncGraphPtr second_grad_fg = ad::Grad(first_grad_fg, opt::Optimizer::MakeEmptyOptimizer(r));
   set_eliminate_forward(true);
   DumpGraphIR("second_grad_fg.ir", second_grad_fg);
   r->Clean();

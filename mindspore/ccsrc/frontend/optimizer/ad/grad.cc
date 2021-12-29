@@ -17,6 +17,7 @@
 #include "frontend/optimizer/ad/grad.h"
 #include "frontend/optimizer/ad/dfunctor.h"
 #include "frontend/optimizer/irpass.h"
+#include "frontend/optimizer/dead_node_eliminate.h"
 #include "ir/func_graph_cloner.h"
 #include "utils/ms_context.h"
 #include "utils/symbolic.h"
@@ -24,7 +25,7 @@
 namespace mindspore {
 namespace ad {
 namespace {
-FuncGraphPtr PartialEliminateOptPass(const ResourcePtr &resource, const FuncGraphPtr &func_graph) {
+FuncGraphPtr PartialEliminateOptPass(const pipeline::ResourcePtr &resource, const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(resource);
 
   opt::irpass::OptimizeIRPassLib irpass;
@@ -68,20 +69,32 @@ FuncGraphPtr LiftFv(const pipeline::ResourceBasePtr &resource, const FuncGraphPt
 }
 }  // namespace
 
-FuncGraphPtr Grad(const FuncGraphPtr &func_graph, const pipeline::ResourceBasePtr &resources, bool is_top) {
+FuncGraphPtr Grad(const FuncGraphPtr &func_graph, const opt::OptimizerPtr &optimzer, bool is_top) {
   MS_EXCEPTION_IF_NULL(func_graph);
   auto gradkv = func_graph->transforms().find("grad");
   if (gradkv != func_graph->transforms().end()) {
     return gradkv->second.func_graph();
   }
 
+  const auto &resources = optimzer->resource();
   auto manager_ptr = resources->manager();
   MS_EXCEPTION_IF_NULL(manager_ptr);
   manager_ptr->AddFuncGraph(func_graph);
 
   FuncGraphPtr grad_fg = func_graph;
-  if (func_graph->func_graphs_used().size() != 0) {
-    grad_fg = LiftFv(resources, func_graph);
+  static bool enable_closure = common::GetEnv("MS_DEV_ENABLE_CLOSURE") == "1";
+  if (enable_closure) {
+    if (func_graph->func_graphs_used().size() != 0 && optimzer->is_first_order_j()) {
+      lift_fv_before_grad = true;
+      grad_fg = LiftFv(resources, func_graph);
+    } else {
+      lift_fv_before_grad = false;
+      opt::EliminateDeadNode(grad_fg);
+    }
+  } else {
+    if (func_graph->func_graphs_used().size() != 0) {
+      grad_fg = LiftFv(resources, func_graph);
+    }
   }
   auto multi_graph_sink = [&func_graph](const FuncGraphPtr &f) {
     if (MsContext::GetInstance()->get_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK)) {
