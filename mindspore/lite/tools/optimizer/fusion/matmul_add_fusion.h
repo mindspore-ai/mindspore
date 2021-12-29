@@ -14,21 +14,29 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_PASS_FUSION_MATMUL_ADD_FUSION_H_
-#define MINDSPORE_LITE_SRC_PASS_FUSION_MATMUL_ADD_FUSION_H_
+#ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_MATMUL_BIAS_ADD_FUSION_H_
+#define MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_MATMUL_BIAS_ADD_FUSION_H_
 
+#include <string>
+#include <unordered_map>
 #include "backend/optimizer/common/optimizer.h"
-#include "tools/converter/converter_context.h"
-#include "backend/optimizer/common/pass.h"
+#include "tools/optimizer/common/multiple_pattern_process_pass.h"
 
 namespace mindspore {
 namespace opt {
-class MatMulAddFusion : public Pass {
+class MatMulAddFusion : public MultiplePatternProcessPass {
  public:
-  MatMulAddFusion() : Pass("MatMulAddFusion") {}
+  explicit MatMulAddFusion(const std::string &name = "MatMulAddFusion", bool multigraph = true)
+      : MultiplePatternProcessPass(name, multigraph) {}
   ~MatMulAddFusion() override = default;
-  bool Run(const FuncGraphPtr &func_graph) override;
+
+ private:
+  std::unordered_map<std::string, VectorRef> DefinePatterns() const override;
+  VectorRef DefineMatmulAddFusionPattern() const;
+  VectorRef DefineMatmulBiasAddPattern() const;
+  AnfNodePtr Process(const std::string &pattern_name, const FuncGraphPtr &func_graph, const AnfNodePtr &,
+                     const EquivPtr &) const override;
 };
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_SRC_PASS_FUSION_MATMUL_ADD_FUSION_H_
+#endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_MATMUL_BIAS_ADD_FUSION_H_

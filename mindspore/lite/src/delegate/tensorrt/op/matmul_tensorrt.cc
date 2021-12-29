@@ -16,6 +16,7 @@
 
 #include "src/delegate/tensorrt/op/matmul_tensorrt.h"
 #include "src/delegate/tensorrt/tensorrt_utils.h"
+#include "src/delegate/tensorrt/op/activation_tensorrt.h"
 namespace mindspore::lite {
 constexpr int BIAS_INDEX = 2;
 
@@ -105,6 +106,22 @@ int MatMulTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     bias_layer->setName(bias_layer_name.c_str());
     out_tensor = bias_layer->getOutput(0);
   }
+
+  // add activation
+  const schema::MatMulFusion *matmul_op = this->op_primitive_->value_as_MatMulFusion();
+  MS_CHECK_TRUE_RET(matmul_op != nullptr, RET_ERROR);
+  if (matmul_op->activation_type() != schema::ActivationType::ActivationType_NO_ACTIVATION) {
+    nvinfer1::ILayer *activation_layer =
+      ActivationTensorRT::AddActivation(network, matmul_op->activation_type(), 0, 0, 0, out_tensor);
+    if (activation_layer == nullptr) {
+      MS_LOG(ERROR) << "addActivation for matmul failed";
+      return RET_ERROR;
+    }
+    activation_layer->setName((op_name_ + "_activation").c_str());
+    activation_layer->getOutput(0)->setName((op_name_ + "_output").c_str());
+    out_tensor = activation_layer->getOutput(0);
+  }
+
   out_tensor->setName((op_name_ + "_output").c_str());
   MS_LOG(DEBUG) << "output " << GetTensorFormat(out_tensor);
   this->AddInnerOutTensors(ITensorHelper{out_tensor});
