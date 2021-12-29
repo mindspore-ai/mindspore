@@ -46,7 +46,7 @@ namespace parallel {
 #define DEFAULT_TRIANGLE_STAR_STRATEGY_OVERWRITE true;
 #define DEFAULT_DP_ALGO_ENABLE_APPROX false
 #define DEFAULT_DP_ALGO_APPROX_EPSILON 0.1
-#define DEFAULT_DP_ALGO_SINGLE_LOOP true
+#define DEFAULT_DP_ALGO_SINGLE_LOOP false
 
 class CostModelContext {
  public:

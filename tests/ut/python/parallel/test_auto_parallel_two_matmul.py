@@ -122,7 +122,7 @@ def test_two_matmul():
     algo_epsilon = get_algo_parameters("algo_approxi_epsilon")
     assert algo_epsilon == 0.001
 
-    expecte_single_loop = True
+    expecte_single_loop = False
     signle_loop = _get_algo_single_loop()
     assert expecte_single_loop == signle_loop
     expecte_single_loop = False
