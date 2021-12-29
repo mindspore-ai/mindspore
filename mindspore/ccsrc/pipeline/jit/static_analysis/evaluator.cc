@@ -144,7 +144,6 @@ AbstractBasePtr BaseFuncGraphEvaluator::LaunchStackFrame(const AnalysisEnginePtr
       EnterStackFrame(engine, current_stack_frame, new_stack_frame);
       // Update current stack frame.
       stack_frames.push(new_stack_frame);
-      current_stack_frame = new_stack_frame;
       MS_LOG(DEBUG) << "[" << this << "/StackFrame] Jump to new func graph, " << new_stack_frame;
       continue;
     }
