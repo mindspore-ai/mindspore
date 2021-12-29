@@ -29,7 +29,7 @@ class Assign(Primitive):
     Assigns `Parameter` with a value.
 
     Inputs of `variable` and `value` comply with the implicit type conversion rules to make the data types consistent.
-    If they have different data types, lower priority data type will be converted to
+    If they have different data types, the lower priority data type will be converted to
     the relatively highest priority data type.
 
     Inputs:
@@ -486,7 +486,7 @@ class CheckBprop(PrimitiveWithInfer):
         - **input_y** (tuple[Tensor]) - The `input_y` contains the inputs of bprop to check against.
 
     Outputs:
-        (tuple[Tensor]), the `input_x`,
+        Tuple[Tensor], the `input_x`,
         if data type and shape of corresponding elements from `input_x` and `input_y` are the same.
 
     Raises:

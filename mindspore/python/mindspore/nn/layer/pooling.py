@@ -178,7 +178,7 @@ class MaxPool1d(_PoolNd):
         - **x** (Tensor) - Tensor of shape :math:`(N, C, L_{in})`.
 
     Outputs:
-        Tensor of shape :math:`(N, C, L_{out}))`.
+        Tensor of shape :math:`(N, C, L_{out})`.
 
     Raises:
         TypeError: If `kernel_size` or `strides` is not an int.

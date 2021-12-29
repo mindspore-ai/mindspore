@@ -771,7 +771,7 @@ class LayerNorm(Cell):
         y = \frac{x - \mathrm{E}[x]}{\sqrt{\mathrm{Var}[x] + \epsilon}} * \gamma + \beta
 
     Args:
-        normalized_shape (Union(tuple[int], list[int]): The normalization is performed over axis
+        normalized_shape (Union(tuple[int], list[int])): The normalization is performed over axis
             `begin_norm_axis ... R - 1`.
         begin_norm_axis (int): The first normalization dimension: normalization will be performed along dimensions
             `begin_norm_axis: rank(inputs)`, the value should be in [-1, rank(input)). Default: -1.

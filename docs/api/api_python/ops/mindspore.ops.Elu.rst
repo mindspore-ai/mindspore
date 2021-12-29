@@ -3,7 +3,7 @@ mindspore.ops.Elu
 
 .. py:class:: mindspore.ops.Elu(*args, **kwargs)
 
-    指数线性单元激活函数（Exponential Linear Uint activation function）。
+    指数线性单元激活函数（Exponential Linear Unit activation function）。
 
     对输入的每个元素计算Elu。该激活函数定义如下：
 

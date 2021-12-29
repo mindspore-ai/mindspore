@@ -296,7 +296,7 @@ class Softmax(Primitive):
     Softmax operation.
 
     Applies the Softmax operation to the input tensor on the specified axis.
-    Supposes a slice in the given aixs :math:`x`, then for each element :math:`x_i`,
+    Supposes a slice in the given axis :math:`x`, then for each element :math:`x_i`,
     the Softmax function is shown as follows:
 
     .. math::
@@ -347,7 +347,7 @@ class LogSoftmax(Primitive):
     Log Softmax activation function.
 
     Applies the Log Softmax function to the input tensor on the specified axis.
-    Supposes a slice in the given aixs, :math:`x` for each element :math:`x_i`,
+    Supposes a slice in the given axis, :math:`x` for each element :math:`x_i`,
     the Log Softmax function is shown as follows:
 
     .. math::
@@ -2540,7 +2540,7 @@ class ApplyMomentum(Primitive):
 
     Inputs of `variable`, `accumulation` and `gradient` comply with the implicit type conversion rules
     to make the data types consistent.
-    If they have different data types, lower priority data type will be converted to
+    If they have different data types, the lower priority data type will be converted to
     the relatively highest priority data type.
 
     Refer to :class:`mindspore.nn.Momentum` for more details about the formula and usage.
@@ -3642,7 +3642,7 @@ class PReLU(PrimitiveWithInfer):
     Raises:
         TypeError: If dtype of `x` or `weight` is neither float16 nor float32.
         TypeError: If the `x` or the `weight` is not a Tensor.
-        ValueError: If the `x` is a 0-D or 1-D Tensor on Ascned.
+        ValueError: If the `x` is a 0-D or 1-D Tensor on Ascend.
         ValueError: If the `weight` is not a 1-D Tensor.
 
     Supported Platforms:
@@ -4646,7 +4646,7 @@ class FusedSparseAdam(PrimitiveWithInfer):
     `epsilon`.
 
     All of inputs except `indices` comply with the implicit type conversion rules to make the data types consistent.
-    If they have different data types, lower priority data type will be converted to
+    If they have different data types, the lower priority data type will be converted to
     the relatively highest priority data type.
 
     Args:
@@ -4796,7 +4796,7 @@ class FusedSparseLazyAdam(PrimitiveWithInfer):
     `epsilon`.
 
     All of inputs except `indices` comply with the implicit type conversion rules to make the data types consistent.
-    If they have different data types, lower priority data type will be converted to
+    If they have different data types, the lower priority data type will be converted to
     the relatively highest priority data type.
 
     Args:
@@ -4928,7 +4928,7 @@ class FusedSparseFtrl(PrimitiveWithInfer):
     Merges the duplicate value of the gradient and then updates relevant entries according to the FTRL-proximal scheme.
 
     All inputs except `indices` comply with the implicit type conversion rules to make the data types consistent.
-    If they have different data types, lower priority data type will be converted to
+    If they have different data types, the lower priority data type will be converted to
     the relatively highest priority data type.
 
     Args:
@@ -5045,7 +5045,7 @@ class FusedSparseProximalAdagrad(PrimitiveWithInfer):
         \end{array}
 
     All of inputs except `indices` comply with the implicit type conversion rules to make the data types consistent.
-    If they have different data types, lower priority data type will be converted to
+    If they have different data types, the lower priority data type will be converted to
     the relatively highest priority data type.
 
     Args:
@@ -5333,7 +5333,7 @@ class ApplyAdaMax(Primitive):
 
     Inputs of `var`, `m`, `v` and `grad` comply with the implicit type conversion rules
     to make the data types consistent.
-    If they have different data types, lower priority data type will be converted to
+    If they have different data types, the lower priority data type will be converted to
     the relatively highest priority data type.
 
     Inputs:
@@ -5440,7 +5440,7 @@ class ApplyAdadelta(Primitive):
 
     Inputs of `var`, `accum`, `accum_update` and `grad` comply with the implicit type conversion rules
     to make the data types consistent.
-    If they have different data types, lower priority data type will be converted to
+    If they have different data types, the lower priority data type will be converted to
     the relatively highest priority data type.
 
     Inputs:
@@ -5534,7 +5534,7 @@ class ApplyAdagrad(Primitive):
 
     Inputs of `var`, `accum` and `grad`  comply with the implicit type conversion rules
     to make the data types consistent.
-    If they have different data types, lower priority data type will be converted to
+    If they have different data types, the lower priority data type will be converted to
     the relatively highest priority data type.
 
     Args:
@@ -5613,7 +5613,7 @@ class ApplyAdagradV2(Primitive):
 
     Inputs of `var`, `accum` and `grad` comply with the implicit type conversion rules
     to make the data types consistent.
-    If they have different data types, lower priority data type will be converted to
+    If they have different data types, the lower priority data type will be converted to
     the relatively highest priority data type.
 
     Note:
@@ -5698,7 +5698,7 @@ class SparseApplyAdagrad(PrimitiveWithInfer):
 
     Inputs of `var`, `accum` and `grad` comply with the implicit type conversion rules
     to make the data types consistent.
-    If they have different data types, lower priority data type will be converted to
+    If they have different data types, the lower priority data type will be converted to
     the relatively highest priority data type.
 
     Args:
@@ -5799,7 +5799,7 @@ class SparseApplyAdagradV2(PrimitiveWithInfer):
 
     Inputs of `var`, `accum` and `grad` comply with the implicit type conversion rules
     to make the data types consistent.
-    If they have different data types, lower priority data type will be converted to
+    If they have different data types, the lower priority data type will be converted to
     the relatively highest priority data type.
 
     Args:
@@ -5901,7 +5901,7 @@ class ApplyProximalAdagrad(Primitive):
 
     Inputs of `var`, `accum` and `grad` comply with the implicit type conversion rules
     to make the data types consistent.
-    If they have different data types, lower priority data type will be converted to
+    If they have different data types, the lower priority data type will be converted to
     the relatively highest priority data type.
 
     Args:
@@ -5911,7 +5911,7 @@ class ApplyProximalAdagrad(Primitive):
     Inputs:
         - **var** (Parameter) - Variable to be updated. The data type must be float16 or float32.
           The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
-        - **accum** (Parameter) - Accumulation to be updated. Must has the same shape and dtype as `var`.
+        - **accum** (Parameter) - Accumulation to be updated. Must have the same shape and dtype as `var`.
         - **lr** (Union[Number, Tensor]) - The learning rate value, must be scalar. The data type must be
           float16 or float32.
         - **l1** (Union[Number, Tensor]) - l1 regularization strength, must be scalar. The data type must be
@@ -5994,7 +5994,7 @@ class SparseApplyProximalAdagrad(PrimitiveWithCheck):
 
     Inputs of `var`, `accum` and `grad` comply with the implicit type conversion rules
     to make the data types consistent.
-    If they have different data types, lower priority data type will be converted to
+    If they have different data types, the lower priority data type will be converted to
     the relatively highest priority data type.
 
     Args:
@@ -6010,7 +6010,7 @@ class SparseApplyProximalAdagrad(PrimitiveWithCheck):
         - **l1** (Union[Number, Tensor]) - l1 regularization strength, must be a float number or
           a scalar tensor with float16 or float32 data type.
         - **l2** (Union[Number, Tensor]) - l2 regularization strength, must be a float number or
-          a scalar tensor with float16 or float32 data type..
+          a scalar tensor with float16 or float32 data type.
         - **grad** (Tensor) - A tensor of the same type as `var` and
           grad.shape[1:] = var.shape[1:] if var.shape > 1.
         - **indices** (Tensor) - A tensor of indices in the first dimension of `var` and `accum`.
@@ -6109,7 +6109,7 @@ class ApplyAddSign(PrimitiveWithInfer):
 
     Inputs of `var`, `accum` and `grad`  comply with the implicit type conversion rules
     to make the data types consistent.
-    If they have different data types, lower priority data type will be converted to
+    If they have different data types, the lower priority data type will be converted to
     the relatively highest priority data type.
 
     Inputs:
@@ -6200,7 +6200,7 @@ class ApplyPowerSign(PrimitiveWithInfer):
     All of inputs comply with the implicit type conversion rules to make the data types consistent.
     If `lr`, `logbase`, `sign_decay` or `beta` is a number, the number is automatically converted to Tensor,
     and the data type is consistent with the Tensor data type involved in the operation.
-    If inputs are tensors and have different data types, lower priority data type will be converted to
+    If inputs are tensors and have different data types, the lower priority data type will be converted to
     the relatively highest priority data type.
 
     Inputs:
@@ -6320,7 +6320,7 @@ class ApplyGradientDescent(Primitive):
     where :math:`\alpha` represents `alpha`, :math:`\delta` represents `delta`.
 
     Inputs of `var` and `delta` comply with the implicit type conversion rules to make the data types consistent.
-    If they have different data types, lower priority data type will be converted to
+    If they have different data types, the lower priority data type will be converted to
     the relatively highest priority data type.
 
     Inputs:
@@ -6385,7 +6385,7 @@ class ApplyProximalGradientDescent(PrimitiveWithInfer):
     where :math:`\alpha` represents `alpha`, :math:`\delta` represents `delta`.
 
     Inputs of `var` and `delta` comply with the implicit type conversion rules to make the data types consistent.
-    If they have different data types, lower priority data type will be converted to
+    If they have different data types, the lower priority data type will be converted to
     the relatively highest priority data type.
 
     Inputs:
@@ -6616,7 +6616,7 @@ class SparseApplyFtrl(PrimitiveWithCheck):
     For more details, please refer to :class:`mindspore.nn.FTRL`.
 
     All of inputs except `indices` comply with the implicit type conversion rules to make the data types consistent.
-    If they have different data types, lower priority data type will be converted to
+    If they have different data types, the lower priority data type will be converted to
     the relatively highest priority data type.
 
     Args:
@@ -6721,7 +6721,7 @@ class SparseApplyFtrlV2(PrimitiveWithInfer):
     l2_shrinkage, than class SparseApplyFtrl.
 
     All of inputs except `indices` comply with the implicit type conversion rules to make the data types consistent.
-    If they have different data types, lower priority data type will be converted to
+    If they have different data types, the lower priority data type will be converted to
     the relatively highest priority data type.
 
 
@@ -8202,7 +8202,7 @@ class SparseApplyAdadelta(Primitive):
 
     Inputs of 'var', 'accum', 'accum_update' and 'grad' comply with the implicit type conversion rules
     to make the data types consistent. Besides, inputs of 'lr' and 'rho' also support implicit type conversion.
-    If they have different data types, lower priority data type will be converted to
+    If they have different data types, the lower priority data type will be converted to
     relatively highest priority data type.
     RuntimeError exception will be thrown when the data type conversion of Parameter is required.
 
@@ -8416,7 +8416,7 @@ class Conv3DTranspose(PrimitiveWithInfer):
         kernel_size (Union[int, tuple[int]]): The data type is int or a tuple of 3 integers.
             Specifies the depth, height and width of the 3D convolution window.
             Single int means the value is for the depth, height and the width of the kernel.
-            A tuple of 3 ints means the first value is for the depth, second value is for height and the
+            A tuple of 3 ints means the first value is for the depth, the second value is for the height and the
             other is for the width of the kernel.
         mode (int): Modes for different convolutions. Default is 1. It is currently not used.
         pad_mode (str): Specifies padding mode. The optional values are
@@ -8734,7 +8734,7 @@ class ApplyAdagradDA(Primitive):
 
     Inputs of `var`, `gradient_accumulator`, `gradient_squared_accumulator` and `grad`
     comply with the implicit type conversion rules to make the data types consistent.
-    If they have different data types, lower priority data type will be converted to
+    If they have different data types, the lower priority data type will be converted to
     the relatively highest priority data type.
 
     Args:
@@ -8845,7 +8845,7 @@ class SparseApplyRMSProp(Primitive):
 
     Inputs of `var`, `ms`, `mom` and `grad` comply with the implicit type conversion rules
     to make the data types consistent.
-    If they have different data types, lower priority data type will be converted to
+    If they have different data types, the lower priority data type will be converted to
     the relatively highest priority data type.
 
     Args:
@@ -8964,7 +8964,7 @@ class ApplyKerasMomentum(Primitive):
 
     Inputs of `var`, `accum` and `grad` comply with the implicit type conversion rules
     to make the data types consistent.
-    If they have different data types, lower priority data type will be converted to
+    If they have different data types, the lower priority data type will be converted to
     relatively highest priority data type.
     RuntimeError exception will be thrown when the data type conversion of Parameter is required.
 

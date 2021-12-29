@@ -314,7 +314,7 @@ class MSSSIM(Cell):
     Args:
         max_val (Union[int, float]): The dynamic range of the pixel values (255 for 8-bit grayscale images).
           Default: 1.0.
-        power_factors (Union[tuple, list]): Iterable of weights for each scal e.
+        power_factors (Union[tuple, list]): Iterable of weights for each scale.
           Default: (0.0448, 0.2856, 0.3001, 0.2363, 0.1333). Default values obtained by Wang et al.
         filter_size (int): The size of the Gaussian filter. Default: 11.
         filter_sigma (float): The standard deviation of Gaussian kernel. Default: 1.5.

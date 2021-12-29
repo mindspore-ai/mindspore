@@ -602,7 +602,7 @@ class TBERegOp(RegOp):
         The behavior type of operator, such as broadcast, reduce and so on.
 
         Args:
-            pattern (str): Value of op pattern.
+            pattern (str): Value of op pattern. Default: None.
         """
         if pattern is not None and self._is_string(pattern):
             self.op_pattern_ = pattern

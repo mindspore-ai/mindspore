@@ -514,7 +514,7 @@ class Conv3d(_Conv):
         kernel_size (Union[int, tuple[int]]): The data type is int or a tuple of 3 integers.
             Specifies the depth, height and width of the 3D convolution window.
             Single int means the value is for the depth, height and the width of the kernel.
-            A tuple of 3 ints means the first value is for the depth, second value is for height and the
+            A tuple of 3 ints means the first value is for the depth, the second value is for the height and the
             other is for the width of the kernel.
         stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the depth, height and width of movement are both strides, or a tuple of three int numbers that

@@ -161,9 +161,9 @@ class Primitive(Primitive_):
             In other parallel modes, strategies set here will be ignored.
 
         Args:
-            in_strategy (tuple): Describe the split strategy of operator input.
-            out_strategy (tuple): Describe the split strategy of operator output,
-                                  it is only for certain operators, such as MatMul.
+            in_strategy (tuple): Describe the split strategy of operator input. Default: None.
+            out_strategy (tuple): Describe the split strategy of operator output, it is only for certain operators,
+                                  such as MatMul. Default: None.
         Examples:
             >>> from mindspore import ops
             >>> add = ops.Add()

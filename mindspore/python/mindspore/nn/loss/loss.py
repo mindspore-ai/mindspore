@@ -111,7 +111,7 @@ class LossBase(Cell):
                 additional dimensions.
             weights (Union[float, Tensor]): Optional `Tensor` whose rank is either 0, or the same rank as inputs,
                 and must be broadcastable to inputs (i.e., all dimensions must be either `1`,
-                or the same as the corresponding inputs dimension).
+                or the same as the corresponding inputs dimension). Default: 1.0.
 
         Examples:
             >>> class Net(nn.LossBase):
@@ -1222,8 +1222,8 @@ class BCEWithLogitsLoss(LossBase):
             If not None, it can be broadcast to a tensor with shape of `logits`,
             data type must be float16 or float32. Default: None.
         pos_weight (Tensor, optional): A weight of positive examples. Must be a vector with length equal to the
-            number of classes. If not None, it must can be broadcast to a tensor with shape of `logits`,
-            data type must be float16 or float32. Default: None.
+            number of classes. If not None, it must be broadcast to a tensor with shape of `logits`, data type
+            must be float16 or float32. Default: None.
 
     Inputs:
         - **logits** (Tensor) - Input logits with shape :math:`(N, *)` where :math:`*` means, any number
