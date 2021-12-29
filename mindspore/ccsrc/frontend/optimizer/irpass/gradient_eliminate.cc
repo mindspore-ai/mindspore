@@ -127,6 +127,10 @@ bool ExpandJPrim::operator()(const FuncGraphPtr &func_graph, const OptimizerPtr 
   for (auto &j_node : todo) {
     auto expanded_j = internal::ExpandJ(j_node->input(1)->cast<ValueNodePtr>(), optimizer);
     manager->Replace(j_node, expanded_j);
+    if (j_node->func_graph()->has_flag(FUNC_GRAPH_FLAG_K_GRAPH)) {
+      MS_LOG(DEBUG) << j_node->func_graph()->ToString() << " has FUNC_GRAPH_FLAG_K_GRAPH flag.";
+      j_node->func_graph()->set_flag(FUNC_GRAPH_FLAG_K_GRAPH, false);
+    }
     change = true;
   }
   return change;

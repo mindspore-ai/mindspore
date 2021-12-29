@@ -663,11 +663,12 @@ GradOperation::GradOperation(const std::string &name, bool get_all, bool get_by_
   }
 }
 
-FuncGraphPtr GradOperation::GetGrad(const AnfNodePtr &k, const AnfNodePtr &weights, const AnfNodePtr &position,
+FuncGraphPtr GradOperation::GetGrad(const AnfNodePtr &j, const AnfNodePtr &weights, const AnfNodePtr &position,
                                     const std::vector<AnfNodePtr> &forward_graph_params, bool enable_tuple_grad,
                                     const std::vector<AnfNodePtr> &weight_args) {
   FuncGraphPtr k_child = std::make_shared<FuncGraph>();
   k_child->set_flag(FUNC_GRAPH_FLAG_CORE, true);
+  k_child->set_flag(FUNC_GRAPH_FLAG_K_GRAPH, true);
 
   AnfNodePtr weights_node = nullptr;
   AnfNodePtr position_node = nullptr;
@@ -681,7 +682,7 @@ FuncGraphPtr GradOperation::GetGrad(const AnfNodePtr &k, const AnfNodePtr &weigh
   }
 
   std::vector<AnfNodePtr> inputs;
-  inputs.push_back(k);
+  inputs.push_back(j);
   for (size_t i = 0; i < forward_graph_params.size(); ++i) {
     inputs.push_back(k_child->add_parameter());
   }
