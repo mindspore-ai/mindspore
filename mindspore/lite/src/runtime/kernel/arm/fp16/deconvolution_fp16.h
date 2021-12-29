@@ -38,6 +38,7 @@ class DeConvolutionFp16CPUKernel : public ConvolutionBaseCPUKernel {
  public:
   int DoDeconv(int task_id);
   int DoDeconvPre(int task_id);
+  int DoDeconvPost(int task_id);
 
  private:
   int InitRunBuf();
@@ -52,7 +53,6 @@ class DeConvolutionFp16CPUKernel : public ConvolutionBaseCPUKernel {
   int kernel_plane_ = 0;
   int output_plane_ = 0;
   int thread_count_ = 0;
-  int thread_stride_ = 0;
   float16_t *pack_input_ = nullptr;
   float16_t *pack_output_ = nullptr;
   float16_t *tmp_buffer_ = nullptr;

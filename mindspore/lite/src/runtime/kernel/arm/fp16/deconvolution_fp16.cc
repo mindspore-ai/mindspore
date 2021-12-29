@@ -104,9 +104,7 @@ int DeConvolutionFp16CPUKernel::InitParam() {
   matmul_param_->row_16_ = UP_ROUND(matmul_param_->row_, C16NUM);
   matmul_param_->col_8_ = UP_ROUND(conv_param_->output_channel_, C8NUM) * kernel_plane_;
 
-  thread_count_ = MSMIN(op_parameter_->thread_num_, UP_DIV(conv_param_->output_channel_, C8NUM));
-  NNACL_CHECK_ZERO_RETURN_ERR(thread_count_);
-  thread_stride_ = UP_DIV(UP_DIV(conv_param_->output_channel_, C8NUM), thread_count_);
+  thread_count_ = op_parameter_->thread_num_;
   return RET_OK;
 }
 
@@ -150,7 +148,7 @@ void DeConvolutionFp16CPUKernel::FreeRunBuf() {
   return;
 }
 
-static int DeConvPreFp16Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+static int DeConvPreFp16Run(void *cdata, int task_id, float, float) {
   auto deconv = reinterpret_cast<DeConvolutionFp16CPUKernel *>(cdata);
   auto error_code = deconv->DoDeconvPre(task_id);
   if (error_code != RET_OK) {
@@ -175,7 +173,7 @@ int DeConvolutionFp16CPUKernel::DoDeconvPre(int task_id) {
   return RET_OK;
 }
 
-static int DeConvFp16Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+static int DeConvFp16Run(void *cdata, int task_id, float, float) {
   auto deconv = reinterpret_cast<DeConvolutionFp16CPUKernel *>(cdata);
   auto error_code = deconv->DoDeconv(task_id);
   if (error_code != RET_OK) {
@@ -186,24 +184,44 @@ static int DeConvFp16Run(void *cdata, int task_id, float lhs_scale, float rhs_sc
 }
 
 int DeConvolutionFp16CPUKernel::DoDeconv(int task_id) {
-  int cur_stride = UP_DIV(conv_param_->output_channel_, C8NUM) - task_id * thread_stride_;
-  int oc = MSMIN(thread_stride_, cur_stride);
-  cur_stride = conv_param_->output_channel_ - task_id * thread_stride_ * C8NUM;
-  int oc_res = MSMIN(thread_stride_ * C8NUM, cur_stride);
-  if (oc <= 0) {
+  int col_8 = UP_DIV(matmul_param_->col_8_, C8NUM);
+  int stride = UP_DIV(col_8, thread_count_) * C8NUM;
+  int cur_stride = matmul_param_->col_8_ - task_id * stride;
+  int current_oc = MSMIN(stride, cur_stride);
+  if (current_oc <= 0) {
     return RET_OK;
   }
 
-  auto tmp_buf = tmp_buffer_ + task_id * thread_stride_ * C8NUM * kernel_plane_ * matmul_param_->row_16_;
-  MatMulFp16(pack_input_,
-             reinterpret_cast<float16_t *>(packed_weight_) +
-               task_id * thread_stride_ * C8NUM * kernel_plane_ * matmul_param_->deep_,
-             tmp_buf, nullptr, ActType_No, matmul_param_->deep_, matmul_param_->row_, oc * C8NUM * kernel_plane_, 0,
-             OutType_C8);
+  auto tmp_output = tmp_buffer_ + task_id * stride * matmul_param_->row_16_;
+  auto tmp_weight = reinterpret_cast<float16_t *>(packed_weight_) + task_id * stride * matmul_param_->deep_;
+  MatMulFp16(pack_input_, tmp_weight, tmp_output, nullptr, ActType_No, matmul_param_->deep_, matmul_param_->row_,
+             current_oc, 0, OutType_C8);
+  return RET_OK;
+}
 
-  DeConvPostFp16(tmp_buf, pack_output_ + task_id * thread_stride_ * C8NUM * output_plane_,
-                 reinterpret_cast<float16_t *>(bias_data_) + task_id * thread_stride_ * C8NUM,
-                 batch_output_ + task_id * thread_stride_ * C8NUM, oc_res, conv_param_);
+static int DeConvPostFp16Run(void *cdata, int task_id, float, float) {
+  auto deconv = reinterpret_cast<DeConvolutionFp16CPUKernel *>(cdata);
+  auto error_code = deconv->DoDeconvPost(task_id);
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "DoDeconvPost error task_id[" << task_id << "] error_code[" << error_code << "]";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+int DeConvolutionFp16CPUKernel::DoDeconvPost(int task_id) {
+  int oc8 = UP_DIV(conv_param_->output_channel_, C8NUM);
+  int stride = UP_DIV(oc8, thread_count_) * C8NUM;
+  int cur_stride = conv_param_->output_channel_ - task_id * stride;
+  int cur_res = MSMIN(stride, cur_stride);
+  if (cur_res <= 0) {
+    return RET_OK;
+  }
+
+  auto tmp_buf = tmp_buffer_ + task_id * stride * kernel_plane_ * matmul_param_->row_16_;
+  DeConvPostFp16(tmp_buf, pack_output_ + task_id * stride * output_plane_,
+                 reinterpret_cast<float16_t *>(bias_data_) + task_id * stride, batch_output_ + task_id * stride,
+                 cur_res, conv_param_);
   return RET_OK;
 }
 
@@ -280,6 +298,13 @@ int DeConvolutionFp16CPUKernel::Run() {
       return error_code;
     }
 
+    error_code = ParallelLaunch(this->ms_context_, DeConvPostFp16Run, this, thread_count_);
+    if (error_code != RET_OK) {
+      MS_LOG(ERROR) << "deconv fp16 post run error! error_code[" << error_code << "]";
+      FreeRunBuf();
+      return error_code;
+    }
+
     PackNC8HW8ToNHWCFp16(pack_output_, batch_output_, 1, conv_param_->output_w_ * conv_param_->output_h_,
                          conv_param_->output_channel_);
   }
@@ -301,7 +326,7 @@ kernel::InnerKernel *CpuDeConvFp16KernelCreator(const std::vector<lite::Tensor *
     kernel = new (std::nothrow)
       DeconvolutionDepthwiseFp16CPUKernel(op_parameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
   } else if (conv_param->group_ == 1) {
-    if ((conv_param->stride_h_ != 1 || conv_param->stride_w_ != 1) &&
+    if ((conv_param->stride_h_ != 1 && conv_param->stride_w_ != 1) &&
 #ifndef ENABLE_ARM32
         (conv_param->kernel_h_ / conv_param->stride_h_ > C2NUM ||
          conv_param->kernel_w_ / conv_param->stride_w_ > C2NUM) &&
