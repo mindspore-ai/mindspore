@@ -74,7 +74,8 @@ static mindspore::HashMap<int, TypeId> kDefaultValueSwitchMap{
   {mind_ir::TensorProto_DataType_FLOAT64, kNumberTypeFloat64},
   {mind_ir::TensorProto_DataType_DOUBLE, kNumberTypeFloat64},
   {mind_ir::TensorProto_DataType_STRING, kObjectTypeString},
-};
+  {mind_ir::TensorProto_DataType_COMPLEX64, kNumberTypeComplex64},
+  {mind_ir::TensorProto_DataType_COMPLEX128, kNumberTypeComplex128}};
 
 template <typename T, typename P>
 std::shared_ptr<T> ParserAttr(const std::string &str, const mindspore::HashMap<string, P> &kv) {

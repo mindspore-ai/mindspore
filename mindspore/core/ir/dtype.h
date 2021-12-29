@@ -436,6 +436,7 @@ inline const TypePtr kKeyword = std::make_shared<Keyword>();
 inline const TypePtr kTensorType = std::make_shared<TensorType>();
 inline const TypePtr kTensorTypeFP16 = std::make_shared<TensorType>(std::make_shared<Float>(16));
 inline const TypePtr kTensorTypeFP32 = std::make_shared<TensorType>(std::make_shared<Float>(32));
+inline const TypePtr kTensorTypeFP64 = std::make_shared<TensorType>(std::make_shared<Float>(64));
 inline const TypePtr kCSRTensorType = std::make_shared<CSRTensorType>();
 }  // namespace mindspore
 
