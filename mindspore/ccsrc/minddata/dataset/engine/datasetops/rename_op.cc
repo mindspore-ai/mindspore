@@ -16,8 +16,8 @@
 #include "minddata/dataset/engine/datasetops/rename_op.h"
 
 #include <set>
-#include <vector>
 #include <unordered_map>
+#include <vector>
 
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/util/log_adapter.h"

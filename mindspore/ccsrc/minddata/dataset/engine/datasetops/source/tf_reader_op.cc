@@ -24,8 +24,6 @@
 #include <utility>
 #include <vector>
 
-#include "utils/file_utils.h"
-#include "proto/example.pb.h"
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/core/global_context.h"
 #include "minddata/dataset/engine/data_schema.h"
@@ -35,6 +33,8 @@
 #include "minddata/dataset/util/status.h"
 #include "minddata/dataset/util/task_manager.h"
 #include "minddata/dataset/util/wait_post.h"
+#include "proto/example.pb.h"
+#include "utils/file_utils.h"
 #include "utils/system/crc32c.h"
 
 namespace mindspore {
