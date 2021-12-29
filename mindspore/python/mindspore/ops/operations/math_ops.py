@@ -3933,17 +3933,6 @@ class LogicalAnd(_LogicBinaryOp):
         [ True False False]
     """
 
-    def infer_dtype(self, x_dtype, y_dtype):
-        return _LogicBinaryOp.do_infer_dtype(x_dtype, y_dtype, (mstype.bool_,), self.name)
-
-    def infer_value(self, x, y):
-        if x is not None and y is not None:
-            x = x.asnumpy()
-            y = y.asnumpy()
-            out = np.array(np.logical_and(x, y))
-            return Tensor(out)
-        return None
-
 
 class LogicalOr(_LogicBinaryOp):
     """

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ constexpr auto kNameLogicalAnd = "LogicalAnd";
 class MS_CORE_API LogicalAnd : public PrimitiveC {
  public:
   /// \brief Constructor.
-  LogicalAnd() : PrimitiveC(kNameLogicalAnd) { InitIOName({"x", "y"}, {"output"}); }
+  LogicalAnd() : PrimitiveC(kNameLogicalAnd) { InitIOName({"x1", "x2"}, {"y"}); }
   /// \brief Destructor.
   ~LogicalAnd() = default;
   MS_DECLARE_PARENT(LogicalAnd, PrimitiveC);
@@ -41,6 +41,7 @@ class MS_CORE_API LogicalAnd : public PrimitiveC {
 };
 AbstractBasePtr LogicalAndInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                 const std::vector<AbstractBasePtr> &input_args);
+using kPrimLogicalAndPtr = std::shared_ptr<LogicalAnd>;
 }  // namespace ops
 }  // namespace mindspore
 
