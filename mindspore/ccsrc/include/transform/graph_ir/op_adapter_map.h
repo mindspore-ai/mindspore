@@ -118,6 +118,7 @@ constexpr const char kNamePadV1[] = "PadV1";
 constexpr const char kNameMirrorPad[] = "MirrorPad";
 constexpr const char kNameMirrorPadGrad[] = "MirrorPadGrad";
 constexpr const char kNameGatherNd[] = "GatherNd";
+constexpr const char kNameGatherD[] = "GatherD";
 constexpr const char kNameArgmax[] = "Argmax";
 constexpr const char kNameArgmin[] = "Argmin";
 constexpr const char kNameArgMaxWithValue[] = "ArgMaxWithValue";
