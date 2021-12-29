@@ -99,12 +99,12 @@ Status NodeOffloadPass::OffloadNodes::Visit(std::shared_ptr<MapNode> node, bool 
           << invalid_ops;
 
         // See if the operations can be split into two Map Nodes
-        if (last_invalid_op_pos != temp_operations.size()) {
+        if (last_invalid_op_pos != static_cast<int>(temp_operations.size())) {
           MS_LOG(WARNING) << "Map operation will be split after " << invalid_ops.back()
                           << ", with the second map operation being offloaded.";
-          std::vector<std::shared_ptr<TensorOperation>> non_offload_ops(temp_operations.begin(),
-                                                                        temp_operations.begin() + last_invalid_op_pos);
-          std::vector<std::shared_ptr<TensorOperation>> offload_ops(temp_operations.begin() + last_invalid_op_pos,
+          std::vector<std::shared_ptr<TensorOperation>> non_offload_ops(
+            temp_operations.begin(), (temp_operations.begin() + last_invalid_op_pos));
+          std::vector<std::shared_ptr<TensorOperation>> offload_ops((temp_operations.begin() + last_invalid_op_pos),
                                                                     temp_operations.end());
 
           // First set operations to offload_ops to prepare for copy
@@ -112,10 +112,10 @@ Status NodeOffloadPass::OffloadNodes::Visit(std::shared_ptr<MapNode> node, bool 
           // Copy node (returns a copy of the node, but without children)
           std::shared_ptr<DatasetNode> offload_node = node->Copy();
           // Set the number of parallel workers of the new node to be the same as current one.
-          offload_node->SetNumWorkers(node->NumWorkers());
+          offload_node = offload_node->SetNumWorkers(node->NumWorkers());
           node->setOperations(non_offload_ops);
           // Insert the split offload map node above the original map node in the ir tree.
-          node->InsertAbove(offload_node);
+          RETURN_IF_NOT_OK(node->InsertAbove(offload_node));
           // Add the offload map node to nodes_to_offload
           nodes_to_offload_.push_back(offload_node);
         }

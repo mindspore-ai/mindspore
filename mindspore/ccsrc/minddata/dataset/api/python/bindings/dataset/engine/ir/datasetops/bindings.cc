@@ -193,7 +193,7 @@ PYBIND_REGISTER(MapNode, 2, ([](const py::module *m) {
                     .def(py::init([](std::shared_ptr<DatasetNode> self, py::list operations, py::list input_columns,
                                      py::list output_columns, py::list project_columns,
                                      std::vector<std::shared_ptr<PyDSCallback>> py_callbacks, int64_t max_rowsize,
-                                     ManualOffloadMode offload) {
+                                     const ManualOffloadMode offload) {
                       auto map = std::make_shared<MapNode>(
                         self, std::move(toTensorOperations(operations)), toStringVector(input_columns),
                         toStringVector(output_columns), toStringVector(project_columns), nullptr,
