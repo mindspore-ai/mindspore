@@ -2943,7 +2943,8 @@ py::object GradExecutor::CheckAlreadyRun(const prim::GradOperationPtr &grad, con
   bool forward_run = false;
   // Get cell id and input args info
   const auto &cell_id = GetCellId(cell, args);
-  grad_operation_ = std::to_string(grad->get_all_) + std::to_string(grad->get_by_list_) + grad->grad_position_;
+  grad_operation_ = std::to_string(static_cast<int>(grad->get_all_)) +
+                    std::to_string(static_cast<int>(grad->get_by_list_)) + grad->grad_position_;
 
   std::string input_args_id;
   for (size_t i = 0; i < args.size(); ++i) {
