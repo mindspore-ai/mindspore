@@ -36,9 +36,10 @@ class HostKernelMod : public AscendKernelMod {
                                    const std::vector<AddressPtr> &, uint32_t) override;
   device::DynamicKernelPtr GenDynamicKernel(const CNodePtr &cnode_ptr, void *stream_ptr) override = 0;
   bool Init(const AnfNodePtr &anf_node);
+  void InferOp() override;
+  void UpdateOp() override {}
 
  protected:
-  AnfNodePtr anf_node_;
   std::string op_name_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;

@@ -211,3 +211,9 @@ RTS_API rtError_t rtMemGetInfoEx(rtMemInfoType_t memInfoType, size_t *free, size
 RTS_API rtError_t rtProfRegisterCtrlCallback(uint32_t moduleId, rtProfCtrlHandle callback) { return RT_ERROR_NONE; }
 
 RTS_API rtError_t rtGetRtCapability(rtFeatureType_t, int32_t, int64_t *) { return RT_ERROR_NONE; }
+
+RTS_API rtError_t rtKernelLaunchWithHandle(void *handle, const void *devFunc, uint32_t blockDim, void *args,
+                                           uint32_t argsSize, rtSmDesc_t *smDesc, rtStream_t stream,
+                                           const void *kernelInfo) {
+  return RT_ERROR_NONE;
+}

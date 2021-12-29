@@ -68,13 +68,26 @@ class RuntimeCache {
 // Interface for device kernel program information.
 class KernelInfoDevice {
  public:
+  class RuntimeCacheScope {
+   public:
+    RuntimeCacheScope(RuntimeCache &base, std::mutex &mu) : runtime_cache_(base), mu_(mu) { mu_.lock(); }
+    RuntimeCacheScope(const RuntimeCacheScope &other) = delete;
+    RuntimeCacheScope operator=(const RuntimeCacheScope &other) = delete;
+    ~RuntimeCacheScope() { mu_.unlock(); }
+    RuntimeCache &runtime_cache() { return runtime_cache_; }
+
+   private:
+    RuntimeCache &runtime_cache_;
+    std::mutex &mu_;
+  };
   // If kernel program was built and build info is set.
   virtual bool has_build_info() const = 0;
 
-  RuntimeCache *runtime_cache() { return &runtime_cache_; }
+  RuntimeCacheScope runtime_cache() { return RuntimeCacheScope(runtime_cache_, mu_); }
 
  private:
   RuntimeCache runtime_cache_;
+  std::mutex mu_;
 };
 using KernelInfoDevicePtr = std::shared_ptr<KernelInfoDevice>;
 }  // namespace mindspore

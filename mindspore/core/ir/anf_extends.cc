@@ -24,12 +24,21 @@
 #include "ir/visitor.h"
 #include "ir/func_graph.h"
 #include "base/core_ops.h"
+#include "utils/anf_utils.h"
 
 namespace mindspore {
 // namespace to support intermediate representation definition
 // Methods of AnfNode
-TypePtr AnfNode::Type() const { return (abstract_ == nullptr) ? nullptr : abstract_->BuildType(); }
-BaseShapePtr AnfNode::Shape() const { return (abstract_ == nullptr) ? nullptr : abstract_->BuildShape(); }
+TypePtr AnfNode::Type() const {
+  // cppcheck-suppress unreadVariable
+  auto lock = AnfUtils::GetAbstractLock(this);
+  return (abstract_ == nullptr) ? nullptr : abstract_->BuildType();
+}
+BaseShapePtr AnfNode::Shape() const {
+  // cppcheck-suppress unreadVariable
+  auto lock = AnfUtils::GetAbstractLock(this);
+  return (abstract_ == nullptr) ? nullptr : abstract_->BuildShape();
+}
 
 std::string AnfNode::ToString() const {
   return mindspore::label_manage::Label(const_cast<AnfNode *>(this)->shared_from_base<AnfNode>()->debug_info());

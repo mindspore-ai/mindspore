@@ -18,6 +18,8 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <map>
+#include <set>
 #include "nlohmann/json.hpp"
 #include "ir/anf.h"
 #include "ir/dtype.h"
@@ -180,6 +182,8 @@ struct KernelLaunchInfo {
 
 class KernelMod {
  public:
+  KernelMod() {}
+  explicit KernelMod(const AnfNodePtr &anf_node_ptr) : anf_node_(anf_node_ptr) {}
   virtual const std::vector<size_t> &GetInputSizeList() const = 0;
   virtual const std::vector<size_t> &GetOutputSizeList() const = 0;
   virtual const std::vector<size_t> &GetWorkspaceSizeList() const = 0;
@@ -193,6 +197,10 @@ class KernelMod {
   virtual std::vector<size_t> GenParameters() { return {}; }
   virtual void ReleaseResource() {}
 
+  virtual void InferOp() {}
+  virtual void InitOp() {}
+  virtual void UpdateOp() {}
+
   virtual ~KernelMod() = default;
   void set_unique_name(const std::string &unique_name) { unique_name_ = unique_name; }
   void set_fullname(const std::string &fullname) { fullname_ = fullname; }
@@ -205,18 +213,29 @@ class KernelMod {
   const std::vector<AddressPtr> &GetOutputsAddr() { return outputs_addr_; }
   void SetStream(void *stream) { stream_ = stream; }
   void *GetStream() const { return stream_; }
+  void SetAtomicCleanNodes(const std::vector<CNodePtr> &atomic_clean_node) { atomic_clean_nodes_ = atomic_clean_node; }
 
  protected:
+  void InferShape();
+
   std::string kernel_name_;
   std::string unique_name_;
   std::string fullname_;
   bool is_monad_{false};
   void *stream_{nullptr};
+  AnfNodeWeakPtr anf_node_;
+  std::map<uint32_t, tensor::TensorPtr> depend_tensor_map_;
+  std::vector<CNodePtr> atomic_clean_nodes_;
 
  private:
+  void InferShapeForNopNode(AnfNodePtr *input_node);
+  void GetDepndLists(const CNodePtr &cnode);
+  bool InferShapeForDefiniteOutputNode(const CNodePtr &cnode);
+
   std::vector<AddressPtr> inputs_addr_;
   std::vector<AddressPtr> workspaces_addr_;
   std::vector<AddressPtr> outputs_addr_;
+  std::set<uint32_t> depend_list_;
 };
 using KernelModPtr = std::shared_ptr<KernelMod>;
 }  // namespace kernel

@@ -722,9 +722,8 @@ KernelWithIndex AnfRuntimeAlgorithm::GetPrevNodeOutput(const AnfNodePtr &anf_nod
   auto kernel_info = anf_node->kernel_info();
   if (kernel_info) {
     auto runtime_cache = kernel_info->runtime_cache();
-    MS_EXCEPTION_IF_NULL(runtime_cache);
-    if (runtime_cache->is_valid()) {
-      auto output = runtime_cache->get_prev_node_output(input_idx);
+    if (runtime_cache.runtime_cache().is_valid()) {
+      auto output = runtime_cache.runtime_cache().get_prev_node_output(input_idx);
       if (output.first != nullptr) {
         return output;
       }
@@ -740,9 +739,8 @@ KernelWithIndex AnfRuntimeAlgorithm::GetPrevNodeOutput(const AnfNodePtr &anf_nod
   }
   if (kernel_info) {
     auto runtime_cache = kernel_info->runtime_cache();
-    MS_EXCEPTION_IF_NULL(runtime_cache);
-    if (runtime_cache->is_valid()) {
-      runtime_cache->set_prev_node_output(input_idx, res);
+    if (runtime_cache.runtime_cache().is_valid()) {
+      runtime_cache.runtime_cache().set_prev_node_output(input_idx, res);
     }
   }
   return res;
@@ -2024,7 +2022,7 @@ std::vector<int64_t> AnfRuntimeAlgorithm::GetOutputMinShape(const AnfNodePtr &an
   }
 }
 
-bool IsNodeInputDynamicShape(const CNodePtr &anf_node_ptr) {
+bool AnfRuntimeAlgorithm::IsNodeInputDynamicShape(const CNodePtr &anf_node_ptr) {
   MS_EXCEPTION_IF_NULL(anf_node_ptr);
   auto input_num = AnfAlgo::GetInputTensorNum(anf_node_ptr);
   for (size_t i = 0; i < input_num; ++i) {
@@ -2231,6 +2229,7 @@ void AnfRuntimeAlgorithm::InferShape(const CNodePtr &node, std::map<uint32_t, te
   AbstractBasePtrList args_spec_list;
   auto primitive = GetValueNode<PrimitivePtr>(inputs[0]);
   auto input_size = AnfAlgo::GetInputTensorNum(node);
+  std::vector<AnfNodePtr> input_nodes;
   for (size_t i = 0; i < input_size; ++i) {
     auto input_with_index = AnfAlgo::GetPrevNodeOutput(node, i);
     auto real_input = input_with_index.first;
@@ -2246,9 +2245,12 @@ void AnfRuntimeAlgorithm::InferShape(const CNodePtr &node, std::map<uint32_t, te
           // sync data from device to host
           tensor_ptr->data_sync();
         }
-        auto real_abs = real_input->abstract();
+        // cppcheck-suppress unreadVariable
+        auto lock = AnfUtils::GetAbstractLock(real_input.get());
+        MS_EXCEPTION_IF_NULL(real_input->abstract());
+        auto real_abs = real_input->abstract()->Clone();
         if (real_abs->isa<abstract::AbstractTensor>()) {
-          real_input->abstract()->set_value(tensor_ptr);
+          real_abs->set_value(tensor_ptr);
         } else if (real_abs->isa<abstract::AbstractTuple>()) {
           auto tuple_get_item_index = AnfAlgo::GetTupleGetItemOutIndex(cnode_input->cast<CNodePtr>());
           auto abstract_tuple = real_abs->cast<abstract::AbstractTuplePtr>();
@@ -2256,15 +2258,27 @@ void AnfRuntimeAlgorithm::InferShape(const CNodePtr &node, std::map<uint32_t, te
           auto tuple_elements = abstract_tuple->elements()[tuple_get_item_index];
           tuple_elements->set_value(tensor_ptr);
         }
+        real_input->set_abstract(real_abs);
       }
     }
-    AddArgList(&args_spec_list, cnode_input, real_input, i);
+    bool is_cnode_input = AddArgList(&args_spec_list, cnode_input, real_input, i);
+    if (is_cnode_input) {
+      input_nodes.push_back(cnode_input);
+    } else {
+      input_nodes.push_back(real_input);
+    }
   }
+  std::vector<AbstractScope> locks;
+  std::transform(input_nodes.begin(), input_nodes.end(), std::back_inserter(locks),
+                 [](const AnfNodePtr &input) { return AnfUtils::GetAbstractLock(input.get()); });
   auto eval_result = opt::CppInferShape(primitive, args_spec_list);
+  locks.clear();
+  // cppcheck-suppress unreadVariable
+  auto lock = AnfUtils::GetAbstractLock(node.get());
   node->set_abstract(eval_result);
 }
 
-void AnfRuntimeAlgorithm::AddArgList(AbstractBasePtrList *args_spec_list, const AnfNodePtr &cnode_input,
+bool AnfRuntimeAlgorithm::AddArgList(AbstractBasePtrList *args_spec_list, const AnfNodePtr &cnode_input,
                                      const AnfNodePtr &real_input, size_t index) {
   if (AnfAlgo::CheckPrimitiveType(cnode_input, prim::kPrimTupleGetItem)) {
     auto base_shape = real_input->Shape();
@@ -2272,15 +2286,24 @@ void AnfRuntimeAlgorithm::AddArgList(AbstractBasePtrList *args_spec_list, const 
       MS_LOG(EXCEPTION) << "Node input is a tuple_get_item but real input node shape is not a TupleShape. trace: "
                         << trace::DumpSourceLines(real_input);
     }
+    // cppcheck-suppress unreadVariable
+    auto lock = AnfUtils::GetAbstractLock(real_input.get());
     auto abs = real_input->abstract()->cast<abstract::AbstractTuplePtr>();
     MS_EXCEPTION_IF_NULL(abs);
     auto tuple_get_item_indexk = AnfAlgo::GetTupleGetItemOutIndex(cnode_input->cast<CNodePtr>());
     auto abs_i = abs->elements()[tuple_get_item_indexk];
     (void)args_spec_list->emplace_back(abs_i);
+    return false;
   } else if (cnode_input->isa<CNode>() && AnfAlgo::GetCNodeName(cnode_input) == prim::kPrimReshape->name()) {
+    // cppcheck-suppress unreadVariable
+    auto lock = AnfUtils::GetAbstractLock(cnode_input.get());
     (void)args_spec_list->emplace_back(cnode_input->abstract());
+    return true;
   } else {
+    // cppcheck-suppress unreadVariable
+    auto lock = AnfUtils::GetAbstractLock(real_input.get());
     (void)args_spec_list->emplace_back(real_input->abstract());
+    return false;
   }
 }
 

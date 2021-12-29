@@ -25,6 +25,8 @@ namespace kernel {
 class AicpuOpKernelMod : public AscendKernelMod {
  public:
   AicpuOpKernelMod();
+  explicit AicpuOpKernelMod(const AnfNodePtr &anf_node_ptr) : AscendKernelMod(anf_node_ptr) {}
+
   ~AicpuOpKernelMod() override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
@@ -33,10 +35,10 @@ class AicpuOpKernelMod : public AscendKernelMod {
                                    const std::vector<AddressPtr> &outputs, uint32_t stream_id) override;
   device::DynamicKernelPtr GenDynamicKernel(const CNodePtr &cnode_ptr, void *stream_ptr) override;
 
-  void SetInputList(const std::vector<int64_t> &inputList);
-  void SetOutputList(const std::vector<int64_t> &outputList);
+  void SetInputList(const std::vector<int64_t> &input_list);
+  void SetOutputList(const std::vector<int64_t> &output_list);
   void SetAnfNode(const AnfNodePtr &anf_node);
-  void SetNodeDef(const std::string &nodeDef);
+  void SetNodeDef(const std::string &node_def);
   void SetExtInfo(const std::string &ext_info);
   void SetNodeName(const std::string &node_name);
   void SetCustSo(const std::string &cust_so);
@@ -56,16 +58,18 @@ class AicpuOpKernelMod : public AscendKernelMod {
   const std::vector<size_t> &GetOutputSizeList() const override;
   const std::vector<size_t> &GetWorkspaceSizeList() const override;
 
- private:
-  bool cust_kernel_{false};
+ protected:
   std::string args_;
-  std::string node_def_str_;
+  std::string ext_info_;
   std::string node_name_;
   std::string node_so_;
-  std::string ext_info_;
-  std::vector<int64_t> inputList_;
-  std::vector<int64_t> outputList_;
-  AnfNodePtr anf_node_;
+  bool cust_kernel_{false};
+  std::string node_def_str_;
+  void *ext_info_addr_dev_ = nullptr;
+
+ private:
+  std::vector<int64_t> input_list_;
+  std::vector<int64_t> output_list_;
 
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;

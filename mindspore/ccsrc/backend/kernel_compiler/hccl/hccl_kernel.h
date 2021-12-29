@@ -34,6 +34,7 @@ namespace kernel {
 class HcclKernel : public AscendKernelMod {
  public:
   HcclKernel();
+  explicit HcclKernel(const AnfNodePtr &anf_node);
   ~HcclKernel() override;
   virtual bool Init(const AnfNodePtr &anf_node);
   const std::vector<size_t> &GetInputSizeList() const override;
@@ -42,6 +43,12 @@ class HcclKernel : public AscendKernelMod {
   std::vector<TaskInfoPtr> GenTask(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                    const std::vector<AddressPtr> &outputs, uint32_t stream_id) override;
   device::DynamicKernelPtr GenDynamicKernel(const CNodePtr &cnode_ptr, void *stream_ptr) override;
+
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
+
+  void InferOp() override;
+  void InitOp() override;
 
  protected:
   std::vector<std::vector<size_t>> hccl_kernel_input_shape_list_;
@@ -56,9 +63,10 @@ class HcclKernel : public AscendKernelMod {
   mutable std::vector<size_t> input_size_list_;
   mutable std::vector<size_t> output_size_list_;
   mutable std::vector<size_t> workspace_size_list_;
-  AnfNodeWeakPtr anf_node_;
   std::string op_name_;
   std::string group_;
+  std::mutex hccl_mutex_;
+  std::condition_variable cond_;
 };
 
 using HcclKernelCreater = std::function<std::shared_ptr<HcclKernel>()>;

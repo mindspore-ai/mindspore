@@ -36,6 +36,8 @@ class DynamicBroadcastGradientArgsKernelMod : public HostKernelMod {
   DynamicBroadcastGradientArgsKernelMod() = default;
   ~DynamicBroadcastGradientArgsKernelMod() override = default;
   device::DynamicKernelPtr GenDynamicKernel(const CNodePtr &cnode_ptr, void *stream_ptr) override;
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
 };
 MS_HOST_REG_KERNEL(DynamicBroadcastGradientArgs, DynamicBroadcastGradientArgsKernelMod);
 }  // namespace kernel

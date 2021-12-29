@@ -123,8 +123,7 @@ void AscendEnableDynamicRuntimeCache(const KernelGraph *graph) {
     }
     MS_EXCEPTION_IF_NULL(kernel_info);
     auto runtime_cache = kernel_info->runtime_cache();
-    MS_EXCEPTION_IF_NULL(runtime_cache);
-    runtime_cache->set_valid();
+    runtime_cache.runtime_cache().set_valid();
   }
 }
 }  // namespace

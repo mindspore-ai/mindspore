@@ -285,6 +285,7 @@ class AnfRuntimeAlgorithm {
   static TypeId GetCNodeOutputPrecision(const AnfNodePtr &node);
   // get fix output precision from prev node, input_idx is the input index of current node related to prev node.
   static TypeId GetPrevNodeOutputPrecision(const AnfNodePtr &node, size_t input_idx);
+  static bool IsNodeInputDynamicShape(const CNodePtr &anf_node_ptr);
   static bool IsDynamicShape(const AnfNodePtr &node);
   static bool HasDynamicShapeFlag(const PrimitivePtr &prim);
   static bool IsCondControlKernel(const CNodePtr &node);
@@ -299,7 +300,8 @@ class AnfRuntimeAlgorithm {
   static bool IsNodeDynamicShape(const AnfNodePtr &node);
   static bool IsHostKernel(const CNodePtr &node);
   static void InferShape(const CNodePtr &node, std::map<uint32_t, tensor::TensorPtr> *depend_tensors = nullptr);
-  static void AddArgList(AbstractBasePtrList *args_spec_list, const AnfNodePtr &cnode_input,
+  // return true if use cnode_input's abstract, false if use real_input's abstract
+  static bool AddArgList(AbstractBasePtrList *args_spec_list, const AnfNodePtr &cnode_input,
                          const AnfNodePtr &real_input, size_t index);
   static std::vector<size_t> GetInputRealDeviceShapeIfExist(const AnfNodePtr &anf_node, size_t index);
   static std::vector<size_t> GetOutputRealDeviceShapeIfExist(const AnfNodePtr &anf_node, size_t index);

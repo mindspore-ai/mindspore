@@ -181,6 +181,13 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/profiler/device/ascend/*.cc"
         "../../../mindspore/ccsrc/profiler/device/profiling.cc"
         "../../../mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/fp32/adam_fp32.c"
+        "../../../mindspore/ccsrc/backend/kernel_compiler/kernel.cc"
+        "../../../mindspore/ccsrc/backend/kernel_compiler/ascend_kernel_mod.cc"
+        "../../../mindspore/ccsrc/backend/optimizer/common/helper.cc"
+        "../../../mindspore/ccsrc/runtime/device/ascend/executor/tiling/op_tiling_adapter.cc"
+        "../../../mindspore/ccsrc/runtime/device/ascend/executor/aicpu_ext_info_handle.cc"
+        "../../../mindspore/ccsrc/runtime/device/ascend/ge_types_convert.cc"
+        "../../../mindspore/ccsrc/backend/kernel_compiler/aicpu/aicpu_util.cc"
         )
 
 if(ENABLE_SECURITY)
@@ -228,6 +235,24 @@ add_dependencies(_ut_mindspore_obj graph)
 add_dependencies(_ut_ut_obj engine-cache-server graph)
 add_executable(ut_tests $<TARGET_OBJECTS:_ut_ut_obj>
         $<TARGET_OBJECTS:_ut_mindspore_obj>)
+
+include_directories("${CMAKE_BINARY_DIR}/backend/kernel_compiler/aicpu")
+file(GLOB_RECURSE PROTO_IN RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+    "../../../mindspore/ccsrc/backend/kernel_compiler/aicpu/proto/*.proto")
+ms_protobuf_generate(PROTOSRCS PROTOHDRS ${PROTO_IN})
+
+file(GLOB_RECURSE PROTO_DUMP RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+    "../../../mindspore/ccsrc/runtime/device/ascend/dump/proto/*.proto")
+ms_protobuf_generate(DUMP_PROTOSRCS PROTOHDRS ${PROTO_DUMP})
+
+list(APPEND MINDSPORE_PROTO_LIST ${PROTOSRCS})
+list(APPEND MINDSPORE_PROTO_LIST ${PREDICT_PROTOSRCS})
+list(APPEND MINDSPORE_PROTO_LIST ${DUMP_PROTOSRCS})
+
+if(MINDSPORE_PROTO_LIST)
+    add_library(proto_input_ut STATIC ${MINDSPORE_PROTO_LIST})
+    set_target_properties(proto_input_ut PROPERTIES COMPILE_FLAGS "-Wno-unused-variable")
+endif()
 
 if(ENABLE_GE)
     if(ENABLE_TRAIN)
