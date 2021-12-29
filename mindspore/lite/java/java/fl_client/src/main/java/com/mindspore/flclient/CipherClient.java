@@ -679,6 +679,10 @@ public class CipherClient {
 
     private FLClientStatus checkSignature(ReturnExchangeKeys bufData, int dataIndex, byte[] cPkByte, byte[] sPkByte) {
         ByteBuffer signature = bufData.remotePublickeys(dataIndex).signatureAsByteBuffer();
+        if (signature == null) {
+            LOGGER.severe(Common.addTag("[checkSignature] the signature get from server is null, please confirm that pki_verify mode is open at server."));
+            return FLClientStatus.FAILED;
+        }
         byte[] sigByte = new byte[signature.remaining()];
         signature.get(sigByte);
         int certifyNum = bufData.remotePublickeys(dataIndex).certificateChainLength();

@@ -138,6 +138,7 @@ public class StartFLJob {
             LOGGER.info(Common.addTag("[startFLJob] parseResponseAlbert by " + localFLParameter.getServerMod()));
             ArrayList<FeatureMap> albertFeatureMaps = new ArrayList<FeatureMap>();
             ArrayList<FeatureMap> inferFeatureMaps = new ArrayList<FeatureMap>();
+            featureSize = 0;
             for (int i = 0; i < fmCount; i++) {
                 FeatureMap feature = flJob.featureMap(i);
                 if (feature == null) {
@@ -185,6 +186,7 @@ public class StartFLJob {
         } else if (localFLParameter.getServerMod().equals(ServerMod.FEDERATED_LEARNING.toString())) {
             LOGGER.info(Common.addTag("[startFLJob] parseResponseAlbert by " + localFLParameter.getServerMod()));
             ArrayList<FeatureMap> featureMaps = new ArrayList<FeatureMap>();
+            featureSize = 0;
             for (int i = 0; i < fmCount; i++) {
                 FeatureMap feature = flJob.featureMap(i);
                 if (feature == null) {
@@ -222,6 +224,7 @@ public class StartFLJob {
         int fmCount = flJob.featureMapLength();
         ArrayList<FeatureMap> featureMaps = new ArrayList<FeatureMap>();
         updateFeatureName.clear();
+        featureSize = 0;
         for (int i = 0; i < fmCount; i++) {
             FeatureMap feature = flJob.featureMap(i);
             if (feature == null) {
@@ -259,6 +262,7 @@ public class StartFLJob {
         int fmCount = flJob.featureMapLength();
         ArrayList<FeatureMap> trainFeatureMaps = new ArrayList<FeatureMap>();
         ArrayList<FeatureMap> inferFeatureMaps = new ArrayList<FeatureMap>();
+        featureSize = 0;
         for (int i = 0; i < fmCount; i++) {
             FeatureMap feature = flJob.featureMap(i);
             if (feature == null) {
@@ -325,6 +329,7 @@ public class StartFLJob {
         Client client = ClientManager.getClient(flParameter.getFlName());
         int fmCount = flJob.featureMapLength();
         ArrayList<FeatureMap> featureMaps = new ArrayList<FeatureMap>();
+        featureSize = 0;
         for (int i = 0; i < fmCount; i++) {
             FeatureMap feature = flJob.featureMap(i);
             if (feature == null) {
