@@ -261,6 +261,7 @@ int GruCPUKernel::Run() {
   auto ret = MallocRunBuffer();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "GruCPUKernel MallocRunBuffer error.";
+    FreeRunBuffer();
     return RET_ERROR;
   }
 

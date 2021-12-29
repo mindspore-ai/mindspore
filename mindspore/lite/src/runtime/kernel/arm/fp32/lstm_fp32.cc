@@ -422,6 +422,8 @@ int LstmCPUKernel::InnerExecute(float *output, const float *input, float *hidden
 int LstmCPUKernel::Run() {
   auto input = in_tensors_.at(0);
   auto output = out_tensors_.at(0);
+  CHECK_NULL_RETURN(input);
+  CHECK_NULL_RETURN(output);
   auto input_ptr = reinterpret_cast<float *>(input->data());
   CHECK_NULL_RETURN(input_ptr);
   auto output_ptr = reinterpret_cast<float *>(output->data());

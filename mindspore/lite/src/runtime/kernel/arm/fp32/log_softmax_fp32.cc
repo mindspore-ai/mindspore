@@ -105,6 +105,8 @@ int LogSoftmaxLastAxisRun(void *cdata, int task_id, float lhs_scale, float rhs_s
 }
 
 int LogSoftmaxCPUKernel::Run() {
+  CHECK_NULL_RETURN(in_tensors_.at(kInputIndex));
+  CHECK_NULL_RETURN(out_tensors_.at(kOutputIndex));
   int ret = RET_OK;
   if (in_plane_size_ == 1) {
     ret = ParallelLaunch(this->ms_context_, LogSoftmaxLastAxisRun, this, op_parameter_->thread_num_);
