@@ -6,6 +6,7 @@ set(DATASET_ENGINE_DATASETOPS_SOURCE_SRC_FILES
     ag_news_op.cc
     album_op.cc
     amazon_review_op.cc
+    caltech_op.cc
     celeba_op.cc
     cifar_op.cc
     cityscapes_op.cc

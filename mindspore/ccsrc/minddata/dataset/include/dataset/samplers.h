@@ -33,6 +33,7 @@ class SamplerObj;
 /// \brief An abstract base class to represent a sampler in the data pipeline.
 class MS_API Sampler : std::enable_shared_from_this<Sampler> {
   friend class AlbumDataset;
+  friend class Caltech256Dataset;
   friend class CelebADataset;
   friend class Cifar10Dataset;
   friend class Cifar100Dataset;
