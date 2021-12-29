@@ -44,7 +44,7 @@ void ReadDataAndDumpAscend(const CNodePtr &cnode, uint32_t exec_order_);
 
 std::string CheckDatasetSinkMode(const KernelGraphPtr &graph_ptr);
 
-void LoadDataForDump(const KernelGraphPtr &graph_ptr);
+void LoadDataForDebugger(const KernelGraphPtr &graph_ptr);
 
 #ifdef ENABLE_D
 // Callback function to dump ascend async mode
