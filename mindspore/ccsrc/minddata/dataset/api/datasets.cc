@@ -128,6 +128,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/udpos_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/usps_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/voc_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/wiki_text_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/yahoo_answers_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/yelp_review_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/yes_no_node.h"
@@ -1664,7 +1665,15 @@ VOCDataset::VOCDataset(const std::vector<char> &dataset_dir, const std::vector<c
   auto ds = std::make_shared<VOCNode>(CharToString(dataset_dir), CharToString(task), CharToString(usage),
                                       MapCharToString(class_indexing), decode, sampler_obj, cache, extra_metadata);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
-}  // namespace dataset
+}
+
+WikiTextDataset::WikiTextDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                                 int64_t num_samples, ShuffleMode shuffle, int32_t num_shards, int32_t shard_id,
+                                 const std::shared_ptr<DatasetCache> &cache) {
+  auto ds = std::make_shared<WikiTextNode>(CharToString(dataset_dir), CharToString(usage), num_samples, shuffle,
+                                           num_shards, shard_id, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
 
 RandomDataDataset::RandomDataDataset(const int32_t &total_rows, std::shared_ptr<SchemaObj> schema,
                                      const std::vector<std::vector<char>> &columns_list,
