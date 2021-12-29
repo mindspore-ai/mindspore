@@ -68,6 +68,7 @@ const char PYTHON_MOD_IS_SUPPORTED_CREATE_INSTANCE_TYPE[] = "is_supported_create
 const char PYTHON_MOD_GET_DATACLASS_ATTRS[] = "get_dataclass_attributes";
 const char PYTHON_MOD_GET_DATACLASS_METHODS[] = "get_dataclass_methods";
 const char PYTHON_MOD_GET_MODULE_NAMESPACE[] = "get_module_namespace";
+const char PYTHON_MOD_GET_ATTR_NAMESPACE_SYMBOL[] = "get_class_attr_namespace_symbol";
 const char PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL[] = "get_class_member_namespace_symbol";
 const char PYTHON_MOD_GET_PARSE_METHOD[] = "get_parse_method_of_class";
 const char PYTHON_MOD_GET_BPROP_METHOD[] = "get_bprop_method_of_class";

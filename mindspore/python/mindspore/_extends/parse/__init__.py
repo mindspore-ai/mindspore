@@ -23,7 +23,7 @@ from .parser import (Parser, create_instance, is_supported_create_instance_type,
                      get_args, get_args_default_values, get_ast_namespace_symbol, get_operation_symbol,
                      get_operation_namespace_symbol, get_parse_method_of_class, get_scope_name, eval_script,
                      expand_expr_statement, is_class_member, parse_cb, resolve_symbol, convert_to_ms_tensor,
-                     get_object_description)
+                     get_object_description, get_class_attr_namespace_symbol)
 
 __all__ = ['parse_cb', 'get_parse_method_of_class', 'get_bprop_method_of_class', 'resolve_symbol',
            'get_object_key', 'get_class_instance_type', 'is_class_member', 'get_ast_type', 'get_node_type',
@@ -32,4 +32,4 @@ __all__ = ['parse_cb', 'get_parse_method_of_class', 'get_bprop_method_of_class',
            'get_module_namespace', 'get_class_member_namespace_symbol', 'get_obj_id', 'Parser',
            'get_dataclass_attributes', 'get_dataclass_methods', 'get_dataclass_methods', 'get_scope_name',
            'eval_script', 'create_slice_obj', 'convert_to_ms_tensor', 'get_object_description', 'expand_expr_statement',
-           'generate_scope', 'get_operation_symbol']
+           'generate_scope', 'get_operation_symbol', 'get_class_attr_namespace_symbol']

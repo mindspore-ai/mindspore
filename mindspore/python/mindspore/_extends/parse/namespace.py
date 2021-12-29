@@ -120,3 +120,21 @@ class ClassMemberNamespace(Namespace):
         except KeyError:
             logger.info(f"'{d.__class__.__name__ }' object has no attribute or method: '{name}', so will return None.")
             raise AttributeError(name)
+
+
+class ClassAttrNamespace(Namespace):
+    """
+    Namespace of a class.
+
+    Args:
+        obj (Object): A python class object.
+    """
+    def __init__(self, obj):
+        name = f'{obj.__module__}..<{obj.__class__.__name__}::{id(obj)}>'
+        super().__init__(name, obj)
+
+    def __getattr__(self, name):
+        for d in self.dicts:
+            if hasattr(d, name):
+                return getattr(d, name)
+        raise NameError(name)
