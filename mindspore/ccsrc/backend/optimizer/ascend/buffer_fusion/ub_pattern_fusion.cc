@@ -527,6 +527,7 @@ bool UbPatternFusion::ReplaceFusionOp(mindspore::HashMap<int64_t, BufferFusionIn
     return false;
   }
   AnfAlgo::SetOutputInferTypeAndShape(types, shapes, buffer_fusion.get());
+  AnfAlgo::SetNodeAttr(kAttrIsUBFusionOp, MakeValue(true), buffer_fusion);
   SetFusionOpRefInfos(kernel_graph, buffer_fusion_info.outputs_list, buffer_fusion);
   ReplaceOldNode(buffer_fusion_infos, fusion_id, buffer_fusion, kernel_graph);
   return true;

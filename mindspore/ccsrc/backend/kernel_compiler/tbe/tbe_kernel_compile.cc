@@ -567,13 +567,13 @@ void TbeKernelCompileManager::GenKernelMod(const std::vector<CNodePtr> &node_lis
   MS_LOG(INFO) << "Gen kernel mod end!";
 }
 
-void TbeKernelCompileManager::LoadPreBuildResult(const std::vector<CNodePtr> &nodes) {
-  // save prebuild result as fusion_type, output_data_desc
+void TbeKernelCompileManager::UpdateFusionTypeAndOutputDataDesc(const std::vector<CNodePtr> &nodes) {
+  // save prebuild result: fusion_type, output_data_desc
   MS_LOG(INFO) << "Start update fusion type after pre build";
   for (auto &node : nodes) {
     MS_EXCEPTION_IF_NULL(node);
     auto full_name = node->fullname_with_scope();
-    auto kernel_name = full_name_to_json_name_[full_name];
+    auto kernel_name = pre_build_full_name_to_json_name_[full_name];
     auto pre_res = prebuild_res_map_[kernel_name];
     auto fusion_type = pre_res.fusion_type;
     auto output_data_desc = pre_res.output_data_desc;
@@ -607,13 +607,11 @@ std::string TbeKernelCompileManager::ParseSelectAndCheckResult(const nlohmann::j
     if (res != kFullySupported) {
       PrintProcessLog(json, WARNING);
     }
-  } else {
-    if (json.at(kStatus) == kFailed) {
-      auto all_logs = GetJsonValue<std::vector<nlohmann::json>>(json, kProcessInfo);
-      auto except_msg = FilterExceptionMessage(all_logs);
-      MS_LOG(EXCEPTION) << job_type << " running failed, op: " << json_name << "\nexception message:" << except_msg
-                        << trace::DumpSourceLines(node);
-    }
+  } else if (json.at(kStatus) == kFailed) {
+    auto all_logs = GetJsonValue<std::vector<nlohmann::json>>(json, kProcessInfo);
+    auto except_msg = FilterExceptionMessage(all_logs);
+    MS_LOG(EXCEPTION) << job_type << " running failed, op: " << json_name << "\nexception message:" << except_msg
+                      << trace::DumpSourceLines(node);
   }
   MS_LOG(DEBUG) << json_name << " " << job_type << " success, get: " << res;
   return res;
@@ -633,8 +631,48 @@ JsonNameMap TbeKernelCompileManager::GetAllSuccessFusion() {
   return success_fusion_ops_;
 }
 
+void TbeKernelCompileManager::DistributePreBuildTask(const std::vector<CNodePtr> &node_list) {
+  auto json_creator = std::make_shared<BuildTbeJsonCreator>();
+  MS_EXCEPTION_IF_NULL(json_creator);
+  nlohmann::json kernel_json;  // for gen json
+  nlohmann::json build_json;   // for assemble json
+  for (const auto &node : node_list) {
+    MS_EXCEPTION_IF_NULL(node);
+    kernel_json.clear();
+    build_json.clear();
+    if (!json_creator->GenJson(node, &kernel_json)) {
+      MS_LOG(EXCEPTION) << "Generate pre build json failed, op: " << node->fullname_with_scope()
+                        << trace::DumpSourceLines(node);
+    }
+    auto json_name = json_creator->GetJsonName();
+    auto full_name = node->fullname_with_scope();
+    pre_build_full_name_to_json_name_[full_name] = json_name;  // cache kernel name
+    if (TbeUtils::IsOneOf(pre_build_single_processed_kernels_, json_name)) {
+      // same op skip prebuild
+      continue;
+    }
+    pre_build_single_processed_kernels_.insert(json_name);
+    JsonAssemble(kPreCompile, kernel_json, &build_json);
+    auto task_id = GetJsonValue<int>(build_json, kJobId);
+    auto is_dynamic = AnfAlgo::IsDynamicShape(node);
+    SaveTaskInfo(is_dynamic, build_json, json_name, full_name, task_id, INT64_MAX);
+
+    // save pair<task_id, node> for exception print and get node trace
+    (void)job_id_to_node_.insert(std::pair<int, CNodePtr>(task_id, node));
+    // start compile
+    auto build_result = DispatchCompileTask(build_json);
+    auto json_obj = TurnStrToJson(build_result);
+    // print message of build
+    PrintCompileResult(json_obj);
+  }
+}
+
 void TbeKernelCompileManager::DistributeCompileTask(const std::vector<CNodePtr> &node_list,
                                                     const std::string &job_type) {
+  if (job_type == kPreCompile) {
+    DistributePreBuildTask(node_list);
+    return;
+  }
   auto json_creator = std::make_shared<BuildTbeJsonCreator>();
   MS_EXCEPTION_IF_NULL(json_creator);
   // for gen json
@@ -644,39 +682,34 @@ void TbeKernelCompileManager::DistributeCompileTask(const std::vector<CNodePtr> 
   for (const auto &node : node_list) {
     MS_EXCEPTION_IF_NULL(node);
     kernel_json.clear();
-    auto full_name = node->fullname_with_scope();
-    if ((full_name_to_json_name_.find(full_name) != full_name_to_json_name_.end()) &&
-        tbe::TbeUtils::SearchCache(full_name_to_json_name_[full_name], false, is_tune_flag_, op_debug_level_) !=
-          nullptr) {
-      continue;  // skip fusion ops
-    }
-    if (AnfAlgo::GetKernelMod(node) != nullptr && !is_tune_flag_) {
-      continue;  // kernel mode exist, no need build
+    build_json.clear();
+    if (AnfAlgo::HasNodeAttr(kAttrIsUBFusionOp, node) && AnfAlgo::GetNodeAttr<bool>(node, kAttrIsUBFusionOp)) {
+      // skip fusion op, if node has the attr: kAttrIsUBFusionOp, means already done fusion compile, can not do single
+      // op compile
+      continue;
     }
     if (!json_creator->GenJson(node, &kernel_json)) {
       MS_LOG(EXCEPTION) << "Generate compile json failed, [" << node->fullname_with_scope() << "]"
                         << trace::DumpSourceLines(node);
     }
     auto json_name = json_creator->GetJsonName();
+    auto full_name = node->fullname_with_scope();
     full_name_to_json_name_[full_name] = json_name;
     // save all task io size info for gen kernel mod
     SaveIOSizeInfo(kernel_json, json_name);
-    if (job_type == kCompile || job_type == kTune) {
-      if (single_processed_kernels_.find(json_name) != single_processed_kernels_.end()) {
-        continue;  // same op no need build
-      }
-      (void)single_processed_kernels_.insert(json_name);
-      if (tbe::TbeUtils::SearchCache(json_name, false, is_tune_flag_, op_debug_level_) != nullptr) {
-        continue;  // cache exist, no need build
-      }
+    if (tbe::TbeUtils::SearchCache(json_name, false) != nullptr && !is_need_rebuild_) {
+      // cache exist, no need compile
+      continue;
     }
-    build_json.clear();
+    if (TbeUtils::IsOneOf(single_processed_kernels_, json_name)) {
+      // same op only compile once
+      continue;
+    }
+    single_processed_kernels_.insert(json_name);
     JsonAssemble(job_type, kernel_json, &build_json);
     // save compile json to file; cache io size for gen kernel mod
-    if (job_type == kCompile || job_type == kTune) {
-      auto build_str = build_json.dump(indent);
-      TbeUtils::SaveJsonInfo(json_name, build_str);
-    }
+    auto build_str = build_json.dump(indent);
+    TbeUtils::SaveJsonInfo(json_name, build_str);
     auto task_id = GetJsonValue<int>(build_json, kJobId);
     auto is_dynamic = AnfAlgo::IsDynamicShape(node);
     SaveTaskInfo(is_dynamic, build_json, json_name, full_name, task_id, INT64_MAX);
@@ -703,7 +736,7 @@ void TbeKernelCompileManager::TbePreBuild(const KernelGraphPtr &kernel_graph) {
   }
   DistributeCompileTask(node_list, kPreCompile);
   Query(kPreCompile);
-  LoadPreBuildResult(node_list);
+  UpdateFusionTypeAndOutputDataDesc(node_list);
   (void)gettimeofday(&end_time, nullptr);
   const uint64_t kUSecondInSecond = 1000000;
   uint64_t cost = kUSecondInSecond * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);
@@ -730,6 +763,7 @@ JsonNameMap TbeKernelCompileManager::TbeFusionOpCompile(const std::vector<Fusion
   nlohmann::json build_json;
   for (const auto &fusion_scope_iter : fusion_scopes) {
     fusion_op.clear();
+    build_json.clear();
     if (!json_creator->GenJson(fusion_scope_iter, &fusion_op)) {
       MS_LOG(WARNING) << "Generate fusion json failed, fusion info: " << fusion_scope_iter.full_name;
       continue;
@@ -737,16 +771,18 @@ JsonNameMap TbeKernelCompileManager::TbeFusionOpCompile(const std::vector<Fusion
     auto full_name = fusion_scope_iter.full_name;
     auto json_name = json_creator->GetJsonName();
     full_name_to_json_name_[full_name] = json_name;
+    // save all fusion ops to filter those compile succeed ops
     all_fusion_ops_[fusion_scope_iter.scope_id] = full_name;
     SaveIOSizeInfo(fusion_op, json_name, fusion_scope_iter.output_nodes);
-    if (fusion_processed_kernels_.find(json_name) != fusion_processed_kernels_.end()) {
-      continue;  // same op no need build
+    if (tbe::TbeUtils::SearchCache(json_name, false) != nullptr && !is_need_rebuild_) {
+      // cache exist, no need compile
+      continue;
     }
-    (void)fusion_processed_kernels_.insert(json_name);
-    if (tbe::TbeUtils::SearchCache(json_name, false, is_tune_flag_, op_debug_level_) != nullptr) {
-      continue;  // cache exist, no need build
+    if (TbeUtils::IsOneOf(fusion_processed_kernels_, json_name)) {
+      // same fusion op only compile once
+      continue;
     }
-    build_json.clear();
+    fusion_processed_kernels_.insert(json_name);
     JsonAssemble(job_type, fusion_op, &build_json);
     auto build_str = build_json.dump(indent);
     MS_LOG(DEBUG) << "FusionOp build json file : " << build_str;
@@ -811,6 +847,7 @@ void TbeKernelCompileManager::TbeInitialize() {
   auto auto_tiling_mode = (init_json[kJobContent][kSocInfo]["autoTilingMode"]).get<std::string>();
   tbe_init_flag_ = true;
   is_tune_flag_ = offline_tune || (auto_tiling_mode != "NO_TUNE");
+  is_need_rebuild_ = is_tune_flag_ || TbeUtils::IsOneOf({"1", "2", "4"}, op_debug_level_);
 
   auto init_str = init_json.dump();
   MS_LOG(INFO) << "TbeInitialize json file : " << init_str;
@@ -843,11 +880,14 @@ void TbeKernelCompileManager::ClearOldTask() {
   full_name_to_json_name_.clear();
   single_processed_kernels_.clear();
   fusion_processed_kernels_.clear();
+  pre_build_full_name_to_json_name_.clear();
+  pre_build_single_processed_kernels_.clear();
 }
 
 TbeKernelCompileManager::~TbeKernelCompileManager() { TbeFinalize(); }
 bool TbeKernelCompileManager::tbe_init_flag_ = false;
 bool TbeKernelCompileManager::is_tune_flag_ = false;
+bool TbeKernelCompileManager::is_need_rebuild_ = false;
 }  // namespace ascend
 }  // namespace kernel
 }  // namespace mindspore

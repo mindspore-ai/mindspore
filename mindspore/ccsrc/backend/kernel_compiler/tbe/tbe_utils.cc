@@ -113,13 +113,15 @@ std::string TbeUtils::GetOpDebugPath() {
 }
 
 std::string GetOpDebugLevel() {
-  const std::set<std::string> exp = {"0", "1", "2", "3", "4"};
-  std::string op_debug_level = "0";
+  static const std::set<int> value_ranges = {OP_DEBUG_LEVEL_0, OP_DEBUG_LEVEL_1, OP_DEBUG_LEVEL_2, OP_DEBUG_LEVEL_3,
+                                             OP_DEBUG_LEVEL_4};
+  std::string op_debug_level = std::to_string(OP_DEBUG_LEVEL_3);
   auto env_level = common::GetEnv(kCOMPILER_OP_LEVEL);
   if (!env_level.empty()) {
-    if (exp.find(env_level) == exp.end()) {
+    if (!TbeUtils::IsOneOf(value_ranges, std::atoi(env_level.c_str()))) {
       MS_LOG(WARNING) << "Invalid environment variable '" << kCOMPILER_OP_LEVEL << "': " << env_level
-                      << ", the value should be in {0, 1, 2, 3, 4}, now using the default value 0";
+                      << ", the value should be in [0, 1, 2, 3, 4], now using the default value 3."
+                         "Get more detail info at https://www.mindspore.cn/docs/note/zh-CN/master/env_var_list.html";
     } else {
       op_debug_level = env_level;
     }
@@ -215,13 +217,8 @@ void TbeUtils::UpdateCache(const std::string &kernel_name) {
   return bin_map->UpdateCache(kernel_name);
 }
 
-KernelPackPtr TbeUtils::SearchCache(const std::string &kernel_name, const bool is_akg, const bool is_tune,
-                                    const std::string op_debug_level) {
+KernelPackPtr TbeUtils::SearchCache(const std::string &kernel_name, const bool is_akg) {
   // search cache.
-  if (is_tune || op_debug_level != "0") {
-    return nullptr;
-  }
-
   KernelMeta *bin_map = KernelMeta::GetInstance();
   if (bin_map == nullptr) {
     MS_LOG(INFO) << "kernel cache is invalid.";
