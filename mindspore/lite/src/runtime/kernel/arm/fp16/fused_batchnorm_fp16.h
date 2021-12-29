@@ -30,6 +30,8 @@ class FusedBatchnormFp16CPUKernel : public FusedBatchnormCPUKernel {
 
   int DoExecute(int task_id) override;
   int Eval() override;
+  int Batchnorm2Scale(const void *scale_data, const void *bias_data, const void *mean_data, const void *var_data,
+                      float eps, int kernel_num) override;
 
  protected:
   void CalcMeanVar(float16_t *in, float16_t *scale, float16_t *offset, float16_t *save_mean, float16_t *save_variance);

@@ -23,12 +23,19 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_FusedBatchNorm;
 
 namespace mindspore::kernel {
-int FusedBatchnormCPUKernel::ReSize() {
-  CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_5D);
+int FusedBatchnormCPUKernel::Prepare() {
+  CHECK_LESS_RETURN(in_tensors_.size(), SIXTH_INPUT);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  if (!InferShapeDone()) {
+    return RET_OK;
+  }
+  return ReSize();
+}
+
+int FusedBatchnormCPUKernel::ReSize() {
+  FillParam();
   FreeMeanAndVariance();
   FreeScaleAndOffset();
-  FillParam();
   return InitConstTensor();
 }
 
@@ -41,29 +48,97 @@ void FusedBatchnormCPUKernel::FreeScaleAndOffset() {
     free(offset_);
     offset_ = nullptr;
   }
+  if (scale_param_ != nullptr) {
+    free(scale_param_);
+    scale_param_ = nullptr;
+  }
+}
+
+int FusedBatchnormCPUKernel::InitScaleParam() {
+  scale_param_ = reinterpret_cast<ScaleParameter *>(malloc(sizeof(ScaleParameter)));
+  CHECK_NULL_RETURN(scale_param_);
+  scale_param_->op_parameter_.thread_num_ = ms_context_->thread_num_;
+
+  scale_param_->axis_ = kNHWC_C;
+  auto in_shape = in_tensors_[0]->shape();
+  CHECK_LESS_RETURN(in_shape.size(), DIMENSION_5D);
+  scale_param_->outer_size_ = 1;
+  for (auto i = 0; i < scale_param_->axis_; i++) {
+    scale_param_->outer_size_ *= in_shape[i];
+  }
+  scale_param_->axis_size_ = in_shape[DIMENSION_3D];
+  scale_param_->inner_size_ = 1;
+  return RET_OK;
+}
+
+// new scale: -scale / sqrt(variance + eps)
+// new bias: -scale * mean / sqrt(variance + eps) + bias
+int FusedBatchnormCPUKernel::Batchnorm2Scale(const void *scale_data, const void *bias_data, const void *mean_data,
+                                             const void *var_data, float eps, int kernel_num) {
+  auto ret = InitScaleParam();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Init scale parameter when converting fused_batchnorm to scale.";
+    return RET_ERROR;
+  }
+
+  scale_ = malloc(in_tensors_.at(SECOND_INPUT)->Size());
+  CHECK_NULL_RETURN(scale_);
+  auto fp32_scale = reinterpret_cast<float *>(scale_);
+  for (int i = 0; i < kernel_num; i++) {
+    fp32_scale[i] =
+      (reinterpret_cast<const float *>(scale_data))[i] / sqrtf((reinterpret_cast<const float *>(var_data))[i] + eps);
+  }
+
+  offset_ = malloc(in_tensors_.at(THIRD_INPUT)->Size());
+  CHECK_NULL_RETURN(offset_);
+  auto fp32_offset = reinterpret_cast<float *>(offset_);
+  for (int i = 0; i < kernel_num; i++) {
+    fp32_offset[i] =
+      (reinterpret_cast<const float *>(bias_data))[i] - (reinterpret_cast<const float *>(mean_data))[i] * fp32_scale[i];
+  }
+  is_scale_ = true;
+  return RET_OK;
 }
 
 int FusedBatchnormCPUKernel::InitConstTensor() {
   auto scale = in_tensors_.at(SECOND_INPUT);
-  auto offset = in_tensors_.at(THIRD_INPUT);
-  auto mean = in_tensors_.at(FOURTH_INPUT);
-  auto variance = in_tensors_.at(FIFTH_INPUT);
+  CHECK_NULL_RETURN(scale);
+  CHECK_NULL_RETURN(scale->data());
 
-  scale_ = malloc(scale->Size());
-  offset_ = malloc(offset->Size());
-  mean_ = malloc(mean->Size());
-  variance_ = malloc(variance->Size());
-  if (scale_ == nullptr || offset_ == nullptr || mean_ == nullptr || variance_ == nullptr) {
-    FreeMeanAndVariance();
-    FreeScaleAndOffset();
-    MS_LOG(ERROR) << "Memory allocation failed";
-    return RET_ERROR;
+  auto offset = in_tensors_.at(THIRD_INPUT);
+  CHECK_NULL_RETURN(offset);
+  CHECK_NULL_RETURN(offset->data());
+
+  auto mean = in_tensors_.at(FOURTH_INPUT);
+  CHECK_NULL_RETURN(mean);
+  CHECK_NULL_RETURN(mean->data());
+
+  auto variance = in_tensors_.at(FIFTH_INPUT);
+  CHECK_NULL_RETURN(variance);
+  CHECK_NULL_RETURN(variance->data());
+
+  auto param = reinterpret_cast<BatchNormParameter *>(op_parameter_);
+  CHECK_NULL_RETURN(param);
+  if (!op_parameter_->is_train_session_) {
+    auto ret = Batchnorm2Scale(reinterpret_cast<float *>(scale->data()), reinterpret_cast<float *>(offset->data()),
+                               reinterpret_cast<float *>(mean->data()), reinterpret_cast<float *>(variance->data()),
+                               param->epsilon_, scale->ElementsNum());
+    if (ret == RET_OK) {
+      return RET_OK;
+    } else {
+      FreeScaleAndOffset();
+    }
   }
 
-  CHECK_NULL_RETURN(scale->data());
-  CHECK_NULL_RETURN(offset->data());
-  CHECK_NULL_RETURN(mean->data());
-  CHECK_NULL_RETURN(variance->data());
+  scale_ = malloc(in_tensors_.at(SECOND_INPUT)->Size());
+  CHECK_NULL_RETURN(scale_);
+  offset_ = malloc(in_tensors_.at(THIRD_INPUT)->Size());
+  CHECK_NULL_RETURN(offset_);
+  mean_ = malloc(in_tensors_.at(FOURTH_INPUT)->Size());
+  CHECK_NULL_RETURN(mean_);
+  variance_ = malloc(in_tensors_.at(FIFTH_INPUT)->Size());
+  CHECK_NULL_RETURN(variance_);
+
   memcpy(scale_, scale->data(), scale->Size());
   memcpy(offset_, offset->data(), offset->Size());
   memcpy(mean_, mean->data(), mean->Size());
@@ -141,8 +216,14 @@ int FusedBatchnormCPUKernel::DoExecute(int task_id) {
   auto out_data = reinterpret_cast<float *>(out_tensors_.at(FIRST_INPUT)->data());
   CHECK_NULL_RETURN(in_data);
   CHECK_NULL_RETURN(out_data);
-  FusedBatchNormFp32(in_data, reinterpret_cast<float *>(scale_), reinterpret_cast<float *>(offset_),
-                     reinterpret_cast<float *>(mean_), reinterpret_cast<float *>(variance_), param, task_id, out_data);
+  if (is_scale_) {
+    DoScale(in_data, out_data, reinterpret_cast<float *>(scale_), reinterpret_cast<float *>(offset_), task_id,
+            scale_param_);
+  } else {
+    FusedBatchNormFp32(in_data, reinterpret_cast<float *>(scale_), reinterpret_cast<float *>(offset_),
+                       reinterpret_cast<float *>(mean_), reinterpret_cast<float *>(variance_), param, task_id,
+                       out_data);
+  }
   return RET_OK;
 }
 

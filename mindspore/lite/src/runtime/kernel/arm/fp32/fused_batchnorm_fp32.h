@@ -19,6 +19,7 @@
 
 #include <vector>
 #include "src/runtime/kernel/arm/fp32/batchnorm_fp32.h"
+#include "nnacl/fp32/scale_fp32.h"
 
 namespace mindspore::kernel {
 class FusedBatchnormCPUKernel : public BatchnormCPUKernel {
@@ -29,16 +30,22 @@ class FusedBatchnormCPUKernel : public BatchnormCPUKernel {
   ~FusedBatchnormCPUKernel() { FreeScaleAndOffset(); }
 
   int Eval() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int InitConstTensor() override;
   int DoExecute(int task_id) override;
+  int Batchnorm2Scale(const void *scale_data, const void *bias_data, const void *mean_data, const void *var_data,
+                      float eps, int kernel_num) override;
 
  protected:
   void FreeScaleAndOffset();
+  int InitScaleParam();
   void *scale_ = nullptr;
   void *offset_ = nullptr;
   bool trained_ = false;
+  bool is_scale_ = false;
+  ScaleParameter *scale_param_ = nullptr;
 };
 }  // namespace mindspore::kernel
 
