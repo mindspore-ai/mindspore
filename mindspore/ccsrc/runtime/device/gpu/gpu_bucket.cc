@@ -22,6 +22,7 @@
 #include <memory>
 #include "abstract/utils.h"
 #include "runtime/device/gpu/gpu_event.h"
+#include "runtime/device/gpu/gpu_device_address.h"
 #include "runtime/device/gpu/gpu_memory_allocator.h"
 #include "runtime/device/gpu/gpu_device_manager.h"
 #include "runtime/device/kernel_runtime_manager.h"
@@ -29,6 +30,7 @@
 #include "runtime/device/gpu/gpu_launch_mul.h"
 #include "backend/kernel_compiler/gpu/nccl/nccl_gpu_kernel.h"
 #include "runtime/device/gpu/gpu_common.h"
+#include "runtime/hardware/device_context_manager.h"
 
 namespace {
 const size_t kCommunicationMemAlignSize = 16;
@@ -40,71 +42,36 @@ size_t AlignMemorySize(size_t size) {
 }
 }  // namespace
 namespace mindspore::device::gpu {
-GPUBucket::GPUBucket(uint32_t id, uint32_t bucket_size) : Bucket(id, bucket_size), collective_handle_(nullptr) {
-  group_ = kNcclWorldGroup;
+GPUBucket::GPUBucket(uint32_t id, uint32_t bucket_size)
+    : Bucket(id, bucket_size, kNcclWorldGroup), collective_handle_(nullptr), device_name_("GPU"), device_id_(0) {}
+
+DeviceAddressPtr GPUBucket::CreateDeviceAddress(size_t size) const {
+  return std::make_shared<GPUDeviceAddress>(nullptr, size);
 }
 
-void GPUBucket::AllocateAllReduceAddr() {
-  MS_LOG(INFO) << "start";
-  if (grad_tensor_list_.size() != bucket_size_) {
-    MS_LOG(EXCEPTION) << "grad tensor list size:" << grad_tensor_list_.size()
-                      << " is not equal to bucket size:" << bucket_size_;
-  }
+size_t GPUBucket::GetAlignSize(size_t size) const { return AlignMemorySize(size); }
 
-  auto total_size = 0;
-  std::vector<size_t> size_list;
-  for (auto &tensor : grad_tensor_list_) {
-    MS_EXCEPTION_IF_NULL(tensor);
-    tensor_type_list_.emplace_back(tensor->data_type());
-    DeviceAddressPtr device_address = std::dynamic_pointer_cast<DeviceAddress>(tensor->device_address());
-    MS_EXCEPTION_IF_NULL(device_address);
-    auto origin_size = device_address->GetSize();
-    auto align_size = AlignMemorySize(origin_size);
-    size_list.emplace_back(origin_size);
-    align_size_list_.emplace_back(align_size);
-    total_size += align_size;
-    memcpy_input_addrs_.emplace_back(
-      std::make_shared<kernel::Address>(static_cast<uint8_t *>(device_address->GetMutablePtr()), origin_size));
+void GPUBucket::AllocateContinousMemory(const std::vector<DeviceAddressPtr> &to_allocate_address, size_t total_size,
+                                        const std::vector<size_t> &size_list) const {
+  const auto &device_context =
+    device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name_, device_id_});
+  MS_EXCEPTION_IF_NULL(device_context);
+  if (!device_context->AllocateContinuousMemory(to_allocate_address, total_size, size_list)) {
+    MS_LOG(EXCEPTION) << "Allocate memory for AllReduce input failed";
   }
-  total_size_ = total_size;
-
-  ar_input_addr_ = static_cast<uint8_t *>(GPUMemoryAllocator::GetInstance().AllocTensorMem(total_size));
-  ar_output_addr_ = static_cast<uint8_t *>(GPUMemoryAllocator::GetInstance().AllocTensorMem(total_size));
-
-  uint8_t *memcpy_output = ar_input_addr_;
-  for (size_t i = 0; i < bucket_size_; ++i) {
-    memcpy_output_addrs_.emplace_back(std::make_shared<kernel::Address>(memcpy_output, size_list[i]));
-    memcpy_output += align_size_list_[i];
-  }
-  MS_LOG(INFO) << "end";
-}
-
-void GPUBucket::FreeDeviceMem(void *dev_ptr) { GPUMemoryAllocator::GetInstance().FreeTensorMem(dev_ptr); }
-
-void GPUBucket::FreeAllDeviceMem() {
-  MS_LOG(INFO) << "start";
-  if (ar_input_addr_ != nullptr) {
-    FreeDeviceMem(ar_input_addr_);
-    ar_input_addr_ = nullptr;
-  }
-  if (ar_output_addr_ != nullptr) {
-    FreeDeviceMem(ar_output_addr_);
-    ar_output_addr_ = nullptr;
-  }
-  // clear launch mul device memory
-  if (launch_mul_ != nullptr) {
-    launch_mul_->FreeLaunchDeviceMem();
-  }
-  MS_LOG(INFO) << "end";
 }
 
 void GPUBucket::CopyTensorToContiguousMemory() {
   MS_LOG(INFO) << "start";
   MS_EXCEPTION_IF_NULL(compute_stream_);
+  if (ar_input_address_list_.empty()) {
+    MS_LOG(EXCEPTION) << "AllReduce input address not found.";
+  }
+  MS_EXCEPTION_IF_NULL(ar_input_address_list_[0]);
   // Clean allreduce input
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-    cudaMemsetAsync(ar_input_addr_, 0, total_size_, static_cast<cudaStream_t>(compute_stream_)),
-    "Call cudaMemsetAsync failed");
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemsetAsync(ar_input_address_list_[0]->GetMutablePtr(), 0, total_size_,
+                                                     static_cast<cudaStream_t>(compute_stream_)),
+                                     "Call cudaMemsetAsync failed");
 
   for (size_t i = 0; i < bucket_size_; ++i) {
     MS_EXCEPTION_IF_NULL(memcpy_output_addrs_[i]);
@@ -146,23 +113,21 @@ void GPUBucket::LaunchAllReduce() {
     MS_LOG(EXCEPTION) << "Invalid type:" << type;
   }
 
-  auto nccl_result =
-    (*all_reduce_funcptr)(ar_input_addr_, ar_output_addr_, total_size_ / type_size, nccl_data_type_iter->second,
-                          ncclRedOp_t::ncclSum, static_cast<cudaStream_t>(stream_), group_);
+  if (ar_input_address_list_.empty() || ar_output_address_list_.empty()) {
+    MS_LOG(EXCEPTION) << "fusion AllReduce input address size is:" << ar_input_address_list_.size()
+                      << " output address size is:" << ar_output_address_list_.size();
+  }
+  MS_EXCEPTION_IF_NULL(ar_input_address_list_[0]);
+  MS_EXCEPTION_IF_NULL(ar_output_address_list_[0]);
+
+  auto nccl_result = (*all_reduce_funcptr)(
+    ar_input_address_list_[0]->GetMutablePtr(), ar_output_address_list_[0]->GetMutablePtr(), total_size_ / type_size,
+    nccl_data_type_iter->second, ncclRedOp_t::ncclSum, static_cast<cudaStream_t>(stream_), group_);
   if (nccl_result != ncclSuccess) {
     MS_LOG(EXCEPTION) << "AllReduce failed, ret:" << nccl_result;
   }
 
   MS_LOG(INFO) << "end";
-}
-
-std::shared_ptr<LaunchKernel> GPUBucket::CreateLaunchMul() {
-  if (tensor_type_list_.empty()) {
-    MS_LOG(ERROR) << "tensor_type_list_ is empty";
-  }
-  auto launch_mul = std::make_shared<GPULaunchMul>(stream_, tensor_type_list_[0], total_size_);
-  MS_EXCEPTION_IF_NULL(launch_mul);
-  return launch_mul;
 }
 
 void GPUBucket::Init(const std::vector<void *> &compute_streams, const std::vector<void *> &communication_streams) {
@@ -184,5 +149,9 @@ void GPUBucket::Init(const std::vector<void *> &compute_streams, const std::vect
   pre_event_->set_wait_stream(stream_);
   post_event_->set_record_stream(stream_);
   post_event_->set_wait_stream(compute_stream_);
+
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  device_id_ = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
 }
 }  // namespace mindspore::device::gpu

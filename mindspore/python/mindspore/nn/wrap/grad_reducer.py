@@ -412,7 +412,7 @@ class DistributedGradReducer(Cell):
         datatypes = self.map_(F.partial(_get_datatype), grads)
         grads = self.map_(F.partial(_cast_datatype, mstype.float32), grads)
         if self.mode == context.PYNATIVE_MODE:
-            new_grad = grads
+            new_grad = self.map_(F.partial(reduce_opt, self.degree, self.mean), self.allreduce_filter, grads)
         elif self.split_fusion:
             if self.enable_parameter_server:
                 new_grad = self.map_(F.partial(reduce_opt, self.degree, self.mean, self.allgather),

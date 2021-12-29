@@ -46,13 +46,11 @@ void Bucket::Launch() {
   MS_LOG(INFO) << "Bucket is full, start to launch AllReduce";
   MS_EXCEPTION_IF_NULL(pre_event_);
   MS_EXCEPTION_IF_NULL(post_event_);
-  AllocateAllReduceAddr();
+  AllocateAllReduceMemory();
   CopyTensorToContiguousMemory();
   pre_event_->RecordEvent();
   pre_event_->WaitEvent();
   LaunchAllReduce();
-  // mul fusion
-  CalculateMean();
   post_event_->RecordEvent();
   UpdateTensorAddr();
   // pass event to the tensor
@@ -63,64 +61,63 @@ void Bucket::Launch() {
   MS_LOG(INFO) << "Bucket launch cost:" << (GetTime() - start) * 1e6 << " us";
 }
 
+void Bucket::AllocateAllReduceMemory() {
+  // Check bucket is full
+  if (grad_tensor_list_.size() != bucket_size_) {
+    MS_LOG(EXCEPTION) << "Grad tensor list size:" << grad_tensor_list_.size()
+                      << " is not equal to bucket size:" << bucket_size_;
+  }
+
+  size_t total_size = 0;
+  std::vector<size_t> origin_size_list;
+  for (auto &tensor : grad_tensor_list_) {
+    MS_EXCEPTION_IF_NULL(tensor);
+    tensor_type_list_.emplace_back(tensor->data_type());
+    DeviceAddressPtr device_address = std::dynamic_pointer_cast<DeviceAddress>(tensor->device_address());
+    MS_EXCEPTION_IF_NULL(device_address);
+    auto origin_size = device_address->GetSize();
+    auto align_size = MemoryManager::GetCommonAlignSize(origin_size);
+    origin_size_list.emplace_back(origin_size);
+    align_size_list_.emplace_back(align_size);
+    total_size += align_size;
+    memcpy_input_addrs_.emplace_back(std::make_shared<kernel::Address>(
+      static_cast<uint8_t *>(device_address->GetMutablePtr()), device_address->GetSize()));
+
+    ar_input_address_list_.emplace_back(CreateDeviceAddress(origin_size));
+    ar_output_address_list_.emplace_back(CreateDeviceAddress(origin_size));
+  }
+
+  total_size_ = total_size;
+
+  AllocateContinousMemory(ar_input_address_list_, total_size, align_size_list_);
+  AllocateContinousMemory(ar_output_address_list_, total_size, align_size_list_);
+
+  // generate memecpy output addr
+  if (origin_size_list.size() != ar_input_address_list_.size()) {
+    MS_LOG(EXCEPTION) << "Invalid ar_input_address_list size:" << ar_input_address_list_.size()
+                      << " origin_size_list size:" << origin_size_list.size();
+  }
+  size_t item_index = 0;
+  for (const auto &ar_input_address_item : ar_input_address_list_) {
+    MS_EXCEPTION_IF_NULL(ar_input_address_item);
+    memcpy_output_addrs_.emplace_back(
+      std::make_shared<kernel::Address>(ar_input_address_item->GetMutablePtr(), origin_size_list[item_index]));
+    ++item_index;
+  }
+}
+
 void Bucket::UpdateTensorAddr() {
-  if (grad_tensor_list_.size() != bucket_size_ || new_tensor_output_addrs_.size() != bucket_size_) {
-    MS_LOG(EXCEPTION) << "grad_tensor_list size:" << grad_tensor_list_.size()
-                      << " tensor output addr size:" << new_tensor_output_addrs_.size()
+  if (grad_tensor_list_.size() != bucket_size_ || ar_output_address_list_.size() != bucket_size_) {
+    MS_LOG(EXCEPTION) << "grad_tensor_list_ size:" << grad_tensor_list_.size()
+                      << " ar_output_address_list_ size:" << ar_output_address_list_.size()
                       << " bucket size:" << bucket_size_;
   }
 
   for (size_t i = 0; i < bucket_size_; ++i) {
     auto &tensor = grad_tensor_list_[i];
     MS_EXCEPTION_IF_NULL(tensor);
-    auto device_address = std::dynamic_pointer_cast<DeviceAddress>(tensor->device_address());
-    // release old addr and manage addr by this Bucket.
-    MS_EXCEPTION_IF_NULL(device_address);
-    auto origin_dev_ptr = device_address->GetMutablePtr();
-    tensor_old_addr_list_.emplace_back(origin_dev_ptr);
-    device_address->from_mem_pool_ = false;
-    device_address->set_ptr(new_tensor_output_addrs_[i]);
+    tensor->set_device_address(ar_output_address_list_[i]);
   }
-}
-
-void Bucket::CalculateMean() {
-  auto parallel_context = parallel::ParallelContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(parallel_context);
-  auto grad_mean = parallel_context->gradients_mean();
-  if (!grad_mean) {
-    UpdateTensorOutputAddr(ar_output_addr_);
-    return;
-  }
-  if (launch_mul_ == nullptr) {
-    launch_mul_ = CreateLaunchMul();
-    MS_EXCEPTION_IF_NULL(launch_mul_);
-  }
-  // set mul input1 addr
-  launch_mul_->SetInputAddr(ar_output_addr_);
-  // launch mean
-  launch_mul_->LaunchOpKernel();
-  // store tensor output addr
-  auto launch_output = launch_mul_->GetKernelOutputAddr();
-  if (launch_output.size() != 1) {
-    MS_LOG(EXCEPTION) << "launch mul outputs should have one output";
-  }
-  UpdateTensorOutputAddr(launch_output[0]);
-}
-
-void Bucket::UpdateTensorOutputAddr(uint8_t *addr) {
-  uint8_t *tensor_output = addr;
-  for (size_t i = 0; i < bucket_size_; ++i) {
-    (void)new_tensor_output_addrs_.emplace_back(tensor_output);
-    tensor_output += align_size_list_[i];
-  }
-}
-
-void Bucket::LazyDeleteOldAddr() {
-  MS_LOG(INFO) << "Lazy delete old grad address";
-  for (auto old_addr : tensor_old_addr_list_) {
-    FreeDeviceMem(old_addr);
-  }
-  tensor_old_addr_list_.clear();
 }
 
 void Bucket::Release() {
@@ -131,7 +128,8 @@ void Bucket::Release() {
   memcpy_input_addrs_.clear();
   memcpy_output_addrs_.clear();
   tensor_type_list_.clear();
-  LazyDeleteOldAddr();
+  ar_input_address_list_.clear();
+  ar_output_address_list_.clear();
   FreeAllDeviceMem();
   full_ = false;
 }

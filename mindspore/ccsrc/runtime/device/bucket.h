@@ -30,7 +30,7 @@
 namespace mindspore::device {
 class Bucket {
  public:
-  Bucket(uint32_t id, uint32_t bucket_size)
+  Bucket(uint32_t id, uint32_t bucket_size, std::string group)
       : id_(id),
         bucket_size_(bucket_size),
         full_(false),
@@ -38,11 +38,9 @@ class Bucket {
         compute_stream_(nullptr),
         pre_event_(nullptr),
         post_event_(nullptr),
-        launch_mul_(nullptr),
         launch_atomic_clean_(nullptr),
         total_size_(0),
-        ar_input_addr_(nullptr),
-        ar_output_addr_(nullptr) {}
+        group_(std::move(group)) {}
   virtual ~Bucket() = default;
 
   uint32_t id() const { return id_; }
@@ -61,12 +59,11 @@ class Bucket {
 
   std::shared_ptr<DeviceEvent> pre_event_;
   std::shared_ptr<DeviceEvent> post_event_;
-  std::shared_ptr<LaunchKernel> launch_mul_;
   std::shared_ptr<LaunchKernel> launch_atomic_clean_;
 
   size_t total_size_;
-  uint8_t *ar_input_addr_;
-  uint8_t *ar_output_addr_;
+  std::vector<DeviceAddressPtr> ar_input_address_list_;
+  std::vector<DeviceAddressPtr> ar_output_address_list_;
   std::string group_;
   std::vector<size_t> align_size_list_;
   std::vector<tensor::TensorPtr> grad_tensor_list_;
@@ -74,18 +71,16 @@ class Bucket {
   std::vector<kernel::AddressPtr> memcpy_input_addrs_;
   std::vector<kernel::AddressPtr> memcpy_output_addrs_;
   std::vector<TypeId> tensor_type_list_;
-  std::vector<void *> tensor_old_addr_list_;
 
-  virtual void AllocateAllReduceAddr() = 0;
   void UpdateTensorAddr();
-  void CalculateMean();
-  virtual std::shared_ptr<LaunchKernel> CreateLaunchMul() = 0;
+  void AllocateAllReduceMemory();
+  virtual void FreeAllDeviceMem() {}
   virtual void LaunchAllReduce() = 0;
-  virtual void FreeAllDeviceMem() = 0;
-  virtual void FreeDeviceMem(void *dev_ptr) = 0;
   virtual void CopyTensorToContiguousMemory() = 0;
-  void UpdateTensorOutputAddr(uint8_t *addr);
-  void LazyDeleteOldAddr();
+  virtual DeviceAddressPtr CreateDeviceAddress(size_t size) const = 0;
+  virtual size_t GetAlignSize(size_t size) const = 0;
+  virtual void AllocateContinousMemory(const std::vector<DeviceAddressPtr> &to_allocate_address, size_t total_size,
+                                       const std::vector<size_t> &size_list) const = 0;
 };
 }  // namespace mindspore::device
 

@@ -19,6 +19,7 @@
 
 #include <memory>
 #include <vector>
+#include <string>
 #include "runtime/device/bucket.h"
 
 namespace mindspore::device::gpu {
@@ -29,14 +30,17 @@ class GPUBucket : public Bucket {
 
   void Init(const std::vector<void *> &compute_streams, const std::vector<void *> &communication_streams) override;
 
- private:
-  void AllocateAllReduceAddr() override;
-  void FreeAllDeviceMem() override;
-  void FreeDeviceMem(void *dev_ptr) override;
+ protected:
   void CopyTensorToContiguousMemory() override;
   void LaunchAllReduce() override;
-  std::shared_ptr<LaunchKernel> CreateLaunchMul() override;
+  DeviceAddressPtr CreateDeviceAddress(size_t size) const override;
+  size_t GetAlignSize(size_t size) const override;
+  void AllocateContinousMemory(const std::vector<DeviceAddressPtr> &to_allocate_address, size_t total_size,
+                               const std::vector<size_t> &size_list) const override;
+
   const void *collective_handle_;
+  std::string device_name_;
+  uint32_t device_id_;
 };
 }  // namespace mindspore::device::gpu
 #endif  // MINDSPORE_MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_GPU_BUCKET_H_
