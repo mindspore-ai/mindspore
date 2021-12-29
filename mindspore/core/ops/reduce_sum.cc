@@ -176,7 +176,9 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
 TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto x_type = input_args[0]->BuildType();
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x dtype", x_type, common_valid_types, prim->name());
+  std::set<TypePtr> valid_types = common_valid_types;
+  valid_types.insert(kBool);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x dtype", x_type, valid_types, prim->name());
   return x_type;
 }
 }  // namespace

@@ -742,6 +742,9 @@ class ReduceSum(_Reduce):
         super(ReduceSum, self).__init__(keep_dims)
         self.__setattr_flag__ = True
 
+    def __infer__(self, input_x, axis):
+        return self.do_infer(input_x, axis, mstype.number_type + (mstype.bool_,))
+
 
 class ReduceAll(_Reduce):
     """
