@@ -56,6 +56,21 @@
 #include "backend/session/pynative_task_manager.h"
 #include "pipeline/pynative/pynative_execute.h"
 #include "runtime/op_builder/op_lazy_builder.h"
+#ifdef ENABLE_DEBUGGER
+#include "debug/tensor_load.h"
+#include "debug/debugger/proto_exporter.h"
+#else
+#include "debug/debugger/proto_exporter_stub.h"
+#endif
+#ifdef ENABLE_DUMP_IR
+#include "debug/rdr/running_data_recorder.h"
+#include "debug/rdr/recorder_manager.h"
+#include "debug/rdr/graph_recorder.h"
+#endif
+#ifndef ENABLE_SECURITY
+#include "debug/data_dump/dump_json_parser.h"
+#include "debug/data_dump/e2e_dump.h"
+#endif
 
 namespace mindspore {
 namespace session {
@@ -2697,15 +2712,44 @@ void SessionBasic::FinalOptimize(const KernelGraphPtr &graph) const {
   MS_LOG(INFO) << "End FinalOptimize for graph: " << graph->graph_id();
 }
 
-void SessionBasic::DumpGraph(const std::shared_ptr<KernelGraph> &kernel_graph) {
+void SessionBasic::DumpGraphs(const std::vector<KernelGraphPtr> &graphs) {
 #ifdef ENABLE_DUMP_IR
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
-  if (save_graphs) {
-    DumpIR("graph_build_" + std::to_string(kernel_graph->graph_id()) + ".ir", kernel_graph, true, kWholeStack);
-    DumpIRProto(kernel_graph, "vm_build_" + std::to_string(kernel_graph->graph_id()));
-    DumpIR("trace_code_graph", kernel_graph, true, kWholeStack);
+  auto &json_parser = DumpJsonParser::GetInstance();
+  json_parser.Parse();
+  if (!save_graphs && !json_parser.e2e_dump_enabled() && !json_parser.async_dump_enabled() &&
+      !mindspore::RecorderManager::Instance().RdrEnable()) {
+    return;
+  }
+  for (auto &graph : graphs) {
+    MS_EXCEPTION_IF_NULL(graph);
+    std::string name = "graph_build." + std::to_string(graph->graph_id());
+    DumpGraphParams dump_params = {true, static_cast<int>(kWholeStack)};
+    (void)mindspore::RDR::RecordAnfGraph(SUBMODULE_ID, name, graph, dump_params, ".ir;.pb");
+    if (save_graphs) {
+      std::string file_name = "graph_build_" + std::to_string(graph->graph_id()) + ".ir";
+      DumpIR(file_name, graph, true, kWholeStack);
+      DumpIRProto(graph, "vm_build_" + std::to_string(graph->graph_id()));
+      DumpIR("trace_code_graph", graph, true, kWholeStack);
+    }
+    if (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) != kAscendDevice) {
+      // Here dump data only with Ascend.
+      continue;
+    }
+    std::string final_graph = "trace_code_graph_" + std::to_string(graph->graph_id());
+    if (json_parser.e2e_dump_enabled() || json_parser.async_dump_enabled()) {
+      std::string root_dir = json_parser.path() + "/rank_" + std::to_string(rank_id_);
+      std::string target_dir = root_dir + "/graphs";
+      std::string cst_file_dir = GenerateDumpPath(graph->root_graph_id(), rank_id_, true);
+      std::string ir_file_path = target_dir + "/" + "ms_output_" + final_graph + ".ir";
+      DumpIRProtoWithSrcInfo(graph, final_graph, target_dir, kDebugWholeStack);
+      DumpConstantInfo(graph, cst_file_dir);
+      DumpIR("trace_code_graph", graph, true, kWholeStack, ir_file_path);
+      DumpGraphExeOrder("ms_execution_order_graph_" + std::to_string(graph->graph_id()) + ".csv", root_dir,
+                        graph->execution_order());
+    }
   }
 #endif
 }

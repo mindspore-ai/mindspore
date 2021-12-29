@@ -507,7 +507,7 @@ GraphId GPUSession::CompileGraphImpl(const KernelGraphPtr &graph) {
     AllocateMemory(graph.get());
   }
 
-  DumpGraph(graph);
+  DumpGraphs({graph});
 
 #ifdef ENABLE_DEBUGGER
   if (debugger_ && debugger_->DebuggerBackendEnabled()) {

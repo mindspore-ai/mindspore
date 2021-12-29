@@ -483,7 +483,7 @@ GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
   Load(root_graph);
   root_graph->SetInputNodes();
   root_graph->SetOptimizerFlag();
-  DumpAllGraphs(all_graphs);
+  DumpGraphs(all_graphs);
   // Save memory profiling data to proto file
 #ifndef ENABLE_SECURITY
   if (MemoryProfiling::GetInstance().IsMemoryProfilingInitialized()) {
@@ -569,7 +569,7 @@ void AscendSession::BuildGraphImpl(GraphId graph_id) {
   }
   // sync the initial const tensor to device
   SyncInitialTenosrToDevice();
-  DumpAllGraphs({graph});
+  DumpGraphs({graph});
   MS_LOG(INFO) << "End";
 }
 
@@ -1414,46 +1414,6 @@ void AscendSession::Dump(const std::shared_ptr<KernelGraph> &kernel_graph) const
   MS_LOG(DEBUG) << "Finish!";
 }
 #endif
-
-void AscendSession::DumpAllGraphs(const std::vector<KernelGraphPtr> &all_graphs) {
-#ifdef ENABLE_DUMP_IR
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
-  auto &json_parser = DumpJsonParser::GetInstance();
-  json_parser.Parse();
-  if (!save_graphs && !json_parser.e2e_dump_enabled() && !json_parser.async_dump_enabled() &&
-      !mindspore::RecorderManager::Instance().RdrEnable()) {
-    return;
-  }
-  auto kernel_runtime = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
-  MS_EXCEPTION_IF_NULL(kernel_runtime);
-  for (auto &graph : all_graphs) {
-    MS_EXCEPTION_IF_NULL(graph);
-    std::string name = "graph_build." + std::to_string(graph->graph_id());
-    DumpGraphParams dump_params = {true, static_cast<int>(kWholeStack)};
-    (void)mindspore::RDR::RecordAnfGraph(SUBMODULE_ID, name, graph, dump_params, ".ir;.pb");
-    if (save_graphs) {
-      std::string file_name = "graph_build_" + std::to_string(graph->graph_id()) + ".ir";
-      DumpIR(file_name, graph, true, kWholeStack);
-      DumpIRProto(graph, "vm_build_" + std::to_string(graph->graph_id()));
-      DumpIR("trace_code_graph", graph, true, kWholeStack);
-    }
-    std::string final_graph = "trace_code_graph_" + std::to_string(graph->graph_id());
-    if (json_parser.e2e_dump_enabled() || json_parser.async_dump_enabled()) {
-      std::string root_dir = json_parser.path() + "/rank_" + std::to_string(rank_id_);
-      std::string target_dir = root_dir + "/graphs";
-      std::string cst_file_dir = GenerateDumpPath(graph->root_graph_id(), rank_id_, true);
-      std::string ir_file_path = target_dir + "/" + "ms_output_" + final_graph + ".ir";
-      DumpIRProtoWithSrcInfo(graph, final_graph, target_dir, kDebugWholeStack);
-      DumpConstantInfo(graph, cst_file_dir);
-      DumpIR("trace_code_graph", graph, true, kWholeStack, ir_file_path);
-      DumpGraphExeOrder("ms_execution_order_graph_" + std::to_string(graph->graph_id()) + ".csv", root_dir,
-                        graph->execution_order());
-    }
-  }
-#endif
-}
 
 void AscendSession::LoadTensor(const std::shared_ptr<KernelGraph> &kernel_graph) const {
   MS_LOG(INFO) << "Start!";

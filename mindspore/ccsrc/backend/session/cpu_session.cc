@@ -155,7 +155,7 @@ GraphId CPUSession::CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtr
   SetSummaryNodes(graph.get());
 #endif
   runtime_.IncreaseSummaryRefCount(graph->summary_nodes());
-  DumpGraph(graph);
+  DumpGraphs({graph});
   return graph_id;
 }
 

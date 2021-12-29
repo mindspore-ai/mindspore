@@ -372,6 +372,8 @@ GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNod
 
   auto graph_id = CompileGraphImpl(graph, device_context);
 
+  session_->DumpGraphs({graph});
+
   // Cache the backend graph output nodes to front nodes with output index.
   auto backend_node = graph->output();
   MS_EXCEPTION_IF_NULL(backend_node);
@@ -408,7 +410,7 @@ GraphId GraphCompiler::CompileGraph(const FuncGraphPtr &func_graph, const Device
   auto graph_id = CompileGraphImpl(root_graph, device_context);
 
   // dump all graphs.
-  device_context->DumpAllGraphs(all_graphs);
+  session_->DumpGraphs(all_graphs);
 
   // Cache the backend graph output nodes to front nodes with output index.
   auto output = func_graph->output();
@@ -496,7 +498,6 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
 #endif
 
   device_context->EnableRuntimeCache(graph);
-  session_->DumpGraph(graph);
   return graph->graph_id();
 }
 
