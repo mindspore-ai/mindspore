@@ -45,6 +45,7 @@ const AnfNodePtr MatMulActivationFusion::Process(const FuncGraphPtr &func_graph,
     MS_LOG(ERROR) << "matmul is not cnode.";
     return nullptr;
   }
+  MS_CHECK_TRUE_RET(act_cnode->input(1) != nullptr, nullptr);
   auto matmul_cnode = act_cnode->input(1)->cast<CNodePtr>();
   auto matmul_prim = GetValueNode<std::shared_ptr<ops::MatMulFusion>>(matmul_cnode->input(0));
   if (matmul_prim == nullptr) {
