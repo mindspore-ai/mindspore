@@ -222,6 +222,7 @@ STATUS UnifyFormatToNHWC::DecideConvWeightSrcAndDstFormat(const CNodePtr &cnode,
 }
 
 STATUS UnifyFormatToNHWC::ConvertOnnxResizeForConstShape(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
+  MS_ASSERT(func_graph != nullptr && cnode != nullptr);
   auto resize_shape_node = cnode->input(kNumResizeInputShape)->cast<ParameterPtr>();
   auto shape_tensor = std::dynamic_pointer_cast<tensor::Tensor>(resize_shape_node->default_param());
   if (shape_tensor == nullptr) {
@@ -270,8 +271,7 @@ STATUS UnifyFormatToNHWC::ConvertOnnxResizeForConstShape(const FuncGraphPtr &fun
 }
 
 STATUS UnifyFormatToNHWC::ConvertOnnxResizeForVariableShape(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
-  MS_CHECK_TRUE_MSG(func_graph != nullptr, RET_ERROR, "func_graph is nullptr.");
-  MS_CHECK_TRUE_MSG(cnode != nullptr, RET_ERROR, "cnode is nullptr.");
+  MS_ASSERT(func_graph != nullptr && cnode != nullptr);
   auto gather_name = cnode->fullname_with_scope() + "_gather";
   auto gather_input = cnode->input(kNumResizeInputShape);
   MS_CHECK_TRUE_MSG(gather_input != nullptr, RET_ERROR, "gather_input is nullptr.");
@@ -300,8 +300,7 @@ STATUS UnifyFormatToNHWC::ConvertOnnxResizeForVariableShape(const FuncGraphPtr &
 }
 
 STATUS UnifyFormatToNHWC::ResizeNodeProcess(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
-  MS_CHECK_TRUE_MSG(func_graph != nullptr, RET_ERROR, "func_graph is nullptr.");
-  MS_CHECK_TRUE_MSG(cnode != nullptr, RET_ERROR, "cnode is nullptr.");
+  MS_ASSERT(func_graph != nullptr && cnode != nullptr);
   if (fmk_type_ != converter::kFmkTypeOnnx) {
     return RET_OK;
   }
@@ -334,15 +333,17 @@ bool UnifyFormatToNHWC::ProcessResizeAndFormat(const FuncGraphPtr &func_graph) {
     if (opt::IsSpecialType(cnode)) {
       continue;
     }
-    auto value_node = cnode->input(0)->cast<ValueNodePtr>();
+    auto anf_node = cnode->input(0);
+    MS_CHECK_TRUE_MSG(anf_node != nullptr, false, "anf_node is nullptr.");
+    auto value_node = anf_node->cast<ValueNodePtr>();
     if (value_node == nullptr) {
-      if (cnode->input(0)->cast<CNodePtr>() != nullptr) {
+      if (anf_node->cast<CNodePtr>() != nullptr) {
         continue;
       }
       MS_LOG(ERROR) << "cnode first input is invalid.";
       return false;
     }
-    auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+    auto prim = GetValueNode<PrimitivePtr>(anf_node);
     if (prim == nullptr) {
       continue;
     }

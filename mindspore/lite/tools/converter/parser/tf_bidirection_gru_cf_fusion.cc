@@ -31,6 +31,7 @@ constexpr size_t kNumFwVars = 4;
 constexpr size_t kNumBwVars = 4;
 const auto &p1 = std::placeholders::_1;
 BaseRef GetPrim(const PrimitivePtr &prim) {
+  MS_ASSERT(prim != nullptr);
   auto ptr = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim));
   MS_CHECK_TRUE_MSG(ptr != nullptr, nullptr, "is nullptr.");
   return ptr;
@@ -56,6 +57,7 @@ TfBidirectionGruCfFusion::TfBidirectionGruCfFusion(const std::string &name, bool
 
 BaseRef TfBidirectionGruCfFusion::DefineGruCellPattern(const BaseRef &in_ta_read, const BaseRef &switch3_true,
                                                        const std::vector<VarPtr> &vars) const {
+  MS_ASSERT(vars.size() == kNumFwVars);
   auto concat = VectorRef({GetPrim(prim::kPrimConcat), in_ta_read, switch3_true});
   auto matmul_enter = VectorRef({GetPrim(lite::kNameEnter), vars[0]});  // gate_kernel
   auto matmul = VectorRef({GetPrim(prim::kPrimMatMulFusion), concat, matmul_enter});
