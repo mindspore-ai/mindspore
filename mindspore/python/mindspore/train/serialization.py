@@ -160,6 +160,7 @@ def _exec_save(ckpt_file_name, data_list, enc_key=None, enc_mode="AES-GCM"):
     try:
         with _ckpt_mutex:
             if os.path.exists(ckpt_file_name):
+                os.chmod(ckpt_file_name, stat.S_IWUSR)
                 os.remove(ckpt_file_name)
             with open(ckpt_file_name, "ab") as f:
                 if enc_key is not None:

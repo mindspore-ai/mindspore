@@ -31,7 +31,7 @@ class LossMonitor(Callback):
 
     Args:
         per_print_times (int): How many steps to print once loss. During sink mode, it will print loss in the
-        nearest step. Default: 1.
+                               nearest step. Default: 1.
 
     Raises:
         ValueError: If per_print_times is not an integer or less than zero.
