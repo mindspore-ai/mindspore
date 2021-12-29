@@ -638,7 +638,7 @@ void GraphCompiler::CalculateRefCount(const KernelGraphPtr &graph, std::map<Kern
 }
 
 void GraphCompiler::CalculateForwardOpOutputCount(const KernelGraphPtr &graph,
-                                                  std::multiset<std::string> *forward_op_output_tensor_id) const {
+                                                  std::map<std::string, size_t> *forward_op_output_tensor_id) const {
   MS_EXCEPTION_IF_NULL(session_);
   forward_op_output_tensor_id->clear();
   session_->GetForwardOpOutputRefCount(graph.get(), forward_op_output_tensor_id);
@@ -652,7 +652,7 @@ void GraphCompiler::UpdateRefCount(const std::set<KernelWithIndex> &input_kernel
 }
 
 void GraphCompiler::UpdateForwardOpOutputRefCount(const std::vector<tensor::TensorPtr> &input_tensor,
-                                                  std::multiset<std::string> *forward_op_output_tensor_id) const {
+                                                  std::map<std::string, size_t> *forward_op_output_tensor_id) const {
   MS_EXCEPTION_IF_NULL(session_);
   MS_EXCEPTION_IF_NULL(forward_op_output_tensor_id);
   session_->ReleaseForwardOpOutput(input_tensor, forward_op_output_tensor_id);

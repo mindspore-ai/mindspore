@@ -1364,37 +1364,41 @@ void SessionBasic::GetRefCount(const KernelGraph *graph, std::map<KernelWithInde
 }
 
 void SessionBasic::GetForwardOpOutputRefCount(const KernelGraph *graph,
-                                              std::multiset<std::string> *forward_op_output_tensor_id) {
+                                              std::map<std::string, size_t> *forward_op_output_tensor_id) {
   if (!pynative::PynativeExecutor::GetInstance()->grad_executor()->grad_is_running()) {
     return;
   }
-  const auto &graph_value_nodes = graph->graph_value_nodes();
-  std::vector<tensor::TensorPtr> tensor_value_list;
-  for (const auto &v : graph_value_nodes) {
-    const auto &value = GetValueNode(v);
-    MS_EXCEPTION_IF_NULL(value);
-    TensorValueToTensor(value, &tensor_value_list);
-  }
   const auto &forward_op_output_id = pynative::PynativeExecutor::GetInstance()->grad_executor()->forward_op_output_id();
   MS_LOG(DEBUG) << "Total forward op out put size " << forward_op_output_id.size();
-  for (const auto &t : tensor_value_list) {
-    if (forward_op_output_id.find(t->id()) != forward_op_output_id.end()) {
-      (*forward_op_output_tensor_id).emplace(t->id());
+  for (const auto &kernel : graph->execution_order()) {
+    const auto input_tensor_num = AnfAlgo::GetInputTensorNum(kernel);
+    for (size_t i = 1; i <= input_tensor_num; ++i) {
+      const auto &input = kernel->input(i);
+      auto kernel_with_index = AnfAlgo::VisitKernel(input, 0);
+      auto real_input = kernel_with_index.first;
+      MS_EXCEPTION_IF_NULL(real_input);
+      if (real_input->isa<ValueNode>()) {
+        const auto &tensor = GetValueNodeOutputTensor(real_input, kernel_with_index.second);
+        MS_EXCEPTION_IF_NULL(tensor);
+        if (forward_op_output_id.find(tensor->id()) != forward_op_output_id.end()) {
+          (*forward_op_output_tensor_id)[tensor->id()] += 1;
+        }
+      }
     }
   }
-  MS_LOG(DEBUG) << "Total value nodes in graph size " << graph_value_nodes.size() << ", total tensor value node size "
-                << tensor_value_list.size() << ", forward op output tensor size "
-                << forward_op_output_tensor_id->size();
+  MS_LOG(DEBUG) << "Forward op output tensor in bprop graph size " << forward_op_output_tensor_id->size();
 }
 
 void SessionBasic::ReleaseForwardOpOutput(const std::vector<tensor::TensorPtr> &input_tensors,
-                                          std::multiset<std::string> *forward_op_output_tensor_id) {
+                                          std::map<std::string, size_t> *forward_op_output_tensor_id) {
   MS_EXCEPTION_IF_NULL(forward_op_output_tensor_id);
   for (const auto &tensor : input_tensors) {
     auto it = forward_op_output_tensor_id->find(tensor->id());
     if (it != forward_op_output_tensor_id->end()) {
-      tensor->set_device_address(nullptr);
-      forward_op_output_tensor_id->erase(it);
+      if (--(it->second) == 0) {
+        tensor->set_device_address(nullptr);
+        forward_op_output_tensor_id->erase(it);
+      }
     }
   }
 }
@@ -2425,7 +2429,7 @@ void SessionBasic::RunOpsInGraphImpl(const GraphId &graph_id, const std::vector<
   graph_output_info.graph_outputs = outputs;
   CreateOutputPlaceholder(kernel_graph, inputs, graph_output_info.graph_outputs, &graph_output_info.output_indexes);
   std::map<KernelWithIndex, size_t> cnode_refcount;
-  std::multiset<std::string> forward_op_output_tensor_id;
+  std::map<std::string, size_t> forward_op_output_tensor_id;
   GetRefCount(kernel_graph.get(), &cnode_refcount);
   GetForwardOpOutputRefCount(kernel_graph.get(), &forward_op_output_tensor_id);
   BuildOpsInGraph(graph_id, parameter_index, inputs, cnode_refcount);
