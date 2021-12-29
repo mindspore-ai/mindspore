@@ -781,6 +781,13 @@ std::vector<size_t> AnfRuntimeAlgorithm::GetOutputInferShape(const AnfNodePtr &n
       return TransShapeToSizet(b_shp->cast<abstract::ShapePtr>());
     } else if (b_shp->isa<abstract::NoShape>()) {
       return std::vector<size_t>();
+    } else if (b_shp->isa<abstract::TupleShape>()) {
+      // Usually there is no tuple in tuple for the shape of the kernel graph parameter, but there will be such a
+      // scenario when dump ir is in the compilation process, here return an empty shape so that dump ir can work
+      // normally.
+      MS_LOG(INFO) << "The output shape of node:" << node->DebugString() << " index:" << output_idx
+                   << " is a TupleShape:" << base_shape->ToString();
+      return std::vector<size_t>();
     } else {
       MS_LOG(EXCEPTION) << "The output type of ApplyKernel index:" << output_idx
                         << " should be a NoShape , ArrayShape or a TupleShape, but it is " << base_shape->ToString()

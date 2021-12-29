@@ -626,6 +626,7 @@ py::object MakeCSRTensor(const VectorRef &value_list) {
       if (tensorptr->DataDim() != 0) {
         MS_LOG(EXCEPTION) << "Element in CSRTensor's shape must be scalar!";
       }
+      tensorptr->data_sync(false);
       shape.push_back(*(static_cast<int64_t *>(tensorptr->data_c())));
     }
   }
