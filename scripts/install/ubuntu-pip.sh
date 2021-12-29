@@ -9,7 +9,7 @@ ARCH=`uname -m`
 if [[ "${PYTHON_VERSION}" == "3.7.5" ]]; then
 VERSION="${MINDSPORE_VERSION}-cp37-cp37m"
 else
-VERSION="${MINDSPORE_VERSION}-cp39-cp39m"
+VERSION="${MINDSPORE_VERSION}-cp39-cp39"
 fi
 
 
