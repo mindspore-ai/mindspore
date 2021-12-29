@@ -238,9 +238,9 @@ def test_csr_ops():
 
     dense_tensor = Tensor([[1., 1, 1, 1], [1, 1, 1, 1]], dtype=mstype.float32)
     dense_vector = Tensor([[1.], [1], [1], [1]], dtype=mstype.float32)
+    csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
 
-    def test_ops_pynative(indptr, indices, values, dense_shape):
-        csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
+    def test_ops_pynative():
         dense1 = csr_reducesum(csr_tensor, 1)
         dense2 = csrmv(csr_tensor, dense_vector)
         sparse1 = csr_tensor * dense_tensor
@@ -249,8 +249,8 @@ def test_csr_ops():
 
     test_ops_graph = ms_function(test_ops_pynative)
 
-    pynative_res = test_ops_pynative(indptr, indices, values, dense_shape)
-    graph_res = test_ops_graph(indptr, indices, values, dense_shape)
+    pynative_res = test_ops_pynative()
+    graph_res = test_ops_graph()
     expect1 = np.array([[2.], [1.]], dtype=np.float32)
     expect2 = np.array([[2.], [1.]], dtype=np.float32)
     expect3 = np.array([2., 1.], dtype=np.float32)

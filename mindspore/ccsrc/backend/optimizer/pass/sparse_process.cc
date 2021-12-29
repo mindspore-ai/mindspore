@@ -47,25 +47,57 @@ void AbstractCSRToAbstractTuple(const AnfNodePtr &sparse) {
   }
 }
 
-ValueNodePtr NewValueNodeAndSetAbstract(const ValuePtr &val, const AbstractBasePtr &abs) {
-  auto node = NewValueNode(val);
+ValueNodePtr MakeNewValueNodeToGraph(const ValueNodePtr &val, const AbstractBasePtr &abs,
+                                     const KernelGraphPtr &kernel_graph) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto node = kernel_graph->NewValueNode(val);
+  MS_EXCEPTION_IF_NULL(node);
   node->set_abstract(abs);
+  kernel_graph->AddValueNodeToGraph(node);
   return node;
 }
 
-bool SplitValueNode(const AnfNodePtr &node, std::vector<AnfNodePtr> *new_inputs) {
+bool SplitValueNode(const AnfNodePtr &node, std::vector<AnfNodePtr> *new_inputs, const KernelGraphPtr &kernel_graph) {
   ValuePtr value = node->cast<ValueNodePtr>()->value();
   MS_EXCEPTION_IF_NULL(value);
   if (!value->isa<CSRTensor>()) return false;
-
   auto csr_tensor = value->cast<CSRTensorPtr>();
   MS_EXCEPTION_IF_NULL(csr_tensor);
   auto csr_abs = node->abstract()->cast<abstract::AbstractCSRTensorPtr>();
   MS_EXCEPTION_IF_NULL(csr_abs);
-  new_inputs->push_back(NewValueNodeAndSetAbstract(csr_tensor->GetIndptr(), csr_abs->indptr()));
-  new_inputs->push_back(NewValueNodeAndSetAbstract(csr_tensor->GetIndices(), csr_abs->indices()));
-  new_inputs->push_back(NewValueNodeAndSetAbstract(csr_tensor->GetValues(), csr_abs->values()));
+  auto new_indptr = MakeNewValueNodeToGraph(NewValueNode(csr_tensor->GetIndptr()), csr_abs->indptr(), kernel_graph);
+  new_inputs->push_back(new_indptr);
+  auto new_indices = MakeNewValueNodeToGraph(NewValueNode(csr_tensor->GetIndices()), csr_abs->indices(), kernel_graph);
+  new_inputs->push_back(new_indices);
+  auto new_values = MakeNewValueNodeToGraph(NewValueNode(csr_tensor->GetValues()), csr_abs->values(), kernel_graph);
+  new_inputs->push_back(new_values);
   return true;
+}
+
+bool SplitParameter(const AnfNodePtr &node, std::vector<AnfNodePtr> *new_inputs, const KernelGraphPtr &kernel_graph) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto node_abs = node->abstract();
+  MS_EXCEPTION_IF_NULL(node_abs);
+  if (node_abs->isa<abstract::AbstractCSRTensor>()) {
+    auto param_abs = node_abs->cast<abstract::AbstractCSRTensorPtr>();
+    MS_EXCEPTION_IF_NULL(param_abs);
+    MS_EXCEPTION_IF_NULL(param_abs->indptr());
+    MS_EXCEPTION_IF_NULL(param_abs->indices());
+    MS_EXCEPTION_IF_NULL(param_abs->values());
+    auto new_indptr =
+      MakeNewValueNodeToGraph(NewValueNode(param_abs->indptr()->BuildValue()), param_abs->indptr(), kernel_graph);
+    MS_EXCEPTION_IF_NULL(new_indptr);
+    new_inputs->push_back(new_indptr);
+    auto new_indices =
+      MakeNewValueNodeToGraph(NewValueNode(param_abs->indices()->BuildValue()), param_abs->indices(), kernel_graph);
+    MS_EXCEPTION_IF_NULL(new_indices);
+    new_inputs->push_back(new_indices);
+    // Set CSRTensor Parameter abstract to Tensor by its values.
+    node->set_abstract(param_abs->values()->Broaden());
+    new_inputs->push_back(node);
+    return true;
+  }
+  return false;
 }
 
 bool SplitCNode(const AnfNodePtr &node, std::vector<AnfNodePtr> *new_inputs) {
@@ -141,7 +173,9 @@ const AnfNodePtr SparseProcess::Process(const FuncGraphPtr &func_graph, const An
       if (inputs[i]->isa<CNode>()) {
         if (SplitCNode(inputs[i], &new_inputs)) continue;
       } else if (inputs[i]->isa<ValueNode>()) {
-        if (SplitValueNode(inputs[i], &new_inputs)) continue;
+        if (SplitValueNode(inputs[i], &new_inputs, kernel_graph)) continue;
+      } else if (inputs[i]->isa<Parameter>()) {
+        if (SplitParameter(inputs[i], &new_inputs, kernel_graph)) continue;
       }
       new_inputs.push_back(inputs[i]);
     }
