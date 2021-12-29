@@ -485,11 +485,8 @@ py::object GraphExecutorPy::GenerateArgumentsKey(const py::tuple &args, bool ena
   for (std::size_t i = 0; i < size; i++) {
     ValuePtr converted = nullptr;
     if (!parse::ConvertData(args[i], &converted)) {
-      MS_EXCEPTION(TypeError)
-        << "The inputs types of the outermost network support bool, int, float, None, tensor, "
-           "mstype.Number(mstype.bool, mstype.int, mstype.float, mstype.uint), "
-           "and tuple or list containing only these types, and dict whose values are these types, but the "
-        << i << "th arg type is " << args[i].get_type() << ", value is '" << py::str(args[i]) << "'.";
+      MS_EXCEPTION(TypeError) << "parse::ConvertData for " << i << "th argument failed, the argument type is "
+                              << args[i].get_type() << ", value is '" << py::str(args[i]) << "'.";
     }
     AbstractBasePtr ptr = ArgsToAbstract(converted, enable_tuple_broaden);
     args_spec.push_back(ptr);
@@ -501,9 +498,6 @@ py::object GraphExecutorPy::GenerateArgumentsKey(const py::tuple &args, bool ena
   if (iter != g_args_cache.end()) {
     return py::int_(iter->second);
   }
-
-  // Check if the args of function or net is valid.
-  CheckArgsValid(args);
 
   static uint64_t key_counter = 0;
   g_args_cache[args_spec] = key_counter;
@@ -987,6 +981,13 @@ bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple
     MS_LOG(ERROR) << "The `phase` must be string.";
     return false;
   }
+  // Check if the function or net is valid.
+  if (py::isinstance<py::none>(source_obj)) {
+    MS_LOG(ERROR) << "The source object to compile should not be None.";
+    return false;
+  }
+  // Check if the args of function or net is valid.
+  CheckArgsValid(args);
 
   auto phase = py::cast<std::string>(phase_obj);
   MS_LOG(INFO) << "Start compiling, phase: " << phase;

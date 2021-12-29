@@ -589,7 +589,10 @@ class _CellGraphExecutor:
             Str, the full phase of the cell.
             Bool, if the graph has been compiled before, return False, else return True.
         """
-        obj.__parse_method__ = obj.construct.__name__
+        obj.__parse_method__ = 'construct'
+        if not hasattr(obj, obj.__parse_method__):
+            raise AttributeError(
+                'The class {} dose not have method {}'.format(obj.__class__.__name__, obj.__parse_method__))
         args_list = args
         if hasattr(obj, "enable_tuple_broaden"):
             self.enable_tuple_broaden = obj.enable_tuple_broaden
