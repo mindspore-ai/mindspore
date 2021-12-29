@@ -868,6 +868,7 @@ class NeighborExchangeV2(Primitive):
         self.send_lens = send_lens
         self.recv_lens = recv_lens
         self.format = data_format
+        self.add_prim_attr('group', _get_group(group))
         self.add_prim_attr('no_eliminate', True)
 
     def __call__(self, tensor):
