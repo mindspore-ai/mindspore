@@ -122,11 +122,6 @@ void AscendGraphOptimization::OptimizeExecutionOrder(const KernelGraphPtr &graph
   AnfAlgo::ReorderExecList(NOT_NULL(&execution_order));
   graph->set_execution_order(execution_order);
 
-#ifndef ENABLE_SECURITY
-  // insert profiling point
-  device::KernelAdjust::GetInstance().Profiling(NOT_NULL(graph.get()));
-#endif
-
   device::KernelAdjust::GetInstance().InsertOverflowCheckOperations(NOT_NULL(graph));
 
 #ifdef ENABLE_DUMP_IR
