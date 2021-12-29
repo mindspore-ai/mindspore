@@ -44,6 +44,7 @@ class DataPrepareActor : public DebugAwareActor {
       : DebugAwareActor(name, KernelTransformType::kDataPrepareActor, nullptr, memory_manager_aid, debug_aid),
         graph_compiler_info_(graph_compiler_info),
         strategy_(GraphExecutionStrategy::kPipeline),
+        real_strategy_(GraphExecutionStrategy::kPipeline),
         host_data_source_actor_(host_data_source_actor),
         host_tensor_queue_(host_tensor_queue) {}
   ~DataPrepareActor() override = default;
@@ -51,7 +52,8 @@ class DataPrepareActor : public DebugAwareActor {
   void Init() override;
 
   // The process entry of data prepare.
-  void PrepareData(const std::vector<std::vector<TensorPtr>> &input_tensors, OpContext<DeviceTensor> *const context);
+  void PrepareData(const std::vector<std::vector<TensorPtr>> &input_tensors, OpContext<DeviceTensor> *const context,
+                   GraphExecutionStrategy real_strategy);
 
   // The debug related operation interface.
   void SendDebugReq(OpContext<DeviceTensor> *const context) override;
@@ -104,6 +106,7 @@ class DataPrepareActor : public DebugAwareActor {
 
   const GraphCompilerInfo *graph_compiler_info_;
   GraphExecutionStrategy strategy_;
+  GraphExecutionStrategy real_strategy_;
   HostQueueDSActorPtr host_data_source_actor_;
   HostTensorQueuePtr host_tensor_queue_;
 
