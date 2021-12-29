@@ -4692,7 +4692,7 @@ class FusedSparseAdam(PrimitiveWithInfer):
         TypeError: If neither `use_locking` nor `use_neserov` is a bool.
         TypeError: If dtype of `var`, `m`, `v`, `beta1_power`, `beta2_power`, `lr`, `beta1`, `beta2`, `epsilon`,
                    `gradient` or `indices` is not float32.
-       RuntimeError: If the data type of all inputs except `indices` conversion of Parameter is not supported.
+        RuntimeError: If the data type of all inputs except `indices` conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
