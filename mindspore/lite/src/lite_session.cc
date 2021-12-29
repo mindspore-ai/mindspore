@@ -711,14 +711,16 @@ int LiteSession::SetNonTaiCallSubgraphOutputInitRefCount(
     auto call_output = call_kernel->out_tensors();
     auto all_out_subgraphs = kernel::LiteKernelUtil::GetCallInputPartialsCorrespondingOutputSubgraph(call_kernel);
     for (auto subgraph : all_out_subgraphs) {
-      if (subgraph->out_tensors().size() != call_output.size()) {
-        MS_LOG(ERROR) << "non tail call outputs size is " << call_output.size()
-                      << " , which is not same as subgraph : " << subgraph->name()
-                      << " output size: " << subgraph->out_tensors().size();
-        return RET_ERROR;
-      }
-      for (size_t i = 0; i < call_output.size(); ++i) {
-        subgraph->out_tensors()[i]->set_init_ref_count(call_output[i]->init_ref_count());
+      MS_CHECK_TRUE_MSG(subgraph->out_tensors().size() == call_output.size(), RET_ERROR,
+                        "non tail call output size is not same as subgraph output.");
+      std::set<Tensor *> subgraph_outputs_set{};
+      for (size_t i = 0; i < subgraph->out_tensors().size(); ++i) {
+        auto output = subgraph->out_tensors()[i];
+        if (subgraph_outputs_set.find(output) == subgraph_outputs_set.end()) {
+          output->set_init_ref_count(1);
+        } else {
+          output->set_init_ref_count(output->init_ref_count() + 1);
+        }
       }
     }
   }
