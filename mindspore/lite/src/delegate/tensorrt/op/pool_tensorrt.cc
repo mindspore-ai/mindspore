@@ -95,9 +95,7 @@ int PoolTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   }
   nvinfer1::ITensor *out_trt_tensor = activation_layer->getOutput(0);
   out_trt_tensor->setName((op_name_ + "_output").c_str());
-  bool same_format = SameDims(out_trt_tensor->getDimensions(), out_tensors_[0].Shape()) &&
-                     SameDims(tensorrt_in_tensors_[0].trt_tensor_->getDimensions(), in_tensors_[0].Shape());
-  this->AddInnerOutTensors(ITensorHelper{out_trt_tensor, Format::NCHW, same_format});
+  this->AddInnerOutTensors(ITensorHelper{out_trt_tensor, Format::NCHW, false});
   MS_LOG(DEBUG) << "output " << GetTensorFormat(tensorrt_out_tensors_[0]);
   return RET_OK;
 }

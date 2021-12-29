@@ -82,37 +82,15 @@ int ElementWiseTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     MS_LOG(ERROR) << "network or input tensor size is invalid";
     return RET_ERROR;
   }
-  input_x_index_ = SameTensor(tensorrt_in_tensors_[0].trt_tensor_, &in_tensors_[0]) ? 0 : 1;
-
-  if (this->tensorrt_in_tensors_.size() != INPUT_SIZE2) {
-    int ret = AddConstTensor(network);
-    if (ret != RET_OK) {
-      return ret;
-    }
+  ITensorHelper x_input;
+  ITensorHelper y_input;
+  int ret = PreprocessInputTensors(network, &x_input, &y_input);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "PreprocessInputTensors failed.";
+    return RET_ERROR;
   }
-  MS_LOG(DEBUG) << "before transpose " << GetTensorFormat(tensorrt_in_tensors_[input_x_index_]);
-  MS_LOG(DEBUG) << "before transpose " << GetTensorFormat(tensorrt_in_tensors_[1 - input_x_index_]);
-
-  if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
-      tensorrt_in_tensors_[0].format_ != tensorrt_in_tensors_[1].format_) {
-    // when inputs format are different, change to NHWC
-    int transpose_input_tensor = tensorrt_in_tensors_[0].format_ == Format::NCHW ? 0 : 1;
-    nvinfer1::IShuffleLayer *transpose_layer =
-      NCHW2NHWC(network, *tensorrt_in_tensors_[transpose_input_tensor].trt_tensor_);
-    if (transpose_layer == nullptr) {
-      MS_LOG(ERROR) << "op action convert failed";
-      return RET_ERROR;
-    }
-    transpose_layer->setName((op_name_ + "_input_transpose2NHWC").c_str());
-    tensorrt_in_tensors_[transpose_input_tensor].trt_tensor_ = transpose_layer->getOutput(0);
-    tensorrt_in_tensors_[transpose_input_tensor].format_ = Format::NHWC;
-  }
-  MS_LOG(DEBUG) << "after transpose " << GetTensorFormat(tensorrt_in_tensors_[input_x_index_]);
-  MS_LOG(DEBUG) << "after transpose " << GetTensorFormat(tensorrt_in_tensors_[1 - input_x_index_]);
-
   nvinfer1::IElementWiseLayer *cal_layer =
-    network->addElementWise(*tensorrt_in_tensors_[input_x_index_].trt_tensor_,
-                            *tensorrt_in_tensors_[1 - input_x_index_].trt_tensor_, element_wise_op_);
+    network->addElementWise(*x_input.trt_tensor_, *y_input.trt_tensor_, element_wise_op_);
 
   if (cal_layer == nullptr) {
     MS_LOG(ERROR) << "addElementWise failed for TensorRT.";
@@ -143,9 +121,54 @@ int ElementWiseTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     }
   }
   op_out_tensor->setName((op_name_ + "_output").c_str());
-  this->AddInnerOutTensors(
-    ITensorHelper{op_out_tensor, tensorrt_in_tensors_[1].format_, tensorrt_in_tensors_[1].same_format_});
+  this->AddInnerOutTensors(ITensorHelper{op_out_tensor, x_input.format_, x_input.same_format_});
   MS_LOG(DEBUG) << "output " << GetTensorFormat(tensorrt_out_tensors_[0]);
+  return RET_OK;
+}
+
+int ElementWiseTensorRT::PreprocessInputTensors(nvinfer1::INetworkDefinition *network, ITensorHelper *x_input,
+                                                ITensorHelper *y_input) {
+  int input_x_index = SameTensor(tensorrt_in_tensors_[0].trt_tensor_, &in_tensors_[0]) ? 0 : 1;
+
+  if (this->tensorrt_in_tensors_.size() != INPUT_SIZE2) {
+    int ret = AddConstTensor(network);
+    if (ret != RET_OK) {
+      return ret;
+    }
+  }
+  *x_input = tensorrt_in_tensors_[input_x_index];
+  *y_input = tensorrt_in_tensors_[1 - input_x_index];
+  MS_LOG(DEBUG) << "before transpose " << GetTensorFormat(*x_input);
+  MS_LOG(DEBUG) << "before transpose " << GetTensorFormat(*y_input);
+
+  if (x_input->trt_tensor_->getDimensions().nbDims == DIMENSION_4D && x_input->format_ != y_input->format_) {
+    // when inputs format are different, change to NHWC
+    auto need_trans = x_input->format_ == Format::NCHW ? x_input : y_input;
+    nvinfer1::IShuffleLayer *transpose_layer = NCHW2NHWC(network, *need_trans->trt_tensor_);
+    if (transpose_layer == nullptr) {
+      MS_LOG(ERROR) << "op action convert failed";
+      return RET_ERROR;
+    }
+    transpose_layer->setName((op_name_ + "_input_transpose2NHWC").c_str());
+    need_trans->trt_tensor_ = transpose_layer->getOutput(0);
+    need_trans->format_ = Format::NHWC;
+    need_trans->same_format_ = true;
+  }
+  MS_LOG(DEBUG) << "after transpose " << GetTensorFormat(*x_input);
+  MS_LOG(DEBUG) << "after transpose " << GetTensorFormat(*y_input);
+  if (GetDimsVolume(x_input->trt_tensor_->getDimensions()) == GetDimsVolume(y_input->trt_tensor_->getDimensions()) &&
+      x_input->trt_tensor_->getDimensions().nbDims != y_input->trt_tensor_->getDimensions().nbDims) {
+    bool x_large = x_input->trt_tensor_->getDimensions().nbDims > y_input->trt_tensor_->getDimensions().nbDims;
+    auto input_tensor = x_large ? y_input : x_input;
+    auto output_dim = x_large ? x_input->trt_tensor_->getDimensions() : y_input->trt_tensor_->getDimensions();
+    auto reshape_layer = network->addShuffle(*input_tensor->trt_tensor_);
+    if (reshape_layer == nullptr) {
+      MS_LOG(ERROR) << "add reshape failed for " << op_name_;
+      return RET_ERROR;
+    }
+    reshape_layer->setReshapeDimensions(output_dim);
+    input_tensor->trt_tensor_ = reshape_layer->getOutput(0);
+  }
   return RET_OK;
 }
 

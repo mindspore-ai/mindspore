@@ -28,7 +28,8 @@ using mindspore::lite::RET_OK;
 namespace mindspore::lite {
 class TensorRTSerializer {
  public:
-  explicit TensorRTSerializer(std::string serialize_file_path) : serialize_file_path_(std::move(serialize_file_path)) {}
+  explicit TensorRTSerializer(const std::string &serialize_file_path)
+      : serialize_file_path_(std::move(serialize_file_path)) {}
 
   ~TensorRTSerializer() = default;
 

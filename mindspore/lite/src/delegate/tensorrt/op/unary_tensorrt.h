@@ -38,6 +38,12 @@ class UnaryTensorRT : public TensorRTOp {
   std::map<schema::PrimitiveType, nvinfer1::UnaryOperation> unary_ops_ = {
     {schema::PrimitiveType_Sqrt, nvinfer1::UnaryOperation::kSQRT},
     {schema::PrimitiveType_Abs, nvinfer1::UnaryOperation::kABS},
+    {schema::PrimitiveType_Neg, nvinfer1::UnaryOperation::kNEG},
+    {schema::PrimitiveType_Log, nvinfer1::UnaryOperation::kLOG},
+    {schema::PrimitiveType_Sin, nvinfer1::UnaryOperation::kSIN},
+    {schema::PrimitiveType_Cos, nvinfer1::UnaryOperation::kCOS},
+    {schema::PrimitiveType_Ceil, nvinfer1::UnaryOperation::kCEIL},
+    {schema::PrimitiveType_Floor, nvinfer1::UnaryOperation::kFLOOR},
   };
   nvinfer1::UnaryOperation unary_op_;
 };

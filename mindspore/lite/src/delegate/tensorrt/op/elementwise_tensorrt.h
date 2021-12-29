@@ -41,10 +41,9 @@ class ElementWiseTensorRT : public TensorRTOp {
 
   bool SameTensor(nvinfer1::ITensor *trt_tensor, mindspore::MSTensor *ms_tensor);
 
-  nvinfer1::ElementWiseOperation element_wise_op_;
+  int PreprocessInputTensors(nvinfer1::INetworkDefinition *network, ITensorHelper *x_input, ITensorHelper *y_input);
 
-  // index of first input MSTensor in the trt input tensor vector
-  size_t input_x_index_ = 0;
+  nvinfer1::ElementWiseOperation element_wise_op_;
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_OP_ELEMENTWISE_TENSORRT_H_
