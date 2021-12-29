@@ -70,7 +70,7 @@ bool GPUMemoryManager::MallocContinuousMemFromMemPool(const DeviceAddressPtrList
   return true;
 }
 
-void GPUMemoryManager::MallocDeviceMemory() {
+void GPUMemoryManager::Initialize() {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   if (ps::ps_cache_instance.initialized_ps_cache()) {
@@ -82,7 +82,7 @@ void GPUMemoryManager::MallocDeviceMemory() {
   }
 }
 
-void GPUMemoryManager::FreeDeviceMemory() { GPUMemoryAllocator::GetInstance().ReleaseDeviceRes(); }
+void GPUMemoryManager::Finalize() { GPUMemoryAllocator::GetInstance().ReleaseDeviceRes(); }
 
 uint8_t *GPUMemoryManager::MallocStaticMem(size_t size, bool, uint32_t) {
   auto context_ptr = MsContext::GetInstance();

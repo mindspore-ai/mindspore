@@ -31,9 +31,12 @@ namespace mindspore {
 namespace device {
 namespace ascend {
 
-void AscendMemoryManager::MallocDeviceMemory() { (void)AscendMemAdapter::GetInstance().Initialize(); }
+void AscendMemoryManager::Initialize() {
+  (void)AscendMemAdapter::GetInstance().Initialize();
+  AscendMemoryPool::GetInstance().Init();
+}
 
-void AscendMemoryManager::FreeDeviceMemory() { (void)AscendMemAdapter::GetInstance().DeInitialize(); }
+void AscendMemoryManager::Finalize() { (void)AscendMemAdapter::GetInstance().DeInitialize(); }
 
 void AscendMemoryManager::ResetDynamicMemory() { (void)AscendMemAdapter::GetInstance().ResetDynamicMemory(); }
 

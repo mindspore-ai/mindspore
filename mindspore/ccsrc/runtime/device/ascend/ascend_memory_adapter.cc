@@ -77,7 +77,6 @@ bool AscendMemAdapter::Initialize() {
   static_mem_offset_ = ms_used_hbm_size_;
   cur_dynamic_mem_offset_ = 0;
   max_dynamic_mem_offset_ = 0;
-  AscendMemoryPool::GetInstance().SetMempoolBlockSize(ms_used_hbm_size_);
   MS_LOG(INFO) << "Ascend Memory Adapter initialize success, Memory Statistics:" << DevMemStatistics();
   initialized_ = true;
   return true;

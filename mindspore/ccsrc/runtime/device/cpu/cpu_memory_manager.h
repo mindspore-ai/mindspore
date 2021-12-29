@@ -34,8 +34,8 @@ class CPUMemoryManager : public MemoryManager {
   CPUMemoryManager() = default;
   virtual ~CPUMemoryManager();
 
-  void MallocDeviceMemory() override {}
-  void FreeDeviceMemory() override { CPUMemoryPool::GetInstance().ReleaseDeviceRes(); }
+  void Initialize() override {}
+  void Finalize() override { CPUMemoryPool::GetInstance().ReleaseDeviceRes(); }
   void ResetDynamicMemory() override;
 
   void AssignMemory(const session::KernelGraph *graph);

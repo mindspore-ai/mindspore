@@ -26,8 +26,8 @@ class GPUMemoryManager : public MemoryManager {
   GPUMemoryManager() = default;
   virtual ~GPUMemoryManager() = default;
 
-  void MallocDeviceMemory() override;
-  void FreeDeviceMemory() override;
+  void Initialize() override;
+  void Finalize() override;
 
   void *MallocMemFromMemPool(size_t size, bool from_persistent_mem) override;
   void FreeMemFromMemPool(void *device_ptr) override;

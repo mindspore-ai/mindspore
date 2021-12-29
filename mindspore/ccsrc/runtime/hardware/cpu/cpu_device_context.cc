@@ -77,7 +77,7 @@ void CPUDeviceContext::Initialize() {
 void CPUDeviceContext::Destroy() {
   // Release memory.
   if (mem_manager_ != nullptr) {
-    mem_manager_->FreeDeviceMemory();
+    mem_manager_->Finalize();
     mem_manager_ = nullptr;
   }
 }
