@@ -358,7 +358,7 @@ public class FLParameter {
     }
 
     public void setUseSSL(boolean useSSL) {
-        LOGGER.warning(Common.addTag("Certificate authentication is required for https communication，this parameter " +
+        LOGGER.warning(Common.addTag("Certificate authentication is required for https communication, this parameter " +
                 "is true by default and no need to set it, " + Common.LOG_DEPRECATED));
         this.useSSL = useSSL;
     }
