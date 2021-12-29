@@ -120,7 +120,7 @@ Status ShardWriter::OpenDataFiles(bool append, bool overwrite) {
         fs_db.close();
       }
       // open the mindrecord file to write
-      fs->open(common::SafeCStr(file), std::ios::out | std::ios::in | std::ios::binary | std::ios::trunc);
+      fs->open(whole_path.value().data(), std::ios::out | std::ios::in | std::ios::binary | std::ios::trunc);
       if (!fs->good()) {
         RETURN_STATUS_UNEXPECTED(
           "Invalid file, failed to open files for writing mindrecord files. Please check file path, permission and "
@@ -129,7 +129,7 @@ Status ShardWriter::OpenDataFiles(bool append, bool overwrite) {
       }
     } else {
       // open the mindrecord file to append
-      fs->open(common::SafeCStr(file), std::ios::out | std::ios::in | std::ios::binary);
+      fs->open(whole_path.value().data(), std::ios::out | std::ios::in | std::ios::binary);
       if (!fs->good()) {
         fs->close();
         RETURN_STATUS_UNEXPECTED(

@@ -87,8 +87,8 @@ def test_chinese_path_on_windows():
     Expectation: raise axception
     """
     mindrecord_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
-    cv_mindrecord_file = "../data/" + mindrecord_file_name
-    cv_dir_name_cn = "../data/数据集/train/"
+    cv_mindrecord_file = "./data/" + mindrecord_file_name
+    cv_dir_name_cn = "./data/数据集/train/"
     file_name = mindrecord_file_name
     file_name2 = "./训练集/" + mindrecord_file_name
 
@@ -96,6 +96,9 @@ def test_chinese_path_on_windows():
         pass
 
     current_pwd = os.getcwd()
+
+    # create chinese path for test
+    os.makedirs("data/数据集/train/训练集")
 
     # current dir in english, mindrecord path in english
     dir_path = "./"
@@ -111,7 +114,7 @@ def test_chinese_path_on_windows():
 
     # current dir in english, mindrecord path in chinese
     dir_path = "./"
-    mindrecord_path = cv_dir_name_cn + "/" + file_name
+    mindrecord_path = cv_dir_name_cn + file_name
 
     add_and_remove_cv_file(dir_path + mindrecord_path)
 
