@@ -27,7 +27,7 @@ bool NcclGpuKernel::LoadNvidiaCommLib() {
     MS_LOG(EXCEPTION) << "Loading NCCL collective library failed.";
     return false;
   }
-  void *nvidia_collective_handle_ = loader->collective_comm_lib_ptr();
+  nvidia_collective_handle_ = loader->collective_comm_lib_ptr();
   MS_EXCEPTION_IF_NULL(nvidia_collective_handle_);
   return true;
 }

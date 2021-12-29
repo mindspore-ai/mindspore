@@ -34,10 +34,7 @@ bool NvidiaCollectiveCommLib::Initialize(uint32_t global_rank, uint32_t global_r
 
 bool NvidiaCollectiveCommLib::CreateCommunicationGroup(const std::string &group_name,
                                                        const std::vector<uint32_t> &group_ranks) {
-  if (groups_.count(group_name) != 0) {
-    MS_LOG(ERROR) << "The NCCL group " << group_name << " has already existed.";
-    return false;
-  }
+  CHECK_RET((groups_.count(group_name) == 0), true, "The NCCL group " + group_name + " has already existed.");
 
   NvidiaCommunicationGroupPtr group =
     std::make_shared<NvidiaCommunicationGroup>(group_name, group_ranks, global_rank_id_);
