@@ -57,6 +57,9 @@
 #define MS_BLEND512_EPI32(src1, src2, src3) _mm512_mask_blend_epi32(src1, src2, src3)
 #define MS_CAST512_F32_S32(src) _mm512_castsi512_ps(src)
 
+#define MS_DIV512_EPI32(src1, src2) \
+  _mm512_cvttps_epi32(MS_DIV512_F32(_mm512_cvtepi32_ps(src1), _mm512_cvtepi32_ps(src2)))
+
 static inline MS_FLOAT32X16 MS_TANHX16_F32(MS_FLOAT32X16 src) {
   static const MS_FLOAT32X16 data0 = {378.0f, 378.0f, 378.0f, 378.0f, 378.0f, 378.0f, 378.0f, 378.0f,
                                       378.0f, 378.0f, 378.0f, 378.0f, 378.0f, 378.0f, 378.0f, 378.0f};
