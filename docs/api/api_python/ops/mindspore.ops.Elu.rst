@@ -1,11 +1,11 @@
 mindspore.ops.Elu
 =================
 
-.. py:class:: mindspore.ops.Elu(*args, **kwargs)
+.. py:class:: mindspore.ops.Elu(alpha=1.0)
 
     指数线性单元激活函数（Exponential Linear Uint activation function）。
 
-    对输入的每个元素计算Elu。该激活函数定义如下：
+    对输入的每个元素计算ELU。该激活函数定义如下：
 
     .. math::
 
@@ -19,11 +19,11 @@ mindspore.ops.Elu
 
     **参数：**
 
-    **alpha** (float)：Elu的alpha值，数据类型为浮点数。默认值：1.0。
+    **alpha** (float)：Elu的alpha值，数据类型为浮点数。目前只支持alpha等于1.0，默认值：1.0。
 
     **输入：**
 
-    **x** (Tensor) - 用于计算Elu的Tensor，数据类型为float16或float32。shape为 :math:`(N,*)` ，:math:`*` 表示任意的附加维度数。
+    **x** (Tensor) - 用于计算Elu的任意维度的Tensor，数据类型为float16或float32。
 
     **输出：**
 

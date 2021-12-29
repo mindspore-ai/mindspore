@@ -1,19 +1,19 @@
 mindspore.ops.Fill
 ==================
 
-.. py:class:: mindspore.ops.Fill(*args, **kwargs)
+.. py:class:: mindspore.ops.Fill()
 
-    创建一个填充了Scalar值的Tensor。shape由 `shape` 参数指定，并用`value` 值填充该Tensor。
+    创建一个指定shape的Tensor，并用指定值填充。
 
     **输入：**
 
-    - **type** (mindspore.dtype) - 指定输出Tensor的数据类型。只支持常量值。
-    - **shape** (tuple) - 指定输出Tensor的shape。只支持常量值。
-    - **value** (scalar) - 用来填充输出Tensor的值。只支持常量值。
+    - **type** (mindspore.dtype) - 指定输出Tensor的数据类型。数据类型只支持`bool_ <https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.html#mindspore.dtype>`_和`number <https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.html#mindspore.dtype>`_。
+    - **shape** (tuple[int]) - 指定输出Tensor的shape。
+    - **value** (Union(number.Number, bool)) - 用来填充输出Tensor的值。
 
     **输出：**
 
-    Tensor，shape为 `shape` 的值，值为 `value` 。
+    Tensor。
 
     **异常：**
 
