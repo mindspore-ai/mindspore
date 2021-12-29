@@ -103,7 +103,7 @@ void DebugInfoManager::PrintInfo(const QuantDebugInfo &info) {
 
 void DebugInfoManager::PrintAllDebugInfo() {
   std::cout << ",NodeName,NodeType,TensorName,InOutFlag,DataTypeFlag,TensorTypeFlag,Min,Q1,Median,Q3,Max,Mean,Var,"
-               "sparsity,Clip,"
+               "Sparsity,Clip,"
                "CosineSimilarity,\n";
   size_t total = 0;
   for (size_t i = 0; i < compared_info_.size(); ++i) {
@@ -146,7 +146,7 @@ int DebugInfoManager::SaveInfo(const std::string &file_path) {
     return RET_ERROR;
   }
   out_file << ",NodeName,NodeType,TensorName,InOutFlag,DataTypeFlag,TensorTypeFlag,Min,Q1,Median,Q3,Max,Mean,Var,"
-              "sparsity,Clip,"
+              "Sparsity,Clip,"
               "CosineSimilarity,\n";
   size_t total = 0;
   for (size_t i = 0; i < compared_info_.size(); ++i) {
@@ -160,6 +160,7 @@ int DebugInfoManager::SaveInfo(const std::string &file_path) {
     SaveInfo(out_file, compared_info);
   }
   out_file.close();
+  std::cout << "Success save debug info to " + file_path << "\n";
   return RET_OK;
 }
 
@@ -559,6 +560,7 @@ int DebugInfoManager::SaveQuantParam(const std::string &file_path) {
     }
   }
   out_file.close();
+  std::cout << "Success save quant param to " + file_path << "\n";
   return RET_OK;
 }
 
@@ -646,9 +648,7 @@ int DebugInfoManager::CompareOriginWithQuant(const quant::SessionModel &origin, 
     }
     auto info_save_path = debug_info_save_path + FILE_SEPARATOR + "round" + "_" + std::to_string(round) + ".csv";
     ret = SaveInfo(info_save_path);
-    if (ret == RET_OK) {
-      std::cout << "Success save debug info to " + info_save_path << "\n";
-    } else {
+    if (ret != RET_OK) {
       MS_LOG(ERROR) << "Failed to save debug info to " + info_save_path;
       FreeBuffer();
       return ret;
@@ -658,9 +658,7 @@ int DebugInfoManager::CompareOriginWithQuant(const quant::SessionModel &origin, 
   }
   auto quant_param_save_path = debug_info_save_path + FILE_SEPARATOR + "quant_param" + ".csv";
   ret = SaveQuantParam(quant_param_save_path);
-  if (ret == RET_OK) {
-    std::cout << "Success save quant param to " + quant_param_save_path << "\n";
-  } else {
+  if (ret != RET_OK) {
     MS_LOG(ERROR) << "Failed to quant param to " + quant_param_save_path;
     return ret;
   }

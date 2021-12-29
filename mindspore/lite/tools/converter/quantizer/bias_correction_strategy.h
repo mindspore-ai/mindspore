@@ -51,10 +51,13 @@ class BiasCorrectionStrategy {
   }
   int DoCPUBiasCorrection(const FuncGraphPtr &quant_func_graph);
 
+  int DoKirinBiasCorrection(const FuncGraphPtr &origin_func_graph, const FuncGraphPtr &quant_func_graph);
+
  private:
   int CreateQuantModel(const FuncGraphPtr &quant_func_graph);
   int DoCNodeBiasCorrection(const FuncGraphPtr &quant_func_graph, const CNodePtr &cnode);
-  int Int8Inference();
+  int Int8Inference(const KernelCallBack &before_call_back, const KernelCallBack &after_call_back);
+  int Fp32Inference(const KernelCallBack &before_call_back, const KernelCallBack &after_call_back);
   bool OpInputDataHandle(OperationType type, const string &op_name, std::vector<float> *data);
   bool OpOutputChMeanDataHandle(OperationType type, const string &op_name, std::vector<float> *data);
   KernelCallBack GetBeforeCallBack(bool int8_op);
