@@ -323,6 +323,10 @@ std::vector<tensor::TensorPtr> GetRealValueNodeTensorFromGraph(
   MS_LOG(INFO) << "new input tensor size:" << new_input_tensors.size();
   return new_input_tensors;
 }
+
+bool OpInBlackList(const OpRunInfo &op_run_info) {
+  return kOpCacheBlackList.find(op_run_info.op_name) != kOpCacheBlackList.end();
+}
 }  // namespace
 
 VectorRef MsBackend::MsRunGraph(const GraphId &g, const VectorRef &args, const std::string &target) {
@@ -1347,8 +1351,10 @@ void MindRTBackend::RunOpInternal(bool single_op_cache_hit, GraphCompilerInfo *g
   // 1. Execute Dynamic shape operator. The output shape depends on the calculation result of the operator.
   // 2. Cache hit and there are no tasks in Queue. For example Non-first iteration.
   // 3. Not in nn.Cell construct.
+  // 4. Operator to process dataset.
   bool lazy_build_disabled = graph_compiler_info->need_erase_ ||
-                             (single_op_cache_hit && op_lazy_builder.QueueEmpty()) || !op_run_info->lazy_build;
+                             (single_op_cache_hit && op_lazy_builder.QueueEmpty()) || !op_run_info->lazy_build ||
+                             OpInBlackList(*op_run_info);
   if (lazy_build_disabled) {
     if (!op_lazy_builder.QueueEmpty()) {
       op_lazy_builder.ExecuteRemainingTasks();
