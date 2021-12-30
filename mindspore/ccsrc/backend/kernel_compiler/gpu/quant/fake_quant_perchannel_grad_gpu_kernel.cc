@@ -40,27 +40,30 @@ const std::vector<size_t> &FakeQuantPerChannelGradGpuKernel::GetWorkspaceSizeLis
 }
 
 bool FakeQuantPerChannelGradGpuKernel::Init(const CNodePtr &kernel_node) {
+  auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
   kernel_node_ = kernel_node;
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_num != 4) {
-    MS_LOG(EXCEPTION) << "Input number is " << input_num << ", but FakeQuantGrad GpuKernel OP needs 4 output.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 4, but got " << input_num;
   }
 
   size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
   if (output_num != 1) {
-    MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but FakeQuantGrad GpuKernel OP needs 1 output.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 1, but got " << output_num;
   }
 
   auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
   MS_EXCEPTION_IF_NULL(prim);
   num_bits_ = static_cast<unsigned int>(GetValue<int64_t>(prim->GetAttr("num_bits")));
   if (num_bits_ <= 2 || num_bits_ >= 16) {
-    MS_LOG(EXCEPTION) << "Attr \'num_bits\' " << num_bits_ << " is out of range, expected between 2 and 16.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the value of num_bits should be in (2, 16), but got "
+                      << num_bits_;
   }
 
   quant_delay_ = static_cast<int>(GetValue<int64_t>(prim->GetAttr("quant_delay")));
   if (quant_delay_ < 0) {
-    MS_LOG(EXCEPTION) << "Attr \'quant_delay_\' " << quant_delay_ << " is less then 0, require larger than 0.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the value of quant_delay_ cannot be less than 0, but got "
+                      << quant_delay_;
   }
 
   symmetric_ = GetValue<bool>(prim->GetAttr("symmetric"));
@@ -74,14 +77,13 @@ bool FakeQuantPerChannelGradGpuKernel::Init(const CNodePtr &kernel_node) {
   }
 
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  is_null_input_ = CHECK_NULL_INPUT(input_shape);
+  is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
   if (is_null_input_) {
-    MS_LOG(WARNING) << "For 'FakeQuantPerchannelGradGpuKernel', input is null";
     InitSizeLists();
     return true;
   }
   if (input_shape.empty()) {
-    MS_LOG(EXCEPTION) << "For 'FakeQuantPerchannelGradGpuKernel', input_shape is empty.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', input cannot be empty, but got empty";
   }
   num_channels_ = SizeToInt(input_shape[0]);
   input_size_ = sizeof(float);

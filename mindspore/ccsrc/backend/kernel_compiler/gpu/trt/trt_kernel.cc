@@ -27,6 +27,7 @@ const std::vector<size_t> &TrtKernel::GetOutputSizeList() const { return output_
 const std::vector<size_t> &TrtKernel::GetWorkspaceSizeList() const { return workspace_size_list_; }
 
 bool TrtKernel::Init(const CNodePtr &kernel_node) {
+  auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
   for (size_t i = 0; i < input_num; i++) {
     auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, i);
@@ -47,7 +48,8 @@ bool TrtKernel::Init(const CNodePtr &kernel_node) {
 
   auto trt_loader = Singleton<device::gpu::TrtLoader>::Instance();
   if (!trt_loader.nvinfer_loaded()) {
-    MS_LOG(EXCEPTION) << "Install Tensor-RT and export LD_LIBRARY_PATH=${TENSORRT_HOME}/lib:$LD_LIBRARY_PATH.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', install Tensor-RT and export LD_LIBRARY_PATH=${TENSORRT_HOME}"
+                      << "/lib:$LD_LIBRARY_PATH.";
   }
   runtime_ = trt_loader.CreateInferRuntime(&Singleton<TrtLogger>::Instance());
   MS_EXCEPTION_IF_NULL(runtime_);
@@ -55,8 +57,8 @@ bool TrtKernel::Init(const CNodePtr &kernel_node) {
   engine_ = TrtPtr(runtime_->deserializeCudaEngine(serialize_.c_str(), serialize_.size(), nullptr));
   MS_EXCEPTION_IF_NULL(engine_);
   if (SizeToInt(input_num + output_num) != engine_->getNbBindings()) {
-    MS_LOG(EXCEPTION) << "Inputs and outputs num not match. Got: " << input_num + output_num
-                      << ", expect: " << engine_->getNbBindings();
+    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs add the number of outputs should be "
+                      << engine_->getNbBindings() << ", but got " << (input_num + output_num);
   }
 
   context_ = TrtPtr(engine_->createExecutionContext());

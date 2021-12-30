@@ -47,6 +47,7 @@ const std::vector<size_t> &BufferSampleKernel::GetOutputSizeList() const { retur
 const std::vector<size_t> &BufferSampleKernel::GetWorkspaceSizeList() const { return workspace_size_list_; }
 
 bool BufferSampleKernel::Init(const CNodePtr &kernel_node) {
+  auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
   kernel_node_ = kernel_node;
   auto shapes = GetAttr<std::vector<int64_t>>(kernel_node, "buffer_elements");
   auto types = GetAttr<std::vector<TypePtr>>(kernel_node, "buffer_dtype");
@@ -66,7 +67,7 @@ bool BufferSampleKernel::Init(const CNodePtr &kernel_node) {
   const size_t cap_state_size = sizeof(curandState) * indexes_size;
   void *dev_state = device::gpu::GPUMemoryAllocator::GetInstance().AllocTensorMem(cap_state_size);
   if (dev_state == nullptr) {
-    MS_LOG(EXCEPTION) << "Failed to alloc dev_state, size is " << cap_state_size;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', failed to alloc dev_state, size is " << cap_state_size;
   }
   devStates_ = reinterpret_cast<curandState *>(dev_state);
 
