@@ -404,7 +404,7 @@ int AnfTransform::DoSingleGraphQuantize(const FuncGraphPtr &old_graph, const con
     }
   } else if (config->commonQuantParam.quant_type == schema::QuantType_QUANT_WEIGHT) {
     double init_scale = config->mixedBitWeightQuantParam.init_scale;
-    if (config->mixedBitWeightQuantParam.auto_tune) {
+    if (config->commonQuantParam.bit_num == 0 && config->mixedBitWeightQuantParam.auto_tune) {
       quant::ParameterOptimizer optimizer;
       status = optimizer.GridSearchForScale(old_graph, const_cast<converter::Flags *>(config), &init_scale);
       if (status != RET_OK) {

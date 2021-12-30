@@ -265,7 +265,8 @@ KernelCallBack BiasCorrectionStrategy::GetFloatAfterCallBack() {
   return after_call_back;
 }
 
-int BiasCorrectionStrategy::Int8Inference() {
+int BiasCorrectionStrategy::Int8Inference(const KernelCallBack &before_call_back,
+                                          const KernelCallBack &after_call_back) {
   // int8 inference
   std::vector<mindspore::tensor::MSTensor *> inputs = int8_session_->GetInputs();
   for (size_t i = 0; i < calibrator_->GetBatchNum(); i++) {
@@ -276,13 +277,33 @@ int BiasCorrectionStrategy::Int8Inference() {
         return RET_ERROR;
       }
     }
-    // before func
-    KernelCallBack before_call_back = GetBeforeCallBack(true);
-    // after func
-    KernelCallBack after_call_back = GetAfterCallBack(true);
     int8_session_->BindThread(true);
     auto status = int8_session_->RunGraph(before_call_back, after_call_back);
     int8_session_->BindThread(false);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "run model failed!";
+      return RET_ERROR;
+    }
+  }  // end for images
+  return RET_OK;
+}
+
+int BiasCorrectionStrategy::Fp32Inference(const KernelCallBack &before_call_back,
+                                          const KernelCallBack &after_call_back) {
+  // get input tensor
+  std::vector<mindspore::tensor::MSTensor *> inputs = fp32_session_->GetInputs();
+  // fp32 inference
+  for (size_t i = 0; i < calibrator_->GetBatchNum(); i++) {
+    for (size_t input_index = 0; input_index < inputs.size(); input_index++) {
+      int status = calibrator_->GenerateInputData(inputs[input_index]->tensor_name(), i, inputs[input_index]);
+      if (status != RET_OK) {
+        MS_LOG(ERROR) << "generate input data from images failed!";
+        return RET_ERROR;
+      }
+    }
+    fp32_session_->BindThread(true);
+    auto status = fp32_session_->RunGraph(before_call_back, after_call_back);
+    fp32_session_->BindThread(false);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "run model failed!";
       return RET_ERROR;
@@ -311,40 +332,31 @@ int BiasCorrectionStrategy::DoCPUBiasCorrection(const FuncGraphPtr &quant_func_g
     MS_LOG(ERROR) << "Create quant model failed:" << ret;
     return ret;
   }
-  std::future<int> int8_inference = std::async(std::launch::async, &BiasCorrectionStrategy::Int8Inference, this);
-  // get input tensor
-  std::vector<mindspore::tensor::MSTensor *> inputs = fp32_session_->GetInputs();
-  // fp32 inference
-  for (size_t i = 0; i < calibrator_->GetBatchNum(); i++) {
-    for (size_t input_index = 0; input_index < inputs.size(); input_index++) {
-      int status = calibrator_->GenerateInputData(inputs[input_index]->tensor_name(), i, inputs[input_index]);
-      if (status != RET_OK) {
-        MS_LOG(ERROR) << "generate input data from images failed!";
-        return RET_ERROR;
-      }
-    }
-    // before func
-    KernelCallBack before_call_back = GetBeforeCallBack(false);
-    // after func
-    KernelCallBack after_call_back = GetAfterCallBack(false);
-    fp32_session_->BindThread(true);
-    auto status = fp32_session_->RunGraph(before_call_back, after_call_back);
-    fp32_session_->BindThread(false);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "run model failed!";
-      return RET_ERROR;
-    }
-  }  // end for images
-
-  int status = int8_inference.get();
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "int8 inference failed!";
-    return RET_ERROR;
-  }
   if (calibrator_->GetBatchNum() == 0) {
     MS_LOG(ERROR) << "divisor 'calibrate_size' cannot be 0.";
     return RET_ERROR;
   }
+  // before func
+  KernelCallBack int8_before_call_back = GetBeforeCallBack(true);
+  // after func
+  KernelCallBack int8_after_call_back = GetAfterCallBack(true);
+  std::future<int> int8_inference = std::async(std::launch::async, &BiasCorrectionStrategy::Int8Inference, this,
+                                               int8_before_call_back, int8_after_call_back);
+  // before func
+  KernelCallBack before_call_back = GetBeforeCallBack(false);
+  // after func
+  KernelCallBack after_call_back = GetAfterCallBack(false);
+  auto status = Fp32Inference(before_call_back, after_call_back);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "int8 inference failed!";
+    return RET_ERROR;
+  }
+  status = int8_inference.get();
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "int8 inference failed!";
+    return RET_ERROR;
+  }
+  // Calculate the mean of the error.
   for (auto &key_value : op_bias_diff_sum_map_) {
     std::for_each(key_value.second.begin(), key_value.second.end(),
                   [this](float &data) { data = data / calibrator_->GetBatchNum(); });
@@ -446,6 +458,16 @@ int BiasCorrectionStrategy::DoCNodeBiasCorrection(const FuncGraphPtr &quant_func
   } else {
     MS_LOG(WARNING) << op_name << " unexpected size: " << input_quant_params.size()
                     << ", and shared weight tensor does not support bias correction temporarily.";
+  }
+  return RET_OK;
+}
+
+int BiasCorrectionStrategy::DoKirinBiasCorrection(const FuncGraphPtr &origin_func_graph,
+                                                  const FuncGraphPtr &quant_func_graph) {
+  auto ret = CreateQuantModel(origin_func_graph);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Create quant model failed:" << ret;
+    return ret;
   }
   return RET_OK;
 }
