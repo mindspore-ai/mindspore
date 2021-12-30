@@ -64,7 +64,7 @@ function Run_TensorRT() {
     source /etc/profile
     local line_info model_info spec_acc_limit model_name input_num input_shapes \
             mode model_file input_files output_file data_path acc_limit enableFp16 \
-            run_result
+            run_result config_file_path
 
     while read line; do
         line_info=${line}
@@ -80,7 +80,7 @@ function Run_TensorRT() {
         model_name=`echo ${model_info} | awk -F ';' '{print $1}'`
         input_info=`echo ${model_info} | awk -F ';' '{print $2}'`
         input_shapes=`echo ${model_info} | awk -F ';' '{print $3}'`
-        mode=`echo ${model_info} | awk -F ';' '{print $3}'`
+        mode=`echo ${model_info} | awk -F ';' '{print $5}'`
         input_num=`echo ${input_info} | sed 's/:/;/' | awk -F ';' '{print $1}'`
         if [[ ${model_name##*.} == "caffemodel" ]]; then
             model_name=${model_name%.*}
@@ -106,6 +106,7 @@ function Run_TensorRT() {
             done
         fi
         output_file=${data_path}'output/'${model_name}'.ms.out'
+        config_file_path=${data_path}'input/'${model_name}'.config'
 
         # set accuracy limitation
         acc_limit="0.5"
@@ -119,10 +120,14 @@ function Run_TensorRT() {
         if [[ ${mode} == "fp16" ]]; then
             enableFp16="true"
         fi
+        if [[ ${mode} == "offline_resize" ]]; then
+            input_shapes=""
+        fi
 
         # different tensorrt run mode use different cuda command
-        echo 'CUDA_VISILE_DEVICE='${cuda_device_id}' ./benchmark --modelFile='${model_file}' --inputShapes='${input_shapes}' --inDataFile='${input_files}' --benchmarkDataFile='${output_file}' --enableFp16='${enableFp16}' --accuracyThreshold='${acc_limit}' --device=GPU' >> "${run_tensorrt_log_file}"
-        CUDA_VISILE_DEVICE=${cuda_device_id} ./benchmark --modelFile=${model_file} --inputShapes=${input_shapes} --inDataFile=${input_files} --benchmarkDataFile=${output_file} --enableFp16=${enableFp16} --accuracyThreshold=${acc_limit} --device=GPU >> ${run_tensorrt_log_file}
+        echo 'CUDA_VISILE_DEVICE='${cuda_device_id}' ./benchmark --modelFile='${model_file}' --inputShapes='${input_shapes}' --inDataFile='${input_files}' --benchmarkDataFile='${output_file}' --enableFp16='${enableFp16}' --accuracyThreshold='${acc_limit}' --configFile='${config_file_path}' --device=GPU' >> "${run_tensorrt_log_file}"
+        CUDA_VISILE_DEVICE=${cuda_device_id} ./benchmark --modelFile=${model_file} --inputShapes=${input_shapes} --inDataFile=${input_files} --benchmarkDataFile=${output_file} --enableFp16=${enableFp16} --accuracyThreshold=${acc_limit} --configFile=${config_file_path} --device=GPU >> ${run_tensorrt_log_file}
+        CUDA_VISILE_DEVICE=${cuda_device_id} ./benchmark --modelFile=${model_file} --inputShapes=${input_shapes} --inDataFile=${input_files} --benchmarkDataFile=${output_file} --enableFp16=${enableFp16} --accuracyThreshold=${acc_limit} --configFile=${config_file_path} --device=GPU >> ${run_tensorrt_log_file}
 
         if [ $? = 0 ]; then
             run_result='TensorRT: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
@@ -207,6 +212,7 @@ run_tensorrt_mpirun_log_file=${basepath}/run_tensorrt_mpirun_log.txt
 echo 'run tensorrt mpirun logs: ' > ${run_tensorrt_mpirun_log_file}
 
 echo "Running in tensorrt with mpirun"
+export GLOG_v=1
 Run_TensorRT_Mpirun &
 Run_TensorRT_Mpirun_PID=$!
 sleep 1
