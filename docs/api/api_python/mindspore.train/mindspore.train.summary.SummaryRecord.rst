@@ -10,6 +10,7 @@
         - 确保在最后关闭SummaryRecord，否则进程不会退出。请参阅下面的示例部分，了解如何用两种方式正确关闭SummaryRecord。
         - 每次训练只允许创建一个SummaryRecord实例，否则会导致数据写入异常。
         - SummaryRecord仅支持Linux系统。
+        - 编译MindSpore时，设置 `-s on` 关闭维测功能后，SummaryRecord不可用。
 
     **参数：**
 
@@ -28,7 +29,7 @@
     **异常：**
 
     - **TypeError：** `max_file_size` 不是整型，或 `file_prefix` 和 `file_suffix` 不是字符串。
-    - **ValueError：** ：未开启可维可测功能，无法使用Summary，如需使用Summary功能，请在勿在编译MindSpore时设置 `-s on` 。
+    - **ValueError：** ：编译MindSpore时，设置 `-s on` 关闭了维测功能。
 
     **样例：**
 
@@ -162,7 +163,7 @@
 
         - **mode** (str) - 待设置的网络阶段，可选值为"train"或"eval"。
           - train：代表训练阶段。
-          - eval：代表推理阶段，此时 `summary_record` 不会记录summary算子的数据。
+          - eval：代表评估阶段，此时 `summary_record` 不会记录summary算子的数据。
 
         **异常：**
 
