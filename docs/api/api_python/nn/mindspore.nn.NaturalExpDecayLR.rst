@@ -46,7 +46,7 @@ mindspore.nn.NaturalExpDecayLR
 
     ``Ascend`` ``GPU`` ``CPU``
 
-     **样例：**
+    **样例：**
 
     >>> import mindspore
     >>> from mindspore import Tensor, nn

@@ -17,7 +17,7 @@ mindspore.nn.Accuracy
     - **eval_type** (str) - 评估的数据集的类型，支持'classification'和'multilabel'。'classification'为单标签分类场景，'multilabel'为多标签分类场景。
       默认值：'classification'。
 
-    **示例：**
+    **样例：**
 
     >>> import numpy as np
     >>> import mindspore

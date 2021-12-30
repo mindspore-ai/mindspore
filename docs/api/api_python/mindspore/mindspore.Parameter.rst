@@ -1,7 +1,7 @@
 ﻿mindspore.Parameter
 ========================
 
-.. py:class:: mindspore.Parameter(default_input, *args, **kwargs)
+.. py:class:: mindspore.Parameter(default_input, name=None, requires_grad=True, layerwise_parallel=False, parallel_optimizer=True)
 
     通常表示网络的参数（ `Parameter` 是 `Tensor` 的子类）。
 

@@ -1,7 +1,7 @@
 mindspore.nn.probability.distribution.Cauchy
 ================================================
 
-.. py:class:: mindspore.nn.probability.distribution.Cauchy(loc=None, scale=None, seed=None, dtype=mindspore.float32, name='Cauchy')
+.. py:class:: mindspore.nn.probability.distribution.Cauchy(loc=None, scale=None, seed=None, dtype=mstype.float32, name='Cauchy')
 
     柯西分布（Cauchy distribution）。
 

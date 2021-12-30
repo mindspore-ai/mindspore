@@ -161,6 +161,7 @@
         **参数：**
 
         - **mode** (str) - 待设置的网络阶段，可选值为"train"或"eval"。
+
           - train：代表训练阶段。
           - eval：代表推理阶段，此时 `summary_record` 不会记录summary算子的数据。
 

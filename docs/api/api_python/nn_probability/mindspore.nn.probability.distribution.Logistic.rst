@@ -1,7 +1,7 @@
 mindspore.nn.probability.distribution.Logistic
 ================================================
 
-.. py:class:: mindspore.nn.probability.distribution.Logistic(loc=None, scale=None, seed=None, dtype=mindspore.float32, name='Logistic')
+.. py:class:: mindspore.nn.probability.distribution.Logistic(loc=None, scale=None, seed=None, dtype=mstype.float32, name='Logistic')
 
     逻辑斯谛分布（Logistic distribution）。
 

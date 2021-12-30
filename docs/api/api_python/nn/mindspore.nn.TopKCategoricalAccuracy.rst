@@ -10,7 +10,7 @@ mindspore.nn.TopKCategoricalAccuracy
 
     **参数：**
 
-    - **k (int)** - 指定要计算的top-k分类正确率。
+    **k (int)** - 指定要计算的top-k分类正确率。
 
     **异常：**
 

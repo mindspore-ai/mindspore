@@ -130,7 +130,7 @@ mindspore.common.initializer
     >>> tensor1 = initializer(XavierUniform(), [1,2,3], mindspore.float32)
     >>> tensor2 = initializer('xavier_uniform', [1,2,3], mindspore.float32)
 
-.. py:class:: mindspore.common.initializer.One
+.. py:class:: mindspore.common.initializer.One(**kwargs)
 
     生成一个值全为1的常量数组用于初始化Tensor。
 
@@ -141,7 +141,7 @@ mindspore.common.initializer
     >>> tensor1 = initializer(One(), [1,2,3], mindspore.float32)
     >>> tensor2 = initializer('ones', [1,2,3], mindspore.float32)
 
-.. py:class:: mindspore.common.initializer.Zero
+.. py:class:: mindspore.common.initializer.Zero(**kwargs)
 
     生成一个值全为0的常量数组用于初始化Tensor。
 

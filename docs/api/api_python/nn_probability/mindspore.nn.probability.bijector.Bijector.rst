@@ -28,13 +28,14 @@ mindspore.nn.probability.bijector.Bijector
 
         - **value** (Tensor) - 输入数据。
         - **para** (Tensor) - Bijector参数。
+        - **kwargs** (dict) - 函数需要的关键字参数字典。
         
     .. py:method:: construct(name, *args, **kwargs)
 
         重写Cell中的 `construct` 。
 
-    .. note::
-        支持的函数包括：'forward'、'inverse'、'forward_log_jacobian'、'inverse_log_jacobian'。
+        .. note::
+            支持的函数包括：'forward'、'inverse'、'forward_log_jacobian'、'inverse_log_jacobian'。
 
         **参数：**
         

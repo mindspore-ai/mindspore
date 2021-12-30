@@ -1,7 +1,7 @@
 mindspore.nn.AdamOffload
 =========================
 
-.. py:class:: mindspore.nn.AdamOffload(params, learning_rate=1e-3, beta1=0.9, beta2=0.999, eps=1e-08, use_locking=False, use_nesterov=False, weight_decay=0.0, loss_scale=1.0)
+.. py:class:: mindspore.nn.AdamOffload(params, learning_rate=1e-3, beta1=0.9, beta2=0.999, eps=1e-8, use_locking=False, use_nesterov=False, weight_decay=0.0, loss_scale=1.0)
 
     此优化器在主机CPU上运行Adam优化算法，设备上仅执行网络参数的更新，最大限度地降低内存成本。虽然会增加性能开销，但优化器可以运行更大的模型。
 
@@ -19,7 +19,8 @@ mindspore.nn.AdamOffload
 
     :math:`m` 代表第一个矩向量 `moment1` ， :math:`v` 代表第二个矩向量 `moment2`，:math:`g` 代表 `gradients`，:math:`l` 代表缩放因子，:math:`\beta_1,\beta_2` 代表 `beta1` 和 `beta2`，:math:`t` 代表当前step，:math:`beta_1^t` 和 :math:`beta_2^t` 代表 `beta1_power` 和 `beta2_power`，:math:`\alpha` 代表 `learning_rate`，:math:`w` 代表 `params`，:math:`\epsilon` 代表 `eps` 。
 
-    .. note::此优化器目前仅支持图模式。
+    .. note::
+        此优化器目前仅支持图模式。
 
         .. include:: mindspore.nn.optim_note_weight_decay.rst
 

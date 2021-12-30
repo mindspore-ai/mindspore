@@ -1,7 +1,7 @@
 mindspore.DynamicLossScaleManager
 ==================================
 
-.. py:class:: mindspore.DynamicLossScaleManager(init_loss_scale=16777216, scale_factor=2, scale_window=2000)
+.. py:class:: mindspore.DynamicLossScaleManager(init_loss_scale=2**24, scale_factor=2, scale_window=2000)
 
     动态调整梯度放大系数的管理器，继承自 :class:`mindspore.LossScaleManager` 。
 
@@ -50,4 +50,4 @@ mindspore.DynamicLossScaleManager
 
         **参数：**
 
-        - **overflow** (bool) - 表示是否溢出。
+        **overflow** (bool) - 表示是否溢出。

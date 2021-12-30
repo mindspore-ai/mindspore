@@ -35,7 +35,6 @@ mindspore.nn.L1Loss
     **异常：**
 
     **ValueError** - `reduction` 不为"mean"、"sum"或"none"。
-    **ValueError** - `logits` 和 `labels` 的shape不同，且不能互相广播。
 
     **支持平台：**
 

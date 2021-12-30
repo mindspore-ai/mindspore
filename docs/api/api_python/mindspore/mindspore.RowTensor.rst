@@ -13,7 +13,8 @@ mindspore.RowTensor
 
     `RowTensor` 只能在  `Cell` 的构造方法中使用。
 
-    目前不支持PyNative模式。
+    .. note::
+        目前不支持PyNative模式。
 
     **参数：**
 

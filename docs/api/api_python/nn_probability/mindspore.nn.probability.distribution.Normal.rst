@@ -1,7 +1,7 @@
 mindspore.nn.probability.distribution.Normal
 ================================================
 
-.. py:class:: mindspore.nn.probability.distribution.Normal(mean=None, sd=None, seed=None, dtype=mindspore.float32, name='Normal')
+.. py:class:: mindspore.nn.probability.distribution.Normal(mean=None, sd=None, seed=None, dtype=mstype.float32, name='Normal')
 
     正态分布（Normal distribution）。
 

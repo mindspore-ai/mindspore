@@ -1,7 +1,7 @@
 mindspore.nn.GELU
 ==================
 
-.. py:class:: mindspore.nn.GELU
+.. py:class:: mindspore.nn.GELU(approximate=True)
 
     高斯误差线性单元激活函数（Gaussian error linear unit activation function）。
 
@@ -17,9 +17,17 @@ mindspore.nn.GELU
 
     GELU相关图参见 `GELU <https://en.wikipedia.org/wiki/Activation_function#/media/File:Activation_gelu.png>`_  。
 
+    **参数：**
+
+    **approximate** (bool): 是否启用approximation，默认值：True。如果approximate的值为True，则高斯误差线性激活函数为:
+    
+    :math:`0.5 * x * (1 + tanh(sqrt(2 / pi) * (x + 0.044715 * x^3)))` ，
+
+    否则为： :math:`x * P(X <= x) = 0.5 * x * (1 + erf(x / sqrt(2)))`, where P(X) ~ N(0, 1) 。
+
     **输入：**
 
-    - **x** （Tensor） - 用于计算GELU的Tensor。数据类型为float16或float32。shape是 :math:`(N,*)` ， :math:`*` 表示任意的附加维度数。
+    **x** （Tensor） - 用于计算GELU的Tensor。数据类型为float16或float32。shape是 :math:`(N,*)` ， :math:`*` 表示任意的附加维度数。
 
     **输出：**
 
@@ -27,7 +35,7 @@ mindspore.nn.GELU
 
     **异常：**
 
-    - **TypeError** - `x` 的数据类型既不是float16也不是float32。
+    **TypeError** - `x` 的数据类型既不是float16也不是float32。
 
     **支持平台：**
 

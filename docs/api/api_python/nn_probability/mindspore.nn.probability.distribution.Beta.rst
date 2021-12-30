@@ -1,7 +1,7 @@
 mindspore.nn.probability.distribution.Beta
 ================================================
 
-.. py:class:: mindspore.nn.probability.distribution.Beta(concentration1=None, concentration0=None, seed=None, dtype=mindspore.float32, name='Beta')
+.. py:class:: mindspore.nn.probability.distribution.Beta(concentration1=None, concentration0=None, seed=None, dtype=mstype.float32, name='Beta')
 
     贝塔分布（Beta Distribution）。
 

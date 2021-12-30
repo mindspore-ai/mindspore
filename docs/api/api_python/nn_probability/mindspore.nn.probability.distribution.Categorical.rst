@@ -1,7 +1,7 @@
 mindspore.nn.probability.distribution.Categorical
 ==================================================
 
-.. py:class:: mindspore.nn.probability.distribution.Categorical(probs=None, seed=None, dtype=mindspore.int32, name='Categorical')
+.. py:class:: mindspore.nn.probability.distribution.Categorical(probs=None, seed=None, dtype=mstype.float32, name='Categorical')
 
     分类分布。
 
