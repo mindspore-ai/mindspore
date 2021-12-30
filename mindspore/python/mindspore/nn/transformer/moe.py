@@ -153,7 +153,7 @@ class MoE(Cell):
         input_shape = F.shape(input_tensor)
         input_tensor = self.reshape(input_tensor, (-1, self.hidden_size))
         bs_and_dmodel = self.shape(input_tensor)
-        tokens_per_device = bs_and_dmodel[0] / self.expert_parallel
+        tokens_per_device = bs_and_dmodel[0] // self.expert_parallel
         input_tensor = self.reshape(input_tensor, (self.expert_parallel, tokens_per_device, self.hidden_size))
 
         expert_capacity = calculate_expert_capacity(self.num_experts_chosen, tokens_per_device,
@@ -215,62 +215,6 @@ class MoE(Cell):
 
         aux_loss = self.mul(self.aux_loss_factor, aux_loss)
         return combined_output, aux_loss
-
-
-class _CumSum(Cell):
-    r"""
-        A layer used to calculate cumulative summation of a tensor along a dimension.
-
-        Inputs:
-            - **expert_mask** (Tensor) - Tensor of shape :math:`(expert\_parallel, tokens\_per\_device,
-            expert\_dim)`.
-
-        Outputs:
-            Tensor of shape :math:`(expert\_parallel, tokens\_per\_device, expert\_dim)`.
-    """
-
-    def __init__(self, config):
-        super(_CumSum, self).__init__()
-        dp = config.data_parallel
-        self.range = P.Range().shard(((1,),))
-        self.reshape = P.Reshape()
-        self.matmul = P.MatMul().shard(((dp, 1), (1, 1)))
-        self.shape = P.Shape()
-        self.cast = P.Cast()
-
-        self.transpose = P.Transpose().shard(((dp, 1, 1),))
-        self.transpose2 = P.Transpose().shard(((1, 1),))
-        self.transpose3 = P.Transpose().shard(((dp, 1, 1),))
-        self.expand = P.ExpandDims().shard(((1,),))
-        self.greater = P.Greater().shard(((1, 1), (1, 1)))
-
-        self.start = Tensor(0, mstype.int32)
-        self.limit = Tensor(0, mstype.int32)
-        self.delta = Tensor(1, mstype.int32)
-        self.add = P.Add().shard(((1,), ()))
-
-    def construct(self, expert_mask):
-        # origin_shape: (expert_parallel, tokens_per_device, self.expert_dim)
-        origin_shape = self.shape(expert_mask)
-        tokens_per_device = origin_shape[1]
-        # expert_mask_trans's shape: (expert_parallel, self.expert_dim, tokens_per_device)
-        expert_mask_trans = self.transpose(expert_mask, (0, 2, 1))
-        # expert_mask_reshaped's shape: (expert_parallel*self.expert_dim, tokens_per_device)
-        expert_mask_reshaped = self.reshape(expert_mask_trans, (-1, tokens_per_device))
-
-        one_dim = self.expand(self.range(self.start, self.add(self.limit, tokens_per_device), self.delta), 0)
-        other_dim = self.transpose2(one_dim, (1, 0))
-        # up_tri_matrix's shape: (tokens_per_device, tokens_per_device)
-        up_tri_matrix = self.greater(one_dim, other_dim)
-        up_tri_matrix = self.cast(up_tri_matrix, mstype.float32)
-
-        # cum_sum's shape: (expert_parallel*self.expert_dim, tokens_per_device)
-        cum_sum = self.matmul(expert_mask_reshaped, up_tri_matrix)
-        # cum_sum's shape: (expert_parallel, self.expert_dim, tokens_per_device)
-        cum_sum = self.reshape(cum_sum, (origin_shape[0], origin_shape[2], tokens_per_device))
-        # cum_sum's shape: (expert_parallel, tokens_per_device, self.expert_dim)
-        cum_sum = self.transpose3(cum_sum, (0, 2, 1))
-        return cum_sum
 
 
 class Router(Cell):
@@ -390,7 +334,7 @@ class SwitchRouter(Cell):
         self.mul9 = P.Mul().shard(((dp, 1, 1, 1), (dp, 1, 1, 1)))
         self.not_equal = P.NotEqual().shard(((dp, 1, 1, 1), ()))
 
-        self.cumsum = _CumSum(config=parallel_config)
+        self.cumsum = P.CumSum(exclusive=True).shard(((dp, 1, 1),))
         self.less = P.Less().shard(((dp, 1, 1), ()))
         self.reduce_sum = P.ReduceSum(keep_dims=False).shard(((dp, 1, 1),))
         self.expand = P.ExpandDims().shard(((dp, 1),))
@@ -413,7 +357,7 @@ class SwitchRouter(Cell):
         """
         Keeping only the tokens that fit within expert_capacity.
         """
-        cumsum = self.cumsum(expert_mask)
+        cumsum = self.cumsum(expert_mask, 1)
         # position_in_expert's shape: (expert_parallel, tokens_per_device, self.expert_dim)
         position_in_expert = self.mul4(cumsum, expert_mask)
         less_result = self.less(position_in_expert, expert_capacity)
@@ -431,7 +375,7 @@ class SwitchRouter(Cell):
         router_logits_shape = self.shape(router_logits)
         router_logits = self.reshape(router_logits, (-1, router_logits_shape[-1]))
         logits_shape = self.shape(router_logits)
-        tokens_per_device = logits_shape[0] / self.expert_parallel
+        tokens_per_device = logits_shape[0] // self.expert_parallel
         expert_capacity = calculate_expert_capacity(1, tokens_per_device, self.capacity_factor, self.expert_dim)
         router_logits = self.reshape(router_logits, (self.expert_parallel, tokens_per_device, self.expert_dim))
         # Currently, lack of gumbel sampler for router_logits.

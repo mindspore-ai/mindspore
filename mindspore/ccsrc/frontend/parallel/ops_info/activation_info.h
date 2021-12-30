@@ -130,6 +130,7 @@ class CumSumInfo : public ActivationBase {
 
  protected:
   Status CheckStrategy(const StrategyPtr &strategy) override;
+  Status InferMirrorOps() override;
   Status GetAttrs() override;
 
  private:

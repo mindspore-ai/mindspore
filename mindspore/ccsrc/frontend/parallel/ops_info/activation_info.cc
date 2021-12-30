@@ -275,6 +275,29 @@ std::vector<StrategyPtr> CumSumInfo::GenerateOpStrategies(int64_t stage_id) {
   return sp_vector;
 }
 
+Status CumSumInfo::InferMirrorOps() {
+  mirror_ops_.clear();
+  Shape input_a_tensor_map = inputs_tensor_map_.at(0);
+  std::vector<Group> input_a_group;
+  if (CreateGroupByTensorMap(input_a_tensor_map, &input_a_group) != SUCCESS) {
+    MS_LOG(ERROR) << name_ << ": Create group for input a failed.";
+    return FAILED;
+  }
+  OperatorVector op_for_input_a, op_for_axis;
+  if (input_a_group.empty()) {
+    MS_LOG(INFO) << name_ << ": The mirror group is empty.";
+    return SUCCESS;
+  } else {
+    op_for_input_a = CreateMirrorOps(input_a_group[0].name(), input_a_group[0].GetDevNum());
+    MS_LOG(INFO) << name_ << ": Create the mirror ops for input a success, groups is " << input_a_group[0].name();
+  }
+
+  mirror_ops_.push_back(op_for_input_a);
+  mirror_ops_.push_back(op_for_axis);
+
+  return SUCCESS;
+}
+
 Status CumSumInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
 Status ActivationBase::InferDevMatrixShape() {

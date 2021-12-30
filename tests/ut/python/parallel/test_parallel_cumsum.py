@@ -104,6 +104,33 @@ def test_cumsum_semi2():
     compile_net(net, x, y)
 
 
+def test_cumsum_semi3():
+    """
+    Feature: CumSum operatorInfo in parallel.
+    Description: MatMul->CumSum
+    Expectation: Compile done without error.
+    """
+    class Net(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.matmul1 = P.MatMul().shard(((16, 1), (1, 1)))
+            self.cumsum = P.CumSum().shard(((2, 1),))
+
+        def construct(self, x, y):
+            out = self.matmul1(x, y)
+            out = self.cumsum(out, 1)
+            return out
+
+    size = 16
+    context.set_auto_parallel_context(device_num=size, global_rank=0)
+    x = Tensor(np.ones([128, 32]), dtype=ms.float32)
+    y = Tensor(np.ones([32, 64]), dtype=ms.float32)
+
+    net = GradWrap(NetWithLoss(Net()))
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    compile_net(net, x, y)
+
+
 def test_cumsum_auto():
     """
     Feature: CumSum operatorInfo in parallel.
