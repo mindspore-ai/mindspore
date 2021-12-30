@@ -208,16 +208,19 @@ std::string CheckDatasetSinkMode(const KernelGraphPtr &graph_ptr) {
   return error_info;
 }
 
-void LoadDataForDump(const KernelGraphPtr &graph_ptr) {
+void LoadDataForDebugger(const KernelGraphPtr &graph_ptr) {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) != kAscendDevice) {
     return;
   }
 #ifdef ENABLE_DEBUGGER
-  MS_LOG(INFO) << "Start load step";
   auto debugger = Debugger::GetInstance();
   MS_EXCEPTION_IF_NULL(debugger);
+  if (!debugger->CheckDebuggerEnabled()) {
+    return;
+  }
+  MS_LOG(INFO) << "Start load step";
   debugger->SetGraphPtr(graph_ptr);
   // load output
   debugger->LoadGraphOutputs();
