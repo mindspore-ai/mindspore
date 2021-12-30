@@ -145,7 +145,7 @@ class GraphCompiler {
   void CalculateRefCount(const KernelGraphPtr &graph, std::map<KernelWithIndex, size_t> *ref_count) const;
 
   // Calculate forward op output ref count of PyNative back graph.
-  void CalculateForwardOpOutputCount(const KernelGraphPtr &graph,
+  void CalculateForwardOpOutputCount(const KernelGraphPtr &graph, const std::vector<tensor::TensorPtr> &inputs,
                                      std::map<std::string, size_t> *forward_op_output_tensor_id) const;
 
   // Update ref count of PyNative back propagation operators.

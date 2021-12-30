@@ -639,10 +639,11 @@ void GraphCompiler::CalculateRefCount(const KernelGraphPtr &graph, std::map<Kern
 }
 
 void GraphCompiler::CalculateForwardOpOutputCount(const KernelGraphPtr &graph,
+                                                  const std::vector<tensor::TensorPtr> &inputs,
                                                   std::map<std::string, size_t> *forward_op_output_tensor_id) const {
   MS_EXCEPTION_IF_NULL(session_);
   forward_op_output_tensor_id->clear();
-  session_->GetForwardOpOutputRefCount(graph.get(), forward_op_output_tensor_id);
+  session_->GetForwardOpOutputRefCount(graph.get(), inputs, forward_op_output_tensor_id);
 }
 
 void GraphCompiler::UpdateRefCount(const std::set<KernelWithIndex> &input_kernels_with_index,

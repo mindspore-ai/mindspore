@@ -834,7 +834,7 @@ void MindRTBackend::RunGraphBySingleOp(const std::vector<KernelGraphPtr> &graphs
     } else {
       cnode_ref_count = iter->second;
     }
-    graph_compiler_->CalculateForwardOpOutputCount(graph, &forward_op_output_tensor_id_);
+    graph_compiler_->CalculateForwardOpOutputCount(graph, inputs[graph_index], &forward_op_output_tensor_id_);
 
     for (const auto &kernel : graph->execution_order()) {
       InputTensorInfo input_tensor_info;
