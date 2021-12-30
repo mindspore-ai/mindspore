@@ -219,6 +219,8 @@ int PadImpl(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 int PadCPUKernel::RunImpl(int task_id) {
   auto input = in_tensors_.at(0);
   auto output = out_tensors_.at(0);
+  CHECK_NULL_RETURN(input);
+  CHECK_NULL_RETURN(output);
   auto input_data = reinterpret_cast<float *>(input->data());
   auto output_data = reinterpret_cast<float *>(output->data());
   CHECK_NULL_RETURN(input_data);

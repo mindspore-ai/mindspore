@@ -55,6 +55,8 @@ int PowerCPUKernel::Run() {
 }
 
 int PowerCPUKernel::RunImpl(int task_id) {
+  CHECK_NULL_RETURN(in_tensors_.at(kInputIndex));
+  CHECK_NULL_RETURN(out_tensors_.at(kOutputIndex));
   auto x_addr = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
   CHECK_NULL_RETURN(x_addr);
   auto output_addr = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());

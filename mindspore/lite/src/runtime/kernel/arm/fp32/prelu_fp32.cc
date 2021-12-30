@@ -26,7 +26,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_PReLUFusion;
 
 namespace mindspore::kernel {
-static int PReluRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+static int PReluRun(void *cdata, int task_id, float, float) {
   auto PRelu = reinterpret_cast<PReluCPUKernel *>(cdata);
   auto ret = PRelu->DoExcute(task_id);
   if (ret != RET_OK) {
@@ -39,6 +39,8 @@ static int PReluRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) 
 int PReluCPUKernel::Init() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(in_tensors_[SECOND_INPUT]);
+
   if (in_tensors_[1]->ElementsNum() == 1) {
     prelu_param_->channelShared = true;
   } else {
