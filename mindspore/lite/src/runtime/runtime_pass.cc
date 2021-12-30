@@ -269,9 +269,14 @@ STATUS DeleteRedundantTrans(std::vector<kernel::LiteKernel *> *kernels) {
     }
     auto pre_in_kernel = pre_kernel->in_kernels().front();
     pre_in_kernel->set_out_kernels({post_kernel});
-    post_kernel->set_in_kernels({pre_in_kernel, post_kernel->in_kernels()[1]});
+    std::vector<kernel::LiteKernel *> post_in_kernels = {pre_in_kernel};
+    if (post_kernel->in_kernels().size() == kInputSize1) {
+      post_in_kernels.push_back(post_kernel->in_kernels()[1]);
+    }
+    post_kernel->set_in_kernels(post_in_kernels);
     post_kernel->set_in_tensor(pre_kernel->in_tensors()[0], 0);
     kernels->erase(find(kernels->begin(), kernels->end(), pre_kernel));
+    delete pre_kernel;
   }
   return RET_OK;
 }
