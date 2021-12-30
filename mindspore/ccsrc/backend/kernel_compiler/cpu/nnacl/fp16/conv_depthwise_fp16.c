@@ -726,14 +726,69 @@ void DeconvDepthwisePostFuncFp16(float16_t *dst, const float16_t *bias, int bloc
                                  const ConvParameter *conv_param) {
   bool relu = conv_param->act_type_ == ActType_Relu;
   bool relu6 = conv_param->act_type_ == ActType_Relu6;
-  float16_t *dst_k = dst;
-  for (int k = 0; k < conv_param->output_h_ * conv_param->output_w_; k++) {
-    for (int c = 0; c < C8NUM; c++) {
-      dst_k[c] += bias[c];
-      dst_k[c] = (relu) ? (MSMAX(0, dst_k[c])) : (dst_k[c]);
-      dst_k[c] = (relu6) ? (MSMIN(6, MSMAX(0, dst_k[c]))) : (dst_k[c]);
+  int hw = conv_param->output_h_ * conv_param->output_w_;
+  int hw8 = hw / C8NUM * C8NUM;
+  float16x8_t bias_value = vld1q_f16(bias);
+  float16x8_t zero = vdupq_n_f16(0.0f);
+  float16x8_t six = vdupq_n_f16(6.0f);
+
+  int i = 0;
+  for (; i < hw8; i += C8NUM) {
+    float16_t *dst_ptr = dst + i * block_channel;
+    float16x8_t dst_value0 = vld1q_f16(dst_ptr);
+    float16x8_t dst_value1 = vld1q_f16(dst_ptr + C1NUM * block_channel);
+    float16x8_t dst_value2 = vld1q_f16(dst_ptr + C2NUM * block_channel);
+    float16x8_t dst_value3 = vld1q_f16(dst_ptr + C3NUM * block_channel);
+    float16x8_t dst_value4 = vld1q_f16(dst_ptr + C4NUM * block_channel);
+    float16x8_t dst_value5 = vld1q_f16(dst_ptr + C5NUM * block_channel);
+    float16x8_t dst_value6 = vld1q_f16(dst_ptr + C6NUM * block_channel);
+    float16x8_t dst_value7 = vld1q_f16(dst_ptr + C7NUM * block_channel);
+
+    dst_value0 = vaddq_f16(dst_value0, bias_value);
+    dst_value1 = vaddq_f16(dst_value1, bias_value);
+    dst_value2 = vaddq_f16(dst_value2, bias_value);
+    dst_value3 = vaddq_f16(dst_value3, bias_value);
+    dst_value4 = vaddq_f16(dst_value4, bias_value);
+    dst_value5 = vaddq_f16(dst_value5, bias_value);
+    dst_value6 = vaddq_f16(dst_value6, bias_value);
+    dst_value7 = vaddq_f16(dst_value7, bias_value);
+    if (relu) {
+      dst_value0 = vmaxq_f16(dst_value0, zero);
+      dst_value1 = vmaxq_f16(dst_value1, zero);
+      dst_value2 = vmaxq_f16(dst_value2, zero);
+      dst_value3 = vmaxq_f16(dst_value3, zero);
+      dst_value4 = vmaxq_f16(dst_value4, zero);
+      dst_value5 = vmaxq_f16(dst_value5, zero);
+      dst_value6 = vmaxq_f16(dst_value6, zero);
+      dst_value7 = vmaxq_f16(dst_value7, zero);
     }
-    dst_k += block_channel;
+    if (relu6) {
+      dst_value0 = vminq_f16(dst_value0, six);
+      dst_value1 = vminq_f16(dst_value1, six);
+      dst_value2 = vminq_f16(dst_value2, six);
+      dst_value3 = vminq_f16(dst_value3, six);
+      dst_value4 = vminq_f16(dst_value4, six);
+      dst_value5 = vminq_f16(dst_value5, six);
+      dst_value6 = vminq_f16(dst_value6, six);
+      dst_value7 = vminq_f16(dst_value7, six);
+    }
+    vst1q_f16(dst_ptr, dst_value0);
+    vst1q_f16(dst_ptr + C1NUM * block_channel, dst_value1);
+    vst1q_f16(dst_ptr + C2NUM * block_channel, dst_value2);
+    vst1q_f16(dst_ptr + C3NUM * block_channel, dst_value3);
+    vst1q_f16(dst_ptr + C4NUM * block_channel, dst_value4);
+    vst1q_f16(dst_ptr + C5NUM * block_channel, dst_value5);
+    vst1q_f16(dst_ptr + C6NUM * block_channel, dst_value6);
+    vst1q_f16(dst_ptr + C7NUM * block_channel, dst_value7);
+  }
+
+  float16_t *dst_ptr = dst + i * block_channel;
+  for (; i < hw; i++, dst_ptr += block_channel) {
+    float16x8_t dst_value0 = vld1q_f16(dst_ptr);
+    dst_value0 = vaddq_f16(dst_value0, bias_value);
+    dst_value0 = relu ? vmaxq_f16(dst_value0, zero) : dst_value0;
+    dst_value0 = relu6 ? vminq_f16(dst_value0, six) : dst_value0;
+    vst1q_f16(dst_ptr, dst_value0);
   }
 }
 
