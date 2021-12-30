@@ -14,8 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_UPDATE_STATE_FORMATTER_H_
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_UPDATE_STATE_FORMATTER_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_CORE_UPDATE_STATE_FORMATTER_H_
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_CORE_UPDATE_STATE_FORMATTER_H_
 
 #include <vector>
 #include "backend/optimizer/common/pass.h"
@@ -145,4 +145,4 @@ class MergeOutputForUpdateState : public opt::Pass {
   bool Run(const FuncGraphPtr &func_graph) override;
 };
 }  // namespace mindspore::graphkernel
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_UPDATE_STATE_FORMATTER_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_CORE_UPDATE_STATE_FORMATTER_H_

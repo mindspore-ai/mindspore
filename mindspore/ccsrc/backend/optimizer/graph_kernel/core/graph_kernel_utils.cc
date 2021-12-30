@@ -203,4 +203,19 @@ FuncGraphPtr GkUtils::LiteGraph2AnfGraph(const inner::LiteGraphPtr &lite_graph) 
   }
   return func_graph;
 }
+
+FuncGraphManagerPtr GkUtils::GetFuncGraphManager(const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  FuncGraphManagerPtr manager = func_graph->manager();
+  if (manager == nullptr) {
+    manager = Manage(func_graph, true);
+    func_graph->set_manager(manager);
+  }
+  return manager;
+}
+
+void GkUtils::UpdateFuncGraphManager(const FuncGraphManagerPtr &mng, const FuncGraphPtr &func_graph) {
+  mng->RemoveRoots();
+  mng->KeepRoots({func_graph});
+}
 }  // namespace mindspore::graphkernel

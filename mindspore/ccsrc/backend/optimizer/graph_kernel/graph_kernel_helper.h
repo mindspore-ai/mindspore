@@ -117,10 +117,5 @@ AbstractBasePtr GetOutputAbstract(const AnfNodePtr &node, size_t output_idx);
 
 // functions to graphkernel model
 inner::LiteGraphPtr AnfGraph2LiteGraph(const FuncGraphPtr &func_graph);
-
-// return a func_graph's manager
-FuncGraphManagerPtr GetFuncGraphManager(const FuncGraphPtr &func_graph);
-
-void UpdateMng(const FuncGraphManagerPtr &mng, const FuncGraphPtr &func_graph);
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_GRAPH_KERNEL_HELPER_H_

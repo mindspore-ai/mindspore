@@ -24,6 +24,7 @@
 #include "backend/optimizer/ascend/ascend_helper.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_helper.h"
+#include "backend/optimizer/graph_kernel/core/graph_kernel_utils.h"
 #include "runtime/device/kernel_info.h"
 #include "backend/kernel_compiler/kernel_build_info.h"
 #include "backend/kernel_compiler/common_utils.h"
@@ -259,7 +260,7 @@ bool DecreaseComputePrecision::Run(const FuncGraphPtr &func_graph) {
     }
   }
   if (changed) {
-    UpdateMng(mng, func_graph);
+    GkUtils::UpdateFuncGraphManager(mng, func_graph);
   }
   return changed;
 }

@@ -85,6 +85,16 @@ class GkUtils {
    * @brief Change lite graph to anf graph.
    */
   static FuncGraphPtr LiteGraph2AnfGraph(const inner::LiteGraphPtr &lite_graph);
+
+  /**
+   * @brief Get manager of func graph. If there is no manager, a new one will be created.
+   */
+  static FuncGraphManagerPtr GetFuncGraphManager(const FuncGraphPtr &func_graph);
+
+  /**
+   * @brief Update func graph manager. Do nothing if the manager is nullptr.
+   */
+  static void UpdateFuncGraphManager(const FuncGraphManagerPtr &mng, const FuncGraphPtr &func_graph);
 };
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_CORE_GRAPH_KERNEL_UTILS_H_
