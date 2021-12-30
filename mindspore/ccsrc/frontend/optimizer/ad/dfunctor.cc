@@ -839,8 +839,8 @@ CNodePtr GetPrimalUser(const CNodePtr &j_user, const std::map<FuncGraphPtr, std:
   auto graph = j_user->func_graph();
   auto iter = primal_map.find(graph);
   if (iter == primal_map.end()) {
-    MS_LOG(WARNING) << "J operation has no relevant primal call in the same graph. Func graph: " << graph->ToString()
-                    << ", J user: " << j_user->DebugString();
+    MS_LOG(INFO) << "J operation has no relevant primal call in the same graph. Func graph: " << graph->ToString()
+                 << ", J user: " << j_user->DebugString();
     return nullptr;
   }
 
