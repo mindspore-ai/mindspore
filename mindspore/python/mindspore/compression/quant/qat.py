@@ -68,7 +68,7 @@ def create_quant_config(quant_observer=(nn.FakeQuantWithMinMaxObserver, nn.FakeQ
             The first element represents weights and the second element represents data flow.
             Default: (False, False).
         mode (str): Optional quantization mode, currently only `DEFAULT`(QAT) and `LEARNED_SCALE` are supported.
-            Default: ("DEFAULT").
+            Default: "DEFAULT".
 
     Returns:
         QuantConfig, contains the observer type of weight and activation.
