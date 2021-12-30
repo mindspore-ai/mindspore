@@ -54,6 +54,16 @@ public class MSContext {
     }
 
     /**
+     * Init Context,default use 2 thread,no bind mode.
+     *
+     * @return init status.
+     */
+    public boolean init() {
+        this.msContextPtr = createMSContext(2, 0, false);
+        return this.msContextPtr != 0;
+    }
+
+    /**
      * Init Context.
      *
      * @param threadNum thread nums.

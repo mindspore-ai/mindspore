@@ -45,7 +45,11 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_Model_buildByGraph(JNIEnv 
     MS_LOGE("Make train config failed");
     return jlong(nullptr);
   }
-  cfg.reset(c_cfg_ptr);
+  if (c_cfg_ptr != nullptr) {
+    cfg.reset(c_cfg_ptr);
+  } else {
+    cfg.reset();
+  }
   auto model = new (std::nothrow) mindspore::Model();
   if (model == nullptr) {
     MS_LOGE("Model new failed");

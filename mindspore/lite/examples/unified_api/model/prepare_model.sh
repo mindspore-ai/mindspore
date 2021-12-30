@@ -12,9 +12,9 @@ if [[ -z ${EXPORT} ]]; then
   fi
 fi
 
-
 CONVERTER="../../../build/tools/converter/converter_lite"
-if [ ! -f "$CONVERTER" ]; then
+$CONVERTER &> /dev/null
+if [ "$?" -ne 0 ]; then
   if ! command -v converter_lite &> /dev/null
   then
     tar -xzf ../../../../../output/mindspore-lite-*-linux-x64.tar.gz --strip-components 4 --wildcards --no-anchored converter_lite *so.* *.so

@@ -54,6 +54,20 @@ public class ModelTest {
     }
 
     @Test
+    public void testBuildByInferGraphSuccess() {
+        String modelFile = "../test/ut/src/runtime/kernel/arm/test_data/nets/lenet_tod_infer.ms";
+        Graph g = new Graph();
+        assertTrue(g.load(modelFile));
+        MSContext context = new MSContext();
+        context.init();
+        context.addDeviceInfo(DeviceType.DT_CPU, false, 0);
+        Model liteModel = new Model();
+        boolean isSuccess = liteModel.build(g, context, null);
+        assertTrue(isSuccess);
+        liteModel.free();
+    }
+
+    @Test
     public void testBuildByFileSuccess() {
         String modelFile = "../test/ut/src/runtime/kernel/arm/test_data/nets/lenet_tod_infer.ms";
         MSContext context = new MSContext();
