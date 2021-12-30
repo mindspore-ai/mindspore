@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,38 +96,59 @@ bool BackendCSE::CheckEqualCnodeInputs(const AnfNodePtr &main, const AnfNodePtr 
   return true;
 }
 
+bool BackendCSE::CheckValueNode(const ValueNodePtr &main, const ValueNodePtr &node) const {
+  MS_EXCEPTION_IF_NULL(main);
+  MS_EXCEPTION_IF_NULL(node);
+
+  auto main_value = main->value();
+  MS_EXCEPTION_IF_NULL(main_value);
+  auto node_value = node->value();
+  MS_EXCEPTION_IF_NULL(node_value);
+  if (main_value->isa<Primitive>() && node_value->isa<Primitive>()) {
+    return false;
+  } else if (main_value->isa<tensor::Tensor>() && node_value->isa<tensor::Tensor>()) {
+    return (AbsOf(main) == AbsOf(node)) && CheckEqualKernelBuildInfo(main, node);
+  }
+  return (AbsOf(main) == AbsOf(node)) && (*main_value == *node_value);
+}
+
+bool BackendCSE::CheckCNode(const CNodePtr &main, const CNodePtr &node, bool check_side_effect) const {
+  MS_EXCEPTION_IF_NULL(main);
+  MS_EXCEPTION_IF_NULL(node);
+
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  if (!context_ptr->get_param<bool>(MS_CTX_ENABLE_LOOP_SINK) && CheckIgnoreCase(main)) {
+    return false;
+  }
+  if (CheckRandomEffect(main, node)) {
+    return false;
+  }
+  if (check_side_effect && HasSideEffectAttr(main)) {
+    return false;
+  }
+  if (!CheckEqualKernelBuildInfo(main, node)) {
+    return false;
+  }
+
+  return CheckEqualCnodeInputs(main, node);
+}
+
 bool BackendCSE::CheckReplace(const AnfNodePtr &main, const AnfNodePtr &node, bool check_side_effect) const {
   MS_EXCEPTION_IF_NULL(main);
   MS_EXCEPTION_IF_NULL(node);
 
+  // attrs of nop node inserted by backend maybe omitted, so two nodes have same inputs will have different outputs
+  auto main_abs = main->abstract();
+  auto node_abs = node->abstract();
+  if (main_abs != nullptr && node_abs != nullptr && !(*main_abs == *node_abs)) {
+    return false;
+  }
+
   if (main->isa<ValueNode>() && node->isa<ValueNode>()) {
-    auto main_value = GetValueNode(main);
-    MS_EXCEPTION_IF_NULL(main_value);
-    auto node_value = GetValueNode(node);
-    MS_EXCEPTION_IF_NULL(node_value);
-    if (main_value->isa<Primitive>() && node_value->isa<Primitive>()) {
-      return false;
-    } else if (main_value->isa<tensor::Tensor>() && node_value->isa<tensor::Tensor>()) {
-      return (AbsOf(main) == AbsOf(node)) && CheckEqualKernelBuildInfo(main, node);
-    } else {
-      return (AbsOf(main) == AbsOf(node)) && (*main_value == *node_value);
-    }
+    return CheckValueNode(main->cast<ValueNodePtr>(), node->cast<ValueNodePtr>());
   } else if (main->isa<CNode>() && node->isa<CNode>()) {
-    auto context_ptr = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(context_ptr);
-    if (!context_ptr->get_param<bool>(MS_CTX_ENABLE_LOOP_SINK) && CheckIgnoreCase(main)) {
-      return false;
-    }
-    if (CheckRandomEffect(main, node)) {
-      return false;
-    }
-    if (check_side_effect && HasSideEffectAttr(main)) {
-      return false;
-    }
-    if (!CheckEqualKernelBuildInfo(main, node)) {
-      return false;
-    }
-    return CheckEqualCnodeInputs(main, node);
+    return CheckCNode(main->cast<CNodePtr>(), node->cast<CNodePtr>(), check_side_effect);
   }
   return false;
 }
