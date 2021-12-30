@@ -45,6 +45,7 @@ set(DATASET_ENGINE_IR_DATASETOPS_SOURCE_SRC_FILES
         udpos_node.cc
         usps_node.cc
         voc_node.cc
+        wiki_text_node.cc
         yahoo_answers_node.cc
         yelp_review_node.cc
         yes_no_node.cc

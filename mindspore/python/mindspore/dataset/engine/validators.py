@@ -2411,3 +2411,32 @@ def check_semeion_dataset(method):
         return method(self, *args, **kwargs)
 
     return new_method
+
+
+def check_wiki_text_dataset(method):
+    """A wrapper that wraps a parameter checker around the original Dataset(WikiTextDataset)."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        _, param_dict = parse_user_args(method, *args, **kwargs)
+
+        nreq_param_int = ['num_samples', 'num_parallel_workers', 'num_shards', 'shard_id']
+
+        # check dataset_dir
+        dataset_dir = param_dict.get('dataset_dir')
+        check_dir(dataset_dir)
+
+        # check usage
+        usage = param_dict.get('usage')
+        if usage is not None:
+            check_valid_str(usage, ["train", "valid", "test", "all"], "usage")
+
+        validate_dataset_param_value(nreq_param_int, param_dict, int)
+        check_sampler_shuffle_shard_options(param_dict)
+
+        cache = param_dict.get('cache')
+        check_cache_option(cache)
+
+        return method(self, *args, **kwargs)
+
+    return new_method

@@ -76,7 +76,7 @@ from .validators import check_batch, check_shuffle, check_map, check_filter, che
     check_stl10_dataset, check_yelp_review_dataset, check_penn_treebank_dataset, check_iwslt2016_dataset, \
     check_iwslt2017_dataset, check_sogou_news_dataset, check_yahoo_answers_dataset, check_udpos_dataset, \
     check_conll2000_dataset, check_amazon_review_dataset, check_semeion_dataset, check_caltech101_dataset, \
-    check_caltech256_dataset
+    check_caltech256_dataset, check_wiki_text_dataset
 from ..core.config import get_callback_timeout, _init_device_info, get_enable_shared_mem, get_num_parallel_workers, \
     get_prefetch_size
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
@@ -3502,7 +3502,6 @@ class FashionMnistDataset(MappableDataset):
     We intend Fashion-MNIST to serve as a direct drop-in replacement for the original MNIST dataset for benchmarking
     machine learning algorithms. It shares the same image size and structure of training and testing splits.
 
-    Here is the original Fashion-MNIST dataset structure.
     You can unzip the dataset files into this directory structure and read by MindSpore's API.
 
     .. code-block::
@@ -6386,6 +6385,84 @@ class USPSDataset(SourceDataset):
     def parse(self, children=None):
         return cde.USPSNode(self.dataset_dir, self.usage, self.num_samples, self.shuffle_flag, self.num_shards,
                             self.shard_id)
+
+
+class WikiTextDataset(SourceDataset):
+    """
+    A source dataset that reads and parses WikiText2 and WikiText103 datasets.
+
+    The generated dataset has one column :py:obj:`[text]`.
+    The tensor of column :py:obj:`text` is of the string type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        usage (str, optional): Acceptable usages include `train`, `test`, 'valid' and `all`(default=None, all samples).
+        num_samples (int, optional): Number of samples (rows) to read (default=None, reads the full dataset).
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, number set in the config).
+        shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
+            (default=Shuffle.GLOBAL).
+            If shuffle is False, no shuffling will be performed;
+            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
+            Otherwise, there are two levels of shuffling:
+
+            - Shuffle.GLOBAL: Shuffle both the files and samples.
+
+            - Shuffle.FILES: Shuffle files only.
+
+        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            When this argument is specified, 'num_samples' reflects the max sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument can only be specified when num_shards is also specified.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
+            (default=None, which means no cache is used).
+
+    Examples:
+        >>> wiki_text_dataset_dir = "/path/to/wiki_text_dataset_directory"
+        >>> dataset = ds.WikiTextDataset(dataset_dir=wiki_text_dataset_dir, usage='all')
+
+    About WikiTextDataset dataset:
+
+    The WikiText Long Term Dependency Language Modeling Dataset is an English lexicon containing 100 million words.
+    These terms are drawn from Wikipedia's premium and benchmark articles, including versions of Wikitext2 and
+    Wikitext103. For WikiText2, it has 36718 lines in wiki.train.tokens, 4358 lines in wiki.test.tokens and
+    3760 lines in wiki.valid.tokens. For WikiText103, it has 1801350 lines in wiki.train.tokens, 4358 lines in
+    wiki.test.tokens and 3760 lines in wiki.valid.tokens.
+
+    Here is the original WikiText dataset structure.
+    You can unzip the dataset files into this directory structure and read by MindSpore's API.
+
+    .. code-block::
+
+        .
+        └── WikiText2/WikiText103
+             ├── wiki.train.tokens
+             ├── wiki.test.tokens
+             ├── wiki.valid.tokens
+
+    Citation:
+
+    .. code-block::
+
+        @article{merity2016pointer,
+          title={Pointer sentinel mixture models},
+          author={Merity, Stephen and Xiong, Caiming and Bradbury, James and Socher, Richard},
+          journal={arXiv preprint arXiv:1609.07843},
+          year={2016}
+        }
+    """
+
+    @check_wiki_text_dataset
+    def __init__(self, dataset_dir, usage=None, num_samples=None, num_parallel_workers=None, shuffle=Shuffle.GLOBAL,
+                 num_shards=None, shard_id=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, num_samples=num_samples, shuffle=shuffle,
+                         num_shards=num_shards, shard_id=shard_id, cache=cache)
+        self.dataset_dir = dataset_dir
+        self.usage = replace_none(usage, "all")
+
+    def parse(self, children=None):
+        return cde.WikiTextNode(self.dataset_dir, self.usage, self.num_samples, self.shuffle_flag, self.num_shards,
+                                self.shard_id)
 
 
 class VOCDataset(MappableDataset):

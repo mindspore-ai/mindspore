@@ -56,6 +56,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/tedlium_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/text_file_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/udpos_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/wiki_text_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/yahoo_answers_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/yelp_review_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/yes_no_node.h"
@@ -614,6 +615,18 @@ PYBIND_REGISTER(VOCNode, 2, ([](const py::module *m) {
                     }));
                 }));
 
+PYBIND_REGISTER(WikiTextNode, 2, ([](const py::module *m) {
+                  (void)py::class_<WikiTextNode, DatasetNode, std::shared_ptr<WikiTextNode>>(*m, "WikiTextNode",
+                                                                                             "to create a WikiTextNode")
+                    .def(py::init([](std::string dataset_dir, std::string usage, int32_t num_samples, int32_t shuffle,
+                                     int32_t num_shards, int32_t shard_id) {
+                      auto wiki_text = std::make_shared<WikiTextNode>(
+                        dataset_dir, usage, num_samples, toShuffleMode(shuffle), num_shards, shard_id, nullptr);
+                      THROW_IF_ERROR(wiki_text->ValidateParams());
+                      return wiki_text;
+                    }));
+                }));
+
 PYBIND_REGISTER(YahooAnswersNode, 2, ([](const py::module *m) {
                   (void)py::class_<YahooAnswersNode, DatasetNode, std::shared_ptr<YahooAnswersNode>>(
                     *m, "YahooAnswersNode", "to create a YahooAnswersNode")
@@ -647,6 +660,5 @@ PYBIND_REGISTER(YesNoNode, 2, ([](const py::module *m) {
                       return yes_no;
                     }));
                 }));
-
 }  // namespace dataset
 }  // namespace mindspore
