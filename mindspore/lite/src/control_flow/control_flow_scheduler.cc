@@ -241,6 +241,8 @@ kernel::SubGraphKernel *ControlFlowScheduler::CreateExitSubGraph(kernel::SubGrap
 }
 
 int ControlFlowScheduler::BuildBoundaryForMultipleCalledGraph(std::vector<kernel::LiteKernel *> *dst_kernels) {
+  kernel::LiteKernelUtil::FindAllInoutKernels(*dst_kernels);
+
   for (auto item : more_than_once_called_partial_nodes_) {
     if (item.second.size() == 1) {
       MS_LOG(DEBUG) << "subgraph call only once.";
@@ -253,8 +255,22 @@ int ControlFlowScheduler::BuildBoundaryForMultipleCalledGraph(std::vector<kernel
     MS_CHECK_TRUE_MSG(aim_kernels.size() == 1, RET_ERROR, "partial subgraph kernels size not right.");
     auto subgraph = reinterpret_cast<kernel::SubGraphKernel *>(aim_kernels.front());
     MS_CHECK_TRUE_MSG(subgraph != nullptr, RET_ERROR, "subgraph is nullptr");
-    if (kernel::LiteKernelUtil::IsTailCallSubGraph(subgraph) || kernel::LiteKernelUtil::IsOutputSubGraph(subgraph)) {
+    if (kernel::LiteKernelUtil::IsTailCallSubGraph(subgraph)) {
       MS_LOG(DEBUG) << "tail call graph or output graph no need to build boundary.";
+      continue;
+    }
+
+    std::vector<kernel::LiteKernel *> all_call_nodes{};
+    for (auto partial_node : item.second) {
+      auto call_node = kernel::LiteKernelUtil::GetPartialOutputCall(partial_node);
+      all_call_nodes.push_back(call_node);
+    }
+
+    // all of the caller is tail call, continue
+    if (kernel::LiteKernelUtil::IsOutputSubGraph(subgraph) &&
+        std::all_of(all_call_nodes.begin(), all_call_nodes.end(),
+                    [](kernel::LiteKernel *call_node) { return kernel::LiteKernelUtil::IsTailCall(call_node); })) {
+      MS_LOG(DEBUG) << "graph is output graph and caller is tail call, no need to build boundary.";
       continue;
     }
 

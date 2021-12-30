@@ -623,24 +623,9 @@ int LiteSession::SetAllocatorForDelegateKernels(const kernel::LiteKernel *kernel
 }
 
 int LiteSession::PrepareKernels(const Model *model) {
-  std::vector<kernel::LiteKernel *> all_kernels;
-  for (auto kernel : this->kernels_) {
-#ifndef DELEGATE_CLIP
-    if (kernel->desc().arch == kernel::kDelegate) {
-      all_kernels.push_back(kernel);
-      continue;
-    }
-#endif
-    auto sub_graph = reinterpret_cast<kernel::SubGraphKernel *>(kernel);
-    MS_ASSERT(sub_graph != nullptr);
-    auto kernel_in_subgraph = sub_graph->nodes();
-    all_kernels.insert(all_kernels.end(), kernel_in_subgraph.begin(), kernel_in_subgraph.end());
-  }
-
-  // find in_kernels and out_kernels for kernels
-  kernel::LiteKernelUtil::FindAllInoutKernels(all_kernels);
-
-  // find in_sub and out_sub for subgraph
+  // find kernel's in_kernels and out_kernels in every subgraph
+  kernel::LiteKernelUtil::FindAllInoutKernelsInSubgraphKernel(this->kernels_);
+  // find in_kernels and out_kernels between subgraph kernels
   kernel::LiteKernelUtil::FindAllInoutKernels(this->kernels_);
 
   // init init_ref_count for subgraphs and kernels
@@ -718,6 +703,7 @@ int LiteSession::SetNonTaiCallSubgraphOutputInitRefCount(
         auto output = subgraph->out_tensors()[i];
         if (subgraph_outputs_set.find(output) == subgraph_outputs_set.end()) {
           output->set_init_ref_count(1);
+          subgraph_outputs_set.insert(output);
         } else {
           output->set_init_ref_count(output->init_ref_count() + 1);
         }
