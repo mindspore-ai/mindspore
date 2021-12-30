@@ -4195,7 +4195,7 @@ class NPUGetFloatStatus(PrimitiveWithInfer):
         >>> from mindspore.common.tensor import Tensor
         >>> from mindspore.ops import operations as P
         >>> class Net(nn.Cell):
-        >>>     def __init__(self):
+        ...     def __init__(self):
         ...         super().__init__()
         ...         self.alloc_status = P.NPUAllocFloatStatus()
         ...         self.get_status = P.NPUGetFloatStatus()
@@ -4269,7 +4269,7 @@ class NPUClearFloatStatus(PrimitiveWithInfer):
         >>> from mindspore.common.tensor import Tensor
         >>> from mindspore.ops import operations as P
         >>> class Net(nn.Cell):
-        >>>     def __init__(self):
+        ...     def __init__(self):
         ...         super().__init__()
         ...         self.alloc_status = P.NPUAllocFloatStatus()
         ...         self.get_status = P.NPUGetFloatStatus()

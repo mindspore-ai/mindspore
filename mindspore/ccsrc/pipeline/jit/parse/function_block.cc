@@ -612,6 +612,10 @@ void FunctionBlock::AttachIsolatedNodesBeforeReturn() {
   MS_LOG(INFO) << "Attached for side-effect nodes, depend_node: " << depend_node->DebugString()
                << ", state: " << state->DebugString(recursive_level);
   func_graph_->set_output(depend_node, true);
+  if (return_node && return_node->debug_info()) {
+    auto new_return = func_graph_->get_return();
+    new_return->set_debug_info(return_node->debug_info());
+  }
 }
 
 void FunctionBlock::SetAsDeadBlock() { is_dead_block_ = true; }
