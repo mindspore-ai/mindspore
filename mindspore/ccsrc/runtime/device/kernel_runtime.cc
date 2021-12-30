@@ -32,7 +32,6 @@
 #include "utils/utils.h"
 #include "frontend/parallel/context.h"
 #include "debug/env_config_parser.h"
-#include "pipeline/pynative/pynative_profiling.h"
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
 #include "ps/ps_cache/ps_cache_manager.h"
 #endif
@@ -1310,18 +1309,14 @@ bool KernelRuntime::LaunchKernelWithPynativeProfiling(kernel::KernelMod *kernel_
   end->set_record_stream(stream);
   start->RecordEvent();
   bool ret = kernel_mod->Launch(kernel_launch_info, stream);
+  if (!ret) {
+    MS_LOG(EXCEPTION) << "Launch kernel failed, kernel name is : " << op_name;
+  }
   end->RecordEvent();
   start->SyncEvent();
   end->SyncEvent();
   start->ElapsedTime(&cost_time, end.get());
-  auto launch_end_time = GetTime();
-  double launch_start_time = launch_end_time - cost_time / kBasicTimeTransferUnit;
-  auto op_launch_start_time_end_time = std::make_pair(launch_start_time, launch_end_time);
-  PynativeProfiler::SetDeviceOpNameAndLaunchTimePoint(std::make_pair(op_name, op_launch_start_time_end_time));
-  PynativeProfiler::SetDeviceOpNameAndLaunchCostTime(std::make_pair(op_name, cost_time / kBasicTimeTransferUnit));
-  if (!ret) {
-    MS_LOG(EXCEPTION) << "Launch kernel failed, kernel name is : " << op_name;
-  }
+  MS_LOG(DEBUG) << "Launch kernel:" << op_name << " cost:" << cost_time / kBasicTimeTransferUnit;
   return ret;
 }
 
