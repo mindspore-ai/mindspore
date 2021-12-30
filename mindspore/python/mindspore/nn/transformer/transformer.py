@@ -139,7 +139,7 @@ class TransformerRecomputeConfig(_Config):
     Examples:
         >>> from mindspore.nn.transformer import TransformerRecomputeConfig
         >>> config=TransformerRecomputeConfig(recompute=True, parallel_optimizer_comm_recompute=True, \
-        mp_comm_recompute=True, recompute_slice_activation=True)
+        ...                                   mp_comm_recompute=True, recompute_slice_activation=True)
     """
 
     def __init__(self, recompute=False, parallel_optimizer_comm_recompute=False,
@@ -226,7 +226,7 @@ class TransformerOpParallelConfig(_Config):
     Examples:
         >>> from mindspore.nn.transformer import TransformerRecomputeConfig
         >>> recompute_config=TransformerRecomputeConfig(recompute=True, parallel_optimizer_comm_recompute=True, \
-        mp_comm_recompute=True, recompute_slice_activation=True)
+        ...                                             mp_comm_recompute=True, recompute_slice_activation=True)
         >>> config=TransformerOpParallelConfig(data_parallel=1, model_parallel=1, recompute=recompute_config)
     """
 
@@ -521,9 +521,9 @@ class AttentionMask(Cell):
         >>> inputs = Tensor(mask_array)
         >>> res = mask(inputs)
         >>> print(res)
-        [[[1. 0. 0. 0],
-          [1. 1. 0. 0],
-          [1. 1. 1. 0],
+        [[[1. 0. 0. 0]
+          [1. 1. 0. 0]
+          [1. 1. 1. 0]
           [0. 0. 0. 0]]]
     """
 
@@ -734,15 +734,15 @@ class MultiHeadAttention(Cell):
         (2, 3, 5, 20)
         >>> print(past[1].shape)
         (2, 3, 20, 5)
-        # When use use_past=True, it includes two steps to implement the incremental prediction.
-        # Step 1: set is_first_iteration=True, and input the full sequence length's state.
-        # We need to prepare the memory parameters for saving key and value states firstly.
+        >>> # When use use_past=True, it includes two steps to implement the incremental prediction.
+        >>> # Step 1: set is_first_iteration=True, and input the full sequence length's state.
+        >>> # We need to prepare the memory parameters for saving key and value states firstly.
         >>> model = MultiHeadAttention(batch_size=2, hidden_size=15, src_seq_length=20, tgt_seq_length=20,
         ...                            num_heads=3, use_past=True)
         >>> key_past = Tensor(np.zeros(shape=(2, 3, 5, 20)), mstype.float16)
         >>> value_past = Tensor(np.zeros(shape=(2, 3, 20, 5)), mstype.float16)
         >>> batch_valid_length = Tensor(np.ones((2,)), mstype.int32)
-        # Set is_first_iteration=True to generate the full memory states
+        >>> # Set is_first_iteration=True to generate the full memory states
         >>> model.add_flags_recursive(is_first_iteration=True)
         >>> attn_out, past = model(from_tensor, to_tensor, to_tensor, attention_mask, key_past, value_past,
         ...                        batch_valid_length)
@@ -755,8 +755,8 @@ class MultiHeadAttention(Cell):
         >>> from_tensor = Tensor(np.ones((2, 1, 15)), mstype.float32)
         >>> to_tensor = Tensor(np.ones((2, 1, 15)), mstype.float16)
         >>> attention_mask = Tensor(np.ones((2, 1, 20)), mstype.float16)
-        # Step 2: set is_first_iteration=False, and pass the single word to run the prediction rather than the full
-        # sequence.
+        >>> # Step 2: set is_first_iteration=False, and pass the single word to run the prediction rather than the full
+        >>> # sequence.
         >>> model.add_flags_recursive(is_first_iteration=False)
         >>> attn_out, past = model(from_tensor, to_tensor, to_tensor, attention_mask, key_past, value_past,
         ...                        batch_valid_length)
@@ -1209,11 +1209,11 @@ class TransformerEncoderLayer(Cell):
         (2, 2, 4, 16)
         >>> print(past[1].shape)
         (2, 2, 16, 4)
-        # When use use_past=True, it includes two steps to implement the incremental prediction.
-        # Step 1: set is_first_iteration=True, and input the full sequence length's state.
+        >>> # When use use_past=True, it includes two steps to implement the incremental prediction.
+        >>> # Step 1: set is_first_iteration=True, and input the full sequence length's state.
         >>> batch_valid_length = Tensor(np.ones((2,)), mstype.int32)
         >>> init_reset = Tensor([True], mstype.bool_)
-        # Set is_first_iteration=True to generate the full memory states
+        >>> # Set is_first_iteration=True to generate the full memory states
         >>> model = TransformerEncoderLayer(batch_size=2, hidden_size=8, ffn_hidden_size=64, seq_length=16,
         ...                                 num_heads=2, use_past=True)
         >>> model.add_flags_recursive(is_first_iteration=True)
@@ -1227,8 +1227,8 @@ class TransformerEncoderLayer(Cell):
         >>> encoder_input_value = Tensor(np.ones((2, 1, 8)), mstype.float32)
         >>> encoder_input_mask = Tensor(np.ones((2, 1, 16)), mstype.float16)
         >>> init_reset = Tensor([False], mstype.bool_)
-        # Step 2: set is_first_iteration=False, and pass the single word to run the prediction rather than the full
-        # sequence.
+        >>> # Step 2: set is_first_iteration=False, and pass the single word to run the prediction rather than the full
+        >>> # sequence.
         >>> model.add_flags_recursive(is_first_iteration=False)
         >>> hidden, past = model(encoder_input_value, encoder_input_mask, init_reset, batch_valid_length)
         >>> print(hidden.shape)
@@ -1847,8 +1847,8 @@ def _get_lambda_func(total_layer=None):
                 network.recompute()
         else:
             if parallel_config.recompute.recompute:
-                network.recompute(parallel_optimizer_comm_recompute=
-                                  parallel_config.recompute.parallel_optimizer_comm_recompute,
+                paralel_op_comm_compute = parallel_config.recompute.parallel_optimizer_comm_recompute
+                network.recompute(parallel_optimizer_comm_recompute=paralel_op_comm_compute,
                                   mp_comm_recompute=parallel_config.recompute.mp_comm_recompute,
                                   recompute_slice_activation=parallel_config.recompute.recompute_slice_activation)
 
@@ -1940,11 +1940,11 @@ class TransformerEncoder(Cell):
         (2, 2, 4, 16)
         >>> print(past[0][1].shape)
         (2, 2, 16, 4)
-        # When use use_past=True, it includes two steps to implement the incremental prediction.
-        # Step 1: set is_first_iteration=True, and input the full sequence length's state.
+        >>> # When use use_past=True, it includes two steps to implement the incremental prediction.
+        >>> # Step 1: set is_first_iteration=True, and input the full sequence length's state.
         >>> batch_valid_length = Tensor(np.ones((2,)), mstype.int32)
         >>> init_reset = Tensor([True], mstype.bool_)
-        # Set is_first_iteration=True to generate the full memory states
+        >>> # Set is_first_iteration=True to generate the full memory states
         >>> model = TransformerEncoder(batch_size=2, hidden_size=8, ffn_hidden_size=64, seq_length=16,
         ...                            num_heads=2, num_layers=2, use_past=True)
         >>> model.add_flags_recursive(is_first_iteration=True)
@@ -1958,8 +1958,8 @@ class TransformerEncoder(Cell):
         >>> encoder_input_value = Tensor(np.ones((2, 1, 8)), mstype.float32)
         >>> encoder_input_mask = Tensor(np.ones((2, 1, 16)), mstype.float16)
         >>> init_reset = Tensor([False], mstype.bool_)
-        # Step 2: set is_first_iteration=False, and pass the single word to run the prediction rather than the full
-        # sequence.
+        >>> # Step 2: set is_first_iteration=False, and pass the single word to run the prediction rather than the full
+        >>> # sequence.
         >>> model.add_flags_recursive(is_first_iteration=False)
         >>> hidden, past = model(encoder_input_value, encoder_input_mask, init_reset, batch_valid_length)
         >>> print(hidden.shape)

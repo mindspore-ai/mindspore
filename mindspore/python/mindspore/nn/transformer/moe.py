@@ -70,7 +70,9 @@ class MoEConfig:
         self.aux_loss_factor = aux_loss_factor
         self.num_experts_chosen = num_experts_chosen
 
+
 default_moe_config = MoEConfig()
+
 
 def _check_moe_config(moe_config=None, parallel_config=None):
     if not isinstance(moe_config, MoEConfig):
@@ -81,6 +83,8 @@ def _check_moe_config(moe_config=None, parallel_config=None):
                          f"of 'data_parallel' value in {type(parallel_config).__name__}, but got "
                          f"{moe_config.expert_num} for 'expert_num' and {parallel_config.data_parallel} for "
                          f"'data_parallel'.")
+
+
 @constexpr
 def calculate_expert_capacity(k, tokens_per_device, capacity_factor, expert_dim):
     return math.ceil(k * tokens_per_device * capacity_factor / expert_dim)
