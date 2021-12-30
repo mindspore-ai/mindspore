@@ -109,10 +109,8 @@ int QuantParamParser::ParseCommonQuant(const CommonQuantString &common_quant_str
 
 int QuantParamParser::ParseMixedBitWeightQuant(const MixedBitWeightQuantString &mixed_bit_weight_quant_string,
                                                quant::MixedBitWeightQuantParam *mixed_bit_weight_quant) {
-  if (mixed_bit_weight_quant_string.init_scale.empty()) {
-    return RET_OK;
-  }
-  if (!ConvertDoubleNum(mixed_bit_weight_quant_string.init_scale, &mixed_bit_weight_quant->init_scale)) {
+  if (!mixed_bit_weight_quant_string.init_scale.empty() &&
+      !ConvertDoubleNum(mixed_bit_weight_quant_string.init_scale, &mixed_bit_weight_quant->init_scale)) {
     MS_LOG(ERROR) << "INPUT ILLEGAL: init_scale should be a valid number.";
     return RET_INPUT_PARAM_INVALID;
   }
