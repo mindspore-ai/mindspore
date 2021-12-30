@@ -373,13 +373,13 @@ def narrow(inputs, axis, start, length):
         >>> x = Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mindspore.int32)
         >>> output = F.narrow(x, 0, 0, 2)
         >>> print(output)
-        [[ 1,  2,  3],
-         [ 4,  5,  6]]
+        [[ 1 2 3],
+         [ 4 5 6]]
         >>> output = F.narrow(x, 1, 1, 2)
         >>> print(output)
-        [[ 2,  3],
-         [ 5,  6],
-         [ 8,  9]]
+        [[ 2 3],
+         [ 5 6],
+         [ 8 9]]
     """
     validator.check_axis_in_range(axis, inputs.ndim)
     validator.check_int_range(start, 0, inputs.shape[axis], Rel.INC_LEFT)
