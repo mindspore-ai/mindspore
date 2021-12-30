@@ -68,6 +68,13 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
 }  // namespace
 AbstractBasePtr SqueezeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args) {
+  const size_t x_index = 0;
+  auto x_type = input_args[x_index]->BuildType();
+  if (!x_type->isa<TensorType>()) {
+    MS_EXCEPTION(TypeError) << "For Squeeze, the " << x_index << "'s input should be a Tensor, but got "
+                            << x_type->ToString();
+  }
+
   return abstract::MakeAbstract(InferShape(primitive, input_args), InferType(primitive, input_args));
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(Squeeze, prim::kPrimSqueeze, SqueezeInfer, nullptr, true);
