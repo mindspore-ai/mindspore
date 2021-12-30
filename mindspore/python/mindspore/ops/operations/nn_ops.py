@@ -565,7 +565,7 @@ class Mish(PrimitiveWithInfer):
 
 class SeLU(Primitive):
     r"""
-    Computes SeLU (scaled exponential Linear Unit) of input tensors element-wise.
+    Activation function SeLU (Scaled exponential Linear Unit).
 
     The activation function is defined as:
 
@@ -583,8 +583,7 @@ class SeLU(Primitive):
     See more details in `Self-Normalizing Neural Networks <https://arxiv.org/abs/1706.02515>`_.
 
     Inputs:
-        - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
-          additional dimensions, with float16 or float32 data type.
+        - **input_x** (Tensor) - Tensor of any dimension, the data type is float16 or float32.
 
     Outputs:
         Tensor, with the same type and shape as the `input_x`.
@@ -666,16 +665,12 @@ class ReLUV2(Primitive):
 
         \text{ReLU}(x) = (x)^+ = \max(0, x)
 
-    Note:
-        The difference from `ReLu` is that the operator will output one more Mask,
-        and the kernel of the operator is different from `ReLu`.
-
     Inputs:
         - **input_x** (Tensor) - The input tensor must be a 4-D tensor.
 
     Outputs:
         - **output** (Tensor) - Has the same type and shape as the `input_x`.
-        - **mask** (Tensor) - A tensor whose data type must be uint8.
+        - **mask** (Tensor) - A tensor, but it is meaningless.
 
     Raises:
         TypeError: If `input_x` is not a Tensor.
@@ -687,17 +682,12 @@ class ReLUV2(Primitive):
     Examples:
         >>> input_x = Tensor(np.array([[[[1, -2], [-3, 4]], [[-5, 6], [7, -8]]]]), mindspore.float32)
         >>> relu_v2 = ops.ReLUV2()
-        >>> output, mask= relu_v2(input_x)
+        >>> output, _= relu_v2(input_x)
         >>> print(output)
         [[[[1. 0.]
            [0. 4.]]
           [[0. 6.]
            [7. 0.]]]]
-        >>> print(mask)
-        [[[[[1 0]
-            [2 0]]
-           [[2 0]
-            [1 0]]]]]
     """
 
     @prim_attr_register
@@ -824,8 +814,7 @@ class Sigmoid(Primitive):
     where :math:`x_i` is an element of the input Tensor.
 
     Inputs:
-        - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
-          additional dimensions, with float16 or float32 data type.
+        - **input_x** (Tensor) - Tensor of any dimension, the data type is float16 or float32.
 
     Outputs:
         Tensor, with the same type and shape as the input_x.
@@ -2641,18 +2630,18 @@ class SoftMarginLoss(Primitive):
 
 class L2Loss(Primitive):
     r"""
-    Calculates half of the L2 norm of a tensor without sqrt.
+    Calculates the L2 norm, but do not square the result.
 
-    Set `input_x` as x and output as loss.
+    Set input as x and output as loss.
 
     .. math::
         loss = \frac{\sum x ^ 2}{2}
 
     Inputs:
-        - **input_x** (Tensor) - A input Tensor. Data type must be float16 or float32.
+        - **input_x** (Tensor) - Tensor for computing the L2 norm. Data type must be float16 or float32.
 
     Outputs:
-        Tensor, has the same dtype as `input_x`. The output tensor is the value of loss which is a scalar tensor.
+        Tensor, has a Scalar Tensor with the same data type as `input_x`.
 
     Raises:
         TypeError: If `input_x` is not a Tensor.
@@ -3392,12 +3381,13 @@ class GeLU(Primitive):
     GeLU is defined as follows:
 
     .. math::
-        \text{output} = 0.5 * x * (1 + tanh(x / \sqrt{2})),
+        GELU(x_i) = x_i*P(X < x_i)
 
-    where :math:`tanh` is the hyperbolic tangent.
+    where :math:`P` is the cumulative distribution function of the standard Gaussian distribution,
+    :math:`x_i` is the input element.
 
     Inputs:
-        - **x** (Tensor) - Input to compute the GeLU with data type of float16 or float32.
+        - **x** (Tensor) - The input of the activation function GeLU, the data type is float16 or float32.
 
     Outputs:
         Tensor, with the same type and shape as `x`.
@@ -3544,11 +3534,10 @@ class PReLU(PrimitiveWithInfer):
     where :math:`x_i` is an element of a channel of the input, `w` is the weight of the channel.
 
     Note:
-        0-D or 1-D input_x is not supported on Ascend.
+        Scalar or 1-D input x is not supported on Ascend.
 
     Inputs:
-        - **x** (Tensor) - The first input tensor, representing the output of the preview layer.
-          With data type of float16 or float32.
+        - **x** (Tensor) - The input Tensor of the activation function. The data type is float16 or float32.
           The shape is :math:`(N, C, *)` where :math:`*` means, any number of additional dimensions.
         - **weight** (Tensor) -  Weight Tensor. The data type is float16 or float32.
           The weight can only be a vector, and the length is the same as the number of channels C of the `input_x`.

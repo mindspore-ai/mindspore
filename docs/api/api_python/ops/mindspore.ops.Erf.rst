@@ -11,7 +11,7 @@ mindspore.ops.Erf
 
     **输入：**
 
-    - **x** (Tensor) - 高斯误差函数的输入Tensor。数据类型必须为float16或float32。任意维度小于8的Tensor。
+    - **x** (Tensor) - 高斯误差函数的输入Tensor。维度必须小于8，数据类型必须为float16或float32。
 
     **输出：**
 
