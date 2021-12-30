@@ -835,12 +835,16 @@ CNodePtr GetJUser(const NodeUsersMap &node_user_map, const CNodePtr &cnode, int 
 }
 
 CNodePtr GetPrimalUser(const CNodePtr &j_user, const std::map<FuncGraphPtr, std::vector<CNodePtr>> &primal_map) {
-  // Check if J operation has relevant primal call in the same graph.
+  // Check if the forward network and the gradient of it are called in the same graph.
   auto graph = j_user->func_graph();
   auto iter = primal_map.find(graph);
   if (iter == primal_map.end()) {
-    MS_LOG(INFO) << "J operation has no relevant primal call in the same graph. Func graph: " << graph->ToString()
-                 << ", J user: " << j_user->DebugString();
+    // The CNode using the forward graph result and the gradient of the forward graph are not in the same graph.
+    // The EliminatePrimalGraph optimization can not be done. If the code use the forward network and its gradient,
+    // the forward network can not be eliminated. This may cause the decrease of the compilation and running efficiency.
+    MS_LOG(INFO) << "The gradient operation of forward network and the forward network are not called in the same"
+                 << " graph. The CNode to use the gradient result is: " << j_user->DebugString()
+                 << " This CNode is in graph: " << graph->ToString();
     return nullptr;
   }
 
