@@ -1615,7 +1615,7 @@ class InvertPermutation(PrimitiveWithInfer):
         values can not be negative.
 
     Inputs:
-        - **input_x** (Union(tuple[int], list[int]) - The input is constructed by multiple
+        - **input_x** (Union(tuple[int], list[int])) - The input is constructed by multiple
           integers, i.e., :math:`(y_1, y_2, ..., y_S)` representing the indices.
           The values must include 0. There can be no duplicate values or negative values.
           Only constant value is allowed. The maximum value must be equal to length of input_x.
@@ -4081,7 +4081,7 @@ class ScatterUpdate(_ScatterOpDynamic):
         \text{input_x}[\text{indices}[i, ..., j], :] = \text{updates}[i, ..., j, :]
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
-    If they have different data types, lower priority data type will be converted to
+    If they have different data types, the lower priority data type will be converted to
     the relatively highest priority data type.
 
     Args:
@@ -4144,7 +4144,7 @@ class ScatterNdUpdate(Primitive):
     :math:`(i_0, i_1, ..., i_{Q-2}, x\_shape_N, ..., x\_shape_{P-1})`.
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
-    If they have different data types, lower priority data type will be converted to
+    If they have different data types, the lower priority data type will be converted to
     the relatively highest priority data type.
 
     Args:
@@ -4209,7 +4209,7 @@ class ScatterMax(_ScatterOp):
         = max(\text{input_x}[\text{indices}[i, ..., j], :], \text{updates}[i, ..., j, :])
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
-    If they have different data types, lower priority data type will be converted to
+    If they have different data types, the lower priority data type will be converted to
     the relatively highest priority data type.
 
     Args:
@@ -4263,7 +4263,7 @@ class ScatterMin(_ScatterOp):
         = min(\text{input_x}[\text{indices}[i, ..., j], :], \text{updates}[i, ..., j, :])
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
-    If they have different data types, lower priority data type will be converted to
+    If they have different data types, the lower priority data type will be converted to
     the relatively highest priority data type.
 
     Args:
@@ -4316,7 +4316,7 @@ class ScatterAdd(_ScatterOpDynamic):
         \text{input_x}[\text{indices}[i, ..., j], :] \mathrel{+}= \text{updates}[i, ..., j, :]
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
-    If they have different data types, lower priority data type will be converted to
+    If they have different data types, the lower priority data type will be converted to
     the relatively highest priority data type.
 
     Note:
@@ -4429,7 +4429,7 @@ class ScatterSub(_ScatterOpDynamic):
         \text{input_x}[\text{indices}[i, ..., j], :] \mathrel{-}= \text{updates}[i, ..., j, :]
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
-    If they have different data types, lower priority data type will be converted to
+    If they have different data types, the lower priority data type will be converted to
     the relatively highest priority data type.
 
     Args:
@@ -4539,7 +4539,7 @@ class ScatterMul(_ScatterOp):
         \text{input_x}[\text{indices}[i, ..., j], :] \mathrel{*}= \text{updates}[i, ..., j, :]
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
-    If they have different data types, lower priority data type will be converted to
+    If they have different data types, the lower priority data type will be converted to
     the relatively highest priority data type.
 
     Args:
@@ -4642,7 +4642,7 @@ class ScatterDiv(_ScatterOp):
         \text{input_x}[\text{indices}[i, ..., j], :] \mathrel{/}= \text{updates}[i, ..., j, :]
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
-    If they have different data types, lower priority data type will be converted to
+    If they have different data types, the lower priority data type will be converted to
     the relatively highest priority data type.
 
     Args:
@@ -4751,7 +4751,7 @@ class ScatterNdAdd(Primitive):
     :math:`(i_0, i_1, ..., i_{Q-2}, x\_shape_N, ..., x\_shape_{P-1})`.
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
-    If they have different data types, lower priority data type will be converted to
+    If they have different data types, the lower priority data type will be converted to
     the relatively highest priority data type.
 
     Args:
@@ -4842,7 +4842,7 @@ class ScatterNdSub(_ScatterNdOp):
     :math:`(i_0, i_1, ..., i_{Q-2}, x\_shape_N, ..., x\_shape_{P-1})`.
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
-    If they have different data types, lower priority data type will be converted to
+    If they have different data types, the lower priority data type will be converted to
     relatively highest priority data type.
 
     Args:
@@ -4911,7 +4911,7 @@ class ScatterNonAliasingAdd(Primitive):
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
-    If they have different data types, lower priority data type will be converted to
+    If they have different data types, the lower priority data type will be converted to
     the relatively highest priority data type.
 
     Inputs:

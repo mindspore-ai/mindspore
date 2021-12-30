@@ -3,7 +3,7 @@ mindspore.nn.ELU
 
 .. py:class:: mindspore.nn.ELU(alpha=1.0)
 
-    指数线性单元激活函数（Exponential Linear Uint activation function）。
+    指数线性单元激活函数（Exponential Linear Unit activation function）。
 
     对输入的每个元素计算ELU。该激活函数定义如下：
 

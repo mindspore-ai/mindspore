@@ -399,7 +399,7 @@ class FusedWeightScaleApplyMomentum(PrimitiveWithInfer):
 
     Inputs of `variable`, `accumulation` and `gradient` comply with the implicit type conversion rules
     to make the data types consistent.
-    If they have different data types, lower priority data type will be converted to
+    If they have different data types, the lower priority data type will be converted to
     relatively highest priority data type.
     Data type conversion of Parameter is not supported. RuntimeError exception will be thrown.
 

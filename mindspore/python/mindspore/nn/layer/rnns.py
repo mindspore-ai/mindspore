@@ -57,12 +57,14 @@ def _check_is_tensor(param_name, input_data, cls_name):
         raise TypeError(f"For '{cls_name}', the '{param_name}' should be '{mstype.tensor_type}', "
                         f"but got '{P.typeof(input_data)}'")
 
+
 @constexpr
 def _check_is_tuple(param_name, input_data, cls_name):
     """Internal function, used to check whether the input data is Tensor."""
     if input_data is not None and not isinstance(P.typeof(input_data), mstype.Tuple):
         raise TypeError(f"For '{cls_name}', the '{param_name}' should be '{mstype.Tuple}', "
                         f"but got '{P.typeof(input_data)}'")
+
 
 @constexpr
 def _check_tuple_length(param_name, input_data, length, cls_name):
@@ -71,16 +73,19 @@ def _check_tuple_length(param_name, input_data, length, cls_name):
         raise TypeError(f"For '{cls_name}', the length of '{param_name}' should be '{length}', "
                         f"but got '{len(input_data)}'")
 
+
 def sequence_mask(lengths, maxlen):
     """generate mask matrix by seq_length"""
     range_vector = arange(0, maxlen, 1, lengths.dtype)
     result = range_vector < lengths.view(lengths.shape + (1,))
     return result.astype(mstype.int32)
 
+
 def select_by_mask(inputs, mask):
     """mask hiddens by mask matrix"""
     return mask.view(mask.shape + (1,)).swapaxes(0, 1) \
-        .expand_as(inputs).astype(mstype.bool_)  * inputs
+               .expand_as(inputs).astype(mstype.bool_) * inputs
+
 
 def get_hidden(output, seq_length):
     """get hidden state by seq_length"""
@@ -88,8 +93,10 @@ def get_hidden(output, seq_length):
     indices = P.Concat(1)((seq_length.view(-1, 1) - 1, batch_index.view(-1, 1)))
     return P.GatherNd()(output, indices)
 
+
 class _DynamicRNNBase(Cell):
     '''Dynamic RNN module to compute RNN cell by timesteps'''
+
     def __init__(self, mode):
         super().__init__()
         if mode == "RNN_RELU":
@@ -112,7 +119,7 @@ class _DynamicRNNBase(Cell):
         t = 0
         h = h_0
         while t < time_step:
-            x_t = x[t:t+1:1]
+            x_t = x[t:t + 1:1]
             x_t = P.Squeeze(0)(x_t)
             h = self.cell(x_t, h, w_ih, w_hh, b_ih, b_hh)
             if self.is_lstm:
@@ -142,7 +149,7 @@ class _DynamicRNNBase(Cell):
         state_t = h_t
         t = 0
         while t < time_step:
-            x_t = x[t:t+1:1]
+            x_t = x[t:t + 1:1]
             x_t = P.Squeeze(0)(x_t)
             h_t = self.cell(x_t, state_t, w_ih, w_hh, b_ih, b_hh)
             seq_cond = seq_length > t
@@ -164,26 +171,34 @@ class _DynamicRNNBase(Cell):
             return self.recurrent(x, h, w_ih, w_hh, b_ih, b_hh)
         return self.variable_recurrent(x, h, seq_length, w_ih, w_hh, b_ih, b_hh)
 
+
 class _DynamicRNNRelu(_DynamicRNNBase):
     '''Dynamic RNN module with Relu activation'''
+
     def __init__(self):
         mode = 'RNN_RELU'
         super().__init__(mode)
 
+
 class _DynamicRNNTanh(_DynamicRNNBase):
     '''Dynamic RNN module with Tanh activation'''
+
     def __init__(self):
         mode = 'RNN_TANH'
         super().__init__(mode)
 
+
 class _DynamicGRUCPUGPU(_DynamicRNNBase):
     '''Dynamic GRU module on CPU and GPU'''
+
     def __init__(self):
         mode = 'GRU'
         super().__init__(mode)
 
+
 class _DynamicGRUAscend(Cell):
     '''Dynamic GRU module on Ascend'''
+
     def __init__(self):
         super().__init__()
         self.gru = P.DynamicGRUV2(gate_order='rzh')
@@ -195,11 +210,11 @@ class _DynamicGRUAscend(Cell):
             b_ih = P.Zeros()(w_ih.shape[0], w_ih.dtype)
             b_hh = P.Zeros()(w_ih.shape[0], w_ih.dtype)
         outputs, _, _, _, _, _ = self.gru(self.cast(x, self.dtype), \
-                                         self.cast(self.transpose(w_ih, (1, 0)), self.dtype), \
-                                         self.cast(self.transpose(w_hh, (1, 0)), self.dtype), \
-                                         self.cast(b_ih, self.dtype), \
-                                         self.cast(b_hh, self.dtype), \
-                                         None, self.cast(h_0, self.dtype))
+                                          self.cast(self.transpose(w_ih, (1, 0)), self.dtype), \
+                                          self.cast(self.transpose(w_hh, (1, 0)), self.dtype), \
+                                          self.cast(b_ih, self.dtype), \
+                                          self.cast(b_hh, self.dtype), \
+                                          None, self.cast(h_0, self.dtype))
         if seq_length is not None:
             h = get_hidden(outputs, seq_length)
             mask = sequence_mask(seq_length, x.shape[0])
@@ -208,8 +223,10 @@ class _DynamicGRUAscend(Cell):
             h = outputs[-1]
         return outputs, h
 
+
 class _DynamicLSTMCPUGPU(Cell):
     '''Dynamic LSTM module on CPU and GPU'''
+
     def __init__(self):
         super().__init__()
         self.concat = P.Concat()
@@ -251,8 +268,10 @@ class _DynamicLSTMCPUGPU(Cell):
             )
         return output, (h_n, c_n)
 
+
 class _DynamicLSTMAscend(Cell):
     '''Dynamic LSTM module on Ascend'''
+
     def __init__(self):
         super().__init__()
         self.lstm = P.DynamicRNN()
@@ -294,8 +313,10 @@ class _DynamicLSTMAscend(Cell):
             c = c[-1]
         return outputs, (h, c)
 
+
 class _RNNBase(Cell):
     '''Basic class for RNN operators'''
+
     def __init__(self, mode, input_size, hidden_size, num_layers=1, has_bias=True,
                  batch_first=False, dropout=0., bidirectional=False):
         super().__init__()
@@ -482,7 +503,7 @@ class _RNNBase(Cell):
         num_directions = 2 if self.bidirectional else 1
         if hx is None:
             hx = _init_state((self.num_layers * num_directions, max_batch_size, self.hidden_size), \
-                              x.dtype, self.is_lstm)
+                             x.dtype, self.is_lstm)
         if self.batch_first:
             x = P.Transpose()(x, (1, 0, 2))
         if self.bidirectional:
@@ -494,6 +515,7 @@ class _RNNBase(Cell):
         if not self.is_lstm:
             return x.astype(mstype.float32), h.astype(mstype.float32)
         return x.astype(mstype.float32), (h[0].astype(mstype.float32), h[1].astype(mstype.float32))
+
 
 class RNN(_RNNBase):
     r"""
@@ -527,11 +549,12 @@ class RNN(_RNNBase):
         - **x** (Tensor) - Tensor of data type mindspore.float32 and
           shape (seq_len, batch_size, `input_size`) or (batch_size, seq_len, `input_size`).
         - **hx** (Tensor) - Tensor of data type mindspore.float32 and
-          shape (num_directions * `num_layers`, batch_size, `hidden_size`). Data type of `hx` must be the same as `x`.
-        - **seq_length** (Tensor) - The length of each sequence in a input batch.
+          shape (num_directions * `num_layers`, batch_size, `hidden_size`). The data type of `hx` must be the same as
+          `x`.
+        - **seq_length** (Tensor) - The length of each sequence in an input batch.
           Tensor of shape :math:`(\text{batch_size})`. Default: None.
           This input indicates the real sequence length before padding to avoid padded elements
-          have been used to compute hidden state and affect the final output. It is recommend to
+          have been used to compute hidden state and affect the final output. It is recommended to
           use this input when **x** has padding elements.
 
     Outputs:
@@ -559,6 +582,7 @@ class RNN(_RNNBase):
         >>> print(output.shape)
         (3, 5, 16)
     """
+
     def __init__(self, *args, **kwargs):
         if 'nonlinearity' in kwargs:
             if kwargs['nonlinearity'] == 'tanh':
@@ -573,6 +597,7 @@ class RNN(_RNNBase):
             mode = 'RNN_TANH'
 
         super(RNN, self).__init__(mode, *args, **kwargs)
+
 
 class GRU(_RNNBase):
     r"""
@@ -622,10 +647,10 @@ class GRU(_RNNBase):
         - **hx** (Tensor) - Tensor of data type mindspore.float32 and
           shape (num_directions * `num_layers`, batch_size, `hidden_size`). The data type of `hx` must be the same as
           `x`.
-        - **seq_length** (Tensor) - The length of each sequence in a input batch.
+        - **seq_length** (Tensor) - The length of each sequence in an input batch.
           Tensor of shape :math:`(\text{batch_size})`. Default: None.
           This input indicates the real sequence length before padding to avoid padded elements
-          have been used to compute hidden state and affect the final output. It is recommend to
+          have been used to compute hidden state and affect the final output. It is recommended to
           use this input when **x** has padding elements.
 
     Outputs:
@@ -652,9 +677,11 @@ class GRU(_RNNBase):
         >>> print(output.shape)
         (3, 5, 16)
     """
+
     def __init__(self, *args, **kwargs):
         mode = 'GRU'
         super(GRU, self).__init__(mode, *args, **kwargs)
+
 
 class LSTM(_RNNBase):
     r"""
@@ -708,11 +735,11 @@ class LSTM(_RNNBase):
           shape (seq_len, batch_size, `input_size`) or (batch_size, seq_len, `input_size`).
         - **hx** (tuple) - A tuple of two Tensors (h_0, c_0) both of data type mindspore.float32
           and shape (num_directions * `num_layers`, batch_size, `hidden_size`).
-          Data type of `hx` must be the same as `x`.
-        - **seq_length** (Tensor) - The length of each sequence in a input batch.
+          The data type of `hx` must be the same as `x`.
+        - **seq_length** (Tensor) - The length of each sequence in an input batch.
           Tensor of shape :math:`(\text{batch_size})`. Default: None.
           This input indicates the real sequence length before padding to avoid padded elements
-          have been used to compute hidden state and affect the final output. It is recommend to
+          have been used to compute hidden state and affect the final output. It is recommended to
           use this input when **x** has padding elements.
 
     Outputs:
@@ -740,6 +767,7 @@ class LSTM(_RNNBase):
         >>> print(output.shape)
         (3, 5, 16)
     """
+
     def __init__(self, *args, **kwargs):
         mode = 'LSTM'
         super(LSTM, self).__init__(mode, *args, **kwargs)

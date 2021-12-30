@@ -199,7 +199,7 @@ class LogSoftmax(Cell):
 
 class ELU(Cell):
     r"""
-    Exponential Linear Uint activation function.
+    Exponential Linear Unit activation function.
 
     Applies the exponential linear unit function element-wise.
     The activation function is defined as:

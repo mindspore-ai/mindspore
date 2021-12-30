@@ -120,8 +120,8 @@ class DenseLayer(nn.Cell):
     Dense Layer for Deep Layer of DeepFM Model;
     Containing: activation, matmul, bias_add;
     Args:
-        input_dim (int): the shape of weight at 0-aixs;
-        output_dim (int): the shape of weight at 1-aixs, and shape of bias
+        input_dim (int): the shape of weight at 0-axis;
+        output_dim (int): the shape of weight at 1-axis, and shape of bias
         weight_bias_init (list): weight and bias init method, "random", "uniform", "one", "zero", "normal";
         act_str (str): activation function method, "relu", "sigmoid", "tanh";
         keep_prob (float): Dropout Layer keep_prob_rate;

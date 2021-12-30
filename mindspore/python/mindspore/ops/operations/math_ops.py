@@ -361,7 +361,7 @@ class AssignAdd(Primitive):
     Updates a `Parameter` by adding a value to it.
 
     Inputs of `variable` and `value` comply with the implicit type conversion rules to make the data types consistent.
-    If they have different data types, lower priority data type will be converted to
+    If they have different data types, the lower priority data type will be converted to
     the relatively highest priority data type.
     If `value` is a number, the number is automatically converted to Tensor,
     and the data type is consistent with the Tensor data type involved in the operation.
@@ -424,7 +424,7 @@ class AssignSub(Primitive):
     Updates a `Parameter` by subtracting a value from it.
 
     Inputs of `variable` and `value` comply with the implicit type conversion rules to make the data types consistent.
-    If they have different data types, lower priority data type will be converted to
+    If they have different data types, the lower priority data type will be converted to
     the relatively highest priority data type.
     If `value` is a number, the number is automatically converted to Tensor,
     and the data type is consistent with the Tensor data type involved in the operation.
@@ -586,7 +586,7 @@ class _Reduce(PrimitiveWithInfer):
 
 class ReduceMean(_Reduce):
     """
-    Reduces a dimension of a tensor by averaging all elements in the dimension, by Default. And also can reduces
+    Reduces a dimension of a tensor by averaging all elements in the dimension, by default. And also can reduce
     a dimension of `x` along the axis. Determine whether the dimensions of the output and input are the same by
     controlling `keep_dims`.
 
@@ -663,8 +663,8 @@ class ReduceMean(_Reduce):
 
 class ReduceSum(_Reduce):
     """
-    Reduces a dimension of a tensor by summing all elements in the dimension, by Default. And also can reduces
-    a dimension of `x` along the axis. Determine whether the dimensions of the output and input are the same by
+    Reduces a dimension of a tensor by summing all elements in the dimension, by default. And also can reduce a
+    dimension of `x` along the axis. Determine whether the dimensions of the output and input are the same by
     controlling `keep_dims`.
 
     Args:
@@ -1194,7 +1194,7 @@ class Cdist(Primitive):
     Computes batched the p norm distance between each pair of the two collections of row vectors.
 
     Args:
-        p (float): P value for the p norm distance to calculate between each vector pair ∈[0,∞].
+        p (float): P value for the p norm distance to calculate between each vector pair ∈[0,∞]. Default: 2.0.
 
     Inputs:
         - **input_x** (Tensor) - Input tensor of shape :math:`(B, P, M)`.
@@ -1244,15 +1244,15 @@ class LpNorm(Primitive):
 
     Args:
         axis(int,list,tuple): Specifies which dimension or dimensions of input to calculate the norm across.
-        p(int): The order of norm.
-        keep_dims(bool): Whether the output tensors have dim retained or not.
+        p(int): The order of norm. Default: 2.
+        keep_dims(bool): Whether the output tensors have dim retained or not. Default: False.
         epsilon(float): A value added to the denominator for numerical stability. Default: 1e-12.
 
     Inputs:
         - **input** (Tensor) - Input tensor.
 
     Outputs:
-        Tensor, has the same dtype as `input`, which shape is depend on the args axis.For example, if the size of input
+        Tensor, has the same dtype as `input`, which shape depends on the args axis.For example, if the size of input
         is (2, 3, 4), axis is [0, 1], Outputs' shape will be (4,).
 
     Raises:
@@ -2305,7 +2305,7 @@ class HistogramFixedWidth(PrimitiveWithInfer):
 
     Inputs:
         - **x** (Tensor) - Numeric Tensor. Must be one of the following types: int32, float32, float16.
-        - **range** (Tensor) - Must has the same data type as `x`, and the shape is [2].
+        - **range** (Tensor) - Must have the same data type as `x`, and the shape is [2].
           x <= range[0] will be mapped to hist[0], x >= range[1] will be mapped to hist[-1].
 
     Outputs:
@@ -3478,7 +3478,7 @@ class ApproximateEqual(_LogicBinaryOp):
     where :math:`\text{tolerance}` indicates Acceptable maximum tolerance.
 
     Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
-    If they have different data types, lower priority data type will be converted to
+    If they have different data types, the lower priority data type will be converted to
     the relatively highest priority data type.
 
     Args:
@@ -4757,7 +4757,7 @@ class Atan2(_MathBinaryOp):
     such that :math:`x = r*\sin(\theta), y = r*\cos(\theta)`, where :math:`r = \sqrt{x^2 + y^2}`.
 
     Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
-    If they have different data types, lower priority data type will be converted to
+    If they have different data types, the lower priority data type will be converted to
     the relatively highest priority data type.
 
     Inputs:
@@ -4852,7 +4852,7 @@ class BitwiseAnd(_BitwiseBinaryOp):
 
     Inputs of `x` and `y` comply with the implicit type conversion rules to
     make the data types consistent.
-    If they have different data types, lower priority data type will be converted to
+    If they have different data types, the lower priority data type will be converted to
     the relatively highest priority data type.
 
     Inputs:
@@ -4891,7 +4891,7 @@ class BitwiseOr(_BitwiseBinaryOp):
 
     Inputs of `x` and `y` comply with the implicit type conversion rules to
     make the data types consistent.
-    If they have different data types, lower priority data type will be converted to
+    If they have different data types, the lower priority data type will be converted to
     the relatively highest priority data type.
 
     Inputs:
@@ -4929,7 +4929,7 @@ class BitwiseXor(_BitwiseBinaryOp):
 
     Inputs of `x` and `y` comply with the implicit type conversion rules to
     make the data types consistent.
-    If they have different data types, lower priority data type will be converted to
+    If they have different data types, the lower priority data type will be converted to
     the relatively highest priority data type.
 
     Inputs:

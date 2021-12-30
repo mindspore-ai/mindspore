@@ -862,16 +862,17 @@ def cummin(x, axis):
 
     It returns the cumulative minimum of elements and the index.
 
-    ..math::
-
-        y{i} = min(x{1}, x{2}, ... , x{i})
+    .. math::
+        \begin{array}{ll} \\
+            y{i} = min(x{1}, x{2}, ... , x{i})
+        \end{array}
 
     Args:
         x (Tensor): The input tensor, rank of `input_x` > 0.
         axis (Int): The dimension to do the operation, The axis is in the range from -len(`input_x`.shape)
           to len(`input_x`.shape) - 1. When it's in the range from 0 to len(`input_x`.shape) - 1, it means starting
           from the first dimension and counting forwards, When it's less than 0, it means we're counting backwards
-          from the last dimension. for example, -1 means the last dimension.
+          from the last dimension. For example, -1 means the last dimension.
 
     Outputs:
         - **output** (Tensor) - The output tensor of the cumulative minimum of elements.
