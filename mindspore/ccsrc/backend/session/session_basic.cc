@@ -1374,11 +1374,18 @@ void SessionBasic::GetRefCount(const KernelGraph *graph, std::map<KernelWithInde
   }
 }
 
-void SessionBasic::GetForwardOpOutputRefCount(const KernelGraph *graph,
+void SessionBasic::GetForwardOpOutputRefCount(const KernelGraph *graph, const std::vector<tensor::TensorPtr> &inputs,
                                               std::map<std::string, size_t> *forward_op_output_tensor_id) {
   if (!pynative::PynativeExecutor::GetInstance()->grad_executor()->grad_is_running()) {
     return;
   }
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  // Cpu can not clear device address, because it's device address and host address is the same
+  if (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice) {
+    return;
+  }
+  MS_EXCEPTION_IF_NULL(forward_op_output_tensor_id);
   const auto &forward_op_output_id = pynative::PynativeExecutor::GetInstance()->grad_executor()->forward_op_output_id();
   MS_LOG(DEBUG) << "Total forward op out put size " << forward_op_output_id.size();
   for (const auto &kernel : graph->execution_order()) {
@@ -1395,6 +1402,12 @@ void SessionBasic::GetForwardOpOutputRefCount(const KernelGraph *graph,
           (*forward_op_output_tensor_id)[tensor->id()] += 1;
         }
       }
+    }
+  }
+  // Forward op output use as sens, so need add reference
+  for (const auto &tensor : inputs) {
+    if (forward_op_output_id.find(tensor->id()) != forward_op_output_id.end()) {
+      (*forward_op_output_tensor_id)[tensor->id()] += 1;
     }
   }
   MS_LOG(DEBUG) << "Forward op output tensor in bprop graph size " << forward_op_output_tensor_id->size();
@@ -2442,7 +2455,7 @@ void SessionBasic::RunOpsInGraphImpl(const GraphId &graph_id, const std::vector<
   std::map<KernelWithIndex, size_t> cnode_refcount;
   std::map<std::string, size_t> forward_op_output_tensor_id;
   GetRefCount(kernel_graph.get(), &cnode_refcount);
-  GetForwardOpOutputRefCount(kernel_graph.get(), &forward_op_output_tensor_id);
+  GetForwardOpOutputRefCount(kernel_graph.get(), inputs, &forward_op_output_tensor_id);
   BuildOpsInGraph(graph_id, parameter_index, inputs, cnode_refcount);
 
   std::map<KernelWithIndex, tensor::TensorPtr> op_output_map;
