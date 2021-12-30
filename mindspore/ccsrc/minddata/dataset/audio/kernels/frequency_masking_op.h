@@ -30,8 +30,8 @@ namespace dataset {
 
 class FrequencyMaskingOp : public TensorOp {
  public:
-  explicit FrequencyMaskingOp(bool iid_masks = false, int32_t frequency_mask_param = 0, int32_t mask_start = 0,
-                              float mask_value_ = 0.0);
+  FrequencyMaskingOp(bool iid_masks = false, int32_t frequency_mask_param = 0, int32_t mask_start = 0,
+                     float mask_value_ = 0.0);
 
   ~FrequencyMaskingOp() override = default;
 

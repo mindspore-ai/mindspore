@@ -251,6 +251,8 @@ Status LFilter(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *ou
   size_t channel_idx = 1;
   size_t m_num_order = b_coeffs.size() - 1;
   size_t m_den_order = a_coeffs.size() - 1;
+  CHECK_FAIL_RETURN_UNEXPECTED(a_coeffs[0] != static_cast<T>(0),
+                               "Invalid data, the first value of 'a_coeffs' should not be 0, but got 0.");
   // init A_coeffs and B_coeffs by div(a0)
   for (size_t i = 1; i < a_coeffs.size(); i++) {
     a_coeffs[i] /= a_coeffs[0];
