@@ -23,6 +23,7 @@ reduce_sum_op_info = CpuRegOp("ReduceSum") \
     .dtype_format(DataType.F64_Default, DataType.F64_Default) \
     .dtype_format(DataType.I32_Default, DataType.I32_Default) \
     .dtype_format(DataType.I64_Default, DataType.I64_Default) \
+    .dtype_format(DataType.BOOL_Default, DataType.BOOL_Default) \
     .get_op_info()
 
 
