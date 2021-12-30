@@ -100,8 +100,7 @@ Status AclGraphImpl::InitEnv() {
 
   aclError ret = aclrtSetDevice(device_id_);
   if (ret != ACL_ERROR_NONE) {
-    MS_LOG(ERROR) << "Acl open device " << device_id_ << " failed";
-    return kMCDeviceError;
+    MS_LOG(EXCEPTION) << "Device " << device_id_ << " call aclrtSetDevice failed, ret[" << static_cast<int>(ret) << "]";
   }
   MS_LOG(INFO) << "Open device " << device_id_ << " success";
 
