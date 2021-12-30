@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,12 +49,13 @@ enum ParseForm : int {
   FORM_PARSE_TENSOR = 2,
   FORM_PARSE_NONE = 3,
   FORM_PARSE_MONAD = 4,
-  FORM_PARSE_UNDEFINE = 5,
+  FORM_PARSE_SEQUENCE = 5,
+  FORM_PARSE_UNDEFINE = 6,
 };
 
 static std::map<std::string, ParseForm> kParseTypeSwitchMap{
   {"type", FORM_PARSE_TYPE}, {"scalar", FORM_PARSE_SCALAR}, {"tensor", FORM_PARSE_TENSOR},
-  {"none", FORM_PARSE_NONE}, {"Monad", FORM_PARSE_MONAD},   {"", FORM_PARSE_UNDEFINE}};
+  {"none", FORM_PARSE_NONE}, {"Monad", FORM_PARSE_MONAD},   {"Sequence", FORM_PARSE_SEQUENCE}};
 
 static mindspore::HashMap<int, TypeId> kDefaultValueSwitchMap{
   {mind_ir::TensorProto_DataType_BOOL, kNumberTypeBool},
@@ -226,17 +227,13 @@ ValuePtr ParseAttrInSingleScalar_double_double(const mind_ir::AttributeProto &at
   return MakeValue<double>(value);
 }
 
-string GetTypeString(const std::string &ref_attr_name, size_t *pos) {
-  if ((*pos = ref_attr_name.find("scalar:")) != std::string::npos) {
-    return ref_attr_name.substr(*pos, string("scalar:").length() - 1);
-  } else if ((*pos = ref_attr_name.find("type:")) != std::string::npos) {
-    return ref_attr_name.substr(*pos, string("type:").length() - 1);
-  } else if ((*pos = ref_attr_name.find("tensor:")) != std::string::npos) {
-    return ref_attr_name.substr(*pos, string("tensor:").length() - 1);
-  } else if (ref_attr_name == "none") {
-    return ref_attr_name;
+ParseForm GetParseFormType(const std::string &ref_attr_name) {
+  for (const auto &iter : kParseTypeSwitchMap) {
+    if (ref_attr_name.find(iter.first) == 0) {
+      return iter.second;
+    }
   }
-  return "";
+  return FORM_PARSE_UNDEFINE;
 }
 }  // namespace
 tensor::TensorPtr MSANFModelParser::GenerateTensorPtrFromTensorProto(const mind_ir::TensorProto &attr_tensor,
@@ -600,13 +597,13 @@ ValuePtr MSANFModelParser::ParseAttrInScalarForm(const mind_ir::AttributeProto &
       const int attr_tensor_type = attr_proto.tensors(index).data_type();
       if (kDefaultValueSwitchMap.find(attr_tensor_type) == kDefaultValueSwitchMap.end()) {
         MS_LOG(ERROR) << "Obtain attr in type-form has not support input type:" << attr_tensor_type;
-        return {};
+        return nullptr;
       }
       return TypeIdToType(kDefaultValueSwitchMap[attr_tensor_type]);
     }
     default:
       MS_LOG(ERROR) << "Obtain attr in scalar-form has not support input type: " << attr_type;
-      return {};
+      return nullptr;
   }
 }
 
@@ -694,11 +691,9 @@ bool MSANFModelParser::GetAttrValueForCNode(const PrimitivePtr &prim, const mind
     return false;
   }
   const std::string &ref_attr_name = attr_proto.ref_attr_name();
-  std::size_t pos(0);
-  string type = GetTypeString(ref_attr_name, &pos);
-
+  ParseForm type = GetParseFormType(ref_attr_name);
   mindspore::HashMap<std::string, ValuePtr> multi_value_map;
-  switch (kParseTypeSwitchMap[type]) {
+  switch (type) {
     case FORM_PARSE_TYPE: {
       ObtainCNodeAttrInTypeForm(prim, attr_proto);
       break;
@@ -740,13 +735,22 @@ bool MSANFModelParser::GetAttrValueForCNode(const PrimitivePtr &prim, const mind
       prim->AddAttr(attr_name, kNone);
       break;
     }
+    case FORM_PARSE_SEQUENCE: {
+      auto sequence_value = ObtainValueInSequenceForm(attr_proto);
+      if (sequence_value == nullptr) {
+        MS_LOG(ERROR) << "Failed to get sequence value for " << attr_name;
+        return false;
+      }
+      prim->AddAttr(attr_name, sequence_value);
+      break;
+    }
     default:
       MS_LOG(ERROR) << "parse attr type don't support the ref_attr_name: " << ref_attr_name;
       return false;
   }
 
-  if (kParseTypeSwitchMap[type] == FORM_PARSE_SCALAR && multi_value_map.size() != 0) {
-    if ((pos = ref_attr_name.find("Tuple")) != std::string::npos) {
+  if (type == FORM_PARSE_SCALAR && multi_value_map.size() != 0) {
+    if (ref_attr_name.find("Tuple") != std::string::npos) {
       auto value_tuple_ptr = ParserScalarAttrValue<ValueTuple>(ref_attr_name, multi_value_map);
       prim->AddAttr(attr_name, value_tuple_ptr);
     } else {
@@ -843,6 +847,67 @@ bool MSANFModelParser::ObtainValueNodeInMonadForm(const std::string &value_node_
   return true;
 }
 
+ValuePtr MSANFModelParser::ObtainValueInSequenceForm(const mind_ir::AttributeProto &attr_proto) {
+  std::vector<ValuePtr> vec;
+  for (int i = 0; i < attr_proto.values_size(); ++i) {
+    mind_ir::AttributeProto elem_attr_proto = attr_proto.values(i);
+    switch (elem_attr_proto.type()) {
+      case mind_ir::AttributeProto_AttributeType_TENSORS: {
+        mind_ir::TensorProto tensor_proto = elem_attr_proto.tensors(0);
+        if (tensor_proto.has_raw_data()) {
+          // For real tensor.
+          tensor::TensorPtr tensor_info = GenerateTensorPtrFromTensorProto(tensor_proto);
+          if (tensor_info == nullptr) {
+            MS_LOG(ERROR) << "Failed to get the tensor for ValueNode.";
+            return nullptr;
+          }
+          (void)vec.emplace_back(tensor_info);
+        } else {
+          // For data type.
+          const int attr_tensor_type = tensor_proto.data_type();
+          auto iter = kDefaultValueSwitchMap.find(attr_tensor_type);
+          if (iter == kDefaultValueSwitchMap.end()) {
+            MS_LOG(ERROR) << "Obtain ValueNode attr in type-form has not support input type: " << attr_tensor_type;
+            return nullptr;
+          }
+          (void)vec.emplace_back(TypeIdToType(iter->second));
+        }
+        break;
+      }
+      case mind_ir::AttributeProto_AttributeType_TUPLE:
+      case mind_ir::AttributeProto_AttributeType_LIST: {
+        auto sequence_value = ObtainValueInSequenceForm(elem_attr_proto);
+        if (sequence_value == nullptr) {
+          MS_LOG(ERROR) << "Failed to get the sequence value";
+          return nullptr;
+        }
+        (void)vec.emplace_back(sequence_value);
+        break;
+      }
+      default: {
+        // For string and scalar.
+        auto scalar_value = ParseAttrInScalarForm(elem_attr_proto, 0);
+        if (scalar_value == nullptr) {
+          MS_LOG(ERROR) << "Failed to get the scalar for ValueNode.";
+          return nullptr;
+        }
+        (void)vec.emplace_back(scalar_value);
+      }
+    }
+  }
+  auto type = attr_proto.type();
+  ValuePtr value_sequence;
+  if (type == mind_ir::AttributeProto_AttributeType_TUPLE) {
+    value_sequence = std::make_shared<ValueTuple>(vec);
+  } else if (type == mind_ir::AttributeProto_AttributeType_LIST) {
+    value_sequence = std::make_shared<ValueList>(vec);
+  } else {
+    MS_LOG(EXCEPTION) << "The attribute type should be tuple or list, but it is " << type;
+  }
+
+  return value_sequence;
+}
+
 bool MSANFModelParser::GetAttrValueForValueNode(const std::string &value_node_name,
                                                 const mind_ir::AttributeProto &attr_proto) {
   if (!attr_proto.has_ref_attr_name()) {
@@ -850,23 +915,10 @@ bool MSANFModelParser::GetAttrValueForValueNode(const std::string &value_node_na
     return false;
   }
   const std::string &ref_attr_name = attr_proto.ref_attr_name();
-  string type = "";
-  std::size_t pos;
-  if ((pos = ref_attr_name.find("scalar:")) != std::string::npos) {
-    type = ref_attr_name.substr(pos, string("scalar:").length() - 1);
-  } else if ((pos = ref_attr_name.find("type:")) != std::string::npos) {
-    type = ref_attr_name.substr(pos, string("type:").length() - 1);
-  } else if ((pos = ref_attr_name.find("tensor:")) != std::string::npos) {
-    type = ref_attr_name.substr(pos, string("tensor:").length() - 1);
-  } else if ((pos = ref_attr_name.find("Monad:")) != std::string::npos) {
-    type = ref_attr_name.substr(pos, string("Monad:").length() - 1);
-  } else if (ref_attr_name == "none") {
-    type = ref_attr_name;
-  }
-
+  ParseForm type = GetParseFormType(ref_attr_name);
   ValueNodePtr new_value_node;
   mindspore::HashMap<std::string, ValuePtr> multi_value_map;
-  switch (kParseTypeSwitchMap[type]) {
+  switch (type) {
     case FORM_PARSE_TYPE: {
       ObtainValueNodeInTypeForm(value_node_name, attr_proto.tensors(0));
       break;
@@ -879,6 +931,7 @@ bool MSANFModelParser::GetAttrValueForValueNode(const std::string &value_node_na
         anfnode_build_map_[value_node_name] = new_value_node;
         break;
       }
+      // Compatible with old versions.
       if (ref_attr_name.find("Tuple[]") != std::string::npos) {
         MS_LOG(INFO) << "Build Tuple() ValueNode for primitive.";
         ValuePtr res = MakeValue(std::vector<ValuePtr>{});
@@ -907,13 +960,24 @@ bool MSANFModelParser::GetAttrValueForValueNode(const std::string &value_node_na
       ObtainValueNodeInMonadForm(value_node_name, attr_proto);
       break;
     }
+    case FORM_PARSE_SEQUENCE: {
+      auto sequence_value = ObtainValueInSequenceForm(attr_proto);
+      if (sequence_value == nullptr) {
+        MS_LOG(ERROR) << "Failed to get sequence value for " << value_node_name;
+        return false;
+      }
+      new_value_node = NewValueNode(sequence_value);
+      new_value_node->set_abstract(sequence_value->ToAbstract());
+      anfnode_build_map_[value_node_name] = new_value_node;
+      break;
+    }
     default:
       MS_LOG(ERROR) << "parse attr type don't support the ref_attr_name: " << ref_attr_name;
       return false;
   }
-
-  if (kParseTypeSwitchMap[type] == FORM_PARSE_SCALAR && multi_value_map.size() != 0) {
-    if ((pos = ref_attr_name.find("Tuple")) != std::string::npos) {
+  // Compatible with old versions.
+  if (type == FORM_PARSE_SCALAR && !multi_value_map.empty()) {
+    if (ref_attr_name.find("Tuple") != std::string::npos) {
       auto value_tuple_ptr = ParserScalarAttrValue<ValueTuple>(ref_attr_name, multi_value_map);
       new_value_node = NewValueNode(value_tuple_ptr);
       new_value_node->set_abstract(value_tuple_ptr->ToAbstract());

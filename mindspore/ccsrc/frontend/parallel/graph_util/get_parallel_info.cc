@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ py::dict GetParameterLayoutFromGraph(const FuncGraphPtr &graph) {
 
 py::dict GetParameterLayoutFromResource(const pipeline::ResourcePtr &resource) {
   py::dict dict;
-  const auto &layout_map = resource->get_layout_map();
+  const auto &layout_map = resource->layout_map();
   for (auto iter = layout_map.begin(); iter != layout_map.end(); ++iter) {
     auto name = iter->first;
     auto layout = iter->second;
@@ -116,7 +116,7 @@ py::list GetParallelParameterNameListFromGraph(const FuncGraphPtr &graph) {
 }
 
 py::list GetParallelParameterNameListFromResource(const pipeline::ResourcePtr &resource) {
-  auto &layout_map = resource->get_layout_map();
+  auto &layout_map = resource->layout_map();
   py::list parallel_parameter_name_list;
   for (auto iter = layout_map.begin(); iter != layout_map.end(); ++iter) {
     auto name = iter->first;

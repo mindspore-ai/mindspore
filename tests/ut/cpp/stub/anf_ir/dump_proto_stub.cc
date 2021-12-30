@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,12 +24,10 @@ std::string GetFuncGraphProtoString(const FuncGraphPtr &func_graph) { return "";
 
 std::string GetOnnxProtoString(const FuncGraphPtr &func_graph) { return ""; }
 
-std::string GetBinaryProtoString(const FuncGraphPtr &func_graph) {
-  return "";
-}
+std::string GetBinaryProtoString(const FuncGraphPtr &func_graph) { return ""; }
 
-ModelProtoPtr GetBinaryProto(const FuncGraphPtr &func_graph, const FuncGraphPtr &layout_fg) {
-  ModelProtoPtr empty_model;
-  return empty_model;
+bool DumpBinaryProto(const FuncGraphPtr &func_graph, const std::string &file_path,
+                     const FuncGraphPtr &param_layout_fg) {
+  return true;
 }
 }  // namespace mindspore

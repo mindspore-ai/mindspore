@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 #include <utility>
 #include <algorithm>
 #include <functional>
+#include <fstream>
 
 #include "utils/hash_map.h"
 #include "ir/tensor.h"
@@ -94,7 +95,7 @@ class IrExporter {
 class IrExportBuilder {
  public:
   IrExportBuilder() : model_(std::make_shared<mind_ir::ModelProto>()) {}
-  ~IrExportBuilder() { google::protobuf::ShutdownProtobufLibrary(); }
+  ~IrExportBuilder() = default;
   std::string GetProtoString() const;
   void BuildModelInfo();
   bool BuildModel(const FuncGraphPtr &func_graph);
@@ -125,10 +126,8 @@ class IrExportBuilder {
   bool SetScalarToAttributeProtoForInt_irs(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto);
   bool SetTypeToAttributeProto_irs(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto);
   bool SetTensorToAttributeProto(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto);
-  bool SetSequenceToAttributeProto(const ValueSequencePtr &value, mind_ir::AttributeProto *const attr_proto,
-                                   std::string *const seq_string);
-  bool SetSeqElemToAttributeProto(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto,
-                                  std::string *const seq_string);
+  bool SetSequenceToAttributeProto(const ValueSequencePtr &value, mind_ir::AttributeProto *const attr_proto);
+  bool SetSeqElemToAttributeProto(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto);
 
   mind_ir::TensorProto_DataType GetMindirDataType(TypeId type_id);
   mind_ir::TensorProto_DataType GetMindirDataBitsIntType(int bits);
@@ -866,15 +865,12 @@ bool IrExportBuilder::SetValueToAttributeProto(const ValuePtr &value, mind_ir::A
   } else if (value->isa<Number>() || value->isa<TensorType>()) {
     return SetTypeToAttributeProto(value, attr_proto);
   } else if (value->isa<ValueSequence>()) {
-    ResetTupleIndex();
-    std::string seq_string = "scalar:";
-    attr_proto->set_type(mind_ir::AttributeProto_AttributeType_TENSORS);
-    if (!SetSequenceToAttributeProto(value->cast<ValueSequencePtr>(), attr_proto, &seq_string)) {
+    if (!SetSequenceToAttributeProto(value->cast<ValueSequencePtr>(), attr_proto)) {
       MS_LOG(ERROR) << "Set sequence to AttributeProto failed.";
       return false;
     }
-    attr_proto->set_ref_attr_name(seq_string);
-    MS_LOG(DEBUG) << "Attr string: " << seq_string;
+    attr_proto->set_ref_attr_name("Sequence");
+    MS_LOG(DEBUG) << "Attr string: " << value->type_name();
   } else if (value->isa<tensor::Tensor>()) {
     return SetTensorToAttributeProto(value, attr_proto);
   } else if (value->isa<None>()) {
@@ -991,7 +987,7 @@ bool IrExportBuilder::SetTypeToAttributeProto_irs(const ValuePtr &value, mind_ir
     mind_ir::TensorProto *tensor_proto = attr_proto->add_tensors();
     tensor_proto->set_data_type(mind_ir::TensorProto_DataType_BOOL);
   } else if (value->isa<tensor::Tensor>()) {
-    attr_proto->set_type(mind_ir::AttributeProto_AttributeType_TENSOR);
+    attr_proto->set_type(mind_ir::AttributeProto_AttributeType_TENSORS);
     return SetTensorToAttributeProto(value, attr_proto);
   } else {
     MS_LOG(EXCEPTION) << "Unsupported type: " << value->type_name();
@@ -1018,9 +1014,6 @@ bool IrExportBuilder::SetScalarToAttributeProto_irs(const ValuePtr &value, mind_
   } else if (value->isa<FP64Imm>()) {
     attr_proto->set_type(mind_ir::AttributeProto_AttributeType_DOUBLE);
     attr_proto->add_doubles(GetValue<double>(value));
-  } else if (value->isa<tensor::Tensor>()) {
-    attr_proto->set_type(mind_ir::AttributeProto_AttributeType_TENSOR);
-    return SetTensorToAttributeProto(value, attr_proto);
   } else {
     MS_LOG(ERROR) << "Unsupported scalar type: " << value->type_name();
     return false;
@@ -1060,15 +1053,10 @@ bool IrExportBuilder::SetScalarToAttributeProtoForInt_irs(const ValuePtr &value,
   return true;
 }
 
-bool IrExportBuilder::SetSeqElemToAttributeProto(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto,
-                                                 std::string *const seq_string) {
+bool IrExportBuilder::SetSeqElemToAttributeProto(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto) {
   if (value == nullptr) {
     MS_LOG(ERROR) << "Value is nullptr";
     return false;
-  }
-  string value_name = "value" + std::to_string(GetTupleIndex());
-  if (seq_string != nullptr) {
-    *seq_string += value_name + ",";
   }
   if (value->isa<StringImm>() || value->isa<Scalar>()) {
     return SetScalarToAttributeProto_irs(value, attr_proto);
@@ -1077,56 +1065,38 @@ bool IrExportBuilder::SetSeqElemToAttributeProto(const ValuePtr &value, mind_ir:
 }
 
 bool IrExportBuilder::SetSequenceToAttributeProto(const ValueSequencePtr &value,
-                                                  mind_ir::AttributeProto *const attr_proto,
-                                                  std::string *const seq_string) {
+                                                  mind_ir::AttributeProto *const attr_proto) {
   if (value == nullptr || attr_proto == nullptr) {
     MS_LOG(EXCEPTION) << "ValueSequencePtr or AttributeProto is null!";
   }
-  if (value->isa<ValueTuple>() && seq_string != nullptr) {
-    *seq_string += "Tuple[";
-    const ValueTuplePtr &tuple_value = value->cast<ValueTuplePtr>();
-    if (tuple_value->value().size() == 0) {
-      *seq_string += "],";
-      MS_LOG(DEBUG) << "SetSequenceToAttributeProto tuple size is 0";
-      return true;
-    }
-    for (const auto &item : tuple_value->value()) {
-      if (item->isa<ValueTuple>()) {
-        if (!SetSequenceToAttributeProto(item->cast<ValueTuplePtr>(), attr_proto, seq_string)) {
-          MS_LOG(ERROR) << "Set sequence to AttributeProto failed.";
-          return false;
-        }
-      } else {
-        if (!SetSeqElemToAttributeProto(item, attr_proto, seq_string)) {
-          MS_LOG(ERROR) << "Set seq elem to AttributeProto failed.";
-          return false;
-        }
+  if (value->isa<ValueTuple>()) {
+    attr_proto->set_type(mind_ir::AttributeProto_AttributeType_TUPLE);
+  } else if (value->isa<ValueList>()) {
+    attr_proto->set_type(mind_ir::AttributeProto_AttributeType_LIST);
+  } else {
+    MS_LOG(EXCEPTION) << "The sequance value should be ValueTuple or ValueList, but it is " << value->ToString();
+  }
+  auto value_sequence = value->cast<ValueSequencePtr>();
+  MS_EXCEPTION_IF_NULL(value_sequence);
+  const auto &values = value_sequence->value();
+  if (values.empty()) {
+    MS_LOG(DEBUG) << "SetSequenceToAttributeProto sequence size is 0";
+    return true;
+  }
+  for (const auto &item : values) {
+    mind_ir::AttributeProto *attr_values = attr_proto->add_values();
+    MS_EXCEPTION_IF_NULL(item);
+    if (item->isa<ValueSequence>()) {
+      if (!SetSequenceToAttributeProto(item->cast<ValueSequencePtr>(), attr_values)) {
+        MS_LOG(ERROR) << "Set sequence to AttributeProto failed.";
+        return false;
+      }
+    } else {
+      if (!SetSeqElemToAttributeProto(item, attr_values)) {
+        MS_LOG(ERROR) << "Set seq elem to AttributeProto failed.";
+        return false;
       }
     }
-    *seq_string += "],";
-  } else if (value->isa<ValueList>() && seq_string != nullptr) {
-    *seq_string += "List[";
-    const ValueListPtr &list_value = value->cast<ValueListPtr>();
-    if (list_value->value().size() == 0) {
-      *seq_string += "],";
-      MS_LOG(DEBUG) << "SetSequenceToAttributeProto list size is 0.";
-      return true;
-    }
-    for (const auto &item : list_value->value()) {
-      MS_EXCEPTION_IF_NULL(item);
-      if (item->isa<ValueList>()) {
-        if (!SetSequenceToAttributeProto(item->cast<ValueListPtr>(), attr_proto, seq_string)) {
-          MS_LOG(ERROR) << "Set sequence to AttributeProto failed.";
-          return false;
-        }
-      } else {
-        if (!SetSeqElemToAttributeProto(item, attr_proto, seq_string)) {
-          MS_LOG(ERROR) << "Set seq elem to AttributeProto failed.";
-          return false;
-        }
-      }
-    }
-    *seq_string += "],";
   }
   return true;
 }
@@ -1145,9 +1115,35 @@ std::string GetBinaryProtoString(const FuncGraphPtr &func_graph) {
   return ret;
 }
 
-ModelProtoPtr GetBinaryProto(const FuncGraphPtr &func_graph, const FuncGraphPtr &param_layout_fg) {
+bool DumpBinaryProto(const FuncGraphPtr &func_graph, const std::string &file_path,
+                     const FuncGraphPtr &param_layout_fg) {
   auto exporter = std::make_shared<IrExporter>(std::make_shared<IrExportBuilder>());
-  auto result = exporter->GetDumpProto(func_graph, param_layout_fg);
-  return result;
+  auto proto = exporter->GetDumpProto(func_graph, param_layout_fg);
+  if (proto == nullptr) {
+    MS_LOG(ERROR) << "Get binary proto for graph " << func_graph->ToString() << " failed.";
+    return false;
+  }
+
+  auto realpath = Common::CreatePrefixPath(file_path, true);
+  if (!realpath.has_value()) {
+    MS_LOG(ERROR) << "Get real path of file " << file_path << " failed.";
+    return false;
+  }
+
+  ChangeFileMode(realpath.value(), S_IWUSR);
+  std::ofstream fout(realpath.value());
+  if (!fout.is_open()) {
+    MS_LOG(ERROR) << "Open the file '" << realpath.value() << "' failed!" << ErrnoToString(errno);
+    return false;
+  }
+
+  if (!proto->SerializeToOstream(&fout)) {
+    MS_LOG(ERROR) << "Failed to write the mindir proto to file " << realpath.value();
+    fout.close();
+    return false;
+  }
+  fout.close();
+  ChangeFileMode(realpath.value(), S_IRUSR);
+  return true;
 }
 }  // namespace mindspore

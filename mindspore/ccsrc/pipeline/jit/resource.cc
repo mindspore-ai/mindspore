@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@
 #include "pipeline/jit/parse/data_converter.h"
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/ad/dfunctor.h"
+#include "frontend/parallel/context.h"
 
 namespace mindspore {
 // namespace to support opmap definition
@@ -320,6 +321,24 @@ Any Resource::GetAttrPtr(const TypeId &type, const std::string &name) {
   TypeId type_id = NormalizeTypeId(type);
   const BuiltInTypeMap &attr_map = GetAttrMap();
   return GetMethodOrAttr(name, type_id, attr_map);
+}
+
+void Resource::GetCompileCacheResource(const py::list &compile_cache_dep_files, const py::dict &weights,
+                                       const std::string &queue_name, size_t compile_cache_id) {
+  compile_cache_manager_ = std::make_shared<CompileCacheManager>(compile_cache_id);
+  compile_cache_manager_->InitCompileCacheHash(compile_cache_dep_files);
+  func_graph_ = compile_cache_manager_->GetCachedFuncGraph(manager_, weights, queue_name);
+  layout_map_ = compile_cache_manager_->layout_map();
+}
+
+void Resource::CacheFuncGraph() const {
+  FuncGraphPtr layout_fg = nullptr;
+  std::string parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
+  if (func_graph_->has_flag(parallel::AUTO_PARALLEL) &&
+      ((parallel_mode == parallel::AUTO_PARALLEL) || (parallel_mode == parallel::SEMI_AUTO_PARALLEL))) {
+    layout_fg = GetResult(kStepParallelGraph).cast<FuncGraphPtr>();
+  }
+  compile_cache_manager_->CacheFuncGraph(func_graph_, layout_fg);
 }
 
 void Resource::Clean() {

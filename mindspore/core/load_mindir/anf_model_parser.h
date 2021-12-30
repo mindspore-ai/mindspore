@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,6 +86,7 @@ class MSANFModelParser {
   bool ObtainValueNodeInTypeForm(const string &value_node_name, const mind_ir::TensorProto &attr_tensor);
   bool ObtainValueNodeInNoneForm(const std::string &value_node_name, const mind_ir::AttributeProto &attr_proto);
   bool ObtainValueNodeInMonadForm(const std::string &value_node_name, const mind_ir::AttributeProto &attr_proto);
+  ValuePtr ObtainValueInSequenceForm(const mind_ir::AttributeProto &attr_proto);
   bool little_endian() { return little_endian_; }
   mindspore::HashMap<std::string, abstract::AbstractBasePtr> GetAbstractForNode(
     const mind_ir::AttributeProto &attr_proto);

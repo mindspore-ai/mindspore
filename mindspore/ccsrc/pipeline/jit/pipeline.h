@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ class Pipeline {
 
   ~Pipeline() = default;
 
-  void Run(const std::string &phase);
+  void Run();
 
   ResourcePtr resource() { return resource_; }
 
@@ -143,6 +143,10 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   // 'validate' stage
   static std::vector<ActionItem> FilterActions(const std::vector<ActionItem> &actions, const std::string &phase);
 
+  void DelOneNetRes(const py::handle &py_phase);
+  // If enable compile cache, get the compile cache resource.
+  void InitCompileCacheInfo(const ResourcePtr &resource, const std::string &phase);
+
   std::map<std::string, ExecutorInfoPtr> info_;
   static std::shared_ptr<GraphExecutorPy> executor_;
   static std::mutex instance_lock_;
@@ -159,7 +163,6 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   py::list compile_cache_dep_files_;
   py::dict weights_;
   std::map<PyObject *, AbstractBasePtr> cur_convert_input_;
-  void DelOneNetRes(const py::handle &py_phase);
 };
 using GraphExecutorPyPtr = std::shared_ptr<GraphExecutorPy>;
 

@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,7 +59,6 @@
 #include "backend/session/executor_manager.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "runtime/device/kernel_runtime_manager.h"
-#include "utils/system/sha256.h"
 
 #ifndef ENABLE_SECURITY
 #ifdef ENABLE_D
@@ -127,11 +126,6 @@ std::unordered_map<abstract::AbstractBasePtrList, uint64_t, abstract::AbstractBa
   g_args_cache;
 
 namespace {
-constexpr char kCompileCacheSubDir[] = "graph_cache";
-constexpr char kCompileCacheFileName[] = "compile_cache";
-constexpr char kCompileCacheFileSuffix[] = ".mindir";
-constexpr char kDepFilesHashPath[] = "compile_dependency.hash";
-
 #ifdef ENABLE_DUMP_IR
 std::string GetBaseNameForIR(int64_t stage_idx, const std::string &action_name) {
   std::ostringstream oss;
@@ -211,98 +205,6 @@ void SetLoopCount(const ResourcePtr &resource) {
   }
 }
 
-std::string GetUserDefinedCachePath() {
-  auto user_defined_path = MsContext::GetInstance()->get_param<std::string>(MS_CTX_COMPILE_CACHE_PATH);
-  if (!user_defined_path.empty()) {
-    user_defined_path += "/";
-    return user_defined_path;
-  }
-  user_defined_path = common::GetEnv("MS_COMPILER_CACHE_PATH");
-  if (!user_defined_path.empty()) {
-    user_defined_path += "/";
-  }
-  return user_defined_path;
-}
-
-std::string GetCompileCacheDir() {
-  static const std::string user_defined_path = GetUserDefinedCachePath();
-  static uint32_t rank_id = IsStandAlone() ? 0 : GetRank();
-  static const std::string compile_cache_dir =
-    user_defined_path + "rank_" + std::to_string(rank_id) + "/" + kCompileCacheSubDir;
-  return compile_cache_dir;
-}
-
-std::string GetCompileCachePath(size_t idx) {
-  return GetCompileCacheDir() + "/" + kCompileCacheFileName + "_" + std::to_string(idx) + kCompileCacheFileSuffix;
-}
-
-std::string GetDepFilesHashPath() {
-  static const std::string dep_files_hash_path = GetCompileCacheDir() + "/" + kDepFilesHashPath;
-  return dep_files_hash_path;
-}
-
-size_t GetCompileCacheGraphId() {
-  static size_t idx = 0;
-  return idx++;
-}
-
-std::string GetCompileDepFilesHash(const py::list &dep_files) {
-  MS_LOG(DEBUG) << "Dependency files size: " << dep_files.size();
-  std::vector<std::string> dep_files_path;
-  for (auto dep_file : dep_files) {
-    auto file_path = py::cast<std::string>(dep_file);
-    MS_LOG(DEBUG) << "Dependency file path: " << file_path;
-    (void)dep_files_path.emplace_back(file_path);
-  }
-  std::sort(dep_files_path.begin(), dep_files_path.end());
-  std::string files_hash;
-  for (const auto &path : dep_files_path) {
-    std::string file_hash = system::sha256::GetHashFromFile(path);
-    files_hash += file_hash;
-  }
-  return files_hash;
-}
-
-bool CheckDepFilesHashConsistency(const std::string &current_dep_files_hash) {
-  if (current_dep_files_hash.empty()) {
-    MS_LOG(ERROR) << "Get current dependency files hash failed.";
-    return false;
-  }
-  std::string dep_files_hash_path = GetDepFilesHashPath();
-  auto realpath = Common::CreatePrefixPath(dep_files_hash_path, true);
-  if (!realpath.has_value()) {
-    MS_LOG(ERROR) << "Get real path of file " << dep_files_hash_path << " failed.";
-    return false;
-  }
-  std::fstream input(realpath.value(), std::ios::in | std::ios::binary);
-  if (!input) {
-    MS_LOG(WARNING) << "Open the hash file " << realpath.value() << " failed. The file may not exist."
-                    << ErrnoToString(errno);
-    return false;
-  }
-  std::string checkpoint_hash;
-  input >> checkpoint_hash;
-  if (checkpoint_hash.empty()) {
-    MS_LOG(ERROR) << "Get the compilation dependency files hash from " << realpath.value() << " failed.";
-    return false;
-  }
-  if (checkpoint_hash != current_dep_files_hash) {
-    MS_LOG(WARNING) << "The compilation dependency files are changed.";
-    return false;
-  }
-  return true;
-}
-
-std::map<string, ValuePtr> GenerateWeightsValueMap(const py::dict &weights) {
-  std::map<string, ValuePtr> ret{};
-  for (auto weight = weights.begin(); weight != weights.end(); ++weight) {
-    auto weight_name = py::cast<std::string>(weight->first);
-    auto weight_value = parse::data_converter::PyDataToValue(py::cast<py::object>(weight->second));
-    ret[weight_name] = weight_value;
-  }
-  return ret;
-}
-
 std::map<string, string> GenerateJitConfigMap(const py::dict &jit_config) {
   std::map<string, string> ret{};
   for (auto jit_param = jit_config.begin(); jit_param != jit_config.end(); ++jit_param) {
@@ -311,148 +213,6 @@ std::map<string, string> GenerateJitConfigMap(const py::dict &jit_config) {
     ret[param_name] = param_value;
   }
   return ret;
-}
-
-FuncGraphPtr LoadFuncGraphFromMindIR(const ResourcePtr &resource, const py::dict &weights, bool has_parallel_info) {
-  const size_t idx = resource->compile_cache_id();
-  std::string compile_cache_path = GetCompileCachePath(idx);
-  auto realpath = Common::CreatePrefixPath(compile_cache_path, true);
-  if (!realpath.has_value()) {
-    MS_LOG(ERROR) << "Get real path of file " << compile_cache_path << " failed.";
-    return nullptr;
-  }
-  std::ifstream f(realpath.value());
-  bool file_is_good = f.good();
-  f.close();
-  if (!file_is_good) {
-    MS_LOG(WARNING) << "Open the compilation cache file " << realpath.value() << " failed.";
-    return nullptr;
-  }
-  MindIRLoader mindir_loader;
-  mindir_loader.set_need_renormalize(false);
-  mindir_loader.set_weights_value_map(GenerateWeightsValueMap(weights));
-  mindir_loader.set_has_parallel_info(has_parallel_info);
-  auto fg = mindir_loader.LoadMindIR(realpath.value());
-  if (has_parallel_info) {
-    resource->set_layout_map(mindir_loader.get_layout_map());
-  }
-  return fg;
-}
-
-FuncGraphPtr GetCachedFuncGraph(const ResourcePtr &resource, const py::dict &weights, const std::string &queue_name) {
-  MS_EXCEPTION_IF_NULL(resource);
-  // Compare the dependency files hash.
-  if (!CheckDepFilesHashConsistency(resource->compile_cache_dep_files_hash())) {
-    MS_LOG(WARNING) << "Check the consistency of dependency files hash failed. Execute all the compilation actions.";
-    return nullptr;
-  }
-
-  // Determine whether to load parallel information.
-  std::string parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
-  bool has_parallel_info = false;
-  if ((parallel_mode == parallel::AUTO_PARALLEL) || (parallel_mode == parallel::SEMI_AUTO_PARALLEL)) {
-    has_parallel_info = true;
-  }
-  // Load the compilation cache file.
-  FuncGraphPtr fg = LoadFuncGraphFromMindIR(resource, weights, has_parallel_info);
-  if (fg == nullptr) {
-    MS_LOG(WARNING) << "Failed to load the compilation cache file. Execute all the compilation actions.";
-    return nullptr;
-  }
-
-  MS_LOG(WARNING) << "Use the compilation cache and execute the backend actions only. Be aware of correctness risks.";
-  FuncGraphManagerPtr mng = fg->manager();
-  if (mng == nullptr) {
-    auto res_mng = resource->manager();
-    MS_EXCEPTION_IF_NULL(res_mng);
-    res_mng->AddFuncGraph(fg);
-    fg->set_manager(res_mng);
-  }
-  // The value of attr "shared_name" will changed every time.
-  auto cnodes = fg->GetOrderedCnodes();
-  for (auto cnode : cnodes) {
-    auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-    if (prim != nullptr && prim->HasAttr("shared_name")) {
-      prim->set_attr("shared_name", MakeValue(queue_name));
-      break;
-    }
-  }
-  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
-    DumpIR("cache_loaded_graph_" + std::to_string(resource->compile_cache_id()) + ".ir", fg);
-  }
-  return fg;
-}
-
-bool ExportFuncGraphToMindIR(const FuncGraphPtr &fg, const FuncGraphPtr &layout_fg, size_t idx) {
-  std::string compile_cache_path = GetCompileCachePath(idx);
-  auto realpath = Common::CreatePrefixPath(compile_cache_path, true);
-  if (!realpath.has_value()) {
-    MS_LOG(ERROR) << "Get real path of file " << compile_cache_path << " failed.";
-    return false;
-  }
-
-  ChangeFileMode(realpath.value(), S_IRWXU);
-  std::ofstream fout(realpath.value());
-  if (!fout.is_open()) {
-    MS_LOG(ERROR) << "Open cache file '" << realpath.value() << "' failed!" << ErrnoToString(errno);
-    return false;
-  }
-  ModelProtoPtr fg_model = GetBinaryProto(fg, layout_fg);
-  if (fg_model == nullptr) {
-    MS_LOG(ERROR) << "Get binary proto for graph " << fg->ToString() << " failed.";
-    fout.close();
-    return false;
-  }
-  if (!fg_model->SerializeToOstream(&fout)) {
-    MS_LOG(ERROR) << "Failed to write the graph compilation cache to file " << realpath.value();
-    fout.close();
-    return false;
-  }
-  fout.close();
-  ChangeFileMode(realpath.value(), S_IRUSR);
-  return true;
-}
-
-bool ExportDepFilesHash(const ResourcePtr &resource) {
-  std::string dep_files_hash_path = GetDepFilesHashPath();
-  auto realpath = Common::CreatePrefixPath(dep_files_hash_path, true);
-  if (!realpath.has_value()) {
-    MS_LOG(ERROR) << "Get real path of file " << dep_files_hash_path << " failed.";
-    return false;
-  }
-
-  ChangeFileMode(realpath.value(), S_IRWXU);
-  std::ofstream fout(realpath.value());
-  if (!fout.is_open()) {
-    MS_LOG(ERROR) << "Open cache file '" << realpath.value() << "' failed!" << ErrnoToString(errno);
-    return false;
-  }
-  fout << resource->compile_cache_dep_files_hash();
-  fout.close();
-  ChangeFileMode(realpath.value(), S_IRUSR);
-  return true;
-}
-
-void CacheFuncGraph(const ResourcePtr &resource) {
-  MS_EXCEPTION_IF_NULL(resource);
-  auto fg = resource->func_graph();
-  if (fg == nullptr) {
-    MS_LOG(ERROR) << "The func_graph to be cached is null.";
-    return;
-  }
-  FuncGraphPtr layout_fg = nullptr;
-  std::string parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
-  if (fg->has_flag(parallel::AUTO_PARALLEL) &&
-      ((parallel_mode == parallel::AUTO_PARALLEL) || (parallel_mode == parallel::SEMI_AUTO_PARALLEL))) {
-    layout_fg = resource->GetResult(kStepParallelGraph).cast<FuncGraphPtr>();
-  }
-  if (!ExportFuncGraphToMindIR(fg, layout_fg, resource->compile_cache_id())) {
-    MS_LOG(ERROR) << "Failed to cache graph: " << fg->ToString();
-    return;
-  }
-  if (resource->compile_cache_id() == 0 && !ExportDepFilesHash(resource)) {
-    MS_LOG(ERROR) << "Failed to cache the dependency files hash";
-  }
 }
 
 void RecordInitStatus() {
@@ -951,14 +711,14 @@ std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::stri
   const std::string &server_mode = ps::PSContext::instance()->server_mode();
   if ((server_mode == ps::kServerModeFL || server_mode == ps::kServerModeHybrid) &&
       ps::PSContext::instance()->is_server()) {
-    return ServerPipeline();
+    return ServerPipeline(resource);
   }
   if (ps::PSContext::instance()->is_server()) {
     resource->SetResult(kBackend, compile::CreateBackend());
-    return PServerPipeline();
+    return PServerPipeline(resource);
   }
   if (ps::PSContext::instance()->is_scheduler()) {
-    return PSchedulerPipeline();
+    return PSchedulerPipeline(resource);
   }
   if (distributed::cluster::ClusterContext::instance()->initialized()) {
     auto node = distributed::cluster::ClusterContext::instance()->node();
@@ -966,9 +726,9 @@ std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::stri
     MS_LOG(INFO) << "Cluster is initialized. This node role is " << node->role();
     switch (node->role()) {
       case ps::core::NodeRole::SERVER:
-        return PServerPipeline();
+        return PServerPipeline(resource);
       case ps::core::NodeRole::SCHEDULER:
-        return PSchedulerPipeline();
+        return PSchedulerPipeline(resource);
       default:
         break;
     }
@@ -977,16 +737,29 @@ std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::stri
 
   if (use_vm && backend != "ge" && !is_air) {
     compile::SetMindRTEnable();
-    // If enable compilation cache and the cache is read successfully, do the backend actions only.
-    if (resource->enable_compile_cache() && resource->func_graph() != nullptr) {
-      return BackendPipeline();
-    }
     if (IsPhaseLoadFromMindIR(phase)) {
       return MindIRPipeline();
     }
-    return VmPipeline();
+    return VmPipeline(resource);
   }
   return GePipeline();
+}
+
+void GraphExecutorPy::InitCompileCacheInfo(const ResourcePtr &resource, const std::string &phase) {
+  // The compilation cache only support for training currently.
+  // If enable compilation cache, it will get a non-empty dependent files list from python.
+  if (!IsPhaseTrain(phase) || compile_cache_dep_files_.empty()) {
+    return;
+  }
+#ifdef ENABLE_PROFILE
+  double t1 = GetTime();
+#endif
+  static size_t idx = 0;
+  resource->GetCompileCacheResource(compile_cache_dep_files_, weights_, queue_name_, idx++);
+#ifdef ENABLE_PROFILE
+  double t2 = GetTime();
+  MsProfile::StatTime("LoadCachedFuncGraph", t2 - t1);
+#endif
 }
 
 bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple &args, const py::object &phase_obj,
@@ -1005,29 +778,15 @@ bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple
   CheckArgsValid(args);
 
   auto phase = py::cast<std::string>(phase_obj);
+  phase_ = phase;
   MS_LOG(INFO) << "Start compiling, phase: " << phase;
   MS_LOG(DEBUG) << "source: {" << py::str(source_obj) << "}\nargs: " << py::str(const_cast<py::tuple &>(args));
 
   ExecutorInfoPtr executor_info = std::make_shared<ExecutorInfo>();
   ResourcePtr resource = std::make_shared<Resource>(source_obj);
-
-  // If enable compilation cache, it will get a non-empty dependent files list from python.
-  if (!compile_cache_dep_files_.empty()) {
-#ifdef ENABLE_PROFILE
-    double t1 = GetTime();
-#endif
-    resource->set_enable_compile_cache(true);
-    resource->set_compile_cache_id(GetCompileCacheGraphId());
-    resource->set_compile_cache_dep_files_hash(GetCompileDepFilesHash(compile_cache_dep_files_));
-    resource->set_func_graph(GetCachedFuncGraph(resource, weights_, queue_name_));
-#ifdef ENABLE_PROFILE
-    double t2 = GetTime();
-    MsProfile::StatTime("LoadCachedFuncGraph", t2 - t1);
-#endif
-  }
-
-  phase_ = phase;
+  InitCompileCacheInfo(resource, phase);
   ConfigManager::GetInstance().ResetQueue(queue_name_);
+
   auto actions = GetPipeline(resource, phase, use_vm);
   std::shared_ptr<Pipeline> pip = std::make_shared<Pipeline>(resource, FilterActions(actions, phase));
 
@@ -1063,7 +822,7 @@ bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple
   executor_info->arg_list_size = size;
   executor_info->resource = resource;
   info_[phase] = executor_info;
-  pip->Run(phase);
+  pip->Run();
 
   // Save the compiled graph to MsPipeLine.
   SaveCompiledGraph(phase);
@@ -1160,17 +919,18 @@ bool GraphExecutorPy::Compile(const py::object &source_obj, const py::tuple &arg
   return ret_value;
 }
 
-void CacheValidateFuncGraph(const std::string &phase, const ResourcePtr &resource) {
-  if (resource->enable_compile_cache()) {
-#ifdef ENABLE_PROFILE
-    double t1 = GetTime();
-#endif
-    CacheFuncGraph(resource);
-#ifdef ENABLE_PROFILE
-    double t2 = GetTime();
-    MsProfile::StatTime("SaveCacheFuncGraph", t2 - t1);
-#endif
+void CacheValidateFuncGraph(const ResourcePtr &resource) {
+  if (!resource->EnableCompileCache()) {
+    return;
   }
+#ifdef ENABLE_PROFILE
+  double t1 = GetTime();
+#endif
+  resource->CacheFuncGraph();
+#ifdef ENABLE_PROFILE
+  double t2 = GetTime();
+  MsProfile::StatTime("SaveCacheFuncGraph", t2 - t1);
+#endif
 }
 
 void CheckInterpretNodeLineInfos() {
@@ -1249,12 +1009,12 @@ void SaveGraphForReadability(const std::string &action_name, const FuncGraphPtr 
 }
 #endif
 
-void Pipeline::Run(const std::string &phase) {
+void Pipeline::Run() {
   MS_LOG(INFO) << "Pipeline run";
   MS_EXCEPTION_IF_NULL(resource_);
   FuncGraphPtr user_graph = nullptr;
 
-  WITH(MsProfile::GetProfile())[&user_graph, &phase, this]() {
+  WITH(MsProfile::GetProfile())[&user_graph, this]() {
     size_t i = 0;
     for (auto &action : actions_) {
 #ifdef ENABLE_TIMELINE
@@ -1271,7 +1031,7 @@ void Pipeline::Run(const std::string &phase) {
         SetLoopCount(resource_);
       } else if (action.first == "validate") {
         CheckInterpretNodeLineInfos();
-        CacheValidateFuncGraph(phase, resource_);
+        CacheValidateFuncGraph(resource_);
 #ifndef ENABLE_SECURITY
 #ifdef ENABLE_D
         FuncGraphPtr graph = resource_->func_graph();
@@ -1906,6 +1666,10 @@ void ClearResAtexit() {
   MS_LOG(INFO) << "Start clear parallel::entire_costgraph...";
   parallel::entire_costgraph.reset();
   MS_LOG(INFO) << "End clear parallel::entire_costgraph...";
+
+  MS_LOG(INFO) << "Start clear ProtobufLibrary...";
+  google::protobuf::ShutdownProtobufLibrary();
+  MS_LOG(INFO) << "End clear ProtobufLibrary...";
 }
 
 py::bytes PyEncrypt(char *plain_data, size_t plain_len, char *key, size_t key_len, const std::string &enc_mode) {
