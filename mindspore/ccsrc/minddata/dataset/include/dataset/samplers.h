@@ -47,6 +47,7 @@ class MS_API Sampler : std::enable_shared_from_this<Sampler> {
   friend class FashionMnistDataset;
   friend class FlickrDataset;
   friend class ImageFolderDataset;
+  friend class IMDBDataset;
   friend class KMnistDataset;
   friend class LJSpeechDataset;
   friend class ManifestDataset;

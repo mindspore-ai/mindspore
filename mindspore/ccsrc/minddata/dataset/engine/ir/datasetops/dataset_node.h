@@ -96,6 +96,7 @@ constexpr char kFashionMnistNode[] = "FashionMnistDataset";
 constexpr char kFlickrNode[] = "FlickrDataset";
 constexpr char kGeneratorNode[] = "GeneratorDataset";
 constexpr char kImageFolderNode[] = "ImageFolderDataset";
+constexpr char kIMDBNode[] = "IMDBDataset";
 constexpr char kIWSLT2016Node[] = "IWSLT2016Dataset";
 constexpr char kIWSLT2017Node[] = "IWSLT2017Dataset";
 constexpr char kKMnistNode[] = "KMnistDataset";

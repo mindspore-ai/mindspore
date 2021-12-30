@@ -2727,6 +2727,94 @@ inline std::shared_ptr<ImageFolderDataset> MS_API ImageFolder(const std::string 
                                               MapStringToChar(class_indexing), cache);
 }
 
+/// \class IMDBDataset
+/// \brief A source dataset for reading and parsing IMDB dataset.
+class MS_API IMDBDataset : public Dataset {
+ public:
+  /// \brief Constructor of IMDBDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] usage The type of dataset. Acceptable usages include "train", "test" or "all".
+  /// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  IMDBDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+              const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Constructor of IMDBDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] usage The type of dataset. Acceptable usages include "train", "test" or "all".
+  /// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  IMDBDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, const Sampler *sampler,
+              const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Constructor of IMDBDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] usage The type of dataset. Acceptable usages include "train", "test" or "all".
+  /// \param[in] sampler Sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  IMDBDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+              const std::reference_wrapper<Sampler> sampler, const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Destructor of IMDBDataset.
+  ~IMDBDataset() = default;
+};
+
+/// \brief A source dataset for reading and parsing IMDB dataset.
+/// \note The generated dataset has two columns ["text", "label"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage The type of dataset. Acceptable usages include "train", "test" or "all"
+///     (Default="all").
+/// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
+///     given, a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler()).
+/// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
+/// \return Shared pointer to the IMDBDataset.
+/// \par Example
+/// \code
+///      /* Define dataset path and MindData object */
+///      std::string dataset_path = "/path/to/imdb_dataset_directory";
+///      std::shared_ptr<Dataset> ds = IMDB(dataset_path, "all");
+///
+///      /* Create iterator to read dataset */
+///      std::shared_ptr<Iterator> iter = ds->CreateIterator();
+///      std::unordered_map<std::string, mindspore::MSTensor> row;
+///      iter->GetNextRow(&row);
+///
+///      /* Note: In IMDB dataset, each data dictionary has keys "text" and "label" */
+///      auto text = row["text"];
+/// \endcode
+inline std::shared_ptr<IMDBDataset> MS_API
+IMDB(const std::string &dataset_dir, const std::string &usage = "all",
+     const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
+     const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<IMDBDataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, cache);
+}
+
+/// \brief A source dataset for reading and parsing IMDB dataset.
+/// \note The generated dataset has two columns ["text", "label"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage The type of dataset. Acceptable usages include "train", "test" or "all".
+/// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
+/// \return Shared pointer to the IMDBDataset.
+inline std::shared_ptr<IMDBDataset> MS_API IMDB(const std::string &dataset_dir, const std::string &usage,
+                                                const Sampler *sampler,
+                                                const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<IMDBDataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, cache);
+}
+
+/// \brief A source dataset for reading and parsing IMDB dataset.
+/// \note The generated dataset has two columns ["text", "label"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage The type of dataset. Acceptable usages include "train", "test" or "all".
+/// \param[in] sampler Sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
+/// \return Shared pointer to the IMDBDataset.
+inline std::shared_ptr<IMDBDataset> MS_API IMDB(const std::string &dataset_dir, const std::string &usage,
+                                                const std::reference_wrapper<Sampler> sampler,
+                                                const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<IMDBDataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, cache);
+}
+
 /// \class IWSLT2016Dataset.
 /// \brief A source dataset for reading and parsing IWSLT2016 dataset.
 class MS_API IWSLT2016Dataset : public Dataset {
@@ -4890,7 +4978,7 @@ class MS_API WikiTextDataset : public Dataset {
 ///      iter->GetNextRow(&row);
 ///
 ///      /* Note: In WikiText dataset, each dictionary has key "text" */
-///      auto text = row["image"];
+///      auto text = row["text"];
 /// \endcode
 inline std::shared_ptr<WikiTextDataset> MS_API WikiText(const std::string &dataset_dir,
                                                         const std::string &usage = "all", int64_t num_samples = 0,
