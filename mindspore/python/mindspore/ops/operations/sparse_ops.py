@@ -52,9 +52,9 @@ class SparseToDense(PrimitiveWithInfer):
         >>> sparse_to_dense = ops.SparseToDense()
         >>> out = sparse_to_dense(indices, values, sparse_shape)
         >>> print(out)
-        [[0 1 0 0]
-         [0 0 2 0]
-         [0 0 0 0]]
+        [[0. 1. 0. 0.]
+         [0. 0. 2. 0.]
+         [0. 0. 0. 0.]]
     """
 
     @prim_attr_register
@@ -133,9 +133,9 @@ class SparseTensorDenseMatmul(PrimitiveWithInfer):
         >>> sparse_dense_matmul = ops.SparseTensorDenseMatmul()
         >>> out = sparse_dense_matmul(indices, values, sparse_shape, dense)
         >>> print(out)
-        [[2 2]
-         [6 6]
-         [0 0]]
+        [[2. 2.]
+         [6. 6.]
+         [0. 0.]]
     """
 
     @prim_attr_register

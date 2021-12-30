@@ -36,5 +36,5 @@ mindspore.nn.HSwish
     >>> hswish = nn.HSwish()
     >>> result = hswish(x)
     >>> print(result)
-    [-0.3333  -0.3333  0  1.666  0.6665]
+    [-0.3333 -0.3333  0.      1.667   0.6665]
     

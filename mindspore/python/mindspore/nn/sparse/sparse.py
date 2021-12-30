@@ -114,9 +114,9 @@ class SparseTensorDenseMatmul(Cell):
         >>> sparse_dense_matmul = nn.SparseTensorDenseMatmul()
         >>> out = sparse_dense_matmul(indices, values, sparse_shape, dense)
         >>> print(out)
-        [[2 2]
-         [6 6]
-         [0 0]]
+        [[2. 2.]
+         [6. 6.]
+         [0. 0.]]
     """
 
     def __init__(self, adjoint_st=False, adjoint_dt=False):

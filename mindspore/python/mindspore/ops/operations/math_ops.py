@@ -748,8 +748,8 @@ class ReduceSum(_Reduce):
 
 class ReduceAll(_Reduce):
     """
-    Reduces a dimension of a tensor by the "logicalAND" of all elements in the dimension, by Default. And also can
-    reduces a dimension of `x` along the axis. Determine whether the dimensions of the output and input are the same by
+    Reduces a dimension of a tensor by the "logicalAND" of all elements in the dimension, by default. And also can
+    reduce a dimension of `x` along the axis. Determine whether the dimensions of the output and input are the same by
     controlling `keep_dims`.
 
     Args:
@@ -807,8 +807,8 @@ class ReduceAll(_Reduce):
 
 class ReduceAny(_Reduce):
     """
-    Reduces a dimension of a tensor by the "logical OR" of all elements in the dimension, by Default. And also can
-    reduces a dimension of `x` along the axis. Determine whether the dimensions of the output and input are the same by
+    Reduces a dimension of a tensor by the "logical OR" of all elements in the dimension, by default. And also can
+    reduce a dimension of `x` along the axis. Determine whether the dimensions of the output and input are the same by
     controlling `keep_dims`.
 
     Args:
@@ -866,8 +866,8 @@ class ReduceAny(_Reduce):
 
 class ReduceMax(_Reduce):
     """
-    Reduces a dimension of a tensor by the maximum value in this dimension, by Default. And also can
-    reduces a dimension of `x` along the axis. Determine whether the dimensions of the output and input are the same by
+    Reduces a dimension of a tensor by the maximum value in this dimension, by default. And also can
+    reduce a dimension of `x` along the axis. Determine whether the dimensions of the output and input are the same by
     controlling `keep_dims`.
 
     Args:
@@ -953,8 +953,8 @@ class ReduceMax(_Reduce):
 
 class ReduceMin(_Reduce):
     """
-    Reduces a dimension of a tensor by the minimum value in the dimension, by Default. And also can
-    reduces a dimension of `x` along the axis. Determine whether the dimensions of the output and input are the same by
+    Reduces a dimension of a tensor by the minimum value in the dimension, by default. And also can
+    reduce a dimension of `x` along the axis. Determine whether the dimensions of the output and input are the same by
     controlling `keep_dims`.
 
     Args:
@@ -1031,8 +1031,8 @@ class ReduceMin(_Reduce):
 
 class ReduceProd(_Reduce):
     """
-    Reduces a dimension of a tensor by multiplying all elements in the dimension, by Default. And also can
-    reduces a dimension of `x` along the axis. Determine whether the dimensions of the output and input are the same by
+    Reduces a dimension of a tensor by multiplying all elements in the dimension, by default. And also can
+    reduce a dimension of `x` along the axis. Determine whether the dimensions of the output and input are the same by
     controlling `keep_dims`.
 
     Args:
