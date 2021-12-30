@@ -154,6 +154,9 @@ int MatmulCPUKernel::ReSize() {
 }
 
 int MatmulCPUKernel::Run() {
+  CHECK_NULL_RETURN(in_tensors_.at(FIRST_INPUT));
+  CHECK_NULL_RETURN(in_tensors_.at(SECOND_INPUT));
+  CHECK_NULL_RETURN(out_tensors_.at(FIRST_INPUT));
   auto ret = MatmulFp32BaseCPUKernel::Run();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "MatmulFp32BaseCPUKernel failed!";

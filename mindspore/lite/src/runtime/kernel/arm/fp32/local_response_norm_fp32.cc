@@ -38,8 +38,12 @@ int LocalResponseNormCPUKernel::ReSize() { return RET_OK; }
 int LocalResponseNormCPUKernel::DoLocalResponseNorm(int task_id) const {
   auto input_tensor = in_tensors_.front();
   auto out_tensor = out_tensors_.front();
+  CHECK_NULL_RETURN(input_tensor);
+  CHECK_NULL_RETURN(out_tensor);
   auto input_ptr = reinterpret_cast<float *>(input_tensor->MutableData());
   auto output_ptr = reinterpret_cast<float *>(out_tensor->MutableData());
+  CHECK_NULL_RETURN(input_ptr);
+  CHECK_NULL_RETURN(output_ptr);
 
   auto in_shape = input_tensor->shape();
   MS_CHECK_TRUE_RET(in_shape.size() == C4NUM, RET_ERROR);

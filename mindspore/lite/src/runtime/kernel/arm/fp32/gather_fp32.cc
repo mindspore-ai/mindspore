@@ -32,6 +32,7 @@ constexpr int kSecondInput = 2;
 int GatherCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), kInputSize2);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(in_tensors_.at(kSecondInput));
   CHECK_NULL_RETURN(in_tensors_.at(kSecondInput)->data());
   axis_ = *(reinterpret_cast<int *>(in_tensors_.at(kSecondInput)->data()));
   if (!InferShapeDone()) {
@@ -91,6 +92,9 @@ int GatherRun(const void *cdata, int task_id, float, float) {
 }
 
 int GatherCPUKernel::Run() {
+  CHECK_NULL_RETURN(in_tensors_.at(FIRST_INPUT));
+  CHECK_NULL_RETURN(in_tensors_.at(SECOND_INPUT));
+  CHECK_NULL_RETURN(out_tensors_.at(FIRST_INPUT));
   auto indices_tensor = in_tensors_.at(1);
   int indices_num = indices_tensor->ElementsNum();
   bool isIndicesInt32 = indices_tensor->data_type() == kNumberTypeInt32;
