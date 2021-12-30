@@ -46,6 +46,7 @@ void MemoryProfiling::StartMemoryProfiling() {
   is_enabled_ = true;
   if (NeedSaveMemoryProfiling()) {
     SaveMemoryProfiling();
+    has_save_memory_data_ = true;
   }
 }
 
@@ -143,7 +144,6 @@ void MemoryProfiling::SaveMemoryProfiling() {
   }
   handle.close();
 
-  has_save_memory_data_ = true;
   MS_LOG(INFO) << "Start save memory profiling data to " << file << " end";
   return;
 }
