@@ -352,6 +352,7 @@ class HookBackward(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
         >>> from mindspore import Tensor
         >>> from mindspore import ops
         >>> from mindspore.ops import GradOperation
@@ -369,9 +370,9 @@ class HookBackward(PrimitiveWithInfer):
         >>> def backward(x, y):
         ...     return grad_all(hook_test)(x, y)
         ...
-        >>> output = backward(1, 2)
+        >>> output = backward(Tensor(1, mindspore.float32), Tensor(2, mindspore.float32))
         >>> print(output)
-        ()
+        (Tensor(shape=[], dtype=Float32, value= 4), Tensor(shape=[], dtype=Float32, value= 4))
     """
 
     def __init__(self, hook_fn, cell_id=""):
@@ -391,6 +392,8 @@ class HookBackward(PrimitiveWithInfer):
         return inputs_shape
 
     def infer_dtype(self, *inputs_type):
+        for dtype in inputs_type:
+            validator.check_subclass("input", dtype, [mstype.tensor], self.name)
         if len(inputs_type) == 1:
             return inputs_type[0]
         return inputs_type
