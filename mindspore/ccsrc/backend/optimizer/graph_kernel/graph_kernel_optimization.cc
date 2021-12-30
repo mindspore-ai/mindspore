@@ -33,7 +33,7 @@
 #include "backend/optimizer/graph_kernel/cast_matmul_fusion.h"
 #include "backend/optimizer/graph_kernel/raise_reduction_precision.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_cse.h"
-#include "backend/optimizer/graph_kernel/shape_ops_splitter.h"
+#include "backend/optimizer/graph_kernel/core/shape_ops_splitter.h"
 #include "backend/optimizer/graph_kernel/value_graph_binder.h"
 #include "backend/optimizer/graph_kernel/parallel_fusion.h"
 #include "backend/optimizer/graph_kernel/optimize_assign.h"
