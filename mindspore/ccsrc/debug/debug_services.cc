@@ -197,7 +197,7 @@ const void *DebugServices::GetPrevTensor(const std::shared_ptr<TensorData> &tens
   } else if (previous_iter_tensor_needed && GetPrevIteration(tensor) != UINT32_MAX) {
     // when prev_tensor is not available, the prev iteration is set to UINT32_MAX
     // read data in offline mode
-    std::vector<std::string> file_paths;
+    AsyncFilePool file_paths;
     if (!is_sync_mode_) {
       ConvertReadTensors(std::vector<std::string>{tensor->GetName()}, std::vector<size_t>{tensor->GetSlot()},
                          std::vector<unsigned int>{tensor->GetDeviceId()},
@@ -395,7 +395,7 @@ void DebugServices::CheckWatchpointsForTensor(
   partitioned_names *const chunk_names, partitioned_names *const chunk_slots,
   partitioned_numbers *const chunk_conditions, partitioned_id *const chunk_watchpoint_id,
   partitioned_parameters *const chunk_parameters, partitioned_error_code *const chunk_error_codes,
-  const std::vector<std::string> &op_overflows, const std::vector<std::string> &async_file_pool,
+  const std::vector<std::string> &op_overflows, const AsyncFilePool &async_file_pool,
   partitioned_numbers *const chunk_exec_orders, std::vector<std::shared_ptr<TensorData>> *const tensor_list, int begin,
   int end, int chunk_id, const bool init_dbg_suspend, const bool step_end, const bool recheck,
   partitioned_id *const chunk_device_id, partitioned_id *const chunk_root_graph_id,
@@ -501,13 +501,15 @@ void DebugServices::CheckWatchpointsForTensor(
   }
 }
 
-void DebugServices::CheckWatchpoints(
-  std::vector<std::string> *const name, std::vector<std::string> *const slot, std::vector<int> *const condition,
-  std::vector<unsigned int> *const watchpoint_id, std::vector<std::vector<parameter_t>> *const parameters,
-  std::vector<int32_t> *const error_codes, const std::vector<std::string> &op_overflows,
-  const std::vector<std::string> &async_file_pool, std::vector<std::shared_ptr<TensorData>> *const tensor_list,
-  const bool init_dbg_suspend, const bool step_end, const bool recheck, std::vector<unsigned int> *const device_id,
-  std::vector<unsigned int> *const root_graph_id, bool error_on_no_value) {
+void DebugServices::CheckWatchpoints(std::vector<std::string> *const name, std::vector<std::string> *const slot,
+                                     std::vector<int> *const condition, std::vector<unsigned int> *const watchpoint_id,
+                                     std::vector<std::vector<parameter_t>> *const parameters,
+                                     std::vector<int32_t> *const error_codes,
+                                     const std::vector<std::string> &op_overflows, const AsyncFilePool &async_file_pool,
+                                     std::vector<std::shared_ptr<TensorData>> *const tensor_list,
+                                     const bool init_dbg_suspend, const bool step_end, const bool recheck,
+                                     std::vector<unsigned int> *const device_id,
+                                     std::vector<unsigned int> *const root_graph_id, bool error_on_no_value) {
   std::lock_guard<std::mutex> lg(lock_);
   auto t1 = std::chrono::high_resolution_clock::now();
   if (watchpoint_table_.empty()) {
@@ -710,30 +712,19 @@ void DebugServices::ReadTensorFromNpy(const std::string &tensor_name, const std:
   }
 }
 
-void DebugServices::ConvertToHostFormat(const std::map<std::string, std::vector<std::string>> &dir_to_files_map,
-                                        std::vector<std::string> *const result_list) {
+void DebugServices::ConvertToHostFormat(const DirMap &dir_to_files_map, AsyncFilePool *const result_list) {
   std::string file_format = "npy";
   for (auto const &d : dir_to_files_map) {
     std::vector<std::string> files_to_convert_in_dir;
     std::vector<std::string> files_after_convert_in_dir;
     std::string dump_key = d.first;
-    for (auto const &file_name : d.second) {
-      bool already_converted = false;
-      // Remove scope from the file_name for matching files converted by mindinsight tool.
-      std::size_t found_first_dot = file_name.find(".");
-      std::size_t found_last_underscore = file_name.find_last_of("_");
-      std::string file_name_without_scope = file_name;
-      if (found_last_underscore != std::string::npos && found_last_underscore > found_first_dot) {
-        file_name_without_scope =
-          file_name_without_scope.erase(found_first_dot + 1, found_last_underscore - found_first_dot);
-      }
-      for (std::string &file_found : *result_list) {
-        if (file_found.find(file_name_without_scope) != std::string::npos) {
-          already_converted = true;
-          break;
-        }
-      }
-      if (!already_converted) {
+    for (auto const &pair : d.second) {
+      std::string file_name = pair.first;
+      std::string file_name_without_scope = pair.second;
+      // skip the file that was converted to npy already.
+      if (std::all_of(result_list->begin(), result_list->end(), [&file_name_without_scope](std::string file_found) {
+            return file_found.find(file_name_without_scope) == std::string::npos;
+          })) {
         (void)files_to_convert_in_dir.emplace_back(dump_key + "/" + file_name);
         (void)files_after_convert_in_dir.emplace_back(dump_key + "/" + file_name_without_scope);
       }
@@ -758,7 +749,7 @@ void DebugServices::ConvertToHostFormat(const std::map<std::string, std::vector<
 }
 
 void DebugServices::ProcessConvertToHostFormat(const std::vector<std::string> &files_after_convert_in_dir,
-                                               const std::string &dump_key, std::vector<std::string> *const result_list,
+                                               const std::string &dump_key, AsyncFilePool *const result_list,
                                                const std::string &file_format) {
   std::string real_dump_iter_dir = RealPath(dump_key);
   DIR *d_handle = opendir(real_dump_iter_dir.c_str());
@@ -787,9 +778,7 @@ void DebugServices::ProcessConvertToHostFormat(const std::vector<std::string> &f
         if (candidate.find(file_n) != std::string::npos && candidate.rfind(file_format) != std::string::npos) {
           // we found a converted file for this op
           std::string found_file = dump_key + "/" + candidate;
-          if (std::find(result_list->begin(), result_list->end(), found_file) == result_list->end()) {
-            result_list->push_back(found_file);
-          }
+          result_list->insert(found_file);
         }
       }
     }
@@ -828,10 +817,9 @@ void ReplaceSrcFileName(std::string *dump_style_name) {
 
 void DebugServices::ConvertReadTensors(std::vector<std::string> backend_name, std::vector<size_t> slot,
                                        std::vector<unsigned int> device_id, std::vector<unsigned int> iteration,
-                                       std::vector<unsigned int> root_graph_id,
-                                       std::vector<std::string> *const result_list) {
+                                       std::vector<unsigned int> root_graph_id, AsyncFilePool *const result_list) {
   std::string file_format = "npy";
-  std::map<std::string, std::vector<std::string>> dir_to_files_map;
+  DirMap dir_to_files_map;
   for (unsigned int i = 0; i < backend_name.size(); i++) {
     // form prefix of the tensor file to read from graph pb node name
     std::string dump_style_kernel_name = backend_name[i];
@@ -864,10 +852,9 @@ void DebugServices::ConvertReadTensors(std::vector<std::string> backend_name, st
 }
 
 void DebugServices::ConvertWatchPointNodes(const std::vector<std::tuple<std::string, std::string>> &proto_dump,
-                                           const std::string &specific_dump_dir,
-                                           std::vector<std::string> *const result_list) {
+                                           const std::string &specific_dump_dir, AsyncFilePool *const result_list) {
   std::string file_format = "npy";
-  std::map<std::string, std::vector<std::string>> dir_to_files_map;
+  DirMap dir_to_files_map;
   for (const auto &node : proto_dump) {
     std::string dump_name = std::get<1>(node);
     dump_name = dump_name.substr(0, dump_name.rfind("."));
@@ -885,9 +872,8 @@ void DebugServices::ConvertWatchPointNodes(const std::vector<std::tuple<std::str
 }
 
 void DebugServices::ProcessConvertList(const std::string &prefix_dump_file_name, const std::string &file_format,
-                                       const std::string &specific_dump_dir,
-                                       std::map<std::string, std::vector<std::string>> *dir_to_files_map,
-                                       std::vector<std::string> *const result_list) {
+                                       const std::string &specific_dump_dir, DirMap *dir_to_files_map,
+                                       AsyncFilePool *const result_list) {
   MS_EXCEPTION_IF_NULL(dir_to_files_map);
   DIR *d = opendir(specific_dump_dir.c_str());
   struct dirent *dir = nullptr;
@@ -906,19 +892,21 @@ void DebugServices::ProcessConvertList(const std::string &prefix_dump_file_name,
     std::string file_name = dir->d_name;
     std::string file_name_w_o_perfix = file_name;
     auto type_pos = file_name.find('.');
-    if (type_pos == std::string::npos || file_name.find(prefix_dump_file_name, type_pos + 1) == std::string::npos) {
+    // adding dot to avoid problematic matching in the scope.
+    if (type_pos == std::string::npos ||
+        file_name.find(prefix_dump_file_name + ".", type_pos + 1) == std::string::npos) {
       continue;
     }
     if (file_name.rfind(file_format) == std::string::npos) {
+      std::size_t second_dot = file_name.find(".", file_name.find(prefix_dump_file_name + ".", type_pos + 1));
+      file_name_w_o_perfix.replace(type_pos + 1, second_dot - type_pos - 1, prefix_dump_file_name);
       // if file matches prefix and is in device format add to candidate files to convert.
-      (*dir_to_files_map)[specific_dump_dir].push_back(file_name);
+      (*dir_to_files_map)[specific_dump_dir].push_back(std::make_pair(file_name, file_name_w_o_perfix));
     } else {
       // otherwise, if file matches prefix and already has been converted to host format
       // add to result of converted files.
       std::string found_file = specific_dump_dir + "/" + file_name;
-      if (std::find(result_list->begin(), result_list->end(), found_file) == result_list->end()) {
-        result_list->push_back(found_file);
-      }
+      result_list->insert(found_file);
     }
   }
   (void)closedir(d);
@@ -926,7 +914,7 @@ void DebugServices::ProcessConvertList(const std::string &prefix_dump_file_name,
 
 void DebugServices::GetTensorDataInfoAsync(const std::vector<std::tuple<std::string, std::string>> &proto_dump,
                                            const std::string &specific_dump_dir, uint32_t iteration, uint32_t device_id,
-                                           uint32_t root_graph_id, const std::vector<std::string> &async_file_pool,
+                                           uint32_t root_graph_id, const AsyncFilePool &async_file_pool,
                                            std::vector<std::shared_ptr<TensorData>> *const tensor_list) {
   for (auto &node : proto_dump) {
     std::vector<size_t> slot_list;
@@ -1209,7 +1197,7 @@ std::string GetTimeStampStr(std::string file_path) {
 void DebugServices::ReadDumpedTensor(std::vector<std::string> backend_name, std::vector<size_t> slot,
                                      std::vector<unsigned int> device_id, std::vector<unsigned int> iteration,
                                      std::vector<unsigned int> root_graph_id, const std::vector<bool> &is_output,
-                                     const std::vector<std::string> &async_file_pool,
+                                     const AsyncFilePool &async_file_pool,
                                      std::vector<std::shared_ptr<TensorData>> *const result_list,
                                      bool *no_mem_to_read) {
   for (unsigned int i = 0; i < backend_name.size(); i++) {
@@ -1327,7 +1315,7 @@ void DebugServices::ReadDumpedTensorAsync(const std::string &specific_dump_dir, 
                                           const std::string &slot_string_to_check, const std::string &backend_name,
                                           size_t slot, unsigned int device_id, unsigned int iteration,
                                           unsigned int root_graph_id, const bool &is_output,
-                                          const std::vector<std::string> &async_file_pool,
+                                          const AsyncFilePool &async_file_pool,
                                           std::vector<std::shared_ptr<TensorData>> *result_list, bool *no_mem_to_read) {
   bool found = false;
   std::vector<std::string> matched_paths;
@@ -1376,8 +1364,9 @@ std::string DebugServices::GetStrippedFilename(const std::string &file_name) {
   return stripped_file_name;
 }
 
-std::vector<std::shared_ptr<TensorData>> DebugServices::ReadNeededDumpedTensors(
-  unsigned int iteration, std::vector<std::string> *const async_file_pool, bool error_on_no_value) {
+std::vector<std::shared_ptr<TensorData>> DebugServices::ReadNeededDumpedTensors(unsigned int iteration,
+                                                                                AsyncFilePool *const async_file_pool,
+                                                                                bool error_on_no_value) {
   // get a list of nodes and the devices they are on to monitor
   std::vector<std::shared_ptr<TensorData>> tensor_list;
   std::map<std::tuple<uint32_t, uint32_t>, std::vector<std::tuple<std::string, bool>>> rank_and_graph_to_nodes =

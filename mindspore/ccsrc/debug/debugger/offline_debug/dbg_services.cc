@@ -186,7 +186,7 @@ std::vector<watchpoint_hit_t> DbgServices::CheckWatchpoints(unsigned int iterati
   std::vector<unsigned int> rank_id;
   std::vector<unsigned int> root_graph_id;
   std::vector<std::shared_ptr<TensorData>> tensor_list;
-  std::vector<std::string> file_paths;
+  DebugServices::AsyncFilePool file_paths;
 
   const bool init_dbg_suspend = (iteration == UINT_MAX);
   {
@@ -262,7 +262,7 @@ std::vector<std::shared_ptr<TensorData>> DbgServices::ReadTensorsUtil(std::vecto
   (void)std::transform(info.begin(), info.end(), std::back_inserter(is_output), GetTensorIsOutput);
 
   MS_LOG(INFO) << "cpp before";
-  std::vector<std::string> file_paths;
+  DebugServices::AsyncFilePool file_paths;
   auto t1 = std::chrono::high_resolution_clock::now();
   // Convert the dumped data to npy format if it's async mode.
   if (!debug_services_->GetSyncMode()) {
