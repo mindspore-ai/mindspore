@@ -68,6 +68,7 @@
 #include "backend/optimizer/ascend/ir_fusion/mul_add_fusion.h"
 #include "backend/optimizer/ascend/ir_fusion/mul_addn_fusion.h"
 #include "backend/optimizer/ascend/ir_fusion/matmul_biasadd_fusion.h"
+#include "backend/optimizer/ascend/ir_fusion/conv2d_backprop_input_biasadd_fusion.h"
 #include "backend/optimizer/ascend/ir_fusion/remove_reshape_pair.h"
 #include "backend/optimizer/ascend/ir_fusion/derelu_fusion.h"
 #include "backend/optimizer/ascend/ir_fusion/batchnorm_to_bninfer.h"
@@ -218,6 +219,7 @@ void AddAscendIRFusionPass(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<MulAddFusion>());
   ir_fusion_pm->AddPass(std::make_shared<MulAddNFusion>());
   ir_fusion_pm->AddPass(std::make_shared<MatmulBiasaddFusion>());
+  ir_fusion_pm->AddPass(std::make_shared<Conv2dBackpropInputBiasaddFusion>());
   ir_fusion_pm->AddPass(std::make_shared<MatmulAddFusion>());
   ir_fusion_pm->AddPass(std::make_shared<AddnFission>());
   ir_fusion_pm->AddPass(std::make_shared<DereluFusion>());

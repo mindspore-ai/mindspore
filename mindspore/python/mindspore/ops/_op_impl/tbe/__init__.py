@@ -15,7 +15,7 @@
 
 """tbe ops"""
 from .celu import _celu_tbe
-from .cummin import  _cummin_tbe
+from .cummin import _cummin_tbe
 from .abs import _abs_tbe
 from .abs_ds import _abs_ds_tbe
 from .inplace_add import _inplace_add_tbe
@@ -89,6 +89,7 @@ from .conv2d_backprop_input import _conv2d_backprop_input_tbe
 from .conv2d_ds import _conv2d_ds_tbe
 from .conv2d_backprop_filter_ds import _conv2d_backprop_filter_ds_tbe
 from .conv2d_backprop_input_ds import _conv2d_backprop_input_ds_tbe
+from .conv2d_transpose import _conv2d_transpose_tbe
 from .confusion_mul_grad import _confusion_mul_grad_tbe
 from .dropout_do_mask import _dropout_do_mask_tbe
 from .dropout_do_mask_ds import _dropout_do_mask_ds_tbe
