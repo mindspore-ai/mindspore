@@ -31,7 +31,7 @@ bool Initialize() {
     // Server and Scheduler don't use collective communication library.
     auto node = cluster::ClusterContext::instance()->node();
     MS_EXCEPTION_IF_NULL(node);
-    if (node->role() != ps::core::NodeRole::SCHEDULER) {
+    if (node->role() != ps::core::NodeRole::SCHEDULER && node->role() != ps::core::NodeRole::SERVER) {
       // Global rank id and size should be manually set if cluster is initialized by MindSpore communication framework.
       auto abstract_node =
         std::dynamic_pointer_cast<ps::core::AbstractNode>(cluster::ClusterContext::instance()->node());

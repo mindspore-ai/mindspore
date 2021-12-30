@@ -45,10 +45,7 @@ bool MPICommunicationGroup::Initialize(const MPI_Group &world_group) {
   CHECK_RET(MPI_Comm_create(MPI_COMM_WORLD, group_, &group_communicator_), MPI_SUCCESS,
             "Creating MPI group communicator for " + name_ + " failed.");
 
-  if (group_communicator_ == MPI_COMM_NULL) {
-    MS_LOG(ERROR) << "Failed to create MPI communicator for group " << name_;
-    return false;
-  }
+  CHECK_RET((group_communicator_ != MPI_COMM_NULL), true, "Failed to create MPI communicator for group " + name_);
   initialized_ = true;
   return true;
 }
