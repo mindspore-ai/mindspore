@@ -50,8 +50,8 @@ class FusedAdaFactorCPUKernel : public CPUKernel {
   bool enable_weight_decay_{false};
   bool need_factor_{false};
   size_t elem_num_{0};
-  size_t last_row_dim_size_{0};
-  size_t last_col_dim_size_{0};
+  size_t last_row_dim_size_{1};
+  size_t last_col_dim_size_{1};
   TypeId param_dtype_{kTypeUnknown};
 
   enum InputEnum {
