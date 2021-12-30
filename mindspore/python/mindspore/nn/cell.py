@@ -1359,8 +1359,8 @@ class Cell(Cell_):
         In order to improve the network performance, configure the network auto enable to
         accelerate the algorithm in the algorithm library.
 
-        If `boost_type is not in the algorithm library`. Please view the algorithm in the algorithm library
-        through `algorithm library`.
+        If `boost_type` is not in the algorithm library. Please view the algorithm in the algorithm library through
+        `algorithm library <https://gitee.com/mindspore/mindspore/tree/master/mindspore/python/mindspore/boost>`_.
 
         Note:
             Some acceleration algorithms may affect the accuracy of the network, please choose carefully.
