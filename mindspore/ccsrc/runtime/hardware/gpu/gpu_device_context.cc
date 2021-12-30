@@ -29,6 +29,7 @@
 #include "runtime/device/gpu/gpu_buffer_mgr.h"
 #include "backend/kernel_compiler/common_utils.h"
 #include "runtime/device/gpu/gpu_common.h"
+#include "runtime/device/gpu/cuda_common.h"
 #include "runtime/hardware/gpu/optimizer.h"
 #include "utils/ms_device_shape_transfer.h"
 #include "utils/context/graph_kernel_flags.h"
@@ -120,6 +121,16 @@ bool GPUDeviceContext::InitDevice() {
       MS_LOG(ERROR) << "Failed to set current device id: " << SizeToInt(device_context_key_.device_id_);
       return false;
     }
+  }
+  // Check the Cuda capability
+  const float cuda_cap = GET_CUDA_CAP;
+  if (cuda_cap < SUPPORTED_CAP) {
+    MS_LOG(WARNING) << "The device with Cuda compute capability " << cuda_cap
+                    << " is lower than the minimum required capability " << SUPPORTED_CAP
+                    << ", this may cause some unexpected problems and severely affect the results. "
+                    << "Eg: the outputs are all zeros.\n"
+                    << "Device with a compute capability > " << SUPPORTED_CAP << " is required, "
+                    << "and it is recommended to use devices with a compute capability >= " << RECOMMEND_SM;
   }
 
   // Initialize device resource, such as stream, cudnn and cublas handle.
