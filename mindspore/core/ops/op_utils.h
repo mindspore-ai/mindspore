@@ -296,7 +296,6 @@ const std::set<TypePtr> all_types = {
   kBool,   kInt,    kInt8,   kInt16, kInt32,   kInt64,   kUInt,    kUInt8,
   kUInt16, kUInt32, kUInt64, kFloat, kFloat16, kFloat32, kFloat64, kComplex64,
 };
-
 std::vector<int64_t> CalBroadCastShape(std::vector<int64_t> x_shape, std::vector<int64_t> y_shape,
                                        const std::string &op_name, const std::string &op_x_name = "input1",
                                        const std::string &op_y_name = "input2");

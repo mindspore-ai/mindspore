@@ -320,6 +320,7 @@ from .depthwise_conv2d import _depthwise_conv2d_tbe
 from .depthwise_conv2d_backprop_filter import _depthwise_conv2d_backprop_filter_tbe
 from .depthwise_conv2d_backprop_input import _depthwise_conv2d_backprop_input_tbe
 from .greater_equal import _greater_equal_tbe
+from .greater_equal_ds import _greater_equal_ds_tbe
 from .not_equal import _not_equal_tbe
 from .floor_mod import _floor_mod_tbe
 from .scatter_nd_update import _scatter_nd_update_tbe
