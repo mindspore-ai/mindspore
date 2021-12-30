@@ -18,7 +18,7 @@ from mindspore.nn.optim import SGD
 from .less_batch_normalization import LessBN
 from .grad_freeze import GradientFreeze
 from .base import OptimizerProcess, ParameterProcess
-from .base import get_local_pca_mat_path
+from .base import _get_local_pca_mat_path
 
 
 __all__ = ["AutoBoost"]
@@ -168,8 +168,8 @@ class AutoBoost:
             optimizer (Cell): Optimizer for updating the weights.
         """
         if self.boost_config["dim_reduce"]:
-            self.local_pca_mat_path = get_local_pca_mat_path(self.weight_load_dir, self.pca_mat_path,
-                                                             self.n_components, self.device_number)
+            self.local_pca_mat_path = _get_local_pca_mat_path(self.weight_load_dir, self.pca_mat_path,
+                                                              self.n_components, self.device_number)
             optimizer = SGD(network.trainable_params(), learning_rate=1, loss_scale=optimizer.loss_scale)
             setattr(optimizer, "dim_reduce", True)
             return network, optimizer

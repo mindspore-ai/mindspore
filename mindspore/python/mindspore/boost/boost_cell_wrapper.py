@@ -31,7 +31,7 @@ from .grad_freeze import FreezeOpt, freeze_cell
 from .adasum import AdaSum
 from .dim_reduce import DimReduce
 from .grad_accumulation import gradient_accumulation_op, gradient_clear_op
-from .base import load_local_pca_mat
+from .base import _load_local_pca_mat
 
 
 __all__ = ["BoostTrainOneStepCell", "BoostTrainOneStepWithLossScaleCell"]
@@ -170,7 +170,7 @@ class BoostTrainOneStepCell(TrainOneStepCell):
             _rank_size = get_group_size()
             _device_number = auto_boost.device_number
             n_components = auto_boost.n_components
-            pca_mat = load_local_pca_mat(local_pca_mat_path, n_components)
+            pca_mat = _load_local_pca_mat(local_pca_mat_path)
             self.weights_clone = ParameterTuple(self.weights).clone(prefix="weights_clone", init="same")
             self.dim_reduce = DimReduce(self.network, self.optimizer, self.weights, pca_mat, n_components, rho,
                                         ls_weight_decay, gamma, alpha, sigma, _rank, _rank_size)
