@@ -50,7 +50,9 @@ CreateKernel RegisterKernel::GetCreator(const schema::Primitive *primitive, Kern
     return nullptr;
   }
   KernelDesc kernel_desc = {desc->data_type, desc->type, CharToString(desc->arch), CharToString(desc->provider)};
-  return RegistryKernelImpl::GetInstance()->GetProviderCreator(primitive, &kernel_desc);
+  auto ret = RegistryKernelImpl::GetInstance()->GetProviderCreator(primitive, &kernel_desc);
+  desc->arch = StringToChar(kernel_desc.arch);
+  return ret;
 #else
   MS_LOG(ERROR) << unsupport_custom_kernel_register_log;
   return nullptr;

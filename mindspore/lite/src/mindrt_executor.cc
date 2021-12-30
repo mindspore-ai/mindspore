@@ -208,6 +208,9 @@ void MindrtExecutor::TransferGraphOutput() {
                     reinterpret_cast<float *>(dst_tensor->data()), dst_tensor->ElementsNum());
     } else {
 #endif
+      if (dst_tensor->allocator() != src_tensor->allocator()) {
+        dst_tensor->set_allocator(src_tensor->allocator());
+      }
       dst_tensor->set_data(src_tensor->data());
       if (IS_RUNTIME_ALLOCATOR(src_tensor->allocator()) == false) {
         src_tensor->set_data(nullptr);

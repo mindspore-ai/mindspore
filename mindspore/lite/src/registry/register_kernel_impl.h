@@ -48,6 +48,11 @@ class RegistryKernelImpl {
     return kernel_creators_;
   }
 
+  const std::map<std::string, std::map<std::string, std::unordered_map<std::string, registry::CreateKernel *>>>
+    &GetCustomKernelCreators() const {
+    return custom_kernel_creators_;
+  }
+
  protected:
   // keys:provider, arch
   std::map<std::string, std::unordered_map<std::string, registry::CreateKernel *>> kernel_creators_;
