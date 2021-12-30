@@ -1042,7 +1042,7 @@ def roll(a, shift, axis=None):
 
     Args:
         a (Tensor): Input tensor.
-        shift (Union[int, tuple(int)]: The number of places by which elements are
+        shift (Union[int, tuple(int)]): The number of places by which elements are
             shifted. If a tuple, then axis must be a tuple of the same size, and
             each of the given axes is shifted by the corresponding number. If shift
             is an int while axis is a tuple of integers, then the same value is used

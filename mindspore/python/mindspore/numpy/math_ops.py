@@ -3865,7 +3865,7 @@ def corrcoef(x, y=None, rowvar=True, dtype=None):
         rowvar (bool, optional): If rowvar is `True` (default), then each row represents
             a variable, with observations in the columns. Otherwise, the relationship
             is transposed: each column represents a variable, while the rows contain observations.
-            Default: `None`.
+            Default: `True`.
         dtype (:class:`mindspore.dtype`, optional): Data-type of the result. By default,
             the return data-type will have at least float32 precision. Default: `None`.
 
