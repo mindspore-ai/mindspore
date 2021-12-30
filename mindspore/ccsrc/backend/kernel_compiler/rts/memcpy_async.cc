@@ -21,7 +21,7 @@
 #include "runtime/mem.h"
 #include "acl/acl_rt.h"
 #include "backend/session/anf_runtime_algorithm.h"
-#include "common/trans.h"
+#include "utils/ms_device_shape_transfer.h"
 #include "utils/ms_context.h"
 #include "runtime/device/kernel_runtime.h"
 #include "runtime/device/ascend/executor/rts/memcpy_rts_dynamic_kernel.h"

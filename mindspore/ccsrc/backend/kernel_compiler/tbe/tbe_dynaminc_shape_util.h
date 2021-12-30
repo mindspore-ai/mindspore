@@ -21,6 +21,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include "utils/ms_device_shape_transfer.h"
 #include "mindspore/core/ir/anf.h"
 #include "backend/kernel_compiler/oplib/oplib.h"
 namespace mindspore {
@@ -38,8 +39,10 @@ class TbeDynamicShapeUtil {
   static bool GetDynamicShapeAttr(const AnfNodePtr &anf_node);
   static std::shared_ptr<OpInfo> FindOp(const std::string &op_name, const AnfNodePtr &anf_node);
   static std::shared_ptr<OpInfo> FindOp(const std::string &op_name, const CNodePtr &cnode);
-  static RangePair GetInputDynamicRange(const AnfNodePtr &anf_node, size_t index, const std::string &def_format);
-  static RangePair GetOutputDynamicRange(const AnfNodePtr &anf_node, size_t index, const std::string &def_format);
+  static RangePair GetInputDynamicRange(const AnfNodePtr &anf_node, size_t index, const std::string &def_format,
+                                        const TypeId &type);
+  static RangePair GetOutputDynamicRange(const AnfNodePtr &anf_node, size_t index, const std::string &def_format,
+                                         const TypeId &type);
 };
 }  // namespace tbe
 }  // namespace kernel

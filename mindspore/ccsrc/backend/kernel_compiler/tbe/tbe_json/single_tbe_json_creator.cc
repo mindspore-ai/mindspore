@@ -165,14 +165,15 @@ void SingleTbeJsonCreator::GenInputDescJson(const AnfNodePtr &anf_node, size_t r
   format = TbeAdapter::FormatPass(format, ori_shape.size());
   format =
     (def_format == kOpFormat_NCDHW && k3DFormatSet.find(format) == k3DFormatSet.end()) ? kOpFormat_NCDHW : format;
-  (*input_desc)[kJDtype] = tbe::TypeIdToString(AnfAlgo::GetInputDeviceDataType(anf_node, real_input_index));
+  auto d_type = AnfAlgo::GetInputDeviceDataType(anf_node, real_input_index);
+  (*input_desc)[kJDtype] = tbe::TypeIdToString(d_type);
   (*input_desc)[kJDataType] = GetJsonValue<std::string>(*input_desc, kJDtype);
   (*input_desc)[kJOriShape] = ori_shape;
   (*input_desc)[kJOriFormat] = def_format;
   (*input_desc)[kJShape] = shape;
   (*input_desc)[kJFormat] = format;
   (*input_desc)[kJValid] = true;
-  (*input_desc)[kJRange] = tbe::TbeDynamicShapeUtil::GetInputDynamicRange(anf_node, real_input_index, format);
+  (*input_desc)[kJRange] = tbe::TbeDynamicShapeUtil::GetInputDynamicRange(anf_node, real_input_index, format, d_type);
   GenInputConstValue(anf_node, real_input_index, input_desc);
 }
 
@@ -181,9 +182,11 @@ void SingleTbeJsonCreator::GenOutputDescJson(const AnfNodePtr &anf_node, size_t 
   MS_EXCEPTION_IF_NULL(anf_node);
   GenDescJson(anf_node, node_out_idx, node_out_idx, output_desc);
   output_desc->erase(kJOutputIndex);
+  auto type_str = GetJsonValue<std::string>(*output_desc, kJDtype);
+  auto d_type = tbe::DtypeToTypeId(type_str);
   (*output_desc)[kJValid] = true;
   (*output_desc)[kJRange] =
-    tbe::TbeDynamicShapeUtil::GetOutputDynamicRange(anf_node, node_out_idx, (*output_desc)[kJFormat]);
+    tbe::TbeDynamicShapeUtil::GetOutputDynamicRange(anf_node, node_out_idx, (*output_desc)[kJFormat], d_type);
 }
 
 bool SingleTbeJsonCreator::AssignInputsJson(const AnfNodePtr &anf_node, const std::vector<nlohmann::json> &inputs_desc,
@@ -360,14 +363,15 @@ void SelectTbeJsonCreator::GenInputDescJson(const AnfNodePtr &anf_node, size_t r
 
   auto def_format = TbeJsonUtils::IsNeedChangeDefaultFormat(anf_node) ? kOpFormat_NCDHW : kOpFormat_NCHW;
   auto format = def_format;
-  (*input_desc)[kJDtype] = tbe::TypeIdToString(AnfAlgo::GetPrevNodeOutputInferDataType(anf_node, real_input_index));
+  auto d_type = AnfAlgo::GetPrevNodeOutputInferDataType(anf_node, real_input_index);
+  (*input_desc)[kJDtype] = tbe::TypeIdToString(d_type);
   (*input_desc)[kJDataType] = GetJsonValue<std::string>(*input_desc, kJDtype);
   (*input_desc)[kJOriShape] = ori_shape;
   (*input_desc)[kJOriFormat] = def_format;
   (*input_desc)[kJShape] = shape;
   (*input_desc)[kJFormat] = format;
   (*input_desc)[kJValid] = true;
-  (*input_desc)[kJRange] = tbe::TbeDynamicShapeUtil::GetInputDynamicRange(anf_node, real_input_index, format);
+  (*input_desc)[kJRange] = tbe::TbeDynamicShapeUtil::GetInputDynamicRange(anf_node, real_input_index, format, d_type);
 }
 bool SelectTbeJsonCreator::AttrsJsonPostProcessing(const AnfNodePtr &anf_node, const OpInfoPtr &op_info_ptr,
                                                    nlohmann::json *attrs_json) {

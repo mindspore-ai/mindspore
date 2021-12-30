@@ -20,7 +20,7 @@
 #include <stack>
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/optimizer/common/helper.h"
-#include "common/trans.h"
+#include "utils/ms_device_shape_transfer.h"
 #include "pipeline/jit/static_analysis/static_analysis.h"
 #include "abstract/dshape.h"
 #include "utils/utils.h"

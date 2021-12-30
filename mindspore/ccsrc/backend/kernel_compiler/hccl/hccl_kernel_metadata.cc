@@ -18,7 +18,7 @@
 #include <memory>
 #include <algorithm>
 #include <set>
-#include "common/trans.h"
+#include "utils/ms_device_shape_transfer.h"
 #include "utils/utils.h"
 #include "backend/kernel_compiler/hccl/hcom_util.h"
 #include "backend/session/anf_runtime_algorithm.h"

@@ -20,7 +20,7 @@
 #include <vector>
 
 #include "utils/utils.h"
-#include "common/trans.h"
+#include "utils/ms_device_shape_transfer.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/kernel_compiler/common_utils.h"
 
@@ -36,8 +36,8 @@ bool CheckFormatForConsistency(const CNodePtr &node, const size_t input_index) {
   if (pre_output_format == selected_input_format) {
     if (selected_input_format == kOpFormat_FRAC_Z &&
         (prev_node.first->isa<CNode>() || prev_node.first->isa<Parameter>())) {
-      auto pre_groups = trans::GetAttrGroups(prev_node.first, prev_node.second);
-      auto cur_groups = trans::GetAttrGroups(node, input_index);
+      auto pre_groups = AnfAlgo::GetAttrGroups(prev_node.first, prev_node.second);
+      auto cur_groups = AnfAlgo::GetAttrGroups(node, input_index);
       if (pre_groups != cur_groups) {
         MS_LOG(ERROR) << "Found inconsistent format! input format " << input_index << ": " << pre_output_format
                       << " with groups " << pre_groups << ", selected input format: " << selected_input_format

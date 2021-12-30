@@ -227,10 +227,6 @@ size_t TypeIdSize(const TypeId data_type) {
   return unsupported_type_error;
 }
 
-size_t ShapeSize(const std::vector<size_t> &shape) {
-  return std::accumulate(shape.begin(), shape.end(), IntToSize(1), std::multiplies<size_t>());
-}
-
 void CheckMinMaxShape(const ShapeVector &shape, ShapeVector *min_shape, ShapeVector *max_shape) {
   *min_shape = (*min_shape).empty() ? shape : *min_shape;
   *max_shape = (*max_shape).empty() ? shape : *max_shape;

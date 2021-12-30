@@ -19,7 +19,7 @@
 #include <utility>
 #include <algorithm>
 namespace mindspore {
-namespace TEMP {
+namespace trans {
 const int b1 = 1;
 const int b2 = 2;
 const int b4 = 4;
@@ -88,7 +88,179 @@ int64_t GetCubeSizeByType(const TypeId &data_type) {
   }
   return kCube16;
 }
+
+RangePair PaddingRangeTo5D(const RangePair &ori_range) {
+  RangePair dst_range(kNcdhw, std::pair<int64_t, int64_t>(1, 1));
+  switch (ori_range.size()) {
+    case N_ncdhw:
+      return ori_range;
+    case C_ncdhw:
+      dst_range[C_ncdhw] = ori_range[N_ncdhw];
+      break;
+    case D_ncdhw:
+      dst_range[C_ncdhw] = ori_range[N_ncdhw];
+      dst_range[D_ncdhw] = ori_range[C_ncdhw];
+      break;
+    case H_ncdhw:
+      dst_range[C_ncdhw] = ori_range[N_ncdhw];
+      dst_range[D_ncdhw] = ori_range[C_ncdhw];
+      dst_range[H_ncdhw] = ori_range[D_ncdhw];
+      break;
+    case W_ncdhw:
+      dst_range[C_ncdhw] = ori_range[N_ncdhw];
+      dst_range[D_ncdhw] = ori_range[C_ncdhw];
+      dst_range[H_ncdhw] = ori_range[D_ncdhw];
+      dst_range[W_ncdhw] = ori_range[H_ncdhw];
+      break;
+    default:
+      MS_LOG(EXCEPTION) << "Unexpected shape size = " << ori_range.size();
+  }
+  return dst_range;
+}
+
+RangePair PaddingRangeTo4D(const RangePair &ori_range) {
+  RangePair dst_range(kNchwDims, std::pair<int64_t, int64_t>(1, 1));
+  switch (ori_range.size()) {
+    case kN:
+      return dst_range;
+    case kC:
+      dst_range[kC] = ori_range[kN];
+      break;
+    case kH:
+      dst_range[kC] = ori_range[kN];
+      dst_range[kH] = ori_range[kC];
+      break;
+    case kW:
+      dst_range[kC] = ori_range[kN];
+      dst_range[kH] = ori_range[kC];
+      dst_range[kW] = ori_range[kH];
+      break;
+    case kNchwDims:
+      (void)std::copy(ori_range.begin(), ori_range.end(), dst_range.begin());
+      break;
+    default:
+      MS_LOG(EXCEPTION) << "Unexpected range size: " << ori_range.size();
+  }
+  return dst_range;
+}
 }  // namespace
+
+void StringToAxisVector4D(const std::string &reshape_type_str, std::vector<Axis> *reshape_type_vec) {
+  MS_EXCEPTION_IF_NULL(reshape_type_vec);
+  if (reshape_type_str.empty()) {
+    MS_LOG(DEBUG) << "Reshape type str is empty, no need padding.";
+    return;
+  }
+  for (const auto &c : reshape_type_str) {
+    switch (c) {
+      case 'N':
+        reshape_type_vec->push_back(N);
+        break;
+      case 'C':
+        reshape_type_vec->push_back(C);
+        break;
+      case 'H':
+        reshape_type_vec->push_back(H);
+        break;
+      case 'W':
+        reshape_type_vec->push_back(W);
+        break;
+      default:
+        MS_LOG(EXCEPTION) << "Unknown axis " << c << "in reshape type.";
+    }
+  }
+}
+
+void StringToAxisVector5D(const std::string &reshape_type_str, std::vector<Axis5D> *reshape_type_vec) {
+  MS_EXCEPTION_IF_NULL(reshape_type_vec);
+  if (reshape_type_str.empty()) {
+    MS_LOG(DEBUG) << "Reshape type str is empty, no need padding.";
+    return;
+  }
+  for (const auto &c : reshape_type_str) {
+    switch (c) {
+      case 'N':
+        reshape_type_vec->push_back(N_ncdhw);
+        break;
+      case 'C':
+        reshape_type_vec->push_back(C_ncdhw);
+        break;
+      case 'D':
+        reshape_type_vec->push_back(D_ncdhw);
+        break;
+      case 'H':
+        reshape_type_vec->push_back(H_ncdhw);
+        break;
+      case 'W':
+        reshape_type_vec->push_back(W_ncdhw);
+        break;
+      default:
+        MS_LOG(EXCEPTION) << "Unknown axis " << c << "in reshape type.";
+    }
+  }
+}
+
+bool IsNeedPadding(const std::string &format, size_t shape_size) {
+  if (shape_size == 0) {
+    return false;
+  }
+  if (format == kOpFormat_DEFAULT || format == kOpFormat_NCHW ||
+      kNoPaddingFormatSet.find(format) != kNoPaddingFormatSet.end()) {
+    return false;
+  } else if (shape_size < kNchwDims) {
+    return true;
+  }
+  return false;
+}
+
+ShapeVector GetRuntimePaddingShape(const AnfNodePtr &node, size_t index) {
+  MS_EXCEPTION_IF_NULL(node);
+  ShapeVector shape;
+  std::vector<size_t> host_shape;
+  if (node->isa<ValueNode>()) {
+    auto value_node = node->cast<ValueNodePtr>();
+    MS_EXCEPTION_IF_NULL(value_node);
+    auto node_value = value_node->value();
+    MS_EXCEPTION_IF_NULL(node_value);
+    auto tensor = node_value->cast<tensor::TensorPtr>();
+    if (tensor == nullptr) {
+      MS_LOG(EXCEPTION) << " The node[ " << node->DebugString() << "]'s cannot convert ";
+    }
+    auto shape_temp = tensor->shape();
+    (void)std::transform(shape_temp.begin(), shape_temp.end(), std::back_inserter(host_shape), LongToSize);
+    if (host_shape.empty()) {
+      host_shape.push_back(1);
+    }
+  } else {
+    host_shape = AnfAlgo::GetOutputInferShape(node, index);
+  }
+  auto format = AnfAlgo::GetOutputFormat(node, index);
+  if (IsNeedPadding(format, host_shape.size())) {
+    host_shape = PaddingShape(host_shape, format, AnfAlgo::GetOutputReshapeType(node, index));
+  }
+  std::transform(host_shape.begin(), host_shape.end(), std::back_inserter(shape), SizeToLong);
+  return shape;
+}
+
+bool TransDataType(const TypeIdArgs &args, void *result) {
+  DataTypeTransfer dataTypeTransfer;
+  return dataTypeTransfer.TransDataType(args, result);
+}
+
+bool TransFormat(const FormatArgs &args, void *result, const AnfNodePtr &node, size_t index) {
+  FormatTransfer formatTransfer;
+  return formatTransfer.TransDataByFormat(args, result, node, index, true);
+}
+
+bool TransFormatFromDeviceToHost(const FormatArgs &args, void *result, int64_t groups) {
+  FormatTransfer formatTransfer;
+  return formatTransfer.TransDataBackwordCore(args, result, groups);
+}
+
+bool TransFormatFromDeviceToHost(const FormatArgs &args, void *result, const AnfNodePtr &node, size_t index) {
+  FormatTransfer formatTransfer;
+  return formatTransfer.TransDataByFormat(args, result, node, index, false);
+}
 
 /**###################### DATA TYPE TRANS ################################*/
 void CheckMemSize(const TypeIdArgs &args) {
@@ -648,7 +820,7 @@ bool FormatTransfer::TransDataByFormat(const FormatArgs &args, void *result, con
 bool FormatTransfer::TransDataForwardCore(const FormatArgs &args, void *result, int64_t groups) {
   MS_LOG(DEBUG) << "Start trans format.";
   if (abstract::TypeIdSize(args.src_data_type) < 1) {
-    MS_LOG(ERROR) << "Invalid datatype:" << args.src_data_type;
+    MS_LOG(ERROR) << "Invalid datatype: " << args.src_data_type;
     return false;
   }
   if (groups > 1 && args.device_format == kOpFormat_FRAC_Z) {
@@ -664,7 +836,7 @@ bool FormatTransfer::TransDataForwardCore(const FormatArgs &args, void *result, 
 bool FormatTransfer::TransDataBackwordCore(const FormatArgs &args, void *result, int64_t groups) {
   MS_LOG(DEBUG) << "Start trans format.";
   if (abstract::TypeIdSize(args.src_data_type) < 1) {
-    MS_LOG(ERROR) << "Invalid datatype..";
+    MS_LOG(ERROR) << "Invalid datatype, type: " << args.src_data_type;
     return false;
   }
   if (groups > 1 && args.device_format == kOpFormat_FRAC_Z) {
@@ -685,7 +857,7 @@ bool FormatTransfer::CheckArgs(const FormatArgs &args, int64_t *size) {
   MS_EXCEPTION_IF_NULL(size);
   *size = SizeToLong(abstract::TypeIdSize(args.src_data_type));
   if (*size < 1) {
-    MS_LOG(ERROR) << "Illegal dtype.";
+    MS_LOG(ERROR) << "Illegal dtype: " << args.src_data_type;
     return false;
   }
   auto total_size = abstract::ShapeSize(args.device_shape) * (*size);
@@ -711,7 +883,7 @@ bool FormatTransfer::TransShapeToHW_NZ(const ShapeVector &host_shape, ShapeVecto
     default:
       auto size = host_shape.size();
       if (size < kDim2) {
-        MS_LOG(ERROR) << "Illegal size.";
+        MS_LOG(ERROR) << "Illegal size: " << size;
         return false;
       }
       int64_t times = 1;
@@ -797,7 +969,7 @@ bool FormatTransfer::NCHW_TO_FRAC_Z(const FormatArgs &args, void *result) {
   }
   auto size = SizeToLong(abstract::TypeIdSize(args.src_data_type));
   if (size < 1) {
-    MS_LOG(ERROR) << "Illegal dtype.";
+    MS_LOG(ERROR) << "Illegal dtype: " << args.src_data_type;
     return false;
   }
   auto n = args.host_shape[kN];
@@ -858,7 +1030,7 @@ bool FormatTransfer::NCHW_TO_FRAC_NZ(const FormatArgs &args, void *result) {
   }
   auto size = SizeToLong(abstract::TypeIdSize(args.src_data_type));
   if (size < 1) {
-    MS_LOG(ERROR) << "Illegal dtype";
+    MS_LOG(ERROR) << "Illegal dtype: " << args.src_data_type;
     return false;
   }
 
@@ -962,7 +1134,7 @@ bool FormatTransfer::NCHW_TO_NC1HWC0(const FormatArgs &args, void *result) {
   }
   auto size = SizeToLong(abstract::TypeIdSize(args.src_data_type));
   if (size < 1) {
-    MS_LOG(ERROR) << "Illegal dtype.";
+    MS_LOG(ERROR) << "Illegal dtype: " << args.src_data_type;
     return false;
   }
   auto total_size = abstract::ShapeSize(args.device_shape) * size;
@@ -1062,7 +1234,7 @@ bool FormatTransfer::NCDHW_TO_NDC1HWC0(const FormatArgs &args, void *result) {
   }
   auto size = SizeToLong(abstract::TypeIdSize(args.src_data_type));
   if (size < 1) {
-    MS_LOG(ERROR) << "Illegal dtype.";
+    MS_LOG(ERROR) << "Illegal dtype: " << args.src_data_type;
     return false;
   }
   auto total_size = abstract::ShapeSize(args.device_shape) * size;
@@ -1121,7 +1293,7 @@ bool FormatTransfer::NCDHW_TO_FRAC_Z3D(const FormatArgs &args, void *result) {
   }
   auto size = SizeToLong(abstract::TypeIdSize(args.src_data_type));
   if (size < 1) {
-    MS_LOG(ERROR) << "Illegal dtype.";
+    MS_LOG(ERROR) << "Illegal dtype: " << args.src_data_type;
     return false;
   }
   auto total_size = abstract::ShapeSize(args.device_shape) * size;
@@ -1175,7 +1347,7 @@ bool FormatTransfer::NCHW_TO_FRAC_Z_WITH_GROPUS(const FormatArgs &args, void *re
   }
   auto size = SizeToLong(abstract::TypeIdSize(args.src_data_type));
   if (size < 1) {
-    MS_LOG(ERROR) << "Illegal dtype";
+    MS_LOG(ERROR) << "Illegal dtype: " << args.src_data_type;
     return false;
   }
   auto n_dim = args.host_shape[kN];
@@ -1252,7 +1424,7 @@ bool FormatTransfer::NC1HWC0_TO_NCHW(const FormatArgs &args, void *result) {
   }
   auto size = SizeToLong(abstract::TypeIdSize(args.src_data_type));
   if (size < 1) {
-    MS_LOG(ERROR) << "Illegal dtype.";
+    MS_LOG(ERROR) << "Illegal dtype: " << args.src_data_type;
     return false;
   }
   auto total_size = abstract::ShapeSize(args.device_shape) * size;
@@ -1343,7 +1515,7 @@ bool FormatTransfer::FRAC_Z_TO_NCHW(const FormatArgs &args, void *result) {
   }
   auto size = SizeToLong(abstract::TypeIdSize(args.src_data_type));
   if (size < 1) {
-    MS_LOG(ERROR) << "Illegal dtype.";
+    MS_LOG(ERROR) << "Illegal dtype: " << args.src_data_type;
     return false;
   }
   auto total_size = abstract::ShapeSize(args.device_shape) * size;
@@ -1400,7 +1572,7 @@ bool FormatTransfer::FRAC_NZ_TO_NCHW(const FormatArgs &args, void *result) {
   }
   auto size = SizeToLong(abstract::TypeIdSize(args.src_data_type));
   if (size < 1) {
-    MS_LOG(ERROR) << "Illegal dtype";
+    MS_LOG(ERROR) << "Illegal dtype: " << args.src_data_type;
     return false;
   }
 
@@ -1448,6 +1620,65 @@ bool FormatTransfer::FRAC_NZ_TO_NCHW(const FormatArgs &args, void *result) {
   return true;
 }
 
+bool FormatTransfer::FRAC_Z3D_TO_NCDHW(const FormatArgs &args, void *result) {
+  MS_LOG(DEBUG) << "Trans from frac_z_3d to ncdhw";
+  MS_EXCEPTION_IF_NULL(result);
+
+  if (args.host_shape.size() != kNcdhw) {
+    MS_LOG(ERROR) << "Illegal host shape dim, expect dim: 5, but got " << args.host_shape.size();
+    return false;
+  }
+  auto size = SizeToLong(abstract::TypeIdSize(args.src_data_type));
+  if (size < 1) {
+    MS_LOG(ERROR) << "Illegal dtype: " << args.src_data_type;
+    return false;
+  }
+  auto total_size = abstract::ShapeSize(args.device_shape) * size;
+  if (total_size != SizeToLong(args.device_size)) {
+    MS_LOG(ERROR) << "Illegal total data size, total_size:" << total_size << ", device_size:" << args.device_size;
+    return false;
+  }
+  auto n = args.host_shape[N_ncdhw];
+  auto c = args.host_shape[C_ncdhw];
+  auto d = args.host_shape[D_ncdhw];
+  auto h = args.host_shape[H_ncdhw];
+  auto w = args.host_shape[W_ncdhw];
+  const int kFZ3D_C0 = 3;
+  auto c0 = args.device_shape[kFZ3D_C0];
+  auto cube_k = GetCubeSizeByType(args.src_data_type);
+  auto c1 = DivCeil(c, cube_k);
+  auto n1n0 = DivCeil(n, kNiSize) * kNiSize;
+  auto n1n0c0 = n1n0 * c0;
+  auto wn1n0c0 = w * n1n0c0;
+  auto hwn1n0c0 = h * wn1n0c0;
+  auto c1hwn1n0c0 = c1 * hwn1n0c0;
+  auto hw = h * w;
+  auto dhw = d * hw;
+  auto cdhw = c * dhw;
+
+  for (int64_t n_i = 0; n_i < n; n_i++) {
+    int64_t n_head = n_i * cdhw;
+    for (int64_t c_i = 0; c_i < c; c_i++) {
+      int64_t c_head = n_head + c_i * dhw;
+      for (int64_t d_i = 0; d_i < d; d_i++) {
+        int64_t d_head = c_head + d_i * hw;
+        for (int64_t h_i = 0; h_i < h; h_i++) {
+          int64_t h_head = d_head + h_i * w;
+          for (int64_t w_i = 0; w_i < w; w_i++) {
+            int64_t dst_i = h_head + w_i;
+            int64_t c1_i = c_i / c0;
+            int64_t c0_i = c_i % c0;
+            int64_t nc_i = n_i;
+            int64_t src_i = d_i * c1hwn1n0c0 + c1_i * hwn1n0c0 + h_i * wn1n0c0 + w_i * n1n0c0 + nc_i * c0 + c0_i;
+            SetData(size, false, src_i, dst_i, args, result);
+          }
+        }
+      }
+    }
+  }
+  return true;
+}
+
 bool FormatTransfer::NDC1HWC0_TO_NCDHW(const FormatArgs &args, void *result) {
   MS_LOG(DEBUG) << "Trans from ndc1hwc0 to ncdhw";
   MS_EXCEPTION_IF_NULL(result);
@@ -1458,7 +1689,7 @@ bool FormatTransfer::NDC1HWC0_TO_NCDHW(const FormatArgs &args, void *result) {
   }
   auto size = SizeToLong(abstract::TypeIdSize(args.src_data_type));
   if (size < 1) {
-    MS_LOG(ERROR) << "Illegal dtype.";
+    MS_LOG(ERROR) << "Illegal dtype: " << args.src_data_type;
     return false;
   }
   auto total_size = abstract::ShapeSize(args.device_shape) * size;
@@ -1507,5 +1738,209 @@ bool FormatTransfer::FRAC_Z_TO_NCHW_WITH_GROUPS(const FormatArgs &args, void *re
   MS_LOG(DEBUG) << "Trans format from frac_z to nchw with groups=" << groups;
   return NCHW_TO_FRAC_Z_WITH_GROPUS(args, result, false, groups);
 }
-}  // namespace TEMP
+
+// ########################  RANGE TRANS ########################
+RangePair ShapeRangeTransfer::GetRealRange(const RangePair &ori_range, const std::string &format, const TypeId &type) {
+  const std::set<std::string> no_need_change = {kOpFormat_ND, kOpFormat_DEFAULT, kOpFormat_NCHW, kOpFormat_NCDHW};
+  using RangeTransfer = std::function<RangePair(const RangePair &, const TypeId &)>;
+  const std::map<std::string, RangeTransfer> format_range_map = {{kOpFormat_NHWC, NHWCRange},
+                                                                 {kOpFormat_HWCN, HWCNRange},
+                                                                 {kOpFormat_FRAC_Z, FRAC_ZRange},
+                                                                 {kOpFormat_NC1HWC0, NC1HWC0Range},
+                                                                 {kOpFormat_NDC1HWC0, NDC1HWC0Range},
+                                                                 {kOpFormat_C1HWNCoC0, C1HWNCOC0Range},
+                                                                 {kOpFormat_NC1HWC0_C04, NC1HWC04Range},
+                                                                 {kOpFormat_FRACTAL_Z_3D, FRAC_Z_3DRange},
+                                                                 {kOpFormat_FRACTAL_Z_C04, FRAC_ZC04Range}};
+  if (no_need_change.find(format) != no_need_change.end()) {
+    return ori_range;
+  }
+  // kOpFormat_FRACTAL_ZN_LSTM, kOpFormat_FRAC_NZ no need pad range
+  if (format == kOpFormat_FRACTAL_ZN_LSTM) {
+    return FRAC_ZN_LSTMRange(ori_range, type);
+  }
+  if (format == kOpFormat_FRAC_NZ) {
+    return FRAC_NZRange(ori_range, type);
+  }
+  auto temp_range = ori_range;
+  if (ori_range.size() < kNchwDims && k3DFormatSet.find(format) == k3DFormatSet.end()) {
+    MS_LOG(DEBUG) << "A special format:" << format << " with a range size less than 4, so padding the range firstly";
+    temp_range = PaddingRangeTo4D(ori_range);
+  }
+  if (ori_range.size() < kNcdhw && k3DFormatSet.find(format) != k3DFormatSet.end()) {
+    MS_LOG(DEBUG) << "A special format:" << format << " with a range size less than 5, so padding the range firstly";
+    temp_range = PaddingRangeTo5D(ori_range);
+  }
+  auto iter = format_range_map.find(format);
+  if (iter == format_range_map.end()) {
+    MS_LOG(WARNING) << "Can not find a supported format: " << format << ", using default range";
+    return ori_range;
+  }
+  return iter->second(temp_range, type);
+}
+
+RangePair ShapeRangeTransfer::NHWCRange(const RangePair &ori_range, const TypeId &) {
+  RangePair dst_range;
+  dst_range.push_back(ori_range[kN]);
+  dst_range.push_back(ori_range[kH]);
+  dst_range.push_back(ori_range[kW]);
+  dst_range.push_back(ori_range[kC]);
+  return dst_range;
+}
+
+RangePair ShapeRangeTransfer::HWCNRange(const RangePair &ori_range, const TypeId &) {
+  RangePair dst_range;
+  dst_range.push_back(ori_range[kH]);
+  dst_range.push_back(ori_range[kW]);
+  dst_range.push_back(ori_range[kC]);
+  dst_range.push_back(ori_range[kN]);
+  return dst_range;
+}
+
+RangePair ShapeRangeTransfer::NC1HWC04Range(const RangePair &ori_range, const TypeId &) {
+  RangePair dst_range;
+  const std::pair<int64_t, int64_t> c0 = {k4, k4};
+  const std::pair<int64_t, int64_t> c1 = {(ori_range[kC].first + k4 - 1) / k4, (ori_range[kC].second + k4 - 1) / k4};
+  dst_range.push_back(ori_range[kN]);
+  dst_range.push_back(c1);
+  dst_range.push_back(ori_range[kH]);
+  dst_range.push_back(ori_range[kW]);
+  dst_range.push_back(c0);
+  return dst_range;
+}
+
+RangePair ShapeRangeTransfer::FRAC_ZC04Range(const RangePair &ori_range, const TypeId &) {
+  RangePair dst_range;
+  const std::pair<int64_t, int64_t> c0 = {k4, k4};
+  const std::pair<int64_t, int64_t> c16 = {kNiSize, kNiSize};
+  const std::pair<int64_t, int64_t> first_dim = {
+    (c0.first * ori_range[kH].first * ori_range[kW].first + kNiSize - 1) / kNiSize,
+    (c0.second * ori_range[kH].second * ori_range[kW].second + kNiSize - 1) / kNiSize};
+  const std::pair<int64_t, int64_t> no = {(ori_range[kN].first + kNiSize - 1) / kNiSize,
+                                          (ori_range[kN].second + kNiSize - 1) / kNiSize};
+  dst_range.push_back(first_dim);
+  dst_range.push_back(no);
+  dst_range.push_back(c16);
+  dst_range.push_back(c16);
+  return dst_range;
+}
+
+RangePair ShapeRangeTransfer::FRAC_ZRange(const RangePair &ori_range, const TypeId &type) {
+  RangePair dst_range;
+  auto cube = GetCubeSizeByType(type);
+  const std::pair<int64_t, int64_t> c0 = {cube, cube};
+  const std::pair<int64_t, int64_t> cout16 = {((ori_range[kN].first + kNiSize - 1) / kNiSize) * kNiSize,
+                                              ((ori_range[kN].second + kNiSize - 1) / kNiSize) * kNiSize};
+  const std::pair<int64_t, int64_t> cin16 = {((ori_range[kC].first + cube - 1) / cube) * cube,
+                                             ((ori_range[kC].second + cube - 1) / cube) * cube};
+  const std::pair<int64_t, int64_t> r0 = {ori_range[kH].first * ori_range[kW].first * cin16.first / cube,
+                                          ori_range[kH].second * ori_range[kW].second * cin16.second / cube};
+  const std::pair<int64_t, int64_t> r1 = {cout16.first / kNiSize, cout16.second / kNiSize};
+  dst_range.push_back(r0);
+  dst_range.push_back(r1);
+  dst_range.push_back({kNiSize, kNiSize});
+  dst_range.push_back(c0);
+  return dst_range;
+}
+
+RangePair ShapeRangeTransfer::FRAC_NZRange(const RangePair &ori_range, const TypeId &type) {
+  RangePair dst_range;
+  auto cube = GetCubeSizeByType(type);
+  auto ori_size = ori_range.size();
+  if (ori_size < kDims2) {
+    MS_LOG(EXCEPTION) << "Format FracNZ can not support range size: " << ori_size;
+  } else {
+    (void)std::copy(ori_range.begin(), ori_range.end() - kDims2, std::back_inserter(dst_range));
+  }
+  const std::pair<int64_t, int64_t> c0 = {cube, cube};
+  const std::pair<int64_t, int64_t> w1 = {(ori_range[ori_size - 1].first - 1) / cube + 1,
+                                          (ori_range[ori_size - 1].second - 1) / cube + 1};
+  const std::pair<int64_t, int64_t> h1 = {(ori_range[ori_size - kDims2].first - 1) / kNiSize + 1,
+                                          (ori_range[ori_size - kDims2].second - 1) / kNiSize + 1};
+  dst_range.push_back(w1);
+  dst_range.push_back(h1);
+  dst_range.push_back({kNiSize, kNiSize});
+  dst_range.push_back(c0);
+  return dst_range;
+}
+
+RangePair ShapeRangeTransfer::NC1HWC0Range(const RangePair &ori_range, const TypeId &type) {
+  RangePair dst_range;
+  auto cube = GetCubeSizeByType(type);
+  const std::pair<int64_t, int64_t> c0 = {cube, cube};
+  const std::pair<int64_t, int64_t> c1 = {(ori_range[kC].first + cube - 1) / cube,
+                                          (ori_range[kC].second + cube - 1) / cube};
+  dst_range.push_back(ori_range[kN]);
+  dst_range.push_back(c1);
+  dst_range.push_back(ori_range[kH]);
+  dst_range.push_back(ori_range[kW]);
+  dst_range.push_back(c0);
+  return dst_range;
+}
+
+RangePair ShapeRangeTransfer::FRAC_ZN_LSTMRange(const RangePair &ori_range, const TypeId &) {
+  RangePair dst_range;
+  const std::pair<int64_t, int64_t> c0 = {k4, k4};
+  const std::pair<int64_t, int64_t> c16 = {k4, k4};
+  const std::pair<int64_t, int64_t> h = {ori_range[kN].first / c0.first, ori_range[kN].second / c0.second};
+  const std::pair<int64_t, int64_t> i = {ori_range[kC].first - h.first, ori_range[kC].second - h.second};
+  const std::pair<int64_t, int64_t> first_dim = {
+    (i.first + kCube16 - 1) / kCube16 + (h.first + kCube16 - 1) / kCube16,
+    (i.second + kCube16 - 1) / kCube16 + (h.second + kCube16 - 1) / kCube16};
+  const std::pair<int64_t, int64_t> second = {c0.first * ((h.first + kCube16 - 1) / kCube16),
+                                              c0.second * ((h.second + kCube16 - 1) / kCube16)};
+  dst_range.push_back(first_dim);
+  dst_range.push_back(second);
+  dst_range.push_back(c16);
+  dst_range.push_back(c16);
+  return dst_range;
+}
+
+RangePair ShapeRangeTransfer::NDC1HWC0Range(const RangePair &ori_range, const TypeId &type) {
+  RangePair dst_range;
+  auto cube = GetCubeSizeByType(type);
+  const std::pair<int64_t, int64_t> c0 = {cube, cube};
+  const std::pair<int64_t, int64_t> c1 = {(ori_range[C_ncdhw].first + cube - 1) / cube,
+                                          (ori_range[C_ncdhw].second + cube - 1) / cube};
+  dst_range.push_back(ori_range[N_ncdhw]);
+  dst_range.push_back(ori_range[D_ncdhw]);
+  dst_range.push_back(c1);
+  dst_range.push_back(ori_range[H_ncdhw]);
+  dst_range.push_back(ori_range[W_ncdhw]);
+  dst_range.push_back(c0);
+  return dst_range;
+}
+
+RangePair ShapeRangeTransfer::C1HWNCOC0Range(const RangePair &ori_range, const TypeId &type) {
+  RangePair dst_range;
+  auto cube = GetCubeSizeByType(type);
+  const std::pair<int64_t, int64_t> c0 = {cube, cube};
+  const std::pair<int64_t, int64_t> r1 = {(ori_range[kC].first - 1) / cube + 1, (ori_range[kC].second - 1) / cube + 1};
+  dst_range.push_back(r1);
+  dst_range.push_back(ori_range[kH]);
+  dst_range.push_back(ori_range[kW]);
+  dst_range.push_back(ori_range[kN]);
+  dst_range.push_back(c0);
+  dst_range.push_back(c0);
+  return dst_range;
+}
+
+RangePair ShapeRangeTransfer::FRAC_Z_3DRange(const RangePair &ori_range, const TypeId &type) {
+  RangePair dst_range;
+  auto cube = GetCubeSizeByType(type);
+  const std::pair<int64_t, int64_t> c0 = {cube, cube};
+  const std::pair<int64_t, int64_t> c1 = {(ori_range[C_ncdhw].first + cube - 1) / cube,
+                                          (ori_range[C_ncdhw].second + cube - 1) / cube};
+  const std::pair<int64_t, int64_t> n1 = {(ori_range[N_ncdhw].first + kNiSize - 1) / kNiSize,
+                                          (ori_range[N_ncdhw].second + kNiSize - 1) / kNiSize};
+  const int64_t r1_0 = ori_range[D_ncdhw].first * c1.first * ori_range[H_ncdhw].first * ori_range[W_ncdhw].first;
+  const int64_t r1_1 = ori_range[D_ncdhw].second * c1.second * ori_range[H_ncdhw].second * ori_range[W_ncdhw].second;
+  const std::pair<int64_t, int64_t> r1 = {r1_0, r1_1};
+  dst_range.push_back(r1);
+  dst_range.push_back(n1);
+  dst_range.push_back(c1);
+  dst_range.push_back(c0);
+  return dst_range;
+}
+}  // namespace trans
 }  // namespace mindspore

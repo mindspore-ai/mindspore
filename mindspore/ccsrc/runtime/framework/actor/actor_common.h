@@ -29,7 +29,7 @@
 #include "backend/session/kernel_graph.h"
 #include "utils/log_adapter.h"
 #include "ir/tensor.h"
-#include "common/trans.h"
+#include "utils/ms_device_shape_transfer.h"
 
 namespace mindspore {
 namespace runtime {

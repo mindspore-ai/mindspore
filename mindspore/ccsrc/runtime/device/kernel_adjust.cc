@@ -24,7 +24,7 @@
 
 #include "backend/session/anf_runtime_algorithm.h"
 #include "utils/ms_context.h"
-#include "common/trans.h"
+#include "utils/ms_device_shape_transfer.h"
 #include "utils/config_manager.h"
 #include "utils/ms_utils.h"
 #include "backend/kernel_compiler/kernel_build_info.h"

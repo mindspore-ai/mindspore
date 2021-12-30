@@ -27,7 +27,7 @@
 #include "runtime/mem.h"
 #include "pipeline/jit/static_analysis/static_analysis.h"
 #include "runtime/device/ascend/executor/tiling/op_tiling_adapter.h"
-#include "common/trans.h"
+#include "utils/ms_device_shape_transfer.h"
 #include "backend/kernel_compiler/tbe/tbe_utils.h"
 #include "acl/acl_rt.h"
 

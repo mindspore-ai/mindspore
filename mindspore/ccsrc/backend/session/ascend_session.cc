@@ -26,7 +26,7 @@
 #include "base/base_ref_utils.h"
 #include "ir/tensor.h"
 #include "ir/anf.h"
-#include "common/trans.h"
+#include "utils/ms_device_shape_transfer.h"
 #include "runtime/device/kernel_runtime.h"
 #include "runtime/device/ascend/kernel_select_ascend.h"
 #include "runtime/device/ascend/kernel_build_ascend.h"
@@ -339,7 +339,7 @@ void AscendSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_gra
     } else if (input_param->has_dynamic_shape()) {
       auto tensor_shape = tensor->shape();
       std::vector<size_t> shape_tmp;
-      (void)std::transform(tensor_shape.begin(), tensor_shape.end(), std::back_inserter(shape_tmp), IntToSize);
+      (void)std::transform(tensor_shape.begin(), tensor_shape.end(), std::back_inserter(shape_tmp), LongToSize);
       AnfAlgo::SetOutputInferTypeAndShape({AnfAlgo::GetOutputInferDataType(input_node, 0)}, {shape_tmp},
                                           input_node.get());
       size = abstract::ShapeSize(shape_tmp) * abstract::TypeIdSize(tensor->data_type());

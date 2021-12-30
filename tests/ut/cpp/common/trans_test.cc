@@ -16,7 +16,7 @@
 
 #include <vector>
 #include "common/common_test.h"
-#include "common/trans.h"
+#include "utils/ms_device_shape_transfer.h"
 #include "utils/utils.h"
 
 using namespace std;
@@ -38,7 +38,7 @@ TEST_F(FormatTransTest, nchw_to_hwcn) {
   auto trans_tmp = std::vector<uint8_t>(device_size);
   FormatArgs format_args{data,         device_size,  kOpFormat_NCHW,    kOpFormat_HWCN,
                          {2, 2, 2, 2}, {2, 2, 2, 2}, kNumberTypeFloat16};
-  EXPECT_EQ(trans::TransFormat(format_args, trans_tmp.data()), true);
+  EXPECT_EQ(trans::TransFormat(format_args, trans_tmp.data(), nullptr, 0), true);
   for (size_t i = 0; i < sizeof(res) / sizeof(res[0]); i++) {
     EXPECT_EQ((reinterpret_cast<uint16_t *>(trans_tmp.data()))[i], res[i]);
   }
@@ -70,7 +70,7 @@ TEST_F(FormatTransTest, nchw_to_nhwc) {
   auto trans_tmp = std::vector<uint8_t>(device_size);
   FormatArgs format_args{data,         device_size,  kOpFormat_NCHW,    kOpFormat_NHWC,
                          {2, 2, 2, 2}, {2, 2, 2, 2}, kNumberTypeFloat16};
-  EXPECT_EQ(trans::TransFormat(format_args, trans_tmp.data()), true);
+  EXPECT_EQ(trans::TransFormat(format_args, trans_tmp.data(), nullptr, 0), true);
   for (size_t i = 0; i < sizeof(res) / sizeof(res[0]); i++) {
     EXPECT_EQ((reinterpret_cast<uint16_t *>(trans_tmp.data()))[i], res[i]);
   }
@@ -103,7 +103,7 @@ TEST_F(ShapeTransTest, fraczn_rnn_device_shape) {
   std::vector<size_t> host_shape = {43, 120};
   std::string format = kOpFormat_FRACTAL_ZN_RNN;
   std::vector<int64_t> input_hidden_size = {13, 30};
-  auto trans_shape = trans::TransShapeToDevice(host_shape, format, 1, input_hidden_size);
+  auto trans_shape = trans::TransShapeToDevice(host_shape, format, kNumberTypeFloat16, 1, input_hidden_size);
   const std::vector<size_t> expect_shape = {3, 8, 16, 16};
   EXPECT_EQ(trans_shape.size(), expect_shape.size());
   for (size_t i = 0; i < expect_shape.size(); i++) {
@@ -115,7 +115,7 @@ TEST_F(ShapeTransTest, nd_rnn_bias_device_shape) {
   std::vector<size_t> host_shape = {120};
   std::string format = kOpFormat_ND_RNN_BIAS;
   std::vector<int64_t> input_hidden_size = {13, 30};
-  auto trans_shape = trans::TransShapeToDevice(host_shape, format, 1, input_hidden_size);
+  auto trans_shape = trans::TransShapeToDevice(host_shape, format, kNumberTypeFloat16, 1, input_hidden_size);
   std::vector<size_t> expect_shape = {128};
   EXPECT_EQ(trans_shape.size(), expect_shape.size());
   for (size_t i = 0; i < expect_shape.size(); i++) {
@@ -127,7 +127,7 @@ TEST_F(ShapeTransTest, fraczn_rnn_dynamic_device_shape) {
   std::vector<int64_t> host_shape = {-1, -1};
   std::string format = kOpFormat_FRACTAL_ZN_RNN;
   std::vector<int64_t> input_hidden_size = {13, 30};
-  auto trans_shape = trans::TransShapeToDevice(host_shape, format, 1, input_hidden_size);
+  auto trans_shape = trans::TransShapeToDevice(host_shape, format, kNumberTypeFloat16, 1, input_hidden_size);
   const std::vector<int64_t> expect_shape = {-1, -1, 16, 16};
   EXPECT_EQ(trans_shape.size(), expect_shape.size());
   for (size_t i = 0; i < expect_shape.size(); i++) {
@@ -139,7 +139,7 @@ TEST_F(ShapeTransTest, nd_rnn_bias_dynamic_device_shape) {
   std::vector<int64_t> host_shape = {-1};
   std::string format = kOpFormat_ND_RNN_BIAS;
   std::vector<int64_t> input_hidden_size = {13, 30};
-  auto trans_shape = trans::TransShapeToDevice(host_shape, format, 1, input_hidden_size);
+  auto trans_shape = trans::TransShapeToDevice(host_shape, format, kNumberTypeFloat16, 1, input_hidden_size);
   std::vector<int64_t> expect_shape = {-1};
   EXPECT_EQ(trans_shape.size(), expect_shape.size());
   for (size_t i = 0; i < expect_shape.size(); i++) {

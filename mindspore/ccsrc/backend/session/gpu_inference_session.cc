@@ -21,7 +21,7 @@
 #include "runtime/device/kernel_runtime.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "utils/ms_utils.h"
-#include "common/trans.h"
+#include "utils/ms_device_shape_transfer.h"
 #include "utils/config_manager.h"
 
 namespace mindspore {
