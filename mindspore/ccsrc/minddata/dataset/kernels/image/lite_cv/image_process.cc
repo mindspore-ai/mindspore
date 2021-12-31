@@ -49,11 +49,11 @@ constexpr int32_t kB2R = kV2R * 128 + kY2GB;
 
 static bool Equal(const float &a, const float &b) { return std::fabs(a - b) < 1e-6; }
 
-static inline void InitBilinearWeight(int *data_ptr, int16_t *weight_ptr, double scale, int dst_length, int src_length,
+static inline bool InitBilinearWeight(int *data_ptr, int16_t *weight_ptr, double scale, int dst_length, int src_length,
                                       int a) {
   const int RESIZE_SCALE = 1 << 11;
   if (data_ptr == nullptr || weight_ptr == nullptr) {
-    return;
+    return false;
   }
 
   int *data_start_ptr = data_ptr;
@@ -78,15 +78,19 @@ static inline void InitBilinearWeight(int *data_ptr, int16_t *weight_ptr, double
     weight_start_ptr[i * 2] = t0;
     weight_start_ptr[i * 2 + 1] = t1;
   }
+  return true;
 }
 
-static void ResizeBilinear3C(const unsigned char *src, int src_width, int src_height, unsigned char *dst, int dst_width,
+static bool ResizeBilinear3C(const unsigned char *src, int src_width, int src_height, unsigned char *dst, int dst_width,
                              int dst_height) {
   double scale_width = static_cast<double>(src_width) / dst_width;
   double scale_height = static_cast<double>(src_height) / dst_height;
 
   if (dst_height >= (INT_MAX / 2 - dst_width)) {
-    return;
+    return false;
+  }
+  if (dst_height >= (INT_MAX / 3 / dst_width)) {
+    return false;
   }
   int *data_buf = new int[2 * dst_width + 2 * dst_height];
 
@@ -96,8 +100,12 @@ static void ResizeBilinear3C(const unsigned char *src, int src_width, int src_he
   int16_t *x_weight = reinterpret_cast<int16_t *>(data_buf + dst_width + dst_height);
   int16_t *y_weight = reinterpret_cast<int16_t *>(x_weight + dst_width);
 
-  InitBilinearWeight(x_offset, x_weight, scale_width, dst_width, src_width, 3);
-  InitBilinearWeight(y_offset, y_weight, scale_height, dst_height, src_height, 1);
+  if (!InitBilinearWeight(x_offset, x_weight, scale_width, dst_width, src_width, 3)) {
+    return false;
+  }
+  if (!InitBilinearWeight(y_offset, y_weight, scale_height, dst_height, src_height, 1)) {
+    return false;
+  }
 
   LiteMat x_tmp_buf0(dst_width * 3 + 1, LDataType::UINT16);
   LiteMat x_tmp_buf1(dst_width * 3 + 1, LDataType::UINT16);
@@ -160,16 +168,21 @@ static void ResizeBilinear3C(const unsigned char *src, int src_width, int src_he
     y_weight += 2;
   }
   delete[] data_buf;
+  return true;
 }
 
-static void ResizeBilinear1C(const unsigned char *src, int src_width, int src_height, unsigned char *dst, int dst_width,
+static bool ResizeBilinear1C(const unsigned char *src, int src_width, int src_height, unsigned char *dst, int dst_width,
                              int dst_height) {
   double scale_width = static_cast<double>(src_width) / dst_width;
   double scale_height = static_cast<double>(src_height) / dst_height;
 
   if (dst_height >= (INT_MAX / 2 - dst_width)) {
-    return;
+    return false;
   }
+  if (dst_height >= (INT_MAX / dst_width)) {
+    return false;
+  }
+
   int *data_buf = new int[2 * dst_width + 2 * dst_height];
 
   int *x_offset = data_buf;
@@ -178,8 +191,12 @@ static void ResizeBilinear1C(const unsigned char *src, int src_width, int src_he
   int16_t *x_weight = reinterpret_cast<int16_t *>(data_buf + dst_width + dst_height);
   int16_t *y_weight = reinterpret_cast<int16_t *>(x_weight + dst_width);
 
-  InitBilinearWeight(x_offset, x_weight, scale_width, dst_width, src_width, 1);
-  InitBilinearWeight(y_offset, y_weight, scale_height, dst_height, src_height, 1);
+  if (!InitBilinearWeight(x_offset, x_weight, scale_width, dst_width, src_width, 1)) {
+    return false;
+  }
+  if (!InitBilinearWeight(y_offset, y_weight, scale_height, dst_height, src_height, 1)) {
+    return false;
+  }
 
   LiteMat x_tmp_buf0(dst_width, LDataType::UINT16);
   LiteMat x_tmp_buf1(dst_width, LDataType::UINT16);
@@ -239,6 +256,7 @@ static void ResizeBilinear1C(const unsigned char *src, int src_width, int src_he
     y_weight += 2;
   }
   delete[] data_buf;
+  return true;
 }
 
 static inline uint8_t clip(float value) {
@@ -392,13 +410,12 @@ bool ResizeBilinear(const LiteMat &src, LiteMat &dst, int dst_w, int dst_h) {
   if (src.channel_ == 3) {
     const unsigned char *src_start_p = src;
     unsigned char *dst_start_p = dst;
-    (void)ResizeBilinear3C(src_start_p, src.width_, src.height_, dst_start_p, dst_w, dst_h);
+    return ResizeBilinear3C(src_start_p, src.width_, src.height_, dst_start_p, dst_w, dst_h);
   } else {  // channel == 1
     const unsigned char *src_start_p = src;
     unsigned char *dst_start_p = dst;
-    (void)ResizeBilinear1C(src_start_p, src.width_, src.height_, dst_start_p, dst_w, dst_h);
+    return ResizeBilinear1C(src_start_p, src.width_, src.height_, dst_start_p, dst_w, dst_h);
   }
-  return true;
 }
 
 static bool ConvertBGR(const unsigned char *data, LDataType data_type, int w, int h, LiteMat &mat) {

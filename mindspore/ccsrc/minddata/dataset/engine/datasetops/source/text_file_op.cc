@@ -20,13 +20,13 @@
 #include <string>
 #include <utility>
 
-#include "utils/file_utils.h"
-#include "minddata/dataset/engine/datasetops/source/text_file_op.h"
 #include "minddata/dataset/core/config_manager.h"
-#include "minddata/dataset/util/wait_post.h"
-#include "minddata/dataset/util/random.h"
 #include "minddata/dataset/engine/datasetops/source/io_block.h"
+#include "minddata/dataset/engine/datasetops/source/text_file_op.h"
 #include "minddata/dataset/engine/execution_tree.h"
+#include "minddata/dataset/util/random.h"
+#include "minddata/dataset/util/wait_post.h"
+#include "utils/file_utils.h"
 
 namespace mindspore {
 namespace dataset {
