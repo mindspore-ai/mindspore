@@ -20,7 +20,7 @@ from enum import Enum
 class StructType(Enum):
     """Define cpp struct type, value is python struct type."""
     CHAR = 'c'
-    UCHAR = 'B'
+    UINT8 = 'B'
     UINT16 = 'H'
     UINT32 = 'I'
     UINT64 = 'Q'
@@ -46,14 +46,16 @@ class StructType(Enum):
 
     @classmethod
     def sizeof(cls, cpp_type):
-        """Given a Cpp type list or a StructType value, and return a python struct format size."""
+        """Given a Cpp type list or dict or a StructType value, and return a python struct format size."""
         size_map = dict(
             CHAR=1,
-            UCHAR=1,
+            UINT8=1,
             UINT16=2,
             UINT32=4,
             UINT64=8
         )
+        if isinstance(cpp_type, dict):
+            cpp_type = cpp_type.values()
         if isinstance(cpp_type, StructType):
             return size_map[cpp_type.name]
 
@@ -68,7 +70,7 @@ class StructType(Enum):
     @classmethod
     def unpack_binary_data(cls, data_struct, binary_data, special_process_func=None):
         """
-        Parse the binary data to get the unpacked data
+        Parse the binary data to get the unpacked data.
 
         Args：
             data_struct (dict): Key is the data name, value is StructType.
@@ -79,12 +81,12 @@ class StructType(Enum):
                 If data can not unpack, this function should return None.
 
         Returns:
-            dict, key is data name, value is a actual value.
+            dict, key is data name, value is actual value.
 
         Example:
-            >>> ret = StructType.unpack_binary_data({'op_name': StructType.UINT32}, b'1101')
+            >>> ret = StructType.unpack_binary_data({'op_id': StructType.UINT8}, b'a')
             >>> print(ret)
-            {'op_name': (825241905,)}
+            {'op_name': 97}
             >>> # special_process_func example
             >>> def handle_tensor_number(binary_data, data_size, cursor, item_name, iten_type)
             ...     if data_name == 'tensorNum':

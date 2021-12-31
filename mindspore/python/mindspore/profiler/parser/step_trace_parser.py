@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-201 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,24 +17,42 @@ import csv
 import json
 import os
 import stat
-import struct
-from collections import namedtuple
+from collections import defaultdict
 from decimal import Decimal
 from abc import abstractmethod
+from enum import Enum
+from pathlib import Path
 
-from mindspore.profiler.common.exceptions.exceptions import ProfilerPathErrorException, \
-    ProfilerIOException, ProfilerRawFileException
 from mindspore import log
+from mindspore.profiler.common.exceptions.exceptions import ProfilerIOException, ProfilerRawFileException
 from mindspore.profiler.common.util import get_summary_for_step_trace
-from mindspore.profiler.common.validator.validate_path import \
-    validate_and_normalize_path
+from mindspore.profiler.common.struct_type import StructType
+from mindspore.profiler.common.util import combine_stream_task_id
 
-ProfilingHeadStruct = namedtuple(
-    'ProfilingHeadStruct', ['mode', 'rptType', 'bufSize']
-)
 
-StepTraceStruct = namedtuple(
-    'StepTraceStruct', ['timeStamp', 'index_id', 'model_id', 'stream_id', 'task_id', 'tag_id']
+class PointTag(Enum):
+    MODEL_START = 0
+    MODEL_END = 1
+    FP_START = 2
+    BP_END = 3
+    ITER_END = 4
+    MIN_ALL_REDUCE = 10000
+    MAX_ALL_REDUCE = 20000
+
+
+STEP_TRACE_RPT_TYPE = 10
+TS_TRACK_STEP_TRACE_STRUCT = dict(
+    mode=StructType.UINT8,
+    rptType=StructType.UINT8,
+    bufSize=StructType.UINT16,
+    reserved1=StructType.UINT32,
+    timestamp=StructType.UINT64,
+    indexId=StructType.UINT64,
+    modelId=StructType.UINT64,
+    streamId=StructType.UINT16,
+    taskId=StructType.UINT16,
+    tagId=StructType.UINT16,
+    reserved2=StructType.UINT16
 )
 
 
@@ -45,34 +63,23 @@ class BaseStepTraceParser:
     Args:
         input_dir (str): The directory that contains original step trace data.
         output_file_path (str): The output file path.
-        job_id (int): The job id used to define the start of new step. Default: 0.
         skip_first_step (bool): Whether skip the first step or not.
         is_training_mode (bool): Whether in training mode or not.
         is_gpu_kernel_async_launch (bool): Whether is gpu kernel async launch or not.
     """
 
-    def __init__(self, input_dir, output_file_path, job_id=0, skip_first_step=False,
+    def __init__(self, input_dir, output_file_path, skip_first_step=False,
                  is_training_mode=True, is_gpu_kernel_async_launch=False):
         self._input_dir = input_dir
         self._output_path = output_file_path
-        self._job_id = job_id
         self._skip_first_step = skip_first_step
+        self._is_training_mode = is_training_mode
+        self._is_gpu_kernel_async_launch = is_gpu_kernel_async_launch
+
         self._result = []
         self._header = []
         self._step_num = 0
         self._tag_map = {}
-        self._is_training_mode = is_training_mode
-        self._step_end_tag_id = 4
-        self._is_gpu_kernel_async_launch = is_gpu_kernel_async_launch
-        self._model_start_tag_id = 0
-        self._model_end_tag_id = 1
-        self._fp_tag_id = 2
-        self._bp_tag_id = 3
-        self._reduce_min_tag_id = 10000
-        self._reduce_max_tag_id = 20000
-        self._profiling_head_len = 4
-        self._profiling_head_pad_len = 4
-        self._st_data_len = 8 + 8 + 8 + 2 + 2 + 2
 
     @property
     def output_file(self):
@@ -88,52 +95,28 @@ class BaseStepTraceParser:
             summary_info['total_steps'] = len(self._result) - 1
         print('\nStep trace summary info (unit: syscnt):')
         print(summary_info)
-        print('\nThe step trace parse result saves under ${summary_dir}/profiler/%s'
-              % self.output_file)
+        print('\nThe step trace parse result saves under ${summary_dir}/profiler/%s' % self.output_file)
 
     def parse_and_save(self):
         """Parse step trace files and save the result."""
-        try:
-            source_files = self._get_step_trace_files()
-            if self._is_gpu_kernel_async_launch:
-                self._parse_async_launch(source_files)
-            else:
-                self._parse(source_files)
-            self._save()
-        except IOError as err:
-            log.warning(err)
-            raise ProfilerIOException()
-        else:
-            log.info("Finish to save intermediate result for step trace file.")
+        self._parse()
+        self._save()
+        log.info("Finish to save intermediate result for step trace file.")
 
-    def record_point_info(self, point_info, output_path):
+    @abstractmethod
+    def record_point_info(self, output_path):
         """
         Record point info into json.
 
         Args:
-            point_info (dict): The point info about tag id and relative op name.
             output_path (str): The output path for saving point info.
 
         Returns:
             dict, parsed point info.
         """
 
-    def update_tag_op_type_map(self, point_info):
-        """
-        update the map from tag id to op type.
-
-        Args:
-            point_info (dict): The point info about tag id and relative op name.
-        """
-        self._get_step_trace_files()
-        tag_map = {}
-        for tag, op_name in point_info.items():
-            op_type = self._get_op_type(tag, op_name)
-            tag_map[tag] = op_type
-        log.info("Get tag types for step trace analysis: %s", tag_map)
-        self._tag_map = tag_map
-
-    def _get_op_type(self, tag, name):
+    @staticmethod
+    def _get_op_type(tag, name):
         """
         Get op type from tag and name.
 
@@ -144,134 +127,28 @@ class BaseStepTraceParser:
         Returns:
             str, the op type or communication op name.
         """
-        tag_map = {self._fp_tag: 'fp', self._bp_tag: 'bp', self._step_end_tag_id: 'end'}
+        tag_map = {PointTag.FP_START.value: 'fp', PointTag.BP_END.value: 'bp', PointTag.ITER_END.value: 'end'}
         # get solid tag type
         op_type = tag_map.get(tag, '')
         if op_type:
             return op_type
         # check if the tag is step tag.
-        if tag == 0:
+        if tag == PointTag.MODEL_START.value:
             return 'start'
-        # analyze the reduce tag
+        # analyze reduce tag
         op_name = name.rsplit('/', 1)[-1]
         if not op_name:
             log.warning("Unexpected op name:%s", name)
 
         return op_name
 
-    def _get_step_trace_files(self):
-        """Get step trace files."""
-        return self._input_dir
-
-    @staticmethod
-    def _search_file(input_dir):
-        """Search step trace file under specific input directory."""
-        # validate input_dir
-        if not os.path.isdir(input_dir):
-            raise ProfilerPathErrorException(
-                '{} does not exist or is not a dir'.format(input_dir)
-            )
-        # get step trace files
-        files = os.listdir(input_dir)
-        step_trace_files = list(
-            filter(
-                lambda file: file.startswith('ts_track.data') and not file.endswith('.done'),
-                files
-            )
-        )
-        # validate result
-        if len(step_trace_files) > 1:
-            # the format of file name is like
-            # `training_trace.46.dev.profiler_default_tag.$id.slice_$number`
-            # use the $number as the sorted key
-            try:
-                step_trace_files.sort(key=lambda path: int(path.rsplit('_', 1)[-1]))
-            except ValueError as err:
-                log.warning("Unable to parse file names: %s. %s", step_trace_files, err)
-                step_trace_files = []
-        else:
-            training_trace_files = list(
-                filter(
-                    lambda file: file.startswith('training_trace') and not file.endswith('.done'),
-                    files
-                )
-            )
-            if len(training_trace_files) >= 1:
-                log.warning("The training_trace file structure is changed, please upgrade "
-                            "mindspore and regenerate profiling data")
-
-        file_paths = [os.path.join(input_dir, file) for file in step_trace_files]
-        log.info("Find %d step trace files.", len(file_paths))
-        return file_paths
-
     @abstractmethod
-    def _parse(self, source_files):
+    def _parse(self):
         """Parse source step trace files."""
-
-    def _get_next_step_trace(self, content, event_info):
-        """
-        Get next step trace info.
-
-        Args:
-            content (bytes): The input step trace info.
-            event_info (dict): The event info.
-
-        Returns:
-            Generator, return the step trace one by one.
-        """
-        start_time = event_info.get('end', '-')
-        event_info['start'] = start_time
-        if 'reduce' not in event_info.keys():
-            event_info['reduce'] = {}
-
-        i = 0
-        while i < len(content):
-            profiling_head_data = content[i:i + self._profiling_head_len]
-            parsed_head = struct.unpack('BBH', profiling_head_data)
-            profiling_head = ProfilingHeadStruct(*parsed_head)
-            if profiling_head.rptType == 10:
-                st_data = content[i + self._profiling_head_len + self._profiling_head_pad_len:
-                                  i + self._profiling_head_len + self._profiling_head_pad_len + self._st_data_len]
-                parsed_data = struct.unpack('QQQHHH', st_data)
-                next_event = StepTraceStruct(*parsed_data)
-                self._construct_event_info(next_event, event_info)
-
-                if event_info.get('end'):
-                    yield event_info
-                    start_time = event_info.get('end', '-')
-                    event_info.clear()
-                    event_info['start'] = start_time
-                    event_info['reduce'] = {}
-            i = i + profiling_head.bufSize
-
-    def _construct_event_info(self, next_event, event_info):
-        """Construct event info according to next_event."""
-        end_flag: bool = lambda tag: tag == self._step_end_tag_id
-        fp_flag: bool = lambda tag: tag == self._fp_tag_id
-        bp_flag: bool = lambda tag: tag == self._bp_tag_id
-        reduce_flag: bool = lambda tag: self._reduce_min_tag_id <= tag < self._reduce_max_tag_id
-
-        def _on_reduce_event(reduce_tag_id):
-            """Handle reduce event."""
-            stream_id = next_event.stream_id
-            if event_info['reduce'].get(stream_id):
-                event_info['reduce'][stream_id].append((reduce_tag_id, time_stamp))
-            else:
-                event_info['reduce'][stream_id] = [(reduce_tag_id, time_stamp)]
-
-        tag_id = next_event.tag_id
-        time_stamp = next_event.timeStamp
-        if end_flag(tag_id):
-            event_info['end'] = time_stamp
-        elif fp_flag(tag_id):
-            event_info['fp'] = time_stamp
-        elif bp_flag(tag_id):
-            event_info['bp'] = time_stamp
-        elif reduce_flag(tag_id):
-            _on_reduce_event(tag_id)
 
     def _record_trace_event(self, step_trace):
         """Record trace event."""
+        log.debug("Profiler start to record trace event: %s", str(step_trace))
         self._step_num += 1
         start_time = step_trace.get('start')
         end_time = step_trace.get('end')
@@ -298,6 +175,7 @@ class BaseStepTraceParser:
         # save the row data
         if not self._header:
             self._header = list(row_data.keys())
+            log.info("Profiler step trace header: %s", str(self._header))
         row_data_list = [row_data.get(header_name, 0) for header_name in self._header]
         self._result.append(row_data_list)
 
@@ -315,6 +193,7 @@ class BaseStepTraceParser:
                     field_name, time_points[point_id], time_points[point_id + 1])
                 row_data.update(reduce_info)
 
+    @abstractmethod
     def _get_single_reduce_event_info(self, field_name, start_point, end_point):
         """
         Get single reduce info.
@@ -327,8 +206,6 @@ class BaseStepTraceParser:
         Returns:
             dict, reduce info.
         """
-        ret_dict = {}
-        return ret_dict
 
     def _record_average_info(self):
         """Calculate average info."""
@@ -375,6 +252,9 @@ class BaseStepTraceParser:
 
 class GpuStepTraceParser(BaseStepTraceParser):
     """The parser for gpu step trace data."""
+    def __init__(self, *args, **kwargs):
+        super(GpuStepTraceParser, self).__init__(*args, **kwargs)
+        self._source_file_path = self._input_dir
 
     def get_fp_bp(self, f_obj, all_step_fp, all_step_bp):
         """Parser the fp and bp."""
@@ -389,12 +269,11 @@ class GpuStepTraceParser(BaseStepTraceParser):
             all_step_fp.append(lines[fp_start].split()[0])
             all_step_bp.append(lines[bp_end].split()[0])
 
-    def record_point_info(self, source_file, output_path):
+    def record_point_info(self, output_path):
         """
         Record point info into json.
 
         Args:
-            source_file (str): The file path of step trace original data.
             output_path (str): The output path for saving point info.
 
         Returns:
@@ -404,10 +283,10 @@ class GpuStepTraceParser(BaseStepTraceParser):
         all_step_fp = []
         all_step_bp = []
         try:
-            with open(source_file, 'r') as f_obj:
+            with open(self._source_file_path, 'r') as f_obj:
                 self.get_fp_bp(f_obj, all_step_fp, all_step_bp)
         except (IOError, OSError) as err:
-            log.warning(f'Failed to read {source_file}', err)
+            log.warning(f'Failed to read {self._source_file_path}', err)
             raise ProfilerIOException
 
         for fp_name, bp_name in zip(all_step_fp, all_step_bp):
@@ -435,11 +314,13 @@ class GpuStepTraceParser(BaseStepTraceParser):
 
         return all_step_points[0]
 
-    def _get_step_trace_files(self):
-        """Get step trace files."""
-        return self._input_dir
+    def _parse(self):
+        if self._is_gpu_kernel_async_launch:
+            self._parse_async_launch()
+        else:
+            self._parse_not_async_launch()
 
-    def _parse(self, source_file):
+    def _parse_not_async_launch(self):
         """Parse source step trace files."""
         log.info("Start to parse step trace file.")
         fp_start, bp_end, iter_end, iter_start = 0, 1, 2, 3
@@ -447,7 +328,7 @@ class GpuStepTraceParser(BaseStepTraceParser):
         start_time, end_time = 0, 1
         step_trace_point_count = 3
 
-        source_file = validate_and_normalize_path(source_file)
+        source_file = self._source_file_path
         try:
             with open(source_file, 'r') as f:
                 lines = f.readlines()
@@ -528,18 +409,16 @@ class GpuStepTraceParser(BaseStepTraceParser):
         step_trace['reduce'] = reduce_info
         self._record_trace_event(step_trace)
 
-    def _parse_async_launch(self, source_file):
+    def _parse_async_launch(self):
         """Parse source step trace files generated from async launch kernel."""
         log.info("Start to parse step trace file.")
-        source_file = validate_and_normalize_path(source_file)
-
         try:
-            with open(source_file, 'r') as f_obj:
+            with open(self._source_file_path, 'r') as f_obj:
                 for line in f_obj:
                     self._parse_one_step(line)
 
         except (IOError, OSError) as err:
-            log.warning(f'Failed to read {source_file}', err)
+            log.warning(f'Failed to read {self._source_file_path}', err)
             raise ProfilerIOException
 
         self._record_average_info()
@@ -571,30 +450,32 @@ class GpuStepTraceParser(BaseStepTraceParser):
 
 class AscendStepTraceParser(BaseStepTraceParser):
     """The parser for ascend step trace data."""
-    _event_size = 20
-    _fp_tag = 2
-    _bp_tag = 3
-    _step_trace_files = []
+    def __init__(self, *args, **kwargs):
+        super(AscendStepTraceParser, self).__init__(*args, **kwargs)
+        self._task_id_op_name_dict = {}
 
-    def record_point_info(self, point_info, output_path):
+    def set_task_id_op_name_dict(self, task_id_op_name_dict):
+        self._task_id_op_name_dict = task_id_op_name_dict
+
+    def record_point_info(self, output_path):
         """
         Record point info into json.
 
         Args:
-            point_info (dict): The point info about tag id and relative op name.
             output_path (str): The output path for saving point info.
 
         Returns:
             dict, parsed point info.
         """
+        point_info = self._tag_map
         if self._is_training_mode:
             points = {
-                'fp_start': point_info.get(self._fp_tag, ''),
-                'bp_end': point_info.get(self._bp_tag, '')
+                'fp_start': point_info.get(PointTag.FP_START.value, ''),
+                'bp_end': point_info.get(PointTag.BP_END.value, '')
             }
         else:
             points = {
-                'fp_start': point_info.get(self._fp_tag, ''),
+                'fp_start': point_info.get(PointTag.FP_START.value, ''),
             }
         if os.path.exists(output_path):
             return points
@@ -607,45 +488,132 @@ class AscendStepTraceParser(BaseStepTraceParser):
             raise ProfilerIOException
         return points
 
-    def _get_step_trace_files(self):
-        """Get step trace files."""
-        # step trace files may under $profiler_dir or $profiler_dir/data
-        if self._step_trace_files:
-            return self._step_trace_files
-
-        profiler_dir = self._input_dir
-        step_trace_files = self._search_file(profiler_dir)
-        if not step_trace_files:
-            # try to find step trace files under $profiler_dir/data
-            profiler_dir = os.path.join(profiler_dir, 'data')
-            step_trace_files = self._search_file(profiler_dir)
-        if not step_trace_files:
-            raise ProfilerPathErrorException('Training trace file does not exist.')
-        self._step_trace_files = step_trace_files
-
-        return step_trace_files
-
-    def _parse(self, source_files):
+    def _parse(self):
         """Parse source step trace files."""
         log.info("Start to parse step trace file.")
-        event_info = {}
-
-        for source_file in source_files:
-            source_file = validate_and_normalize_path(source_file)
-            try:
-                with open(source_file, 'rb') as handler:
-                    content = handler.read()
-                    for step_trace in self._get_next_step_trace(content, event_info):
-                        if self._skip_first_step:
-                            self._skip_first_step = False
-                            continue
-                        self._record_trace_event(step_trace)
-            except (IOError, OSError) as err:
-                log.warning(f'Failed to read {source_file}', err)
-                raise ProfilerIOException
-
+        ts_track_paths = self._list_ts_track_files(self._input_dir)
+        ts_tracks = self._list_ts_track_step_traces(ts_track_paths)
+        self._tag_map = self._construct_point_info(ts_tracks, self._task_id_op_name_dict)
+        self._save_step_trace_to_result(ts_tracks, self._skip_first_step)
         self._record_average_info()
         log.info("Finish to parse step trace file.")
+
+    @staticmethod
+    def _list_ts_track_files(input_dir):
+        """Ts track files have 4 types data, this function will list all files."""
+        step_trace_paths = []
+        data_dir = os.path.join(input_dir, 'data')
+        data_dir = os.path.realpath(data_dir)
+        for file in Path(data_dir).glob(r'ts_track*[0-9]'):
+            step_trace_paths.append(file.resolve())
+        if not step_trace_paths:
+            raise ProfilerRawFileException(f"Can not find any ts track files in {data_dir} when parse profiler data.")
+        step_trace_paths.sort()
+        log.info("Profiler found %d ts track files.", len(step_trace_paths))
+        return step_trace_paths
+
+    def _construct_point_info(self, ts_tracks, task_id_op_name_dict):
+        """This function can not support multi graph scenario."""
+        tag_map_task = {}
+        for ts_track in ts_tracks:
+            tag_map_task[ts_track['tagId']] = combine_stream_task_id(ts_track['streamId'], ts_track['taskId'])
+
+        tag_map_op = {}
+        for tag, task_id in tag_map_task.items():
+            tag_map_op[tag] = self._get_real_point_op_name(tag, task_id, task_id_op_name_dict)
+        return tag_map_op
+
+    def _get_real_point_op_name(self, tag, profiling_task_id, task_id_op_name_dict):
+        """Get real point op name from given tag and task id."""
+        # Currently, the given task id belongs to the profiling operator. We need to obtain the operator whose
+        # point is actually performed based on the tag.
+        # Inserting point operator rules:
+        # 1. model start profiling op -> fp start profiling op -> init-data op -> bp end profiling op -> iter end
+        # 2. model start -> other op... -> fp start -> Conv op ... -> bp end -> other op -> iter end
+        # 3. AllReduce profiling-op (tag:10000) -> AllReduce op -> AllReduce profiling op (tag: 10001)
+        task_ids = list(task_id_op_name_dict.keys())
+        op_names = list(task_id_op_name_dict.values())
+
+        cur_task_index = task_ids.index(profiling_task_id)
+        if tag == PointTag.MODEL_START.value:
+            real_index = cur_task_index + 1
+            is_fp_start_profiling_op = bool('Profiling-op' in op_names[real_index])
+            if is_fp_start_profiling_op:
+                real_index += 1
+        elif tag == PointTag.FP_START.value:
+            real_index = cur_task_index + 1
+        elif tag in (PointTag.BP_END.value, PointTag.ITER_END.value, PointTag.MODEL_END.value):
+            real_index = cur_task_index - 1
+        elif tag == PointTag.ITER_END.value:
+            real_index = cur_task_index - 1
+        elif self._is_all_reduce_tag(tag):
+            if tag % 2:
+                real_index = cur_task_index - 1
+            else:
+                real_index = cur_task_index + 1
+        else:
+            real_index = cur_task_index
+            log.warning("The tag id %s can not be identified.", tag)
+        return op_names[real_index]
+
+    @staticmethod
+    def _is_all_reduce_tag(tag):
+        return PointTag.MIN_ALL_REDUCE.value <= tag < PointTag.MAX_ALL_REDUCE.value
+
+    def _save_step_trace_to_result(self, ts_tracks, skip_step):
+        """Save step trace data to result."""
+        step_trace = {'reduce': defaultdict(list)}
+        for ts_track in ts_tracks:
+            if ts_track['rptType'] != STEP_TRACE_RPT_TYPE:
+                continue
+            step_trace['start'] = step_trace.get('end', '-')
+            self._construct_step_trace(ts_track, step_trace)
+
+            if step_trace.get('end'):
+                if not skip_step:
+                    self._record_trace_event(step_trace)
+                skip_step = False
+                start_time = step_trace.get('end', '-')
+                step_trace.clear()
+                step_trace['start'] = start_time
+                step_trace['reduce'] = defaultdict(list)
+
+    @staticmethod
+    def _list_ts_track_step_traces(ts_track_paths):
+        """List all ts track from ts track files."""
+        step_trace_size = StructType.sizeof(TS_TRACK_STEP_TRACE_STRUCT)
+        ts_tracks = []
+        for path in ts_track_paths:
+            try:
+                with open(path, 'rb') as fp:
+                    while True:
+                        binary_data = fp.read(step_trace_size)
+                        if len(binary_data) < step_trace_size:
+                            break
+                        unpacked_data = StructType.unpack_binary_data(TS_TRACK_STEP_TRACE_STRUCT, binary_data)
+                        if unpacked_data['rptType'] != STEP_TRACE_RPT_TYPE:
+                            continue
+                        ts_tracks.append(unpacked_data)
+            except (IOError, OSError) as err:
+                log.critical("Can not parse profiler file, open file %s failed, detail: %s.", path, str(err))
+                raise ProfilerIOException()
+        log.info("Profiler found %d ts track step trace data.", len(ts_tracks))
+        return ts_tracks
+
+    def _construct_step_trace(self, ts_track, step_trace):
+        """Construct step point data."""
+        timestamp = ts_track['timestamp']
+        tag_id = ts_track['tagId']
+        stream_id = ts_track['streamId']
+
+        if tag_id == PointTag.FP_START.value:
+            step_trace['fp'] = timestamp
+        elif tag_id == PointTag.BP_END.value:
+            step_trace['bp'] = timestamp
+        elif tag_id == PointTag.ITER_END.value:
+            step_trace['end'] = timestamp
+        elif self._is_all_reduce_tag(tag_id):
+            step_trace['reduce'][stream_id].append((tag_id, timestamp))
 
     def _get_single_reduce_event_info(self, field_name, start_point, end_point):
         """

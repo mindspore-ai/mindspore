@@ -32,7 +32,7 @@ TASK_DESC_STRUCT = dict(
     streamId=StructType.UINT32,
     taskId=StructType.UINT32,
     threadId=StructType.UINT32,
-    reserve=[StructType.UCHAR] * 16
+    reserve=[StructType.UINT8] * 16
 )
 
 STEP_INFO_STRUCT = dict(
@@ -44,8 +44,8 @@ STEP_INFO_STRUCT = dict(
     timeStamp=StructType.UINT64,
     curIterNum=StructType.UINT64,
     threadId=StructType.UINT32,
-    tag=StructType.UCHAR,
-    reserve=[StructType.UCHAR] * 27
+    tag=StructType.UINT8,
+    reserve=[StructType.UINT8] * 27
 )
 
 TENSOR_DATA_STRUCT = dict(
@@ -55,7 +55,7 @@ TENSOR_DATA_STRUCT = dict(
     curIterNum=StructType.UINT64,
     streamId=StructType.UINT32,
     taskId=StructType.UINT32,
-    tensorNum=[StructType.UCHAR] * 4,  # Note: Here the memory is aligned. The actual memory usage is 1, 3 is padding.
+    tensorNum=[StructType.UINT8] * 4,  # Note: Here the memory is aligned. The actual memory usage is 1, 3 is padding.
     tensorData=[[StructType.UINT32] * 11] * 5,
-    reserve=[StructType.UCHAR] * 8     # Note: Here the memory is aligned. The actual memory usage is 4, 4 is padding.
+    reserve=[StructType.UINT8] * 8     # Note: Here the memory is aligned. The actual memory usage is 4, 4 is padding.
 )
