@@ -39,21 +39,26 @@ int64_t EnvironMgr::Create() {
 
 EnvironPtr EnvironMgr::Get(int64_t handle) {
   mutex.lock_shared();
-  if (envs_.count(handle) > 0) {
-    return envs_[handle];
-  } else {
-    return nullptr;
+  const auto &envIter = envs_.find(handle);
+  if (envIter != envs_.end()) {
+    auto &result = envIter->second;
+    mutex.unlock_shared();
+    return result;
   }
-  mutex.unlock();
+
+  mutex.unlock_shared();
+  return nullptr;
 }
 
 void EnvironMgr::Clear() {
+  mutex.lock();
   for (auto &env : envs_) {
     MS_EXCEPTION_IF_NULL(env.second);
     env.second->Clear();
   }
 
   envs_.clear();
+  mutex.unlock();
 }
 
 bool EnvironMgr::CheckEnvInput(const CNodePtr &kernel_node) {
@@ -99,17 +104,15 @@ bool EnvironMgr::IsScalarTensor(TypeId type, std::vector<size_t> shape) {
     return false;
   }
 
-  if (shape.size() != kScalarTensorShapeDim) {
-    MS_LOG(ERROR) << "The shape size is invalid: " << shape.size();
-    return false;
+  if (shape.empty()) {
+    return true;
   }
 
-  if (shape[0] != kScalarTensorShapeSize) {
-    MS_LOG(ERROR) << "The shape is invalid: " << shape[0];
-    return false;
+  if ((shape.size() == kScalarTensorShapeDim) && (shape[0] == kScalarTensorShapeSize)) {
+    return true;
   }
 
-  return true;
+  return false;
 }
 }  // namespace kernel
 }  // namespace mindspore

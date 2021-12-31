@@ -41,6 +41,7 @@ void EnvironSetCPUKernel::InitKernel(const CNodePtr &node) {
   }
 
   value_type_attr_ = TypeId(AnfAlgo::GetNodeAttr<int>(node, kEnvValueTypeAttr));
+  MS_LOG(INFO) << "The EnvironSet kernel " << node->fullname_with_scope() << " value type: " << value_type_attr_;
   handle_size_ = sizeof(int64_t);
   key_size_ = sizeof(int64_t);
 
@@ -63,9 +64,6 @@ bool EnvironSetCPUKernel::Launch(const std::vector<AddressPtr> &inputs, const st
   auto input_key = GetDeviceAddress<int64_t>(inputs, 1);
   auto input_value = GetDeviceAddress<void>(inputs, 2);
   auto output_handle = GetDeviceAddress<int64_t>(outputs, 0);
-  if (input_handle != output_handle) {
-    MS_LOG(EXCEPTION) << "The EnvSet is ref kernel and the output handle is not equal of input handle.";
-  }
 
   // Get host handle and host key.
   int64_t host_handle = input_handle[0];
@@ -81,9 +79,15 @@ bool EnvironSetCPUKernel::Launch(const std::vector<AddressPtr> &inputs, const st
 
   // Set env member.
   const auto &env = EnvironMgr::GetInstance().Get(host_handle);
-  MS_EXCEPTION_IF_NULL(env);
+  if (env == nullptr) {
+    MS_LOG(EXCEPTION) << "Get the env failed, handle: " << host_handle << ", key: " << host_key;
+  }
   auto env_value = std::make_shared<EnvironValue>(value_ptr, value_size_, value_type_attr_, kGPUDevice);
   env->Set(host_key, env_value);
+
+  // Set output handle.
+  output_handle[0] = input_handle[0];
+  MS_LOG(DEBUG) << "Get output handle: " << output_handle[0];
 
   return true;
 }

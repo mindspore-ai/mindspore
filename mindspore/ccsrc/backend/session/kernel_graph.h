@@ -157,6 +157,7 @@ class KernelGraph : public FuncGraph {
   AnfNodePtr GetBackendAnfByFrontAnf(const AnfNodePtr &front_anf);
   // get front anf by backend anf
   AnfNodePtr GetFrontAnfByBackendAnf(const AnfNodePtr &backend_anf) const;
+  const mindspore::HashMap<AnfNodePtr, AnfNodePtr> &backend_front_anf_map() const { return backend_front_anf_map_; }
   // check backend node whether exist in map
   bool BackendNodeExistInFrontBackendMap(const AnfNodePtr &backend_anf);
   // get value node by tensor

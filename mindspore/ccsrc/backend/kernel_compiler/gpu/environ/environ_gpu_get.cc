@@ -34,6 +34,7 @@ bool EnvironGetGpuKernel::Init(const CNodePtr &kernel_node) {
   }
 
   value_type_attr_ = TypeId(AnfAlgo::GetNodeAttr<int>(kernel_node, kEnvValueTypeAttr));
+  MS_LOG(INFO) << "The EnvironGet kernel " << kernel_node->fullname_with_scope() << " value type: " << value_type_attr_;
   handle_size_ = sizeof(int64_t);
   key_size_ = sizeof(int64_t);
 
@@ -84,7 +85,9 @@ bool EnvironGetGpuKernel::Launch(const std::vector<AddressPtr> &inputs, const st
 
   // Get env and value by handle and key.
   const auto &env = EnvironMgr::GetInstance().Get(host_handle);
-  MS_EXCEPTION_IF_NULL(env);
+  if (env == nullptr) {
+    MS_LOG(EXCEPTION) << "Get the env failed, handle: " << host_handle << ", key: " << host_key;
+  }
   const auto &env_value = env->Get(host_key);
   // Default value.
   auto value = input_default_value;
