@@ -114,6 +114,7 @@
 #define kDefaulLiteMinSpinCount 1
 #define kDefaulLiteIosSpinCount 1
 #define DEFAULT_GROUP_NAME_LEN 101
+#define kValueThreshold6 6
 
 #if ENABLE_HIGH_PERFORMANCE
 #define MS_CHECK_TRUE_RET(value, errcode)

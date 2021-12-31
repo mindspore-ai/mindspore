@@ -47,15 +47,15 @@ bool ClipConvertActivationPass::Run(const FuncGraphPtr &graph) {
     MS_ASSERT(clip_cnode->size() >= kClipMinIndex);
     auto clip_c = GetValueNode<ops::PrimClipPtr>(clip_cnode->input(0));
     MS_ASSERT(clip_c != nullptr);
-    float max = -1;
-    float min = -1;
+    float max = FLT_MAX;
+    float min = -FLT_MAX;
     if (clip_c->GetAttr(ops::kMax) != nullptr) {
       max = clip_c->get_max();
     }
     if (clip_c->GetAttr(ops::kMin) != nullptr) {
       min = clip_c->get_min();
     }
-    if ((min == -1) && (max == -1)) {
+    if ((min == -FLT_MAX) && (max == FLT_MAX)) {
       if (clip_cnode->size() > kClipMinIndex) {
         auto min_tensor_info = GetTensorInfo(clip_cnode->input(kClipMinIndex));
         MS_CHECK_TRUE_MSG(min_tensor_info != nullptr, false, "min_tensor_info is nullptr");
@@ -65,8 +65,6 @@ bool ClipConvertActivationPass::Run(const FuncGraphPtr &graph) {
         }
         MS_CHECK_TRUE_MSG(min_tensor_info->data_c() != nullptr, false, "tensor data is nullptr");
         min = *reinterpret_cast<float *>(min_tensor_info->data_c());
-      } else {
-        min = FLT_MIN;
       }
 
       if (clip_cnode->size() > kClipMaxIndex) {
@@ -78,17 +76,18 @@ bool ClipConvertActivationPass::Run(const FuncGraphPtr &graph) {
         }
         MS_CHECK_TRUE_MSG(max_tensor_info->data_c() != nullptr, false, "tensor data is nullptr");
         max = *reinterpret_cast<float *>(max_tensor_info->data_c());
-      } else {
-        max = FLT_MAX;
       }
     }
     auto manager = graph->manager();
     MS_ASSERT(manager != nullptr);
     auto primitive_c = std::make_shared<mindspore::ops::Activation>();
     MS_CHECK_TRUE_MSG(primitive_c != nullptr, false, "primitive_c is nullptr");
-    primitive_c->Init(0, min, max, mindspore::RELU6);
-    if (min != 0 || max != 6) {
-      primitive_c->set_activation_type(mindspore::HARD_TANH);
+    primitive_c->Init(0, min, max, mindspore::HARD_TANH);
+    if (min == 0 && max == kValueThreshold6) {
+      primitive_c->set_activation_type(mindspore::RELU6);
+    }
+    if (min == 0 && max == FLT_MAX) {
+      primitive_c->set_activation_type(mindspore::RELU);
     }
     auto value_node = NewValueNode(primitive_c);
     MS_CHECK_TRUE_MSG(value_node != nullptr, false, "value_node is nullptr");

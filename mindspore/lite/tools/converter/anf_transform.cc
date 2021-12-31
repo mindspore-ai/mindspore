@@ -60,6 +60,7 @@
 #include "tools/optimizer/fusion/fullconnected_fusion.h"
 #include "tools/optimizer/fusion/add_concat_activation_fusion.h"
 #include "tools/optimizer/fusion/matmul_activation_fusion.h"
+#include "tools/optimizer/fusion/activation_fusion.h"
 #include "tools/optimizer/graph/add_tensor_array.h"
 #include "tools/optimizer/graph/redundant_op_remove_pass.h"
 #include "tools/optimizer/graph/clip_convert_activation_pass.h"
@@ -195,6 +196,7 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const converter::
   fusion_pm->AddPass(std::make_shared<opt::BatchMatMulFusion>());
   fusion_pm->AddPass(std::make_shared<opt::BatchNormToScaleFusion>());
   fusion_pm->AddPass(std::make_shared<opt::SigmoidMulFusion>());
+  fusion_pm->AddPass(std::make_shared<opt::ActivationFusion>());
   fusion_pm->AddPass(std::make_shared<opt::ConvActivationFusion>());
   fusion_pm->AddPass(std::make_shared<opt::ConvTupleGetItemFusion>());
   fusion_pm->AddPass(std::make_shared<opt::ConvTupleActivationFusion>());

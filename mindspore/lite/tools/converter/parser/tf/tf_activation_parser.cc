@@ -31,8 +31,12 @@ ops::PrimitiveC *TFActivationParser::Parse(const tensorflow::NodeDef &tf_op,
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   if (tf_op.op() == "Relu") {
     prim->set_activation_type(mindspore::ActivationType::RELU);
+    prim->set_min_val(0);
+    prim->set_max_val(FLT_MAX);
   } else if (tf_op.op() == "Relu6") {
     prim->set_activation_type(mindspore::ActivationType::RELU6);
+    prim->set_min_val(0);
+    prim->set_max_val(kValueThreshold6);
   } else if (tf_op.op() == "Sigmoid") {
     prim->set_activation_type(mindspore::ActivationType::SIGMOID);
   } else if (tf_op.op() == "Tanh") {

@@ -30,6 +30,8 @@ ops::PrimitiveC *TfliteReluParser::Parse(const std::unique_ptr<tflite::OperatorT
   auto prim = std::make_unique<ops::Activation>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   prim->set_activation_type(mindspore::ActivationType::RELU);
+  prim->set_min_val(0);
+  prim->set_max_val(FLT_MAX);
 
   return prim.release();
 }
@@ -40,6 +42,8 @@ ops::PrimitiveC *TfliteRelu6Parser::Parse(const std::unique_ptr<tflite::Operator
   auto prim = std::make_unique<ops::Activation>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   prim->set_activation_type(mindspore::ActivationType::RELU6);
+  prim->set_min_val(0);
+  prim->set_max_val(kValueThreshold6);
 
   return prim.release();
 }
