@@ -458,6 +458,10 @@ Model *Model::Import(const char *filename) {
 }
 
 int Model::Export(Model *model, char *buffer, size_t *len) {
+  if (model == nullptr || buffer == nullptr || len == nullptr) {
+    MS_LOG(ERROR) << "model, buffer or len is nullptr.";
+    return RET_ERROR;
+  }
   if (len == nullptr) {
     MS_LOG(ERROR) << "len is nullptr";
     return RET_ERROR;
@@ -485,6 +489,10 @@ int Model::Export(Model *model, char *buffer, size_t *len) {
 }
 
 int Model::Export(Model *model, const char *filename) {
+  if (model == nullptr || filename == nullptr) {
+    MS_LOG(ERROR) << "model or filename is nullptr.";
+    return RET_ERROR;
+  }
   auto *liteModel = reinterpret_cast<LiteModel *>(model);
   if (liteModel->buf_size_ == 0 || liteModel->buf == nullptr) {
     MS_LOG(ERROR) << "model buf is invalid";

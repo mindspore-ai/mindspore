@@ -59,6 +59,9 @@ InnerContext::InnerContext(const Context *context) {
 }
 
 void InnerContext::SetContextDevice(const Context *context) {
+  if (context == nullptr) {
+    return;
+  }
   this->device_list_.clear();
 
   if (context->device_list_.size() > kMaxLiteContextDeviceNums || context->device_list_.size() <= 0) {

@@ -239,6 +239,7 @@ int LiteOpActor::CompileArrowThroughPartialCall() {
     }
     partial_node_ = partial_node;
     auto subgraph = reinterpret_cast<kernel::PartialFusionKernel *>(partial_node->kernel())->subgraph_kernel();
+    MS_CHECK_TRUE_MSG(subgraph != nullptr, RET_NULL_PTR, "partial's subgraph is nullptr.");
     auto out_actor_id = subgraph_to_actor_.at(subgraph);
 
     kernel_->set_out_tensors(partial_node->in_tensors());
@@ -475,6 +476,7 @@ int LiteSwitchOpActor::CompileFalseBranchArrow() {
     return RET_NULL_PTR;
   }
   auto subgraph = static_cast<kernel::PartialFusionKernel *>(false_partial_node_->kernel())->subgraph_kernel();
+  MS_CHECK_TRUE_MSG(subgraph != nullptr, RET_NULL_PTR, "partial's subgraph is nullptr.");
   auto false_branch_actor_id = subgraph_to_actor_.at(subgraph);
 
   for (size_t i = 0; i < false_partial_node_->in_tensors().size(); ++i) {

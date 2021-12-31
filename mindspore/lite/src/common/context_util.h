@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_LITE_SRC_COMMON_CONTEXT_UTIL_H_
 #define MINDSPORE_LITE_SRC_COMMON_CONTEXT_UTIL_H_
 
-#include <set>
 #include <string>
 #include "include/context.h"
 #include "include/api/context.h"

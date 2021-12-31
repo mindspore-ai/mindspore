@@ -71,6 +71,7 @@ class LiteModel : public Model {
       MS_CHECK_TRUE_MSG(c_node != nullptr, false, "get as cnode fail!");
 #ifdef ENABLE_MODEL_OBF
       auto src_prim = reinterpret_cast<const schema::Primitive *>(c_node->primitive());
+      MS_CHECK_TRUE_MSG(src_prim != nullptr, false, "cast to src_prim fail!");
       auto src_prim_type = src_prim->value_type();
       unsigned char *dst_prim = nullptr;
       if (src_prim_type == schema::PrimitiveType_GenOP) {

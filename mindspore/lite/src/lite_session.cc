@@ -132,8 +132,7 @@ void LiteSession::ConvertTensorsQuantParam(const schema::Tensor *src_tensor, lit
   }
 }
 
-int LiteSession::ConvertTensorsData(const lite::Model *model, size_t tensor_index, const schema::Tensor *src_tensor,
-                                    lite::Tensor *dst_tensor) {
+int LiteSession::ConvertTensorsData(size_t tensor_index, const schema::Tensor *src_tensor, lite::Tensor *dst_tensor) {
   MS_ASSERT(src_tensor != nullptr);
   MS_ASSERT(dst_tensor != nullptr);
   if (src_tensor->data() == nullptr || src_tensor->data()->size() <= 0) {
@@ -235,7 +234,7 @@ int LiteSession::ConvertTensors(const lite::Model *model) {
       MS_LOG(ERROR) << "Convert new " << i << "th tensor failed!";
       return RET_NULL_PTR;
     }
-    auto ret = ConvertTensorsData(model, i, src_tensor, dst_tensor);
+    auto ret = ConvertTensorsData(i, src_tensor, dst_tensor);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Convert data of " << i << "th tensor failed";
       delete dst_tensor;
