@@ -9,7 +9,7 @@ endif()
 
 if(WIN32)
     mindspore_add_pkg(sqlite
-        VER 3.32.2
+        VER 3.36.0
         LIBS sqlite3
         URL https://sqlite.org/2021/sqlite-amalgamation-3360000.zip
         MD5 c5d360c74111bafae1b704721ff18fe6
