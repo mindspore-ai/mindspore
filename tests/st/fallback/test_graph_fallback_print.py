@@ -200,3 +200,28 @@ def test_print_validate_tuple():
         print("res1: ", res1)
         print("res2: ", res2)
     assert "Should not use Python object in runtime" in str(err.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_print_validate():
+    """
+    Feature: JIT Fallback
+    Description: Support print.
+    Expectation: No exception.
+    """
+    @ms_function
+    def print_func():
+        np_x = np.array([1, 2, 3, 4, 5])
+        np_y = np.array([1, 2, 3, 4, 5])
+        np_sum = np_x + np_y
+        print("np_sum: ", np_sum)
+        return np_sum
+
+    with pytest.raises(RuntimeError) as err:
+        res = print_func()
+        print("res: ", res)
+    assert "Should not use Python object in runtime" in str(err.value)

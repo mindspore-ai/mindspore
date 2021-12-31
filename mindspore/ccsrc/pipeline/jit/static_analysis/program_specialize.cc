@@ -294,6 +294,7 @@ void FuncGraphSpecializer::ProcessNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   ScopeGuard scope_guard(node->scope());
   AnfNodeConfigPtr conf = MakeConfig(node);
+  TraceGuard guard(std::make_shared<TraceCopy>(node->debug_info()));
   AnfNodePtr new_node = GetReplicatedNode(node);
   MS_EXCEPTION_IF_NULL(new_node);
   if (new_node->func_graph() != specialized_func_graph_) {

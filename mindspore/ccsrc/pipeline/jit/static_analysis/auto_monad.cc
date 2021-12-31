@@ -1445,6 +1445,7 @@ class AutoMonadConverter {
 
   void AttachToOutput(const AnfNodePtr &node) const {
     auto output = GetGraphOutput();
+    TraceGuard guard(std::make_shared<TraceCopy>(output->debug_info()));
     auto depend = NewValueNode(prim::kPrimDepend);
     // If isolated nodes dependencies exist.
     if (IsPrimitiveCNode(output, prim::kPrimDepend) &&
