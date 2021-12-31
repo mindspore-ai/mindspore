@@ -41,10 +41,10 @@ TypePtr ImagInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePt
   auto input_tensor = input_type->cast<TensorTypePtr>();
   TypeId input_tensor_id = input_tensor->element()->type_id();
   if (input_tensor_id == kNumberTypeComplex64) {
-    return kFloat32;
+    return kTensorTypeFP32;
   }
   if (input_tensor_id == kNumberTypeComplex128) {
-    return kFloat64;
+    return kTensorTypeFP64;
   }
   return input_type;
 }

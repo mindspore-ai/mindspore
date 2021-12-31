@@ -51,7 +51,8 @@ static mindspore::HashMap<int, mind_ir::TensorProto_DataType> g_data_type_map = 
   {kNumberTypeFloat32, mind_ir::TensorProto_DataType_FLOAT},
   {kNumberTypeFloat64, mind_ir::TensorProto_DataType_DOUBLE},
   {kObjectTypeString, mind_ir::TensorProto_DataType_STRING},
-};
+  {kNumberTypeComplex64, mind_ir::TensorProto_DataType_COMPLEX64},
+  {kNumberTypeComplex128, mind_ir::TensorProto_DataType_COMPLEX128}};
 
 static mindspore::HashMap<int, mind_ir::TensorProto_DataType> g_data_bits_int_map = {
   {8, mind_ir::TensorProto_DataType_INT8},
