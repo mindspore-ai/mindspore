@@ -581,11 +581,6 @@ class Parameter(Tensor_):
         obj.sliced = set_sliced
         return obj
 
-    def __del__(self):
-        if hasattr(self, "init_param_info"):
-            if self.init_param_info is True and context.get_context("mode") == context.GRAPH_MODE:
-                self.param_info = None
-
 
 class ParameterTuple(tuple):
     """
