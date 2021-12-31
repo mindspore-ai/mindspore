@@ -92,7 +92,7 @@ void SchedulerNode::RunRecovery() {
   node_manager_.set_next_server_rank_id(clusterConfig.initial_next_server_rank_id);
   node_manager_.set_total_node_num(clusterConfig.initial_total_node_num);
 
-  for (const auto kvs : initial_node_infos) {
+  for (const auto &kvs : initial_node_infos) {
     auto client = std::make_shared<TcpClient>(kvs.second.ip_, kvs.second.port_, config_.get());
     client->SetMessageCallback(
       [&](const std::shared_ptr<MessageMeta> &meta, const Protos &protos, const void *data, size_t size) {
@@ -1348,7 +1348,7 @@ void SchedulerNode::BroadcastTimeoutEvent() {
   auto initial_node_infos = clusterConfig.initial_registered_nodes_infos;
   const uint32_t event = static_cast<uint32_t>(ps::UserDefineEvent::kNodeTimeout);
   MS_LOG(INFO) << "Broad timeout event:" << event;
-  for (const auto kvs : initial_node_infos) {
+  for (const auto &kvs : initial_node_infos) {
     auto client = GetOrCreateClient(kvs.second);
     SendEvent(client, event);
   }

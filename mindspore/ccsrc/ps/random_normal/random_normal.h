@@ -16,6 +16,7 @@
 #ifndef MINDSPORE_CCSRC_PS_RANDOM_NORMAL_RANDOM_NORMAL_H_
 #define MINDSPORE_CCSRC_PS_RANDOM_NORMAL_RANDOM_NORMAL_H_
 #include <vector>
+#include <cstddef>
 
 namespace mindspore {
 namespace ps {

@@ -102,7 +102,7 @@ void FileConfiguration::PersistNodes(const core::ClusterConfig &clusterConfig) c
   persist_js[kRecoveryNextServerRankId] = clusterConfig.initial_next_server_rank_id;
 
   auto node_infos = clusterConfig.initial_registered_nodes_infos;
-  for (const auto kvs : node_infos) {
+  for (const auto &kvs : node_infos) {
     std::unordered_map<std::string, std::string> res;
     res["ip"] = kvs.second.ip_;
     res["port"] = std::to_string(kvs.second.port_);

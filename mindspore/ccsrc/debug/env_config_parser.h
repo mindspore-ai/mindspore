@@ -20,6 +20,7 @@
 #include <map>
 #include <set>
 #include <mutex>
+#include <optional>
 #include "nlohmann/json.hpp"
 #include "utils/ms_utils.h"
 namespace mindspore {

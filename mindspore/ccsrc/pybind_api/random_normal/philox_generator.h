@@ -18,6 +18,7 @@
 #include <securec.h>
 #include <math.h>
 #include <array>
+#include <cstdint>
 
 namespace mindspore {
 static constexpr int gResultNum = 4;
