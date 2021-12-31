@@ -124,7 +124,7 @@ class NodeManager {
   void setPersistCallback(const OnPersist &onPersist);
 
   // Query node information by node id.
-  const NodeInfo &QueryNodeInfo(const std::string &node_id) const;
+  const NodeInfo QueryNodeInfo(const std::string &node_id) const;
 
   // Determine whether the node is in persistent.
   bool IsNodePersisting(const std::string &node_id) const;

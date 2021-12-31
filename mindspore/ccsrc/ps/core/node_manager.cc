@@ -359,10 +359,11 @@ bool NodeManager::IsNodeRegistered(const std::string &node_id) {
   return false;
 }
 
-const NodeInfo &NodeManager::QueryNodeInfo(const std::string &node_id) const {
+const NodeInfo NodeManager::QueryNodeInfo(const std::string &node_id) const {
   auto iter = registered_nodes_info_.find(node_id);
   if (iter == registered_nodes_info_.end()) {
-    MS_LOG(EXCEPTION) << "Cannot find node of id: " << node_id;
+    MS_LOG(DEBUG) << "Cannot find node of id: " << node_id;
+    return NodeInfo();
   }
   return iter->second;
 }

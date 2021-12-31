@@ -17,6 +17,8 @@
 #include "ps/core/comm_util.h"
 
 #include <arpa/inet.h>
+#include <unistd.h>
+#include <sys/stat.h>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -227,6 +229,27 @@ bool CommUtil::IsFileEmpty(const std::string &file) {
   fs.close();
 
   return str.empty();
+}
+
+bool CommUtil::CreateDirectory(const std::string &directoryPath) {
+  uint32_t dirPathLen = directoryPath.length();
+  uint32_t MAX_PATH_LEN = 512;
+  if (dirPathLen > MAX_PATH_LEN) {
+    return false;
+  }
+  char tmpDirPath[MAX_PATH_LEN] = {0};
+  for (uint32_t i = 0; i < dirPathLen; ++i) {
+    tmpDirPath[i] = directoryPath[i];
+    if (tmpDirPath[i] == '/') {
+      if (access(tmpDirPath, 0) != 0) {
+        int32_t ret = mkdir(tmpDirPath, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+        if (ret != 0) {
+          return false;
+        }
+      }
+    }
+  }
+  return true;
 }
 
 std::string CommUtil::ClusterStateToString(const ClusterState &state) {

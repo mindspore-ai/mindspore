@@ -38,10 +38,10 @@ void AbstractNode::Register(const std::shared_ptr<TcpClient> &client) {
   MS_LOG(INFO) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
                << " the node id:" << node_info_.node_id_ << " begin to register to the scheduler!";
 
-  if (!SendMessageSync(client, message_meta, Protos::PROTOBUF, register_message.SerializeAsString().data(),
-                       register_message.ByteSizeLong())) {
-    MS_LOG(EXCEPTION) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
-                      << " the node id:" << node_info_.node_id_ << " register timeout!";
+  if (!SendMessageAsync(client, message_meta, Protos::PROTOBUF, register_message.SerializeAsString().data(),
+                        register_message.ByteSizeLong())) {
+    MS_LOG(ERROR) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
+                  << " the node id:" << node_info_.node_id_ << " register timeout!";
   } else {
     MS_LOG(INFO) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
                  << " the node id:" << node_info_.node_id_ << " send register success!";

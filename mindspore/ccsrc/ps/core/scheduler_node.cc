@@ -144,15 +144,18 @@ void SchedulerNode::ProcessHeartbeat(const std::shared_ptr<TcpServer> &server,
   HeartbeatRespMessage heartbeat_resp_message;
   heartbeat_resp_message.set_persistent_cmd(PersistentCommand::DEFAULT);
 
-  NodeRole node_role = (node_manager_.QueryNodeInfo(node_id)).node_role_;
-  // The worker role does not support disaster recovery for the time being.
-  if (node_role == NodeRole::SERVER && persistent_cmd_ == PersistentCommand::BEGIN_PERSIST) {
-    if (!node_manager_.IsNodePersisting(node_id)) {
-      heartbeat_resp_message.set_persistent_cmd(PersistentCommand::BEGIN_PERSIST);
-      node_manager_.AddPersistingNode(node_id);
-    }
-    if (node_manager_.IsAllNodeInPersisting()) {
-      persistent_cmd_ = PersistentCommand::DEFAULT;
+  NodeInfo nodeInfo = node_manager_.QueryNodeInfo(node_id);
+  if (nodeInfo.node_id_ != "") {
+    // The worker role does not support disaster recovery for the time being.
+    NodeRole node_role = nodeInfo.node_role_;
+    if (node_role == NodeRole::SERVER && persistent_cmd_ == PersistentCommand::BEGIN_PERSIST) {
+      if (!node_manager_.IsNodePersisting(node_id)) {
+        heartbeat_resp_message.set_persistent_cmd(PersistentCommand::BEGIN_PERSIST);
+        node_manager_.AddPersistingNode(node_id);
+      }
+      if (node_manager_.IsAllNodeInPersisting()) {
+        persistent_cmd_ = PersistentCommand::DEFAULT;
+      }
     }
   }
 

@@ -134,6 +134,7 @@ class CommUtil {
   static bool verifyExtendedAttributes(const X509 *caCert);
   static void verifyCertPipeline(const X509 *caCert, const X509 *subCert);
   static bool checkCRLTime(const std::string &crlPath);
+  static bool CreateDirectory(const std::string &directoryPath);
 
  private:
   static std::random_device rd;
