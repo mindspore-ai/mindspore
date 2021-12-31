@@ -86,6 +86,9 @@ std::vector<PrimitivePtr> GetExpandOps() {
     {kCPUDevice, OpLevel_1, prim::kPrimMaximumGrad},
     {kCPUDevice, OpLevel_1, prim::kPrimMinimumGrad},
     {kCPUDevice, OpLevel_1, prim::kPrimAdam},
+    {kCPUDevice, OpLevel_1, prim::kPrimTanhGrad},
+    {kCPUDevice, OpLevel_1, prim::kPrimSoftplus},
+    {kCPUDevice, OpLevel_1, prim::kPrimSoftplusGrad},
   };
   const auto &flags = GraphKernelFlags::GetInstance();
   return GkUtils::GetValidOps(expand_ops_with_level, flags.fusion_ops_level, flags.enable_expand_ops_only,
