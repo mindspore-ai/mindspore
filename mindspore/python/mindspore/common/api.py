@@ -215,6 +215,14 @@ class _MindsporeFunctionExecutor:
         init_phase = "init_subgraph" + graph_name[graph_name.find("."):]
         _exec_init_graph(self.obj, init_phase)
 
+    def _set_compile_cache_dep_files(self):
+        # If enable compile cache, get the dependency files list
+        enable_compile_cache = context.get_context("enable_compile_cache")
+        if enable_compile_cache is None:
+            enable_compile_cache = os.getenv('MS_COMPILER_CACHE_ENABLE')
+        if enable_compile_cache is True or enable_compile_cache == "1":
+            self._graph_executor.set_compile_cache_dep_files(_get_compile_cache_dep_files())
+
     def compile(self, args_list, method_name):
         """Returns pipeline for the given args."""
         # Verify the signature for both function and method
@@ -254,6 +262,9 @@ class _MindsporeFunctionExecutor:
         phase = generate_name + '.' + str(key)
         if phase in ms_compile_cache:
             return phase
+
+        # If enable compile cache, get the dependency files list and set to graph executor.
+        self._set_compile_cache_dep_files()
 
         if self.obj is None:
             is_compile = self._graph_executor.compile(self.fn, args_list, phase, True)
