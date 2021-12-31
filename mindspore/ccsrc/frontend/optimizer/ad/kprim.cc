@@ -713,6 +713,7 @@ void KPrim::TransformArgsForFuncGraph(const FuncGraphManagerPtr &mng, const Func
 }
 
 void KPrim::CheckBprop(const FuncGraphPtr &bprop_fg, const string &prim_to_check) {
+  TraceGuard guard(std::make_shared<TraceCopy>(bprop_fg->return_node()->debug_info()));
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   bool check_bprop_flag = context->get_param<bool>(MS_CTX_CHECK_BPROP_FLAG);

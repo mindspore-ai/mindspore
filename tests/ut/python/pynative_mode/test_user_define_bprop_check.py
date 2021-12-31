@@ -209,4 +209,4 @@ def test_user_define_bprop_check_number():
     grad_net = GradNet(net)
     with pytest.raises(TypeError) as ex:
         ret = grad_net(x, y, sens)
-    assert "For user defined bprop of net" in str(ex.value)
+    assert "For user defined method 'bprop' of net" in str(ex.value)
