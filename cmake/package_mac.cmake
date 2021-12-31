@@ -73,12 +73,8 @@ install(
 )
 
 if(USE_GLOG)
-    file(GLOB_RECURSE GLOG_LIB_LIST ${glog_LIBPATH}/libmindspore_glog*)
-    install(
-        FILES ${GLOG_LIB_LIST}
-        DESTINATION ${INSTALL_LIB_DIR}
-        COMPONENT mindspore
-    )
+    install(FILES ${glog_LIBPATH}/libmindspore_glog.0.4.0.dylib
+        DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_glog.0.dylib COMPONENT mindspore)
 endif()
 
 install(FILES ${libevent_LIBPATH}/libevent-2.1.7.dylib
@@ -101,14 +97,16 @@ if(ENABLE_CPU AND NOT WIN32)
 endif()
 
 if(MS_BUILD_GRPC)
-    file(GLOB_RECURSE GRPC_LIB_LIST
-        ${grpc_LIBPATH}/libmindspore*
-    )
-    install(
-        FILES ${GRPC_LIB_LIST}
-        DESTINATION ${INSTALL_LIB_DIR}
-        COMPONENT mindspore
-    )
+    install(FILES ${grpc_LIBPATH}/libmindspore_grpc++.1.36.1.dylib
+        DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_grpc++.1.dylib COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libmindspore_grpc.15.0.0.dylib
+        DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_grpc.15.dylib COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libmindspore_gpr.15.0.0.dylib
+        DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_gpr.15.dylib COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libmindspore_upb.15.0.0.dylib
+        DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_upb.15.dylib COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libmindspore_address_sorting.15.0.0.dylib
+        DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_address_sorting.15.dylib COMPONENT mindspore)
 endif()
 
 if(ENABLE_MINDDATA)
@@ -118,49 +116,26 @@ if(ENABLE_MINDDATA)
         COMPONENT mindspore
     )
 
-    file(GLOB_RECURSE OPENCV_LIB_LIST
-        ${opencv_LIBPATH}/libopencv_core*
-        ${opencv_LIBPATH}/libopencv_imgcodecs*
-        ${opencv_LIBPATH}/libopencv_imgproc*
-    )
-    install(
-        FILES ${OPENCV_LIB_LIST}
-        DESTINATION ${INSTALL_LIB_DIR}
-        COMPONENT mindspore
-    )
-    file(GLOB_RECURSE JPEG_LIB_LIST
-        ${jpeg_turbo_LIBPATH}/*.dylib
-    )
-    install(
-        FILES ${JPEG_LIB_LIST}
-        DESTINATION ${INSTALL_LIB_DIR}
-        COMPONENT mindspore
-    )
-    file(GLOB_RECURSE TINYXML2_LIB_LIST ${tinyxml2_LIBPATH}/libtinyxml2*)
-    install(
-        FILES ${TINYXML2_LIB_LIST}
-        DESTINATION ${INSTALL_LIB_DIR}
-        COMPONENT mindspore
-    )
-    file(GLOB_RECURSE ICU4C_LIB_LIST
-        ${icu4c_LIBPATH}/libicuuc*
-        ${icu4c_LIBPATH}/libicudata*
-        ${icu4c_LIBPATH}/libicui18n*
-    )
-    install(
-        FILES ${ICU4C_LIB_LIST}
-        DESTINATION ${INSTALL_LIB_DIR}
-        COMPONENT mindspore
-    )
+    install(FILES ${opencv_LIBPATH}/libopencv_core.4.5.2.dylib
+        DESTINATION ${INSTALL_LIB_DIR} RENAME libopencv_core.4.5.dylib COMPONENT mindspore)
+    install(FILES ${opencv_LIBPATH}/libopencv_imgcodecs.4.5.2.dylib
+        DESTINATION ${INSTALL_LIB_DIR} RENAME libopencv_imgcodecs.4.5.dylib COMPONENT mindspore)
+    install(FILES ${opencv_LIBPATH}/libopencv_imgproc.4.5.2.dylib
+        DESTINATION ${INSTALL_LIB_DIR} RENAME libopencv_imgproc.4.5.dylib COMPONENT mindspore)
+    install(FILES ${tinyxml2_LIBPATH}/libtinyxml2.8.0.0.dylib
+        DESTINATION ${INSTALL_LIB_DIR} RENAME libtinyxml2.8.dylib COMPONENT mindspore)
+
+    install(FILES ${icu4c_LIBPATH}/libicuuc.67.1.dylib
+        DESTINATION ${INSTALL_LIB_DIR} RENAME libicuuc.67.dylib COMPONENT mindspore)
+    install(FILES ${icu4c_LIBPATH}/libicudata.67.1.dylib
+        DESTINATION ${INSTALL_LIB_DIR} RENAME libicudata.67.dylib COMPONENT mindspore)
+    install(FILES ${icu4c_LIBPATH}/libicui18n.67.1.dylib
+        DESTINATION ${INSTALL_LIB_DIR} RENAME libicui18n.67.dylib COMPONENT mindspore)
 endif()
 
 if(ENABLE_CPU)
-    file(GLOB_RECURSE DNNL_LIB_LIST ${onednn_LIBPATH}/libdnnl*)
-    install(
-        FILES ${DNNL_LIB_LIST}
-        DESTINATION ${INSTALL_LIB_DIR}
-        COMPONENT mindspore
-    )
+    install(FILES ${onednn_LIBPATH}/libdnnl.2.2.dylib
+        DESTINATION ${INSTALL_LIB_DIR} RENAME libdnnl.2.dylib COMPONENT mindspore)
     install(
         TARGETS nnacl
         DESTINATION ${INSTALL_LIB_DIR}
@@ -199,17 +174,6 @@ if(ENABLE_GPU)
         COMPONENT mindspore
     )
 endif()
-
-get_filename_component(CXX_DIR ${CMAKE_CXX_COMPILER} PATH)
-file(GLOB CXX_LIB_LIST ${CXX_DIR}/*.dylib)
-
-file(GLOB JPEG_LIB_LIST ${jpeg_turbo_LIBPATH}/*.dylib)
-file(GLOB SQLITE_LIB_LIST ${sqlite_LIBPATH}/*.dylib)
-install(
-    FILES ${CXX_LIB_LIST} ${SQLITE_LIB_LIST}
-    DESTINATION ${INSTALL_LIB_DIR}
-    COMPONENT mindspore
-)
 
 # set python files
 file(GLOB MS_PY_LIST ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/*.py)

@@ -97,9 +97,14 @@ if(CPACK_ENABLE_SYM_FILE)
 endif()
 
 if("${CPACK_CMAKE_BUILD_TYPE}" STREQUAL "Release")
+    if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
+        set(CMAKE_STRIP_ARGS "-x")
+    else()
+        set(CMAKE_STRIP_ARGS "")
+    endif()
     foreach(schema ${DEBUG_STRIP_SYM})
     execute_process(
-        COMMAND ${CMAKE_STRIP} ${schema}
+        COMMAND ${CMAKE_STRIP} ${CMAKE_STRIP_ARGS} ${schema}
         WORKING_DIRECTORY ${MS_PACK_ROOT_DIR}
     )
     endforeach()
