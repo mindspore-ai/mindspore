@@ -174,14 +174,13 @@ FuncGraphPtr BuildFakeBProp(const PrimitivePtr &prim, size_t inputs_num) {
 
   auto fake_bprop = std::make_shared<Primitive>("fake_bprop");
   (void)fake_bprop->AddAttr("info", MakeValue("Primitive " + prim->name() + "'s bprop not defined."));
-  auto fake_input_sens = func_graph->NewCNode({NewValueNode(fake_bprop), NewValueNode(true)});
 
   for (size_t i = 0; i < inputs_num; ++i) {
     // Mock params for inputs
     auto param = func_graph->add_parameter();
     MS_EXCEPTION_IF_NULL(param);
     // Mock derivatives for each inputs
-    outputs.push_back(fake_input_sens);
+    outputs.push_back(func_graph->NewCNode({NewValueNode(fake_bprop), param}));
   }
   // mock params for out and dout
   (void)func_graph->add_parameter();
