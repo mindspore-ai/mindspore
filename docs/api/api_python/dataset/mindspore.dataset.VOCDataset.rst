@@ -3,48 +3,53 @@ mindspore.dataset.VOCDataset
 
 .. py:class:: mindspore.dataset.VOCDataset(dataset_dir, task='Segmentation', usage='train', class_indexing=None, num_samples=None, num_parallel_workers=None, shuffle=None, decode=False, sampler=None, num_shards=None, shard_id=None, cache=None, extra_metadata=False)
 
-    用于读取和解析VOC数据集的源数据集文件。
-
-    根据给定的task配置，数据集会生成不同的输出列：
-
-    - task = `Detection`，输出列： `[image, dtype=uint8]`, `[bbox, dtype=float32]`, `[label, dtype=uint32]`, `[difficult, dtype=uint32]`, `[truncate, dtype=uint32]`。
-    - task = `Segmentation`，输出列： `[image, dtype=uint8]`, `[target,dtype=uint8]`。
+    读取和解析VOC数据集的源文件构建数据集。
 
     **参数：**
 
     - **dataset_dir** (str): 包含数据集文件的根目录的路径。
-    - **task** (str, 可选): 指定读取VOC数据的任务类型，现在只支持 `Segmentation` 或 `Detection` （默认值 `Segmentation` ）。
-    - **usage** (str, 可选): 指定数据集的子集（默认值 `train` ）。如果 `task` 参数为 `Segmentation` ，则将在./ImageSets/Segmentation/usage + ".txt"中加载数据集图像和标注信息；如果 `task` 参数为 `Detection` ，则将在./ImageSets/Main/usage + ".txt"中加载数据集图像和标注信息；如果未设置任务和用法，默认将加载./ImageSets/Segmentation/train.txt中的数据集图像和标注信息。
-    - **class_indexing** (dict, 可选): 指定标签名称到类标签的映射，要求映射规则为str到int，仅在 `Detection` 任务中有效（默认值None，文件夹名称将按字母顺序排列，每类都有一个唯一的索引，从0开始)。
-    - **num_samples** (int, 可选): 指定从数据集中读取的样本数（默认值为None，所有图像样本）。
-    - **num_parallel_workers** (int, 可选): 指定读取数据的工作线程数（默认值None，即使用mindspore.dataset.config中配置的线程数）。
-    - **shuffle** (bool, 可选): 是否混洗数据集（默认为None，下表中会展示不同配置的预期行为）。
-    - **decode** (bool, 可选): 是否对读取的图像进行解码操作（默认值为False）。
-    - **sampler** (Sampler, 可选): 指定从数据集中选取样本的采样器（默认为None，下表中会展示不同配置的预期行为）。
-    - **num_shards** (int, 可选): 分布式训练时，将数据集划分成指定的分片数（默认值None）。指定此参数后， `num_samples` 表示每个分片的最大样本数。
-    - **shard_id** (int, 可选): 分布式训练时，指定使用的分片ID号（默认值None）。只有当指定了 `num_shards` 时才能指定此参数。
-    - **cache** (DatasetCache, 可选): 数据缓存客户端实例，用于加快数据集处理速度（默认为None，不使用缓存）。
-    - **extra_metadata** (bool, 可选): 用于指定是否额外输出一列数据用于表示图像元信息。如果为True，则将额外输出一列数据，名为 `[_meta-filename, dtype=string]` （默认值为False）。
+    - **task** (str, 可选): 指定读取VOC数据的任务类型，现在只支持'Segmentation'和'Detection'。默认值：'Segmentation'。
+    - **usage** (str, 可选): 指定数据集的子集，默认值：'train'。
+
+      - 如果 'task' 的值为 'Segmentation'，则读取 'ImageSets/Segmentation/' 目录下定义的图片和label信息；
+      - 如果 'task' 的值为 'Detection' ，则读取 'ImageSets/Main/' 目录下定义的图片和label信息。
+    - **class_indexing** (dict, 可选): 指定一个从label名称到label索引的映射，要求映射规则为string到int。索引值从0开始，并且要求每个label名称对应的索引值唯一。
+      仅在 'Detection' 任务中有效。默认值：None，不指定。
+    - **num_samples** (int, 可选): 指定从数据集中读取的样本数。默认值：None，所有图像样本。
+    - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用mindspore.dataset.config中配置的线程数。
+    - **shuffle** (bool, 可选) - 是否混洗数据集。默认值：None，下表中会展示不同参数配置的预期行为。
+    - **decode** (bool, 可选) - 是否对读取的图片进行解码操作，默认值：False，不解码。
+    - **sampler** (Sampler, 可选) - 指定从数据集中选取样本的采样器，默认值：None，下表中会展示不同配置的预期行为。
+    - **num_shards** (int, 可选) - 指定分布式训练时将数据集进行划分的分片数，默认值：None。指定此参数后， `num_samples` 表示每个分片的最大样本数。
+    - **shard_id** (int, 可选) - 指定分布式训练时使用的分片ID号，默认值：None。只有当指定了 `num_shards` 时才能指定此参数。
+    - **cache** (DatasetCache, 可选) - 单节点数据缓存服务，用于加快数据集处理，详情请阅读`单节点数据缓存 <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/cache.html>`_ 。默认值：None，不使用缓存。
+    - **extra_metadata** (bool, 可选) - 用于指定是否额外输出一个数据列用于表示图片元信息。如果为True，则将额外输出一个名为 `[_meta-filename, dtype=string]` 的数据列，默认值：False。
+
+    根据给定的`task`配置，生成数据集具有不同的输出列：
+
+    - `task` = 'Detection'，输出列： `[image, dtype=uint8]`, `[bbox, dtype=float32]`, `[label, dtype=uint32]`, `[difficult, dtype=uint32]`, `[truncate, dtype=uint32]`。
+    - `task` = 'Segmentation'，输出列： `[image, dtype=uint8]`, `[target, dtype=uint8]`。
 
     **异常：**
 
-    - **RuntimeError** - `dataset_dir` 不包含任何数据文件。
-    - **RuntimeError** - `num_parallel_workers` 超过系统最大线程数。
-    - **RuntimeError** - 标注的xml文件格式异常或无效。
-    - **RuntimeError** - 标注的xml文件缺失 `object` 属性。
-    - **RuntimeError** - 标注的xml文件缺失 `bndbox` 属性。
-    - **RuntimeError** - 同时指定了 `sampler` 和 `shuffle` 。
-    - **RuntimeError** - 同时指定了 `sampler` 和 `num_shards` 。
+    - **RuntimeError** - `dataset_dir` 路径下不包含任何数据文件。
+    - **RuntimeError** - `num_parallel_workers` 参数超过系统最大线程数。
+    - **RuntimeError** - 读取的xml文件格式异常或无效。
+    - **RuntimeError** - 读取的xml文件缺失 `object` 属性。
+    - **RuntimeError** - 读取的xml文件缺失 `bndbox` 属性。
+    - **RuntimeError** - 同时指定了 `sampler` 和 `shuffle` 参数。
+    - **RuntimeError** - 同时指定了 `sampler` 和 `num_shards` 参数。
     - **RuntimeError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
     - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
     - **ValueError** - 指定的任务不为'Segmentation'或'Detection'。
-    - **ValueError** - 指定任务为'Segmentation'时，class_indexing不为None。
-    - **ValueError** - 与usage相关的txt文件不存在。
-    - **ValueError** -  `shard_id` 参数错误（小于0或者大于等于 `num_shards` ）。
+    - **ValueError** - 指定任务为'Segmentation'时， `class_indexing` 参数不为None。
+    - **ValueError** - 与 `usage` 参数相关的txt文件不存在。
+    - **ValueError** - `shard_id` 参数值错误（小于0或者大于等于 `num_shards` ）。
 
     .. note::
-        - 当指定 `extra_metadata` 为True时，除非显式使用rename算子以删除元信息列明的前缀('_meta-')，否则迭代的数据行中不会出现'[_meta-filename, dtype=string]'列。
-        - 此数据集可以指定 `sampler` 参数，但 `sampler` 和 `shuffle` 是互斥的。下表展示了几种合法的输入参数及预期的行为。
+        - 当参数 `extra_metadata` 为True时，还需使用 `rename` 操作删除额外数据列'_meta-filename'的前缀'_meta-'，
+          否则迭代得到的数据行中不会出现此额外数据列。
+        - 此数据集可以指定参数 `sampler` ，但参数 `sampler` 和参数 `shuffle` 的行为是互斥的。下表展示了几种合法的输入参数组合及预期的行为。
 
     .. list-table:: 配置 `sampler` 和 `shuffle` 的不同组合得到的预期排序结果
        :widths: 25 25 50
@@ -62,13 +67,13 @@ mindspore.dataset.VOCDataset
        * - None
          - False
          - 顺序排列
-       * - 参数 `sampler`
+       * - `sampler` 实例
          - None
          - 由 `sampler` 行为定义的顺序
-       * - 参数 `sampler`
+       * - `sampler` 实例
          - True
          - 不允许
-       * - 参数 `sampler`
+       * - `sampler` 实例
          - False
          - 不允许
 
