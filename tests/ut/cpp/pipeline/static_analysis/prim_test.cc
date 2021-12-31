@@ -370,81 +370,81 @@ TEST_F(TestPrim, test_partial) {
   ASSERT_TRUE(res->ToString() == expected->ToString());
 }
 
-// def test_env(x, y):
-//     return env_setitem(newenv, embed(x), y)
-TEST_F(TestPrim, test_env_setitem) {
+/// Feature: Check inference result of primitive by build a FuncGraph with single primitive.
+/// Description: Check inference result of primitive EnvironSet.
+/// Expectation: Equal
+TEST_F(TestPrim, test_environ_set) {
   FuncGraphPtr graph_embed = MakeFuncGraph(prim::kPrimEmbed, 1);
   AbstractBasePtr abstract_x = FromValue(static_cast<int64_t>(1), false);
   AbstractBasePtrList args_spec_list = {abstract_x};
   AbstractBasePtr embed_x = engine_->Run(graph_embed, args_spec_list).inferred->abstract();
 
-  FuncGraphPtr func_graph = MakeFuncGraph(prim::kPrimEnvSetItem, 3);
+  FuncGraphPtr func_graph = MakeFuncGraph(prim::kPrimEnvironSet, 3);
 
-  AbstractBasePtr abstract_env = ToAbstract(newenv);
+  AbstractBasePtr abstract_environ = MakeEnvironAbstract();
   AbstractBasePtr abstract_y = FromValue(static_cast<int64_t>(2), false);
-  args_spec_list = {abstract_env, embed_x, abstract_y};
+  args_spec_list = {abstract_environ, embed_x, abstract_y};
 
   AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred->abstract();
   AbstractBasePtr exp = std::make_shared<AbstractScalar>(kAnyValue, std::make_shared<EnvType>());
   ASSERT_TRUE(*res == *exp);
 }
 
-// def test_env(x, y, z):
-//     e = env_setitem(newenv, embed(x), y)
-//     return env_getitem(e, embed(x), z)
-TEST_F(TestPrim, test_env_getitem) {
+/// Feature: Check inference result of primitive by build a FuncGraph with single primitive.
+/// Description: Check inference result of primitive EnvironGet.
+/// Expectation: Equal
+TEST_F(TestPrim, test_environ_get) {
   FuncGraphPtr graph_embed = MakeFuncGraph(prim::kPrimEmbed, 1);
   AbstractBasePtr abstract_x = FromValue(static_cast<int64_t>(1), false);
   AbstractBasePtrList args_spec_list = {abstract_x};
   AbstractBasePtr embed_x = engine_->Run(graph_embed, args_spec_list).inferred->abstract();
 
-  FuncGraphPtr graph_setitem = MakeFuncGraph(prim::kPrimEnvSetItem, 3);
+  FuncGraphPtr graph_environ_set = MakeFuncGraph(prim::kPrimEnvironSet, 3);
 
-  AbstractBasePtr abstract_env = ToAbstract(newenv);
+  AbstractBasePtr abstract_environ = MakeEnvironAbstract();
   AbstractBasePtr abstract_y = FromValue(static_cast<int64_t>(2), false);
-  args_spec_list = {abstract_env, embed_x, abstract_y};
+  args_spec_list = {abstract_environ, embed_x, abstract_y};
 
-  AbstractBasePtr res = engine_->Run(graph_setitem, args_spec_list).inferred->abstract();
+  AbstractBasePtr res = engine_->Run(graph_environ_set, args_spec_list).inferred->abstract();
   AbstractBasePtr exp = std::make_shared<AbstractScalar>(kAnyValue, std::make_shared<EnvType>());
   ASSERT_TRUE(*res == *exp);
 
-  FuncGraphPtr graph_getitem = MakeFuncGraph(prim::kPrimEnvGetItem, 3);
+  FuncGraphPtr graph_environ_get = MakeFuncGraph(prim::kPrimEnvironGet, 3);
 
   AbstractBasePtr abstract_z = FromValue(static_cast<int64_t>(3), false);
   args_spec_list = {res, embed_x, abstract_z};
 
-  res = engine_->Run(graph_getitem, args_spec_list).inferred->abstract();
+  res = engine_->Run(graph_environ_get, args_spec_list).inferred->abstract();
 
   ASSERT_TRUE(*res == *abstract_x);
 }
 
-// def test_env(x, y, z):
-//     e1 = env_setitem(newenv, embed(x), y)
-//     e2 = env_setitem(newenv, embed(x), z)
-//     return env_add(e1, e2)
-TEST_F(TestPrim, test_env_add) {
+/// Feature: Check inference result of primitive by build a FuncGraph with single primitive.
+/// Description: Check inference result of primitive EnvironAdd.
+/// Expectation: Equal
+TEST_F(TestPrim, test_environ_add) {
   FuncGraphPtr graph_embed = MakeFuncGraph(prim::kPrimEmbed, 1);
   AbstractBasePtr abstract_x = FromValue(static_cast<int64_t>(1), false);
   AbstractBasePtrList args_spec_list = {abstract_x};
   AbstractBasePtr embed_x = engine_->Run(graph_embed, args_spec_list).inferred->abstract();
 
-  FuncGraphPtr graph_setitem = MakeFuncGraph(prim::kPrimEnvSetItem, 3);
+  FuncGraphPtr graph_environ_set = MakeFuncGraph(prim::kPrimEnvironSet, 3);
 
-  AbstractBasePtr abstract_env = ToAbstract(newenv);
+  AbstractBasePtr abstract_environ = MakeEnvironAbstract();
   AbstractBasePtr abstract_y = FromValue(static_cast<int64_t>(2), false);
-  args_spec_list = {abstract_env, embed_x, abstract_y};
+  args_spec_list = {abstract_environ, embed_x, abstract_y};
 
-  AbstractBasePtr abstract_e1 = engine_->Run(graph_setitem, args_spec_list).inferred->abstract();
+  AbstractBasePtr abstract_e1 = engine_->Run(graph_environ_set, args_spec_list).inferred->abstract();
   AbstractBasePtr exp = std::make_shared<AbstractScalar>(kAnyValue, std::make_shared<EnvType>());
   ASSERT_TRUE(*abstract_e1 == *exp);
 
   AbstractBasePtr abstract_z = FromValue(static_cast<int64_t>(3), false);
-  args_spec_list = {abstract_env, embed_x, abstract_z};
+  args_spec_list = {abstract_environ, embed_x, abstract_z};
 
-  AbstractBasePtr abstract_e2 = engine_->Run(graph_setitem, args_spec_list).inferred->abstract();
+  AbstractBasePtr abstract_e2 = engine_->Run(graph_environ_set, args_spec_list).inferred->abstract();
   ASSERT_TRUE(*abstract_e2 == *exp);
 
-  FuncGraphPtr graph_add = MakeFuncGraph(prim::kPrimEnvAdd, 2);
+  FuncGraphPtr graph_add = MakeFuncGraph(prim::kPrimEnvironAdd, 2);
   args_spec_list = {abstract_e1, abstract_e2};
   AbstractBasePtr res = engine_->Run(graph_add, args_spec_list).inferred->abstract();
 

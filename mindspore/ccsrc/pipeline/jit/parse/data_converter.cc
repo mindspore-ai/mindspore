@@ -502,7 +502,6 @@ std::vector<DataConverterPtr> GetDataConverters() {
     std::make_shared<ByTypeDataConverter<Type>>(ObjCast<TypePtr>),
     std::make_shared<ByTypeDataConverter<UMonad>>(ObjCast<UMonadPtr>),
     std::make_shared<ByTypeDataConverter<IOMonad>>(ObjCast<IOMonadPtr>),
-    std::make_shared<ByTypeDataConverter<EnvInstance>>(ObjCast<std::shared_ptr<EnvInstance>>),
     std::make_shared<ByAttrDataConverter>(PYTHON_CLASS_MEMBER_NAMESPACE,
                                           [](const py::object &obj) -> ValuePtr {
                                             auto res =

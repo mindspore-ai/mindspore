@@ -648,15 +648,15 @@ class IncorporateGetitemSwitch : public AnfVisitor {
     MS_EXCEPTION_IF_NULL(switch_call);
     const auto &switch_call_cnode = switch_call->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(switch_call_cnode);
-    // If exist env_getitem/env_setitem in this funcgraph or
-    // if g1_/g2_ is fprop func_graph and the corresponding bprop funcgraph has any env_getitem or env_setitem;
+    // If exist EnvironGet/EnvironSet in this funcgraph or
+    // if g1_/g2_ is fprop func_graph and the corresponding bprop funcgraph has any EnvironGet or EnvironSet;
     std::vector<internal::TpCNodeAndIndex> tp_cnodes_and_index;
     auto switch_call_users_counter = MultipleUseOfSwitch(switch_call, fg, &tp_cnodes_and_index);
     bool multiple_use = (tp_cnodes_and_index.size() > 1);
     if (g1_output_is_shrinkable && g2_output_is_shrinkable && multiple_use &&
         (tp_cnodes_and_index.size() == switch_call_users_counter)) {
-      if (!internal::HasMoreJ(optimizer) && !ExistEnvNode(fg) && !ExistEnvNodeInTupleItem(g1_) &&
-          !ExistEnvNodeInTupleItem(g2_) && !internal::ShouldTransform(switch_call, tp_cnodes_and_index)) {
+      if (!internal::HasMoreJ(optimizer) && !ExistEnvironNode(fg) && !ExistEnvironNodeInTupleItem(g1_) &&
+          !ExistEnvironNodeInTupleItem(g2_) && !internal::ShouldTransform(switch_call, tp_cnodes_and_index)) {
         MS_LOG(DEBUG) << "No more j, will shrink. Node: " << node->DebugString()
                       << ", switch: " << switch_->DebugString();
         const auto g1_output_size = internal::GetOutputSize(g1_->output());
@@ -834,15 +834,15 @@ class IncorporateGetitemSwitch : public AnfVisitor {
     return node_users.size();
   }
 
-  static bool inline ExistEnvNode(const FuncGraphPtr &fg) {
+  static bool inline ExistEnvironNode(const FuncGraphPtr &fg) {
     MS_EXCEPTION_IF_NULL(fg);
     auto &nodes = fg->value_nodes();
     return std::any_of(nodes.begin(), nodes.end(), [](const auto &node) {
-      return IsPrimitive(node.first, prim::kPrimEnvSetItem) || IsPrimitive(node.first, prim::kPrimEnvGetItem);
+      return IsPrimitive(node.first, prim::kPrimEnvironSet) || IsPrimitive(node.first, prim::kPrimEnvironGet);
     });
   }
 
-  static bool inline ExistEnvNodeInTupleItem(const FuncGraphPtr &fg) {
+  static bool inline ExistEnvironNodeInTupleItem(const FuncGraphPtr &fg) {
     MS_EXCEPTION_IF_NULL(fg);
     const auto &output = fg->output();
     if (!IsPrimitiveCNode(output, prim::kPrimMakeTuple)) {
@@ -852,7 +852,7 @@ class IncorporateGetitemSwitch : public AnfVisitor {
     const auto &inputs = cnode->inputs();
     return std::any_of(inputs.cbegin() + 1, inputs.cend(), [](const auto &input) {
       auto sub_fg = GetValueNode<FuncGraphPtr>(input);
-      if (sub_fg != nullptr && ExistEnvNode(sub_fg)) {
+      if (sub_fg != nullptr && ExistEnvironNode(sub_fg)) {
         return true;
       }
       return false;

@@ -254,7 +254,7 @@ def _add_env(x, y):
     Returns:
         EnvType, equal to x + y.
     """
-    return F.env_add(x, y)
+    return F.environ_add(x, y)
 
 
 @add.register("Tuple", "Tuple")

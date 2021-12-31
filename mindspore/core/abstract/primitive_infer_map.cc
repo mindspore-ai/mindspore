@@ -200,9 +200,10 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimLoad, R{InferImplLoad, nullptr, true}},
     // Set impl to null as it will use PartialEvaluator;
     {prim::kPrimPartial, R{nullptr, nullptr, true}},
-    {prim::kPrimEnvGetItem, R{InferImplEnvGetItem, nullptr, true}},
-    {prim::kPrimEnvSetItem, R{InferImplEnvSetItem, nullptr, true}},
-    {prim::kPrimEnvAdd, R{InferImplEnvAdd, nullptr, true}},
+    {prim::kPrimEnvironCreate, R{InferImplEnvironCreate, nullptr, true}},
+    {prim::kPrimEnvironGet, R{InferImplEnvironGet, nullptr, true}},
+    {prim::kPrimEnvironSet, R{InferImplEnvironSet, nullptr, true}},
+    {prim::kPrimEnvironAdd, R{InferImplEnvironAdd, nullptr, true}},
     {prim::kPrimMakeRefKey, R{InferImplMakeRefKey, nullptr, true}},
     {prim::kPrimMakeRef, R{InferImplMakeRef, nullptr, true}},
     {prim::kPrimGetRefKey, R{InferImplGetRefKey, nullptr, true}},

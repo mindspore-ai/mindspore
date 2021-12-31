@@ -2047,7 +2047,7 @@ class RefToEmbed(Primitive):
     Make a key from Ref.
 
     The Key is a symbolic_key, is a embedding on Parameter, which is used as a key of the variable in env_type,
-    and get items by operation `env_get_item` with the symbolic_key instance. The `Parameter` is a ref.
+    and get items by operation `EnvironGet` with the symbolic_key instance. The `Parameter` is a ref.
 
     Inputs:
         - **input** (Ref) - Target ref, ref is short for reference. The value of a Parameter is a ref.

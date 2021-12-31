@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_ENV_ITEM_ELIMINATE_H_
-#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_ENV_ITEM_ELIMINATE_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_ENVIRON_ELIMINATE_H_
+#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_ENVIRON_ELIMINATE_H_
 
 #include <algorithm>
 #include <memory>
@@ -37,10 +37,15 @@ namespace mindspore {
 namespace opt {
 namespace irpass {
 namespace internal {
-class EnvGetitemTransform {
+constexpr int kEnvironGetSetInputSize = 4;
+constexpr int kEnvironOffset = 1;
+constexpr int kSymbolicKeyOffset = 2;
+constexpr int kValueOffset = 3;
+
+class EnvironGetTransform {
  public:
-  EnvGetitemTransform() : cache_() {}
-  ~EnvGetitemTransform() = default;
+  EnvironGetTransform() : cache_() {}
+  ~EnvironGetTransform() = default;
 
   FuncGraphPtr operator()(const FuncGraphPtr &fg, const SymbolicKeyInstancePtr &key, const AnfNodePtr &default_node) {
     if (cache_.find(fg) == cache_.end()) {
@@ -56,22 +61,22 @@ class EnvGetitemTransform {
       }
 
       auto new_fg = TransformableClone(fg, std::make_shared<TraceTransform>(ss.str()));
-      auto env = new_fg->output();
-      while (IsPrimitiveCNode(env, prim::kPrimEnvSetItem)) {
-        // {prim::kPrimEnvSetItem, env, symbolickey, value}
-        auto &inputs = env->cast<CNodePtr>()->inputs();
-        if (inputs.size() != 4) {
+      auto environ_node = new_fg->output();
+      while (IsPrimitiveCNode(environ_node, prim::kPrimEnvironSet)) {
+        // {prim::kPrimEnvironSet, environ, symbolickey, value}
+        auto &inputs = environ_node->cast<CNodePtr>()->inputs();
+        if (inputs.size() != kEnvironGetSetInputSize) {
           MS_LOG(WARNING) << "Input size should be 4";
           return nullptr;
         }
-        if (!IsValueNode<SymbolicKeyInstance>(inputs[2])) {
+        if (!IsValueNode<SymbolicKeyInstance>(inputs[kSymbolicKeyOffset])) {
           MS_LOG(DEBUG) << "Input 2 is not a SymbolicKeyInstance?";
           return nullptr;
         }
 
-        env = inputs[1];
-        auto value = inputs[3];
-        auto key2 = GetValueNode<SymbolicKeyInstancePtr>(inputs[2]);
+        environ_node = inputs[kEnvironOffset];
+        auto value = inputs[kValueOffset];
+        auto key2 = GetValueNode<SymbolicKeyInstancePtr>(inputs[kSymbolicKeyOffset]);
         if (*key2 == *key) {
           new_fg->set_output(value);
           cache[hash_key] = new_fg;
@@ -79,7 +84,8 @@ class EnvGetitemTransform {
           return new_fg;
         }
       }
-      new_fg->set_output(new_fg->NewCNode({NewValueNode(prim::kPrimEnvGetItem), env, NewValueNode(key), default_node}));
+      new_fg->set_output(
+        new_fg->NewCNode({NewValueNode(prim::kPrimEnvironGet), environ_node, NewValueNode(key), default_node}));
       cache[hash_key] = new_fg;
     }
 
@@ -92,10 +98,10 @@ class EnvGetitemTransform {
     cache_;
 };
 
-class EnvGetitemTransformACrossGraph {
+class EnvironGetTransformACrossGraph {
  public:
-  EnvGetitemTransformACrossGraph() : cache_() {}
-  ~EnvGetitemTransformACrossGraph() = default;
+  EnvironGetTransformACrossGraph() : cache_() {}
+  ~EnvironGetTransformACrossGraph() = default;
 
   FuncGraphPtr operator()(const FuncGraphPtr &fg, const SymbolicKeyInstancePtr &key, const AnfNodePtr &default_node) {
     if (cache_.find(fg) == cache_.end()) {
@@ -120,29 +126,30 @@ class EnvGetitemTransformACrossGraph {
       auto new_fg = TransformableClone(fg_inner, std::make_shared<TraceTransform>(ss.str()));
       new_fg_outer->set_output(NewValueNode(new_fg));
 
-      auto env = new_fg->output();
-      while (IsPrimitiveCNode(env, prim::kPrimEnvSetItem)) {
-        // {prim::kPrimEnvSetItem, env, symbolickey, value}
-        auto &inputs = env->cast<CNodePtr>()->inputs();
-        if (inputs.size() != 4) {
+      auto environ_node = new_fg->output();
+      while (IsPrimitiveCNode(environ_node, prim::kPrimEnvironSet)) {
+        // {prim::kPrimEnvironSet, environ, symbolickey, value}
+        auto &inputs = environ_node->cast<CNodePtr>()->inputs();
+        if (inputs.size() != kEnvironGetSetInputSize) {
           MS_LOG(WARNING) << "Input size should be 4";
           return nullptr;
         }
-        if (!IsValueNode<SymbolicKeyInstance>(inputs[2])) {
+        if (!IsValueNode<SymbolicKeyInstance>(inputs[kSymbolicKeyOffset])) {
           MS_LOG(DEBUG) << "Input 2 is not a SymbolicKeyInstance?";
           return nullptr;
         }
 
-        env = inputs[1];
-        auto value = inputs[3];
-        auto key2 = GetValueNode<SymbolicKeyInstancePtr>(inputs[2]);
+        environ_node = inputs[kEnvironOffset];
+        auto value = inputs[kValueOffset];
+        auto key2 = GetValueNode<SymbolicKeyInstancePtr>(inputs[kSymbolicKeyOffset]);
         if (*key2 == *key) {
           new_fg->set_output(value);
           cache[hash_key] = new_fg_outer;
           return new_fg_outer;
         }
       }
-      new_fg->set_output(new_fg->NewCNode({NewValueNode(prim::kPrimEnvGetItem), env, NewValueNode(key), default_node}));
+      new_fg->set_output(
+        new_fg->NewCNode({NewValueNode(prim::kPrimEnvironGet), environ_node, NewValueNode(key), default_node}));
       cache[hash_key] = new_fg_outer;
     }
 
@@ -156,48 +163,48 @@ class EnvGetitemTransformACrossGraph {
 };
 }  // namespace internal
 
-// {prim::kPrimEnvGetItem, C1, C2, Y} -> Y
-class EnvGetItemEliminater : public AnfVisitor {
+// {prim::kPrimEnvironGet, C1, C2, Y} -> Y
+class EnvironGetEliminater : public AnfVisitor {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
     PatternNode c1, c2, y;
-    MATCH_REPLACE_IF(node, PPrimitive(prim::kPrimEnvGetItem, c1, c2, y), y,
-                     (IsValueNode<EnvInstance>(c1.GetNode(node)) && IsVNode(c2.GetNode(node))));
+    MATCH_REPLACE_IF(node, PPrimitive(prim::kPrimEnvironGet, c1, c2, y), y,
+                     (IsNewEnvironNode(c1.GetNode(node)) && IsVNode(c2.GetNode(node))));
     return nullptr;
   }
 };
 
-// {prim::kPrimEnvGetItem, {prim::kPrimEnvAdd, X, Y}, C, Z} ->
-// {prim::GetPythonOps("hyper_add"), {prim::kPrimEnvGetItem, X, C, Z}, {prim::kPrimEnvGetItem, Y, C, Z}}
-class EnvGetItemAddEliminater : public AnfVisitor {
+// {prim::kPrimEnvironGet, {prim::kPrimEnvironAdd, X, Y}, C, Z} ->
+// {prim::GetPythonOps("hyper_add"), {prim::kPrimEnvironGet, X, C, Z}, {prim::kPrimEnvironGet, Y, C, Z}}
+class EnvironGetAddEliminater : public AnfVisitor {
  public:
-  EnvGetItemAddEliminater() : PrimHyperAdd_(prim::GetPythonOps("hyper_add")) {}
-  ~EnvGetItemAddEliminater() override = default;
+  EnvironGetAddEliminater() : PrimHyperAdd_(prim::GetPythonOps("hyper_add")) {}
+  ~EnvironGetAddEliminater() override = default;
 
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
     is_match_ = false;
     auto IsAddCNode = [](const AnfNodePtr &node) -> bool {
-      return IsPrimitiveCNode(node, prim::kPrimEnvAdd) && node->cast<CNodePtr>()->size() == 3;
+      return IsPrimitiveCNode(node, prim::kPrimEnvironAdd) && node->cast<CNodePtr>()->size() == 3;
     };
-    AnfVisitor::Match(prim::kPrimEnvGetItem, {IsAddCNode, IsVNode, IsNode})(node);
+    AnfVisitor::Match(prim::kPrimEnvironGet, {IsAddCNode, IsVNode, IsNode})(node);
 
     if (!is_match_ || node->func_graph() == nullptr) {
       return nullptr;
     }
 
-    // {prim::kPrimEnvGetItem, {...}, C, Z}
+    // {prim::kPrimEnvironGet, {...}, C, Z}
     auto cnode = node->cast<CNodePtr>();
     auto inp1 = cnode->input(1)->cast<CNodePtr>();
     auto c = cnode->input(2);
     auto z = cnode->input(3);
 
-    // {prim::kPrimEnvAdd, X, Y}
+    // {prim::kPrimEnvironAdd, X, Y}
     auto x = inp1->input(1);
     auto y = inp1->input(2);
 
     auto fg = node->func_graph();
-    auto xcz = fg->NewCNode({NewValueNode(prim::kPrimEnvGetItem), x, c, z});
-    auto ycz = fg->NewCNode({NewValueNode(prim::kPrimEnvGetItem), y, c, z});
+    auto xcz = fg->NewCNode({NewValueNode(prim::kPrimEnvironGet), x, c, z});
+    auto ycz = fg->NewCNode({NewValueNode(prim::kPrimEnvironGet), y, c, z});
 
     return fg->NewCNode({NewValueNode(PrimHyperAdd_), xcz, ycz});
   }
@@ -209,17 +216,17 @@ class EnvGetItemAddEliminater : public AnfVisitor {
   ValuePtr PrimHyperAdd_;
 };
 
-// {prim::kPrimEnvGetItem, {prim::kPrimEnvSetItem, X, C1, Y}, C2, Z}
-class EnvGetSetItemEliminater : public AnfVisitor {
+// {prim::kPrimEnvironGet, {prim::kPrimEnvironSet, X, C1, Y}, C2, Z}
+class EnvironGetSetEliminater : public AnfVisitor {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
     is_match_ = false;
     auto IsSetCNode = [](const AnfNodePtr &node) -> bool {
-      if (!IsPrimitiveCNode(node, prim::kPrimEnvSetItem)) {
+      if (!IsPrimitiveCNode(node, prim::kPrimEnvironSet)) {
         return false;
       }
 
-      // {prim::kPrimEnvSetItem, X, C1, Y}
+      // {prim::kPrimEnvironSet, X, C1, Y}
       auto &inputs = node->cast<CNodePtr>()->inputs();
       if (inputs.size() != 4) {
         return false;
@@ -227,21 +234,21 @@ class EnvGetSetItemEliminater : public AnfVisitor {
 
       return IsValueNode<SymbolicKeyInstance>(inputs[2]);
     };
-    AnfVisitor::Match(prim::kPrimEnvGetItem, {IsSetCNode, IsValueNode<SymbolicKeyInstance>, IsNode})(node);
+    AnfVisitor::Match(prim::kPrimEnvironGet, {IsSetCNode, IsValueNode<SymbolicKeyInstance>, IsNode})(node);
 
     if (!is_match_ || node->func_graph() == nullptr) {
       return nullptr;
     }
 
-    // {prim::kPrimEnvGetItem, {...}, C2, Z}
+    // {prim::kPrimEnvironGet, {...}, C2, Z}
     auto cnode = node->cast<CNodePtr>();
     auto inp1 = cnode->input(1)->cast<CNodePtr>();
     auto key2 = cnode->input(2);
     auto c2 = GetValueNode<SymbolicKeyInstancePtr>(key2);
     auto default_v = cnode->input(3);
 
-    // {prim::kPrimEnvSetItem, X, C1, Y}
-    auto env = inp1->input(1);
+    // {prim::kPrimEnvironSet, X, C1, Y}
+    AnfNodePtr environ_node = inp1->input(1);
     auto c1 = GetValueNode<SymbolicKeyInstancePtr>(inp1->input(2));
     auto last_set = inp1->input(3);
 
@@ -249,27 +256,27 @@ class EnvGetSetItemEliminater : public AnfVisitor {
       return last_set;
     }
 
-    while (IsPrimitiveCNode(env, prim::kPrimEnvSetItem)) {
-      // {prim::kPrimEnvSetItem, env, symbolickey, value}
-      auto &inputs = env->cast<CNodePtr>()->inputs();
-      if (inputs.size() != 4) {
+    while (IsPrimitiveCNode(environ_node, prim::kPrimEnvironSet)) {
+      // {prim::kPrimEnvironSet, environ, symbolickey, value}
+      auto &inputs = environ_node->cast<CNodePtr>()->inputs();
+      if (inputs.size() != internal::kEnvironGetSetInputSize) {
         MS_LOG(WARNING) << "Input size should be 4";
         return nullptr;
       }
-      if (!IsValueNode<SymbolicKeyInstance>(inputs[2])) {
+      if (!IsValueNode<SymbolicKeyInstance>(inputs[internal::kSymbolicKeyOffset])) {
         MS_LOG(DEBUG) << "Input 2 is not a SymbolicKeyInstance?";
         return nullptr;
       }
 
-      env = inputs[1];
-      last_set = inputs[3];
-      auto symbolic_c1 = GetValueNode<SymbolicKeyInstancePtr>(inputs[2]);
+      environ_node = inputs[internal::kEnvironOffset];
+      last_set = inputs[internal::kValueOffset];
+      auto symbolic_c1 = GetValueNode<SymbolicKeyInstancePtr>(inputs[internal::kSymbolicKeyOffset]);
       if (*symbolic_c1 == *c2) {
         return last_set;
       }
     }
 
-    return node->func_graph()->NewCNode({NewValueNode(prim::kPrimEnvGetItem), env, key2, default_v});
+    return node->func_graph()->NewCNode({NewValueNode(prim::kPrimEnvironGet), environ_node, key2, default_v});
   }
 
   void Visit(const AnfNodePtr &) override { is_match_ = true; }
@@ -278,9 +285,9 @@ class EnvGetSetItemEliminater : public AnfVisitor {
   bool is_match_{false};
 };
 
-// {prim::kPrimEnvGetitem, {prim::kPrimDepend, X1, X2}, item, dflt} ->
-// {prim::kPrimDepend, {prim::kPrimEnvGetitem, X1, item, dflt}, X2}
-class EnvGetItemDependSwap : public OptimizerCaller {
+// {prim::kPrimEnvironGet, {prim::kPrimDepend, X1, X2}, item, dflt} ->
+// {prim::kPrimDepend, {prim::kPrimEnvironGet, X1, item, dflt}, X2}
+class EnvironGetDependSwap : public OptimizerCaller {
  public:
   AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) override {
     if (!node->isa<CNode>() || node->func_graph() == nullptr) {
@@ -290,18 +297,30 @@ class EnvGetItemDependSwap : public OptimizerCaller {
     ScopeGuard scope_guard(scope);
 
     PatternNode x1, x2, item, dflt;
-    MATCH_REPLACE(node, PPrimitive(prim::kPrimEnvGetItem, PPrimitive(prim::kPrimDepend, x1, x2), item, dflt),
-                  PPrimitive(prim::kPrimDepend, PPrimitive(prim::kPrimEnvGetItem, x1, item, dflt), x2));
+    MATCH_REPLACE(node, PPrimitive(prim::kPrimEnvironGet, PPrimitive(prim::kPrimDepend, x1, x2), item, dflt),
+                  PPrimitive(prim::kPrimDepend, PPrimitive(prim::kPrimEnvironGet, x1, item, dflt), x2));
     return nullptr;
   }
 };
 
-// {prim::kPrimEnvGetItem, {G, Xs}, C, Y}
-class IncorporateEnvGetitem : public AnfVisitor {
+// {prim::kPrimEnvironAdd, C1, X} -> X
+// {prim::kPrimEnvironAdd, X, C1} -> X
+class EnvironAddConstEliminater : public AnfVisitor {
  public:
-  explicit IncorporateEnvGetitem(bool bypass_recursive = false)
-      : env_get_item_transform_(), bypass_recursive_(bypass_recursive) {}
-  ~IncorporateEnvGetitem() override = default;
+  AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
+    PatternNode c1, x;
+    MATCH_REPLACE_IF(node, PPrimitive(prim::kPrimEnvironAdd, c1, x), x, (IsNewEnvironNode(c1.GetNode(node))));
+    MATCH_REPLACE_IF(node, PPrimitive(prim::kPrimEnvironAdd, x, c1), x, (IsNewEnvironNode(c1.GetNode(node))));
+    return nullptr;
+  }
+};
+
+// {prim::kPrimEnvironGet, {G, Xs}, C, Y}
+class IncorporateEnvironGet : public AnfVisitor {
+ public:
+  explicit IncorporateEnvironGet(bool bypass_recursive = false)
+      : environ_get_transform_(), bypass_recursive_(bypass_recursive) {}
+  ~IncorporateEnvironGet() override = default;
 
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
     static bool enable_closure = common::GetEnv("MS_DEV_ENABLE_CLOSURE") == "1";
@@ -316,13 +335,13 @@ class IncorporateEnvGetitem : public AnfVisitor {
       }
       return IsValueNode<FuncGraph>(cnode->input(0));
     };
-    AnfVisitor::Match(prim::kPrimEnvGetItem, {IsGCNode, IsValueNode<SymbolicKeyInstance>, IsNode})(node);
+    AnfVisitor::Match(prim::kPrimEnvironGet, {IsGCNode, IsValueNode<SymbolicKeyInstance>, IsNode})(node);
 
     if (!is_match_) {
       return nullptr;
     }
 
-    // {prim::kPrimEnvGetItem, {...}, C, Y}
+    // {prim::kPrimEnvironGet, {...}, C, Y}
     auto cnode = node->cast<CNodePtr>();
     auto inp1 = cnode->input(1)->cast<CNodePtr>();
     auto key = GetValueNode<SymbolicKeyInstancePtr>(cnode->input(2));
@@ -331,9 +350,9 @@ class IncorporateEnvGetitem : public AnfVisitor {
     // {G, Xs}
     auto inputs = inp1->inputs();
     auto fg = GetValueNode<FuncGraphPtr>(inputs[0]);
-    auto new_fg = env_get_item_transform_(fg, key, default_v);
+    auto new_fg = environ_get_transform_(fg, key, default_v);
     if (fg->recursive() && bypass_recursive_) {
-      MS_LOG(DEBUG) << "Bypass env_get_item transform for recursive fg=" << fg->ToString();
+      MS_LOG(DEBUG) << "Bypass EnvironGet transform for recursive fg=" << fg->ToString();
       return nullptr;
     }
     if (new_fg == nullptr) {
@@ -350,15 +369,15 @@ class IncorporateEnvGetitem : public AnfVisitor {
 
  private:
   bool is_match_{false};
-  internal::EnvGetitemTransform env_get_item_transform_;
+  internal::EnvironGetTransform environ_get_transform_;
   bool bypass_recursive_;
 };
 
-// {prim::kPrimEnvGetItem, {{prim::kPrimSwitch, X, G1, G2}, Xs}, C, Y}
-class IncorporateEnvGetitemSwitch : public AnfVisitor {
+// {prim::kPrimEnvironGet, {{prim::kPrimSwitch, X, G1, G2}, Xs}, C, Y}
+class IncorporateEnvironGetSwitch : public AnfVisitor {
  public:
-  IncorporateEnvGetitemSwitch() : env_get_item_transform_() {}
-  ~IncorporateEnvGetitemSwitch() override = default;
+  IncorporateEnvironGetSwitch() : environ_get_transform_() {}
+  ~IncorporateEnvironGetSwitch() override = default;
 
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
     static bool enable_closure = common::GetEnv("MS_DEV_ENABLE_CLOSURE") == "1";
@@ -374,12 +393,12 @@ class IncorporateEnvGetitemSwitch : public AnfVisitor {
 
       return IsPrimitiveCNode(cnode->input(0), prim::kPrimSwitch);
     };
-    AnfVisitor::Match(prim::kPrimEnvGetItem, {IsSwNode, IsValueNode<SymbolicKeyInstance>, IsNode})(node);
+    AnfVisitor::Match(prim::kPrimEnvironGet, {IsSwNode, IsValueNode<SymbolicKeyInstance>, IsNode})(node);
     if (!is_match_ || node->func_graph() == nullptr) {
       return nullptr;
     }
 
-    // {prim::kPrimEnvGetItem, {...}, C, Y}
+    // {prim::kPrimEnvironGet, {...}, C, Y}
     auto cnode = node->cast<CNodePtr>();
     auto inp1 = cnode->input(1)->cast<CNodePtr>();
     auto key = GetValueNode<SymbolicKeyInstancePtr>(cnode->input(2));
@@ -398,8 +417,8 @@ class IncorporateEnvGetitemSwitch : public AnfVisitor {
     auto x = sw->input(1);
     auto g1 = GetValueNode<FuncGraphPtr>(sw->input(2));
     auto g2 = GetValueNode<FuncGraphPtr>(sw->input(3));
-    auto new_g1 = env_get_item_transform_(g1, key, default_v);
-    auto new_g2 = env_get_item_transform_(g2, key, default_v);
+    auto new_g1 = environ_get_transform_(g1, key, default_v);
+    auto new_g2 = environ_get_transform_(g2, key, default_v);
     if (new_g1 == nullptr || new_g2 == nullptr) {
       return nullptr;
     }
@@ -416,14 +435,14 @@ class IncorporateEnvGetitemSwitch : public AnfVisitor {
 
  private:
   bool is_match_{false};
-  internal::EnvGetitemTransform env_get_item_transform_;
+  internal::EnvironGetTransform environ_get_transform_;
 };
 
-// {prim::kPrimEnvGetItem, {{{prim::kPrimSwitchLayer, X, {prim::kPrimMakeTuple, G1, G2...}}, Xs}, Ys}, C, Y}
-class IncorporateEnvGetitemSwitchLayer : public AnfVisitor {
+// {prim::kPrimEnvironGet, {{{prim::kPrimSwitchLayer, X, {prim::kPrimMakeTuple, G1, G2...}}, Xs}, Ys}, C, Y}
+class IncorporateEnvironGetSwitchLayer : public AnfVisitor {
  public:
-  IncorporateEnvGetitemSwitchLayer() : env_get_item_transform_() {}
-  ~IncorporateEnvGetitemSwitchLayer() override = default;
+  IncorporateEnvironGetSwitchLayer() : environ_get_transform_() {}
+  ~IncorporateEnvironGetSwitchLayer() override = default;
 
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
     static bool enable_closure = common::GetEnv("MS_DEV_ENABLE_CLOSURE") == "1";
@@ -431,11 +450,11 @@ class IncorporateEnvGetitemSwitchLayer : public AnfVisitor {
       return nullptr;
     }
     is_match_ = false;
-    AnfVisitor::Match(prim::kPrimEnvGetItem, {IsCNode, IsValueNode<SymbolicKeyInstance>, IsNode})(node);
+    AnfVisitor::Match(prim::kPrimEnvironGet, {IsCNode, IsValueNode<SymbolicKeyInstance>, IsNode})(node);
     if (!is_match_ || node->func_graph() == nullptr) {
       return nullptr;
     }
-    // {prim::kPrimEnvGetItem, {...}, C, Y}
+    // {prim::kPrimEnvironGet, {...}, C, Y}
     auto cnode = node->cast<CNodePtr>();
     auto inp1 = cnode->input(1)->cast<CNodePtr>();
     auto key = GetValueNode<SymbolicKeyInstancePtr>(cnode->input(2));
@@ -463,7 +482,8 @@ class IncorporateEnvGetitemSwitchLayer : public AnfVisitor {
     std::vector<FuncGraphPtr> graphs{};
     auto graphs_cnode = sw->input(2)->cast<CNodePtr>();
     auto &graphs_inputs = graphs_cnode->inputs();
-    if (IsPrimitiveCNode(graphs_cnode, prim::kPrimMakeTuple) && graphs_inputs.size() >= 2 &&
+    const int kMinInputSize = 2;
+    if (IsPrimitiveCNode(graphs_cnode, prim::kPrimMakeTuple) && graphs_inputs.size() >= kMinInputSize &&
         IsValueNode<FuncGraph>(graphs_inputs[1])) {
       (void)std::transform(graphs_inputs.begin() + 1, graphs_inputs.end(), std::back_inserter(graphs),
                            [](const AnfNodePtr &vnode) { return GetValueNode<FuncGraphPtr>(vnode); });
@@ -475,7 +495,7 @@ class IncorporateEnvGetitemSwitchLayer : public AnfVisitor {
     auto fg = node->func_graph();
     std::vector<AnfNodePtr> layers;
     for (auto &graph : graphs) {
-      auto fg_transform = env_get_item_transform_(graph, key, default_v);
+      auto fg_transform = environ_get_transform_(graph, key, default_v);
       if (fg_transform == nullptr) {
         return nullptr;
       }
@@ -493,9 +513,9 @@ class IncorporateEnvGetitemSwitchLayer : public AnfVisitor {
 
  private:
   bool is_match_{false};
-  internal::EnvGetitemTransformACrossGraph env_get_item_transform_;
+  internal::EnvironGetTransformACrossGraph environ_get_transform_;
 };
 }  // namespace irpass
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_ENV_ITEM_ELIMINATE_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_ENVIRON_ELIMINATE_H_

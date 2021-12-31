@@ -587,7 +587,7 @@ FuncGraphPtr MakeTupleGradient::GenerateFuncGraph(const AbstractBasePtrList &arg
 
   std::vector<AnfNodePtr> grads;
   grads.push_back(NewValueNode(prim::kPrimMakeTuple));
-  grads.push_back(NewValueNode(newenv));
+  grads.push_back(NewEnviron(b));
   for (int64_t i = 0; i < tuple_size; ++i) {
     grads.push_back(b->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), dout, NewValueNode(i)}));
   }
@@ -628,7 +628,7 @@ FuncGraphPtr MakeListGradient::GenerateFuncGraph(const AbstractBasePtrList &args
 
   std::vector<AnfNodePtr> grads;
   grads.push_back(NewValueNode(prim::kPrimMakeTuple));
-  grads.push_back(NewValueNode(newenv));
+  grads.push_back(NewEnviron(b));
   for (int64_t i = 0; i < list_size; ++i) {
     grads.push_back(b->NewCNodeInOrder({NewValueNode(prim::kPrimListGetItem), dout, NewValueNode(i)}));
   }

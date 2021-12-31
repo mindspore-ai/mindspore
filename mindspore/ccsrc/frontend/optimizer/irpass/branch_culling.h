@@ -66,16 +66,16 @@ class FloatTupleGetItemSwitch : public OptimizerCaller {
   }
 };
 
-// {prim::kPrimEnvGetItem, {prim::kPrimSwitch, X1, X2, X3}, X4, X5} =>
-// {prim::kPrimSwitch, X1, {prim::kPrimEnvGetItem, X2, X4, X5}, {prim::kPrimEnvGetItem, X3, X4, X5}}
-class FloatEnvGetItemSwitch : public OptimizerCaller {
+// {prim::kPrimEnvironGet, {prim::kPrimSwitch, X1, X2, X3}, X4, X5} =>
+// {prim::kPrimSwitch, X1, {prim::kPrimEnvironGet, X2, X4, X5}, {prim::kPrimEnvironGet, X3, X4, X5}}
+class FloatEnvironGetSwitch : public OptimizerCaller {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
     PatternNode<AnfNodePtr> cond, true_br, false_br, x, x2;
     MATCH_REPLACE(node,
-                  PPrimitive(prim::kPrimEnvGetItem, PPrimitive(prim::kPrimSwitch, cond, true_br, false_br), x, x2),
-                  PPrimitive(prim::kPrimSwitch, cond, PPrimitive(prim::kPrimEnvGetItem, true_br, x, x2),
-                             PPrimitive(prim::kPrimEnvGetItem, false_br, x, x2)));
+                  PPrimitive(prim::kPrimEnvironGet, PPrimitive(prim::kPrimSwitch, cond, true_br, false_br), x, x2),
+                  PPrimitive(prim::kPrimSwitch, cond, PPrimitive(prim::kPrimEnvironGet, true_br, x, x2),
+                             PPrimitive(prim::kPrimEnvironGet, false_br, x, x2)));
 
     return nullptr;
   }

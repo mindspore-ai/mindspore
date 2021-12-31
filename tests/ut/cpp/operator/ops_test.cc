@@ -346,19 +346,28 @@ TEST_F(TestOps, EmbedTest) {
   ASSERT_EQ(prim->name(), kPrimEmbed->name());
 }
 
-TEST_F(TestOps, EnvSetItemTest) {
-  auto prim = std::make_shared<Primitive>("env_setitem");
-  ASSERT_EQ(prim->name(), kPrimEnvSetItem->name());
+/// Feature: Check primitive name equivalence
+/// Description: EnvironSet primitive name equivalence
+/// Expectation: Equal
+TEST_F(TestOps, EnvironSetTest) {
+  auto prim = std::make_shared<Primitive>("EnvironSet");
+  ASSERT_EQ(prim->name(), kPrimEnvironSet->name());
 }
 
-TEST_F(TestOps, EnvGetItemTest) {
-  auto prim = std::make_shared<Primitive>("env_getitem");
-  ASSERT_EQ(prim->name(), kPrimEnvGetItem->name());
+/// Feature: Check primitive name equivalence
+/// Description: EnvironGet primitive name equivalence
+/// Expectation: Equal
+TEST_F(TestOps, EnvironGetTest) {
+  auto prim = std::make_shared<Primitive>("EnvironGet");
+  ASSERT_EQ(prim->name(), kPrimEnvironGet->name());
 }
 
-TEST_F(TestOps, EnvAddest) {
-  auto prim = std::make_shared<Primitive>("env_add");
-  ASSERT_EQ(prim->name(), kPrimEnvAdd->name());
+/// Feature: Check primitive name equivalence
+/// Description: EnvironAdd primitive name equivalence
+/// Expectation: Equal
+TEST_F(TestOps, EnvironAddTest) {
+  auto prim = std::make_shared<Primitive>("EnvironAdd");
+  ASSERT_EQ(prim->name(), kPrimEnvironAdd->name());
 }
 
 // Neural Network

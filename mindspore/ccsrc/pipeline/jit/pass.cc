@@ -42,6 +42,7 @@
 #include "frontend/parallel/allreduce_fusion/step_allreduce_fusion.h"
 #include "frontend/optimizer/recompute.h"
 #include "frontend/optimizer/slice_activation_in_recompute.h"
+#include "frontend/optimizer/environ_conversion.h"
 #include "utils/log_adapter.h"
 #include "pipeline/jit/pipeline_split.h"
 #include "pipeline/pynative/pynative_execute.h"
@@ -198,12 +199,12 @@ FuncGraphPtr BpropGraphFinalOptPass(const ResourcePtr &res) {
     (void)map.emplace_back(std::make_pair("renormalize", opt::OptPassConfig::Renormalize()));
     opt::OptPassConfig real_op_eliminate = opt::OptPassConfig{irpass.real_op_eliminate_};
     (void)map.emplace_back(std::make_pair("real_op_eliminate", real_op_eliminate));
-    opt::OptPassConfig env_eliminate = opt::OptPassConfig({
+    opt::OptPassConfig environ_eliminate = opt::OptPassConfig({
       irpass.incorporate_call_,
       irpass.incorporate_call_switch_,
       irpass.incorporate_getitem_set_,
     });
-    (void)map.emplace_back(std::make_pair("env_eliminate", env_eliminate));
+    (void)map.emplace_back(std::make_pair("environ_eliminate", environ_eliminate));
   }
 
   auto bprop_graph_final_opt = opt::Optimizer::MakeOptimizer("bprop_graph_final_opt", res, map);
@@ -264,10 +265,11 @@ opt::OptPassConfig GetOptPassA1(const opt::irpass::OptimizeIRPassLib &irpass) {
     irpass.tuple_list_get_item_depend_reorder_,
     irpass.tuple_list_convert_item_index_to_positive_,
 
-    irpass.env_get_item_eliminate_,
-    irpass.env_get_item_add_eliminate_,
-    irpass.env_get_set_item_eliminate_,
-    irpass.env_get_item_depend_swap_,
+    irpass.environ_get_eliminate_,
+    irpass.environ_get_add_eliminate_,
+    irpass.environ_get_set_eliminate_,
+    irpass.environ_get_depend_swap_,
+    irpass.environ_add_const_eliminate_,
 
     irpass.cast_eliminate_,
     irpass.reshape_eliminate_,
@@ -301,16 +303,16 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
       irpass.specialize_transform_,
       irpass.merge_addn_,
       irpass.float_tuple_getitem_switch_,
-      irpass.float_env_getitem_switch_,
+      irpass.float_environ_get_switch_,
       irpass.inline_,
       irpass.updatestate_useless_node_eliminater_,
       irpass.tuple_list_get_item_eliminator_,
       irpass.incorporate_getitem_set_,
       irpass.incorporate_call_,
       irpass.incorporate_call_switch_,
-      irpass.incorporate_env_getitem_bypass_recursive_,
-      irpass.incorporate_env_getitem_switch_,
-      irpass.env_get_item_eliminate_,
+      irpass.incorporate_environ_get_bypass_recursive_,
+      irpass.incorporate_environ_get_switch_,
+      irpass.environ_get_eliminate_,
       irpass.depend_value_elim_,
       irpass.all_reduce_const_elim_,
     },
@@ -434,13 +436,14 @@ OptPassGroupMap GetOptPassesB(const opt::irpass::OptimizeIRPassLib &irpass) {
                                                irpass.stopgrad_eliminater_,
                                                irpass.special_op_eliminate_,
                                                irpass.get_make_ref_eliminate_,
-                                               irpass.incorporate_env_getitem_,
-                                               irpass.incorporate_env_getitem_switch_,
-                                               irpass.env_get_item_eliminate_,
-                                               irpass.env_get_item_add_eliminate_,
-                                               irpass.env_get_set_item_eliminate_,
-                                               irpass.env_get_item_depend_swap_,
-                                               irpass.incorporate_env_getitem_switch_layer_,
+                                               irpass.incorporate_environ_get_,
+                                               irpass.incorporate_environ_get_switch_,
+                                               irpass.environ_get_eliminate_,
+                                               irpass.environ_get_add_eliminate_,
+                                               irpass.environ_get_set_eliminate_,
+                                               irpass.environ_get_depend_swap_,
+                                               irpass.environ_add_const_eliminate_,
+                                               irpass.incorporate_environ_get_switch_layer_,
                                                irpass.value_based_eliminate_,
                                                irpass.virtual_accu_grad_,
                                                irpass.virtual_assign_add_,
@@ -732,6 +735,15 @@ bool AutoMonadElimOptPass(const FuncGraphPtr &func_graph) {
   return true;
 }
 
+bool EnvironConversionPass(const ResourcePtr &res) {
+  MS_EXCEPTION_IF_NULL(res);
+  static bool enable_closure = common::GetEnv("MS_DEV_ENABLE_CLOSURE") == "1";
+  if (enable_closure) {
+    opt::EnvironConversion(res);
+  }
+  return true;
+}
+
 std::vector<PassItem> kVmPasses = {{"simplify_data_structures", SimplifyDataStructuresPass},
                                    {"opt_before_recompute", OptBeforeRecomputeGroup},
                                    {"opt_a", OptPassAGroup},
@@ -744,6 +756,7 @@ std::vector<PassItem> kVmPasses = {{"simplify_data_structures", SimplifyDataStru
                                    {"add_cache_embedding", AddCacheEmbeddingPass},
                                    {"add_recomputation", AddRecomputationPass},
                                    {"cse_after_recomputation", OptAfterRecomputeGroup},
+                                   {"environ_conv", EnvironConversionPass},
                                    {"slice_recompute_activation", SliceRecomputeActivationPass}};
 
 std::vector<PassItem> kGePasses = {{"simplify_data_structures", SimplifyDataStructuresPass},

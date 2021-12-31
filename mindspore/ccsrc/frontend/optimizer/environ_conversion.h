@@ -1,6 +1,4 @@
 /**
- * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
- *
  * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,24 +14,16 @@
  * limitations under the License.
  */
 
-#include "utils/symbolic.h"
+#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_ENVIRON_CONVERSION_H_
+#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_ENVIRON_CONVERSION_H_
 
-#include <memory>
+#include "pipeline/jit/resource.h"
 
 namespace mindspore {
-std::ostream &operator<<(std::ostream &out, const std::shared_ptr<EnvInstance> &objPtr) {
-  out << "()";
-  return out;
-}
-
-bool EnvInstance::operator==(const EnvInstance &other) const { return true; }
-
-bool EnvInstance::operator==(const Value &other) const {
-  if (other.isa<EnvInstance>()) {
-    auto other_env_inst = static_cast<const EnvInstance *>(&other);
-    return *this == *other_env_inst;
-  }
-  return false;
-}
-std::shared_ptr<EnvInstance> newenv = std::make_shared<EnvInstance>();
+/* namespace to support opt */
+namespace opt {
+bool EnvironConversion(const pipeline::ResourcePtr &resource);
+}  // namespace opt
 }  // namespace mindspore
+
+#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_ENVIRON_CONVERSION_H_

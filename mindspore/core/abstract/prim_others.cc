@@ -43,7 +43,15 @@ AbstractBasePtr InferImplIdentity(const AnalysisEnginePtr &, const PrimitivePtr 
   return args_spec_list[0];
 }
 
-AbstractBasePtr InferImplEnvGetItem(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+AbstractBasePtr InferImplEnvironCreate(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                       const AbstractBasePtrList &args_spec_list) {
+  // args: None.
+  CheckArgsSize(primitive->name(), args_spec_list, 0);
+  static AbstractBasePtr abs_env = std::make_shared<AbstractScalar>(kAnyValue, std::make_shared<EnvType>());
+  return abs_env;
+}
+
+AbstractBasePtr InferImplEnvironGet(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const AbstractBasePtrList &args_spec_list) {
   MS_EXCEPTION_IF_NULL(primitive);
   // args: Three objects of a subclass of AbstractBase, env, key, dflt(default).
@@ -53,7 +61,7 @@ AbstractBasePtr InferImplEnvGetItem(const AnalysisEnginePtr &, const PrimitivePt
   TypePtr type = key->GetTypeTrack();
   MS_EXCEPTION_IF_NULL(type);
   if (type->type_id() != kObjectTypeSymbolicKeyType) {
-    MS_LOG(EXCEPTION) << "EnvGetItem evaluator args[1] should be a SymbolicKeyInstance but: " << key->ToString();
+    MS_LOG(EXCEPTION) << "EnvironGet evaluator args[1] should be a SymbolicKeyInstance but: " << key->ToString();
   }
 
   auto context = MsContext::GetInstance();
@@ -76,7 +84,7 @@ AbstractBasePtr InferImplEnvGetItem(const AnalysisEnginePtr &, const PrimitivePt
   return expected;
 }
 
-AbstractBasePtr InferImplEnvSetItem(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+AbstractBasePtr InferImplEnvironSet(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const AbstractBasePtrList &args_spec_list) {
   // args: Three objects of a subclass of AbstractBase, env, key, dflt(default).
   CheckArgsSize(primitive->name(), args_spec_list, 3);
@@ -86,7 +94,7 @@ AbstractBasePtr InferImplEnvSetItem(const AnalysisEnginePtr &, const PrimitivePt
   MS_EXCEPTION_IF_NULL(key_value_ptr);
   auto key_value_track = key_value_ptr->cast<SymbolicKeyInstancePtr>();
   if (key_value_track == nullptr) {
-    MS_LOG(EXCEPTION) << "EnvGetItem evaluator args[1] expected should be able to cast to SymbolicKeyInstancePtrbut: "
+    MS_LOG(EXCEPTION) << "EnvironSet evaluator args[1] expected should be able to cast to SymbolicKeyInstancePtrbut: "
                       << key_value_ptr->ToString();
   }
   auto expected = key_value_track->abstract();
@@ -94,8 +102,8 @@ AbstractBasePtr InferImplEnvSetItem(const AnalysisEnginePtr &, const PrimitivePt
   return std::make_shared<AbstractScalar>(kAnyValue, std::make_shared<EnvType>());
 }
 
-AbstractBasePtr InferImplEnvAdd(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                const AbstractBasePtrList &args_spec_list) {
+AbstractBasePtr InferImplEnvironAdd(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                    const AbstractBasePtrList &args_spec_list) {
   // args: Three objects of a subclass of AbstractBase, env, key, dflt(default).
   CheckArgsSize(primitive->name(), args_spec_list, 2);
   return std::make_shared<AbstractScalar>(kAnyValue, std::make_shared<EnvType>());

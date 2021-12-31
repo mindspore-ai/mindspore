@@ -37,9 +37,6 @@ def _zeros_like_bool(x):
     return False
 
 
-newenv = base.EnvInstance_()
-
-
 @zeros_like_leaf.register("Function")
 def _zeros_like_func(x):
     """
@@ -49,10 +46,10 @@ def _zeros_like_func(x):
         x (Function): x
 
     Returns:
-        EnvInstance_, value is newenv.
+        A instance of EnvType.
     """
     # Unused parameters are placeholders.
-    return newenv
+    return F.environ_create()
 
 
 @zeros_like_leaf.register("Tensor")
