@@ -34,20 +34,20 @@ namespace mindspore::kernel {
 int ReshapeOpenCLKernel::CheckSpecs() {
   if ((in_tensors_.size() != INPUT_TENSOR_SIZE_1 && in_tensors_.size() != INPUT_TENSOR_SIZE_2) ||
       out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
-    MS_LOG(ERROR) << "Reshape input output size unsupported.";
+    MS_LOG(WARNING) << "Reshape input output size unsupported.";
     return RET_ERROR;
   }
   if (in_tensors_[0]->data_type() != kNumberTypeFloat32 && in_tensors_[0]->data_type() != kNumberTypeFloat16 &&
       in_tensors_[0]->data_type() != kNumberTypeInt32) {
-    MS_LOG(ERROR) << "Unsupported data type " << in_tensors_[0]->data_type();
+    MS_LOG(WARNING) << "Unsupported data type " << in_tensors_[0]->data_type();
     return RET_ERROR;
   }
   if (in_tensors_[0]->shape().size() > DIMENSION_4D) {
-    MS_LOG(ERROR) << "Reshape input size should in 0-4, actual: " << in_tensors_[0]->shape().size();
+    MS_LOG(WARNING) << "Reshape input size should in 0-4, actual: " << in_tensors_[0]->shape().size();
     return RET_ERROR;
   }
   if (out_tensors_[0]->shape().size() > OUTPUT_TENSOR_SIZE_4) {
-    MS_LOG(ERROR) << "Reshape output size should in 0-4, actual: " << out_tensors_[0]->shape().size();
+    MS_LOG(WARNING) << "Reshape output size should in 0-4, actual: " << out_tensors_[0]->shape().size();
     return RET_ERROR;
   }
   return RET_OK;

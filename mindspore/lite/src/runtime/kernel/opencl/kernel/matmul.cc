@@ -446,7 +446,7 @@ kernel::InnerKernel *OpenCLMatMulKernelCreator(const std::vector<lite::Tensor *>
       new (std::nothrow) MatMulOpenCLKernel(opParameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
   }
   if (kernel == nullptr) {
-    MS_LOG(ERROR) << "kernel " << opParameter->name_ << "is nullptr.";
+    MS_LOG(WARNING) << "kernel " << opParameter->name_ << "is nullptr.";
     free(opParameter);
     return nullptr;
   }
@@ -454,14 +454,14 @@ kernel::InnerKernel *OpenCLMatMulKernelCreator(const std::vector<lite::Tensor *>
     MS_LOG(WARNING) << "kernel don't infer shape yet!";
     auto ret = reinterpret_cast<MatMulOpenCLKernel *>(kernel)->StoreConstData();
     if (ret != mindspore::lite::RET_OK) {
-      MS_LOG(ERROR) << "Store " << opParameter->name_ << " const data failed!";
+      MS_LOG(WARNING) << "Store " << opParameter->name_ << " const data failed!";
       delete kernel;
       return nullptr;
     }
     return kernel;
   }
   if (kernel->CheckSpecs() != RET_OK || kernel->OpenCLKernel::CheckSpecs() != RET_OK) {
-    MS_LOG(ERROR) << "Check " << opParameter->name_ << " specification failed!";
+    MS_LOG(WARNING) << "Check " << opParameter->name_ << " specification failed!";
     delete kernel;
     return nullptr;
   }
