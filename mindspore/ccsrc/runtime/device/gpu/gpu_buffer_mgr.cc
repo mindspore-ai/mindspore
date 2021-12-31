@@ -26,21 +26,9 @@ namespace py = pybind11;
 
 namespace mindspore {
 namespace device {
-unsigned int HandleMgr::AllocHandle() {
-  for (size_t i = 0; i < MAX_HANDLE_NUM; ++i) {
-    if (!handle_list_[i]) {
-      handle_list_[i] = true;
-      return (unsigned int)i;
-    }
-  }
-  return INVALID_HANDLE;
-}
-
-void HandleMgr::FreeHandle(unsigned int handle_id) {
-  if (handle_id >= MAX_HANDLE_NUM) {
-    return;
-  }
-  handle_list_[handle_id] = false;
+static unsigned int AllocHandle() {
+  static std::atomic<unsigned int> handle(1);
+  return handle.fetch_add(1, std::memory_order_relaxed);
 }
 
 GpuBufferMgr &GpuBufferMgr::GetInstance() noexcept {
@@ -71,12 +59,12 @@ unsigned int GpuBufferMgr::Open(unsigned int device_id, const std::string &chann
   std::string name = std::to_string(device_id) + std::string("_") + channel_name;
   if (!name_queue_map_.count(name)) {
     MS_LOG(ERROR) << "Queue not exist " << name;
-    return HandleMgr::INVALID_HANDLE;
+    return INVALID_HANDLE;
   }
-  unsigned int handle = handle_mgr_.AllocHandle();
-  if (handle == HandleMgr::INVALID_HANDLE) {
+  unsigned int handle = AllocHandle();
+  if (handle == INVALID_HANDLE) {
     MS_LOG(ERROR) << "handle is invalid";
-    return HandleMgr::INVALID_HANDLE;
+    return INVALID_HANDLE;
   }
   (void)handle_queue_map_.insert(std::make_pair(handle, name_queue_map_[name]));
   name_queue_map_[name]->RegisterRelease(func);
@@ -90,12 +78,12 @@ unsigned int GpuBufferMgr::Open(unsigned int device_id, const std::string &chann
   std::string name = std::to_string(device_id) + std::string("_") + channel_name;
   if (!name_queue_map_.count(name)) {
     MS_LOG(ERROR) << "Queue not exist " << name;
-    return HandleMgr::INVALID_HANDLE;
+    return INVALID_HANDLE;
   }
-  unsigned int handle = handle_mgr_.AllocHandle();
-  if (handle == HandleMgr::INVALID_HANDLE) {
+  unsigned int handle = AllocHandle();
+  if (handle == INVALID_HANDLE) {
     MS_LOG(ERROR) << "handle is invalid";
-    return HandleMgr::INVALID_HANDLE;
+    return INVALID_HANDLE;
   }
   (void)handle_queue_map_.insert(std::make_pair(handle, name_queue_map_[name]));
   return handle;
@@ -147,7 +135,6 @@ void GpuBufferMgr::Close(unsigned int handle) noexcept {
     return;
   }
   (void)handle_queue_map_.erase(handle);
-  handle_mgr_.FreeHandle(handle);
   return;
 }
 
@@ -201,7 +188,7 @@ bool GpuBufferMgr::CloseNotify() {
 void GpuBufferMgr::CloseConfirm() { sema.Signal(); }
 
 size_t GpuBufferMgr::Size(unsigned int handle) {
-  if (handle == HandleMgr::INVALID_HANDLE) {
+  if (handle == INVALID_HANDLE) {
     MS_LOG(ERROR) << "handle is invalid";
     return 0;
   }
@@ -222,7 +209,7 @@ size_t GpuBufferMgr::Size(unsigned int device_id, const std::string &channel_nam
 }
 
 size_t GpuBufferMgr::Capacity(unsigned int handle) {
-  if (handle == HandleMgr::INVALID_HANDLE) {
+  if (handle == INVALID_HANDLE) {
     MS_LOG(ERROR) << "handle is invalid";
     return 0;
   }

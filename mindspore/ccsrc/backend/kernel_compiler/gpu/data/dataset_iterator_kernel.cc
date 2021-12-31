@@ -34,17 +34,11 @@
 namespace mindspore {
 namespace kernel {
 using mindspore::device::GpuBufferMgr;
-using mindspore::device::HandleMgr;
 
 DatasetIteratorKernel::DatasetIteratorKernel()
-    : handle_(HandleMgr::INVALID_HANDLE), total_bytes_(0), profiling_enable_(false), profiling_op_(nullptr) {}
+    : handle_(GpuBufferMgr::INVALID_HANDLE), total_bytes_(0), profiling_enable_(false), profiling_op_(nullptr) {}
 
 DatasetIteratorKernel::~DatasetIteratorKernel() { GpuBufferMgr::GetInstance().Close(handle_); }
-
-void DatasetIteratorKernel::ReleaseResource() {
-  GpuBufferMgr::GetInstance().Close(handle_);
-  handle_ = HandleMgr::INVALID_HANDLE;
-}
 
 const std::vector<size_t> &DatasetIteratorKernel::GetInputSizeList() const { return input_size_list_; }
 
@@ -138,9 +132,9 @@ bool DatasetIteratorKernel::ReadDevice(void **addr, size_t *len) {
 
 bool DatasetIteratorKernel::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
                                    const std::vector<AddressPtr> &outputs, void *stream) {
-  if (handle_ == HandleMgr::INVALID_HANDLE) {
+  if (handle_ == GpuBufferMgr::INVALID_HANDLE) {
     handle_ = GpuBufferMgr::GetInstance().Open(0, queue_name_, output_size_list_);
-    if (handle_ == HandleMgr::INVALID_HANDLE) {
+    if (handle_ == GpuBufferMgr::INVALID_HANDLE) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', gpu Queue(" << queue_name_ << ") Open Failed";
     }
   }
