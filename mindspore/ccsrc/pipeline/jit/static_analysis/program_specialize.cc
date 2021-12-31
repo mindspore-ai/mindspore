@@ -311,7 +311,9 @@ void FuncGraphSpecializer::ProcessNode(const AnfNodePtr &node) {
       partial_abstract->set_node(new_node);
     }
   }
-  MS_LOG(DEBUG) << "Set new_node: " << new_node->ToString() << ", abstract as: " << new_node->abstract()->ToString();
+  MS_LOG(DEBUG) << "Set new_node: " << new_node->DebugString() << ", abstract as: " << new_node->abstract()->ToString()
+                << ", func_graph_: " << func_graph_->ToString()
+                << ", specialized_func_graph_: " << specialized_func_graph_->ToString();
 
   if (node->isa<CNode>()) {
     auto attrs = conf->ObtainEvalResult()->attribute();
@@ -326,7 +328,7 @@ void FuncGraphSpecializer::ProcessNode(const AnfNodePtr &node) {
       AbstractBasePtr ival = GetEvaluatedValue(iconf);
       // First try to check if node_input can be replaced by a ValueNode. If cannot, then try to check if
       // can be replaced by another CNode from anfnode_config_map, otherwise use the replicated node.
-      AnfNodePtr replace_node = BuildPossibleValueNode(iconf->node(), ival, attrs);
+      AnfNodePtr replace_node = BuildPossibleValueNode(iconf->node(), ival, attrs, node);
       if (replace_node == nullptr) {
         replace_node = BuildReplacedNode(iconf);
         replace_node->set_abstract(ival);
@@ -834,7 +836,7 @@ static PrimitivePtr BuildPrimtiveValueWithAttributes(const PrimitivePtr &prim, c
 }
 
 AnfNodePtr FuncGraphSpecializer::BuildPossibleValueNode(const AnfNodePtr &origin_node, const AbstractBasePtr &ival,
-                                                        const AttrValueMapPtr &attrs) {
+                                                        const AttrValueMapPtr &attrs, const AnfNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(origin_node);
   MS_EXCEPTION_IF_NULL(ival);
 
@@ -865,6 +867,11 @@ AnfNodePtr FuncGraphSpecializer::BuildPossibleValueNode(const AnfNodePtr &origin
     MS_EXCEPTION_IF_NULL(value);
     if (!value->isa<FuncGraph>() || value->cast<FuncGraphPtr>()->parent() == nullptr ||
         (IsValueNode<FuncGraph>(origin_node) && IsVisible(func_graph_, value->cast<FuncGraphPtr>()->parent()))) {
+      return BuildValueNode(value, ival);
+    } else if (IsPrimitiveCNode(cnode, prim::kPrimJ) && origin_node->isa<Parameter>() &&
+               !value->cast<FuncGraphPtr>()->has_flag(FUNC_GRAPH_FLAG_K_GRAPH)) {
+      // Only if J(Parameter=func_graph) and func_graph(aka 'value') is not K graph.
+      MS_LOG(DEBUG) << "Specialize the parameter used by J CNode, cnode: " << cnode->DebugString();
       return BuildValueNode(value, ival);
     } else {
       return nullptr;

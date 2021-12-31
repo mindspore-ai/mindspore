@@ -120,7 +120,7 @@ class FuncGraphSpecializer : public std::enable_shared_from_this<FuncGraphSpecia
 
   // Build a value node if ival is constant and not any-value
   AnfNodePtr BuildPossibleValueNode(const AnfNodePtr &origin_node, const AbstractBasePtr &ival,
-                                    const AttrValueMapPtr &attrs);
+                                    const AttrValueMapPtr &attrs, const AnfNodePtr &cnode = nullptr);
   // Build a replaceable node for iconf->node; it may be a replicated forwarded CNode in static analysis or just a
   // replicated node.
   AnfNodePtr BuildReplacedNode(const AnfNodeConfigPtr &conf);
