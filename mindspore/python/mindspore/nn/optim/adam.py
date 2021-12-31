@@ -296,6 +296,8 @@ class Adam(Optimizer):
         ``Ascend`` ``GPU``  ``CPU``
 
     Examples:
+        >>>from mindspore import nn, Model
+        >>>
         >>> net = Net()
         >>> #1) All parameters use the same learning rate and weight decay
         >>> optim = nn.Adam(params=net.trainable_params())
@@ -474,6 +476,8 @@ class AdamWeightDecay(Optimizer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>>from mindspore import nn, Model
+        >>>
         >>> net = Net()
         >>> #1) All parameters use the same learning rate and weight decay
         >>> optim = nn.AdamWeightDecay(params=net.trainable_params())
@@ -626,6 +630,8 @@ class AdamOffload(Optimizer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore import nn, Model
+        >>>
         >>> net = Net()
         >>> #1) All parameters use the same learning rate and weight decay
         >>> optim = nn.AdamOffload(params=net.trainable_params())

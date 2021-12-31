@@ -117,6 +117,8 @@ class SGD(Optimizer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore import nn, Model
+        >>>
         >>> net = Net()
         >>> #1) All parameters use the same learning rate and weight decay
         >>> optim = nn.SGD(params=net.trainable_params())
