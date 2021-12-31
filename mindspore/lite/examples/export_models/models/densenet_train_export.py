@@ -25,7 +25,7 @@ from src.network.densenet import DenseNet121
 #pylint: disable=wrong-import-position
 sys.path.append(os.environ['CLOUD_MODEL_ZOO'] + 'official/cv/densenet121/')
 
-context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU", save_graphs=False)
+context.set_context(mode=context.GRAPH_MODE, device_target="GPU", save_graphs=False)
 
 n = DenseNet121(num_classes=10)
 loss_fn = nn.SoftmaxCrossEntropyWithLogits(sparse=False)

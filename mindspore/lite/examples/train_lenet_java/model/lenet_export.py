@@ -23,7 +23,7 @@ from train_utils import train_wrap
 
 n = LeNet5()
 n.set_train()
-context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU", save_graphs=False)
+context.set_context(mode=context.GRAPH_MODE, device_target="CPU", save_graphs=False)
 
 BATCH_SIZE = 4
 x = Tensor(np.ones((BATCH_SIZE, 1, 32, 32)), mstype.float32)

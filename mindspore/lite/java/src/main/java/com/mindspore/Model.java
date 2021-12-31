@@ -47,10 +47,11 @@ public class Model {
      * @return build status.
      */
     public boolean build(Graph graph, MSContext context, TrainCfg cfg) {
-        if (graph == null || context == null || cfg == null) {
+        if (graph == null || context == null) {
             return false;
         }
-        modelPtr = this.buildByGraph(graph.getGraphPtr(), context.getMSContextPtr(), cfg.getTrainCfgPtr());
+        long cfgPtr = cfg != null ? cfg.getTrainCfgPtr() : 0;
+        modelPtr = this.buildByGraph(graph.getGraphPtr(), context.getMSContextPtr(), cfgPtr);
         return modelPtr != 0;
     }
 

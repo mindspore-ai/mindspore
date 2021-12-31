@@ -147,7 +147,7 @@ class BertTrainCell(M.nn.Cell):
         return F.depend(loss, succ)
 
 
-M.context.set_context(mode=M.context.PYNATIVE_MODE,
+M.context.set_context(mode=M.context.GRAPH_MODE,
                       device_target="CPU", save_graphs=False)
 
 # get epoch number

@@ -22,7 +22,7 @@ import mindspore.common.dtype as mstype
 from mindspore import context, Tensor, nn
 from mindspore.train.serialization import export
 
-context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU", save_graphs=False)
+context.set_context(mode=context.GRAPH_MODE, device_target="GPU", save_graphs=False)
 
 n = LeNet5()
 loss_fn = nn.MSELoss()
