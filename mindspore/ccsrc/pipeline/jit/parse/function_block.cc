@@ -590,6 +590,9 @@ void FunctionBlock::AttachIsolatedNodesBeforeReturn() {
     state = states[1];
   } else {
     state = func_graph_->NewCNode(std::move(states));
+    if (state->debug_info()) {
+      state->debug_info()->set_location(nullptr);
+    }
   }
 
   AnfNodePtr old_output = nullptr;
@@ -605,6 +608,12 @@ void FunctionBlock::AttachIsolatedNodesBeforeReturn() {
   }
   AnfNodePtr stop_grad_node = func_graph_->NewCNode({NewValueNode(prim::kPrimStopGradient), state});
   CNodePtr depend_node = func_graph_->NewCNode({NewValueNode(prim::kPrimDepend), old_output, stop_grad_node});
+  if (stop_grad_node->debug_info()) {
+    stop_grad_node->debug_info()->set_location(nullptr);
+  }
+  if (depend_node->debug_info()) {
+    depend_node->debug_info()->set_location(nullptr);
+  }
   // We add this attribute for @constexpr use scene, since we must infer them before other nodes.
   // That means isolated nodes will be evaluated first. It's not complete, but works in most scenes.
   depend_node->AddAttr(kAttrTopoSortRhsFirst, MakeValue(true));
