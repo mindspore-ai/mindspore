@@ -48,14 +48,9 @@ int OneHotCPUKernel::Init() {
     MS_LOG(ERROR) << "OneHot context nullptr";
     return RET_NULL_PTR;
   }
+  CHECK_NULL_RETURN(one_hot_param_);
   thread_num_ = op_parameter_->thread_num_;
-
-  auto param = reinterpret_cast<OneHotParameter *>(op_parameter_);
-  if (param == nullptr) {
-    MS_LOG(ERROR) << "OneHot op_parameter_ nullptr";
-    return RET_NULL_PTR;
-  }
-  axis_ = param->axis_;
+  axis_ = one_hot_param_->axis_;
 
   if (!InferShapeDone()) {
     return RET_OK;
@@ -88,6 +83,7 @@ int OneHotCPUKernel::ReSize() {
 }
 
 int RunOneHot(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+  CHECK_NULL_RETURN(cdata);
   auto onehot_kernel = reinterpret_cast<OneHotCPUKernel *>(cdata);
   if (onehot_kernel == nullptr) {
     MS_LOG(ERROR) << "cast OneHotCPUKernel failed";
@@ -102,29 +98,22 @@ int RunOneHot(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 }
 
 int OneHotCPUKernel::OneHotImpl(int task_id) {
+  CHECK_NULL_RETURN(in_tensors_.at(0));
   auto indices_data = static_cast<int *>(in_tensors_.at(0)->data());
-  if (indices_data == nullptr) {
-    return RET_NULL_PTR;
-  }
+  CHECK_NULL_RETURN(indices_data);
   auto output = out_tensors_.at(0);
-  if (output == nullptr) {
-    MS_LOG(ERROR) << "OneHot output nullptr";
-    return RET_NULL_PTR;
-  }
+  CHECK_NULL_RETURN(output);
   auto output_data = output->data();
-  if (output_data == nullptr) {
-    return RET_NULL_PTR;
-  }
-  auto one_hot_param = reinterpret_cast<OneHotParameter *>(op_parameter_);
+  CHECK_NULL_RETURN(output_data);
 
   if (output->data_type() == kNumberTypeFloat32) {
-    auto ret = OneHotToFp32(indices_data, on_value_, off_value_, reinterpret_cast<float *>(output_data), one_hot_param,
+    auto ret = OneHotToFp32(indices_data, on_value_, off_value_, reinterpret_cast<float *>(output_data), one_hot_param_,
                             task_id, thread_num_);
     return ret;
 #if defined(ENABLE_ARM) && defined(ENABLE_FP16)
   } else if (output->data_type() == kNumberTypeFloat16) {
     auto ret = OneHotToFp16(indices_data, on_value_, off_value_, reinterpret_cast<float16_t *>(output_data),
-                            one_hot_param, task_id, thread_num_);
+                            one_hot_param_, task_id, thread_num_);
     return ret;
 #endif
   } else {
@@ -134,26 +123,20 @@ int OneHotCPUKernel::OneHotImpl(int task_id) {
 }
 
 int OneHotCPUKernel::InitParamsAndOnOffValue() {
-  auto one_hot_param = reinterpret_cast<OneHotParameter *>(op_parameter_);
-  if (one_hot_param == nullptr) {
-    MS_LOG(ERROR) << "cast OneHotParameter nullptr";
-    return RET_NULL_PTR;
-  }
-
   auto depth_tensor = in_tensors_.at(1);
   if (depth_tensor == nullptr) {
     MS_LOG(ERROR) << "OneHot inputs[1] depth nullptr";
     return RET_NULL_PTR;
   }
-  const int *depth = reinterpret_cast<int *>(depth_tensor->MutableData());
+  const int *depth = reinterpret_cast<int *>(depth_tensor->data());
   if (depth == nullptr) {
     return RET_NULL_PTR;
   }
-  one_hot_param->depth_ = *depth;
+  one_hot_param_->depth_ = *depth;
 
   if (in_tensors_.size() == kInputNum) {
     // 4 inputs: indices, depth, on_value, off_value
-    one_hot_param->support_neg_index_ = false;
+    one_hot_param_->support_neg_index_ = false;
     auto ret = InitOnOffValueForFourInputs();
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Init on off value failed";
@@ -161,7 +144,7 @@ int OneHotCPUKernel::InitParamsAndOnOffValue() {
     }
   } else {
     // 3 inputs: indices, depth, off_on_value
-    one_hot_param->support_neg_index_ = true;
+    one_hot_param_->support_neg_index_ = true;
     auto ret = InitOnOffValueForThreeInputs();
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Init on off value failed";
@@ -169,8 +152,8 @@ int OneHotCPUKernel::InitParamsAndOnOffValue() {
     }
   }
 
-  one_hot_param->outer_size_ = outer_size_;
-  one_hot_param->inner_size_ = inner_size_;
+  one_hot_param_->outer_size_ = outer_size_;
+  one_hot_param_->inner_size_ = inner_size_;
 
   return RET_OK;
 }

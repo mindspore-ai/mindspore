@@ -39,7 +39,7 @@ class CropBaseCPUKernel : public InnerKernel {
  protected:
   std::vector<int> input_shape_;
   std::vector<int> output_shape_;
-  CropParameter *crop_para_;
+  CropParameter *crop_para_ = nullptr;
   int PadOffset(int input_dim, CropParameter *crop_para) const;
 };
 }  // namespace mindspore::kernel
