@@ -422,6 +422,62 @@ AnfNodePtr CreateFP16Cast(const CNodePtr &node, const AnfNodePtr &pre_node, cons
   auto new_node = node->func_graph()->NewCNode({NewValueNode(prim), pre_node, type_node});
   new_node->set_abstract(node->abstract());
   return new_node;
-}  // namespace parallel
+}
+
+AnfNodePtr RealInputNode(const CNodePtr cnode, size_t index) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (cnode->size() <= index) {
+    MS_LOG(EXCEPTION) << "cnode inputs size: " << cnode->size() << " is less equal index: " << index;
+  }
+  auto input0 = cnode->input(index);
+  if (!input0->isa<CNode>()) {
+    return input0;
+  }
+  auto prim = GetCNodePrimitive(input0);
+  MS_EXCEPTION_IF_NULL(prim);
+  while (prim->name() == LOAD || prim->name() == DEPEND || prim->name() == UPDATESTATE) {
+    if (prim->name() == LOAD || prim->name() == DEPEND) {
+      input0 = input0->cast<CNodePtr>()->input(1);
+    } else if (prim->name() == UPDATESTATE) {
+      input0 = input0->cast<CNodePtr>()->input(2);
+    }
+    if (!input0->isa<CNode>()) {
+      return input0;
+    }
+    prim = GetCNodePrimitive(input0);
+    MS_EXCEPTION_IF_NULL(prim);
+  }
+  return input0;
+}
+
+void LabelGenMaskMicro(const FuncGraphPtr &root) {
+  AnfNodePtr ret = root->get_return();
+  MS_EXCEPTION_IF_NULL(ret);
+  std::vector<AnfNodePtr> all_nodes = DeepScopedGraphSearch(ret);
+  for (auto &node : all_nodes) {
+    if (IsPrimitiveCNode(node, prim::kPrimDropoutDoMask)) {
+      auto gen_mask_node = RealInputNode(node->cast<CNodePtr>(), 2);
+      if (gen_mask_node->isa<CNode>()) {
+        gen_mask_node->cast<CNodePtr>()->set_primal_attrs(node->cast<CNodePtr>()->primal_attrs());
+      }
+    }
+  }
+}
+
+void SetCastForParamNotRecompute(const std::vector<AnfNodePtr> &all_nodes) {
+  for (const auto &node : all_nodes) {
+    if (!IsPrimitiveCNode(node, prim::kPrimCast)) {
+      continue;
+    }
+    auto cnode = node->cast<CNodePtr>();
+    auto cast_input = RealInputNode(cnode, 1);
+    if (cast_input->isa<Parameter>()) {
+      MS_LOG(INFO) << "Cast for parameter no needs recompute to avoid redundant trans_data operator";
+      PrimitivePtr prim = GetValueNode<PrimitivePtr>(cnode->input(0)->cast<ValueNodePtr>());
+      prim->AddAttr("recompute", MakeValue(false));
+    }
+  }
+}
+
 }  // namespace parallel
 }  // namespace mindspore

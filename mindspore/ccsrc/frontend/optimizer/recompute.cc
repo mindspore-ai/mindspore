@@ -335,6 +335,9 @@ CNodePtr CreateNewRecomputedNode(const FuncGraphPtr &graph, const CNodePtr &orig
   recomputed_node->AddAttr(kAttrNeedCseAfterRecompute, MakeValue(true));
   recomputed_node->set_abstract(origin_node->abstract());
   recomputed_node->set_scope(origin_node->scope());
+  if (origin_node->HasPrimalAttr(kAttrMicro)) {
+    recomputed_node->AddPrimalAttr(kAttrMicro, origin_node->GetPrimalAttr(kAttrMicro));
+  }
   return recomputed_node;
 }
 

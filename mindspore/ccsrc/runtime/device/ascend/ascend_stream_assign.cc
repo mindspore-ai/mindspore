@@ -271,6 +271,7 @@ void AscendStreamAssign::AssignStream(const NotNull<KernelGraphPtr> &graph_ptr) 
     InsertStreamActive(graph_ptr);
     InsertEventForHcomParallel(graph_ptr);
     InsertEventForIndependentParallel(graph_ptr);
+    InsertEventForMicroBatchIndependent(graph_ptr);
     GetIndependentMaxTarget(graph_ptr);
     InsertCtrlForIndependentParallel(graph_ptr);
     AdjustAtomicAddrCleanOrder(graph_ptr);
@@ -2596,6 +2597,92 @@ void AscendStreamAssign::AdjustAtomicAddrCleanOrder(const NotNull<KernelGraphPtr
     }
   }
   graph_ptr->set_execution_order(update_orders);
+}
+
+CNodePtr FindNextGenMask(const NotNull<KernelGraphPtr> &graph_ptr, const CNodePtr do_mask_cnode) {
+  auto &exec_order = graph_ptr->execution_order();
+  auto iter = std::find(exec_order.begin(), exec_order.end(), do_mask_cnode);
+  for (; iter != exec_order.end(); iter++) {
+    auto cnode = *iter;
+    if ((AnfAlgo::GetCNodeName(cnode) != kDropoutGenMaskOpName &&
+         AnfAlgo::GetCNodeName(cnode) != kDropoutGenMaskV3OpName) ||
+        !cnode->HasPrimalAttr(kAttrMicro)) {
+      continue;
+    }
+    return cnode;
+  }
+  return nullptr;
+}
+
+void AscendStreamAssign::InsertEventForMicroBatchIndependent(const NotNull<KernelGraphPtr> &graph_ptr) {
+  if (parallel::ParallelContext::GetInstance()->pipeline_stage_split_num() <= 1) {
+    return;
+  }
+  std::map<CNodePtr, CNodePtr> node_send_map;
+  std::map<CNodePtr, CNodePtr> node_recv_map;
+  std::map<size_t, CNodePtr> micro_last_cnode_map;
+  AscendStreamMng &resource_manager = AscendStreamMng::GetInstance();
+
+  auto &exec_order = graph_ptr->execution_order();
+  for (auto &cnode : exec_order) {
+    if (AnfAlgo::GetCNodeName(cnode) != kDropoutDoMaskOpName &&
+        AnfAlgo::GetCNodeName(cnode) != kDropoutDoMaskV3OpName) {
+      continue;
+    }
+    if (!cnode->HasPrimalAttr(kAttrMicro)) {
+      MS_LOG(WARNING) << "Node doesn't have the attr [micro], node: " << cnode->fullname_with_scope();
+      continue;
+    }
+    auto micro_ptr = cnode->GetPrimalAttr(kAttrMicro);
+    auto micro_value = GetValue<int64_t>(micro_ptr);
+    micro_last_cnode_map[micro_value] = cnode;
+  }
+
+  for (auto &micro_cnode_item : micro_last_cnode_map) {
+    auto cnode = micro_cnode_item.second;
+    auto micro_batch = micro_cnode_item.first;
+    MS_LOG(INFO) << "Micro: " << micro_batch << ", last DropoutDoMask: " << cnode->fullname_with_scope();
+    auto next_gen_mask = FindNextGenMask(graph_ptr, cnode);
+    if (next_gen_mask == nullptr) {
+      MS_LOG(INFO) << "Node doesn't have the next DropoutGenMask, node: " << cnode->fullname_with_scope()
+                   << ", micro value: " << micro_batch;
+      continue;
+    }
+    MS_LOG(INFO) << "Insert send after node: " << cnode->fullname_with_scope()
+                 << ", insert recv before node: " << next_gen_mask->fullname_with_scope();
+    uint32_t cur_event_id = resource_manager.ApplyNewEvent();
+    CNodePtr send_cnode = CreateSendApplyKernel(graph_ptr, cur_event_id, AnfAlgo::GetStreamId((cnode)));
+    CNodePtr recv_cnode = CreateRecvApplyKernel(graph_ptr, cur_event_id, AnfAlgo::GetStreamId(next_gen_mask));
+    node_send_map[cnode] = send_cnode;
+    node_recv_map[next_gen_mask] = recv_cnode;
+  }
+
+  MS_LOG(INFO) << "Print execution order before inserting event between DropoutDoMask and DropoutGenMask.";
+  graph_ptr->PrintGraphExecuteOrder();
+  std::vector<CNodePtr> new_exec_order;
+  for (auto &cnode : exec_order) {
+    auto cnode_name = AnfAlgo::GetCNodeName(cnode);
+    if (cnode_name == kDropoutDoMaskOpName || cnode_name == kDropoutDoMaskV3OpName) {
+      auto send_iter = node_send_map.find(cnode);
+      if (send_iter != node_send_map.end()) {
+        new_exec_order.push_back(cnode);
+        new_exec_order.push_back((*send_iter).second);
+        continue;
+      }
+    }
+    if (cnode_name == kDropoutGenMaskOpName || cnode_name == kDropoutGenMaskV3OpName) {
+      auto recv_iter = node_recv_map.find(cnode);
+      if (recv_iter != node_recv_map.end()) {
+        new_exec_order.push_back((*recv_iter).second);
+        new_exec_order.push_back(cnode);
+        continue;
+      }
+    }
+    new_exec_order.push_back(cnode);
+  }
+  graph_ptr->set_execution_order(new_exec_order);
+  MS_LOG(INFO) << "Print execution order after inserting event between DropoutDoMask and DropoutGenMask.";
+  graph_ptr->PrintGraphExecuteOrder();
 }
 }  // namespace ascend
 }  // namespace device

@@ -514,6 +514,7 @@ constexpr auto kAttrFuncType = "func_type";
 constexpr auto kAttrCustAicpu = "cust_aicpu";
 constexpr auto kAttrIsInternalOutputNopNode = "is_internal_output_nop_node";
 constexpr auto kAttrIsUBFusionOp = "is_ub_fusion_op";
+constexpr auto kAttrMicro = "micro";
 
 // custom operator func type
 constexpr auto kCustomTypeAOT = "aot";

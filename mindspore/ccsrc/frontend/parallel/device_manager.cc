@@ -27,8 +27,9 @@
 namespace mindspore {
 namespace parallel {
 DeviceManagerPtr g_device_manager = nullptr;
-bool InitDevice(int64_t device_num, int64_t global_rank, const std::string &backend,
-                const std::vector<int64_t> &stage) {
+
+bool CheckDeviceConfig(int64_t device_num, int64_t global_rank, const std::string &backend,
+                       const std::vector<int64_t> &stage) {
   if (device_num <= 0) {
     MS_LOG(ERROR) << "The context configuration parameter 'device_num' must be positive, "
                      "but got the value of device_num: "
@@ -46,10 +47,10 @@ bool InitDevice(int64_t device_num, int64_t global_rank, const std::string &back
                   << ", but got the value of device_num: " << device_num;
     return false;
   }
-  // 'device_num_converted' must be the power of 2
-  if ((LongToUlong(device_num) & LongToUlong(device_num - 1)) != 0) {
-    MS_LOG(ERROR) << "The context configuration parameter device_num' must be the power of 2, "
-                     "but got the value of device_num: "
+  // 'device_num_converted' must be divisible by 8
+  if (device_num % DEVICE_NUM_PER_SERVER != 0 && device_num != 1 && device_num != 2 && device_num != 4) {
+    MS_LOG(ERROR) << "The context configuration parameter device_num' must be divisible by 8, "
+                     "or equal to 1, 2 or 4, but got the value of device_num: "
                   << device_num;
     return false;
   }
@@ -67,6 +68,14 @@ bool InitDevice(int64_t device_num, int64_t global_rank, const std::string &back
   }
   if (stage.empty()) {
     MS_LOG(ERROR) << "The size of parameter 'stage' must be positive, but got the size of stage is empty.";
+    return false;
+  }
+  return true;
+}
+
+bool InitDevice(int64_t device_num, int64_t global_rank, const std::string &backend,
+                const std::vector<int64_t> &stage) {
+  if (!CheckDeviceConfig(device_num, global_rank, backend, stage)) {
     return false;
   }
 

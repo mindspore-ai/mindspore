@@ -3152,11 +3152,22 @@ static void HandleDataParallel() {
   }
 }
 
+static void PipelinePreProcess(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager,
+                               const std::vector<AnfNodePtr> &all_nodes) {
+  auto pipeline_stages = ParallelContext::GetInstance()->pipeline_stage_split_num();
+  if (pipeline_stages > 1) {
+    HandleMicroBatch(all_nodes, manager);
+    ParameterStartNode(all_nodes, manager);
+    LastStageEndNode(all_nodes, manager, root);
+  }
+}
+
 static void PipelinePostProcess(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes) {
   auto pipeline_stages = ParallelContext::GetInstance()->pipeline_stage_split_num();
   if (pipeline_stages > 1) {
     AddVirtualAssignAdd(root);
     HandleReceiveParam(root, all_nodes);
+    LabelGenMaskMicro(root);
   }
 }
 
@@ -3207,12 +3218,7 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
     if (pipeline_stages <= 1 && ParallelInit() != SUCCESS) {
       MS_LOG(EXCEPTION) << "Parallel init failed";
     }
-
-    if (pipeline_stages > 1) {
-      HandleMicroBatch(all_nodes, manager);
-      ParameterStartNode(all_nodes, manager);
-      LastStageEndNode(all_nodes, manager, root);
-    }
+    PipelinePreProcess(root, manager, all_nodes);
 
     // mark the forward cnodes, parallel only care these nodes
     MarkForwardCNode(root);
@@ -3233,6 +3239,8 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
     ExtractInformation(all_nodes);
     ReshapeInit(all_nodes);
   }
+
+  SetCastForParamNotRecompute(all_nodes);
 
   HandleRootReshapeAndSaveStrategy(all_nodes);
 

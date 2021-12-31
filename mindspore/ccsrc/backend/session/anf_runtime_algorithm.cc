@@ -25,6 +25,7 @@
 #include "base/core_ops.h"
 #include "utils/utils.h"
 #include "utils/shape_utils.h"
+#include "frontend/parallel/context.h"
 #include "runtime/device/kernel_info.h"
 #include "runtime/device/device_address.h"
 #include "backend/optimizer/common/helper.h"
@@ -521,6 +522,11 @@ void AnfRuntimeAlgorithm::CopyNodeAttrs(const AnfNodePtr &from, const AnfNodePtr
   MS_EXCEPTION_IF_NULL(from_primitive);
   auto to_primitive = AnfAlgo::GetCNodePrimitive(to);
   MS_EXCEPTION_IF_NULL(to_primitive);
+  auto from_cnode = from->cast<CNodePtr>();
+  auto to_cnode = to->cast<CNodePtr>();
+  if (from_cnode->HasPrimalAttr(kAttrMicro)) {
+    to_cnode->AddPrimalAttr(kAttrMicro, from_cnode->GetPrimalAttr(kAttrMicro));
+  }
   (void)to_primitive->SetAttrs(from_primitive->attrs());
 }
 
@@ -1809,10 +1815,13 @@ std::vector<CNodePtr> DelayExecNode(const std::vector<CNodePtr> &nodes, const st
 void AnfRuntimeAlgorithm::ReorderExecList(NotNull<std::vector<CNodePtr> *> node_list) {
   std::vector<CNodePtr> result;
   std::copy(node_list->begin(), node_list->end(), std::back_inserter(result));
-  result = DelayExecNode(result, "TransData", true);
-  result = DelayExecNode(result, "Cast", true);
-  result = DelayExecNode(result, "AdamApplyOneWithDecay", false);
-  result = DelayExecNode(result, "AdamApplyOne", false);
+  result = DelayExecNode(result, kTransDataOpName, true);
+  result = DelayExecNode(result, kCastOpName, true);
+  result = DelayExecNode(result, kAdamApplyOneWithDecayOpName, false);
+  result = DelayExecNode(result, kAdamApplyOneOpName, false);
+  if (parallel::ParallelContext::GetInstance()->pipeline_stage_split_num() > 1) {
+    result = DelayExecNode(result, kDropoutGenMaskOpName, true);
+  }
   node_list->clear();
   std::copy(result.begin(), result.end(), std::back_inserter(*node_list));
 }

@@ -190,8 +190,7 @@ class TransformerRecomputeConfig(_Config):
         self._recompute_slice_activation = value
 
 
-_DEFALUT_TRANSFORMER_RECOMPUTE_CONFIG = TransformerRecomputeConfig()
-
+default_transformer_recompute_config = TransformerRecomputeConfig()
 
 class TransformerOpParallelConfig(_Config):
     r"""
@@ -231,7 +230,7 @@ class TransformerOpParallelConfig(_Config):
     """
 
     def __init__(self, data_parallel=1, model_parallel=1, pipeline_stage=1, micro_batch_num=1,
-                 recompute=_DEFALUT_TRANSFORMER_RECOMPUTE_CONFIG,
+                 recompute=default_transformer_recompute_config,
                  optimizer_shard=False, gradient_aggregation_group=4, vocab_emb_dp=True):
         self.recompute = recompute
         self.optimizer_shard = optimizer_shard
