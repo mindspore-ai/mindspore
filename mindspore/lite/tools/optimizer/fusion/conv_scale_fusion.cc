@@ -56,6 +56,7 @@ int ConvScaleFusion::InitTransParam(const CNodePtr &scale_node, int kernel_num, 
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_INPUT_TENSOR_ERROR);
     return lite::RET_ERROR;
   }
+  MS_CHECK_TRUE_RET(scale_weight_node != nullptr, lite::RET_ERROR);
   if (!scale_weight_node->isa<Parameter>()) {
     MS_LOG(ERROR) << "scale weight node not parameter node";
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_INVALID_OP_ATTR);
@@ -65,10 +66,11 @@ int ConvScaleFusion::InitTransParam(const CNodePtr &scale_node, int kernel_num, 
     MS_LOG(DEBUG) << "scale bias input is dynamic.";
     return lite::RET_NO_CHANGE;
   }
+  MS_ASSERT(scale_weight_node->cast<ParameterPtr>() != nullptr);
   auto scale_weight_param = scale_weight_node->cast<ParameterPtr>()->default_param();
-  MS_ASSERT(scale_weight_param != nullptr);
+  MS_CHECK_TRUE_RET(scale_weight_param != nullptr, lite::RET_ERROR);
   auto weight_value = std::dynamic_pointer_cast<tensor::Tensor>(scale_weight_param);
-  MS_ASSERT(weight_value != nullptr);
+  MS_CHECK_TRUE_RET(weight_value != nullptr && weight_value->data_c() != nullptr, lite::RET_ERROR);
   auto weight_data = reinterpret_cast<const float *>(weight_value->data_c());
 
   if (memcpy_s(trans_scale, kernel_num * sizeof(float), weight_data, weight_value->Size()) != EOK) {
@@ -78,10 +80,11 @@ int ConvScaleFusion::InitTransParam(const CNodePtr &scale_node, int kernel_num, 
   }
 
   if (scale_bias_node != nullptr) {
+    MS_ASSERT(scale_bias_node->cast<ParameterPtr>() != nullptr);
     auto scale_bias_param = scale_bias_node->cast<ParameterPtr>()->default_param();
-    MS_ASSERT(scale_bias_param != nullptr);
+    MS_CHECK_TRUE_RET(scale_bias_param != nullptr, lite::RET_ERROR);
     auto bias_value = std::dynamic_pointer_cast<tensor::Tensor>(scale_bias_param);
-    MS_ASSERT(bias_value != nullptr);
+    MS_CHECK_TRUE_RET(bias_value != nullptr && bias_value->data_c() != nullptr, lite::RET_ERROR);
     auto bias_data = reinterpret_cast<const float *>(bias_value->data_c());
     if (memcpy_s(trans_bias, kernel_num * sizeof(float), bias_data, bias_value->Size()) != EOK) {
       MS_LOG(ERROR) << "memcpy_s transScale failed";

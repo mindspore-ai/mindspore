@@ -101,7 +101,7 @@ int Conv2DInfo::CheckIfSplit() {
   if (split_mode_ != SplitCOUT) {
     auto input_node_abstract = GetCNodeInputAbstract(cnode_, 1);
     MS_CHECK_TRUE_RET(input_node_abstract != nullptr, RET_ERROR);
-    auto weight_node_abstract = GetCNodeInputAbstract(cnode_, 2);
+    auto weight_node_abstract = GetCNodeInputAbstract(cnode_, kInputIndexTwo);
     MS_CHECK_TRUE_RET(weight_node_abstract != nullptr, RET_ERROR);
     if (!utils::isa<abstract::AbstractTensorPtr>(input_node_abstract)) {
       MS_LOG(ERROR) << "conv_input_abstract of should be abstract tensor";
@@ -263,6 +263,62 @@ int Conv2DInfo::InferParallelCNodes() {
   return ConstructOutputCNodes(conv_prim, feature_split_outputs, kernel_split_outputs, bias_split_outputs);
 }
 
+std::shared_ptr<ops::Conv2DFusion> Conv2DInfo::GetNewConvPrimitive(const std::shared_ptr<ops::Conv2DFusion> &conv_prim,
+                                                                   size_t dev_index, int cin_sum, int cout_sum) {
+  auto prim = std::make_shared<ops::Conv2DFusion>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  prim->set_pad(conv_prim->get_pad());
+  prim->set_pad_mode(PAD);
+  prim->set_in_channel(conv_prim->get_in_channel());
+  prim->set_out_channel(conv_prim->get_out_channel());
+  prim->set_dilation(conv_prim->get_dilation());
+  prim->set_format(conv_prim->get_format());
+  prim->set_group(conv_prim->get_group());
+  prim->set_kernel_size(conv_prim->get_kernel_size());
+  prim->set_pad_list(conv_prim->get_pad_list());
+  prim->set_stride(conv_prim->get_stride());
+  prim->set_activation_type(conv_prim->get_activation_type());
+  Strategys strategys = strategy_.strategys;
+  size_t dev_num = strategy_.dev_num;
+  switch (split_mode_) {
+    case SplitH: {
+      if (dev_index != 0) {
+        auto pad = prim->get_pad_list();
+        pad.at(kPadUp) = 0;
+        prim->set_pad_list(pad);
+      }
+      if (dev_index != (dev_num - 1)) {
+        auto pad = prim->get_pad_list();
+        pad.at(kPadDown) = 0;
+        prim->set_pad_list(pad);
+      }
+    } break;
+    case SplitCIN: {
+      auto in_channel = prim->get_in_channel();
+      MS_CHECK_TRUE_RET(cin_sum != 0, nullptr);
+      MS_CHECK_INT_MUL_NOT_OVERFLOW(in_channel, strategys[0][kAxisCIn][0], nullptr);
+      if (dev_index == 0) {
+        prim->set_in_channel(in_channel * strategys[0][kAxisCIn][0] / cin_sum);
+      } else {
+        prim->set_in_channel(in_channel - (in_channel * strategys[0][kAxisCIn][0] / cin_sum));
+      }
+    } break;
+    case SplitCOUT: {
+      auto out_channel = prim->get_out_channel();
+      MS_CHECK_TRUE_RET(cout_sum != 0, nullptr);
+      MS_CHECK_INT_MUL_NOT_OVERFLOW(out_channel, strategys[1][kAxisCOut][0], nullptr);
+      if (dev_index == 0) {
+        prim->set_out_channel(out_channel * strategys[1][kAxisCOut][0] / cout_sum);
+      } else {
+        prim->set_out_channel(out_channel - (out_channel * strategys[1][kAxisCOut][0] / cout_sum));
+      }
+    } break;
+    default:
+      break;
+  }
+  return prim;
+}
+
 int Conv2DInfo::ConstructOutputCNodes(const std::shared_ptr<ops::Conv2DFusion> &conv_prim,
                                       const std::vector<AnfNodePtr> &feature_split_outputs,
                                       const std::vector<AnfNodePtr> &kernel_split_outputs,
@@ -282,54 +338,10 @@ int Conv2DInfo::ConstructOutputCNodes(const std::shared_ptr<ops::Conv2DFusion> &
       has_bias = false;
     }
     // copy attr
-    auto prim = std::make_shared<ops::Conv2DFusion>();
-    MS_CHECK_TRUE_RET(prim != nullptr, RET_ERROR);
-    prim->set_pad(conv_prim->get_pad());
-    prim->set_pad_mode(PAD);
-    prim->set_in_channel(conv_prim->get_in_channel());
-    prim->set_out_channel(conv_prim->get_out_channel());
-    prim->set_dilation(conv_prim->get_dilation());
-    prim->set_format(conv_prim->get_format());
-    prim->set_group(conv_prim->get_group());
-    prim->set_kernel_size(conv_prim->get_kernel_size());
-    prim->set_pad_list(conv_prim->get_pad_list());
-    prim->set_stride(conv_prim->get_stride());
-    prim->set_activation_type(conv_prim->get_activation_type());
-    switch (split_mode_) {
-      case SplitH: {
-        if (i != 0) {
-          auto pad = prim->get_pad_list();
-          pad.at(kPadUp) = 0;
-          prim->set_pad_list(pad);
-        }
-        if (i != (dev_num - 1)) {
-          auto pad = prim->get_pad_list();
-          pad.at(kPadDown) = 0;
-          prim->set_pad_list(pad);
-        }
-      } break;
-      case SplitCIN: {
-        auto in_channel = prim->get_in_channel();
-        MS_CHECK_TRUE_RET(cin_strategy_sum != 0, RET_ERROR);
-        MS_CHECK_INT_MUL_NOT_OVERFLOW(in_channel, strategys[0][kAxisCIn][0], RET_ERROR);
-        if (i == 0) {
-          prim->set_in_channel(in_channel * strategys[0][kAxisCIn][0] / cin_strategy_sum);
-        } else {
-          prim->set_in_channel(in_channel - (in_channel * strategys[0][kAxisCIn][0] / cin_strategy_sum));
-        }
-      } break;
-      case SplitCOUT: {
-        auto out_channel = prim->get_out_channel();
-        MS_CHECK_TRUE_RET(cout_strategy_sum != 0, RET_ERROR);
-        MS_CHECK_INT_MUL_NOT_OVERFLOW(out_channel, strategys[1][kAxisCOut][0], RET_ERROR);
-        if (i == 0) {
-          prim->set_out_channel(out_channel * strategys[1][kAxisCOut][0] / cout_strategy_sum);
-        } else {
-          prim->set_out_channel(out_channel - (out_channel * strategys[1][kAxisCOut][0] / cout_strategy_sum));
-        }
-      } break;
-      default:
-        break;
+    auto prim = GetNewConvPrimitive(conv_prim, i, cin_strategy_sum, cout_strategy_sum);
+    if (prim == nullptr) {
+      MS_LOG(ERROR) << "Get new convolution primitive failed.";
+      return RET_ERROR;
     }
     std::vector<AnfNodePtr> conv_inputs;
     // if split Cout, feature will not be splited
