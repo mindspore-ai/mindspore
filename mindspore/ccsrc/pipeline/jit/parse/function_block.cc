@@ -188,6 +188,14 @@ AnfNodePtr FunctionBlock::MakeResolveAstOp(const py::object &op) {
 AnfNodePtr FunctionBlock::MakeResolveClassMember(const std::string &attr) {
   auto ast = parser_.ast();
   MS_EXCEPTION_IF_NULL(ast);
+  // The fallback feature is enabled in default.
+  // Not support change the flag during the process is alive.
+  static const auto use_fallback = (parser_.support_fallback() != "0");
+  if (use_fallback && !global_py_params().contains("self")) {
+    py::object self_namespace = ast->CallParseModFunction(PYTHON_MOD_GET_ATTR_NAMESPACE_SYMBOL, ast->obj());
+    AddGlobalPyParam("self", self_namespace);
+  }
+
   py::object namespace_var = ast->CallParseModFunction(PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL, ast->obj());
   NameSpacePtr name_space = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, namespace_var);
   SymbolPtr symbol = std::make_shared<Symbol>(attr);
@@ -261,7 +269,8 @@ AnfNodePtr FunctionBlock::HandleBuiltinNamespaceInfo(const py::tuple &info) {
 // Make a resolve node for symbol string
 AnfNodePtr FunctionBlock::MakeResolveSymbol(const std::string &value) {
   MS_LOG(DEBUG) << "value: " << value;
-  if (value.compare(0, strlen("self"), "self") == 0) {
+  // The prefix of value is "self.".
+  if (value.compare(0, strlen("self."), "self.") == 0) {
     auto start = value.find_first_of('.') + 1;
     if (start >= value.size()) {
       MS_LOG(ERROR) << "Find invalid resolve symbol str: " << value;
