@@ -60,20 +60,10 @@ class Semaphore {
   int count_;
 };
 
-class HandleMgr {
- public:
-  static const unsigned int MAX_HANDLE_NUM = 32;
-  static const unsigned int INVALID_HANDLE = 0xffffffffUL;
-
-  unsigned int AllocHandle();
-  void FreeHandle(unsigned int);
-
- private:
-  bool handle_list_[MAX_HANDLE_NUM];
-};
-
 class GpuBufferMgr {
  public:
+  static const unsigned int INVALID_HANDLE = 0xffffffffUL;
+
   EXPORT GpuBufferMgr() : cur_dev_id_(0), init_(false), closed_(false), open_by_dataset_(0) {}
 
   EXPORT virtual ~GpuBufferMgr() = default;
@@ -130,8 +120,6 @@ class GpuBufferMgr {
   // how many queues opened by dataset
   int open_by_dataset_;
   Semaphore sema;
-
-  HandleMgr handle_mgr_;
 
   std::map<unsigned int, std::shared_ptr<BlockingQueue>> handle_queue_map_;
   std::map<std::string, std::shared_ptr<BlockingQueue>> name_queue_map_;
