@@ -110,7 +110,7 @@ int ReduceOpenCLKernel::SetShapeSizeIs0Axes() {
     reduction_indices = reduction_indices + (C4NUM % input_shape_size);
     reduce_axes_[reduction_indices] = true;
   } else {
-    MS_LOG(ERROR) << "in Reduce: axes tensor's reduction_indices should be -1, 1, 2, 3";
+    MS_LOG(WARNING) << "in Reduce: axes tensor's reduction_indices should be -1, 1, 2, 3";
     return RET_ERROR;
   }
   return RET_OK;
@@ -132,7 +132,7 @@ int ReduceOpenCLKernel::SetShapeSizeIs1Axes() {
     axes_[i] = reinterpret_cast<int *>(axes_tensor->data())[i];
   }
   if (num_axes > 2 || num_axes < 1) {
-    MS_LOG(ERROR) << "Unsupported reduce num axes " << num_axes;
+    MS_LOG(WARNING) << "Unsupported reduce num axes " << num_axes;
     return RET_PARAM_INVALID;
   }
 
@@ -165,7 +165,7 @@ int ReduceOpenCLKernel::SetAxes() {
   } else if (axes_tensor->shape().size() == 1) {
     return SetShapeSizeIs1Axes();
   } else {
-    MS_LOG(ERROR) << "in Reduce: axes tensor's ndim should be 0 or 1.";
+    MS_LOG(WARNING) << "in Reduce: axes tensor's ndim should be 0 or 1.";
     return RET_ERROR;
   }
 

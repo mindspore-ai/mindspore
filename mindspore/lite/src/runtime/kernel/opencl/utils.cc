@@ -338,11 +338,11 @@ void PackNCHWToNHWC4(void *src, void *dst, bool src_is_fp16, bool dst_is_fp16, c
 int CheckParamLikeTensor(const std::string &kernel_name, const std::string &tensor_name, lite::Tensor *tensor,
                          TypeId expect_data_type, const std::vector<int> &expect_shape) {
   if (!tensor->IsConst()) {
-    MS_LOG(ERROR) << "in " << kernel_name << ": tensor " << tensor_name << " must be Const.";
+    MS_LOG(WARNING) << "in " << kernel_name << ": tensor " << tensor_name << " must be Const.";
     return RET_ERROR;
   }
   if (tensor->data_type() != expect_data_type) {
-    MS_LOG(ERROR) << "in " << kernel_name << ": tensor's data_type must be " << expect_data_type;
+    MS_LOG(WARNING) << "in " << kernel_name << ": tensor's data_type must be " << expect_data_type;
     return RET_ERROR;
   }
   if (tensor->shape() != expect_shape) {
@@ -358,9 +358,9 @@ int CheckParamLikeTensor(const std::string &kernel_name, const std::string &tens
     }
     tensor_shape_str += ")";
 
-    MS_LOG(ERROR) << "in " << kernel_name
-                  << ": tensor's shape is error. expect_shape: " + expect_shape_str +
-                       " tensor->shape(): " + tensor_shape_str;
+    MS_LOG(WARNING) << "in " << kernel_name
+                    << ": tensor's shape is error. expect_shape: " + expect_shape_str +
+                         " tensor->shape(): " + tensor_shape_str;
     return RET_ERROR;
   }
   return RET_OK;

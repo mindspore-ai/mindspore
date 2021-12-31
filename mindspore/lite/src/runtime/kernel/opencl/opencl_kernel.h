@@ -258,14 +258,14 @@ kernel::InnerKernel *OpenCLKernelCreator(const std::vector<lite::Tensor *> &inpu
   auto *kernel = new (std::nothrow)
     T(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
   if (kernel == nullptr) {
-    MS_LOG(ERROR) << "kernel " << opParameter->name_ << "is nullptr.";
+    MS_LOG(WARNING) << "kernel " << opParameter->name_ << "is nullptr.";
     free(opParameter);
     return nullptr;
   }
 
   auto ret = kernel->CheckSpecsWithoutShape();
   if (ret != mindspore::lite::RET_OK) {
-    MS_LOG(ERROR) << "Check " << opParameter->name_ << " specification Without shape failed!";
+    MS_LOG(WARNING) << "Check " << opParameter->name_ << " specification Without shape failed!";
     delete kernel;
     return nullptr;
   }
@@ -281,19 +281,19 @@ kernel::InnerKernel *OpenCLKernelCreator(const std::vector<lite::Tensor *> &inpu
   }
   ret = kernel->CheckSpecs();
   if (ret != mindspore::lite::RET_OK) {
-    MS_LOG(ERROR) << "Check " << opParameter->name_ << " specification failed!";
+    MS_LOG(WARNING) << "Check " << opParameter->name_ << " specification failed!";
     delete kernel;
     return nullptr;
   }
   ret = kernel->OpenCLKernel::CheckSpecs();
   if (ret != mindspore::lite::RET_OK) {
-    MS_LOG(ERROR) << "Check " << opParameter->name_ << " specification failed!";
+    MS_LOG(WARNING) << "Check " << opParameter->name_ << " specification failed!";
     delete kernel;
     return nullptr;
   }
   ret = reinterpret_cast<OpenCLKernel *>(kernel)->StoreConstData();
   if (ret != mindspore::lite::RET_OK) {
-    MS_LOG(ERROR) << "Store " << opParameter->name_ << " const data failed!";
+    MS_LOG(WARNING) << "Store " << opParameter->name_ << " const data failed!";
     delete kernel;
     return nullptr;
   }

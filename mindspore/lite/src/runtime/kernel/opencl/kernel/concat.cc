@@ -40,7 +40,7 @@ int ConcatOpenCLKernel::RunAxis0() {
   for (size_t i = 0; i < in_tensors_.size(); i++) {
     auto src_data = weight_ptrs_.at(i) == nullptr ? in_tensors_[i]->data() : weight_ptrs_.at(i);
     if (allocator_->GetImageSize(src_data, &img_size) != RET_OK) {
-      MS_LOG(ERROR) << "GetImageSize failed.";
+      MS_LOG(WARNING) << "GetImageSize failed.";
       return RET_ERROR;
     }
     auto src_origin = cl::array<cl::size_type, 3U>{0, 0, 0};

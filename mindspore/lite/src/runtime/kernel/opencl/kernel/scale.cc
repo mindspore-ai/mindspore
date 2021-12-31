@@ -37,6 +37,7 @@ int ScaleOpenCLKernel::CheckSpecs() {
   auto *param = reinterpret_cast<const ScaleParameter *>(op_parameter_);
   if (param->activation_type_ != ActType_No && param->activation_type_ != ActType_Relu &&
       param->activation_type_ != ActType_Relu6) {
+    MS_LOG(WARNING) << "unsupported scale activation type " << param->activation_type_;
     return RET_ERROR;
   }
   auto *scale_param = reinterpret_cast<const ScaleParameter *>(op_parameter_);
