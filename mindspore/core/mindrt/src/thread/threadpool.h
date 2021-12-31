@@ -132,6 +132,7 @@ class ThreadPool {
   void SetActorThreadNum(size_t actor_thread_num) { actor_thread_num_ = actor_thread_num; }
   void SetKernelThreadNum(size_t kernel_thread_num) { kernel_thread_num_ = kernel_thread_num; }
   size_t GetKernelThreadNum() const { return kernel_thread_num_; }
+  void SetKernelThreadMaxSpinCount(int spin_count);
   void SetSpinCountMaxValue();
   void SetSpinCountMinValue();
   void SetMaxSpinCount(int spin_count);
