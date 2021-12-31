@@ -408,11 +408,9 @@ void SetFusionOpRefInfos(session::KernelGraph *kernel_graph, const std::vector<A
 // As shown in the following graph, if A, B, and C are combined into E,
 //  A -> B -> C
 //    -> D ->
-//
 // then E and D form a cycle.
-//   _
-// E _ D
-//
+//    _
+//  E _ D
 bool CheckCircle(const session::KernelGraph &kernel_graph, const BufferFusionInfo_t &fusion_info) {
   // The nodes do not form cycles before fusion. Checking is not necessary if one of the following conditions is met:
   // 1. All inputs to the fusion scope are passed to the first node in the scope.
