@@ -1,7 +1,7 @@
 mindspore.nn.probability.distribution.Gumbel
 ================================================
 
-.. py:class:: mindspore.nn.probability.distribution.Gumbel(loc, scale, seed=0, dtype=mindspore.float32, name='Gumbel')
+.. py:class:: mindspore.nn.probability.distribution.Gumbel(loc, scale, seed=0, dtype=mstype.float32, name='Gumbel')
 
     耿贝尔分布（Gumbel distribution）。
 

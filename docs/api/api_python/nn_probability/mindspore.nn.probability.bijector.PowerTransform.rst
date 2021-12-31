@@ -1,7 +1,7 @@
 mindspore.nn.probability.bijector.PowerTransform
 =================================================
 
-.. py:class:: mindspore.nn.probability.bijector.PowerTransform(power=0.0, name='PowerTransform')
+.. py:class:: mindspore.nn.probability.bijector.PowerTransform(power=0., name='PowerTransform')
 
     乘方Bijector（Power Bijector）。
     此Bijector执行如下操作：

@@ -23,23 +23,23 @@ mindspore.nn.Conv2d
    - **kernel_size** (`Union[int, tuple[int]]`) – 指定二维卷积窗口的高度和宽度。数据类型为整型或2个整型的tuple。一个整数表示卷积核的高度和宽度均为该值。2个整数的tuple分别表示卷积核的高度和宽度。
    - **stride** (`Union[int, tuple[int]]`) – 步长大小。数据类型为整型或2个整型的tuple。一个整数表示在高度和宽度方向的滑动步长均为该值。2个整数的tuple分别表示在高度和宽度方向的滑动步长。默认值：1。
 
-      - **pad_mode** (`str`) – 指定填充模式。可选值为“same”，“valid”，“pad”。默认值：“same”。
+     - **pad_mode** (`str`) – 指定填充模式。可选值为“same”，“valid”，“pad”。默认值：“same”。
 
-         - **same**：采用补全方式。输出的高度和宽度与输入 `x` 一致。填充总数将在水平和垂直方向进行计算。并尽可能均匀分布到顶部、底部、左侧和右侧。否则，最后一次将从底部和右侧进行额外的填充。若设置该模式，`padding` 必须为0。
-         - **valid**：采用丢弃方式。在不填充的前提下返回可能大的高度和宽度的输出。多余的像素会被丢弃。若设置该模式，`padding` 必须为0。
-         - **pad**：输入 `x` 两侧的隐式填充。`padding` 的数量将填充到输入Tensor边框上。`padding` 必须大于或等于0。
+       - **same**：采用补全方式。输出的高度和宽度与输入 `x` 一致。填充总数将在水平和垂直方向进行计算。并尽可能均匀分布到顶部、底部、左侧和右侧。否则，最后一次将从底部和右侧进行额外的填充。若设置该模式，`padding` 必须为0。
+       - **valid**：采用丢弃方式。在不填充的前提下返回可能大的高度和宽度的输出。多余的像素会被丢弃。若设置该模式，`padding` 必须为0。
+       - **pad**：输入 `x` 两侧的隐式填充。`padding` 的数量将填充到输入Tensor边框上。`padding` 必须大于或等于0。
 
-      - **padding** (`Union[int, tuple[int]]`) –  输入 `x` 两侧的隐式填充。数据类型为int或包含4个整数的tuple。如果 `padding` 是一个整数，那么上、下、左、右的填充都等于 `padding` 。如果 `padding` 是一个有4个整数的tuple，那么上、下、左、右的填充分别等于 `padding[0]` 、 `padding[1]` 、 `padding[2]` 和 `padding[3]` 。默认值：0。
-      - **dilation** (`Union[int, tuple[int]]`) –  指定用于扩张卷积的扩张速率。数据类型为整型或具有2个整型的tuple。如果设置 :math:`k > 1` ，则每个采样位置将跳过 :math:`k-1` 个像素。其值必须大于或等于1，并以输入的高度和宽度为边界。默认值：1。
-      - **group** (`int`) –  将过滤器分组， `in_channels` 和 `out_channels` 必须被组数整除。如果组数等于 `in_channels` 和 `out_channels` ，这个二维卷积层也被称为二维深度卷积层。默认值：1.
-      - **has_bias** (`bool`) –  指定图层是否使用偏置向量。默认值：False。
-      - **weight_init** (`Union[Tensor, str, Initializer, numbers.Number]`) – 卷积核的初始化方法。它可以是Tensor，str，初始化实例或numbers.Number。当使用str时，可选“TruncatedNormal”，“Normal”，“Uniform”，“HeUniform”和“XavierUniform”分布以及常量“One”和“Zero”分布的值，可接受别名“ xavier_uniform”，“ he_uniform”，“ ones”和“ zeros”。上述字符串大小写均可。更多细节请参考Initializer的值。默认值：“normal”。
-      - **bias_init** (`Union[Tensor, str, Initializer, numbers.Number]`) – 偏置向量的初始化方法。可以使用的初始化方法和字符串与“weight_init”相同。更多细节请参考Initializer的值。默认值：“zeros”。
-      - **data_format** (`str`) –  数据格式的可选值有“NHWC”，“NCHW”。默认值：“NCHW”。
+     - **padding** (`Union[int, tuple[int]]`) –  输入 `x` 两侧的隐式填充。数据类型为int或包含4个整数的tuple。如果 `padding` 是一个整数，那么上、下、左、右的填充都等于 `padding` 。如果 `padding` 是一个有4个整数的tuple，那么上、下、左、右的填充分别等于 `padding[0]` 、 `padding[1]` 、 `padding[2]` 和 `padding[3]` 。默认值：0。
+     - **dilation** (`Union[int, tuple[int]]`) –  指定用于扩张卷积的扩张速率。数据类型为整型或具有2个整型的tuple。如果设置 :math:`k > 1` ，则每个采样位置将跳过 :math:`k-1` 个像素。其值必须大于或等于1，并以输入的高度和宽度为边界。默认值：1。
+     - **group** (`int`) –  将过滤器分组， `in_channels` 和 `out_channels` 必须被组数整除。如果组数等于 `in_channels` 和 `out_channels` ，这个二维卷积层也被称为二维深度卷积层。默认值：1.
+     - **has_bias** (`bool`) –  指定图层是否使用偏置向量。默认值：False。
+     - **weight_init** (`Union[Tensor, str, Initializer, numbers.Number]`) – 卷积核的初始化方法。它可以是Tensor，str，初始化实例或numbers.Number。当使用str时，可选“TruncatedNormal”，“Normal”，“Uniform”，“HeUniform”和“XavierUniform”分布以及常量“One”和“Zero”分布的值，可接受别名“ xavier_uniform”，“ he_uniform”，“ ones”和“ zeros”。上述字符串大小写均可。更多细节请参考Initializer的值。默认值：“normal”。
+     - **bias_init** (`Union[Tensor, str, Initializer, numbers.Number]`) – 偏置向量的初始化方法。可以使用的初始化方法和字符串与“weight_init”相同。更多细节请参考Initializer的值。默认值：“zeros”。
+     - **data_format** (`str`) –  数据格式的可选值有“NHWC”，“NCHW”。默认值：“NCHW”。
 
    **输入：**
 
-   - **x** (Tensor) - Shape为 :math:`(N, C_{in}, H_{in}, W_{in})` 或者 :math:`(N, H_{in}, W_{in}, C_{in})` 的Tensor。
+   **x** (Tensor) - Shape为 :math:`(N, C_{in}, H_{in}, W_{in})` 或者 :math:`(N, H_{in}, W_{in}, C_{in})` 的Tensor。
 
    **输出：**
 

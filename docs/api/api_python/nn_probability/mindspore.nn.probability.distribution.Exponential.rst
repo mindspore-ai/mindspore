@@ -1,7 +1,7 @@
 mindspore.nn.probability.distribution.Exponential
 ===================================================
 
-.. py:class:: mindspore.nn.probability.distribution.Exponential(rate=None, seed=None, dtype=mindspore.float32, name='Exponential')
+.. py:class:: mindspore.nn.probability.distribution.Exponential(rate=None, seed=None, dtype=mstype.float32, name='Exponential')
 
     示例类：指数分布（Exponential Distribution）。
 

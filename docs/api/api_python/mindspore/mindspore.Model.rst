@@ -1,7 +1,7 @@
 ﻿mindspore.Model
 ================
 
-.. py:class:: mindspore.Model(network, loss_fn=None, optimizer=None, metrics=None, eval_network=None, eval_indexes=None, amp_level="O0", acc_level="O0", **kwargs)
+.. py:class:: mindspore.Model(network, loss_fn=None, optimizer=None, metrics=None, eval_network=None, eval_indexes=None, amp_level="O0", boost_level="O0", **kwargs)
 
     模型训练或推理的高阶接口。 `Model` 会根据用户传入的参数封装可训练或推理的实例。
 
@@ -23,6 +23,14 @@
       在GPU上建议使用O2，在Ascend上建议使用O3。
       通过`kwargs`设置`keep_batchnorm_fp32`，可修改batchnorm策略，`keep_batchnorm_fp32`必须为bool类型；通过`kwargs`设置`loss_scale_manager`可修改梯度放大策略，`loss_scale_manager`必须为:class:`mindspore.LossScaleManager`的子类，
       关于 `amp_level` 详见 `mindpore.build_train_network`。
+
+    - **boost_level** (str) – `mindspore.boost` 的可选参数, 为boost模式训练等级。支持[“O0”, “O1”, “O2”]. 默认值: “O0”.
+
+      - O0: 无变化。
+      - O1: 启用boost模式, 性能将提升约20%, 精度保持不变。
+      - O2: 启用boost模式, 性能将提升约30%, 精度下降约3%。
+
+      如果你想设置boost模式, 可以将 `boost_config_dict` 设置为 `boost.py`。
 
     **样例:**
 
@@ -57,7 +65,7 @@
     >>> dataset = create_custom_dataset()
     >>> model.train(2, dataset)
 
-    .. py:method:: build(train_dataset=None, valid_dataset=None, sink_size=-1)
+    .. py:method:: build(train_dataset=None, valid_dataset=None, sink_size=-1, epoch=1, jit_config=None)
 
         数据下沉模式下构建计算图和数据图。
 
@@ -71,6 +79,9 @@
         - **valid_dataset** (Dataset) - 一个验证集迭代器。如果定义了 `valid_dataset` ，将会构建验证计算图，此时 `Model` 中的 `metrics` 不能为None。默认值：None。
         - **sink_size** (int) - 控制每次数据下沉的数据量。默认值：-1。
         - **epoch** (int) - 控制训练轮次。默认值：1。
+        - **jit_config** (Union[str, str]) – 控制jit设置。默认情况下，如果设置为None，计算图会按默认方式编译。用户可以使用字典自定义编译配置。 例如，可以设置 {'jit_level':'o0'} 来控制 jit 级别。支持控制的数据如下所示。 默认值：None。
+
+          - jit_level (string): 控制计算图编译优化级别。可选项: o0/o1。默认值: o1。如果设置为o0，则计算图编译将会传入类似于图阶段的组合。
 
         **样例：**
 
@@ -206,7 +217,7 @@
 
         **参数：**
 
-        - **predict_data** (Tensor) – 预测样本，数据可以是单个张量、张量列表或张量元组。
+        **predict_data** (Tensor) – 预测样本，数据可以是单个张量、张量列表或张量元组。
 
         **返回：**
 
@@ -243,7 +254,7 @@
 
         - **epoch** (int) – 训练执行轮次。通常每个epoch都会使用全量数据集进行训练。当 `dataset_sink_mode` 设置为True且 `sink_size` 大于零时，则每个epoch训练次数为 `sink_size` 而不是数据集的总步数。
         - **train_dataset** (Dataset) – 一个训练数据集迭代器。如果定义了 `loss_fn` ，则数据和标签会被分别传给 `network` 和 `loss_fn` ，此时数据集需要返回一个元组（data, label）。如果数据集中有多个数据或者标签，可以设置 `loss_fn` 为None，并在 `network` 中实现损失函数计算，此时数据集返回的所有数据组成的元组（data1, data2, data3, ...）会传给 `network` 。
-        - **callback** (Optional[list[Callback], Callback]) – 训练过程中需要执行的回调对象或者回调对象列表。默认值：None。
+        - **callbacks** (Optional[list[Callback], Callback]) – 训练过程中需要执行的回调对象或者回调对象列表。默认值：None。
         - **dataset_sink_mode** (bool) – 数据是否直接下沉至处理器进行处理。使用PYNATIVE_MODE模式或CPU处理器时，模型训练流程将以非下沉模式执行。默认值：True。
         - **sink_size** (int) – 控制每次数据下沉的数据量。`dataset_sink_mode` 为False时 `sink_size` 无效。如果sink_size=-1，则每一次epoch下沉完整数据集。如果sink_size>0，则每一次epoch下沉数据量为sink_size的数据集。默认值：-1。
 

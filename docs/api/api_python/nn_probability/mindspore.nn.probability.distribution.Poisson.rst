@@ -1,7 +1,7 @@
 mindspore.nn.probability.distribution.Poisson
 ================================================
 
-.. py:class:: mindspore.nn.probability.distribution.Poisson(rate=None, seed=None, dtype=mindspore.float32, name='Poisson')
+.. py:class:: mindspore.nn.probability.distribution.Poisson(rate=None, seed=None, dtype=mstype.float32, name='Poisson')
 
     泊松分布（Poisson Distribution）。
 

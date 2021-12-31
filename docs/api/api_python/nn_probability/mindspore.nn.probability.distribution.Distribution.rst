@@ -29,6 +29,9 @@ mindspore.nn.probability.distribution.Distribution
         - **args** (list) - 传递给子类的位置参数列表。
         - **kwargs** (dict) - 传递给子类的关键字参数字典。
         
+        .. note::
+            可以通过 `args` 或 `kwargs` 传递其 `dist_spec_args` 来选择性地将Distribution传递给函数。
+
     .. py:method:: construct(name, *args, **kwargs)
 
         重写Cell中的 `construct` 。
@@ -52,6 +55,9 @@ mindspore.nn.probability.distribution.Distribution
         - **dist** (str) - 分布的类型。
         - **args** (list) - 传递给子类的位置参数列表。
         - **kwargs** (dict) - 传递给子类的关键字参数字典。
+
+        .. note::
+            Distribution b的 `dist_spec_args` 必须通过 `args` 或 `kwargs` 传递给函数。 传入Distribution a的 `dist_spec_args` 是可选的。
         
     .. py:method:: entropy(*args, **kwargs)
 
@@ -61,6 +67,9 @@ mindspore.nn.probability.distribution.Distribution
 
         - **args** (list) - 传递给子类的位置参数列表。
         - **kwargs** (dict) - 传递给子类的关键字参数字典。
+
+        .. note::
+            可以通过 `args` 或 `kwargs` 传递其 `dist_spec_args` 来选择性地将Distribution传递给函数。
         
     .. py:method:: get_dist_args(*args, **kwargs)
 
@@ -87,6 +96,9 @@ mindspore.nn.probability.distribution.Distribution
         - **dist** (str) - 分布的类型。
         - **args** (list) - 传递给子类的位置参数列表。
         - **kwargs** (dict) - 传递给子类的关键字参数字典。
+
+        .. note::
+            Distribution b的 `dist_spec_args` 必须通过 `args` 或 `kwargs` 传递给函数。 传入Distribution a的 `dist_spec_args` 是可选的。
         
     .. py:method:: log_cdf(value, *args, **kwargs)
 
@@ -97,6 +109,9 @@ mindspore.nn.probability.distribution.Distribution
         - **value** (Tensor) - 要评估的值。
         - **args** (list) - 传递给子类的位置参数列表。
         - **kwargs** (dict) - 传递给子类的关键字参数字典。
+
+        .. note::
+            可以通过 `args` 或 `kwargs` 传递其 `dist_spec_args` 来选择性地将Distribution传递给函数。
         
     .. py:method:: log_prob(value, *args, **kwargs)
 
@@ -107,6 +122,9 @@ mindspore.nn.probability.distribution.Distribution
         - **value** (Tensor) - 要评估的值。
         - **args** (list) - 传递给子类的位置参数列表。
         - **kwargs** (dict) - 传递给子类的关键字参数字典。
+
+        .. note::
+            可以通过 `args` 或 `kwargs` 传递其 `dist_spec_args` 来选择性地将Distribution传递给函数。
         
     .. py:method:: log_survival(value, *args, **kwargs)
 
@@ -117,6 +135,9 @@ mindspore.nn.probability.distribution.Distribution
         - **value** (Tensor) - 要评估的值。
         - **args** (list) - 传递给子类的位置参数列表。
         - **kwargs** (dict) - 传递给子类的关键字参数字典。
+
+        .. note::
+            可以通过 `args` 或 `kwargs` 传递其 `dist_spec_args` 来选择性地将Distribution传递给函数。
         
     .. py:method:: mean(*args, **kwargs)
 
@@ -126,6 +147,9 @@ mindspore.nn.probability.distribution.Distribution
 
         - **args** (list) - 传递给子类的位置参数列表。
         - **kwargs** (dict) - 传递给子类的关键字参数字典。
+
+        .. note::
+            可以通过 `args` 或 `kwargs` 传递其 `dist_spec_args` 来选择性地将Distribution传递给函数。
         
     .. py:method:: mode(*args, **kwargs)
 
@@ -135,6 +159,9 @@ mindspore.nn.probability.distribution.Distribution
 
         - **args** (list) - 传递给子类的位置参数列表。
         - **kwargs** (dict) - 传递给子类的关键字参数字典。
+
+        .. note::
+            可以通过 `args` 或 `kwargs` 传递其 `dist_spec_args` 来选择性地将Distribution传递给函数。
         
     .. py:method:: prob(value, *args, **kwargs)
 
@@ -146,6 +173,9 @@ mindspore.nn.probability.distribution.Distribution
         - **args** (list) - 传递给子类的位置参数列表。
         - **kwargs** (dict) - 传递给子类的关键字参数字典。
         
+        .. note::
+            可以通过 `args` 或 `kwargs` 传递其 `dist_spec_args` 来选择性地将Distribution传递给函数。
+
     .. py:method:: sample(*args, **kwargs)
 
         采样函数。
@@ -155,6 +185,9 @@ mindspore.nn.probability.distribution.Distribution
         - **shape** (tuple) - 样本的shape。
         - **args** (list) - 传递给子类的位置参数列表。
         - **kwargs** (dict) - 传递给子类的关键字参数字典。
+
+        .. note::
+            可以通过 `args` 或 `kwargs` 传递其 `dist_spec_args` 来选择性地将Distribution传递给函数。
         
     .. py:method:: sd(*args, **kwargs)
 
@@ -164,6 +197,9 @@ mindspore.nn.probability.distribution.Distribution
 
         - **args** (list) - 传递给子类的位置参数列表。
         - **kwargs** (dict) - 传递给子类的关键字参数字典。
+
+        .. note::
+            可以通过 `args` 或 `kwargs` 传递其 `dist_spec_args` 来选择性地将Distribution传递给函数。
         
     .. py:method:: survival_function(value, *args, **kwargs)
 
@@ -175,6 +211,9 @@ mindspore.nn.probability.distribution.Distribution
         - **args** (list) - 传递给子类的位置参数列表。
         - **kwargs** (dict) - 传递给子类的关键字参数字典。
         
+        .. note::
+            可以通过 `args` 或 `kwargs` 传递其 `dist_spec_args` 来选择性地将Distribution传递给函数。
+
     .. py:method:: var(*args, **kwargs)
 
         评估方差。
@@ -183,4 +222,7 @@ mindspore.nn.probability.distribution.Distribution
 
         - **args** (list) - 传递给子类的位置参数列表。
         - **kwargs** (dict) - 传递给子类的关键字参数字典。
+
+        .. note::
+            可以通过 `args` 或 `kwargs` 传递其 `dist_spec_args` 来选择性地将Distribution传递给函数。
         

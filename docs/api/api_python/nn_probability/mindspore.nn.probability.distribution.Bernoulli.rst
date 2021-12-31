@@ -1,7 +1,7 @@
 mindspore.nn.probability.distribution.Bernoulli
 ================================================
 
-.. py:class:: mindspore.nn.probability.distribution.Bernoulli(probs=None, seed=None, dtype=mindspore.int32, name='Bernoulli')
+.. py:class:: mindspore.nn.probability.distribution.Bernoulli(probs=None, seed=None, dtype=mstype.int32, name='Bernoulli')
 
     伯努利分布（Bernoulli Distribution）。
 

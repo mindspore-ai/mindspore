@@ -1,7 +1,7 @@
 mindspore.nn.probability.distribution.LogNormal
 ================================================
 
-.. py:class:: mindspore.nn.probability.distribution.LogNormal(loc=None, scale=None, seed=0, dtype=mindspore.float32, name='LogNormal')
+.. py:class:: mindspore.nn.probability.distribution.LogNormal(loc=None, scale=None, seed=0, dtype=mstype.float32, name='LogNormal')
 
     对数正态分布（LogNormal distribution）。
     对数正态分布是随机变量的连续概率分布，变量的对数为正态分布。它被构造为正态分布的指数变换。

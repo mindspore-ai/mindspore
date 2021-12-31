@@ -7,7 +7,8 @@ mindspore.SparseTensor
 
     `SparseTensor` 只能在  `Cell` 的构造方法中使用。
 
-    目前不支持PyNative模式。
+    .. note::
+        目前不支持PyNative模式。
 
     对于稠密张量，其 `SparseTensor(indices, values, dense_shape)` 具有 `dense[indices[i]] = values[i]` 。
 

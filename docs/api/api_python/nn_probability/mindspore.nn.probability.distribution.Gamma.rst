@@ -1,7 +1,7 @@
 mindspore.nn.probability.distribution.Gamma
 ================================================
 
-.. py:class:: mindspore.nn.probability.distribution.Gamma(concentration=None, rate=None, seed=None, dtype=mindspore.float32, name='Gamma')
+.. py:class:: mindspore.nn.probability.distribution.Gamma(concentration=None, rate=None, seed=None, dtype=mstype.float3, name='Gamma')
 
     伽马分布（Gamma distribution）。
 

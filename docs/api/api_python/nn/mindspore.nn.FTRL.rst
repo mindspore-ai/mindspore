@@ -30,7 +30,7 @@ mindspore.nn.FTRL
 
         .. include:: mindspore.nn.optim_note_weight_decay.rst
 
-   **参数：**
+    **参数：**
 
     - **params** (Union[list[Parameter], list[dict]]) - 必须是 `Parameter` 组成的列表或字典组成的列表。当列表元素是字典时，字典的键可以是"params"、"lr"、"weight_decay"、"grad_centralization"和"order_params"：
 
@@ -57,7 +57,7 @@ mindspore.nn.FTRL
 
     **输入：**
 
-    - **grads** (tuple[Tensor]) - 优化器中 `params` 的梯度，shape与优化器中的 `params` 相同。
+    **grads** (tuple[Tensor]) - 优化器中 `params` 的梯度，shape与优化器中的 `params` 相同。
 
 
     **输出：**

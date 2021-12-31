@@ -61,5 +61,5 @@ mindspore.nn.CellList
 
         **参数：**
 
-        **index** (int) - 给定的列表索引。
-        **cell** (Cell) - 要插入的Cell子类。
+        - **index** (int) - 给定的列表索引。
+        - **cell** (Cell) - 要插入的Cell子类。
