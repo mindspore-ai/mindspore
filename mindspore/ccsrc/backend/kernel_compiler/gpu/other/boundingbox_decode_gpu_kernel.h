@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_KERNEL_GPU_OTHER_BOUNDINGBOX_DECODE_GPU_KERNEL_H
 
 #include <vector>
+#include <string>
 #include <algorithm>
 #include "backend/kernel_compiler/gpu/cuda_impl/boundingbox_decode_impl.cuh"
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
@@ -46,7 +47,8 @@ class BoundingBoxDecodeGpuKernel : public GpuKernel {
     T *bboxes_addr = GetDeviceAddress<T>(outputs, 0);
 
     if (inputs[0]->size != inputs[1]->size) {
-      MS_LOG(ERROR) << "Rois box size must equal with deltas box size -" << inputs[1]->size << ", but got"
+      MS_LOG(ERROR) << "For '" << kernel_name_
+                    << "', rois box size must equal with deltas box size: " << inputs[1]->size << ", but got "
                     << inputs[0]->size;
       return false;
     }
@@ -54,7 +56,7 @@ class BoundingBoxDecodeGpuKernel : public GpuKernel {
     const size_t coordinate = 4;
     const size_t block_size = inputs[0]->size / sizeof(T);
     if ((block_size % coordinate) != 0) {
-      MS_LOG(ERROR) << "The size of the box must be a multiple of 4.";
+      MS_LOG(ERROR) << "For '" << kernel_name_ << ", the size of the box should be a multiple of 4.";
       return false;
     }
 
@@ -65,11 +67,11 @@ class BoundingBoxDecodeGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     MS_EXCEPTION_IF_NULL(kernel_node);
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but BoundingBoxDecode needs 2 inputs.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 2, but got " << input_num;
     }
     rois_size_ = sizeof(T);
     deltas_size_ = sizeof(T);
@@ -78,9 +80,10 @@ class BoundingBoxDecodeGpuKernel : public GpuKernel {
     auto logits_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto labels_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(logits_shape) || CHECK_NULL_INPUT(labels_shape) || CHECK_NULL_INPUT(output_shape);
+    is_null_input_ = CHECK_SHAPE_NULL(logits_shape, kernel_name_, "anchor_box") ||
+                     CHECK_SHAPE_NULL(labels_shape, kernel_name_, "deltas") ||
+                     CHECK_SHAPE_NULL(output_shape, kernel_name_, "output");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'BoundingBoxDecodeGpuKernel', input or output is null";
       InitSizeLists();
       return true;
     }
@@ -111,7 +114,7 @@ class BoundingBoxDecodeGpuKernel : public GpuKernel {
         means_.emplace_back(mean);
       }
     } else {
-      MS_LOG(EXCEPTION) << "Attribute means type is invalid.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', attribute means type is invalid.";
     }
 
     auto stds = prim->GetAttr("stds");
@@ -124,7 +127,7 @@ class BoundingBoxDecodeGpuKernel : public GpuKernel {
         stds_.emplace_back(std);
       }
     } else {
-      MS_LOG(EXCEPTION) << "Attribute stds type is invalid.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', attribute stds type is invalid.";
     }
 
     std::vector<int64_t> max_shape_me = GetAttr<std::vector<int64_t>>(kernel_node, "max_shape");
@@ -133,11 +136,13 @@ class BoundingBoxDecodeGpuKernel : public GpuKernel {
     wh_ratio_clip_ = GetAttr<float>(kernel_node, "wh_ratio_clip");
 
     if (means_.size() < coordinate_size || stds_.size() < coordinate_size) {
-      MS_LOG(EXCEPTION) << "The size of means or stds is less than 4.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the both size of means or stds cannot be less than 4, but got"
+                        << " the size of means: " << means_.size() << ", the size of stds: " << stds_.size();
     }
 
     if (max_shape_.size() < 2) {
-      MS_LOG(EXCEPTION) << "The size of max_shape is less than 2.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the size of max_shape cannot be less than 2, but got "
+                        << max_shape_.size();
     }
 
     return true;

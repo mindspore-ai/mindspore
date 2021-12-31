@@ -44,6 +44,7 @@ class GetNextProfiling : public ProfilingOp {
   std::vector<std::pair<uint64_t, uint64_t>> time_stamp_;  // First value of std::pair is the start time stamp,
                                                            // Second value of std::pair is the stop time stamp
   std::string device_id_;
+  std::string kernel_name_;
 };
 }  // namespace kernel
 }  // namespace mindspore

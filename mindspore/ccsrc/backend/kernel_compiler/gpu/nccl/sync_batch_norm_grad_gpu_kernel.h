@@ -41,6 +41,9 @@ class SyncBatchNormGradGpuKernel : public NcclGpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     T *dy = GetDeviceAddress<T>(inputs, 0);
     T *x_input = GetDeviceAddress<T>(inputs, 1);
     S *scale = GetDeviceAddress<S>(inputs, 2);
@@ -65,6 +68,7 @@ class SyncBatchNormGradGpuKernel : public NcclGpuKernel {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     auto root_rank = AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr(kAttrRootRank);
     if (root_rank) {
       root_ = static_cast<int>(GetValue<int64_t>(root_rank));
@@ -73,24 +77,22 @@ class SyncBatchNormGradGpuKernel : public NcclGpuKernel {
     group_name_ = GetAttr<std::string>(kernel_node, kAttrGroup);
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 5) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but SyncBatchNormGrad needs 5 inputs.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 5, but got " << input_num;
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 3) {
-      MS_LOG(ERROR) << "Output number is " << output_num << ", but SyncBatchNormGrad needs 5 output.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 3, but got " << output_num;
     }
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    if (CHECK_NULL_INPUT(input_shape)) {
-      MS_LOG(WARNING) << "SyncBatchNormGrad input is null";
+    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
+    if (is_null_input_) {
       InitSizeLists();
       return true;
     }
     auto input_shape_dims = input_shape.size();
     if (input_shape_dims != 4 && input_shape_dims != 2) {
-      MS_LOG(EXCEPTION) << "Tensor shape is " << input_shape.size()
-                        << ", SyncBatchNormGpuGrad input should be 2D or 4D";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input only should be 2 or 4, but got "
+                        << input_shape_dims;
     }
     input_size_ = 1;
     for (auto dim : input_shape) {
@@ -155,6 +157,7 @@ class SyncBatchNormGradGpuKernel : public NcclGpuKernel {
     input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
+    is_null_input_ = false;
   }
 
  protected:
@@ -201,6 +204,7 @@ class SyncBatchNormGradGpuKernel : public NcclGpuKernel {
   string group_name_;
   int root_;
   cudaStream_t comm_stream_;
+  bool is_null_input_;
 };
 }  // namespace kernel
 }  // namespace mindspore

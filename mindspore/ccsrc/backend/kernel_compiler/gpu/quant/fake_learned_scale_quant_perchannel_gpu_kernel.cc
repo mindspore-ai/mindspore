@@ -45,17 +45,16 @@ const std::vector<size_t> &FakeLearnedScaleQuantPerChannelGpuKernel::GetWorkspac
 }
 
 bool FakeLearnedScaleQuantPerChannelGpuKernel::Init(const CNodePtr &kernel_node) {
+  auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
   kernel_node_ = kernel_node;
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_num != 3) {
-    MS_LOG(EXCEPTION) << "Input number is " << input_num
-                      << ", but FakeLearnedScaleQuantPerChannel GpuKernel OP needs 3 Input.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 3, but got " << input_num;
   }
 
   size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
   if (output_num != 1) {
-    MS_LOG(EXCEPTION) << "Output number is " << output_num
-                      << ", but FakeLearnedScaleQuantPerChannel GpuKernel OP needs 1 output.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 1, but got " << output_num;
   }
 
   quant_delay_ = static_cast<int>(GetValue<int64_t>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("quant_delay")));

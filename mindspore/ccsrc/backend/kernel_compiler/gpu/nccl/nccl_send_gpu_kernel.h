@@ -46,12 +46,12 @@ class NcclSendGpuKernel : public NcclGpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     MS_EXCEPTION_IF_NULL(kernel_node);
     kernel_node_ = kernel_node;
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but NCCL send needs 1 input.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 1, but got " << input_num;
     }
 
     dest_rank_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "dest_rank"));
@@ -60,9 +60,8 @@ class NcclSendGpuKernel : public NcclGpuKernel {
     MS_LOG(INFO) << "NcclSend dest rank is " << dest_rank_ << ", group name is " << group_name_;
 
     auto input_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(input_shape);
+    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'NcclSendGpuKernel', input is null";
       InitSizeLists();
       return true;
     }

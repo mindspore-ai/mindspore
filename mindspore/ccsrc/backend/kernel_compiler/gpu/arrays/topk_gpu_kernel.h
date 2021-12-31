@@ -83,12 +83,13 @@ class TopKGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     auto input_shapes = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto output_shapes = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(input_shapes) || CHECK_NULL_INPUT(output_shapes);
+    is_null_input_ =
+      CHECK_SHAPE_NULL(input_shapes, kernel_name, "input") || CHECK_SHAPE_NULL(output_shapes, kernel_name, "output");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'TopkGpuKernel', input or output is null";
       InitSizeLists();
       return true;
     }

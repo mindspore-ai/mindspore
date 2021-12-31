@@ -112,7 +112,9 @@ class UnaryGradOpGpuKernel : public GpuKernel {
         break;
       }
       default: {
-        MS_LOG(EXCEPTION) << "Unary grad operation " << unary_grad_op_type_ << " is not supported.";
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", only support these types: SqrtGrad, RsqrtGrad, AsinGrad, "
+                          << "ACosGrad, AtanGrad, AsinhGrad, AcoshGrad, ReciprocalGrad currently, but got "
+                          << unary_grad_op_type_;
       }
     }
     return true;
@@ -121,23 +123,22 @@ class UnaryGradOpGpuKernel : public GpuKernel {
     std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     auto iter = kUnaryGradOpTypeMap.find(kernel_name);
     if (iter == kUnaryGradOpTypeMap.end()) {
-      MS_LOG(EXCEPTION) << "Unary grad operation " << kernel_name << " is not supported.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << ", only support these types: SqrtGrad, RsqrtGrad, AsinGrad, "
+                        << "ACosGrad, AtanGrad, AsinhGrad, AcoshGrad, ReciprocalGrad currently, but got "
+                        << kernel_name;
     }
     unary_grad_op_type_ = iter->second;
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but unary grad op needs 2 inputs.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 2, but got " << input_num;
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(ERROR) << "Output number is " << output_num << ", but unary grad op needs 1 output.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 1, but got " << output_num;
     }
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(input_shape);
+    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'UnaryOpGradGpuKernel', input is null";
       InitSizeLists();
       return true;
     }
@@ -145,9 +146,8 @@ class UnaryGradOpGpuKernel : public GpuKernel {
       input_size_ *= input_shape[i];
     }
     auto dx_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    is_null_input_ = CHECK_NULL_INPUT(dx_shape);
+    is_null_input_ = CHECK_SHAPE_NULL(dx_shape, kernel_name, "input");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "UnaryGradOpGpuKernel input 1 is null";
       InitSizeLists();
       return true;
     }
@@ -155,7 +155,8 @@ class UnaryGradOpGpuKernel : public GpuKernel {
       dx_size_ *= dx_shape[i];
     }
     if (input_size_ != dx_size_) {
-      MS_LOG(WARNING) << "UnaryGradOpGpuKernel inputs should be same, but got " << input_size_ << " and " << dx_size_;
+      MS_LOG(WARNING) << "For '" << kernel_name << "', both inputs should be equal, but got " << input_size_ << " and "
+                      << dx_size_;
       InitSizeLists();
       return true;
     }

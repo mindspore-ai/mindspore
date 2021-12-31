@@ -56,18 +56,21 @@ class SquaredDifferenceOpGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     auto input_shape1 = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
     auto input_shape2 = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 1);
     auto output_shape = AnfAlgo::GetOutputRealDeviceShapeIfExist(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(input_shape1) || CHECK_NULL_INPUT(input_shape2) || CHECK_NULL_INPUT(output_shape);
+    is_null_input_ = CHECK_SHAPE_NULL(input_shape1, kernel_name, "input") ||
+                     CHECK_SHAPE_NULL(input_shape2, kernel_name, "input") ||
+                     CHECK_SHAPE_NULL(output_shape, kernel_name, "output");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'SquaredDifferenceGpuKernel', input or output is null";
       InitSizeLists();
       return true;
     }
     need_broadcast_ = IsBroadcast(input_shape1, input_shape2);
     if (need_broadcast_ && output_shape.size() > MAX_DIMS) {
-      MS_LOG(EXCEPTION) << "Broadcast operation not support dim greater than " << MAX_DIMS;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of output cannot be greater than " << MAX_DIMS
+                        << ", but got " << output_shape.size();
     }
 
     lhs_shape_.resize(MAX_DIMS, 1);
@@ -86,7 +89,8 @@ class SquaredDifferenceOpGpuKernel : public GpuKernel {
           lhs_shape_[j + lhs_offset] = input_shape1[j];
         } else {
           auto index = j + lhs_offset;
-          MS_LOG(EXCEPTION) << "Invalid input1 index: " << index;
+          MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the index of input cannot be " << index << ", but got "
+                            << index;
         }
       }
       input1_num_ *= input_shape1[j];
@@ -98,7 +102,8 @@ class SquaredDifferenceOpGpuKernel : public GpuKernel {
           rhs_shape_[k + rhs_offset] = input_shape2[k];
         } else {
           auto index = k + rhs_offset;
-          MS_LOG(EXCEPTION) << "Invalid input2 index: " << index;
+          MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the index of input cannot be " << index << ", but got "
+                            << index;
         }
       }
       input2_num_ *= input_shape2[k];

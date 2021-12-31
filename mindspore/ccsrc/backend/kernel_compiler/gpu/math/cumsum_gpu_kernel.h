@@ -55,15 +55,15 @@ class CumSumGpuKernel : public GpuKernel {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
-      MS_LOG(EXCEPTION) << "Argument number is " << input_num << ", but CumSumGpuKernel needs 1.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 1, but got " << input_num;
     }
     input_size_0_ = sizeof(T);
     shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(shape_);
+    is_null_input_ = CHECK_SHAPE_NULL(shape_, kernel_name, "input");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'CumSumGpuKernel', input is null";
       InitSizeLists();
       return true;
     }
@@ -72,7 +72,8 @@ class CumSumGpuKernel : public GpuKernel {
     reverse_ = GetAttr<bool>(kernel_node, "reverse");
     int input_dim_length = SizeToInt(shape_.size());
     if (axis_ >= input_dim_length) {
-      MS_LOG(EXCEPTION) << "Axis is: " << axis_ << " out of bounds.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the value of 'axis' should be less than " << input_dim_length
+                        << ", but got " << axis_;
     }
     while (axis_ < 0) {
       axis_ += input_dim_length;

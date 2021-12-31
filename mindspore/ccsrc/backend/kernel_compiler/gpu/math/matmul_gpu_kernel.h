@@ -91,13 +91,14 @@ class MatMulGpuKernel : public GpuKernel {
           "cublasGemmStridedBatchedEx failed. Possible reasons: the GPU is occupied by other processes.");
       }
     } catch (const std::exception &e) {
-      MS_LOG(EXCEPTION) << "Encountered an exception: " << e.what() << " when invoke cublas "
-                        << (batch_ == 1 ? "cublasGemmEx" : "cublasGemmStridedBatchedEx");
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', encountered an exception: " << e.what() << " when invoke "
+                        << "cublas " << (batch_ == 1 ? "cublasGemmEx" : "cublasGemmStridedBatchedEx");
     }
     return true;
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCublasHandle();
     dtype_a_ = GetCudaDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
@@ -105,7 +106,7 @@ class MatMulGpuKernel : public GpuKernel {
     dtype_c_ = GetCudaDataType(TypeIdLabel(AnfAlgo::GetOutputDeviceDataType(kernel_node, 0)));
     auto node_name = AnfAlgo::GetCNodeName(kernel_node);
     if (dtype_a_ != dtype_b_ || dtype_a_ != dtype_c_) {
-      MS_LOG(EXCEPTION) << "input and output types are not the same in " << node_name;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', input and output types are not the same in " << node_name;
     }
     if (dtype_a_ == CUDA_R_16F && dtype_b_ == CUDA_R_16F && dtype_c_ == CUDA_R_16F) {
       MS_LOG(INFO) << "input and output type is float16, allow to use Tensor Core operations if possible";
@@ -113,15 +114,16 @@ class MatMulGpuKernel : public GpuKernel {
     }
     auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
     auto input1_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(output_shape) || CHECK_NULL_INPUT(input1_shape);
+    is_null_input_ =
+      CHECK_SHAPE_NULL(input1_shape, kernel_name_, "input") || CHECK_SHAPE_NULL(output_shape, kernel_name_, "output");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'MatmulGpuKernel', input or output is null";
       InitSizeLists();
       return true;
     }
     auto dims = output_shape.size();
     if (dims < 2) {
-      MS_LOG(EXCEPTION) << "Output dims " << dims << " not support.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of output cannot be less than 2, but got "
+                        << dims;
     }
 
     m_ = output_shape[dims - 2];
@@ -139,7 +141,7 @@ class MatMulGpuKernel : public GpuKernel {
     } else if (!transpose && input1_shape.size() > (dims - 1)) {
       k_ = input1_shape[dims - 1];
     } else {
-      MS_LOG(EXCEPTION) << "Init k_ via input1_shape failed.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', init k_ via input1_shape failed.";
     }
 
     transpose = GetAttr<bool>(kernel_node, "transpose_x2");

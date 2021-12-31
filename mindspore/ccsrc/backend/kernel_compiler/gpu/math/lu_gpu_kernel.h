@@ -19,6 +19,7 @@
 #include <cublas_v2.h>
 #include <cuda_runtime_api.h>
 #include <vector>
+#include <string>
 #include <algorithm>
 #include <type_traits>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
@@ -39,7 +40,7 @@ constexpr size_t kLuNormalShape = 2;
 template <typename T>
 class LUGpuKernel : public GpuKernel {
  public:
-  LUGpuKernel() = default;
+  LUGpuKernel() : is_null_input_(false) {}
   ~LUGpuKernel() = default;
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
@@ -47,6 +48,9 @@ class LUGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     CHECK_CUSOLVER_RET_WITH_ERROR(cusolverDnSetStream(handle_, reinterpret_cast<cudaStream_t>(stream_ptr)),
                                   "cusolverDnSetStream failed");
     auto input_addr = GetDeviceAddress<T>(inputs, kDim0);
@@ -65,7 +69,7 @@ class LUGpuKernel : public GpuKernel {
                                      "cusolver query lu work size fail");
 
       if (cudaMalloc(reinterpret_cast<void **>(&d_work_), unit_size_ * lwork_) != cudaSuccess) {
-        MS_LOG(EXCEPTION) << "cusolver malloc work size fail";
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', cusolver malloc work size fail";
       }
 
       CHECK_CUSOLVER_RET_WITH_EXCEPT(
@@ -79,7 +83,7 @@ class LUGpuKernel : public GpuKernel {
       // 5. malloc device working space of getrf
 
       if (cudaMalloc(reinterpret_cast<void **>(&d_work_), unit_size_ * lwork_) != cudaSuccess) {
-        MS_LOG(EXCEPTION) << "cusolver malloc work size fail";
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', cusolver malloc work size fail";
       }
 
       // 6. solve to lu factorization according to cuSolver api, outputs have been written to input's matrix.
@@ -87,7 +91,7 @@ class LUGpuKernel : public GpuKernel {
         kernel_node_, cusolverDnDgetrf(handle_, m_, m_, input_addr, lda_, d_work_, piv_output_addr, info_output_addr),
         "cusolver lu fail");
     } else {
-      MS_LOG(EXCEPTION) << "cholesky factorization do not support other data type but only float or double, right now.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the data type only should be float or double, right now.";
     }
     // 7. copy results from written input's matrix to output's matrix.
     //    if (cudaMemcpy(output_addr, input_addr, lda_ * m_ * unit_size_, cudaMemcpyDeviceToDevice) != cudaSuccess) {
@@ -101,14 +105,16 @@ class LUGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     // 1. get CuSolver Dense matrix handler
     handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCusolverDnHandle();
     auto in_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     // 2. check input shape not null
-    bool is_null_input = CHECK_NULL_INPUT(in_shape);
-    if (is_null_input) {
-      MS_LOG(EXCEPTION) << "For 'PureCholeskyGpuKernel', input is null";
+    is_null_input_ = CHECK_SHAPE_NULL(in_shape, kernel_name_, "input");
+    if (is_null_input_) {
+      InitSizeLists();
+      return true;
     }
     // 3. calculate input size
     if (!InitInputSize(in_shape)) {
@@ -126,11 +132,11 @@ class LUGpuKernel : public GpuKernel {
       lu_row_ = in_shape.at(kDim0);
       lu_col_ = in_shape.at(kDim1);
     } else {
-      MS_LOG(ERROR) << "Input Only support Rank 1 OR 2";
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of input only should be 1 or 2";
       return false;
     }
     if (lu_row_ != lu_col_) {
-      MS_LOG(ERROR) << "Cholesky need square matrix as input.";
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', the shape of input should be square matrix";
       return false;
     }
     // set matrix row or col to be lead dimension
@@ -170,6 +176,7 @@ class LUGpuKernel : public GpuKernel {
   std::vector<size_t> input_size_list_{};
   std::vector<size_t> output_size_list_{};
   std::vector<size_t> workspace_size_list_{};
+  bool is_null_input_;
 };
 }  // namespace kernel
 }  // namespace mindspore

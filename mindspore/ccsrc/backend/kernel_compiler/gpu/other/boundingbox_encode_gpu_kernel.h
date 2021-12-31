@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_KERNEL_GPU_OTHER_BOUNDINGBOX_ENCODE_GPU_KERNEL_H
 
 #include <vector>
+#include <string>
 #include "backend/kernel_compiler/gpu/cuda_impl/boundingbox_encode_impl.cuh"
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
@@ -28,7 +29,6 @@ template <typename T>
 class BoundingBoxEncodeGpuKernel : public GpuKernel {
  public:
   BoundingBoxEncodeGpuKernel() : anchor_size_(0), groundtruth_size_(0), deltas_size_(0), is_null_input_(false) {}
-
   ~BoundingBoxEncodeGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
@@ -45,7 +45,8 @@ class BoundingBoxEncodeGpuKernel : public GpuKernel {
     T *deltas_addr = GetDeviceAddress<T>(outputs, 0);
 
     if (inputs[0]->size != inputs[1]->size) {
-      MS_LOG(ERROR) << "Anchor box size must equal with groundtruth box size -" << inputs[1]->size << ", but got"
+      MS_LOG(ERROR) << "For '" << kernel_name_
+                    << "', anchor box size must equal with groundtruth box size: " << inputs[1]->size << ", but got "
                     << inputs[0]->size;
       return false;
     }
@@ -53,7 +54,7 @@ class BoundingBoxEncodeGpuKernel : public GpuKernel {
     const size_t coordinate = 4;
     const size_t block_size = inputs[0]->size / sizeof(T);
     if ((block_size % coordinate) != 0) {
-      MS_LOG(ERROR) << "The size of the box must be a multiple of 4.";
+      MS_LOG(ERROR) << "For '" << kernel_name_ << ", the size of the box should be a multiple of 4.";
       return false;
     }
 
@@ -64,11 +65,11 @@ class BoundingBoxEncodeGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     MS_EXCEPTION_IF_NULL(kernel_node);
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but BoundingBoxEncode needs 2 inputs.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 2, but got " << input_num;
     }
     anchor_size_ = sizeof(T);
     groundtruth_size_ = sizeof(T);
@@ -77,9 +78,10 @@ class BoundingBoxEncodeGpuKernel : public GpuKernel {
     auto logits_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto labels_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(logits_shape) || CHECK_NULL_INPUT(labels_shape) || CHECK_NULL_INPUT(output_shape);
+    is_null_input_ = CHECK_SHAPE_NULL(logits_shape, kernel_name_, "anchor_box") ||
+                     CHECK_SHAPE_NULL(labels_shape, kernel_name_, "groundtruth_box") ||
+                     CHECK_SHAPE_NULL(output_shape, kernel_name_, "output");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'BoundingBoxEncodeGpuKernel', input or output is null";
       InitSizeLists();
       return true;
     }
@@ -110,7 +112,7 @@ class BoundingBoxEncodeGpuKernel : public GpuKernel {
         means_.emplace_back(mean);
       }
     } else {
-      MS_LOG(EXCEPTION) << "Attribute means type is invalid.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', attribute means type is invalid.";
     }
     auto stds = prim->GetAttr("stds");
     MS_EXCEPTION_IF_NULL(stds);
@@ -122,11 +124,12 @@ class BoundingBoxEncodeGpuKernel : public GpuKernel {
         stds_.emplace_back(std);
       }
     } else {
-      MS_LOG(EXCEPTION) << "Attribute stds type is invalid.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', attribute stds type is invalid.";
     }
 
     if (means_.size() < coordinate_size || stds_.size() < coordinate_size) {
-      MS_LOG(EXCEPTION) << "The size of means or stds is less than 4.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the both size of means or stds cannot be less than 4, but got"
+                        << " the size of means: " << means_.size() << ", the size of stds: " << stds_.size();
     }
 
     return true;

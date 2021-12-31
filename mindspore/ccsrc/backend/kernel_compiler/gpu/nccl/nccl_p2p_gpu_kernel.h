@@ -52,13 +52,15 @@ class NcclP2PGpuKernel : public NcclGpuKernel {
         break;
       }
       default: {
-        MS_LOG(EXCEPTION) << "Kernel type " << nccl_kernel_type_ << " is not supported.";
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", only support these types: AllToAllv, NeighborExchange "
+                          << "currently, but got " << nccl_kernel_type_;
       }
     }
     return true;
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     MS_EXCEPTION_IF_NULL(kernel_node);
     kernel_node_ = kernel_node;
     InferCommType(kernel_node);
@@ -73,9 +75,8 @@ class NcclP2PGpuKernel : public NcclGpuKernel {
     }
     for (size_t i = 0; i < input_num; ++i) {
       auto shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, i);
-      is_null_input_ = CHECK_NULL_INPUT(shape);
+      is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name_, "input");
       if (is_null_input_) {
-        MS_LOG(WARNING) << "For 'NcclP2PGpuKernel', input shape is null ";
         InitSizeLists();
         return true;
       }
@@ -88,9 +89,8 @@ class NcclP2PGpuKernel : public NcclGpuKernel {
     }
     for (size_t i = 0; i < output_num; ++i) {
       auto shape = AnfAlgo::GetOutputRealDeviceShapeIfExist(kernel_node, i);
-      is_null_input_ = CHECK_NULL_INPUT(shape);
+      is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name_, "output");
       if (is_null_input_) {
-        MS_LOG(WARNING) << "For 'NcclP2PGpuKernel', output shape is null";
         InitSizeLists();
         return true;
       }
@@ -157,10 +157,12 @@ class NcclP2PGpuKernel : public NcclGpuKernel {
 
     // send_rank_id and recv rank_id size needs to be equal to input_list size
     if (send_rank_ids.size() != input_size_list_.size()) {
-      MS_LOG(ERROR) << "Trying to use AlltoAllv, but send_rank_ids vector size not equals to input_list size.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", trying to use AlltoAllv, the size of  send_rank_ids vector "
+                        << "should be " << input_size_list_.size() << ", but got " << send_rank_ids.size();
     }
     if (recv_rank_ids.size() != output_size_list_.size()) {
-      MS_LOG(ERROR) << "Trying to use AlltoAllv, but recv_rank_ids vector size not equals to output_list size.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", trying to use AlltoAllv, the size of  recv_rank_ids vector "
+                        << "should be " << output_size_list_.size() << ", but got " << recv_rank_ids.size();
     }
 
     // This implementation refers to NVIDIA NCCL 2.11 doc.
@@ -182,7 +184,8 @@ class NcclP2PGpuKernel : public NcclGpuKernel {
     std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     auto iter = kNcclTypeMap.find(kernel_name);
     if (iter == kNcclTypeMap.end()) {
-      MS_LOG(EXCEPTION) << "Kernel " << kernel_name << " is not supported.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", only support these types: AllToAllv, NeighborExchange "
+                        << "currently, but got " << kernel_name;
     } else {
       nccl_kernel_type_ = iter->second;
     }

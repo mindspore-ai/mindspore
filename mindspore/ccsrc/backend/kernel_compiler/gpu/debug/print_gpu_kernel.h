@@ -90,6 +90,7 @@ class PrintGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     MS_EXCEPTION_IF_NULL(kernel_node);
     kernel_node_ = kernel_node;
     if (AnfAlgo::HasNodeAttr("string_pos", kernel_node)) {
@@ -105,9 +106,8 @@ class PrintGpuKernel : public GpuKernel {
     input_flag_ = SetInputFlag(&string_pos_, input_tensor_num);
     for (size_t i = 0; i < input_tensor_num; i++) {
       auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, i);
-      is_null_input_ = CHECK_NULL_INPUT(input_shape);
+      is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input");
       if (is_null_input_) {
-        MS_LOG(WARNING) << "For 'PrintGpuKernel', input is null";
         InitSizeLists();
         return true;
       }
@@ -183,7 +183,7 @@ class PrintGpuKernel : public GpuKernel {
           input_device_data->push_back(GetDeviceAddress<double>(inputs, i));
           break;
         default:
-          MS_LOG(EXCEPTION) << "TypeId: " << type_id << " is not supported in Print.";
+          MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the typeid cannot be " << type_id;
       }
     }
   }
@@ -200,7 +200,7 @@ class PrintGpuKernel : public GpuKernel {
     }
     for (size_t i = 0; i < string_pos->size(); i++) {
       if ((*string_pos)[i] < 0) {
-        MS_LOG(EXCEPTION) << "string_pos cannot be a negative value";
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', string_pos cannot be a negative value";
       }
       auto index = IntToSize((*string_pos)[i]);
       res[index] = -1;

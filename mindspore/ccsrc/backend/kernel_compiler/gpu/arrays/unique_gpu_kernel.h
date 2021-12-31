@@ -50,11 +50,11 @@ class UniqueGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     std::vector<size_t> shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(shape);
+    is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name, "input");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'UniqueGpuKernel', input is null";
       InitSizeLists();
       return true;
     }

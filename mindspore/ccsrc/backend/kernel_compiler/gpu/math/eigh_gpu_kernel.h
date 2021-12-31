@@ -39,13 +39,14 @@ constexpr char LOWER[] = "lower";
 template <typename T>
 class EighGpuKernel : public GpuKernel {
  public:
-  EighGpuKernel() = default;
+  EighGpuKernel() : is_null_input_(false) {}
   ~EighGpuKernel() = default;
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
 
   bool Init(const CNodePtr &kernel_node) override {
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
     auto A_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     compute_eigen_vectors_ = static_cast<bool>(GetAttr<bool>(kernel_node, C_EIEH_VECTOR));
@@ -56,13 +57,14 @@ class EighGpuKernel : public GpuKernel {
       jobz_ = CUSOLVER_EIG_MODE_NOVECTOR;
     }
     cusolver_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCusolverDnHandle();
-    bool is_null_input = CHECK_NULL_INPUT(A_shape);
-    if (is_null_input) {
-      MS_LOG(EXCEPTION) << "For 'EighValue GpuKernel', input is null";
+    is_null_input_ = CHECK_SHAPE_NULL(A_shape, kernel_name, "input");
+    if (is_null_input_) {
+      InitSizeLists();
+      return true;
     }
     if (A_shape.size() != kShape2dDims || A_shape[0] != A_shape[1]) {
-      MS_LOG(EXCEPTION) << "wrong array shape, A should be a square matrix, but got [" << A_shape[0] << " X "
-                        << A_shape[1] << "]";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the shape of input should be square matrix, but got ["
+                        << A_shape[0] << " X " << A_shape[1] << "]";
     }
     m_ = A_shape[0];
     InitSizeLists();
@@ -71,6 +73,9 @@ class EighGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     CHECK_CUSOLVER_RET_WITH_ERROR(cusolverDnSetStream(cusolver_handle_, reinterpret_cast<cudaStream_t>(stream_ptr)),
                                   "cusolverDnSetStream failed");
     // matrix A, input or output(eigenvector)
@@ -152,6 +157,7 @@ class EighGpuKernel : public GpuKernel {
   cusolverEigMode_t jobz_ = CUSOLVER_EIG_MODE_NOVECTOR;
   bool compute_eigen_vectors_{false};
   bool lower_{true};
+  bool is_null_input_;
   std::vector<T *> h_array_{};
   std::vector<size_t> input_size_list_{};
   std::vector<size_t> output_size_list_{};

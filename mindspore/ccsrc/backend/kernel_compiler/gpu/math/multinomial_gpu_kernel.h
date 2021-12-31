@@ -59,7 +59,7 @@ class MultinomialGpuKernel : public GpuKernel {
     T *probs_addr = GetDeviceAddress<T>(inputs, 0);
     int64_t *num_sample_addr = GetDeviceAddress<int64_t>(inputs, 1);
     if (distributions_ == 0) {
-      MS_LOG(ERROR) << "Divide by zero. the distributions_ is 0.";
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', divide by zero. the distributions_ is 0.";
       return false;
     }
 
@@ -83,22 +83,20 @@ class MultinomialGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but multinomial needs 2 input.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 2, but got " << input_num;
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(ERROR) << "Output number is " << output_num << ", but multinomial needs 1 output.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
     }
     auto input_shape_0 = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(input_shape_0) || CHECK_NULL_INPUT(output_shape);
+    is_null_input_ =
+      CHECK_SHAPE_NULL(input_shape_0, kernel_name_, "input") || CHECK_SHAPE_NULL(output_shape, kernel_name_, "output");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'MultinomialGpuKernel', input or output is null";
       InitSizeLists();
       return true;
     }

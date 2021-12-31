@@ -55,7 +55,7 @@ class CustomAOTGpuKernel : public GpuKernel {
     if (!handle_) {
       handle_ = dlopen(file_path_.c_str(), RTLD_LAZY | RTLD_LOCAL);
       if (!handle_) {
-        MS_LOG(ERROR) << "Open Error: " << dlerror();
+        MS_LOG(ERROR) << "For '" << kernel_name_ << "', open should be successful, but error, " << dlerror();
         return false;
       }
     }
@@ -65,7 +65,7 @@ class CustomAOTGpuKernel : public GpuKernel {
         reinterpret_cast<std::add_pointer<int(int, void **, int *, int64_t **, const char **, void *, void *)>::type>(
           dlsym(handle_, func_name_.c_str()));
       if (auto error_info = dlerror(); error_info != nullptr) {
-        MS_LOG(ERROR) << error_info;
+        MS_LOG(ERROR) << "For '" << kernel_name_ << "', error info: " << error_info;
         return false;
       }
     }
@@ -79,7 +79,8 @@ class CustomAOTGpuKernel : public GpuKernel {
         ret = aot_func_(nparam, &params[0], &ndims_[0], &shapes_[0], &type_pointer_list_[0], stream_ptr, nullptr);
       }
     } catch (const std::exception &e) {
-      MS_LOG(ERROR) << "CustomAOT operator failed when running user defined file " << file_path_ << "! "
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', operator failed when running user defined file " << file_path_
+                    << "! "
                     << "Error message is " << e.what();
       return false;
     }
@@ -88,14 +89,15 @@ class CustomAOTGpuKernel : public GpuKernel {
       case 0:
         break;
       case 1:
-        MS_LOG(ERROR) << "Number of parameters passed to AOT kernel is  " << nparam
+        MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of parameters passed to AOT kernel is " << nparam
                       << ", inconsistent with what the user wants";
         return false;
       case 2:
-        MS_LOG(ERROR) << "Type of parameters passed to AOT kernel is inconsistent with what the user wants";
+        MS_LOG(ERROR) << "For '" << kernel_name_
+                      << "', type of parameters passed to AOT kernel is inconsistent with what the user wants";
         return false;
       default:
-        MS_LOG(ERROR) << "Error occurred when running AOT kernel, "
+        MS_LOG(ERROR) << "For '" << kernel_name_ << "', error occurred when running AOT kernel, "
                       << "error id is " << ret;
         return false;
     }
@@ -104,27 +106,25 @@ class CustomAOTGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     const auto &exec_info = AnfAlgo::GetNodeAttr<std::string>(kernel_node, "func_name");
     if (auto pos = exec_info.find(":"); pos != std::string::npos) {
       auto path = exec_info.substr(0, pos);
       auto real_path = FileUtils::GetRealPath(path.c_str());
       if (!real_path.has_value()) {
-        MS_LOG(ERROR) << "Invalid file path, " << path << " does not exist.";
-        return false;
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the file path should be exist, but got " << path;
       }
       file_path_ = real_path.value();
       func_name_ = exec_info.substr(pos + 1);
     } else {
-      MS_LOG(ERROR) << "Wrong execute info:" << exec_info;
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', Wrong execute info:" << exec_info;
     }
 
     num_input_ = AnfAlgo::GetInputTensorNum(kernel_node);
     auto input_type_list = AnfAlgo::GetAllInputDeviceTypes(kernel_node);
     if (num_input_ != input_type_list.size()) {
-      MS_LOG(ERROR) << "Input shapes'size is " << num_input_ << ", while input types' size is "
-                    << input_type_list.size();
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be " << input_type_list.size()
+                        << ", but got " << num_input_;
     }
 
     for (size_t i = 0; i < num_input_; i++) {
@@ -141,9 +141,8 @@ class CustomAOTGpuKernel : public GpuKernel {
     auto output_type_list = AnfAlgo::GetAllOutputDeviceTypes(kernel_node);
 
     if (num_output_ != output_type_list.size()) {
-      MS_LOG(ERROR) << "Output shapes'size is " << num_output_ << ", while output types' size is "
-                    << output_type_list.size();
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be " << output_type_list.size()
+                        << ", but got " << num_output_;
     }
 
     for (size_t i = 0; i < num_output_; i++) {
