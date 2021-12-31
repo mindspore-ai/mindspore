@@ -76,7 +76,7 @@ from .validators import check_batch, check_shuffle, check_map, check_filter, che
     check_stl10_dataset, check_yelp_review_dataset, check_penn_treebank_dataset, check_iwslt2016_dataset, \
     check_iwslt2017_dataset, check_sogou_news_dataset, check_yahoo_answers_dataset, check_udpos_dataset, \
     check_conll2000_dataset, check_amazon_review_dataset, check_semeion_dataset, check_caltech101_dataset, \
-    check_caltech256_dataset, check_wiki_text_dataset, check_imdb_dataset
+    check_caltech256_dataset, check_wiki_text_dataset, check_imdb_dataset, check_wider_face_dataset
 from ..core.config import get_callback_timeout, _init_device_info, get_enable_shared_mem, get_num_parallel_workers, \
     get_prefetch_size
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
@@ -9801,6 +9801,158 @@ class DIV2KDataset(MappableDataset):
 
     def parse(self, children=None):
         return cde.DIV2KNode(self.dataset_dir, self.usage, self.downgrade, self.scale, self.decode, self.sampler)
+
+
+class WIDERFaceDataset(MappableDataset):
+    """
+    A source dataset for reading and parsing WIDERFace dataset.
+
+    When usage is "train", "valid" or "all", the generated dataset has eight columns ["image", "bbox", "blur",
+    "expression", "illumination", "occlusion", "pose", "invalid"]. When usage is "test", it only has one column
+    ["image"].
+    The tensor of column :py:obj:`image` is a vector of the uint8 type.
+    The tensor of column :py:obj:`bbox` is a scalar of the uint32 type.
+    The tensor of column :py:obj:`blur` is a scalar of the uint32 type.
+    The tensor of column :py:obj:`expression` is a scalar of the uint32 type.
+    The tensor of column :py:obj:`illumination` is a scalar of the uint32 type.
+    The tensor of column :py:obj:`occlusion` is a scalar of the uint32 type.
+    The tensor of column :py:obj:`pose` is a scalar of the uint32 type.
+    The tensor of column :py:obj:`invalid` is a scalar of the uint32 type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        usage (str, optional): Usage of this dataset, can be `train`, `test`, `valid` or `all`. `train` will read
+            from 12,880 samples, `test` will read from 16,097 samples, `valid` will read from 3,226 test samples
+            and `all` will read all `train` and `valid` samples (default=None, will be set to `all`).
+        num_samples (int, optional): The number of images to be included in the dataset
+            (default=None, will read all images).
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, will use value set in the config).
+        shuffle (bool, optional): Whether or not to perform shuffle on the dataset
+            (default=None, expected order behavior shown in the table).
+        decode (bool, optional): Decode the images after reading (default=False).
+        sampler (Sampler, optional): Object used to choose samples from the dataset
+            (default=None, expected order behavior shown in the table).
+        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
+        shard_id (int, optional): The shard ID within `num_shards` (default=None). This argument can only be specified
+            when `num_shards` is also specified.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing
+            (default=None, which means no cache is used).
+
+    Raises:
+        RuntimeError: If dataset_dir does not contain data files.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If sampler and shuffle are specified at the same time.
+        RuntimeError: If sampler and sharding are specified at the same time.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+        ValueError: If usage is not in [`train`, `test`, `valid`, `all`].
+        ValueError: If annotation_file is not exist.
+        ValueError: If dataset_dir is not exist.
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+
+    Note:
+        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+          The table below shows what input arguments are allowed and their expected behavior.
+
+    .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
+       :widths: 25 25 50
+       :header-rows: 1
+
+       * - Parameter `sampler`
+         - Parameter `shuffle`
+         - Expected Order Behavior
+       * - None
+         - None
+         - random order
+       * - None
+         - True
+         - random order
+       * - None
+         - False
+         - sequential order
+       * - Sampler object
+         - None
+         - order defined by sampler
+       * - Sampler object
+         - True
+         - not allowed
+       * - Sampler object
+         - False
+         - not allowed
+
+    Examples:
+        >>> wider_face_dir = "/path/to/wider_face_dataset"
+        >>>
+        >>> # Read 3 samples from WIDERFace dataset
+        >>> dataset = ds.WIDERFaceDataset(dataset_dir=wider_face_dir, num_samples=3)
+
+    About WIDERFace dataset:
+
+    The WIDERFace database of people faces has a training set of 12,880 samples, a testing set of 16,097 examples
+    and a validating set of 3,226 examples. It is a subset of a larger set available from WIDER. The digits have
+    been size-normalized and centered in a fixed-size image.
+
+    The following is the original WIDERFace dataset structure.
+    You can unzip the dataset files into this directory structure and read by MindSpore's API.
+
+    .. code-block::
+
+        .
+        └── wider_face_dir
+             ├── WIDER_test
+             │    └── images
+             │         ├── 0--Parade
+             │         │     ├── 0_Parade_marchingband_1_9.jpg
+             │         │     ├── ...
+             │         ├──1--Handshaking
+             │         ├──...
+             ├── WIDER_train
+             │    └── images
+             │         ├── 0--Parade
+             │         │     ├── 0_Parade_marchingband_1_11.jpg
+             │         │     ├── ...
+             │         ├──1--Handshaking
+             │         ├──...
+             ├── WIDER_val
+             │    └── images
+             │         ├── 0--Parade
+             │         │     ├── 0_Parade_marchingband_1_102.jpg
+             │         │     ├── ...
+             │         ├──1--Handshaking
+             │         ├──...
+             └── wider_face_split
+                  ├── wider_face_test_filelist.txt
+                  ├── wider_face_train_bbx_gt.txt
+                  └── wider_face_val_bbx_gt.txt
+
+    Citation:
+
+    .. code-block::
+
+        @inproceedings{2016WIDER,
+          title={WIDER FACE: A Face Detection Benchmark},
+          author={Yang, S. and Luo, P. and Loy, C. C. and Tang, X.},
+          booktitle={IEEE},
+          pages={5525-5533},
+          year={2016},
+        }
+    """
+
+    @check_wider_face_dataset
+    def __init__(self, dataset_dir, usage=None, num_samples=None, num_parallel_workers=None, shuffle=None,
+                 decode=False, sampler=None, num_shards=None, shard_id=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, sampler=sampler, num_samples=num_samples,
+                         shuffle=shuffle, num_shards=num_shards, shard_id=shard_id, cache=cache)
+
+        self.dataset_dir = dataset_dir
+        self.usage = replace_none(usage, "all")
+        self.decode = replace_none(decode, False)
+
+    def parse(self, children=None):
+        return cde.WIDERFaceNode(self.dataset_dir, self.usage, self.decode, self.sampler)
 
 
 class YelpReviewDataset(SourceDataset, TextBaseDataset):
