@@ -49,6 +49,7 @@ enum TensorType {
   kSummaryInput,
   kRefNodeInput,
   kRefNodeOutput,
+  kEventVirtualOutput,
   kUnknown
 };
 
