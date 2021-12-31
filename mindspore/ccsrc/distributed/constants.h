@@ -34,6 +34,13 @@ constexpr char kEnvRoleOfWorker[] = "MS_WORKER";
 constexpr char kEnvRoleOfScheduler[] = "MS_SCHED";
 const std::set<std::string> kValidRoleName = {kEnvRoleOfServer, kEnvRoleOfWorker, kEnvRoleOfScheduler};
 
+// The distributed execution mode enum.
+enum class DistributedExecutionMode { kPSMode = 0, kInvalidMode };
+
+// The operator's label in distributed execution.
+constexpr char kOpLabelRankId[] = "rank_id";
+constexpr char kOpLabelRole[] = "ms_role";
+
 constexpr char kLocalHost[] = "127.0.0.1";
 constexpr int MAX_HOSTNAME_LEN = 1024;
 const uint16_t kDefaultSchedPort = 6667;

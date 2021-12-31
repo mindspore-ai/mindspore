@@ -30,6 +30,7 @@
 #include "abstract/abstract_value.h"
 #include "frontend/parallel/costmodel_context.h"
 #include "frontend/parallel/context.h"
+#include "frontend/parallel/graph_util/graph_splitter.h"
 #include "pipeline/jit/pass.h"
 #include "pipeline/jit/parse/parse_base.h"
 #include "pipeline/jit/parse/data_converter.h"
@@ -975,6 +976,20 @@ bool StartPSSchedulerAction(const ResourcePtr &) {
   ps::Scheduler::GetInstance().Run();
   return true;
 }
+
+bool DistributedSplitAction(const ResourcePtr &res) {
+  MS_EXCEPTION_IF_NULL(res);
+  FuncGraphPtr func_graph = res->func_graph();
+  auto node = distributed::cluster::ClusterContext::instance()->node();
+  MS_EXCEPTION_IF_NULL(node);
+  auto node_role = distributed::cluster::ClusterContext::instance()->node_role();
+
+  parallel::GraphSplitterPtr splitter =
+    std::make_shared<parallel::GraphSplitter>(func_graph, node->rank_id(), node_role);
+  MS_EXCEPTION_IF_NULL(splitter);
+  splitter->Run();
+  return true;
+}
 #endif
 
 // The parallel primitive related valuenode might be partitioned so that its value changes by device,
@@ -1026,6 +1041,7 @@ bool RemoveValueNodeDuplicationsAction(const ResourcePtr &res) {
 }
 
 bool PipelineSplitAction(const ResourcePtr &res) { return PipelineSplitPass(res); }
+
 bool ValidateAction(const ResourcePtr &res) { return ValidatePass(res); }
 
 bool SetMindIRGraphAction(const ResourcePtr &res) {
@@ -1226,6 +1242,7 @@ std::vector<ActionItem> VmPipeline() {
   (void)actions.emplace_back(std::make_pair("eliminate_forward_cnode", EliminateForwardCNode));
 
   (void)actions.emplace_back(std::make_pair("validate", ValidateAction));
+
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
   if (ps::PSContext::instance()->is_worker()) {
     if (distributed::cluster::ClusterContext::instance()->initialized()) {
