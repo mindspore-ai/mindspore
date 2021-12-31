@@ -29,6 +29,7 @@
 #include "runtime/device/ascend/kernel_build_ascend.h"
 #include "runtime/hardware/ascend/ascend_graph_optimization.h"
 #include "backend/kernel_compiler/ascend_kernel_mod.h"
+#include "backend/kernel_compiler/aicpu/aicpu_kernel_load.h"
 #include "runtime/device/ascend/ascend_bucket.h"
 #include "common/util/error_manager/error_manager.h"
 #include "runtime/device/ascend/ascend_memory_adapter.h"
@@ -691,6 +692,10 @@ void AscendDeviceContext::PreprocessBeforeRunSingleOpGraph(const KernelGraphPtr 
   }
 
   CreateKernel(atomic_nodes);
+
+  if (!mindspore::kernel::AicpuOpKernelLoad::GetInstance().LaunchAicpuKernelSo()) {
+    MS_LOG(EXCEPTION) << "Cust aicpu kernel so load failed.";
+  }
 }
 
 void AscendDeviceContext::UpdateDynamicShape(const CNodePtr &kernel) const {}
