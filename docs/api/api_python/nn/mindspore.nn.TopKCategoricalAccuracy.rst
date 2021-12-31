@@ -5,12 +5,9 @@ mindspore.nn.TopKCategoricalAccuracy
 
     计算top-k分类正确率。
 
-    .. note::
-        `update` 方法需要接收满足 :math:`(y_{pred}, y)` 格式的输入。如果某些样本具有相同的正确率，则将选择第一个样本。
-
     **参数：**
 
-    **k (int)** - 指定要计算的top-k分类正确率。
+    **k (int)** - 计算准确率使用的Top类别数。
 
     **异常：**
 
@@ -19,6 +16,7 @@ mindspore.nn.TopKCategoricalAccuracy
 
     **样例：**
 
+    >>> import mindspore
     >>> import numpy as np
     >>> from mindspore import nn, Tensor
     >>>
@@ -47,6 +45,9 @@ mindspore.nn.TopKCategoricalAccuracy
     .. py:method:: update(*inputs)
 
         使用预测值 `y_pred` 和真实标签 `y` 更新局部变量。
+
+        .. note::
+            `update` 方法需要接收满足 :math:`(y_{pred}, y)` 格式的输入。如果某些样本具有相同的正确率，则将选择第一个样本。
 
         **参数：**
 

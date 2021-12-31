@@ -167,6 +167,9 @@ class Metric(metaclass=ABCMeta):
         Outputs:
             :class:`Metric`, its original Class instance.
 
+        Raises:
+            ValueError: If the type of input 'indexes'  is not a list or its elements are not all int.
+
         Examples:
             >>> import numpy as np
             >>> from mindspore import nn, Tensor

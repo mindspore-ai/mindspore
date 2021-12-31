@@ -3,9 +3,9 @@ mindspore.nn.Precision
 
 .. py:class::  mindspore.nn.Precision(eval_type='classification')
 
-    计算'classification'单标签数据分类和'multilabel'多标签数据分类的精度。
+    计算数据分类的精度，包括单标签场景和多标签场景。
 
-    此函数创建两个局部变量 :math:`\text{true_positive}` 和 :math:`\text{false_positive}` 用于计算精度。计算方式为 :math:`\text{true_positive}` 除以 :math:`\text{true_positive}` 与 :math:`\text{false_positive}` 的和，是一个幂等操作，此值最终作为精度返回。
+    此函数创建两个局部变量 :math:`\text{true_positive}` 和 :math:`\text{false_positive}` 用于计算精度。计算方式如下：
 
     .. math::
         \text{precision} = \frac{\text{true_positive}}{\text{true_positive} + \text{false_positive}}

@@ -39,23 +39,18 @@ from ..parallel._tensor import _load_tensor_by_layout
 
 class Cell(Cell_):
     """
-    Base class for all neural networks.
+    The basic building block of neural networks in MindSpore. The model or neural network layer should inherit this
+    base class.
 
-    A 'Cell' could be a single neural network cell, such as  :class:`mindspore.nn.Conv2d`,  :class:`mindspore.nn.ReLU`,
-    :class:`mindspore.nn.BatchNorm`, etc. or a composition of cells to constructing a network.
-
-    Note:
-        In general, the autograd algorithm will automatically generate the implementation of the gradient function,
-        but if back-propagation(bprop) method is implemented, the gradient function will be replaced by the bprop.
-        The bprop implementation will receive a tensor `dout` containing the gradient of the loss w.r.t.
-        the output, and a tensor `out` containing the forward result. The bprop needs to compute the
-        gradient of the loss w.r.t. the inputs, gradient of the loss w.r.t. Parameter variables are not supported
-        currently. The bprop method must contain the self parameter.
+    Layers in `mindspore.nn` are also the subclass of Cell, such as :class:`mindspore.nn.Conv2d`,
+    :class:`mindspore.nn.ReLU`, :class:`mindspore.nn.BatchNorm`, etc. Cell will be compiled into a calculation
+    graph in GRAPH_MODE (static graph mode) and used as the basic module of neural networks in
+    PYNATIVE_MODE (dynamic graph mode).
 
     Args:
-        auto_prefix (bool): Recursively generate namespaces. It will affect the name of the parameter in the network.
-                            If set to True, the network parameter name will be prefixed, otherwise it will not.
-                            Default: True.
+        auto_prefix (bool): Whether to automatically generate NameSpace for Cell and its subcells. It will affect the
+                      name of the parameter in the network. If set to True, the network parameter
+                      name will be prefixed, otherwise it will not. Default: True.
         flags (dict): Network configuration information, currently it is used for the binding of network and dataset.
                       Users can also customize network attributes by this parameter. Default: None.
 
@@ -673,7 +668,7 @@ class Cell(Cell_):
 
     def extend_repr(self):
         """
-        Sets the extended representation of the Cell.
+        Expand the description of Cell.
 
         To print customized extended information, re-implement this method in your own cells.
         """
@@ -781,7 +776,7 @@ class Cell(Cell_):
 
     def compile(self, *inputs):
         """
-        Compiles cell.
+        Compile Cell as a computation graph, the input must be consistent with the input defined in construct.
 
         Args:
             inputs (tuple): Inputs of the Cell object.
@@ -790,7 +785,9 @@ class Cell(Cell_):
 
     def compile_and_run(self, *inputs):
         """
-        Compiles and runs cell.
+        Compile and run Cell, the input must be consistent with the input defined in construct.
+
+        Note: It is not recommended to call directly.
 
         Args:
             inputs (tuple): Inputs of the Cell object.

@@ -21,7 +21,7 @@ from .metric import Metric, rearrange_inputs
 
 class Fbeta(Metric):
     r"""
-    Calculates the fbeta score.
+    Calculates the Fbeta score.
 
     Fbeta score is a weighted mean of precision and recall.
 
@@ -74,6 +74,10 @@ class Fbeta(Metric):
                 and the shape is :math:`(N, C)`, where :math:`N` is the number of cases and :math:`C`
                 is the number of categories. y contains values of integers. The shape is :math:`(N, C)`
                 if one-hot encoding is used. Shape can also be :math:`(N,)` if category index is used.
+
+        Raises:
+            ValueError: class numbers of last input predicted data and current predicted data not match.
+            ValueError: If the predicted value and true value contain different classes.
         """
         if len(inputs) != 2:
             raise ValueError("For 'Fbeta.update', it needs 2 inputs (predicted value, true value), "

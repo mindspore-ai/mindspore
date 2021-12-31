@@ -15,6 +15,10 @@ mindspore.nn.get_metric_fn
 
     metric对象，metric方法的类实例。
 
-    **样例：**
+    **异常：**
 
+    - **TypeError** - 入参`metric`的类型不是None, dict或set。
+
+    **样例：**
+    >>> from mindspore import nn
     >>> metric = nn.get_metric_fn('precision', eval_type='classification')

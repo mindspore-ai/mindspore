@@ -26,10 +26,7 @@ class Recall(EvaluationBase):
     Calculates recall for classification and multilabel data.
 
     The recall class creates two local variables, :math:`\text{true_positive}` and :math:`\text{false_negative}`,
-    that are used to compute the recall. This value is ultimately returned as the recall, an idempotent operation
-    that simply divides :math:`\text{true_positive}` by the sum of :math:`\text{true_positive}` and
-    :math:`\text{false_negative}`.
-
+    that are used to compute the recall. The calculation formula is:
     .. math::
         \text{recall} = \frac{\text{true_positive}}{\text{true_positive} + \text{false_negative}}
 

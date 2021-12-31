@@ -21,10 +21,6 @@ class TopKCategoricalAccuracy(Metric):
     """
     Calculates the top-k categorical accuracy.
 
-    Note:
-        The method `update` must receive input of the form :math:`(y_{pred}, y)`. If some samples have
-        the same accuracy, the first sample will be chosen.
-
     Args:
         k (int): Specifies the top-k categorical accuracy to compute.
 
@@ -36,6 +32,7 @@ class TopKCategoricalAccuracy(Metric):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
         >>> import numpy as np
         >>> from mindspore import nn, Tensor
         >>>
@@ -76,6 +73,10 @@ class TopKCategoricalAccuracy(Metric):
                 and the shape is :math:`(N, C)`, where :math:`N` is the number of cases and :math:`C`
                 is the number of categories. `y` contains values of integers. The shape is :math:`(N, C)`
                 if one-hot encoding is used. Shape can also be :math:`(N,)` if category index is used.
+
+        Note:
+            The method `update` must receive input of the form :math:`(y_{pred}, y)`. If some samples have
+            the same accuracy, the first sample will be chosen.
         """
         if len(inputs) != 2:
             raise ValueError("For 'TopKCategoricalAccuracy.update', "

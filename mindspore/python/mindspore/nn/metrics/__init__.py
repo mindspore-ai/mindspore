@@ -136,6 +136,9 @@ def get_metrics(metrics):
 
     Returns:
         dict, the key is metric name, the value is class instance of metric method.
+
+    Raises:
+        TypeError: If the type of argument 'metrics' is not None, dict or set.
     """
     if metrics is None:
         return metrics

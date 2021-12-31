@@ -67,7 +67,8 @@ def init_to_value(init):
 
 class Parameter(Tensor_):
     r"""
-    An object holding weights of cells, after initialized `Parameter` is a subtype of `Tensor`.
+    `Parameter` is a `Tensor` subclass, when they are assigned as Cell attributes they are automatically added to
+     the list of its parameters, and will appear e.g. in `cell.get_parameters()` iterator.
 
     Note:
         In auto_parallel mode of  "semi_auto_parallel" and "auto_parallel", if init `Parameter` by
@@ -644,7 +645,7 @@ class Parameter(Tensor_):
 
 class ParameterTuple(tuple):
     """
-    Class for storing tuple of parameters.
+    Inherited from tuple, ParameterTuple  is used to save multiple parameter.
 
     Note:
         It is used to store the parameters of the network into the parameter tuple collection.
@@ -678,11 +679,17 @@ class ParameterTuple(tuple):
         Clone the parameters in ParameterTuple element-wisely to generate a new ParameterTuple.
 
         Args:
-            prefix (str): Namespace of parameter.
-            init (Union[Tensor, str, numbers.Number]): Initialize the shape and dtype of the parameters.
-                The definition of `init` is the same as in `Parameter` API. If `init` is 'same', the
-                parameters in the new parameter tuple are the same as those in the original parameter tuple.
-                Default: 'same'.
+            prefix (str): Namespace of parameter, the prefix string will be added to the names of parameters
+                in parametertuple.
+
+            init (Union[Tensor, str, numbers.Number]): Clone the shape and dtype of Parameters in ParameterTuple and
+                set  data according to `init`. Default: 'same'.
+                If `init` is a `Tensor` , set the new Parameter data to the input Tensor.
+                If `init` is `numbers.Number` , set the new Parameter data to the input number.
+                If `init` is a `str`, data will be seted according to the initialization method of the same name in
+                the `Initializer`.
+                If `init` is 'same', the new Parameter has the same value with the original Parameter.
+
 
         Returns:
             Tuple, the new Parameter tuple.
