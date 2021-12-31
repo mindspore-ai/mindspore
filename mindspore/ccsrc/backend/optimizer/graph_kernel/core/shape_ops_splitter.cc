@@ -13,21 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "backend/optimizer/graph_kernel/shape_ops_splitter.h"
+#include "backend/optimizer/graph_kernel/core/shape_ops_splitter.h"
+
 #include <algorithm>
 #include <vector>
 #include <set>
-#include <string>
 #include <utility>
-#include <queue>
 #include <map>
-#include "frontend/optimizer/irpass.h"
-#include "pipeline/jit/parse/python_adapter.h"
-#include "backend/session/anf_runtime_algorithm.h"
-#include "backend/kernel_compiler/common_utils.h"
-#include "backend/kernel_compiler/akg/akg_kernel_json_decoder.h"
-#include "backend/optimizer/graph_kernel/graph_kernel_helper.h"
-#include "debug/anf_ir_dump.h"
+#include "ir/anf.h"
+#include "utils/anf_utils.h"
 
 namespace mindspore::graphkernel {
 namespace {
@@ -116,8 +110,8 @@ bool ShapeOpsSplitter::Run(const FuncGraphPtr &func_graph) {
   auto todos = TopoSort(func_graph->get_return());
   bool result = false;
   for (const auto &anf_node : todos) {
-    if (AnfAlgo::IsGraphKernel(anf_node)) {
-      auto sub_graph = AnfAlgo::GetCNodeFuncGraphPtr(anf_node);
+    if (AnfUtils::IsGraphKernel(anf_node)) {
+      auto sub_graph = GetCNodeFuncGraph(anf_node);
       bool changed = false;
       do {
         changed = Process(sub_graph);
