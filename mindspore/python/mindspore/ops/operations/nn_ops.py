@@ -828,7 +828,7 @@ class Sigmoid(Primitive):
 
     .. math::
 
-        \text{sigmoid}(x_i) = \frac{1}{1 + \exp(-x_i)},
+        \text{sigmoid}(x_i) = \frac{1}{1 + \exp(-x_i)}
 
     where :math:`x_i` is an element of the input Tensor.
 

@@ -9,7 +9,7 @@ mindspore.ops.Sigmoid
 
     .. math::
 
-        \text{sigmoid}(x_i) = \frac{1}{1 + \exp(-x_i)},
+        \text{sigmoid}(x_i) = \frac{1}{1 + \exp(-x_i)}
 
     其中， :math:`x_i` 是输入Tensor的一个元素。
 
