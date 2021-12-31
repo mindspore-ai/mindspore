@@ -41,7 +41,8 @@
         - **batch_size** (int or function) - 每个批处理数据包含的条数。参数需要是int或可调用对象，该对象接收1个参数，即BatchInfo。
         - **drop_remainder** (bool, optional) - 是否删除最后一个数据条数小于批处理大小的batch（默认值为False）。如果为True，并且最后一个批次中数据行数少于 `batch_size`，则这些数据将被丢弃，不会传递给后续的操作。
         - **num_parallel_workers** (int, optional) - 用于进行batch操作的的线程数（threads），默认值为None。
-        - **per_batch_map** (callable, optional) - 是一个以(list[Tensor], list[Tensor], ..., BatchInfo)作为输入参数的可调用对象。每个list[Tensor]代表给定列上的一批Tensor。入参中list[Tensor]的个数应与 `input_columns` 中传入列名的数量相匹配。该可调用对象的最后一个参数始终是BatchInfo对象。`per_batch_map` 应返回(list[Tensor], list[Tensor], ...)。其出中list[Tensor]的个数应与输入相同。如果输出列数与输入列数不一致，则需要指定 `output_columns`。        - **input_columns** (Union[str, list[str]], optional)：由输入列名组成的列表。如果 `per_batch_map` 不为None，列表中列名的个数应与 `per_batch_map` 中包含的列数匹配（默认为None）。
+        - **per_batch_map** (callable, optional) - 是一个以(list[Tensor], list[Tensor], ..., BatchInfo)作为输入参数的可调用对象，每个list[Tensor]代表给定列上的一批Tensor，入参中list[Tensor]的个数应与 `input_columns` 中传入列名的数量相匹配，该可调用对象的最后一个参数始终是BatchInfo对象。`per_batch_map` 应返回(list[Tensor], list[Tensor], ...)，其输出list[Tensor]的个数应与输入相同，如果输出列数与输入列数不一致，则需要指定 `output_columns`。
+        - **input_columns** (Union[str, list[str]], optional)：由输入列名组成的列表。如果 `per_batch_map` 不为None，列表中列名的个数应与 `per_batch_map` 中包含的列数匹配（默认为None）。
         - **output_columns** (Union[str, list[str]], optional) - 当前操作所有输出列的列名列表。如果len(input_columns) != len(output_columns)，则此参数必须指定。此列表中列名的数量必须与给定操作的输出列数相匹配（默认为None，输出列将与输入列具有相同的名称）。
         - **column_order** (Union[str, list[str]], optional) - 指定整个数据集对象中包含的所有列名的顺序。如果len(input_column) != len(output_column)，则此参数必须指定。 注意：这里的列名不仅仅是在 `input_columns` 和 `output_columns` 中指定的列。
         - **pad_info** (dict, optional) - 用于对给定列进行填充。例如 `pad_info={"col1":([224,224],0)}` ，则将列名为"col1"的列填充到大小为[224,224]的张量，并用0填充缺失的值（默认为None)。
@@ -358,8 +359,8 @@
 
         **样例：**
 
-        >> # dataset是数据集类的实例化对象
-        >> batch_size = dataset.get_batch_size()
+        >>> # dataset是数据集类的实例化对象
+        >>> batch_size = dataset.get_batch_size()
 
     .. py:method:: get_class_indexing()
 
@@ -371,8 +372,8 @@
 
         **样例：**
 
-        >> # dataset是数据集类的实例化对象
-        >> class_indexing = dataset.get_class_indexing()
+        >>> # dataset是数据集类的实例化对象
+        >>> class_indexing = dataset.get_class_indexing()
 
 
     .. py:method:: get_col_names()
@@ -385,8 +386,8 @@
 
         **样例：**
 
-        >> # dataset是数据集类的实例化对象
-        >> col_names = dataset.get_col_names()
+        >>> # dataset是数据集类的实例化对象
+        >>> col_names = dataset.get_col_names()
 
     .. py:method:: get_dataset_size()
 

@@ -50,7 +50,7 @@ mindspore.dataset.GraphData
 
     .. py:method:: get_all_neighbors(node_list, neighbor_type, output_format=<OutputFormat.NORMAL: 0。
 
-        获取 `node_list` 所有节点的邻居，以 `neighbor_type` 类型返回。格式的定义参见以下示例：1表示两个节点之间连接，0表示不连接。
+        获取 `node_list` 所有节点的相邻节点，以 `neighbor_type` 类型返回。格式的定义参见以下示例：1表示两个节点之间连接，0表示不连接。
 
         .. list-table:: 邻接矩阵
             :widths: 20 20 20 20 20
@@ -139,12 +139,12 @@ mindspore.dataset.GraphData
         **参数：**
 
         - **node_list** (Union[list, numpy.ndarray]) - 给定的节点列表。
-        - **neighbor_type** (int) - 指定邻居节点的类型。
+        - **neighbor_type** (int) - 指定相邻节点的类型。
         - **output_format** (OutputFormat, 可选) - 输出存储格式（默认为mindspore.dataset.engine.OutputFormat.NORMAL）取值范围：[OutputFormat.NORMAL, OutputFormat.COO, OutputFormat.CSR]。
 
         **返回：**
 
-        对于普通格式或COO格式，将返回numpy.ndarray类型的数组表示邻居节点。如果指定了CSR格式，将返回两个numpy.ndarray数组，第一个表示偏移表，第二个表示邻居节点。
+        对于普通格式或COO格式，将返回numpy.ndarray类型的数组表示相邻节点。如果指定了CSR格式，将返回两个numpy.ndarray数组，第一个表示偏移表，第二个表示相邻节点。
 
         **样例：**
 
@@ -227,17 +227,17 @@ mindspore.dataset.GraphData
 
     .. py:method:: get_neg_sampled_neighbors(node_list, neg_neighbor_num, neg_neighbor_type)
 
-        获取 `node_list` 列表中节所有点的负样本邻居，以 `neg_neighbor_type` 类型返回。
+        获取 `node_list` 列表中节所有点的负样本相邻节点，以 `neg_neighbor_type` 类型返回。
 
         **参数：**
 
         - **node_list** (Union[list, numpy.ndarray]) - 包含节点的列表。
-        - **neg_neighbor_num** (int) - 采样的邻居数量。
-        - **neg_neighbor_type** (int) - 指定负样本邻居的类型。
+        - **neg_neighbor_num** (int) - 采样的相邻节点数量。
+        - **neg_neighbor_type** (int) - 指定负样本相邻节点的类型。
 
         **返回：**
 
-        numpy.ndarray，包含邻居的数组。
+        numpy.ndarray，包含相邻节点的数组。
 
         **样例：**
 
@@ -292,13 +292,13 @@ mindspore.dataset.GraphData
 
     .. py:method:: get_sampled_neighbors(node_list, neighbor_nums, neighbor_types, strategy=<SamplingStrategy.RANDOM: 0>)
 
-        获取已采样邻居信息。此API支持多跳邻居采样。即将上一次采样结果作为下一跳采样的输入，最多允许6跳。采样结果平铺成列表，格式为[input node, 1-hop sampling result, 2-hop samling result ...]
+        获取已采样相邻节点信息。此API支持多跳相邻节点采样。即将上一次采样结果作为下一跳采样的输入，最多允许6跳。采样结果平铺成列表，格式为[input node, 1-hop sampling result, 2-hop samling result ...]
 
         **参数：**
 
         - **node_list** (Union[list, numpy.ndarray]) - 包含节点的列表。
-        - **neighbor_nums** (Union[list, numpy.ndarray]) - 每跳采样的邻居数。
-        - **neighbor_types** (Union[list, numpy.ndarray]) - 每跳采样的邻居类型。
+        - **neighbor_nums** (Union[list, numpy.ndarray]) - 每跳采样的相邻节点数。
+        - **neighbor_types** (Union[list, numpy.ndarray]) - 每跳采样的相邻节点类型。
         - **strategy** (SamplingStrategy, 可选) - 采样策略（默认为mindspore.dataset.engine.SamplingStrategy.RANDOM）。取值范围：[SamplingStrategy.RANDOM, SamplingStrategy.EDGE_WEIGHT]。
 
         - **SamplingStrategy.RANDOM**：随机抽样，带放回采样。
@@ -306,7 +306,7 @@ mindspore.dataset.GraphData
 
         **返回：**
 
-        numpy.ndarray，包含邻居的数组。
+        numpy.ndarray，包含相邻节点的数组。
 
         *样例：**
 
@@ -340,7 +340,7 @@ mindspore.dataset.GraphData
         - **meta_path** (list[int]) - 每个步长的节点类型。
         - **step_home_param** (float, 可选) - 返回node2vec算法中的超参（默认为1.0）。
         - **step_away_param** (float, 可选) - node2vec算法中的in和out超参（默认为1.0）。
-        - **default_node** (int, 可选) - 如果找不到更多邻居，则为默认节点（默认值为-1，表示不给定节点）。
+        - **default_node** (int, 可选) - 如果找不到更多相邻节点，则为默认节点（默认值为-1，表示不给定节点）。
 
         **返回：**
 

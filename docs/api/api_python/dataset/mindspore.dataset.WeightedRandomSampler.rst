@@ -23,7 +23,7 @@ mindspore.dataset.WeightedRandomSampler
 
     **异常：**
 
-    - **TypeError：** `weights` 元素的类型不是number。
+    - **TypeError：** `weights` 元素的类型不是数字。
     - **TypeError：** `num_samples` 不是整数值。
     - **TypeError：** `replacement` 不是布尔值。
     - **RuntimeError：** `weights` 为空或全为零。
