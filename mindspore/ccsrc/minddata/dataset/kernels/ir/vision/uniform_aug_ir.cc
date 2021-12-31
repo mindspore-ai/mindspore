@@ -41,13 +41,13 @@ std::string UniformAugOperation::Name() const { return kUniformAugOperation; }
 Status UniformAugOperation::ValidateParams() {
   // transforms
   RETURN_IF_NOT_OK(ValidateVectorTransforms("UniformAug", transforms_));
+  // num_ops
+  RETURN_IF_NOT_OK(ValidateIntScalarPositive("UniformAug", "num_ops", num_ops_));
   if (num_ops_ > transforms_.size()) {
     std::string err_msg =
       "UniformAug: num_ops must be less than or equal to transforms size, but got: " + std::to_string(num_ops_);
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-  // num_ops
-  RETURN_IF_NOT_OK(ValidateIntScalarPositive("UniformAug", "num_ops", num_ops_));
   return Status::OK();
 }
 

@@ -46,6 +46,13 @@ std::string RotateOperation::Name() const { return kRotateOperation; }
 
 Status RotateOperation::ValidateParams() {
 #ifndef ENABLE_ANDROID
+  // interpolation
+  if (interpolation_mode_ != InterpolationMode::kLinear &&
+      interpolation_mode_ != InterpolationMode::kNearestNeighbour && interpolation_mode_ != InterpolationMode::kCubic &&
+      interpolation_mode_ != InterpolationMode::kArea) {
+    std::string err_msg = "Rotate: Invalid InterpolationMode, check input value of enum.";
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
   // center
   if (center_.size() != 0 && center_.size() != 2) {
     std::string err_msg =

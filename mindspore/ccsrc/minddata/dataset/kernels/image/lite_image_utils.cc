@@ -44,7 +44,7 @@ static boolean JpegFillInputBuffer(j_decompress_ptr cinfo) {
     // so we catch runtime_error and just return FALSE.
     try {
       ERREXIT(cinfo, JERR_INPUT_EMPTY);
-    } catch (std::runtime_error &e) {
+    } catch (const std::exception &e) {
       return FALSE;
     }
     return FALSE;
@@ -95,7 +95,7 @@ static Status JpegReadScanlines(jpeg_decompress_struct *const cinfo, int max_sca
     int num_lines_read = 0;
     try {
       num_lines_read = jpeg_read_scanlines(cinfo, &scanline_ptr, 1);
-    } catch (std::runtime_error &e) {
+    } catch (const std::exception &e) {
       RETURN_STATUS_UNEXPECTED("Decode: jpeg_read_scanlines error.");
     }
     if (cinfo->out_color_space == JCS_CMYK && num_lines_read > 0) {
@@ -182,7 +182,7 @@ Status JpegCropAndDecode(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
     (void)jpeg_read_header(&cinfo, TRUE);
     RETURN_IF_NOT_OK(JpegSetColorSpace(&cinfo));
     jpeg_calc_output_dimensions(&cinfo);
-  } catch (std::runtime_error &e) {
+  } catch (const std::exception &e) {
     return DestroyDecompressAndReturnError(e.what());
   }
   CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int32_t>::max() - crop_w) > crop_x, "invalid crop width");
@@ -201,7 +201,7 @@ Status JpegCropAndDecode(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
   try {
     (void)jpeg_start_decompress(&cinfo);
     jpeg_crop_scanline(&cinfo, &crop_x_aligned, &crop_w_aligned);
-  } catch (std::runtime_error &e) {
+  } catch (const std::exception &e) {
     return DestroyDecompressAndReturnError(e.what());
   }
   JDIMENSION skipped_scanlines = jpeg_skip_scanlines(&cinfo, crop_y);
@@ -300,7 +300,7 @@ Status Crop(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
 
     *output = output_tensor;
     return Status::OK();
-  } catch (std::runtime_error &e) {
+  } catch (const std::exception &e) {
     RETURN_STATUS_UNEXPECTED("Crop: " + std::string(e.what()));
   }
   return Status::OK();
@@ -316,7 +316,7 @@ Status GetJpegImageInfo(const std::shared_ptr<Tensor> &input, int *img_width, in
     JpegSetSource(&cinfo, input->GetBuffer(), input->SizeInBytes());
     (void)jpeg_read_header(&cinfo, TRUE);
     jpeg_calc_output_dimensions(&cinfo);
-  } catch (std::runtime_error &e) {
+  } catch (const std::exception &e) {
     jpeg_destroy_decompress(&cinfo);
     RETURN_STATUS_UNEXPECTED(e.what());
   }
@@ -359,7 +359,7 @@ Status Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
                                               static_cast<uchar *>(lite_mat_norm.data_ptr_), &output_tensor));
 
     *output = output_tensor;
-  } catch (std::runtime_error &e) {
+  } catch (const std::exception &e) {
     RETURN_STATUS_UNEXPECTED("Normalize: " + std::string(e.what()));
   }
   return Status::OK();
@@ -410,7 +410,7 @@ Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
     CHECK_FAIL_RETURN_UNEXPECTED(ret, "Resize: bilinear resize failed.");
 
     *output = output_tensor;
-  } catch (std::runtime_error &e) {
+  } catch (const std::exception &e) {
     RETURN_STATUS_UNEXPECTED("Resize: " + std::string(e.what()));
   }
   return Status::OK();
@@ -484,7 +484,7 @@ Status RgbToBgr(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
     CHECK_FAIL_RETURN_UNEXPECTED(ret, "RgbToBgr: RGBToBGR failed.");
 
     *output = output_tensor;
-  } catch (std::runtime_error &e) {
+  } catch (const std::exception &e) {
     RETURN_STATUS_UNEXPECTED("RgbToBgr: " + std::string(e.what()));
   }
   return Status::OK();
@@ -518,7 +518,7 @@ Status RgbToGray(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
     CHECK_FAIL_RETURN_UNEXPECTED(ret, "RgbToGray: RGBToGRAY failed.");
 
     *output = output_tensor;
-  } catch (std::runtime_error &e) {
+  } catch (const std::exception &e) {
     RETURN_STATUS_UNEXPECTED("RgbToGray: " + std::string(e.what()));
   }
   return Status::OK();
@@ -572,7 +572,7 @@ Status Pad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output
     CHECK_FAIL_RETURN_UNEXPECTED(ret, "Pad: pad failed.");
 
     *output = output_tensor;
-  } catch (std::runtime_error &e) {
+  } catch (const std::exception &e) {
     RETURN_STATUS_UNEXPECTED("Pad: " + std::string(e.what()));
   }
   return Status::OK();
@@ -634,7 +634,7 @@ static Status RotateAngleWithOutMirror(const std::shared_ptr<Tensor> &input, std
     CHECK_FAIL_RETURN_UNEXPECTED(ret, "Rotate: rotate failed.");
 
     *output = output_tensor;
-  } catch (std::runtime_error &e) {
+  } catch (const std::exception &e) {
     RETURN_STATUS_UNEXPECTED("Rotate: " + std::string(e.what()));
   }
   return Status::OK();
@@ -704,7 +704,7 @@ static Status RotateAngleWithMirror(const std::shared_ptr<Tensor> &input, std::s
     CHECK_FAIL_RETURN_UNEXPECTED(ret, "Rotate: rotate failed.");
 
     *output = output_tensor;
-  } catch (std::runtime_error &e) {
+  } catch (const std::exception &e) {
     RETURN_STATUS_UNEXPECTED("Rotate: " + std::string(e.what()));
   }
   return Status::OK();
@@ -770,7 +770,7 @@ Status Affine(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
 
     *output = output_tensor;
     return Status::OK();
-  } catch (std::runtime_error &e) {
+  } catch (const std::exception &e) {
     RETURN_STATUS_UNEXPECTED("Affine: " + std::string(e.what()));
   }
 }
@@ -805,7 +805,7 @@ Status GaussianBlur(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
     CHECK_FAIL_RETURN_UNEXPECTED(ret, "GaussianBlur: GaussianBlur failed.");
     *output = output_tensor;
     return Status::OK();
-  } catch (std::runtime_error &e) {
+  } catch (const std::exception &e) {
     RETURN_STATUS_UNEXPECTED("GaussianBlur: " + std::string(e.what()));
   }
 }
