@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <functional>
 #include "include/api/status.h"
 #include "include/api/types.h"
 #if defined(ENABLE_ANDROID) || defined(ENABLE_LITE_TENSOR)
@@ -45,6 +46,12 @@ class DETensor : public mindspore::MSTensor::Impl {
   size_t DataSize() const override;
 
   const std::vector<int64_t> &Shape() const override;
+
+#if defined(ENABLE_ANDROID) || defined(ENABLE_LITE_TENSOR)
+  int64_t ElementNum() const override;
+#else
+  int64_t ElementNum() const;
+#endif
 
   std::shared_ptr<const void> Data() const override;
 

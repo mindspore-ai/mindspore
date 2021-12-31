@@ -83,6 +83,14 @@ size_t DETensor::DataSize() const {
 
 const std::vector<int64_t> &DETensor::Shape() const { return shape_; }
 
+int64_t DETensor::ElementNum() const {
+  if (shape_.empty()) {
+    // element number of scalar is 1
+    return 1;
+  }
+  return std::accumulate(shape_.begin(), shape_.end(), 1, std::multiplies<int64_t>());
+}
+
 std::shared_ptr<const void> DETensor::Data() const {
 #ifndef ENABLE_ANDROID
   if (is_device_) {
