@@ -48,7 +48,7 @@ int Relu6Fp16Grad(const float16_t *src0, const float16_t *src1, int length, floa
 #ifdef ENABLE_NEON
   float16x8_t zero_8 = vdupq_n_f16(0);
   float16x8_t six_8 = vdupq_n_f16(6);
-  for (; i <= length - 8; i += 8) {
+  for (; i <= length - C8NUM; i += C8NUM) {
     float16x8_t src1_8 = vld1q_f16(src1 + i);
     float16x8_t src0_8 = vld1q_f16(src0 + i);
     float16x8_t max_8 = vmaxq_f16(src1_8, zero_8);
@@ -84,7 +84,7 @@ int SigmoidFp16Grad(const float16_t *src0, const float16_t *src1, int length, fl
   int i = 0;
 #ifdef ENABLE_NEON
   float16x8_t one_8 = vdupq_n_f16(1);
-  for (; i < length - 8; i += 8) {
+  for (; i < length - C8NUM; i += C8NUM) {
     float16x8_t src0_8 = vld1q_f16(src0 + i);
     float16x8_t src1_8 = vld1q_f16(src1 + i);
     float16x8_t dst_8 = vmulq_f16(src0_8, vmulq_f16(src1_8, vsubq_f16(one_8, src1_8)));
@@ -125,12 +125,12 @@ int EluFp16Grad(const float16_t *src0, const float16_t *src1, int length, float1
   float16x4_t zero_4 = vdup_n_f16(0);
   float16x4_t one_4 = vdup_n_f16(1);
   float16x4_t alpha_4 = vdup_n_f16(alpha);
-  for (; i <= length - 4; i += 4) {
+  for (; i <= length - C4NUM; i += C4NUM) {
     float16x4_t src0_4 = vld1_f16(src0 + i);
     float16x4_t src1_4 = vld1_f16(src1 + i);
     uint16x4_t mask_4 = vcgt_f16(src1_4, zero_4);
     float32x4_t tmp;
-    simd_exp(vcvt_f32_f16(src1_4), (float *)&tmp);
+    simd_exp128(vcvt_f32_f16(src1_4), (float *)&tmp);
     uint16x4_t expm1_4 = vsub_f16(vcvt_f16_f32(tmp), one_4);
     float16x4_t dst_4 = vbsl_f16(mask_4, src0_4, vmul_f16(alpha_4, vmul_f16(expm1_4, src0_4)));
     vst1_f16(dst + i, dst_4);

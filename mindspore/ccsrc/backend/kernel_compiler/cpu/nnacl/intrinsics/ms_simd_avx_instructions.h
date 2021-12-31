@@ -28,6 +28,7 @@
 
 #define MS_FLOAT32X8 __m256
 #define MS_INT32X8 __m256i
+#define MS_MASK256_TYPE MS_FLOAT32X8
 #define MS_LD256_F32 _mm256_loadu_ps
 #define MS_LD256_EPI32(src) _mm256_loadu_si256((__m256i const *)(src))
 #define MS_ADD256_F32 _mm256_add_ps
@@ -52,6 +53,8 @@
 #define MS_CVT256PS_EPI32(src) _mm256_cvttps_epi32(src)
 #define MS_CVT256EPI32_PS(src) _mm256_cvtepi32_ps(src)  // truncate float to int
 #define MS_CMP256_F32(src1, src2, src3) _mm256_cmp_ps(src1, src2, src3)
+#define MS_CMPGT256_F32(src1, src2) _mm256_cmp_ps(src1, src2, 30)
+#define MS_CMPLE256_F32(src1, src2) _mm256_cmp_ps(src1, src2, 18)
 #define MS_CMPGT256_EPI32(src1, src2) _mm256_cmpgt_epi32(src1, src2)
 #define MS_BLEND256_F32(src1, src2, src3) _mm256_blendv_ps(src1, src2, src3)
 #define MS_BLEND256_EPI32(src1, src2, src3) _mm256_blendv_epi8(src1, src2, src3)

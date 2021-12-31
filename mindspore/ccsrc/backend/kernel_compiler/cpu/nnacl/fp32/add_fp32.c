@@ -270,8 +270,7 @@ int ElementAddRelu(const float *in0, const float *in1, float *out, int size) {
     MS_FLOAT32X16 vin0 = MS_LD512_F32(in0 + index);
     MS_FLOAT32X16 vin1 = MS_LD512_F32(in1 + index);
     MS_FLOAT32X16 vout = MS_ADD512_F32(vin0, vin1);
-    __mmask16 mask = MS_CMP512_F32(vout, zeros_16, 30);
-    vout = MS_BLEND512_F32(mask, zeros_16, vout);
+    vout = MS_BLEND512_F32(zeros_16, vout, MS_CMP512_F32(vout, zeros_16, 30));  // 30: gt
     MS_ST512_F32(out + index, vout);
   }
 #endif
@@ -281,7 +280,7 @@ int ElementAddRelu(const float *in0, const float *in1, float *out, int size) {
     MS_FLOAT32X8 vin0 = MS_LD256_F32(in0 + index);
     MS_FLOAT32X8 vin1 = MS_LD256_F32(in1 + index);
     MS_FLOAT32X8 vout = MS_ADD256_F32(vin0, vin1);
-    vout = MS_BLEND256_F32(zeros_8, vout, MS_CMP256_F32(vout, zeros_8, 30));
+    vout = MS_BLEND256_F32(zeros_8, vout, MS_CMP256_F32(vout, zeros_8, 30));  // 30:gt
     MS_ST256_F32(out + index, vout);
   }
 #endif

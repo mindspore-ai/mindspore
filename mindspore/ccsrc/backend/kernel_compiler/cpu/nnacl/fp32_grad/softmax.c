@@ -27,11 +27,11 @@ void ExpFp32Offset(const float *src, float *dst, float sub_bias, int num) {
     MS_FLOAT32X4 input = vld1q_f32(src + i);
     MS_FLOAT32X4 bias = vdupq_n_f32(sub_bias);
     MS_FLOAT32X4 i1 = vsubq_f32(input, bias);
-    simd_exp(i1, dst + i);
+    simd_exp128(i1, dst + i);
   }
 #endif
   for (; i < num; ++i) {
-    single_exp(src[i] - sub_bias, dst + i);
+    simd_exp32(src[i] - sub_bias, dst + i);
   }
 }
 

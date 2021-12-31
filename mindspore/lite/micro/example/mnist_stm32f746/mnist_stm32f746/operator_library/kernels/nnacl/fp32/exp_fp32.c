@@ -42,10 +42,10 @@ void ExpFp32(const float *src, float *dst, int num) {
 #ifdef ENABLE_ARM64
   int count = (num / C4NUM) * C4NUM;
   for (; i < count; i += C4NUM) {
-    simd_exp(vld1q_f32(src + i), dst + i);
+    simd_exp128(vld1q_f32(src + i), dst + i);
   }
 #endif
   for (; i < num; ++i) {
-    single_exp(src[i], dst + i);
+    simd_exp32(src[i], dst + i);
   }
 }

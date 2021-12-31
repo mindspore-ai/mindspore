@@ -28,6 +28,7 @@
 
 #define MS_FLOAT32X4 __m128
 #define MS_INT32X4 __m128i
+#define MS_MASK128_TYPE MS_FLOAT32X4
 #define MS_LDQ_F32 _mm_loadu_ps
 #define MS_LD128_F32 _mm_loadu_ps
 #define MS_LDQ_EPI32(src) _mm_loadu_si128((__m128i const *)(src))
@@ -46,6 +47,7 @@
 #define MS_STQ_EPI32(src1, src2) _mm_storeu_si128((__m128i *)(src1), src2)
 #define MS_ST128_EPI32(src1, src2) _mm_storeu_si128((__m128i *)(src1), src2)
 #define MS_SUBQ_F32 _mm_sub_ps
+#define MS_SUB128_F32 _mm_sub_ps
 #define MS_MAXQ_F32 _mm_max_ps
 #define MS_MAXQ_EPI32 _mm_max_epi32
 #define MS_MAX128_F32 _mm_max_ps
@@ -71,6 +73,11 @@
 #define MS_CMPGTQ_EPI32(src1, src2) _mm_cmpgt_epi32(src1, src2)
 #define MS_BLENDQ_F32(src1, src2, src3) _mm_blendv_ps(src1, src2, src3)
 #define MS_BLENDQ_EPI32(src1, src2, src3) _mm_blendv_epi8(src1, src2, src3)
+#define MS_CMPLE128_F32(src1, src2) _mm_cmple_ps(src1, src2)
+#define MS_CMPGT128_F32(src1, src2) _mm_cmpgt_ps(src1, src2)
+#define MS_CMPGT128_EPI32(src1, src2) _mm_cmpgt_epi32(src1, src2)
+#define MS_BLEND128_F32(src1, src2, src3) _mm_blendv_ps(src1, src2, src3)
+#define MS_BLEND128_EPI32(src1, src2, src3) _mm_blendv_epi8(src1, src2, src3)
 #define MS_CAST_F32_S32(src) _mm_castsi128_ps(src)
 #define MS_DIV128_EPI32(src1, src2) _mm_cvttps_epi32(MS_DIV128_F32(_mm_cvtepi32_ps(src1), _mm_cvtepi32_ps(src2)))
 

@@ -78,13 +78,13 @@ int SigmoidFp16(const float16_t *src, float16_t *dst, int ele_num) {
   int count = (ele_num / C4NUM) * C4NUM;
   for (; i < count; i += C4NUM) {
     float32x4_t tmp;
-    simd_exp(vnegq_f32(vcvt_f32_f16(vld1_f16(src + i))), (float *)&tmp);
+    simd_exp128(vnegq_f32(vcvt_f32_f16(vld1_f16(src + i))), (float *)&tmp);
     vst1_f16(dst + i, vcvt_f16_f32(MS_DIVQ_F32(vdupq_n_f32(1.0f), vaddq_f32(vdupq_n_f32(1.0f), tmp))));
   }
 #endif
   for (; i < ele_num; ++i) {
     float temp;
-    single_exp(-src[i], &temp);
+    simd_exp32(-src[i], &temp);
     dst[i] = (float16_t)1.0f / ((float16_t)1.0f + temp);
   }
   return NNACL_OK;

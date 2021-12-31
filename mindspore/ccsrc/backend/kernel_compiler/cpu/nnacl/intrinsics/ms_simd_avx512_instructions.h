@@ -28,6 +28,7 @@
 
 #define MS_FLOAT32X16 __m512
 #define MS_INT32X16 __m512i
+#define MS_MASK512_TYPE __mmask16
 #define MS_LD512_F32 _mm512_loadu_ps
 #define MS_LD512_EPI32(src) _mm512_loadu_si512((__m512i const *)(src))
 #define MS_ADD512_F32 _mm512_add_ps
@@ -52,9 +53,11 @@
 #define MS_CVT512PS_EPI32(src) _mm512_cvttps_epi32(src)
 #define MS_CVT512EPI32_PS(src) _mm512_cvtepi32_ps(src)  // truncate float to int
 #define MS_CMP512_F32(src1, src2, src3) _mm512_cmp_ps_mask(src1, src2, src3)
+#define MS_CMPGT512_F32(src1, src2) _mm512_cmp_ps_mask(src1, src2, 30)
+#define MS_CMPLE512_F32(src1, src2) _mm512_cmp_ps_mask(src1, src2, 18)
 #define MS_CMPGT512_EPI32(src1, src2) _mm512_cmpgt_epi32(src1, src2)
-#define MS_BLEND512_F32(src1, src2, src3) _mm512_mask_blend_ps(src1, src2, src3)
-#define MS_BLEND512_EPI32(src1, src2, src3) _mm512_mask_blend_epi32(src1, src2, src3)
+#define MS_BLEND512_F32(src1, src2, mask) _mm512_mask_blend_ps(mask, src1, src2)
+#define MS_BLEND512_EPI32(src1, src2, mask) _mm512_mask_blend_epi32(mask, src1, src2)
 #define MS_CAST512_F32_S32(src) _mm512_castsi512_ps(src)
 
 #define MS_DIV512_EPI32(src1, src2) \
@@ -89,4 +92,5 @@ static inline MS_FLOAT32X16 MS_TANHX16_F32(MS_FLOAT32X16 src) {
     data2);
   return MS_MIN512_F32(MS_MAX512_F32(MS_DIV512_F32(a, b), neg), pos);
 }
+
 #endif
