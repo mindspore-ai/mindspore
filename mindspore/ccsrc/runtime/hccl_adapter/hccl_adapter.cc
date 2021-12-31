@@ -40,6 +40,17 @@ static constexpr const char *kHcclAlgoOption = "HCCL_algorithm";
     return HcclResult::HCCL_E_RESERVED;                                              \
   }
 
+#define CHECK_EXCUTION_MODE()                                                                     \
+  do {                                                                                            \
+    auto hccl_mode = GetCurrentHcclMode();                                                        \
+    if (hccl_mode != hccl_mode_) {                                                                \
+      MS_LOG(EXCEPTION) << "HCCL is initialized in " << GetHcclModeString(hccl_mode_)             \
+                        << " but current execution mode is " << GetHcclModeString(hccl_mode)      \
+                        << ". Please set the execution mode before HCCL init(), and then do not " \
+                           "change it in the subsequent script";                                  \
+    }                                                                                             \
+  } while (0)
+
 static std::map<std::string, std::string> GenHcclOptions(uint32_t device_id, std::string_view rank_id,
                                                          std::string_view rank_file) {
   auto env_deploy_mode = mindspore::common::GetEnv(kHcclDeployModeEnv);
@@ -134,6 +145,28 @@ void HcclAdapter::FinalizePlugin() {
   plugin_handle_ = nullptr;
 }
 
+HcclMode HcclAdapter::GetCurrentHcclMode() const {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  bool is_graph_mode = context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode;
+  bool is_task_sink = context->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
+  if (!is_graph_mode) {
+    return HcclMode::kPynative;
+  } else if (is_task_sink) {
+    return HcclMode::kGraph;
+  } else {
+    return HcclMode::kKernelByKernel;
+  }
+}
+
+std::string HcclAdapter::GetHcclModeString(HcclMode hccl_mode) {
+  static std::map<HcclMode, std::string> kHcclModeString = {
+    {HcclMode::kGraph, "GRAPH_MODE"},
+    {HcclMode::kPynative, "PYNATIVE_MODE"},
+    {HcclMode::kKernelByKernel, "GRAPH_MODE disable TASK_SINK"}};
+  return kHcclModeString.at(hccl_mode);
+}
+
 bool HcclAdapter::InitHccl() {
   MS_LOG(INFO) << "Start init hccl adapter.";
   std::lock_guard<std::mutex> lock(init_mutex_);
@@ -143,21 +176,23 @@ bool HcclAdapter::InitHccl() {
   }
   InitPlugin();
   init_flag_ = true;
+  hccl_mode_ = HcclMode::kKernelByKernel;
   MS_LOG(INFO) << "Init hccl adapter success.";
   return true;
 }
 
 bool HcclAdapter::InitHccl(uint32_t device_id, std::string_view rank_id, std::string_view rank_file,
-                           bool is_graph_mode) {
-  MS_LOG(INFO) << "Start init hccl adapter for " << (is_graph_mode ? "graph mode." : "pynative mode.");
+                           HcclMode hccl_mode) {
+  MS_LOG(INFO) << "Start init hccl adapter for " << GetHcclModeString(hccl_mode);
   std::lock_guard<std::mutex> lock(init_mutex_);
   if (init_flag_) {
     MS_LOG(INFO) << "Hccl has been inited, skip.";
     return true;
   }
-  is_graph_mode_ = is_graph_mode;
+
+  hccl_mode_ = hccl_mode;
   InitPlugin();
-  if (is_graph_mode_) {
+  if (hccl_mode_ == HcclMode::kGraph) {
     bool ret = InitKernelInfoStore(device_id, rank_id, rank_file);
     if (!ret) {
       return false;
@@ -181,13 +216,13 @@ bool HcclAdapter::InitHccl(uint32_t device_id, std::string_view rank_id, std::st
 
 bool HcclAdapter::FinalizeHccl() {
   std::lock_guard<std::mutex> lock(init_mutex_);
-  MS_LOG(INFO) << "Start destroy hccl adapter for " << (is_graph_mode_ ? "graph mode." : "pynative mode.");
+  MS_LOG(INFO) << "Start destroy hccl adapter for " << GetHcclModeString(hccl_mode_);
   if (!init_flag_) {
     MS_LOG(INFO) << "Hccl has never been inited, skip.";
     return true;
   }
 
-  if (is_graph_mode_) {
+  if (hccl_mode_ == HcclMode::kGraph) {
     (void)FinalizeHcclExec();
     (void)FinalizeKernelInfoStore();
   } else {
@@ -272,12 +307,14 @@ std::string HcclAdapter::GetHcclType(const AnfNodePtr &node) {
 
 HcclResult HcclAdapter::HcclBroadcast(void *buf, uint64_t count, HcclDataType dataType, uint32_t root,
                                       aclrtStream stream) const {
+  CHECK_EXCUTION_MODE();
   CHECK_SYMBOL_NULL(launch_hccl_broadcast_);
   return launch_hccl_broadcast_(buf, count, dataType, root, hccl_comm_, stream);
 }
 
 HcclResult HcclAdapter::HcclAllReduce(void *send_buf, void *recv_buf, uint64_t count, HcclDataType dataType,
                                       HcclReduceOp op, aclrtStream stream, const std::string &group) const {
+  CHECK_EXCUTION_MODE();
   CHECK_SYMBOL_NULL(launch_hccl_all_reduce_);
   auto hccl_comm = GetHcomm(group);
   MS_EXCEPTION_IF_NULL(hccl_comm);
@@ -286,6 +323,7 @@ HcclResult HcclAdapter::HcclAllReduce(void *send_buf, void *recv_buf, uint64_t c
 
 HcclResult HcclAdapter::HcclReduceScatter(void *send_buf, void *recv_buf, uint64_t count, HcclDataType dataType,
                                           HcclReduceOp op, aclrtStream stream, const std::string &group) const {
+  CHECK_EXCUTION_MODE();
   CHECK_SYMBOL_NULL(launch_hccl_reduce_scatter_);
   auto hccl_comm = GetHcomm(group);
   MS_EXCEPTION_IF_NULL(hccl_comm);
@@ -294,6 +332,7 @@ HcclResult HcclAdapter::HcclReduceScatter(void *send_buf, void *recv_buf, uint64
 
 HcclResult HcclAdapter::HcclAllGather(void *send_buf, void *recv_buf, uint64_t count, HcclDataType dataType,
                                       aclrtStream stream, const std::string &group) const {
+  CHECK_EXCUTION_MODE();
   CHECK_SYMBOL_NULL(launch_hccl_all_gather_);
   auto hccl_comm = GetHcomm(group);
   MS_EXCEPTION_IF_NULL(hccl_comm);
@@ -302,6 +341,7 @@ HcclResult HcclAdapter::HcclAllGather(void *send_buf, void *recv_buf, uint64_t c
 
 HcclResult HcclAdapter::HcclSend(void *send_buf, uint64_t count, HcclDataType dataType, uint32_t destRank,
                                  aclrtStream stream, const std::string &group) const {
+  CHECK_EXCUTION_MODE();
   CHECK_SYMBOL_NULL(launch_hccl_send_);
   auto hccl_comm = GetHcomm(group);
   MS_EXCEPTION_IF_NULL(hccl_comm);
@@ -310,6 +350,7 @@ HcclResult HcclAdapter::HcclSend(void *send_buf, uint64_t count, HcclDataType da
 
 HcclResult HcclAdapter::HcclRecv(void *recv_buf, uint64_t count, HcclDataType dataType, uint32_t srcRank,
                                  aclrtStream stream, const std::string &group) const {
+  CHECK_EXCUTION_MODE();
   CHECK_SYMBOL_NULL(launch_hccl_recv_);
   auto hccl_comm = GetHcomm(group);
   MS_EXCEPTION_IF_NULL(hccl_comm);
@@ -432,6 +473,7 @@ bool HcclAdapter::FinalizeHcclComm() {
 }
 
 HcclResult HcclAdapter::HcclCreateGroup(const std::string &group, uint32_t rank_num, uint32_t *rank_ids) const {
+  CHECK_EXCUTION_MODE();
   CHECK_SYMBOL_NULL(hccl_create_group_);
   return hccl_create_group_(group.c_str(), rank_num, rank_ids);
 }
@@ -442,21 +484,25 @@ HcclResult HcclAdapter::HcclDestroyGroup(const std::string &group) const {
 }
 
 HcclResult HcclAdapter::HcclGetRankId(uint32_t *rank_id) const {
+  CHECK_EXCUTION_MODE();
   CHECK_SYMBOL_NULL(single_op_hccl_get_rank_id_);
   return single_op_hccl_get_rank_id_(hccl_comm_, rank_id);
 }
 
 HcclResult HcclAdapter::HcclGetRankSize(uint32_t *rank_size) const {
+  CHECK_EXCUTION_MODE();
   CHECK_SYMBOL_NULL(single_op_hccl_get_rank_size_);
   return single_op_hccl_get_rank_size_(hccl_comm_, rank_size);
 }
 
 HcclResult HcclAdapter::HcclGetRankId(const std::string &group, uint32_t *rank_id) const {
+  CHECK_EXCUTION_MODE();
   CHECK_SYMBOL_NULL(hccl_get_rank_id_);
   return hccl_get_rank_id_(group.c_str(), rank_id);
 }
 
 HcclResult HcclAdapter::HcclGetRankSize(const std::string &group, uint32_t *rank_size) const {
+  CHECK_EXCUTION_MODE();
   CHECK_SYMBOL_NULL(hccl_get_rank_size_);
   return hccl_get_rank_size_(group.c_str(), rank_size);
 }
@@ -490,11 +536,13 @@ bool HcclAdapter::FinalizeHcclExec() {
 }
 
 HcclResult HcclAdapter::HcclExecEnqueueOp(const ::HcomOperation &op_info, const HExecCallBack &callback) const {
+  CHECK_EXCUTION_MODE();
   CHECK_SYMBOL_NULL(hccl_exec_enqueue_op_);
   return hccl_exec_enqueue_op_(op_info, callback);
 }
 
 HcclResult HcclAdapter::HcclExecAllToAllv(const ::HcomAllToAllVParams &params, const HExecCallBack &callback) const {
+  CHECK_EXCUTION_MODE();
   CHECK_SYMBOL_NULL(hccl_exec_enqueue_all_to_all_v_);
   return hccl_exec_enqueue_all_to_all_v_(params, callback);
 }

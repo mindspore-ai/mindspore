@@ -23,7 +23,7 @@ HcclAdapter &HcclAdapter::GetInstance() {
   return instance;
 }
 bool HcclAdapter::InitHccl() { return true; }
-bool HcclAdapter::InitHccl(uint32_t, std::string_view, std::string_view, bool) { return true; }
+bool HcclAdapter::InitHccl(uint32_t, std::string_view, std::string_view, HcclMode) { return true; }
 bool HcclAdapter::FinalizeHccl() { return true; }
 HcclResult HcclAdapter::HcclCreateGroup(const std::string &, uint32_t, uint32_t *) const { return HCCL_SUCCESS; }
 HcclResult HcclAdapter::HcclDestroyGroup(const std::string &) const { return HCCL_SUCCESS; }

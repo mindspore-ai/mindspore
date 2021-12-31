@@ -48,8 +48,8 @@ DeviceContext *DeviceContextManager::GetOrCreateDeviceContext(const DeviceContex
     MS_EXCEPTION_IF_NULL(device_context);
     device_contexts_[device_context_key_str] = device_context;
   } else {
-    MS_LOG(EXCEPTION) << "There is no device context creator for " << device_context_key.device_name_
-                      << " with device id " << device_context_key.device_id_;
+    MS_LOG(EXCEPTION) << "Create device context failed, please make sure target device:"
+                      << device_context_key.device_name_ << " is available.";
   }
   return device_context.get();
 }
