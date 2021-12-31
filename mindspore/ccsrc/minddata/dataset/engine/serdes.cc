@@ -92,9 +92,11 @@ Status Serdes::Deserialize(const std::string &json_filepath, std::shared_ptr<Dat
   try {
     json_in >> json_obj;
   } catch (const std::exception &e) {
+    json_in.close();
     return Status(StatusCode::kMDSyntaxError,
                   "Invalid file, failed to parse json file: " + json_filepath + ", error message: " + e.what());
   }
+  json_in.close();
   RETURN_IF_NOT_OK(ConstructPipeline(json_obj, ds));
   return Status::OK();
 }

@@ -746,6 +746,7 @@ void DeviceQueueOp::DetectPerBatchTime(const uint64_t *start_time, uint64_t *end
                        " performance(with creating dataset iterator) and optimize it.";
   }
 }
+#endif
 
 void DeviceQueueOp::PrintBeginInfoWhenFirstBatch(const bool &first_push_flag) {
   if (first_push_flag != true) {
@@ -763,6 +764,5 @@ void DeviceQueueOp::PrintEndInfoWhenFirstBatch(bool *first_push_flag) {
     *first_push_flag = true;
   }
 }
-#endif
 }  // namespace dataset
 }  // namespace mindspore
