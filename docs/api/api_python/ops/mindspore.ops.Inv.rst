@@ -18,7 +18,6 @@ mindspore.ops.Inv
 
     **异常：**
 
-    - **TypeError** - `x` 不是Tensor。
     - **TypeError** - `x` 的数据类型不是float16、float32或int32。
 
     **支持平台：**

@@ -1,7 +1,7 @@
 mindspore.ops.Gamma
 ===================
 
-.. py:class:: mindspore.ops.Gamma(*args, **kwargs)
+.. py:class:: mindspore.ops.Gamma(seed=0, seed2=0)
 
     根据概率密度函数分布生成随机正浮点数x。
 
