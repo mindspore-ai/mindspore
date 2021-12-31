@@ -23,7 +23,7 @@ mindspore.ops.Elu
 
     **输入：**
 
-    **x** (Tensor) - 用于计算Elu的任意维度的Tensor，数据类型为float16或float32。
+    **input_x** (Tensor) - 用于计算Elu的任意维度的Tensor，数据类型为float16或float32。
 
     **输出：**
 

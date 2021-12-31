@@ -22,7 +22,6 @@ mindspore.ops.Gather
 
     - **TypeError** - `axis` 不是int。
     - **TypeError** - `input_indices` 不是int类型的Tensor。
-    - **TypeError** - `input_params` 或 `input_indices` 不是Tensor。
 
     **支持平台：**
 
