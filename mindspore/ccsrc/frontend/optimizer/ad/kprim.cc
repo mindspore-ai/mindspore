@@ -469,6 +469,13 @@ static void AppendMonadOutput(const FuncGraphPtr &bprop_fg, const AnfNodePtr &mo
   auto output_cnode = output->cast<CNodePtr>();
   if (output_cnode != nullptr) {
     // If output_cnode has the form like (make_tuple, x, y).
+    while (IsPrimitiveCNode(output_cnode, prim::kPrimDepend)) {
+      auto real_input = output_cnode->input(kRealInputIndexInDepend);
+      MS_EXCEPTION_IF_NULL(real_input);
+      output_cnode = real_input->cast<CNodePtr>();
+    }
+  }
+  if (output_cnode != nullptr) {
     output_cnode->add_input(monad);
     return;
   }
