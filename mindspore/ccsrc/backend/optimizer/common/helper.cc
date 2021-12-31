@@ -603,8 +603,6 @@ void ConstInputToAttr(const CNodePtr &cnode, const mindspore::HashSet<size_t> &i
   auto inputs = cnode->inputs();
   new_inputs.push_back(inputs[0]);
   bool need_update = false;
-  std::vector<size_t> input_to_attr_idx;
-  std::vector<string> input_to_attr_name;
   for (size_t i = 0; i < inputs.size() - 1; ++i) {
     auto input_node = inputs[i + 1];
     if (AnfAlgo::CheckPrimitiveType(input_node, prim::kPrimDepend)) {
@@ -628,22 +626,11 @@ void ConstInputToAttr(const CNodePtr &cnode, const mindspore::HashSet<size_t> &i
       }
       primitive->set_attr(input_names_vec[i], value);
       need_update = true;
-      input_to_attr_idx.push_back(i);
-      input_to_attr_name.push_back(input_names_vec[i]);
     } else {
       new_inputs.push_back(inputs[i + 1]);
     }
   }
   if (need_update) {
-    auto context = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(context);
-    bool exec_on_ascend = (primitive->HasAttr(kAttrPrimitiveTarget) &&
-                           GetValue<string>(primitive->GetAttr(kAttrPrimitiveTarget)) == "Ascend") ||
-                          context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice;
-    if (exec_on_ascend) {
-      primitive->set_attr(kAttrInputToAttrIdx, MakeValue(input_to_attr_idx));
-      primitive->set_attr(kAttrInputToAttrName, MakeValue(input_to_attr_name));
-    }
     // Update cnode's inputs
     new_inputs[0] = NewValueNode(primitive);
     cnode->set_inputs(new_inputs);
