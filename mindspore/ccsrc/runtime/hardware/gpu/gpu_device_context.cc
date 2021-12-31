@@ -17,7 +17,6 @@
 #include "runtime/hardware/gpu/gpu_device_context.h"
 #include <dlfcn.h>
 #include <utility>
-#include "pipeline/pynative/pynative_profiling.h"
 #include "runtime/device/gpu/kernel_info_setter.h"
 #include "runtime/device/gpu/gpu_kernel_build.h"
 #include "runtime/device/gpu/gpu_device_address.h"
@@ -492,10 +491,8 @@ bool GPUDeviceContext::LaunchKernelWithProfiling(const CNodePtr &kernel, const s
   profiler_inst->OpDataProducerEnd();
 
   auto op_launch_start_end_time = profiler_inst->GetSingleOpLaunchTime();
-  std::string op_name = kernel->fullname_with_scope();
-  PynativeProfiler::SetDeviceOpNameAndLaunchTimePoint(std::make_pair(op_name, op_launch_start_end_time));
-  PynativeProfiler::SetDeviceOpNameAndLaunchCostTime(
-    std::make_pair(op_name, op_launch_start_end_time.second - op_launch_start_end_time.first));
+  MS_LOG(DEBUG) << "Launch kernel:" << kernel->fullname_with_scope() << " cost:"
+                << (op_launch_start_end_time.second - op_launch_start_end_time.first) / kBasicTimeTransferUnit;
 
   if (profiler_inst->GetSyncEnableFlag()) {
     CHECK_RET_WITH_RETURN_ERROR(SyncStream(), "Profiler SyncStream failed.");
