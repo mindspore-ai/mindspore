@@ -147,18 +147,19 @@ FuncGraphPtr MultitypeFuncGraph::GenerateFromTypes(const TypePtrList &types) {
     return stub;
   }
   std::ostringstream oss;
-  oss << "There are " << fn_cache_py_.size() << " prototypes for overload function `" << name_
-      << "`, corresponding location info:\n";
-  int64_t idx = 0;
+  oss << "The supported types of overload function `" << name_ << "` is: ";
+  size_t idx = 0;
   for (auto &item : fn_cache_py_) {
-    FuncGraphPtr func_graph = parse::ParsePythonCode(item.second);
-    if (func_graph == nullptr) {
-      MS_LOG(WARNING) << "Fail to parse Python code for function `" << name_ << "`.";
-      continue;
+    oss << item.first;
+    if (idx != fn_cache_py_.size() - 1) {
+      oss << ", ";
+    } else {
+      oss << ".";
     }
-    oss << ++idx << ". " << item.first << "\n  " << trace::GetDebugInfo(func_graph->debug_info()) << "\n";
+    idx++;
   }
-  MS_LOG(EXCEPTION) << "The '" << name_ << "' operation does not support the type " << buffer.str() << "\n"
+  oss << "\n";
+  MS_LOG(EXCEPTION) << "The '" << name_ << "' operation does not support the type " << buffer.str() << ".\n"
                     << oss.str();
 }
 
