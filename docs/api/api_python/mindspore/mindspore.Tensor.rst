@@ -70,12 +70,12 @@ mindspore.Tensor
 
         **参数：**
 
-        - **axis** (Union[None, int, tuple(int)) - 缩减的维度。 当 `axis` 为None或者空元组的时候，缩减所有维度。当 `axis` 为int或tuple(int)时，记Tensor的维度为dim，则其取值范围为[-dim, dim)。默认值：()。
-        - **keep_dims** (bool) - 是否在输出Tensor中保留缩减的维度。 默认值： False。
+        - **axis** (Union[None, int, tuple(int)) - 计算all的维度。 当 `axis` 为None或者空元组的时候，计算所有维度。当 `axis` 为int或tuple(int)时，记Tensor的维度为dim，则其取值范围为[-dim, dim)。默认值：()。
+        - **keep_dims** (bool) - 计算结果是否保留维度。 默认值： False。
 
         **返回：**
 
-        Tensor。如果在指定轴方向上所有数组元素都为True，则其值为True，否则其值为False。如果轴为None或空元组，则缩减所有维度。
+        Tensor。如果在指定轴方向上所有数组元素都为True，则其值为True，否则其值为False。如果轴为None或空元组，则默认降维。
 
         **支持平台：**
 
@@ -95,12 +95,12 @@ mindspore.Tensor
 
         **参数：**
 
-        - **axis** (Union[None, int, tuple(int)) - 缩减的维度。当 `axis` 为None或空元组时，缩减所有维度。当 `axis` 为int或tuple(int)时，记Tensor的维度为dim，则其取值范围为[-dim, dim)。默认值：()。
-        - **keep_dims** (bool) - 是否在输出Tensor中保留缩减的维度。默认值：False。
+        - **axis** (Union[None, int, tuple(int)) - 计算any的维度。当 `axis` 为None或空元组时，计算所有维度。当 `axis` 为int或tuple(int)时，记Tensor的维度为dim，则其取值范围为[-dim, dim)。默认值：()。
+        - **keep_dims** (bool) - 计算结果是否保留维度。默认值：False。
 
         **返回：**
 
-        Tensor。如果在指定轴方向上所有Tensor元素都为True，则其值为True，否则其值为False。如果轴为None或空元组，则缩减所有维度。
+        Tensor。如果在指定轴方向上所有Tensor元素都为True，则其值为True，否则其值为False。如果轴为None或空元组，则默认降维。
 
         **支持平台：**
 
@@ -660,12 +660,12 @@ mindspore.Tensor
 
     .. py:method:: mean(axis=(), keep_dims=False)
 
-        计算指定维度上所有元素的均值，缩减Tensor的维度。
+        计算指定维度上所有元素的均值，并降维。
 
         **参数：**
 
-        - **axis** (Union[None, int, tuple(int), list(int)]) - 缩减的维度。当 `axis` 为None或空元组时，缩减所有维度。当 `axis` 为int、tuple(int)或list(int)时，记Tensor的维度为dim，则其取值范围为[-dim, dim)。默认值：()。
-        - **keep_dims** (bool) - 是否在输出Tensor中保留缩减的维度。。默认值：False。
+        - **axis** (Union[None, int, tuple(int), list(int)]) - 计算mean的维度。当 `axis` 为None或空元组时，计算所有维度。当 `axis` 为int、tuple(int)或list(int)时，记Tensor的维度为dim，则其取值范围为[-dim, dim)。默认值：()。
+        - **keep_dims** (bool) - 计算结果是否保留维度。默认值：False。
 
         **返回：**
 
