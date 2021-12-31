@@ -256,9 +256,12 @@ int LiteModel::SubGraphVerify() const {
       MS_LOG(ERROR) << "Index of graph->tensor_indices_ is beyond tensor_size.";
       return RET_ERROR;
     }
-    if (std::any_of(graph->node_indices_.begin(), graph->node_indices_.end(),
-                    [&node_size](const uint32_t &idx) { return idx >= node_size; })) {
-      MS_LOG(ERROR) << "Index of graph->node_indices_ is beyond node_size.";
+    if (std::any_of(graph->node_indices_.begin(), graph->node_indices_.end(), [&](const uint32_t &idx) {
+          bool repeated = std::count_if(graph->node_indices_.begin(), graph->node_indices_.end(),
+                                        [&idx](const uint32_t &index) { return index == idx; }) != 1;
+          return repeated || idx >= node_size;
+        })) {
+      MS_LOG(ERROR) << "The subgraph contains repeated nodes or the node index is beyond node_size.";
       return RET_ERROR;
     }
     // Check the graph valid

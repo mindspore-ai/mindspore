@@ -107,6 +107,7 @@ bool ConvBiasaddFusion::CheckCanFusion(const FuncGraphPtr &func_graph, const Anf
   auto add_act_ptr = prim_add->GetAttr(ops::kActivationType);
   auto add_act = add_act_ptr == nullptr ? mindspore::NO_ACTIVATION
                                         : static_cast<mindspore::ActivationType>(GetValue<int64_t>(add_act_ptr));
+  MS_CHECK_TRUE_RET(add_cnode->size() == kInputSizeThree && add_cnode->input(1) != nullptr, false);
   auto conv_cnode = add_cnode->input(1)->cast<CNodePtr>();
   if (conv_cnode == nullptr || IsMarkedTrainOp(conv_cnode)) {
     return false;
