@@ -118,7 +118,7 @@ bool InitExecDatasetGe(const std::string &queue_name, int64_t size, int64_t batc
   });
 
   ConfigManager::GetInstance().set_dataset_mode(DatasetMode::DS_SINK_MODE);
-  ConfigManager::GetInstance().set_iter_num(size);
+  ConfigManager::GetInstance().set_iter_num(queue_name, size);
   ConfigManager::GetInstance().set_dataset_phase(phase);
 
   DatasetGraphParam param(queue_name, size, batch_size, ge_types, shapes, input_indexes);

@@ -55,6 +55,15 @@ FuncGraph::FuncGraph(GraphDebugInfoPtr &&debug_info)
       switch_layer_input_(std::make_shared<bool>(false)),
       stage_(-1) {}
 
+void FuncGraph::DoBreakLoop() {
+  if (attached_mng_cnt() > 0) {
+    MS_LOG(ERROR) << "Cur Graph is holding by FuncGraphManager, can't DoBreakLoop now";
+    return;
+  }
+  ClearOrderList();
+  return_ = nullptr;
+}
+
 abstract::AbstractBasePtr FuncGraph::ToAbstract() {
   auto temp_context = abstract::AnalysisContext::DummyContext();
   return std::make_shared<abstract::FuncGraphAbstractClosure>(shared_from_base<FuncGraph>(), temp_context);
@@ -787,6 +796,4 @@ api::FuncGraphPtr api::FuncGraph::GetFuncGraphFromAnfNode(const AnfNodePtr &inpu
   auto fg = GetValueNode<mindspore::FuncGraphPtr>(input);
   return fg;
 }
-
-const PrimitivePtr FuncGraphTransform::func_graph_prim_ = std::make_shared<Primitive>("FuncGraph");
 }  // namespace mindspore

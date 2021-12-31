@@ -29,7 +29,7 @@ from .. import context
 from .._c_expression import init_pipeline, update_func_graph_hyper_params, Cell_, FuncGraph, MixedPrecisionType
 from .._checkparam import Validator
 from ..common import dtype as mstype
-from ..common.api import _cell_graph_executor, _pynative_executor, _check_all_tensor
+from ..common.api import _cell_graph_executor, _pynative_executor, _check_all_tensor, cells_compile_cache
 from ..common.parameter import Parameter, ParameterTuple
 from ..common.tensor import Tensor, CSRTensor
 from ..ops.operations import HookBackward, Cast
@@ -111,6 +111,7 @@ class Cell(Cell_):
         self._create_time = int(time.time() * 1e9)
         self.arguments_key = ""
         self.compile_cache = set()
+        cells_compile_cache[id(self)] = self.compile_cache
         self.parameter_broadcast_done = False
         self._id = 1
         self.exist_names = set("")
@@ -320,6 +321,8 @@ class Cell(Cell_):
     def __del__(self):
         if context.get_context is not None and context._get_mode() == context.PYNATIVE_MODE:
             _pynative_executor.del_cell(str(id(self)))
+
+        cells_compile_cache.pop(id(self))
         if self.compile_cache:
             _cell_graph_executor.del_net_res(self.compile_cache)
 

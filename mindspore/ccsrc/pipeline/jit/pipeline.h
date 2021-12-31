@@ -176,6 +176,7 @@ void InitPipeline();
 void FinalizeBackend();
 void ClearResAtexit();
 void ReleaseGeTsd();
+void MemoryRecycle();
 
 void ExportGraph(const std::string &file_name, const std::string &, const std::string &phase);
 FuncGraphPtr LoadMindIR(const std::string &file_name, char *dec_key, const size_t key_len, const std::string &dec_mode);
