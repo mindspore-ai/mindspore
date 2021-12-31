@@ -75,6 +75,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/tf_record_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/usps_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/voc_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/wider_face_node.h"
 #endif
 
 namespace mindspore {
@@ -623,6 +624,17 @@ PYBIND_REGISTER(VOCNode, 2, ([](const py::module *m) {
                                                   toSamplerObj(sampler), nullptr, extra_metadata);
                       THROW_IF_ERROR(voc->ValidateParams());
                       return voc;
+                    }));
+                }));
+
+PYBIND_REGISTER(WIDERFaceNode, 2, ([](const py::module *m) {
+                  (void)py::class_<WIDERFaceNode, DatasetNode, std::shared_ptr<WIDERFaceNode>>(
+                    *m, "WIDERFaceNode", "to create a WIDERFaceNode")
+                    .def(py::init([](std::string dataset_dir, std::string usage, bool decode, py::handle sampler) {
+                      auto wider_face =
+                        std::make_shared<WIDERFaceNode>(dataset_dir, usage, decode, toSamplerObj(sampler), nullptr);
+                      THROW_IF_ERROR(wider_face->ValidateParams());
+                      return wider_face;
                     }));
                 }));
 

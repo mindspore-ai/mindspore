@@ -4925,6 +4925,113 @@ inline std::shared_ptr<VOCDataset> MS_API VOC(const std::string &dataset_dir, co
                                       MapStringToChar(class_indexing), decode, sampler, cache, extra_metadata);
 }
 
+/// \class WIDERFaceDataset
+/// \brief A source dataset for reading and parsing WIDERFace dataset.
+class MS_API WIDERFaceDataset : public Dataset {
+ public:
+  /// \brief Constructor of WIDERFaceDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] usage The type of data to be read, can be "train", "test", "valid" or "all". "all" will read samples
+  ///     from "train" and "valid".
+  /// \param[in] decode Decode the images after reading.
+  /// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  WIDERFaceDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, bool decode,
+                   const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Constructor of WIDERFaceDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] usage The type of data to be read, can be "train", "test", "valid" or "all". "all" will read samples
+  ///     from "train" and "valid".
+  /// \param[in] decode Decode the images after reading.
+  /// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  WIDERFaceDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, bool decode,
+                   const Sampler *sampler, const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Constructor of WIDERFaceDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] usage The type of data to be read, can be "train", "test", "valid" or "all". "all" will read samples
+  ///     from "train" and "valid".
+  /// \param[in] decode Decode the images after reading.
+  /// \param[in] sampler Sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  WIDERFaceDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, bool decode,
+                   const std::reference_wrapper<Sampler> sampler, const std::shared_ptr<DatasetCache> &cache);
+
+  /// Destructor of WIDERFaceDataset.
+  ~WIDERFaceDataset() = default;
+};
+
+/// \brief Function to create a WIDERFace Dataset.
+/// \note When usage is "train", "valid" or "all", the generated dataset has eight columns ["image", "bbox", "blur",
+///     "expression", "illumination", "occlusion", "pose", "invalid"]. When usage is "test", it only has one column
+///     ["image"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage The type of data to be read, can be "train", "test", "valid" or "all" (default="all"). "all" will
+///     read samples from "train" and "valid".
+/// \param[in] decode The option to decode the images in dataset (default = false).
+/// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
+///     given, a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler()).
+/// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
+/// \return Shared pointer to the WIDERFaceDataset.
+/// \par Example
+/// \code
+///      /* Define dataset path and MindData object */
+///      std::string folder_path = "/path/to/wider_face_dataset_directory";
+///      std::shared_ptr<Dataset> ds = WIDERFace(folder_path, "train", std::make_shared<SequentialSampler>(0, 2));
+///
+///      /* Create iterator to read dataset */
+///      std::shared_ptr<Iterator> iter = ds->CreateIterator();
+///      std::unordered_map<std::string, mindspore::MSTensor> row;
+///      iter->GetNextRow(&row);
+///
+///      /* Note: In WIDERFace dataset, if task='test', each dictionary has key "image" */
+///      /* Note: In WIDERFace dataset, if task='all', 'train' or 'valid', each dictionary has keys "image", "bbox",
+///      "blur", "expression", "illumination", "occlusion", "pose", "invalid" */
+///      auto image = row["image"];
+/// \endcode
+inline std::shared_ptr<WIDERFaceDataset> MS_API
+WIDERFace(const std::string &dataset_dir, const std::string &usage = "all", bool decode = false,
+          const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
+          const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<WIDERFaceDataset>(StringToChar(dataset_dir), StringToChar(usage), decode, sampler, cache);
+}
+
+/// \brief Function to create a WIDERFace Dataset.
+/// \note When usage is "train", "valid" or "all", the generated dataset has eight columns ["image", "bbox", "blur",
+///     "expression", "illumination", "occlusion", "pose", "invalid"]. When usage is "test", it only has one column
+///     ["image"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage The type of data to be read, can be "train", "test", "valid" or "all". "all" will read samples
+///     from "train" and "valid".
+/// \param[in] decode The option to decode the images in dataset.
+/// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
+/// \return Shared pointer to the WIDERFaceDataset.
+inline std::shared_ptr<WIDERFaceDataset> MS_API WIDERFace(const std::string &dataset_dir, const std::string &usage,
+                                                          bool decode, const Sampler *sampler,
+                                                          const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<WIDERFaceDataset>(StringToChar(dataset_dir), StringToChar(usage), decode, sampler, cache);
+}
+
+/// \brief Function to create a WIDERFace Dataset.
+/// \note When usage is "train", "valid" or "all", the generated dataset has eight columns ["image", "bbox", "blur",
+///     "expression", "illumination", "occlusion", "pose", "invalid"]. When usage is "test", it only has one column
+///     ["image"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage The type of data to be read, can be "train", "test", "valid" or "all". "all" will read samples
+///     from "train" and "valid".
+/// \param[in] decode The option to decode the images in dataset.
+/// \param[in] sampler Sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
+/// \return Shared pointer to the WIDERFaceDataset.
+inline std::shared_ptr<WIDERFaceDataset> MS_API WIDERFace(const std::string &dataset_dir, const std::string &usage,
+                                                          bool decode, const std::reference_wrapper<Sampler> sampler,
+                                                          const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<WIDERFaceDataset>(StringToChar(dataset_dir), StringToChar(usage), decode, sampler, cache);
+}
+
 /// \class WikiTextDataset
 /// \brief A source dataset for reading and parsing WikiTextDataset dataset.
 class MS_API WikiTextDataset : public Dataset {

@@ -129,6 +129,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/udpos_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/usps_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/voc_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/wider_face_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/wiki_text_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/yahoo_answers_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/yelp_review_node.h"
@@ -1790,6 +1791,29 @@ UDPOSDataset::UDPOSDataset(const std::vector<char> &dataset_dir, const std::vect
   auto ds = std::make_shared<UDPOSNode>(CharToString(dataset_dir), CharToString(usage), num_samples, shuffle,
                                         num_shards, shard_id, cache);
   ir_node_ = std::static_pointer_cast<UDPOSNode>(ds);
+}
+
+WIDERFaceDataset::WIDERFaceDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, bool decode,
+                                   const std::shared_ptr<Sampler> &sampler,
+                                   const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
+  auto ds = std::make_shared<WIDERFaceNode>(CharToString(dataset_dir), CharToString(usage), decode, sampler_obj, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+
+WIDERFaceDataset::WIDERFaceDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, bool decode,
+                                   const Sampler *sampler, const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
+  auto ds = std::make_shared<WIDERFaceNode>(CharToString(dataset_dir), CharToString(usage), decode, sampler_obj, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+
+WIDERFaceDataset::WIDERFaceDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, bool decode,
+                                   const std::reference_wrapper<Sampler> sampler,
+                                   const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler.get().Parse();
+  auto ds = std::make_shared<WIDERFaceNode>(CharToString(dataset_dir), CharToString(usage), decode, sampler_obj, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
 
 YahooAnswersDataset::YahooAnswersDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,

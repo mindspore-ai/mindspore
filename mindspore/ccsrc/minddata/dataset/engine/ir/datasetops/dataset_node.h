@@ -120,6 +120,7 @@ constexpr char kTFRecordNode[] = "TFRecordDataset";
 constexpr char kUDPOSNode[] = "UDPOSDataset";
 constexpr char kUSPSNode[] = "USPSDataset";
 constexpr char kVOCNode[] = "VOCDataset";
+constexpr char kWIDERFaceNode[] = "WIDERFaceDataset";
 constexpr char kWikiTextNode[] = "WikiTextDataset";
 constexpr char kYahooAnswersNode[] = "YahooAnswersDataset";
 constexpr char kYelpReviewNode[] = "YelpReviewDataset";

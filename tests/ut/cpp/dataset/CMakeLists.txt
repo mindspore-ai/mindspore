@@ -56,6 +56,7 @@ SET(DE_UT_SRCS
         c_api_dataset_udpos_test.cc
         c_api_dataset_usps_test.cc
         c_api_dataset_voc_test.cc
+        c_api_dataset_wider_face_test.cc
         c_api_dataset_yahoo_answers_test.cc
         c_api_dataset_yelp_review_test.cc
         c_api_dataset_yes_no_test.cc
