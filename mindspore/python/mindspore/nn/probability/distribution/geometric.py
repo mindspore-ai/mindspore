@@ -26,15 +26,28 @@ from ._utils.custom_ops import exp_generic, log_generic
 class Geometric(Distribution):
     """
     Geometric Distribution.
-
+    A Geometric Distribution is a discrete distribution with the range as the non-negative integers,
+    and the probability mass function as :math:`P(X = i) = p(1-p)^{i-1}, i = 1, 2, ...`.
     It represents that there are k failures before the first success, namely that there are in total k+1 Bernoulli
     trials when the first success is achieved.
 
     Args:
-        probs (float, list, numpy.ndarray, Tensor): The probability of success. Default: None.
+        probs (int, float, list, numpy.ndarray, Tensor): The probability of success. Default: None.
         seed (int): The seed used in sampling. Global seed is used if it is None. Default: None.
         dtype (mindspore.dtype): The type of the event samples. Default: mstype.int32.
         name (str): The name of the distribution. Default: 'Geometric'.
+
+    Inputs and Outputs of APIs:
+        The accessible api is defined in the base class, including:
+
+        - `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`
+        - `mean`, `sd`, `mode`, `var`, and `entropy`
+        - `kl_loss` and `cross_entropy`
+        - `sample`
+
+        It should be notice that the input should be always a tensor.
+        For more details of all APIs, including the inputs and outputs,
+        please refer to :class:`mindspore.nn.probability.bijector.Distribution`, and examples below.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -42,6 +55,9 @@ class Geometric(Distribution):
     Note:
         `probs` must be a proper probability (0 < p < 1).
         `dist_spec_args` is `probs`.
+
+    Raises:
+        ValueError: When p <= 0 or p >= 1.
 
     Examples:
         >>> import mindspore
@@ -138,7 +154,8 @@ class Geometric(Distribution):
         param = dict(locals())
         param['param_dict'] = {'probs': probs}
         valid_dtype = mstype.int_type + mstype.uint_type + mstype.float_type
-        Validator.check_type_name("dtype", dtype, valid_dtype, type(self).__name__)
+        Validator.check_type_name(
+            "dtype", dtype, valid_dtype, type(self).__name__)
         super(Geometric, self).__init__(seed, dtype, name, param)
 
         self._probs = self._add_parameter(probs, 'probs')
@@ -176,6 +193,9 @@ class Geometric(Distribution):
     def probs(self):
         """
         Return the probability of success of the Bernoulli trial, after casting to dtype.
+
+        Output:
+            Tensor, the probs parameter of the distribution.
         """
         return self._probs
 

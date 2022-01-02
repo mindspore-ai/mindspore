@@ -32,6 +32,19 @@ class GumbelCDF(Bijector):
         scale (float, list, numpy.ndarray, Tensor): The scale. Default: 1.0.
         name (str): The name of the Bijector. Default: 'GumbelCDF'.
 
+    Inputs and Outputs of APIs:
+        The accessible api is defined in the base class, including:
+
+        - **forward**
+        - **inverse**
+        - **forward_log_jacobian**
+        - **backward_log_jacobian**
+
+        It should be notice that the input should be always a tensor,
+        with a shape that can be broadcasted to that of `loc` and `scale`.
+        For more details of all APIs, including the inputs and outputs,
+        please refer to :class:`mindspore.nn.probability.bijector.Bijector`, and examples below.
+
     Supported Platforms:
         ``Ascend`` ``GPU``
 
@@ -44,7 +57,7 @@ class GumbelCDF(Bijector):
 
     Raises:
         TypeError: When the dtype of `loc` or `scale` is not float,
-                   and when the dtype of `loc` and `scale` is not same.
+                   or when the dtype of `loc` and `scale` is not same.
 
     Examples:
         >>> import mindspore
@@ -86,18 +99,28 @@ class GumbelCDF(Bijector):
         self._scale = self._add_parameter(scale, 'scale')
         check_greater_zero(self._scale, "scale")
 
-
         self.cast = P.Cast()
         self.exp = exp_generic
         self.log = log_generic
 
-
     @property
     def loc(self):
+        """
+        Return the loc parameter of the bijector.
+
+        Output:
+            Tensor, the loc parameter of the bijector.
+        """
         return self._loc
 
     @property
     def scale(self):
+        """
+        Return the scale parameter of the bijector.
+
+        Output:
+            Tensor, the scale parameter of the bijector.
+        """
         return self._scale
 
     def extend_repr(self):

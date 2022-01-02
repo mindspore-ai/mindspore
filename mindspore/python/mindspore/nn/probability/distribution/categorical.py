@@ -29,19 +29,36 @@ from ._utils.custom_ops import exp_generic, log_generic, broadcast_to
 
 class Categorical(Distribution):
     """
-    Create a categorical distribution parameterized by event probabilities.
+    Categorical distribution.
+    A Categorical Distribution is a discrete distribution with the range {1, 2, ..., k}
+    and the probability mass function as :math:`P(X = i) = p_i, i = 1, ..., k`.
 
     Args:
-        probs (Tensor, list, numpy.ndarray): Event probabilities.
+        probs (Tensor, list, numpy.ndarray): Event probabilities. Default: None.
         seed (int): The global seed is used in sampling. Global seed is used if it is None. Default: None.
         dtype (mindspore.dtype): The type of the event samples. Default: mstype.int32.
         name (str): The name of the distribution. Default: Categorical.
+
+    Inputs and Outputs of APIs:
+        The accessible api is defined in the base class, including:
+
+        - `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`
+        - `mean`, `sd`, `var`, and `entropy`
+        - `kl_loss` and `cross_entropy`
+        - `sample`
+
+        It should be notice that the input should be always a tensor.
+        For more details of all APIs, including the inputs and outputs,
+        please refer to :class:`mindspore.nn.probability.bijector.Distribution`, and examples below.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
 
     Note:
         `probs` must have rank at least 1, values are proper probabilities and sum to 1.
+
+    Raises:
+        ValueError: When the sum of all elements in `probs` is not 1.
 
     Examples:
         >>> import mindspore
@@ -95,7 +112,7 @@ class Categorical(Distribution):
         >>> #     dist (str): the name of the distribution. Only 'Categorical' is supported.
         >>> #     probs_b (Tensor): event probabilities of distribution b.
         >>> #     probs (Tensor): event probabilities of distribution a. Default: self.probs.
-        >>> # Examples of kl_loss. `cross_entropy` is similar.
+        >>> # Examples of `kl_loss`, `cross_entropy` is similar.
         >>> ans = ca1.kl_loss('Categorical', probs_b)
         >>> print(ans.shape)
         ()
@@ -172,6 +189,9 @@ class Categorical(Distribution):
     def probs(self):
         """
         Return the probability after casting to dtype.
+
+        Output:
+            Tensor, the probs of the distribution.
         """
         return self._probs
 

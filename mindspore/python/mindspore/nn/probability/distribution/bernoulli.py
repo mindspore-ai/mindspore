@@ -25,6 +25,8 @@ from ._utils.custom_ops import exp_generic, log_generic
 class Bernoulli(Distribution):
     """
     Bernoulli Distribution.
+    A Bernoulli Distribution is a discrete distribution with the range {0, 1}
+    and the probability mass function as :math:`P(X = 0) = p, P(X = 1) = 1-p`.
 
     Args:
         probs (float, list, numpy.ndarray, Tensor): The probability of that the outcome is 1. Default: None.
@@ -32,12 +34,28 @@ class Bernoulli(Distribution):
         dtype (mindspore.dtype): The type of the event samples. Default: mstype.int32.
         name (str): The name of the distribution. Default: 'Bernoulli'.
 
+    Inputs and Outputs of APIs:
+        The accessible api is defined in the base class, including:
+
+        - `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`
+        - `mean`, `sd`, `var`, and `entropy`
+        - `kl_loss` and `cross_entropy`
+        - `sample`
+
+        It should be notice that the input should be always a tensor.
+        For more details of all APIs, including the inputs and outputs,
+        please refer to :class:`mindspore.nn.probability.bijector.Distribution`, and examples below.
+
     Supported Platforms:
         ``Ascend`` ``GPU``
 
     Note:
         `probs` must be a proper probability (0 < p < 1).
         `dist_spec_args` is `probs`.
+
+    Raises:
+        ValueError: When p <= 0 or p >=1.
+        TypeError: When the input `dtype` is not a subclass of float.
 
     Examples:
         >>> import mindspore
@@ -91,7 +109,7 @@ class Bernoulli(Distribution):
         >>> #     dist (str): the name of the distribution. Only 'Bernoulli' is supported.
         >>> #     probs1_b (Tensor): the probability of success of distribution b.
         >>> #     probs1_a (Tensor): the probability of success of distribution a. Default: self.probs.
-        >>> # Examples of kl_loss. `cross_entropy` is similar.
+        >>> # Examples of `kl_loss`. `cross_entropy` is similar.
         >>> ans = b1.kl_loss('Bernoulli', probs_b)
         >>> print(ans.shape)
         (3,)
@@ -165,6 +183,9 @@ class Bernoulli(Distribution):
         """
         Return the probability of that the outcome is 1
         after casting to dtype.
+
+        Output:
+            Tensor, the probs of the distribution.
         """
         return self._probs
 

@@ -25,17 +25,37 @@ from ._utils.custom_ops import log_generic
 
 
 class Gamma(Distribution):
-    """
+    r"""
     Gamma distribution.
+    A Gamma distributio is a continuous distribution with the range :math:`[0, 1]`
+    and the probability density function:
+
+    .. math::
+        f(x, \alpha, \beta) = \beta^\alpha / \Gamma(\alpha) x^{\alpha - 1} \exp(-\beta x).
+
+    where :math:`G` is the Gamma function,
+    and :math:`\alpha, \beta` are the concentration and the rate of the distribution respectively.
 
     Args:
-        concentration (list, numpy.ndarray, Tensor): The concentration,
+        concentration (int, float, list, numpy.ndarray, Tensor): The concentration,
           also know as alpha of the Gamma distribution. Default: None.
-        rate (list, numpy.ndarray, Tensor): The rate, also know as
+        rate (int, float, list, numpy.ndarray, Tensor): The rate, also know as
           beta of the Gamma distribution. Default: None.
         seed (int): The seed used in sampling. The global seed is used if it is None. Default: None.
         dtype (mindspore.dtype): The type of the event samples. Default: mstype.float32.
         name (str): The name of the distribution. Default: 'Gamma'.
+
+    Inputs and Outputs of APIs:
+        The accessible api is defined in the base class, including:
+
+        - `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`
+        - `mean`, `sd`, `mode`, `var`, and `entropy`
+        - `kl_loss` and `cross_entropy`
+        - `sample`
+
+        It should be notice that the input should be always a tensor.
+        For more details of all APIs, including the inputs and outputs,
+        please refer to :class:`mindspore.nn.probability.bijector.Distribution`, and examples below.
 
     Supported Platforms:
         ``Ascend``
@@ -44,6 +64,10 @@ class Gamma(Distribution):
         `concentration` and `rate` must be greater than zero.
         `dist_spec_args` are `concentration` and `rate`.
         `dtype` must be a float type because Gamma distributions are continuous.
+
+    Raises:
+        ValueError: When concentration <= 0 or rate <= 0.
+        TypeError: When the input `dtype` is not a subclass of float.
 
     Examples:
         >>> import mindspore
@@ -147,7 +171,8 @@ class Gamma(Distribution):
         param = dict(locals())
         param['param_dict'] = {'concentration': concentration, 'rate': rate}
         valid_dtype = mstype.float_type
-        Validator.check_type_name("dtype", dtype, valid_dtype, type(self).__name__)
+        Validator.check_type_name(
+            "dtype", dtype, valid_dtype, type(self).__name__)
 
         # As some operators can't accept scalar input, check the type here
         if isinstance(concentration, (int, float)):
@@ -157,7 +182,8 @@ class Gamma(Distribution):
 
         super(Gamma, self).__init__(seed, dtype, name, param)
 
-        self._concentration = self._add_parameter(concentration, 'concentration')
+        self._concentration = self._add_parameter(
+            concentration, 'concentration')
         self._rate = self._add_parameter(rate, 'rate')
         if self._concentration is not None:
             check_greater_zero(self._concentration, "concentration")
@@ -182,7 +208,8 @@ class Gamma(Distribution):
     def extend_repr(self):
         """Display instance object as string."""
         if self.is_scalar_batch:
-            s = 'concentration = {}, rate = {}'.format(self._concentration, self._rate)
+            s = 'concentration = {}, rate = {}'.format(
+                self._concentration, self._rate)
         else:
             s = 'batch_shape = {}'.format(self._broadcast_shape)
         return s
@@ -192,6 +219,9 @@ class Gamma(Distribution):
         """
         Return the concentration, also know as the alpha of the Gamma distribution,
         after casting to dtype.
+
+        Output:
+            Tensor, the concentration parameter of the distribution.
         """
         return self._concentration
 
@@ -200,6 +230,9 @@ class Gamma(Distribution):
         """
         Return the rate, also know as the beta of the Gamma distribution,
         after casting to dtype.
+
+        Output:
+            Tensor, the rate parameter of the distribution.
         """
         return self._rate
 
@@ -244,7 +277,8 @@ class Gamma(Distribution):
         """
         concentration, rate = self._check_param_type(concentration, rate)
         mode = (concentration - 1.) / rate
-        nan = self.fill(self.dtypeop(concentration), self.shape(concentration), np.nan)
+        nan = self.fill(self.dtypeop(concentration),
+                        self.shape(concentration), np.nan)
         comp = self.greater(concentration, 1.)
         return self.select(comp, mode, nan)
 
@@ -257,7 +291,7 @@ class Gamma(Distribution):
         """
         concentration, rate = self._check_param_type(concentration, rate)
         return concentration - self.log(rate) + self.lgamma(concentration) \
-               + (1. - concentration) * self.digamma(concentration)
+            + (1. - concentration) * self.digamma(concentration)
 
     def _cross_entropy(self, dist, concentration_b, rate_b, concentration_a=None, rate_a=None):
         r"""
@@ -272,7 +306,8 @@ class Gamma(Distribution):
         """
         check_distribution_name(dist, 'Gamma')
         return self._entropy(concentration_a, rate_a) +\
-               self._kl_loss(dist, concentration_b, rate_b, concentration_a, rate_a)
+            self._kl_loss(dist, concentration_b, rate_b,
+                          concentration_a, rate_a)
 
     def _log_prob(self, value, concentration=None, rate=None):
         r"""
@@ -289,8 +324,10 @@ class Gamma(Distribution):
         value = self._check_value(value, 'value')
         value = self.cast(value, self.dtype)
         concentration, rate = self._check_param_type(concentration, rate)
-        unnormalized_log_prob = (concentration - 1.) * self.log(value) - rate * value
-        log_normalization = self.lgamma(concentration) - concentration * self.log(rate)
+        unnormalized_log_prob = (concentration - 1.) * \
+            self.log(value) - rate * value
+        log_normalization = self.lgamma(
+            concentration) - concentration * self.log(rate)
         return unnormalized_log_prob - log_normalization
 
     def _cdf(self, value, concentration=None, rate=None):
@@ -332,11 +369,12 @@ class Gamma(Distribution):
         rate_b = self._check_value(rate_b, 'rate_b')
         concentration_b = self.cast(concentration_b, self.parameter_type)
         rate_b = self.cast(rate_b, self.parameter_type)
-        concentration_a, rate_a = self._check_param_type(concentration_a, rate_a)
+        concentration_a, rate_a = self._check_param_type(
+            concentration_a, rate_a)
         return (concentration_a - concentration_b) * self.digamma(concentration_a) \
-               + self.lgamma(concentration_b)  - self.lgamma(concentration_a) \
-               + concentration_b * self.log(rate_a) - concentration_b * self.log(rate_b) \
-               + concentration_a * (rate_b / rate_a - 1.)
+            + self.lgamma(concentration_b) - self.lgamma(concentration_a) \
+            + concentration_b * self.log(rate_a) - concentration_b * self.log(rate_b) \
+            + concentration_a * (rate_b / rate_a - 1.)
 
     def _sample(self, shape=(), concentration=None, rate=None):
         """

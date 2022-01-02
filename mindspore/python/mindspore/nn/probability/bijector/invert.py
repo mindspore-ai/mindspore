@@ -26,6 +26,18 @@ class Invert(Bijector):
         name (str): The name of the Bijector. Default: "". When name is set to "", it is actually
             'Invert' + bijector.name.
 
+    Inputs and Outputs of APIs:
+        The accessible api is defined in the base class, including:
+
+        - **forward**
+        - **inverse**
+        - **forward_log_jacobian**
+        - **backward_log_jacobian**
+
+        It should be notice that the input should be always a tensor.
+        For more details of all APIs, including the inputs and outputs,
+        please refer to :class:`mindspore.nn.probability.bijector.Bijector`, and examples below.
+
     Supported Platforms:
         ``Ascend`` ``GPU``
 
@@ -73,36 +85,52 @@ class Invert(Bijector):
 
     def inverse(self, y):
         """
-        Forward transformation: transform the input value to another distribution.
+        Perform the inverse transformation of the inverse bijector,
+        namely the forward transformation of the underlying bijector.
 
         Args:
-            y (Tensor): Tensor of any shape.
+            y (Tensor): the value of the transformed random variable.
+
+        Output:
+            Tensor, the value of the input random variable.
         """
         return self.bijector("forward", y)
 
     def forward(self, x):
         """
-        Inverse transformation: transform the input value back to the original distribution.
+        Perform the forward transformation of the inverse bijector,
+        namely the inverse transformation of the underlying bijector.
 
         Args:
-            x (Tensor): Tensor of any shape.
+            x (Tensor): the value of the input random variable.
+
+        Output:
+            Tensor, the value of the transformed random variable.
         """
         return self.bijector("inverse", x)
 
     def inverse_log_jacobian(self, y):
         """
-        Logarithm of the derivative of the forward transformation.
+        Logarithm of the derivative of the inverse transformation of the inverse bijector,
+        namely logarithm of the derivative of the forward transformation of the underlying bijector.
 
         Args:
-            y (Tensor): Tensor of any shape.
+            y (Tensor): the value of the transformed random variable.
+
+        Output:
+            Tensor, logarithm of the derivative of the inverse transformation of the inverse bijector.
         """
         return self.bijector("forward_log_jacobian", y)
 
     def forward_log_jacobian(self, x):
         """
-        Logarithm of the derivative of the inverse transformation.
+        Logarithm of the derivative of the forward transformation of the inverse bijector,
+        namely logarithm of the derivative of the inverse transformation of the underlying bijector.
 
         Args:
-            x (Tensor): Tensor of any shape.
+            x (Tensor): the value of the input random variable.
+
+        Output:
+            Tensor, logarithm of the derivative of the forward transformation of the inverse bijector.
         """
         return self.bijector("inverse_log_jacobian", x)

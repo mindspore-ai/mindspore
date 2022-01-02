@@ -26,15 +26,30 @@ from ._utils.custom_ops import exp_generic, log_generic
 
 
 class Gumbel(TransformedDistribution):
-    """
+    r"""
     Gumbel distribution.
+    A Gumbel distributio is a continuous distribution with the range :math:`[0, 1]`
+    and the probability density function:
+
+    .. math::
+        f(x, a, b) = 1 / b \exp(\exp(-(x - a) / b) - x),
+
+    where a and b are loc and scale parameter respectively.
 
     Args:
-        loc (float, list, numpy.ndarray, Tensor): The location of Gumbel distribution.
-        scale (float, list, numpy.ndarray, Tensor): The scale of Gumbel distribution.
+        loc (int, float, list, numpy.ndarray, Tensor): The location of Gumbel distribution. Default: None.
+        scale (int, float, list, numpy.ndarray, Tensor): The scale of Gumbel distribution. Default: None.
         seed (int): the seed used in sampling. The global seed is used if it is None. Default: None.
         dtype (mindspore.dtype): type of the distribution. Default: mstype.float32.
         name (str): the name of the distribution. Default: 'Gumbel'.
+
+    Inputs and Outputs of APIs:
+        The accessible api is defined in the base class, including:
+
+        - `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`
+        - `mean`, `sd`, `mode`, `var`, and `entropy`
+        - `kl_loss` and `cross_entropy`
+        - `sample`
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -44,6 +59,10 @@ class Gumbel(TransformedDistribution):
         `dist_spec_args` are `loc` and `scale`.
         `dtype` must be a float type because Gumbel distributions are continuous.
         `kl_loss` and `cross_entropy` are not supported on GPU backend.
+
+    Raises:
+        ValueError: When scale <= 0.
+        TypeError: When the input `dtype` is not a subclass of float.
 
     Examples:
         >>> import mindspore
@@ -72,7 +91,8 @@ class Gumbel(TransformedDistribution):
         Constructor of Gumbel distribution.
         """
         valid_dtype = mstype.float_type
-        Validator.check_type_name("dtype", dtype, valid_dtype, type(self).__name__)
+        Validator.check_type_name(
+            "dtype", dtype, valid_dtype, type(self).__name__)
         gumbel_cdf = msb.GumbelCDF(loc, scale)
         super(Gumbel, self).__init__(
             distribution=msd.Uniform(0.0, 1.0, dtype=dtype),
@@ -101,6 +121,9 @@ class Gumbel(TransformedDistribution):
     def loc(self):
         """
         Return the location of the distribution after casting to dtype.
+
+        Output:
+            Tensor, the loc parameter of the distribution.
         """
         return self._loc
 
@@ -108,6 +131,9 @@ class Gumbel(TransformedDistribution):
     def scale(self):
         """
         Return the scale of the distribution after casting to dtype.
+
+        Output:
+            Tensor, the scale parameter of the distribution.
         """
         return self._scale
 
@@ -155,7 +181,8 @@ class Gumbel(TransformedDistribution):
         .. math::
             STD(X) = \frac{\pi}{\sqrt(6)} * scale
         """
-        scale = self.scale * self.fill(self.parameter_type, self.broadcast_shape, 1.0)
+        scale = self.scale * \
+            self.fill(self.parameter_type, self.broadcast_shape, 1.0)
         return scale * np.pi / self.sqrt(self.const(6.))
 
     def _entropy(self):
@@ -165,7 +192,8 @@ class Gumbel(TransformedDistribution):
         .. math::
             H(X) = 1. + \log(scale) + Euler-Mascheroni_constant
         """
-        scale = self.scale * self.fill(self.parameter_type, self.broadcast_shape, 1.0)
+        scale = self.scale * \
+            self.fill(self.parameter_type, self.broadcast_shape, 1.0)
         return 1. + self.log(scale) + np.euler_gamma
 
     def _log_prob(self, value):
@@ -219,8 +247,9 @@ class Gumbel(TransformedDistribution):
         loc_b = self.cast(loc_b, self.parameter_type)
         scale_b = self.cast(scale_b, self.parameter_type)
         return self.log(scale_b / self.scale) +\
-               np.euler_gamma * (self.scale / scale_b - 1.) + (self.loc - loc_b) / scale_b +\
-               self.expm1((loc_b - self.loc) / scale_b + self.lgamma(self.scale / scale_b + 1.))
+            np.euler_gamma * (self.scale / scale_b - 1.) + (self.loc - loc_b) / scale_b +\
+            self.expm1((loc_b - self.loc) / scale_b +
+                       self.lgamma(self.scale / scale_b + 1.))
 
     def _sample(self, shape=()):
         shape = self.checktuple(shape, 'shape')

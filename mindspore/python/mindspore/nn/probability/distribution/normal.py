@@ -25,8 +25,16 @@ from ._utils.custom_ops import exp_generic, log_generic
 
 
 class Normal(Distribution):
-    """
+    r"""
     Normal distribution.
+    A Normal distributio is a continuous distribution with the range :math:`(-\inf, \inf)`
+    and the probability density function:
+
+    .. math::
+        f(x, \mu, \sigma) = 1 / \sigma\sqrt{2\pi} \exp(-(x - \mu)^2 / 2\sigma^2).
+
+    where :math:`\mu, \sigma` are the mean and
+    the standard deviation of the normal distribution respectively.
 
     Args:
         mean (int, float, list, numpy.ndarray, Tensor): The mean of the Normal distribution. Default: None.
@@ -35,6 +43,18 @@ class Normal(Distribution):
         dtype (mindspore.dtype): The type of the event samples. Default: mstype.float32.
         name (str): The name of the distribution. Default: 'Normal'.
 
+    Inputs and Outputs of APIs:
+        The accessible api is defined in the base class, including:
+
+        - `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`
+        - `mean`, `sd`, `mode`, `var`, and `entropy`
+        - `kl_loss` and `cross_entropy`
+        - `sample`
+
+        It should be notice that the input should be always a tensor.
+        For more details of all APIs, including the inputs and outputs,
+        please refer to :class:`mindspore.nn.probability.bijector.Distribution`, and examples below.
+
     Supported Platforms:
         ``Ascend`` ``GPU``
 
@@ -42,6 +62,10 @@ class Normal(Distribution):
         `sd` must be greater than zero.
         `dist_spec_args` are `mean` and `sd`.
         `dtype` must be a float type because Normal distributions are continuous.
+
+    Raises:
+        ValueError: When sd <= 0.
+        TypeError: When the input `dtype` is not a subclass of float.
 
     Examples:
         >>> import mindspore

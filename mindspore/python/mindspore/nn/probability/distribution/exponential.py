@@ -24,14 +24,33 @@ from ._utils.custom_ops import exp_generic, log_generic
 
 
 class Exponential(Distribution):
-    """
-    Example class: Exponential Distribution.
+    r"""
+    Exponential Distribution.
+    An Exponential distributio is a continuous distribution with the range :math:`[0, 1]`
+    and the probability density function:
+
+    .. math::
+        f(x, \lambda) = \lambda \exp(-\lambda x),
+
+    where :math:`\lambda` is the rate of the distribution.
 
     Args:
-        rate (float, list, numpy.ndarray, Tensor): The inverse scale. Default: None.
+        rate (int, float, list, numpy.ndarray, Tensor): The inverse scale. Default: None.
         seed (int): The seed used in sampling. The global seed is used if it is None. Default: None.
         dtype (mindspore.dtype): The type of the event samples. Default: mstype.float32.
         name (str): The name of the distribution. Default: 'Exponential'.
+
+    Inputs and Outputs of APIs:
+        The accessible api is defined in the base class, including:
+
+        - `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`
+        - `mean`, `sd`, `var`, and `entropy`
+        - `kl_loss` and `cross_entropy`
+        - `sample`
+
+        It should be notice that the input should be always a tensor.
+        For more details of all APIs, including the inputs and outputs,
+        please refer to :class:`mindspore.nn.probability.bijector.Distribution`, and examples below.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -40,6 +59,10 @@ class Exponential(Distribution):
         `rate` must be strictly greater than 0.
         `dist_spec_args` is `rate`.
         `dtype` must be a float type because Exponential distributions are continuous.
+
+    Raises:
+        ValueError: When rate <= 0.
+        TypeError: When the input `dtype` is not a subclass of float.
 
     Examples:
         >>> import mindspore
@@ -133,7 +156,8 @@ class Exponential(Distribution):
         param = dict(locals())
         param['param_dict'] = {'rate': rate}
         valid_dtype = mstype.float_type
-        Validator.check_type_name("dtype", dtype, valid_dtype, type(self).__name__)
+        Validator.check_type_name(
+            "dtype", dtype, valid_dtype, type(self).__name__)
         super(Exponential, self).__init__(seed, dtype, name, param)
 
         self._rate = self._add_parameter(rate, 'rate')
@@ -167,6 +191,9 @@ class Exponential(Distribution):
     def rate(self):
         """
         Return `rate` of the distribution after casting to dtype.
+
+        Output:
+            Tensor, the rate parameter of the distribution.
         """
         return self._rate
 

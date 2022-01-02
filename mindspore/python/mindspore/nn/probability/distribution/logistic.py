@@ -24,15 +24,34 @@ from ._utils.custom_ops import exp_generic, log_generic
 
 
 class Logistic(Distribution):
-    """
+    r"""
     Logistic distribution.
+    A Logistic distributio is a continuous distribution with the range :math:`(-\inf, \inf)`
+    and the probability density function:
+
+    .. math::
+        f(x, a, b) = 1 / b \exp(\exp(-(x - a) / b) - x).
+
+    where a and b are loc and scale parameter respectively.
 
     Args:
-        loc (int, float, list, numpy.ndarray, Tensor): The location of the Logistic distribution. Default: None.
-        scale (int, float, list, numpy.ndarray, Tensor): The scale of the Logistic distribution. Default: None.
+        loc (float, list, numpy.ndarray, Tensor): The location of the Logistic distribution. Default: None.
+        scale (float, list, numpy.ndarray, Tensor): The scale of the Logistic distribution. Default: None.
         seed (int): The seed used in sampling. The global seed is used if it is None. Default: None.
         dtype (mindspore.dtype): The type of the event samples. Default: mstype.float32.
         name (str): The name of the distribution. Default: 'Logistic'.
+
+    Inputs and Outputs of APIs:
+        The accessible api is defined in the base class, including:
+
+        - `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`
+        - `mean`, `sd`, `mode`, `var`, and `entropy`
+        - `kl_loss` and `cross_entropy`
+        - `sample`
+
+        It should be notice that the input should be always a tensor.
+        For more details of all APIs, including the inputs and outputs,
+        please refer to :class:`mindspore.nn.probability.bijector.Distribution`, and examples below.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -41,6 +60,10 @@ class Logistic(Distribution):
         `scale` must be greater than zero.
         `dist_spec_args` are `loc` and `scale`.
         `dtype` must be a float type because Logistic distributions are continuous.
+
+    Raises:
+        ValueError: When scale <= 0.
+        TypeError: When the input `dtype` is not a subclass of float.
 
     Examples:
         >>> import mindspore
@@ -127,7 +150,8 @@ class Logistic(Distribution):
         param = dict(locals())
         param['param_dict'] = {'loc': loc, 'scale': scale}
         valid_dtype = mstype.float_type
-        Validator.check_type_name("dtype", dtype, valid_dtype, type(self).__name__)
+        Validator.check_type_name(
+            "dtype", dtype, valid_dtype, type(self).__name__)
         super(Logistic, self).__init__(seed, dtype, name, param)
 
         self._loc = self._add_parameter(loc, 'loc')
@@ -184,6 +208,9 @@ class Logistic(Distribution):
     def loc(self):
         """
         Return the location of the distribution after casting to dtype.
+
+        Output:
+            Tensor, the loc parameter of the distribution.
         """
         return self._loc
 
@@ -191,6 +218,9 @@ class Logistic(Distribution):
     def scale(self):
         """
         Return the scale of the distribution after casting to dtype.
+
+        Output:
+            Tensor, the scale parameter of the distribution.
         """
         return self._scale
 

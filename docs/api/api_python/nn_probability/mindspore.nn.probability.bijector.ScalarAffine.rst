@@ -4,7 +4,7 @@ mindspore.nn.probability.bijector.ScalarAffine
 .. py:class:: mindspore.nn.probability.bijector.ScalarAffine(scale=1.0, shift=0.0, name='ScalarAffine')
 
     标量仿射Bijector（Scalar Affine Bijector）。
-    此Bijector执行如下操作：
+    此Bijector对应的映射函数为：
 
     .. math::
         Y = a * X + b
@@ -22,11 +22,11 @@ mindspore.nn.probability.bijector.ScalarAffine
     ``Ascend`` ``GPU``
 
     .. note::
-        `shift` 和 `scale` 的数据类型必须为float。如果 `shift` 、 `scale` 作为numpy.ndarray或Tensor传入，则它们必须具有相同的数据类型，否则将引发错误。
+        `shift` 和 `scale` 中元素的数据类型必须为float。如果 `shift` 、 `scale` 作为numpy.ndarray或Tensor传入，则它们必须具有相同的数据类型，否则将引发错误。
 
     **异常：**
 
-    - **TypeError** - `shift` 或 `scale` 的数据类型不为float，或 `shift` 和 `scale` 的数据类型不相同。
+    - **TypeError** - `shift` 或 `scale` 中元素的数据类型不为float，或 `shift` 和 `scale` 的数据类型不相同。
 
     **样例：**
 
@@ -50,3 +50,50 @@ mindspore.nn.probability.bijector.ScalarAffine
     >>> print(ans4.shape)
     ()
 
+    .. py:method:: forward(value)
+
+        正映射，计算输入随机变量 :math:`X = value` 经过映射后的值 :math:`Y = g(value)`。
+
+        **参数：**
+
+        - **value** (Tensor) - 输入随机变量的值。
+
+        **返回：**
+
+        Tensor, 输入随机变量的值。
+
+    .. py:method:: forward_log_jacobian(value)
+
+        计算正映射导数的对数值，即 :math:`\log(dg(x) / dx)`。
+
+        **参数：**
+
+        - **value** (Tensor) - 输入随机变量的值。
+
+        **返回：**
+
+        Tensor, 正映射导数的对数值。
+
+    .. py:method:: inverse(value)
+
+        正映射，计算输出随机变量 :math:`Y = value` 时对应的输入随机变量的值 :math:`X = g(value)`。
+
+        **参数：**
+
+        - **value** (Tensor) - 输出随机变量的值。
+
+        **返回：**
+
+        Tensor, 输出随机变量的值。
+
+    .. py:method:: inverse_log_jacobian(value)
+
+        计算逆映射导数的对数值，即 :math:`\log(dg^{-1}(x) / dx)`。
+
+        **参数：**
+
+        - **value** (Tensor) - 输出随机变量的值。
+
+        **返回：**
+
+        Tensor, 逆映射导数的对数值。

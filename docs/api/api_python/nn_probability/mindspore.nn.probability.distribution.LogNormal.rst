@@ -4,7 +4,13 @@ mindspore.nn.probability.distribution.LogNormal
 .. py:class:: mindspore.nn.probability.distribution.LogNormal(loc=None, scale=None, seed=0, dtype=mstype.float32, name='LogNormal')
 
     对数正态分布（LogNormal distribution）。
-    对数正态分布是随机变量的连续概率分布，变量的对数为正态分布。它被构造为正态分布的指数变换。
+    连续随机分布，取值范围为 :math:`(0, \inf)` ，概率密度函数为
+
+    .. math:: 
+        f(x, a, b) = 1 / xb\sqrt{2\pi} \exp(-(\ln(x) - a)^2 / 2b^2).
+
+    其中 :math:`a, b` 为分别为基础正态分布的平均值和标准差。
+    服从对数正态分布的随机变量的对数服从正态分布。它被构造为正态分布的指数变换。
 
     **参数：**
 
@@ -21,6 +27,11 @@ mindspore.nn.probability.distribution.LogNormal
     .. note:: 
         - `scale` 必须大于零。
         - `dtype` 必须是float，因为对数正态分布是连续的。
+
+    **异常：**
+
+    - **ValueError** - `scale` 中元素小于0。
+    - **TypeError** - `dtype` 不是float的子类。
 
     **样例：**
 
@@ -39,13 +50,21 @@ mindspore.nn.probability.distribution.LogNormal
     >>> output = pdf(Tensor([1.0, 2.0], dtype=mindspore.float32))
     >>> print(output.shape)
     (2, 2)
-    
+
     .. py:method:: loc
         :property:
 
-        返回分布的均值。
-        
+        返回分布位置。
+
+        **返回：**
+
+        Tensor, 分布的位置值。
+
     .. py:method:: scale
         :property:
 
-        返回分布的标准差。
+        返回分布比例。
+
+        **返回：**
+
+        Tensor, 分布的比例值。

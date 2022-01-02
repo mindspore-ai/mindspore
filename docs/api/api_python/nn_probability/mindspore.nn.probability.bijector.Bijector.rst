@@ -3,7 +3,7 @@ mindspore.nn.probability.bijector.Bijector
 
 .. py:class:: mindspore.nn.probability.bijector.Bijector(is_constant_jacobian=False, is_injective=True, name=None, dtype=None, param=None)
 
-    Bijector类。
+    Bijector类。Bijector描述了一种随机变量的映射方法，可以通过一个已有的随机变量 :math:`X` 和一个映射函数 :math:`g` 生成一个新的随机变量 :math:`Y = g(X)` 。
 
     **参数：**
     
@@ -19,23 +19,22 @@ mindspore.nn.probability.bijector.Bijector
 
     .. note::
         Bijector的 `dtype` 为None时，输入值必须是float类型，除此之外没有其他强制要求。在初始化过程中，当 `dtype` 为None时，对参数的数据类型没有强制要求。但所有参数都应具有相同的float类型，否则将引发TypeError。具体来说，参数类型跟随输入值的数据类型，即当 `dtype` 为None时，Bijector的参数将被强制转换为与输入值相同的类型。当指定了 `dtype` 时，参数和输入值的 `dtype` 必须相同。当参数类型或输入值类型与 `dtype` 不相同时，将引发TypeError。只能使用mindspore的float数据类型来指定Bijector的 `dtype` 。
-    
+
     .. py:method:: cast_param_by_value(value, para)
 
-        将Bijector的参数para的数据类型转换为与value相同的类型。
-        
+        将输入中的 `para` 的数据类型转换为与 `value` 相同的类型，一般由Bijector的子类用于基于输入对自身参数进行数据类型变化。
+
         **参数：**
 
         - **value** (Tensor) - 输入数据。
         - **para** (Tensor) - Bijector参数。
-        - **kwargs** (dict) - 函数需要的关键字参数字典。
         
     .. py:method:: construct(name, *args, **kwargs)
 
         重写Cell中的 `construct` 。
 
         .. note::
-            支持的函数包括：'forward'、'inverse'、'forward_log_jacobian'、'inverse_log_jacobian'。
+            支持的函数名称包括：'forward'、'inverse'、'forward_log_jacobian'、'inverse_log_jacobian'。
 
         **参数：**
         
@@ -45,41 +44,56 @@ mindspore.nn.probability.bijector.Bijector
         
     .. py:method:: forward(value, *args, **kwargs)
 
-        正变换：将输入值转换为另一个分布。
+        正映射，计算输入随机变量 :math:`X = value` 经过映射后的值 :math:`Y = g(value)`。
         
         **参数：**
 
-        - **value** (Tensor) - 输入。
+        - **value** (Tensor) - 输入随机变量的值。
         - **args** (list) - 函数所需的位置参数列表。
         - **kwargs** (dict) - 函数所需的关键字参数字典。
+
+        **返回：**
+
+        Tensor, 输出随机变量的值。
         
     .. py:method:: forward_log_jacobian(value, *args, **kwargs)
 
-        对正变换导数取对数。
+        计算正映射导数的对数值，即 :math:`\log(dg(x) / dx)`。
         
         **参数：**
 
-        - **value** (Tensor) - 输入。
+        - **value** (Tensor) - 输入随机变量的值。
         - **args** (list) - 函数所需的位置参数列表。
         - **kwargs** (dict) - 函数所需的关键字参数字典。
+
+        **返回：**
+
+        Tensor, 正映射导数的对数值。
         
     .. py:method:: inverse(value, *args, **kwargs)
 
-        逆变换：将输入值转换回原始分布。
+        逆映射，计算输出随机变量 :math:`Y = value` 时对应的输入随机变量的值 :math:`X = g^{-1}(value)`。
         
         **参数：**
         
-        - **value** (Tensor) - 输入。
+        - **value** (Tensor) - 输出随机变量的值。
         - **args** (list) - 函数所需的位置参数列表。
         - **kwargs** (dict) - 函数所需的关键字参数字典。
-        
+
+        **返回：**
+
+        Tensor, 输入随机变量的值。
+
     .. py:method:: inverse_log_jacobian(value, *args, **kwargs)
 
-        对逆变换的导数取对数。
-        
+        计算逆映射导数的对数值，即 :math:`\log(dg^{-1}(x) / dx)`。
+
         **参数：**
 
-        - **value** (Tensor) - 输入。
+        - **value** (Tensor) - 输出随机变量的值。
         - **args** (list) - 函数所需的位置参数列表。
         - **kwargs** (dict) - 函数所需的关键字参数字典。
-        
+
+        **返回：**
+
+        Tensor, 逆映射导数的对数值。
