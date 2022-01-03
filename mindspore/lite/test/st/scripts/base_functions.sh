@@ -62,6 +62,12 @@ function Convert() {
         config_file="${quant_config_path}/weight_quant_${suffix}.cfg"
       elif [[ ${cfg_file_name} =~ "_train" ]]; then
         train_model="true"
+      elif [[ ${cfg_file_name} =~ "_ascend" ]]; then
+        model_option_path="${cfg_file%/*}/model_options"
+        option_file="${model_option_path}/${model_name}.txt"
+        if [ -f "$option_file" ]; then
+          config_file=${option_file}
+        fi
       elif [[ ${cfg_file_name} =~ "posttraining" ]]; then
         quant_type="PostTraining"
         output_file=${output_file}"_posttraining"
