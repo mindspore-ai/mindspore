@@ -64,6 +64,8 @@ def clip_by_value(x, clip_value_min, clip_value_max):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore import Tensor, ops
+        >>> import numpy as np
         >>> min_value = Tensor(5, mindspore.float32)
         >>> max_value = Tensor(20, mindspore.float32)
         >>> x = Tensor(np.array([[1., 25., 5., 7.], [4., 11., 6., 21.]]), mindspore.float32)
@@ -161,6 +163,8 @@ def clip_by_global_norm(x, clip_norm=1.0, use_norm=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore import Tensor, ops
+        >>> import numpy as np
         >>> x1 = np.array([[2., 3.], [1., 2.]]).astype(np.float32)
         >>> x2 = np.array([[1., 4.], [3., 1.]]).astype(np.float32)
         >>> input_x = (Tensor(x1), Tensor(x2))

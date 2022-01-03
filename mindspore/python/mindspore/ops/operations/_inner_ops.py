@@ -721,6 +721,8 @@ class SequenceMask(PrimitiveWithCheck):
         ``GPU``
 
     Examples:
+        >>> from mindspore import ops
+        >>> import numpy as np
         >>> x = Tensor(np.array([[1, 3], [2, 0]]))
         >>> sequence_mask = ops.SequenceMask()
         >>> output = sequence_mask(x, 3)
@@ -1464,6 +1466,8 @@ class Cummin(Primitive):
         ``Ascend``
 
     Examples:
+        >>> from mindspore import Tensor, ops
+        >>> import mindspore
         >>> a = Tensor([-0.2284, -0.6628,  0.0975,  0.2680, -1.3298, -0.4220], mindspore.float32)
         >>> output = ops.cummin(a, axis=0)
         >>> print(output[0])

@@ -33,6 +33,7 @@ class Primitive(Primitive_):
         name (str): Name for the current Primitive.
 
     Examples:
+        >>> from mindspore.ops.primitive import prim_attr_register, Primitive
         >>> add = Primitive('add')
         >>>
         >>> # or work with prim_attr_register:
@@ -251,6 +252,9 @@ class Primitive(Primitive_):
             the second element is calculated result.
 
         Examples:
+            >>> from mindspore.ops.primitive import prim_attr_register, Primitive
+            >>> from mindspore import Tensor
+            >>> import numpy as np
             >>> class AddN(Primitive):
             ...     @prim_attr_register
             ...     def __init__(self):
@@ -384,6 +388,7 @@ class PrimitiveWithCheck(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore.ops.primitive import prim_attr_register, PrimitiveWithCheck
         >>> # init a Primitive class with check
         >>> class Flatten(PrimitiveWithCheck):
         ...     @prim_attr_register
@@ -465,6 +470,7 @@ class PrimitiveWithInfer(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore.ops.primitive import prim_attr_register, PrimitiveWithCheck
         >>> # init a Primitive class with infer
         >>> class Add(PrimitiveWithInfer):
         ...     @prim_attr_register
@@ -613,6 +619,7 @@ def prim_attr_register(fn):
         function, original function.
 
     Examples:
+        >>> from mindspore.ops.primitive import prim_attr_register, PrimitiveWithCheck
         >>> class MatMul(PrimitiveWithCheck):
         ...     @prim_attr_register
         ...     def __init__(self, transpose_a=False, transpose_b=False):

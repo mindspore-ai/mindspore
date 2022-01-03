@@ -211,6 +211,7 @@ class GradOperation(GradOperation_):
     Examples:
         >>> from mindspore import ParameterTuple
         >>> from mindspore.ops.composite import GradOperation
+        >>> from mindspore.ops import operations as P
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
@@ -525,6 +526,7 @@ class MultitypeFuncGraph(MultitypeFuncGraph_):
         >>> from mindspore import Tensor
         >>> from mindspore import ops
         >>> from mindspore import dtype as mstype
+        >>> from mindspore.ops.composite import MultitypeFuncGraph
         >>>
         >>> tensor_add = ops.Add()
         >>> add = MultitypeFuncGraph('add')
@@ -624,6 +626,8 @@ class HyperMap(HyperMap_):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore import Tensor, ops
+        >>> from mindspore.ops.composite.base import MultitypeFuncGraph, HyperMap
         >>> from mindspore import dtype as mstype
         >>> nest_tensor_list = ((Tensor(1, mstype.float32), Tensor(2, mstype.float32)),
         ...                     (Tensor(3, mstype.float32), Tensor(4, mstype.float32)))

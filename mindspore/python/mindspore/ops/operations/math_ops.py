@@ -5394,20 +5394,20 @@ class Erfinv(Primitive):
                                 erfinv(erf(x)) = x
 
     Inputs:
-        - **input_x** (Tensor) - The input tensor to compute to, with data type float32, float16.
+        - **input_x** (Tensor) - The input tensor to compute to, with data type float32 or float16.
 
     Outputs:
         Tensor, has the same shape and dtype as `input_x`.
 
     Raises:
-        TypeError: If dtype of `input_x` is not one of: float32, float16.
+        TypeError: If dtype of `input_x` is neither float32 nor float16.
 
     Supported Platforms:
         ``Ascend``
 
     Examples:
         >>> x = Tensor(np.array([0, 0.5, -0.9]), mindspore.float32)
-        >>> erfinv = P.Erfinv()
+        >>> erfinv = ops.Erfinv()
         >>> output = erfinv(x)
         >>> print(output)
         [ 0.          0.47695306 -1.1630805 ]

@@ -74,6 +74,9 @@ def repeat_elements(x, rep, axis=0):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore import Tensor, ops
+        >>> import mindspore
+        >>> import numpy as np
         >>> # case 1 : repeat on axis 0
         >>> x = Tensor(np.array([[0, 1, 2], [3, 4, 5]]), mindspore.int32)
         >>> output = ops.repeat_elements(x, rep = 2, axis = 0)
@@ -159,6 +162,9 @@ def sequence_mask(lengths, maxlen=None, prim_name='sequence_mask'):
         ``GPU``
 
     Examples:
+        >>> from mindspore import Tensor, ops
+        >>> import mindspore
+        >>> import numpy as np
         >>> # case 1: When maxlen is assigned
         >>> x = Tensor(np.array([1, 2, 3, 4]))
         >>> output = ops.sequence_mask(x, 5)
