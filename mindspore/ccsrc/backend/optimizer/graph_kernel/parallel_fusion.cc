@@ -392,12 +392,12 @@ void DumpParallelGroups(const std::vector<std::vector<AnfNodePtrList>> &groups, 
   MS_LOG(INFO) << "[" << title << "]"
                << "There are " << groups.size() << " parallel groups, their detail is: ";
   int i = 0;
-  for (const auto group : groups) {
+  for (const auto &group : groups) {
     std::stringstream buf;
     buf << "[" << i << " group] " << group.size() << ":\n";
-    for (const auto nodes : group) {
+    for (const auto &nodes : group) {
       buf << "  " << nodes.size() << ": [<";
-      for (const auto node : nodes) {
+      for (const auto &node : nodes) {
         buf << "(" << DumpNode(node) << ") -> ";
       }
       buf << ">]\n";

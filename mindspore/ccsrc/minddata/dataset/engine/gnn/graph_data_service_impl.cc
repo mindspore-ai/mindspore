@@ -45,13 +45,13 @@ GraphDataServiceImpl::GraphDataServiceImpl(GraphDataServer *server, GraphDataImp
 
 Status GraphDataServiceImpl::FillDefaultFeature(GnnClientRegisterResponsePb *response) {
   const auto default_node_features = graph_data_impl_->GetAllDefaultNodeFeatures();
-  for (const auto feature : *default_node_features) {
+  for (const auto &feature : *default_node_features) {
     GnnFeatureInfoPb *feature_info = response->add_default_node_feature();
     feature_info->set_type(feature.first);
     RETURN_IF_NOT_OK(TensorToPb(feature.second->Value(), feature_info->mutable_feature()));
   }
   const auto default_edge_features = graph_data_impl_->GetAllDefaultEdgeFeatures();
-  for (const auto feature : *default_edge_features) {
+  for (const auto &feature : *default_edge_features) {
     GnnFeatureInfoPb *feature_info = response->add_default_edge_feature();
     feature_info->set_type(feature.first);
     RETURN_IF_NOT_OK(TensorToPb(feature.second->Value(), feature_info->mutable_feature()));

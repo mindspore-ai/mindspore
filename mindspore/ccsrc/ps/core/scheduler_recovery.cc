@@ -118,7 +118,7 @@ bool SchedulerRecovery::Recover() {
                << ", the initial next server rank id:" << clusterConfig.initial_next_server_rank_id;
 
   if (!clusterConfig.initial_registered_nodes_infos.empty()) {
-    for (const auto kvs : clusterConfig.initial_registered_nodes_infos) {
+    for (const auto &kvs : clusterConfig.initial_registered_nodes_infos) {
       MS_LOG(INFO) << "The ip:" << kvs.second.ip_ << ", the port:" << kvs.second.port_
                    << ", the node_id:" << kvs.second.node_id_
                    << ", the node_role:" << CommUtil::NodeRoleToString(kvs.second.node_role_)

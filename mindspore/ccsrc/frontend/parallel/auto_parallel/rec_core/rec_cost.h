@@ -22,6 +22,8 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <stdexcept>
+#include <limits>
 
 #include "frontend/parallel/auto_parallel/rec_core/rec_graph.h"
 #include "frontend/parallel/auto_parallel/rec_core/rec_strategy.h"
