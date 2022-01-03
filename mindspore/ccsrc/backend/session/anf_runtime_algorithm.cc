@@ -853,6 +853,27 @@ std::vector<size_t> AnfRuntimeAlgorithm::GetOutputDeviceShape(const AnfNodePtr &
   return trans::TransShapeToDevice(infer_shape, format, node, output_idx, dtype);
 }
 
+std::vector<int64_t> AnfRuntimeAlgorithm::GetInputDeviceShapeForTbeBuild(const AnfNodePtr &node, const size_t input_idx,
+                                                                         const std::string &format) {
+  auto output_shape = GetPrevNodeOutputDetailShape(node, input_idx);
+  std::vector<int64_t> infer_shape;
+  if (output_shape->isa<abstract::Shape>()) {
+    auto shape_ptr = output_shape->cast<abstract::ShapePtr>();
+    MS_EXCEPTION_IF_NULL(shape_ptr);
+    infer_shape = shape_ptr->shape();
+  }
+  if (infer_shape.empty()) {
+    return infer_shape;
+  }
+
+  // if format is default_format or NC1KHKWHWC0,device shape = original shape
+  if (trans::IsNeedPadding(format, infer_shape.size())) {
+    infer_shape = trans::PaddingShape(infer_shape, format, GetInputReshapeType(node, input_idx));
+  }
+  auto dtype = GetInputDeviceDataType(node, input_idx);
+  return trans::TransShapeToDevice(infer_shape, format, node, input_idx, dtype);
+}
+
 std::vector<size_t> AnfRuntimeAlgorithm::GetInputDeviceShape(const AnfNodePtr &node, size_t input_idx) {
   auto format = GetInputFormat(node, input_idx);
   auto infer_shape = GetPrevNodeOutputInferShape(node, input_idx);
