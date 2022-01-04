@@ -92,11 +92,8 @@ class TcpServer {
 
   void SetServerCallback(const OnConnected &client_conn, const OnDisconnected &client_disconn,
                          const OnAccepted &client_accept);
-  void set_timer_once_callback(const OnTimerOnce &timer);
-  void set_timer_callback(const OnTimer &timer);
   void Init();
   void Start();
-  void StartWithNoBlock();
   void Stop();
   void SendToAllClients(const char *data, size_t len);
   void AddConnection(const evutil_socket_t &fd, std::shared_ptr<TcpConnection> connection);
@@ -116,11 +113,13 @@ class TcpServer {
  protected:
   static void ListenerCallback(struct evconnlistener *listener, evutil_socket_t socket, struct sockaddr *saddr,
                                int socklen, void *server);
+  static void ListenerCallbackInner(evutil_socket_t socket, struct sockaddr *saddr, void *server);
   static void SignalCallback(evutil_socket_t sig, std::int16_t events, void *server);
+  static void SignalCallbackInner(void *server);
   static void ReadCallback(struct bufferevent *, void *connection);
+  static void ReadCallbackInner(struct bufferevent *, void *connection);
   static void EventCallback(struct bufferevent *, std::int16_t events, void *server);
-  static void TimerCallback(evutil_socket_t fd, int16_t event, void *arg);
-  static void TimerOnceCallback(evutil_socket_t fd, int16_t event, void *arg);
+  static void EventCallbackInner(struct bufferevent *, std::int16_t events, void *server);
   static void SetTcpNoDelay(const evutil_socket_t &fd);
   std::shared_ptr<TcpConnection> onCreateConnection(struct bufferevent *bev, const evutil_socket_t &fd);
 
@@ -137,8 +136,6 @@ class TcpServer {
   OnAccepted client_accept_;
   std::mutex connection_mutex_;
   OnServerReceiveMessage message_callback_;
-  OnTimerOnce on_timer_once_callback_;
-  OnTimer on_timer_callback_;
   // The Configuration file
   Configuration *config_;
   int64_t max_connection_;

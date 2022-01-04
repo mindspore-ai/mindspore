@@ -141,10 +141,6 @@ void TcpServer::SetServerCallback(const OnConnected &client_conn, const OnDiscon
   this->client_accept_ = client_accept;
 }
 
-void TcpServer::set_timer_once_callback(const OnTimerOnce &timer) { on_timer_once_callback_ = timer; }
-
-void TcpServer::set_timer_callback(const OnTimer &timer) { on_timer_callback_ = timer; }
-
 void TcpServer::Init() {
   int result = evthread_use_pthreads();
   if (result != 0) {
@@ -209,17 +205,6 @@ void TcpServer::Start() {
   MSLOG_IF(mindspore::EXCEPTION, ret < -1, AbortedError) << "Event base dispatch with unexpected error code!";
 }
 
-void TcpServer::StartWithNoBlock() {
-  std::lock_guard<std::mutex> lock(connection_mutex_);
-  MS_LOG(INFO) << "Start tcp server with no block!";
-  MS_EXCEPTION_IF_NULL(base_);
-  int ret = event_base_loop(base_, EVLOOP_NONBLOCK);
-  MSLOG_IF(INFO, ret == 0, NoExceptionType) << "Event base loop success!";
-  MSLOG_IF(mindspore::ERROR, ret == 1, NoExceptionType) << "Event base loop failed with no events pending or active!";
-  MSLOG_IF(mindspore::ERROR, ret == -1, NoExceptionType) << "Event base loop failed with error occurred!";
-  MSLOG_IF(mindspore::EXCEPTION, ret < -1, AbortedError) << "Event base loop with unexpected error code!";
-}
-
 void TcpServer::Stop() {
   MS_EXCEPTION_IF_NULL(base_);
   std::lock_guard<std::mutex> lock(connection_mutex_);
@@ -261,6 +246,14 @@ std::shared_ptr<TcpConnection> TcpServer::GetConnectionByFd(const evutil_socket_
 
 void TcpServer::ListenerCallback(struct evconnlistener *, evutil_socket_t fd, struct sockaddr *sockaddr, int,
                                  void *data) {
+  try {
+    ListenerCallbackInner(fd, sockaddr, data);
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "Catch exception: " << e.what();
+  }
+}
+
+void TcpServer::ListenerCallbackInner(evutil_socket_t fd, struct sockaddr *sockaddr, void *data) {
   auto server = reinterpret_cast<class TcpServer *>(data);
   MS_EXCEPTION_IF_NULL(server);
   auto base = reinterpret_cast<struct event_base *>(server->base_);
@@ -328,6 +321,14 @@ std::shared_ptr<TcpConnection> TcpServer::onCreateConnection(struct bufferevent 
 OnServerReceiveMessage TcpServer::GetServerReceive() const { return message_callback_; }
 
 void TcpServer::SignalCallback(evutil_socket_t, std::int16_t, void *data) {
+  try {
+    SignalCallbackInner(data);
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "Catch exception: " << e.what();
+  }
+}
+
+void TcpServer::SignalCallbackInner(void *data) {
   MS_EXCEPTION_IF_NULL(data);
   auto server = reinterpret_cast<class TcpServer *>(data);
   struct event_base *base = server->base_;
@@ -340,6 +341,14 @@ void TcpServer::SignalCallback(evutil_socket_t, std::int16_t, void *data) {
 }
 
 void TcpServer::ReadCallback(struct bufferevent *bev, void *connection) {
+  try {
+    ReadCallbackInner(bev, connection);
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "Catch exception: " << e.what();
+  }
+}
+
+void TcpServer::ReadCallbackInner(struct bufferevent *bev, void *connection) {
   MS_EXCEPTION_IF_NULL(bev);
   MS_EXCEPTION_IF_NULL(connection);
 
@@ -357,6 +366,14 @@ void TcpServer::ReadCallback(struct bufferevent *bev, void *connection) {
 }
 
 void TcpServer::EventCallback(struct bufferevent *bev, std::int16_t events, void *data) {
+  try {
+    EventCallbackInner(bev, events, data);
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "Catch exception: " << e.what();
+  }
+}
+
+void TcpServer::EventCallbackInner(struct bufferevent *bev, std::int16_t events, void *data) {
   MS_EXCEPTION_IF_NULL(bev);
   MS_EXCEPTION_IF_NULL(data);
   struct evbuffer *output = bufferevent_get_output(bev);
@@ -392,22 +409,6 @@ void TcpServer::EventCallback(struct bufferevent *bev, std::int16_t events, void
     }
   } else {
     MS_LOG(WARNING) << "Unhandled event:" << events;
-  }
-}
-
-void TcpServer::TimerCallback(evutil_socket_t, int16_t, void *arg) {
-  MS_EXCEPTION_IF_NULL(arg);
-  auto tcp_server = reinterpret_cast<TcpServer *>(arg);
-  if (tcp_server->on_timer_callback_) {
-    tcp_server->on_timer_callback_();
-  }
-}
-
-void TcpServer::TimerOnceCallback(evutil_socket_t, int16_t, void *arg) {
-  MS_EXCEPTION_IF_NULL(arg);
-  auto tcp_server = reinterpret_cast<TcpServer *>(arg);
-  if (tcp_server->on_timer_once_callback_) {
-    tcp_server->on_timer_once_callback_(*tcp_server);
   }
 }
 

@@ -56,14 +56,18 @@ bool HttpRequestHandler::Initialize(int fd, const std::unordered_map<std::string
 
   for (const auto &handler : handlers) {
     auto TransFunc = [](struct evhttp_request *req, void *arg) {
-      MS_EXCEPTION_IF_NULL(req);
-      MS_EXCEPTION_IF_NULL(arg);
-      auto httpReq = std::make_shared<HttpMessageHandler>();
-      MS_EXCEPTION_IF_NULL(httpReq);
-      httpReq->set_request(req);
-      httpReq->InitHttpMessage();
-      OnRequestReceive *func = reinterpret_cast<OnRequestReceive *>(arg);
-      (*func)(httpReq);
+      try {
+        MS_EXCEPTION_IF_NULL(req);
+        MS_EXCEPTION_IF_NULL(arg);
+        auto httpReq = std::make_shared<HttpMessageHandler>();
+        MS_EXCEPTION_IF_NULL(httpReq);
+        httpReq->set_request(req);
+        httpReq->InitHttpMessage();
+        OnRequestReceive *func = reinterpret_cast<OnRequestReceive *>(arg);
+        (*func)(httpReq);
+      } catch (const std::exception &e) {
+        MS_LOG(ERROR) << "Catch exception: " << e.what();
+      }
     };
 
     // O SUCCESS,-1 ALREADY_EXIST,-2 FAILURE

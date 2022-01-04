@@ -202,17 +202,24 @@ std::string HttpMessageHandler::GetUriFragment() const {
   return std::string(fragment);
 }
 
-uint64_t HttpMessageHandler::GetPostMsg(unsigned char **buffer) {
+bool HttpMessageHandler::GetPostMsg(size_t *len, uint8_t **buffer) {
   MS_EXCEPTION_IF_NULL(event_request_);
-  MS_EXCEPTION_IF_NULL(buffer);
-
-  size_t len = evbuffer_get_length(event_request_->input_buffer);
-  if (len == 0) {
-    MS_LOG(EXCEPTION) << "The post message is empty!";
+  if (len == nullptr || buffer == nullptr) {
+    MS_LOG(ERROR) << "Input parameter len or buffer cannot be nullptr";
+    return false;
+  }
+  *len = evbuffer_get_length(event_request_->input_buffer);
+  constexpr size_t max_http_bytes_len = UINT32_MAX;  // 4GB
+  if (*len == 0 || *len > max_http_bytes_len) {
+    MS_LOG(ERROR) << "The post message length " << max_http_bytes_len << " is invalid!";
+    return false;
   }
   *buffer = evbuffer_pullup(event_request_->input_buffer, -1);
-  MS_EXCEPTION_IF_NULL(*buffer);
-  return len;
+  if (*buffer == nullptr) {
+    MS_LOG(ERROR) << "Failed to pull post message buffer!";
+    return false;
+  }
+  return true;
 }
 
 void HttpMessageHandler::AddRespHeadParam(const std::string &key, const std::string &val) {

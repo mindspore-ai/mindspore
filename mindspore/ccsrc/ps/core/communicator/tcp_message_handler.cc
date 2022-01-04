@@ -50,6 +50,10 @@ void TcpMessageHandler::ReceiveMessage(const void *buffer, size_t num) {
             MS_LOG(WARNING) << "The message len:" << message_header_.message_length_ << " is too long.";
             return;
           }
+          if (message_header_.message_meta_length_ > message_header_.message_length_) {
+            MS_LOG(WARNING) << "The message meta len " << message_header_.message_meta_length_ << " > the message len "
+                            << message_header_.message_length_;
+          }
           remaining_length_ = message_header_.message_length_;
           message_buffer_ = std::make_unique<unsigned char[]>(remaining_length_);
           MS_EXCEPTION_IF_NULL(message_buffer_);

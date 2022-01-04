@@ -76,8 +76,11 @@ class TcpClient {
  protected:
   static void SetTcpNoDelay(const evutil_socket_t &fd);
   static void TimeoutCallback(evutil_socket_t fd, std::int16_t what, void *arg);
+  static void TimeoutCallbackInner(void *arg);
   static void ReadCallback(struct bufferevent *bev, void *ctx);
+  static void ReadCallbackInner(struct bufferevent *bev, void *ctx);
   static void EventCallback(struct bufferevent *bev, std::int16_t events, void *ptr);
+  static void EventCallbackInner(struct bufferevent *bev, std::int16_t events, void *ptr);
   virtual void OnReadHandler(const void *buf, size_t num);
   static void TimerCallback(evutil_socket_t fd, int16_t event, void *arg);
   void NotifyConnected();
