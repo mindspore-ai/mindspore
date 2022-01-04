@@ -1,0 +1,13 @@
+  <page>
+    <title>MindSpore</title>
+    <id>1</id>
+    <revision>
+      <id>234</id>
+      <timestamp>2020-01-01T00:00:00Z</timestamp>
+      <contributor>
+        <username>MS</username>
+        <id>567</id>
+      </contributor>
+      <text xml:space="preserve">666</text>
+    </revision>
+  </page>

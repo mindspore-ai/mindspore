@@ -114,7 +114,7 @@ class TextFileOp : public NonMappableLeafOp {
   // Count number of rows in each file.
   // @param file - txt file name.
   // @return int64_t - the total number of rows in file.
-  int64_t CountTotalRows(const std::string &file);
+  virtual int64_t CountTotalRows(const std::string &file);
 
   std::vector<std::string> text_files_list_;
   std::unique_ptr<DataSchema> data_schema_;

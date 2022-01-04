@@ -248,6 +248,5 @@ Status TextFileOp::ComputeColMap() {
   }
   return Status::OK();
 }
-
 }  // namespace dataset
 }  // namespace mindspore

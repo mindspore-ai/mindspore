@@ -17,6 +17,7 @@ set(DATASET_ENGINE_DATASETOPS_SOURCE_SRC_FILES
     dbpedia_op.cc
     div2k_op.cc
     emnist_op.cc
+    en_wik9_op.cc
     fake_image_op.cc
     fashion_mnist_op.cc
     flickr_op.cc

@@ -76,7 +76,8 @@ from .validators import check_batch, check_shuffle, check_map, check_filter, che
     check_stl10_dataset, check_yelp_review_dataset, check_penn_treebank_dataset, check_iwslt2016_dataset, \
     check_iwslt2017_dataset, check_sogou_news_dataset, check_yahoo_answers_dataset, check_udpos_dataset, \
     check_conll2000_dataset, check_amazon_review_dataset, check_semeion_dataset, check_caltech101_dataset, \
-    check_caltech256_dataset, check_wiki_text_dataset, check_imdb_dataset, check_wider_face_dataset
+    check_caltech256_dataset, check_wiki_text_dataset, check_imdb_dataset, check_wider_face_dataset, \
+    check_en_wik9_dataset
 from ..core.config import get_callback_timeout, _init_device_info, get_enable_shared_mem, get_num_parallel_workers, \
     get_prefetch_size
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
@@ -10803,6 +10804,82 @@ class STL10Dataset(MappableDataset):
 
     def parse(self, children=None):
         return cde.STL10Node(self.dataset_dir, self.usage, self.sampler)
+
+
+class EnWik9Dataset(SourceDataset):
+    """
+    A source dataset that reads and parses EnWik9 dataset.
+
+    The generated dataset has one column :py:obj:`[text]` with type string.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        num_samples (int, optional): The number of samples to be included in the dataset
+            (default=None, will include all samples).
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, number set in the config).
+        shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
+            (default=True).
+            If shuffle is False, no shuffling will be performed;
+            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
+            Otherwise, there are two levels of shuffling:
+
+            - Shuffle.GLOBAL: Shuffle both the files and samples.
+
+            - Shuffle.FILES: Shuffle files only.
+
+        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument can only be specified when num_shards is also specified.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing
+            (default=None, which means no cache is used).
+
+    Examples:
+        >>> en_wik9_dataset_dir = "/path/to/en_wik9_dataset"
+        >>> dataset2 = ds.EnWik9Dataset(dataset_dir=en_wik9_dataset_dir, num_samples=2,
+        ...                             shuffle=True)
+
+    About EnWik9 dataset:
+
+    The data of EnWik9 is UTF-8 encoded XML consisting primarily of English text. It contains 243,426 article titles,
+    of which 85,560 are #REDIRECT to fix broken links, and the rest are regular articles.
+
+    The data is UTF-8 clean. All characters are in the range U'0000 to U'10FFFF with valid encodings of 1 to
+    4 bytes. The byte values 0xC0, 0xC1, and 0xF5-0xFF never occur. Also, in the Wikipedia dumps,
+    there are no control characters in the range 0x00-0x1F except for 0x09 (tab) and 0x0A (linefeed).
+    Linebreaks occur only on paragraph boundaries, so they always have a semantic purpose.
+
+    You can unzip the dataset files into the following directory structure and read by MindSpore's API.
+
+    .. code-block::
+
+        .
+        └── EnWik9
+             ├── enwik9
+
+    Citation:
+
+    .. code-block::
+
+        @NetworkResource{Hutter_prize,
+        author    = {English Wikipedia},
+        url       = "https://cs.fit.edu/~mmahoney/compression/textdata.html",
+        month     = {March},
+        year      = {2006}
+        }
+    """
+
+    @check_en_wik9_dataset
+    def __init__(self, dataset_dir, num_samples=None, num_parallel_workers=None, shuffle=True,
+                 num_shards=None, shard_id=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, num_samples=num_samples, shuffle=shuffle,
+                         num_shards=num_shards, shard_id=shard_id, cache=cache)
+        self.dataset_dir = dataset_dir
+
+    def parse(self, children=None):
+        return cde.EnWik9Node(self.dataset_dir, self.num_samples, self.shuffle_flag, self.num_shards,
+                              self.shard_id)
 
 
 class YahooAnswersDataset(SourceDataset):
