@@ -58,7 +58,7 @@ void Compute(const ComputeParams<T> *params, const size_t start, const size_t en
 }
 }  // namespace
 
-void ScatterNdUpdateCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void ScatterUpdateCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   auto shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
@@ -109,9 +109,9 @@ void ScatterNdUpdateCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
 }
 
-bool ScatterNdUpdateCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> &,
-                                      const std::vector<kernel::AddressPtr> &outputs) {
+bool ScatterUpdateCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                    const std::vector<kernel::AddressPtr> &,
+                                    const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kScatterNdUpdateInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kScatterNdUpdateOutputsNum, kernel_name_);
   switch (dtype_) {
@@ -139,13 +139,9 @@ bool ScatterNdUpdateCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inp
 }
 
 template <typename T>
-void ScatterNdUpdateCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                            const std::vector<kernel::AddressPtr> &outputs) {
-  auto x = reinterpret_cast<T *>(outputs[0]->addr);
-  auto ret = memcpy_s(x, outputs[0]->size, inputs[0]->addr, inputs[0]->size);
-  if (ret != 0) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy_s error. Error no: " << ret;
-  }
+void ScatterUpdateCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                          const std::vector<kernel::AddressPtr> &outputs) {
+  T *x = reinterpret_cast<T *>(ScatterUpdateRealData(inputs, outputs));
   ComputeParams<T> params;
   params.x_ = x;
   params.indices_ = reinterpret_cast<int *>(inputs[1]->addr);
@@ -169,6 +165,22 @@ void ScatterNdUpdateCPUKernel::LaunchKernel(const std::vector<AddressPtr> &input
     start += once_compute_size;
   }
   ParallelLaunch(tasks);
+  (void)memcpy_s(outputs[0]->addr, outputs[0]->size, x, inputs[0]->size);
+}
+
+void *ScatterNdUpdateCPUKernel::ScatterUpdateRealData(const std::vector<AddressPtr> &inputs,
+                                                      const std::vector<kernel::AddressPtr> &) {
+  return inputs[0]->addr;
+}
+
+void *TensorScatterUpdateCPUKernel::ScatterUpdateRealData(const std::vector<AddressPtr> &inputs,
+                                                          const std::vector<kernel::AddressPtr> &outputs) {
+  void *x = outputs[0]->addr;
+  auto ret = memcpy_s(x, outputs[0]->size, inputs[0]->addr, inputs[0]->size);
+  if (ret != 0) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy_s error. Error no: " << ret;
+  }
+  return x;
 }
 }  // namespace kernel
 }  // namespace mindspore
