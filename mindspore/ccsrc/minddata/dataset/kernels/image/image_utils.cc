@@ -543,10 +543,8 @@ Status HwcToChw(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output) 
                                  "HWC2CHW: rank of input data should be greater than:" + std::to_string(CHANNEL_INDEX) +
                                    ", but got:" + std::to_string(input_cv->shape().Size()));
     int num_channels = input_cv->shape()[CHANNEL_INDEX];
-    if (input_cv->shape().Size() < MIN_IMAGE_DIMENSION || input_cv->shape().Size() > DEFAULT_IMAGE_CHANNELS ||
-        (input_cv->shape().Size() == DEFAULT_IMAGE_CHANNELS && num_channels != DEFAULT_IMAGE_CHANNELS &&
-         num_channels != MIN_IMAGE_CHANNELS)) {
-      RETURN_STATUS_UNEXPECTED("HWC2CHW: image shape is not <H,W,C>, but got rank: " +
+    if (input_cv->shape().Size() != DEFAULT_IMAGE_RANK) {
+      RETURN_STATUS_UNEXPECTED("HWC2CHW: image shape should be <H,W,C>, but got rank: " +
                                std::to_string(input_cv->shape().Size()));
     }
     cv::Mat output_img;
