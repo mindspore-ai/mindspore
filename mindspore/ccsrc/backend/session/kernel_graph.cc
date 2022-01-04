@@ -1353,6 +1353,9 @@ void KernelGraph::SetInputNodes() {
     if (params.size() == 1) {
       FrontBackendlMapUpdate(input_node, params[0]);
     } else {
+      if (backend_front_anf_map_.find(input_node) == backend_front_anf_map_.end()) {
+        continue;
+      }
       auto front_node = backend_front_anf_map_[input_node];
       for (size_t i = 0; i < params.size(); ++i) {
         FrontBackendlMapUpdate(input_node, params[i]);
