@@ -29,6 +29,8 @@ namespace kernel {
 class TbeKernelMod : public AscendKernelMod {
  public:
   explicit TbeKernelMod(KernelPackPtr kernel_pack) : kernel_pack_(std::move(kernel_pack)) {}
+  TbeKernelMod(KernelPackPtr kernel_pack, const AnfNodePtr &anf_node_ptr)
+      : AscendKernelMod(anf_node_ptr), kernel_pack_(std::move(kernel_pack)) {}
   ~TbeKernelMod() override = default;
 
   void SetInputSizeList(const std::vector<size_t> &size_list) { input_size_list_ = size_list; }
@@ -45,7 +47,7 @@ class TbeKernelMod : public AscendKernelMod {
   device::DynamicKernelPtr GenDynamicKernel(const CNodePtr &cnode_ptr, void *stream_ptr) override;
   std::vector<size_t> GenParameters() override;
 
- private:
+ protected:
   KernelPackPtr kernel_pack_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;

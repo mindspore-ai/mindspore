@@ -16,6 +16,7 @@
 
 #include "backend/kernel_compiler/host/dynamic_broadcast_gradient_args_kernel.h"
 #include "backend/session/anf_runtime_algorithm.h"
+#include "runtime/device/ascend/ascend_kernel_runtime.h"
 #include "utils/trace_base.h"
 
 namespace mindspore {
@@ -195,6 +196,15 @@ void DynamicBroadcastGradientArgsKernel::Execute() {
   input_shapes[1] = GetInputShape(cnode, 1);
   auto grad_reduce_idx = CalculateOutput(input_shapes);
 
+  auto runtime_instance = device::KernelRuntimeManager::Instance().GetCurrentKernelRuntime();
+  MS_EXCEPTION_IF_NULL(runtime_instance);
+  // cppcheck-suppress unreadVariable
+  auto lock = AscendKernelMod::LockRuntime();
+  auto ret = runtime_instance->SyncStream();
+  if (!ret) {
+    MS_LOG(EXCEPTION) << "Sync stream error!";
+  }
+
   auto r0_size = SetOutputValue(cnode, grad_reduce_idx, 0, input_shapes[0].size());
   auto r1_size = SetOutputValue(cnode, grad_reduce_idx, 1, input_shapes[1].size());
 
@@ -208,6 +218,27 @@ void DynamicBroadcastGradientArgsKernel::Execute() {
 device::DynamicKernelPtr DynamicBroadcastGradientArgsKernelMod::GenDynamicKernel(const CNodePtr &cnode_ptr,
                                                                                  void *stream_ptr) {
   return std::make_shared<DynamicBroadcastGradientArgsKernel>(stream_ptr, cnode_ptr);
+}
+
+bool DynamicBroadcastGradientArgsKernelMod::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
+                                                   const std::vector<AddressPtr> &, void *stream_ptr) {
+  auto node = anf_node_.lock();
+  MS_EXCEPTION_IF_NULL(node);
+  if (!node->isa<CNode>()) {
+    MS_LOG(EXCEPTION) << "anfnode is not a cnode";
+  }
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  stream_ = stream_ptr;
+  auto broadcast_grad_kernel = std::make_shared<DynamicBroadcastGradientArgsKernel>(stream_ptr, cnode);
+  try {
+    broadcast_grad_kernel->Execute();
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "DynamicBroadcastGradientArgsKernel Launch failed. node: " << cnode->fullname_with_scope()
+                  << ", Error message is " << e.what();
+    return false;
+  }
+  return true;
 }
 }  // namespace kernel
 }  // namespace mindspore

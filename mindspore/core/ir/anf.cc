@@ -28,8 +28,21 @@
 #include "ir/func_graph.h"
 #include "ir/primitive.h"
 #include "utils/ms_context.h"
+#include "utils/anf_utils.h"
 
 namespace mindspore {
+const AbstractBasePtr &AnfNode::abstract() const {
+  // cppcheck-suppress unreadVariable
+  auto lock = AnfUtils::GetAbstractLock(this);
+  return abstract_;
+}
+
+void AnfNode::set_abstract(const AbstractBasePtr &abs) {
+  // cppcheck-suppress unreadVariable
+  auto lock = AnfUtils::GetAbstractLock(this);
+  abstract_ = abs;
+}
+
 // namespace to support intermediate representation definition
 CNode::CNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &func_graph)
     : AnfNode(func_graph),
@@ -574,9 +587,8 @@ std::string GetCNodeTarget(const AnfNodePtr &node) {
   auto kernel_info = node->kernel_info();
   if (kernel_info != nullptr) {
     auto runtime_cache = kernel_info->runtime_cache();
-    MS_EXCEPTION_IF_NULL(runtime_cache);
-    if (runtime_cache->is_valid()) {
-      auto tmp_target = runtime_cache->device_target();
+    if (runtime_cache.runtime_cache().is_valid()) {
+      auto tmp_target = runtime_cache.runtime_cache().device_target();
       if (!tmp_target.empty()) {
         return tmp_target;
       }
@@ -595,9 +607,8 @@ std::string GetCNodeTarget(const AnfNodePtr &node) {
 
   if (kernel_info != nullptr) {
     auto runtime_cache = kernel_info->runtime_cache();
-    MS_EXCEPTION_IF_NULL(runtime_cache);
-    if (runtime_cache->is_valid()) {
-      runtime_cache->set_device_target(target);
+    if (runtime_cache.runtime_cache().is_valid()) {
+      runtime_cache.runtime_cache().set_device_target(target);
     }
   }
   return target;

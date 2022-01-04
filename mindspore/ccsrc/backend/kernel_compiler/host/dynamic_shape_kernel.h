@@ -38,18 +38,7 @@ class DynamicShapeKernelMod : public HostKernelMod {
   ~DynamicShapeKernelMod() override = default;
   device::DynamicKernelPtr GenDynamicKernel(const CNodePtr &cnode_ptr, void *stream_ptr) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    if (kernel_ == nullptr) {
-      kernel_ =
-        std::dynamic_pointer_cast<DynamicShapeKernel>(GenDynamicKernel(anf_node_->cast<CNodePtr>(), stream_ptr));
-      kernel_->Initialize();
-    }
-    kernel_->Execute(inputs, outputs);
-    return true;
-  }
-
- private:
-  std::shared_ptr<DynamicShapeKernel> kernel_;
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
 };
 MS_HOST_REG_KERNEL(DynamicShape, DynamicShapeKernelMod);
 }  // namespace kernel

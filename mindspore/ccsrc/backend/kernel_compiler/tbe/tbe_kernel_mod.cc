@@ -15,6 +15,8 @@
  */
 
 #include "backend/kernel_compiler/tbe/tbe_kernel_mod.h"
+
+#include <algorithm>
 #include "runtime/rt.h"
 #include "utils/ms_context.h"
 #include "runtime/device/ascend/ge_runtime/task_info.h"
@@ -41,6 +43,20 @@ bool TbeKernelMod::Launch(const std::vector<mindspore::kernel::AddressPtr> &inpu
   if (stream_ == nullptr) {
     stream_ = stream_ptr;
   }
+  // launch atomic_cleans first
+  if (!atomic_clean_nodes_.empty()) {
+    for (const auto &atomic_clean_node : atomic_clean_nodes_) {
+      KernelLaunchInfo kernel_launch_info;
+      auto kernel_mod = AnfAlgo::GetKernelMod(atomic_clean_node);
+      MS_EXCEPTION_IF_NULL(kernel_mod);
+      device::KernelRuntime::GenLaunchArgs(*kernel_mod, atomic_clean_node, &kernel_launch_info);
+      auto atomic_inputs = kernel_launch_info.inputs_;
+      std::vector<AddressPtr> atomic_outputs;
+      std::vector<AddressPtr> atomic_workspace;
+      kernel_mod->Launch(atomic_inputs, atomic_workspace, atomic_outputs, stream_ptr);
+    }
+  }
+
   uint32_t blockdim = 1;  // default blockdim equal to 1.
   auto func_stub = KernelManager::GenFuncStub(*kernel_pack_, false, &blockdim);
   if (func_stub == 0) {
@@ -61,6 +77,7 @@ bool TbeKernelMod::Launch(const std::vector<mindspore::kernel::AddressPtr> &inpu
   rtL2Ctrl_t *l2ctrl = nullptr;
   const void *stubFunc = reinterpret_cast<void *>(func_stub);
   auto argsSize = static_cast<uint32_t>(UlongToUint(sizeof(void *)) * runtimeargs.size());
+  auto lock = AscendKernelMod::LockRuntime();
   auto ret = rtKernelLaunch(stubFunc, blockdim, runtimeargs.data(), argsSize, l2ctrl, stream_);
   if (ret != RT_ERROR_NONE) {
     MS_LOG(ERROR) << "Call runtime rtKernelLaunch error.";

@@ -15,6 +15,7 @@
  */
 
 #include "utils/anf_utils.h"
+#include <map>
 #include <string>
 #include "base/core_ops.h"
 #include "utils/trace_base.h"
@@ -23,7 +24,51 @@
 namespace mindspore {
 namespace {
 const PrimitiveSet follow_first_input_prims = {prim::kPrimDepend, prim::kPrimLoad};
+
+class AbstractMutexManager {
+ public:
+  static AbstractMutexManager &GetInstance() {
+    static AbstractMutexManager instance;
+    return instance;
+  }
+
+  AbstractScope GetAbstractLock(const AnfNode *node) {
+    std::lock_guard<std::recursive_mutex> lock(mu_);
+    return AbstractScope(&mu_for_nodes_[node]);
+  }
+
+ private:
+  std::map<const AnfNode *, std::recursive_mutex> mu_for_nodes_;
+  std::recursive_mutex mu_;
+};
 }  // namespace
+
+AbstractScope::AbstractScope(std::recursive_mutex *mu) {
+  MS_EXCEPTION_IF_NULL(mu);
+  mu_ = mu;
+  mu_->lock();
+}
+
+AbstractScope::AbstractScope(AbstractScope &&other) {
+  mu_ = other.mu_;
+  other.mu_ = nullptr;
+}
+
+AbstractScope &AbstractScope::operator=(AbstractScope &&other) {
+  mu_ = other.mu_;
+  other.mu_ = nullptr;
+  return *this;
+}
+
+AbstractScope::~AbstractScope() {
+  if (mu_ != nullptr) {
+    mu_->unlock();
+  }
+}
+
+AbstractScope AnfUtils::GetAbstractLock(const AnfNode *node) {
+  return AbstractMutexManager::GetInstance().GetAbstractLock(node);
+}
 
 bool AnfUtils::IsDimUnknown(const abstract::ShapePtr &shape) {
   MS_EXCEPTION_IF_NULL(shape);
@@ -112,20 +157,18 @@ bool AnfUtils::IsRealKernel(const AnfNodePtr &node) {
   auto kernel_info = cnode->kernel_info();
   if (kernel_info) {
     auto runtime_cache = kernel_info->runtime_cache();
-    MS_EXCEPTION_IF_NULL(runtime_cache);
-    if (runtime_cache->is_real_kernel() != CacheBool::UNCACHED) {
-      return (runtime_cache->is_real_kernel() == CacheBool::TRUE);
+    if (runtime_cache.runtime_cache().is_real_kernel() != CacheBool::UNCACHED) {
+      return (runtime_cache.runtime_cache().is_real_kernel() == CacheBool::TRUE);
     }
   }
   bool res = !IsOneOfPrimitive(cnode->input(kAnfPrimitiveIndex), virtual_prims);
 
   if (kernel_info) {
     auto runtime_cache = kernel_info->runtime_cache();
-    MS_EXCEPTION_IF_NULL(runtime_cache);
     if (res) {
-      runtime_cache->set_real_kernel(CacheBool::TRUE);
+      runtime_cache.runtime_cache().set_real_kernel(CacheBool::TRUE);
     } else {
-      runtime_cache->set_real_kernel(CacheBool::FALSE);
+      runtime_cache.runtime_cache().set_real_kernel(CacheBool::FALSE);
     }
   }
 
@@ -175,10 +218,15 @@ size_t AnfUtils::GetInputTensorNum(const AnfNodePtr &node) {
     MS_LOG(EXCEPTION) << "Only cnode has real input, but this anf is " << node->DebugString()
                       << trace::DumpSourceLines(node);
   }
-  ssize_t input_tensor_num = cnode->input_tensor_num();
-  if (input_tensor_num >= 0) {
-    return static_cast<size_t>(input_tensor_num);
+  {
+    // cppcheck-suppress unreadVariable
+    auto lock = AnfUtils::GetAbstractLock(node.get());
+    ssize_t input_tensor_num = cnode->input_tensor_num();
+    if (input_tensor_num >= 0) {
+      return static_cast<size_t>(input_tensor_num);
+    }
   }
+
   size_t input_num = cnode->inputs().size();
   if (input_num == 0) {
     MS_LOG(EXCEPTION) << "Cnode inputs size can't be zero" << trace::DumpSourceLines(node);
@@ -191,6 +239,8 @@ size_t AnfUtils::GetInputTensorNum(const AnfNodePtr &node) {
     auto &inputs = cnode->inputs();
     // Search monad inputs, backward.
     for (auto iter = inputs.rbegin(); iter != inputs.rend(); ++iter) {
+      // cppcheck-suppress unreadVariable
+      auto lock = AnfUtils::GetAbstractLock(node.get());
       if (!HasAbstractMonad(*iter)) {
         // Stop count if we encounter a non-monad input.
         break;
@@ -198,6 +248,8 @@ size_t AnfUtils::GetInputTensorNum(const AnfNodePtr &node) {
       --input_num;
     }
   }
+  // cppcheck-suppress unreadVariable
+  auto lock = AnfUtils::GetAbstractLock(node.get());
   cnode->set_input_tensor_num(static_cast<ssize_t>(input_num));
   return input_num;
 }
@@ -207,8 +259,8 @@ size_t AnfUtils::GetOutputTensorNum(const AnfNodePtr &node) {
   auto kernel_info = node->kernel_info();
   if (kernel_info) {
     auto runtime_cache = kernel_info->runtime_cache();
-    if (runtime_cache->is_valid()) {
-      ssize_t output_tensor_num = runtime_cache->output_tensor_num();
+    if (runtime_cache.runtime_cache().is_valid()) {
+      ssize_t output_tensor_num = runtime_cache.runtime_cache().output_tensor_num();
       if (output_tensor_num >= 0) {
         return static_cast<size_t>(output_tensor_num);
       }
@@ -231,8 +283,8 @@ size_t AnfUtils::GetOutputTensorNum(const AnfNodePtr &node) {
 
   if (kernel_info) {
     auto runtime_cache = kernel_info->runtime_cache();
-    if (runtime_cache->is_valid()) {
-      runtime_cache->set_output_tensor_num(static_cast<ssize_t>(res));
+    if (runtime_cache.runtime_cache().is_valid()) {
+      runtime_cache.runtime_cache().set_output_tensor_num(static_cast<ssize_t>(res));
     }
   }
   return res;

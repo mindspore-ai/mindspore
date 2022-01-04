@@ -114,5 +114,26 @@ void DynamicReshapeKernel::Execute() {
 device::DynamicKernelPtr DynamicReshapeKernelMod::GenDynamicKernel(const CNodePtr &cnode_ptr, void *stream_ptr) {
   return std::make_shared<DynamicReshapeKernel>(stream_ptr, cnode_ptr);
 }
+
+bool DynamicReshapeKernelMod::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
+                                     const std::vector<AddressPtr> &, void *stream_ptr) {
+  auto node = anf_node_.lock();
+  MS_EXCEPTION_IF_NULL(node);
+  if (!node->isa<CNode>()) {
+    MS_LOG(EXCEPTION) << "anfnode is not a cnode";
+  }
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  stream_ = stream_ptr;
+  auto reshape_kernel = std::make_shared<DynamicReshapeKernel>(stream_ptr, cnode);
+  try {
+    reshape_kernel->Execute();
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "DynamicReshapeKernel Launch failed. node: " << cnode->fullname_with_scope()
+                  << ", Error message is " << e.what();
+    return false;
+  }
+  return true;
+}
 }  // namespace kernel
 }  // namespace mindspore

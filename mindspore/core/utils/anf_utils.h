@@ -25,6 +25,19 @@
 #include "ir/primitive.h"
 
 namespace mindspore {
+class AbstractScope {
+ public:
+  explicit AbstractScope(std::recursive_mutex *mu);
+  AbstractScope(const AbstractScope &other) = delete;
+  AbstractScope operator=(const AbstractScope &other) = delete;
+  AbstractScope(AbstractScope &&other);
+  AbstractScope &operator=(AbstractScope &&other);
+  ~AbstractScope();
+
+ private:
+  std::recursive_mutex *mu_;
+};
+
 class AnfUtils {
  public:
   static bool IsDimUnknown(const abstract::ShapePtr &shape);
@@ -52,6 +65,7 @@ class AnfUtils {
   static void SetDumpFlag(const AnfNodePtr &node);
   // Get dump flag from CNode's primitive.
   static bool GetDumpFlag(const AnfNodePtr &node);
+  static AbstractScope GetAbstractLock(const AnfNode *node);
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_UTILS_ANF_UTILS_H_

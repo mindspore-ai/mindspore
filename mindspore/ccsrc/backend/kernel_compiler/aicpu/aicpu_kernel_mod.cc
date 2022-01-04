@@ -36,13 +36,12 @@ using HostDynamicKernel = mindspore::device::ascend::HostDynamicKernel;
 
 namespace mindspore {
 namespace kernel {
-AicpuOpKernelMod::AicpuOpKernelMod() : anf_node_(nullptr) {}
+AicpuOpKernelMod::AicpuOpKernelMod() {}
 
 AicpuOpKernelMod::~AicpuOpKernelMod() {
   args_.clear();
-  inputList_.clear();
-  outputList_.clear();
-  anf_node_ = nullptr;
+  input_list_.clear();
+  output_list_.clear();
   input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
@@ -55,9 +54,9 @@ void AicpuOpKernelMod::SetOutputSizeList(const std::vector<size_t> &size_list) {
 const std::vector<size_t> &AicpuOpKernelMod::GetOutputSizeList() const { return output_size_list_; }
 void AicpuOpKernelMod::SetWorkspaceSizeList(const std::vector<size_t> &size_list) { workspace_size_list_ = size_list; }
 const std::vector<size_t> &AicpuOpKernelMod::GetWorkspaceSizeList() const { return workspace_size_list_; }
-void AicpuOpKernelMod::SetInputList(const std::vector<int64_t> &inputList) { inputList_ = inputList; }
-void AicpuOpKernelMod::SetOutputList(const std::vector<int64_t> &outputList) { outputList_ = outputList; }
-void AicpuOpKernelMod::SetNodeDef(const std::string &nodeDef) { (void)node_def_str_.assign(nodeDef); }
+void AicpuOpKernelMod::SetInputList(const std::vector<int64_t> &input_list) { input_list_ = input_list; }
+void AicpuOpKernelMod::SetOutputList(const std::vector<int64_t> &output_list) { output_list_ = output_list; }
+void AicpuOpKernelMod::SetNodeDef(const std::string &node_def) { (void)node_def_str_.assign(node_def); }
 void AicpuOpKernelMod::SetExtInfo(const std::string &ext_info) { ext_info_ = ext_info; }
 void AicpuOpKernelMod::SetNodeName(const std::string &node_name) { node_name_ = node_name; }
 void AicpuOpKernelMod::SetCustSo(const std::string &cust_so) {
@@ -85,11 +84,18 @@ void AicpuOpKernelMod::CreateCpuKernelInfo(const std::vector<AddressPtr> &inputs
         node_so_ = kLibAicpuKernelSoName;
       }
     }
-  } else {
-    if (kCpuKernelBaseOps.find(node_name_) == kCpuKernelBaseOps.end()) {
-      node_name_ = kCpuRunApi;
-    }
+  } else if (kCpuKernelBaseOps.find(node_name_) == kCpuKernelBaseOps.end()) {
+    node_name_ = kCpuRunApi;
   }
+
+  if (node_name_ == kTopK) {
+    node_name_ = kTopKV2;
+  }
+
+  if (node_name_ == kStack) {
+    node_name_ = kPack;
+  }
+
   // InputOutputAddr
   vector<void *> io_addrs;
   (void)std::transform(std::begin(inputs), std::end(inputs), std::back_inserter(io_addrs),
@@ -120,6 +126,8 @@ void AicpuOpKernelMod::CreateCpuKernelInfo(const std::vector<AddressPtr> &inputs
     aicpu_param_head.extInfoAddr = 0;
   } else {
     MS_LOG(INFO) << "Dynamic Kernel Ext Info size:" << ext_info_.size();
+    aicpu_param_head.extInfoLength = SizeToUint(ext_info_.size());
+    aicpu_param_head.extInfoAddr = reinterpret_cast<uint64_t>(ext_info_addr_dev_);
   }
 
   args_.clear();
@@ -162,6 +170,8 @@ bool AicpuOpKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::
   }
   MS_LOG(INFO) << "Aicpu launch, node_so_:" << node_so_ << ", node name:" << node_name_
                << ", args_size:" << args_.length();
+  // cppcheck-suppress unreadVariable
+  auto lock = AscendKernelMod::LockRuntime();
   if (rtCpuKernelLaunchWithFlag(reinterpret_cast<const void *>(node_so_.c_str()),
                                 reinterpret_cast<const void *>(node_name_.c_str()), 1,
                                 reinterpret_cast<const void *>(args_.data()), static_cast<uint32_t>(args_.length()),

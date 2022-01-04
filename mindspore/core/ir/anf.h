@@ -178,12 +178,12 @@ class MS_CORE_API AnfNode : public Base {
   /// \brief Obtain the inferred abstract value of this AnfNode.
   ///
   /// \return The inferred abstract value.
-  const AbstractBasePtr &abstract() const { return abstract_; }
+  const AbstractBasePtr &abstract() const;
 
   /// \brief Set the abstract value of this AnfNode.
   ///
   /// \param[in] abs New abstract value.
-  void set_abstract(const AbstractBasePtr &abs) { abstract_ = abs; }
+  void set_abstract(const AbstractBasePtr &abs);
 
   /// \brief Obtain the intermediate abstract value of this AnfNode.
   ///

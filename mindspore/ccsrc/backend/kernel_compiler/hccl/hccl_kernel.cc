@@ -66,7 +66,13 @@ HcclKernelFactory &HcclKernelFactory::Get() {
 
 HcclKernel::HcclKernel()
     : hccl_count_(0), op_type_(::HcclReduceOp::HCCL_REDUCE_SUM), root_id_(0), src_rank_(0), dest_rank_(0) {}
-
+HcclKernel::HcclKernel(const AnfNodePtr &anf_node)
+    : AscendKernelMod(),
+      hccl_count_(0),
+      op_type_(::HcclReduceOp::HCCL_REDUCE_SUM),
+      root_id_(0),
+      src_rank_(0),
+      dest_rank_(0) {}
 HcclKernel::~HcclKernel() {
   hccl_kernel_input_shape_list_.clear();
   hccl_kernel_output_shape_list_.clear();
@@ -293,6 +299,100 @@ device::DynamicKernelPtr HcclKernel::GenDynamicKernel(const CNodePtr &cnode_ptr,
   auto executor = std::make_shared<device::ascend::HcclDynamicKernel>(
     hccl_type, input_data_addr, output_data_addr, hccl_count_, data_type, op_type_, root_id_, stream_ptr, cnode_ptr);
   return executor;
+}
+
+void HcclKernel::InferOp() {
+  if (AnfAlgo::IsDynamicShape(anf_node_.lock())) {
+    KernelMod::InferShape();
+  }
+}
+
+bool HcclKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                        const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+  auto node = anf_node_.lock();
+  MS_EXCEPTION_IF_NULL(node);
+  if (!node->isa<CNode>()) {
+    MS_LOG(EXCEPTION) << "anfnode is not a cnode";
+  }
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+
+  if (inputs.empty() && outputs.empty()) {
+    MS_LOG(ERROR) << "Hccl kernel input or output is empty";
+    return false;
+  }
+  if (hccl_data_type_list_.empty()) {
+    MS_LOG(ERROR) << "Hccl data type list is empty";
+    return false;
+  }
+
+  MS_EXCEPTION_IF_NULL(stream_ptr);
+
+  MS_LOG(INFO) << "Start Execute: " << cnode->DebugString();
+  std::string hccl_type = MsOpNameToHcomOpType(AnfAlgo::GetCNodeName(anf_node_.lock()));
+  HcclDataType data_type = hccl_data_type_list_[0];
+
+  ::HcomOperation op_info;
+  op_info.hcclType = hccl_type;
+  op_info.inputPtr = inputs[0]->addr;
+  op_info.outputPtr = outputs[0]->addr;
+  op_info.dataType = static_cast<HcclDataType>(data_type);
+  op_info.opType = static_cast<HcclReduceOp>(op_type_);
+  op_info.root = IntToUint(root_id_);
+  op_info.count = hccl_count_;
+
+  auto callback = [this](HcclResult status) {
+    if (status != HCCL_SUCCESS) {
+      MS_LOG(ERROR) << "HcomExcutorInitialize failed, ret:" << status;
+    }
+    std::lock_guard<std::mutex> lock(this->hccl_mutex_);
+    this->cond_.notify_all();
+    MS_LOG(INFO) << "hccl callback success.";
+  };
+
+  auto hccl_ret = hccl::HcclAdapter::GetInstance().HcclExecEnqueueOp(op_info, callback);
+  if (hccl_ret != HCCL_SUCCESS) {
+    MS_LOG(EXCEPTION) << "Call EnqueueHcomOperation failed, node info: " << cnode->DebugString();
+    return false;
+  }
+
+  std::unique_lock<std::mutex> ulock(hccl_mutex_);
+  cond_.wait(ulock);
+  MS_LOG(INFO) << "Execute " << cnode->DebugString() << " success";
+  return true;
+}
+
+void HcclKernel::InitOp() {
+  auto node = anf_node_.lock();
+  MS_EXCEPTION_IF_NULL(node);
+  if (!node->isa<CNode>()) {
+    MS_LOG(EXCEPTION) << "anfnode is not a cnode";
+  }
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+
+  if (!AnfAlgo::IsDynamicShape(cnode)) {
+    MS_LOG(DEBUG) << "The node is not dynamic shape: " << cnode->fullname_with_scope();
+    return;
+  }
+
+  MS_LOG(INFO) << "Start to InitOp. Node info: " << cnode->DebugString();
+
+  std::vector<std::vector<size_t>> hccl_kernel_input_shape_list;
+  if (!HcomUtil::GetKernelInputShape(cnode, &hccl_kernel_input_shape_list)) {
+    MS_LOG(EXCEPTION) << "GetKernelInputShape fail! Node info: " << cnode->DebugString();
+  }
+
+  std::vector<HcclDataType> hccl_data_type_list;
+  if (!HcomUtil::GetHcomDataType(cnode, &hccl_data_type_list)) {
+    MS_LOG(EXCEPTION) << "GetHcomDataType fail! Node info: " << cnode->DebugString();
+  }
+
+  // Update Hccl count
+  if (!HcomUtil::GetHcomCount(cnode, hccl_data_type_list, hccl_kernel_input_shape_list, &hccl_count_)) {
+    MS_LOG(EXCEPTION) << "GetHcomCount fail! Node info: " << cnode->DebugString();
+  }
+  MS_LOG(INFO) << "Update Hccl count:" << hccl_count_;
 }
 }  // namespace kernel
 }  // namespace mindspore

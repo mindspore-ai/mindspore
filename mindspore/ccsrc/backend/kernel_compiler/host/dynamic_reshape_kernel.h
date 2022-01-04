@@ -35,6 +35,9 @@ class DynamicReshapeKernelMod : public HostKernelMod {
   DynamicReshapeKernelMod() = default;
   ~DynamicReshapeKernelMod() override = default;
   device::DynamicKernelPtr GenDynamicKernel(const CNodePtr &cnode_ptr, void *stream_ptr) override;
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
+  void UpdateOp() override { AscendKernelMod::UpdateOp(); }
 };
 MS_HOST_REG_KERNEL(DynamicReshape, DynamicReshapeKernelMod);
 }  // namespace kernel

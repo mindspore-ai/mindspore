@@ -57,6 +57,8 @@ void DynamicShapeKernel::Execute() {
   } else {
     auto runtime_instance = device::KernelRuntimeManager::Instance().GetCurrentKernelRuntime();
     MS_EXCEPTION_IF_NULL(runtime_instance);
+    // cppcheck-suppress unreadVariable
+    auto lock = AscendKernelMod::LockRuntime();
     auto ret = runtime_instance->SyncStream();
     if (!ret) {
       MS_LOG(EXCEPTION) << "Sync stream error!";
@@ -105,6 +107,24 @@ void DynamicShapeKernel::Execute(const std::vector<AddressPtr> &inputs, const st
 
 device::DynamicKernelPtr DynamicShapeKernelMod::GenDynamicKernel(const CNodePtr &cnode_ptr, void *stream_ptr) {
   return std::make_shared<DynamicShapeKernel>(stream_ptr, cnode_ptr);
+}
+
+bool DynamicShapeKernelMod::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
+                                   const std::vector<AddressPtr> &, void *stream_ptr) {
+  auto node = anf_node_.lock();
+  MS_EXCEPTION_IF_NULL(node);
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  stream_ = stream_ptr;
+  auto shape_kernel = std::make_shared<DynamicShapeKernel>(stream_ptr, cnode);
+  try {
+    shape_kernel->Execute();
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "DynamicShapeKernelMod Launch failed. node: " << cnode->fullname_with_scope()
+                  << ", Error message is " << e.what();
+    return false;
+  }
+  return true;
 }
 }  // namespace kernel
 }  // namespace mindspore

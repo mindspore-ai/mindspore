@@ -1,5 +1,6 @@
 file(GLOB_RECURSE KERNEL_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     "kernel_build_info.cc"
+    "kernel.cc"
     "kash/*.cc"
     "common_utils.cc"
     "oplib/*.cc"
@@ -12,6 +13,7 @@ endif()
 
 if(ENABLE_D)
     file(GLOB_RECURSE D_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+        "ascend_kernel_mod.cc"
         "kernel_query.cc"
         "tbe/*.cc"
         "host/*.cc"
