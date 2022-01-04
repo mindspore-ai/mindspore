@@ -184,7 +184,7 @@ Status WIDERFaceOp::ParseAnnotations(const std::string &path, TensorRow *tensor)
   CHECK_FAIL_RETURN_UNEXPECTED(
     static_cast<int>(annotation.size()) % kDataLen == 0,
     "Invalid parameter, only annotation with size multiple of eight are accepted, but got: " +
-      static_cast<int>(annotation.size()));
+      std::to_string(annotation.size()));
   std::vector<int32_t> bboxes_vec, blur_vec, expression_vec, illumination_vec, occlusion_vec, pose_vec, invalid_vec;
   std::vector<int32_t> label_vec;
   std::shared_ptr<Tensor> bbox, blur, expression, illumination, occlusion, pose, invalid;
