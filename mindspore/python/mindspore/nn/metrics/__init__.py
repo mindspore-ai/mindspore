@@ -117,6 +117,7 @@ def get_metric_fn(name, *args, **kwargs):
         Metric object, class instance of the metric method.
 
     Examples:
+        >>> from mindspore import nn
         >>> metric = nn.get_metric_fn('precision', eval_type='classification')
     """
     if name not in __factory__:

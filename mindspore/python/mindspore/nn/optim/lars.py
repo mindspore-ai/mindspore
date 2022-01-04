@@ -94,6 +94,8 @@ class LARS(Optimizer):
         ``Ascend``
 
     Examples:
+        >>> from mindspore import nn, Model
+        >>>
         >>> net = Net()
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
         >>> opt = nn.Momentum(net.trainable_params(), 0.1, 0.9)

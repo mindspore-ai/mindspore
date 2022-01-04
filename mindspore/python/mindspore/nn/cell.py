@@ -1200,7 +1200,7 @@ class Cell(Cell_):
         Returns an iterator over immediate cells.
 
         Returns:
-            Iteration, the immediate child cells in the cell.
+            Iteration, the immediate cells in the cell.
         """
         return self.name_cells().values()
 
@@ -1246,7 +1246,7 @@ class Cell(Cell_):
         Include name of the cell and cell itself.
 
         Returns:
-            Dict[String, Cell], all the child cells and corresponding names in the cell.
+            Dict, all the child cells and corresponding names in the cell.
         """
         value_set = set()
         cells = OrderedDict()
@@ -1274,7 +1274,7 @@ class Cell(Cell_):
         """
         Add customized attributes for cell.
 
-        This method is also called when the cell class is instantiated and the class parameter 'flag' is set to True.
+        This method is also called when the cell class is instantiated and the class parameter 'flags' is set to True.
 
         Args:
             flags (dict): Network configuration information, currently it is used for the binding of network and
@@ -1331,13 +1331,13 @@ class Cell(Cell_):
 
         Args:
             dst_type (:class:`mindspore.dtype`): Transfer cell to run with dst_type.
-                dst_type can be `mindspore.dtype.float16` or `mindspore.dtype.float32`.
+                dst_type can be `mstype.float16` or `mstype.float32`.
 
         Returns:
             Cell, the cell itself.
 
         Raises:
-            ValueError: If dst_type is not float32 or float16.
+            ValueError: If dst_type is not mstype.float32 or mstype.float16.
 
         Examples:
             >>> import mindspore.nn as nn

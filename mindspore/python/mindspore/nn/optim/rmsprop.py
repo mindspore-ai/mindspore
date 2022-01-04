@@ -161,6 +161,8 @@ class RMSProp(Optimizer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore import nn, Model
+        >>>
         >>> net = Net()
         >>> #1) All parameters use the same learning rate and weight decay
         >>> optim = nn.RMSProp(params=net.trainable_params(), learning_rate=0.1)
