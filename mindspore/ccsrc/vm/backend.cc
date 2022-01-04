@@ -230,18 +230,6 @@ TensorPtr CreateOutputTensor(const AnfNodePtr &output_node, size_t output_index)
   return tensor;
 }
 
-void UpdateOutput(const std::vector<session::KernelWithIndex> &output_nodes, VectorRef *const outputs) {
-  MS_EXCEPTION_IF_NULL(outputs);
-  for (auto &item_with_index : output_nodes) {
-    MS_EXCEPTION_IF_NULL(item_with_index.first);
-    // if is graph return nothing ,the function should return a null anylist
-    if (AnfAlgo::GetOutputTensorNum(item_with_index.first) == 0) {
-      continue;
-    }
-    outputs->emplace_back(CreateOutputTensor(item_with_index.first, item_with_index.second));
-  }
-}
-
 void ClearGraphDeviceAddress(const KernelGraphPtr &graph, const DeviceContext *device_context, bool is_gradient_out) {
   MS_EXCEPTION_IF_NULL(graph);
   for (const auto &node : graph->execution_order()) {
@@ -1388,9 +1376,8 @@ void MindRTBackend::RunOpInternal(bool single_op_cache_hit, GraphCompilerInfo *g
       op_lazy_builder.PushOpBuildTask(std::make_shared<runtime::OpBuildTask>(run_op_context));
     }
     op_lazy_builder.PushOpRunTask(std::make_shared<runtime::OpRunTask>(run_op_context));
-    if (!op_lazy_builder.registered()) {
-      op_lazy_builder.Register([this]() { LazyExecuteTaskCallback(); });
-    }
+    // Callbacks need to be re-registered in heterogeneous scenarios.
+    op_lazy_builder.Register([this]() { LazyExecuteTaskCallback(); });
     if (op_lazy_builder.QueueFull()) {
       op_lazy_builder.ExecuteRemainingTasks();
     }
@@ -1447,6 +1434,20 @@ void MindRTBackend::CompileSingleOpGraph(const KernelGraphPtr &graph, const Devi
   // Workspace need to be initialized in Actor::Init().
   // So `Schedule` need to execute after `CreateKernelWorkspaceDeviceAddress`.
   runtime::GraphScheduler::GetInstance().Schedule(actor_set);
+}
+
+void MindRTBackend::UpdateOutput(const std::vector<session::KernelWithIndex> &output_nodes, VectorRef *const outputs) {
+  MS_EXCEPTION_IF_NULL(outputs);
+  for (auto &item_with_index : output_nodes) {
+    MS_EXCEPTION_IF_NULL(item_with_index.first);
+    if (AnfAlgo::GetOutputTensorNum(item_with_index.first) == 0) {
+      continue;
+    }
+    auto output_tensor = CreateOutputTensor(item_with_index.first, item_with_index.second);
+    MS_EXCEPTION_IF_NULL(output_tensor);
+    output_tensor->set_lazy_callback([]() { runtime::OpLazyBuilder::GetInstance().ExecuteRemainingTasks(); });
+    outputs->emplace_back(output_tensor);
+  }
 }
 }  // namespace compile
 }  // namespace mindspore
