@@ -2334,10 +2334,10 @@ inline std::shared_ptr<EMnistDataset> MS_API EMnist(const std::string &dataset_d
 /// \param[in] sampler Sampler object used to choose samples from the dataset.
 /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
 /// \return Shared pointer to the current EMnistDataset.
-inline std::shared_ptr<EMnistDataset> MS_APIEMnist(const std::string &dataset_dir, const std::string &name,
-                                                   const std::string &usage,
-                                                   const std::reference_wrapper<Sampler> sampler,
-                                                   const std::shared_ptr<DatasetCache> &cache = nullptr) {
+inline std::shared_ptr<EMnistDataset> MS_API EMnist(const std::string &dataset_dir, const std::string &name,
+                                                    const std::string &usage,
+                                                    const std::reference_wrapper<Sampler> sampler,
+                                                    const std::shared_ptr<DatasetCache> &cache = nullptr) {
   return std::make_shared<EMnistDataset>(StringToChar(dataset_dir), StringToChar(name), StringToChar(usage), sampler,
                                          cache);
 }
