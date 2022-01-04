@@ -22,6 +22,7 @@ from .ops import LU
 from .ops import LUSolver
 from .ops import EighNet
 from ..ops import operations as P
+from .utils_const import _raise_value_error
 
 __all__ = ['block_diag', 'inv', 'eigh', 'lu_factor', 'lu']
 
@@ -80,12 +81,11 @@ def block_diag(*arrs):
         return mnp.zeros((1, 0))
     bad_shapes = [i for i, a in enumerate(arrs) if a.ndim > 2]
     if bad_shapes:
-        raise ValueError("Arguments to mindspore.scipy.linalg.block_diag must have at "
-                         "most 2 dimensions, got {} at argument {}."
-                         .format(arrs[bad_shapes[0]], bad_shapes[0]))
-    arrs = [mnp.atleast_2d(a) for a in arrs]
-    accum = arrs[0]
+        _raise_value_error("Arguments to mindspore.scipy.linalg.block_diag must have at most 2 dimensions.")
+
+    accum = mnp.atleast_2d(arrs[0])
     for arr in arrs[1:]:
+        arr = mnp.atleast_2d(arr)
         _, c = arr.shape
         arr = ops.Pad(((0, 0), (accum.shape[-1], 0)))(arr)
         accum = ops.Pad(((0, 0), (0, c)))(accum)
@@ -235,10 +235,11 @@ def cho_factor(a, lower=False, overwrite_a=False, check_finite=True):
         >>> A = Tensor(onp.array([[9, 3, 1, 5], [3, 7, 5, 1], [1, 5, 9, 2], [5, 1, 2, 6]]).astype(onp.float32))
         >>> c, low = cho_factor(A)
         >>> c
-        [[ 2.9999998   0.99999994  0.3333333   1.6666665 ]
-         [ 0.          2.4494896   1.9051585  -0.27216542]
-         [ 0.          0.          2.2933078   0.8559527 ]
-         [ 0.          0.          0.          1.5541859 ]]
+        Tensor(shape=[4, 4], dtype=Float32, value=
+        [[ 3.00000000e+00,  1.00000000e+00,  3.33333343e-01,  1.66666663e+00],
+         [ 3.00000000e+00,  2.44948983e+00,  1.90515852e+00, -2.72165507e-01],
+         [ 1.00000000e+00,  5.00000000e+00,  2.29330778e+00,  8.55952621e-01],
+         [ 5.00000000e+00,  1.00000000e+00,  2.00000000e+00,  1.55418575e+00]])
     """
     cholesky_net = Cholesky(lower=lower, clean=False)
     c = cholesky_net(a)
@@ -277,8 +278,9 @@ def cholesky(a, lower=False, overwrite_a=False, check_finite=True):
         >>> a = Tensor(onp.array([[1, -2],[2, 5]]).astype(onp.float32))
         >>> L = cholesky(a, lower=True)
         >>> L
-        [[1., 0.],
-         [2., 1.]]
+        Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 1.00000000e+00,  0.00000000e+00],
+         [ 2.00000000e+00,  1.00000000e+00]])
     """
     cholesky_net = Cholesky(lower=lower, clean=True)
     c = cholesky_net(a)
@@ -311,7 +313,7 @@ def cho_solve(c_and_lower, b, overwrite_b=False, check_finite=True):
         >>> c, low = cho_factor(A)
         >>> x = cho_solve((c, low), b)
         >>> x
-        [-0.01749271,  0.11953353,  0.01166181,  0.1574344 ]
+        Tensor(shape=[4], dtype=Float32, value= [-1.74926575e-02,  1.19533479e-01,  1.16618462e-02,  1.57434344e-01])
     """
     (c, lower) = c_and_lower
     cholesky_solver_net = CholeskySolver(lower=lower)
@@ -419,6 +421,7 @@ def lu_solve_core(in_lu, permutation, b, trans):
     for sh in res_shape:
         prod_result *= sh
     x = mnp.reshape(b, (m, prod_result))
+    trans_str = None
     if trans == 0:
         trans_str = "N"
         x = x[permutation, :]
@@ -427,7 +430,7 @@ def lu_solve_core(in_lu, permutation, b, trans):
     elif trans == 2:
         trans_str = "C"
     else:
-        raise ValueError("trans error, it's value must be 0, 1, 2")
+        _raise_value_error("trans error, it's value must be 0, 1, 2")
     ms_lu_solve = LUSolver(trans_str)
     output = ms_lu_solve(in_lu, x)
     return mnp.reshape(output, b.shape)
@@ -436,18 +439,21 @@ def lu_solve_core(in_lu, permutation, b, trans):
 def check_lu_shape(in_lu, b):
     """ check lu input shape"""
     if len(in_lu.shape) < 2 or in_lu.shape[-1] != in_lu.shape[-2]:
-        raise ValueError("last two dimensions of LU decomposition must be equal.")
+        _raise_value_error("last two dimensions of LU decomposition must be equal.")
 
     if b.shape is None:
-        raise ValueError(" LU decomposition input b's rank must >=1.")
+        _raise_value_error(" LU decomposition input b's rank must >=1.")
+
     rhs_vector = in_lu.ndim == b.ndim + 1
     if rhs_vector:
         if b.shape[-1] != in_lu.shape[-1]:
-            raise ValueError("LU decomposition: lu matrix and b must have same number of dimensions")
+            _raise_value_error("LU decomposition: lu matrix and b must have same number of dimensions")
         mnp.expand_dims(b, axis=1)
     else:
         if b.shape[-2] != in_lu.shape[-1]:
-            raise ValueError("LU decomposition: lu matrix and b must have same number of dimensions")
+            _raise_value_error("LU decomposition: lu matrix and b must have same number of dimensions")
+
+    return True
 
 
 def lu_factor(a, overwrite_a=False, check_finite=True):
@@ -496,9 +502,8 @@ def lu_factor(a, overwrite_a=False, check_finite=True):
         >>> piv
         Tensor(shape=[4], dtype=Int32, value= [2, 0, 3, 1])
     """
-    del overwrite_a, check_finite
     if len(a.shape) < 2 or (a.shape[-1] != a.shape[-2]):
-        raise ValueError("input of lu matrix must be square.")
+        _raise_value_error("input of lu matrix must be square.")
     msp_lu = LU()
     m_lu, pivots, _ = msp_lu(a)
     return m_lu, pivots
@@ -564,7 +569,6 @@ def lu(a, permute_l=False, overwrite_a=False, check_finite=True):
          [ 0.00000000e+00,  0.00000000e+00, -1.03999996e+00,  3.07999992e+00],
          [ 0.00000000e+00, -0.00000000e+00, -0.00000000e+00,  7.46153831e+00]])
     """
-    del overwrite_a, check_finite
     msp_lu = LU()
     m_lu, _, p = msp_lu(a)
     m = a.shape[-2]
@@ -614,8 +618,6 @@ def lu_solve(lu_and_piv, b, trans=0, overwrite_b=False, check_finite=True):
         >>> lu_solve((lu, piv), b)
         [ 0.05154639, -0.08247423,  0.08247423,  0.09278351]
     """
-
-    del overwrite_b, check_finite
     m_lu, pivots = lu_and_piv
     # 1. check shape
     check_lu_shape(m_lu, b)

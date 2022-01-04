@@ -19,6 +19,7 @@ import pytest
 import numpy as onp
 import scipy as osp
 
+import mindspore.nn as nn
 import mindspore.scipy as msp
 from mindspore import context, Tensor
 import mindspore.numpy as mnp
@@ -199,18 +200,18 @@ def test_eigh_complex(n: int, dtype):
                 A[i][j] = complex(onp.random.rand(1, 1), 0)
             else:
                 A[i][j] = complex(onp.random.rand(1, 1), onp.random.rand(1, 1))
-    sym_Al = (onp.tril((onp.tril(A) - onp.tril(A).T)) + onp.tril(A).conj().T)
-    sym_Au = (onp.triu((onp.triu(A) - onp.triu(A).T)) + onp.triu(A).conj().T)
-    msp_wl, msp_vl = msp.linalg.eigh(Tensor(onp.array(sym_Al).astype(dtype[0])), lower=True, eigvals_only=False)
-    msp_wu, msp_vu = msp.linalg.eigh(Tensor(onp.array(sym_Au).astype(dtype[0])), lower=False, eigvals_only=False)
-    assert onp.allclose(sym_Al @ msp_vl.asnumpy() - msp_vl.asnumpy() @ onp.diag(msp_wl.asnumpy()),
+    sym_al = (onp.tril((onp.tril(A) - onp.tril(A).T)) + onp.tril(A).conj().T)
+    sym_au = (onp.triu((onp.triu(A) - onp.triu(A).T)) + onp.triu(A).conj().T)
+    msp_wl, msp_vl = msp.linalg.eigh(Tensor(onp.array(sym_al).astype(dtype[0])), lower=True, eigvals_only=False)
+    msp_wu, msp_vu = msp.linalg.eigh(Tensor(onp.array(sym_au).astype(dtype[0])), lower=False, eigvals_only=False)
+    assert onp.allclose(sym_al @ msp_vl.asnumpy() - msp_vl.asnumpy() @ onp.diag(msp_wl.asnumpy()),
                         onp.zeros((n, n)), rtol, atol)
-    assert onp.allclose(sym_Au @ msp_vu.asnumpy() - msp_vu.asnumpy() @ onp.diag(msp_wu.asnumpy()),
+    assert onp.allclose(sym_au @ msp_vu.asnumpy() - msp_vu.asnumpy() @ onp.diag(msp_wu.asnumpy()),
                         onp.zeros((n, n)), rtol, atol)
 
     # test for real scalar complex no vector
-    msp_wl0 = msp.linalg.eigh(Tensor(onp.array(sym_Al).astype(dtype[0])), lower=True, eigvals_only=True)
-    msp_wu0 = msp.linalg.eigh(Tensor(onp.array(sym_Au).astype(dtype[0])), lower=False, eigvals_only=True)
+    msp_wl0 = msp.linalg.eigh(Tensor(onp.array(sym_al).astype(dtype[0])), lower=True, eigvals_only=True)
+    msp_wu0 = msp.linalg.eigh(Tensor(onp.array(sym_au).astype(dtype[0])), lower=False, eigvals_only=True)
     assert onp.allclose(msp_wl.asnumpy() - msp_wl0.asnumpy(), onp.zeros((n, n)), rtol, atol)
     assert onp.allclose(msp_wu.asnumpy() - msp_wu0.asnumpy(), onp.zeros((n, n)), rtol, atol)
 
@@ -292,3 +293,28 @@ def test_lu_solve(n: int, dtype):
     atol = 1.e-3
     assert onp.allclose(real_b.asnumpy(), expected_b, rtol=rtol, atol=atol)
     assert onp.allclose(msp_x.asnumpy(), osp_x, rtol=rtol, atol=atol)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('args', [(), (1,), (7, -1), (3, 4, 5),
+                                  (onp.ones((3, 4), dtype=onp.float32), 5, onp.random.randn(5, 2).astype(onp.float32))])
+def test_block_diag_graph(args):
+    """
+    Feature: ALL TO ALL
+    Description: test cases for block_diag in graph mode
+    Expectation: the result match scipy
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+
+    class TestNet(nn.Cell):
+        def construct(self, inputs):
+            return msp.linalg.block_diag(*inputs)
+
+    tensor_args = tuple([Tensor(arg) for arg in args])
+    ms_res = TestNet()(tensor_args)
+
+    scipy_res = osp.linalg.block_diag(*args)
+    match_array(ms_res.asnumpy(), scipy_res)

@@ -25,16 +25,11 @@ def _type_convert(new_type, obj):
 
 
 @constexpr
-def _raise_type_error(info, param=None):
+def _raise_value_error(info):
     """
-    Raise TypeError in both graph/pynative mode
+    Raise ValueError in both graph/pynative mode
 
     Args:
         info(str): info string to display
-        param(python obj): any object that can be recognized by graph mode. If is
-            not None, then param's type information will be extracted and displayed.
-            Default is None.
     """
-    if param is None:
-        raise TypeError(info)
-    raise TypeError(info + f"{type(param)}")
+    raise ValueError(info)

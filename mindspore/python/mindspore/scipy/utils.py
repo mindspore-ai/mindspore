@@ -19,7 +19,7 @@ from ..numpy import where, zeros_like, dot, greater
 from ..ops import functional as F
 from ..common import Tensor
 from ..common import dtype as mstype
-from .utils_const import _type_convert, _raise_type_error
+from .utils_const import _type_convert, _raise_value_error
 from ..ops.composite import GradOperation
 from ..ops.primitive import constexpr
 from .._c_expression import typing
@@ -48,7 +48,7 @@ def _to_tensor(*args, dtype=None):
             else:
                 arg = arg.astype(dtype)
         elif not isinstance(arg, Tensor):
-            _raise_type_error("Expect input to be array like.")
+            _raise_value_error("Expect input to be array like.")
         res += (arg,)
     if len(res) == 1:
         return res[0]
@@ -121,10 +121,10 @@ def _normalize_matvec(f):
 
     if isinstance(f, Tensor):
         if f.ndim != 2 or f.shape[0] != f.shape[1]:
-            _raise_type_error(
-                'linear operator must be a square matrix, but has shape: ', f.shape)
+            _raise_value_error(
+                'linear operator must be a square matrix, but has shape: {}'.format(f.shape))
         return F.partial(dot, f)
 
-    _raise_type_error(
-        'linear operator must be either a function or Tensor: but got', F.typeof(f))
+    _raise_value_error(
+        'linear operator must be either a function or Tensor: but got {}'.format(F.typeof(f)))
     return f
