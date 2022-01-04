@@ -49,18 +49,19 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   if (size->isa<abstract::AbstractTensor>()) {
     if (size_v->isa<tensor::Tensor>()) {
       size_value = CheckAndConvertUtils::CheckTensorIntValue("size", size_v, prim_name);
-    }
-    size_value.push_back(-1);
-    size_value.push_back(-1);
-    auto min_value = size->cast<abstract::AbstractTensorPtr>()->get_min_value();
-    auto max_value = size->cast<abstract::AbstractTensorPtr>()->get_max_value();
-    if (!min_value || !max_value) {
-      MS_EXCEPTION(ValueError) << "For ResizeNearestNeighbor, inputs['size'] min or max value is empty.";
-    }
-    min_size = GetValue<std::vector<int64_t>>(min_value);
-    max_size = GetValue<std::vector<int64_t>>(max_value);
-    if (min_size.size() != size_size || max_size.size() != size_size) {
-      MS_EXCEPTION(ValueError) << "For ResizeNearestNeighbor, inputs['size'] min or max value size is not 2.";
+    } else {
+      size_value.push_back(-1);
+      size_value.push_back(-1);
+      auto min_value = size->cast<abstract::AbstractTensorPtr>()->get_min_value();
+      auto max_value = size->cast<abstract::AbstractTensorPtr>()->get_max_value();
+      if (!min_value || !max_value) {
+        MS_EXCEPTION(ValueError) << "For ResizeNearestNeighbor, inputs['size'] min or max value is empty.";
+      }
+      min_size = GetValue<std::vector<int64_t>>(min_value);
+      max_size = GetValue<std::vector<int64_t>>(max_value);
+      if (min_size.size() != size_size || max_size.size() != size_size) {
+        MS_EXCEPTION(ValueError) << "For ResizeNearestNeighbor, inputs['size'] min or max value size is not 2.";
+      }
     }
   } else if (size->isa<abstract::AbstractTuple>()) {
     size_value = CheckAndConvertUtils::CheckIntOrTupleInt("size", size_v, prim_name);

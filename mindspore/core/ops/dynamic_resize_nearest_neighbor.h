@@ -27,7 +27,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameDynamicResizeNearestNeighbor = "DynamicResizeNearestNeighbor";
 
-class MS_CORE_API DynamicResizeNearestNeighbor : public PrimitiveC {
+class DynamicResizeNearestNeighbor : public PrimitiveC {
  public:
   DynamicResizeNearestNeighbor() : PrimitiveC(kNameDynamicResizeNearestNeighbor) {}
   ~DynamicResizeNearestNeighbor() = default;

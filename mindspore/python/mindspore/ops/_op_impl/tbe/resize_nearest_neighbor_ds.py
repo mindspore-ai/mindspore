@@ -16,7 +16,7 @@
 """ResizeNearestNeighbor op"""
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
-resize_nearest_neighbor_op_info = TBERegOp("ResizeNearestNeighbor") \
+resize_nearest_neighbor_op_info = TBERegOp("DynamicResizeNearestNeighbor") \
     .fusion_type("OPAQUE") \
     .async_flag(False) \
     .binfile_name("resize_nearest_neighbor.so") \
@@ -24,14 +24,13 @@ resize_nearest_neighbor_op_info = TBERegOp("ResizeNearestNeighbor") \
     .kernel_name("resize_nearest_neighbor_v2") \
     .partial_flag(True) \
     .dynamic_shape(True) \
-    .need_check_supported(True) \
     .attr("align_corners", "optional", "bool", "all", "false") \
     .attr("half_pixel_centers", "optional", "bool", "all", "false") \
-    .input(0, "images", False, "required", "all") \
+    .input(0, "x", False, "reqxuired", "all") \
     .input(1, "size", False, "required", "all") \
     .output(0, "y", True, "required", "all") \
-    .dtype_format(DataType.F16_5HD, DataType.I32_5HD, DataType.F16_5HD) \
-    .dtype_format(DataType.F32_5HD, DataType.I32_5HD, DataType.F32_5HD) \
+    .dtype_format(DataType.F16_5HD, DataType.I32_Default, DataType.F16_5HD) \
+    .dtype_format(DataType.F32_5HD, DataType.I32_Default, DataType.F32_5HD) \
     .get_op_info()
 
 

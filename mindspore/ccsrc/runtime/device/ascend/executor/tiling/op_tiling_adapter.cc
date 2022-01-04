@@ -50,6 +50,7 @@ std::string OpTilingCalculateAdapter::GetRealOpType(const std::string &op_type) 
     {"DropoutDoMask", "DropOutDoMask"},
     {"IOU", "Iou"},
     {"DynamicBroadcastTo", "BroadcastTo"},
+    {"DynamicResizeNearestNeighbor", "ResizeNearestNeighborV2"},
   };
   auto iter = kOpTypeMap.find(op_type);
   if (iter == kOpTypeMap.end()) {

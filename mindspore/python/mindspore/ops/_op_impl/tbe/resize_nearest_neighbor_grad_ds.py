@@ -1,3 +1,4 @@
+
 # Copyright 2020 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,7 +25,6 @@ resize_nearest_neighbor_grad_op_info = TBERegOp("ResizeNearestNeighborGrad") \
     .kernel_name("resize_nearest_neighbor_v2_grad") \
     .partial_flag(True) \
     .dynamic_shape(True) \
-    .need_check_supported(True) \
     .attr("size", "required", "listInt", "all") \
     .attr("align_corners", "optional", "bool", "all", "false") \
     .attr("half_pixel_centers", "optional", "bool", "all", "false") \
