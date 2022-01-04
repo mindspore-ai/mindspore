@@ -607,7 +607,18 @@ int FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
       MS_LOG(INFO) << "do bias correction";
       BiasCorrectionStrategy strategy(flags_, calibrator_, fp32_session_, fp32_model_, activation_q_min_,
                                       activation_q_max_);
-      status = strategy.DoCPUBiasCorrection(func_graph);
+      switch (this->flags_.fullQuantParam.target_device) {
+        case CPU:
+          status = strategy.DoCPUBiasCorrection(func_graph);
+          break;
+        case NVGPU:
+          status = strategy.DoNVGPUBiasCorrection(func_graph);
+          break;
+        default:
+          MS_LOG(ERROR) << "Unsupported target device " << this->flags_.fullQuantParam.target_device
+                        << " for bias correction.";
+          return RET_ERROR;
+      }
       if (status != RET_OK) {
         MS_LOG(ERROR) << "bias_correction failed.";
         return status;

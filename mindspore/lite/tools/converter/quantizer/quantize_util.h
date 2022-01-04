@@ -101,7 +101,7 @@ int DoParameterBiasQuant(const ParameterPtr &bias, const PrimitivePtr &primitive
 int DeQuantData(mindspore::tensor::MSTensor *tensor, std::vector<double> *dequant_data, int preferred_dim = 0);
 
 int DeQuantData(const int8_t *tensor_data, int64_t elements_num, std::vector<lite::LiteQuantParam> quant_params,
-                std::vector<double> *dequant_data, int preferred_dim);
+                std::vector<double> *dequant_data, int preferred_dim = 0);
 
 int DoBitPack(const size_t &bit_num, schema::TensorT *tensor_input);
 
