@@ -87,6 +87,7 @@ const char PYTHON_PARSE_GET_OPERATION_SYMBOL[] = "get_operation_symbol";
 const char PYTHON_PARSE_GET_OPERATION_NAMESPACE_SYMBOL[] = "get_operation_namespace_symbol";
 const char PYTHON_PARSE_GET_BUILTIN_NAMESPACE_SYMBOL[] = "get_builtin_namespace_symbol";
 const char PYTHON_PARSE_GET_LOCATION[] = "get_location";
+const char PYTHON_PARSE_CHECK_IS_CONSTANT_VALUE[] = "is_constant_value";
 const char PYTHON_PARSE_EXPAND_EXPR_STATEMENT[] = "expand_expr_statement";
 const char PYTHON_PARSE_GENERATE_SCOPE[] = "generate_scope";
 const char PYTHON_PARSE_GET_SCOPE_NAME[] = "get_scope_name";

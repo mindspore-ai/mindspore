@@ -20,6 +20,7 @@ import mindspore.nn as nn
 from mindspore import Tensor, ms_function, context
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
+from mindspore.nn.probability import distribution
 import mindspore.common.dtype as mstype
 import mindspore.common._monad as monad
 
@@ -334,3 +335,34 @@ def test_self_method_2():
     net = Network()
     out = net()
     print(out)
+
+
+def test_probability_cauchy():
+    """
+    Feature: JIT Fallback
+    Description: NumPy method is called in probability cauchy.
+    Expectation: No exception.
+    """
+    class CauchyProb(nn.Cell):
+        def __init__(self, loc, scale, seed=10, dtype=mstype.float32, name='Cauchy'):
+            super().__init__()
+            self.b = distribution.Cauchy(loc, scale, seed, dtype, name)
+
+        def construct(self, value, loc=None, scale=None):
+            out1 = self.b.prob(value, loc, scale)
+            out2 = self.b.log_prob(value, loc, scale)
+            out3 = self.b.cdf(value, loc, scale)
+            out4 = self.b.log_cdf(value, loc, scale)
+            out5 = self.b.survival_function(value, loc, scale)
+            out6 = self.b.log_survival(value, loc, scale)
+            return out1, out2, out3, out4, out5, out6
+
+
+    loc = np.random.randn(1024, 512, 7, 7).astype(np.float32)
+    scale = np.random.uniform(0.0001, 100, size=(1024, 512, 7, 7)).astype(np.float32)
+    loc_a = np.random.randn(1024, 512, 7, 7).astype(np.float32)
+    scale_a = np.random.uniform(0.0001, 100, size=(1024, 512, 7, 7)).astype(np.float32)
+    value = np.random.randn(1024, 512, 7, 7).astype(np.float32)
+
+    net = CauchyProb(loc, scale)
+    net(Tensor(value), Tensor(loc_a), Tensor(scale_a))
