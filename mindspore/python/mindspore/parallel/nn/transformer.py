@@ -21,4 +21,5 @@ from mindspore.nn.transformer.transformer import AttentionMask, VocabEmbedding, 
     TransformerEncoder, TransformerDecoder, TransformerEncoderLayer, TransformerDecoderLayer, Transformer, \
     TransformerOpParallelConfig, \
     EmbeddingOpParallelConfig, TransformerRecomputeConfig, \
-    default_transformer_config, default_embedding_parallel_config
+    default_transformer_config, default_embedding_parallel_config, default_dpmp_config, default_moe_config, \
+    default_transformer_recompute_config
