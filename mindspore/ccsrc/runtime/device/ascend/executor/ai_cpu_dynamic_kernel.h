@@ -29,12 +29,13 @@ namespace ascend {
 class AiCpuDynamicKernel : public DynamicKernel {
  public:
   AiCpuDynamicKernel(void *stream, const CNodePtr &cnode_ptr, const std::string &args, const std::string &ext_info_data,
-                     const std::string &so_name, const std::string &kernel_name)
+                     const std::string &so_name, const std::string &kernel_name, const bool cust_kernel)
       : DynamicKernel(stream, cnode_ptr),
         args_(args),
         ext_info_data_(ext_info_data),
         so_name_(so_name),
         kernel_name_(kernel_name),
+        cust_kernel_(cust_kernel),
         ext_info_handler_(nullptr),
         ext_info_addr_dev_(nullptr),
         ext_info_size_(0),
@@ -57,6 +58,7 @@ class AiCpuDynamicKernel : public DynamicKernel {
   std::string ext_info_data_;
   std::string so_name_;
   std::string kernel_name_;
+  bool cust_kernel_;
 
   std::shared_ptr<AicpuExtInfoHandler> ext_info_handler_;
   void *ext_info_addr_dev_;
