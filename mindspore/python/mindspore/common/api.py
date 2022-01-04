@@ -795,7 +795,6 @@ def ms_memory_recycle():
     When train multi Neural network models in one process, memory used by mindspore is very large,
     this is because mindspore cached runtime memory for every model.
     To recycle these cached memory, users can call this function after training of one model.
-    :return:
     """
     if ms_compile_cache:
         _cell_graph_executor.del_net_res(ms_compile_cache)
