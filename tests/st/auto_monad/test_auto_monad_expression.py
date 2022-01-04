@@ -16,10 +16,13 @@ import pytest
 from mindspore.nn import Cell
 from mindspore import context, Tensor, Parameter
 import mindspore.ops.operations as P
+from mindspore.ops import functional as F
+from mindspore.ops import composite as C
 import mindspore as ms
 import numpy as np
 
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+context.set_context(mode=context.GRAPH_MODE)
+
 
 class AutoMonadAddnAdamNet(Cell):
     def __init__(self, var, m, v):
@@ -121,3 +124,77 @@ def test_auto_monad_read_dependency_two_assign_two_addn():
     out1 = net(Tensor([9.0], ms.float32))
     out2 = benchmarknet(Tensor([9.0], ms.float32))
     allclose_nparray(out1.asnumpy(), out2.asnumpy(), 0.001, 0.001)
+
+
+class ForwardNet(Cell):
+    def __init__(self):
+        super(ForwardNet, self).__init__()
+        self.weight = Parameter(Tensor(np.array(0), ms.int32), name="param")
+
+    def construct(self, x):
+        out = 0
+        i = 0
+        while i < 3:
+            F.assign(self.weight, i)
+            out = x * self.weight + out
+            i = i + 1
+        return out
+
+
+class BackwardNet(Cell):
+    def __init__(self, net):
+        super(BackwardNet, self).__init__(auto_prefix=False)
+        self.forward_net = net
+        self.grad = C.GradOperation(get_all=True)
+
+    def construct(self, *inputs):
+        grads = self.grad(self.forward_net)(*inputs)
+        return grads
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_load_convert_tensormove():
+    """
+    Feature: Auto monad feature: record the value of load.
+    Description: record the value of load.
+    Expectation: No exception.
+    """
+    x = Tensor(np.array(1), ms.int32)
+    graph_forword_net = ForwardNet()
+    graph_backword_net = BackwardNet(graph_forword_net)
+    graph_mode_grads = graph_backword_net(x)
+    output_except = (Tensor(np.array(3), ms.int32),)
+    assert np.all(graph_mode_grads == output_except)
+
+
+class ForwardNet2(Cell):
+    def __init__(self):
+        super(ForwardNet2, self).__init__()
+        self.weight = Parameter(Tensor(np.array(0), ms.int32), name="param")
+
+    def construct(self):
+        out = 0
+        i = 0
+        while i < 3:
+            F.assign(self.weight, i)
+            out = self.weight + out
+            i = i + 1
+        return out
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_load_convert_tensormove_2():
+    """
+    Feature: Auto monad feature: record the value of load.
+    Description: record the value of load.
+    Expectation: No exception.
+    """
+    graph_forword_net = ForwardNet2()
+    forward_res = graph_forword_net()
+    assert forward_res == 3
