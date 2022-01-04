@@ -30,7 +30,7 @@ def block_diag(*arrs):
     """
     Create a block diagonal matrix from provided arrays.
 
-    Given the list of Tensors `A`, `B` and `C`, the output will have these
+    Given the list of Tensors `A`, `B`, and `C`, the output will have these
     Tensors arranged on the diagonal:
 
     .. code-block::
@@ -167,7 +167,7 @@ def inv(a, overwrite_a=False, check_finite=True):
             if the inputs do contain infinities or NaNs. Default: True.
 
     Returns:
-        Tensor, Inverse of the matrix `a`.
+        Tensor, inverse of the matrix `a`.
 
     Raises:
         LinAlgError: If :math:`a` is singular.
@@ -297,7 +297,7 @@ def cho_solve(c_and_lower, b, overwrite_b=False, check_finite=True):
             (crashes, non-termination) if the inputs do contain infinities or NaNs.
 
     Returns:
-        Tensor, The solution to the system A x = b
+        Tensor, the solution to the system A x = b
 
     Supported Platforms:
         ``CPU`` ``GPU``
@@ -368,7 +368,7 @@ def eigh(a, b=None, lower=True, eigvals_only=False, overwrite_a=False,
         - Tensor with shape :math:`(N,)`, The :math:`N (1<=N<=M)` selected eigenvalues, in ascending order,
           each repeated according to its multiplicity.
 
-        - Tensor with shape :math:`(M, N)`, (if :math:`eigvals_only == False`)
+        - Tensor with shape :math:`(M, N)`, (if ``eigvals_only == False``)
 
     Raises:
         LinAlgError: If eigenvalue computation does not converge, an error occurred, or b matrix is not
@@ -472,8 +472,8 @@ def lu_factor(a, overwrite_a=False, check_finite=True):
         - Tensor, a square matrix of :math:`(N, N)` containing `U` in its upper triangle, and `L` in its lower triangle.
           The unit diagonal elements of `L` are not stored.
 
-        - Tensor, :math:`(N,)` Pivot indices representing the permutation matrix `P`:
-          row i of matrix was interchanged with row piv[i].
+        - Tensor, :math:`(N,)` pivot indices representing the permutation matrix `P`:
+          the i-th element value j in the indices indicates that row i of matrix was interchanged with row j.
 
     Raises:
         ValueError: If :math:`a` is not square.
@@ -527,14 +527,14 @@ def lu(a, permute_l=False, overwrite_a=False, check_finite=True):
     Returns:
         **If permute_l == False**
 
-        - Tensor, :math:`(M, M)` Permutation matrix.
-        - Tensor, :math:`(M, K)` Lower triangular or trapezoidal matrix with unit diagonal. :math:`K = min(M, N)`.
-        - Tensor, :math:`(K, N)` Upper triangular or trapezoidal matrix.
+        - Tensor, :math:`(M, M)` permutation matrix.
+        - Tensor, :math:`(M, K)` lower triangular or trapezoidal matrix with unit diagonal. :math:`K = min(M, N)`.
+        - Tensor, :math:`(K, N)` upper triangular or trapezoidal matrix.
 
         **If permute_l == True**
 
-        - Tensor, :math:`(M, K)` Permuted L matrix. :math:`K = min(M, N)`.
-        - Tensor, :math:`(K, N)` Upper triangular or trapezoidal matrix.
+        - Tensor, :math:`(M, K)` permuted L matrix. :math:`K = min(M, N)`.
+        - Tensor, :math:`(K, N)` upper triangular or trapezoidal matrix.
 
     Supported Platforms:
         ``CPU`` ``GPU``

@@ -321,7 +321,7 @@ def line_search(f, xk, pk, gfk=None, old_fval=None, old_old_fval=None, c1=1e-4,
         maxiter (int): maximum number of iterations to search. Default: 20.
 
     Returns:
-        LineSearchResults
+        LineSearchResults, results of line search results.
 
     Supported Platforms:
         ``CPU`` ``GPU``

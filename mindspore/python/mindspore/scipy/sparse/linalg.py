@@ -229,8 +229,8 @@ def gmres(A, b, x0=None, *, tol=1e-5, atol=0.0, restart=20, maxiter=None,
               iteration. It does not allow for early termination, but has much less overhead on GPUs.
 
     Returns:
-        - Tensor, The converged solution. Has the same structure as `b`.
-        - None, Placeholder for convergence information.
+        - Tensor, the converged solution. Has the same structure as `b`.
+        - None, placeholder for convergence information.
 
     Supported Platforms:
         ``CPU`` ``GPU``
@@ -350,8 +350,8 @@ def cg(A, b, x0=None, *, tol=1e-5, atol=0.0, maxiter=None, M=None):
             to reach a given error tolerance. Default: None.
 
     Returns:
-        - Tensor, The converged solution. Has the same structure as `b`.
-        - None, Placeholder for convergence information.
+        - Tensor, the converged solution. Has the same structure as `b`.
+        - None, placeholder for convergence information.
 
     Supported Platforms:
         ``CPU`` ``GPU``
