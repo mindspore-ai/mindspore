@@ -4996,7 +4996,12 @@ def _check_shm_usage(num_worker, queue_size, max_rowsize, num_queues=1):
     """
     threshold_ratio = 0.8
     if platform.system().lower() not in {"windows", "darwin"}:
-        shm_estimate_usage = _get_device_num() * num_worker * num_queues * \
+        device_num = _get_device_num()
+        # In the cluster, _get_device_num indicates the number of the entire cluster. The maximum number of cards
+        # on the ascend server is 8.
+        if device_num > 1 and context.get_context("device_target") == "Ascend":
+            device_num = min(device_num, 8)
+        shm_estimate_usage = device_num * num_worker * num_queues * \
                              (queue_size + 2) * max_rowsize * 1024 * 1024
         try:
             shm_available = psutil.disk_usage('/dev/shm').free
