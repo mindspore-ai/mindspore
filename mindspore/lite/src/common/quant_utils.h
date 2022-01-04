@@ -149,6 +149,10 @@ int DoPerChannelQuant(const float *raw_datas, size_t elem_count, const schema::Q
                       std::vector<schema::QuantParamT> *quant_params, const int &quant_max, const int &quant_min,
                       const size_t &bit_num, std::vector<T> *quant_datas, const std::vector<int> &dims,
                       int preferred_dim, bool symmetry = false, bool narrow_range = false, bool k_means = false) {
+  if (raw_datas == nullptr || quant_params == nullptr || quant_datas == nullptr) {
+    MS_LOG(ERROR) << "raw_data, quant_params or quant_data is nullptr.";
+    return RET_ERROR;
+  }
   if (k_means) {
     MS_LOG(ERROR) << "Unsupported K-means.";
     return RET_ERROR;
