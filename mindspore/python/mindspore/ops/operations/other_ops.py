@@ -161,7 +161,7 @@ class BoundingBoxDecode(PrimitiveWithInfer):
     """
     Decodes bounding boxes locations.
 
-    The function of the a operator is to calculate the offset, and this operator converts the offset into a Bbox,
+    The function of the operator is to calculate the offset, and this operator converts the offset into a Bbox,
     which is used to mark the target in the subsequent images, etc.
 
     Args:

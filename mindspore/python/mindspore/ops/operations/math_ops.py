@@ -3070,7 +3070,7 @@ class FloorMod(_MathBinaryOp):
     Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
-    dtypes of them cannot be both bool , and the shapes of them could be broadcast.
+    dtypes of them cannot be both bool, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
     the scalar could only be a constant.
 
@@ -3095,7 +3095,7 @@ class FloorMod(_MathBinaryOp):
 
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,
-        and the data type is the one with higher precision or higher digits among the two inputs.
+        and the data type is the one with higher precision of the two inputs.
 
     Raises:
         TypeError: If neither `x` nor `y` is a Tensor.
@@ -3529,7 +3529,7 @@ class EqualCount(PrimitiveWithInfer):
           must be the same as `x`, and vice versa.
 
     Outputs:
-        Tensor, with the type same as input tensor and size as (1,).
+        Tensor, with the type same as input tensor and shape as (1,).
 
     Raises:
         TypeError: If `x` or `y` is not a Tensor.
