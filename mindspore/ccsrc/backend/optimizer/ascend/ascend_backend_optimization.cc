@@ -34,6 +34,8 @@
 #include "backend/optimizer/ascend/ir_fission/unsorted_segment_sum_fission.h"
 #include "backend/optimizer/ascend/ir_fission/gather_v2_ds_fission.h"
 #include "backend/optimizer/ascend/ir_fission/bce_with_logits_loss_fission.h"
+#include "backend/optimizer/ascend/ir_fission/broadcastto_fission.h"
+#include "backend/optimizer/ascend/ir_fission/reduce_sum_fission.h"
 #include "backend/optimizer/ascend/ir_fission/cdist_fission.h"
 #include "backend/optimizer/ascend/ir_fission/seed_adapter.h"
 #include "backend/optimizer/pass/communication_op_fusion.h"
@@ -237,6 +239,8 @@ void AddAscendIRFusionPass(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<UnsortSegmentSumFission>());
   ir_fusion_pm->AddPass(std::make_shared<GatherV2DsFission>());
   ir_fusion_pm->AddPass(std::make_shared<BCEWithLogitsLossFission>());
+  ir_fusion_pm->AddPass(std::make_shared<BroadcasttoFission>());
+  ir_fusion_pm->AddPass(std::make_shared<ReduceSumFission>());
   ir_fusion_pm->AddPass(std::make_shared<CdistFission>());
   ir_fusion_pm->AddPass(std::make_shared<CdistGradFission>());
   ir_fusion_pm->AddPass(std::make_shared<BNReduceGradConv2dBackpropFilterFusion>());
@@ -391,6 +395,8 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
   ir_fusion_pm->AddPass(std::make_shared<InsertPadForNMSWithMask>());
   ir_fusion_pm->AddPass(std::make_shared<TensorScatterUpdateFission>());
   ir_fusion_pm->AddPass(std::make_shared<EraseVisitAttr>());
+  ir_fusion_pm->AddPass(std::make_shared<BroadcasttoFission>());
+  ir_fusion_pm->AddPass(std::make_shared<ReduceSumFission>());
   ir_fusion_pm->AddPass(std::make_shared<CdistFission>());
   ir_fusion_pm->AddPass(std::make_shared<CdistGradFission>());
   ir_fusion_pm->AddPass(std::make_shared<BCEWithLogitsLossFission>());
