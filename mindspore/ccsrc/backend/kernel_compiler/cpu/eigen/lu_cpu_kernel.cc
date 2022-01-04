@@ -48,7 +48,6 @@ void LUCPUKernel<T>::InitMatrixInfo(const std::vector<size_t> &shape, size_t *ro
     *row = shape.at(shape.size() - kRowIndex);
     *col = shape.at(shape.size() - kColIndex);
   }
-  return;
 }
 
 template <typename T>
@@ -79,33 +78,35 @@ void LUCPUKernel<T>::InitInputOutputSize(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-T LUCPUKernel<T>::GetPermutatedValue(const T *lu_value, const int *per, size_t i, size_t j) {
-  const T *pered_lu_value = lu_value + per[i] * lu_col_ + j;
+T LUCPUKernel<T>::GetPermutatedValue(const T *lu_value, const std::vector<int> &per_value, size_t i, size_t j) {
+  const T *pered_lu_value = lu_value + per_value[i] * lu_col_ + j;
   return *pered_lu_value;
 }
 
 template <typename T>
-bool LUCPUKernel<T>::UpdateMajorPermutation(T *lu_value, int *per, size_t k, size_t rows) {
+bool LUCPUKernel<T>::UpdateMajorPermutation(T *lu_value, std::vector<int> *const per_value, size_t k, size_t rows) {
   T max_major_value = static_cast<T>(kZeroThreshold);
   int max_major_index = 0;
   for (size_t i = k; i < rows; ++i) {
-    T value = GetPermutatedValue(lu_value, per, i, k);
+    T value = GetPermutatedValue(lu_value, *per_value, i, k);
     T abs_value = std::abs(value);
     if (abs_value > max_major_value) {
       max_major_value = abs_value;
       max_major_index = i;
     }
   }
-  size_t per_k = per[k];
-  per[k] = per[max_major_index];
-  per[max_major_index] = per_k;
+  int per_k = per_value->at(k);
+  (*per_value)[k] = per_value->at(max_major_index);
+  (*per_value)[max_major_index] = per_k;
+  pivots_[k] = max_major_index;
   return max_major_value != static_cast<T>(kZeroThreshold);
 }
 
 template <typename T>
-void LUCPUKernel<T>::SetPermutatedValue(T *lu_value, const int *per, size_t i, size_t j, const T &value) {
-  T *pered_lu_value = lu_value + per[i] * lu_col_ + j;
-  *pered_lu_value = value;
+void LUCPUKernel<T>::SetPermutatedValue(T *lu_value, const std::vector<int> &per_value, size_t i, size_t j,
+                                        const T &value) {
+  T *per_lu_value = lu_value + per_value[i] * lu_col_ + j;
+  *per_lu_value = value;
 }
 
 template <typename T>
@@ -116,12 +117,13 @@ bool LUCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
   T *a_value = reinterpret_cast<T *>(inputs[kLUaIndex]->addr);
   T *lu_value = reinterpret_cast<T *>(outputs[kLuIndex]->addr);
   // pivots permutation value
-  int *per_value = reinterpret_cast<int *>(outputs[kPivotsIndex]->addr);
+  pivots_ = reinterpret_cast<int *>(outputs[kPivotsIndex]->addr);
   // permutation matrix value
   int *permutation_value = reinterpret_cast<int *>(outputs[kPermutationIndex]->addr);
   T *lu_ori_wk = reinterpret_cast<T *>(workspace[kLuIndex]->addr);
   T *lu_trans_wk = reinterpret_cast<T *>(workspace[kPivotsIndex]->addr);
   // init pivots
+  std::vector<int> per_value(pivots_row_, 0);
   for (size_t i = 0; i < pivots_row_; ++i) {
     per_value[i] = i;
   }
@@ -133,7 +135,7 @@ bool LUCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
   // 2. do lu decompose inplace
   for (int k = 0; k < s; ++k) {
     // 2.1 choose major element of current col if return false means current col elements are all zero, just continue.
-    if (!UpdateMajorPermutation(lu_value, per_value, k, lu_row_)) {
+    if (!UpdateMajorPermutation(lu_value, &per_value, k, lu_row_)) {
       continue;
     }
     // 2.2 major element x --> (1/x), get inplace origin lu matrix value.
@@ -208,7 +210,6 @@ bool LUCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
     int *per_addr = permutation_value + position * permutation_row_ + i;
     *per_addr = 1;
   }
-
   return true;
 }
 }  // namespace kernel

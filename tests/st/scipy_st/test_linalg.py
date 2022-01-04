@@ -249,16 +249,13 @@ def test_lu_factor(n: int, dtype):
     Expectation: the result match to scipy
     """
     a = create_full_rank_matrix((n, n), dtype)
-    s_lu, _ = osp.linalg.lu_factor(a)
+    s_lu, s_pivots = osp.linalg.lu_factor(a)
     tensor_a = Tensor(a)
-    m_lu, pivots = msp.linalg.lu_factor(tensor_a)
-    m_l, m_u = onp.tril(m_lu.asnumpy(), k=-1) + onp.eye(n), onp.triu(m_lu.asnumpy())
-    s_l, s_u = onp.tril(s_lu, k=-1) + onp.eye(n), onp.triu(s_lu)
+    m_lu, m_pivots = msp.linalg.lu_factor(tensor_a)
     rtol = 1.e-5
     atol = 1.e-5
     assert onp.allclose(m_lu.asnumpy(), s_lu, rtol=rtol, atol=atol)
-    assert onp.allclose(a[pivots.asnumpy()], onp.dot(m_l, m_u), rtol=rtol, atol=atol)
-    assert onp.allclose(a[pivots.asnumpy()], onp.dot(s_l, s_u), rtol=rtol, atol=atol)
+    assert onp.allclose(m_pivots.asnumpy(), s_pivots, rtol=rtol, atol=atol)
 
 
 @pytest.mark.level0
