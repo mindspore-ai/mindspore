@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -621,7 +621,7 @@ void Debugger::CheckGraphPtr(const KernelGraphPtr &graph_ptr) {
       }
       if (debugger_enabled_) {
         LoadParametersAndConst();
-        // get graph proto and send to Mindinsight
+        // get graph proto and send to MindInsight
         auto graph_proto = graph_proto_list_.front();
         SendGraphAndSuspend(graph_proto);
         graph_proto_list_.clear();
@@ -700,7 +700,7 @@ void Debugger::SendGraphAndSuspend(const GraphProto &graph_proto) {
   if (!CheckSendMetadata()) {
     return;
   }
-  // send graph to Mindinsight server
+  // send graph to MindInsight server
   MS_EXCEPTION_IF_NULL(grpc_client_);
   EventReply reply = grpc_client_->SendGraph(graph_proto);
   if (reply.status() != reply.OK) {
@@ -874,11 +874,11 @@ void Debugger::CommandLoop() {
         ProcessKViewCMD(reply);
         break;
       case DebuggerCommand::kVersionMatchedCMD:
-        MS_LOG(ERROR) << "Received unexpected Version Matched CMD from Mindinsight.";
+        MS_LOG(ERROR) << "Received unexpected Version Matched CMD from MindInsight.";
         Exit();
         break;
       default:
-        MS_LOG(ERROR) << "Received unknown CMD from Mindinsight";
+        MS_LOG(ERROR) << "Received unknown CMD from MindInsight";
         Exit();
         break;
     }

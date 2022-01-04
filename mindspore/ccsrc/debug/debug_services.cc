@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -742,12 +742,15 @@ void DebugServices::ConvertToHostFormat(const std::map<std::string, std::vector<
     if (!files_to_convert_in_dir.empty()) {
       // Look for the installation path to the conver_async package. If not found, throw exception and terminate the
       // later task.
-      try {
-        auto pkg = pybind11::module::import("mindspore.offline_debug.convert_async");
-        auto convert_obj = pkg.attr("AsyncDumpConverter")(pybind11::cast(files_to_convert_in_dir), dump_key);
-        (void)convert_obj.attr("convert_files")();
-      } catch (pybind11::error_already_set &e) {
-        MS_LOG(EXCEPTION) << "Failed to convert async dump data: " << e.what();
+      {
+        pybind11::gil_scoped_acquire acquire;
+        try {
+          auto pkg = pybind11::module::import("mindspore.offline_debug.convert_async");
+          auto convert_obj = pkg.attr("AsyncDumpConverter")(pybind11::cast(files_to_convert_in_dir), dump_key);
+          (void)convert_obj.attr("convert_files")();
+        } catch (pybind11::error_already_set &e) {
+          MS_LOG(EXCEPTION) << "Failed to convert async dump data: " << e.what();
+        }
       }
       ProcessConvertToHostFormat(files_after_convert_in_dir, dump_key, result_list, file_format);
     }

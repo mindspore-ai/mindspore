@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -134,8 +134,8 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 
   void SetTrainingDone(bool training_done);
 
-  // returns true if reply received and mindspore version matched with mindinsight version
-  // version_check should be true if you want the function to do backend compatibility check with Mindinsight
+  // returns true if reply received and mindspore version matched with mindInsight version
+  // version_check should be true if you want the function to do backend compatibility check with MindInsight
   bool SendMetadata(bool version_check);
 
   bool CheckSendMetadata();
