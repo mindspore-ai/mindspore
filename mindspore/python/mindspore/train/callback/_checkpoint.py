@@ -102,6 +102,7 @@ class CheckpointConfig:
     Examples:
         >>> from mindspore import Model, nn
         >>> from mindspore.train.callback import ModelCheckpoint, CheckpointConfig
+        >>> from mindspore.common.initializer import Normal
         >>>
         >>> class LeNet5(nn.Cell):
         ...     def __init__(self, num_class=10, num_channel=1):

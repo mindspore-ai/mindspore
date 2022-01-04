@@ -608,7 +608,7 @@ void DfGraphConvertor::TraceOutputFromTupleGetItem(const AnfNodePtr &anf_out) {
     auto op = handle.op;
     if (op != nullptr) {
       MS_LOG(INFO) << "op name: " << op->GetName() << ", op type: " << op->GetOpType() << ", out_name: " << handle.out;
-      graph_outputs_.emplace_back(*op, handle.out);
+      (void)graph_outputs_.emplace_back(*op, handle.out);
     } else {
       MS_LOG(EXCEPTION) << "tuple_getitem: " << anf_out->fullname_with_scope() << " is not converted";
     }
@@ -627,7 +627,7 @@ void DfGraphConvertor::TraceOutput(const AnfNodePtr node) {
   if (node->isa<ValueNode>()) {
     auto op = Convert(anf_out);
     if (op != nullptr) {
-      graph_outputs_.emplace_back(*op, "");
+      (void)graph_outputs_.emplace_back(*op, "");
       AddGraphConstInput(op);
     }
     return;
@@ -677,7 +677,7 @@ void DfGraphConvertor::TraceOutput(const AnfNodePtr node) {
         }
       }
       MS_LOG(INFO) << "Add graph output: " << anf_out->fullname_with_scope() << ":" << index;
-      graph_outputs_.emplace_back(*op, index);
+      (void)graph_outputs_.emplace_back(*op, index);
     }
   }
 }
@@ -692,13 +692,13 @@ void DfGraphConvertor::TraceOutputFromParameter(const AnfNodePtr &anf_out) {
       OutHandler handle = it->second;
       auto op = handle.op;
       MS_LOG(INFO) << "op name: " << op->GetName() << ", op type: " << op->GetOpType() << ", out_name: " << handle.out;
-      graph_outputs_.emplace_back(*op, handle.out);
+      (void)graph_outputs_.emplace_back(*op, handle.out);
     } else {
       // common parameter case
       auto op = Convert(anf_out);
       if (op != nullptr) {
         MS_LOG(INFO) << "op name: " << op->GetName() << ", op type: " << op->GetOpType();
-        graph_outputs_.emplace_back(*op, "");
+        (void)graph_outputs_.emplace_back(*op, "");
       }
     }
   }
