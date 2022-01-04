@@ -24,8 +24,15 @@ from ._utils.custom_ops import exp_generic, log_generic
 
 
 class Uniform(Distribution):
-    """
-    Example class: Uniform Distribution.
+    r"""
+    Uniform Distribution.
+    A Uniform distributio is a continuous distribution with the range :math:`[a, b]`
+    and the probability density function:
+
+    .. math::
+        f(x, a, b) = 1 / b \exp(\exp(-(x - a) / b) - x),
+
+    where a and b are the lower and upper bound respectively.
 
     Args:
         low (int, float, list, numpy.ndarray, Tensor): The lower bound of the distribution. Default: None.
@@ -34,6 +41,18 @@ class Uniform(Distribution):
         dtype (mindspore.dtype): The type of the event samples. Default: mstype.float32.
         name (str): The name of the distribution. Default: 'Uniform'.
 
+    Inputs and Outputs of APIs:
+        The accessible api is defined in the base class, including:
+
+        - `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`
+        - `mean`, `sd`, `var`, and `entropy`
+        - `kl_loss` and `cross_entropy`
+        - `sample`
+
+        It should be notice that the input should be always a tensor.
+        For more details of all APIs, including the inputs and outputs,
+        please refer to :class:`mindspore.nn.probability.bijector.Distribution`, and examples below.
+
     Supported Platforms:
         ``Ascend`` ``GPU``
 
@@ -41,6 +60,11 @@ class Uniform(Distribution):
         `low` must be strictly less than `high`.
         `dist_spec_args` are `high` and `low`.
         `dtype` must be float type because Uniform distributions are continuous.
+
+    Raises:
+        ValueError: When high <= low.
+        TypeError: When the input `dtype` is not a subclass of float.
+
 
     Examples:
         >>> import mindspore
@@ -181,13 +205,19 @@ class Uniform(Distribution):
     def low(self):
         """
         Return the lower bound of the distribution after casting to dtype.
+
+        Output:
+            Tensor, the lower bound of the distribution.
         """
         return self._low
 
     @property
     def high(self):
         """
-        Return the upper bound of the distribution after casting to dtype..
+        Return the upper bound of the distribution after casting to dtype.
+
+        Output:
+            Tensor, the upper bound of the distribution.
         """
         return self._high
 

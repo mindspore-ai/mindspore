@@ -4,6 +4,12 @@ mindspore.nn.probability.distribution.Cauchy
 .. py:class:: mindspore.nn.probability.distribution.Cauchy(loc=None, scale=None, seed=None, dtype=mstype.float32, name='Cauchy')
 
     柯西分布（Cauchy distribution）。
+    连续随机分布，取值范围为所有实数，概率密度函数为
+
+    .. math:: 
+        f(x, a, b) = 1 / \pi b(1 - ((x - a)/b)^2).
+
+    其中 :math:`a, b` 为分别为柯西分布的位置参数和比例参数。
 
     **参数：**
 
@@ -18,9 +24,15 @@ mindspore.nn.probability.distribution.Cauchy
     ``Ascend``
 
     .. note:: 
-        - `scale` 必须大于零。
+        - `scale` 中的元素必须大于零。
         - `dtype` 必须是float，因为柯西分布是连续的。
         - GPU后端不支持柯西分布。
+
+    **异常：**
+
+    - **ValueError** - `scale` 中元素小于0。
+    - **TypeError** - `dtype` 不是float的子类。
+    
 
     **样例：**
 
@@ -107,14 +119,21 @@ mindspore.nn.probability.distribution.Cauchy
     >>> ans = cauchy2.sample((2,3), loc_a, scale_a)
     >>> print(ans.shape)
     (2, 3, 3)
-    
+
     .. py:method:: loc
         :property:
 
         返回分布位置。
+
+        **返回：**
+
+        Tensor, 分布的位置值。
         
     .. py:method:: scale
         :property:
 
         返回分布比例。
-        
+
+        **返回：**
+
+        Tensor, 分布的比例值。

@@ -4,7 +4,8 @@ mindspore.nn.probability.distribution.TransformedDistribution
 .. py:class:: mindspore.nn.probability.distribution.TransformedDistribution(bijector, distribution, seed=None, name='transformed_distribution')
 
     转换分布（Transformed Distribution）。
-    该类包含一个Bijector和一个分布，并通过Bijector定义的操作将原始分布转换为新分布。
+    该类包含一个Bijector和一个分布，并通过Bijector定义的操作将原始分布转换为新分布。可如果原始分布为 :math:`X` ，Bijector的映射函数为 :math:`g`， 那么对应的转换分布为 :math:`Y = g(X)` 。
+
 
     **参数：**
 
@@ -19,6 +20,10 @@ mindspore.nn.probability.distribution.TransformedDistribution
 
     .. note:: 
         用于初始化原始分布的参数不能为None。例如，由于未指定 `mean` 和 `sd` ，因此无法使用mynormal = msd.Normal(dtype=mindspore.float32)初始化TransformedDistribution。
+
+    **异常：**
+
+    - **ValueError** - bijector不是Bijector类，distribution不是Distribution类。
 
     **样例：**
 
@@ -48,4 +53,4 @@ mindspore.nn.probability.distribution.TransformedDistribution
     >>> cdf, sample = net(tx)
     >>> print(sample.shape)
     (2, 3)
-    
+

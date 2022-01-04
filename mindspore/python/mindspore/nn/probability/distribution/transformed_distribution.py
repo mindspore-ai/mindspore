@@ -28,17 +28,35 @@ class TransformedDistribution(Distribution):
     Transformed Distribution.
     This class contains a bijector and a distribution and transforms the original distribution
     to a new distribution through the operation defined by the bijector.
+    If X is an random variable following the underying distribution,
+    and g(x) is a function represented by the bijector,
+    then Y = g(X) is a random variable following the transformed distribution.
 
     Args:
         bijector (Bijector): The transformation to perform.
-        distribution (Distribution): The original distribution. Must has a float dtype.
-        seed (int): The seed is used in sampling. The global seed is used if it is None. Default:None.
+        distribution (Distribution): The original distribution. Must be a float dtype.
+        seed (int): The seed is used in sampling. The global seed is used if it is None. Default: None.
           If this seed is given when a TransformedDistribution object is initialized, the object's sampling function
           will use this seed; elsewise, the underlying distribution's seed will be used.
         name (str): The name of the transformed distribution. Default: 'transformed_distribution'.
 
+    Inputs and Outputs of APIs:
+        The accessible api is defined in the base class, including:
+
+        - `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`
+        - `mean`
+        - `sample`
+
+        It should be notice that the input should be always a tensor.
+        For more details of all APIs, including the inputs and outputs,
+        please refer to :class:`mindspore.nn.probability.bijector.Distribution`, and examples below.
+
     Supported Platforms:
         ``Ascend`` ``GPU``
+
+    Raises:
+        TypeError: When the input `bijector` is not a Bijector instance.
+        TypeError: When the input `distribution` is not a Distribution instance.
 
     Note:
         The arguments used to initialize the original distribution cannot be None.
@@ -93,8 +111,10 @@ class TransformedDistribution(Distribution):
                                    [nn.probability.bijector.Bijector], type(self).__name__)
         validator.check_value_type('distribution', distribution,
                                    [Distribution], type(self).__name__)
-        validator.check_type_name("dtype", distribution.dtype, mstype.float_type, type(self).__name__)
-        super(TransformedDistribution, self).__init__(seed, distribution.dtype, name, param)
+        validator.check_type_name(
+            "dtype", distribution.dtype, mstype.float_type, type(self).__name__)
+        super(TransformedDistribution, self).__init__(
+            seed, distribution.dtype, name, param)
 
         self._bijector = bijector
         self._distribution = distribution
@@ -121,21 +141,44 @@ class TransformedDistribution(Distribution):
         # broadcast bijector batch_shape and distribution batch_shape
         self._broadcast_shape = self._broadcast_bijector_dist()
 
-
     @property
     def bijector(self):
+        """
+        Return the bijector of the transformed distribution.
+
+        Output:
+            Bijector, the bijector of the transformed distribution.
+        """
         return self._bijector
 
     @property
     def distribution(self):
+        """
+        Return the underlying distribution of the transformed distribution.
+
+        Output:
+            Bijector, the underlying distribution of the transformed distribution.
+        """
         return self._distribution
 
     @property
     def dtype(self):
+        """
+        Return the dtype of the transformed distribution.
+
+        Output:
+            Mindspore.dtype, the dtype of the transformed distribution.
+        """
         return self._dtype
 
     @property
     def is_linear_transformation(self):
+        """
+        Return whether the transformation is linear.
+
+        Output:
+            Bool, true if the transformation is linear, and false otherwise.
+        """
         return self._is_linear_transformation
 
     def _broadcast_bijector_dist(self):
@@ -144,7 +187,8 @@ class TransformedDistribution(Distribution):
         """
         if self.batch_shape is None or self.bijector.batch_shape is None:
             return None
-        bijector_shape_tensor = self.fill_base(self.dtype, self.bijector.batch_shape, 0.0)
+        bijector_shape_tensor = self.fill_base(
+            self.dtype, self.bijector.batch_shape, 0.0)
         dist_shape_tensor = self.fill_base(self.dtype, self.batch_shape, 0.0)
         return (bijector_shape_tensor + dist_shape_tensor).shape
 
@@ -174,12 +218,14 @@ class TransformedDistribution(Distribution):
             \log(Py(a)) = \log(Px(g^{-1}(a))) + \log((g^{-1})'(a))
         """
         inverse_value = self.bijector("inverse", value)
-        unadjust_prob = self.distribution("log_prob", inverse_value, *args, **kwargs)
+        unadjust_prob = self.distribution(
+            "log_prob", inverse_value, *args, **kwargs)
         log_jacobian = self.bijector("inverse_log_jacobian", value)
         isneginf = self.equal_base(unadjust_prob, -np.inf)
         isnan = self.equal_base(unadjust_prob + log_jacobian, np.nan)
         return self.select_base(isneginf,
-                                self.select_base(isnan, unadjust_prob + log_jacobian, unadjust_prob),
+                                self.select_base(
+                                    isnan, unadjust_prob + log_jacobian, unadjust_prob),
                                 unadjust_prob + log_jacobian)
 
     def _prob(self, value, *args, **kwargs):

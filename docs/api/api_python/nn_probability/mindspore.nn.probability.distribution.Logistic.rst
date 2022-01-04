@@ -3,12 +3,18 @@ mindspore.nn.probability.distribution.Logistic
 
 .. py:class:: mindspore.nn.probability.distribution.Logistic(loc=None, scale=None, seed=None, dtype=mstype.float32, name='Logistic')
 
-    逻辑斯谛分布（Logistic distribution）。
+    Logistic分布（Logistic distribution）。
+    连续随机分布，取值范围为 :math:`(0, \inf)` ，概率密度函数为
+
+    .. math::
+        f(x, a, b) = 1 / b \exp(\exp(-(x - a) / b) - x).
+
+    其中 :math:`a, b` 为分别为Logistic分布的位置参数和比例参数。
 
     **参数：**
 
-    - **loc** (int, float, list, numpy.ndarray, Tensor) - 逻辑斯谛分布的位置。默认值：None。
-    - **scale** (int, float, list, numpy.ndarray, Tensor) - 逻辑斯谛分布的尺度。默认值：None。
+    - **loc** (int, float, list, numpy.ndarray, Tensor) - Logistic分布的位置。默认值：None。
+    - **scale** (int, float, list, numpy.ndarray, Tensor) - Logistic分布的尺度。默认值：None。
     - **seed** (int) - 采样时使用的种子。如果为None，则使用全局种子。默认值：None。
     - **dtype** (mindspore.dtype) - 事件样例的类型。默认值：mindspore.float32。
     - **name** (str) - 分布的名称。默认值：'Logistic'。
@@ -19,7 +25,12 @@ mindspore.nn.probability.distribution.Logistic
 
     .. note:: 
         - `scale` 必须大于零。
-        - `dtype` 必须是float，因为逻辑斯谛分布是连续的。
+        - `dtype` 必须是float，因为Logistic分布是连续的。
+
+    **异常：**
+
+    - **ValueError** - `scale` 中元素小于0。
+    - **TypeError** - `dtype` 不是float的子类。
 
     **样例：**
 
@@ -27,9 +38,9 @@ mindspore.nn.probability.distribution.Logistic
     >>> import mindspore.nn as nn
     >>> import mindspore.nn.probability.distribution as msd
     >>> from mindspore import Tensor
-    >>> # 初始化loc为3.0和scale为4.0的逻辑斯谛分布。
+    >>> # 初始化loc为3.0和scale为4.0的Logistic分布。
     >>> l1 = msd.Logistic(3.0, 4.0, dtype=mindspore.float32)
-    >>> # 可以在没有参数的情况下初始化逻辑斯谛分布。
+    >>> # 可以在没有参数的情况下初始化Logistic分布。
     >>> # 在这种情况下，`loc`和`scale`必须通过参数传入。
     >>> l2 = msd.Logistic(dtype=mindspore.float32)
     >>>
@@ -90,14 +101,22 @@ mindspore.nn.probability.distribution.Logistic
     >>> ans = l1.sample((2,3), loc_a, scale_a)
     >>> print(ans.shape)
     (2, 3, 3)
-    
+
     .. py:method:: loc
         :property:
 
         返回分布位置。
-        
+
+        **返回：**
+
+        Tensor, 分布的位置值。
+
     .. py:method:: scale
         :property:
 
-        返回分布尺度。
-        
+        返回分布比例。
+
+        **返回：**
+
+        Tensor, 分布的比例值。
+

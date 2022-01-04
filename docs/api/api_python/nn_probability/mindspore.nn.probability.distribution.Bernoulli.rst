@@ -4,6 +4,7 @@ mindspore.nn.probability.distribution.Bernoulli
 .. py:class:: mindspore.nn.probability.distribution.Bernoulli(probs=None, seed=None, dtype=mstype.int32, name='Bernoulli')
 
     伯努利分布（Bernoulli Distribution）。
+    离散随机分布，取值范围为 :math:`\{0, 1\}` ，概率质量函数为 :math:`P(X = 0) = p, P(X = 1) = 1-p`。
 
     **参数：**
 
@@ -17,7 +18,12 @@ mindspore.nn.probability.distribution.Bernoulli
     ``Ascend`` ``GPU``
 
     .. note:: 
-        `probs` 必须是合适的概率（0<p<1）。
+        `probs` 中元素必须是合适的概率（0<p<1）。
+
+    **异常：**
+
+    - **ValueError** - `probs` 中元素小于0或大于1。
+    - **TypeError** - `dtype` 不是float的子类。
 
     **样例：**
 
@@ -104,4 +110,8 @@ mindspore.nn.probability.distribution.Bernoulli
 
     .. py:method:: probs
 
-        返回结果为1的概率。     
+        返回结果为1的概率。
+
+        **返回：**
+
+        Tensor, 结果为1的概率。

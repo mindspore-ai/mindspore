@@ -34,6 +34,19 @@ class Softplus(Bijector):
         sharpness (float, list, numpy.ndarray, Tensor): The scale factor. Default: 1.0.
         name (str): The name of the Bijector. Default: 'Softplus'.
 
+    Inputs and Outputs of APIs:
+        The accessible api is defined in the base class, including:
+
+        - **forward**
+        - **inverse**
+        - **forward_log_jacobian**
+        - **backward_log_jacobian**
+
+        It should be notice that the input should be always a tensor,
+        with a shape that can be broadcasted to that of `sharpness`.
+        For more details of all APIs, including the inputs and outputs,
+        please refer to :class:`mindspore.nn.probability.bijector.Bijector`, and examples below.
+
     Supported Platforms:
         ``Ascend`` ``GPU``
 
@@ -127,6 +140,12 @@ class Softplus(Bijector):
 
     @property
     def sharpness(self):
+        """
+        Return the sharpness parameter of the bijector.
+
+        Output:
+            Tensor, the sharpness parameter of the bijector.
+        """
         return self._sharpness
 
     def extend_repr(self):

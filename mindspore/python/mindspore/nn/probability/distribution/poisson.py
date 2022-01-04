@@ -25,8 +25,11 @@ from ._utils.custom_ops import exp_generic, log_generic
 
 
 class Poisson(Distribution):
-    """
+    r"""
     Poisson Distribution.
+    A Poisson Distribution is a discrete distribution with the range as the non-negative integers,
+    and the probability mass function as :math:`P(X = k) = \lambda^k \exp(-\lambda) / k!, k = 1, 2, ...`,
+    where :math:`\lambda` is the rate of the distribution.
 
     Args:
         rate (list, numpy.ndarray, Tensor): The rate of the Poisson distribution. Default: None.
@@ -34,12 +37,28 @@ class Poisson(Distribution):
         dtype (mindspore.dtype): The type of the event samples. Default: mstype.float32.
         name (str): The name of the distribution. Default: 'Poisson'.
 
+    Inputs and Outputs of APIs:
+        The accessible api is defined in the base class, including:
+
+        - `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`
+        - `mean`, `sd`, `mode`, `var`, and `entropy`
+        - `kl_loss` and `cross_entropy`
+        - `sample`
+
+        It should be notice that the input should be always a tensor.
+        For more details of all APIs, including the inputs and outputs,
+        please refer to :class:`mindspore.nn.probability.bijector.Distribution`, and examples below.
+
     Supported Platforms:
         ``Ascend``
 
     Note:
         `rate` must be strictly greater than 0.
         `dist_spec_args` is `rate`.
+
+    Raises:
+        ValueError: When rate <= 0.
+        TypeError: When the input `dtype` is not a subclass of float.
 
     Examples:
         >>> import mindspore
@@ -119,7 +138,8 @@ class Poisson(Distribution):
         param = dict(locals())
         param['param_dict'] = {'rate': rate}
         valid_dtype = mstype.int_type + mstype.uint_type + mstype.float_type
-        Validator.check_type_name("dtype", dtype, valid_dtype, type(self).__name__)
+        Validator.check_type_name(
+            "dtype", dtype, valid_dtype, type(self).__name__)
 
         # As some operators can't accept scalar input, check the type here
         if isinstance(rate, (int, float)):
@@ -151,6 +171,9 @@ class Poisson(Distribution):
     def rate(self):
         """
         Return `rate` of the distribution after casting to dtype.
+
+        Output:
+            Tensor, the rate parameter of the distribution.
         """
         return self._rate
 

@@ -4,10 +4,10 @@ mindspore.nn.probability.bijector.GumbelCDF
 .. py:class:: mindspore.nn.probability.bijector.GumbelCDF(loc=0.0, scale=1.0, name='GumbelCDF')
 
     GumbelCDF Bijector。
-    此Bijector执行如下操作：
+    此Bijector对应的映射函数为：
 
     .. math::
-        Y = \exp(-\exp(\frac{-(X - loc)}{scale}))
+        Y = g(x) = \exp(-\exp(\frac{-(X - loc)}{scale}))
 
     **参数：**
 
@@ -20,11 +20,15 @@ mindspore.nn.probability.bijector.GumbelCDF
     ``Ascend`` ``GPU``
 
     .. note::
-        `scale` 必须大于零。对于 `inverse` 和 `inverse_log_jacobian` ，输入应在(0, 1)范围内。`loc` 和 `scale` 的数据类型必须为float。如果 `loc` 、 `scale` 作为numpy.ndarray或Tensor传入，则它们必须具有相同的数据类型，否则将引发错误。
+        `scale` 中元素必须大于零。对于 `inverse` 和 `inverse_log_jacobian` ，输入应在(0, 1)范围内。`loc` 和 `scale` 中元素的数据类型必须为float。如果 `loc` 、 `scale` 作为numpy.ndarray或Tensor传入，则它们必须具有相同的数据类型，否则将引发错误。
 
     **异常：**
 
-    - **TypeError** - `loc` 或 `scale` 的数据类型不为float，或 `loc` 和 `scale` 的数据类型不相同。
+    - **TypeError** - `loc` 或 `scale` 中元素的数据类型不为float，或 `loc` 和 `scale` 中元素的数据类型不相同。
+
+    **支持平台：**
+
+    ``Ascend`` ``GPU``
 
     **样例：**
 
@@ -51,3 +55,50 @@ mindspore.nn.probability.bijector.GumbelCDF
     >>> print(ans4.shape)
     (3,)
 
+    .. py:method:: forward(value)
+
+        正映射，计算输入随机变量 :math:`X = value` 经过映射后的值 :math:`Y = g(value)`。
+
+        **参数：**
+
+        - **value** (Tensor) - 输入随机变量的值。
+
+        **返回：**
+
+        Tensor, 输入随机变量的值。
+
+    .. py:method:: forward_log_jacobian(value)
+
+        计算正映射导数的对数值，即 :math:`\log(dg(x) / dx)`。
+
+        **参数：**
+
+        - **value** (Tensor) - 输入随机变量的值。
+
+        **返回：**
+
+        Tensor, 正映射导数的对数值。
+
+    .. py:method:: inverse(value)
+
+        正映射，计算输出随机变量 :math:`Y = value` 时对应的输入随机变量的值 :math:`X = g(value)`。
+
+        **参数：**
+
+        - **value** (Tensor) - 输出随机变量的值。
+
+        **返回：**
+
+        Tensor, 输出随机变量的值。
+
+    .. py:method:: inverse_log_jacobian(value)
+
+        计算逆映射导数的对数值，即 :math:`\log(dg^{-1}(x) / dx)`。
+
+        **参数：**
+
+        - **value** (Tensor) - 输出随机变量的值。
+
+        **返回：**
+
+        Tensor, 逆映射导数的对数值。

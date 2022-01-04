@@ -26,7 +26,10 @@ from ..distribution import TransformedDistribution
 
 class Bijector(Cell):
     """
-    Bijecotr class.
+    Bijecotr class. A bijector perform a mapping from one distribution to the other via some function.
+    If X is a random variable following the original distribution,
+    and g(x) is the mapping function,
+    then Y = g(X) is the random variable following the transformed distribution.
 
     Args:
         is_constant_jacobian (bool): Whether the Bijector has constant derivative. Default: False.
@@ -234,24 +237,56 @@ class Bijector(Cell):
     def forward(self, value, *args, **kwargs):
         """
         Forward transformation: transform the input value to another distribution.
+
+        Args:
+            value (Tensor): the value of the input variables.
+            *args (list): the list of positional arguments forwarded to subclasses.
+            **kwargs (dict): the dictionary of keyword arguments forwarded to subclasses.
+
+        Output:
+            Tensor, the value of the  transformed random variable.
         """
         return self._forward(value, *args, **kwargs)
 
     def inverse(self, value, *args, **kwargs):
         """
         Inverse transformation: transform the input value back to the original distribution.
+
+        Args:
+            value (Tensor): the value of the transformed variables.
+            *args (list): the list of positional arguments forwarded to subclasses.
+            **kwargs (dict): the dictionary of keyword arguments forwarded to subclasses.
+
+        Output:
+            Tensor, the value of the input random variable.
         """
         return self._inverse(value, *args, **kwargs)
 
     def forward_log_jacobian(self, value, *args, **kwargs):
         """
         Logarithm of the derivative of the forward transformation.
+
+        Args:
+            value (Tensor): the value of the input variables.
+            *args (list): the list of positional arguments forwarded to subclasses.
+            **kwargs (dict): the dictionary of keyword arguments forwarded to subclasses.
+
+        Output:
+            Tensor, the value of logarithm of the derivative of the forward transformation.
         """
         return self._forward_log_jacobian(value, *args, **kwargs)
 
     def inverse_log_jacobian(self, value, *args, **kwargs):
         """
         Logarithm of the derivative of the inverse transformation.
+
+        Args:
+            value (Tensor): the value of the transformed variables.
+            *args (list): the list of positional arguments forwarded to subclasses.
+            **kwargs (dict): the dictionary of keyword arguments forwarded to subclasses.
+
+        Output:
+            Tensor, the value of logarithm of the derivative of the inverse transformation.
         """
         return self._inverse_log_jacobian(value, *args, **kwargs)
 

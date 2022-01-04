@@ -33,6 +33,19 @@ class ScalarAffine(Bijector):
         shift (float, list, numpy.ndarray, Tensor): The shift factor. Default: 0.0.
         name (str): The name of the bijector. Default: 'ScalarAffine'.
 
+    Inputs and Outputs of APIs:
+        The accessible api is defined in the base class, including:
+
+        - **forward**
+        - **inverse**
+        - **forward_log_jacobian**
+        - **backward_log_jacobian**
+
+        It should be notice that the input should be always a tensor,
+        with a shape that can be broadcasted to that of `shift` and `scale`.
+        For more details of all APIs, including the inputs and outputs,
+        please refer to :class:`mindspore.nn.probability.bijector.Bijector`, and examples below.
+
     Supported Platforms:
         ``Ascend`` ``GPU``
 
@@ -94,10 +107,22 @@ class ScalarAffine(Bijector):
 
     @property
     def scale(self):
+        """
+        Return the scale parameter of the bijector.
+
+        Output:
+            Tensor, the scale parameter of the bijector.
+        """
         return self._scale
 
     @property
     def shift(self):
+        """
+        Return the shift parameter of the bijector.
+
+        Output:
+            Tensor, the shift parameter of the bijector.
+        """
         return self._shift
 
     def extend_repr(self):

@@ -23,10 +23,18 @@ from ._utils.custom_ops import exp_generic, log_generic
 
 
 class LogNormal(msd.TransformedDistribution):
-    """
+    r"""
     LogNormal distribution.
     A log-normal (or lognormal) distribution is a continuous probability distribution of a random variable whose
-    logarithm is normally distributed. It is constructed as the exponential transformation of a Normal distribution.
+    logarithm is normally distributed.
+    The log-normal distribution has the range :math:`(0, \inf)` with the pdf as
+
+    .. math::
+        f(x, \mu, \sigma) = 1 / x\sigma\sqrt{2\pi} \exp(-(\ln(x) - \mu)^2 / 2\sigma^2).
+
+    where :math:`\mu, \sigma` are the mean and
+    the standard deviation of the underlying normal distribution respectively.
+    It is constructed as the exponential transformation of a Normal distribution.
 
     Args:
         loc (int, float, list, numpy.ndarray, Tensor): The mean of the underlying Normal distribution. Default: None.
@@ -36,6 +44,19 @@ class LogNormal(msd.TransformedDistribution):
         dtype (mindspore.dtype): type of the distribution. Default: mstype.float32.
         name (str): the name of the distribution. Default: 'LogNormal'.
 
+
+    Inputs and Outputs of APIs:
+        The accessible api is defined in the base class, including:
+
+        - `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`
+        - `mean`, `sd`, `mode`, `var`, and `entropy`
+        - `kl_loss` and `cross_entropy`
+        - `sample`
+
+        It should be notice that the input should be always a tensor.
+        For more details of all APIs, including the inputs and outputs,
+        please refer to :class:`mindspore.nn.probability.bijector.Distribution`, and examples below.
+
     Supported Platforms:
         ``Ascend`` ``GPU``
 
@@ -43,6 +64,10 @@ class LogNormal(msd.TransformedDistribution):
         `scale` must be greater than zero.
         `dist_spec_args` are `loc` and `scale`.
         `dtype` must be a float type because LogNormal distributions are continuous.
+
+    Raises:
+        ValueError: When scale <= 0.
+        TypeError: When the input `dtype` is not a subclass of float.
 
     Examples:
         >>> import numpy as np
@@ -82,7 +107,7 @@ class LogNormal(msd.TransformedDistribution):
 
         self.log_2pi = np.log(2 * np.pi)
 
-        #ops needed for the class
+        # ops needed for the class
         self.dtypeop = P.DType()
         self.exp = exp_generic
         self.expm1 = P.Expm1()
@@ -103,6 +128,9 @@ class LogNormal(msd.TransformedDistribution):
         """
         Distribution parameter for the pre-transformed mean
         after casting to dtype.
+
+        Output:
+            Tensor, the loc parameter of the distribution.
         """
         return self._loc
 
@@ -111,6 +139,9 @@ class LogNormal(msd.TransformedDistribution):
         """
         Distribution parameter for the pre-transformed standard deviation
         after casting to dtype.
+
+        Output:
+            Tensor, the scale parameter of the distribution.
         """
         return self._scale
 

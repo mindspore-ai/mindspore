@@ -37,6 +37,19 @@ class PowerTransform(Bijector):
         power (float, list, numpy.ndarray, Tensor): The scale factor. Default: 0.
         name (str): The name of the bijector. Default: 'PowerTransform'.
 
+    Inputs and Outputs of APIs:
+        The accessible api is defined in the base class, including:
+
+        - **forward**
+        - **inverse**
+        - **forward_log_jacobian**
+        - **backward_log_jacobian**
+
+        It should be notice that the input should be always a tensor,
+        with a shape that can be broadcasted to that of `power`.
+        For more details of all APIs, including the inputs and outputs,
+        please refer to :class:`mindspore.nn.probability.bijector.Bijector`, and examples below.
+
     Supported Platforms:
         ``Ascend`` ``GPU``
 
@@ -92,6 +105,12 @@ class PowerTransform(Bijector):
 
     @property
     def power(self):
+        """
+        Return the power parameter of the bijector.
+
+        Output:
+            Tensor, the power parameter of the bijector.
+        """
         return self._power
 
     def extend_repr(self):
@@ -110,7 +129,8 @@ class PowerTransform(Bijector):
         power_local = self.cast_param_by_value(x, self.power)
 
         # broad cast the value of x and power
-        ones = self.fill(self.dtypeop(power_local), self.shape(x + power_local), 1.)
+        ones = self.fill(self.dtypeop(power_local),
+                         self.shape(x + power_local), 1.)
         power_local = power_local * ones
         x = x * ones
         safe_power = self.select_base(self.equal_base(power_local, 0.),
@@ -130,7 +150,8 @@ class PowerTransform(Bijector):
         power_local = self.cast_param_by_value(y, self.power)
 
         # broad cast the value of x and power
-        ones = self.fill(self.dtypeop(power_local), self.shape(y + power_local), 1.)
+        ones = self.fill(self.dtypeop(power_local),
+                         self.shape(y + power_local), 1.)
         power_local = power_local * ones
         y = y * ones
         safe_power = self.select_base(self.equal_base(power_local, 0.),
@@ -159,7 +180,8 @@ class PowerTransform(Bijector):
         power_local = self.cast_param_by_value(x, self.power)
 
         # broad cast the value of x and power
-        ones = self.fill(self.dtypeop(power_local), self.shape(x + power_local), 1.)
+        ones = self.fill(self.dtypeop(power_local),
+                         self.shape(x + power_local), 1.)
         power_local = power_local * ones
         x = x * ones
 
