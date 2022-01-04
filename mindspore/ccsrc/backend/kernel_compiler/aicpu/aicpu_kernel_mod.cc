@@ -225,7 +225,8 @@ device::DynamicKernelPtr AicpuOpKernelMod::GenDynamicKernel(const CNodePtr &cnod
   device::KernelRuntime::GenLaunchArgs(*this, cnode_ptr, &kernel_launch_info);
 
   CreateCpuKernelInfo(kernel_launch_info.inputs_, kernel_launch_info.outputs_);
-  return std::make_shared<AicpuDynamicKernel>(stream_ptr, cnode_ptr, args_, ext_info_, node_so_, node_name_);
+  return std::make_shared<AicpuDynamicKernel>(stream_ptr, cnode_ptr, args_, ext_info_, node_so_, node_name_,
+                                              cust_kernel_);
 }
 }  // namespace kernel
 }  // namespace mindspore

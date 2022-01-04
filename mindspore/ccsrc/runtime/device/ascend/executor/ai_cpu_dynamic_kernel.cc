@@ -15,6 +15,8 @@
  */
 
 #include "runtime/device/ascend/executor/ai_cpu_dynamic_kernel.h"
+#include <algorithm>
+#include <vector>
 #include "runtime/mem.h"
 #include "acl/acl_rt.h"
 #include "runtime/kernel.h"
@@ -50,9 +52,13 @@ void AiCpuDynamicKernel::Execute() {
   auto cnode = cnode_ptr_.lock();
   MS_EXCEPTION_IF_NULL(cnode);
   MS_LOG(INFO) << "Execute AiCpuDynamicKerenl Start, op name: " << cnode->fullname_with_scope();
+  auto flag = RT_KERNEL_DEFAULT;
+  if (cust_kernel_) {
+    flag = RT_KERNEL_CUSTOM_AICPU;
+  }
   auto ret = rtCpuKernelLaunchWithFlag(
     reinterpret_cast<const void *>(so_name_.c_str()), reinterpret_cast<const void *>(kernel_name_.c_str()), 1,
-    reinterpret_cast<const void *>(args_.data()), SizeToUint(args_.size()), nullptr, stream_, RT_KERNEL_DEFAULT);
+    reinterpret_cast<const void *>(args_.data()), SizeToUint(args_.size()), nullptr, stream_, flag);
   if (ret != RT_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Call rtCpuKernelLaunchWithFlag Failed";
   }
