@@ -621,7 +621,7 @@ def lu_solve(lu_and_piv, b, trans=0, overwrite_b=False, check_finite=True):
     check_lu_shape(m_lu, b)
     # here permutation array has been calculated, just use it.
     # 2. calculate permutation
-    permutation = pivots
+    permutation = lu_pivots_to_permutation(pivots, len(pivots))
     # 3. rhs_vector
     rhs_vector = m_lu.ndim == b.ndim + 1
     x = lu_solve_core(m_lu, permutation, b, trans)

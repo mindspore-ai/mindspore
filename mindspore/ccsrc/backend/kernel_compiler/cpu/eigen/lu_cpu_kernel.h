@@ -35,9 +35,9 @@ class LUCPUKernel : public CPUKernel {
  private:
   void InitMatrixInfo(const std::vector<size_t> &shape, size_t *row, size_t *col);
   void InitInputOutputSize(const CNodePtr &kernel_node) override;
-  T GetPermutatedValue(const T *lu_value, const int *per, size_t i, size_t j);
-  bool UpdateMajorPermutation(T *lu_value, int *per, size_t k, size_t rows);
-  void SetPermutatedValue(T *lu_value, const int *per, size_t i, size_t j, const T &value);
+  T GetPermutatedValue(const T *lu_value, const std::vector<int> &per_value, size_t i, size_t j);
+  bool UpdateMajorPermutation(T *lu_value, std::vector<int> *const per_value, size_t k, size_t rows);
+  void SetPermutatedValue(T *lu_value, const std::vector<int> &per_value, size_t i, size_t j, const T &value);
   size_t a_row_{1};
   size_t a_col_{1};
   size_t lu_row_{1};
@@ -47,6 +47,7 @@ class LUCPUKernel : public CPUKernel {
   size_t permutation_row_{1};
   size_t permutation_col_{1};
   TypeId dtype_{kNumberTypeFloat32};
+  int *pivots_{nullptr};
 };
 
 MS_REG_CPU_KERNEL_T(LU,
