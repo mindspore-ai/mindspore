@@ -69,15 +69,16 @@ Status JsonHelper::UpdateArray(const std::string &in_file, const std::string &ke
     nlohmann::json js;
     if (in.Exists()) {
       RETURN_IF_NOT_OK(RealPath(in_file));
+      std::ifstream in_stream(in_file);
       try {
-        std::ifstream in_stream(in_file);
         MS_LOG(INFO) << "Filename: " << in_file << ".";
         in_stream >> js;
-        in_stream.close();
       } catch (const std::exception &err) {
+        in_stream.close();
         RETURN_STATUS_UNEXPECTED("Invalid file, failed to open json file: " + in_file +
                                  ", please delete it and try again!");
       }
+      in_stream.close();
     }
     js[key] = value;
     MS_LOG(INFO) << "Write outfile is: " << js << ".";
@@ -104,15 +105,16 @@ Status JsonHelper::RemoveKey(const std::string &in_file, const std::string &key,
     nlohmann::json js;
     if (in.Exists()) {
       RETURN_IF_NOT_OK(RealPath(in_file));
+      std::ifstream in_stream(in_file);
       try {
-        std::ifstream in_stream(in_file);
         MS_LOG(INFO) << "Filename: " << in_file << ".";
         in_stream >> js;
-        in_stream.close();
       } catch (const std::exception &err) {
+        in_stream.close();
         RETURN_STATUS_UNEXPECTED("Invalid file, failed to open json file: " + in_file +
                                  ", please delete it and try again!");
       }
+      in_stream.close();
     }
     (void)js.erase(key);
     MS_LOG(INFO) << "Write outfile is: " << js << ".";

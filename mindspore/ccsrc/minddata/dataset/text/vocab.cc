@@ -203,16 +203,20 @@ Status Vocab::BuildFromFileCpp(const std::string &path, const std::string &delim
       // if delimiter is not found, find_first_of would return std::string::npos which is -1
       word = word.substr(0, word.find_first_of(delimiter));
     }
-    CHECK_FAIL_RETURN_UNEXPECTED(word2id.find(word) == word2id.end(),
-                                 "from_file: word_list contains duplicate word:" + word);
-    CHECK_FAIL_RETURN_UNEXPECTED(specials.find(word) == specials.end(),
-                                 "from_file: special_tokens and word_list contain duplicate word:" + word);
-
+    if (word2id.find(word) != word2id.end()) {
+      handle.close();
+      RETURN_STATUS_UNEXPECTED("from_file: word_list contains duplicate word:" + word);
+    }
+    if (specials.find(word) != specials.end()) {
+      handle.close();
+      RETURN_STATUS_UNEXPECTED("from_file: special_tokens and word_list contain duplicate word:" + word);
+    }
     word2id[word] = word_id++;
     // break if enough row is read, if vocab_size is smaller than 0
     if (word2id.size() == vocab_size) break;
   }
 
+  handle.close();
   word_id = prepend_special ? 0 : word2id.size();
 
   for (auto special_token : special_tokens) {
@@ -250,14 +254,19 @@ Status Vocab::BuildFromFile(const std::string &path, const std::string &delimite
       // if delimiter is not found, find_first_of would return std::string::npos which is -1
       word = word.substr(0, word.find_first_of(delimiter));
     }
-    CHECK_FAIL_RETURN_UNEXPECTED(word2id.find(word) == word2id.end(), "from_file: duplicate word:" + word + ".");
-    CHECK_FAIL_RETURN_UNEXPECTED(specials.find(word) == specials.end(),
-                                 "from_file: " + word + " is already in special_tokens.");
+    if (word2id.find(word) != word2id.end()) {
+      handle.close();
+      RETURN_STATUS_UNEXPECTED("from_file: duplicate word:" + word + ".");
+    }
+    if (specials.find(word) != specials.end()) {
+      handle.close();
+      RETURN_STATUS_UNEXPECTED("from_file: special_tokens and word_list contain duplicate word:" + word);
+    }
     word2id[word] = word_id++;
     // break if enough row is read, if vocab_size is smaller than 0
     if (word2id.size() == vocab_size) break;
   }
-
+  handle.close();
   word_id = prepend_special ? 0 : word2id.size();
 
   for (auto special_token : special_tokens) {

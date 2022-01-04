@@ -105,6 +105,8 @@ def set_seed(seed):
         >>> # Operations with randomness will use the seed value to generate random values.
         >>> ds.config.set_seed(1000)
     """
+    if not isinstance(seed, int):
+        raise ValueError("seed isn't of type int.")
     if seed < 0 or seed > UINT32_MAX:
         raise ValueError("Seed given is not within the required range.")
     _config.set_seed(seed)
@@ -149,6 +151,8 @@ def set_prefetch_size(size):
         >>> # Set a new global configuration value for the prefetch size.
         >>> ds.config.set_prefetch_size(1000)
     """
+    if not isinstance(size, int):
+        raise ValueError("size isn't of type int.")
     if size <= 0 or size > INT32_MAX:
         raise ValueError("Prefetch size given is not within the required range.")
     _config.set_op_connector_size(size)
@@ -185,6 +189,8 @@ def set_num_parallel_workers(num):
         >>> # Now parallel dataset operators will run with 8 workers.
         >>> ds.config.set_num_parallel_workers(8)
     """
+    if not isinstance(num, int):
+        raise ValueError("num isn't of type int.")
     if num <= 0 or num > INT32_MAX:
         raise ValueError("Number of parallel workers given is not within the required range.")
     _config.set_num_parallel_workers(num)
@@ -256,6 +262,8 @@ def set_monitor_sampling_interval(interval):
         >>> # Set a new global configuration value for the monitor sampling interval.
         >>> ds.config.set_monitor_sampling_interval(100)
     """
+    if not isinstance(interval, int):
+        raise ValueError("interval isn't of type int.")
     if interval <= 0 or interval > INT32_MAX:
         raise ValueError("Interval given is not within the required range.")
     _config.set_monitor_sampling_interval(interval)
@@ -355,6 +363,8 @@ def set_callback_timeout(timeout):
         >>> # Set a new global configuration value for the timeout value.
         >>> ds.config.set_callback_timeout(100)
     """
+    if not isinstance(timeout, int):
+        raise ValueError("timeout isn't of type int.")
     if timeout <= 0 or timeout > INT32_MAX:
         raise ValueError("Timeout given is not within the required range.")
     _config.set_callback_timeout(timeout)

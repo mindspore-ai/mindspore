@@ -151,6 +151,10 @@ Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
   cv::Mat in_image = input_cv->mat();
   const uint32_t kResizeShapeLimits = 1000;
   // resize image too large or too small, 1000 is arbitrarily chosen here to prevent open cv from segmentation fault
+  CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int>::max() / kResizeShapeLimits) > in_image.rows,
+                               "Resize: in_image rows out of bounds.");
+  CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int>::max() / kResizeShapeLimits) > in_image.cols,
+                               "Resize: in_image cols out of bounds.");
   if (output_height > in_image.rows * kResizeShapeLimits || output_width > in_image.cols * kResizeShapeLimits) {
     std::string err_msg =
       "Resize: the resizing width or height is too big, it's 1000 times bigger than the original image, got output "
@@ -690,6 +694,10 @@ Status CropAndResize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
     RETURN_IF_NOT_OK(ValidateImageRank("CropAndResize", input_cv->Rank()));
     // image too large or too small, 1000 is arbitrary here to prevent opencv from segmentation fault
     const uint32_t kCropShapeLimits = 1000;
+    CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int>::max() / kCropShapeLimits) > crop_height,
+                                 "CropAndResize: crop_height out of bounds.");
+    CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int>::max() / kCropShapeLimits) > crop_width,
+                                 "CropAndResize: crop_width out of bounds.");
     if (crop_height == 0 || crop_width == 0 || target_height == 0 || target_height > crop_height * kCropShapeLimits ||
         target_width == 0 || target_width > crop_width * kCropShapeLimits) {
       std::string err_msg =
@@ -724,7 +732,9 @@ Status CropAndResize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
 
     TensorShape shape{target_height, target_width};
     int num_channels = input_cv->shape()[CHANNEL_INDEX];
-    if (input_cv->Rank() == DEFAULT_IMAGE_RANK) shape = shape.AppendDim(num_channels);
+    if (input_cv->Rank() == DEFAULT_IMAGE_RANK) {
+      shape = shape.AppendDim(num_channels);
+    }
     std::shared_ptr<CVTensor> cvt_out;
     RETURN_IF_NOT_OK(CVTensor::CreateEmpty(shape, input_cv->type(), &cvt_out));
     cv::resize(cv_in(roi), cvt_out->mat(), cv::Size(target_width, target_height), 0, 0, cv_mode);
