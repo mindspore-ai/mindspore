@@ -82,7 +82,7 @@ def minimize(func, x0, args=(), *, method, tol=None, options=None):
           method each iteration may use several function evaluations.
 
     Returns:
-        OptimizeResults
+        OptimizeResults, object holding optimization results.
 
     Supported Platforms:
         ``CPU`` ``GPU``
