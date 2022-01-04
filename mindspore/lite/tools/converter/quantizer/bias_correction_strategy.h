@@ -29,7 +29,11 @@ enum OperationType {
   STORE,
   FETCH,
 };
-
+enum CallBackType {
+  CPUFP32,
+  CPUInt8,
+  NVGPUInt8,
+};
 class BiasCorrectionStrategy {
  public:
   BiasCorrectionStrategy(const converter::Flags &flags, const std::shared_ptr<Calibrator> &calibrator,
@@ -51,39 +55,39 @@ class BiasCorrectionStrategy {
   }
   int DoCPUBiasCorrection(const FuncGraphPtr &quant_func_graph);
 
-  int DoKirinBiasCorrection(const FuncGraphPtr &origin_func_graph, const FuncGraphPtr &quant_func_graph);
+  int DoNVGPUBiasCorrection(const FuncGraphPtr &quant_func_graph);
 
  private:
   int CreateQuantModel(const FuncGraphPtr &quant_func_graph);
+  int DoBiasCorrection(const FuncGraphPtr &quant_func_graph);
   int DoCNodeBiasCorrection(const FuncGraphPtr &quant_func_graph, const CNodePtr &cnode);
   int Int8Inference(const KernelCallBack &before_call_back, const KernelCallBack &after_call_back);
   int Fp32Inference(const KernelCallBack &before_call_back, const KernelCallBack &after_call_back);
   bool OpInputDataHandle(OperationType type, const string &op_name, std::vector<float> *data);
   bool OpOutputChMeanDataHandle(OperationType type, const string &op_name, std::vector<float> *data);
-  KernelCallBack GetBeforeCallBack(bool int8_op);
-  KernelCallBack GetFloatBeforeCallBack();
-  KernelCallBack GetInt8BeforeCallBack();
-  KernelCallBack GetAfterCallBack(bool int8_op);
-  KernelCallBack GetInt8AfterCallBack();
-  KernelCallBack GetFloatAfterCallBack();
+  void CalcAccumulativeError(const CallBackParam &call_param, const std::vector<float> &fp32_op_output_ch_mean,
+                             const std::vector<float> &dequant_op_output_ch_mean);
+  KernelCallBack GetBeforeCallBack(CallBackType call_back_flag);
+  KernelCallBack GetCPUFloatBeforeCallBack();
+  KernelCallBack GetCPUInt8BeforeCallBack();
+  KernelCallBack GetNVGPUInt8BeforeCallBack();
+  KernelCallBack GetAfterCallBack(CallBackType call_back_flag);
+  KernelCallBack GetCPUInt8AfterCallBack();
+  KernelCallBack GetCPUFloatAfterCallBack();
+  KernelCallBack GetNVGPUInt8AfterCallBack();
+
+  int QuantOriginFeatureMap(const float *origin_feature_map_data, size_t origin_feature_map_data_size,
+                            const std::vector<lite::LiteQuantParam> &feature_map_quant_params, size_t quant_size,
+                            std::vector<int8_t> *quant_datas);
 
   template <typename T>
   int CalculatePerChannelMeans(const T *tensor_data, size_t elem_count, std::vector<int> shapes,
                                std::vector<float> *per_channel_mean) {
-    //  const auto *tensor_data = static_cast<const float *>(tensor->data());
-    //  size_t elem_count = tensor->ElementsNum();
-    MS_CHECK_GT(elem_count, 0, false);
-    //  auto shapes = tensor->shape();
-    if (shapes.size() != DIMENSION_4D) {
-      MS_LOG(ERROR) << "unexpected shape size: " << shapes.size();
-      return RET_ERROR;
-    }
+    CHECK_NULL_RETURN(tensor_data);
+    MS_CHECK_GT(elem_count, 0, RET_ERROR);
     // suppose the activation format: NHWC
-    auto channels = shapes[FOURTH_INPUT];
-    if (channels == 0) {
-      MS_LOG(ERROR) << "unexpected channels: 0";
-      return RET_ERROR;
-    }
+    auto channels = shapes[shapes.size() - 1];
+    MS_CHECK_GT(channels, 0, RET_ERROR);
     per_channel_mean->resize(channels);
     auto bucket_size = elem_count / channels;
     for (int i = 0; i < channels; i++) {
@@ -96,7 +100,7 @@ class BiasCorrectionStrategy {
         }
         sum += tensor_data[index];
       }
-      MS_CHECK_GT(bucket_size, 0, false);
+      MS_CHECK_GT(bucket_size, 0, RET_ERROR);
       sum = sum / bucket_size;
       per_channel_mean->at(i) = sum;
     }
@@ -113,6 +117,11 @@ class BiasCorrectionStrategy {
 
   session::LiteSession *int8_session_{nullptr};
   Model *int8_model_{nullptr};
+
+  KernelCallBack int8_before_call_back_;
+  KernelCallBack int8_after_call_back_;
+  KernelCallBack fp32_before_call_back_;
+  KernelCallBack fp32_after_call_back_;
 
   std::map<std::string, std::vector<float>> fp32_op_input_map_;           // concurrency
   std::map<std::string, std::vector<float>> fp32_op_output_ch_mean_map_;  // concurrency

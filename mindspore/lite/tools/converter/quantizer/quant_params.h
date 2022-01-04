@@ -31,6 +31,7 @@ enum ActivationQuantizedMethod {
 enum TargetDevice {
   CPU,
   KIRIN,
+  NVGPU,
 };
 
 struct CommonQuantParam {
