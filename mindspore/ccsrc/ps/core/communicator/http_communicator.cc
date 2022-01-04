@@ -53,15 +53,26 @@ bool HttpCommunicator::Stop() {
 void HttpCommunicator::RegisterMsgCallBack(const std::string &msg_type, const MessageCallback &cb) {
   MS_LOG(INFO) << "msg_type is: " << msg_type;
   msg_callbacks_[msg_type] = cb;
-  http_msg_callbacks_[msg_type] = std::bind(
-    [&](std::shared_ptr<HttpMessageHandler> http_msg) -> void {
-      MS_EXCEPTION_IF_NULL(http_msg);
-      std::shared_ptr<MessageHandler> http_msg_handler = std::make_shared<HttpMsgHandler>(http_msg);
+  http_msg_callbacks_[msg_type] = [&](std::shared_ptr<HttpMessageHandler> http_msg) -> void {
+    MS_EXCEPTION_IF_NULL(http_msg);
+    try {
+      size_t len = 0;
+      uint8_t *data = nullptr;
+      if (!http_msg->GetPostMsg(&len, &data)) {
+        RequestProcessResult result(RequestProcessResultCode::kInvalidInputs, "Get post message failed");
+        http_msg->ErrorResponse(HTTP_INTERNAL, result);
+        return;
+      }
+      std::shared_ptr<MessageHandler> http_msg_handler = std::make_shared<HttpMsgHandler>(http_msg, data, len);
       MS_EXCEPTION_IF_NULL(http_msg_handler);
       msg_callbacks_[msg_type](http_msg_handler);
-      return;
-    },
-    std::placeholders::_1);
+    } catch (const std::exception &e) {
+      MS_LOG(ERROR) << "Catch exception when invoke message handler, msg_type: " << msg_type
+                    << " exception: " << e.what();
+      RequestProcessResult result(RequestProcessResultCode::kSystemError, e.what());
+      http_msg->ErrorResponse(HTTP_INTERNAL, result);
+    }
+  };
 
   std::string url = ps::PSContext::instance()->http_url_prefix();
   url += "/";

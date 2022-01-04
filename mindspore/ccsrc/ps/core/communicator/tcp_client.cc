@@ -166,12 +166,28 @@ void TcpClient::SetTcpNoDelay(const evutil_socket_t &fd) {
 }
 
 void TcpClient::TimeoutCallback(evutil_socket_t, std::int16_t, void *arg) {
+  try {
+    TimeoutCallbackInner(arg);
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "Catch exception: " << e.what();
+  }
+}
+
+void TcpClient::TimeoutCallbackInner(void *arg) {
   MS_EXCEPTION_IF_NULL(arg);
   auto tcp_client = reinterpret_cast<TcpClient *>(arg);
   tcp_client->Init();
 }
 
 void TcpClient::ReadCallback(struct bufferevent *bev, void *ctx) {
+  try {
+    ReadCallbackInner(bev, ctx);
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "Catch exception: " << e.what();
+  }
+}
+
+void TcpClient::ReadCallbackInner(struct bufferevent *bev, void *ctx) {
   MS_EXCEPTION_IF_NULL(bev);
   MS_EXCEPTION_IF_NULL(ctx);
   auto tcp_client = reinterpret_cast<TcpClient *>(ctx);
@@ -219,6 +235,14 @@ bool TcpClient::EstablishSSL() {
 }
 
 void TcpClient::EventCallback(struct bufferevent *bev, std::int16_t events, void *ptr) {
+  try {
+    EventCallbackInner(bev, events, ptr);
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "Catch exception: " << e.what();
+  }
+}
+
+void TcpClient::EventCallbackInner(struct bufferevent *bev, std::int16_t events, void *ptr) {
   MS_EXCEPTION_IF_NULL(bev);
   MS_EXCEPTION_IF_NULL(ptr);
   auto tcp_client = reinterpret_cast<TcpClient *>(ptr);

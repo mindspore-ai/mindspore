@@ -130,7 +130,7 @@ void HttpServer::SetTimeOut(int seconds) {
 }
 
 bool HttpServer::RegisterRoute(const std::string &url, OnRequestReceive *function) {
-  if (!function) {
+  if (!function || !(*function)) {
     return false;
   }
   MS_LOG(INFO) << "request handler url is: " << url;
