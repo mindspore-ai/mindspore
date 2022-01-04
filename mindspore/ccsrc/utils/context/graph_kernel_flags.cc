@@ -185,6 +185,15 @@ void GraphKernelFlags::Refresh() {
       MS_LOG(WARNING) << "GraphKernel only support GRAPH_MODE";
       opt_level = OptLevel_0;
     }
+
+    // check whether on ascend open graphkernel, if open, may cause error, reminder
+    // users to close this feature.
+    auto is_ascend = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
+    if (is_ascend) {
+      MS_LOG(WARNING)
+        << "GraphKernel on Ascend is experimental, please disable it if you meet some compiling or running error. For "
+           "more details, please refer to 'mindspore.context' at https://www.mindspore.cn.";
+    }
 #ifndef USE_LLVM
     auto is_cpu = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice);
     if (is_cpu) {
