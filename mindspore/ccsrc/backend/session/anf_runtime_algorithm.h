@@ -168,6 +168,9 @@ class AnfRuntimeAlgorithm {
   // get output shapes for tbe build
   static std::vector<int64_t> GetOutputDeviceShapeForTbeBuild(const AnfNodePtr &node, const size_t output_idx,
                                                               const std::string &format);
+  // get input shapes for tbe build
+  static std::vector<int64_t> GetInputDeviceShapeForTbeBuild(const AnfNodePtr &node, const size_t input_idx,
+                                                             const std::string &format);
   // Get Input Padding Axis
   static std::string GetInputReshapeType(const AnfNodePtr &node, size_t output_idx);
   // Get Output Padding Axis

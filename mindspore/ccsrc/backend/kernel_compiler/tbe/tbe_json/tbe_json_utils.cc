@@ -85,9 +85,8 @@ std::vector<int64_t> TbeJsonUtils::GetInputOriShapeForTbeBuild(const AnfNodePtr 
 std::vector<int64_t> TbeJsonUtils::GetInputDeviceShapeForTbeBuild(const AnfNodePtr &anf_node, size_t real_idx) {
   MS_EXCEPTION_IF_NULL(anf_node);
   std::vector<int64_t> shape;
-  session::KernelWithIndex kernel_with_index = AnfAlgo::GetPrevNodeOutput(anf_node, real_idx);
   auto format = AnfAlgo::GetInputFormat(anf_node, real_idx);
-  shape = AnfAlgo::GetOutputDeviceShapeForTbeBuild(kernel_with_index.first, kernel_with_index.second, format);
+  shape = AnfAlgo::GetInputDeviceShapeForTbeBuild(anf_node, real_idx, format);
   if (shape.empty()) {
     shape.emplace_back(1);
   }
