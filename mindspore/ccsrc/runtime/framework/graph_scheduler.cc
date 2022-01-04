@@ -1427,19 +1427,21 @@ void GraphScheduler::LinkControlArrowForDataPrepareActor(DataPrepareActor *data_
   MS_EXCEPTION_IF_NULL(data_prepare_actor);
   MS_EXCEPTION_IF_NULL(actor_set);
   MS_EXCEPTION_IF_NULL(parser);
+  AbstractActor *no_input_kernel_control_source = data_prepare_actor;
 
   // Data prepare actor --> data source actor.
   for (auto &data_source_actor : actor_set->data_source_actors_) {
     MS_EXCEPTION_IF_NULL(data_source_actor);
     AddControlArrow(data_prepare_actor, data_source_actor.get());
+    no_input_kernel_control_source = data_source_actor.get();
   }
 
   // In control flow, control arrow of no input kernel actor needs to be connected to the corresponding entrance actor.
   if (!parser->IsInited()) {
-    // Data prepare actor --> no input kernel actor.
+    // Data prepare actor/data source actor --> no input kernel actor.
     for (auto &no_input_kernel_actor : actor_set->no_input_kernel_actors_) {
       MS_EXCEPTION_IF_NULL(no_input_kernel_actor);
-      AddControlArrow(data_prepare_actor, no_input_kernel_actor.get());
+      AddControlArrow(no_input_kernel_control_source, no_input_kernel_actor.get());
     }
   }
 
