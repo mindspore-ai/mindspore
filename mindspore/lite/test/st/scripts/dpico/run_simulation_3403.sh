@@ -231,7 +231,7 @@ else
 fi
 
 dpico_atc_path=${hisi_sdk}/sd3403_sdk/dpico_atc_adapter
-x86_path=${release_path}/ubuntu_x86
+x86_path=${release_path}/centos_x86
 
 # Set version
 file_name=$(ls ${x86_path}/*-linux-x64.tar.gz)

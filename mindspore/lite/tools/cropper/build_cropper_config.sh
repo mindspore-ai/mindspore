@@ -118,11 +118,11 @@ getOpsFile() {
 }
 
 getFilesFromArr() {
-  local -n arr_files=${1}
+  local arr_files=${1}
   # echo " func parm 1 : ${arr_files[@]}"
   # echo " func parm 2 : $2"
   # shellcheck disable=SC2068
-  for file in ${arr_files[@]}; do
+  for file in ${arr_files[*]}; do
     map_files=$(gcc -MM ${file} ${DEFINE_STR} ${HEADER_LOCATION})
     # first is *.o second is *.cc
     # shellcheck disable=SC2207
@@ -223,8 +223,8 @@ getCommonFile() {
     "${others_files_c[@]}" "${assembly_files[@]}" "${mindrt_files[@]}"
     "${cxx_api_files[@]}"
   ) 
-  getFilesFromArr all_files
-  getFilesFromArr all_files_h
+  getFilesFromArr "${all_files[*]}"
+  getFilesFromArr "${all_files_h[*]}"
   # shellcheck disable=SC2068
   for file in ${all_files[@]}; do
     file=$(echo ${file} | awk -F '/' '{print $NF}')
@@ -240,8 +240,8 @@ getCommonFile() {
   for val in ${all_files_train_h[@]:1}; do
     REMOVE_LISTS_STR="$REMOVE_LISTS_STR|$val"
   done
-  getFilesFromArr all_files_train "train_source"
-  getFilesFromArr all_files_train_h "train_source"
+  getFilesFromArr "${all_files_train[*]}" "train_source"
+  getFilesFromArr "${all_files_train_h[*]}" "train_source"
   # shellcheck disable=SC2068
   for file in ${all_files_train[@]}; do
     file=$(echo ${file} | awk -F '/' '{print $NF}')

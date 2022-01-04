@@ -120,7 +120,7 @@ echo 'run cropper logs: ' > "${run_cropper_log_file}"
 
 cropper_config="${basepath}"/../config/models_cropper.cfg
 arm64_path=${release_path}/android_aarch64/npu
-x86_path=${release_path}/ubuntu_x86
+x86_path=${release_path}/centos_x86
 
 # Write converter result to temp file
 run_converter_log_file="${basepath}"/run_converter_log.txt
