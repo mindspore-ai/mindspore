@@ -84,14 +84,15 @@ class ROC(Metric):
     def _precision_recall_curve_update(self, y_pred, y, class_num, pos_label):
         """update curve"""
         if not (len(y_pred.shape) == len(y.shape) or len(y_pred.shape) == len(y.shape) + 1):
-            raise ValueError("y_pred and y must have the same number of dimensions, or one additional dimension for"
-                             " y_pred.")
+            raise ValueError(f"For 'ROC', predicted value (input[0]) and true value (input[1]) should have same "
+                             f"dimensions, or the dimension of predicted value equal the dimension of true value add "
+                             f"1, but got predicted value ndim: {len(y_pred.shape)}, true value ndim: {len(y.shape)}.")
 
         # single class evaluation
         if len(y_pred.shape) == len(y.shape):
             if class_num is not None and class_num != 1:
-                raise ValueError('The y_pred and y should have the same shape, '
-                                 'but the number of classes is different from 1.')
+                raise ValueError(f"For 'ROC', when predicted value (input[0]) and true value (input[1]) have the same "
+                                 f"shape, the 'class_num' should be 1, but got {class_num}.")
             class_num = 1
             if pos_label is None:
                 pos_label = 1
@@ -101,11 +102,13 @@ class ROC(Metric):
         # multi class evaluation
         elif len(y_pred.shape) == len(y.shape) + 1:
             if pos_label is not None:
-                raise ValueError('Argument `pos_label` should be `None` when running multiclass precision recall '
-                                 'curve, but got {}.'.format(pos_label))
+                raise ValueError(f"For 'ROC', when the dimension of predicted value (input[0]) equals the dimension "
+                                 f"of true value (input[1]) add 1, the 'pos_label' should be None, "
+                                 f"but got {pos_label}.")
             if class_num != y_pred.shape[1]:
-                raise ValueError('Argument `class_num` was set to {}, but detected {} number of classes from '
-                                 'predictions.'.format(class_num, y_pred.shape[1]))
+                raise ValueError("For 'ROC', the 'class_num' should equal the number of classes from predicted value "
+                                 "(input[0]), but got 'class_num' {}, the number of classes from predicted value {}."
+                                 .format(class_num, y_pred.shape[1]))
             y_pred = y_pred.transpose(0, 1).reshape(class_num, -1).transpose(0, 1)
             y = y.flatten()
 
@@ -124,7 +127,8 @@ class ROC(Metric):
                 encoding is used. Shape can also be :math:`(N,)` if category index is used.
         """
         if len(inputs) != 2:
-            raise ValueError('ROC need 2 inputs (y_pred, y), but got {}'.format(len(inputs)))
+            raise ValueError("For 'ROC.update', it needs 2 inputs (predicted value, true value), but got {}"
+                             .format(len(inputs)))
         y_pred = self._convert_data(inputs[0])
         y = self._convert_data(inputs[1])
 
@@ -146,11 +150,13 @@ class ROC(Metric):
             thresholds = np.hstack([thresholds[0][None] + 1, thresholds])
 
             if fps[-1] <= 0:
-                raise ValueError("No negative samples in y, false positive value should be meaningless.")
+                raise ValueError("For 'ROC.eval', there is no negative samples in true value, "
+                                 "false positive value is meaningless.")
             fpr = fps / fps[-1]
 
             if tps[-1] <= 0:
-                raise ValueError("No positive samples in y, true positive value should be meaningless.")
+                raise ValueError("For 'ROC.eval', there is no positive samples in true value, "
+                                 "true positive value is meaningless.")
             tpr = tps / tps[-1]
 
             return fpr, tpr, thresholds

@@ -54,7 +54,7 @@ def test_asgdwithoutparam():
     """
     net = NetWithoutWeight()
     net.set_train()
-    with pytest.raises(ValueError, match=r"Optimizer got an empty parameters list"):
+    with pytest.raises(ValueError, match=r"For 'Optimizer', the argument parameters must not be empty"):
         ASGD(net.trainable_params(), learning_rate=0.1)
 
 
@@ -98,5 +98,5 @@ def test_asgd_mindspore_with_empty_params():
     Expectation: ValueError is raised.
     """
     net = nn.Flatten()
-    with pytest.raises(ValueError, match=r"Optimizer got an empty parameters list"):
+    with pytest.raises(ValueError, match=r"For 'Optimizer', the argument parameters must not be empty"):
         ASGD(net.get_parameters())

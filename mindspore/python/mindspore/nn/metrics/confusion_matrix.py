@@ -313,11 +313,12 @@ class _ConfusionMatrix:
             ValueError: when `y_pred` has less than two dimensions.
         """
         if not np.all(y.astype(np.uint8) == y):
-            raise ValueError("The y should be a binarized ndarray.")
+            raise ValueError("For 'ConfusionMatrix.update', the true value (input[1]) should be a binarized ndarray.")
 
         dims = y_pred.ndim
         if dims < 2:
-            raise ValueError("The y_pred should have at least two dimensions.")
+            raise ValueError(f"For 'ConfusionMatrix.update', the predicted value (input[0]) should have at least 2 "
+                             f"dimensions, but got {dims}.")
 
         if dims == 2 or (dims == 3 and y_pred.shape[-1] == 1):
             if self.calculation_method:
@@ -332,7 +333,7 @@ class _ConfusionMatrix:
                 return chart, not_nans
 
             if not self.metric_name:
-                raise ValueError("There should be at least one metric name.")
+                raise ValueError("For 'ConfusionMatrix', the argument 'metric_name' cannot be None.")
 
             results = []
             for metric_name in self.metric_name:
@@ -594,7 +595,7 @@ def _compute_confusion_matrix_metric(metric_name, confusion_matrix):
     if input_dim == 1:
         confusion_matrix = np.expand_dims(confusion_matrix, 0)
     if confusion_matrix.shape[-1] != 4:
-        raise ValueError(f"The size of the last dimension of confusion_matrix should be 4, "
+        raise ValueError(f"For 'ConfusionMatrix', the size of the last dimension of confusion_matrix should be 4, "
                          f"but got {confusion_matrix.shape[-1]}.")
 
     tp = confusion_matrix[..., 0]

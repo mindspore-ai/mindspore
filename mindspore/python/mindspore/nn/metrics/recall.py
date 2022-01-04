@@ -110,8 +110,9 @@ class Recall(EvaluationBase):
         class_num = self._class_num
         if self._type == "classification":
             if y.max() + 1 > class_num:
-                raise ValueError('y_pred contains {} classes less than y contains {} classes.'.
-                                 format(class_num, y.max() + 1))
+                raise ValueError("For 'Recall.update', predicted value (input[0]) should have the same classes number "
+                                 "as true value (input[1]), but got predicted value classes {}, true value classes {}."
+                                 .format(class_num, y.max() + 1))
             y = np.eye(class_num)[y.reshape(-1)]
             indices = y_pred.argmax(axis=1).reshape(-1)
             y_pred = np.eye(class_num)[indices]
