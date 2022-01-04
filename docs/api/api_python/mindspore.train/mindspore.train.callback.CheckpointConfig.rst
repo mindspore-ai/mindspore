@@ -102,7 +102,7 @@
     .. py:method:: saved_network
         :property:
 
-        获取_保存的网络。
+        获取保存的网络。
 
     .. py:method:: save_checkpoint_seconds
         :property:

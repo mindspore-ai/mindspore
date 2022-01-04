@@ -3,7 +3,7 @@ mindspore.ops.L2Loss
 
 .. py:class:: mindspore.ops.L2Loss(*args, **kwargs)
 
-    计算Tensor的L2范数的一半，不对结果进行 `sqrt` 开方。
+    计算Tensor的L2范数的一半，不对结果进行开方。
 
     把 `input_x` 设为x，输出设为loss。
 
