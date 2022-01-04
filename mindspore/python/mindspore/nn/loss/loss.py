@@ -1351,6 +1351,8 @@ class FocalLoss(LossBase):
         ValueError: If `labels` dim is different from `logits`.
         ValueError: If `labels` channel is not 1 and `labels` shape is different from `logits`.
         ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+        ValueError: If the value of `labels` is not in the range [-:math:`C`, :math:`C`).
+                    Where :math:`C` is the number of classes in logits.
 
     Supported Platforms:
         ``Ascend``
