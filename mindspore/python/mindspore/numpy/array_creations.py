@@ -769,7 +769,7 @@ def empty(shape, dtype=mstype.float32):
         shape and dtype.
 
     Raises:
-        TypeError: if the input shape or dtype is invalid.
+        TypeError: If the input shape or dtype is invalid.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -839,7 +839,7 @@ def empty_like(prototype, dtype=None, shape=None):
         shape and type as `prototype`.
 
     Raises:
-        ValueError: if `prototype` is not a Tensor, list or tuple.
+        ValueError: If `prototype` is not a Tensor, list or tuple.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -875,7 +875,7 @@ def ones_like(a, dtype=None, shape=None):
         Tensor, array of ones with the same shape and type as `a`.
 
     Raises:
-        ValueError: if `a` is not a Tensor, list or tuple.
+        ValueError: If `a` is not a Tensor, list or tuple.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -913,7 +913,7 @@ def zeros_like(a, dtype=None, shape=None):
         Tensor, array of zeros with the same shape and type as `a`.
 
     Raises:
-        ValueError: if `a` is not a Tensor, list or tuple.
+        ValueError: If `a` is not a Tensor, list or tuple.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -952,7 +952,7 @@ def full_like(a, fill_value, dtype=None, shape=None):
         Tensor, array of fill_value with the same shape and type as `a`.
 
     Raises:
-        ValueError: if `a` is not a Tensor, list or tuple.
+        ValueError: If `a` is not a Tensor, list or tuple.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1112,7 +1112,7 @@ def diagonal(a, offset=0, axis1=0, axis2=1):
         and a new axis inserted at the end corresponding to the diagonal.
 
     Raises:
-        ValueError: if the input tensor has less than two dimensions.
+        ValueError: If the input tensor has less than two dimensions.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1168,7 +1168,7 @@ def trace(a, offset=0, axis1=0, axis2=1, dtype=None):
         axis2 (int, optional): Axis to be used as the second axis of the 2-D
             sub-arrays from which the diagonals should be taken. Defaults to
             second axis.
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -1177,7 +1177,7 @@ def trace(a, offset=0, axis1=0, axis2=1, dtype=None):
         diagonals is returned.
 
     Raises:
-        ValueError: if the input tensor has less than two dimensions.
+        ValueError: If the input tensor has less than two dimensions.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1241,7 +1241,7 @@ def meshgrid(*xi, sparse=False, indexing='xy'):
         along the first dimension for `x1`, the second for `x2` and so on.
 
     Raises:
-        TypeError: if the input is not a tensor, or sparse is not boolean, or
+        TypeError: If the input is not a tensor, or sparse is not boolean, or
             indexing is not 'xy' or 'ij'.
 
     Supported Platforms:
@@ -1378,7 +1378,7 @@ class MGridClass(NdGrid):
         Tensor or tuple of tensor, a meshgrid.
 
     Raises:
-        TypeError: if slicing indices are not integers.
+        TypeError: If slicing indices are not integers.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1423,7 +1423,7 @@ class OGridClass(NdGrid):
         ``int(abs(step))``.
 
     Raises:
-        TypeError: if slicing indices are not integers.
+        TypeError: If slicing indices are not integers.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1468,7 +1468,7 @@ def diag(v, k=0):
         Tensor, the extracted diagonal or constructed diagonal array.
 
     Raises:
-        ValueError: if input is not 1-D or 2-D.
+        ValueError: If input is not 1-D or 2-D.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1535,7 +1535,7 @@ def diagflat(v, k=0):
         Tensor, The 2-D output array.
 
     Raises:
-        TypeError: if the input is not a tensor.
+        TypeError: If the input is not a tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1595,7 +1595,7 @@ def diag_indices(n, ndim=2):
         Tuple of Tensor.
 
     Raises:
-        TypeError: if input are not integers.
+        TypeError: If input are not integers.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1637,7 +1637,7 @@ def ix_(*args):
         mesh.
 
     Raises:
-        TypeError: if the input is not a tensor.
+        TypeError: If the input is not a tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1739,7 +1739,7 @@ def indices(dimensions, dtype=mstype.int32, sparse=False):
         ``dimensions[i]`` in the `ith` place
 
     Raises:
-        TypeError: if input dimensions is not a tuple or list.
+        TypeError: If input dimensions is not a tuple or list.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1786,7 +1786,7 @@ def bartlett(M):
         first and last samples equal to zero.
 
     Raises:
-        TypeError: if `M` is not an int.
+        TypeError: If `M` is not an int.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1820,7 +1820,7 @@ def blackman(M):
         one appears only if the number of samples is odd).
 
     Raises:
-        TypeError: if `M` is not an int.
+        TypeError: If `M` is not an int.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1853,7 +1853,7 @@ def hamming(M):
         one appears only if the number of samples is odd).
 
     Raises:
-        TypeError: if `M` is not an int.
+        TypeError: If `M` is not an int.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1884,7 +1884,7 @@ def hanning(M):
         one appears only if the number of samples is odd).
 
     Raises:
-        TypeError: if `M` is not an int.
+        TypeError: If `M` is not an int.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1943,7 +1943,7 @@ def triu_indices(n, k=0, m=None):
         with the indices along one dimension of the tensor.
 
     Raises:
-        TypeError: if `n`, `k`, `m` are not numbers.
+        TypeError: If `n`, `k`, `m` are not numbers.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1972,7 +1972,7 @@ def tril_indices(n, k=0, m=None):
         with the indices along one dimension of the tensor.
 
     Raises:
-        TypeError: if `n`, `k`, `m` are not numbers.
+        TypeError: If `n`, `k`, `m` are not numbers.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1999,8 +1999,8 @@ def triu_indices_from(arr, k=0):
         Indices for the upper-triangle of `arr`.
 
     Raises:
-        TypeError: if `arr` cannot be converted to tensor, or `k` is not a number.
-        ValueError: if `arr` cannot be converted to a 2-dimensional tensor.
+        TypeError: If `arr` cannot be converted to tensor, or `k` is not a number.
+        ValueError: If `arr` cannot be converted to a 2-dimensional tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2031,8 +2031,8 @@ def tril_indices_from(arr, k=0):
         Indices for the upper-triangle of `arr`.
 
     Raises:
-        TypeError: if `arr` cannot be converted to tensor, or `k` is not a number.
-        ValueError: if `arr` cannot be converted to a 2-dimensional tensor.
+        TypeError: If `arr` cannot be converted to tensor, or `k` is not a number.
+        ValueError: If `arr` cannot be converted to a 2-dimensional tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2080,7 +2080,7 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None): # pylint: disable
         ``Ascend`` ``GPU`` ``CPU``
 
     Raises:
-        TypeError: if `bins` is an array and not one-dimensional.
+        TypeError: If `bins` is an array and not one-dimensional.
 
     Examples:
         >>> import mindspore.numpy as np
@@ -2438,17 +2438,19 @@ def pad(arr, pad_width, mode="constant", stat_length=None, constant_values=0,
             unaltered reflection around the edge value. For the \'odd\' style, the extended
             part of the `arr` is created by subtracting the reflected values from two times
             the edge value.
+        kwargs (anytype, optional): Any keyword arguments that will be used only in <function>
+            mode.
 
     Returns:
         Padded tensor of rank equal to `arr` with shape increased according to `pad_width`.
 
     Raises:
-        TypeError: if `arr`, `pad_width`, `stat_length`, `constant_values` or `end_values`
+        TypeError: If `arr`, `pad_width`, `stat_length`, `constant_values` or `end_values`
             have types not specified above.
-        ValueError: if `mode` cannot be recognized, or if `pad_width`, `stat_length`,
+        ValueError: If `mode` cannot be recognized, or if `pad_width`, `stat_length`,
             `constant_values`, `end_values` cannot broadcast to :class:`(arr.ndim, 2)`,
             or if keyword arguments got unexpected inputs.
-        NotImplementedError: if mode is function or \'median\'.
+        NotImplementedError: If mode is function or \'median\'.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

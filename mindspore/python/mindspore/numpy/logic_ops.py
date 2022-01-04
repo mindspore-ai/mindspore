@@ -37,7 +37,7 @@ def not_equal(x1, x2, dtype=None):
     Args:
         x1 (Tensor): First input tensor to be compared.
         x2 (Tensor): Second input tensor to be compared.
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -75,7 +75,7 @@ def less_equal(x1, x2, dtype=None):
         x1 (Tensor): Input array.
         x2 (Tensor): Input array. If ``x1.shape != x2.shape``, they must be
             broadcastable to a common shape (which becomes the shape of the output).
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -108,7 +108,7 @@ def less(x1, x2, dtype=None):
         x1 (Tensor): input array.
         x2 (Tensor): Input array. If ``x1.shape != x2.shape``, they must be
             broadcastable to a common shape (which becomes the shape of the output).
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -140,7 +140,7 @@ def greater_equal(x1, x2, dtype=None):
         x1 (Tensor): Input array.
         x2 (Tensor): Input array. If ``x1.shape != x2.shape``, they must be
             broadcastable to a common shape (which becomes the shape of the output).
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -172,7 +172,7 @@ def greater(x1, x2, dtype=None):
         x1 (Tensor): Input array.
         x2 (Tensor): Input array. If ``x1.shape != x2.shape``, they must be
             broadcastable to a common shape (which becomes the shape of the output).
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -204,7 +204,7 @@ def equal(x1, x2, dtype=None):
         x1 (Tensor): Input array.
         x2 (Tensor): Input array. If ``x1.shape != x2.shape``, they must be
             broadcastable to a common shape (which becomes the shape of the output).
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -237,7 +237,7 @@ def isfinite(x, dtype=None):
 
     Args:
         x (Tensor): Input values.
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -267,7 +267,7 @@ def isnan(x, dtype=None):
 
     Args:
         x (Tensor): Input values.
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -314,7 +314,7 @@ def isinf(x, dtype=None):
 
     Args:
         x (Tensor): Input values.
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -364,7 +364,7 @@ def isposinf(x):
        This is a scalar if `x` is a scalar.
 
     Raises:
-        TypeError: if the input is not a tensor.
+        TypeError: If the input is not a tensor.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -395,7 +395,7 @@ def isneginf(x):
        This is a scalar if `x` is a scalar.
 
     Raises:
-        TypeError: if the input is not a tensor.
+        TypeError: If the input is not a tensor.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -425,7 +425,7 @@ def isscalar(element):
         Boolean, True if `element` is a scalar type, False if it is not.
 
     Raises:
-        TypeError: if the type of `element` is not supported by mindspore parser.
+        TypeError: If the type of `element` is not supported by mindspore parser.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -622,7 +622,7 @@ def logical_not(a, dtype=None):
         This is a scalar if `a` is a scalar.
 
     Raises:
-        TypeError: if the input is not a tensor or its dtype is not bool.
+        TypeError: If the input is not a tensor or its dtype is not bool.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -649,7 +649,7 @@ def logical_or(x1, x2, dtype=None):
         x1 (Tensor): Input tensor.
         x2 (Tensor): Input tensor. If ``x1.shape != x2.shape``, they must be
             broadcastable to a common shape (which becomes the shape of the output).
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -683,7 +683,7 @@ def logical_and(x1, x2, dtype=None):
         x1 (Tensor): Input tensor.
         x2 (Tensor): Input tensor. If ``x1.shape != x2.shape``, they must be
             broadcastable to a common shape (which becomes the shape of the output).
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -717,7 +717,7 @@ def logical_xor(x1, x2, dtype=None):
         x1 (Tensor): Input tensor.
         x2 (Tensor): Input tensor. If ``x1.shape != x2.shape``, they must be
             broadcastable to a common shape (which becomes the shape of the output).
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -833,7 +833,7 @@ def signbit(x, dtype=None):
 
     Args:
         x (Union[int, float, bool, list, tuple, Tensor]): The input value(s).
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:

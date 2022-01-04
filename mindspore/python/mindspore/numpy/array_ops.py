@@ -678,7 +678,7 @@ def where(condition, x=None, y=None):
         elements from `y` elsewhere.
 
     Raises:
-        ValueError: if operands cannot be broadcast.
+        ValueError: If operands cannot be broadcast.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -761,7 +761,7 @@ def atleast_1d(*arys):
         Tensor, or list of tensors, each with ``a.ndim >= 1``.
 
     Raises:
-        TypeError: if the input is not a tensor.
+        TypeError: If the input is not a tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -798,7 +798,7 @@ def atleast_2d(*arys):
         Tensor, or list of tensors, each with ``a.ndim >= 2``.
 
     Raises:
-        TypeError: if the input is not a tensor.
+        TypeError: If the input is not a tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -838,7 +838,7 @@ def atleast_3d(*arys):
         a 2-D array of shape `(M, N)` becomes a tensor of shape `(M, N, 1)`.
 
     Raises:
-        TypeError: if the input is not a tensor.
+        TypeError: If the input is not a tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -894,7 +894,7 @@ def stack(arrays, axis=0):
         arrays.
 
     Raises:
-        ValueError: if input is not Tensor, tuple, or list.
+        ValueError: If input is not Tensor, tuple, or list.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1145,7 +1145,7 @@ def moveaxis(a, source, destination):
         Tensor, array with moved axes.
 
     Raises:
-        ValueError: if axes are out of the range of ``[-a.ndim, a.ndim)``, or
+        ValueError: If axes are out of the range of ``[-a.ndim, a.ndim)``, or
             if the axes contain duplicates.
 
     Supported Platforms:
@@ -1199,7 +1199,7 @@ def tile(a, reps):
         Tensor, the tiled output array.
 
     Raises:
-        TypeError: if the input is not a tensor.
+        TypeError: If the input is not a tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1254,7 +1254,7 @@ def broadcast_to(array, shape):
         Tensor, original array broadcast to the given shape.
 
     Raises:
-        ValueError: if array cannot be broadcast to shape.
+        ValueError: If array cannot be broadcast to shape.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1290,7 +1290,7 @@ def broadcast_arrays(*args):
         List of Tensor.
 
     Raises:
-        ValueError: if arrays cannot be broadcast.
+        ValueError: If arrays cannot be broadcast.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1642,7 +1642,7 @@ def flip(m, axis=None):
         Tensor, with the entries of `axis` reversed.
 
     Raises:
-        TypeError: if the input is not a tensor.
+        TypeError: If the input is not a tensor.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -1652,16 +1652,16 @@ def flip(m, axis=None):
         >>> A = np.arange(8.0).reshape((2,2,2))
         >>> output = np.flip(A)
         >>> print(output)
-        [[[7. 6]
-        [5. 4]]
-        [[3. 2]
-        [1. 0]]]
+        [[[7. 6.]
+        [5. 4.]]
+        [[3. 2.]
+        [1. 0.]]]
         >>> output = np.flip(A, (0, 2))
         >>> print(output)
-        [[[5. 4]
-        [7. 6]]
-        [[1. 0]
-        [3. 2]]]
+        [[[5. 4.]
+        [7. 6.]]
+        [[1. 0.]
+        [3. 2.]]]
     """
     _check_input_tensor(m)
     ndim = F.rank(m)
@@ -1693,7 +1693,7 @@ def flipud(m):
         Tensor.
 
     Raises:
-        TypeError: if the input is not a tensor.
+        TypeError: If the input is not a tensor.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -1723,7 +1723,7 @@ def fliplr(m):
         Tensor.
 
     Raises:
-        TypeError: if the input is not a tensor.
+        TypeError: If the input is not a tensor.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -1761,8 +1761,8 @@ def take_along_axis(arr, indices, axis):
         Tensor, the indexed result, with shape `(Ni…, J, Nk…)`.
 
     Raises:
-        ValueError: if input array and indices have different number of dimensions.
-        TypeError: if the input is not a Tensor.
+        ValueError: If input array and indices have different number of dimensions.
+        TypeError: If the input is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1859,8 +1859,8 @@ def take(a, indices, axis=None, mode='clip'):
         Tensor, the indexed result.
 
     Raises:
-        ValueError: if axis is out of range.
-        TypeError: if the input is not a Tensor.
+        ValueError: If axis is out of range.
+        TypeError: If the input is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1898,8 +1898,8 @@ def repeat(a, repeats, axis=None):
         axis.
 
     Raises:
-        ValueError: if axis is out of range.
-        TypeError: if input `a` is not a Tensor.
+        ValueError: If axis is out of range.
+        TypeError: If input `a` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1943,10 +1943,10 @@ def rot90(a, k=1, axes=(0, 1)):
         Tensor.
 
     Raises:
-        TypeError: if input `a` is not a Tensor or
+        TypeError: If input `a` is not a Tensor or
             the argument `k` is not integer or
             the argument `axes` is not tuple of integers or list of ints.
-        ValueError: if any axis is out of range or
+        ValueError: If any axis is out of range or
             the length of `axes` is not `2`.
 
     Supported Platforms:
@@ -2022,7 +2022,7 @@ def select(condlist, choicelist, default=0):
         is `True`.
 
     Raises:
-        ValueError: if ``len(condlist) != len(choicelist)``.
+        ValueError: If ``len(condlist) != len(choicelist)``.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2135,7 +2135,7 @@ def choose(a, choices, mode='clip'):
         Tensor, the merged result.
 
     Raises:
-        ValueError: if `a` and any of the `choices` cannot be broadcast.
+        ValueError: If `a` and any of the `choices` cannot be broadcast.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2280,7 +2280,7 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
         ``Ascend`` ``GPU`` ``CPU``
 
     Raises:
-        ValueError: if axis is out of the range.
+        ValueError: If axis is out of the range.
 
     Examples:
         >>> import mindspore.numpy as np
@@ -2362,7 +2362,7 @@ def piecewise(x, condlist, funclist, *args, **kw):
         ``Ascend`` ``GPU`` ``CPU``
 
     Raises:
-        ValueError: if length of `funclist` is not in ``(len(condlist), len(condlist) + 1)``
+        ValueError: If length of `funclist` is not in ``(len(condlist), len(condlist) + 1)``
 
     Examples:
         >>> import mindspore.numpy as np
@@ -2413,7 +2413,7 @@ def unravel_index(indices, shape, order='C'):
         ``Ascend`` ``GPU`` ``CPU``
 
     Raises:
-        ValueError: if `order` is not 'C' or 'F'.
+        ValueError: If `order` is not 'C' or 'F'.
 
     Examples:
         >>> import mindspore.numpy as np
