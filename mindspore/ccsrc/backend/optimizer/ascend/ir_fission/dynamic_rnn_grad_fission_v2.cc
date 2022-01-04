@@ -194,7 +194,8 @@ void DynamicRnnGradFissionV2::CreateTLoopNodeWithEdge(const FuncGraphPtr &func_g
       auto reshape_out_shape = {IntToSize(1),
                                 AnfAlgo::GetOutputInferShape(dynamic_rnn_grad_cnode->input(kIndex6), 0)[0],
                                 AnfAlgo::GetOutputInferShape(dynamic_rnn_grad_cnode->input(kIndex6), 0)[1]};
-      AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat32}, {reshape_out_shape}, reshape.get());
+      auto reshape_out_dtype = AnfAlgo::GetOutputInferDataType(dynamic_rnn_grad_cnode->input(kIndex6), 0);
+      AnfAlgo::SetOutputInferTypeAndShape({reshape_out_dtype}, {reshape_out_shape}, reshape.get());
       (void)basic_lstm_cell_c_state_grad_inputs.emplace_back(reshape);
     } else {
       (void)basic_lstm_cell_c_state_grad_inputs.emplace_back(lstm_split_c_outputs[idx - 1]);
