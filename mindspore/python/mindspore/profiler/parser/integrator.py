@@ -1066,8 +1066,9 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
         self._display_filename = self._display_filename.format(rank_id)
         self._timeline_summary_filename = self._timeline_summary_filename.format(rank_id)
 
-    def _load_timeline_data(self):
+    def _load_timeline_data(self, all_reduce_names=None):
         """Load timeline data from file."""
+        all_reduce_names = all_reduce_names or []
         file_path = os.path.join(
             self._profiling_dir,
             self._output_timeline_data_file_path.format(self._rank_id)
@@ -1081,10 +1082,11 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
         try:
             with open(file_path, 'r') as f_obj:
                 for line in f_obj:
-                    if not line.startswith('op_name'):
-                        line_list = line.strip('\n').split(',')
-                        line_list[self._tid_idx] = f"Stream #{line_list[self._tid_idx]}"
-                        timeline_list.append(line_list)
+                    line_list = line.strip('\n').split(',')
+                    if line_list[0] == 'op_name' or line_list[0] in all_reduce_names:
+                        continue
+                    line_list[self._tid_idx] = f"Stream #{line_list[self._tid_idx]}"
+                    timeline_list.append(line_list)
         except (IOError, OSError) as err:
             logger.critical('Error occurred when read timeline intermediate file: %s', err)
             raise ProfilerIOException()
@@ -1136,7 +1138,14 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
             min_cycle_counter = 0
 
         logger.info('Initiating timeline...')
-        timeline_list = self._load_timeline_data()
+        all_reduce_names = []
+        for info in communication_info:
+            # stream_{stream_id}_{stream_op_index}_{opname}
+            all_reduce_name = info[0][info[0].rindex('_')+1:]
+            if all_reduce_name not in all_reduce_names:
+                all_reduce_names.append(all_reduce_name)
+
+        timeline_list = self._load_timeline_data(all_reduce_names)
         cpu_timeline_generator = CpuTimelineGenerator(self._profiling_dir, self._rank_id)
         cpu_timeline_list = cpu_timeline_generator.get_timeline_data()
         if cpu_timeline_list:
