@@ -45,6 +45,8 @@ class MemScheduler {
 
   void set_need_record_event(bool flag) { need_record_event_ = flag; }
 
+  bool optimized() const { return optimized_; }
+
   void Update();
 
   void SetMemHandler(const std::shared_ptr<MemHandler> &handler) { mem_handler_ = handler; }
@@ -89,6 +91,8 @@ class MemScheduler {
 
   void OptMemUsage(float mem_used_factor = 1.0f);
 
+  bool MockOneStep();
+
   void AdjustFirstEventIndex();
 
   std::map<const void *, MemPriority> mem_priority_;
@@ -104,7 +108,7 @@ class MemScheduler {
   size_t current_step_{0};
   bool need_record_event_{true};
   bool optimized_{false};
-  float mem_used_factor_{0.9};
+  float mem_used_factor_{1.0};
   double compute_start_time_{0};
   std::vector<double> compute_time_;
   bool record_compute_time_{false};

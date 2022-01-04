@@ -29,6 +29,7 @@ namespace {
 constexpr float kMaxMemReuseFactor = 1.0;
 constexpr float kMinMemReuseFactor = 0.5;
 constexpr float kRetryFactor = 0.1;
+constexpr size_t kMockTimes = 3;
 
 double GetCurrentTime() {
 #ifdef _MSC_VER
@@ -232,37 +233,49 @@ void MemScheduler::OptMemUsage(float mem_used_factor) {
 
 bool MemScheduler::Optimize() {
   AdjustFirstEventIndex();
-  float mem_used_factor = kMaxMemReuseFactor;
-  while (!optimized_ && mem_used_factor >= kMinMemReuseFactor) {
+  float mem_used_factor = optimized_ ? mem_used_factor_ - kRetryFactor : kMaxMemReuseFactor;
+  while (mem_used_factor >= kMinMemReuseFactor) {
     OptMemUsage(mem_used_factor);
-    current_step_ = 0;
     bool ret = true;
-    for (size_t step = 0; step < total_step_; ++step) {
-      ret = PreCompute(nullptr);
-      auto &step_events = step_events_[step];
-      for (auto &event : step_events) {
-        if (event->type != kGet) {
-          continue;
-        }
-        auto ptr = GetOrMalloc(event->key, event->mem_size);
-        if (ptr == nullptr) {
-          ret = false;
-          break;
-        }
-      }
+    for (size_t mock_time = 0; mock_time < kMockTimes; ++mock_time) {
+      ret = MockOneStep();
       if (!ret) {
         break;
       }
-      PostCompute(nullptr);
     }
     if (ret) {
       optimized_ = true;
-    } else {
-      ClearAllocatedMem();
-      mem_used_factor -= kRetryFactor;
+      return true;
+    }
+    ClearAllocatedMem();
+    mem_used_factor -= kRetryFactor;
+  }
+  return false;
+}
+
+bool MemScheduler::MockOneStep() {
+  current_step_ = 0;
+  for (size_t step = 0; step < total_step_; ++step) {
+    bool ret = PreCompute(nullptr);
+    if (!ret) {
+      return false;
+    }
+    auto &step_events = step_events_[step];
+    for (auto &event : step_events) {
+      if (event->type != kGet) {
+        continue;
+      }
+      auto ptr = GetOrMalloc(event->key, event->mem_size);
+      if (ptr == nullptr) {
+        return false;
+      }
+    }
+    ret = PostCompute(nullptr);
+    if (!ret) {
+      return false;
     }
   }
-  return optimized_;
+  return true;
 }
 
 void MemScheduler::AdjustFirstEventIndex() {
