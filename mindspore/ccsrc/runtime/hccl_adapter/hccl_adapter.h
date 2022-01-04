@@ -39,12 +39,14 @@ struct HcclTaskInfo {
   int64_t stream_num;
 };
 
+enum HcclMode { kGraph, kPynative, kKernelByKernel };
+
 class HcclAdapter {
  public:
   static HcclAdapter &GetInstance();
 
   // common
-  bool InitHccl(uint32_t device_id, std::string_view rank_id, std::string_view rank_file, bool is_graph_mode);
+  bool InitHccl(uint32_t device_id, std::string_view rank_id, std::string_view rank_file, HcclMode hccl_mode);
   bool InitHccl();
   bool FinalizeHccl();
   const bool Inited() const { return init_flag_; }
@@ -103,6 +105,9 @@ class HcclAdapter {
   bool InitHcclExec();
   bool FinalizeHcclExec();
 
+  HcclMode GetCurrentHcclMode() const;
+  static std::string GetHcclModeString(HcclMode hccl_mode);
+
   void *plugin_handle_ = nullptr;
 
   InitHcomGraphAdapterFunObj init_hcom_graph_adapter_ = nullptr;
@@ -137,7 +142,7 @@ class HcclAdapter {
   std::shared_ptr<::ge::OpsKernelBuilder> ops_kernel_builder_ = nullptr;
 
   bool init_flag_ = false;
-  bool is_graph_mode_ = false;
+  HcclMode hccl_mode_ = HcclMode::kGraph;
   std::mutex init_mutex_;
 };
 }  // namespace mindspore::hccl

@@ -1173,8 +1173,9 @@ bool AscendKernelRuntime::HcclInit() {
     return false;
   }
   MS_LOG(INFO) << "MINDSPORE_HCCL_CONFIG_PATH : " << full_path << ", RANK_ID: " << rank_id_str;
-  bool ret = hccl::HcclAdapter::GetInstance().InitHccl(context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID), rank_id_str,
-                                                       full_path, mode == kGraphMode);
+  bool ret = hccl::HcclAdapter::GetInstance().InitHccl(
+    context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID), rank_id_str, full_path,
+    mode == kGraphMode ? hccl::HcclMode::kGraph : hccl::HcclMode::kPynative);
   free(full_path);
   if (!ret) {
     MS_LOG(ERROR) << "Hcom init failed.";
