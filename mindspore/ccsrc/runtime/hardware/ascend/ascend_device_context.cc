@@ -200,16 +200,6 @@ void InitMemReuseExecOrder(KernelGraph *kernel_graph) {
   kernel_graph->set_mem_reuse_exec_order(mem_reuse_order);
   UnfoldRecursiveExecOrder(kernel_graph);
 }
-
-static std::string GetSocVersion() {
-  constexpr int kSocVersionLen = 50;
-  char soc_version[kSocVersionLen] = {0};
-  auto ret = rtGetSocVersion(soc_version, kSocVersionLen);
-  if (ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Get SocVersion failed.";
-  }
-  return soc_version;
-}
 }  // namespace
 #ifndef ENABLE_SECURITY
 void DumpInit(uint32_t device_id) {
@@ -249,12 +239,6 @@ void Dump(const KernelGraphPtr &graph, uint32_t rank_id) {
 
 void AscendDeviceContext::Initialize() {
   MS_LOG(INFO) << "Status record: Enter Initialize...";
-  auto soc_version = GetSocVersion();
-  std::transform(soc_version.begin(), soc_version.end(), soc_version.begin(), ::tolower);
-  if (soc_version.find(kAscend910) == std::string::npos) {
-    MS_LOG(INFO) << "The device version is " << soc_version << ", do not need to be initialized by device context.";
-    return;
-  }
   if (initialized_) {
     MS_EXCEPTION_IF_NULL(runtime_instance_);
     runtime_instance_->SetContext();

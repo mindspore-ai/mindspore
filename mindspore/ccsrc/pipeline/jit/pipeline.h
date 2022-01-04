@@ -54,6 +54,8 @@ class Pipeline {
 
   ResourcePtr resource() { return resource_; }
 
+  bool NeedCreateBackend();
+
  private:
   ResourcePtr resource_;
   std::vector<ActionItem> actions_;

@@ -955,13 +955,6 @@ std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::stri
 
   if (use_vm && backend != "ge" && !is_air) {
     compile::SetMindRTEnable();
-    // Create backend.
-    auto backend_ptr = compile::CreateBackend();
-#ifdef ENABLE_DEBUGGER
-    // Connect session to debugger
-    backend_ptr->SetDebugger();
-#endif
-    resource->SetResult(kBackend, backend_ptr);
     // If enable compilation cache and the cache is read successfully, do the backend actions only.
     if (resource->enable_compile_cache() && resource->func_graph() != nullptr) {
       return BackendPipeline();
@@ -1018,6 +1011,16 @@ bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple
   ConfigManager::GetInstance().ResetQueue(queue_name_);
   auto actions = GetPipeline(resource, phase, use_vm);
   std::shared_ptr<Pipeline> pip = std::make_shared<Pipeline>(resource, FilterActions(actions, phase));
+
+  if (pip->NeedCreateBackend()) {
+    // Create backend.
+    auto backend_ptr = compile::CreateBackend();
+#ifdef ENABLE_DEBUGGER
+    // Connect session to debugger
+    backend_ptr->SetDebugger();
+#endif
+    resource->SetResult(kBackend, backend_ptr);
+  }
 
   // Get the parameters items and add the value to args_spec.
   abstract::AbstractBasePtrList args_spec;
@@ -1290,6 +1293,11 @@ void Pipeline::Run(const std::string &phase) {
   }
 #endif
   MS_LOG(INFO) << "End";
+}
+
+bool Pipeline::NeedCreateBackend() {
+  return std::any_of(actions_.begin(), actions_.end(),
+                     [](ActionItem action) { return action.first == "task_emit" || action.first == "execute"; });
 }
 
 void ProcessVmArgInner(const py::tuple &args, const ResourcePtr &res, VectorRef *const arg_list) {
