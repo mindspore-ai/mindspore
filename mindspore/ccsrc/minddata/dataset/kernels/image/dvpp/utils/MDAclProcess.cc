@@ -431,7 +431,7 @@ APP_ERROR MDAclProcess::JPEG_R_(const DvppDataInfo &ImageInfo) {
 }
 
 APP_ERROR MDAclProcess::JPEG_R_(std::string &last_step) {
-  std::shared_ptr<DvppDataInfo> input_image = std::make_shared<DvppDataInfo>();
+  std::shared_ptr<DvppDataInfo> input_image;
   if (last_step == "Decode") {
     input_image = dvppCommon_->GetDecodedImage();
   } else {
@@ -530,7 +530,7 @@ APP_ERROR MDAclProcess::JPEG_C_(const DvppDataInfo &ImageInfo) {
     MS_LOG(ERROR) << "Failed to copy data from host to device, ret = " << ret << ".";
     return ret;
   }
-  // Unneccessary to be image after resize, maybe after decode, we store both of them in DecodedImage()
+  // Unnecessary to be image after resize, maybe after decode, we store both of them in DecodedImage()
   std::shared_ptr<DvppDataInfo> resized_image = dvppCommon_->GetDecodedImage();
   uint32_t pri_h = resized_image->heightStride;
   uint32_t pri_w = resized_image->widthStride;
@@ -557,7 +557,7 @@ APP_ERROR MDAclProcess::JPEG_C_(const DvppDataInfo &ImageInfo) {
 }
 
 APP_ERROR MDAclProcess::JPEG_C_(std::string &last_step) {
-  std::shared_ptr<DvppDataInfo> input_image = std::make_shared<DvppDataInfo>();
+  std::shared_ptr<DvppDataInfo> input_image;
   if (last_step == "Resize") {
     input_image = dvppCommon_->GetResizedImage();
   } else {
@@ -701,8 +701,6 @@ APP_ERROR MDAclProcess::JPEG_DRC(const RawData &ImageInfo) {
   const double fps = 1 * SEC2MS / costMs;
   MS_LOG(INFO) << "[dvpp Delay] cost: " << costMs << "ms\tfps: " << fps;
   // Get output of resize module
-  /*  测试Device内存
-   */
   std::shared_ptr<DvppDataInfo> CropOutData = dvppCommon_->GetCropedImage();
   if (CropOutData->dataSize == 0) {
     MS_LOG(ERROR) << "CropOutData return NULL";
@@ -970,14 +968,14 @@ void MDAclProcess::CropConfigFilter(CropRoiConfig &cfg, DvppCropInputInfo &cropi
 
 APP_ERROR MDAclProcess::ResizeConfigFilter(DvppDataInfo &resizeinfo, const uint32_t pri_w_,
                                            const uint32_t pri_h_) const {
-  if (resizeWidth_ != 0) {  // 如果输入参数个数为2，按指定参数缩放
+  if (resizeWidth_ != 0) {
     resizeinfo.width = resizeWidth_;
     resizeinfo.widthStride = DVPP_ALIGN_UP(resizeWidth_, VPC_STRIDE_WIDTH);
     resizeinfo.height = resizeHeight_;
     resizeinfo.heightStride = DVPP_ALIGN_UP(resizeHeight_, VPC_STRIDE_HEIGHT);
-  } else {  // 如果输入参数个数为1，保持原图片比例缩放
+  } else {
     if (pri_h_ >= pri_w_) {
-      resizeinfo.width = resizeHeight_;  // 若输入参数个数为1，则只有resizeHeight_有值
+      resizeinfo.width = resizeHeight_;
       resizeinfo.widthStride = DVPP_ALIGN_UP(resizeinfo.width, VPC_STRIDE_WIDTH);
       resizeinfo.height = uint32_t(resizeHeight_ * pri_h_ / pri_w_);
       resizeinfo.heightStride = DVPP_ALIGN_UP(resizeinfo.height, VPC_STRIDE_HEIGHT);
