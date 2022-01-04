@@ -50,6 +50,14 @@ parser.add_argument("--client_password", type=str, default="")
 parser.add_argument("--server_password", type=str, default="")
 parser.add_argument("--enable_ssl", type=ast.literal_eval, default=False)
 parser.add_argument("--config_file_path", type=str, default="")
+parser.add_argument("--pki_verify", type=ast.literal_eval, default=False)
+# parameters used for pki_verify=True
+# You can download root_first_ca, root_second_ca and equip_crl
+# from https://pki.consumer.huawei.com/ca/
+parser.add_argument("--root_first_ca_path", type=str, default="")
+parser.add_argument("--root_second_ca_path", type=str, default="")
+parser.add_argument("--equip_crl_path", type=str, default="")
+parser.add_argument("--replay_attack_time_diff", type=int, default=600000)
 
 args, _ = parser.parse_known_args()
 device_target = args.device_target
@@ -80,6 +88,11 @@ client_password = args.client_password
 server_password = args.server_password
 enable_ssl = args.enable_ssl
 config_file_path = args.config_file_path
+pki_verify = args.pki_verify
+root_first_ca_path = args.root_first_ca_path
+root_second_ca_path = args.root_second_ca_path
+equip_crl_path = args.equip_crl_path
+replay_attack_time_diff = args.replay_attack_time_diff
 
 if local_server_num == -1:
     local_server_num = server_num
@@ -121,6 +134,11 @@ for i in range(local_server_num):
     cmd_server += " --enable_ssl=" + str(enable_ssl)
     cmd_server += " --reconstruct_secrets_threshold=" + str(reconstruct_secrets_threshold)
     cmd_server += " --config_file_path=" + config_file_path
+    cmd_server += " --pki_verify=" + str(pki_verify)
+    cmd_server += " --root_first_ca_path=" + str(root_first_ca_path)
+    cmd_server += " --root_second_ca_path=" + str(root_second_ca_path)
+    cmd_server += " --equip_crl_path=" + str(equip_crl_path)
+    cmd_server += " --replay_attack_time_diff=" + str(replay_attack_time_diff)
     cmd_server += " > server.log 2>&1 &"
 
     import time

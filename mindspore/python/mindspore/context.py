@@ -1064,6 +1064,18 @@ def set_fl_context(**kwargs):
         enable_ssl (bool): Set PS SSL mode enabled or disabled. Default: False.
         client_password (str): Password to decrypt the secret key stored in the client certificate. Default: ''.
         server_password (str): Password to decrypt the secret key stored in the server certificate. Default: ''.
+        pki_verify (bool): If True, the identity verification between server and clients would be turned on.
+            You should also download Root CA certificate, Root CA G2 certificate and Mobile Equipment CRL certificate
+            from https://pki.consumer.huawei.com/ca/. It should be noted that only when the client is an Android
+            environment with HUKS service, pki_verify can be True. Default: False.
+        root_first_ca_path (str): The file path of the Root CA certificate. It should be given when pki_verify
+            is True. Default: "".
+        root_second_ca_path (str): The file path of the Root CA G2 certificate. It should be given when
+            pki_verify is True. Default: "".
+        equip_crl_path (str): The file path of the Mobile Equipment CRL certificate. It should be given when
+            pki_verify is True. Default: "".
+        replay_attack_time_diff (int): The maximum tolerable error of certificate timestamp verification (ms).
+            Default: 600000.
 
     Raises:
         ValueError: If input key is not the attribute in federated learning mode context.

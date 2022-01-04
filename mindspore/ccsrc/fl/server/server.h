@@ -36,7 +36,7 @@ namespace fl {
 namespace server {
 // The sleeping time of the server thread before the networking is completed.
 constexpr uint32_t kServerSleepTimeForNetworking = 1000;
-constexpr uint64_t kDefaultReplayAttackTimeDiff = 60000;
+constexpr uint64_t kDefaultReplayAttackTimeDiff = 600000;
 // Class Server is the entrance of MindSpore's parameter server training mode and federated learning.
 class Server {
  public:

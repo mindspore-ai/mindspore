@@ -246,7 +246,7 @@ class PSContext {
         root_second_ca_path_(""),
         pki_verify_(false),
         equip_crl_path_(""),
-        replay_attack_time_diff_(60000),
+        replay_attack_time_diff_(600000),
         scheduler_manage_port_(11202),
         config_file_path_(""),
         node_id_(""),
