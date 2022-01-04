@@ -47,7 +47,7 @@ bool RunOptimizerPass(const FuncGraphPtr &func_graph, const std::vector<std::str
       return false;
     }
     if (!pass_builtin->Run(func_graph)) {
-      MS_LOG(ERROR) << "run pass failed, pass name is " << pass_name;
+      MS_LOG(WARNING) << "run pass failed, pass name is " << pass_name;
       return false;
     }
   }

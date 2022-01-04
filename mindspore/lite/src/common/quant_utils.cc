@@ -109,6 +109,10 @@ int GetBucketIndex(const std::vector<int> &dims, int preferred_dim, int data_ind
   for (size_t i = preferred_dim + 1; i < dims.size(); i++) {
     stride *= dims[i];
   }
+  if (stride == 0 || bucket_count == 0) {
+    MS_LOG(ERROR) << "stride or bucket_count is 0.";
+    return 0;
+  }
   return (data_index / stride) % bucket_count;
 }
 
