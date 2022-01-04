@@ -115,7 +115,7 @@ class OpLazyBuilder {
   std::vector<std::shared_ptr<OpTask>> op_build_tasks;
   std::queue<std::shared_ptr<OpTask>> op_run_tasks;
   std::function<void()> execute_callback_{nullptr};
-  inline static size_t kMaxQueueSize = 100;
+  inline static size_t kMaxQueueSize = 20;
   bool executing_{false};
   bool registered_{false};
 };
