@@ -177,7 +177,11 @@ void ExecuteActionForMindRT(const ResourcePtr &res) {
       VectorRef outputs;
       mindrt_bc_ptr->RunGraph(actor_info, args, &outputs);
       MS_LOG(DEBUG) << "out size " << outputs.size();
-      return outputs[0];
+      if (outputs.empty()) {
+        return VectorRef();
+      } else {
+        return outputs[0];
+      }
     });
   res->SetResult(kOutput, run);
 }
