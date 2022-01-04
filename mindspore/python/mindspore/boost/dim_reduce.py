@@ -78,17 +78,43 @@ class DimReduce(Cell):
     r"""
     The dimension reduce training, is a novel algorithm for accelerating convergence of Deep Learning models.
 
+    .. math::
+
+            \begin{align}
+            grad\_k &= pca\_mat \cdot grad\\
+            dk &= - bk \cdot grad\_k\\
+            sk &= rho ^ m \cdot dk\\
+            delta\_loss &= sigma \cdot grad\_k.T \cdot sk
+            \end{align}
+
+    Here: pca_mat (array): Shape (k*n), k is part of n_components, n is the size of weight.
+          bk (array): Shape (k*k), is the symmetric positive definite matrix in Quasi-Newton method.
+
+    we need to find the m satisfy:
+
+    .. math::
+            new\_loss < old\_loss + delta\_loss
+
+    Then, get delta_grad to update the weights for model:
+
+    .. math::
+
+            \begin{align}
+            grad\_k\_proj &= pca\_mat.T \cdot grad\_k\\
+            new\_grad\_momentum &= gamma \cdot old\_grad\_momentum + grad - grad\_k\_proj\\
+            delta\_grad &= alpha \cdot new\_grad\_momentum - pca\_mat.T \cdot sk
+            \end{align}
+
     Args:
         network (Cell): The training network. The network only supports single output.
         optimizer (Union[Cell]): Optimizer for updating the weights.
         weight (Tuple(Parameter)): Tuple of parameters.
         pca_mat_local (numpy.ndarray): For PCA operation, k*n, k is part of n_components, n is the size of weight.
         n_components (int): PCA.components.
-        rho (float): Apply to grad.
-        ls_weight_decay (float): Apply to l2loss.
-        gamma (float): Apply to grad.
-        alpha (float): Apply to grad.
-        sigma (float): Apply to loss.
+        rho (float): Generally, it does not need to be modified.
+        gamma (float): Generally, it does not need to be modified.
+        alpha (float): Generally, it does not need to be modified.
+        sigma (float): Generally, it does not need to be modified.
         rank (int): Rank number.
         rank_size (int): Rank size.
 
@@ -100,16 +126,15 @@ class DimReduce(Cell):
         - **(\*inputs)** (Tuple(Tensor)) - Tuple of input tensors with shape :math:`(N, \ldots)`.
 
     Outputs:
-        - **loss** (Tensor) -  Tensor with shape :math:`()`.
+        - **loss** (Tensor) - Tensor with shape :math:`()`.
     """
-    def __init__(self, network, optimizer, weight, pca_mat_local, n_components, rho, ls_weight_decay, gamma, alpha,
-                 sigma, rank, rank_size):
+    def __init__(self, network, optimizer, weight, pca_mat_local, n_components, rho, gamma, alpha, sigma, rank,
+                 rank_size):
         super(DimReduce, self).__init__()
         self.network = network
         self.optimizer = optimizer
         self.rank = rank
         self.rank_size = rank_size
-        self.ls_weight_decay = ls_weight_decay
         self.gamma = gamma
         self.alpha = alpha
         self.sigma = sigma
@@ -125,7 +150,6 @@ class DimReduce(Cell):
         self.concat = P.Concat()
         self.matmul = P.MatMul()
         self.mul = P.Mul()
-        self.l2loss = P.L2Loss()
         self.add = P.Add()
 
     def _set_rho_list(self, rho):
@@ -176,8 +200,7 @@ class DimReduce(Cell):
 
     def construct(self, loss, old_grad, weight, weight_clone, *inputs):
         weight = F.depend(weight, loss)
-        l2_loss = self._get_l2_loss(weight)
-        old_loss = self.allreduce(loss) / self.rank_size + l2_loss
+        old_loss = self.allreduce(loss) / self.rank_size
 
         gk_local = self.hyper_map(_pca_projection, self.pca_list_local, old_grad)
         gk_local = F.addn(gk_local)
@@ -228,11 +251,8 @@ class DimReduce(Cell):
         sn = self.hyper_map(F.partial(self.mul, -1 * rho), dn)
         sn = F.depend(sn, old_loss)
         update = self.optimizer(sn)
-        new_loss = self.network(*inputs)
-        new_loss = self.allreduce(new_loss)
-        weight = F.depend(weight, update)
-        new_l2_loss = self._get_l2_loss(weight)
-        new_loss = new_loss / self.rank_size + new_l2_loss
+        new_loss = F.depend(self.network(*inputs), update)
+        new_loss = self.allreduce(new_loss) / self.rank_size
         old_loss_delta = old_loss + self.sigma * rho * F.squeeze(self.matmul(F.transpose(gk, (1, 0)), dk))
         if old_loss_delta > new_loss:
             _save_weight(self.sk, rho * dk)
@@ -259,10 +279,3 @@ class DimReduce(Cell):
         _save_weight(self.gk_last, gk)
         dk = -1 * self.matmul(self.bk, gk)
         return dk
-
-    def _get_l2_loss(self, weight):
-        """get l2 loss."""
-        l2_loss = self.hyper_map(self.l2loss, weight)
-        l2_loss = F.addn(l2_loss)
-        l2_loss *= self.ls_weight_decay
-        return l2_loss

@@ -42,7 +42,7 @@ class OptimizerProcess:
 
     Examples:
         >>> from mindspore import Tensor, Parameter, nn
-        >>> import mindspore.ops import ops
+        >>> from mindspore import ops
         >>> from mindspore.boost import OptimizerProcess
         >>>
         >>> class Net(nn.Cell):
@@ -325,23 +325,19 @@ def _load_weights(weight_load_dir):
     Args:
         weight_load_dir (str): The weight(ckpt) file directory to be load.
     """
-    param_mat = None
+    param_mat_tuple = ()
     weight_file_list = os.listdir(weight_load_dir)
     for file in weight_file_list:
         if not file.endswith('.ckpt'):
             continue
         file_path = os.path.join(weight_load_dir, file)
         param_dict = load_checkpoint(file_path)
-        param = None
+        param_tuple = ()
         for _, value in param_dict.items():
-            if param is None:
-                param = value.asnumpy().reshape((1, -1))
-            else:
-                param = np.hstack((param, value.asnumpy().reshape((1, -1))))
-        if param_mat is None:
-            param_mat = param
-        else:
-            param_mat = np.vstack((param_mat, param))
+            param_tuple += (value.asnumpy().reshape((1, -1)),)
+        param = np.concatenate(param_tuple, axis=1)
+        param_mat_tuple += (param,)
+    param_mat = np.concatenate(param_mat_tuple, axis=0)
     return param_mat
 
 
@@ -485,7 +481,7 @@ def _save_local_pca_mat(pca_mat, full_pca_mat_path, n_component):
     os.mknod(save_pca_end_path)
 
 
-def _load_local_pca_mat(local_pca_mat_path):
+def _load_local_pca_mat(local_pca_mat_path, timeout):
     """
     load pca mat.
 
@@ -493,7 +489,11 @@ def _load_local_pca_mat(local_pca_mat_path):
         local_pca_mat_path (str): local pca mat file path.
     """
     save_pca_end_path = os.path.join(os.path.dirname(local_pca_mat_path), "save_pca_end.txt")
+    start_time = time.time()
     while True:
+        current_time = time.time()
+        if (current_time - start_time) > timeout:
+            raise RuntimeError("the time of waiting to load local pca mat is larger than {} second.".format(timeout))
         if os.path.exists(save_pca_end_path):
             break
         time.sleep(5)

@@ -162,7 +162,6 @@ class BoostTrainOneStepCell(TrainOneStepCell):
         if self.enable_dim_reduce:
             local_pca_mat_path = auto_boost.local_pca_mat_path
             rho = auto_boost.rho
-            ls_weight_decay = auto_boost.ls_weight_decay
             gamma = auto_boost.gamma
             alpha = auto_boost.alpha
             sigma = auto_boost.sigma
@@ -170,10 +169,11 @@ class BoostTrainOneStepCell(TrainOneStepCell):
             _rank_size = get_group_size()
             _device_number = auto_boost.device_number
             n_components = auto_boost.n_components
-            pca_mat = _load_local_pca_mat(local_pca_mat_path)
+            timeout = auto_boost.timeout
+            pca_mat = _load_local_pca_mat(local_pca_mat_path, timeout)
             self.weights_clone = ParameterTuple(self.weights).clone(prefix="weights_clone", init="same")
-            self.dim_reduce = DimReduce(self.network, self.optimizer, self.weights, pca_mat, n_components, rho,
-                                        ls_weight_decay, gamma, alpha, sigma, _rank, _rank_size)
+            self.dim_reduce = DimReduce(self.network, self.optimizer, self.weights, pca_mat, n_components, rho, gamma,
+                                        alpha, sigma, _rank, _rank_size)
 
         self.freeze_nets = None
         self.step = Parameter(Tensor(0, dtype=mstype.int32))
