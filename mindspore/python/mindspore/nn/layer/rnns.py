@@ -73,6 +73,12 @@ def _check_tuple_length(param_name, input_data, length, cls_name):
         raise TypeError(f"For '{cls_name}', the length of '{param_name}' should be '{length}', "
                         f"but got '{len(input_data)}'")
 
+@constexpr
+def _check_seq_length_size(batch_size_x, seq_length_size, cls_name):
+    if batch_size_x != seq_length_size:
+        raise ValueError(f"For '{cls_name}' batch size of x and seq_length should be equal, "
+                         f"but got {batch_size_x} of x and {seq_length_size} of seq_length.")
+
 
 def sequence_mask(lengths, maxlen):
     """generate mask matrix by seq_length"""
@@ -484,6 +490,8 @@ class _RNNBase(Cell):
 
     def construct(self, x, hx=None, seq_length=None):
         '''Defines the RNN like operators performed'''
+        max_batch_size = x.shape[0] if self.batch_first else x.shape[1]
+        num_directions = 2 if self.bidirectional else 1
         _check_is_tensor("x", x, self.cls_name)
         _check_input_dtype(x.dtype, "x", [mstype.float32], self.cls_name)
         if hx is not None:
@@ -499,8 +507,7 @@ class _RNNBase(Cell):
                 _check_input_dtype(hx[1].dtype, "hx[1]", [mstype.float32], self.cls_name)
         if seq_length is not None:
             _check_input_dtype(seq_length.dtype, "seq_length", [mstype.int32, mstype.int64], self.cls_name)
-        max_batch_size = x.shape[0] if self.batch_first else x.shape[1]
-        num_directions = 2 if self.bidirectional else 1
+            _check_seq_length_size(max_batch_size, seq_length.shape[0], self.cls_name)
         if hx is None:
             hx = _init_state((self.num_layers * num_directions, max_batch_size, self.hidden_size), \
                              x.dtype, self.is_lstm)
@@ -567,12 +574,12 @@ class RNN(_RNNBase):
     Raises:
         TypeError: If `input_size`, `hidden_size` or `num_layers` is not an int.
         TypeError: If `has_bias`, `batch_first` or `bidirectional` is not a bool.
-        TypeError: If `dropout` is neither a float nor an int.
+        TypeError: If `dropout` is not a float.
         ValueError: If `dropout` is not in range [0.0, 1.0).
         ValueError: If `nonlinearity` is not in ['tanh', 'relu'].
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> net = nn.RNN(10, 16, 2, has_bias=True, batch_first=True, bidirectional=False)
@@ -663,7 +670,7 @@ class GRU(_RNNBase):
     Raises:
         TypeError: If `input_size`, `hidden_size` or `num_layers` is not an int.
         TypeError: If `has_bias`, `batch_first` or `bidirectional` is not a bool.
-        TypeError: If `dropout` is neither a float nor an int.
+        TypeError: If `dropout` is not a float.
         ValueError: If `dropout` is not in range [0.0, 1.0).
 
     Supported Platforms:
@@ -752,7 +759,7 @@ class LSTM(_RNNBase):
     Raises:
         TypeError: If `input_size`, `hidden_size` or `num_layers` is not an int.
         TypeError: If `has_bias`, `batch_first` or `bidirectional` is not a bool.
-        TypeError: If `dropout` is neither a float nor an int.
+        TypeError: If `dropout` is neither a float.
         ValueError: If `dropout` is not in range [0.0, 1.0].
 
     Supported Platforms:

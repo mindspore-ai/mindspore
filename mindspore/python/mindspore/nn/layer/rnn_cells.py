@@ -202,8 +202,8 @@ class RNNCell(RNNCellBase):
 
     def __init__(self, input_size: int, hidden_size: int, has_bias: bool = True, nonlinearity: str = "tanh"):
         super().__init__(input_size, hidden_size, has_bias, num_chunks=1)
-        if nonlinearity not in self._non_linearity:
-            raise ValueError("Unknown nonlinearity: {}".format(nonlinearity))
+        validator.check_value_type("nonlinearity", nonlinearity, [str], self.cls_name)
+        validator.check_string(nonlinearity, self._non_linearity, "nonlinearity", self.cls_name)
         self.nonlinearity = nonlinearity
 
     def construct(self, x, hx):
