@@ -123,14 +123,18 @@ int SubGraphKernel::ReSize() {
   }
   return RET_OK;
 }
-void SubGraphKernel::InitInputTensorInitRefCount() {
+void SubGraphKernel::InitInputOutputTensorInitRefCount() {
   for (auto &input : this->in_tensors()) {
-    int input_init_ref_count = input->init_ref_count();
+    int input_init_refcount = input->init_ref_count();
     for (auto *node : nodes_) {
-      input_init_ref_count += std::count_if(node->in_tensors().begin(), node->in_tensors().end(),
-                                            [&input](lite::Tensor *item) { return item == input; });
+      input_init_refcount += std::count_if(node->in_tensors().begin(), node->in_tensors().end(),
+                                           [&input](lite::Tensor *item) { return item == input; });
     }
-    input->set_init_ref_count(input_init_ref_count);
+    input->set_init_ref_count(input_init_refcount);
+  }
+  for (auto &output : this->out_tensors()) {
+    int output_init_refcount = output->init_ref_count();
+    output->set_init_ref_count(output_init_refcount + 1);
   }
 }
 

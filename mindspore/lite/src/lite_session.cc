@@ -699,7 +699,7 @@ int LiteSession::SetTensorInitRefCount(const Model *model) {
     }
 #endif
     if (IsIsolatedSubGraph(kernel)) {
-      static_cast<kernel::SubGraphKernel *>(kernel)->InitInputTensorInitRefCount();
+      static_cast<kernel::SubGraphKernel *>(kernel)->InitInputOutputTensorInitRefCount();
     }
   }
   AdjustModelOutputTensorInitRefCount(model);

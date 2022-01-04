@@ -236,7 +236,8 @@ bool LiteKernelUtil::IsTailCall(kernel::LiteKernel *node) {
          (reinterpret_cast<CallParameter *>(node->op_parameter())->is_tail_call);
 }
 
-bool LiteKernelUtil::IsNonTailCallSubGraph(kernel::SubGraphKernel *subgraph_kernel) {
+bool LiteKernelUtil::IsNonTailCallSubGraph(kernel::LiteKernel *kernel) {
+  auto subgraph_kernel = reinterpret_cast<kernel::SubGraphKernel *>(kernel);
   if (subgraph_kernel == nullptr) {
     return false;
   }
@@ -245,7 +246,8 @@ bool LiteKernelUtil::IsNonTailCallSubGraph(kernel::SubGraphKernel *subgraph_kern
                      [](kernel::LiteKernel *node) { return kernel::LiteKernelUtil::IsNonTailCall(node); });
 }
 
-bool LiteKernelUtil::IsTailCallSubGraph(kernel::SubGraphKernel *subgraph_kernel) {
+bool LiteKernelUtil::IsTailCallSubGraph(kernel::LiteKernel *kernel) {
+  auto subgraph_kernel = reinterpret_cast<kernel::SubGraphKernel *>(kernel);
   if (subgraph_kernel == nullptr) {
     return false;
   }
@@ -431,8 +433,9 @@ void LiteKernelUtil::FindAllInoutKernelsInSubgraphKernel(const std::vector<LiteK
   kernel::LiteKernelUtil::FindAllInoutKernels(all_kernels);
 }
 
-bool LiteKernelUtil::IsOutputSubGraph(kernel::SubGraphKernel *subgraph_kernel) {
-  return std::all_of(subgraph_kernel->out_tensors().begin(), subgraph_kernel->out_tensors().end(),
+bool LiteKernelUtil::IsOutputSubGraph(kernel::LiteKernel *subgraph_kernel) {
+  return !subgraph_kernel->out_tensors().empty() &&
+         std::all_of(subgraph_kernel->out_tensors().begin(), subgraph_kernel->out_tensors().end(),
                      [](lite::Tensor *tensor) { return tensor->IsGraphOutput(); });
 }
 

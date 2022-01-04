@@ -610,8 +610,13 @@ int AnfExporter::SetMetaGraphInput(const FuncGraphPtr &func_graph,
 
 int AnfExporter::SetMetaGraphOutput(const FuncGraphPtr &func_graph,
                                     const std::unique_ptr<schema::MetaGraphT> &meta_graphT) {
-  int i = 0;
-  auto final_fg = GetFinalGraph(func_graph, i);
+  FuncGraphPtr final_fg = nullptr;
+  if (meta_graphT->fmkType == converter::kFmkTypeMs) {
+    final_fg = func_graph;
+  } else {
+    int i = 0;
+    final_fg = GetFinalGraph(func_graph, i);
+  }
   MS_CHECK_TRUE_MSG(final_fg != nullptr, RET_ERROR, "GetFinalGraph failed.");
   auto final_meta_graph_index = fg_subgraph_map_.at(final_fg);
   auto &final_meta_graph = meta_graphT->subGraph.at(final_meta_graph_index);
