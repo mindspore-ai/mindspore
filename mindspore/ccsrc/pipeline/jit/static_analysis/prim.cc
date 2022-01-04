@@ -628,8 +628,7 @@ AbstractBasePtr PyInferRes2Abstract(const PrimitivePyPtr &prim_py, const py::dic
   // Convert to AbstractValue based on type and shape
   auto out_dtype = output[ATTR_DTYPE];
   if (output[ATTR_VALUE].is_none()) {
-    auto out_shape = output[ATTR_SHAPE];
-    return MakePyInferRes2Abstract(out_shape, out_dtype, output);
+    return MakePyInferRes2Abstract(output);
   }
   // Convert pyobject to Value, then to AbstractValue
   ValuePtr converted_ret = nullptr;

@@ -497,8 +497,29 @@ static AbstractBasePtr ToMonadAbstract(const py::object &type_obj) {
   MS_LOG(EXCEPTION) << "Not a type object: " << py::str(type_obj);
 }
 
-AbstractBasePtr MakePyInferRes2Abstract(const py::object &shape_obj, const py::object &type_obj,
-                                        const py::object &output) {
+static py::object GetPyAbsItemOfTupleOut(const py::object &output, const size_t index) {
+  auto out_dict = output.cast<py::dict>();
+  auto type_obj = out_dict[ATTR_DTYPE];
+  auto shape_obj = out_dict[ATTR_SHAPE];
+  auto out_item = py::dict();
+  auto shape_tuple = shape_obj.cast<py::tuple>();
+  auto typeid_tuple = type_obj.cast<py::tuple>();
+  out_item[ATTR_DTYPE] = typeid_tuple[index];
+  out_item[ATTR_SHAPE] = shape_tuple[index];
+  if (output.contains(py::str(ATTR_MIN_SHAPE))) {
+    out_item[ATTR_MIN_SHAPE] = output[ATTR_MIN_SHAPE].cast<py::tuple>()[index];
+  }
+  if (output.contains(py::str(ATTR_MAX_SHAPE))) {
+    out_item[ATTR_MAX_SHAPE] = output[ATTR_MAX_SHAPE].cast<py::tuple>()[index];
+  }
+  out_item[ATTR_VALUE] = py::none();
+  return out_item;
+}
+
+AbstractBasePtr MakePyInferRes2Abstract(const py::object &output) {
+  auto out_dict = output.cast<py::dict>();
+  auto type_obj = out_dict[ATTR_DTYPE];
+  auto shape_obj = out_dict[ATTR_SHAPE];
   if ((py::isinstance<py::list>(shape_obj) || py::isinstance<py::tuple>(shape_obj)) && py::isinstance<Type>(type_obj)) {
     auto ret_vec = shape_obj.cast<ShapeVector>();
     auto ret_dtype = type_obj.cast<TypePtr>();
@@ -510,21 +531,21 @@ AbstractBasePtr MakePyInferRes2Abstract(const py::object &shape_obj, const py::o
     }
     return MakePyInferRes2AbstractTensor(shape_obj, type_obj, output);
   } else if (py::isinstance<py::tuple>(shape_obj) && py::isinstance<py::tuple>(type_obj)) {
-    auto shape_tuple = shape_obj.cast<py::tuple>();
     auto typeid_tuple = type_obj.cast<py::tuple>();
     AbstractBasePtrList ptr_list;
-    for (size_t it = 0; it < shape_tuple.size(); ++it) {
-      auto tensor_it = MakePyInferRes2Abstract(shape_tuple[it], typeid_tuple[it]);
+    for (size_t it = 0; it < typeid_tuple.size(); ++it) {
+      auto output_it = GetPyAbsItemOfTupleOut(output, it);
+      auto tensor_it = MakePyInferRes2Abstract(output_it);
       ptr_list.push_back(tensor_it);
     }
     auto tuple = std::make_shared<abstract::AbstractTuple>(ptr_list);
     return tuple;
   } else if (py::isinstance<py::list>(shape_obj) && py::isinstance<py::list>(type_obj)) {
-    auto shape_list = shape_obj.cast<py::list>();
     auto typeid_list = type_obj.cast<py::list>();
     AbstractBasePtrList ptr_list;
-    for (size_t it = 0; it < shape_list.size(); ++it) {
-      auto tensor_it = MakePyInferRes2Abstract(shape_list[it], typeid_list[it]);
+    for (size_t it = 0; it < typeid_list.size(); ++it) {
+      auto output_it = GetPyAbsItemOfTupleOut(output, it);
+      auto tensor_it = MakePyInferRes2Abstract(output_it);
       ptr_list.push_back(tensor_it);
     }
     auto list = std::make_shared<abstract::AbstractList>(ptr_list);
