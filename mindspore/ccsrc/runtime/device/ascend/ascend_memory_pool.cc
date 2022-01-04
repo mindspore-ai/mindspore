@@ -24,10 +24,27 @@
 namespace mindspore {
 namespace device {
 namespace ascend {
-// The minimum unit size (8MB) of memory block used for dynamic extend in graph mode.
-static const size_t ASCEND_DYNAMIC_MEM_ALLOC_UNIT_SIZE_FOR_GRAPH = 8 << 20;
+// The minimum unit size (8MB) of memory block used for dynamic extend in graph task sink mode.
+static const size_t ASCEND_COMMON_POOL_ALLOC_UNIT_SIZE_FOR_GRAPH = 8 << 20;
+constexpr float kCommonMemoryRatio = 0.9667;   // 29/30
+constexpr float kPersistMemoryRatio = 0.0333;  // 1/30
 
-void AscendMemoryPool::Init() { SetMemPoolBlockSize(AscendMemAdapter::GetInstance().GetMsUsedHbmSize()); }
+void AscendMemoryPool::Init() {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  const bool pynative_mode = (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode);
+  const bool task_sink = ms_context->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
+  auto total_size = AscendMemAdapter::GetInstance().GetMsUsedHbmSize();
+  if (pynative_mode) {
+    SetMemPoolBlockSize(total_size);
+  } else {
+    if (task_sink) {
+      SetMemAllocUintSize(ASCEND_COMMON_POOL_ALLOC_UNIT_SIZE_FOR_GRAPH, ASCEND_COMMON_POOL_ALLOC_UNIT_SIZE_FOR_GRAPH);
+    } else {
+      SetMemAllocUintSize(total_size * kCommonMemoryRatio, total_size * kPersistMemoryRatio);
+    }
+  }
+}
 
 size_t AscendMemoryPool::CalMemBlockAllocSize(size_t size, bool from_persistent_mem) {
   auto device_free_mem_size = free_mem_size();
@@ -48,23 +65,20 @@ size_t AscendMemoryPool::CalMemBlockAllocSize(size_t size, bool from_persistent_
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   const bool pynative_mode = (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode);
-  const bool task_sink = ms_context->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
+  auto alloc_mem_unit_size = MemAllocUnitSize(from_persistent_mem);
+  MS_LOG(DEBUG) << "Get unit block size " << alloc_mem_unit_size;
+  alloc_mem_size = alloc_mem_unit_size;
   if (pynative_mode) {
-    alloc_mem_size = MemAllocUnitSize(from_persistent_mem);
-    // Growing at twice of alloc size
-    MS_LOG(DEBUG) << "Get unit block size " << alloc_mem_size;
+    // Growing at twice of alloc unit size
     constexpr size_t kDouble = 2;
     while (alloc_mem_size < size) {
       alloc_mem_size = alloc_mem_size * kDouble;
     }
-  } else if (task_sink) {
-    // The graph mode controls itself independently
-    alloc_mem_size = ASCEND_DYNAMIC_MEM_ALLOC_UNIT_SIZE_FOR_GRAPH;
-    while (alloc_mem_size < size) {
-      alloc_mem_size = alloc_mem_size + ASCEND_DYNAMIC_MEM_ALLOC_UNIT_SIZE_FOR_GRAPH;
-    }
   } else {
-    alloc_mem_size = device_free_mem_size;
+    // Growing at adding alloc unit size
+    while (alloc_mem_size < size) {
+      alloc_mem_size = alloc_mem_size + alloc_mem_unit_size;
+    }
   }
   alloc_mem_size = std::min(alloc_mem_size, device_free_mem_size);
   return alloc_mem_size;
