@@ -78,9 +78,40 @@ AnfNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr
   return cast;
 }
 
+std::shared_ptr<std::vector<std::pair<AnfNodePtr, int>>> GetNodeUserList(const FuncGraphPtr &graph,
+                                                                         const AnfNodePtr &node) {
+  auto output_node_list = std::make_shared<std::vector<std::pair<AnfNodePtr, int>>>();
+  MS_EXCEPTION_IF_NULL(graph);
+  auto manager = graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  auto iter = manager->node_users().find(node);
+  if (iter == manager->node_users().end()) {
+    return output_node_list;
+  }
+  auto output_info_list = iter->second;
+  std::copy(output_info_list.begin(), output_info_list.end(), std::back_inserter(*output_node_list));
+  return output_node_list;
+}
+
+void SyncWeightNodeWithCast(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const AnfNodePtr &cur_input,
+                            const AnfNodePtr &cast, const std::string &format, const TypeId &device_type,
+                            const TypeId &origin_type, const abstract::BaseShapePtr &origin_shape,
+                            std::vector<AnfNodePtr> *make_tuple_inputs) {
+  auto first_depend_node =
+    func_graph->NewCNode({NewValueNode(std::make_shared<Primitive>(prim::kPrimDepend->name())), cast, cnode});
+  first_depend_node->set_abstract(cast->abstract());
+  auto post_cast =
+    AddCastOpNodeToGraph(func_graph, first_depend_node, format, device_type, origin_type, origin_shape, origin_type);
+  auto kernel_graph = func_graph->cast<KernelGraphPtr>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  kernel_graph->AddRefCorrespondPairs(std::make_pair(post_cast, 0), AnfAlgo::VisitKernel(cur_input, 0));
+  make_tuple_inputs->push_back(post_cast);
+}
+
 void InsertCast(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   size_t in_num = AnfAlgo::GetInputTensorNum(cnode);
+  std::vector<AnfNodePtr> make_tuple_inputs{NewValueNode(std::make_shared<Primitive>(prim::kPrimMakeTuple->name()))};
   for (size_t input_index = 0; input_index < in_num; ++input_index) {
     auto prev_node = AnfAlgo::GetPrevNodeOutput(cnode, input_index);
     auto origin_type = AnfAlgo::GetOutputDeviceDataType(prev_node.first, prev_node.second);
@@ -91,7 +122,6 @@ void InsertCast(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
     MS_EXCEPTION_IF_NULL(cur_input);
     const std::string dev_fmt = AnfAlgo::GetInputFormat(cnode, input_index);
     const abstract::BaseShapePtr origin_shape = AnfAlgo::GetOutputDetailShape(prev_node.first, prev_node.second);
-
     if (TypeId device_type = AnfAlgo::GetInputDeviceDataType(cnode, input_index); origin_type != device_type) {
       auto cast =
         AddCastOpNodeToGraph(func_graph, cur_input, dev_fmt, origin_type, device_type, origin_shape, device_type);
@@ -101,22 +131,25 @@ void InsertCast(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
       auto real_input = AnfAlgo::VisitKernel(cur_input, 0).first;
       if (AnfAlgo::IsUpdateParameterKernel(cnode) && real_input->isa<Parameter>() &&
           AnfAlgo::IsParameterWeight(real_input->cast<ParameterPtr>())) {
-        auto first_depend_node =
-          func_graph->NewCNode({NewValueNode(std::make_shared<Primitive>(prim::kPrimDepend->name())), cast, cnode});
-        first_depend_node->set_abstract(cast->abstract());
-        auto post_cast = AddCastOpNodeToGraph(func_graph, first_depend_node, dev_fmt, device_type, origin_type,
-                                              origin_shape, origin_type);
-        auto kernel_graph = func_graph->cast<KernelGraphPtr>();
-        MS_EXCEPTION_IF_NULL(kernel_graph);
-        kernel_graph->AddRefCorrespondPairs(std::make_pair(post_cast, 0), AnfAlgo::VisitKernel(cur_input, 0));
-        auto second_depend_node = func_graph->NewCNode(
-          {NewValueNode(std::make_shared<Primitive>(prim::kPrimDepend->name())), cnode, post_cast});
-        second_depend_node->set_abstract(cnode->abstract());
-        auto used_node_list = GetRealNodeUsedListByOutputIdx(func_graph, cnode, 0);
-        for (size_t j = 0; j < used_node_list->size(); j++) {
-          auto used_node = used_node_list->at(j).first;
-          utils::cast<CNodePtr>(used_node)->set_input(used_node_list->at(j).second, second_depend_node);
+        SyncWeightNodeWithCast(func_graph, cnode, cur_input, cast, dev_fmt, device_type, origin_type, origin_shape,
+                               &make_tuple_inputs);
+      }
+    }
+    if (make_tuple_inputs.size() > 1) {
+      auto make_tuple = func_graph->NewCNode(make_tuple_inputs);
+      auto second_depend_node =
+        func_graph->NewCNode({NewValueNode(std::make_shared<Primitive>(prim::kPrimDepend->name())), cnode, make_tuple});
+      second_depend_node->set_abstract(cnode->abstract());
+      auto used_node_list = GetRealNodeUsedList(func_graph, cnode);
+      if (used_node_list != nullptr && used_node_list->empty()) {
+        used_node_list = GetNodeUserList(func_graph, cnode);
+      }
+      for (size_t j = 0; j < used_node_list->size(); j++) {
+        auto used_node = used_node_list->at(j).first;
+        if (!used_node->isa<CNode>()) {
+          continue;
         }
+        utils::cast<CNodePtr>(used_node)->set_input(used_node_list->at(j).second, second_depend_node);
       }
     }
   }
