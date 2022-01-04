@@ -41,7 +41,7 @@ class ArgMinMaxCPUKernel : public InnerKernel {
   int Run() override;
 
  private:
-  ArgMinMaxParameter *arg_param_;
+  ArgMinMaxParameter *arg_param_ = nullptr;
 };
 }  // namespace mindspore::kernel
 

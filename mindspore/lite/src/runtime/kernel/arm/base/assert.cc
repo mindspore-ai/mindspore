@@ -32,11 +32,14 @@ int AssertCPUKernel::Prepare() {
 int AssertCPUKernel::ReSize() { return RET_OK; }
 
 int AssertCPUKernel::Run() {
+  CHECK_NULL_RETURN(in_tensors_.front());
+  CHECK_NULL_RETURN(in_tensors_.front()->data());
   auto cond = reinterpret_cast<bool *>(in_tensors_.front()->data());
   if (*cond) {
     return RET_OK;
   } else {
     for (size_t i = 1; i < in_tensors_.size(); i++) {
+      CHECK_NULL_RETURN(in_tensors_.at(i));
       MS_LOG(ERROR) << in_tensors_.at(i)->ToString();
     }
     return RET_ERROR;

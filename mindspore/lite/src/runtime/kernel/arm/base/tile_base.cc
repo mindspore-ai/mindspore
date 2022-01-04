@@ -41,6 +41,7 @@ int TileCPUKernel::Prepare() {
 int TileCPUKernel::ReSize() {
   CHECK_NULL_RETURN(tile_parameter_);
   if (in_tensors_.size() == kDoubleInputsSize) {
+    CHECK_NULL_RETURN(in_tensors_.at(1));
     if (in_tensors_[1]->ElementsNum() > static_cast<int>(in_tensors_[0]->shape().size())) {
       MS_LOG(ERROR) << "tile's input1 data_num cannot be larger than input0's shape_size.";
       return RET_ERROR;
@@ -50,14 +51,23 @@ int TileCPUKernel::ReSize() {
                     << " must be kNumberTypeInt32 or kNumberTypeInt!";
       return RET_ERROR;
     }
+    CHECK_NULL_RETURN(in_tensors_[1]->data());
     auto input1_addr = reinterpret_cast<int *>(in_tensors_[1]->data());
     for (int i = 0; i < in_tensors_[1]->ElementsNum(); ++i) {
+      if (input1_addr[i] <= 0) {
+        MS_LOG(ERROR) << "Tile input1 data must be greater than 0";
+        return RET_ERROR;
+      }
       tile_parameter_->dims_[i] = i;
       tile_parameter_->multiples_[i] = input1_addr[i];
     }
   }
+
+  CHECK_NULL_RETURN(in_tensors_.at(0));
+  CHECK_NULL_RETURN(out_tensors_.at(0));
   tile_parameter_->in_dim_ = in_tensors_.at(0)->shape().size();
-  CHECK_LESS_RETURN(tile_parameter_->in_dim_, 1);
+  MS_CHECK_TRUE_RET(tile_parameter_->in_dim_ > 0 && tile_parameter_->in_dim_ <= MAX_TILE_DIM_SIZE, RET_ERROR);
+  CHECK_LESS_RETURN((int)(out_tensors_.at(0)->shape().size()), tile_parameter_->in_dim_);
   for (int i = 0; i < tile_parameter_->in_dim_; ++i) {
     tile_parameter_->in_shape_[i] = in_tensors_.at(0)->shape().at(i);
     tile_parameter_->out_shape_[i] = out_tensors_.at(0)->shape().at(i);
@@ -74,7 +84,6 @@ int TileCPUKernel::ReSize() {
     MS_LOG(ERROR) << "tile not support data type: " << data_type;
     return RET_ERROR;
   }
-
   return FillOneDimTileParam();
 }
 

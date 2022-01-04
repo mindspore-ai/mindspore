@@ -28,6 +28,7 @@ namespace mindspore::kernel {
 int SplitBaseCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(param);
   output_ptr_.resize(param->num_split_);
   for (size_t i = 0; i < output_ptr_.size(); i++) {
     output_ptr_.at(i) = nullptr;
@@ -40,8 +41,6 @@ int SplitBaseCPUKernel::Prepare() {
 }
 int SplitBaseCPUKernel::CheckAndInitSplitParam(const lite::Tensor &in_tensor, SplitParameter *param) {
   auto input_shape = in_tensor.shape();
-
-  CHECK_NULL_RETURN(param);
   CHECK_LESS_RETURN(input_shape.size(), 1);
   CHECK_LESS_RETURN(SPLIT_STRIDES_SIZE - 1, input_shape.size());
   auto split_dim = param->split_dim_;
@@ -92,7 +91,7 @@ int SplitBaseCPUKernel::CheckAndInitSplitParam(const lite::Tensor &in_tensor, Sp
 
 int SplitBaseCPUKernel::ReSize() {
   auto in_tensor = in_tensors_.front();
-  CHECK_NULL_RETURN(param);
+  CHECK_NULL_RETURN(in_tensor);
   auto status = CheckAndInitSplitParam(*in_tensor, param);
   if (RET_OK != status) {
     MS_LOG(ERROR) << "CheckAndInitSplitParam failed";
@@ -145,7 +144,6 @@ int SplitBaseCPUKernel::Run() {
     return RET_NULL_PTR;
   }
 
-  CHECK_NULL_RETURN(param);
   for (int i = 0; i < param->num_split_; i++) {
     auto output_tensor = out_tensors_.at(i);
     output_ptr_.at(i) = output_tensor->data();

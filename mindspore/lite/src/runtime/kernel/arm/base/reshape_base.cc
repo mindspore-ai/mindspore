@@ -39,7 +39,9 @@ int ReshapeBaseCPUKernel::Run() {
    * out_tensor data_c can not change
    * */
   auto in_tensor = in_tensors().front();
+  CHECK_NULL_RETURN(in_tensor);
   auto out_tensor = out_tensors().front();
+  CHECK_NULL_RETURN(out_tensor);
   if (in_tensor->allocator() == nullptr || in_tensor->allocator() != out_tensor->allocator() ||
       in_tensor->allocator() != ms_context_->allocator || /* runtime allocator */
       op_parameter_->is_train_session_) {

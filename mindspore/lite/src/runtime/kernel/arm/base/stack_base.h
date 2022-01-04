@@ -26,7 +26,9 @@ class StackBaseCPUKernel : public InnerKernel {
  public:
   StackBaseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                      const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {}
+      : InnerKernel(parameter, inputs, outputs, ctx) {
+    stack_param_ = reinterpret_cast<StackParameter *>(op_parameter_);
+  }
   ~StackBaseCPUKernel() override = default;
 
   int Prepare() override;
@@ -35,6 +37,7 @@ class StackBaseCPUKernel : public InnerKernel {
   int Execute(int task_id);
 
  protected:
+  StackParameter *stack_param_ = nullptr;
   int axis_ = 0;
   size_t data_type_size_ = 0;
   size_t copy_size_ = 0;

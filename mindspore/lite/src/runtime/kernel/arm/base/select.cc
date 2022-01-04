@@ -37,11 +37,12 @@ int SelectCPUKernel::ReSize() { return RET_OK; }
 // inputs: bool*1 true-data*n false-data*n
 // output: data*n
 int SelectCPUKernel::Run() {
-  MS_ASSERT(in_tensors_.size() >= 3);
-  MS_ASSERT(in_tensors_.size() == out_tensors_.size() * 2 + 1);
+  CHECK_LESS_RETURN(in_tensors_.size(), FOURTH_INPUT);
+  MS_CHECK_TRUE_MSG(in_tensors_.size() == out_tensors_.size() * C2NUM + 1, RET_ERROR,
+                    "The tensor number is incorrect.");
   auto bool_tensor = in_tensors_.front();
-  MS_ASSERT(bool_tensor != nullptr);
-  MS_ASSERT(bool_tensor->data_type() == kNumberTypeBool);
+  CHECK_NULL_RETURN(bool_tensor);
+  MS_CHECK_TRUE_MSG(bool_tensor->data_type() == kNumberTypeBool, RET_ERROR, "The tensor data type is invalid.");
   if (bool_tensor->Size() == 1) {
     auto condition = static_cast<bool *>(bool_tensor->data());
     if (condition == nullptr) {
@@ -65,7 +66,8 @@ int SelectCPUKernel::Run() {
       }
     }
   } else {
-    MS_ASSERT(bool_tensor->shape().size() == in_tensors_.at(1)->shape().size());
+    MS_CHECK_TRUE_MSG(bool_tensor->shape().size() == in_tensors_.at(1)->shape().size(), RET_ERROR,
+                      "The tensor size should be the same.");
     for (size_t i = 0; i < in_tensors_.at(1)->shape().size(); i++) {
       if (bool_tensor->shape()[i] != in_tensors_.at(1)->shape()[i]) {
         MS_LOG(ERROR) << "Tensor shapes differ in dim: " << i << " in_tensors_.at(0): " << bool_tensor->shape()[i]
@@ -73,7 +75,8 @@ int SelectCPUKernel::Run() {
         return RET_ERROR;
       }
     }
-    MS_ASSERT(in_tensors_.at(1)->Size() == out_tensors_.at(0)->Size());
+    MS_CHECK_TRUE_MSG(in_tensors_.at(1)->Size() == out_tensors_.at(0)->Size(), RET_ERROR,
+                      "The tensor size should be the same.");
     auto size = in_tensors_.at(1)->ElementsNum();
     MS_CHECK_GT(size, 0, RET_ERROR);
     auto condition = static_cast<bool *>(bool_tensor->data());

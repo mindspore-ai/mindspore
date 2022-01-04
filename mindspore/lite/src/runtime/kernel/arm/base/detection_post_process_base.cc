@@ -39,6 +39,7 @@ void PartialArgSort(const float *scores, int *indexes, int num_to_sort, int num_
 }
 
 int DetectionPostProcessBaseCPUKernel::Prepare() {
+  CHECK_NULL_RETURN(params_);
   params_->decoded_boxes_ = nullptr;
   params_->nms_candidate_ = nullptr;
   params_->indexes_ = nullptr;
@@ -48,7 +49,11 @@ int DetectionPostProcessBaseCPUKernel::Prepare() {
   params_->single_class_indexes_ = nullptr;
   params_->selected_ = nullptr;
   params_->anchors_ = nullptr;
+
+  CHECK_LESS_RETURN(in_tensors_.size(), FOURTH_INPUT);
+  CHECK_LESS_RETURN(out_tensors_.size(), FIFTH_INPUT);
   auto anchor_tensor = in_tensors_.at(2);
+  CHECK_NULL_RETURN(anchor_tensor);
   MS_CHECK_GT(anchor_tensor->ElementsNum(), 0, RET_ERROR);
   CHECK_NULL_RETURN(anchor_tensor->data());
   if (anchor_tensor->data_type() == kNumberTypeFloat32 || anchor_tensor->data_type() == kNumberTypeFloat) {
@@ -61,6 +66,7 @@ int DetectionPostProcessBaseCPUKernel::Prepare() {
     memcpy(params_->anchors_, anchor_tensor->data(), anchor_tensor->Size());
 #ifndef OP_INT8_CLIP
   } else if (anchor_tensor->data_type() == kNumberTypeInt8) {
+    CHECK_LESS_RETURN(anchor_tensor->quant_params().size(), 1);
     auto quant_param = anchor_tensor->quant_params().front();
     auto anchor_int8 = reinterpret_cast<int8_t *>(anchor_tensor->data());
     auto anchor_fp32 = new (std::nothrow) float[anchor_tensor->ElementsNum()];
@@ -72,6 +78,7 @@ int DetectionPostProcessBaseCPUKernel::Prepare() {
                            anchor_tensor->ElementsNum());
     params_->anchors_ = anchor_fp32;
   } else if (anchor_tensor->data_type() == kNumberTypeUInt8) {
+    CHECK_LESS_RETURN(anchor_tensor->quant_params().size(), 1);
     auto quant_param = anchor_tensor->quant_params().front();
     auto anchor_uint8 = reinterpret_cast<uint8_t *>(anchor_tensor->data());
     auto anchor_fp32 = new (std::nothrow) float[anchor_tensor->ElementsNum()];
@@ -95,6 +102,7 @@ DetectionPostProcessBaseCPUKernel::~DetectionPostProcessBaseCPUKernel() { delete
 int DetectionPostProcessBaseCPUKernel::ReSize() { return RET_OK; }
 
 int NmsMultiClassesFastCoreRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+  CHECK_NULL_RETURN(cdata);
   auto KernelData = reinterpret_cast<DetectionPostProcessBaseCPUKernel *>(cdata);
   int ret = NmsMultiClassesFastCore(KernelData->num_boxes_, KernelData->num_classes_with_bg_, KernelData->input_scores_,
                                     PartialArgSort, KernelData->params_, task_id, KernelData->thread_num_);
@@ -141,7 +149,11 @@ void DetectionPostProcessBaseCPUKernel::FreeAllocatedBuffer() {
 }
 
 int DetectionPostProcessBaseCPUKernel::ParamInit() {
+  CHECK_NULL_RETURN(in_tensors_.at(0));
+  CHECK_LESS_RETURN(in_tensors_.at(0)->shape().size(), DIMENSION_2D);
   num_boxes_ = in_tensors_.at(0)->shape().at(1);
+  CHECK_NULL_RETURN(in_tensors_.at(1));
+  CHECK_LESS_RETURN(in_tensors_.at(1)->shape().size(), DIMENSION_3D);
   num_classes_with_bg_ = in_tensors_.at(1)->shape().at(2);
   params_->decoded_boxes_ = ms_context_->allocator->Malloc(num_boxes_ * DIMENSION_4D * sizeof(float));
   if (params_->decoded_boxes_ == nullptr) {
@@ -212,15 +224,18 @@ int DetectionPostProcessBaseCPUKernel::ParamInit() {
 }
 
 int DetectionPostProcessBaseCPUKernel::Run() {
-  MS_ASSERT(ms_context_->allocator != nullptr);
   int status = GetInputData();
   if (status != RET_OK) {
     return status;
   }
-  auto output_boxes = reinterpret_cast<float *>(out_tensors_.at(0)->data());
-  auto output_classes = reinterpret_cast<float *>(out_tensors_.at(1)->data());
-  auto output_scores = reinterpret_cast<float *>(out_tensors_.at(2)->data());
-  auto output_num = reinterpret_cast<float *>(out_tensors_.at(3)->data());
+  CHECK_NULL_RETURN(out_tensors_.at(FIRST_INPUT));
+  auto output_boxes = reinterpret_cast<float *>(out_tensors_.at(FIRST_INPUT)->data());
+  CHECK_NULL_RETURN(out_tensors_.at(SECOND_INPUT));
+  auto output_classes = reinterpret_cast<float *>(out_tensors_.at(SECOND_INPUT)->data());
+  CHECK_NULL_RETURN(out_tensors_.at(THIRD_INPUT));
+  auto output_scores = reinterpret_cast<float *>(out_tensors_.at(THIRD_INPUT)->data());
+  CHECK_NULL_RETURN(out_tensors_.at(FOURTH_INPUT));
+  auto output_num = reinterpret_cast<float *>(out_tensors_.at(FOURTH_INPUT)->data());
   if (output_boxes == nullptr || output_classes == nullptr || output_scores == nullptr || output_num == nullptr) {
     return RET_NULL_PTR;
   }

@@ -28,7 +28,10 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_RandomStandardNormal;
 
 namespace mindspore::kernel {
-int RandomStandardNormalCPUKernel::Prepare() { return RET_OK; }
+int RandomStandardNormalCPUKernel::Prepare() {
+  CHECK_NULL_RETURN(param_);
+  return RET_OK;
+}
 
 int RandomStandardNormalCPUKernel::ReSize() { return RET_OK; }
 
@@ -47,7 +50,7 @@ int RandomStandardNormalCPUKernel::Run() {
   auto all_data_nums = out_tensors_[kOutputIndex]->ElementsNum();
   MS_CHECK_GT(all_data_nums, 0, RET_ERROR);
   auto out_data = out_tensors_[kOutputIndex]->data();
-  MS_ASSERT(out_data != nullptr);
+  CHECK_NULL_RETURN(out_data);
   if (out_tensors_[kOutputIndex]->data_type() == kNumberTypeFloat16) {
 #ifdef ENABLE_FP16
     auto output = static_cast<float16_t *>(out_data);

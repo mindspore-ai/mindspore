@@ -74,7 +74,7 @@ class GroupConvCreator {
   std::vector<int> output_shape_;
   std::vector<int> filter_shape_;
   std::vector<int> bias_shape_;
-  ConvParameter *conv_param_;
+  ConvParameter *conv_param_ = nullptr;
   bool infered_ = false;
   bool is_quant_ = false;
   TypeId data_type_;

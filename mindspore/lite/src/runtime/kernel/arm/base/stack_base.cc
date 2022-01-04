@@ -18,7 +18,6 @@
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "nnacl/base/stack_base.h"
-#include "nnacl/stack_parameter.h"
 #include "include/errorcode.h"
 #include "nnacl/errorcode.h"
 
@@ -56,14 +55,15 @@ static inline int GetOuterSize(const std::vector<int> &in_shape, int axis) {
 }
 
 int StackBaseCPUKernel::ReSize() {
-  auto param = reinterpret_cast<StackParameter *>(op_parameter_);
+  CHECK_NULL_RETURN(in_tensors_.front());
   auto input0_shape = in_tensors_.front()->shape();
-  axis_ = param->axis_ < 0 ? param->axis_ + input0_shape.size() + 1 : param->axis_;
+  axis_ = stack_param_->axis_ < 0 ? stack_param_->axis_ + input0_shape.size() + 1 : stack_param_->axis_;
   auto input_nums = in_tensors_.size();
   if (input_nums == 1) {
+    MS_CHECK_GT(in_tensors_.front()->ElementsNum(), 0, RET_ERROR);
     copy_size_ = in_tensors_.front()->ElementsNum() * data_type_size_;
   } else {
-    MS_ASSERT(input_nums > 1);
+    CHECK_LESS_RETURN(input_nums, THIRD_INPUT);
     CHECK_LESS_RETURN(input0_shape.size(), static_cast<size_t>(axis_));
     copy_size_ = GetCopyNum(input0_shape, axis_, input0_shape.size()) * data_type_size_;
     outer_size_ = GetOuterSize(input0_shape, axis_);
@@ -75,6 +75,7 @@ int StackBaseCPUKernel::ReSize() {
 int StackBaseCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(stack_param_);
   data_type_size_ = sizeof(float);
   if (!InferShapeDone()) {
     return RET_OK;
@@ -124,6 +125,7 @@ int StackBaseCPUKernel::Run() {
     all_inputs_[j] = input_data;
   }
   // run stack
+  CHECK_NULL_RETURN(out_tensors_.at(0));
   num_threads_ = MSMIN(UP_DIV(outer_size_, kStackStep), op_parameter_->thread_num_);
   auto ret = ParallelLaunch(this->ms_context_, StackRun, this, num_threads_);
   if (ret != RET_OK) {

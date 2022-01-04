@@ -95,8 +95,10 @@ int GroupConvolutionBaseCPUKernel::PreProcess() {
     for (int i = 0; i < group_num_; ++i) {
       // in
       auto in_tensor = in_tensors_.front();
+      CHECK_NULL_RETURN(in_tensor);
       in_shape = {in_tensor->Batch(), in_tensor->Height(), in_tensor->Width(), conv_param_->input_channel_};
       auto sub_kernel_in_tensor = group_convs_.at(i)->in_tensors().front();
+      CHECK_NULL_RETURN(sub_kernel_in_tensor);
       sub_kernel_in_tensor->set_shape(in_shape);
       ret = sub_kernel_in_tensor->MallocData();
       if (ret != RET_OK) {
@@ -106,9 +108,11 @@ int GroupConvolutionBaseCPUKernel::PreProcess() {
       }
       // out
       auto out_tensor = out_tensors_.front();
+      CHECK_NULL_RETURN(out_tensor);
       out_shape = {out_tensor->Batch(), out_tensor->Height(), out_tensor->Width(), conv_param_->output_channel_};
       auto sub_kernel_out_tensors = group_convs_.at(i)->out_tensors();
       for (auto tensor : sub_kernel_out_tensors) {
+        CHECK_NULL_RETURN(tensor);
         tensor->set_shape(out_shape);
         ret = tensor->MallocData();
         if (ret != RET_OK) {
@@ -127,7 +131,7 @@ int GroupConvolutionBaseCPUKernel::PreProcess() {
 
   auto outputs = this->out_tensors_;
   for (auto *output : outputs) {
-    MS_ASSERT(output != nullptr);
+    CHECK_NULL_RETURN(output);
     auto ret = output->MallocData();
     if (ret != RET_OK) {
       FreeSubKernel();
@@ -172,7 +176,9 @@ int GroupConvolutionBaseCPUKernel::Run() {
   }
 
   ori_in_data_ = in_tensors_[0]->data();
+  CHECK_NULL_RETURN(ori_in_data_);
   ori_out_data_ = out_tensors_[0]->data();
+  CHECK_NULL_RETURN(ori_out_data_);
   for (int i = 0; i < group_num_; ++i) {
     // first, separate group conv input into several parts. This step must be in runtime stage.
     ret = SeparateInput(i);

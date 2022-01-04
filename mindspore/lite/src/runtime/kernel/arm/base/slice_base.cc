@@ -44,9 +44,10 @@ int SliceCPUKernel::ReSize() {
   auto in_tensor = in_tensors_[kNumInput0];
   auto begin_tensor = in_tensors_[kNumInput1];
   auto size_tensor = in_tensors_[kNumInput2];
-  MS_ASSERT(in_tensor->shape().size() == static_cast<size_t>(begin_tensor->ElementsNum()));
-  MS_ASSERT(in_tensor->shape().size() == static_cast<size_t>(size_tensor->ElementsNum()));
-  MS_ASSERT(in_tensor->shape().size() <= DIMENSION_8D);
+  MS_CHECK_TRUE_MSG(in_tensor->shape().size() == static_cast<size_t>(begin_tensor->ElementsNum()), RET_ERROR,
+                    "The begin tensor is invalid.");
+  MS_CHECK_TRUE_MSG(in_tensor->shape().size() == static_cast<size_t>(size_tensor->ElementsNum()), RET_ERROR,
+                    "The size tensor is invalid.");
   auto begin = reinterpret_cast<int32_t *>(begin_tensor->data());
   CHECK_NULL_RETURN(begin);
   auto size = reinterpret_cast<int32_t *>(size_tensor->data());
@@ -76,7 +77,7 @@ int SliceCPUKernel::Prepare() {
   CHECK_NULL_RETURN(in_tensors_[kNumInput1]);
   CHECK_NULL_RETURN(in_tensors_[kNumInput2]);
   CHECK_NULL_RETURN(out_tensors_[0]);
-  CHECK_NULL_RETURN(op_parameter_);
+  CHECK_NULL_RETURN(param_);
   if (!InferShapeDone()) {
     return RET_OK;
   }

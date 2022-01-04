@@ -44,7 +44,7 @@ class PoolingBaseCPUKernel : public InnerKernel {
  protected:
   const InnerContext *ctx_;
   int thread_count_;
-  PoolingParameter *pooling_param_;
+  PoolingParameter *pooling_param_ = nullptr;
   QuantArg **pooling_quant_arg_ = nullptr;
 };
 }  // namespace mindspore::kernel

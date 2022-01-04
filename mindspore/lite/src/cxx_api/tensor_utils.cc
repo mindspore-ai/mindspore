@@ -30,7 +30,7 @@ std::vector<int32_t> TruncateShape(const std::vector<int64_t> &shape, enum TypeI
   size_t element_size = lite::DataTypeSize(type);
   for (size_t i = 0; i < shape.size(); i++) {
     auto dim = shape[i];
-    if (dim < 0 || dim > INT_MAX) {
+    if (dim < 0 || dim > INT_MAX || (dim != 0 && element_size > INT_MAX / static_cast<size_t>(dim))) {
       MS_LOG(ERROR) << "Invalid shape.";
       return empty;
     } else {

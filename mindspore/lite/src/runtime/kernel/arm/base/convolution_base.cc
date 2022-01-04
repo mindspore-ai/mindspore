@@ -106,6 +106,8 @@ void ConvolutionBaseCPUKernel::FreeQuantParam() {
 }
 
 int ConvolutionBaseCPUKernel::Prepare() {
+  CHECK_LESS_RETURN(in_tensors_.size(), kBiasIndex);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   auto input = this->in_tensors_.front();
   auto output = this->out_tensors_.front();
   CHECK_NULL_RETURN(input);
@@ -140,12 +142,14 @@ int ConvolutionBaseCPUKernel::InitConvWeightBias() {
   }
 
   if (in_tensors_.size() == kInputSize2) {
-    MS_CHECK_FALSE(in_tensors_.at(kBiasIndex)->Size() == 0, RET_ERROR);
+    auto bias_tensor = in_tensors_.at(kBiasIndex);
+    CHECK_NULL_RETURN(bias_tensor);
+    MS_CHECK_FALSE(bias_tensor->Size() == 0, RET_ERROR);
     if (origin_bias_ == nullptr) {
       MS_LOG(ERROR) << "Convolution op " << this->name() << " bias data is nullptr.";
       return RET_ERROR;
     }
-    memcpy(bias_data_, origin_bias_, in_tensors_.at(kBiasIndex)->Size());
+    memcpy(bias_data_, origin_bias_, bias_tensor->Size());
   } else {
     MS_ASSERT(in_tensors_.size() == kInputSize1);
   }
@@ -232,8 +236,11 @@ int ConvolutionBaseCPUKernel::SetIfPerChannel() {
 int ConvolutionBaseCPUKernel::MallocQuantParam() {
   conv_quant_arg_ = &(conv_param_->conv_quant_arg_);
   auto input_tensor = in_tensors_.at(kInputIndex);
+  CHECK_NULL_RETURN(input_tensor);
   auto weight_tensor = in_tensors_.at(kWeightIndex);
+  CHECK_NULL_RETURN(weight_tensor);
   auto output_tensor = out_tensors_.at(kOutputIndex);
+  CHECK_NULL_RETURN(output_tensor);
   size_t input_arg_num = input_tensor->quant_params().size();
   size_t filter_arg_num = weight_tensor->quant_params().size();
   size_t output_arg_num = output_tensor->quant_params().size();
@@ -241,16 +248,19 @@ int ConvolutionBaseCPUKernel::MallocQuantParam() {
   conv_quant_arg_->filter_arg_num_ = filter_arg_num;
   conv_quant_arg_->output_arg_num_ = output_arg_num;
 
+  MS_CHECK_TRUE_RET(input_arg_num > 0 && input_arg_num <= MAX_MALLOC_SIZE, RET_ERROR);
   conv_quant_arg_->input_quant_args_ = reinterpret_cast<QuantArg *>(malloc(input_arg_num * sizeof(QuantArg)));
   if (conv_quant_arg_->input_quant_args_ == nullptr) {
     MS_LOG(ERROR) << "malloc input_quant_args_ failed.";
     return RET_MEMORY_FAILED;
   }
+  MS_CHECK_TRUE_RET(filter_arg_num > 0 && filter_arg_num <= MAX_MALLOC_SIZE, RET_ERROR);
   conv_quant_arg_->filter_quant_args_ = reinterpret_cast<QuantArg *>(malloc(filter_arg_num * sizeof(QuantArg)));
   if (conv_quant_arg_->filter_quant_args_ == nullptr) {
     MS_LOG(ERROR) << "malloc filter_quant_args_ failed.";
     return RET_MEMORY_FAILED;
   }
+  MS_CHECK_TRUE_RET(output_arg_num > 0 && output_arg_num <= MAX_MALLOC_SIZE, RET_ERROR);
   conv_quant_arg_->output_quant_args_ = reinterpret_cast<QuantArg *>(malloc(output_arg_num * sizeof(QuantArg)));
   if (conv_quant_arg_->output_quant_args_ == nullptr) {
     MS_LOG(ERROR) << "malloc output_quant_args_ failed.";
@@ -359,28 +369,30 @@ int ConvolutionBaseCPUKernel::SetQuantMultiplier() {
 }
 
 void ConvolutionBaseCPUKernel::SetRoundingAndMultipilerMode() {
-  auto input_quant_arg = in_tensors_.at(kInputIndex)->quant_params().front();
-  int round_type = input_quant_arg.roundType;
-  switch (round_type) {
-    case 1:
-      conv_quant_arg_->round_mode_ = Rounding_Away_from_zero;
-      break;
-    case 2:
-      conv_quant_arg_->round_mode_ = Rounding_Up;
-      break;
-    default:
-      conv_quant_arg_->round_mode_ = Rounding_No;
-  }
-  int cal_multiplier_type = input_quant_arg.multiplier;
-  switch (cal_multiplier_type) {
-    case 0:
-      conv_quant_arg_->quant_multiplier_mode_ = Method_SinglePrecision;
-      break;
-    case 1:
-      conv_quant_arg_->quant_multiplier_mode_ = Method_DoublePrecision;
-      break;
-    default:
-      conv_quant_arg_->quant_multiplier_mode_ = Method_No;
+  if (!in_tensors_.at(kInputIndex)->quant_params().empty()) {
+    auto input_quant_arg = in_tensors_.at(kInputIndex)->quant_params().front();
+    int round_type = input_quant_arg.roundType;
+    switch (round_type) {
+      case 1:
+        conv_quant_arg_->round_mode_ = Rounding_Away_from_zero;
+        break;
+      case 2:
+        conv_quant_arg_->round_mode_ = Rounding_Up;
+        break;
+      default:
+        conv_quant_arg_->round_mode_ = Rounding_No;
+    }
+    int cal_multiplier_type = input_quant_arg.multiplier;
+    switch (cal_multiplier_type) {
+      case 0:
+        conv_quant_arg_->quant_multiplier_mode_ = Method_SinglePrecision;
+        break;
+      case 1:
+        conv_quant_arg_->quant_multiplier_mode_ = Method_DoublePrecision;
+        break;
+      default:
+        conv_quant_arg_->quant_multiplier_mode_ = Method_No;
+    }
   }
 }
 
