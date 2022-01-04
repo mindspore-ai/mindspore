@@ -577,7 +577,7 @@ class TBERegOp(RegOp):
 
     def need_check_supported(self, need_check_supported=False):
         """
-        Whether the operator need check supports.
+        Whether the operator needs check supports.
 
         Args:
             need_check_supported (bool): Value of need_check_supported. Default: false.
@@ -588,7 +588,7 @@ class TBERegOp(RegOp):
 
     def is_dynamic_format(self, is_dynamic_format=False):
         """
-        Whether the operator need calop_select_format api.
+        Whether the operator needs calop_select_format api.
 
         Args:
             is_dynamic_format (bool): Value of is_dynamic_format. Default: false.
@@ -762,7 +762,7 @@ class CustomRegOp(RegOp):
 
 class DataType:
     r"""
-    Ascend ops various combinations of dtype and format.
+    Various combinations of dtype and format of Ascend ops.
 
     The current list below may be incomplete.
 

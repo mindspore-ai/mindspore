@@ -65,6 +65,8 @@ def count_nonzero(x, axis=(), keep_dims=False, dtype=mstype.int32):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore import Tensor, ops
+        >>> import numpy as np
         >>> # case 1: each value specified.
         >>> x = Tensor(np.array([[0, 1, 0], [1, 1, 0]]).astype(np.float32))
         >>> nonzero_num = ops.count_nonzero(x=x, axis=[0, 1], keep_dims=True, dtype=mindspore.int32)
@@ -276,6 +278,9 @@ def tensor_dot(x1, x2, axes):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore import Tensor, ops
+        >>> import mindspore
+        >>> import numpy as np
         >>> input_x1 = Tensor(np.ones(shape=[1, 2, 3]), mindspore.float32)
         >>> input_x2 = Tensor(np.ones(shape=[3, 1, 2]), mindspore.float32)
         >>> output = ops.tensor_dot(input_x1, input_x2, ((0,1),(1,2)))
@@ -367,6 +372,8 @@ def dot(x1, x2):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore import Tensor, ops
+        >>> import mindspore
         >>> input_x1 = Tensor(np.ones(shape=[2, 3]), mindspore.float32)
         >>> input_x2 = Tensor(np.ones(shape=[1, 3, 2]), mindspore.float32)
         >>> output = ops.dot(input_x1, input_x2)
@@ -584,6 +591,8 @@ def batch_dot(x1, x2, axes=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore import Tensor, ops
+        >>> import numpy as np
         >>> x1 = Tensor(np.ones(shape=[2, 2, 3]), mindspore.float32)
         >>> x2 = Tensor(np.ones(shape=[2, 3, 2]), mindspore.float32)
         >>> axes = (-1, -2)
@@ -781,6 +790,8 @@ def matmul(x1, x2, dtype=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore import Tensor, ops
+        >>> import mindspore
         >>> # case 1 : Reasonable application of broadcast mechanism
         >>> x1 = Tensor(np.arange(2*3*4).reshape(2, 3, 4), mindspore.float32)
         >>> x2 = Tensor(np.arange(4*5).reshape(4, 5), mindspore.float32)
@@ -887,6 +898,8 @@ def cummin(x, axis):
         ``Ascend``
 
     Examples:
+        >>> from mindspore import Tensor, ops
+        >>> import mindspore
         >>> a = Tensor([-0.2284, -0.6628,  0.0975,  0.2680, -1.3298, -0.4220], mindspore.float32)
         >>> output = ops.cummin(a, axis=0)
         >>> print(output[0])
