@@ -715,7 +715,12 @@ class Profiler:
         """
 
         if self._is_offline_parser():
-            return self._ascend_job_id
+            # The self._ascend_job_id directory like "/../PROF***" or "/../JOB***".
+            job_id = self._ascend_job_id.rstrip('/').split('/')[-1]
+            if job_id.startswith('PROF'):
+                device_dir = [dir for dir in os.listdir(self._ascend_job_id) if dir.startswith('device')]
+                return os.path.join(job_id, device_dir[0])
+            return job_id
 
         job_id = ""
         job_dirs = filter(lambda item: item.startswith('JOB') or item.startswith('PROF') and \
