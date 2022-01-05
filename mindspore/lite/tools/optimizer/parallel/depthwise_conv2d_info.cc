@@ -362,6 +362,7 @@ AnfNodePtr DepthwiseConv2DInfo::CreateOutputsOfSplit(const CNodePtr &ori_node, s
     auto extend_bottom =
       depth_wise_conv_prim->get_kernel_size().at(kIndexH) - depth_wise_conv_prim->get_stride().at(kIndexH);
     auto bottom_vector = std::vector<int64_t>(split_num, extend_bottom);
+    MS_CHECK_GE(split_num, 1, nullptr);
     bottom_vector[split_num - 1] = 0;
     split_prim->set_extend_bottom(bottom_vector);
     if (!UpdateRatioWithPadStride(new_splits.data(), new_splits.size(), split_num, input_shape[split_dim_])) {

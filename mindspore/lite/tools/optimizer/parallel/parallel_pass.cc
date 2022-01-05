@@ -31,6 +31,7 @@ constexpr auto kAnfPrimitiveIndex = 0;
 bool ParallelPass::IsParallelCareNode(const AnfNodePtr &node) {
   MS_ASSERT(node != nullptr);
   auto c_node = node->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(c_node != nullptr, false);
   auto prim = GetValueNode<PrimitivePtr>(c_node->input(kAnfPrimitiveIndex));
   MS_CHECK_TRUE_RET(prim != nullptr, false);
   // depth_wise can not be splited in conv_info, we deal with in depthwise_conv_info

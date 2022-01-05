@@ -35,11 +35,15 @@ constexpr size_t kInputNodeIndex = 1;
 constexpr size_t kCaffeBNMeanIndex = 2;
 constexpr size_t kCaffeBNVarIndex = 3;
 constexpr size_t kCaffeBNScaleFactorIndex = 4;
+constexpr size_t kCaffeBNInputSize = 5;
+
 constexpr size_t kTFBNScaleIndex = 2;
 constexpr size_t kTFBNBiasIndex = 3;
 constexpr size_t kTFBNMeanIndex = 4;
 constexpr size_t kTFBNVarIndex = 5;
+constexpr size_t kTFBNInputSize = 6;
 }  // namespace
+
 int CalTransale(const AnfNodePtr &bn_scale_node, const AnfNodePtr &bn_var_node, float *trans_scale, float eps,
                 int kernel_num) {
   MS_ASSERT(bn_var_node != nullptr && trans_scale != nullptr);
@@ -79,13 +83,14 @@ int CalTransale(const AnfNodePtr &bn_scale_node, const AnfNodePtr &bn_var_node, 
   return lite::RET_OK;
 }
 
-void CalTransBias(const AnfNodePtr &bn_mean_node, const AnfNodePtr &bn_bias_node, const float *trans_scale,
-                  float *trans_bias, int kernel_num) {
+int CalTransBias(const AnfNodePtr &bn_mean_node, const AnfNodePtr &bn_bias_node, const float *trans_scale,
+                 float *trans_bias, int kernel_num) {
   MS_ASSERT(bn_mean_node != nullptr && trans_scale != nullptr && trans_bias != nullptr);
+  MS_ASSERT(bn_mean_node->cast<ParameterPtr>() != nullptr);
   auto bn_mean_param = bn_mean_node->cast<ParameterPtr>()->default_param();
-  MS_ASSERT(bn_mean_param != nullptr);
+  MS_CHECK_TRUE_RET(bn_mean_param != nullptr, lite::RET_ERROR);
   auto bn_mean_tensor = std::dynamic_pointer_cast<tensor::Tensor>(bn_mean_param);
-  MS_ASSERT(bn_mean_tensor != nullptr);
+  MS_CHECK_TRUE_RET(bn_mean_tensor != nullptr && bn_mean_tensor->data_c() != nullptr, lite::RET_ERROR);
   auto bn_mean_data = reinterpret_cast<float *>(bn_mean_tensor->data_c());
   // cal transBias, tf : -scale*mean/sqrt(variance + eps) + bias; caffe : -mean/sqrt(variance + eps)
   // -mean/sqrt(variance + eps)
@@ -94,16 +99,19 @@ void CalTransBias(const AnfNodePtr &bn_mean_node, const AnfNodePtr &bn_bias_node
   }
 
   if (bn_bias_node != nullptr) {
+    MS_ASSERT(bn_bias_node->cast<ParameterPtr>() != nullptr);
     auto bn_bias_param = bn_bias_node->cast<ParameterPtr>()->default_param();
-    MS_ASSERT(bn_bias_param != nullptr);
+    MS_CHECK_TRUE_RET(bn_bias_param != nullptr, lite::RET_ERROR);
     auto bn_bias_tensor = std::dynamic_pointer_cast<tensor::Tensor>(bn_bias_param);
-    MS_ASSERT(bn_bias_tensor != nullptr);
+    MS_CHECK_TRUE_RET(bn_bias_tensor != nullptr && bn_bias_tensor->data_c() != nullptr, lite::RET_ERROR);
     auto bn_bias_data = reinterpret_cast<float *>(bn_bias_tensor->data_c());
     // -scale*mean/sqrt(variance + eps) + bias
     for (int32_t i = 0; i < kernel_num; i++) {
       trans_bias[i] += bn_bias_data[i];
     }
   }
+  return lite::RET_OK;
+  s
 }
 
 int CalEstimatedData(const AnfNodePtr &origin_node, const AnfNodePtr &scale_factor_node) {
@@ -116,12 +124,14 @@ int CalEstimatedData(const AnfNodePtr &origin_node, const AnfNodePtr &scale_fact
     MS_LOG(ERROR) << "scale factor node is null";
     return lite::RET_ERROR;
   }
+  MS_ASSERT(origin_node->cast<ParameterPtr>() != nullptr);
   auto origin_param = origin_node->cast<ParameterPtr>()->default_param();
   MS_CHECK_TRUE_RET(origin_param != nullptr, lite::RET_ERROR);
   auto origin_tensor = std::dynamic_pointer_cast<tensor::Tensor>(origin_param);
   MS_CHECK_TRUE_RET(origin_tensor != nullptr, lite::RET_ERROR);
   auto origin_data = reinterpret_cast<float *>(origin_tensor->data_c());
 
+  MS_ASSERT(scale_factor_node->cast<ParameterPtr>() != nullptr);
   auto scale_factor_param = scale_factor_node->cast<ParameterPtr>()->default_param();
   MS_CHECK_TRUE_RET(scale_factor_param != nullptr, lite::RET_ERROR);
   auto scale_factor_tensor = std::dynamic_pointer_cast<tensor::Tensor>(scale_factor_param);
@@ -130,6 +140,7 @@ int CalEstimatedData(const AnfNodePtr &origin_node, const AnfNodePtr &scale_fact
     MS_LOG(ERROR) << "scale factor data size is not equal to 1";
     return lite::RET_ERROR;
   }
+  MS_CHECK_TRUE_RET(scale_factor_tensor->data_c() != nullptr, lite::RET_ERROR);
   auto scale_factor_data = (reinterpret_cast<float *>(scale_factor_tensor->data_c()))[0];
   float scale_factor = scale_factor_data == 0 ? 0 : 1 / scale_factor_data;
   for (size_t i = 0; i < origin_tensor->DataSize(); i++) {
@@ -166,24 +177,32 @@ int CalculateScaleAndBiasFromBN(const CNodePtr &bn_node, int kernel_num, float *
     eps = kEps;
   }
   if (CheckPrimitiveType(bn_node, prim::kPrimBatchNorm)) {
+    MS_CHECK_TRUE_RET(bn_node->size() == kCaffeBNInputSize, lite::RET_ERROR);
     bn_mean_node = bn_node->input(kCaffeBNMeanIndex);
-    MS_ASSERT(bn_mean_node != nullptr);
+    MS_CHECK_TRUE_RET(bn_mean_node != nullptr, lite::RET_ERROR);
     bn_variance_node = bn_node->input(kCaffeBNVarIndex);
-    MS_ASSERT(bn_variance_node != nullptr);
+    MS_CHECK_TRUE_RET(bn_variance_node != nullptr, lite::RET_ERROR);
     AnfNodePtr bn_scale_factor_node = bn_node->input(kCaffeBNScaleFactorIndex);
+    MS_CHECK_TRUE_RET(bn_scale_factor_node != nullptr, lite::RET_ERROR);
     if (!bn_mean_node->isa<Parameter>() || !bn_variance_node->isa<Parameter>() || !IsParamNode(bn_scale_factor_node)) {
       MS_LOG(DEBUG) << "bn op's input is dynamic.";
       return lite::RET_NO_CHANGE;
     }
-    auto status = CalEstimatedData(bn_mean_node, bn_scale_factor_node);
-    MS_CHECK_TRUE_RET(status == lite::RET_OK, status);
-    status = CalEstimatedData(bn_variance_node, bn_scale_factor_node);
-    MS_CHECK_TRUE_RET(status == lite::RET_OK, status);
+    if (CalEstimatedData(bn_mean_node, bn_scale_factor_node) != lite::RET_OK ||
+        CalEstimatedData(bn_variance_node, bn_scale_factor_node) != lite::RET_OK) {
+      MS_LOG(ERROR) << "Calculate esimate data failed.";
+      return lite::RET_ERROR;
+    }
   } else if (CheckPrimitiveType(bn_node, prim::kPrimFusedBatchNorm)) {
+    MS_CHECK_TRUE_RET(bn_node->size() == kTFBNInputSize, lite::RET_ERROR);
     bn_scale_node = bn_node->input(kTFBNScaleIndex);
+    MS_CHECK_TRUE_RET(bn_scale_node != nullptr, lite::RET_ERROR);
     bn_bias_node = bn_node->input(kTFBNBiasIndex);
+    MS_CHECK_TRUE_RET(bn_bias_node != nullptr, lite::RET_ERROR);
     bn_mean_node = bn_node->input(kTFBNMeanIndex);
+    MS_CHECK_TRUE_RET(bn_mean_node != nullptr, lite::RET_ERROR);
     bn_variance_node = bn_node->input(kTFBNVarIndex);
+    MS_CHECK_TRUE_RET(bn_variance_node != nullptr, lite::RET_ERROR);
   } else {
     MS_LOG(ERROR) << "not caffe or tf batchnorm op.";
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_INVALID_OP_ATTR);
@@ -196,7 +215,9 @@ int CalculateScaleAndBiasFromBN(const CNodePtr &bn_node, int kernel_num, float *
   if (CalTransale(bn_scale_node, bn_variance_node, trans_scale, eps, kernel_num) != lite::RET_OK) {
     return lite::RET_NO_CHANGE;
   }
-  CalTransBias(bn_mean_node, bn_bias_node, trans_scale, trans_bias, kernel_num);
+  if (CalTransBias(bn_mean_node, bn_bias_node, trans_scale, trans_bias, kernel_num) != lite::RET_OK) {
+    return lite::RET_NO_CHANGE;
+  }
   return lite::RET_OK;
 }
 
