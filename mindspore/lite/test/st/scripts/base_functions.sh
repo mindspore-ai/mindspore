@@ -74,8 +74,8 @@ function Convert() {
         if [[ ${input_num} == "" ]]; then
           input_num=1
         fi
-        LFS="," read -r -a name_array <<< ${input_names}
-        LFS=":" read -r -a shape_array <<< ${input_shapes}
+        IFS="," read -r -a name_array <<< ${input_names}
+        IFS=":" read -r -a shape_array <<< ${input_shapes}
         for i in $(seq 0 $((${input_num}-1)))
         do
           spec_shapes=${spec_shapes}${name_array[$i]}':'${shape_array[$i]}';'

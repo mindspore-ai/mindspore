@@ -59,10 +59,9 @@ int ReduceScatterTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     return RET_ERROR;
   }
   auto reduce_mode = reduce_op->mode();
-
   auto rank = GetGPUGroupSize();
-
   auto plugin = std::make_shared<ReduceScatterPlugin>(op_name_, reduce_mode, rank);
+  MS_LOG(INFO) << op_name_ << " group size: " << rank << ", rank id: " << GetRankID();
   nvinfer1::IPluginV2Layer *reduce_scatter_layer = network->addPluginV2(inputTensors, 1, *plugin);
   if (reduce_scatter_layer == nullptr) {
     MS_LOG(ERROR) << "create ReduceScatter layer failed for: " << op_name_;
