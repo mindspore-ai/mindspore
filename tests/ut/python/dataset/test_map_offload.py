@@ -223,6 +223,23 @@ def test_offload_not_end_of_pipeline():
     np.testing.assert_(data_iterator.offload_model is None)
 
 
+def test_offload_dim_check():
+    """
+    Feature: test input has the required number of dimensions for offload operation.
+    Description: Input is image dataset.
+    Expectation: Should raise ValueError.
+    """
+    # Dataset with offload activated.
+    dataset = ds.ImageFolderDataset(DATA_DIR)
+    dataset = dataset.map(operations=[C.Decode()], input_columns="image")
+    dataset = dataset.map(operations=[C.HWC2CHW()], input_columns="image", offload=True)
+
+    error_msg = "For HwcToChw offload operation, the dimension of input should be 4, but got 3."
+    with pytest.raises(ValueError, match=error_msg):
+        for (_, _) in dataset.create_tuple_iterator(num_epochs=1, output_numpy=True):
+            continue
+
+
 if __name__ == "__main__":
     test_offload()
     test_auto_offload()
@@ -232,3 +249,4 @@ if __name__ == "__main__":
     test_offload_rescale_op()
     test_offload_different_column_end_of_pipeline()
     test_offload_not_end_of_pipeline()
+    test_offload_dim_check()
