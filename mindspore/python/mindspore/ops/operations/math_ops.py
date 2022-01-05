@@ -2297,7 +2297,7 @@ class Expm1(Primitive):
 class HistogramFixedWidth(PrimitiveWithInfer):
     """
     Returns a rank 1 histogram counting the number of entries in values that fall into every bin. The bins are equal
-    width and determined by the arguments range and nbins.
+    width and determined by the inputs `range` and the arguments `nbins`.
 
     Args:
         dtype (str): An optional attribute. The dtype must be "int32". Default: "int32".
@@ -2305,8 +2305,8 @@ class HistogramFixedWidth(PrimitiveWithInfer):
 
     Inputs:
         - **x** (Tensor) - Numeric Tensor. Must be one of the following types: int32, float32, float16.
-        - **range** (Tensor) - Must have the same data type as `x`, and the shape is [2].
-          x <= range[0] will be mapped to hist[0], x >= range[1] will be mapped to hist[-1].
+        - **range** (Tensor) - Must have the same data type as `x`, and the shape is (2,).
+          x <= range[0] will be mapped to histogram[0], x >= range[1] will be mapped to histogram[-1].
 
     Outputs:
         Tensor, the type is int32.
@@ -4749,15 +4749,13 @@ class Atan2(_MathBinaryOp):
     such that :math:`x = r*\sin(\theta), y = r*\cos(\theta)`, where :math:`r = \sqrt{x^2 + y^2}`.
 
     Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
-    If they have different data types, the lower priority data type will be converted to
-    the relatively highest priority data type.
+    If they have different data types, the lower precision data type will be converted to
+    the relatively highest precision data type.
 
     Inputs:
         - **x** (Tensor) - The input tensor.
           :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-          The data type will give priority to the high-precision data type
-        - **y** (Tensor) - The input tensor.
-          It has the same shape with `x`. The data type will give priority to the high-precision data type.
+        - **y** (Tensor) - The input tensor. It has the same shape with `x`.
 
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,and the data type is same as `x`.
@@ -5137,7 +5135,8 @@ class Invert(Primitive):
         out_i = -x_{i}
 
     Inputs:
-        - **x** (Tensor[int16], Tensor[uint16]) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+        - **x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+          The data type should be one of the following types: int16, uint16.
 
     Outputs:
         Tensor, has the same shape as `x`.
@@ -5164,7 +5163,7 @@ class Invert(Primitive):
 
 class Eps(PrimitiveWithInfer):
     """
-    Creates a tensor filled with `x` dtype minimum value.
+    Creates a tensor filled with minimum value in `x` dtype.
 
     Inputs:
         - **x** (Tensor) - Input tensor. The data type must be float16, float32 or float64.
@@ -5322,8 +5321,8 @@ class MatrixInverse(PrimitiveWithInfer):
 
 class IndexAdd(Primitive):
     """
-    Adds tensor y to specified axis and indices of tensor x. The axis should be in the range from 0 to len(x.dim) - 1,
-    and indices should be in the range from 0 to the size of x at the axis dimension.
+    Adds tensor `y` to specified axis and indices of tensor `x`. The axis should be in [0,  len(x.dim) - 1],
+    and indices should be in [0, the size of `x`] at the axis dimension.
 
     Args:
         axis (int): The dimension along which to index.
@@ -5331,7 +5330,7 @@ class IndexAdd(Primitive):
         check_index_bound (bool): If true, check index boundary. If false, don't check index boundary. Default: True.
 
     Inputs:
-        - **x** (Parameter) - The input tensor to add to.
+        - **x** (Parameter) - The input Parameter to add to.
         - **indices** (Tensor) - Add the  value of `x` and `y` along the dimension of the `axis` according to the
           specified index value, with data type int32.
           The `indices` must be 1D with the same size as the size of `y` in the `axis` dimension. The values
@@ -5340,10 +5339,10 @@ class IndexAdd(Primitive):
           The shape must be the same as `x` except the `axis` th dimension.
 
     Outputs:
-        Tensor, has the same shape and dtype as x.
+        Tensor, has the same shape and dtype as `x`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
+        TypeError: If `x` is not a Parameter.
         TypeError: If neither `indices` nor `y` is a Tensor.
         ValueError: If axis is out of `x` rank's range.
         ValueError: If `x` rank is not the same as `y` rank.
