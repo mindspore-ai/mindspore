@@ -1446,7 +1446,7 @@ void KernelRuntime::InitGraphInputTensors(const std::shared_ptr<MemScheduler> &m
   if (input_tensors.size() != input_nodes.size()) {
     MS_LOG_EXCEPTION << "Invalid input tensor size:" << input_tensors.size() << " vs node size:" << input_nodes.size();
   }
-  mem_scheduler->ClearMemNeedInit();
+  mem_scheduler->ClearMemInitFunc();
   for (size_t i = 0; i < input_tensors.size(); ++i) {
     auto input_node = input_nodes[i];
     if (!input_node->isa<Parameter>() || !AnfAlgo::OutputAddrExist(input_node, 0)) {
@@ -1468,11 +1468,17 @@ void KernelRuntime::InitGraphInputTensors(const std::shared_ptr<MemScheduler> &m
       device_address->set_ptr(nullptr);
     }
     if (need_sync) {
+      const auto &shape = trans::GetRuntimePaddingShape(input_node, 0);
       if (device_address->GetPtr() != nullptr) {
-        device_address->SyncHostToDevice(trans::GetRuntimePaddingShape(input_node, 0), tensor->data().nbytes(),
-                                         tensor->data_type(), tensor->data_c(), tensor->device_info().host_format_);
+        device_address->SyncHostToDevice(shape, tensor->data().nbytes(), tensor->data_type(), tensor->data_c(),
+                                         tensor->device_info().host_format_);
       } else {
-        mem_scheduler->AddMemNeedInit(device_address.get());
+        mem_scheduler->AddMemInitFunc(device_address.get(), [device_address, tensor, shape](void *device_ptr) -> void {
+          device_address->set_ptr(device_ptr);
+          device_address->SyncHostToDevice(shape, tensor->data().nbytes(), tensor->data_type(), tensor->data_c(),
+                                           tensor->device_info().host_format_);
+          device_address->set_ptr(nullptr);
+        });
       }
     }
     MemPriority priority = kMemPriorityLow;
