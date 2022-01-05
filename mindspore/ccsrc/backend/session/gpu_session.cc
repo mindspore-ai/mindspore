@@ -461,14 +461,6 @@ GraphId GPUSession::CompileGraphImpl(const KernelGraphPtr &graph) {
   }
   // Build kernel if node is cnode
   BuildKernel(graph);
-#ifdef ENABLE_DUMP_IR
-  std::string name = "graph_build";
-  DumpGraphParams dump_params = {true, static_cast<int>(kWholeStack)};
-  (void)mindspore::RDR::RecordAnfGraph(SubModuleId::SM_SESSION, name, graph, dump_params, ".ir,.pb");
-  auto &kernels = graph->execution_order();
-  std::string exec_order_name = "graph_exec_order." + std::to_string(graph->graph_id());
-  (void)mindspore::RDR::RecordGraphExecOrder(SubModuleId::SM_SESSION, exec_order_name, kernels);
-#endif
 #ifndef ENABLE_SECURITY
   // Get summary nodes.
   SetSummaryNodes(graph.get());

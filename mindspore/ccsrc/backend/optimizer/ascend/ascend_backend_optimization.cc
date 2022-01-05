@@ -474,9 +474,6 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
   (void)optimizer2->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
 #ifdef ENABLE_DUMP_IR
-  const std::vector<CNodePtr> &exec_order = kernel_graph->execution_order();
-  std::string exec_order_name = "graph_exec_order." + std::to_string(kernel_graph->graph_id());
-  (void)mindspore::RDR::RecordGraphExecOrder(SubModuleId::SM_OPTIMIZER, exec_order_name, exec_order);
   if (save_graphs) {
     std::string file_name = "hwopt_d_end_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_name, kernel_graph, true, kWholeStack);
