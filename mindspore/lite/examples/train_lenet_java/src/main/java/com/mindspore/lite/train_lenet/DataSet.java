@@ -25,8 +25,8 @@ public class DataSet {
     private long numOfClasses = 0;
     private long expectedDataSize = 0;
     public class DataLabelTuple {
-        public float[] data;
-        public int label;
+        public byte[] data;
+        public byte label;
     }
     Vector<DataLabelTuple> trainData;
     Vector<DataLabelTuple> testData;
@@ -104,7 +104,7 @@ public class DataSet {
             int image_size = n_rows * n_cols;
             byte[] image_data = new byte[image_size];
             for (int i = 0; i < lnumber; i++) {
-                float [] hwc_bin_image = new float[32 * 32];
+                byte [] hwc_bin_image = new byte[32 * 32];
                 readFile(ibin, image_data, image_size);
                 for (int r = 0; r < 32; r++) {
                     for (int c = 0; c < 32; c++) {
@@ -112,15 +112,14 @@ public class DataSet {
                         if (r < 2 || r > 29 || c < 2 || c > 29) {
                             hwc_bin_image[index] = 0;
                         } else {
-                            int data = image_data[(r-2)*28 + (c-2)] & 0xff;
-                            hwc_bin_image[index] = (float)data / 255.0f;
+                            hwc_bin_image[index] = image_data[(r-2)*28 + (c-2)];
                         }
                     }
                 }
 
                 DataLabelTuple data_label_tupel = new DataLabelTuple();
                 data_label_tupel.data = hwc_bin_image;
-                data_label_tupel.label = labels[i] & 0xff;
+                data_label_tupel.label = labels[i];
                 dataset.add(data_label_tupel);
             }
         } catch (IOException e) {

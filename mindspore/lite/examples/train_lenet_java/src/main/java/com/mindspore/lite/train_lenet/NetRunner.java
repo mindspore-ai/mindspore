@@ -31,7 +31,7 @@ public class NetRunner {
     private int dataIndex = 0;
     private int labelIndex = 1;
     private LiteSession session;
-    private long batchSize;
+    private int batchSize;
     private long dataSize; // one input data size, in byte
     private DataSet ds = new DataSet();
     private long numOfClasses;
@@ -39,6 +39,12 @@ public class NetRunner {
     private int idx = 1;
     private int virtualBatch = 16;
     private String trainedFilePath = "trained.ms";
+    private ByteBuffer imageInputBuf;
+    private ByteBuffer labelInputBuf;
+    private int imageBatchElements;
+    private MSTensor imageTensor;
+    private MSTensor labelTensor;
+    private int[] targetLabels;
 
     public void initAndFigureInputs(String modelPath, int virtualBatchSize) {
         MSConfig msConfig = new MSConfig();
@@ -71,6 +77,16 @@ public class NetRunner {
             return;
         }
         trainedFilePath = modelPath.substring(0, index) + "_trained.ms";
+
+        imageTensor = inputs.get(dataIndex);
+        imageInputBuf = ByteBuffer.allocateDirect((int) imageTensor.size());
+        imageInputBuf.order(ByteOrder.nativeOrder());
+        imageBatchElements = inputs.get(dataIndex).elementsNum();
+
+        labelTensor = inputs.get(labelIndex);
+        labelInputBuf = ByteBuffer.allocateDirect((int) labelTensor.size());
+        labelInputBuf.order(ByteOrder.nativeOrder());
+        targetLabels = new int[batchSize];
     }
 
     public int initDB(String datasetPath) {
@@ -125,7 +141,8 @@ public class NetRunner {
                     if (max_acc < acc) {
                         max_acc = acc;
                     }
-                    System.out.println("step_" + (i + 1) + ": \tLoss is " + loss + " [min=" + min_loss + "]" + " max_accc=" + max_acc);
+                    System.out.println("step_" + (i + 1) + ": \tLoss is " + loss + " [min=" + min_loss + "]" + " " +
+                            "max_accc=" + max_acc);
                 }
             }
         }
@@ -141,11 +158,7 @@ public class NetRunner {
         }
         session.eval();
         for (long i = 0; i < tests; i++) {
-            Vector<Integer> labels = fillInputData(test_set, (maxTests == -1));
-            if (labels.size() != batchSize) {
-                System.err.println("unexpected labels size: " + labels.size() + " batch_size size: " + batchSize);
-                System.exit(1);
-            }
+            int[] labels = fillInputData(test_set, (maxTests == -1));
             session.runGraph();
             MSTensor outputsv = searchOutputsForSize((int) (batchSize * numOfClasses));
             if (outputsv == null) {
@@ -163,7 +176,7 @@ public class NetRunner {
                     }
 
                 }
-                if (labels.get(b) == max_idx) {
+                if (labels[b] == max_idx) {
                     accuracy += 1.0;
                 }
             }
@@ -174,48 +187,28 @@ public class NetRunner {
     }
 
     // each time fill batch_size data
-    Vector<Integer> fillInputData(Vector<DataSet.DataLabelTuple> dataset, boolean serially) {
-        Vector<Integer> labelsVec = new Vector<Integer>();
+    int[] fillInputData(Vector<DataSet.DataLabelTuple> dataset, boolean serially) {
         int totalSize = dataset.size();
-
-        List<MSTensor> inputs = session.getInputs();
-
-        int inputDataCnt = inputs.get(dataIndex).elementsNum();
-        float[] inputBatchData = new float[inputDataCnt];
-
-        int labelDataCnt = inputs.get(labelIndex).elementsNum();
-        int[] labelBatchData = new int[labelDataCnt];
-
+        imageInputBuf.clear();
+        labelInputBuf.clear();
         for (int i = 0; i < batchSize; i++) {
             if (serially) {
                 idx = (++idx) % totalSize;
             } else {
                 idx = (int) (Math.random() * totalSize);
             }
-
-            int label = 0;
             DataSet.DataLabelTuple dataLabelTuple = dataset.get(idx);
-            label = dataLabelTuple.label;
-            System.arraycopy(dataLabelTuple.data, 0, inputBatchData, (int) (i * dataLabelTuple.data.length), dataLabelTuple.data.length);
-            labelBatchData[i] = label;
-            labelsVec.add(label);
+            byte[] inputBatchData = dataLabelTuple.data;
+            for (int j = 0; j < imageBatchElements / batchSize; j++) {
+                imageInputBuf.putFloat((inputBatchData[j] & 0xff) / 255.0f);
+            }
+            int label = dataLabelTuple.label;
+            labelInputBuf.putInt(label & 0xff);
+            targetLabels[i] = label;
         }
-
-        ByteBuffer byteBuf = ByteBuffer.allocateDirect(inputBatchData.length * Float.BYTES);
-        byteBuf.order(ByteOrder.nativeOrder());
-        for (int i = 0; i < inputBatchData.length; i++) {
-            byteBuf.putFloat(inputBatchData[i]);
-        }
-        inputs.get(dataIndex).setData(byteBuf);
-
-        ByteBuffer labelByteBuf = ByteBuffer.allocateDirect(labelBatchData.length * 4);
-        labelByteBuf.order(ByteOrder.nativeOrder());
-        for (int i = 0; i < labelBatchData.length; i++) {
-            labelByteBuf.putInt(labelBatchData[i]);
-        }
-        inputs.get(labelIndex).setData(labelByteBuf);
-
-        return labelsVec;
+        imageTensor.setData(imageInputBuf);
+        labelTensor.setData(labelInputBuf);
+        return targetLabels;
     }
 
     public void trainModel(String modelPath, String datasetPath, int virtualBatch) {
