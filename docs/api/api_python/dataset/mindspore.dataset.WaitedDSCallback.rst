@@ -3,25 +3,84 @@ mindspore.dataset.WaitedDSCallback
 
 .. py:class:: mindspore.dataset.WaitedDSCallback(step_size=1)
 
-    用于自定义与训练回调同步的数据集回调类的抽象基类。
+    数据集自定义回调类的抽象基类，用于与训练回调类(`mindspore.callback <https://mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.train.html#mindspore.train.callback.Callback>`_)的同步。
 
-    此类可用于自定义在step或epoch结束后执行的回调方法。
+    可用于在每个step或epoch开始前执行自定义的回调方法，注意，第二个step或epoch开始时才会触发该调用。
     例如在自动数据增强中根据上一个epoch的loss值来更新增强算子参数配置。
+
+    用户可通过 `train_run_context` 获取模型相关信息。如 `network` 、 `train_network` 、 `epoch_num` 、 `batch_num` 、 `loss_fn` 、 `optimizer` 、 `parallel_mode` 、 `device_number` 、 `list_callback` 、 `cur_epoch_num` 、 `cur_step_num` 、 `dataset_sink_mode` 、 `net_outputs` 等，详见 `mindspore.callback <https://mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.train.html#mindspore.train.callback.Callback>`_ 。
+
+    用户可通过 `ds_run_context` 获取数据处理管道相关信息。包括 `cur_epoch_num` (当前epoch数)、 `cur_step_num_in_epoch` (当前epoch的step数)、 `cur_step_num` (当前step数)。
 
     **参数：**
 
-    - **step_size** (int, optional) - 每个step包含的数据行数。step大小通常与batch大小相等（默认值为1）。
+    - **step_size** (int, optional) - 每个step包含的数据行数。通常step_size与batch_size一致，默认值：1。
 
     **样例：**
 
+    >>> import mindspore.nn as nn
     >>> from mindspore.dataset import WaitedDSCallback
+    >>> from mindspore import context
+    >>> from mindspore.train import Model
+    >>> from mindspore.train.callback import Callback
     >>>
-    >>> my_cb = WaitedDSCallback(32)
-    >>> # dataset为任意数据集实例
-    >>> data = data.map(operations=AugOp(), callbacks=my_cb)
-    >>> data = data.batch(32)
-    >>> # 定义网络
-    >>> model.train(epochs, data, callbacks=[my_cb])
+    >>> context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    >>>
+    >>> # 自定义用于数据处理管道同步数据的回调类
+    >>> class MyWaitedCallback(WaitedDSCallback):
+    ...     def __init__(self, events, step_size=1):
+    ...         super().__init__(step_size)
+    ...         self.events = events
+    ...
+    ...     # epoch开始前数据处理管道要执行的回调函数
+    ...     def sync_epoch_begin(self, train_run_context, ds_run_context):
+    ...         event = f"ds_epoch_begin_{ds_run_context.cur_epoch_num}_{ds_run_context.cur_step_num}"
+    ...         self.events.append(event)
+    ...
+    ...     # step开始前数据处理管道要执行的回调函数
+    ...     def sync_step_begin(self, train_run_context, ds_run_context):
+    ...         event = f"ds_step_begin_{ds_run_context.cur_epoch_num}_{ds_run_context.cur_step_num}"
+    ...         self.events.append(event)
+    >>>
+    >>> # 自定义用于网络训练时同步数据的回调类
+    >>> class MyMSCallback(Callback):
+    ...     def __init__(self, events):
+    ...         self.events = events
+    ...
+    ...     # epoch结束网络训练要执行的回调函数
+    ...     def epoch_end(self, run_context):
+    ...         cb_params = run_context.original_args()
+    ...         event = f"ms_epoch_end_{cb_params.cur_epoch_num}_{cb_params.cur_step_num}"
+    ...         self.events.append(event)
+    ...
+    ...     # step结束网络训练要执行的回调函数
+    ...     def step_end(self, run_context):
+    ...         cb_params = run_context.original_args()
+    ...         event = f"ms_step_end_{cb_params.cur_epoch_num}_{cb_params.cur_step_num}"
+    ...         self.events.append(event)
+    >>>
+    >>> # 自定义网络
+    >>> class Net(nn.Cell):
+    ...     def construct(self, x, y):
+    ...         return x
+    >>>
+    >>> # 声明一个网络训练与数据处理同步的数据
+    >>> events = []
+    >>>
+    >>> # 声明数据处理管道和网络训练的回调类
+    >>> my_cb1 = MyWaitedCallback(events, 1)
+    >>> my_cb2 = MyMSCallback(events)
+    >>> arr = [1, 2, 3, 4]
+    >>> # 构建数据处理管道
+    >>> data = ds.NumpySlicesDataset((arr, arr), column_names=["c1", "c2"], shuffle=False)
+    >>> # 将数据处理管道的回调类加入到map中
+    >>> data = data.map(operations=(lambda x: x), callbacks=my_cb1)
+    >>>
+    >>> net = Net()
+    >>> model = Model(net)
+    >>>
+    >>> # 将数据处理管道和网络训练的回调类加入到模型训练的回调列表中
+    >>> model.train(2, data, dataset_sink_mode=False, callbacks=[my_cb2, my_cb1])
 
     .. py:method:: begin(run_context)
 
