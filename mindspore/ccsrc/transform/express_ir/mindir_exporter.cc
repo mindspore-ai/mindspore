@@ -727,7 +727,7 @@ std::string IrExportBuilder::BuildInputNode(const AnfNodePtr &node, mind_ir::Gra
     return fg->ToString();
   }
   if (node->isa<ValueNode>()) {
-    nodeName_.insert(node_name);
+    (void)nodeName_.insert(node_name);
     // When node input is a ValueNode, need to create a Constant Node
     mind_ir::NodeProto *node_proto = graph_proto->add_node();
     node_proto->set_name(node_name);

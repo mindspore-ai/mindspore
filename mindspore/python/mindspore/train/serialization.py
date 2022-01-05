@@ -506,19 +506,19 @@ def _check_checkpoint_param(ckpt_file_name, filter_prefix=None):
         raise ValueError("For 'load_checkpoint', the argument 'ckpt_file_name' must be string, "
                          "but got {}.".format(type(ckpt_file_name)))
 
-    if not os.path.exists(ckpt_file_name):
-        raise ValueError("For 'load_checkpoint', the checkpoint file does not exist, please check "
-                         "whether the 'ckpt_file_name' is correct.")
-
     if ckpt_file_name[-5:] != ".ckpt":
         raise ValueError("For 'load_checkpoint', the checkpoint file should end with '.ckpt', please "
                          "input the correct 'ckpt_file_name'.")
+
     ckpt_file_name = os.path.realpath(ckpt_file_name)
+    if not os.path.exists(ckpt_file_name):
+        raise ValueError("For 'load_checkpoint', the checkpoint file: {} does not exist, please check "
+                         "whether the 'ckpt_file_name' is correct.".format(ckpt_file_name))
 
     if filter_prefix is not None:
         if not isinstance(filter_prefix, (str, list, tuple)):
-            raise TypeError(f"For 'load_checkpoint', the type of 'filter_prefix' must be string, "
-                            f"list[string] or tuple[string] when 'filter_prefix' is not None, but "
+            raise TypeError("For 'load_checkpoint', the type of 'filter_prefix' must be string, "
+                            "list[string] or tuple[string] when 'filter_prefix' is not None, but "
                             f"got {str(type(filter_prefix))}.")
         if isinstance(filter_prefix, str):
             filter_prefix = (filter_prefix,)
@@ -527,8 +527,8 @@ def _check_checkpoint_param(ckpt_file_name, filter_prefix=None):
                              "'filter_prefix' is list or tuple.")
         for index, prefix in enumerate(filter_prefix):
             if not isinstance(prefix, str):
-                raise TypeError(f"For 'load_checkpoint', when 'filter_prefix' is list or tuple, "
-                                f"the element in 'filter_prefix' must be string, but got "
+                raise TypeError("For 'load_checkpoint', when 'filter_prefix' is list or tuple, "
+                                "the element in 'filter_prefix' must be string, but got "
                                 f"{str(type(prefix))} at index {index}.")
     return ckpt_file_name, filter_prefix
 
