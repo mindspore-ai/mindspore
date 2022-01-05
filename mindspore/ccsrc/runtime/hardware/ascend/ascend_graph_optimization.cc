@@ -16,6 +16,7 @@
 
 #include "runtime/hardware/ascend/ascend_graph_optimization.h"
 #include <set>
+#include <string>
 #include "backend/optimizer/common/common_backend_optimization.h"
 #include "backend/optimizer/ascend/ascend_backend_optimization.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_optimization.h"
@@ -53,6 +54,8 @@ void AscendGraphOptimization::OptimizeGraph(const KernelGraphPtr &graph) {
   PostOptimization(graph);
   // must clear memo_ which holds kernelgraph after using AscendGraphOptimization class.
   memo_.clear();
+  // clear and reset graph_manager_ after optimization
+  graph_manager_ = MakeManager();
   MS_LOG(INFO) << "Status record: end optimize graph. graph id: " << graph->graph_id();
 }
 
@@ -80,9 +83,8 @@ void AscendGraphOptimization::OptimizeGraphWithoutDeviceInfo(const KernelGraphPt
   }
 
   // add all graphs to manager first, so that don't have to make new manager in following passes.
-  auto manager = Manage(graph, true);
   memo_.clear();
-  AddGraphToManager(NOT_NULL(graph), NOT_NULL(manager));
+  AddGraphToManager(NOT_NULL(graph), NOT_NULL(graph_manager_));
 
   memo_.clear();
   IRFusionOptimization(graph);
@@ -160,15 +162,15 @@ void AscendGraphOptimization::HardWareOptimization(const KernelGraphPtr &graph) 
 }
 
 void AscendGraphOptimization::AddGraphToManager(const NotNull<KernelGraphPtr> graph,
-                                                NotNull<FuncGraphManagerPtr> manager) {
+                                                NotNull<FuncGraphManagerPtr> manager, bool is_root) {
   if (memo_.find(graph) != memo_.end()) {
     return;
   }
   memo_.insert(graph.get());
-  manager->AddFuncGraph(graph.get(), false);
+  manager->AddFuncGraph(graph.get(), is_root);
 
   for (auto &child_graph : graph->child_graph_order()) {
-    AddGraphToManager(NOT_NULL(child_graph.lock()), manager);
+    AddGraphToManager(NOT_NULL(child_graph.lock()), manager, false);
   }
 }
 

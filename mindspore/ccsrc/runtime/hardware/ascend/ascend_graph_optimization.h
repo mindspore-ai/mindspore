@@ -44,7 +44,7 @@ class AscendGraphOptimization {
   void UnifyMindIR(const KernelGraphPtr &graph);
 
  private:
-  AscendGraphOptimization() = default;
+  AscendGraphOptimization() { graph_manager_ = MakeManager(); }
   ~AscendGraphOptimization() = default;
   AscendGraphOptimization(const AscendGraphOptimization &) = delete;
   AscendGraphOptimization &operator=(const AscendGraphOptimization &) = delete;
@@ -57,7 +57,8 @@ class AscendGraphOptimization {
   // Graph Optimized level-3 interface
   void IRFusionOptimization(const KernelGraphPtr &graph);
   void UpdateRefOutputMap(const KernelGraphPtr &graph);
-  void AddGraphToManager(const NotNull<KernelGraphPtr> graph, NotNull<FuncGraphManagerPtr> manager);
+  void AddGraphToManager(const NotNull<KernelGraphPtr> graph, NotNull<FuncGraphManagerPtr> manager,
+                         bool is_root = true);
   void SelectKernel(const KernelGraphPtr &graph);
   void RecurseSelectKernelInfo(const KernelGraphPtr &graph);
   void HardWareOptimization(const KernelGraphPtr &graph);
@@ -67,6 +68,8 @@ class AscendGraphOptimization {
   void GetAllGraphs(const KernelGraphPtr &root_graph);
   void CheckControlFlowDynamicShape(const KernelGraphPtr &root_graph);
 
+  // Manager for the optimized graphs
+  FuncGraphManagerPtr graph_manager_;
   // Number of operators whose precision changes after select kernel
   size_t raise_precision_count_{0};
   size_t reduce_precision_count_{0};
