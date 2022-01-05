@@ -53,7 +53,7 @@ bool HttpCommunicator::Stop() {
 void HttpCommunicator::RegisterMsgCallBack(const std::string &msg_type, const MessageCallback &cb) {
   MS_LOG(INFO) << "msg_type is: " << msg_type;
   msg_callbacks_[msg_type] = cb;
-  http_msg_callbacks_[msg_type] = [&](std::shared_ptr<HttpMessageHandler> http_msg) -> void {
+  http_msg_callbacks_[msg_type] = [this, msg_type](std::shared_ptr<HttpMessageHandler> http_msg) -> void {
     MS_EXCEPTION_IF_NULL(http_msg);
     try {
       size_t len = 0;

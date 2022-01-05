@@ -209,7 +209,7 @@ bool HttpMessageHandler::GetPostMsg(size_t *len, uint8_t **buffer) {
     return false;
   }
   *len = evbuffer_get_length(event_request_->input_buffer);
-  constexpr size_t max_http_bytes_len = UINT32_MAX;  // 4GB
+  const size_t max_http_bytes_len = UINT32_MAX;  // 4GB
   if (*len == 0 || *len > max_http_bytes_len) {
     MS_LOG(ERROR) << "The post message length " << max_http_bytes_len << " is invalid!";
     return false;

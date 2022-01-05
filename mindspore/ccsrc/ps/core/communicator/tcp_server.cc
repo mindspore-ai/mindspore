@@ -245,7 +245,7 @@ void TcpServer::RemoveConnection(const evutil_socket_t &fd) {
 std::shared_ptr<TcpConnection> TcpServer::GetConnectionByFd(const evutil_socket_t &fd) { return connections_[fd]; }
 
 void TcpServer::ListenerCallback(struct evconnlistener *, evutil_socket_t fd, struct sockaddr *sockaddr, int,
-                                 void *data) {
+                                 void *const data) {
   try {
     ListenerCallbackInner(fd, sockaddr, data);
   } catch (const std::exception &e) {
@@ -253,7 +253,7 @@ void TcpServer::ListenerCallback(struct evconnlistener *, evutil_socket_t fd, st
   }
 }
 
-void TcpServer::ListenerCallbackInner(evutil_socket_t fd, struct sockaddr *sockaddr, void *data) {
+void TcpServer::ListenerCallbackInner(evutil_socket_t fd, struct sockaddr *sockaddr, void *const data) {
   auto server = reinterpret_cast<class TcpServer *>(data);
   MS_EXCEPTION_IF_NULL(server);
   auto base = reinterpret_cast<struct event_base *>(server->base_);
@@ -320,7 +320,7 @@ std::shared_ptr<TcpConnection> TcpServer::onCreateConnection(struct bufferevent 
 
 OnServerReceiveMessage TcpServer::GetServerReceive() const { return message_callback_; }
 
-void TcpServer::SignalCallback(evutil_socket_t, std::int16_t, void *data) {
+void TcpServer::SignalCallback(evutil_socket_t, std::int16_t, void *const data) {
   try {
     SignalCallbackInner(data);
   } catch (const std::exception &e) {
@@ -328,7 +328,7 @@ void TcpServer::SignalCallback(evutil_socket_t, std::int16_t, void *data) {
   }
 }
 
-void TcpServer::SignalCallbackInner(void *data) {
+void TcpServer::SignalCallbackInner(void *const data) {
   MS_EXCEPTION_IF_NULL(data);
   auto server = reinterpret_cast<class TcpServer *>(data);
   struct event_base *base = server->base_;
@@ -340,7 +340,7 @@ void TcpServer::SignalCallbackInner(void *data) {
   }
 }
 
-void TcpServer::ReadCallback(struct bufferevent *bev, void *connection) {
+void TcpServer::ReadCallback(struct bufferevent *bev, void *const connection) {
   try {
     ReadCallbackInner(bev, connection);
   } catch (const std::exception &e) {
@@ -348,7 +348,7 @@ void TcpServer::ReadCallback(struct bufferevent *bev, void *connection) {
   }
 }
 
-void TcpServer::ReadCallbackInner(struct bufferevent *bev, void *connection) {
+void TcpServer::ReadCallbackInner(struct bufferevent *bev, void *const connection) {
   MS_EXCEPTION_IF_NULL(bev);
   MS_EXCEPTION_IF_NULL(connection);
 
@@ -365,7 +365,7 @@ void TcpServer::ReadCallbackInner(struct bufferevent *bev, void *connection) {
   }
 }
 
-void TcpServer::EventCallback(struct bufferevent *bev, std::int16_t events, void *data) {
+void TcpServer::EventCallback(struct bufferevent *bev, std::int16_t events, void *const data) {
   try {
     EventCallbackInner(bev, events, data);
   } catch (const std::exception &e) {
@@ -373,7 +373,7 @@ void TcpServer::EventCallback(struct bufferevent *bev, std::int16_t events, void
   }
 }
 
-void TcpServer::EventCallbackInner(struct bufferevent *bev, std::int16_t events, void *data) {
+void TcpServer::EventCallbackInner(struct bufferevent *bev, std::int16_t events, void *const data) {
   MS_EXCEPTION_IF_NULL(bev);
   MS_EXCEPTION_IF_NULL(data);
   struct evbuffer *output = bufferevent_get_output(bev);
