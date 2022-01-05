@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CUSTOM_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CUSTOM_H_
+#ifndef DPICO_SRC_CUSTOM_FP32_H_
+#define DPICO_SRC_CUSTOM_FP32_H_
 
 #include <sys/stat.h>
 #include <cmath>
@@ -23,6 +23,8 @@
 #include <fstream>
 #include <cstring>
 #include <map>
+#include <unordered_map>
+#include <memory>
 #include <sstream>
 #include <vector>
 #include <string>
@@ -65,10 +67,16 @@ class CustomCPUKernel : public Kernel {
   Result CreateInputs();
   Result CreateOutputs();
   Result SetDetParas();
-
+  Result InitInputsLinkMap();
+  Result InitOutputsLinkMap();
+  Result MallocOutputsData();
+  Result UpdateInputDataset();
+  Result UpdateOutputDataset();
+  Result FlushInputsData();
+  Result InvalidateOutputsData();
   Result GetStrideParam(size_t *devSize, int index, size_t *stride, svp_acl_mdl_io_dims *dims);
   Result CreateInput(void *inputDataBuffer, size_t bufferSize, int stride);
-  void *GetDeviceBufferOfTensor(const svp_acl_mdl_io_dims &dims, const size_t &stride, size_t dataSize);
+  void *GetDeviceBufferOfTensor(const svp_acl_mdl_io_dims &dims, const size_t &stride);
   Result CreateTaskBufAndWorkBuf();
   Result CreateBuf(int index);
   Result GetInputDims(int index, svp_acl_mdl_io_dims *dims);
@@ -93,12 +101,16 @@ class CustomCPUKernel : public Kernel {
   void *model_mem_ptr_ = nullptr;
   bool load_flag_ = false;  // model load flag
   svp_acl_mdl_desc *model_desc_ = nullptr;
-  svp_acl_mdl_dataset *input_ = nullptr;
-  svp_acl_mdl_dataset *output_ = nullptr;
+  svp_acl_mdl_dataset *input_dataset_ = nullptr;
+  svp_acl_mdl_dataset *output_dataset_ = nullptr;
 
   svp_acl_rt_stream stream_;
 
   std::vector<void *> inputs_data_in_npu_;
+  std::unordered_map<size_t, size_t> inputs_link_map_;         // <tensor_input_idx, om_input_idx>
+  std::unordered_map<size_t, size_t> outputs_link_map_;        // <tensor_output_idx, om_output_idx>
+  std::unordered_map<size_t, bool> inputs_mem_aligned_flag_;   // <tensor_output_idx, is_mem_already_aligned>
+  std::unordered_map<size_t, bool> outputs_mem_aligned_flag_;  // <tensor_input_idx, is_mem_already_aligned>
   size_t recurrent_total_t = 1;
   bool is_recurrent_net_ = false;  // true: batch is 1, false: not support Total_t
   bool is_detection_net_ = false;
@@ -106,6 +118,7 @@ class CustomCPUKernel : public Kernel {
   bool prepared_ = false;
   float *det_param_buf_float_ = nullptr;
   static size_t num_of_om_model_;
+  static std::shared_ptr<Allocator> custom_allocator_;
   static dpico::CustomInterface custom_infershape_;
   static DpicoConfigParamExtractor dpico_config_param_extractor_;
   static DpicoContextManager dpico_context_manager_;
@@ -113,4 +126,4 @@ class CustomCPUKernel : public Kernel {
 };
 }  // namespace lite
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CUSTOM_H_
+#endif  // DPICO_SRC_CUSTOM_FP32_H_

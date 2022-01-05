@@ -143,6 +143,19 @@ void *ReadBinFile(const std::string &fileName, uint32_t *fileSize) {
   return binFileBufferData;
 }
 
+size_t GetMaxMallocSize() {
+  size_t max_malloc_size = 0;
+#if defined(_MSC_VER) || defined(_WIN32)
+  MEMORYSTATUSEX status;
+  status.dwLength = sizeof(status);
+  GlobalMemoryStatusEx(&status);
+  max_malloc_size = static_cast<size_t>(status.ullTotalPhys);
+#else
+  max_malloc_size = static_cast<size_t>(sysconf(_SC_PHYS_PAGES)) * static_cast<size_t>(sysconf(_SC_PAGESIZE));
+#endif
+  return max_malloc_size;
+}
+
 Result JudgeOmNetType(const schema::Primitive &primitive, OmNetType *net_type) {
   auto op = primitive.value_as_Custom();
   if (op == nullptr) {
