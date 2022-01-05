@@ -111,7 +111,6 @@ int CalTransBias(const AnfNodePtr &bn_mean_node, const AnfNodePtr &bn_bias_node,
     }
   }
   return lite::RET_OK;
-  s
 }
 
 int CalEstimatedData(const AnfNodePtr &origin_node, const AnfNodePtr &scale_factor_node) {
