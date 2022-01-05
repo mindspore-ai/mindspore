@@ -1274,6 +1274,14 @@ class ResolveEvaluator : public TransitionPrimEvaluator {
   }
 };
 
+bool IsContainUndetermined(const AbstractBasePtr &arg) {
+  if (arg->isa<AbstractSequence>()) {
+    auto seq_arg = arg->cast<AbstractSequencePtr>();
+    return std::any_of(seq_arg->elements().begin(), seq_arg->elements().end(), IsContainUndetermined);
+  }
+  return arg->isa<AbstractUndetermined>();
+}
+
 class CreateInstanceEvaluator : public TransitionPrimEvaluator {
  public:
   CreateInstanceEvaluator() : TransitionPrimEvaluator("CreateInstanceEvaluator") {}
@@ -1340,22 +1348,25 @@ class CreateInstanceEvaluator : public TransitionPrimEvaluator {
   }
 
   py::tuple GetParameters(const AbstractBasePtrList &args_spec_list) const {
+    if (args_spec_list.empty()) {
+      MS_LOG(EXCEPTION) << "Unexpected arguments num, the min arguments num must be 1, but got 0.";
+    }
     // Exclude class type by minus 1;
     std::size_t params_size = args_spec_list.size() - 1;
     auto params = py::tuple(params_size);
-    if (params_size > params.size()) {
-      MS_LOG(EXCEPTION) << "Unexpected params_size: " << params_size << ", params.size():" << params.size();
-    }
-    if (params_size > 0) {
-      for (size_t i = 0; i < params_size; i++) {
-        // Only support the Scalar parameters type. Bypass class type by offset with 1.
-        auto arg = args_spec_list[i + 1];
-        MS_EXCEPTION_IF_NULL(arg);
-        // Because the Tensor's AbstractTensor can't get value from GetValueTrack.
-        ValuePtr param_value = arg->BuildValue();
-        py::object param = ValueToPyData(param_value);
-        params[i] = param;
+    for (size_t i = 0; i < params_size; i++) {
+      // Only support the Scalar parameters type. Bypass class type by offset with 1.
+      auto arg = args_spec_list[i + 1];
+      MS_EXCEPTION_IF_NULL(arg);
+      if (IsContainUndetermined(arg)) {
+        MS_EXCEPTION(TypeError) << "The " << i << "th input of method __init__ for "
+                                << args_spec_list[0]->BuildValue()->ToString()
+                                << " should be a scalar but got:" << arg->ToString();
       }
+      // Because the Tensor's AbstractTensor can't get value from GetValueTrack.
+      ValuePtr param_value = arg->BuildValue();
+      py::object param = ValueToPyData(param_value);
+      params[i] = param;
     }
     return params;
   }
