@@ -29,6 +29,7 @@ void L2LossCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   std::vector<size_t> x_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  tensor_size_ = 1;
   for (const size_t &d : x_shape) {
     tensor_size_ *= d;
   }
@@ -39,6 +40,9 @@ bool L2LossCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, c
                                 const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kL2LossInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kL2LossOutputsNum, kernel_name_);
+  if (tensor_size_ == 0) {
+    return true;
+  }
   auto input_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto result_addr = reinterpret_cast<T *>(outputs[0]->addr);
   *result_addr = static_cast<T>(0);

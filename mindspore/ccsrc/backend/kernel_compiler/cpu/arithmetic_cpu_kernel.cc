@@ -459,6 +459,9 @@ bool ArithmeticCPUKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const
                                     const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
+  if (output_size_ == 0) {
+    return true;
+  }
   auto *input1 = reinterpret_cast<T *>(inputs[0]->addr);
   const auto *input2 = reinterpret_cast<T *>(inputs[1]->addr);
   auto *output = reinterpret_cast<T *>(outputs[0]->addr);

@@ -182,6 +182,9 @@ ActorThreadPool *GetActorMgrInnerThreadPool() {
 
 // Use threadpool of mindrt
 void ParallelLaunch(const CTask &task, size_t count, float block_size, Content content) {
+  if (count == 0) {
+    return;
+  }
   auto thread_pool = GetActorMgrInnerThreadPool();
   size_t kernel_thread_num = thread_pool->GetKernelThreadNum();
   if (kernel_thread_num == 0) {
