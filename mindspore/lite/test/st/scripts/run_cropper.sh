@@ -1,5 +1,4 @@
 #!/bin/bash
-source ./base_functions.sh
 
 function Print_Cropper_Result() {
     MS_PRINT_TESTCASE_START_MSG

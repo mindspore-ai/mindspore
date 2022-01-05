@@ -17,9 +17,9 @@ function Run_Converter() {
     # Prepare the config file list
     backend=${backend:-"all"}
     if [[ $backend == "gpu_gl_texture" ]]; then
-        local cfg_file_list=("$models_gpu_gl_texture_fp32_config")
+        local cfg_file_list=("$models_gpu_gl_texture_fp32_config" "$models_mindrt_parallel_config" "$models_gpu_weightquant_config" "$cropper_config")
     else
-        local cfg_file_list=("$models_gpu_fp32_config" "$models_gpu_weightquant_config")
+        local cfg_file_list=("$models_gpu_fp32_config")
     fi
     # Convert models:
     # $1:cfgFileList; $2:inModelPath; $3:outModelPath; $4:logFile; $5:resultFile;
@@ -31,9 +31,9 @@ function Run_gpu() {
     # Prepare the config file list
     backend=${backend:-"all"}
     if [[ $backend == "gpu_gl_texture" ]]; then
-        local gpu_cfg_file_list=("$models_gpu_gl_texture_fp32_config")
+        local gpu_cfg_file_list=("$models_gpu_gl_texture_fp32_config" "$models_gpu_weightquant_config")
     else
-        local gpu_cfg_file_list=("$models_gpu_fp32_config" "$models_gpu_fp16_config" "$models_gpu_weightquant_config")
+        local gpu_cfg_file_list=("$models_gpu_fp32_config" "$models_gpu_fp16_config")
     fi
     
     # Run converted models:
@@ -139,6 +139,7 @@ version=${file_name_array[2]}
 # Set models config filepath
 models_gpu_fp32_config=${basepath}/../config/models_gpu_fp32.cfg
 models_gpu_fp16_config=${basepath}/../config/models_gpu_fp16.cfg
+cropper_config=${basepath}/../config/models_cropper.cfg
 models_gpu_gl_texture_fp32_config=${basepath}/../config/models_gpu_gl_texture_fp32.cfg
 models_gpu_weightquant_config=${basepath}/../config/models_weightquant_8bit_gpu.cfg
 models_mindrt_parallel_config=${basepath}/../config/models_mindrt_parallel.cfg
@@ -196,7 +197,7 @@ if [[ $backend == "all" || $backend == "gpu" || $backend == "gpu_gl_texture" ]];
     # sleep 1
 fi
 # guard mindrt parallel
-if [[ $backend == "all" || $backend == "gpu" || $backend == "mindrt_parallel" ]]; then
+if [[ $backend == "all" || $backend == "gpu_gl_texture" || $backend == "mindrt_parallel" ]]; then
     echo "start Run Mindrt Parallel ... "
     Run_mindrt_parallel
     Run_mindrt_parallel_status=$?
@@ -204,7 +205,7 @@ if [[ $backend == "all" || $backend == "gpu" || $backend == "mindrt_parallel" ]]
     # sleep 1
 fi
 # guard cropper
-if [[ $backend == "all" || $backend == "gpu" || $backend == "cropper" ]]; then
+if [[ $backend == "all" || $backend == "gpu_gl_texture" || $backend == "cropper" ]]; then
     echo "start Run Cropper ... "
     cd ${basepath} || exit 1
     bash ${basepath}/scripts/run_cropper.sh -r ${release_path} -d ${device_id}
@@ -222,7 +223,7 @@ if [[ $backend == "all" || $backend == "gpu" || $backend == "gpu_gl_texture" ]];
         isFailed=1
     fi
 fi
-if [[ $backend == "all" || $backend == "gpu" || $backend == "mindrt_parallel" ]]; then
+if [[ $backend == "all" || $backend == "gpu_gl_texture" || $backend == "mindrt_parallel" ]]; then
     # wait ${Run_mindrt_parallel_PID}
     # Run_mindrt_parallel_status=$?
     if [[ ${Run_mindrt_parallel_status} != 0 ]];then
@@ -231,7 +232,7 @@ if [[ $backend == "all" || $backend == "gpu" || $backend == "mindrt_parallel" ]]
         isFailed=1
     fi
 fi
-if [[ $backend == "all" || $backend == "gpu" || $backend == "cropper" ]]; then
+if [[ $backend == "all" || $backend == "gpu_gl_texture" || $backend == "cropper" ]]; then
     # wait ${Run_cropper_PID}
     # Run_cropper_status=$?
     if [[ ${Run_cropper_status} != 0 ]];then

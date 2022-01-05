@@ -96,7 +96,9 @@ function Convert() {
             if [[ ${model_size} -gt ${calib_size} ]]; then
               echo "${output_file}.ms " model size is " ${model_size} " and calib size is " ${calib_size}"
               converter_result='compare_size '${model_type}''${quant_type}' '${output_file##*/}.ms' failed';echo ${converter_result} >> $5
-              return 1
+              if [[ $6 != "ON" ]]; then
+                  return 1
+              fi
             else
               converter_result='compare_size '${model_type}''${quant_type}' '${output_file##*/}.ms' pass';echo ${converter_result} >> $5
             fi

@@ -25,12 +25,17 @@ ops::PrimitiveC *CaffeReluParser::Parse(const caffe::LayerParameter &proto, cons
   auto prim = std::make_unique<ops::Activation>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   prim->set_activation_type(mindspore::ActivationType::RELU);
+  prim->set_min_val(0);
+  prim->set_max_val(FLT_MAX);
 
   if (proto.has_relu_param() && proto.relu_param().has_negative_slope()) {
     float negative_slope = proto.relu_param().negative_slope();
     if (negative_slope != 0) {
       prim->set_activation_type(mindspore::ActivationType::LEAKY_RELU);
       prim->set_alpha(negative_slope);
+    }
+    if (negative_slope > 0) {
+      prim->set_min_val(-FLT_MAX);
     }
   }
 
@@ -41,6 +46,8 @@ ops::PrimitiveC *CaffeRelu6Parser::Parse(const caffe::LayerParameter &proto, con
   auto prim = std::make_unique<ops::Activation>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   prim->set_activation_type(mindspore::ActivationType::RELU6);
+  prim->set_min_val(0);
+  prim->set_max_val(kValueThreshold6);
 
   return prim.release();
 }
