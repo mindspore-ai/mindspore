@@ -613,7 +613,8 @@ void SetMindRTEnable() {
   std::string target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   if (common::GetEnv("DISABLE_ASCEND_MINDRT") == "1" && target == kAscendDevice) {
     return;
-  } else if (common::GetEnv(kGraphOpRun) == "1" && target == kAscendDevice) {
+  } else if (!(common::GetEnv("ENABLE_ASCEND_KERNEL_MINDRT") == "1" || common::kEnableAscendKernelByKernel) &&
+             common::GetEnv(kGraphOpRun) == "1" && target == kAscendDevice) {
     // exception scenario: still run original process after enable ascend mindrt
     return;
   }

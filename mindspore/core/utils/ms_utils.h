@@ -38,6 +38,8 @@
 
 namespace mindspore {
 namespace common {
+// TODO(lzlang): delete
+constexpr auto kEnableAscendKernelByKernel = false;
 inline const char *SafeCStr(const std::string &str) { return str.c_str(); }
 const char *SafeCStr(const std::string &&str);
 

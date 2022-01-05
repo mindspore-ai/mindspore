@@ -46,6 +46,8 @@
 #include "frontend/optimizer/ad/grad.h"
 #include "frontend/optimizer/py_pass_manager.h"
 #include "utils/ms_context.h"
+#include "utils/func_graph_analyzer.h"
+#include "utils/ms_utils.h"
 #include "vm/transform.h"
 #include "load_mindir/infer_mindir.h"
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
@@ -134,6 +136,9 @@ void ResetMindRTEnable(const ResourcePtr &res) {
     }
     if (common::GetEnv("DISABLE_ASCEND_MINDRT") != "1") {
       MS_LOG(INFO) << "Enable Ascend MindRT";
+      if (common::GetEnv("ENABLE_ASCEND_KERNEL_MINDRT") == "1" || common::kEnableAscendKernelByKernel) {
+        return;
+      }
       // No control flow && control flow without while need multigraph-sink, so enable mindrt.
       // Temporary changes: After MindRT supports control flow, the sinking mode is judged in MindRT.
       if (EnableMindRTForAscendSubGraph(manager, func_graph)) {
@@ -744,20 +749,81 @@ bool EliminateForwardCNode(const ResourcePtr &res) {
   return true;
 }
 
-bool TaskEmitAction(const ResourcePtr &res) {
+void SetRunMode(const ResourcePtr &res) {
   MS_EXCEPTION_IF_NULL(res);
-  if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode &&
-      CheckGraphOutputConstOrParameter(res->func_graph())) {
-    return true;
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  // GPU/CPU no need set any context.
+  if (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) != kAscendDevice) {
+    return;
   }
-  if (res->func_graph() == nullptr) {
-    MS_LOG(EXCEPTION) << "TaskEmit args error";
+
+  FuncGraphPtr func_graph = res->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  auto backend_ptr = res->GetResult(kBackend).cast<compile::BackendPtr>();
+  MS_EXCEPTION_IF_NULL(backend_ptr);
+  std::string backend = context_ptr->backend_policy();
+  auto set_ctx = [&context_ptr, &backend_ptr](bool task_sink, bool is_multi_graph_sink, bool enable_loop_sink) {
+    context_ptr->set_param<bool>(MS_CTX_ENABLE_TASK_SINK, task_sink);
+    context_ptr->set_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK, is_multi_graph_sink);
+    context_ptr->set_param<bool>(MS_CTX_ENABLE_LOOP_SINK, enable_loop_sink);
+    backend_ptr->set_is_multi_graph_sink(is_multi_graph_sink);
+  };
+
+  // PYNATIVE: no need set any context.
+  if (context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
+    MS_LOG(INFO) << "Run Graph mode with pynative.";
+    set_ctx(false, false, false);
+    return;
   }
-  auto closure_env = std::getenv("MS_DEV_ENABLE_CLOSURE");
-  if (closure_env == nullptr) {
-    // Disable mindRT in the control flow scenario.
-    ResetMindRTEnable(res);
+
+  // GRAPH | Single Op : KernelByKernel path in MindRT.
+  if (common::GetEnv(kGraphOpRun) == "1") {
+    MS_LOG(INFO) << "Run Graph mode with kernelbykernel.";
+    set_ctx(false, false, false);
+    return;
   }
+
+  // GRAPH | Dynamic Shape : MultiGraph path in MindRT.
+  if (IsDynamicShapeGraph(func_graph)) {
+    set_ctx(true, true, true);
+    MS_LOG(INFO) << "Run Graph mode with kernelbykernel(Dynamic Shape).";
+    return;
+  }
+
+  // GRAPH | Closure\ENV\While scenario : KernelByKernel path in MindRT.
+  auto manager = func_graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  auto graphs = manager->func_graphs();
+  FuncGraphAnalyzer analyzer(func_graph);
+  analyzer.Run();
+  bool exist_func = analyzer.HasIncorporateCall();
+  bool exist_closure = analyzer.ExistClosure();
+  bool exist_while =
+    std::any_of(graphs.cbegin(), graphs.cend(), [](const FuncGraphPtr &fg) { return fg->recursive(); });
+  MS_LOG(INFO) << func_graph->ToString() << " exist_func: " << exist_func << " exist_closure: " << exist_closure
+               << " exist_while: " << exist_while;
+  if (exist_while || exist_func || exist_closure) {
+    MS_LOG(INFO) << "Run graph mode with kernelbykernel.";
+    set_ctx(false, false, false);
+    return;
+  }
+
+  // GRAPH | Heterogeneous scenario : SubGraph path in MindRT.
+  if (func_graph->ContainMultiTarget()) {
+    MS_LOG(INFO) << "Run graph mode with subgraph sink.";
+    set_ctx(true, false, false);
+    return;
+  }
+
+  // GRAPH | normal network and if/for/switch scenario etc : MultiGraph path in MindRT.
+  MS_LOG(INFO) << "Run graph mode with multigraph sink.";
+  set_ctx(true, true, true);
+  return;
+}
+
+// TODO(lzlang): delete
+void OriginSetRunMode(const ResourcePtr &res) {
   FuncGraphPtr func_graph = res->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
   auto bc_ptr = res->GetResult(kBackend).cast<compile::BackendPtr>();
@@ -789,6 +855,35 @@ bool TaskEmitAction(const ResourcePtr &res) {
       context_ptr->set_param<bool>(MS_CTX_ENABLE_LOOP_SINK, false);
     }
   }
+}
+
+bool TaskEmitAction(const ResourcePtr &res) {
+  MS_EXCEPTION_IF_NULL(res);
+  if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode &&
+      CheckGraphOutputConstOrParameter(res->func_graph())) {
+    return true;
+  }
+  if (res->func_graph() == nullptr) {
+    MS_LOG(EXCEPTION) << "TaskEmit args error";
+  }
+  auto closure_env = std::getenv("MS_DEV_ENABLE_CLOSURE");
+  if (closure_env == nullptr) {
+    // Disable mindRT in the control flow scenario.
+    ResetMindRTEnable(res);
+  }
+  if (common::GetEnv("ENABLE_ASCEND_KERNEL_MINDRT") == "1" || common::kEnableAscendKernelByKernel) {
+    SetRunMode(res);
+  } else {  // TODO(lzlang): delete
+    OriginSetRunMode(res);
+  }
+
+  FuncGraphPtr func_graph = res->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  auto bc_ptr = res->GetResult(kBackend).cast<compile::BackendPtr>();
+  MS_EXCEPTION_IF_NULL(bc_ptr);
+  auto context_ptr = MsContext::GetInstance();
+  std::string backend = MsContext::GetInstance()->backend_policy();
+  MS_EXCEPTION_IF_NULL(context_ptr);
   // The graph compiling of mindRT.
   if ((backend == kMsConvert) && context_ptr->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
     TaskEmitActionForMindRT(res);
