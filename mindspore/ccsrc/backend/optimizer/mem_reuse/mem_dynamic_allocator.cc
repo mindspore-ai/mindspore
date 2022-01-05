@@ -131,11 +131,11 @@ size_t DynamicMemPoolBestFit::MemAllocUnitSize(bool from_persistent_mem) const {
   return from_persistent_mem ? persistent_mem_->unit_size_ : common_mem_->unit_size_;
 }
 
-void DynamicMemPoolBestFit::SetMemAllocUintSize(size_t size) {
-  persistent_mem_->unit_size_ = DYNAMIC_MEM_ALLOC_UNIT_SIZE;
-  common_mem_->unit_size_ = size;
-  config_unit_size_ = size;
-  MS_LOG(INFO) << "Set mem alloc unit size " << size;
+void DynamicMemPoolBestFit::SetMemAllocUintSize(size_t common_size, size_t persist_size) {
+  persistent_mem_->unit_size_ = persist_size;
+  common_mem_->unit_size_ = common_size;
+  config_unit_size_ = common_size;
+  MS_LOG(INFO) << "Set mem alloc unit size, common " << common_size << " persistent " << persist_size;
 }
 
 void DynamicMemPoolBestFit::SetMemPoolBlockSize(size_t available_device_mem_size) {

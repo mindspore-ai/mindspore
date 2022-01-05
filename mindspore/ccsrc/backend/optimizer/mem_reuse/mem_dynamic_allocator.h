@@ -120,7 +120,7 @@ class DynamicMemPoolBestFit {
   // Get the minimum memory unit size using for dynamic extend.
   size_t MemAllocUnitSize(bool from_persistent_mem = false) const;
   // Set the minimum memory unit size using for dynamic extend.
-  void SetMemAllocUintSize(size_t size);
+  void SetMemAllocUintSize(size_t common_size, size_t persist_size = DYNAMIC_MEM_ALLOC_UNIT_SIZE);
   // Set mem pool block size
   void SetMemPoolBlockSize(size_t available_device_mem_size);
   size_t TotalMemStatistics() const {
