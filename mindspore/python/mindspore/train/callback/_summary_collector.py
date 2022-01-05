@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -102,9 +102,9 @@ class SummaryCollector(Callback):
             - collect_train_lineage (bool): Whether to collect lineage data for the training phase,
               this field will be displayed on the `lineage page \
               <https://www.mindspore.cn/mindinsight/docs/en/master/lineage_and_scalars_comparison.html>`_
-              of Mindinsight. Default: True.
+              of MindInsight. Default: True.
             - collect_eval_lineage (bool): Whether to collect lineage data for the evaluation phase,
-              this field will be displayed on the lineage page of Mindinsight. Default: True.
+              this field will be displayed on the lineage page of MindInsight. Default: True.
             - collect_input_data (bool): Whether to collect dataset for each training.
               Currently only image data is supported.
               If there are multiple columns of data in the dataset, the first column should be image data.

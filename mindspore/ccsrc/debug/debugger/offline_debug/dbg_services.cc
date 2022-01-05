@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -189,10 +189,9 @@ std::vector<watchpoint_hit_t> DbgServices::CheckWatchpoints(unsigned int iterati
   std::vector<std::string> file_paths;
 
   const bool init_dbg_suspend = (iteration == UINT_MAX);
-
-  tensor_list = debug_services_->ReadNeededDumpedTensors(iteration, &file_paths, error_on_no_value);
   {
-    py::gil_scoped_release release;
+    pybind11::gil_scoped_release release;
+    tensor_list = debug_services_->ReadNeededDumpedTensors(iteration, &file_paths, error_on_no_value);
     debug_services_->CheckWatchpoints(&name, &slot, &condition, &watchpoint_id, &parameters, &error_codes, overflow_ops,
                                       file_paths, &tensor_list, init_dbg_suspend, true, true, &rank_id, &root_graph_id,
                                       error_on_no_value);
