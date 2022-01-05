@@ -1651,6 +1651,7 @@ size_t OnnxExporter::ExportPrimitive(const FuncGraphPtr &, std::map<AnfNodePtr, 
                                      const PrimitivePtr &prim, const std::vector<AnfNodePtr> &inputs,
                                      onnx::GraphProto *const graph_proto) {
   auto op_map = OpConvertRegistry::GetOpConvertMap();
+  MS_EXCEPTION_IF_NULL(prim);
   auto op_iter = op_map.find(prim->name());
   if (op_iter == op_map.end()) {
     MS_LOG(EXCEPTION) << "Can not find key " << prim->name() << " in convert map. "

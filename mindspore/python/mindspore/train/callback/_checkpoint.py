@@ -35,15 +35,19 @@ _save_dir = _cur_dir
 _info_list = ["epoch_num", "step_num"]
 
 
-def _chg_ckpt_file_name_if_same_exist(directory, prefix):
+def _chg_ckpt_file_name_if_same_exist(directory, prefix, exception=False):
     """Check if there is a file with the same name."""
     files = os.listdir(directory)
     suffix_num = 0
     pre_len = len(prefix)
     for filename in files:
         name_ext = os.path.splitext(filename)
-        if name_ext[-1] != ".ckpt":
-            continue
+        if not exception:
+            if name_ext[-1] != ".ckpt" or name_ext[-1] == ".ckpt" and filename[-16:] == "_breakpoint.ckpt":
+                continue
+        else:
+            if filename[-16:] != "_breakpoint.ckpt":
+                continue
         # find same prefix file
         if filename.find(prefix) == 0 and not filename[pre_len].isalpha():
             # add the max suffix + 1
