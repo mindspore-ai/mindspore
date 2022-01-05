@@ -16,17 +16,18 @@
 
 #include "schema/model_v0_generated.h"
 #include "src/ops/populate/populate_register.h"
+#include "nnacl/where_parameter.h"
 
 namespace mindspore {
 namespace lite {
 namespace {
 OpParameter *PopulateWhereParameter(const void *prim) {
-  OpParameter *where_parameter = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
+  OpParameter *where_parameter = reinterpret_cast<OpParameter *>(malloc(sizeof(WhereParameter)));
   if (where_parameter == nullptr) {
     MS_LOG(ERROR) << "malloc Where parameter failed.";
     return nullptr;
   }
-  memset(where_parameter, 0, sizeof(OpParameter));
+  memset(where_parameter, 0, sizeof(WhereParameter));
   where_parameter->type_ = schema::PrimitiveType_Where;
   return reinterpret_cast<OpParameter *>(where_parameter);
 }

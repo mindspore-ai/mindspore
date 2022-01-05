@@ -1288,6 +1288,10 @@ std::vector<kernel::LiteKernel *> Scheduler::ScheduleMainSubGraphToKernels() {
   auto ret = ScheduleSubGraphToKernels(kMainSubGraphIndex, &kernels, &in_tensors, &out_tensors);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Schedule subgraph failed, index: " << kMainSubGraphIndex;
+    for (auto *kernel : kernels) {
+      delete kernel;
+      kernel = nullptr;
+    }
     return {};
   }
   return kernels;
