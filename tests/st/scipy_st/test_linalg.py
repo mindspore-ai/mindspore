@@ -23,6 +23,7 @@ import mindspore.nn as nn
 import mindspore.scipy as msp
 from mindspore import context, Tensor
 import mindspore.numpy as mnp
+from mindspore.scipy.linalg import det
 from tests.st.scipy_st.utils import match_array, create_full_rank_matrix, create_sym_pos_matrix, \
     create_random_rank_matrix
 
@@ -329,6 +330,50 @@ def test_lu_solve(n: int, dtype):
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('shape', [(3, 3), (5, 5), (10, 10), (20, 20)])
+@pytest.mark.parametrize('dtype', [onp.float32, onp.float64])
+def test_det(shape, dtype):
+    """
+    Feature: ALL To ALL
+    Description: test cases for det
+    Expectation: the result match to scipy
+    """
+    a = onp.random.random(shape).astype(dtype)
+    sp_det = osp.linalg.det(a)
+    tensor_a = Tensor(a)
+    ms_det = msp.linalg.det(tensor_a)
+    rtol = 1.e-5
+    atol = 1.e-5
+    assert onp.allclose(ms_det.asnumpy(), sp_det, rtol=rtol, atol=atol)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('shape', [(2, 3, 3), (2, 3, 5, 5)])
+@pytest.mark.parametrize('dtype', [onp.float32, onp.float64])
+def test_batch_det(shape, dtype):
+    """
+    Feature: ALL To ALL
+    Description: test batch cases for det
+    Expectation: the result match to scipy
+    """
+    a = onp.random.random(shape).astype(dtype)
+    tensor_a = Tensor(a)
+    ms_det = msp.linalg.det(tensor_a)
+    sp_det = onp.empty(shape=ms_det.shape, dtype=dtype)
+    for index, _ in onp.ndenumerate(sp_det):
+        sp_det[index] = osp.linalg.det(a[index])
+    rtol = 1.e-5
+    atol = 1.e-5
+    assert onp.allclose(ms_det.asnumpy(), sp_det, rtol=rtol, atol=atol)
+
+
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -351,3 +396,30 @@ def test_block_diag_graph(args):
 
     scipy_res = osp.linalg.block_diag(*args)
     match_array(ms_res.asnumpy(), scipy_res)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('shape', [(3, 3), (5, 5), (10, 10), (20, 20)])
+@pytest.mark.parametrize('dtype', [onp.float32, onp.float64])
+def test_det_graph(shape, dtype):
+    """
+    Feature: ALL To ALL
+    Description: test cases for det in graph mode
+    Expectation: the result match to scipy
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+
+    class TestNet(nn.Cell):
+        def construct(self, a):
+            return det(a)
+
+    a = onp.random.random(shape).astype(dtype)
+    sp_det = osp.linalg.det(a)
+    tensor_a = Tensor(a)
+    ms_det = TestNet()(tensor_a)
+    rtol = 1.e-5
+    atol = 1.e-5
+    assert onp.allclose(ms_det.asnumpy(), sp_det, rtol=rtol, atol=atol)
