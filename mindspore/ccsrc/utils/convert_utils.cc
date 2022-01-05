@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@
 #include "ir/tensor.h"
 #include "ir/param_info.h"
 #include "utils/ms_context.h"
+#include "utils/anf_utils.h"
 
 namespace mindspore {
 bool ValueToBool(const ValuePtr &v, bool *value) {
@@ -139,6 +140,9 @@ bool SameNodeShallow(const AnfNodePtr &node1, const AnfNodePtr &node2, FuncGraph
     }
     MS_LOG(DEBUG) << "two parameters are not equal.";
     return false;
+  }
+  if (AnfUtils::IsCustomActorNode(node1) && AnfUtils::IsCustomActorNode(node2)) {
+    return AnfUtils::IsCutomActorNodeSame(node1, node2);
   }
   if (node1->isa<CNode>() && node2->isa<CNode>()) {
     return SameNode(node1, node2, equiv_func_graph, equiv_node);

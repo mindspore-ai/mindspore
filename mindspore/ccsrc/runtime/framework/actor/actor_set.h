@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@
 #include "runtime/framework/actor/data_source_actor.h"
 #include "runtime/framework/actor/loop_count_actor.h"
 #include "runtime/framework/actor/kernel_actor.h"
+#include "runtime/framework/actor/custom_actor.h"
 #include "runtime/framework/actor/super_kernel_actor.h"
 #include "runtime/framework/actor/output_actor.h"
 #include "runtime/framework/actor/copy_actor.h"
@@ -77,6 +78,7 @@ struct ActorSet {
   DataPrepareActorPtr data_prepare_actor_{nullptr};
   std::vector<DataSourceActorPtr> data_source_actors_;
   std::vector<KernelActorPtr> kernel_actors_;
+  std::vector<CustomActorPtr> custom_actors_;
   std::vector<SuperKernelActorPtr> super_kernel_actors_;
   // No input kernel actors need be triggered specifically.
   std::vector<AbstractActorPtr> no_input_kernel_actors_;

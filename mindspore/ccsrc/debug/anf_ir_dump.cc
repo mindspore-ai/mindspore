@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@
 #include "pipeline/jit/base.h"
 #include "debug/trace.h"
 #include "utils/trace_base.h"
+#include "utils/anf_utils.h"
 
 namespace mindspore {
 const std::string ToShortString(const TypeId &typeId) {
@@ -257,6 +258,32 @@ void DumpOperator(const AnfNodePtr &node, const std::shared_ptr<SubGraphIRInfo> 
   }
 }
 
+void DumpParamterInOperand(const AnfNodePtr &node, const AnfNodePtr &in, OrderedMap<AnfNodePtr, int32_t> *para_map,
+                           const std::shared_ptr<SubGraphIRInfo> &gsub) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(node->func_graph());
+  MS_EXCEPTION_IF_NULL(in);
+  MS_EXCEPTION_IF_NULL(para_map);
+  MS_EXCEPTION_IF_NULL(gsub);
+  if (in->func_graph() == nullptr) {
+    MS_LOG(ERROR) << "Parameter should belong to a func graph. Check func graph: " << node->func_graph();
+  }
+  if (in->func_graph() != nullptr && in->func_graph() != node->func_graph()) {
+    gsub->buffer << "$(@" << in->func_graph()->ToString() << ":";
+  } else {
+    gsub->buffer << "%";
+  }
+  auto iter = para_map->find(in);
+  if (iter == para_map->end()) {
+    gsub->buffer << "para_" << in->ToString();
+  } else {
+    gsub->buffer << "para" << iter->second << "_" << in->ToString();
+  }
+  if (in->func_graph() != nullptr && in->func_graph() != node->func_graph()) {
+    gsub->buffer << ")";
+  }
+}
+
 void DumpOperands(const AnfNodePtr &node, OrderedMap<AnfNodePtr, int32_t> *para_map,
                   const std::shared_ptr<SubGraphIRInfo> &gsub) {
   if (node == nullptr || para_map == nullptr || gsub == nullptr) {
@@ -275,24 +302,7 @@ void DumpOperands(const AnfNodePtr &node, OrderedMap<AnfNodePtr, int32_t> *para_
         gsub->buffer << ", ";
       }
       if (in->isa<Parameter>()) {
-        MS_EXCEPTION_IF_NULL(node->func_graph());
-        if (in->func_graph() == nullptr) {
-          MS_LOG(ERROR) << "Parameter should belong to a func graph. Check func graph: " << node->func_graph();
-        }
-        if (in->func_graph() != nullptr && in->func_graph() != node->func_graph()) {
-          gsub->buffer << "$(@" << in->func_graph()->ToString() << ":";
-        } else {
-          gsub->buffer << "%";
-        }
-        auto iter = para_map->find(in);
-        if (iter == para_map->end()) {
-          gsub->buffer << "para_" << in->ToString();
-        } else {
-          gsub->buffer << "para" << iter->second << "_" << in->ToString();
-        }
-        if (in->func_graph() != nullptr && in->func_graph() != node->func_graph()) {
-          gsub->buffer << ")";
-        }
+        DumpParamterInOperand(node, in, para_map, gsub);
       } else if (in->isa<CNode>()) {
         auto iter = gsub->local_var_map.find(in);
         if (iter != gsub->local_var_map.end()) {
@@ -308,6 +318,8 @@ void DumpOperands(const AnfNodePtr &node, OrderedMap<AnfNodePtr, int32_t> *para_
       } else if (IsValueNode<FuncGraph>(in)) {
         FuncGraphPtr fg = GetValueNode<FuncGraphPtr>(in);
         gsub->buffer << "@" << fg->ToString();
+      } else if (AnfUtils::IsCustomActorNode(in)) {
+        gsub->buffer << "%" << AnfUtils::GetCustomActorName(in);
       } else {
         gsub->buffer << in->ToString();
       }
@@ -570,6 +582,8 @@ void DumpIRInSubgraph(const std::vector<AnfNodePtr> &nodes, OrderedMap<AnfNodePt
       if (node->isa<CNode>()) {
         // Print and record output of operator if it is not 'Return'
         DumpCNode(node->cast<CNodePtr>(), sub_graph, para_map, gsub, dump_full_name, dump_location);
+      } else if (AnfUtils::IsCustomActorNode(node)) {
+        continue;
       } else {
         gsub->buffer << "  " << node->ToString() << std::endl;
       }

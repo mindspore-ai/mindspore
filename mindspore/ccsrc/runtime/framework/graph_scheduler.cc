@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 
 #include "runtime/framework/graph_scheduler.h"
+#include <queue>
 #include "runtime/framework/actor/memory_manager_actor.h"
 #include "runtime/framework/actor/debug_actor.h"
 #include "runtime/framework/actor/recorder_actor.h"
@@ -23,6 +24,7 @@
 #include "mindrt/include/async/async.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/optimizer/common/helper.h"
+#include "utils/anf_utils.h"
 #include "utils/config_manager.h"
 #include "utils/log_adapter.h"
 #include "utils/convert_utils.h"
@@ -74,6 +76,10 @@ std::vector<AbstractActorPtr> CollectActors(const ActorSet *actor_set) {
   for (auto &data_source_actor : actor_set->data_source_actors_) {
     MS_EXCEPTION_IF_NULL(data_source_actor);
     (void)actors.emplace_back(static_cast<AbstractActorPtr>(data_source_actor));
+  }
+  for (auto &custom_actor : actor_set->custom_actors_) {
+    MS_EXCEPTION_IF_NULL(custom_actor);
+    (void)actors.emplace_back(static_cast<AbstractActorPtr>(custom_actor));
   }
   for (auto &kernel_actor : actor_set->kernel_actors_) {
     MS_EXCEPTION_IF_NULL(kernel_actor);
@@ -486,6 +492,7 @@ ActorSetPtr GraphScheduler::Build(const GraphCompilerInfo &graph_compiler_info) 
 
   auto host_queue = std::make_shared<HostTensorQueue>();
   actor_set->data_source_actors_ = BuildDataSourceActor(graph_compiler_info, host_queue);
+  actor_set->custom_actors_ = BuildCustomActor(graph_compiler_info);
   actor_set->kernel_actors_ = BuildKernelActor(graph_compiler_info);
   actor_set->super_kernel_actors_ = BuildSuperKernelActor(graph_compiler_info);
   actor_set->loop_count_actor_ = BuildLoopCountActor(graph_compiler_info);
@@ -680,6 +687,32 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Graph
   }
 
   return data_source_actors;
+}
+
+std::vector<CustomActorPtr> GraphScheduler::BuildCustomActor(const GraphCompilerInfo &graph_compiler_info) {
+  std::vector<CustomActorPtr> custom_actors;
+  for (size_t i = 0; i < graph_compiler_info.graphs_.size(); ++i) {
+    const auto &device_context = graph_compiler_info.device_contexts_[i];
+    const auto &graph = graph_compiler_info.graphs_[i];
+    MS_EXCEPTION_IF_NULL(graph);
+    if (graph->is_executing_sink()) {
+      continue;
+    }
+
+    auto all_nodes = TopoSort(graph->get_return());
+    for (const auto &node : all_nodes) {
+      if (!AnfUtils::IsCustomActorNode(node)) {
+        continue;
+      }
+
+      auto actor_name = AnfUtils::GetCustomActorName(node);
+      auto custom_actor = std::make_shared<CustomActor>(actor_name, node, device_context, recorder_aid_);
+      MS_EXCEPTION_IF_NULL(custom_actor);
+      InsertActor(custom_actor.get());
+      custom_actors.emplace_back(custom_actor);
+    }
+  }
+  return custom_actors;
 }
 
 std::vector<KernelActorPtr> GraphScheduler::BuildKernelActor(const GraphCompilerInfo &graph_compiler_info) {
@@ -1388,6 +1421,87 @@ void GraphScheduler::LinkGlobalControlArrow(ActorSet *const actor_set, const std
 
   LinkControlArrowForLoopCountActor(actor_set->loop_count_actor_.get(), actor_set,
                                     graph_compiler_info.control_node_parser_);
+
+  // Link control arrows for custom actor
+  LinkControlArrowForCustomActor(actor_set, graph_compiler_info);
+}
+
+void GraphScheduler::LinkControlArrowForCustomActor(ActorSet *const actor_set,
+                                                    const GraphCompilerInfo &graph_compiler_info) {
+  constexpr size_t kDependFromIdx = 2;
+  constexpr size_t kDependToIdx = 1;
+  MS_EXCEPTION_IF_NULL(actor_set);
+  MS_EXCEPTION_IF_NULL(actor_set->data_prepare_actor_);
+  // prepare for kernel => actor map
+  HashMap<AnfNodePtr, AbstractActorPtr> kernel_to_actors = {};
+  HashSet<AbstractActorPtr> no_depend_custom_actors = {};
+  for (const auto &actor : actor_set->custom_actors_) {
+    MS_EXCEPTION_IF_NULL(actor);
+    auto kernel = actor->kernel().lock();
+    MS_EXCEPTION_IF_NULL(kernel);
+    kernel_to_actors.emplace(kernel, actor);
+    no_depend_custom_actors.insert(actor);
+  }
+  for (const auto &actor : actor_set->kernel_actors_) {
+    MS_EXCEPTION_IF_NULL(actor);
+    auto kernel = actor->kernel();
+    MS_EXCEPTION_IF_NULL(kernel);
+    kernel_to_actors.emplace(kernel, actor);
+  }
+  for (const auto &actor : actor_set->data_source_actors_) {
+    MS_EXCEPTION_IF_NULL(actor);
+    auto device_data_source_actor = dynamic_cast<DeviceQueueDataSourceActor *>(actor.get());
+    if (device_data_source_actor != nullptr) {
+      auto kernel = device_data_source_actor->data_kernel();
+      MS_EXCEPTION_IF_NULL(kernel);
+      if (AnfAlgo::GetCNodeName(kernel) == kGetNextOpName) {
+        kernel_to_actors.emplace(kernel, actor);
+      }
+    }
+  }
+  // find depend(custom, custom)
+  for (size_t i = 0; i < graph_compiler_info.graphs_.size(); ++i) {
+    const auto &graph = graph_compiler_info.graphs_[i];
+    MS_EXCEPTION_IF_NULL(graph);
+    if (graph->is_executing_sink()) {
+      continue;
+    }
+
+    auto all_nodes = TopoSort(graph->get_return());
+    for (const auto &node : all_nodes) {
+      if (!IsPrimitiveCNode(node, prim::kPrimDepend)) {
+        continue;
+      }
+      auto depend_cnode = node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(depend_cnode);
+      MS_EXCEPTION_IF_CHECK_FAIL(depend_cnode->size() > kDependFromIdx,
+                                 "depend node " + depend_cnode->DebugString() + " input size " +
+                                   std::to_string(depend_cnode->size()) + " is invalid.");
+      MS_EXCEPTION_IF_NULL(depend_cnode->input(kDependFromIdx));
+      MS_EXCEPTION_IF_NULL(depend_cnode->input(kDependToIdx));
+      auto from_node = depend_cnode->input(kDependFromIdx);
+      auto to_node = depend_cnode->input(kDependToIdx);
+      if (!AnfUtils::IsCustomActorNode(from_node) && !AnfUtils::IsCustomActorNode(to_node)) {
+        continue;
+      }
+      auto from_iter = kernel_to_actors.find(from_node);
+      if (from_iter == kernel_to_actors.end()) {
+        MS_LOG(INFO) << from_node->fullname_with_scope() << " is a CNode but cannot find Actor.";
+        continue;
+      }
+      auto to_iter = kernel_to_actors.find(to_node);
+      if (to_iter == kernel_to_actors.end()) {
+        MS_LOG(INFO) << to_node->fullname_with_scope() << " is a CNode but cannot find Actor.";
+        continue;
+      }
+      AddControlArrow(from_iter->second.get(), to_iter->second.get());
+      no_depend_custom_actors.erase(std::dynamic_pointer_cast<CustomActor>(to_iter->second));
+    }
+  }
+
+  for (const auto &custom_actor : no_depend_custom_actors) {
+    AddControlArrow(actor_set->data_prepare_actor_.get(), custom_actor.get());
+  }
 }
 
 void GraphScheduler::LinkControlArrowByCommunicationNode(const std::vector<CNodePtr> &communication_nodes,
@@ -1708,11 +1822,12 @@ void GraphScheduler::CheckActorValid(const ActorSet *actor_set) const {
                         << ", actual control num: " << actor->input_control_arrow_aids_.size();
     }
 
-    if ((actor->type_ != KernelTransformType::kOutputActor) && (actor->output_data_arrows_.size() == 0) &&
-        (actor->output_control_arrows_.size() == 0)) {
+    if ((actor->type_ != KernelTransformType::kOutputActor) && (actor->type_ != KernelTransformType::kCustomActor) &&
+        (actor->output_data_arrows_.size() == 0) && (actor->output_control_arrows_.size() == 0)) {
       MS_LOG(EXCEPTION) << actor->GetAID().Name() << " has no user.";
     }
-    if ((actor->type_ != KernelTransformType::kDataPrepareActor) && (actor->input_datas_num_ == 0) &&
+    if ((actor->type_ != KernelTransformType::kDataPrepareActor) &&
+        (actor->type_ != KernelTransformType::kCustomActor) && (actor->input_datas_num_ == 0) &&
         (actor->input_controls_num_ == 0)) {
       MS_LOG(EXCEPTION) << actor->GetAID().Name() << " has no source.";
     }
@@ -1868,6 +1983,7 @@ void GraphScheduler::DumpActor(const ActorSet *actor_set, const GraphCompilerInf
   DumpLoopCountActor(actor_set->loop_count_actor_, ofs);
   DumpOutputActor(actor_set->output_actor_, ofs);
   DumpControlActors(actor_set->control_actors_, ofs);
+  DumpCustomActors(actor_set->custom_actors_, ofs);
 }
 
 void GraphScheduler::DumpDeviceTensorStore(const GraphCompilerInfo &graph_compiler_info, std::ofstream &ofs) const {

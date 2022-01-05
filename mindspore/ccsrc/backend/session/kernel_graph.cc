@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@
 #include "runtime/device/kernel_runtime_manager.h"
 #include "backend/kernel_compiler/common_utils.h"
 #include "backend/optimizer/common/helper.h"
+#include "utils/anf_utils.h"
 
 namespace mindspore {
 namespace session {
@@ -878,7 +879,7 @@ void KernelGraph::UpdateNodeEdgeList(std::queue<AnfNodePtr> *seed_nodes) {
     auto node = que.front();
     que.pop();
     MS_EXCEPTION_IF_NULL(node);
-    if (node->isa<Parameter>() || node->isa<ValueNode>()) {
+    if (node->isa<Parameter>() || node->isa<ValueNode>() || AnfUtils::IsCustomActorNode(node)) {
       seed_nodes->push(node);
       continue;
     }

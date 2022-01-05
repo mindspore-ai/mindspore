@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@
 #include "utils/symbolic.h"
 #include "utils/utils.h"
 #include "pipeline/jit/base.h"
+#include "utils/anf_utils.h"
 
 namespace mindspore {
 class ProtoExporter {
@@ -397,6 +398,10 @@ std::string ProtoExporter::GetOpNodeInputId(const FuncGraphPtr &, const AnfNodeP
 
   if (node->isa<Parameter>()) {
     return node->ToString();
+  }
+
+  if (AnfUtils::IsCustomActorNode(node)) {
+    return AnfUtils::GetCustomActorName(node);
   }
 
   if (node->isa<ValueNode>()) {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 #include "utils/anf_utils.h"
 #include <map>
+#include <memory>
 #include <string>
 #include "base/core_ops.h"
 #include "utils/trace_base.h"
@@ -41,6 +42,33 @@ class AbstractMutexManager {
   std::map<const AnfNode *, std::recursive_mutex> mu_for_nodes_;
   std::recursive_mutex mu_;
 };
+
+struct CustomActorInfo {
+  CustomActorInfo(AnfUtils::CustomActorCallback func, const std::string &base_node_name, const std::string &type_name,
+                  bool is_fake = false, bool is_just_sync = false)
+      : actor_func(func),
+        base_node_name(base_node_name),
+        type_name(type_name),
+        is_fake(is_fake),
+        is_just_sync(is_just_sync) {}
+  ~CustomActorInfo() = default;
+
+  // Key for user data.
+  constexpr static char key[] = "CustomActor";
+  AnfUtils::CustomActorCallback actor_func = {};
+  std::string base_node_name;
+  std::string type_name;
+  bool is_fake{false};       // For infer
+  bool is_just_sync{false};  // For update
+};
+using CustomActorInfoPtr = std::shared_ptr<CustomActorInfo>;
+
+AnfNodePtr NewCustomActorNode(const CustomActorInfoPtr &actor_info, const FuncGraphPtr &g) {
+  MS_EXCEPTION_IF_NULL(g);
+  auto custom_actor_node = std::make_shared<AnfNode>(g);
+  custom_actor_node->set_user_data<CustomActorInfo>(actor_info);
+  return custom_actor_node;
+}
 }  // namespace
 
 AbstractScope::AbstractScope(std::recursive_mutex *mu) {
@@ -296,6 +324,8 @@ std::pair<AnfNodePtr, size_t> AnfUtils::VisitKernel(const AnfNodePtr &anf_node, 
     return std::make_pair(anf_node, 0);
   } else if (anf_node->isa<Parameter>()) {
     return std::make_pair(anf_node, 0);
+  } else if (IsCustomActorNode(anf_node)) {
+    return std::make_pair(anf_node, 0);
   } else if (anf_node->isa<CNode>()) {
     auto cnode = anf_node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
@@ -363,5 +393,96 @@ bool AnfUtils::GetDumpFlag(const AnfNodePtr &node) {
     }
   }
   return false;
+}
+
+bool AnfUtils::IsCustomActorNode(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  return node->has_user_data<CustomActorInfo>();
+}
+
+bool AnfUtils::IsCutomActorNodeSame(const AnfNodePtr &node1, const AnfNodePtr &node2) {
+  MS_EXCEPTION_IF_NULL(node1);
+  MS_EXCEPTION_IF_NULL(node2);
+  if (!IsCustomActorNode(node1) || !IsCustomActorNode(node2)) {
+    MS_LOG(EXCEPTION) << "Two node are not all Custom Actor Node!";
+  }
+
+  auto actor_info1 = node1->user_data<CustomActorInfo>();
+  MS_EXCEPTION_IF_NULL(actor_info1);
+  std::string actor_type1 = actor_info1->type_name;
+  bool is_fake1 = actor_info1->is_fake;
+  bool is_just_sync1 = actor_info1->is_just_sync;
+
+  auto actor_info2 = node2->user_data<CustomActorInfo>();
+  MS_EXCEPTION_IF_NULL(actor_info2);
+  std::string actor_type2 = actor_info2->type_name;
+  bool is_fake2 = actor_info2->is_fake;
+  bool is_just_sync2 = actor_info2->is_just_sync;
+
+  return (actor_type1 == actor_type2) && (is_fake1 == is_fake2) && (is_just_sync1 == is_just_sync2);
+}
+
+std::string AnfUtils::GetCustomActorType(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!IsCustomActorNode(node)) {
+    MS_LOG(EXCEPTION) << node->fullname_with_scope() << " is not a custom actor node!";
+  }
+
+  auto actor_info = node->user_data<CustomActorInfo>();
+  MS_EXCEPTION_IF_NULL(actor_info);
+  return actor_info->type_name;
+}
+
+std::string AnfUtils::GetCustomActorName(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!IsCustomActorNode(node)) {
+    MS_LOG(EXCEPTION) << node->fullname_with_scope() << " is not a custom actor node!";
+  }
+
+  auto actor_info = node->user_data<CustomActorInfo>();
+  MS_EXCEPTION_IF_NULL(actor_info);
+  std::string actor_name = actor_info->type_name + "_of_" + actor_info->base_node_name;
+  return actor_name;
+}
+
+bool AnfUtils::GetCustomActorJustSyncFlag(const AnfNodePtr &node) {
+  if (!IsCustomActorNode(node)) {
+    MS_LOG(EXCEPTION) << node->fullname_with_scope() << " is not a custom actor node!";
+  }
+
+  auto update_info = node->user_data<CustomActorInfo>();
+  MS_EXCEPTION_IF_NULL(update_info);
+  return update_info->is_just_sync;
+}
+
+AnfUtils::CustomActorCallback AnfUtils::GetCustomFunc(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!IsCustomActorNode(node)) {
+    MS_LOG(EXCEPTION) << node->fullname_with_scope() << " is not a custom actor node!";
+  }
+
+  auto actor_info = node->user_data<CustomActorInfo>();
+  MS_EXCEPTION_IF_NULL(actor_info);
+  return actor_info->actor_func;
+}
+
+AnfNodePtr AnfUtils::NewInitActorNode(AnfUtils::CustomActorCallback f, const CNodePtr &base_cnode) {
+  MS_EXCEPTION_IF_NULL(base_cnode);
+  auto actor_info = std::make_shared<CustomActorInfo>(f, base_cnode->fullname_with_scope(), kInit);
+  return NewCustomActorNode(actor_info, base_cnode->func_graph());
+}
+
+AnfNodePtr AnfUtils::NewInferActorNode(AnfUtils::CustomActorCallback f, const CNodePtr &base_cnode, bool is_fake) {
+  MS_EXCEPTION_IF_NULL(base_cnode);
+  auto actor_info = std::make_shared<CustomActorInfo>(f, base_cnode->fullname_with_scope(), kInfer, is_fake);
+  return NewCustomActorNode(actor_info, base_cnode->func_graph());
+}
+
+AnfNodePtr AnfUtils::NewUpdateActorNode(AnfUtils::CustomActorCallback f, const CNodePtr &base_cnode,
+                                        bool is_just_sync) {
+  MS_EXCEPTION_IF_NULL(base_cnode);
+  auto actor_info =
+    std::make_shared<CustomActorInfo>(f, base_cnode->fullname_with_scope(), kUpdate, false, is_just_sync);
+  return NewCustomActorNode(actor_info, base_cnode->func_graph());
 }
 }  // namespace mindspore
