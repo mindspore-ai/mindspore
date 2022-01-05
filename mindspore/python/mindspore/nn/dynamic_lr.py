@@ -20,7 +20,7 @@ from mindspore._checkparam import Validator as validator
 
 def piecewise_constant_lr(milestone, learning_rates):
     r"""
-    Get piecewise constant learning rate.
+    Get piecewise constant learning rate. The learning rate for each step will be stored in a list.
 
     Calculate learning rate by the given `milestone` and `learning_rates`. Let the value of `milestone` be
     :math:`(M_1, M_2, ..., M_t, ..., M_N)` and the value of `learning_rates` be :math:`(x_1, x_2, ..., x_t, ..., x_N)`.
@@ -37,6 +37,11 @@ def piecewise_constant_lr(milestone, learning_rates):
 
     Returns:
         list[float]. The size of list is :math:`M_N`.
+
+    Raises:
+        TypeError: If `milestone` or `learning_rates` is neither a tuple nor a list.
+        ValueError: If the length of `milestone` and `learning_rates` is not same.
+        ValueError: If the value in `milestone` is not monotonically decreasing.
 
     Examples:
         >>> import mindspore.nn as nn
@@ -83,7 +88,8 @@ def _check_inputs(learning_rate, decay_rate, total_step, step_per_epoch, decay_e
 
 def exponential_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch, is_stair=False):
     r"""
-    Calculates learning rate base on exponential decay function.
+    Calculates learning rate base on exponential decay function. The learning rate for each step will
+    be stored in a list.
 
     For the i-th step, the formula of computing decayed_learning_rate[i] is:
 
@@ -97,11 +103,17 @@ def exponential_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, 
         decay_rate (float): The decay rate.
         total_step (int): The total number of steps.
         step_per_epoch (int): The number of steps in per epoch.
-        decay_epoch (int): A value used to calculate decayed learning rate.
+        decay_epoch (int): Number of epochs to decay over.
         is_stair (bool): If true, learning rate is decayed once every `decay_epoch` times. Default: False.
 
     Returns:
         list[float]. The size of list is `total_step`.
+
+    Raises:
+        TypeError: If `total_step` or `step_per_epoch` or `decay_epoch` is not an int.
+        TypeError: If `is_stair` is not a bool.
+        TypeError: If `learning_rate` or `decay_rate` is not a float.
+        ValueError: If `learning_rate` or `decay_rate` is less than or equal to 0.
 
     Examples:
         >>> import mindspore.nn as nn
@@ -128,7 +140,8 @@ def exponential_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, 
 
 def natural_exp_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch, is_stair=False):
     r"""
-    Calculates learning rate base on natural exponential decay function.
+    Calculates learning rate base on natural exponential decay function. The learning rate for each step will be
+    stored in a list.
 
     For the i-th step, the formula of computing decayed_learning_rate[i] is:
 
@@ -142,11 +155,17 @@ def natural_exp_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, 
         decay_rate (float): The decay rate.
         total_step (int): The total number of steps.
         step_per_epoch (int): The number of steps in per epoch.
-        decay_epoch (int): A value used to calculate decayed learning rate.
+        decay_epoch (int): Number of epochs to decay over.
         is_stair (bool): If true, learning rate is decayed once every `decay_epoch` times. Default: False.
 
     Returns:
         list[float]. The size of list is `total_step`.
+
+    Raises:
+        TypeError: If `total_step` or `step_per_epoch` or `decay_epoch` is not an int.
+        TypeError: If `is_stair` is not a bool.
+        TypeError: If `learning_rate` or `decay_rate` is not a float.
+        ValueError: If `learning_rate` or `decay_rate` is less than or equal to 0.
 
     Examples:
         >>> import mindspore.nn as nn
@@ -174,7 +193,8 @@ def natural_exp_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, 
 
 def inverse_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch, is_stair=False):
     r"""
-    Calculates learning rate base on inverse-time decay function.
+    Calculates learning rate base on inverse-time decay function. The learning rate for each step
+    will be stored in a list.
 
     For the i-th step, the formula of computing decayed_learning_rate[i] is:
 
@@ -188,11 +208,17 @@ def inverse_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, deca
         decay_rate (float): The decay rate.
         total_step (int): The total number of steps.
         step_per_epoch (int): The number of steps in per epoch.
-        decay_epoch (int): A value used to calculate decayed learning rate.
+        decay_epoch (int): Number of epochs to decay over.
         is_stair (bool): If true, learning rate is decayed once every `decay_epoch` times. Default: False.
 
     Returns:
         list[float]. The size of list is `total_step`.
+
+    Raises:
+        TypeError: If `total_step` or `step_per_epoch` or `decay_epoch` is not an int.
+        TypeError: If `is_stair` is not a bool.
+        TypeError: If `learning_rate` or `decay_rate` is not a float.
+        ValueError: If `learning_rate` or `decay_rate` is less than or equal to 0.
 
     Examples:
         >>> import mindspore.nn as nn
@@ -219,7 +245,7 @@ def inverse_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, deca
 
 def cosine_decay_lr(min_lr, max_lr, total_step, step_per_epoch, decay_epoch):
     r"""
-    Calculates learning rate base on cosine decay function.
+    Calculates learning rate base on cosine decay function. The learning rate for each step will be stored in a list.
 
     For the i-th step, the formula of computing decayed_learning_rate[i] is:
 
@@ -234,10 +260,17 @@ def cosine_decay_lr(min_lr, max_lr, total_step, step_per_epoch, decay_epoch):
         max_lr (float): The maximum value of learning rate.
         total_step (int): The total number of steps.
         step_per_epoch (int): The number of steps in per epoch.
-        decay_epoch (int): A value used to calculate decayed learning rate.
+        decay_epoch (int): Number of epochs to decay over.
 
     Returns:
         list[float]. The size of list is `total_step`.
+
+    Raises:
+        TypeError: If `min_lr` or `max_lr` is not a float.
+        TypeError: If `total_step` or `step_per_epoch` or `decay_epoch` is not an int.
+        ValueError: If `max_lr` is not greater than 0 or `min_lr` is less than 0.
+        ValueError: If `total_step` or `step_per_epoch` or `decay_epoch` is less than 0.
+        ValueError: If `min_lr` is greater than or equal to `max_lr`.
 
     Examples:
         >>> import mindspore.nn as nn
@@ -274,7 +307,8 @@ def cosine_decay_lr(min_lr, max_lr, total_step, step_per_epoch, decay_epoch):
 def polynomial_decay_lr(learning_rate, end_learning_rate, total_step, step_per_epoch, decay_epoch, power,
                         update_decay_epoch=False):
     r"""
-    Calculates learning rate base on polynomial decay function.
+    Calculates learning rate base on polynomial decay function. The learning rate for each step
+    will be stored in a list.
 
     For the i-th step, the formula of computing decayed_learning_rate[i] is:
 
@@ -303,9 +337,15 @@ def polynomial_decay_lr(learning_rate, end_learning_rate, total_step, step_per_e
         end_learning_rate (float): The end value of learning rate.
         total_step (int): The total number of steps.
         step_per_epoch (int): The number of steps in per epoch.
-        decay_epoch (int): A value used to calculate decayed learning rate.
-        power (float): A value used to calculate decayed learning rate. This parameter must be greater than 0.
+        decay_epoch (int): Number of epochs to decay over.
+        power (float): The power of polynomial. It must be greater than 0.
         update_decay_epoch (bool): If true, update `decay_epoch`. Default: False.
+
+    Raises:
+        TypeError: If `learning_rate` or `end_learning_rate` or `power` is not a float.
+        TypeError: If `total_step` or `step_per_epoch` or `decay_epoch` is not an int.
+        TypeError: If `update_decay_epoch` is not a bool.
+        ValueError: If `learning_rate` or `power` is not greater than 0.
 
     Returns:
         list[float]. The size of list is `total_step`.
@@ -352,7 +392,7 @@ def polynomial_decay_lr(learning_rate, end_learning_rate, total_step, step_per_e
 
 def warmup_lr(learning_rate, total_step, step_per_epoch, warmup_epoch):
     r"""
-    Gets learning rate warming up.
+    Gets learning rate warming up. The learning rate for each step will be stored in a list.
 
     For the i-th step, the formula of computing warmup_learning_rate[i] is:
 
@@ -369,6 +409,11 @@ def warmup_lr(learning_rate, total_step, step_per_epoch, warmup_epoch):
 
     Returns:
         list[float]. The size of list is `total_step`.
+
+    Raises:
+        TypeError: If `learning_rate` is not a float.
+        TypeError: If `total_step` or `step_per_epoch` or `decay_epoch` is not an int.
+        ValueError: If `learning_rate` is less than 0.
 
     Examples:
         >>> import mindspore.nn as nn

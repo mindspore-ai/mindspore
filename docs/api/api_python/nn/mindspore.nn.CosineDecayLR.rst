@@ -5,10 +5,10 @@ mindspore.nn.CosineDecayLR
 
     基于余弦衰减函数计算学习率。
 
-    对于当前step，decayed_learning_rate[current_step]的计算公式为：
+    对于当前step，计算学习率的公式为：
 
     .. math::
-        decayed\_learning\_rate[current\_step] = &min\_lr + 0.5 * (max\_lr - min\_lr) *\\
+        decayed\_learning\_rate = &min\_lr + 0.5 * (max\_lr - min\_lr) *\\
         &(1 + cos(\frac{current\_step}{decay\_steps}\pi))
 
 
@@ -16,7 +16,7 @@ mindspore.nn.CosineDecayLR
 
     - **min_lr** (float): 学习率的最小值。
     - **max_lr** (float): 学习率的最大值。
-    - **decay_steps** (int): 用于计算衰减学习率的值。
+    - **decay_steps** (int): 进行衰减的step数。
 
     **输入：**
 
@@ -24,7 +24,7 @@ mindspore.nn.CosineDecayLR
 
     **输出：**
 
-    Tensor。形状为  :math:`()` 的当前step的学习率值。
+    标量Tensor。当前step的学习率值。
 
     **异常：**
 

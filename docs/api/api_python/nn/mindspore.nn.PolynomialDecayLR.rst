@@ -5,10 +5,10 @@ mindspore.nn.PolynomialDecayLR
 
     基于多项式衰减函数计算学习率。
 
-    对于当前step，计算decayed_learning_rate[current_step]的公式为：
+    对于当前step，计算学习率的公式为：
 
     .. math::
-        decayed\_learning\_rate[current\_step] = &(learning\_rate - end\_learning\_rate) *\\
+        decayed\_learning\_rate = &(learning\_rate - end\_learning\_rate) *\\
         &(1 - tmp\_step / tmp\_decay\_steps)^{power}\\
         &+ end\_learning\_rate
 
@@ -26,8 +26,8 @@ mindspore.nn.PolynomialDecayLR
 
     - **learning_rate** (float) - 学习率的初始值。
     - **end_learning_rate** (float) - 学习率的最终值。
-    - **decay_steps** (int) - 用于计算衰减学习率的值。
-    - **power** (float) - 用于计算衰减学习率的值。该参数必须大于0。
+    - **decay_steps** (int) - 进行衰减的step数。
+    - **power** (float) - 多项式的幂，必须大于0。
     - **update_decay_steps** (bool) - 如果为True，则学习率每 `decay_steps` 次衰减一次。默认值：False。
 
     **输入：**
@@ -36,7 +36,7 @@ mindspore.nn.PolynomialDecayLR
 
     **输出：**
 
-    Tensor。当前step的学习率值, shape为 :math:`()`。
+    标量Tensor。当前step的学习率值。
 
     **异常：**
 
