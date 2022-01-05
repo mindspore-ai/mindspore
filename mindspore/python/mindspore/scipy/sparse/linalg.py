@@ -19,6 +19,7 @@ from ...ops import functional as F
 from ..linalg import solve_triangular
 from ..linalg import cho_factor, cho_solve
 from ..utils import _INT_ZERO, _INT_NEG_ONE, _normalize_matvec, _to_tensor, _safe_normalize, _eps
+from ..utils_const import _raise_value_error
 
 
 def gram_schmidt(Q, q):
@@ -265,8 +266,8 @@ def gmres(A, b, x0=None, *, tol=1e-5, atol=0.0, restart=20, maxiter=None,
     elif solve_method == 'batched':
         x = BatchedGmres(A, M)(b, x0, tol, atol, restart, maxiter)
     else:
-        raise ValueError("solve_method should be in ('incremental' or 'batched'), but got {}."
-                         .format(solve_method))
+        _raise_value_error("solve_method should be in ('incremental' or 'batched'), but got {}."
+                           .format(solve_method))
     _, x_norm = _safe_normalize(x)
     info = mnp.where(mnp.isnan(x_norm), _INT_NEG_ONE, _INT_ZERO)
     return x, info
@@ -376,8 +377,8 @@ def cg(A, b, x0=None, *, tol=1e-5, atol=0.0, maxiter=None, M=None):
         M = lambda x: x
 
     if x0.shape != b.shape:
-        raise ValueError(
-            'Tensor in x0 and b must have matching shapes: ', x0.shape, " vs ", b.shape)
+        _raise_value_error(
+            'Tensor in x0 and b must have matching shapes: {} vs {}'.format(x0.shape, b.shape))
 
     x = CG(A, M)(b, x0, tol, atol, maxiter)
     return x, None
