@@ -22,34 +22,37 @@ from ..ops import functional as F
 
 class SolveTriangular(PrimitiveWithInfer):
     """
-    SolveTriangular op frontend implementation.
+    Solve the equation `a x = b` for `x`, assuming a is a triangular matrix.
 
     Args:
-        lower (bool): The input Matrix :math:`A` is lower triangular matrix or not.
-        unit_diagonal (bool): If True, diagonal elements of :math:`A` are assumed to be 1 and
-            will not be referenced.
+        A (Tensor): A triangular matrix of shape :math:`(N, N)`.
+        b (Tensor): A Tensor of shape :math:`(M,)` or :math:`(M, N)`.
+            Right-hand side matrix in :math:`A x = b`.
+        lower (bool, optional): Use only data contained in the lower triangle of `a`.
+            Default is to use upper triangle.
         trans (0, 1, 2, 'N', 'T', 'C', optional):
             Type of system to solve:
-
-            ========  =========
-            trans     system
-            ========  =========
-            0 or 'N'  a x  = b
-            1 or 'T'  a^T x = b
-            2 or 'C'  a^H x = b
-            ========  =========
-
-    Inputs:
-        - **A** (Tensor) - A triangular matrix of shape :math:`(N, N)`.
-        - **b** (Tensor) - A Tensor of shape :math:`(M,)` or :math:`(M, N)`. Right-hand side matrix in :math:`A x = b`.
+            trans:        system:
+                0 or 'N'        a x  = b
+                1 or 'T'        a^T x = b
+                2 or 'C'        a^H x = b
+        unit_diagonal (bool, optional): If True, diagonal elements of :math:`A` are assumed to be 1 and
+            will not be referenced.
+        overwrite_b (bool, optional): Allow overwriting data in :math:`b` (may enhance performance)
+        check_finite (bool, optional): Whether to check that the input matrices contain only finite numbers.
+            Disabling may give a performance gain, but may result in problems
+            (crashes, non-termination) if the inputs do contain infinities or NaNs.
 
     Returns:
-        - **x** (Tensor) - A Tensor of shape :math:`(M,)` or :math:`(M, N)`,
-            which is the solution to the system :math:`A x = b`.
-            Shape of :math:`x` matches :math:`b`.
+        Tensor of shape :math:`(M,)` or :math:`(M, N)`,
+        which is the solution to the system :math:`A x = b`.
+        Shape of :math:`x` matches :math:`b`.
+
+    Raises:
+        LinAlgError: If :math:`A` is singular
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``CPU`` ``GPU``
 
     Examples:
         Solve the lower triangular system :math:`A x = b`, where:
