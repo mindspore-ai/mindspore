@@ -28,12 +28,15 @@
 #if defined(_WIN32) || defined(_WIN64)
 #include <windows.h>
 #include <wchar.h>
+
+#undef ERROR  // which is in wingdi.h and conflict with log_adaptor.h
 #endif
 
 namespace mindspore {
 #if defined(_WIN32) || defined(_WIN64)
 int IncludeChinese(const char *str) {
   if (str == nullptr) {
+    MS_LOG(ERROR) << "Input str is nullptr";
     return 0;
   }
 
@@ -150,6 +153,7 @@ void UnicodeToGB2312(char *p_out, WCHAR u_data) {
 
 std::string FileUtils::UTF_8ToGB2312(const char *text) {
   if (text == nullptr) {
+    MS_LOG(ERROR) << "Input text is nullptr";
     return "";
   }
 
@@ -167,8 +171,9 @@ std::string FileUtils::UTF_8ToGB2312(const char *text) {
   int len = strlen(text);
   char *new_text = const_cast<char *>(text);
   std::unique_ptr<char[]> rst(new char[len + (len >> 2) + 2]);
-  auto ret2 = memset_s(rst.get(), len + (len >> 2) + 2, 0, len + (len >> 2) + 2);
-  if (ret2 != 0) {
+  auto ret = memset_s(rst.get(), len + (len >> 2) + 2, 0, len + (len >> 2) + 2);
+  if (ret != 0) {
+    MS_LOG(ERROR) << "memset_s error, error code: " << ret;
     return "";
   }
 
@@ -200,6 +205,7 @@ std::string FileUtils::UTF_8ToGB2312(const char *text) {
 // gb2312 to utf8
 std::string FileUtils::GB2312ToUTF_8(const char *gb2312) {
   if (gb2312 == nullptr) {
+    MS_LOG(ERROR) << "Input string gb2312 is nullptr";
     return "";
   }
 
@@ -211,6 +217,7 @@ std::string FileUtils::GB2312ToUTF_8(const char *gb2312) {
   std::unique_ptr<wchar_t[]> wstr(new wchar_t[len + 1]);
   auto ret = memset_s(wstr.get(), len + 1, 0, len + 1);
   if (ret != 0) {
+    MS_LOG(ERROR) << "memset_s error, error code: " << ret;
     return "";
   }
   MultiByteToWideChar(CP_ACP, 0, gb2312, -1, wstr.get(), len);
@@ -219,6 +226,7 @@ std::string FileUtils::GB2312ToUTF_8(const char *gb2312) {
   std::unique_ptr<char[]> str(new char[len + 1]);
   auto ret2 = memset_s(str.get(), len + 1, 0, len + 1);
   if (ret2 != 0) {
+    MS_LOG(ERROR) << "memset_s error, error code: " << ret2;
     return "";
   }
   WideCharToMultiByte(CP_UTF8, 0, wstr.get(), -1, str.get(), len, nullptr, nullptr);
@@ -230,9 +238,7 @@ std::string FileUtils::GB2312ToUTF_8(const char *gb2312) {
 
 std::optional<std::string> FileUtils::GetRealPath(const char *path) {
   if (path == nullptr) {
-#if !defined(_WIN32) && !defined(_WIN64)
     MS_LOG(ERROR) << "Input path is nullptr";
-#endif
     return std::nullopt;
   }
 
@@ -240,6 +246,7 @@ std::optional<std::string> FileUtils::GetRealPath(const char *path) {
 #if defined(_WIN32) || defined(_WIN64)
   std::string new_path = FileUtils::UTF_8ToGB2312(path);
   if (new_path.length() >= PATH_MAX || _fullpath(real_path, new_path.data(), PATH_MAX) == nullptr) {
+    MS_LOG(ERROR) << "Get realpath failed, path[" << path << "]";
     return std::nullopt;
   }
 #else
@@ -284,17 +291,13 @@ void FileUtils::ConcatDirAndFileName(const std::optional<std::string> *dir, cons
 
 std::optional<std::string> FileUtils::CreateNotExistDirs(const std::string &path, const bool support_relative_path) {
   if (path.size() >= PATH_MAX) {
-#if !defined(_WIN32) && !defined(_WIN64)
     MS_LOG(ERROR) << "The length of the path is greater than or equal to:" << PATH_MAX;
-#endif
     return std::nullopt;
   }
   if (!support_relative_path) {
     auto dot_pos = path.find("..");
     if (dot_pos != std::string::npos) {
-#if !defined(_WIN32) && !defined(_WIN64)
       MS_LOG(ERROR) << "Do not support relative path";
-#endif
       return std::nullopt;
     }
   }
@@ -311,9 +314,7 @@ std::optional<std::string> FileUtils::CreateNotExistDirs(const std::string &path
         std::string path_handle(temp_path);
         if (!fs->FileExist(path_handle)) {
           if (!fs->CreateDir(path_handle)) {
-#if !defined(_WIN32) && !defined(_WIN64)
             MS_LOG(ERROR) << "Create " << path_handle << " dir error";
-#endif
             return std::nullopt;
           }
         }
@@ -324,9 +325,7 @@ std::optional<std::string> FileUtils::CreateNotExistDirs(const std::string &path
 
   if (!fs->FileExist(path)) {
     if (!fs->CreateDir(path)) {
-#if !defined(_WIN32) && !defined(_WIN64)
       MS_LOG(ERROR) << "Create " << path << " dir error";
-#endif
       return std::nullopt;
     }
   }
