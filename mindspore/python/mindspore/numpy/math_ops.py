@@ -78,7 +78,7 @@ def absolute(x, dtype=None):
 
     Args:
         x (Tensor): Tensor to be used for calculation.
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -128,7 +128,7 @@ def count_nonzero(x, axis=None, keepdims=False):
 
     Raises:
         TypeError: If axis is not int or tuple.
-        ValueError: If axis is not in range [-x.ndim, x.ndim)
+        ValueError: If axis is not in range [-x.ndim, x.ndim).
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -163,7 +163,7 @@ def clip(x, xmin, xmax, dtype=None):
             on upper interval edge. Not more than one of `xmin` and `xmax` may be None.
             If `xmin` or `xmax` are tensors, then the three tensors will be broadcasted
             to match their shapes.
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -199,7 +199,7 @@ def deg2rad(x, dtype=None):
 
     Args:
         x (Tensor): Angles in degrees.
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -207,7 +207,7 @@ def deg2rad(x, dtype=None):
         is a tensor scalar.
 
     Raises:
-        TypeError: if `x` is not a tensor.
+        TypeError: If `x` is not a tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -232,7 +232,7 @@ def rad2deg(x, dtype=None):
 
     Args:
         x (Tensor): Angles in radians.
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -267,7 +267,7 @@ def add(x1, x2, dtype=None):
     Args:
         x1 (Tensor): input to be added.
         x2 (Tensor): input to be added.
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -303,9 +303,9 @@ def subtract(x1, x2, dtype=None):
         not supported.
 
     Args:
-        x1 (Tensor): the input to be subtracted from.
-        x2 (Tensor): the input to be subtracted by.
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        x1 (Tensor): The input to be subtracted from.
+        x2 (Tensor): The input to be subtracted by.
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -339,7 +339,7 @@ def multiply(x1, x2, dtype=None):
     Args:
         x1 (Tensor): input tensor to be multiplied.
         x2 (Tensor): input tensor to be multiplied.
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -383,7 +383,7 @@ def divide(x1, x2, dtype=None):
     Args:
         x1 (Tensor): the divident.
         x2 (Tensor): the divisor.
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -421,9 +421,9 @@ def true_divide(x1, x2, dtype=None):
         not supported.
 
     Args:
-        x1 (Tensor): the divident.
+        x1 (Tensor): the dividend.
         x2 (Tensor): the divisor.
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -457,9 +457,9 @@ def power(x1, x2, dtype=None):
         On GPU, the supported dtypes are np.float16, and np.float32.
 
     Args:
-        x1 (Tensor): the bases.
-        x2 (Tensor): the exponents.
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        x1 (Tensor): The bases.
+        x2 (Tensor): The exponents.
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -501,7 +501,7 @@ def float_power(x1, x2, dtype=None):
     Args:
         x1 (Tensor): the bases.
         x2 (Tensor): the exponents.
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -541,7 +541,7 @@ def minimum(x1, x2, dtype=None):
     Args:
         x1 (Tensor): first input tensor to be compared.
         x2 (Tensor): second input tensor to be compared.
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -607,14 +607,14 @@ def mean(a, axis=None, keepdims=False, dtype=None):
                     are reduced are left in the result as dimensions with
                     size one. With this option, the result will broadcast
                     correctly against the input tensor.
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
         Tensor or scalar, an array containing the mean values.
 
     Raises:
-        ValueError: if axes are out of the range of ``[-a.ndim, a.ndim)``, or
+        ValueError: If axes are out of the range of ``[-a.ndim, a.ndim)``, or
             if the axes contain duplicates.
 
     Supported Platforms:
@@ -654,7 +654,7 @@ def inner(a, b):
         Tensor or scalar.
 
     Raises:
-        ValueError: if ``x1.shape[-1] != x2.shape[-1]``.
+        ValueError: If ``x1.shape[-1] != x2.shape[-1]``.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -785,7 +785,7 @@ def outer(a, b):
         Tensor or scalar, ``out[i, j] = a[i] * b[j]``.
 
     Raises:
-        TypeError: if the input is not a tensor.
+        TypeError: If the input is not a tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -980,7 +980,7 @@ def ptp(x, axis=None, keepdims=False):
         Tensor.
 
     Raises:
-        TypeError: if inputs have types not specified above.
+        TypeError: If inputs have types not specified above.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1100,7 +1100,7 @@ def matmul(x1, x2, dtype=None):
     Args:
         x1 (Tensor): Input tensor, scalar not allowed.
         x2 (Tensor): Input tensor, scalar not allowed.
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -1141,7 +1141,7 @@ def square(x, dtype=None):
 
     Args:
         x (Tensor): Input data.
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -1172,7 +1172,7 @@ def sqrt(x, dtype=None):
 
     Args:
         x (Tensor): The values whose square-roots are required.
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -1212,7 +1212,7 @@ def reciprocal(x, dtype=None):
         x (Tensor): Input array. For integer arguments with absolute value larger
             than 1 the result is always zero because of the way Python handles
             integer division. For integer zero the result is an overflow.
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -1247,7 +1247,7 @@ def log(x, dtype=None):
 
     Args:
         x (Tensor): Input array.
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -1291,7 +1291,7 @@ def maximum(x1, x2, dtype=None):
         x2 (Tensor): The array holding the elements to be compared. If
             ``x1.shape != x2.shape``, they must be broadcastable to a common shape
             (which becomes the shape of the output).
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -1341,7 +1341,7 @@ def heaviside(x1, x2, dtype=None):
         x2 (Tensor): The value of the function when `x1` is 0. If
             ``x1.shape != x2.shape``, they must be broadcastable to a common shape
             (which becomes the shape of the output).
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -1394,18 +1394,18 @@ def amax(a, axis=None, keepdims=False, initial=None, where=True):
 
     Args:
         a (Tensor): Input data.
-        axis (None or int or tuple of integers, optional): defaults to None. Axis or
+        axis (None or int or tuple of integers, optional): Defaults to None. Axis or
             axes along which to operate. By default, flattened input is used. If
             this is a tuple of integers, the maximum is selected over multiple axes,
             instead of a single axis or all the axes as before.
-        keepdims (boolean, optional): defaults to False.
+        keepdims (boolean, optional): Defaults to False.
             If this is set to True, the axes which are reduced are left in the
             result as dimensions with size one. With this option, the result will
             broadcast correctly against the input array.
-        initial (scalar, optional): defaults to None.
+        initial (scalar, optional): Defaults to None.
             The minimum value of an output element. Must be present to allow
             computation on empty slice.
-        where (boolean Tensor, optional): defaults to True.
+        where (boolean Tensor, optional): Defaults to True.
             A boolean array which is broadcasted to match the dimensions of array,
             and selects elements to include in the reduction. If non-default value
             is passed, initial must also be provided.
@@ -1415,7 +1415,7 @@ def amax(a, axis=None, keepdims=False, initial=None, where=True):
         value. If `axis` is given, the result is an array of dimension ``a.ndim - 1``.
 
     Raises:
-        TypeError: if the input is not a tensor.
+        TypeError: If the input is not a tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1449,18 +1449,18 @@ def amin(a, axis=None, keepdims=False, initial=None, where=True):
 
     Args:
         a (Tensor): Input data.
-        axis (None or int or tuple of integers, optional): defaults to None. Axis or
+        axis (None or int or tuple of integers, optional): Defaults to None. Axis or
             axes along which to operate. By default, flattened input is used. If
             this is a tuple of integers, the minimum is selected over multiple axes,
             instead of a single axis or all the axes as before.
-        keepdims (bool, optional): defaults to False.
+        keepdims (bool, optional): Defaults to False.
             If this is set to True, the axes which are reduced are left in the
             result as dimensions with size one. With this option, the result will
             broadcast correctly against the input array.
-        initial (Number, optional): defaults to None.
+        initial (Number, optional): Defaults to None.
             The maximum value of an output element. Must be present to allow
             computation on empty slice.
-        where (bool Tensor, optional): defaults to True.
+        where (bool Tensor, optional): Defaults to True.
             A boolean array which is broadcasted to match the dimensions of array,
             and selects elements to include in the reduction. If non-default value
             is passed, initial must also be provided.
@@ -1470,7 +1470,7 @@ def amin(a, axis=None, keepdims=False, initial=None, where=True):
         value. If `axis` is given, the result is an array of dimension ``a.ndim - 1``.
 
     Raises:
-        TypeError: if the input is not a tensor.
+        TypeError: If the input is not a tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1513,7 +1513,7 @@ def hypot(x1, x2, dtype=None):
         x2 (Tensor): Leg of the triangle(s). If ``x1.shape != x2.shape``, they
             must be broadcastable to a common shape (which becomes the shape of
             the output).
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -1562,7 +1562,7 @@ def floor(x, dtype=None):
 
     Args:
         x (Tensor): input data.
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -1594,7 +1594,7 @@ def floor_divide(x1, x2, dtype=None):
     Args:
         x1 (Tensor): Input array.
         x2 (Tensor): Input array.
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -1651,7 +1651,7 @@ def remainder(x1, x2, dtype=None):
     Args:
         x1 (Tensor): input array.
         x2 (Tensor): input array.
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -1690,7 +1690,7 @@ def fix(x):
         Tensor.
 
     Raises:
-        TypeError: if the input is not a tensor.
+        TypeError: If the input is not a tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1726,7 +1726,7 @@ def fmod(x1, x2, dtype=None):
     Args:
         x1 (Tensor): the first input arrays.
         x2 (Tensor): the second input arrays.
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -1758,7 +1758,7 @@ def trunc(x, dtype=None):
 
     Args:
         x (Tensor): input data.
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -1792,7 +1792,7 @@ def exp(x, dtype=None):
 
     Args:
         x (Tensor): input data.
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -1823,7 +1823,7 @@ def expm1(x, dtype=None):
 
     Args:
         x (Tensor): input data.
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -1850,14 +1850,14 @@ def divmod_(x1, x2, dtype=None):
         x1(Union[Tensor]): Dividend tensor.
         x2(Union[Tensor, int, float, bool]): Divisor. If ``x1.shape != x2.shape``,
             they must be broadcastable to a common shape.
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
         Element-wise quotient and remainder from floor division, in format of (quotient, remainder)
 
     Raises:
-        TypeError: if `x1` and `x2` are not Tensor or scalar.
+        TypeError: If `x1` and `x2` are not Tensor or scalar.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2125,7 +2125,7 @@ def gcd(x1, x2, dtype=None):
     Args:
         x1 (Tensor): input data.
         x2 (Tensor): input data.
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -2155,7 +2155,7 @@ def lcm(x1, x2, dtype=None):
     Args:
         x1 (Tensor): input data.
         x2 (Tensor): input data.
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -2212,8 +2212,8 @@ def convolve(a, v, mode='full'):
         Tensor, discrete, linear convolution of a and v.
 
     Raises:
-        TypeError: if the inputs have types not specified above.
-        ValueError: if a and v are empty or have wrong dimensions
+        TypeError: If the inputs have types not specified above.
+        ValueError: If a and v are empty or have wrong dimensions
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -2339,9 +2339,9 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None, aweights=N
         Tensor, the covariance matrix of the variables.
 
     Raises:
-        TypeError: if the inputs have types not specified above.
-        ValueError: if `m` and `y` have wrong dimensions.
-        RuntimeError: if `aweights` and `fweights` have dimensions > 2.
+        TypeError: If the inputs have types not specified above.
+        ValueError: If `m` and `y` have wrong dimensions.
+        RuntimeError: If `aweights` and `fweights` have dimensions > 2.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2490,9 +2490,9 @@ def nanmax(a, axis=None, dtype=None, keepdims=False):
             is desired. If `a` is not an array, a conversion is attempted.
         axis (Union[int, tuple of int, None], optional): Axis or axes along which the maximum is
             computed. The default is to compute the maximum of the flattened array.
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
-        keepdims (boolean, optional): defaults to False. If this is set to True, the axes which
+        keepdims (boolean, optional): Defaults to False. If this is set to True, the axes which
             are reduced are left in the result as dimensions with size one. With this option,
             the result will broadcast correctly against the original `a`.
 
@@ -2500,7 +2500,7 @@ def nanmax(a, axis=None, dtype=None, keepdims=False):
         Tensor.
 
     Raises:
-        ValueError: if axes are out of the range of ``[-a.ndim, a.ndim)``, or
+        ValueError: If axes are out of the range of ``[-a.ndim, a.ndim)``, or
             if the axes contain duplicates.
 
     Supported Platforms:
@@ -2540,9 +2540,9 @@ def nanmin(a, axis=None, dtype=None, keepdims=False):
             is desired. If `a` is not an array, a conversion is attempted.
         axis (Union[int, tuple of int, None], optional): Axis or axes along which the minimum is
             computed. The default is to compute the minimum of the flattened array.
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
-        keepdims (boolean, optional): defaults to False. If this is set to True, the axes which
+        keepdims (boolean, optional): Defaults to False. If this is set to True, the axes which
             are reduced are left in the result as dimensions with size one. With this option,
             the result will broadcast correctly against the original `a`.
 
@@ -2550,7 +2550,7 @@ def nanmin(a, axis=None, dtype=None, keepdims=False):
         Tensor.
 
     Raises:
-        ValueError: if axes are out of the range of ``[-a.ndim, a.ndim)``, or
+        ValueError: If axes are out of the range of ``[-a.ndim, a.ndim)``, or
             if the axes contain duplicates.
 
     Supported Platforms:
@@ -2595,9 +2595,9 @@ def nansum(a, axis=None, dtype=None, keepdims=False):
             whose sum is desired. If `a` is not an array, a conversion is attempted.
         axis (Union[int, tuple of int, None], optional): Axis or axes along which the sum is
             computed. The default is to compute the sum of the flattened array.
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
-        keepdims (boolean, optional): defaults to False. If this is set to True, the axes which
+        keepdims (boolean, optional): Defaults to False. If this is set to True, the axes which
             are reduced are left in the result as dimensions with size one. With this option,
             the result will broadcast correctly against the original `a`.
 
@@ -2605,7 +2605,7 @@ def nansum(a, axis=None, dtype=None, keepdims=False):
         Tensor.
 
     Raises:
-        ValueError: if axes are out of the range of ``[-a.ndim, a.ndim)``, or
+        ValueError: If axes are out of the range of ``[-a.ndim, a.ndim)``, or
             if the axes contain duplicates.
 
     Supported Platforms:
@@ -2652,9 +2652,9 @@ def nanmean(a, axis=None, dtype=None, keepdims=False):
             whose mean is desired. If `a` is not an array, a conversion is attempted.
         axis (Union[int, tuple of int, None], optional): Axis or axes along which the mean is
             computed. The default is to compute the mean of the flattened array.
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
-        keepdims (boolean, optional): defaults to False. If this is set to True, the axes which
+        keepdims (boolean, optional): Defaults to False. If this is set to True, the axes which
             are reduced are left in the result as dimensions with size one. With this option,
             the result will broadcast correctly against the original `a`.
 
@@ -2662,7 +2662,7 @@ def nanmean(a, axis=None, dtype=None, keepdims=False):
         Tensor.
 
     Raises:
-        ValueError: if axes are out of the range of ``[-a.ndim, a.ndim)``, or
+        ValueError: If axes are out of the range of ``[-a.ndim, a.ndim)``, or
             if the axes contain duplicates.
 
     Supported Platforms:
@@ -2714,12 +2714,12 @@ def nanvar(a, axis=None, dtype=None, ddof=0, keepdims=False):
             whose variance is desired. If `a` is not an array, a conversion is attempted.
         axis (Union[int, tuple of int, None], optional): Axis or axes along which the variance is
             computed. The default is to compute the variance of the flattened array.
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
         ddof (int, optional): "Delta Degrees of Freedom": the divisor used in the calculation is
             ``N - ddof``, where `N` represents the number of non-NaN elements. By default `ddof`
             is zero.
-        keepdims (boolean, optional): defaults to False. If this is set to True, the axes which
+        keepdims (boolean, optional): Defaults to False. If this is set to True, the axes which
             are reduced are left in the result as dimensions with size one. With this option,
             the result will broadcast correctly against the original `a`.
 
@@ -2727,7 +2727,7 @@ def nanvar(a, axis=None, dtype=None, ddof=0, keepdims=False):
         Tensor.
 
     Raises:
-        ValueError: if axes are out of the range of ``[-a.ndim, a.ndim)``, or
+        ValueError: If axes are out of the range of ``[-a.ndim, a.ndim)``, or
             if the axes contain duplicates.
 
     Supported Platforms:
@@ -2769,12 +2769,12 @@ def nanstd(a, axis=None, dtype=None, ddof=0, keepdims=False):
         axis (Union[int, tuple of int, None], optional): Axis or axes along which the standard
             deviation is computed. The default is to compute the standard deviation of the
             flattened array.
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
         ddof (int, optional): "Delta Degrees of Freedom": the divisor used in the calculation is
             ``N - ddof``, where `N` represents the number of non-NaN elements. By default `ddof`
             is zero.
-        keepdims (boolean, optional): defaults to False. If this is set to True, the axes which
+        keepdims (boolean, optional): Defaults to False. If this is set to True, the axes which
             are reduced are left in the result as dimensions with size one. With this option,
             the result will broadcast correctly against the original `a`.
 
@@ -2782,7 +2782,7 @@ def nanstd(a, axis=None, dtype=None, ddof=0, keepdims=False):
         Tensor.
 
     Raises:
-        ValueError: if axes are out of the range of ``[-a.ndim, a.ndim)``, or
+        ValueError: If axes are out of the range of ``[-a.ndim, a.ndim)``, or
             if the axes contain duplicates.
 
     Supported Platforms:
@@ -2818,7 +2818,7 @@ def exp2(x, dtype=None):
 
     Args:
         x (Tensor): input values.
-        dtype (:class:`mindspore.dtype`, optional): defaults to :class:`None`. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to :class:`None`. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -3008,7 +3008,7 @@ def ceil(x, dtype=None):
 
     Args:
         x (Tensor): input values.
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -3052,7 +3052,7 @@ def positive(a, dtype=None):
 
     Args:
         a (Tensor): Input tensor.
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -3083,7 +3083,7 @@ def negative(a, dtype=None):
 
     Args:
         a (Tensor): Input tensor.
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -3201,7 +3201,7 @@ def cbrt(x, dtype=None):
 
     Args:
         x (Tensor): Input tensor.
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -3789,7 +3789,7 @@ def arctan2(x1, x2, dtype=None):
     Args:
         x1 (Tensor): input tensor.
         x2 (Tensor): input tensor.
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -3828,7 +3828,7 @@ def promote_types(type1, type2):
         The promoted data type.
 
     Raises:
-        TypeError: if the input are not valid :class:`mindspore.dtype` input.
+        TypeError: If the input are not valid :class:`mindspore.dtype` input.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3873,8 +3873,8 @@ def corrcoef(x, y=None, rowvar=True, dtype=None):
         Tensor, The correlation coefficient matrix of the variables.
 
     Raises:
-        TypeError: if the inputs have types not specified above.
-        ValueError: if `x` and `y` have wrong dimensions.
+        TypeError: If the inputs have types not specified above.
+        ValueError: If `x` and `y` have wrong dimensions.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3971,21 +3971,21 @@ def gradient(f, *varargs, axis=None, edge_order=1):
             Spacing can be specified using:
             1. single scalar to specify a sample distance for all dimensions.
             2. N scalars to specify a constant sample distance for each dimension.
-        edge_order (int): Gradient is calculated using N-th order accurate differences
-            at the boundaries. Default: 1.
         axis (Union[None, int, tuple(int), list(int)], optional): Gradient is calculated
             only along the given axis or axes. The default :class:`(axis = None)` is to calculate
             the gradient for all the axes of the input tensor. `axis` may be negative,
             in which case it counts from the last to the first `axis`.
+        edge_order (int): Gradient is calculated using N-th order accurate differences
+            at the boundaries. Default: 1.
 
     Returns:
         gradient, a list of tensors (or a single tensor if there is only one dimension
         to be calculated). Each derivative has the same shape as f.
 
     Raises:
-        TypeError: if the inputs have types not specified above.
-        ValueError: if `axis` values out of bounds, or shape of `f` has entries < 1.
-        NotImplementedError: if `edge_order` != 1, or `varargs` contains non-scalar entries.
+        TypeError: If the inputs have types not specified above.
+        ValueError: If `axis` values out of bounds, or shape of `f` has entries < 1.
+        NotImplementedError: If `edge_order` != 1, or `varargs` contains non-scalar entries.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4045,12 +4045,12 @@ def sum_(a, axis=None, dtype=None, keepdims=False, initial=None):
 
     Args:
         x (Union[int, float, bool, list, tuple, Tensor]): Elements to sum.
-        axis (Union[None, int, tuple(int)]): Axis or axes along which a sum is performed. Default: None.
-            If None, sum all of the elements of the input array.
+        axis (Union[None, int, tuple(int)]): Axis or axes along which a sum is performed. Default: `None`.
+            If `None`, sum all of the elements of the input array.
             If axis is negative it counts from the last to the first axis.
             If axis is a tuple of integers, a sum is performed on all of the axes specified in the tuple
             instead of a single axis or all the axes as before.
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to `None`. Overrides the dtype of the
             output Tensor.
         keepdims (bool): If this is set to True, the axes which are reduced are left in the result as
             dimensions with size one. With this option, the result will broadcast correctly against the input array.
@@ -4062,7 +4062,7 @@ def sum_(a, axis=None, dtype=None, keepdims=False, initial=None):
 
     Returns:
         Tensor. An array with the same shape as a, with the specified axis removed.
-        If a is a 0-d array, or if axis is None, a scalar is returned.
+        If a is a 0-d array, or if axis is `None`, a scalar is returned.
         If an output array is specified, a reference to out is returned.
 
     Raises:
@@ -4137,7 +4137,7 @@ def multi_dot(arrays):
     multi_dot chains numpy.dot and uses optimal parenthesization of the matrices. For more
     information, refer to the `wiki page <https://en.wikipedia.org/wiki/Matrix_chain_multiplication>`_.
     Depending on the shapes of the matrices, this can speed up the multiplication a lot.
-    If the first argument is 1-D it is treated as a row vector. If the last argument is 1-D it
+    If the first argument is 1-D, it is treated as a row vector. If the last argument is 1-D, it
     is treated as a column vector. The other arguments must be 2-D.
 
     Note:
@@ -4228,7 +4228,7 @@ def argmax(a, axis=None):
         shape as a.shape with the dimension along axis removed.
 
     Raises:
-        ValueError: if axis is out of range.
+        ValueError: If axis is out of range.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4265,7 +4265,7 @@ def argmin(a, axis=None):
         shape as a.shape with the dimension along axis removed.
 
     Raises:
-        ValueError: if axis is out of range.
+        ValueError: If axis is out of range.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4312,7 +4312,7 @@ def searchsorted(a, v, side='left', sorter=None):
         Tensor, array of insertion points with the same shape as `v`.
 
     Raises:
-        ValueError: if argument for `side` or `sorter` is invalid.
+        ValueError: If argument for `side` or `sorter` is invalid.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4378,7 +4378,7 @@ def interp(x, xp, fp, left=None, right=None):
         Tensor, the interpolated values, same shape as `x`.
 
     Raises:
-        ValueError: if `xp` or `fp` is not one-dimensional, or if `xp` and `fp` do not have
+        ValueError: If `xp` or `fp` is not one-dimensional, or if `xp` and `fp` do not have
             the same length.
 
     Supported Platforms:
@@ -4454,14 +4454,14 @@ def sign(x, dtype=None):
 
     Args:
         x (Union[int, float, list, tuple, Tensor]): Input values.
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
         The sign of x. This is a tensor or a scalar when x is a scalar.
 
     Raises:
-        TypeError: if dtype of the input is not in the given types or
+        TypeError: If dtype of the input is not in the given types or
             the input can not be converted to tensor.
 
     Supported Platforms:
@@ -4504,14 +4504,14 @@ def copysign(x1, x2, dtype=None):
         x1 (Union[int, float, list, tuple, Tensor]): Values to change the sign of.
         x2 (Union[int, float, list, tuple, Tensor]): The sign of x2 is copied to x1. If `x1.shape != x2.shape`,
             they must be broadcastable to a common shape (which becomes the shape of the output).
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
         Tensor or scalar. The values of `x1` with the sign of `x2`. This is a scalar if both `x1` and `x2` are scalars.
 
     Raises:
-        TypeError: if dtype of the input is not in the given types or
+        TypeError: If dtype of the input is not in the given types or
             the input can not be converted to tensor.
 
     Supported Platforms:
@@ -4624,7 +4624,7 @@ def bincount(x, weights=None, minlength=0, length=None):
         ``np.amax(x)+1``.
 
     Raises:
-        ValueError: if `x` is not one-dimensional, or if `x` and `weights` do not have
+        ValueError: If `x` is not one-dimensional, or if `x` and `weights` do not have
             the same shape.
 
     Supported Platforms:
@@ -4696,7 +4696,7 @@ def histogram(a, bins=10, range=None, weights=None, density=False): # pylint: di
         (Tensor, Tensor), the values of the histogram and the bin edges.
 
     Raises:
-        ValueError: if `x` and `weights` do not have the same size.
+        ValueError: If `x` and `weights` do not have the same size.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4809,7 +4809,7 @@ def histogramdd(sample, bins=10, range=None, weights=None, density=False): # pyl
         (Tensor, list of Tensor), the values of the histogram and the bin edges.
 
     Raises:
-        ValueError: if `range` does not have the same size as the number of samples.
+        ValueError: If `range` does not have the same size as the number of samples.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4917,7 +4917,7 @@ def histogram2d(x, y, bins=10, range=None, weights=None, density=False): # pylin
         along the first and second dimensions.
 
     Raises:
-        ValueError: if `range` does not have the same size as the number of samples.
+        ValueError: If `range` does not have the same size as the number of samples.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4958,9 +4958,9 @@ def matrix_power(a, n):
         Tensor.
 
     Raises:
-        TypeError: if the input can not be converted to a tensor or
+        TypeError: If the input can not be converted to a tensor or
             the exponent is not integer.
-        ValueError: if the input includes less than 2 dimensions or
+        ValueError: If the input includes less than 2 dimensions or
             the last 2 dimensions are not square.
 
     Supported Platforms:
@@ -5013,7 +5013,7 @@ def around(a, decimals=0):
         The result of rounding a float is a float.
 
     Raises:
-        TypeError: if the input can not be converted to a tensor or
+        TypeError: If the input can not be converted to a tensor or
             the `decimals` argument is not integer.
 
     Supported Platforms:
@@ -5058,7 +5058,7 @@ def polyadd(a1, a2):
         Tensor, the sum of the inputs.
 
     Raises:
-        ValueError: if the input array has more than 1 dimensions.
+        ValueError: If the input array has more than 1 dimensions.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5094,7 +5094,7 @@ def polysub(a1, a2):
         Tensor, the difference of the inputs.
 
     Raises:
-        ValueError: if the input array has more than 1 dimensions.
+        ValueError: If the input array has more than 1 dimensions.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5128,7 +5128,7 @@ def polyval(p, x):
     Returns:
         Tensor.
     Raises:
-        ValueError: if `p` has more than 1 dimensions.
+        ValueError: If `p` has more than 1 dimensions.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5162,7 +5162,7 @@ def polyder(p, m=1):
         Tensor, a new polynomial representing the derivative.
 
     Raises:
-        ValueError: if `p` has more than 1 dimensions.
+        ValueError: If `p` has more than 1 dimensions.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5198,7 +5198,7 @@ def polymul(a1, a2):
         Tensor, a new polynomial representing the derivative.
 
     Raises:
-        ValueError: if the input array has more than 1 dimensions.
+        ValueError: If the input array has more than 1 dimensions.
 
     Supported Platforms:
         ``GPU``
@@ -5233,7 +5233,7 @@ def polyint(p, m=1, k=None):
         Tensor, a new polynomial representing the antiderivative.
 
     Raises:
-        ValueError: if `p` has more than 1 dimensions.
+        ValueError: If `p` has more than 1 dimensions.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5296,7 +5296,7 @@ def result_type(*arrays_and_dtypes):
         :class:`mindspore.dtype`, the result type.
 
     Raises:
-        TypeError: if the input is not a valid data type.
+        TypeError: If the input is not a valid data type.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5336,7 +5336,7 @@ def unwrap(p, discont=3.141592653589793, axis=-1):
         Tensor.
 
     Raises:
-        ValueError: if the axis is out of range.
+        ValueError: If the axis is out of range.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5634,7 +5634,7 @@ def bitwise_and(x1, x2, dtype=None):
         x2 (Tensor): Input array. Only integer and boolean types are handled. If
             ``x1.shape != x2.shape``, they must be broadcastable to a common shape (which becomes
             the shape of the output).
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -5666,7 +5666,7 @@ def bitwise_or(x1, x2, dtype=None):
         x2 (Tensor): Input array. Only integer and boolean types are handled. If
             ``x1.shape != x2.shape``, they must be broadcastable to a common shape (which becomes
             the shape of the output).
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -5698,7 +5698,7 @@ def bitwise_xor(x1, x2, dtype=None):
         x2 (Tensor): Input array. Only integer and boolean types are handled. If
             ``x1.shape != x2.shape``, they must be broadcastable to a common shape (which becomes
             the shape of the output).
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -5733,7 +5733,7 @@ def invert(x, dtype=None):
 
     Args:
         x (Tensor): Only integer and boolean types are handled.
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -5761,7 +5761,7 @@ def rint(x, dtype=None):
 
     Args:
         x (Union[float, list, tuple, Tensor]): Input tensor.
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -5817,8 +5817,8 @@ def correlate(a, v, mode='valid'):
         Tensor. Discrete cross-correlation of `a` and `v`.
 
     Raises:
-        TypeError: if the inputs can not be converted to tensor.
-        ValueError: if `a` and `v` are empty or have wrong dimensions
+        TypeError: If the inputs can not be converted to tensor.
+        ValueError: If `a` and `v` are empty or have wrong dimensions
 
     Supported Platforms:
         ``GPU``
@@ -5880,7 +5880,7 @@ def radians(x, dtype=None):
 
     Args:
         x (Tensor): Angles in degrees.
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to None. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -5888,7 +5888,7 @@ def radians(x, dtype=None):
         is a tensor scalar.
 
     Raises:
-        TypeError: if `x` is not a tensor.
+        TypeError: If `x` is not a tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
