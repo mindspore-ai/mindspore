@@ -462,7 +462,10 @@ void Debugger::DumpSetup(const KernelGraphPtr &kernel_graph) const {
 }
 
 void Debugger::DumpInGraphCompiler(const KernelGraphPtr &kernel_graph) {
-  // This function will be called for new GPU runtime using MindRTBackend
+  // This function is used for new GPU runtime using MindRTBackend, on Ascend platform, graphs are saved in other way.
+  if (device_target_ == kAscendDevice) {
+    return;
+  }
   auto &json_parser = DumpJsonParser::GetInstance();
   if (json_parser.e2e_dump_enabled() || json_parser.async_dump_enabled()) {
     uint32_t rank_id = GetRankID();

@@ -23,12 +23,12 @@ PYBIND11_MODULE(_mindspore_offline_debug, m) {
   (void)py::class_<DbgServices>(m, "DbgServices")
     .def(py::init())
     .def("Initialize", &DbgServices::Initialize)
-    .def("AddWatchpoint", &DbgServices::AddWatchpoint)
+    .def("AddWatchpoint", &DbgServices::AddWatchpoint, py::call_guard<py::gil_scoped_release>())
     .def("RemoveWatchpoint", &DbgServices::RemoveWatchpoint)
-    .def("CheckWatchpoints", &DbgServices::CheckWatchpoints)
-    .def("ReadTensors", &DbgServices::ReadTensors)
-    .def("ReadTensorsBase", &DbgServices::ReadTensorsBase)
-    .def("ReadTensorsStat", &DbgServices::ReadTensorsStat)
+    .def("CheckWatchpoints", &DbgServices::CheckWatchpoints, py::call_guard<py::gil_scoped_release>())
+    .def("ReadTensors", &DbgServices::ReadTensors, py::call_guard<py::gil_scoped_release>())
+    .def("ReadTensorsBase", &DbgServices::ReadTensorsBase, py::call_guard<py::gil_scoped_release>())
+    .def("ReadTensorsStat", &DbgServices::ReadTensorsStat, py::call_guard<py::gil_scoped_release>())
     .def("GetVersion", &DbgServices::GetVersion);
 
   (void)py::class_<parameter_t>(m, "parameter")
