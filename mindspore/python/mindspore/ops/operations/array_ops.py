@@ -5476,7 +5476,7 @@ class BroadcastTo(Primitive):
 
     Inputs:
         - **input_x** (Tensor) - The input tensor. The data type should be one of the following types:
-          float16, float32, int32, int8, uint8.
+          float16, float32, int32, int8, uint8, bool.
           The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
 
     Outputs:
