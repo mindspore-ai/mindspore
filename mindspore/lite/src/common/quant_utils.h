@@ -116,6 +116,10 @@ template <typename T>
 STATUS DoPerLayerQuant(const float *raw_datas, size_t elem_count, std::vector<schema::QuantParamT> *quant_params,
                        const int &quant_max, const int &quant_min, const size_t &bit_num, const bool &k_means,
                        std::vector<T> *quant_datas) {
+  if (raw_datas == nullptr || quant_params == nullptr || quant_datas == nullptr) {
+    MS_LOG(ERROR) << "raw_data, quant_params or quant_data is nullptr.";
+    return RET_ERROR;
+  }
   float min = FLT_MAX;
   float max = -FLT_MIN;
   for (uint32_t i = 0; i < elem_count; i++) {

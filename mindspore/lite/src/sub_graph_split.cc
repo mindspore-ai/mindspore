@@ -31,6 +31,7 @@
 
 namespace mindspore::lite {
 size_t CommConvMul(std::vector<int> weight_shape, std::vector<int> output_shape) {
+  MS_CHECK_TRUE_MSG(output_shape.size() == kNHWCDimNumber, 0, "output shape size is not 4.");
   size_t cost = output_shape[NHWC_N] * output_shape[NHWC_H] * output_shape[NHWC_W] * output_shape[NHWC_C] *
                 weight_shape[NHWC_H] * weight_shape[NHWC_W] * weight_shape[NHWC_C];
   return cost;
@@ -42,6 +43,7 @@ size_t WinogradConvMul() {
 }
 
 size_t CommConvdwMul(std::vector<int> weight_shape, std::vector<int> output_shape) {
+  MS_CHECK_TRUE_MSG(output_shape.size() == kNHWCDimNumber, 0, "output shape size is not 4.");
   size_t cost = static_cast<size_t>(output_shape[NHWC_N] * output_shape[NHWC_H] * output_shape[NHWC_W] *
                                     output_shape[NHWC_C] * weight_shape[NHWC_H] * weight_shape[NHWC_W]);
   return cost;

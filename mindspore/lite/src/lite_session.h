@@ -89,8 +89,7 @@ class LiteSession : public session::LiteSession {
  protected:
   static void ConvertTensorsQuantParam(const schema::Tensor *src_tensor, lite::Tensor *dst_tensor);
 
-  int ConvertTensorsData(const lite::Model *model, size_t tensor_index, const schema::Tensor *src_tensor,
-                         lite::Tensor *dst_tensor);
+  int ConvertTensorsData(size_t tensor_index, const schema::Tensor *src_tensor, lite::Tensor *dst_tensor);
 
   lite::Tensor *ConvertTensor(const schema::Tensor &src_tensor);
 

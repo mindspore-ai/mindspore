@@ -32,6 +32,9 @@ uint64_t GetTimeUs() {
   LARGE_INTEGER cur_time, frequency;
   QueryPerformanceCounter(&cur_time);
   QueryPerformanceFrequency(&frequency);
+  if (frequency.QuadPart == 0) {
+    return 0;
+  }
   uint64_t sec = cur_time.QuadPart / frequency.QuadPart;
   uint64_t usec = (cur_time.QuadPart % frequency.QuadPart) * sec_to_us / frequency.QuadPart;
   return sec * sec_to_us + usec;

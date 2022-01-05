@@ -152,6 +152,10 @@ std::vector<lite::Tensor *> LiteKernelUtil::SubgraphOutputTensors(const std::vec
 }
 
 int LiteKernelUtil::TopologicalSortKernels(std::vector<kernel::LiteKernel *> *kernels) {
+  if (kernels == nullptr) {
+    MS_LOG(ERROR) << "topological sort failed.";
+    return RET_ERROR;
+  }
   auto old_kernels = *kernels;
   kernels->clear();
   std::queue<kernel::LiteKernel *> kernel_queue;
@@ -270,5 +274,4 @@ void LiteKernelUtil::FindAllInoutKernels(const std::vector<kernel::LiteKernel *>
     }
   }
 }
-
 }  // namespace mindspore::kernel

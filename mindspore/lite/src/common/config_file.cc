@@ -31,6 +31,10 @@ int GetSectionInfoFromConfigFile(const std::string &file, const std::string &sec
     MS_LOG(ERROR) << "file is nullptr";
     return RET_ERROR;
   }
+  if (section_info == nullptr) {
+    MS_LOG(ERROR) << "section_info is nullptr.";
+    return RET_NULL_PTR;
+  }
   auto resolved_path = std::make_unique<char[]>(PATH_MAX);
   if (resolved_path == nullptr) {
     MS_LOG(ERROR) << "new resolved_path failed";
@@ -97,6 +101,10 @@ int GetSectionInfoFromConfigFile(const std::string &file, const std::string &sec
 
 void ParserExecutionPlan(const std::map<std::string, std::string> *config_infos,
                          std::map<std::string, TypeId> *data_type_plan) {
+  if (config_infos == nullptr || data_type_plan == nullptr) {
+    MS_LOG(ERROR) << "config_info or data_type_len is nullptr.";
+    return;
+  }
   for (auto info : *config_infos) {
     std::string op_name = info.first;
     std::string value = info.second;
