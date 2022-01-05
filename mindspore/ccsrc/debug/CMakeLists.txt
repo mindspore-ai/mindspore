@@ -6,6 +6,7 @@ add_definitions(-DMSVERSION=\"${MSVERSION}\")
 set(_DEBUG_SRC_LIST
     "${CMAKE_CURRENT_SOURCE_DIR}/anf_ir_dump.cc"
     "${CMAKE_CURRENT_SOURCE_DIR}/anf_ir_utils.cc"
+    "${CMAKE_CURRENT_SOURCE_DIR}/anf_dump_utils.cc"
     "${CMAKE_CURRENT_SOURCE_DIR}/draw.cc"
     "${CMAKE_CURRENT_SOURCE_DIR}/dump_proto.cc"
     "${CMAKE_CURRENT_SOURCE_DIR}/trace.cc"
