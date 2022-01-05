@@ -154,7 +154,7 @@ int TransferSession::RunGraph(const KernelCallBack &before, const KernelCallBack
         }
       }
     } else {
-      std::copy(output_data, output_data + output->Size(), input_data);
+      std::copy(output_data, output_data + output->ElementsNum(), input_data);
     }
   }
   ret = lite::TrainSession::RunGraph(before, after);

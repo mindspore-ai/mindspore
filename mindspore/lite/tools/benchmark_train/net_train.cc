@@ -154,8 +154,9 @@ int NetTrain::ReadInputFile(std::vector<mindspore::tensor::MSTensor *> *ms_input
       auto tensor_data_size = cur_tensor->Size();
       if (size != tensor_data_size) {
         std::cerr << "Input binary file size error, required: " << tensor_data_size << ", in fact: " << size
-                  << std::endl;
-        MS_LOG(ERROR) << "Input binary file size error, required: " << tensor_data_size << ", in fact: " << size;
+                  << " ,file_name: " << file_name.c_str() << std::endl;
+        MS_LOG(ERROR) << "Input binary file size error, required: " << tensor_data_size << ", in fact: " << size
+                      << " ,file_name: " << file_name.c_str();
         delete bin_buf;
         return RET_ERROR;
       }
@@ -380,7 +381,6 @@ std::unique_ptr<session::LiteSession> NetTrain::CreateAndRunNetworkForInference(
   auto *model = mindspore::lite::Model::Import(filenamems.c_str());
   if (model == nullptr) {
     MS_LOG(ERROR) << "create model for train session failed";
-    std::cout << "create model for train session failed " << filenamems.c_str() << std::endl;
     return nullptr;
   }
   session = std::unique_ptr<session::LiteSession>(session::LiteSession::CreateSession(&context));
@@ -481,7 +481,8 @@ int NetTrain::CreateAndRunNetwork(const std::string &filename, const std::string
 }
 
 int NetTrain::RunNetTrain() {
-  bool isTrain = (flags_->model_file_.find("train") != std::string::npos) || !flags_->bb_model_file_.empty();
+  auto file_name = flags_->model_file_.substr(flags_->model_file_.find_last_of(DELIM_SLASH) + 1);
+  bool isTrain = (file_name.find("train") != std::string::npos) || !flags_->bb_model_file_.empty();
   auto status = CreateAndRunNetwork(flags_->model_file_, flags_->bb_model_file_, isTrain, flags_->epochs_);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "CreateAndRunNetwork failed for model " << flags_->model_file_ << ". Status is " << status;
@@ -581,9 +582,11 @@ void NetTrain::CheckSum(mindspore::tensor::MSTensor *tensor, std::string node_ty
     case kNumberTypeFloat32:
       TensorNan(reinterpret_cast<float *>(data), tensor_size);
       std::cout << TensorSum<float>(data, tensor_size) << std::endl;
-      std::cout << "data: " << static_cast<float>(fdata[0]) << ", " << static_cast<float>(fdata[1]) << ", "
-                << static_cast<float>(fdata[2]) << ", " << static_cast<float>(fdata[3]) << ", "
-                << static_cast<float>(fdata[4]) << std::endl;
+      std::cout << "data: ";
+      for (int i = 0; i <= kPrintOffset; i++) {
+        std::cout << static_cast<float>(fdata[i]) << ", ";
+      }
+      std::cout << std::endl;
       break;
     case kNumberTypeInt32:
       std::cout << TensorSum<int>(data, tensor_size) << std::endl;
