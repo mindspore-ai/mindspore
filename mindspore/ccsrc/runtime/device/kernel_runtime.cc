@@ -666,7 +666,9 @@ void KernelRuntime::AssignStaticMemoryOutput(const session::KernelGraph &graph) 
   std::vector<session::KernelWithIndex> non_communication_op;
   // Assign Communicate Op Memory firstly.
   for (const auto &node : nodes) {
-    auto kernel_with_index = AnfAlgo::VisitKernelWithReturnType(node, 0, true);
+    // Assign output address to nop node that the attribute of "skip_nop_op_addr" is false;
+    auto is_skip = !opt::IsNopNode(node) || AnfAlgo::IsNeedSkipNopOpAddr(node);
+    auto kernel_with_index = AnfAlgo::VisitKernelWithReturnType(node, 0, is_skip);
     MS_EXCEPTION_IF_NULL(kernel_with_index.first);
     if (!kernel_with_index.first->isa<CNode>() || !AnfUtils::IsRealKernel(kernel_with_index.first)) {
       continue;
