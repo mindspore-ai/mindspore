@@ -103,6 +103,8 @@ KernelWithIndex GetFrontNodeByKernelGraph(const AnfNodePtr &backend_node, Kernel
 std::vector<KernelWithIndex> FetchInputNodeByCNode(const AnfNodePtr &node);
 // Fetch the sub abstract from the top abstract by the index.
 abstract::AbstractBasePtr FetchAbstractByIndex(const AbstractBasePtr &abstract, size_t index);
+// Fetch the real input of tuple get item node.
+KernelWithIndex FetchRealNodeByGetItem(const KernelWithIndex &node_with_index);
 // ControlNodeParser is used to parse control nodes, and get the edges between nodes.
 class ControlNodeParser {
  public:

@@ -364,6 +364,8 @@ class AnfRuntimeAlgorithm {
   }
 
   static void UpdateGraphValidRefPair(const KernelGraphPtr &graph);
+  // Get the real output node and indexes of get item, make tuple, depend, load.
+  static AnfNodePtr GetTupleIndexes(const AnfNodePtr &node, std::vector<size_t> *index_stack);
 };
 }  // namespace session
 using AnfAlgo = session::AnfRuntimeAlgorithm;
