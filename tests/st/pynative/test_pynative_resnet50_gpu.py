@@ -16,7 +16,6 @@
 import time
 import random
 import numpy as np
-import pytest
 
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
@@ -33,6 +32,8 @@ from mindspore.ops import operations as P
 from mindspore.ops import composite as CP
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.nn.wrap.cell_wrapper import WithLossCell
+from mindspore.context import ParallelMode
+from mindspore.communication.management import init
 
 random.seed(1)
 np.random.seed(1)
@@ -377,11 +378,11 @@ class GradWrap(Cell):
         return grad_by_list(self.network, weights)(x, label)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
 def test_pynative_resnet50():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    context.reset_auto_parallel_context()
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, gradients_mean=False, device_num=8)
+    init()
 
     batch_size = 32
     num_classes = 10
