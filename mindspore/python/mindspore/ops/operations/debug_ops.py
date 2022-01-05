@@ -270,8 +270,8 @@ class InsertGradientOf(PrimitiveWithInfer):
     Examples:
         >>> import numpy as np
         >>> from mindspore import Tensor, ops, ms_function
-        >>> a = Tensor(np.array([1.0]).astype(np.float))
-        >>> b = Tensor(np.array([0.2]).astype(np.float))
+        >>> a = Tensor(np.array([1.0]).astype(np.float32))
+        >>> b = Tensor(np.array([0.2]).astype(np.float32))
         >>> def clip_gradient(dx):
         ...     ret = dx
         ...     if ret > a:
@@ -298,14 +298,14 @@ class InsertGradientOf(PrimitiveWithInfer):
         ...     def fd(x, y):
         ...         return grad_all(clip_test)(x, y)
         ...
-        ...     print("forward: ", f(Tensor(np.array([1.1]).astype(np.float)),
-        ...         Tensor(np.array([0.1]).astype(np.float))))
-        ...     print("clip_gradient:", fd(Tensor(np.array([1.1]).astype(np.float)),
-        ...         Tensor(np.array([0.1]).astype(np.float))))
+        ...     print("forward: ", f(Tensor(np.array([1.1]).astype(np.float32)),
+        ...         Tensor(np.array([0.1]).astype(np.float32))))
+        ...     print("clip_gradient:", fd(Tensor(np.array([1.1]).astype(np.float32)),
+        ...         Tensor(np.array([0.1]).astype(np.float32))))
         >>> InsertGradientOfClipDemo()
-        forward: [0.11]
-        clip_gradient: (Tensor(shape=[1], dtype=Float64, value= [ 2.00000000e-01]),
-                        Tensor(shape=[1], dtype=Float64,value= [ 1.00000000e+00]))
+        forward: [0.11000001]
+        clip_gradient: (Tensor(shape=[1], dtype=Float32, value= [ 2.00000003e-01]),
+                        Tensor(shape=[1], dtype=Float32, value= [ 1.00000000e+00]))
     """
 
     @prim_attr_register
