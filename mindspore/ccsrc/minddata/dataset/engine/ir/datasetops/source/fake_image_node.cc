@@ -132,6 +132,5 @@ Status FakeImageNode::to_json(nlohmann::json *out_json) {
   *out_json = args;
   return Status::OK();
 }
-
 }  // namespace dataset
 }  // namespace mindspore

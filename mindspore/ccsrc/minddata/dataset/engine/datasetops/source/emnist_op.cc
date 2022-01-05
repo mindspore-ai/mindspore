@@ -146,6 +146,5 @@ Status EMnistOp::CountTotalRows(const std::string &dir, const std::string &name,
 
   return Status::OK();
 }
-
 }  // namespace dataset
 }  // namespace mindspore

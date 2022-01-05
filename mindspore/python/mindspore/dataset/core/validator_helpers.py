@@ -752,6 +752,7 @@ def replace_none(value, default):
     """ replaces None with a default value."""
     return value if value is not None else default
 
+
 def check_dataset_num_shards_shard_id(num_shards, shard_id):
     if (num_shards is None) != (shard_id is None):
         # These two parameters appear together.

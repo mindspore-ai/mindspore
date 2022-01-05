@@ -33,7 +33,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 using json = nlohmann::json;
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
 #define USING_LINUX

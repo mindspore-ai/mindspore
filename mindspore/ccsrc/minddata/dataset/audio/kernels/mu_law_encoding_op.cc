@@ -19,7 +19,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 // constructor
 MuLawEncodingOp::MuLawEncodingOp(int32_t quantization_channels) : quantization_channels_(quantization_channels) {}
 
