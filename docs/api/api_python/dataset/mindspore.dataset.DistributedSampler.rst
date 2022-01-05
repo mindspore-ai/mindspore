@@ -9,17 +9,9 @@ mindspore.dataset.DistributedSampler
 
     - **num_shards** (int) - 数据集分片数量。
     - **shard_id** (int) - 当前分片的分片ID，应在[0, num_shards-1]范围内。
-    - **shuffle** (bool, optional) - 如果为True，则索引将被打乱（默认为True）。
-    - **num_samples** (int, optional) - 要采样的样本数（默认为None，对所有元素进行采样）。
-    - **offset** (int, optional) - 将数据集中的元素发送到的起始分片ID，不应超过 `num_shards` 。仅当ConcatDataset以DistributedSampler为采样器时，此参数才有效。此参数影响每个分片的样本数（默认为-1，每个分片具有相同的样本数）。
-
-    **样例：**
-
-    >>> # 创建一个分布式采样器，共10个分片。当前分片为分片5。
-    >>> sampler = ds.DistributedSampler(10, 5)
-    >>> dataset = ds.ImageFolderDataset(image_folder_dataset_dir,
-    ...                                 num_parallel_workers=8,
-    ...                                 sampler=sampler)
+    - **shuffle** (bool, 可选) - 是否混洗采样得到的样本，默认值：True，混洗样本。
+    - **num_samples** (int, 可选) - 获取的样本数，可用于部分获取采样得到的样本，默认值：None，获取采样到的所有样本。
+    - **offset** (int, 可选) - 分布式采样结果进行分配时的起始分片ID号，值不能大于参数 `num_shards` 。从不同的分片ID开始分配数据可能会影响每个分片的最终样本数。仅当ConcatDataset以DistributedSampler为采样器时，此参数才有效。默认值：-1，每个分片具有相同的样本数。
 
     **异常：**
 
@@ -32,5 +24,13 @@ mindspore.dataset.DistributedSampler
     - **RuntimeError** - `num_shards` 不是正值。
     - **RuntimeError** - `shard_id` 小于0或大于等于 `num_shards` 。
     - **RuntimeError** - `offset` 大于 `num_shards` 。
+
+    **样例：**
+
+    >>> # 创建一个分布式采样器，共10个分片。当前分片为分片5。
+    >>> sampler = ds.DistributedSampler(10, 5)
+    >>> dataset = ds.ImageFolderDataset(image_folder_dataset_dir,
+    ...                                 num_parallel_workers=8,
+    ...                                 sampler=sampler)
 
     .. include:: mindspore.dataset.BuiltinSampler.rst
