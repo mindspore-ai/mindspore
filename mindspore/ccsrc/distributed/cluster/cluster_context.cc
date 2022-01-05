@@ -156,7 +156,7 @@ bool ClusterContext::BuildCluster() {
 void ClusterContext::InitNodeRole() {
   node_role_ = common::GetEnv(kEnvRole);
   if (kValidRoleName.count(node_role_) == 0) {
-    MS_LOG(EXCEPTION) << "Role name " << node_role_ << " is invalid.";
+    MS_LOG(EXCEPTION) << "Role name '" << node_role_ << "' is invalid. " << kDetailedFailureReason;
     return;
   }
 
@@ -177,7 +177,12 @@ void ClusterContext::InitNodeRole() {
   }
 }
 
-void ClusterContext::InitSchedulerIp() { scheduler_host_ = common::GetEnv(kEnvSchedulerHost); }
+void ClusterContext::InitSchedulerIp() {
+  scheduler_host_ = common::GetEnv(kEnvSchedulerHost);
+  if (scheduler_host_.empty()) {
+    MS_LOG(EXCEPTION) << kEnvSchedulerHost << " is empty. " << kEnvSchedulerHost;
+  }
+}
 
 void ClusterContext::InitSchedulerPort() {
   TRY_AND_CATCH_WITH_EXCEPTION((scheduler_port_ = static_cast<uint16_t>(std::stoi(common::GetEnv(kEnvSchedulerPort)))),
