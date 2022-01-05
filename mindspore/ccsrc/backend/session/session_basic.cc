@@ -2737,6 +2737,10 @@ void SessionBasic::DumpGraphs(const std::vector<KernelGraphPtr> &graphs) {
     std::string name = "graph_build." + std::to_string(graph->graph_id());
     DumpGraphParams dump_params = {true, static_cast<int>(kWholeStack)};
     (void)mindspore::RDR::RecordAnfGraph(SUBMODULE_ID, name, graph, dump_params, ".ir;.pb");
+
+    auto &kernels = graph->execution_order();
+    std::string exec_order_name = "graph_exec_order." + std::to_string(graph->graph_id());
+    (void)mindspore::RDR::RecordGraphExecOrder(SUBMODULE_ID, exec_order_name, kernels);
     if (save_graphs) {
       std::string file_name = "graph_build_" + std::to_string(graph->graph_id()) + ".ir";
       DumpIR(file_name, graph, true, kWholeStack);

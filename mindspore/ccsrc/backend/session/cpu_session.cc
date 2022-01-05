@@ -133,17 +133,6 @@ GraphId CPUSession::CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtr
   auto execution_order = graph->execution_order();
   Reorder(&execution_order);
   graph->set_execution_order(execution_order);
-
-#ifdef ENABLE_DUMP_IR
-  std::string name = "graph_build." + std::to_string(graph->graph_id());
-  DumpGraphParams dump_params = {true, static_cast<int>(kWholeStack)};
-  (void)mindspore::RDR::RecordAnfGraph(SubModuleId::SM_SESSION, name, graph, dump_params, ".ir");
-
-  const std::vector<CNodePtr> &exec_order = graph->execution_order();
-  std::string exec_order_name = "graph_exec_order." + std::to_string(graph->graph_id());
-  (void)mindspore::RDR::RecordGraphExecOrder(SubModuleId::SM_SESSION, exec_order_name, exec_order);
-#endif
-
   // runtime init
   if (!runtime_.Init()) {
     MS_LOG(EXCEPTION) << "Kernel runtime init error.";
