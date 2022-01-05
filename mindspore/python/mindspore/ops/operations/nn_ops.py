@@ -2563,9 +2563,9 @@ class ApplyMomentum(Primitive):
         gradient_scale (float): The scale of the gradient. Default: 1.0.
 
     Inputs:
-        - **variable** (Parameter) - Weights to be updated. data type must be float.
-        - **accumulation** (Parameter) - Accumulated gradient value by moment weight.
-          Has the same data type with `variable`.
+        - **variable** (Parameter) - Weights to be updated. Data type must be float.
+        - **accumulation** (Parameter) - Accumulated gradient value by moment weight,
+          has the same data type with `variable`.
         - **learning_rate** (Union[Number, Tensor]) - The learning rate value, must be a float number or
           a scalar tensor with float data type.
         - **gradient** (Tensor) - Gradient, has the same data type as `variable`.
@@ -2644,7 +2644,7 @@ class SmoothL1Loss(Primitive):
 
     Raises:
         TypeError: If `beta` is not a float.
-        TypeError: If dtype of `logits` or `labels` is neither float16 not float32.
+        TypeError: If dtype of `logits` or `labels` is neither float16 nor float32.
         ValueError: If `beta` is less than or equal to 0.
         ValueError: If shape of `logits` is not the same as `labels`.
 
@@ -2694,7 +2694,7 @@ class SoftMarginLoss(Primitive):
         TypeError: If `logits` or `labels` is not a Tensor.
         TypeError: If dtype of `logits` or `labels` is neither float16 nor float32.
         ValueError: If shape of `logits` is not the same as `labels`.
-        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+        ValueError: If `reduction` is not one of 'none', 'mean' or 'sum'.
 
     Supported Platforms:
         ``Ascend``
@@ -2980,12 +2980,12 @@ class ApplyRMSProp(PrimitiveWithInfer):
                             from being updated. Default: False.
 
     Inputs:
-        - **var** (Tensor) - Weights to be update.
-        - **mean_square** (Tensor) - Mean square gradients, must have the same type as `var`.
-        - **moment** (Tensor) - Delta of `var`, must have the same type as `var`.
+        - **var** (Tensor) - Weights to be updated.
+        - **mean_square** (Tensor) - Mean square gradients, must be the same type as `var`.
+        - **moment** (Tensor) - Delta of `var`, must be the same type as `var`.
         - **learning_rate** (Union[Number, Tensor]) - Learning rate. Must be a float number or
           a scalar tensor with float16 or float32 data type.
-        - **grad** (Tensor) - Gradient, must have the same type as `var`.
+        - **grad** (Tensor) - Gradient, must be the same type as `var`.
         - **decay** (float) - Decay rate. Only constant value is allowed.
         - **momentum** (float) - Momentum. Only constant value is allowed.
         - **epsilon** (float) - Ridge term. Only constant value is allowed.
@@ -3098,11 +3098,11 @@ class ApplyCenteredRMSProp(Primitive):
                             from being updated. Default: False.
 
     Inputs:
-        - **var** (Tensor) - Weights to be update.
-        - **mean_gradient** (Tensor) - Mean gradients, must have the same type as `var`.
-        - **mean_square** (Tensor) - Mean square gradients, must have the same type as `var`.
-        - **moment** (Tensor) - Delta of `var`, must have the same type as `var`.
-        - **grad** (Tensor) - Gradient, must have the same type as `var`.
+        - **var** (Tensor) - Weights to be updated.
+        - **mean_gradient** (Tensor) - Mean gradients, must be the same type as `var`.
+        - **mean_square** (Tensor) - Mean square gradients, must be the same type as `var`.
+        - **moment** (Tensor) - Delta of `var`, must be the same type as `var`.
+        - **grad** (Tensor) - Gradient, must be the same type as `var`.
         - **learning_rate** (Union[Number, Tensor]) - Learning rate. Must be a float number or
           a scalar tensor with float16 or float32 data type.
         - **decay** (float) - Decay rate.
@@ -3572,7 +3572,7 @@ class GetNext(Primitive):
     Note:
         The GetNext operation needs to be associated with network and it also depends on the init_dataset interface,
         it can't be used directly as a single operation.
-        For details, please refer to `connect_network_with_dataset` source code.
+        For details, please refer to :class:`mindspore.connect_network_with_dataset` source code.
 
     Args:
         types (list[:class:`mindspore.dtype`]): The type of the outputs.
@@ -3584,13 +3584,15 @@ class GetNext(Primitive):
         No inputs.
 
     Outputs:
-        tuple[Tensor], the output of Dataset. The shape is described in `shapes`
+        tuple[Tensor], the output of dataset. The shape is described in `shapes`
         and the type is described in `types`.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import ops
         >>> train_dataset = create_custom_dataset()
         >>> dataset_helper = mindspore.DatasetHelper(train_dataset, dataset_sink_mode=True)
         >>> dataset = dataset_helper.iter.dataset
@@ -3924,7 +3926,7 @@ class BCEWithLogitsLoss(PrimitiveWithInfer):
     Raises:
         TypeError: If data type of any input is neither float16 nor float32.
         ValueError: If `weight` or `pos_weight` can not be broadcast to a tensor with shape of `logits`.
-        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+        ValueError: If `reduction` is not one of 'none', 'mean' or 'sum'.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -4168,7 +4170,7 @@ class ComputeAccidentalHits(PrimitiveWithCheck):
     When a target class matches the sample class, we call it "accidental hit".
     The result of calculating accidental hits contain three parts (index, id, weight),
     where index represents the row number in true_classes, and id represents the position in sampled_candidates,
-    the weight is -FLOAT_MAX. FLOAT_MAX indicates the max value in the type of Float
+    the weight is FLOAT_MAX. FLOAT_MAX indicates the max value in the type of Float
 
     Args:
         num_true (int): The number of target classes per training example. Default: 1.
@@ -5166,7 +5168,7 @@ class KLDivLoss(PrimitiveWithInfer):
 
     Args:
         reduction (str): Specifies the reduction to be applied to the output.
-            Its value must be one of 'none', 'mean', 'sum'. Default: 'mean'.
+            Its value must be one of 'none', 'mean' or 'sum'. Default: 'mean'.
 
     Inputs:
         - **logits** (Tensor) - The input Tensor. The data type must be float32.
@@ -5248,22 +5250,22 @@ class BinaryCrossEntropy(PrimitiveWithInfer):
 
     Args:
         reduction (str): Specifies the reduction to be applied to the output.
-            Its value must be one of 'none', 'mean', 'sum'. Default: 'mean'.
+            Its value must be one of 'none', 'mean' or 'sum'. Default: 'mean'.
 
     Inputs:
         - **logits** (Tensor) - The input Tensor. The data type must be float16 or float32,
           The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
-        - **labels** (Tensor) - The label Tensor which has same shape and data type as `logits`.
+        - **labels** (Tensor) - The label Tensor which has the same shape and data type as `logits`.
         - **weight** (Tensor, optional) - A rescaling weight applied to the loss of each batch element.
-          And it must have same shape and data type as `logits`. Default: None.
+          And it must have the same shape and data type as `logits`. Default: None.
 
     Outputs:
         Tensor or Scalar, if `reduction` is 'none', then output is a tensor and has the same shape as `logits`.
         Otherwise, the output is a scalar.
 
     Raises:
-        TypeError: If dtype of `logits`, `labels` or `weight` (if given) is neither float16 not float32.
-        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+        TypeError: If dtype of `logits`, `labels` or `weight` (if given) is neither float16 nor float32.
+        ValueError: If `reduction` is not one of 'none', 'mean' or 'sum'.
         ValueError: If shape of `labels` is not the same as `logits` or `weight` (if given).
         TypeError: If `logits`, `labels` or `weight` is not a Tensor.
 
@@ -5345,15 +5347,15 @@ class ApplyAdaMax(Primitive):
           With float32 or float16 data type.
         - **v** (Parameter) - The 2nd moment vector in the updating formula. Mean square gradients
           with the same shape and type as `var`. With float32 or float16 data type.
-        - **beta1_power** (Union[Number, Tensor]) - :math:`beta_1^t` in the updating formula, must be scalar.
+        - **beta1_power** (Union[Number, Tensor]) - :math:`beta_1^t` in the updating formula, must be a scalar.
           With float32 or float16 data type.
-        - **lr** (Union[Number, Tensor]) - Learning rate, :math:`l` in the updating formula, must be scalar.
+        - **lr** (Union[Number, Tensor]) - Learning rate, :math:`l` in the updating formula, must be a scalar.
           With float32 or float16 data type.
         - **beta1** (Union[Number, Tensor]) - The exponential decay rate for the 1st moment estimations,
-          must be scalar. With float32 or float16 data type.
+          must be a scalar. With float32 or float16 data type.
         - **beta2** (Union[Number, Tensor]) - The exponential decay rate for the 2nd moment estimations,
-          must be scalar. With float32 or float16 data type.
-        - **epsilon** (Union[Number, Tensor]) - A small value added for numerical stability, must be scalar.
+          must be a scalar. With float32 or float16 data type.
+        - **epsilon** (Union[Number, Tensor]) - A small value added for numerical stability, must be a scalar.
           With float32 or float16 data type.
         - **grad** (Tensor) - A tensor for gradient, has the same shape and type as `var`.
           With float32 or float16 data type.
@@ -5450,9 +5452,9 @@ class ApplyAdadelta(Primitive):
           The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         - **accum** (Parameter) - Accumulation to be updated, has the same shape and data type as `var`.
         - **accum_update** (Parameter) - Accum_update to be updated, has the same shape and data type as `var`.
-        - **lr** (Union[Number, Tensor]) - Learning rate, must be scalar. With float32 or float16 data type.
-        - **rho** (Union[Number, Tensor]) - Decay rate, must be scalar. With float32 or float16 data type.
-        - **epsilon** (Union[Number, Tensor]) - A small value added for numerical stability, must be scalar.
+        - **lr** (Union[Number, Tensor]) - Learning rate, must be a scalar. With float32 or float16 data type.
+        - **rho** (Union[Number, Tensor]) - Decay rate, must be a scalar. With float32 or float16 data type.
+        - **epsilon** (Union[Number, Tensor]) - A small value added for numerical stability, must be a scalar.
           With float32 or float16 data type.
         - **grad** (Tensor) - Gradients, has the same shape and data type as `var`.
 
@@ -5546,7 +5548,7 @@ class ApplyAdagrad(Primitive):
         - **var** (Parameter) - Variable to be updated. With float32 or float16 data type.
           The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         - **accum** (Parameter) - Accumulation to be updated. The shape and data type must be the same as `var`.
-        - **lr** (Union[Number, Tensor]) - The learning rate value, must be scalar. With float32 or float16 data type.
+        - **lr** (Union[Number, Tensor]) - The learning rate value, must be a scalar. With float32 or float16 data type.
         - **grad** (Tensor) - A tensor for gradient. The shape and data type must be the same as `var`.
 
     Outputs:
@@ -5913,12 +5915,12 @@ class ApplyProximalAdagrad(Primitive):
     Inputs:
         - **var** (Parameter) - Variable to be updated. The data type must be float16 or float32.
           The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
-        - **accum** (Parameter) - Accumulation to be updated. Must have the same shape and dtype as `var`.
-        - **lr** (Union[Number, Tensor]) - The learning rate value, must be scalar. The data type must be
+        - **accum** (Parameter) - Accumulation to be updated, must have the same shape and dtype as `var`.
+        - **lr** (Union[Number, Tensor]) - The learning rate value, must be a scalar. The data type must be
           float16 or float32.
-        - **l1** (Union[Number, Tensor]) - l1 regularization strength, must be scalar. The data type must be
+        - **l1** (Union[Number, Tensor]) - l1 regularization strength, must be a scalar. The data type must be
           float16 or float32.
-        - **l2** (Union[Number, Tensor]) - l2 regularization strength, must be scalar. The data type must be
+        - **l2** (Union[Number, Tensor]) - l2 regularization strength, must be a scalar. The data type must be
           float16 or float32.
         - **grad** (Tensor) - Gradient with the same shape and dtype as `var`.
 
@@ -6282,7 +6284,7 @@ class ApplyPowerSign(Primitive):
 
 class ApplyGradientDescent(Primitive):
     r"""
-    Updates relevant entries according to the following.
+    Updates `var` by subtracting `alpha` * `delta` from it.
 
     .. math::
         var = var - \alpha * \delta
@@ -6362,9 +6364,9 @@ class ApplyProximalGradientDescent(PrimitiveWithInfer):
         - **var** (Parameter) - Variable tensor to be updated. With float32 or float16 data type.
           The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         - **alpha** (Union[Number, Tensor]) - Scaling factor, must be a scalar. With float32 or float16 data type.
-        - **l1** (Union[Number, Tensor]) - l1 regularization strength, must be scalar.
+        - **l1** (Union[Number, Tensor]) - l1 regularization strength, must be a scalar.
           With float32 or float16 data type.
-        - **l2** (Union[Number, Tensor]) - l2 regularization strength, must be scalar.
+        - **l2** (Union[Number, Tensor]) - l2 regularization strength, must be a scalar.
           With float32 or float16 data type.
         - **delta** (Tensor) - A tensor for the change, has the same shape and data type as `var`.
 
@@ -8191,8 +8193,8 @@ class SparseApplyAdadelta(Primitive):
           With float32 or float16 data type.
         - **accum_update** (Parameter) - Accum_update to be updated. Must have the same shape and dtype as `var`.
           With float32 or float16 data type.
-        - **lr** (Union[float, Tensor]) - Learning rate, must be scalar. With float32 or float16 data type.
-        - **rho** (Union[float, Tensor]) - Decay rate, must be scalar. With float32 or float16 data type.
+        - **lr** (Union[float, Tensor]) - Learning rate, must be a scalar. With float32 or float16 data type.
+        - **rho** (Union[float, Tensor]) - Decay rate, must be a scalar. With float32 or float16 data type.
         - **grad** (Tensor) - A tensor for gradient. Must have the same shape and dtype as `var`.
         - **indices** (Tensor) - A tensor of indices in the first dimension of `var` and `accum`.
           Must be one of the following types: int32, int64 and indices.shape[0] = grad.shape[0].
