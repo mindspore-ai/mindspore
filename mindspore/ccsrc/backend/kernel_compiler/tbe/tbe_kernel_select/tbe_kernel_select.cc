@@ -427,7 +427,7 @@ std::vector<std::string> TbeKernelSelect::SplitStrToVec(const std::string &op_se
 
 std::string TbeKernelSelect::OpSelectFormat() {
   std::string res_json_str;
-  MS_LOG(INFO) << "Format select for node:[" << cnode_ptr_->fullname_with_scope() << "].";
+  MS_LOG(DEBUG) << "Format select for node:[" << cnode_ptr_->fullname_with_scope() << "].";
   auto &build_manager = kernel::ascend::TbeKernelCompileManager::GetInstance();
   res_json_str = build_manager.TbeOpSelectFormat(cnode_ptr_);
   return res_json_str;

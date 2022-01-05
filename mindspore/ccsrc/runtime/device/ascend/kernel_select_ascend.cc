@@ -678,8 +678,8 @@ KernelSelectStatus SetMatchedKernelInfo(const CNodePtr &kernel_node,
     }
   }
   // Set kernel build info to node
-  MS_LOG(INFO) << "Current node: " << kernel_node->fullname_with_scope()
-               << " selected: " << selected_kernel_info->ToString();
+  MS_LOG(DEBUG) << "Current node: " << kernel_node->fullname_with_scope()
+                << " selected: " << selected_kernel_info->ToString();
   ResetPreFixedFormat(kernel_node, &selected_kernel_info);
   AnfAlgo::SetSelectKernelBuildInfo(selected_kernel_info, kernel_node.get());
   // Set format and data type for input tensor.
