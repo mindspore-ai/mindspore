@@ -1692,20 +1692,20 @@ class Neg(PrimitiveWithInfer):
 
 class InplaceAdd(PrimitiveWithInfer):
     """
-    Adds v into specified rows of x. Computes y = x; y[i,] += v.
+    Adds `v` into specified rows of `x`. Computes `y` = `x`; y[i,] += `v`.
 
     Args:
-        indices (Union[int, tuple]): Indices into the left-most dimension of x, and determines which rows of x
-            to add with v. It is an integer or a tuple, whose value is in [0, the first dimension size of x).
+        indices (Union[int, tuple]): Indices into the left-most dimension of `x`, and determines which rows of `x`
+            to add with `v`. It is an integer or a tuple, whose value is in [0, the first dimension size of `x`).
 
     Inputs:
         - **x** (Tensor) - The first input is a tensor whose data type is float16, float32 or int32.
           :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
-        - **input_v** (Tensor) - The second input is a tensor that has the same dimension sizes as x except
+        - **input_v** (Tensor) - The second input is a tensor that has the same dimension sizes as `x` except
           the first dimension, which must be the same as indices' size. It has the same data type with `x`.
 
     Outputs:
-        Tensor, has the same shape and dtype as x.
+        Tensor, has the same shape and dtype as `x`.
 
     Raises:
         TypeError: If `indices` is neither int nor tuple.
@@ -1761,20 +1761,20 @@ class InplaceAdd(PrimitiveWithInfer):
 
 class InplaceSub(PrimitiveWithInfer):
     """
-    Subtracts v into specified rows of x. Computes y = x; y[i, :] -= v.
+    Subtracts `v` into specified rows of `x`. Computes `y` = `x`; y[i,] -= `v.
 
     Args:
-        indices (Union[int, tuple]): Indices into the left-most dimension of x, and determines which rows of x
-            to subtract with v. It is an int or tuple, whose value is in [0, the first dimension size of x).
+        indices (Union[int, tuple]): Indices into the left-most dimension of `x`, and determines which rows of `x`
+            to subtract with `v`. It is an int or tuple, whose value is in [0, the first dimension size of `x`).
 
     Inputs:
         - **x** (Tensor) - The first input is a tensor whose data type is float16, float32 or int32.
           :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
-        - **input_v** (Tensor) - The second input is a tensor who has the same dimension sizes as x except
+        - **input_v** (Tensor) - The second input is a tensor who has the same dimension sizes as `x` except
           the first dimension, which must be the same as indices' size. It has the same data type with `x`.
 
     Outputs:
-        Tensor, has the same shape and dtype as x.
+        Tensor, has the same shape and dtype as `x`.
 
     Raises:
         TypeError: If `indices` is neither int nor tuple.
@@ -3475,11 +3475,11 @@ class ApproximateEqual(_LogicBinaryOp):
         & \text{ if } \left | x_{i} - y_{i} \right | \ge \text{tolerance},\ \  False
         \end{cases}
 
-    where :math:`\text{tolerance}` indicates Acceptable maximum tolerance.
+    where `tolerance` indicates Acceptable maximum tolerance.
 
     Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
-    If they have different data types, the lower priority data type will be converted to
-    the relatively highest priority data type.
+    If they have different data types, the lower precision data type will be converted to
+    the relatively highest precision data type.
 
     Args:
         tolerance (float): The maximum deviation that two elements can be considered equal. Default: 1e-05.
@@ -3487,15 +3487,15 @@ class ApproximateEqual(_LogicBinaryOp):
     Inputs:
         - **x** (Tensor) - A tensor. Must be one of the following types: float32, float16.
           :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
-        - **y** (Tensor) - A tensor of the same type and shape as 'x'.
+        - **y** (Tensor) - A tensor of the same type and shape as `x`.
 
     Outputs:
-        Tensor, the shape is the same as the shape of 'x', and the data type is bool.
+        Tensor, the shape is the same as the shape of `x`, and the data type is bool.
 
     Raises:
         TypeError: If `tolerance` is not a float.
-        RuntimeError: If the data type of `x`, `y` conversion of Parameter is required
-                      when data type conversion of Parameter is not supported.
+        RuntimeError: If the data type of `x`, `y` conversion of Parameter is given
+                      but data type conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend``
@@ -3964,8 +3964,8 @@ class IsNan(Primitive):
     .. math::
 
         out_i = \begin{cases}
-          & \text{ if } x_{i} = \text{Nan},\ \ True \\
-          & \text{ if } x_{i} \ne  \text{Nan},\ \ False
+          & \ True,\ \text{ if } x_{i} = \text{Nan} \\
+          & \ False,\ \text{ if } x_{i} \ne  \text{Nan}
         \end{cases}
 
     where :math:`Nan` means not a number.
@@ -5094,11 +5094,11 @@ class BesselI1e(Primitive):
 
 class Inv(Primitive):
     r"""
-    Computes Inv(Reciprocal) of input tensor element-wise.
+    Computes Reciprocal of input tensor element-wise.
 
     .. math::
 
-        out_i = out_i = \frac{1}{x_{i} }
+        out_i = \frac{1}{x_{i} }
 
     Inputs:
         - **x** (Tensor) - The shape of tensor is
@@ -5358,7 +5358,8 @@ class IndexAdd(Primitive):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
         ...         self.index_add = ops.IndexAdd(axis=1)
-        ...         self.x = Parameter(Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), mindspore.float32))
+        ...         self.x = Parameter(Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), mindspore.float32),
+        ...                 name="name_x")
         ...         self.indices = Tensor(np.array([0, 2]), mindspore.int32)
         ...
         ...     def construct(self, y):
