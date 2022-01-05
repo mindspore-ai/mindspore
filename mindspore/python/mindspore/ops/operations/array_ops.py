@@ -5077,21 +5077,6 @@ class DepthToSpace(PrimitiveWithInfer):
         self.block_size = block_size
         self.add_prim_attr("data_format", "NCHW")
 
-    def infer_shape(self, x_shape):
-        validator.check('x dimension', len(x_shape), '', 4, Rel.EQ)
-        out_shape = copy.deepcopy(x_shape)
-        for i in range(2):
-            out_shape[i + 2] *= self.block_size
-
-        validator.check_int(x_shape[1] % (self.block_size * self.block_size),
-                            0, Rel.EQ, 'x_shape[1] % (block_size*block_size)', self.name)
-        out_shape[1] //= self.block_size * self.block_size
-        return out_shape
-
-    def infer_dtype(self, x_dtype):
-        validator.check_subclass("x_dtype", x_dtype, mstype.tensor, self.name)
-        return x_dtype
-
 
 class SpaceToBatch(PrimitiveWithInfer):
     r"""
