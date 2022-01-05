@@ -46,6 +46,6 @@ AbstractBasePtr GreaterEqualInfer(const abstract::AnalysisEnginePtr &, const Pri
   auto infer_shape = GreaterEqualInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(GreaterEqual, prim::kPrimGreaterEqual, GreaterEqualInfer, nullptr, true);
+REGISTER_PRIMITIVE_C(kNameGreaterEqual, GreaterEqual);
 }  // namespace ops
 }  // namespace mindspore
