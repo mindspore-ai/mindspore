@@ -51,6 +51,8 @@ class Conv2DInfo : public OperatorInfo {
  private:
   int CheckConv2DPrimitiveType();
   int CheckIfSplit();
+  std::shared_ptr<ops::Conv2DFusion> GetNewConvPrimitive(const std::shared_ptr<ops::Conv2DFusion> &conv_prim,
+                                                         size_t dev_index, int cin_sum, int cout_sum);
 };
 }  // namespace opt
 }  // namespace mindspore
