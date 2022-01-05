@@ -34,12 +34,19 @@ int DataDistribution::RecordMaxMinValueArray(const std::vector<float> &data) {
   }
   real_min_ = std::min(min_num, real_min_);
   real_max_ = std::max(max_num, real_max_);
-  auto quantile_min = Quantile(data, 0.0001);
-  auto quantile_max = Quantile(data, 0.9999);
-  MS_LOG(DEBUG) << "real_min_:" << real_min_ << " real_max_:" << real_max_ << "quantile_min:" << quantile_min
-                << " quantile_max:" << quantile_max;
-  this->min_datas_.emplace_back(quantile_min);
-  this->max_datas_.emplace_back(quantile_max);
+  if (activation_quant_method_ == REMOVAL_OUTLIER) {
+    auto bak_data(data);
+    auto const q_min = static_cast<int>(0.0001 * bak_data.size());
+    auto const q_max = static_cast<int>(0.9999 * bak_data.size());
+    std::nth_element(bak_data.begin(), bak_data.begin() + q_min, bak_data.end());
+    auto quantile_min = bak_data.at(q_min);
+    std::nth_element(bak_data.begin() + q_min + 1, bak_data.begin() + q_max, bak_data.end());
+    auto quantile_max = bak_data.at(q_max);
+    MS_LOG(DEBUG) << "real_min_:" << real_min_ << " real_max_:" << real_max_ << " quantile_min:" << quantile_min
+                  << " quantile_max:" << quantile_max;
+    this->min_datas_.emplace_back(quantile_min);
+    this->max_datas_.emplace_back(quantile_max);
+  }
   return RET_OK;
 }
 
