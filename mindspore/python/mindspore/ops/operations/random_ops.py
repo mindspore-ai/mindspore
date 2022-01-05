@@ -655,7 +655,7 @@ class LogUniformCandidateSampler(PrimitiveWithInfer):
     """
     Generates random labels with a log-uniform distribution for sampled_candidates.
 
-    Random sampling a tensor of sampled classes from the range of integers [0, range_max).
+    Randomly samples a tensor of sampled classes from the range of integers [0, range_max).
 
     Args:
         num_true (int): The number of target classes per training example. Default: 1.
