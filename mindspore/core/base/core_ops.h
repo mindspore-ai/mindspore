@@ -623,6 +623,7 @@ inline const PrimitivePtr kPrimXlogy = std::make_shared<Primitive>("Xlogy");
 inline const PrimitivePtr kPrimInv = std::make_shared<Primitive>("Inv");
 inline const PrimitivePtr kPrimBitwiseOr = std::make_shared<Primitive>("BitwiseOr");
 inline const PrimitivePtr kPrimBitwiseAnd = std::make_shared<Primitive>("BitwiseAnd");
+inline const PrimitivePtr kPrimBitwiseXor = std::make_shared<Primitive>("BitwiseXor");
 
 // Image
 inline const PrimitivePtr kPrimNonMaxSuppressionV3 = std::make_shared<Primitive>("NonMaxSuppressionV3");
