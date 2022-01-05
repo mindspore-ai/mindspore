@@ -418,8 +418,8 @@ class KernelGraph : public FuncGraph {
   bool RemoveValueNodeFromGraph(const ValueNodePtr &value_node);
   void SetKernelInfoForNode(const AnfNodePtr &node) const;
   AnfNodePtr MakeValueNode(const AnfNodePtr &node) const;
-  void EnqueueActiveNodes(const AnfNodePtr &node, std::queue<AnfNodePtr> *visit_queue,
-                          mindspore::HashSet<AnfNodePtr> *visited_nodes, bool comm_first = true);
+  void EnqueueReadyNodes(const AnfNodePtr &node, std::queue<AnfNodePtr> *visit_queue,
+                         mindspore::HashSet<AnfNodePtr> *visited_nodes, bool comm_first = true);
   // update node edge list
   void UpdateNodeEdgeList(std::queue<AnfNodePtr> *seed_nodes);
   // add node depend edge by data edge
