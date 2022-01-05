@@ -134,7 +134,13 @@ class ClassAttrNamespace(Namespace):
         super().__init__(name, obj)
 
     def __getattr__(self, name):
-        for d in self.dicts:
+        d, = self.dicts
+        try:
             if hasattr(d, name):
                 return getattr(d, name)
-        raise NameError(name)
+            return d.__dict__[name]
+        except ValueError:
+            raise UnboundLocalError(name)
+        except KeyError:
+            logger.info(f"'{d.__class__.__name__ }' object has no attribute or method: '{name}', so will return None.")
+            raise AttributeError(name)
