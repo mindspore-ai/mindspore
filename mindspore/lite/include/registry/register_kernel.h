@@ -147,7 +147,9 @@ CreateKernel RegisterKernel::GetCreator(const schema::Primitive *primitive, Kern
     return nullptr;
   }
   KernelDescHelper kernel_desc = {desc->data_type, desc->type, StringToChar(desc->arch), StringToChar(desc->provider)};
-  return GetCreator(primitive, &kernel_desc);
+  auto ret = GetCreator(primitive, &kernel_desc);
+  desc->arch = CharToString(kernel_desc.arch);
+  return ret;
 }
 
 /// \brief Defined registering macro to register ordinary op kernel, which called by user directly.

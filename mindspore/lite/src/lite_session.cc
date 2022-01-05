@@ -37,6 +37,9 @@
 #include "src/weight_decoder.h"
 #include "src/runtime/runtime_allocator.h"
 #include "src/lite_kernel_util.h"
+#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
+#include "src/registry/register_kernel_impl.h"
+#endif
 #ifdef ENABLE_MINDRT
 #include "src/mindrt_executor.h"
 #endif
@@ -61,6 +64,9 @@ extern void common_log_init();
 #endif
 namespace lite {
 namespace {
+#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
+const char *const kArchCPU = "CPU";
+#endif
 bool NeedBitUppackCheck(const SchemaTensorWrapper &src_tensor) {
   MS_ASSERT(src_tensor.handler() != nullptr);
   MS_ASSERT(src_tensor.data() != nullptr);
@@ -106,6 +112,23 @@ int DecompressTensor(const SchemaTensorWrapper &src_tensor, Tensor *dst_tensor) 
 #endif
   }
 }
+#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
+bool ExistCustomCpuKernel() {
+  auto custom_kernel_creators = registry::RegistryKernelImpl::GetInstance()->GetCustomKernelCreators();
+  for (const auto &custom_kernel_creator : custom_kernel_creators) {  // <provider, <arch, <type, CreateKernel*>>>
+    if (custom_kernel_creator.second.empty()) {
+      continue;
+    }
+    if (std::any_of(custom_kernel_creator.second.begin(), custom_kernel_creator.second.end(),
+                    [](const std::pair<std::string, std::unordered_map<std::string, registry::CreateKernel *>> &pair) {
+                      return pair.first == kArchCPU && !pair.second.empty();
+                    })) {
+      return true;
+    }
+  }
+  return false;
+}
+#endif
 }  // namespace
 
 LiteSession::LiteSession() {
@@ -1377,6 +1400,11 @@ int LiteSession::RuntimeAllocatorInit() {
   if (RuntimeAllocatorValid() != RET_OK) {
     return RET_OK;
   }
+#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
+  if (ExistCustomCpuKernel()) {
+    return RET_OK;
+  }
+#endif
   if (runtime_allocator_ == nullptr) {
     runtime_allocator_ = std::shared_ptr<RuntimeAllocator>(new (std::nothrow) RuntimeAllocator());
   } else {

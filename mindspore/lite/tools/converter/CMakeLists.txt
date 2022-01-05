@@ -106,6 +106,7 @@ set(LITE_SRC ${API_SRC}
         ${SRC_DIR}/ms_tensor.cc
         ${SRC_DIR}/tensorlist.cc
         ${SRC_DIR}/kernel_registry.cc
+        ${SRC_DIR}/registry/register_kernel_impl.cc
         ${SRC_DIR}/inner_kernel.cc
         ${SRC_DIR}/lite_kernel.cc
         ${SRC_DIR}/lite_kernel_util.cc

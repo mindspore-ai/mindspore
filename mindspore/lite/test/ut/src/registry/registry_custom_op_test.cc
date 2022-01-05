@@ -129,12 +129,15 @@ std::shared_ptr<Kernel> TestCustomAddCreator(const std::vector<MSTensor> &inputs
 std::shared_ptr<KernelInterface> CustomAddInferCreator() { return std::make_shared<TestCustomOpInfer>(); }
 }  // namespace
 
-REGISTER_CUSTOM_KERNEL(CPU, BuiltInTest, kFloat32, Add, TestCustomAddCreator)
-REGISTER_CUSTOM_KERNEL_INTERFACE(BuiltInTest, Add, CustomAddInferCreator)
-
 class TestRegistryCustomOp : public mindspore::CommonTest {
  public:
   TestRegistryCustomOp() = default;
+  void SetUp() override {
+    static mindspore::registry::KernelReg g_CPUBuiltInTestkFloat32AddkernelReg("CPU", "BuiltInTest", kFloat32, "Add",
+                                                                               TestCustomAddCreator);
+    static mindspore::registry::KernelInterfaceReg g_BuiltInTestAdd_custom_inter_reg("BuiltInTest", "Add",
+                                                                                     CustomAddInferCreator);
+  }
 };
 
 TEST_F(TestRegistryCustomOp, TestCustomAdd) {
