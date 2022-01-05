@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 #include "backend/optimizer/ascend/ir_fission/transdata_split.h"
-#include "backend/optimizer/ascend/ascend_helper.h"
-#include "backend/session/anf_runtime_algorithm.h"
+#include <set>
 #include "debug/anf_ir_dump.h"
-#include "utils/trace_base.h"
 
 namespace mindspore {
 namespace opt {
