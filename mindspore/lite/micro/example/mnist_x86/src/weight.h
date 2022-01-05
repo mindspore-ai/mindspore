@@ -20,9 +20,11 @@
 #include "nnacl/int8/common_func_int8.h"
 #include "nnacl/int8/conv3x3_int8.h"
 #include "nnacl/int8/conv_int8.h"
+#include "nnacl/int8/fixed_point.h"
 #include "nnacl/int8/matmul_int8.h"
 #include "nnacl/int8/pooling_int8.h"
 #include "nnacl/int8/quant_dtype_cast_int8.h"
+#include "nnacl/int8/relux_int8.h"
 #include "nnacl/int8/reshape_int8.h"
 #include "nnacl/int8/softmax_int8.h"
 #include "wrapper/int8/matmul_int8_wrapper.h"
@@ -45,3 +47,7 @@ extern int32_t *g_Weight16;
 extern int32_t *g_Weight17;
 extern int8_t *g_Weight18;
 extern int32_t *g_Weight19;
+extern int8_t g_Weight6[];
+extern int32_t g_Weight7[];
+extern int8_t g_Weight8[];
+extern int32_t g_Weight9[];

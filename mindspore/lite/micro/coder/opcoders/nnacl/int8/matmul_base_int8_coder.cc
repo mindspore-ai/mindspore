@@ -197,7 +197,7 @@ int MatMulBaseInt8Coder::DoCode(CoderContext *const context) {
   if (bias_ptr_) {
     init_code.CodeMallocExpression(bias_ptr_, bias_ptr_size_);
     init_code.CodeFunction("memset", bias_ptr_, 0, bias_ptr_size_);
-    init_code.CodeFunction("memcpy", bias_ptr_, bias_tensor_, bias_ptr_size_);
+    init_code.CodeFunction("memcpy", bias_ptr_, bias_tensor_, bias_tensor_->Size());
   }
   if (param_->b_const_) {
     init_code.CodeMallocExpression(weight_bias_sums_, weight_bias_sums_size_);

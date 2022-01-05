@@ -106,8 +106,7 @@ int Calibrator::CompareOutputs(const Vector<tensor::MSTensor *> &outputs) const 
     CalibTensor *calib = calib_outputs_[i];
     MS_ERROR_IF_NULL(calib);
     if (output->tensor_name() != calib->tensor_name()) {
-      printf("error, output tensor name is not equal to calib\n");
-      return RET_ERROR;
+      printf("warning, output tensor name is not equal to calib\n");
     }
     if (output->ElementsNum() != calib->ElementsNum()) {
       printf("error, output elements num is not equal to calib\n");

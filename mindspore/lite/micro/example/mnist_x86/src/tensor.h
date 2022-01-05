@@ -18,8 +18,8 @@
 #ifndef MINDSPORE_LITE_MICRO_LIBRARY_SOURCE_TENSOR_H_
 #define MINDSPORE_LITE_MICRO_LIBRARY_SOURCE_TENSOR_H_
 
-#include "include/ms_tensor.h"
-#include "ir/format.h"
+#include "ms_tensor.h"
+#include "api/format.h"
 
 namespace mindspore {
 namespace lite {
@@ -39,7 +39,7 @@ struct LiteQuantParam {
 class MTensor : public mindspore::tensor::MSTensor {
  public:
   MTensor() = default;
-  MTensor(String name, TypeId type, Vector<int> shape) : tensor_name_(name), data_type_(type), shape_(shape) {}
+  MTensor(String name, TypeId type, Vector<int32_t> shape) : tensor_name_(name), data_type_(type), shape_(shape) {}
   ~MTensor() override;
 
   void set_allocator(AllocatorPtr allocator) override {}
@@ -50,7 +50,7 @@ class MTensor : public mindspore::tensor::MSTensor {
   mindspore::Format format() const override { return mindspore::NHWC; }
   Vector<int> shape() const override { return shape_; }
   void set_shape(const Vector<int> &shape) override { shape_ = shape; }
-  int ElementsNum() const override;
+  int64_t ElementsNum() const override;
   size_t Size() const override;
   String tensor_name() const override { return tensor_name_; }
   void set_tensor_name(const String &name) override { tensor_name_ = name; }
@@ -59,6 +59,7 @@ class MTensor : public mindspore::tensor::MSTensor {
   void set_data(void *data) override { data_ = data; }
   Vector<LiteQuantParam> quant_params() const override { return this->quant_params_; }
   void set_quant_params(const Vector<LiteQuantParam> quant_params) override { this->quant_params_ = quant_params; }
+  bool IsConst() const override {return this->data_ != nullptr;}
 
  private:
   String tensor_name_;
@@ -71,3 +72,4 @@ class MTensor : public mindspore::tensor::MSTensor {
 }  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_MICRO_LIBRARY_SOURCE_TENSOR_H_
+

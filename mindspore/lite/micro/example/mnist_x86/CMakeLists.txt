@@ -46,13 +46,17 @@ else()
     string(REPLACE "-g" "" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
     string(REPLACE "-g" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 endif()
+string(APPEND CMAKE_EXE_LINKER_FLAGS " -Wl,--gc-sections")
 
 add_subdirectory(src)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${HEADER_PATH})
+include_directories(${HEADER_PATH}/include)
 set(SRC_FILES
         benchmark/benchmark.cc
+        benchmark/calib_output.cc
         benchmark/load_input.c
 )
 add_executable(benchmark ${SRC_FILES})
 target_link_libraries(benchmark net -lm -pthread)
+

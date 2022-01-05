@@ -13,13 +13,14 @@ set(WRAPPER_LIB ${PKG_PATH}/tools/codegen/lib/libwrapper.a)
 set(OP_HEADER_PATH ${PKG_PATH}/tools/codegen/include)
 set(HEADER_PATH ${PKG_PATH}/runtime)
 
-message("operator lib path: ${OP_LIB}")
-message("operator header path: ${OP_HEADER_PATH}")
+message(STATUS "operator lib path: ${OP_LIB}")
+message(STATUS "operator header path: ${OP_HEADER_PATH}")
 
 add_compile_definitions(NOT_USE_STL)
 
 include_directories(${OP_HEADER_PATH})
 include_directories(${HEADER_PATH})
+include_directories(${HEADER_PATH}/include)
 
 if(NOT PLATFORM_ARM32 AND NOT PLATFORM_ARM64)
   include_directories(${PKG_PATH}/tools/codegen/third_party/include)
@@ -97,3 +98,4 @@ function(create_library)
 endfunction(create_library)
 string(CONCAT library_name "lib" net ".a")
 create_library()
+
