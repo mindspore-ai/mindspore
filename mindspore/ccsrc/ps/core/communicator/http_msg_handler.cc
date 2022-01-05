@@ -20,7 +20,7 @@
 namespace mindspore {
 namespace ps {
 namespace core {
-HttpMsgHandler::HttpMsgHandler(const std::shared_ptr<HttpMessageHandler> &http_msg, uint8_t *data, size_t len)
+HttpMsgHandler::HttpMsgHandler(const std::shared_ptr<HttpMessageHandler> &http_msg, uint8_t *const data, size_t len)
     : http_msg_(http_msg), data_(data), len_(len) {}
 
 void *HttpMsgHandler::data() const {

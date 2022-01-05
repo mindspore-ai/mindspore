@@ -36,7 +36,7 @@ class HttpMsgHandler : public MessageHandler {
 
  private:
   std::shared_ptr<HttpMessageHandler> http_msg_;
-  unsigned char *data_;
+  uint8_t *data_;
   size_t len_;
 };
 }  // namespace core

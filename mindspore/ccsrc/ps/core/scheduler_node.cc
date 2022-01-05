@@ -92,8 +92,10 @@ void SchedulerNode::RunRecovery() {
   node_manager_.set_next_server_rank_id(clusterConfig.initial_next_server_rank_id);
   node_manager_.set_total_node_num(clusterConfig.initial_total_node_num);
 
-  for (const auto kvs : initial_node_infos) {
-    auto client = std::make_shared<TcpClient>(kvs.second.ip_, kvs.second.port_, config_.get());
+  for (const auto &kvs : initial_node_infos) {
+    auto &node_id = kvs.first;
+    auto &node_info = kvs.second;
+    auto client = std::make_shared<TcpClient>(node_info.ip_, node_info.port_, config_.get());
     client->SetMessageCallback(
       [&](const std::shared_ptr<MessageMeta> &meta, const Protos &protos, const void *data, size_t size) {
         MS_LOG(INFO) << "received the response. ";
@@ -106,20 +108,20 @@ void SchedulerNode::RunRecovery() {
     MS_EXCEPTION_IF_NULL(message_meta);
     message_meta->set_cmd(NodeCommand::SCHEDULER_RECOVERY);
 
-    int rank_id = kvs.second.rank_id_;
+    auto rank_id = node_info.rank_id_;
     SendMetadataMessage scheduler_recovery_message;
     scheduler_recovery_message.set_worker_num(worker_num);
     scheduler_recovery_message.set_server_num(server_num);
     scheduler_recovery_message.set_rank_id(rank_id);
     if (!SendMessageSync(client, message_meta, Protos::PROTOBUF, scheduler_recovery_message.SerializeAsString().data(),
                          scheduler_recovery_message.ByteSizeLong())) {
-      if (kvs.second.node_role_ == NodeRole::WORKER) {
+      if (node_info.node_role_ == NodeRole::WORKER) {
         is_worker_timeout_ = true;
         break;
       }
-      MS_LOG(WARNING) << "Scheduler send recovery msg to " << kvs.first << " timeout!";
+      MS_LOG(WARNING) << "Scheduler send recovery msg to " << node_id << " timeout!";
     } else {
-      MS_LOG(INFO) << "Scheduler send recovery msg to " << kvs.first << " successful.";
+      MS_LOG(INFO) << "Scheduler send recovery msg to " << node_id << " successful.";
     }
   }
   MS_LOG(INFO) << "Scheduler recovery finish.";
@@ -1348,7 +1350,7 @@ void SchedulerNode::BroadcastTimeoutEvent() {
   auto initial_node_infos = clusterConfig.initial_registered_nodes_infos;
   const uint32_t event = static_cast<uint32_t>(ps::UserDefineEvent::kNodeTimeout);
   MS_LOG(INFO) << "Broad timeout event:" << event;
-  for (const auto kvs : initial_node_infos) {
+  for (const auto &kvs : initial_node_infos) {
     auto client = GetOrCreateClient(kvs.second);
     SendEvent(client, event);
   }
