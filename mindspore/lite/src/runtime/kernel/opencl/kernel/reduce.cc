@@ -101,7 +101,6 @@ int ReduceOpenCLKernel::SetShapeSizeIs0Axes() {
   CHECK_NULL_RETURN(axes_tensor->data());
 
   auto reduction_indices = reinterpret_cast<int *>(axes_tensor->data())[0];
-
   if (reduction_indices == -1) {
     reduce_axes_[kNHWC_H] = true;
     reduce_axes_[kNHWC_W] = true;
@@ -121,7 +120,6 @@ int ReduceOpenCLKernel::SetShapeSizeIs1Axes() {
   // get num_axes
   auto *axes_tensor = in_tensors_.at(1);
   int num_axes = axes_tensor->shape().front();
-
   // check axes tensor
   if (CheckParamLikeTensor("Reduce", "axes", axes_tensor, kNumberTypeInt32, {num_axes}) != RET_OK) {
     return RET_ERROR;
@@ -131,7 +129,7 @@ int ReduceOpenCLKernel::SetShapeSizeIs1Axes() {
   for (int i = 0; i < std::min(num_axes, MAX_SHAPE_SIZE); ++i) {
     axes_[i] = reinterpret_cast<int *>(axes_tensor->data())[i];
   }
-  if (num_axes > 2 || num_axes < 1) {
+  if (num_axes > C2NUM || num_axes < C1NUM) {
     MS_LOG(WARNING) << "Unsupported reduce num axes " << num_axes;
     return RET_PARAM_INVALID;
   }

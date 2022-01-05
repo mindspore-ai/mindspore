@@ -262,6 +262,17 @@ int ConcatOpenCLKernel::Prepare() {
     return RET_ERROR;
   }
   auto build_options_ext = CreateBuildOptionsExtByDType(this->registry_data_type_);
+  GpuTensorInfo out_image_info(out_tensors_.front());
+  if (out_image_info.C <= 4) {  // outC <= 4
+    build_options_ext.emplace_back(" -DOUTCTMPSIZE=4");
+  } else if (out_image_info.C <= 128) {  // outC <= 128
+    build_options_ext.emplace_back(" -DOUTCTMPSIZE=128");
+  } else if (out_image_info.C <= 1024) {  // outC <= 1024
+    build_options_ext.emplace_back(" -DOUTCTMPSIZE=1024");
+  } else {
+    build_options_ext.emplace_back(" -DOUTCTMPSIZE=" + to_string(out_image_info.C));
+  }
+
   ret = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Build kernel failed.";
@@ -289,17 +300,12 @@ int ConcatOpenCLKernel::Run() {
       return RET_ERROR;
     }
   }
-  if (axis_ == 3 && !Align_) {
-    if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data(), true) != CL_SUCCESS) {
-      MS_LOG(ERROR) << "SetKernelArg failed.";
-      return RET_ERROR;
-    }
-  } else {
-    if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data()) != CL_SUCCESS) {
-      MS_LOG(ERROR) << "SetKernelArg failed.";
-      return RET_ERROR;
-    }
+
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data()) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
   }
+
   if (ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_) != RET_OK) {
     MS_LOG(ERROR) << "RunKernel failed.";
     return RET_ERROR;
