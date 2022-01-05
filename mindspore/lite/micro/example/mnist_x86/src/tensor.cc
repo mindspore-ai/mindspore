@@ -60,8 +60,8 @@ MTensor::~MTensor() {
   }
 }
 
-int MTensor::ElementsNum() const {
-  int elements = 1;
+int64_t MTensor::ElementsNum() const {
+  int64_t elements = 1;
   for (int i : shape_) {
     elements *= i;
   }
@@ -81,3 +81,4 @@ void *MTensor::MutableData() {
 }
 }  // namespace lite
 }  // namespace mindspore
+

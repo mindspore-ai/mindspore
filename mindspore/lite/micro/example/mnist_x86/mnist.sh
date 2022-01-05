@@ -16,13 +16,18 @@
 set -e
 
 GEN=OFF
-while getopts 'g' OPT
+TARBALL=""
+while getopts 'r:g:' OPT
 do
-    case $OPT in
+    case "${OPT}" in
         g)
-            GEN=ON;;
+            GEN=$OPTARG
+            ;;
+        r)
+            TARBALL=$OPTARG
+            ;;
         ?)
-            echo "Usage: add -g or left it empty"
+            echo "Usage: add -g on , -r specific release.tar.gz"
     esac
 done
 
@@ -44,20 +49,6 @@ get_version() {
     VERSION_STR=${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REVISION}
 }
 
-download_inference() {
-    MINDSPORE_FILE_NAME="mindspore-lite-${VERSION_STR}-linux-x64"
-    local MINDSPORE_FILE="${MINDSPORE_FILE_NAME}.tar.gz"
-    local MINDSPORE_LITE_DOWNLOAD_URL="https://ms-release.obs.cn-north-4.myhuaweicloud.com/${VERSION_STR}/MindSpore/lite/release/linux/${MINDSPORE_FILE}"
-
-    if [ ! -e ${BASEPATH}/build/${MINDSPORE_FILE} ]; then
-      wget -c -O ${BASEPATH}/build/${MINDSPORE_FILE} --no-check-certificate ${MINDSPORE_LITE_DOWNLOAD_URL}
-    fi
-
-    tar xzvf ${BASEPATH}/build/${MINDSPORE_FILE} -C ${BASEPATH}/build/ || exit 1
-    rm ${BASEPATH}/build/${MINDSPORE_FILE} || exit 1
-    PKG_PATH=${BASEPATH}/build/${MINDSPORE_FILE_NAME}
-}
-
 download_mnist() {
     local MNIST_DOWNLOAD_URL=https://download.mindspore.cn/model_zoo/official/lite/mnist_lite/${MNIST_FILE}
 
@@ -74,9 +65,28 @@ gen_mnist() {
 mkdir -p ${BASEPATH}/build
 
 get_version
-download_inference
+MINDSPORE_FILE_NAME="mindspore-lite-${VERSION_STR}-linux-x64"
+MINDSPORE_FILE="${MINDSPORE_FILE_NAME}.tar.gz"
+echo "tar ball is: ${TARBALL}"
+if [ -n "$TARBALL" ]; then
+   echo "cp file"
+  cp ${TARBALL} ${BASEPATH}/build/${MINDSPORE_FILE}
+fi
 
-if [[ "${GEN}" == "ON" ]]; then
+download_inference() {
+    local MINDSPORE_LITE_DOWNLOAD_URL="https://ms-release.obs.cn-north-4.myhuaweicloud.com/${VERSION_STR}/MindSpore/lite/release/linux/${MINDSPORE_FILE}"
+    wget -c -O ${BASEPATH}/build/${MINDSPORE_FILE} --no-check-certificate ${MINDSPORE_LITE_DOWNLOAD_URL}
+}
+if [ ! -e ${BASEPATH}/build/${MINDSPORE_FILE} ]; then
+  echo "need down inference"
+  download_inference
+fi
+
+tar xzvf ${BASEPATH}/build/${MINDSPORE_FILE} -C ${BASEPATH}/build/ || exit 1
+#rm ${BASEPATH}/build/${MINDSPORE_FILE} || exit 1
+PKG_PATH=${BASEPATH}/build/${MINDSPORE_FILE_NAME}
+
+if [[ "${GEN}" == "ON" ]] || [[ "${GEN}" == "on" ]]; then
     echo "downloading mnist.ms!"
     download_mnist
     echo "generating mnist"

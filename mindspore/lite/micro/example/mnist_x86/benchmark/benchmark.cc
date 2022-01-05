@@ -19,9 +19,9 @@
 #include <string>
 #include <cstring>
 
-#include "include/lite_session.h"
-#include "include/ms_tensor.h"
-#include "include/errorcode.h"
+#include "lite_session.h"
+#include "ms_tensor.h"
+#include "errorcode.h"
 
 #include "load_input.h"
 #include "calib_output.h"
@@ -66,7 +66,7 @@ void PrintData(void *data, size_t data_number) {
 void TensorToString(tensor::MSTensor *tensor) {
   printf("name: %s, ", tensor->tensor_name().c_str());
   printf("DataType: %d, ", tensor->data_type());
-  printf("Elements: %d, ", tensor->ElementsNum());
+  printf("Elements: %d, ", static_cast<int>(tensor->ElementsNum()));
   printf("Shape: [");
   for (auto &dim : tensor->shape()) {
     printf("%d ", dim);
@@ -120,8 +120,19 @@ int main(int argc, const char **argv) {
       return lite::RET_ERROR;
     }
     context->thread_num_ = atoi(argv[5]);
+    if (context->thread_num_ < 1) {
+      printf("Thread number error! It should be greater than 0\n");
+      return lite::RET_ERROR;
+    }
     context->device_list_.resize(1);
-    context->device_list_[0] = {lite::DT_CPU, {{false, static_cast<lite::CpuBindMode>(atoi(argv[6]))}}};
+    context->device_list_[0].device_type_ = lite::DT_CPU;
+    context->device_list_[0].device_info_.cpu_device_info_.enable_float16_ = false;
+    lite::CpuBindMode bind_mode = static_cast<lite::CpuBindMode>(atoi(argv[6]));
+    if (bind_mode < lite::NO_BIND || bind_mode > lite::MID_CPU) {
+      printf("Thread bind mode error! 0: No bind, 1: Bind hign cpu, 2: Bind mid cpu.\n");
+      return lite::RET_ERROR;
+    }
+    context->device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_ = bind_mode;
     printf("context: ThreadNum: %d, BindMode: %d\n", context->thread_num_,
            context->device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_);
   }
@@ -143,6 +154,7 @@ int main(int argc, const char **argv) {
   }
   int ret = ReadInputsFile(const_cast<char *>(argv[1]), inputs_binbuf, inputs_size, inputs_num);
   if (ret != lite::RET_OK) {
+    delete session;
     return lite::RET_ERROR;
   }
   for (size_t i = 0; i < inputs_num; ++i) {
@@ -157,6 +169,7 @@ int main(int argc, const char **argv) {
     for (int i = 0; i < loop_count; ++i) {
       ret = session->RunGraph();
       if (ret != lite::RET_OK) {
+        delete session;
         return lite::RET_ERROR;
       }
     }
@@ -166,6 +179,7 @@ int main(int argc, const char **argv) {
   }
   ret = session->RunGraph();
   if (ret != lite::RET_OK) {
+    delete session;
     return lite::RET_ERROR;
   }
 
@@ -180,14 +194,19 @@ int main(int argc, const char **argv) {
   if (argc >= 5) {
     lite::Calibrator *calibrator = new (std::nothrow) lite::Calibrator();
     if (calibrator == nullptr) {
+      delete session;
       return lite::RET_NULL_PTR;
     }
     ret = calibrator->ReadCalibData(argv[4]);
     if (ret != lite::RET_OK) {
+      delete session;
+      delete calibrator;
       return lite::RET_ERROR;
     }
     ret = calibrator->CompareOutputs(outputs);
     if (ret != lite::RET_OK) {
+      delete session;
+      delete calibrator;
       return lite::RET_ERROR;
     }
     delete calibrator;
@@ -205,3 +224,4 @@ int main(int argc, const char **argv) {
   }
   return lite::RET_OK;
 }
+

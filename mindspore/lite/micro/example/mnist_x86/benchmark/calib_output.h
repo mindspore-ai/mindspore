@@ -18,9 +18,9 @@
 #ifndef MINDSPORE_LITE_MICRO_CALIB_OUTPUT_H_
 #define MINDSPORE_LITE_MICRO_CALIB_OUTPUT_H_
 
-#include "include/lite_utils.h"
-#include "include/ms_tensor.h"
-#include "include/errorcode.h"
+#include "lite_utils.h"
+#include "ms_tensor.h"
+#include "errorcode.h"
 
 namespace mindspore {
 namespace lite {

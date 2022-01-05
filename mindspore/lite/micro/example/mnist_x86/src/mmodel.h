@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_LITE_LIBRARY_SOURCE_MODEL_H_
 #define MINDSPORE_LITE_LIBRARY_SOURCE_MODEL_H_
 
-#include "include/model.h"
+#include "model.h"
 #include "session.h"
 #include <new>
 #include <string.h>
@@ -62,3 +62,4 @@ Model *Model::Import(const char *model_buf, size_t size) {
 }
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_LIBRARY_SOURCE_MODEL_H_
+

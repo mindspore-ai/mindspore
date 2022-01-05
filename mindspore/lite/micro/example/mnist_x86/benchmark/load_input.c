@@ -26,7 +26,7 @@ void *ReadInputData(const char *real_input_path, int *size) {
   }
   if (strstr(real_input_path, ".bin") || strstr(real_input_path, ".net")) {
     FILE *file;
-    file = fopen(real_input_path, "rb+");
+    file = fopen(real_input_path, "rb");
     if (!file) {
       printf("Can't find %s\n", real_input_path);
       return NULL;
