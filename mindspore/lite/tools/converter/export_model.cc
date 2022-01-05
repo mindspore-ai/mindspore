@@ -239,6 +239,7 @@ STATUS ExportModel(const FuncGraphPtr &graph, const converter::Flags *flags) {
   }
   meta_graph->version = Version();
   status = Storage::Save(*meta_graph, "model");
+  delete meta_graph;
   std::ostringstream oss;
   if (status != RET_OK) {
     oss << "SAVE GRAPH FAILED:" << status << " " << lite::GetErrorInfo(status);
@@ -246,8 +247,6 @@ STATUS ExportModel(const FuncGraphPtr &graph, const converter::Flags *flags) {
     std::cout << oss.str() << std::endl;
     return status;
   }
-
-  delete meta_graph;
   return status;
 }
 }  // namespace lite
