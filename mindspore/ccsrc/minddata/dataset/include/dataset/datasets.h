@@ -2342,6 +2342,51 @@ inline std::shared_ptr<EMnistDataset> MS_API EMnist(const std::string &dataset_d
                                          cache);
 }
 
+/// \class EnWik9Dataset
+/// \brief A source dataset for reading and parsing EnWik9 dataset.
+class MS_API EnWik9Dataset : public Dataset {
+ public:
+  /// \brief Function to create a EnWik9Dataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] num_samples The number of samples to be included in the dataset.
+  /// \param[in] shuffle The mode for shuffling data every epoch.
+  ///     Can be any of:
+  ///     ShuffleMode.kFalse - No shuffling is performed.
+  ///     ShuffleMode.kFiles - Shuffle files only.
+  ///     ShuffleMode.kGlobal - Shuffle both the files and samples.
+  /// \param[in] num_shards Number of shards that the dataset should be divided into.
+  /// \param[in] shard_id The shard ID within num_shards. This argument should be
+  ///     specified only when num_shards is also specified.
+  /// \param[in] cache Tensor cache to use.
+  EnWik9Dataset(const std::vector<char> &dataset_dir, int64_t num_samples, ShuffleMode shuffle, int32_t num_shards,
+                int32_t shard_id, const std::shared_ptr<DatasetCache> &cache);
+
+  /// Destructor of EnWik9Dataset.
+  ~EnWik9Dataset() = default;
+};
+
+/// \brief Function to create a EnWik9Dataset.
+/// \note The generated dataset has one column ['text'].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] num_samples The number of samples to be included in the dataset
+///     (Default = 0, means all samples).
+/// \param[in] shuffle The mode for shuffling data every epoch (Default=ShuffleMode.kGlobal).
+///     Can be any of:
+///     ShuffleMode.kFalse - No shuffling is performed.
+///     ShuffleMode.kFiles - Shuffle files only.
+///     ShuffleMode.kGlobal - Shuffle both the files and samples.
+/// \param[in] num_shards Number of shards that the dataset should be divided into (Default = 1).
+/// \param[in] shard_id The shard ID within num_shards. This argument should be
+///     specified only when num_shards is also specified (Default = 0).
+/// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
+/// \return Shared pointer to the EnWik9Dataset.
+inline std::shared_ptr<EnWik9Dataset> MS_API EnWik9(const std::string &dataset_dir, int64_t num_samples = 0,
+                                                    ShuffleMode shuffle = ShuffleMode::kGlobal, int32_t num_shards = 1,
+                                                    int32_t shard_id = 0,
+                                                    const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<EnWik9Dataset>(StringToChar(dataset_dir), num_samples, shuffle, num_shards, shard_id, cache);
+}
+
 /// \class FakeImageDataset
 /// \brief A source dataset for generating fake images.
 class MS_API FakeImageDataset : public Dataset {

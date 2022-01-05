@@ -39,6 +39,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/dbpedia_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/div2k_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/emnist_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/en_wik9_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/fake_image_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/fashion_mnist_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/flickr_node.h"
@@ -245,6 +246,18 @@ PYBIND_REGISTER(EMnistNode, 2, ([](const py::module *m) {
                         std::make_shared<EMnistNode>(dataset_dir, name, usage, toSamplerObj(sampler), nullptr);
                       THROW_IF_ERROR(emnist->ValidateParams());
                       return emnist;
+                    }));
+                }));
+
+PYBIND_REGISTER(EnWik9Node, 2, ([](const py::module *m) {
+                  (void)py::class_<EnWik9Node, DatasetNode, std::shared_ptr<EnWik9Node>>(*m, "EnWik9Node",
+                                                                                         "to create an EnWik9Node")
+                    .def(py::init([](std::string dataset_dir, int32_t num_samples, int32_t shuffle, int32_t num_shards,
+                                     int32_t shard_id) {
+                      std::shared_ptr<EnWik9Node> en_wik9 = std::make_shared<EnWik9Node>(
+                        dataset_dir, num_samples, toShuffleMode(shuffle), num_shards, shard_id, nullptr);
+                      THROW_IF_ERROR(en_wik9->ValidateParams());
+                      return en_wik9;
                     }));
                 }));
 
