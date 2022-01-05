@@ -2329,8 +2329,6 @@ bool AnfRuntimeAlgorithm::AddArgList(AbstractBasePtrList *args_spec_list, const 
       MS_LOG(EXCEPTION) << "Node input is a tuple_get_item but real input node shape is not a TupleShape. trace: "
                         << trace::DumpSourceLines(real_input);
     }
-    // cppcheck-suppress unreadVariable
-    auto lock = AnfUtils::GetAbstractLock(real_input.get());
     auto abs = real_input->abstract()->cast<abstract::AbstractTuplePtr>();
     MS_EXCEPTION_IF_NULL(abs);
     auto tuple_get_item_indexk = AnfAlgo::GetTupleGetItemOutIndex(cnode_input->cast<CNodePtr>());
@@ -2338,13 +2336,9 @@ bool AnfRuntimeAlgorithm::AddArgList(AbstractBasePtrList *args_spec_list, const 
     (void)args_spec_list->emplace_back(abs_i);
     return false;
   } else if (cnode_input->isa<CNode>() && AnfAlgo::GetCNodeName(cnode_input) == prim::kPrimReshape->name()) {
-    // cppcheck-suppress unreadVariable
-    auto lock = AnfUtils::GetAbstractLock(cnode_input.get());
     (void)args_spec_list->emplace_back(cnode_input->abstract());
     return true;
   } else {
-    // cppcheck-suppress unreadVariable
-    auto lock = AnfUtils::GetAbstractLock(real_input.get());
     (void)args_spec_list->emplace_back(real_input->abstract());
     return false;
   }
