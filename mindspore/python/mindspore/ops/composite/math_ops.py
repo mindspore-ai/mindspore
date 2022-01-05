@@ -784,7 +784,7 @@ def matmul(x1, x2, dtype=None):
     Raises:
         ValueError: If the last dimension of `x1` is not the same size as the
             second-to-last dimension of `x2`, or if a scalar value is passed in.
-        ValueError: If the shape of `x1` and `x2` could not broadcast together。
+        ValueError: If the shape of `x1` and `x2` could not broadcast together.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

@@ -598,7 +598,7 @@ class HyperMap(HyperMap_):
     """
     Hypermap will apply the set operation to input sequences.
 
-    Apply the operations to every elements of the sequence or nested sequence. Different
+    Apply the operations to every element of the sequence or nested sequence. Different
     from `Map`, the `HyperMap` supports to apply on nested structure.
 
     Args:
@@ -687,7 +687,7 @@ class Map(Map_):
 
     Inputs:
         - **args** (Tuple[sequence]) - If `ops` is not `None`, all the inputs should be the same length sequences,
-          and each row of the sequences. e.g. If args length is 2, and for `i` in length of each sequence
+          and each row of the sequences. e.g. If the length of args is 2, and for `i` in length of each sequence
           `(args[0][i], args[1][i])` will be the input of the operation.
 
           If `ops` is `None`, the first input is the operation, and the other is inputs.

@@ -1411,79 +1411,9 @@ class Conv2D(Primitive):
 class DepthwiseConv2dNative(PrimitiveWithInfer):
     r"""
     DepthwiseConv2dNative will be deprecated in the future. Please use :class:`mindspore.nn.Conv2d` instead.
-    Returns the depth-wise convolution value for the input.
-
-    Applies depthwise conv2d for the input, which will generate more channels with channel_multiplier.
-    Given an input tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})` where :math:`N` is the batch size,
-    :math:`C` is the channels, :math:`H` is height, :math:`W` is width and a filter tensor with kernel size
-    :math:`(\text{kernel_size[0]}, \text{kernel_size[1]})`, where :math:`\text{kernel_size[0]}` indicates the
-    kernel_size of height, :math:`\text{kernel_size[1]}` indicates the kernel_size of width, containing
-    :math:`C_{in} * \text{channel_multiplier}` convolutional filters of depth 1;
-    it applies different filters to each input channel (channel_multiplier channels
-    for each input channel has the default value 1), then concatenates the results together. The output has
-    :math:`C_{in} * \text{channel_multiplier}` channels.
-
-    Args:
-        channel_multiplier (int): The multiplier for the original output convolution. Its value must be greater than 0.
-        kernel_size (Union[int, tuple[int]]): The data type is int or a tuple of 2 integers. Specifies the height
-            and width of the 2D convolution window. Single int means the value is for both the height and the width of
-            the kernel. A tuple of 2 ints means the first value is for the height and the other is for the
-            width of the kernel.
-        mode (int): Modes for different convolutions. 0 Math convolution, 1 cross-correlation convolution ,
-                       2 deconvolution, 3 depthwise convolution. Default: 3.
-        pad_mode (str): Specifies padding mode. The optional values are
-            "same", "valid", "pad". Default: "valid".
-
-            - same: Adopts the way of completion. The height and width of the output will be the same as
-              the input `x`. The total number of padding will be calculated in horizontal and vertical
-              directions and evenly distributed to top and bottom, left and right if possible. Otherwise, the
-              last extra padding will be done from the bottom and the right side. If this mode is set, `pad`
-              must be 0.
-
-            - valid: Adopts the way of discarding. The possible largest height and width of output will be returned
-              without padding. Extra pixels will be discarded. If this mode is set, `pad` must be 0.
-
-            - pad: Implicit paddings on both sides of the input `x`. The number of `pad` will be padded to the input
-              Tensor borders. `pad` must be greater than or equal to 0.
-        pad (Union[int, tuple[int]]): Implicit paddings on both sides of the input `x`. If `pad` is one integer,
-                    the paddings of top, bottom, left and right are the same, equal to pad. If `pad` is a tuple
-                    with four integers, the paddings of top, bottom, left and right will be equal to pad[0],
-                    pad[1], pad[2], and pad[3] accordingly. Default: 0.
-        stride (Union(int, tuple[int])): The distance of kernel moving, an int number that represents
-            the height and width of movement are both strides, or a tuple of two int numbers that
-            represent height and width of movement respectively. Default: 1.
-        dilation (Union(int, tuple[int])): The data type is int or a tuple of 2 integers. Specifies the dilation rate
-                                      to use for dilated convolution. If set to be :math:`k > 1`, there will
-                                      be :math:`k - 1` pixels skipped for each sampling location. Its value must
-                                      be greater or equal to 1 and bounded by the height and width of the
-                                      input `x`. Default: 1.
-        group (int): Splits input into groups. Default: 1.
-
-    Inputs:
-        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
-        - **weight** (Tensor) - Set the size of kernel as :math:`(\text{kernel_size[0]}, \text{kernel_size[1]})`,
-          then the shape is :math:`(K, C_{in}, \text{kernel_size[0]}, \text{kernel_size[1]})`, `K` must be 1.
-
-    Outputs:
-        Tensor of shape :math:`(N, C_{in} * \text{channel_multiplier}, H_{out}, W_{out})`.
-
-    Raises:
-        TypeError: If `kernel_size`, `stride`, `pad` or `dilation` is neither an int nor a tuple.
-        TypeError: If `channel_multiplier` or `group` is not an int.
-        ValueError: If `stride` or `dilation` is less than 1.
-        ValueError: If `pad_mode` is not one of the following:'same', 'valid' or 'pad'.
-        ValueError: If `pad_mode` it not equal to 'pad' and `pad` is not equal to (0, 0, 0, 0).
 
     Supported Platforms:
         Deprecated
-
-    Examples:
-        >>> x = Tensor(np.ones([10, 32, 32, 32]), mindspore.float32)
-        >>> weight = Tensor(np.ones([1, 32, 3, 3]), mindspore.float32)
-        >>> depthwise_conv2d = ops.DepthwiseConv2dNative(channel_multiplier=3, kernel_size=(3, 3))
-        >>> output = depthwise_conv2d(x, weight)
-        >>> print(output.shape)
-        (10, 96, 30, 30)
     """
 
     @prim_attr_register
@@ -2317,7 +2247,7 @@ class NLLLoss(PrimitiveWithInfer):
         \quad w_{c}=\text { weight }[c] \cdot 1
 
     where :math:`x` is the logits, :math:`t` is the labels, :math:`w` is the weight,
-    N is the batch size, :math:`c` belonging [0, C-1] is class index, where :math:`C` is the number of classes.
+    N is the batch size, :math:`c` belonging to [0, C-1] is class index, where :math:`C` is the number of classes.
 
     If reduction is not 'none' (default 'mean'), then
 
@@ -2329,24 +2259,25 @@ class NLLLoss(PrimitiveWithInfer):
         \end{array}\right.
 
     Args:
-        reduction (str): Apply specific reduction method to the output: 'none', 'mean', 'sum'. Default: "mean".
+        reduction (str): Apply specific reduction method to the output: 'none', 'mean', or 'sum'. Default: 'mean'.
 
     Inputs:
-        - **logits** (Tensor) - Input logits, with shape :math:`(N, C)`. Data type only support float32 or float16.
-        - **labels** (Tensor) - Ground truth labels, with shape :math:`(N,)`. Data type only support int32.
+        - **logits** (Tensor) - Input logits, with shape :math:`(N, C)`. Data type only supports float32 or float16.
+        - **labels** (Tensor) - Ground truth labels, with shape :math:`(N,)`. Data type only supports int32.
         - **weight** (Tensor) - The rescaling weight to each class, with shape :math:`(C,)` and data type only
-          support float32 or float16.
+          supports float32 or float16.
 
     Outputs:
         Tuple of 2 tensors composed with `loss` and `total_weight`.
 
-        - **loss** (Tensor) - When `reduction` is 'none' and `logits` is 2D tensor, the `loss` shape is :math:`(N,)`.
-          Otherwise, the `loss` is a scalar. The data type is same with `input's`.
-        - **total_weight** (Tensor) - The `total_weight` is a scalar. The data type is same with `weight's`.
+        - **loss** (Tensor) - When `reduction` is 'none' and `logits` is a 2D tensor, the `loss` shape is :math:`(N,)`.
+          Otherwise, the `loss` is a scalar. The data type is the same with `input's`.
+        - **total_weight** (Tensor) - The `total_weight` is a scalar. The data type is the same with `weight's`.
 
     Raises:
         TypeError: If dtype of `logits` or `weight` is neither float16 nor float32, `labels` is not int32.
-        ValueError: If `logits` is not a one or two dimension tensor, `labels` and `weight` not a one dimension tensor.
+        ValueError: If `logits` is not a one or two dimension tensor, `labels` and `weight` are not
+                    one dimension tensors.
                     When `logits` is a two dimension tensor, the first dimension of `logits` is not equal to `labels`,
                     and second dimension of `logits` is not equal to `weight`.
                     When `logits` is a one dimension tensor, the dimensions of `logits`, `labels`
@@ -3230,7 +3161,7 @@ class L2Normalize(PrimitiveWithInfer):
         \displaylines{{\text{output} = \frac{x}{\sqrt{\text{max}(\parallel x_i \parallel^p , \epsilon)} } } \\
         {\parallel x_i \parallel^p = (\sum_{i}^{}\left | x_i  \right | ^p  )^{1/p}} }
 
-    where :math:`\epsilon` is epsilon amd :math:`\sum_{i}^{}\left | x_i  \right | ^p` calculate
+    where :math:`\epsilon` is epsilon and :math:`\sum_{i}^{}\left | x_i  \right | ^p` calculates
     along the dimension `axis`.
 
     Args:
@@ -3394,7 +3325,7 @@ class OneHot(Primitive):
     r"""
     Computes a one-hot tensor.
 
-    Makes a new tensor, whose locations represented by indices in `indices` take value `on_value`, while all
+    The locations represented by indices in `indices` take value `on_value`, while all
     other locations take value `off_value`.
 
     Note:
@@ -3408,7 +3339,7 @@ class OneHot(Primitive):
     Inputs:
         - **indices** (Tensor) - A tensor of indices. Tensor of shape :math:`(X_0, \ldots, X_n)`.
           Data type must be int32 or int64.
-        - **depth** (int) - A scalar defining the depth of the one hot dimension.
+        - **depth** (int) - A scalar defining the depth of the one-hot dimension.
         - **on_value** (Tensor) - A value to fill in output when `indices[j] = i`.
           With data type of float16 or float32.
         - **off_value** (Tensor) - A value to fill in output when `indices[j] != i`.
@@ -4777,7 +4708,7 @@ class FusedSparseAdam(PrimitiveWithInfer):
 
 class FusedSparseLazyAdam(PrimitiveWithInfer):
     r"""
-    Merges the duplicate value of the gradient and then updates parameters by the Adaptive Moment Estimation (LazyAdam)
+    Merges the duplicate value of the gradient and then updates parameters by the Adaptive Moment Estimation (Adam)
     algorithm. This operator is used when the gradient is sparse. The behavior is not equivalent to the
     original Adam algorithm, as only the current indices parameters will be updated.
 
@@ -5078,7 +5009,7 @@ class FusedSparseProximalAdagrad(PrimitiveWithInfer):
         TypeError: If `use_locking` is not a bool.
         TypeError: If dtype of `var`, `accum`, `lr`, `l1`, `l2` or `grad` is not float32.
         TypeError: If dtype of `indices` is not int32.
-        RuntimeError: If the data type of all of inputs except `indices` conversion of Parameter is not supported.
+        RuntimeError: If the data type of all inputs except `indices` conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -6470,7 +6401,7 @@ class LARSUpdate(PrimitiveWithInfer):
         TypeError: If `use_clip` is a bool.
         TypeError: If `weight`, `gradient`, `norm_weight` or `norm_gradient` is not a Tensor.
         TypeError: If `weight_decay` or `learning_rate` is neither a Number nor a Tensor.
-        TypeError: If shape of `gradient` is not same as `weight`.
+        TypeError: If shape of `gradient` is not the same as `weight`.
 
     Supported Platforms:
         ``Ascend``
@@ -7180,7 +7111,7 @@ class BasicLSTMCell(PrimitiveWithInfer):
 class DynamicRNN(PrimitiveWithInfer):
     r"""
     Applies a recurrent neural network to the input.
-    Only long short-term memory (LSTM) currently supported.
+    Only long short-term memory (LSTM) is supported currently.
 
     .. math::
         \begin{array}{ll} \\
@@ -7200,21 +7131,21 @@ class DynamicRNN(PrimitiveWithInfer):
     :math:`W_{ix}, b_{ix}` are the weight and bias used to transform from input :math:`x` to :math:`i`.
 
     Args:
-        cell_type (str): A string identifying the cell type in the op. Default: 'LSTM'.
+        cell_type (str): A string identifying the cell type in the operator. Default: 'LSTM'.
             Only 'LSTM' is currently supported.
-        direction (str): A string identifying the direction in the op. Default: 'UNIDIRECTIONAL'.
+        direction (str): A string identifying the direction in the operator. Default: 'UNIDIRECTIONAL'.
             Only 'UNIDIRECTIONAL' is currently supported.
-        cell_depth (int): An integer identifying the cell depth in the op. Default: 1.
-        use_peephole (bool): A bool identifying if use peephole in the op. Default: False.
-        keep_prob (float): A float identifying the keep prob in the op. Default: 1.0.
-        cell_clip (float): A float identifying the cell clip in the op. Default: -1.0.
-        num_proj (int): An integer identifying the num proj in the op. Default: 0.
-        time_major (bool): A bool identifying the time major in the op. Default: True.
+        cell_depth (int): An integer identifying the cell depth in the operator. Default: 1.
+        use_peephole (bool): A bool identifying if use peephole in the operator. Default: False.
+        keep_prob (float): A float identifying the keep prob in the operator. Default: 1.0.
+        cell_clip (float): A float identifying the cell clip in the operator. Default: -1.0.
+        num_proj (int): An integer identifying the number projection in the operator. Default: 0.
+        time_major (bool): A bool identifying the time major in the operator. Default: True.
             Only `True` is currently supported.
-        activation (str): A string identifying the type of activation function in the op. Default: 'tanh'.
+        activation (str): A string identifying the type of activation function in the operator. Default: 'tanh'.
             Only 'tanh' is currently supported.
-        forget_bias (float): A float identifying the forget bias in the op. Default: 0.0.
-        is_training (bool): A bool identifying is training in the op. Default: True.
+        forget_bias (float): A float identifying the forget bias in the operator. Default: 0.0.
+        is_training (bool): A bool identifying is training in the operator. Default: True.
 
     Inputs:
         - **x** (Tensor) - Current words. Tensor of shape :math:`(num\_step, batch\_size, input\_size)`.
@@ -7254,7 +7185,7 @@ class DynamicRNN(PrimitiveWithInfer):
         TypeError: If `keep_prob`, `cell_clip` or `forget_bias` is not a float.
         TypeError: If `use_peehpole`, `time_major` or `is_training` is not a bool.
         TypeError: If `x`, `w`, `b`, `seq_length`, `init_h` or `init_c` is not a Tensor.
-        TypeError: If dtype of `x`, `w`, `init_h` or `nit_c` is not float16.
+        TypeError: If dtype of `x`, `w`, `init_h` or `init_c` is not float16.
         TypeError: If dtype of `b` is neither float16 nor float32.
 
     Supported Platforms:
@@ -7361,19 +7292,20 @@ class DynamicGRUV2(PrimitiveWithInfer):
     :math:`\sigma` is the sigmoid function, and :math:`*` is the Hadamard product.
 
     Args:
-        direction (str): A string identifying the direction in the op. Default: 'UNIDIRECTIONAL'.
+        direction (str): A string identifying the direction in the operator. Default: 'UNIDIRECTIONAL'.
             Only 'UNIDIRECTIONAL' is currently supported.
-        cell_depth (int): An integer identifying the cell depth in the op. Default: 1.
-        keep_prob (float): A float identifying the keep prob in the op. Default: 1.0.
-        cell_clip (float): A float identifying the cell clip in the op. Default: -1.0.
-        num_proj (int): An integer identifying the num proj in the op. Default: 0.
-        time_major (bool): A bool identifying the time major in the op. Default: True.
-        activation (str) : A string identifying the type of activation function in the op. Default: 'tanh'.
+        cell_depth (int): An integer identifying the cell depth in the operator. Default: 1.
+        keep_prob (float): A float identifying the keep prob in the operator. Default: 1.0.
+        cell_clip (float): A float identifying the cell clip in the operator. Default: -1.0.
+        num_proj (int): An integer identifying the number projection in the operator. Default: 0.
+        time_major (bool): A bool identifying the time major in the operator. Default: True.
+        activation (str) : A string identifying the type of activation function in the operator. Default: 'tanh'.
             Only 'tanh' is currently supported.
-        gate_order (str): A string identifying the gate order in weight and bias. Default: 'rzh.
-            'zrh' is another option.
+        gate_order (str): A string identifying the gate order in weight and bias. Default: 'rzh'.
+            'zrh' is another option. Here, 'rzh' means the gate order is: reset gate, update gate, hidden gate.
+            'zrh' means the gate order is: update gate, reset gate, hidden gate.
         reset_after (bool): A bool identifying whether to apply reset gate after matrix multiplication. Default: True.
-        is_training (bool): A bool identifying is training in the op. Default: True.
+        is_training (bool): A bool identifying is training in the operator. Default: True.
 
     Inputs:
         - **x** (Tensor) - Current words.
@@ -7415,7 +7347,7 @@ class DynamicGRUV2(PrimitiveWithInfer):
 
         A note about the bias_type:
 
-        - If `bias_input` and `bias_hidden` both are `None`, `bias_type` is data type of `init_h`.
+        - If `bias_input` and `bias_hidden` both are `None`, `bias_type` is the data type of `init_h`.
         - If `bias_input` is not `None`, `bias_type` is the data type of `bias_input`.
         - If `bias_input` is `None` and `bias_hidden` is not `None`, `bias_type` is the data type of `bias_hidden`.
 
