@@ -216,6 +216,7 @@ int RunConverter(int argc, const char **argv) {
   meta_graph->version = Version();
   status = MetaGraphSerializer::Save(*meta_graph, flags->outputFile);
   if (status != RET_OK) {
+    delete meta_graph;
     oss.clear();
     oss << "SAVE GRAPH FAILED:" << status << " " << GetErrorInfo(status);
     MS_LOG(ERROR) << oss.str();
