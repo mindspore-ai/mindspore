@@ -19,7 +19,9 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
+import mindspore.ops as ops
 from mindspore.ops import operations as P
+
 
 class Net(nn.Cell):
     def __init__(self):
@@ -59,3 +61,24 @@ def test_select():
     output = select(Tensor(cond), Tensor(x), Tensor(y))
     expect = np.array([[1, 0], [1, 1]]).astype(np.bool)
     assert np.all(output.asnumpy() == expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_functional_select_scalar():
+    """
+    Feature: Test functional select operator. Support x or y is a int/float.
+    Description: Operator select's input `x` is a Tensor with int32 type, input `y` is a int.
+    Expectation: Assert result.
+    """
+    context.set_context(device_target="GPU")
+    cond = np.array([[True, False], [True, False]]).astype(np.bool)
+    x = np.array([[12, 1], [1, 0]]).astype(np.int32)
+    y = 2
+    output = ops.select(Tensor(cond), Tensor(x), y)
+    expect = [[12, 2], [1, 2]]
+    error = np.ones(shape=[2, 2]) * 1.0e-6
+    diff = output.asnumpy() - expect
+    assert np.all(diff < error)
+    assert np.all(-diff < error)
