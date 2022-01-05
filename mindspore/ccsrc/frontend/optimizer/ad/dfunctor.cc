@@ -128,7 +128,7 @@ void DFunctor::BackPropagateFv(const AnfNodePtr &fv, const AnfNodePtr &din) {
     fv_adjoint->second->RegisterKUser(default_val_node, 1);
     anfnode_to_envitem_[fv_node] = std::make_pair(embed_node, default_val_node);
   }
-  auto dfv = tape_->NewCNode({NewValueNode(prim::kPrimEnvGetItem), din, embed_node, default_val_node});
+  auto dfv = tape_->NewCNode({NewValueNode(prim::kPrimEnvironGet), din, embed_node, default_val_node});
   MS_LOG(DEBUG) << "BackPropagateFv find adjoint in anfnode_to_adjoin_ or anfnode_to_adjoin_indirect_fv_ fv "
                 << fv->func_graph()->ToString() << " " << fv->ToString() << ".";
   MS_LOG(DEBUG) << "BackPropagateFv get item from " << din->ToString() << " key " << embed_node->ToString() << ".";
@@ -421,7 +421,7 @@ AnfNodePtr DFunctor::AttachFvDoutToTape(const AnfNodePtr &grad_fv) {
     fv_adjoint->second->RegisterKUser(node, 1);
     auto sens = fv_adjoint->second->dout();
     new_grad_fv = tape_->NewCNode({
-      NewValueNode(prim::kPrimEnvSetItem),
+      NewValueNode(prim::kPrimEnvironSet),
       new_grad_fv,
       node,
       sens,
@@ -448,7 +448,7 @@ AnfNodePtr DFunctor::AttachIndirectFvDoutToTape(const AnfNodePtr &grad_fv) {
     fv_adjoint.second->RegisterKUser(node, 1);
     auto sens = fv_adjoint.second->dout();
     new_grad_fv = tape_->NewCNode({
-      NewValueNode(prim::kPrimEnvSetItem),
+      NewValueNode(prim::kPrimEnvironSet),
       new_grad_fv,
       node,
       sens,
@@ -486,9 +486,9 @@ void DFunctor::MapMorphism() {
   // Set output for tape closure.
   AnfNodePtr grad_fv;
   if (lift_fv_before_grad) {
-    grad_fv = AttachFvDoutToTape(NewValueNode(newenv));
+    grad_fv = AttachFvDoutToTape(NewEnviron(tape_));
   } else {
-    grad_fv = AttachIndirectFvDoutToTape(AttachFvDoutToTape(NewValueNode(newenv)));
+    grad_fv = AttachIndirectFvDoutToTape(AttachFvDoutToTape(NewEnviron(tape_)));
   }
 
   std::vector<AnfNodePtr> inputs{NewValueNode(prim::kPrimMakeTuple), grad_fv};

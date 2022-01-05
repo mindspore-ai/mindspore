@@ -65,14 +65,15 @@ class OptimizeIRPassLib {
   SubstitutionPtr real_op_eliminate_;
 
   // Env Item Eliminate
-  SubstitutionPtr env_get_item_eliminate_;
-  SubstitutionPtr env_get_item_add_eliminate_;
-  SubstitutionPtr env_get_set_item_eliminate_;
-  SubstitutionPtr env_get_item_depend_swap_;
-  SubstitutionPtr incorporate_env_getitem_;
-  SubstitutionPtr incorporate_env_getitem_bypass_recursive_;
-  SubstitutionPtr incorporate_env_getitem_switch_;
-  SubstitutionPtr incorporate_env_getitem_switch_layer_;
+  SubstitutionPtr environ_get_eliminate_;
+  SubstitutionPtr environ_get_add_eliminate_;
+  SubstitutionPtr environ_get_set_eliminate_;
+  SubstitutionPtr environ_get_depend_swap_;
+  SubstitutionPtr environ_add_const_eliminate_;
+  SubstitutionPtr incorporate_environ_get_;
+  SubstitutionPtr incorporate_environ_get_bypass_recursive_;
+  SubstitutionPtr incorporate_environ_get_switch_;
+  SubstitutionPtr incorporate_environ_get_switch_layer_;
 
   // Ref eliminate
   SubstitutionPtr make_ref_eliminate_;
@@ -84,7 +85,7 @@ class OptimizeIRPassLib {
   // Branch culling
   SubstitutionPtr switch_simplify_;
   SubstitutionPtr float_tuple_getitem_switch_;
-  SubstitutionPtr float_env_getitem_switch_;
+  SubstitutionPtr float_environ_get_switch_;
   SubstitutionPtr exchange_switch_depend_value_;
 
   SubstitutionPtr switch_partial_eliminater_;

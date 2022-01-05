@@ -167,12 +167,12 @@ AnfNodePtr EliminateUpdateStateWithDepend(const CNodePtr &update_state) {
   return input_monad;
 }
 
-bool ExistEnvGetItem(FuncGraphManagerPtr manager) {
+bool ExistEnvironGet(FuncGraphManagerPtr manager) {
   const FuncGraphSet &fgs = manager->func_graphs();
   for (auto &fg : fgs) {
     auto &nodes = fg->value_nodes();
     bool exist = std::any_of(nodes.begin(), nodes.end(),
-                             [](const auto &node) { return IsPrimitive(node.first, prim::kPrimEnvGetItem); });
+                             [](const auto &node) { return IsPrimitive(node.first, prim::kPrimEnvironGet); });
     if (exist) {
       return true;
     }
@@ -181,10 +181,10 @@ bool ExistEnvGetItem(FuncGraphManagerPtr manager) {
 }
 
 // Convert:
-// cnode1 = env_setitem(EnvInstance, para1, attach1)
-// cnode2 = env_setitem(cnode1, para2, attach2)
+// cnode1 = EnvironSet(EnvCreate(), para1, attach1)
+// cnode2 = EnvironSet(cnode1, para2, attach2)
 // ...
-// cnode_n = env_setitem(cnode_n-1, para_n-1, attach_n-1)
+// cnode_n = EnvironSet(cnode_n-1, para_n-1, attach_n-1)
 // maketuple = maketuple(cnode_n, ...)
 // updatestate = updatestate(umonad, maketuple)
 // To:
@@ -194,26 +194,26 @@ AnfNodePtr EliminateUpdateStateMakeTupleWithUselessEnv(const CNodePtr &update_st
   std::vector<AnfNodePtr> env_nodes;
   std::vector<AnfNodePtr> new_maketuple_inputs{NewValueNode(prim::kPrimMakeTuple)};
   size_t input_size = make_tuple->inputs().size();
-  bool has_env_setitem = false;
+  bool has_environ_set = false;
   for (size_t i = 1; i < input_size; i++) {
     auto node = make_tuple->input(i);
-    if (IsPrimitiveCNode(node, prim::kPrimEnvSetItem) && OnlyUsedByOneNode(node, make_tuple)) {
+    if (IsPrimitiveCNode(node, prim::kPrimEnvironSet) && OnlyUsedByOneNode(node, make_tuple)) {
       env_nodes.emplace_back(node);
-      has_env_setitem = true;
+      has_environ_set = true;
     } else if (node->isa<CNode>() && !IsPrimitiveCNode(node, prim::kPrimUpdateState)) {
       new_maketuple_inputs.emplace_back(node);
     }
   }
-  if (!has_env_setitem) {
+  if (!has_environ_set) {
     return nullptr;
   }
-  // Check env_setitem in MakeTuple
+  // Check EnvironSet in MakeTuple
   auto mgr = GetManager(update_state);
   if (mgr == nullptr) {
     return nullptr;
   }
-  // If exist env_getitem, don't eliminate env_setitem.
-  if (ExistEnvGetItem(mgr)) {
+  // If exist EnvironGet, don't eliminate EnvironSet.
+  if (ExistEnvironGet(mgr)) {
     return nullptr;
   }
   const size_t first_index = 1;
@@ -228,7 +228,7 @@ AnfNodePtr EliminateUpdateStateMakeTupleWithUselessEnv(const CNodePtr &update_st
     auto env_cnode = env->cast<CNodePtr>();
     auto env_input = env_cnode->input(first_index);
     auto attach = env_cnode->input(attach_index);
-    if (IsPrimitiveCNode(env_input, prim::kPrimEnvSetItem) && OnlyUsedByOneNode(env_input, env_cnode)) {
+    if (IsPrimitiveCNode(env_input, prim::kPrimEnvironSet) && OnlyUsedByOneNode(env_input, env_cnode)) {
       env_nodes.emplace_back(env_input);
       new_maketuple_inputs.insert(new_maketuple_inputs.begin() + no_env_node_size, attach);
     }

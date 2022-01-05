@@ -20,7 +20,7 @@ from functools import partial
 from types import FunctionType
 
 from mindspore import context
-from ..._c_expression import EnvInstance_, GradOperation_, HyperMap_, Map_, MultitypeFuncGraph_, Tail_, Shard_, \
+from ..._c_expression import GradOperation_, HyperMap_, Map_, MultitypeFuncGraph_, Tail_, Shard_, \
     TupleAdd_, TupleSlice_, UnpackCall_, ZipOperation_, ListAppend_, TupleGetItemTensor_, ListInsert_
 from ...common import dtype as mstype
 from ...common.api import ms_function, _pynative_executor, _wrap_func
@@ -29,7 +29,7 @@ from ..operations import _grad_ops
 from .. import operations as P
 from .. import signature as sig
 
-__all__ = [EnvInstance_, TupleAdd_, TupleSlice_, UnpackCall_, TupleGetItemTensor_]
+__all__ = [TupleAdd_, TupleSlice_, UnpackCall_, TupleGetItemTensor_]
 
 
 def add_flags(fn=None, **flags):
@@ -856,7 +856,7 @@ zip_operation = _ZipOperation('zip_operation')
 env_get = MultitypeFuncGraph("env_get")
 
 
-env_getitem = Primitive('env_getitem')
+environ_get = Primitive('EnvironGet')
 ref_to_embed = _grad_ops.RefToEmbed()
 zeros_like = P.ZerosLike()
 
@@ -864,4 +864,4 @@ zeros_like = P.ZerosLike()
 @env_get.register("EnvType", "Tensor")
 def _tensor_env_get(env, parameter):
     """Used to get env."""
-    return env_getitem(env, ref_to_embed(parameter), zeros_like(parameter))
+    return environ_get(env, ref_to_embed(parameter), zeros_like(parameter))

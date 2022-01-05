@@ -17,7 +17,7 @@
 """Data type for MindSpore."""
 
 import numpy as np
-from .._c_expression import typing, EnvInstance_
+from .._c_expression import typing
 from .._c_expression.typing import Type
 
 __dtype__ = [
@@ -161,7 +161,6 @@ _simple_types = {
     np.float16: float16,
     np.float32: float32,
     np.float64: float64,
-    EnvInstance_: env_type,
 }
 
 

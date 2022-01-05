@@ -45,7 +45,6 @@
 
 namespace py = pybind11;
 
-using EnvInstance = mindspore::EnvInstance;
 using GraphExecutorPy = mindspore::pipeline::GraphExecutorPy;
 using Pipeline = mindspore::pipeline::Pipeline;
 using PrimitivePy = mindspore::PrimitivePy;
@@ -117,8 +116,6 @@ PYBIND11_MODULE(_c_expression, m) {
          "Get the optimize graph proto string.")
     .def("set_jit_config", &GraphExecutorPy::SetJitConfig, py::arg("jit_config") = py::dict(), "Set the jit config.")
     .def("generate_arguments_key", &GraphExecutorPy::GenerateArgumentsKey, "Generate unique key of argument.");
-
-  (void)py::class_<EnvInstance, std::shared_ptr<EnvInstance>>(m, "EnvInstance_").def(py::init());
 
   (void)m.def("real_run_op", &mindspore::pynative::RealRunOp, "Run op pynatively.");
   (void)m.def("reset_op_id", &mindspore::pipeline::ResetOpId, "Reset Operator Id");

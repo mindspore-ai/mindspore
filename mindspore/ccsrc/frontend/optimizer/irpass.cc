@@ -19,7 +19,7 @@
 #include "frontend/optimizer/irpass/branch_culling.h"
 #include "frontend/optimizer/irpass/cast_eliminate.h"
 #include "frontend/optimizer/irpass/convert.h"
-#include "frontend/optimizer/irpass/env_item_eliminate.h"
+#include "frontend/optimizer/irpass/environ_eliminate.h"
 #include "frontend/optimizer/irpass/grad_var_prepare.h"
 #include "frontend/optimizer/irpass/gradient_eliminate.h"
 #include "frontend/optimizer/irpass/inline.h"
@@ -119,26 +119,28 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
     MakeSubstitution(std::make_shared<AllReduceConstElim>(), "reduce_all_const_elim", prim::kPrimAllReduce);
   real_op_eliminate_ = MakeSubstitution(std::make_shared<RealOpEliminate>(), "real_op_eliminate", prim::kPrimRealInner);
 
-  // Env Item Eliminate
-  env_get_item_eliminate_ =
-    MakeSubstitution(std::make_shared<EnvGetItemEliminater>(), "env_get_item_eliminate", prim::kPrimEnvGetItem);
-  env_get_item_add_eliminate_ =
-    MakeSubstitution(std::make_shared<EnvGetItemAddEliminater>(), "env_get_item_add_eliminate_", prim::kPrimEnvGetItem);
-  env_get_set_item_eliminate_ =
-    MakeSubstitution(std::make_shared<EnvGetSetItemEliminater>(), "env_get_set_item_eliminate", prim::kPrimEnvGetItem);
-  env_get_item_depend_swap_ =
-    MakeSubstitution(std::make_shared<EnvGetItemDependSwap>(), "env_get_item_depend_swap", prim::kPrimEnvGetItem);
+  // Environ Item Eliminate
+  environ_get_eliminate_ =
+    MakeSubstitution(std::make_shared<EnvironGetEliminater>(), "environ_get_eliminate", prim::kPrimEnvironGet);
+  environ_get_add_eliminate_ =
+    MakeSubstitution(std::make_shared<EnvironGetAddEliminater>(), "environ_get_add_eliminate_", prim::kPrimEnvironGet);
+  environ_get_set_eliminate_ =
+    MakeSubstitution(std::make_shared<EnvironGetSetEliminater>(), "environ_get_set_eliminate", prim::kPrimEnvironGet);
+  environ_get_depend_swap_ =
+    MakeSubstitution(std::make_shared<EnvironGetDependSwap>(), "environ_get_depend_swap", prim::kPrimEnvironGet);
+  environ_add_const_eliminate_ = MakeSubstitution(std::make_shared<EnvironAddConstEliminater>(),
+                                                  "environ_add_const_eliminate_", prim::kPrimEnvironAdd);
 
-  incorporate_env_getitem_bypass_recursive_ =
-    MakeSubstitution(std::make_shared<IncorporateEnvGetitem>(true), "incorporate_env_get_item", prim::kPrimEnvGetItem);
-  incorporate_env_getitem_switch_ = MakeSubstitution(std::make_shared<IncorporateEnvGetitemSwitch>(),
-                                                     "incorporate_env_getitem_switch", prim::kPrimEnvGetItem);
-  incorporate_env_getitem_ =
-    MakeSubstitution(std::make_shared<IncorporateEnvGetitem>(), "incorporate_env_get_item", prim::kPrimEnvGetItem);
+  incorporate_environ_get_bypass_recursive_ =
+    MakeSubstitution(std::make_shared<IncorporateEnvironGet>(true), "incorporate_environ_get", prim::kPrimEnvironGet);
+  incorporate_environ_get_switch_ = MakeSubstitution(std::make_shared<IncorporateEnvironGetSwitch>(),
+                                                     "incorporate_environ_get_switch", prim::kPrimEnvironGet);
+  incorporate_environ_get_ =
+    MakeSubstitution(std::make_shared<IncorporateEnvironGet>(), "incorporate_environ_get", prim::kPrimEnvironGet);
 
-  incorporate_env_getitem_switch_layer_ =
-    MakeSubstitution(std::make_shared<IncorporateEnvGetitemSwitchLayer>(), "incorporate_env_getitem_switch_layer",
-                     prim::kPrimEnvGetItem);
+  incorporate_environ_get_switch_layer_ =
+    MakeSubstitution(std::make_shared<IncorporateEnvironGetSwitchLayer>(), "incorporate_environ_get_switch_layer",
+                     prim::kPrimEnvironGet);
 
   // Ref eliminate
   make_ref_eliminate_ =
@@ -157,8 +159,8 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   switch_simplify_ = MakeSubstitution(std::make_shared<SwitchSimplify>(), "switch_simplify", prim::kPrimSwitch);
   float_tuple_getitem_switch_ = MakeSubstitution(std::make_shared<FloatTupleGetItemSwitch>(),
                                                  "float_tuple_getitem_switch", prim::kPrimTupleGetItem);
-  float_env_getitem_switch_ =
-    MakeSubstitution(std::make_shared<FloatEnvGetItemSwitch>(), "float_env_getitem_switch", prim::kPrimEnvGetItem);
+  float_environ_get_switch_ =
+    MakeSubstitution(std::make_shared<FloatEnvironGetSwitch>(), "float_environ_get_switch", prim::kPrimEnvironGet);
   exchange_switch_depend_value_ =
     MakeSubstitution(std::make_shared<ExchangeSwitchDependValue>(), "exchange_switch_depend_value", prim::kPrimSwitch);
 

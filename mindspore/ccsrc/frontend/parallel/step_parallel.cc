@@ -2862,7 +2862,7 @@ static AnfNodePtr FindGrad(const CNodePtr &cnode, size_t curr_depth) {
     if (!node->isa<CNode>()) {
       continue;
     }
-    if (!IsPrimitiveCNode(node, prim::kPrimEnvGetItem)) {
+    if (!IsPrimitiveCNode(node, prim::kPrimEnvironGet)) {
       return FindGrad(node->cast<CNodePtr>(), ++curr_depth);
     } else {
       return node;

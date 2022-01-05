@@ -120,6 +120,13 @@ constexpr auto kSparseApplyAdadelta = "SparseApplyAdadelta";
 constexpr auto kRoll = "Roll";
 constexpr auto kTanh = "Tanh";
 
+// Others
+constexpr auto kEnvironCreate = "EnvironCreate";
+constexpr auto kEnvironSet = "EnvironSet";
+constexpr auto kEnvironGet = "EnvironGet";
+constexpr auto kEnvironAdd = "EnvironAdd";
+
+//
 // Here list all primitives used in backend or some special primitives used by core.
 // GetNext
 inline const PrimitivePtr kPrimGetNext = std::make_shared<Primitive>(kGetNext);
@@ -710,9 +717,10 @@ inline const PrimitivePtr kPrimListAppend = std::make_shared<Primitive>("list_ap
 inline const PrimitivePtr kPrimListLen = std::make_shared<Primitive>("list_len");
 
 // Other miscellaneous
-inline const PrimitivePtr kPrimEnvSetItem = std::make_shared<Primitive>("env_setitem");
-inline const PrimitivePtr kPrimEnvGetItem = std::make_shared<Primitive>("env_getitem");
-inline const PrimitivePtr kPrimEnvAdd = std::make_shared<Primitive>("env_add");
+inline const PrimitivePtr kPrimEnvironCreate = std::make_shared<Primitive>(kEnvironCreate);
+inline const PrimitivePtr kPrimEnvironSet = std::make_shared<Primitive>(kEnvironSet);
+inline const PrimitivePtr kPrimEnvironGet = std::make_shared<Primitive>(kEnvironGet);
+inline const PrimitivePtr kPrimEnvironAdd = std::make_shared<Primitive>(kEnvironAdd);
 inline const PrimitivePtr kPrimMakeRefKey = std::make_shared<Primitive>("MakeRefKey");
 inline const PrimitivePtr kPrimGetRefKey = std::make_shared<Primitive>("get_ref_key");
 inline const PrimitivePtr kPrimMakeRef = std::make_shared<Primitive>("make_ref");

@@ -315,7 +315,7 @@ def test_while_if():
 
 
 # should compile success without zeros_like_tensor args mismatch, the generated graph files
-# should not contain env_getitem or env_setitem.
+# should not contain EnvironGet or EnvironSet.
 # InsertGradientOf primitive will make func_graph bprop_construct had BackPropAutoMonad flag set,
 # so all graph it used will be checked if any side effect it has, so the hyper_map_zeros_like
 # will have U as parameter, but the call site zeros_like(fv) don't have U argument.
@@ -347,7 +347,7 @@ def test_grad_fv_and_insert_gradient_of():
 
     net = FvAndInsertGradientNet()
     input_data = Tensor(np.array([1.0], np.float32))
-    # if use grad_all_list, the generated graph will have env_setitem
+    # if use grad_all_list, the generated graph will have EnvironSet
     # as gradient for inputs is constant zero, so it will depend on result of grad.
     grad_net = grad_by_list(net, ParameterTuple(net.trainable_params()))
     print(grad_net(input_data))

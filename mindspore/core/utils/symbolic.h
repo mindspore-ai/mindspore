@@ -26,7 +26,9 @@
 
 #include "utils/hash_map.h"
 #include "ir/anf.h"
+#include "ir/func_graph.h"
 #include "abstract/abstract_value.h"
+#include "base/core_ops.h"
 
 namespace mindspore {
 class SymbolicKeyInstance : public Value {
@@ -97,37 +99,15 @@ struct SymbolicKeyInstanceEqual {
   }
 };
 
-using EnvInstanceContentsMap =
-  mindspore::HashMap<SymbolicKeyInstancePtr, Any, SymbolicKeyInstanceHash, SymbolicKeyInstanceEqual>;
+static inline AnfNodePtr NewEnviron(const FuncGraphPtr &fg) {
+  return fg->NewCNode({NewValueNode(prim::kPrimEnvironCreate)});
+}
 
-// Environment mapping keys to values.
-// Keys are SymbolicKeyInstances, which represent nodes in the graph along
-// with inferred properties.
-class EnvInstance : public Value {
- public:
-  friend std::ostream &operator<<(std::ostream &out, const std::shared_ptr<EnvInstance> &env);
+static inline bool IsNewEnvironNode(const AnfNodePtr &node) { return IsPrimitiveCNode(node, prim::kPrimEnvironCreate); }
 
-  EnvInstance() = default;
-  ~EnvInstance() override = default;
-  MS_DECLARE_PARENT(EnvInstance, Value);
-  abstract::AbstractBasePtr ToAbstract() override {
-    return std::make_shared<abstract::AbstractScalar>(shared_from_base<EnvInstance>(), std::make_shared<EnvType>());
-  }
-  bool operator==(const EnvInstance &other) const;
-  bool operator==(const Value &other) const override;
-  EnvInstance(const EnvInstance &v) : Value(v) {}
-  EnvInstance(EnvInstance &&v) = default;
-  EnvInstance &operator=(EnvInstance &&src) noexcept { return *this; };
-
-  std::size_t hash() const override {
-    // deterministic characteristic of member variables.
-    return tid();
-  }
-};
-
-using EnvInstancePtr = std::shared_ptr<EnvInstance>;
-
-extern std::shared_ptr<EnvInstance> newenv;
+static inline abstract::AbstractBasePtr MakeEnvironAbstract() {
+  return std::make_shared<abstract::AbstractScalar>(kAnyValue, std::make_shared<EnvType>());
+}
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_UTILS_SYMBOLIC_H_

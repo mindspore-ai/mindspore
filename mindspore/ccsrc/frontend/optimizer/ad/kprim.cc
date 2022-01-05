@@ -611,7 +611,7 @@ AnfNodePtr KPrim::BuildOutput(const FuncGraphPtr &bprop_fg, const FuncGraphPtr &
 
     std::vector<AnfNodePtr> args;
     args.push_back(NewValueNode(prim::kPrimMakeTuple));
-    args.push_back(NewValueNode(newenv));
+    args.push_back(NewEnviron(bprop_fg));
     (void)args.insert(args.end(), inputs.begin() + 1, inputs.end());
     if (!extra_args.empty()) {
       args.insert(args.end(), extra_args.cbegin(), extra_args.cend());
@@ -622,7 +622,7 @@ AnfNodePtr KPrim::BuildOutput(const FuncGraphPtr &bprop_fg, const FuncGraphPtr &
   // Set bprop output as (env, dx)
   std::string model_name("mindspore.ops.composite.multitype_ops.add_impl");
   std::string python_ops("_tuple_add");
-  auto tuple_env = NewCNode({NewValueNode(prim::kPrimMakeTuple), NewValueNode(newenv)}, bprop_fg);
+  auto tuple_env = NewCNode({NewValueNode(prim::kPrimMakeTuple), NewEnviron(bprop_fg)}, bprop_fg);
   auto tuple_add_ops = NewValueNode(prim::GetPythonOps(python_ops, model_name));
   if (!extra_args.empty()) {
     extra_args.insert(extra_args.begin(), NewValueNode(prim::kPrimMakeTuple));
