@@ -631,7 +631,8 @@ AbstractBasePtr InferImplMakeRange(const AnalysisEnginePtr &, const PrimitivePtr
     if (slide.step <= 0) {
       MS_LOG(EXCEPTION) << "For 'range', while the argument 'start' " << slide.start
                         << " is less than or equal to the argument 'stop' " << slide.stop << ", "
-                        << "the argument 'step' must be more than 0, but the argument 'step' is " << slide.step << ".";
+                        << "the argument 'step' must be greater than 0, but the argument 'step' is " << slide.step
+                        << ".";
     }
 
     for (int64_t i = slide.start; i < slide.stop; i += slide.step) {
@@ -643,7 +644,7 @@ AbstractBasePtr InferImplMakeRange(const AnalysisEnginePtr &, const PrimitivePtr
     }
   } else {
     if (slide.step >= 0) {
-      MS_LOG(EXCEPTION) << "For 'range', while the argument 'start' " << slide.start << " is more than the argument "
+      MS_LOG(EXCEPTION) << "For 'range', while the argument 'start' " << slide.start << " is greater than the argument "
                         << "'stop' " << slide.stop << ", the argument 'step' must be less than 0, "
                         << "but the argument 'step' is " << slide.step << ".";
     }
@@ -773,7 +774,7 @@ AbstractBasePtr InferImplMakeRecord(const AnalysisEnginePtr &, const PrimitivePt
                                     const AbstractBasePtrList &args_spec_list) {
   // Inputs: at lease two objects of a subclass of AbstractBase.
   if (args_spec_list.size() < 2) {
-    MS_LOG(EXCEPTION) << "The size of arguments of MakeRecord operator must more than 1, but the input size is "
+    MS_LOG(EXCEPTION) << "The size of arguments of MakeRecord operator must greater than 1, but the input size is "
                       << args_spec_list.size() << ".";
   }
 

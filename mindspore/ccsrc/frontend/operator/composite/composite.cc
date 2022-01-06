@@ -769,7 +769,7 @@ FuncGraphPtr GradOperation::GenerateFuncGraph(const AbstractBasePtrList &args_sp
   MS_EXCEPTION_IF_NULL(args_spec_list[0]);
   AbstractFunctionPtr fn = dyn_cast<AbstractFunction>(args_spec_list[0]);
   if (fn == nullptr) {
-    MS_LOG(EXCEPTION) << "'GradOperation' arg0 must be a 'Function' or 'Cell', but got "
+    MS_LOG(EXCEPTION) << "For 'GradOperation', the first argument must be a 'Function' or 'Cell', but got "
                       << args_spec_list[0]->ToString();
   }
 

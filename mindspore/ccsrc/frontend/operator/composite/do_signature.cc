@@ -55,7 +55,7 @@ void ProcessDefault(const std::string &func_name, size_t actual_param_number, co
     for (size_t i = actual_param_number; i < sig_size; ++i) {
       auto default_value = signature[i].default_value;
       if (default_value == nullptr) {
-        MS_LOG(EXCEPTION) << "The size of input in the operator should be " << sig_size << ", but got "
+        MS_LOG(EXCEPTION) << "For '" << func_name << "', the size of input should be " << sig_size << ", but got "
                           << actual_param_number << ". Please check inputs of the operator.";
       } else {
         (*op_inputs).push_back(NewValueNode(default_value));
