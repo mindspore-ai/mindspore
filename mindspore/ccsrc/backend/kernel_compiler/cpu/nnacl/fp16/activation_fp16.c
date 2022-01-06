@@ -223,12 +223,11 @@ int GeluFp16(const float16_t *src, int length, float16_t *dst, bool approximate)
   if (approximate) {
     // dst = 0.5 * x * (1 + tanh((2 / pi) ^ 0.5 * (x + 0.044715x^3)))
 #ifdef ENABLE_NEON
-    int C8 = DOWN_ROUND(length, C8NUM);
-    for (; i < C8; i += C8NUM) {
-      float16x8_t in = vld1q_f16(src + i);
-      float16x8_t res =
-        0.5f * in * (1.0f + MS_TANHX8_F16(((float16_t)0.79788456080287f + (float16_t)0.035677408136f * in * in) * in));
-      vst1q_f16(dst + i, res);
+    int C4 = DOWN_ROUND(length, C4NUM);
+    for (; i < C4; i += C4NUM) {
+      float32x4_t in = MS_CVT_F32_F16(vld1_f16(src + i));
+      float32x4_t res = 0.5f * in * (1.0f + MS_TANHX4_F32((0.79788456080287f + 0.035677408136f * in * in) * in));
+      vst1_f16(dst + i, MS_CVT_F16_F32(res));
     }
 #endif
     for (; i < length; i++) {
