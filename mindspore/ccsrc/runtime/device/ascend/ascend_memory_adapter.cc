@@ -236,7 +236,6 @@ bool AscendMemAdapter::FreeToRts(void *devPtr) {
   }
   return true;
 }
-
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

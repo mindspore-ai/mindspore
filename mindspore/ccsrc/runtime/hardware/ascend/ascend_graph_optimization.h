@@ -18,15 +18,8 @@
 #define MINDSPORE_CCSRC_RUNTIME_HARDWARE_ASCEND_MINDSPORE_ASCEND_GRAPH_OPTIMIZATION_H
 
 #include <vector>
-#include <memory>
-#include <string>
 #include <set>
-#include <map>
-#include "runtime/hardware/device_context.h"
-#include "runtime/hardware/device_context_manager.h"
-#include "runtime/device/memory_manager.h"
-#include "runtime/device/ascend/ascend_kernel_runtime.h"
-#include "runtime/device/ascend/ascend_device_address.h"
+#include "backend/session/kernel_graph.h"
 
 namespace mindspore {
 namespace device {
