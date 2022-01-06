@@ -1364,7 +1364,7 @@ def build_searched_strategy(strategy_filename):
 
     Raises:
         ValueError: Strategy file is incorrect.
-        TypeError: strategy_filename is not str.
+        TypeError: strategy_filename is not a string.
 
     Examples:
         >>> strategy = build_searched_strategy("./strategy_train.ckpt")

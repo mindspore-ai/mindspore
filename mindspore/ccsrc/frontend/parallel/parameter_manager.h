@@ -32,10 +32,6 @@ constexpr char EXP_AVG_SQ_COL[] = "exp_avg_sq_col_";
 constexpr char EXP_AVG_SQ[] = "exp_avg_sq_";
 using RefKeyPair = std::pair<AnfNodePtr, std::vector<AnfNodePtr>>;
 using ParameterUsersInfo = std::pair<std::string, std::pair<AnfNodePtr, AnfNodeIndexSet>>;
-struct ParameterSliceInfo {
-  Shape slice_shape;
-  RankList group_ranks;
-};
 
 ParameterUsersInfo FindParameterUsers(const AnfNodePtr &node, bool (*IsCareNode)(const CNodePtr &));
 void CheckParameterSplit(const std::vector<AnfNodePtr> &all_nodes);

@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <string>
+#include <utility>
 #include "base/base.h"
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
@@ -35,6 +36,8 @@ Shapes GetNodeShape(const AnfNodePtr &node);
 std::vector<AnfNodePtr> ReplaceOpInput(const Operator &replace_op, const std::string &instance_name,
                                        const CNodePtr &node);
 std::string CreateInstanceName(const CNodePtr &node, size_t index);
+TensorInfo GetInputsTensorInfo(const std::pair<AnfNodePtr, int64_t> &param_info);
+AnfNodePtr CheckMakeTupleSplit(const AnfNodePtr &node, const FuncGraphManagerPtr &manager);
 
 // for specific scenarios
 RankList FindCommonMirrorGroup(const FuncGraphPtr &root);

@@ -59,6 +59,57 @@ bool IsSomePrimitive(const CNodePtr &cnode, const std::string &name) {
   return (prim->name() == name);
 }
 
+TensorInfo GetInputsTensorInfo(const std::pair<AnfNodePtr, int64_t> &param_info) {
+  auto user_cnode = param_info.first->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(user_cnode);
+  auto user_input_index = param_info.second;
+  OperatorInfoPtr op_info = user_cnode->user_data<OperatorInfo>();
+  MS_EXCEPTION_IF_NULL(op_info);
+
+  TensorInfo tensor_info;
+  if (IsPrimitiveCNode(user_cnode, prim::kPrimSend)) {
+    auto param_index = IntToSize(GetValue<int>(user_cnode->GetPrimalAttr(PARAM_INDEX)));
+    tensor_info = op_info->inputs_tensor_info()[param_index];
+  } else {
+    size_t input_tensor_info_size = op_info->inputs_tensor_info().size();
+    if (SizeToLong(input_tensor_info_size) <= user_input_index - 1) {
+      MS_LOG(EXCEPTION) << op_info->name() << ": the size of inputs tensor info is " << input_tensor_info_size
+                        << ", but the index is " << (user_input_index - 1);
+    }
+    tensor_info = op_info->inputs_tensor_info()[LongToSize(user_input_index - 1)];
+  }
+  return tensor_info;
+}
+
+AnfNodePtr CheckMakeTupleSplit(const AnfNodePtr &node, const FuncGraphManagerPtr &manager) {
+  auto node_users = manager->node_users()[node];
+
+  bool is_first_tensor_info = true;
+  TensorInfo first_tensor_info;
+  AnfNodePtr first_node;
+  for (auto &node_user : node_users) {
+    auto user_node = node_user.first->cast<CNodePtr>();
+    if (!user_node->has_user_data<OperatorInfo>()) {
+      continue;
+    }
+    auto op_info = user_node->user_data<OperatorInfo>();
+    auto tensor_info = GetInputsTensorInfo(node_user);
+    if (is_first_tensor_info) {
+      is_first_tensor_info = false;
+      first_tensor_info = tensor_info;
+      first_node = node_user.first;
+      continue;
+    }
+    if (first_tensor_info == tensor_info) {
+      continue;
+    } else {
+      MS_LOG(EXCEPTION) << "The node: " << node->DebugString()
+                        << " has multiple users, but the TensorInfo are different";
+    }
+  }
+  return first_node;
+}
+
 bool IsInNodeList(const CNodePtr &cnode, const std::set<string> &check_list) {
   return std::any_of(check_list.begin(), check_list.end(), [cnode](string in) { return IsSomePrimitive(cnode, in); });
 }

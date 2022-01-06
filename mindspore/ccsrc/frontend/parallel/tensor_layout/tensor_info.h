@@ -57,6 +57,15 @@ class TensorInfo {
     }
     return stra;
   }
+  bool operator==(const TensorInfo &other) {
+    if (this->slice_shape_ != other.slice_shape_) {
+      return false;
+    }
+    if (this->tensor_layout_ != other.tensor_layout_) {
+      return false;
+    }
+    return true;
+  }
 
  private:
   TensorLayout tensor_layout_;

@@ -196,52 +196,6 @@ static bool IsUsedParameter(const FuncGraphPtr &graph, const AnfNodePtr &paramet
   return true;
 }
 
-static RankList GetGroupByTensorInfo(const TensorInfo &tensor_info) {
-  CheckGlobalDeviceManager();
-  int64_t rank = g_device_manager->global_rank();
-  RankList stage_device_list = g_device_manager->GetDeviceListInThisStage();
-  Shape dev_matrix_shape = tensor_info.tensor_layout().device_arrangement().array();
-  Shape tensor_map = tensor_info.tensor_layout().tensor_map().array();
-
-  DeviceMatrix dev_matrix(rank, stage_device_list, dev_matrix_shape);
-  RankList group_devices;
-  if (dev_matrix.GetDevicesByTensorMap(tensor_map, &group_devices) != SUCCESS) {
-    MS_LOG(EXCEPTION) << "Get devices by tensor map failed";
-  }
-
-  std::sort(group_devices.begin(), group_devices.end());
-  return group_devices;
-}
-
-static ParameterSliceInfo GetParameterSliceInfo(const std::pair<AnfNodePtr, int64_t> &param_info) {
-  auto user_cnode = param_info.first->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(user_cnode);
-  auto user_input_index = param_info.second;
-  OperatorInfoPtr op_info = user_cnode->user_data<OperatorInfo>();
-  MS_EXCEPTION_IF_NULL(op_info);
-
-  TensorInfo tensor_info;
-  if (IsPrimitiveCNode(user_cnode, prim::kPrimSend)) {
-    auto param_index = IntToSize(GetValue<int>(user_cnode->GetPrimalAttr(PARAM_INDEX)));
-    tensor_info = op_info->inputs_tensor_info()[param_index];
-  } else {
-    size_t input_tensor_info_size = op_info->inputs_tensor_info().size();
-    if (SizeToLong(input_tensor_info_size) <= user_input_index - 1) {
-      MS_LOG(EXCEPTION) << op_info->name() << ": the size of inputs tensor info is " << input_tensor_info_size
-                        << ", but the index is " << (user_input_index - 1);
-    }
-    tensor_info = op_info->inputs_tensor_info()[LongToSize(user_input_index - 1)];
-  }
-
-  ParameterSliceInfo parameter_slice_info;
-  parameter_slice_info.slice_shape = tensor_info.slice_shape();
-  parameter_slice_info.group_ranks = GetGroupByTensorInfo(tensor_info);
-  MS_LOG(DEBUG) << "The op name is " << op_info->name() << ", the parameter index is " << (user_input_index - 1)
-                << ", the slice shape is " << tensor_info.slice_shape() << ", the origin shape is "
-                << tensor_info.shape() << ", the group rank list is " << parameter_slice_info.group_ranks;
-  return parameter_slice_info;
-}
-
 void CheckParameterSplit(const std::vector<AnfNodePtr> &all_nodes) {
   for (auto &node : all_nodes) {
     ParameterUsersInfo parameter_users_info = FindParameterUsers(node, IsParallelCareNode);
@@ -253,25 +207,16 @@ void CheckParameterSplit(const std::vector<AnfNodePtr> &all_nodes) {
     auto parameter_name = parameter_users_info.first;
     MS_LOG(INFO) << "The parameter: " << parameter_name << " has " << users_set.size() << " users";
     auto &first_user = users_set.front();
-    ParameterSliceInfo parameter_slice_info = GetParameterSliceInfo(first_user);
-    Shape first_user_slice_shape = parameter_slice_info.slice_shape;
-    RankList first_user_group_list = parameter_slice_info.group_ranks;
+    auto parameter_tensor_info = GetInputsTensorInfo(first_user);
 
     for (auto iter = users_set.begin() + 1; iter != users_set.end(); ++iter) {
       auto &user = *iter;
-      ParameterSliceInfo user_slice_info = GetParameterSliceInfo(user);
-      Shape user_slice_shape = user_slice_info.slice_shape;
-      RankList user_group_list = user_slice_info.group_ranks;
-      if (first_user_slice_shape != user_slice_shape) {
+      auto user_tensor_info = GetInputsTensorInfo(user);
+      if (parameter_tensor_info == user_tensor_info) {
+        continue;
+      } else {
         MS_LOG(EXCEPTION) << "The parameter: " << parameter_name
-                          << " has multiple users, but the slice shapes are different";
-      }
-
-      if (ParallelContext::GetInstance()->pipeline_stage_split_num() == 1 && first_user_group_list != user_group_list) {
-        MS_LOG(EXCEPTION) << "The parameter: " << parameter_name
-                          << " has multiple users, but the group rank list are different, "
-                          << "the group rank list for first user is " << first_user_group_list
-                          << ", and the group rank list for this user is " << user_group_list;
+                          << " has multiple users, but the TensorInfo are different";
       }
     }
   }

@@ -47,8 +47,8 @@ constexpr auto kAttrStreamID = "stream_id";
 constexpr uint32_t kHcomSecondaryStreamNum = 3;
 constexpr uint32_t kMaxCommonNodeNumPerStream = 350;
 
-constexpr uint32_t kTaskNumPerHcomNode = 200;
-constexpr uint32_t kTaskNumPerWorldHcomNode = 250;
+constexpr uint32_t kTaskNumPerHcomNode = 300;
+constexpr uint32_t kTaskNumPerWorldHcomNode = 350;
 constexpr uint32_t kTaskNumPerSameServerHcomNode = 125;
 constexpr uint32_t kTaskNumPerHcomSendRecvNode = 15;
 
