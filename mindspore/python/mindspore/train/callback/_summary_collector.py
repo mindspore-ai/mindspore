@@ -372,7 +372,7 @@ class SummaryCollector(Callback):
                              f'but got the: {landscape_size}')
 
     @staticmethod
-    def  _check_unit(unit):
+    def _check_unit(unit):
         """Check unit type and value."""
         check_value_type('unit', unit, str)
         if unit not in ["step", "epoch"]:
