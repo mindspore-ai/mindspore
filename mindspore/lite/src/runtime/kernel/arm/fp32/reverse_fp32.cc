@@ -76,6 +76,10 @@ int ReverseCPUKernel::ReSize() {
 
   for (int i = 0; i < param->num_axis_; i++) {
     int axis = param->axis_[i];
+    if (axis >= static_cast<int>(input_shape.size())) {
+      MS_LOG(ERROR) << "Reverse axis error!";
+      return RET_ERROR;
+    }
     int stride = Stride(axis);
     strides_[i] = stride;
     inCount_[i] = input_shape[axis];

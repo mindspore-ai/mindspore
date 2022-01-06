@@ -51,7 +51,7 @@ void ReduceInt8CPUKernel::OneAxis() {
   }
 }
 
-void ReduceInt8CPUKernel::TwoAxes() {
+int ReduceInt8CPUKernel::TwoAxes() {
   auto axis_info1 = axes_[0];
   auto axis_info2 = axes_[1];
   auto axis_sum = axis_info1 + axis_info2;
@@ -67,10 +67,13 @@ void ReduceInt8CPUKernel::TwoAxes() {
     }
   } else if (axis_sum == 4) {
     pattern_ = kernel::HC;
-  } else {
-    MS_ASSERT(axis_sum == 5);
+  } else if (axis_sum == 5) {
     pattern_ = kernel::WC;
+  } else {
+    MS_LOG(ERROR) << "Reduce axis_sum invalid : " << axis_sum;
+    return RET_ERROR;
   }
+  return RET_OK;
 }
 
 void ReduceInt8CPUKernel::ThreeAxes() {
@@ -89,17 +92,20 @@ void ReduceInt8CPUKernel::ThreeAxes() {
   }
 }
 
-void ReduceInt8CPUKernel::Match4DReducePattern() {
+int ReduceInt8CPUKernel::Match4DReducePattern() {
   if (num_axes_ == 1) {
     OneAxis();
   } else if (num_axes_ == 2) {
-    TwoAxes();
+    return TwoAxes();
   } else if (num_axes_ == 3) {
     ThreeAxes();
-  } else {
-    MS_ASSERT(num_axes_ == 4);
+  } else if (num_axes_ == 4) {
     pattern_ = kernel::NHWC;
+  } else {
+    MS_LOG(ERROR) << "Reduce num_axes invalid : " << num_axes_;
+    return RET_ERROR;
   }
+  return RET_OK;
 }
 
 int ReduceInt8CPUKernel::Init() {
@@ -107,7 +113,10 @@ int ReduceInt8CPUKernel::Init() {
   if (ret != RET_OK) {
     return ret;
   }
-  Match4DReducePattern();
+  ret = Match4DReducePattern();
+  if (ret != RET_OK) {
+    return ret;
+  }
   if (!this->in_tensors_[0]->shape().empty()) {
     this->valid_shape_ = true;
     ret = CalculateQuantArgs();

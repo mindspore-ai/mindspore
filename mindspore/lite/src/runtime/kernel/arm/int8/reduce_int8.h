@@ -52,9 +52,9 @@ class ReduceInt8CPUKernel : public ReduceBaseCPUKernel {
  private:
   int MallocTmpBuffer();
   void FreeTmpBuffer();
-  void Match4DReducePattern();
+  int Match4DReducePattern();
   void OneAxis();
-  void TwoAxes();
+  int TwoAxes();
   void ThreeAxes();
   void ReduceMean4DCalQuantParam();
   int CalculateQuantArgs();

@@ -34,6 +34,7 @@ using mindspore::schema::PrimitiveType_Resize;
 namespace mindspore::kernel {
 namespace {
 constexpr int kResizeSizeDouble = 2;
+constexpr size_t kShape4dDims = 4;
 }  // namespace
 
 int ResizeCPUKernel::Init() {
@@ -182,6 +183,10 @@ int ResizeCPUKernel::RunImpl(int task_id) {
   MSLITE_CHECK_PTR(output_data);
 
   auto input_shape = input->shape();
+  if (input_shape.size() != kShape4dDims) {
+    MS_LOG(ERROR) << "Resize only supports 4D data.";
+    return RET_ERROR;
+  }
   int unit = UP_DIV(new_height_, op_parameter_->thread_num_);
   int h_begin = unit * task_id;
   int h_end = std::min(h_begin + unit, new_height_);
