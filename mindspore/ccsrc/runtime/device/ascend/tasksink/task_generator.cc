@@ -17,7 +17,9 @@
 #include "runtime/device/ascend/tasksink/task_generator.h"
 
 #include <runtime/rt.h>
+#include "backend/session/anf_runtime_algorithm.h"
 #include "backend/kernel_compiler/task_stream.h"
+#include "utils/utils.h"
 #include "utils/ms_utils.h"
 #ifndef ENABLE_SECURITY
 #include "runtime/device/ascend/profiling/profiling_utils.h"
@@ -157,8 +159,7 @@ bool TaskGenerator::LaunchKernel(const CNodePtr &anf_node_ptr, uint32_t stream_i
   kernel_mod->set_fullname(anf_node_ptr->fullname_with_scope());
   kernel_mod->set_is_monad(AnfAlgo::IsNodeInputContainMonad(anf_node_ptr) && HasAbstractMonad(anf_node_ptr));
   auto op_name = AnfAlgo::GetCNodeName(anf_node_ptr);
-  constexpr size_t kNonePlaceholderIdx = 3;
-  if ((op_name == kSplitOpName || op_name == kSplitVOpName) && AnfAlgo::HasNodeAttr(kAttrNonTask, anf_node_ptr)) {
+  if (AnfAlgo::IsNonTaskOp(anf_node_ptr)) {
     MS_LOG(INFO) << "Skip task generation for NonTask op " << anf_node_ptr->fullname_with_scope();
     auto debug_info = std::make_shared<TaskDebugInfo>();
     MS_EXCEPTION_IF_NULL(debug_info);
@@ -171,15 +172,8 @@ bool TaskGenerator::LaunchKernel(const CNodePtr &anf_node_ptr, uint32_t stream_i
   if (op_name != kAtomicAddrCleanOpName) {
     size_t input_num = AnfAlgo::GetInputTensorNum(anf_node_ptr);
     for (size_t i = 0; i < input_num; ++i) {
-      if (op_name == kDynamicRNNOpName && i == kNonePlaceholderIdx) {
+      if (AnfAlgo::IsNoneInput(anf_node_ptr, i)) {
         continue;
-      }
-      if (op_name == kDynamicGRUV2OpName) {
-        auto none_index = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(anf_node_ptr, "placeholder_index");
-        auto item = find(none_index.begin(), none_index.end(), i);
-        if (item != none_index.end()) {
-          continue;
-        }
       }
       auto real_input_index = AnfAlgo::GetRealInputIndex(anf_node_ptr, i);
       auto device_address = AnfAlgo::GetPrevNodeOutputAddr(anf_node_ptr, real_input_index);
@@ -191,9 +185,7 @@ bool TaskGenerator::LaunchKernel(const CNodePtr &anf_node_ptr, uint32_t stream_i
       auto prenode_with_index = AnfAlgo::GetPrevNodeOutput(anf_node_ptr, i);
       MS_EXCEPTION_IF_NULL(prenode_with_index.first);
       if (AnfUtils::IsRealCNodeKernel(prenode_with_index.first)) {
-        if ((AnfAlgo::GetCNodeName(prenode_with_index.first) == kSplitOpName ||
-             AnfAlgo::GetCNodeName(prenode_with_index.first) == kSplitVOpName) &&
-            AnfAlgo::HasNodeAttr(kAttrNonTask, prenode_with_index.first->cast<CNodePtr>())) {
+        if (AnfAlgo::IsNonTaskOp(prenode_with_index.first->cast<CNodePtr>())) {
           // use memory offset to implement NonTask Type Split op
           // when op A -> split(NonTask) -> op B, op B's input addr is split's input0's addr + offset
           // offset is split's output index * split's output size

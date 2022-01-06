@@ -31,6 +31,7 @@
 #include "backend/kernel_compiler/tbe/tbe_json/tbe_json_utils.h"
 #include "utils/json_operation_utils.h"
 #include "utils/ms_context.h"
+#include "utils/utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -190,8 +191,8 @@ bool TbeAdapter::IsPlaceHolderInput(const AnfNodePtr &node, const OpIOInfoPtr &i
   }
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  if (AnfAlgo::HasNodeAttr("placeholder_index", cnode)) {
-    auto none_index = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, "placeholder_index");
+  if (AnfAlgo::HasNodeAttr(kAttrPlaceHolderIndex, cnode)) {
+    auto none_index = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, kAttrPlaceHolderIndex);
     return find(none_index.begin(), none_index.end(), input_ptr->index()) != none_index.end();
   } else {
     MS_LOG(EXCEPTION) << "Cnode: " << cnode_name << " doesn't has attribute placeholder_index.";

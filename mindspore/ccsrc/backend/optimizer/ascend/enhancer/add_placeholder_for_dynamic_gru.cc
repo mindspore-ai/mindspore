@@ -48,7 +48,7 @@ const AnfNodePtr InsertPlaceholderForDynamicGRUV2::Process(const FuncGraphPtr &f
   }
 
   std::vector<AnfNodePtr> new_inputs = {AnfAlgo::GetCNodePrimitiveNode(cnode)};
-  auto none_index = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, "placeholder_index");
+  auto none_index = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrPlaceHolderIndex);
   size_t real_input_index = 0;
   for (size_t in_idx = 0; in_idx < input_num + none_index.size(); in_idx++) {
     auto item = find(none_index.begin(), none_index.end(), in_idx);

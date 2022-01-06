@@ -260,7 +260,11 @@ void DataDumper::ConstructDumpTask(NotNull<const CNodePtr &> kernel, NotNull<aic
   dump_task->set_end_graph(false);
   auto iter = runtime_info_map_.find(kernel->UniqueName());
   if (iter == runtime_info_map_.end()) {
-    MS_LOG(EXCEPTION) << "[DataDump] kernel name not found in runtime_info_map";
+    if (AnfAlgo::IsNonTaskOp(kernel.get())) {
+      MS_LOG(INFO) << "[DataDump] kernel [" << kernel->UniqueName() << "] is a non-task node, skip dump.";
+      return;
+    }
+    MS_LOG(EXCEPTION) << "[DataDump] kernel name not found in runtime_info_map, kernel name: " << kernel->UniqueName();
   }
   MS_EXCEPTION_IF_NULL(iter->second);
   auto task_id = std::get<kTupleTaskId>(*iter->second);
@@ -461,6 +465,9 @@ void DataDumper::DumpKernelInput(const CNodePtr &kernel, void *args, NotNull<aic
   auto input_size = AnfAlgo::GetInputTensorNum(kernel);
   uint64_t offset = 0;
   for (size_t i = 0; i < input_size; ++i) {
+    if (AnfAlgo::IsNoneInput(kernel, i)) {
+      continue;
+    }
     aicpu::dump::Input input;
     auto input_node_with_index = AnfAlgo::GetPrevNodeOutput(kernel, i);
     auto input_node = input_node_with_index.first;

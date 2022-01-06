@@ -768,19 +768,26 @@ ShapeVector DeviceShapeTransfer::NDRNNBiasDeviceShape(const ShapeVector &shape, 
 
 ShapeVector DeviceShapeTransfer::GetAttrInputAndHiddenSize(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  ShapeVector input_hidden_size = {kAlign16, kAlign16};
-  if (!node->isa<CNode>()) {
+  std::vector<int64_t> input_hidden_size = {kAlign16, kAlign16};
+  if (!node->isa<CNode>() && !node->isa<Parameter>()) {
     return input_hidden_size;
   }
-  auto cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  if (!AnfAlgo::HasNodeAttr(kAttrHiddenSize, cnode) || !AnfAlgo::HasNodeAttr(kAttrInputSize, cnode)) {
-    MS_LOG(EXCEPTION)
-      << "Node with format FRACTAL_ZN_RNN or ND_RNN_BIAS should have hidden_size or input_size attr. Node info:"
-      << cnode->DebugString();
+
+  if (node->isa<Parameter>()) {
+    auto param = node->cast<ParameterPtr>();
+    input_hidden_size[0] = param->input_size();
+    input_hidden_size[1] = param->hidden_size();
+  } else {
+    CNodePtr cnode = node->cast<CNodePtr>();
+    if (cnode == nullptr || !AnfAlgo::HasNodeAttr(kAttrHiddenSize, cnode) ||
+        !AnfAlgo::HasNodeAttr(kAttrInputSize, cnode)) {
+      MS_LOG(EXCEPTION)
+        << "Node with format FRACTAL_ZN_RNN or ND_RNN_BIAS should have hidden_size or input_size attr. Node info:"
+        << node->DebugString();
+    }
+    input_hidden_size[0] = AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrInputSize);
+    input_hidden_size[1] = AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrHiddenSize);
   }
-  input_hidden_size[0] = AnfAlgo::GetNodeAttr<int64_t>(node, kAttrInputSize);
-  input_hidden_size[1] = AnfAlgo::GetNodeAttr<int64_t>(node, kAttrHiddenSize);
   return input_hidden_size;
 }
 

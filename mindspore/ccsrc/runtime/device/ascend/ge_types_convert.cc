@@ -80,7 +80,9 @@ ge::Format GeTypesConvert::GetGeFormat(const std::string &format, size_t shape_s
     {kOpFormat_DHWCN, ge::Format::FORMAT_DHWCN},
     {kOpFormat_NDC1HWC0, ge::Format::FORMAT_NDC1HWC0},
     {kOpFormat_FRACTAL_Z_3D, ge::Format::FORMAT_FRACTAL_Z_3D},
-    {kOpFormat_FRACTAL_ZN_LSTM, ge::Format::FORMAT_FRACTAL_ZN_LSTM}};
+    {kOpFormat_FRACTAL_ZN_LSTM, ge::Format::FORMAT_FRACTAL_ZN_LSTM},
+    {kOpFormat_ND_RNN_BIAS, ge::Format::FORMAT_ND_RNN_BIAS},
+    {kOpFormat_FRACTAL_ZN_RNN, ge::Format::FORMAT_FRACTAL_ZN_RNN}};
   MS_LOG(INFO) << "GetGeFormat format:" << format << " shape_size:" << shape_size;
   if (format == kOpFormat_DEFAULT) {
     return shape_size == k4dSize ? ge::Format::FORMAT_NCHW : ge::Format::FORMAT_ND;
