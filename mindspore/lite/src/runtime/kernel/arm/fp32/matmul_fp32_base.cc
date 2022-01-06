@@ -37,10 +37,8 @@ int MatmulRun(const void *cdata, int task_id, float, float) {
 }
 
 MatmulFp32BaseCPUKernel::~MatmulFp32BaseCPUKernel() {
-  if (is_pack_) {
-    FreeResizeBufA();
-    FreeResizeBufB();
-  }
+  FreeResizeBufA();
+  FreeResizeBufB();
   if (is_pack_ && out_need_aligned_ && oc_res_ != 0 && output_data_ != nullptr) {
     free(output_data_);
     output_data_ = nullptr;
@@ -250,7 +248,7 @@ int MatmulFp32BaseCPUKernel::ParallelRunIsNotPackByBatch(int task_id) const {
     const float *a = a_pack_ptr_ + index * params_->row_ * params_->deep_;
     const float *b = b_pack_ptr_ + index * params_->deep_ * params_->col_;
     float *c = output_data_ + index * params_->row_ * params_->col_;
-    GemmIsNotPack(a, b, c, &bias, params_->row_);
+    gemmIsNotPackFun(a, b, c, &bias, params_->row_, params_->deep_);
   }
   return RET_OK;
 }
@@ -294,7 +292,7 @@ int MatmulFp32BaseCPUKernel::ParallelRunByOC(int task_id) const {
   return RET_OK;
 }
 
-void MatmulFp32BaseCPUKernel::init_global_variable() {
+int MatmulFp32BaseCPUKernel::init_global_variable() {
 #ifdef ENABLE_AVX512
   matrix_a_pack_fun_ = params_->a_transpose_ ? RowMajor2ColMajor : RowMajor2RowMajor;
   matrix_b_pack_fun_ = params_->b_transpose_ ? RowMajor2Col64Major : RowMajor2Row64Major;
@@ -335,18 +333,27 @@ void MatmulFp32BaseCPUKernel::init_global_variable() {
   // need not aligned
   col_step_ = params_->col_;
 #endif
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(a_batch_, params_->row_align_, RET_ERROR);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(a_batch_ * params_->row_align_, params_->deep_, RET_ERROR);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(a_batch_, params_->col_align_, RET_ERROR);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(a_batch_ * params_->col_align_, params_->deep_, RET_ERROR);
+  if (params_->col_ == 1 && params_->b_const_) {
+    is_pack_ = false;
+    matrix_a_pack_size_ = a_batch_ * params_->row_ * params_->deep_;
+    matrix_b_pack_size_ = b_batch_ * params_->col_ * params_->deep_;
+    matrix_a_pack_fun_ = params_->a_transpose_ ? RowMajor2ColMajor : RowMajor2RowMajor;
+    matrix_b_pack_fun_ = params_->b_transpose_ ? RowMajor2ColMajor : RowMajor2RowMajor;
+  } else {
+    matrix_a_pack_size_ = a_batch_ * params_->row_align_ * params_->deep_;
+    matrix_b_pack_size_ = b_batch_ * params_->col_align_ * params_->deep_;
+  }
+  return RET_OK;
 }
 
 int MatmulFp32BaseCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   init_global_variable();
-  MS_CHECK_INT_MUL_NOT_OVERFLOW(a_batch_, params_->row_align_, RET_ERROR);
-  MS_CHECK_INT_MUL_NOT_OVERFLOW(a_batch_ * params_->row_align_, params_->deep_, RET_ERROR);
-  matrix_a_pack_size_ = a_batch_ * params_->row_align_ * params_->deep_;
-  MS_CHECK_INT_MUL_NOT_OVERFLOW(a_batch_, params_->col_align_, RET_ERROR);
-  MS_CHECK_INT_MUL_NOT_OVERFLOW(a_batch_ * params_->col_align_, params_->deep_, RET_ERROR);
-  matrix_b_pack_size_ = b_batch_ * params_->col_align_ * params_->deep_;
   if (matrix_a_pack_size_ < 0 || matrix_b_pack_size_ < 0) {
     MS_LOG(ERROR) << "Matrix pack size is negative "
                   << "matrix_a_pack_size=" << matrix_a_pack_size_ << "matrix_b_pack_size=" << matrix_b_pack_size_;
@@ -358,6 +365,8 @@ int MatmulFp32BaseCPUKernel::Prepare() {
     return ret;
   }
   if (params_->a_const_) {
+    auto a_tensor = in_tensors_[0];
+    CHECK_NULL_RETURN(a_tensor);
     if (InitBufferA() != RET_OK) {
       return RET_ERROR;
     }
@@ -394,10 +403,6 @@ int MatmulFp32BaseCPUKernel::ReSize() {
     set_workspace_size((matrix_a_pack_size_ + matrix_b_pack_size_) * static_cast<int>(sizeof(float)));
   }
   GetThreadCuttingPolicy();
-  if (params_->col_ == 1 && params_->deep_ == 1) {
-    is_pack_ = false;
-    parallel_fun_ = &MatmulFp32BaseCPUKernel::ParallelRunIsNotPackByBatch;
-  }
   auto ret = InitTmpOutBuffer();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "InitTmpOutBuffer error!";
@@ -438,7 +443,7 @@ int MatmulFp32BaseCPUKernel::InitTmpOutBuffer() {
 }
 
 void MatmulFp32BaseCPUKernel::GetThreadCuttingPolicy() {
-  if (params_->batch >= op_parameter_->thread_num_) {
+  if (params_->batch >= op_parameter_->thread_num_ || (params_->col_ == 1 && params_->b_const_)) {
     thread_count_ = op_parameter_->thread_num_;
     batch_stride_ = UP_DIV(params_->batch, thread_count_);
     batch_split_ = true;
@@ -452,6 +457,15 @@ void MatmulFp32BaseCPUKernel::GetThreadCuttingPolicy() {
 #endif
     batch_split_ = false;
     parallel_fun_ = &MatmulFp32BaseCPUKernel::ParallelRunByOC;
+  }
+  if (params_->col_ == 1 && params_->b_const_) {
+    is_pack_ = false;
+    parallel_fun_ = &MatmulFp32BaseCPUKernel::ParallelRunIsNotPackByBatch;
+    if (params_->deep_ == 1) {
+      gemmIsNotPackFun = GemmIsNotPack;
+    } else {
+      gemmIsNotPackFun = GemmIsNotPackOptimize;
+    }
   }
 }
 
@@ -517,12 +531,20 @@ int MatmulFp32BaseCPUKernel::Run() {
     PackNHWCXToNHWCFp32(output_data_, out_data, params_->batch, params_->row_, params_->col_, col_tile_);
   }
   if (!params_->a_const_) {
-    FreeResizeBufA();
+    if (is_pack_) {
+      FreeResizeBufA();
+    } else {
+      a_pack_ptr_ = nullptr;
+    }
   }
 
   if (!params_->b_const_) {
-    FreeResizeBufB();
+    if (is_pack_) {
+      FreeResizeBufB();
+    } else {
+      b_pack_ptr_ = nullptr;
+    }
   }
   return RET_OK;
-}
+}  // namespace mindspore::kernel
 }  // namespace mindspore::kernel

@@ -35,7 +35,7 @@
 #define MS_ADD512_EPI32 _mm512_add_epi32
 #define MS_MOV512_F32 _mm512_set1_ps
 #define MS_MOV512_EPI32 _mm512_set1_epi32
-#define MS_MLA512_F32(src1, src2, src3) _mm512_add_ps(src1, _mm512_mul_ps(src2, src3))
+#define MS_MLA512_F32(src1, src2, src3) _mm512_fmadd_ps(src2, src3, src1)
 #define MS_ST512_F32 _mm512_storeu_ps
 #define MS_ST512_EPI32(src1, src2) _mm512_storeu_si512((__m512i *)(src1), src2)
 #define MS_SUB512_F32 _mm512_sub_ps
@@ -93,4 +93,51 @@ static inline MS_FLOAT32X16 MS_TANHX16_F32(MS_FLOAT32X16 src) {
   return MS_MIN512_F32(MS_MAX512_F32(MS_DIV512_F32(a, b), neg), pos);
 }
 
-#endif
+#define MS_LOAD512X8_F32(src, input_ptr, num)               \
+  MS_FLOAT32X16 src##1 = MS_LD512_F32(input_ptr);           \
+  MS_FLOAT32X16 src##2 = MS_LD512_F32(input_ptr + 1 * num); \
+  MS_FLOAT32X16 src##3 = MS_LD512_F32(input_ptr + 2 * num); \
+  MS_FLOAT32X16 src##4 = MS_LD512_F32(input_ptr + 3 * num); \
+  MS_FLOAT32X16 src##5 = MS_LD512_F32(input_ptr + 4 * num); \
+  MS_FLOAT32X16 src##6 = MS_LD512_F32(input_ptr + 5 * num); \
+  MS_FLOAT32X16 src##7 = MS_LD512_F32(input_ptr + 6 * num); \
+  MS_FLOAT32X16 src##8 = MS_LD512_F32(input_ptr + 7 * num);
+
+#define MS_LOAD512X4_F32(src, input_ptr, num)               \
+  MS_FLOAT32X16 src##1 = MS_LD512_F32(input_ptr);           \
+  MS_FLOAT32X16 src##2 = MS_LD512_F32(input_ptr + 1 * num); \
+  MS_FLOAT32X16 src##3 = MS_LD512_F32(input_ptr + 2 * num); \
+  MS_FLOAT32X16 src##4 = MS_LD512_F32(input_ptr + 3 * num);
+
+#define MS_FMADD512X8_F32(src, weight, dst)       \
+  dst##1 = MS_MLA512_F32(dst##1, src##1, weight); \
+  dst##2 = MS_MLA512_F32(dst##2, src##2, weight); \
+  dst##3 = MS_MLA512_F32(dst##3, src##3, weight); \
+  dst##4 = MS_MLA512_F32(dst##4, src##4, weight); \
+  dst##5 = MS_MLA512_F32(dst##5, src##5, weight); \
+  dst##6 = MS_MLA512_F32(dst##6, src##6, weight); \
+  dst##7 = MS_MLA512_F32(dst##7, src##7, weight); \
+  dst##8 = MS_MLA512_F32(dst##8, src##8, weight);
+
+#define MS_FMADD512X4_F32(src, weight, dst)       \
+  dst##1 = MS_MLA512_F32(src##1, weight, dst##1); \
+  dst##2 = MS_MLA512_F32(src##2, weight, dst##2); \
+  dst##3 = MS_MLA512_F32(src##3, weight, dst##3); \
+  dst##4 = MS_MLA512_F32(src##4, weight, dst##4);
+
+#define MS_SET_ZERO512X8_F32(dst)             \
+  MS_FLOAT32X16 dst##1 = _mm512_setzero_ps(); \
+  MS_FLOAT32X16 dst##2 = _mm512_setzero_ps(); \
+  MS_FLOAT32X16 dst##3 = _mm512_setzero_ps(); \
+  MS_FLOAT32X16 dst##4 = _mm512_setzero_ps(); \
+  MS_FLOAT32X16 dst##5 = _mm512_setzero_ps(); \
+  MS_FLOAT32X16 dst##6 = _mm512_setzero_ps(); \
+  MS_FLOAT32X16 dst##7 = _mm512_setzero_ps(); \
+  MS_FLOAT32X16 dst##8 = _mm512_setzero_ps();
+
+#define MS_SET_ZERO512X4_F32(dst)             \
+  MS_FLOAT32X16 dst##1 = _mm512_setzero_ps(); \
+  MS_FLOAT32X16 dst##2 = _mm512_setzero_ps(); \
+  MS_FLOAT32X16 dst##3 = _mm512_setzero_ps(); \
+  MS_FLOAT32X16 dst##4 = _mm512_setzero_ps();
+#endif  // MINDSPORE_NNACL_AVX512_INTRINSICS_MS_SIMD_INSTRUCTIONS_H_
