@@ -348,6 +348,7 @@ GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNod
                                     const DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(session_);
   MS_EXCEPTION_IF_NULL(segment);
+  MS_LOG(INFO) << "Status record: start compile graph.";
   auto nodes = segment->nodes_;
   // Generate kernel graph.
   KernelGraphPtr graph = session_->ConstructKernelGraph(nodes, outputs, true, device_context);
@@ -386,12 +387,14 @@ GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNod
   }
   AnfAlgo::UpdateGraphValidRefPair(graph);
 
+  MS_LOG(INFO) << "Status record: end compile graph. graph id: " << graph_id;
   return graph_id;
 }
 
 GraphId GraphCompiler::CompileGraph(const FuncGraphPtr &func_graph, const DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(session_);
   MS_EXCEPTION_IF_NULL(func_graph);
+  MS_LOG(INFO) << "Status record: start compile graph.";
   // Generate kernel graph.
   std::vector<KernelGraphPtr> all_graphs;
   KernelGraphPtr root_graph = session_->ConstructKernelGraph(func_graph, &all_graphs);
@@ -420,6 +423,7 @@ GraphId GraphCompiler::CompileGraph(const FuncGraphPtr &func_graph, const Device
   root_graph->CacheGraphOutputToFrontNodeWithIndex({backend_node}, {output});
   AnfAlgo::UpdateGraphValidRefPair(root_graph);
 
+  MS_LOG(INFO) << "Status record: end compile graph. graph id: " << graph_id;
   return graph_id;
 }
 
@@ -569,12 +573,15 @@ KernelGraphPtr GraphCompiler::Fetch(const GraphInfo &graph_info) const {
 
 void GraphCompiler::CreateDeviceAddress(const KernelGraphPtr &graph, const DeviceContext *device_context,
                                         bool is_gradient_out) const {
+  MS_LOG(INFO) << "Status record: start create device address. graph id: " << graph->graph_id();
   CreateParameterDeviceAddress(device_context, graph);
   CreateValueNodeDeviceAddress(device_context, graph);
   CreateKernelOutputDeviceAddress(device_context, graph, is_gradient_out);
   CreateKernelWorkspaceDeviceAddress(device_context, graph);
   UpdateDeviceAddressForInplaceNode(graph);
   UpdateDeviceAddressForRefNode(graph);
+
+  MS_LOG(INFO) << "Status record: end create device address. graph id: " << graph->graph_id();
 }
 
 void GraphCompiler::CreateDeviceAddressWithoutWorkspace(const KernelGraphPtr &graph,

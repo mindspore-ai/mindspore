@@ -14,13 +14,11 @@
  * limitations under the License.
  */
 #include "backend/optimizer/ascend/ir_fusion/softmax_dropout_do_mask_v3_fusion.h"
-#include <memory>
 #include <vector>
 #include "backend/session/anf_runtime_algorithm.h"
 #include "ir/primitive.h"
 #include "utils/utils.h"
 #include "base/core_ops.h"
-#include "abstract/abstract_value.h"
 #include "backend/optimizer/common/helper.h"
 
 namespace mindspore {
@@ -50,8 +48,8 @@ const AnfNodePtr SoftmaxDropoutDoMaskV3Fusion::Process(const FuncGraphPtr &graph
 
   // create SoftmaxV2WithDropoutDoMaskV3D
   std::vector<AnfNodePtr> softmax_dropout_inputs = {
-    NewValueNode(std::make_shared<Primitive>(kSoftmaxV2WithDropoutDoMaskV3OpName)), softmax->input(1),
-    dropout->input(2)};
+    NewValueNode(std::make_shared<Primitive>(kSoftmaxV2WithDropoutDoMaskV3OpName)), softmax->input(kIndex1),
+    dropout->input(kIndex2)};
   auto softmax_dropout = NewCNode(softmax_dropout_inputs, graph);
   MS_EXCEPTION_IF_NULL(softmax_dropout);
   auto types = {AnfAlgo::GetOutputInferDataType(softmax, 0), AnfAlgo::GetOutputInferDataType(dropout, 0)};

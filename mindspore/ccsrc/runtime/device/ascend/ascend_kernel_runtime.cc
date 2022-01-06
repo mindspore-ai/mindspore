@@ -321,7 +321,6 @@ bool AscendKernelRuntime::Init() {
   auto profiler_manager = profiler::ProfilerManager::GetInstance();
   MS_EXCEPTION_IF_NULL(profiler_manager);
   auto profiling_flag = profiler_manager->GetProfilingEnableFlag();
-
   if (execution_mode == kPynativeMode && profiling_flag) {
     pynative_mode_profiling_flag_ = true;
   }
