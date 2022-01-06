@@ -106,14 +106,15 @@ void FileConfiguration::PersistNodes(const core::ClusterConfig &clusterConfig) c
   persist_js[kRecoveryNextServerRankId] = clusterConfig.initial_next_server_rank_id;
 
   auto node_infos = clusterConfig.initial_registered_nodes_infos;
-  for (const auto kvs : node_infos) {
+  for (const auto &kvs : node_infos) {
     std::unordered_map<std::string, std::string> res;
-    res["ip"] = kvs.second.ip_;
-    res["port"] = std::to_string(kvs.second.port_);
-    res["node_id"] = kvs.second.node_id_;
-    res["rank_id"] = std::to_string(kvs.second.rank_id_);
-    res["role"] = CommUtil::NodeRoleToString(kvs.second.node_role_);
-    res["alive"] = CommUtil::BoolToString(kvs.second.is_alive);
+    auto &node_info = kvs.second;
+    res["ip"] = node_info.ip_;
+    res["port"] = std::to_string(node_info.port_);
+    res["node_id"] = node_info.node_id_;
+    res["rank_id"] = std::to_string(node_info.rank_id_);
+    res["role"] = CommUtil::NodeRoleToString(node_info.node_role_);
+    res["alive"] = CommUtil::BoolToString(node_info.is_alive);
     persist_js["node_ids"].push_back(res);
   }
 

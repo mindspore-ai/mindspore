@@ -96,11 +96,10 @@ void SchedulerNode::RunRecovery() {
     auto &node_id = kvs.first;
     auto &node_info = kvs.second;
     auto client = std::make_shared<TcpClient>(node_info.ip_, node_info.port_, config_.get());
-    client->SetMessageCallback(
-      [&](const std::shared_ptr<MessageMeta> &meta, const Protos &protos, const void *data, size_t size) {
-        MS_LOG(INFO) << "received the response. ";
-        NotifyMessageArrival(meta);
-      });
+    client->SetMessageCallback([this](const std::shared_ptr<MessageMeta> &meta, const Protos &, const void *, size_t) {
+      MS_LOG(INFO) << "received the response. ";
+      NotifyMessageArrival(meta);
+    });
     client->Init();
     MS_EXCEPTION_IF_NULL(client);
 
