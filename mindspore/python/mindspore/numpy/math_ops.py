@@ -3712,9 +3712,9 @@ def arcsinh(x, dtype=None):
 
     Examples:
         >>> import mindspore.numpy as np
-        >>> x = np.arange(5).astype('float32')
+        >>> x = np.array([1., 2., 3., 4.], dtype=np.float32)
         >>> print(np.arcsinh(x))
-        [0.        0.8813736 1.4436355 1.8184465 2.0947125]
+        [0.8813736 1.4436355 1.8184465 2.0947125]
     """
     x = _cast_type_for_trigonometric(x)
     return _apply_tensor_op(F.asinh, x, dtype=dtype)
