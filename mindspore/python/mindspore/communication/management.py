@@ -90,7 +90,7 @@ def init(backend_name=None):
         The full name of HCCL is Huawei Collective Communication Library.
         The full name of NCCL is NVIDIA Collective Communication Library.
         This method should be used after set_context. The user needs to preset communication environment variables
-        before running the following example, please see the docstring of the mindspore.managerment.
+        before running the following example, please see the docstring of the mindspore.management.
 
     Args:
         backend_name (str): Backend, using HCCL/NCCL. If the `backend_name` is None, system will recognize
