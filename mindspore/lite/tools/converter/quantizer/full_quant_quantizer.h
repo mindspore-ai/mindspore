@@ -37,6 +37,7 @@
 #include "tools/converter/quantizer/calibrator.h"
 #include "tools/converter/quantizer/data_distribution.h"
 #include "src/common/quant_utils.h"
+#include "tools/converter/quantizer/quant_strategy.h"
 
 namespace mindspore::lite::quant {
 class FullQuantQuantizer : public Quantizer {
@@ -88,6 +89,7 @@ class FullQuantQuantizer : public Quantizer {
   std::set<mindspore::ActivationType> support_activation_;
 
   std::shared_ptr<Calibrator> calibrator_{nullptr};
+  std::shared_ptr<QuantStrategy> quant_strategy_{nullptr};
   session::LiteSession *fp32_session_{nullptr};
   Model *fp32_model_{nullptr};
 

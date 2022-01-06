@@ -38,7 +38,7 @@ class QuantStrategy {
                           const std::set<PrimitivePtr> &skip_check_dtype_ops,
                           const std::set<mindspore::ActivationType> &support_activation);
   bool CanTensorQuantized(const CNodePtr &cnode, const AnfNodePtr &input_node, int preferred_dim);
-  bool IsSkipOp(const AnfNodePtr &input_node);
+  bool IsSkipOp(const std::string &skip_node_name);
 
  private:
   size_t min_quant_weight_size_;

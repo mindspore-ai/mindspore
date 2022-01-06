@@ -100,10 +100,23 @@ int DoParameterBiasQuant(const ParameterPtr &bias, const PrimitivePtr &primitive
 
 int DeQuantData(mindspore::tensor::MSTensor *tensor, std::vector<double> *dequant_data, int preferred_dim = 0);
 
-int DeQuantData(const int8_t *tensor_data, int64_t elements_num, std::vector<lite::LiteQuantParam> quant_params,
-                std::vector<double> *dequant_data, int preferred_dim = 0);
-
 int DoBitPack(const size_t &bit_num, schema::TensorT *tensor_input);
+
+template <typename T>
+int DeQuantData(const int8_t *tensor_data, int64_t elements_num, std::vector<lite::LiteQuantParam> quant_params,
+                std::vector<T> *dequant_data, int preferred_dim = 0) {
+  if (quant_params.size() != 1) {
+    MS_LOG(ERROR) << "unexpected quant_params size: " << quant_params.size() << " only support per-layer now.";
+    return RET_ERROR;
+  }
+  auto scale = quant_params[0].scale;
+  auto zp = quant_params[0].zeroPoint;
+  dequant_data->resize(elements_num);
+  for (int64_t i = 0; i < elements_num; i++) {
+    dequant_data->at(i) = scale * (tensor_data[i] - zp);
+  }
+  return RET_OK;
+}
 
 template <typename T>
 int FixedBitQuantFilter(const AnfNodePtr &parameter, const tensor::TensorPtr &weight, const PrimitivePtr &primitive,
@@ -376,7 +389,7 @@ bool PackRepetition(size_t bit_num, schema::TensorT *tensor) {
   size_t coor_best_bit = 0;
   auto nz_cnt = CalCoorBestBit<T>(quant_data, elem_cnt, quant_params, unique_value_bit, &coor_best_bit);
   // 1. coor_best_bit 2. nz_cnt 3. quant_data_set size 4. unique_values 5. unique_value indexing 6. nz values coord
-  auto pack_sparsity_size_in_bit =
+  const auto pack_sparsity_size_in_bit =
     1 * k8Bit + 4 * k8Bit + bit_num + bit_num * unique_value_cnt + unique_value_bit * nz_cnt + nz_cnt * coor_best_bit;
   size_t pack_sparsity_size_in_byte = ceil(1.0 * pack_sparsity_size_in_bit / k8Bit);
   MS_LOG(DEBUG) << "coor_best_bit: " << coor_best_bit << " ori: " << origin_size_in_byte
