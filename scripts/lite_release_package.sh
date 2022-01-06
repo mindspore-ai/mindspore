@@ -44,10 +44,14 @@ function ios_release_package()
 function linux_release_package()
 {
     mkdir -p ${output_path}/release/linux/nnie/
-    cp ${input_path}/ubuntu_x86/avx/*.tar.gz* ${output_path}/release/linux/
+    mkdir -p ${output_path}/release/linux/x86_64/
+    mkdir -p ${output_path}/release/linux/aarch64/
+    cp ${input_path}/centos_x86/avx/*.tar.gz* ${output_path}/release/linux/x86_64/
+    cp ${input_path}/linux_aarch64/*.tar.gz* ${output_path}/release/linux/aarch64/
 
     cp -r ${input_path}/linux_aarch32/nnie/Hi* ${output_path}/release/linux/nnie/
-    cp ${input_path}/ubuntu_x86/nnie/Hi3516D/*.tar.gz* ${output_path}/release/linux/nnie/
+    cp -r ${input_path}/linux_aarch64/nnie/Hi* ${output_path}/release/linux/nnie/
+    cp ${input_path}/centos_x86/nnie/Hi3516D/*.tar.gz* ${output_path}/release/linux/nnie/
 }
 
 function windows_release_package()
