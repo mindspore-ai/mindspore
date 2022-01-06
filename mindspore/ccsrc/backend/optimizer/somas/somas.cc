@@ -796,7 +796,7 @@ void Somas::SummaryInputProcess(const session::KernelGraph *graph) {
     size_t origin_index = IntToSize(node_item.second.second);
     auto item_with_index = AnfAlgo::VisitKernelWithReturnType(origin_node, origin_index, true);
     auto node = item_with_index.first;
-    size_t index = IntToSize(item_with_index.second);
+    size_t index = item_with_index.second;
     auto iter = nodes_map_.find(node.get());
     if (iter != nodes_map_.end()) {
       auto input_node = iter->second.at(0);
