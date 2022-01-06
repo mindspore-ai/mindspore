@@ -17,11 +17,7 @@ set(CPACK_CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE})
 set(CPACK_PYTHON_EXE ${Python3_EXECUTABLE})
 set(CPACK_PYTHON_VERSION ${Python3_VERSION_MAJOR}.${Python3_VERSION_MINOR})
 
-if(ENABLE_GE)
-    set(CPACK_MS_BACKEND "ge")
-    set(CPACK_MS_TARGET "ascend or cpu")
-    set(CPACK_MS_PACKAGE_NAME "mindspore")
-elseif(ENABLE_GPU)
+if(ENABLE_GPU)
     set(CPACK_MS_BACKEND "ms")
     set(CPACK_MS_TARGET "gpu or cpu")
     if(BUILD_DEV_MODE)
@@ -232,31 +228,29 @@ if(ENABLE_CPU AND NOT WIN32)
     )
 endif()
 
-if(NOT ENABLE_GE)
-    if(ENABLE_D OR ENABLE_ACL)
-        if(DEFINED ENV{ASCEND_CUSTOM_PATH})
-            set(ASCEND_PATH $ENV{ASCEND_CUSTOM_PATH})
-        else()
-            set(ASCEND_PATH /usr/local/Ascend)
-        endif()
-        set(ASCEND_DRIVER_PATH ${ASCEND_PATH}/driver/lib64/common)
+if(ENABLE_D OR ENABLE_ACL)
+    if(DEFINED ENV{ASCEND_CUSTOM_PATH})
+        set(ASCEND_PATH $ENV{ASCEND_CUSTOM_PATH})
+    else()
+        set(ASCEND_PATH /usr/local/Ascend)
+    endif()
+    set(ASCEND_DRIVER_PATH ${ASCEND_PATH}/driver/lib64/common)
 
-        if(ENABLE_D)
-            install(
-              TARGETS hccl_plugin
-              DESTINATION ${INSTALL_LIB_DIR}
-              COMPONENT mindspore
-            )
-        endif()
-    elseif(ENABLE_TESTCASES)
+    if(ENABLE_D)
         install(
-            FILES
-                ${CMAKE_BINARY_DIR}/graphengine/metadef/graph/libgraph.so
-                ${BUILD_PATH}/graphengine/c_sec/lib/libc_sec.so
-            DESTINATION ${INSTALL_LIB_DIR}
-            COMPONENT mindspore
+          TARGETS hccl_plugin
+          DESTINATION ${INSTALL_LIB_DIR}
+          COMPONENT mindspore
         )
     endif()
+elseif(ENABLE_TESTCASES)
+    install(
+        FILES
+            ${CMAKE_BINARY_DIR}/graphengine/metadef/graph/libgraph.so
+            ${BUILD_PATH}/graphengine/c_sec/lib/libc_sec.so
+        DESTINATION ${INSTALL_LIB_DIR}
+        COMPONENT mindspore
+    )
 endif()
 
 if(MS_BUILD_GRPC)

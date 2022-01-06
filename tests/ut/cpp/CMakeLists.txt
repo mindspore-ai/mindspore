@@ -255,7 +255,7 @@ if(MINDSPORE_PROTO_LIST)
     set_target_properties(proto_input_ut PROPERTIES COMPILE_FLAGS "-Wno-unused-variable")
 endif()
 
-if(ENABLE_GE)
+if(ENABLE_D)
     if(ENABLE_TRAIN)
         target_link_libraries(ut_tests PRIVATE graph ge_runner)
     else()

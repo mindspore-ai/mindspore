@@ -33,7 +33,6 @@ class TestOpAdapter : public UT::Common {
   TestOpAdapter() {}
 };
 
-#if (!defined ENABLE_GE)
 #if 0
 // fix conv2d ut
 TEST_F(TestOpAdapter, TestSpecilization_Conv2D) {
@@ -93,7 +92,6 @@ TEST_F(TestOpAdapter, TestSetAttr_Conv2d_Primitive) {
 
     delete adpt;
 }
-#endif
 #endif
 }  // namespace transform
 }  // namespace mindspore

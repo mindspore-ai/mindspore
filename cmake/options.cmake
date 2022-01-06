@@ -1,7 +1,6 @@
 option(ENABLE_D "Enable d" OFF)
 option(ENABLE_GPU "Enable gpu" OFF)
 option(ENABLE_CPU "Enable cpu" OFF)
-option(ENABLE_GE "Enable graph engine as backend to execute" OFF)
 option(ENABLE_MINDDATA "Enable minddata compile" OFF)
 option(ENABLE_TRAIN "Enable ge train, default off(only infer)" OFF)
 option(ENABLE_TESTCASES "Run testcases switch, default off" OFF)
@@ -30,7 +29,7 @@ option(BUILD_DEV_MODE "MindSpore build nightly dev mode" OFF)
 option(ENABLE_FAST_HASH_TABLE "Enable use fast hash table instead of std ones" ON)
 option(USE_LLVM "use llvm" OFF)
 
-if(NOT ENABLE_D AND NOT ENABLE_TESTCASES AND NOT ENABLE_ACL AND NOT ENABLE_GE)
+if(NOT ENABLE_D AND NOT ENABLE_TESTCASES AND NOT ENABLE_ACL)
     set(ENABLE_GLIBCXX ON)
 endif()
 
@@ -73,7 +72,7 @@ if(NOT BUILD_PATH)
     set(BUILD_PATH "${CMAKE_SOURCE_DIR}/build")
 endif()
 
-if(ENABLE_GE OR ENABLE_D)
+if(ENABLE_D)
     set(ENABLE_TDTQUE ON)
 endif()
 
@@ -86,8 +85,8 @@ if(ENABLE_CPU)
     add_compile_definitions(ENABLE_CPU)
 endif()
 
-if(ENABLE_GE)
-    add_compile_definitions(ENABLE_GE)
+if(ENABLE_D)
+    add_compile_definitions(ENABLE_D)
     add_compile_definitions(CUSTOM_OP)
 endif()
 
@@ -117,7 +116,7 @@ if(ENABLE_LOAD_ANF_IR)
     add_compile_definitions(ENABLE_LOAD_ANF_IR)
 endif()
 
-if(ENABLE_TESTCASES OR (NOT ENABLE_D AND NOT ENABLE_GE))
+if(ENABLE_TESTCASES OR (NOT ENABLE_D))
     add_compile_definitions(NO_DLIB=1)
 endif()
 

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#ifdef ENABLE_D
 #include "utils/callbacks_ge.h"
 #include "pybind11/pybind11.h"
 #include "ir/param_info.h"
@@ -186,3 +187,4 @@ uint32_t MS_EXPORT SummarySaveCallback(uint32_t graph_id, const std::map<std::st
 }
 }  // namespace callbacks
 }  // namespace mindspore
+#endif

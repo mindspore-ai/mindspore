@@ -22,7 +22,7 @@
 #include "pipeline/jit/parse/python_adapter.h"
 #include "transform/graph_ir/df_graph_manager.h"
 #include "debug/draw.h"
-#ifdef ENABLE_GE
+#ifdef ENABLE_D
 #include "utils/callbacks_ge.h"
 #endif
 

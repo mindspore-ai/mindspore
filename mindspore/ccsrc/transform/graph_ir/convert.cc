@@ -35,7 +35,7 @@
 #include "ops/array_ops.h"
 #include "ops/elewise_calculation_ops.h"
 #include "ops/math_ops.h"
-#ifdef ENABLE_GE
+#ifdef ENABLE_D
 #include "ops/save_ops.h"
 #endif
 
@@ -422,7 +422,7 @@ DfGraphConvertor &DfGraphConvertor::InitParam(const TensorOrderMap &tensors) {
   return *this;
 }
 
-#if (defined ENABLE_GE)
+#if (defined ENABLE_D)
 void DfGraphConvertor::BuildSaveCheckpointGraph() {
   std::vector<Operator> graph_inputs;
   ge::op::Save save_op("save_parms");
@@ -545,9 +545,13 @@ DfGraphConvertor &DfGraphConvertor::GenerateCheckpointGraph() {
     MS_LOG(ERROR) << "Invalid AnfGraph in GenerateCheckpointGraph";
     return *this;
   }
-#if (defined ENABLE_GE)
-  BuildSaveCheckpointGraph();
-  // Restoring from checkpoint file is done by pyfront, not in graph now.
+#ifdef ENABLE_D
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->backend_policy() == "ge") {
+    BuildSaveCheckpointGraph();
+    // Restoring from checkpoint file is done by pyfront, not in graph now.
+  }
 #endif
   return *this;
 }
@@ -566,9 +570,13 @@ DfGraphConvertor &DfGraphConvertor::ConvertAllNode() {
   compute_sout_ << "digraph {" << endl;
   init_sout_.clear();
   init_sout_ << "digraph {" << endl;
-#if (defined ENABLE_GE)
-  checkpoint_sout_.clear();
-  checkpoint_sout_ << "digraph {" << endl;
+#ifdef ENABLE_D
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->backend_policy() == "ge") {
+    checkpoint_sout_.clear();
+    checkpoint_sout_ << "digraph {" << endl;
+  }
 #endif
   restore_checkpoint_sout_.clear();
   restore_checkpoint_sout_ << "digraph {" << endl;

@@ -25,7 +25,6 @@ from mindspore import log as logger
 from ..version import __version__
 from ..default_config import __package_name__
 
-
 class EnvChecker(metaclass=ABCMeta):
     """basic class for environment check"""
 
@@ -389,9 +388,6 @@ class AscendEnvChecker(EnvChecker):
 
 def check_version_and_env_config():
     """check version and env config"""
-    if os.getenv("MS_DEV_CLOSE_VERSION_CHECK") == "ON":
-        return
-    os.environ["MS_DEV_CLOSE_VERSION_CHECK"] = "ON"
     if __package_name__.lower() == "mindspore-ascend":
         env_checker = AscendEnvChecker()
         # Note: pre-load libgomp.so to solve error like "cannot allocate memory in statis TLS block"
@@ -407,6 +403,9 @@ def check_version_and_env_config():
     else:
         logger.info(f"Package version {__package_name__} does not need to check any environment variable, skipping.")
         return
+    if os.getenv("MS_DEV_CLOSE_VERSION_CHECK") == "ON":
+        return
+    os.environ["MS_DEV_CLOSE_VERSION_CHECK"] = "ON"
 
     try:
         # check version of ascend site or cuda

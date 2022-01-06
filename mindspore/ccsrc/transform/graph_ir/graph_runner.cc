@@ -27,34 +27,34 @@
 #include "sys/time.h"
 #include "utils/utils.h"
 #include "utils/callbacks.h"
-#ifdef ENABLE_GE
+#ifdef ENABLE_D
 #include "utils/callbacks_ge.h"
 #endif
+#include "utils/ms_context.h"
 
-#ifdef NO_GE_CLIENT
-namespace ge {
-Session::Session(const std::map<std::string, std::string> &options) {
-  if (options.empty()) {
-    MS_LOG(ERROR) << "session input options is empty";
-  }
-  sessionId_ = 0;
-}
-Session::~Session() {}
-}  // namespace ge
-#endif
 #ifndef ENABLE_LITE_ASCEND
 namespace py = pybind11;
 #endif
 namespace mindspore {
 namespace transform {
 std::shared_ptr<ge::Session> GraphRunner::NewSession(const SessionOptions &sess_options) {
-  std::shared_ptr<ge::Session> ret = std::make_shared<ge::Session>(sess_options);
-  if (ret == nullptr) {
-    MS_LOG(ERROR) << "Create GE session failed";
-    return nullptr;
+#ifdef ENABLE_D
+  std::shared_ptr<ge::Session> ret;
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->backend_policy() == "ge") {
+    ret = std::make_shared<ge::Session>(sess_options);
+    if (ret == nullptr) {
+      MS_LOG(EXCEPTION) << "Create GE session failed!";
+      return nullptr;
+    }
+    MS_LOG(INFO) << "Create new GE session success!";
+    return ret;
   }
-  MS_LOG(INFO) << "Create new GE session success";
-  return ret;
+#endif
+
+  MS_LOG(WARNING) << "no GE client, return nullptr!";
+  return nullptr;
 }
 
 GraphRunner::GraphRunner(const GraphRunnerOptions &options)
@@ -68,31 +68,36 @@ GraphRunner::GraphRunner(const GraphRunnerOptions &options)
   } else {
     sess_ = NewSession(options.options);
     if (sess_ == nullptr) {
-      MS_LOG(EXCEPTION) << "GraphRunner initialize failed!!";
-      return;
+      MS_LOG(WARNING) << "graph runner sess_ is nullptr!";
     }
   }
 
-#if (defined ENABLE_GE)
-  // register the callback function
-  if (sess_->RegisterCallBackFunc(callbacks::kCheckPoint, callbacks::CheckpointSaveCallback) != ge::GRAPH_SUCCESS) {
-    MS_LOG(EXCEPTION) << "register callback failed!";
-    return;
-  }
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+#ifdef ENABLE_D
+  if (ms_context->backend_policy() == "ge") {
+    // register the callback function
+    if (sess_->RegisterCallBackFunc(callbacks::kCheckPoint, callbacks::CheckpointSaveCallback) != ge::GRAPH_SUCCESS) {
+      MS_LOG(EXCEPTION) << "register callback failed!";
+      return;
+    }
 
-  if (sess_->RegisterCallBackFunc(callbacks::kSummary, callbacks::SummarySaveCallback) != ge::GRAPH_SUCCESS) {
-    MS_LOG(EXCEPTION) << "register summary callback failed!";
-    return;
+    if (sess_->RegisterCallBackFunc(callbacks::kSummary, callbacks::SummarySaveCallback) != ge::GRAPH_SUCCESS) {
+      MS_LOG(EXCEPTION) << "register summary callback failed!";
+      return;
+    }
   }
 #endif
-
   std::vector<DfGraphWrapperPtr> wrappers = graph_manager_.GetAllGraphs();
   if (wrappers.empty()) {
     MS_LOG(INFO) << "The GraphManager is empty!!";
     return;
   }
+#ifdef ENABLE_D
+  if (ms_context->backend_policy() != "ge") {
+    return;
+  }
 
-#ifdef ENABLE_GE
   for (auto &it : wrappers) {
     std::set<string> saved_graph = graph_manager_.GetSavedGraphs();
     auto iter_find = saved_graph.find(std::to_string(it->id_));
@@ -137,16 +142,19 @@ Status GraphRunner::RunGraph(const RunOptions &options, const std::vector<GeTens
   struct timeval start_time, end_time;
   (void)gettimeofday(&start_time, nullptr);
 
-#ifdef ENABLE_GE
-  if (sess_ == nullptr) {
-    MS_LOG(ERROR) << "The GE session is null, can't run the graph!";
-    return Status::FAILED;
-  }
-
-  ge::Status ret = sess_->RunGraph(wrap_ptr->id_, ge_inputs, ge_outputs);
-  if (ret != ge::GRAPH_SUCCESS) {
-    MS_LOG(ERROR) << "Call GE RunGraph Failed, ret is: " << ret;
-    return Status::FAILED;
+#ifdef ENABLE_D
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->backend_policy() == "ge") {
+    if (sess_ == nullptr) {
+      MS_LOG(ERROR) << "The GE session is null, can't run the graph!";
+      return Status::FAILED;
+    }
+    ge::Status ret = sess_->RunGraph(wrap_ptr->id_, ge_inputs, ge_outputs);
+    if (ret != ge::GRAPH_SUCCESS) {
+      MS_LOG(ERROR) << "Call GE RunGraph Failed, ret is: " << ret;
+      return Status::FAILED;
+    }
   }
 #else
   ge_outputs.swap(ge_inputs);

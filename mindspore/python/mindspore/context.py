@@ -330,7 +330,8 @@ class _Context:
         'max_device_memory': set_max_device_memory,
         'mempool_block_size': set_mempool_block_size,
         'print_file_path': set_print_file_path,
-        'env_config_path': set_env_config_path
+        'env_config_path': set_env_config_path,
+        'backend_policy': set_backend_policy
     }
 
     @property
@@ -607,7 +608,8 @@ def _check_target_specific_cfgs(device, arg_key):
                  enable_graph_kernel=bool, reserve_class_name_in_scope=bool, check_bprop=bool,
                  max_device_memory=str, print_file_path=str, enable_sparse=bool, max_call_depth=int,
                  env_config_path=str, graph_kernel_flags=str, save_compile_cache=bool,
-                 load_compile_cache=bool, grad_for_scalar=bool, pynative_synchronize=bool, mempool_block_size=str)
+                 load_compile_cache=bool, grad_for_scalar=bool, pynative_synchronize=bool, mempool_block_size=str,
+                 backend_policy=str)
 def set_context(**kwargs):
     """
     Set context for running environment.
@@ -678,6 +680,8 @@ def set_context(**kwargs):
     |                         |  enable_compile_cache        |  CPU/GPU/Ascend            |
     |                         +------------------------------+----------------------------+
     |                         |  compile_cache_path          |  CPU/GPU/Ascend            |
+    |                         +------------------------------+----------------------------+
+    |                         |  backend_policy              |  Ascend                    |
     +-------------------------+------------------------------+----------------------------+
 
     Args:
@@ -815,6 +819,9 @@ def set_context(**kwargs):
             If the specified directory does not exist, the system will automatically create the directory.
             The cache will be saved to the directory of `compile_cache_path/rank_${rank_id}/`. The `rank_id` is
             the ID of the current device in the cluster.
+        backend_policy (str): Used to choose a backend. ("ge", "vm" or "ms").
+            Through context.set_context(backend_policy="ms")
+            Default: The value must be in ['ge', 'vm', 'ms'].
     Raises:
         ValueError: If input key is not an attribute in context.
 

@@ -30,6 +30,7 @@
 #include <sstream>
 
 #include "utils/hash_map.h"
+#include "utils/ms_context.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "transform/graph_ir/util.h"
@@ -55,10 +56,14 @@ class DfGraphConvertor {
   explicit DfGraphConvertor(const AnfGraphPtr &anf_graph) : anf_graph_(anf_graph) {
     MS_EXCEPTION_IF_NULL(anf_graph);
     df_graph_ = std::make_shared<DfGraph>(anf_graph_->ToString());
-#if (!defined ENABLE_GE) || (defined ENABLE_INFER)
-    training_ = anf_graph->has_flag("training");
+#if (defined ENABLE_D) && (!defined ENABLE_INFER)
+    auto ms_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ms_context);
+    if (ms_context->backend_policy() == "ge") {
+      training_ = ENABLE_TRAIN;
+    }
 #else
-    training_ = ENABLE_TRAIN;
+    training_ = anf_graph->has_flag("training");
 #endif
     distribute_ = anf_graph->has_flag("broadcast_flag");
     if (anf_graph->has_flag("broadcast_flag")) {
