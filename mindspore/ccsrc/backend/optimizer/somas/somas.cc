@@ -86,6 +86,7 @@ std::map<LifeLongType, std::string> life_long_name_map = {{kLifeLongNone, "LifeL
                                                           {kLifeLongGraphEnd, "LifeLongGraphEnd"}};
 
 bool Somas::Allocate(const session::KernelGraph *graph) {
+  MS_LOG(DEBUG) << "Somas Allocate start...";
   auto ret = InitSomasTensors(graph);
   if (!ret) {
     MS_LOG(EXCEPTION) << "Somas Initialize Failed.";
@@ -113,11 +114,13 @@ bool Somas::Allocate(const session::KernelGraph *graph) {
   }
   SaveSomasResult(graph);
   GenGraphStatisticInfo();
+  MS_LOG(DEBUG) << "Somas Allocate end.";
   return ret;
 }
 
 bool Somas::LoadSomasCache(const session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
+  MS_LOG(DEBUG) << "Somas LoadSomasCache start...";
   if (tensors_list_.size() < kCachedResultThreshold) {
     MS_LOG(DEBUG) << "Tensors size (" << tensors_list_.size() << ") less than " << kCachedResultThreshold
                   << ", no need to load cached";
@@ -135,6 +138,7 @@ bool Somas::LoadSomasCache(const session::KernelGraph *graph) {
   } else {
     MS_LOG(ERROR) << "Calculate somas's model hash id failed.";
   }
+  MS_LOG(DEBUG) << "Somas LoadSomasCache end.";
   return ret;
 }
 
@@ -334,6 +338,7 @@ bool Somas::UpdateTensorsOffset(const std::vector<nlohmann::json> &tensors_json)
 }
 
 bool Somas::InitSomasTensors(const session::KernelGraph *graph) {
+  MS_LOG(DEBUG) << "Somas InitSomasTensors start...";
   MS_EXCEPTION_IF_NULL(graph);
   InitBasicInfo(graph);
   IndependentNodeOutputProcess(graph);
@@ -372,11 +377,12 @@ bool Somas::InitSomasTensors(const session::KernelGraph *graph) {
       GetSaveGraphsPathName("/somas_offline_log_" + std::to_string(graph->graph_id()) + ".ir", save_graphs_path_);
     DumpOfflineIR(offline_file_path);
   }
-
+  MS_LOG(DEBUG) << "Somas InitSomasTensors end.";
   return true;
 }
 
 void Somas::InitSomasStreamAndNode(const session::KernelGraph *graph) {
+  MS_LOG(DEBUG) << "Somas InitSomasStreamAndNode start...";
   MS_EXCEPTION_IF_NULL(graph);
   std::vector<CNodePtr> kernel_cnodes;
   streams_list_ = {};
@@ -419,6 +425,7 @@ void Somas::InitSomasStreamAndNode(const session::KernelGraph *graph) {
 }
 
 void Somas::InitSomasOutputAndWorkspaceTensors(const session::KernelGraph *graph) {
+  MS_LOG(DEBUG) << "Somas InitSomasOutputAndWorkspaceTensors start...";
   MS_EXCEPTION_IF_NULL(graph);
   tensors_list_ = {};
   size_t tensor_index = 0;
@@ -487,6 +494,7 @@ void Somas::InitSomasOutputAndWorkspaceTensors(const session::KernelGraph *graph
 }
 
 void Somas::InitSomasInputTensors(const session::KernelGraph *graph) {
+  MS_LOG(DEBUG) << "Somas InitSomasInputTensors start...";
   MS_EXCEPTION_IF_NULL(graph);
   bool is_all_nop_node = opt::IsAllNopNode(graph);
   static const auto enable_fusion_clear = (common::GetEnv("ENV_FUSION_CLEAR") == "1");
@@ -631,7 +639,7 @@ void Somas::InitAtomicCleanInputs(bool enable_fusion_clear, const CNodePtr &kern
 }
 
 void Somas::InitSomasEventInfos() {
-  // process event infos
+  MS_LOG(DEBUG) << "Somas InitSomasEventInfos start...";
   std::map<CNodePtr, CNodePtr> send_recv_map;
 #ifdef ENABLE_D
   send_recv_map = device::ascend::AscendStreamAssign::GetInstance().get_event_map();
@@ -644,8 +652,14 @@ void Somas::InitSomasEventInfos() {
   auto tensor_index = tensors_list_.size();
   for (auto &event : event_map_) {
     std::pair<CNodePtr, CNodePtr> send_recv_pair = event.second;
-    auto &somas_send = nodes_map_[send_recv_pair.first.get()].at(0);
-    auto &somas_recv = nodes_map_[send_recv_pair.second.get()].at(0);
+    auto send_iter = nodes_map_.find(send_recv_pair.first.get());
+    auto recv_iter = nodes_map_.find(send_recv_pair.second.get());
+    if (send_iter == nodes_map_.end() || recv_iter == nodes_map_.end()) {
+      continue;
+    }
+
+    auto &somas_send = send_iter->second.at(0);
+    auto &somas_recv = recv_iter->second.at(0);
     auto output_tensor_index = tensor_index;
     tensor_index++;
     SomasTensorPtr tensor =
@@ -662,6 +676,7 @@ void Somas::InitSomasEventInfos() {
     tensors_list_.push_back(tensor);
     tensors_map_[output_tensor_index] = tensor;
   }
+  MS_LOG(DEBUG) << "Somas InitSomasEventInfos end.";
 }
 
 SomasParameterPtr Somas::CreateSomasParameter(const AnfNodePtr &node, size_t index) {
@@ -1189,6 +1204,7 @@ void Somas::ComputeOneTensorConflicts(const std::shared_ptr<SomasTensor> &calc_t
 bool Somas::NodeSort(const SomasNodePtr &node1, const SomasNodePtr &node2) { return node1->GetId() < node2->GetId(); }
 
 bool Somas::Assign(const session::KernelGraph *graph) {
+  MS_LOG(DEBUG) << "Somas Assign start...";
   if (tensors_list_.empty()) {
     MS_LOG(INFO) << "No Tensor for Assigner";
     return true;
@@ -1278,7 +1294,7 @@ bool Somas::Assign(const session::KernelGraph *graph) {
 
   // Set mem_offset_ value by solver result
   mem_offset_ = static_cast<size_t>(somas_solver_->GetMaxOffset());
-
+  MS_LOG(DEBUG) << "Somas Assign end.";
   return true;
 }
 
@@ -1500,7 +1516,7 @@ std::string Somas::SomasInfo(bool calc_hash) const {
   }
 
   return oss.str();
-}  // namespace somas
+}
 
 void Somas::DumpNodes(std::ostringstream &oss) const {
   oss << "\n\nAll Nodes:\n\n";
