@@ -121,7 +121,7 @@ TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t 
     MS_LOG(ERROR) << "The output position is of range: " << output_position;
     return nullptr;
   }
-  auto device_context = device_contexts_[output_position];
+  auto &device_context = device_contexts_[output_position];
   MS_EXCEPTION_IF_NULL(device_context);
   if (device_context->GetDeviceAddressType() != device_tensor->DeviceType()) {
     auto old_device_context = device_context;
