@@ -26,9 +26,11 @@
 #include "ops/real_div.h"
 #include "ops/add.h"
 #include "ops/equal.h"
+#include "ops/greater_equal.h"
 #include "ops/not_equal.h"
 #include "ops/neg.h"
 #include "ops/mul.h"
+#include "ops/mod.h"
 #include "ops/sub.h"
 #include "ops/strided_slice.h"
 #include "ops/reduce_sum.h"
@@ -250,12 +252,14 @@ PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap() {
   using R = PrimitiveEvalImplMap::mapped_type;
   static PrimitiveEvalImplMap prim_backend_eval_implement_map = {
     {prim::kPrimMul, R{ops::MulInfer, nullptr, true}},
+    {prim::kPrimMod, R{ops::ModInfer, nullptr, true}},
     {prim::kPrimAdd, R{ops::AddInfer, nullptr, false}},
     {prim::kPrimSqrtGrad, R{InferImplSqrtGrad, nullptr, true}},
     {prim::kPrimSub, R{ops::SubInfer, nullptr, false}},
     {prim::kPrimNeg, R{ops::NegInfer, nullptr, false}},
     {prim::kPrimTile, R{ops::TileInfer, nullptr, true}},
     {prim::kPrimEqual, R{ops::EqualInfer, nullptr, true}},
+    {prim::kPrimGreaterEqual, R{ops::GreaterEqualInfer, nullptr, true}},
     {prim::kPrimNotEqual, R{ops::NotEqualInfer, nullptr, true}},
     {prim::kPrimLog, R{ops::LogInfer, nullptr, true}},
     {prim::kPrimReciprocal, R{ops::ReciprocalInfer, nullptr, true}},

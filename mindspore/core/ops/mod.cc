@@ -81,6 +81,6 @@ AbstractBasePtr ModInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr
   auto infer_shape = ModInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(Mod, prim::kPrimMod, ModInfer, nullptr, true);
+REGISTER_PRIMITIVE_C(kNameMod, Mod);
 }  // namespace ops
 }  // namespace mindspore
