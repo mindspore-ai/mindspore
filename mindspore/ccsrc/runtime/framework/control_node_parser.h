@@ -82,8 +82,11 @@ using CallNodeToFuncGraph = mindspore::HashMap<AnfNodePtr, std::set<FuncGraphPtr
 using KernelGraphToDeviceContext = mindspore::HashMap<KernelGraphPtr, DeviceContext *>;
 // In the control flow, heterogeneous kernel graphs need to be reconnected in the same group, and the kernel graph
 // group info is used to store the inputs and outputs of the group.
+// Need stack indicates whether a stack actor needs to be created for the group.
+// Level indicates the level of the output of the graph in the group.
 struct KernelGraphGroupInfo {
-  bool is_call_input_;
+  bool need_stack_{0};
+  size_t level_;
   std::string group_name_;
   std::set<KernelGraphPtr> graphs_;
   std::map<KernelWithIndex, const DeviceContext *> front_input_nodes_;
@@ -128,6 +131,7 @@ class ControlNodeParser {
   // If there is a recursive call node in the input of the kernel graph, the graph is recursive.
   bool IsRecursionKernelGraph(const KernelGraphPtr &graph);
   bool IsSameKernelGraphGroup(const AnfNodePtr &node, const KernelGraphPtr &graph);
+  bool IsInputInSameLevel(const AnfNodePtr &node);
 
   const std::vector<AnfNodePtr> &control_node_parameters() const { return control_node_parameters_; }
   const FrontToBackendNodeWithContext &front_to_backend_parameters() const { return front_to_backend_parameters_; }
@@ -217,6 +221,8 @@ class ControlNodeParser {
   // When a control node or kernel graph has input that is a call node, you need to add a stack actor for it.
   void ParseNeedStackControlNode(const std::vector<AnfNodePtr> &control_nodes);
   void ParseNeedStackKernelGraph(const KernelGraphToDeviceContext &kernel_graph_to_device_contexts);
+  // Parse the level of inputs and outputs of graphs and all control nodes.
+  void ParseNodeLevel(const std::vector<AnfNodePtr> &control_nodes);
   // When the parameter is directly used as the condition of the switch, there will be no back-end node, and a device
   // tensor needs to be created for it.
   void CreateDeviceTensorForRootGraphParameter(DeviceContext *default_context);
@@ -241,6 +247,15 @@ class ControlNodeParser {
   // id needs to be sent to the gather actor corresponding to the funcgraph, and the gather will send the branch id
   // to its output switch actor.
   mindspore::HashMap<AnfNodePtr, int> call_node_to_branch_id_;
+  // Level indicates that the input of the node depends on the number of the recursive call node in the funcgraph.
+  // During graph scheduler, the input needs to be graded according to the input's dependence on the recursive call
+  // node, and according to this level, the lower-level inputs are pushed in the stack actor. When arranging, first
+  // sort the call nodes in the funcgraph according to their topological relationships, and then confirm the
+  // dependencies of other nodes on these call nodes in turn.
+  // For example, the dependencies are a -> b, b -> d, c -> d, where b is a call node, then the level of a and c is 0,
+  // and the level of bd is 1, then since d has inputs with different levels of b and c, it is necessary to add a
+  // stack to d.
+  mindspore::HashMap<AnfNodePtr, size_t> node_to_level_;
   CallNodeToFuncGraph call_node_to_func_graphs_;
   // host parameter to weights records the weights in the subgraph corresponding to the node in the root funcgraph.
   // When initializing the weights, all related weights need to be recorded as the same device tensor.

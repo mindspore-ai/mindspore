@@ -37,9 +37,11 @@ void StackActor::Init() {
   // 6. Call input partial.
   input_datas_num_ = formal_parameters_.size() - input_stack_data_num_ - input_stack_partials_num_;
   if (input_stack_data_num_ < device_tensor_store_keys_.size() + local_device_tensors_.size()) {
-    MS_LOG(EXCEPTION) << "Invalid input parameter data num:" << input_stack_data_num_
-                      << " device store num:" << device_tensor_store_keys_.size() << " local device tensor num"
-                      << local_device_tensors_.size() << " for actor:" << GetAID();
+    MS_LOG(EXCEPTION) << "Invalid input stack data num:" << input_stack_data_num_
+                      << " device store num:" << device_tensor_store_keys_.size()
+                      << " local device tensor num:" << local_device_tensors_.size()
+                      << " input stack data num:" << input_stack_data_num_
+                      << " input stack partial num:" << input_stack_partials_num_ << " for actor:" << GetAID();
   }
 
   // Fetch the total number of input partial.
@@ -63,8 +65,8 @@ void StackActor::Init() {
   if (input_stack_data_num_ + input_stack_partials_num_ + input_datas_num_ + input_partials_num_ +
         device_tensor_store_keys_.size() + local_device_tensors_.size() !=
       formal_parameters_.size()) {
-    MS_LOG(EXCEPTION) << "Invalid input num, input parameter data num:" << input_stack_data_num_
-                      << " input parameter partial num:" << input_stack_partials_num_
+    MS_LOG(EXCEPTION) << "Invalid input num, input stack data num:" << input_stack_data_num_
+                      << " input stack partial num:" << input_stack_partials_num_
                       << " input data num:" << input_datas_num_ << " input partial num:" << input_partials_num_
                       << " device tensor store size:" << device_tensor_store_keys_.size()
                       << " need total size:" << formal_parameters_.size() << " for actor:" << GetAID();
