@@ -42,9 +42,7 @@ int RunBenchmark(int argc, const char **argv) {
     std::cerr << flags.Usage() << std::endl;
     return RET_OK;
   }
-#ifdef SUPPORT_NNIE
-  BenchmarkBase *benchmark = new (std::nothrow) Benchmark(&flags);
-#else
+
   auto api_type = std::getenv("MSLITE_API_TYPE");
   if (api_type != nullptr) {
     MS_LOG(INFO) << "MSLITE_API_TYPE = " << api_type;
@@ -61,7 +59,6 @@ int RunBenchmark(int argc, const char **argv) {
     BENCHMARK_LOG_ERROR("Invalid MSLITE_API_TYPE, (OLD/NEW/C, default:OLD)");
     return RET_ERROR;
   }
-#endif
   if (benchmark == nullptr) {
     BENCHMARK_LOG_ERROR("new benchmark failed ");
     return RET_ERROR;

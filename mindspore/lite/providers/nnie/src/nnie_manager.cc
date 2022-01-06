@@ -31,6 +31,16 @@ int NNIEManager::CfgInit(int max_roi_num, int step, const std::vector<int> &core
   nnie_cfg_.cfg_.max_roi_num_ = max_roi_num;
 
   nnie_cfg_.cfg_.step_ = step;
+  if (core_id.size() == 1) {
+    for (size_t i = 0; i < SVP_NNIE_MAX_NET_SEG_NUM; i++) {
+      if (core_id[0] < SVP_NNIE_ID_BUTT) {
+        nnie_cfg_.cfg_.nnie_core_id_[i] = (SVP_NNIE_ID_E)core_id[0];
+      } else {
+        LOGE("nnie core num toobig.\n");
+        return RET_ERROR;
+      }
+    }
+  }
   for (size_t i = 0; i < SVP_NNIE_MAX_NET_SEG_NUM && i < core_id.size(); i++) {
     if (core_id[i] < SVP_NNIE_ID_BUTT) {
       nnie_cfg_.cfg_.nnie_core_id_[i] = (SVP_NNIE_ID_E)core_id[i];

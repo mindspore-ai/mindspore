@@ -17,6 +17,7 @@
 #include "src/proposal_fp32.h"
 #include <memory>
 #include <string>
+#include <algorithm>
 #include "schema/model_generated.h"
 #include "include/registry/register_kernel.h"
 #include "include/errorcode.h"
@@ -27,9 +28,19 @@ using mindspore::schema::PrimitiveType_Custom;
 constexpr int kMaxSize = 1024;
 constexpr int kNumInput2 = 2;
 constexpr int kDecimal = 10;
+constexpr auto kMazRoiNum = "MaxROINum";
 
 namespace mindspore {
 namespace proposal {
+bool IsValidUnsignedNum(const std::string &num_str) {
+  return !num_str.empty() && std::all_of(num_str.begin(), num_str.end(), ::isdigit);
+}
+
+void PrintInvalidChar(const std::string &key, const std::string &dat) {
+  auto message = key + " configuration contains invalid characters: \'" + dat + "\'";
+  LOGE(message.c_str());
+}
+
 int ProposalCPUKernel::Prepare() {
   if (inputs_.size() < kNumInput2) {
     LOGE("inputs tensor num error.");
@@ -74,18 +85,14 @@ int ProposalCPUKernel::Prepare() {
   outputs_[0].SetTensorName("proposal");
 
   int max_roi_num_int = 300;
-  auto *max_roi_num = std::getenv("MAX_ROI_NUM");
-  if (max_roi_num != nullptr) {
-    auto iter =
-      std::find_if(max_roi_num, max_roi_num + strlen(max_roi_num), [](char val) { return val < '0' || val > '9'; });
-    if (iter != max_roi_num) {
-      *iter = '\0';
-      max_roi_num_int = atoi(max_roi_num);
+  auto nnie_arg = GetConfig("nnie");
+  if (nnie_arg.find(kMazRoiNum) != nnie_arg.end()) {
+    if (IsValidUnsignedNum(nnie_arg.at(kMazRoiNum)) == true) {
+      max_roi_num_int = stoi(nnie_arg.at(kMazRoiNum));
     } else {
-      LOGW("MAX_ROI_NUM ENV is invalid, now set to default value %d", max_roi_num_int);
+      PrintInvalidChar(kMazRoiNum, nnie_arg.at(kMazRoiNum));
+      return RET_ERROR;
     }
-  } else {
-    LOGW("MAX_ROI_NUM ENV is not set, now set to default value %d", max_roi_num_int);
   }
 
   return ProposalInit(&proposal_param_, inputs_, max_roi_num_int, image_height_, image_weight_);
