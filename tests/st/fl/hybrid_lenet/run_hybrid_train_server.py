@@ -37,6 +37,14 @@ parser.add_argument("--client_batch_size", type=int, default=32)
 parser.add_argument("--client_learning_rate", type=float, default=0.1)
 parser.add_argument("--local_server_num", type=int, default=-1)
 parser.add_argument("--config_file_path", type=str, default="")
+parser.add_argument("--pki_verify", type=ast.literal_eval, default=False)
+# parameters used for pki_verify=True
+# You can download root_first_ca, root_second_ca and equip_crl
+# from https://pki.consumer.huawei.com/ca/
+parser.add_argument("--root_first_ca_path", type=str, default="")
+parser.add_argument("--root_second_ca_path", type=str, default="")
+parser.add_argument("--equip_crl_path", type=str, default="")
+parser.add_argument("--replay_attack_time_diff", type=int, default=600000)
 parser.add_argument("--encrypt_type", type=str, default="NOT_ENCRYPT")
 # parameters for encrypt_type='DP_ENCRYPT'
 parser.add_argument("--dp_eps", type=float, default=50.0)
@@ -79,6 +87,11 @@ dp_norm_clip = args.dp_norm_clip
 client_password = args.client_password
 server_password = args.server_password
 enable_ssl = args.enable_ssl
+pki_verify = args.pki_verify
+root_first_ca_path = args.root_first_ca_path
+root_second_ca_path = args.root_second_ca_path
+equip_crl_path = args.equip_crl_path
+replay_attack_time_diff = args.replay_attack_time_diff
 
 if local_server_num == -1:
     local_server_num = server_num
@@ -120,6 +133,11 @@ for i in range(local_server_num):
     cmd_server += " --server_password=" + str(server_password)
     cmd_server += " --enable_ssl=" + str(enable_ssl)
     cmd_server += " --dp_norm_clip=" + str(dp_norm_clip)
+    cmd_server += " --pki_verify=" + str(pki_verify)
+    cmd_server += " --root_first_ca_path=" + str(root_first_ca_path)
+    cmd_server += " --root_second_ca_path=" + str(root_second_ca_path)
+    cmd_server += " --equip_crl_path=" + str(equip_crl_path)
+    cmd_server += " --replay_attack_time_diff=" + str(replay_attack_time_diff)
     cmd_server += " > server.log 2>&1 &"
 
     import time

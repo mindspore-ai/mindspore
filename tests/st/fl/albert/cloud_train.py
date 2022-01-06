@@ -70,6 +70,12 @@ def parse_args():
     parser.add_argument("--client_password", type=str, default="")
     parser.add_argument("--server_password", type=str, default="")
     parser.add_argument("--enable_ssl", type=ast.literal_eval, default=False)
+    parser.add_argument("--pki_verify", type=ast.literal_eval, default=False)
+    # parameters used for pki_verify=True
+    parser.add_argument("--root_first_ca_path", type=str, default="")
+    parser.add_argument("--root_second_ca_path", type=str, default="")
+    parser.add_argument("--equip_crl_path", type=str, default="")
+    parser.add_argument("--replay_attack_time_diff", type=int, default=600000)
     return parser.parse_args()
 
 
@@ -107,6 +113,11 @@ def server_train(args):
     client_password = args.client_password
     server_password = args.server_password
     enable_ssl = args.enable_ssl
+    pki_verify = args.pki_verify
+    root_first_ca_path = args.root_first_ca_path
+    root_second_ca_path = args.root_second_ca_path
+    equip_crl_path = args.equip_crl_path
+    replay_attack_time_diff = args.replay_attack_time_diff
 
     # Replace some parameters with federated learning parameters.
     train_cfg.max_global_epoch = fl_iteration_num
@@ -139,7 +150,12 @@ def server_train(args):
         "config_file_path": config_file_path,
         "client_password": client_password,
         "server_password": server_password,
-        "enable_ssl": enable_ssl
+        "enable_ssl": enable_ssl,
+        "pki_verify": pki_verify,
+        "root_first_ca_path": root_first_ca_path,
+        "root_second_ca_path": root_second_ca_path,
+        "equip_crl_path": equip_crl_path,
+        "replay_attack_time_diff": replay_attack_time_diff
     }
 
     if not os.path.exists(output_dir):

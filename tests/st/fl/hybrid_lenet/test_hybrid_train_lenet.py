@@ -47,6 +47,12 @@ parser.add_argument("--client_learning_rate", type=float, default=0.1)
 parser.add_argument("--worker_step_num_per_iteration", type=int, default=65)
 parser.add_argument("--scheduler_manage_port", type=int, default=11202)
 parser.add_argument("--config_file_path", type=str, default="")
+parser.add_argument("--pki_verify", type=ast.literal_eval, default=False)
+# parameters used for pki_verify=True
+parser.add_argument("--root_first_ca_path", type=str, default="")
+parser.add_argument("--root_second_ca_path", type=str, default="")
+parser.add_argument("--equip_crl_path", type=str, default="")
+parser.add_argument("--replay_attack_time_diff", type=int, default=600000)
 parser.add_argument("--encrypt_type", type=str, default="NOT_ENCRYPT")
 # parameters for encrypt_type='DP_ENCRYPT'
 parser.add_argument("--dp_eps", type=float, default=50.0)
@@ -91,6 +97,11 @@ dp_norm_clip = args.dp_norm_clip
 client_password = args.client_password
 server_password = args.server_password
 enable_ssl = args.enable_ssl
+pki_verify = args.pki_verify
+root_first_ca_path = args.root_first_ca_path
+root_second_ca_path = args.root_second_ca_path
+equip_crl_path = args.equip_crl_path
+replay_attack_time_diff = args.replay_attack_time_diff
 
 ctx = {
     "enable_fl": True,
@@ -113,6 +124,11 @@ ctx = {
     "worker_step_num_per_iteration": worker_step_num_per_iteration,
     "scheduler_manage_port": scheduler_manage_port,
     "config_file_path": config_file_path,
+    "pki_verify": pki_verify,
+    "root_first_ca_path": root_first_ca_path,
+    "root_second_ca_path": root_second_ca_path,
+    "equip_crl_path": equip_crl_path,
+    "replay_attack_time_diff": replay_attack_time_diff,
     "share_secrets_ratio": share_secrets_ratio,
     "cipher_time_window": cipher_time_window,
     "reconstruct_secrets_threshold": reconstruct_secrets_threshold,

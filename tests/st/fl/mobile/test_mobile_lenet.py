@@ -44,6 +44,14 @@ parser.add_argument("--client_batch_size", type=int, default=32)
 parser.add_argument("--client_learning_rate", type=float, default=0.1)
 parser.add_argument("--scheduler_manage_port", type=int, default=11202)
 parser.add_argument("--config_file_path", type=str, default="")
+parser.add_argument("--pki_verify", type=ast.literal_eval, default=False)
+# parameters used for pki_verify=True
+# You can download root_first_ca, root_second_ca and equip_crl
+# from https://pki.consumer.huawei.com/ca/
+parser.add_argument("--root_first_ca_path", type=str, default="")
+parser.add_argument("--root_second_ca_path", type=str, default="")
+parser.add_argument("--equip_crl_path", type=str, default="")
+parser.add_argument("--replay_attack_time_diff", type=int, default=600000)
 parser.add_argument("--encrypt_type", type=str, default="NOT_ENCRYPT")
 # parameters for encrypt_type='DP_ENCRYPT'
 parser.add_argument("--dp_eps", type=float, default=50.0)
@@ -84,6 +92,11 @@ dp_eps = args.dp_eps
 dp_delta = args.dp_delta
 dp_norm_clip = args.dp_norm_clip
 encrypt_type = args.encrypt_type
+pki_verify = args.pki_verify
+root_first_ca_path = args.root_first_ca_path
+root_second_ca_path = args.root_second_ca_path
+equip_crl_path = args.equip_crl_path
+replay_attack_time_diff = args.replay_attack_time_diff
 client_password = args.client_password
 server_password = args.server_password
 enable_ssl = args.enable_ssl
@@ -111,6 +124,11 @@ ctx = {
     "client_learning_rate": client_learning_rate,
     "scheduler_manage_port": scheduler_manage_port,
     "config_file_path": config_file_path,
+    "pki_verify": pki_verify,
+    "root_first_ca_path": root_first_ca_path,
+    "root_second_ca_path": root_second_ca_path,
+    "equip_crl_path": equip_crl_path,
+    "replay_attack_time_diff": replay_attack_time_diff,
     "dp_eps": dp_eps,
     "dp_delta": dp_delta,
     "dp_norm_clip": dp_norm_clip,
