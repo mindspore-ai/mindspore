@@ -847,7 +847,7 @@ class LogSigmoid(Cell):
 
 class SoftShrink(Cell):
     r"""
-    Applies the soft shrinkage function elementwise.
+    Applies the SoftShrink function element-wise.
 
     .. math::
         \text{SoftShrink}(x) =
@@ -858,7 +858,7 @@ class SoftShrink(Cell):
         \end{cases}
 
     Args:
-        lambd: the :math:`\lambda` must be no less than zero value for the Softshrink formulation. Default: 0.5.
+        lambd: the :math:`\lambda` must be no less than zero for the SoftShrink formulation. Default: 0.5.
 
     Inputs:
         - **input_x** (Tensor) - The input of SoftShrink with data type of float16 or float32.

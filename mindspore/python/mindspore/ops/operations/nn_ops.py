@@ -200,7 +200,7 @@ class AdaptiveAvgPool2D(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Tensor) - The input of AdaptiveAvgPool2D, which is a 3D or 4D tensor,
-          with float16, float32, float64 data type.
+          with float16, float32 or float64 data type.
 
     Outputs:
         Tensor, with the same type as the `input_x`.
@@ -218,10 +218,10 @@ class AdaptiveAvgPool2D(PrimitiveWithInfer):
         \end{cases}
 
     Raises:
-        ValueError: If `output_size` is a tuple and if `output_size` length is not 2.
+        ValueError: If `output_size` is a tuple and the length of `output_size` is not 2.
         TypeError: If `input_x` is not a tensor.
-        TypeError: If dtype of `input_x` is not float16, float32, float64.
-        ValueError: If `input_x` dimension is less than or equal to output_size dimension.
+        TypeError: If dtype of `input_x` is not float16, float32 nor float64.
+        ValueError: If the dimension of `input_x` is less than or equal to the dimension of `output_size`.
 
     Supported Platforms:
         ``GPU``
@@ -296,7 +296,7 @@ class Softmax(Primitive):
     Softmax operation.
 
     Applies the Softmax operation to the input tensor on the specified axis.
-    Supposes a slice in the given axis :math:`x`, then for each element :math:`x_i`,
+    Suppose a slice in the given axis :math:`x`, then for each element :math:`x_i`,
     the Softmax function is shown as follows:
 
     .. math::
@@ -489,13 +489,14 @@ class ReLU(Primitive):
 
     Inputs:
         - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
-          additional dimensions, with number data type.
+          additional dimensions, data type is
+          `number <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_.
 
     Outputs:
         Tensor of shape :math:`(N, *)`, with the same type and shape as the `input_x`.
 
     Raises:
-        TypeError: If dtype of `input_x` is not number.
+        TypeError: If dtype of `input_x` is not a number.
         TypeError: If `input_x` is not a Tensor.
 
     Supported Platforms:
@@ -2610,8 +2611,10 @@ class SoftMarginLoss(Primitive):
     .. math::
         \text{loss}(x, y) = \sum_i \frac{\log(1 + \exp(-y[i]*x[i]))}{\text{x.nelement}()}
 
+    where :math:`x.nelement()` is the number of elements of x.
+
     Args:
-        reduction (str): Apply specific reduction method to the output: 'none', 'mean', 'sum'. Default: "mean".
+        reduction (str): Apply specific reduction method to the output: 'none', 'mean' or 'sum'. Default: "mean".
 
     Inputs:
         - **logits** (Tensor) - Predict data. Data type must be float16 or float32.
@@ -2692,8 +2695,8 @@ class DataFormatDimMap(PrimitiveWithInfer):
             Default: 'NCHW'.
 
     Inputs:
-        - **input_x** (Tensor) - A Tensor with each element as a dimension index in source data format.
-          The suggested values is in the range [-4, 4). Only supports int32.
+        - **input_x** (Tensor) - A Tensor, each element is used as a dimension index of the source data format.
+          The suggested values are in the range [-4, 4). Only supports int32.
 
     Outputs:
         Tensor, Return the dimension index in the given target data format,
@@ -3556,7 +3559,7 @@ class PReLU(PrimitiveWithInfer):
     .. math::
         prelu(x_i)= \max(0, x_i) + \min(0, w * x_i),
 
-    where :math:`x_i` is an element of an channel of the input, `w` is the weight of the channel.
+    where :math:`x_i` is an element of a channel of the input, `w` is the weight of the channel.
 
     Note:
         0-D or 1-D input_x is not supported on Ascend.
@@ -3565,9 +3568,9 @@ class PReLU(PrimitiveWithInfer):
         - **x** (Tensor) - The first input tensor, representing the output of the preview layer.
           With data type of float16 or float32.
           The shape is :math:`(N, C, *)` where :math:`*` means, any number of additional dimensions.
-        - **weight** (Tensor) -  The second input tensor. The data type is float16 or float32.
-          There are only two shapes are legitimate, 1 or the number of channels of the `input_x`.
-          Channel dim is the 2nd dim of input. When input is 0-D or 1-D tensor, the number of channels is 1.
+        - **weight** (Tensor) -  Weight Tensor. The data type is float16 or float32.
+          The weight can only be a vector, and the length is the same as the number of channels C of the `input_x`.
+          On GPU devices, when the input is a scalar, the shape is 1.
 
     Outputs:
         Tensor, with the same type as `x`.
@@ -4341,7 +4344,7 @@ class Adam(Primitive):
 
 class AdamWeightDecay(PrimitiveWithInfer):
     r"""
-    Updates gradients by the Adaptive Moment Estimation (AdamWeightDecay) algorithm with weight decay.
+    Updates gradients by the Adaptive Moment Estimation algorithm with weight decay (AdamWeightDecay).
 
     The Adam algorithm is proposed in `Adam: A Method for Stochastic Optimization <https://arxiv.org/abs/1412.6980>`_.
     The AdamWeightDecay variant was proposed in `Decoupled Weight Decay Regularization
@@ -4450,7 +4453,7 @@ class AdamWeightDecay(PrimitiveWithInfer):
 
 class AdamNoUpdateParam(PrimitiveWithInfer):
     r"""
-    Updates gradients by Adaptive Moment Estimation (Adam) algorithm. This operator do not update the parameter, but
+    Updates gradients by the Adaptive Moment Estimation (Adam) algorithm. This operator do not update the parameter, but
     calculate the value that should be added to the parameter instead.
 
     The Adam algorithm is proposed in `Adam: A Method for Stochastic Optimization <https://arxiv.org/abs/1412.6980>`_.
@@ -4486,7 +4489,7 @@ class AdamNoUpdateParam(PrimitiveWithInfer):
           The data type must be float32.
         - **beta1_power** (Tensor) - :math:`beta_1^t(\beta_1^{t})` in the updating formula.
           The shape is :math:`(1, )` and the data type must be float32.
-        - **beta2_power** (Tensor) - :math:`beta_2^t(\beta_1^{t})` in the updating formula.
+        - **beta2_power** (Tensor) - :math:`beta_2^t(\beta_2^{t})` in the updating formula.
           The shape is :math:`(1, )` and the data type must be float32.
         - **lr** (Tensor) - :math:`l` in the updating formula.
           The shape is :math:`(1, )` and the data type must be float32.
@@ -6927,7 +6930,7 @@ class CTCLoss(Primitive):
         - **labels_indices** (Tensor) - The indices of labels. `labels_indices[i, :] = [b, t]` means
           `labels_values[i]` stores the id for `(batch b, time t)`. The type must be int64 and rank must be 2.
         - **labels_values** (Tensor) - A `1-D` input tensor. The values are associated with the given batch and time.
-          The type must be int32. `labels_values[i]` must in the range of `[0, num_classes)`.
+          The type must be int32. `labels_values[i]` must be in the range of `[0, num_classes)`.
         - **sequence_length** (Tensor) - A tensor containing sequence lengths with the shape of :math:`(batch\_size, )`.
           The type must be int32. Each value in the tensor must not be greater than `max_time`.
 
@@ -6940,8 +6943,8 @@ class CTCLoss(Primitive):
         TypeError: If `preprocess_collapse_repeated`, `ctc_merge_repeated` or `ignore_longer_outputs_than_inputs`
                    is not a bool.
         TypeError: If `x`, `labels_indices`, `labels_values` or `sequence_length` is not a Tensor.
-        ValueError: If rank of `labels_indices` is not equal 2.
-        TypeError: If dtype of `x` is not one of the following: float16, float32 or float64.
+        ValueError: If rank of `labels_indices` is not equal to 2.
+        TypeError: If dtype of `x` is not one of the following: float16, float32 nor float64.
         TypeError: If dtype of `labels_indices` is not int64.
         TypeError: If dtype of `labels_values` or `sequence_length` is not int32.
 
@@ -8307,20 +8310,20 @@ class Conv3DTranspose(PrimitiveWithInfer):
 
     .. math::
         D_{out} = (D_{in} - 1) \times \text{stride}[0] - 2 \times \text{pad}[0] + \text{dilation}[0]
-        \times (\text{kernel\_size}[0] - 1) + \text{output\_padding}[0] + 1
+        \times (\text{kernel_size}[0] - 1) + \text{output_padding}[0] + 1
 
         H_{out} = (H_{in} - 1) \times \text{stride}[1] - 2 \times \text{pad}[1] + \text{dilation}[1]
-        \times (\text{kernel\_size}[1] - 1) + \text{output\_padding}[1] + 1
+        \times (\text{kernel_size}[1] - 1) + \text{output_padding}[1] + 1
 
         W_{out} = (W_{in} - 1) \times \text{stride}[2] - 2 \times \text{pad}[2] + \text{dilation}[2]
-        \times (\text{kernel\_size}[2] - 1) + \text{output\_padding}[2] + 1
+        \times (\text{kernel_size}[2] - 1) + \text{output_padding}[2] + 1
 
     Args:
         in_channel (int): The channel of the input x.
         out_channel (int): The channel of the weight x.
         kernel_size (Union[int, tuple[int]]): The data type is int or a tuple of 3 integers.
             Specifies the depth, height and width of the 3D convolution window.
-            Single int means the value is for the depth, height and the width of the kernel.
+            Single int means the value is for the depth, height and width of the kernel.
             A tuple of 3 ints means the first value is for the depth, the second value is for the height and the
             other is for the width of the kernel.
         mode (int): Modes for different convolutions. Default is 1. It is currently not used.
@@ -8337,7 +8340,7 @@ class Conv3DTranspose(PrimitiveWithInfer):
               will be returned without padding. Extra pixels will be discarded. If this mode is set, `pad`
               and `output_padding` must be 0.
 
-            - pad: Implicit paddings on both sides of the input in depth, height, width. The number of `pad` will
+            - pad: Implicit paddings on both sides of the input in depth, height and width. The number of `pad` will
               be padded to the input Tensor borders. `pad` must be greater than or equal to 0.
 
         pad (Union(int, tuple[int])): The pad value to be filled. Default: 0. If `pad` is an integer, the paddings of
@@ -8358,7 +8361,8 @@ class Conv3DTranspose(PrimitiveWithInfer):
           data_format :math:`(N, C_{in}, D_{out}, H_{out}, W_{out})`. Currently dout data type only supports float16
           and float32.
         - **weight** (Tensor) - Set size of kernel is :math:`(K_d, K_h, K_w)`, then the shape is
-          :math:`(C_{in}, C_{out}//group, K_d, K_h, K_w)`. Where :math:`group` is the Args parameter.
+          :math:`(C_{in}, C_{out}//group, K_d, K_h, K_w)`. Where :math:`group` is the Args parameter,
+          :math:`//` is the symbol for integer division.
           Currently weight data type only supports float16 and float32.
         - **bias** (Tensor) - Tensor of shape :math:`C_{out}`. Currently, only support none.
 
@@ -8375,11 +8379,11 @@ class Conv3DTranspose(PrimitiveWithInfer):
         TypeError: If `kernel_size`, `stride`, `pad` , `dilation` or `output_padding` is neither an int not a tuple.
         ValueError: If `in_channel`, `out_channel`, `kernel_size`, `stride` or `dilation` is less than 1.
         ValueError: If `pad` is less than 0.
-        ValueError: If `pad_mode` is not one of 'same', 'valid', 'pad'.
+        ValueError: If `pad_mode` is not one of 'same', 'valid' nor 'pad'.
         ValueError: If `pad` is a tuple whose length is not equal to 6.
         ValueError: If `pad_mode` is not equal to 'pad' and `pad` is not equal to (0, 0, 0, 0, 0, 0).
         ValueError: If `data_format` is not 'NCDHW'.
-        TypeError: If dout and weight data type is not float16.
+        TypeError: If data type of dout and weight is not float16.
         ValueError: If bias is not none. The rank of dout and weight is not 5.
 
     Examples:
@@ -8531,7 +8535,7 @@ class Conv3DTranspose(PrimitiveWithInfer):
 
 class SoftShrink(Primitive):
     r"""
-    Applies the soft shrinkage function elementwise.
+    Applies the soft shrinkage function element-wise.
 
     .. math::
         \text{SoftShrink}(x) =
@@ -8675,10 +8679,9 @@ class ApplyAdagradDA(Primitive):
         TypeError: If `grad` is not a Tensor.
         TypeError: If `lr`, `l1`, `l2` or `global_step` is neither a Number nor a Tensor.
         TypeError: If use_locking is not a bool.
-        TypeError: If dtype of `var`, `gradient_accumulator`, `gradient_squared_accumulator`, `gradient_accumulator`,
+        TypeError: If dtype of `var`, `gradient_accumulator`, `gradient_squared_accumulator`, `grad`,
                    `lr`, `l1` or `l2` is neither float16 nor float32.
-        TypeError: If dtype of `gradient_accumulator`, `gradient_squared_accumulator` or `gradient_accumulator`
-                     is not same as `var`.
+        TypeError: If dtype of `gradient_accumulator`, `gradient_squared_accumulator` or `grad` is not same as `var`.
         TypeError: If dtype of `global_step` is not int32 nor int64.
         ValueError: If the shape size of `lr`, `l1`, `l2` and `global_step` is not 0.
         RuntimeError: If the data type of `var`, `gradient_accumulator`, `gradient_squared_accumulator` and `grad`
