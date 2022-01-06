@@ -50,8 +50,8 @@ class Custom(ops.PrimitiveWithInfer):
             - str: If func is of str type, then str should be a path of binary file along with a function name.
               This could only be used when func_type is "aot". Currently "aot" supports GPU/CPU(linux only) platform.
               "aot" means ahead of time, in which case Custom directly launches user defined "xxx.so" file as an
-              operator. Users need compile a handwriting "xxx.cu"/"xxx.cc" file into "xxx.so" ahead of time, and offer
-              the path of the file along with a function name.
+              operator. Users need to compile a handwriting "xxx.cu"/"xxx.cc" file into "xxx.so" ahead of time,
+              and offer the path of the file along with a function name.
 
               - "xxx.so" file generation:
 
