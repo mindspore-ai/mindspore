@@ -24,8 +24,8 @@ from mindspore.nn.optim import LARS
 from mindspore import log as logger
 from mindspore.common import Parameter
 from mindspore.communication.management import get_group_size
-from mindspore.parallel._utils import _get_global_rank
 from mindspore.train.serialization import load_checkpoint
+from mindspore.parallel._utils import _get_global_rank
 from .less_batch_normalization import CommonHeadLastFN
 
 
@@ -41,6 +41,7 @@ class OptimizerProcess:
        opt (Cell): Optimizer used.
 
     Examples:
+        >>> import numpy as np
         >>> from mindspore import Tensor, Parameter, nn
         >>> from mindspore import ops
         >>> from mindspore.boost import OptimizerProcess
