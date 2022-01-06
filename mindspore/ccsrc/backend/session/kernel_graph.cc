@@ -148,6 +148,20 @@ void SetInternalOutputAttr(const AnfNodePtr &node) {
   node->cast<CNodePtr>()->set_input(kAnfPrimitiveIndex, prim_node);
   AnfAlgo::SetNodeAttr(kAttrIsInternalOutputNopNode, MakeValue(true), node);
 }
+
+bool NeedOptimize(const AnfNodePtr &node, const std::string &optimized_comm_group) {
+  bool is_fused_comm = AnfAlgo::IsFusedCommunicationOp(node);
+  if (!is_fused_comm) {
+    return false;
+  }
+  auto node_group = GetNodeGroup(node);
+  if (node_group.find(kSyncBnGroup) == string::npos) {
+    if (optimized_comm_group.empty() || node_group == optimized_comm_group) {
+      return true;
+    }
+  }
+  return false;
+}
 }  // namespace
 
 AnfNodePtr KernelGraph::MakeValueNode(const AnfNodePtr &node) const {
@@ -174,8 +188,8 @@ std::vector<AnfNodePtr> KernelGraph::outputs() const {
   return std::vector<AnfNodePtr>(1, graph_output);
 }
 
-void KernelGraph::EnqueueActiveNodes(const AnfNodePtr &node, std::queue<AnfNodePtr> *visit_queue,
-                                     mindspore::HashSet<AnfNodePtr> *visited_nodes, bool comm_first) {
+void KernelGraph::EnqueueReadyNodes(const AnfNodePtr &node, std::queue<AnfNodePtr> *visit_queue,
+                                    mindspore::HashSet<AnfNodePtr> *visited_nodes, bool comm_first) {
   MS_EXCEPTION_IF_NULL(visit_queue);
   MS_EXCEPTION_IF_NULL(visited_nodes);
   auto it = node_output_edges_.find(node);
@@ -207,7 +221,7 @@ void KernelGraph::EnqueueActiveNodes(const AnfNodePtr &node, std::queue<AnfNodeP
       (void)visited_nodes->insert(next_node);
       bool is_comm_node = AnfAlgo::IsCommunicationOp(next_node);
       if (AnfAlgo::CheckPrimitiveType(next_node, prim::kPrimLoad)) {
-        EnqueueActiveNodes(next_node, visit_queue, visited_nodes);
+        EnqueueReadyNodes(next_node, visit_queue, visited_nodes);
       } else if ((is_comm_node && comm_first) || (!is_comm_node && !comm_first)) {
         MS_LOG(DEBUG) << "Visit node:" << next_node->DebugString();
         visit_queue->push(next_node);
@@ -226,30 +240,31 @@ void KernelGraph::SetExecOrderByDefault() {
   UpdateNodeEdgeList(&seed_nodes);
   execution_order_.clear();
   mindspore::HashSet<AnfNodePtr> visited_nodes;
-  std::queue<AnfNodePtr> zero_input_nodes;
+  std::queue<AnfNodePtr> ready_nodes;
   std::queue<AnfNodePtr> delay_comm_stack;
-  std::queue<AnfNodePtr> communication_descendants;
+  std::queue<AnfNodePtr> ready_comm_descendants;
+  std::queue<AnfNodePtr> *handle_queue_ptr;
   std::string optimized_comm_group;
   while (!seed_nodes.empty() || !delay_comm_stack.empty()) {
     // seed nodes first, then delay comm nodes
     if (seed_nodes.empty()) {
-      EnqueueActiveNodes(delay_comm_stack.front(), &communication_descendants, &visited_nodes, false);
+      EnqueueReadyNodes(delay_comm_stack.front(), &ready_comm_descendants, &visited_nodes, false);
       delay_comm_stack.pop();
     } else {
-      zero_input_nodes.push(seed_nodes.front());
+      ready_nodes.push(seed_nodes.front());
       seed_nodes.pop();
     }
     // comm descendant first, then common queue
-    while (!zero_input_nodes.empty() || !communication_descendants.empty()) {
+    while (!ready_nodes.empty() || !ready_comm_descendants.empty()) {
       AnfNodePtr node = nullptr;
-      bool is_communication_descendant = false;
-      if (communication_descendants.empty()) {
-        node = zero_input_nodes.front();
-        zero_input_nodes.pop();
+      if (ready_comm_descendants.empty()) {
+        handle_queue_ptr = &ready_nodes;
+        node = ready_nodes.front();
+        ready_nodes.pop();
       } else {
-        node = communication_descendants.front();
-        communication_descendants.pop();
-        is_communication_descendant = true;
+        handle_queue_ptr = &ready_comm_descendants;
+        node = ready_comm_descendants.front();
+        ready_comm_descendants.pop();
       }
       // add execute node
       MS_EXCEPTION_IF_NULL(node);
@@ -257,36 +272,23 @@ void KernelGraph::SetExecOrderByDefault() {
         execution_order_.push_back(node->cast<CNodePtr>());
       }
       // delay execute comm ops that need optimize
-      bool is_fused_comm = AnfAlgo::IsFusedCommunicationOp(node);
       bool is_comm = AnfAlgo::IsCommunicationOp(node);
-      bool optimize_comm = false;
-      if (is_fused_comm) {
-        auto node_group = GetNodeGroup(node);
-        if (node_group.find(kSyncBnGroup) == string::npos) {
-          if (optimized_comm_group.empty()) {
-            optimized_comm_group = node_group;
-            optimize_comm = true;
-          } else if (optimized_comm_group == node_group) {
-            optimize_comm = true;
-          }
-        }
-      }
+      bool optimize_comm = NeedOptimize(node, optimized_comm_group);
       if (optimize_comm) {
+        optimized_comm_group = GetNodeGroup(node);
         while (!delay_comm_stack.empty()) {
-          EnqueueActiveNodes(delay_comm_stack.front(), &communication_descendants, &visited_nodes, false);
+          EnqueueReadyNodes(delay_comm_stack.front(), &ready_comm_descendants, &visited_nodes, false);
           delay_comm_stack.pop();
         }
         delay_comm_stack.push(node);
       } else if (is_comm) {
         if (delay_comm_stack.size() > 1) {
-          EnqueueActiveNodes(delay_comm_stack.front(), &communication_descendants, &visited_nodes, false);
+          EnqueueReadyNodes(delay_comm_stack.front(), &ready_comm_descendants, &visited_nodes, false);
           delay_comm_stack.pop();
         }
         delay_comm_stack.push(node);
-      } else if (is_communication_descendant) {
-        EnqueueActiveNodes(node, &communication_descendants, &visited_nodes);
       } else {
-        EnqueueActiveNodes(node, &zero_input_nodes, &visited_nodes);
+        EnqueueReadyNodes(node, handle_queue_ptr, &visited_nodes);
       }
     }
   }
