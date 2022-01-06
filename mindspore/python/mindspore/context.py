@@ -495,7 +495,7 @@ def set_auto_parallel_context(**kwargs):
                         communication fusion config has two keys: "mode" and "config".
                         It supports following communication fusion types and configurations:
 
-                        - allreduce: if communication fusion type is `allreduce`. The `mode` contains: `auto`, `size`
+                        - allreduce: If communication fusion type is `allreduce`. The `mode` contains: `auto`, `size`
                           and `index`. In `auto` mode, allreduce fusion is configured by gradients size, and the default
                           fusion threshold is `64` MB. In 'size' mode, allreduce fusion is configured by gradients size
                           manually, and the fusion threshold must be larger than `0` MB. In `index` mode, it is same as
@@ -763,15 +763,15 @@ def set_context(**kwargs):
               Default: 2. Graph kernel fusion can be enabled equivalently by setting opt_level greater than 0.
               Available values are:
 
-              - 0: Disable graph kernel fusion;
-              - 1: enable the basic fusion of operators;
+              - 0: disables graph kernel fusion;
+              - 1: enables the basic fusion of operators;
               - 2: includes all optimizations of level 1,
                 and turns on more optimizations such as CSE, arithmetic simplification and so on;
               - 3: includes all optimizations of level 2, and turns on more optimizations such as SitchingFusion,
                 ParallelFusion and so on. Optimizations of this level are radical and unstable in some scenarios.
                 Be caution when using this level.
 
-            - dump_as_text: dump detail info as text files. Default: false.
+            - dump_as_text: dumps detail info as text files. Default: false.
 
             More options can refer to the implementation code.
         enable_reduce_precision (bool): Whether to enable precision reduction.
@@ -818,6 +818,7 @@ def set_context(**kwargs):
         ValueError: If input key is not an attribute in context.
 
     Examples:
+        >>> from mindspore import context
         >>> context.set_context(mode=context.PYNATIVE_MODE)
         >>> context.set_context(precompile_only=True)
         >>> context.set_context(device_target="Ascend")
@@ -888,6 +889,7 @@ def get_context(attr_key):
     Raises:
         ValueError: If input key is not an attribute in context.
     Examples:
+        >>> from mindspore import context
         >>> context.get_context("device_target")
         >>> context.get_context("device_id")
     """
@@ -969,7 +971,7 @@ def set_ps_context(**kwargs):
                           Default: False.
         config_file_path (string): Configuration file path used by recovery, parameter server training mode only
                                    supports Server disaster recovery currently. Default: ''.
-        scheduler_manage_port (int): scheduler manage port used to scale out/in. Default: 11202.
+        scheduler_manage_port (int): Scheduler manage port used to scale out/in. Default: 11202.
         enable_ssl (bool): Set PS SSL mode enabled or disabled. Default: False.
         client_password (str): Password to decrypt the secret key stored in the client certificate. Default: ''.
         server_password (str): Password to decrypt the secret key stored in the server certificate. Default: ''.
@@ -978,6 +980,7 @@ def set_ps_context(**kwargs):
         ValueError: If input key is not the attribute in parameter server training mode context.
 
     Examples:
+        >>> from mindspore import context
         >>> context.set_ps_context(enable_ps=True, enable_ssl=True, client_password='123456', server_password='123456')
     """
     _set_ps_context(**kwargs)
@@ -999,6 +1002,7 @@ def get_ps_context(attr_key):
         ValueError: If input key is not attribute in auto parallel context.
 
     Examples:
+        >>> from mindspore import context
         >>> context.get_ps_context("enable_ps")
     """
     return _get_ps_context(attr_key)
