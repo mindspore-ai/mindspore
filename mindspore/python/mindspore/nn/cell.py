@@ -401,13 +401,13 @@ class Cell(Cell_):
                     default_args += 1
 
         if len(inputs) < positional_args:
-            raise TypeError(
-                f"The function construct needs {positional_args} positional argument, but only provided {len(inputs)}.")
+            raise TypeError(f"For 'Cell', the function construct need {positional_args} positional argument, "
+                            f"but got {len(inputs)}.")
 
         if len(inputs) > positional_args + default_args:
-            raise TypeError(
-                f"The function construct needs {positional_args} positional argument and {default_args} default "
-                f"argument, but provided {len(inputs)}")
+            raise TypeError(f"For 'Cell', the function construct need {positional_args} positional argument and "
+                            f"{default_args} default argument, total {positional_args + default_args}, "
+                            f"but got {len(inputs)}.")
 
     def _get_prims_recursively(self):
         all_prims = list()
@@ -472,7 +472,8 @@ class Cell(Cell_):
         if context._get_mode() == context.GRAPH_MODE:
             self._check_construct_args(*args, **kwargs)
             if self.enable_hook:
-                raise ValueError("The graph mode does not support hook function.")
+                raise ValueError("For 'Cell', it's not support hook function in graph mode, please use "
+                                 "context.set_context to set pynative mode.")
             out = self.compile_and_run(*args)
             return out
 
@@ -486,7 +487,7 @@ class Cell(Cell_):
             if isinstance(item, Tensor) and item.has_init:
                 item.init_data()
             elif isinstance(item, numpy.ndarray):
-                raise TypeError("The cell inputs should not be numpy arrays.")
+                raise TypeError("For 'Cell', inputs should not be numpy array.")
         if self.requires_grad is True:
             _pynative_executor.set_grad_flag(True)
         _pynative_executor.new_graph(self, *args, **kwargs)
@@ -540,13 +541,13 @@ class Cell(Cell_):
         cells = self.__dict__.get('_cells')
         params = self.__dict__.get('_params')
         if params is None:
-            raise AttributeError("Can not assign params before Cell.__init__() call.")
+            raise AttributeError("For 'Cell', can not assign params before Cell.__init__() is called.")
         if name in self.__dict__:
             if self.__dict__[name] is not None:
-                raise TypeError("The type of value should not be Parameter or Cell, but got Parameter.")
+                raise TypeError(f"For 'Cell', the {name} should not be Parameter.")
             del self.__dict__[name]
         if cells and name in cells:
-            raise TypeError("The type of value should be Cell, but got Parameter.")
+            raise TypeError(f"For 'Cell', the {name} should be Cell, but got Parameter.")
         self.insert_param_to_cell(name, value)
 
     def _set_attr_for_parameter_tuple(self, name, value):
@@ -554,7 +555,7 @@ class Cell(Cell_):
         params = self.__dict__.get('_params')
         params_list = self.__dict__.get('_params_list')
         if params is None:
-            raise AttributeError("Can not assign params before Cell.__init__() call.")
+            raise AttributeError("For 'Cell', can not assign params before Cell.__init__() is called.")
         exist_names = set("")
         exist_objs = set()
         for item in value:
@@ -603,11 +604,11 @@ class Cell(Cell_):
         cells = self.__dict__.get('_cells')
         params = self.__dict__.get('_params')
         if cells is None:
-            raise AttributeError("Can not assign cells before Cell.__init__() call.")
+            raise AttributeError("For 'Cell', can not assign cells before Cell.__init__() is called.")
         if name in self.__dict__:
             del self.__dict__[name]
         if params and name in params:
-            raise TypeError("The type of value should be Parameter, but got Cell.")
+            raise TypeError(f"For 'Cell', the {name} should be Parameter, but got Cell.")
         if self._auto_prefix:
             value.update_parameters_name(name + '.')
         cells[name] = value
@@ -618,7 +619,7 @@ class Cell(Cell_):
         if isinstance(value, Tensor) and self._params[name] is not None:
             self._params[name].set_data(value)
         elif value is not None:
-            raise TypeError(f"The type of value should be Parameter or ParameterTuple, "
+            raise TypeError(f"For 'Cell', the type of {name} should be Parameter or ParameterTuple, "
                             f"but got {type(value).__name__}.")
         else:
             self.insert_param_to_cell(name, None)
@@ -658,7 +659,7 @@ class Cell(Cell_):
             self._set_attr_for_params(name, value)
         elif cells and name in cells:
             if value is not None:
-                raise TypeError(f"The type of value should be cell, but got {type(value).__name__}.")
+                raise TypeError(f"For 'Cell', the type of {name} should be cell, but got {type(value).__name__}.")
             self._cells[name] = None
         elif isinstance(value, Tensor):
             self._set_attr_for_tensor(name, value)
@@ -769,7 +770,7 @@ class Cell(Cell_):
         self._construct_inputs_names = fn.__code__.co_varnames
 
         if self._construct_inputs_num <= 0:
-            raise ValueError(f"Num of inputs must be greater than 0, but got {self._construct_inputs_num}")
+            raise ValueError(f"The number of inputs must be greater than 0, but got {self._construct_inputs_num}.")
         if self._construct_inputs_names[0] != 'self':
             raise ValueError(f"First member of fn function must be self, but got {self._construct_inputs_names[0]}")
         if self._construct_inputs_num - 1 > len(self._construct_inputs_names):
@@ -857,7 +858,7 @@ class Cell(Cell_):
         if check_name_contain_dot and '.' in param_name:
             raise KeyError("For 'insert_param_to_cell', the argument 'param_name' should not contain \".\"")
         if '_params' not in self.__dict__:
-            raise AttributeError("You need call init() first.")
+            raise AttributeError("Please call Cell.__init__() firstly.")
         if hasattr(self, param_name) and param_name not in self._params:
             raise KeyError("For 'insert_param_to_cell', the {} parameter already exists in the network. Cannot "
                            "insert another parameter with the same name.".format(param_name))
@@ -1464,8 +1465,12 @@ class Cell(Cell_):
             fn (function): Specifies the hook function with grad as input.
 
         """
-        self._backward_hook = HookBackward(fn, self.cls_name + "(" + str(id(self)) + ")")
-        self.enable_hook = True
+        if context.get_context("mode") != context.PYNATIVE_MODE:
+            logger.warning("Hook function is only supported in pynative mode, you can use context.set_context to set "
+                           "pynative mode.")
+        else:
+            self._backward_hook = HookBackward(fn, self.cls_name + "(" + str(id(self)) + ")")
+            self.enable_hook = True
 
     def set_param_ps(self, recurse=True, init_in_server=False):
         """
@@ -1641,10 +1646,9 @@ class Cell(Cell_):
         params = []
         for param in self.trainable_params():
             if not param._pipeline_stage_list:
-                raise RuntimeError("The parameter {} does not belong to any stage, "
-                                   "please check whether the cell where the param locates"
-                                   " has been set pipeline_stage. "
-                                   "Otherwise, the parameter should use add_pipeline_stage "
+                raise RuntimeError("For 'infer_param_pipeline_stage', the parameter {} does not belong to any stage, "
+                                   "please check whether the cell where the param locates has been set "
+                                   "'pipeline_stage'. Otherwise, the parameter should use 'add_pipeline_stage' "
                                    "to add its stage information".format(param.name))
             if current_stage in param._pipeline_stage_list:
                 params.append(param)

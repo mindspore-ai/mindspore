@@ -337,12 +337,12 @@ def _verify_config(kwargs):
 
     if console is not None:
         if not console.isdigit() or console not in (_std_off, _std_on):
-            raise ValueError(f'Incorrect value, The value of {_confmap_dict["console"]} must be 0 or 1,'
-                             f' Output log to console, configure to 1.')
+            raise ValueError(f'Incorrect value, the value of {_confmap_dict["console"]} must be 0 or 1, '
+                             f'but got {console}.')
 
         if console == _std_off and not file_path:
-            raise ValueError(f'When {_confmap_dict["console"]} is set to 0, The directory of '
-                             f'saving log must be set, {_confmap_dict["filepath"]} cannot be empty.')
+            raise ValueError(f'When {_confmap_dict["console"]} is set to 0, the directory of saving log '
+                             f'{_confmap_dict["filepath"]} must be set, but got it empty.')
 
         # Check the input value of filepath
         if console == _std_off and file_path is not None:
@@ -353,15 +353,15 @@ def _verify_config(kwargs):
         max_bytes = kwargs.get('maxBytes', None)
         if console == _std_off and max_bytes is not None:
             if not max_bytes.isdigit():
-                raise ValueError(f'Incorrect value, The value of {_confmap_dict["maxBytes"]} must be positive integer. '
-                                 f'{_confmap_dict["maxBytes"]}:{max_bytes}')
+                raise ValueError(f'Incorrect value, the value of {_confmap_dict["maxBytes"]} must be positive integer. '
+                                 f'But got {_confmap_dict["maxBytes"]}:{max_bytes}.')
 
         # Check the input value of backupCount
         backup_count = kwargs.get('backupCount', None)
         if console == _std_off and backup_count is not None:
             if not backup_count.isdigit():
-                raise ValueError(f'Incorrect value, The value of {_confmap_dict["backupCount"]} must be positive '
-                                 f'integer. {_confmap_dict["backupCount"]}:{backup_count}')
+                raise ValueError(f'Incorrect value, the value of {_confmap_dict["backupCount"]} must be positive '
+                                 f'integer. But got {_confmap_dict["backupCount"]}:{backup_count}')
 
 
 def _verify_level(level):
@@ -375,9 +375,9 @@ def _verify_level(level):
 
     # Check the value of input level
     if level_name not in _name_to_level:
-        raise ValueError(f'Incorrect log level:{level}, Please check the configuration of GLOG_v or '
-                         'GLOG_stderrthreshold, desired log level: 4-CRITICAL, 3-ERROR, 2-WARNING, '
-                         '1-INFO, 0-DEBUG')
+        raise ValueError(f'Incorrect log level, please check the configuration of GLOG_v or '
+                         f'GLOG_stderrthreshold, desired log level: 4-CRITICAL, 3-ERROR, 2-WARNING, '
+                         f'1-INFO, 0-DEBUG. But got {level}.')
 
 
 def get_log_config():

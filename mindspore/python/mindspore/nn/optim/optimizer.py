@@ -132,8 +132,8 @@ class Optimizer(Cell):
         super(Optimizer, self).__init__(auto_prefix=False)
         parameters = self._parameters_base_check(parameters, "parameters")
         if not all(isinstance(x, Parameter) for x in parameters) and not all(isinstance(x, dict) for x in parameters):
-            raise TypeError("For 'Optimizer', all elements of the argument 'parameters' must be "
-                            "'Parameter' or 'dict'.")
+            raise TypeError("For 'Optimizer', all elements of the argument 'parameters' must be 'Parameter' or 'dict',"
+                            " please check the 'parameters'.")
 
         if isinstance(loss_scale, int):
             loss_scale = float(loss_scale)
@@ -214,18 +214,20 @@ class Optimizer(Cell):
                 self.use_parallel = True
             elif _get_parallel_mode() == ParallelMode.DATA_PARALLEL \
                     and context.get_context("device_target") != "Ascend":
-                raise RuntimeError("Parallel optimizer only supports 'Ascend' in data parallel mode, "
-                                   "but got {}.".format(context.get_context("device_target")))
+                raise RuntimeError(f'For "Optimizer", parallel optimizer only supports "Ascend" in data parallel mode, '
+                                   f'but got {context.get_context("device_target")}.')
             elif _get_parallel_mode() in (ParallelMode.STAND_ALONE, ParallelMode.HYBRID_PARALLEL):
-                raise RuntimeError("Parallel optimizer is not supported in {}.".format(_get_parallel_mode()))
+                raise RuntimeError("For 'Optimizer', parallel optimizer is not supported in {}, you should set "
+                                   "parallel mode to 'data_parallel', 'semi_auto_parallel' or 'auto_parallel'."
+                                   .format(_get_parallel_mode()))
             else:
                 self.use_parallel = False
         else:
             self.use_parallel = False
         if self.use_parallel:
             if self.cls_name not in ["Lamb", "AdamWeightDecay", "AdaFactor"]:
-                raise RuntimeError("Parallel optimizer only support optimizer 'Lamb', 'AdamWeightDecay' or "
-                                   "'AdaFactor', but got {}.".format(self.cls_name))
+                raise RuntimeError("For 'Optimizer', parallel optimizer only support optimizer 'Lamb' and "
+                                   "'AdamWeightDecay', but got {}.".format(self.cls_name))
             self.dev_num = _get_device_num()
             if self.dev_num > self.param_length:
                 raise RuntimeError("Parallel optimizer can not be applied when the number of parameters {} is"
@@ -423,14 +425,16 @@ class Optimizer(Cell):
         return learning_rate
 
     def _parameters_base_check(self, parameters, param_info):
+        """Parameters base check."""
         if parameters is None:
-            raise ValueError(f"Optimizer {param_info} can not be None.")
+            raise ValueError(f"For 'Optimizer', the argument {param_info} can not be None.")
         if not isinstance(parameters, Iterable):
-            raise TypeError(f"Optimizer {param_info} must be Iterable.")
+            raise TypeError(f"For 'Optimizer', the argument {param_info} must be Iterable type, "
+                            f"but got {type(parameters)}.")
         parameters = list(parameters)
 
         if not parameters:
-            raise ValueError(f"Optimizer got an empty {param_info} list.")
+            raise ValueError(f"For 'Optimizer', the argument {param_info} must not be empty.")
         return parameters
 
     def _check_group_params(self, parameters):
@@ -439,19 +443,23 @@ class Optimizer(Cell):
         for group_param in parameters:
             invalid_key = list(filter(lambda x: x not in parse_keys, group_param.keys()))
             if invalid_key:
-                raise KeyError(f'The key "{invalid_key}" cannot be recognized in group params.')
+                raise KeyError(f"For 'Optimizer', the key in group params should be one of in {parse_keys}, "
+                               f"but got {invalid_key}.")
 
             if 'order_params' in group_param.keys():
                 if len(group_param.keys()) > 1:
-                    raise ValueError("The order params dict in group parameters should "
-                                     "only include the 'order_params' key.")
+                    raise ValueError(f"For 'Optimizer', the order params dict in group parameters should only "
+                                     f"include the 'order_params' key, but got {group_param.keys()}.")
                 if not isinstance(group_param['order_params'], Iterable):
-                    raise TypeError("The value of 'order_params' should be an Iterable type.")
+                    raise TypeError("For 'Optimizer', the value of 'order_params' in group parameters should "
+                                    "be Iterable type, but got {}.".format(type(group_param['order_params'])))
                 continue
 
             parameters = self._parameters_base_check(group_param['params'], "group `params`")
-            if not all(isinstance(x, Parameter) for x in parameters):
-                raise TypeError("The group `params` should be an iterator of Parameter type.")
+            for index, param in enumerate(parameters):
+                if not isinstance(param, Parameter):
+                    raise TypeError(f"For 'Optimizer', the elemeter in group parameters must be Parameter type, "
+                                    f"but got {type(param)} at index {index}.")
 
     def _parse_group_params(self, parameters, learning_rate):
         """Parse group params."""
@@ -464,10 +472,11 @@ class Optimizer(Cell):
         for group_param in parameters:
             if 'order_params' in group_param.keys():
                 if len(group_param.keys()) > 1:
-                    raise ValueError("The order params dict in group parameters should "
-                                     "only include the 'order_params' key.")
+                    raise ValueError(f"For 'Optimizer', the order params dict in group parameters should only include "
+                                     f"the 'order_params' key, but got {group_param.keys()}.")
                 if not isinstance(group_param['order_params'], Iterable):
-                    raise TypeError("The value of 'order_params' should be an Iterable type.")
+                    raise TypeError("For 'Optimizer', the value of 'order_params' in group parameters should be "
+                                    "Iterable type, but got {}.".format(type(group_param['order_params'])))
                 self.is_group_params_ordered = True
                 continue
 
@@ -480,7 +489,8 @@ class Optimizer(Cell):
                     if tensor_lr_length == 0:
                         tensor_lr_length = group_lr_length
                     elif group_lr_length != tensor_lr_length:
-                        raise ValueError("The Tensor type dynamic learning rate in group should be the same size.")
+                        raise ValueError("For 'Optimizer', the Tensor type dynamic learning rate in group should be "
+                                         "the same size as the argument 'learning_rate'.")
 
     def _init_group_params(self, parameters, learning_rate, weight_decay, grad_centralization):
         """Initialize learning rate, weight decay or grad centralization in group params."""
@@ -541,7 +551,9 @@ class Optimizer(Cell):
         """
         params_length = len(self.group_params)
         if len(ordered_parameters) != len(self.group_params):
-            raise ValueError(f"The value of 'order_params' should be same with all group parameters.")
+            raise ValueError(f"The length of order parameters should be the same as the length of group parameters, "
+                             f"but got order parameters' length {len(ordered_parameters)}, "
+                             f"group parameters' length {len(self.group_params)}.")
 
         ordered_params = [None] * params_length
         ordered_learning_rate = [None] * params_length

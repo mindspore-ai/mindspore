@@ -198,7 +198,9 @@ class FTRL(Optimizer):
                  use_locking=False, loss_scale=1.0, weight_decay=0.0):
         super(FTRL, self).__init__(learning_rate, params, weight_decay, loss_scale=loss_scale)
         if self.dynamic_lr or self.is_group_lr:
-            raise ValueError('Dynamic learning rate or group learning rate is currently not supported.')
+            raise ValueError(f"For 'FTRL', dynamic learning rate and group learning rate are currently not supported "
+                             f"in FTRL, they should all be false, but got dynamic learning rate {self.dynamic_lr} and"
+                             f" group learning rate {self.is_group_lr}.")
         _check_param(initial_accum, lr_power, l1, l2, use_locking, self.cls_name)
         self.moments = self.parameters.clone(prefix="moments", init=initial_accum)
         self.linear = self.parameters.clone(prefix="linear", init='zeros')

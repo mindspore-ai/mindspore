@@ -94,17 +94,21 @@ class OcclusionSensitivity(Metric):
             b_box_min = b_box_max = None
         else:
             if len(b_box) != 2 * len(im_shape):
-                raise ValueError("The bounding box should contain upper and lower "
-                                 "for all dimensions (except batch number)")
+                raise ValueError(f"For 'OcclusionSensitivity', the bounding box should contain upper and lower for "
+                                 f"all dimensions (except batch number), and the length of 'b_box' should be twice "
+                                 f"as long as predicted value's (except batch number), but got 'b_box' length "
+                                 f"{len(b_box)}, predicted value length (except batch number) {len(im_shape)}.")
 
             b_box_min = np.array(b_box[::2])
             b_box_max = np.array(b_box[1::2])
             b_box_min[b_box_min < 0] = 0
             b_box_max[b_box_max < 0] = im_shape[b_box_max < 0] - 1
             if np.any(b_box_max >= im_shape):
-                raise ValueError("Max bounding box should be < image size for all values")
+                raise ValueError("For 'OcclusionSensitivity', maximum bounding box should be smaller than image size "
+                                 "for all values.")
             if np.any(b_box_min > b_box_max):
-                raise ValueError("Min bounding box should be <= max for all values")
+                raise ValueError("For 'OcclusionSensitivity', minimum bounding box should be smaller than maximum "
+                                 "bounding box for all values.")
 
         return b_box_min, b_box_max
 
@@ -155,7 +159,9 @@ class OcclusionSensitivity(Metric):
             label = np.array([[label]], dtype=int)
         # If the label is a tensor, make sure  there's only 1 element
         elif np.prod(label.shape) != y_pred.shape[0]:
-            raise RuntimeError("Expected as many labels as batches.")
+            raise RuntimeError(f"For 'OcclusionSensitivity.update', the number of the label (input[2]) should be "
+                               f"same as the batches, but got the label number {np.prod(label.shape)}, "
+                               f"and batches {y_pred.shape[0]}.")
 
         y_pred_shape = np.array(y_pred.shape[1:])
         b_box_min, b_box_max = self._check_input_bounding_box(self.b_box, y_pred_shape)

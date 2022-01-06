@@ -96,8 +96,9 @@ class Perplexity(Metric):
         num = 0
         for label, pred in zip(labels, preds):
             if label.size != pred.size / pred.shape[-1]:
-                raise RuntimeError("shape mismatch: label shape should be equal to pred shape, but got label shape "
-                                   "is {}, pred shape is {}.".format(label.shape, pred.shape))
+                raise RuntimeError("For 'Perplexity.update', predicted value (input[0]) and label (input[1]) should "
+                                   "have the same shape, but got predicted value shape {}, label shape {}."
+                                   .format(pred.shape, label.shape))
             label = label.reshape((label.size,))
             label_expand = label.astype(int)
             label_expand = np.expand_dims(label_expand, axis=1)

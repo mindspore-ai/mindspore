@@ -607,6 +607,8 @@ def load_param_into_net(net, parameter_dict, strict_load=False):
 def _load_dismatch_prefix_params(net, parameter_dict, param_not_load, strict_load):
     """When some net parameter did not load, try to continue loading."""
     prefix_name = ""
+    dict_param_name = ""
+    not_load_param_name = ""
     longest_name = param_not_load[0]
     while prefix_name != longest_name and param_not_load:
         logger.debug("Count: {} parameters has not been loaded, try to continue loading.".format(len(param_not_load)))
@@ -615,12 +617,15 @@ def _load_dismatch_prefix_params(net, parameter_dict, param_not_load, strict_loa
             for dict_name in parameter_dict:
                 if dict_name.endswith(net_param_name):
                     prefix_name = dict_name[:-len(net_param_name)]
+                    dict_param_name = dict_name
+                    not_load_param_name = net_param_name
                     break
             if prefix_name != longest_name:
                 break
 
         if prefix_name != longest_name:
-            logger.warning("Remove parameter prefix name: {}, continue to load.".format(prefix_name))
+            logger.warning(f"For 'load_param_into_net', remove parameter {dict_param_name}'s prefix name: "
+                           f"{prefix_name}, continue to load it to net parameter {not_load_param_name}.")
             for _, param in net.parameters_and_names():
                 new_param_name = prefix_name + param.name
                 if param.name in param_not_load and new_param_name in parameter_dict:
@@ -683,7 +688,9 @@ def _get_merged_param_data(net, param_name, param_data, integrated_save):
             if context.get_auto_parallel_context("pipeline_stages") > 1:
                 raise RuntimeError("Pipeline Parallel don't support Integrated save checkpoint now.")
             if uniform_split == 0:
-                raise RuntimeError("Integrated save checkpoint only support uniform split tensor now.")
+                raise RuntimeError("For 'save_checkpoint' and in automatic model parallel scene, when set "
+                                   "'integrated_save' to True, the checkpoint will be integrated save, it "
+                                   "is only supports uniform split tensor now.")
             # while any dim is not equal to -1, means param is split and needs to be merged
             # pipeline parallel need to be supported here later
             if mp_weight:
@@ -1034,7 +1041,8 @@ def _save_together(net_dict, model):
         if name in net_dict.keys():
             data_total += sys.getsizeof(net_dict[name].data.asnumpy().tobytes()) / 1024
         else:
-            raise RuntimeError('Graph parameter: {} Undefined in network.'.format(param_proto.name))
+            raise ValueError("The parameter {} in the graph should also be defined in the network."
+                             .format(param_proto.name))
         if data_total > TOTAL_SAVE:
             return False
     return True
@@ -1240,7 +1248,7 @@ def _merge_param_with_strategy(sliced_data, parameter_name, strategy, is_even):
         param_split_shape = list(layout.param_split_shape[0].dim)
         field_size = int(layout.field)
     except BaseException as e:
-        raise ValueError(f"{e.__str__()}. Please make sure that strategy matches the node_strategy.proto.")
+        raise ValueError(f"{e.__str__()}. For 'merge_sliced_parameter', please make sure that 'strategy' is correct.")
 
     device_count = 1
     for dim in dev_mat:
@@ -1253,8 +1261,8 @@ def _merge_param_with_strategy(sliced_data, parameter_name, strategy, is_even):
 
     if not param_split_shape:
         if not is_even:
-            raise ValueError("When the shape of every parameter in 'sliced_parameters' is same, "
-                             "the 'is_even' should be True, but got {}.".format(is_even))
+            raise ValueError("For 'merge_sliced_parameter', the shape of every parameter in 'sliced_parameters' "
+                             "should be the same when slice manner is even.")
 
         all_gather_tensor = Tensor(np.concatenate(sliced_data))
 
@@ -1271,16 +1279,17 @@ def _merge_param_with_strategy(sliced_data, parameter_name, strategy, is_even):
             slice_count *= dim
 
         if len(param_split_shape) != slice_count:
-            raise ValueError(f"The param_split_shape length in strategy should be {slice_count}, "
-                             f"but got {len(param_split_shape)}.")
+            raise ValueError(f"For 'merge_sliced_parameter', the param_split_shape length in 'strategy' should be "
+                             f"{slice_count}, but got {len(param_split_shape)}.")
 
         tensor_slices_new = list(range(slice_count))
         tensor_slices = sliced_data
         for i in range(device_count):
             slice_index = int(_get_tensor_slice_index(dev_mat, tensor_strategy, tensor_map, i))
             if tensor_slices[i].shape[0] != param_split_shape[slice_index]:
-                raise ValueError(f"The slice {slice_index} should be {param_split_shape[slice_index]} in 0 axis, "
-                                 f"but got {tensor_slices[i].shape[0]}.")
+                raise ValueError(f"For 'merge_sliced_parameter', the slice {slice_index} should be "
+                                 f"{param_split_shape[slice_index]} in 0 axis, but got "
+                                 f"{tensor_slices[i].shape[0]}.")
             tensor_slices_new[slice_index] = np.array(tensor_slices[i])
 
         dim_len = len(tensor_strategy)
@@ -1608,9 +1617,13 @@ def load_distributed_checkpoint(network, checkpoint_filenames, predict_strategy=
         param_dict[param.name] = split_param
 
     if param_not_in_strategy:
-        logger.warning("{} parameters in network are not in the slice strategy.".format(param_not_in_strategy))
+        logger.warning("For 'load_distributed_checkpoint', {} parameters in network are not in the slice strategy, "
+                       "you can check whether 'predict_strategy' or 'train_strategy_filename' is correct."
+                       .format(param_not_in_strategy))
     if param_not_in_ckpt:
-        logger.warning("{} parameters in slice strategy but not in the checkpoint file.".format(param_not_in_ckpt))
+        logger.warning("For 'load_distributed_checkpoint', {} parameters in network and slice strategy but not in "
+                       "the checkpoint file, please check whether 'checkpoint_filenames' is correct."
+                       .format(param_not_in_ckpt))
 
     load_param_into_net(network, param_dict, strict_load=strict_load)
 
@@ -1688,7 +1701,9 @@ def _convert_to_list(strategy):
             shard_size = int(layout.opt_weight_shard_size)
             train_map[param_name] = [dev_mat, tensor_map, param_split_shape, field_size, shard_stride, shard_size]
         except BaseException as e:
-            raise ValueError(f"{e.__str__()}. Please make sure that strategy matches the node_strategy.proto.")
+            raise ValueError(f"{e.__str__()}. For 'load_distributed_checkpoint', convert layout strategy to list "
+                             f"failed, please make sure that strategy matches the node_strategy.proto, you can "
+                             f"check whether 'train_strategy_filename' is correct.")
     return train_map
 
 
@@ -1711,7 +1726,8 @@ def _convert_to_layout(param_name, tensor_layout):
         for item in tensor_layout[2]:
             param_split_shape.dim.append(item)
     except BaseException as e:
-        raise ValueError("Convert failed. " + e.__str__())
+        raise ValueError(f"{e.__str__()}. For 'load_distributed_checkpoint', convert list to layout strategy failed, "
+                         f"you can check whether your input list is correct.")
 
     strategy[param_name] = layout
     return strategy

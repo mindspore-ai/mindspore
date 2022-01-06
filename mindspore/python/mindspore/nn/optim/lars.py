@@ -126,8 +126,8 @@ class LARS(Optimizer):
             self.origin_learning_rate = optimizer.learning_rate
             self.global_step = optimizer.global_step
             if self.is_group_lr and self.dynamic_lr:
-                raise ValueError('Grouped dynamic learning rate is currently not supported for the inputs optimizer ' \
-                                 'of lars.')
+                raise ValueError("For 'LARS', if the argument 'use_clip' is set to True, then the dynamic "
+                                 "learning rate and group learning rate cannot both be true.")
 
         if self.is_group:
             self.weight_decay = tuple(map(lambda x: x / optimizer.loss_scale, optimizer.weight_decay))

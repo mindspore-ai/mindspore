@@ -73,7 +73,8 @@ def _get_print_file_name(file_name):
     time_second = str(int(time.time()))
     file_name = file_name + "." + time_second
     if os.path.exists(file_name):
-        ValueError("This file {} already exists.".format(file_name))
+        raise ValueError("For 'context.set_context', the argument 'print_file_path' {} already exists, "
+                         "please check it".format(file_name))
     return file_name
 
 
@@ -95,9 +96,6 @@ class _ThreadLocalInfo(threading.local):
     @reserve_class_name_in_scope.setter
     def reserve_class_name_in_scope(self, reserve_class_name_in_scope):
         """Set whether to save the network class name in the scope."""
-        if not isinstance(reserve_class_name_in_scope, bool):
-            raise ValueError("For 'context.set_context', the type of the property 'reserve_class_name_in_scope' must "
-                             "be bool, but got {}.".format(type(reserve_class_name_in_scope)))
         self._reserve_class_name_in_scope = reserve_class_name_in_scope
 
 
@@ -255,7 +253,7 @@ class _Context:
                              " format! It must be a string ending with 'GB', in addition to that, it must contain "
                              "only numbers or decimal points, such as \"5GB\" or \"3.5GB\", but got {}."
                              .format(variable_memory_max_size))
-        if int(variable_memory_max_size[:-2]) > _DEVICE_APP_MEMORY_SIZE:
+        if float(variable_memory_max_size[:-2]) > _DEVICE_APP_MEMORY_SIZE:
             raise ValueError("For 'context.set_context', the argument 'variable_memory_max_size' should not be "
                              "greater than 31GB, but got {}.".format(variable_memory_max_size))
         variable_memory_max_size_ = variable_memory_max_size[:-2] + " * 1024 * 1024 * 1024"
@@ -305,8 +303,8 @@ class _Context:
     def set_env_config_path(self, env_config_path):
         """Check and set env_config_path."""
         if not self._context_handle.enable_dump_ir():
-            raise ValueError("The 'env_config_path' is not supported, please enable ENABLE_DUMP_IR "
-                             "with '-D on' and recompile source.")
+            raise ValueError("For 'context.set_context', the argument 'env_config_path' is not supported, please "
+                             "enable ENABLE_DUMP_IR with '-D on' and recompile source firstly.")
         env_config_path = os.path.realpath(env_config_path)
         if not os.path.isfile(env_config_path):
             raise ValueError("For 'context.set_context', the 'env_config_path' file %r is not exists, "
@@ -343,6 +341,9 @@ class _Context:
     @reserve_class_name_in_scope.setter
     def reserve_class_name_in_scope(self, reserve_class_name_in_scope):
         """Set whether to save the network class name in the scope."""
+        if not isinstance(reserve_class_name_in_scope, bool):
+            raise ValueError("For 'context.set_context', the type of the property 'reserve_class_name_in_scope' must "
+                             "be bool, but got {}.".format(type(reserve_class_name_in_scope)))
         self._thread_local_info.reserve_class_name_in_scope = reserve_class_name_in_scope
 
     @property
@@ -850,8 +851,8 @@ def set_context(**kwargs):
         ctx.set_device_target(kwargs['device_target'])
         device = ctx.get_param(ms_ctx_param.device_target)
         if not device.lower() in __device_target__:
-            raise ValueError(f"Error, package type {__package_name__} support device type {__device_target__}, "
-                             f"but got device target {device}")
+            raise ValueError(f"For 'context.set_context', package type {__package_name__} support 'device_target' "
+                             f"type {__device_target__}, but got {device}.")
     device = ctx.get_param(ms_ctx_param.device_target)
     for key, value in kwargs.items():
         if key in ('enable_profiling', 'profiling_options', 'enable_auto_mixed_precision',
