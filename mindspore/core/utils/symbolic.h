@@ -78,16 +78,16 @@ class SymbolicKeyInstance : public Value {
 using SymbolicKeyInstancePtr = std::shared_ptr<SymbolicKeyInstance>;
 
 struct SymbolicKeyInstanceHash {
-  std::size_t operator()(const SymbolicKeyInstancePtr s) const {
+  std::size_t operator()(const SymbolicKeyInstancePtr &s) const {
     if (s == nullptr) {
       return 0;
     }
-    return s->abstract()->hash();
+    return s->hash();
   }
 };
 
 struct SymbolicKeyInstanceEqual {
-  bool operator()(const SymbolicKeyInstancePtr lhs, const SymbolicKeyInstancePtr rhs) const {
+  bool operator()(const SymbolicKeyInstancePtr &lhs, const SymbolicKeyInstancePtr &rhs) const {
     if (lhs == nullptr || rhs == nullptr) {
       return false;
     }
