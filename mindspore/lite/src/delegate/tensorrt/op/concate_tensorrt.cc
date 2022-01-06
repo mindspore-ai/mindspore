@@ -46,13 +46,15 @@ int ConcateTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     return RET_ERROR;
   }
   if (tensorrt_in_tensors_.size() != in_tensors_.size()) {
-    MS_LOG(ERROR) << "concate_op in tensor is invalid";
+    MS_LOG(ERROR) << "concate_op in tensor is invalid, trt tensor has " << tensorrt_in_tensors_.size()
+                  << ", but origin ms tensor has " << in_tensors_.size();
     return RET_ERROR;
   }
 
   nvinfer1::ITensor *trt_input_tensors[tensorrt_in_tensors_.size()];
   int input_nbDims = tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims;
   Format out_format = tensorrt_in_tensors_[0].format_;
+  bool same_format = tensorrt_in_tensors_[0].same_format_;
 
   for (size_t i = 0; i < tensorrt_in_tensors_.size(); i++) {
     if (tensorrt_in_tensors_[i].trt_tensor_->getDimensions().nbDims != input_nbDims) {
@@ -78,6 +80,7 @@ int ConcateTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
           return RET_ERROR;
         }
         trt_input_tensors[i] = transpose_layer->getOutput(0);
+        same_format = true;
         MS_LOG(DEBUG) << "concate input " << GetTensorFormat(trt_input_tensors[i], Format::NHWC, true);
       }
     }
@@ -92,10 +95,14 @@ int ConcateTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   if (axis == -1) {
     axis = input_nbDims - 1;
   }
-  if (trt_input_tensors[0]->getDimensions().nbDims == DIMENSION_4D && out_format == Format::NCHW) {
-    // when inputs all NCHW, change axis
-    axis = ConvertAxisFromNHWC2NCHW(axis);
-    MS_LOG(DEBUG) << "concate axis change to " << axis << " when using NCHW format.";
+  if (!same_format) {
+    if (trt_input_tensors[0]->getDimensions().nbDims == DIMENSION_4D && out_format == Format::NCHW) {
+      // when inputs all NCHW, change axis
+      axis = ConvertAxisFromNHWC2NCHW(axis);
+      MS_LOG(DEBUG) << "concate axis change to " << axis << " when using NCHW format.";
+    } else {
+      MS_LOG(WARNING) << "input tensor format needs check, convert concat axis failed for " << op_name_;
+    }
   }
 
   nvinfer1::IConcatenationLayer *concate_layer =
@@ -110,8 +117,6 @@ int ConcateTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   }
   concate_layer->setName(op_name_.c_str());
   concate_layer->getOutput(0)->setName((op_name_ + "_output").c_str());
-  bool same_format = SameDims(trt_input_tensors[0]->getDimensions(), in_tensors_[0].Shape()) &&
-                     SameDims(concate_layer->getOutput(0)->getDimensions(), out_tensors_[0].Shape());
   this->AddInnerOutTensors(ITensorHelper{concate_layer->getOutput(0), out_format, same_format});
   return RET_OK;
 }

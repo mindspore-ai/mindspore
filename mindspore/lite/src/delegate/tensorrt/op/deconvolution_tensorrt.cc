@@ -120,9 +120,7 @@ int DeconvolutionTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     activation_layer->setName((op_name_ + "_activation").c_str());
   }
   activation_layer->getOutput(0)->setName((op_name_ + "_output").c_str());
-  bool same_format = SameDims(activation_layer->getOutput(0)->getDimensions(), out_tensors_[0].Shape()) &&
-                     SameDims(tensorrt_in_tensors_[0].trt_tensor_->getDimensions(), in_tensors_[0].Shape());
-  this->AddInnerOutTensors(ITensorHelper{activation_layer->getOutput(0), Format::NCHW, same_format});
+  this->AddInnerOutTensors(ITensorHelper{activation_layer->getOutput(0), Format::NCHW, false});
   return RET_OK;
 }
 

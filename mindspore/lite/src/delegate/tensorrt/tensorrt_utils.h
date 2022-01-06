@@ -103,10 +103,12 @@ std::string GetTensorFormat(nvinfer1::ITensor *trt_tensors);
 
 nvinfer1::ReduceOperation ConvertTRTReduceMode(schema::ReduceMode mode);
 
-nvinfer1::ITensor *PreprocessInputs2SameDim(nvinfer1::INetworkDefinition *network,
-                                            const ITensorHelper &input_tensor_helper);
+int PreprocessInputs2SameDim(nvinfer1::INetworkDefinition *network, const ITensorHelper &input_tensor_helper,
+                             ITensorHelper *out_tensor_helper);
 
 int GetDimsVolume(const nvinfer1::Dims &dims);
+
+int GetDimsVolume(const std::vector<int64_t> &shape);
 
 void SerializeValue(void **buffer, const void *value, size_t cpy_size);
 

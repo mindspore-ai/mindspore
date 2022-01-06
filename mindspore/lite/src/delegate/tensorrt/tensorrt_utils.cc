@@ -135,7 +135,7 @@ nvinfer1::ITensor *ConvertConstantTensor(nvinfer1::INetworkDefinition *network, 
   }
   nvinfer1::Dims dims = ConvertCudaDims(ms_tensor.Shape());
   if (dims.nbDims == -1) {
-    MS_LOG(WARNING) << "ConvertCudaDims failed for " << op_name;
+    MS_LOG(WARNING) << ms_tensor.Name() << " ConvertCudaDims failed, convert as scalar.";
     dims.nbDims = 1;
     dims.d[0] = 1;
   }
@@ -461,35 +461,51 @@ nvinfer1::ReduceOperation ConvertTRTReduceMode(schema::ReduceMode mode) {
   }
   return trt_mode;
 }
-nvinfer1::ITensor *PreprocessInputs2SameDim(nvinfer1::INetworkDefinition *network,
-                                            const ITensorHelper &input_tensor_helper) {
-  nvinfer1::ITensor *output = input_tensor_helper.trt_tensor_;
+int PreprocessInputs2SameDim(nvinfer1::INetworkDefinition *network, const ITensorHelper &input_tensor_helper,
+                             ITensorHelper *out_tensor_helper) {
+  out_tensor_helper->trt_tensor_ = input_tensor_helper.trt_tensor_;
+  out_tensor_helper->format_ = input_tensor_helper.format_;
+  out_tensor_helper->same_format_ = true;
   if (input_tensor_helper.trt_tensor_->getDimensions().nbDims == DIMENSION_4D && !input_tensor_helper.same_format_) {
     if (input_tensor_helper.format_ == Format::NCHW) {
       // transpose: NCHW->NHWC
       nvinfer1::IShuffleLayer *transpose_layer_in = NCHW2NHWC(network, *input_tensor_helper.trt_tensor_);
       if (transpose_layer_in == nullptr) {
         MS_LOG(ERROR) << "op action convert failed";
-        return nullptr;
+        return RET_ERROR;
       }
-      transpose_layer_in->setName((std::string(output->getName()) + "_input_transpose2NHWC").c_str());
-      output = transpose_layer_in->getOutput(0);
+      transpose_layer_in->setName(
+        (std::string(input_tensor_helper.trt_tensor_->getName()) + "_input_transpose2NHWC").c_str());
+      out_tensor_helper->trt_tensor_ = transpose_layer_in->getOutput(0);
+      out_tensor_helper->format_ = Format::NHWC;
     } else {
       // transpose: NHWC->NCHW
       nvinfer1::IShuffleLayer *transpose_layer_in = NHWC2NCHW(network, *input_tensor_helper.trt_tensor_);
       if (transpose_layer_in == nullptr) {
         MS_LOG(ERROR) << "op action convert failed";
-        return nullptr;
+        return RET_ERROR;
       }
-      transpose_layer_in->setName((std::string(output->getName()) + "_input_transpose2NCHW").c_str());
-      output = transpose_layer_in->getOutput(0);
+      transpose_layer_in->setName(
+        (std::string(input_tensor_helper.trt_tensor_->getName()) + "_input_transpose2NCHW").c_str());
+      out_tensor_helper->trt_tensor_ = transpose_layer_in->getOutput(0);
+      out_tensor_helper->format_ = Format::NCHW;
     }
   }
-  return output;
+  return RET_OK;
 }
 
 int GetDimsVolume(const nvinfer1::Dims &dims) {
+  if (dims.nbDims == 0) {
+    return 0;
+  }
   return std::accumulate(dims.d, dims.d + dims.nbDims, 1, std::multiplies<int64_t>());
+}
+
+int GetDimsVolume(const std::vector<int64_t> &shape) {
+  if (shape.size() == 0) {
+    return 0;
+  }
+  return std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int64_t>());
 }
 
 void SerializeValue(void **buffer, const void *value, size_t cpy_size) {

@@ -60,16 +60,25 @@ int GatherTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
       MS_LOG(ERROR) << "add const input tensor failed for " << op_name_;
       return RET_ERROR;
     }
-    tensorrt_in_tensors_.push_back(ITensorHelper{const_input, Format::NHWC, true});
+    tensorrt_in_tensors_.push_back(ITensorHelper{const_input});
   }
 
   int indices_tensor_index = tensorrt_in_tensors_[0].trt_tensor_->getType() == nvinfer1::DataType::kINT32 ? 0 : 1;
-
-  nvinfer1::ITensor *gather_input = PreprocessInputs2SameDim(network, tensorrt_in_tensors_[1 - indices_tensor_index]);
-  nvinfer1::ITensor *indices_tensor = PreprocessInputs2SameDim(network, tensorrt_in_tensors_[indices_tensor_index]);
+  ITensorHelper gather_input;
+  int ret = PreprocessInputs2SameDim(network, tensorrt_in_tensors_[1 - indices_tensor_index], &gather_input);
+  if (ret != RET_OK || gather_input.trt_tensor_ == nullptr) {
+    MS_LOG(ERROR) << "PreprocessInputs2SameDim gather failed for " << op_name_;
+    return RET_ERROR;
+  }
+  ITensorHelper indices_tensor;
+  ret = PreprocessInputs2SameDim(network, tensorrt_in_tensors_[indices_tensor_index], &indices_tensor);
+  if (ret != RET_OK || indices_tensor.trt_tensor_ == nullptr) {
+    MS_LOG(ERROR) << "PreprocessInputs2SameDim indices failed for " << op_name_;
+    return RET_ERROR;
+  }
 
   nvinfer1::IGatherLayer *gather_layer =
-    network->addGather(*gather_input, *indices_tensor /* indices */, axis_ /* axis */);
+    network->addGather(*gather_input.trt_tensor_, *indices_tensor.trt_tensor_ /* indices */, axis_ /* axis */);
   if (gather_layer == nullptr) {
     MS_LOG(ERROR) << "addGather failed for TensorRT.";
     return RET_ERROR;
@@ -91,7 +100,7 @@ int GatherTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     op_output = squeeze->getOutput(0);
   }
   op_output->setName((op_name_ + "_output").c_str());
-  this->AddInnerOutTensors(ITensorHelper{op_output, Format::NHWC, true});
+  this->AddInnerOutTensors(ITensorHelper{op_output, gather_input.format_, gather_input.same_format_});
   return RET_OK;
 }
 }  // namespace mindspore::lite

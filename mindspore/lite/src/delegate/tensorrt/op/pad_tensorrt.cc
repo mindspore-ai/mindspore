@@ -46,7 +46,7 @@ int PadTensorRT::IsSupport(const mindspore::schema::Primitive *primitive,
   }
   schema::PaddingMode padding_mode = pad_primitive->padding_mode();
   if (padding_mode != schema::PaddingMode::PaddingMode_CONSTANT) {
-    MS_LOG(ERROR) << "Unsupported padding mode: " << pad_primitive << ", for op: " << op_name_;
+    MS_LOG(ERROR) << "Unsupported padding mode: " << schema::PaddingMode(padding_mode) << ", for op: " << op_name_;
     return RET_ERROR;
   }
   if (in_tensors[0].format() != Format::NHWC && in_tensors[0].format() != Format::NCHW) {
@@ -67,6 +67,8 @@ int PadTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   }
 
   nvinfer1::ITensor *pad_input = tensorrt_in_tensors_[0].trt_tensor_;
+  MS_LOG(DEBUG) << "before transpose "
+                << GetTensorFormat(pad_input, tensorrt_in_tensors_[0].format_, tensorrt_in_tensors_[0].same_format_);
   if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
       tensorrt_in_tensors_[0].format_ == Format::NHWC) {
     // transpose: NHWC->NCHW
@@ -129,6 +131,7 @@ int PadTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   bool same_format = SameDims(padding_layer->getOutput(0)->getDimensions(), out_tensors_[0].Shape()) &&
                      SameDims(tensorrt_in_tensors_[0].trt_tensor_->getDimensions(), in_tensors_[0].Shape());
   this->AddInnerOutTensors(ITensorHelper{padding_layer->getOutput(0), Format::NCHW, same_format});
+  MS_LOG(DEBUG) << "after transpose " << GetTensorFormat(tensorrt_out_tensors_[0]);
   return RET_OK;
 }
 }  // namespace mindspore::lite

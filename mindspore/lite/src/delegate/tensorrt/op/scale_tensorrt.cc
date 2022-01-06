@@ -56,12 +56,13 @@ int ScaleTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   schema::ActivationType activation_type = scale_op->activation_type();
 
   // mode of scale
-  int64_t axis = scale_op->axis();
-  if (axis == -1) {
-    axis = static_cast<int64_t>(in_tensors_[0].Shape().size() - 1);
+  axis_ = scale_op->axis();
+  if (axis_ == -1) {
+    axis_ = static_cast<int64_t>(in_tensors_[0].Shape().size() - 1);
   }
-  mode_ = GetScaleMode(axis);
+  mode_ = GetScaleMode(axis_);
   out_format_ = tensorrt_in_tensors_[0].format_;
+  out_same_format_ = tensorrt_in_tensors_[0].same_format_;
   MS_LOG(DEBUG) << "before transpose " << GetTensorFormat(tensorrt_in_tensors_[0]);
 
   nvinfer1::ITensor *scale_in_tensor = PreProcessInputTensor(network);
@@ -70,8 +71,7 @@ int ScaleTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     return RET_ERROR;
   }
 
-  MS_LOG(DEBUG) << "after transpose "
-                << GetTensorFormat(scale_in_tensor, out_format_, tensorrt_in_tensors_[0].same_format_);
+  MS_LOG(DEBUG) << "after transpose " << GetTensorFormat(scale_in_tensor, out_format_, out_same_format_);
 
   bool nd = false;
   // (input * scale + shift) ^ power
@@ -101,7 +101,7 @@ int ScaleTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
 
   if (nd) {
     MS_LOG(WARNING) << "multi dims ScaleMode enter";
-    cal_layer = network->addScaleNd(*scale_in_tensor, mode_, shift, scale, power, axis);
+    cal_layer = network->addScaleNd(*scale_in_tensor, mode_, shift, scale, power, axis_);
   } else {
     cal_layer = network->addScale(*scale_in_tensor, mode_, shift, scale, power);
   }
@@ -131,7 +131,7 @@ int ScaleTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     op_out_tensor = AddSqueezeOp(activation_tensor, network);
   }
   op_out_tensor->setName((op_name_ + "_output").c_str());
-  this->AddInnerOutTensors(ITensorHelper{op_out_tensor, out_format_, tensorrt_in_tensors_[0].same_format_});
+  this->AddInnerOutTensors(ITensorHelper{op_out_tensor, out_format_, out_same_format_});
   MS_LOG(DEBUG) << "output " << GetTensorFormat(tensorrt_out_tensors_[0]);
   return RET_OK;
 }
@@ -146,17 +146,24 @@ nvinfer1::ITensor *ScaleTensorRT::PreProcessInputTensor(nvinfer1::INetworkDefini
       return nullptr;
     }
   } else if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
-             mode_ == nvinfer1::ScaleMode::kCHANNEL && tensorrt_in_tensors_[0].format_ == Format::NHWC) {
+             mode_ == nvinfer1::ScaleMode::kCHANNEL) {
     // per channel input format should be nchw, otherwise should be same with scale nhwc
     // transpose: NHWC->NCHW
-    nvinfer1::IShuffleLayer *transpose_layer_in = NHWC2NCHW(network, *tensorrt_in_tensors_[0].trt_tensor_);
-    if (transpose_layer_in == nullptr) {
-      MS_LOG(ERROR) << "op action convert failed";
-      return nullptr;
+    if ((tensorrt_in_tensors_[0].format_ == Format::NHWC && axis_ == kNHWC_C) ||
+        (tensorrt_in_tensors_[0].same_format_ == true && axis_ == kNHWC_C)) {
+      nvinfer1::IShuffleLayer *transpose_layer_in = NHWC2NCHW(network, *tensorrt_in_tensors_[0].trt_tensor_);
+      if (transpose_layer_in == nullptr) {
+        MS_LOG(ERROR) << "op action convert failed";
+        return nullptr;
+      }
+      transpose_layer_in->setName((op_name_ + "_transpose2NCHW").c_str());
+      scale_in_tensor = transpose_layer_in->getOutput(0);
+      out_format_ = Format::NCHW;
+      out_same_format_ = !out_same_format_;
+    } else if (out_format_ != Format::NCHW && axis_ != kNCHW_C) {
+      MS_LOG(WARNING) << op_name_ << " out format (NHWC:1, NCHW:0) infer as " << out_format_ << ", and axis is "
+                      << axis_;
     }
-    transpose_layer_in->setName((op_name_ + "_transpose2NCHW").c_str());
-    scale_in_tensor = transpose_layer_in->getOutput(0);
-    out_format_ = Format::NCHW;
   } else if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
              tensorrt_in_tensors_[0].format_ == Format::NCHW && mode_ == nvinfer1::ScaleMode::kELEMENTWISE) {
     // transpose: NCHW->NHWC
@@ -168,6 +175,7 @@ nvinfer1::ITensor *ScaleTensorRT::PreProcessInputTensor(nvinfer1::INetworkDefini
     transpose_layer_in->setName((op_name_ + "_transpose2NHWC").c_str());
     scale_in_tensor = transpose_layer_in->getOutput(0);
     out_format_ = Format::NHWC;
+    out_same_format_ = true;
   }
   return scale_in_tensor;
 }
@@ -177,7 +185,6 @@ nvinfer1::ScaleMode ScaleTensorRT::GetScaleMode(int64_t axis) {
   auto input_data_shape = in_tensors_[0].Shape();
   auto input_weight_shape = in_tensors_[1].Shape();
   int total = std::accumulate(input_data_shape.begin(), input_data_shape.end(), 1, std::multiplies<int>());
-  MS_LOG(DEBUG) << "input tensor element cnt: " << total;
   if (input_weight_shape.size() == 0 || (input_weight_shape.size() == 1 && input_weight_shape[0] == 1)) {
     mode = nvinfer1::ScaleMode::kUNIFORM;
   } else if ((axis < static_cast<int64_t>(input_data_shape.size()) && input_weight_shape.size() == 1 &&

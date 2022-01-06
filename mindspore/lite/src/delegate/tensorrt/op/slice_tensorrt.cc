@@ -52,18 +52,20 @@ int SliceTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   strides_index_ = in_tensors_.size() - 1;
   axis_index_ = in_tensors_.size() == HAS_AXIS ? AXIS_INDEX : -1;
 
-  nvinfer1::ITensor *slice_input = PreprocessInputs2SameDim(network, tensorrt_in_tensors_[0]);
-  if (slice_input == nullptr) {
+  ITensorHelper slice_input;
+  int ret = PreprocessInputs2SameDim(network, tensorrt_in_tensors_[0], &slice_input);
+  if (ret != RET_OK || slice_input.trt_tensor_ == nullptr) {
     MS_LOG(ERROR) << "PreprocessInputs2SameDim input tensor failed for " << op_name_;
     return RET_ERROR;
   }
-  int ret = ConvertParamsDims();
+  ret = ConvertParamsDims();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvertParamsDims failed for " << op_name_;
     return ret;
   }
 
-  nvinfer1::ISliceLayer *slice_layer = network->addSlice(*slice_input, start_dims_, size_dims_, stride_dims_);
+  nvinfer1::ISliceLayer *slice_layer =
+    network->addSlice(*slice_input.trt_tensor_, start_dims_, size_dims_, stride_dims_);
   if (slice_layer == nullptr) {
     MS_LOG(ERROR) << "add Slice op failed for TensorRT: " << op_name_;
     return RET_ERROR;
@@ -75,7 +77,7 @@ int SliceTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     return RET_ERROR;
   }
   out_tensor->setName((op_name_ + "_output").c_str());
-  this->AddInnerOutTensors(ITensorHelper{out_tensor, Format::NHWC, true});
+  this->AddInnerOutTensors(ITensorHelper{out_tensor, slice_input.format_, slice_input.same_format_});
   return RET_OK;
 }
 

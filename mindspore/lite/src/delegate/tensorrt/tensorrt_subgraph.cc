@@ -60,6 +60,9 @@ int TensorRTSubGraph::Init(cudaStream_t stream) {
     MS_LOG(ERROR) << "createOptimizationProfile failed.";
     return RET_ERROR;
   }
+  if (SetDeviceConfig(stream) != RET_OK) {
+    MS_LOG(WARNING) << "set tensorrt config failed.";
+  }
   serializer_ = std::make_shared<TensorRTSerializer>(serialize_file_path_);
   if (serializer_ == nullptr) {
     MS_LOG(ERROR) << "create Serializer failed.";
@@ -80,9 +83,6 @@ int TensorRTSubGraph::Init(cudaStream_t stream) {
     if (inputs_[i].Shape().size() != DIMENSION_4D) {
       input_hw_index_ = -1;
     }
-  }
-  if (SetDeviceConfig(stream) != RET_OK) {
-    MS_LOG(WARNING) << "set tensorrt config failed.";
   }
   return RET_OK;
 }
@@ -127,33 +127,6 @@ int TensorRTSubGraph::SetDeviceConfig(cudaStream_t stream) {
   // config setMaxWorkspaceSize to 1152 MB for max limit
   config_->setMaxWorkspaceSize(1152 * (1 << 20));
   return RET_OK;
-}
-
-bool TensorRTSubGraph::SupportFP16() {
-  int deviceCnt = 0;
-
-  cudaError ret = cudaGetDeviceCount(&deviceCnt);
-  if (ret != cudaSuccess) {
-    MS_LOG(ERROR) << "cudaGetDeviceCount failed.";
-    return false;
-  }
-  std::vector<std::string> supportFP16_versions{"5.3", "6.0", "6.2", "7.0", "7.2", "7.5", "8.0", "8.6"};
-  cudaDeviceProp prop;
-  std::string version;
-  for (int dev = 0; dev < deviceCnt; dev++) {
-    ret = cudaGetDeviceProperties(&prop, dev);
-    if (ret != cudaSuccess) {
-      MS_LOG(ERROR) << "cuDeviceGetAttribute failed.";
-      return false;
-    }
-    version = std::to_string(prop.major) + "." + std::to_string(prop.minor);
-    if (std::find(supportFP16_versions.begin(), supportFP16_versions.end(), version) != supportFP16_versions.end()) {
-      MS_LOG(INFO) << "cuda device version is: " << version << ", support FP16, set enable FP16 tag successful";
-      return true;
-    }
-  }
-  MS_LOG(WARNING) << "cuda device version is: " << version << ", don't support FP16, set enable FP16 tag failed";
-  return false;
 }
 
 nvinfer1::ITensor *TensorRTSubGraph::SetTensorRTNetworkInput(const mindspore::MSTensor &in_tensor) {

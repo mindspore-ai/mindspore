@@ -42,6 +42,7 @@ class ShuffleTensorRT : public TensorRTOp {
   int AddReshapeOp(nvinfer1::IShuffleLayer *shuffle_layer);
   int AddFlattenOp(nvinfer1::IShuffleLayer *shuffle_layer);
   int AddExpandDimsOp(nvinfer1::IShuffleLayer *shuffle_layer);
+  nvinfer1::ITensor *ExpandDim(nvinfer1::IShuffleLayer *shuffle_layer, nvinfer1::ITensor *input_tensor, int axis);
   nvinfer1::Dims InferReshapeDims(const nvinfer1::Dims &input_dims, const std::vector<int64_t> &ms_input_shape,
                                   const std::vector<int64_t> &ms_output_shape);
 

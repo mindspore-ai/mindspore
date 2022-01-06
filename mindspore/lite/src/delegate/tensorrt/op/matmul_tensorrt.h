@@ -36,8 +36,10 @@ class MatMulTensorRT : public TensorRTOp {
   int AddInnerOp(nvinfer1::INetworkDefinition *network) override;
 
  private:
+  int PreprocessInputs(nvinfer1::INetworkDefinition *network, ITensorHelper *matmul_a, ITensorHelper *matmul_b);
   nvinfer1::MatrixOperation transpose_a_ = nvinfer1::MatrixOperation::kNONE;
   nvinfer1::MatrixOperation transpose_b_ = nvinfer1::MatrixOperation::kNONE;
+  Format out_format_;
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_OP_MATMUL_TENSORRT_H_

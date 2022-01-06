@@ -119,6 +119,12 @@ Status TensorRTDelegate::Init() {
     {schema::PrimitiveType_ArgMaxFusion, GetTensorRTOp<TopKTensorRT>},
     {schema::PrimitiveType_Sqrt, GetTensorRTOp<UnaryTensorRT>},
     {schema::PrimitiveType_Abs, GetTensorRTOp<UnaryTensorRT>},
+    {schema::PrimitiveType_Neg, GetTensorRTOp<UnaryTensorRT>},
+    {schema::PrimitiveType_Log, GetTensorRTOp<UnaryTensorRT>},
+    {schema::PrimitiveType_Sin, GetTensorRTOp<UnaryTensorRT>},
+    {schema::PrimitiveType_Cos, GetTensorRTOp<UnaryTensorRT>},
+    {schema::PrimitiveType_Ceil, GetTensorRTOp<UnaryTensorRT>},
+    {schema::PrimitiveType_Floor, GetTensorRTOp<UnaryTensorRT>},
   };
   int ret = lite::SetCudaDevice(device_info_);
   if (ret != RET_OK) {
