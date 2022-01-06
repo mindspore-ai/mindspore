@@ -5008,8 +5008,11 @@ def _check_shm_usage(num_worker, queue_size, max_rowsize, num_queues=1):
             if shm_estimate_usage >= threshold_ratio * shm_available:
                 raise RuntimeError(
                     "Insufficient shared memory available. Required: {}, Available: {}. "
-                    "The required memory can't exceed 80% of the available shared memory. "
-                    "Recommend to set_enable_shared_mem to False, reduce max_rowsize or reduce num_parallel_workers."
+                    "The required memory can't exceed 80% of the available shared memory, "
+                    "it's recommended to reduce memory usage by following methods:\n"
+                    "1. reduce value of parameter max_rowsize or num_parallel_workers.\n"
+                    "2. reduce prefetch size by set_prefetch_size().\n"
+                    "3. disable shared memory by set_enable_shared_mem()."
                     .format(shm_estimate_usage, shm_available))
         except FileNotFoundError:
             raise RuntimeError("Expected /dev/shm to exist.")
