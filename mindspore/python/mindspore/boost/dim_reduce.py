@@ -111,10 +111,10 @@ class DimReduce(Cell):
         weight (Tuple(Parameter)): Tuple of parameters.
         pca_mat_local (numpy.ndarray): For PCA operation, k*n, k is part of n_components, n is the size of weight.
         n_components (int): PCA.components.
-        rho (float): Generally, it does not need to be modified.
-        gamma (float): Generally, it does not need to be modified.
-        alpha (float): Generally, it does not need to be modified.
-        sigma (float): Generally, it does not need to be modified.
+        rho (float): Coefficient.
+        gamma (float): Coefficient.
+        alpha (float): Coefficient.
+        sigma (float): Coefficient.
         rank (int): Rank number.
         rank_size (int): Rank size.
 
@@ -158,6 +158,7 @@ class DimReduce(Cell):
         self.rho_list = []
         for i in range(self.max_search_time):
             self.rho_list.append(Tensor(np.power(rho, i), dtype=self.float_type))
+        self.rho_list.append(Tensor(0, dtype=self.float_type))
 
     def _set_local_pca_mat(self, pca_mat_local, n_components, parameter_tuple):
         """set pca info."""
@@ -198,6 +199,10 @@ class DimReduce(Cell):
         self.eye = Tensor(np.eye(self.n_components), dtype=self.float_type)
         self.grad_res_momentum = ParameterTuple(parameter_tuple).clone(prefix="grad_res_momentum", init="zeros")
 
+        self.gk_last_back = Parameter(Tensor(np.zeros([self.n_components, 1]), dtype=self.float_type),
+                                      name="gk_last_back")
+        self.bk_back = Parameter(Tensor(np.eye(self.n_components), dtype=self.float_type), name="bk_back")
+
     def construct(self, loss, old_grad, weight, weight_clone, *inputs):
         weight = F.depend(weight, loss)
         old_loss = self.allreduce(loss) / self.rank_size
@@ -207,6 +212,9 @@ class DimReduce(Cell):
         gk_pad = self.allgather(gk_local)
         gk_pad = F.reshape(gk_pad, (-1, 1))
         gk = gk_pad[0:self.n_components, :]
+
+        _save_weight(self.gk_last_back, self.gk_last)
+        _save_weight(self.bk_back, self.bk)
 
         dk = self._apply_quasi_newton_update(gk)
         if self.dk_pad_flag:
@@ -237,12 +245,16 @@ class DimReduce(Cell):
 
     def _line_search(self, gk, dk, dn, old_loss, weight, weight_clone, *inputs):
         """line search rho."""
-        res = self.rho_list[self.max_search_time - 1]
+        res = self.rho_list[-1]
+        find = self.false_flag
         for i in range(self.max_search_time):
             find = self._find_rho(gk, dk, dn, old_loss, weight, weight_clone, self.rho_list[i], *inputs)
             if find:
                 res = self.rho_list[i]
                 break
+        if not find:
+            _save_weight(self.gk_last, self.gk_last_back)
+            _save_weight(self.bk, self.bk_back)
         return res
 
     def _find_rho(self, gk, dk, dn, old_loss, weight, weight_clone, rho, *inputs):
