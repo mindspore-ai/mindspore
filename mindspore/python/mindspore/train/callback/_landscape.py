@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -765,19 +765,19 @@ class SummaryLandscape:
         return metrics
 
     @staticmethod
+    def _check_unit(unit):
+        """Check unit type and value."""
+        check_value_type('unit', unit, str)
+        if unit not in ["step", "epoch"]:
+            raise ValueError(f'Unit should be step or epoch, but got the: {unit}')
+
+    @staticmethod
     def _check_landscape_size(landscape_size):
         """Check landscape size type and value."""
         check_value_type('landscape_size', landscape_size, int)
         # landscape size should be between 3 and 256.
         if landscape_size < 3 or landscape_size > 256:
             raise ValueError(f'Landscape size should be between 3 and 256, but got the: {landscape_size}')
-
-    @staticmethod
-    def _check_unit(unit):
-        """Check unit type and value."""
-        check_value_type('unit', unit, str)
-        if unit not in ["step", "epoch"]:
-            raise ValueError(f'Unit should be step or epoch, but got the: {unit}')
 
     @staticmethod
     def _check_create_landscape(create_landscape):
