@@ -178,6 +178,26 @@ public class ModelTest {
     }
 
     @Test
+    public void testExport() {
+        String modelFile = "../test/ut/src/runtime/kernel/arm/test_data/nets/lenet_tod_infer.ms";
+        MSContext context = new MSContext();
+        context.init(1, 0);
+        context.addDeviceInfo(DeviceType.DT_CPU, false, 0);
+        Model liteModel = new Model();
+        boolean isSuccess = liteModel.build(modelFile, 0, context);
+        assertTrue(isSuccess);
+        isSuccess = liteModel.export(null, 0, true, null);
+        assertFalse(isSuccess);
+        String outputName= "Default/network-WithLossCell/_backbone-LeNet5/conv2-Conv2d/Conv2D-op98";
+        List<String> outputTensorNames = new ArrayList<>();
+        outputTensorNames.add(outputName);
+        isSuccess = liteModel.export("./test.ms", 0, false, outputTensorNames);
+        assertFalse(isSuccess);
+        liteModel.free();
+    }
+
+
+    @Test
     public void testFeatureMap() {
         String modelFile = "../test/ut/src/runtime/kernel/arm/test_data/nets/lenet_train.ms";
         Graph g = new Graph();

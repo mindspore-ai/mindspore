@@ -67,7 +67,7 @@ public class Model {
      */
     public boolean build(final MappedByteBuffer buffer, int modelType, MSContext context, char[] dec_key,
                          String dec_mode) {
-        if (context == null) {
+        if (context == null || buffer == null || dec_key == null || dec_mode == null) {
             return false;
         }
         modelPtr = this.buildByBuffer(buffer, modelType, context.getMSContextPtr(), dec_key, dec_mode);
@@ -83,7 +83,7 @@ public class Model {
      * @return model build status.
      */
     public boolean build(final MappedByteBuffer buffer, int modelType, MSContext context) {
-        if (context == null) {
+        if (context == null || buffer == null) {
             return false;
         }
         modelPtr = this.buildByBuffer(buffer, modelType, context.getMSContextPtr(), null, "");
@@ -102,7 +102,7 @@ public class Model {
      * @return model build status.
      */
     public boolean build(String modelPath, int modelType, MSContext context, char[] dec_key, String dec_mode) {
-        if (context == null) {
+        if (context == null || modelPath == null || dec_key == null || dec_mode == null) {
             return false;
         }
         modelPtr = this.buildByPath(modelPath, modelType, context.getMSContextPtr(), dec_key, dec_mode);
@@ -118,7 +118,7 @@ public class Model {
      * @return build status.
      */
     public boolean build(String modelPath, int modelType, MSContext context) {
-        if (context == null) {
+        if (context == null || modelPath == null) {
             return false;
         }
         modelPtr = this.buildByPath(modelPath, modelType, context.getMSContextPtr(), null, "");
@@ -198,6 +198,9 @@ public class Model {
      * @return input tensor.
      */
     public MSTensor getInputByTensorName(String tensorName) {
+        if (tensorName == null) {
+            return null;
+        }
         long tensorAddr = this.getInputByTensorName(this.modelPtr, tensorName);
         return new MSTensor(tensorAddr);
     }
@@ -209,6 +212,9 @@ public class Model {
      * @return output tensor
      */
     public MSTensor getOutputByTensorName(String tensorName) {
+        if (tensorName == null) {
+            return null;
+        }
         long tensorAddr = this.getOutputByTensorName(this.modelPtr, tensorName);
         return new MSTensor(tensorAddr);
     }
@@ -224,7 +230,14 @@ public class Model {
      */
     public boolean export(String fileName, int quantizationType, boolean isOnlyExportInfer,
                           List<String> outputTensorNames) {
-        return export(modelPtr, fileName, quantizationType, isOnlyExportInfer, outputTensorNames);
+        if (fileName == null || outputTensorNames == null) {
+            return false;
+        }
+        String[] outputTensorArray = new String[outputTensorNames.size()];
+        for (int i = 0; i < outputTensorNames.size(); i++) {
+            outputTensorArray[i] = outputTensorNames.get(i);
+        }
+        return export(modelPtr, fileName, quantizationType, isOnlyExportInfer, outputTensorArray);
     }
 
     /**
@@ -311,7 +324,7 @@ public class Model {
     private native boolean resize(long modelPtr, long[] inputs, int[][] dims);
 
     private native boolean export(long modelPtr, String fileName, int quantizationType, boolean isOnlyExportInfer,
-                                  List<String> outputTensorNames);
+                                  String[] outputTensorNames);
 
     private native List<Long> getFeatureMaps(long modelPtr);
 

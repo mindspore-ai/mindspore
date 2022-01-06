@@ -373,11 +373,11 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_export(JNIEnv *en
   auto *lite_model_ptr = static_cast<mindspore::Model *>(model_pointer);
   auto model_path = env->GetStringUTFChars(model_name, JNI_FALSE);
   std::vector<std::string> output_tensor_names;
-  if (tensorNames != nullptr) {
+  if (tensorNames != NULL) {
     auto tensor_size = static_cast<int>(env->GetArrayLength(tensorNames));
     for (int i = 0; i < tensor_size; i++) {
       auto tensor_name = static_cast<jstring>(env->GetObjectArrayElement(tensorNames, i));
-      output_tensor_names[i] = env->GetStringUTFChars(tensor_name, JNI_FALSE);
+      output_tensor_names.emplace_back(env->GetStringUTFChars(tensor_name, JNI_FALSE));
       env->DeleteLocalRef(tensor_name);
     }
   }

@@ -49,6 +49,9 @@ public class MSTensor {
      * @param buffer     tensor buffer
      */
     public static MSTensor createTensor(String tensorName, int dataType, int[] tensorShape, ByteBuffer buffer) {
+        if (tensorName == null || tensorShape == null || buffer == null) {
+            return null;
+        }
         long tensorPtr = createTensorByNative(tensorName, dataType, tensorShape, buffer);
         return new MSTensor(tensorPtr);
     }
@@ -127,6 +130,9 @@ public class MSTensor {
      * @return whether set data success.
      */
     public boolean setData(ByteBuffer data) {
+        if (data == null) {
+            return false;
+        }
         return this.setByteBufferData(this.tensorPtr, data);
     }
 
