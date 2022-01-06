@@ -74,6 +74,9 @@ class ToTensor(py_transforms.PyTensorOperation):
         TypeError: If the input is not PIL Image or numpy.ndarray.
         TypeError: If the dimension of input is not 2 or 3.
 
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>> # create a list of transformations to be applied to the "image" column of each data row
@@ -112,6 +115,9 @@ class ToType(py_transforms.PyTensorOperation):
     Raises:
         TypeError: If the input is not numpy.ndarray.
 
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>> import numpy as np
@@ -149,6 +155,9 @@ class HWC2CHW(py_transforms.PyTensorOperation):
         TypeError: If the input is not numpy.ndarray.
         TypeError: If the dimension of input is not 3.
 
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>> transforms_list = Compose([py_vision.Decode(),
@@ -184,6 +193,9 @@ class ToPIL(py_transforms.PyTensorOperation):
     Raises:
         TypeError: If the input is not numpy.ndarray or PIL Image.
 
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> # data is already decoded, but not in PIL Image format
         >>> from mindspore.dataset.transforms.py_transforms import Compose
@@ -218,6 +230,9 @@ class Decode(py_transforms.PyTensorOperation):
     Raises:
         ValueError: If the input is not raw data.
         ValueError: If the input image is already decoded.
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
@@ -270,6 +285,9 @@ class Normalize(py_transforms.PyTensorOperation):
         NotImplementedError: If the dtype of input is a subdtype of np.integer.
         ValueError: If the lengths of the mean and std are not equal.
         ValueError: If the length of the mean or std is neither equal to the channel length nor 1.
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
@@ -332,6 +350,9 @@ class NormalizePad(py_transforms.PyTensorOperation):
         ValueError: If the length of the mean and std are not equal.
         ValueError: If the length of the mean or std is neither equal to the channel length nor 1.
 
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>> transforms_list = Compose([py_vision.Decode(),
@@ -393,6 +414,19 @@ class RandomCrop(py_transforms.PyTensorOperation):
 
             - Border.SYMMETRIC, means to pad with reflection of image repeating the last value at the edge.
 
+    Raises:
+        TypeError: If `size` is not of type integer or sequence of integer.
+        TypeError: If `padding` is not of type integer or sequence of integer.
+        TypeError: If `pad_if_needed` is not of type boolean.
+        TypeError: If `fill_value` is not of type integer or sequence of integer.
+        TypeError: If `padding_mode` is not of type Border.
+        ValueError: If `size` is not positive.
+        ValueError: If `padding` is negative.
+        ValueError: If `fill_value` is not in range [0, 255].
+
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>> transforms_list = Compose([py_vision.Decode(),
@@ -436,6 +470,14 @@ class RandomHorizontalFlip(py_transforms.PyTensorOperation):
     Args:
         prob (float, optional): Probability of the image to be horizontally flipped (default=0.5).
 
+    Raises:
+        TypeError: If `prob` is not of type float.
+        ValueError: If `prob` is not in range [0, 1].
+        RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
+
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>> transforms_list = Compose([py_vision.Decode(),
@@ -469,6 +511,14 @@ class RandomVerticalFlip(py_transforms.PyTensorOperation):
 
     Args:
         prob (float, optional): Probability of the image to be vertically flipped (default=0.5).
+
+    Raises:
+        TypeError: If `prob` is not of type float.
+        ValueError: If `prob` is not in range [0, 1].
+        RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
@@ -516,6 +566,14 @@ class Resize(py_transforms.PyTensorOperation):
             - Inter.BILINEAR, bilinear interpolation.
 
             - Inter.BICUBIC, bicubic interpolation.
+
+    Raises:
+        TypeError: If `size` is not of type integer or sequence of integer.
+        TypeError: If `interpolation` is not of type Inter.
+        ValueError: If `size` is not positive.
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
@@ -572,6 +630,20 @@ class RandomResizedCrop(py_transforms.PyTensorOperation):
         max_attempts (int, optional): The maximum number of attempts to propose a valid
             crop area (default=10). If exceeded, fall back to use center crop instead.
 
+    Raises:
+        TypeError: If `size` is not of type integer or sequence of integer.
+        TypeError: If `scale` is not of type tuple.
+        TypeError: If `ratio` is not of type tuple.
+        TypeError: If `interpolation` is not of type Inter.
+        TypeError: If `max_attempts` is not of type integer.
+        ValueError: If `size` is not positive.
+        ValueError: If `scale` is negative.
+        ValueError: If `ratio` is negative.
+        ValueError: If `max_attempts` is not positive.
+
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>> transforms_list = Compose([py_vision.Decode(),
@@ -613,6 +685,13 @@ class CenterCrop(py_transforms.PyTensorOperation):
         size (Union[int, sequence]): The output size of the cropped image.
             If size is an integer, a square of size (size, size) is returned.
             If size is a sequence of length 2, it should be in shape of (height, width).
+
+    Raises:
+        TypeError: If `size` is not of type integer or sequence.
+        ValueError: If `size` is less than or equal to 0.
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
@@ -662,6 +741,19 @@ class RandomColorAdjust(py_transforms.PyTensorOperation):
         hue (Union[float, tuple], optional): Hue adjustment factor (default=(0, 0)).
             If hue is a float, the range will be [-hue, hue], where 0 <= hue <= 0.5.
             If hue is a sequence of length 2, it should be in shape of [min, max], where -0.5 <= min <= max <= 0.5.
+
+    Raises:
+        TypeError: If `brightness` is not of type float or sequence of float.
+        TypeError: If `contrast` is not of type float or sequence of float.
+        TypeError: If `saturation` is not of type float or sequence of float.
+        TypeError: If `hue` is not of type float or sequence of float.
+        ValueError: If `brightness` is negative.
+        ValueError: If `contrast` is negative.
+        ValueError: If `saturation` is negative.
+        ValueError: If `hue` is not in range [-0.5, 0.5].
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
@@ -726,6 +818,18 @@ class RandomRotation(py_transforms.PyTensorOperation):
             If fill_value is a tuple of length 3, it is used to fill R, G, B channels respectively.
             If fill_value is an integer, it is used to fill all RGB channels.
 
+    Raises:
+        TypeError: If `degrees` is not of type integer, float or sequence.
+        TypeError: If `resample` is not of type Inter.
+        TypeError: If `expand` is not of type boolean.
+        TypeError: If `center` is not of type tuple.
+        TypeError: If `fill_value` is not of type integer or tuple of integer.
+        ValueError: If `fill_value` is not in range [0, 255].
+        RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
+
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>> transforms_list = Compose([py_vision.Decode(),
@@ -766,7 +870,15 @@ class FiveCrop(py_transforms.PyTensorOperation):
             If size is an integer, a square of size (size, size) is returned.
             If size is a sequence of length 2, it should be in shape of (height, width).
 
+    Raises:
+        TypeError: If `size` is not of type integer or sequence of integer.
+        ValueError: If `size` is not positive.
+
+    Supported Platforms:
+        ``CPU``
+
     Examples:
+        >>> import numpy
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>> transforms_list = Compose([py_vision.Decode(),
         ...                            py_vision.FiveCrop(size=200),
@@ -805,6 +917,14 @@ class TenCrop(py_transforms.PyTensorOperation):
             If size is a sequence of length 2, it should be in shape of (height, width).
         use_vertical_flip (bool, optional): Whether to flip the image vertically,
             otherwise horizontally (default=False).
+
+    Raises:
+        TypeError: If `size` is not of type integer or sequence of integer.
+        TypeError: If `use_vertical_flip` is not of type boolean.
+        ValueError: If `size` is not positive.
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> import numpy
@@ -848,6 +968,13 @@ class Grayscale(py_transforms.PyTensorOperation):
         num_output_channels (int): Number of channels of the output grayscale image, which can be 1 or 3 (default=1).
             If num_output_channels is 3, the returned image will have 3 identical RGB channels.
 
+    Raises:
+        TypeError: If `num_output_channels` is not of type integer.
+        ValueError: If `num_output_channels` is not 1 or 3.
+
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>> transforms_list = Compose([py_vision.Decode(),
@@ -882,6 +1009,13 @@ class RandomGrayscale(py_transforms.PyTensorOperation):
 
     Args:
         prob (float, optional): Probability of the image being converted to grayscale (default=0.1).
+
+    Raises:
+        TypeError: If `prob` is not of type float.
+        ValueError: If `prob` is not in range [0, 1].
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
@@ -944,6 +1078,17 @@ class Pad(py_transforms.PyTensorOperation):
 
             - Border.SYMMETRIC, pads with reflection of the image repeating the last value on the edge.
 
+    Raises:
+        TypeError: If `padding` is not of type integer or sequence of integer.
+        TypeError: If `fill_value` is not of type integer or tuple of integer.
+        TypeError: If `padding_mode` is not of type Border.
+        ValueError: If `padding` is negative.
+        ValueError: If `fill_value` is not in range [0, 255].
+        RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
+
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>> transforms_list = Compose([py_vision.Decode(),
@@ -992,6 +1137,16 @@ class RandomPerspective(py_transforms.PyTensorOperation):
             - Inter.NEAREST, nearest-neighbor interpolation.
 
             - Inter.BICUBIC, bicubic interpolation.
+
+    Raises:
+        TypeError: If `distortion_scale` is not of type float.
+        TypeError: If `prob` is not of type float.
+        TypeError: If `interpolation` is not of type Inter.
+        ValueError: If `distortion_scale` is not in range [0, 1].
+        ValueError: If `prob` is not in range [0, 1].
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
@@ -1048,6 +1203,22 @@ class RandomErasing(py_transforms.PyTensorOperation):
         max_attempts (int, optional): The maximum number of attempts to propose a valid
             area to be erased (default=10). If exceeded, return the original image.
 
+    Raises:
+        TypeError: If `prob` is not of type float.
+        TypeError: If `scale` is not of type sequence.
+        TypeError: If `ratio` is not of type sequence.
+        TypeError: If `value` is not of type integer, sequence or string.
+        TypeError: If `inplace` is not of type boolean.
+        TypeError: If `max_attempts` is not of type integer.
+        ValueError: If `prob` is not in range [0, 1].
+        ValueError: If `scale` is negative.
+        ValueError: If `ratio` is negative.
+        ValueError: If `value` is not in range [0, 255].
+        ValueError: If `max_attempts` is not positive.
+
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>> transforms_list = Compose([py_vision.Decode(),
@@ -1096,6 +1267,16 @@ class Cutout(py_transforms.PyTensorOperation):
     Args:
         length (int): The side length of each square patch.
         num_patches (int, optional): Number of patches to be applied to the image (default=1).
+
+    Raises:
+        TypeError: If `length` is not of type integer.
+        TypeError: If `num_patches` is not of type integer.
+        ValueError: If `length` is less than or equal 0.
+        ValueError: If `num_patches` is less than or equal 0.
+        RuntimeError: If given tensor shape is not <H, W, C>.
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
@@ -1151,6 +1332,13 @@ class LinearTransformation(py_transforms.PyTensorOperation):
         transformation_matrix (numpy.ndarray): A square transformation matrix in shape of (D, D), where
             :math:`D = C \times H \times W`.
         mean_vector (numpy.ndarray): A mean vector in shape of (D,), where :math:`D = C \times H \times W`.
+
+    Raises:
+        TypeError: If `transformation_matrix` is not of type numpy.ndarray.
+        TypeError: If `mean_vector` is not of type numpy.ndarray.
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
@@ -1224,15 +1412,20 @@ class RandomAffine(py_transforms.PyTensorOperation):
             Only supported with Pillow version > 5.0.0.
 
     Raises:
+        TypeError: If `degrees` is not of type integer, float or sequence.
+        TypeError: If `translate` is not of type sequence.
+        TypeError: If `scale` is not of type sequence.
+        TypeError: If `shear` is not of type integer, float or sequence.
+        TypeError: If `resample` is not of type Inter.
+        TypeError: If `fill_value` is not of type integer or tuple of integer.
         ValueError: If `degrees` is negative.
-        ValueError: If translation is not between 0 and 1.
-        ValueError: If scale is not positive.
-        ValueError: If shear is a non positive number.
-        TypeError: If `degrees` is not a number or a sequence of length 2.
-        TypeError: If translate is defined but not a sequence of length 2.
-        TypeError: If scale is not a sequence of length 2.
-        TypeError: If shear is not a sequence of length 2 or 4.
-        TypeError: If fill_value is not an integer or a tuple of length 3.
+        ValueError: If `translate` is not in range [-1.0, 1.0].
+        ValueError: If `scale` is negative.
+        ValueError: If `shear` is not positive.
+        RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
@@ -1299,6 +1492,15 @@ class MixUp(py_transforms.PyTensorOperation):
             [img1, ..., img(n), img0] in each batch. Otherwise, it will randomly mix up images with the
             output of mixing of previous batch of images (Default=True).
 
+    Raises:
+        TypeError: If `batch_size` is not of type integer.
+        TypeError: If `alpha` is not of type float.
+        TypeError: If `is_single` is not of type boolean.
+        ValueError: If `batch_size` is not positive.
+        ValueError: If `alpha` is not positive.
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> # Setup multi-batch mixup transformation
@@ -1343,6 +1545,9 @@ class RgbToBgr(py_transforms.PyTensorOperation):
         is_hwc (bool): Whether the image is in shape of (H, W, C) or (N, H, W, C), otherwise
             in shape of (C, H, W) or (N, C, H, W) (default=False).
 
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>> transforms_list = Compose([py_vision.Decode(),
@@ -1379,6 +1584,9 @@ class RgbToHsv(py_transforms.PyTensorOperation):
     Args:
         is_hwc (bool): Whether the image is in shape of (H, W, C) or (N, H, W, C), otherwise
             in shape of (C, H, W) or (N, C, H, W) (default=False).
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
@@ -1417,6 +1625,9 @@ class HsvToRgb(py_transforms.PyTensorOperation):
         is_hwc (bool): Whether the image is in shape of (H, W, C) or (N, H, W, C), otherwise
             in shape of (C, H, W) or (N, C, H, W) (default=False).
 
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>> transforms_list = Compose([py_vision.Decode(),
@@ -1454,6 +1665,14 @@ class RandomColor(py_transforms.PyTensorOperation):
         degrees (sequence): Range of color adjustment degree to be randomly chosen from,
             which should be in shape of (min, max) (default=(0.1,1.9)).
 
+    Raises:
+        TypeError: If `degrees` is not of type sequence of float.
+        ValueError: If `degrees` is negative.
+        RuntimeError: If given tensor shape is not <H, W, C>.
+
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>> transforms_list = Compose([py_vision.Decode(),
@@ -1488,6 +1707,14 @@ class RandomLighting:
 
     Args:
         alpha (float, optional): Intensity of the image (default=0.05).
+
+    Raises:
+        TypeError: If `alpha` is not of type float.
+        ValueError: If `alpha` is negative.
+        RuntimeError: If given tensor shape is not <H, W, C>.
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
@@ -1528,6 +1755,14 @@ class RandomSharpness(py_transforms.PyTensorOperation):
             Degree of 0.0 gives a blurred image, degree of 1.0 gives the original image,
             and degree of 2.0 increases the sharpness by a factor of 2.
 
+    Raises:
+        TypeError : If `degrees` is not a list or a tuple.
+        ValueError: If `degrees` is negative.
+        ValueError: If `degrees` is in (max, min) format instead of (min, max).
+
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>> transforms_list = Compose([py_vision.Decode(),
@@ -1563,6 +1798,15 @@ class AdjustGamma(py_transforms.PyTensorOperation):
     Args:
         gamma (float): Gamma parameter in the correction equation, which must be non negative.
         gain (float, optional): The constant multiplier (default=1.0).
+
+    Raises:
+        TypeError: If `gain` is not of type float.
+        TypeError: If `gamma` is not of type float.
+        ValueError: If `gamma` is less than 0.
+        RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
@@ -1603,6 +1847,16 @@ class AutoContrast(py_transforms.PyTensorOperation):
             which must be in range of [0.0, 50.0) (default=0.0).
         ignore (Union[int, sequence], optional): Pixel values to be ignored (default=None).
 
+    Raises:
+        TypeError: If `cutoff` is not of type float.
+        TypeError: If `ignore` is not of type int or sequence.
+        ValueError: If `cutoff` is not in range [0, 50.0).
+        ValueError: If `ignore` is not in range [0, 255].
+        RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
+
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>> transforms_list = Compose([py_vision.Decode(),
@@ -1637,6 +1891,9 @@ class Invert(py_transforms.PyTensorOperation):
     """
     Invert the colors of the input PIL Image.
 
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>> transforms_list = Compose([py_vision.Decode(),
@@ -1667,6 +1924,9 @@ class Invert(py_transforms.PyTensorOperation):
 class Equalize(py_transforms.PyTensorOperation):
     """
     Apply histogram equalization on the input PIL Image.
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
@@ -1708,6 +1968,14 @@ class UniformAugment(py_transforms.PyTensorOperation):
     Args:
          transforms (sequence): Sequence of transformations to be chosen from.
          num_ops (int, optional): Number of transformations to be sequentially and randomly applied (default=2).
+
+    Raises:
+        TypeError: If `transforms` is not of type ImageTensorOperation.
+        TypeError: If `num_ops` is not of type integer.
+        ValueError: If `num_ops` is not positive.
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose

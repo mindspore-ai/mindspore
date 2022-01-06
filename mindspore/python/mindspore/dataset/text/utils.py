@@ -173,7 +173,7 @@ class Vocab:
         Args:
             file_path (str): Path to the file which contains the vocab list.
             delimiter (str, optional): A delimiter to break up each line in file, the first element is taken to be
-                the word (default="").
+                the word (default="", the whole line will be treated as a word).
             vocab_size (int, optional): Number of words to read from file_path (default=None, all words are taken).
             special_tokens (list, optional):  A list of strings, each one is a special token. For example
                 special_tokens=["<pad>","<unk>"] (default=None, no special tokens will be added).
@@ -185,7 +185,19 @@ class Vocab:
             Vocab, vocab built from the file.
 
         Examples:
+            >>> # Assume vocab file contains the following content:
+            >>> # --- begin of file ---
+            >>> # apple,apple2
+            >>> # banana, 333
+            >>> # cat,00
+            >>> # --- end of file ---
+            >>>
+            >>> # Read file through this API and specify "," as delimiter,
+            >>> # then the delimiter will break up each line in file, the first element is taken to be the word.
             >>> vocab = text.Vocab.from_file("/path/to/simple/vocab/file", ",", None, ["<pad>", "<unk>"], True)
+            >>>
+            >>> # Finally, there are 5 words in the vocab: "<pad>", "<unk>", "apple", "banana", "cat"
+            >>> print(vocab.vocab())
         """
         if vocab_size is None:
             vocab_size = -1
