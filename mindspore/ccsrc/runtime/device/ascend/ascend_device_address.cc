@@ -194,11 +194,6 @@ void AscendDeviceAddress::SyncStream() const {
   MS_LOG(DEBUG) << "SyncStream Start!";
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode &&
-      !ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER)) {
-    MS_LOG(DEBUG) << "Finish!";
-    return;
-  }
   auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id);
   MS_EXCEPTION_IF_NULL(runtime_instance);
