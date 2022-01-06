@@ -18,7 +18,7 @@ mindspore.ops.Reshape
 
     **异常：**
 
-    - **ValueError** - 给定的 `input_shape`，如果它有几个-1，或者其元素的乘积小于或等于0，或者无法被输入Tensor的shape的乘积相除，或者与输入的数组大小不匹配。
+    - **ValueError** - 给定的 `input_shape`，如果它有几个-1，或者除-1（若存在）之外的元素的乘积小于或等于0，或者无法被输入Tensor的shape的乘积相除，或者与输入的数组大小不匹配。
 
     **支持平台：**
 
