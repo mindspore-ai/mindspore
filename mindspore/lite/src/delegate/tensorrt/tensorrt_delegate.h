@@ -58,22 +58,16 @@ class TensorRTDelegate : public Delegate {
                                         KernelIter from, KernelIter end, int index);
 
   std::unordered_map<schema::PrimitiveType, TensorRTGetOp> op_func_lists_;
-
-  mindspore::Context *context_;
-
+  mindspore::Context *context_{nullptr};
   std::shared_ptr<GPUDeviceInfo> device_info_{nullptr};
-
   TensorRTRuntime *runtime_{nullptr};
-
   bool support_hw_resize_{true};
-
   bool support_resize_{true};
   const std::string cache_model_path_;
-  size_t vocab_size_;
-  size_t device_cache_size_;
+  size_t vocab_size_{0};
+  size_t device_cache_size_{0};
   std::shared_ptr<cache::EmbeddingCacheManager> cache_mgr_{nullptr};
   const std::string serialize_path_;
-
   cudaStream_t stream_;
 };
 }  // namespace mindspore::lite

@@ -107,7 +107,7 @@ class TensorRTOp {
  protected:
   bool IsShapeKnown();
 
-  const schema::Primitive *op_primitive_;
+  const schema::Primitive *op_primitive_{nullptr};
 
   std::vector<mindspore::MSTensor> in_tensors_;
 

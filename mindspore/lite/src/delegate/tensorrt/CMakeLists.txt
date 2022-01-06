@@ -37,27 +37,6 @@ else()
 endif()
 add_dependencies(gpu_distribution_collective fbs_src)
 
-# lstm only compile when tensorrt version is later than 7
-file(GLOB TENSORRT_LIB_FILE false ${TENSORRT_LIB_PATH}/libnvinfer.so*)
-set(HIGH_TRT_VERSION "false")
-FOREACH(TENSORRT_LIB ${TENSORRT_LIB_FILE})
-    STRING(REGEX MATCHALL "(.*libnvinfer\.so\.)([1-9])\.([1-9]\.*)+" VERSION_NAME ${TENSORRT_LIB})
-    IF(VERSION_NAME STREQUAL "")
-        CONTINUE()
-    ENDIF()
-    STRING(REGEX REPLACE ".*libnvinfer\.so\." "" VERSION_NAME ${VERSION_NAME})
-    STRING(REGEX MATCH "[1-9]" MAIN_VERSION ${VERSION_NAME})
-    MESSAGE("compile with TensorRT version: ${MAIN_VERSION}")
-    IF(MAIN_VERSION STREQUAL "7" OR "8" OR "9")
-        set(HIGH_TRT_VERSION "true")
-    ENDIF()
-ENDFOREACH()
-IF(HIGH_TRT_VERSION STREQUAL "false")
-    MESSAGE("TensorRT version is too low to get new features, please upgrade TesorRT version to 7 or higher.")
-ELSE()
-    add_compile_definitions(HIGH_TRT_VERSION)
-ENDIF()
-
 file(GLOB TENSORRT_RUNTIME_SRC LIST_DIRECTORIES false
     ${CMAKE_CURRENT_SOURCE_DIR}/*.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/op/*.cc

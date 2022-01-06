@@ -106,7 +106,7 @@ class ReduceScatterPlugin : public nvinfer1::IPluginV2DynamicExt {
  private:
   const std::string layer_name_;
   std::string name_space_;
-  int rank_;
+  int rank_{0};
   schema::ReduceMode red_mode_;
 };
 }  // namespace mindspore::lite
