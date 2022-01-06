@@ -278,12 +278,11 @@ ShapeVector AscendDeviceAddress::GetDeviceShape(ShapeVector *host_shape) const {
   if (format_ == kOpFormat_FRAC_NZ || format_ == kOpFormat_NCDHW) {
     device_shape = trans::TransShapeToDevice(*host_shape, format_, node_index.first, node_index.second, type_id_);
   } else {
-    if (host_shape_.empty()) {
-      *host_shape = trans::PaddingShape(*host_shape, format_);
-    } else {
+    if (!host_shape_.empty()) {
       host_shape->clear();
       *host_shape = host_shape_;
     }
+    *host_shape = trans::PaddingShape(*host_shape, format_);
     device_shape = trans::TransShapeToDevice(*host_shape, format_, node_index.first, node_index.second, type_id_);
   }
   return device_shape;
