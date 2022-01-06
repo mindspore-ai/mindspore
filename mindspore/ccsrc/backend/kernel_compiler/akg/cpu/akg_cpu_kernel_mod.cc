@@ -128,9 +128,9 @@ bool CpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
   }
   std::vector<void *> runtimeargs;
   (void)std::transform(std::begin(inputs), std::end(inputs), std::back_inserter(runtimeargs),
-                       [](const AddressPtr &input) -> void * { return input->addr; });
+                       [](const AddressPtr &input) { return input->addr; });
   (void)std::transform(std::begin(outputs), std::end(outputs), std::back_inserter(runtimeargs),
-                       [](const AddressPtr &output) -> void * { return output->addr; });
+                       [](const AddressPtr &output) { return output->addr; });
   static AkgCallBack akg_callback;
   (void)runtimeargs.emplace_back(reinterpret_cast<void *>(&akg_callback));
   using AkgCpuKernelFunction = void (*)(void *);

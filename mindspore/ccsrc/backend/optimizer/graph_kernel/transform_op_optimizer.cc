@@ -146,6 +146,7 @@ class MinCut {
         original_edges_(original_edges) {
     BuildGraph(original_nodes);
   }
+  ~MinCut() = default;
 
   void Run() {
     Dinic();
@@ -199,6 +200,7 @@ class TransformOp {
  public:
   explicit TransformOp(const NodePtr &node)
       : op_(node->As<PrimOp>()->op()), format_a_(node->input(0)->format), format_b_(node->format) {}
+  ~TransformOp() = default;
   bool IsTransformOp(const NodePtr &node) {
     if (node->NodeType() != NType::Primitive || node->As<PrimOp>()->op() != op_) {
       return false;
@@ -266,6 +268,8 @@ bool IsFlexibleOp(const NodePtr &node) {
 class Mutator {
  public:
   explicit Mutator(const NodePtr &node) : op_checker_(node), basenode_(node), ori_node_(1) {}
+  ~Mutator() = default;
+
   bool Run() {
     VisitNode(basenode_);
     if (flexible_ops_.empty()) return false;

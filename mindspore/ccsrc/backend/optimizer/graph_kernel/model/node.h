@@ -87,7 +87,7 @@ class Node : public NodeBase, public std::enable_shared_from_this<Node> {
  private:
   // the nodes' users are only maintained by AddInput/SetInput.
   void AddUser(Node *user, size_t index) { users_[user].insert(index); }
-  void RemoveUser(Node *user, size_t index);
+  void RemoveUser(Node *const user, size_t index);
 };
 
 class ConstTensorNode : public Node {

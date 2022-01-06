@@ -126,19 +126,18 @@ void CallbackImpl::SetGraphKernelNodeKernelInfo(const AnfNodePtr &node) {
   }
   for (size_t i = 0; i < outputs.size(); ++i) {
     auto kernel_with_index = AnfAlgo::VisitKernel(outputs[i], 0);
-    auto output_format = AnfAlgo::GetOutputFormat(kernel_with_index.first, kernel_with_index.second);
-    auto output_type = AnfAlgo::GetOutputDeviceDataType(kernel_with_index.first, kernel_with_index.second);
-    graph_output_format.push_back(output_format);
-    graph_output_type.push_back(output_type);
+    graph_output_format.push_back(AnfAlgo::GetOutputFormat(kernel_with_index.first, kernel_with_index.second));
+    graph_output_type.push_back(AnfAlgo::GetOutputDeviceDataType(kernel_with_index.first, kernel_with_index.second));
   }
   kernel::KernelBuildInfo::KernelBuildInfoBuilder graph_info_builder;
+  graph_info_builder.SetProcessor(kernel::GetProcessorFromContext());
+  graph_info_builder.SetKernelType(KernelType::AKG_KERNEL);
+  graph_info_builder.SetFusionType(kernel::FusionType::OPAQUE);
   graph_info_builder.SetInputsFormat(graph_input_format);
   graph_info_builder.SetInputsDeviceType(graph_input_type);
   graph_info_builder.SetOutputsFormat(graph_output_format);
   graph_info_builder.SetOutputsDeviceType(graph_output_type);
-  graph_info_builder.SetProcessor(kernel::GetProcessorFromContext());
-  graph_info_builder.SetKernelType(KernelType::AKG_KERNEL);
-  graph_info_builder.SetFusionType(kernel::FusionType::OPAQUE);
+
   auto graph_selected_info = graph_info_builder.Build();
   AnfAlgo::SetSelectKernelBuildInfo(graph_selected_info, node.get());
 }

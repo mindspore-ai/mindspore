@@ -139,7 +139,6 @@ tensor::TensorPtr CalcByOperator(const NodePtrList &inputs, const std::string &o
     {"Sqrt", [](const std::vector<TM> &n) { return sqrt(n[0]); }},
     {"Rsqrt", [](const std::vector<TM> &n) { return TM(1) / sqrt(n[0]); }},
   };
-
   if (func_map.find(op) == func_map.end()) {
     return nullptr;
   }
@@ -406,9 +405,9 @@ DShape Conv2dOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
       GetValue<std::string>(attrs.find("format")->second) != kOpFormat_NHWC) {
     MS_LOG(EXCEPTION) << "check NHWC format failed";
   }
-  constexpr auto axis_n = 0;
-  constexpr auto axis_h = 1;
-  constexpr auto axis_w = 2;
+  const auto axis_n = 0;
+  const auto axis_h = 1;
+  const auto axis_w = 2;
   auto n = shape0[axis_n];
   auto h = shape0[axis_h];
   auto w = shape0[axis_w];

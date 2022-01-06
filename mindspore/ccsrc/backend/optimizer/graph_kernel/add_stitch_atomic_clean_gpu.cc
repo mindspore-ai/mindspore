@@ -36,14 +36,12 @@ void StitchAtomicCleanInsertter::CorrectKernelBuildInfo(
   auto kernel_info = dynamic_cast<device::KernelInfo *>(composite_node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   const auto &origin_kernel_build_info = kernel_info->GetMutableSelectKernelBuildInfo();
-  auto origin_inputs_format = origin_kernel_build_info->GetAllInputFormats();
   auto origin_outputs_format = origin_kernel_build_info->GetAllOutputFormats();
-  auto origin_inputs_type = origin_kernel_build_info->GetAllInputDeviceTypes();
   auto origin_outputs_type = origin_kernel_build_info->GetAllOutputDeviceTypes();
   auto origin_processor = origin_kernel_build_info->processor();
 
-  std::vector<std::string> &new_inputs_format = origin_inputs_format;
-  std::vector<TypeId> &new_inputs_type = origin_inputs_type;
+  std::vector<std::string> new_inputs_format = origin_kernel_build_info->GetAllInputFormats();
+  std::vector<TypeId> new_inputs_type = origin_kernel_build_info->GetAllInputDeviceTypes();
   std::vector<std::string> new_outputs_format;
   std::vector<TypeId> new_outputs_type;
   for (size_t i = 0; i < origin_outputs_format.size(); ++i) {

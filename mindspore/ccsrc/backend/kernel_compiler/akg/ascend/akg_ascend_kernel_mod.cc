@@ -73,12 +73,12 @@ bool AkgKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
   // pack all addresses into a vector.
   std::vector<void *> runtime_args;
   (void)std::transform(std::begin(inputs), std::end(inputs), std::back_inserter(runtime_args),
-                       [](const AddressPtr &input) -> void * { return input->addr; });
+                       [](const AddressPtr &input) { return input->addr; });
   (void)std::transform(std::begin(outputs), std::end(outputs), std::back_inserter(runtime_args),
-                       [](const AddressPtr &output) -> void * { return output->addr; });
+                       [](const AddressPtr &output) { return output->addr; });
   if (!workspace.empty()) {
     (void)std::transform(std::begin(workspace), std::end(workspace), std::back_inserter(runtime_args),
-                         [](const AddressPtr &addr) -> void * { return addr->addr; });
+                         [](const AddressPtr &addr) { return addr->addr; });
   }
 
   rtL2Ctrl_t *l2ctrl = nullptr;
@@ -111,12 +111,12 @@ std::vector<TaskInfoPtr> AkgKernelMod::GenTask(const std::vector<AddressPtr> &in
 
   // pack all addresses into a vector.
   (void)std::transform(std::begin(inputs), std::end(inputs), std::back_inserter(input_data_addrs),
-                       [](const AddressPtr &input) -> void * { return input->addr; });
+                       [](const AddressPtr &input) { return input->addr; });
   (void)std::transform(std::begin(outputs), std::end(outputs), std::back_inserter(output_data_addrs),
-                       [](const AddressPtr &output) -> void * { return output->addr; });
+                       [](const AddressPtr &output) { return output->addr; });
   if (!workspace.empty()) {
     (void)std::transform(std::begin(workspace), std::end(workspace), std::back_inserter(workspace_addrs),
-                         [](const AddressPtr &workspace) -> void * { return workspace->addr; });
+                         [](const AddressPtr &workspace) { return workspace->addr; });
   }
 
   uint32_t block_dim = DEFAULT_BLOCK_DIM;  // default blockdim equal to 1.

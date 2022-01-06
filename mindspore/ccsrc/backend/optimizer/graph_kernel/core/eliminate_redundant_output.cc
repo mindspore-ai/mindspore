@@ -75,7 +75,7 @@ bool GetGraphKernelGetitemList(const FuncGraphManagerPtr &mng, const AnfNodePtr 
       MS_LOG(EXCEPTION) << "Index of GetItem is out of range of MakeTuple. getitem node: " << getitem->DebugString();
     }
     if (merge_repeated_getitem && (*getitem_list)[idx] != nullptr) {
-      mng->Replace(getitem, (*getitem_list)[idx]);
+      (void)mng->Replace(getitem, (*getitem_list)[idx]);
       changed = true;
     } else {
       (*getitem_list)[idx] = getitem;
@@ -87,7 +87,7 @@ bool GetGraphKernelGetitemList(const FuncGraphManagerPtr &mng, const AnfNodePtr 
 AnfNodePtrList FindGraphKernelsWithMultiOutput(const FuncGraphPtr &func_graph) {
   auto todos = TopoSort(func_graph->get_return());
   AnfNodePtrList result;
-  std::copy_if(todos.begin(), todos.end(), std::back_inserter(result), [](const AnfNodePtr &node) {
+  (void)std::copy_if(todos.begin(), todos.end(), std::back_inserter(result), [](const AnfNodePtr &node) {
     return AnfUtils::IsGraphKernel(node) && IsPrimitiveCNode(GetCNodeFuncGraph(node)->output(), prim::kPrimMakeTuple);
   });
   return result;
@@ -127,7 +127,7 @@ class UnifyRepeatedOutput : public opt::Pass {
       if (CheckRepeatedOutput(GetCNodeFuncGraph(node))) {
         changed = true;
         AnfNodePtrList getitem_list;
-        GetGraphKernelGetitemList(mng, node, &getitem_list, false);
+        (void)GetGraphKernelGetitemList(mng, node, &getitem_list, false);
         if (getitem_list.size() != index_map_.size()) {
           MS_LOG(EXCEPTION) << "getitem_list.size (" << getitem_list.size() << ") should be equal to index_map.size ("
                             << index_map_.size() << ").";
@@ -242,7 +242,7 @@ AnfNodePtr EliminateHangingOutput::ReplaceMakeTuple(const AnfNodePtr &node, cons
   if (new_maketuple_inputs.size() == 1) {
     MS_LOG(EXCEPTION) << "Input of MakeTuple could not be empty";
   }
-  constexpr size_t maketuple_one_input_size = 2;
+  const size_t maketuple_one_input_size = 2;
   if (new_maketuple_inputs.size() == maketuple_one_input_size) {
     func_graph->set_output(new_maketuple_inputs.back());
   } else {
@@ -266,17 +266,17 @@ bool EliminateHangingOutput::Run(const FuncGraphPtr &func_graph) {
   bool changed = false;
   for (auto node : todos) {
     AnfNodePtrList getitems;
-    GetGraphKernelGetitemList(mng, node, &getitems, false);
+    (void)GetGraphKernelGetitemList(mng, node, &getitems, false);
     auto new_node = ReplaceMakeTuple(node, getitems);
     if (new_node != nullptr) {
       if (!IsPrimitiveCNode(GetCNodeFuncGraph(new_node)->output(), prim::kPrimMakeTuple)) {
         // only one output, remove the getitem.
         auto i = std::find_if(getitems.begin(), getitems.end(), [](const AnfNodePtr &node) { return node != nullptr; });
         if (i != getitems.end()) {
-          mng->Replace(*i, new_node);
+          (void)mng->Replace(*i, new_node);
         }
       } else {
-        mng->Replace(node, new_node);
+        (void)mng->Replace(node, new_node);
       }
       changed = true;
     }

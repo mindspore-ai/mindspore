@@ -61,6 +61,7 @@ using LiteGraphPtr = std::shared_ptr<LiteGraph>;
 class LiteGraph::GraphBuilder {
  public:
   explicit GraphBuilder(const std::string &name = "") { graph_ = std::make_shared<LiteGraph>(name); }
+  ~GraphBuilder() = default;
 
   // Create a parameter of graph
   NodePtr Parameter(const NodeBase &baseinfo) {
