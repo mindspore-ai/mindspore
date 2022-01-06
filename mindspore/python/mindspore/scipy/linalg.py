@@ -218,9 +218,9 @@ def cho_factor(a, lower=False, overwrite_a=False, check_finite=True):
             (crashes, non-termination) if the inputs do contain infinities or NaNs.
 
     Returns:
-         - Tensor, Matrix whose upper or lower triangle contains the Cholesky factor of `a`.
+         - Tensor, matrix whose upper or lower triangle contains the Cholesky factor of `a`.
         Other parts of the matrix contain random data.
-         - bool, Flag indicating whether the factor is in the lower or upper triangle
+         - bool, flag indicating whether the factor is in the lower or upper triangle
 
     Raises:
         LinAlgError: Raised if decomposition fails.
@@ -263,7 +263,7 @@ def cholesky(a, lower=False, overwrite_a=False, check_finite=True):
             (crashes, non-termination) if the inputs do contain infinities or NaNs.
 
     Returns:
-        Tensor, Upper- or lower-triangular Cholesky factor of `a`.
+        Tensor, upper- or lower-triangular Cholesky factor of `a`.
 
     Raises:
         LinAlgError: if decomposition fails.
@@ -367,7 +367,7 @@ def eigh(a, b=None, lower=True, eigvals_only=False, overwrite_a=False,
             and eigenvectors are returned. Default: None.
 
     Returns:
-        - Tensor with shape :math:`(N,)`, The :math:`N (1<=N<=M)` selected eigenvalues, in ascending order,
+        - Tensor with shape :math:`(N,)`, the :math:`N (1<=N<=M)` selected eigenvalues, in ascending order,
           each repeated according to its multiplicity.
 
         - Tensor with shape :math:`(M, N)`, (if ``eigvals_only == False``)
@@ -465,11 +465,12 @@ def lu_factor(a, overwrite_a=False, check_finite=True):
     .. math::
         A = P L U
 
-    where P is a permutation matrix, L lower triangular with unit diagonal elements, and U upper triangular.
+    where :math:`P` is a permutation matrix, :math:`L` lower triangular with unit diagonal elements,
+    and :math:`U` upper triangular.
 
     Args:
         a (Tensor): square matrix of :math:`(M, M)` to decompose.
-        overwrite_a (bool, optional): Whether to overwrite data in `A` (may increase performance). Default: False.
+        overwrite_a (bool, optional): Whether to overwrite data in :math:`A` (may increase performance). Default: False.
         check_finite (bool, optional): Whether to check that the input matrix contains only finite numbers.
             Disabling may give a performance gain, but may result in problems
             (crashes, non-termination) if the inputs do contain infinities or NaNs. Default: True.
@@ -518,13 +519,13 @@ def lu(a, permute_l=False, overwrite_a=False, check_finite=True):
     .. math::
         A = P L U
 
-    where P is a permutation matrix, L lower triangular with unit
-    diagonal elements, and U upper triangular.
+    where :math:`P` is a permutation matrix, :math:`L` lower triangular with unit
+    diagonal elements, and :math:`U` upper triangular.
 
     Args:
         a (Tensor): a :math:`(M, N)` matrix to decompose.
         permute_l (bool, optional): Perform the multiplication :math:`P L` (Default: do not permute). Default: False.
-        overwrite_a (bool, optional): Whether to overwrite data in a (may improve performance). Default: False.
+        overwrite_a (bool, optional): Whether to overwrite data in :math:`A` (may improve performance). Default: False.
         check_finite (bool, optional):  Whether to check that the input matrix contains
             only finite numbers. Disabling may give a performance gain, but may result
             in problems (crashes, non-termination) if the inputs do contain infinities or NaNs. Default: True.
@@ -603,7 +604,7 @@ def lu_solve(lu_and_piv, b, trans=0, overwrite_b=False, check_finite=True):
             if the inputs do contain infinities or NaNs.
 
     Returns:
-        Tesnor, Solution to the system
+        Tesnor, solution to the system
 
     Supported Platforms:
         ``CPU`` ``GPU``
