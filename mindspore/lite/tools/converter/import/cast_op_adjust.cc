@@ -57,9 +57,17 @@ bool GetInOutDataTypeValue(const CNodePtr &cast_cnode, int *output_type_value, i
   switch (data_info.data_type_) {
     case kNumberTypeInt:
     case kNumberTypeInt32:
+      if (data_info.data_.size() < sizeof(int32_t)) {
+        MS_LOG(ERROR) << "Data and datatype of data-info not match.";
+        return false;
+      }
       *output_type_value = reinterpret_cast<int *>(data_info.data_.data())[0];
       break;
     case kNumberTypeInt64:
+      if (data_info.data_.size() < sizeof(int64_t)) {
+        MS_LOG(ERROR) << "Data and datatype of data-info not match.";
+        return false;
+      }
       *output_type_value = reinterpret_cast<int64_t *>(data_info.data_.data())[0];
       break;
     default:

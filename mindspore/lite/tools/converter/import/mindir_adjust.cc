@@ -88,7 +88,10 @@ int ConvertInputQuantParam(const PrimitivePtr &prim, bool input_narrow_range, bo
 int ConvertOutputQuantParam(const PrimitivePtr &prim, bool narrow_range, int32_t numbits) {
   MS_ASSERT(prim->GetAttr("quant_params") != nullptr);
   auto quant_param_holder = prim->GetAttr("quant_params")->cast<lite::QuantParamHolderPtr>();
-  MS_ASSERT(quant_param_holder != nullptr);
+  if (quant_param_holder == nullptr) {
+    MS_LOG(ERROR) << "Primitive has not quant-parameter.";
+    return lite::RET_ERROR;
+  }
   std::vector<schema::QuantParamT> quants;
   schema::QuantParamT quant_param;
   auto outputMin = prim->GetAttr("output_minq");
@@ -140,6 +143,8 @@ int GetNumBits(const PrimitivePtr &prim, const std::string &num_bits_str, int *c
       auto num_bits_tensor = num_bits->cast<tensor::TensorPtr>();
       MS_ASSERT(num_bits_tensor != nullptr);
       MS_CHECK_TRUE_MSG(num_bits_tensor->data_c() != nullptr, RET_ERROR, "num_bits_tensor->data_c() is nullptr");
+      MS_CHECK_TRUE_MSG(num_bits_tensor->data().nbytes() >= static_cast<int>(sizeof(int64_t)), RET_ERROR,
+                        "num_bits_tensor->data_c() is not longer enough for int64_t");
       *num_bits_param = *reinterpret_cast<int64_t *>(num_bits_tensor->data_c());
     } else if (utils::isa<ImmTraits<int64_t>::type>(num_bits)) {
       *num_bits_param = GetValue<int64_t>(num_bits);
@@ -204,11 +209,15 @@ int MindirAdjust::ValueNodeInt64Convert(AnfNodePtr anf_node) {
       auto dest_tensor_info = std::make_shared<tensor::Tensor>(kNumberTypeInt32, shape_vector);
       MS_CHECK_TRUE_MSG(dest_tensor_info != nullptr, RET_NULL_PTR, "dest_tensor_info is nullptr.");
       MS_CHECK_TRUE_MSG(dest_tensor_info->data_c() != nullptr, RET_ERROR, "dest_tensor_info->data_c() is nullptr");
+      MS_CHECK_TRUE_MSG(dest_tensor_info->data().nbytes() >= static_cast<int>(sizeof(int32_t)), RET_ERROR,
+                        "num_bits_tensor->data_c() is not longer enough for int32_t");
       auto *dest_data_buf = reinterpret_cast<int32_t *>(dest_tensor_info->data_c());
       MS_CHECK_TRUE_MSG(dest_data_buf != nullptr, RET_NULL_PTR, "dest_data_buf is nullptr.");
       auto src_tensor_info = value->cast<tensor::TensorPtr>();
       MS_CHECK_TRUE_MSG(src_tensor_info != nullptr, RET_NULL_PTR, "src_tensor_info is nullptr.");
       MS_CHECK_TRUE_MSG(src_tensor_info->data_c() != nullptr, RET_ERROR, "src_tensor_info->data_c() is nullptr");
+      MS_CHECK_TRUE_MSG(src_tensor_info->data().nbytes() >= static_cast<int>(sizeof(int64_t)), RET_ERROR,
+                        "num_bits_tensor->data_c() is not longer enough for int64_t");
       auto *src_data_buf = reinterpret_cast<int64_t *>(src_tensor_info->data_c());
       MS_CHECK_TRUE_MSG(dest_tensor_info->ElementsNum() == src_tensor_info->ElementsNum(), RET_ERROR,
                         "Sizes don't match.");
