@@ -21,6 +21,7 @@
 #include <string>
 #include <memory>
 #include <map>
+#include <set>
 #include <unordered_map>
 #include <stack>
 #include <queue>
@@ -70,6 +71,9 @@ class ControlActor : public MemoryAwareActor {
   const std::unordered_map<size_t, OpPartialPtr> &local_partials() const { return local_partials_; }
   const std::vector<AID> &input_partial_arrow_aids() const { return input_partial_arrow_aids_; }
   const std::vector<AID> &input_branch_id_arrow_aids() const { return input_branch_id_arrow_aids_; }
+  const std::map<size_t, std::set<DeviceTensorPtr>> &ref_formal_parameter_device_tensors() const {
+    return ref_formal_parameter_device_tensors_;
+  }
   size_t branch_id() const { return output_branch_id_; }
 
  protected:
@@ -89,6 +93,8 @@ class ControlActor : public MemoryAwareActor {
   virtual void FetchInput(OpContext<DeviceTensor> *const context);
   void Run(OpContext<DeviceTensor> *const context) override;
   bool CheckRunningCondition(const OpContext<DeviceTensor> *context) const override;
+  void UpdateOutputData(OpData<DeviceTensor> *const output_data, const DataArrowPtr &data_arrow,
+                        const AnfNodePtr &output_node, OpContext<DeviceTensor> *const context) override;
   void SendOutput(OpContext<DeviceTensor> *const context) override;
   void EraseInput(const OpContext<DeviceTensor> *context) override;
 
@@ -144,6 +150,10 @@ class ControlActor : public MemoryAwareActor {
 
   // Formal parameters for control actor.
   std::vector<KernelWithIndex> formal_parameters_;
+  // The device tensors of backend input nodes corresponding to ref formal parameters, the key is the position index of
+  // formal parameter. Used to update the ptr of device tensors when receive the real parameters for ref nodes.
+  std::map<size_t, std::set<DeviceTensorPtr>> ref_formal_parameter_device_tensors_;
+
   // local node for control actor, such as return node for exit actor, switch node for switch actor.
   AnfNodePtr node_;
 };

@@ -51,6 +51,7 @@ class ExitActor : public ControlActor {
   const mindspore::HashMap<int, std::vector<DataArrowPtr>> &output_branch_partial_arrows() const {
     return output_branch_partial_arrows_;
   }
+  const std::vector<bool> &is_need_copy_device_tensors() const { return is_need_copy_device_tensors_; }
 
  protected:
   void FetchInput(OpContext<DeviceTensor> *const context) override;

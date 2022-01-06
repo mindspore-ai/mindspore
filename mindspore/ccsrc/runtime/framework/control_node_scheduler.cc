@@ -90,6 +90,26 @@ bool IsControlFlowArrow(const ControlNodeParserPtr &parser, const KernelGraphPtr
          (from_node != nullptr && IsPersistentDeviceTensor(from_node)) ||
          (from_node != nullptr && parser->IsSameKernelGraphGroup(from_node, graph));
 }
+
+// Parameter and ref node can not copy the device tensor.
+bool is_need_copy_device_tensor(const AnfNodePtr &backend_node, size_t index) {
+  MS_EXCEPTION_IF_NULL(backend_node);
+  if (!backend_node->isa<CNode>()) {
+    return false;
+  }
+
+  if (HasAbstractRef(backend_node)) {
+    return false;
+  }
+
+  auto kernel_graph = FetchKernelGraph(backend_node);
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  if (kernel_graph->IsInRefOutputMap({backend_node, index})) {
+    return false;
+  }
+
+  return true;
+}
 }  // namespace
 
 ControlActorSetPtr ControlNodeScheduler::Build(const GraphCompilerInfo &graph_compiler_info,
@@ -274,7 +294,8 @@ std::vector<ExitActorPtr> ControlNodeScheduler::BuildExitActor(const GraphCompil
       // Get the device contexts of the exit actor's cnode inputs.
       const AnfNodePtr &backend_node = node_with_context.second.first.first;
       MS_EXCEPTION_IF_NULL(backend_node);
-      is_need_copy_device_tensors.emplace_back(backend_node->isa<CNode>() ? true : false);
+      is_need_copy_device_tensors.emplace_back(
+        is_need_copy_device_tensor(backend_node, node_with_context.second.first.second));
       device_contexts.emplace_back(node_with_context.second.second);
     }
 
@@ -1155,6 +1176,7 @@ void ControlNodeScheduler::LinkDataArrowByKernelGraph(const KernelGraphPtr &grap
         to_index = super_kernel_actor->FetchInputNodePosition(input);
         (void)sink_input_node_linked.insert(input);
       }
+      AddFormalParameterDeviceTensor(from_actor, from_index, input);
       LinkDataArrow(from_actor, to_actor, from_index, to_index);
     }
   }
@@ -1229,6 +1251,22 @@ void ControlNodeScheduler::LinkArrowForRootGraphEntranceActor(const GraphCompile
       device_tensor->SetNodeIndex(parameter, 0);
     }
   }
+}
+
+void ControlNodeScheduler::AddFormalParameterDeviceTensor(ControlActor *const from_actor, size_t from_index,
+                                                          const AnfNodePtr &input_node) {
+  MS_EXCEPTION_IF_NULL(from_actor);
+  MS_EXCEPTION_IF_NULL(input_node);
+  if (!HasAbstractRef(input_node)) {
+    return;
+  }
+
+  auto device_tensor = AnfAlgo::GetMutableOutputAddr(input_node, 0, false);
+  MS_EXCEPTION_IF_NULL(device_tensor);
+  (void)from_actor->ref_formal_parameter_device_tensors_[from_index].insert(device_tensor);
+
+  UpdateRefCount(device_tensor.get(), true);
+  device_tensor->SetNodeIndex(input_node, 0);
 }
 
 void ControlNodeScheduler::LinkDataArrow(AbstractActor *const from_actor, AbstractActor *const to_actor,
