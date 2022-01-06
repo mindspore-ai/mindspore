@@ -327,6 +327,12 @@ std::vector<tensor::TensorPtr> GetRealValueNodeTensorFromGraph(
 bool OpInBlackList(const OpRunInfo &op_run_info) {
   return kOpCacheBlackList.find(op_run_info.op_name) != kOpCacheBlackList.end();
 }
+
+int GetExecutionMode() {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  return ms_context->get_param<int>(MS_CTX_EXECUTION_MODE);
+}
 }  // namespace
 
 VectorRef MsBackend::MsRunGraph(const GraphId &g, const VectorRef &args, const std::string &target) {
@@ -1352,9 +1358,10 @@ void MindRTBackend::RunOpInternal(bool single_op_cache_hit, GraphCompilerInfo *g
   // 2. Cache hit and there are no tasks in Queue. For example Non-first iteration.
   // 3. Not in nn.Cell construct.
   // 4. Operator to process dataset.
+  // 5. Graph mode.
   bool lazy_build_disabled = graph_compiler_info->need_erase_ ||
                              (single_op_cache_hit && op_lazy_builder.QueueEmpty()) || !op_run_info->lazy_build ||
-                             OpInBlackList(*op_run_info);
+                             OpInBlackList(*op_run_info) || GetExecutionMode() == kGraphMode;
   if (lazy_build_disabled) {
     if (!op_lazy_builder.QueueEmpty()) {
       op_lazy_builder.ExecuteRemainingTasks();
