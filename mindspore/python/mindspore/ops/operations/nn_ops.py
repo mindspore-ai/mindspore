@@ -5570,7 +5570,7 @@ class ApplyAdagradV2(Primitive):
         Tuple of 2 Tensors, the updated parameters.
 
         - **var** (Tensor) - The same shape and data type as `var`.
-        - **accum** (Tensor) - The same shape and data type as `m`.
+        - **accum** (Tensor) - The same shape and data type as `accum`.
 
     Raises:
         TypeError: If dtype of `var`, `accum`, `lr` or `grad` is neither float16 nor float32.
@@ -6463,7 +6463,7 @@ class ApplyFtrl(Primitive):
 
     Outputs:
         - **var** (Tensor) - Represents the updated `var`. As the input parameters has been updated in-place, this
-          value is always zero when the platforms is GPU.
+          value is always zero when the platform is GPU.
 
     Raises:
         TypeError: If `use_locking` is not a bool.
@@ -8666,15 +8666,15 @@ class ApplyAdagradDA(Primitive):
         - **gradient_squared_accumulator** (Tensor) - The same shape and data type as `gradient_squared_accumulator`.
 
     Raises:
-        TypeError: If `var`, `gradient_accumulator`, `gradient_squared_accumulator` is not a Parameter.
+        TypeError: If `var`, `gradient_accumulator` or `gradient_squared_accumulator` is not a Parameter.
         TypeError: If `grad` is not a Tensor.
         TypeError: If `lr`, `l1`, `l2` or `global_step` is neither a Number nor a Tensor.
         TypeError: If use_locking is not a bool.
         TypeError: If dtype of `var`, `gradient_accumulator`, `gradient_squared_accumulator`, `gradient_accumulator`,
-                   `lr`, `l1`, `l2` is neither float16 nor float32.
-        TypeError: If dtype of `gradient_accumulator`, `gradient_squared_accumulator`, `gradient_accumulator`
+                   `lr`, `l1` or `l2` is neither float16 nor float32.
+        TypeError: If dtype of `gradient_accumulator`, `gradient_squared_accumulator` or `gradient_accumulator`
                      is not same as `var`.
-        TypeError: If dtype of `global_step` is not int32 or int64.
+        TypeError: If dtype of `global_step` is not int32 nor int64.
         ValueError: If the shape size of `lr`, `l1`, `l2` and `global_step` is not 0.
         RuntimeError: If the data type of `var`, `gradient_accumulator`, `gradient_squared_accumulator` and `grad`
                       conversion of Parameter is not supported.
