@@ -79,7 +79,6 @@ std::vector<int64_t> HostCheck::GetFinalInferShape(const AnfNodePtr &node, const
 bool HostCheck::CheckValidOutputDeviceShape(const AnfNodePtr &node, const size_t output_idx,
                                             const std::string &format) {
   auto infer_shape = GetFinalInferShape(node, output_idx, format);
-
   if (infer_shape.empty()) {
     return true;
   }
@@ -109,6 +108,5 @@ bool HostCheck::CheckValidOutputDeviceShape(const AnfNodePtr &node, const size_t
   }
   return true;
 }
-
 }  // namespace kernel
 }  // namespace mindspore

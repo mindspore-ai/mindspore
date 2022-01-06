@@ -336,7 +336,6 @@ void AscendGraphOptimization::CheckControlFlowDynamicShape(const KernelGraphPtr 
   }
   memo_.clear();
 }
-
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore
