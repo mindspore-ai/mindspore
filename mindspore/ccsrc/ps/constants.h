@@ -162,35 +162,10 @@ constexpr char kServerCert[] = "server.p12";
 constexpr char kClientCert[] = "client.p12";
 constexpr char kCaCert[] = "ca.crt";
 constexpr char kColon = ':';
-const std::map<std::string, size_t> kCiphers = {{"ECDHE-RSA-AES128-GCM-SHA256", 0},
-                                                {"ECDHE-ECDSA-AES128-GCM-SHA256", 1},
-                                                {"ECDHE-RSA-AES256-GCM-SHA384", 2},
-                                                {"ECDHE-ECDSA-AES256-GCM-SHA384", 3},
-                                                {"DHE-RSA-AES128-GCM-SHA256", 4},
-                                                {"DHE-DSS-AES128-GCM-SHA256", 5},
-                                                {"ECDHE-RSA-AES128-SHA256", 6},
-                                                {"ECDHE-ECDSA-AES128-SHA256", 7},
-                                                {"ECDHE-RSA-AES128-SHA", 8},
-                                                {"ECDHE-ECDSA-AES128-SHA", 9},
-                                                {"ECDHE-RSA-AES256-SHA384", 10},
-                                                {"ECDHE-ECDSA-AES256-SHA384", 11},
-                                                {"ECDHE-RSA-AES256-SHA", 12},
-                                                {"ECDHE-ECDSA-AES256-SHA", 13},
-                                                {"DHE-RSA-AES128-SHA256", 14},
-                                                {"DHE-RSA-AES128-SHA", 15},
-                                                {"DHE-DSS-AES128-SHA256", 16},
-                                                {"DHE-RSA-AES256-SHA256", 17},
-                                                {"DHE-DSS-AES256-SHA", 18},
-                                                {"DHE-RSA-AES256-SHA", 19},
-                                                {"!aNULL", 20},
-                                                {"!eNULL", 21},
-                                                {"!EXPORT", 22},
-                                                {"!DES", 23},
-                                                {"!RC4", 24},
-                                                {"!3DES", 25},
-                                                {"!MD5", 26},
-                                                {"!PSK", 27},
-                                                {"kEDH+AESGCM", 28}};
+const std::map<std::string, size_t> kCiphers = {
+  {"ECDHE-RSA-AES128-GCM-SHA256", 0},   {"ECDHE-ECDSA-AES128-GCM-SHA256", 1}, {"ECDHE-RSA-AES256-GCM-SHA384", 2},
+  {"ECDHE-ECDSA-AES256-GCM-SHA384", 3}, {"ECDHE-RSA-CHACHA20-POLY1305", 4},   {"ECDHE-PSK-CHACHA20-POLY1305", 5},
+  {"ECDHE-ECDSA-AES128-CCM", 6},        {"ECDHE-ECDSA-AES256-CCM", 7},        {"ECDHE-ECDSA-CHACHA20-POLY1305", 8}};
 
 using DataPtr = std::shared_ptr<unsigned char[]>;
 using VectorPtr = std::shared_ptr<std::vector<unsigned char>>;
