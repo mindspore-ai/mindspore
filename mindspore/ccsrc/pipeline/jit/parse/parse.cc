@@ -896,7 +896,18 @@ AnfNodePtr Parser::ParseAttribute(const FunctionBlockPtr &block, const py::objec
   MS_EXCEPTION_IF_NULL(block->func_graph());
   // Create the apply node
   auto attr_cnode = block->func_graph()->NewCNodeInOrder({op_node, value_node, attr_node});
-  UpdateInterpretForUserNode(attr_cnode, value_node);
+  // The fallback feature is enabled in default.
+  static const auto use_fallback = (support_fallback() != "0");
+  if (use_fallback) {
+    // Check whether it is constant, constant does not need interpret.
+    auto value_str = py::cast<std::string>(ast()->GetAstNodeText(value_body));
+    py::bool_ is_const_value =
+      ast()->CallParserObjMethod(PYTHON_PARSE_CHECK_IS_CONSTANT_VALUE, value_str, common::SafeCStr(attr_str));
+    auto is_constant = py::cast<bool>(is_const_value);
+    if (!is_constant) {
+      UpdateInterpretForUserNode(attr_cnode, value_node);
+    }
+  }
   return attr_cnode;
 }
 
@@ -1994,6 +2005,12 @@ void Parser::WriteAssignVars(const FunctionBlockPtr &block, const py::object &ta
 }
 
 void Parser::UpdateInterpretForUserNode(const AnfNodePtr &user_node, const AnfNodePtr &node) {
+  // The fallback feature is enabled in default.
+  static const auto use_fallback = (support_fallback() != "0");
+  if (!use_fallback) {
+    return;
+  }
+
   MS_EXCEPTION_IF_NULL(user_node);
   MS_EXCEPTION_IF_NULL(node);
   // Do not handle user node with internal type such as Tensor.abs().

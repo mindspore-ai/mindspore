@@ -639,6 +639,15 @@ class Parser:
         logger.error("Fn type is invalid")
         return None, None
 
+    def is_constant_value(self, var, attr):
+        if var in self.global_namespace:
+            module = self.global_namespace[var]
+            if hasattr(module, attr):
+                value = getattr(module, attr)
+                # Check if value is constant.
+                return isinstance(value, (int, float, bool))
+        return False
+
     def is_unsupported_namespace(self, value):
         unsupported = isinstance(value, _builtin_function_or_method_type) and value not in convert_object_map
         logger.debug(f"'{value}' unsupported: {unsupported}.")
