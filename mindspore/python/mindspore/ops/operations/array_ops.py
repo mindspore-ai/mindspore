@@ -975,7 +975,7 @@ class Padding(PrimitiveWithInfer):
     Raises:
         TypeError: If `pad_dim_size` is not an int.
         ValueError: If `pad_dim_size` is less than 1.
-        ValueError: If last dim of `x` is not equal 1.
+        ValueError: If last dim of `x` is not equal to 1.
 
     Supported Platforms:
         ``Ascend``
@@ -3711,9 +3711,9 @@ class ScatterNd(PrimitiveWithInfer):
         - **updates** (Tensor) - The source Tensor to be scattered.
           It has shape `indices_shape[:-1] + shape[indices_shape[-1]:]`.
         - **shape** (tuple[int]) - Define the shape of the output tensor, has the same data type as indices.
-          The shape of `shape` is :math:`(x_1, x_2, ..., x_R)`, and length of 'shape' is greater than or equal 2.
+          The shape of `shape` is :math:`(x_1, x_2, ..., x_R)`, and the length of 'shape' is greater than or equal to 2.
           In other words, the shape of `shape` is at least :math:`(x_1, x_2)`.
-          And the value of any element in `shape` must be greater than or equal 1.
+          And the value of any element in `shape` must be greater than or equal to 1.
           In other words, :math:`x_1` >= 1, :math:`x_2` >= 1.
 
     Outputs:
@@ -4085,7 +4085,7 @@ class ScatterUpdate(_ScatterOpDynamic):
     the relatively highest priority data type.
 
     Args:
-        use_locking (bool): Whether protect the assignment by a lock. Default: True.
+        use_locking (bool): Whether to protect the assignment by a lock. Default: True.
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
@@ -4148,7 +4148,7 @@ class ScatterNdUpdate(Primitive):
     the relatively highest priority data type.
 
     Args:
-        use_locking (bool): Whether protect the assignment by a lock. Default: True.
+        use_locking (bool): Whether to protect the assignment by a lock. Default: True.
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
@@ -4213,7 +4213,7 @@ class ScatterMax(_ScatterOp):
     the relatively highest priority data type.
 
     Args:
-        use_locking (bool): Whether protect the assignment by a lock. Default: True.
+        use_locking (bool): Whether to protect the assignment by a lock. Default: True.
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
@@ -4267,7 +4267,7 @@ class ScatterMin(_ScatterOp):
     the relatively highest priority data type.
 
     Args:
-        use_locking (bool): Whether protect the assignment by a lock. Default: False.
+        use_locking (bool): Whether to protect the assignment by a lock. Default: False.
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
@@ -4323,7 +4323,7 @@ class ScatterAdd(_ScatterOpDynamic):
         This is an in-place update operator. Therefore, the `input_x` will be updated after the operation is completed.
 
     Args:
-        use_locking (bool): Whether protect the assignment by a lock. Default: False.
+        use_locking (bool): Whether to protect the assignment by a lock. Default: False.
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
@@ -4433,7 +4433,7 @@ class ScatterSub(_ScatterOpDynamic):
     the relatively highest priority data type.
 
     Args:
-        use_locking (bool): Whether protect the assignment by a lock. Default: False.
+        use_locking (bool): Whether to protect the assignment by a lock. Default: False.
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
@@ -4543,7 +4543,7 @@ class ScatterMul(_ScatterOp):
     the relatively highest priority data type.
 
     Args:
-        use_locking (bool): Whether protect the assignment by a lock. Default: False.
+        use_locking (bool): Whether to protect the assignment by a lock. Default: False.
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
@@ -4646,7 +4646,7 @@ class ScatterDiv(_ScatterOp):
     the relatively highest priority data type.
 
     Args:
-        use_locking (bool): Whether protect the assignment by a lock. Default: False.
+        use_locking (bool): Whether to protect the assignment by a lock. Default: False.
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
@@ -4755,7 +4755,7 @@ class ScatterNdAdd(Primitive):
     the relatively highest priority data type.
 
     Args:
-        use_locking (bool): Whether protect the assignment by a lock. Default: False.
+        use_locking (bool): Whether to protect the assignment by a lock. Default: False.
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
@@ -4846,7 +4846,7 @@ class ScatterNdSub(_ScatterNdOp):
     relatively highest priority data type.
 
     Args:
-        use_locking (bool): Whether protect the assignment by a lock. Default: False.
+        use_locking (bool): Whether to protect the assignment by a lock. Default: False.
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
