@@ -134,7 +134,6 @@ void AscendGraphOptimization::OptimizeExecutionOrder(const KernelGraphPtr &graph
 
 void AscendGraphOptimization::PostOptimization(const KernelGraphPtr &graph) {
   MS_LOG(INFO) << "Status record: start post optimization. graph id: " << graph->graph_id();
-  graph->SetInputNodes();
   graph->SetOptimizerFlag();
   MS_LOG(INFO) << "Status record: end post optimization. graph id: " << graph->graph_id();
 }
