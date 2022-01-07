@@ -613,7 +613,7 @@ class ReduceMean(_Reduce):
     Raises:
         TypeError: If `keep_dims` is not a bool.
         TypeError: If `x` is not a Tensor.
-        ValueError: If `axis` is not one of the following: int, tuple or list.
+        TypeError: If `axis` is not one of the following: int, tuple or list.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -701,7 +701,7 @@ class ReduceSum(_Reduce):
         >>> output = op(x, 1)
         >>> output.shape
         (3, 1, 5, 6)
-        >>> # case 1: Reduces a dimension by averaging all elements in the dimension.
+        >>> # case 1: Reduces a dimension by summing all elements in the dimension.
         >>> x = Tensor(np.array([[[1, 1, 1, 1, 1, 1], [2, 2, 2, 2, 2, 2], [3, 3, 3, 3, 3, 3]],
         ...                      [[4, 4, 4, 4, 4, 4], [5, 5, 5, 5, 5, 5], [6, 6, 6, 6, 6, 6]],
         ...                      [[7, 7, 7, 7, 7, 7], [8, 8, 8, 8, 8, 8], [9, 9, 9, 9, 9, 9]]]), mindspore.float32)
@@ -754,8 +754,7 @@ class ReduceAll(_Reduce):
 
     Args:
        keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
-                         If false, don't keep these dimensions.
-                         Default : False, don't keep these reduced dimensions.
+                         If false, don't keep these dimensions. Default : False.
 
     Inputs:
         - **x** (Tensor[bool]) - The input tensor. The dtype of the tensor to be reduced is bool.
@@ -776,7 +775,7 @@ class ReduceAll(_Reduce):
     Raises:
         TypeError: If `keep_dims` is not a bool.
         TypeError: If `x` is not a Tensor.
-        ValueError: If `axis` is not one of the following: int, tuple or list.
+        TypeError: If `axis` is not one of the following: int, tuple or list.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -784,7 +783,7 @@ class ReduceAll(_Reduce):
     Examples:
         >>> x = Tensor(np.array([[True, False], [True, True]]))
         >>> op = ops.ReduceAll(keep_dims=True)
-        >>> # case 1: Reduces a dimension by averaging all elements in the dimension.
+        >>> # case 1: Reduces a dimension by the "logicalAND" of all elements in the dimension.
         >>> output = op(x)
         >>> print(output)
         [[False]]
@@ -813,8 +812,7 @@ class ReduceAny(_Reduce):
 
     Args:
        keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
-                         If false, don't keep these dimensions.
-                         Default : False, don't keep these reduced dimensions.
+                         If false, don't keep these dimensions. Default : False.
 
     Inputs:
         - **x** (Tensor[bool]) - The input tensor. The dtype of the tensor to be reduced is bool.
@@ -835,7 +833,7 @@ class ReduceAny(_Reduce):
     Raises:
         TypeError: If `keep_dims` is not a bool.
         TypeError: If `x` is not a Tensor.
-        ValueError: If `axis` is not one of the following: int, tuple or list.
+        TypeError: If `axis` is not one of the following: int, tuple or list.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -843,7 +841,7 @@ class ReduceAny(_Reduce):
     Examples:
         >>> x = Tensor(np.array([[True, False], [True, True]]))
         >>> op = ops.ReduceAny(keep_dims=True)
-        >>> # case 1: Reduces a dimension by averaging all elements in the dimension.
+        >>> # case 1: Reduces a dimension by the "logical OR" of all elements in the dimension.
         >>> output = op(x)
         >>> print(output)
         [[ True]]
@@ -872,8 +870,7 @@ class ReduceMax(_Reduce):
 
     Args:
         keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
-                          If false, don't keep these dimensions.
-                          Default : False, don't keep these reduced dimensions.
+                          If false, don't keep these dimensions. Default : False.
 
     Inputs:
          - **x** (Tensor[Number]) - The input tensor. The dtype of the tensor to be reduced is number.
@@ -894,7 +891,7 @@ class ReduceMax(_Reduce):
     Raises:
         TypeError: If `keep_dims` is not a bool.
         TypeError: If `x` is not a Tensor.
-        ValueError: If `axis` is not one of the following: int, tuple or list.
+        TypeError: If `axis` is not one of the following: int, tuple or list.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -906,7 +903,7 @@ class ReduceMax(_Reduce):
         >>> result = output.shape
         >>> print(result)
         (3, 1, 5, 6)
-        >>> # case 1: Reduces a dimension by averaging all elements in the dimension.
+        >>> # case 1: Reduces a dimension by the maximum value of all elements in the dimension.
         >>> x = Tensor(np.array([[[1, 1, 1, 1, 1, 1], [2, 2, 2, 2, 2, 2], [3, 3, 3, 3, 3, 3]],
         ...                      [[4, 4, 4, 4, 4, 4], [5, 5, 5, 5, 5, 5], [6, 6, 6, 6, 6, 6]],
         ...                      [[7, 7, 7, 7, 7, 7], [8, 8, 8, 8, 8, 8], [9, 9, 9, 9, 9, 9]]]), mindspore.float32)
@@ -959,8 +956,7 @@ class ReduceMin(_Reduce):
 
     Args:
         keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
-                          If false, don't keep these dimensions.
-                          Default : False, don't keep these reduced dimensions.
+                          If false, don't keep these dimensions. Default : False.
 
     Inputs:
         - **x** (Tensor[Number]) - The input tensor. The dtype of the tensor to be reduced is number.
@@ -981,7 +977,7 @@ class ReduceMin(_Reduce):
     Raises:
         TypeError: If `keep_dims` is not a bool.
         TypeError: If `x` is not a Tensor.
-        ValueError: If `axis` is not one of the following: int, tuple or list.
+        TypeError: If `axis` is not one of the following: int, tuple or list.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -993,7 +989,7 @@ class ReduceMin(_Reduce):
         >>> result = output.shape
         >>> print(result)
         (3, 1, 5, 6)
-        >>> # case 1: Reduces a dimension by averaging all elements in the dimension.
+        >>> # case 1: Reduces a dimension by the minimum value of all elements in the dimension.
         >>> x = Tensor(np.array([[[1, 1, 1, 1, 1, 1], [2, 2, 2, 2, 2, 2], [3, 3, 3, 3, 3, 3]],
         ...                      [[4, 4, 4, 4, 4, 4], [5, 5, 5, 5, 5, 5], [6, 6, 6, 6, 6, 6]],
         ...                      [[7, 7, 7, 7, 7, 7], [8, 8, 8, 8, 8, 8], [9, 9, 9, 9, 9, 9]]]), mindspore.float32)
@@ -1037,8 +1033,7 @@ class ReduceProd(_Reduce):
 
     Args:
         keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
-                          If false, don't keep these dimensions.
-                          Default : False, don't keep these reduced dimensions.
+                          If false, don't keep these dimensions. Default : False.
 
     Inputs:
         - **x** (Tensor[Number]) - The input tensor. The dtype of the tensor to be reduced is number.
@@ -1059,7 +1054,7 @@ class ReduceProd(_Reduce):
     Raises:
         TypeError: If `keep_dims` is not a bool.
         TypeError: If `x` is not a Tensor.
-        ValueError: If `axis` is not one of the following: int, tuple or list.
+        TypeError: If `axis` is not one of the following: int, tuple or list.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -1071,7 +1066,7 @@ class ReduceProd(_Reduce):
         >>> result = output.shape
         >>> print(result)
         (3, 1, 5, 6)
-        >>> # case 1: Reduces a dimension by averaging all elements in the dimension.
+        >>> # case 1: Reduces a dimension by multiplying all elements in the dimension.
         >>> x = Tensor(np.array([[[1, 1, 1, 1, 1, 1], [2, 2, 2, 2, 2, 2], [3, 3, 3, 3, 3, 3]],
         ...                      [[4, 4, 4, 4, 4, 4], [5, 5, 5, 5, 5, 5], [6, 6, 6, 6, 6, 6]],
         ...                      [[7, 7, 7, 7, 7, 7], [8, 8, 8, 8, 8, 8], [9, 9, 9, 9, 9, 9]]]), mindspore.float32)
@@ -1761,7 +1756,7 @@ class InplaceAdd(PrimitiveWithInfer):
 
 class InplaceSub(PrimitiveWithInfer):
     """
-    Subtracts `v` into specified rows of `x`. Computes `y` = `x`; y[i,] -= `v.
+    Subtracts `v` into specified rows of `x`. Computes `y` = `x`; y[i,] -= `v`.
 
     Args:
         indices (Union[int, tuple]): Indices into the left-most dimension of `x`, and determines which rows of `x`
@@ -2361,14 +2356,16 @@ class Log(PrimitiveWithInfer):
         is subject to change.
 
     Inputs:
-        - **x** (Tensor) - The input tensor. The value must be greater than 0.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+        - **x** (Tensor) - The input tensor. The data type must be float16, float32 or float64. The value must be
+        greater than 0. :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should
+        be less than 8.
 
     Outputs:
-        Tensor, has the same shape as the `x`.
+        Tensor, has the same shape and dtype as the `x`.
 
     Raises:
         TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` is not float16, float32 or float64.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2682,18 +2679,20 @@ class Div(_MathBinaryOp):
         out_{i} = \frac{x_i}{y_i}
 
     Inputs:
-        - **x** (Union[Tensor, Number, bool]) - The first input is a number or
-          a bool or a tensor whose data type is number or bool.
-        - **y** (Union[Tensor, Number, bool]) - When the first input is a tensor, The second input
-          could be a number, a bool, or a tensor whose data type is number or bool. When the first input
-          is a number or a bool, the second input must be a tensor whose data type is number or bool.
+        - **x** (Union[Tensor, number.Number, bool]) - The first input is a number.Number or
+          a bool or a tensor whose data type is
+          `number <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
+          `bool_ <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+        - **y** (Union[Tensor, number.Number, bool]) - The second input is a number.Number or
+          a bool when the first input is a tensor or a tensor whose data type is number or bool_.
+          When the first input is Scalar, the second input must be a Tensor whose data type is number or bool_.
 
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,
         and the data type is the one with higher precision or higher digits among the two inputs.
 
     Raises:
-        TypeError: If neither `x` nor `y` is a Tensor.
+        TypeError: If `x` and `y` is not a number.Number or a bool or a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2743,17 +2742,21 @@ class DivNoNan(_MathBinaryOp):
         \end{cases}
 
     Inputs:
-        - **x** (Union[Tensor, Number, bool]) - The first input is a number or
-          a bool or a tensor whose data type is number or bool.
-        - **y** (Union[Tensor, Number, bool]) - The second input is a number or
-          a bool when the first input is a tensor or a tensor whose data type is number or bool.
+        - **x** (Union[Tensor, number.Number, bool]) - The first input is a number.Number or
+          a bool or a tensor whose data type is
+          `number <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
+          `bool_ <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+        - **y** (Union[Tensor, number.Number, bool]) - The second input is a number.Number or
+          a bool when the first input is a tensor or a tensor whose data type is number or bool_.
+          When the first input is Scalar, the second input must be a Tensor whose data type is number or bool_.
+
 
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,
         and the data type is the one with higher precision or higher digits among the two inputs.
 
     Raises:
-        TypeError: If neither `x` nor `y` is a Tensor.
+        TypeError: If `x` and `y` is not a number.Number or a bool or a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -4142,7 +4145,7 @@ class NPUAllocFloatStatus(PrimitiveWithInfer):
     The flag is a tensor whose shape is `(8,)` and data type is `mindspore.dtype.float32`.
 
     Note:
-        Please refer to the Examples of class: `mindspore.ops.NPUAllocFloatStatus`.
+        Please refer to the Examples of :class:`mindspore.ops.NPUGetFloatStatus`.
 
     Outputs:
         Tensor, has the shape of `(8,)`.
@@ -4254,9 +4257,9 @@ class NPUClearFloatStatus(PrimitiveWithInfer):
         `NPUClearFloatStatus` is called.
         In addition, there are strict sequencing requirements for use, i.e., before using the NPUGetFloatStatus
         operator, need to ensure that the NPUClearFlotStatus and your compute has been executed.
-        We use depend on ensure the execution order.
+        We use :class:`mindspore.ops.Depend` on ensure the execution order.
 
-        Please refer to the Examples of class: `mindspore.ops.NPUGetFloatStatus`.
+        Please refer to the Examples of :class:`mindspore.ops.NPUGetFloatStatus`.
 
     Inputs:
         - **x** (Tensor) - The output tensor of `NPUAllocFloatStatus`.
@@ -4500,9 +4503,9 @@ class NMSWithMask(PrimitiveWithInfer):
           valid output bounding boxes.
 
     Raises:
-        ValueError: If the `iou_threshold` is not a float number, or if the first dimension
-            of input Tensor is less than or equal to 0, or if the data type of the input
-            Tensor is not float16 or float32.
+        ValueError: If the `iou_threshold` is not a float number.
+        ValueError:  if the first dimension of input Tensor is less than or equal to 0.
+        TypeError: if the dtype of the `bboxes` is not float16 or float32.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5225,8 +5228,8 @@ class Eps(PrimitiveWithInfer):
 
 class LinSpace(PrimitiveWithInfer):
     r"""
-    The OP returns a Tensor whose value is num evenly spaced in the interval start and stop (including start and stop),
-    and the length of the output Tensor is num.
+    Returns a Tensor whose value is `num` evenly spaced in the interval `start` and `stop` (including `start` and
+    `stop`), and the length of the output Tensor is `num`.
 
     .. math::
         \begin{aligned}
@@ -5235,12 +5238,17 @@ class LinSpace(PrimitiveWithInfer):
         \end{aligned}
 
     Inputs:
-        - **start** (Tensor[float32]) - Start value of interval, With shape of 0-D.
-        - **stop** (Tensor[float32]) - Last value of interval, With shape of 0-D.
+        - **start** (Tensor) - The data type must be float32. Start value of interval, With shape of 0-D.
+        - **stop** (Tensor) - The data type must be float32. Last value of interval, With shape of 0-D.
         - **num** (int) - Number of ticks in the interval, inclusive of start and stop.
 
     Outputs:
-        Tensor, has the same shape as `start`.
+        Tensor, has the same shape and dtype as `start`.
+
+    Raises:
+        TypeError: If `start` or `stop` is not a Tensor.
+        TypeError: If dtype of `start` or dtype of `stop` is not float32.
+        TypeError: If `num` is not a int.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -5476,13 +5484,14 @@ class Real(PrimitiveWithInfer):
     If input is real, it is returned unchanged.
 
     Inputs:
-        - **input** (Tensor) - The input tensor to compute to.
+        -**input** (Tensor) - The input tensor to compute to, the type of the input should be complex64 or complex128.
 
     Outputs:
-        Tensor, the shape is the same as the input.
+        Tensor, the type is the same as the real part of input.
 
     Raises:
        TypeError: If the input is not a Tensor.
+       TypeError: If the type of the real part of input is not complex64 or complex128.
 
     Supported Platforms:
         ``GPU``
