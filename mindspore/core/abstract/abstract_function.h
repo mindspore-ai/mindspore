@@ -142,8 +142,11 @@ class MS_CORE_API FuncGraphAbstractClosure final : public AbstractFuncAtom {
   /// \param[in] context The context that func_graph corresponding to.
   /// \param[in] tracking_id A Node identifies different uses of the func_graph.
   FuncGraphAbstractClosure(const FuncGraphPtr &func_graph, const AnalysisContextPtr &context,
-                           const AnfNodePtr &tracking_id = nullptr)
-      : func_graph_(func_graph), context_(context), tracking_id_(AnfNodeWeakPtr(tracking_id)) {
+                           const AnfNodePtr &tracking_id = nullptr, const bool specialized = false)
+      : func_graph_(func_graph),
+        context_(context),
+        tracking_id_(AnfNodeWeakPtr(tracking_id)),
+        specialized_(specialized) {
     MS_EXCEPTION_IF_NULL(func_graph);
     MS_EXCEPTION_IF_NULL(context);
   }
@@ -163,8 +166,10 @@ class MS_CORE_API FuncGraphAbstractClosure final : public AbstractFuncAtom {
 
   void set_tracking_id(AnfNodePtr node) override { tracking_id_ = AnfNodeWeakPtr(node); }
 
+  bool specialized() const { return specialized_; }
+
   AbstractFunctionPtr Copy() const override {
-    return std::make_shared<FuncGraphAbstractClosure>(func_graph_, context_, tracking_id());
+    return std::make_shared<FuncGraphAbstractClosure>(func_graph_, context_, tracking_id(), specialized_);
   }
 
   bool operator==(const AbstractFunction &other) const override;
@@ -184,6 +189,9 @@ class MS_CORE_API FuncGraphAbstractClosure final : public AbstractFuncAtom {
   // Notes: Be careful to use nullptr for this variable.
   // store it as weak_ptr to break reference cycle.
   AnfNodeWeakPtr tracking_id_;
+  // If the func_graph_ member is the specialized func_graph_ in current IR or
+  // it's a old func_graph of IR before renormalized.
+  bool specialized_{false};
 };
 using FuncGraphAbstractClosurePtr = std::shared_ptr<FuncGraphAbstractClosure>;
 

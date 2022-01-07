@@ -693,8 +693,8 @@ class MS_CORE_API AbstractSequence : public AbstractBase {
   ///
   /// \param[in] elements A list of abstracts.
   /// \param[in] sequence_nodes The nodes of tuple/list, usually are MakeTuple/MakeList CNodes or tuple/list ValueNodes.
-  explicit AbstractSequence(const AbstractBasePtrList &elements, const AnfNodeWeakPtrList &sequence_nodes)
-      : elements_(elements), sequence_nodes_(sequence_nodes) {}
+  explicit AbstractSequence(const AbstractBasePtrList &elements,
+                            const std::shared_ptr<AnfNodeWeakPtrList> &sequence_nodes);
 
   /// \brief Destructor of AbstractSequence.
   ~AbstractSequence() override = default;
@@ -757,46 +757,37 @@ class MS_CORE_API AbstractSequence : public AbstractBase {
   const AbstractBasePtrList &elements() const { return elements_; }
 
   /// \brief Purify the elements list, and clean unused elements.
-  void PurifyElements();
+  ///
+  /// \return A boolean, which indicates whether success.
+  bool PurifyElements();
 
   /// \brief Get the sequence nodes where these 'AbstractSequence' evaluated from.
   ///
   /// \return The nodes of tuple/list, usually are MakeTuple/MakeList CNodes or tuple/list ValueNodes.
-  const AnfNodeWeakPtrList &sequence_nodes() const { return sequence_nodes_; }
+  const std::shared_ptr<AnfNodeWeakPtrList> &sequence_nodes() const { return sequence_nodes_; }
 
   /// \brief Set the sequence nodes where these 'AbstractSequence' evaluated from.
   ///
   /// \param[in] sequence_nodes The nodes of tuple/list, usually are MakeTuple/MakeList CNodes or tuple/list ValueNodes.
-  void set_sequence_nodes(const AnfNodeWeakPtrList &sequence_nodes) { sequence_nodes_ = sequence_nodes; }
+  void set_sequence_nodes(const std::shared_ptr<AnfNodeWeakPtrList> &sequence_nodes) {
+    sequence_nodes_ = sequence_nodes;
+  }
 
   /// \brief Insert a node into the sequence nodes.
   ///
   /// \param[in] sequence_node The node to intert into sequence nodes.
-  void insert_sequence_node(const AnfNodePtr &sequence_node) {
-    auto iter =
-      std::find_if(sequence_nodes_.begin(), sequence_nodes_.end(),
-                   [&sequence_node](const AnfNodeWeakPtr &weak_node) { return sequence_node == weak_node.lock(); });
-    if (iter == sequence_nodes_.end()) {
-      sequence_nodes_.emplace_back(sequence_node);
-    } else {
-      MS_LOG(EXCEPTION) << "Fail to insert node \'" << sequence_node->DebugString() << "\' into sequence nodes.";
-    }
-  }
+  void InsertSequenceNode(const AnfNodePtr &sequence_node);
+
+  /// \brief Insert nodes into the sequence nodes.
+  ///
+  /// \param[in] sequence_nodes The nodes to intert into sequence nodes.
+  void InsertSequenceNodes(const AnfNodeWeakPtrList &sequence_nodes);
 
   /// \brief Update the sequence nodes.
   ///
   /// \param[in] old_sequence_node The old node in sequence nodes.
   /// \param[in] new_sequence_node The new node to replace old node in sequence nodes.
-  void update_sequence_node(const AnfNodePtr &old_sequence_node, const AnfNodePtr &new_sequence_node) {
-    auto iter = std::find_if(
-      sequence_nodes_.begin(), sequence_nodes_.end(),
-      [&old_sequence_node](const AnfNodeWeakPtr &weak_node) { return old_sequence_node == weak_node.lock(); });
-    if (iter != sequence_nodes_.end()) {
-      *iter = new_sequence_node;
-      return;
-    }
-    MS_LOG(EXCEPTION) << "Not found old node \'" << old_sequence_node->DebugString() << "\' in sequence nodes.";
-  }
+  void UpdateSequenceNode(const AnfNodePtr &old_sequence_node, const AnfNodePtr &new_sequence_node);
 
   std::size_t hash() const override;
 
@@ -818,7 +809,8 @@ class MS_CORE_API AbstractSequence : public AbstractBase {
 
  protected:
   AbstractBasePtrList elements_;
-  AnfNodeWeakPtrList sequence_nodes_;
+  // Since there're not too many nodes, we just use vector here.
+  std::shared_ptr<AnfNodeWeakPtrList> sequence_nodes_;
 };
 using AbstractSequencePtr = std::shared_ptr<AbstractSequence>;
 
@@ -829,7 +821,8 @@ class MS_CORE_API AbstractTuple final : public AbstractSequence {
   ///
   /// \param[in] elements A list of abstracts.
   /// \param[in] tuple_node The nodes of tuple, usually are MakeTuple CNodes or tuple ValueNodes.
-  explicit AbstractTuple(const AbstractBasePtrList &elements, const AnfNodeWeakPtrList &tuple_nodes = {})
+  explicit AbstractTuple(const AbstractBasePtrList &elements,
+                         const std::shared_ptr<AnfNodeWeakPtrList> &tuple_nodes = nullptr)
       : AbstractSequence(elements, tuple_nodes) {}
 
   /// \brief Destructor of AbstractTuple.
@@ -840,20 +833,20 @@ class MS_CORE_API AbstractTuple final : public AbstractSequence {
 
   BaseShapePtr BuildShape() const override { return std::make_shared<TupleShape>(ElementsShape()); }
 
-  AbstractBasePtr Clone() const override { return std::make_shared<AbstractTuple>(ElementsClone(), sequence_nodes_); }
+  AbstractBasePtr Clone() const override { return std::make_shared<AbstractTuple>(ElementsClone(), sequence_nodes()); }
 
   AbstractBasePtr Broaden() const override {
-    return std::make_shared<AbstractTuple>(ElementsBroaden(), sequence_nodes_);
+    return std::make_shared<AbstractTuple>(ElementsBroaden(), sequence_nodes());
   }
 
   AbstractBasePtr PartialBroaden() const override {
-    return std::make_shared<AbstractTuple>(ElementsPartialBroaden(), sequence_nodes_);
+    return std::make_shared<AbstractTuple>(ElementsPartialBroaden(), sequence_nodes());
   }
 
   AbstractBasePtr Join(const AbstractBasePtr &other) override {
     auto res = dyn_cast<AbstractSequence>(ElementsJoin<AbstractTuple>(other));
     MS_EXCEPTION_IF_NULL(res);
-    res->set_sequence_nodes(SequenceNodesJoin(other));
+    res->InsertSequenceNodes(SequenceNodesJoin(other));
     return res;
   }
 
@@ -883,7 +876,8 @@ class MS_CORE_API AbstractList final : public AbstractSequence {
   ///
   /// \param[in] elements A list of abstracts.
   /// \param[in] list_node The nodes of list, usually are MakeList CNodes or list ValueNodes.
-  explicit AbstractList(const AbstractBasePtrList &elements, const AnfNodeWeakPtrList &list_nodes = {})
+  explicit AbstractList(const AbstractBasePtrList &elements,
+                        const std::shared_ptr<AnfNodeWeakPtrList> &list_nodes = nullptr)
       : AbstractSequence(elements, list_nodes) {}
 
   /// \brief Destructor of AbstractList.
@@ -894,20 +888,20 @@ class MS_CORE_API AbstractList final : public AbstractSequence {
 
   BaseShapePtr BuildShape() const override { return std::make_shared<ListShape>(ElementsShape()); }
 
-  AbstractBasePtr Clone() const override { return std::make_shared<AbstractList>(ElementsClone(), sequence_nodes_); }
+  AbstractBasePtr Clone() const override { return std::make_shared<AbstractList>(ElementsClone(), sequence_nodes()); }
 
   AbstractBasePtr Broaden() const override {
-    return std::make_shared<AbstractList>(ElementsBroaden(), sequence_nodes_);
+    return std::make_shared<AbstractList>(ElementsBroaden(), sequence_nodes());
   }
 
   AbstractBasePtr PartialBroaden() const override {
-    return std::make_shared<AbstractList>(ElementsPartialBroaden(), sequence_nodes_);
+    return std::make_shared<AbstractList>(ElementsPartialBroaden(), sequence_nodes());
   }
 
   AbstractBasePtr Join(const AbstractBasePtr &other) override {
     auto res = dyn_cast<AbstractSequence>(ElementsJoin<AbstractList>(other));
     MS_EXCEPTION_IF_NULL(res);
-    res->set_sequence_nodes(SequenceNodesJoin(other));
+    res->InsertSequenceNodes(SequenceNodesJoin(other));
     return res;
   }
 
@@ -1640,8 +1634,9 @@ using AbstractIOMonadPtr = std::shared_ptr<AbstractIOMonad>;
 
 AnfNodePtr GetTraceNode(const AbstractBasePtr &abs);
 std::string ExtractLoggingInfo(const std::string &info);
-void SynchronizeSequenceNodesElementsUseFlags(const AnfNodeWeakPtrList &lhs_sequence_nodes,
-                                              const AnfNodeWeakPtrList &rhs_sequence_nodes);
+
+void SynchronizeSequenceElementsUseFlagsRecursively(const AbstractSequencePtr &lhs_sequence,
+                                                    const AbstractSequencePtr &rhs_sequence);
 }  // namespace abstract
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_ABSTRACT_ABSTRACT_VALUE_H_

@@ -15,6 +15,7 @@
  */
 
 #include "runtime/framework/actor/control_flow/control_actor.h"
+#include "runtime/hardware/device_context_manager.h"
 
 namespace mindspore {
 namespace runtime {
@@ -104,16 +105,22 @@ size_t ControlActor::FetchNodePosition(const KernelWithIndex &node) const {
 }
 
 void ControlActor::Run(OpContext<DeviceTensor> *const context) {
-  FetchInput(context);
+  try {
+    FetchInput(context);
 
-  // Note that IncreaseDynamicRefCounts must be in front of SendMemoryFreeReq. SendMemoryFreeReq will decreasing the
-  // dynamic ref count. Avoid the illegal timing problem that the dynamic reference count is decremented and then
-  // incremented.
-  IncreaseDynamicRefCounts(context);
-  SendMemoryFreeReq(context);
+    // Note that IncreaseDynamicRefCounts must be in front of SendMemoryFreeReq. SendMemoryFreeReq will decreasing the
+    // dynamic ref count. Avoid the illegal timing problem that the dynamic reference count is decremented and then
+    // incremented.
+    IncreaseDynamicRefCounts(context);
+    SendMemoryFreeReq(context);
 
-  EraseInput(context);
-  SendOutput(context);
+    EraseInput(context);
+    SendOutput(context);
+  } catch (const std::exception &e) {
+    MsException::Instance().SetException();
+    std::string error_info = "Actor fun failed:" + GetAID().Name();
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(GraphExecutionStrategy::kPipeline, (*context), error_info);
+  }
 }
 
 void ControlActor::RunOpPartial(const OpPartialPtr &partial, size_t position, OpContext<DeviceTensor> *const context) {
@@ -175,7 +182,7 @@ void ControlActor::FetchInput(OpContext<DeviceTensor> *const context) {
                                  " for actor:" + GetAID().Name();
         SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
       }
-
+      MS_EXCEPTION_IF_NULL(input_data->data_);
       input_device_tensors_[input_data->index_] = input_data->data_;
     }
   }
@@ -210,6 +217,7 @@ void ControlActor::FetchInput(OpContext<DeviceTensor> *const context) {
         " current:" + std::to_string(input_device_tensors_.size()) + " for actor:" + GetAID().Name();
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
     }
+    MS_EXCEPTION_IF_NULL(device_tensors[0]);
     input_device_tensors_[device_tensor_store_key.first] = device_tensors[0].get();
   }
 
@@ -260,9 +268,11 @@ void ControlActor::FetchInput(OpContext<DeviceTensor> *const context) {
 void ControlActor::IncreaseDynamicRefCounts(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   // Increase dynamic ref count by the output data.
-  for (auto &output_data : output_data_) {
-    MS_EXCEPTION_IF_NULL(output_data);
-    IncreaseDynamicRefCount(output_data.get());
+  for (size_t i = 0; i < output_data_.size(); ++i) {
+    MS_EXCEPTION_IF_NULL(output_data_[i]);
+    std::string error_info = GetAID().Name() + " fetches data null, data index:" + std::to_string(i);
+    MS_EXCEPTION_IF_CHECK_FAIL((output_data_[i]->data_ != nullptr), error_info);
+    IncreaseDynamicRefCount(output_data_[i].get());
   }
 
   // Increase dynamic ref count by the output partial.
@@ -337,24 +347,19 @@ void ControlActor::UpdateOutputData(OpData<DeviceTensor> *const output_data, con
                                     const AnfNodePtr &, OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(output_data);
   MS_EXCEPTION_IF_NULL(data_arrow);
-  MS_EXCEPTION_IF_NULL(context);
-
-  const auto &data = output_data->data_;
-  MS_EXCEPTION_IF_NULL(data);
   auto formal_parameter_position = data_arrow->from_output_index_;
   // Has no the ref formal parameter.
   if (ref_formal_parameter_device_tensors_.count(formal_parameter_position) == 0) {
     return;
   }
 
-  if (data->GetMutablePtr() == nullptr) {
-    std::string error_info =
-      "The address of the " + std::to_string(formal_parameter_position) + "position formal parameter is nullptr.";
-    SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
-  }
-  if (data->ref_count() != SIZE_MAX) {
-    std::string error_info = "The ref count of the " + std::to_string(formal_parameter_position) +
-                             "position formal parameter is wrong:" + std::to_string(data->ref_count());
+  MS_EXCEPTION_IF_NULL(context);
+  const auto &data = output_data->data_;
+  MS_EXCEPTION_IF_NULL(data);
+  if ((data->GetMutablePtr() == nullptr) || (data->ref_count() != SIZE_MAX) ||
+      (data->dynamic_ref_count() != INT32_MAX)) {
+    std::string error_info = "The address of the " + std::to_string(formal_parameter_position) +
+                             "position real parameter is nullptr or ref count is wrong.";
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
   }
 
@@ -364,19 +369,45 @@ void ControlActor::UpdateOutputData(OpData<DeviceTensor> *const output_data, con
     if ((device_tensor.get() == data) || (device_tensor->GetMutablePtr() == data->GetMutablePtr())) {
       continue;
     }
-    auto real_parameter = device_tensor->GetNodeIndex();
-    MS_EXCEPTION_IF_NULL(real_parameter.first);
-    if ((device_tensor->GetSize() != data->GetSize()) || (device_tensor->format() != data->format()) ||
-        (device_tensor->type_id() != data->type_id())) {
+    auto formal_parameter = device_tensor->GetNodeIndex();
+    MS_EXCEPTION_IF_NULL(formal_parameter.first);
+    if ((device_tensor->GetSize() != data->GetSize()) || (device_tensor->type_id() != data->type_id())) {
       std::string error_info =
-        "The address of the " + std::to_string(formal_parameter_position) +
-        "position formal parameter can not be set to real parameter:" + real_parameter.first->DebugString();
+        "The formal parameter: " + formal_parameter.first->DebugString() +
+        " position:" + std::to_string(formal_parameter_position) + "can not set from real parameter," +
+        " formal parameter size:" + std::to_string(device_tensor->GetSize()) +
+        " type id:" + std::to_string(device_tensor->type_id()) +
+        ", real parameter size:" + std::to_string(data->GetSize()) + " type id:" + std::to_string(data->type_id());
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+    }
+
+    // Copy from the real parameter to formal parameter and insert the device tensor copy store.
+    if ((device_tensor->format() != data->format()) || (device_tensor->DeviceType() != data->DeviceType())) {
+      MS_LOG(INFO) << GetAID().Name() << " the input position:" << formal_parameter_position
+                   << " copy from real parameter address:" << data << ", type:" << data->DeviceType()
+                   << ", format:" << data->format() << " to formal parameter address:" << device_tensor.get()
+                   << ", type:" << device_tensor->DeviceType() << ", format:" << device_tensor->format()
+                   << ", formal parameter name:" << formal_parameter.first->DebugString();
+      const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+        {device_tensor->device_name(), device_tensor->device_id()});
+      MS_EXCEPTION_IF_NULL(device_context);
+      if ((device_tensor->GetPtr() == nullptr) &&
+          (!device_context->AllocateMemory(device_tensor.get(), device_tensor->GetSize()))) {
+        SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(GraphExecutionStrategy::kPipeline, *context, *device_context,
+                                                    formal_parameter.first->DebugString(), device_tensor->GetSize());
+      }
+      if (!Copy(device_tensor.get(), data)) {
+        std::string error_info = "The formal parameter: " + formal_parameter.first->DebugString() +
+                                 " position:" + std::to_string(formal_parameter_position) + " copy failed.";
+        SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+      }
+      output_data->data_ = device_tensor.get();
+      DeviceTensorCopyStore::GetInstance().Insert(device_tensor.get(), data);
     }
 
     device_tensor->set_ptr(data->GetMutablePtr());
     MS_LOG(DEBUG) << "Set the ptr: " << data->GetMutablePtr()
-                  << " for the ref real parameter: " << real_parameter.first->DebugString()
+                  << " for the ref formal parameter: " << formal_parameter.first->DebugString()
                   << " in the actor: " << GetAID().Name();
   }
 }

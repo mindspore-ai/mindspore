@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -123,7 +123,7 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   environ_get_eliminate_ =
     MakeSubstitution(std::make_shared<EnvironGetEliminater>(), "environ_get_eliminate", prim::kPrimEnvironGet);
   environ_get_add_eliminate_ =
-    MakeSubstitution(std::make_shared<EnvironGetAddEliminater>(), "environ_get_add_eliminate_", prim::kPrimEnvironGet);
+    MakeSubstitution(std::make_shared<EnvironGetAddEliminater>(), "environ_get_add_eliminate", prim::kPrimEnvironGet);
   environ_get_set_eliminate_ =
     MakeSubstitution(std::make_shared<EnvironGetSetEliminater>(), "environ_get_set_eliminate", prim::kPrimEnvironGet);
   environ_get_depend_swap_ =
@@ -141,6 +141,10 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   incorporate_environ_get_switch_layer_ =
     MakeSubstitution(std::make_shared<IncorporateEnvironGetSwitchLayer>(), "incorporate_environ_get_switch_layer",
                      prim::kPrimEnvironGet);
+
+  split_environ_get_set_with_tuple_value_ =
+    MakeSubstitution(std::make_shared<SplitEnvironGetSetWithTupleValue>(), "split_environ_get_set_with_tuple_value",
+                     {prim::kPrimEnvironGet, prim::kPrimEnvironSet});
 
   // Ref eliminate
   make_ref_eliminate_ =
@@ -235,7 +239,7 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
 
   // tuple parameter graph transform
   call_graph_tuple_transform_ =
-    MakeSubstitution(std::make_shared<CallGraphTupleTransform>(), "graph_param_transorm", IsCNode);
+    MakeSubstitution(std::make_shared<CallGraphTupleTransform>(), "graph_param_transform", IsCNode);
 
   // RowTensor Eliminate
   row_tensor_eliminate_ = MakeSubstitution(
@@ -266,6 +270,10 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   // recompute
   set_cell_output_no_recompute_ = MakeSubstitution(std::make_shared<SetCellOutputNoRecompute>(),
                                                    "set_cell_output_no_recompute", IsValueNode<FuncGraph>);
+
+  // Workaround
+  stop_gradient_special_op_ =
+    MakeSubstitution(std::make_shared<StopGradientSpecialOp>(), "stop_gradient_special_op", prim::kPrimBiasAddGrad);
 }
 
 ResolveIRPassLib::ResolveIRPassLib() {

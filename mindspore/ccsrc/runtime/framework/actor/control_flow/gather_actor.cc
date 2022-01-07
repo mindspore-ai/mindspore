@@ -88,9 +88,11 @@ void GatherActor::IncreaseDynamicRefCounts(OpContext<DeviceTensor> *const contex
   }
 
   // Increase dynamic ref count by the output data.
-  for (auto &output_data : output_data_) {
-    MS_EXCEPTION_IF_NULL(output_data);
-    IncreaseDynamicRefCount(output_data.get());
+  for (size_t i = 0; i < output_data_.size(); ++i) {
+    MS_EXCEPTION_IF_NULL(output_data_[i]);
+    std::string error_info = GetAID().Name() + " fetches data null, data index:" + std::to_string(i);
+    MS_EXCEPTION_IF_CHECK_FAIL((output_data_[i]->data_ != nullptr), error_info);
+    IncreaseDynamicRefCount(output_data_[i].get());
   }
 
   // Increase dynamic ref count by the output partial.

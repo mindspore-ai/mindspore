@@ -218,9 +218,6 @@ std::vector<EntranceActorPtr> ControlNodeScheduler::BuildEntranceActor(const Gra
       // The entrance actor has two parts of node members :
       // 1. The formal parameters of the subgraph are used to connect the actor's output arrows.
       for (const auto &parameter : func_graph->parameters()) {
-        if (HasAbstractMonad(parameter)) {
-          continue;
-        }
         const auto &abstract = parameter->abstract();
         MS_EXCEPTION_IF_NULL(abstract);
         size_t output_num = AnfAlgo::GetOutputNumByAbstract(abstract);
@@ -349,8 +346,7 @@ std::vector<StackActorPtr> ControlNodeScheduler::BuildStackActor(const GraphComp
         MS_LOG(EXCEPTION) << "Failed to get level by from node:" << from_node->DebugString()
                           << " in graph:" << kernel_graph_group_info->group_name_;
       }
-      if (iter->second == kernel_graph_group_info->level_ &&
-          (!(parser->IsRootGraphParameter(from_node) && IsPersistentDeviceTensor(from_node)))) {
+      if (iter->second == kernel_graph_group_info->level_ && (!parser->IsRootGraphPersistentDeviceTensor(from_node))) {
         (void)formal_parameters.emplace_back(node_with_context.first);
         (void)device_contexts.emplace_back(node_with_context.second);
       } else {
@@ -430,8 +426,7 @@ void ControlNodeScheduler::BuildStackActorForControlNode(const GraphCompilerInfo
                           << " for need stack control node:" << need_stack_control_node->DebugString();
       }
 
-      if (control_node_level == iter->second &&
-          (!(parser->IsRootGraphParameter(parameter.first) && IsPersistentDeviceTensor(parameter.first)))) {
+      if (control_node_level == iter->second && (!parser->IsRootGraphPersistentDeviceTensor(parameter.first))) {
         (void)formal_parameters.emplace_back(parameter);
         (void)device_contexts.emplace_back(device_context);
       } else {
@@ -705,7 +700,8 @@ void ControlNodeScheduler::LinkArrowByParameter(const AnfNodePtr &parameter, Con
                                                 const KernelWithIndex &from_node_with_index,
                                                 const KernelWithIndex &to_node_with_index,
                                                 const ControlNodeParserPtr &parser) {
-  if (parser->IsRootGraphParameter(parameter) && IsPersistentDeviceTensor(parameter)) {
+  MS_EXCEPTION_IF_NULL(parser);
+  if (parser->IsRootGraphPersistentDeviceTensor(parameter)) {
     (void)to_actor->device_tensor_store_keys_.emplace_back(to_node_with_index.second, parameter);
     return;
   }
@@ -715,18 +711,27 @@ void ControlNodeScheduler::LinkArrowByParameter(const AnfNodePtr &parameter, Con
   const auto &actor_name = func_graph->ToString() + kEntranceActorNameSuffix;
   auto actor = FetchActor(actor_name);
   MS_EXCEPTION_IF_NULL(actor);
-  auto entrance_actor = dynamic_cast<EntranceActor *>(actor);
-  MS_EXCEPTION_IF_NULL(entrance_actor);
+
+  // If the input of the exit actor of the kernel graph is a parameter node, and there is a corresponding stack actor,
+  // it should be linked to the stack actor.
+  if (to_actor->type() == KernelTransformType::kExitActor) {
+    auto stack_actor_name = (to_actor->node_ == nullptr ? GetStackActorNameByExitName(to_actor->GetAID().Name())
+                                                        : GetActorName(to_actor->node_) + kStackActorNameSuffix);
+    auto stack_actor = FetchActor(stack_actor_name);
+    actor = (stack_actor == nullptr ? actor : stack_actor);
+  }
+
+  auto from_actor = dynamic_cast<ControlActor *>(actor);
+  MS_EXCEPTION_IF_NULL(from_actor);
 
   auto abstract = parameter->abstract();
   MS_EXCEPTION_IF_NULL(abstract);
   auto dst_abstract = FetchAbstractByIndex(abstract, from_node_with_index.second);
   if (dst_abstract->isa<abstract::AbstractFunction>()) {
-    LinkPartialArrow(entrance_actor, to_actor, entrance_actor->FetchNodePosition(from_node_with_index),
+    LinkPartialArrow(from_actor, to_actor, from_actor->FetchNodePosition(from_node_with_index),
                      to_node_with_index.second);
   } else {
-    LinkDataArrow(entrance_actor, to_actor, entrance_actor->FetchNodePosition(from_node_with_index),
-                  to_node_with_index.second);
+    LinkDataArrow(from_actor, to_actor, from_actor->FetchNodePosition(from_node_with_index), to_node_with_index.second);
   }
 }
 
@@ -734,6 +739,7 @@ void ControlNodeScheduler::LinkArrowByCallNode(const AnfNodePtr &call_node, Cont
                                                const KernelWithIndex &from_node_with_index,
                                                const KernelWithIndex &to_node_with_index,
                                                const ControlNodeParserPtr &parser) {
+  MS_EXCEPTION_IF_NULL(parser);
   MS_EXCEPTION_IF_NULL(call_node);
   MS_EXCEPTION_IF_NULL(to_actor);
   const auto &from_node = from_node_with_index.first;
@@ -786,14 +792,17 @@ void ControlNodeScheduler::LinkArrowByKernel(const AnfNodePtr &kernel, ControlAc
                                              const KernelWithIndex &from_node_with_index,
                                              const KernelWithIndex &to_node_with_index,
                                              const ControlNodeParserPtr &parser) {
+  MS_EXCEPTION_IF_NULL(parser);
   MS_EXCEPTION_IF_NULL(kernel);
   MS_EXCEPTION_IF_NULL(to_actor);
   const auto &from_node = from_node_with_index.first;
   MS_EXCEPTION_IF_NULL(from_node);
   const auto &graph = parser->FetchKernelGraphByFrontNode(from_node);
   MS_EXCEPTION_IF_NULL(graph);
+  const auto &group_name = parser->FetchGroupNameByKernelGraph(graph);
 
-  if (to_actor->type_ == KernelTransformType::kExitActor && to_actor->node_ == nullptr) {
+  if (to_actor->type_ == KernelTransformType::kExitActor && to_actor->node_ == nullptr &&
+      to_actor->GetAID().Name().find(group_name) != std::string::npos) {
     // Link arrow from actor of output node to exit actor of kernel graph.
     const auto &kernel_with_index = parser->FetchBackendNodeByFrontNode(from_node_with_index);
     MS_EXCEPTION_IF_NULL(kernel_with_index.first);
@@ -827,33 +836,7 @@ void ControlNodeScheduler::LinkControlArrowForControlActor(ActorSet *const actor
   MS_EXCEPTION_IF_NULL(control_actor_set);
   const auto &parser = graph_compiler_info.control_node_parser_;
   MS_EXCEPTION_IF_NULL(parser);
-
-  // Since only one set of real parameters are allowed to be executed in funcgraph at the same time, when the funcgraph
-  // stops running, it is necessary to send the control arrow to the corresponding entrance actor at the exit of the
-  // graph to run the next set of real parameters. The corresponding nodes of the actors that need to send the control
-  // arrow have been parsed in the control node parser.
-  for (const auto &graph_to_nodes : parser->func_graph_to_first_control_nodes_) {
-    // Fetch the entrance actor.
-    const auto &func_graph = graph_to_nodes.first;
-    MS_EXCEPTION_IF_NULL(func_graph);
-    auto actor_name = func_graph->ToString() + kEntranceActorNameSuffix;
-    auto entrance_actor = dynamic_cast<EntranceActor *>(FetchActor(actor_name));
-    MS_EXCEPTION_IF_NULL(entrance_actor);
-
-    const auto &nodes = graph_to_nodes.second;
-    for (const auto &node : nodes) {
-      // Fetch the source actor of control arrow.
-      MS_EXCEPTION_IF_NULL(node);
-      if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimReturn)) {
-        actor_name = func_graph->ToString() + kExitActorNameSuffix;
-      } else {
-        actor_name = GetActorName(node);
-      }
-      auto from_actor = dynamic_cast<ControlActor *>(FetchActor(actor_name));
-      MS_EXCEPTION_IF_NULL(from_actor);
-      LinkLoopBodyControlArrow(from_actor, entrance_actor);
-    }
-  }
+  LinkControlArrowForEntranceActor(actor_set, graph_compiler_info);
 
   // When the switch actor and gather actor have no input, need to link a control arrow from entrance actor.
   std::vector<ControlActor *> need_check_control_actors;
@@ -934,6 +917,62 @@ void ControlNodeScheduler::LinkControlArrowForControlActor(ActorSet *const actor
     auto exit_actor = FetchActor(exit_actor_name);
     MS_EXCEPTION_IF_NULL(exit_actor);
     LinkControlArrow(copy_actor.get(), exit_actor);
+  }
+}
+
+void ControlNodeScheduler::LinkControlArrowForEntranceActor(ActorSet *const actor_set,
+                                                            const GraphCompilerInfo &graph_compiler_info) {
+  MS_EXCEPTION_IF_NULL(actor_set);
+  auto control_actor_set = actor_set->control_actors_.get();
+  MS_EXCEPTION_IF_NULL(control_actor_set);
+  const auto &parser = graph_compiler_info.control_node_parser_;
+  MS_EXCEPTION_IF_NULL(parser);
+
+  // Since only one set of real parameters are allowed to be executed in funcgraph at the same time, when the funcgraph
+  // stops running, it is necessary to send the control arrow to the corresponding entrance actor at the exit of the
+  // graph to run the next set of real parameters. The corresponding nodes of the actors that need to send the control
+  // arrow have been parsed in the control node parser.
+  for (const auto &graph_to_nodes : parser->func_graph_to_first_control_nodes_) {
+    // Fetch the entrance actor.
+    const auto &func_graph = graph_to_nodes.first;
+    MS_EXCEPTION_IF_NULL(func_graph);
+    auto actor_name = func_graph->ToString() + kEntranceActorNameSuffix;
+    auto entrance_actor = dynamic_cast<EntranceActor *>(FetchActor(actor_name));
+    MS_EXCEPTION_IF_NULL(entrance_actor);
+
+    const auto &nodes = graph_to_nodes.second;
+    for (const auto &node : nodes) {
+      // Fetch the source actor of control arrow.
+      MS_EXCEPTION_IF_NULL(node);
+      if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimReturn)) {
+        actor_name = func_graph->ToString() + kExitActorNameSuffix;
+      } else {
+        actor_name = GetActorName(node);
+      }
+      auto from_actor = dynamic_cast<ControlActor *>(FetchActor(actor_name));
+      MS_EXCEPTION_IF_NULL(from_actor);
+      LinkLoopBodyControlArrow(from_actor, entrance_actor);
+    }
+  }
+
+  // In the recursive scene, some kernel graph needs to be completed before the next set of data is sent by the
+  // entrance actor. At this time, it is necessary to connect a control arrow from the exit actor of the graph
+  // to the entrance actor.
+  for (const auto &func_graph_to_group_info : parser->func_graph_to_first_kernel_graphs_) {
+    const auto &func_graph = func_graph_to_group_info.first;
+    MS_EXCEPTION_IF_NULL(func_graph);
+    auto actor_name = func_graph->ToString() + kEntranceActorNameSuffix;
+    auto actor = FetchActor(actor_name);
+    MS_EXCEPTION_IF_NULL(actor);
+    auto entrance_actor = dynamic_cast<EntranceActor *>(actor);
+    MS_EXCEPTION_IF_NULL(entrance_actor);
+    for (const auto &group_info : func_graph_to_group_info.second) {
+      MS_EXCEPTION_IF_NULL(group_info);
+      actor_name = group_info->group_name_ + kExitActorNameSuffix;
+      auto from_actor = FetchActor(actor_name);
+      MS_EXCEPTION_IF_NULL(from_actor);
+      LinkLoopBodyControlArrow(from_actor, entrance_actor);
+    }
   }
 }
 
@@ -1414,12 +1453,27 @@ void ControlNodeScheduler::LinkBranchIDArrow(ControlActor *const from_actor, Con
   to_actor->input_branch_ids_num_++;
 }
 
-bool ControlNodeScheduler::CheckActorValid(const ControlActorSetPtr &control_actor_set) const {
-  MS_EXCEPTION_IF_NULL(control_actor_set);
-  for (const auto &gather_actor : control_actor_set->gather_actors_) {
-    if (gather_actor->input_partials_num_ != 1) {
-      MS_LOG(EXCEPTION) << "Invalid partial num:" << gather_actor->input_partials_num_
-                        << " for actor:" << gather_actor->GetAID();
+bool ControlNodeScheduler::CheckActorValid(const ActorSet *actor_set) const {
+  MS_EXCEPTION_IF_NULL(actor_set);
+  if (actor_set->control_actors_ == nullptr) {
+    return true;
+  }
+
+  for (const auto &kernel_actor : actor_set->kernel_actors_) {
+    std::string exit_actor_name = "";
+    for (const auto arrow : kernel_actor->output_data_arrows_) {
+      MS_EXCEPTION_IF_NULL(arrow);
+      if (arrow->to_op_id_.Name().find(kExitActorNameSuffix) == std::string::npos) {
+        continue;
+      }
+      if (exit_actor_name == "") {
+        exit_actor_name = arrow->to_op_id_.Name();
+        continue;
+      }
+      if (exit_actor_name != arrow->to_op_id_.Name()) {
+        MS_LOG(EXCEPTION) << "Kernel actor:" << kernel_actor->GetAID() << " link to two exit actor:" << exit_actor_name
+                          << " and:" << arrow->to_op_id_.Name();
+      }
     }
   }
   return true;

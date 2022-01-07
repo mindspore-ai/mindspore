@@ -51,7 +51,6 @@ AbstractBasePtr InferImplTupleOrListEqual(const std::string &op_name, const Abst
   CheckArgsSize(op_name, args_spec_list, 2);
   auto input_x = CheckArg<T>(op_name, args_spec_list, 0);
   auto input_y = CheckArg<T>(op_name, args_spec_list, 1);
-
   ValuePtr x_value = input_x->BuildValue();
   ValuePtr y_value = input_y->BuildValue();
   return std::make_shared<AbstractScalar>(*x_value == *y_value);
@@ -296,7 +295,6 @@ AbstractBasePtr InferImplBroadcastGradientArgs(const AnalysisEnginePtr &, const 
 
     return std::make_shared<AbstractTuple>(elem_list);
   }
-
   return BroadcastGradientArgsDiff(x_shape, y_shape);
 }
 
@@ -407,7 +405,6 @@ AbstractBasePtr InferImplReduceShape(const AnalysisEnginePtr &, const PrimitiveP
   }
   auto axis_value_ptr = axis_value->cast<ValueSequencePtr>();
   MS_EXCEPTION_IF_NULL(axis_value_ptr);
-
   return DoInferReduceShape(shape_x, x_shp_value, axis_value_ptr, primitive);
 }
 
@@ -472,7 +469,6 @@ AbstractBasePtr InferImplTupleDiv(const AnalysisEnginePtr &, const PrimitivePtr 
     auto result_v = MakeValue(result);
     values.push_back(std::make_shared<AbstractScalar>(result_v, result_v->type()));
   }
-
   return std::make_shared<AbstractTuple>(values);
 }
 

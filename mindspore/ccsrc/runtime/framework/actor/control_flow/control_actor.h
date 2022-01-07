@@ -58,8 +58,6 @@ class ControlActor : public MemoryAwareActor {
                const std::vector<KernelWithIndex> &parameters, const AnfNodePtr &node);
   ~ControlActor() override = default;
 
-  void Init() override;
-
   // Receive partial.
   virtual void RunOpPartial(const OpPartialPtr &partial, size_t position, OpContext<DeviceTensor> *const context);
 
@@ -78,6 +76,8 @@ class ControlActor : public MemoryAwareActor {
 
  protected:
   friend class ControlNodeScheduler;
+
+  void Init() override;
 
   // The basic interfaces for op partial and op real parameter.
   std::vector<DeviceTensor *> GetAllDeviceTensors(const OpPartialPtr &op_partial);

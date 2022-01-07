@@ -108,7 +108,7 @@ void ParseAttrValue(const std::string &type, const std::string &attr_name, const
   MS_EXCEPTION_IF_NULL(node_attr);
   MS_EXCEPTION_IF_NULL(value);
   if (type == "int") {
-    auto attr_value = static_cast<int>(GetValue<int64_t>(value));
+    auto attr_value = value->isa<Int32Imm>() ? GetValue<int>(value) : GetValue<int64_t>(value);
     (*node_attr)[attr_name].set_i(attr_value);
   } else if (type == "str") {
     auto attr_value = GetValue<std::string>(value);
@@ -186,6 +186,12 @@ void SetNodeInputs(const std::shared_ptr<AnfNode> &anf_node, mindspore::NodeDef 
     return;
   }
 
+  std::vector<size_t> input_size_list;
+  if (!SetIOIputSize(anf_node, input_num, &input_size_list)) {
+    MS_LOG(ERROR) << "Node [" << AnfAlgo::GetCNodeName(anf_node) << "] get input size list failed.";
+    return;
+  }
+
   for (size_t input_index = 0; input_index < input_num; input_index++) {
     ::mindspore::Tensor *node_inputs = proto->add_inputs();
     MS_EXCEPTION_IF_NULL(node_inputs);
@@ -215,6 +221,7 @@ void SetNodeInputs(const std::shared_ptr<AnfNode> &anf_node, mindspore::NodeDef 
     }
     node_inputs->set_tensor_type(input_data_type);
     node_inputs->set_mem_device("HBM");
+    node_inputs->set_data_size(input_size_list[input_index]);
   }
 }
 
@@ -243,8 +250,17 @@ void SetNodeOutputs(const std::shared_ptr<AnfNode> &anf_node, mindspore::NodeDef
     }
     TypeId output_type = AnfAlgo::GetOutputDeviceDataType(anf_node, output_index);
     int32_t output_data_type = AicpuOpUtil::MsTypeToProtoType(output_type);
+
+    int64_t data_size = 1;
+    if (!GetShapeSize(output_shape, TypeIdToType(output_type), &data_size)) {
+      MS_LOG(ERROR) << "Node [" << AnfAlgo::GetCNodeName(anf_node) << "] get output size failed for output "
+                    << output_index;
+      return;
+    }
+
     node_outputs->set_tensor_type(output_data_type);
     node_outputs->set_mem_device("HBM");
+    node_outputs->set_data_size(LongToSize(data_size));
   }
 }
 

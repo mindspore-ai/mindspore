@@ -60,14 +60,18 @@ constexpr size_t kCsrTensorIndPtrIndex = 0;
 constexpr size_t kCsrTensorIndicesIndex = 1;
 constexpr size_t kCsrTensorValuesIndex = 2;
 constexpr size_t kCsrTensorDenseShapeIndex = 3;
+constexpr size_t kCooTensorIndicesIndex = 0;
+constexpr size_t kCooTensorValuesIndex = 1;
+constexpr size_t kCooTensorDenseShapeIndex = 2;
 constexpr size_t kMakeCSRTensorInputStartPos = 1;
+constexpr size_t kMakeTensorInputStartPos = 1;
 constexpr size_t kMakeCSRTensorInputNum = 4;
 
 const char kEntranceActorNameSuffix[] = "_EntranceActor";
 const char kExitActorNameSuffix[] = "_ExitActor";
 const char kStackActorNameSuffix[] = "_StackActor";
-
-using FrontToBackendNodeWithContext = std::map<KernelWithIndex, std::set<std::pair<AnfNodePtr, DeviceContext *>>>;
+using NodeWithContext = std::pair<AnfNodePtr, DeviceContext *>;
+using FrontToBackendNodeWithContext = std::map<KernelWithIndex, std::set<NodeWithContext>>;
 using FrontToBackendKernelWithContext = std::map<KernelWithIndex, std::pair<KernelWithIndex, DeviceContext *>>;
 using FuncGraphToKernelGraphGroup = mindspore::HashMap<FuncGraphPtr, std::vector<std::vector<KernelGraphPtr>>>;
 using HostParameterToWeight = std::map<AnfNodePtr, std::set<AnfNodePtr>>;
@@ -80,6 +84,7 @@ using FrontNodeToKernelGraph = mindspore::HashMap<AnfNodePtr, KernelGraphPtr>;
 using FuncGraphCallRelation = mindspore::HashMap<FuncGraphPtr, std::vector<std::set<FuncGraphPtr>>>;
 using CallNodeToFuncGraph = mindspore::HashMap<AnfNodePtr, std::set<FuncGraphPtr>>;
 using KernelGraphToDeviceContext = mindspore::HashMap<KernelGraphPtr, DeviceContext *>;
+using GroupNameToCommuNodes = std::unordered_map<std::string, std::vector<CNodePtr>>;
 // In the control flow, heterogeneous kernel graphs need to be reconnected in the same group, and the kernel graph
 // group info is used to store the inputs and outputs of the group.
 // Need stack indicates whether a stack actor needs to be created for the group.
@@ -94,9 +99,6 @@ struct KernelGraphGroupInfo {
 };
 using KernelGraphGroupInfoPtr = std::shared_ptr<KernelGraphGroupInfo>;
 
-// Check whether the parameter is a weight. In the control flow, weight is passed to the subgraph, and in the subgraph,
-// it is determined whether it is a weight.
-bool HasAbstractRef(const AnfNodePtr &node);
 // Check whether the node is a csr node.
 bool IsCsrNode(const AnfNodePtr &node);
 // Get the front node corresponding to the backend node, if the front node is not a parameter node, return the
@@ -111,6 +113,8 @@ KernelWithIndex FetchRealNodeByGetItem(const KernelWithIndex &node_with_index);
 // ControlNodeParser is used to parse control nodes, and get the edges between nodes.
 class ControlNodeParser {
  public:
+  ControlNodeParser() : is_inited_(false), root_func_graph_(nullptr) {}
+
   // Parse the control node and put the results of the parsing into member variables.
   void Parse(const std::vector<AnfNodePtr> &control_nodes, const std::vector<KernelGraphPtr> &graphs,
              const std::vector<DeviceContext *> &device_contexts, const FuncGraphPtr &root_graph,
@@ -126,7 +130,9 @@ class ControlNodeParser {
   // 1. In control flow, the parameter input needs to be connected to the entrance actor of the funcgraph.
   // 2. In the kernel graph with call node input, the data arrow needs to be connected to the stack actor.
   bool IsControlFlowDataArrow(const KernelGraphPtr &graph, const AnfNodePtr &backend_node);
-  bool IsRootGraphParameter(const AnfNodePtr &node);
+  // Only the parameters of root graph are persistent and fetched from the store, the parameters of sub graphs are not
+  // persistent and real parameters passed.
+  bool IsRootGraphPersistentDeviceTensor(const AnfNodePtr &node);
   bool IsRecursionCallNode(const AnfNodePtr &node);
   // If there is a recursive call node in the input of the kernel graph, the graph is recursive.
   bool IsRecursionKernelGraph(const KernelGraphPtr &graph);
@@ -148,6 +154,7 @@ class ControlNodeParser {
   KernelWithIndex FetchBackendNodeByFrontNode(const KernelWithIndex &node_with_index);
   FuncGraphPtr FetchFuncGraphByKernelGraph(const KernelGraph *const graph);
   std::string FetchGroupNameByKernelGraph(const KernelGraphPtr &graph);
+  NodeWithContext FetchBackendParameterWithContextByFrontParameter(const KernelWithIndex &front_parameter_with_index);
 
  private:
   friend class GraphScheduler;
@@ -200,7 +207,7 @@ class ControlNodeParser {
   // the entrance actor so that it can process next parameters. This is used to obtain the nodes corresponding to all
   // actors in the funcgraph that need to send control messages to the entrance.
   // These node are control nodes without control node input in the topological sort of the funcgraph.
-  void ParseFirstControlNodeForFuncGraph(const std::vector<AnfNodePtr> &control_nodes);
+  void ParseFirstControlNodeAndKernelGraphForFuncGraph(const std::vector<AnfNodePtr> &control_nodes);
   // Parse all funcgraphs that call nodes may call.
   void ParseCallNodeToFuncGraph(const std::vector<AnfNodePtr> &control_nodes);
 
@@ -219,6 +226,7 @@ class ControlNodeParser {
   // Get the control nodes and kernel graphs which need to add a stack actor for them.
   // When a control node or kernel graph has input that is a call node, you need to add a stack actor for it.
   void ParseNeedStackControlNode(const std::vector<AnfNodePtr> &control_nodes);
+  bool IsCallNodeNeedStack(const AnfNodePtr &node);
   void ParseNeedStackKernelGraph(const KernelGraphToDeviceContext &kernel_graph_to_device_contexts);
   // Parse the level of inputs and outputs of graphs and all control nodes.
   void ParseNodeLevel(const std::vector<AnfNodePtr> &control_nodes);
@@ -275,6 +283,11 @@ class ControlNodeParser {
   mindspore::HashMap<AnfNodePtr, AnfNodePtr> kernel_to_call_nodes_;
   // Control nodes without a control node input in the topological sorting of funcgraph.
   mindspore::HashMap<FuncGraphPtr, std::set<AnfNodePtr>> func_graph_to_first_control_nodes_;
+  // Kernel graphs need to link a control arrow to its entrance actor.
+  // In the recursive scene, some kernel graph needs to be completed before the next set of data is sent by the
+  // entrance actor. At this time, it is necessary to connect a control arrow from the exit actor of the graph
+  // to the entrance actor.
+  mindspore::HashMap<FuncGraphPtr, std::set<KernelGraphGroupInfoPtr>> func_graph_to_first_kernel_graphs_;
   // Call nodes without recursive call. The funcgraphs of the call will not call the funcgraph where the call node
   // belong.
   std::set<AnfNodePtr> unrecursion_call_nodes_;
@@ -293,7 +306,7 @@ class ControlNodeParser {
   mindspore::HashMap<KernelGraphPtr, KernelGraphGroupInfoPtr> kernel_graphs_to_group_info_;
 
   // Is control flow enable.
-  bool is_inited_{false};
+  bool is_inited_;
 
   // Root funcgraph and its parameters.
   FuncGraphPtr root_func_graph_;

@@ -820,7 +820,7 @@ std::vector<AnfNodePtr> SessionBasic::CreateCallSwitchInputs(const CNodePtr &cno
   }
   std::vector<AnfNodePtr> switch_inputs = {switch_cnode->input(kAnfPrimitiveIndex),
                                            switch_cnode->input(kFirstDataInputIndex)};
-  for (size_t index = kFirstBranchInSwitch; index < switch_cnode->inputs().size(); index++) {
+  for (size_t index = kSwitchTrueBranchIndex; index < switch_cnode->inputs().size(); index++) {
     auto node = switch_cnode->input(index);
     // there is real input in call, should put it to true and false branch in switch
     if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimPartial)) {
@@ -913,7 +913,7 @@ std::vector<AnfNodePtr> SessionBasic::CreateCallSwitchLayerInputs(const CNodePtr
   MS_EXCEPTION_IF_NULL(switch_layer_cnode);
   std::vector<AnfNodePtr> switch_layer_inputs = {switch_layer_cnode->input(kAnfPrimitiveIndex),
                                                  switch_layer_cnode->input(kFirstDataInputIndex)};
-  auto make_tuple_node = switch_layer_cnode->input(kMakeTupleInSwitchLayerIndex);
+  auto make_tuple_node = switch_layer_cnode->input(kSwitchLayerBranchesIndex);
   MS_EXCEPTION_IF_NULL(make_tuple_node);
   auto node = make_tuple_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(node);
@@ -1034,7 +1034,7 @@ void SessionBasic::CreateCNodeInputs(const CNodePtr &cnode, KernelGraph *graph, 
   MS_EXCEPTION_IF_NULL(graph);
   if (AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimSwitch)) {
     (void)cnode_inputs->emplace_back(graph->GetBackendAnfByFrontAnf(cnode->input(kFirstDataInputIndex)));
-    for (size_t index = kFirstBranchInSwitch; index < cnode->inputs().size(); index++) {
+    for (size_t index = kSwitchTrueBranchIndex; index < cnode->inputs().size(); index++) {
       auto node_input = cnode->input(index);
       auto switch_input = CreateSwitchInput(cnode, node_input, graph);
       (void)cnode_inputs->emplace_back(switch_input);

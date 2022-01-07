@@ -37,11 +37,15 @@ namespace device {
 namespace gpu {
 bool GPUDeviceAddress::SyncDeviceToHost(size_t size, void *host_ptr) const {
   // The input or output may be empty.
-  bool need_sync = (size != 0) && (size_ != 0) && (size <= size_);
-  if (!need_sync) {
+  if ((size == 0) || (size_ == 0)) {
     MS_LOG(INFO) << "No need sync, host size: " << size << ", device size: " << size_;
     return true;
   }
+  if (size > size_) {
+    MS_LOG(WARNING) << "Please check whether need sync data, host size: " << size << ", device size: " << size_;
+    return true;
+  }
+
   MS_EXCEPTION_IF_NULL(host_ptr);
   if (ptr_ == nullptr) {
     MS_LOG(ERROR) << "The device address is null!";
@@ -67,9 +71,12 @@ bool GPUDeviceAddress::SyncDeviceToHost(size_t size, void *host_ptr) const {
 
 bool GPUDeviceAddress::SyncHostToDevice(size_t size, const void *host_ptr) const {
   // The input or output may be empty.
-  bool need_sync = (size != 0) && (size_ != 0) && (size <= size_);
-  if (!need_sync) {
+  if ((size == 0) || (size_ == 0)) {
     MS_LOG(INFO) << "No need sync, host size: " << size << ", device size: " << size_;
+    return true;
+  }
+  if (size > size_) {
+    MS_LOG(WARNING) << "Please check whether need sync data, host size: " << size << ", device size: " << size_;
     return true;
   }
   MS_EXCEPTION_IF_NULL(host_ptr);
@@ -125,6 +132,36 @@ bool GPUDeviceAddress::SyncHostToDevice(const ShapeVector &, size_t size, TypeId
   auto &stream = GPUDeviceManager::GetInstance().default_stream();
   MS_EXCEPTION_IF_NULL(stream);
   return GPUDeviceManager::GetInstance().CopyHostMemToDeviceAsync(ptr_, host_ptr, size, stream);
+}
+
+bool GPUDeviceAddress::SyncDeviceToDevice(const DeviceSync *src_device_addr) const {
+  MS_EXCEPTION_IF_NULL(src_device_addr);
+  auto src_gpu_device = dynamic_cast<const GPUDeviceAddress *>(src_device_addr);
+  MS_EXCEPTION_IF_NULL(src_gpu_device);
+  auto src_size = src_gpu_device->GetSize();
+  auto src_ptr = src_gpu_device->GetMutablePtr();
+
+  // The input or output may be empty.
+  if ((src_size == 0) || (size_ == 0)) {
+    MS_LOG(INFO) << "No need sync, src device size: " << src_size << ", dst device size: " << size_;
+    return true;
+  }
+
+  if (src_size != size_) {
+    MS_LOG(ERROR) << "The src device size is not equal of the dst device size, src device size: " << src_size
+                  << ", dst device size: " << size_;
+    return false;
+  }
+  MS_EXCEPTION_IF_NULL(src_ptr);
+  MS_EXCEPTION_IF_NULL(ptr_);
+
+  auto &stream = GPUDeviceManager::GetInstance().default_stream();
+  MS_EXCEPTION_IF_NULL(stream);
+  if (!GPUDeviceManager::GetInstance().CopyDeviceMemToDeviceAsync(ptr_, src_ptr, size_, stream)) {
+    MS_LOG(ERROR) << "CopyDeviceMemToDeviceAsync failed";
+    return false;
+  }
+  return GPUDeviceManager::GetInstance().SyncStream(stream);
 }
 
 void GPUDeviceAddress::ClearDeviceMemory() {

@@ -181,7 +181,8 @@ void IntHandler(int, siginfo_t *, void *) {
 #endif
 }  // namespace
 
-void GraphScheduler::Clear(const ActorInfo &actor_info, const std::vector<KernelGraphPtr> &graphs) noexcept {
+void GraphScheduler::Clear(const ActorInfo &actor_info, const std::vector<KernelGraphPtr> &graphs,
+                           const std::vector<AnfNodePtr> &root_graph_parameters) noexcept {
   // Terminate the actors of actor info.
   if (actors_.count(actor_info) > 0) {
     auto actor_manager = ActorMgr::GetActorMgrRef();
@@ -201,6 +202,11 @@ void GraphScheduler::Clear(const ActorInfo &actor_info, const std::vector<Kernel
   // Clear device tensor and device tensor store.
   for (auto &graph : graphs) {
     ClearNodeInfo(graph);
+  }
+
+  // Clear the member of DeviceTensorStore.
+  for (auto &root_graph_parameter : root_graph_parameters) {
+    DeviceTensorStore::GetInstance().Remove(root_graph_parameter.get());
   }
 
   // Clear global maps of actor info.
@@ -223,6 +229,9 @@ void GraphScheduler::Clear() {
 
 void GraphScheduler::ClearActorData(const ActorSet *actor_set) {
   MS_EXCEPTION_IF_NULL(actor_set);
+
+  // Clear the member of DeviceTensorCopyStore.
+  DeviceTensorCopyStore::GetInstance().Clear();
 
   for (auto &super_kernel_actor : actor_set->super_kernel_actors_) {
     MS_EXCEPTION_IF_NULL(super_kernel_actor);
@@ -313,6 +322,20 @@ void GraphScheduler::BuildAndScheduleGlobalActor() {
 }
 
 ActorSet *GraphScheduler::Transform(const GraphCompilerInfo &graph_compiler_info) {
+  struct ScopeCleaner {
+    GraphScheduler *const scheduler_;
+    explicit ScopeCleaner(GraphScheduler *scheduler) : scheduler_(scheduler) {}
+    ~ScopeCleaner() {
+      // Local maps and vectors clear.
+      if (scheduler_ == nullptr) {
+        return;
+      }
+      scheduler_->graph_output_to_actor_.clear();
+      scheduler_->copy_actors_.clear();
+    }
+  };
+  // cppcheck-suppress unreadVariable
+  ScopeCleaner cleaner(this);
   MS_LOG(INFO) << "Graph(" << graph_compiler_info.name_ << ") transforms actor begin.";
   if (graph_compiler_info.graphs_.size() == 0) {
     MS_LOG(EXCEPTION) << "The number of graphs is zero.";
@@ -332,10 +355,6 @@ ActorSet *GraphScheduler::Transform(const GraphCompilerInfo &graph_compiler_info
     CheckActorValid(actor_set.get());
   }
   MS_LOG(INFO) << "Graph(" << graph_compiler_info.name_ << ") transforms actor end.";
-
-  // Local maps and vectors clear.
-  graph_output_to_actor_.clear();
-  copy_actors_.clear();
 
   return actor_set.get();
 }
@@ -402,6 +421,8 @@ void GraphScheduler::Run(ActorSet *const actor_set, const std::vector<DeviceCont
     std::condition_variable thread_blocker;
     const int64_t kTimeToWait = 2;
     (void)thread_blocker.wait_for(locker, std::chrono::seconds(kTimeToWait));
+    // May set exception in the wait time, need throw the exception to avoid affecting the next execution.
+    MsException::Instance().CheckException();
     MS_LOG(EXCEPTION) << op_context.error_info_;
   }
 
@@ -541,7 +562,10 @@ void GraphScheduler::CacheGraphOutputToActor(const GraphCompilerInfo &graph_comp
 void GraphScheduler::Link(ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info) {
   MS_EXCEPTION_IF_NULL(actor_set);
   std::vector<AbstractActor *> auto_monad_actors;
-  std::vector<CNodePtr> communication_nodes;
+  GroupNameToCommuNodes group_name_to_communication_nodes;
+  std::string default_group_name = "";
+  const auto &parser = graph_compiler_info.control_node_parser_;
+  MS_EXCEPTION_IF_NULL(parser);
 
   for (const auto &graph : graph_compiler_info.graphs_) {
     MS_EXCEPTION_IF_NULL(graph);
@@ -552,11 +576,19 @@ void GraphScheduler::Link(ActorSet *actor_set, const GraphCompilerInfo &graph_co
     if (graph->is_executing_sink()) {
       LinkDataArrowInSinkMode(graph, graph_compiler_info, &auto_monad_actors);
     } else {
+      // In the control flow, the communication nodes need to be guaranteed to be executed in order. The order
+      // within the kernel graph group needs to add control arrows between the communication nodes, and the order
+      // between groups is guaranteed by the control flow framework. Therefore, communication nodes need to be
+      // grouped by group name. And this is not required in non-control flow, the default unified group name is used.
+      std::vector<CNodePtr> communication_nodes;
+      const auto &group_name = (parser->IsInited() ? parser->FetchGroupNameByKernelGraph(graph) : default_group_name);
       LinkDataArrowInNonSinkMode(graph, graph_compiler_info, &auto_monad_actors, &communication_nodes);
+      group_name_to_communication_nodes[group_name].insert(group_name_to_communication_nodes[group_name].end(),
+                                                           communication_nodes.begin(), communication_nodes.end());
     }
   }
 
-  LinkGlobalControlArrow(actor_set, communication_nodes, auto_monad_actors, graph_compiler_info);
+  LinkGlobalControlArrow(actor_set, group_name_to_communication_nodes, auto_monad_actors, graph_compiler_info);
   LinkOutputResultArrowForOutputActor(actor_set->output_actor_.get(), graph_compiler_info);
 
   // The copy actors are built in the link, so need push into the actor set after link.
@@ -645,22 +677,16 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Graph
     }
   }
 
-  MS_EXCEPTION_IF_NULL(graph_compiler_info.control_node_parser_);
-  const auto &front_to_backend_parameter = graph_compiler_info.control_node_parser_->front_to_backend_parameters_;
+  const auto parser = graph_compiler_info.control_node_parser_;
+  MS_EXCEPTION_IF_NULL(parser);
 
   // Initialize the parameter in the control node, first get all the front parameters in the control node, then find
-  // the corresponding backend parameter from the map, and insert it into the host data source actor
-  const auto &control_node_parameters = graph_compiler_info.control_node_parser_->control_node_parameters();
+  // the corresponding backend parameter from the map, and insert it into the host data source actor.
+  const auto &control_node_parameters = parser->control_node_parameters();
   for (const auto &parameter : control_node_parameters) {
     if (IsPersistentDeviceTensor(parameter)) {
       continue;
     }
-
-    auto backend_iter = front_to_backend_parameter.find({parameter, 0});
-    if (backend_iter == front_to_backend_parameter.end() || backend_iter->second.empty()) {
-      MS_LOG(EXCEPTION) << "Cannot find backend node for front node:" << AnfAlgo::GetNodeDebugString(parameter);
-    }
-
     if (host_queue_ds_actor == nullptr) {
       auto actor_name = graph_compiler_info.name_ + "_HostDSActor";
       MS_LOG(INFO) << "Create host queue data source actor: " << actor_name;
@@ -674,15 +700,18 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Graph
     if (node_map.find(parameter) != node_map.end()) {
       continue;
     }
-    const auto &backend_node = backend_iter->second.begin()->first;
+    const auto &backend_parameter_with_context =
+      parser->FetchBackendParameterWithContextByFrontParameter({parameter, 0});
+    const auto &backend_node = backend_parameter_with_context.first;
+    MS_EXCEPTION_IF_NULL(backend_node);
     auto iter = find(host_queue_ds_actor->data_nodes_.begin(), host_queue_ds_actor->data_nodes_.end(), backend_node);
     if (iter != host_queue_ds_actor->data_nodes_.end()) {
       (void)node_map.emplace(parameter, iter - host_queue_ds_actor->data_nodes_.begin());
     } else {
       (void)node_map.emplace(parameter, host_queue_ds_actor->data_nodes_.size());
-      (void)node_map.emplace(backend_iter->second.begin()->first, host_queue_ds_actor->data_nodes_.size());
-      (void)host_queue_ds_actor->data_nodes_.emplace_back(backend_iter->second.begin()->first);
-      (void)host_queue_ds_actor->device_contexts_.emplace_back(backend_iter->second.begin()->second);
+      (void)node_map.emplace(backend_node, host_queue_ds_actor->data_nodes_.size());
+      (void)host_queue_ds_actor->data_nodes_.emplace_back(backend_node);
+      (void)host_queue_ds_actor->device_contexts_.emplace_back(backend_parameter_with_context.second);
     }
   }
 
@@ -737,8 +766,11 @@ std::vector<KernelActorPtr> GraphScheduler::BuildKernelActor(const GraphCompiler
     for (auto &kernel : execution_order) {
       MS_EXCEPTION_IF_NULL(kernel);
       if (IsKernelActor(kernel, graph_compiler_info.strategy_) && (!IsSkippedKernelActor(kernel))) {
-        auto kernel_actor = std::make_shared<KernelActor>(kernel->fullname_with_scope(), kernel, device_context,
-                                                          memory_manager_aid_, debug_aid_, recorder_aid_, strategy);
+        auto ref_input_indexes = FetchModifiableRefInputIndex(kernel);
+        auto ref_output_indexes = FetchModifiableRefOutputIndex(kernel, graph);
+        auto kernel_actor =
+          std::make_shared<KernelActor>(kernel->fullname_with_scope(), kernel, device_context, memory_manager_aid_,
+                                        debug_aid_, recorder_aid_, strategy, ref_input_indexes, ref_output_indexes);
         MS_EXCEPTION_IF_NULL(kernel_actor);
         InsertActor(kernel_actor.get());
         (void)kernel_actors.emplace_back(kernel_actor);
@@ -1399,13 +1431,15 @@ void GraphScheduler::LinkControlArrowBySendRecvNodes(const KernelGraphPtr &graph
   }
 }
 
-void GraphScheduler::LinkGlobalControlArrow(ActorSet *const actor_set, const std::vector<CNodePtr> &communication_nodes,
+void GraphScheduler::LinkGlobalControlArrow(ActorSet *const actor_set,
+                                            const GroupNameToCommuNodes &communication_node_groups,
                                             const std::vector<AbstractActor *> &auto_monad_actors,
                                             const GraphCompilerInfo &graph_compiler_info) {
   MS_EXCEPTION_IF_NULL(actor_set);
-
-  // Link the control arrows by the communication nodes to ensure communication nodes running order.
-  LinkControlArrowByCommunicationNode(communication_nodes, graph_compiler_info);
+  for (const auto &communication_nodes : communication_node_groups) {
+    // Link the control arrows by the communication nodes to ensure communication nodes running order.
+    LinkControlArrowByCommunicationNode(communication_nodes.second, graph_compiler_info);
+  }
 
   // Auto monad actor may modify the device tensor store.
   LinkDeviceTensorStoreForAutoMonadActor(auto_monad_actors);
@@ -1859,10 +1893,12 @@ void GraphScheduler::CheckActorValid(const ActorSet *actor_set) const {
                       << output_actor->outputs_num_ << ", the input data arrows num: " << output_actor->input_datas_num_
                       << ", the device tensor store num: " << output_actor->device_tensor_store_keys_.size();
   }
+  control_node_scheduler_.CheckActorValid(actor_set);
 }
 
 void GraphScheduler::PersistDeviceTensor(const GraphCompilerInfo &graph_compiler_info) {
   const auto &parser = graph_compiler_info.control_node_parser_;
+  MS_EXCEPTION_IF_NULL(parser);
   for (size_t i = 0; i < graph_compiler_info.graphs_.size(); ++i) {
     const auto &graph = graph_compiler_info.graphs_[i];
     const auto &device_context = graph_compiler_info.device_contexts_[i];
@@ -1890,8 +1926,7 @@ void GraphScheduler::PersistDeviceTensor(const GraphCompilerInfo &graph_compiler
       } else if (IsPersistentDeviceTensor(input_node)) {
         front_node = FetchFrontNodeByBackendNode(input_node, graph);
       }
-      if (front_node == nullptr || (!IsPersistentDeviceTensor(front_node)) ||
-          (parser != nullptr && parser->IsInited() && (!parser->IsRootGraphParameter(front_node)))) {
+      if (front_node == nullptr || (!parser->IsRootGraphPersistentDeviceTensor(front_node))) {
         continue;
       }
 
@@ -1919,38 +1954,51 @@ void GraphScheduler::PersistDeviceTensor(const GraphCompilerInfo &graph_compiler
       }
     }
   }
-  PersistDeviceTensorForControlNode(graph_compiler_info);
+  PersistDeviceTensorForRootGraphControlNode(graph_compiler_info);
 }
 
-void GraphScheduler::PersistDeviceTensorForControlNode(const GraphCompilerInfo &graph_compiler_info) {
+void GraphScheduler::PersistDeviceTensorForRootGraphControlNode(const GraphCompilerInfo &graph_compiler_info) {
   const auto &parser = graph_compiler_info.control_node_parser_;
   if (parser == nullptr || (!parser->IsInited())) {
     return;
   }
 
-  const auto &control_node_parameters = parser->control_node_parameters();
-  for (size_t i = 0; i < control_node_parameters.size(); ++i) {
-    const auto &input_node = control_node_parameters[i];
-    MS_EXCEPTION_IF_NULL(input_node);
-    if ((!IsPersistentDeviceTensor(input_node)) || (!parser->IsRootGraphParameter(input_node))) {
+  for (auto &root_graph_parameter : graph_compiler_info.origin_parameters_order_) {
+    MS_EXCEPTION_IF_NULL(root_graph_parameter);
+    if (!IsPersistentDeviceTensor(root_graph_parameter)) {
       continue;
     }
-    const auto &front_to_backend_parameters = parser->front_to_backend_parameters();
-    const auto &iter = front_to_backend_parameters.find({input_node, 0});
-    if (iter == front_to_backend_parameters.end() || iter->second.empty()) {
-      MS_LOG(EXCEPTION) << "Cannot find backend node for weight parameter:" << input_node->DebugString();
+    // The device tensor store has been done in the backend kernel graph corresponding to the root graph.
+    if (!DeviceTensorStore::GetInstance().Fetch(root_graph_parameter.get()).empty()) {
+      continue;
     }
-    const auto &node_with_context = iter->second.begin();
-    const auto &backend_node = node_with_context->first;
-    const auto &device_context = node_with_context->second;
+
+    // The different root graph parameters may correspond to parameter of same sub kernel graph when call the same sub
+    // graph using the different root graph parameters. So can not use the device tensor of sub kernel graph parameter
+    // directly and choose the first backend parameter in sub kernel graphs to create new device tensor to make sure
+    // that the device tensor of root graph parameters are different.
+    const auto &backend_parameter_with_context =
+      parser->FetchBackendParameterWithContextByFrontParameter({root_graph_parameter, 0});
+    if (backend_parameter_with_context.first == nullptr) {
+      MS_LOG(EXCEPTION) << "Cannot find backend node for weight parameter:" << root_graph_parameter->DebugString();
+    }
+    const auto &backend_node = backend_parameter_with_context.first;
+    const auto &device_context = backend_parameter_with_context.second;
     MS_EXCEPTION_IF_NULL(backend_node);
     MS_EXCEPTION_IF_NULL(device_context);
-    if (!DeviceTensorStore::GetInstance().Fetch(input_node.get()).empty()) {
-      continue;
-    }
-    auto device_tensor = AnfAlgo::GetMutableOutputAddr(backend_node, 0, false);
-    MS_EXCEPTION_IF_NULL(device_tensor);
-    AddDeviceTensorStore(input_node.get(), device_tensor);
+    auto sub_device_tensor = AnfAlgo::GetMutableOutputAddr(backend_node, 0, false);
+    MS_EXCEPTION_IF_NULL(sub_device_tensor);
+
+    auto new_device_tensor = device_context->CreateDeviceAddress(
+      nullptr, sub_device_tensor->GetSize(), sub_device_tensor->format(), sub_device_tensor->type_id());
+    MS_EXCEPTION_IF_NULL(new_device_tensor);
+    new_device_tensor->SetNodeIndex(backend_node, 0);
+    new_device_tensor->set_is_ptr_persisted(sub_device_tensor->is_ptr_persisted());
+    new_device_tensor->set_from_persistent_mem(true);
+    AddDeviceTensorStore(root_graph_parameter.get(), new_device_tensor);
+    MS_LOG(INFO) << "Add device tensor store by root graph parameter:" << root_graph_parameter->fullname_with_scope()
+                 << ", backend node:" << backend_node->DebugString()
+                 << ", type:" << device_context->GetDeviceAddressType();
   }
 }
 

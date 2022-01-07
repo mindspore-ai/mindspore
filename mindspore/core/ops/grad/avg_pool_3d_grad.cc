@@ -62,8 +62,9 @@ TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBaseP
 
 AbstractBasePtr AvgPool3DGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
-                                                    InferShape(primitive, input_args)->shape());
+  auto res = std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
+                                                        InferShape(primitive, input_args)->shape());
+  return res;
 }
 
 REGISTER_PRIMITIVE_EVAL_IMPL(AvgPool3DGrad, prim::kPrimAvgPool3DGrad, AvgPool3DGradInfer, nullptr, true);

@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,17 +33,21 @@
 namespace mindspore {
 class SymbolicKeyInstance : public Value {
  public:
-  SymbolicKeyInstance(const AnfNodePtr &node, const abstract::AbstractBasePtr &abstract)
-      : node_(node), abstract_(abstract) {}
+  SymbolicKeyInstance(const AnfNodePtr &node, const abstract::AbstractBasePtr &abstract, const int64_t index = -1)
+      : node_(node), abstract_(abstract), index_(index) {}
   ~SymbolicKeyInstance() override = default;
   MS_DECLARE_PARENT(SymbolicKeyInstance, Value);
   AnfNodePtr node() const { return node_; }
   abstract::AbstractBasePtr abstract() const { return abstract_; }
   bool operator==(const SymbolicKeyInstance &other) const {
-    return (*node_ == *other.node_) && (*abstract_ == *other.abstract_);
+    return (*node_ == *other.node_) && (*abstract_ == *other.abstract_) && (index_ == other.index_);
   }
 
-  std::size_t hash() const override { return std::hash<AnfNodePtr>{}(node_); }
+  std::size_t hash() const override {
+    auto hash_value = hash_combine(std::hash<AnfNodePtr>{}(node_), std::hash<int64_t>{}(index_));
+    return hash_value;
+  }
+
   friend std::ostream &operator<<(std::ostream &os, const std::shared_ptr<SymbolicKeyInstance> &inst) {
     if (inst == nullptr) {
       os << "[Key]["
@@ -55,8 +59,17 @@ class SymbolicKeyInstance : public Value {
     return os;
   }
   std::string ToString() const override {
-    return node_ == nullptr ? "Invalid node" : "[Key][" + node_->type_name() + "]" + node_->ToString();
+    std::ostringstream oss;
+    if (node_ == nullptr) {
+      return "Invalid node";
+    }
+    oss << "[Key][" << node_->type_name() + "]" << node_->ToString();
+    if (index_ != -1) {
+      oss << "[" << index_ << "]";
+    }
+    return oss.str();
   }
+
   bool operator==(const Value &other) const override {
     if (other.isa<SymbolicKeyInstance>()) {
       auto other_ = static_cast<const SymbolicKeyInstance &>(other);
@@ -73,6 +86,10 @@ class SymbolicKeyInstance : public Value {
  private:
   AnfNodePtr node_;
   abstract::AbstractBasePtr abstract_;
+  // If the Value in EnvironGet/EnvironSet of one SymbolicKey is Tuple, that SymbolicKey will be split
+  // to multiple SymbolicKey, this index is used to discriminate those SymbolicKey derived from the same
+  // one.
+  int64_t index_{-1};
 };
 
 using SymbolicKeyInstancePtr = std::shared_ptr<SymbolicKeyInstance>;
@@ -95,7 +112,7 @@ struct SymbolicKeyInstanceEqual {
     MS_EXCEPTION_IF_NULL(rhs->node());
     MS_EXCEPTION_IF_NULL(lhs->abstract());
     MS_EXCEPTION_IF_NULL(rhs->abstract());
-    return (*lhs->node() == *rhs->node()) && (*lhs->abstract() == *rhs->abstract());
+    return *lhs == *rhs;
   }
 };
 

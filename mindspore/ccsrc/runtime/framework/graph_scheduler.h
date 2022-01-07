@@ -56,7 +56,8 @@ class GraphScheduler {
 
   // Clear the members.
   void Clear();
-  void Clear(const ActorInfo &actor_info, const std::vector<KernelGraphPtr> &graphs) noexcept;
+  void Clear(const ActorInfo &actor_info, const std::vector<KernelGraphPtr> &graphs,
+             const std::vector<AnfNodePtr> &root_graph_parameters) noexcept;
   // The control flow actors will generate some data in the loop body execution, so need clear on the end of execution.
   void ClearActorData(const ActorSet *actor_set);
 
@@ -150,7 +151,7 @@ class GraphScheduler {
   void LinkControlArrowBySendRecvNodes(const KernelGraphPtr &graph);
 
   // The gather of linking the global control arrows, it will call following functions:
-  void LinkGlobalControlArrow(ActorSet *const actor_set, const std::vector<CNodePtr> &communication_nodes,
+  void LinkGlobalControlArrow(ActorSet *const actor_set, const GroupNameToCommuNodes &communication_node_groups,
                               const std::vector<AbstractActor *> &auto_monad_actors,
                               const GraphCompilerInfo &graph_compiler_info);
   void LinkControlArrowForCustomActor(ActorSet *const actor_set, const GraphCompilerInfo &graph_compiler_info);
@@ -179,7 +180,8 @@ class GraphScheduler {
 
   // Persist device tensors of graph's some nodes(such as weights and value nodes).
   void PersistDeviceTensor(const GraphCompilerInfo &graph_compiler_info);
-  void PersistDeviceTensorForControlNode(const GraphCompilerInfo &graph_compiler_info);
+  // When the parameters of root graph are not in backend kernel graphs, need persist device tensor by this function.
+  void PersistDeviceTensorForRootGraphControlNode(const GraphCompilerInfo &graph_compiler_info);
 
   // Display the actor information of corresponding kernel graph.
   void DumpActor(const ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info) const;

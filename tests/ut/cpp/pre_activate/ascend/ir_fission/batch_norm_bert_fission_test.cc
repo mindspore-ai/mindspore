@@ -44,9 +44,7 @@ TEST_F(TestHWBatchNormBertFission, test_fused_batch_norm_fission) {
   EXPECT_NE(ret, nullptr);
   auto make_tuple0 = ret->input(1);
   EXPECT_NE(make_tuple0, nullptr);
-  auto tuple_getitem0 = make_tuple0->cast<CNodePtr>()->input(1);
-  EXPECT_NE(tuple_getitem0, nullptr);
-  auto make_tuple1 = tuple_getitem0->cast<CNodePtr>()->input(1);
+  auto make_tuple1 = make_tuple0->cast<CNodePtr>()->input(1);
   EXPECT_NE(make_tuple1, nullptr);
   auto tuple_getitem1 = make_tuple1->cast<CNodePtr>()->input(1);
   EXPECT_NE(tuple_getitem1, nullptr);

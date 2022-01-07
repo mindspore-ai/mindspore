@@ -118,10 +118,11 @@ TypePtr StridedSliceGradInferType(const PrimitivePtr &primitive, const std::vect
 AbstractBasePtr StridedSliceGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                       const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t input_num = 5;
+  constexpr int64_t input_num = 5;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
-  return abstract::MakeAbstract(StridedSliceGradInferShape(primitive, input_args),
-                                StridedSliceGradInferType(primitive, input_args));
+  auto res = abstract::MakeAbstract(StridedSliceGradInferShape(primitive, input_args),
+                                    StridedSliceGradInferType(primitive, input_args));
+  return res;
 }
 
 void StridedSliceGrad::set_begin_mask(int64_t begin_mask) {

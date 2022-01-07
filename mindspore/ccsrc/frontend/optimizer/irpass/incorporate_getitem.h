@@ -1070,7 +1070,7 @@ class IncorporateGetitemSet : public OptimizerCaller {
   ~IncorporateGetitemSet() = default;
 
   AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) override {
-    static bool enable_closure = common::GetEnv("MS_DEV_ENABLE_CLOSURE") == "1";
+    static bool enable_closure = common::GetEnv("MS_DEV_ENABLE_CLOSURE") != "0";
     if (enable_closure) {
       return nullptr;
     }

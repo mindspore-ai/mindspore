@@ -53,11 +53,10 @@ class CustomActor : public AbstractActor {
   }
   ~CustomActor() override = default;
 
-  void Init() override;
-
   const AnfNodeWeakPtr &kernel() const { return kernel_; }
 
  protected:
+  void Init() override;
   void Run(OpContext<DeviceTensor> *const context) override;
 
  private:

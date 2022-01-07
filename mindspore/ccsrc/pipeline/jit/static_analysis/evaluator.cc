@@ -396,17 +396,16 @@ EvalResultPtr Evaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args
     MS_LOG(DEBUG) << "[" << this << "/" << evaluator_name
                   << "] cache hit. result: " << eval_result->abstract()->ToString() << ", args: " << args_spec_list;
     // Update inputs sequence nodes info, if matched in cache.
-    static const auto eliminate_unused_element = common::GetEnv("MS_DEV_ELIMINATE_SEQUENCE_UNUSED_ELEMENT");
-    static const auto enable_eliminate_unused_element = (eliminate_unused_element == "1");
+    static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
     if (enable_eliminate_unused_element) {
       for (size_t i = 0; i < args_spec_list.size(); ++i) {
-        auto new_sequence = dyn_cast<AbstractTuple>(args_spec_list[i]);
-        auto old_sequence = dyn_cast<AbstractTuple>(iter->first[i]);
+        auto new_sequence = dyn_cast<AbstractSequence>(args_spec_list[i]);
+        auto old_sequence = dyn_cast<AbstractSequence>(iter->first[i]);
         if (old_sequence != nullptr && new_sequence != nullptr) {
           MS_LOG(DEBUG) << "Before synchronize sequence nodes use flags for NodeConfig: " << out_conf->ToString()
                         << ", old_sequence: " << old_sequence->ToString()
                         << ", new_sequence: " << new_sequence->ToString();
-          SynchronizeSequenceNodesElementsUseFlags(old_sequence->sequence_nodes(), new_sequence->sequence_nodes());
+          SynchronizeSequenceElementsUseFlagsRecursively(old_sequence, new_sequence);
           MS_LOG(DEBUG) << "After synchronize sequence nodes use flags for NodeConfig: " << out_conf->ToString()
                         << ", old_sequence: " << old_sequence->ToString()
                         << ", new_sequence: " << new_sequence->ToString();
@@ -514,6 +513,8 @@ EvalResultPtr JEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &arg
   // Call the original evaluator, get the result: y = f(x)
   EvalResultPtr result = evaluator_->Run(engine, args_conf_list, nullptr);
   MS_EXCEPTION_IF_NULL(result);
+  // If the primal func graph's output is sequence, set its elements use flags all true.
+  SetSequenceElementsUseFlagsRecursively(result->abstract(), true);
   // Build a virtual function: bprop_f which use sense of y as input, return sense of function free variable and input
   // parameters. (sense_f, sense_x, ...)(*bpro_f) (sense_y)
   AbstractBasePtrList bparams;
@@ -569,9 +570,16 @@ EvalResultPtr VirtualEvaluator::Eval(AnalysisEnginePtr, const AbstractBasePtrLis
     MS_LOG(EXCEPTION) << "Arguments mismatch, parameters no: " << args_spec_list_.size()
                       << ", arguments no: " << args_spec_list.size();
   }
+  static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
   // Check each parameter and argument match;
   for (std::size_t i = 0; i < args_spec_list.size(); i++) {
     MS_EXCEPTION_IF_NULL(args_spec_list[i]);
+    // For VirtualAbstractClosure, likely J's bprop, we just set its tuple arguments as used before really grad.
+    if (enable_eliminate_unused_element && args_spec_list[i]->isa<abstract::AbstractSequence>()) {
+      MS_LOG(INFO) << "Notice: For VirtualAbstractClosure, update all use flags as true for arguments[" << i
+                   << "]: " << args_spec_list[i]->ToString();
+      SetSequenceElementsUseFlagsRecursively(args_spec_list[i], true);
+    }
     (void)args_spec_list[i]->Join(args_spec_list_[i]);
   }
   return std::make_shared<EvalResult>(output_, std::make_shared<AttrValueMap>());

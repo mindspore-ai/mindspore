@@ -91,9 +91,9 @@ using OptPassGroupMap = std::vector<std::pair<std::string, OptPassConfig>>;
 
 class Optimizer : public std::enable_shared_from_this<Optimizer> {
  public:
-  Optimizer(const std::string &name, const pipeline::ResourceBasePtr &resource_ptr, bool traverse_nodes_first = true)
+  Optimizer(const std::string &name, const pipeline::ResourceBasePtr &resource, bool traverse_nodes_first = true)
       : name_(name),
-        resource_(resource_ptr),
+        resource_(resource),
         run_only_once_(false),
         is_watch_renormalize_(false),
         is_enable_(true),
@@ -131,10 +131,10 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
     }
   }
 
-  static std::shared_ptr<Optimizer> MakeOptimizer(const std::string &name, const pipeline::ResourceBasePtr resource_ptr,
+  static std::shared_ptr<Optimizer> MakeOptimizer(const std::string &name, const pipeline::ResourceBasePtr resource,
                                                   const OptPassGroupMap &passes, bool run_only_once = false,
                                                   bool watch_renormalize = false, bool traverse_nodes_first = true) {
-    OptimizerPtr optimizer = std::make_shared<Optimizer>(name, resource_ptr, traverse_nodes_first);
+    OptimizerPtr optimizer = std::make_shared<Optimizer>(name, resource, traverse_nodes_first);
     optimizer->Init(passes, run_only_once);
     if (watch_renormalize) {
       optimizer->enable_watch_renormalize();
@@ -142,8 +142,8 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
     return optimizer;
   }
 
-  static std::shared_ptr<Optimizer> MakeEmptyOptimizer(const pipeline::ResourceBasePtr resource_ptr) {
-    OptimizerPtr optimizer = std::make_shared<Optimizer>("empty", resource_ptr, false);
+  static std::shared_ptr<Optimizer> MakeEmptyOptimizer(const pipeline::ResourceBasePtr resource) {
+    OptimizerPtr optimizer = std::make_shared<Optimizer>("empty", resource, false);
     optimizer->Init(OptPassGroupMap{}, false);
     return optimizer;
   }
@@ -171,8 +171,8 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
               if (!changes_since_last_renorm) {
                 return;
               }
-              auto resource_ptr = std::dynamic_pointer_cast<pipeline::Resource>(resource_);
-              if (resource_ptr != nullptr) {
+              auto resource = std::dynamic_pointer_cast<pipeline::Resource>(resource_);
+              if (resource != nullptr) {
                 // StepParallel may replace the AbstractValue of the parameters of func_graph,
                 // So generate the args_spec from parameters.
                 abstract::AbstractBasePtrList maybe_new_args_spec;
@@ -181,7 +181,7 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
                     std::transform(func_graph->parameters().begin(), func_graph->parameters().end(),
                                    std::back_inserter(maybe_new_args_spec),
                                    [](AnfNodePtr param) -> AbstractBasePtr { return param->abstract(); });
-                    func_graph = pipeline::Renormalize(resource_ptr, func_graph, maybe_new_args_spec);
+                    func_graph = pipeline::Renormalize(resource, func_graph, maybe_new_args_spec);
                     clear_is_untyped_generated();
                   } else {
                     MS_LOG(INFO) << "Optimizer::step: Skipping Renormalize because is_untyped_generated_ is False.";
@@ -190,7 +190,7 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
                   std::transform(func_graph->parameters().begin(), func_graph->parameters().end(),
                                  std::back_inserter(maybe_new_args_spec),
                                  [](AnfNodePtr param) -> AbstractBasePtr { return param->abstract(); });
-                  func_graph = pipeline::Renormalize(resource_ptr, func_graph, maybe_new_args_spec);
+                  func_graph = pipeline::Renormalize(resource, func_graph, maybe_new_args_spec);
                 }
               }
               changes_since_last_renorm = false;

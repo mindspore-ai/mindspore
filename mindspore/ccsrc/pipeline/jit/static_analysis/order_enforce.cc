@@ -36,15 +36,6 @@ class OrderEnforcer {
   ~OrderEnforcer() = default;
 
   void Run() {
-    // In order to store current value of parameter, insert TensorMove for Load:
-    // whose refkey appears more than once,
-    // or the load is input of call or partial,
-    // or the first input of load is call or partial.
-    std::vector<CNodePtr> need_insert_loads = GetNeedInsertLoads();
-    for (auto &node : need_insert_loads) {
-      InsertTensorMoveForLoad(node->cast<CNodePtr>());
-    }
-
     auto nodes = MakeTopoSortMap();
     for (auto &node : nodes) {
       if (IsPrimitiveCNode(node, prim::kPrimUpdateState)) {
@@ -54,6 +45,15 @@ class OrderEnforcer {
         // So need special treatment in order to ensure the exec_order of MakeTuple users.
         HandleMakeTupleUsers(node);
       }
+    }
+    // After ensuring the correct control edge relationship, then insert the TensorMove operator.
+    // In order to store current value of parameter, insert TensorMove for Load:
+    // whose refkey appears more than once,
+    // or the load is input of call or partial,
+    // or the first input of load is call or partial.
+    std::vector<CNodePtr> need_insert_loads = GetNeedInsertLoads();
+    for (auto &node : need_insert_loads) {
+      InsertTensorMoveForLoad(node->cast<CNodePtr>());
     }
   }
 

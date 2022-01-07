@@ -342,7 +342,9 @@ void UpdateRefCountForGraphOutput(const std::vector<KernelWithIndex> &output_wit
 }
 }  // namespace
 
-GraphCompilerInfo::~GraphCompilerInfo() { GraphScheduler::GetInstance().Clear(name_, graphs_); }
+GraphCompilerInfo::~GraphCompilerInfo() {
+  GraphScheduler::GetInstance().Clear(name_, graphs_, origin_parameters_order_);
+}
 
 GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNodePtrList &outputs,
                                     const DeviceContext *device_context) {

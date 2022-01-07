@@ -78,25 +78,6 @@ void DecreaseStackFrameDepth() {
 size_t StackFrameDepth() { return stack_frame_depth; }
 size_t StackFrameMaxDepth() { return stack_frame_max_depth; }
 
-bool IsIntermediateAbstract(const AbstractBasePtr &arg_spec) {
-  MS_EXCEPTION_IF_NULL(arg_spec);
-  if (dyn_cast<AbstractScalar>(arg_spec)) {
-    auto v = arg_spec->GetValueTrack();
-    if (v->isa<SymbolicKeyInstance>()) {
-      return true;
-    }
-  }
-  return false;
-}
-
-AbstractBasePtr IntermediateJoin(const AbstractBasePtr &arg1, const AbstractBasePtr &arg2) {
-  if (dyn_cast<AbstractScalar>(arg1) && dyn_cast<AbstractScalar>(arg2)) {
-    MS_EXCEPTION_IF_NULL(arg1);
-    return arg1->Join(arg2);
-  }
-  return nullptr;
-}
-
 AnalysisResult AnalysisEngine::Run(const FuncGraphPtr &func_graph, const AbstractBasePtrList &args_spec_list) {
   StaticAnalysisException::Instance().ClearException();
   AnalysisResult result;
@@ -151,16 +132,15 @@ void AnalysisEngine::SaveEvalResultInCache(const AnfNodeConfigPtr &conf, const E
     MS_LOG(DEBUG) << "Found previous result for NodeConfig: " << conf->ToString()
                   << ", result: " << iter->second->abstract().get() << "/" << iter->second->abstract()->ToString();
     // Update sequence nodes info, if matched in cache.
-    static const auto eliminate_unused_element = common::GetEnv("MS_DEV_ELIMINATE_SEQUENCE_UNUSED_ELEMENT");
-    static const auto enable_eliminate_unused_element = (eliminate_unused_element == "1");
+    static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
     if (enable_eliminate_unused_element) {
-      auto new_sequence = dyn_cast<AbstractTuple>(result->abstract());
-      auto old_sequence = dyn_cast<AbstractTuple>(iter->second->abstract());
+      auto new_sequence = dyn_cast<AbstractSequence>(result->abstract());
+      auto old_sequence = dyn_cast<AbstractSequence>(iter->second->abstract());
       if (old_sequence != nullptr && new_sequence != nullptr) {
         MS_LOG(DEBUG) << "Before synchronize sequence nodes use flags for NodeConfig: " << conf->ToString()
                       << ", old_sequence: " << old_sequence->ToString()
                       << ", new_sequence: " << new_sequence->ToString();
-        SynchronizeSequenceNodesElementsUseFlags(old_sequence->sequence_nodes(), new_sequence->sequence_nodes());
+        SynchronizeSequenceElementsUseFlagsRecursively(old_sequence, new_sequence);
         MS_LOG(DEBUG) << "After synchronize sequence nodes use flags for NodeConfig: " << conf->ToString()
                       << ", old_sequence: " << old_sequence->ToString()
                       << ", new_sequence: " << new_sequence->ToString();
@@ -170,21 +150,6 @@ void AnalysisEngine::SaveEvalResultInCache(const AnfNodeConfigPtr &conf, const E
   MS_LOG(DEBUG) << "Save result for NodeConfig: " << conf->ToString() << ", result: " << result->abstract().get() << "/"
                 << result->abstract()->ToString();
   cache_mgr.SetValue(conf, result);
-
-  // Set intermediate abstract value.
-  if (IsIntermediateAbstract(result->abstract())) {
-    if (conf->node()->intermediate_abstract() == nullptr) {
-      conf->node()->set_intermediate_abstract(result->abstract());
-      MS_LOG(DEBUG) << "Set intermediate abstract: " << result->abstract()->ToString();
-    } else {
-      auto old_spec = conf->node()->intermediate_abstract();
-      auto joined_spec = IntermediateJoin(result->abstract(), old_spec);
-      conf->node()->set_intermediate_abstract(joined_spec);
-      MS_LOG(DEBUG) << "Set joined intermediate abstract:\nold_spec:\t\t" << old_spec->ToString() << "\nnew_spec:\t\t"
-                    << result->abstract()->ToString() << "\njoined_spec:\t"
-                    << (joined_spec != nullptr ? joined_spec->ToString() : "nullptr");
-    }
-  }
 }
 
 EvalResultPtr AnalysisEngine::ObtainEvalResultWithCache(const AnfNodeConfigPtr &conf) {
@@ -743,9 +708,12 @@ EvalResultPtr AnalysisEngine::ProcessEvalResults(const AbstractBasePtrList &out_
 
   AbstractBasePtr last_spec = out_specs[0];
   AbstractBasePtr joined_spec = out_specs[0];
-  for (const auto &spec : out_specs) {
+  for (size_t i = 1; i < out_specs.size(); ++i) {
+    const auto &spec = out_specs[i];
     MS_EXCEPTION_IF_NULL(spec);
     try {
+      MS_LOG(DEBUG) << "Join node: " << node->DebugString() << ", " << joined_spec->ToString() << ", and "
+                    << spec->ToString();
       joined_spec = joined_spec->Join(spec);
     } catch (const py::type_error &ex) {
       auto error_info = ExtractLoggingInfo(ex.what());
@@ -849,15 +817,14 @@ AbstractBasePtr BuildAsyncAbstractRecursively(const AbstractBasePtr &orig_abs,
         new_elements.push_back(orig_elements[i]);
       }
     }
-    static const auto eliminate_unused_element = common::GetEnv("MS_DEV_ELIMINATE_SEQUENCE_UNUSED_ELEMENT");
-    static const auto enable_eliminate_unused_element = (eliminate_unused_element == "1");
+    static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
     AbstractBasePtr new_abs;
     if (orig_abs->isa<AbstractTuple>()) {
       new_abs = std::make_shared<AbstractTuple>(
-        new_elements, (enable_eliminate_unused_element ? sequence_abs->sequence_nodes() : AnfNodeWeakPtrList()));
+        new_elements, (enable_eliminate_unused_element ? sequence_abs->sequence_nodes() : nullptr));
     } else if (orig_abs->isa<AbstractList>()) {
       new_abs = std::make_shared<AbstractList>(
-        new_elements, (enable_eliminate_unused_element ? sequence_abs->sequence_nodes() : AnfNodeWeakPtrList()));
+        new_elements, (enable_eliminate_unused_element ? sequence_abs->sequence_nodes() : nullptr));
     } else {
       MS_LOG(EXCEPTION) << "FirstResult is not AbstractTuple or AbstractList, but: " << orig_abs->ToString();
     }
@@ -1086,16 +1053,18 @@ AbstractBasePtr ToAbstract(const ValuePtr &value, const AnalysisContextPtr &cont
     auto prim = value->cast<PrimitivePtr>();
     return MakeAbstractClosure(prim, anf_node);
   }
-  static const auto eliminate_unused_element = common::GetEnv("MS_DEV_ELIMINATE_SEQUENCE_UNUSED_ELEMENT");
-  static const auto enable_eliminate_unused_element = (eliminate_unused_element == "1");
+  static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
   if (enable_eliminate_unused_element && value->isa<ValueSequence>()) {
     auto abs = value->ToAbstract();
     auto sequence_abs = dyn_cast<AbstractSequence>(abs);
     MS_EXCEPTION_IF_NULL(sequence_abs);
     if (anf_node != nullptr) {
       SetSequenceNodeElementsUseFlags(anf_node, std::make_shared<std::vector<bool>>(sequence_abs->elements().size()));
-      sequence_abs->set_sequence_nodes({AnfNodeWeakPtr(anf_node)});
+      std::shared_ptr<AnfNodeWeakPtrList> sequence_nodes = std::make_shared<AnfNodeWeakPtrList>();
+      sequence_nodes->emplace_back(AnfNodeWeakPtr(anf_node));
+      sequence_abs->set_sequence_nodes(sequence_nodes);
     }
+    return abs;
   }
   return value->ToAbstract();
 }

@@ -29,6 +29,7 @@
 #include "frontend/parallel/ops_info/operator_info.h"
 #include "pipeline/jit/base.h"
 #include "debug/trace.h"
+#include "debug/anf_dump_utils.h"
 #include "utils/trace_base.h"
 #include "utils/anf_utils.h"
 
@@ -61,13 +62,13 @@ void PrintKernelFormatAndType(std::ostringstream &buffer, const std::string &fmt
 }
 
 void PrintTupleNodeUsedFlags(std::ostringstream &buffer, const abstract::AbstractSequencePtr &sequence_abs) {
-  if (sequence_abs == nullptr || sequence_abs->sequence_nodes().empty()) {
+  if (sequence_abs == nullptr || sequence_abs->sequence_nodes() == nullptr || sequence_abs->sequence_nodes()->empty()) {
     return;
   }
 
   buffer << ", sequence_nodes={";
-  for (size_t i = 0; i < sequence_abs->sequence_nodes().size(); ++i) {
-    auto node = sequence_abs->sequence_nodes()[i].lock();
+  for (size_t i = 0; i < sequence_abs->sequence_nodes()->size(); ++i) {
+    auto node = (*sequence_abs->sequence_nodes())[i].lock();
     if (node == nullptr) {
       MS_LOG(DEBUG) << "The node in sequence_nodes is free.";
       buffer << "node={<freed node>}";
@@ -75,10 +76,11 @@ void PrintTupleNodeUsedFlags(std::ostringstream &buffer, const abstract::Abstrac
       buffer << "node={" << node->DebugString();
       auto flags = GetSequenceNodeElementsUseFlags(node);
       if (flags != nullptr) {
-        buffer << ", elements_use_flags=" << (*flags) << "}";
+        buffer << ", elements_use_flags: {ptr: " << flags << ", value: " << (*flags) << "}";
       }
+      buffer << "}";
     }
-    if (i != sequence_abs->sequence_nodes().size() - 1) {
+    if (i != sequence_abs->sequence_nodes()->size() - 1) {
       buffer << ", ";
     }
   }
@@ -266,12 +268,16 @@ void DumpOperator(const AnfNodePtr &node, const std::shared_ptr<SubGraphIRInfo> 
       gsub->buffer << "call @" << fg->ToString();
     }
   } else if (op->isa<CNode>()) {
+    std::string func_str = GetNodeFuncStr(op);
     if (gsub->local_var_map.find(op) != gsub->local_var_map.end()) {
       gsub->buffer << "%" << gsub->local_var_map[op];
     } else {
       auto input = op->cast<CNodePtr>();
       auto fg = input->func_graph();
       gsub->buffer << "$(@" << fg->ToString() << ":" << input->ToString() << ")";
+    }
+    if (!func_str.empty()) {
+      gsub->buffer << "[" << func_str << "]";
     }
   } else if (op->isa<ValueNode>()) {
     auto value = GetValueNode(op);
@@ -286,6 +292,10 @@ void DumpOperator(const AnfNodePtr &node, const std::shared_ptr<SubGraphIRInfo> 
     gsub->buffer << op->ToString();
     if (op->func_graph() != nullptr && op->func_graph() != node->func_graph()) {
       gsub->buffer << ")";
+    }
+    std::string func_str = GetNodeFuncStr(op);
+    if (!func_str.empty()) {
+      gsub->buffer << "[" << func_str << "]";
     }
   }
 }

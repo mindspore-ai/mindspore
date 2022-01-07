@@ -84,3 +84,7 @@ from .resize_bilinear import _resize_bilinear_aicpu
 from .resize_bilinear_grad import _resize_bilinear_grad_aicpu
 from .scatter_elements import _scatter_elements_aicpu
 from .non_max_suppression import _non_max_suppression_aicpu
+from .environ_create import _environ_create_aicpu
+from .environ_set import _environ_set_aicpu
+from .environ_get import _environ_get_aicpu
+from .environ_destroy_all import _environ_destroy_all_aicpu

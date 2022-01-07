@@ -134,6 +134,7 @@ AbstractBasePtr InferTupleOrListGetItem(const std::string &op_name, const Abstra
   } else {
     index_unsigned_value = LongToSize(index_int64_value + SizeToLong(nelems));
   }
+  MS_LOG(DEBUG) << "GetItem use flags, index: " << index_unsigned_value << ", for " << queue->ToString();
   SetSequenceElementsUseFlags(queue, index_unsigned_value, true);
   return queue->elements()[index_unsigned_value];
 }
@@ -163,7 +164,8 @@ AbstractBasePtr InferTupleOrListSetItem(const std::string &op_name, const Abstra
   size_t index_unsigned_value = LongToSize(index_positive_value);
   constexpr int target_value_index = 2;
   elements[index_unsigned_value] = args_spec_list[target_value_index];
-  return std::make_shared<T>(elements);
+  MS_LOG(DEBUG) << "SetItem use flags, index: " << index_unsigned_value << ", for " << queue->ToString();
+  return std::make_shared<T>(elements, queue->sequence_nodes());
 }
 
 AbstractBasePtr InferImplTupleGetItem(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
@@ -295,7 +297,21 @@ AbstractBasePtr InferImplListAppend(const AnalysisEnginePtr &, const PrimitivePt
   MS_EXCEPTION_IF_NULL(item);
   auto new_list = AbstractBasePtrList(list->elements());
   new_list.emplace_back(item);
-  return std::make_shared<AbstractList>(new_list);
+  MS_LOG(DEBUG) << "ListAppend, new size: " << new_list.size() << ", for " << list->ToString();
+  static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
+  if (enable_eliminate_unused_element && list->sequence_nodes() != nullptr) {
+    for (auto &weak_node : *list->sequence_nodes()) {
+      auto node = weak_node.lock();
+      if (node == nullptr) {
+        MS_LOG(DEBUG) << "The node in sequence_nodes is free.";
+        continue;
+      }
+      // Add one element in flag list.
+      auto flags = GetSequenceNodeElementsUseFlags(node);
+      flags->emplace_back(false);
+    }
+  }
+  return std::make_shared<AbstractList>(new_list, list->sequence_nodes());
 }
 
 AbstractBasePtr InferImplTupleLen(const AnalysisEnginePtr &, const PrimitivePtr &primitive,

@@ -41,8 +41,7 @@ def test_batch_norm_bert_fission(tag):
     def before(input0, input1, input2, input3, input4):
         batch_norm = BatchNorm(input0, input1, input2, input3, input4)
         outputs = make_tuple(tuple_getitem(batch_norm, 0), tuple_getitem(batch_norm, 3), tuple_getitem(batch_norm, 4))
-        output = tuple_getitem(outputs, 0)
-        return output
+        return outputs
 
     @fns
     def after(input0, input1, input2, input3, input4):
@@ -51,7 +50,6 @@ def test_batch_norm_bert_fission(tag):
                                                    tuple_getitem(bn_training_reduce, 1), input1, input2)
         outputs = make_tuple(tuple_getitem(bn_training_update_v2, 0), tuple_getitem(bn_training_update_v2, 1),
                              tuple_getitem(bn_training_update_v2, 2))
-        output = tuple_getitem(outputs, 0)
-        return make_tuple(output)
+        return make_tuple(outputs)
 
     return fns[tag]

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ bool CNodeHasTupleInput(const CNodePtr &cnode) {
       continue;
     }
     if (IsValueNode<Primitive>(inputs[i])) {
-      // unexpected high order primitvie  as cnode input when transform graph
+      // unexpected high order primitive  as cnode input when transform graph
       MS_LOG(WARNING) << "CheckTupleInput, got unexpected primitive as input" << cnode->DebugString();
       return false;
     }
@@ -62,7 +62,10 @@ std::vector<AnfNodePtr> TransformTupleArgument(const FuncGraphPtr &fg, const Anf
   auto &elements = abs->elements();
   std::vector<AnfNodePtr> tuple_node_expanded;
   for (size_t i = 0; i < elements.size(); i++) {
-    auto elem_node = fg->NewCNode({NewValueNode(prim::kPrimTupleGetItem), node, NewValueNode(SizeToLong(i))});
+    auto idx = NewValueNode(SizeToLong(i));
+    auto abstract_scalar = std::make_shared<abstract::AbstractScalar>(std::make_shared<Int64Imm>(SizeToLong(i)));
+    idx->set_abstract(abstract_scalar);
+    auto elem_node = fg->NewCNode({NewValueNode(prim::kPrimTupleGetItem), node, idx});
     elem_node->set_abstract(elements[i]);
     if (elements[i]->isa<abstract::AbstractTuple>()) {
       auto nodes = TransformTupleArgument(fg, elem_node, elements[i]->cast<abstract::AbstractTuplePtr>());
@@ -92,7 +95,8 @@ AnfNodePtr TransformCallGraph(const FuncGraphPtr &trans_fg, const CNodePtr &cnod
     }
   }
   auto new_node = fg->NewCNode(inputs);
-  new_node->set_abstract(cnode->abstract());
+  // Because the current pass involves the operation of changing the graph,
+  // so the abstract of this new_node cannot be set here, otherwise the Renormalize() will not be called.
   return new_node;
 }
 
@@ -119,11 +123,11 @@ AnfNodePtr TransformPartial(const FuncGraphPtr &trans_fg, const CNodePtr &cnode)
   return new_node;
 }
 
-AnfNodePtr TransformSwitchCall(const AnfNodePtr &swtich_node, const CNodePtr &cnode) {
+AnfNodePtr TransformSwitchCall(const AnfNodePtr &switch_node, const CNodePtr &cnode) {
   auto &cinputs = cnode->inputs();
   auto fg = cnode->func_graph();
   std::vector<AnfNodePtr> inputs;
-  inputs.push_back(swtich_node);
+  inputs.push_back(switch_node);
   for (size_t i = 1; i < cinputs.size(); i++) {
     auto abs = cinputs[i]->abstract();
     if (abs == nullptr) {
@@ -137,7 +141,8 @@ AnfNodePtr TransformSwitchCall(const AnfNodePtr &swtich_node, const CNodePtr &cn
     }
   }
   auto new_node = fg->NewCNode(inputs);
-  new_node->set_abstract(cnode->abstract());
+  // Because the current pass involves the operation of changing the graph,
+  // so the abstract of this new_node cannot be set here, otherwise the Renormalize() will not be called.
   return new_node;
 }
 }  // namespace opt

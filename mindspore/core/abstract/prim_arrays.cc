@@ -115,7 +115,6 @@ AbstractBasePtr InferImplBroadCastShape(const AnalysisEnginePtr &, const Primiti
   (void)std::transform(res.begin(), res.end(), std::back_inserter(elems), [](int64_t n) -> AbstractBasePtr {
     return std::make_shared<AbstractScalar>(std::make_shared<Int64Imm>(n), kInt64);
   });
-
   return std::make_shared<AbstractTuple>(elems);
 }
 
@@ -136,8 +135,6 @@ AbstractBasePtr InferImplStack(const AnalysisEnginePtr &, const PrimitivePtr &pr
     arg = CheckArg<AbstractTuple>(op_name, args_spec_list, 0);
     tuple_len = arg->elements().size();
     tensor_base = CheckArg<AbstractTensor>(op_name, arg->elements(), 0);
-    // For Stack(tuple), set all used flags of tuple as true.
-    SetSequenceElementsUseFlags(args_spec_list[0], true);
   } else if (args_spec_list[0]->isa<AbstractTensor>()) {
     tuple_len = args_spec_list.size();
     tensor_base = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);

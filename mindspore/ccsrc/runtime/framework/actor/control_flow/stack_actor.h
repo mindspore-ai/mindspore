@@ -40,7 +40,6 @@ class StackActor : public ControlActor {
   StackActor(const std::string &name, const AID &memory_manager_aid, const std::vector<KernelWithIndex> &parameters);
   ~StackActor() override = default;
 
-  void Init() override;
   // The input data and partial of the stack actor needs to be pushed into the stack according to the input index,
   // so it is implemented separately.
   void RunOpData(OpData<DeviceTensor> *const input_data, OpContext<DeviceTensor> *const context) override;
@@ -48,6 +47,7 @@ class StackActor : public ControlActor {
   void RunOpControl(AID *const input_control, OpContext<DeviceTensor> *const context) override;
 
  protected:
+  void Init() override;
   void FetchInput(OpContext<DeviceTensor> *const context) override;
   bool CheckRunningCondition(const OpContext<DeviceTensor> *context) const override;
   void EraseInput(const OpContext<DeviceTensor> *const context) override;

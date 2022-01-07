@@ -145,6 +145,20 @@ def _zeros_like_io_monad(x):
     return x
 
 
+@zeros_like_leaf.register("EnvType")
+def _zeros_like_env_type(x):
+    """
+    Env Type.
+
+    Args:
+        x (EnvType): the input
+
+    Returns:
+        a EnvType created by F.environ_create.
+    """
+    return F.environ_create()
+
+
 # zeros_like is an object that will generate graph of zero_like operation for different type
 zeros_like = base.HyperMap(zeros_like_leaf)
 """`zeros_like` is an object that will generate graph of `zero_like` operation for different type."""
