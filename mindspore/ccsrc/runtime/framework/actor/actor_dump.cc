@@ -183,6 +183,26 @@ void DumpCopyActor(const CopyActor *actor, std::ofstream &ofs) {
   ofs << "\n";
 }
 
+void DumpFormalParameterDeviceTensor(const ControlActor *actor, std::ofstream &ofs) {
+  MS_EXCEPTION_IF_NULL(actor);
+  const auto &formal_parameter_device_tensors = actor->ref_formal_parameter_device_tensors();
+  if (formal_parameter_device_tensors.empty()) {
+    return;
+  }
+
+  ofs << "\t\tref_formal_parameter_device_tensors:" << formal_parameter_device_tensors.size() << "\n ";
+  for (const auto &formal_parameter_device_tensor : formal_parameter_device_tensors) {
+    for (const auto &device_tensor : formal_parameter_device_tensor.second) {
+      MS_EXCEPTION_IF_NULL(device_tensor);
+      auto ref_node = device_tensor->GetNodeIndex();
+      MS_EXCEPTION_IF_NULL(ref_node.first);
+      ofs << "\t\t\tref_position:" << formal_parameter_device_tensor.first
+          << "\tref_node_name:" << ref_node.first->fullname_with_scope()
+          << "\tref_node_debug_name:" << ref_node.first->DebugString() << "\n";
+    }
+  }
+}
+
 void DumpControlActor(const ControlActor *actor, std::ofstream &ofs) {
   MS_EXCEPTION_IF_NULL(actor);
   DumpAbstractActor(actor, ofs);
@@ -229,6 +249,8 @@ void DumpControlActor(const ControlActor *actor, std::ofstream &ofs) {
       ofs << "\t\t\tto_actor_name:" << aid.Name() << "\n";
     }
   }
+
+  DumpFormalParameterDeviceTensor(actor, ofs);
 }
 
 void DumpSwitchActor(const SwitchActor *actor, std::ofstream &ofs) {
@@ -307,6 +329,14 @@ void DumpExitActor(const ExitActor *actor, std::ofstream &ofs) {
       for (const auto &arrow : output_branch_control_arrow.second) {
         ofs << "\t\t\t\tto actor:" << arrow << "\n";
       }
+    }
+  }
+
+  const auto &is_need_copy_device_tensors = actor->is_need_copy_device_tensors();
+  if (is_need_copy_device_tensors.size() > 0) {
+    ofs << "\t\twhether_need_copy_device_tensors:" << is_need_copy_device_tensors.size() << "\n ";
+    for (size_t i = 0; i < is_need_copy_device_tensors.size(); ++i) {
+      ofs << "\t\t\tdevice_tensor_position:" << i << "\tis_need_copy:" << is_need_copy_device_tensors[i] << "\n";
     }
   }
 }
@@ -449,11 +479,11 @@ void DumpCopyActors(const std::vector<CopyActorPtr> &actors, std::ofstream &ofs)
 }
 
 void DumpControlActors(const ControlActorSetPtr &control_actor_set, std::ofstream &ofs) {
-  ofs << "\n\n[Control actors]\n";
   if (control_actor_set == nullptr) {
     return;
   }
 
+  ofs << "\n\n[Control actors]\n";
   DumpEntranceActors(control_actor_set->entrance_actors_, ofs);
   DumpSwitchActors(control_actor_set->switch_actors_, ofs);
   DumpGatherActors(control_actor_set->gather_actors_, ofs);

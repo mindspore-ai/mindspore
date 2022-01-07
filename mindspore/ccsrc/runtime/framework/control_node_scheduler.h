@@ -25,6 +25,7 @@
 #include <map>
 #include <set>
 #include <algorithm>
+#include <queue>
 #include "runtime/framework/actor/actor_set.h"
 #include "runtime/framework/graph_compiler.h"
 
@@ -106,6 +107,9 @@ class ControlNodeScheduler {
   void LinkPartialArrowForExitActor(ExitActor *const exit_actor, ControlActor *const to_actor, size_t from_index,
                                     size_t to_index, int branch_id);
   bool IsNoInputActor(const ControlActor *control_actor);
+
+  // Fill the device tensors of backend input nodes corresponding to ref formal parameters.
+  void AddFormalParameterDeviceTensor(ControlActor *const from_actor, size_t from_index, const AnfNodePtr &input_node);
 
   // The id of memory manager actor.
   AID memory_manager_aid_;

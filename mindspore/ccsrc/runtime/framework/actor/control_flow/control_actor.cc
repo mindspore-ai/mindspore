@@ -333,6 +333,54 @@ void ControlActor::EraseInput(const OpContext<DeviceTensor> *context) {
   }
 }
 
+void ControlActor::UpdateOutputData(OpData<DeviceTensor> *const output_data, const DataArrowPtr &data_arrow,
+                                    const AnfNodePtr &, OpContext<DeviceTensor> *const context) {
+  MS_EXCEPTION_IF_NULL(output_data);
+  MS_EXCEPTION_IF_NULL(data_arrow);
+  MS_EXCEPTION_IF_NULL(context);
+
+  const auto &data = output_data->data_;
+  MS_EXCEPTION_IF_NULL(data);
+  auto formal_parameter_position = data_arrow->from_output_index_;
+  // Has no the ref formal parameter.
+  if (ref_formal_parameter_device_tensors_.count(formal_parameter_position) == 0) {
+    return;
+  }
+
+  if (data->GetMutablePtr() == nullptr) {
+    std::string error_info =
+      "The address of the " + std::to_string(formal_parameter_position) + "position formal parameter is nullptr.";
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+  }
+  if (data->ref_count() != SIZE_MAX) {
+    std::string error_info = "The ref count of the " + std::to_string(formal_parameter_position) +
+                             "position formal parameter is wrong:" + std::to_string(data->ref_count());
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+  }
+
+  // Foreach the device tensors to set the ptr from data.
+  for (auto &device_tensor : ref_formal_parameter_device_tensors_[formal_parameter_position]) {
+    MS_EXCEPTION_IF_NULL(device_tensor);
+    if ((device_tensor.get() == data) || (device_tensor->GetMutablePtr() == data->GetMutablePtr())) {
+      continue;
+    }
+    auto real_parameter = device_tensor->GetNodeIndex();
+    MS_EXCEPTION_IF_NULL(real_parameter.first);
+    if ((device_tensor->GetSize() != data->GetSize()) || (device_tensor->format() != data->format()) ||
+        (device_tensor->type_id() != data->type_id())) {
+      std::string error_info =
+        "The address of the " + std::to_string(formal_parameter_position) +
+        "position formal parameter can not be set to real parameter:" + real_parameter.first->DebugString();
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+    }
+
+    device_tensor->set_ptr(data->GetMutablePtr());
+    MS_LOG(DEBUG) << "Set the ptr: " << data->GetMutablePtr()
+                  << " for the ref real parameter: " << real_parameter.first->DebugString()
+                  << " in the actor: " << GetAID().Name();
+  }
+}
+
 void ControlActor::SendOutput(OpContext<DeviceTensor> *const context) {
   // Send branch id.
   for (const auto &branch_id_arrow : output_branch_id_arrows_) {
