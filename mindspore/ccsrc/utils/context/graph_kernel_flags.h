@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -128,12 +128,12 @@ class GraphKernelFlags {
   unsigned int online_tuning{0};
 
   /**
-   * Threshold for detection of recopute's memory increment case.
+   * Threshold for detection of recopute's memory increment case, unit is byte.
    */
   int64_t recompute_increment_threshold{0};
 
   /**
-   * Threshold for detection of recopute's memory peak case.
+   * Threshold for detection of recopute's memory peak case, unit is byte.
    */
   int64_t recompute_peak_threshold{0};
 

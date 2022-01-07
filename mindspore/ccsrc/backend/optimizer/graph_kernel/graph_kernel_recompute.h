@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,28 +66,33 @@ struct Candidate {
 
 class AutoRecompute {
  public:
-  std::vector<Candidate> Run(const FuncGraphPtr &func_graph) {
-    lifetime_threshold_ = GraphKernelFlags::GetInstance().recompute_increment_threshold;
-    local_peak_threshold_ = GraphKernelFlags::GetInstance().recompute_peak_threshold;
-    FindCandidates(func_graph);
-    return candidates_;
-  }
+  AutoRecompute() = default;
+  ~AutoRecompute() = default;
+
+  std::vector<Candidate> Run(const FuncGraphPtr &func_graph);
 
  private:
+  using NodeRecomputeCandidates =
+    OrderedMap<AnfNodePtr, OrderedMap<AnfNodePtr, std::pair<EdgeLifeTimeType, AnfNodePtrList>>>;
   OutPosLinkList JudegeTargetAndCaptureSource(const AnfNodePtr &node, const FuncGraphManagerPtr &mng);
   AnfNodePtrList Filter(const AnfNodePtr &source_node, const AnfNodePtr &end_node, int edge_pos,
                         const FuncGraphManagerPtr &mng);
+  NodeRecomputeCandidates FindNodeRecomputeCandidates(const AnfNodePtr &node, const OutPosLinkList &target_graphs,
+                                                      const FuncGraphManagerPtr &mng);
   void FindCandidates(const FuncGraphPtr &func_graph);
   int GetSourceLinkOutPos(const AnfNodePtr &target, int pos);
   std::tuple<OrderedSet<AnfNodePtr>, OutPosLinkMap, MemorySize> GetValidUsers(const AnfNodePtr &node,
                                                                               const FuncGraphManagerPtr &mng);
-  MemorySize SelectThreshold(EdgeLifeTimeType type);
+  MemorySize SelectThreshold(EdgeLifeTimeType type) const;
+  bool IsThresholdDefaultValue() const;
 
   std::map<AnfNodePtr, MemorySize> topo_indice_;
   std::vector<Candidate> candidates_;
   MemorySize lifetime_threshold_{0};
   MemorySize local_peak_threshold_{0};
 
+  void RecomputeLinkEdgeLog(const AnfNodePtr &node, const OrderedSet<AnfNodePtr> &direct_users,
+                            const OutPosLinkList &target_link_infos) const;
   void RecomputeCandidatesLog(const std::vector<Candidate> &candidates) const;
 };
 
@@ -101,8 +106,9 @@ class GraphKernelRecompute : public opt::Pass {
   void Process(const Candidate &candidate);
   std::pair<FuncGraphPtr, AnfNodePtrList> CloneGraph(const CNodePtr &source_graph,
                                                      const AnfNodePtrList &recompute_edge);
-  void LinkIntoTargetFuncGraph(const Candidate &candidate, const FuncGraphPtr &cloned_func,
-                               const AnfNodePtrList &cloned_inputs);
+  void LinkIntoTargetFuncGraph(
+    const Candidate &candidate, const FuncGraphPtr &cloned_func, const AnfNodePtrList &cloned_inputs,
+    std::function<std::pair<bool, size_t>(const Candidate &, const AnfNodePtr &)> match_func);
 
   std::vector<Candidate> candidates_;
 };
