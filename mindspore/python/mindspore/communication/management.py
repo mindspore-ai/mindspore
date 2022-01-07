@@ -102,6 +102,9 @@ def init(backend_name=None):
                       or the environment variables RANK_ID/MINDSPORE_HCCL_CONFIG_PATH
                       have not been exported when backend is HCCL.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> from mindspore.communication import init
         >>> init()

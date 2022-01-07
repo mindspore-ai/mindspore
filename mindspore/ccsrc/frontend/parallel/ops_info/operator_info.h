@@ -121,6 +121,7 @@ class OperatorInfo {
   VirtualDivOp virtual_div_op() const { return virtual_div_op_; }
   Shape dev_matrix_shape() const { return dev_matrix_shape_; }
   std::vector<TensorInfo> inputs_tensor_info() const { return inputs_tensor_info_; }
+  void set_inputs_tensor_info(const std::vector<TensorInfo> &tensor_info) { inputs_tensor_info_ = tensor_info; }
   std::vector<TensorInfo> outputs_tensor_info() const { return outputs_tensor_info_; }
   std::vector<std::shared_ptr<StrategyWithCost>> strategy_cost() const { return strategy_cost_; }
   const std::string &name() const { return name_; }

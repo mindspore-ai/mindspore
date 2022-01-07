@@ -433,9 +433,6 @@ OperatorInfoPtr GetDistributeOperator(const CNodePtr &node) {
     return nullptr;
   }
   OperatorInfoPtr distribute_operator = node->user_data<OperatorInfo>();
-  if (distribute_operator == nullptr) {
-    MS_LOG(EXCEPTION) << "Distribute operator is nullptr, the prim is " << GetPrimName(node);
-  }
   return distribute_operator;
 }
 
@@ -3053,25 +3050,13 @@ void HandleForwardMakeTupleAndMakeList(const std::vector<AnfNodePtr> &all_nodes)
     MS_EXCEPTION_IF_NULL(manager);
     std::string op_type = AnfNodeIsPrimitive(node, MAKE_TUPLE) ? MAKE_TUPLE : MAKE_LIST;
 
-    auto &make_tuple_list_user = manager->node_users()[cnode];
-    if (make_tuple_list_user.size() != 1) {
-      MS_LOG(EXCEPTION) << "Now the " << op_type << "'s user must be 1, but got " << make_tuple_list_user.size();
-    }
-    CNodePtr make_tuple_list_next_cnode = make_tuple_list_user.front().first->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(make_tuple_list_next_cnode);
-
-    std::string make_tuple__list_user_prim_name = GetPrimName(make_tuple_list_next_cnode);
-    if (!IsParallelCareNode(make_tuple_list_next_cnode)) {
-      MS_LOG(INFO) << "The " << op_type << "'s user is " << make_tuple__list_user_prim_name
-                   << ", no need to set operator info";
+    // MakeTuple has multiple users, each user's TensorInfo must be same.
+    auto make_tuple_list_next_node = CheckMakeTupleSplit(node, manager);
+    if (make_tuple_list_next_node == nullptr) {
       continue;
     }
-    if (make_tuple_list_next_cnode->inputs().size() != 2) {
-      MS_LOG(EXCEPTION) << "Now the " << op_type << "'s user only support 1 input, but got "
-                        << (make_tuple_list_next_cnode->inputs().size() - 1);
-    }
-
-    MS_LOG(INFO) << "Set the " << op_type << "'s operator info, and the op name is " << make_tuple__list_user_prim_name;
+    auto make_tuple_list_next_cnode = make_tuple_list_next_node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(make_tuple_list_next_cnode);
     OperatorInfoPtr op_info = GetDistributeOperator(make_tuple_list_next_cnode);
     MS_EXCEPTION_IF_NULL(op_info);
     cnode->set_user_data<OperatorInfo>(op_info);
