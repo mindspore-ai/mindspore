@@ -35,7 +35,7 @@
 #include "ps/constants.h"
 #include "utils/shape_utils.h"
 #include "ps/ps_cache/ps_data/ps_data_prefetch.h"
-#include "ps/core/worker_node.h"
+#include "ps/core/ps_worker_node.h"
 #include "ps/embedding_table_shard_metadata.h"
 #include "proto/comm.pb.h"
 #include "proto/ps.pb.h"
@@ -135,7 +135,7 @@ class Worker {
   std::map<size_t, int64_t> key_to_optimId_;
   std::map<size_t, std::vector<ShapeVector>> key_to_optim_shapes_;
   std::map<std::string, bool> param_to_init_in_server_;
-  core::WorkerNode worker_node_;
+  core::PSWorkerNode worker_node_;
 
   EmbeddingPartitioner lookup_partitioner_;
   KVPartitioner sparse_partitioner_;

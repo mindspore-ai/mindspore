@@ -61,7 +61,7 @@
 #include "utils/log_adapter.h"
 #include "proto/comm.pb.h"
 #include "proto/ps.pb.h"
-#include "ps/core/server_node.h"
+#include "ps/core/ps_server_node.h"
 #include "ps/core/node.h"
 
 namespace mindspore {

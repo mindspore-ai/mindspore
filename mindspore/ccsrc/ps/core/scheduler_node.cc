@@ -256,6 +256,20 @@ void SchedulerNode::ProcessRegister(const std::shared_ptr<TcpServer> &server,
   MS_LOG(INFO) << "The node id:" << node_id << " is registering to scheduler.";
   client_mutex_.lock();
   if (node_manager_.IsNodeRegistered(node_id)) {
+    NodeInfo node_info = node_manager_.QueryNodeInfo(node_id);
+    if (NeedRejectRegister(node_info)) {
+      MS_LOG(WARNING) << "The node(id: " << node_id << ") is alive, register is rejected!";
+      RegisterRespMessage register_rejected_message;
+      register_rejected_message.set_node_id(node_id);
+      register_rejected_message.set_rank_id(UINT32_MAX);
+      if (!server->SendMessage(conn, meta, Protos::PROTOBUF, register_rejected_message.SerializeAsString().data(),
+                               register_rejected_message.ByteSizeLong())) {
+        MS_LOG(WARNING) << "Server response rejected message failed.";
+      }
+      client_mutex_.unlock();
+      return;
+    }
+
     MS_LOG(INFO) << "The node id is registered.";
     if (connected_nodes_.count(node_id)) {
       (void)connected_nodes_.erase(node_id);
