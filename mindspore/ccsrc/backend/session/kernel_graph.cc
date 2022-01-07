@@ -1356,6 +1356,8 @@ void KernelGraph::SetInputNodes() {
       FrontBackendlMapUpdate(input_node, params[0]);
     } else {
       if (backend_front_anf_map_.find(input_node) == backend_front_anf_map_.end()) {
+        MS_EXCEPTION_IF_NULL(input_node);
+        MS_LOG(WARNING) << "Cannot find input_node: " << input_node->DebugString() << " in backend_front_anf_map.";
         continue;
       }
       auto front_node = backend_front_anf_map_[input_node];
