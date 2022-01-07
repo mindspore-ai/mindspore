@@ -35,6 +35,7 @@ class ArithmeticOpenCLKernel : public OpenCLKernel {
   int Run() override;
   int Prepare() override;
   int CheckSpecs() override;
+  void InitGpuTensorInfoShape();
   int InitWeights() override;
   int SetConstArgs() override;
   void SetGlobalLocal() override;
@@ -45,6 +46,7 @@ class ArithmeticOpenCLKernel : public OpenCLKernel {
   float activation_max_{FLT_MAX};
   GpuTensorInfo in0_shape_;
   GpuTensorInfo in1_shape_;
+  bool in1_shape_switch_flag_{false};
   GpuTensorInfo out_shape_;
   std::vector<void *> weight_ptrs_;
   std::string kernel_name_;
