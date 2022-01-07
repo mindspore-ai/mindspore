@@ -628,6 +628,8 @@ bool AscendDeviceAddress::DumpMemToFile(const std::string &filepath, const std::
     ret = DumpJsonParser::DumpToFile(path, out_tensor->data_c(), host_size, host_shape, host_type);
   } else {
     auto host_tmp = std::vector<uint8_t>(size_);
+    BindDevice();
+    SyncStream();
     auto ret_rt_memcpy = aclrtMemcpy(host_tmp.data(), size_, ptr_, size_, ACL_MEMCPY_DEVICE_TO_HOST);
     if (ret_rt_memcpy != RT_ERROR_NONE) {
       MS_LOG(ERROR) << "SyncDeviceToHost: aclrtMemcpy mem size[" << size_ << "] fail, ret[" << ret_rt_memcpy << "]";
