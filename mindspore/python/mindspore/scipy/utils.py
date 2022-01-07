@@ -107,6 +107,8 @@ _FLOAT_TWO = _to_tensor(2.0, dtype=float)
 _BOOL_TRUE = _to_tensor(True)
 _BOOL_FALSE = _to_tensor(False)
 
+float_types = (mstype.float32, mstype.float64)
+
 
 @constexpr
 def _callable_const(x):

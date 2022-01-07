@@ -18,8 +18,8 @@ from ... import numpy as mnp
 from ...ops import functional as F
 from ..linalg import solve_triangular
 from ..linalg import cho_factor, cho_solve
-from ..utils import _INT_ZERO, _INT_NEG_ONE, _normalize_matvec, _to_tensor, _safe_normalize, _eps
-from ..utils_const import _raise_value_error
+from ..utils import _INT_ZERO, _INT_NEG_ONE, _normalize_matvec, _to_tensor, _safe_normalize, _eps, float_types
+from ..utils_const import _raise_value_error, _raise_type_error
 
 
 def gram_schmidt(Q, q):
@@ -331,6 +331,8 @@ def cg(A, b, x0=None, *, tol=1e-5, atol=0.0, maxiter=None, M=None):
     Note:
         In the future, MindSpore will report the number of iterations when convergence
         is not achieved, like SciPy. Currently it is None, as a Placeholder.
+        Input `A` must represent a hermitian, positive definite matrix. If not,
+        the output is wrong and inconsistent with scipy.
 
     Args:
         A (Union[Tensor, function]): 2D Tensor or function that calculates the linear
@@ -353,6 +355,10 @@ def cg(A, b, x0=None, *, tol=1e-5, atol=0.0, maxiter=None, M=None):
     Returns:
         - Tensor, the converged solution. Has the same structure as `b`.
         - None, placeholder for convergence information.
+
+    Raises:
+        ValueError: If `x0` and `b` don't have the same structure.
+        TypeError: If `A`, `x0` and `b` don't have the same float types(`mstype.float32` or `mstype.float64`).
 
     Supported Platforms:
         ``CPU`` ``GPU``
@@ -378,7 +384,10 @@ def cg(A, b, x0=None, *, tol=1e-5, atol=0.0, maxiter=None, M=None):
 
     if x0.shape != b.shape:
         _raise_value_error(
-            'Tensor in x0 and b must have matching shapes: {} vs {}'.format(x0.shape, b.shape))
+            'Input x0 and b must have matching shapes: {} vs {}'.format(x0.shape, b.shape))
+
+    if (F.dtype(b) not in float_types) or (F.dtype(b) != F.dtype(x0)) or (F.dtype(b) != F.dtype(A)):
+        _raise_type_error('Input A, x0 and b must have same float types')
 
     x = CG(A, M)(b, x0, tol, atol, maxiter)
     return x, None

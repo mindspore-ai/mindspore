@@ -22,6 +22,9 @@ from .ops import LU
 from .ops import LUSolver
 from .ops import EighNet
 from ..ops import operations as P
+from ..ops import functional as F
+from ..common import dtype as mstype
+from .utils import float_types
 from .utils_const import _raise_value_error
 
 __all__ = ['block_diag', 'inv', 'eigh', 'lu_factor', 'lu']
@@ -160,7 +163,8 @@ def inv(a, overwrite_a=False, check_finite=True):
     Compute the inverse of a matrix.
 
     Args:
-        a (Tensor): Square matrix to be inverted.
+        a (Tensor): Square matrix to be inverted. Note that if the input tensor is not a `float`,
+        then it will be casted to :class:`mstype.float32`.
         overwrite_a (bool, optional): Discard data in `a` (may improve performance). Default: False.
         check_finite (bool, optional): Whether to check that the input matrix contains only finite numbers.
             Disabling may give a performance gain, but may result in problems (crashes, non-termination)
@@ -191,6 +195,9 @@ def inv(a, overwrite_a=False, check_finite=True):
         [[ 1.00000000e+00,  0.00000000e+00],
          [ 8.88178420e-16,  1.00000000e+00]])
     """
+    if F.dtype(a) not in float_types:
+        a = F.cast(a, mstype.float32)
+
     matrix_inverse = P.MatrixInverse(adjoint=False)
     return matrix_inverse(a)
 
