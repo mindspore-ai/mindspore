@@ -562,11 +562,10 @@ class AscendStepTraceParser(BaseStepTraceParser):
 
     def _save_step_trace_to_result(self, ts_tracks, skip_step):
         """Save step trace data to result."""
-        step_trace = {'reduce': defaultdict(list)}
+        step_trace = {'reduce': defaultdict(list), 'start': '-'}
         for ts_track in ts_tracks:
             if ts_track['rptType'] != STEP_TRACE_RPT_TYPE:
                 continue
-            step_trace['start'] = step_trace.get('end', '-')
             self._construct_step_trace(ts_track, step_trace)
 
             if step_trace.get('end'):
