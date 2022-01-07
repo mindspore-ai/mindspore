@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,6 +58,7 @@
 #ifndef ENABLE_SECURITY
 #include "profiler/device/ascend/memory_profiling.h"
 #include "runtime/device/ascend/profiling/profiling_manager.h"
+#include "utils/anf_utils.h"
 
 using Adx::AdxRegDumpProcessCallBack;
 using mindspore::device::ascend::ProfilingManager;
@@ -718,6 +719,14 @@ bool AscendDeviceContext::MemoryCopyAsync(const CNodePtr &node, const vector<Add
     MS_LOG(ERROR) << "MemCpyAsync op aclrtMemcpyAsync failed, ret:" << status;
     return false;
   }
+  return true;
+}
+
+bool AscendDeviceContext::LaunchCustomFunc(const AnfNodePtr &kernel) const {
+  MS_EXCEPTION_IF_NULL(kernel);
+  auto custom_func = AnfUtils::GetCustomFunc(kernel);
+  BindDeviceToCurrentThread();
+  custom_func(nullptr);
   return true;
 }
 

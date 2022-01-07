@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,6 +96,7 @@ class GraphScheduler {
   std::vector<DataSourceActorPtr> BuildDataSourceActor(const GraphCompilerInfo &graph_compiler_info,
                                                        const HostTensorQueuePtr &host_queue);
   std::vector<KernelActorPtr> BuildKernelActor(const GraphCompilerInfo &graph_compiler_info);
+  std::vector<CustomActorPtr> BuildCustomActor(const GraphCompilerInfo &graph_compiler_info);
   std::vector<SuperKernelActorPtr> BuildSuperKernelActor(const GraphCompilerInfo &graph_compiler_info);
   LoopCountActorPtr BuildLoopCountActor(const GraphCompilerInfo &graph_compiler_info);
   OutputActorPtr BuildOutputActor(const GraphCompilerInfo &graph_compiler_info);
@@ -152,6 +153,7 @@ class GraphScheduler {
   void LinkGlobalControlArrow(ActorSet *const actor_set, const std::vector<CNodePtr> &communication_nodes,
                               const std::vector<AbstractActor *> &auto_monad_actors,
                               const GraphCompilerInfo &graph_compiler_info);
+  void LinkControlArrowForCustomActor(ActorSet *const actor_set, const GraphCompilerInfo &graph_compiler_info);
   // Link the control arrows by the communication nodes in the kernel graph to ensure communication nodes running order.
   void LinkControlArrowByCommunicationNode(const std::vector<CNodePtr> &communication_nodes,
                                            const GraphCompilerInfo &graph_compiler_info);

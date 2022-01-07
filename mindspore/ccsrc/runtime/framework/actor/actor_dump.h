@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@
 #include "runtime/framework/actor/super_kernel_actor.h"
 #include "runtime/framework/actor/output_actor.h"
 #include "runtime/framework/actor/copy_actor.h"
+#include "runtime/framework/actor/custom_actor.h"
 #include "runtime/framework/actor/control_flow/control_actor.h"
 #include "runtime/framework/actor/control_flow/switch_actor.h"
 #include "runtime/framework/actor/control_flow/gather_actor.h"
@@ -49,6 +50,7 @@ void DumpSuperKernelActors(const std::vector<SuperKernelActorPtr> &actors, std::
 void DumpNoInputKernelActors(const std::vector<AbstractActorPtr> &actors, std::ofstream &ofs);
 void DumpCopyActors(const std::vector<CopyActorPtr> &actors, std::ofstream &ofs);
 void DumpControlActors(const ControlActorSetPtr &control_actor_set, std::ofstream &ofs);
+void DumpCustomActors(const std::vector<CustomActorPtr> &actors, std::ofstream &ofs);
 }  // namespace runtime
 }  // namespace mindspore
 

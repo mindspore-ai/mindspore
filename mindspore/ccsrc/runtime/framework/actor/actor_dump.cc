@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -148,6 +148,13 @@ void DumpKernelActor(const KernelActor *actor, std::ofstream &ofs) {
         << "\tdynamic_ref_count:" << device_tensor->dynamic_ref_count() << "\n ";
   }
 
+  DumpAbstractActor(actor, ofs);
+  ofs << "\n";
+}
+
+void DumpCustomActor(const CustomActor *actor, std::ofstream &ofs) {
+  MS_EXCEPTION_IF_NULL(actor);
+  ofs << "\tactor_name:" << actor->GetAID().Name() << "\n";
   DumpAbstractActor(actor, ofs);
   ofs << "\n";
 }
@@ -445,6 +452,13 @@ void DumpKernelActors(const std::vector<KernelActorPtr> &actors, std::ofstream &
   ofs << "\n\n[Kernel actors:" << actors.size() << "]\n";
   for (const auto &kernel_actor : actors) {
     DumpKernelActor(kernel_actor.get(), ofs);
+  }
+}
+
+void DumpCustomActors(const std::vector<CustomActorPtr> &actors, std::ofstream &ofs) {
+  ofs << "\n\n[Custom actors:" << actors.size() << "]\n";
+  for (const auto &custom_actor : actors) {
+    DumpCustomActor(custom_actor.get(), ofs);
   }
 }
 

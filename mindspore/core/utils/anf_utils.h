@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 #ifndef MINDSPORE_CORE_UTILS_ANF_UTILS_H_
 #define MINDSPORE_CORE_UTILS_ANF_UTILS_H_
+#include <functional>
 #include <vector>
 #include <string>
 #include <utility>
@@ -25,6 +26,10 @@
 #include "ir/primitive.h"
 
 namespace mindspore {
+constexpr auto kInfer = "DS_Infer";
+constexpr auto kInit = "DS_Init";
+constexpr auto kUpdate = "DS_Update";
+
 class AbstractScope {
  public:
   explicit AbstractScope(std::recursive_mutex *mu);
@@ -40,6 +45,7 @@ class AbstractScope {
 
 class AnfUtils {
  public:
+  using CustomActorCallback = std::function<void(void *args)>;
   static bool IsDimUnknown(const abstract::ShapePtr &shape);
   static bool IsShapeDynamic(const abstract::ShapePtr &shape);
   static bool IsShapeDynamic(const std::vector<size_t> &shape);
@@ -66,6 +72,20 @@ class AnfUtils {
   // Get dump flag from CNode's primitive.
   static bool GetDumpFlag(const AnfNodePtr &node);
   static AbstractScope GetAbstractLock(const AnfNode *node);
+
+  // Custom actor node is for dynamic shape.
+  // Generate a Init custom actor node.
+  static AnfNodePtr NewInitActorNode(CustomActorCallback f, const CNodePtr &base_cnode);
+  // Generate a Infer custom actor node. If `is_fake` is set to true, this node is a fake node without any infer action.
+  static AnfNodePtr NewInferActorNode(CustomActorCallback f, const CNodePtr &base_cnode, bool is_fake);
+  // Generate a Update custom actor node. If `is_just_sync` is set to true, this node is just for a stream-sync call.
+  static AnfNodePtr NewUpdateActorNode(CustomActorCallback f, const CNodePtr &base_cnode, bool is_just_sync);
+  static bool IsCustomActorNode(const AnfNodePtr &node);
+  static std::string GetCustomActorType(const AnfNodePtr &node);
+  static std::string GetCustomActorName(const AnfNodePtr &node);
+  static bool GetCustomActorJustSyncFlag(const AnfNodePtr &node);
+  static CustomActorCallback GetCustomFunc(const AnfNodePtr &node);
+  static bool IsCutomActorNodeSame(const AnfNodePtr &node1, const AnfNodePtr &node2);
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_UTILS_ANF_UTILS_H_

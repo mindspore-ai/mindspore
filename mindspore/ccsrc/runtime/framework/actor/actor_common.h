@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,7 @@ enum class KernelTransformType {
   kDeviceDataSourceActor,
   kHostDataSourceActor,
   kKernelActor,
+  kCustomActor,
   // Super kernel actor represents the sink executing of graph which is the combination of kernels.
   kSuperKernelActor,
   kCopyActor,
