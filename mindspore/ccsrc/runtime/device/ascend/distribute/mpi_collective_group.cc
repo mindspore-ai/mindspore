@@ -88,7 +88,7 @@ bool MPICollective::CreateCommGroup(const std::string &name, const std::vector<u
             "Create mpi group failed!");
   MPI_Comm mpi_group_comm;
 
-  CHECK_RET(MPI_Comm_create(MPI_COMM_WORLD, mpi_group, &mpi_group_comm), MPI_SUCCESS, "Create mpi comm fail!");
+  CHECK_RET(MPI_Comm_create_group(MPI_COMM_WORLD, mpi_group, 0, &mpi_group_comm), MPI_SUCCESS, "Create mpi comm fail!");
 
   CHECK_RET(MPI_Bcast(&rootInfo, sizeof(rootInfo), MPI_BYTE, 0, mpi_group_comm), MPI_SUCCESS,
             "Mpi reduce_scatter failed!");

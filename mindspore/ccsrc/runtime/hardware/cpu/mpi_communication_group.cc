@@ -42,7 +42,7 @@ bool MPICommunicationGroup::Initialize(const MPI_Group &world_group) {
   std::vector<int> ranks(group_ranks_.begin(), group_ranks_.end());
   CHECK_RET(MPI_Group_incl(world_group, ranks.size(), ranks.data(), &group_), MPI_SUCCESS,
             "Creating MPI group for " + name_ + " failed.");
-  CHECK_RET(MPI_Comm_create(MPI_COMM_WORLD, group_, &group_communicator_), MPI_SUCCESS,
+  CHECK_RET(MPI_Comm_create_group(MPI_COMM_WORLD, group_, 0, &group_communicator_), MPI_SUCCESS,
             "Creating MPI group communicator for " + name_ + " failed.");
 
   CHECK_RET((group_communicator_ != MPI_COMM_NULL), true, "Failed to create MPI communicator for group " + name_);
