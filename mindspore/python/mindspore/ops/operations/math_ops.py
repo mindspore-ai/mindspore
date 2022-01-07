@@ -5436,10 +5436,15 @@ class Erfinv(Primitive):
 
 class Conj(PrimitiveWithInfer):
     """
-    Returns a Tensor that is the conjugate part of the input.
+    Returns a tensor of complex numbers that are the complex conjugate of each element in input.
+    The complex numbers in input must be of the form a + bj, where a is the real part and b is the imaginary part.
+
+    The complex conjugate returned by this operation is of the form a - bj.
+
+    If input is real, it is returned unchanged.
 
     Inputs:
-        -**input** (Tensor) - The input tensor to compute to. Must have numeric type.
+        - **input** (Tensor) - The input tensor to compute to. Must have numeric type.
 
     Outputs:
         A Tensor that is the conjugate of x (with the same type).
@@ -5468,9 +5473,10 @@ class Conj(PrimitiveWithInfer):
 class Real(PrimitiveWithInfer):
     """
     Returns a Tensor that is the real part of the input.
+    If input is real, it is returned unchanged.
 
     Inputs:
-        -**input** (Tensor) - The input tensor to compute to.
+        - **input** (Tensor) - The input tensor to compute to.
 
     Outputs:
         Tensor, the shape is the same as the input.
@@ -5531,9 +5537,10 @@ class Complex(Primitive):
 class Imag(PrimitiveWithInfer):
     """
     Returns a new tensor containing imaginary value of the input.
+    If input is real, it is returned zeros.
 
     Inputs:
-        -**input** (Tensor) - The input tensor to compute to.
+        - **input** (Tensor) - The input tensor to compute to.
 
     Outputs:
         Tensor, the shape is the same as the input.
