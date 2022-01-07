@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -86,7 +86,7 @@ class TestAutotuneWithProfiler:
         # sys.stderr.write(err)
 
         md_profiler.stop()
-        ds.config.set_enable_autotune(True)
+        ds.config.set_enable_autotune(False)
 
     @pytest.mark.skip(reason="close non-sink")
     def test_autotune_with_2_pipeline(self, capfd):
