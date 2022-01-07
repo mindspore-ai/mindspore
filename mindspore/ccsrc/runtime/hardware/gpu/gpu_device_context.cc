@@ -292,8 +292,7 @@ void GPUDeviceContext::OptimizeGraphWithDeviceInfo(const KernelGraphPtr &graph) 
   pm->AddPass(std::make_shared<opt::AddReluV2Fusion>());
   pm->AddPass(std::make_shared<opt::AddReluGradV2Fusion>());
   pm->AddPass(std::make_shared<opt::AllReduceFusion>());
-  pm->AddPass(std::make_shared<opt::AdjustDependForParallelOptimizerRecomputeAllGatherFusion>(
-    "adjust_depend_for_parallel_optimizer_recompute_all_gather_fusion"));
+  pm->AddPass(std::make_shared<opt::AdjustDependForParallelOptimizerRecomputeAllGather>());
   pm->AddPass(std::make_shared<opt::AllGatherFusion>());
   pm->AddPass(std::make_shared<opt::ConcatOutputsForAllGather>());
   pm->AddPass(std::make_shared<opt::GetitemTuple>());

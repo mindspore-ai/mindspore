@@ -26,20 +26,17 @@
 #include "ir/anf.h"
 #include "backend/optimizer/common/helper.h"
 #include "backend/optimizer/common/optimizer.h"
-#include "backend/optimizer/ascend/ascend_helper.h"
 
 namespace mindspore {
 namespace opt {
 class AdjustDependForParallelOptimizerRecomputeAllGather : public Pass {
  public:
   AdjustDependForParallelOptimizerRecomputeAllGather()
-      : Pass("adjust_depend_for_parallel_optimizer_recompute_all_gather"),
-        kernel_select_(std::make_shared<KernelSelect>()) {}
+      : Pass("adjust_depend_for_parallel_optimizer_recompute_all_gather") {}
   ~AdjustDependForParallelOptimizerRecomputeAllGather() override = default;
   bool Run(const FuncGraphPtr &graph) override;
 
  private:
-  KernelSelectPtr kernel_select_;
   bool AdjustAllgatherDepend(const FuncGraphPtr &graph,
                              const std::vector<AnfNodePtr> &parallel_optimizer_recompute_allgathers);
   void IncreaseAllgatherFusionId(const std::vector<AnfNodePtr> &parallel_optimizer_recompute_allgathers,

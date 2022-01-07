@@ -16,15 +16,7 @@
 
 #include "backend/optimizer/pass/reduce_sum_optimizer.h"
 #include <vector>
-#include "backend/optimizer/common/helper.h"
 #include "backend/session/anf_runtime_algorithm.h"
-#include "utils/utils.h"
-#include "abstract/abstract_value.h"
-#include "base/core_ops.h"
-#include "ir/anf.h"
-#include "ir/dtype.h"
-#include "ir/scalar.h"
-#include "utils/anf_utils.h"
 
 namespace mindspore {
 namespace opt {
@@ -119,7 +111,6 @@ AnfNodePtr ReduceSumOptimizer::InsertAssistNode(const CNodePtr &cnode, const Ker
 // create a new assist value node to deal with the following two case:
 // 1: the axis_input is empty, the new tensor of the new value node should be 'range(shape.size())',
 // the shape is the first input'shape of ReduceSum;
-//
 // 2: the value of axis_input contain the value less 0,
 // the new tensor of the new value node should be "shape.size() + the_old_value_less_0",
 // the shape is the first input'shape of ReduceSum;

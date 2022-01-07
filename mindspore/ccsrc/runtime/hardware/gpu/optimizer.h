@@ -21,6 +21,7 @@
 #include "backend/optimizer/common/optimizer.h"
 #include "backend/optimizer/common/pass_manager.h"
 #include "backend/optimizer/common/common_backend_optimization.h"
+#include "backend/optimizer/pass/adjust_depend_for_parallel_optimizer_recompute_all_gather.h"
 #include "backend/optimizer/gpu/adam_weight_decay_fusion.h"
 #include "backend/optimizer/gpu/adam_fusion.h"
 #include "backend/optimizer/gpu/alltoall_fusion.h"
@@ -52,7 +53,6 @@
 #include "backend/optimizer/gpu/matmul_biasadd_fusion.h"
 #include "backend/optimizer/gpu/bce_with_logits_loss_fusion.h"
 #include "backend/optimizer/gpu/insert_cast_gpu.h"
-#include "backend/optimizer/gpu/adjust_depend_for_parallel_optimizer_recompute_all_gather_fusion.h"
 #include "backend/optimizer/gpu/neighbor_exchange_v2_fusion.h"
 
 #endif  // MINDSPORE_CCSRC_RUNTIME_HARDWARE_GPU_OPTIMIZER_H_

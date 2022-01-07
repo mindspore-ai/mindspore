@@ -14,15 +14,9 @@
  * limitations under the License.
  */
 #include "backend/optimizer/ascend/mindir/bn_grad_unify_mindir.h"
-
 #include <vector>
 #include <memory>
-
-#include "utils/utils.h"
-#include "utils/ms_context.h"
-#include "backend/optimizer/common/helper.h"
 #include "backend/session/anf_runtime_algorithm.h"
-#include "utils/trace_base.h"
 
 namespace mindspore {
 namespace opt {

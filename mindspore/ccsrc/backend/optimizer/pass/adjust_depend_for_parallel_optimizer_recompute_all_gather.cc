@@ -15,7 +15,7 @@
  */
 
 #include "backend/optimizer/pass/adjust_depend_for_parallel_optimizer_recompute_all_gather.h"
-#include "utils/utils.h"
+#include <algorithm>
 #include "backend/session/anf_runtime_algorithm.h"
 
 namespace mindspore {
