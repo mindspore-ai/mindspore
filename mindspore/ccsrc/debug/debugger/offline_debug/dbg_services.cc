@@ -189,13 +189,10 @@ std::vector<watchpoint_hit_t> DbgServices::CheckWatchpoints(unsigned int iterati
   DebugServices::AsyncFilePool file_paths;
 
   const bool init_dbg_suspend = (iteration == UINT_MAX);
-  {
-    pybind11::gil_scoped_release release;
-    tensor_list = debug_services_->ReadNeededDumpedTensors(iteration, &file_paths, error_on_no_value);
-    debug_services_->CheckWatchpoints(&name, &slot, &condition, &watchpoint_id, &parameters, &error_codes, overflow_ops,
-                                      file_paths, &tensor_list, init_dbg_suspend, true, true, &rank_id, &root_graph_id,
-                                      error_on_no_value);
-  }
+  tensor_list = debug_services_->ReadNeededDumpedTensors(iteration, &file_paths, error_on_no_value);
+  debug_services_->CheckWatchpoints(&name, &slot, &condition, &watchpoint_id, &parameters, &error_codes, overflow_ops,
+                                    file_paths, &tensor_list, init_dbg_suspend, true, true, &rank_id, &root_graph_id,
+                                    error_on_no_value);
   std::vector<watchpoint_hit_t> hits;
   for (unsigned int i = 0; i < name.size(); i++) {
     std::vector<DebugServices::parameter_t> &parameter = parameters[i];

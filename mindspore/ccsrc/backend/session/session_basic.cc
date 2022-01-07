@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,6 +66,7 @@
 #include "debug/rdr/running_data_recorder.h"
 #include "debug/rdr/recorder_manager.h"
 #include "debug/rdr/graph_recorder.h"
+#include "runtime/hardware/device_context_manager.h"
 #endif
 #ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
@@ -2747,15 +2748,24 @@ void SessionBasic::DumpGraphs(const std::vector<KernelGraphPtr> &graphs) {
       DumpIRProto(graph, "vm_build_" + std::to_string(graph->graph_id()));
       DumpIR("trace_code_graph", graph, true, kWholeStack);
     }
-    if (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) != kAscendDevice) {
+    std::string device_target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+    if (device_target != kAscendDevice) {
       // Here dump data only with Ascend.
       continue;
     }
+    // If the new runtime is used, get rank_id from context via GetRankID(), else get rank_id from rank_id_.
+    uint32_t rank_id = rank_id_;
+    if (MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
+      uint32_t device_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+      const auto &device_context =
+        device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_target, device_id});
+      rank_id = device_context->GetRankID();
+    }
     std::string final_graph = "trace_code_graph_" + std::to_string(graph->graph_id());
     if (json_parser.e2e_dump_enabled() || json_parser.async_dump_enabled()) {
-      std::string root_dir = json_parser.path() + "/rank_" + std::to_string(rank_id_);
+      std::string root_dir = json_parser.path() + "/rank_" + std::to_string(rank_id);
       std::string target_dir = root_dir + "/graphs";
-      std::string cst_file_dir = GenerateDumpPath(graph->root_graph_id(), rank_id_, true);
+      std::string cst_file_dir = GenerateDumpPath(graph->root_graph_id(), rank_id, true);
       std::string ir_file_path = target_dir + "/" + "ms_output_" + final_graph + ".ir";
       DumpIRProtoWithSrcInfo(graph, final_graph, target_dir, kDebugWholeStack);
       DumpConstantInfo(graph, cst_file_dir);
