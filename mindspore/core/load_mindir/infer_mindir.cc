@@ -396,7 +396,8 @@ void MindIREngine::EvalFuncGraphAbastract(const abstract::FuncGraphAbstractClosu
   if (args != nullptr) {
     if (func_inputs.size() != args->size()) {
       MS_LOG(EXCEPTION) << func->func_graph()->ToString() << " input size:" << func_inputs.size()
-                        << " CNode:" << node->DebugString() << " input size:" << args->size();
+                        << " CNode:" << node->DebugString() << " input size:" << args->size()
+                        << " may have unsupported parameters.";
     }
     for (size_t i = 0; i < func_inputs.size(); ++i) {
       SaveNodeInferResult(func_inputs[i], (*args)[i]);
@@ -407,7 +408,8 @@ void MindIREngine::EvalFuncGraphAbastract(const abstract::FuncGraphAbstractClosu
   auto &cnode_inputs = node->inputs();
   if (func_inputs.size() != cnode_inputs.size() - 1) {
     MS_LOG(EXCEPTION) << func->func_graph()->ToString() << " input size:" << func_inputs.size()
-                      << " CNode:" << node->DebugString() << " input size:" << cnode_inputs.size();
+                      << " CNode:" << node->DebugString() << " input size:" << cnode_inputs.size()
+                      << " may have unsupported parameters.";
   }
 
   for (size_t i = 0; i < func_inputs.size(); ++i) {

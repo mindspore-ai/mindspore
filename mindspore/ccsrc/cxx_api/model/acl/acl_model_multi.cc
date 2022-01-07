@@ -93,7 +93,13 @@ Status AclModelMulti::Build() {
                          }
                          return abstract;
                        });
-  (void)InferMindir(ModelImpl::GetFuncGraph(), broaded_args);
+  try {
+    (void)InferMindir(ModelImpl::GetFuncGraph(), broaded_args);
+  } catch (const std::runtime_error &e) {
+    MS_LOG(ERROR) << "Infer mindir for sub graph failed: " << e.what();
+    return kMCFailed;
+  }
+
   // set output
   SetOutput();
   // create vm
