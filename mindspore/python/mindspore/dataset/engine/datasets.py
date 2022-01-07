@@ -1,4 +1,4 @@
-# Copyright 2019-2021 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -4310,7 +4310,7 @@ class PennTreebankDataset(SourceDataset, TextBaseDataset):
             (default=None, which means no cache is used).
 
     Examples:
-        >>> penn_treebank_dataset_dir = "path/to/penn_treebank_dataset_directory"
+        >>> penn_treebank_dataset_dir = "/path/to/penn_treebank_dataset_directory"
         >>> dataset = ds.PennTreebankDataset(dataset_dir=penn_treebank_dataset_dir, usage='all')
 
     About PennTreebank dataset:

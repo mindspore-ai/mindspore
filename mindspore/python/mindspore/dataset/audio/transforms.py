@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -194,7 +194,7 @@ class BandpassBiquad(AudioTensorOperation):
 
 class BandrejectBiquad(AudioTensorOperation):
     """
-    Design two-pole band filter for audio waveform of dimension of (..., time).
+    Design two-pole band-reject filter for audio waveform of dimension of (..., time).
 
     Args:
         sample_rate (int): sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.

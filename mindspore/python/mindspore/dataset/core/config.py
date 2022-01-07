@@ -1,4 +1,4 @@
-# Copyright 2019-2021 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -497,6 +497,8 @@ def get_enable_shared_mem():
     """
     Get the default state of shared mem enabled variable.
 
+    Note:
+        `get_enable_shared_mem` is not supported on Windows and MacOS platforms yet.
 
     Returns:
         bool, the state of shared mem enabled variable (default=True).
@@ -505,9 +507,9 @@ def get_enable_shared_mem():
         >>> # Get the flag of shared memory feature.
         >>> shared_mem_flag = ds.config.get_enable_shared_mem()
     """
-    # For windows and macos we forbid shared mem function temporarily
+    # For Windows and MacOS we forbid shared mem function temporarily
     if platform.system().lower() in {"windows", "darwin"}:
-        logger.warning("For windows and macos we forbid shared mem function temporarily.")
+        logger.warning("For Windows and MacOS we forbid shared mem function temporarily.")
         return False
     return _config.get_enable_shared_mem()
 
@@ -516,6 +518,9 @@ def set_enable_shared_mem(enable):
     """
     Set the default state of shared memory flag. If shared_mem_enable is True, will use shared memory queues
     to pass data to processes that are created for operators that set python_multiprocessing=True.
+
+    Note:
+        `set_enable_shared_mem` is not supported on Windows and MacOS platforms yet.
 
     Args:
         enable (bool): Whether to use shared memory in operators when python_multiprocessing=True.
@@ -527,12 +532,16 @@ def set_enable_shared_mem(enable):
         >>> # Enable shared memory feature to improve the performance of Python multiprocessing.
         >>> ds.config.set_enable_shared_mem(True)
     """
+    # For Windows and MacOS we forbid shared mem function temporarily
+    if platform.system().lower() in {"windows", "darwin"}:
+        logger.warning("For Windows and MacOS we forbid shared mem function temporarily.")
+        return
+
     if not isinstance(enable, bool):
         raise TypeError("enable must be of type bool.")
     if enable:
         logger.warning("The shared memory is on, multiprocessing performance will be improved. "
-                       "Note: the required shared memory can't exceeds 80% of the available shared memory. "
-                       "You can reduce max_rowsize or reduce num_parallel_workers to reduce shared memory usage.")
+                       "Note: the required shared memory can't exceeds 80% of the available shared memory.")
     _config.set_enable_shared_mem(enable)
 
 
