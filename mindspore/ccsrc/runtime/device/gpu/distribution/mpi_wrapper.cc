@@ -48,7 +48,7 @@ bool MPIWrapper::CreateCommGroup(const std::string &group_name, const std::vecto
   SetGroupNameToMPIGroup(group_name, mpi_group);
 
   MPI_Comm mpi_group_comm;
-  CHECK_RET(MPI_Comm_create(MPI_COMM_WORLD, mpi_group, &mpi_group_comm), MPI_SUCCESS,
+  CHECK_RET(MPI_Comm_create_group(MPI_COMM_WORLD, mpi_group, 0, &mpi_group_comm), MPI_SUCCESS,
             "Failed to create MPI communicator.");
   if (mpi_group_comm == MPI_COMM_NULL) {
     return false;
