@@ -223,6 +223,20 @@ int LiteModel::NodeVerify() const {
         return RET_ERROR;
       }
     }
+    if ((!IsTensorListNode(node->primitive_, schema_version_)) && (!IsPartialNode(node->primitive_, schema_version_))) {
+      if (std::any_of(node->input_indices_.begin(), node->input_indices_.end(), [this](const uint32_t &idx) {
+            return TypeId(this->all_tensors_[idx]->dataType()) == kObjectTypeTensorType;
+          })) {
+        MS_LOG(ERROR) << "node input tensor type can't be object type, node name: " << node->name_;
+        return RET_ERROR;
+      }
+      if (std::any_of(node->output_indices_.begin(), node->output_indices_.end(), [this](const uint32_t &idx) {
+            return TypeId(this->all_tensors_[idx]->dataType()) == kObjectTypeTensorType;
+          })) {
+        MS_LOG(ERROR) << "node output tensor type can't be object type, node name: " << node->name_;
+        return RET_ERROR;
+      }
+    }
   }
   return RET_OK;
 }

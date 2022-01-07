@@ -15,6 +15,7 @@
  */
 
 #include "src/common/prim_util.h"
+#include <set>
 #include "nnacl/op_base.h"
 #include "schema/model_generated.h"
 #include "src/common/log_adapter.h"
@@ -25,6 +26,17 @@
 
 namespace mindspore {
 namespace lite {
+static std::set<schema::PrimitiveType> tensor_list_ops = {
+  schema::PrimitiveType_TensorListFromTensor, schema::PrimitiveType_TensorListGetItem,
+  schema::PrimitiveType_TensorListReserve, schema::PrimitiveType_TensorListSetItem,
+  schema::PrimitiveType_TensorListStack};
+#ifdef ENABLE_V0
+static std::set<schema::v0::PrimitiveType> v0_tensor_list_ops = {
+  schema::v0::PrimitiveType_TensorListFromTensor, schema::v0::PrimitiveType_TensorListGetItem,
+  schema::v0::PrimitiveType_TensorListReserve, schema::v0::PrimitiveType_TensorListSetItem,
+  schema::v0::PrimitiveType_TensorListStack};
+#endif
+
 int GetPrimitiveType(const void *primitive, int schema_version) {
   if (primitive == nullptr) {
     return -1;
@@ -90,6 +102,25 @@ bool IsCustomNode(const void *primitive, int schema_version) {
   if (schema_version == SCHEMA_CUR) {
     return reinterpret_cast<const schema::Primitive *>(primitive)->value_type() == schema::PrimitiveType_Custom;
   }
+  return false;
+}
+
+bool IsTensorListNode(const void *primitive, int schema_version) {
+  MS_CHECK_TRUE_MSG(primitive != nullptr, false, "primtive cannot be nullptr");
+  if (schema_version == SCHEMA_CUR) {
+    if (tensor_list_ops.find(reinterpret_cast<const schema::Primitive *>(primitive)->value_type()) !=
+        tensor_list_ops.end()) {
+      return true;
+    }
+  }
+#ifdef ENABLE_V0
+  if (schema_version == SCHEMA_V0) {
+    if (v0_tensor_list_ops.find(reinterpret_cast<const schema::v0::Primitive *>(primitive)->value_type()) !=
+        v0_tensor_list_ops.end()) {
+      return true;
+    }
+  }
+#endif
   return false;
 }
 

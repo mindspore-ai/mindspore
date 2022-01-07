@@ -27,7 +27,7 @@ bool IsPartialNode(const void *primitive, int schema_version);
 bool IsCallNode(const void *node, int schema_version);
 bool IsSwitchNode(const void *node, int schema_version);
 bool IsCustomNode(const void *primitive, int schema_version);
-bool IsCastNode(const void *primitive, int schema_version);
+bool IsTensorListNode(const void *primitive, int schema_version);
 int GetPartialGraphIndex(const void *primitive, int schema_version);
 }  // namespace lite
 }  // namespace mindspore
