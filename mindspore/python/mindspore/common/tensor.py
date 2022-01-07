@@ -1375,7 +1375,7 @@ class Tensor(Tensor_):
         mask_shape = validator.infer_out_shape(self.shape, mask.shape)
         mask = tensor_operator_registry.get('broadcast_to')(mask_shape)(mask)
         validator.check_value_type('value', value, [int, float], "Tensor")
-        return tensor_operator_registry.get("_masked_fill")(self, mask, value)
+        return tensor_operator_registry.get("masked_fill")(self, mask, value)
 
     def ptp(self, axis=None, keepdims=False):
         """
