@@ -48,7 +48,7 @@ class ReduceOp:
         For more, refer to example. This needs to run in an environment with multiple graphics cards.
         The user needs to preset
         communication environment variables before running the following example, please check the details on the
-        official websit of `MindSpore \
+        official website of `MindSpore \
         <https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.ops.html#communication-operators>`_.
 
     Supported Platforms:
@@ -103,7 +103,7 @@ class AllReduce(PrimitiveWithInfer):
         The operation of AllReduce does not support "prod" currently.
         The tensors must have the same shape and format in all processes of the collection. The user needs to preset
         communication environment variables before running the following example, please check the details on the
-        official websit of `MindSpore \
+        official website of `MindSpore \
         <https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.ops.html#communication-operators>`_.
 
     Args:
@@ -181,7 +181,7 @@ class AllGather(PrimitiveWithInfer):
     Note:
         The tensors must have the same shape and format in all processes of the collection. The user needs to preset
         communication environment variables before running the following example, please check the details on the
-        official websit of `MindSpore \
+        official website of `MindSpore \
         <https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.ops.html#communication-operators>`_.
 
     Args:
@@ -384,7 +384,7 @@ class ReduceScatter(PrimitiveWithInfer):
         The back propagation of the op is not supported yet. Stay tuned for more.
         The tensors must have the same shape and format in all processes of the collection. The user needs to preset
         communication environment variables before running the following example, please check the details on the
-        official websit of `MindSpore \
+        official website of `MindSpore \
         <https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.ops.html#communication-operators>`_.
 
     Args:
@@ -517,7 +517,7 @@ class Broadcast(PrimitiveWithInfer):
     Note:
         The tensors must have the same shape and format in all processes of the collection. The user needs to preset
         communication environment variables before running the following example, please check the details on the
-        official websit of `MindSpore \
+        official website of `MindSpore \
         <https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.ops.html#communication-operators>`_.
 
     Args:
@@ -651,8 +651,12 @@ class NeighborExchange(Primitive):
     Note:
         The user needs to preset
         communication environment variables before running the following example, please check the details on the
-        official websit of `MindSpore \
+        official website of `MindSpore \
         <https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.ops.html#communication-operators>`_.
+
+        This operator requires a full-mesh network topology, each device has the same vlan id, and the ip & mask are
+        in the same subnet, please check the details on the official website of `MindSpore \
+        <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/distributed_training_ops.html#id2>`_.
 
     Args:
         send_rank_ids (list(int)): Ranks which the data is sent to.
@@ -723,8 +727,12 @@ class AlltoAll(PrimitiveWithInfer):
     Note:
         The tensors must have the same shape and format in all processes of the collection. The user needs to preset
         communication environment variables before running the following example, please check the details on the
-        official websit of `MindSpore \
+        official website of `MindSpore \
         <https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.ops.html#communication-operators>`_.
+
+        This operator requires a full-mesh network topology, each device has the same vlan id, and the ip & mask are
+        in the same subnet, please check the details on the official website of `MindSpore \
+        <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/distributed_training_ops.html#id2>`_.
 
     Args:
         split_count (int): On each process, divide blocks into split_count number.
@@ -809,8 +817,12 @@ class NeighborExchangeV2(Primitive):
     Note:
         The user needs to preset
         communication environment variables before running the following example, please check the details on the
-        official websit of `MindSpore \
+        official website of `MindSpore \
         <https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.ops.html#communication-operators>`_.
+
+        This operator requires a full-mesh network topology, each device has the same vlan id, and the ip & mask are
+        in the same subnet, please check the details on the official website of `MindSpore \
+        <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/distributed_training_ops.html#id2>`_.
 
     Args:
         send_rank_ids (list(int)): Ranks which the data is sent to. 8 rank_ids represents 8 directions, if one
