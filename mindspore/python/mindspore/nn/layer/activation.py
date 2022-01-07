@@ -544,6 +544,9 @@ class FastGelu(Cell):
         ``Ascend``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
         >>> fast_gelu = nn.FastGelu()
         >>> output = fast_gelu(x)
@@ -920,7 +923,10 @@ class HShrink(Cell):
         TypeError: If dtype of `input_x` is neither float16 nor float32.
 
     Examples:
-        >>> input_x = Tensor(np.array([[ 0.5,  1,  2.0],[0.0533,0.0776,-2.1233]]),mstype.float32)
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
+        >>> input_x = Tensor(np.array([[ 0.5,  1,  2.0],[0.0533,0.0776,-2.1233]]),mindspore.float32)
         >>> hshrink = nn.HShrink()
         >>> output = hshrink(input_x)
         >>> print(output)

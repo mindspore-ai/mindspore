@@ -8604,7 +8604,10 @@ class HShrink(Primitive):
         TypeError: If dtype of `input_x` is neither float16 nor float32.
 
     Examples:
-        >>> input_x = Tensor(np.array([[ 0.5,  1,  2.0],[0.0533,0.0776,-2.1233]]),mstype.float32)
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
+        >>> input_x = Tensor(np.array([[ 0.5,  1,  2.0],[0.0533,0.0776,-2.1233]]),mindspore.float32)
         >>> hshrink = P.HShrink()
         >>> output = hshrink(input_x)
         >>> print(output)
