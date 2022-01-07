@@ -34,7 +34,7 @@ class GatherTensorRT : public TensorRTOp {
                 const std::vector<mindspore::MSTensor> &out_tensors) override;
 
  private:
-  int axis_;
+  int axis_{0};
   mindspore::MSTensor indices_;
 };
 }  // namespace mindspore::lite

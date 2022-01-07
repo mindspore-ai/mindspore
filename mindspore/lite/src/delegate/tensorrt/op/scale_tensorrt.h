@@ -46,11 +46,11 @@ class ScaleTensorRT : public TensorRTOp {
 
   Format out_format_;
 
-  bool out_same_format_;
+  bool out_same_format_{false};
 
   nvinfer1::ScaleMode mode_;
 
-  int64_t axis_;
+  int64_t axis_{0};
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_OP_SCALE_TENSORRT_H_

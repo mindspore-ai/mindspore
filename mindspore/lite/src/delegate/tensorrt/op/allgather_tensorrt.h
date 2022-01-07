@@ -102,7 +102,7 @@ class AllGatherPlugin : public nvinfer1::IPluginV2DynamicExt {
  private:
   const std::string layer_name_;
   std::string name_space_;
-  int rank_;
+  int rank_{0};
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_OP_ALLGATHER_TENSORRT_H_

@@ -36,7 +36,7 @@ class SoftMaxTensorRT : public TensorRTOp {
  private:
   nvinfer1::ISoftMaxLayer *AddSoftMaxOp(nvinfer1::INetworkDefinition *network);
 
-  const schema::Softmax *softmax_op_;
+  const schema::Softmax *softmax_op_{nullptr};
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_OP_SOFTMAX_TENSORRT_H_

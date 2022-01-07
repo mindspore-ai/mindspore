@@ -20,10 +20,7 @@
 namespace mindspore::lite {
 int LSTMTensorRT::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                             const std::vector<mindspore::MSTensor> &out_tensors) {
-#ifndef HIGH_TRT_VERSION
-  MS_LOG(ERROR) << "low TensorRT version don't support LSTM op, please upgrade TensorRT version to 7 or higher";
-  return RET_ERROR;
-#else
+#if TRT_VERSION_GE(7, 0)
   if (!IsShapeKnown()) {
     MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
     return RET_ERROR;
@@ -39,6 +36,9 @@ int LSTMTensorRT::IsSupport(const schema::Primitive *primitive, const std::vecto
   dynamic_shape_params_.support_dynamic_ = false;
   dynamic_shape_params_.support_hw_dynamic_ = false;
   return RET_OK;
+#else
+  MS_LOG(WARNING) << "low TensorRT version don't support LSTM op, please upgrade TensorRT version to 7 or higher";
+  return RET_ERROR;
 #endif
 }
 
@@ -355,10 +355,7 @@ nvinfer1::ITensor *LSTMTensorRT::AddLSTMCalculation(const LstmState &input_state
 nvinfer1::ITensor *LSTMTensorRT::AddLSTMOneLoop(const LstmState &input_state, const LstmWeights &lstm_weights,
                                                 nvinfer1::ITensor **hidden_out, nvinfer1::ITensor **cell_out,
                                                 bool is_backward) {
-#ifndef HIGH_TRT_VERSION
-  MS_LOG(ERROR) << "low TensorRT version don't support LSTM op, please upgrade TensorRT version to 7 or higher";
-  return nullptr;
-#else
+#if TRT_VERSION_GE(7, 0)
   nvinfer1::ILoop *sequence_loop = network_->addLoop();
   if (sequence_loop == nullptr) {
     MS_LOG(ERROR) << "add sequence_loop layer failed for " << op_name_;
@@ -448,6 +445,9 @@ nvinfer1::ITensor *LSTMTensorRT::AddLSTMOneLoop(const LstmState &input_state, co
     Reshape(sequence_loop->addLoopOutput(*cell_mid->getOutput(0), nvinfer1::LoopOutput::kLAST_VALUE)->getOutput(0),
             nvinfer1::Dims3(1, 1, params_.hidden_size_));
   return Reshape(output_layer->getOutput(0), nvinfer1::Dims4(params_.sequence_size_, 1, 1, params_.hidden_size_));
+#else
+  MS_LOG(ERROR) << "low TensorRT version don't support LSTM op, please upgrade TensorRT version to 7 or higher";
+  return nullptr;
 #endif
 }
 

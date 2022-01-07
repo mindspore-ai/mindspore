@@ -17,6 +17,7 @@
 #define MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_TENSORRT_UTILS_H_
 #include <vector>
 #include <NvInfer.h>
+#include <NvInferVersion.h>
 #include <memory>
 #include <string>
 #include "src/delegate/tensorrt/op/tensorrt_op.h"
@@ -35,6 +36,8 @@
 #define kNHWC_C 3
 
 namespace mindspore::lite {
+#define TRT_VERSION_GE(major, minor) \
+  (NV_TENSORRT_MAJOR > major) || ((NV_TENSORRT_MAJOR == major && NV_TENSORRT_MINOR >= minor))
 struct ITensorHelper;
 struct ActivationParams {
   nvinfer1::ActivationType activation_type;
