@@ -29,7 +29,7 @@ static const uint32_t kCPUCoreNum = std::thread::hardware_concurrency();
 void ParameterServer::Run(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_LOG(INFO) << "PServer starts connecting to scheduler and workers...";
-  server_node_ = std::make_shared<core::ServerNode>();
+  server_node_ = std::make_shared<core::PSServerNode>();
 
   MS_LOG(INFO) << "PServer connected successfully.";
   if (!PSContext::instance()->is_server()) {

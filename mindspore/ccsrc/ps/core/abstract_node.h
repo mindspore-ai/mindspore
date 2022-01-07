@@ -150,7 +150,7 @@ class AbstractNode : public Node {
                                                        const std::shared_ptr<TaskExecutor> &task_executor);
 
  protected:
-  void Register(const std::shared_ptr<TcpClient> &client);
+  virtual void Register(const std::shared_ptr<TcpClient> &client);
   bool Heartbeat(const std::shared_ptr<TcpClient> &client);
   void FetchServers(const std::shared_ptr<TcpClient> &client);
 

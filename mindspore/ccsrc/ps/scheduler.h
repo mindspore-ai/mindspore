@@ -17,7 +17,9 @@
 #ifndef MINDSPORE_CCSRC_PS_SCHEDULER_H_
 #define MINDSPORE_CCSRC_PS_SCHEDULER_H_
 
+#include <memory>
 #include "ps/core/scheduler_node.h"
+#include "ps/core/ps_scheduler_node.h"
 #include "ps/util.h"
 #include "ps/ps_context.h"
 
@@ -33,11 +35,22 @@ class Scheduler {
   void Run();
 
  private:
-  Scheduler() = default;
+  Scheduler() {
+    if (scheduler_node_ == nullptr) {
+      bool is_fl_mode = PSContext::instance()->server_mode() == ps::kServerModeFL ||
+                        PSContext::instance()->server_mode() == ps::kServerModeHybrid;
+      if (is_fl_mode) {
+        scheduler_node_ = std::make_unique<core::SchedulerNode>();
+      } else {
+        scheduler_node_ = std::make_unique<core::PSSchedulerNode>();
+      }
+    }
+  }
+
   ~Scheduler() = default;
   Scheduler(const Scheduler &) = delete;
   Scheduler &operator=(const Scheduler &) = delete;
-  core::SchedulerNode scheduler_node_;
+  std::unique_ptr<core::SchedulerNode> scheduler_node_;
 };
 }  // namespace ps
 }  // namespace mindspore
