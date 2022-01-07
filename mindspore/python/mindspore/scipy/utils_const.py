@@ -33,3 +33,14 @@ def _raise_value_error(info):
         info(str): info string to display
     """
     raise ValueError(info)
+
+
+@constexpr
+def _raise_type_error(info):
+    """
+    Raise TypeError in both graph/pynative mode
+
+    Args:
+        info(str): info string to display
+    """
+    raise TypeError(info)
