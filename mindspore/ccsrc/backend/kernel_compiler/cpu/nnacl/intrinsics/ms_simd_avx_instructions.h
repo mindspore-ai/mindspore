@@ -76,7 +76,7 @@ static inline MS_FLOAT32X8 MS_SQRTFX8_F32(MS_FLOAT32X8 src) {
   return dst;
 }
 
-#define LOAD256X8_F32(src, input_ptr, num)                 \
+#define MS_LOAD256X8_F32(src, input_ptr, num)              \
   MS_FLOAT32X8 src##1 = MS_LD256_F32(input_ptr + 0 * num); \
   MS_FLOAT32X8 src##2 = MS_LD256_F32(input_ptr + 1 * num); \
   MS_FLOAT32X8 src##3 = MS_LD256_F32(input_ptr + 2 * num); \
@@ -86,7 +86,7 @@ static inline MS_FLOAT32X8 MS_SQRTFX8_F32(MS_FLOAT32X8 src) {
   MS_FLOAT32X8 src##7 = MS_LD256_F32(input_ptr + 6 * num); \
   MS_FLOAT32X8 src##8 = MS_LD256_F32(input_ptr + 7 * num);
 
-#define LOAD256X16_F32(src, input_ptr, num)                  \
+#define MS_LOAD256X16_F32(src, input_ptr, num)               \
   MS_FLOAT32X8 src##1 = MS_LD256_F32(input_ptr + 0 * num);   \
   MS_FLOAT32X8 src##2 = MS_LD256_F32(input_ptr + 1 * num);   \
   MS_FLOAT32X8 src##3 = MS_LD256_F32(input_ptr + 2 * num);   \
@@ -154,4 +154,35 @@ static inline MS_FLOAT32X8 MS_TANHX8_F32(MS_FLOAT32X8 src) {
   return MS_MIN256_F32(MS_MAX256_F32(MS_DIV256_F32(a, b), neg), pos);
 }
 
-#endif
+#define MS_FMADD256X8_F32(src, weight, dst)       \
+  dst##1 = MS_MLA256_F32(dst##1, src##1, weight); \
+  dst##2 = MS_MLA256_F32(dst##2, src##2, weight); \
+  dst##3 = MS_MLA256_F32(dst##3, src##3, weight); \
+  dst##4 = MS_MLA256_F32(dst##4, src##4, weight); \
+  dst##5 = MS_MLA256_F32(dst##5, src##5, weight); \
+  dst##6 = MS_MLA256_F32(dst##6, src##6, weight); \
+  dst##7 = MS_MLA256_F32(dst##7, src##7, weight); \
+  dst##8 = MS_MLA256_F32(dst##8, src##8, weight);
+
+#define MS_SET_ZERO256X8_F32(dst)            \
+  MS_FLOAT32X8 dst##1 = _mm256_setzero_ps(); \
+  MS_FLOAT32X8 dst##2 = _mm256_setzero_ps(); \
+  MS_FLOAT32X8 dst##3 = _mm256_setzero_ps(); \
+  MS_FLOAT32X8 dst##4 = _mm256_setzero_ps(); \
+  MS_FLOAT32X8 dst##5 = _mm256_setzero_ps(); \
+  MS_FLOAT32X8 dst##6 = _mm256_setzero_ps(); \
+  MS_FLOAT32X8 dst##7 = _mm256_setzero_ps(); \
+  MS_FLOAT32X8 dst##8 = _mm256_setzero_ps();
+
+#define MS_FMADD256X4_F32(src, weight, dst)       \
+  dst##1 = MS_MLA256_F32(dst##1, src##1, weight); \
+  dst##2 = MS_MLA256_F32(dst##2, src##2, weight); \
+  dst##3 = MS_MLA256_F32(dst##3, src##3, weight); \
+  dst##4 = MS_MLA256_F32(dst##4, src##4, weight);
+
+#define MS_SET_ZERO256X4_F32(dst)            \
+  MS_FLOAT32X8 dst##1 = _mm256_setzero_ps(); \
+  MS_FLOAT32X8 dst##2 = _mm256_setzero_ps(); \
+  MS_FLOAT32X8 dst##3 = _mm256_setzero_ps(); \
+  MS_FLOAT32X8 dst##4 = _mm256_setzero_ps();
+#endif  // MINDSPORE_NNACL_AVX_INTRINSICS_MS_SIMD_INSTRUCTIONS_H_

@@ -152,4 +152,51 @@ static inline MS_FLOAT32X4 MS_ERFX4_F32(MS_FLOAT32X4 src) {
   return dst;
 }
 
-#endif
+#define MS_FMADD128X8_F32(src, weight, dst)     \
+  dst##1 = MS_MLAQ_F32(src##1, weight, dst##1); \
+  dst##2 = MS_MLAQ_F32(src##2, weight, dst##2); \
+  dst##3 = MS_MLAQ_F32(src##3, weight, dst##3); \
+  dst##4 = MS_MLAQ_F32(src##4, weight, dst##4); \
+  dst##5 = MS_MLAQ_F32(src##5, weight, dst##5); \
+  dst##6 = MS_MLAQ_F32(src##6, weight, dst##6); \
+  dst##7 = MS_MLAQ_F32(src##7, weight, dst##7); \
+  dst##8 = MS_MLAQ_F32(src##8, weight, dst##8);
+
+#define MS_LOAD128X4_F32(src, input_ptr, num)            \
+  MS_FLOAT32X4 src##1 = MS_LDQ_F32(input_ptr + 0 * num); \
+  MS_FLOAT32X4 src##2 = MS_LDQ_F32(input_ptr + 1 * num); \
+  MS_FLOAT32X4 src##3 = MS_LDQ_F32(input_ptr + 2 * num); \
+  MS_FLOAT32X4 src##4 = MS_LDQ_F32(input_ptr + 3 * num);
+
+#define MS_FMADD128X4_F32(src, weight, dst)     \
+  dst##1 = MS_MLAQ_F32(src##1, weight, dst##1); \
+  dst##2 = MS_MLAQ_F32(src##2, weight, dst##2); \
+  dst##3 = MS_MLAQ_F32(src##3, weight, dst##3); \
+  dst##4 = MS_MLAQ_F32(src##4, weight, dst##4);
+
+#define MS_LOAD128X8_F32(src, input_ptr, num)            \
+  MS_FLOAT32X4 src##1 = MS_LDQ_F32(input_ptr + 0 * num); \
+  MS_FLOAT32X4 src##2 = MS_LDQ_F32(input_ptr + 1 * num); \
+  MS_FLOAT32X4 src##3 = MS_LDQ_F32(input_ptr + 2 * num); \
+  MS_FLOAT32X4 src##4 = MS_LDQ_F32(input_ptr + 3 * num); \
+  MS_FLOAT32X4 src##5 = MS_LDQ_F32(input_ptr + 4 * num); \
+  MS_FLOAT32X4 src##6 = MS_LDQ_F32(input_ptr + 5 * num); \
+  MS_FLOAT32X4 src##7 = MS_LDQ_F32(input_ptr + 6 * num); \
+  MS_FLOAT32X4 src##8 = MS_LDQ_F32(input_ptr + 7 * num);
+
+#define MS_SET_ZERO128X8_F32(dst)          \
+  MS_FLOAT32X4 dst##1 = MS_MOVQ_F32(0.0f); \
+  MS_FLOAT32X4 dst##2 = MS_MOVQ_F32(0.0f); \
+  MS_FLOAT32X4 dst##3 = MS_MOVQ_F32(0.0f); \
+  MS_FLOAT32X4 dst##4 = MS_MOVQ_F32(0.0f); \
+  MS_FLOAT32X4 dst##5 = MS_MOVQ_F32(0.0f); \
+  MS_FLOAT32X4 dst##6 = MS_MOVQ_F32(0.0f); \
+  MS_FLOAT32X4 dst##7 = MS_MOVQ_F32(0.0f); \
+  MS_FLOAT32X4 dst##8 = MS_MOVQ_F32(0.0f);
+
+#define MS_SET_ZERO128X4_F32(dst)          \
+  MS_FLOAT32X4 dst##1 = MS_MOVQ_F32(0.0f); \
+  MS_FLOAT32X4 dst##2 = MS_MOVQ_F32(0.0f); \
+  MS_FLOAT32X4 dst##3 = MS_MOVQ_F32(0.0f); \
+  MS_FLOAT32X4 dst##4 = MS_MOVQ_F32(0.0f);
+#endif  // MINDSPORE_NNACL_NEON_INTRINSICS_MS_SIMD_INSTRUCTIONS_H_

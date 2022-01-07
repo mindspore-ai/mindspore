@@ -2173,7 +2173,7 @@ void MatVecMulRowxColKernel(float *dst, const float *src, const float *weight, c
 #endif
 #endif
 
-void GemmIsNotPack(const float *a, const float *b, float *c, const float *bias, int row) {
+void GemmIsNotPack(const float *a, const float *b, float *c, const float *bias, int row, int deep) {
   int index = 0;
 #ifdef ENABLE_AVX512
   __m512 b_data16 = _mm512_set1_ps(b[0]);
@@ -2211,5 +2211,60 @@ void GemmIsNotPack(const float *a, const float *b, float *c, const float *bias, 
 
   for (; index < row; ++index) {
     c[index] = a[index] * b[0] + bias[0];
+  }
+}
+
+void GemmIsNotPackOptimize(const float *a, const float *b, float *c, const float *bias, int m, int k) {
+  // gemm dot is [m, k] * [k, 1] ==>> [m, 1]
+  int m_index = 0;
+#ifdef ENABLE_AVX512
+  // block 8
+  for (; m_index <= m - C8NUM; m_index += C8NUM) {
+    int k_index = 0;
+    MS_FLOAT32X8 dst = MS_MOV256_F32(bias[0]);
+    MS_SET_ZERO512X8_F32(dst16_)
+    for (; k_index <= k - C16NUM; k_index += C16NUM) {
+      __m512 weight = _mm512_loadu_ps(b + k_index);
+      MS_LOAD512X8_F32(src, a + m_index * k + k_index, k)
+      MS_FMADD512X8_F32(src, weight, dst16_)
+    }
+    MS_F32X8_GETI(dst, 0) += _mm512_reduce_add_ps(dst16_1);
+    MS_F32X8_GETI(dst, 1) += _mm512_reduce_add_ps(dst16_2);
+    MS_F32X8_GETI(dst, 2) += _mm512_reduce_add_ps(dst16_3);
+    MS_F32X8_GETI(dst, 3) += _mm512_reduce_add_ps(dst16_4);
+    MS_F32X8_GETI(dst, 4) += _mm512_reduce_add_ps(dst16_5);
+    MS_F32X8_GETI(dst, 5) += _mm512_reduce_add_ps(dst16_6);
+    MS_F32X8_GETI(dst, 6) += _mm512_reduce_add_ps(dst16_7);
+    MS_F32X8_GETI(dst, 7) += _mm512_reduce_add_ps(dst16_8);
+    for (; k_index < k; k_index++) {
+      MS_F32X8_GETI(dst, 0) += b[k_index] * a[m_index * k + k_index];
+      MS_F32X8_GETI(dst, 1) += b[k_index] * a[m_index * k + k_index + k];
+      MS_F32X8_GETI(dst, 2) += b[k_index] * a[m_index * k + k_index + 2 * k];
+      MS_F32X8_GETI(dst, 3) += b[k_index] * a[m_index * k + k_index + 3 * k];
+      MS_F32X8_GETI(dst, 4) += b[k_index] * a[m_index * k + k_index + 4 * k];
+      MS_F32X8_GETI(dst, 5) += b[k_index] * a[m_index * k + k_index + 5 * k];
+      MS_F32X8_GETI(dst, 6) += b[k_index] * a[m_index * k + k_index + 6 * k];
+      MS_F32X8_GETI(dst, 7) += b[k_index] * a[m_index * k + k_index + 7 * k];
+    }
+    MS_ST256_F32(c + m_index, dst);
+  }
+#endif
+
+  // block 1
+  for (; m_index < m; m_index++) {
+    c[m_index] = bias[0];
+    int k_index = 0;
+#ifdef ENABLE_AVX512
+    __m512 dst1 = _mm512_setzero_ps();
+    for (; k_index <= k - C16NUM; k_index += C16NUM) {
+      __m512 weight = _mm512_loadu_ps(b + k_index);
+      __m512 a1 = _mm512_loadu_ps(a + m_index * k + k_index);
+      dst1 = _mm512_fmadd_ps(weight, a1, dst1);
+    }
+    c[m_index] += _mm512_reduce_add_ps(dst1);
+#endif
+    for (; k_index < k; k_index++) {
+      c[m_index] += b[k_index] * a[m_index * k + k_index];
+    }
   }
 }

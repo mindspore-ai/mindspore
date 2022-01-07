@@ -33,6 +33,8 @@ using GemmFun = void (*)(const float *a, const float *b, float *c, const float *
                          const int depth, const int cur_col, const int col_align, const int row);
 using GemvFun = void (*)(const float *a, const float *b, float *c, const float *bias, const int act_type,
                          const int depth, const int cur_col, const int col_align);
+using GemmIsNotPackFun = void (*)(const float *a, const float *b, float *c, const float *bias, int m, int k);
+
 class MatmulFp32BaseCPUKernel : public InnerKernel {
  public:
   MatmulFp32BaseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
@@ -62,7 +64,7 @@ class MatmulFp32BaseCPUKernel : public InnerKernel {
   void FreeBiasBuf();
   int InitBiasData();
   void InitParameter();
-  void init_global_variable();
+  int init_global_variable();
 
  private:
   void ResizeParameter();
@@ -105,6 +107,7 @@ class MatmulFp32BaseCPUKernel : public InnerKernel {
   GemmFun gemmCalFun = nullptr;
   GemvFun gemvCalFun = nullptr;
 #endif
+  GemmIsNotPackFun gemmIsNotPackFun = nullptr;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_MATMUL_FP32_BASE_H_

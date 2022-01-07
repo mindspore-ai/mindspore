@@ -512,7 +512,7 @@ void PackNHWCToCXHWNXFp32(const float *src, float *dst, int batch, int plane, in
         for (; oc < oc_remainder_c8; oc += C8NUM) {
           const float *cur_src = src + index_batch + oc;
           float *cur_dst = dst + oc;
-          LOAD256X16_F32(r, cur_src, channel);
+          MS_LOAD256X16_F32(r, cur_src, channel);
           STORE256X16_F32(cur_dst, stride, r);
         }
         for (; oc < oc_remainder; ++oc) {
@@ -821,7 +821,7 @@ inline void Transpose8X8Fp32Arm32(const float *src_ptr, float *dst_ptr, int src_
 
 #ifdef ENABLE_AVX
 inline void Transpose8X8Fp32Avx(const float *src_ptr, float *dst_ptr, int src_stride, int dst_stride) {
-  LOAD256X8_F32(src, src_ptr, src_stride)
+  MS_LOAD256X8_F32(src, src_ptr, src_stride)
   __m256 r1 = _mm256_unpacklo_ps(src1, src2);
   __m256 r2 = _mm256_unpackhi_ps(src1, src2);
   __m256 r3 = _mm256_unpacklo_ps(src3, src4);
