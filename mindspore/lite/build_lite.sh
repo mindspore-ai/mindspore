@@ -370,6 +370,11 @@ build_lite_arm64_and_jni() {
         cp ./${pkg_name}/runtime/third_party/libjpeg-turbo/lib/*.so* ${LITE_JAVA_PATH}/java/app/libs/arm64-v8a/
         cp ./${pkg_name}/runtime/third_party/libjpeg-turbo/lib/*.so* ${LITE_JAVA_PATH}/native/libs/arm64-v8a/
     fi
+    local npu_so=$pkg_name/runtime/third_party/hiai_ddk/lib/libhiai.so
+    if [ -e "$npu_so" ]; then
+      cp ./${pkg_name}/runtime/third_party/hiai_ddk/lib/*.so* ${LITE_JAVA_PATH}/java/app/libs/arm64-v8a/
+      cp ./${pkg_name}/runtime/third_party/hiai_ddk/lib/*.so* ${LITE_JAVA_PATH}/native/libs/arm64-v8a/
+    fi
     # build jni so
     [ -n "${BASEPATH}" ] && rm -rf java/jni && mkdir -pv java/jni
     cd java/jni
@@ -415,7 +420,11 @@ build_lite_arm32_and_jni() {
         cp ./${pkg_name}/runtime/third_party/libjpeg-turbo/lib/*.so* ${LITE_JAVA_PATH}/java/app/libs/armeabi-v7a/
         cp ./${pkg_name}/runtime/third_party/libjpeg-turbo/lib/*.so* ${LITE_JAVA_PATH}/native/libs/armeabi-v7a/
     fi
-
+    local npu_so=$pkg_name/runtime/third_party/hiai_ddk/lib/libhiai.so
+    if [ -e "$npu_so" ]; then
+      cp ./${pkg_name}/runtime/third_party/hiai_ddk/lib/*.so* ${LITE_JAVA_PATH}/java/app/libs/armeabi-v7a/
+      cp ./${pkg_name}/runtime/third_party/hiai_ddk/lib/*.so* ${LITE_JAVA_PATH}/native/libs/armeabi-v7a/
+    fi
     # build jni so
     [ -n "${BASEPATH}" ] && rm -rf java/jni && mkdir -pv java/jni
     cd java/jni
@@ -457,11 +466,8 @@ build_aar() {
     ${gradle_command} build -p ${LITE_JAVA_PATH}/ -x test
 
     # build aar
-    local npu_bak=${MSLITE_ENABLE_NPU}
-    export MSLITE_ENABLE_NPU="off"
     build_lite_arm64_and_jni
     build_lite_arm32_and_jni
-    export MSLITE_ENABLE_NPU=${npu_bak}
 
     # build java fl_client
     local is_train=on

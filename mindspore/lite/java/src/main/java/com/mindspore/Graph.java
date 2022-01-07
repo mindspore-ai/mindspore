@@ -37,6 +37,9 @@ public class Graph {
      * @return load status.
      */
     public boolean load(String file) {
+        if(file == null) {
+            return false;
+        }
         this.graphPtr = loadModel(file);
         return this.graphPtr != 0L;
     }
