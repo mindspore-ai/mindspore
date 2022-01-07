@@ -1309,7 +1309,7 @@ void MindRTBackend::LazyExecuteTaskCallback() {
       ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, context->is_pynative_infer());
       RunSingleOpGraph(context->graph(), context->output_nodes(), context->op_run_info(),
                        context->graph_compiler_info(), context->device_context());
-      ClearGraphDeviceAddress(context->graph(), context->device_context(), false);
+      ClearGraphDeviceAddress(context->graph(), context->device_context(), context->op_run_info().is_gradient_out);
 
       UpdateInputDeviceAddress(context->graph());
 
@@ -1371,7 +1371,7 @@ void MindRTBackend::RunOpInternal(bool single_op_cache_hit, GraphCompilerInfo *g
     }
     RunSingleOpGraph(graph, output_nodes, *op_run_info, graph_compiler_info, device_context);
     UpdateOutput(output_nodes, outputs);
-    ClearGraphDeviceAddress(graph, device_context, false);
+    ClearGraphDeviceAddress(graph, device_context, op_run_info->is_gradient_out);
     UpdateInputDeviceAddress(graph);
     if (op_run_info->is_dynamic_shape) {
       UpdateOutputAbstract(graph, op_run_info);
