@@ -84,7 +84,7 @@ def test_inner_scalar_mod_args_length():
 
     x = Tensor(2, dtype=ms.int32)
     net = Net()
-    with pytest.raises(Exception, match="The size of input in the operator should be 2"):
+    with pytest.raises(Exception, match="For 'S-Prim-Mod', the size of input should be 2"):
         ret = net(x)
         print("ret:", ret)
 

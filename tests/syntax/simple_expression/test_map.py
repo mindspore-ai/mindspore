@@ -118,7 +118,7 @@ def test_map_args_full_make_list_same_length():
     input_me_y = Tensor(np.random.randn(2, 3, 4, 5).astype(np.float32))
 
     net = MapNet()
-    with pytest.raises(Exception, match="The length of lists in Map must be the same"):
+    with pytest.raises(Exception, match="For 'Map', the length of lists must be the same."):
         ret = net([input_me_x], [input_me_y, input_me_y])
         print("ret:", ret)
 
@@ -142,7 +142,7 @@ def test_map_args_full_make_tuple_same_length():
     input_me_y = Tensor(np.random.randn(2, 3, 4, 5).astype(np.float32))
 
     net = MapNet()
-    with pytest.raises(Exception, match="The length of tuples in Map must be the same."):
+    with pytest.raises(Exception, match="For 'Map', the length of tuples must be the same."):
         ret = net((input_me_x, input_me_x), (input_me_y, input_me_y, input_me_y))
         print("ret:", ret)
 

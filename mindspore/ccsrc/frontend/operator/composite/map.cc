@@ -109,7 +109,7 @@ AnfNodePtr Map::FullMakeList(const std::shared_ptr<List> &type, const FuncGraphP
     }
   }
   if (is_not_same) {
-    MS_LOG(EXCEPTION) << "The length of lists in Map must be the same. " << oss.str();
+    MS_LOG(EXCEPTION) << "For 'Map', the length of lists must be the same. " << oss.str();
   }
 
   constexpr size_t kPrimHoldLen = 1;
@@ -170,7 +170,7 @@ AnfNodePtr Map::FullMakeTuple(const std::shared_ptr<Tuple> &type, const FuncGrap
     }
   }
   if (is_not_same) {
-    MS_LOG(EXCEPTION) << "The length of tuples in Map must be the same. " << oss.str();
+    MS_LOG(EXCEPTION) << "For 'Map', the length of tuples must be the same. " << oss.str();
   }
 
   constexpr size_t kPrimHoldLen = 1;

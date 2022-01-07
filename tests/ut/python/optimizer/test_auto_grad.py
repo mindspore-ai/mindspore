@@ -154,9 +154,6 @@ def test_second_grad_with_j_primitive():
 def test_ad_fv_cnode_order():
     context.set_context(mode=context.GRAPH_MODE)
     class Net(nn.Cell):
-        def __init__(self):
-            super(Net, self).__init__()
-
         # cnode xay is not being MapMorphism when cnode second_level() is being MapMorphism and
         # BackPropagateFv as MapMorphism is started from output node and from left to right order.
         def construct(self, x, y):
@@ -256,9 +253,6 @@ def test_limit_lift_fv_scope():
 
 def test_same_primal_used_by_multi_j():
     class Net(nn.Cell):
-        def __init__(self):
-            super(Net, self).__init__()
-
         def construct(self, x):
             return x
 
@@ -466,7 +460,7 @@ def test_grad_net_is_none():
     try:
         GradNetWrtX(Net())(x, y)
     except Exception as e:
-        assert "'GradOperation' arg0 must be a 'Function' or 'Cell', but got" in str(e)
+        assert "For 'GradOperation', the first argument must be a 'Function' or 'Cell', but got" in str(e)
 
 
 def test_grad_missing_net():
