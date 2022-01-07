@@ -692,12 +692,20 @@ class ParameterUpdate(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> import mindspore
+        >>> from mindspore import nn, Tensor
         >>> network = nn.Dense(3, 4)
         >>> param = network.parameters_dict()['weight']
         >>> update = nn.ParameterUpdate(param)
         >>> update.phase = "update_param"
         >>> weight = Tensor(np.arange(12).reshape((4, 3)), mindspore.float32)
         >>> output = update(weight)
+        >>> print(output)
+        [[ 0.  1.  2.]
+         [ 3.  4.  5.]
+         [ 6.  7.  8.]
+         [ 9. 10. 11.]]
     """
 
     def __init__(self, param):

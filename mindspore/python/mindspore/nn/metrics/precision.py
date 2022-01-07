@@ -39,6 +39,9 @@ class Precision(EvaluationBase):
     Args:
         eval_type (str): 'classification' or 'multilabel' are supported. Default: 'classification'.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> import numpy as np
         >>> from mindspore import nn, Tensor

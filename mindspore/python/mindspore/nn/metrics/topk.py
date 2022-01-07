@@ -32,6 +32,9 @@ class TopKCategoricalAccuracy(Metric):
         TypeError: If `k` is not int.
         ValueError: If `k` is less than 1.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> import numpy as np
         >>> from mindspore import nn, Tensor
@@ -108,6 +111,9 @@ class Top1CategoricalAccuracy(TopKCategoricalAccuracy):
     Calculates the top-1 categorical accuracy. This class is a specialized class for TopKCategoricalAccuracy.
     Refer to :class:`TopKCategoricalAccuracy` for more details.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> import numpy as np
         >>> from mindspore import nn, Tensor
@@ -130,6 +136,9 @@ class Top5CategoricalAccuracy(TopKCategoricalAccuracy):
     """
     Calculates the top-5 categorical accuracy. This class is a specialized class for TopKCategoricalAccuracy.
     Refer to :class:`TopKCategoricalAccuracy` for more details.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as np

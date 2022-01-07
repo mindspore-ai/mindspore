@@ -29,6 +29,9 @@ class MAE(Metric):
 
     where :math:`n` is batch size.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> import numpy as np
         >>> import mindspore
@@ -101,6 +104,9 @@ class MSE(Metric):
         \text{MSE}(x,\ y) = \frac{\sum_{i=1}^n(y_i - x_i)^2}{n}
 
     where :math:`n` is batch size.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as np

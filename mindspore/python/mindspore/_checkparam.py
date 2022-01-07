@@ -149,7 +149,7 @@ def check_number(arg_value, value, rel, arg_type=int, arg_name=None, prim_name=N
     Check argument integer.
 
     Usage:
-    - number = check_number(number, 0, Rel.GE, "number", None) # number >= 0
+    - number = check_number(number, 0, Rel.GE, "number", None)
     """
     rel_fn = Rel.get_fns(rel)
     prim_name = f' in `{prim_name}`' if prim_name else ''

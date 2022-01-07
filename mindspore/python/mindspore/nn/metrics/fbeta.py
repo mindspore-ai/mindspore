@@ -30,7 +30,10 @@ class Fbeta(Metric):
                 {(1+\beta^2) \cdot true\_positive +\beta^2 \cdot false\_negative + false\_positive}
 
     Args:
-        beta (Union[float, int]): Beta coefficient in the F measure.
+        beta (Union[float, int]): Beta coefficient in the F measure. `beta` should be greater than 0.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as np

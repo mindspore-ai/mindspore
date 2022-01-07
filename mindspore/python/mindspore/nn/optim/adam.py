@@ -296,7 +296,7 @@ class Adam(Optimizer):
         ``Ascend`` ``GPU``  ``CPU``
 
     Examples:
-        >>>from mindspore import nn, Model
+        >>> from mindspore import nn, Model
         >>>
         >>> net = Net()
         >>> #1) All parameters use the same learning rate and weight decay
@@ -476,7 +476,7 @@ class AdamWeightDecay(Optimizer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>>from mindspore import nn, Model
+        >>> from mindspore import nn, Model
         >>>
         >>> net = Net()
         >>> #1) All parameters use the same learning rate and weight decay

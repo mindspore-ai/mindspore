@@ -222,7 +222,7 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
         integrated_save (bool): Whether to integrated save in automatic model parallel scene. Default: True
         async_save (bool): Whether to open an independent thread to save the checkpoint file. Default: False
         append_dict (dict): Additional information that needs to be saved.  The key of dict must be str,
-            the value of dict must be one of int float and bool. Default: None
+            the value of dict must be one of int, float or bool. Default: None
         enc_key (Union[None, bytes]): Byte type key used for encryption. If the value is None, the encryption
                                       is not required. Default: None.
         enc_mode (str): This parameter is valid only when enc_key is not set to None. Specifies the encryption
@@ -734,7 +734,7 @@ def _fill_param_into_net(net, parameter_list):
 
 def export(net, *inputs, file_name, file_format='AIR', **kwargs):
     """
-    Export the mindspore network into an offline model in the specified format.
+    Export the MindSpore network into an offline model in the specified format.
 
     Note:
         1. When exporting AIR, ONNX format, the size of a single tensor can not exceed 2GB.

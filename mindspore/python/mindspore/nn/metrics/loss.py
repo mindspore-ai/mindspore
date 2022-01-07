@@ -24,6 +24,9 @@ class Loss(Metric):
     .. math::
         loss = \frac{\sum_{k=1}^{n}loss_k}{n}
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> import numpy as np
         >>> import mindspore

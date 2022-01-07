@@ -792,8 +792,8 @@ class _CellGraphExecutor:
 def ms_memory_recycle():
     """
     Recycle memory used by MindSpore.
-    When train multi Neural network models in one process, memory used by mindspore is very large,
-    this is because mindspore cached runtime memory for every model.
+    When train multi Neural network models in one process, memory used by MindSpore is very large,
+    this is because MindSpore cached runtime memory for every model.
     To recycle these cached memory, users can call this function after training of one model.
     """
     if ms_compile_cache:

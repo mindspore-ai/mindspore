@@ -61,7 +61,7 @@ def set_seed(seed):
         >>> import mindspore.ops as ops
         >>> from mindspore import Tensor, set_seed, Parameter
         >>> from mindspore.common.initializer import initializer
-        >>>
+        >>> import mindspore as ms
         >>> # Note: (1) Please make sure the code is running in PYNATIVE MODE;
         >>> # (2) Because Composite-level ops need parameters to be Tensors, for below examples,
         >>> # when using ops.uniform operator, minval and maxval are initialised as:
@@ -129,7 +129,7 @@ def set_seed(seed):
         >>> # condition 5.
         >>> c1 = ops.uniform((1, 4), minval, maxval, seed=2) # C1
         >>> c2 = ops.uniform((1, 4), minval, maxval, seed=2) # C2
-        >>> # Rerun the program will get the same results:
+        >>> # Rerun the program will get the different results:
         >>> c1 = ops.uniform((1, 4), minval, maxval, seed=2) # C1
         >>> c2 = ops.uniform((1, 4), minval, maxval, seed=2) # C2
         >>>

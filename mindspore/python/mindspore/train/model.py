@@ -996,6 +996,7 @@ class Model:
             Tensor, array(s) of predictions.
 
         Examples:
+            >>> import numpy as np
             >>> import mindspore as ms
             >>> from mindspore import Model, Tensor
             >>>
