@@ -155,9 +155,9 @@ class CheckAndConvertUtils {
     }
     std::ostringstream buffer;
     if (prim_name.empty()) {
-      buffer << "The attribute[" << arg_name << "] must ";
+      buffer << "The attribute[" << arg_name << "] must be ";
     } else {
-      buffer << "For primitive[" << prim_name << "], the " << arg_name << " must ";
+      buffer << "For primitive[" << prim_name << "], the " << arg_name << " must be ";
     }
     auto iter_to_string = kCompareRangeToString.find(compare_operator);
     if (iter_to_string == kCompareRangeToString.end()) {
@@ -165,7 +165,7 @@ class CheckAndConvertUtils {
                                    << " cannot find in the compare string map";
     }
     auto range_strng = iter_to_string->second;
-    buffer << range_strng.first << range.first << "," << range.second << range_strng.second << " ,but got " << arg_value
+    buffer << range_strng.first << range.first << "," << range.second << range_strng.second << ", but got " << arg_value
            << ".";
     MS_EXCEPTION(ValueError) << buffer.str();
   }
