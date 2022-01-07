@@ -33,6 +33,9 @@ void BnupdateEltwiseEltwiseFusionPass::MatchBnupdateAddRelu(const CNodePtr &cnod
   MS_EXCEPTION_IF_NULL(relu_input);
   auto add = relu_input->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(add);
+  if (AnfAlgo::GetInputTensorNum(cnode) != (ELTWISE_DOUBLE_IN_INPUT_SIZE - 1)) {
+    return;
+  }
   auto tuple_getitem = add->input(kIndex1);
   MS_EXCEPTION_IF_NULL(tuple_getitem);
   if (tuple_getitem->isa<CNode>() && AnfAlgo::GetCNodeName(tuple_getitem) == prim::kPrimTupleGetItem->name()) {
@@ -62,7 +65,8 @@ void BnupdateEltwiseEltwiseFusionPass::MatchSingleFusionPattern(const session::K
     MS_EXCEPTION_IF_NULL(cnode);
     if (AnfAlgo::GetKernelType(cnode) == KernelType::TBE_KERNEL &&
         AnfAlgo::GetFusionType(cnode) == kernel::FusionType::ELEMWISE &&
-        AnfAlgo::GetOutputTensorNum(cnode) == ELTWISE_DOUBLE_OUTPUT_SIZE) {
+        AnfAlgo::GetOutputTensorNum(cnode) == ELTWISE_DOUBLE_OUTPUT_SIZE &&
+        AnfAlgo::GetInputTensorNum(cnode) == (ELTWISE_INPUT_SIZE - 1)) {
       auto eltwise_input = cnode->input(kIndex1);
       MS_EXCEPTION_IF_NULL(eltwise_input);
       if (eltwise_input->isa<CNode>() && AnfAlgo::CheckPrimitiveType(eltwise_input, prim::kPrimAdd)) {

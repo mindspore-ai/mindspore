@@ -65,6 +65,10 @@ class TbeAdapter {
       (void)std::copy(inputs_list.begin(), inputs_list.end(), std::back_inserter((*inputs_json)));
     } else {
       if (op_name == kMinimumGradOpName || op_name == kMaximumGradOpName) {
+        if (inputs_list.size() < kIndex3) {
+          MS_LOG(EXCEPTION) << "Op " << op_name << " should have at least " << kIndex3 << " inputs, but got "
+                            << inputs_list.size();
+        }
         inputs_json->push_back(inputs_list[kIndex2]);
         inputs_json->push_back(inputs_list[kIndex0]);
         inputs_json->push_back(inputs_list[kIndex1]);
@@ -74,6 +78,10 @@ class TbeAdapter {
       } else if (op_name == kApplyCenteredRMSPropOpName) {
         // Parameter order of ApplyCenteredRMSProp's TBE implementation is different from python API, so map
         // TBE parameter to correspond python API parameter by latter's index using hardcode
+        if (inputs_list.size() < kIndex9) {
+          MS_LOG(EXCEPTION) << "Op " << op_name << " should have at least " << kIndex9 << " inputs, but got "
+                            << inputs_list.size();
+        }
         inputs_json->push_back(inputs_list[kIndex0]);
         inputs_json->push_back(inputs_list[kIndex1]);
         inputs_json->push_back(inputs_list[kIndex2]);
@@ -84,6 +92,10 @@ class TbeAdapter {
         inputs_json->push_back(inputs_list[kIndex8]);
         inputs_json->push_back(inputs_list[kIndex4]);
       } else {
+        if (inputs_list.size() < kIndex2) {
+          MS_LOG(EXCEPTION) << "Op " << op_name << " should have at least " << kIndex2 << " inputs, but got "
+                            << inputs_list.size();
+        }
         inputs_json->push_back(inputs_list[kIndex1]);
         inputs_json->push_back(inputs_list[kIndex0]);
         for (size_t i = 2; i < inputs_list.size(); ++i) {
