@@ -34,8 +34,8 @@ class SparseToDense(Cell):
 
     Raises:
         TypeError: If `sparse_tensor.indices` is not a Tensor.
-        TypeError: If 'sparse_tensor.values' is not a Tensor.
-        TypeError: If 'sparse_tensor.dense_shape' is not a tuple.
+        TypeError: If `sparse_tensor.values` is not a Tensor.
+        TypeError: If `sparse_tensor.dense_shape` is not a tuple.
 
     Supported Platforms:
         ``CPU``
