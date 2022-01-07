@@ -36,6 +36,7 @@
 #include <map>
 #include <limits>
 #include <sstream>
+#include <utility>
 #include "debug/tensor_load.h"
 #include "debug/tensor_data.h"
 
@@ -117,6 +118,8 @@ class DebugServices {
   typedef std::vector<std::vector<std::vector<parameter_t>>> partitioned_parameters;
   typedef std::vector<std::vector<int32_t>> partitioned_error_code;
   typedef std::vector<std::vector<unsigned int>> partitioned_id;
+  typedef std::set<std::string> AsyncFilePool;
+  typedef std::map<std::string, std::vector<std::pair<std::string, std::string>>> DirMap;
 
   struct watchpoint_t {
     unsigned int id;
@@ -267,8 +270,7 @@ class DebugServices {
   void CheckWatchpointsForTensor(partitioned_names *chunk_names, partitioned_names *chunk_slots,
                                  partitioned_numbers *chunk_conditions, partitioned_id *const chunk_watchpoint_id,
                                  partitioned_parameters *chunk_parameters, partitioned_error_code *chunk_error_codes,
-                                 const std::vector<std::string> &op_overflows,
-                                 const std::vector<std::string> &async_file_pool,
+                                 const std::vector<std::string> &op_overflows, const AsyncFilePool &async_file_pool,
                                  partitioned_numbers *chunk_exec_orders,
                                  std::vector<std::shared_ptr<TensorData>> *tensor_list, int begin, int end,
                                  int chunk_id, const bool init_dbg_suspend, const bool step_end, const bool recheck,
@@ -282,7 +284,7 @@ class DebugServices {
   void CheckWatchpoints(std::vector<std::string> *name, std::vector<std::string> *slot, std::vector<int> *condition,
                         std::vector<unsigned int> *const watchpoint_id,
                         std::vector<std::vector<parameter_t>> *parameters, std::vector<int32_t> *error_code,
-                        const std::vector<std::string> &op_overflows, const std::vector<std::string> &async_file_pool,
+                        const std::vector<std::string> &op_overflows, const AsyncFilePool &async_file_pool,
                         std::vector<std::shared_ptr<TensorData>> *tensor_list, bool init_dbg_suspend,
                         const bool step_end, const bool recheck, std::vector<unsigned int> *device_id = nullptr,
                         std::vector<unsigned int> *root_graph_id = nullptr, bool error_on_no_value = false);
@@ -331,7 +333,7 @@ class DebugServices {
   void ReadDumpedTensor(std::vector<std::string> backend_name, std::vector<size_t> slot,
                         std::vector<unsigned int> device_id, std::vector<unsigned int> iteration,
                         std::vector<unsigned int> root_graph_id, const std::vector<bool> &is_output,
-                        const std::vector<std::string> &async_file_pool,
+                        const AsyncFilePool &async_file_pool,
                         std::vector<std::shared_ptr<TensorData>> *const result_list, bool *no_mem_to_read = nullptr);
 
   void ProcessTensorDataSync(const std::vector<std::tuple<std::string, std::string>> &proto_to_dump,
@@ -353,11 +355,11 @@ class DebugServices {
   void ReadDumpedTensorAsync(const std::string &specific_dump_dir, const std::string &prefix_dump_to_check,
                              const std::string &slot_string_to_check, const std::string &backend_name, size_t slot,
                              unsigned int device_id, unsigned int iteration, unsigned int root_graph_id,
-                             const bool &is_output, const std::vector<std::string> &async_file_pool,
+                             const bool &is_output, const AsyncFilePool &async_file_pool,
                              std::vector<std::shared_ptr<TensorData>> *result_list, bool *no_mem_to_read);
 
   std::vector<std::shared_ptr<TensorData>> ReadNeededDumpedTensors(unsigned int iteration,
-                                                                   std::vector<std::string> *const async_file_pool,
+                                                                   AsyncFilePool *const async_file_pool,
                                                                    bool error_on_no_value = false);
 
   const void *GetPrevTensor(const std::shared_ptr<TensorData> &tensor, bool previous_iter_tensor_needed,
@@ -367,28 +369,26 @@ class DebugServices {
                          std::size_t *const size, std::vector<int64_t> *const shape,
                          std::vector<char> **const data_buffer, bool *no_mem_to_read);
 
-  void ConvertToHostFormat(const std::map<std::string, std::vector<std::string>> &dir_to_files_map,
-                           std::vector<std::string> *const result_list);
+  void ConvertToHostFormat(const DirMap &dir_to_files_map, AsyncFilePool *const result_list);
 
   void ProcessConvertToHostFormat(const std::vector<std::string> &files_after_convert_in_dir,
-                                  const std::string &dump_key, std::vector<std::string> *const result_list,
+                                  const std::string &dump_key, AsyncFilePool *const result_list,
                                   const std::string &file_format);
 
   void ConvertReadTensors(std::vector<std::string> backend_name, std::vector<size_t> slot,
                           std::vector<unsigned int> device_id, std::vector<unsigned int> iteration,
-                          std::vector<unsigned int> root_graph_id, std::vector<std::string> *const result_list);
+                          std::vector<unsigned int> root_graph_id, AsyncFilePool *const result_list);
 
   void ConvertWatchPointNodes(const std::vector<std::tuple<std::string, std::string>> &proto_dump,
-                              const std::string &specific_dump_dir, std::vector<std::string> *const result_list);
+                              const std::string &specific_dump_dir, AsyncFilePool *const result_list);
 
   void ProcessConvertList(const std::string &prefix_dump_file_name, const std::string &file_format,
-                          const std::string &specific_dump_dir,
-                          std::map<std::string, std::vector<std::string>> *dir_to_files_map,
-                          std::vector<std::string> *const result_list);
+                          const std::string &specific_dump_dir, DirMap *dir_to_files_map,
+                          AsyncFilePool *const result_list);
 
   void GetTensorDataInfoAsync(const std::vector<std::tuple<std::string, std::string>> &proto_dump,
                               const std::string &specific_dump_dir, uint32_t iteration, uint32_t device_id,
-                              uint32_t root_graph_id, const std::vector<std::string> &async_file_pool,
+                              uint32_t root_graph_id, const AsyncFilePool &async_file_pool,
                               std::vector<std::shared_ptr<TensorData>> *const tensor_list);
 
   void SetGraphsHistory();
