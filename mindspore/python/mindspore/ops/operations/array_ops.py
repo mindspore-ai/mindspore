@@ -5493,7 +5493,7 @@ class BroadcastTo(Primitive):
     def __init__(self, shape):
         """Initialize BroadcastTo"""
         validator.check_value_type("shape", shape, (tuple), self.name)
-        validator.check("shape length", len(shape), "", 0, Rel.GT, self.name)
+        validator.check("dimension of input_x", len(shape), "", 0, Rel.GT, self.name)
         for ix, i in enumerate(shape):
             validator.check_value_type('target shape index -> ' + str(ix), i, [int], self.name)
             validator.check("shape element", i, "shape element min limit", -1, Rel.GE, self.name)
