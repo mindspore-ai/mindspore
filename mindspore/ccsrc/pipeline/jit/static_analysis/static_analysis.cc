@@ -122,7 +122,10 @@ AnalysisResult AnalysisEngine::Run(const FuncGraphPtr &func_graph, const Abstrac
     MS_LOG(INFO) << func_graph->ToString() << ": Run finished.";
 
     MS_EXCEPTION_IF_NULL(output_conf);
-    result.inferred = output_conf->ObtainEvalResult();
+    auto eval_result = output_conf->ObtainEvalResult();
+    // Set the sequence nodes' elements use flags all true.
+    SetSequenceElementsUseFlagsRecursively(eval_result->abstract(), true);
+    result.eval_result = eval_result;
     result.context = root_context;
   } catch (const std::exception &ex) {
     MS_LOG(INFO) << "Eval " << func_graph->ToString() << " threw exception.";
@@ -361,13 +364,14 @@ EvaluatorPtr GetPrimEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr 
     return std::make_shared<MixedPrecisionCastEvaluator>(prim);
   }
 
-  // find prim infer function in the prim function map return a standard evaluator
+  // Find prim infer function in the prim function map return a standard evaluator
   auto eval_impl = GetPrimitiveInferImpl(prim);
-  if (eval_impl.infer_shape_impl_ != nullptr) {
+  if (eval_impl.infer_shape_impl_ != nullptr && prim->name() != prim::kPrimMakeTuple->name() &&
+      prim->name() != prim::kPrimMakeList->name()) {  // Refactoring infer routine soon.
     return std::make_shared<StandardPrimEvaluator>(prim, eval_impl);
   }
 
-  // use python infer function if the infer function not founded in the map return a python evaluator
+  // Use python infer function if the infer function not founded in the map return a python evaluator
   EvaluatorPtr evaluator = nullptr;
   if (prim->HasPyEvaluator()) {
     auto prim_py = dyn_cast<PrimitivePy>(prim);
@@ -388,7 +392,7 @@ EvaluatorPtr GetPrimEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr 
     return nullptr;
   }
 
-  // return a default evaluator
+  // Return a default evaluator
   if (engine == nullptr) {
     // If engine is nullptr, get constructor from default.
     const PrimEvaluatorMap &prim_evaluator_map = GetPrimEvaluatorConstructors();
@@ -674,12 +678,13 @@ EvaluatorPtr AnalysisEngine::HandleNestedRecursion(const std::vector<EvaluatorPt
 
 std::string JoinBranchesFailedInfo(const AbstractBasePtr &spec, const AbstractBasePtr &last_spec,
                                    const AnfNodePtr &node, const std::string &error_info) {
+  constexpr int recursive_level = 2;
   std::ostringstream buffer;
   buffer << "The return values of different branches do not join. \n"
          << error_info << "\nFor more details, please refer to the FAQ at https://www.mindspore.cn.\n"
          << "The abstract type of the return value of the current branch is " << spec->ToString()
          << ", and that of the previous branch is " << last_spec->ToString() << ".\n"
-         << "The node " << node->DebugString();
+         << "The node is " << node->DebugString(recursive_level);
   if (node->isa<CNode>()) {
     auto cnode = node->cast<CNodePtr>()->input(0);
     if (IsPrimitiveCNode(cnode, prim::kPrimSwitch)) {
@@ -803,10 +808,9 @@ void ExecEvaluator(EvaluatorPtr eval, AnalysisEnginePtr engine, ConfigPtrList ar
 AbstractBasePtr BuildAsyncAbstractRecursively(const AbstractBasePtr &orig_abs,
                                               const std::vector<AsyncAbstractPtr> &pending_async_abstract_list,
                                               const std::vector<std::size_t> &index) {
-  if (orig_abs->isa<AbstractSequence>()) {
-    const auto &orig_abstract_seq = orig_abs->cast<AbstractSequencePtr>();
-    MS_EXCEPTION_IF_NULL(orig_abstract_seq);
-    const auto &orig_elements = orig_abstract_seq->elements();
+  const auto sequence_abs = dyn_cast<AbstractSequence>(orig_abs);
+  if (sequence_abs != nullptr) {
+    const auto &orig_elements = sequence_abs->elements();
     AbstractBasePtrList new_elements;
     for (size_t i = 0; i < orig_elements.size(); ++i) {
       if (orig_elements[i]->isa<AbstractFuncAtom>()) {
@@ -826,11 +830,15 @@ AbstractBasePtr BuildAsyncAbstractRecursively(const AbstractBasePtr &orig_abs,
         new_elements.push_back(orig_elements[i]);
       }
     }
+    static const auto eliminate_unused_element = common::GetEnv("MS_DEV_ELIMINATE_SEQUENCE_UNUSED_ELEMENT");
+    static const auto enable_eliminate_unused_element = (eliminate_unused_element == "1");
     AbstractBasePtr new_abs;
     if (orig_abs->isa<AbstractTuple>()) {
-      new_abs = std::make_shared<AbstractTuple>(new_elements);
+      new_abs = std::make_shared<AbstractTuple>(
+        new_elements, (enable_eliminate_unused_element ? sequence_abs->sequence_nodes() : AnfNodeWeakPtrList()));
     } else if (orig_abs->isa<AbstractList>()) {
-      new_abs = std::make_shared<AbstractList>(new_elements);
+      new_abs = std::make_shared<AbstractList>(
+        new_elements, (enable_eliminate_unused_element ? sequence_abs->sequence_nodes() : AnfNodeWeakPtrList()));
     } else {
       MS_LOG(EXCEPTION) << "FirstResult is not AbstractTuple or AbstractList, but: " << orig_abs->ToString();
     }
@@ -864,7 +872,7 @@ void BuildPossibleSpecs(const AbstractBasePtr &first_result,
     MS_LOG(DEBUG) << GetInferThread() << " Try to replace old first with new one, old: " << first_result->ToString()
                   << ", new: " << new_first_result->ToString();
     std::replace_if(
-      out_specs->begin(), out_specs->end(), [first_result](const auto &elem) { return elem == first_result; },
+      out_specs->begin(), out_specs->end(), [first_result](const auto &element) { return element == first_result; },
       new_first_result);
   } else {
     MS_LOG(DEBUG) << GetInferThread() << " wait for normal async result";
@@ -1058,6 +1066,17 @@ AbstractBasePtr ToAbstract(const ValuePtr &value, const AnalysisContextPtr &cont
   if (value->isa<Primitive>()) {
     auto prim = value->cast<PrimitivePtr>();
     return MakeAbstractClosure(prim, anf_node);
+  }
+  static const auto eliminate_unused_element = common::GetEnv("MS_DEV_ELIMINATE_SEQUENCE_UNUSED_ELEMENT");
+  static const auto enable_eliminate_unused_element = (eliminate_unused_element == "1");
+  if (enable_eliminate_unused_element && value->isa<ValueSequence>()) {
+    auto abs = value->ToAbstract();
+    auto sequence_abs = dyn_cast<AbstractSequence>(abs);
+    MS_EXCEPTION_IF_NULL(sequence_abs);
+    if (anf_node != nullptr) {
+      SetSequenceNodeElementsUseFlags(anf_node, std::make_shared<std::vector<bool>>(sequence_abs->elements().size()));
+      sequence_abs->set_sequence_nodes({AnfNodeWeakPtr(anf_node)});
+    }
   }
   return value->ToAbstract();
 }

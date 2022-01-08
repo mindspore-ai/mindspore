@@ -98,7 +98,10 @@ AbstractBasePtr AddNInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  return abstract::MakeAbstract(AddNInferShape(primitive, input_args), AddNInferType(primitive, input_args));
+  auto res = abstract::MakeAbstract(AddNInferShape(primitive, input_args), AddNInferType(primitive, input_args));
+  // For AddN(MakeTuple()) or AddN(tuple), set all used flags of tuple as true.
+  SetSequenceElementsUseFlags(input_args[0], true);
+  return res;
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(AddN, prim::kPrimAddN, AddNInfer, nullptr, true);
 }  // namespace ops

@@ -241,13 +241,13 @@ const AbstractBasePtr AbstractSequence::operator[](const std::size_t &dim) const
   return elements_[dim];
 }
 
-std::string AbstractSequence::ToString() const {
+std::string AbstractSequence::ToStringInternal() const {
   std::ostringstream buffer;
   size_t i = 0;
   size_t size = elements_.size();
-  for (const auto &ele : elements_) {
-    MS_EXCEPTION_IF_NULL(ele);
-    buffer << "element[" << i << "]: " << ele->ToString();
+  for (const auto &element : elements_) {
+    MS_EXCEPTION_IF_NULL(element);
+    buffer << "element[" << i << "]: " << element->ToString();
     if (i < size - 1) {
       buffer << ", ";
     }
@@ -256,11 +256,169 @@ std::string AbstractSequence::ToString() const {
   return buffer.str();
 }
 
+std::string AbstractSequence::ToString() const {
+  std::stringstream ss;
+  ss << type_name();
+  ss << "{";
+  ss << ToStringInternal();
+  if (!sequence_nodes_.empty()) {
+    ss << ", sequence_nodes: {";
+    for (size_t i = 0; i < sequence_nodes_.size(); ++i) {
+      auto sequence_node = sequence_nodes_[i].lock();
+      if (sequence_node == nullptr) {
+        ss << "<freed node>";
+        continue;
+      } else {
+        ss << sequence_node->DebugString();
+      }
+      auto flags = GetSequenceNodeElementsUseFlags(sequence_node);
+      if (flags != nullptr) {
+        ss << ", elements_use_flags: " << (*flags);
+      }
+      if (i != sequence_nodes_.size() - 1) {
+        ss << ", ";
+      }
+    }
+    ss << "}";
+  }
+  ss << "}";
+  return ss.str();
+}
+
+namespace {
+void CollectSequenceNodes(const AnfNodeWeakPtrList &source_sequence_nodes, AnfNodeWeakPtrList *sequence_nodes_ptr) {
+  AnfNodeWeakPtrList &sequence_nodes = *sequence_nodes_ptr;
+  auto sequence_nodes_size = source_sequence_nodes.size();
+  for (size_t i = 0; i < sequence_nodes_size; ++i) {
+    // Lock sequence nodes of this.
+    auto &source_weak_node = source_sequence_nodes[i];
+    auto this_sequence_node = source_weak_node.lock();
+    if (this_sequence_node == nullptr) {
+      continue;
+    }
+    // Check and emplace sequence node for this.
+    auto this_iter = std::find_if(
+      sequence_nodes.begin(), sequence_nodes.end(),
+      [&this_sequence_node](const AnfNodeWeakPtr &weak_node) { return this_sequence_node == weak_node.lock(); });
+    if (this_iter == sequence_nodes.end()) {
+      sequence_nodes.emplace_back(AnfNodeWeakPtr(this_sequence_node));
+    }
+  }
+}
+
+void SynchronizeSequenceNodesElementsUseFlags(const AnfNodeWeakPtrList &sequence_nodes) {
+  // Synchronize the elements use flags for all sequence nodes.
+  auto current_sequence_node = sequence_nodes[0].lock();
+  MS_EXCEPTION_IF_NULL(current_sequence_node);
+  for (size_t i = 1; i < sequence_nodes.size(); ++i) {
+    // Synchronize the 'elements_use_flags' for all sequence node.
+    // We set the same 'elements_use_flags' for them after here.
+    auto latter_sequence_node = sequence_nodes[i].lock();
+    MS_EXCEPTION_IF_NULL(latter_sequence_node);
+    // The 'current_sequence_node' is not equal to 'latter_sequence_node'.
+    auto current_flags = GetSequenceNodeElementsUseFlags(current_sequence_node);
+    auto latter_flags = GetSequenceNodeElementsUseFlags(latter_sequence_node);
+    std::shared_ptr<std::vector<bool>> unique_flags = nullptr;  // Choose the ptr (use_count > 1) as unique flags.
+    if (current_flags.use_count() == 1 && latter_flags.use_count() == 1) {
+      unique_flags = current_flags;
+    } else {
+      MS_EXCEPTION_IF_CHECK_FAIL(current_flags.use_count() > 1 && latter_flags.use_count() > 1,
+                                 "Allow only one side has more than one use count.");
+      if (current_flags.use_count() > 1) {
+        unique_flags = current_flags;
+      } else {  // If latter_flags.use_count() > 1
+        unique_flags = latter_flags;
+      }
+    }
+    for (size_t j = 0; j < current_flags->size(); ++j) {
+      MS_LOG(DEBUG) << "Check elements_use_flags[" << j << "], this_flag: " << (*current_flags)[j]
+                    << ", other_flag: " << (*latter_flags)[j];
+      if ((*current_flags)[j] != (*latter_flags)[j]) {
+        (*unique_flags)[j] = true;
+      } else {
+        (*unique_flags)[j] = (*current_flags)[j];
+      }
+    }
+    if (unique_flags != current_flags) {
+      SetSequenceNodeElementsUseFlags(current_sequence_node, unique_flags);
+    }
+    if (unique_flags != latter_flags) {
+      SetSequenceNodeElementsUseFlags(latter_sequence_node, unique_flags);
+    }
+  }
+}
+}  // namespace
+
+AnfNodeWeakPtrList AbstractSequence::SequenceNodesJoin(const AbstractBasePtr &other) {
+  AnfNodeWeakPtrList sequence_nodes;
+  static const auto eliminate_unused_element = common::GetEnv("MS_DEV_ELIMINATE_SEQUENCE_UNUSED_ELEMENT");
+  static const auto enable_eliminate_unused_element = (eliminate_unused_element == "1");
+  if (!enable_eliminate_unused_element) {
+    return sequence_nodes;
+  }
+
+  MS_LOG(DEBUG) << "this: " << ToString() << ", other: " << other->ToString();
+  auto other_sequence = dyn_cast<AbstractSequence>(other);
+  auto this_sequence_nodes_size = sequence_nodes_.size();
+  auto other_sequence_nodes_size = (other_sequence != nullptr ? other_sequence->sequence_nodes_.size() : 0);
+  if (this_sequence_nodes_size == 0 && other_sequence_nodes_size == 0) {
+    return sequence_nodes;
+  }
+  // Collect this and other sequence nodes.
+  CollectSequenceNodes(sequence_nodes_, &sequence_nodes);
+  CollectSequenceNodes(other_sequence->sequence_nodes_, &sequence_nodes);
+  if (sequence_nodes.empty()) {
+    MS_LOG(EXCEPTION) << "Sequence nodes size should not be empty.";
+  }
+  // Synchronize the elements use flags for all sequence nodes.
+  SynchronizeSequenceNodesElementsUseFlags(sequence_nodes);
+  return sequence_nodes;
+}
+
+void AbstractSequence::PurifyElements() {
+  if (sequence_nodes_.empty()) {
+    return;
+  }
+  // Just use any sequence node's elements_use_flags.
+  std::shared_ptr<std::vector<bool>> elements_use_flags_ptr = nullptr;
+  for (auto &weak_node : sequence_nodes_) {
+    auto sequence_node = weak_node.lock();
+    if (sequence_node == nullptr) {
+      MS_LOG(DEBUG) << "The node in sequence_nodes is free.";
+      continue;
+    }
+    auto flags = GetSequenceNodeElementsUseFlags(sequence_node);
+    if (flags != nullptr) {
+      elements_use_flags_ptr = flags;
+      break;
+    }
+  }
+  // Purify the elements.
+  if (elements_use_flags_ptr == nullptr) {
+    MS_LOG(ERROR) << "Check if all sequence nodes are released, or none elements use flags in them. " << ToString();
+    return;
+  }
+  auto &elements_use_flags = *elements_use_flags_ptr;
+  if (elements_use_flags.size() != elements_.size()) {
+    MS_LOG(EXCEPTION) << "Elements size should be equal to elements use flags size.";
+  }
+  for (size_t i = 0; i < elements_use_flags.size(); ++i) {
+    MS_EXCEPTION_IF_NULL(elements_[i]);
+    if (!elements_use_flags[i]) {
+      const auto unuse_node_none = std::make_shared<AbstractScalar>(std::make_shared<Int32Imm>(0));
+      elements_[i] = unuse_node_none;
+      MS_LOG(INFO) << "Set element[" << i << "] to Zero.";
+    } else {
+      MS_LOG(DEBUG) << "Keep element[" << i << "] as " << elements_[i]->ToString();
+    }
+  }
+}
+
 TypePtrList AbstractSequence::ElementsType() const {
   TypePtrList element_type_list;
-  for (const auto &ele : elements_) {
-    MS_EXCEPTION_IF_NULL(ele);
-    TypePtr element_type = ele->BuildType();
+  for (const auto &element : elements_) {
+    MS_EXCEPTION_IF_NULL(element);
+    TypePtr element_type = element->BuildType();
     element_type_list.push_back(element_type);
   }
   return element_type_list;
@@ -268,50 +426,50 @@ TypePtrList AbstractSequence::ElementsType() const {
 
 BaseShapePtrList AbstractSequence::ElementsShape() const {
   BaseShapePtrList element_shape_list;
-  for (const auto &ele : elements_) {
-    MS_EXCEPTION_IF_NULL(ele);
-    BaseShapePtr element_shape = ele->BuildShape();
+  for (const auto &element : elements_) {
+    MS_EXCEPTION_IF_NULL(element);
+    BaseShapePtr element_shape = element->BuildShape();
     element_shape_list.push_back(element_shape);
   }
   return element_shape_list;
 }
 
 AbstractBasePtrList AbstractSequence::ElementsClone() const {
-  AbstractBasePtrList ele_list;
-  for (const auto &ele : elements_) {
-    MS_EXCEPTION_IF_NULL(ele);
-    AbstractBasePtr clone = ele->Clone();
-    ele_list.push_back(clone);
+  AbstractBasePtrList element_list;
+  for (const auto &element : elements_) {
+    MS_EXCEPTION_IF_NULL(element);
+    AbstractBasePtr clone = element->Clone();
+    element_list.push_back(clone);
   }
-  return ele_list;
+  return element_list;
 }
 
 AbstractBasePtrList AbstractSequence::ElementsBroaden() const {
-  AbstractBasePtrList ele_list;
-  for (const auto &ele : elements_) {
-    MS_EXCEPTION_IF_NULL(ele);
-    AbstractBasePtr broadend = ele->Broaden();
-    ele_list.push_back(broadend);
+  AbstractBasePtrList element_list;
+  for (const auto &element : elements_) {
+    MS_EXCEPTION_IF_NULL(element);
+    AbstractBasePtr broadend = element->Broaden();
+    element_list.push_back(broadend);
   }
-  return ele_list;
+  return element_list;
 }
 
 AbstractBasePtrList AbstractSequence::ElementsPartialBroaden() const {
-  AbstractBasePtrList ele_list;
-  for (const auto &ele : elements_) {
-    MS_EXCEPTION_IF_NULL(ele);
-    AbstractBasePtr broadend = ele->PartialBroaden();
-    ele_list.push_back(broadend);
+  AbstractBasePtrList element_list;
+  for (const auto &element : elements_) {
+    MS_EXCEPTION_IF_NULL(element);
+    AbstractBasePtr broadend = element->PartialBroaden();
+    element_list.push_back(broadend);
   }
-  return ele_list;
+  return element_list;
 }
 
 template <typename T>
 ValuePtr AbstractSequence::ElementsBuildValue() const {
   std::vector<ValuePtr> element_value_list;
-  for (const auto &ele : elements_) {
-    MS_EXCEPTION_IF_NULL(ele);
-    ValuePtr element_value = ele->BuildValue();
+  for (const auto &element : elements_) {
+    MS_EXCEPTION_IF_NULL(element);
+    ValuePtr element_value = element->BuildValue();
     MS_EXCEPTION_IF_NULL(element_value);
     if (element_value->isa<AnyValue>()) {
       return kAnyValue;

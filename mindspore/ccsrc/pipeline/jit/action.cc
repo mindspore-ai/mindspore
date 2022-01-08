@@ -257,20 +257,20 @@ using CompileGraphs = compile::CompileGraphs;
 using abstract::AnalysisResult;
 using mindspore::abstract::AnalysisContextPtr;
 
-abstract::AnalysisResult AbstractAnalyze(const ResourcePtr &res, const FuncGraphPtr &func_graph,
+abstract::AnalysisResult AbstractAnalyze(const ResourcePtr &resource, const FuncGraphPtr &func_graph,
                                          const abstract::AbstractBasePtrList &args_spec, bool clear) {
   MS_LOG(DEBUG) << "AbstractAnalyze start";
-  auto engine = res->engine();
+  auto engine = resource->engine();
   MS_EXCEPTION_IF_NULL(engine);
   if (clear) {
-    auto manager = res->manager();
+    auto manager = resource->manager();
     MS_EXCEPTION_IF_NULL(manager);
     engine->Clear();
     for (auto &node : manager->all_nodes()) {
       MS_EXCEPTION_IF_NULL(node);
 
       // Handle previous inferred value for CNode if is loaded from MindIR
-      if (res->is_load()) {
+      if (resource->is_load()) {
         // If the primitive is not defined in front end,keep the inferred value loaded from MindIR.
         auto primitive = GetCNodePrimitive(node);
         if (primitive != nullptr && abstract::GetPrimEvaluator(primitive, engine) == nullptr) {
@@ -287,19 +287,19 @@ abstract::AnalysisResult AbstractAnalyze(const ResourcePtr &res, const FuncGraph
       }
     }
   }
-  auto ret = engine->Run(func_graph, args_spec);
+  auto res = engine->Run(func_graph, args_spec);
   MS_LOG(INFO) << "function call max depth: " << abstract::FunctionCallMaxDepth()
                << ", simulate call max depth: " << abstract::StackFrameMaxDepth();
   MS_LOG(DEBUG) << "AbstractAnalyze end";
-  return ret;
+  return res;
 }
 
 FuncGraphPtr ProgramSpecialize(const ResourcePtr &res, const FuncGraphPtr &func_graph,
                                const abstract::AnalysisContextPtr &context) {
   MS_EXCEPTION_IF_NULL(res);
   MS_LOG(DEBUG) << "ProgramSpecialize start";
-  abstract::ProgramSpecializer spc(res->engine());
-  FuncGraphPtr result = spc.Run(func_graph, context);
+  abstract::ProgramSpecializer specializer(res->engine());
+  FuncGraphPtr result = specializer.Run(func_graph, context);
   auto manager = res->manager();
   MS_EXCEPTION_IF_NULL(manager);
   manager->KeepRoots({result});

@@ -66,6 +66,56 @@ class PythonPrimEvaluator final : public TrivialPrimEvaluator {
   PrimitivePyPtr prim_py_;
 };
 
+using ValuePtrList = std::vector<ValuePtr>;
+using PrimitiveImpl = ValuePtr (*)(const ValuePtrList &);
+
+class UniformPrimEvaluator final : public TrivialPrimEvaluator {
+ public:
+  UniformPrimEvaluator(const FunctionPtr func_desc, PrimitiveImpl impl, bool eval_value, const TypePtr specify_out_type)
+      : TrivialPrimEvaluator("UniformPrimEvaluator"),
+        impl_(impl),
+        eval_value_(eval_value),
+        func_desc_(func_desc),
+        nargs_(func_desc_->args().size()),
+        return_value_type_(func_desc_->retval()),
+        specify_out_type_(specify_out_type) {
+    for (size_t i = 0; i < nargs_; ++i) {
+      TypePtr type = func_desc_->args()[i];
+      if (type_map_[type]) {
+        type_map_[type]->push_back(i);
+      } else {
+        type_map_[type] = std::make_shared<std::vector<size_t>>();
+        type_map_[type]->push_back(i);
+      }
+    }
+  }
+  ~UniformPrimEvaluator() override = default;
+  MS_DECLARE_PARENT(UniformPrimEvaluator, TrivialPrimEvaluator);
+
+  EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args) override;
+  ValuePtr RunImpl(const ValuePtrList &args) const;
+
+  // If eval_value_ is False, return broadened arguments.
+  AbstractBasePtrList NormalizeArgs(const AbstractBasePtrList &args_spec_list) const override {
+    if (!eval_value_) {
+      AbstractBasePtrList broadened_args_spec_list;
+      (void)std::transform(args_spec_list.begin(), args_spec_list.end(), std::back_inserter(broadened_args_spec_list),
+                           [](const AbstractBasePtr &arg) -> AbstractBasePtr { return arg->Broaden(); });
+      return broadened_args_spec_list;
+    }
+    return args_spec_list;
+  }
+
+ private:
+  PrimitiveImpl impl_;
+  bool eval_value_;
+  const FunctionPtr func_desc_;
+  const std::size_t nargs_;
+  const TypePtr return_value_type_;
+  const TypePtr specify_out_type_;
+  mindspore::HashMap<TypePtr, std::shared_ptr<std::vector<size_t>>, TypeHasher, TypeEqual> type_map_;
+};
+
 class DoSignatureEvaluator final : public Evaluator {
  public:
   explicit DoSignatureEvaluator(const PrimitivePtr primitive) : Evaluator("DoSignatureEvaluator"), prim_(primitive) {}
@@ -116,56 +166,6 @@ class MixedPrecisionCastEvaluator final : public Evaluator {
 };
 
 bool IsInWhiteList(const PrimitivePtr &primitive);
-
-using ValuePtrList = std::vector<ValuePtr>;
-using PrimitiveImpl = ValuePtr (*)(const ValuePtrList &);
-
-class UniformPrimEvaluator final : public TrivialPrimEvaluator {
- public:
-  UniformPrimEvaluator(const FunctionPtr func_desc, PrimitiveImpl impl, bool eval_value, const TypePtr specify_out_type)
-      : TrivialPrimEvaluator("UniformPrimEvaluator"),
-        impl_(impl),
-        eval_value_(eval_value),
-        func_desc_(func_desc),
-        nargs_(func_desc_->args().size()),
-        return_value_type_(func_desc_->retval()),
-        specify_out_type_(specify_out_type) {
-    for (size_t i = 0; i < nargs_; ++i) {
-      TypePtr type = func_desc_->args()[i];
-      if (type_map_[type]) {
-        type_map_[type]->push_back(i);
-      } else {
-        type_map_[type] = std::make_shared<std::vector<size_t>>();
-        type_map_[type]->push_back(i);
-      }
-    }
-  }
-  ~UniformPrimEvaluator() override = default;
-  MS_DECLARE_PARENT(UniformPrimEvaluator, TrivialPrimEvaluator);
-
-  EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args) override;
-  ValuePtr RunImpl(const ValuePtrList &args) const;
-
-  // If eval_value_ is False, return broadened arguments.
-  AbstractBasePtrList NormalizeArgs(const AbstractBasePtrList &args_spec_list) const override {
-    if (!eval_value_) {
-      AbstractBasePtrList broadened_args_spec_list;
-      (void)std::transform(args_spec_list.begin(), args_spec_list.end(), std::back_inserter(broadened_args_spec_list),
-                           [](const AbstractBasePtr &arg) -> AbstractBasePtr { return arg->Broaden(); });
-      return broadened_args_spec_list;
-    }
-    return args_spec_list;
-  }
-
- private:
-  PrimitiveImpl impl_;
-  bool eval_value_;
-  const FunctionPtr func_desc_;
-  const std::size_t nargs_;
-  const TypePtr return_value_type_;
-  const TypePtr specify_out_type_;
-  mindspore::HashMap<TypePtr, std::shared_ptr<std::vector<size_t>>, TypeHasher, TypeEqual> type_map_;
-};
 
 PrimEvaluatorMap &GetPrimEvaluatorConstructors();
 

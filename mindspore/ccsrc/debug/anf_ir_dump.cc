@@ -60,16 +60,46 @@ void PrintKernelFormatAndType(std::ostringstream &buffer, const std::string &fmt
   buffer << ">";
 }
 
+void PrintTupleNodeUsedFlags(std::ostringstream &buffer, const abstract::AbstractSequencePtr &sequence_abs) {
+  if (sequence_abs == nullptr || sequence_abs->sequence_nodes().empty()) {
+    return;
+  }
+
+  buffer << ", sequence_nodes={";
+  for (size_t i = 0; i < sequence_abs->sequence_nodes().size(); ++i) {
+    auto node = sequence_abs->sequence_nodes()[i].lock();
+    if (node == nullptr) {
+      MS_LOG(DEBUG) << "The node in sequence_nodes is free.";
+      buffer << "node={<freed node>}";
+    } else {
+      buffer << "node={" << node->DebugString();
+      auto flags = GetSequenceNodeElementsUseFlags(node);
+      if (flags != nullptr) {
+        buffer << ", elements_use_flags=" << (*flags) << "}";
+      }
+    }
+    if (i != sequence_abs->sequence_nodes().size() - 1) {
+      buffer << ", ";
+    }
+  }
+  buffer << "}";
+}
+
 void PrintNodeOutputType(std::ostringstream &buffer, const AnfNodePtr &node) {
   if (node == nullptr) {
     return;
   }
 
   ValuePtr tensor_value = nullptr;
+  abstract::AbstractSequencePtr sequence_abs = nullptr;
   auto abstract = node->abstract();
-  if (abstract != nullptr && abstract->isa<abstract::AbstractTensor>()) {
-    tensor_value = abstract->BuildValue();
+  if (abstract != nullptr) {
+    if (abstract->isa<abstract::AbstractTensor>()) {
+      tensor_value = abstract->BuildValue();
+    }
+    sequence_abs = dyn_cast<abstract::AbstractSequence>(abstract);
   }
+
   abstract::ShapePtr shape = dyn_cast<abstract::Shape>(node->Shape());
   TypePtr type = dyn_cast<Type>(node->Type());
   if ((shape != nullptr) && (type != nullptr)) {
@@ -77,12 +107,14 @@ void PrintNodeOutputType(std::ostringstream &buffer, const AnfNodePtr &node) {
     if (tensor_value != nullptr && tensor_value != kAnyValue) {
       buffer << ", value=...";
     }
+    PrintTupleNodeUsedFlags(buffer, sequence_abs);
     buffer << ">";
   } else if (type != nullptr) {
     buffer << "<" << type;
     if (tensor_value != nullptr && tensor_value != kAnyValue) {
       buffer << ", value=...";
     }
+    PrintTupleNodeUsedFlags(buffer, sequence_abs);
     buffer << ">";
   } else {
     buffer << "<null>";

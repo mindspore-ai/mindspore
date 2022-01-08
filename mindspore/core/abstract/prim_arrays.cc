@@ -136,6 +136,8 @@ AbstractBasePtr InferImplStack(const AnalysisEnginePtr &, const PrimitivePtr &pr
     arg = CheckArg<AbstractTuple>(op_name, args_spec_list, 0);
     tuple_len = arg->elements().size();
     tensor_base = CheckArg<AbstractTensor>(op_name, arg->elements(), 0);
+    // For Stack(tuple), set all used flags of tuple as true.
+    SetSequenceElementsUseFlags(args_spec_list[0], true);
   } else if (args_spec_list[0]->isa<AbstractTensor>()) {
     tuple_len = args_spec_list.size();
     tensor_base = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);

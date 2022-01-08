@@ -111,7 +111,7 @@ TEST_F(TestStandardEvaluator, test_multiple_conv2d) {
   std::vector<int64_t> shape = {2, 2, 6, 6};
   expected->set_shape(std::make_shared<Shape>(shape));
 
-  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred->abstract();
+  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).eval_result->abstract();
   MS_LOG(INFO) << "result: " << res->ToString();
   MS_LOG(INFO) << "expected: " << expected->ToString();
 
@@ -143,7 +143,7 @@ TEST_F(TestPartialEvaluator, test_infer_dataclass_resolved) {
   AbstractBasePtr abstract_x = FromValue(x, false);
   args_spec_list.push_back(abstract_x);
 
-  AbstractBasePtr abs_base_got = engine_->Run(func_graph, args_spec_list).inferred->abstract();
+  AbstractBasePtr abs_base_got = engine_->Run(func_graph, args_spec_list).eval_result->abstract();
   ASSERT_TRUE(*(abs_base_got->GetTypeTrack()) == *(abstract_x->GetTypeTrack()));
   ASSERT_TRUE(abs_base_got->GetTypeTrack()->type_id() == kNumberTypeFloat32);
 }
@@ -159,7 +159,7 @@ TEST_F(TestPartialEvaluator, test_infer_dataclass_unresolved) {
   AbstractBasePtr abstract_x = FromValue(x, false);
   args_spec_list.push_back(abstract_x);
 
-  AbstractBasePtr abs_base_got = engine_->Run(func_graph, args_spec_list).inferred->abstract();
+  AbstractBasePtr abs_base_got = engine_->Run(func_graph, args_spec_list).eval_result->abstract();
   ASSERT_TRUE(*(abs_base_got->GetTypeTrack()) == *(abstract_x->GetTypeTrack()));
   ASSERT_TRUE(abs_base_got->GetTypeTrack()->type_id() == kNumberTypeFloat32);
 }
@@ -178,7 +178,7 @@ TEST_F(TestPartialEvaluator, test_infer_add_resolved) {
   args_spec_list.push_back(abstract_x);
   args_spec_list.push_back(abstract_y);
 
-  AbstractBasePtr abs_base_got = engine_->Run(func_graph, args_spec_list).inferred->abstract();
+  AbstractBasePtr abs_base_got = engine_->Run(func_graph, args_spec_list).eval_result->abstract();
   ASSERT_TRUE(*(abs_base_got->GetTypeTrack()) == *(abstract_x->GetTypeTrack()));
   ASSERT_TRUE(abs_base_got->GetTypeTrack()->type_id() == kNumberTypeFloat64);
 }
@@ -197,7 +197,7 @@ TEST_F(TestPartialEvaluator, test_infer_sub_unresolved) {
   args_spec_list.push_back(abstract_x);
   args_spec_list.push_back(abstract_y);
 
-  AbstractBasePtr abs_base_got = engine_->Run(func_graph, args_spec_list).inferred->abstract();
+  AbstractBasePtr abs_base_got = engine_->Run(func_graph, args_spec_list).eval_result->abstract();
   ASSERT_TRUE(*(abs_base_got->GetTypeTrack()) == *(abstract_x->GetTypeTrack()));
   ASSERT_TRUE(abs_base_got->GetTypeTrack()->type_id() == kNumberTypeFloat64);
 }
@@ -216,7 +216,7 @@ TEST_F(TestPartialEvaluator, test_infer_net_construct_add_resolved) {
   args_spec_list.push_back(abstract_x);
   args_spec_list.push_back(abstract_y);
 
-  AbstractBasePtr abs_base_got = engine_->Run(func_graph, args_spec_list).inferred->abstract();
+  AbstractBasePtr abs_base_got = engine_->Run(func_graph, args_spec_list).eval_result->abstract();
   ASSERT_TRUE(*(abs_base_got->GetTypeTrack()) == *(abstract_x->GetTypeTrack()));
   ASSERT_TRUE(abs_base_got->GetTypeTrack()->type_id() == kNumberTypeFloat64);
 }
@@ -235,7 +235,7 @@ TEST_F(TestPartialEvaluator, test_infer_construct_sub_unresolved) {
   args_spec_list.push_back(abstract_x);
   args_spec_list.push_back(abstract_y);
 
-  AbstractBasePtr abs_base_got = engine_->Run(func_graph, args_spec_list).inferred->abstract();
+  AbstractBasePtr abs_base_got = engine_->Run(func_graph, args_spec_list).eval_result->abstract();
   ASSERT_TRUE(*(abs_base_got->GetTypeTrack()) == *(abstract_x->GetTypeTrack()));
   ASSERT_TRUE(abs_base_got->GetTypeTrack()->type_id() == kNumberTypeFloat64);
 }

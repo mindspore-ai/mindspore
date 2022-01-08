@@ -240,7 +240,8 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
     const auto &node = parameters[i];
     AnfNodeConfigPtr conf = engine->MakeConfig(node, context, fg);
     engine->SaveEvalResultInCache(conf, std::make_shared<EvalResult>(arg, nullptr));
-    MS_LOG(DEBUG) << GetInferThread() << "Set Param: " << conf->ToString() << "   =   " << arg->ToString();
+    MS_LOG(DEBUG) << GetInferThread() << "Set parameter[" << i << "] for " << fg->ToString()
+                  << ", conf: " << conf->ToString() << ", arg: " << arg->ToString();
   }
   MS_LOG(DEBUG) << "Analysis FuncGraph begin, func graph: " << fg << "/" << fg->ToString()
                 << ", context: " << context->ToString() << ", return node: " << fg->get_return()->DebugString()
@@ -416,8 +417,8 @@ EvalResultPtr TrivialPrimEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
 
 EvalResultPtr TransitionPrimEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
                                            const AnfNodeConfigPtr &out_conf) {
-  if (args_conf_list.empty()) {
-    MS_LOG(EXCEPTION) << "Size should be greater than 0";
+  if (args_conf_list.empty() && identifier_ != "MakeTupleEvaluator" && identifier_ != "MakeListEvaluator") {
+    MS_LOG(EXCEPTION) << "Size should be greater than 0, during running " << identifier_;
   }
   AbstractBasePtrList args_spec_list;
   (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_spec_list),

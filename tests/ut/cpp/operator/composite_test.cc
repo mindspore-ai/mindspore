@@ -160,7 +160,8 @@ TEST_F(TestComposite, test_TupleSlice_arg_slice) {
   auto slice = std::make_shared<AbstractSlice>(start_index, stop_index, step);
   AbstractBasePtrList args_spec_list = {tuple_tensor, slice};
 
-  AbstractTuplePtr ret = dyn_cast<AbstractTuple>(engine_->Run(tupleSliceGraphPtr, args_spec_list).inferred->abstract());
+  AbstractTuplePtr ret =
+    dyn_cast<AbstractTuple>(engine_->Run(tupleSliceGraphPtr, args_spec_list).eval_result->abstract());
   if (ret == nullptr) {
     FAIL() << "Cast ret to abstract tuple failed.";
   }
@@ -186,7 +187,8 @@ TEST_F(TestComposite, test_TupleSlice_arg_slice_step_none) {
   auto slice = std::make_shared<AbstractSlice>(start_index, stop_index, step);
   AbstractBasePtrList args_spec_list = {tuple_tensor, slice};
 
-  AbstractTuplePtr ret = dyn_cast<AbstractTuple>(engine_->Run(tupleSliceGraphPtr, args_spec_list).inferred->abstract());
+  AbstractTuplePtr ret =
+    dyn_cast<AbstractTuple>(engine_->Run(tupleSliceGraphPtr, args_spec_list).eval_result->abstract());
   if (ret == nullptr) {
     FAIL() << "Cast ret to abstract tuple failed.";
   }
@@ -212,7 +214,8 @@ TEST_F(TestComposite, test_TupleSlice_arg_slice_step_negative) {
   auto slice = std::make_shared<AbstractSlice>(start_index, stop_index, step);
   AbstractBasePtrList args_spec_list = {tuple_tensor, slice};
 
-  AbstractTuplePtr ret = dyn_cast<AbstractTuple>(engine_->Run(tupleSliceGraphPtr, args_spec_list).inferred->abstract());
+  AbstractTuplePtr ret =
+    dyn_cast<AbstractTuple>(engine_->Run(tupleSliceGraphPtr, args_spec_list).eval_result->abstract());
   if (ret == nullptr) {
     FAIL() << "Cast ret to abstract tuple failed.";
   }
@@ -238,7 +241,8 @@ TEST_F(TestComposite, test_TupleSlice_arg_slice_step_positive) {
   auto slice = std::make_shared<AbstractSlice>(start_index, stop_index, step);
   AbstractBasePtrList args_spec_list = {tuple_tensor, slice};
 
-  AbstractTuplePtr ret = dyn_cast<AbstractTuple>(engine_->Run(tupleSliceGraphPtr, args_spec_list).inferred->abstract());
+  AbstractTuplePtr ret =
+    dyn_cast<AbstractTuple>(engine_->Run(tupleSliceGraphPtr, args_spec_list).eval_result->abstract());
   if (ret == nullptr) {
     FAIL() << "Cast ret to abstract tuple failed.";
   }
@@ -265,7 +269,8 @@ TEST_F(TestComposite, test_UnpackCall_3args) {
   abstract::AbstractDictionaryPtr tensor_dict = std::make_shared<abstract::AbstractDictionary>(tensor_map);
 
   AbstractBasePtrList args_spec_list = {fn_arg, tensor_tuple, tensor_dict};
-  AbstractTuplePtr ret = dyn_cast<AbstractTuple>(engine_->Run(unPackCallGraphPtr, args_spec_list).inferred->abstract());
+  AbstractTuplePtr ret =
+    dyn_cast<AbstractTuple>(engine_->Run(unPackCallGraphPtr, args_spec_list).eval_result->abstract());
   if (ret == nullptr) {
     FAIL() << "Cast ret to abstract tuple failed.";
   }
@@ -292,7 +297,8 @@ TEST_F(TestComposite, test_UnpackCall_5args) {
   abstract::AbstractDictionaryPtr tensor_dict = std::make_shared<abstract::AbstractDictionary>(tensor_map);
 
   AbstractBasePtrList args_spec_list = {fn_arg, tensor_dict, tensor_tuple, tensor_dict, tensor_tuple};
-  AbstractTuplePtr ret = dyn_cast<AbstractTuple>(engine_->Run(unPackCallGraphPtr, args_spec_list).inferred->abstract());
+  AbstractTuplePtr ret =
+    dyn_cast<AbstractTuple>(engine_->Run(unPackCallGraphPtr, args_spec_list).eval_result->abstract());
   if (ret == nullptr) {
     FAIL() << "Cast ret to abstract tuple failed.";
   }
@@ -314,7 +320,7 @@ TEST_F(TestComposite, test_ZipOperation) {
   auto tuple = std::make_shared<AbstractTuple>(eles);
   AbstractBasePtrList args_spec_list = {tuple};
 
-  AbstractTuplePtr ret = dyn_cast<AbstractTuple>(engine_->Run(zip_op_graph, args_spec_list).inferred->abstract());
+  AbstractTuplePtr ret = dyn_cast<AbstractTuple>(engine_->Run(zip_op_graph, args_spec_list).eval_result->abstract());
   if (ret == nullptr) {
     FAIL() << "Cast ret to abstract tuple failed.";
   }
@@ -362,7 +368,7 @@ TEST_F(TestComposite, test_shard) {
   auto tensor = UTCompositeUtils::ArrayInt32Of({2, 3, 4});
   AbstractBasePtrList args_spec_list = {tensor};
 
-  auto ret = engine_->Run(shard_func_graph, args_spec_list).inferred->abstract();
+  auto ret = engine_->Run(shard_func_graph, args_spec_list).eval_result->abstract();
   ASSERT_NE(ret, nullptr);
   ASSERT_TRUE(ret->isa<abstract::AbstractTensor>());
   auto build_shape = ret->BuildShape();
