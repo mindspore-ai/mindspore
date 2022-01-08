@@ -48,7 +48,11 @@ void LiteEntranceOpActor::InitInputData() {
   for (size_t i = 0; i < inputs_data_.size(); ++i) {
     auto dst_tensor = kernel_->out_tensors()[i + 1];
     auto src_tensor = inputs_data_[i];
-    MoveInputData(dst_tensor, src_tensor);
+    if (src_tensor->allocator() == nullptr || src_tensor->IsGraphInput()) {
+      SetInputData(dst_tensor, src_tensor);
+    } else {
+      MoveInputData(dst_tensor, src_tensor);
+    }
   }
   return;
 }

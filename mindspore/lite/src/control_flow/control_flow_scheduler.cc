@@ -23,6 +23,7 @@
 #include "nnacl/call_parameter.h"
 #include "src/control_flow/entrance_subgraph_kernel.h"
 #include "src/control_flow/exit_subgraph_kernel.h"
+#include "src/control_flow/output_kernel.h"
 
 namespace mindspore::lite {
 int ControlFlowScheduler::SplitNonTailCallSubGraphs(std::vector<kernel::LiteKernel *> *dst_kernels) {
@@ -186,6 +187,10 @@ void ControlFlowScheduler::RecordSubgraphCaller(const size_t &subgraph_index, ke
 
 kernel::SubGraphKernel *ControlFlowScheduler::CreateEntranceSubGraph(kernel::SubGraphKernel *subgraph,
                                                                      lite::Tensor *link_tensor) {
+  if (subgraph == nullptr || link_tensor == nullptr) {
+    MS_LOG(ERROR) << "input is nullptr.";
+    return nullptr;
+  }
   size_t in_tensor_size = subgraph->in_tensors().size();
   std::vector<Tensor *> old_input_tensors{};
   // entrance subgraph kernel first output tensor is the first input of the corresponding exit subgraph kernel.
@@ -214,6 +219,10 @@ kernel::SubGraphKernel *ControlFlowScheduler::CreateEntranceSubGraph(kernel::Sub
 
 kernel::SubGraphKernel *ControlFlowScheduler::CreateExitSubGraph(kernel::SubGraphKernel *subgraph,
                                                                  lite::Tensor *link_tensor) {
+  if (subgraph == nullptr || link_tensor == nullptr) {
+    MS_LOG(ERROR) << "input is nullptr.";
+    return nullptr;
+  }
   size_t out_tensor_size = subgraph->out_tensors().size();
   std::vector<Tensor *> old_output_tensors{};
   // exit subgraph kernel first input tensor is the first output of the corresponding entrance subgraph kernel.
@@ -240,6 +249,46 @@ kernel::SubGraphKernel *ControlFlowScheduler::CreateExitSubGraph(kernel::SubGrap
   return exit_subgraph;
 }
 
+kernel::SubGraphKernel *ControlFlowScheduler::AddOutputKernel(kernel::SubGraphKernel *subgraph) {
+  auto inputs = subgraph->in_tensors();
+  auto outputs = subgraph->out_tensors();
+  auto nodes = subgraph->nodes();
+
+  auto call_node = subgraph->out_nodes().front();
+  reinterpret_cast<CallParameter *>(call_node->op_parameter())->is_tail_call = false;
+
+  size_t out_tensor_size = call_node->out_tensors().size();
+  std::vector<Tensor *> old_output_tensors{};
+  std::vector<Tensor *> new_output_tensors{};
+  for (size_t i = 0; i < out_tensor_size; i++) {
+    Tensor *old_tensor = subgraph->out_tensors()[i];
+    old_output_tensors.push_back(old_tensor);
+    auto allocator = old_tensor->allocator();
+    if (allocator == nullptr && subgraph->Context() != nullptr && subgraph->desc().arch != kernel::kDelegate) {
+      allocator = subgraph->Context()->allocator;
+    }
+    auto new_tensor = Tensor::CopyTensor(*old_tensor, false, allocator);
+    if (new_tensor == nullptr) {
+      MS_LOG(ERROR) << "new Tensor failed.";
+      return nullptr;
+    }
+    src_tensors_->push_back(new_tensor);
+    new_output_tensors.push_back(new_tensor);
+    kernel::LiteKernelUtil::ReplaceSubGraphNodesOutTensor(subgraph, old_tensor, new_tensor);
+    call_node->set_out_tensor(new_tensor, i);
+    context_->ReplaceLinkInfoReceiverWithNewOne(new_tensor, old_tensor);
+  }
+  auto output_node = kernel::OutputKernel::Create(new_output_tensors, old_output_tensors, this->context_);
+  output_node->set_name(call_node->name() + "_output");
+  output_node->AddInKernel(call_node);
+  call_node->AddOutKernel(output_node);
+  nodes.push_back(output_node);
+  auto subgraph_type = subgraph->subgraph_type();
+  auto new_subgraph =
+    kernel::LiteKernelUtil::CreateSubGraphKernel(nodes, &inputs, &outputs, subgraph_type, *context_, schema_version_);
+  return new_subgraph;
+}
+
 int ControlFlowScheduler::BuildBoundaryForMultipleCalledGraph(std::vector<kernel::LiteKernel *> *dst_kernels) {
   kernel::LiteKernelUtil::FindAllInoutKernels(*dst_kernels);
 
@@ -255,10 +304,6 @@ int ControlFlowScheduler::BuildBoundaryForMultipleCalledGraph(std::vector<kernel
     MS_CHECK_TRUE_MSG(aim_kernels.size() == 1, RET_ERROR, "partial subgraph kernels size not right.");
     auto subgraph = reinterpret_cast<kernel::SubGraphKernel *>(aim_kernels.front());
     MS_CHECK_TRUE_MSG(subgraph != nullptr, RET_ERROR, "subgraph is nullptr");
-    if (kernel::LiteKernelUtil::IsTailCallSubGraph(subgraph)) {
-      MS_LOG(DEBUG) << "tail call graph or output graph no need to build boundary.";
-      continue;
-    }
 
     std::vector<kernel::LiteKernel *> all_call_nodes{};
     for (auto partial_node : item.second) {
@@ -267,8 +312,7 @@ int ControlFlowScheduler::BuildBoundaryForMultipleCalledGraph(std::vector<kernel
     }
 
     // all of the caller is tail call, continue
-    if (kernel::LiteKernelUtil::IsOutputSubGraph(subgraph) &&
-        std::all_of(all_call_nodes.begin(), all_call_nodes.end(),
+    if (std::all_of(all_call_nodes.begin(), all_call_nodes.end(),
                     [](kernel::LiteKernel *call_node) { return kernel::LiteKernelUtil::IsTailCall(call_node); })) {
       MS_LOG(DEBUG) << "graph is output graph and caller is tail call, no need to build boundary.";
       continue;
@@ -313,6 +357,104 @@ int ControlFlowScheduler::BuildBoundaryForMultipleCalledGraph(std::vector<kernel
       auto partial_kernel = reinterpret_cast<kernel::PartialFusionKernel *>(partial_node->kernel());
       MS_CHECK_TRUE_MSG(partial_kernel != nullptr, RET_ERROR, "cast to partial kernel failed.");
       partial_kernel->set_subgraph_kernels(subgraph_kernels);
+    }
+  }
+  return RET_OK;
+}
+
+int ControlFlowScheduler::BuildOutputForCallOutputGraph(std::vector<kernel::LiteKernel *> *dst_kernels) {
+  kernel::LiteKernel *main_graph_kernel = dst_kernels->front();
+  if (!kernel::LiteKernelUtil::IsOutputSubGraph(main_graph_kernel)) {
+    MS_LOG(DEBUG) << "Not is output graph.";
+    return RET_OK;
+  }
+
+  auto subgraph = reinterpret_cast<kernel::SubGraphKernel *>(main_graph_kernel);
+  MS_CHECK_TRUE_MSG(subgraph != nullptr, RET_ERROR, "cast to subgraph failed.");
+  if (subgraph->out_nodes().size() != 1 && subgraph->out_nodes().front()->type() != schema::PrimitiveType_Call) {
+    MS_LOG(DEBUG) << "main graph output is not call node.";
+    return RET_OK;
+  }
+
+  auto new_subgraph = AddOutputKernel(subgraph);
+  MS_CHECK_TRUE_MSG(new_subgraph != nullptr, RET_ERROR, "create output subgraph failed.");
+  new_subgraph->set_name(subgraph->name());
+  dst_kernels->emplace_back(new_subgraph);
+
+  std::set<kernel::LiteKernel *> useless_kernels{subgraph};
+  RemoveUselessKernels(dst_kernels, &useless_kernels);
+  return RET_OK;
+}
+
+int ControlFlowScheduler::GetTailCallFinalSubgraphs(std::queue<kernel::LiteKernel *> *tail_call_q,
+                                                    std::vector<kernel::LiteKernel *> *final_graphs,
+                                                    std::set<kernel::LiteKernel *> reviewed_graphs) {
+  if (tail_call_q->empty()) {
+    return RET_OK;
+  }
+  auto tail_call = tail_call_q->front();
+  tail_call_q->pop();
+  auto partials = kernel::LiteKernelUtil::GetCallInputPartials(tail_call);
+  for (auto partial : partials) {
+    auto partial_kernel = reinterpret_cast<kernel::PartialFusionKernel *>(partial->kernel());
+    MS_CHECK_TRUE_MSG(partial_kernel != nullptr, RET_ERROR, "cast to partial kernel failed.");
+    // only get the output subgraph, the last subgraph is the output subgraph.
+    auto subgraphs = partial_kernel->subgraph_kernels();
+    for (auto subgraph : subgraphs) {
+      auto subgraph_kernel = reinterpret_cast<kernel::SubGraphKernel *>(subgraph);
+      if (kernel::LiteKernelUtil::IsTailCallSubGraph(subgraph_kernel)) {
+        if (reviewed_graphs.find(subgraph) == reviewed_graphs.end()) {
+          tail_call_q->push(subgraph_kernel->out_nodes().front());
+          reviewed_graphs.insert(subgraph);
+        }
+      } else {
+        final_graphs->push_back(subgraph);
+      }
+    }
+  }
+  return GetTailCallFinalSubgraphs(tail_call_q, final_graphs, reviewed_graphs);
+}
+
+int ControlFlowScheduler::RecordTailCallLinkInfo(kernel::LiteKernel *tail_call) {
+  std::queue<kernel::LiteKernel *> tail_call_q{};
+  tail_call_q.push(tail_call);
+  std::vector<kernel::LiteKernel *> final_graphs{};
+  std::set<kernel::LiteKernel *> reviewed_graphs{};
+  auto ret = GetTailCallFinalSubgraphs(&tail_call_q, &final_graphs, reviewed_graphs);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "GetTailCallFinalSubgraphs failed.";
+    return ret;
+  }
+
+  if (std::any_of(final_graphs.begin(), final_graphs.end(), [&tail_call](kernel::LiteKernel *item) {
+        return item->out_tensors().size() != tail_call->out_tensors().size();
+      })) {
+    MS_LOG(DEBUG) << "not is mindir model, return ok.";
+    return RET_OK;
+  }
+
+  for (auto final_graph : final_graphs) {
+    for (size_t i = 0; i < final_graph->out_tensors().size(); ++i) {
+      context_->SetLinkInfo(final_graph->out_tensors()[i], tail_call->out_tensors()[i]);
+    }
+  }
+  return RET_OK;
+}
+
+int ControlFlowScheduler::RecordAllTailCallLinkInfo(std::vector<kernel::LiteKernel *> *dst_kernels) {
+  std::vector<kernel::LiteKernel *> all_tail_calls{};
+  for (auto dst_kernel : *dst_kernels) {
+    auto subgraph_kernel = reinterpret_cast<kernel::SubGraphKernel *>(dst_kernel);
+    if (kernel::LiteKernelUtil::IsTailCallSubGraph(subgraph_kernel)) {
+      all_tail_calls.push_back(subgraph_kernel->out_nodes().front());
+    }
+  }
+
+  for (auto tail_call : all_tail_calls) {
+    auto ret = RecordTailCallLinkInfo(tail_call);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "record tail call: " << tail_call->name() << " failed.";
+      return ret;
     }
   }
   return RET_OK;

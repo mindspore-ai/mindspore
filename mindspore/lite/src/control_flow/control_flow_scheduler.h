@@ -40,9 +40,12 @@ class ControlFlowScheduler {
   ~ControlFlowScheduler() = default;
   int SplitNonTailCallSubGraphs(std::vector<kernel::LiteKernel *> *dst_kernels);
   void RecordSubgraphCaller(const size_t &subgraph_index, kernel::LiteKernel *partial_node);
-  // we insert entrance subgraph kernel and exit subgraph kernel define the boundary of the subgraph.
+  // We insert entrance subgraph kernel and exit subgraph kernel define the boundary of the subgraph.
   int BuildBoundaryForMultipleCalledGraph(std::vector<kernel::LiteKernel *> *dst_kernels);
   std::vector<kernel::LiteKernel *> GetNonTailCalls() const { return non_tail_calls_; }
+  // When graph output is switch call node, output tensors not fixed, we need output subgraph holds the output tensors.
+  int BuildOutputForCallOutputGraph(std::vector<kernel::LiteKernel *> *dst_kernels);
+  int RecordAllTailCallLinkInfo(std::vector<kernel::LiteKernel *> *dst_kernels);
 
  private:
   int SplitSingleNonTailCallSubGraph(kernel::SubGraphKernel *subgraph_kernel,
@@ -56,6 +59,11 @@ class ControlFlowScheduler {
   int RecordNonTailCallLinkInfo();
   kernel::SubGraphKernel *CreateEntranceSubGraph(kernel::SubGraphKernel *subgraph, lite::Tensor *link_tensor);
   kernel::SubGraphKernel *CreateExitSubGraph(kernel::SubGraphKernel *subgraph, lite::Tensor *link_tensor);
+  kernel::SubGraphKernel *AddOutputKernel(kernel::SubGraphKernel *subgraph);
+  int GetTailCallFinalSubgraphs(std::queue<kernel::LiteKernel *> *tail_call_q,
+                                std::vector<kernel::LiteKernel *> *final_graphst,
+                                std::set<kernel::LiteKernel *> reviewed_graphs);
+  int RecordTailCallLinkInfo(kernel::LiteKernel *tail_call);
 
  private:
   InnerContext *context_ = nullptr;

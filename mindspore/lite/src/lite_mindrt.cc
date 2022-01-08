@@ -255,8 +255,10 @@ int LiteOpActor::CreateCommonArrow(const std::unordered_map<void *, std::set<std
                                    const std::set<void *> &receiver_tensors, const size_t &output_index,
                                    std::unordered_map<AID, std::set<size_t>> *receiver_index_set) {
   for (auto receiver_tensor : receiver_tensors) {
-    MS_CHECK_TRUE_MSG(receivers_map.find(receiver_tensor) != receivers_map.end(), RET_ERROR,
-                      "not find receiver_tensor in receivers_map");
+    if (receivers_map.find(receiver_tensor) == receivers_map.end()) {
+      MS_LOG(DEBUG) << "not a useful receiver.";
+      continue;
+    }
     if (partial_node_ != nullptr && subgraph_inputs_set.find(receiver_tensor) == subgraph_inputs_set.end()) {
       MS_LOG(DEBUG) << "not a need arrow for this actor.";
       continue;
