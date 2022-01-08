@@ -3,9 +3,7 @@ mindspore.nn.HSigmoid
 
 .. py:class:: mindspore.nn.HSigmoid
 
-    Hard Sigmoid激活函数。
-
-    按元素计算Hard Sigmoid激活函数。
+    Hard Sigmoid激活函数，按元素计算输出。
 
     Hard Sigmoid定义为：
 
@@ -16,7 +14,7 @@ mindspore.nn.HSigmoid
 
     **输入：**
 
-    - **input_x** (Tensor) - Hard Sigmoid的输入。shape为 :math:`(N,*)` ，其中 :math:`*` 表示任意的附加维度。
+    - **input_x** (Tensor) - Hard Sigmoid的输入，任意维度的Tensor。
           
     **输出：**
 

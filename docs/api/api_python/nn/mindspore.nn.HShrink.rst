@@ -3,7 +3,7 @@ mindspore.nn.HShrink
 
 .. py:class:: mindspore.nn.HShrink(lambd=0.5)
 
-    按元素计算Hard Shrink函数，公式定义如下：
+    Hard Shrink激活函数，按输入元素计算输出，公式定义如下：
 
     .. math::
         \text{HardShrink}(x) =
@@ -15,7 +15,7 @@ mindspore.nn.HShrink
 
     **参数：**
 
-    **lambd** (float) - Hard Shrink公式定义的阈值。默认值：0.5。
+    **lambd** (float) - Hard Shrink公式定义的阈值 :math:`\lambda` 。默认值：0.5。
 
     **输入：**
         
@@ -31,8 +31,8 @@ mindspore.nn.HShrink
 
     **异常：**
 
-    - **TypeError** - `lambd` 不是float。
-    - **TypeError** - `input_x` 的dtype既不是float16也不是float32。
+    - **TypeError** - `lambd` 数据类型不是float。
+    - **TypeError** - `input_x` 数据类型不是float。
 
     **样例：**
 

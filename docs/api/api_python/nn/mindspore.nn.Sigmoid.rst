@@ -3,9 +3,9 @@ mindspore.nn.Sigmoid
 
 .. py:class:: mindspore.nn.Sigmoid
 
-    Sgmoid激活函数。
+    Sigmoid激活函数。
 
-    按元素计算Sgmoid激活函数。
+    按元素计算Sigmoid激活函数。
 
     Sigmoid函数定义为：
 
@@ -19,7 +19,7 @@ mindspore.nn.Sigmoid
 
     **输入：**
 
-    - **x** (Tensor) - 数据类型为float16或float32的Sgmoid输入。shape为 :math:`(N,*)` ，其中 :math:`*` 表示任意的附加维度。
+    - **x** (Tensor) - 数据类型为float16或float32的Sgmoid输入。任意维度的Tensor。
 
     **输出：**
 

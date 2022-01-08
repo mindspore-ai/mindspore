@@ -9,7 +9,7 @@ Cell
 
     mindspore.nn.Cell
 
-Containers
+容器
 -----------
 
 .. cnmsplatformautosummary::
@@ -18,7 +18,7 @@ Containers
     mindspore.nn.CellList
     mindspore.nn.SequentialCell
 
-Convolution Layers
+卷积层
 --------------------
 
 .. cnmsplatformautosummary::
@@ -40,7 +40,7 @@ Gradient
     mindspore.nn.Jvp
     mindspore.nn.Vjp
 
-Non-linear Activations
+非线性激活函数
 ----------------------
 
 .. cnmsplatformautosummary::
@@ -69,14 +69,13 @@ Utilities
     mindspore.nn.Flatten
     mindspore.nn.Tril
 
-Loss Functions
+损失函数
 --------------
 
 .. cnmsplatformautosummary::
     :toctree: nn
 
     mindspore.nn.L1Loss
-    mindspore.nn.MAELoss
     mindspore.nn.MSELoss
     mindspore.nn.SmoothL1Loss
 

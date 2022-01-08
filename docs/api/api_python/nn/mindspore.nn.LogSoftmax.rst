@@ -27,7 +27,7 @@ mindspore.nn.LogSoftmax
 
     **输出：**
 
-    Tensor，数据类型和shape与`x`相同，值的范围在[-inf,0)。
+    Tensor，数据类型和shape与`x`相同，输出值的范围在[-inf,0)。
 
     **异常：**
 
