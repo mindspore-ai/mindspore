@@ -106,8 +106,7 @@ int ConvertToLiteTensor(const std::vector<lite::DataInfo> &data_infos, std::vect
           MS_LOG(ERROR) << "tensor_data is nullptr.";
           return lite::RET_ERROR;
         }
-        if (common::huge_memcpy_s(static_cast<uint8_t *>(tensor_data), tensor_size, data_info.data_.data(),
-                                  tensor_size) != EOK) {
+        if (memcpy_s(tensor_data, tensor_size, data_info.data_.data(), tensor_size) != EOK) {
           free(tensor_data);
           MS_LOG(ERROR) << "memcpy data error.";
           return lite::RET_ERROR;
