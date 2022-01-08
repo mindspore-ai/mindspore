@@ -1967,7 +1967,7 @@ void SessionBasic::SetSummaryNodes(KernelGraph *graph) {
       auto cnode = n->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
       if (cnode->inputs().size() <= kSummaryGetItem) {
-        MS_LOG(EXCEPTION) << "The node Summary should have 2 inputs at least, but got " << cnode->inputs().size() - 1
+        MS_LOG(EXCEPTION) << "The node Summary should have 2 inputs at least, but got " << (cnode->inputs().size() - 1)
                           << "." << trace::DumpSourceLines(cnode);
       }
       auto node = cnode->input(kSummaryGetItem);
@@ -2619,7 +2619,7 @@ void PreProcessOnSplitIndex(const KernelGraphPtr &graph, vector<uint32_t> *split
 
 void SessionBasic::InitAllBucket(const KernelGraphPtr &graph, const device::DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(graph);
-  MS_LOG(INFO) << "Init Bucket start, graph_id:" << graph->graph_id();
+  MS_LOG(INFO) << "Status record: start init all bucket. graph id: " << graph->graph_id();
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   const bool pynative_mode = (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode);
@@ -2661,7 +2661,7 @@ void SessionBasic::InitAllBucket(const KernelGraphPtr &graph, const device::Devi
   if (!free_bucket_ret.second) {
     MS_LOG(EXCEPTION) << "Duplicate free_bucket_id_map_ graph key:" << graph->graph_id();
   }
-  MS_LOG(INFO) << "Init Bucket finish";
+  MS_LOG(INFO) << "Status record: end init all bucket. graph id: " << graph->graph_id();
 }
 
 void SessionBasic::AddGradAddrToBucket(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &grad_tensor) {

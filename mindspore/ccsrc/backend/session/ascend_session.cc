@@ -1160,7 +1160,7 @@ void AscendSession::BuildKernel(const std::vector<CNodePtr> &kernels) {
   const uint64_t kUSecondInSecond = 1000000;
   uint64_t cost = kUSecondInSecond * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);
   cost += static_cast<uint64_t>(end_time.tv_usec - start_time.tv_usec);
-  MS_LOG(INFO) << "KernelBuild run in  " << PRIu64 << " us " << cost;
+  MS_LOG(INFO) << "KernelBuild run in " << cost << " us.";
 }
 
 void AscendSession::BuildDynamicKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const {

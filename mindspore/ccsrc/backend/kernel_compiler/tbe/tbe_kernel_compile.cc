@@ -741,7 +741,7 @@ void TbeKernelCompileManager::TbePreBuild(const KernelGraphPtr &kernel_graph) {
   const uint64_t kUSecondInSecond = 1000000;
   uint64_t cost = kUSecondInSecond * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);
   cost += static_cast<uint64_t>(end_time.tv_usec - start_time.tv_usec);
-  MS_LOG(INFO) << "Kernel PreBuild run in " << PRIu64 << " us " << cost;
+  MS_LOG(INFO) << "Kernel PreBuild run in " << cost << " us.";
   MS_LOG(INFO) << "Single op pre build end.";
 }
 

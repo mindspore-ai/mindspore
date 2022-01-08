@@ -346,7 +346,7 @@ void AscendDeviceContext::SetOperatorInfo(const std::vector<CNodePtr> &nodes) co
 }
 
 void AscendDeviceContext::CreateKernel(const std::vector<CNodePtr> &nodes) const {
-  MS_LOG(INFO) << "CreateKernel Start...";
+  MS_LOG(INFO) << "Status record: start create kernel.";
   struct timeval start_time, end_time;
   (void)gettimeofday(&start_time, nullptr);
   auto ret = device::ascend::KernelBuild(nodes);
@@ -357,7 +357,8 @@ void AscendDeviceContext::CreateKernel(const std::vector<CNodePtr> &nodes) const
   const uint64_t kUSecondInSecond = 1000000;
   uint64_t cost = kUSecondInSecond * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);
   cost += static_cast<uint64_t>(end_time.tv_usec - start_time.tv_usec);
-  MS_LOG(INFO) << "CreateKernel finish run in  " << PRIu64 << " us " << cost;
+  MS_LOG(INFO) << "CreateKernel finish run in " << cost << " us.";
+  MS_LOG(INFO) << "Status record: end create kernel.";
 }
 
 void AscendDeviceContext::UpdateExecOrder(const KernelGraphPtr &graph) const {
@@ -384,7 +385,7 @@ void AscendDeviceContext::GenKernelEvents(const NotNull<KernelGraphPtr> &root_gr
 
 void AscendDeviceContext::PreprocessBeforeRunGraph(const KernelGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
-  MS_LOG(INFO) << "PreprocessBeforeRunGraph Start for graph " << graph->graph_id();
+  MS_LOG(INFO) << "Status record: start preprocess before run graph. graph id: " << graph->graph_id();
   if (graph->is_executing_sink()) {
     device::ascend::InsertAtomicCleanOps(graph->execution_order(), &node_atomics_);
     UpdateExecOrder(graph);
@@ -405,7 +406,7 @@ void AscendDeviceContext::PreprocessBeforeRunGraph(const KernelGraphPtr &graph) 
     GenKernelEvents(NOT_NULL(graph));
   }
 
-  MS_LOG(INFO) << "PreprocessBeforeRunGraph success.";
+  MS_LOG(INFO) << "Status record: end preprocess before run graph. graph id: " << graph->graph_id();
 }
 
 void AscendDeviceContext::AssignOutputNopNodeDeviceAddress(const KernelGraphPtr &graph) const {
@@ -448,6 +449,7 @@ void AscendDeviceContext::AssignOutputNopNodeDeviceAddress(const KernelGraphPtr 
 }
 
 void AscendDeviceContext::AllocateGraphMemory(const NotNull<KernelGraphPtr> &root_graph) const {
+  MS_LOG(INFO) << "Status record: start memory alloc. graph id: " << root_graph->graph_id();
   MS_EXCEPTION_IF_NULL(runtime_instance_);
   runtime_instance_->ClearGlobalIdleMem();
   memo_.clear();
