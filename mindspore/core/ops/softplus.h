@@ -27,11 +27,12 @@
 
 namespace mindspore {
 namespace ops {
+constexpr auto kNameSoftplus = "Softplus";
 /// \brief Softplus activation function. Refer to Python API @ref mindspore.ops.Softplus for more details.
 class MS_CORE_API Softplus : public PrimitiveC {
  public:
   /// \brief Constructor.
-  Softplus() : PrimitiveC(prim::kPrimSoftplus->name()) { InitIOName({"x"}, {"output"}); }
+  Softplus() : PrimitiveC(kNameSoftplus) { InitIOName({"x"}, {"output"}); }
   /// \brief Destructor.
   ~Softplus() = default;
   MS_DECLARE_PARENT(Softplus, PrimitiveC);

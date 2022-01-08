@@ -72,6 +72,7 @@
 #include "ops/sigmoid.h"
 #include "ops/stack.h"
 #include "ops/tanh.h"
+#include "ops/softplus.h"
 #include "ops/sparse_softmax_cross_entropy_with_logits.h"
 #include "ops/grad/resize_grad.h"
 #include "ops/random_standard_normal.h"
@@ -118,6 +119,7 @@ using mindspore::ops::kNameResizeBilinear;
 using mindspore::ops::kNameResizeNearestNeighbor;
 using mindspore::ops::kNameScale;
 using mindspore::ops::kNameSigmoid;
+using mindspore::ops::kNameSoftplus;
 using mindspore::ops::kNameSparseSoftmaxCrossEntropyWithLogits;
 using mindspore::ops::kNameSub;
 using mindspore::ops::kNameTanh;
@@ -160,6 +162,7 @@ std::map<std::string, mindspore::ActivationType> activation_map = {{ops::kNameEl
                                                                    {ops::kNameReLU6, mindspore::RELU6},
                                                                    {ops::kNameSigmoid, mindspore::SIGMOID},
                                                                    {ops::kNameTanh, mindspore::TANH},
+                                                                   {ops::kNameSoftplus, mindspore::SOFTPLUS},
                                                                    {kNameHSigmoid, mindspore::HSIGMOID},
                                                                    {kNameHSigmoidGrad, mindspore::HSIGMOID},
                                                                    {kNameHSwish, mindspore::HSWISH},
@@ -671,5 +674,6 @@ REGIST_PRIMITIVE_ADJUST(kNameSparseSoftmaxCrossEntropyWithLogits,
                         MoveAttrMapCommon<ops::SparseSoftmaxCrossEntropyWithLogits>)
 REGIST_PRIMITIVE_ADJUST(kNameResizeBilinearGrad, MoveAttrMapResizeGrad)
 REGIST_PRIMITIVE_ADJUST(kNameResizeNearestNeighborGrad, MoveAttrMapResizeGrad)
+REGIST_PRIMITIVE_ADJUST(kNameSoftplus, MoveAttrMapActivation)
 }  // namespace lite
 }  // namespace mindspore
