@@ -869,7 +869,7 @@ std::vector<int64_t> AnfRuntimeAlgorithm::GetInputDeviceShapeForTbeBuild(const A
     infer_shape = trans::PaddingShape(infer_shape, format, GetInputReshapeType(node, input_idx));
   }
   auto dtype = GetInputDeviceDataType(node, input_idx);
-  return trans::TransShapeToDevice(infer_shape, format, node, input_idx, dtype);
+  return trans::TransShapeToDevice(infer_shape, format, node, input_idx, dtype, false);
 }
 
 std::vector<size_t> AnfRuntimeAlgorithm::GetInputDeviceShape(const AnfNodePtr &node, size_t input_idx) {
