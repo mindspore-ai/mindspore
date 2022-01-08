@@ -49,8 +49,9 @@ bool ConstFoldAlongInferShape::CheckCanFold(const FuncGraphPtr &func_graph, cons
   if (!is_inferred) {
     return false;
   }
-  if (CheckPrimitiveType(cnode, prim::kPrimShape)) {
-    return lite::ConverterInnerContext::GetInstance()->GetGraphInputTensorShapeMapSize() != 0;
+  if (CheckPrimitiveType(cnode, prim::kPrimShape) &&
+      lite::ConverterInnerContext::GetInstance()->GetGraphInputTensorShapeMapSize() != 0) {
+    return true;
   }
   auto inputs = cnode->inputs();
   auto graph_inputs =
