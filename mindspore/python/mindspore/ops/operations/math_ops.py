@@ -2165,7 +2165,6 @@ class Pow(Primitive):
 
     Raises:
         TypeError: If `x` and `y` is not one of the following: Tensor, Number, bool.
-        ValueError: If `x` and `y` are not the same shape.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2639,7 +2638,6 @@ class RealDiv(_MathBinaryOp):
 
     Raises:
         TypeError: If `x` and `y` is not one of the following: Tensor, Number, bool.
-        ValueError: If `x` and `y` are not the same shape.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3219,18 +3217,20 @@ class Xlogy(Primitive):
     the scalar could only be a constant.
 
     Inputs:
-        - **x** (Union[Tensor, Number, bool]) - The first input is a number or
-          a bool or a tensor whose data type is float16, float32 or bool.
-        - **y** (Union[Tensor, Number, bool]) - The second input is a number or
-          a bool when the first input is a tensor or a tensor whose data type is float16, float32 or bool.
-          The value must be positive.
+         - **x** (Union[Tensor, number.Number, bool]) - The first input is a number.Number or
+          a bool or a tensor whose data type is
+          `number <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
+          `bool_ <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+        - **y** (Union[Tensor, number.Number, bool]) - The second input is a number.Number or
+          a bool when the first input is a tensor or a tensor whose data type is number or bool_.
+          When the first input is Scalar, the second input must be a Tensor whose data type is number or bool_.
 
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,
         and the data type is the one with higher precision or higher digits among the two inputs.
 
     Raises:
-        TypeError: If `x` and `y` is not one of the following: Tensor, Number, bool.
+        TypeError: If `x` and `y` is not a number.Number or a bool or a Tensor.
 
     Supported Platforms:
         ``Ascend``
