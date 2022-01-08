@@ -244,8 +244,8 @@ class Dense(Cell):
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): The trainable bias_init parameter. The dtype is
             same as `x`. The values of str refer to the function `initializer`. Default: 'zeros'.
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: True.
-        activation (Union[str, Cell, Primitive]): activate function applied to the output of the fully connected layer,
-            eg. 'ReLU'.Default: None.
+        activation (Union[str, Cell, Primitive, None]): activate function applied to the output of the fully connected
+            layer, eg. 'ReLU'.Default: None.
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(*, in\_channels)`. The `in_channels` in `Args` should be equal
@@ -855,11 +855,11 @@ class ResizeBilinear(Cell):
     Inputs:
         - **x** (Tensor) - Tensor to be resized. Input tensor must be a 4-D tensor with shape
           :math:`(batch, channels, height, width)`, with data type of float16 or float32.
-        - **size** (Union[tuple[int], list[int]]): A tuple or list of 2 int elements
+        - **size** (Union[tuple[int], list[int], None]): A tuple or list of 2 int elements
           :math:`(new\_height, new\_width)`,the new size of the tensor.
           One and only one of size and scale_factor can be set to None. Default: None.
-        - **scale_factor** (int): The scale factor of new size of the tensor. The value should be positive integer.
-          One and only one of size and scale_factor can be set to None. Default: None.
+        - **scale_factor** (int, None): The scale factor of new size of the tensor. The value should be positive
+          integer. One and only one of size and scale_factor can be set to None. Default: None.
         - **align_corners** (bool): If true, rescale input by :math:`(new\_height - 1) / (height - 1)`, which exactly
           aligns the 4 corners of images and resized images. If false, rescale by :math:`new\_height / height`.
           Default: False.
