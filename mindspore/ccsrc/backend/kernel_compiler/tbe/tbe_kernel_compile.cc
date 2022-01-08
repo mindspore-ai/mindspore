@@ -695,6 +695,9 @@ void TbeKernelCompileManager::DistributeCompileTask(const std::vector<CNodePtr> 
     auto json_name = json_creator->GetJsonName();
     auto full_name = node->fullname_with_scope();
     full_name_to_json_name_[full_name] = json_name;
+    if (AnfAlgo::IsDynamicShape(node)) {
+      AnfAlgo::SetNodeAttr(kAttrJsonFileName, MakeValue(json_name), node);
+    }
     // save all task io size info for gen kernel mod
     SaveIOSizeInfo(kernel_json, json_name);
     if (tbe::TbeUtils::SearchCache(json_name, false) != nullptr && !is_need_rebuild_) {

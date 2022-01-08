@@ -376,15 +376,20 @@ bool KernelMeta::ReadIndex(const std::string &bin_dir) {
 void TbeUtils::GetCompileInfo(const AnfNodePtr &node, std::string *compile_info, bool *get_flag) {
   MS_EXCEPTION_IF_NULL(node);
   MS_LOG(INFO) << "Get compile info from json file start. [" << node->fullname_with_scope() << "]";
-  auto json_creator = std::make_shared<kernel::BuildTbeJsonCreator>();
-  MS_EXCEPTION_IF_NULL(json_creator);
-  nlohmann::json kernel_json;
-  if (!json_creator->GenJson(node, &kernel_json)) {
-    MS_LOG(WARNING) << "Gen kernel json failed [" << node->fullname_with_scope() << "]";
-    *get_flag = false;
-    return;
+  std::string json_name;
+  if (AnfAlgo::HasNodeAttr(kAttrJsonFileName, node->cast<CNodePtr>())) {
+    json_name = AnfAlgo::GetNodeAttr<std::string>(node, kAttrJsonFileName);
+  } else {
+    auto json_creator = std::make_shared<kernel::BuildTbeJsonCreator>();
+    MS_EXCEPTION_IF_NULL(json_creator);
+    nlohmann::json kernel_json;
+    if (!json_creator->GenJson(node, &kernel_json)) {
+      MS_LOG(WARNING) << "Gen kernel json failed [" << node->fullname_with_scope() << "]";
+      *get_flag = false;
+      return;
+    }
+    json_name = json_creator->GetJsonName();
   }
-  auto json_name = json_creator->GetJsonName();
   auto config_path = TbeUtils::GetOpDebugPath();
   std::string path = config_path + kCceKernelMeta + json_name + kJsonSuffix;
   if (path.size() > PATH_MAX) {
