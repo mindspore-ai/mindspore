@@ -24,6 +24,7 @@ from mindspore import dtype as mstype
 from ..._checkparam import Validator as validator
 from ...ops import functional as F
 from ...ops import operations as P
+from ...ops import composite as C
 from ...ops.composite import tail, core, MultitypeFuncGraph, env_get, hyper_add, \
     zeros_like, ones_like, repeat_elements
 from ...ops.composite.base import _append, _insert
@@ -1501,6 +1502,34 @@ def expand_tensor_as(x, y):
     return broadcast_to(x)
 
 
+def expand_dims(x, axis):
+    """
+    Insert a dimension of shape 1 at the specified axis of Tensor
+    """
+    check_is_int(axis, 'axis')
+    return P.ExpandDims()(x, axis)
+
+
+def masked_fill(x, mask, value):
+    """
+    Fills elements of self tensor with value where mask is True.
+    The shape of mask must be equal to the shape of the underlying tensor.
+    """
+    check_is_tensor(mask)
+    check_type_name('mask', mask.dtype, [mstype.bool_], "Tensor")
+    mask_shape = infer_out_shape(x.shape, mask.shape)
+    mask = P.BroadcastTo(mask_shape)(mask)
+    check_value_type('value', value, [int, float], "Tensor")
+    return C.array_ops.masked_fill(x, mask, value)
+
+
+def narrow(x, axis, start, length):
+    """
+    Returns a narrowed tensor from input tensor.
+    The dimension axis is input from start to start + length.
+    """
+    return F.narrow(x, axis, start, length)
+
 def view(x, *shape):
     """Reshape tensor, if shape is -1, reshape tensor into one dimension"""
     shape = check_view_shape(shape)
@@ -1655,6 +1684,9 @@ check_axis_type = constexpr(validator.check_axis_type)
 check_and_canonicalize_axes = constexpr(validator.check_and_canonicalize_axes)
 empty_compile = constexpr(validator.empty_compile)
 check_type_support = constexpr(validator.check_type_support)
+check_is_int = constexpr(validator.check_is_int)
+check_type_name = constexpr(validator.check_type_name)
+check_value_type = constexpr(validator.check_value_type)
 
 
 def tensor_bool(x):

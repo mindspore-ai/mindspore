@@ -217,8 +217,8 @@ def sequence_mask(lengths, maxlen=None, prim_name='sequence_mask'):
     result = range_vector < mask
     return result
 
-def _masked_fill(inputs, mask, value):
+def masked_fill(inputs, mask, value):
     masked_value = P.Fill()(inputs.dtype, inputs.shape, value)
     return P.Select()(mask, masked_value, inputs)
 
-tensor_operator_registry.register('_masked_fill', _masked_fill)
+tensor_operator_registry.register('masked_fill', masked_fill)
