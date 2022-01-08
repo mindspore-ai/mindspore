@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""Power Bijector"""
+"""PowerTransform Bijector"""
 from mindspore.ops import operations as P
 from ..distribution._utils.utils import check_greater_equal_zero
 from ..distribution._utils.custom_ops import exp_generic, log_generic
@@ -21,7 +21,7 @@ from .bijector import Bijector
 
 class PowerTransform(Bijector):
     r"""
-    Power Bijector.
+    PowerTransform Bijector.
     This Bijector performs the operation:
 
     .. math::
@@ -38,16 +38,16 @@ class PowerTransform(Bijector):
         name (str): The name of the bijector. Default: 'PowerTransform'.
 
     Inputs and Outputs of APIs:
-        The accessible api is defined in the base class, including:
+        The accessible APIs of the PowerTransform bijector are defined in the base class, including:
 
         - **forward**
         - **inverse**
         - **forward_log_jacobian**
         - **backward_log_jacobian**
 
-        It should be notice that the input should be always a tensor,
+        It should be notice that the inputs to APIs of the PowerTransform bijector should be always a tensor,
         with a shape that can be broadcasted to that of `power`.
-        For more details of all APIs, including the inputs and outputs,
+        For more details of all APIs, including the inputs and outputs of the PowerTransform bijector,
         please refer to :class:`mindspore.nn.probability.bijector.Bijector`, and examples below.
 
     Supported Platforms:

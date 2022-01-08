@@ -35,16 +35,16 @@ class Softplus(Bijector):
         name (str): The name of the Bijector. Default: 'Softplus'.
 
     Inputs and Outputs of APIs:
-        The accessible api is defined in the base class, including:
+        The accessible APIs of the Softplus bijector is defined in the base class, including:
 
         - **forward**
         - **inverse**
         - **forward_log_jacobian**
         - **backward_log_jacobian**
 
-        It should be notice that the input should be always a tensor,
+        It should be notice that the inputs of APIs of APIs of the Softplus bijector should be always a tensor,
         with a shape that can be broadcasted to that of `sharpness`.
-        For more details of all APIs, including the inputs and outputs,
+        For more details of all APIs, including the inputs and outputs of APIs of the Softplus bijector,
         please refer to :class:`mindspore.nn.probability.bijector.Bijector`, and examples below.
 
     Supported Platforms:

@@ -39,17 +39,20 @@ class Gumbel(TransformedDistribution):
     Args:
         loc (int, float, list, numpy.ndarray, Tensor): The location of Gumbel distribution. Default: None.
         scale (int, float, list, numpy.ndarray, Tensor): The scale of Gumbel distribution. Default: None.
-        seed (int): the seed used in sampling. The global seed is used if it is None. Default: None.
+        seed (int): the seed used in sampling. The global seed is used if it is None. Default: 0.
         dtype (mindspore.dtype): type of the distribution. Default: mstype.float32.
         name (str): the name of the distribution. Default: 'Gumbel'.
 
     Inputs and Outputs of APIs:
-        The accessible api is defined in the base class, including:
+        The accessible APIs of the Gumbel distribution are defined in the base class, including:
 
         - `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`
         - `mean`, `sd`, `mode`, `var`, and `entropy`
         - `kl_loss` and `cross_entropy`
         - `sample`
+
+        For more details of all APIs, including the inputs and outputs of all APIs of the Gumbel distribution,
+        please refer to :class:`mindspore.nn.probability.distribution.Distribution`, and examples below.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -58,13 +61,13 @@ class Gumbel(TransformedDistribution):
         `scale` must be greater than zero.
         `dist_spec_args` are `loc` and `scale`.
         `dtype` must be a float type because Gumbel distributions are continuous.
-        `kl_loss` and `cross_entropy` are not supported on GPU backend.
 
     Raises:
         ValueError: When scale <= 0.
         TypeError: When the input `dtype` is not a subclass of float.
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore
         >>> import mindspore.nn as nn
         >>> import mindspore.nn.probability.distribution as msd

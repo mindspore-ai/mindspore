@@ -3,7 +3,7 @@ mindspore.nn.probability.bijector.PowerTransform
 
 .. py:class:: mindspore.nn.probability.bijector.PowerTransform(power=0., name='PowerTransform')
 
-    乘方Bijector（Power Bijector）。
+    乘方Bijector（PowerTransform Bijector）。
     此Bijector对应的映射函数为：
 
     .. math::
@@ -11,7 +11,7 @@ mindspore.nn.probability.bijector.PowerTransform
 
     其中幂c >= 0。
 
-    Power Bijector将输入从 `[-1/c, inf]` 映射到 `[0, inf]` 。
+    PowerTransform Bijector将输入从 `[-1/c, inf]` 映射到 `[0, inf]` 。
 
     当 `c=0` 时，此Bijector等于 :class:`mindspore.nn.probability.bijector.Exp` Bijector。
 

@@ -40,22 +40,21 @@ class LogNormal(msd.TransformedDistribution):
         loc (int, float, list, numpy.ndarray, Tensor): The mean of the underlying Normal distribution. Default: None.
         scale (int, float, list, numpy.ndarray, Tensor): The standard deviation of the underlying
           Normal distribution. Default: None.
-        seed (int): the seed used in sampling. The global seed is used if it is None. Default: None.
+        seed (int): the seed used in sampling. The global seed is used if it is None. Default: 0.
         dtype (mindspore.dtype): type of the distribution. Default: mstype.float32.
         name (str): the name of the distribution. Default: 'LogNormal'.
 
 
     Inputs and Outputs of APIs:
-        The accessible api is defined in the base class, including:
+        The accessible APIs of the Log-Normal distribution are defined in the base class, including:
 
         - `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`
         - `mean`, `sd`, `mode`, `var`, and `entropy`
         - `kl_loss` and `cross_entropy`
         - `sample`
 
-        It should be notice that the input should be always a tensor.
-        For more details of all APIs, including the inputs and outputs,
-        please refer to :class:`mindspore.nn.probability.bijector.Distribution`, and examples below.
+        For more details of all APIs, including the inputs and outputs of APIs of the Log-Normal distribution,
+        please refer to :class:`mindspore.nn.probability.distribution.Distribution`, and examples below.
 
     Supported Platforms:
         ``Ascend`` ``GPU``

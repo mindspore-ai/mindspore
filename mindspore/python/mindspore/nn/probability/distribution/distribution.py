@@ -78,7 +78,7 @@ class Distribution(Cell):
         # if not a transformed distribution, set the following attribute
         if 'distribution' not in self.parameters.keys():
             self.parameter_type = set_param_type(
-                self.parameters['param_dict'], dtype)
+                self.parameters.get('param_dict', {}), dtype)
             self._batch_shape = self._calc_batch_shape()
             self._is_scalar_batch = self._check_is_scalar_batch()
             self._broadcast_shape = self._batch_shape
@@ -397,7 +397,7 @@ class Distribution(Cell):
             **kwargs (dict): the dictionary of keyword arguments forwarded to subclasses.
 
         Note:
-            A distribution can be optionally passed to the function by passing its dist_spec_args through
+            A distribution can be optionally passed to the function by passing its `dist_spec_args` through
             `args` or `kwargs`.
         """
         return self._call_log_prob(value, *args, **kwargs)
@@ -421,7 +421,7 @@ class Distribution(Cell):
             **kwargs (dict): the dictionary of keyword arguments forwarded to subclasses.
 
         Note:
-            A distribution can be optionally passed to the function by passing its dist_spec_args through
+            A distribution can be optionally passed to the function by passing its `dist_spec_args` through
             `args` or `kwargs`.
         """
         return self._call_prob(value, *args, **kwargs)
@@ -445,7 +445,7 @@ class Distribution(Cell):
             **kwargs (dict): the dictionary of keyword arguments forwarded to subclasses.
 
         Note:
-            A distribution can be optionally passed to the function by passing its dist_spec_args through
+            A distribution can be optionally passed to the function by passing its `dist_spec_args` through
             `args` or `kwargs`.
 
         Output:
@@ -490,7 +490,7 @@ class Distribution(Cell):
             **kwargs (dict: the dictionary of keyword arguments forwarded to subclasses.
 
         Note:
-            A distribution can be optionally passed to the function by passing its dist_spec_args through
+            A distribution can be optionally passed to the function by passing its `dist_spec_args` through
             `args` or `kwargs`.
 
         Output:
@@ -517,7 +517,7 @@ class Distribution(Cell):
             **kwargs (dict): the dictionary of keyword arguments forwarded to subclasses.
 
         Note:
-            A distribution can be optionally passed to the function by passing its dist_spec_args through
+            A distribution can be optionally passed to the function by passing its `dist_spec_args` through
             `args` or `kwargs`.
 
         Output:
@@ -553,7 +553,7 @@ class Distribution(Cell):
             **kwargs (dict): the dictionary of keyword arguments forwarded to subclasses.
 
         Note:
-            A distribution can be optionally passed to the function by passing its dist_spec_args through
+            A distribution can be optionally passed to the function by passing its `dist_spec_args` through
             `args` or `kwargs`.
 
         Output:
@@ -583,8 +583,8 @@ class Distribution(Cell):
             **kwargs (dict): the dictionary of keyword arguments forwarded to subclasses.
 
         Note:
-            dist_spec_args of distribution b must be passed to the function through `args` or `kwargs`.
-            Passing in dist_spec_args of distribution a is optional.
+            `dist_spec_args` of distribution b must be passed to the function through `args` or `kwargs`.
+            Passing in `dist_spec_args` of distribution a is optional.
 
         Output:
             Tensor, the kl loss function of the distribution.
@@ -604,7 +604,7 @@ class Distribution(Cell):
 
         Note:
             A distribution can be optionally passed to the function by passing its *dist_spec_args* through
-            *args* or *kwargs*.
+            `args` or `kwargs`.
 
         Output:
             Tensor, the mean of the distribution.
@@ -624,7 +624,7 @@ class Distribution(Cell):
 
         Note:
             A distribution can be optionally passed to the function by passing its *dist_spec_args* through
-            *args* or *kwargs*.
+            `args` or `kwargs`.
 
         Output:
             Tensor, the mode of the distribution.
@@ -641,7 +641,7 @@ class Distribution(Cell):
 
         Note:
             A distribution can be optionally passed to the function by passing its *dist_spec_args* through
-            *args* or *kwargs*.
+            `args` or `kwargs`.
 
         Output:
             Tensor, the standard deviation of the distribution.
@@ -658,7 +658,7 @@ class Distribution(Cell):
 
         Note:
             A distribution can be optionally passed to the function by passing its *dist_spec_args* through
-            *args* or *kwargs*.
+            `args` or `kwargs`.
 
         Output:
             Tensor, the variance of the distribution.
@@ -696,7 +696,7 @@ class Distribution(Cell):
 
         Note:
             A distribution can be optionally passed to the function by passing its *dist_spec_args* through
-            *args* or *kwargs*.
+            `args` or `kwargs`.
 
         Output:
             Tensor, the entropy of the distribution.
@@ -713,8 +713,8 @@ class Distribution(Cell):
             **kwargs (dict): the dictionary of keyword arguments forwarded to subclasses.
 
         Note:
-            dist_spec_args of distribution b must be passed to the function through `args` or `kwargs`.
-            Passing in dist_spec_args of distribution a is optional.
+            `dist_spec_args` of distribution b must be passed to the function through `args` or `kwargs`.
+            Passing in `dist_spec_args` of distribution a is optional.
 
         Output:
             Tensor, the cross_entropy of two distributions.
@@ -744,7 +744,7 @@ class Distribution(Cell):
 
         Note:
             A distribution can be optionally passed to the function by passing its *dist_spec_args* through
-            *args* or *kwargs*.
+            `args` or `kwargs`.
 
         Output:
             Tensor, the sample generated from the distribution.
