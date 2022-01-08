@@ -336,6 +336,10 @@ class AnfRuntimeAlgorithm {
   static bool IsControlOpExecInBackend(const AnfNodePtr &node);
 
   static bool IsNodeInputContainMonad(const AnfNodePtr &node);
+  // Check if node is non-task op.
+  static bool IsNonTaskOp(const CNodePtr &node);
+  // Check if node has none input after IR fusion.
+  static bool IsNoneInput(const AnfNodePtr &node, size_t index);
   // Save inputs/outputs/workspace address in kernel_mod.
   static void CacheAddrForGraph(const KernelGraphPtr &kernel_graph);
   static void CacheAddrForKernel(const AnfNodePtr &node, kernel::KernelMod *kernel_mod);

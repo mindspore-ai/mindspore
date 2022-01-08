@@ -2406,6 +2406,27 @@ bool AnfRuntimeAlgorithm::IsNodeInputContainMonad(const AnfNodePtr &node) {
   return false;
 }
 
+bool AnfRuntimeAlgorithm::IsNonTaskOp(const CNodePtr &node) {
+  auto op_name = GetCNodeName(node);
+  return (op_name == kSplitOpName || op_name == kSplitVOpName) && AnfAlgo::HasNodeAttr(kAttrNonTask, node);
+}
+
+bool AnfRuntimeAlgorithm::IsNoneInput(const AnfNodePtr &node, size_t index) {
+  auto op_name = GetCNodeName(node);
+  constexpr auto none_placeholder_index = 3;
+  if (op_name == kDynamicRNNOpName && index == none_placeholder_index) {
+    return true;
+  }
+  if (op_name == kDynamicGRUV2OpName) {
+    auto none_index = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, kAttrPlaceHolderIndex);
+    auto item = std::find(none_index.begin(), none_index.end(), index);
+    if (item != none_index.end()) {
+      return true;
+    }
+  }
+  return false;
+}
+
 void AnfRuntimeAlgorithm::CacheAddrForGraph(const KernelGraphPtr &kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto ms_context = MsContext::GetInstance();
@@ -2450,17 +2471,8 @@ void AnfRuntimeAlgorithm::CacheAddrForKernel(const AnfNodePtr &node, kernel::Ker
   auto skip_nop_node = (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode);
   size_t input_num = GetInputTensorNum(node);
   for (size_t i = 0; i < input_num; ++i) {
-    auto op_name = GetCNodeName(cnode);
-    constexpr auto none_placeholder_index = 3;
-    if (op_name == kDynamicRNNOpName && i == none_placeholder_index) {
+    if (IsNoneInput(node, i)) {
       continue;
-    }
-    if (op_name == kDynamicGRUV2OpName) {
-      auto none_index = GetNodeAttr<std::vector<int64_t>>(cnode, "placeholder_index");
-      auto item = std::find(none_index.begin(), none_index.end(), i);
-      if (item != none_index.end()) {
-        continue;
-      }
     }
     auto real_input = GetRealInputIndex(node, i);
     auto device_address = GetPrevNodeOutputAddr(node, real_input, skip_nop_node);

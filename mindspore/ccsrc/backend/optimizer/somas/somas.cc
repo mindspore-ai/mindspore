@@ -896,7 +896,7 @@ void Somas::NonTaskSplitProcess(const session::KernelGraph *graph) {
   auto kernel_cnodes = graph->execution_order();
   for (const auto &kernel : kernel_cnodes) {
     auto op_name = AnfAlgo::GetCNodeName(kernel);
-    if ((op_name == kSplitOpName || op_name == kSplitVOpName) && AnfAlgo::HasNodeAttr(kAttrNonTask, kernel)) {
+    if (AnfAlgo::IsNonTaskOp(kernel)) {
       std::vector<size_t> refnode_input_output;
       auto node = nodes_map_[kernel.get()].at(0);
       MS_EXCEPTION_IF_NULL(node);

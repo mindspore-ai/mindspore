@@ -1123,17 +1123,8 @@ void KernelRuntime::GenLaunchArgs(const mindspore::kernel::KernelMod &kernel_mod
   auto skip_nop_node = (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode);
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel);
   for (size_t i = 0; i < input_num; ++i) {
-    auto op_name = AnfAlgo::GetCNodeName(cnode);
-    constexpr auto none_placeholder_index = 3;
-    if (op_name == kDynamicRNNOpName && i == none_placeholder_index) {
+    if (AnfAlgo::IsNoneInput(kernel, i)) {
       continue;
-    }
-    if (op_name == kDynamicGRUV2OpName) {
-      auto none_index = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, "placeholder_index");
-      auto item = std::find(none_index.begin(), none_index.end(), i);
-      if (item != none_index.end()) {
-        continue;
-      }
     }
     auto real_input = AnfAlgo::GetRealInputIndex(kernel, i);
     auto device_address = AnfAlgo::GetPrevNodeOutputAddr(kernel, real_input, skip_nop_node);

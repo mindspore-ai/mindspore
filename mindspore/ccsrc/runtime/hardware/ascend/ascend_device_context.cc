@@ -23,6 +23,7 @@
 #include "backend/optimizer/ascend/ascend_backend_optimization.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_optimization.h"
 #include "utils/context/graph_kernel_flags.h"
+#include "utils/utils.h"
 #include "runtime/device/ascend/kernel_select_ascend.h"
 #include "runtime/device/kernel_adjust.h"
 #include "runtime/device/ascend/ascend_stream_assign.h"
@@ -649,7 +650,7 @@ void AscendDeviceContext::PreprocessBeforeRunSingleOpGraph(const KernelGraphPtr 
     static const std::set<std::string> place_holder_nodes = {kDynamicRNNOpName, kDynamicGRUV2OpName};
     auto iter = place_holder_nodes.find(op_name);
     if (iter != place_holder_nodes.end()) {
-      auto none_index = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, "placeholder_index");
+      auto none_index = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, kAttrPlaceHolderIndex);
       // Remove seq_length
       auto input_num = AnfAlgo::GetInputTensorNum(node);
       std::vector<AnfNodePtr> new_inputs = {AnfAlgo::GetCNodePrimitiveNode(node)};
