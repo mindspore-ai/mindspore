@@ -2040,6 +2040,9 @@ class Sqrt(PrimitiveWithCheck):
     r"""
     Returns square root of a tensor element-wise.
 
+    Note:
+        When there are some negative number, it will return a Tensor whose specific position is nan.
+
     .. math::
 
         out_{i} =  \sqrt{x_{i}}
@@ -2054,6 +2057,7 @@ class Sqrt(PrimitiveWithCheck):
 
     Raises:
         TypeError: If `x` is not a Tensor.
+        ValueError: If `x` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2414,6 +2418,7 @@ class Log1p(Primitive):
         Tensor, has the same shape as the `x`.
 
     Raises:
+        TypeError: If `x` is not a Tensor.
         TypeError: If dtype of `x` is neither float16 nor float32.
 
     Supported Platforms:
@@ -2952,17 +2957,19 @@ class TruncateMod(Primitive):
         - If shape is expressed as (D1,D2... ,Dn), then D1\*D2... \*DN<=1000000,n<=8.
 
     Inputs:
-        - **x** (Union[Tensor, Number, bool]) - The first input is a number, or a bool,
+        - **x** (Union[Tensor, numbers.Number, bool]) - The first input is a number, or a bool,
           or a tensor whose data type is number or bool.
-        - **y** (Union[Tensor, Number, bool]) - The second input is a number, or a bool when the first input
+        - **y** (Union[Tensor, numbers.Number, bool]) - The second input is a number, or a bool when the first input
           is a tensor, or a tensor whose data type is number or bool.
 
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,
-        and the data type is the one with higher precision or higher digits among the two inputs.
+        and the data type is the one with higher precision among the two inputs.
 
     Raises:
-        TypeError: If neither `x` nor `y` is one of the following: Tensor, Number, bool.
+        TypeError: If neither `x` nor `y` is one of the following: Tensor, number, bool.
+        TypeError: If neither `x` nor `y` is a Tensor.
+        ValueError: If the shape `x` and `y` cannot be broadcasted to each other.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -2993,7 +3000,7 @@ class Mod(_MathBinaryOp):
 
     .. math::
 
-        out_{i} = x_{i} // y_{i}
+        out_{i} = x_{i} \text{ % } y_{i}
 
     .. warning::
         - The input data does not support 0.
@@ -3003,9 +3010,10 @@ class Mod(_MathBinaryOp):
         - If shape is expressed as (D1,D2... ,Dn), then D1\*D2... \*DN<=1000000,n<=8.
 
     Inputs:
-        - **x** (Union[Tensor, Number]) - The first input is a number or a tensor whose data type is number.
-        - **y** (Union[Tensor, Number]) - When the first input is a tensor, The second input
-          could be a number or a tensor whose data type is number. When the first input is a number,
+        - **x** (Union[Tensor, numbers.Number, bool]) - The first input is a number, a bool
+          or a tensor whose data type is number.
+        - **y** (Union[Tensor, numbers.Number, bool]) - When the first input is a tensor, The second input
+          could be a number, a bool or a tensor whose data type is number. When the first input is a number or a bool
           the second input must be a tensor whose data type is number.
 
     Outputs:
@@ -3013,7 +3021,10 @@ class Mod(_MathBinaryOp):
         and the data type is the one with higher precision or higher digits among the two inputs.
 
     Raises:
-        ValueError: When `x` and `y` are not the same dtype.
+        TypeError: If neither `x` nor `y` is one of the following: Tensor, number, bool.
+        TypeError: If neither `x` nor `y` is a Tensor.
+        ValueError: If the shape `x` and `y` cannot be broadcasted to each other.
+
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3368,7 +3379,7 @@ class Sinh(Primitive):
 
     .. math::
 
-        out_i = \sinh(input_i)
+        out_i = \sinh(x_i)
 
     Inputs:
         - **x** (Tensor) - The shape of tensor is
@@ -3871,6 +3882,7 @@ class LogicalNot(Primitive):
 
     Raises:
         TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` is not a bool.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4592,7 +4604,7 @@ class Sign(Primitive):
           :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
-        Tensor, has the same shape and type as the `x`.
+        Tensor, has the same shape and dtype as the `x`.
 
     Raises:
         TypeError: If `x` is not a Tensor.
@@ -4815,8 +4827,8 @@ class SquareSumAll(PrimitiveWithInfer):
         SquareSumAll only supports float16 and float32 data type.
 
     Outputs:
-        - **output_y1** (Tensor) - The same type as the `x`.
-        - **output_y2** (Tensor) - The same type as the `x`.
+        - **output_x** (Tensor) - The same type as the `x`.
+        - **output_y** (Tensor) - The same type as the `x`.
 
     Raises:
         TypeError: If neither `x` nor `y` is a Tensor.
@@ -5293,11 +5305,12 @@ class MatrixInverse(PrimitiveWithInfer):
         The parameter 'adjoint' is only supporting False right now. Because complex number is not supported at present.
 
     Args:
-        adjoint (bool) : An optional bool. Default: False.
+        adjoint (bool) : Whether to support complex matrix. False means that complex matrix is not supported.
+        Default: False.
 
     Inputs:
         - **x** (Tensor) - A matrix to be calculated. The matrix must be at least two dimensions, and the last two
-          dimensions must be the same size. types: float32, float64.
+          dimensions must be the same size. dtypes: float32, float64.
 
     Outputs:
         Tensor, has the same type and shape as input `x`.

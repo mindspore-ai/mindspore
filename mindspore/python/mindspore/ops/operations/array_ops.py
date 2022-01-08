@@ -3631,6 +3631,10 @@ class Eye(PrimitiveWithInfer):
 
     Creates a tensor with ones on the diagonal and zeros in the rest.
 
+    Note:
+        Combines ReverseV2 operator to get an anti-diagonal Tensor,
+        but ReverseV2 only supports Ascend and GPU platforms currently.
+
     Inputs:
         - **n** (int) - The number of rows of returned tensor. Constant value only.
         - **m** (int) - The number of columns of returned tensor. Constant value only.
@@ -3661,14 +3665,6 @@ class Eye(PrimitiveWithInfer):
         [[1. 0.]]
         >>> print(output.dtype)
         Float64
-        >>> # if wants a anti-diagonal
-        >>> anti_diagonal_input = eye(2, 2, mindspore.int32)
-        >>> # Note that ReverseV2 only supports "Ascend" and "GPU" at this time
-        >>> reverse = ops.ReverseV2([1])
-        >>> anti_diagonal_output = reverse(anti_diagonal_input)
-        >>> print(anti_diagonal_output)
-        [[0 1]
-         [1 0]]
     """
 
     @prim_attr_register

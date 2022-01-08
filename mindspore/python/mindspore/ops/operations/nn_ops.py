@@ -1279,7 +1279,7 @@ class Conv2D(Primitive):
     of kernel and it has shape :math:`(\text{kernel_size[0]}, \text{kernel_size[1]})`,
     where :math:`\text{kernel_size[0]}` and :math:`\text{kernel_size[1]}` are the height and width of the
     convolution kernel. The full kernel has shape
-    :math:`(C_{out}, C_{in} // \text{group}, \text{kernel_size[0]}, \text{kernel_size[1]})`,
+    :math:`(C_{out}, C_{in} / \text{group}, \text{kernel_size[0]}, \text{kernel_size[1]})`,
     where group is the group number to split the input in the channel dimension.
 
     If the 'pad_mode' is set to be "valid", the output height and width will be
@@ -1287,7 +1287,7 @@ class Conv2D(Primitive):
     (\text{kernel_size[0]} - 1) \times (\text{dilation[0]} - 1) }{\text{stride[0]}}} \right \rfloor` and
     :math:`\left \lfloor{1 + \frac{W_{in} + \text{padding[2]} + \text{padding[3]} - \text{kernel_size[1]} -
     (\text{kernel_size[1]} - 1) \times (\text{dilation[1]} - 1) }{\text{stride[1]}}} \right \rfloor` respectively.
-    Where :math:`dialtion` is Spacing between kernel elements, :math:`stride` is The step length of each step,
+    Where :math:`dilation` is Spacing between kernel elements, :math:`stride` is The step length of each step,
     :math:`padding` is zero-padding added to both sides of the input.
 
 
@@ -1304,13 +1304,13 @@ class Conv2D(Primitive):
         mode (int): Modes for different convolutions. 0 Math convolution, 1 cross-correlation convolution ,
                        2 deconvolution, 3 depthwise convolution. Default: 1.
         pad_mode (str): Specifies padding mode. The optional values are
-            "same", "valid", "pad". Default: "valid".
+            "same", "valid" and "pad". Default: "valid".
 
-            - same: Adopts the way of completion. The height and width of the output will be the same as
-              the input `x`. The total number of padding will be calculated in horizontal and vertical
-              directions and evenly distributed to top and bottom, left and right if possible. Otherwise, the
-              last extra padding will be done from the bottom and the right side. If this mode is set, `pad`
-              must be 0.
+            - same: Adopts the way of completion. The height and width of the output will be equal to
+              the input `x` divided by stride. The padding will be evenly calculated in top and bottom,
+              left and right possiblily.
+              Otherwise, the last extra padding will be calculated from the bottom and the right side.
+              If this mode is set, `pad` must be 0.
 
             - valid: Adopts the way of discarding. The possible largest height and width of output will be returned
               without padding. Extra pixels will be discarded. If this mode is set, `pad` must be 0.
@@ -1327,7 +1327,7 @@ class Conv2D(Primitive):
         dilation (Union(int, tuple[int])): The data type is int or a tuple of 2 integers. Specifies the dilation rate
                                       to use for dilated convolution. If set to be :math:`k > 1`, there will
                                       be :math:`k - 1` pixels skipped for each sampling location. Its value must
-                                      be greater or equal to 1 and bounded by the height and width of the
+                                      be greater than or equal to 1 and bounded by the height and width of the
                                       input `x`. Default: 1.
         group (int): Splits input into groups. Default: 1.
         data_format (str): The optional value for data format, is 'NHWC' or 'NCHW'. Default: "NCHW".
@@ -1344,10 +1344,10 @@ class Conv2D(Primitive):
         TypeError: If `kernel_size`, `stride`, `pad` or `dilation` is neither an int nor a tuple.
         TypeError: If `out_channel` or `group` is not an int.
         ValueError: If `kernel_size`, `stride` or `dilation` is less than 1.
-        ValueError: If `pad_mode` is not one of 'same', 'valid', 'pad'.
+        ValueError: If `pad_mode` is not one of 'same', 'valid' or 'pad'.
         ValueError: If `pad` is a tuple whose length is not equal to 4.
         ValueError: If `pad_mode` it not equal to 'pad' and `pad` is not equal to (0, 0, 0, 0).
-        ValueError: If `data_format` is neither 'NCHW' not 'NHWC'.
+        ValueError: If `data_format` is neither 'NCHW' nor 'NHWC'.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2070,24 +2070,24 @@ class Conv2DTranspose(Conv2DBackpropInput):
             default is 'NCHW'.
 
     Inputs:
-        - **dout** (Tensor) - the gradients w.r.t the output of the convolution. The shape conforms to the default
-          data_format :math:`(N, C_{out}, H_{out}, W_{out})`.
+        - **dout** (Tensor) - the gradients with respect to the output of the convolution.
+          The shape conforms to the default data_format :math:`(N, C_{out}, H_{out}, W_{out})`.
         - **weight** (Tensor) - Set size of kernel is :math:`(K_1, K_2)`, then the shape is
           :math:`(C_{out}, C_{in}, K_1, K_2)`.
         - **input_size** (Tensor) - A tuple describes the shape of the input which conforms to the format
           :math:`(N, C_{in}, H_{in}, W_{in})`.
 
     Outputs:
-        Tensor, the gradients w.r.t the input of convolution. It has the same shape as the input.
+        Tensor, the gradients with respect to the input of convolution. It has the same shape as the input.
 
     Raises:
         TypeError: If `kernel_size`, `stride`, `pad` or `dilation` is neither an int nor a tuple.
         TypeError: If `out_channel` or `group` is not an int.
         ValueError: If `kernel_size`, `stride` or `dilation` is less than 1.
-        ValueError: If `pad_mode` is not one of 'same', 'valid', 'pad'.
+        ValueError: If `pad_mode` is not one of 'same', 'valid' or 'pad'.
         ValueError: If `padding` is a tuple whose length is not equal to 4.
         ValueError: If `pad_mode` it not equal to 'pad' and `pad` is not equal to (0, 0, 0, 0).
-        ValueError: If `data_format` is neither 'NCHW' not 'NHWC'.
+        ValueError: If `data_format` is neither 'NCHW' nor 'NHWC'.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2164,7 +2164,7 @@ class TopK(PrimitiveWithInfer):
     Finds values and indices of the `k` largest entries along the last dimension.
 
     .. warning::
-        - If sorted set to 'False', it will use aicpu operator, performance may be reduced.
+        - If sorted is set to 'False', it will use the aicpu operator, the performance may be reduced.
 
     If the `input_x` is a one-dimensional Tensor, finds the `k` largest entries in the Tensor,
     and outputs its value and index as a Tensor. Therefore, values[`k`] is the `k` largest item in `input_x`,
@@ -2190,7 +2190,7 @@ class TopK(PrimitiveWithInfer):
     Outputs:
         Tuple of 2 tensors, the values and the indices.
 
-        - **values** (Tensor) - The `k` largest elements in each slice of the last dimensional.
+        - **values** (Tensor) - The `k` largest elements in each slice of the last dimension.
         - **indices** (Tensor) - The indices of values within the last dimension of input.
 
     Raises:
@@ -2647,13 +2647,13 @@ class SoftMarginLoss(Primitive):
 
 
 class L2Loss(Primitive):
-    """
-    Calculates half of the L2 norm of a tensor without using the `sqrt`.
+    r"""
+    Calculates half of the L2 norm of a tensor without sqrt.
 
     Set `input_x` as x and output as loss.
 
     .. math::
-        loss = sum(x ** 2) / 2
+        loss = \frac{\sum x ^ 2}{2}
 
     Inputs:
         - **input_x** (Tensor) - A input Tensor. Data type must be float16 or float32.
@@ -2662,7 +2662,7 @@ class L2Loss(Primitive):
         Tensor, has the same dtype as `input_x`. The output tensor is the value of loss which is a scalar tensor.
 
     Raises:
-        TypeError: If `input_x` not a Tensor.
+        TypeError: If `input_x` is not a Tensor.
         TypeError: If dtype of `input_x` is neither float16 nor float32.
 
     Supported Platforms:
@@ -3658,6 +3658,7 @@ class LSTM(PrimitiveWithInfer):
           (batch_size, seq_len, `input_size`).
         - **h** (tuple) - Tensor of shape (num_directions * `num_layers`, batch_size, `hidden_size`).
         - **c** (tuple) - Tensor of shape (num_directions * `num_layers`, batch_size, `hidden_size`).
+        - **w** (Tensor) - A weight Tensor.
 
     Outputs:
         Tuple, a tuple contains (`output`, `h_n`, `c_n`, `reserve`, `state`).
@@ -5960,7 +5961,7 @@ class SparseApplyProximalAdagrad(PrimitiveWithCheck):
 
     Raises:
         TypeError: If `use_locking` is not a bool.
-        TypeError: If dtype of `var`, `accum`, `lr`, `l1`, `l2`, `scalar` or `grad` is neither float16 nor float32.
+        TypeError: If dtype of `var`, `accum`, `lr`, `l1`, `l2` or `grad` is neither float16 nor float32.
         TypeError: If dtype of `indices` is neither int32 nor int64.
         RuntimeError: If the data type of `var`, `accum` and `grad` conversion of Parameter is not supported.
 
@@ -7721,13 +7722,13 @@ class Conv3D(PrimitiveWithInfer):
     (\text{ks_h} - 1) \times (\text{dilation} - 1) }{\text{stride}}} \right \rfloor` and
     :math:`\left \lfloor{1 + \frac{W_{in} + 2 \times \text{padding} - \text{ks_w} -
     (\text{ks_w} - 1) \times (\text{dilation} - 1) }{\text{stride}}} \right \rfloor` respectively. Where
-    :math:`dialtion` is Spacing between kernel elements, :math:`stride` is The step length of each step,
+    :math:`dilation` is Spacing between kernel elements, :math:`stride` is The step length of each step,
     :math:`padding` is zero-padding added to both sides of the input.
 
     Args:
         out_channel (int): The number of output channel :math:`C_{out}`.
         kernel_size (Union[int, tuple[int]]): The data type is int or a tuple of 3 integers. Specifies the depth, height
-            and width of the 3D convolution window. Single int means the value is for the depth, height and the width
+            and width of the 3D convolution window. Single int means the value is for the depth, height and width
             of the kernel. A tuple of 3 ints means the first value is for the depth, height and the other is for the
             width of the kernel.
         mode (int): Modes for different convolutions. It is currently not used. Default: 1.
@@ -7735,19 +7736,19 @@ class Conv3D(PrimitiveWithInfer):
             the depth, height and width of movement are both strides, or a tuple of three int numbers that
             represent depth, height and width of movement respectively. Default: 1.
         pad_mode (str): Specifies padding mode. The optional values are
-            "same", "valid", "pad". Default: "valid".
+            "same", "valid" and "pad". Default: "valid".
 
-            - same: Adopts the way of completion. The depth, height and width of the output will be the same as
-              the input. The total number of padding will be calculated in depth, horizontal and vertical
-              directions and evenly distributed to head and tail, top and bottom, left and right if possible.
-              Otherwise, the last extra padding will be done from the tail, bottom and the right side.
+            - same: Adopts the way of completion. The depth, height and width of the output will be equal to
+              the input `x` divided by stride. The padding will be evenly calculated in head and tail, top and bottom,
+              left and right directions possiblily.
+              Otherwise, the last extra padding will be calculated from the tail, bottom and the right side.
               If this mode is set, `pad` must be 0.
 
             - valid: Adopts the way of discarding. The possible largest depth, height and width of output
               will be returned without padding. Extra pixels will be discarded. If this mode is set, `pad`
               must be 0.
 
-            - pad: Implicit paddings on both sides of the input in depth, height, width. The number of `pad` will
+            - pad: Implicit paddings on both sides of the input in depth, height and width. The number of `pad` will
               be padded to the input Tensor borders. `pad` must be greater than or equal to 0.
 
         pad (Union(int, tuple[int])): The pad value to be filled. Default: 0. If `pad` is an integer, the paddings of
@@ -7759,9 +7760,9 @@ class Conv3D(PrimitiveWithInfer):
                                       Currently, dilation on depth only supports the case of 1.
                                       Specifies the dilation rate to use for dilated convolution.
                                       If set :math:`k > 1`, there will be :math:`k - 1` pixels skipped
-                                      for each sampling location. Its value must be greater or equal to 1 and
+                                      for each sampling location. Its value must be greater than or equal to 1 and
                                       bounded by the height and width of the input. Default: 1.
-        group (int): Splits filter into groups, `in_ channels` and `out_channels` must be
+        group (int): Splits filter into groups, `in_channels` and `out_channels` must be
             divisible by the number of groups. Default: 1. Only 1 is currently supported.
         data_format (str): The optional value for data format. Currently only support "NCDHW".
 
@@ -7769,7 +7770,7 @@ class Conv3D(PrimitiveWithInfer):
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`.
           Currently input data type only support float16 and float32.
         - **weight** (Tensor) - Set size of kernel is :math:`(k_d, K_h, K_w)`, then the shape is
-          :math:`(C_{out}, C_{in}//groups, k_d, K_h, K_w)`.
+          :math:`(C_{out}, C_{in}/groups, k_d, K_h, K_w)`.
           Currently weight data type only support float16 and float32.
         - **bias** (Tensor) - Tensor of shape :math:`C_{in}`. Currently, only support none.
 
@@ -7781,7 +7782,7 @@ class Conv3D(PrimitiveWithInfer):
         TypeError: If `kernel_size`, `stride`, `pad` or `dilation` is neither an int nor a tuple.
         ValueError: If `out_channel`, `kernel_size`, `stride` or `dilation` is less than 1.
         ValueError: If `pad` is less than 0.
-        ValueError: If `pad_mode` is not one of 'same', 'valid', 'pad'.
+        ValueError: If `pad_mode` is not one of 'same', 'valid' or 'pad'.
         ValueError: If `pad` is a tuple whose length is not equal to 6.
         ValueError: If `pad_mode` is not equal to 'pad' and `pad` is not equal to (0, 0, 0, 0, 0, 0).
         ValueError: If `data_format` is not 'NCDHW'.
@@ -8326,11 +8327,11 @@ class Conv3DTranspose(PrimitiveWithInfer):
         pad_mode (str): Specifies padding mode. The optional values are
             "same", "valid", "pad". Default: "valid".
 
-            - same: Adopts the way of completion. The depth, height and width of the output will be the same as
-              the input. The total number of padding will be calculated in depth, horizontal and vertical
-              directions and evenly distributed to head and tail, top and bottom, left and right if possible.
-              Otherwise, the last extra padding will be done from the tail, bottom and the right side.
-              If this mode is set, `pad` and `output_padding` must be 0.
+            - same: Adopts the way of completion. The depth, height and width of the output will be equal to
+              the input `x` divided by stride. The padding will be evenly calculated in head and tail, top and bottom,
+              left and right directions possiblily.
+              Otherwise, the last extra padding will be calculated from the tail, bottom and the right side.
+              If this mode is set, `pad` must be 0.
 
             - valid: Adopts the way of discarding. The possible largest depth, height and width of output
               will be returned without padding. Extra pixels will be discarded. If this mode is set, `pad`
@@ -8577,7 +8578,7 @@ class SoftShrink(Primitive):
 
 class HShrink(Primitive):
     r"""
-    Applies the hard shrinkage function element-wise, each element complies the follow function:
+    Applies the hard shrinkage function element-wise, each element complies with the following function:
 
     .. math::
         \text{HardShrink}(x) =
@@ -8604,11 +8605,12 @@ class HShrink(Primitive):
         TypeError: If dtype of `input_x` is neither float16 nor float32.
 
     Examples:
-        >>> import mindspore
+        >>> import mindspore as ms
+        >>> import mindspore.ops as ops
         >>> from mindspore import Tensor, nn
         >>> import numpy as np
-        >>> input_x = Tensor(np.array([[ 0.5,  1,  2.0],[0.0533,0.0776,-2.1233]]),mindspore.float32)
-        >>> hshrink = P.HShrink()
+        >>> input_x = Tensor(np.array([[0.5,  1,  2.0], [0.0533, 0.0776, -2.1233]]), ms.float32)
+        >>> hshrink = ops.HShrink()
         >>> output = hshrink(input_x)
         >>> print(output)
         [[ 0.      1.      2.    ]
