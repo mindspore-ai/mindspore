@@ -161,7 +161,8 @@ KernelCallBack BiasCorrectionStrategy::GetCPUFloatBeforeCallBack() {
   auto before_call_back = [this](const std::vector<mindspore::tensor::MSTensor *> &before_inputs,
                                  const std::vector<mindspore::tensor::MSTensor *> &before_outputs,
                                  const CallBackParam &call_param) -> bool {
-    if (kSupportBiasCorrectionNode.find(call_param.node_type) == kSupportBiasCorrectionNode.end()) {
+    auto is_skip_op = quant_strategy_->IsSkipOp(call_param.node_name);
+    if (kSupportBiasCorrectionNode.find(call_param.node_type) == kSupportBiasCorrectionNode.end() || is_skip_op) {
       return true;
     }
     auto tensor = before_inputs[0];
@@ -191,7 +192,8 @@ KernelCallBack BiasCorrectionStrategy::GetCPUInt8BeforeCallBack() {
   auto before_call_back = [this](const std::vector<mindspore::tensor::MSTensor *> &before_inputs,
                                  const std::vector<mindspore::tensor::MSTensor *> &before_outputs,
                                  const CallBackParam &call_param) -> bool {
-    if (kSupportBiasCorrectionNode.find(call_param.node_type) == kSupportBiasCorrectionNode.end()) {
+    auto is_skip_op = quant_strategy_->IsSkipOp(call_param.node_name);
+    if (kSupportBiasCorrectionNode.find(call_param.node_type) == kSupportBiasCorrectionNode.end() || is_skip_op) {
       return true;
     }
     auto tensor = before_inputs[0];
@@ -229,7 +231,8 @@ KernelCallBack BiasCorrectionStrategy::GetCPUInt8AfterCallBack() {
   auto after_call_back = [this](const std::vector<mindspore::tensor::MSTensor *> &after_inputs,
                                 const std::vector<mindspore::tensor::MSTensor *> &after_outputs,
                                 const CallBackParam &call_param) -> bool {
-    if (kSupportBiasCorrectionNode.find(call_param.node_type) == kSupportBiasCorrectionNode.end()) {
+    auto is_skip_op = quant_strategy_->IsSkipOp(call_param.node_name);
+    if (kSupportBiasCorrectionNode.find(call_param.node_type) == kSupportBiasCorrectionNode.end() || is_skip_op) {
       return true;
     }
     auto tensor = after_outputs[0];
@@ -271,7 +274,8 @@ KernelCallBack BiasCorrectionStrategy::GetCPUFloatAfterCallBack() {
   auto after_call_back = [this](const std::vector<mindspore::tensor::MSTensor *> &after_inputs,
                                 const std::vector<mindspore::tensor::MSTensor *> &after_outputs,
                                 const CallBackParam &call_param) -> bool {
-    if (kSupportBiasCorrectionNode.find(call_param.node_type) == kSupportBiasCorrectionNode.end()) {
+    auto is_skip_op = quant_strategy_->IsSkipOp(call_param.node_name);
+    if (kSupportBiasCorrectionNode.find(call_param.node_type) == kSupportBiasCorrectionNode.end() || is_skip_op) {
       return true;
     }
     auto tensor = after_outputs[0];
@@ -351,30 +355,36 @@ int BiasCorrectionStrategy::CreateQuantModel(const FuncGraphPtr &quant_func_grap
   auto int8_sm = CreateSessionByFuncGraph(quant_func_graph, flags_, this->flags_.commonQuantParam.thread_num);
   int8_session_ = int8_sm.session;
   int8_model_ = int8_sm.model;
-  if (int8_session_ == nullptr || int8_model_ == nullptr) {
-    MS_LOG(ERROR) << "create session failed!";
-    return RET_NULL_PTR;
-  }
+  CHECK_NULL_RETURN(int8_session_);
+  CHECK_NULL_RETURN(int8_model_);
   return RET_OK;
 }
 
 int BiasCorrectionStrategy::DoCPUBiasCorrection(const FuncGraphPtr &quant_func_graph) {
+  CHECK_NULL_RETURN(calibrator_);
+  CHECK_NULL_RETURN(quant_strategy_);
+  CHECK_NULL_RETURN(fp32_session_);
+  CHECK_NULL_RETURN(fp32_model_);
   int8_before_call_back_ = GetBeforeCallBack(CPUInt8);
   int8_after_call_back_ = GetAfterCallBack(CPUInt8);
   fp32_before_call_back_ = GetBeforeCallBack(CPUFP32);
   fp32_after_call_back_ = GetAfterCallBack(CPUFP32);
-  return DoBiasCorrection(quant_func_graph);
+  return DoBiasCorrection(quant_func_graph, true);
 }
 
 int BiasCorrectionStrategy::DoNVGPUBiasCorrection(const FuncGraphPtr &quant_func_graph) {
+  CHECK_NULL_RETURN(calibrator_);
+  CHECK_NULL_RETURN(quant_strategy_);
+  CHECK_NULL_RETURN(fp32_session_);
+  CHECK_NULL_RETURN(fp32_model_);
   int8_before_call_back_ = GetBeforeCallBack(NVGPUInt8);
   int8_after_call_back_ = GetAfterCallBack(NVGPUInt8);
   fp32_before_call_back_ = GetBeforeCallBack(CPUFP32);
   fp32_after_call_back_ = GetAfterCallBack(CPUFP32);
-  return DoBiasCorrection(quant_func_graph);
+  return DoBiasCorrection(quant_func_graph, false);
 }
 
-int BiasCorrectionStrategy::DoBiasCorrection(const FuncGraphPtr &quant_func_graph) {
+int BiasCorrectionStrategy::DoBiasCorrection(const FuncGraphPtr &quant_func_graph, bool int32_bias) {
   auto ret = CreateQuantModel(quant_func_graph);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Create quant model failed:" << ret;
@@ -408,21 +418,106 @@ int BiasCorrectionStrategy::DoBiasCorrection(const FuncGraphPtr &quant_func_grap
     if (op_bias_diff_sum_map_.find(op_name) == op_bias_diff_sum_map_.end()) {
       continue;
     }
-    status = DoCNodeBiasCorrection(quant_func_graph, cnode);
+    status = DoCNodeBiasCorrection(quant_func_graph, cnode, int32_bias);
     if (status != RET_OK) {
-      MS_LOG(ERROR) << "do node bias correct failed.";
+      MS_LOG(ERROR) << op_name << " do node bias correct failed.";
       break;
     }
   }
   return status;
 }
 
-int BiasCorrectionStrategy::DoCNodeBiasCorrection(const FuncGraphPtr &quant_func_graph, const CNodePtr &cnode) {
+int BiasCorrectionStrategy::CreateFp32BiasTensor(const FuncGraphPtr &quant_func_graph, const CNodePtr &cnode,
+                                                 const ParameterPtr &parameter, const std::vector<float> &bias_diff) {
+  auto op_name = cnode->fullname_with_scope();
+  if (parameter == nullptr) {
+    MS_LOG(ERROR) << op_name << " parameter is nullptr.";
+    return RET_NULL_PTR;
+  }
+  std::vector<int64_t> shape;
+  shape.push_back(bias_diff.size());
+
+  auto tensor_info = CreateTensorInfo(bias_diff.data(), sizeof(float) * bias_diff.size(), shape, kNumberTypeFloat32);
+  if (tensor_info == nullptr) {
+    MS_LOG(ERROR) << op_name << " create tensor info failed.";
+    return RET_ERROR;
+  }
+  auto status = InitParameterFromTensorInfo(parameter, tensor_info);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << op_name << " init parameter from tensor info failed";
+    return RET_ERROR;
+  }
+  parameter->set_name("added_" + op_name + "_bias");
+  cnode->add_input(parameter);
+  return RET_OK;
+}
+
+int BiasCorrectionStrategy::AddBiasToInt32Tensor(const CNodePtr &cnode, const tensor::TensorPtr &bias_tensor,
+                                                 const std::vector<schema::QuantParamT> &bias_quant_params,
+                                                 const std::vector<float> &bias_diff) {
+  auto op_name = cnode->fullname_with_scope();
+  int *bias_datas = static_cast<int *>(bias_tensor->data_c());
+  if (static_cast<size_t>(bias_tensor->DataSize()) != bias_diff.size()) {
+    MS_LOG(ERROR) << op_name << " unexpected bias data count: " << bias_tensor->DataSize()
+                  << " not the same as bias_diff: " << bias_diff.size();
+    return RET_ERROR;
+  }
+  if (bias_quant_params.size() != bias_diff.size()) {
+    MS_LOG(ERROR) << op_name << " unexpected bias quant params size: " << bias_quant_params.size()
+                  << " not the same as bias_diff: " << bias_diff.size();
+    return RET_ERROR;
+  }
+  for (size_t i = 0; i < bias_tensor->DataSize(); i++) {
+    auto scale = bias_quant_params[i].scale;
+    if (fabs(scale) <= 0.0f) {
+      MS_LOG(ERROR) << op_name << " divisor 'scale' cannot be 0.";
+      return RET_ERROR;
+    }
+    double after_correct = std::round(bias_diff[i] / scale) + bias_datas[i];
+    const constexpr int32_t corrected_bias_abs_limit = 0.6 * INT32_MAX;
+    if (after_correct > corrected_bias_abs_limit) {
+      MS_LOG(WARNING) << op_name << " ch: " << i << " bias after_corrected too large: " << after_correct
+                      << " origin value: " << bias_datas[i] << " bias_diff: " << bias_diff[i] << " scale: " << scale;
+      bias_datas[i] = static_cast<int>(corrected_bias_abs_limit);
+    } else if (after_correct < -corrected_bias_abs_limit) {
+      MS_LOG(WARNING) << op_name << " ch: " << i << " bias after_corrected too small: " << after_correct
+                      << " origin value: " << bias_datas[i] << " bias_diff: " << bias_diff[i] << " scale: " << scale;
+      bias_datas[i] = static_cast<int>(-corrected_bias_abs_limit);
+    } else {
+      auto diff = static_cast<int>(std::round(bias_diff[i] / scale));
+      bias_datas[i] += diff;
+    }
+  }
+  return RET_OK;
+}
+
+int BiasCorrectionStrategy::AddBiasToFp32Tensor(const CNodePtr &cnode, const tensor::TensorPtr &bias_tensor,
+                                                const std::vector<float> &bias_diff) {
+  auto op_name = cnode->fullname_with_scope();
+  auto bias_datas = static_cast<float *>(bias_tensor->data_c());
+  if (static_cast<size_t>(bias_tensor->DataSize()) != bias_diff.size()) {
+    MS_LOG(ERROR) << op_name << " unexpected bias data count: " << bias_tensor->DataSize()
+                  << " not the same as bias_diff: " << bias_diff.size();
+    return RET_ERROR;
+  }
+  if (bias_tensor->DataSize() != bias_diff.size()) {
+    MS_LOG(ERROR) << op_name << " unexpected bias size: " << bias_tensor->DataSize()
+                  << " not the same as bias_diff: " << bias_diff.size();
+    return RET_ERROR;
+  }
+  for (size_t i = 0; i < bias_tensor->DataSize(); i++) {
+    bias_datas[i] += bias_diff[i];
+  }
+  return RET_OK;
+}
+
+int BiasCorrectionStrategy::DoCNodeBiasCorrection(const FuncGraphPtr &quant_func_graph, const CNodePtr &cnode,
+                                                  bool int32_bias) {
   auto op_name = cnode->fullname_with_scope();
   const auto &bias_diff = op_bias_diff_sum_map_[op_name];
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
   if (primitive == nullptr) {
-    MS_LOG(ERROR) << op_name << " primitive is nullptr";
+    MS_LOG(ERROR) << op_name << " primitive is nullptr.";
     return RET_NULL_PTR;
   }
   auto quant_param_holder = GetCNodeQuantHolder(primitive);
@@ -430,71 +525,39 @@ int BiasCorrectionStrategy::DoCNodeBiasCorrection(const FuncGraphPtr &quant_func
   auto input_quant_params = quant_param_holder->get_input_quant_params();
   if (input_quant_params.size() == kHasBiasTensorSize) {
     // compensate the existed
-    auto bias_quant_params = input_quant_params.at(THIRD_INPUT);
     auto bias = cnode->input(THIRD_INPUT + 1);
     auto bias_parameter_ptr = bias->cast<ParameterPtr>();
     auto bias_default_param = bias_parameter_ptr->default_param();
-    auto bias_param = bias_default_param->cast<tensor::TensorPtr>();
-    int *bias_datas = static_cast<int *>(bias_param->data_c());
-
-    if (static_cast<size_t>(bias_param->DataSize()) != bias_diff.size()) {
-      MS_LOG(DEBUG) << op_name << " unexpected bias data count: " << bias_param->DataSize()
-                    << " not the same as bias_diff: " << bias_diff.size();
-      return RET_ERROR;
-    }
-    if (bias_quant_params.size() != bias_diff.size()) {
-      MS_LOG(ERROR) << op_name << " unexpected bias quant params size: " << bias_quant_params.size()
-                    << " not the same as bias_diff: " << bias_diff.size();
-      return RET_ERROR;
-    }
-    for (size_t i = 0; i < bias_param->DataSize(); i++) {
-      auto scale = bias_quant_params[i].scale;
-      if (fabs(scale) <= 0.0f) {
-        MS_LOG(ERROR) << op_name << " divisor 'scale' cannot be 0.";
+    auto bias_tensor = bias_default_param->cast<tensor::TensorPtr>();
+    if (int32_bias) {
+      auto bias_quant_params = input_quant_params.at(THIRD_INPUT);
+      auto status = AddBiasToInt32Tensor(cnode, bias_tensor, bias_quant_params, bias_diff);
+      if (status != RET_OK) {
+        MS_LOG(ERROR) << op_name << " Add bias to int32 tensor failed.";
         return RET_ERROR;
       }
-      double after_correct = std::round(bias_diff[i] / scale) + bias_datas[i];
-      const constexpr int32_t corrected_bias_abs_limit = 0.6 * INT32_MAX;
-      if (after_correct > corrected_bias_abs_limit) {
-        MS_LOG(WARNING) << op_name << " ch: " << i << " bias after_corrected too large: " << after_correct
-                        << " origin value: " << bias_datas[i] << " bias_diff: " << bias_diff[i] << " scale: " << scale;
-        bias_datas[i] = static_cast<int>(corrected_bias_abs_limit);
-      } else if (after_correct < -corrected_bias_abs_limit) {
-        MS_LOG(WARNING) << op_name << " ch: " << i << " bias after_corrected too small: " << after_correct
-                        << " origin value: " << bias_datas[i] << " bias_diff: " << bias_diff[i] << " scale: " << scale;
-        bias_datas[i] = static_cast<int>(-corrected_bias_abs_limit);
-      } else {
-        auto diff = static_cast<int>(std::round(bias_diff[i] / scale));
-        bias_datas[i] += diff;
+    } else {
+      auto status = AddBiasToFp32Tensor(cnode, bias_tensor, bias_diff);
+      if (status != RET_OK) {
+        MS_LOG(ERROR) << op_name << " Add bias to int32 tensor failed.";
+        return RET_ERROR;
       }
     }
   } else if (input_quant_params.size() == kHasBiasTensorSize - 1) {
     MS_LOG(INFO) << op_name << " add bias input";
     // need to add bias input
     auto parameter = quant_func_graph->add_parameter();
-    if (parameter == nullptr) {
-      MS_LOG(ERROR) << "parameter is nullptr.";
-      return RET_NULL_PTR;
-    }
-    std::vector<int64_t> shape;
-    shape.push_back(bias_diff.size());
-
-    auto tensor_info = CreateTensorInfo(bias_diff.data(), sizeof(float) * bias_diff.size(), shape, kNumberTypeFloat32);
-    if (tensor_info == nullptr) {
-      MS_LOG(ERROR) << op_name << " create tensor info failed.";
-      return RET_ERROR;
-    }
-    auto status = InitParameterFromTensorInfo(parameter, tensor_info);
+    auto status = CreateFp32BiasTensor(quant_func_graph, cnode, parameter, bias_diff);
     if (status != RET_OK) {
-      MS_LOG(ERROR) << op_name << " init parameter from tensor info failed";
+      MS_LOG(ERROR) << op_name << " Create fp32 bias tensor failed.";
       return RET_ERROR;
     }
-    parameter->set_name("added_" + op_name + "_bias");
-    cnode->add_input(parameter);
-    status = DoParameterBiasQuant(parameter, primitive);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << op_name << " Do bias quant failed.";
-      return RET_ERROR;
+    if (int32_bias) {
+      status = DoParameterBiasQuant(parameter, primitive);
+      if (status != RET_OK) {
+        MS_LOG(ERROR) << op_name << " Do bias quant failed.";
+        return RET_ERROR;
+      }
     }
   } else {
     MS_LOG(WARNING) << op_name << " unexpected size: " << input_quant_params.size()
@@ -507,13 +570,14 @@ KernelCallBack BiasCorrectionStrategy::GetNVGPUInt8BeforeCallBack() {
   auto before_call_back = [this](const std::vector<mindspore::tensor::MSTensor *> &before_inputs,
                                  const std::vector<mindspore::tensor::MSTensor *> &before_outputs,
                                  const CallBackParam &call_param) -> bool {
-    if (kSupportBiasCorrectionNode.find(call_param.node_type) == kSupportBiasCorrectionNode.end()) {
+    auto is_skip_op = quant_strategy_->IsSkipOp(call_param.node_name);
+    if (kSupportBiasCorrectionNode.find(call_param.node_type) == kSupportBiasCorrectionNode.end() || is_skip_op) {
       return true;
     }
     auto feature_map_tensor = before_inputs[0];
     MS_ASSERT(feature_map_tensor != nullptr);
     // op can be skipped.
-    if (feature_map_tensor->data_type() != kNumberTypeInt8) {
+    if (feature_map_tensor->data_type() != kNumberTypeFloat32) {
       MS_LOG(INFO) << "feature_map_tensor type is " << feature_map_tensor->data_type();
       return true;
     }
@@ -524,12 +588,21 @@ KernelCallBack BiasCorrectionStrategy::GetNVGPUInt8BeforeCallBack() {
     }
     // do quantization: activation is always per layer quantized
     std::vector<int8_t> quant_datas;
-    QuantOriginFeatureMap(static_cast<float *>(feature_map_tensor->data()), feature_map_tensor->ElementsNum(),
-                          feature_map_tensor->quant_params(), feature_map_tensor->Size(), &quant_datas);
-    std::vector<double> dequant_data;
-    DeQuantData(quant_datas.data(), quant_datas.size(), feature_map_tensor->quant_params(), &dequant_data);
-    auto ret = memcpy_s(feature_map_tensor->data(), feature_map_tensor->Size(), quant_datas.data(),
-                        quant_datas.size() * sizeof(int8_t));
+    auto ret = QuantOriginFeatureMap(static_cast<float *>(feature_map_tensor->data()),
+                                     feature_map_tensor->ElementsNum(), feature_map_tensor->quant_params(),
+                                     feature_map_tensor->ElementsNum() * sizeof(int8_t), &quant_datas);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << feature_map_tensor->tensor_name() << " Quant origin feature map failed. " << ret;
+      return false;
+    }
+    std::vector<float> dequant_data;
+    ret = DeQuantData(quant_datas.data(), quant_datas.size(), feature_map_tensor->quant_params(), &dequant_data);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "DeQuant origin feature map failed. " << ret;
+      return false;
+    }
+    ret = memcpy_s(feature_map_tensor->data(), feature_map_tensor->Size(), dequant_data.data(),
+                   dequant_data.size() * sizeof(float));
     if (ret != EOK) {
       MS_LOG(ERROR) << "memcpy error: " << ret;
       return false;
@@ -543,7 +616,8 @@ KernelCallBack BiasCorrectionStrategy::GetNVGPUInt8AfterCallBack() {
   auto after_call_back = [this](const std::vector<mindspore::tensor::MSTensor *> &after_inputs,
                                 const std::vector<mindspore::tensor::MSTensor *> &after_outputs,
                                 const CallBackParam &call_param) -> bool {
-    if (kSupportBiasCorrectionNode.find(call_param.node_type) == kSupportBiasCorrectionNode.end()) {
+    auto is_skip_op = quant_strategy_->IsSkipOp(call_param.node_name);
+    if (kSupportBiasCorrectionNode.find(call_param.node_type) == kSupportBiasCorrectionNode.end() || is_skip_op) {
       return true;
     }
     auto tensor = after_outputs[0];

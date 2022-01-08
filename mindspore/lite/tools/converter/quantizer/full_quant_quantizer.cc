@@ -25,7 +25,6 @@
 #include "src/tensor.h"
 #include "tools/converter/quantizer/quant_cast.h"
 #include "tools/converter/quantizer/quantize_util.h"
-#include "tools/converter/quantizer/quant_strategy.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "src/common/log_adapter.h"
 #include "securec/include/securec.h"
@@ -438,18 +437,14 @@ int FullQuantQuantizer::MarkQuantNode(const FuncGraphPtr &func_graph) {
       MS_LOG(ERROR) << cnode->fullname_with_scope() << " cnode is null";
       return RET_NULL_PTR;
     }
-    auto quant_strategy = std::make_unique<QuantStrategy>(flags_.commonQuantParam.min_quant_weight_size,
-                                                          flags_.commonQuantParam.min_quant_weight_channel,
-                                                          flags_.commonQuantParam.skip_quant_node);
-    CHECK_NULL_RETURN(quant_strategy);
-    auto is_skip_op = quant_strategy->IsSkipOp(anode);
+    auto is_skip_op = quant_strategy_->IsSkipOp(anode->fullname_with_scope());
     if (is_skip_op) {
       MS_LOG(INFO) << cnode->fullname_with_scope() << " is skip quant.";
       continue;
     }
     //  Mark quantifiable nodes
     auto is_support_op =
-      quant_strategy->CanOpFullQuantized(anode, support_int8_ops_, skip_check_dtype_ops_, support_activation_);
+      quant_strategy_->CanOpFullQuantized(anode, support_int8_ops_, skip_check_dtype_ops_, support_activation_);
     if (is_support_op) {
       auto ret = calibrator_->AddQuantizedOp(cnode);
       if (ret != RET_OK) {
@@ -479,6 +474,10 @@ int FullQuantQuantizer::PreProcess(const FuncGraphPtr &func_graph) {
                                              this->flags_.fullQuantParam.activation_quant_method,
                                              this->flags_.dataPreProcessParam, activation_symmetry_);
   MSLITE_CHECK_PTR(calibrator_);
+  quant_strategy_ = std::make_unique<QuantStrategy>(flags_.commonQuantParam.min_quant_weight_size,
+                                                    flags_.commonQuantParam.min_quant_weight_channel,
+                                                    flags_.commonQuantParam.skip_quant_node);
+  CHECK_NULL_RETURN(quant_strategy_);
   auto ret = MarkQuantNode(func_graph);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Mark quant node failed.";
@@ -603,26 +602,26 @@ int FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
       ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
       return RET_ERROR;
     }
-    if (this->flags_.fullQuantParam.bias_correction) {
-      MS_LOG(INFO) << "do bias correction";
-      BiasCorrectionStrategy strategy(flags_, calibrator_, fp32_session_, fp32_model_, activation_q_min_,
-                                      activation_q_max_);
-      switch (this->flags_.fullQuantParam.target_device) {
-        case CPU:
-          status = strategy.DoCPUBiasCorrection(func_graph);
-          break;
-        case NVGPU:
-          status = strategy.DoNVGPUBiasCorrection(func_graph);
-          break;
-        default:
-          MS_LOG(ERROR) << "Unsupported target device " << this->flags_.fullQuantParam.target_device
-                        << " for bias correction.";
-          return RET_ERROR;
-      }
-      if (status != RET_OK) {
-        MS_LOG(ERROR) << "bias_correction failed.";
-        return status;
-      }
+  }
+  if (this->flags_.fullQuantParam.bias_correction) {
+    MS_LOG(INFO) << "do bias correction";
+    BiasCorrectionStrategy strategy(flags_, calibrator_, quant_strategy_, fp32_session_, fp32_model_, activation_q_min_,
+                                    activation_q_max_);
+    switch (this->flags_.fullQuantParam.target_device) {
+      case CPU:
+        status = strategy.DoCPUBiasCorrection(func_graph);
+        break;
+      case NVGPU:
+        status = strategy.DoNVGPUBiasCorrection(func_graph);
+        break;
+      default:
+        MS_LOG(ERROR) << "Unsupported target device " << this->flags_.fullQuantParam.target_device
+                      << " for bias correction.";
+        return RET_ERROR;
+    }
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "bias_correction failed.";
+      return status;
     }
   }
   return RET_OK;

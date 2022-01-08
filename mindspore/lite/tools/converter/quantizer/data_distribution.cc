@@ -36,12 +36,14 @@ int DataDistribution::RecordMaxMinValueArray(const std::vector<float> &data) {
   real_max_ = std::max(max_num, real_max_);
   if (activation_quant_method_ == REMOVAL_OUTLIER) {
     auto bak_data(data);
-    auto const q_min = static_cast<int>(0.0001 * bak_data.size());
-    auto const q_max = static_cast<int>(0.9999 * bak_data.size());
-    std::nth_element(bak_data.begin(), bak_data.begin() + q_min, bak_data.end());
-    auto quantile_min = bak_data.at(q_min);
-    std::nth_element(bak_data.begin() + q_min + 1, bak_data.begin() + q_max, bak_data.end());
-    auto quantile_max = bak_data.at(q_max);
+    const float min_percentage = 0.0001;
+    const float max_percentage = 0.9999;
+    auto const quantile_min_index = static_cast<int>(min_percentage * bak_data.size());
+    auto const quantile_max_index = static_cast<int>(max_percentage * bak_data.size());
+    std::nth_element(bak_data.begin(), bak_data.begin() + quantile_min_index, bak_data.end());
+    auto quantile_min = bak_data.at(quantile_min_index);
+    std::nth_element(bak_data.begin() + quantile_min_index + 1, bak_data.begin() + quantile_max_index, bak_data.end());
+    auto quantile_max = bak_data.at(quantile_max_index);
     MS_LOG(DEBUG) << "real_min_:" << real_min_ << " real_max_:" << real_max_ << " quantile_min:" << quantile_min
                   << " quantile_max:" << quantile_max;
     this->min_datas_.emplace_back(quantile_min);

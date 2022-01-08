@@ -620,21 +620,6 @@ int DoParameterBiasQuant(const ParameterPtr &bias, const PrimitivePtr &primitive
   return RET_OK;
 }
 
-int DeQuantData(const int8_t *tensor_data, int64_t elements_num, std::vector<lite::LiteQuantParam> quant_params,
-                std::vector<double> *dequant_data, int preferred_dim) {
-  if (quant_params.size() != 1) {
-    MS_LOG(ERROR) << "unexpected quant_params size: " << quant_params.size() << " only support per-layer now.";
-    return RET_ERROR;
-  }
-  auto scale = quant_params[0].scale;
-  auto zp = quant_params[0].zeroPoint;
-  dequant_data->resize(elements_num);
-  for (int64_t i = 0; i < elements_num; i++) {
-    dequant_data->at(i) = scale * (tensor_data[i] - zp);
-  }
-  return RET_OK;
-}
-
 int DeQuantData(mindspore::tensor::MSTensor *tensor, std::vector<double> *dequant_data, int preferred_dim) {
   return DeQuantData(static_cast<int8_t *>(tensor->data()), tensor->ElementsNum(), tensor->quant_params(), dequant_data,
                      preferred_dim);

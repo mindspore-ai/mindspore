@@ -142,7 +142,7 @@ int ParameterOptimizer::WeightQuantModelInference(const FuncGraphPtr &func_graph
       }
     }
     MS_CHECK_TRUE_MSG(weight_quant_size > 0, RET_ERROR, "weight quant size must large 0");
-    auto compress_ratio = 1.0 * origin_model_size / weight_quant_size;
+    const auto compress_ratio = 1.0 * origin_model_size / weight_quant_size;
     std::cout << " round:" << round << " scale:" << scale << " cos_sim:" << cos_sim << " mean_error:" << mean_error
               << " ratio:" << compress_ratio << std::endl;
     if (cos_sim >= threshold && compress_ratio > best_compress_ratio) {
@@ -249,7 +249,7 @@ int ParameterOptimizer::GridSearchForScale(const FuncGraphPtr &func_graph, conve
     delete origin_model;
     return RET_OK;
   }
-  int baby_step_rounds = 25;
+  const int baby_step_rounds = 25;
   step = (min_max.max - min_max.min) / baby_step_rounds;
 
   param.rounds = baby_step_rounds;

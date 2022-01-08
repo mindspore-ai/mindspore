@@ -23,6 +23,7 @@
 #include "base/base.h"
 #include "ir/anf.h"
 #include "tools/converter/quantizer/calibrator.h"
+#include "tools/converter/quantizer/quant_strategy.h"
 
 namespace mindspore::lite::quant {
 enum OperationType {
@@ -37,10 +38,11 @@ enum CallBackType {
 class BiasCorrectionStrategy {
  public:
   BiasCorrectionStrategy(const converter::Flags &flags, const std::shared_ptr<Calibrator> &calibrator,
-                         session::LiteSession *fp32_session, Model *fp32_model, int activation_q_min,
-                         int activation_q_max)
+                         const std::shared_ptr<QuantStrategy> &quant_strategy, session::LiteSession *fp32_session,
+                         Model *fp32_model, int activation_q_min, int activation_q_max)
       : flags_(flags),
         calibrator_(calibrator),
+        quant_strategy_(quant_strategy),
         fp32_session_(fp32_session),
         fp32_model_(fp32_model),
         activation_q_min_(activation_q_min),
@@ -59,8 +61,8 @@ class BiasCorrectionStrategy {
 
  private:
   int CreateQuantModel(const FuncGraphPtr &quant_func_graph);
-  int DoBiasCorrection(const FuncGraphPtr &quant_func_graph);
-  int DoCNodeBiasCorrection(const FuncGraphPtr &quant_func_graph, const CNodePtr &cnode);
+  int DoBiasCorrection(const FuncGraphPtr &quant_func_graph, bool int32_bias);
+  int DoCNodeBiasCorrection(const FuncGraphPtr &quant_func_graph, const CNodePtr &cnode, bool int32_bias);
   int Int8Inference(const KernelCallBack &before_call_back, const KernelCallBack &after_call_back);
   int Fp32Inference(const KernelCallBack &before_call_back, const KernelCallBack &after_call_back);
   bool OpInputDataHandle(OperationType type, const string &op_name, std::vector<float> *data);
@@ -80,6 +82,15 @@ class BiasCorrectionStrategy {
                             const std::vector<lite::LiteQuantParam> &feature_map_quant_params, size_t quant_size,
                             std::vector<int8_t> *quant_datas);
 
+  int CreateFp32BiasTensor(const FuncGraphPtr &quant_func_graph, const CNodePtr &cnode, const ParameterPtr &parameter,
+                           const std::vector<float> &bias_diff);
+
+  int AddBiasToInt32Tensor(const CNodePtr &cnode, const tensor::TensorPtr &bias_tensor,
+                           const std::vector<schema::QuantParamT> &bias_quant_params,
+                           const std::vector<float> &bias_diff);
+
+  int AddBiasToFp32Tensor(const CNodePtr &cnode, const tensor::TensorPtr &bias_tensor,
+                          const std::vector<float> &bias_diff);
   template <typename T>
   int CalculatePerChannelMeans(const T *tensor_data, size_t elem_count, std::vector<int> shapes,
                                std::vector<float> *per_channel_mean) {
@@ -110,6 +121,7 @@ class BiasCorrectionStrategy {
  private:
   converter::Flags flags_;
   std::shared_ptr<Calibrator> calibrator_{nullptr};
+  std::shared_ptr<QuantStrategy> quant_strategy_{nullptr};
   session::LiteSession *fp32_session_{nullptr};
   Model *fp32_model_{nullptr};
   int activation_q_min_{INT8_MIN};

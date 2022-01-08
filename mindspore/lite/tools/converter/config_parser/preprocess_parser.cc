@@ -109,17 +109,21 @@ int PreprocessParser::ParseCalibratePath(const std::string &str, std::map<std::s
   }
   auto key_values = SplitStringToVector(str, ',');
   for (const auto &key_value : key_values) {
-    auto tmp = SplitStringToVector(key_value, ':');
-    if (tmp.size() != 2) {
-      MS_LOG(ERROR) << "vector need size = 2, size is " << tmp.size();
+    auto string_split = SplitStringToVector(key_value, ':');
+    const size_t min_size = 2;
+    if (string_split.size() < min_size) {
+      MS_LOG(ERROR) << "vector need size >= 2, size is " << string_split.size();
       return RET_INPUT_PARAM_INVALID;
     }
-    auto data_path = RealPath(tmp.at(1).c_str());
+    auto data_path = string_split.at(1);
+    for (size_t i = 2; i < string_split.size() - 1; ++i) {
+      data_path += ":" + string_split[i];
+    }
     if (data_path.empty()) {
       MS_LOG(ERROR) << "path is invalid.";
       return RET_INPUT_PARAM_INVALID;
     }
-    (*value)[tmp.at(0)] = data_path;
+    (*value)[string_split.at(0)] = data_path;
   }
   return RET_OK;
 }

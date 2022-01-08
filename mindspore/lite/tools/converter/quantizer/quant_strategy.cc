@@ -127,7 +127,7 @@ bool QuantStrategy::CanOpFullQuantized(const AnfNodePtr &node, const std::set<Pr
   return true;
 }
 
-bool QuantStrategy::IsSkipOp(const AnfNodePtr &input_node) {
-  return !(skip_node_.find(input_node->fullname_with_scope()) == skip_node_.end());
+bool QuantStrategy::IsSkipOp(const std::string &skip_node_name) {
+  return !(skip_node_.find(skip_node_name) == skip_node_.end());
 }
 }  // namespace mindspore::lite::quant
