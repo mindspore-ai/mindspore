@@ -1610,14 +1610,14 @@ class MaxPool(_Pool):
             is an int number that represents height and width of the kernel, or a tuple
             of two int numbers that represent height and width respectively. Default: 1.
         strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
-            the height and width of movement are both strides, or a tuple of two int numbers that
+            not only the height of movement but also the width of movement, or a tuple of two int numbers that
             represent height and width of movement respectively. Default: 1.
-        pad_mode (str): The optional value for pad mode, is "same" or "valid".
+        pad_mode (str): The optional value of pad mode is "same" or "valid".
             Default: "valid".
 
             - same: Adopts the way of completion. The height and width of the output will be the same as
               the input. The total number of padding will be calculated in horizontal and vertical
-              directions and evenly distributed to top and bottom, left and right if possible.
+              directions and evenly distributed to top, bottom, left and right if possible.
               Otherwise, the last extra padding will be done from the bottom and the right side.
 
             - valid: Adopts the way of discarding. The possible largest height and width of output
@@ -1673,18 +1673,18 @@ class MaxPoolWithArgmax(_Pool):
         \text{input}(N_i, C_j, s_0 \times h + m, s_1 \times w + n)
 
     Args:
-        kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value and arg
+        kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value and argmax
             value, is an int number that represents height and width of the kernel, or a tuple of
             two int numbers that represent height and width respectively. Default: 1.
         strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
-            the height and width of movement are both strides, or a tuple of two int numbers that
+            not only the height of movement but also the width of movement, or a tuple of two int numbers that
             represent height and width of movement respectively. Default: 1.
         pad_mode (str): The optional value for pad mode, is "same" or "valid".
             Default: "valid".
 
             - same: Adopts the way of completion. The height and width of the output will be the same as
               the input. The total number of padding will be calculated in horizontal and vertical
-              directions and evenly distributed to top and bottom, left and right if possible.
+              directions and evenly distributed to top, bottom, left and right if possible.
               Otherwise, the last extra padding will be done from the bottom and the right side.
 
             - valid: Adopts the way of discarding. The possible largest height and width of output
@@ -1759,25 +1759,25 @@ class MaxPool3D(PrimitiveWithInfer):
             is an int number that represents depth, height and width of the kernel, or a tuple
             of three int numbers that represent depth, height and width respectively. Default: 1.
         strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
-            the depth, height and width of movement are both strides, or a tuple of three int numbers that
+            not only the depth, height of movement but also the width of movement,, or a tuple of three int numbers that
             represent depth, height and width of movement respectively. Default: 1.
-        pad_mode (str): The optional value for pad mode, is "same" or "valid".
+        pad_mode (str): The optional value of pad mode is "same" or "valid".
             Default: "valid".
 
             - same: Adopts the way of completion. The height and width of the output will be the same as
               the input. The total number of padding will be calculated in horizontal and vertical
-              directions and evenly distributed to top and bottom, left and right if possible.
+              directions and evenly distributed to top, bottom, left and right if possible.
               Otherwise, the last extra padding will be done from the bottom and the right side.
 
             - valid: Adopts the way of discarding. The possible largest height and width of output
               will be returned without padding. Extra pixels will be discarded.
 
-            - pad: Implicit paddings on both sides of the input in depth, height, width. The number of "pad" will
+            - pad: Implicit paddings on both sides of the input in depth, height and width. The number of "pad" will
               be padded to the input Tensor borders. "pad" must be greater than or equal to 0.
 
         pad_list (Union(int, tuple[int])): The pad value to be filled. Default: 0. If `pad` is an integer, the paddings
             of head, tail, top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of six
-            integers, the padding of head, tail, top, bottom, left and right equal to pad[0], pad[1], pad[2],
+            integers, the padding of head, tail, top, bottom, left and right equals to pad[0], pad[1], pad[2],
             pad[3], pad[4] and pad[5] correspondingly.
         ceil_mode (bool): Whether to use ceil instead of floor to calculate output shape. Only effective in "pad" mode.
             When "pad_mode" is "pad" and "ceil_mode" is "None", "ceil_mode" will be set as "False". Default: None.
@@ -1788,13 +1788,13 @@ class MaxPool3D(PrimitiveWithInfer):
           Data type must be float16 or float32.
 
     Outputs:
-        Tensor, with shape :math:`(N, C, D_{out}, H_{out}, W_{out})`. Has the data type with `x`.
+        Tensor, with shape :math:`(N, C, D_{out}, H_{out}, W_{out})`. Has the data type of `x`.
 
     Raises:
-        TypeError: If `kernel_size` or `strides` is neither an int not a tuple.
+        TypeError: If `kernel_size` or `strides` is neither an int nor a tuple.
         TypeError: If `pad_mode` or `data_format` is not a string.
         ValueError: If numbers in `kernel_size` or `strides` are not positive.
-        ValueError: If `pad_mode` is not one of 'same', 'valid', 'pad'.
+        ValueError: If `pad_mode` is not one of 'same', 'valid' or 'pad'.
         ValueError: If `pad_mode` is 'same' or 'valid', 'ceil_mode' is not None.
         ValueError: If `kernel_size` or `strides` is a tuple whose length is not equal to 3.
         ValueError: If `data_format` is not 'NCDHW'.
@@ -4013,11 +4013,13 @@ class MirrorPad(PrimitiveWithInfer):
 
         - If `mode` is "REFLECT", it uses a way of symmetrical copying through the axis of symmetry to fill in.
           If the `input_x` is [[1,2,3], [4,5,6], [7,8,9]] and `paddings` is [[1,1], [2,2]], then the
-          Outputs is [[6,5,4,5,6,5,4], [3,2,1,2,3,2,1], [6,5,4,5,6,5,4], [9,8,7,8,9,8,7], [6,5,4,5,6,5,4]].
+          `Outputs` is [[6,5,4,5,6,5,4], [3,2,1,2,3,2,1], [6,5,4,5,6,5,4], [9,8,7,8,9,8,7], [6,5,4,5,6,5,4]].
+          For a more intuitive understanding, please see the example below.
         - If `mode` is "SYMMETRIC", the filling method is similar to the "REFLECT". It is also copied
           according to the symmetry axis, except that it includes the symmetry axis. If the `input_x`
-          is [[1,2,3], [4,5,6], [7,8,9]] and `paddings` is [[1,1], [2,2]], then the Outputs is
+          is [[1,2,3], [4,5,6], [7,8,9]] and `paddings` is [[1,1], [2,2]], then the `Outputs` is
           [[2,1,1,2,3,3,2], [2,1,1,2,3,3,2], [5,4,4,5,6,6,5], [8,7,7,8,9,9,8], [8,7,7,8,9,9,8]].
+          For a more intuitive understanding, please see the example below.
 
     Raises:
         TypeError: If `input_x` or `paddings` is not a Tensor.
@@ -4028,6 +4030,7 @@ class MirrorPad(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore import Tensor, nn, ops
         >>> # case1: mode="REFLECT"
         >>> class Net(nn.Cell):
         ...    def __init__(self, mode):
@@ -7523,9 +7526,9 @@ class LRN(PrimitiveWithInfer):
         b_{c} = a_{c}\left(k + \frac{\alpha}{n}
         \sum_{c'=\max(0, c-n/2)}^{\min(N-1,c+n/2)}a_{c'}^2\right)^{-\beta}
 
-    where the :math:`a_{c}` indicates the represents the specific value of the pixel corresponding to c in feature map;
-    where the :math:`n/2` indicate the `depth_radius`; where the :math:`k` indicate the `bias`;
-    where the :math:`\alpha` indicate the `alpha`; where the :math:`\beta` indicate the `beta`.
+    where the :math:`a_{c}` indicates the specific value of the pixel corresponding to c in feature map;
+    where the :math:`n/2` indicates the `depth_radius`; where the :math:`k` indicates the `bias`;
+    where the :math:`\alpha` indicates the `alpha`; where the :math:`\beta` indicates the `beta`.
 
     Args:
         depth_radius (int): Half-width of the 1-D normalization window with the shape of 0-D. Default: 5.
@@ -7535,7 +7538,7 @@ class LRN(PrimitiveWithInfer):
         norm_region (str): Specifies normalization region. Options: "ACROSS_CHANNELS". Default: "ACROSS_CHANNELS".
 
     Inputs:
-        - **x** (Tensor) - A 4D Tensor with float16 or float32 data type.
+        - **x** (Tensor) - A 4-D Tensor with float16 or float32 data type.
 
     Outputs:
         Tensor, with the same shape and data type as `x`.
