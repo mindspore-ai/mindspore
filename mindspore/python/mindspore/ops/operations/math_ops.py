@@ -1125,6 +1125,7 @@ class CumProd(PrimitiveWithInfer):
 
     Raises:
         TypeError: If `exclusive` or `reverse` is not a bool.
+        TypeError: If `axis` is not an int.
         ValueError: If `axis` is None.
 
     Supported Platforms:
@@ -1186,10 +1187,10 @@ class CumProd(PrimitiveWithInfer):
 
 class Cdist(Primitive):
     """
-    Computes batched the p norm distance between each pair of the two collections of row vectors.
+    Computes batched the p-norm distance between each pair of the two collections of row vectors.
 
     Args:
-        p (float): P value for the p norm distance to calculate between each vector pair ∈[0,∞]. Default: 2.0.
+        p (float): P value for the p-norm distance to calculate between each vector pair, P ∈ [0,∞]. Default: 2.0.
 
     Inputs:
         - **input_x** (Tensor) - Input tensor of shape :math:`(B, P, M)`.
@@ -2272,6 +2273,7 @@ class Expm1(Primitive):
         Tensor, has the same shape as the `x`.
 
     Raises:
+        TypeError: If `x` is not a Tensor.
         TypeError: If dtype of `x` is neither float16 nor float32.
 
     Supported Platforms:
@@ -3062,6 +3064,7 @@ class Floor(Primitive):
         Tensor, has the same shape as `x`.
 
     Raises:
+        TypeError: If `x` is not a Tensor.
         TypeError: If dtype of `x` is not in [float16, float32, float64].
 
     Supported Platforms:
@@ -3310,7 +3313,7 @@ class Cosh(Primitive):
 
     .. math::
 
-        out_i = \cosh(input_i)
+        out_i = \cosh(x_i)
 
     Inputs:
         - **x** (Tensor) - The shape of tensor is
@@ -5468,11 +5471,11 @@ class Conj(PrimitiveWithInfer):
         - **input** (Tensor) - The input tensor to compute to. Must have numeric type.
 
     Outputs:
-        A Tensor that is the conjugate of x (with the same type).
+        Tensor, has the same dtype as the input.
 
     Raises:
        TypeError: If the dtype of input is not a numeric type.
-                  If the input is not a Tensor.
+       TypeError: If the input is not a Tensor.
 
     Supported Platforms:
         ``GPU``
