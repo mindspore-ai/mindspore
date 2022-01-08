@@ -150,7 +150,8 @@ Status ReshapeInfo::ComputeReplaceOp() {
     int64_t shape_dim = 2;
     auto value = replace_op_.front().second.second.front().first.second;
     Shape dst_shape = GetValue<std::vector<int64_t>>(value);
-    Shape origin_dst_shape = GetValue<std::vector<int64_t>>(cnode_->input(shape_dim)->cast<ValueNodePtr>()->value());
+    Shape origin_dst_shape =
+      GetValue<std::vector<int64_t>>(cnode_->input(LongToSize(shape_dim))->cast<ValueNodePtr>()->value());
     if (dst_shape.size() == origin_dst_shape.size()) {
       for (size_t i = 0; i < dst_shape.size(); ++i) {
         if (origin_dst_shape[i] != dst_shape[i] && origin_dst_shape[i] != -1) {
@@ -602,12 +603,12 @@ int64_t ReshapeInfo::GetSWCIndexByInputLayoutWithMiniComm(const TensorLayout &in
   return index_comm[0].first;
 }
 
-bool ReshapeInfo::CheckStrategyConsistencyByOutputLayout(int64_t swc_index, const TensorLayout &output_layout) {
+bool ReshapeInfo::CheckStrategyConsistencyByOutputLayout(int64_t swc_index, const TensorLayout &output_layout) const {
   if (swc_index == -1 || swc_index >= SizeToLong(strategy_cost_.size())) {
     MS_LOG(ERROR) << "The strategy_index: " << swc_index << " is out of range.";
     return false;
   }
-  const auto &swc = strategy_cost_[swc_index];
+  const auto &swc = strategy_cost_[LongToSize(swc_index)];
   if (swc->outputs_ptr[0].tensor_layout() == output_layout) {
     return true;
   }
@@ -617,12 +618,12 @@ bool ReshapeInfo::CheckStrategyConsistencyByOutputLayout(int64_t swc_index, cons
   return false;
 }
 
-bool ReshapeInfo::CheckStrategyConsistencyByInputLayout(int64_t swc_index, const TensorLayout &input_layout) {
+bool ReshapeInfo::CheckStrategyConsistencyByInputLayout(int64_t swc_index, const TensorLayout &input_layout) const {
   if (swc_index == -1 || swc_index >= SizeToLong(strategy_cost_.size())) {
     MS_LOG(ERROR) << "The strategy_index: " << swc_index << " is out of range.";
     return false;
   }
-  const auto &swc = strategy_cost_[swc_index];
+  const auto &swc = strategy_cost_[LongToSize(swc_index)];
   if (swc->inputs_ptr[0].tensor_layout() == input_layout) {
     return true;
   }
@@ -632,19 +633,19 @@ bool ReshapeInfo::CheckStrategyConsistencyByInputLayout(int64_t swc_index, const
   return false;
 }
 
-TensorLayout ReshapeInfo::GetInputLayoutBySWCIndex(int64_t swc_index) {
+TensorLayout ReshapeInfo::GetInputLayoutBySWCIndex(int64_t swc_index) const {
   if (swc_index == -1 || swc_index >= SizeToLong(strategy_cost_.size())) {
     MS_LOG(EXCEPTION) << "The strategy_index: " << swc_index << " is out of range.";
   }
-  const auto &swc = strategy_cost_[swc_index];
+  const auto &swc = strategy_cost_[LongToSize(swc_index)];
   return std::move(swc->inputs_ptr[0].tensor_layout());
 }
 
-TensorLayout ReshapeInfo::GetOutputLayoutBySWCIndex(int64_t swc_index) {
+TensorLayout ReshapeInfo::GetOutputLayoutBySWCIndex(int64_t swc_index) const {
   if (swc_index == -1 || swc_index >= SizeToLong(strategy_cost_.size())) {
     MS_LOG(EXCEPTION) << "The strategy_index: " << swc_index << " is out of range.";
   }
-  const auto &swc = strategy_cost_[swc_index];
+  const auto &swc = strategy_cost_[LongToSize(swc_index)];
   return std::move(swc->outputs_ptr[0].tensor_layout());
 }
 }  // namespace parallel

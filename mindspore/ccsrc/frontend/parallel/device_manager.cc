@@ -48,7 +48,7 @@ bool CheckDeviceConfig(int64_t device_num, int64_t global_rank, const std::strin
     return false;
   }
   // 'device_num_converted' must be divisible by 8
-  if (device_num % DEVICE_NUM_PER_SERVER != 0 && device_num != 1 && device_num != 2 && device_num != 4) {
+  if (LongToSize(device_num) % DEVICE_NUM_PER_SERVER != 0 && device_num != 1 && device_num != 2 && device_num != 4) {
     MS_LOG(ERROR) << "The context configuration parameter device_num' must be divisible by 8, "
                      "or equal to 1, 2 or 4, but got the value of device_num: "
                   << device_num;
@@ -275,7 +275,7 @@ std::string DeviceManager::FindRankListNameByHashName(const std::string &hash_na
 RankList DeviceManager::FindRankListByHashName(const std::string &hash_name) {
   std::string rank_list_name = FindRankListNameByHashName(hash_name);
   if (rank_list_name == "WORLD_GROUP") {
-    int64_t device_num = g_device_manager->DeviceNum();
+    int64_t device_num = SizeToLong(g_device_manager->DeviceNum());
     RankList rank_list;
     for (size_t i = 0; i < size_t(device_num); ++i) {
       rank_list.push_back(i);

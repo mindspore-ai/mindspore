@@ -406,7 +406,7 @@ Status GatherInfo::CheckOutputStrategy(const StrategyPtr &out_strategy) {
     return FAILED;
   }
 
-  if (param_strategy[axis_] == 1) {
+  if (param_strategy[LongToSize(axis_)] == 1) {
     MS_LOG(ERROR) << name_ << ": The axis is not split, can not set output strategy";
     return FAILED;
   }
@@ -495,7 +495,7 @@ Status GatherInfo::InferDevMatrixShape() {
 
   // param_strategy(axis) is 1
   if (param_strategy.at(LongToSize(axis_)) == 1) {
-    dev_matrix_shape_.insert(dev_matrix_shape_.end(), index_strategy.begin(), index_strategy.end());
+    (void)dev_matrix_shape_.insert(dev_matrix_shape_.end(), index_strategy.begin(), index_strategy.end());
   }
 
   // infer out dev_matrix_shape
@@ -536,7 +536,7 @@ void GatherInfo::InferInputsTensorMap() {
   Shape tensor_map_params;
   auto param_strategy = strategy_->GetInputDim().at(0);
   if (param_strategy.at(LongToSize(axis_)) != 1) {
-    tensor_map_index.insert(tensor_map_index.begin(), index_size, MAP_NONE);
+    (void)tensor_map_index.insert(tensor_map_index.begin(), index_size, MAP_NONE);
     for (size_t i = 0; i < param_size; ++i) {
       tensor_map_params.push_back(SizeToLong(param_size - i - 1));
     }
@@ -549,8 +549,8 @@ void GatherInfo::InferInputsTensorMap() {
       tensor_map_index.push_back(SizeToLong(index_size - i - 1));
     }
   }
-  inputs_tensor_map_.emplace_back(std::move(tensor_map_params));
-  inputs_tensor_map_.emplace_back(std::move(tensor_map_index));
+  (void)inputs_tensor_map_.emplace_back(std::move(tensor_map_params));
+  (void)inputs_tensor_map_.emplace_back(std::move(tensor_map_index));
 }
 
 Shape GatherInfo::InferOutputsTensorMapSplitAxis() {
@@ -560,18 +560,18 @@ Shape GatherInfo::InferOutputsTensorMapSplitAxis() {
   if (axis_ == 0) {
     if ((dynamic_shape_indices_ && target_ != CPU) || axis_split_forward_allreduce_) {
       // the output is repeat calculation
-      tensor_map_out.insert(tensor_map_out.end(), MAP_NONE);
+      (void)tensor_map_out.insert(tensor_map_out.end(), MAP_NONE);
     } else {
-      tensor_map_out.insert(tensor_map_out.end(), param_size - 1);
+      (void)tensor_map_out.insert(tensor_map_out.end(), param_size - 1);
     }
-    tensor_map_out.insert(tensor_map_out.end(), index_size - 1, MAP_NONE);
+    (void)tensor_map_out.insert(tensor_map_out.end(), index_size - 1, MAP_NONE);
     for (size_t i = 1; i < param_size; ++i) {
       tensor_map_out.push_back(param_size - 1 - i);
     }
   } else {
     for (size_t i = 0; i < param_size; ++i) {
       if (i == LongToSize(axis_)) {
-        tensor_map_out.insert(tensor_map_out.end(), index_size, MAP_NONE);
+        (void)tensor_map_out.insert(tensor_map_out.end(), index_size, MAP_NONE);
       } else {
         if (i == 0 && dynamic_shape_indices_ && target_ != CPU) {
           tensor_map_out.push_back(MAP_NONE);

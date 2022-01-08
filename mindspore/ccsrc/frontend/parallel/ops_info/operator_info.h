@@ -147,12 +147,12 @@ class OperatorInfo {
   StrategyPtr selected_strategy() const { return selected_strategy_; }
   CostPtr selected_cost() const { return selected_cost_; }
 
-  TensorLayout GetInputLayoutFromSWCByStrategy(StrategyPtr stra, size_t input_index);
-  TensorLayout GetOutputLayoutFromSWCByStrategy(StrategyPtr stra, size_t output_index);
-  StrategyPtr GetStrategyFromSWCByInputLayout(TensorLayout input_layout, size_t input_index);
-  StrategyPtr GetStrategyFromSWCByOutputLayout(TensorLayout output_layout, size_t output_index);
-  bool IsReshape();
-  bool IsTmpIdentity();
+  TensorLayout GetInputLayoutFromSWCByStrategy(const StrategyPtr &stra, size_t input_index);
+  TensorLayout GetOutputLayoutFromSWCByStrategy(const StrategyPtr &stra, size_t output_index);
+  StrategyPtr GetStrategyFromSWCByInputLayout(const TensorLayout &input_layout, size_t input_index);
+  StrategyPtr GetStrategyFromSWCByOutputLayout(const TensorLayout &output_layout, size_t output_index);
+  bool IsReshape() const;
+  bool IsTmpIdentity() const;
 
   void set_swc_index(int64_t, int64_t);
   int64_t swc_index() { return swc_index_; }

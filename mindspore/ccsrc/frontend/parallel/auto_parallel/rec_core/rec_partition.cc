@@ -190,7 +190,7 @@ StrategyRec PartitionNode(const Graph::NodeType &node,
   }
 }
 
-StrategyRec GetOneLoopStrategy(size_t op_inputs_num, StrategyRec old_str, StrategyRec new_str) {
+StrategyRec GetOneLoopStrategy(size_t op_inputs_num, const StrategyRec &old_str, StrategyRec new_str) {
   for (size_t i = 0; i < op_inputs_num; i++) {
     if (old_str.inputTensor[i].str_n != 0 && old_str.inputTensor[i].str_c != 0 && old_str.inputTensor[i].str_h != 0 &&
         old_str.inputTensor[i].str_w != 0) {

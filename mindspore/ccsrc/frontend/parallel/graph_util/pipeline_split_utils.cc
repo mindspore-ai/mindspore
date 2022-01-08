@@ -108,8 +108,7 @@ void SetStridedSliceStrategy(const AnfNodePtr &node) {
   cnode->AddPrimalAttr(IN_STRATEGY, strategy);
 }
 
-CNodePtr FindNodeWithMircoSize(const AnfNodePtr &node_user, const FuncGraphManagerPtr &manager,
-                               const NodeUsersMap &node_users_map) {
+CNodePtr FindNodeWithMircoSize(const AnfNodePtr &node_user, const NodeUsersMap &node_users_map) {
   // Recursively find micro tags, this may takes much more time if layers are too much
   std::queue<AnfNodePtr> visited;
   visited.push(node_user);
@@ -158,14 +157,14 @@ void InsertVirtualAssignAdd(const std::pair<AnfNodePtr, int> &node_user, const F
   ValuePtr micro = nullptr;
   int64_t step = 0;
   if (grad_accumulation_shard) {
-    auto cnode_with_micro_size = FindNodeWithMircoSize(cnode, manager, node_user_map);
+    auto cnode_with_micro_size = FindNodeWithMircoSize(cnode, node_user_map);
     if (cnode_with_micro_size && cnode_with_micro_size->HasPrimalAttr(MICRO)) {
       micro = cnode_with_micro_size->GetPrimalAttr(MICRO);
       step = GetValue<int64_t>(micro);
     }
   }
   args1 = MakeValue(param_ptr->user_data<TensorLayout>()->opt_shard_group());
-  args2 = MakeValue(param_ptr->param_info()->comm_fusion() + step * PIPELINE_FUSTION_OFFSET);
+  args2 = MakeValue(LongToSize(param_ptr->param_info()->comm_fusion()) + LongToSize(step) * PIPELINE_FUSTION_OFFSET);
   OperatorAttrs attrs = {};
   auto py_instance = CreateOpInstance(attrs, VIRTUAL_ASSIGN_ADD, VIRTUAL_ASSIGN_ADD);
   auto value_node = NewValueNode(py_instance);
@@ -175,7 +174,7 @@ void InsertVirtualAssignAdd(const std::pair<AnfNodePtr, int> &node_user, const F
   auto attrs_prim = new_prim->attrs();
   attrs_prim[GROUP] = args1;
   attrs_prim[kAttrFusion] = args2;
-  new_prim->SetAttrs(attrs_prim);
+  (void)new_prim->SetAttrs(attrs_prim);
 
   std::vector<AnfNodePtr> virtual_node_input = {value_node, cnode->input(IntToSize(node_user.second)), accu_parameter};
   auto graph = cnode->func_graph();
@@ -252,11 +251,11 @@ void HandleReceiveParam(const FuncGraphPtr &root, const std::vector<AnfNodePtr> 
 // If the graph likes the followings:
 // 1. MicroStepAllGather->MirrorMicro->load, we need to visit the param after the load
 std::vector<std::pair<AnfNodePtr, int>> FindNextNode(const std::pair<AnfNodePtr, int> &node_ptr,
-                                                     const FuncGraphPtr &root, const NodeUsersMap &node_users_map) {
+                                                     const NodeUsersMap &node_users_map) {
   std::vector<std::pair<AnfNodePtr, int>> to_be_visited_set;
   if (!IsPrimitiveCNode(node_ptr.first, prim::kPrimMirrorMicroStep) &&
       !IsPrimitiveCNode(node_ptr.first, prim::kPrimMicroStepAllGather)) {
-    to_be_visited_set.emplace_back(node_ptr);
+    (void)to_be_visited_set.emplace_back(node_ptr);
     return to_be_visited_set;
   }
   auto node_set = node_users_map.at(node_ptr.first);
@@ -269,7 +268,7 @@ std::vector<std::pair<AnfNodePtr, int>> FindNextNode(const std::pair<AnfNodePtr,
     visited.pop();
     if (!IsPrimitiveCNode(node.first, prim::kPrimMirrorMicroStep) &&
         !IsPrimitiveCNode(node.first, prim::kPrimMicroStepAllGather)) {
-      to_be_visited_set.emplace_back(node);
+      (void)to_be_visited_set.emplace_back(node);
     } else {
       auto next_node_set = node_users_map.at(node.first);
       for (auto &node_user : next_node_set) {
@@ -296,7 +295,7 @@ void AddVirtualAssignAdd(const FuncGraphPtr &root) {
       if (IsPrimitiveCNode(temp_node.first, prim::kPrimCast)) {
         temp_node = *node_users_map[temp_node.first].begin();
       }
-      auto node_set = FindNextNode(temp_node, root, node_users_map);
+      auto node_set = FindNextNode(temp_node, node_users_map);
       for (auto &node_user : node_set) {
         InsertVirtualAssignAdd(node_user, root->manager(), accu_parameter, node_users_map);
       }

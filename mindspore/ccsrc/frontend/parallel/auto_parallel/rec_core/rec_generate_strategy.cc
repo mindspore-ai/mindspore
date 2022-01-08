@@ -164,8 +164,8 @@ Strategys PrepareSoftMax(const std::vector<std::shared_ptr<OperatorInfo>> &ops, 
     if (axis >= SizeToLong(strategies[0].size()) || axis < 0) {
       MS_LOG(EXCEPTION) << ops[iter_ops]->name() << ": axis value is out of range.";
     }
-    if (strategies[0][axis] != 1) {
-      strategies[0][axis] = 1;
+    if (strategies[0][LongToSize(axis)] != 1) {
+      strategies[0][LongToSize(axis)] = 1;
       MS_LOG(INFO) << ops[iter_ops]->name() << ": adjust strategy to 1 on axis " << axis;
     }
   }
@@ -723,11 +723,9 @@ Dimensions CopyIncomingOperatorOutputStrategy(const std::shared_ptr<Graph> &grap
 Dimensions PrepareReshapeOutputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                                         const size_t incoming_op_index) {
   Dimensions s;
-
   auto output_shape = ops[incoming_op_index]->outputs_tensor_info()[0].shape();
   auto input_shape = ops[incoming_op_index]->inputs_tensor_info()[0].shape();
   auto strategy = ops[incoming_op_index]->selected_strategy();
-
   std::vector<int64_t> mapping;
   int64_t tmp_prod = 1;
   int64_t tmp_index = 0;
@@ -740,67 +738,63 @@ Dimensions PrepareReshapeOutputStrategy(const std::vector<std::shared_ptr<Operat
   // e.g. input_shape [2,2,2,2] output_shape [2,4,2], the mapping is [0,2,3,-1].
   if (output_shape.size() >= input_shape.size()) {
     for (size_t i = 0; i < input_shape.size(); i++) {
-      if (input_shape[i] < output_shape[tmp_index]) {
+      if (input_shape[i] < output_shape[LongToSize(tmp_index)]) {
         break;
-      } else {
-        for (size_t j = tmp_index; j < output_shape.size(); j++) {
-          tmp_prod *= output_shape[j];
-          tmp_index++;
-          if (input_shape[i] == tmp_prod) {
-            tmp_prod = 1;
-            mapping.push_back(i);
-            break;
-          } else {
-            mapping.push_back(i);
-          }
+      }
+      for (size_t j = LongToSize(tmp_index); j < output_shape.size(); j++) {
+        tmp_prod *= output_shape[j];
+        tmp_index++;
+        if (input_shape[i] == tmp_prod) {
+          tmp_prod = 1;
+          mapping.push_back(i);
+          break;
         }
+        mapping.push_back(i);
       }
     }
     mapping.push_back(-1);
-  } else {
+    tmp_index = 0;
     for (size_t i = 0; i < output_shape.size(); i++) {
-      if (output_shape[i] < input_shape[tmp_index]) {
-        break;
-      } else {
-        for (size_t j = tmp_index; j < input_shape.size(); j++) {
-          tmp_prod *= input_shape[j];
-          if (output_shape[i] == tmp_prod) {
-            tmp_prod = 1;
-            mapping.push_back(tmp_index);
-            tmp_index++;
-            break;
-          }
-          tmp_index++;
-        }
-      }
-    }
-    mapping.push_back(-1);
-  }
-  tmp_index = 0;
-  tmp_prod = 1;
-  if (output_shape.size() >= input_shape.size()) {
-    for (size_t i = 0; i < output_shape.size(); i++) {
-      if ((int64_t)mapping[i] == tmp_index) {
-        s.push_back(strategy->GetInputDim()[0][mapping[i]]);
+      if (mapping[i] == tmp_index) {
+        s.push_back(strategy->GetInputDim()[0][LongToSize(mapping[i])]);
         tmp_index++;
       } else {
         s.push_back(1);
       }
     }
-  } else {
-    for (size_t i = 0; i < output_shape.size(); i++) {
-      if (mapping[i] == -1) {
-        mapping.push_back(-1);
-        s.push_back(1);
-      } else {
-        for (size_t j = tmp_index; j < input_shape.size(); j++) {
-          tmp_prod *= strategy->GetInputDim()[0][j];
-          tmp_index++;
-          if (mapping[i] == (int64_t)j) {
-            s.push_back(tmp_prod);
-            tmp_prod = 1;
-            break;
-          }
+    return s;
+  }
+
+  for (size_t i = 0; i < output_shape.size(); i++) {
+    if (output_shape[i] < input_shape[LongToSize(tmp_index)]) {
+      break;
+    }
+    for (size_t j = LongToSize(tmp_index); j < input_shape.size(); j++) {
+      tmp_prod *= input_shape[j];
+      if (output_shape[i] == tmp_prod) {
+        tmp_prod = 1;
+        mapping.push_back(tmp_index);
+        tmp_index++;
+        break;
+      }
+      tmp_index++;
+    }
+  }
+  mapping.push_back(-1);
+  tmp_index = 0;
+  tmp_prod = 1;
+  for (size_t i = 0; i < output_shape.size(); i++) {
+    if (mapping[i] == -1) {
+      mapping.push_back(-1);
+      s.push_back(1);
+    } else {
+      for (size_t j = tmp_index; j < input_shape.size(); j++) {
+        tmp_prod *= strategy->GetInputDim()[0][j];
+        tmp_index++;
+        if (mapping[i] == (int64_t)j) {
+          s.push_back(tmp_prod);
+          tmp_prod = 1;
+          break;
         }
       }
     }
@@ -811,12 +805,11 @@ Dimensions PrepareReshapeOutputStrategy(const std::vector<std::shared_ptr<Operat
 Dimensions PrepareTransposeOutputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                                           const size_t incoming_op_index) {
   Dimensions s;
-
   auto permutation = GetValue<std::vector<int64_t>>(ops[incoming_op_index]->input_value().at(1));
   auto strategy = ops[incoming_op_index]->selected_strategy();
   // The strategies are assigned according to the order in permutation (user defined).
   for (size_t i = 0; i < permutation.size(); i++) {
-    s.push_back(strategy->GetInputDim()[0][permutation[i]]);
+    s.push_back(strategy->GetInputDim()[0][LongToSize(permutation[i])]);
   }
   return s;
 }

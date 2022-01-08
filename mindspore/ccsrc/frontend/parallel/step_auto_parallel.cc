@@ -302,7 +302,7 @@ void ApplyApproximationForNode(const OperatorInfoPtr &operator_info) {
 void AddOperatorToIgnoreCandidates(const PrimitivePtr &prim, const OperatorInfoPtr &operator_info) {
   if (prim->name() == CAST) {
     // add CAST into ignore_candidate
-    ignore_candidate_.insert(operator_info);
+    (void)ignore_candidate_.insert(operator_info);
   }
 }
 
@@ -374,7 +374,7 @@ OperatorInfoPtr CreateTheOperatorInfo(const PrimitivePtr &prim, const CNodePtr &
   // Compute split_flag_list_, indicating which input has batch dimension. This is ONLY used for preparation for
   // BatchParallelInfo operator
   operator_info->ComputeBatchSplitFlagList();
-  bool retGenStra;
+  Status retGenStra;
   if (AttrFound(attrs, STRATEGY_GEN_MODE) && GetValue<std::string>(attrs[STRATEGY_GEN_MODE]) == DATA_PARALLEL) {
     MS_LOG(INFO) << "generating batch parallel strategy...";
     StrategyPtr strategyPtr = parallel::GenerateBatchParallelStrategy(operator_info, prim);
@@ -1076,7 +1076,7 @@ Status ParallelStrategySearch(const std::vector<AnfNodePtr> &all_nodes, const Fu
     PrintStrategy(s_strategy);
   }
   // Remove some operatorInfo from the CNODEs
-  IgnoreOperatorsInCostGraph();
+  (void)IgnoreOperatorsInCostGraph();
 
   ops_in_a_loop_.clear();
   configured_stra_ops_.clear();

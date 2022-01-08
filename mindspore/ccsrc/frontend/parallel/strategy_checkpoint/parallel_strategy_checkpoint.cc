@@ -215,7 +215,7 @@ Status StrategyCheckpoint::SaveGroupInfo(const GroupInfoMap &group_info_map, con
   }
   straspb::ParallelGroupRanks *ckpt_restore_rank_list = parallel_group_map.mutable_ckpt_restore_rank_list();
   for (auto &restore_rank : restore_rank_list) {
-    ckpt_restore_rank_list->add_dim(restore_rank);
+    ckpt_restore_rank_list->add_dim(LongToSize(restore_rank));
   }
   if (!CheckPath(group_info_save_file_)) {
     MS_LOG(EXCEPTION) << "CheckPoint file in invalid";

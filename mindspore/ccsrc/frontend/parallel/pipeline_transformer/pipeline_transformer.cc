@@ -850,7 +850,7 @@ void PipelineTransformer::CutBorderForNode(const FuncGraphPtr &graph, const AnfN
           if (!send_depend) {
             continue;
           }
-          send_ops->insert(send_ops->begin(), send_depend);
+          (void)send_ops->insert(send_ops->begin(), send_depend);
           continue;
         }
         if (Reuse(node, user_node_stage, *send_ops, DEST_RANK)) {
