@@ -892,7 +892,7 @@ void KernelRuntime::AssignNodeOutputMem(MemType type, const AnfNodePtr &node, in
       continue;
     }
     if (NodeOutputDeviceAddressExist(node, i)) {
-      MS_LOG(INFO) << "Already malloc index:" << i;
+      MS_LOG(DEBUG) << "Already malloc index:" << i;
       continue;
     }
     MS_LOG(DEBUG) << "Assign Node:" << node->fullname_with_scope() << " output memory size:" << output_sizes[i];

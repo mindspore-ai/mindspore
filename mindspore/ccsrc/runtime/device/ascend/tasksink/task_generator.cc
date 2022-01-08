@@ -263,8 +263,8 @@ bool TaskGenerator::LaunchAllKernel(const std::vector<CNodePtr> &anf_node_list,
     size_t old_size = task_info_list->size();
     uint32_t stream_id = AnfAlgo::GetStreamId(anf_node_ptr);
     MS_EXCEPTION_IF_NULL(anf_node_ptr);
-    MS_LOG(INFO) << "Task gen launch begin, current_op_idx:" << current_op_index
-                 << " name:" << anf_node_ptr->fullname_with_scope() << ", stream id:" << stream_id;
+    MS_LOG(DEBUG) << "Task gen launch begin, current_op_idx:" << current_op_index
+                  << " name:" << anf_node_ptr->fullname_with_scope() << ", stream id:" << stream_id;
     if (!LaunchKernel(anf_node_ptr, stream_id, task_info_list)) {
       MS_LOG(ERROR) << "LaunchKernel failed.";
       return false;
