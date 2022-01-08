@@ -168,8 +168,11 @@ int QuantParamParser::ParseTargetDevice(const std::string &target_device_str, qu
   if (target_device_str == "KIRIN") {
     (*target_device) = quant::KIRIN;
     return RET_OK;
+  } else if (target_device_str == "NVGPU") {
+    (*target_device) = quant::NVGPU;
+    return RET_OK;
   } else {
-    MS_LOG(ERROR) << "INPUT ILLEGAL: target_device must be KIRIN.";
+    MS_LOG(ERROR) << "INPUT ILLEGAL: target_device must be KIRIN or NVGPU.";
     return RET_INPUT_PARAM_INVALID;
   }
 }

@@ -218,6 +218,8 @@ class MSTensor::Impl {
       param.bit_num = lite_quant_params[i].bitNum;
       param.scale = lite_quant_params[i].scale;
       param.zero_point = lite_quant_params[i].zeroPoint;
+      param.min = lite_quant_params[i].min;
+      param.max = lite_quant_params[i].max;
       quant_params.push_back(param);
     }
     return quant_params;

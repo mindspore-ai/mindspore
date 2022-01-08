@@ -16,6 +16,7 @@
 
 #include "src/delegate/tensorrt/op/tensorrt_op.h"
 #include "src/delegate/tensorrt/tensorrt_runtime.h"
+#include <unordered_map>
 
 namespace mindspore::lite {
 const schema::Primitive *TensorRTOp::GetPrimitive() { return this->op_primitive_; }
@@ -45,6 +46,8 @@ const std::vector<TensorRTOp *> &TensorRTOp::in_ops() const { return this->in_op
 const std::vector<TensorRTOp *> &TensorRTOp::out_ops() const { return this->out_ops_; }
 
 void TensorRTOp::SetRuntime(TensorRTRuntime *runtime) { this->runtime_ = runtime; }
+
+std::unordered_map<std::string, std::string> TensorRTOp::GetTensorNameMap() { return this->tensor_name_map_; }
 
 bool TensorRTOp::IsShapeKnown() {
   if (this->in_tensors_.size() == 1 && this->in_tensors_[0].Shape().size() == 0) {

@@ -63,6 +63,7 @@ int ConvolutionTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
       return RET_ERROR;
     }
     transpose_layer_in->setName((op_name_ + "_transpose2NCHW").c_str());
+    tensor_name_map_[transpose_layer_in->getOutput(0)->getName()] = op_name_;
     conv_input = transpose_layer_in->getOutput(0);
   }
 
@@ -105,6 +106,7 @@ int ConvolutionTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     return RET_ERROR;
   }
   conv_layer->setName((op_name_ + "_conv").c_str());
+  tensor_name_map_[conv_layer->getOutput(0)->getName()] = op_name_;
 
   // add params
   SetAttributes(conv_op, conv_layer);
@@ -124,6 +126,8 @@ int ConvolutionTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   }
   activation_layer->getOutput(0)->setName((op_name_ + "_output").c_str());
   this->AddInnerOutTensors(ITensorHelper{activation_layer->getOutput(0), Format::NCHW, false});
+  // add tensor name mapping
+  tensor_name_map_[activation_layer->getOutput(0)->getName()] = op_name_;
   return RET_OK;
 }
 

@@ -20,6 +20,7 @@
 #include <NvInfer.h>
 #include <string>
 #include <vector>
+#include <unordered_map>
 #include "include/api/kernel.h"
 #include "src/common/log_adapter.h"
 #include "include/errorcode.h"
@@ -104,6 +105,8 @@ class TensorRTOp {
 
   DynamicShapeParams GetDynamicShapeParams() const;
 
+  std::unordered_map<std::string, std::string> GetTensorNameMap();
+
  protected:
   bool IsShapeKnown();
 
@@ -130,6 +133,8 @@ class TensorRTOp {
   TensorRTRuntime *runtime_{nullptr};
 
   DynamicShapeParams dynamic_shape_params_;
+
+  std::unordered_map<std::string, std::string> tensor_name_map_;
 };
 
 template <class T>

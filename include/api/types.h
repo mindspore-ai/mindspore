@@ -58,6 +58,8 @@ struct QuantParam {
   int bit_num;
   double scale;
   int32_t zero_point;
+  double min;
+  double max;
 };
 
 class Allocator;

@@ -18,6 +18,7 @@
 #include <cuda_runtime_api.h>
 #include <string>
 #include <vector>
+#include <unordered_map>
 #include <set>
 #include <queue>
 #include "src/delegate/delegate_utils.h"
@@ -84,6 +85,51 @@ int TensorRTSubGraph::Init(cudaStream_t stream) {
       input_hw_index_ = -1;
     }
   }
+  if (GetInt8DynamicRange() != RET_OK) {
+    MS_LOG(WARNING) << "get tensorrt dynamic range failed.";
+  }
+  if (SetDeviceConfig(stream) != RET_OK) {
+    MS_LOG(WARNING) << "set tensorrt config failed.";
+  }
+  return RET_OK;
+}
+
+int TensorRTSubGraph::GetInt8DynamicRange() {
+  if (!IsInt8Mode() || !runtime_->GetBuilder()->platformHasFastInt8()) {
+    MS_LOG(WARNING) << "no int8 mode, not need dynamic range.";
+  }
+  // input tensor
+  for (size_t i = 0; i < inputs_.size(); i++) {
+    auto quant_params = inputs_[i].QuantParams();
+    auto tensor_name = inputs_[i].Name();
+    for (auto param : quant_params) {
+      dynamic_range_map_[tensor_name] = param.max;
+    }
+  }
+  // output tensor
+  for (size_t i = 0; i < outputs_.size(); i++) {
+    auto quant_params = outputs_[i].QuantParams();
+    auto tensor_name = outputs_[i].Name();
+    for (auto param : quant_params) {
+      dynamic_range_map_[tensor_name] = param.max;
+    }
+  }
+  // op tensor
+  for (auto cur_op : all_ops_) {
+    for (auto in_tensor : cur_op->inputs()) {
+      auto tensor_name = in_tensor.Name();
+      for (auto param : in_tensor.QuantParams()) {
+        dynamic_range_map_[tensor_name] = param.max;
+      }
+    }
+
+    for (auto out_tensor : cur_op->outputs()) {
+      auto tensor_name = out_tensor.Name();
+      for (auto param : out_tensor.QuantParams()) {
+        dynamic_range_map_[tensor_name] = param.max;
+      }
+    }
+  }
   return RET_OK;
 }
 
@@ -122,10 +168,144 @@ int TensorRTSubGraph::SetDeviceConfig(cudaStream_t stream) {
     config_->setFlag(nvinfer1::BuilderFlag::kFP16);
   }
 
+  // set int8
+  if (IsInt8Mode() && runtime_->GetBuilder()->platformHasFastInt8()) {
+    MS_LOG(INFO) << "set int8 flag successfully for tensorrt.";
+    config_->setFlag(nvinfer1::BuilderFlag::kINT8);
+    // Mark calibrator as null
+    config_->setInt8Calibrator(nullptr);
+    input_hw_index_ = -1;
+  } else {
+    MS_LOG(INFO) << "inputs no quant params or platform not support int8.";
+  }
   config_->setProfileStream(stream);
 
   // config setMaxWorkspaceSize to 1152 MB for max limit
   config_->setMaxWorkspaceSize(1152 * (1 << 20));
+  return RET_OK;
+}
+
+bool TensorRTSubGraph::SupportFP16() {
+  int deviceCnt = 0;
+
+  cudaError ret = cudaGetDeviceCount(&deviceCnt);
+  if (ret != cudaSuccess) {
+    MS_LOG(ERROR) << "cudaGetDeviceCount failed.";
+    return false;
+  }
+  std::vector<std::string> supportFP16_versions{"5.3", "6.0", "6.2", "7.0", "7.2", "7.5", "8.0", "8.6"};
+  cudaDeviceProp prop;
+  std::string version;
+  for (int dev = 0; dev < deviceCnt; dev++) {
+    ret = cudaGetDeviceProperties(&prop, dev);
+    if (ret != cudaSuccess) {
+      MS_LOG(ERROR) << "cuDeviceGetAttribute failed.";
+      return false;
+    }
+    version = std::to_string(prop.major) + "." + std::to_string(prop.minor);
+    if (std::find(supportFP16_versions.begin(), supportFP16_versions.end(), version) != supportFP16_versions.end()) {
+      MS_LOG(INFO) << "cuda device version is: " << version << ", support FP16, set enable FP16 tag successful";
+      return true;
+    }
+  }
+  MS_LOG(WARNING) << "cuda device version is: " << version << ", don't support FP16, set enable FP16 tag failed";
+  return false;
+}
+
+bool TensorRTSubGraph::IsInt8Mode() {
+  bool isInt8Mode = false;
+  for (auto cur_op : all_ops_) {
+    for (auto in_tensor : cur_op->inputs()) {
+      if (cur_op->inputs().front().QuantParams().empty()) {
+        continue;
+      }
+      auto quant_param = cur_op->inputs().front().QuantParams().front();
+      if (quant_param.max > 0) {
+        isInt8Mode = true;
+        break;
+      }
+    }
+
+    for (auto out_tensor : cur_op->outputs()) {
+      if (cur_op->outputs().front().QuantParams().empty()) {
+        continue;
+      }
+      auto quant_param = cur_op->outputs().front().QuantParams().front();
+      if (quant_param.max > 0) {
+        isInt8Mode = true;
+        break;
+      }
+    }
+  }
+  return isInt8Mode;
+}
+
+void TensorRTSubGraph::SetInt8LayerPresion() {
+  if (!IsInt8Mode() || !runtime_->GetBuilder()->platformHasFastInt8()) {
+    MS_LOG(WARNING) << "no int8 mode, not need layer presion.";
+    return;
+  }
+
+  for (int i = 0; i < this->network_->getNbLayers(); ++i) {
+    auto layer = this->network_->getLayer(i);
+    if (layer->getType() != nvinfer1::LayerType::kCONSTANT && layer->getType() != nvinfer1::LayerType::kCONCATENATION &&
+        layer->getType() != nvinfer1::LayerType::kSHAPE) {
+      layer->setPrecision(nvinfer1::DataType::kINT8);
+    }
+
+    for (int j = 0; j < layer->getNbOutputs(); ++j) {
+      std::string tensorName = layer->getOutput(j)->getName();
+      MS_LOG(DEBUG) << "Tensor: " << tensorName << ". OutputType: INT8";
+      if (layer->getOutput(j)->isExecutionTensor()) {
+        layer->setOutputType(j, nvinfer1::DataType::kINT8);
+      }
+    }
+  }
+}
+
+int TensorRTSubGraph::SetInt8DynamicRange() {
+  if (!IsInt8Mode() || !runtime_->GetBuilder()->platformHasFastInt8()) {
+    MS_LOG(DEBUG) << "no int8 mode, not need dynamic range.";
+    return RET_OK;
+  }
+
+  // set dynamic range for network input tensor
+  for (int i = 0; i < this->network_->getNbInputs(); ++i) {
+    std::string tensorName = this->network_->getInput(i)->getName();
+    if (dynamic_range_map_.find(tensorName) != dynamic_range_map_.end()) {
+      if (!this->network_->getInput(i)->setDynamicRange(-dynamic_range_map_.at(tensorName),
+                                                        dynamic_range_map_.at(tensorName))) {
+        return RET_ERROR;
+      }
+      MS_LOG(INFO) << "set dynamic range for input tensor: " << tensorName
+                   << " value: " << dynamic_range_map_.at(tensorName);
+    } else {
+      MS_LOG(INFO) << "missing network dynamic range for input tensor: " << tensorName;
+    }
+  }
+
+  // set dynamic range for network output tensor
+  for (int i = 0; i < this->network_->getNbLayers(); ++i) {
+    auto lyr = this->network_->getLayer(i);
+    for (int j = 0, e = lyr->getNbOutputs(); j < e; ++j) {
+      std::string tensorName = lyr->getOutput(j)->getName();
+      if (tensor_name_map_.find(tensorName) == tensor_name_map_.end()) {
+        MS_LOG(INFO) << "missing network dynamic range for output tensor: " << tensorName;
+        continue;
+      }
+      std::string mappingName = tensor_name_map_.at(tensorName);
+      if (dynamic_range_map_.find(mappingName) != dynamic_range_map_.end()) {
+        if (!lyr->getOutput(j)->setDynamicRange(-dynamic_range_map_.at(mappingName),
+                                                dynamic_range_map_.at(mappingName))) {
+          return RET_ERROR;
+        }
+        MS_LOG(INFO) << "set dynamic range for output tensor: " << tensorName
+                     << " value: " << dynamic_range_map_.at(mappingName);
+      } else {
+        MS_LOG(INFO) << "missing network dynamic range for output tensor: " << tensorName;
+      }
+    }
+  }
   return RET_OK;
 }
 
@@ -267,20 +447,45 @@ int TensorRTSubGraph::BuildTensorRTGraph() {
       MS_LOG(ERROR) << "Add op failed in TensorRT network";
       return RET_ERROR;
     }
+    ret = GetTensorName(cur_op);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "GetTensorName failed in TensorRT network";
+      return RET_ERROR;
+    }
   }
   ret = MarkOutputs();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "MarkOutputs failed in TensorRT network";
     return ret;
   }
+
+  ret = SetInt8DynamicRange();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "SetInt8DynamicRange failed in TensorRT network";
+    return ret;
+  }
+
   std::string network_name =
     "network_" + std::string(network_->getInput(0)->getName()) + "_" + std::string(network_->getOutput(0)->getName());
   network_->setName(network_name.c_str());
   this->name_ = network_name;
+  SetInt8LayerPresion();
   ret = BuildEngine();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Create engine failed in TensorRT network";
     return ret;
+  }
+  return RET_OK;
+}
+
+int TensorRTSubGraph::GetTensorName(TensorRTOp *cur_op) {
+  auto op_tensor_map = cur_op->GetTensorNameMap();
+  std::unordered_map<std::string, std::string>::iterator iter;
+  for (iter = op_tensor_map.begin(); iter != op_tensor_map.end(); ++iter) {
+    if (tensor_name_map_.find(iter->first) == tensor_name_map_.end()) {
+      tensor_name_map_[iter->first] = iter->second;
+      MS_LOG(DEBUG) << "UpdateTensorName mapping: " << iter->first << " value: " << iter->second;
+    }
   }
   return RET_OK;
 }

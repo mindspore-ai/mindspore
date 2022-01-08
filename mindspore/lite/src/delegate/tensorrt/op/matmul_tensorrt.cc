@@ -68,6 +68,7 @@ int MatMulTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     network->addMatrixMultiply(*matmul_a.trt_tensor_, transpose_a_, *matmul_b.trt_tensor_, transpose_b_);
   matmul_layer->setName(op_name_.c_str());
   nvinfer1::ITensor *out_tensor = matmul_layer->getOutput(0);
+  tensor_name_map_[matmul_layer->getOutput(0)->getName()] = op_name_;
 
   if (in_tensors_.size() == BIAS_INDEX + 1) {
     nvinfer1::ITensor *bias = nullptr;

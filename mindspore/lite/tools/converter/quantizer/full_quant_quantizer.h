@@ -66,6 +66,7 @@ class FullQuantQuantizer : public Quantizer {
   int DoValueNodeQuant(const CNodePtr &cnode, const ValueNodePtr &input_node, size_t input_index);
   int IsSupportWeightQuant(const CNodePtr &cnode, const AnfNodePtr &input_node, size_t input_index);
   void InitQMinMax();
+  void InitNvGpuConfig();
   void InitCpuConfig();
   void InitKirinConfig();
   int MarkQuantNode(const FuncGraphPtr &func_graph);

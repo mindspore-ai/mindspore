@@ -48,6 +48,9 @@ struct LiteQuantParam {
   int roundType{1};
   int multiplier{1};
   int dstDtype{32};
+  // dynamic range
+  double min{-255.0};
+  double max{255.0};
 };
 
 class Tensor : public mindspore::tensor::MSTensor {
