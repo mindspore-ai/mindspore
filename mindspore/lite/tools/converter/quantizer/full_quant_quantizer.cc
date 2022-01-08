@@ -249,6 +249,10 @@ int FullQuantQuantizer::QuantNodeSimpleOp(const CNodePtr &cnode) {
         }
       }
     } else if (input_node->isa<mindspore::Parameter>()) {
+      if (weight_data_type_ == kTypeUnknown) {
+        MS_LOG(INFO) << "weight not need parameter quant.";
+        continue;
+      }
       ret = DoParameterNodeQuant(cnode, input_node->cast<ParameterPtr>(), i);
       if (ret == RET_NO_CHANGE) {
         continue;
@@ -260,6 +264,10 @@ int FullQuantQuantizer::QuantNodeSimpleOp(const CNodePtr &cnode) {
       weight_quant_params_bak[input_node->fullname_with_scope()] =
         primitive_quant_holder->get_input_quant_params()[i - 1];
     } else if (input_node->isa<mindspore::ValueNode>()) {
+      if (weight_data_type_ == kTypeUnknown) {
+        MS_LOG(INFO) << "weight not need parameter quant.";
+        continue;
+      }
       ret = DoValueNodeQuant(cnode, input_node->cast<ValueNodePtr>(), i);
       if (ret == RET_NO_CHANGE) {
         continue;
@@ -410,6 +418,17 @@ void FullQuantQuantizer::InitKirinConfig() {
   per_channel_ops_ = {prim::kPrimConv2DFusion};
 }
 
+void FullQuantQuantizer::InitNvGpuConfig() {
+  // `kTypeUnknown` represents the original data type
+  activation_target_data_type_ = kTypeUnknown;
+  activation_symmetry_ = true;
+  weight_data_type_ = kTypeUnknown;
+  weight_symmetry_ = true;
+  support_int8_ops_ = {prim::kPrimConv2DFusion, prim::kPrimFullConnection, prim::kPrimMatMul,
+                       prim::kPrimConv2dTransposeFusion, prim::kPrimConv2dTransposeFusion};
+  per_channel_ops_ = {prim::kPrimConv2DFusion, prim::kPrimMatMul, prim::kPrimFullConnection};
+}
+
 void FullQuantQuantizer::InitQMinMax() {
   MS_ASSERT(activation_quant_data_type_ == kNumberTypeInt8 || activation_quant_data_type_ == kNumberTypeUInt8);
   if (activation_quant_data_type_ == kNumberTypeInt8) {
@@ -463,6 +482,9 @@ int FullQuantQuantizer::PreProcess(const FuncGraphPtr &func_graph) {
       break;
     case KIRIN:
       InitKirinConfig();
+      break;
+    case NVGPU:
+      InitNvGpuConfig();
       break;
     default:
       MS_LOG(ERROR) << " Unsupported device " << flags_.fullQuantParam.target_device;

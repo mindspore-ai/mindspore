@@ -17,16 +17,21 @@
 #define LITE_UNUSED_QUANT_PARAM_DATA_REMOVE_PASS_H
 #include <memory>
 #include "tools/converter/optimizer.h"
+#include "tools/converter/converter_flags.h"
 #include "tools/common/graph_util.h"
 namespace mindspore {
 namespace lite {
 class SetUnusedQuantParamToDefaultPass : public GraphPass {
  public:
   SetUnusedQuantParamToDefaultPass() {}
+  explicit SetUnusedQuantParamToDefaultPass(const converter::Flags &ctx) : ctx_(ctx) {}
 
   ~SetUnusedQuantParamToDefaultPass() override = default;
 
   STATUS Run(schema::MetaGraphT *graph) override;
+
+ private:
+  converter::Flags ctx_;
 };
 }  // namespace lite
 }  // namespace mindspore

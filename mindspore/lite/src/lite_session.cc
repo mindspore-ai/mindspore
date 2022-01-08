@@ -158,6 +158,8 @@ void LiteSession::ConvertTensorsQuantParam(const schema::Tensor *src_tensor, lit
         quant_arg.roundType = quant_param->roundType();
         quant_arg.multiplier = quant_param->multiplier();
         quant_arg.dstDtype = quant_param->dstDtype();
+        quant_arg.min = quant_param->min();
+        quant_arg.max = quant_param->max();
       }
       dst_tensor->AddQuantParam(quant_arg);
     }

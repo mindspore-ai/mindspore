@@ -149,7 +149,7 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
   {
     Optimizer forming_model_optimizer;
     forming_model_optimizer.AddPass(new (std::nothrow) InferShapePass(ctx.fmk));
-    forming_model_optimizer.AddPass(new (std::nothrow) SetUnusedQuantParamToDefaultPass());
+    forming_model_optimizer.AddPass(new (std::nothrow) SetUnusedQuantParamToDefaultPass(ctx));
     forming_model_optimizer.AddPass(new (std::nothrow) TensorNamePass());
     forming_model_optimizer.AddPass(new (std::nothrow) ConvertFP32ToFP16Pass(ctx.saveFP16));
     status = forming_model_optimizer.Run(graph_defT_);
