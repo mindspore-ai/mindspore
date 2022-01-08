@@ -4337,8 +4337,8 @@ class Sin(PrimitiveWithInfer):
         out_i = sin(x_i)
 
     Inputs:
-        - **x** (Tensor) - The shape of tensor is
-           :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+        - **x** (Tensor) - The shape of tensor is :math:`(N,*)` where :math:`*` means, any number of
+          additional dimensions.
 
     Outputs:
         Tensor, has the same shape as `x`.
