@@ -50,7 +50,7 @@ void PackLstmWeightTranspose(float *dst, const float *src, int batch, int col, i
   }
 }
 
-void ReorderLstmWeights(float *dst, float *src, int nof_martices, int col, int row, const int *order) {
+void ReorderLstmWeights(float *dst, const float *src, int nof_martices, int col, int row, const int *order) {
   int matrix_size = col * row;
   for (int i = 0; i < nof_martices; i++) {
     const float *src_block = src + i * matrix_size;
@@ -92,8 +92,8 @@ int GetRunWorkspaceSize(const LstmParameter *lstm_param) {
   return workspace_size;
 }
 
-void LstmGradStepUnitInit(float *output_gate, float *cell_state, float *dY, float *dC, float *dH, float *workspace,
-                          const LstmParameter *lstm_param) {
+void LstmGradStepUnitInit(const float *output_gate, float *cell_state, float *dY, float *dC, float *dH,
+                          float *workspace, const LstmParameter *lstm_param) {
   int state_size = lstm_param->batch_ * lstm_param->hidden_size_;
   memcpy(dH, dY, state_size * sizeof(float));
   float *workspace_i = workspace;
@@ -106,7 +106,7 @@ void LstmGradStepUnitInit(float *output_gate, float *cell_state, float *dY, floa
   ElementSub(dC, temp, dC, lstm_param->output_step_);
 }
 
-void LstmGradStepUnit(float *input_t, float *output, float *input_gate, float *forget_gate, float *cell_gate,
+void LstmGradStepUnit(const float *input_t, float *output, float *input_gate, float *forget_gate, float *cell_gate,
                       float *output_gate, float *hidden_state, float *cell_state, float *dC, float *dH, float *dY,
                       float *dW, float *dX, float *cell_state_minus1, float *weights, float *workspace,
                       const LstmParameter *lstm_param) {
