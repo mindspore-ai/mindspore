@@ -72,6 +72,15 @@ bool OfflineIsolated(const std::vector<kernel::LiteKernel *> &kernels, const ker
   return true;
 }
 
+TypeId GetSubgraphInTensorDataType(const kernel::LiteKernel *kernel, const lite::Tensor *tensor) {
+  if (kernel->subgraph_type() != kernel::kGpuFp16SubGraph || tensor->IsGraphInput() || tensor->IsGraphOutput()) {
+    if (tensor->data_type() == kNumberTypeFloat16 || tensor->data_type() == kNumberTypeFloat32) {
+      return kernel->desc().data_type;
+    }
+  }
+  return tensor->data_type();
+}
+
 int LiteOpActor::PreInit(std::vector<std::shared_ptr<LiteOpActor>> *actors,
                          std::unordered_map<Tensor *, Tensor *> *input_map) {
   return IsolateInputData(actors, input_map);
@@ -105,11 +114,7 @@ int LiteOpActor::IsolateInputData(std::vector<std::shared_ptr<LiteOpActor>> *act
       continue;
     }
 
-    TypeId new_data_type = old_tensor->data_type();
-    if (old_tensor->data_type() == kNumberTypeFloat16 || old_tensor->data_type() == kNumberTypeFloat32) {
-      new_data_type = kernel_->desc().data_type;
-    }
-
+    TypeId new_data_type = GetSubgraphInTensorDataType(kernel_, old_tensor);
     Tensor *new_tensor = new Tensor(new_data_type, old_tensor->shape(), old_tensor->format(), old_tensor->category());
     if (new_tensor == nullptr) {
       MS_LOG(ERROR) << "new Tensor failed.";
