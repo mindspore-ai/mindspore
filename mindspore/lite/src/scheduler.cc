@@ -1453,8 +1453,7 @@ bool KernelFitCurrentSubGraph(const kernel::SubGraphType subgraph_type, const ke
       if (desc.arch != kernel::KERNEL_ARCH::kCPU) {
         return false;
       }
-      return (desc.data_type == kNumberTypeFloat16 || desc.data_type == kNumberTypeInt32 ||
-              desc.data_type == kNumberTypeInt || desc.data_type == kNumberTypeBool);
+      return (desc.data_type == kNumberTypeFloat16);
     }
     case kernel::SubGraphType::kCpuFP32SubGraph: {
       auto desc = kernel.desc();
