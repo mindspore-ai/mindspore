@@ -317,55 +317,16 @@ int LiteOpActor::CompileArrowThroughOutputTensors(
   return RET_OK;
 }
 
-void LiteOpActor::MoveTensorInputData(Tensor *dst_tensor, Tensor *src_tensor) {
-  MS_ASSERT(src_tensor != dst_tensor);
-  dst_tensor->FreeData();
-  dst_tensor->ResetRefCount();
-  dst_tensor->set_allocator(src_tensor->allocator());
-
-  src_tensor->allocator()->IncRefCount(src_tensor->data(), dst_tensor->ref_count());
-
-  if (src_tensor->data() != nullptr) {
-    dst_tensor->set_data(src_tensor->MutableData()); /* using MutableData to sync GPU data */
-  }
-
-  dst_tensor->set_own_data(src_tensor->own_data());
-  src_tensor->DecRefCount();
-}
-
-void LiteOpActor::MoveInputData(Tensor *dst_tensor, Tensor *src_tensor) {
-  if (src_tensor == dst_tensor) {
-    MS_LOG(INFO) << "no need to move.";
-    return;
-  }
-  MS_ASSERT(src_tensor->allocator() != nullptr);
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
-  if (src_tensor->data_type() == kObjectTypeTensorType) {
-    MoveTensorListInputData(reinterpret_cast<TensorList *>(dst_tensor), reinterpret_cast<TensorList *>(src_tensor));
-  } else {
-    MoveTensorInputData(dst_tensor, src_tensor);
-  }
-#else
-  MoveTensorInputData(dst_tensor, src_tensor);
-#endif
-  return;
-}
-
-void LiteOpActor::SetInputData(Tensor *dst_tensor, Tensor *src_tensor) {
-  dst_tensor->set_data(src_tensor->data());
-  dst_tensor->set_own_data(false);
-}
-
-int LiteOpActor::CastInputData(Tensor *dst, Tensor *src) {
+int LiteOpActor::CastTensorData(Tensor *dst, Tensor *src) {
   int ret = RET_OK;
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
   if (src->data_type() != kObjectTypeTensorType) {
-    ret = CastTensorInputData(dst, src);
+    ret = CastCommonTensorData(dst, src);
   } else {
-    ret = CastTensorListInputData(reinterpret_cast<TensorList *>(dst), reinterpret_cast<TensorList *>(src));
+    ret = CastTensorListTensorData(reinterpret_cast<TensorList *>(dst), reinterpret_cast<TensorList *>(src));
   }
 #else
-  ret = CastTensorInputData(dst, src);
+  ret = CastCommonTensorData(dst, src);
 #endif
   src->DecRefCount();
   return ret;
@@ -386,7 +347,7 @@ bool LiteOpActor::NeedCastData(Tensor *dst_tensor, Tensor *src_tensor) {
   return false;
 }
 
-int LiteOpActor::CastTensorInputData(Tensor *dst, Tensor *src) {
+int LiteOpActor::CastCommonTensorData(Tensor *dst, Tensor *src) {
   dst->MallocData();
   dst->ResetRefCount();
 #if defined(ENABLE_ARM) && defined(ENABLE_FP16)
@@ -414,46 +375,7 @@ int LiteOpActor::CastTensorInputData(Tensor *dst, Tensor *src) {
 }
 
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
-void LiteOpActor::MoveTensorListInputData(TensorList *dst_tensorlist, TensorList *src_tensorlist) {
-  MS_ASSERT(src_tensorlist != nullptr);
-  MS_ASSERT(dst_tensorlist != nullptr);
-  dst_tensorlist->FreeData();
-  dst_tensorlist->ResetRefCount();
-  dst_tensorlist->set_allocator(src_tensorlist->allocator());
-
-  auto src_tensorlist_tensors_size = src_tensorlist->tensors().size();
-  auto dst_tensorlist_tensors_size = dst_tensorlist->tensors().size();
-  if (src_tensorlist_tensors_size != dst_tensorlist_tensors_size) {
-    MS_LOG(ERROR) << "src tensorlist: " << src_tensorlist->tensor_name()
-                  << " tesnors size: " << src_tensorlist_tensors_size
-                  << " vs dst tensorlist: " << src_tensorlist->tensor_name()
-                  << " tensors size: " << dst_tensorlist_tensors_size;
-    return;
-  }
-
-  dst_tensorlist->set_own_data(src_tensorlist->own_data());
-  for (size_t i = 0; i < src_tensorlist_tensors_size; ++i) {
-    auto &src_tensor = src_tensorlist->tensors()[i];
-    auto &dst_tensor = dst_tensorlist->tensors()[i];
-
-    if (src_tensor->allocator() != nullptr) {
-      src_tensor->allocator()->IncRefCount(src_tensor->data(), dst_tensor->ref_count());
-    }
-    dst_tensor->set_own_data(src_tensor->own_data());
-    if (src_tensor->data() != nullptr) {
-      dst_tensor->set_data(src_tensor->MutableData()); /* using MutableData to sync GPU data */
-    }
-    dst_tensor->set_shape(src_tensor->shape());
-  }
-
-  if (src_tensorlist->IsConst() || src_tensorlist->IsGraphInput()) {
-    dst_tensorlist->set_own_data(false);
-  } else {
-    src_tensorlist->DecRefCount();
-  }
-}
-
-int LiteOpActor::CastTensorListInputData(TensorList *dst_tensorlist, TensorList *src_tensorlist) {
+int LiteOpActor::CastTensorListTensorData(TensorList *dst_tensorlist, TensorList *src_tensorlist) {
   MS_ASSERT(src_tensorlist != nullptr);
   MS_ASSERT(dst_tensorlist != nullptr);
   dst_tensorlist->set_shape(src_tensorlist->shape());
@@ -474,7 +396,7 @@ int LiteOpActor::CastTensorListInputData(TensorList *dst_tensorlist, TensorList 
   for (size_t i = 0; i < src_tensorlist->tensors().size(); ++i) {
     auto &src_tensor = src_tensorlist->tensors()[i];
     auto &dst_tensor = dst_tensorlist->tensors()[i];
-    CastTensorInputData(dst_tensor, src_tensor);
+    CastCommonTensorData(dst_tensor, src_tensor);
   }
   return RET_OK;
 }
@@ -552,16 +474,16 @@ void LiteOpActor::InitInputData() {
     }
 
     if (NeedCastData(dst_tensor, src_tensor)) {
-      CastInputData(dst_tensor, src_tensor);
+      CastTensorData(dst_tensor, src_tensor);
       continue;
     }
 
     /* same data-type  */
     if (src_tensor->allocator() == nullptr || src_tensor->IsGraphInput()) {
       // delegate graph kernel output tensor
-      SetInputData(dst_tensor, src_tensor);
+      SetTensorData(dst_tensor, src_tensor);
     } else {
-      MoveInputData(dst_tensor, src_tensor);
+      MoveTensorData(dst_tensor, src_tensor);
     }
   }
   return;

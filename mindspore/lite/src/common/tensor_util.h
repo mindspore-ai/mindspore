@@ -42,11 +42,14 @@ int GenerateInTensorC(const OpParameter *const parameter, const std::vector<lite
                       std::vector<TensorC *> *in_tensor_c);
 int GenerateOutTensorC(const OpParameter *const parameter, const std::vector<lite::Tensor *> &outputs,
                        std::vector<TensorC *> *out_tensor_c);
-
 int CheckTensorsInvalid(const std::vector<Tensor *> &tensors);
-
 std::vector<mindspore::MSTensor> LiteTensorsToMSTensors(const std::vector<lite::Tensor *> &lite_tensors);
-
+void MoveCommonTensorData(Tensor *dst_tensor, Tensor *src_tensor);
+void MoveTensorData(Tensor *dst_tensor, Tensor *src_tensor);
+void SetTensorData(Tensor *dst_tensor, Tensor *src_tensor);
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
+void MoveTensorListTensorData(TensorList *dst_tensor, TensorList *src_tensor);
+#endif
 }  // namespace lite
 }  // namespace mindspore
 

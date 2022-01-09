@@ -263,5 +263,85 @@ std::vector<mindspore::MSTensor> LiteTensorsToMSTensors(const std::vector<lite::
 
   return tensors;
 }
+
+void MoveCommonTensorData(Tensor *dst_tensor, Tensor *src_tensor) {
+  MS_ASSERT(src_tensor != dst_tensor);
+  dst_tensor->FreeData();
+  dst_tensor->ResetRefCount();
+  dst_tensor->set_allocator(src_tensor->allocator());
+
+  src_tensor->allocator()->IncRefCount(src_tensor->data(), dst_tensor->ref_count());
+
+  if (src_tensor->data() != nullptr) {
+    dst_tensor->set_data(src_tensor->MutableData()); /* using MutableData to sync GPU data */
+  }
+
+  dst_tensor->set_own_data(src_tensor->own_data());
+  src_tensor->DecRefCount();
+}
+
+void MoveTensorData(Tensor *dst_tensor, Tensor *src_tensor) {
+  if (src_tensor == dst_tensor) {
+    MS_LOG(INFO) << "no need to move.";
+    return;
+  }
+  MS_ASSERT(src_tensor->allocator() != nullptr);
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
+  if (src_tensor->data_type() == kObjectTypeTensorType) {
+    MoveTensorListTensorData(reinterpret_cast<TensorList *>(dst_tensor), reinterpret_cast<TensorList *>(src_tensor));
+  } else {
+    MoveCommonTensorData(dst_tensor, src_tensor);
+  }
+#else
+  MoveCommonTensorData(dst_tensor, src_tensor);
+#endif
+  return;
+}
+
+void SetTensorData(Tensor *dst_tensor, Tensor *src_tensor) {
+  dst_tensor->set_data(src_tensor->data());
+  dst_tensor->set_own_data(false);
+}
+
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
+void MoveTensorListTensorData(TensorList *dst_tensorlist, TensorList *src_tensorlist) {
+  MS_ASSERT(src_tensorlist != nullptr);
+  MS_ASSERT(dst_tensorlist != nullptr);
+  dst_tensorlist->FreeData();
+  dst_tensorlist->ResetRefCount();
+  dst_tensorlist->set_allocator(src_tensorlist->allocator());
+
+  auto src_tensorlist_tensors_size = src_tensorlist->tensors().size();
+  auto dst_tensorlist_tensors_size = dst_tensorlist->tensors().size();
+  if (src_tensorlist_tensors_size != dst_tensorlist_tensors_size) {
+    MS_LOG(ERROR) << "src tensorlist: " << src_tensorlist->tensor_name()
+                  << " tesnors size: " << src_tensorlist_tensors_size
+                  << " vs dst tensorlist: " << src_tensorlist->tensor_name()
+                  << " tensors size: " << dst_tensorlist_tensors_size;
+    return;
+  }
+
+  dst_tensorlist->set_own_data(src_tensorlist->own_data());
+  for (size_t i = 0; i < src_tensorlist_tensors_size; ++i) {
+    auto &src_tensor = src_tensorlist->tensors()[i];
+    auto &dst_tensor = dst_tensorlist->tensors()[i];
+
+    if (src_tensor->allocator() != nullptr) {
+      src_tensor->allocator()->IncRefCount(src_tensor->data(), dst_tensor->ref_count());
+    }
+    dst_tensor->set_own_data(src_tensor->own_data());
+    if (src_tensor->data() != nullptr) {
+      dst_tensor->set_data(src_tensor->MutableData()); /* using MutableData to sync GPU data */
+    }
+    dst_tensor->set_shape(src_tensor->shape());
+  }
+
+  if (src_tensorlist->IsConst() || src_tensorlist->IsGraphInput()) {
+    dst_tensorlist->set_own_data(false);
+  } else {
+    src_tensorlist->DecRefCount();
+  }
+}
+#endif
 }  // namespace lite
 }  // namespace mindspore
