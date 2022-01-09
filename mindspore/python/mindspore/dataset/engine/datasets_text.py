@@ -1,0 +1,1593 @@
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+"""
+This dataset module supports various formats of datasets, including ImageNet, TFData,
+MNIST, Cifar10/100, Manifest, MindRecord, and more. This module loads data with
+high performance and parses data precisely. Some of the operations that are
+provided to users to preprocess data include shuffle, batch, repeat, map, and zip.
+"""
+import mindspore._c_dataengine as cde
+
+from .datasets import MappableDataset, SourceDataset, TextBaseDataset, Shuffle
+from .validators import check_imdb_dataset, check_iwslt2016_dataset, check_iwslt2017_dataset, \
+    check_penn_treebank_dataset, check_ag_news_dataset, check_amazon_review_dataset, check_udpos_dataset, \
+    check_wiki_text_dataset, check_conll2000_dataset, check_cluedataset, check_csvdataset, \
+    check_sogou_news_dataset, check_textfiledataset, check_dbpedia_dataset, check_yelp_review_dataset, \
+    check_en_wik9_dataset, check_yahoo_answers_dataset
+
+from ..core.validator_helpers import replace_none
+
+
+class AGNewsDataset(SourceDataset, TextBaseDataset):
+    """
+    A source dataset that reads and parses AG News datasets.
+
+    The generated dataset has three columns: :py:obj:`[index, title, description]`.
+    The tensor of column :py:obj:`index` is of the string type.
+    The tensor of column :py:obj:`title` is of the string type.
+    The tensor of column :py:obj:`description` is of the string type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        usage (str, optional): Acceptable usages include `train`, `test` and `all` (default=None, all samples).
+        num_samples (int, optional): Number of samples (rows) to read (default=None, reads the full dataset).
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, number set in the config).
+        shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
+            (default=Shuffle.GLOBAL).
+            If shuffle is False, no shuffling will be performed;
+            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
+            Otherwise, there are two levels of shuffling:
+
+            - Shuffle.GLOBAL: Shuffle both the files and samples.
+
+            - Shuffle.FILES: Shuffle files only.
+
+        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            When this argument is specified, 'num_samples' reflects the max sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument can only be specified when num_shards is also specified.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
+            (default=None, which means no cache is used).
+
+    Examples:
+        >>> ag_news_dataset_dir = "/path/to/ag_news_dataset_file"
+        >>> dataset = ds.AGNewsDataset(dataset_dir=ag_news_dataset_dir, usage='all')
+
+    About AGNews dataset:
+
+    AG is a collection of over 1 million news articles. The news articles were collected
+    by ComeToMyHead from over 2,000 news sources in over 1 year of activity. ComeToMyHead
+    is an academic news search engine that has been in operation since July 2004.
+    The dataset is provided by academics for research purposes such as data mining
+    (clustering, classification, etc.), information retrieval (ranking, searching, etc.),
+    xml, data compression, data streaming, and any other non-commercial activities.
+    AG's news topic classification dataset was constructed by selecting the four largest
+    classes from the original corpus. Each class contains 30,000 training samples and
+    1,900 test samples. The total number of training samples in train.csv is 120,000
+    and the number of test samples in test.csv is 7,600.
+
+    You can unzip the dataset files into the following structure and read by MindSpore's API:
+
+    .. code-block::
+
+        .
+        └── ag_news_dataset_dir
+            ├── classes.txt
+            ├── train.csv
+            ├── test.csv
+            └── readme.txt
+
+    Citation:
+
+    .. code-block::
+
+        @misc{zhang2015characterlevel,
+        title={Character-level Convolutional Networks for Text Classification},
+        author={Xiang Zhang and Junbo Zhao and Yann LeCun},
+        year={2015},
+        eprint={1509.01626},
+        archivePrefix={arXiv},
+        primaryClass={cs.LG}
+        }
+    """
+
+    @check_ag_news_dataset
+    def __init__(self, dataset_dir, usage=None, num_samples=None,
+                 num_parallel_workers=None, shuffle=Shuffle.GLOBAL, num_shards=None, shard_id=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, num_samples=num_samples, shuffle=shuffle,
+                         num_shards=num_shards, shard_id=shard_id, cache=cache)
+        self.dataset_dir = dataset_dir
+        self.usage = replace_none(usage, "all")
+
+    def parse(self, children=None):
+        return cde.AGNewsNode(self.dataset_dir, self.usage, self.num_samples, self.shuffle_flag, self.num_shards,
+                              self.shard_id)
+
+
+class AmazonReviewDataset(SourceDataset):
+    """
+    A source dataset that reads and parses Amazon Review Polarity and Amazon Review Full datasets.
+
+    The generated dataset has three columns: :py:obj:`[label, title, content]`.
+    The tensor of column :py:obj:`label` is of the string type.
+    The tensor of column :py:obj:`title` is of the string type.
+    The tensor of column :py:obj:`content` is of the string type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the Amazon Review Polarity dataset
+            or the Amazon Review Full dataset.
+        usage (str, optional): Usage of this dataset, can be `train`, `test` or `all` (default= `all`).
+            For Polarity dataset, `train` will read from 3,600,000 train samples,
+            `test` will read from 400,000 test samples,
+            `all` will read from all 4,000,000 samples.
+             For Full dataset, `train` will read from 3,000,000 train samples,
+            `test` will read from 650,000 test samples,
+            `all` will read from all 3,650,000 samples (default=None, all samples).
+        num_samples (int, optional): Number of samples (rows) to be read (default=None, reads the full dataset).
+        shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
+            (default=Shuffle.GLOBAL).
+            If shuffle is False, no shuffling will be performed;
+            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
+            Otherwise, there are two levels of shuffling:
+
+            - Shuffle.GLOBAL: Shuffle both the files and samples.
+
+            - Shuffle.FILES: Shuffle files only.
+        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            When this argument is specified, `num_samples` reflects the max sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument can only be specified when num_shards is also specified.
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, number set in the  mindspore.dataset.config).
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing
+            (default=None, which means no cache is used).
+
+    Raises:
+        RuntimeError: If dataset_dir does not contain data files.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+
+    Examples:
+        >>> amazon_review_dataset_dir = "/path/to/amazon_review_dataset_dir"
+        >>> dataset = ds.AmazonReviewDataset(dataset_dir=amazon_review_dataset_dir, usage='all')
+
+    About AmazonReview Dataset:
+
+    The Amazon reviews full dataset consists of reviews from Amazon. The data span a period of 18 years, including ~35
+    million reviews up to March 2013. Reviews include product and user information, ratings, and a plaintext review.
+    The dataset is mainly used for text classification, given the content and title, predict the correct star rating.
+
+    The Amazon reviews polarity dataset is constructed by taking review score 1 and 2 as negative, 4 and 5 as positive.
+    Samples of score 3 is ignored. In the dataset, class 1 is the negative and class 2 is the positive.
+
+    The Amazon Reviews Polarity and Amazon Reviews Full datasets have the same directory structures.
+    You can unzip the dataset files into the following structure and read by MindSpore's API:
+
+    .. code-block::
+
+        .
+        └── amazon_review_dir
+             ├── train.csv
+             ├── test.csv
+             └── readme.txt
+
+   Citation:
+
+    .. code-block::
+
+        @article{zhang2015character,
+          title={Character-level convolutional networks for text classification},
+          author={Zhang, Xiang and Zhao, Junbo and LeCun, Yann},
+          journal={Advances in neural information processing systems},
+          volume={28},
+          pages={649--657},
+          year={2015}
+        }
+    """
+
+    @check_amazon_review_dataset
+    def __init__(self, dataset_dir, usage=None, num_samples=None, num_parallel_workers=None, shuffle=Shuffle.GLOBAL,
+                 num_shards=None, shard_id=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, num_samples=num_samples, shuffle=shuffle,
+                         num_shards=num_shards, shard_id=shard_id, cache=cache)
+        self.dataset_dir = dataset_dir
+        self.usage = replace_none(usage, 'all')
+
+    def parse(self, children=None):
+        return cde.AmazonReviewNode(self.dataset_dir, self.usage, self.num_samples, self.shuffle_flag, self.num_shards,
+                                    self.shard_id)
+
+
+class CLUEDataset(SourceDataset, TextBaseDataset):
+    """
+    A source dataset that reads and parses CLUE datasets.
+    Supported CLUE classification tasks: `AFQMC`, `TNEWS`, `IFLYTEK`, `CMNLI`, `WSC` and `CSL`.
+
+    The generated dataset with different task setting has different output columns:
+
+    - task = :py:obj:`AFQMC`
+        - usage = :py:obj:`train`, output columns: :py:obj:`[sentence1, dtype=string]`, \
+            :py:obj:`[sentence2, dtype=string]`, :py:obj:`[label, dtype=string]`.
+        - usage = :py:obj:`test`, output columns: :py:obj:`[id, dtype=uint8]`, \
+            :py:obj:`[sentence1, dtype=string]`, :py:obj:`[sentence2, dtype=string]`.
+        - usage = :py:obj:`eval`, output columns: :py:obj:`[sentence1, dtype=string]`, \
+            :py:obj:`[sentence2, dtype=string]`, :py:obj:`[label, dtype=string]`.
+
+    - task = :py:obj:`TNEWS`
+        - usage = :py:obj:`train`, output columns: :py:obj:`[label, dtype=string]`, \
+            :py:obj:`[label_des, dtype=string]`, :py:obj:`[sentence, dtype=string]`, :py:obj:`[keywords, dtype=string]`.
+        - usage = :py:obj:`test`, output columns: :py:obj:`[label, dtype=string]`, \
+            :py:obj:`[label_des, dtype=string]`, :py:obj:`[sentence, dtype=string]`, :py:obj:`[keywords, dtype=string]`.
+        - usage = :py:obj:`eval`, output columns: :py:obj:`[label, dtype=string]`, \
+            :py:obj:`[label_des, dtype=string]`, :py:obj:`[sentence, dtype=string]`, :py:obj:`[keywords, dtype=string]`.
+
+    - task = :py:obj:`IFLYTEK`
+        - usage = :py:obj:`train`, output columns: :py:obj:`[label, dtype=string]`, \
+            :py:obj:`[label_des, dtype=string]`, :py:obj:`[sentence, dtype=string]`.
+        - usage = :py:obj:`test`, output columns: :py:obj:`[id, dtype=string]`, \
+            :py:obj:`[sentence, dtype=string]`.
+        - usage = :py:obj:`eval`, output columns: :py:obj:`[label, dtype=string]`, \
+            :py:obj:`[label_des, dtype=string]`, :py:obj:`[sentence, dtype=string]`.
+
+    - task = :py:obj:`CMNLI`
+        - usage = :py:obj:`train`, output columns: :py:obj:`[sentence1, dtype=string]`, \
+            :py:obj:`[sentence2, dtype=string]`, :py:obj:`[label, dtype=string]`.
+        - usage = :py:obj:`test`, output columns: :py:obj:`[id, dtype=uint8]`, \
+            :py:obj:`[sentence1, dtype=string]`, :py:obj:`[sentence2, dtype=string]`.
+        - usage = :py:obj:`eval`, output columns: :py:obj:`[sentence1, dtype=string]`, \
+            :py:obj:`[sentence2, dtype=string]`, :py:obj:`[label, dtype=string]`.
+
+    - task = :py:obj:`WSC`
+        - usage = :py:obj:`train`, output columns: :py:obj:`[span1_index, dtype=uint8]`, \
+            :py:obj:`[span2_index, dtype=uint8]`, :py:obj:`[span1_text, dtype=string]`, \
+            :py:obj:`[span2_text, dtype=string]`, :py:obj:`[idx, dtype=uint8]`, \
+            :py:obj:`[text, dtype=string]`, :py:obj:`[label, dtype=string]`.
+        - usage = :py:obj:`test`, output columns: :py:obj:`[span1_index, dtype=uint8]`, \
+            :py:obj:`[span2_index, dtype=uint8]`, :py:obj:`[span1_text, dtype=string]`, \
+            :py:obj:`[span2_text, dtype=string]`, :py:obj:`[idx, dtype=uint8]`, :py:obj:`[text, dtype=string]`.
+        - usage = :py:obj:`eval`, output columns: :py:obj:`[span1_index, dtype=uint8]`, \
+            :py:obj:`[span2_index, dtype=uint8]`, :py:obj:`[span1_text, dtype=string]`, \
+            :py:obj:`[span2_text, dtype=string]`, :py:obj:`[idx, dtype=uint8]`, \
+            :py:obj:`[text, dtype=string]`, :py:obj:`[label, dtype=string]`.
+
+    - task = :py:obj:`CSL`
+        - usage = :py:obj:`train`, output columns: :py:obj:`[id, dtype=uint8]`, \
+            :py:obj:`[abst, dtype=string]`, :py:obj:`[keyword, dtype=string]`, :py:obj:`[label, dtype=string]`.
+        - usage = :py:obj:`test`, output columns: :py:obj:`[id, dtype=uint8]`, \
+            :py:obj:`[abst, dtype=string]`, :py:obj:`[keyword, dtype=string]`.
+        - usage = :py:obj:`eval`, output columns: :py:obj:`[id, dtype=uint8]`, \
+            :py:obj:`[abst, dtype=string]`, :py:obj:`[keyword, dtype=string]`, :py:obj:`[label, dtype=string]`.
+
+    Args:
+        dataset_files (Union[str, list[str]]): String or list of files to be read or glob strings to search for
+            a pattern of files. The list will be sorted in a lexicographical order.
+        task (str, optional): The kind of task, one of `AFQMC`, `TNEWS`, `IFLYTEK`, `CMNLI`, `WSC` and `CSL`.
+            (default=AFQMC).
+        usage (str, optional): Specify the `train`, `test` or `eval` part of dataset (default="train").
+        num_samples (int, optional): The number of samples to be included in the dataset
+            (default=None, will include all images).
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, number set in the config).
+        shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
+            (default=Shuffle.GLOBAL).
+            If shuffle is False, no shuffling will be performed;
+            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
+            Otherwise, there are two levels of shuffling:
+
+            - Shuffle.GLOBAL: Shuffle both the files and samples.
+
+            - Shuffle.FILES: Shuffle files only.
+
+        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument can only be specified when num_shards is also specified.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
+            (default=None, which means no cache is used).
+
+    Raises:
+        RuntimeError: If dataset_files are not valid or do not exist.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+
+    Examples:
+        >>> clue_dataset_dir = ["/path/to/clue_dataset_file"] # contains 1 or multiple clue files
+        >>> dataset = ds.CLUEDataset(dataset_files=clue_dataset_dir, task='AFQMC', usage='train')
+
+    About CLUE dataset:
+
+    CLUE, a Chinese Language Understanding Evaluation benchmark. It contains multiple
+    tasks, including single-sentence classification, sentence pair classification, and machine
+    reading comprehension.
+
+    You can unzip the dataset files into the following structure and read by MindSpore's API,
+    such as afqmc dataset:
+
+    .. code-block::
+
+        .
+        └── afqmc_public
+             ├── train.json
+             ├── test.json
+             └── dev.json
+
+    Citation:
+
+    .. code-block::
+
+        @article{CLUEbenchmark,
+        title   = {CLUE: A Chinese Language Understanding Evaluation Benchmark},
+        author  = {Liang Xu, Xuanwei Zhang, Lu Li, Hai Hu, Chenjie Cao, Weitang Liu, Junyi Li, Yudong Li,
+                Kai Sun, Yechen Xu, Yiming Cui, Cong Yu, Qianqian Dong, Yin Tian, Dian Yu, Bo Shi, Jun Zeng,
+                Rongzhao Wang, Weijian Xie, Yanting Li, Yina Patterson, Zuoyu Tian, Yiwen Zhang, He Zhou,
+                Shaoweihua Liu, Qipeng Zhao, Cong Yue, Xinrui Zhang, Zhengliang Yang, Zhenzhong Lan},
+        journal = {arXiv preprint arXiv:2004.05986},
+        year    = {2020},
+        howpublished = {https://github.com/CLUEbenchmark/CLUE}
+        }
+    """
+
+    @check_cluedataset
+    def __init__(self, dataset_files, task='AFQMC', usage='train', num_samples=None, num_parallel_workers=None,
+                 shuffle=Shuffle.GLOBAL, num_shards=None, shard_id=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, num_samples=num_samples, shuffle=shuffle,
+                         num_shards=num_shards, shard_id=shard_id, cache=cache)
+        self.dataset_files = self._find_files(dataset_files)
+        self.usage = replace_none(usage, 'train')
+        self.task = replace_none(task, 'AFQMC')
+
+    def parse(self, children=None):
+        return cde.CLUENode(self.dataset_files, self.task, self.usage, self.num_samples, self.shuffle_flag,
+                            self.num_shards, self.shard_id)
+
+
+class CoNLL2000Dataset(SourceDataset):
+    """
+    A source dataset that reads and parses CoNLL2000 dataset.
+
+    The generated dataset has three columns: :py:obj:`[word, pos_tag, chunk_tag]`.
+    The tensor of column :py:obj:`word` is of the string type.
+    The tensor of column :py:obj:`pos_tag` is of the string type.
+    The tensor of column :py:obj:`chunk_tag` is of the string type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        usage (str, optional): Usage of this dataset, can be `train`, `test`,  or `all`. `train` will read from
+            8936 train samples, `test` will read from 2,012 test samples,
+            `all` will read from all 1,0948 samples (default=None, all samples).
+        num_samples (int, optional): Number of samples (rows) to read (default=None, reads the full dataset).
+        shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
+            (default=Shuffle.GLOBAL).
+            If shuffle is False, no shuffling will be performed;
+            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
+            Otherwise, there are two levels of shuffling:
+
+            - Shuffle.GLOBAL: Shuffle both the files and samples.
+
+            - Shuffle.FILES: Shuffle files only.
+
+        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            When this argument is specified, `num_samples` reflects the max sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument can only be specified when num_shards is also specified.
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, number set in the config).
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing
+            (default=None, which means no cache is used).
+
+    Raises:
+        RuntimeError: If dataset_dir does not contain data files.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+
+    Examples:
+        >>> conll2000_dataset_dir = "/path/to/conll2000_dataset_dir"
+        >>> dataset = ds.CoNLL2000Dataset(dataset_files=conll2000_dataset_dir, usage='all')
+    """
+
+    @check_conll2000_dataset
+    def __init__(self, dataset_dir, usage=None, num_samples=None, shuffle=Shuffle.GLOBAL, num_shards=None,
+                 shard_id=None, num_parallel_workers=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, num_samples=num_samples, shuffle=shuffle,
+                         num_shards=num_shards, shard_id=shard_id, cache=cache)
+        self.dataset_dir = dataset_dir
+        self.usage = replace_none(usage, 'all')
+
+    def parse(self, children=None):
+        return cde.CoNLL2000Node(self.dataset_dir, self.usage, self.num_samples, self.shuffle_flag, self.num_shards,
+                                 self.shard_id)
+
+
+class CSVDataset(SourceDataset, TextBaseDataset):
+    """
+    A source dataset that reads and parses comma-separated values (CSV) datasets.
+    The columns of generated dataset depend on the source CSV files.
+
+    Args:
+        dataset_files (Union[str, list[str]]): String or list of files to be read or glob strings to search
+            for a pattern of files. The list will be sorted in a lexicographical order.
+        field_delim (str, optional): A string that indicates the char delimiter to separate fields (default=',').
+        column_defaults (list, optional): List of default values for the CSV field (default=None). Each item
+            in the list is either a valid type (float, int, or string). If this is not provided, treats all
+            columns as string type.
+        column_names (list[str], optional): List of column names of the dataset (default=None). If this
+            is not provided, infers the column_names from the first row of CSV file.
+        num_samples (int, optional): The number of samples to be included in the dataset
+            (default=None, will include all images).
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, number set in the config).
+        shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
+            (default=Shuffle.GLOBAL).
+            If shuffle is False, no shuffling will be performed;
+            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
+            Otherwise, there are two levels of shuffling:
+
+            - Shuffle.GLOBAL: Shuffle both the files and samples.
+
+            - Shuffle.FILES: Shuffle files only.
+
+        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument can only be specified when num_shards is also specified.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
+            (default=None, which means no cache is used).
+
+    Raises:
+        RuntimeError: If dataset_files are not valid or do not exist.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+
+    Examples:
+        >>> csv_dataset_dir = ["/path/to/csv_dataset_file"] # contains 1 or multiple csv files
+        >>> dataset = ds.CSVDataset(dataset_files=csv_dataset_dir, column_names=['col1', 'col2', 'col3', 'col4'])
+    """
+
+    @check_csvdataset
+    def __init__(self, dataset_files, field_delim=',', column_defaults=None, column_names=None, num_samples=None,
+                 num_parallel_workers=None, shuffle=Shuffle.GLOBAL, num_shards=None, shard_id=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, num_samples=num_samples, shuffle=shuffle,
+                         num_shards=num_shards, shard_id=shard_id, cache=cache)
+        self.dataset_files = self._find_files(dataset_files)
+        self.dataset_files.sort()
+        self.field_delim = replace_none(field_delim, ',')
+        self.column_defaults = replace_none(column_defaults, [])
+        self.column_names = replace_none(column_names, [])
+
+    def parse(self, children=None):
+        return cde.CSVNode(self.dataset_files, self.field_delim, self.column_defaults, self.column_names,
+                           self.num_samples, self.shuffle_flag, self.num_shards, self.shard_id)
+
+
+class DBpediaDataset(SourceDataset, TextBaseDataset):
+    """
+    A source dataset that reads and parses the DBpedia dataset.
+
+    The generated dataset has three columns :py:obj:`[class, title, content]`.
+    The tensor of column :py:obj:`class` is of the string type.
+    The tensor of column :py:obj:`title` is of the string type.
+    The tensor of column :py:obj:`content` is of the string type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        usage (str, optional): Usage of this dataset, can be `train`, `test` or `all`.
+            `train` will read from 560,000 train samples,
+            `test` will read from 70,000 test samples,
+            `all` will read from all 630,000 samples (default=None, all samples).
+        num_samples (int, optional): The number of samples to be included in the dataset
+            (default=None, will include all text).
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, number set in the config).
+        shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
+            (default=Shuffle.GLOBAL).
+            If shuffle is False, no shuffling will be performed;
+            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL;
+            Otherwise, there are two levels of shuffling:
+
+            - Shuffle.GLOBAL: Shuffle both the files and samples.
+
+            - Shuffle.FILES: Shuffle files only.
+
+        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument can only be specified when num_shards is also specified.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
+            (default=None, which means no cache is used).
+
+    Raises:
+        RuntimeError: If dataset_dir does not contain data files.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+
+    Examples:
+        >>> dbpedia_dataset_dir = "/path/to/dbpedia_dataset_directory"
+        >>>
+        >>> # 1) Read 3 samples from DBpedia dataset
+        >>> dataset = ds.DBpediaDataset(dataset_dir=dbpedia_dataset_dir, num_samples=3)
+        >>>
+        >>> # 2) Read train samples from DBpedia dataset
+        >>> dataset = ds.DBpediaDataset(dataset_dir=dbpedia_dataset_dir, usage="train")
+
+    About DBpedia dataset:
+
+    The DBpedia dataset consists of 630,000 text samples in 14 classes, there are 560,000 samples in the train.csv
+    and 70,000 samples in the test.csv.
+    The 14 different classes represent Company, EducationaInstitution, Artist, Athlete, OfficeHolder,
+    MeanOfTransportation, Building, NaturalPlace, Village, Animal, Plant, Album, Film, WrittenWork.
+
+    Here is the original DBpedia dataset structure.
+    You can unzip the dataset files into this directory structure and read by Mindspore's API.
+
+    .. code-block::
+
+        .
+        └── dbpedia_dataset_dir
+            ├── train.csv
+            ├── test.csv
+            ├── classes.txt
+            └── readme.txt
+
+    .. code-block::
+
+        @article{DBpedia,
+        title   = {DBPedia Ontology Classification Dataset},
+        author  = {Jens Lehmann, Robert Isele, Max Jakob, Anja Jentzsch, Dimitris Kontokostas,
+                Pablo N. Mendes, Sebastian Hellmann, Mohamed Morsey, Patrick van Kleef,
+                    Sören Auer, Christian Bizer},
+        year    = {2015},
+        howpublished = {http://dbpedia.org}
+        }
+    """
+
+    @check_dbpedia_dataset
+    def __init__(self, dataset_dir, usage=None, num_samples=None, num_parallel_workers=None, shuffle=Shuffle.GLOBAL,
+                 num_shards=None, shard_id=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, num_samples=num_samples, shuffle=shuffle,
+                         num_shards=num_shards, shard_id=shard_id, cache=cache)
+        self.dataset_dir = dataset_dir
+        self.usage = replace_none(usage, "all")
+
+    def parse(self, children=None):
+        return cde.DBpediaNode(self.dataset_dir, self.usage, self.num_samples, self.shuffle_flag, self.num_shards,
+                               self.shard_id)
+
+
+class EnWik9Dataset(SourceDataset):
+    """
+    A source dataset that reads and parses EnWik9 dataset.
+
+    The generated dataset has one column :py:obj:`[text]` with type string.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        num_samples (int, optional): The number of samples to be included in the dataset
+            (default=None, will include all samples).
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, number set in the config).
+        shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
+            (default=True).
+            If shuffle is False, no shuffling will be performed;
+            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
+            Otherwise, there are two levels of shuffling:
+
+            - Shuffle.GLOBAL: Shuffle both the files and samples.
+
+            - Shuffle.FILES: Shuffle files only.
+
+        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument can only be specified when num_shards is also specified.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing
+            (default=None, which means no cache is used).
+
+    Examples:
+        >>> en_wik9_dataset_dir = "/path/to/en_wik9_dataset"
+        >>> dataset2 = ds.EnWik9Dataset(dataset_dir=en_wik9_dataset_dir, num_samples=2,
+        ...                             shuffle=True)
+
+    About EnWik9 dataset:
+
+    The data of EnWik9 is UTF-8 encoded XML consisting primarily of English text. It contains 243,426 article titles,
+    of which 85,560 are #REDIRECT to fix broken links, and the rest are regular articles.
+
+    The data is UTF-8 clean. All characters are in the range U'0000 to U'10FFFF with valid encodings of 1 to
+    4 bytes. The byte values 0xC0, 0xC1, and 0xF5-0xFF never occur. Also, in the Wikipedia dumps,
+    there are no control characters in the range 0x00-0x1F except for 0x09 (tab) and 0x0A (linefeed).
+    Linebreaks occur only on paragraph boundaries, so they always have a semantic purpose.
+
+    You can unzip the dataset files into the following directory structure and read by MindSpore's API.
+
+    .. code-block::
+
+        .
+        └── EnWik9
+             ├── enwik9
+
+    Citation:
+
+    .. code-block::
+
+        @NetworkResource{Hutter_prize,
+        author    = {English Wikipedia},
+        url       = "https://cs.fit.edu/~mmahoney/compression/textdata.html",
+        month     = {March},
+        year      = {2006}
+        }
+    """
+
+    @check_en_wik9_dataset
+    def __init__(self, dataset_dir, num_samples=None, num_parallel_workers=None, shuffle=True,
+                 num_shards=None, shard_id=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, num_samples=num_samples, shuffle=shuffle,
+                         num_shards=num_shards, shard_id=shard_id, cache=cache)
+        self.dataset_dir = dataset_dir
+
+    def parse(self, children=None):
+        return cde.EnWik9Node(self.dataset_dir, self.num_samples, self.shuffle_flag, self.num_shards,
+                              self.shard_id)
+
+class IMDBDataset(MappableDataset):
+    """
+    A source dataset for reading and parsing Internet Movie Database (IMDb).
+
+    The generated dataset has two columns: :py:obj:`[text, label]`.
+    The tensor of column :py:obj:`text` is of the string type.
+    The tensor of column :py:obj:`label` is of a scalar of uint32 type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        usage (str, optional): Usage of this dataset, can be `train`, `test` or `all`
+            (default=None, will read all samples).
+        num_samples (int, optional): The number of images to be included in the dataset
+            (default=None, will read all samples).
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, set in the config).
+        shuffle (bool, optional): Whether or not to perform shuffle on the dataset
+            (default=None, expected order behavior shown in the table).
+        sampler (Sampler, optional): Object used to choose samples from the
+            dataset (default=None, expected order behavior shown in the table).
+        num_shards (int, optional): Number of shards that the dataset will be divided
+            into (default=None). When this argument is specified, `num_samples` reflects
+            the maximum sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument can only be specified when num_shards is also specified.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing
+            (default=None, which means no cache is used).
+
+    Raises:
+        RuntimeError: If dataset_dir does not contain data files.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If sampler and shuffle are specified at the same time.
+        RuntimeError: If sampler and sharding are specified at the same time.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+
+    Note:
+        - The shape of the test column.
+        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+          The table below shows what input arguments are allowed and their expected behavior.
+
+    .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
+       :widths: 25 25 50
+       :header-rows: 1
+
+       * - Parameter `sampler`
+         - Parameter `shuffle`
+         - Expected Order Behavior
+       * - None
+         - None
+         - random order
+       * - None
+         - True
+         - random order
+       * - None
+         - False
+         - sequential order
+       * - Sampler object
+         - None
+         - order defined by sampler
+       * - Sampler object
+         - True
+         - not allowed
+       * - Sampler object
+         - False
+         - not allowed
+
+    Examples:
+        >>> imdb_dataset_dir = "/path/to/imdb_dataset_directory"
+        >>>
+        >>> # 1) Read all samples (text files) in imdb_dataset_dir with 8 threads
+        >>> dataset = ds.IMDBDataset(dataset_dir=imdb_dataset_dir, num_parallel_workers=8)
+        >>>
+        >>> # 2) Read train samples (text files).
+        >>> dataset = ds.IMDBDataset(dataset_dir=imdb_dataset_dir, usage="train")
+
+    About IMDBDataset:
+
+    The IMDB dataset contains 50, 000 highly polarized reviews from the Internet Movie Database (IMDB). The data set
+    was divided into 25 000 comments for training and 25 000 comments for testing, with both the training set and test
+    set containing 50% positive and 50% negative comments. Train labels and test labels are all lists of 0 and 1, where
+    0 stands for negative and 1 for positive.
+
+    You can unzip the dataset files into this directory structure and read by MindSpore's API.
+
+    .. code-block::
+
+        .
+        └── imdb_dataset_directory
+             ├── train
+             │    ├── pos
+             │    │    ├── 0_9.txt
+             │    │    ├── 1_7.txt
+             │    │    ├── ...
+             │    ├── neg
+             │    │    ├── 0_3.txt
+             │    │    ├── 1_1.txt
+             │    │    ├── ...
+             ├── test
+             │    ├── pos
+             │    │    ├── 0_10.txt
+             │    │    ├── 1_10.txt
+             │    │    ├── ...
+             │    ├── neg
+             │    │    ├── 0_2.txt
+             │    │    ├── 1_3.txt
+             │    │    ├── ...
+
+    Citation:
+
+    .. code-block::
+
+        @InProceedings{maas-EtAl:2011:ACL-HLT2011,
+          author    = {Maas, Andrew L.  and  Daly, Raymond E.  and  Pham, Peter T.  and  Huang, Dan
+                        and  Ng, Andrew Y.  and  Potts, Christopher},
+          title     = {Learning Word Vectors for Sentiment Analysis},
+          booktitle = {Proceedings of the 49th Annual Meeting of the Association for Computational Linguistics:
+                        Human Language Technologies},
+          month     = {June},
+          year      = {2011},
+          address   = {Portland, Oregon, USA},
+          publisher = {Association for Computational Linguistics},
+          pages     = {142--150},
+          url       = {http://www.aclweb.org/anthology/P11-1015}
+        }
+    """
+
+    @check_imdb_dataset
+    def __init__(self, dataset_dir, usage=None, num_samples=None, num_parallel_workers=None, shuffle=None, sampler=None,
+                 num_shards=None, shard_id=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, sampler=sampler, num_samples=num_samples,
+                         shuffle=shuffle, num_shards=num_shards, shard_id=shard_id, cache=cache)
+
+        self.dataset_dir = dataset_dir
+        self.usage = replace_none(usage, "all")
+
+    def parse(self, children=None):
+        return cde.IMDBNode(self.dataset_dir, self.usage, self.sampler)
+
+
+class IWSLT2016Dataset(SourceDataset, TextBaseDataset):
+    """
+    A source dataset that reads and parses IWSLT2016 datasets.
+
+    The generated dataset has two columns: :py:obj:`[text, translation]`.
+    The tensor of column :py:obj: `text` is of the string type.
+    The tensor of column :py:obj: `translation` is of the string type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        usage (str, optional): Acceptable usages include "train", "valid", "test" and "all" (default=None, all samples).
+        language_pair (sequence, optional): Sequence containing source and target language, supported values are
+            (`en`, `fr`), ("en", "de"), ("en", "cs"), ("en", "ar"), ("fr", "en"), ("de", "en"), ("cs", "en"),
+            ("ar", "en") (default=("de", "en")).
+        valid_set (str, optional): A string to identify validation set, when usage is valid or all, the validation set
+            of valid_set type will be read, supported values are "dev2010", "tst2010", "tst2011", "tst2012", "tst2013"
+            and "tst2014" (default="tst2013").
+        test_set (str, optional): A string to identify test set, when usage is test or all, the test set of test_set
+            type will be read, supported values are "dev2010", "tst2010", "tst2011", "tst2012", "tst2013" and "tst2014"
+            (default="tst2014").
+        num_samples (int, optional): Number of samples (rows) to read (default=None, reads the full dataset).
+        shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
+            (default=Shuffle.GLOBAL).
+            If shuffle is False, no shuffling will be performed;
+            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
+            Otherwise, there are two levels of shuffling:
+
+            - Shuffle.GLOBAL: Shuffle both the files and samples.
+
+            - Shuffle.FILES: Shuffle files only.
+        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            When this argument is specified, `num_samples` reflects the max sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument can only be specified when num_shards is also specified.
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, number set in the config).
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
+            (default=None, which means no cache is used).
+
+    Raises:
+        RuntimeError: If dataset_dir does not contain data files.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+
+    Examples:
+        >>> iwslt2016_dataset_dir = "/path/to/iwslt2016_dataset_dir"
+        >>> dataset = ds.IWSLT2016Dataset(dataset_files=iwslt2016_dataset_dir, usage='all',
+        ...                               language_pair=('de', 'en'), valid_set='tst2013', test_set='tst2014')
+
+    About IWSLT2016 dataset:
+
+    IWSLT is an international oral translation conference, a major annual scientific conference dedicated to all aspects
+    of oral translation. The MT task of the IWSLT evaluation activity constitutes a data set, which can be publicly
+    obtained through the WIT3 website wit3.fbk.eu. The IWSLT2016 data set includes translations from English to Arabic,
+    Czech, French, and German, and translations from Arabic, Czech, French, and German to English.
+
+    You can unzip the original IWSLT2016 dataset files into this directory structure and read by MindSpore's API. After
+    decompression, you also need to decompress the data set to be read in the specified folder. For example, if you want
+    to read the data set of de-en, you need to unzip the tgz file in the de/en directory, the data set is in the
+    unzipped folder.
+
+    .. code-block::
+
+        .
+        └── iwslt2016_dataset_directory
+             ├── subeval_files
+             └── texts
+                  ├── ar
+                  │    └── en
+                  │        └── ar-en
+                  ├── cs
+                  │    └── en
+                  │        └── cs-en
+                  ├── de
+                  │    └── en
+                  │        └── de-en
+                  │            ├── IWSLT16.TED.dev2010.de-en.de.xml
+                  │            ├── train.tags.de-en.de
+                  │            ├── ...
+                  ├── en
+                  │    ├── ar
+                  │    │   └── en-ar
+                  │    ├── cs
+                  │    │   └── en-cs
+                  │    ├── de
+                  │    │   └── en-de
+                  │    └── fr
+                  │        └── en-fr
+                  └── fr
+                       └── en
+                           └── fr-en
+
+    Citation:
+
+    .. code-block::
+
+        @inproceedings{cettoloEtAl:EAMT2012,
+        Address = {Trento, Italy},
+        Author = {Mauro Cettolo and Christian Girardi and Marcello Federico},
+        Booktitle = {Proceedings of the 16$^{th}$ Conference of the European Association for Machine Translation
+                     (EAMT)},
+        Date = {28-30},
+        Month = {May},
+        Pages = {261--268},
+        Title = {WIT$^3$: Web Inventory of Transcribed and Translated Talks},
+        Year = {2012}}
+    """
+
+    @check_iwslt2016_dataset
+    def __init__(self, dataset_dir, usage=None, language_pair=None, valid_set=None, test_set=None,
+                 num_samples=None, shuffle=Shuffle.GLOBAL, num_shards=None, shard_id=None, num_parallel_workers=None,
+                 cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, num_samples=num_samples, shuffle=shuffle,
+                         num_shards=num_shards, shard_id=shard_id, cache=cache)
+        self.dataset_dir = dataset_dir
+        self.usage = replace_none(usage, 'all')
+        self.language_pair = replace_none(language_pair, ["de", "en"])
+        self.valid_set = replace_none(valid_set, 'tst2013')
+        self.test_set = replace_none(test_set, 'tst2014')
+
+    def parse(self, children=None):
+        return cde.IWSLT2016Node(self.dataset_dir, self.usage, self.language_pair, self.valid_set, self.test_set,
+                                 self.num_samples, self.shuffle_flag, self.num_shards, self.shard_id)
+
+
+class IWSLT2017Dataset(SourceDataset, TextBaseDataset):
+    """
+    A source dataset that reads and parses IWSLT2017 datasets.
+
+    The generated dataset has two columns: :py:obj:`[text, translation]`.
+    The tensor of column :py:obj:`text` is of the string type.
+    The tensor of column :py:obj:`translation` is of the string type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        usage (str, optional): Acceptable usages include "train", "valid", "test" and "all" (default=None, all samples).
+        language_pair (list, optional): List containing src and tgt language, supported values are ("en", "nl"),
+            ("en", "de"), ("en", "it"), ("en", "ro"), ("nl", "en"), ("nl", "de"), ("nl", "it"), ("nl", "ro"),
+            ("de", "en"), ("de", "nl"), ("de", "it"), ("de", "ro"), ("it", "en"), ("it", "nl"), ("it", "de"),
+            ("it", "ro"), (`ro`, `en`), (`ro`, `nl`), (`ro`, `de`), (`ro`, `it`) (default=(`de`, `en`)).
+        num_samples (int, optional): Number of samples (rows) to read (default=None, reads the full dataset).
+        shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
+            (default=Shuffle.GLOBAL).
+            If shuffle is False, no shuffling will be performed;
+            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
+            Otherwise, there are two levels of shuffling:
+
+            - Shuffle.GLOBAL: Shuffle both the files and samples.
+
+            - Shuffle.FILES: Shuffle files only.
+        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            When this argument is specified, `num_samples` reflects the max sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument can only be specified when num_shards is also specified.
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, number set in the config).
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
+            (default=None, which means no cache is used).
+
+    Raises:
+        RuntimeError: If dataset_dir does not contain data files.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+
+    Examples:
+        >>> iwslt2017_dataset_dir = "/path/to/iwslt207_dataset_dir"
+        >>> dataset = ds.IWSLT2017Dataset(dataset_files=iwslt2017_dataset_dir, usage='all', language_pair=('de', 'en'))
+
+    About IWSLT2017 dataset:
+
+    IWSLT is an international oral translation conference, a major annual scientific conference dedicated to all aspects
+    of oral translation. The MT task of the IWSLT evaluation activity constitutes a data set, which can be publicly
+    obtained through the WIT3 website wit3.fbk.eu. The IWSLT2017 data set involves German, English, Italian, Dutch, and
+    Romanian. The data set includes translations in any two different languages.
+
+    You can unzip the original IWSLT2017 dataset files into this directory structure and read by MindSpore's API. You
+    need to decompress the dataset package in texts/DeEnItNlRo/DeEnItNlRo directory to get the DeEnItNlRo-DeEnItNlRo
+    subdirectory.
+
+    .. code-block::
+
+        .
+        └── iwslt2017_dataset_directory
+            └── DeEnItNlRo
+                └── DeEnItNlRo
+                    └── DeEnItNlRo-DeEnItNlRo
+                        ├── IWSLT17.TED.dev2010.de-en.de.xml
+                        ├── train.tags.de-en.de
+                        ├── ...
+
+    Citation:
+
+    .. code-block::
+
+        @inproceedings{cettoloEtAl:EAMT2012,
+        Address = {Trento, Italy},
+        Author = {Mauro Cettolo and Christian Girardi and Marcello Federico},
+        Booktitle = {Proceedings of the 16$^{th}$ Conference of the European Association for Machine Translation
+                     (EAMT)},
+        Date = {28-30},
+        Month = {May},
+        Pages = {261--268},
+        Title = {WIT$^3$: Web Inventory of Transcribed and Translated Talks},
+        Year = {2012}}
+    """
+
+    @check_iwslt2017_dataset
+    def __init__(self, dataset_dir, usage=None, language_pair=None, num_samples=None, shuffle=Shuffle.GLOBAL,
+                 num_shards=None, shard_id=None, num_parallel_workers=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, num_samples=num_samples, shuffle=shuffle,
+                         num_shards=num_shards, shard_id=shard_id, cache=cache)
+        self.dataset_dir = dataset_dir
+        self.usage = replace_none(usage, 'all')
+        self.language_pair = replace_none(language_pair, ["de", "en"])
+
+    def parse(self, children=None):
+        return cde.IWSLT2017Node(self.dataset_dir, self.usage, self.language_pair, self.num_samples,
+                                 self.shuffle_flag, self.num_shards, self.shard_id)
+
+
+class PennTreebankDataset(SourceDataset, TextBaseDataset):
+    """
+    A source dataset that reads and parses PennTreebank datasets.
+
+    The generated dataset has one column :py:obj:`[text]`.
+    The tensor of column :py:obj:`text` is of the string type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        usage (str, optional): Acceptable usages include `train`, `test`, 'valid' and `all`.
+            'train' will read from 42,068 train samples of string type,
+            'test' will read from 3,370 test samples of string type,
+            'valid' will read from 3,761 test samples of string type,
+            'all' will read from all 49,199 samples of string type (default=None, all samples).
+        num_samples (int, optional): Number of samples (rows) to read (default=None, reads the full dataset).
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, number set in the config).
+        shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
+            (default=Shuffle.GLOBAL).
+            If shuffle is False, no shuffling will be performed;
+            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
+            Otherwise, there are two levels of shuffling:
+
+            - Shuffle.GLOBAL: Shuffle both the files and samples.
+
+            - Shuffle.FILES: Shuffle files only.
+
+        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            When this argument is specified, 'num_samples' reflects the max sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument can only be specified when num_shards is also specified.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
+            (default=None, which means no cache is used).
+
+    Examples:
+        >>> penn_treebank_dataset_dir = "/path/to/penn_treebank_dataset_directory"
+        >>> dataset = ds.PennTreebankDataset(dataset_dir=penn_treebank_dataset_dir, usage='all')
+
+    About PennTreebank dataset:
+
+    Penn Treebank (PTB) dataset, is widely used in machine learning for NLP (Natural Language Processing)
+    research. Word-level PTB does not contain capital letters, numbers, and punctuations, and the vocabulary
+    is capped at 10k unique words, which is relatively small in comparison to most modern datasets which
+    can result in a larger number of out of vocabulary tokens.
+
+    Here is the original PennTreebank dataset structure.
+    You can unzip the dataset files into this directory structure and read by MindSpore's API.
+
+    .. code-block::
+        .
+        └── PennTreebank_dataset_dir
+             ├── ptb.test.txt
+             ├── ptb.train.txt
+             └── ptb.valid.txt
+
+    Citation:
+
+    .. code-block::
+
+        @techreport{Santorini1990,
+          added-at = {2014-03-26T23:25:56.000+0100},
+          author = {Santorini, Beatrice},
+          biburl = {https://www.bibsonomy.org/bibtex/234cdf6ddadd89376090e7dada2fc18ec/butonic},
+          file = {:Santorini - Penn Treebank tag definitions.pdf:PDF},
+          institution = {Department of Computer and Information Science, University of Pennsylvania},
+          interhash = {818e72efd9e4b5fae3e51e88848100a0},
+          intrahash = {34cdf6ddadd89376090e7dada2fc18ec},
+          keywords = {dis pos tagging treebank},
+          number = {MS-CIS-90-47},
+          timestamp = {2014-03-26T23:25:56.000+0100},
+          title = {Part-of-speech tagging guidelines for the {P}enn {T}reebank {P}roject},
+          url = {ftp://ftp.cis.upenn.edu/pub/treebank/doc/tagguide.ps.gz},
+          year = 1990
+        }
+    """
+
+    @check_penn_treebank_dataset
+    def __init__(self, dataset_dir, usage=None, num_samples=None, num_parallel_workers=None, shuffle=Shuffle.GLOBAL,
+                 num_shards=None, shard_id=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, num_samples=num_samples, shuffle=shuffle,
+                         num_shards=num_shards, shard_id=shard_id, cache=cache)
+        self.dataset_dir = dataset_dir
+        self.usage = replace_none(usage, "all")
+
+    def parse(self, children=None):
+        return cde.PennTreebankNode(self.dataset_dir, self.usage, self.num_samples, self.shuffle_flag, self.num_shards,
+                                    self.shard_id)
+
+
+class SogouNewsDataset(SourceDataset):
+    """
+    A source dataset that reads and parses Sogou News dataset.
+
+    The generated dataset has three columns: :py:obj:`[index, title, content]`.
+    The tensor of column :py:obj:`index` is of the string type.
+    The tensor of column :py:obj:`title` is of the string type.
+    The tensor of column :py:obj:`content` is of the string type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        usage (str, optional): Usage of this dataset, can be `train`, `test` or `all` .
+            `train` will read from 450,000 train samples, `test` will read from 60,000 test samples,
+            `all` will read from all 510,000 samples (default=None, all samples).
+        num_samples (int, optional): Number of samples (rows) to read (default=None, read all samples).
+        shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
+            (default=Shuffle.GLOBAL).
+            If shuffle is False, no shuffling will be performed;
+            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
+            Otherwise, there are two levels of shuffling:
+
+            - Shuffle.GLOBAL: Shuffle both the files and samples.
+
+            - Shuffle.FILES: Shuffle files only.
+        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            When this argument is specified, `num_samples` reflects the max sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument can only be specified when num_shards is also specified.
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, number set in the config).
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
+            (default=None, which means no cache is used).
+
+    Raises:
+        RuntimeError: If dataset_dir does not contain data files.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+
+    Examples:
+        >>> sogou_news_dataset_dir = "/path/to/sogou_news_dataset_dir"
+        >>> dataset = ds.SogouNewsDataset(dataset_files=sogou_news_dataset_dir, usage='all')
+
+    About SogouNews Dataset:
+
+    SogouNews dataset includes 3 columns, corresponding to class index (1 to 5), title and content. The title and
+    content are escaped using double quotes ("), and any internal double quote is escaped by 2 double quotes ("").
+    New lines are escaped by a backslash followed with an "n" character, that is "\n".
+
+    You can unzip the dataset files into the following structure and read by MindSpore's API:
+
+    .. code-block::
+
+        .
+        └── sogou_news_dir
+             ├── classes.txt
+             ├── readme.txt
+             ├── test.csv
+             └── train.csv
+
+    Citation:
+
+    .. code-block::
+
+        @misc{zhang2015characterlevel,
+            title={Character-level Convolutional Networks for Text Classification},
+            author={Xiang Zhang and Junbo Zhao and Yann LeCun},
+            year={2015},
+            eprint={1509.01626},
+            archivePrefix={arXiv},
+            primaryClass={cs.LG}
+        }
+    """
+
+    @check_sogou_news_dataset
+    def __init__(self, dataset_dir, usage=None, num_samples=None, shuffle=Shuffle.GLOBAL, num_shards=None,
+                 shard_id=None, num_parallel_workers=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, num_samples=num_samples, shuffle=shuffle,
+                         num_shards=num_shards, shard_id=shard_id, cache=cache)
+        self.dataset_dir = dataset_dir
+        self.usage = replace_none(usage, 'all')
+
+    def parse(self, children=None):
+        return cde.SogouNewsNode(self.dataset_dir, self.usage, self.num_samples, self.shuffle_flag,
+                                 self.num_shards, self.shard_id)
+
+
+class TextFileDataset(SourceDataset, TextBaseDataset):
+    """
+    A source dataset that reads and parses datasets stored on disk in text format.
+    The generated dataset has one column :py:obj:`[text]` with type string.
+
+    Args:
+        dataset_files (Union[str, list[str]]): String or list of files to be read or glob strings to search for a
+            pattern of files. The list will be sorted in a lexicographical order.
+        num_samples (int, optional): The number of samples to be included in the dataset
+            (default=None, will include all images).
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, number set in the config).
+        shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
+            (default=Shuffle.GLOBAL).
+            If shuffle is False, no shuffling will be performed;
+            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
+            Otherwise, there are two levels of shuffling:
+
+            - Shuffle.GLOBAL: Shuffle both the files and samples.
+
+            - Shuffle.FILES: Shuffle files only.
+
+        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument can only be specified when num_shards is also specified.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
+            (default=None, which means no cache is used).
+
+    Raises:
+        RuntimeError: If dataset_files are not valid or do not exist.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+
+    Examples:
+        >>> text_file_dataset_dir = ["/path/to/text_file_dataset_file"] # contains 1 or multiple text files
+        >>> dataset = ds.TextFileDataset(dataset_files=text_file_dataset_dir)
+    """
+
+    @check_textfiledataset
+    def __init__(self, dataset_files, num_samples=None, num_parallel_workers=None, shuffle=Shuffle.GLOBAL,
+                 num_shards=None, shard_id=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, num_samples=num_samples, shuffle=shuffle,
+                         num_shards=num_shards, shard_id=shard_id, cache=cache)
+        self.dataset_files = self._find_files(dataset_files)
+        self.dataset_files.sort()
+
+    def parse(self, children=None):
+        return cde.TextFileNode(self.dataset_files, self.num_samples, self.shuffle_flag, self.num_shards,
+                                self.shard_id)
+
+
+class UDPOSDataset(SourceDataset):
+    """
+    A source dataset that reads and parses UDPOS dataset.
+
+    The generated dataset has three columns: :py:obj:`[word, universal, stanford]`.
+    The tensor of column :py:obj:`word` is of the string type.
+    The tensor of column :py:obj:`universal` is of the string type.
+    The tensor of column :py:obj:`stanford` is of the string type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        usage (str, optional): Usage of this dataset, can be `train`, `test`, `valid` or `all`. `train` will read from
+            12,543 train samples, `test` will read from 2,077 test samples, `valid` will read from 2,002 test samples,
+            `all` will read from all 16,622 samples (default=None, all samples).
+        num_samples (int, optional): Number of samples (rows) to read (default=None, reads the full dataset).
+        shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
+            (default=Shuffle.GLOBAL).
+            If shuffle is False, no shuffling will be performed;
+            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
+            Otherwise, there are two levels of shuffling:
+
+            - Shuffle.GLOBAL: Shuffle both the files and samples.
+
+            - Shuffle.FILES: Shuffle files only.
+
+        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            When this argument is specified, `num_samples` reflects the max sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument can only be specified when num_shards is also specified.
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, number set in the config).
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
+            (default=None, which means no cache is used).
+
+    Raises:
+        RuntimeError: If dataset_dir does not contain data files.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+
+    Examples:
+        >>> udpos_dataset_dir = "/path/to/udpos_dataset_dir"
+        >>> dataset = ds.UDPOSDataset(dataset_files=udpos_dataset_dir, usage='all')
+    """
+
+    @check_udpos_dataset
+    def __init__(self, dataset_dir, usage=None, num_samples=None, shuffle=Shuffle.GLOBAL, num_shards=None,
+                 shard_id=None, num_parallel_workers=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, num_samples=num_samples, shuffle=shuffle,
+                         num_shards=num_shards, shard_id=shard_id, cache=cache)
+        self.dataset_dir = dataset_dir
+        self.usage = replace_none(usage, 'all')
+
+    def parse(self, children=None):
+        return cde.UDPOSNode(self.dataset_dir, self.usage, self.num_samples, self.shuffle_flag, self.num_shards,
+                             self.shard_id)
+
+
+class WikiTextDataset(SourceDataset):
+    """
+    A source dataset that reads and parses WikiText2 and WikiText103 datasets.
+
+    The generated dataset has one column :py:obj:`[text]`.
+    The tensor of column :py:obj:`text` is of the string type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        usage (str, optional): Acceptable usages include `train`, `test`, 'valid' and `all`(default=None, all samples).
+        num_samples (int, optional): Number of samples (rows) to read (default=None, reads the full dataset).
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, number set in the config).
+        shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
+            (default=Shuffle.GLOBAL).
+            If shuffle is False, no shuffling will be performed;
+            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
+            Otherwise, there are two levels of shuffling:
+
+            - Shuffle.GLOBAL: Shuffle both the files and samples.
+
+            - Shuffle.FILES: Shuffle files only.
+
+        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            When this argument is specified, 'num_samples' reflects the max sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument can only be specified when num_shards is also specified.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
+            (default=None, which means no cache is used).
+
+    Examples:
+        >>> wiki_text_dataset_dir = "/path/to/wiki_text_dataset_directory"
+        >>> dataset = ds.WikiTextDataset(dataset_dir=wiki_text_dataset_dir, usage='all')
+
+    About WikiTextDataset dataset:
+
+    The WikiText Long Term Dependency Language Modeling Dataset is an English lexicon containing 100 million words.
+    These terms are drawn from Wikipedia's premium and benchmark articles, including versions of Wikitext2 and
+    Wikitext103. For WikiText2, it has 36718 lines in wiki.train.tokens, 4358 lines in wiki.test.tokens and
+    3760 lines in wiki.valid.tokens. For WikiText103, it has 1801350 lines in wiki.train.tokens, 4358 lines in
+    wiki.test.tokens and 3760 lines in wiki.valid.tokens.
+
+    Here is the original WikiText dataset structure.
+    You can unzip the dataset files into this directory structure and read by MindSpore's API.
+
+    .. code-block::
+
+        .
+        └── WikiText2/WikiText103
+             ├── wiki.train.tokens
+             ├── wiki.test.tokens
+             ├── wiki.valid.tokens
+
+    Citation:
+
+    .. code-block::
+
+        @article{merity2016pointer,
+          title={Pointer sentinel mixture models},
+          author={Merity, Stephen and Xiong, Caiming and Bradbury, James and Socher, Richard},
+          journal={arXiv preprint arXiv:1609.07843},
+          year={2016}
+        }
+    """
+
+    @check_wiki_text_dataset
+    def __init__(self, dataset_dir, usage=None, num_samples=None, num_parallel_workers=None, shuffle=Shuffle.GLOBAL,
+                 num_shards=None, shard_id=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, num_samples=num_samples, shuffle=shuffle,
+                         num_shards=num_shards, shard_id=shard_id, cache=cache)
+        self.dataset_dir = dataset_dir
+        self.usage = replace_none(usage, "all")
+
+    def parse(self, children=None):
+        return cde.WikiTextNode(self.dataset_dir, self.usage, self.num_samples, self.shuffle_flag, self.num_shards,
+                                self.shard_id)
+
+
+class YahooAnswersDataset(SourceDataset):
+    """
+    A source dataset that reads and parses the YahooAnswers dataset.
+
+    The generated dataset has three columns :py:obj:`[class, title, content, answer]`.
+    The tensor of column :py:obj:`class` is of the string type.
+    The tensor of column :py:obj:`title` is of the string type.
+    The tensor of column :py:obj:`content` is of the string type.
+    The tensor of column :py:obj:`answer` is of the string type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        usage (str, optional): Usage of this dataset, can be `train`, `test` or `all`. `train` will read
+            from 1,400,000 train samples, `test` will read from 60,000 test samples, `all` will read from
+            all 1,460,000 samples (default=None, all samples).
+        num_samples (int, optional): The number of samples to be included in the dataset
+            (default=None, will include all text).
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, number set in the config).
+        shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
+            (default=Shuffle.GLOBAL).
+            If shuffle is False, no shuffling will be performed;
+            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
+            Otherwise, there are two levels of shuffling:
+
+            - Shuffle.GLOBAL: Shuffle both the files and samples.
+
+            - Shuffle.FILES: Shuffle files only.
+
+        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument can only be specified when num_shards is also specified.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing
+            (default=None, which means no cache is used).
+
+    Raises:
+        RuntimeError: If dataset_dir does not contain data files.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+
+    Examples:
+        >>> yahoo_answers_dataset_dir = "/path/to/yahoo_answers_dataset_directory"
+        >>>
+        >>> # 1) Read 3 samples from YahooAnswers dataset
+        >>> dataset = ds.YahooAnswersDataset(dataset_dir=yahoo_answers_dataset_dir, num_samples=3)
+        >>>
+        >>> # 2) Read train samples from YahooAnswers dataset
+        >>> dataset = ds.YahooAnswersDataset(dataset_dir=yahoo_answers_dataset_dir, usage="train")
+
+    About YahooAnswers dataset:
+
+    The YahooAnswers dataset consists of 630,000 text samples in 14 classes,
+    There are 560,000 samples in the train.csv and 70,000 samples in the test.csv.
+    The 10 different classes represent Society & Culture, Science & Mathematics, Health, Education & Reference,
+    Computers & Internet, Sports, Business & Finance, Entertainment & Music, Family & Relationships,
+    Politics & Government.
+
+    Here is the original YahooAnswers dataset structure.
+    You can unzip the dataset files into this directory structure and read by Mindspore's API.
+
+    .. code-block::
+
+        .
+        └── yahoo_answers_dataset_dir
+            ├── train.csv
+            ├── test.csv
+            ├── classes.txt
+            └── readme.txt
+
+    .. code-block::
+
+        @article{YahooAnswers,
+        title   = {Yahoo! Answers Topic Classification Dataset},
+        author  = {Xiang Zhang},
+        year    = {2015},
+        howpublished = {}
+        }
+    """
+
+    @check_yahoo_answers_dataset
+    def __init__(self, dataset_dir, usage=None, num_samples=None, num_parallel_workers=None, shuffle=Shuffle.GLOBAL,
+                 num_shards=None, shard_id=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, num_samples=num_samples, shuffle=shuffle,
+                         num_shards=num_shards, shard_id=shard_id, cache=cache)
+        self.dataset_dir = dataset_dir
+        self.usage = replace_none(usage, "all")
+
+    def parse(self, children=None):
+        return cde.YahooAnswersNode(self.dataset_dir, self.usage, self.num_samples, self.shuffle_flag,
+                                    self.num_shards, self.shard_id)
+
+
+class YelpReviewDataset(SourceDataset, TextBaseDataset):
+    """
+    A source dataset that reads and parses Yelp Review Polarity and Yelp Review Full dataset.
+
+    The generated dataset has two columns: :py:obj:`[label, text]`.
+    The tensor of column :py:obj:`label` is of the string type.
+    The tensor of column :py:obj:`text` is of the string type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        usage (str, optional): Usage of this dataset, can be `train`, `test` or `all`.
+            For Polarity, `train` will read from 560,000 train samples, `test` will read from 38,000 test samples,
+            `all` will read from all 598,000 samples.
+            For Full, `train` will read from 650,000 train samples, `test` will read from 50,000 test samples,
+            `all` will read from all 700,000 samples (default=None, all samples).
+        num_samples (int, optional): Number of samples (rows) to read (default=None, reads all samples).
+        shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
+            (default=Shuffle.GLOBAL).
+            If shuffle is False, no shuffling will be performed;
+            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
+            Otherwise, there are two levels of shuffling:
+
+            - Shuffle.GLOBAL: Shuffle both the files and samples.
+
+            - Shuffle.FILES: Shuffle files only.
+        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            When this argument is specified, `num_samples` reflects the max sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument can only be specified when num_shards is also specified.
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, number set in the config).
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
+            (default=None, which means no cache is used).
+
+    Raises:
+        RuntimeError: If dataset_dir does not contain data files.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+
+    Examples:
+        >>> yelp_review_dataset_dir = "/path/to/yelp_review_dataset_dir"
+        >>> dataset = ds.YelpReviewDataset(dataset_dir=yelp_review_dataset_dir, usage='all')
+
+    About YelpReview Dataset:
+
+    The Yelp Review Full dataset consists of reviews from Yelp. It is extracted from the Yelp Dataset Challenge 2015
+    data, and it is mainly used for text classification.
+
+    The Yelp Review Polarity dataset is constructed from the above dataset, by considering stars 1 and 2 negative, and 3
+    and 4 positive.
+
+    The directory structures of these two datasets are the same.
+    You can unzip the dataset files into the following structure and read by MindSpore's API:
+
+    .. code-block::
+
+        .
+        └── yelp_review_dir
+             ├── train.csv
+             ├── test.csv
+             └── readme.txt
+
+    Citation:
+
+    For Yelp Review Polarity:
+
+    .. code-block::
+
+        @article{zhangCharacterlevelConvolutionalNetworks2015,
+          archivePrefix = {arXiv},
+          eprinttype = {arxiv},
+          eprint = {1509.01626},
+          primaryClass = {cs},
+          title = {Character-Level {{Convolutional Networks}} for {{Text Classification}}},
+          abstract = {This article offers an empirical exploration on the use of character-level convolutional networks
+                      (ConvNets) for text classification. We constructed several large-scale datasets to show that
+                      character-level convolutional networks could achieve state-of-the-art or competitive results.
+                      Comparisons are offered against traditional models such as bag of words, n-grams and their TFIDF
+                      variants, and deep learning models such as word-based ConvNets and recurrent neural networks.},
+          journal = {arXiv:1509.01626 [cs]},
+          author = {Zhang, Xiang and Zhao, Junbo and LeCun, Yann},
+          month = sep,
+          year = {2015},
+        }
+
+    Citation:
+
+    For Yelp Review Full:
+
+    .. code-block::
+
+        @article{zhangCharacterlevelConvolutionalNetworks2015,
+          archivePrefix = {arXiv},
+          eprinttype = {arxiv},
+          eprint = {1509.01626},
+          primaryClass = {cs},
+          title = {Character-Level {{Convolutional Networks}} for {{Text Classification}}},
+          abstract = {This article offers an empirical exploration on the use of character-level convolutional networks
+                      (ConvNets) for text classification. We constructed several large-scale datasets to show that
+                      character-level convolutional networks could achieve state-of-the-art or competitive results.
+                      Comparisons are offered against traditional models such as bag of words, n-grams and their TFIDF
+                      variants, and deep learning models such as word-based ConvNets and recurrent neural networks.},
+          journal = {arXiv:1509.01626 [cs]},
+          author = {Zhang, Xiang and Zhao, Junbo and LeCun, Yann},
+          month = sep,
+          year = {2015},
+        }
+    """
+
+    @check_yelp_review_dataset
+    def __init__(self, dataset_dir, usage=None, num_samples=None, shuffle=Shuffle.GLOBAL, num_shards=None,
+                 shard_id=None, num_parallel_workers=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, num_samples=num_samples, shuffle=shuffle,
+                         num_shards=num_shards, shard_id=shard_id, cache=cache)
+        self.dataset_dir = dataset_dir
+        self.usage = replace_none(usage, 'all')
+
+    def parse(self, children=None):
+        return cde.YelpReviewNode(self.dataset_dir, self.usage, self.num_samples, self.shuffle_flag,
+                                  self.num_shards, self.shard_id)

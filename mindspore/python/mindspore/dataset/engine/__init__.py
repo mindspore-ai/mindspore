@@ -26,15 +26,85 @@ from ..callback import DSCallback, WaitedDSCallback
 from ..core import config
 from .cache_client import DatasetCache
 from .datasets import *
+from .datasets_vision import *
+from .datasets_text import *
+from .datasets_audio import *
+from .datasets_standard_format import *
+from .datasets_user_defined import *
 from .graphdata import GraphData, SamplingStrategy, OutputFormat
 from .iterators import *
 from .samplers import *
 from .serializer_deserializer import compare, deserialize, serialize, show
 
-__all__ = ["CelebADataset", "Cifar100Dataset", "Cifar10Dataset", "CLUEDataset", "CocoDataset", "CSVDataset",
-           "GeneratorDataset", "GraphData", "ImageFolderDataset", "ManifestDataset", "MindDataset", "MnistDataset",
-           "NumpySlicesDataset", "PaddedDataset", "TextFileDataset", "TFRecordDataset", "VOCDataset",
-           "DistributedSampler", "PKSampler", "RandomSampler", "SequentialSampler", "SubsetRandomSampler",
-           "WeightedRandomSampler", "SubsetSampler",
-           "DatasetCache", "DSCallback", "Schema", "WaitedDSCallback", "compare", "deserialize",
-           "serialize", "show", "zip"]
+__all__ = ["Caltech101Dataset",        # vision dataset
+           "Caltech256Dataset",        # vision dataset
+           "CelebADataset",            # vision dataset
+           "Cifar10Dataset",           # vision dataset
+           "Cifar100Dataset",          # vision dataset
+           "CityscapesDataset",        # vision dataset
+           "CocoDataset",              # vision dataset
+           "DIV2KDataset",             # vision dataset
+           "EMnistDataset",            # vision dataset
+           "FakeImageDataset",         # vision dataset
+           "FashionMnistDataset",      # vision dataset
+           "FlickrDataset",            # vision dataset
+           "Flowers102Dataset",        # vision dataset
+           "ImageFolderDataset",       # vision dataset
+           "KMnistDataset",            # vision dataset
+           "ManifestDataset",          # vision dataset
+           "MnistDataset",             # vision dataset
+           "PhotoTourDataset",         # vision dataset
+           "Places365Dataset",         # vision dataset
+           "QMnistDataset",            # vision dataset
+           "RandomDataset",            # vision dataset
+           "SBDataset",                # vision dataset
+           "SBUDataset",               # vision dataset
+           "SemeionDataset",           # vision dataset
+           "STL10Dataset",             # vision dataset
+           "SVHNDataset",              # vision dataset
+           "USPSDataset",              # vision dataset
+           "VOCDataset",               # vision dataset
+           "WIDERFaceDataset",         # vision dataset
+           "AGNewsDataset",            # text dataset
+           "AmazonReviewDataset",      # text dataset
+           "CLUEDataset",              # text dataset
+           "CoNLL2000Dataset",         # text dataset
+           "CSVDataset",               # text dataset
+           "DBpediaDataset",           # text dataset
+           "EnWik9Dataset",            # text dataset
+           "IMDBDataset",              # text dataset
+           "IWSLT2016Dataset",         # text dataset
+           "IWSLT2017Dataset",         # text dataset
+           "PennTreebankDataset",      # text dataset
+           "SogouNewsDataset",         # text dataset
+           "TextFileDataset",          # text dataset
+           "UDPOSDataset",             # text dataset
+           "WikiTextDataset",          # text dataset
+           "YahooAnswersDataset",      # text dataset
+           "YelpReviewDataset",        # text dataset
+           "LJSpeechDataset",          # audio dataset
+           "SpeechCommandsDataset",    # audio dataset
+           "TedliumDataset",           # audio dataset
+           "YesNoDataset",             # audio dataset
+           "MindDataset",              # standard format dataset
+           "TFRecordDataset",          # standard format dataset
+           "GeneratorDataset",         # user defined dataset
+           "NumpySlicesDataset",       # user defined dataset
+           "PaddedDataset",            # user defined dataset
+           "GraphData",                # graph data
+           "DistributedSampler",       # sampler
+           "RandomSampler",            # sampler
+           "SequentialSampler",        # sampler
+           "SubsetRandomSampler",      # sampler
+           "SubsetSampler",            # sampler
+           "PKSampler",                # sampler
+           "WeightedRandomSampler",    # sampler
+           "DatasetCache",
+           "DSCallback",
+           "WaitedDSCallback",
+           "Schema",
+           "compare",
+           "deserialize",
+           "serialize",
+           "show",
+           "zip"]
