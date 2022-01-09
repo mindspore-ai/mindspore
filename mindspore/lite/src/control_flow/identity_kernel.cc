@@ -14,22 +14,27 @@
  * limitations under the License.
  */
 
-#include "src/control_flow/output_kernel.h"
+#include "src/control_flow/identity_kernel.h"
 #include "src/tensor.h"
 #include "src/inner_kernel.h"
+#include "src/common/tensor_util.h"
 
 namespace mindspore::kernel {
-int OutputKernel::Run() {
+int IdentityKernel::Run() {
   for (size_t i = 0; i < in_tensors().size(); ++i) {
     auto src_tensor = in_tensors()[i];
     auto dst_tensor = out_tensors()[i];
-    memcpy(dst_tensor->data(), src_tensor->data(), src_tensor->Size());
+    if (src_tensor->allocator() == nullptr || src_tensor->IsGraphInput()) {
+      SetTensorData(dst_tensor, src_tensor);
+    } else {
+      MoveTensorData(dst_tensor, src_tensor);
+    }
   }
   return lite::RET_OK;
 }
 
-LiteKernel *OutputKernel::Create(std::vector<lite::Tensor *> in_tensors, std::vector<lite::Tensor *> out_tensors,
-                                 const lite::InnerContext *ctx) {
+LiteKernel *IdentityKernel::Create(std::vector<lite::Tensor *> in_tensors, std::vector<lite::Tensor *> out_tensors,
+                                   const lite::InnerContext *ctx) {
   auto *param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
   if (param == nullptr) {
     MS_LOG(ERROR) << "malloc OpParameter failed.";
@@ -37,13 +42,14 @@ LiteKernel *OutputKernel::Create(std::vector<lite::Tensor *> in_tensors, std::ve
   }
   memset(param, 0, sizeof(OpParameter));
   param->type_ = schema::PrimitiveType_NONE;
-  auto inner_kernel = new OutputKernel(param, in_tensors, out_tensors, ctx);
+  auto inner_kernel = new IdentityKernel(param, in_tensors, out_tensors, ctx);
   MS_CHECK_TRUE_MSG(inner_kernel != nullptr, nullptr, "new inner kernel failed.");
   std::shared_ptr<kernel::Kernel> shared_kernel(inner_kernel);
   auto *lite_kernel = new LiteKernel(shared_kernel);
   return lite_kernel;
 }
-int OutputKernel::PreProcess() {
+
+int IdentityKernel::PreProcess() {
   if (in_tensors().size() != out_tensors().size()) {
     MS_LOG(ERROR) << "output kernel in_tensors size is not same as out_tensors size.";
     return lite::RET_ERROR;
@@ -54,6 +60,8 @@ int OutputKernel::PreProcess() {
     dst_tensor->set_shape(src_tensor->shape());
     dst_tensor->set_format(src_tensor->format());
   }
-  return InnerKernel::PreProcess();
+  return lite::RET_OK;
 }
+
+int IdentityKernel::PostProcess() { return lite::RET_OK; }
 }  // namespace mindspore::kernel

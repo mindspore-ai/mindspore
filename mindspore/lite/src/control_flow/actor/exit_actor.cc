@@ -18,6 +18,7 @@
 #include <algorithm>
 #include "src/control_flow/exit_subgraph_kernel.h"
 #include "src/lite_kernel_util.h"
+#include "src/common/tensor_util.h"
 
 namespace {
 const constexpr int kEntranceTensorIndex = 0;
@@ -45,9 +46,9 @@ void LiteExitOpActor::InitInputData() {
     auto dst_tensor = kernel_->out_tensors()[i - 1];
     auto src_tensor = inputs_data_[i];
     if (src_tensor->allocator() == nullptr || src_tensor->IsGraphInput()) {
-      SetInputData(dst_tensor, src_tensor);
+      SetTensorData(dst_tensor, src_tensor);
     } else {
-      MoveInputData(dst_tensor, src_tensor);
+      MoveTensorData(dst_tensor, src_tensor);
     }
   }
   return;
