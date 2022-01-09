@@ -4838,7 +4838,7 @@ class ScatterNdSub(_ScatterNdOp):
     :math:`(i_0, i_1, ..., i_{Q-2}, x\_shape_N, ..., x\_shape_{P-1})`.
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
-    If they have different data types, the lower priority data type will be converted to
+    If they have different data types, the lower priority data type will be converted to the
     relatively highest priority data type.
 
     Args:
