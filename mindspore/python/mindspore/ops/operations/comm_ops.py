@@ -64,7 +64,7 @@ class ReduceOp:
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
-        ...         self.allreduce_sum = ops.AllReduce(ReduceOp.SUM, group="nccl_world_group")
+        ...         self.allreduce_sum = ops.AllReduce(ReduceOp.SUM)
         ...
         ...     def construct(self, x):
         ...         return self.allreduce_sum(x)
@@ -73,8 +73,8 @@ class ReduceOp:
         >>> net = Net()
         >>> output = net(input_)
         >>> print(output)
-        [[4. 5. 6. 0. 0. 0. 0. 0.]
-         [0. 0. 0. 0. 0. 0. 0. 0.]]
+        [[2. 2. 2. 2. 2. 2. 2. 2.]
+         [2. 2. 2. 2. 2. 2. 2. 2.]]
     """
     SUM = "sum"
     MAX = "max"
