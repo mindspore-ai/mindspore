@@ -69,15 +69,7 @@ class NcclSendGpuKernel : public NcclGpuKernel {
     input_size_list_.push_back(input_size);
     output_size_list_.push_back(0);
 
-    use_mpi_ = common::CheckUseMPI();
-    if (use_mpi_) {
-      collective_handle_ = device::gpu::CollectiveInitializer::instance().collective_handle();
-      MS_EXCEPTION_IF_NULL(collective_handle_);
-    } else {
-      if (!LoadNvidiaCommLib()) {
-        return false;
-      }
-    }
+    SelectCollectiveHandle();
     return true;
   }
 

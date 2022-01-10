@@ -39,9 +39,14 @@ ClusterContext::ClusterContext()
 
 ClusterContext::~ClusterContext() {
   if (!finalized_) {
-    Finalize();
+    try {
+      (void)Finalize();
+    } catch (std::exception &) {
+      MS_LOG(ERROR) << "Failed to finalize cluster context.";
+    }
   }
   finalized_ = true;
+  node_ = nullptr;
 }
 
 std::shared_ptr<ClusterContext> ClusterContext::instance() {

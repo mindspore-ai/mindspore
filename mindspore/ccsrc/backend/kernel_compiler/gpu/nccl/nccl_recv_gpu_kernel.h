@@ -68,15 +68,7 @@ class NcclRecvGpuKernel : public NcclGpuKernel {
     output_size_list_.push_back(output_size);
     MS_LOG(INFO) << "NcclRecv source rank is " << src_rank_ << ", group name is " << group_name_;
 
-    use_mpi_ = common::CheckUseMPI();
-    if (use_mpi_) {
-      collective_handle_ = device::gpu::CollectiveInitializer::instance().collective_handle();
-      MS_EXCEPTION_IF_NULL(collective_handle_);
-    } else {
-      if (!LoadNvidiaCommLib()) {
-        return false;
-      }
-    }
+    SelectCollectiveHandle();
     return true;
   }
 

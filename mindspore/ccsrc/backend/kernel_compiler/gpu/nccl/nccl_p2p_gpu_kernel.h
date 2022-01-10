@@ -120,15 +120,7 @@ class NcclP2PGpuKernel : public NcclGpuKernel {
       recv_rank_ids = GetValue<std::vector<int64_t>>(recv_rank_ids_attr);
     }
 
-    use_mpi_ = common::CheckUseMPI();
-    if (use_mpi_) {
-      collective_handle_ = device::gpu::CollectiveInitializer::instance().collective_handle();
-      MS_EXCEPTION_IF_NULL(collective_handle_);
-    } else {
-      if (!LoadNvidiaCommLib()) {
-        return false;
-      }
-    }
+    SelectCollectiveHandle();
     return true;
   }
 

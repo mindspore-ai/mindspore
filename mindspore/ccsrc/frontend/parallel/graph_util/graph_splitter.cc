@@ -67,7 +67,7 @@ void GraphSplitter::DyeGraph() {
   MS_EXCEPTION_IF_NULL(func_graph_);
 
   std::vector<AnfNodePtr> all_nodes = DeepScopedGraphSearch(func_graph_->get_return());
-  std::for_each(all_nodes.begin(), all_nodes.end(), [this](AnfNodePtr &node) {
+  (void)std::for_each(all_nodes.begin(), all_nodes.end(), [this](AnfNodePtr &node) {
     MS_EXCEPTION_IF_NULL(node);
     // Mark all nodes with original label at the beginning.
     node_labels_[node] = default_label_;
@@ -98,17 +98,17 @@ std::vector<SplitGraphSegment> GraphSplitter::GenerateSplitSegments() {
     auto cnode_split_label = node_labels_[n];
     // If this node's label is not the same as last node's, create a segment from 'segment_nodes'.
     if (cnode_split_label != last_label && !segment.nodes.empty()) {
-      results.emplace_back(segment);
+      (void)results.emplace_back(segment);
       segment.nodes.clear();
     }
     // Mark the last label.
     last_label = cnode_split_label;
     segment.label = cnode_split_label;
-    segment.nodes.emplace_back(n);
+    (void)segment.nodes.emplace_back(n);
   }
 
   // Add the last segment.
-  results.emplace_back(segment);
+  (void)results.emplace_back(segment);
   MS_LOG(INFO) << "Segments number with different distributed split labels is " << results.size();
   return results;
 }
@@ -159,15 +159,15 @@ void GraphSplitter::SplitGraph(const std::vector<SplitGraphSegment> &segments,
     std::vector<AnfNodePtr> concerned_out_degree_nodes = FindInterProcessOutDegree(nodes, comm_edges);
 
     std::vector<AnfNodePtr> make_tuple_send_input = {NewValueNode(prim::kPrimMakeTuple)};
-    make_tuple_send_input.insert(make_tuple_send_input.end(), concerned_in_degree_nodes.begin(),
-                                 concerned_in_degree_nodes.end());
+    (void)make_tuple_send_input.insert(make_tuple_send_input.end(), concerned_in_degree_nodes.begin(),
+                                       concerned_in_degree_nodes.end());
     auto make_tuple = func_graph_->NewCNode(make_tuple_send_input);
     if (concerned_out_degree_nodes.empty()) {
       std::vector<AnfNodePtr> out = {NewValueNode(prim::kPrimDepend)};
       out.push_back(make_tuple_send_input.back());
       out.push_back(make_tuple);
       auto out_node = func_graph_->NewCNode(out);
-      func_graph_->manager()->Replace(func_graph_->output(), out_node);
+      (void)func_graph_->manager()->Replace(func_graph_->output(), out_node);
     } else {
       for (auto &recv : concerned_out_degree_nodes) {
         std::vector<AnfNodePtr> depend_input = {NewValueNode(prim::kPrimDepend), recv->cast<CNodePtr>()->inputs()[1],
@@ -262,7 +262,7 @@ InterProcessOpEdgesInfo GraphSplitter::GenerateInterProcessOpsForNodeInputs(cons
 
     InterProcessOpEdge comm_edge = {input_i, cnode};
     auto comm_node_pair = std::make_tuple(send_node, recv_node, cnode, SizeToInt(i));
-    comm_edges.insert(std::make_pair(comm_edge, comm_node_pair));
+    (void)comm_edges.insert(std::make_pair(comm_edge, comm_node_pair));
   }
   return comm_edges;
 }
@@ -292,7 +292,7 @@ InterProcessOpEdgesInfo GraphSplitter::GenerateInterProcessOpsForNodeOutputs(con
 
     InterProcessOpEdge comm_edge = {cnode, user_node};
     auto comm_node_pair = std::make_tuple(send_node, recv_node, user_node, index);
-    comm_edges.insert(std::make_pair(comm_edge, comm_node_pair));
+    (void)comm_edges.insert(std::make_pair(comm_edge, comm_node_pair));
   }
   return comm_edges;
 }
@@ -369,7 +369,7 @@ std::vector<AnfNodePtr> GraphSplitter::FindInterProcessInDegree(const std::vecto
       MS_LOG(INFO) << input_i->fullname_with_scope() << " to " << cnode->fullname_with_scope()
                    << " is a communication edge.";
       auto comm_node_pair = comm_edges.at({input_i, cnode});
-      results.emplace_back(std::get<0>(comm_node_pair));
+      (void)results.emplace_back(std::get<0>(comm_node_pair));
     }
   }
   return results;
@@ -396,7 +396,7 @@ std::vector<AnfNodePtr> GraphSplitter::FindInterProcessOutDegree(const std::vect
       MS_LOG(INFO) << cnode->fullname_with_scope() << " to " << user_node->fullname_with_scope()
                    << " is a communication edge.";
       auto comm_node_pair = comm_edges.at({cnode, user_node});
-      results.emplace_back(std::get<1>(comm_node_pair));
+      (void)results.emplace_back(std::get<1>(comm_node_pair));
     }
   }
   return results;

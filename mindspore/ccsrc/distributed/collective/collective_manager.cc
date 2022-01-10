@@ -37,9 +37,17 @@ CollectiveManager::CollectiveManager()
 
 CollectiveManager::~CollectiveManager() {
   if (!finalized_) {
-    Finalize();
+    try {
+      (void)Finalize();
+    } catch (std::exception &) {
+      MS_LOG(ERROR) << "Failed to finalize collective manager.";
+    }
   }
   finalized_ = true;
+  host_ctx_ = nullptr;
+  device_ctx_ = nullptr;
+  host_comm_lib_instance_ = nullptr;
+  device_comm_lib_instance_ = nullptr;
 }
 
 std::shared_ptr<CollectiveManager> CollectiveManager::instance() {

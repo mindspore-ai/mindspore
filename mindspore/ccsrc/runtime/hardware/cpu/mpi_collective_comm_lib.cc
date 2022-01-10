@@ -19,7 +19,9 @@
 namespace mindspore {
 namespace device {
 namespace cpu {
-MPICollectiveCommLib::MPICollectiveCommLib() { global_group_name_ = kMPIGlobalGroupName; }
+MPICollectiveCommLib::MPICollectiveCommLib() : world_group_(MPI_GROUP_NULL) {
+  global_group_name_ = kMPIGlobalGroupName;
+}
 
 bool MPICollectiveCommLib::Initialize(uint32_t, uint32_t) {
   if (initialized_) {
