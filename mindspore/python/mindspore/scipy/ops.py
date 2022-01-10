@@ -304,10 +304,12 @@ class LU(PrimitiveWithInfer):
 
         if ndim in (1, 2):
             permutation_shape = (x_shape[0], x_shape[0])
+            pivots_shape = (1, x_shape[0])
         else:
             permutation_shape = (x_shape[0], x_shape[1], x_shape[1])
+            pivots_shape = (x_shape[0], 1, x_shape[1])
         output = {
-            'shape': (x_shape, permutation_shape[:-1], permutation_shape),
+            'shape': (x_shape, pivots_shape, permutation_shape),
             'dtype': (x_dtype, mstype.int32, mstype.int32),
             'value': None
         }
