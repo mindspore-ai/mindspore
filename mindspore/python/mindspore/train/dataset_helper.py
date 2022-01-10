@@ -18,6 +18,7 @@ import math
 from mindspore._checkparam import Validator
 from mindspore.common.dtype import pytype_to_dtype
 from mindspore.common.api import _cell_graph_executor
+from mindspore.dataset.engine import offload
 from .. import context, nn
 from ._utils import _exec_datagraph, _get_types_and_shapes, _construct_tensor_list
 from ..parallel._utils import _get_device_num, _get_global_rank, _need_to_full, _to_full_shapes, _get_pipeline_stages
@@ -118,24 +119,6 @@ def _generate_network_with_dataset(network, dataset_helper, queue_name):
     return network
 
 
-def _check_add_offload(dataset, dataset_helper, network):
-    """Check if any map operations were removed to be offloaded and apply the transforms if so."""
-    from mindspore.dataset.engine import offload
-    if hasattr(dataset, '__no_send__'):
-        # Dataset was not sent to device. Skip adding offload.
-        return network
-    offload_model = dataset.__transfer_dataset__.get_offload_model()
-    # See if the offload pass identified any operations to be offloaded
-    if offload_model.transform_list != []:
-        offload.check_concat_zip_dataset(dataset.__transfer_dataset__)
-        # A temporary solution to ensure there are two columns in dataset.
-        dataset_types, _ = dataset_helper.types_shapes()
-        if len(dataset_types) != 2:
-            raise RuntimeError("Offload can currently only use datasets with two columns.")
-        network = offload.ApplyPreTransform(offload_model, network)
-    return network
-
-
 class _DatasetAux:
     def __deepcopy__(self, memodict):
         return None
@@ -220,7 +203,7 @@ def connect_network_with_dataset(network, dataset_helper):
         network = aux.__sink_network__
     else:
         if not context.get_context("enable_ge") and context.get_context("device_target") in ("Ascend", "GPU"):
-            network = _check_add_offload(dataset, dataset_helper, network)
+            network = offload.check_add_offload_sink_mode(dataset, dataset_helper, network)
             network = _generate_network_with_dataset(network, dataset_helper, queue_name)
             aux.__sink_network__ = network
 
