@@ -253,7 +253,6 @@ bool CommUtil::CreateDirectory(const std::string &directoryPath) {
 }
 
 std::string CommUtil::ClusterStateToString(const ClusterState &state) {
-  MS_LOG(DEBUG) << "The cluster state:" << state;
   if (state < SizeToInt(kClusterState.size())) {
     return kClusterState.at(state);
   } else {
@@ -430,11 +429,11 @@ bool CommUtil::verifyCertKeyID(const X509 *caCert, const X509 *subCert) {
   ASN1_OCTET_STRING *skid =
     reinterpret_cast<ASN1_OCTET_STRING *>(X509_get_ext_d2i(caCert, NID_subject_key_identifier, &crit, NULL));
   MS_EXCEPTION_IF_NULL(skid);
-  const int keyidLen = 512;
+  const size_t keyidLen = 512;
   char subject_keyid[keyidLen] = {0};
   for (int i = 0; i < skid->length; i++) {
     char keyid[8] = {0};
-    int base = keyidLen;
+    size_t base = keyidLen;
     (void)sprintf_s(keyid, sizeof(keyid), "%x ", (uint32_t)skid->data[i]);
     int ret = strcat_s(subject_keyid, base, keyid);
     if (ret == -1) {
@@ -449,7 +448,7 @@ bool CommUtil::verifyCertKeyID(const X509 *caCert, const X509 *subCert) {
   char issuer_keyid[keyidLen] = {0};
   for (int i = 0; i < akeyid->keyid->length; i++) {
     char keyid[8] = {0};
-    int base = keyidLen;
+    size_t base = keyidLen;
     (void)sprintf_s(keyid, sizeof(keyid), "%x ", (uint32_t)(akeyid->keyid->data[i]));
     int ret = strcat_s(issuer_keyid, base, keyid);
     if (ret == -1) {

@@ -85,7 +85,7 @@ class CommunicatorBase {
 
   bool SendResponse(const void *rsp_data, size_t rsp_len, const std::shared_ptr<MessageHandler> &msg_handler);
 
-  bool running();
+  bool running() const;
 
  protected:
   std::unordered_map<std::string, MessageCallback> msg_callbacks_;
