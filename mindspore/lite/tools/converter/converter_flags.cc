@@ -82,7 +82,6 @@ Flags::Flags() {
           "");
   AddFlag(&Flags::graphInputFormatStr, "inputDataFormat",
           "Assign the input format of exported model. Only Valid for 4-dimensional input. NHWC | NCHW", "NHWC");
-  AddFlag(&Flags::device, "device", "Set the target device. Only valid when device is Ascend310 or Ascend710.", "");
 }
 
 int Flags::InitInputOutputDataType() {

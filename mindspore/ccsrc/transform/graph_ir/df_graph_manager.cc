@@ -18,7 +18,7 @@
 
 #include <sstream>
 
-#ifndef ENABLE_LITE_ACL
+#ifndef ENABLE_LITE_ASCEND
 #include "pipeline/jit/parse/python_adapter.h"
 #include "pipeline/jit/pipeline.h"
 #endif
@@ -43,7 +43,7 @@ DfGraphManager::~DfGraphManager() {
   DeleteGraphRunner();
   DeleteGeSession();
   ClearGraph();
-#ifndef ENABLE_LITE_ACL
+#ifndef ENABLE_LITE_ASCEND
   parse::python_adapter::set_python_env_flag(false);
 #endif
 }
