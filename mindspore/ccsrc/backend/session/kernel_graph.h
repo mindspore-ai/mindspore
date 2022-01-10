@@ -305,7 +305,10 @@ class KernelGraph : public FuncGraph {
     }
     auto nop_node_output_iter = nop_node_output_map_.find(output_index);
     if (nop_node_output_iter != nop_node_output_map_.end()) {
-      return GetNodeOutputTensor(nop_node_output_iter->second);
+      iter = output_node_to_tensor_.find(nop_node_output_iter->second);
+      if (iter != output_node_to_tensor_.end()) {
+        return utils::cast<tensor::TensorPtr>(iter->second);
+      }
     }
     return nullptr;
   }

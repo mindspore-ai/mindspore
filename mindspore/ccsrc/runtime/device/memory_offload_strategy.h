@@ -64,7 +64,7 @@ class MemOffloadStrategy {
   bool need_swap() const { return need_swap_; }
 
  private:
-  bool IsHighPriorityMem(const void *key);
+  bool IsHighPriorityMem(const void *key) const;
 
   void CountMemUsage();
 
