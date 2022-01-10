@@ -36,12 +36,28 @@ bool NeedFusion(const AnfNodePtr &sum_anf, const AnfNodePtr &input0, const AnfNo
     MS_LOG(INFO) << "ReduceSum's attr keep_dims should be true if do fusion. Otherwise the calculation will be wrong.";
     return false;
   }
+
   // check axis should be last dim
-  if (!AnfAlgo::HasNodeAttr(kAttrAxis, reduce_sum)) {
+  auto prim = AnfAlgo::GetCNodePrimitive(reduce_sum);
+  MS_EXCEPTION_IF_NULL(prim);
+  if (!prim->HasAttr(kAttrAxis)) {
     MS_LOG(INFO) << "ReduceSum should have attr axis if do fusion.";
     return false;
   }
-  auto axis = AnfAlgo::GetNodeAttr<int64_t>(reduce_sum, kAttrAxis);
+  auto axis_value = prim->GetAttr(kAttrAxis);
+  int64_t axis;
+  if (axis_value->isa<Int64Imm>()) {
+    axis = GetValue<int64_t>(axis_value);
+  } else if (axis_value->isa<ValueTuple>()) {
+    auto axis_tuple = GetValue<std::vector<int64_t>>(axis_value);
+    if (axis_tuple.size() != 1) {
+      MS_LOG(INFO) << "ReduceSum's attr axis size should be 1 if do fusion.";
+      return false;
+    }
+    axis = axis_tuple[0];
+  } else {
+    return false;
+  }
   auto sum_input_shape = AnfAlgo::GetPrevNodeOutputInferShape(reduce_sum, 0);
   auto sum_input_size = SizeToLong(sum_input_shape.size());
   if (sum_input_size == 0) {
@@ -53,6 +69,7 @@ bool NeedFusion(const AnfNodePtr &sum_anf, const AnfNodePtr &input0, const AnfNo
     MS_LOG(INFO) << "ReduceSum's attr axis should be last dim if do fusion.";
     return false;
   }
+
   // check shape black list, wait for tbe op optimization
   std::set<std::vector<size_t>> shape_black_list = {{16, 4, 32, 32000}};
   auto input0_shape = AnfAlgo::GetOutputInferShape(input0, 0);
