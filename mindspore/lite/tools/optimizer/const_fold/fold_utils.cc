@@ -72,7 +72,7 @@ ParameterPtr CreateNewParamter(const FuncGraphPtr &func_graph, Tensor *tensor) {
 kernel::LiteKernel *GetLiteKernel(std::vector<Tensor *> inputs, std::vector<Tensor *> *outputs, const CNodePtr &cnode,
                                   lite::InnerContext *context, mindspore::Context *ms_context) {
   MS_ASSERT(outputs != nullptr && cnode != nullptr && context != nullptr && ms_context != nullptr);
-  OpParameter *parameter;
+  OpParameter *parameter = nullptr;
   auto ret = lite::FetchOpParameterFromNode(cnode->input(0), &parameter);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << cnode->fullname_with_scope() << " FetchOpParameterFromNode failed. ";

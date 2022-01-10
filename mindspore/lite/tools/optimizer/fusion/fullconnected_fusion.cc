@@ -86,6 +86,7 @@ int CalNewCnodeScale(const AnfNodePtr &curr_weight_node, const AnfNodePtr &prev_
                          curr_tensor_shape[0] * prev_tensor_shape[1] * sizeof(float));
   if (status != EOK) {
     MS_LOG(ERROR) << "memset_s failed";
+    delete[] new_weight_data;
     return RET_ERROR;
   }
   Segmm<float>(false, curr_weight_data, prev_weight_data, nullptr, new_weight_data, curr_tensor_shape[0],
@@ -95,19 +96,17 @@ int CalNewCnodeScale(const AnfNodePtr &curr_weight_node, const AnfNodePtr &prev_
     lite::CreateTensorInfo(new_weight_data, curr_tensor_shape[0] * prev_tensor_shape[1] * sizeof(float), new_shape,
                            curr_weight_tensor->data_type());
   if (tensor_info == nullptr) {
-    delete[] new_weight_data;
     MS_LOG(ERROR) << "create tensor info failed";
+    delete[] new_weight_data;
     return RET_ERROR;
   }
-
+  delete[] new_weight_data;
   auto ret = lite::InitParameterFromTensorInfo(parameter_node, tensor_info);
   if (ret != RET_OK) {
-    delete[] new_weight_data;
     MS_LOG(ERROR) << "failed to initialize parameter from tensor info";
     return ret;
   }
 
-  delete[] new_weight_data;
   parameter_node->set_name(curr_weight_node->fullname_with_scope() + "_fusion");
   return RET_OK;
 }
