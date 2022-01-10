@@ -1,3 +1,37 @@
+# MindSpore 1.6.0
+
+## MindSpore 1.6.0 Release Notes
+
+## MindSpore Lite
+
+### Major Features and Improvements
+
+#### Converter and runtime
+
+1. Add more fusion patterns in the converter tool to improve runtime performance.
+2. Support inference on Ascend310.
+3. Support take OpenGL texture as input and output of inference.
+4. Refactor the JAVA API.
+
+#### x86 backend optimization
+
+1. Optimize kernels for x86 using Advanced Vector Extensions(AVX512).
+
+#### ARM backend optimization
+
+1. Support heterogeneous parallel inference, including splitting operators, constructing heterogeneous subgraphs, and heterogeneous parallel scheduling between CPUs and GPUs.
+2. Add more FP16 operators.
+
+#### Post quantization
+
+1. Post quantization supports debugging.
+2. Full quantization supports choosing non-quantized nodes.
+3. Mixed bit quantization supports auto-tune.
+
+#### Training on Device
+
+1. Support user-defined algorithm models to access the federated learning framework.
+
 # MindSpore 1.5.2
 
 ## MindSpore 1.5.2 Release Notes
