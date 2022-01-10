@@ -5309,7 +5309,7 @@ class MatrixInverse(PrimitiveWithInfer):
 
     Args:
         adjoint (bool) : Whether to support complex matrix. False means that complex matrix is not supported.
-        Default: False.
+            Default: False.
 
     Inputs:
         - **x** (Tensor) - A matrix to be calculated. The matrix must be at least two dimensions, and the last two
