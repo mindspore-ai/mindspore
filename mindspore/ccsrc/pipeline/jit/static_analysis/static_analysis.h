@@ -142,8 +142,8 @@ class AnfNodeConfig : public Config {
   }
 
   bool operator==(const AnfNodeConfig &other) const {
-    // compare node with pointer, context with pointer except DummyContext as it's created by make_shared;
-    // context should not be nullptr;
+    // Compare node with pointer, context with pointer except DummyContext as it's created by make_shared().
+    // Context should not be nullptr.
     if (node_ != other.node_) {
       return false;
     }
@@ -156,8 +156,10 @@ class AnfNodeConfig : public Config {
 
   std::string ToString() const override {
     std::ostringstream buffer;
-    buffer << "Node: " << node_ << "/" << node_->DebugString() << "-uid(" << node_->UniqueId()
-           << "), Context: " << context_ << "/" << context_->ToString() << ", FuncGraph: " << func_graph_->ToString();
+    constexpr int recursive_level = 2;
+    buffer << "Node: " << node_ << "/" << node_->DebugString(recursive_level) << "-uid(" << node_->UniqueId()
+           << "), Context: " << context_ << "/" << context_->ToString() << ", FuncGraph: " << func_graph_ << "/"
+           << func_graph_->ToString();
     return buffer.str();
   }
 

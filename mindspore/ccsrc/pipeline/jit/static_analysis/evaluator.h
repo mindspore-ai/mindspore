@@ -47,7 +47,7 @@ class Evaluator : public Base {
   ~Evaluator() override = default;
   MS_DECLARE_PARENT(Evaluator, Base);
 
-  // difference between Run() and Eval():
+  // Difference between Run() and Eval():
   // Run() will be called with ConfigPtrList, but Eval() will be called with AbstractBasePtr.
   // Run() will modify cache_ member, so it cannot marked as const;
   virtual EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
