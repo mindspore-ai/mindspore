@@ -58,6 +58,7 @@
 #include "tools/optimizer/fusion/scale_activation_fusion.h"
 #include "tools/optimizer/fusion/scale_scale_fusion.h"
 #include "tools/optimizer/fusion/fullconnected_fusion.h"
+#include "tools/optimizer/fusion/fullconnected_add_fusion.h"
 #include "tools/optimizer/fusion/add_concat_activation_fusion.h"
 #include "tools/optimizer/fusion/matmul_activation_fusion.h"
 #include "tools/optimizer/fusion/activation_fusion.h"
@@ -219,6 +220,7 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const converter::
   fusion_pm->AddPass(std::make_shared<opt::ScaleActivationFusion>());
   fusion_pm->AddPass(std::make_shared<opt::ScaleScaleFusion>());
   fusion_pm->AddPass(std::make_shared<opt::FullConnectedFusion>());
+  fusion_pm->AddPass(std::make_shared<opt::FullconnectedAddFusion>());
   fusion_pm->AddPass(std::make_shared<opt::TensorDotFusion>());
   fusion_pm->AddPass(std::make_shared<opt::MatMulActivationFusion>());
   optimizer->AddPassManager(fusion_pm);

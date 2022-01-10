@@ -19,7 +19,6 @@
 #include <vector>
 #include "tools/common/tensor_util.h"
 #include "ops/fusion/full_connection.h"
-#include "ops/fusion/conv2d_fusion.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/converter/quant_param_holder.h"
 #include "nnacl/op_base.h"
