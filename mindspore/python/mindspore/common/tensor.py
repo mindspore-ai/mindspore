@@ -1669,7 +1669,7 @@ class Tensor(Tensor_):
             Tensor, if Tensor is 2-D, return a 1-D Tensor containing the diagonal.
 
         Raises:
-            ValueError: if the input tensor has less than two dimensions.
+            ValueError: If the input tensor has less than two dimensions.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
@@ -1805,7 +1805,7 @@ class Tensor(Tensor_):
             Tensor, the indexed result.
 
         Raises:
-            ValueError: if `axis` is out of range, or `mode` has values other than ('raise', 'wrap', 'clip')
+            ValueError: If `axis` is out of range, or `mode` has values other than ('raise', 'wrap', 'clip')
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
@@ -1876,7 +1876,7 @@ class Tensor(Tensor_):
             ``Ascend`` ``GPU`` ``CPU``
 
         Raises:
-            ValueError: if the input tensor and any of the `choices` cannot be broadcast.
+            ValueError: If the input tensor and any of the `choices` cannot be broadcast.
 
         Examples:
             >>> import numpy as np
@@ -1944,7 +1944,7 @@ class Tensor(Tensor_):
             Tensor, array of insertion points with the same shape as `v`.
 
         Raises:
-            ValueError: if argument for `side` or `sorter` is invalid.
+            ValueError: If argument for `side` or `sorter` is invalid.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``

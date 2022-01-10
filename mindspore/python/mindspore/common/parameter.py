@@ -390,7 +390,7 @@ class Parameter(Tensor_):
 
     @property
     def unique(self):
-        """whether the parameter is already unique or not."""
+        """Whether the parameter is already unique or not."""
         return self._unique
 
     @unique.setter
@@ -524,7 +524,7 @@ class Parameter(Tensor_):
         Set Parameter's data.
 
         Args:
-            data (Union[Tensor, int, float]): new data.
+            data (Union[Tensor, int, float]): New data.
             slice_shape (bool): If slice the parameter is set to true, the shape is not checked for consistency.
                                 Default: False.
 
