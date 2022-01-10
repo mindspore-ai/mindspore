@@ -1597,7 +1597,7 @@ bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph, bool mock
       // Skip transpose kernel with "nop_op" attr which is not hidden or removed in PyNative infer scenario. Transpose
       // kernel, which is not supposed to be executed, is generated in TransDataSplit to support specific Transdata.
       // And hard code here should be removed after new Transdata programme is implemented in the foreseeable future.
-      if (AnfAlgo::HasNodeAttr("nop_op", kernel)) {
+      if (AnfAlgo::HasNodeAttr(kAttrNopOp, kernel)) {
         for (size_t idx = 0; idx < AnfAlgo::GetOutputTensorNum(kernel); idx += 1) {
           auto real_input = AnfAlgo::GetRealInputIndex(kernel, idx);
           auto device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel, real_input);

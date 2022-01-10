@@ -646,7 +646,7 @@ void AscendDeviceContext::PreprocessBeforeRunSingleOpGraph(const KernelGraphPtr 
     }
 
     // Save the nop_op that needs to be memcpy
-    if (op_name == prim::kPrimTranspose->name() && AnfAlgo::HasNodeAttr("nop_op", node)) {
+    if (op_name == prim::kPrimTranspose->name() && AnfAlgo::HasNodeAttr(kAttrNopOp, node)) {
       nop_op_to_memcpy_.insert(node);
     }
   }

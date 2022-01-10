@@ -60,7 +60,7 @@ CNodePtr Insert(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
                        false, prim::kPrimTranspose->name(), std::vector<int64_t>{2, 3, 1, 0});
       MS_EXCEPTION_IF_NULL(new_transpose_node);
       // This Transpose operator is only to change the shape, but does not expect to change the data arrangement!
-      AnfAlgo::SetNodeAttr("nop_op", MakeValue(true), new_transpose_node);
+      AnfAlgo::SetNodeAttr(kAttrNopOp, MakeValue(true), new_transpose_node);
       RefreshKernelBuildInfo(input_format, kOpFormat_HWCN, new_transpose_node);
       // trans hwcn to output_format
       new_transdata_node =
