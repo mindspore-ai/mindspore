@@ -2362,8 +2362,8 @@ class Log(PrimitiveWithInfer):
 
     Inputs:
         - **x** (Tensor) - The input tensor. The data type must be float16, float32 or float64. The value must be
-        greater than 0. :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should
-        be less than 8.
+          greater than 0. :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should
+          be less than 8.
 
     Outputs:
         Tensor, has the same shape and dtype as the `x`.
@@ -2689,8 +2689,8 @@ class Div(_MathBinaryOp):
           `number <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
           `bool_ <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_.
         - **y** (Union[Tensor, number.Number, bool]) - The second input is a number.Number or
-          a bool when the first input is a tensor or a tensor whose data type is number or bool_.
-          When the first input is Scalar, the second input must be a Tensor whose data type is number or bool_.
+          a bool when the first input is a tensor or a tensor whose data type is number or bool\_.
+          When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
 
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,
@@ -2752,8 +2752,8 @@ class DivNoNan(_MathBinaryOp):
           `number <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
           `bool_ <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_.
         - **y** (Union[Tensor, number.Number, bool]) - The second input is a number.Number or
-          a bool when the first input is a tensor or a tensor whose data type is number or bool_.
-          When the first input is Scalar, the second input must be a Tensor whose data type is number or bool_.
+          a bool when the first input is a tensor or a tensor whose data type is number or bool\_.
+          When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
 
 
     Outputs:
@@ -3231,13 +3231,13 @@ class Xlogy(Primitive):
     the scalar could only be a constant.
 
     Inputs:
-         - **x** (Union[Tensor, number.Number, bool]) - The first input is a number.Number or
+        - **x** (Union[Tensor, number.Number, bool]) - The first input is a number.Number or
           a bool or a tensor whose data type is
           `number <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
           `bool_ <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_.
         - **y** (Union[Tensor, number.Number, bool]) - The second input is a number.Number or
-          a bool when the first input is a tensor or a tensor whose data type is number or bool_.
-          When the first input is Scalar, the second input must be a Tensor whose data type is number or bool_.
+          a bool when the first input is a tensor or a tensor whose data type is number or bool\_.
+          When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
 
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,

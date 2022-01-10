@@ -784,7 +784,7 @@ class LSTM(_RNNBase):
         - **x** (Tensor) - (Tensor) - Tensor of data type mindspore.float32 or mindspore.float16 and
           shape (seq_len, batch_size, `input_size`) or (batch_size, seq_len, `input_size`).
         - **hx** (tuple) - A tuple of two Tensors (h_0, c_0) both of data type mindspore.float32
-        or mindspore.float16 and shape (num_directions * `num_layers`, batch_size, `hidden_size`).
+          or mindspore.float16 and shape (num_directions * `num_layers`, batch_size, `hidden_size`).
           The data type of `hx` must be the same as `x`.
         - **seq_length** (Tensor) - The length of each sequence in an input batch.
           Tensor of shape :math:`(\text{batch_size})`. Default: None.
