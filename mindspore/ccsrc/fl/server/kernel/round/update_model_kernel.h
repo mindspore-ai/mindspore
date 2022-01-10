@@ -62,7 +62,7 @@ class UpdateModelKernel : public RoundKernel {
                            const std::string &reason, const std::string &next_req_time);
 
   // The executor is for updating the model for updateModel request.
-  Executor *executor_;
+  Executor *executor_{nullptr};
 
   // The time window of one iteration.
   size_t iteration_time_window_{0};

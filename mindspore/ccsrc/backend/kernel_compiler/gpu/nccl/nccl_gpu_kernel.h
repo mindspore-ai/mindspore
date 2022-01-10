@@ -54,6 +54,10 @@ class NcclGpuKernel : public GpuKernel {
  protected:
   ncclDataType_t nccl_dtype(const TypeId &type_id) { return kNcclDtypeMap[TypeIdLabel(type_id)]; }
 
+  // Select the collective communication handle according to whether this is launched by OpenMPI or not.
+  void SelectCollectiveHandle();
+
+  // Load nvidia communication library when using MindSpore communication library.
   bool LoadNvidiaCommLib();
 
   // The capsulation of the collective communication operation APIs for compatibility.

@@ -51,7 +51,7 @@ bool MsCollectiveCommLib::CreateCommunicationGroup(const std::string &group_name
 }
 
 bool MsCollectiveCommLib::AllGather(const void *send_buff, void *recv_buff, size_t send_count, TypeId data_type,
-                                    const std::string &group_name, void *stream) {
+                                    const std::string &, void *) {
   CHECK_IF_NULL(send_buff);
   CHECK_IF_NULL(recv_buff);
   CHECK_IF_NULL(node_);
@@ -74,7 +74,7 @@ bool MsCollectiveCommLib::AllGather(const void *send_buff, void *recv_buff, size
 }
 
 bool MsCollectiveCommLib::Broadcast(const void *send_buff, void *recv_buff, size_t send_count, TypeId data_type,
-                                    uint32_t root_rank, const std::string &group_name, void *stream) {
+                                    uint32_t root_rank, const std::string &group_name, void *) {
   CHECK_IF_NULL(send_buff);
   CHECK_IF_NULL(recv_buff);
   CHECK_IF_NULL(node_);

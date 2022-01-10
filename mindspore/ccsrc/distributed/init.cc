@@ -37,7 +37,7 @@ bool Initialize() {
         std::dynamic_pointer_cast<ps::core::AbstractNode>(cluster::ClusterContext::instance()->node());
       MS_EXCEPTION_IF_NULL(abstract_node);
       collective::CollectiveManager::instance()->set_global_rank_id(abstract_node->rank_id());
-      collective::CollectiveManager::instance()->set_global_rank_size(abstract_node->worker_num());
+      collective::CollectiveManager::instance()->set_global_rank_size(IntToUint(abstract_node->worker_num()));
 
       if (!InitializeCollective()) {
         MS_LOG(ERROR) << "Failed to initialize collective communication.";

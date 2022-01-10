@@ -21,7 +21,7 @@ namespace device {
 namespace cpu {
 MPICommunicationGroup::MPICommunicationGroup(const std::string &name, const std::vector<uint32_t> &group_ranks,
                                              uint32_t global_rank)
-    : CommunicationGroup(name, group_ranks, global_rank) {}
+    : CommunicationGroup(name, group_ranks, global_rank), group_(MPI_GROUP_NULL), group_communicator_(MPI_COMM_NULL) {}
 
 bool MPICommunicationGroup::Finalize() {
   if (!initialized_) {
@@ -40,7 +40,7 @@ bool MPICommunicationGroup::Initialize(const MPI_Group &world_group) {
     return false;
   }
   std::vector<int> ranks(group_ranks_.begin(), group_ranks_.end());
-  CHECK_RET(MPI_Group_incl(world_group, ranks.size(), ranks.data(), &group_), MPI_SUCCESS,
+  CHECK_RET(MPI_Group_incl(world_group, static_cast<int>(ranks.size()), ranks.data(), &group_), MPI_SUCCESS,
             "Creating MPI group for " + name_ + " failed.");
   CHECK_RET(MPI_Comm_create_group(MPI_COMM_WORLD, group_, 0, &group_communicator_), MPI_SUCCESS,
             "Creating MPI group communicator for " + name_ + " failed.");
