@@ -215,7 +215,7 @@ void InsertNode(const Operator &op, const CNodePtr &node, size_t index, const An
     if (next_node_dtype) {
       MS_LOG(INFO) << "Inserting Cast from float32 to float16 for node " << node->fullname_with_scope() << " for saving"
                    << " communication.";
-      pre_node_ = CreateFP16Cast(node, pre_node, node_user_map, next_node_dtype);
+      pre_node_ = CreateFP16Cast(node, pre_node, next_node_dtype);
     }
     node_input = CreateMirrorInput(root, op, pre_node_, instance_name, param_name);
   } else {
@@ -746,10 +746,10 @@ void StepReplaceOp(OperatorVector replace_op, const CNodePtr &node) {
   if (reshape_type_str.find(BOOL) != std::string::npos) {
     auto cast_int = CreateCastOp(kInt32);
     auto cast_bool = CreateCastOp(kBool);
-    replace_op.insert(replace_op.begin(), cast_int);
-    replace_op.insert(replace_op.end(), cast_bool);
-    replace_op_info.insert(replace_op_info.begin(), {false, 1});
-    replace_op_info.insert(replace_op_info.end(), {false, 1});
+    (void)replace_op.insert(replace_op.begin(), cast_int);
+    (void)replace_op.insert(replace_op.end(), cast_bool);
+    (void)replace_op_info.insert(replace_op_info.begin(), {false, 1});
+    (void)replace_op_info.insert(replace_op_info.end(), {false, 1});
   }
 
   // step2:traverse op_list and insert node

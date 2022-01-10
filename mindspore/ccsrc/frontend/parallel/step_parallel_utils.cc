@@ -92,7 +92,6 @@ AnfNodePtr CheckMakeTupleSplit(const AnfNodePtr &node, const FuncGraphManagerPtr
     if (!user_node->has_user_data<OperatorInfo>()) {
       continue;
     }
-    auto op_info = user_node->user_data<OperatorInfo>();
     auto tensor_info = GetInputsTensorInfo(node_user);
     if (is_first_tensor_info) {
       is_first_tensor_info = false;
@@ -111,7 +110,8 @@ AnfNodePtr CheckMakeTupleSplit(const AnfNodePtr &node, const FuncGraphManagerPtr
 }
 
 bool IsInNodeList(const CNodePtr &cnode, const std::set<string> &check_list) {
-  return std::any_of(check_list.begin(), check_list.end(), [cnode](string in) { return IsSomePrimitive(cnode, in); });
+  return std::any_of(check_list.begin(), check_list.end(),
+                     [cnode](const string &in) { return IsSomePrimitive(cnode, in); });
 }
 
 bool IsParallelCareNode(const CNodePtr &cnode) {
@@ -254,8 +254,8 @@ RankList FindCommonMirrorGroup(const FuncGraphPtr &root) {
       is_first_group = false;
     } else {
       std::vector<int64_t> new_comm_group_list;
-      std::set_intersection(common_group_list.begin(), common_group_list.end(), group_list.begin(), group_list.end(),
-                            std::back_inserter(new_comm_group_list));
+      (void)std::set_intersection(common_group_list.begin(), common_group_list.end(), group_list.begin(),
+                                  group_list.end(), std::back_inserter(new_comm_group_list));
       common_group_list = new_comm_group_list;
     }
   }
@@ -456,8 +456,7 @@ TypePtr FindChildCastWithFP32ToFP16(const CNodePtr &cnode_ptr, const NodeUsersMa
 // Create a cast node given the current node and the previous node. The target type of the the cast is from the
 // compute_node_type.
 // Return the new cast node with pre_node as the inputs.
-AnfNodePtr CreateFP16Cast(const CNodePtr &node, const AnfNodePtr &pre_node, const NodeUsersMap &node_user_map,
-                          const TypePtr &compute_node_type) {
+AnfNodePtr CreateFP16Cast(const CNodePtr &node, const AnfNodePtr &pre_node, const TypePtr &compute_node_type) {
   const char kOpsFunctionModelName[] = "mindspore.ops.functional";
   static py::object cast_prim = parse::python_adapter::GetPyFn(kOpsFunctionModelName, "cast");
   const auto &adapter = py::cast<PrimitivePyAdapterPtr>(cast_prim);
@@ -525,7 +524,7 @@ void SetCastForParamNotRecompute(const std::vector<AnfNodePtr> &all_nodes) {
     if (cast_input->isa<Parameter>()) {
       MS_LOG(INFO) << "Cast for parameter no needs recompute to avoid redundant trans_data operator";
       PrimitivePtr prim = GetValueNode<PrimitivePtr>(cnode->input(0)->cast<ValueNodePtr>());
-      prim->AddAttr("recompute", MakeValue(false));
+      (void)prim->AddAttr("recompute", MakeValue(false));
     }
   }
 }

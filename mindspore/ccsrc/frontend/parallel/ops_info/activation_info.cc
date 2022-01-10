@@ -245,12 +245,12 @@ Status CumSumInfo::CheckStrategy(const StrategyPtr &strategy) {
 
   Strategys stra = strategy->GetInputDim();
   Dimensions input_strategy = stra.at(0);
-  if (input_strategy.size() <= IntToSize(axis_)) {
+  if (input_strategy.size() <= LongToSize(axis_)) {
     MS_LOG(ERROR) << "The " << name_ << " input strategy length: " << input_strategy.size() << ", is less ot equal to "
                   << axis_;
     return FAILED;
   }
-  auto axis_split = input_strategy[axis_];
+  auto axis_split = input_strategy[LongToSize(axis_)];
   if (axis_split > 1) {
     MS_LOG(ERROR) << "Currently, CumSum does not support the sharding strategies which splits axis.";
     return FAILED;
@@ -261,11 +261,11 @@ Status CumSumInfo::CheckStrategy(const StrategyPtr &strategy) {
 
 std::vector<StrategyPtr> CumSumInfo::GenerateOpStrategies(int64_t stage_id) {
   Shape input0_split(inputs_shape_[0].size(), 1);
-  if (axis_ < 0 || IntToSize(axis_) >= inputs_shape_[0].size()) {
+  if (axis_ < 0 || LongToSize(axis_) >= inputs_shape_[0].size()) {
     MS_LOG(EXCEPTION) << "Wrong axis value: " << axis_;
   }
   // Currently, CumSum does not support the sharding strategies which splits axis.
-  input0_split[axis_] = 0;
+  input0_split[LongToSize(axis_)] = 0;
   Shapes splittable_inputs = {input0_split};
 
   std::vector<StrategyPtr> sp_vector;

@@ -1390,8 +1390,8 @@ Status OperatorInfo::SetCostUnderStrategyBase(const StrategyPtr &strategy) {
   return SUCCESS;
 }
 
-TensorLayout OperatorInfo::GetInputLayoutFromSWCByStrategy(StrategyPtr stra, size_t input_index) {
-  auto is_target = [&](std::shared_ptr<StrategyWithCost> swc) { return swc->strategy_ptr->IsEqual(stra); };
+TensorLayout OperatorInfo::GetInputLayoutFromSWCByStrategy(const StrategyPtr &stra, size_t input_index) {
+  auto is_target = [&](const std::shared_ptr<StrategyWithCost> &swc) { return swc->strategy_ptr->IsEqual(stra); };
   auto it = std::find_if(strategy_cost_.begin(), strategy_cost_.end(), is_target);
   if (it != strategy_cost_.end()) {
     const auto &input_info = (*it)->inputs_ptr[input_index];
@@ -1401,8 +1401,8 @@ TensorLayout OperatorInfo::GetInputLayoutFromSWCByStrategy(StrategyPtr stra, siz
   return empty;
 }
 
-TensorLayout OperatorInfo::GetOutputLayoutFromSWCByStrategy(StrategyPtr stra, size_t output_index) {
-  auto is_target = [&](std::shared_ptr<StrategyWithCost> swc) { return swc->strategy_ptr->IsEqual(stra); };
+TensorLayout OperatorInfo::GetOutputLayoutFromSWCByStrategy(const StrategyPtr &stra, size_t output_index) {
+  auto is_target = [&](const std::shared_ptr<StrategyWithCost> &swc) { return swc->strategy_ptr->IsEqual(stra); };
   auto it = std::find_if(strategy_cost_.begin(), strategy_cost_.end(), is_target);
   if (it != strategy_cost_.end()) {
     const auto &output_info = (*it)->outputs_ptr[output_index];
@@ -1412,8 +1412,8 @@ TensorLayout OperatorInfo::GetOutputLayoutFromSWCByStrategy(StrategyPtr stra, si
   return empty;
 }
 
-StrategyPtr OperatorInfo::GetStrategyFromSWCByInputLayout(TensorLayout input_layout, size_t input_index) {
-  auto is_target = [&](std::shared_ptr<StrategyWithCost> swc) {
+StrategyPtr OperatorInfo::GetStrategyFromSWCByInputLayout(const TensorLayout &input_layout, size_t input_index) {
+  auto is_target = [&](const std::shared_ptr<StrategyWithCost> &swc) {
     return swc->inputs_ptr[input_index].tensor_layout() == input_layout;
   };
   auto it = std::find_if(strategy_cost_.begin(), strategy_cost_.end(), is_target);
@@ -1423,8 +1423,8 @@ StrategyPtr OperatorInfo::GetStrategyFromSWCByInputLayout(TensorLayout input_lay
   return nullptr;
 }
 
-StrategyPtr OperatorInfo::GetStrategyFromSWCByOutputLayout(TensorLayout output_layout, size_t output_index) {
-  auto is_target = [&](std::shared_ptr<StrategyWithCost> swc) {
+StrategyPtr OperatorInfo::GetStrategyFromSWCByOutputLayout(const TensorLayout &output_layout, size_t output_index) {
+  auto is_target = [&](const std::shared_ptr<StrategyWithCost> &swc) {
     return swc->outputs_ptr[output_index].tensor_layout() == output_layout;
   };
   auto it = std::find_if(strategy_cost_.begin(), strategy_cost_.end(), is_target);
@@ -1434,14 +1434,14 @@ StrategyPtr OperatorInfo::GetStrategyFromSWCByOutputLayout(TensorLayout output_l
   return nullptr;
 }
 
-bool OperatorInfo::IsReshape() {
+bool OperatorInfo::IsReshape() const {
   if (name_.find(RESHAPEINFO) != std::string::npos) {
     return true;
   }
   return false;
 }
 
-bool OperatorInfo::IsTmpIdentity() {
+bool OperatorInfo::IsTmpIdentity() const {
   if (name_.find(IDENTITY_INFO) != std::string::npos) {
     return true;
   }

@@ -26,6 +26,7 @@ _MAX_GROUP_NAME_LEN = 127
 _DEFAULT_HCCL_FUSION_GROUP_NAME = "hccl_world_groupsum1"
 _DEFAULT_NCCL_FUSION_GROUP_NAME = "nccl_world_groupsum1"
 
+
 class _ParallelFusionConfig:
     """
     The key of the Parallel fusion method configuration.
@@ -36,6 +37,7 @@ class _ParallelFusionConfig:
     AUTO = "auto"
     INDEX = "index"
     SIZE = "size"
+
 
 class _ParallelOptimizerConfig:
     """
@@ -697,8 +699,8 @@ class _AutoParallelContext:
         self._context_handle.set_grad_accumulation_shard(
             parallel_optimizer_config[grad_shard_name])
 
-
     def get_grad_accumulation_shard(self):
+        """Get grad accumulation shard."""
         self.check_context_handle()
         return self._context_handle.get_grad_accumulation_shard()
 

@@ -73,11 +73,11 @@ class ReshapeInfo : public OperatorInfo {
   int64_t GetSWCIndexByOutputLayoutWithMiniComm(const TensorLayout &);
   int64_t GetSWCIndexByInputLayoutWithZeroComm(const TensorLayout &);
   int64_t GetSWCIndexByInputLayoutWithMiniComm(const TensorLayout &);
-  bool CheckStrategyConsistencyByOutputLayout(int64_t, const TensorLayout &);
-  bool CheckStrategyConsistencyByInputLayout(int64_t, const TensorLayout &);
+  bool CheckStrategyConsistencyByOutputLayout(int64_t, const TensorLayout &) const;
+  bool CheckStrategyConsistencyByInputLayout(int64_t, const TensorLayout &) const;
 
-  TensorLayout GetInputLayoutBySWCIndex(int64_t);
-  TensorLayout GetOutputLayoutBySWCIndex(int64_t);
+  TensorLayout GetInputLayoutBySWCIndex(int64_t) const;
+  TensorLayout GetOutputLayoutBySWCIndex(int64_t) const;
 
  protected:
   Status CheckStrategy(const StrategyPtr &strategy) override;

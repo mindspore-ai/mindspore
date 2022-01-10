@@ -43,8 +43,7 @@ AnfNodePtr CheckMakeTupleSplit(const AnfNodePtr &node, const FuncGraphManagerPtr
 RankList FindCommonMirrorGroup(const FuncGraphPtr &root);
 void SetCommunicationOpGroupLabel(std::vector<AnfNodePtr> new_node_input);
 void SetStridedSliceSplitStrategy(const std::vector<AnfNodePtr> &all_nodes);
-AnfNodePtr CreateFP16Cast(const CNodePtr &node, const AnfNodePtr &pre_node, const NodeUsersMap &node_user_map,
-                          const TypePtr &compute_node_type);
+AnfNodePtr CreateFP16Cast(const CNodePtr &node, const AnfNodePtr &pre_node, const TypePtr &compute_node_type);
 AnfNodePtr GetChildCastNode(const CNodePtr &cnode_ptr, const NodeUsersMap &node_users_map);
 TypePtr FindChildCastWithFP32ToFP16(const CNodePtr &cnode_ptr, const NodeUsersMap &node_users_map);
 void LabelGenMaskMicro(const FuncGraphPtr &root);
