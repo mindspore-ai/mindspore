@@ -30,15 +30,11 @@ namespace mindspore {
 namespace lite {
 class PassStorage {
  public:
-  static int StorePass(const std::string &pass_name, const opt::PassPtr &pass, bool access_for_outer) {
-    if (registry::PassRegistry::GetPassFromStoreRoom(pass_name) != nullptr) {
-      return RET_ERROR;
-    }
+  static void StorePass(const std::string &pass_name, const opt::PassPtr &pass, bool access_for_outer) {
     pass_storage_[pass_name] = pass;
     if (!access_for_outer) {
       inaccessible_for_outer_.insert(pass_name);
     }
-    return RET_OK;
   }
   static opt::PassPtr GetPassFromStorage(const std::string &pass_name) { return pass_storage_[pass_name]; }
   static bool IsAccessibleForOuter(const std::string &pass_name) {

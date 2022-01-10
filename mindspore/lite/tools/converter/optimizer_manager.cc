@@ -21,7 +21,9 @@
 #include <vector>
 #include "backend/optimizer/common/pass.h"
 #include "src/common/log_util.h"
+#include "tools/converter/parser/parser_utils.h"
 #include "include/registry/pass_base.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
@@ -31,6 +33,16 @@ bool RunOptimizerPass(const FuncGraphPtr &func_graph, const std::vector<std::str
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "func graph is nullptr.";
     return false;
+  }
+  auto manager = func_graph->manager();
+  if (manager == nullptr) {
+    manager = Manage(func_graph, true);
+    MS_CHECK_TRUE_RET(manager != nullptr, RET_ERROR);
+    std::set<FuncGraphPtr> all_func_graphs;
+    GetAllFuncGraph(func_graph, &all_func_graphs);
+    for (auto &graph : all_func_graphs) {
+      manager->AddFuncGraph(graph);
+    }
   }
   for (auto &pass_name : pass_names) {
     auto pass_outer = registry::PassRegistry::GetPassFromStoreRoom(pass_name);

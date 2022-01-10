@@ -601,17 +601,14 @@ bool AnfTransform::StoreBuiltinPass(const converter::Flags *config) {
     {"SpecialNodePostProcess", std::make_shared<opt::SpecialNodePostProcess>(), false},
     {"DecreaseTransposeAlgo", std::make_shared<opt::DecreaseTransposeAlgo>(fmk, is_train), true},
     {"SpecifyGraphInputFormat", std::make_shared<opt::SpecifyGraphInputFormat>(config->graphInputFormat), false}};
-  bool succeed_store = true;
   for (const auto &pass_info : pass_infos) {
     MS_CHECK_TRUE_RET(std::get<1>(pass_info) != nullptr, false);
-    if (PassStorage::StorePass(std::get<0>(pass_info), std::get<1>(pass_info),
-                               std::get<opt::kInputIndexTwo>(pass_info)) != RET_OK) {
-      MS_LOG(ERROR) << "external pass name conflicts with that of internal pass, the pass name is "
-                    << std::get<0>(pass_info) << ", please edit external pass name.";
-      succeed_store = false;
-    }
+    PassStorage::StorePass(std::get<0>(pass_info), std::get<1>(pass_info), std::get<opt::kInputIndexTwo>(pass_info));
   }
-  return succeed_store;
+  auto dump_graph_outer = std::make_shared<opt::DumpGraph>(config);
+  MS_CHECK_TRUE_MSG(dump_graph_outer != nullptr, false, "dumpGraph object is a nullptr.");
+  registry::PassRegistry("DumpGraph", dump_graph_outer);
+  return true;
 }
 
 FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &main_graph, const converter::Flags *config) {

@@ -18,20 +18,28 @@
 
 #include "backend/optimizer/common/pass.h"
 #include "tools/converter/export_model.h"
+#include "include/registry/pass_base.h"
 
 namespace mindspore {
 namespace opt {
-class DumpGraph : public Pass {
+class DumpGraph : public registry::PassBase, public Pass {
  public:
   explicit DumpGraph(const converter::Flags *flags = nullptr) : Pass("DumpGraph"), flags_(flags) {}
   ~DumpGraph() = default;
   bool Run(const FuncGraphPtr &graph) override {
-    MS_ASSERT(graph != nullptr);
+    MS_CHECK_TRUE_MSG(graph != nullptr, false, "funcGraph is a nullptr.");
     if (lite::ExportModel(graph, flags_) != lite::RET_OK) {
       MS_LOG(ERROR) << "dump graph failed.";
       return false;
     }
     return true;
+  }
+
+  bool Execute(const api::FuncGraphPtr &func_graph) override {
+    MS_CHECK_TRUE_MSG(func_graph != nullptr, false, "funcGraph is a nullptr.");
+    auto graph = std::dynamic_pointer_cast<FuncGraph>(func_graph);
+    MS_CHECK_TRUE_MSG(graph != nullptr, false, "Graph is a nullptr.");
+    return Run(graph);
   }
 
  private:
