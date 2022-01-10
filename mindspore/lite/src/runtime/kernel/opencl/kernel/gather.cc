@@ -63,11 +63,11 @@ int GatherOpenCLKernel::CheckSpecs() {
     return RET_ERROR;
   }
 
-  if (CheckParamLikeTensor("Gather", "axis", in_tensors_.at(2), kNumberTypeInt32, {1}) != RET_OK) {
+  if (CheckParamLikeTensor("Gather", "axis", in_tensors_.at(kNHWC_W), kNumberTypeInt32, {1}) != RET_OK) {
     return RET_ERROR;
   }
-  axis_ = *reinterpret_cast<int32_t *>(in_tensors_.at(2)->data());
-  if (in_tensors_.at(2)->data() == nullptr) {
+  axis_ = *reinterpret_cast<int32_t *>(in_tensors_.at(kNHWC_W)->data());
+  if (in_tensors_.at(kNHWC_W)->data() == nullptr) {
     MS_LOG(WARNING) << "GatherOpenCLKernel need Axis.";
     return RET_ERROR;
   }
@@ -338,7 +338,7 @@ int GatherOpenCLKernel::Run() {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }
-  if (ocl_runtime_->SetKernelArg(kernel_, 2, indices_data_, true) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, C2NUM, indices_data_, true) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }

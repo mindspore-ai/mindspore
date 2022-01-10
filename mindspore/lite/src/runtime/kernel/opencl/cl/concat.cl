@@ -246,85 +246,135 @@ CONCAT2(2input, axis3, _NHWC4)
   int IW = Y;                                                                                     \
   int Align_Shape0 = UP_DIV(input_shape0.w, C4NUM), Align_Shape1 = UP_DIV(input_shape1.w, C4NUM); \
   int Align_OutShape = output_shape.w;                                                            \
-  int index_output = (IN * output_shape.y + IH) * stride_w + IW * Align_OutShape * C4NUM;
+  int index_output = 0;                                                                           \
+  DTYPE result_outc[OUTCTMPSIZE];
 
-int doconcat(__read_only image2d_t input, __global DTYPE *output, int Align_Shape, int4 input_shape, int IN, int IH,
-             int Y, int index_output) {
+int doconcat(__read_only image2d_t input, DTYPE *result_outc, int Align_Shape, int4 input_shape, int IN, int IH, int Y,
+             int index_output) {
   int Remainder = input_shape.w % C4NUM;
   for (int i = 0; i < Align_Shape; ++i) {
     DTYPE4 result = READ_IMAGE(input, smp_none, (int2)((Y * Align_Shape + i), (IN * input_shape.y + IH)));
     DTYPE result_temp[4] = {result.x, result.y, result.z, result.w};
     if ((i + 1) * C4NUM <= input_shape.w) {
       for (int j = 0; j < C4NUM; ++j) {
-        output[index_output++] = result_temp[j];
+        result_outc[index_output++] = result_temp[j];
       }
     } else {
       for (int j = 0; j < Remainder; ++j) {
-        output[index_output++] = result_temp[j];
+        result_outc[index_output++] = result_temp[j];
       }
     }
   }
   return index_output;
 }
 
+#define WRITE_DATA_TO_IMAGE                                                                                \
+  int c4block_max_size = index_output - C4NUM + 1;                                                         \
+  int i = 0;                                                                                               \
+  int index_output_wc = (Y)*output_shape.w;                                                                \
+  for (; i < c4block_max_size; i += C4NUM) {                                                               \
+    WRITE_IMAGE(output, (int2)(index_output_wc++, (X)),                                                    \
+                (DTYPE4)(result_outc[i], result_outc[i + 1], result_outc[i + 2], result_outc[i + 3]));     \
+  }                                                                                                        \
+  int c4block_less_size = index_output % C4NUM;                                                            \
+  if (c4block_less_size == 1) {                                                                            \
+    WRITE_IMAGE(output, (int2)(index_output_wc, (X)), (DTYPE4)(result_outc[i], 0, 0, 0));                  \
+  } else if (c4block_less_size == 2) {                                                                     \
+    WRITE_IMAGE(output, (int2)(index_output_wc, (X)), (DTYPE4)(result_outc[i], result_outc[i + 1], 0, 0)); \
+  } else if (c4block_less_size == 3) {                                                                     \
+    WRITE_IMAGE(output, (int2)(index_output_wc, (X)),                                                      \
+                (DTYPE4)(result_outc[i], result_outc[i + 1], result_outc[i + 2], 0));                      \
+  }
+
 __kernel void ConcatInput2UnAlign_NHWC4(__read_only image2d_t input0, __read_only image2d_t input1,
-                                        __global DTYPE *output, int4 input_shape0, int4 input_shape1, int stride_w,
-                                        int4 output_shape) {
+                                        __write_only image2d_t output, int4 input_shape0, int4 input_shape1,
+                                        int stride_w, int4 output_shape) {
   CHECK_IDX_UNALIGN;
-  index_output = doconcat(input0, output, Align_Shape0, input_shape0, IN, IH, Y, index_output);
-  index_output = doconcat(input1, output, Align_Shape1, input_shape1, IN, IH, Y, index_output);
+  index_output = doconcat(input0, result_outc, Align_Shape0, input_shape0, IN, IH, Y, index_output);
+  index_output = doconcat(input1, result_outc, Align_Shape1, input_shape1, IN, IH, Y, index_output);
+  WRITE_DATA_TO_IMAGE;
 }
 
 __kernel void ConcatInput3UnAlign_NHWC4(__read_only image2d_t input0, __read_only image2d_t input1,
-                                        __read_only image2d_t input2, __global DTYPE *output, int4 input_shape0,
+                                        __read_only image2d_t input2, __write_only image2d_t output, int4 input_shape0,
                                         int4 input_shape1, int4 input_shape2, int stride_w, int4 output_shape) {
   CHECK_IDX_UNALIGN;
   int Align_Shape2 = UP_DIV(input_shape2.w, C4NUM);
-  index_output = doconcat(input0, output, Align_Shape0, input_shape0, IN, IH, Y, index_output);
-  index_output = doconcat(input1, output, Align_Shape1, input_shape1, IN, IH, Y, index_output);
-  index_output = doconcat(input2, output, Align_Shape2, input_shape2, IN, IH, Y, index_output);
+  index_output = doconcat(input0, result_outc, Align_Shape0, input_shape0, IN, IH, Y, index_output);
+  index_output = doconcat(input1, result_outc, Align_Shape1, input_shape1, IN, IH, Y, index_output);
+  index_output = doconcat(input2, result_outc, Align_Shape2, input_shape2, IN, IH, Y, index_output);
+  WRITE_DATA_TO_IMAGE;
 }
 
 __kernel void ConcatInput4UnAlign_NHWC4(__read_only image2d_t input0, __read_only image2d_t input1,
                                         __read_only image2d_t input2, __read_only image2d_t input3,
-                                        __global DTYPE *output, int4 input_shape0, int4 input_shape1, int4 input_shape2,
-                                        int4 input_shape3, int stride_w, int4 output_shape) {
+                                        __write_only image2d_t output, int4 input_shape0, int4 input_shape1,
+                                        int4 input_shape2, int4 input_shape3, int stride_w, int4 output_shape) {
   CHECK_IDX_UNALIGN;
   int Align_Shape2 = UP_DIV(input_shape2.w, C4NUM), Align_Shape3 = UP_DIV(input_shape3.w, C4NUM);
-  index_output = doconcat(input0, output, Align_Shape0, input_shape0, IN, IH, Y, index_output);
-  index_output = doconcat(input1, output, Align_Shape1, input_shape1, IN, IH, Y, index_output);
-  index_output = doconcat(input2, output, Align_Shape2, input_shape2, IN, IH, Y, index_output);
-  index_output = doconcat(input3, output, Align_Shape3, input_shape3, IN, IH, Y, index_output);
+  index_output = doconcat(input0, result_outc, Align_Shape0, input_shape0, IN, IH, Y, index_output);
+  index_output = doconcat(input1, result_outc, Align_Shape1, input_shape1, IN, IH, Y, index_output);
+  index_output = doconcat(input2, result_outc, Align_Shape2, input_shape2, IN, IH, Y, index_output);
+  index_output = doconcat(input3, result_outc, Align_Shape3, input_shape3, IN, IH, Y, index_output);
+  WRITE_DATA_TO_IMAGE;
 }
 
 __kernel void ConcatInput5UnAlign_NHWC4(__read_only image2d_t input0, __read_only image2d_t input1,
                                         __read_only image2d_t input2, __read_only image2d_t input3,
-                                        __read_only image2d_t input4, __global DTYPE *output, int4 input_shape0,
+                                        __read_only image2d_t input4, __write_only image2d_t output, int4 input_shape0,
                                         int4 input_shape1, int4 input_shape2, int4 input_shape3, int4 input_shape4,
                                         int stride_w, int4 output_shape) {
   CHECK_IDX_UNALIGN;
   int Align_Shape2 = UP_DIV(input_shape2.w, C4NUM), Align_Shape3 = UP_DIV(input_shape3.w, C4NUM);
   int Align_Shape4 = UP_DIV(input_shape4.w, C4NUM);
-  index_output = doconcat(input0, output, Align_Shape0, input_shape0, IN, IH, Y, index_output);
-  index_output = doconcat(input1, output, Align_Shape1, input_shape1, IN, IH, Y, index_output);
-  index_output = doconcat(input2, output, Align_Shape2, input_shape2, IN, IH, Y, index_output);
-  index_output = doconcat(input3, output, Align_Shape3, input_shape3, IN, IH, Y, index_output);
-  index_output = doconcat(input4, output, Align_Shape4, input_shape4, IN, IH, Y, index_output);
+  index_output = doconcat(input0, result_outc, Align_Shape0, input_shape0, IN, IH, Y, index_output);
+  index_output = doconcat(input1, result_outc, Align_Shape1, input_shape1, IN, IH, Y, index_output);
+  index_output = doconcat(input2, result_outc, Align_Shape2, input_shape2, IN, IH, Y, index_output);
+  index_output = doconcat(input3, result_outc, Align_Shape3, input_shape3, IN, IH, Y, index_output);
+  index_output = doconcat(input4, result_outc, Align_Shape4, input_shape4, IN, IH, Y, index_output);
+  WRITE_DATA_TO_IMAGE;
 }
 
 __kernel void ConcatInput6UnAlign_NHWC4(__read_only image2d_t input0, __read_only image2d_t input1,
                                         __read_only image2d_t input2, __read_only image2d_t input3,
                                         __read_only image2d_t input4, __read_only image2d_t input5,
-                                        __global DTYPE *output, int4 input_shape0, int4 input_shape1, int4 input_shape2,
-                                        int4 input_shape3, int4 input_shape4, int4 input_shape5, int stride_w,
-                                        int4 output_shape) {
+                                        __write_only image2d_t output, int4 input_shape0, int4 input_shape1,
+                                        int4 input_shape2, int4 input_shape3, int4 input_shape4, int4 input_shape5,
+                                        int stride_w, int4 output_shape) {
   CHECK_IDX_UNALIGN;
   int Align_Shape2 = UP_DIV(input_shape2.w, C4NUM), Align_Shape3 = UP_DIV(input_shape3.w, C4NUM);
   int Align_Shape4 = UP_DIV(input_shape4.w, C4NUM), Align_Shape5 = UP_DIV(input_shape5.w, C4NUM);
-  index_output = doconcat(input0, output, Align_Shape0, input_shape0, IN, IH, Y, index_output);
-  index_output = doconcat(input1, output, Align_Shape1, input_shape1, IN, IH, Y, index_output);
-  index_output = doconcat(input2, output, Align_Shape2, input_shape2, IN, IH, Y, index_output);
-  index_output = doconcat(input3, output, Align_Shape3, input_shape3, IN, IH, Y, index_output);
-  index_output = doconcat(input4, output, Align_Shape4, input_shape4, IN, IH, Y, index_output);
-  index_output = doconcat(input5, output, Align_Shape5, input_shape5, IN, IH, Y, index_output);
+  index_output = doconcat(input0, result_outc, Align_Shape0, input_shape0, IN, IH, Y, index_output);
+  index_output = doconcat(input1, result_outc, Align_Shape1, input_shape1, IN, IH, Y, index_output);
+  index_output = doconcat(input2, result_outc, Align_Shape2, input_shape2, IN, IH, Y, index_output);
+  index_output = doconcat(input3, result_outc, Align_Shape3, input_shape3, IN, IH, Y, index_output);
+  index_output = doconcat(input4, result_outc, Align_Shape4, input_shape4, IN, IH, Y, index_output);
+  index_output = doconcat(input5, result_outc, Align_Shape5, input_shape5, IN, IH, Y, index_output);
+  WRITE_DATA_TO_IMAGE;
 }
+
+// __kernel void ConcatInput2UnAlign_NHWC4(__read_only image2d_t input0, __read_only image2d_t input1,
+//                                         __write_only image2d_t output, int4 input_shape0, int4 input_shape1,
+//                                         int stride_w, int4 output_shape) {
+//   int X = get_global_id(0);
+//   int Y = get_global_id(1);
+
+//   if (X >= output_shape.x * output_shape.y || Y >= output_shape.z) {
+//     return;
+//   }
+//   int IN = X / output_shape.y, IH = X % output_shape.y;
+//   int IW = Y;
+//   int Align_Shape0 = UP_DIV(input_shape0.w, C4NUM), Align_Shape1 = UP_DIV(input_shape1.w, C4NUM);
+//   int Align_OutShape = output_shape.w;
+//   int index_output = 0;
+//   DTYPE result_outc[OUTCTMPSIZE];
+
+//   index_output = doconcat(input0, result_outc, Align_Shape0, input_shape0, IN, IH, Y, index_output);
+//   index_output = doconcat(input1, result_outc, Align_Shape1, input_shape1, IN, IH, Y, index_output);
+
+//   int c4block_max_size = output_shape.w - C4NUM;
+//   for (int i = 0; i < c4block_max_size; i += C4NUM) {
+//     DTYPE4 result = (result_outc[i], result_outc[i + 1], result_outc[i + 2], result_outc[i + 3]);
+//     WRITE_IMAGE(output, (int2)((Y)*output_shape.w + i, (X)), result);
+//   }
+// }
