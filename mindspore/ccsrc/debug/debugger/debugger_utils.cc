@@ -30,6 +30,7 @@
 #include "backend/kernel_compiler/kernel.h"
 #include "debug/data_dump/e2e_dump.h"
 #include "utils/config_manager.h"
+#include "backend/session/session_basic.h"
 
 constexpr int kFailure = 1;
 
@@ -227,6 +228,40 @@ void LoadDataForDebugger(const KernelGraphPtr &graph_ptr) {
   // load parameters
   debugger->LoadParametersAndConst();
 
+#endif
+}
+
+void DumpSetup(const KernelGraphPtr &graph) {
+  MS_LOG(DEBUG) << "Start!";
+  MS_EXCEPTION_IF_NULL(graph);
+  E2eDump::DumpSetup(graph.get());
+  MS_LOG(DEBUG) << "Finish!";
+}
+
+void Dump(const KernelGraphPtr &graph, uint32_t rank_id) {
+  MS_LOG(DEBUG) << "Start!";
+  MS_EXCEPTION_IF_NULL(graph);
+  E2eDump::DumpRunIter(graph, rank_id);
+  E2eDump::DumpData(graph.get(), rank_id);
+  MS_LOG(DEBUG) << "Finish!";
+}
+
+uint32_t GetRankID() {
+  uint32_t rank_id = 0;
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto env_rank_id = common::GetEnv("RANK_ID");
+  if (ms_context->get_param<bool>(MS_CTX_ENABLE_HCCL) && !env_rank_id.empty()) {
+    // get actual rank id if it's distribution training case.
+    rank_id = GetRankId();
+  }
+  return rank_id;
+}
+
+void SuperKernelE2eDump(const KernelGraphPtr &graph) {
+#ifndef ENABLE_SECURITY
+  Dump(graph, GetRankID());
+  DumpSetup(graph);
 #endif
 }
 

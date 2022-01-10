@@ -100,6 +100,10 @@ void DebugActor::DebugForGraph(const KernelGraphPtr &graph, const DeviceContext 
   MS_LOG(DEBUG) << "Super kernel debug for graph: " << graph->graph_id() << ".";
 #ifdef ENABLE_DEBUGGER
   LoadDataForDebugger(graph);
+  // This function updates graph history file and cur_dump_iter if dump is enabled.
+  // When e2e dump is enabled, this function dumps the graph.
+  SuperKernelE2eDump(graph);
+
 #endif
   // Call back to the from actor to process after debug finished.
   ActorDispatcher::Send(*from_aid, &DebugAwareActor::OnDebugFinish, op_context);

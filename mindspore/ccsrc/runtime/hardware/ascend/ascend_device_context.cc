@@ -222,21 +222,6 @@ void DumpInit(uint32_t device_id) {
     }
   }
 }
-
-void DumpSetup(const KernelGraphPtr &graph) {
-  MS_LOG(DEBUG) << "Start!";
-  MS_EXCEPTION_IF_NULL(graph);
-  E2eDump::DumpSetup(graph.get());
-  MS_LOG(DEBUG) << "Finish!";
-}
-
-void Dump(const KernelGraphPtr &graph, uint32_t rank_id) {
-  MS_LOG(DEBUG) << "Start!";
-  MS_EXCEPTION_IF_NULL(graph);
-  E2eDump::DumpRunIter(graph, rank_id);
-  E2eDump::DumpData(graph.get(), rank_id);
-  MS_LOG(DEBUG) << "Finish!";
-}
 #endif
 
 void AscendDeviceContext::Initialize() {
@@ -569,10 +554,6 @@ bool AscendDeviceContext::ExecuteGraph(const KernelGraphPtr &graph) const {
       std::lock_guard<std::mutex> locker(launch_mutex_);
       ret = runtime_instance_->RunTask(*graph);
     }
-#ifndef ENABLE_SECURITY
-    Dump(graph, GetRankID());
-    DumpSetup(graph);
-#endif
 #if defined(_WIN32) || defined(_WIN64)
     auto end_time = std::chrono::steady_clock::now();
     std::chrono::duration<double, std::ratio<1, kUSecondInSecond>> cost = end_time - start_time;
