@@ -1379,7 +1379,8 @@ class Tensor(Tensor_):
 
     def ptp(self, axis=None, keepdims=False):
         """
-        The name of the function comes from the acronym for "peak to peak".
+        The name of the function comes from the acronym for "peak to peak". Calculate the difference between the
+        maximum value and the minimum value along the axis.
 
         Note:
             Numpy argument `out` is not supported.
@@ -1490,7 +1491,8 @@ class Tensor(Tensor_):
     def init_data(self, slice_index=None, shape=None, opt_shard_group=None):
         """
         Get the tensor format data of this Tensor.
-        The init_data function can be called once for the same tensor.
+        Note:
+            The init_data function can be called once for the same tensor.
 
         Args:
             slice_index (int): Slice index of a parameter's slices.

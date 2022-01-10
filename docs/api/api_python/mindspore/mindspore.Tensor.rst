@@ -124,11 +124,11 @@ mindspore.Tensor
 
         **返回：**
 
-        Tensor，最大值的索引。它具有与此Tensor相同的shape，但移除了轴方向上的维度。
+        Tensor，最大值的索引。它与原始Tensor具有相同的shape，但移除了轴方向上的维度。
 
         **异常：**
 
-        - **ValueError** - 轴超出了范围。
+        - **ValueError** - 入参axis的设定值超出了范围。
 
         **支持平台：**
 
@@ -152,11 +152,11 @@ mindspore.Tensor
 
         **返回：**
 
-        Tensor，最小Tensor的索引。它与Tensor的shape相同，但移除了轴方向上的维度。
+        Tensor，最小Tensor的索引。它与原始Tensor具有相同的shape，但移除了轴方向上的维度。
 
         **异常：**
 
-        - **ValueError** - 轴超出了范围。
+        - **ValueError** - 入参axis的设定值超出了范围。
 
         **支持平台：**
 
@@ -192,7 +192,7 @@ mindspore.Tensor
 
     .. py:method:: astype(dtype, copy=True)
 
-        返回Tensor的副本，并将其转换为指定类型。
+        将Tensor转为指定数据类型，可指定是否返回副本。
 
         **参数：**
 
@@ -222,16 +222,16 @@ mindspore.Tensor
 
     .. py:method:: choose(choices, mode='clip')
 
-        通过索引数组和Tensor数组中构造一个Tensor。
+        根据原始Tensor数组和一个索引数组构造一个新的Tensor。
 
         **参数：**
 
-        - **choices** (Union[tuple, list, Tensor]) - 选择数组。输入的索引数组和 `choose` 广播维度必须相同。如果 `choices` 本身是一个数组，则其最外层的维度（即，对应于 `choices.shape[0]` 的维度）被用来定义长度。
+        - **choices** (Union[tuple, list, Tensor]) - 索引选择数组。原始输入Tensor和 `choices` 的广播维度必须相同。如果 `choices` 本身是一个Tensor，则其最外层的维度（即，对应于第0维的维度）被用来定义 `choices` 数组。
         - **mode** ('raise', 'wrap', 'clip', optional) - 指定如何处理 `[0, n-1]` 外部的索引：
 
           - **raise** – 引发异常（默认）；
-          - **wrap** – 绕接；
-          - **clip** – 裁剪到范围。`clip` 模式意味着所有过大的索引都将替换为在轴方向上寻址最后一个元素的索引。注：这将禁用具有负数的索引。
+          - **wrap** – 原值映射为对n取余后的值；
+          - **clip** – 大于n-1的值会被映射为n-1。该模式下禁用负数索引。
 
         **返回：**
 
@@ -293,7 +293,7 @@ mindspore.Tensor
 
     .. py:method:: copy()
 
-        返回复制的Tensor。
+        复制一个Tensor并返回。
 
         .. note::
             当前实现不支持类似NumPy的 `order` 参数。
@@ -326,7 +326,7 @@ mindspore.Tensor
 
         **参数：**
 
-        - **axis** (int, optional) - 轴，在该轴方向上的累积和。其默认值（None）用来计算扁平轴上的累加和。
+        - **axis** (int, optional) - 轴，在该轴方向上的累积和。默认情况下，计算所有元素的累加和。
         - **dtype** (`mindspore.dtype`, optional) - 如果未指定参数值，则保持与原始Tensor相同，除非参数值是一个精度小于 `float32` 的整数。在这种情况下，使用 `float32` 。默认值：None。
 
         **异常：**
@@ -529,7 +529,8 @@ mindspore.Tensor
     .. py:method:: init_data(slice_index=None, shape=None, opt_shard_group=None)
 
         获取此Tensor的数据。
-        对于同一个Tensor，只可以调用一次 `init_data` 函数。
+
+        .. note:: 对于同一个Tensor，只可以调用一次 `init_data` 函数。
 
         **参数：**
 
@@ -557,7 +558,7 @@ mindspore.Tensor
 
     .. py:method:: item(index=None)
 
-        使用索引从Tensor中获取值。
+        获取Tensor中指定索引的元素。
 
         .. note::
             Tensor.item返回的是Tensor标量，而不是Python标量。
@@ -591,7 +592,7 @@ mindspore.Tensor
 
         将标量插入到Tensor（并将标量转换为Tensor的数据类型）。
 
-        必须至少有1个参数，并且最后一个参数被定义为项。
+        至少有1个参数，并且最后一个参数被定义为设定值。
         Tensor.itemset(\*args)等同于 :math:`Tensor[args] = item` 。
 
         **参数：**
@@ -634,7 +635,7 @@ mindspore.Tensor
 
         - **axis** (Union[None, int, tuple of ints], optional) - 轴，在该轴方向上进行操作。默认情况下，使用扁平输入。如果该参数为整数元组，则在多个轴上选择最大值，而不是在单个轴或所有轴上进行选择。默认值：None。
         - **keepdims** (bool, optional) - 如果这个参数为True，被删去的维度保留在结果中，且维度大小设为1。有了这个选项，结果就可以与输入数组进行正确的广播运算。默认值：False。
-        - **initial** (scalar, optional) - 输出元素的最小值。该参数必须设置，才能对空切片进行计算。默认值：None。
+        - **initial** (scalar, optional) - 输出元素的最小值。如果对空切片进行计算，则该参数必须设置。默认值：None。
         - **where** (bool Tensor, optional) - 一个bool数组，被广播以匹配数组维度和选择包含在降维中的元素。如果传递了一个非默认值，则还必须提供初始值。默认值：True。
 
         **返回：**
@@ -692,7 +693,7 @@ mindspore.Tensor
 
         - **axis** (Union[None, int, tuple of ints], optional) - 轴，在该轴方向上进行操作。默认情况下，使用扁平输入。如果该参数为整数元组，则在多个轴上选择最小值，而不是在单个轴或所有轴上进行选择。默认值：None。
         - **keepdims** (bool, optional) - 如果这个参数为True，被删去的维度保留在结果中，且维度大小设为1。有了这个选项，结果就可以与输入数组进行正确的广播运算。默认值：False。
-        - **initial** (scalar, optional) - 输出元素的最大值。该参数必须设置，才能对空切片进行计算。默认值：None。
+        - **initial** (scalar, optional) - 输出元素的最大值。如果对空切片进行计算，则该参数必须设置。默认值：None。
         - **where** (bool Tensor, optional) - 一个布尔数组，被广播以匹配数组维度和选择包含在降维中的元素。如果传递了一个非默认值，则还必须提供初始值。默认值：True。
 
         **返回：**
@@ -729,7 +730,7 @@ mindspore.Tensor
 
     .. py:method:: ptp(axis=None, keepdims=False)
 
-        该函数名称是"peak to peak"的缩写。
+        该函数名称是"peak to peak"的缩写。计算沿着axis的最大值与最小值的差值。
 
         .. note::
             不支持NumPy参数 `dtype` 和 `out` 。
@@ -823,7 +824,7 @@ mindspore.Tensor
 
     .. py:method:: reshape(*shape)
 
-        不改变数据的情况下，为Tensor提供新的shape。
+        不改变数据的情况下，将Tensor的shape改为输入的新shape。
 
         **参数：**
 
@@ -855,7 +856,7 @@ mindspore.Tensor
 
     .. py:method:: resize(*new_shape)
 
-        更改Tensor的shape。
+        将Tensor改为输入的新shape, 并将不足的元素补0。
 
         .. note::
             此方法不更改输入数组的大小，也不返回NumPy中的任何内容，而是返回一个具有输入大小的新Tensor。不支持Numpy参数 `refcheck` 。
@@ -1069,8 +1070,7 @@ mindspore.Tensor
         - **axis** (int, optional) - 在指定维度上选择值。默认情况下，使用展开的输入数组。默认值：None。
         - **mode** ('raise', 'wrap', 'clip', optional)
 
-          - edge：填充Tensor的边缘值。
-          - raise：引发错误。
+          - raise：抛出错误。
           - wrap：绕接。
           - clip：裁剪到范围。 `clip` 模式意味着所有过大的索引都会被在指定轴方向上指向最后一个元素的索引替换。注：这将禁用具有负数的索引。默认值：`clip` 。
 

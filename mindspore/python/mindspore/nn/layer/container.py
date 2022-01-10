@@ -78,14 +78,14 @@ def _get_prefix_and_index(cells):
 
 class _CellListBase:
     """
-    An interface for base the cell as list.
+    An interface for base the Cell as list.
 
-    The sequential cell may be iterated using the construct method using for-in statement.
+    The sequential Cell may be iterated using the construct method using for-in statement.
     But there are some scenarios that the construct method built-in does not fit.
     For convenience, we provide an interface that indicates the sequential
-    cell may be interpreted as list of cells, so it can be accessed using
-    iterator or subscript when a sequential cell instantiate is accessed
-    by iterator or subscript , it will be interpreted as a list of cells.
+    Cell may be interpreted as list of Cells, so it can be accessed using
+    iterator or subscript when a sequential Cell instantiate is accessed
+    by iterator or subscript, it will be interpreted as a list of Cells.
     """
     def __init__(self):
         """Initialize _CellListBase."""
@@ -105,13 +105,18 @@ class _CellListBase:
 
 class SequentialCell(Cell):
     """
-    Sequential cell container.
+    Sequential Cell container. For more details about Cell, please refer to
+    `Cell <https://www.mindspore.cn/docs/api/en/master/api_python/nn/mindspore.nn.Cell.html#mindspore.nn.Cell>`_.
 
     A list of Cells will be added to it in the order they are passed in the constructor.
     Alternatively, an ordered dict of cells can also be passed in.
 
+    Note:
+        SequentialCell and torch.nn.ModuleList are different, ModuleList is a list for storing modules. However,
+        the layers in a Sequential are connected in a cascading way.
+
     Args:
-        args (list, OrderedDict): List of subclass of Cell.
+        args (list, OrderedDict): List or OrderedDict of subclass of Cell.
 
     Inputs:
         - **x** (Tensor) - Tensor with shape according to the first Cell in the sequence.
@@ -126,9 +131,26 @@ class SequentialCell(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore import Tensor
+        >>> import mindspore
+        >>> import mindspore.nn as nn
+        >>> import numpy as np
+        >>>
         >>> conv = nn.Conv2d(3, 2, 3, pad_mode='valid', weight_init="ones")
         >>> relu = nn.ReLU()
         >>> seq = nn.SequentialCell([conv, relu])
+        >>> x = Tensor(np.ones([1, 3, 4, 4]), dtype=mindspore.float32)
+        >>> output = seq(x)
+        >>> print(output)
+        [[[[27. 27.]
+           [27. 27.]]
+          [[27. 27.]
+           [27. 27.]]]]
+        >>> from collections import OrderedDict
+        >>> d = OrderedDict()
+        >>> d["conv"] = conv
+        >>> d["relu"] = relu
+        >>> seq = nn.SequentialCell(d)
         >>> x = Tensor(np.ones([1, 3, 4, 4]), dtype=mindspore.float32)
         >>> output = seq(x)
         >>> print(output)
@@ -218,12 +240,17 @@ class SequentialCell(Cell):
 
     def append(self, cell):
         """
-        Appends a given cell to the end of the list.
+        Appends a given Cell to the end of the list.
 
         Args:
-            cell(Cell): The subcell to be appended.
+            cell(Cell): The Cell to be appended.
 
         Examples:
+            >>> from mindspore import Tensor
+            >>> import mindspore
+            >>> import mindspore.nn as nn
+            >>> import numpy as np
+            >>>
             >>> conv = nn.Conv2d(3, 2, 3, pad_mode='valid', weight_init="ones")
             >>> bn = nn.BatchNorm2d(2)
             >>> relu = nn.ReLU()
@@ -252,11 +279,10 @@ class SequentialCell(Cell):
 
 class CellList(_CellListBase, Cell):
     """
-    Holds Cells in a list.
+    Holds Cells in a list. For more details about Cell, please refer to
+    `Cell <https://www.mindspore.cn/docs/api/en/master/api_python/nn/mindspore.nn.Cell.html#mindspore.nn.Cell>`_.
 
-    CellList can be used like a regular Python list, support
-    '__getitem__', '__setitem__', '__delitem__', '__len__', '__iter__' and '__iadd__',
-    but cells it contains are properly registered, and will be visible by all Cell methods.
+    CellList can be used like a regular Python list, the Cells it contains have been initialized.
 
     Args:
         args (list, optional): List of subclass of Cell.
@@ -265,23 +291,15 @@ class CellList(_CellListBase, Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.nn as nn
+        >>>
         >>> conv = nn.Conv2d(100, 20, 3)
         >>> bn = nn.BatchNorm2d(20)
         >>> relu = nn.ReLU()
         >>> cell_ls = nn.CellList([bn])
         >>> cell_ls.insert(0, conv)
         >>> cell_ls.append(relu)
-        >>> print(cell_ls)
-        CellList<
-          (0): Conv2d<input_channels=100, output_channels=20, kernel_size=(3, 3),stride=(1, 1),  pad_mode=same,
-          padding=0, dilation=(1, 1), group=1, has_bias=False, weight_init=normal, bias_init=zeros, format=NCHW>
-          (1): BatchNorm2d<num_features=20, eps=1e-05, momentum=0.09999999999999998, gamma=Parameter (name=1.gamma,
-          shape=(20,), dtype=Float32, requires_grad=True), beta=Parameter (name=1.beta, shape=(20,), dtype=Float32,
-          requires_grad=True), moving_mean=Parameter (name=1.moving_mean, shape=(20,), dtype=Float32,
-          requires_grad=False), moving_variance=Parameter (name=1.moving_variance, shape=(20,), dtype=Float32,
-          requires_grad=False)>
-          (2): ReLU<>
-          >
+        >>> cell_ls.extend([relu, relu])
     """
     def __init__(self, *args, **kwargs):
         """Initialize CellList."""
@@ -346,11 +364,11 @@ class CellList(_CellListBase, Cell):
 
     def insert(self, index, cell):
         """
-        Inserts a given cell before a given index in the list.
+        Inserts a given Cell before a given index in the list.
 
         Args:
             index(int): The Insert index in the CellList.
-            cell(Cell): The subcell to be inserted.
+            cell(Cell): The Cell to be inserted.
         """
         cls_name = self.__class__.__name__
         idx = _valid_index(len(self), index, cls_name)
@@ -370,13 +388,13 @@ class CellList(_CellListBase, Cell):
 
     def extend(self, cells):
         """
-        Appends cells from a Python iterable to the end of the list.
+        Appends Cells from a Python iterable to the end of the list.
 
         Args:
-            cells(list): The subcells to be extended.
+            cells(list): The Cells to be extended.
 
         Raises:
-            TypeError: If the cells are not a list of subcells.
+            TypeError: If the argument cells are not a list of Cells.
         """
         cls_name = self.__class__.__name__
         if not isinstance(cells, list):
@@ -392,7 +410,7 @@ class CellList(_CellListBase, Cell):
 
     def append(self, cell):
         """
-        Appends a given cell to the end of the list.
+        Appends a given Cell to the end of the list.
 
         Args:
             cell(Cell): The subcell to be appended.
