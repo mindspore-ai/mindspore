@@ -164,7 +164,7 @@ def inv(a, overwrite_a=False, check_finite=True):
 
     Args:
         a (Tensor): Square matrix to be inverted. Note that if the input tensor is not a `float`,
-        then it will be casted to :class:`mstype.float32`.
+            then it will be casted to :class:`mstype.float32`.
         overwrite_a (bool, optional): Discard data in `a` (may improve performance). Default: False.
         check_finite (bool, optional): Whether to check that the input matrix contains only finite numbers.
             Disabling may give a performance gain, but may result in problems (crashes, non-termination)
@@ -205,7 +205,7 @@ def inv(a, overwrite_a=False, check_finite=True):
 def cho_factor(a, lower=False, overwrite_a=False, check_finite=True):
     """
     Compute the Cholesky decomposition of a matrix, to use in cho_solve
-
+    Note that if the input tensor is not a `float`, then it will be casted to :class:'mstype.float32'.
     Returns a matrix containing the Cholesky decomposition,
     ``A = L L*`` or ``A = U* U`` of a Hermitian positive-definite matrix `a`.
     The return value can be directly used as the first parameter to cho_solve.
@@ -216,7 +216,8 @@ def cho_factor(a, lower=False, overwrite_a=False, check_finite=True):
         entries, use the function `cholesky` instead.
 
     Args:
-        a (Tensor): square Matrix of (M, M) to be decomposed
+        a (Tensor): square Matrix of (M, M) to be decomposed. Note that if the input tensor is not a `float`,
+            then it will be casted to :class:'mstype.float32'.
         lower (bool, optional): Whether to compute the upper or lower triangular Cholesky factorization
             (Default: upper-triangular)
         overwrite_a(bool, optional): Whether to overwrite data in a (may improve performance)
@@ -248,6 +249,8 @@ def cho_factor(a, lower=False, overwrite_a=False, check_finite=True):
          [ 1.00000000e+00,  5.00000000e+00,  2.29330778e+00,  8.55952621e-01],
          [ 5.00000000e+00,  1.00000000e+00,  2.00000000e+00,  1.55418575e+00]])
     """
+    if F.dtype(a) not in float_types:
+        a = F.cast(a, mstype.float32)
     cholesky_net = Cholesky(lower=lower, clean=False)
     c = cholesky_net(a)
     return c, lower
@@ -289,6 +292,8 @@ def cholesky(a, lower=False, overwrite_a=False, check_finite=True):
         [[ 1.00000000e+00,  0.00000000e+00],
          [ 2.00000000e+00,  1.00000000e+00]])
     """
+    if F.dtype(a) not in float_types:
+        a = F.cast(a, mstype.float32)
     cholesky_net = Cholesky(lower=lower, clean=True)
     c = cholesky_net(a)
     return c
@@ -476,7 +481,8 @@ def lu_factor(a, overwrite_a=False, check_finite=True):
     and :math:`U` upper triangular.
 
     Args:
-        a (Tensor): square matrix of :math:`(M, M)` to decompose.
+        a (Tensor): square matrix of :math:`(M, M)` to decompose. Note that if the input tensor is not a `float`,
+            then it will be casted to :class:'mstype.float32'.
         overwrite_a (bool, optional): Whether to overwrite data in :math:`A` (may increase performance). Default: False.
         check_finite (bool, optional): Whether to check that the input matrix contains only finite numbers.
             Disabling may give a performance gain, but may result in problems
@@ -510,6 +516,8 @@ def lu_factor(a, overwrite_a=False, check_finite=True):
         >>> piv
         Tensor(shape=[4], dtype=Int32, value= [2, 0, 3, 1])
     """
+    if F.dtype(a) not in float_types:
+        a = F.cast(a, mstype.float32)
     if len(a.shape) < 2 or (a.shape[-1] != a.shape[-2]):
         _raise_value_error("input of lu matrix must be square.")
     msp_lu = LU()
@@ -530,7 +538,8 @@ def lu(a, permute_l=False, overwrite_a=False, check_finite=True):
     diagonal elements, and :math:`U` upper triangular.
 
     Args:
-        a (Tensor): a :math:`(M, N)` matrix to decompose.
+        a (Tensor): a :math:`(M, N)` matrix to decompose. Note that if the input tensor is not a `float`,
+            then it will be casted to :class:'mstype.float32'.
         permute_l (bool, optional): Perform the multiplication :math:`P L` (Default: do not permute). Default: False.
         overwrite_a (bool, optional): Whether to overwrite data in :math:`A` (may improve performance). Default: False.
         check_finite (bool, optional):  Whether to check that the input matrix contains
@@ -577,6 +586,8 @@ def lu(a, permute_l=False, overwrite_a=False, check_finite=True):
          [ 0.00000000e+00,  0.00000000e+00, -1.03999996e+00,  3.07999992e+00],
          [ 0.00000000e+00, -0.00000000e+00, -0.00000000e+00,  7.46153831e+00]])
     """
+    if F.dtype(a) not in float_types:
+        a = F.cast(a, mstype.float32)
     msp_lu = LU()
     m_lu, _, p = msp_lu(a)
     m = a.shape[-2]
