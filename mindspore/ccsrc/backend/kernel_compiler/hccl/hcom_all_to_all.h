@@ -35,6 +35,7 @@ class HcomAllToAllKernel : public HcclKernel {
 
  private:
   HcclDataType data_type_ = {};
+  bool need_drop_input_ = false;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_HCCL_HCOM_ALL_TO_ALL_H_

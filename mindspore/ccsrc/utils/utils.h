@@ -515,6 +515,7 @@ constexpr auto kAttrIsUBFusionOp = "is_ub_fusion_op";
 constexpr auto kAttrPlaceHolderIndex = "placeholder_index";
 constexpr auto kAttrMicro = "micro";
 constexpr auto kAttrJsonFileName = "json_file_name";
+constexpr auto kAttrNeedDropInput = "need_drop_input";
 
 // custom operator func type
 constexpr auto kCustomTypeAOT = "aot";

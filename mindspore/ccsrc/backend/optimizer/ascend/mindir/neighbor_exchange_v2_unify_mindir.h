@@ -43,7 +43,7 @@ class NeighborExchangeV2UnifyMindIR : public PatternProcessPass {
   CNodePtr CreateMiddleConcat(const FuncGraphPtr &graph, const CNodePtr &neighbor_exchange_v2,
                               const std::vector<AnfNodePtr> &all_to_all_v_outputs,
                               const std::vector<int64_t> &recv_rank_ids, const std::vector<int64_t> &recv_lens,
-                              int64_t concat_dim) const;
+                              size_t concat_dim) const;
   CNodePtr AllToAllvRecvEmpty(const FuncGraphPtr &graph, const CNodePtr &neighbor_exchange_v2,
                               const CNodePtr &all_to_all_v) const;
   CNodePtr CreateConcatNodes(const FuncGraphPtr &graph, const CNodePtr &neighbor_exchange_v2,
