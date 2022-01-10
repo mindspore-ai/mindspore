@@ -8636,13 +8636,16 @@ class ApplyAdagradDA(Primitive):
 
     .. math::
         \begin{array}{ll} \\
-            grad_accum += grad \\
-            grad_squared_accum += grad * grad \\
-            tmp_val=sign(grad_accum) * max\left \{|grad_accum|-l1*global_step, 0\right \}
-                    \quad if \quad l1>0 \quad else \quad grad_accum \\
-            x_value = -1 * lr * tmp_val \\
-            y_value = l2 * global_step * lr + \sqrt{grad_squared_accum} \\
-            var = x_value / y_value
+            grad\_accum += grad \\
+            grad\_squared\_accum += grad * grad \\
+            tmp\_val=
+                \begin{cases}
+                     sign(grad\_accum) * max\left \{|grad\_accum|-l1*global\_step, 0\right \} & \text{ if } l1>0 \\
+                     grad\_accum & \text{ otherwise } \\
+                 \end{cases} \\
+            x\_value = -1 * lr * tmp\_val \\
+            y\_value = l2 * global\_step * lr + \sqrt{grad\_squared\_accum} \\
+            var = \frac{ x\_value }{ y\_value }
         \end{array}
 
     Inputs of `var`, `gradient_accumulator`, `gradient_squared_accumulator` and `grad`
