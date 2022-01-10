@@ -33,6 +33,11 @@ bool HcomAllToAllKernel::Init(const AnfNodePtr &anf_node) {
   if (!ret) {
     return ret;
   }
+  auto cnode = anf_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (AnfAlgo::HasNodeAttr(kAttrNeedDropInput, cnode)) {
+    need_drop_input_ = AnfAlgo::GetNodeAttr<bool>(cnode, kAttrNeedDropInput);
+  }
 
   if (hccl_data_type_list_.empty()) {
     auto recv_type = AnfAlgo::GetNodeAttr<TypePtr>(anf_node, kAttrRecvType);
@@ -71,6 +76,11 @@ std::vector<TaskInfoPtr> HcomAllToAllKernel::GenTask(const std::vector<AddressPt
   stream_id_ = stream_id;
   void *input_data_addr = inputs.empty() ? nullptr : inputs.at(0)->addr;
   void *output_data_addr = outputs.empty() ? nullptr : outputs.at(0)->addr;
+
+  // if send empty, remove the input that added for depend
+  if (need_drop_input_) {
+    input_data_addr = nullptr;
+  }
 
   std::vector<uint8_t> private_def;
   std::vector<hccl::HcclTaskInfo> task_info;

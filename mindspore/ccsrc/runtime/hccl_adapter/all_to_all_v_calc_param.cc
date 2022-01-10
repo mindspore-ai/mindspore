@@ -45,6 +45,13 @@ void AllToAllvCalcParam::CalcOpParam() {
   CNodePtr cnode = node_.lock();
   MS_EXCEPTION_IF_NULL(cnode);
   size_t input_num = AnfAlgo::GetInputTensorNum(cnode);
+  // ignore send empty input
+  if (AnfAlgo::HasNodeAttr(kAttrNeedDropInput, cnode)) {
+    bool need_drop_input = AnfAlgo::GetNodeAttr<bool>(cnode, kAttrNeedDropInput);
+    if (need_drop_input) {
+      input_num = 0;
+    }
+  }
   size_t output_num = AnfAlgo::GetOutputTensorNum(cnode);
   std::vector<size_t> input_aligned_mem_size(input_num);
   std::vector<size_t> output_aligned_mem_size(output_num);
@@ -53,6 +60,9 @@ void AllToAllvCalcParam::CalcOpParam() {
   for (size_t i = 0; i < input_num; ++i) {
     auto ms_shape = AnfAlgo::GetInputDeviceShape(cnode, i);
     auto type_size = transform::TransformUtil::GetDataTypeSize(AnfAlgo::GetInputDeviceDataType(cnode, i));
+    if (type_size == 0) {
+      MS_LOG(EXCEPTION) << "Invalid type_size 0 of node: " << cnode->fullname_with_scope();
+    }
     size_t origin_mem_size = std::accumulate(ms_shape.begin(), ms_shape.end(), type_size, std::multiplies<size_t>());
     size_t aligned_mem_size = device::MemoryManager::GetCommonAlignSize(origin_mem_size);
     input_aligned_mem_size[i] = aligned_mem_size / type_size;
@@ -61,6 +71,9 @@ void AllToAllvCalcParam::CalcOpParam() {
   for (size_t i = 0; i < output_num; ++i) {
     auto ms_shape = AnfAlgo::GetOutputDeviceShape(cnode, i);
     auto type_size = transform::TransformUtil::GetDataTypeSize(AnfAlgo::GetOutputDeviceDataType(cnode, i));
+    if (type_size == 0) {
+      MS_LOG(EXCEPTION) << "Invalid type_size 0 of node: " << cnode->fullname_with_scope();
+    }
     size_t origin_mem_size = std::accumulate(ms_shape.begin(), ms_shape.end(), type_size, std::multiplies<size_t>());
     size_t aligned_mem_size = device::MemoryManager::GetCommonAlignSize(origin_mem_size);
     output_aligned_mem_size[i] = aligned_mem_size / type_size;
