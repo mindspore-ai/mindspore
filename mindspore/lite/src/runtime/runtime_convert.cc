@@ -21,7 +21,6 @@
 #include "include/version.h"
 #include "tools/converter/converter.h"
 #include "tools/converter/converter_flags.h"
-#include "acl/acl_base.h"
 
 namespace mindspore::lite {
 char *RuntimeConvert(const char *model_buf, const size_t &buf_size, size_t *size,
@@ -68,19 +67,6 @@ char *RuntimeConvert(const char *model_buf, const size_t &buf_size, size_t *size
       continue;
     }
   }
-
-#ifdef ENABLE_LITE_ACL
-  const char *soc_name_c = aclrtGetSocName();
-  if (soc_name_c != nullptr) {
-    std::string soc_name(soc_name_c);
-    if (soc_name.find("710") == std::string::npos) {
-      flag->device = "Ascend710";
-    }
-    if (soc_name.find("310") == std::string::npos) {
-      flag->device = "Ascend310";
-    }
-  }
-#endif
 
   Converter cvt;
   auto meta_graph = cvt.Convert(flag, model_buf, buf_size);

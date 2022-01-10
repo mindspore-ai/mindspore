@@ -15,20 +15,20 @@
  */
 
 #include "tools/converter/adapter/acl/acl_pass.h"
-#ifdef ENABLE_LITE_ACL
+#ifdef ENABLE_LITE_ASCEND
 #include "mindspore/lite/tools/converter/adapter/acl/src/acl_pass_impl.h"
 #endif
 
 namespace mindspore {
 namespace opt {
 AclPass::AclPass(const converter::Flags &config) : Pass("ACL") {
-#ifdef ENABLE_LITE_ACL
+#ifdef ENABLE_LITE_ASCEND
   impl_ = std::make_shared<AclPassImpl>(config);
 #endif
 }
 
 bool AclPass::Run(const FuncGraphPtr &func_graph) {
-#ifdef ENABLE_LITE_ACL
+#ifdef ENABLE_LITE_ASCEND
   if (impl_ == nullptr) {
     MS_LOG(ERROR) << "Impl is nullptr.";
     return false;

@@ -335,7 +335,7 @@ if(MSLITE_ENABLE_COVERAGE)
 endif()
 
 if(MSLITE_ENABLE_ACL)
-    add_definitions(-D ENABLE_LITE_ACL)
+    add_definitions(-D ENABLE_LITE_ASCEND)
     add_compile_definitions(_GLIBCXX_USE_CXX11_ABI=0)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,--allow-shlib-undefined")
 

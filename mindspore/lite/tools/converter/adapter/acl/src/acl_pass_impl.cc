@@ -36,7 +36,6 @@
 
 namespace mindspore {
 namespace opt {
-static const std::set<std::string> kDevice = {"Ascend310", "Ascend710"};
 static const std::set<std::string> kAdjustCnodeName = {"Resize", "Conv2dTransposeFusion", "Concat"};
 static const std::map<int64_t, std::string> kEnumFormatToStrMap = {{Format::NCHW, "NCHW"}, {Format::NHWC, "NHWC"}};
 namespace {
@@ -101,18 +100,10 @@ STATUS PreProcForOnnx(const FuncGraphPtr &func_graph) {
 }  // namespace
 
 AclPassImpl::AclPassImpl(const converter::Flags &config)
-    : device_type_(config.device),
-      fmk_type_(config.fmk),
+    : fmk_type_(config.fmk),
       user_options_cfg_(std::move(config.aclModelOptionCfgParam)),
       om_parameter_(nullptr),
       custom_node_(nullptr) {}
-
-bool AclPassImpl::IsDeviceAscend() {
-  if (kDevice.find(device_type_) != kDevice.end()) {
-    return true;
-  }
-  return false;
-}
 
 bool AclPassImpl::IsDynamicInput() {
   return !user_options_cfg_.dynamic_image_size.empty() || !user_options_cfg_.dynamic_batch_size.empty();
@@ -608,10 +599,6 @@ STATUS AclPassImpl::ModifyGraphByCustomNode(const FuncGraphPtr &func_graph, cons
 }
 
 bool AclPassImpl::Run(const FuncGraphPtr &func_graph) {
-  if (!IsDeviceAscend()) {
-    MS_LOG(INFO) << "The device is not ascend, no need to pass.";
-    return true;
-  }
   MS_LOG(INFO) << "Acl pass run start.";
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "Func_graph is nullptr.";

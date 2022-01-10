@@ -73,7 +73,7 @@ ops::PrimitiveC *TFDeconvParser::Parse(const tensorflow::NodeDef &tf_op,
   prim->AddAttr(ops::kOriginalOpName, MakeValue("Conv2DBackpropInput"));
 
   *output_size = 1;
-#ifdef ENABLE_LITE_ACL
+#ifdef ENABLE_LITE_ASCEND
   if (AddOpInput(tf_op, kOutBackpropIndex, inputs) != RET_OK || AddOpInput(tf_op, kFilterIndex, inputs) != RET_OK ||
       AddOpInput(tf_op, kInputSizeIndex, inputs) != RET_OK) {
     MS_LOG(ERROR) << "add op input failed";

@@ -43,7 +43,6 @@ class AclPassImpl {
   bool Run(const FuncGraphPtr &func_graph);
 
  private: /* pre or post pass */
-  bool IsDeviceAscend();
   bool IsDynamicInput();
   STATUS CommonPass(const FuncGraphPtr &func_graph);
   STATUS PreProcGraph(const FuncGraphPtr &func_graph);
@@ -78,7 +77,6 @@ class AclPassImpl {
   STATUS ReplaceInputsByAippInputs(const FuncGraphPtr &func_graph);
 
  private:
-  std::string device_type_;
   FmkType fmk_type_;
   lite::acl::AclModelOptionCfg user_options_cfg_;
   ParameterPtr om_parameter_;

@@ -324,10 +324,10 @@ FuncGraphPtr MindsporeImporter::CheckAndUpdateFuncGraph(const converter::Flags &
     return nullptr;
   }
   ConverterInnerContext::GetInstance()->SetGraphOutputTensorNames(output_tensor_name_);
-  if (flag.device == "Ascend310" || flag.device == "Ascend710") {
-    MS_LOG(INFO) << "There is no need to adjust and pass graph when in Ascend310 or Ascend710.";
-    return func_graph;
-  }
+#ifdef ENABLE_LITE_ASCEND
+  MS_LOG(INFO) << "There is no need to adjust and pass graph when in Ascend.";
+  return func_graph;
+#endif
   if ((status = Mindir2AnfAdjust(func_graph, flag)) != RET_OK) {
     MS_LOG(ERROR) << "Mindir2AnfAdjust failed.";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
