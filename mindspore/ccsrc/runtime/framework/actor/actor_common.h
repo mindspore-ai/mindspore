@@ -66,7 +66,10 @@ enum class KernelTransformType {
   kGatherActor,
   kEntranceActor,
   kExitActor,
-  kStackActor
+  kStackActor,
+  // RPC actor type.
+  kSendActor,
+  kRecvActor
 };
 
 #define SET_OPCONTEXT_FAIL_RET_WITH_ERROR(op_context, message) \
