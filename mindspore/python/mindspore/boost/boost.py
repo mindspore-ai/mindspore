@@ -57,45 +57,114 @@ class AutoBoost:
 
                 {
                     "boost": {
-                        "//": "suggest mode: ["auto", "manual", "enable_all", "disable_all"]",
                         "mode": "auto",
-                        "less_bn": false,
-                        "grad_freeze": false,
-                        "adasum": false,
-                        "grad_accumulation": false,
-                        "dim_reduce": false
+                        "less_bn": False,
+                        "grad_freeze": False,
+                        "adasum": False,
+                        "grad_accumulation": False,
+                        "dim_reduce": False
                     },
                     "common": {
                         "gradient_split_groups": [50, 100],
                         "device_number": 8
                     },
                     "less_bn": {
-                        "fn_flag": true,
-                        "gc_flag": true
+                        "fn_flag": True,
+                        "gc_flag": True
                     },
                     "grad_freeze": {
                         "param_groups": 10,
                         "freeze_type": 1,
                         "freeze_p": 0.7,
                         "total_steps": 65536
-                    },
-                    "adasum": {
-
-                    },
+                    }
                     "grad_accumulation": {
                         "grad_accumulation_step": 1
                     },
                     "dim_reduce": {
-                        "ls_weight_decay": 0.0001,
                         "rho": 0.55,
                         "gamma": 0.9,
                         "alpha": 0.001,
                         "sigma": 0.4,
                         "n_components": 32,
                         "pca_mat_path": None,
-                        "weight_load_dir": None
+                        "weight_load_dir": None,
+                        "timeout": 1800
                     }
                 }
+
+                boost:
+                    mode (str): How to set the boost. Supports ["auto", "manual", "enable_all", "disable_all"].
+                        Default: "auto".
+
+                        - auto: Depend on the argument "boost_level" in class model.
+                        - manual: Depen on "boost_config_dict".
+                        - enable_all: Set all boost functions true.
+                        - disable_all: Set all boost functions false.
+
+                    less_bn (bool): Whether to apply less_bn function. Default: False.
+                    grad_freeze: (bool): Whether to apply grad_freeze function. Default: False.
+                    adasum (bool): Whether to apply adasum function. Default: False.
+                    grad_accumulation (bool): Whether to apply grad_accumulation function. Default: False.
+                    dim_reduce (bool): Whether to apply dim_reduce function. Default: False.
+
+                    If set dim_reduce true, other functions will be false.
+                    If set grad_freeze true and dim_reduce fasle, other functions will be false.
+
+                common:
+                    gradient_split_groups (list): The gradient split point of this network. Default: [50, 100].
+                    device_number (int): Device number. Default: 8.
+
+                less_bn:
+                    fn_flag (bool): Whether changing fc to fn. Default: True.
+                    gc_flag (bool): Whether to apply gc. Default: True.
+
+                grad_freeze:
+                    param_groups (int): The number of parameter groups. Default: 10.
+                    freeze_type (int): Gradient freeze grouping strategy, select from [0, 1]. Default: 1.
+                    freeze_p (float): Gradient freezing probability. Default: 0.7.
+                    total_steps (int): Total training steps. Default: 65536.
+
+                grad_accumulation:
+                    grad_ccumulation_step (int): Steps to accumulate gradients. Default: 1.
+
+                dim_reduce:
+
+                    .. math::
+
+                            \begin{align}
+                            grad\_k &= pca\_mat \cdot grad\\
+                            dk &= - bk \cdot grad\_k\\
+                            sk &= rho ^ m \cdot dk\\
+                            delta\_loss &= sigma \cdot grad\_k.T \cdot sk
+                            \end{align}
+
+                    Here: pca_mat (array): Shape (k*n), k is part of n_components, n is the size of weight.
+                          bk (array): Shape (k*k), is the symmetric positive definite matrix in Quasi-Newton method.
+
+                    we need to find the m satisfy:
+
+                    .. math::
+                            new\_loss < old\_loss + delta\_loss
+
+                    Then, get delta_grad to update the weights for model:
+
+                    .. math::
+
+                            \begin{align}
+                            grad\_k\_proj &= pca\_mat.T \cdot grad\_k\\
+                            new\_grad\_momentum &= gamma \cdot old\_grad\_momentum + grad - grad\_k\_proj\\
+                            delta\_grad &= alpha \cdot new\_grad\_momentum - pca\_mat.T \cdot sk
+                            \end{align}
+
+                    rho (float): Generally, it does not need to be modified. Default: 0.55.
+                    gamma (float): Generally, it does not need to be modified. Default: 0.9.
+                    alpha (float): Generally, it does not need to be modified. Default: 0.001.
+                    sigma (float): Generally, it does not need to be modified. Default: 0.4.
+                    n_components (int): PCA component. Default: 32.
+                    pca_mat_path (str): The path to load pca mat. Default: None.
+                    weight_load_dir (str): The directory to load weight files saved as ckpt. Default: None.
+                    timeout (int): Waiting time to load local pca mat. Default: 1800 second.
 
             User can load the config through the JSON file or use the dictionary directly.
             The unconfigured parameters will adopt the default values. Default: "".
@@ -137,7 +206,6 @@ class AutoBoost:
             self.gradient_groups = None
             self.device_number = 8
             self.grad_accumulation_step = 1
-            self.ls_weight_decay = 0.0001
             self.rho = 0.55
             self.gamma = 0.9
             self.alpha = 0.001
@@ -146,6 +214,7 @@ class AutoBoost:
             self.pca_mat_path = None
             self.weight_load_dir = None
             self.local_pca_mat_path = None
+            self.timeout = 1800
             self.boost_config = self._get_configuration(level, self.boost_config_dict)
             self._param_processer = ParameterProcess()
 
@@ -239,9 +308,6 @@ class AutoBoost:
             gradient_groups = list(gradient_groups)
         self.gradient_groups = gradient_groups
 
-    def set_ls_weight_decay(self, ls_weight_decay):
-        self.ls_weight_decay = ls_weight_decay
-
     def set_rho(self, rho):
         self.rho = rho
 
@@ -262,6 +328,9 @@ class AutoBoost:
 
     def set_weight_load_dir(self, weight_load_dir):
         self.weight_load_dir = weight_load_dir
+
+    def set_timeout(self, timeout):
+        self.timeout = timeout
 
     def _get_configuration(self, level, boost_config_dict):
         """Get configuration."""
@@ -298,7 +367,6 @@ class AutoBoost:
         "device_number": set_device_number,
         "gradient_split_groups": set_gradient_split_groups,
         "grad_accumulation_step": set_grad_accumulation_step,
-        "ls_weight_decay": set_ls_weight_decay,
         "rho": set_rho,
         "gamma": set_gamma,
         "alpha": set_alpha,
@@ -306,4 +374,5 @@ class AutoBoost:
         "n_components": set_n_components,
         "pca_mat_path": set_pca_mat_path,
         "weight_load_dir": set_weight_load_dir,
+        "timeout": set_timeout
     }
