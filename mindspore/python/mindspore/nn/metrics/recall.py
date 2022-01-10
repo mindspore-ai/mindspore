@@ -40,6 +40,9 @@ class Recall(EvaluationBase):
         eval_type (str): 'classification' or 'multilabel' are supported. Default: 'classification'.
             Default: 'classification'.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> import numpy as np
         >>> from mindspore import nn, Tensor

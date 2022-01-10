@@ -28,8 +28,8 @@ class Perplexity(Metric):
         PP(W)=P(w_{1}w_{2}...w_{N})^{-\frac{1}{N}}=\sqrt[N]{\frac{1}{P(w_{1}w_{2}...w_{N})}}
 
     Args:
-        ignore_label (int): Index of an invalid label to be ignored when counting. If set to `None`, it will include all
-                            entries. Default: None.
+        ignore_label (Union[int, None]): Index of an invalid label to be ignored when counting. If set to `None`,
+        it will include all entries. Default: None.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -40,7 +40,6 @@ class Perplexity(Metric):
     Examples:
         >>> import numpy as np
         >>> from mindspore import nn, Tensor
-        >>>
         >>> x = Tensor(np.array([[0.2, 0.5], [0.3, 0.1], [0.9, 0.6]]))
         >>> y = Tensor(np.array([1, 0, 1]))
         >>> metric = nn.Perplexity(ignore_label=None)

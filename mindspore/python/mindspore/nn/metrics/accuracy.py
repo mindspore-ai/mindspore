@@ -34,6 +34,9 @@ class Accuracy(EvaluationBase):
           'multilabel'. 'classification' means the dataset label is single. 'multilabel' means the dataset has multiple
           labels. Default: 'classification'.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> import numpy as np
         >>> import mindspore

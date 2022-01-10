@@ -28,6 +28,7 @@ def rearrange_inputs(func):
     This decorator is currently applied on the `update` of :class:`mindspore.nn.Metric`.
 
     Examples:
+        >>> from mindspore.nn import rearrange_inputs
         >>> class RearrangeInputsExample:
         ...     def __init__(self):
         ...         self._indexes = None

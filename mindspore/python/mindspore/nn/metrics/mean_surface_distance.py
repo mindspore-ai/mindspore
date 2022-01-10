@@ -58,9 +58,7 @@ class MeanSurfaceDistance(Metric):
 
     Examples:
         >>> import numpy as np
-
         >>> from mindspore import nn, Tensor
-        >>>
         >>> x = Tensor(np.array([[3, 0, 1], [1, 3, 0], [1, 0, 2]]))
         >>> y = Tensor(np.array([[0, 2, 1], [1, 2, 1], [0, 0, 1]]))
         >>> metric = nn.MeanSurfaceDistance(symmetric=False, distance_metric="euclidean")
