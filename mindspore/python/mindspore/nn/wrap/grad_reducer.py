@@ -280,7 +280,7 @@ class DistributedGradReducer(Cell):
     A distributed optimizer.
 
     Constructs a gradient reducer Cell, which applies communication and average operations on
-    single-process gradient values.
+    single-process gradient values. Used in data parallel.
 
     Args:
         parameters (list): the parameters to be updated.

@@ -314,8 +314,6 @@ MindSpore上下文，用于配置当前执行环境，包括执行模式、执�
     - SEMI_AUTO_PARALLEL：半自动并行模式。
     - AUTO_PARALLEL：自动并行模式。
 
-    MODE_LIST：表示所有支持的并行模式的列表。
-
 .. py:function:: mindspore.context.set_ps_context(**kwargs)
 
     设置参数服务器训练模式的上下文。

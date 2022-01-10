@@ -5,7 +5,7 @@ mindspore.nn.DistributedGradReducer
 
     分布式优化器。
 
-    对反向梯度进行AllReduce运算。
+    用于数据并行模式中，对所有卡的梯度利用AllReduce进行聚合。
 
     **参数：**
 
@@ -90,15 +90,3 @@ mindspore.nn.DistributedGradReducer
     >>> grads = train_cell(inputs, label)
     >>> print(grads)
     256.0
-
-.. py:method:: construct(grads)
-
-    某些情况下，梯度的数据精度可以与float16和float32混合。因此，AllReduce的结果不可靠。要解决这个问题，必须在AllReduce之前强制转换为float32，并在操作之后再强制转换为float32。
-
-    **参数：**
-
-    - **grads** (Union[Tensor, tuple[Tensor]]) - 操作前的梯度Tensor或tuple。
-
-    **返回：**
-
-    - **new_grads** (Union[Tensor, tuple[Tensor]])，操作后的梯度Tensor或tuple。
