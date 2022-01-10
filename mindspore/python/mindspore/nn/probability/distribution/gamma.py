@@ -46,16 +46,15 @@ class Gamma(Distribution):
         name (str): The name of the distribution. Default: 'Gamma'.
 
     Inputs and Outputs of APIs:
-        The accessible api is defined in the base class, including:
+        The accessible APIs of the Gamma distribution are defined in the base class, including:
 
         - `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`
         - `mean`, `sd`, `mode`, `var`, and `entropy`
         - `kl_loss` and `cross_entropy`
         - `sample`
 
-        It should be notice that the input should be always a tensor.
-        For more details of all APIs, including the inputs and outputs,
-        please refer to :class:`mindspore.nn.probability.bijector.Distribution`, and examples below.
+        For more details of all APIs, including the inputs and outputs of all APIs of the Gamma distribution,
+        please refer to :class:`mindspore.nn.probability.distribution.Distribution`, and examples below.
 
     Supported Platforms:
         ``Ascend``

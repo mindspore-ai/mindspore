@@ -39,7 +39,7 @@ mindspore.nn.probability.bijector.GumbelCDF
     >>>
     >>> # 初始化GumbelCDF Bijector，loc设置为1.0和scale设置为2.0。
     >>> gumbel_cdf = msb.GumbelCDF(1.0, 2.0)
-    >>> # 在网络中使用ScalarAffinebijector。
+    >>> # 在网络中使用GumbelCDF bijector。
     >>> x = Tensor([1, 2, 3], dtype=mindspore.float32)
     >>> y = Tensor([0.1, 0.2, 0.3], dtype=mindspore.float32)
     >>> ans1 = gumbel_cdf.forward(x)

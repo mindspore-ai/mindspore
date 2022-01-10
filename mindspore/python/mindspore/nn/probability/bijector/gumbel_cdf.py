@@ -33,16 +33,16 @@ class GumbelCDF(Bijector):
         name (str): The name of the Bijector. Default: 'GumbelCDF'.
 
     Inputs and Outputs of APIs:
-        The accessible api is defined in the base class, including:
+        The accessible APIs of the Gumbel_cdf bijector are defined in the base class, including:
 
         - **forward**
         - **inverse**
         - **forward_log_jacobian**
         - **backward_log_jacobian**
 
-        It should be notice that the input should be always a tensor,
+        It should be notice that the inputs of APIs of the Gumbel_cdf bijector should be always a tensor,
         with a shape that can be broadcasted to that of `loc` and `scale`.
-        For more details of all APIs, including the inputs and outputs,
+        For more details of all APIs, including the inputs and outputs of APIs of the Gumbel_cdf bijector,
         please refer to :class:`mindspore.nn.probability.bijector.Bijector`, and examples below.
 
     Supported Platforms:
@@ -67,7 +67,7 @@ class GumbelCDF(Bijector):
         >>>
         >>> # To initialize a GumbelCDF bijector of loc 1.0, and scale 2.0.
         >>> gumbel_cdf = msb.GumbelCDF(1.0, 2.0)
-        >>> # To use a ScalarAffine bijector in a network.
+        >>> # To use a GumbelCDF bijector in a network.
         >>> x = Tensor([1, 2, 3], dtype=mindspore.float32)
         >>> y = Tensor([0.1, 0.2, 0.3], dtype=mindspore.float32)
         >>> ans1 = gumbel_cdf.forward(x)

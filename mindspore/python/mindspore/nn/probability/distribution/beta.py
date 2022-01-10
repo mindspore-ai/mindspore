@@ -44,16 +44,15 @@ class Beta(Distribution):
         name (str): The name of the distribution. Default: 'Beta'.
 
     Inputs and Outputs of APIs:
-        The accessible api is defined in the base class, including:
+        The accessible APIs of the Beta distribution are defined in the base class, including:
 
         - `prob` and `log_prob`
         - `mean`, `sd`, `var`, and `entropy`
         - `kl_loss` and `cross_entropy`
         - `sample`
 
-        It should be notice that the input should be always a tensor.
-        For more details of all APIs, including the inputs and outputs,
-        please refer to :class:`mindspore.nn.probability.bijector.Distribution`, and examples below.
+        For more details of all APIs, including the inputs and outputs of APIs of the Beta distribution
+        please refer to :class:`mindspore.nn.probability.distribution.Distribution`, and examples below.
 
     Supported Platforms:
         ``Ascend``

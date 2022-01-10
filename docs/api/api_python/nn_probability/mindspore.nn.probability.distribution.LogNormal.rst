@@ -16,7 +16,7 @@ mindspore.nn.probability.distribution.LogNormal
 
     - **loc** (int, float, list, numpy.ndarray, Tensor) - 基础正态分布的平均值。默认值：None。
     - **scale** (int, float, list, numpy.ndarray, Tensor) - 基础正态分布的标准差。默认值：None。
-    - **seed** (int) - 采样时使用的种子。如果为None，则使用全局种子。默认值：None。
+    - **seed** (int) - 采样时使用的种子。如果为None，则使用全局种子。默认值：0。
     - **dtype** (mindspore.dtype) - 分布类型。默认值：mindspore.float32。
     - **name** (str) - 分布的名称。默认值：'LogNormal'。
 
