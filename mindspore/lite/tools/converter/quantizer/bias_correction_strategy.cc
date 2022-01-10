@@ -32,7 +32,7 @@
 
 namespace mindspore::lite::quant {
 namespace {
-constexpr int kHasBiasTensorSize = 3;
+constexpr int kHasBiasTensorSize = 4;
 const std::set<std::string> kSupportBiasCorrectionNode = {
   schema::EnumNamePrimitiveType(schema::PrimitiveType_Conv2DFusion)};
 }  // namespace
@@ -523,8 +523,7 @@ int BiasCorrectionStrategy::DoCNodeBiasCorrection(const FuncGraphPtr &quant_func
   auto quant_param_holder = GetCNodeQuantHolder(primitive);
   MS_CHECK_TRUE_MSG(quant_param_holder != nullptr, RET_NULL_PTR, "quant_param_holder is nullptr.");
   auto input_quant_params = quant_param_holder->get_input_quant_params();
-  if (input_quant_params.size() == kHasBiasTensorSize) {
-    // compensate the existed
+  if (cnode->size() == kHasBiasTensorSize) {
     auto bias = cnode->input(THIRD_INPUT + 1);
     auto bias_parameter_ptr = bias->cast<ParameterPtr>();
     auto bias_default_param = bias_parameter_ptr->default_param();
@@ -543,7 +542,7 @@ int BiasCorrectionStrategy::DoCNodeBiasCorrection(const FuncGraphPtr &quant_func
         return RET_ERROR;
       }
     }
-  } else if (input_quant_params.size() == kHasBiasTensorSize - 1) {
+  } else if (cnode->size() == kHasBiasTensorSize - 1) {
     MS_LOG(INFO) << op_name << " add bias input";
     // need to add bias input
     auto parameter = quant_func_graph->add_parameter();
@@ -560,8 +559,7 @@ int BiasCorrectionStrategy::DoCNodeBiasCorrection(const FuncGraphPtr &quant_func
       }
     }
   } else {
-    MS_LOG(WARNING) << op_name << " unexpected size: " << input_quant_params.size()
-                    << ", and shared weight tensor does not support bias correction temporarily.";
+    MS_LOG(WARNING) << op_name << " unexpected size: " << cnode->size();
   }
   return RET_OK;
 }

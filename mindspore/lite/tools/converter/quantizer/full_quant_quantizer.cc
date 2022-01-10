@@ -427,6 +427,7 @@ void FullQuantQuantizer::InitNvGpuConfig() {
   support_int8_ops_ = {prim::kPrimConv2DFusion, prim::kPrimFullConnection, prim::kPrimMatMul,
                        prim::kPrimConv2dTransposeFusion, prim::kPrimConv2dTransposeFusion};
   per_channel_ops_ = {prim::kPrimConv2DFusion, prim::kPrimMatMul, prim::kPrimFullConnection};
+  flags_.fullQuantParam.bias_correction = false;
 }
 
 void FullQuantQuantizer::InitQMinMax() {
