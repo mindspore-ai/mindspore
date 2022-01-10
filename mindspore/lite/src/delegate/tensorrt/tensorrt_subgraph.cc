@@ -179,6 +179,8 @@ int TensorRTSubGraph::SetDeviceConfig(cudaStream_t stream) {
     MS_LOG(INFO) << "inputs no quant params or platform not support int8.";
   }
   config_->setProfileStream(stream);
+  stream_ = stream;
+  MS_LOG(INFO) << GetRankID() << " tensorrt subgraph stream: " << stream_;
 
   // config setMaxWorkspaceSize to 1152 MB for max limit
   config_->setMaxWorkspaceSize(1152 * (1 << 20));
@@ -444,7 +446,7 @@ int TensorRTSubGraph::BuildTensorRTGraph() {
 
     ret = cur_op->AddInnerOp(this->network_);
     if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Add op failed in TensorRT network";
+      MS_LOG(ERROR) << "Add op failed in TensorRT network: " << cur_op->GetOpName();
       return RET_ERROR;
     }
     ret = GetTensorName(cur_op);

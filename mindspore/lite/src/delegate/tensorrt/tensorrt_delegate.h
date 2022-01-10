@@ -68,7 +68,7 @@ class TensorRTDelegate : public Delegate {
   size_t device_cache_size_{0};
   std::shared_ptr<cache::EmbeddingCacheManager> cache_mgr_{nullptr};
   const std::string serialize_path_;
-  cudaStream_t stream_;
+  cudaStream_t stream_{nullptr};
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_DELEGATE_
