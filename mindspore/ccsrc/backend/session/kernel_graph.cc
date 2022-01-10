@@ -1219,14 +1219,15 @@ void KernelGraph::CacheGraphOutputToFrontNodeWithIndex(const std::vector<AnfNode
   std::vector<KernelWithIndex> backend_output_nodes;
   for (auto &backend_output : backend_outputs) {
     auto temp_backend_outputs = AnfAlgo::GetAllOutputWithIndex(backend_output);
-    backend_output_nodes.insert(backend_output_nodes.end(), temp_backend_outputs.begin(), temp_backend_outputs.end());
+    (void)backend_output_nodes.insert(backend_output_nodes.end(), temp_backend_outputs.begin(),
+                                      temp_backend_outputs.end());
   }
 
   MS_LOG(INFO) << "Get graph front output nodes.";
   std::vector<KernelWithIndex> front_output_nodes;
   for (auto &front_output : front_outputs) {
     auto temp_front_outputs = AnfAlgo::GetAllOutputWithIndex(front_output);
-    front_output_nodes.insert(front_output_nodes.end(), temp_front_outputs.begin(), temp_front_outputs.end());
+    (void)front_output_nodes.insert(front_output_nodes.end(), temp_front_outputs.begin(), temp_front_outputs.end());
   }
 
   if (backend_output_nodes.size() != front_output_nodes.size()) {
@@ -1425,7 +1426,7 @@ bool KernelGraph::IsChildGraphResult(const AnfNodePtr &node) {
   for (const auto &child_graph_result : child_graph_result_) {
     MS_EXCEPTION_IF_NULL(child_graph_result);
     auto outputs = AnfAlgo::GetAllOutput(child_graph_result);
-    child_graph_results.insert(child_graph_results.end(), outputs.begin(), outputs.end());
+    (void)child_graph_results.insert(child_graph_results.end(), outputs.begin(), outputs.end());
   }
 
   return find(child_graph_results.begin(), child_graph_results.end(), node) != child_graph_results.end();

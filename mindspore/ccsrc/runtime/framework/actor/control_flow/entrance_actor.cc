@@ -204,24 +204,24 @@ void EntranceActor::EraseInput(const OpContext<DeviceTensor> *const context) {
 
   const auto &data_iter = input_op_datas_.find(sequential_num);
   if (data_iter != input_op_datas_.end()) {
-    input_op_datas_.erase(data_iter);
+    (void)input_op_datas_.erase(data_iter);
   }
 
   const auto &control_iter = input_op_controls_.find(sequential_num);
   if (control_iter != input_op_controls_.end()) {
-    input_op_controls_.erase(control_iter);
+    (void)input_op_controls_.erase(control_iter);
   }
 
   const auto &loop_body_control_iter = loop_body_input_op_controls_.find(sequential_num);
   if (loop_body_control_iter != loop_body_input_op_controls_.end()) {
-    loop_body_input_op_controls_.erase(loop_body_control_iter);
+    (void)loop_body_input_op_controls_.erase(loop_body_control_iter);
   }
 
   const auto &iter = real_parameters_with_branch_id_.find(sequential_num);
   if (iter != real_parameters_with_branch_id_.end()) {
     iter->second.pop();
     if (iter->second.empty()) {
-      real_parameters_with_branch_id_.erase(sequential_num);
+      (void)real_parameters_with_branch_id_.erase(sequential_num);
     }
   }
 }
@@ -236,7 +236,7 @@ void EntranceActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
     for (auto &input_data : input_op_datas_[sequential_num]) {
       MS_EXCEPTION_IF_NULL(input_data);
       MS_EXCEPTION_IF_NULL(input_data->data_);
-      memory_free_list.emplace_back(input_data->data_);
+      (void)memory_free_list.emplace_back(input_data->data_);
     }
   }
 

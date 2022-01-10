@@ -82,7 +82,7 @@ bool EnvironSetCPUKernel::Launch(const std::vector<AddressPtr> &inputs, const st
   if (env == nullptr) {
     MS_LOG(EXCEPTION) << "Get the env failed, handle: " << host_handle << ", key: " << host_key;
   }
-  auto env_value = std::make_shared<EnvironValue>(value_ptr, value_size_, value_type_attr_, kGPUDevice);
+  auto env_value = std::make_shared<EnvironValue>(value_ptr, value_size_, value_type_attr_, kCPUDevice);
   env->Set(host_key, env_value);
 
   // Set output handle.

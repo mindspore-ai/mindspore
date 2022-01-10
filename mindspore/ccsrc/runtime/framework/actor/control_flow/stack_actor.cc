@@ -81,7 +81,7 @@ void StackActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<Dev
     input_stack_data_[context->sequential_num_][input_data->index_].push(input_data->data_);
   } else {
     // The outputs of call nodes are placed directly in the input data.
-    input_op_datas_[context->sequential_num_].emplace_back(input_data);
+    (void)input_op_datas_[context->sequential_num_].emplace_back(input_data);
   }
 
   auto is_run = CheckRunningCondition(context);
@@ -119,7 +119,7 @@ void StackActor::RunOpPartial(const OpPartialPtr &partial, size_t position, OpCo
                               local_device_tensors_.size()) {
     input_stack_partials_[context->sequential_num_][position].push(self_partial);
   } else {
-    input_op_partials_[context->sequential_num_].emplace_back(position, self_partial);
+    (void)input_op_partials_[context->sequential_num_].emplace_back(position, self_partial);
   }
 
   auto is_run = CheckRunningCondition(context);
@@ -302,7 +302,7 @@ void StackActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
     for (auto &input_data : input_op_datas_[sequential_num]) {
       MS_EXCEPTION_IF_NULL(input_data);
       MS_EXCEPTION_IF_NULL(input_data->data_);
-      memory_free_list.emplace_back(input_data->data_);
+      (void)memory_free_list.emplace_back(input_data->data_);
     }
   }
 
@@ -317,7 +317,7 @@ void StackActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
   if ((input_stack_data_num_ != 0) && (input_stack_data_.count(sequential_num) > 0)) {
     for (auto &stack_data_pair : input_stack_data_[sequential_num]) {
       if (!stack_data_pair.second.empty()) {
-        memory_free_list.emplace_back(stack_data_pair.second.top());
+        (void)memory_free_list.emplace_back(stack_data_pair.second.top());
       }
     }
   }

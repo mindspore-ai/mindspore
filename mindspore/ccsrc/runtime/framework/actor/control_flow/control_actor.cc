@@ -22,7 +22,7 @@ ControlActor::ControlActor(const std::string &name, KernelTransformType type, co
                            const std::vector<KernelWithIndex> &parameters, const AnfNodePtr &node)
     : MemoryAwareActor(name, type, nullptr, memory_manager_aid), formal_parameters_(parameters), node_(node) {
   for (size_t i = 0; i < parameters.size(); ++i) {
-    input_partials_.emplace_back(std::make_shared<OpPartial>());
+    (void)input_partials_.emplace_back(std::make_shared<OpPartial>());
   }
   input_device_tensors_.resize(parameters.size());
 }
@@ -119,7 +119,7 @@ void ControlActor::Run(OpContext<DeviceTensor> *const context) {
 void ControlActor::RunOpPartial(const OpPartialPtr &partial, size_t position, OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   auto &sequential_num = context->sequential_num_;
-  input_op_partials_[sequential_num].emplace_back(position, partial);
+  (void)input_op_partials_[sequential_num].emplace_back(position, partial);
 
   auto is_run = CheckRunningCondition(context);
   MS_LOG(DEBUG) << "Actor(" << GetAID().Name()
@@ -266,14 +266,14 @@ void ControlActor::IncreaseDynamicRefCounts(OpContext<DeviceTensor> *const conte
   }
 
   // Increase dynamic ref count by the output partial.
-  for (const auto &partial_arrow : output_partial_arrows_) {
-    MS_EXCEPTION_IF_NULL(partial_arrow);
-    if (IntToSize(partial_arrow->from_output_index_) >= input_partials_.size()) {
-      std::string error_info = "Invalid partial input:" + std::to_string(partial_arrow->from_output_index_) +
+  for (const auto &output_partial_arrow : output_partial_arrows_) {
+    MS_EXCEPTION_IF_NULL(output_partial_arrow);
+    if (IntToSize(output_partial_arrow->from_output_index_) >= input_partials_.size()) {
+      std::string error_info = "Invalid partial input:" + std::to_string(output_partial_arrow->from_output_index_) +
                                " current:" + std::to_string(input_partials_.size()) + " for actor:" + GetAID().Name();
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
     }
-    auto output_partial = input_partials_[partial_arrow->from_output_index_];
+    auto output_partial = input_partials_[output_partial_arrow->from_output_index_];
     IncreaseDynamicRefCount(output_partial);
   }
 }
@@ -285,16 +285,16 @@ void ControlActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
   // Collect the input device tensors.
   std::vector<DeviceTensor *> memory_free_list;
   if (input_op_datas_.count(sequential_num) > 0) {
-    for (auto &input_data : input_op_datas_[sequential_num]) {
-      MS_EXCEPTION_IF_NULL(input_data);
-      MS_EXCEPTION_IF_NULL(input_data->data_);
-      memory_free_list.emplace_back(input_data->data_);
+    for (auto &input_op_data : input_op_datas_[sequential_num]) {
+      MS_EXCEPTION_IF_NULL(input_op_data);
+      MS_EXCEPTION_IF_NULL(input_op_data->data_);
+      (void)memory_free_list.emplace_back(input_op_data->data_);
     }
   }
 
   if (input_op_partials_.count(sequential_num) > 0) {
-    for (auto &input_partial_pair : input_op_partials_[sequential_num]) {
-      const auto &partial_device_tensors = GetAllDeviceTensors(input_partial_pair.second);
+    for (auto &input_op_partial : input_op_partials_[sequential_num]) {
+      const auto &partial_device_tensors = GetAllDeviceTensors(input_op_partial.second);
       (void)std::copy(partial_device_tensors.begin(), partial_device_tensors.end(),
                       std::back_inserter(memory_free_list));
     }

@@ -41,9 +41,9 @@ class EnvironMgr {
   void Clear();
 
   // Check whether the inputs of EnvironGet kernel or EnvironSet kernel are valid.
-  bool CheckEnvInput(const CNodePtr &kernel_node);
+  bool CheckEnvInput(const CNodePtr &kernel_node) const;
   // Check whether is scalar tensor. Environ handle and env key only support scalar tensor currently.
-  bool IsScalarTensor(TypeId type, std::vector<size_t> shape);
+  bool IsScalarTensor(TypeId type, const std::vector<size_t> &shape) const;
 
  private:
   EnvironMgr() = default;

@@ -192,7 +192,7 @@ void SuperKernelActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context)
       MS_EXCEPTION_IF_NULL(input_data);
       MS_EXCEPTION_IF_NULL(input_data->data_);
       if (input_data->data_->dynamic_ref_count() != INT32_MAX) {
-        memory_free_list.emplace_back(input_data->data_);
+        (void)memory_free_list.emplace_back(input_data->data_);
       }
     }
   }

@@ -62,7 +62,7 @@ void GatherActor::SendOutput(OpContext<DeviceTensor> *const context) {
                             IntToSize(partial_arrow->to_input_index_), context);
     } else {
       ActorDispatcher::Send(partial_arrow->to_op_id_, &ControlActor::RunOpPartial,
-                            input_partials_[partial_arrow->from_output_index_],
+                            input_partials_[IntToSize(partial_arrow->from_output_index_)],
                             IntToSize(partial_arrow->to_input_index_), context);
     }
   }
@@ -105,7 +105,7 @@ void GatherActor::IncreaseDynamicRefCounts(OpContext<DeviceTensor> *const contex
     if (partial_arrow->from_output_index_ == 0) {
       IncreaseDynamicRefCount(gather_input_);
     } else {
-      IncreaseDynamicRefCount(input_partials_[partial_arrow->from_output_index_]);
+      IncreaseDynamicRefCount(input_partials_[IntToSize(partial_arrow->from_output_index_)]);
     }
   }
 }
@@ -132,14 +132,14 @@ void GatherActor::GatherInput(OpContext<DeviceTensor> *const context) {
   for (size_t i = 0; i < input_device_tensors_.size(); ++i) {
     const auto &device_tensor = input_device_tensors_[i];
     if (device_tensor != nullptr) {
-      gather_input_->device_tensors_.emplace_back(i + offset, device_tensor);
+      (void)gather_input_->device_tensors_.emplace_back(i + offset, device_tensor);
     }
   }
 
   // Put other partials in the first partial.
   for (size_t i = 1; i < input_partials_.size(); ++i) {
     if (input_partials_[i] != nullptr && input_partials_[i]->func_graph_ != nullptr) {
-      gather_input_->partials_.emplace_back(i + offset, input_partials_[i]);
+      (void)gather_input_->partials_.emplace_back(i + offset, input_partials_[i]);
     }
   }
 }
