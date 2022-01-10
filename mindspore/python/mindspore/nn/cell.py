@@ -501,7 +501,7 @@ class Cell(Cell_):
                 raise err
 
         if _pynative_executor.is_top_cell():
-            _pynative_executor.execute_all_task()
+            _pynative_executor.execute_lazy_task()
 
         if isinstance(output, Parameter):
             output = output.data
