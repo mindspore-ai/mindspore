@@ -27,19 +27,19 @@ function Run_TensorRT_Mpirun() {
 
 
   # wide_and_deep_
-  echo "start mpirun wide_and_deep_ ..."
-  model_name='wide_and_deep_.mindir.ms'
-  model_file=${basepath}'/'${model_name}
-  input_files=${inpath}'/wide_and_deep_.mindir.ms.bin_1,'${inpath}'/wide_and_deep_.mindir.ms.bin_2'
-  config_file=${inpath}'/wide_and_deep_.mindir.ms.config'
-  output_file=${outpath}'/wide_and_deep_.mindir.ms.out'
-  echo 'mpirun -np 2 ./benchmark --modelFile='${model_file}' --configFile='${config_file}' --inDataFile='${input_files}' --benchmarkDataFile='${output_file}' --device=GPU' >> "${run_tensorrt_mpirun_log_file}"
-  mpirun -np 2 ./benchmark --modelFile=${model_file} --inDataFile=${input_files} --configFile=${config_file} --benchmarkDataFile=${output_file} --device=GPU >> ${run_tensorrt_mpirun_log_file}
-  if [ $? = 0 ]; then
-      run_result='TensorRT_Server: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
-  else
-      run_result='TensorRT_Server: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
-  fi
+#   echo "start mpirun wide_and_deep_ ..."
+#   model_name='wide_and_deep_.mindir.ms'
+#   model_file=${basepath}'/'${model_name}
+#   input_files=${inpath}'/wide_and_deep_.mindir.ms.bin_1,'${inpath}'/wide_and_deep_.mindir.ms.bin_2'
+#   config_file=${inpath}'/wide_and_deep_.mindir.ms.config'
+#   output_file=${outpath}'/wide_and_deep_.mindir.ms.out'
+#   echo 'mpirun -np 2 ./benchmark --modelFile='${model_file}' --configFile='${config_file}' --inDataFile='${input_files}' --benchmarkDataFile='${output_file}' --device=GPU' >> "${run_tensorrt_mpirun_log_file}"
+#   mpirun -np 2 ./benchmark --modelFile=${model_file} --inDataFile=${input_files} --configFile=${config_file} --benchmarkDataFile=${output_file} --device=GPU >> ${run_tensorrt_mpirun_log_file}
+#   if [ $? = 0 ]; then
+#       run_result='TensorRT_Server: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+#   else
+#       run_result='TensorRT_Server: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+#   fi
 
   # wide_deep_worker_
   echo "start mpirun wide_deep_worker_ ..."
