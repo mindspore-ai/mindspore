@@ -689,6 +689,56 @@ void AddFormalToRealParameter(const AnfNodePtr &formal_parameter, const AnfNodeP
     (*formal_to_real_parameters)[{formal_parameter, i}].insert(real_parameters.begin(), real_parameters.end());
   }
 }
+
+// Recursively traverse the input to confirm whether there is an input of recursive call.
+bool IsFirstControlNode(const AnfNodePtr &node, std::set<AnfNodePtr> *checked_nodes,
+                        std::set<AnfNodePtr> unrecursion_call_nodes) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(checked_nodes);
+  if (!node->isa<CNode>() || checked_nodes->find(node) != checked_nodes->end()) {
+    return true;
+  }
+  checked_nodes->emplace(node);
+
+  const auto &cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  const auto &inputs = cnode->inputs();
+  for (const auto &input : inputs) {
+    MS_EXCEPTION_IF_NULL(input);
+    if ((AnfAlgo::IsCallNode(input) && unrecursion_call_nodes.find(input) == unrecursion_call_nodes.end()) ||
+        (!IsFirstControlNode(input, checked_nodes, unrecursion_call_nodes))) {
+      return false;
+    }
+  }
+  return true;
+}
+
+// Get the level of the control node, recursively traverse all the inputs of the node, and find the largest level
+// among them.
+size_t ParseControlNodeLevel(const AnfNodePtr &node, std::set<AnfNodePtr> *checked_nodes,
+                             const mindspore::HashMap<AnfNodePtr, size_t> &node_to_level) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(checked_nodes);
+  if (!node->isa<CNode>() || checked_nodes->find(node) != checked_nodes->end()) {
+    return 0;
+  }
+  checked_nodes->emplace(node);
+
+  auto iter = node_to_level.find(node);
+  if (iter != node_to_level.end()) {
+    return iter->second;
+  }
+
+  size_t level = 0;
+  const auto &cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  const auto &inputs = cnode->inputs();
+  for (const auto &input : inputs) {
+    size_t tmp_level = ParseControlNodeLevel(input, checked_nodes, node_to_level);
+    level = (tmp_level > level ? tmp_level : level);
+  }
+  return level;
+}
 }  // namespace
 
 KernelWithIndex FetchRealNodeByGetItem(const KernelWithIndex &node_with_index) {
@@ -870,6 +920,8 @@ void ControlNodeParser::Parse(const std::vector<AnfNodePtr> &control_nodes, cons
 
   ParseNeedStackKernelGraph(kernel_graph_to_device_contexts);
 
+  ParseNodeLevel(control_nodes);
+
   ParseNeedStackControlNode(control_nodes);
 
   ParseFormalToRealParameter(control_nodes);
@@ -961,7 +1013,7 @@ bool ControlNodeParser::IsRecursionKernelGraph(const KernelGraphPtr &graph) {
     MS_LOG(EXCEPTION) << "Invalid kernel graph:" << graph->ToString();
   }
   MS_EXCEPTION_IF_NULL(group_info_iter->second);
-  if (!group_info_iter->second->is_call_input_) {
+  if (!group_info_iter->second->need_stack_) {
     return false;
   }
   for (const auto &front_input_node : group_info_iter->second->front_input_nodes_) {
@@ -1303,7 +1355,7 @@ bool ControlNodeParser::IsCallInputKernelGraph(KernelGraph *const graph) {
 bool ControlNodeParser::IsCallInputKernelGraphGroup(const std::string &group_name) {
   for (const auto &graph_group : kernel_graph_group_infos_) {
     if (group_name.find(graph_group->group_name_) != std ::string::npos) {
-      return graph_group->is_call_input_;
+      return graph_group->need_stack_;
     }
   }
   MS_LOG(EXCEPTION) << "Invalid kernel graph group name:" << group_name;
@@ -1697,28 +1749,6 @@ AnfNodePtr ControlNodeParser::FetchRootGraphFrontNodeBySubFrontNode(const AnfNod
   return sub_front_node_to_root_front_node_[sub_front_node];
 }
 
-bool IsFirstControlNode(const AnfNodePtr &node, std::set<AnfNodePtr> *checked_nodes,
-                        std::set<AnfNodePtr> unrecursion_call_nodes) {
-  MS_EXCEPTION_IF_NULL(node);
-  MS_EXCEPTION_IF_NULL(checked_nodes);
-  if (!node->isa<CNode>() || checked_nodes->find(node) != checked_nodes->end()) {
-    return true;
-  }
-  checked_nodes->emplace(node);
-
-  const auto &cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  const auto &inputs = cnode->inputs();
-  for (const auto &input : inputs) {
-    MS_EXCEPTION_IF_NULL(input);
-    if ((AnfAlgo::IsCallNode(input) && unrecursion_call_nodes.find(input) == unrecursion_call_nodes.end()) ||
-        (!IsFirstControlNode(input, checked_nodes, unrecursion_call_nodes))) {
-      return false;
-    }
-  }
-  return true;
-}
-
 void ControlNodeParser::ParseFirstControlNodeForFuncGraph(const std::vector<AnfNodePtr> &control_nodes) {
   for (const auto &control_node : control_nodes) {
     std::set<AnfNodePtr> checked_nodes;
@@ -1806,10 +1836,10 @@ void ControlNodeParser::ParseNeedStackControlNode(const std::vector<AnfNodePtr> 
       if (call_input_num != 0 && (AnfAlgo::CheckPrimitiveType(inputs[kReturnInputPos], prim::kPrimDepend))) {
         need_stack_control_nodes_.emplace(control_node);
       }
-    } else if (AnfAlgo::CheckPrimitiveType(control_node, prim::kPrimPartial)) {
-      auto input_with_indexs = FetchInputNodeByCNode(control_node);
-      if (std::any_of(input_with_indexs.begin(), input_with_indexs.end(),
-                      [this](const auto &input_with_index) { return IsRecursionCallNode(input_with_index.first); })) {
+    } else if (AnfAlgo::CheckPrimitiveType(control_node, prim::kPrimPartial) ||
+               AnfAlgo::CheckPrimitiveType(control_node, prim::kPrimSwitch) ||
+               AnfAlgo::CheckPrimitiveType(control_node, prim::kPrimSwitchLayer)) {
+      if (!IsInputInSameLevel(control_node)) {
         need_stack_control_nodes_.emplace(control_node);
         MS_LOG(DEBUG) << "Add need stack control node:" << control_node->DebugString();
       }
@@ -1850,7 +1880,7 @@ void ControlNodeParser::ParseNeedStackKernelGraph(const KernelGraphToDeviceConte
             continue;
           }
           if (AnfAlgo::IsCallNode(front_node_with_index.first)) {
-            kernel_graph_group_info->is_call_input_ = true;
+            kernel_graph_group_info->need_stack_ = true;
           }
 
           if (AnfAlgo::CheckPrimitiveType(front_node_with_index.first, prim::kPrimTupleGetItem)) {
@@ -1877,7 +1907,7 @@ void ControlNodeParser::ParseNeedStackKernelGraph(const KernelGraphToDeviceConte
         }
 
         kernel_graphs_to_group_info_[kernel_graph] = kernel_graph_group_info;
-        if (kernel_graph_group_info->is_call_input_) {
+        if (kernel_graph_group_info->need_stack_) {
           call_input_kernel_graphs_.emplace(kernel_graph.get());
         }
       }
@@ -1888,6 +1918,97 @@ void ControlNodeParser::ParseNeedStackKernelGraph(const KernelGraphToDeviceConte
       kernel_graph_group_infos_.emplace(kernel_graph_group_info);
     }
   }
+}
+
+void ControlNodeParser::ParseNodeLevel(const std::vector<AnfNodePtr> &control_nodes) {
+  size_t level = 0;
+  // 1. Parse levels of control nodes.
+  for (const auto &control_node : control_nodes) {
+    if (AnfAlgo::CheckPrimitiveType(control_node, prim::kPrimReturn)) {
+      node_to_level_[control_node] = level;
+      level = 0;
+      const auto &func_graph = control_node->func_graph();
+      MS_EXCEPTION_IF_NULL(func_graph);
+      const auto &parameters = func_graph->parameters();
+      for (const auto &parameter : parameters) {
+        node_to_level_[parameter] = level;
+      }
+      continue;
+    } else if (AnfAlgo::IsCallNode(control_node) && IsRecursionCallNode(control_node)) {
+      ++level;
+      node_to_level_[control_node] = level;
+    } else {
+      std::set<AnfNodePtr> checked_nodes;
+      node_to_level_[control_node] = ParseControlNodeLevel(control_node, &checked_nodes, node_to_level_);
+    }
+  }
+
+  // 2. Parse the levels of kernel graph outputs.
+  for (const auto &kernel_graph_group_info : kernel_graph_group_infos_) {
+    level = 0;
+    for (const auto &front_input_node : kernel_graph_group_info->front_input_nodes_) {
+      const auto &input_node = front_input_node.first.first;
+      auto iter = node_to_level_.find(input_node);
+      if (iter != node_to_level_.end() && level < iter->second) {
+        level = iter->second;
+      }
+    }
+    for (const auto &front_output_node : kernel_graph_group_info->front_output_nodes_) {
+      const auto &output_node = front_output_node.first.first;
+      node_to_level_[output_node] = level;
+    }
+  }
+
+  // Parse the levels of kernel graph groups.
+  for (const auto &kernel_graph_group_info : kernel_graph_group_infos_) {
+    size_t max_level = 0;
+    for (const auto &front_input_node : kernel_graph_group_info->front_input_nodes_) {
+      const auto &input_node = front_input_node.first.first;
+      auto iter = node_to_level_.find(input_node);
+      if (iter == node_to_level_.end()) {
+        MS_LOG(EXCEPTION) << "Failed to get level by input node:" << input_node->DebugString()
+                          << " for kernel graph:" << kernel_graph_group_info->group_name_;
+      }
+      max_level = (max_level > iter->second ? max_level : iter->second);
+    }
+    if (max_level > 0) {
+      kernel_graph_group_info->need_stack_ = true;
+      kernel_graph_group_info->level_ = max_level;
+      for (const auto &kernel_graph : kernel_graph_group_info->graphs_) {
+        call_input_kernel_graphs_.emplace(kernel_graph.get());
+      }
+    }
+  }
+}
+
+bool ControlNodeParser::IsInputInSameLevel(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!node->isa<CNode>()) {
+    return true;
+  }
+
+  auto input_with_indexes = FetchInputNodeByCNode(node);
+  size_t level = SIZE_MAX;
+  for (const auto &input_with_index : input_with_indexes) {
+    auto input_node = input_with_index.first;
+    MS_EXCEPTION_IF_NULL(input_node);
+    if (input_node->isa<ValueNode>()) {
+      continue;
+    }
+    auto iter = node_to_level_.find(input_node);
+    if (iter == node_to_level_.end()) {
+      MS_LOG(EXCEPTION) << "Failed to find level by input:" << input_node->DebugString()
+                        << " for node:" << node->DebugString();
+    }
+    if (level == SIZE_MAX) {
+      level = iter->second;
+      continue;
+    }
+    if (level != iter->second) {
+      return false;
+    }
+  }
+  return true;
 }
 
 void ControlNodeParser::CreateDeviceTensorForRootGraphParameter(DeviceContext *default_context) {

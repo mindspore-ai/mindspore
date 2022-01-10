@@ -21,6 +21,9 @@
 namespace mindspore {
 namespace runtime {
 void AbstractActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<DeviceTensor> *const context) {
+  MS_EXCEPTION_IF_NULL(input_data);
+  MS_EXCEPTION_IF_NULL(input_data->data_);
+  MS_EXCEPTION_IF_NULL(input_data->data_->GetPtr());
   MS_EXCEPTION_IF_NULL(context);
   auto &sequential_num = context->sequential_num_;
   (void)input_op_datas_[sequential_num].emplace_back(input_data);
