@@ -23,19 +23,21 @@
 namespace mindspore {
 namespace opt {
 namespace {
-constexpr size_t kInt64Len = 8;
+constexpr size_t kInt32Len = 4;
 
 tensor::TensorPtr CreatePermTensor(const CNodePtr &transposed) {
-  auto perm = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(transposed, kAttrPerm);
+  auto perm_attr = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(transposed, kAttrPerm);
+  std::vector<int32_t> perm;
+  (void)std::transform(perm_attr.begin(), perm_attr.end(), std::back_inserter(perm), LongToInt);
   std::vector<int64_t> perm_shape = {SizeToLong(perm.size())};
-  TensorTypePtr tensor_type = std::make_shared<TensorType>(kInt64);
+  TensorTypePtr tensor_type = std::make_shared<TensorType>(kInt32);
   tensor::DeviceInfo device_info{kOpFormat_DEFAULT, tensor_type};
-  auto perm_tensor = std::make_shared<tensor::Tensor>(kNumberTypeInt64, perm_shape);
+  auto perm_tensor = std::make_shared<tensor::Tensor>(kNumberTypeInt32, perm_shape);
   perm_tensor->set_device_info(device_info);
   MS_EXCEPTION_IF_NULL(perm_tensor);
   auto data_ptr = perm_tensor->data_c();
   MS_EXCEPTION_IF_NULL(data_ptr);
-  auto elem_num = perm.size() * kInt64Len;
+  auto elem_num = perm.size() * kInt32Len;
   auto ret_code = memcpy_s(data_ptr, static_cast<size_t>(perm_tensor->data().nbytes()),
                            reinterpret_cast<void *>(perm.data()), elem_num);
   if (ret_code != 0) {
@@ -57,7 +59,7 @@ ValueNodePtr CreatePermValueNode(const CNodePtr &transposed) {
   perm_const->set_kernel_info(perm_kernel_info);
   kernel::KernelBuildInfo::KernelBuildInfoBuilder op_builder;
   op_builder.SetOutputsFormat({kOpFormat_DEFAULT});
-  op_builder.SetOutputsDeviceType({kNumberTypeInt64});
+  op_builder.SetOutputsDeviceType({kNumberTypeInt32});
   AnfAlgo::SetSelectKernelBuildInfo(op_builder.Build(), perm_const.get());
   return perm_const;
 }
@@ -76,6 +78,11 @@ const AnfNodePtr TransposedUpdateFusion::Process(const FuncGraphPtr &func_graph,
   MS_EXCEPTION_IF_NULL(transposed);
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
+  if (AnfAlgo::HasNodeAttr(kAttrNopOp, transposed) && AnfAlgo::GetNodeAttr<bool>(transposed, kAttrNopOp)) {
+    MS_LOG(INFO) << "Node [" << transposed->fullname_with_scope() << "] is a nop op, skip update.";
+    return nullptr;
+  }
+
   auto perm_vnode = CreatePermValueNode(transposed);
   std::vector<AnfNodePtr> transpose_inputs = {NewValueNode(std::make_shared<Primitive>(kTransposeNODOpName)),
                                               transposed->input(1), perm_vnode};
@@ -99,6 +106,7 @@ const AnfNodePtr TransposedUpdateFusion::Process(const FuncGraphPtr &func_graph,
   builder->SetOutputsFormat({output_format});
   AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), transpose.get());
   kernel_graph->AddValueNodeToGraph(perm_vnode);
+  AnfAlgo::CopyNodeAttrs(transposed, transpose);
   return transpose;
 }
 }  // namespace opt
