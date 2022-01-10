@@ -104,7 +104,7 @@ bool HcomUtil::GetHcclOpSize(const HcclDataType &data_type, const vector<size_t>
 
   *size = SizetMulWithOverflowCheck(tmp_size, type_size);
 
-  MS_LOG(INFO) << "size[" << *size << "]";
+  MS_LOG(DEBUG) << "size[" << *size << "]";
   return true;
 }
 

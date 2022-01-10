@@ -119,7 +119,7 @@ std::vector<TaskInfoPtr> TbeKernelMod::GenTask(const std::vector<AddressPtr> &in
 
   std::string stub_func = KernelManager::GetStubFuncName(kernel_pack_);
 
-  MS_LOG(INFO) << "block_dim is:" << block_dim_;
+  MS_LOG(DEBUG) << "block_dim is:" << block_dim_;
 
   TbeTaskInfoPtr task_info_ptr = std::make_shared<mindspore::ge::model_runner::TbeTaskInfo>(
     unique_name_, stream_id, stub_func, block_dim_, args, 0, sm_desc, nullptr, 0, meta_data, input_data_addrs,

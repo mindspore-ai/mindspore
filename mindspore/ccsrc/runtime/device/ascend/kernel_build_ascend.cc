@@ -167,7 +167,7 @@ bool IsAtomicNode(const CNodePtr &kernel_node) {
     auto param_output = parameters_indexes.at(input_num + i);
     if (param_output == 1) {
       output_indexes.emplace_back(i);
-      MS_LOG(INFO) << "Atomic clear output index: " << i;
+      MS_LOG(DEBUG) << "Atomic clear output index: " << i;
     }
   }
 
@@ -182,7 +182,7 @@ bool IsAtomicNode(const CNodePtr &kernel_node) {
     auto param_workspace = parameters_indexes.at(input_num + output_num + k);
     if (param_workspace == 1) {
       workspace_indexes.emplace_back(k);
-      MS_LOG(INFO) << "Atomic clear workspace index: " << k;
+      MS_LOG(DEBUG) << "Atomic clear workspace index: " << k;
     }
   }
   if (!workspace_indexes.empty()) {
