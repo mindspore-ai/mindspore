@@ -3683,6 +3683,14 @@ class Greater(_LogicBinaryOp):
         [False  True False]
     """
 
+    def infer_value(self, x, y):
+        if x is not None and y is not None:
+            x = x.asnumpy()
+            y = y.asnumpy()
+            out = np.array(np.greater(x, y))
+            return Tensor(out)
+        return None
+
 
 class GreaterEqual(_LogicBinaryOp):
     r"""
