@@ -136,6 +136,17 @@ def _check_add_offload(dataset, dataset_helper, network):
     return network
 
 
+class _DatasetAux:
+    def __deepcopy__(self, memodict):
+        return None
+
+
+def _get_dataset_aux(dataset):
+    if not hasattr(dataset, '__network_aux__'):
+        dataset.__network_aux__ = _DatasetAux()
+    return dataset.__network_aux__
+
+
 def connect_network_with_dataset(network, dataset_helper):
     """
     Connect the `network` with dataset in `dataset_helper`.
@@ -173,6 +184,7 @@ def connect_network_with_dataset(network, dataset_helper):
     """
     dataset_iter = dataset_helper.iter
     dataset = dataset_iter.dataset
+    aux = _get_dataset_aux(dataset)
 
     if isinstance(dataset_iter, _DatasetIterNormal):
         raise RuntimeError("The API 'connect_network_with_dataset' should be called in dataset sink mode.")
@@ -180,35 +192,37 @@ def connect_network_with_dataset(network, dataset_helper):
     if _is_role_sched() or _is_role_pserver():
         return network
 
+    if not hasattr(aux, '__network__'):
+        aux.__network__ = network
+
+    if aux.__network__ is not network:
+        raise ValueError("The dataset has been connected to other network, please check the code.")
+
     queue_name = dataset.__transfer_dataset__.queue_name
     if _dynamic_sink_scenario(dataset, dataset_iter):
-        if not hasattr(dataset_iter, '__network__'):
-            dataset_iter.__network__ = network
-        network = dataset_iter.__network__
-
         dataset_types, dataset_shapes = dataset_helper.get_data_info()
         dataset_types = [pytype_to_dtype(x) for x in dataset_types]
 
         key = str(dataset_types) + str(dataset_shapes)
-        if hasattr(dataset_iter, '__network_manage__') and key in dataset_iter.__network_manage__:
-            network = dataset_iter.__network_manage__[key]
+        if hasattr(aux, '__network_manage__') and key in aux.__network_manage__:
+            network = aux.__network_manage__[key]
         else:
             if _need_to_full():
                 device_num = _get_device_num() // _get_pipeline_stages()
                 dataset_shapes = _to_full_shapes(dataset_shapes, device_num)
 
             network = _generate_dataset_sink_mode_net(network, dataset_shapes, dataset_types, queue_name)
-            dataset_iter.__network_manage__ = dataset_iter.__network_manage__ if hasattr(
-                dataset_iter, '__network_manage__') else dict()
-            dataset_iter.__network_manage__[key] = network
+            aux.__network_manage__ = aux.__network_manage__ if hasattr(aux, '__network_manage__') else dict()
+            aux.__network_manage__[key] = network
         return network
 
-    if not hasattr(dataset, '__me_inited__') and \
-       not context.get_context("enable_ge") and \
-       context.get_context("device_target") in ("Ascend", "GPU"):
-        dataset.__me_inited__ = True
-        network = _check_add_offload(dataset, dataset_helper, network)
-        network = _generate_network_with_dataset(network, dataset_helper, queue_name)
+    if hasattr(aux, '__sink_network__'):
+        network = aux.__sink_network__
+    else:
+        if not context.get_context("enable_ge") and context.get_context("device_target") in ("Ascend", "GPU"):
+            network = _check_add_offload(dataset, dataset_helper, network)
+            network = _generate_network_with_dataset(network, dataset_helper, queue_name)
+            aux.__sink_network__ = network
 
     if _dynamic_sink_data(dataset, dataset_iter) and _dynamic_sink_exception_scenario(dataset_iter):
         dataset_helper.get_data_info()
