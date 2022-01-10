@@ -439,13 +439,13 @@ void AbstractNode::RegisterFollowerScalerHandlerAfterScaleIn(const std::string &
 PersistentState AbstractNode::persistent_state() const { return persistent_state_; }
 void AbstractNode::set_persistent_state(PersistentState persistent_state) { persistent_state_ = persistent_state; }
 
-int32_t AbstractNode::worker_num() const { return worker_num_; }
+uint32_t AbstractNode::worker_num() const { return worker_num_; }
 
-int32_t AbstractNode::server_num() const { return server_num_; }
+uint32_t AbstractNode::server_num() const { return server_num_; }
 
-void AbstractNode::set_worker_num(const int32_t &worker_num) { worker_num_ = worker_num; }
+void AbstractNode::set_worker_num(const uint32_t &worker_num) { worker_num_ = worker_num; }
 
-void AbstractNode::set_server_num(const int32_t &server_num) { server_num_ = server_num; }
+void AbstractNode::set_server_num(const uint32_t &server_num) { server_num_ = server_num; }
 
 std::string AbstractNode::scheduler_ip() const { return scheduler_ip_; }
 
@@ -1063,7 +1063,8 @@ void AbstractNode::ProcessSendData(const std::shared_ptr<TcpConnection> &conn, c
   std::shared_ptr<unsigned char> res(new unsigned char[size], std::default_delete<unsigned char[]>());
 #else
   if (size < 0) {
-    MS_LOG(EXCEPTION) << "size < 0";
+    MS_LOG(ERROR) << "size < 0";
+    return;
   }
   std::shared_ptr<unsigned char[]> res(new unsigned char[size]);
 #endif
@@ -1293,7 +1294,7 @@ void AbstractNode::CreateTcpServer() {
 }
 
 void AbstractNode::UpdateClusterState(const ClusterState &state) {
-  std::lock_guard<std::mutex> lk(cluster_state_mutex_);
+  std::lock_guard<std::mutex> lock(cluster_state_mutex_);
   MS_LOG(INFO) << "[state]: Cluster state change from:" << CommUtil::ClusterStateToString(current_cluster_state_)
                << " to " << CommUtil::ClusterStateToString(state);
   current_cluster_state_ = state;
