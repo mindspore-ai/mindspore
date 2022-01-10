@@ -22,6 +22,39 @@
 
 namespace mindspore {
 namespace opt {
+bool RunOpInsertTransData::InsertTransdataForOutput(const FuncGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  bool changed = false;
+  bool has_changed = false;
+  auto output = graph->output();
+  MS_EXCEPTION_IF_NULL(output);
+  auto cnode = output->cast<CNodePtr>();
+  auto inputs_num = AnfAlgo::GetInputNum(cnode);
+  if (AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimMakeTuple)) {
+    for (size_t index = 0; index < inputs_num; index++) {
+      auto format = AnfAlgo::GetPrevNodeOutputFormat(cnode, index);
+      if (format == kOpFormat_ND_RNN_BIAS || format == kOpFormat_FRACTAL_ZN_RNN) {
+        auto cur_cnode_with_index = AnfAlgo::GetPrevNodeOutput(cnode, index, false);
+        auto trans_node =
+          AddTransOpNodeToGraph(graph, cur_cnode_with_index.first, kernel_select_, cur_cnode_with_index.second, false);
+        AnfAlgo::SetNodeInput(cnode, trans_node, index);
+        has_changed = true;
+      }
+    }
+  }
+
+  if (has_changed) {
+    auto kernel_graph = graph->cast<KernelGraphPtr>();
+    MS_EXCEPTION_IF_NULL(kernel_graph);
+    auto new_node = kernel_graph->NewCNode(cnode);
+    auto manager = kernel_graph->manager();
+    MS_EXCEPTION_IF_NULL(manager);
+    (void)manager->Replace(cnode, new_node);
+    changed = true;
+  }
+  return changed;
+}
+
 bool RunOpInsertTransData::Run(const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   bool changed = false;
@@ -64,6 +97,8 @@ bool RunOpInsertTransData::Run(const FuncGraphPtr &graph) {
       changed = true;
     }
   }
+
+  changed = InsertTransdataForOutput(graph) || changed;
   return changed;
 }
 }  // namespace opt
