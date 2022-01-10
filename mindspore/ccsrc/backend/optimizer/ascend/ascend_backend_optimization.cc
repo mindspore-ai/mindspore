@@ -621,7 +621,6 @@ void AscendUnifyMindIR(const std::shared_ptr<session::KernelGraph> &graph) {
   }
 #endif
 }
-
 void AscendDynamicShapeConvert(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);

@@ -22,7 +22,6 @@
 
 namespace mindspore {
 namespace opt {
-
 const AnfNodePtr AddDynamicShapeAttr::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                               const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(func_graph);
