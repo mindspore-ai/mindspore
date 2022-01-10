@@ -211,19 +211,18 @@ class FederatedLearningManager(Callback):
         if self._min_consistent_rate > consistent_rate:
             self._min_consistent_rate = consistent_rate
             self._min_consistent_rate_at_round = self._round_id
-        else:
-            if self._round_id - self._min_consistent_rate_at_round > self._observation_window_size:
-                if self._sync_frequency > 1 and self._round_id > self._unchanged_round:
-                    self._sync_frequency = (self._sync_frequency + self._frequency_increase_ratio - 1) \
-                                           // self._frequency_increase_ratio
-                    self._min_consistent_rate = 1.1
-                    self._min_consistent_rate_at_round = self._round_id
-                    self._observation_window_size *= self._frequency_increase_ratio
+        elif self._round_id - self._min_consistent_rate_at_round > self._observation_window_size and \
+                self._sync_frequency > 1 and self._round_id > self._unchanged_round:
+            self._sync_frequency = (self._sync_frequency + self._frequency_increase_ratio - 1) \
+                                    // self._frequency_increase_ratio
+            self._min_consistent_rate = 1.1
+            self._min_consistent_rate_at_round = self._round_id
+            self._observation_window_size *= self._frequency_increase_ratio
 
-                    for param in self._model.trainable_params():
-                        if self._as_prefix not in param.name:
-                            self._grads_ema[param.name] = np.zeros(param.shape)
-                            self._abs_grads_ema[param.name] = np.zeros(param.shape)
+            for param in self._model.trainable_params():
+                if self._as_prefix not in param.name:
+                    self._grads_ema[param.name] = np.zeros(param.shape)
+                    self._abs_grads_ema[param.name] = np.zeros(param.shape)
 
     def _as_set_last_param(self):
         """
