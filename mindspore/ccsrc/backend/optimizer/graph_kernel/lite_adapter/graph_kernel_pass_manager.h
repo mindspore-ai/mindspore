@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_PASS_MANAGER_H_
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_PASS_MANAGER_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_LITE_ADAPTER_GRAPH_KERNEL_PASS_MANAGER_H_
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_LITE_ADAPTER_GRAPH_KERNEL_PASS_MANAGER_H_
 
 #include <utility>
 #include <vector>
@@ -39,6 +39,7 @@ class GraphKernelPassManager : public PassManager {
   bool Run(const FuncGraphPtr &func_graph) const override;
 
  protected:
+  bool RunPass(const FuncGraphPtr &func_graph, size_t pass_id, const opt::PassPtr &pass) const override;
   std::string GetPassFullname(size_t pass_id, const opt::PassPtr &pass) const override;
 
   size_t stage_;
@@ -46,4 +47,4 @@ class GraphKernelPassManager : public PassManager {
   const GraphKernelFlags &flags_;
 };
 }  // namespace mindspore::graphkernel
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_PASS_MANAGER_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_LITE_ADAPTER_GRAPH_KERNEL_PASS_MANAGER_H_

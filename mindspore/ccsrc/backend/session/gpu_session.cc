@@ -52,7 +52,7 @@
 #ifdef ENABLE_GPU_INFER
 #include "backend/optimizer/trt_pass/graph_converter.h"
 #endif
-#include "backend/optimizer/graph_kernel/graph_kernel_optimization.h"
+#include "backend/optimizer/graph_kernel/adapter/graph_kernel_optimization.h"
 #include "backend/optimizer/pass/communication_op_fusion.h"
 #include "backend/optimizer/gpu/concat_outputs_for_all_gather.h"
 #include "backend/optimizer/pass/getitem_tuple.h"

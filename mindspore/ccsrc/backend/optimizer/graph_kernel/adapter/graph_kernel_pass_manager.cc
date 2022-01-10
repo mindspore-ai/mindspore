@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "backend/optimizer/graph_kernel/graph_kernel_pass_manager.h"
+#include "backend/optimizer/graph_kernel/adapter/graph_kernel_pass_manager.h"
 
 #include <iomanip>
 
@@ -58,7 +58,9 @@ bool GraphKernelPassManager::Run(const FuncGraphPtr &func_graph) const {
       // dump ir to a graph_kernel subdir, and set a global id in front of the filename
       std::ostringstream oss;
       static int g_id = 0;
-      oss << "graph_kernel/" << std::setfill('0') << std::setw(4) << g_id++ << "_" << GetPassFullname(i, passes_[i]);
+      constexpr int id_length = 4;
+      oss << "graph_kernel/" << std::setfill('0') << std::setw(id_length) << g_id++ << "_"
+          << GetPassFullname(i, passes_[i]);
       DumpPassIR(func_graph, oss.str());
     } else {
       MS_LOG(INFO) << "pass " << GetPassFullname(i, passes_[i]) << " is disabled.";
