@@ -40,9 +40,6 @@ class MatMulGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    if (is_null_input_) {
-      return true;
-    }
     CHECK_CUBLAS_RET_WITH_ERROR(cublasSetStream(handle_, reinterpret_cast<cudaStream_t>(stream_ptr)),
                                 "cublasSetStream failed");
     VARIABLE_NOT_USED(workspace);

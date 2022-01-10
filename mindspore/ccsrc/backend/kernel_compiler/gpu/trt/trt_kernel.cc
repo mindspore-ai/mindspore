@@ -15,6 +15,8 @@
  */
 #include "backend/kernel_compiler/gpu/trt/trt_kernel.h"
 
+#include <functional>
+#include <algorithm>
 #include "backend/kernel_compiler/gpu/data/dataset_utils.h"
 #include "backend/kernel_compiler/gpu/trt/trt_utils.h"
 #include "backend/kernel_compiler/common_utils.h"
@@ -78,9 +80,9 @@ bool TrtKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<
   MS_EXCEPTION_IF_NULL(context_);
   std::vector<void *> device_buffer;
   std::transform(std::begin(inputs), std::end(inputs), std::back_inserter(device_buffer),
-                 [](const AddressPtr &input) -> void * { return input->addr; });
+                 [](const AddressPtr &input) { return input->addr; });
   std::transform(std::begin(outputs), std::end(outputs), std::back_inserter(device_buffer),
-                 [](const AddressPtr &output) -> void * { return output->addr; });
+                 [](const AddressPtr &output) { return output->addr; });
   return context_->enqueueV2(device_buffer.data(), reinterpret_cast<cudaStream_t>(stream), nullptr);
 }
 }  // namespace kernel
