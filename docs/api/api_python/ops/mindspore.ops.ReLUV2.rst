@@ -1,7 +1,7 @@
 mindspore.ops.ReLUV2
 ====================
 
-.. py:class:: mindspore.ops.ReLUV2(*args, **kwargs)
+.. py:class:: mindspore.ops.ReLUV2()
 
     线性修正单元激活函数（Rectified Linear Unit activation function）。
 
@@ -11,10 +11,6 @@ mindspore.ops.ReLUV2
 
         \text{ReLU}(x) = (x)^+ = \max(0, x)，
 
-    .. note::
-
-        与 `ReLu` 的区别在于该算子多输出一个mask，且算子的kernel与 `ReLu` 的不同。
-
     **输入：**
 
     - **input_x** (Tensor) - 输入Tensor必须是4-D Tensor。
@@ -22,7 +18,7 @@ mindspore.ops.ReLUV2
     **输出：**
 
     - **output** (Tensor) - 数据类型和shape与 `input_x` 的相同。
-    - **mask** (Tensor) - 数据类型必须为uint8的Tensor。
+    - **mask** (Tensor) - 保留输出，无实际意义。
 
     **异常：**
 
@@ -37,14 +33,9 @@ mindspore.ops.ReLUV2
 
     >>> input_x = Tensor(np.array([[[[1, -2], [-3, 4]], [[-5, 6], [7, -8]]]]), mindspore.float32)
     >>> relu_v2 = ops.ReLUV2()
-    >>> output, mask= relu_v2(input_x)
+    >>> output, _= relu_v2(input_x)
     >>> print(output)
     [[[[1. 0.]
        [0. 4.]]
        [[0. 6.]
        [7. 0.]]]]
-    >>> print(mask)
-    [[[[[1 0]
-        [2 0]]
-        [[2 0]
-        [1 0]]]]]

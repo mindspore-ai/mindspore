@@ -1,9 +1,9 @@
 mindspore.ops.SeLU
 ==================
 
-.. py:class:: mindspore.ops.SeLU(*args, **kwargs)
+.. py:class:: mindspore.ops.SeLU()
 
-    按元素计算输入Tensor的SeLU（scaled exponential Linear Unit）函数。
+    激活函数SeLU（Scaled exponential Linear Unit）。
 
     该激活函数定义为：
 
@@ -21,7 +21,7 @@ mindspore.ops.SeLU
 
     **输入：**
 
-    - **input_x** (Tensor) - shape为 :math:`(N, *)` 的Tensor，其中， :math:`*` 表示任意的附加维度数，数据类型为float16或float32。
+    - **input_x** (Tensor) - 任意维度的Tensor，数据类型为float16或float32。
 
     **输出：**
 

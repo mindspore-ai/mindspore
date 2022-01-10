@@ -1,15 +1,13 @@
 mindspore.ops.Size
 ==================
 
-.. py:class:: mindspore.ops.Size(*args, **kwargs)
+.. py:class:: mindspore.ops.Size()
 
-    返回Tensor的大小。
-
-    返回一个整数Scalar，表示输入的元素大小，即Tensor中元素的总数。
+    返回一个Scalar，类型为整数，表示输入Tensor的大小，即Tensor中元素的总数。
 
     **输入：**
 
-    - **input_x** (Tensor) - Tensor的shape为 :math:`(x_1, x_2, ..., x_R)` 。数据类型为Number。
+    - **input_x** (Tensor) - 输入参数，shape为 :math:`(x_1, x_2, ..., x_R)` 。数据类型为 `number <https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.html#mindspore.dtype>`_ 。
 
     **输出：**
 

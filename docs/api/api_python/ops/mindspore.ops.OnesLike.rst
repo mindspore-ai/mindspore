@@ -1,15 +1,13 @@
 mindspore.ops.OnesLike
 ======================
 
-.. py:class:: mindspore.ops.OnesLike(*args, **kwargs)
+.. py:class:: mindspore.ops.OnesLike()
 
-    创建新Tensor。所有元素的值都为1。
-
-    返回填充了Scalar值为1的具有与输入相同shape和数据类型的Tensor。
+    返回值为1的Tensor，shape和数据类型与输入相同。
 
     **输入：**
 
-    - **input_x** (Tensor) - 输入Tensor。shape为 :math:`(N,*)` ，其中 :math:`*` 表示任意的附加维度数。
+    - **input_x** (Tensor) - 任意维度的Tensor。
 
     **输出：**
 

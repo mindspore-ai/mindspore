@@ -1,20 +1,23 @@
 mindspore.ops.Log
 =================
 
-.. py:class:: mindspore.ops.Log(*args, **kwargs)
+.. py:class:: mindspore.ops.Log()
 
-    按元素返回Tensor的自然对数。
+    逐元素返回Tensor的自然对数。
 
     .. math::
         y_i = log_e(x_i)
 
     .. warning::
 
-        如果算子Log的输入值在(0，0.01]或[0.95，1.05]范围内，则输出精度可能会发生变化。
+        如果算子Log的输入值在(0，0.01]或[0.95，1.05]范围内，则输出精度可能会存在误差。
+
+    .. note::
+        Ascend上输入Tensor的维度要小于等于8，CPU上输入Tensor的维度要小于8。
 
     **输入：**
 
-    - **x** (Tensor) - 输入Tensor。该值必须大于0。shape为 :math:`(N,*)`，其中 :math:`*` 表示任意的附加维度数，它的秩应小于8。
+    - **x** (Tensor) - 任意维度的输入Tensor。该值必须大于0。
 
     **输出：**
 

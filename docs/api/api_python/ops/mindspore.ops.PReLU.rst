@@ -1,7 +1,7 @@
 mindspore.ops.PReLU
 ===================
 
-.. py:class:: mindspore.ops.PReLU(*args, **kwargs)
+.. py:class:: mindspore.ops.PReLU()
 
     带参数的线性修正单元激活函数（Parametric Rectified Linear Unit activation function）。
 
@@ -14,18 +14,18 @@ mindspore.ops.PReLU
 
     .. note::
 
-        Ascend不支持0-D或1-D的x。
+        Ascend不支持标量和1维向量的输入x。
 
     **输入：**
 
-    - **x** (Tensor) - 用于计算激活函数的Tensor。数据类型为float16或float32。shape为 :math:`(N, C, *)` ，其中 :math:`*` 表示任意的附加维度数。
-    - **weight** (Tensor) - 权重Tensor。数据类型为float16或float32。只有两种shape是合法的，1或 `input_x` 的通道数。通道维度是输入的第二维。当输入为0-D或1-D Tensor时，通道数为1。
+    - **x** (Tensor) - 激活函数的输入Tensor。数据类型为float16或float32。shape为 :math:`(N, C, *)` ，其中 :math:`*` 表示任意的附加维度。
+    - **weight** (Tensor) - 权重Tensor。数据类型为float16或float32。weight只可以是向量，长度与输入x的通道数C相同。在GPU设备上，当输入为标量时，shape为1。
 
     **输出：**
 
     Tensor，数据类型与 `x` 的相同。
 
-    有关详细信息，请参考:class:`nn.PReLU`。
+    有关详细信息，请参考 :class:`mindspore.nn.PReLU` 。
 
     **异常：**
 

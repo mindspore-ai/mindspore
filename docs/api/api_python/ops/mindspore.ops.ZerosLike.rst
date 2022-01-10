@@ -1,15 +1,13 @@
 mindspore.ops.ZerosLike
 =======================
 
-.. py:class:: mindspore.ops.ZerosLike(*args, **kwargs)
+.. py:class:: mindspore.ops.ZerosLike()
 
-    创建新的Tensor。它的所有元素的值都为0。
-
-    返回具有与输入Tensor相同shape和数据类型的值为0的Tensor。
+    返回值为0的Tensor，其shape和数据类型与输入Tensor相同。
 
     **输入：**
 
-    - **input_x** (Tensor) - 输入Tensor。数据类型为int32、int64、float16或float32。shape为 :math:`(N,*)` ，其中 :math:`*` 表示任意的附加维度数。
+    - **input_x** (Tensor) - 任意维度的输入Tensor。数据类型为int32、int64、float16或float32。
 
     **输出：**
 
