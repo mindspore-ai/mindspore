@@ -107,6 +107,9 @@ void DynamicRnnGradFissionV2::CreateTLoopNode(const FuncGraphPtr &func_graph, co
     AnfAlgo::SetNodeAttr("transpose_x1", MakeValue(false), matmul);
     AnfAlgo::SetNodeAttr("transpose_x2", MakeValue(true), matmul);
     if (specs.shape_need_align) {
+      AnfAlgo::SetNodeAttr(kAttrFixedInputFormat,
+                           MakeValue(std::vector<string>{kOpFormat_FRAC_NZ, kOpFormat_FRACTAL_ZN_RNN}), matmul);
+      AnfAlgo::SetNodeAttr(kAttrFixedOutputFormat, MakeValue(std::vector<string>{kOpFormat_FRAC_NZ}), matmul);
       AnfAlgo::SetNodeAttr(kAttrInputSize, MakeValue(SizeToLong(specs.input_size)), matmul);
       AnfAlgo::SetNodeAttr(kAttrHiddenSize, MakeValue(SizeToLong(specs.hidden_size)), matmul);
       std::vector<size_t> output_shape = {1, specs.input_nz_size + specs.hidden_nz_size, specs.batch_nz_size, kCubeSize,
