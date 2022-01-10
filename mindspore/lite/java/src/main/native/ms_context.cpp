@@ -34,14 +34,12 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_config_MSContext_createMSC
   return (jlong)context;
 }
 
-extern "C" JNIEXPORT void JNICALL Java_com_mindspore_config_MSContext_addDeviceInfo(JNIEnv *env, jobject thiz,
-                                                                                    jlong context_ptr, jint device_type,
-                                                                                    jboolean enable_fp16,
-                                                                                    jint npu_freq) {
+extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_config_MSContext_addDeviceInfo(
+  JNIEnv *env, jobject thiz, jlong context_ptr, jint device_type, jboolean enable_fp16, jint npu_freq) {
   auto *pointer = reinterpret_cast<void *>(context_ptr);
   if (pointer == nullptr) {
     MS_LOGE("Context pointer from java is nullptr");
-    return;
+    return (jboolean) false;
   }
   auto *c_context_ptr = static_cast<mindspore::Context *>(pointer);
   auto &device_list = c_context_ptr->MutableDeviceInfo();
@@ -51,7 +49,7 @@ extern "C" JNIEXPORT void JNICALL Java_com_mindspore_config_MSContext_addDeviceI
       if (cpu_device_info == nullptr) {
         MS_LOGE("cpu device info is nullptr");
         delete (c_context_ptr);
-        return;
+        return (jboolean) false;
       }
       cpu_device_info->SetEnableFP16(enable_fp16);
       device_list.push_back(cpu_device_info);
@@ -63,7 +61,7 @@ extern "C" JNIEXPORT void JNICALL Java_com_mindspore_config_MSContext_addDeviceI
       if (gpu_device_info == nullptr) {
         MS_LOGE("gpu device info is nullptr");
         delete (c_context_ptr);
-        return;
+        return (jboolean) false;
       }
       gpu_device_info->SetEnableFP16(enable_fp16);
       device_list.push_back(gpu_device_info);
@@ -75,7 +73,7 @@ extern "C" JNIEXPORT void JNICALL Java_com_mindspore_config_MSContext_addDeviceI
       if (npu_device_info == nullptr) {
         MS_LOGE("npu device info is nullptr");
         delete (c_context_ptr);
-        return;
+        return (jboolean) false;
       }
       npu_device_info->SetFrequency(npu_freq);
       device_list.push_back(npu_device_info);
@@ -84,7 +82,9 @@ extern "C" JNIEXPORT void JNICALL Java_com_mindspore_config_MSContext_addDeviceI
     default:
       MS_LOGE("Invalid device_type : %d", device_type);
       delete (c_context_ptr);
+      return (jboolean) false;
   }
+  return (jboolean) true;
 }
 
 extern "C" JNIEXPORT void JNICALL Java_com_mindspore_config_MSContext_free(JNIEnv *env, jobject thiz,
