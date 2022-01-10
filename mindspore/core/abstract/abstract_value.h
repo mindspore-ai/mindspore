@@ -1633,6 +1633,8 @@ using AbstractIOMonadPtr = std::shared_ptr<AbstractIOMonad>;
 
 AnfNodePtr GetTraceNode(const AbstractBasePtr &abs);
 std::string ExtractLoggingInfo(const std::string &info);
+void SynchronizeSequenceNodesElementsUseFlags(const AnfNodeWeakPtrList &lhs_sequence_nodes,
+                                              const AnfNodeWeakPtrList &rhs_sequence_nodes);
 }  // namespace abstract
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_ABSTRACT_ABSTRACT_VALUE_H_

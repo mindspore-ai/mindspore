@@ -73,9 +73,23 @@ StackFramePtr StackFrame::DoJump(const AnalysisEnginePtr &engine, const CNodePtr
   // Evaluate the inputs firstly. Build arguments for the func graph.
   AbstractBasePtrList args_abs_list = GenerateArgsAbsList(engine, evaluator, current_cnode);
   // Check if already evaluated before.
-  if (evaluator->evaluator_cache_mgr()->GetValue(args_abs_list) != nullptr) {
+  auto &cache = evaluator->evaluator_cache_mgr()->GetCache();
+  auto iter = cache.find(args_abs_list);
+  if (iter != cache.end()) {
     MS_LOG(DEBUG) << "Eval before, current_node: " << current_cnode->DebugString()
                   << ", current_context_: " << current_context_->ToString() << ", args: " << args_abs_list;
+    // Update inputs sequence nodes info, if matched in cache.
+    for (size_t i = 0; i < args_abs_list.size(); ++i) {
+      auto new_sequence = dyn_cast<AbstractTuple>(args_abs_list[i]);
+      auto old_sequence = dyn_cast<AbstractTuple>(iter->first[i]);
+      if (old_sequence != nullptr && new_sequence != nullptr) {
+        MS_LOG(DEBUG) << "Before synchronize sequence nodes use flags, old_sequence: " << old_sequence->ToString()
+                      << ", new_sequence: " << new_sequence->ToString();
+        SynchronizeSequenceNodesElementsUseFlags(old_sequence->sequence_nodes(), new_sequence->sequence_nodes());
+        MS_LOG(DEBUG) << "After synchronize sequence nodes use flags, old_sequence: " << old_sequence->ToString()
+                      << ", new_sequence: " << new_sequence->ToString();
+      }
+    }
     return nullptr;
   }
 

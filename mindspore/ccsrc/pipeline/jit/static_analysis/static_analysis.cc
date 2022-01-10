@@ -581,23 +581,17 @@ EvalResultPtr AnalysisEngine::ForwardConfig(const AnfNodeConfigPtr &orig_conf, c
   MS_EXCEPTION_IF_NULL(new_conf);
   // Use anfnode_config_map_[orig_conf] = new_conf will require AnfNodeConfig provide copy constructor.
   (void)anfnode_config_map_.emplace(orig_conf, new_conf);
-  MS_LOG(DEBUG) << "Forward orig_conf: " << orig_conf->node()->DebugString()
-                << ", to new_conf: " << new_conf->node()->DebugString();
-  if (orig_conf->node()->isa<CNode>()) {
-    auto old_cnode = orig_conf->node()->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(old_cnode);
-    if (new_conf->node()->isa<CNode>()) {
-      auto new_cnode = new_conf->node()->cast<CNodePtr>();
-      MS_EXCEPTION_IF_NULL(new_cnode);
-      MS_EXCEPTION_IF_NULL(old_cnode->func_graph());
-      if (old_cnode->func_graph() == new_cnode->func_graph()) {
-        MS_LOG(DEBUG) << "Try to remove forward node from order list, forward node: " << new_cnode->ToString()
-                      << ", as origin node should be in order list, origin_node: " << old_cnode->ToString();
-        old_cnode->func_graph()->EraseUnusedNodeInOrder(new_cnode);
-      } else {
-        MS_LOG(EXCEPTION) << "Forward orig_node to different func_graph, old_node: " << old_cnode->DebugString()
-                          << ", new_node: " << new_cnode->DebugString();
-      }
+  MS_LOG(DEBUG) << "Forward orig_conf: " << orig_conf->ToString() << ", to new_conf: " << new_conf->ToString();
+  auto old_cnode = orig_conf->node()->cast<CNodePtr>();
+  auto new_cnode = new_conf->node()->cast<CNodePtr>();
+  if (old_cnode != nullptr && new_cnode != nullptr) {
+    if (old_cnode->func_graph() == new_cnode->func_graph()) {
+      MS_LOG(DEBUG) << "Try to remove forward node from order list, forward node: " << new_cnode->DebugString()
+                    << ", as origin node should be in order list, origin_node: " << old_cnode->DebugString();
+      old_cnode->func_graph()->EraseUnusedNodeInOrder(new_cnode);
+    } else {
+      MS_LOG(EXCEPTION) << "Forward orig_node to different func_graph, old_node: " << old_cnode->DebugString()
+                        << ", new_node: " << new_cnode->DebugString();
     }
   }
   (void)forward_count_++;

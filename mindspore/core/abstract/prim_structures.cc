@@ -134,20 +134,7 @@ AbstractBasePtr InferTupleOrListGetItem(const std::string &op_name, const Abstra
   } else {
     index_unsigned_value = LongToSize(index_int64_value + SizeToLong(nelems));
   }
-  if (!queue->sequence_nodes().empty()) {
-    for (auto &node : queue->sequence_nodes()) {
-      auto sequence_node = node.lock();
-      if (sequence_node == nullptr) {
-        MS_LOG(DEBUG) << "The node in sequence_nodes is free.";
-        continue;
-      }
-      auto flags = GetSequenceNodeElementsUseFlags(sequence_node);
-      if (flags != nullptr) {
-        (*flags)[index_unsigned_value] = true;
-        MS_LOG(DEBUG) << "Set item[" << index_unsigned_value << "] as use flag for " << sequence_node->DebugString();
-      }
-    }
-  }
+  SetSequenceElementsUseFlags(queue, index_unsigned_value, true);
   return queue->elements()[index_unsigned_value];
 }
 

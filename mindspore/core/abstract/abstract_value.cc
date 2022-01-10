@@ -306,7 +306,7 @@ void CollectSequenceNodes(const AnfNodeWeakPtrList &source_sequence_nodes, AnfNo
   }
 }
 
-void SynchronizeSequenceNodesElementsUseFlags(const AnfNodeWeakPtrList &sequence_nodes) {
+void SynchronizeSequenceNodesElementsUseFlagsInner(const AnfNodeWeakPtrList &sequence_nodes) {
   // Synchronize the elements use flags for all sequence nodes.
   auto current_sequence_node = sequence_nodes[0].lock();
   MS_EXCEPTION_IF_NULL(current_sequence_node);
@@ -315,21 +315,33 @@ void SynchronizeSequenceNodesElementsUseFlags(const AnfNodeWeakPtrList &sequence
     // We set the same 'elements_use_flags' for them after here.
     auto latter_sequence_node = sequence_nodes[i].lock();
     MS_EXCEPTION_IF_NULL(latter_sequence_node);
+    if (current_sequence_node == latter_sequence_node) {
+      continue;
+    }
     // The 'current_sequence_node' is not equal to 'latter_sequence_node'.
     auto current_flags = GetSequenceNodeElementsUseFlags(current_sequence_node);
     auto latter_flags = GetSequenceNodeElementsUseFlags(latter_sequence_node);
-    std::shared_ptr<std::vector<bool>> unique_flags = nullptr;  // Choose the ptr (use_count > 1) as unique flags.
-    if (current_flags.use_count() == 1 && latter_flags.use_count() == 1) {
+    if (current_flags == latter_flags) {
+      continue;
+    }
+    // Choose the ptr (use_count > 1) as unique flags.
+    std::shared_ptr<std::vector<bool>> unique_flags = nullptr;
+    auto current_count = current_flags.use_count();
+    auto latter_count = latter_flags.use_count();
+    if (current_count == 1 && latter_count == 1) {
       unique_flags = current_flags;
     } else {
-      MS_EXCEPTION_IF_CHECK_FAIL(current_flags.use_count() > 1 && latter_flags.use_count() > 1,
-                                 "Allow only one side has more than one use count.");
-      if (current_flags.use_count() > 1) {
+      if (current_count > 1 && latter_count > 1) {
+        MS_LOG(INFO) << "Allow only one side has more than one use count. count: " << current_count << ", "
+                     << latter_count;
+      }
+      if (current_count > latter_count) {
         unique_flags = current_flags;
-      } else {  // If latter_flags.use_count() > 1
+      } else {
         unique_flags = latter_flags;
       }
     }
+    // Merge the use flags, set true if either is true.
     for (size_t j = 0; j < current_flags->size(); ++j) {
       MS_LOG(DEBUG) << "Check elements_use_flags[" << j << "], this_flag: " << (*current_flags)[j]
                     << ", other_flag: " << (*latter_flags)[j];
@@ -339,6 +351,7 @@ void SynchronizeSequenceNodesElementsUseFlags(const AnfNodeWeakPtrList &sequence
         (*unique_flags)[j] = (*current_flags)[j];
       }
     }
+    // Use the same flags.
     if (unique_flags != current_flags) {
       SetSequenceNodeElementsUseFlags(current_sequence_node, unique_flags);
     }
@@ -371,8 +384,22 @@ AnfNodeWeakPtrList AbstractSequence::SequenceNodesJoin(const AbstractBasePtr &ot
     MS_LOG(EXCEPTION) << "Sequence nodes size should not be empty.";
   }
   // Synchronize the elements use flags for all sequence nodes.
-  SynchronizeSequenceNodesElementsUseFlags(sequence_nodes);
+  SynchronizeSequenceNodesElementsUseFlagsInner(sequence_nodes);
   return sequence_nodes;
+}
+
+void SynchronizeSequenceNodesElementsUseFlags(const AnfNodeWeakPtrList &lhs_sequence_nodes,
+                                              const AnfNodeWeakPtrList &rhs_sequence_nodes) {
+  // Collect this and other sequence nodes.
+  AnfNodeWeakPtrList sequence_nodes;
+  CollectSequenceNodes(lhs_sequence_nodes, &sequence_nodes);
+  CollectSequenceNodes(rhs_sequence_nodes, &sequence_nodes);
+  if (sequence_nodes.size() <= 1) {
+    MS_LOG(DEBUG) << "Sequence nodes size should exceed 1.";
+    return;
+  }
+  // Synchronize the elements use flags for all sequence nodes.
+  SynchronizeSequenceNodesElementsUseFlagsInner(sequence_nodes);
 }
 
 void AbstractSequence::PurifyElements() {
@@ -407,9 +434,9 @@ void AbstractSequence::PurifyElements() {
     if (!elements_use_flags[i]) {
       const auto unuse_node_none = std::make_shared<AbstractScalar>(std::make_shared<Int32Imm>(0));
       elements_[i] = unuse_node_none;
-      MS_LOG(INFO) << "Set element[" << i << "] to Zero.";
+      MS_LOG(DEBUG) << "Erase elements[" << i << "] abstract as Zero for " << ToString();
     } else {
-      MS_LOG(DEBUG) << "Keep element[" << i << "] as " << elements_[i]->ToString();
+      MS_LOG(DEBUG) << "Keep elements[" << i << "] abstract as " << elements_[i]->ToString();
     }
   }
 }
