@@ -24,8 +24,6 @@ celu_op_info = TBERegOp("CeLU") \
     .kernel_name("celu") \
     .partial_flag(True) \
     .attr("alpha", "optional", "float", "all", "1.0") \
-    .attr("alpha2", "optional", "float", "all", "1.0") \
-    .attr("alpha3", "optional", "float", "all", "1.0") \
     .input(0, "x", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
     .dtype_format(DataType.F16_Default, DataType.F16_Default) \
