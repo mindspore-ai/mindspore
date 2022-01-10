@@ -65,6 +65,7 @@ int UniqueCPUKernel::Run() {
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Unique, LiteKernelCreator<UniqueCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Unique, LiteKernelCreator<UniqueCPUKernel>)
 #ifdef ENABLE_FP16
 REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Unique, LiteKernelCreator<UniqueCPUKernel>)
 #endif
