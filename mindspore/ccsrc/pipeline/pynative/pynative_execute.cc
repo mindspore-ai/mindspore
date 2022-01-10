@@ -359,6 +359,9 @@ void GetSingleOpGraphInfo(const OpExecInfoPtr &op_exec_info, const std::vector<t
   std::ostringstream buf;
   buf << op_exec_info->op_name;
   bool has_const_input = false;
+  const auto &op_prim = op_exec_info->py_primitive;
+  MS_EXCEPTION_IF_NULL(op_prim);
+  bool is_random_effect_op = op_prim->HasAttr(GRAPH_FLAG_RANDOM_EFFECT);
   for (size_t index = 0; index < input_tensors.size(); ++index) {
     MS_EXCEPTION_IF_NULL(input_tensors[index]);
     buf << input_tensors[index]->shape();
@@ -366,7 +369,7 @@ void GetSingleOpGraphInfo(const OpExecInfoPtr &op_exec_info, const std::vector<t
     buf << input_tensors[index]->padding_type();
     // In the case of the same shape, but dtype and format are inconsistent
     auto tensor_addr = input_tensors[index]->device_address();
-    if (tensor_addr != nullptr) {
+    if (tensor_addr != nullptr && !is_random_effect_op) {
       auto p_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor_addr);
       MS_EXCEPTION_IF_NULL(p_address);
       buf << p_address->type_id();
@@ -390,8 +393,6 @@ void GetSingleOpGraphInfo(const OpExecInfoPtr &op_exec_info, const std::vector<t
     buf << "_";
   }
   // The value of the attribute affects the operator selection
-  const auto &op_prim = op_exec_info->py_primitive;
-  MS_EXCEPTION_IF_NULL(op_prim);
   const auto &attr_map = op_prim->attrs();
   (void)std::for_each(attr_map.begin(), attr_map.end(),
                       [&buf](const auto &element) { buf << element.second->ToString(); });
@@ -409,6 +410,12 @@ void GetSingleOpGraphInfo(const OpExecInfoPtr &op_exec_info, const std::vector<t
     MS_EXCEPTION_IF_NULL(build_type);
     buf << build_type->type_id();
   }
+
+  // Random effect operator
+  if (is_random_effect_op) {
+    buf << "_" << GetId(op_prim->GetPyObj());
+  }
+
   graph_info = buf.str();
 }
 
