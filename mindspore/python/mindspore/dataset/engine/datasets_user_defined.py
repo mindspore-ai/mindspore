@@ -13,10 +13,13 @@
 # limitations under the License.
 # ==============================================================================
 """
-This dataset module supports various formats of datasets, including ImageNet, TFData,
-MNIST, Cifar10/100, Manifest, MindRecord, and more. This module loads data with
-high performance and parses data precisely. Some of the operations that are
-provided to users to preprocess data include shuffle, batch, repeat, map, and zip.
+This file contains contains basic classes that help users do flexible dataset loading.
+You can define your own dataset loading class, and use GeneratorDataset to help load data.
+You can refer to the
+`tutorial <https://www.mindspore.cn/docs/programming_guide/en/master/dataset_loading.html#loading-user-defined-dataset>`
+to help define your dataset loading.
+After declaring the dataset object, you can further apply dataset operations
+(e.g. filter, skip, concat, map, batch) on it.
 """
 import builtins
 import math
@@ -38,7 +41,7 @@ import mindspore._c_dataengine as cde
 from mindspore.common import Tensor
 from mindspore import log as logger
 
-from .datasets import MappableDataset, TextBaseDataset, Schema, to_list, _watch_dog, _check_shm_usage
+from .datasets import UnionBaseDataset, MappableDataset, Schema, to_list, _watch_dog, _check_shm_usage
 from . import samplers
 from .queue import _SharedQueue
 from .validators import check_generatordataset, check_numpyslicesdataset, check_paddeddataset
@@ -427,7 +430,7 @@ class _GeneratorWorkerMp(multiprocessing.Process):
         return True
 
 
-class GeneratorDataset(MappableDataset, TextBaseDataset):
+class GeneratorDataset(MappableDataset, UnionBaseDataset):
     """
     A source dataset that generates data from Python by invoking Python data source each epoch.
 
@@ -873,7 +876,7 @@ class _PaddedDataset:
 
 class PaddedDataset(GeneratorDataset):
     """
-    Creates a dataset with filler data provided by user. Mainly used to add to the original data set
+    Creates a dataset with filler data provided by user. Mainly used to add to the original dataset
     and assign it to the corresponding shard.
 
     Args:

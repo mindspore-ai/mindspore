@@ -13,17 +13,22 @@
 # limitations under the License.
 # ==============================================================================
 """
-This dataset module supports various formats of datasets, including ImageNet, TFData,
-MNIST, Cifar10/100, Manifest, MindRecord, and more. This module loads data with
-high performance and parses data precisely. Some of the operations that are
-provided to users to preprocess data include shuffle, batch, repeat, map, and zip.
+This file contains specific text dataset loading classes. You can easily use
+these classes to load the prepared dataset. For example:
+    IMDBDataset: which is IMDB dataset.
+    WikiTextDataset: which is Wiki text dataset.
+    CLUEDataset: which is CLUE dataset.
+    YelpReviewDataset: which is yelp review dataset.
+    ...
+After declaring the dataset object, you can further apply dataset operations
+(e.g. filter, skip, concat, map, batch) on it.
 """
 import mindspore._c_dataengine as cde
 
-from .datasets import MappableDataset, SourceDataset, TextBaseDataset, Shuffle
+from .datasets import TextBaseDataset, SourceDataset, MappableDataset, Shuffle
 from .validators import check_imdb_dataset, check_iwslt2016_dataset, check_iwslt2017_dataset, \
     check_penn_treebank_dataset, check_ag_news_dataset, check_amazon_review_dataset, check_udpos_dataset, \
-    check_wiki_text_dataset, check_conll2000_dataset, check_cluedataset, check_csvdataset, \
+    check_wiki_text_dataset, check_conll2000_dataset, check_cluedataset, \
     check_sogou_news_dataset, check_textfiledataset, check_dbpedia_dataset, check_yelp_review_dataset, \
     check_en_wik9_dataset, check_yahoo_answers_dataset
 
@@ -117,7 +122,7 @@ class AGNewsDataset(SourceDataset, TextBaseDataset):
                               self.shard_id)
 
 
-class AmazonReviewDataset(SourceDataset):
+class AmazonReviewDataset(SourceDataset, TextBaseDataset):
     """
     A source dataset that reads and parses Amazon Review Polarity and Amazon Review Full datasets.
 
@@ -363,7 +368,7 @@ class CLUEDataset(SourceDataset, TextBaseDataset):
                             self.num_shards, self.shard_id)
 
 
-class CoNLL2000Dataset(SourceDataset):
+class CoNLL2000Dataset(SourceDataset, TextBaseDataset):
     """
     A source dataset that reads and parses CoNLL2000 dataset.
 
@@ -419,71 +424,6 @@ class CoNLL2000Dataset(SourceDataset):
     def parse(self, children=None):
         return cde.CoNLL2000Node(self.dataset_dir, self.usage, self.num_samples, self.shuffle_flag, self.num_shards,
                                  self.shard_id)
-
-
-class CSVDataset(SourceDataset, TextBaseDataset):
-    """
-    A source dataset that reads and parses comma-separated values
-    `(CSV) <http://en.volupedia.org/wiki/Comma-separated_values>`_ files as dataset.
-    The columns of generated dataset depend on the source CSV files.
-
-    Args:
-        dataset_files (Union[str, list[str]]): String or list of files to be read or glob strings to search
-            for a pattern of files. The list will be sorted in a lexicographical order.
-        field_delim (str, optional): A string that indicates the char delimiter to separate fields (default=',').
-        column_defaults (list, optional): List of default values for the CSV field (default=None). Each item
-            in the list is either a valid type (float, int, or string). If this is not provided, treats all
-            columns as string type.
-        column_names (list[str], optional): List of column names of the dataset (default=None). If this
-            is not provided, infers the column_names from the first row of CSV file.
-        num_samples (int, optional): The number of samples to be included in the dataset
-            (default=None, will include all images).
-        num_parallel_workers (int, optional): Number of workers to read the data
-            (default=None, number set in the config).
-        shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
-            (default=Shuffle.GLOBAL).
-            If shuffle is False, no shuffling will be performed.
-            If shuffle is True, performs global shuffle.
-            There are three levels of shuffling, desired shuffle enum defined by mindspore.dataset.Shuffle.
-
-            - Shuffle.GLOBAL: Shuffle both the files and samples, same as setting shuffle to True.
-
-            - Shuffle.FILES: Shuffle files only.
-
-        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
-            When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
-        shard_id (int, optional): The shard ID within num_shards (default=None). This
-            argument can only be specified when num_shards is also specified.
-        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
-            (default=None, which means no cache is used).
-
-    Raises:
-        RuntimeError: If dataset_files are not valid or do not exist.
-        ValueError: If field_delim is invalid.
-        ValueError: If num_parallel_workers exceeds the max thread numbers.
-        RuntimeError: If num_shards is specified but shard_id is None.
-        RuntimeError: If shard_id is specified but num_shards is None.
-        ValueError: If shard_id is invalid (< 0 or >= num_shards).
-
-    Examples:
-        >>> csv_dataset_dir = ["/path/to/csv_dataset_file"] # contains 1 or multiple csv files
-        >>> dataset = ds.CSVDataset(dataset_files=csv_dataset_dir, column_names=['col1', 'col2', 'col3', 'col4'])
-    """
-
-    @check_csvdataset
-    def __init__(self, dataset_files, field_delim=',', column_defaults=None, column_names=None, num_samples=None,
-                 num_parallel_workers=None, shuffle=Shuffle.GLOBAL, num_shards=None, shard_id=None, cache=None):
-        super().__init__(num_parallel_workers=num_parallel_workers, num_samples=num_samples, shuffle=shuffle,
-                         num_shards=num_shards, shard_id=shard_id, cache=cache)
-        self.dataset_files = self._find_files(dataset_files)
-        self.dataset_files.sort()
-        self.field_delim = replace_none(field_delim, ',')
-        self.column_defaults = replace_none(column_defaults, [])
-        self.column_names = replace_none(column_names, [])
-
-    def parse(self, children=None):
-        return cde.CSVNode(self.dataset_files, self.field_delim, self.column_defaults, self.column_names,
-                           self.num_samples, self.shuffle_flag, self.num_shards, self.shard_id)
 
 
 class DBpediaDataset(SourceDataset, TextBaseDataset):
@@ -582,7 +522,7 @@ class DBpediaDataset(SourceDataset, TextBaseDataset):
                                self.shard_id)
 
 
-class EnWik9Dataset(SourceDataset):
+class EnWik9Dataset(SourceDataset, TextBaseDataset):
     """
     A source dataset that reads and parses EnWik9 dataset.
 
@@ -658,7 +598,7 @@ class EnWik9Dataset(SourceDataset):
                               self.shard_id)
 
 
-class IMDBDataset(MappableDataset):
+class IMDBDataset(MappableDataset, TextBaseDataset):
     """
     A source dataset for reading and parsing Internet Movie Database (IMDb).
 
@@ -737,7 +677,7 @@ class IMDBDataset(MappableDataset):
 
     About IMDBDataset:
 
-    The IMDB dataset contains 50, 000 highly polarized reviews from the Internet Movie Database (IMDB). The data set
+    The IMDB dataset contains 50, 000 highly polarized reviews from the Internet Movie Database (IMDB). The dataset
     was divided into 25 000 comments for training and 25 000 comments for testing, with both the training set and test
     set containing 50% positive and 50% negative comments. Train labels and test labels are all lists of 0 and 1, where
     0 stands for negative and 1 for positive.
@@ -852,13 +792,13 @@ class IWSLT2016Dataset(SourceDataset, TextBaseDataset):
     About IWSLT2016 dataset:
 
     IWSLT is an international oral translation conference, a major annual scientific conference dedicated to all aspects
-    of oral translation. The MT task of the IWSLT evaluation activity constitutes a data set, which can be publicly
-    obtained through the WIT3 website wit3.fbk.eu. The IWSLT2016 data set includes translations from English to Arabic,
+    of oral translation. The MT task of the IWSLT evaluation activity constitutes a dataset, which can be publicly
+    obtained through the WIT3 website wit3.fbk.eu. The IWSLT2016 dataset includes translations from English to Arabic,
     Czech, French, and German, and translations from Arabic, Czech, French, and German to English.
 
     You can unzip the original IWSLT2016 dataset files into this directory structure and read by MindSpore's API. After
-    decompression, you also need to decompress the data set to be read in the specified folder. For example, if you want
-    to read the data set of de-en, you need to unzip the tgz file in the de/en directory, the data set is in the
+    decompression, you also need to decompress the dataset to be read in the specified folder. For example, if you want
+    to read the dataset of de-en, you need to unzip the tgz file in the de/en directory, the dataset is in the
     unzipped folder.
 
     .. code-block::
@@ -972,9 +912,9 @@ class IWSLT2017Dataset(SourceDataset, TextBaseDataset):
     About IWSLT2017 dataset:
 
     IWSLT is an international oral translation conference, a major annual scientific conference dedicated to all aspects
-    of oral translation. The MT task of the IWSLT evaluation activity constitutes a data set, which can be publicly
-    obtained through the WIT3 website wit3.fbk.eu. The IWSLT2017 data set involves German, English, Italian, Dutch, and
-    Romanian. The data set includes translations in any two different languages.
+    of oral translation. The MT task of the IWSLT evaluation activity constitutes a dataset, which can be publicly
+    obtained through the WIT3 website wit3.fbk.eu. The IWSLT2017 dataset involves German, English, Italian, Dutch, and
+    Romanian. The dataset includes translations in any two different languages.
 
     You can unzip the original IWSLT2017 dataset files into this directory structure and read by MindSpore's API. You
     need to decompress the dataset package in texts/DeEnItNlRo/DeEnItNlRo directory to get the DeEnItNlRo-DeEnItNlRo
@@ -1111,7 +1051,7 @@ class PennTreebankDataset(SourceDataset, TextBaseDataset):
                                     self.shard_id)
 
 
-class SogouNewsDataset(SourceDataset):
+class SogouNewsDataset(SourceDataset, TextBaseDataset):
     r"""
     A source dataset that reads and parses Sogou News dataset.
 
@@ -1252,7 +1192,7 @@ class TextFileDataset(SourceDataset, TextBaseDataset):
                                 self.shard_id)
 
 
-class UDPOSDataset(SourceDataset):
+class UDPOSDataset(SourceDataset, TextBaseDataset):
     """
     A source dataset that reads and parses UDPOS dataset.
 
@@ -1310,7 +1250,7 @@ class UDPOSDataset(SourceDataset):
                              self.shard_id)
 
 
-class WikiTextDataset(SourceDataset):
+class WikiTextDataset(SourceDataset, TextBaseDataset):
     """
     A source dataset that reads and parses WikiText2 and WikiText103 datasets.
 
@@ -1388,7 +1328,7 @@ class WikiTextDataset(SourceDataset):
                                 self.shard_id)
 
 
-class YahooAnswersDataset(SourceDataset):
+class YahooAnswersDataset(SourceDataset, TextBaseDataset):
     """
     A source dataset that reads and parses the YahooAnswers dataset.
 

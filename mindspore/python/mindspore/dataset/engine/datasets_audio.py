@@ -13,21 +13,26 @@
 # limitations under the License.
 # ==============================================================================
 """
-This dataset module supports various formats of datasets, including ImageNet, TFData,
-MNIST, Cifar10/100, Manifest, MindRecord, and more. This module loads data with
-high performance and parses data precisely. Some of the operations that are
-provided to users to preprocess data include shuffle, batch, repeat, map, and zip.
+This file contains specific audio dataset loading classes. You can easily use
+these classes to load the prepared dataset. For example:
+    LJSpeechDataset: which is lj speech dataset.
+    YesNoDataset: which is yes or no dataset.
+    SpeechCommandsDataset: which is speech commands dataset.
+    TedliumDataset: which is tedlium dataset.
+    ...
+After declaring the dataset object, you can further apply dataset operations
+(e.g. filter, skip, concat, map, batch) on it.
 """
 import mindspore._c_dataengine as cde
 
-from .datasets import MappableDataset
+from .datasets import AudioBaseDataset, MappableDataset
 from .validators import check_lj_speech_dataset, check_yes_no_dataset, check_speech_commands_dataset, \
     check_tedlium_dataset
 
 from ..core.validator_helpers import replace_none
 
 
-class LJSpeechDataset(MappableDataset):
+class LJSpeechDataset(MappableDataset, AudioBaseDataset):
     """
     A source dataset for reading and parsing LJSpeech dataset.
 
@@ -163,7 +168,7 @@ class LJSpeechDataset(MappableDataset):
         return cde.LJSpeechNode(self.dataset_dir, self.sampler)
 
 
-class SpeechCommandsDataset(MappableDataset):
+class SpeechCommandsDataset(MappableDataset, AudioBaseDataset):
     """
     A source dataset for reading and parsing the SpeechCommands dataset.
 
@@ -288,7 +293,7 @@ class SpeechCommandsDataset(MappableDataset):
         return cde.SpeechCommandsNode(self.dataset_dir, self.usage, self.sampler)
 
 
-class TedliumDataset(MappableDataset):
+class TedliumDataset(MappableDataset, AudioBaseDataset):
     """
     A source dataset for reading and parsing Tedlium dataset.
     The columns of generated dataset depend on the source SPH files and the corresponding STM files.
@@ -500,7 +505,7 @@ class TedliumDataset(MappableDataset):
         return cde.TedliumNode(self.dataset_dir, self.release, self.usage, self.extensions, self.sampler)
 
 
-class YesNoDataset(MappableDataset):
+class YesNoDataset(MappableDataset, AudioBaseDataset):
     """
     A source dataset for reading and parsing the YesNo dataset.
 
