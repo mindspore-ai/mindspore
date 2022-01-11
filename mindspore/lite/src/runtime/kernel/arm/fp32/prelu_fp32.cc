@@ -84,7 +84,7 @@ int PReluCPUKernel::ReSize() {
 }
 
 int PReluCPUKernel::Run() {
-  constexpr int kSlopeIndex = 1;
+  const int kSlopeIndex = 1;
   input_data_ = in_tensors_[kInputIndex]->data();
   slope_data_ = in_tensors_[kSlopeIndex]->data();
   output_data_ = out_tensors_[kOutputIndex]->data();

@@ -71,7 +71,7 @@ int GruFp16CPUKernel::InitParam() {
   std::vector<int> w_shape = weight_g->shape();
   NNACL_CHECK_ZERO_RETURN_ERR(gate_num);
   gru_param_->hidden_size_ = w_shape.at(1) / gate_num;
-  constexpr int twice = 2;
+  const int twice = 2;
   weight_batch_ = gru_param_->bidirectional_ ? twice * gate_num : gate_num;
   gru_param_->output_step_ = gru_param_->bidirectional_ ? twice * gru_param_->batch_ * gru_param_->hidden_size_
                                                         : gru_param_->batch_ * gru_param_->hidden_size_;

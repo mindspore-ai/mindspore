@@ -77,7 +77,7 @@ int LstmFp16CPUKernel::InitParam() {
   NNACL_CHECK_ZERO_RETURN_ERR(gate_num);
   lstm_param_->hidden_size_ = w_shape.at(1) / gate_num;
 
-  constexpr int twice = 2;
+  const int twice = 2;
   lstm_param_->output_step_ = lstm_param_->bidirectional_ ? twice * lstm_param_->batch_ * lstm_param_->hidden_size_
                                                           : lstm_param_->batch_ * lstm_param_->hidden_size_;
   weight_batch_ = lstm_param_->bidirectional_ ? 2 * gate_num : gate_num;
