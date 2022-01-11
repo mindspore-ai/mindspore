@@ -144,7 +144,10 @@ class DataPreProcessParser:
 
         with open(self._source_file_name, 'rb') as ai_cpu_data:
             content = ai_cpu_data.read()
-            ai_cpu_total_time_summary, result_list = self.parser_binary_file(content)
+            if content[0:2].hex().upper() == "5A5A":
+                ai_cpu_total_time_summary, result_list = self.parser_binary_file(content)
+            else:
+                ai_cpu_total_time_summary, result_list = self.parser_txt_file(content)
 
         os.chmod(self._source_file_name, stat.S_IREAD)
 
@@ -186,6 +189,39 @@ class DataPreProcessParser:
 
             i = i + self._ai_cpu_len
 
+        return ai_cpu_total_time_summary, result_list
+
+    def parser_txt_file(self, content):
+        """Parse txt format file."""
+        ai_cpu_str = str(content.replace(b'\n\x00', b' ___ ').replace(b'\x00', b' ___ '))[2:-1]
+        ai_cpu_lines = ai_cpu_str.split(" ___ ")
+        result_list = list()
+        ai_cpu_total_time_summary = 0
+        # Node serial number.
+        serial_number = 1
+        for i in range(len(ai_cpu_lines) - 1):
+            node_line = ai_cpu_lines[i]
+            thread_line = ai_cpu_lines[i + 1]
+            if "Node" in node_line and "Thread" in thread_line:
+                # Get the node data from node_line
+                result = self._get_kernel_result(
+                    serial_number,
+                    node_line.split(','),
+                    thread_line.split(',')
+                )
+
+                if result is None:
+                    continue
+
+                result_list.append(result)
+                # Calculate the total time.
+                total_time = result[2]
+                ai_cpu_total_time_summary += total_time
+                # Increase node serial number.
+                serial_number += 1
+            elif "Node" in node_line and "Thread" not in thread_line:
+                node_type_name = node_line.split(',')[0].split(':')[-1]
+                logger.warning("The node type:%s cannot find thread data", node_type_name)
         return ai_cpu_total_time_summary, result_list
 
     def query_aicpu_data(self):
