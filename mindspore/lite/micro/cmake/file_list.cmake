@@ -152,6 +152,7 @@ set(LITE_SRC
         ${LITE_DIR}/src/huffman_decode.cc
         ${LITE_DIR}/src/common/log.cc
         ${LITE_DIR}/src/common/utils.cc
+        ${LITE_DIR}/src/pack_weight_manager.cc
         ${LITE_DIR}/../core/utils/status.cc
         ### tools
         ${LITE_DIR}/tools/common/flag_parser.cc

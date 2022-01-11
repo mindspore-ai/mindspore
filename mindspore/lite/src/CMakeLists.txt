@@ -30,6 +30,9 @@ endif()
 if(NOT MSLITE_ENABLE_INT8)
     add_compile_definitions(OP_INT8_CLIP)
 endif()
+if(MSLITE_ENABLE_SERVING)
+    add_compile_definitions(USING_SERVING)
+endif()
 
 if(APPLE OR PLATFORM_ARM32 OR PLATFORM_ARM64)
     #for performance
@@ -118,6 +121,7 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/lite_session.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/errorcode.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/cpu_info.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/pack_weight_manager.cc
         )
 
 if(MSLITE_ENABLE_CONTROLFLOW)

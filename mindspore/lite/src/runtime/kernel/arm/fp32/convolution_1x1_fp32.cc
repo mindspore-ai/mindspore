@@ -15,7 +15,9 @@
  */
 
 #include "src/runtime/kernel/arm/fp32/convolution_1x1_fp32.h"
-
+#ifdef USING_SERVING
+#include "src/pack_weight_manager.h"
+#endif
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_MEMORY_FAILED;
 using mindspore::lite::RET_OK;
@@ -305,7 +307,16 @@ int Convolution1x1CPUKernel::MallocWeightBiasData() {
   int size = input_channel * UP_ROUND(output_channel, col_tile_) * sizeof(float);
   if (!op_parameter_->is_train_session_) {
     CHECK_LESS_RETURN(MAX_MALLOC_SIZE, size);
+#ifdef USING_SERVING
+    auto packed = lite::PackWeightManager::GetInstance()->GetPackedTensor(in_tensors_[1], size);
+    packed_weight_ = packed.second;
+    weight_is_packed_ = packed.first;
+    if (weight_is_packed_ == lite::MALLOC && packed_weight_ == nullptr) {
+      packed_weight_ = malloc(size);
+    }
+#else
     packed_weight_ = malloc(size);
+#endif
     if (packed_weight_ == nullptr) {
       MS_LOG(ERROR) << "Conv1x1 Malloc packed_weight_ error!";
       return RET_ERROR;
