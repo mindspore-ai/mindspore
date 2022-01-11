@@ -77,11 +77,11 @@ void Node::ReplaceWith(const NodePtr &other_node) {
   }
 }
 
-void Node::RemoveUser(Node *user, size_t index) {
+void Node::RemoveUser(Node *const user, size_t index) {
   if (auto iter = users_.find(user); iter != users_.end()) {
-    iter->second.erase(index);
+    (void)iter->second.erase(index);
     if (iter->second.empty()) {
-      users_.erase(iter);
+      (void)users_.erase(iter);
     }
   }
 }

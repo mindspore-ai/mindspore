@@ -565,6 +565,7 @@ void AkgKernelBuilder::LoadCache() {
     (void)bin_map->Insert(kernel_name, kernel_dir + kernel_json);
   }
   has_load = true;
+  (void)closedir(dir);
   return;
 }
 

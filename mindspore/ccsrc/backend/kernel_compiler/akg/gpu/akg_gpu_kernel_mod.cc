@@ -120,12 +120,12 @@ bool GpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
   }
   std::vector<void *> runtimeargs;
   (void)std::transform(std::begin(inputs), std::end(inputs), std::back_inserter(runtimeargs),
-                       [](const AddressPtr &input) -> void * { return reinterpret_cast<void *>(&(input->addr)); });
+                       [](const AddressPtr &input) { return reinterpret_cast<void *>(&(input->addr)); });
   (void)std::transform(std::begin(outputs), std::end(outputs), std::back_inserter(runtimeargs),
-                       [](const AddressPtr &output) -> void * { return reinterpret_cast<void *>(&(output->addr)); });
+                       [](const AddressPtr &output) { return reinterpret_cast<void *>(&(output->addr)); });
   if (!workspace.empty()) {
     (void)std::transform(std::begin(workspace), std::end(workspace), std::back_inserter(runtimeargs),
-                         [](const AddressPtr &addr) -> void * { return reinterpret_cast<void *>(&(addr->addr)); });
+                         [](const AddressPtr &addr) { return reinterpret_cast<void *>(&(addr->addr)); });
   }
   result = cuLaunchKernel(kernel_addr, thread_info[0], thread_info[1], thread_info[2], thread_info[3], thread_info[4],
                           thread_info[5], 0, reinterpret_cast<CUstream>(stream_ptr),

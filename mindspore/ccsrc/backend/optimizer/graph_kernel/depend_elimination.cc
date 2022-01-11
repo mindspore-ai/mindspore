@@ -35,7 +35,7 @@ bool DependElimination::Run(const FuncGraphPtr &func_graph) {
         continue;
       }
       if (inputs[kRealInputIndexInDepend] == inputs[kDependAttachNodeIndex]) {
-        mng->Replace(node, inputs[kRealInputIndexInDepend]);
+        (void)mng->Replace(node, inputs[kRealInputIndexInDepend]);
         MS_LOG(INFO) << "Depend node has been replaced by " << inputs[kRealInputIndexInDepend];
       }
     }

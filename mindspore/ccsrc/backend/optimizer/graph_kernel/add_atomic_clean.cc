@@ -526,7 +526,7 @@ std::vector<std::tuple<AnfNodePtr, int, AnfNodePtr>> AtomicCleanInsertter::FindO
       auto item_idx = GetValue<int64_t>(value_node->value());
       auto iter = real_indices_and_clean_node.find(LongToSize(item_idx));
       if (iter != real_indices_and_clean_node.end()) {
-        getitem_user_nodes.emplace_back(node_index.first, iter->second);
+        (void)getitem_user_nodes.emplace_back(node_index.first, iter->second);
       } else if (correct_index) {
         // Recorrect other getitem index.
         int64_t new_item_idx = CalNewIndex(item_idx, real_indices);

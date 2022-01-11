@@ -48,7 +48,7 @@ class AbstractShapeCreator {
  private:
   static ShapeVector NchwAbstractShape(const ShapeVector &device_shape) { return device_shape; }
   static ShapeVector NhwcAbstractShape(const ShapeVector &device_shape) {
-    constexpr size_t nhwc_size = 4;
+    const size_t nhwc_size = 4;
     if (device_shape.size() != nhwc_size) {
       MS_LOG(EXCEPTION) << "Shape size of NHWC should be 4, but got " << device_shape.size();
     }
@@ -58,7 +58,7 @@ class AbstractShapeCreator {
     if (device_shape.size() == 1 && (device_shape[0] == 1 || static_cast<size_t>(device_shape[0]) % kCubeSize == 0)) {
       return device_shape;
     }
-    constexpr size_t nz_size = 4;
+    const size_t nz_size = 4;
     if (device_shape.size() < nz_size) {
       MS_LOG(EXCEPTION) << "Shape size of FRACTAL_NZ should >= 4, but got " << device_shape.size();
     }

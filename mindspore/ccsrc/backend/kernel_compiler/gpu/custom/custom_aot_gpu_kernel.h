@@ -128,13 +128,13 @@ class CustomAOTGpuKernel : public GpuKernel {
     }
 
     for (size_t i = 0; i < num_input_; i++) {
-      std::vector<size_t> in_shape = AnfAlgo::GetInputDeviceShape(kernel_node, i);
+      auto in_shape = AnfAlgo::GetInputDeviceShape(kernel_node, i);
       std::vector<int64_t> in_shape_tmp;
       std::for_each(in_shape.begin(), in_shape.end(),
                     [&in_shape_tmp](size_t c) { in_shape_tmp.push_back(SizeToLong(c)); });
-      shape_list_.emplace_back(in_shape_tmp);
-      ndims_.push_back(SizeToInt(in_shape_tmp.size()));
       type_list_.emplace_back(TypeIdToString(input_type_list[i], true));
+      ndims_.push_back(SizeToInt(in_shape_tmp.size()));
+      shape_list_.emplace_back(in_shape_tmp);
     }
 
     num_output_ = AnfAlgo::GetOutputTensorNum(kernel_node);
@@ -182,15 +182,16 @@ class CustomAOTGpuKernel : public GpuKernel {
   }
 
  private:
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
   std::vector<std::vector<int64_t>> shape_list_;
   std::vector<int> ndims_;
   std::vector<std::string> type_list_;
 
   std::vector<int64_t *> shapes_;
   std::vector<const char *> type_pointer_list_;
+
+  std::vector<size_t> input_size_list_;
+  std::vector<size_t> output_size_list_;
+  std::vector<size_t> workspace_size_list_;
 
   size_t num_input_;
   size_t num_output_;

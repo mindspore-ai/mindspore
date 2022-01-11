@@ -46,7 +46,7 @@ AnfNodePtr CloneCNode(const AnfNodePtr &anf_node) {
 void SplitNode(const AnfNodePtr &node, const FuncGraphManagerPtr &mng) {
   const auto &index_set = mng->node_users()[node];
   std::map<AnfNodePtr, std::vector<int>> users_info;
-  std::for_each(index_set.cbegin(), index_set.cend(), [&users_info](const std::pair<AnfNodePtr, int> &iter) {
+  (void)std::for_each(index_set.cbegin(), index_set.cend(), [&users_info](const std::pair<AnfNodePtr, int> &iter) {
     users_info[iter.first].push_back(iter.second);
   });
 
@@ -70,8 +70,8 @@ void SplitNode(const AnfNodePtr &node, const FuncGraphManagerPtr &mng) {
 bool ShapeOpsSplitter::IsMultiUserShapeOps(const AnfNodePtr &node, const FuncGraphManagerPtr &mng) const {
   auto &users = mng->node_users();
   std::set<AnfNodePtr> user_set;
-  std::transform(users[node].cbegin(), users[node].cend(), std::inserter(user_set, user_set.end()),
-                 [](const std::pair<AnfNodePtr, int> &iter) { return iter.first; });
+  (void)std::transform(users[node].cbegin(), users[node].cend(), std::inserter(user_set, user_set.end()),
+                       [](const std::pair<AnfNodePtr, int> &iter) { return iter.first; });
   return user_set.size() > 1 && std::any_of(shape_ops_.begin(), shape_ops_.end(),
                                             [&node](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); });
 }
