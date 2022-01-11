@@ -3448,7 +3448,7 @@ void PynativeExecutor::Sync() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
 
-  ExecuteAllTask();
+  ExecuteLazyTask();
 
   if (!ms_context->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
     for (auto &item : kSessionBackends) {
@@ -3485,7 +3485,7 @@ void PynativeExecutor::ExitCell() {
 
 bool PynativeExecutor::IsTopCell() const { return cell_depth_ == 0; }
 
-void PynativeExecutor::ExecuteAllTask() {
+void PynativeExecutor::ExecuteLazyTask() {
   mindspore::ScopedLongRunning long_running;
   session::PynativeTaskManager::GetInstance().ExecuteRemainingTasks();
   for (auto &item : kMindRtBackends) {
@@ -3511,7 +3511,7 @@ REGISTER_PYBIND_DEFINE(PynativeExecutor_, ([](const py::module *m) {
                            .def("clear_grad", &PynativeExecutor::ClearGrad, "pynative clear grad status.")
                            .def("sync", &PynativeExecutor::Sync, "pynative sync stream.")
                            .def("set_lazy_build", &PynativeExecutor::SetLazyBuild, "pynative build kernel async")
-                           .def("execute_all_task", &PynativeExecutor::ExecuteAllTask, "clear all task")
+                           .def("execute_lazy_task", &PynativeExecutor::ExecuteLazyTask, "clear all task")
                            .def("__call__", &PynativeExecutor::Run, "pynative executor run grad graph.")
                            .def("set_graph_phase", &PynativeExecutor::set_graph_phase, "pynative set graph phase")
                            .def("grad_flag", &PynativeExecutor::grad_flag, "pynative grad flag")
