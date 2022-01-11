@@ -42,12 +42,10 @@ def _chg_ckpt_file_name_if_same_exist(directory, prefix, exception=False):
     pre_len = len(prefix)
     for filename in files:
         name_ext = os.path.splitext(filename)
-        if not exception:
-            if name_ext[-1] != ".ckpt" or name_ext[-1] == ".ckpt" and filename[-16:] == "_breakpoint.ckpt":
-                continue
-        else:
-            if filename[-16:] != "_breakpoint.ckpt":
-                continue
+        if exception and filename[-16:] != "_breakpoint.ckpt":
+            continue
+        if not exception and (name_ext[-1] != ".ckpt" or filename[-16:] == "_breakpoint.ckpt"):
+            continue
         # find same prefix file
         if filename.find(prefix) == 0 and not filename[pre_len].isalpha():
             # add the max suffix + 1
