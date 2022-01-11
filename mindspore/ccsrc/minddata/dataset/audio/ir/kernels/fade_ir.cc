@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ std::shared_ptr<TensorOp> FadeOperation::Build() {
   return tensor_op;
 }
 
-Status FadeOperation::to_json(nlohmann::json *const out_json) {
+Status FadeOperation::to_json(nlohmann::json *out_json) {
   nlohmann::json args;
   args["fade_in_len"] = fade_in_len_;
   args["fade_out_len"] = fade_out_len_;

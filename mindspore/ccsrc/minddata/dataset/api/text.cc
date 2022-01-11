@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "minddata/dataset/include/dataset/text.h"
 
 #include <unistd.h>
 #include <fstream>
 #include <regex>
 
-#include "utils/file_utils.h"
-#include "minddata/dataset/include/dataset/text.h"
 #include "minddata/dataset/core/type_id.h"
 #include "minddata/dataset/text/ir/kernels/text_ir.h"
 #include "mindspore/core/ir/dtype/type_id.h"
+#include "utils/file_utils.h"
 
 namespace mindspore {
 namespace dataset {
-
 // Transform operations for text.
 namespace text {
-
 constexpr size_t size_two = 2;
 constexpr size_t size_three = 3;
 constexpr int64_t value_one = 1;
@@ -104,7 +102,7 @@ std::shared_ptr<TensorOperation> BertTokenizer::Parse() {
 }
 
 // CaseFold
-CaseFold::CaseFold() {}
+CaseFold::CaseFold() = default;
 
 std::shared_ptr<TensorOperation> CaseFold::Parse() { return std::make_shared<CaseFoldOperation>(); }
 #endif
@@ -170,6 +168,7 @@ Status JiebaTokenizer::AddDictChar(const std::vector<char> &file_path) {
 
 Status JiebaTokenizer::ParserFile(const std::string &file_path,
                                   std::vector<std::pair<std::string, int64_t>> *const user_dict) {
+  RETURN_UNEXPECTED_IF_NULL(user_dict);
   auto realpath = FileUtils::GetRealPath(file_path.data());
   if (!realpath.has_value()) {
     std::string err_msg = "Get real path failed, path: " + file_path;
@@ -193,7 +192,7 @@ Status JiebaTokenizer::ParserFile(const std::string &file_path,
       if (tokens.size() == size_two) {
         (void)user_dict->emplace_back(tokens.str(value_one), 0);
       } else if (tokens.size() == size_three) {
-        (void)user_dict->emplace_back(tokens.str(value_one), strtoll(tokens.str(value_two).c_str(), NULL, 0));
+        (void)user_dict->emplace_back(tokens.str(value_one), strtoll(tokens.str(value_two).c_str(), nullptr, 0));
       } else {
         continue;
       }
@@ -201,6 +200,7 @@ Status JiebaTokenizer::ParserFile(const std::string &file_path,
       continue;
     }
   }
+  ifs.close();
   MS_LOG(INFO) << "JiebaTokenizer::AddDict: The size of user input dictionary is: " << user_dict->size();
   MS_LOG(INFO) << "Valid rows in input dictionary (Maximum of first 10 rows are shown.):";
   for (std::size_t i = 0; i != user_dict->size(); ++i) {
@@ -367,7 +367,8 @@ struct ToVectors::Data {
   bool lower_case_backup_;
 };
 
-ToVectors::ToVectors(const std::shared_ptr<Vectors> &vectors, const std::vector<float> unk_init, bool lower_case_backup)
+ToVectors::ToVectors(const std::shared_ptr<Vectors> &vectors, const std::vector<float> &unk_init,
+                     bool lower_case_backup)
     : data_(std::make_shared<Data>(vectors, unk_init, lower_case_backup)) {}
 
 std::shared_ptr<TensorOperation> ToVectors::Parse() {

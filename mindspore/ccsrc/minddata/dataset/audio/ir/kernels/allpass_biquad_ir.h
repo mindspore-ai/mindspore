@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ constexpr char kAllpassBiquadOperation[] = "AllpassBiquad";
 
 class AllpassBiquadOperation : public TensorOperation {
  public:
-  explicit AllpassBiquadOperation(int32_t sample_rate, float central_freq, float Q);
+  AllpassBiquadOperation(int32_t sample_rate, float central_freq, float Q);
 
   ~AllpassBiquadOperation() = default;
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,9 +92,10 @@ std::shared_ptr<TensorOperation> AmplitudeToDB::Parse() {
 }
 
 // Angle Transform Operation.
-Angle::Angle() {}
+Angle::Angle() = default;
 
 std::shared_ptr<TensorOperation> Angle::Parse() { return std::make_shared<AngleOperation>(); }
+
 // BandBiquad Transform Operation.
 struct BandBiquad::Data {
   Data(int32_t sample_rate, float central_freq, float Q, bool noise)
@@ -225,7 +226,7 @@ struct DBToAmplitude::Data {
   float power_;
 };
 
-DBToAmplitude::DBToAmplitude(float ref, float power) : data_(std::make_shared<Data>(power, power)) {}
+DBToAmplitude::DBToAmplitude(float ref, float power) : data_(std::make_shared<Data>(ref, power)) {}
 
 std::shared_ptr<TensorOperation> DBToAmplitude::Parse() {
   return std::make_shared<DBToAmplitudeOperation>(data_->ref_, data_->power_);
@@ -431,7 +432,7 @@ struct LFilter::Data {
   bool clamp_;
 };
 
-LFilter::LFilter(std::vector<float> a_coeffs, std::vector<float> b_coeffs, bool clamp)
+LFilter::LFilter(const std::vector<float> &a_coeffs, const std::vector<float> &b_coeffs, bool clamp)
     : data_(std::make_shared<Data>(a_coeffs, b_coeffs, clamp)) {}
 
 std::shared_ptr<TensorOperation> LFilter::Parse() {
@@ -585,6 +586,17 @@ struct Spectrogram::Data {
   bool onesided_;
 };
 
+Spectrogram::Spectrogram(int32_t n_fft, int32_t win_length, int32_t hop_length, int32_t pad, WindowType window,
+                         float power, bool normalized, bool center, BorderType pad_mode, bool onesided)
+    : data_(std::make_shared<Data>(n_fft, win_length, hop_length, pad, window, power, normalized, center, pad_mode,
+                                   onesided)) {}
+
+std::shared_ptr<TensorOperation> Spectrogram::Parse() {
+  return std::make_shared<SpectrogramOperation>(data_->n_fft_, data_->win_length_, data_->hop_length_, data_->pad_,
+                                                data_->window_, data_->power_, data_->normalized_, data_->center_,
+                                                data_->pad_mode_, data_->onesided_);
+}
+
 // SpectralCentroid Transform Operation.
 struct SpectralCentroid::Data {
   Data(int32_t sample_rate, int32_t n_fft, int32_t win_length, int32_t hop_length, int32_t pad, WindowType window)
@@ -609,17 +621,6 @@ SpectralCentroid::SpectralCentroid(int32_t sample_rate, int32_t n_fft, int32_t w
 std::shared_ptr<TensorOperation> SpectralCentroid::Parse() {
   return std::make_shared<SpectralCentroidOperation>(data_->sample_rate_, data_->n_fft_, data_->win_length_,
                                                      data_->hop_length_, data_->pad_, data_->window_);
-}
-
-Spectrogram::Spectrogram(int32_t n_fft, int32_t win_length, int32_t hop_length, int32_t pad, WindowType window,
-                         float power, bool normalized, bool center, BorderType pad_mode, bool onesided)
-    : data_(std::make_shared<Data>(n_fft, win_length, hop_length, pad, window, power, normalized, center, pad_mode,
-                                   onesided)) {}
-
-std::shared_ptr<TensorOperation> Spectrogram::Parse() {
-  return std::make_shared<SpectrogramOperation>(data_->n_fft_, data_->win_length_, data_->hop_length_, data_->pad_,
-                                                data_->window_, data_->power_, data_->normalized_, data_->center_,
-                                                data_->pad_mode_, data_->onesided_);
 }
 
 // TimeMasking Transform Operation.

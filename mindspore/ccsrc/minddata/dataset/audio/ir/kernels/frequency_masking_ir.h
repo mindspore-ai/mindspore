@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@
 namespace mindspore {
 namespace dataset {
 namespace audio {
-
 constexpr char kFrequencyMaskingOperation[] = "FrequencyMasking";
 
 class FrequencyMaskingOperation : public TensorOperation {
@@ -49,7 +48,6 @@ class FrequencyMaskingOperation : public TensorOperation {
   bool iid_masks_;
   float mask_value_;
 };  // class FrequencyMaskingOperation
-
 }  // namespace audio
 }  // namespace dataset
 }  // namespace mindspore

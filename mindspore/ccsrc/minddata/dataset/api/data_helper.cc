@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -121,41 +121,49 @@ Status DataHelper::UpdateValueIF(const std::vector<char> &in_file, const std::ve
   auto jh = JsonHelper();
   return jh.UpdateValue(CharToString(in_file), CharToString(key), value, CharToString(out_file));
 }
+
 Status DataHelper::UpdateValueIF(const std::vector<char> &in_file, const std::vector<char> &key, const uint8_t &value,
                                  const std::vector<char> &out_file) {
   auto jh = JsonHelper();
   return jh.UpdateValue(CharToString(in_file), CharToString(key), value, CharToString(out_file));
 }
+
 Status DataHelper::UpdateValueIF(const std::vector<char> &in_file, const std::vector<char> &key, const int16_t &value,
                                  const std::vector<char> &out_file) {
   auto jh = JsonHelper();
   return jh.UpdateValue(CharToString(in_file), CharToString(key), value, CharToString(out_file));
 }
+
 Status DataHelper::UpdateValueIF(const std::vector<char> &in_file, const std::vector<char> &key, const uint16_t &value,
                                  const std::vector<char> &out_file) {
   auto jh = JsonHelper();
   return jh.UpdateValue(CharToString(in_file), CharToString(key), value, CharToString(out_file));
 }
+
 Status DataHelper::UpdateValueIF(const std::vector<char> &in_file, const std::vector<char> &key, const int32_t &value,
                                  const std::vector<char> &out_file) {
   auto jh = JsonHelper();
   return jh.UpdateValue(CharToString(in_file), CharToString(key), value, CharToString(out_file));
 }
+
 Status DataHelper::UpdateValueIF(const std::vector<char> &in_file, const std::vector<char> &key, const uint32_t &value,
                                  const std::vector<char> &out_file) {
   auto jh = JsonHelper();
   return jh.UpdateValue(CharToString(in_file), CharToString(key), value, CharToString(out_file));
 }
+
 Status DataHelper::UpdateValueIF(const std::vector<char> &in_file, const std::vector<char> &key, const int64_t &value,
                                  const std::vector<char> &out_file) {
   auto jh = JsonHelper();
   return jh.UpdateValue(CharToString(in_file), CharToString(key), value, CharToString(out_file));
 }
+
 Status DataHelper::UpdateValueIF(const std::vector<char> &in_file, const std::vector<char> &key, const uint64_t &value,
                                  const std::vector<char> &out_file) {
   auto jh = JsonHelper();
   return jh.UpdateValue(CharToString(in_file), CharToString(key), value, CharToString(out_file));
 }
+
 Status DataHelper::UpdateValueIF(const std::vector<char> &in_file, const std::vector<char> &key, const float &value,
                                  const std::vector<char> &out_file) {
   auto jh = JsonHelper();
@@ -179,6 +187,5 @@ size_t DataHelper::DumpData(const unsigned char *tensor_addr, const size_t &tens
   auto jh = JsonHelper();
   return jh.DumpData(tensor_addr, tensor_size, addr, buffer_size);
 }
-
 }  // namespace dataset
 }  // namespace mindspore

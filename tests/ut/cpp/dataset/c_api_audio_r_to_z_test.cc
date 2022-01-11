@@ -54,7 +54,7 @@ TEST_F(MindDataTestPipeline, TestRiaaBiquadBasicSampleRate44100) {
   std::vector<int64_t> expected = {2, 200};
 
   int i = 0;
-  while (row.size() != 0) {
+  while (!row.empty()) {
     auto col = row["waveform"];
     ASSERT_EQ(col.Shape(), expected);
     ASSERT_EQ(col.Shape().size(), 2);
@@ -93,7 +93,7 @@ TEST_F(MindDataTestPipeline, TestRiaaBiquadBasicSampleRate48000) {
   std::vector<int64_t> expected = {30, 40};
 
   int i = 0;
-  while (row.size() != 0) {
+  while (!row.empty()) {
     auto col = row["waveform"];
     ASSERT_EQ(col.Shape(), expected);
     ASSERT_EQ(col.Shape().size(), 2);
@@ -132,7 +132,7 @@ TEST_F(MindDataTestPipeline, TestRiaaBiquadBasicSampleRate88200) {
   std::vector<int64_t> expected = {5, 4};
 
   int i = 0;
-  while (row.size() != 0) {
+  while (!row.empty()) {
     auto col = row["waveform"];
     ASSERT_EQ(col.Shape(), expected);
     ASSERT_EQ(col.Shape().size(), 2);
@@ -171,7 +171,7 @@ TEST_F(MindDataTestPipeline, TestRiaaBiquadBasicSampleRate96000) {
   std::vector<int64_t> expected = {2, 3};
 
   int i = 0;
-  while (row.size() != 0) {
+  while (!row.empty()) {
     auto col = row["waveform"];
     ASSERT_EQ(col.Shape(), expected);
     ASSERT_EQ(col.Shape().size(), 2);
@@ -221,7 +221,7 @@ TEST_F(MindDataTestPipeline, TestSlidingWindowCmn) {
   std::unordered_map<std::string, mindspore::MSTensor> row;
   ASSERT_OK(iter->GetNextRow(&row));
   uint64_t i = 0;
-  while (row.size() != 0) {
+  while (!row.empty()) {
     i++;
     ASSERT_OK(iter->GetNextRow(&row));
   }
@@ -266,7 +266,7 @@ TEST_F(MindDataTestPipeline, TestSpectralCentroidBasic) {
   std::shared_ptr<Dataset> ds = RandomData(8, schema);
   EXPECT_NE(ds, nullptr);
 
-  auto spectral_centroid = audio::SpectralCentroid({44100, 8, 8, 4, 1, WindowType::kHann});
+  auto spectral_centroid = audio::SpectralCentroid(44100, 8, 8, 4, 1, WindowType::kHann);
 
   auto ds1 = ds->Map({spectral_centroid}, {"waveform"});
   EXPECT_NE(ds1, nullptr);
@@ -278,7 +278,7 @@ TEST_F(MindDataTestPipeline, TestSpectralCentroidBasic) {
   ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
-  while (row.size() != 0) {
+  while (!row.empty()) {
     ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
@@ -297,7 +297,7 @@ TEST_F(MindDataTestPipeline, TestSpectralCentroidDefault) {
   std::shared_ptr<Dataset> ds = RandomData(8, schema);
   EXPECT_NE(ds, nullptr);
 
-  auto spectral_centroid = audio::SpectralCentroid({44100});
+  auto spectral_centroid = audio::SpectralCentroid(44100);
 
   auto ds1 = ds->Map({spectral_centroid}, {"waveform"});
   EXPECT_NE(ds1, nullptr);
@@ -309,7 +309,7 @@ TEST_F(MindDataTestPipeline, TestSpectralCentroidDefault) {
   ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
-  while (row.size() != 0) {
+  while (!row.empty()) {
     ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
@@ -336,7 +336,7 @@ TEST_F(MindDataTestPipeline, TestSpectralCentroidWrongArgs) {
 
   // Check n_fft
   MS_LOG(INFO) << "n_fft is zero.";
-  auto spectral_centroid_op_1 = audio::SpectralCentroid({44100, 0, 8, 4, 1, WindowType::kHann});
+  auto spectral_centroid_op_1 = audio::SpectralCentroid(44100, 0, 8, 4, 1, WindowType::kHann);
   ds01 = ds->Map({spectral_centroid_op_1});
   EXPECT_NE(ds01, nullptr);
 
@@ -345,7 +345,7 @@ TEST_F(MindDataTestPipeline, TestSpectralCentroidWrongArgs) {
 
   // Check win_length
   MS_LOG(INFO) << "win_length is -1.";
-  auto spectral_centroid_op_2 = audio::SpectralCentroid({44100, 8, -1, 4, 1, WindowType::kHann});
+  auto spectral_centroid_op_2 = audio::SpectralCentroid(44100, 8, -1, 4, 1, WindowType::kHann);
   ds02 = ds->Map({spectral_centroid_op_2});
   EXPECT_NE(ds02, nullptr);
 
@@ -354,7 +354,7 @@ TEST_F(MindDataTestPipeline, TestSpectralCentroidWrongArgs) {
 
   // Check hop_length
   MS_LOG(INFO) << "hop_length is -1.";
-  auto spectral_centroid_op_3 = audio::SpectralCentroid({44100, 8, 8, -1, 1, WindowType::kHann});
+  auto spectral_centroid_op_3 = audio::SpectralCentroid(44100, 8, 8, -1, 1, WindowType::kHann);
   ds03 = ds->Map({spectral_centroid_op_3});
   EXPECT_NE(ds03, nullptr);
 
@@ -363,7 +363,7 @@ TEST_F(MindDataTestPipeline, TestSpectralCentroidWrongArgs) {
 
   // Check pad
   MS_LOG(INFO) << "pad is -1.";
-  auto spectral_centroid_op_4 = audio::SpectralCentroid({44100, 8, 8, 4, -1, WindowType::kHann});
+  auto spectral_centroid_op_4 = audio::SpectralCentroid(44100, 8, 8, 4, -1, WindowType::kHann);
   ds04 = ds->Map({spectral_centroid_op_4});
   EXPECT_NE(ds04, nullptr);
 
@@ -372,7 +372,7 @@ TEST_F(MindDataTestPipeline, TestSpectralCentroidWrongArgs) {
 
   // Check sample_rate
   MS_LOG(INFO) << "sample_rate is -1.";
-  auto spectral_centroid_op_5 = audio::SpectralCentroid({-1, 8, 8, 4, 8, WindowType::kHann});
+  auto spectral_centroid_op_5 = audio::SpectralCentroid(-1, 8, 8, 4, 8, WindowType::kHann);
   ds05 = ds->Map({spectral_centroid_op_5});
   EXPECT_NE(ds05, nullptr);
 
@@ -392,7 +392,7 @@ TEST_F(MindDataTestPipeline, TestSpectrogramDefault) {
   EXPECT_NE(ds, nullptr);
 
   auto spectrogram =
-    audio::Spectrogram({40, 40, 20, 0, WindowType::kHann, 2.0, false, true, BorderType::kReflect, true});
+    audio::Spectrogram(40, 40, 20, 0, WindowType::kHann, 2.0, false, true, BorderType::kReflect, true);
 
   auto ds1 = ds->Map({spectrogram}, {"waveform"});
   EXPECT_NE(ds1, nullptr);
@@ -404,7 +404,7 @@ TEST_F(MindDataTestPipeline, TestSpectrogramDefault) {
   ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
-  while (row.size() != 0) {
+  while (!row.empty()) {
     ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
@@ -424,7 +424,7 @@ TEST_F(MindDataTestPipeline, TestSpectrogramOnesidedFalse) {
   EXPECT_NE(ds, nullptr);
 
   auto spectrogram =
-    audio::Spectrogram({40, 40, 20, 0, WindowType::kHann, 2.0, false, true, BorderType::kReflect, false});
+    audio::Spectrogram(40, 40, 20, 0, WindowType::kHann, 2.0, false, true, BorderType::kReflect, false);
 
   auto ds1 = ds->Map({spectrogram}, {"waveform"});
   EXPECT_NE(ds1, nullptr);
@@ -436,7 +436,7 @@ TEST_F(MindDataTestPipeline, TestSpectrogramOnesidedFalse) {
   ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
-  while (row.size() != 0) {
+  while (!row.empty()) {
     ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
@@ -456,7 +456,7 @@ TEST_F(MindDataTestPipeline, TestSpectrogramCenterFalse) {
   EXPECT_NE(ds, nullptr);
 
   auto spectrogram =
-    audio::Spectrogram({40, 40, 20, 0, WindowType::kHann, 2.0, false, false, BorderType::kReflect, true});
+    audio::Spectrogram(40, 40, 20, 0, WindowType::kHann, 2.0, false, false, BorderType::kReflect, true);
 
   auto ds1 = ds->Map({spectrogram}, {"waveform"});
   EXPECT_NE(ds1, nullptr);
@@ -468,7 +468,7 @@ TEST_F(MindDataTestPipeline, TestSpectrogramCenterFalse) {
   ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
-  while (row.size() != 0) {
+  while (!row.empty()) {
     ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
@@ -488,7 +488,7 @@ TEST_F(MindDataTestPipeline, TestSpectrogramNormalizedTrue) {
   EXPECT_NE(ds, nullptr);
 
   auto spectrogram =
-    audio::Spectrogram({40, 40, 20, 0, WindowType::kHann, 2.0, true, true, BorderType::kReflect, true});
+    audio::Spectrogram(40, 40, 20, 0, WindowType::kHann, 2.0, true, true, BorderType::kReflect, true);
 
   auto ds1 = ds->Map({spectrogram}, {"waveform"});
   EXPECT_NE(ds1, nullptr);
@@ -500,7 +500,7 @@ TEST_F(MindDataTestPipeline, TestSpectrogramNormalizedTrue) {
   ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
-  while (row.size() != 0) {
+  while (!row.empty()) {
     ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
@@ -520,7 +520,7 @@ TEST_F(MindDataTestPipeline, TestSpectrogramWindowHamming) {
   EXPECT_NE(ds, nullptr);
 
   auto spectrogram =
-    audio::Spectrogram({40, 40, 20, 0, WindowType::kHamming, 2.0, false, true, BorderType::kReflect, true});
+    audio::Spectrogram(40, 40, 20, 0, WindowType::kHamming, 2.0, false, true, BorderType::kReflect, true);
 
   auto ds1 = ds->Map({spectrogram}, {"waveform"});
   EXPECT_NE(ds1, nullptr);
@@ -532,7 +532,7 @@ TEST_F(MindDataTestPipeline, TestSpectrogramWindowHamming) {
   ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
-  while (row.size() != 0) {
+  while (!row.empty()) {
     ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
@@ -552,7 +552,7 @@ TEST_F(MindDataTestPipeline, TestSpectrogramPadmodeEdge) {
   EXPECT_NE(ds, nullptr);
 
   auto spectrogram =
-    audio::Spectrogram({40, 40, 20, 0, WindowType::kHamming, 2.0, false, true, BorderType::kEdge, true});
+    audio::Spectrogram(40, 40, 20, 0, WindowType::kHamming, 2.0, false, true, BorderType::kEdge, true);
 
   auto ds1 = ds->Map({spectrogram}, {"waveform"});
   EXPECT_NE(ds1, nullptr);
@@ -564,7 +564,7 @@ TEST_F(MindDataTestPipeline, TestSpectrogramPadmodeEdge) {
   ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
-  while (row.size() != 0) {
+  while (!row.empty()) {
     ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
@@ -584,7 +584,7 @@ TEST_F(MindDataTestPipeline, TestSpectrogramPower0) {
   EXPECT_NE(ds, nullptr);
 
   auto spectrogram =
-    audio::Spectrogram({40, 40, 20, 0, WindowType::kHamming, 0, false, true, BorderType::kReflect, true});
+    audio::Spectrogram(40, 40, 20, 0, WindowType::kHamming, 0, false, true, BorderType::kReflect, true);
 
   auto ds1 = ds->Map({spectrogram}, {"waveform"});
   EXPECT_NE(ds1, nullptr);
@@ -596,7 +596,7 @@ TEST_F(MindDataTestPipeline, TestSpectrogramPower0) {
   ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
-  while (row.size() != 0) {
+  while (!row.empty()) {
     ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
@@ -616,7 +616,7 @@ TEST_F(MindDataTestPipeline, TestSpectrogramNfft50) {
   EXPECT_NE(ds, nullptr);
 
   auto spectrogram =
-    audio::Spectrogram({50, 40, 20, 0, WindowType::kHann, 2.0, false, true, BorderType::kReflect, true});
+    audio::Spectrogram(50, 40, 20, 0, WindowType::kHann, 2.0, false, true, BorderType::kReflect, true);
 
   auto ds1 = ds->Map({spectrogram}, {"waveform"});
   EXPECT_NE(ds1, nullptr);
@@ -628,7 +628,7 @@ TEST_F(MindDataTestPipeline, TestSpectrogramNfft50) {
   ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
-  while (row.size() != 0) {
+  while (!row.empty()) {
     ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
@@ -648,7 +648,7 @@ TEST_F(MindDataTestPipeline, TestSpectrogramPad10) {
   EXPECT_NE(ds, nullptr);
 
   auto spectrogram =
-    audio::Spectrogram({40, 40, 20, 10, WindowType::kHann, 2.0, false, true, BorderType::kReflect, true});
+    audio::Spectrogram(40, 40, 20, 10, WindowType::kHann, 2.0, false, true, BorderType::kReflect, true);
 
   auto ds1 = ds->Map({spectrogram}, {"waveform"});
   EXPECT_NE(ds1, nullptr);
@@ -660,7 +660,7 @@ TEST_F(MindDataTestPipeline, TestSpectrogramPad10) {
   ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
-  while (row.size() != 0) {
+  while (!row.empty()) {
     ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
@@ -680,7 +680,7 @@ TEST_F(MindDataTestPipeline, TestSpectrogramWinlength30) {
   EXPECT_NE(ds, nullptr);
 
   auto spectrogram =
-    audio::Spectrogram({40, 30, 20, 0, WindowType::kHann, 2.0, false, true, BorderType::kReflect, true});
+    audio::Spectrogram(40, 30, 20, 0, WindowType::kHann, 2.0, false, true, BorderType::kReflect, true);
 
   auto ds1 = ds->Map({spectrogram}, {"waveform"});
   EXPECT_NE(ds1, nullptr);
@@ -692,7 +692,7 @@ TEST_F(MindDataTestPipeline, TestSpectrogramWinlength30) {
   ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
-  while (row.size() != 0) {
+  while (!row.empty()) {
     ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
@@ -712,7 +712,7 @@ TEST_F(MindDataTestPipeline, TestSpectrogramHoplength30) {
   EXPECT_NE(ds, nullptr);
 
   auto spectrogram =
-    audio::Spectrogram({40, 40, 30, 0, WindowType::kHann, 2.0, false, true, BorderType::kReflect, true});
+    audio::Spectrogram(40, 40, 30, 0, WindowType::kHann, 2.0, false, true, BorderType::kReflect, true);
 
   auto ds1 = ds->Map({spectrogram}, {"waveform"});
   EXPECT_NE(ds1, nullptr);
@@ -724,7 +724,7 @@ TEST_F(MindDataTestPipeline, TestSpectrogramHoplength30) {
   ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
-  while (row.size() != 0) {
+  while (!row.empty()) {
     ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
@@ -753,7 +753,7 @@ TEST_F(MindDataTestPipeline, TestSpectrogramWrongArgs) {
   // Check n_fft
   MS_LOG(INFO) << "n_fft is zero.";
   auto spectrogram_op_01 =
-    audio::Spectrogram({0, 40, 20, 0, WindowType::kHann, 2.0, false, true, BorderType::kReflect, true});
+    audio::Spectrogram(0, 40, 20, 0, WindowType::kHann, 2.0, false, true, BorderType::kReflect, true);
   ds01 = ds->Map({spectrogram_op_01});
   EXPECT_NE(ds01, nullptr);
 
@@ -763,7 +763,7 @@ TEST_F(MindDataTestPipeline, TestSpectrogramWrongArgs) {
   // Check win_length
   MS_LOG(INFO) << "win_length is -1.";
   auto spectrogram_op_02 =
-    audio::Spectrogram({40, -1, 20, 0, WindowType::kHann, 2.0, false, true, BorderType::kReflect, true});
+    audio::Spectrogram(40, -1, 20, 0, WindowType::kHann, 2.0, false, true, BorderType::kReflect, true);
   ds02 = ds->Map({spectrogram_op_02});
   EXPECT_NE(ds02, nullptr);
 
@@ -773,7 +773,7 @@ TEST_F(MindDataTestPipeline, TestSpectrogramWrongArgs) {
   // Check hop_length
   MS_LOG(INFO) << "hop_length is -1.";
   auto spectrogram_op_03 =
-    audio::Spectrogram({40, 40, -1, 0, WindowType::kHann, 2.0, false, true, BorderType::kReflect, true});
+    audio::Spectrogram(40, 40, -1, 0, WindowType::kHann, 2.0, false, true, BorderType::kReflect, true);
   ds03 = ds->Map({spectrogram_op_03});
   EXPECT_NE(ds03, nullptr);
 
@@ -783,7 +783,7 @@ TEST_F(MindDataTestPipeline, TestSpectrogramWrongArgs) {
   // Check power
   MS_LOG(INFO) << "power is -1.";
   auto spectrogram_op_04 =
-    audio::Spectrogram({40, 40, 20, 0, WindowType::kHann, -1, false, true, BorderType::kReflect, true});
+    audio::Spectrogram(40, 40, 20, 0, WindowType::kHann, -1, false, true, BorderType::kReflect, true);
   ds04 = ds->Map({spectrogram_op_04});
   EXPECT_NE(ds04, nullptr);
 
@@ -793,7 +793,7 @@ TEST_F(MindDataTestPipeline, TestSpectrogramWrongArgs) {
   // Check pad
   MS_LOG(INFO) << "pad is -1.";
   auto spectrogram_op_05 =
-    audio::Spectrogram({40, 40, 20, -1, WindowType::kHann, 2.0, false, true, BorderType::kReflect, true});
+    audio::Spectrogram(40, 40, 20, -1, WindowType::kHann, 2.0, false, true, BorderType::kReflect, true);
   ds05 = ds->Map({spectrogram_op_05});
   EXPECT_NE(ds05, nullptr);
 
@@ -803,7 +803,7 @@ TEST_F(MindDataTestPipeline, TestSpectrogramWrongArgs) {
   // Check n_fft and win)length
   MS_LOG(INFO) << "n_fft is 40, win_length is 50.";
   auto spectrogram_op_06 =
-    audio::Spectrogram({40, 50, 20, -1, WindowType::kHann, 2.0, false, true, BorderType::kReflect, true});
+    audio::Spectrogram(40, 50, 20, -1, WindowType::kHann, 2.0, false, true, BorderType::kReflect, true);
   ds06 = ds->Map({spectrogram_op_06});
   EXPECT_NE(ds06, nullptr);
 
@@ -837,7 +837,7 @@ TEST_F(MindDataTestPipeline, TestTimeMaskingPipeline) {
   std::vector<int64_t> expected = {2, 200};
 
   int i = 0;
-  while (row.size() != 0) {
+  while (!row.empty()) {
     auto col = row["inputData"];
     ASSERT_EQ(col.Shape(), expected);
     ASSERT_EQ(col.Shape().size(), 2);
@@ -901,7 +901,7 @@ TEST_F(MindDataTestPipeline, TestTimeStretchPipeline) {
   std::vector<int64_t> expected = {2, freq, static_cast<int64_t>(std::ceil(400 / rate)), 2};
 
   int i = 0;
-  while (row.size() != 0) {
+  while (!row.empty()) {
     auto col = row["inputData"];
     ASSERT_EQ(col.Shape(), expected);
     ASSERT_EQ(col.DataType(), mindspore::DataType::kNumberTypeFloat32);
@@ -965,7 +965,7 @@ TEST_F(MindDataTestPipeline, TestTrebleBiquadBasic) {
   std::vector<int64_t> expected = {2, 200};
 
   int i = 0;
-  while (row.size() != 0) {
+  while (!row.empty()) {
     auto col = row["waveform"];
     ASSERT_EQ(col.Shape(), expected);
     ASSERT_EQ(col.Shape().size(), 2);
@@ -1032,7 +1032,7 @@ TEST_F(MindDataTestPipeline, TestVolPipeline) {
   std::vector<int64_t> expected = {2, 200};
 
   int i = 0;
-  while (row.size() != 0) {
+  while (!row.empty()) {
     auto col = row["inputData"];
     ASSERT_EQ(col.Shape(), expected);
     ASSERT_EQ(col.Shape().size(), 2);

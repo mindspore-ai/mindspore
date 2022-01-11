@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "pybind11/numpy.h"
 #include "pybind11/pybind11.h"
 #include "pybind11/stl_bind.h"
 
 #include "minddata/dataset/api/python/pybind_register.h"
-#include "minddata/dataset/core/global_context.h"
+
 #include "minddata/dataset/core/client.h"  // DE client
-#include "minddata/dataset/util/status.h"
-#include "pybind11/numpy.h"
+#include "minddata/dataset/core/global_context.h"
+
 #include "minddata/dataset/include/dataset/constants.h"
+#include "minddata/dataset/util/status.h"
 
 namespace mindspore {
 namespace dataset {
@@ -63,12 +65,12 @@ PYBIND_REGISTER(ConfigManager, 0, ([](const py::module *m) {
                     .def("get_enable_autotune", &ConfigManager::enable_autotune)
                     .def("set_autotune_interval", &ConfigManager::set_autotune_interval)
                     .def("get_autotune_interval", &ConfigManager::autotune_interval)
-                    .def("load", [](ConfigManager &c, std::string s) { THROW_IF_ERROR(c.LoadFile(s)); });
+                    .def("load", [](ConfigManager &c, const std::string &s) { THROW_IF_ERROR(c.LoadFile(s)); });
                 }));
 
 PYBIND_REGISTER(Tensor, 0, ([](const py::module *m) {
                   (void)py::class_<Tensor, std::shared_ptr<Tensor>>(*m, "Tensor", py::buffer_protocol())
-                    .def(py::init([](py::array arr) {
+                    .def(py::init([](const py::array &arr) {
                       std::shared_ptr<Tensor> out;
                       THROW_IF_ERROR(Tensor::CreateFromNpArray(arr, &out));
                       return out;
@@ -107,7 +109,7 @@ PYBIND_REGISTER(DataType, 0, ([](const py::module *m) {
                     .def(py::init<std::string>())
                     .def(py::self == py::self)
                     .def("__str__", &DataType::ToString)
-                    .def("__deepcopy__", [](py::object &t, py::dict memo) { return t; });
+                    .def("__deepcopy__", [](py::object &t, const py::dict &memo) { return t; });
                 }));
 
 PYBIND_REGISTER(AutoAugmentPolicy, 0, ([](const py::module *m) {

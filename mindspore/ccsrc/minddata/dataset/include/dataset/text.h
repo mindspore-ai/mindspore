@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 class SentencePieceVocab;
 class TensorOperation;
 class Vectors;
@@ -63,7 +62,7 @@ class MS_API BasicTokenizer final : public TensorTransform {
   ///                            {"text"});        // input columns
   /// \endcode
   explicit BasicTokenizer(bool lower_case = false, bool keep_whitespace = false,
-                          const NormalizeForm normalize_form = NormalizeForm::kNone, bool preserve_unused_token = true,
+                          NormalizeForm normalize_form = NormalizeForm::kNone, bool preserve_unused_token = true,
                           bool with_offsets = false);
 
   /// \brief Destructor
@@ -136,8 +135,7 @@ class MS_API BertTokenizer final : public TensorTransform {
   /// \param[in] with_offsets Whether to output offsets of tokens (default=false).
   BertTokenizer(const std::shared_ptr<Vocab> &vocab, const std::vector<char> &suffix_indicator,
                 int32_t max_bytes_per_token, const std::vector<char> &unknown_token, bool lower_case,
-                bool keep_whitespace, const NormalizeForm normalize_form, bool preserve_unused_token,
-                bool with_offsets);
+                bool keep_whitespace, NormalizeForm normalize_form, bool preserve_unused_token, bool with_offsets);
 
   /// \brief Destructor
   ~BertTokenizer() = default;
@@ -448,7 +446,7 @@ class MS_API RegexReplace final : public TensorTransform {
   ///     dataset = dataset->Map({regex_op},   // operations
   ///                            {"text"});    // input columns
   /// \endcode
-  RegexReplace(std::string pattern, std::string replace, bool replace_all = true)
+  RegexReplace(const std::string &pattern, const std::string &replace, bool replace_all = true)
       : RegexReplace(StringToChar(pattern), StringToChar(replace), replace_all) {}
 
   /// \brief Constructor.
@@ -489,7 +487,8 @@ class MS_API RegexTokenizer final : public TensorTransform {
   ///     dataset = dataset->Map({regex_op},   // operations
   ///                            {"text"});    // input columns
   /// \endcode
-  explicit RegexTokenizer(std::string delim_pattern, std::string keep_delim_pattern = "", bool with_offsets = false)
+  explicit RegexTokenizer(const std::string &delim_pattern, const std::string &keep_delim_pattern = "",
+                          bool with_offsets = false)
       : RegexTokenizer(StringToChar(delim_pattern), StringToChar(keep_delim_pattern), with_offsets) {}
 
   explicit RegexTokenizer(const std::vector<char> &delim_pattern, const std::vector<char> &keep_delim_pattern,
@@ -581,7 +580,7 @@ class MS_API SlidingWindow final : public TensorTransform {
   ///     dataset = dataset->Map({slidingwindow_op},   // operations
   ///                            {"text"});            // input columns
   /// \endcode
-  explicit SlidingWindow(const int32_t width, const int32_t axis = 0);
+  explicit SlidingWindow(int32_t width, int32_t axis = 0);
 
   /// \brief Destructor
   ~SlidingWindow() = default;
@@ -637,7 +636,7 @@ class MS_API ToVectors final : public TensorTransform {
   /// \param[in] unk_init In case of the token is out-of-vectors (OOV), the result will be initialized with `unk_init`.
   ///     (default={}, means to initialize with zero vectors).
   /// \param[in] lower_case_backup Whether to look up the token in the lower case (default=false).
-  explicit ToVectors(const std::shared_ptr<Vectors> &vectors, std::vector<float> unk_init = {},
+  explicit ToVectors(const std::shared_ptr<Vectors> &vectors, const std::vector<float> &unk_init = {},
                      bool lower_case_backup = false);
 
   /// \brief Destructor

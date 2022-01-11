@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "pybind11/pybind11.h"
+
 #include "minddata/dataset/api/python/pybind_conversion.h"
 #include "minddata/dataset/api/python/pybind_register.h"
 #include "minddata/dataset/include/dataset/transforms.h"
@@ -112,7 +113,7 @@ PYBIND_REGISTER(BoundingBoxAugmentOperation, 1, ([](const py::module *m) {
                   (void)py::class_<vision::BoundingBoxAugmentOperation, TensorOperation,
                                    std::shared_ptr<vision::BoundingBoxAugmentOperation>>(*m,
                                                                                          "BoundingBoxAugmentOperation")
-                    .def(py::init([](const py::object transform, float ratio) {
+                    .def(py::init([](const py::object &transform, float ratio) {
                       auto bounding_box_augment = std::make_shared<vision::BoundingBoxAugmentOperation>(
                         std::move(toTensorOperation(transform)), ratio);
                       THROW_IF_ERROR(bounding_box_augment->ValidateParams());
@@ -207,7 +208,7 @@ PYBIND_REGISTER(
   GaussianBlurOperation, 1, ([](const py::module *m) {
     (void)py::class_<vision::GaussianBlurOperation, TensorOperation, std::shared_ptr<vision::GaussianBlurOperation>>(
       *m, "GaussianBlurOperation")
-      .def(py::init([](std::vector<int32_t> kernel_size, std::vector<float> sigma) {
+      .def(py::init([](const std::vector<int32_t> &kernel_size, const std::vector<float> &sigma) {
         auto gaussian_blur = std::make_shared<vision::GaussianBlurOperation>(kernel_size, sigma);
         THROW_IF_ERROR(gaussian_blur->ValidateParams());
         return gaussian_blur;
@@ -504,23 +505,25 @@ PYBIND_REGISTER(RandomResizeWithBBoxOperation, 1, ([](const py::module *m) {
                     }));
                 }));
 
-PYBIND_REGISTER(RandomRotationOperation, 1, ([](const py::module *m) {
-                  (void)py::class_<vision::RandomRotationOperation, TensorOperation,
-                                   std::shared_ptr<vision::RandomRotationOperation>>(*m, "RandomRotationOperation")
-                    .def(py::init([](std::vector<float> degrees, InterpolationMode interpolation_mode, bool expand,
-                                     std::vector<float> center, std::vector<uint8_t> fill_value) {
-                      auto random_rotation = std::make_shared<vision::RandomRotationOperation>(
-                        degrees, interpolation_mode, expand, center, fill_value);
-                      THROW_IF_ERROR(random_rotation->ValidateParams());
-                      return random_rotation;
-                    }));
-                }));
+PYBIND_REGISTER(
+  RandomRotationOperation, 1, ([](const py::module *m) {
+    (void)
+      py::class_<vision::RandomRotationOperation, TensorOperation, std::shared_ptr<vision::RandomRotationOperation>>(
+        *m, "RandomRotationOperation")
+        .def(py::init([](const std::vector<float> &degrees, InterpolationMode interpolation_mode, bool expand,
+                         const std::vector<float> &center, const std::vector<uint8_t> &fill_value) {
+          auto random_rotation =
+            std::make_shared<vision::RandomRotationOperation>(degrees, interpolation_mode, expand, center, fill_value);
+          THROW_IF_ERROR(random_rotation->ValidateParams());
+          return random_rotation;
+        }));
+  }));
 
 PYBIND_REGISTER(
   RandomSelectSubpolicyOperation, 1, ([](const py::module *m) {
     (void)py::class_<vision::RandomSelectSubpolicyOperation, TensorOperation,
                      std::shared_ptr<vision::RandomSelectSubpolicyOperation>>(*m, "RandomSelectSubpolicyOperation")
-      .def(py::init([](const py::list py_policy) {
+      .def(py::init([](const py::list &py_policy) {
         std::vector<std::vector<std::pair<std::shared_ptr<TensorOperation>, double>>> cpp_policy;
         for (auto &py_sub : py_policy) {
           cpp_policy.push_back({});
@@ -643,8 +646,8 @@ PYBIND_REGISTER(RgbToBgrOperation, 1, ([](const py::module *m) {
 PYBIND_REGISTER(RotateOperation, 1, ([](const py::module *m) {
                   (void)py::class_<vision::RotateOperation, TensorOperation, std::shared_ptr<vision::RotateOperation>>(
                     *m, "RotateOperation")
-                    .def(py::init([](float degrees, InterpolationMode resample, bool expand, std::vector<float> center,
-                                     std::vector<uint8_t> fill_value) {
+                    .def(py::init([](float degrees, InterpolationMode resample, bool expand,
+                                     const std::vector<float> &center, const std::vector<uint8_t> &fill_value) {
                       auto rotate =
                         std::make_shared<vision::RotateOperation>(degrees, resample, expand, center, fill_value);
                       THROW_IF_ERROR(rotate->ValidateParams());
@@ -694,7 +697,7 @@ PYBIND_REGISTER(
   UniformAugOperation, 1, ([](const py::module *m) {
     (void)py::class_<vision::UniformAugOperation, TensorOperation, std::shared_ptr<vision::UniformAugOperation>>(
       *m, "UniformAugOperation")
-      .def(py::init([](const py::list transforms, int32_t num_ops) {
+      .def(py::init([](const py::list &transforms, int32_t num_ops) {
         auto uniform_aug =
           std::make_shared<vision::UniformAugOperation>(std::move(toTensorOperations(transforms)), num_ops);
         THROW_IF_ERROR(uniform_aug->ValidateParams());

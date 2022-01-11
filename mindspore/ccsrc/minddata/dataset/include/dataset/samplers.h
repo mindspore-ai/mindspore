@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 // Forward declare
 class SamplerObj;
 
@@ -72,14 +71,14 @@ class MS_API Sampler : std::enable_shared_from_this<Sampler> {
 
  public:
   /// \brief Constructor
-  Sampler() {}
+  Sampler() = default;
 
   /// \brief Destructor
   ~Sampler() = default;
 
   /// \brief A virtual function to add a child sampler.
   /// \param[in] child The child sampler to be added as a children of this sampler.
-  virtual void AddChild(std::shared_ptr<Sampler> child) { children_.push_back(child); }
+  virtual void AddChild(const std::shared_ptr<Sampler> &child) { children_.push_back(child); }
 
  protected:
   /// \brief Pure virtual function to convert a Sampler class into an IR Sampler object.
@@ -238,7 +237,7 @@ class MS_API SubsetSampler : public Sampler {
   ///      std::string folder_path = "/path/to/image/folder";
   ///      std::shared_ptr<Dataset> ds = ImageFolder(folder_path, false, std::make_shared<SubsetSampler>({0, 2, 5}));
   /// \endcode
-  explicit SubsetSampler(std::vector<int64_t> indices, int64_t num_samples = 0);
+  explicit SubsetSampler(const std::vector<int64_t> &indices, int64_t num_samples = 0);
 
   /// \brief Destructor.
   ~SubsetSampler() = default;
@@ -267,7 +266,7 @@ class MS_API SubsetRandomSampler final : public SubsetSampler {
   ///      std::string folder_path = "/path/to/image/folder";
   ///      std::shared_ptr<Dataset> ds = ImageFolder(folder_path, false, std::make_shared<SubsetRandomSampler>({2, 7}));
   /// \endcode
-  explicit SubsetRandomSampler(std::vector<int64_t> indices, int64_t num_samples = 0);
+  explicit SubsetRandomSampler(const std::vector<int64_t> &indices, int64_t num_samples = 0);
 
   /// \brief Destructor.
   ~SubsetRandomSampler() = default;
@@ -297,7 +296,7 @@ class MS_API WeightedRandomSampler final : public Sampler {
   ///      std::string folder_path = "/path/to/image/folder";
   ///      std::shared_ptr<Dataset> ds = ImageFolder(folder_path, false, sampler);
   /// \endcode
-  explicit WeightedRandomSampler(std::vector<double> weights, int64_t num_samples = 0, bool replacement = true);
+  explicit WeightedRandomSampler(const std::vector<double> &weights, int64_t num_samples = 0, bool replacement = true);
 
   /// \brief Destructor.
   ~WeightedRandomSampler() = default;
@@ -312,7 +311,6 @@ class MS_API WeightedRandomSampler final : public Sampler {
   int64_t num_samples_;
   bool replacement_;
 };
-
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_SAMPLERS_H_

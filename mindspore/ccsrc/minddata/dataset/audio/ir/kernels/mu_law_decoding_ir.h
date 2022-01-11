@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@
 namespace mindspore {
 namespace dataset {
 namespace audio {
-
 constexpr char kMuLawDecodingOperation[] = "MuLawDecoding";
 
 class MuLawDecodingOperation : public TensorOperation {
@@ -46,9 +45,7 @@ class MuLawDecodingOperation : public TensorOperation {
  private:
   int32_t quantization_channels_;
 };  // class MuLawDecodingOperation
-
 }  // namespace audio
 }  // namespace dataset
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_AUDIO_IR_KERNELS_MU_LAW_DECODING_IR_H_
