@@ -360,7 +360,7 @@ MS_TRT_CONVERTER_FUNC_REG(ReLU6) {
   dim.nbDims = SizeToInt(x_shape.size());
   std::fill(dim.d, dim.d + dim.nbDims, 1);
 
-  auto AddConst = [&context, &dim](const float &coeff) -> nvinfer1::ITensor * {
+  auto AddConst = [&context, &dim](const float &coeff) {
     std::shared_ptr<tensor::Tensor> weight = context->CreateTempWeight(kNumberTypeFloat32, {1});
     auto value = static_cast<float *>(weight->data_c());
     value[0] = coeff;
@@ -395,7 +395,7 @@ MS_TRT_CONVERTER_FUNC_REG(GeLU) {
   dim.nbDims = SizeToInt(x_shape.size());
   std::fill(dim.d, dim.d + dim.nbDims, 1);
 
-  auto AddConst = [&context, &dim](const float &coeff) -> nvinfer1::ITensor * {
+  auto AddConst = [&context, &dim](const float &coeff) {
     std::shared_ptr<tensor::Tensor> weight = context->CreateTempWeight(kNumberTypeFloat32, {1});
     auto value = static_cast<float *>(weight->data_c());
     value[0] = coeff;
@@ -446,7 +446,7 @@ MS_TRT_CONVERTER_FUNC_REG(HSigmoid) {
   dim.nbDims = SizeToInt(x_shape.size());
   std::fill(dim.d, dim.d + dim.nbDims, 1);
 
-  auto AddConst = [&context, &dim](const float &coeff) -> nvinfer1::ITensor * {
+  auto AddConst = [&context, &dim](const float &coeff) {
     std::shared_ptr<tensor::Tensor> weight = context->CreateTempWeight(kNumberTypeFloat32, {1});
     auto value = static_cast<float *>(weight->data_c());
     value[0] = coeff;
@@ -487,7 +487,7 @@ MS_TRT_CONVERTER_FUNC_REG(HSwish) {
   dim.nbDims = SizeToInt(x_shape.size());
   std::fill(dim.d, dim.d + dim.nbDims, 1);
 
-  auto AddConst = [&context, &dim](const float &coeff) -> nvinfer1::ITensor * {
+  auto AddConst = [&context, &dim](const float &coeff) {
     std::shared_ptr<tensor::Tensor> weight = context->CreateTempWeight(kNumberTypeFloat32, {1});
     auto value = static_cast<float *>(weight->data_c());
     value[0] = coeff;
