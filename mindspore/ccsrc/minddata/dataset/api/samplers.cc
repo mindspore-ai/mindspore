@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,11 @@
  */
 
 #include "minddata/dataset/include/dataset/samplers.h"
+
+#include <utility>
+
 #include "minddata/dataset/engine/ir/datasetops/source/samplers/distributed_sampler_ir.h"
 #include "minddata/dataset/engine/ir/datasetops/source/samplers/pk_sampler_ir.h"
-#include "minddata/dataset/engine/ir/datasetops/source/samplers/prebuilt_sampler_ir.h"
 #include "minddata/dataset/engine/ir/datasetops/source/samplers/random_sampler_ir.h"
 #include "minddata/dataset/engine/ir/datasetops/source/samplers/samplers_ir.h"
 #include "minddata/dataset/engine/ir/datasetops/source/samplers/sequential_sampler_ir.h"
@@ -27,7 +29,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 // DistributedSampler
 DistributedSampler::DistributedSampler(int64_t num_shards, int64_t shard_id, bool shuffle, int64_t num_samples,
                                        uint32_t seed, int64_t offset, bool even_dist)
@@ -69,7 +70,7 @@ std::shared_ptr<SamplerObj> SequentialSampler::Parse() const {
 }
 
 // SubsetSampler
-SubsetSampler::SubsetSampler(std::vector<int64_t> indices, int64_t num_samples)
+SubsetSampler::SubsetSampler(const std::vector<int64_t> &indices, int64_t num_samples)
     : indices_(indices), num_samples_(num_samples) {}
 
 std::shared_ptr<SamplerObj> SubsetSampler::Parse() const {
@@ -77,7 +78,7 @@ std::shared_ptr<SamplerObj> SubsetSampler::Parse() const {
 }
 
 // SubsetRandomSampler
-SubsetRandomSampler::SubsetRandomSampler(std::vector<int64_t> indices, int64_t num_samples)
+SubsetRandomSampler::SubsetRandomSampler(const std::vector<int64_t> &indices, int64_t num_samples)
     : SubsetSampler(indices, num_samples) {}
 
 std::shared_ptr<SamplerObj> SubsetRandomSampler::Parse() const {
@@ -85,12 +86,11 @@ std::shared_ptr<SamplerObj> SubsetRandomSampler::Parse() const {
 }
 
 // WeightedRandomSampler
-WeightedRandomSampler::WeightedRandomSampler(std::vector<double> weights, int64_t num_samples, bool replacement)
+WeightedRandomSampler::WeightedRandomSampler(const std::vector<double> &weights, int64_t num_samples, bool replacement)
     : weights_(weights), num_samples_(num_samples), replacement_(replacement) {}
 
 std::shared_ptr<SamplerObj> WeightedRandomSampler::Parse() const {
   return std::make_shared<WeightedRandomSamplerObj>(weights_, num_samples_, replacement_);
 }
-
 }  // namespace dataset
 }  // namespace mindspore

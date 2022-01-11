@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ class EnWik9Node : public NonMappableSourceNode {
   /// \param[in] shard_id The id of shard.
   /// \param[in] cache Tensor cache to use.
   EnWik9Node(const std::string &dataset_dir, int32_t num_samples, ShuffleMode shuffle, int32_t num_shards,
-             int32_t shard_id, std::shared_ptr<DatasetCache> cache);
+             int32_t shard_id, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor.
   ~EnWik9Node() = default;

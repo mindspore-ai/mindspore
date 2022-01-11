@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ class EnWik9Op : public TextFileOp {
   /// \brief DatasetName name getter.
   /// \param[in] upper A bool to control if you need upper DatasetName.
   /// \return DatasetName of the current Op.
-  virtual std::string DatasetName(bool upper = false) const { return upper ? "EnWik9" : "enwik9"; }
+  std::string DatasetName(bool upper = false) const override { return upper ? "EnWik9" : "enwik9"; }
 
   /// \brief Reads a text file and loads the data into multiple TensorRows.
   /// \param[in] file The file to read.
@@ -70,7 +70,7 @@ class EnWik9Op : public TextFileOp {
   /// \brief Count number of rows in each file.
   /// \param[in] file Txt file name.
   /// \return int64_t The total number of rows in file.
-  int64_t CountTotalRows(const std::string &file);
+  int64_t CountTotalRows(const std::string &file) override;
 };
 }  // namespace dataset
 }  // namespace mindspore

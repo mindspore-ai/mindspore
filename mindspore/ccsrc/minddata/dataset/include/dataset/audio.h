@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,12 +31,10 @@
 
 namespace mindspore {
 namespace dataset {
-
 class TensorOperation;
 
 // Transform operations for performing computer audio.
 namespace audio {
-
 /// \brief Compute the angle of complex tensor input.
 class MS_API Angle final : public TensorTransform {
  public:
@@ -49,29 +47,6 @@ class MS_API Angle final : public TensorTransform {
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
-};
-
-/// \brief Design two-pole band filter.
-class MS_API BandBiquad final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
-  /// \param[in] central_freq Central frequency (in Hz).
-  /// \param[in] Q Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1] (Default: 0.707).
-  /// \param[in] noise Choose alternate mode for un-pitched audio or mode oriented to pitched audio(Default: False).
-  explicit BandBiquad(int32_t sample_rate, float central_freq, float Q = 0.707, bool noise = false);
-
-  /// \brief Destructor.
-  ~BandBiquad() = default;
-
- protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-
- private:
-  struct Data;
-  std::shared_ptr<Data> data_;
 };
 
 /// \brief Design two-pole allpass filter. Similar to SoX implementation.
@@ -110,6 +85,29 @@ class MS_API AmplitudeToDB final : public TensorTransform {
 
   /// \brief Destructor.
   ~AmplitudeToDB() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
+/// \brief Design two-pole band filter.
+class MS_API BandBiquad final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
+  /// \param[in] central_freq Central frequency (in Hz).
+  /// \param[in] Q Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1] (Default: 0.707).
+  /// \param[in] noise Choose alternate mode for un-pitched audio or mode oriented to pitched audio(Default: False).
+  explicit BandBiquad(int32_t sample_rate, float central_freq, float Q = 0.707, bool noise = false);
+
+  /// \brief Destructor.
+  ~BandBiquad() = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -561,7 +559,7 @@ class MS_API LFilter final : public TensorTransform {
   ///     Lower delays coefficients are first, e.g. [b0, b1, b2, ...].
   ///     Must be same size as a_coeffs (pad with 0's as necessary).
   /// \param[in] clamp If True, clamp the output signal to be in the range [-1, 1] (Default: True).
-  explicit LFilter(std::vector<float> a_coeffs, std::vector<float> b_coeffs, bool clamp = true);
+  explicit LFilter(const std::vector<float> &a_coeffs, const std::vector<float> &b_coeffs, bool clamp = true);
 
   /// \brief Destructor.
   ~LFilter() = default;
@@ -695,8 +693,8 @@ class MS_API Phaser final : public TensorTransform {
   /// \param[in] mod_speed Modulation speed in Hz. Allowed range of values is [0.1, 2] (Default=0.5).
   /// \param[in] sinusoidal If true, use sinusoidal modulation (preferable for multiple instruments).
   ///     If false, use triangular modulation (gives single instruments a sharper phasing effect) (Default=true).
-  Phaser(int32_t sample_rate, float gain_in = 0.4f, float gain_out = 0.74f, float delay_ms = 3.0f, float decay = 0.4f,
-         float mod_speed = 0.5f, bool sinusoidal = true);
+  explicit Phaser(int32_t sample_rate, float gain_in = 0.4f, float gain_out = 0.74f, float delay_ms = 3.0f,
+                  float decay = 0.4f, float mod_speed = 0.5f, bool sinusoidal = true);
 
   /// \brief Destructor.
   ~Phaser() = default;
@@ -770,8 +768,8 @@ class MS_API SpectralCentroid : public TensorTransform {
   /// \param[in] window Window function that is applied/multiplied to each frame/window,
   ///     which can be WindowType::kBartlett, WindowType::kBlackman, WindowType::kHamming,
   ///     WindowType::kHann or WindowType::kKaiser (Default: WindowType::kHann).
-  SpectralCentroid(int sample_rate, int32_t n_fft = 400, int32_t win_length = 0, int32_t hop_length = 0,
-                   int32_t pad = 0, WindowType window = WindowType::kHann);
+  explicit SpectralCentroid(int32_t sample_rate, int32_t n_fft = 400, int32_t win_length = 0, int32_t hop_length = 0,
+                            int32_t pad = 0, WindowType window = WindowType::kHann);
 
   ~SpectralCentroid() = default;
 
@@ -807,9 +805,9 @@ class MS_API Spectrogram : public TensorTransform {
   /// \param[in] center Whether to pad waveform on both sides (Default: true).
   /// \param[in] pad_mode Controls the padding method used when center is true (Default: BorderType::kReflect).
   /// \param[in] onesided Controls whether to return half of results to avoid redundancy (Default: true).
-  Spectrogram(int32_t n_fft = 400, int32_t win_length = 0, int32_t hop_length = 0, int32_t pad = 0,
-              WindowType window = WindowType::kHann, float power = 2.0, bool normalized = false, bool center = true,
-              BorderType pad_mode = BorderType::kReflect, bool onesided = true);
+  explicit Spectrogram(int32_t n_fft = 400, int32_t win_length = 0, int32_t hop_length = 0, int32_t pad = 0,
+                       WindowType window = WindowType::kHann, float power = 2.0, bool normalized = false,
+                       bool center = true, BorderType pad_mode = BorderType::kReflect, bool onesided = true);
 
   /// \brief Destructor.
   ~Spectrogram() = default;

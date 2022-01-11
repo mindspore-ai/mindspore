@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@
 #include "minddata/dataset/kernels/ir/vision/ascend_vision_ir.h"
 #endif
 
-#include "minddata/dataset/include/dataset/transforms.h"
 #include "minddata/dataset/kernels/ir/vision/adjust_gamma_ir.h"
 #include "minddata/dataset/kernels/ir/vision/affine_ir.h"
 #include "minddata/dataset/kernels/ir/vision/auto_augment_ir.h"
@@ -88,11 +87,8 @@
 #endif
 #include "minddata/dataset/kernels/ir/validators.h"
 
-// Kernel image headers (in alphabetical order)
-
 namespace mindspore {
 namespace dataset {
-
 // Transform operations for computer vision.
 namespace vision {
 // CONSTRUCTORS FOR API CLASSES TO CREATE VISION TENSOR TRANSFORM OPERATIONS
@@ -163,7 +159,7 @@ struct AutoContrast::Data {
   std::vector<uint32_t> ignore_;
 };
 
-AutoContrast::AutoContrast(float cutoff, std::vector<uint32_t> ignore)
+AutoContrast::AutoContrast(float cutoff, const std::vector<uint32_t> &ignore)
     : data_(std::make_shared<Data>(cutoff, ignore)) {}
 
 std::shared_ptr<TensorOperation> AutoContrast::Parse() {
@@ -187,7 +183,7 @@ BoundingBoxAugment::BoundingBoxAugment(const std::shared_ptr<TensorTransform> &t
   data_->ratio_ = ratio;
 }
 
-BoundingBoxAugment::BoundingBoxAugment(const std::reference_wrapper<TensorTransform> transform, float ratio)
+BoundingBoxAugment::BoundingBoxAugment(const std::reference_wrapper<TensorTransform> &transform, float ratio)
     : data_(std::make_shared<Data>()) {
   data_->transform_ = transform.get().Parse();
   data_->ratio_ = ratio;
@@ -204,7 +200,7 @@ struct CenterCrop::Data {
   std::vector<int32_t> size_;
 };
 
-CenterCrop::CenterCrop(std::vector<int32_t> size) : data_(std::make_shared<Data>(size)) {}
+CenterCrop::CenterCrop(const std::vector<int32_t> &size) : data_(std::make_shared<Data>(size)) {}
 
 std::shared_ptr<TensorOperation> CenterCrop::Parse() { return std::make_shared<CenterCropOperation>(data_->size_); }
 
@@ -246,7 +242,7 @@ struct Crop::Data {
   std::vector<int32_t> size_;
 };
 
-Crop::Crop(std::vector<int32_t> coordinates, std::vector<int32_t> size)
+Crop::Crop(const std::vector<int32_t> &coordinates, const std::vector<int32_t> &size)
     : data_(std::make_shared<Data>(coordinates, size)) {}
 
 std::shared_ptr<TensorOperation> Crop::Parse() {
@@ -313,7 +309,8 @@ struct DvppDecodeResizeJpeg::Data {
   std::vector<uint32_t> resize_;
 };
 
-DvppDecodeResizeJpeg::DvppDecodeResizeJpeg(std::vector<uint32_t> resize) : data_(std::make_shared<Data>(resize)) {}
+DvppDecodeResizeJpeg::DvppDecodeResizeJpeg(const std::vector<uint32_t> &resize)
+    : data_(std::make_shared<Data>(resize)) {}
 
 std::shared_ptr<TensorOperation> DvppDecodeResizeJpeg::Parse() {
   return std::make_shared<DvppDecodeResizeOperation>(data_->resize_);
@@ -334,7 +331,8 @@ struct DvppDecodeResizeCropJpeg::Data {
   std::vector<uint32_t> resize_;
 };
 
-DvppDecodeResizeCropJpeg::DvppDecodeResizeCropJpeg(std::vector<uint32_t> crop, std::vector<uint32_t> resize)
+DvppDecodeResizeCropJpeg::DvppDecodeResizeCropJpeg(const std::vector<uint32_t> &crop,
+                                                   const std::vector<uint32_t> &resize)
     : data_(std::make_shared<Data>(crop, resize)) {}
 
 std::shared_ptr<TensorOperation> DvppDecodeResizeCropJpeg::Parse() {
@@ -365,7 +363,7 @@ std::shared_ptr<TensorOperation> DvppDecodePng::Parse(const MapTargetDevice &env
 
 #ifndef ENABLE_ANDROID
 // Equalize Transform Operation.
-Equalize::Equalize() {}
+Equalize::Equalize() = default;
 
 std::shared_ptr<TensorOperation> Equalize::Parse() { return std::make_shared<EqualizeOperation>(); }
 #endif  // not ENABLE_ANDROID
@@ -387,17 +385,17 @@ std::shared_ptr<TensorOperation> GaussianBlur::Parse() {
 
 #ifndef ENABLE_ANDROID
 // HorizontalFlip Transform Operation.
-HorizontalFlip::HorizontalFlip() {}
+HorizontalFlip::HorizontalFlip() = default;
 
 std::shared_ptr<TensorOperation> HorizontalFlip::Parse() { return std::make_shared<HorizontalFlipOperation>(); }
 
 // HwcToChw Transform Operation.
-HWC2CHW::HWC2CHW() {}
+HWC2CHW::HWC2CHW() = default;
 
 std::shared_ptr<TensorOperation> HWC2CHW::Parse() { return std::make_shared<HwcToChwOperation>(); }
 
 // Invert Transform Operation.
-Invert::Invert() {}
+Invert::Invert() = default;
 
 std::shared_ptr<TensorOperation> Invert::Parse() { return std::make_shared<InvertOperation>(); }
 
@@ -419,7 +417,8 @@ struct Normalize::Data {
   std::vector<float> std_;
 };
 
-Normalize::Normalize(std::vector<float> mean, std::vector<float> std) : data_(std::make_shared<Data>(mean, std)) {}
+Normalize::Normalize(const std::vector<float> &mean, const std::vector<float> &std)
+    : data_(std::make_shared<Data>(mean, std)) {}
 
 std::shared_ptr<TensorOperation> Normalize::Parse() {
   return std::make_shared<NormalizeOperation>(data_->mean_, data_->std_);
@@ -464,7 +463,7 @@ struct Pad::Data {
   BorderType padding_mode_;
 };
 
-Pad::Pad(std::vector<int32_t> padding, std::vector<uint8_t> fill_value, BorderType padding_mode)
+Pad::Pad(const std::vector<int32_t> &padding, const std::vector<uint8_t> &fill_value, BorderType padding_mode)
     : data_(std::make_shared<Data>(padding, fill_value, padding_mode)) {}
 
 std::shared_ptr<TensorOperation> Pad::Parse() {
@@ -524,7 +523,7 @@ struct RandomAutoContrast::Data {
   float probability_;
 };
 
-RandomAutoContrast::RandomAutoContrast(float cutoff, std::vector<uint32_t> ignore, float prob)
+RandomAutoContrast::RandomAutoContrast(float cutoff, const std::vector<uint32_t> &ignore, float prob)
     : data_(std::make_shared<Data>(cutoff, ignore, prob)) {}
 
 std::shared_ptr<TensorOperation> RandomAutoContrast::Parse() {
@@ -555,8 +554,8 @@ struct RandomColorAdjust::Data {
   std::vector<float> hue_;
 };
 
-RandomColorAdjust::RandomColorAdjust(std::vector<float> brightness, std::vector<float> contrast,
-                                     std::vector<float> saturation, std::vector<float> hue)
+RandomColorAdjust::RandomColorAdjust(const std::vector<float> &brightness, const std::vector<float> &contrast,
+                                     const std::vector<float> &saturation, const std::vector<float> &hue)
     : data_(std::make_shared<Data>(brightness, contrast, saturation, hue)) {}
 
 std::shared_ptr<TensorOperation> RandomColorAdjust::Parse() {
@@ -580,8 +579,8 @@ struct RandomCrop::Data {
   BorderType padding_mode_;
 };
 
-RandomCrop::RandomCrop(std::vector<int32_t> size, std::vector<int32_t> padding, bool pad_if_needed,
-                       std::vector<uint8_t> fill_value, BorderType padding_mode)
+RandomCrop::RandomCrop(const std::vector<int32_t> &size, const std::vector<int32_t> &padding, bool pad_if_needed,
+                       const std::vector<uint8_t> &fill_value, BorderType padding_mode)
     : data_(std::make_shared<Data>(size, padding, pad_if_needed, fill_value, padding_mode)) {}
 
 std::shared_ptr<TensorOperation> RandomCrop::Parse() {
@@ -601,8 +600,8 @@ struct RandomCropDecodeResize::Data {
   int32_t max_attempts_;
 };
 
-RandomCropDecodeResize::RandomCropDecodeResize(std::vector<int32_t> size, std::vector<float> scale,
-                                               std::vector<float> ratio, InterpolationMode interpolation,
+RandomCropDecodeResize::RandomCropDecodeResize(const std::vector<int32_t> &size, const std::vector<float> &scale,
+                                               const std::vector<float> &ratio, InterpolationMode interpolation,
                                                int32_t max_attempts)
     : data_(std::make_shared<Data>(size, scale, ratio, interpolation, max_attempts)) {}
 
@@ -627,8 +626,9 @@ struct RandomCropWithBBox::Data {
   BorderType padding_mode_;
 };
 
-RandomCropWithBBox::RandomCropWithBBox(std::vector<int32_t> size, std::vector<int32_t> padding, bool pad_if_needed,
-                                       std::vector<uint8_t> fill_value, BorderType padding_mode)
+RandomCropWithBBox::RandomCropWithBBox(const std::vector<int32_t> &size, const std::vector<int32_t> &padding,
+                                       bool pad_if_needed, const std::vector<uint8_t> &fill_value,
+                                       BorderType padding_mode)
     : data_(std::make_shared<Data>(size, padding, pad_if_needed, fill_value, padding_mode)) {}
 
 std::shared_ptr<TensorOperation> RandomCropWithBBox::Parse() {
@@ -714,7 +714,7 @@ struct RandomResize::Data {
   std::vector<int32_t> size_;
 };
 
-RandomResize::RandomResize(std::vector<int32_t> size) : data_(std::make_shared<Data>(size)) {}
+RandomResize::RandomResize(const std::vector<int32_t> &size) : data_(std::make_shared<Data>(size)) {}
 
 std::shared_ptr<TensorOperation> RandomResize::Parse() { return std::make_shared<RandomResizeOperation>(data_->size_); }
 
@@ -724,7 +724,7 @@ struct RandomResizeWithBBox::Data {
   std::vector<int32_t> size_;
 };
 
-RandomResizeWithBBox::RandomResizeWithBBox(std::vector<int32_t> size) : data_(std::make_shared<Data>(size)) {}
+RandomResizeWithBBox::RandomResizeWithBBox(const std::vector<int32_t> &size) : data_(std::make_shared<Data>(size)) {}
 
 std::shared_ptr<TensorOperation> RandomResizeWithBBox::Parse() {
   return std::make_shared<RandomResizeWithBBoxOperation>(data_->size_);
@@ -742,8 +742,9 @@ struct RandomResizedCrop::Data {
   int32_t max_attempts_;
 };
 
-RandomResizedCrop::RandomResizedCrop(std::vector<int32_t> size, std::vector<float> scale, std::vector<float> ratio,
-                                     InterpolationMode interpolation, int32_t max_attempts)
+RandomResizedCrop::RandomResizedCrop(const std::vector<int32_t> &size, const std::vector<float> &scale,
+                                     const std::vector<float> &ratio, InterpolationMode interpolation,
+                                     int32_t max_attempts)
     : data_(std::make_shared<Data>(size, scale, ratio, interpolation, max_attempts)) {}
 
 std::shared_ptr<TensorOperation> RandomResizedCrop::Parse() {
@@ -763,8 +764,8 @@ struct RandomResizedCropWithBBox::Data {
   int32_t max_attempts_;
 };
 
-RandomResizedCropWithBBox::RandomResizedCropWithBBox(std::vector<int32_t> size, std::vector<float> scale,
-                                                     std::vector<float> ratio, InterpolationMode interpolation,
+RandomResizedCropWithBBox::RandomResizedCropWithBBox(const std::vector<int32_t> &size, const std::vector<float> &scale,
+                                                     const std::vector<float> &ratio, InterpolationMode interpolation,
                                                      int32_t max_attempts)
     : data_(std::make_shared<Data>(size, scale, ratio, interpolation, max_attempts)) {}
 
@@ -785,8 +786,8 @@ struct RandomRotation::Data {
   std::vector<uint8_t> fill_value_;
 };
 
-RandomRotation::RandomRotation(std::vector<float> degrees, InterpolationMode resample, bool expand,
-                               std::vector<float> center, std::vector<uint8_t> fill_value)
+RandomRotation::RandomRotation(const std::vector<float> &degrees, InterpolationMode resample, bool expand,
+                               const std::vector<float> &center, const std::vector<uint8_t> &fill_value)
     : data_(std::make_shared<Data>(degrees, resample, expand, center, fill_value)) {}
 
 std::shared_ptr<TensorOperation> RandomRotation::Parse() {
@@ -857,7 +858,7 @@ struct RandomSharpness::Data {
   std::vector<float> degrees_;
 };
 
-RandomSharpness::RandomSharpness(std::vector<float> degrees) : data_(std::make_shared<Data>(degrees)) {}
+RandomSharpness::RandomSharpness(const std::vector<float> &degrees) : data_(std::make_shared<Data>(degrees)) {}
 
 std::shared_ptr<TensorOperation> RandomSharpness::Parse() {
   return std::make_shared<RandomSharpnessOperation>(data_->degrees_);
@@ -869,7 +870,7 @@ struct RandomSolarize::Data {
   std::vector<uint8_t> threshold_;
 };
 
-RandomSolarize::RandomSolarize(std::vector<uint8_t> threshold) : data_(std::make_shared<Data>(threshold)) {}
+RandomSolarize::RandomSolarize(const std::vector<uint8_t> &threshold) : data_(std::make_shared<Data>(threshold)) {}
 
 std::shared_ptr<TensorOperation> RandomSolarize::Parse() {
   return std::make_shared<RandomSolarizeOperation>(data_->threshold_);
@@ -921,7 +922,7 @@ struct Resize::Data {
   InterpolationMode interpolation_;
 };
 
-Resize::Resize(std::vector<int32_t> size, InterpolationMode interpolation)
+Resize::Resize(const std::vector<int32_t> &size, InterpolationMode interpolation)
     : data_(std::make_shared<Data>(size, interpolation)) {}
 
 std::shared_ptr<TensorOperation> Resize::Parse() {
@@ -960,6 +961,40 @@ std::shared_ptr<TensorOperation> ResizePreserveAR::Parse() {
   return std::make_shared<ResizePreserveAROperation>(data_->height_, data_->width_, data_->img_orientation_);
 }
 
+#ifndef ENABLE_ANDROID
+// ResizeWithBBox Transform Operation.
+struct ResizeWithBBox::Data {
+  Data(const std::vector<int32_t> &size, InterpolationMode interpolation)
+      : size_(size), interpolation_(interpolation) {}
+  std::vector<int32_t> size_;
+  InterpolationMode interpolation_;
+};
+
+ResizeWithBBox::ResizeWithBBox(const std::vector<int32_t> &size, InterpolationMode interpolation)
+    : data_(std::make_shared<Data>(size, interpolation)) {}
+
+std::shared_ptr<TensorOperation> ResizeWithBBox::Parse() {
+  return std::make_shared<ResizeWithBBoxOperation>(data_->size_, data_->interpolation_);
+}
+#endif  // not ENABLE_ANDROID
+
+// RGB2BGR Transform Operation.
+std::shared_ptr<TensorOperation> RGB2BGR::Parse() { return std::make_shared<RgbToBgrOperation>(); }
+
+// RGB2GRAY Transform Operation.
+std::shared_ptr<TensorOperation> RGB2GRAY::Parse() { return std::make_shared<RgbToGrayOperation>(); }
+
+#ifndef ENABLE_ANDROID
+// RgbaToBgr Transform Operation.
+RGBA2BGR::RGBA2BGR() = default;
+
+std::shared_ptr<TensorOperation> RGBA2BGR::Parse() { return std::make_shared<RgbaToBgrOperation>(); }
+
+// RgbaToRgb Transform Operation.
+RGBA2RGB::RGBA2RGB() = default;
+
+std::shared_ptr<TensorOperation> RGBA2RGB::Parse() { return std::make_shared<RgbaToRgbOperation>(); }
+
 // Rotate Transform Operation.
 struct Rotate::Data {
   Data(const float &degrees, InterpolationMode resample, bool expand, const std::vector<float> &center,
@@ -977,8 +1012,8 @@ struct Rotate::Data {
 
 Rotate::Rotate(FixRotationAngle angle_id) : data_(std::make_shared<Data>(angle_id)) {}
 
-Rotate::Rotate(float degrees, InterpolationMode resample, bool expand, std::vector<float> center,
-               std::vector<uint8_t> fill_value)
+Rotate::Rotate(float degrees, InterpolationMode resample, bool expand, const std::vector<float> &center,
+               const std::vector<uint8_t> &fill_value)
     : data_(std::make_shared<Data>(degrees, resample, expand, center, fill_value)) {}
 
 std::shared_ptr<TensorOperation> Rotate::Parse() {
@@ -996,40 +1031,6 @@ std::shared_ptr<TensorOperation> Rotate::Parse() {
   MS_LOG(ERROR) << "This Rotate API is not supported for " + platform + ", use another Rotate API.";
   return nullptr;
 }
-
-#ifndef ENABLE_ANDROID
-// ResizeWithBBox Transform Operation.
-struct ResizeWithBBox::Data {
-  Data(const std::vector<int32_t> &size, InterpolationMode interpolation)
-      : size_(size), interpolation_(interpolation) {}
-  std::vector<int32_t> size_;
-  InterpolationMode interpolation_;
-};
-
-ResizeWithBBox::ResizeWithBBox(std::vector<int32_t> size, InterpolationMode interpolation)
-    : data_(std::make_shared<Data>(size, interpolation)) {}
-
-std::shared_ptr<TensorOperation> ResizeWithBBox::Parse() {
-  return std::make_shared<ResizeWithBBoxOperation>(data_->size_, data_->interpolation_);
-}
-#endif  // not ENABLE_ANDROID
-
-// RGB2BGR Transform Operation.
-std::shared_ptr<TensorOperation> RGB2BGR::Parse() { return std::make_shared<RgbToBgrOperation>(); }
-
-// RGB2GRAY Transform Operation.
-std::shared_ptr<TensorOperation> RGB2GRAY::Parse() { return std::make_shared<RgbToGrayOperation>(); }
-
-#ifndef ENABLE_ANDROID
-// RgbaToBgr Transform Operation.
-RGBA2BGR::RGBA2BGR() {}
-
-std::shared_ptr<TensorOperation> RGBA2BGR::Parse() { return std::make_shared<RgbaToBgrOperation>(); }
-
-// RgbaToRgb Transform Operation.
-RGBA2RGB::RGBA2RGB() {}
-
-std::shared_ptr<TensorOperation> RGBA2RGB::Parse() { return std::make_shared<RgbaToRgbOperation>(); }
 
 // SlicePatches Transform Operation.
 struct SlicePatches::Data {
@@ -1060,9 +1061,10 @@ struct SoftDvppDecodeRandomCropResizeJpeg::Data {
   int32_t max_attempts_;
 };
 
-SoftDvppDecodeRandomCropResizeJpeg::SoftDvppDecodeRandomCropResizeJpeg(std::vector<int32_t> size,
-                                                                       std::vector<float> scale,
-                                                                       std::vector<float> ratio, int32_t max_attempts)
+SoftDvppDecodeRandomCropResizeJpeg::SoftDvppDecodeRandomCropResizeJpeg(const std::vector<int32_t> &size,
+                                                                       const std::vector<float> &scale,
+                                                                       const std::vector<float> &ratio,
+                                                                       int32_t max_attempts)
     : data_(std::make_shared<Data>(size, scale, ratio, max_attempts)) {}
 
 std::shared_ptr<TensorOperation> SoftDvppDecodeRandomCropResizeJpeg::Parse() {
@@ -1076,14 +1078,15 @@ struct SoftDvppDecodeResizeJpeg::Data {
   std::vector<int32_t> size_;
 };
 
-SoftDvppDecodeResizeJpeg::SoftDvppDecodeResizeJpeg(std::vector<int32_t> size) : data_(std::make_shared<Data>(size)) {}
+SoftDvppDecodeResizeJpeg::SoftDvppDecodeResizeJpeg(const std::vector<int32_t> &size)
+    : data_(std::make_shared<Data>(size)) {}
 
 std::shared_ptr<TensorOperation> SoftDvppDecodeResizeJpeg::Parse() {
   return std::make_shared<SoftDvppDecodeResizeJpegOperation>(data_->size_);
 }
 
 // SwapRedBlue Transform Operation.
-SwapRedBlue::SwapRedBlue() {}
+SwapRedBlue::SwapRedBlue() = default;
 
 std::shared_ptr<TensorOperation> SwapRedBlue::Parse() { return std::make_shared<SwapRedBlueOperation>(); }
 
@@ -1104,7 +1107,7 @@ UniformAugment::UniformAugment(const std::vector<TensorTransform *> &transforms,
 UniformAugment::UniformAugment(const std::vector<std::shared_ptr<TensorTransform>> &transforms, int32_t num_ops)
     : data_(std::make_shared<Data>()) {
   (void)std::transform(transforms.begin(), transforms.end(), std::back_inserter(data_->transforms_),
-                       [](const std::shared_ptr<TensorTransform> op) -> std::shared_ptr<TensorOperation> {
+                       [](const std::shared_ptr<TensorTransform> &op) -> std::shared_ptr<TensorOperation> {
                          return op ? op->Parse() : nullptr;
                        });
   data_->num_ops_ = num_ops;
@@ -1122,11 +1125,10 @@ std::shared_ptr<TensorOperation> UniformAugment::Parse() {
 }
 
 // VerticalFlip Transform Operation.
-VerticalFlip::VerticalFlip() {}
+VerticalFlip::VerticalFlip() = default;
 
 std::shared_ptr<TensorOperation> VerticalFlip::Parse() { return std::make_shared<VerticalFlipOperation>(); }
 #endif  // not ENABLE_ANDROID
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

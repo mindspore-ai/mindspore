@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,13 +22,13 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+
 #include "include/api/dual_abi_helper.h"
 #include "include/api/status.h"
 #include "include/api/types.h"
 
 namespace mindspore {
 namespace dataset {
-
 // Forward declare
 class ExecutionTree;
 class DatasetOp;
@@ -57,7 +57,7 @@ class MS_API Iterator {
   /// \param[in] ds The last DatasetOp in the dataset pipeline.
   /// \param[in] num_epochs Number of epochs passed down to EpochCtrlNode (default=-1, which means infinite epochs).
   /// \return Status error code, returns OK if no error encountered.
-  Status BuildAndLaunchTree(std::shared_ptr<Dataset> ds, int32_t num_epochs);
+  Status BuildAndLaunchTree(const std::shared_ptr<Dataset> &ds, int32_t num_epochs);
 
   /// \brief Function to get the next row from the data pipeline.
   /// \note Type of return data is a unordered_map(with column name).
@@ -185,7 +185,7 @@ class MS_API PullIterator : public Iterator {
   /// \note Consider making this function protected.
   /// \param[in] ds The root node that calls the function.
   /// \return Status error code, returns OK if no error encountered.
-  Status BuildAndLaunchTree(std::shared_ptr<Dataset> ds);
+  Status BuildAndLaunchTree(const std::shared_ptr<Dataset> &ds);
 
  private:
   std::unique_ptr<PullBasedIteratorConsumer> pull_consumer_;

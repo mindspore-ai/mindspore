@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 class TensorOperation;
 
 // We need the following two groups of forward declaration to friend the class in class TensorTransform.
@@ -60,7 +59,7 @@ class MS_API TensorTransform : public std::enable_shared_from_this<TensorTransfo
 
  public:
   /// \brief Constructor
-  TensorTransform() {}
+  TensorTransform() = default;
 
   /// \brief Destructor
   ~TensorTransform() = default;
@@ -108,10 +107,13 @@ class MS_API SliceOption {
  public:
   /// \param[in] all Slice the whole dimension
   explicit SliceOption(bool all) : all_(all) {}
+
   /// \param[in] indices Slice these indices along the dimension. Negative indices are supported.
-  explicit SliceOption(std::vector<dsize_t> indices) : indices_(indices) {}
+  explicit SliceOption(const std::vector<dsize_t> &indices) : indices_(indices) {}
+
   /// \param[in] slice Slice the generated indices from the slice object along the dimension.
   explicit SliceOption(Slice slice) : slice_(slice) {}
+
   SliceOption(SliceOption const &slice) = default;
 
   ~SliceOption() = default;

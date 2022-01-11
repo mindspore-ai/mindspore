@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,9 @@
  */
 
 #include "minddata/dataset/audio/ir/kernels/frequency_masking_ir.h"
-#include "minddata/dataset/audio/kernels/frequency_masking_op.h"
+
 #include "minddata/dataset/audio/ir/validators.h"
+#include "minddata/dataset/audio/kernels/frequency_masking_op.h"
 
 namespace mindspore {
 namespace dataset {
