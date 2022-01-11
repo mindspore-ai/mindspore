@@ -30,15 +30,11 @@ int Gather(const void *input, int outer_size, int inner_size, int limit, const i
 
     for (int i = 0; i < indices_element_size; ++i) {
       int index = indices[i];
-      if (index < -limit) {
-        index = -limit;
+      if (index < -limit || index >= limit) {
+        memset(int8_out_m + i * inner_size * data_size, 0, data_size * inner_size);
+        continue;
       }
-      if (index >= limit) {
-        index = limit - 1;
-      }
-      if (index < 0) {
-        index += limit;
-      }
+      index = index < 0 ? index + limit : index;
       memcpy(int8_out_m + i * inner_size * data_size, int8_in_m + index * inner_size * data_size,
              data_size * inner_size);
     }

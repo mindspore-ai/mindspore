@@ -102,7 +102,8 @@ int DoDequantizeInt8ToFp16(const int8_t *quant_values, float16_t *real_values, f
 
 #ifdef ENABLE_ARM64
 void Fp16ToInt8_arm64(const float16_t *real_values, int8_t *quant_values, float scale, int32_t zp, int size) {
-  float ivs = 1.0f / scale;
+  const float one = 1.0f;
+  const float ivs = one / scale;
   const int32_t min_value = -128;
   const int32_t max_value = 127;
   asm volatile(
@@ -230,20 +231,22 @@ int DoQuantizeFp16ToInt8(const float16_t *real_values, int8_t *quant_values, flo
 #ifdef ENABLE_ARM64
   Fp16ToInt8_arm64(real_values, quant_values, scale, zp, size);
 #else
+  const int8_t min_value = -128;
+  const int8_t max_value = 127;
   for (int i = 0; i < size; ++i) {
     if (real_values[i] == INFINITY) {
-      quant_values[i] = 127;
+      quant_values[i] = max_value;
       continue;
     }
     if (real_values[i] == -INFINITY) {
-      quant_values[i] = -128;
+      quant_values[i] = min_value;
       continue;
     }
     float temp = round((float)real_values[i] / scale + zp);
-    if (temp > 127) {
-      quant_values[i] = 127;
-    } else if (temp < -128) {
-      quant_values[i] = -128;
+    if (temp > max_value) {
+      quant_values[i] = max_value;
+    } else if (temp < min_value) {
+      quant_values[i] = min_value;
     } else {
       quant_values[i] = (int8_t)temp;
     }
