@@ -134,9 +134,7 @@ class CeLU(Primitive):
         validator.check_value_type("alpha", alpha, [float], self.name)
         validator.check_float(alpha, 0.0, Rel.NE, "alpha", self.name)
         self.alpha = alpha
-        self.alpha2 = alpha
         self.add_prim_attr('alpha', self.alpha)
-        self.add_prim_attr('alpha2', self.alpha2)
 
 
 class Flatten(Primitive):
