@@ -264,7 +264,7 @@ void GraphScheduler::Initialize() {
   if (ret != MINDRT_OK) {
     MS_LOG(EXCEPTION) << "Actor manager init failed.";
   }
-  (void)common::SetOMPThreadNum();
+  common::SetOMPThreadNum();
   auto OMP_thread_num_used = common::GetEnv("OMP_NUM_THREADS");
   MS_LOG(INFO) << "The actor thread number: " << actor_thread_num
                << ", the kernel thread number: " << (actor_and_kernel_thread_num - actor_thread_num)
@@ -902,7 +902,7 @@ void GraphScheduler::LinkDataArrowInSinkMode(const KernelGraphPtr &graph, const 
   }
 
   auto to_actor_name = graph->ToString() + "_SuperKernelActor";
-  auto to_actor = dynamic_cast<SuperKernelActor *>(FetchActor(to_actor_name));
+  auto to_actor = FetchActor(to_actor_name);
   MS_EXCEPTION_IF_NULL(to_actor);
 
   auto &input_nodes = graph->input_nodes();
@@ -970,7 +970,7 @@ void GraphScheduler::LinkDataArrowInNonSinkMode(const KernelGraphPtr &graph,
     if (IsSkippedKernelActor(kernel) || (!IsKernelActor(kernel, graph_compiler_info.strategy_))) {
       continue;
     }
-    const auto &kernel_actor = dynamic_cast<KernelActor *>(FetchActor(kernel->fullname_with_scope()));
+    const auto &kernel_actor = FetchActor(kernel->fullname_with_scope());
     MS_EXCEPTION_IF_NULL(kernel_actor);
 
     for (size_t i = 0; i < AnfAlgo::GetInputNum(kernel); ++i) {
@@ -1323,7 +1323,7 @@ void GraphScheduler::LinkControlArrowBySkippedNode(AbstractActor *to_actor, cons
   for (size_t i = 0; i < input_num; ++i) {
     auto kernel_with_index = AnfAlgo::GetPrevNodeOutput(skipped_node, i, false);
     MS_EXCEPTION_IF_NULL(kernel_with_index.first);
-    auto from_actor = dynamic_cast<KernelActor *>(FetchActor(kernel_with_index.first->fullname_with_scope()));
+    auto from_actor = FetchActor(kernel_with_index.first->fullname_with_scope());
     MS_EXCEPTION_IF_NULL(from_actor);
     MS_LOG(INFO) << "Link control arrow by skipped node: " << skipped_node->fullname_with_scope()
                  << ", from actor: " << from_actor->GetAID().Name() << ", to actor: " << to_actor->GetAID().Name();
@@ -1341,9 +1341,9 @@ void GraphScheduler::LinkControlArrowBySendRecvNodes(const KernelGraphPtr &graph
     MS_EXCEPTION_IF_NULL(from_send_node);
     MS_EXCEPTION_IF_NULL(from_recv_node);
     MS_LOG(INFO) << "Link control arrow for to_allreduce_node: " << to_allreduce_node->fullname_with_scope();
-    auto to_allreduce_actor = dynamic_cast<KernelActor *>(FetchActor(to_allreduce_node->fullname_with_scope()));
-    auto from_send_actor = dynamic_cast<KernelActor *>(FetchActor(from_send_node->fullname_with_scope()));
-    auto from_recv_actor = dynamic_cast<KernelActor *>(FetchActor(from_recv_node->fullname_with_scope()));
+    auto to_allreduce_actor = FetchActor(to_allreduce_node->fullname_with_scope());
+    auto from_send_actor = FetchActor(from_send_node->fullname_with_scope());
+    auto from_recv_actor = FetchActor(from_recv_node->fullname_with_scope());
     MS_EXCEPTION_IF_NULL(to_allreduce_actor);
     MS_EXCEPTION_IF_NULL(from_send_actor);
     MS_EXCEPTION_IF_NULL(from_recv_actor);
@@ -1369,8 +1369,8 @@ void GraphScheduler::LinkControlArrowBySendRecvNodes(const KernelGraphPtr &graph
     MS_EXCEPTION_IF_NULL(to_send_node);
     MS_EXCEPTION_IF_NULL(to_recv_node);
     MS_LOG(INFO) << "Link control arrow for from_allreduce_node: " << from_allreduce_node->fullname_with_scope();
-    auto from_allreduce_actor = dynamic_cast<KernelActor *>(FetchActor(from_allreduce_node->fullname_with_scope()));
-    auto to_send_actor = dynamic_cast<KernelActor *>(FetchActor(to_send_node->fullname_with_scope()));
+    auto from_allreduce_actor = FetchActor(from_allreduce_node->fullname_with_scope());
+    auto to_send_actor = FetchActor(to_send_node->fullname_with_scope());
     auto to_recv_actor = dynamic_cast<KernelActor *>(FetchActor(to_recv_node->fullname_with_scope()));
     MS_EXCEPTION_IF_NULL(from_allreduce_actor);
     MS_EXCEPTION_IF_NULL(to_send_actor);
@@ -1382,7 +1382,7 @@ void GraphScheduler::LinkControlArrowBySendRecvNodes(const KernelGraphPtr &graph
     AddControlArrow(to_send_actor, to_recv_actor);
     // to_recv_actor --> outputs of from_allreduce_actor
     for (auto &output_data_arrow : from_allreduce_actor->output_data_arrows_) {
-      auto output_actor = dynamic_cast<KernelActor *>(FetchActor(output_data_arrow->to_op_id_.Name()));
+      auto output_actor = FetchActor(output_data_arrow->to_op_id_.Name());
       if (output_actor != nullptr) {
         AddControlArrow(to_recv_actor, output_actor);
       }
@@ -1513,8 +1513,8 @@ void GraphScheduler::LinkControlArrowByCommunicationNode(const std::vector<CNode
 
   // Ensure communication node to execute orderly.
   for (size_t i = 1; i < communication_nodes.size(); ++i) {
-    auto from_actor = dynamic_cast<KernelActor *>(FetchActor(communication_nodes[i - 1]->fullname_with_scope()));
-    auto to_actor = dynamic_cast<KernelActor *>(FetchActor(communication_nodes[i]->fullname_with_scope()));
+    auto from_actor = FetchActor(communication_nodes[i - 1]->fullname_with_scope());
+    auto to_actor = FetchActor(communication_nodes[i]->fullname_with_scope());
     MS_EXCEPTION_IF_NULL(from_actor);
     MS_EXCEPTION_IF_NULL(to_actor);
     AddControlArrow(from_actor, to_actor);
@@ -1526,8 +1526,8 @@ void GraphScheduler::LinkControlArrowByCommunicationNode(const std::vector<CNode
     MS_EXCEPTION_IF_NULL(graph);
     auto &execution_order = graph->execution_order();
     for (size_t i = 1; i < execution_order.size(); ++i) {
-      auto from_actor = dynamic_cast<KernelActor *>(FetchActor(execution_order[i - 1]->fullname_with_scope()));
-      auto to_actor = dynamic_cast<KernelActor *>(FetchActor(execution_order[i]->fullname_with_scope()));
+      auto from_actor = FetchActor(execution_order[i - 1]->fullname_with_scope());
+      auto to_actor = FetchActor(execution_order[i]->fullname_with_scope());
       if ((from_actor != nullptr) && (to_actor != nullptr)) {
         AddControlArrow(from_actor, to_actor);
       }

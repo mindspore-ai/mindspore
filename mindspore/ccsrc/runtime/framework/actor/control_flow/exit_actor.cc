@@ -29,7 +29,7 @@ void ExitActor::Init() {
     for (auto &data_arrow : output_branch_data_arrows) {
       MS_EXCEPTION_IF_NULL(data_arrow);
       auto data = std::make_unique<OpData<DeviceTensor>>(data_arrow->to_op_id_, nullptr, data_arrow->to_input_index_);
-      output_branch_data_[i].emplace_back(data_arrow->from_output_index_, std::move(data));
+      (void)output_branch_data_[i].emplace_back(data_arrow->from_output_index_, std::move(data));
     }
   }
 }
@@ -116,7 +116,7 @@ void ExitActor::IncreaseDynamicRefCounts(OpContext<DeviceTensor> *const context)
                                  " current:" + std::to_string(input_partials_.size()) + " for actor:" + GetAID().Name();
         SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
       }
-      auto output_partial = input_partials_[partial_arrow->from_output_index_];
+      auto output_partial = input_partials_[IntToSize(partial_arrow->from_output_index_)];
       IncreaseDynamicRefCount(output_partial);
     }
   }
@@ -139,7 +139,7 @@ void ExitActor::CopyDeviceAddress(OpContext<DeviceTensor> *const context) {
   for (size_t i = 0; i < input_device_tensors_.size(); ++i) {
     auto input_device_tensor = input_device_tensors_[i];
     if (!is_need_copy_device_tensors_[i]) {
-      new_device_tensors.emplace_back(input_device_tensor);
+      (void)new_device_tensors.emplace_back(input_device_tensor);
       continue;
     }
 
@@ -147,7 +147,7 @@ void ExitActor::CopyDeviceAddress(OpContext<DeviceTensor> *const context) {
     const KernelWithIndex &node_with_index = input_device_tensor->GetNodeIndex();
     MS_EXCEPTION_IF_NULL(node_with_index.first);
     if (HasAbstractRef(node_with_index.first)) {
-      new_device_tensors.emplace_back(input_device_tensor);
+      (void)new_device_tensors.emplace_back(input_device_tensor);
       continue;
     }
     MS_EXCEPTION_IF_NULL(device_contexts_[i]);
@@ -155,8 +155,8 @@ void ExitActor::CopyDeviceAddress(OpContext<DeviceTensor> *const context) {
     auto new_device_tensor = device_contexts_[i]->CreateDeviceAddress(
       nullptr, input_device_tensor->GetSize(), input_device_tensor->format(), input_device_tensor->type_id());
     MS_EXCEPTION_IF_NULL(new_device_tensor);
-    created_device_tensors_.emplace_back(new_device_tensor);
-    new_device_tensors.emplace_back(new_device_tensor.get());
+    (void)created_device_tensors_.emplace_back(new_device_tensor);
+    (void)new_device_tensors.emplace_back(new_device_tensor.get());
 
     new_device_tensor->SetNodeIndex(node_with_index.first, node_with_index.second);
     new_device_tensor->set_from_persistent_mem(input_device_tensor->from_persistent_mem());

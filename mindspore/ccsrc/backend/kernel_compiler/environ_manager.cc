@@ -61,7 +61,7 @@ void EnvironMgr::Clear() {
   mutex.unlock();
 }
 
-bool EnvironMgr::CheckEnvInput(const CNodePtr &kernel_node) {
+bool EnvironMgr::CheckEnvInput(const CNodePtr &kernel_node) const {
   MS_EXCEPTION_IF_NULL(kernel_node);
   // Check the value type attr.
   auto value_type_attr = TypeId(AnfAlgo::GetNodeAttr<int>(kernel_node, kEnvValueTypeAttr));
@@ -98,7 +98,7 @@ bool EnvironMgr::CheckEnvInput(const CNodePtr &kernel_node) {
   return true;
 }
 
-bool EnvironMgr::IsScalarTensor(TypeId type, std::vector<size_t> shape) {
+bool EnvironMgr::IsScalarTensor(TypeId type, const std::vector<size_t> &shape) const {
   if (type == kObjectTypeTensorType) {
     MS_LOG(ERROR) << "The type is invalid: " << type;
     return false;
