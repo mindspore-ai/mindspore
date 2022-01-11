@@ -679,7 +679,7 @@ class Squeeze(PrimitiveWithInfer):
     Returns a tensor with the same data type but dimensions of 1 are removed based on `axis`.
 
     If `axis` is specified, it will remove the dimensions of size 1 in the given `axis`.
-    It `axis` is None, it will remove all the dimensions of size 1.
+    If `axis` is None, it will remove all the dimensions of size 1.
     For example, if input is of shape: (A×1×B×C×1×D), then the out tensor will be of shape: (A×B×C×D);
     When dim is given, a squeeze operation is done only in the given dimension.
     If input is of shape: (A×1×B), squeeze(input, 0) leaves the tensor unchanged,
@@ -738,7 +738,7 @@ class Transpose(Primitive):
     Permutes the dimensions of the input tensor according to input permutation.
 
     For a 1-D array this has no effect, as a transposed vector is simply the same vector.
-    To convert a 1-D array into a 2D column vecto please refer the class: mindspore.ops.ExpandDims.
+    To convert a 1-D array into a 2D column vector please refer the class: mindspore.ops.ExpandDims.
     For a 2-D array, this is a standard matrix transpose. For an n-D array, if axes are given,
     their order indicates how the axes are permuted (see Examples).
     If axes are not provided and a.shape = (i[0], i[1], ... i[n-2], i[n-1]),
@@ -788,7 +788,7 @@ class Unique(Primitive):
     tensor corresponding to the output unique tensor.
 
     The output contains Tensor `y` and Tensor `idx`, the format is probably similar to (`y`, `idx`).
-    The shape of Tensor `y` and Tensor `idx` is different in most cases, because Tensor `y` will be deduplicated,
+    The shape of Tensor `y` and Tensor `idx` is different in most cases, because Tensor `y` will be duplicated,
     and the shape of Tensor `idx` is consistent with the input.
 
     To get the same shape between `idx` and `y`, please ref to 'UniqueWithPad' operator.
@@ -5938,6 +5938,7 @@ class Sort(Primitive):
         >>> x = Tensor(np.array([[8, 2, 1], [5, 9, 3], [4, 6, 7]]), mindspore.float16)
         >>> sort = ops.Sort()
         >>> output = sort(x)
+        >>> # The output below is based on the Ascend platform.
         >>> print(output)
         (Tensor(shape=[3, 3], dtype=Float16, value=
         [[ 1.0000e+00,  2.0000e+00,  8.0000e+00],
