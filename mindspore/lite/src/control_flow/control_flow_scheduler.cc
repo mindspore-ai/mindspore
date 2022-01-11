@@ -23,7 +23,7 @@
 #include "nnacl/call_parameter.h"
 #include "src/control_flow/entrance_subgraph_kernel.h"
 #include "src/control_flow/exit_subgraph_kernel.h"
-#include "src/control_flow/output_kernel.h"
+#include "src/control_flow/identity_kernel.h"
 
 namespace mindspore::lite {
 int ControlFlowScheduler::SplitNonTailCallSubGraphs(std::vector<kernel::LiteKernel *> *dst_kernels) {
@@ -199,9 +199,6 @@ kernel::SubGraphKernel *ControlFlowScheduler::CreateEntranceSubGraph(kernel::Sub
     Tensor *old_tensor = subgraph->in_tensors()[i];
     old_input_tensors.push_back(old_tensor);
     auto allocator = old_tensor->allocator();
-    if (allocator == nullptr && subgraph->Context() != nullptr && subgraph->desc().arch != kernel::kDelegate) {
-      allocator = subgraph->Context()->allocator;
-    }
     auto new_tensor = Tensor::CopyTensor(*old_tensor, false, allocator);
     if (new_tensor == nullptr) {
       MS_LOG(ERROR) << "new Tensor failed.";
@@ -231,9 +228,6 @@ kernel::SubGraphKernel *ControlFlowScheduler::CreateExitSubGraph(kernel::SubGrap
     Tensor *old_tensor = subgraph->out_tensors()[i];
     old_output_tensors.push_back(old_tensor);
     auto allocator = old_tensor->allocator();
-    if (allocator == nullptr && subgraph->Context() != nullptr && subgraph->desc().arch != kernel::kDelegate) {
-      allocator = subgraph->Context()->allocator;
-    }
     auto new_tensor = Tensor::CopyTensor(*old_tensor, false, allocator);
     if (new_tensor == nullptr) {
       MS_LOG(ERROR) << "new Tensor failed.";
@@ -264,9 +258,6 @@ kernel::SubGraphKernel *ControlFlowScheduler::AddOutputKernel(kernel::SubGraphKe
     Tensor *old_tensor = subgraph->out_tensors()[i];
     old_output_tensors.push_back(old_tensor);
     auto allocator = old_tensor->allocator();
-    if (allocator == nullptr && subgraph->Context() != nullptr && subgraph->desc().arch != kernel::kDelegate) {
-      allocator = subgraph->Context()->allocator;
-    }
     auto new_tensor = Tensor::CopyTensor(*old_tensor, false, allocator);
     if (new_tensor == nullptr) {
       MS_LOG(ERROR) << "new Tensor failed.";
@@ -278,7 +269,7 @@ kernel::SubGraphKernel *ControlFlowScheduler::AddOutputKernel(kernel::SubGraphKe
     call_node->set_out_tensor(new_tensor, i);
     context_->ReplaceLinkInfoReceiverWithNewOne(new_tensor, old_tensor);
   }
-  auto output_node = kernel::OutputKernel::Create(new_output_tensors, old_output_tensors, this->context_);
+  auto output_node = kernel::IdentityKernel::Create(new_output_tensors, old_output_tensors, this->context_);
   output_node->set_name(call_node->name() + "_output");
   output_node->AddInKernel(call_node);
   call_node->AddOutKernel(output_node);
@@ -362,7 +353,7 @@ int ControlFlowScheduler::BuildBoundaryForMultipleCalledGraph(std::vector<kernel
   return RET_OK;
 }
 
-int ControlFlowScheduler::BuildOutputForCallOutputGraph(std::vector<kernel::LiteKernel *> *dst_kernels) {
+int ControlFlowScheduler::IsolateOutputForCallOutputGraph(std::vector<kernel::LiteKernel *> *dst_kernels) {
   kernel::LiteKernel *main_graph_kernel = dst_kernels->front();
   if (!kernel::LiteKernelUtil::IsOutputSubGraph(main_graph_kernel)) {
     MS_LOG(DEBUG) << "Not is output graph.";

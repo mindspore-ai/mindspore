@@ -97,15 +97,11 @@ class LiteOpActor : public OpActor<lite::Tensor> {
   virtual int UpdateActorOutput();
   void SetTensorListShape(Tensor *dst, Tensor *src);
 #endif
-  void MoveTensorInputData(Tensor *dst_tensor, Tensor *src_tensor);
-  void MoveInputData(Tensor *dst_tensor, Tensor *src_tensor);
-  void SetInputData(Tensor *dst_tensor, Tensor *src_tensor);
-  int CastInputData(Tensor *dst_tensor, Tensor *src_tensor);
+  int CastTensorData(Tensor *dst_tensor, Tensor *src_tensor);
   bool NeedCastData(Tensor *dst_tensor, Tensor *src_tensor);
-  int CastTensorInputData(Tensor *dst_tensor, Tensor *src_tensor);
+  int CastCommonTensorData(Tensor *dst_tensor, Tensor *src_tensor);
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
-  void MoveTensorListInputData(TensorList *dst_tensor, TensorList *src_tensor);
-  int CastTensorListInputData(TensorList *dst_tensor, TensorList *src_tensor);
+  int CastTensorListTensorData(TensorList *dst_tensor, TensorList *src_tensor);
 #endif
 
   kernel::LiteKernel *kernel_;
