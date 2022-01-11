@@ -100,13 +100,13 @@ using StringImmPtr = SharedPtr<StringImm>;
 
 MIND_API_IMM_TRAIT(StringImm, std::string);
 
-/// \beief Scalar defines interface for scalar data.
+/// \brief Scalar defines interface for scalar data.
 class MIND_API Scalar : public Value {
  public:
   MIND_API_BASE_MEMBER(Scalar);
 };
 
-/// \beief BoolImm defines interface for bool data.
+/// \brief BoolImm defines interface for bool data.
 class MIND_API BoolImm : public Scalar {
  public:
   MIND_API_BASE_MEMBER(BoolImm);
@@ -126,20 +126,20 @@ using BoolImmPtr = SharedPtr<BoolImm>;
 
 MIND_API_IMM_TRAIT(BoolImm, bool);
 
-/// \beief IntegerImm defines interface for integer data.
+/// \brief IntegerImm defines interface for integer data.
 class MIND_API IntegerImm : public Scalar {
  public:
   MIND_API_BASE_MEMBER(IntegerImm);
 };
 
-/// \beief Int64Imm defines interface for int64 data.
+/// \brief Int64Imm defines interface for int64 data.
 class MIND_API Int64Imm : public IntegerImm {
  public:
   MIND_API_BASE_MEMBER(Int64Imm);
 
   /// \brief Create Int64Imm with the given int64 value.
   ///
-  /// \param[in] value The given bool value.
+  /// \param[in] value The given int64 value.
   explicit Int64Imm(int64_t value);
 
   /// \brief Get the int64 value of this Int64Imm.
@@ -152,13 +152,33 @@ using Int64ImmPtr = SharedPtr<Int64Imm>;
 
 MIND_API_IMM_TRAIT(Int64Imm, int64_t);
 
-/// \beief FloatImm defines interface for float data.
+/// \brief UInt8Imm defines interface for uint8 data.
+class MIND_API UInt8Imm : public IntegerImm {
+ public:
+  MIND_API_BASE_MEMBER(UInt8Imm);
+
+  /// \brief Create UInt8Imm with the given uint8 value.
+  ///
+  /// \param[in] value The given uint8 value.
+  explicit UInt8Imm(uint8_t value);
+
+  /// \brief Get the uint8 value of this UInt8Imm.
+  ///
+  /// \return The uint8 value of this UInt8Imm.
+  uint8_t value() const;
+};
+
+using UInt8ImmPtr = SharedPtr<UInt8Imm>;
+
+MIND_API_IMM_TRAIT(UInt8Imm, uint8_t);
+
+/// \brief FloatImm defines interface for float data.
 class MIND_API FloatImm : public Scalar {
  public:
   MIND_API_BASE_MEMBER(FloatImm);
 };
 
-/// \beief FP32Imm defines interface for float32 data.
+/// \brief FP32Imm defines interface for float32 data.
 class MIND_API FP32Imm : public FloatImm {
  public:
   MIND_API_BASE_MEMBER(FP32Imm);
