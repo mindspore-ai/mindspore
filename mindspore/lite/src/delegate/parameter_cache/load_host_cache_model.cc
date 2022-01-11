@@ -106,7 +106,7 @@ Status HostCacheModel::LoadCache(DelegateModel<schema::Primitive> *model) {
     if (kernel->type() != schema::PrimitiveType_Gather) {
       continue;
     }
-    MS_ASSERT(kernel->inputs.size() == kGatherInputsSize);
+    MS_ASSERT(kernel->inputs().size() == kGatherInputsSize);
     auto tensor = kernel->inputs()[0];
     if (tensor.Data() == nullptr) {
       continue;

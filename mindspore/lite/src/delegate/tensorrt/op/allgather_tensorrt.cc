@@ -106,6 +106,7 @@ const char *AllGatherPluginCreater::getPluginNamespace() const noexcept { return
 int AllGatherPlugin::enqueue(const nvinfer1::PluginTensorDesc *inputDesc, const nvinfer1::PluginTensorDesc *outputDesc,
                              const void *const *inputs, void *const *outputs, void *workspace,
                              cudaStream_t stream) noexcept {
+  MS_LOG(INFO) << "all gather run at rank id: " << GetRankID() << " stream: " << stream;
   nvinfer1::Dims input_dims = inputDesc[0].dims;
   int send_element_cnt = std::accumulate(input_dims.d, input_dims.d + input_dims.nbDims, 1, std::multiplies<int64_t>());
   const void *input = inputs[0];

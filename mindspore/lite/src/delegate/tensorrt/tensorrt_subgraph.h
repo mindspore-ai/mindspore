@@ -158,6 +158,7 @@ class TensorRTSubGraph : public kernel::Kernel {
   std::shared_ptr<TensorRTSerializer> serializer_{nullptr};
 
   std::string serialize_file_path_;
+  cudaStream_t stream_{nullptr};
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_TENSORRT_SUBGTAPH_H_
