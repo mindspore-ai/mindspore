@@ -116,7 +116,7 @@ int PreprocessParser::ParseCalibratePath(const std::string &str, std::map<std::s
       return RET_INPUT_PARAM_INVALID;
     }
     auto data_path = string_split.at(1);
-    for (size_t i = 2; i < string_split.size() - 1; ++i) {
+    for (size_t i = 2; i < string_split.size(); ++i) {
       data_path += ":" + string_split[i];
     }
     if (data_path.empty()) {
@@ -184,7 +184,7 @@ int PreprocessParser::CollectCalibInputs(const std::map<std::string, std::string
   for (const auto &image_path : calibrate_data_path) {
     DIR *root = opendir(image_path.second.c_str());
     if (root == nullptr) {
-      MS_LOG(ERROR) << "invalid data path: " << image_path;
+      MS_LOG(ERROR) << "cant open dir: " << image_path.second.c_str();
       return RET_PARAM_INVALID;
     }
     struct dirent *image_dir = readdir(root);
