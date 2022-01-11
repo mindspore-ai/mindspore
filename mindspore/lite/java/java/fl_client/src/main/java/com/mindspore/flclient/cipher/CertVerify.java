@@ -154,7 +154,7 @@ public class CertVerify {
             LOGGER.severe(Common.addTag("[verifyChain] catch Exception: " + e.getMessage()));
             return false;
         }
-        LOGGER.severe(Common.addTag("verifyChain success!"));
+        LOGGER.info(Common.addTag("verifyChain success!"));
         return true;
     }
 

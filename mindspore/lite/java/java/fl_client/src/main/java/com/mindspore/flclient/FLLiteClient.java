@@ -441,53 +441,6 @@ public class FLLiteClient {
         return featureMap;
     }
 
-    /**
-     * Obtain the weight of the model before training.
-     *
-     * @param map a map to store the weight of the model.
-     * @return the weight.
-     */
-    public static synchronized Map<String, float[]> getOldMapCopy(Map<String, float[]> map) {
-        if (mapBeforeTrain == null) {
-            Map<String, float[]> copyMap = new TreeMap<>();
-            for (String key : map.keySet()) {
-                float[] data = map.get(key);
-                int dataLen = data.length;
-                float[] weights = new float[dataLen];
-                if ((key.indexOf("Default") < 0) && (key.indexOf("nhwc") < 0) && (key.indexOf("moment") < 0) &&
-                        (key.indexOf("learning") < 0)) {
-                    for (int j = 0; j < dataLen; j++) {
-                        float weight = data[j];
-                        weights[j] = weight;
-                    }
-                    copyMap.put(key, weights);
-                }
-            }
-            mapBeforeTrain = copyMap;
-        } else {
-            for (String key : map.keySet()) {
-                float[] data = map.get(key);
-                float[] copyData = mapBeforeTrain.get(key);
-                int dataLen = data.length;
-                if ((key.indexOf("Default") < 0) && (key.indexOf("nhwc") < 0) && (key.indexOf("moment") < 0) &&
-                        (key.indexOf("learning") < 0)) {
-                    for (int j = 0; j < dataLen; j++) {
-                        copyData[j] = data[j];
-                    }
-                }
-            }
-        }
-        return mapBeforeTrain;
-    }
-
-    private void getOldFeatureMap() {
-        EncryptLevel encryptLevel = localFLParameter.getEncryptLevel();
-        if (encryptLevel == EncryptLevel.DP_ENCRYPT) {
-            Map<String, float[]> featureMap = getFeatureMap();
-            oldFeatureMap = getOldMapCopy(featureMap);
-        }
-    }
-
     public void updateDpNormClip() {
         EncryptLevel encryptLevel = localFLParameter.getEncryptLevel();
         if (encryptLevel == EncryptLevel.DP_ENCRYPT) {
@@ -554,12 +507,7 @@ public class FLLiteClient {
                 return curStatus;
             case DP_ENCRYPT:
                 // get the feature map before train
-                getOldFeatureMap();
-                if (oldFeatureMap.isEmpty()) {
-                    LOGGER.severe(Common.addTag("[Encrypt] the return map in getOldFeatureMapis empty "));
-                    retCode = ResponseCode.RequestError;
-                    return FLClientStatus.FAILED;
-                }
+                oldFeatureMap = getFeatureMap();
                 curStatus = secureProtocol.setDPParameter(iteration, dpEps, dpDelta, dpNormClipAdapt, oldFeatureMap);
                 retCode = ResponseCode.SUCCEED;
                 if (curStatus != FLClientStatus.SUCCESS) {
