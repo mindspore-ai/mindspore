@@ -195,6 +195,7 @@ class ForwardValueAndGrad(Cell):
     Args:
         network (Cell): The training network.
         weights (ParameterTuple): The parameters of the training network that need to calculate the gradient.
+            Default: None.
         get_all (bool): If True, get all the gradients with respect to inputs. Default: False.
         get_by_list (bool): If True, get all the gradients with respect to Parameter variables.
             If get_all and get_by_list are both False, get the gradient with respect to first input.

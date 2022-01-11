@@ -2649,9 +2649,9 @@ void GradExecutor::DoGradForCustomBprop(const py::object &cell, const py::object
   }
   // Three parameters self, out and dout need to be excluded
   const size_t inputs_num = py::cast<int64_t>(py::getattr(code_obj, "co_argcount")) - 3;
-  if (inputs_num > args.size()) {
-    MS_EXCEPTION(TypeError) << "Size of bprop func inputs[" << inputs_num << "] is larger than size of cell inputs["
-                            << args.size() << "]";
+  if (inputs_num != args.size()) {
+    MS_EXCEPTION(TypeError) << "Size of bprop func inputs[" << inputs_num
+                            << "] is not equal to the size of cell inputs[" << args.size() << "]";
   }
 
   py::list cell_inputs;
