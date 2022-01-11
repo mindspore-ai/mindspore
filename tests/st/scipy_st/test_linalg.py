@@ -217,9 +217,10 @@ def test_eigh_complex(n: int, dtype):
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('shape', [(4, 4), (4, 5), (10, 5), (20, 20)])
+@pytest.mark.parametrize('shape', [(4, 4), (4, 5), (5, 10), (20, 20)])
 @pytest.mark.parametrize('dtype', [onp.float32, onp.float64])
 def test_lu(shape: (int, int), dtype):
     """
@@ -239,11 +240,12 @@ def test_lu(shape: (int, int), dtype):
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('shape', [(3, 4, 4), (3, 4, 5)])
 @pytest.mark.parametrize('dtype', [onp.float32, onp.float64])
-def test_batch_lu(shape: (int, int), dtype):
+def test_batch_lu(shape: (int, int, int), dtype):
     """
     Feature: ALL To ALL
     Description: test cases for lu decomposition test cases for A[N,N]x = b[N,1]
