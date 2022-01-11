@@ -23,10 +23,10 @@ if(BUILD_LITE)
                 -DANDROID_STL=${ANDROID_STL}
                 ${CMAKE_OPTION})
     endif()
-else()
-    if(NOT ENABLE_GLIBCXX)
-        set(gtest_CXXFLAGS "${gtest_CXXFLAGS} -D_GLIBCXX_USE_CXX11_ABI=0")
-    endif()
+endif()
+
+if(NOT ENABLE_GLIBCXX)
+    set(gtest_CXXFLAGS "${gtest_CXXFLAGS} -D_GLIBCXX_USE_CXX11_ABI=0")
 endif()
 
 if(ENABLE_GITEE)
