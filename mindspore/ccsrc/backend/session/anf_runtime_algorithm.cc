@@ -2641,7 +2641,7 @@ int64_t AnfRuntimeAlgorithm::GetAttrGroups(const AnfNodePtr &node, size_t index)
   return 1;
 }
 
-AnfNodePtr AnfRuntimeAlgorithm::GetTupleIndexes(const AnfNodePtr &node, std::vector<size_t> *index_stack) {
+AnfNodePtr AnfRuntimeAlgorithm::GetTupleIndexes(const AnfNodePtr &node, std::vector<size_t> *const index_stack) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(index_stack);
 

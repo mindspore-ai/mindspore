@@ -90,7 +90,7 @@ void FetchContinuousMemoryInfo(const CNodePtr &node, std::vector<DeviceTensorPtr
   }
 }
 
-void ValueTupleToValue(const ValuePtr &value, std::vector<ValuePtr> *values) {
+void ValueTupleToValue(const ValuePtr &value, std::vector<ValuePtr> *const values) {
   MS_EXCEPTION_IF_NULL(value);
   MS_EXCEPTION_IF_NULL(values);
   if (value->isa<ValueTuple>()) {
