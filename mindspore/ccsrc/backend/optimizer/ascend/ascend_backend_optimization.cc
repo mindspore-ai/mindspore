@@ -150,7 +150,6 @@
 #include "backend/optimizer/ascend/mindir/update_input_names_strided_slice_grad.h"
 #include "backend/optimizer/ascend/mindir/avg_pool_grad_unify_mindir.h"
 #include "backend/optimizer/ascend/mindir/bn_grad_unify_mindir.h"
-#include "backend/optimizer/ascend/mindir/dynamic_reshape_unify_mindir.h"
 #include "backend/optimizer/ascend/mindir/all_to_all_unify_mindir.h"
 #include "backend/optimizer/ascend/mindir/neighbor_exchange_v2_unify_mindir.h"
 #include "backend/optimizer/ascend/dynamic_shape/convert_dynamic_op.h"
@@ -605,7 +604,6 @@ void AscendUnifyMindIR(const std::shared_ptr<session::KernelGraph> &graph) {
   unify_mindir_pm->AddPass(std::make_shared<opt::DropoutUnifyMindIR1>());
   unify_mindir_pm->AddPass(std::make_shared<opt::DropoutGradUnifyMindIR>());
   unify_mindir_pm->AddPass(std::make_shared<opt::BatchNormGradUnifyMindIR>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::DynamicReshapeUnifyMindIR>());
   unify_mindir_pm->AddPass(std::make_shared<opt::NeighborExchangeUnifyMindIR>());
   unify_mindir_pm->AddPass(std::make_shared<opt::NeighborExchangeV2UnifyMindIR>());
   unify_mindir_pm->AddPass(std::make_shared<opt::NeighborExchangeV2GradUnifyMindIR>());
