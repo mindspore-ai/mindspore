@@ -82,7 +82,7 @@ class Callback:
     Callback function will execute some operations in the current step or epoch.
     To create a custom callback, subclass Callback and override the method associated
     with the stage of interest. For details of Callback fusion, please check
-    `Callback <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/custom_debugging_info.html>`_.
+    `Callback <https://www.mindspore.cn/docs/programming_guide/zh-CN/r1.6/custom_debugging_info.html>`_.
 
     It holds the information of the model. Such as `network`, `train_network`, `epoch_num`, `batch_num`,
     `loss_fn`, `optimizer`, `parallel_mode`, `device_number`, `list_callback`, `cur_epoch_num`,

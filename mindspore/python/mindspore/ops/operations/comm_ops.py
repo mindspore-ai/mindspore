@@ -49,7 +49,7 @@ class ReduceOp:
         The user needs to preset
         communication environment variables before running the following example, please check the details on the
         official website of `MindSpore \
-        <https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.ops.html#communication-operators>`_.
+        <https://www.mindspore.cn/docs/api/zh-CN/r1.6/api_python/mindspore.ops.html#communication-operators>`_.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -104,7 +104,7 @@ class AllReduce(PrimitiveWithInfer):
         The tensors must have the same shape and format in all processes of the collection. The user needs to preset
         communication environment variables before running the following example, please check the details on the
         official website of `MindSpore \
-        <https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.ops.html#communication-operators>`_.
+        <https://www.mindspore.cn/docs/api/zh-CN/r1.6/api_python/mindspore.ops.html#communication-operators>`_.
 
     Args:
         op (str): Specifies an operation used for element-wise reductions,
@@ -182,7 +182,7 @@ class AllGather(PrimitiveWithInfer):
         The tensors must have the same shape and format in all processes of the collection. The user needs to preset
         communication environment variables before running the following example, please check the details on the
         official website of `MindSpore \
-        <https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.ops.html#communication-operators>`_.
+        <https://www.mindspore.cn/docs/api/zh-CN/r1.6/api_python/mindspore.ops.html#communication-operators>`_.
 
     Args:
         group (str): The communication group to work on. Default: "GlobalComm.WORLD_COMM_GROUP".
@@ -385,7 +385,7 @@ class ReduceScatter(PrimitiveWithInfer):
         The tensors must have the same shape and format in all processes of the collection. The user needs to preset
         communication environment variables before running the following example, please check the details on the
         official website of `MindSpore \
-        <https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.ops.html#communication-operators>`_.
+        <https://www.mindspore.cn/docs/api/zh-CN/r1.6/api_python/mindspore.ops.html#communication-operators>`_.
 
     Args:
         op (str): Specifies an operation used for element-wise reductions,
@@ -518,7 +518,7 @@ class Broadcast(PrimitiveWithInfer):
         The tensors must have the same shape and format in all processes of the collection. The user needs to preset
         communication environment variables before running the following example, please check the details on the
         official website of `MindSpore \
-        <https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.ops.html#communication-operators>`_.
+        <https://www.mindspore.cn/docs/api/zh-CN/r1.6/api_python/mindspore.ops.html#communication-operators>`_.
 
     Args:
         root_rank (int): Source rank. Required in all processes except the one
@@ -652,11 +652,11 @@ class NeighborExchange(Primitive):
         The user needs to preset
         communication environment variables before running the following example, please check the details on the
         official website of `MindSpore \
-        <https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.ops.html#communication-operators>`_.
+        <https://www.mindspore.cn/docs/api/zh-CN/r1.6/api_python/mindspore.ops.html#communication-operators>`_.
 
         This operator requires a full-mesh network topology, each device has the same vlan id, and the ip & mask are
         in the same subnet, please check the details on the official website of `MindSpore \
-        <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/distributed_training_ops.html#id2>`_.
+        <https://www.mindspore.cn/docs/programming_guide/zh-CN/r1.6/distributed_training_ops.html#id2>`_.
 
     Args:
         send_rank_ids (list(int)): Ranks which the data is sent to.
@@ -728,11 +728,11 @@ class AlltoAll(PrimitiveWithInfer):
         The tensors must have the same shape and format in all processes of the collection. The user needs to preset
         communication environment variables before running the following example, please check the details on the
         official website of `MindSpore \
-        <https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.ops.html#communication-operators>`_.
+        <https://www.mindspore.cn/docs/api/zh-CN/r1.6/api_python/mindspore.ops.html#communication-operators>`_.
 
         This operator requires a full-mesh network topology, each device has the same vlan id, and the ip & mask are
         in the same subnet, please check the details on the official website of `MindSpore \
-        <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/distributed_training_ops.html#id2>`_.
+        <https://www.mindspore.cn/docs/programming_guide/zh-CN/r1.6/distributed_training_ops.html#id2>`_.
 
     Args:
         split_count (int): On each process, divide blocks into split_count number.
@@ -818,11 +818,11 @@ class NeighborExchangeV2(Primitive):
         The user needs to preset
         communication environment variables before running the following example, please check the details on the
         official website of `MindSpore \
-        <https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.ops.html#communication-operators>`_.
+        <https://www.mindspore.cn/docs/api/zh-CN/r1.6/api_python/mindspore.ops.html#communication-operators>`_.
 
         This operator requires a full-mesh network topology, each device has the same vlan id, and the ip & mask are
         in the same subnet, please check the details on the official website of `MindSpore \
-        <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/distributed_training_ops.html#id2>`_.
+        <https://www.mindspore.cn/docs/programming_guide/zh-CN/r1.6/distributed_training_ops.html#id2>`_.
 
     Args:
         send_rank_ids (list(int)): Ranks which the data is sent to. 8 rank_ids represents 8 directions, if one

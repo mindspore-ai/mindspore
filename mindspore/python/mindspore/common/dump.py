@@ -26,7 +26,7 @@ def set_dump(target, enabled=True):
     Target should be an instance of Cell or Primitive. The default enabled
     status for a cell or primitive is False. Please note that this API takes
     effect only when the dump_mode field in dump config file is 2. See the
-    `dump document <https://mindspore.cn/docs/programming_guide/zh-CN/master/dump_in_graph_mode.html>`_
+    `dump document <https://mindspore.cn/docs/programming_guide/zh-CN/r1.6/dump_in_graph_mode.html>`_
     for details.
 
     .. warning::

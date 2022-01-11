@@ -1258,7 +1258,7 @@ class BondForceWithAtomEnergyAndVirial(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
+    <https://gitee.com/mindspore/mindscience/blob/r0.2/MindSPONGE/docs/simple_formula.md>`_.
 
     .. warning::
         This is an experimental prototype that is subject to change and/or deletion.
@@ -1346,7 +1346,7 @@ class LJForceWithVirialEnergy(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
+    <https://gitee.com/mindspore/mindscience/blob/r0.2/MindSPONGE/docs/simple_formula.md>`_.
 
     .. warning::
         This is an experimental prototype that is subject to change and/or deletion.
@@ -1454,7 +1454,7 @@ class LJForceWithPMEDirectForceUpdate(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
+    <https://gitee.com/mindspore/mindscience/blob/r0.2/MindSPONGE/docs/simple_formula.md>`_.
 
     .. warning::
         This is an experimental prototype that is subject to change and/or deletion.
@@ -1564,7 +1564,7 @@ class PMEReciprocalForceUpdate(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
+    <https://gitee.com/mindspore/mindscience/blob/r0.2/MindSPONGE/docs/simple_formula.md>`_.
 
     .. warning::
         This is an experimental prototype that is subject to change and/or deletion.
@@ -1659,7 +1659,7 @@ class PMEExcludedForceUpdate(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
+    <https://gitee.com/mindspore/mindscience/blob/r0.2/MindSPONGE/docs/simple_formula.md>`_.
 
     .. warning::
         This is an experimental prototype that is subject to change and/or deletion.
@@ -1761,7 +1761,7 @@ class LJForceWithVirialEnergyUpdate(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
+    <https://gitee.com/mindspore/mindscience/blob/r0.2/MindSPONGE/docs/simple_formula.md>`_.
 
     .. warning::
         This is an experimental prototype that is subject to change and/or deletion.
@@ -1985,7 +1985,7 @@ class PMEEnergyUpdate(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
+    <https://gitee.com/mindspore/mindscience/blob/r0.2/MindSPONGE/docs/simple_formula.md>`_.
 
     .. warning::
         This is an experimental prototype that is subject to change and/or deletion.

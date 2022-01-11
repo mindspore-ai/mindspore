@@ -798,7 +798,7 @@ def set_context(**kwargs):
             set larger too, otherwise a `core dumped` exception may be raised because of system stack overflow.
         enable_sparse (bool): Whether to enable sparsity feature. Default: False.
             For details of sparsity and sparse tensor, please check
-            `sparse tensor <https://www.mindspore.cn/docs/programming_guide/en/master/tensor.html#sparse-tensor>`_.
+            `sparse tensor <https://www.mindspore.cn/docs/programming_guide/en/r1.6/tensor.html#sparse-tensor>`_.
         grad_for_scalar (bool):  Whether to get gradient for scalar. Default: False.
             When grad_for_scalar is set to True, the function's scalar input can be derived.
             The default value is False. Because the back-end does not support scaling operations currently,
