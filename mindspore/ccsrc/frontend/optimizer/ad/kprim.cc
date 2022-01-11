@@ -285,9 +285,14 @@ std::string GetBpropFileHash(const py::function &fn) {
   static auto bprop_hash_to_file = GetAllBpropFileHash();
   // Get the file where the bprop function is defined.
   auto filename = fn.attr("__code__").attr("co_filename").cast<std::string>();
+  auto realpath = FileUtils::GetRealPath(common::SafeCStr(filename));
+  if (!realpath.has_value()) {
+    MS_LOG(ERROR) << "Failed to get the realpath of file: " << filename;
+    return "";
+  }
   // Get the hash of the file.
   auto it = std::find_if(bprop_hash_to_file.begin(), bprop_hash_to_file.end(),
-                         [&filename](const auto &item) { return item.second == filename; });
+                         [&realpath](const auto &item) { return item.second == realpath.value(); });
   if (it != bprop_hash_to_file.end()) {
     return it->first;
   }
