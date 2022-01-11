@@ -332,6 +332,24 @@ int GetExecutionMode() {
   MS_EXCEPTION_IF_NULL(ms_context);
   return ms_context->get_param<int>(MS_CTX_EXECUTION_MODE);
 }
+
+bool EnablePyNativeSyncRunning() {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  return ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE);
+}
+
+bool NeedDisableLazyBuild(bool need_erase, bool cache_hit, const OpRunInfo &op_run_info) {
+  // Disable lazy build when:
+  // 1. Execute Dynamic shape operator. The output shape depends on the calculation result of the operator.
+  // 2. Cache hit and there are no tasks in Queue. For example Non-first iteration.
+  // 3. Not in nn.Cell construct.
+  // 4. Operator to process dataset.
+  // 5. Graph mode.
+  // 6. set PYNATIVE_SYNCHRONIZE in context.
+  return need_erase || cache_hit || !op_run_info.lazy_build || OpInBlackList(op_run_info) ||
+         GetExecutionMode() == kGraphMode || EnablePyNativeSyncRunning();
+}
 }  // namespace
 
 VectorRef MsBackend::MsRunGraph(const GraphId &g, const VectorRef &args, const std::string &target) {
@@ -1352,15 +1370,9 @@ void MindRTBackend::RunOpInternal(bool single_op_cache_hit, GraphCompilerInfo *g
 
   auto device_context = graph_compiler_info->device_contexts_.front();
   auto &op_lazy_builder = runtime::OpLazyBuilder::GetInstance();
-  // Disable lazy build when:
-  // 1. Execute Dynamic shape operator. The output shape depends on the calculation result of the operator.
-  // 2. Cache hit and there are no tasks in Queue. For example Non-first iteration.
-  // 3. Not in nn.Cell construct.
-  // 4. Operator to process dataset.
-  // 5. Graph mode.
-  bool lazy_build_disabled = graph_compiler_info->need_erase_ ||
-                             (single_op_cache_hit && op_lazy_builder.QueueEmpty()) || !op_run_info->lazy_build ||
-                             OpInBlackList(*op_run_info) || GetExecutionMode() == kGraphMode;
+
+  bool lazy_build_disabled = NeedDisableLazyBuild(graph_compiler_info->need_erase_,
+                                                  (single_op_cache_hit && op_lazy_builder.QueueEmpty()), *op_run_info);
   if (lazy_build_disabled) {
     if (!op_lazy_builder.QueueEmpty()) {
       op_lazy_builder.ExecuteRemainingTasks();
