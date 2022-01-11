@@ -21,6 +21,7 @@
 #include <fstream>
 
 #include "utils/utils.h"
+#include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {
@@ -28,18 +29,18 @@ namespace distributed {
 namespace storage {
 namespace {
 bool CheckFStreamLength(const std::string &file_name, std::fstream &fs, size_t size) {
-  size_t cur_pos = fs.tellp();
-  fs.seekp(0, std::ios::end);
+  size_t cur_pos = LongToSize(fs.tellp());
+  (void)fs.seekp(0, std::ios::end);
   if (!fs.good() || fs.fail() || fs.bad()) {
     MS_LOG(ERROR) << "Failed to seedp file pos, file name: " << file_name;
     return false;
   }
-  size_t end_pos = fs.tellp();
+  size_t end_pos = LongToSize(fs.tellp());
   if (end_pos - cur_pos < size) {
     MS_LOG(ERROR) << "The content length of file:" << file_name << " is less than expected size: " << size;
     return false;
   }
-  fs.seekp(cur_pos);
+  (void)fs.seekp(cur_pos);
   if (!fs.good() || fs.fail() || fs.bad()) {
     MS_LOG(ERROR) << "Failed to seedp file pos, file name: " << file_name;
     return false;
@@ -66,13 +67,13 @@ bool FileIOUtils::Write(const std::string &file_name, const std::vector<std::pai
     const void *data = item.first;
     MS_ERROR_IF_NULL(data);
     size_t size = item.second;
-    fs.write(reinterpret_cast<const char *>(data), size);
+    (void)fs.write(reinterpret_cast<const char *>(data), SizeToLong(size));
     if (!fs.good() || fs.fail() || fs.bad()) {
       fs.close();
       MS_LOG(ERROR) << "Insert data to fstream failed.";
       return false;
     }
-    fs.flush();
+    (void)fs.flush();
     if (!fs.good() || fs.fail() || fs.bad()) {
       fs.close();
       MS_LOG(ERROR) << "Insert data to fstream failed.";
@@ -106,7 +107,7 @@ bool FileIOUtils::Read(const std::string &file_name, const std::vector<std::pair
       return false;
     }
 
-    fs.read(reinterpret_cast<char *>(data), size);
+    (void)fs.read(reinterpret_cast<char *>(data), SizeToLong(size));
     if (!fs.good() || fs.fail() || fs.bad()) {
       fs.close();
       MS_LOG(ERROR) << "Read data from fstream failed.";
