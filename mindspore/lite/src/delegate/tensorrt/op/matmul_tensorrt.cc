@@ -47,6 +47,7 @@ int MatMulTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     }
     transpose_a_ = primitive->transpose_a() ? nvinfer1::MatrixOperation::kTRANSPOSE : nvinfer1::MatrixOperation::kNONE;
     transpose_b_ = primitive->transpose_b() ? nvinfer1::MatrixOperation::kTRANSPOSE : nvinfer1::MatrixOperation::kNONE;
+    activation_ = primitive->activation_type();
   } else if (type_ == schema::PrimitiveType_FullConnection) {
     transpose_a_ = nvinfer1::MatrixOperation::kNONE;
     transpose_b_ = nvinfer1::MatrixOperation::kTRANSPOSE;
@@ -66,6 +67,10 @@ int MatMulTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
 
   auto matmul_layer =
     network->addMatrixMultiply(*matmul_a.trt_tensor_, transpose_a_, *matmul_b.trt_tensor_, transpose_b_);
+  if (matmul_layer == nullptr) {
+    MS_LOG(ERROR) << "addMatrixMultiply failed for " << op_name_;
+    return RET_ERROR;
+  }
   matmul_layer->setName(op_name_.c_str());
   nvinfer1::ITensor *out_tensor = matmul_layer->getOutput(0);
   tensor_name_map_[matmul_layer->getOutput(0)->getName()] = op_name_;
@@ -86,23 +91,23 @@ int MatMulTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
       return RET_ERROR;
     }
     auto bias_layer = network->addElementWise(*matmul_layer->getOutput(0), *bias, nvinfer1::ElementWiseOperation::kSUM);
+    if (bias_layer == nullptr) {
+      MS_LOG(ERROR) << "add bias add layer failed for " << op_name_;
+      return RET_ERROR;
+    }
     auto bias_layer_name = op_name_ + "_bias";
     bias_layer->setName(bias_layer_name.c_str());
     out_tensor = bias_layer->getOutput(0);
   }
 
   // add activation
-  const schema::MatMulFusion *matmul_op = this->op_primitive_->value_as_MatMulFusion();
-  MS_CHECK_TRUE_RET(matmul_op != nullptr, RET_ERROR);
-  if (matmul_op->activation_type() != schema::ActivationType::ActivationType_NO_ACTIVATION) {
-    nvinfer1::ILayer *activation_layer =
-      ActivationTensorRT::AddActivation(network, matmul_op->activation_type(), 0, 0, 0, out_tensor);
+  if (activation_ != schema::ActivationType::ActivationType_NO_ACTIVATION) {
+    nvinfer1::ILayer *activation_layer = ActivationTensorRT::AddActivation(network, activation_, 0, 0, 0, out_tensor);
     if (activation_layer == nullptr) {
       MS_LOG(ERROR) << "addActivation for matmul failed";
       return RET_ERROR;
     }
     activation_layer->setName((op_name_ + "_activation").c_str());
-    activation_layer->getOutput(0)->setName((op_name_ + "_output").c_str());
     out_tensor = activation_layer->getOutput(0);
   }
 
