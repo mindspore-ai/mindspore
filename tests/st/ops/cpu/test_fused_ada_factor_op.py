@@ -39,6 +39,17 @@ class Net(nn.Cell):
         return out
 
 
+class NetWithGlobalNorm(Net):
+    def __init__(self):
+        super(NetWithGlobalNorm, self).__init__()
+        self.opt = ops.FusedAdaFactorWithGlobalNorm()
+
+    def construct(self, epsilon, clip_threshold, beta1, beta2, weight_decay, lr, grad, global_norm):
+        out = self.opt(epsilon, clip_threshold, beta1, beta2, weight_decay, lr, grad, self.param, self.exp_avg,
+                       self.exp_avg_sq_row, self.exp_avg_sq_col, self.exp_avg_sq, global_norm)
+        return out
+
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -52,5 +63,22 @@ def test_adafactor():
     net = Net()
     gradient = Tensor(np.ones(param_shape), mstype.float32)
     net((1e-30, 1e-3), 1.0, 0.9, 0.8, 1e-2, 0.03, gradient)
+    diff = net.param.asnumpy() - np.ones(param_shape) * 0.97
+    assert np.all(diff < 1e-3)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_adafactor_with_global_norm():
+    '''
+    Feature: AdaFactor
+    Description: Test AdaFactor
+    Expectation: Run success
+    '''
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    net = NetWithGlobalNorm()
+    gradient = Tensor(np.ones(param_shape), mstype.float32)
+    net((1e-30, 1e-3), 1.0, 0.9, 0.8, 1e-2, 0.03, gradient, 10.0)
     diff = net.param.asnumpy() - np.ones(param_shape) * 0.97
     assert np.all(diff < 1e-3)

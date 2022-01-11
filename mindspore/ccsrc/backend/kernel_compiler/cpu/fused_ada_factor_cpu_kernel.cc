@@ -24,8 +24,8 @@ namespace {
 static constexpr size_t kSizeFloat32 = sizeof(float);
 static constexpr size_t kSizeFloat16 = sizeof(float16);
 static constexpr size_t kScalarIndex = 0;
-static constexpr size_t kFusedAdaFactorInputNum = 12;
-static constexpr size_t kFusedAdaFactorWorkSpaceNum = 3;
+static constexpr size_t kStandardInputNum = 12;
+static constexpr size_t kWorkSpaceNum = 3;
 static constexpr size_t kBatchSize = 10000;
 static auto constexpr kEnableScaleParameter = "enable_scale_parameter";
 static auto constexpr kEnableFirstMoment = "enable_first_moment";
@@ -37,15 +37,9 @@ static constexpr float kEps = 1e-30;
 
 void FusedAdaFactorCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
   CPUKernel::InitInputOutputSize(kernel_node);
-  if (param_dtype_ == kNumberTypeFloat16) {
-    (void)workspace_size_list_.emplace_back(elem_num_ * kSizeFloat16);
-    (void)workspace_size_list_.emplace_back(elem_num_ / last_row_dim_size_ * kSizeFloat16);
-    (void)workspace_size_list_.emplace_back(elem_num_ / last_col_dim_size_ * kSizeFloat16);
-  } else {
-    (void)workspace_size_list_.emplace_back(elem_num_ * kSizeFloat32);
-    (void)workspace_size_list_.emplace_back(elem_num_ / last_row_dim_size_ * kSizeFloat32);
-    (void)workspace_size_list_.emplace_back(elem_num_ / last_col_dim_size_ * kSizeFloat32);
-  }
+  (void)workspace_size_list_.emplace_back(elem_num_ * kSizeFloat32);
+  (void)workspace_size_list_.emplace_back(elem_num_ / last_row_dim_size_ * kSizeFloat32);
+  (void)workspace_size_list_.emplace_back(elem_num_ / last_col_dim_size_ * kSizeFloat32);
 }
 
 void FusedAdaFactorCPUKernel::InitKernel(const CNodePtr &kernel_node) {
@@ -93,14 +87,14 @@ float FusedAdaFactorCPUKernel::CalcRMS(T *input, size_t elem_num) {
 }
 
 template <typename T>
-void FusedAdaFactorCPUKernel::FactorUpdate(T *update, const std::vector<AddressPtr> &inputs,
+void FusedAdaFactorCPUKernel::FactorUpdate(float *update, const std::vector<AddressPtr> &inputs,
                                            const std::vector<AddressPtr> &workspaces) {
   auto beta2t = reinterpret_cast<float *>(inputs[BETA2T]->addr)[kScalarIndex];
   auto grad = reinterpret_cast<T *>(inputs[GRAD]->addr);
   auto exp_avg_sq_row = reinterpret_cast<T *>(inputs[EXP_AVG_SQ_ROW]->addr);
   auto exp_avg_sq_col = reinterpret_cast<T *>(inputs[EXP_AVG_SQ_COL]->addr);
-  auto r_factor = reinterpret_cast<T *>(workspaces[R_FACTOR]->addr);
-  auto c_factor = reinterpret_cast<T *>(workspaces[C_FACTOR]->addr);
+  auto r_factor = reinterpret_cast<float *>(workspaces[R_FACTOR]->addr);
+  auto c_factor = reinterpret_cast<float *>(workspaces[C_FACTOR]->addr);
   auto one_minus_beta2t = 1 - beta2t;
 
   std::function<void(size_t, size_t)> task;
@@ -115,7 +109,7 @@ void FusedAdaFactorCPUKernel::FactorUpdate(T *update, const std::vector<AddressP
       float row_reduce = 0;
       size_t reduce_start = i * row_dim_size;
       for (size_t j = 0; j < row_dim_size; ++j) {
-        row_reduce += static_cast<float>(update[reduce_start + j]);
+        row_reduce += update[reduce_start + j];
       }
       row_reduce = row_reduce / row_dim_size;
       auto tmp = static_cast<float>(exp_avg_sq_row[i]) * beta2t + row_reduce * one_minus_beta2t;
@@ -135,8 +129,7 @@ void FusedAdaFactorCPUKernel::FactorUpdate(T *update, const std::vector<AddressP
       col_reduce /= col_dim_size;
       col_reduce = std::max(col_reduce, kEps);
       for (size_t j = 0; j < col_dim_size; ++j) {
-        auto tmp = std::sqrt(static_cast<float>(exp_avg_sq_row[reduce_start + j]) / col_reduce);
-        r_factor[reduce_start + j] = static_cast<T>(tmp);
+        r_factor[reduce_start + j] = std::sqrt(static_cast<float>(exp_avg_sq_row[reduce_start + j]) / col_reduce);
       }
     }
   };
@@ -149,13 +142,13 @@ void FusedAdaFactorCPUKernel::FactorUpdate(T *update, const std::vector<AddressP
       float row_reduce = 0;
       size_t reduce_start = i / row_dim_size * last_row_col_size + i % row_dim_size;
       for (size_t j = 0; j < col_dim_size; ++j) {
-        row_reduce += static_cast<float>(update[reduce_start + j * row_dim_size]);
+        row_reduce += update[reduce_start + j * row_dim_size];
       }
       row_reduce = row_reduce / col_dim_size;
       auto tmp = static_cast<float>(exp_avg_sq_col[i]) * beta2t + row_reduce * one_minus_beta2t;
       tmp = std::max(tmp, kEps);
       exp_avg_sq_col[i] = static_cast<T>(tmp);
-      c_factor[i] = static_cast<T>(std::sqrt(tmp));
+      c_factor[i] = std::sqrt(tmp);
     }
   };
   CPUKernelUtils::ParallelFor(task, exp_avg_sq_col_elem_num, kBatchSize);
@@ -166,12 +159,8 @@ void FusedAdaFactorCPUKernel::FactorUpdate(T *update, const std::vector<AddressP
       size_t row_i = i % row_dim_size;
       size_t col_i = i / row_dim_size % col_dim_size;
       size_t slice = i / last_row_col_size;
-      auto left = static_cast<float>(r_factor[slice * col_dim_size + col_i]);
-      auto right = static_cast<float>(c_factor[slice * row_dim_size + row_i]);
-      auto norm = left * right;
-      norm = std::max(norm, kEps);
-      auto tmp = static_cast<float>(grad[i]) / norm;
-      update[i] = static_cast<T>(tmp);
+      auto norm = r_factor[slice * col_dim_size + col_i] * c_factor[slice * row_dim_size + row_i];
+      update[i] = static_cast<float>(grad[i]) * global_norm_reciprocal_ / std::max(norm, kEps);
     }
   };
   CPUKernelUtils::ParallelFor(task, elem_num_, kBatchSize);
@@ -190,7 +179,7 @@ void FusedAdaFactorCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs
   auto param = reinterpret_cast<T *>(inputs[PARAM]->addr);
   auto exp_avg = reinterpret_cast<T *>(inputs[EXP_AVG]->addr);
   auto exp_avg_sq = reinterpret_cast<T *>(inputs[EXP_AVG_SQ]->addr);
-  auto update = reinterpret_cast<T *>(workspaces[UPDATE]->addr);
+  auto update = reinterpret_cast<float *>(workspaces[UPDATE]->addr);
   auto one_minus_beta1 = 1 - beta1;
   auto one_minus_beta2t = 1 - beta2t;
   if (clip_threshold <= 0) {
@@ -211,23 +200,22 @@ void FusedAdaFactorCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs
   // update = grad * grad + eps[0]
   task = [&](size_t start, size_t end) {
     for (size_t i = start; i < end; ++i) {
-      auto tmp = static_cast<float>(grad[i]);
-      update[i] = static_cast<T>(tmp * tmp + epsilon[0]);
+      auto tmp = static_cast<float>(grad[i]) * global_norm_reciprocal_;
+      update[i] = tmp * tmp + epsilon[0];
     }
   };
   CPUKernelUtils::ParallelFor(task, elem_num_, kBatchSize);
 
   if (need_factor_) {
-    FactorUpdate(update, inputs, workspaces);
+    FactorUpdate<T>(update, inputs, workspaces);
   } else {
     // no factor
     task = [&](size_t start, size_t end) {
       for (size_t i = start; i < end; ++i) {
-        auto tmp = static_cast<float>(exp_avg_sq[i]) * beta2t + static_cast<float>(update[i]) * one_minus_beta2t;
+        auto tmp = static_cast<float>(exp_avg_sq[i]) * beta2t + update[i] * one_minus_beta2t;
         tmp = std::max(tmp, kEps);
         exp_avg_sq[i] = static_cast<T>(tmp);
-        tmp = static_cast<float>(grad[i]) / std::sqrt(static_cast<float>(exp_avg_sq[i]));
-        update[i] = static_cast<T>(tmp);
+        update[i] = static_cast<float>(grad[i]) * global_norm_reciprocal_ / std::sqrt(tmp);
       }
     };
     CPUKernelUtils::ParallelFor(task, elem_num_, kBatchSize);
@@ -244,18 +232,16 @@ void FusedAdaFactorCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs
   auto update_coff = learning_rate / std::max(update_rms_thres, 1.0f);
   task = [&](size_t start, size_t end) {
     for (size_t i = start; i < end; ++i) {
-      auto tmp = static_cast<float>(update[i]) * update_coff;
-      update[i] = static_cast<T>(tmp);
+      update[i] = update[i] * update_coff;
       if (enable_first_moment_) {
-        tmp = static_cast<float>(exp_avg[i]) * beta1 + static_cast<float>(update[i]) * one_minus_beta1;
-        exp_avg[i] = static_cast<T>(tmp);
-        update[i] = exp_avg[i];
+        update[i] = static_cast<float>(exp_avg[i]) * beta1 + update[i] * one_minus_beta1;
+        exp_avg[i] = static_cast<T>(update[i]);
       }
       if (enable_weight_decay_) {
-        tmp = static_cast<float>(param[i]) * weight_decay * learning_rate;
-        param[i] = param[i] - update[i] - static_cast<T>(tmp);
+        auto tmp = static_cast<float>(param[i]) * weight_decay * learning_rate;
+        param[i] = static_cast<T>(static_cast<float>(param[i]) - update[i] - tmp);
       } else {
-        param[i] = param[i] - update[i];
+        param[i] = static_cast<T>(static_cast<float>(param[i]) - update[i]);
       }
     }
   };
@@ -265,15 +251,17 @@ void FusedAdaFactorCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs
 bool FusedAdaFactorCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                      const std::vector<kernel::AddressPtr> &workspaces,
                                      const std::vector<kernel::AddressPtr> &outputs) {
-  if (inputs.size() != kFusedAdaFactorInputNum) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be " << kFusedAdaFactorInputNum
-                      << ", but got: " << inputs.size();
+  if (inputs.size() == kStandardInputNum + 1) {
+    auto global_norm = reinterpret_cast<float *>(inputs[GLOBAL_NORM]->addr)[kScalarIndex];
+    if (global_norm < kEps) {
+      global_norm_reciprocal_ = 1.0f;
+    } else {
+      global_norm_reciprocal_ = 1.0f / global_norm;
+    }
   }
-  if (workspaces.size() != kFusedAdaFactorWorkSpaceNum) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of workspaces should be "
-                      << kFusedAdaFactorWorkSpaceNum << ", but got: " << workspaces.size();
-  }
-  CheckParam(inputs, workspaces, outputs);
+
+  CheckInputAddresses(inputs);
+  CheckWorkspaceAddresses(workspaces);
   if (param_dtype_ == kNumberTypeFloat16) {
     LaunchKernel<float16>(inputs, workspaces, outputs);
   } else {
@@ -282,9 +270,12 @@ bool FusedAdaFactorCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inpu
   return true;
 }
 
-void FusedAdaFactorCPUKernel::CheckParam(const std::vector<kernel::AddressPtr> &inputs,
-                                         const std::vector<kernel::AddressPtr> &workspaces,
-                                         const std::vector<kernel::AddressPtr> &) const {
+void FusedAdaFactorCPUKernel::CheckInputAddresses(const std::vector<kernel::AddressPtr> &inputs) const {
+  if (inputs.size() < kStandardInputNum) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be at least " << kStandardInputNum
+                      << ", but got: " << inputs.size();
+  }
+
   if (inputs[EPSILON]->size != kSizeFloat32 << 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'epsilon' should be " << (kSizeFloat32 << 1)
                       << ", but got " << inputs[EPSILON]->size;
@@ -293,7 +284,6 @@ void FusedAdaFactorCPUKernel::CheckParam(const std::vector<kernel::AddressPtr> &
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'beta1' should be " << kSizeFloat32
                       << ", but got " << inputs[BETA1]->size;
   }
-
   if (inputs[BETA1]->size != kSizeFloat32) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'beta1' should be " << kSizeFloat32
                       << ", but got " << inputs[BETA1]->size;
@@ -320,10 +310,6 @@ void FusedAdaFactorCPUKernel::CheckParam(const std::vector<kernel::AddressPtr> &
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'gradient' should be " << param_size
                       << ", but got " << inputs[GRAD]->size;
   }
-  if (workspaces[UPDATE]->size != param_size) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'update ' should be " << param_size
-                      << ", but got " << workspaces[0]->size;
-  }
 
   if (enable_first_moment_ && inputs[EXP_AVG]->size != param_size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'exp_avg' should be " << param_size
@@ -345,6 +331,29 @@ void FusedAdaFactorCPUKernel::CheckParam(const std::vector<kernel::AddressPtr> &
   if (inputs[EXP_AVG_SQ_COL]->size != param_size / last_col_dim_size_) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'exp_avg_sq_col' should be "
                       << param_size / last_col_dim_size_ << ", but got " << inputs[EXP_AVG_SQ_COL]->size;
+  }
+}
+
+void FusedAdaFactorCPUKernel::CheckWorkspaceAddresses(const std::vector<kernel::AddressPtr> &workspaces) const {
+  if (workspaces.size() != kWorkSpaceNum) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of workspaces should be " << kWorkSpaceNum
+                      << ", but got: " << workspaces.size();
+  }
+
+  size_t update_size = elem_num_ * kSizeFloat32;
+
+  if (workspaces[UPDATE]->size != elem_num_ * kSizeFloat32) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'update ' should be " << update_size
+                      << ", but got " << workspaces[0]->size;
+  }
+
+  if (workspaces[R_FACTOR]->size != update_size / last_row_dim_size_) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'r_factor' should be "
+                      << update_size / last_row_dim_size_ << ", but got " << workspaces[R_FACTOR]->size;
+  }
+  if (workspaces[C_FACTOR]->size != update_size / last_col_dim_size_) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'c_factor' should be "
+                      << update_size / last_col_dim_size_ << ", but got " << workspaces[C_FACTOR]->size;
   }
 }
 }  // namespace kernel
