@@ -77,7 +77,7 @@
 #include "distributed/cluster/cluster_context.h"
 #endif
 
-#if ((defined ENABLE_GE) || (defined ENABLE_D))
+#ifdef ENABLE_D
 #include "pipeline/jit/pipeline_ge.h"
 #include "transform/graph_ir/convert.h"
 #include "transform/graph_ir/df_graph_manager.h"
@@ -85,6 +85,7 @@
 #include "runtime/device/ascend/profiling/profiling_manager.h"
 #include "runtime/device/ascend/distribute/ascend_collective.h"
 #endif
+
 #ifdef ENABLE_DUMP_IR
 #include "debug/rdr/running_data_recorder.h"
 #include "debug/rdr/recorder_manager.h"
@@ -714,8 +715,15 @@ py::dict GraphExecutorPy::GetAllreduceFusion(const std::string &phase) {
 // Not support multi thread, not support nested call too.
 // Here using nested_called flg to avoid nested call.
 void GraphExecutorPy::DelNetRes(const py::set &id) {
-#ifdef ENABLE_GE
-  FinalizeBackend();
+#ifdef ENABLE_D
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  std::string backend = ms_context->backend_policy();
+  if (backend == "ge") {
+    FinalizeBackend();
+  } else {
+    ConfigManager::GetInstance().ResetIterNum();
+  }
 #else
   ConfigManager::GetInstance().ResetIterNum();
 #endif
@@ -728,9 +736,8 @@ void GraphExecutorPy::DelNetRes(const py::set &id) {
       MS_LOG(ERROR) << "Expect string phase, but got " << py::str(item);
     }
   }
-
-#ifdef ENABLE_GE
-  if (!id.empty() && info_.size() == 0) {
+#ifdef ENABLE_D
+  if (backend == "ge" && !id.empty() && info_.size() == 0) {
     // because Ge only support one Session exist at the same time ,so we delete the old one
     transform::DfGraphManager::GetInstance().DeleteGraphRunner();
     transform::DfGraphManager::GetInstance().EraseAnfGraph();
@@ -986,9 +993,6 @@ bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple
   MS_LOG(INFO) << "Start compiling, phase: " << phase;
   MS_LOG(DEBUG) << "source: {" << py::str(source_obj) << "}\nargs: " << py::str(const_cast<py::tuple &>(args));
 
-#ifdef ENABLE_GE
-  GetGeBackendPolicy();
-#endif
   ExecutorInfoPtr executor_info = std::make_shared<ExecutorInfo>();
   ResourcePtr resource = std::make_shared<Resource>(source_obj);
 
@@ -1372,26 +1376,25 @@ py::object GraphExecutorPy::Run(const py::tuple &args, const py::object &phase_o
     MS_LOG(EXCEPTION) << "Run failed, phase input is not a str";
   }
   auto phase = py::cast<std::string>(phase_obj);
-  std::string backend = MsContext::GetInstance()->backend_policy();
-#ifdef ENABLE_GE
-  if (backend == "ge") {
+  auto ms_context = MsContext::GetInstance();
+#ifdef ENABLE_D
+  if (ms_context->backend_policy() == "ge") {
     return ExecDFGraph(info_, args, phase);
   }
-#else
+#endif
   auto ret_val = std::make_shared<py::object>();
   if (info_.count(phase) != 0 && info_[phase]->func_graph != nullptr) {
     if (IsGraphOutputValueNodeOrParameter(info_[phase]->func_graph->output(), args, ret_val)) {
       return *ret_val;
     }
   }
-  if (backend == "ge") {
+  if (ms_context->backend_policy() == "ge") {
     // Virtual output constructed for test cases.
     if (!args.empty()) {
       return args[0];
     }
     return args;
   }
-#endif
   auto iter = info_.find(phase);
   if (iter == info_.end()) {
     MS_LOG(EXCEPTION) << "No executor info. found for phase: " << phase;
@@ -1420,7 +1423,7 @@ py::object GraphExecutorPy::Run(const py::tuple &args, const py::object &phase_o
   }
   MS_LOG(INFO) << "VM loop size " << vm_loop << ", loopsink size " << vm_loop;
   py::object ret;
-  MS_LOG(DEBUG) << "Eval run" << backend;
+  MS_LOG(DEBUG) << "Eval run" << ms_context->backend_policy();
   auto output = execute_info->func_graph->output()->abstract();
   MS_EXCEPTION_IF_NULL(output);
   for (int64_t i = 0; i < vm_loop; i++) {
@@ -1429,11 +1432,11 @@ py::object GraphExecutorPy::Run(const py::tuple &args, const py::object &phase_o
   }
   MS_LOG(DEBUG) << "Run end";
   return ret;
-}
+}  // namespace pipeline
 
 FuncGraphPtr GraphExecutorPy::BuildGraph(const py::dict &init_params, const std::string &phase,
                                          const py::object &broadcast_params) {
-#if ((defined ENABLE_GE) || (defined ENABLE_D))
+#ifdef ENABLE_D
   return BuildDFGraph(info_, init_params, phase, broadcast_params);
 #else
   return nullptr;
@@ -1459,8 +1462,13 @@ void GraphExecutorPy::UpdataParamNodeDefaultInput(
 }
 
 void GraphExecutorPy::RunInitGraph(const py::dict &init_params, const std::string &phase) const {
-#ifdef ENABLE_GE
-  RunGEInitGraph(init_params, phase);
+#ifdef ENABLE_D
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto backend = ms_context->backend_policy();
+  if (backend == "ge") {
+    RunGEInitGraph(init_params, phase);
+  }
 #endif
 }
 
@@ -1486,9 +1494,9 @@ bool InitExecDataset(const std::string &queue_name, int64_t iter_num, int64_t ba
                      const std::vector<TypePtr> &types, const std::vector<std::vector<int64_t>> &shapes,
                      const std::vector<int64_t> &input_indexes, const std::string &phase, bool need_run) {
   std::string name = MsContext::GetInstance()->backend_policy();
-#ifndef NO_DLIB
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
+#ifndef NO_DLIB
   if (!context::IsTsdOpened(ms_context) || !context::IsGeInited(ms_context)) {
     InitPipeline();
   }
@@ -1499,15 +1507,13 @@ bool InitExecDataset(const std::string &queue_name, int64_t iter_num, int64_t ba
   if (name == kMsConvert || name == kMsVm) {
     return InitExecDatasetVm(queue_name, iter_num, batch_size, types, shapes, input_indexes, need_run);
   }
-#ifdef ENABLE_GE
-  return InitExecDatasetGe(queue_name, iter_num, batch_size, types, shapes, input_indexes, phase);
-#else
-  std::string backend = MsContext::GetInstance()->backend_policy();
+  std::string backend = ms_context->backend_policy();
+#ifdef ENABLE_D
   if (backend == "ge") {
-    return true;
+    return InitExecDatasetGe(queue_name, iter_num, batch_size, types, shapes, input_indexes, phase);
   }
 #endif
-  return false;
+  return backend == "ge" ? true : false;
 }
 
 bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batch_size,
@@ -1616,12 +1622,17 @@ std::string GetJitLevel() {
 void ResetOpId() { mindspore::id_generator::reset_id(); }
 
 void InitHccl() {
-#ifdef ENABLE_GE
-  (void)InitPipeline();
-#else
-  mindspore::parse::python_adapter::set_python_env_flag(true);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
+#ifdef ENABLE_D
+  auto backend = ms_context->backend_policy();
+  if (backend == "ge") {
+    (void)InitPipeline();
+    return;
+  }
+#endif
+
+  mindspore::parse::python_adapter::set_python_env_flag(true);
   uint32_t device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
 #if ENABLE_D
   bool task_sink = true;
@@ -1656,17 +1667,21 @@ void InitHccl() {
   } else {
     (void)context::OpenTsd(ms_context);
   }
-#endif
 }
 
 void FinalizeHccl() {
-#ifdef ENABLE_GE
-  (void)FinalizeBackend();
-#else
+#ifdef ENABLE_D
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto backend = ms_context->backend_policy();
+  if (backend == "ge") {
+    (void)FinalizeBackend();
+    return;
+  }
+#endif
   session::ExecutorManager::Instance().Clear();
   device::DeviceContextManager::GetInstance().ClearDeviceContexts();
   device::KernelRuntimeManager::Instance().ClearRuntimeResource();
-#endif
 }
 
 uint32_t GetHcclRankId() {
@@ -1688,7 +1703,7 @@ uint32_t GetHcclRankSize() {
 }
 
 void ExportGraph(const std::string &file_name, const std::string &, const std::string &phase) {
-#if ((defined ENABLE_GE) || (defined ENABLE_D))
+#ifdef ENABLE_D
   ExportDFGraph(file_name, phase);
 #else
   MS_EXCEPTION(ValueError) << "Only support export file in 'AIR' format with Ascend backend.";
@@ -1811,14 +1826,23 @@ void ClearResAtexit() {
   opt::python_pass::PyPassManager::GetInstance()->ClearRes();
   MS_LOG(INFO) << "End clear PyPassManager.";
 
-#ifdef ENABLE_GE
-  transform::DfGraphManager::GetInstance().ClearGraph();
-  transform::OpAdapterMap::get().clear();
+#ifdef ENABLE_D
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->backend_policy() == "ge") {
+    transform::DfGraphManager::GetInstance().ClearGraph();
+    transform::OpAdapterMap::get().clear();
+  } else {
+    MS_LOG(INFO) << "Start clear ConfigManager...";
+    ConfigManager::GetInstance().ResetIterNum();
+    MS_LOG(INFO) << "End clear ConfigManager.";
+  }
 #else
   MS_LOG(INFO) << "Start clear ConfigManager...";
   ConfigManager::GetInstance().ResetIterNum();
   MS_LOG(INFO) << "End clear ConfigManager.";
 #endif
+
   ReleaseGeTsd();
   MS_LOG(INFO) << "Start clear python_adapter...";
   parse::python_adapter::ResetPythonScope();

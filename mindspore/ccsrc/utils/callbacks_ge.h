@@ -16,6 +16,7 @@
 #ifndef MINDSPORE_CCSRC_UTILS_CALLBACKS_GE_H_
 #define MINDSPORE_CCSRC_UTILS_CALLBACKS_GE_H_
 
+#ifdef ENABLE_D
 #include <map>
 #include <vector>
 #include <string>
@@ -32,5 +33,5 @@ uint32_t CheckpointSaveCallback(uint32_t, const std::map<std::string, ge::Tensor
 uint32_t SummarySaveCallback(uint32_t, const std::map<std::string, ge::Tensor> &);
 }  // namespace callbacks
 }  // namespace mindspore
-
+#endif
 #endif  // MINDSPORE_CCSRC_UTILS_CALLBACKS_GE_H_

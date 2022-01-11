@@ -20,16 +20,10 @@
 import os
 import pytest
 
-
 def is_enable_ge():
-    val = os.getenv("ENABLE_GE", "False")
-    if val in ('ON', 'on', 'TRUE', 'True', 'true'):
-        return True
     return False
 
-
 non_graph_engine = pytest.mark.skipif(is_enable_ge(), reason="Not support running on GE environment")
-
 
 def is_enable_gpu():
     val = os.getenv("ENABLE_GPU", "False")

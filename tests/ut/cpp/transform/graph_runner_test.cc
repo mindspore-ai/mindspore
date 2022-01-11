@@ -131,8 +131,6 @@ TEST_F(TestGraphRunner, TestGeTensorConstructor) {
   assert(memcmp(ge_tensor_data, tensor_tuple_array.data(), sizeof(ge_tensor_data)) == 0);
 }
 
-#if (!defined ENABLE_GE)
-
 TEST_F(TestGraphRunner, TestRunGraphException) {
   DfGraphManager &graph_manager = DfGraphManager::GetInstance();
   graph_manager.ClearGraph();
@@ -244,7 +242,6 @@ TEST_F(TestGraphRunner, TestAPI) {
     PrintMeTensor(&(*tensor));
   }
 }
-#endif
 
 }  // namespace transform
 }  // namespace mindspore

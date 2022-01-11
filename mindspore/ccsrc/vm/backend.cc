@@ -35,7 +35,7 @@
 #include "runtime/hardware/device_context_manager.h"
 #include "runtime/framework/graph_compiler.h"
 #include "utils/scoped_long_running.h"
-#ifdef ENABLE_GE
+#ifdef ENABLE_D
 #include "utils/callbacks_ge.h"
 #endif
 #ifdef ENABLE_DEBUGGER

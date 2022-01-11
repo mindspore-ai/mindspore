@@ -28,7 +28,7 @@
 #include "toolchain/plog.h"
 #include "common/util/error_manager/error_manager.h"
 #endif
-#ifdef ENABLE_GE
+#ifdef ENABLE_D
 #include "transform/graph_ir/df_graph_manager.h"
 #endif
 #include "profiler/device/profiling.h"
@@ -37,7 +37,7 @@ namespace py = pybind11;
 
 namespace mindspore {
 namespace context {
-#ifdef ENABLE_GE
+#ifdef ENABLE_D
 using mindspore::transform::DfGraphManager;
 #endif
 
@@ -157,7 +157,10 @@ void GetGeOptions(const std::shared_ptr<MsContext> &ms_context_ptr, std::map<std
   if (ms_context_ptr == nullptr) {
     MS_LOG(EXCEPTION) << "nullptr";
   }
-#ifdef ENABLE_GE
+  if (ms_context_ptr->backend_policy() != "ge") {
+    return;
+  }
+#ifdef ENABLE_D
   (*ge_options)["device_id"] = "0";
   (*ge_options)["ge.exec.enableDump"] = std::to_string(ms_context_ptr->get_param<bool>(MS_CTX_ENABLE_DUMP));
   (*ge_options)["ge.exec.dumpPath"] = ms_context_ptr->get_param<std::string>(MS_CTX_SAVE_DUMP_PATH);
@@ -275,7 +278,10 @@ bool InitGe(const std::shared_ptr<MsContext> &ms_context_ptr) {
   if (ms_context_ptr == nullptr) {
     MS_LOG(EXCEPTION) << "nullptr";
   }
-#ifdef ENABLE_GE
+#ifdef ENABLE_D
+  if (ms_context_ptr->backend_policy() != "ge") {
+    return true;
+  }
   if (ms_context_ptr->get_param<bool>(MS_CTX_IS_PYNATIVE_GE_INIT)) {
     return true;
   }
@@ -319,7 +325,10 @@ bool FinalizeGe(const std::shared_ptr<MsContext> &ms_context_ptr, bool force) {
   if (ms_context_ptr == nullptr) {
     MS_LOG(EXCEPTION) << "nullptr";
   }
-#ifdef ENABLE_GE
+#ifdef ENABLE_D
+  if (ms_context_ptr->backend_policy() != "ge") {
+    return true;
+  }
   if (ms_context_ptr->get_param<uint32_t>(MS_CTX_GE_REF) == 0) {
     return true;
   }
@@ -365,9 +374,7 @@ bool IsGeInited(const std::shared_ptr<MsContext> &ms_context_ptr) {
 struct DeviceTypeSetRegister {
   DeviceTypeSetRegister() {
     MsContext::device_type_seter([](std::shared_ptr<MsContext> &device_type_seter) {
-#ifdef ENABLE_GE
-      device_type_seter.reset(new (std::nothrow) MsContext("ge", kAscendDevice));
-#elif defined(ENABLE_D)
+#if defined(ENABLE_D)
       device_type_seter.reset(new (std::nothrow) MsContext("ms", kAscendDevice));
 #elif defined(ENABLE_GPU)
       device_type_seter.reset(new (std::nothrow) MsContext("ms", kGPUDevice));

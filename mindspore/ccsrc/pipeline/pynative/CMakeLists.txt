@@ -1,6 +1,6 @@
 file(GLOB_RECURSE _PYNATIVE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "pynative_execute.cc")
 
-if(ENABLE_GE)
+if(ENABLE_D)
     file(GLOB_RECURSE _GE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "pynative_execute_ge.cc")
     list(APPEND _PYNATIVE_SRC_LIST ${_GE_SRC_LIST})
 endif()

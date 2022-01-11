@@ -64,8 +64,6 @@ TEST_F(TestConvert, TestConstruct) {
   ASSERT_NE(converter.ErrCode(), SUCCESS);
 }
 
-#if (!defined ENABLE_GE)
-
 namespace {
 
 bool MakeDfGraph(PrimitivePtr prim, unsigned int nparam) {
@@ -598,8 +596,6 @@ TEST_F(TestConvert, TestNPUClearFloatStatusOps) {
   bool ret = MakeDfGraph(prim, 1);
   ASSERT_TRUE(ret);
 }
-
-#endif
 
 TEST_F(TestConvert, TestAddOps) {
   auto prim = std::make_shared<Primitive>("Add");

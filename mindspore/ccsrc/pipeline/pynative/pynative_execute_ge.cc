@@ -216,7 +216,6 @@ PynativeStatusCode ConvertAttributes(const OpExecInfoPtr &op_exec_info, const st
     MS_LOG(ERROR) << "Failed to AddGraph into graph manager";
     return PYNATIVE_GRAPH_MANAGER_ERR;
   }
-
   return PYNATIVE_SUCCESS;
 }
 

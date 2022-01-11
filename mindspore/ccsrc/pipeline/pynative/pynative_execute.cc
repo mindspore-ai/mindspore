@@ -61,7 +61,7 @@
 #include "runtime/hardware/device_context_manager.h"
 #include "vm/transform.h"
 
-#ifdef ENABLE_GE
+#ifdef ENABLE_D
 #include "pipeline/pynative/pynative_execute_ge.h"
 #endif
 
@@ -2018,10 +2018,16 @@ MsBackendPolicy ForwardExecutor::InitEnv(const OpExecInfoPtr &op_exec_info) {
   MS_EXCEPTION_IF_NULL(op_exec_info);
   MS_LOG(DEBUG) << "RunOp start, op name is: " << op_exec_info->op_name;
   parse::python_adapter::set_python_env_flag(true);
-  MsBackendPolicy backend_policy;
-#if (!defined ENABLE_GE)
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
+
+  MsBackendPolicy backend_policy = kMsBackendMsPrior;
+#ifdef ENABLE_D
+  if (ms_context->backend_policy() == "ge") {
+    context::PynativeInitGe(ms_context);
+    backend_policy = kMsBackendGeOnly;
+  }
+#else
   if (!context::IsTsdOpened(ms_context)) {
     if (!context::OpenTsd(ms_context)) {
       MS_LOG(EXCEPTION) << "Open tsd failed";
@@ -2032,11 +2038,6 @@ MsBackendPolicy ForwardExecutor::InitEnv(const OpExecInfoPtr &op_exec_info) {
   } else {
     backend_policy = kMsBackendVmOnly;
   }
-#else
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  context::PynativeInitGe(ms_context);
-  backend_policy = kMsBackendGeOnly;
 #endif
   if (kVmOperators.find(op_exec_info->op_name) != kVmOperators.end()) {
     backend_policy = kMsBackendVmOnly;
@@ -2056,7 +2057,7 @@ py::object ForwardExecutor::RunOpWithBackendPolicy(MsBackendPolicy backend_polic
       break;
     }
     case kMsBackendGePrior: {
-#ifdef ENABLE_GE
+#ifdef ENABLE_D
       // use GE first, use vm when GE fails
       MS_LOG(DEBUG) << "RunOp use GE first backend";
       result = RunOpInGE(op_exec_info, status);

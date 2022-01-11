@@ -26,7 +26,7 @@ namespace mindspore::transform {
 DECLARE_OP_ADAPTER(Print)
 DECLARE_OP_USE_DYN_INPUT(Print)
 
-#ifdef ENABLE_GE
+#ifdef ENABLE_D
 DECLARE_OP_ADAPTER(Assert)
 DECLARE_OP_USE_DYN_INPUT(Assert)
 #endif

@@ -28,7 +28,7 @@
 #include "utils/ms_context.h"
 #include "ps/ps_context.h"
 #include "utils/anf_utils.h"
-#ifdef ENABLE_GE
+#ifdef ENABLE_D
 #include "transform/graph_ir/convert.h"
 #endif
 namespace mindspore {
@@ -652,7 +652,7 @@ bool GraphPartition::IsCut(const AnfNodePtr &node) {
         return true;
       }
     }
-#ifdef ENABLE_GE
+#ifdef ENABLE_D
     if (backend_name_ == kGeVm) {
       auto name = GetCNodeFuncName(cnode);
       auto adpt = transform::DfGraphConvertor::FindAdapter(name);

@@ -25,7 +25,7 @@
 #include <vector>
 
 #include "abstract/abstract_value.h"
-#ifdef ENABLE_GE
+#ifdef ENABLE_D
 #include "transform/graph_ir/convert.h"
 #endif
 #include "ir/graph_utils.h"
