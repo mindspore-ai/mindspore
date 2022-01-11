@@ -301,13 +301,14 @@ class LU(PrimitiveWithInfer):
         x_shape = list(x['shape'])
         x_dtype = x['dtype']
         ndim = len(x_shape)
-
         if ndim in (1, 2):
-            permutation_shape = (x_shape[0], x_shape[0])
-            pivots_shape = (1, x_shape[0])
+            k_shape = min(x_shape[0], x_shape[1])
+            permutation_shape = (k_shape, k_shape)
+            pivots_shape = (1, k_shape)
         else:
-            permutation_shape = (x_shape[0], x_shape[1], x_shape[1])
-            pivots_shape = (x_shape[0], 1, x_shape[1])
+            k_shape = min(x_shape[1], x_shape[2])
+            permutation_shape = (x_shape[0], k_shape, k_shape)
+            pivots_shape = (x_shape[0], 1, k_shape)
         output = {
             'shape': (x_shape, pivots_shape, permutation_shape),
             'dtype': (x_dtype, mstype.int32, mstype.int32),

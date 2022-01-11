@@ -592,6 +592,8 @@ def lu(a, permute_l=False, overwrite_a=False, check_finite=True):
     m_lu, _, p = msp_lu(a)
     m = a.shape[-2]
     n = a.shape[-1]
+    if m > n:
+        _raise_value_error("last two dimensions of LU decomposition must be row less or equal to col.")
     k = min(m, n)
     a_dtype = a.dtype
     l = mnp.tril(m_lu, -1)[..., :k] + mnp.eye(m, k, dtype=a_dtype)
