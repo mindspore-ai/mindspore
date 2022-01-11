@@ -90,7 +90,8 @@ std::vector<std::pair<AnfNodePtr, std::pair<size_t, size_t>>> GetInputIndex(cons
           accum_idx += LongToInt(dyn_input_sizes[dyn_i]);
           if (used_as_idx < accum_idx) {
             input_index.push_back(std::make_pair(
-              anf_node, std::make_pair(dyn_i, IntToSize(used_as_idx - (accum_idx - dyn_input_sizes[dyn_i])))));
+              anf_node,
+              std::make_pair(dyn_i, IntToSize(used_as_idx - (accum_idx - LongToInt(dyn_input_sizes[dyn_i]))))));
             found = true;
             break;
           }
@@ -335,7 +336,7 @@ bool AkgKernelJsonGenerator::CreateInputDescJson(const AnfNodePtr &anf_node, con
       input_list.emplace_back(input_desc_json);
       real_input_index++;
     }
-    inputs_json->emplace_back(input_list);
+    (void)inputs_json->emplace_back(input_list);
   }
   return true;
 }
@@ -877,7 +878,7 @@ nlohmann::json AkgKernelJsonGenerator::CreateInputsJson(const std::vector<AnfNod
       input_shape.push_back(1);
     }
     input_desc_json[kJsonKeyShape] = input_shape;
-    inputs_json.emplace_back(std::vector<nlohmann::json>{input_desc_json});
+    (void)inputs_json.emplace_back(std::vector<nlohmann::json>{input_desc_json});
   }
   return inputs_json;
 }

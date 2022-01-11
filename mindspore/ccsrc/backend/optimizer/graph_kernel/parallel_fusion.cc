@@ -40,7 +40,7 @@ bool IsOneOf(const AnfNodePtr &node, const std::vector<PrimitivePtr> &ops_prim) 
 }
 
 void ProcessThroughPassCNode(const std::function<bool(const AnfNodePtr &)> &pass_fn,
-                             OrderedMap<AnfNodePtr, NodeRelation> *node_rels) {
+                             OrderedMap<AnfNodePtr, NodeRelation> *const node_rels) {
   std::set<AnfNodePtr> latter_to_be_erased;
   for (const auto &[node, node_rel] : (*node_rels)) {
     if (!pass_fn(node) || latter_to_be_erased.count(node) != 0) {
@@ -90,7 +90,7 @@ void ProcessThroughPassCNode(const std::function<bool(const AnfNodePtr &)> &pass
   }
 }
 
-void ProcessTailMakeTupleCNode(OrderedMap<AnfNodePtr, NodeRelation> *node_rels) {
+void ProcessTailMakeTupleCNode(OrderedMap<AnfNodePtr, NodeRelation> *const node_rels) {
   AnfNodePtrList latter_to_be_erased;
   for (auto &[node, node_rel] : (*node_rels)) {
     if (!IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
@@ -177,8 +177,8 @@ bool IsNoOutputsNode(const OrderedMap<AnfNodePtr, NodeRelation> &node_rels, cons
   return false;
 }
 
-void ProcessLocalStructure(OrderedMap<AnfNodePtr, NodeRelation> *node_rels, std::set<AnfNodePtr> *virtual_noout_nodes,
-                           std::set<AnfNodePtr> *ignore_noin_nodes) {
+void ProcessLocalStructure(OrderedMap<AnfNodePtr, NodeRelation> *node_rels,
+                           std::set<AnfNodePtr> *const virtual_noout_nodes, std::set<AnfNodePtr> *ignore_noin_nodes) {
   // 1. Local relation
   // Graph as following left part, relation D->B and D->E(D is a no input node)
   // will make B and E to be multiply inputs node.
@@ -302,7 +302,7 @@ bool Parallelizable(const AnfNodePtr &node) { return WhiteOpsFilter(node) && !Un
 std::vector<AnfNodePtrList> SearchFromNodes(const AnfNodePtrList &nodes,
                                             const std::function<bool(const AnfNodePtr &)> &filter_func,
                                             const OrderedMap<AnfNodePtr, NodeRelation> &node_rels, bool is_backward,
-                                            std::set<AnfNodePtr> *seen) {
+                                            std::set<AnfNodePtr> *const seen) {
   // Start from multi-inputs node, stop on seen node or multi-inputs or multi-outputs nodes.
   // For backward search, the other multi-inputs node can be contained in.
   // For forward search, the other multi-outputs node can be contained in.
@@ -343,7 +343,8 @@ std::vector<AnfNodePtrList> SearchFromNodes(const AnfNodePtrList &nodes,
 
 void SearchStreamFromMultiRelationNode(const AnfNodePtrList &multi_nodes,
                                        const OrderedMap<AnfNodePtr, NodeRelation> &node_rels, bool is_backward,
-                                       std::vector<std::vector<AnfNodePtrList>> *groups, std::set<AnfNodePtr> *seen) {
+                                       std::vector<std::vector<AnfNodePtrList>> *groups,
+                                       std::set<AnfNodePtr> *const seen) {
   auto get_related_nodes = is_backward ? [](const NodeRelation &info) { return info.pres; }
                                        : [](const NodeRelation &info) { return info.nexts; };
   for (const auto &node : multi_nodes) {
@@ -366,7 +367,8 @@ void SearchStreamFromMultiRelationNode(const AnfNodePtrList &multi_nodes,
 
 void SearchStreamFromUnidirectionalNode(const AnfNodePtrList &ud_nodes,
                                         const OrderedMap<AnfNodePtr, NodeRelation> &node_rels, bool is_backward,
-                                        std::vector<std::vector<AnfNodePtrList>> *groups, std::set<AnfNodePtr> *seen) {
+                                        std::vector<std::vector<AnfNodePtrList>> *groups,
+                                        std::set<AnfNodePtr> *const seen) {
   groups->push_back(SearchFromNodes(ud_nodes, Parallelizable, node_rels, is_backward, seen));
 
   // Erase empty groups.

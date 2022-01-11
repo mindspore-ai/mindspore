@@ -22,6 +22,10 @@ class OpRegister {
  public:
   OpRegister(const std::string &name, const CreatorFunc &func) { OpRegistry::Instance().Register(name, func); }
   ~OpRegister() = default;
+
+ private:
+  // for pclint-plus
+  bool rev_{false};
 };
 
 #define JOIN(x, y) x##y

@@ -29,8 +29,8 @@ namespace mindspore::graphkernel {
 AnfNodePtrList GetUpdateStateList(const FuncGraphPtr &func_graph) {
   auto todos = TopoSort(func_graph->get_return());
   AnfNodePtrList result;
-  std::copy_if(todos.begin(), todos.end(), std::back_inserter(result),
-               [](const AnfNodePtr &node) { return IsPrimitiveCNode(node, prim::kPrimUpdateState); });
+  (void)std::copy_if(todos.begin(), todos.end(), std::back_inserter(result),
+                     [](const AnfNodePtr &node) { return IsPrimitiveCNode(node, prim::kPrimUpdateState); });
   return result;
 }
 
@@ -75,7 +75,7 @@ bool SpreadUpdateState::Run(const FuncGraphPtr &func_graph) {
     inputs = ExtendInputsOfUpdateState(inputs, func_graph);
     if (inputs.size() + kUpdateStateRealInput != cnode->size() || inputs[0] != cnode->input(kUpdateStateRealInput)) {
       AnfNodePtrList node_inputs = {cnode->input(kAnfPrimitiveIndex), cnode->input(kUpdateStateStateInput)};
-      node_inputs.insert(node_inputs.end(), inputs.begin(), inputs.end());
+      (void)node_inputs.insert(node_inputs.end(), inputs.begin(), inputs.end());
       // Create a new UpdateState
       auto new_node = func_graph->NewCNode(node_inputs);
       new_node->set_abstract(node->abstract());
@@ -97,9 +97,9 @@ bool ShrinkUpdateState::Run(const FuncGraphPtr &func_graph) {
     if (cnode->size() <= kUpdateStateRealInput + 1) continue;
     AnfNodePtrList mt_inputs = GkUtils::SpreadTuples(cnode->inputs(), kUpdateStateRealInput);
     AbstractBasePtrList abs_list;
-    std::transform(mt_inputs.begin(), mt_inputs.end(), std::back_inserter(abs_list),
-                   [](const AnfNodePtr &inp) { return inp->abstract(); });
-    mt_inputs.insert(mt_inputs.begin(), NewValueNode(prim::kPrimMakeTuple));
+    (void)std::transform(mt_inputs.begin(), mt_inputs.end(), std::back_inserter(abs_list),
+                         [](const AnfNodePtr &inp) { return inp->abstract(); });
+    (void)mt_inputs.insert(mt_inputs.begin(), NewValueNode(prim::kPrimMakeTuple));
     auto mt_node = func_graph->NewCNode(mt_inputs);
     mt_node->set_abstract(std::make_shared<abstract::AbstractTuple>(abs_list));
     Callback::Instance()->SetEmptyKernelInfo(mt_node);
@@ -120,7 +120,7 @@ bool ExtendOutputForUpdateState::Run(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(mng);
   bool changed = false;
   for (const auto &node : todos) {
-    GetGraphKernelGetitemList(mng, node, &getitems_, false);
+    (void)GetGraphKernelGetitemList(mng, node, &getitems_, false);
     if (getitems_.empty()) continue;
     FindIndexesToUpdateState(mng);
     if (indexes_.empty()) continue;
@@ -133,8 +133,12 @@ bool ExtendOutputForUpdateState::Run(const FuncGraphPtr &func_graph) {
   }
   if (changed) {
     GkUtils::UpdateFuncGraphManager(mng, func_graph);
-    std::make_shared<SpreadUpdateState>()->Run(func_graph);
-    std::make_shared<EliminateHangingOutput>()->Run(func_graph);
+    auto spread_update_state = std::make_shared<SpreadUpdateState>();
+    MS_EXCEPTION_IF_NULL(spread_update_state);
+    (void)spread_update_state->Run(func_graph);
+    auto elim_hanging_output = std::make_shared<EliminateHangingOutput>();
+    MS_EXCEPTION_IF_NULL(elim_hanging_output);
+    (void)elim_hanging_output->Run(func_graph);
   }
   return changed;
 }
@@ -164,9 +168,9 @@ void ExtendOutputForUpdateState::FindIndexesToUpdateState(const FuncGraphManager
 void ExtendOutputForUpdateState::FilterIndexes(const FuncGraphPtr &func_graph) {
   auto output_node = func_graph->output()->cast<CNodePtr>();
   // do not process the side-effect nodes.
-  indexes_.erase(std::remove_if(indexes_.begin(), indexes_.end(),
-                                [&output_node](size_t i) { return IsSideEffectNode(output_node->input(i + 1)); }),
-                 indexes_.end());
+  (void)indexes_.erase(std::remove_if(indexes_.begin(), indexes_.end(),
+                                      [&output_node](size_t i) { return IsSideEffectNode(output_node->input(i + 1)); }),
+                       indexes_.end());
 }
 
 std::vector<size_t> ExtendOutputForUpdateState::FindAllOutputs(const FuncGraphPtr &func_graph, size_t index) {
@@ -222,8 +226,8 @@ bool ExtendOutputForUpdateState::ProcessIndex(const FuncGraphPtr &func_graph, co
     // Create MakeTuple, even though the group size is 1, the following pass will spread the MakeTuple,
     // so it's unnecessary to set abstract for it.
     AnfNodePtrList mt_input = {NewValueNode(prim::kPrimMakeTuple)};
-    std::transform(group.begin(), group.end(), std::back_inserter(mt_input),
-                   [this](size_t idx) { return getitems_[idx]; });
+    (void)std::transform(group.begin(), group.end(), std::back_inserter(mt_input),
+                         [this](size_t idx) { return getitems_[idx]; });
     new_node = func_graph->NewCNode(mt_input)->cast<AnfNodePtr>();
   }
   auto mng = func_graph->manager();

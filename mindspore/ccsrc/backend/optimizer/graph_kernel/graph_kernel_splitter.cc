@@ -247,7 +247,8 @@ class Area {
   }
 
   // Make a return node for traitor nodes.
-  void CreateReturnNode(const FuncGraphPtr &func_graph, mindspore::HashMap<AnfNodePtr, size_t> *tuple_node_index) {
+  void CreateReturnNode(const FuncGraphPtr &func_graph,
+                        mindspore::HashMap<AnfNodePtr, size_t> *const tuple_node_index) {
     // If there's no traitor in the area, it means that this area is the last part
     // of the original FuncGraph, it already contains the original Return node.
     if (traitor_nodes_.empty()) {
