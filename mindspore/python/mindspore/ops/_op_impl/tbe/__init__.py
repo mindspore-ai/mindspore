@@ -122,7 +122,9 @@ from .relu_ds import _relu_ds_tbe
 from .relu_grad import _relu_grad_tbe
 from .relu_grad_ds import _relu_grad_ds_tbe
 from .relu6 import _relu6_tbe
+from .relu6_ds import _relu6_ds_tbe
 from .relu6_grad import _relu6_grad_tbe
+from .relu6_grad_ds import _relu6_grad_ds_tbe
 from .relu_v2 import _relu_v2_tbe
 from .relu_grad_v2 import _relu_grad_v2_tbe
 from .relu_v2_ds import _relu_v2_ds_tbe

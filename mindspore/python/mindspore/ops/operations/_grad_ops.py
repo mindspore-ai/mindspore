@@ -1629,7 +1629,7 @@ class ReluGrad(Primitive):
         raise NotImplementedError
 
 
-class ReLU6Grad(PrimitiveWithInfer):
+class ReLU6Grad(Primitive):
     """Performs grad of ReLU6 operation."""
 
     @prim_attr_register
@@ -1638,15 +1638,6 @@ class ReLU6Grad(PrimitiveWithInfer):
 
     def __call__(self, y_grad, x):
         raise NotImplementedError
-
-    def infer_shape(self, y_grad_shape, x_shape):
-        return x_shape
-
-    def infer_dtype(self, y_grad_dtype, x_dtype):
-        valid_dtypes = (mstype.float16, mstype.float32)
-        validator.check_tensor_dtype_valid("y_grad", y_grad_dtype, valid_dtypes, self.name)
-        validator.check_tensor_dtype_valid("x", x_dtype, valid_dtypes, self.name)
-        return x_dtype
 
 
 class ReluGradV2(Primitive):
