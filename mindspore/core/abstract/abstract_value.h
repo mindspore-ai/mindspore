@@ -665,13 +665,10 @@ class MS_CORE_API AbstractTensor : public AbstractUndetermined {
   std::string ToString() const override;
 
   std::size_t hash() const override {
-    auto value = GetValueTrack();
     auto hash_sum = hash_combine(tid(), element_->hash());
-    if (value != nullptr) {
-      auto tensor = value->cast<tensor::TensorPtr>();
-      if (tensor != nullptr) {
-        hash_sum = hash_combine(hash_sum, tensor->DataSize());
-      }
+    auto shape = GetShapeTrack();
+    if (shape != nullptr) {
+      hash_sum = hash_combine(hash_sum, shape->hash());
     }
     return hash_sum;
   }
@@ -1377,10 +1374,6 @@ class MS_CORE_API AbstractRef final : public AbstractTensor {
   }
 
   AbstractBasePtr Join(const AbstractBasePtr &other) override;
-
-  std::size_t hash() const override {
-    return AbstractTensor::hash() ^ (std::hash<uint32_t>{}(this->tid()) << 1);  // ref_key_->hash() ^
-  }
 
   AbstractBasePtr PartialBroaden() const override;
 

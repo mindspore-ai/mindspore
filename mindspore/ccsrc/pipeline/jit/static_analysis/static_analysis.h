@@ -29,6 +29,8 @@
 #include <mutex>
 #include <unordered_map>
 #include <unordered_set>
+#include "abstract/abstract_value.h"
+#include "utils/ms_utils.h"
 
 #ifdef DEBUG
 #include <stack>
@@ -66,8 +68,8 @@ class EvalResult : public Base {
   EvalResult(AbstractBasePtr abs, AttrValueMapPtr attr) : abstract_(abs), attribute_(attr) {}
   ~EvalResult() override = default;
   MS_DECLARE_PARENT(EvalResult, Base);
-  AbstractBasePtr abstract() { return abstract_; }
-  AttrValueMapPtr attribute() { return attribute_; }
+  const AbstractBasePtr &abstract() { return abstract_; }
+  const AttrValueMapPtr &attribute() { return attribute_; }
 
  private:
   AbstractBasePtr abstract_;
@@ -219,9 +221,7 @@ struct AnalysisResult {
 
 struct PartialAppHasher {
   std::size_t operator()(const std::pair<AbstractFunctionPtr, AbstractBasePtrList> &p) const {
-    auto h1 = std::hash<AbstractFunctionPtr>{}(p.first);
-    auto h2 = AbstractBasePtrListHash(p.second);
-    return h1 ^ h2;
+    return hash_combine(PointerHash<AbstractFunctionPtr>{}(p.first), AbstractBasePtrListHash(p.second));
   }
 };
 
@@ -229,13 +229,7 @@ struct PartialAppHasher {
 struct EvaluatorArgs {
   EvaluatorArgs(const EvaluatorPtr &eval, const AbstractBasePtrList &args) : evaluator_(eval), args_(args) {}
   bool operator==(const EvaluatorArgs &other) const {
-    if (evaluator_ != other.evaluator_) {
-      return false;
-    }
-    if (AbstractBasePtrListDeepEqual(args_, other.args_)) {
-      return true;
-    }
-    return false;
+    return (evaluator_ == other.evaluator_) && AbstractBasePtrListDeepEqual(args_, other.args_);
   }
   bool operator!=(const EvaluatorArgs &other) { return !(*this == other); }
 
@@ -245,12 +239,49 @@ struct EvaluatorArgs {
 using EvalTraceRevIter = std::list<EvaluatorArgs>::reverse_iterator;
 struct EvaluatorArgsHasher {
   std::size_t operator()(const EvaluatorArgs &eval_args) const {
-    return hash_combine(std::hash<EvaluatorPtr>{}(eval_args.evaluator_), AbstractBasePtrListHash(eval_args.args_));
+    return hash_combine(PointerHash<EvaluatorPtr>{}(eval_args.evaluator_), AbstractBasePtrListHash(eval_args.args_));
   }
 };
 struct EvaluatorArgsEqual {
   bool operator()(const EvaluatorArgs &lhs, const EvaluatorArgs &rhs) const { return lhs == rhs; }
 };
+
+struct PrimitiveEvalCacheKey {
+  AttrValueMap attrs;
+  AbstractBasePtrList args;
+};
+
+struct PrimitiveEvalCacheHash {
+  std::size_t operator()(const PrimitiveEvalCacheKey &key) const {
+    return hash_combine(key.attrs.size(), AbstractBasePtrListHash(key.args));
+  }
+};
+
+struct PrimitiveEvalCacheEqual {
+  bool operator()(const PrimitiveEvalCacheKey &a, const PrimitiveEvalCacheKey &b) const {
+    if (!common::IsAttrsEqual(a.attrs, b.attrs)) {
+      return false;
+    }
+    return AbstractBasePtrListDeepEqual(a.args, b.args);
+  }
+};
+
+class PrimitiveEvalCache {
+ public:
+  using EvalCache =
+    std::unordered_map<PrimitiveEvalCacheKey, EvalResultPtr, PrimitiveEvalCacheHash, PrimitiveEvalCacheEqual>;
+  using PrimToEvalCache = mindspore::HashMap<std::string, EvalCache>;
+  EvalResultPtr Get(const PrimitivePtr &prim, const AbstractBasePtrList &args) const;
+  void Put(const PrimitivePtr &prim, AttrValueMap &&attrs, const AbstractBasePtrList &args,
+           const EvalResultPtr &result);
+  void Clear();
+
+ private:
+  mutable std::mutex mutex_;
+  PrimToEvalCache prim_cache_;
+};
+
+using PrimitiveEvalCachePtr = std::shared_ptr<PrimitiveEvalCache>;
 
 class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
  public:

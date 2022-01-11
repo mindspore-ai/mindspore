@@ -17,6 +17,7 @@
 #include "abstract/abstract_function.h"
 
 #include <vector>
+#include "utils/hashing.h"
 
 namespace mindspore {
 namespace abstract {
@@ -138,18 +139,15 @@ bool PrimitiveAbstractClosure::operator==(const AbstractFunction &other) const {
   if (!other.isa<PrimitiveAbstractClosure>()) {
     return false;
   }
-  auto other_prim = static_cast<const PrimitiveAbstractClosure *>(&other);
-  MS_EXCEPTION_IF_NULL(prim_);
-  return (prim_ == other_prim->prim_ && tracking_id() == other_prim->tracking_id());
+  const auto &other_abs = static_cast<const PrimitiveAbstractClosure &>(other);
+  return (prim_ == other_abs.prim_) && (tracking_id() == other_abs.tracking_id());
 }
 
 std::size_t PrimitiveAbstractClosure::hash() const {
-  auto hash_value = hash_combine(tid(), prim_->hash());
-  // Keep in sync with operator==() which compares the prim_ pointer;
-  hash_value = hash_combine(hash_value, std::hash<Primitive *>{}(prim_.get()));
-  if (tracking_id() != nullptr) {
-    hash_value = hash_combine(hash_value, tracking_id()->hash());
-  }
+  // Keep in sync with operator==() which compares tid, prim_ & tracking_id;
+  auto hash_value = static_cast<std::size_t>(tid());
+  hash_value = hash_combine(hash_value, PointerHash<PrimitivePtr>{}(prim_));
+  hash_value = hash_combine(hash_value, PointerHash<AnfNodePtr>{}(tracking_id()));
   return hash_value;
 }
 

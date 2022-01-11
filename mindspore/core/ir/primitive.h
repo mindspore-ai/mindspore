@@ -124,9 +124,9 @@ class MS_CORE_API Primitive : public Named {
   /// \param[in] attrs The attribute map needs to be added in the primitive attribute.
   void set_evaluate_added_attrs(const mindspore::HashMap<std::string, ValuePtr> &attrs) {
     for (auto &attr : attrs) {
-      MS_LOG(DEBUG) << " set evalu attrl " << name() << attr.first;
-      attrs_[attr.first] = attr.second;
+      (void)attrs_.insert_or_assign(attr.first, attr.second);
     }
+    evaluate_added_attrs_ = attrs;
   }
   /// \brief Check if Primitive has any attribute.
   /// for example Primitives like scalar_add, return, etc, don't have any attribute.
