@@ -62,12 +62,12 @@ mindspore.common.initializer
 
 .. py:class:: mindspore.common.initializer.HeUniform(negative_slope=0, mode="fan_in", nonlinearity="leaky_relu")
 
-    生成一个服从HeKaiming均匀分布U(-boundary, boundary)的随机数组用于初始化Tensor。
-    
-    HeKaiming均匀分布范围的上下界：
+    生成一个服从HeKaiming均匀分布U(-boundary, boundary)的随机数组用于初始化Tensor，其中：
     
     .. math::
-        boundary = \sqrt{\frac{6}{(1 + a^2) \times \text{fan_in}}}
+        boundary = \text{gain} \times \sqrt{\frac{3}{fan_mode}}
+
+    其中，gain是一个可选的缩放因子。fan_mode是权重Tensor中输入或输出单元的数量，取决于mode是"fan_in"或是"fan_out"。
 
     **参数：**
 
@@ -87,9 +87,10 @@ mindspore.common.initializer
     生成一个服从HeKaiming正态分布N(0, sigma^2)的随机数组用于初始化Tensor，其中：
 
     .. math::
-        sigma = \frac{gain} {\sqrt{N}}
+        sigma = \frac{gain} {\sqrt{fan_mode}}
 
-    其中，gain是一个可选的缩放因子。如果mode是"fan_in"， N是权重Tensor中输入单元的数量，如果mode是"fan_out"， N是权重Tensor中输出单元的数量。
+    其中，gain是一个可选的缩放因子。如果mode是"fan_in"，则fan_mode是权重Tensor中输入单元的数量，如果mode是"fan_out"，
+    fan_mode是权重Tensor中输出单元的数量。
 
     HeUniform 算法的详细信息，请查看 https://arxiv.org/abs/1502.01852。
 
@@ -113,9 +114,7 @@ mindspore.common.initializer
     .. math::
         boundary = gain * \sqrt{\frac{6}{n_{in} + n_{out}}}
 
-    - :math:`gain` 是一个可选的缩放因子。
-    - :math:`n_{in}` 为权重Tensor中输入单元的数量。
-    - :math:`n_{out}` 为权重Tensor中输出单元的数量。
+    :math:`gain` 是一个可选的缩放因子。:math:`n_{in}` 为权重Tensor中输入单元的数量。:math:`n_{out}` 为权重Tensor中输出单元的数量。
 
     有关 XavierUniform 算法的详细信息，请查看 http://proceedings.mlr.press/v9/glorot10a.html。
 
@@ -187,7 +186,7 @@ mindspore.common.initializer
 
     **返回：**
 
-    Tensor，返回一个张量对象。
+    Tensor。
 
     **异常：**
 

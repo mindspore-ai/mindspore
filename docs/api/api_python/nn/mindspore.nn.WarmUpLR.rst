@@ -5,10 +5,10 @@ mindspore.nn.WarmUpLR
 
     学习率热身。
 
-    对于当前step，计算warmup_learning_rate[current_step]的公式为：
+    对于当前step，计算学习率的公式为：
 
     .. math::
-        warmup\_learning\_rate[current\_step] = learning\_rate * tmp\_step / warmup\_steps
+        warmup\_learning\_rate = learning\_rate * tmp\_step / warmup\_steps
 
     其中，
 
@@ -26,7 +26,7 @@ mindspore.nn.WarmUpLR
 
     **输出：**
 
-    Tensor。形状为  :math:`()` 的当前step的学习率值。
+    标量Tensor。当前step的学习率值。
 
     **异常：**
 

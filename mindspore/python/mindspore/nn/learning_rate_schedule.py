@@ -58,10 +58,10 @@ class ExponentialDecayLR(LearningRateSchedule):
     r"""
     Calculates learning rate based on exponential decay function.
 
-    For current step, the formula of computing decayed_learning_rate[current_step] is:
+    For current step, the formula of computing decayed learning rate is:
 
     .. math::
-        decayed\_learning\_rate[current\_step] = learning\_rate * decay\_rate^{p}
+        decayed\_learning\_rate = learning\_rate * decay\_rate^{p}
 
     Where :
 
@@ -76,7 +76,7 @@ class ExponentialDecayLR(LearningRateSchedule):
     Args:
         learning_rate (float): The initial value of learning rate.
         decay_rate (float): The decay rate.
-        decay_steps (int): A value used to calculate decayed learning rate.
+        decay_steps (int): Number of steps to decay over.
         is_stair (bool): If true, learning rate is decayed once every `decay_steps` time. Default: False.
 
     Inputs:
@@ -128,10 +128,10 @@ class NaturalExpDecayLR(LearningRateSchedule):
     r"""
     Calculates learning rate base on natural exponential decay function.
 
-    For current step, the formula of computing decayed_learning_rate[current_step] is:
+    For current step, the formula of computing decayed learning rate is:
 
     .. math::
-        decayed\_learning\_rate[current_step] = learning\_rate * e^{-decay\_rate * p}
+        decayed\_learning\_rate= learning\_rate * e^{-decay\_rate * p}
 
     Where :
 
@@ -146,7 +146,7 @@ class NaturalExpDecayLR(LearningRateSchedule):
     Args:
         learning_rate (float): The initial value of learning rate.
         decay_rate (float): The decay rate.
-        decay_steps (int): A value used to calculate decayed learning rate.
+        decay_steps (int): Number of steps to decay over.
         is_stair (bool): If true, learning rate is decayed once every `decay_steps` time. Default: False.
 
     Inputs:
@@ -199,10 +199,10 @@ class InverseDecayLR(LearningRateSchedule):
     r"""
     Calculates learning rate base on inverse-time decay function.
 
-    For current step, the formula of computing decayed_learning_rate[current_step] is:
+    For current step, the formula of computing decayed learning rate is:
 
     .. math::
-        decayed\_learning\_rate[current\_step] = learning\_rate / (1 + decay\_rate * p)
+        decayed\_learning\_rate = learning\_rate / (1 + decay\_rate * p)
 
     Where :
 
@@ -217,7 +217,7 @@ class InverseDecayLR(LearningRateSchedule):
     Args:
         learning_rate (float): The initial value of learning rate.
         decay_rate (float): The decay rate.
-        decay_steps (int): A value used to calculate decayed learning rate.
+        decay_steps (int): Number of steps to decay over.
         is_stair (bool): If true, learning rate decay once every `decay_steps` times. Default: False.
 
     Inputs:
@@ -268,17 +268,17 @@ class CosineDecayLR(LearningRateSchedule):
     r"""
     Calculates learning rate based on cosine decay function.
 
-    For current step, the formula of computing decayed_learning_rate[current_step] is:
+    For current step, the formula of computing decayed learning rate is:
 
     .. math::
-        decayed\_learning\_rate[current\_step] = min\_lr + 0.5 * (max\_lr - min\_lr) *
+        decayed\_learning\_rate = min\_lr + 0.5 * (max\_lr - min\_lr) *
         (1 + cos(\frac{current\_step}{decay\_steps}\pi))
 
 
     Args:
         min_lr (float): The minimum value of learning rate.
         max_lr (float): The maximum value of learning rate.
-        decay_steps (int): A value used to calculate decayed learning rate.
+        decay_steps (int): Number of steps to decay over.
 
     Inputs:
         - **global_step** (Tensor) - The current step number.
@@ -338,10 +338,10 @@ class PolynomialDecayLR(LearningRateSchedule):
     r"""
     Calculates learning rate base on polynomial decay function.
 
-    For current step, the formula of computing decayed_learning_rate[current_step] is:
+    For current step, the formula of computing decayed learning rate is:
 
     .. math::
-        decayed\_learning\_rate[current\_step] = (learning\_rate - end\_learning\_rate) *
+        decayed\_learning\_rate = (learning\_rate - end\_learning\_rate) *
         (1 - tmp\_step / tmp\_decay\_steps)^{power} + end\_learning\_rate
 
     Where :
@@ -357,8 +357,8 @@ class PolynomialDecayLR(LearningRateSchedule):
     Args:
         learning_rate (float): The initial value of learning rate.
         end_learning_rate (float): The end value of learning rate.
-        decay_steps (int): A value used to calculate decayed learning rate.
-        power (float): A value used to calculate decayed learning rate. This parameter must be greater than 0.
+        decay_steps (int): Number of steps to decay over.
+        power (float): The power of polynomial. It must be greater than 0.
         update_decay_steps (bool): If true, learning rate is decayed once every `decay_steps` time. Default: False.
 
     Inputs:
@@ -432,10 +432,10 @@ class WarmUpLR(LearningRateSchedule):
     r"""
     Gets learning rate warming up.
 
-    For current step, the formula of computing warmup_learning_rate[i] is:
+    For current step, the formula of computing warmup learning rate is:
 
     .. math::
-        warmup\_learning\_rate[current\_step] = learning\_rate * tmp\_step / warmup\_steps
+        warmup\_learning\_rate = learning\_rate * tmp\_step / warmup\_steps
 
     Where :
 

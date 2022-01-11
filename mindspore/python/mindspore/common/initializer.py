@@ -228,14 +228,13 @@ def _calculate_in_and_out(arr):
 class XavierUniform(Initializer):
     r"""
     Generates an array with values sampled from Xavier uniform distribution
-    :math:`{U}(-\text{boundary}, \text{boundary})` in order to initialize a tensor, where:
+    :math:`{U}(-\text{boundary}, \text{boundary})` in order to initialize a tensor, where
 
     .. math::
         boundary = gain * \sqrt{\frac{6}{n_{in} + n_{out}}}
 
-    - where :math:`gain` is an optional scaling factor.
-    - where :math:`n_{in}` is the number of input units in the weight tensor.
-    - where :math:`n_{out}` is the number of output units in the weight tensor.
+    where :math:`gain` is an optional scaling factor, :math:`n_{in}` is the number of input units in the weight tensor,
+    :math:`n_{out}` is the number of output units in the weight tensor.
 
     For details of XavierUniform algorithm, please check
     `<http://proceedings.mlr.press/v9/glorot10a.html>`_.
@@ -270,9 +269,10 @@ class HeUniform(Initializer):
     :math:`{U}(-\text{boundary}, \text{boundary})` in order to initialize a tensor, where
 
     .. math::
-        boundary = \sqrt{\frac{6}{(1 + a^2) \times \text{fan_in}}}
+        boundary = \text{gain} \times \sqrt{\frac{3}{fan_mode}}
 
-    which is the bound of the HeUniform distribution.
+    where :math:`gain` is an optional scaling factor. If :math: `fan_mode` is 'fan_in', it is the number of input units
+    of the weight tensor. If :math: `fan_mode` is 'fan_out', it is the number of output units of the weight tensor.
 
     For details of HeUniform algorithm, please check
     `<https://arxiv.org/abs/1502.01852>`_.
@@ -316,10 +316,10 @@ class HeNormal(Initializer):
     :math:`{N}(0, \text{sigma}^2)` in order to initialize a tensor, where
 
     .. math::
-        sigma = \frac{gain} {\sqrt{N}}
+        sigma = \frac{gain} {\sqrt{fan_mode}}
 
-    where :math:`gain` is an optional scaling factor. :math: `N` is the number of input units of the weight tensor,
-    if `mode` is 'fan_in'. If `mode` is 'fan_out', it is the number of output units.
+    where :math:`gain` is an optional scaling factor. :math: `fan_mode` is the number of input or output units of
+    the weight tensor, depending on the `mode` is 'fan_in' or 'fan_out'.
 
     For details of HeUniform algorithm, please check `<https://arxiv.org/abs/1502.01852>`_.
 
@@ -633,7 +633,6 @@ class Normal(Initializer):
     Args:
         sigma (float): The standard deviation of Normal distribution. Default: 0.01.
         mean (float): The mean of Normal distribution. Default: 0.0.
-
 
     Examples:
         >>> import mindspore

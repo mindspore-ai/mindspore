@@ -5,10 +5,10 @@ mindspore.nn.ExponentialDecayLR
 
     基于指数衰减函数计算学习率。
 
-    对于当前step，decayed_learning_rate[current_step]的计算公式为：
+    对于当前step，计算学习率的公式为：
 
     .. math::
-        decayed\_learning\_rate[current\_step] = learning\_rate * decay\_rate^{p}
+        decayed\_learning\_rate = learning\_rate * decay\_rate^{p}
 
     其中，
 
@@ -24,7 +24,7 @@ mindspore.nn.ExponentialDecayLR
 
     - **learning_rate** (float): 学习率的初始值。
     - **decay_rate** (float): 衰减率。
-    - **decay_steps** (int): 用于计算衰减学习率的值。
+    - **decay_steps** (int): 进行衰减的step数。
     - **is_stair** (bool): 如果为True，则学习率每 `decay_steps` 步衰减一次。默认值：False。
 
     **输入：**
@@ -33,7 +33,7 @@ mindspore.nn.ExponentialDecayLR
 
     **输出：**
 
-    Tensor。形状为  :math:`()` 的当前step的学习率值。
+    标量Tensor。当前step的学习率值。
 
     **异常：**
 

@@ -3,7 +3,7 @@ mindspore.nn.polynomial_decay_lr
 
 .. py:class:: mindspore.nn.polynomial_decay_lr(learning_rate, end_learning_rate, total_step, step_per_epoch, decay_epoch, power, update_decay_epoch=False)
 
-    基于多项式衰减函数计算学习率。
+    基于多项式衰减函数计算学习率。每个step的学习率将会被存放在一个列表中。
 
     对于第i步，计算decayed_learning_rate[i]的公式为：
 
@@ -33,13 +33,20 @@ mindspore.nn.polynomial_decay_lr
     - **end_learning_rate** (float) - 学习率的最终值。
     - **total_step** (int) - step总数。
     - **step_per_epoch** (int) - 每个epoch的step数。
-    - **decay_epoch** (int) - 用于计算衰减学习率的值。
-    - **power** (float) - 用于计算衰减学习率的值。该参数必须大于0。
+    - **decay_epoch** (int) - 进行衰减的epoch数。
+    - **power** (float) - 多项式的幂，必须大于0。
     - **update_decay_epoch** (bool) - 如果为True，则更新 `decay_epoch` 。默认值：False。
 
     **返回：**
 
     list[float]。列表的大小为 `total_step`。
+
+    **异常：**
+
+    - **TypeError:** `learning_rate` 或 `end_learning_rate` 或 `power` 不是float。
+    - **TypeError:** `total_step` 或 `step_per_epoch` 或 `decay_epoch` 不是int。
+    - **TypeError:** `update_decay_epoch` 不是bool。
+    - **ValueError:** `learning_rate` 或 `power` 小于等于0。
 
     **样例：**
 
