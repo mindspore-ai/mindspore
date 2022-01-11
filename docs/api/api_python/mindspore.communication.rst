@@ -1,13 +1,27 @@
 mindspore.communication
 ========================
-集合通信接口的类。
+集合通信接口。
+
+注意，集合通信接口需要预先设置环境变量。对于Ascend，用户需要配置rank_table，设置rank_id和device_id，相关教程可参考：
+<https://www.mindspore.cn/tutorials/zh-CN/master/intermediate/distributed_training/distributed_training_ascend.html>`_。
+对于GPU，用户需要预先配置host_file以及mpi，相关教程参考：
+<https://www.mindspore.cn/tutorials/zh-CN/master/intermediate/distributed_training/distributed_training_gpu.html>`_。
+
+目前尚不支持CPU。
 
 .. py:class:: mindspore.communication.GlobalComm
 
-    全局通信信息。GlobalComm 是一个全局类。 成员包含：BACKEND、WORLD_COMM_GROUP。
+    GlobalComm 是一个储存通信信息的全局类。 成员包含：BACKEND、WORLD_COMM_GROUP。
 
     - BACKEND：使用的通信库，HCCL或者NCCL。
     - WORLD_COMM_GROUP：全局通信域。
+
+    **样例：**
+
+    >>> from mindspore.context import set_context
+    >>> set_context(device_target="Ascend")
+    >>> init()
+    >>> GlobalComm.BACKEND
 
 .. py:method:: mindspore.communication.init(backend_name=None)
 
@@ -17,13 +31,13 @@ mindspore.communication
 
     **参数：**
 
-    - **backend_name** (str) – 后台服务的名称，可选HCCL或NCCL。如果未设置则根据硬件平台类型（device_target）进行推断，默认值为None。
+    - **backend_name** (str) – 分布式后端的名称，可选HCCL或NCCL。如果未设置则根据硬件平台类型（device_target）进行推断，默认值为None。
 
     **异常：**
 
-    - **TypeError** – 在参数 `backend_name` 不是字符串时抛出。
-    - **RuntimeError** – 在以下情况将抛出：1）硬件设备类型无效；2）后台服务无效；3）分布式计算初始化失败；4）未设置环境变量 `RANK_ID` 或 `MINDSPORE_HCCL_CONFIG_PATH` 的情况下初始化HCCL服务。
-    - **ValueError** – 在环境变量 `RANK_ID` 设置成非数字时抛出。
+    - **TypeError** – 参数 `backend_name` 不是字符串。
+    - **RuntimeError** – 1）硬件设备类型无效；2）后台服务无效；3）分布式计算初始化失败；4）未设置环境变量 `RANK_ID` 或 `MINDSPORE_HCCL_CONFIG_PATH` 的情况下初始化HCCL服务。
+    - **ValueError** – 环境变量 `RANK_ID` 设置成非数字。
 
     **样例：**
 
@@ -65,7 +79,7 @@ mindspore.communication
 
     获取指定通信组实例的rank_size。
 
-    .. note:: `get_group_size` 方法应该在 `init` 方法之后使用。
+    .. note:: `get_group_size` 方法应该在 `init` 方法之后使用。在跑用例之前用户需要预先配置通信相关的环境变量。
 
     **参数：**
 
@@ -80,6 +94,18 @@ mindspore.communication
     - **TypeError** – 在参数 `group` 不是字符串时抛出。
     - **ValueError** – 在后台不可用时抛出。
     - **RuntimeError** – 在‘HCCL’或‘NCCL’服务不可用时抛出。
+
+    **样例：**
+
+    >>> from mindspore.context import set_context
+    >>> set_context(device_target="Ascend")
+    >>> init()
+    >>> group = "0-4"
+    >>> rank_ids = [0,4]
+    >>> create_group(group, rank_ids)
+    >>> group_size = get_group_size(group)
+    >>> print("group_size is: ", group_size)
+    >>> group_size is:2
 
 .. py:class:: mindspore.communication.get_world_rank_from_group_rank(group, group_rank_id)
 
@@ -101,9 +127,9 @@ mindspore.communication
 
     **异常：**
 
-    - **TypeError** – 在参数 `group_rank_id` 不是数字或参数 `group` 不是字符串时抛出。
-    - **ValueError** – 在参数 `group` 是 `hccl_world_group` 或后台不可用时抛出。
-    - **RuntimeError** – 在‘HCCL’或‘NCCL’服务不可用，以及使用GPU版本的MindSpore时抛出。
+    - **TypeError** – 参数 `group` 不是字符串或参数 `group_rank_id` 不是数字。
+    - **ValueError** – 参数 `group` 是 `hccl_world_group` 或后台不可用。
+    - **RuntimeError** – ‘HCCL’或‘NCCL’服务不可用，以及使用CPU版本的MindSpore。
 
     **样例：**
 
@@ -168,9 +194,9 @@ mindspore.communication
 
     **异常：**
 
-    - **TypeError** – 在参数 `group_rank_id` 不是数字或参数 `group` 不是字符串时抛出。
-    - **ValueError** – 在列表rank_ids的长度小于1，或列表rank_ids内有重复数据，以及后台无效时抛出。
-    - **RuntimeError** – 在‘HCCL’或‘NCCL’ 服务不可用，以及使用GPU版本的MindSpore时抛出。
+    - **TypeError** – 参数 `group_rank_id` 不是数字或参数 `group` 不是字符串。
+    - **ValueError** – 列表rank_ids的长度小于1，或列表rank_ids内有重复数据，以及后台无效。
+    - **RuntimeError** – 在‘HCCL’或‘NCCL’ 服务不可用，以及使用CPU版本的MindSpore。
 
     **样例：**
 
@@ -243,3 +269,13 @@ mindspore.communication
     - **TypeError** – 在参数 `group` 不是字符串时抛出。
     - **ValueError** – 在参数 `group` 是 `hccl_world_group` 或后台不可用时抛出。
     - **RuntimeError** – 在‘HCCL’或‘NCCL’服务不可用时抛出。
+
+    **样例：**
+
+    >>> from mindspore.context import set_context
+    >>> set_context(device_target="Ascend")
+    >>> init()
+    >>> group = "0-8"
+    >>> rank_ids = [0,8]
+    >>> create_group(group, rank_ids)
+    >>> destroy_group(group)
