@@ -1857,6 +1857,7 @@ void GraphScheduler::CheckActorValid(const ActorSet *actor_set) const {
                       << output_actor->outputs_num_ << ", the input data arrows num: " << output_actor->input_datas_num_
                       << ", the device tensor store num: " << output_actor->device_tensor_store_keys_.size();
   }
+  control_node_scheduler_.CheckActorValid(actor_set);
 }
 
 void GraphScheduler::PersistDeviceTensor(const GraphCompilerInfo &graph_compiler_info) {
