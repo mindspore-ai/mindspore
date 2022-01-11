@@ -417,7 +417,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   // Sync stream
   void Sync();
   void SetLazyBuild(bool enable);
-  void ExecuteAllTask();
+  void ExecuteLazyTask();
   void EnterCell();
   void ExitCell();
   bool IsTopCell() const;

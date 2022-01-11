@@ -463,8 +463,8 @@ class _PynativeExecutor:
     def set_lazy_build(self, enable):
         self._executor.set_lazy_build(enable)
 
-    def execute_all_task(self):
-        self._executor.execute_all_task()
+    def execute_lazy_task(self):
+        self._executor.execute_lazy_task()
 
     def grad_ms_function(self, output, *args):
         return self._executor.grad_ms_function(output, *args)
