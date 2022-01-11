@@ -563,7 +563,7 @@ class Mish(PrimitiveWithInfer):
         return x_dtype
 
 
-class SeLU(PrimitiveWithInfer):
+class SeLU(Primitive):
     r"""
     Computes SeLU (scaled exponential Linear Unit) of input tensors element-wise.
 
@@ -608,14 +608,6 @@ class SeLU(PrimitiveWithInfer):
     def __init__(self):
         """Initialize SeLU"""
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
-
-    def infer_shape(self, x_shape):
-        return x_shape
-
-    def infer_dtype(self, x_dtype):
-        valid_dtypes = [mstype.float16, mstype.float32]
-        validator.check_tensor_dtype_valid('x', x_dtype, valid_dtypes, self.name)
-        return x_dtype
 
 
 class ReLU6(PrimitiveWithCheck):

@@ -513,6 +513,7 @@ from .mish import _mish_tbe
 from .mul_no_nan import _mul_no_nan_tbe
 from .mul_no_nan_ds import _mul_no_nan_ds_tbe
 from .selu import _selu_tbe
+from .selu_ds import _selu_ds_tbe
 from .centralization import _centralization_tbe
 from .exp_ds import _exp_ds_tbe
 from .log_ds import _log_ds_tbe
