@@ -6150,12 +6150,12 @@ class ApplyPowerSign(Primitive):
           If data type of `var` is float16, all inputs must have the same data type as `var`.
           The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         - **m** (Parameter) - Variable tensor to be updated, has the same shape and data type as `var`.
-        - **lr** (Union[Number, Tensor]) - The learning rate value, must be a scalar.
-          With float32 or float16 data type.
-        - **logbase** (Union[Number, Tensor]) - Must be a scalar. With float32 or float16 data type.
-        - **sign_decay** (Union[Number, Tensor]) - Must be a scalar. With float32 or float16 data type.
-        - **beta** (Union[Number, Tensor]) - The exponential decay rate, must be a scalar.
-          With float32 or float16 data type.
+        - **lr** (Union[Number, Tensor]) - The learning rate value, should be a scalar or Tensor
+          with float32 or float16 data type.
+        - **logbase** (Union[Number, Tensor]) - Should be a scalar or Tensor with float32 or float16 data type.
+        - **sign_decay** (Union[Number, Tensor]) - Should be a scalar or Tensor with float32 or float16 data type.
+        - **beta** (Union[Number, Tensor]) - The exponential decay rate, should be a scalar or Tensor
+          with float32 or float16 data type.
         - **grad** (Tensor) - A tensor of the same shape and data type as `var`, for the gradient.
 
     Outputs:

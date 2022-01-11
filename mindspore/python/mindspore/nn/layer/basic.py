@@ -1295,6 +1295,8 @@ class MatrixDiagPart(Cell):
         ``Ascend``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
         >>> x = Tensor([[[-1, 0], [0, 1]],
         ...             [[-1, 0], [0, 1]],
         ...             [[-1, 0], [0, 1]]], mindspore.float32)
@@ -1312,6 +1314,7 @@ class MatrixDiagPart(Cell):
         >>> output = matrix_diag_part(x)
         >>> print(output)
         [-1 0 0 1]
+        [-1.  0.  0.  1.]
     """
 
     def __init__(self):
