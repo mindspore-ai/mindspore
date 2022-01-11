@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 
 #include <algorithm>
 #include <functional>
+#include <limits>
 #include <map>
 #include <memory>
 #include <queue>
@@ -196,6 +197,13 @@ void ElimRedundantInputsAndGraphParameters(const FuncGraphPtr &func_graph, AnfNo
 }
 }  // namespace
 
+std::vector<Candidate> AutoRecompute::Run(const FuncGraphPtr &func_graph) {
+  lifetime_threshold_ = GraphKernelFlags::GetInstance().recompute_increment_threshold;
+  local_peak_threshold_ = GraphKernelFlags::GetInstance().recompute_peak_threshold;
+  FindCandidates(func_graph);
+  return candidates_;
+}
+
 /**
  * @brief Filter the input tensor(that live longer than end node) out and return valid inputs for memory calculation. \n
  *        If the topo indices of the input's user is at least one greater than end_node,                              \n
@@ -341,6 +349,8 @@ OutPosLinkList AutoRecompute::JudegeTargetAndCaptureSource(const AnfNodePtr &nod
       (void)target_link_infos.emplace_back(user, user_edge_pos[user], EdgeLifeTimeType::ShortTerm);
     }
   }
+
+  RecomputeLinkEdgeLog(node, direct_users, target_link_infos);
   return target_link_infos;
 }
 
@@ -377,21 +387,29 @@ int AutoRecompute::GetSourceLinkOutPos(const AnfNodePtr &target, int pos) {
   return static_cast<int>(GetValue<int64_t>(value_node->value()));
 }
 
-MemorySize AutoRecompute::SelectThreshold(EdgeLifeTimeType type) {
+MemorySize AutoRecompute::SelectThreshold(EdgeLifeTimeType type) const {
   MemorySize threshold = 0;
+  auto local_peak_th = local_peak_threshold_ == 0 ? std::numeric_limits<MemorySize>::max() : local_peak_threshold_;
+  auto lifetime_th = lifetime_threshold_ == 0 ? std::numeric_limits<MemorySize>::max() : lifetime_threshold_;
   switch (type) {
     case EdgeLifeTimeType::ShortTerm:
-      threshold = local_peak_threshold_;
+      threshold = local_peak_th;
       break;
     case EdgeLifeTimeType::LongTerm:
-      threshold =
-        local_peak_threshold_ == 0 ? lifetime_threshold_ : std::min(local_peak_threshold_, lifetime_threshold_);
+      threshold = std::min(local_peak_th, lifetime_th);
       break;
     default:
       MS_LOG(EXCEPTION) << "Unknown edge type!";
   }
 
   return threshold;
+}
+
+bool AutoRecompute::IsThresholdDefaultValue() const {
+  if (local_peak_threshold_ == 0 && lifetime_threshold_ == 0) {
+    return true;
+  }
+  return false;
 }
 
 /**
@@ -405,13 +423,10 @@ void AutoRecompute::FindCandidates(const FuncGraphPtr &func_graph) {
   candidates_.clear();
 
   auto mng = func_graph->manager();
-  if (mng == nullptr) {
-    mng = Manage(func_graph, true);
-    func_graph->set_manager(mng);
-  }
+  MS_EXCEPTION_IF_NULL(mng);
 
-  // Do thing when threshold is default value 0.
-  if (SelectThreshold(EdgeLifeTimeType::ShortTerm) == 0 && SelectThreshold(EdgeLifeTimeType::LongTerm) == 0) {
+  // Do nothing when threshold is default value.
+  if (IsThresholdDefaultValue()) {
     return;
   }
 
@@ -433,37 +448,9 @@ void AutoRecompute::FindCandidates(const FuncGraphPtr &func_graph) {
     if (target_graphs.empty()) {
       continue;
     }
-
-    OrderedMap<AnfNodePtr, OrderedMap<AnfNodePtr, std::pair<EdgeLifeTimeType, AnfNodePtrList>>> tmp_candidates;
-    for (auto [gt, gt_in_pos_vec, edge_life_time_type] : target_graphs) {
-      MemorySize threshold = SelectThreshold(edge_life_time_type);
-      for (auto gt_in_pos : gt_in_pos_vec) {
-        MemorySize out_tensor_size =
-          static_cast<MemorySize>(AnfAlgo::GetOutputTensorMemSize(node, IntToSize(GetSourceLinkOutPos(gt, gt_in_pos))));
-        MemorySize absorb_input_tensor_size = 0;
-        for (auto input : Filter(node, gt, gt_in_pos, mng)) {
-          absorb_input_tensor_size += static_cast<MemorySize>(AnfAlgo::GetOutputTensorMemSize(input, 0));
-        }
-        auto gt_cnode = gt->cast<CNodePtr>();
-        MS_EXCEPTION_IF_NULL(gt_cnode);
-        auto edge = gt_cnode->input(IntToSize(gt_in_pos));
-        if (out_tensor_size < absorb_input_tensor_size) {
-          continue;
-        }
-        if (out_tensor_size - absorb_input_tensor_size > threshold) {
-          if (tmp_candidates[node].find(gt) == tmp_candidates[node].end()) {
-            tmp_candidates[node][gt] = {edge_life_time_type, AnfNodePtrList{}};
-          }
-          // Only add getitem node as edge, if GS is single output node, there will be no edges.
-          if (IsPrimitiveCNode(edge, prim::kPrimTupleGetItem)) {
-            tmp_candidates[node][gt].second.push_back(edge);
-          }
-        }
-      }
-    }
-
+    auto node_candidates = FindNodeRecomputeCandidates(node, target_graphs, mng);
     // Delete duplicated link.
-    for (const auto &[source, target_and_link] : tmp_candidates) {
+    for (const auto &[source, target_and_link] : node_candidates) {
       for (const auto &[target, link] : target_and_link) {
         candidates_.push_back({source, target, link.first, link.second});
       }
@@ -471,6 +458,76 @@ void AutoRecompute::FindCandidates(const FuncGraphPtr &func_graph) {
   }
 
   RecomputeCandidatesLog(candidates_);
+}
+
+/**
+ * @brief Find recompute candidates for node as source graph.
+ *
+ * @param node Source graph node.
+ * @param target_graphs Vector of [AnfNodePtr, std::vector<int>, EdgeLifeTimeType].
+ * @param mng Manager of main graph(which contains this node).
+ * @return AutoRecompute::NodeRecomputeCandidates
+ */
+AutoRecompute::NodeRecomputeCandidates AutoRecompute::FindNodeRecomputeCandidates(const AnfNodePtr &node,
+                                                                                  const OutPosLinkList &target_graphs,
+                                                                                  const FuncGraphManagerPtr &mng) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(mng);
+  NodeRecomputeCandidates node_candidates;
+  for (auto [gt, gt_in_pos_vec, edge_life_time_type] : target_graphs) {
+    MemorySize threshold = SelectThreshold(edge_life_time_type);
+    for (auto gt_in_pos : gt_in_pos_vec) {
+      MemorySize out_tensor_size =
+        static_cast<MemorySize>(AnfAlgo::GetOutputTensorMemSize(node, IntToSize(GetSourceLinkOutPos(gt, gt_in_pos))));
+      MemorySize absorb_input_tensor_size = 0;
+      for (auto input : Filter(node, gt, gt_in_pos, mng)) {
+        absorb_input_tensor_size += static_cast<MemorySize>(AnfAlgo::GetOutputTensorMemSize(input, 0));
+      }
+      auto gt_cnode = gt->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(gt_cnode);
+      auto edge = gt_cnode->input(IntToSize(gt_in_pos));
+
+      MS_LOG(DEBUG) << "Recompute case: GS(" << node->fullname_with_scope() << ") -> GT(" << gt->fullname_with_scope()
+                    << ") with Edge(" << edge->fullname_with_scope() << "<" << edge_life_time_type << ">.";
+
+      if (out_tensor_size < absorb_input_tensor_size) {
+        MS_LOG(DEBUG) << " ==> Skip this case because memory reduction.";
+        continue;
+      }
+
+      auto memory_increment = out_tensor_size - absorb_input_tensor_size;
+      MS_LOG(DEBUG) << " ==> Threshold: " << threshold << ", Out Tensor[" << out_tensor_size << "] - Absort Tensor["
+                    << absorb_input_tensor_size << "] = " << memory_increment;
+
+      if (memory_increment > threshold) {
+        if (node_candidates[node].find(gt) == node_candidates[node].end()) {
+          node_candidates[node][gt] = {edge_life_time_type, AnfNodePtrList{}};
+        }
+        // Only add getitem node as edge, if GS is single output node, there will be no edges.
+        if (IsPrimitiveCNode(edge, prim::kPrimTupleGetItem)) {
+          node_candidates[node][gt].second.push_back(edge);
+        }
+      }
+    }
+  }
+
+  return node_candidates;
+}
+
+void AutoRecompute::RecomputeLinkEdgeLog(const AnfNodePtr &node, const OrderedSet<AnfNodePtr> &direct_users,
+                                         const OutPosLinkList &target_link_infos) const {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_LOG(DEBUG) << "Recompute users for node: " << node->fullname_with_scope();
+  for (const auto &direct_user : direct_users) {
+    MS_LOG(DEBUG) << "  └─ " << direct_user->fullname_with_scope();
+  }
+
+  MS_LOG(DEBUG) << "Edge Link relation: ";
+  for (const auto &[target, tartget_in_index, life_type] : target_link_infos) {
+    MS_EXCEPTION_IF_NULL(target);
+    MS_LOG(DEBUG) << "  └[" << tartget_in_index << "|<" << life_type
+                  << ">]─> Link to: " << target->fullname_with_scope();
+  }
 }
 
 void AutoRecompute::RecomputeCandidatesLog(const std::vector<Candidate> &candidates) const {
@@ -505,7 +562,7 @@ std::pair<FuncGraphPtr, AnfNodePtrList> GraphKernelRecompute::CloneGraph(const C
   if (new_outputs.size() + 1 == output_node->size()) {
     return {new_funcgraph, inputs};
   }
-  new_outputs.insert(new_outputs.begin(), output_node->input(0));
+  (void)new_outputs.insert(new_outputs.begin(), output_node->input(0));
   auto new_output_node = new_funcgraph->NewCNode(new_outputs);
   // use the old abstract, since the new_funcgraph will be deleted in later process.
   new_output_node->set_abstract(output_node->abstract());
@@ -515,8 +572,9 @@ std::pair<FuncGraphPtr, AnfNodePtrList> GraphKernelRecompute::CloneGraph(const C
   return {new_funcgraph, inputs};
 }
 
-void GraphKernelRecompute::LinkIntoTargetFuncGraph(const Candidate &candidate, const FuncGraphPtr &cloned_func,
-                                                   const AnfNodePtrList &cloned_inputs) {
+void GraphKernelRecompute::LinkIntoTargetFuncGraph(
+  const Candidate &candidate, const FuncGraphPtr &cloned_func, const AnfNodePtrList &cloned_inputs,
+  std::function<std::pair<bool, size_t>(const Candidate &, const AnfNodePtr &)> edge_match_func) {
   auto cloned_nodes = TopoSort(cloned_func->get_return());
   auto gt = AnfAlgo::GetCNodeFuncGraphPtr(candidate.target_graph);
   MS_EXCEPTION_IF_NULL(gt);
@@ -534,9 +592,8 @@ void GraphKernelRecompute::LinkIntoTargetFuncGraph(const Candidate &candidate, c
   auto &params = gt->parameters();
   for (size_t i = 0; i < params.size(); i++) {
     // if the parameter is a recompute edge, then links the param to the cloned_func's output.
-    auto iter = std::find(candidate.recompute_edges.begin(), candidate.recompute_edges.end(), gt_node->input(i + 1));
-    if (iter != candidate.recompute_edges.end()) {
-      auto out_index = iter - candidate.recompute_edges.begin();
+    auto [is_match, out_index] = edge_match_func(candidate, gt_node->input(i + 1));
+    if (is_match) {
       (void)mng->Replace(params[i], GetOutput(cloned_func, LongToSize(out_index)));
     } else {
       new_parameters.push_back(params[i]);
@@ -577,15 +634,34 @@ void GraphKernelRecompute::LinkIntoTargetFuncGraph(const Candidate &candidate, c
 }
 
 void GraphKernelRecompute::Process(const Candidate &candidate) {
-  auto gs = AnfAlgo::GetCNodeFuncGraphPtr(candidate.source_graph);
-  MS_EXCEPTION_IF_NULL(gs);
+  FuncGraphPtr new_funcgraph;
+  AnfNodePtrList inputs;
+  std::function<std::pair<bool, size_t>(const Candidate &, const AnfNodePtr &)> edge_match_func;
   if (candidate.recompute_edges.empty()) {
     // single output, clone the whole source_graph.
-    return;
+    auto gs = AnfAlgo::GetCNodeFuncGraphPtr(candidate.source_graph);
+    MS_EXCEPTION_IF_NULL(gs);
+    new_funcgraph = BasicClone(gs);
+    auto source_cnode = candidate.source_graph->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(source_cnode);
+    (void)inputs.insert(inputs.end(), source_cnode->inputs().begin() + 1, source_cnode->inputs().end());
+    edge_match_func = [](const Candidate &match_candidate, const AnfNodePtr &to_match) -> std::pair<bool, size_t> {
+      if (match_candidate.source_graph == to_match) {
+        return std::make_pair(true, 0);
+      }
+      return std::make_pair(false, 0);
+    };
+  } else {
+    std::tie(new_funcgraph, inputs) = CloneGraph(candidate.source_graph->cast<CNodePtr>(), candidate.recompute_edges);
+    edge_match_func = [](const Candidate &match_candidate, const AnfNodePtr &to_match) -> std::pair<bool, size_t> {
+      auto iter = std::find(match_candidate.recompute_edges.begin(), match_candidate.recompute_edges.end(), to_match);
+      if (iter != match_candidate.recompute_edges.end()) {
+        auto out_index = iter - match_candidate.recompute_edges.begin();
+        return std::make_pair(true, LongToSize(out_index));
+      }
+      return std::make_pair(false, 0);
+    };
   }
-
-  // AnfNodePtrList outputs;
-  auto [new_funcgraph, inputs] = CloneGraph(candidate.source_graph->cast<CNodePtr>(), candidate.recompute_edges);
 
   auto mng = new_funcgraph->manager();
   if (mng == nullptr) {
@@ -595,7 +671,7 @@ void GraphKernelRecompute::Process(const Candidate &candidate) {
 
   if (AnfAlgo::IsGraphKernel(candidate.target_graph)) {
     // the target graph is a GraphKernel, push the new_funcgraph into the target graph.
-    LinkIntoTargetFuncGraph(candidate, new_funcgraph, inputs);
+    LinkIntoTargetFuncGraph(candidate, new_funcgraph, inputs, edge_match_func);
   } else {
     // The target graph is not a GraphKernel, build the new_funcgraph to a CNode.
     MS_LOG(WARNING) << "Target node " << candidate.target_graph->fullname_with_scope()
