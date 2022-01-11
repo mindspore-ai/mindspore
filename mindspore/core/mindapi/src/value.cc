@@ -33,6 +33,7 @@ using ScalarImpl = mindspore::Scalar;
 using BoolImmImpl = mindspore::BoolImm;
 using IntegerImmImpl = mindspore::IntegerImm;
 using Int64ImmImpl = mindspore::Int64Imm;
+using UInt8ImmImpl = mindspore::UInt8Imm;
 using FloatImmImpl = mindspore::FloatImm;
 using FP32ImmImpl = mindspore::FP32Imm;
 
@@ -83,6 +84,12 @@ MIND_API_BASE_IMPL(Int64Imm, Int64ImmImpl, IntegerImm);
 Int64Imm::Int64Imm(int64_t value) : IntegerImm(std::make_shared<Int64ImmImpl>(value)) {}
 
 int64_t Int64Imm::value() const { return ToRef<Int64ImmImpl>(impl_).value(); }
+
+MIND_API_BASE_IMPL(UInt8Imm, UInt8ImmImpl, IntegerImm);
+
+UInt8Imm::UInt8Imm(uint8_t value) : UInt8Imm(std::make_shared<UInt8ImmImpl>(value)) {}
+
+uint8_t UInt8Imm::value() const { return ToRef<UInt8ImmImpl>(impl_).value(); }
 
 MIND_API_BASE_IMPL(FloatImm, FloatImmImpl, Scalar);
 
