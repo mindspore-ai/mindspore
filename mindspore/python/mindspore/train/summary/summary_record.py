@@ -325,7 +325,7 @@ class SummaryRecord:
 
         Raises:
             TypeError: `step` is not int，or `train_network` is not `mindspore.nn.Cell \
-            <https://www.mindspore.cn/docs/api/en/master/api_python/nn/mindspore.nn.Cell.html#mindspore-nn-cell>`_ 。
+            <https://www.mindspore.cn/docs/api/en/r1.6/api_python/nn/mindspore.nn.Cell.html#mindspore-nn-cell>`_ 。
 
         Examples:
             >>> from mindspore.train.summary import SummaryRecord

@@ -33,7 +33,7 @@ class BondForce(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
+    <https://gitee.com/mindspore/mindscience/blob/r0.2/MindSPONGE/docs/simple_formula.md>`_.
 
     .. math::
 
@@ -118,7 +118,7 @@ class BondEnergy(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
+    <https://gitee.com/mindspore/mindscience/blob/r0.2/MindSPONGE/docs/simple_formula.md>`_.
 
     .. math::
 
@@ -206,7 +206,7 @@ class BondAtomEnergy(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
+    <https://gitee.com/mindspore/mindscience/blob/r0.2/MindSPONGE/docs/simple_formula.md>`_.
 
     Args:
         atom_numbers(int32): the number of atoms n.
@@ -284,7 +284,7 @@ class BondForceWithAtomEnergy(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
+    <https://gitee.com/mindspore/mindscience/blob/r0.2/MindSPONGE/docs/simple_formula.md>`_.
 
     Args:
         atom_numbers(int32): the number of atoms n.
@@ -368,7 +368,7 @@ class BondForceWithAtomVirial(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
+    <https://gitee.com/mindspore/mindscience/blob/r0.2/MindSPONGE/docs/simple_formula.md>`_.
 
     The Virial part is as follows:
 
@@ -461,7 +461,7 @@ class DihedralForce(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
+    <https://gitee.com/mindspore/mindscience/blob/r0.2/MindSPONGE/docs/simple_formula.md>`_.
 
     Args:
         dihedral_numbers(int32): the number of dihedral terms m.
@@ -563,7 +563,7 @@ class DihedralEnergy(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
+    <https://gitee.com/mindspore/mindscience/blob/r0.2/MindSPONGE/docs/simple_formula.md>`_.
 
     Args:
         dihedral_numbers(int32): the number of dihedral terms m.
@@ -666,7 +666,7 @@ class DihedralAtomEnergy(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
+    <https://gitee.com/mindspore/mindscience/blob/r0.2/MindSPONGE/docs/simple_formula.md>`_.
 
     The calculation formula is the same as operator DihedralEnergy().
 
@@ -771,7 +771,7 @@ class DihedralForceWithAtomEnergy(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
+    <https://gitee.com/mindspore/mindscience/blob/r0.2/MindSPONGE/docs/simple_formula.md>`_.
 
     Args:
         dihedral_numbers(int32): the number of dihedral terms m.
@@ -876,7 +876,7 @@ class AngleForce(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
+    <https://gitee.com/mindspore/mindscience/blob/r0.2/MindSPONGE/docs/simple_formula.md>`_.
 
     .. math::
         dr_{ab} = (x_b-x_a, y_b-y_a, z_b-z_a)
@@ -971,7 +971,7 @@ class AngleEnergy(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
+    <https://gitee.com/mindspore/mindscience/blob/r0.2/MindSPONGE/docs/simple_formula.md>`_.
 
     .. math::
         dr_{ab} = (x_b-x_a, y_b-y_a, z_b-z_a)
@@ -1063,7 +1063,7 @@ class AngleAtomEnergy(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
+    <https://gitee.com/mindspore/mindscience/blob/r0.2/MindSPONGE/docs/simple_formula.md>`_.
 
     Args:
         angle_numbers(int32): the number of angles m.
@@ -1146,7 +1146,7 @@ class AngleForceWithAtomEnergy(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
+    <https://gitee.com/mindspore/mindscience/blob/r0.2/MindSPONGE/docs/simple_formula.md>`_.
 
     Args:
         angle_numbers(int32): the number of angles m.
@@ -1234,7 +1234,7 @@ class Dihedral14LJForce(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
+    <https://gitee.com/mindspore/mindscience/blob/r0.2/MindSPONGE/docs/simple_formula.md>`_.
 
     .. math::
         dr = (x_a-x_b, y_a-y_b, z_a-z_b)
@@ -1337,7 +1337,7 @@ class Dihedral14LJEnergy(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
+    <https://gitee.com/mindspore/mindscience/blob/r0.2/MindSPONGE/docs/simple_formula.md>`_.
 
     .. math::
         dr = (x_a-x_b, y_a-y_b, z_a-z-b)
@@ -1440,7 +1440,7 @@ class Dihedral14LJForceWithDirectCF(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
+    <https://gitee.com/mindspore/mindscience/blob/r0.2/MindSPONGE/docs/simple_formula.md>`_.
 
     The calculation formula of the Lennard-Jones part is the same as operator
     Dihedral14LJForce(), and the Coulomb part is as follows:
@@ -1558,7 +1558,7 @@ class Dihedral14LJCFForceWithAtomEnergy(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
+    <https://gitee.com/mindspore/mindscience/blob/r0.2/MindSPONGE/docs/simple_formula.md>`_.
 
     Args:
         nb14_numbers (int32): the number of necessary dihedral 1,4 terms m.
@@ -1667,7 +1667,7 @@ class Dihedral14LJAtomEnergy(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
+    <https://gitee.com/mindspore/mindscience/blob/r0.2/MindSPONGE/docs/simple_formula.md>`_.
 
     Args:
         nb14_numbers (int32): the number of necessary dihedral 1,4 terms m.
@@ -1769,7 +1769,7 @@ class Dihedral14CFEnergy(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
+    <https://gitee.com/mindspore/mindscience/blob/r0.2/MindSPONGE/docs/simple_formula.md>`_.
 
     .. math::
 
@@ -1867,7 +1867,7 @@ class Dihedral14CFAtomEnergy(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
+    <https://gitee.com/mindspore/mindscience/blob/r0.2/MindSPONGE/docs/simple_formula.md>`_.
 
     Args:
         nb14_numbers (int32): the number of necessary dihedral 1,4 terms m.
@@ -1961,7 +1961,7 @@ class PMEReciprocalForce(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
+    <https://gitee.com/mindspore/mindscience/blob/r0.2/MindSPONGE/docs/simple_formula.md>`_.
 
     Args:
         atom_numbers(int32): the number of atoms, n.
@@ -2044,7 +2044,7 @@ class PMEExcludedForce(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
+    <https://gitee.com/mindspore/mindscience/blob/r0.2/MindSPONGE/docs/simple_formula.md>`_.
 
     Args:
         atom_numbers(int32): the number of atoms, n.
@@ -2128,7 +2128,7 @@ class PMEEnergy(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
+    <https://gitee.com/mindspore/mindscience/blob/r0.2/MindSPONGE/docs/simple_formula.md>`_.
 
     .. math::
 
@@ -2264,7 +2264,7 @@ class LJEnergy(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
+    <https://gitee.com/mindspore/mindscience/blob/r0.2/MindSPONGE/docs/simple_formula.md>`_.
 
     .. math::
 
@@ -2362,7 +2362,7 @@ class LJForce(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
+    <https://gitee.com/mindspore/mindscience/blob/r0.2/MindSPONGE/docs/simple_formula.md>`_.
 
     .. math::
 
@@ -2461,7 +2461,7 @@ class LJForceWithPMEDirectForce(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
+    <https://gitee.com/mindspore/mindscience/blob/r0.2/MindSPONGE/docs/simple_formula.md>`_.
 
     Args:
         atom_numbers(int32): the number of atoms, n.
@@ -2554,7 +2554,7 @@ class MDTemperature(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
+    <https://gitee.com/mindspore/mindscience/blob/r0.2/MindSPONGE/docs/simple_formula.md>`_.
 
     Args:
         residue_numbers (int32): the number of residues m.
@@ -2626,7 +2626,7 @@ class MDIterationLeapFrogWithRF(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
+    <https://gitee.com/mindspore/mindscience/blob/r0.2/MindSPONGE/docs/simple_formula.md>`_.
 
     Inputs:
         - **float4_numbers** (Scalar) - total length to store random numbers.
@@ -2741,7 +2741,7 @@ class MDIterationLeapFrogLiujian(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
+    <https://gitee.com/mindspore/mindscience/blob/r0.2/MindSPONGE/docs/simple_formula.md>`_.
 
     Args:
         atom_numbers(int32): the number of atoms n.
@@ -2836,7 +2836,7 @@ class CrdToUintCrd(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
+    <https://gitee.com/mindspore/mindscience/blob/r0.2/MindSPONGE/docs/simple_formula.md>`_.
 
     Args:
         atom_numbers(int32): the number of atoms n.
@@ -2882,7 +2882,7 @@ class MDIterationSetupRandState(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
+    <https://gitee.com/mindspore/mindscience/blob/r0.2/MindSPONGE/docs/simple_formula.md>`_.
 
     Args:
         atom_numbers(int32): the number of atoms n.
@@ -2922,7 +2922,7 @@ class TransferCrd(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
+    <https://gitee.com/mindspore/mindscience/blob/r0.2/MindSPONGE/docs/simple_formula.md>`_.
 
     Args:
         start_serial(int32): the index start position.
