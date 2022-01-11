@@ -511,13 +511,8 @@ TypePtr CheckAndConvertUtils::CheckTensorTypeSame(const std::map<std::string, Ty
       MS_EXCEPTION(TypeError) << buffer.str();
     }
   }
-  auto check_type = _CheckTypeSame(types, prim_name, false);
-  std::string input_names;
-  for (const auto &item : types) {
-    (void)input_names.append(item.first);
-    (void)input_names.append(", ");
-  }
-  return CheckTensorSubClass(input_names, check_type, check_list, prim_name);
+  (void)_CheckTypeSame(types, prim_name, false);
+  return CheckTensorSubClass(types.begin()->first, types.begin()->second, check_list, prim_name);
 }
 
 TypePtr CheckAndConvertUtils::CheckTensorTypeValid(const std::string &type_name, const TypePtr &type,
@@ -538,7 +533,7 @@ TypePtr CheckAndConvertUtils::CheckTensorTypeValid(const std::string &type_name,
       }
     }
   }
-  return CheckTensorSubClass(type_name, element, check_list, prim_name);
+  return CheckTensorSubClass(type_name, type, check_list, prim_name);
 }
 
 ShapeVector CheckAndConvertUtils::CheckTensorIntValue(const std::string &type_name, const ValuePtr &value,
@@ -577,8 +572,13 @@ ShapeVector CheckAndConvertUtils::CheckTensorIntValue(const std::string &type_na
 TypePtr CheckAndConvertUtils::CheckTensorSubClass(const string &type_name, const TypePtr &type,
                                                   const std::set<TypePtr> &template_types, const string &prim_name,
                                                   bool is_mix) {
-  if (CheckType(type, template_types)) {
-    return type;
+  auto real_type = type;
+  if (type->isa<TensorType>()) {
+    auto tensor_type = type->cast<TensorTypePtr>();
+    real_type = tensor_type->element();
+  }
+  if (CheckType(real_type, template_types)) {
+    return real_type;
   }
   std::ostringstream buffer;
   buffer << "For primitive[" << prim_name << "], the input argument[" << type_name << "] must be a type of {";
@@ -617,13 +617,8 @@ TypePtr CheckAndConvertUtils::CheckSubClass(const std::string &type_name, const 
 TypePtr CheckAndConvertUtils::CheckScalarOrTensorTypesSame(const std::map<std::string, TypePtr> &args,
                                                            const std::set<TypePtr> &valid_values,
                                                            const std::string &prim_name, const bool allow_mix) {
-  auto arg_ = _CheckTypeSame(args, prim_name, allow_mix);
-  std::string input_names;
-  for (const auto &item : args) {
-    (void)input_names.append(item.first);
-    (void)input_names.append(", ");
-  }
-  return CheckTensorSubClass(input_names, arg_, valid_values, prim_name, true);
+  (void)_CheckTypeSame(args, prim_name, allow_mix);
+  return CheckTensorSubClass(args.begin()->first, args.begin()->second, valid_values, prim_name, true);
 }
 
 TypePtr CheckAndConvertUtils::_CheckTypeSame(const std::map<std::string, TypePtr> &args, const std::string &prim_name,
