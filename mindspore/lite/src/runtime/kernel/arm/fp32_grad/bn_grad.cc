@@ -100,6 +100,7 @@ int BNGradCPUKernel::Execute(int task_id) {
     total = spatial * batch;
   } else if (in_tensors().at(1)->shape().size() == kNumInputDim2) {
     total = batch;
+    channels = input_x->Height();
   } else {
     MS_LOG(ERROR) << "Unsupported tensor shape: " << in_tensors().at(1)->shape().size();
     return RET_ERROR;
