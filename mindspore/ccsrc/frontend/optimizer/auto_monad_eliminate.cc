@@ -85,7 +85,7 @@ LoadGraphMap GenerateLoadGroups(const FuncGraphPtr &fg, const std::vector<AnfNod
     if (cnode->IsApply(prim::kPrimLoad)) {
       auto ref_key = GetRefKey(cnode->input(1));
       if (!ref_key.has_value()) {
-        MS_LOG(WARNING) << "Load without ref key: " << cnode->DebugString();
+        MS_LOG(INFO) << "Load without ref key: " << cnode->DebugString();
         continue;
       }
       // Group load nodes by their input ref key.
