@@ -13,15 +13,21 @@
 # limitations under the License.
 # ==============================================================================
 """
-This dataset module supports various formats of datasets, including ImageNet, TFData,
-MNIST, Cifar10/100, Manifest, MindRecord, and more. This module loads data with
-high performance and parses data precisely. Some of the operations that are
-provided to users to preprocess data include shuffle, batch, repeat, map, and zip.
+1. This file is an abstraction of the dataset loading class. It contains
+some basic dataset operations(skip, filter, map, batch, ...).
+2. Specific dataset loading classes can be found in datasets_vision.py, datasets_text.py,
+datasets_audio.py, datasets_standard_format.py and dataets_user_defined.py files.
+    datasets_vision.py: contains vision dataset loading classes.
+    datasets_text.py: contains text dataset loading classes.
+    datasets_audio.py: contains audio dataset loading classes.
+    datasets_standard_format.py: contains standard format loading classes which
+                                 any other kinds of datasets can be converted to.
+    dataets_user_defined.py: contains basic classes that help users to define
+                             flexible ways to load dataset.
 """
 import atexit
 import glob
 import json
-import math
 import os
 import signal
 import stat
@@ -215,6 +221,44 @@ class Dataset:
 
     This class is the base class of SourceDataset and Dataset, and represents
     a node in the data flow graph.
+                                     Dataset
+           -----------------------------------------------------------
+           |                  |                   |                  |
+    VisionBaseDataset    TextBaseDataset    AudioBaseDataset         |
+           -                  -                   -                  |
+           |                  |                   |                  |
+           ----------------------------------------                  |
+                      UnionBaseDataset                               |
+                                                                     |
+                                                               SourceDataset
+                                                                     -
+                                                                     |
+                                                              MappableDataset
+
+    DatasetOperator: MapDataset(UnionBaseDataset)
+                     BatchDataset(UnionBaseDataset)
+                     BucketBatchByLengthDataset(UnionBaseDataset)
+                     ShuffleDataset(UnionBaseDataset)
+                     FilterDataset(UnionBaseDataset)
+                     RepeatDataset(UnionBaseDataset)
+                     SkipDataset(UnionBaseDataset)
+                     TakeDataset(UnionBaseDataset)
+                     ZipDataset(UnionBaseDataset)
+                     ConcatDataset(UnionBaseDataset)
+                     RenameDataset(UnionBaseDataset)
+                     ProjectDataset(UnionBaseDataset)
+                     SyncWaitDataset(UnionBaseDataset)
+
+    Impl Dataset - vision:       ImageFolderDataset(MappableDataset, VisionBaseDataset)
+                                 USPSDataset(SourceDataset, VisionBaseDataset)
+    Impl Dataset - text:         TextFileDataset(SourceDataset, TextBaseDataset)
+                                 YahooAnswersDataset(SourceDataset, TextBaseDataset)
+    Impl Dataset - audio:        LJSpeechDataset(MappableDataset, AudioBaseDataset)
+                                 TedliumDataset(MappableDataset, AudioBaseDataset)
+    Impl Dataset - standard:     MindDataset(MappableDataset, UnionBaseDataset)
+                                 TFRecordDataset(SourceDataset, UnionBaseDataset)
+    Impl Dataset - user defined: GeneratorDataset(MappableDataset, UnionBaseDataset)
+                                 NumpySlicesDataset(GeneratorDataset)
 
     Args:
         num_parallel_workers (int, optional): Number of workers to process the dataset in parallel
@@ -1796,6 +1840,18 @@ class Dataset:
         return ir_node
 
 
+class VisionBaseDataset(Dataset):
+    """
+    Abstract class to represent a vision source dataset which produces content to the data pipeline.
+    """
+
+    def __init__(self, children=None, num_parallel_workers=None, cache=None):
+        super().__init__(children=children, num_parallel_workers=num_parallel_workers, cache=cache)
+
+    def parse(self, children=None):
+        raise NotImplementedError("Dataset has to implement parse method.")
+
+
 class TextBaseDataset(Dataset):
     """
     Abstract class to represent a text source dataset which produces content to the data pipeline.
@@ -1926,6 +1982,30 @@ class TextBaseDataset(Dataset):
         del api_tree
 
         return vocab
+
+
+class AudioBaseDataset(Dataset):
+    """
+    Abstract class to represent a audio source dataset which produces content to the data pipeline.
+    """
+
+    def __init__(self, children=None, num_parallel_workers=None, cache=None):
+        super().__init__(children=children, num_parallel_workers=num_parallel_workers, cache=cache)
+
+    def parse(self, children=None):
+        raise NotImplementedError("Dataset has to implement parse method.")
+
+
+class UnionBaseDataset(VisionBaseDataset, TextBaseDataset, AudioBaseDataset):
+    """
+    Abstract class to represent a union source dataset which produces content to the data pipeline.
+    """
+
+    def __init__(self, children=None, num_parallel_workers=None, cache=None):
+        super().__init__(children=children, num_parallel_workers=num_parallel_workers, cache=cache)
+
+    def parse(self, children=None):
+        raise NotImplementedError("Dataset has to implement parse method.")
 
 
 class SourceDataset(Dataset):
@@ -2159,7 +2239,7 @@ class MappableDataset(SourceDataset):
         return tuple(splits)
 
 
-class BucketBatchByLengthDataset(Dataset):
+class BucketBatchByLengthDataset(UnionBaseDataset):
     """
     The result of applying BucketBatchByLength operator to the input dataset.
     """
@@ -2211,7 +2291,7 @@ def _check_shm_usage(num_worker, queue_size, max_rowsize, num_queues=1):
             raise RuntimeError("Expected /dev/shm to exist.")
 
 
-class BatchDataset(Dataset):
+class BatchDataset(UnionBaseDataset):
     """
     The result of applying Batch operator to the input dataset.
 
@@ -2482,7 +2562,7 @@ class BlockReleasePair:
             self.cv.notify_all()
 
 
-class SyncWaitDataset(Dataset):
+class SyncWaitDataset(UnionBaseDataset):
     """
     The result of adding a blocking condition to the input Dataset.
 
@@ -2551,7 +2631,7 @@ class SyncWaitDataset(Dataset):
         self._pair.reset()
 
 
-class ShuffleDataset(Dataset):
+class ShuffleDataset(UnionBaseDataset):
     """
     The result of applying Shuffle operator to the input Dataset.
 
@@ -2830,7 +2910,7 @@ class _ExceptHookHandler:
         _mp_pool_exit_preprocess()
 
 
-class MapDataset(TextBaseDataset, Dataset):
+class MapDataset(UnionBaseDataset):
     """
     The result of applying the Map operator to the input Dataset.
 
@@ -3003,7 +3083,7 @@ class MapDataset(TextBaseDataset, Dataset):
             self._abort_watchdog()
 
 
-class FilterDataset(Dataset):
+class FilterDataset(UnionBaseDataset):
     """
     The result of applying filter predicate to the input Dataset.
 
@@ -3025,7 +3105,7 @@ class FilterDataset(Dataset):
         return cde.FilterNode(children[0], self.predicate, self.input_columns)
 
 
-class RepeatDataset(Dataset):
+class RepeatDataset(UnionBaseDataset):
     """
     The result of applying Repeat operator to the input Dataset.
 
@@ -3042,7 +3122,7 @@ class RepeatDataset(Dataset):
         return cde.RepeatNode(children[0], self.count)
 
 
-class SkipDataset(Dataset):
+class SkipDataset(UnionBaseDataset):
     """
     The result of applying Skip operator to the input Dataset.
 
@@ -3059,7 +3139,7 @@ class SkipDataset(Dataset):
         return cde.SkipNode(children[0], self.count)
 
 
-class TakeDataset(Dataset):
+class TakeDataset(UnionBaseDataset):
     """
     The result of applying Take operator to the input Dataset.
 
@@ -3076,7 +3156,7 @@ class TakeDataset(Dataset):
         return cde.TakeNode(children[0], self.count)
 
 
-class ZipDataset(Dataset):
+class ZipDataset(UnionBaseDataset):
     """
     The result of applying Zip operator to the input Dataset.
 
@@ -3097,7 +3177,7 @@ class ZipDataset(Dataset):
         return any([c.is_sync() for c in self.children])
 
 
-class ConcatDataset(Dataset):
+class ConcatDataset(UnionBaseDataset):
     """
     The result of applying concat dataset operator to the input Dataset.
 
@@ -3126,7 +3206,7 @@ class ConcatDataset(Dataset):
             child_index += 1
 
         # _children_flag_and_nums: A list of pair<int ,int>.The first element of pair is flag that characterizes
-        # whether the data set is mappable. The second element of pair is length of the dataset
+        # whether the dataset is mappable. The second element of pair is length of the dataset
         self._children_flag_and_nums = []
 
         # _children_start_end_index_: A list of pair<int ,int>.The elements of pair are used to characterize
@@ -3208,7 +3288,7 @@ class ConcatDataset(Dataset):
             cumulative_samples_nums %= sampler.num_shards
 
 
-class RenameDataset(Dataset):
+class RenameDataset(UnionBaseDataset):
     """
     The result of applying Rename operator to the input Dataset.
 
@@ -3237,7 +3317,7 @@ def to_list(items):
     return items
 
 
-class ProjectDataset(Dataset):
+class ProjectDataset(UnionBaseDataset):
     """
     The result of applying Project operator to the input Dataset.
 
@@ -3401,37 +3481,6 @@ class TransferDataset(Dataset):
         """
         if self._to_device is not None:
             self._to_device.release()
-
-
-class RangeDataset(MappableDataset):
-    """
-    A source dataset that reads and parses datasets stored on disk in a range.
-
-    Args:
-        start (int): Starting index.
-        stop (int): Ending index.
-        step (int): Step size in the range specified by start and stop.
-    """
-
-    def __init__(self, start, stop, step):
-        super().__init__()
-        self.start = start
-        self.stop = stop
-        self.step = step
-
-    def parse(self, children=None):
-        raise NotImplementedError("Dataset has to implement parse method.")
-
-    def is_shuffled(self):
-        return False
-
-    def is_sharded(self):
-        return False
-
-    def get_dataset_size(self):
-        if self.dataset_size is None:
-            self.dataset_size = math.ceil((self.stop - self.start) / self.step)
-        return self.dataset_size
 
 
 class Schema:
