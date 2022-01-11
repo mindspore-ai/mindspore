@@ -848,12 +848,12 @@ class Tensor(Tensor_):
             >>> x = Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mindspore.int32)
             >>> output = x.narrow(0, 0, 2)
             >>> print(output)
-            [[ 1 2 3],
+            [[ 1 2 3]
              [ 4 5 6]]
             >>> output = x.narrow(1, 1, 2)
             >>> print(output)
-            [[ 2 3],
-             [ 5 6],
+            [[ 2 3]
+             [ 5 6]
              [ 8 9]]
         """
         self._init_check()
