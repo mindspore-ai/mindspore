@@ -50,9 +50,14 @@ class Conv2DInfo : public OperatorInfo {
   Status InferForwardCommunication() override;
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
-  Status InferRankBias();
+  void InferAdjacentRankInfo();
+  std::vector<int64_t> GetAdjacentRankIdsAndBiases(int64_t rank_id, const std::string &dimension);
   void InferOverlapSize();
+  void InferOverlapSizeForHDim();
+  void InferOverlapSizeForWDim();
   void InferNewOperatorAttrs();
+  void InferSendRankIds();
+  void InferRecvRankIds();
   void InferCommunicationAttrs();
   std::string ReplaceNodeName() const;
   AnfNodePtr GenerateConv2DNode(const AnfNodePtr &new_input, const CNodePtr &cnode);
@@ -74,23 +79,54 @@ class Conv2DInfo : public OperatorInfo {
   int64_t new_out_channel_ = 1;
   std::vector<int64_t> new_pad_list_;
 
-  bool need_exchange_overlap_ = false;
-  int64_t rank_bias_ = 0;
-  int64_t left_rank_bias_ = -1;
-  int64_t right_rank_bias_ = -1;
-  int64_t left_rank_id_ = -1;
+  bool w_dim_need_exchange_overlap_ = false;
+  bool h_dim_need_exchange_overlap_ = false;
+  int64_t h_rank_bias_ = 0;        // the bias of current rank in h dimension of device matrix
+  int64_t w_rank_bias_ = 0;        // the bias of current rank in w dimension of device matrix
+  int64_t top_rank_bias_ = -1;     // the bias of top rank in h dimension of device matrix
+  int64_t bottom_rank_bias_ = -1;  // the bias of bottom rank in h dimension of device matrix
+  int64_t left_rank_bias_ = -1;    // the bias of left rank in w dimension of device matrix
+  int64_t right_rank_bias_ = -1;   // the bias of right rank in w dimension of device matrix
+
+  // 8 adjacent ranks
+  int64_t top_rank_id_ = -1;
+  int64_t top_right_rank_id_ = -1;
   int64_t right_rank_id_ = -1;
+  int64_t bottom_right_rank_id_ = -1;
+  int64_t bottom_rank_id_ = -1;
+  int64_t bottom_left_rank_id_ = -1;
+  int64_t left_rank_id_ = -1;
+  int64_t top_left_rank_id_ = -1;
+
+  // overlap sizes for h dimension
+  int64_t overlap_top_size_ = 0;
+  int64_t overlap_bottom_size_ = 0;
+  int64_t top_rank_overlap_bottom_size_ = 0;
+  int64_t bottom_rank_overlap_top_size_ = 0;
+
+  // overlap sizes for w dimension
   int64_t overlap_left_size_ = 0;
   int64_t overlap_right_size_ = 0;
-  int64_t left_rank_overlap_left_size_ = 0;
   int64_t left_rank_overlap_right_size_ = 0;
   int64_t right_rank_overlap_left_size_ = 0;
-  int64_t right_rank_overlap_right_size_ = 0;
+
+  int64_t h_dimension_shard_num_ = 1;
   int64_t w_dimension_shard_num_ = 1;
   Shape input_slice_shape_;
 
+  // the send_rank_ids_ or recv_rank_ids is an array with 8 rank ids, the order of index in the array is organized in
+  // the following format(the 'R' is current rank), the invalid rank fill -1
+  // +++++++++++++
+  // | 7 | 0 | 1 |
+  // +++++++++++++
+  // | 6 | R | 2 |
+  // +++++++++++++
+  // | 5 | 4 | 3 |
+  // +++++++++++++
   std::vector<int64_t> send_rank_ids_;
   std::vector<int64_t> recv_rank_ids_;
+
+  // the send_lens_ or recv_lens_ is an array with 4 lens, the order in the array represents top, bottom, left, right
   std::vector<int64_t> send_lens_;
   std::vector<int64_t> recv_lens_;
   std::string all_to_all_group_;
@@ -99,10 +135,13 @@ class Conv2DInfo : public OperatorInfo {
 
   virtual Status CheckHWStrategy(int64_t h_strategy, int64_t w_strategy);
   virtual void InferNewPadList();
+  virtual int64_t ComputeOverlapTopSizeByRankBias(int64_t rank_bias);
+  virtual int64_t ComputeOverlapBottomSizeByRankBias(int64_t rank_bias);
   virtual int64_t ComputeOverlapLeftSizeByRankBias(int64_t rank_bias);
   virtual int64_t ComputeOverlapRightSizeByRankBias(int64_t rank_bias);
 
  private:
+  Status CheckHWStrategySameModeByDimension(int64_t strategy, const std::string &dimension);
   Status CheckHWStrategySameMode(int64_t h_strategy, int64_t w_strategy);
   Status CheckHWStrategyValidMode(int64_t h_strategy, int64_t w_strategy);
 };
@@ -126,6 +165,9 @@ class Conv2DBackpropInputInfo : public Conv2DInfo {
 
   Status CheckHWStrategy(int64_t h_strategy, int64_t w_strategy) override;
   void InferNewPadList() override;
+  void InferNewPadListByDimension(const std::string &dimension);
+  int64_t ComputeOverlapTopSizeByRankBias(int64_t rank_bias) override;
+  int64_t ComputeOverlapBottomSizeByRankBias(int64_t rank_bias) override;
   int64_t ComputeOverlapLeftSizeByRankBias(int64_t rank_bias) override;
   int64_t ComputeOverlapRightSizeByRankBias(int64_t rank_bias) override;
 

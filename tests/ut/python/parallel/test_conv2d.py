@@ -57,6 +57,11 @@ def compile_net(net, input_x=_x):
 
 
 def test_conv2d_data_parallel():
+    """
+    Feature: test conv2d data parallel
+    Description: shard n dimension
+    Expectation: compile success
+    """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     strategy1 = ((8, 1, 1, 1), (1, 1, 1, 1))
     strategy2 = ((8, 1, 1, 1),)
@@ -65,6 +70,11 @@ def test_conv2d_data_parallel():
 
 
 def test_conv2d_data_parallel_invalid_stride():
+    """
+    Feature: test conv2d invalid stride
+    Description: the first two elements of stride must be 1, but set 2
+    Expectation: compile success
+    """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     strategy1 = ((8, 1, 1, 1), (1, 1, 1, 1))
     strategy2 = ((8, 1, 1, 1),)
@@ -75,6 +85,11 @@ def test_conv2d_data_parallel_invalid_stride():
 
 
 def test_conv2d_data_parallel_dilation():
+    """
+    Feature: test conv2d data parallel and dilation is not 1
+    Description: data parallel and dilation is not 1
+    Expectation: compile success
+    """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     strategy1 = ((8, 1, 1, 1), (1, 1, 1, 1))
     strategy2 = ((8, 1, 1, 1),)
@@ -84,6 +99,11 @@ def test_conv2d_data_parallel_dilation():
 
 
 def test_conv2d_data_parallel_group():
+    """
+    Feature: test conv2d data parallel and group is not 1
+    Description: data parallel and group is not 1
+    Expectation: compile success
+    """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     strategy1 = ((8, 1, 1, 1), (1, 1, 1, 1))
     strategy2 = ((8, 1, 1, 1),)
@@ -93,6 +113,11 @@ def test_conv2d_data_parallel_group():
 
 
 def test_conv2d_model_parallel1():
+    """
+    Feature: test conv2d model parallel
+    Description: split n/c-in/c-out
+    Expectation: compile success
+    """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     strategy1 = ((2, 2, 1, 1), (2, 2, 1, 1))
     strategy2 = ((8, 1, 1, 1),)
@@ -101,6 +126,11 @@ def test_conv2d_model_parallel1():
 
 
 def test_conv2d_model_parallel_dilation():
+    """
+    Feature: test conv2d model parallel and dilation is not 1
+    Description: model parallel and dilation is not 1
+    Expectation: compile failed
+    """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     strategy1 = ((2, 2, 1, 1), (2, 2, 1, 1))
     strategy2 = ((8, 1, 1, 1),)
@@ -111,6 +141,11 @@ def test_conv2d_model_parallel_dilation():
 
 
 def test_conv2d_model_parallel_group():
+    """
+    Feature: test conv2d model parallel and group is not 1
+    Description: model parallel and group is not 1
+    Expectation: compile failed
+    """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     strategy1 = ((2, 2, 1, 1), (2, 2, 1, 1))
     strategy2 = ((8, 1, 1, 1),)
@@ -121,6 +156,11 @@ def test_conv2d_model_parallel_group():
 
 
 def test_conv2d_model_parallel2():
+    """
+    Feature: same mode, stride = kernel_size, no need exchange
+    Description: split n/c-in/c-out/h/w
+    Expectation: compile success
+    """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=32, global_rank=0)
     strategy1 = ((2, 2, 2, 2), (2, 2, 1, 1))
     strategy2 = ((32, 1, 1, 1),)
@@ -129,6 +169,11 @@ def test_conv2d_model_parallel2():
 
 
 def test_conv2d_model_parallel3():
+    """
+    Feature: same mode, stride < kernel_size, need exchange
+    Description: split n/w
+    Expectation: compile success
+    """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     strategy1 = ((2, 1, 1, 4), (1, 1, 1, 1))
     strategy2 = ((2, 1, 1, 4),)
@@ -137,12 +182,22 @@ def test_conv2d_model_parallel3():
 
 
 def test_conv2d_auto_parallel():
+    """
+    Feature: same mode, auto parallel
+    Description: generate data parallel strategy
+    Expectation: compile success
+    """
     context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0)
     net = Net(_w2, out_channel=8, kernel_size=3, pad_mode="same", stride=1)
     compile_net(net)
 
 
 def test_conv2d_model_parallel4():
+    """
+    Feature: same mode, stride < kernel_size, need exchange
+    Description: split n/c-in/c-out/w
+    Expectation: compile success
+    """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=32, global_rank=0)
     strategy1 = ((2, 2, 1, 4), (2, 2, 1, 1))
     strategy2 = ((2, 2, 1, 4),)
@@ -151,6 +206,11 @@ def test_conv2d_model_parallel4():
 
 
 def test_conv2d_left_and_right_no_need_to_send():
+    """
+    Feature: same mode, k - s = 1, left pad is 0
+    Description: do not support that the left no need to send
+    Expectation: compile failed
+    """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     strategy1 = ((2, 1, 1, 4), (1, 1, 1, 1))
     strategy2 = ((2, 1, 1, 4),)
@@ -160,15 +220,24 @@ def test_conv2d_left_and_right_no_need_to_send():
 
 
 def test_conv2d_kernel_size_larger_than_stride_and_split_h():
+    """
+    Feature: same mode, stride < kernel_size, need exchange
+    Description: split n/c-in/c-out/h
+    Expectation: compile success
+    """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=32, global_rank=0)
     strategy1 = ((2, 2, 4, 1), (2, 2, 1, 1))
     strategy2 = ((2, 2, 4, 1),)
     net = Net(_w2, out_channel=8, kernel_size=3, pad_mode="same", stride=1, strategy1=strategy1, strategy2=strategy2)
-    with pytest.raises(RuntimeError):
-        compile_net(net)
+    compile_net(net)
 
 
 def test_conv2d_valid_mode_kernel_size_larger_than_stride():
+    """
+    Feature: valid mode, stride < kernel_size, need exchange
+    Description: do not support to split w
+    Expectation: compile failed
+    """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     strategy1 = ((2, 1, 1, 2), (1, 1, 1, 1))
     strategy2 = ((2, 1, 1, 4),)
@@ -178,6 +247,11 @@ def test_conv2d_valid_mode_kernel_size_larger_than_stride():
 
 
 def test_conv2d_output_can_not_divisible_by_strategy():
+    """
+    Feature: same mode, stride = kernel_size, but output shape can not be divided by strategy
+    Description: split w dimension
+    Expectation: compile failed
+    """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     strategy1 = ((1, 1, 1, 8), (1, 1, 1, 1))
     strategy2 = ((1, 1, 1, 8),)
@@ -187,6 +261,11 @@ def test_conv2d_output_can_not_divisible_by_strategy():
 
 
 def test_conv2d_output_can_not_divisible_by_strategy2():
+    """
+    Feature: same mode, stride = kernel_size, but output shape can not be divided by strategy
+    Description: split h dimension
+    Expectation: compile failed
+    """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     strategy1 = ((1, 1, 8, 1), (1, 1, 1, 1))
     strategy2 = ((1, 1, 1, 8),)
@@ -196,6 +275,11 @@ def test_conv2d_output_can_not_divisible_by_strategy2():
 
 
 def test_split_kernel():
+    """
+    Feature: split kernel size
+    Description: do not support to split kernel size
+    Expectation: compile failed
+    """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     strategy1 = ((1, 1, 1, 1), (1, 1, 2, 2))
     strategy2 = ((1, 1, 1, 8),)
@@ -205,6 +289,11 @@ def test_split_kernel():
 
 
 def test_kernel_size_smaller_than_stride_and_slice_can_not_divisible_by_stride_same_mode():
+    """
+    Feature: same mode, slice shape can not be divided by stride
+    Description: split w
+    Expectation: compile failed
+    """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     strategy1 = ((1, 1, 1, 2), (1, 1, 1, 1))
     strategy2 = ((1, 1, 1, 8),)
@@ -214,6 +303,11 @@ def test_kernel_size_smaller_than_stride_and_slice_can_not_divisible_by_stride_s
 
 
 def test_kernel_size_smaller_than_stride_and_slice_can_not_divisible_by_stride_valid_mode():
+    """
+    Feature: valid mode, slice shape can not be divided by stride
+    Description: split w
+    Expectation: compile failed
+    """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     strategy1 = ((1, 1, 1, 2), (1, 1, 1, 1))
     strategy2 = ((1, 1, 1, 8),)
@@ -223,6 +317,11 @@ def test_kernel_size_smaller_than_stride_and_slice_can_not_divisible_by_stride_v
 
 
 def test_h_dimension_kernel_size_smaller_than_stride_and_slice_is_not_divisible_by_stride_same_mode():
+    """
+    Feature: same mode, slice shape can not be divided by stride
+    Description: split h
+    Expectation: compile failed
+    """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     strategy1 = ((1, 1, 2, 1), (1, 1, 1, 1))
     strategy2 = ((1, 1, 1, 8),)
@@ -232,6 +331,11 @@ def test_h_dimension_kernel_size_smaller_than_stride_and_slice_is_not_divisible_
 
 
 def test_h_dimension_kernel_size_smaller_than_stride_and_slice_can_not_divisible_by_stride_valid_mode():
+    """
+    Feature: valid mode, slice shape can not be divided by stride
+    Description: split h
+    Expectation: compile failed
+    """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     strategy1 = ((1, 1, 2, 1), (1, 1, 1, 1))
     strategy2 = ((1, 1, 1, 8),)
@@ -241,6 +345,11 @@ def test_h_dimension_kernel_size_smaller_than_stride_and_slice_can_not_divisible
 
 
 def test_split_h_dimension_and_pad_mode_is_pad():
+    """
+    Feature: pad mode
+    Description: split h
+    Expectation: compile failed
+    """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     strategy1 = ((1, 1, 2, 1), (1, 1, 1, 1))
     strategy2 = ((1, 1, 1, 8),)
@@ -250,6 +359,11 @@ def test_split_h_dimension_and_pad_mode_is_pad():
 
 
 def test_kernel_size_larger_than_stride_and_input_can_not_divisible_by_stride():
+    """
+    Feature: same mode, input shape can not be divided by stride
+    Description: split w
+    Expectation: compile failed
+    """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     strategy1 = ((1, 1, 1, 2), (1, 1, 1, 1))
     strategy2 = ((1, 1, 1, 8),)
@@ -259,6 +373,11 @@ def test_kernel_size_larger_than_stride_and_input_can_not_divisible_by_stride():
 
 
 def test_kernel_size_larger_than_stride_and_slice_too_small():
+    """
+    Feature: same mode, slice shape is small than overlap shape
+    Description: split w
+    Expectation: compile failed
+    """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     strategy1 = ((1, 1, 1, 8), (1, 1, 1, 1))
     strategy2 = ((1, 1, 1, 8),)
@@ -268,6 +387,11 @@ def test_kernel_size_larger_than_stride_and_slice_too_small():
 
 
 def test_conv2d_same_mode_overlap_size_equal_to_slice_shape():
+    """
+    Feature: same mode, slice shape is equal to overlap shape
+    Description: split w
+    Expectation: compile failed
+    """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     strategy1 = ((1, 1, 1, 8), (1, 1, 1, 1))
     strategy2 = ((2, 1, 1, 4),)
@@ -277,9 +401,27 @@ def test_conv2d_same_mode_overlap_size_equal_to_slice_shape():
 
 
 def test_kernel_size_larger_than_stride_and_left_pad_is_0():
+    """
+    Feature: same mode, kernel_size > stride and left pad is 0
+    Description: split w
+    Expectation: compile failed
+    """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     strategy1 = ((1, 1, 1, 4), (1, 1, 1, 1))
     strategy2 = ((1, 1, 1, 8),)
     net = Net(_w1, out_channel=8, kernel_size=2, pad_mode="same", stride=1, strategy1=strategy1, strategy2=strategy2)
     with pytest.raises(RuntimeError):
         compile_net(net)
+
+
+def test_conv2d_kernel_size_larger_than_stride_and_split_nchw():
+    """
+    Feature: same mode, stride < kernel_size, need exchange
+    Description: split n/c-in/c-out/h/w
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=32, global_rank=0)
+    strategy1 = ((2, 2, 2, 2), (2, 2, 1, 1))
+    strategy2 = ((2, 2, 2, 2),)
+    net = Net(_w2, out_channel=8, kernel_size=3, pad_mode="same", stride=1, strategy1=strategy1, strategy2=strategy2)
+    compile_net(net)

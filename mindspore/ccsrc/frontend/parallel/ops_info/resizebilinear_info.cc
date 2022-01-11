@@ -204,9 +204,7 @@ Status ResizeBilinearInfo::InferRankBias() {
     right_rank_id_ = *(it + 1);
   }
 
-  Group group = g_device_manager->CreateGroup(group_devices);
-  all_to_all_group_ = group.name();
-
+  all_to_all_group_ = g_device_manager->world_group();  // use world group temporarily
   MS_LOG(INFO) << name_ << ": The current rank is " << rank << ", the device list of w dimension is " << group_devices
                << ", the rank bias is " << rank_bias_ << ", the left rank bias is " << left_rank_bias_
                << ", the right rank bias is " << right_rank_bias_ << ", the left rank id is " << left_rank_id_
