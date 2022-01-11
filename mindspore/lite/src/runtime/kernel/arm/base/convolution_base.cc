@@ -50,10 +50,14 @@ ConvolutionBaseCPUKernel::~ConvolutionBaseCPUKernel() {
   if (addr_map.find(reinterpret_cast<uintptr_t>(packed_weight_)) != addr_map.end()) {
     FreeAlignedData(reinterpret_cast<void **>(&packed_weight_));
   } else if (!op_parameter_->is_train_session_) {
-    if (packed_weight_ != nullptr) {
+#ifdef USING_SERVING
+    if (packed_weight_ != nullptr && weight_is_packed_ == lite::MALLOC) {
+#endif
       free(packed_weight_);
       packed_weight_ = nullptr;
+#ifdef USING_SERVING
     }
+#endif
   }
   if (addr_map.find(reinterpret_cast<uintptr_t>(bias_data_)) != addr_map.end()) {
     FreeAlignedData(reinterpret_cast<void **>(&bias_data_));
@@ -154,6 +158,12 @@ int ConvolutionBaseCPUKernel::InitConvWeightBias() {
     MS_ASSERT(in_tensors_.size() == kInputSize1);
   }
   if (!op_parameter_->is_train_session_) {
+#ifdef USING_SERVING
+    if (weight_is_packed_ == lite::PACKED) {
+      MS_LOG(DEBUG) << "not do weight pack.";
+      return RET_OK;
+    }
+#endif
     if (origin_weight_ != nullptr) {
       PackWeight();
     } else {

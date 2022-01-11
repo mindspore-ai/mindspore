@@ -19,6 +19,9 @@
 
 #include <vector>
 #include "src/inner_kernel.h"
+#ifdef USING_SERVING
+#include "src/pack_weight_manager.h"
+#endif
 #include "nnacl/matmul_parameter.h"
 #include "include/errorcode.h"
 #include "src/common/common.h"
@@ -78,6 +81,10 @@ class MatmulFp32BaseCPUKernel : public InnerKernel {
   MatMulParameter *params_ = nullptr;
   float *a_pack_ptr_ = nullptr;
   float *b_pack_ptr_ = nullptr;
+#ifdef USING_SERVING
+  lite::PackStatus a_is_packed_ = lite::MALLOC;
+  lite::PackStatus b_is_packed_ = lite::MALLOC;
+#endif
   int a_batch_ = 1;
   int b_batch_ = 1;
   std::vector<int> a_offset_;

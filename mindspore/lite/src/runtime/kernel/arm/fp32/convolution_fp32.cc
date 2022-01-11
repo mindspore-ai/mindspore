@@ -15,6 +15,9 @@
  */
 
 #include "src/runtime/kernel/arm/fp32/convolution_fp32.h"
+#ifdef USING_SERVING
+#include "src/pack_weight_manager.h"
+#endif
 #include "include/errorcode.h"
 #include "nnacl/common_func.h"
 #include "schema/model_generated.h"
@@ -210,12 +213,25 @@ int ConvolutionCPUKernel::MallocWeightBiasData() {
   size_t pack_weight_size = oc_block_num * in_channel * kernel_plane;
   if (!op_parameter_->is_train_session_) {
     CHECK_LESS_RETURN(MAX_MALLOC_SIZE, pack_weight_size * sizeof(float));
+#ifdef USING_SERVING
+    auto packed = lite::PackWeightManager::GetInstance()->GetPackedTensor(
+      in_tensors_[1], static_cast<size_t>(pack_weight_size) * sizeof(float));
+    packed_weight_ = packed.second;
+    weight_is_packed_ = packed.first;
+    if (weight_is_packed_ == lite::MALLOC && packed_weight_ == nullptr) {
+      packed_weight_ = malloc(pack_weight_size * sizeof(float));
+      memset(packed_weight_, 0, pack_weight_size * sizeof(float));
+    }
+#else
     packed_weight_ = malloc(pack_weight_size * sizeof(float));
+#endif
     if (packed_weight_ == nullptr) {
       MS_LOG(ERROR) << "malloc packed weight failed.";
       return RET_ERROR;
     }
+#ifndef USING_SERVING
     memset(packed_weight_, 0, pack_weight_size * sizeof(float));
+#endif
   }
 
   if (bias_data_ == nullptr) {

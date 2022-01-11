@@ -15,6 +15,10 @@
  */
 
 #include "src/lite_session.h"
+#include <set>
+#ifdef USING_SERVING
+#include "src/pack_weight_manager.h"
+#endif
 #ifndef RUNTIME_PASS_CLIP
 #include "src/runtime/runtime_pass.h"
 #endif
@@ -548,6 +552,35 @@ void LiteSession::FreePackOpWeight(const std::vector<kernel::LiteKernel *> &kern
     }
   }
 }
+#ifdef USING_SERVING
+int LiteSession::IniPackWeightData(Model *model) {
+  auto lite_model = reinterpret_cast<LiteModel *>(model);
+  auto kernel_num = model->all_nodes_.size();
+  for (size_t i = 0; i < kernel_num; i++) {
+    auto node = model->all_nodes_[i];
+    auto node_type = node->node_type_;
+    if (IsPackedOp(node_type)) {
+      for (size_t j = 0; j < node->input_indices_.size(); j++) {
+        auto tensor_index = node->input_indices_[j];
+        auto src_tensor = lite_model->GetSchemaTensor(tensor_index);
+        if (src_tensor == nullptr || src_tensor->handler() == nullptr || src_tensor->data() == nullptr ||
+            src_tensor->length() == 0) {
+          continue;
+        }
+        lite::PackWeightManager::GetInstance()->StoreOriginTensor(lite_model, src_tensor, tensor_index);
+        auto data = lite::PackWeightManager::GetInstance()->GetTensorData(lite_model, tensor_index);
+        if (data == nullptr) {
+          MS_LOG(DEBUG) << "data not packed.";
+          continue;
+        }
+        this->tensors_[tensor_index]->set_data(data);
+        this->tensors_[tensor_index]->set_own_data(false);
+      }
+    }
+  }
+  return RET_OK;
+}
+#endif
 
 int LiteSession::CompileGraph(Model *model) {
   auto ret = PreCheck(model);
@@ -563,6 +596,13 @@ int LiteSession::CompileGraph(Model *model) {
     is_running_.store(false);
     return ret;
   }
+#ifdef USING_SERVING
+  ret = IniPackWeightData(model);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "IniPackWeightData failed.";
+    return RET_ERROR;
+  }
+#endif
   InitGraphInputTensors(model);
   InitGraphOutputTensors(model);
 
@@ -942,6 +982,9 @@ LiteSession::~LiteSession() {
     MS_LOG(ERROR) << "Not support multi-threading";
     return;
   }
+#ifdef USING_SERVING
+  lite::PackWeightManager::GetInstance()->DeleteSavedSessionPtr(this);
+#endif
   for (auto *kernel : kernels_) {
     delete kernel;
     kernel = nullptr;
@@ -1640,6 +1683,9 @@ const char *lite::LiteSession::LoadModelByPath(const std::string &file, mindspor
     delete[] model_buf;
     model_buf = nullptr;
   }
+#ifdef USING_SERVING
+  lite::PackWeightManager::GetInstance()->InitWeightManagerByPath(file, model_buf, nullptr);
+#endif
   return lite_buf;
 }
 
@@ -1661,6 +1707,9 @@ const char *lite::LiteSession::LoadModelByPath(const std::string &file, mindspor
     delete[] model_buf;
     model_buf = nullptr;
   }
+#ifdef USING_SERVING
+  lite::PackWeightManager::GetInstance()->InitWeightManagerByPath(file, model_buf, nullptr);
+#endif
   return lite_buf;
 }
 
@@ -1673,7 +1722,9 @@ int lite::LiteSession::LoadModelAndCompileByBuf(const char *model_buf, mindspore
     MS_LOG(ERROR) << "Invalid model_buf";
     return RET_ERROR;
   }
-
+#ifdef USING_SERVING
+  lite::PackWeightManager::GetInstance()->InitWeightManagerByBuf(model_buf, this);
+#endif
   auto *model = lite::ImportFromBuffer(lite_buf, lite_buf_size, true);
   if (model == nullptr) {
     MS_LOG(ERROR) << "Import model failed";
@@ -1704,7 +1755,9 @@ int lite::LiteSession::LoadModelAndCompileByBuf(const char *model_buf, mindspore
     MS_LOG(ERROR) << "Invalid model_buf";
     return RET_ERROR;
   }
-
+#ifdef USING_SERVING
+  lite::PackWeightManager::GetInstance()->InitWeightManagerByBuf(model_buf, this);
+#endif
   auto *model = lite::ImportFromBuffer(lite_buf, lite_buf_size, true);
   if (model == nullptr) {
     MS_LOG(ERROR) << "Import model failed";
