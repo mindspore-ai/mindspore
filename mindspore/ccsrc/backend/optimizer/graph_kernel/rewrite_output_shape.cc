@@ -28,7 +28,9 @@ bool SaveOutputShape::Run(const FuncGraphPtr &func_graph) {
     return false;
   }
   auto output = func_graph->output()->cast<CNodePtr>()->input(1)->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(output);
+  if (output == nullptr) {
+    return false;
+  }
   if (IsPrimitiveCNode(output, prim::kPrimMakeTuple)) {
     // the MakeTuple of multi output
     return false;
@@ -82,7 +84,9 @@ bool RewriteOutputShape::Run(const FuncGraphPtr &func_graph) {
     return false;
   }
   auto output = func_graph->output()->cast<CNodePtr>()->input(1)->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(output);
+  if (output == nullptr) {
+    return false;
+  }
   if (!IsPrimitiveCNode(output, prim::kPrimMakeTuple)) {
     return false;
   }
