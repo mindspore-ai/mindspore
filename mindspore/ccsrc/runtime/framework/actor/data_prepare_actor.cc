@@ -37,7 +37,6 @@ void SyncTensorData(const TensorPtr &host_tensor, const DeviceTensorPtr &device_
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(context);
-  
   if ((device_tensor->GetPtr() == nullptr) &&
       (!device_context->AllocateMemory(device_tensor.get(), device_tensor->GetSize()))) {
     SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(strategy, *context, *device_context, node->fullname_with_scope(),
@@ -192,6 +191,16 @@ void UpdateRefNodeOutputDeviceAddress(const KernelGraphPtr &graph) {
     }
   }
 }
+
+void UpdateGraphsRefNodeAddress(const std::vector<KernelGraphPtr> &graphs) {
+  for (const auto &graph : graphs) {
+    // The DeviceAddress of the graph parameter has been updated.
+    // The output address of RefNode needs to be consistent with the address of parameter.
+    if (!graph->is_executing_sink()) {
+      UpdateRefNodeOutputDeviceAddress(graph);
+    }
+  }
+}
 }  // namespace
 void DataPrepareActor::Init() {
   MS_EXCEPTION_IF_NULL(graph_compiler_info_);
@@ -261,6 +270,8 @@ void DataPrepareActor::PrepareData(const std::vector<std::vector<TensorPtr>> &in
       } else if (strategy_ == GraphExecutionStrategy::kStep) {
         PrepareDataForStepMode(input_tensors, context);
       }
+
+      UpdateGraphsRefNodeAddress(graph_compiler_info_->graphs_);
 
       // Debug actor is blocked, must wait debug actor callback message to process continue.
       if (debug_aid_ != nullptr && strategy_ == GraphExecutionStrategy::kPipeline) {
@@ -332,11 +343,6 @@ void DataPrepareActor::PrepareDataForDeviceTensorStore(const std::vector<std::ve
       }
       const auto front_node = FetchFrontNodeByBackendNode(input_node, graph);
       PrepareDataForWeightNode(input_node, front_node, input_tensor, device_context, context);
-    }
-    // The DeviceAddress of the graph parameter has been updated.
-    // The output address of RefNode needs to be consistent with the address of parameter.
-    if (!graph->is_executing_sink()) {
-      UpdateRefNodeOutputDeviceAddress(graph);
     }
   }
 
