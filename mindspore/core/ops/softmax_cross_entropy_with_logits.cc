@@ -32,6 +32,13 @@ abstract::TupleShapePtr SoftmaxCrossEntropyWithLogitsInferShape(const PrimitiveP
   (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
   auto logits_shape = input_args[0]->BuildShape();
   auto label_shape = input_args[1]->BuildShape();
+  auto logits_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(logits_shape)[kShape];
+  auto label_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(label_shape)[kShape];
+  const int64_t input_rank = 2;
+  (void)CheckAndConvertUtils::CheckInteger("dimension of logits", SizeToLong(logits_map.size()), kEqual, input_rank,
+                                           prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("dimension of labels", SizeToLong(label_map.size()), kEqual, input_rank,
+                                           prim_name);
   auto logits_shape_ptr = logits_shape->cast<abstract::ShapePtr>();
   auto label_shape_ptr = label_shape->cast<abstract::ShapePtr>();
   // logits and label must have the same shape when is not dynamic

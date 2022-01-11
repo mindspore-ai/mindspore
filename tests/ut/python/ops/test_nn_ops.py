@@ -297,6 +297,8 @@ class NetWithLossClass(nn.Cell):
 
     def construct(self, x, label):
         predict = self.network(x)
+        if F.rank(predict) == 4:
+            predict = predict[0, 0, :, :]
         return self.loss(predict, label)
 
 
@@ -390,9 +392,10 @@ def test_conv2d_same_primitive():
 
 
 class ComparisonNet(nn.Cell):
-    def __init__(self):
+    def __init__(self, empty=None):
         """ ComparisonNet definition """
         super(ComparisonNet, self).__init__()
+        self.empty = empty
 
     def construct(self, x, y):
         ret = x <= y
@@ -539,7 +542,7 @@ test_cases = [
     }),
     ('BlockGrad', {
         'block': Grad(NetWithLossClass(BlockNet())),
-        'desc_inputs': [Tensor(np.ones([1, 3, 8, 8], np.float32)), Tensor(np.zeros([1, 64, 4, 4], np.float32))],
+        'desc_inputs': [Tensor(np.ones([1, 3, 8, 8], np.float32)), Tensor(np.zeros([4, 4], np.float32))],
     }),
     ('Conv2dWithBiasGrad', {
         'block': Grad(NetWithLossClass(Conv2dWithBiasNet())),
@@ -555,7 +558,7 @@ test_cases = [
     }),
     ('StateGrad', {
         'block': Grad(NetWithLossClass(StateNet())),
-        'desc_inputs': [Tensor(np.ones([2, 1, 2, 2], np.float32)), Tensor(np.ones([2, 1, 2, 2], np.float32))],
+        'desc_inputs': [Tensor(np.ones([2, 1, 2, 2], np.float32)), Tensor(np.ones([2, 2], np.float32))],
     }),
     ('ComparisonTest', {
         'block': ComparisonNet(),

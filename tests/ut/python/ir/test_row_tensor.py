@@ -41,11 +41,13 @@ from mindspore.nn.optim import Momentum
 from mindspore.train import Model
 from ....dataset_mock import MindData
 
+
 @pytest.fixture(scope="module", autouse=True)
 def setup_teardown():
     context.set_context(mode=context.GRAPH_MODE, enable_sparse=True)
     yield
     context.set_context(enable_sparse=False)
+
 
 reduce_sum = P.ReduceSum()
 unsorted_segment_sum = P.UnsortedSegmentSum()
@@ -56,11 +58,13 @@ size_op = P.Size()
 invert_permutation = P.InvertPermutation()
 logical_and = P.LogicalAnd()
 
+
 def get_axis(x):
     shape = shape_op(x)
     length = F.tuple_len(shape)
     perm = F.make_range(0, length)
     return perm
+
 
 class MSELoss(nn.Cell):
     def __init__(self):
@@ -80,6 +84,7 @@ class MindDataSet(MindData):
                                           np_types=dataset_types,
                                           output_shapes=dataset_shapes,
                                           input_indexs=(0, 1))
+
     def __next__(self):
         if self._size < self._iter_num:
             raise StopIteration
@@ -99,11 +104,13 @@ def _generate_inverse_index(x_shape, axis):
     perm = index[1:1 + axis] + (0,) + index[1 + axis:]
     return perm
 
+
 # pylint: disable=W0231
 class MySparseGatherV2(PrimitiveWithInfer):
     """
     For test
     """
+
     @prim_attr_register
     def __init__(self):
         """init index_select"""
@@ -124,6 +131,7 @@ class MySparseGatherV2(PrimitiveWithInfer):
                'dtype': params['dtype'],
                'value': None}
         return out
+
 
 @bprop_getters.register(MySparseGatherV2)
 def get_bprop_sparse_gather_v2(self):
@@ -155,12 +163,16 @@ def get_bprop_sparse_gather_v2(self):
 
     return bprop
 
+
 adam_opt_for_map = C.MultitypeFuncGraph("adam_opt_for_map")
+
+
 @adam_opt_for_map.register("Tensor", "Tensor", "Tensor", "Tensor", "Tensor",
                            "Tensor", "Tensor", "Tensor", "RowTensor", "Bool")
 def _update_run_op_for_map_row_tensor(beta1, beta2, eps, lr, weight_decay_tensor, param,
                                       m, v, gradient, decay_flag):
     return gradient.values
+
 
 @adam_opt_for_map.register("Tensor", "Tensor", "Tensor", "Tensor", "Tensor",
                            "Tensor", "Tensor", "Tensor", "Tensor", "Bool")
@@ -239,9 +251,11 @@ def test_row_tensor_make_row_tensor():
         def __init__(self):
             super(MakeRowTensor, self).__init__()
             self.dense_shape = (3, 2)
+
         def construct(self, indices, values):
             ret = (RowTensor(indices, values, self.dense_shape),)
             return ret[0]
+
     indices = Tensor([1, 2])
     values = Tensor([[0, 0], [1, 2]], dtype=ms.float32)
     MakeRowTensor()(indices, values)
@@ -251,6 +265,7 @@ class RowTensorGetAttr(nn.Cell):
     def __init__(self, dense_shape):
         super(RowTensorGetAttr, self).__init__()
         self.dense_shape = dense_shape
+
     def construct(self, indices, values):
         x = RowTensor(indices, values, self.dense_shape)
         return x.values, x.indices, x.dense_shape
@@ -264,20 +279,25 @@ def test_row_tensor_attr():
 
 def test_row_tensor_sparse_gatherv2_grad_all():
     grad_all = C.GradOperation(get_all=True)
+
     class GradWrap(nn.Cell):
         def __init__(self, network):
             super(GradWrap, self).__init__()
             self.network = network
+
         def construct(self, x, y):
             grad = grad_all(self.network)(x, y)
             return grad[0].indices, grad[0].values, grad[0].dense_shape
+
     class SparseGatherV2(nn.Cell):
         def __init__(self):
             super(SparseGatherV2, self).__init__()
             self.sparse_gatherv2 = MySparseGatherV2()
             self.axis = 0
+
         def construct(self, params, indices):
             return self.sparse_gatherv2(params, indices, self.axis)
+
     params = Tensor(np.ones([3, 1, 2]).astype(np.int32))
     indices = Tensor(np.array([0, 1]).astype(np.int32))
     GradWrap(SparseGatherV2())(params, indices)
@@ -285,24 +305,29 @@ def test_row_tensor_sparse_gatherv2_grad_all():
 
 def test_row_tensor_sparse_gatherv2_grad_with_pram():
     grad_by_list = C.GradOperation(get_by_list=True)
+
     class GradWrap(nn.Cell):
         def __init__(self, network):
             super(GradWrap, self).__init__()
             self.network = network
             self.weights = ParameterTuple(filter(lambda x: x.requires_grad, network.get_parameters()))
+
         def construct(self, x):
             weights = self.weights
             grad = grad_by_list(self.network, weights)(x)
             x = grad[0]
             return x.values, x.indices, x.dense_shape
+
     class SparseGatherV2(nn.Cell):
         def __init__(self):
             super(SparseGatherV2, self).__init__()
             self.sparse_gatherv2 = MySparseGatherV2()
             self.axis = 0
             self.params = Parameter(Tensor(np.ones([3, 1, 2]).astype(np.int32)), name="params")
+
         def construct(self, indices):
             return self.sparse_gatherv2(self.params, indices, self.axis)
+
     indices = Tensor(np.array([0, 1]).astype(np.int32))
     network = GradWrap(SparseGatherV2())
     network(indices)
@@ -310,10 +335,13 @@ def test_row_tensor_sparse_gatherv2_grad_with_pram():
 
 def test_row_tensor_env_get():
     class Loss(nn.Cell):
-        def __init__(self):
+        def __init__(self, empty=None):
             super(Loss, self).__init__()
+            self.empty = empty
+
         def construct(self, base, target):
             return base
+
     class NetWithSparseGatherV2(nn.Cell):
         def __init__(self):
             super(NetWithSparseGatherV2, self).__init__()
@@ -321,6 +349,7 @@ def test_row_tensor_env_get():
             self.w2 = Parameter(Tensor(np.ones([2, 1, 2]).astype(np.float32)), name="w2")
             self.gatherv2 = MySparseGatherV2()
             self.axis = 0
+
         def construct(self, indices):
             return self.gatherv2(self.w1, indices, self.axis) * self.w2
 
@@ -387,8 +416,9 @@ def test_row_tensor_value_and_dense_shape_illegal():
 
 
 class RowTensorValuesDouble(nn.Cell):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, empty=None):
+        super(RowTensorValuesDouble, self).__init__()
+        self.empty = empty
 
     def construct(self, x):
         indices = x.indices
@@ -398,8 +428,9 @@ class RowTensorValuesDouble(nn.Cell):
 
 
 class RowTensorValuesAdd2(nn.Cell):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, empty=None):
+        super(RowTensorValuesAdd2, self).__init__()
+        self.empty = empty
 
     def construct(self, x):
         indices = x.indices
@@ -449,12 +480,13 @@ class EmbeddingLookUpBnNet(nn.Cell):
         x = self.reshape(x, (2, 3, 2, 2))
         x = self.relu(x)
         x = self.bn(x)
+        x = x[0, 0, :, :]
         return x
 
 
 def test_embedding_lookup_with_mix_precision():
     data = Tensor(np.array([0, 1, 2]).astype(np.int32))
-    label = Tensor(np.random.randn(*(2, 3, 2, 2)).astype(np.float32))
+    label = Tensor(np.random.randn(*(2, 2)).astype(np.float32))
     net = EmbeddingLookUpBnNet(8, 8, target='CPU')
 
     criterion = nn.SoftmaxCrossEntropyWithLogits(reduction='mean')
