@@ -66,7 +66,7 @@ def init_to_value(init):
 
 
 class Parameter(Tensor_):
-    """
+    r"""
     An object holding weights of cells, after initialized `Parameter` is a subtype of `Tensor`.
 
     Note:
@@ -93,7 +93,7 @@ class Parameter(Tensor_):
                 self.param_b = Parameter(Tensor([2], ms.float32))
 
             2) If parameter in list or tuple is not given a name, will give it a unique name. For example, the names of
-            parameters below are Parameter$1 and Parameter$2.
+            parameters below are Parameter\$1 and Parameter\$2.
 
             .. code-block::
 
