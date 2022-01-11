@@ -40,7 +40,7 @@ def _tensor_run_opt_ext(opt, momentum, learning_rate, gradient, weight, moment, 
 
 class Momentum(Optimizer):
     r"""
-    An optimizer that implements the Momentum algorithm.
+    Implements the Momentum algorithm.
 
     Refer to the paper `On the importance of initialization and momentum in deep
     learning <https://dl.acm.org/doi/10.5555/3042817.3043064>`_  for more details.

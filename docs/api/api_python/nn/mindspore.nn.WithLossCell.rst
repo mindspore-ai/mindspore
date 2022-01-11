@@ -9,7 +9,7 @@ mindspore.nn.WithLossCell
 
     **参数：**
 
-    - **backbone** (Cell) - 要封装的目标网络。
+    - **backbone** (Cell) - 要封装的骨干网络。
     - **loss_fn** (Cell) - 用于计算损失函数。
 
     **输入：**

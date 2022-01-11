@@ -20,7 +20,8 @@ from .. import nn
 
 class LossScaleManager:
     """
-    Loss scale (Magnification factor of gradients when mix precision is used) manager abstract class.
+    Loss scale (Magnification factor of gradients when mix precision is used) manager abstract class when using
+    mixed precision.
 
     Derived class needs to implement all of its methods. `get_loss_scale` is used to get current loss scale value.
     `update_loss_scale` is used to update loss scale value, `update_loss_scale` will be called during the training.

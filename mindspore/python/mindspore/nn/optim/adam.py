@@ -188,7 +188,7 @@ def _check_param_value(beta1, beta2, eps, prim_name):
 
 class Adam(Optimizer):
     r"""
-    Updates gradients by the Adaptive Moment Estimation (Adam) algorithm.
+    Implements the Adaptive Moment Estimation (Adam) algorithm.
 
     The Adam optimizer can dynamically adjust the learning rate of each parameter using the first-order
     moment estimation and the second-order moment estimation of the gradient.

@@ -3,16 +3,16 @@ mindspore.nn.TrainOneStepWithLossScaleCell
 
 .. py:class:: mindspore.nn.TrainOneStepWithLossScaleCell(network, optimizer, scale_sense)
 
-    使用梯度放大功能（loss scale）的训练网络。
+    使用混合精度功能的训练网络。
 
-    实现了包含梯度放大功能的单次训练。它使用网络、优化器和用于更新梯度放大系数的Cell(或一个Tensor)作为参数。可在host侧或device侧更新梯度放大系数。
-    如果需要在host侧更新，使用Tensor作为 `scale_sense` ，否则，使用可更新梯度放大系数的Cell实例作为 `scale_sense` 。
+    实现了包含损失缩放（loss scale）的单次训练。它使用网络、优化器和用于更新损失缩放系数（loss scale）的Cell(或一个Tensor)作为参数。可在host侧或device侧更新损失缩放系数。
+    如果需要在host侧更新，使用Tensor作为 `scale_sense` ，否则，使用可更新损失缩放系数的Cell实例作为 `scale_sense` 。
 
     **参数：**
 
     - **network** (Cell) - 训练网络。仅支持单输出网络。
     - **optimizer** (Cell) - 用于更新网络参数的优化器。
-    - **scale_sense** (Union[Tensor, Cell]) - 如果此值为Cell类型，`TrainOneStepWithLossScaleCell` 会调用它来更新梯度放大系数。如果此值为Tensor类型，可调用 `set_sense_scale` 来更新梯度放大系数，shape为 :math:`()` 或 :math:`(1,)` 。
+    - **scale_sense** (Union[Tensor, Cell]) - 如果此值为Cell类型，`TrainOneStepWithLossScaleCell` 会调用它来更新损失缩放系数。如果此值为Tensor类型，可调用 `set_sense_scale` 来更新损失缩放系数，shape为 :math:`()` 或 :math:`(1,)` 。
 
     **输入：**
 
@@ -20,11 +20,11 @@ mindspore.nn.TrainOneStepWithLossScaleCell
 
     **输出：**
 
-    Tuple，包含三个Tensor，分别为损失函数值、溢出状态和当前梯度放大系数。
+    Tuple，包含三个Tensor，分别为损失函数值、溢出状态和当前损失缩放系数。
 
-    - **loss** （Tensor） - shape为 :math:`()` 的Tensor。
-    - **overflow** （Tensor）- shape为 :math:`()` 的Tensor，类型为bool。
-    - **loss scale** （Tensor）- shape为 :math:`()` 的Tensor。
+    - **loss** （Tensor） - 标量，表示损失函数值。
+    - **overflow** （Tensor）- 类型为bool的标量，表示是否发生溢出。
+    - **loss scale** （Tensor）- 表示损失放大系数，shape为 :math:`()` 或 :math:`(1,)` 。
 
     **异常：**
 
@@ -94,7 +94,7 @@ mindspore.nn.TrainOneStepWithLossScaleCell
 
     .. py:method:: process_loss_scale(overflow)
 
-        根据溢出状态计算梯度放大系数。
+        根据溢出状态计算损失缩放系数。
         
         继承该类自定义训练网络时，可复用该接口。
 
@@ -113,7 +113,7 @@ mindspore.nn.TrainOneStepWithLossScaleCell
 
         **参数：**
 
-        **sens** （Tensor）- 新的梯度放大系数，其shape和类型需要与原始 `scale_sense` 相同。
+        **sens** （Tensor）- 新的损失缩放系数，其shape和类型需要与原始 `scale_sense` 相同。
 
     .. py:method:: start_overflow_check(pre_cond, compute_input)
 

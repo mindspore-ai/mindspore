@@ -49,7 +49,7 @@ def _check_param_value(optimizer, epsilon, coefficient, use_clip, prim_name):
 
 class LARS(Optimizer):
     r"""
-    Implements the LARS algorithm with LARSUpdate Operator.
+    Implements the LARS algorithm.
 
     LARS is an optimization algorithm employing a large batch optimization technique. Refer to paper `LARGE BATCH
     TRAINING OF CONVOLUTIONAL NETWORKS <https://arxiv.org/abs/1708.03888>`_.

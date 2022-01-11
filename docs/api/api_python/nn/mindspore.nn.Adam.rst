@@ -3,7 +3,7 @@ mindspore.nn.Adam
 
 .. py:class:: mindspore.nn.Adam(*args, **kwargs)
 
-    通过Adaptive Moment Estimation (Adam)算法更新梯度。
+    Adaptive Moment Estimation (Adam)算法的实现。
 
     请参阅论文 `Adam: A Method for Stochastic Optimization <https://arxiv.org/abs/1412.6980>`_。
 

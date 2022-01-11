@@ -2,7 +2,7 @@ mindspore.nn.FTRL
 =================
 .. py:class:: mindspore.nn.FTRL(*args, **kwargs)
 
-    使用ApplyFtrl算子实现FTRL算法。
+    FTRL算法实现。
 
     FTRL是一种在线凸优化算法，根据损失函数自适应地选择正则化函数。详见论文 `Adaptive Bound Optimization for Online Convex Optimization <https://arxiv.org/abs/1002.4908>`_。工程文档参阅 `Ad Click Prediction: a View from the Trenches <https://www.eecs.tufts.edu/~dsculley/papers/ad-click-prediction.pdf>`_。
 

@@ -3,7 +3,7 @@ mindspore.nn.Momentum
 
 .. py:class:: mindspore.nn.Momentum(*args, **kwargs)
 
-    Momentum算法优化器。
+    Momentum算法的实现。
 
     有关更多详细信息，请参阅论文 `On the importance of initialization and momentum in deep learning <https://dl.acm.org/doi/10.5555/3042817.3043064>`_。
 

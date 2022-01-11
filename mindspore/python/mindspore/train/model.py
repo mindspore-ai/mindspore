@@ -115,15 +115,15 @@ class Model:
         amp_level (str): Option for argument `level` in :func:`mindspore.build_train_network`, level for mixed
             precision training. Supports ["O0", "O2", "O3", "auto"]. Default: "O0".
 
-            - O0: Do not change.
-            - O2: Cast network to float16, keep batchnorm run in float32, using dynamic loss scale.
-            - O3: Cast network to float16, the batchnorm is also cast to float16, loss scale will not be used.
-            - auto: Set level to recommended level in different devices. Set level to O2 on GPU, set
-              level to O3 on Ascend. The recommended level is chosen by the export experience, not applicable to all
+            - "O0": Do not change.
+            - "O2": Cast network to float16, keep BatchNorm run in float32, using dynamic loss scale.
+            - "O3": Cast network to float16, the BatchNorm is also cast to float16, loss scale will not be used.
+            - auto: Set level to recommended level in different devices. Set level to "O2" on GPU, set
+              level to "O3" on Ascend. The recommended level is chosen by the export experience, not applicable to all
               scenarios. User should specify the level for special network.
 
-            O2 is recommended on GPU, O3 is recommended on Ascend.
-            The batchnorm strategy can be changed by `keep_batchnorm_fp32` settings in `kwargs`. `keep_batchnorm_fp32`
+            "O2" is recommended on GPU, "O3" is recommended on Ascend.
+            The BatchNorm strategy can be changed by `keep_batchnorm_fp32` settings in `kwargs`. `keep_batchnorm_fp32`
             must be a bool. The loss scale strategy can be changed by `loss_scale_manager` setting in `kwargs`.
             `loss_scale_manager` should be a subclass of :class:`mindspore.LossScaleManager`.
             The more detailed explanation of `amp_level` setting can be found at `mindspore.build_train_network`.
@@ -131,10 +131,10 @@ class Model:
         boost_level (str): Option for argument `level` in `mindspore.boost`, level for boost mode
             training. Supports ["O0", "O1", "O2"]. Default: "O0".
 
-            - O0: Do not change.
-            - O1: Enable the boost mode, the performance is improved by about 20%, and
+            - "O0": Do not change.
+            - "O1": Enable the boost mode, the performance is improved by about 20%, and
               the accuracy is the same as the original accuracy.
-            - O2: Enable the boost mode, the performance is improved by about 30%, and
+            - "O2": Enable the boost mode, the performance is improved by about 30%, and
               the accuracy is reduced by less than 3%.
 
             If you want to config boost mode by yourself, you can set boost_config_dict as `boost.py`.
@@ -916,10 +916,9 @@ class Model:
         Configure to pynative mode or CPU, the evaluating process will be performed with dataset non-sink mode.
 
         Note:
-            If dataset_sink_mode is True, data will be sent to device. If the device is Ascend, features
+            If dataset_sink_mode is True, data will be sent to device. At this point, the dataset will be bound to this
+            model, so the dataset cannot be used by other models. If the device is Ascend, features
             of data will be transferred one by one. The limitation of data transmission per time is 256M.
-
-            If dataset_sink_mode is True, dataset will be bound to this model and cannot be used by other models.
 
             The interface builds the computational graphs and then executes the computational graphs. However, when
             the `Model.build` is executed first, it only performs the graphs execution.
@@ -1117,7 +1116,8 @@ class Model:
             Batch data should be put together in one tensor.
 
         Args:
-            predict_data (Tensor): One tensor or multiple tensors of predict data.
+            predict_data (Optional[Tensor, list[Tensor], tuple[Tensor]]): The predict data, can be a single tensor,
+                a list of tensor, or a tuple of tensor.
 
         Returns:
             Dict, Parameter layout dictionary used for load distributed checkpoint.
