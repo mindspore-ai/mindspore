@@ -26,7 +26,7 @@ resize_nearest_neighbor_op_info = TBERegOp("DynamicResizeNearestNeighbor") \
     .dynamic_shape(True) \
     .attr("align_corners", "optional", "bool", "all", "false") \
     .attr("half_pixel_centers", "optional", "bool", "all", "false") \
-    .input(0, "x", False, "reqxuired", "all") \
+    .input(0, "x", False, "required", "all") \
     .input(1, "size", False, "required", "all") \
     .output(0, "y", True, "required", "all") \
     .dtype_format(DataType.F16_5HD, DataType.I32_Default, DataType.F16_5HD) \

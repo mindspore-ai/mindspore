@@ -27,6 +27,7 @@
 #include "ops/add.h"
 #include "ops/equal.h"
 #include "ops/greater_equal.h"
+#include "ops/greater.h"
 #include "ops/not_equal.h"
 #include "ops/neg.h"
 #include "ops/mul.h"
@@ -256,6 +257,7 @@ PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap() {
     {prim::kPrimNeg, R{ops::NegInfer, nullptr, false}},
     {prim::kPrimTile, R{ops::TileInfer, nullptr, true}},
     {prim::kPrimEqual, R{ops::EqualInfer, nullptr, true}},
+    {prim::kPrimGreaterEqual, R{ops::GreaterInfer, nullptr, true}},
     {prim::kPrimGreaterEqual, R{ops::GreaterEqualInfer, nullptr, true}},
     {prim::kPrimNotEqual, R{ops::NotEqualInfer, nullptr, true}},
     {prim::kPrimLog, R{ops::LogInfer, nullptr, true}},
