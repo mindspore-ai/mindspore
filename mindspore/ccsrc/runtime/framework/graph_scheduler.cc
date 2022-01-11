@@ -1862,6 +1862,7 @@ void GraphScheduler::CheckActorValid(const ActorSet *actor_set) const {
 }
 
 void GraphScheduler::PersistDeviceTensor(const GraphCompilerInfo &graph_compiler_info) {
+  const auto &parser = graph_compiler_info.control_node_parser_;
   for (size_t i = 0; i < graph_compiler_info.graphs_.size(); ++i) {
     const auto &graph = graph_compiler_info.graphs_[i];
     const auto &device_context = graph_compiler_info.device_contexts_[i];
@@ -1882,23 +1883,17 @@ void GraphScheduler::PersistDeviceTensor(const GraphCompilerInfo &graph_compiler
 
     for (auto &input_node : graph->input_nodes()) {
       MS_EXCEPTION_IF_NULL(input_node);
-      AnfNodePtr sub_front_node = nullptr;
+      AnfNodePtr front_node = nullptr;
       if (IsInternalParameter(input_node, graph)) {
         auto front_output_with_index = graph->GetFrontNodeByInternalParameter(input_node);
-        sub_front_node = front_output_with_index.first;
-      } else if (IsPersistentDeviceTensor(input_node) || HasAbstractRef(input_node)) {
-        sub_front_node = FetchFrontNodeByBackendNode(input_node, graph);
+        front_node = front_output_with_index.first;
+      } else if (IsPersistentDeviceTensor(input_node)) {
+        front_node = FetchFrontNodeByBackendNode(input_node, graph);
       }
-      if (sub_front_node == nullptr) {
+      if (front_node == nullptr || (!IsPersistentDeviceTensor(front_node)) ||
+          (parser != nullptr && parser->IsInited() && (!parser->IsRootGraphParameter(front_node)))) {
         continue;
       }
-
-      // The sub front nodes share the device tensor store with the root front node.
-      MS_EXCEPTION_IF_NULL(graph_compiler_info.control_node_parser_);
-      auto front_node = graph_compiler_info.control_node_parser_->FetchRootGraphFrontNodeBySubFrontNode(sub_front_node);
-      MS_EXCEPTION_IF_NULL(front_node);
-      MS_LOG(DEBUG) << "Graph id:" << graph->graph_id() << ", sub front node:" << sub_front_node->DebugString()
-                    << ", root front node:" << front_node->DebugString();
 
       auto device_tensor = AnfAlgo::GetMutableOutputAddr(input_node, 0, false);
       MS_EXCEPTION_IF_NULL(device_tensor);
@@ -1907,14 +1902,11 @@ void GraphScheduler::PersistDeviceTensor(const GraphCompilerInfo &graph_compiler
         AddDeviceTensorStore(front_node.get(), device_tensor);
       }
 
-      // Share the weight in the host and device, then input_node is internal parameter and front_node is weight.
-      if (!IsPersistentDeviceTensor(front_node)) {
-        continue;
-      }
       if (device_tensor->is_ptr_persisted()) {
         device_tensor->SetNodeIndex(input_node, 0);
         AddDeviceTensorStore(front_node.get(), device_tensor);
       }
+
       // If the device tensor store of this device type is not exist, then create the new device tensor of this type.
       if (DeviceTensorStore::GetInstance().Fetch(front_node.get(), device_context->GetDeviceAddressType()) == nullptr) {
         MS_LOG(INFO) << "Fetch no device tensor store by:" << front_node->fullname_with_scope()
@@ -1927,17 +1919,38 @@ void GraphScheduler::PersistDeviceTensor(const GraphCompilerInfo &graph_compiler
       }
     }
   }
+  PersistDeviceTensorForControlNode(graph_compiler_info);
+}
 
+void GraphScheduler::PersistDeviceTensorForControlNode(const GraphCompilerInfo &graph_compiler_info) {
   const auto &parser = graph_compiler_info.control_node_parser_;
-  if (parser == nullptr) {
+  if (parser == nullptr || (!parser->IsInited())) {
     return;
   }
-  for (const auto &sub_front_node_to_root_front_node : parser->sub_front_node_to_root_front_node_) {
-    auto device_tensors = DeviceTensorStore::GetInstance().Fetch(sub_front_node_to_root_front_node.second.get());
-    for (const auto &device_tensor : device_tensors) {
-      MS_EXCEPTION_IF_NULL(device_tensor);
-      AddDeviceTensorStore(sub_front_node_to_root_front_node.first.get(), device_tensor);
+
+  const auto &control_node_parameters = parser->control_node_parameters();
+  for (size_t i = 0; i < control_node_parameters.size(); ++i) {
+    const auto &input_node = control_node_parameters[i];
+    MS_EXCEPTION_IF_NULL(input_node);
+    if ((!IsPersistentDeviceTensor(input_node)) || (!parser->IsRootGraphParameter(input_node))) {
+      continue;
     }
+    const auto &front_to_backend_parameters = parser->front_to_backend_parameters();
+    const auto &iter = front_to_backend_parameters.find({input_node, 0});
+    if (iter == front_to_backend_parameters.end() || iter->second.empty()) {
+      MS_LOG(EXCEPTION) << "Cannot find backend node for weight parameter:" << input_node->DebugString();
+    }
+    const auto &node_with_context = iter->second.begin();
+    const auto &backend_node = node_with_context->first;
+    const auto &device_context = node_with_context->second;
+    MS_EXCEPTION_IF_NULL(backend_node);
+    MS_EXCEPTION_IF_NULL(device_context);
+    if (!DeviceTensorStore::GetInstance().Fetch(input_node.get()).empty()) {
+      continue;
+    }
+    auto device_tensor = AnfAlgo::GetMutableOutputAddr(backend_node, 0, false);
+    MS_EXCEPTION_IF_NULL(device_tensor);
+    AddDeviceTensorStore(input_node.get(), device_tensor);
   }
 }
 

@@ -320,6 +320,7 @@ void DataPrepareActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const contex
 
 void DataPrepareActor::PrepareDataForDeviceTensorStore(const std::vector<std::vector<TensorPtr>> &input_tensors,
                                                        OpContext<DeviceTensor> *const context) {
+  const auto &parser = graph_compiler_info_->control_node_parser_;
   for (size_t i = 0; i < graph_compiler_info_->graphs_.size(); ++i) {
     const auto &graph = graph_compiler_info_->graphs_[i];
     const auto &device_context = graph_compiler_info_->device_contexts_[i];
@@ -338,15 +339,16 @@ void DataPrepareActor::PrepareDataForDeviceTensorStore(const std::vector<std::ve
       const auto &input_node = input_nodes[j];
       const auto &input_tensor = tensors[j];
       MS_EXCEPTION_IF_NULL(input_node);
-      if (!IsPersistentDeviceTensor(input_node)) {
+      const auto front_node = FetchFrontNodeByBackendNode(input_node, graph);
+      if (!IsPersistentDeviceTensor(input_node) ||
+          (parser != nullptr && parser->IsInited() && (!parser->IsRootGraphParameter(front_node)))) {
         continue;
       }
-      const auto front_node = FetchFrontNodeByBackendNode(input_node, graph);
       PrepareDataForWeightNode(input_node, front_node, input_tensor, device_context, context);
     }
   }
 
-  PrepareDeviceTensorStoreForControlNode(graph_compiler_info_->control_node_parser_, input_tensors.back(), context);
+  PrepareDataForControlNode(graph_compiler_info_->control_node_parser_, input_tensors.back(), context);
 }
 
 void DataPrepareActor::PrepareDataForHostTensorQueue(const std::vector<std::vector<TensorPtr>> &input_tensors,
@@ -699,51 +701,14 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
   }
 }
 
-// In control flow, all weight nodes associated with the host weight parameter need to use the same device tensor.
-void DataPrepareActor::PrepareDataForControlWeightNode(const AnfNodePtr &node, const AnfNodePtr &front_node,
-                                                       const TensorPtr &tensor, const DeviceContext *device_context,
-                                                       const HostParameterToWeight &host_parameter_to_weights,
-                                                       OpContext<DeviceTensor> *const context) {
-  MS_EXCEPTION_IF_NULL(node);
-  MS_EXCEPTION_IF_NULL(front_node);
-  MS_EXCEPTION_IF_NULL(tensor);
-  MS_EXCEPTION_IF_NULL(device_context);
-
-  auto device_tensors = DeviceTensorStore::GetInstance().Fetch(front_node.get());
-  bool need_update_device_tensor_store = (device_tensors.size() == 0) ? true : false;
-  for (auto &device_tensor : device_tensors) {
-    MS_EXCEPTION_IF_NULL(device_tensor);
-    // Different from CPU、GPU platform, the subgraph weight params device addr of Ascend platform
-    // has already been allocated during the compilation, so these weight params still need to be updated.
-    if (device_tensor->GetPtr() == nullptr || device_tensor->is_ptr_persisted()) {
-      need_update_device_tensor_store = true;
-      break;
-    }
-  }
-  if (need_update_device_tensor_store) {
-    PrepareDataForWeightNode(node, front_node, tensor, device_context, context);
-  }
-
-  const auto iter = host_parameter_to_weights.find(front_node);
-  if (iter == host_parameter_to_weights.end()) {
+void DataPrepareActor::PrepareDataForControlNode(const ControlNodeParserPtr &control_node_parser,
+                                                 const std::vector<TensorPtr> &tensors,
+                                                 OpContext<DeviceTensor> *const context) {
+  MS_EXCEPTION_IF_NULL(control_node_parser);
+  if (!control_node_parser->IsInited()) {
     return;
   }
 
-  // Fetch all the device tensors of host weight node and insert as the weight of other nodes.
-  const auto &sub_front_nodes = host_parameter_to_weights.at(front_node);
-  device_tensors = DeviceTensorStore::GetInstance().Fetch(front_node.get());
-  for (const auto &sub_front_node : sub_front_nodes) {
-    for (const auto &device_tensor : device_tensors) {
-      MS_EXCEPTION_IF_NULL(sub_front_node);
-      DeviceTensorStore::GetInstance().Insert(sub_front_node.get(), device_tensor);
-    }
-  }
-}
-
-void DataPrepareActor::PrepareDeviceTensorStoreForControlNode(const ControlNodeParserPtr &control_node_parser,
-                                                              const std::vector<TensorPtr> &tensors,
-                                                              OpContext<DeviceTensor> *const context) {
-  MS_EXCEPTION_IF_NULL(control_node_parser);
   for (const auto &value_node_with_context : control_node_parser->front_value_nodes()) {
     MS_EXCEPTION_IF_NULL(value_node_with_context.first.first);
     if (AnfAlgo::OutputAddrExist(value_node_with_context.first.first, 0)) {
@@ -753,19 +718,34 @@ void DataPrepareActor::PrepareDeviceTensorStoreForControlNode(const ControlNodeP
 
   const auto &control_node_parameters = control_node_parser->control_node_parameters();
   for (size_t i = 0; i < control_node_parameters.size(); ++i) {
-    const auto &input_node = control_node_parameters[i];
-    const auto &input_tensor = tensors[i];
-    MS_EXCEPTION_IF_NULL(input_node);
-    if (IsPersistentDeviceTensor(input_node)) {
-      const auto &front_to_backend_parameters = control_node_parser->front_to_backend_parameters();
-      const auto &iter = front_to_backend_parameters.find({input_node, 0});
-      if (iter == front_to_backend_parameters.end() || iter->second.empty()) {
-        MS_LOG(EXCEPTION) << "Cannot find backend node for weight parameter:"
-                          << AnfAlgo::GetNodeDebugString(input_node);
-      }
-      const auto &node_with_context = iter->second.begin();
-      PrepareDataForControlWeightNode(node_with_context->first, input_node, input_tensor, node_with_context->second,
-                                      control_node_parser->host_parameter_to_weights(), context);
+    const auto &front_node = control_node_parameters[i];
+    MS_EXCEPTION_IF_NULL(front_node);
+    if ((!IsPersistentDeviceTensor(front_node)) || (!control_node_parser->IsRootGraphParameter(front_node))) {
+      continue;
+    }
+
+    const auto &front_to_backend_parameters = control_node_parser->front_to_backend_parameters();
+    const auto &iter = front_to_backend_parameters.find({front_node, 0});
+    if (iter == front_to_backend_parameters.end() || iter->second.empty()) {
+      MS_LOG(EXCEPTION) << "Cannot find backend node for weight parameter:" << AnfAlgo::GetNodeDebugString(front_node);
+    }
+    const auto &node_with_context = iter->second.begin();
+    const auto &backend_node = node_with_context->first;
+    const auto &device_context = node_with_context->second;
+    MS_EXCEPTION_IF_NULL(backend_node);
+    MS_EXCEPTION_IF_NULL(device_context);
+
+    auto device_tensors = DeviceTensorStore::GetInstance().Fetch(front_node.get());
+    if (device_tensors.empty()) {
+      std::string error_info = "Failed to get device tensor for front node:" + front_node->DebugString();
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(real_strategy_, (*context), error_info);
+    }
+
+    // Different from CPU, GPU platform, the subgraph weight params device addr of Ascend platform has already been
+    // allocated during the compilation, so these weight params still need to be updated.
+    if (device_tensors[0] != nullptr &&
+        (device_tensors[0]->GetPtr() == nullptr || device_tensors[0]->is_ptr_persisted())) {
+      PrepareDataForWeightNode(backend_node, front_node, tensors[i], device_context, context);
     }
   }
 }

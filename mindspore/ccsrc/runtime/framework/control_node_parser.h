@@ -125,7 +125,7 @@ class ControlNodeParser {
   // There are two situations:
   // 1. In control flow, the parameter input needs to be connected to the entrance actor of the funcgraph.
   // 2. In the kernel graph with call node input, the data arrow needs to be connected to the stack actor.
-  bool IsControlFlowDataArrow(const KernelGraphPtr &graph, const AnfNodePtr &node);
+  bool IsControlFlowDataArrow(const KernelGraphPtr &graph, const AnfNodePtr &backend_node);
   bool IsRootGraphParameter(const AnfNodePtr &node);
   bool IsRecursionCallNode(const AnfNodePtr &node);
   // If there is a recursive call node in the input of the kernel graph, the graph is recursive.
