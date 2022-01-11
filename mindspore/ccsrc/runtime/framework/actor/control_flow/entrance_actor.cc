@@ -43,7 +43,7 @@ void EntranceActor::RunOpRealParameterWithBranchID(const OpRealParameterWithBran
                                                    OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   auto &sequential_num = context->sequential_num_;
-  real_parameters_with_branch_id_[sequential_num].emplace(real_parameter_with_branch_id);
+  (void)real_parameters_with_branch_id_[sequential_num].emplace(real_parameter_with_branch_id);
 
   auto is_run = CheckRunningCondition(context);
   MS_LOG(DEBUG) << "Actor(" << GetAID().Name()

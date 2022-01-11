@@ -101,7 +101,7 @@ bool HasAbstractRef(const AnfNodePtr &node);
 bool IsCsrNode(const AnfNodePtr &node);
 // Get the front node corresponding to the backend node, if the front node is not a parameter node, return the
 // corresponding cnode.
-KernelWithIndex GetFrontNodeByKernelGraph(const AnfNodePtr &backend_node, KernelGraph *const graph);
+KernelWithIndex GetFrontNodeByKernelGraph(const AnfNodePtr &backend_node, const KernelGraph *const graph);
 // Get all the real input of the frontend node, skip the virtual node like maketuple, tuplegetitem.
 std::vector<KernelWithIndex> FetchInputNodeByCNode(const AnfNodePtr &node);
 // Fetch the sub abstract from the top abstract by the index.
@@ -125,7 +125,7 @@ class ControlNodeParser {
   // There are two situations:
   // 1. In control flow, the parameter input needs to be connected to the entrance actor of the funcgraph.
   // 2. In the kernel graph with call node input, the data arrow needs to be connected to the stack actor.
-  bool IsControlFlowDataArrow(const KernelGraphPtr &graph, const AnfNodePtr &node);
+  bool IsControlFlowDataArrow(const KernelGraphPtr &graph, const AnfNodePtr &backend_node);
   bool IsRootGraphParameter(const AnfNodePtr &node);
   bool IsRecursionCallNode(const AnfNodePtr &node);
   // If there is a recursive call node in the input of the kernel graph, the graph is recursive.
@@ -156,7 +156,7 @@ class ControlNodeParser {
   // value nodes will not enter the kernel graph, so these nodes need to be saved separately, and space is allocated for
   // them separately during initialization.
   // The interface is initialized by finding the backend node in the kernel graph that the front node finally sends to.
-  void FetchFrontValueNode(const std::vector<AnfNodePtr> &control_nodes, DeviceContext *default_context);
+  void FetchFrontValueNode(const std::vector<AnfNodePtr> &control_nodes, const DeviceContext *const default_context);
   // Create branch id for all call node in the control flow.
   void CreateBranchIDForCallNode(const std::vector<AnfNodePtr> &control_nodes);
 
@@ -225,7 +225,7 @@ class ControlNodeParser {
   void ParseNodeLevel(const std::vector<AnfNodePtr> &control_nodes);
   // When the parameter is directly used as the condition of the switch, there will be no back-end node, and a device
   // tensor needs to be created for it.
-  void CreateDeviceTensorForRootGraphParameter(DeviceContext *default_context);
+  void CreateDeviceTensorForRootGraphParameter(DeviceContext *const default_context);
   // In control flow, funcgraph will be cut into multiple kernel graphs for execution, and this relationship is recorded
   // in this map.
   FuncGraphToKernelGraphGroup func_graph_to_kernel_graph_groups_;

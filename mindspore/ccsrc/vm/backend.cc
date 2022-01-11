@@ -467,7 +467,6 @@ const ActorInfo &MindRTBackend::CompileGraphs(const FuncGraphPtr &func_graph) {
   func_graph_to_kernel_graph_ids_.clear();
   control_nodes_.clear();
   auto subgraph_need_compile = CompileGraph(root_graph);
-
   // Compile sub graphs.
   if (subgraph_need_compile) {
     MS_EXCEPTION_IF_NULL(root_graph->manager());

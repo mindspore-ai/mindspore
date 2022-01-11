@@ -40,7 +40,7 @@ class ControlNodeScheduler {
   // Transform the control nodes to control actors.
   ControlActorSetPtr Build(const GraphCompilerInfo &graph_compiler_info, const AID &memory_manager_aid);
   // Link control actors.
-  void Link(ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info);
+  void Link(ActorSet *const actor_set, const GraphCompilerInfo &graph_compiler_info);
 
   bool CheckActorValid(const ControlActorSetPtr &control_actor_set);
 
@@ -55,7 +55,7 @@ class ControlNodeScheduler {
   std::vector<ExitActorPtr> BuildExitActor(const GraphCompilerInfo &graph_compiler_info);
   std::vector<StackActorPtr> BuildStackActor(const GraphCompilerInfo &graph_compiler_info);
   void BuildStackActorForControlNode(const GraphCompilerInfo &graph_compiler_info,
-                                     std::vector<StackActorPtr> *stack_actors);
+                                     std::vector<StackActorPtr> *const stack_actors);
   // Interface to link control actors.
   void LinkControlArrowForControlActor(ActorSet *const actor_set, const GraphCompilerInfo &graph_compiler_info);
   void LinkBranchIDArrowForControlActor(ControlActorSet *const control_actor_set);
@@ -89,7 +89,7 @@ class ControlNodeScheduler {
                                    const ControlNodeParserPtr &parser);
 
   // Interface tool to link arrows between actors.
-  void LinkControlArrow(AbstractActor *from_actor, AbstractActor *to_actor);
+  void LinkControlArrow(AbstractActor *const from_actor, AbstractActor *to_actor);
   void LinkLoopBodyControlArrow(AbstractActor *from_actor, EntranceActor *to_actor);
   // Data arrow with branch id is only exists from gather actor to entrance actor.
   void LinkDataWithBranchIDArrow(GatherActor *const gather_actor, EntranceActor *const entrance_actor,
