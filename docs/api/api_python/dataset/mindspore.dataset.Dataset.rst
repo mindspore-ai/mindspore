@@ -4,7 +4,7 @@
 
         **参数：**
 
-        `apply_func` (function)：传入 `Dataset` 对象作为参数，并将返回处理后的 `Dataset` 对象。
+        `apply_func` (function)：数据集处理函数，要求该函数的输入是一个 `Dataset` 对象，返回的是处理后的 `Dataset` 对象。
 
         **返回：**
 
@@ -12,55 +12,68 @@
 
         **样例：**
 
-        >>> # dataset是数据集类的实例化对象
+        >>> # dataset是任意数据集对象的实例
         >>>
-        >>> # 声明一个名为apply_func函数，其返回值是一个Dataset对象
-        >>> def apply_func(data)：
+        >>> # 声明一个名为apply_func函数，对数据集对象执行batch操作，并返回值处理后的Dataset对象
+        >>> # 注意apply_func函数的输入参数data需要为 `Dataset` 对象
+        >>> def apply_func(data):
         ...     data = data.batch(2)
         ...     return data
         >>>
-        >>> # 通过apply操作调用apply_func函数
+        >>> # 通过apply操作调用apply_func函数，得到处理后的数据集对象
         >>> dataset = dataset.apply(apply_func)
 
         **异常：**
 
-        - **TypeError：** `apply_func` 不是一个函数。
+        - **TypeError：** `apply_func` 的类型不是函数。
         - **TypeError：** `apply_func` 未返回Dataset对象。
 
     .. py:method:: batch(batch_size, drop_remainder=False, num_parallel_workers=None, per_batch_map=None, input_columns=None, output_columns=None, column_order=None, pad_info=None, python_multiprocessing=False)
 
-        将dataset中连续 `batch_size` 行数据合并为一个批处理数据。
+        将数据集中连续 `batch_size` 条数据合并为一个批处理数据。
 
-        对一个批处理数据执行给定操作与对条数据进行给定操作用法一致。对于任意列，batch操作要求该列中的各条数据shape必须相同。如果给定可执行函数 `per_batch_map` ，它将作用于批处理后的数据。
+        `batch` 操作要求每列中的数据具有相同的shape。如果指定了参数 `per_batch_map` ，该参数将作用于批处理后的数据。
 
         .. note::
-            执行 `repeat` 和 `batch` 操作的顺序，会影响数据批次的数量及 `per_batch_map` 操作。建议在batch操作完成后执行repeat操作。
+            执行 `repeat` 和 `batch` 操作的先后顺序，会影响批处理数据的数量及 `per_batch_map` 的结果。建议在 `batch` 操作完成后执行 `repeat` 操作。
 
         **参数：**
 
-        - **batch_size** (int or function) - 每个批处理数据包含的条数。参数需要是int或可调用对象，该对象接收1个参数，即BatchInfo。
-        - **drop_remainder** (bool, optional) - 是否删除最后一个数据条数小于批处理大小的batch（默认值为False）。如果为True，并且最后一个批次中数据行数少于 `batch_size`，则这些数据将被丢弃，不会传递给后续的操作。
-        - **num_parallel_workers** (int, optional) - 用于进行batch操作的的线程数（threads），默认值为None。
-        - **per_batch_map** (callable, optional) - 是一个以(list[Tensor], list[Tensor], ..., BatchInfo)作为输入参数的可调用对象，每个list[Tensor]代表给定列上的一批Tensor，入参中list[Tensor]的个数应与 `input_columns` 中传入列名的数量相匹配，该可调用对象的最后一个参数始终是BatchInfo对象。`per_batch_map` 应返回(list[Tensor], list[Tensor], ...)，其输出list[Tensor]的个数应与输入相同，如果输出列数与输入列数不一致，则需要指定 `output_columns`。
-        - **input_columns** (Union[str, list[str]], optional)：由输入列名组成的列表。如果 `per_batch_map` 不为None，列表中列名的个数应与 `per_batch_map` 中包含的列数匹配（默认为None）。
-        - **output_columns** (Union[str, list[str]], optional) - 当前操作所有输出列的列名列表。如果len(input_columns) != len(output_columns)，则此参数必须指定。此列表中列名的数量必须与给定操作的输出列数相匹配（默认为None，输出列将与输入列具有相同的名称）。
-        - **column_order** (Union[str, list[str]], optional) - 指定整个数据集对象中包含的所有列名的顺序。如果len(input_column) != len(output_column)，则此参数必须指定。 注意：这里的列名不仅仅是在 `input_columns` 和 `output_columns` 中指定的列。
-        - **pad_info** (dict, optional) - 用于对给定列进行填充。例如 `pad_info={"col1":([224,224],0)}` ，则将列名为"col1"的列填充到大小为[224,224]的张量，并用0填充缺失的值（默认为None)。
-        - **python_multiprocessing** (bool, optional) - 针对 `per_batch_map` 函数，使用Python多进执行的方式进行调用。如果函数计算量大，开启这个选项可能会很有帮助（默认值为False）。
+        - **batch_size** (Union[int, Callable]) - 指定每个批处理数据包含的数据条目。
+          如果 `batch_size` 为整型，则直接表示每个批处理数据大小；
+          如果为可调用对象，则可以通过自定义行为动态指定每个批处理数据大小，要求该可调用对象接收一个参数BatchInfo，返回一个整形代表批处理大小，用法请参考样例（3）。
+        - **drop_remainder** (bool, 可选) - 当最后一个批处理数据包含的数据条目小于 `batch_size` 时，是否将该批处理丢弃，不传递给下一个操作。默认值：False，不丢弃。
+        - **num_parallel_workers** (int, 可选) - 指定 `batch `操作的并发进程数/线程数（由参数 `python_multiprocessing` 决定当前为多进程模式或多线程模式）。
+          默认值：None，使用mindspore.dataset.config中配置的线程数。
+        - **per_batch_map** (callable, 可选) - 可调用对象，以(list[Tensor], list[Tensor], ..., BatchInfo)作为输入参数，处理后返回(list[Tensor], list[Tensor],...)作为新的数据列。
+          输入参数中每个list[Tensor]代表给定数据列中的一批Tensor，list[Tensor]的个数应与 `input_columns` 中传入列名的数量相匹配，
+          在返回的(list[Tensor], list[Tensor], ...)中，list[Tensor]的个数应与输入相同，如果输出列数与输入列数不一致，则需要指定 `output_columns`。
+          该可调用对象的最后一个输入参数始终是BatchInfo，用于获取数据集的信息，用法参考样例（2）。
+        - **input_columns** (Union[str, list[str]], 可选)：指定 `batch` 操作的输入数据列。
+          如果 `per_batch_map` 不为None，列表中列名的个数应与 `per_batch_map` 中包含的列数匹配。默认值：None，不指定。
+        - **output_columns** (Union[str, list[str]], 可选) - 指定 `batch` 操作的输出数据列。如果输入数据列与输入数据列的长度不相等，则必须指定此参数。
+          此列表中列名的数量必须与 `per_batch_map` 方法的返回值数量相匹配。默认值：None，输出列将与输入列具有相同的名称。
+        - **column_order** (Union[str, list[str]], 可选) - 指定传递到下一个数据集操作的数据列顺序。
+          如果 `input_column` 长度不等于 `output_column` 长度，则此参数必须指定。
+          注意：列名不限定在 `input_columns` 和 `output_columns` 中指定的列，也可以是上一个操作输出的未被处理的数据列，详细可参阅使用样例（4）。默认值：None，按照原输入顺序排列。
+        - **pad_info** (dict, 可选) - 对给定数据列进行填充。通过传入dict来指定列信息与填充信息，例如 `pad_info={"col1":([224,224],0)}` ，
+          则将列名为"col1"的数据列扩充到shape为[224,224]的Tensor，缺失的值使用0填充。默认值：None，不填充。
+        - **python_multiprocessing** (bool, 可选) - 启动Python多进程模式并行执行 `per_batch_map` 。如果 `per_batch_map` 的计算量很大，此选项可能会很有用。默认值：False，不启用多进程。
 
         **返回：**
 
-        批处理后的数据集对象。
+        Dataset， `batch` 操作后的数据集对象。
 
         **样例：**
 
-        >>> # 创建一个数据集对象，每100条数据合并成一个批次
+        >>> # 1）创建一个数据集对象，每100条数据合并成一个批处理数据
         >>> # 如果最后一个批次数据小于给定的批次大小（batch_size)，则丢弃这个批次
         >>> dataset = dataset.batch(100, True)
-        >>> # 根据批次编号调整图像大小，如果是第5批，则图像大小调整为(5^2, 5^2) = (25, 25)
-        >>> def np_resize(col, batchInfo):
+        >>>
+        >>> # 2）根据批次编号调整图像大小，如果是第5批，则图像大小调整为(5^2, 5^2) = (25, 25)
+        >>> def np_resize(col, BatchInfo):
         ...     output = col.copy()
-        ...     s = (batchInfo.get_batch_num() + 1) ** 2
+        ...     s = (BatchInfo.get_batch_num() + 1) ** 2
         ...     index = 0
         ...     for c in col:
         ...         img = Image.fromarray(c.astype('uint8')).convert('RGB')
@@ -69,26 +82,43 @@
         ...         index += 1
         ...     return (output,)
         >>> dataset = dataset.batch(batch_size=8, input_columns=["image"], per_batch_map=np_resize)
+        >>>
+        >>> # 3）创建一个数据集对象，动态指定批处理大小
+        >>> # 定义一个批处理函数，每次将batch_size加一
+        >>> def add_one(BatchInfo):
+        ...     return BatchInfo.get_batch_num() + 1
+        >>> dataset = dataset.batch(batch_size=add_one, drop_remainder=True)
+        >>>
+        >>> # 4）创建一个数据集对象，并执行batch数据，指定column_order更换数据列顺序
+        >>> # 假设数据集对象的数据列原顺序是["image", "label"]
+        >>> dataset = dataset.batch(32, column_order=["label", "image"])
 
     .. py:method:: bucket_batch_by_length(column_names, bucket_boundaries, bucket_batch_sizes, element_length_function=None, pad_info=None, pad_to_bucket_boundary=False, drop_remainder=False)
 
-        依据数据中元素长度进行分桶。每个桶将在满了的时候进行元素填充和批处理操作。
+        根据数据的长度进行分桶，每个桶将在数据填满的时候进行填充和批处理操作。
 
-        对数据集中的每一条数据执行长度计算函数。然后，根据该条数据的长度和桶的边界将该数据归到特定的桶里面。当桶中数据条数达到指定的大小 `bucket_batch_sizes` 时，将根据 `pad_info` 对桶中元素进行填充，再进行批处理。这样每个批次都是满的，但也有特殊情况，每个桶的最后一个批次（batch）可能不满。
+        对数据集中的每一条数据进行长度计算，根据该条数据的长度计算结果和每个分桶的范围将该数据归类到特定的桶里面。
+        当某个分桶中数据条数达到指定的大小 `bucket_batch_sizes` 时，将根据 `pad_info` 的信息对分桶进行填充，再进行批处理。
 
         **参数：**
 
-        - **column_names** (list[str]) - 传递给长度计算函数的所有列名。
-        - **bucket_boundaries** (list[int]) - 由各个桶的上边界值组成的列表，必须严格递增。如果有n个边界，则创建n+1个桶，分配后桶的边界如下：[0, bucket_boundaries[0])，[bucket_boundaries[i], bucket_boundaries[i+1])（其中，0<i<n-1），[bucket_boundaries[n-1], inf)。
-        - **bucket_batch_sizes** (list[int]) - 由每个桶的批次大小组成的列表，必须包含 `len(bucket_boundaries)+1` 个元素。
-        - **element_length_function** (Callable, optional) - 输入包含M个参数的函数，其中M等于 `len(column_names)` ，并返回一个整数。如果未指定该参数，则 `len(column_names)` 必须为1，并且该列数据第一维的shape值将用作长度（默认为None）。
-        - **pad_info** (dict, optional) - 有关如何对指定列进行填充的字典对象。字典中键对应要填充的列名，值必须是包含2个元素的元组。元组中第一个元素对应要填充成的shape，第二个元素对应要填充的值。如果某一列未指定将要填充后的shape和填充值，则当前批次中该列上的每条数据都将填充至该批次中最长数据的长度，填充值为0。除非 `pad_to_bucket_boundary` 为True，否则 `pad_info` 中任何填充shape为None的列，其每条数据长度都将被填充为当前批处理中最数据的长度。如果不需要填充，请将 `pad_info` 设置为None（默认为None）。
-        - **pad_to_bucket_boundary** (bool, optional) - 如果为True，则 `pad_info` 中填充shape为None的列，其长度都会被填充至 `bucket_boundary-1` 长度。如果有任何元素落入最后一个桶中，则将报错（默认为False）。
-        - **drop_remainder** (bool, optional) - 如果为True，则丢弃每个桶中最后不足一个批次数据（默认为False）。
+        - **column_names** (list[str]) - 传递给参数 `element_length_function` 的数据列，用于计算数据的长度。
+        - **bucket_boundaries** (list[int]) - 指定各个分桶的上边界值，列表的数值必须严格递增。
+          如果有n个边界，则会创建n+1个桶，分配后桶的边界如下：[0, bucket_boundaries[0])，[bucket_boundaries[i], bucket_boundaries[i+1])，[bucket_boundaries[n-1], inf)，其中，0<i<n-1。
+        - **bucket_batch_sizes** (list[int]) - 指定每个分桶的批数据大小，必须包含 `len(bucket_boundaries)+1` 个元素。
+        - **element_length_function** (Callable, 可选) - 长度计算函数。要求接收 `len(column_names)` 个输入参数，并返回一个整数代表该条数据的长度。
+          如果未指定该参数，则参数 `column_names` 的长度必须为1，此时该列数据的shape[0]值将被当做数据长度。默认值：None，不指定。
+        - **pad_info** (dict, 可选) - 对指定数据列进行填充。通过传入dict来指定列信息与填充信息，要求dict的键是要填充的数据列名，dict的值是包含2个元素的元组。
+          元组中第1个元素表示要扩展至的目标shape，第2个元素表示要填充的值。
+          如果某一个数据列未指定将要填充后的shape和填充值，则该列中的每条数据都将填充至该批次中最长数据的长度，且填充值为0。
+          注意，`pad_info` 中任何填充shape为None的列，其每条数据长度都将被填充为当前批处理中最数据的长度，除非指定 `pad_to_bucket_boundary` 为True。默认值：None，不填充。
+        - **pad_to_bucket_boundary** (bool, 可选) - 如果为True，则 `pad_info` 中填充shape为None的列，会被填充至由参数 `bucket_batch_sizes` 指定的对应分桶长度-1的长度。
+          如果有任何数据落入最后一个分桶中，则将报错。默认值：False。
+        - **drop_remainder** (bool, 可选) - 当每个分桶中的最后一个批处理数据数据条目小于 `bucket_batch_sizes` 时，是否丢弃该批处理数据。默认值：False，不丢弃。
 
         **返回：**
 
-        BucketBatchByLengthDataset，按长度进行分桶和批处理操作后的数据集对象。
+        Dataset，按长度进行分桶和批处理操作后的数据集对象。
 
         **样例：**
 
@@ -114,19 +144,21 @@
 
     .. py:method:: build_sentencepiece_vocab(columns, vocab_size, character_coverage, model_type, params)
 
-        用于从源数据集对象创建句子词表的函数。
+        迭代源数据集对象获取数据并构建SentencePiece词汇表。
 
         **参数：**
 
-        - **columns** (list[str]) - 指定从哪一列中获取单词。
-        - **vocab_size** (int) - 词汇表大小。
-        - **character_coverage** (int) - 模型涵盖的字符百分比，必须介于0.98和1.0之间。默认值如0.9995，适用于具有丰富字符集的语言，如日语或中文字符集；1.0适用于其他字符集较小的语言，比如英语或拉丁文。
-        - **model_type** (SentencePieceModel) - 模型类型，枚举值包括unigram（默认值）、bpe、char及word。当类型为word时，输入句子必须预先标记。
-        - **params** (dict) - 依据原始数据内容构建祠表的附加参数，无附加参数时取值可以是空字典。
+        - **columns** (list[str]) - 指定 `build_sentencepiece_vocab` 操作的输入列，会从该列获取数据构造词汇表。
+        - **vocab_size** (int) - 词汇表的容量。
+        - **character_coverage** (float) - 模型涵盖的字符百分比，必须介于0.98和1.0之间。
+          对于具有丰富字符集的语言，如日语或中文字符集，推荐使用0.9995；对于其他字符集较小的语言，比如英语或拉丁文，推荐使用1.0。
+        - **model_type** (SentencePieceModel) - 训练的SentencePiece模型类型，可取值为'SentencePieceModel.UNIGRAM'、'SentencePieceModel.BPE'、'SentencePieceModel.CHAR'或'SentencePieceModel.WORD'。
+          当取值为'SentencePieceModel.WORD'时，输入的数据必须进行预分词（pretokenize）。默认值：SentencePieceModel.UNIGRAM。
+        - **params** (dict) - 如果希望使用SentencePiece的其他参数，可以构造一个dict进行传入，键为SentencePiece库接口的输入参数名，值为参数值。
 
         **返回：**
 
-        SentencePieceVocab，从数据集构建的词汇表。
+        构建好的SentencePiece词汇表。
 
         **样例：**
 
@@ -141,28 +173,28 @@
 
     .. py:method:: build_vocab(columns, freq_range, top_k, special_tokens, special_first)
 
-        基于数据集对象创建词汇表。
+        迭代源数据集对象获取数据并构建词汇表。
 
-        用于收集数据集中所有的唯一单词，并返回 `top_k` 个最常见的单词组成的词汇表（如果指定了 `top_k` ）。
+        收集数据集中所有的不重复单词，并返回 `top_k` 个最常见的单词组成的词汇表（如果指定了 `top_k` ）。
 
         **参数：**
 
-        - **columns** (Union[str, list[str]]) ：指定从数据集对象中哪一列中获取单词。
-        - **freq_range** (tuple[int]) - 由(min_frequency, max_frequency)组成的整数元组，在这个频率范围的词汇会被保存下来。
-          取值范围需满足：0 <= min_frequency <= max_frequency <= total_words，其中min_frequency、max_frequency的默认值分别设置为0、total_words。
-        - **top_k** (int) - 词汇表中包含的单词数，取 `top_k` 个最常见的单词。`top_k` 优先级低于 `freq_range`。如果 `top_k` 的值大于单词总数，则取所有单词。
-        - **special_tokens** (list[str]) - 字符串列表，每个字符串都是一个特殊的标记。
-        - **special_first** (bool) - 是否将 `special_tokens` 添加到词汇表首尾。如果指定了 `special_tokens` 且
-          `special_first` 设置为默认值，则将 `special_tokens` 添加到词汇表最前面。
+        - **columns** (Union[str, list[str]]) ：指定 `build_vocab` 操作的输入列，会从该列获取数据构造词汇表。
+        - **freq_range** (tuple[int]) - 由(min_frequency, max_frequency)组成的整数元组，代表词汇出现的频率范围，在这个频率范围的词汇会被保存下来。
+          取值范围需满足：0 <= min_frequency <= max_frequency <= 单词总数，其中min_frequency、max_frequency的默认值分别设置为0、单词总数。
+        - **top_k** (int) - 使用 `top_k` 个最常见的单词构建词汇表。 假如指定了参数 `freq_range` ，则优先统计给定频率范围内的词汇，再根据参数 `top_k` 选取最常见的单词构建词汇表。
+          如果 `top_k` 的值大于单词总数，则取所有单词构建词汇表。
+        - **special_tokens** (list[str]) - 指定词汇表的特殊标记（special token），如'[UNK]'、'[SEP]'。
+        - **special_first** (bool) - 是否将参数 `special_tokens` 指定的特殊标记添加到词汇表的开头。如果为True则放到开头，否则放到词汇表的结尾。
 
         **返回：**
 
-        从数据集对象中构建出的词汇表对象。
+        构建好的词汇表。
 
         **样例：**
 
         >>> def gen_corpus():
-        ...     # 键：单词，值：出现次数，键的取值采用字母表示有利于排序和显示。
+        ...     # key：单词，value：出现次数，键的取值采用字母表示有利于排序和显示。
         ...     corpus = {"Z": 4, "Y": 4, "X": 4, "W": 3, "U": 3, "V": 2, "T": 1}
         ...     for k, v in corpus.items():
         ...         yield (np.array([k] * v, dtype='S'),)
@@ -179,36 +211,34 @@
 
     .. py:method:: concat(datasets)
 
-        对传入的多个数据集对象进行拼接操作。重载“+”运算符来进行数据集对象拼接操作。
+        对传入的多个数据集对象进行拼接操作，也可以使用"+"运算符来进行数据集进行拼接。
 
-        .. note::用于拼接的多个数据集对象，其列名、每列数据的维度（rank)和类型必须相同。
+        .. note::用于拼接的多个数据集对象，每个数据集对象的列名、每列数据的维度（rank）和数据类型必须相同。
 
         **参数：**
 
-        - **datasets** (Union[list, class Dataset]) - 与当前数据集对象拼接的数据集对象列表或单个数据集对象。
+        - **datasets** (Union[list, Dataset]) - 与当前数据集对象拼接的数据集对象列表或单个数据集对象。
 
 
         **返回：**
 
-        ConcatDataset，拼接后的数据集对象。
+        Dataset，拼接后的数据集对象。
 
         **样例：**
 
-        >>> # 通过使用“+”运算符拼接dataset_1和dataset_2，获得拼接后的数据集对象
+        >>> # 使用"+"运算符拼接dataset_1和dataset_2，获得拼接后的数据集对象
         >>> dataset = dataset_1 + dataset_2
         >>> # 通过concat操作拼接dataset_1和dataset_2，获得拼接后的数据集对象
         >>> dataset = dataset_1.concat(dataset_2)
 
     .. py:method:: create_dict_iterator(num_epochs=-1, output_numpy=False)
 
-        基于数据集对象创建迭代器，输出数据为字典类型。
-
-        字典中列的顺序可能与数据集对象中原始顺序不同。
+        基于数据集对象创建迭代器，输出的数据为字典类型。
 
         **参数：**
 
-        - **num_epochs** (int, optional) - 迭代器可以迭代的最多轮次数（默认为-1，迭代器可以迭代无限次）。
-        - **output_numpy** (bool, optional) - 是否输出NumPy数据类型，如果 `output_numpy` 为False，迭代器输出的每列数据类型为MindSpore.Tensor（默认为False）。
+        - **num_epochs** (int, 可选) - 迭代器可以迭代的最大次数。默认值：-1，迭代器可以迭代无限次。
+        - **output_numpy** (bool, 可选) - 输出的数据是否转为NumPy类型。如果为False，迭代器输出的每列数据类型为MindSpore.Tensor，否则为NumPy。默认值：False。
 
         **返回：**
 
@@ -216,7 +246,7 @@
 
         **样例：**
 
-        >>> # dataset是数据集类的实例化对象
+        >>> # dataset是任意数据集对象的实例
         >>> iterator = dataset.create_dict_iterator()
         >>> for item in iterator:
         ...     # item 是一个dict
@@ -228,14 +258,14 @@
 
         基于数据集对象创建迭代器，输出数据为ndarray组成的列表。
 
-        可以使用columns指定输出的所有列名及列的顺序。如果columns未指定，列的顺序将保持不变。
+        可以通过参数 `columns` 指定输出的所有列名及列的顺序。如果columns未指定，列的顺序将保持不变。
 
         **参数：**
 
-        - **columns** (list[str], optional) - 用于指定列顺序的列名列表（默认为None，表示所有列）。
-        - **num_epochs** (int, optional) - 迭代器可以迭代的最多轮次数（默认为-1，迭代器可以迭代无限次）。
-        - **output_numpy** (bool, optional) - 是否输出NumPy数据类型，如果output_numpy为False，迭代器输出的每列数据类型为MindSpore.Tensor（默认为False）。
-        - **do_copy** (bool, optional) - 当输出数据类型为mindspore.Tensor时，通过此参数指定转换方法，采用False主要考虑以获得更好的性能（默认为True）。
+        - **columns** (list[str], 可选) - 用于指定输出的数据列和列的顺序。默认值：None，输出所有数据列。
+        - **num_epochs** (int, 可选) - 迭代器可以迭代的最大次数。默认值：-1，迭代器可以迭代无限次。
+        - **output_numpy** (bool, 可选) - 输出的数据是否转为NumPy类型。如果为False，迭代器输出的每列数据类型为MindSpore.Tensor，否则为NumPy。默认值：False。
+        - **do_copy** (bool, 可选) - 当参数 `output_numpy` 为False，即输出数据类型为mindspore.Tensor时，可以将此参数指定为False以减少拷贝，获得更好的性能。默认值：True。
 
         **返回：**
 
@@ -243,40 +273,38 @@
 
         **样例：**
 
-        >>> # dataset是数据集类的实例化对象
+        >>> # dataset是任意数据集对象的实例
         >>> iterator = dataset.create_tuple_iterator()
         >>> for item in iterator：
-        ...     # item 是一个列表
+        ...     # item 是一个list
         ...     print(type(item))
         ...     break
         <class 'list'>
 
     .. py:method:: device_que(send_epoch_end=True, create_data_info_queue=False)
 
-        返回一个能将数据传输到设备上的数据集对象。
+        将数据异步传输到Ascend/GPU设备上。
 
         **参数：**
 
-        - **send_epoch_end** (bool, optional) - 数据发送完成后是否发送结束标识到设备上（默认值为True）。
-        - **create_data_info_queue** (bool, optional) - 是否创建一个队列，用于存储每条数据的type和shape（默认值为False）。
-
+        - **send_epoch_end** (bool, 可选) - 数据发送完成后是否发送结束标识到设备上，默认值：True。
+        - **create_data_info_queue** (bool, 可选) - 是否创建一个队列，用于存储每条数据的数据类型和shape。默认值：False，不创建。
 
         .. note::
-            如果设备类型为Ascend，数据的每一列将被依次单独传输，每次传输的数据大小限制为256M。
-
+            如果设备类型为Ascend，每次传输的数据大小限制为256MB。
 
         **返回：**
 
-        TransferDataset，用于帮助发送数据到设备上的数据集对象。
+        Dataset，用于帮助发送数据到设备上的数据集对象。
 
 
     .. py:method:: dynamic_min_max_shapes()
 
-        获取数据集对象中单条数据的最小和最大shape，用于图编译过程。
+        当数据集对象中的数据shape不唯一（动态shape）时，获取数据的最小shape和最大shape。
 
         **返回：**
 
-        列表，原始数据集对象中单条数据的最小和最大shape分别以list形式返回。
+        两个列表代表最小shape和最大shape，每个列表中的shape按照数据列的顺序排列。
 
         **样例：**
 
@@ -293,41 +321,41 @@
 
     .. py:method:: filter(predicate, input_columns=None, num_parallel_workers=None)
 
-        通过判断条件对数据集对象中的数据进行过滤。
-
-        .. note::
-             如果 `input_columns` 未指定或为空，则将使用所有列。
+        通过自定义判断条件对数据集对象中的数据进行过滤。
 
         **参数：**
 
-        - **predicate** (callable) - Python可调用对象，返回值为Bool类型。如果为False，则过滤掉该条数据。
-        - **input_columns** (Union[str, list[str]], optional) - 输入列名组成的列表，当取默认值None时，`predicate` 将应用于数据集中的所有列。
-        - **num_parallel_workers** (int, optional) - 用于并行处理数据集的线程数（默认为None，将使用配置文件中的值）。
+        - **predicate** (callable) - Python可调用对象。要求该对象接收n个入参，用于指代每个数据列的数据，最后返回值一个bool值。
+          如果返回值为False，则表示过滤掉该条数据。注意n的值与参数 `input_columns` 表示的输入列数量一致。
+        - **input_columns** (Union[str, list[str]], 可选) - `filter` 操作的输入数据列。默认值：None，`predicate` 将应用于数据集中的所有列。
+        - **num_parallel_workers** (int, 可选) - 指定 `filter` 操作的并发线程数。默认值：None，使用mindspore.dataset.config中配置的线程数。
 
         **返回：**
 
-        FilterDataset，执行给定筛选过滤操作的数据集对象。
+        Dataset，执行给定筛选过滤操作的数据集对象。
 
         **样例：**
 
         >>> # 生成一个list，其取值范围为（0，63）
+        >>> def generator_1d():
+        ...     for i in range(64):
+        ...         yield (np.array(i),)
+        >>> dataset = ds.GeneratorDataset(generator_1d, ["data"])
         >>> # 过滤掉数值大于或等于11的数据
         >>> dataset = dataset.filter(predicate=lambda data: data < 11, input_columns = ["data"])
 
 
     .. py:method:: flat_map(func)
 
-        对数据集对象中每一条数据执行给定的 `func` 操作，并将结果展平。
-
-        指定的 `func` 是一个函数，输入必须为一个'ndarray'，返回值是一个'Dataset'对象。
+        对数据集对象中每一条数据执行给定的数据处理，并将结果展平。
 
         **参数：**
 
-        - **func** (function) - 输入'ndarray'并返回一个'Dataset'对象的函数。
+        - **func** (function) - 数据处理函数，要求输入必须为一个'ndarray'，返回值是一个'Dataset'对象。
 
         **返回：**
 
-        执行给定操作的数据集对象。
+        执行给定操作后的数据集对象。
 
         **样例：**
 
@@ -351,15 +379,16 @@
 
     .. py:method:: get_batch_size()
 
-        获得批处理的大小，即一个批次中包含的数据条数。
+        获得数据集对象定义的批处理大小，即一个批处理数据中包含的数据条数。
 
         **返回：**
 
-        int，一个批次中包含的数据条数。
+        int，一个批处理数据中包含的数据条数。
 
         **样例：**
 
-        >>> # dataset是数据集类的实例化对象
+        >>> # dataset是任意数据集对象的实例
+        >>> dataset = dataset.batch(16)
         >>> batch_size = dataset.get_batch_size()
 
     .. py:method:: get_class_indexing()

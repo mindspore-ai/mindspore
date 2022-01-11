@@ -1885,7 +1885,7 @@ class TextBaseDataset(Dataset):
 
             columns(list[str]): Column names to get words from.
             vocab_size(int): Vocabulary size.
-            character_coverage(int): Percentage of characters covered by the model, must be between
+            character_coverage(float): Percentage of characters covered by the model, must be between
                 0.98 and 1.0 Good defaults are: 0.9995 for languages with rich character sets like
                 Japanese or Chinese character sets, and 1.0 for other languages with small character sets
                 like English or Latin.
