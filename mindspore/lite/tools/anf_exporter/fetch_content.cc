@@ -525,7 +525,7 @@ int FetchOpParameterFromFuncGraph(const FuncGraphPtr &func_graph, std::map<std::
       continue;
     }
     auto primitive = cnode->input(0);
-    OpParameter *parameter;
+    OpParameter *parameter = nullptr;
     auto ret = lite::FetchOpParameterFromNode(primitive, &parameter);
     if (ret != lite::RET_OK) {
       MS_LOG(ERROR) << cnode->fullname_with_scope() << " FetchOpParameterFromNode failed. ";
