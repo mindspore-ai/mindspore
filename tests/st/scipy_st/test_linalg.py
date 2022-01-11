@@ -241,6 +241,35 @@ def test_lu(shape: (int, int), dtype):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
+@pytest.mark.parametrize('shape', [(3, 4, 4), (3, 4, 5)])
+@pytest.mark.parametrize('dtype', [onp.float32, onp.float64])
+def test_batch_lu(shape: (int, int), dtype):
+    """
+    Feature: ALL To ALL
+    Description: test cases for lu decomposition test cases for A[N,N]x = b[N,1]
+    Expectation: the result match to scipy
+    """
+    b_a = create_random_rank_matrix(shape, dtype)
+    b_s_p = list()
+    b_s_l = list()
+    b_s_u = list()
+    for a in b_a:
+        s_p, s_l, s_u = osp.linalg.lu(a)
+        b_s_p.append(s_p)
+        b_s_l.append(s_l)
+        b_s_u.append(s_u)
+    tensor_b_a = Tensor(onp.array(b_a))
+    b_m_p, b_m_l, b_m_u = msp.linalg.lu(tensor_b_a)
+    rtol = 1.e-5
+    atol = 1.e-5
+    assert onp.allclose(b_m_p.asnumpy(), b_s_p, rtol=rtol, atol=atol)
+    assert onp.allclose(b_m_l.asnumpy(), b_s_l, rtol=rtol, atol=atol)
+    assert onp.allclose(b_m_u.asnumpy(), b_s_u, rtol=rtol, atol=atol)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 @pytest.mark.parametrize('n', [4, 5, 10, 20])
 @pytest.mark.parametrize('dtype', [onp.float32, onp.float64])
 def test_lu_factor(n: int, dtype):
