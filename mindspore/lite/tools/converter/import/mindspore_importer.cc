@@ -324,7 +324,7 @@ FuncGraphPtr MindsporeImporter::CheckAndUpdateFuncGraph(const converter::Flags &
     return nullptr;
   }
   ConverterInnerContext::GetInstance()->SetGraphOutputTensorNames(output_tensor_name_);
-#ifdef ENABLE_LITE_ASCEND
+#ifdef ENABLE_LITE_ACL
   MS_LOG(INFO) << "There is no need to adjust and pass graph when in Ascend.";
   return func_graph;
 #endif

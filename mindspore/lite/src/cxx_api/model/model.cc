@@ -19,7 +19,7 @@
 #ifdef GPU_TENSORRT
 #include <cuda_runtime.h>
 #endif
-#ifdef ENABLE_LITE_ASCEND
+#ifdef ENABLE_LITE_ACL
 #include "acl/acl_base.h"
 #endif
 #include "include/api/callback/callback.h"
@@ -170,7 +170,7 @@ bool Model::CheckModelSupport(enum DeviceType device_type, ModelType model_type)
     return true;
   }
 #endif
-#ifdef ENABLE_LITE_ASCEND
+#ifdef ENABLE_LITE_ACL
   if (device_type == kAscend || device_type == kAscend310) {
     const char *soc_name_c = aclrtGetSocName();
     if (soc_name_c == nullptr) {

@@ -19,7 +19,7 @@
 #include <string>
 #include <memory>
 
-#ifndef ENABLE_LITE_ASCEND
+#ifndef ENABLE_LITE_ACL
 #include "pybind11/pybind11.h"
 #endif
 #include "utils/log_adapter.h"
@@ -32,7 +32,7 @@
 #endif
 #include "utils/ms_context.h"
 
-#ifndef ENABLE_LITE_ASCEND
+#ifndef ENABLE_LITE_ACL
 namespace py = pybind11;
 #endif
 namespace mindspore {
@@ -199,7 +199,7 @@ Status GraphRunner::RunGraph(const RunOptions &options, const std::vector<MeTens
   Status ret;
   {
     // Release GIL before calling into (potentially long-running) C++ code
-#ifndef ENABLE_LITE_ASCEND
+#ifndef ENABLE_LITE_ACL
     py::gil_scoped_release release;
 #endif
     ret = RunGraph(options, ge_inputs, &ge_outputs);
