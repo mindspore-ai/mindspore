@@ -120,6 +120,6 @@
 "mindspore/tests/ut/python/optimizer/test_auto_grad.py"                                                 "broad-except"
 
 #MindSpore Lite
-"mindspore/mindspore/lite/experiment/HPC-generator/generator.py"                                         "redefined-builtin"
-"mindspore/mindspore/lite/experiment/HPC-generator/generator.py"                                         "exec-used"
-"mindspore/mindspore/lite/experiment/HPC-generator/generator.py"                                         "global-variable-undefined"
+"mindspore/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/experiment/HPC-generator/generator.py"                                         "redefined-builtin"
+"mindspore/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/experiment/HPC-generator/generator.py"                                         "exec-used"
+"mindspore/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/experiment/HPC-generator/generator.py"                                         "global-variable-undefined"
