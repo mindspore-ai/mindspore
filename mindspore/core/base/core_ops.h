@@ -460,6 +460,8 @@ inline const PrimitivePtr kPrimHShrink = std::make_shared<Primitive>("HShrink");
 inline const PrimitivePtr kPrimHShrinkGrad = std::make_shared<Primitive>("HShrinkGrad");
 inline const PrimitivePtr kPrimApplyAdagradDA = std::make_shared<Primitive>("ApplyAdagradDA");
 inline const PrimitivePtr kPrimApplyAdagradV2 = std::make_shared<Primitive>("ApplyAdagradV2");
+inline const PrimitivePtr kPrimApplyProximalGradientDescent =
+  std::make_shared<Primitive>("ApplyProximalGradientDescent");
 inline const PrimitivePtr kPrimSparseApplyRMSProp = std::make_shared<Primitive>("SparseApplyRMSProp");
 inline const PrimitivePtr kPrimApplyKerasMomentum = std::make_shared<Primitive>("ApplyKerasMomentum");
 inline const PrimitivePtr kPrimLARSUpdate = std::make_shared<Primitive>("LARSUpdate");

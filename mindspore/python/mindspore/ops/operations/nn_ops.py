@@ -6274,7 +6274,7 @@ class ApplyGradientDescent(Primitive):
         self.add_prim_attr('side_effect_mem', True)
 
 
-class ApplyProximalGradientDescent(PrimitiveWithInfer):
+class ApplyProximalGradientDescent(Primitive):
     r"""
     Updates relevant entries according to the FOBOS(Forward Backward Splitting) algorithm.
 
@@ -6346,30 +6346,6 @@ class ApplyProximalGradientDescent(PrimitiveWithInfer):
         """Initialize ApplyGradientDescent."""
         self.add_prim_attr('side_effect_mem', True)
 
-    def infer_shape(self, var_shape, alpha_shape, l1_shape, l2_shape, delta_shape):
-        validator.check('delta shape', delta_shape, 'var shape', var_shape, Rel.EQ, self.name)
-        alpha_shape_len = len(alpha_shape)
-        validator.check_int(alpha_shape_len, 1, Rel.LE, "alpha's rank", self.name)
-        if alpha_shape_len == 1:
-            validator.check_int(alpha_shape[0], 1, Rel.EQ, "alpha_shape[0]", self.name)
-        l1_shape_len = len(l1_shape)
-        validator.check_int(l1_shape_len, 1, Rel.LE, "l1's rank", self.name)
-        if l1_shape_len == 1:
-            validator.check_int(l1_shape[0], 1, Rel.EQ, "l1_shape[0]", self.name)
-        l2_shape_len = len(l2_shape)
-        validator.check_int(l2_shape_len, 1, Rel.LE, "l2's rank", self.name)
-        if l2_shape_len == 1:
-            validator.check_int(l2_shape[0], 1, Rel.EQ, "l2_shape[0]", self.name)
-        return var_shape
-
-    def infer_dtype(self, var_dtype, alpha_dtype, l1_dtype, l2_dtype, delta_dtype):
-        valid_dtypes = [mstype.float16, mstype.float32]
-        args = {'var': var_dtype, 'delta': delta_dtype}
-        validator.check_tensors_dtypes_same_and_valid(args, valid_dtypes, self.name)
-        validator.check_scalar_or_tensor_types_same({"alpha": alpha_dtype}, valid_dtypes, self.name)
-        validator.check_scalar_or_tensor_types_same({"l1": l1_dtype}, valid_dtypes, self.name)
-        validator.check_scalar_or_tensor_types_same({"l2": l2_dtype}, valid_dtypes, self.name)
-        return var_dtype
 
 
 class LARSUpdate(PrimitiveWithInfer):
