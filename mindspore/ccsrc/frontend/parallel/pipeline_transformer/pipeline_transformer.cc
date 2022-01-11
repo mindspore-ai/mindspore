@@ -845,8 +845,8 @@ void PipelineTransformer::CutBorderForNode(const FuncGraphPtr &graph, const AnfN
     if (node_stage < user_node_stage) {
       if (node_stage == stage_) {
         if (IsParameterGraph(node)) {
-          auto send_depend =
-            HandleParameterGraph(node, user_node, node_stage, user_node_stage, micro, user_pair.second, *send_ops);
+          auto send_depend = HandleParameterGraph(node, user_node, node_stage, user_node_stage, micro,
+                                                  IntToSize(user_pair.second), *send_ops);
           if (!send_depend) {
             continue;
           }
@@ -864,8 +864,8 @@ void PipelineTransformer::CutBorderForNode(const FuncGraphPtr &graph, const AnfN
       } else {
         if (!receive) {
           if (IsParameterGraph(node)) {
-            receive =
-              HandleParameterGraph(node, user_node, node_stage, user_node_stage, micro, user_pair.second, *receive_ops);
+            receive = HandleParameterGraph(node, user_node, node_stage, user_node_stage, micro,
+                                           IntToSize(user_pair.second), *receive_ops);
             if (!receive) {
               continue;
             }

@@ -3048,7 +3048,6 @@ void HandleForwardMakeTupleAndMakeList(const std::vector<AnfNodePtr> &all_nodes)
 
     FuncGraphManagerPtr manager = cnode->func_graph()->manager();
     MS_EXCEPTION_IF_NULL(manager);
-    std::string op_type = AnfNodeIsPrimitive(node, MAKE_TUPLE) ? MAKE_TUPLE : MAKE_LIST;
 
     // MakeTuple has multiple users, each user's TensorInfo must be same.
     auto make_tuple_list_next_node = CheckMakeTupleSplit(node, manager);
