@@ -359,8 +359,8 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
   if (*is_control_flow_) {
     ret = control_flow_scheduler_->RecordAllTailCallLinkInfo(dst_kernels);
     MS_CHECK_TRUE_MSG(ret == RET_OK, ret, "SplitNonTailCallSubGraphs failed");
-    ret = control_flow_scheduler_->BuildOutputForCallOutputGraph(dst_kernels);
-    MS_CHECK_TRUE_MSG(ret == RET_OK, ret, "BuildOutputForCallOutputGraph failed");
+    ret = control_flow_scheduler_->IsolateOutputForCallOutputGraph(dst_kernels);
+    MS_CHECK_TRUE_MSG(ret == RET_OK, ret, "IsolateOutputForCallOutputGraph failed");
     ret = control_flow_scheduler_->SplitNonTailCallSubGraphs(dst_kernels);
     MS_CHECK_TRUE_MSG(ret == RET_OK, ret, "SplitNonTailCallSubGraphs failed");
   }

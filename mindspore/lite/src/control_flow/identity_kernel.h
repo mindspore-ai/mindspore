@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_OUTPUT_KERNEL_H_
-#define MINDSPORE_LITE_SRC_OUTPUT_KERNEL_H_
+#ifndef MINDSPORE_LITE_SRC_IDENTITY_KERNEL_H_
+#define MINDSPORE_LITE_SRC_IDENTITY_KERNEL_H_
 #include <atomic>
 #include <utility>
 #include <string>
@@ -31,17 +31,18 @@
 #include "src/sub_graph_kernel.h"
 
 namespace mindspore::kernel {
-// Output kernel is used to record graph output when the graph output kernel is switch type call node. In this
-// case, output tensor is not fixed, we use output kernel holds the output tensors of graph.
-class OutputKernel : public InnerKernel {
+// Identity kernel is used to update a reference to a tensor. This is useful in control flow model.
+class IdentityKernel : public InnerKernel {
  public:
-  OutputKernel(OpParameter *param, const std::vector<lite::Tensor *> &inputs,
-               const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+  IdentityKernel(OpParameter *param, const std::vector<lite::Tensor *> &inputs,
+                 const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
       : InnerKernel(param, inputs, outputs, ctx) {}
 
-  ~OutputKernel() override = default;
+  ~IdentityKernel() override = default;
 
   int PreProcess() override;
+
+  int PostProcess() override;
 
   int Run() override;
 
@@ -52,4 +53,4 @@ class OutputKernel : public InnerKernel {
   int schema_version_ = lite::SCHEMA_VERSION::SCHEMA_CUR;
 };
 }  // namespace mindspore::kernel
-#endif  // MINDSPORE_LITE_SRC_OUTPUT_KERNEL_H_
+#endif  // MINDSPORE_LITE_SRC_IDENTITY_KERNEL_H_

@@ -44,7 +44,7 @@ class ControlFlowScheduler {
   int BuildBoundaryForMultipleCalledGraph(std::vector<kernel::LiteKernel *> *dst_kernels);
   std::vector<kernel::LiteKernel *> GetNonTailCalls() const { return non_tail_calls_; }
   // When graph output is switch call node, output tensors not fixed, we need output subgraph holds the output tensors.
-  int BuildOutputForCallOutputGraph(std::vector<kernel::LiteKernel *> *dst_kernels);
+  int IsolateOutputForCallOutputGraph(std::vector<kernel::LiteKernel *> *dst_kernels);
   int RecordAllTailCallLinkInfo(std::vector<kernel::LiteKernel *> *dst_kernels);
 
  private:

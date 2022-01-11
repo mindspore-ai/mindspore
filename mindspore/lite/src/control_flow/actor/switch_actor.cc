@@ -303,5 +303,9 @@ void LiteSwitchOpActor::RunOpData(OpData<Tensor> *inputs, OpContext<Tensor> *con
   size_t index = static_cast<size_t>(*cond_ptr);
   DecreaseOtherBranchInputTensor(index);
   AsyncBranchOutput(index, context);
+  if (!output_data_arrows_.empty()) {
+    AsyncOutput(context);
+    SetOutputData(context);
+  }
 }
 }  // namespace mindspore::lite
