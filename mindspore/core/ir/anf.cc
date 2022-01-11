@@ -31,17 +31,9 @@
 #include "utils/anf_utils.h"
 
 namespace mindspore {
-const AbstractBasePtr &AnfNode::abstract() const {
-  // cppcheck-suppress unreadVariable
-  auto lock = AnfUtils::GetAbstractLock(this);
-  return abstract_;
-}
+const AbstractBasePtr &AnfNode::abstract() const { return abstract_; }
 
-void AnfNode::set_abstract(const AbstractBasePtr &abs) {
-  // cppcheck-suppress unreadVariable
-  auto lock = AnfUtils::GetAbstractLock(this);
-  abstract_ = abs;
-}
+void AnfNode::set_abstract(const AbstractBasePtr &abs) { abstract_ = abs; }
 
 // namespace to support intermediate representation definition
 CNode::CNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &func_graph)
