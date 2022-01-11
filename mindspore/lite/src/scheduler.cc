@@ -317,22 +317,6 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
     return ret;
   }
 
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
-  SetSubgraphForPartialNode();
-  if (*is_control_flow_) {
-    ret = control_flow_scheduler_->BuildBoundaryForMultipleCalledGraph(dst_kernels);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "BuildBoundaryForMultipleCalledGraph failed.";
-      return ret;
-    }
-  }
-  ret = RecordControlFlowLinkInfo();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Record ControlFlow LinkInfo failed.";
-    return ret;
-  }
-#endif
-
 #ifndef DELEGATE_CLIP
   ret = InitDelegateKernels(dst_kernels);
   if (ret != RET_OK) {
@@ -357,12 +341,10 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
 
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
   if (*is_control_flow_) {
-    ret = control_flow_scheduler_->RecordAllTailCallLinkInfo(dst_kernels);
-    MS_CHECK_TRUE_MSG(ret == RET_OK, ret, "SplitNonTailCallSubGraphs failed");
-    ret = control_flow_scheduler_->IsolateOutputForCallOutputGraph(dst_kernels);
-    MS_CHECK_TRUE_MSG(ret == RET_OK, ret, "IsolateOutputForCallOutputGraph failed");
-    ret = control_flow_scheduler_->SplitNonTailCallSubGraphs(dst_kernels);
-    MS_CHECK_TRUE_MSG(ret == RET_OK, ret, "SplitNonTailCallSubGraphs failed");
+    control_flow_scheduler_->SetSubgraphForPartialNode(&partial_kernel_subgraph_index_map_,
+                                                       &subgraph_index_subgraph_kernel_map_);
+    ret = control_flow_scheduler_->Schedule(dst_kernels);
+    MS_CHECK_TRUE_MSG(ret == RET_OK, ret, "control flow schedule failed.");
   }
 #endif
 
@@ -1654,32 +1636,6 @@ bool Scheduler::SubGraphHasScheduled(const int &index) {
 }
 
 void Scheduler::SubGraphMarkScheduled(const int &index) { scheduled_subgraph_index_.insert(index); }
-
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
-void Scheduler::SetSubgraphForPartialNode() {
-  for (auto &pair : partial_kernel_subgraph_index_map_) {
-    auto partial_kernel = static_cast<kernel::PartialFusionKernel *>((pair.first)->kernel());
-    auto &subgraph_index = pair.second;
-    partial_kernel->set_subgraph_kernels({subgraph_index_subgraph_kernel_map_.at(subgraph_index)});
-  }
-}
-
-int Scheduler::RecordControlFlowLinkInfo() {
-  for (auto &pair : partial_kernel_subgraph_index_map_) {
-    auto partial_kernel = reinterpret_cast<kernel::PartialFusionKernel *>((pair.first)->kernel());
-    MS_CHECK_TRUE_MSG(partial_kernel != nullptr, RET_ERROR, "cast to partial kernel failed.");
-    auto subgraph_kernels = partial_kernel->subgraph_kernels();
-    MS_CHECK_TRUE_MSG(!subgraph_kernels.empty(), RET_ERROR, "partial corresponding subgraph kernels empty.");
-    auto subgraph_kernel = subgraph_kernels.front();
-    MS_CHECK_TRUE_MSG(partial_kernel->in_tensors().size() == subgraph_kernel->in_tensors().size(), RET_ERROR,
-                      "partial inputs and corresponding subgraph inputs size not same.");
-    for (size_t i = 0; i < partial_kernel->in_tensors().size(); ++i) {
-      context_->SetLinkInfo(partial_kernel->in_tensors()[i], subgraph_kernel->in_tensors()[i]);
-    }
-  }
-  return RET_OK;
-}
-#endif
 
 void CopyTensorList(TensorList *dst_tensor, TensorList *src_tensor) {
   dst_tensor->set_data_type(src_tensor->data_type());
