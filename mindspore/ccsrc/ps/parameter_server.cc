@@ -64,7 +64,7 @@ bool ParameterServer::Init(const FuncGraphPtr &func_graph) {
   handler_.reset(new ServerHandler(this));
   handler_->Init();
 
-  recover_handler_.reset(new RecoverHandler(this));
+  recover_handler_ = std::make_unique<RecoverHandler>(this);
 
   InitOptimInfoBuilders();
   server_node_->set_handler(*handler_);
@@ -266,8 +266,8 @@ void ParameterServer::PersistKernels(const Key &key,
   }
   if (shapes_list.size() < keys.size()) {
     std::vector<std::vector<size_t>> shape_tmp;
-    std::transform(shapes->begin(), shapes->end(), std::back_inserter(shape_tmp),
-                   [](const std::shared_ptr<std::vector<size_t>> &shape_ptr) { return *shape_ptr; });
+    (void)std::transform(shapes->begin(), shapes->end(), std::back_inserter(shape_tmp),
+                         [](const std::shared_ptr<std::vector<size_t>> &shape_ptr) { return *shape_ptr; });
     shapes_list.push_back(shape_tmp);
     config_storage->PutValue<std::vector<std::vector<std::vector<size_t>>>>(kShapes, shapes_list);
   }
@@ -308,7 +308,7 @@ void ParameterServer::PersistInitParameters(const Key &key, const WeightPtr &par
   config_map[distributed::storage::kFileStoragePath] = real_storage_file_path;
   persistent_weight->Initialize(config_map);
 
-  weights_dirty_info_.emplace(key, distributed::storage::DirtyInfo());
+  (void)weights_dirty_info_.emplace(key, distributed::storage::DirtyInfo());
   persistent_weight->Persist(distributed::storage::DirtyInfo());
 
   MS_LOG(INFO) << "Finish persist initialized parameter, key: " << key;
@@ -340,8 +340,8 @@ void ParameterServer::InitEmbeddingTable(
       std::accumulate(input_shapes.begin(), input_shapes.end(), IntToSize(1), std::multiplies<size_t>());
 
     std::shared_ptr<std::vector<int>> embedding_shape = std::make_shared<std::vector<int>>();
-    std::transform(input_shapes.begin(), input_shapes.end(), std::back_inserter(*embedding_shape),
-                   [](size_t dim) { return static_cast<int>(dim); });
+    (void)std::transform(input_shapes.begin(), input_shapes.end(), std::back_inserter(*embedding_shape),
+                         [](size_t dim) { return static_cast<int>(dim); });
 
     WeightPtr embedding =
       Util::MakeWeightPtr(std::make_shared<std::vector<float>>(total_dims, 0), EnableRecovery(), embedding_shape);
@@ -582,9 +582,9 @@ void ParameterServer::UpdateEmbeddings(const Key &key, const LookupIds &lookup_i
 void ParameterServer::UpdateDirtyInfo(const Key &key, const LookupIds &lookup_ids, int64_t offset) {
   if (EnableRecovery()) {
     std::set<int> sorted_ids;
-    std::for_each(lookup_ids.begin(), lookup_ids.end(), [&](uint64_t id) {
+    (void)std::for_each(lookup_ids.begin(), lookup_ids.end(), [&](uint64_t id) {
       int index = SizeToInt(id) - LongToInt(offset);
-      sorted_ids.insert(index);
+      (void)sorted_ids.insert(index);
     });
 
     auto iter = weights_dirty_info_.find(key);
@@ -592,7 +592,7 @@ void ParameterServer::UpdateDirtyInfo(const Key &key, const LookupIds &lookup_id
       MS_LOG(EXCEPTION) << "Cannot find dirty info for embedding table, key: " << key;
     }
     distributed::storage::DirtyInfo &dirty_info = iter->second;
-    std::for_each(sorted_ids.begin(), sorted_ids.end(), [&](int id) { dirty_info.push_back(id); });
+    (void)std::for_each(sorted_ids.begin(), sorted_ids.end(), [&](int id) { dirty_info.push_back(id); });
   }
 }
 
@@ -744,8 +744,8 @@ void ParameterServer::RecoverParameters(const std::vector<Key> &keys) {
         std::accumulate(input_shapes.begin(), input_shapes.end(), IntToSize(1), std::multiplies<size_t>());
 
       std::shared_ptr<std::vector<int>> embedding_shape = std::make_shared<std::vector<int>>();
-      std::transform(input_shapes.begin(), input_shapes.end(), std::back_inserter(*embedding_shape),
-                     [](size_t dim) { return static_cast<int>(dim); });
+      (void)std::transform(input_shapes.begin(), input_shapes.end(), std::back_inserter(*embedding_shape),
+                           [](size_t dim) { return static_cast<int>(dim); });
 
       PersistentWeightPtr embedding =
         std::make_shared<PersistentWeight>(std::make_shared<std::vector<float>>(total_dims, 0), embedding_shape);
@@ -767,7 +767,7 @@ void ParameterServer::RecoverParameters(const std::vector<Key> &keys) {
       embedding->Initialize(config_map);
       embedding->Restore();
       weights_[key] = embedding;
-      weights_dirty_info_.emplace(key, distributed::storage::DirtyInfo());
+      (void)weights_dirty_info_.emplace(key, distributed::storage::DirtyInfo());
     }
   }
 }
