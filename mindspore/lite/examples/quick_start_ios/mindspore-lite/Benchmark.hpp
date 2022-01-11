@@ -228,7 +228,10 @@ class Benchmark {
 
   template <typename T, typename Distribution>
   void FillInputData(int size, void *data, Distribution distribution) {
-    assert(data != nullptr);
+    if (data == nullptr) {
+      std::cout << "data is nullptr.";
+      return;
+    }
     int elements_num = size / sizeof(T);
     (void)std::generate_n(static_cast<T *>(data), elements_num,
                           [&]() { return static_cast<T>(distribution(random_engine_)); });
