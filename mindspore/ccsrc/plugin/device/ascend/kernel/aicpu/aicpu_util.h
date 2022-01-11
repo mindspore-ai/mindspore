@@ -77,6 +77,7 @@ constexpr auto kSearchSorted = "SearchSorted";
 constexpr auto kResizeBilinear = "ResizeBilinear";
 constexpr auto kResizeBilinearGrad = "ResizeBilinearGrad";
 constexpr auto kTensorScatterElements = "TensorScatterElements";
+constexpr auto kExtractGlimpse = "ExtractGlimpse";
 constexpr auto kEnvironCreate = "EnvironCreate";
 constexpr auto kEnvironSet = "EnvironSet";
 constexpr auto kEnvironGet = "EnvironGet";

@@ -374,6 +374,7 @@ constexpr auto kPriorityReplayBufferUpdate = "PriorityReplayBufferUpdate";
 constexpr auto kPriorityReplayBufferDestroy = "PriorityReplayBufferDestroy";
 constexpr auto kDenseToDenseSetOperation = "DenseToDenseSetOperation";
 constexpr auto kNonZeroOpName = "NonZero";
+constexpr auto kExtractGlimpse = "ExtractGlimpse";
 
 // Communication world group
 constexpr auto kNcclWorldGroup = "nccl_world_group";
