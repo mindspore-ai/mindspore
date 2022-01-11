@@ -398,7 +398,7 @@ bool KPynativeCellImpl::KPynativeOp(const CNodePtr &cnode, const ValuePtrList &o
   }
 
   FuncGraphPtr bprop_fg = nullptr;
-  if (IsPrimitiveEquals(prim, prim::kPrimHookBackward)) {
+  if (IsPrimitiveEquals(prim, prim::kPrimHookBackward) || IsPrimitiveEquals(prim, prim::kPrimCellBackwardHook)) {
     bprop_fg = BuildBPropCutFuncGraph(prim, cnode);
   } else if (IsPrimitiveEquals(prim, prim::kPrimMakeTuple) || IsPrimitiveEquals(prim, prim::kPrimMakeList)) {
     bprop_fg = BuildMakeSequenceBprop(prim, cnode);
@@ -906,8 +906,11 @@ FuncGraphPtr KPynativeCellImpl::BuildBPropCutFuncGraph(const PrimitivePtr &prim,
   auto func_graph = std::make_shared<FuncGraph>();
   std::vector<AnfNodePtr> outputs;
 
+  auto prim_py = prim->cast<PrimitivePyPtr>();
+  MS_EXCEPTION_IF_NULL(prim_py);
   auto bprop_cut = std::make_shared<PrimitivePy>("bprop_cut");
-  bprop_cut->CopyHookFunction(prim);
+  bprop_cut->CopyHookFunction(prim_py);
+  prim_py->AddBpropCutPrim(bprop_cut);
 
   auto cell_id = GetValue<std::string>(prim->GetAttr("cell_id"));
   if (cell_id != "") {

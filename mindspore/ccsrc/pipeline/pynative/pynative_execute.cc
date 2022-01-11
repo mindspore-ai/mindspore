@@ -75,8 +75,8 @@ const size_t ARG_SIZE = 2;
 const size_t MAX_TOP_CELL_COUNTS = 20;
 
 // primitive unable to infer value for constant input in PyNative mode
-const std::set<std::string> kVmOperators = {"make_ref", "HookBackward", "InsertGradientOf", "stop_gradient",
-                                            "mixed_precision_cast"};
+const std::set<std::string> kVmOperators = {"make_ref",     "InsertGradientOf", "stop_gradient", "mixed_precision_cast",
+                                            "HookBackward", "CellBackwardHook"};
 const char kOpsFunctionModelName[] = "mindspore.ops.functional";
 const char kGrad[] = "grad";
 std::map<std::string, std::shared_ptr<session::SessionBasic>> kSessionBackends;
@@ -1728,6 +1728,22 @@ void GradExecutor::EnableOpGraphCache(bool is_enable) {
   inst->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_OP_GRAPH_CACHE, is_enable);
 }
 
+void GradExecutor::SetHookChanged(const py::object &cell) {
+  auto cell_id = GetId(cell);
+  for (const auto &top_cell : top_cell_list_) {
+    MS_EXCEPTION_IF_NULL(top_cell);
+    if (top_cell->cell_id().find(cell_id) != std::string::npos) {
+      top_cell->set_hook_changed(true);
+    }
+    const auto &sub_cells = top_cell->sub_cell_list();
+    for (const auto &sub_cell_id : sub_cells) {
+      if (sub_cell_id.find(cell_id) != std::string::npos) {
+        top_cell->set_hook_changed(true);
+      }
+    }
+  }
+}
+
 void GradExecutor::RecordGradOpInfo(const OpExecInfoPtr &op_exec_info) {
   if (!grad_flag_) {
     MS_LOG(DEBUG) << "Grad flag is set to false, no need to record op info";
@@ -2050,14 +2066,17 @@ py::object ForwardExecutor::RunOpInVM(const OpExecInfoPtr &op_exec_info) {
   MS_EXCEPTION_IF_NULL(op_exec_info->py_primitive);
 
   auto &op_inputs = op_exec_info->op_inputs;
-  if (op_exec_info->op_name == "HookBackward" || op_exec_info->op_name == "InsertGradientOf" ||
-      op_exec_info->op_name == "stop_gradient") {
+  if (op_exec_info->op_name == prim::kPrimInsertGradientOf->name() ||
+      op_exec_info->op_name == prim::kPrimStopGradient->name() ||
+      op_exec_info->op_name == prim::kPrimHookBackward->name() ||
+      op_exec_info->op_name == prim::kPrimCellBackwardHook->name()) {
     py::tuple result(op_inputs.size());
     for (size_t i = 0; i < op_inputs.size(); i++) {
       py::object input = op_inputs[i];
       auto tensor = py::cast<tensor::TensorPtr>(input);
       MS_EXCEPTION_IF_NULL(tensor);
-      if (op_exec_info->op_name == "HookBackward") {
+      if (op_exec_info->op_name == prim::kPrimHookBackward->name() ||
+          op_exec_info->op_name == prim::kPrimCellBackwardHook->name()) {
         // the input object is not a output of forward cnode, eg: parameter
         result[i] = tensor;
       } else {
@@ -2405,7 +2424,10 @@ void GradExecutor::NewGraphInner(py::object *ret, const py::object &cell, const 
       // Top cell forward run.
       const auto &pre_top_cell = top_it->second;
       MS_EXCEPTION_IF_NULL(pre_top_cell);
-      if (!pre_top_cell->is_dynamic()) {
+      if (pre_top_cell->hook_changed()) {
+        already_run_top_cell_.erase(top_it);
+        EraseTopCellFromTopCellList(pre_top_cell);
+      } else if (!pre_top_cell->is_dynamic()) {
         MS_LOG(DEBUG) << "Top cell " << cell_id << " is not dynamic, no need to run NewGraphInner again";
         ResetTopCellInfo(pre_top_cell, args);
         PushHighOrderGraphStack(pre_top_cell);
@@ -2594,7 +2616,7 @@ void GradExecutor::DoGradForCustomBprop(const py::object &cell, const py::object
     auto cell_ptr = py::cast<CellPtr>(cell);
     fake_prim->set_bprop_cls_name(cell_ptr->name());
   }
-  fake_prim->set_hook(bprop_func);
+  fake_prim->AddBackwardHookFn(0, bprop_func);
 
   const auto &cell_id = GetCellId(cell, args);
   (void)fake_prim->AddAttr("cell_id", MakeValue(cell_id));
@@ -2911,7 +2933,7 @@ py::object GradExecutor::CheckAlreadyRun(const prim::GradOperationPtr &grad, con
     auto find_top_cell = GetTopCell(check_already_run_cell_id);
     if (find_top_cell != nullptr) {
       MS_LOG(DEBUG) << "Find already run top cell";
-      forward_run = find_top_cell->forward_already_run();
+      forward_run = find_top_cell->forward_already_run() && !find_top_cell->hook_changed();
       auto curr_top_cell = top_cell();
       set_top_cell(find_top_cell);
       bool input_args_changed =
@@ -3293,6 +3315,13 @@ bool PynativeExecutor::grad_flag() const { return grad_executor()->grad_flag(); 
 
 void PynativeExecutor::set_grad_flag(bool flag) { grad_executor()->set_grad_flag(flag); }
 
+void PynativeExecutor::SetHookChanged(const py::object &cell) {
+  if (!py::isinstance<Cell>(cell)) {
+    MS_LOG(EXCEPTION) << "The 'set_hook_changed' function is only supported on Cell object!";
+  }
+  grad_executor()->SetHookChanged(cell);
+}
+
 void PynativeExecutor::set_graph_phase(const std::string &graph_phase) {
   grad_executor()->set_graph_phase(graph_phase);
 }
@@ -3475,6 +3504,7 @@ REGISTER_PYBIND_DEFINE(PynativeExecutor_, ([](const py::module *m) {
                            .def("__call__", &PynativeExecutor::Run, "pynative executor run grad graph.")
                            .def("set_graph_phase", &PynativeExecutor::set_graph_phase, "pynative set graph phase")
                            .def("grad_flag", &PynativeExecutor::grad_flag, "pynative grad flag")
+                           .def("set_hook_changed", &PynativeExecutor::SetHookChanged, "set pynative hook changed")
                            .def("set_grad_position", &PynativeExecutor::set_grad_position, "set pynative grad position")
                            .def("set_grad_flag", &PynativeExecutor::set_grad_flag, py::arg("flag") = py::bool_(false),
                                 "Executor set grad flag.")

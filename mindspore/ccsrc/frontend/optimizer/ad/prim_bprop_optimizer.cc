@@ -194,7 +194,8 @@ FuncGraphPtr PrimBpropOptimizer::OptimizeBPropFuncGraph(const FuncGraphPtr &bpro
   MS_LOG(DEBUG) << "Hash of prim " << prim->ToString() << " is:" << prim->hash();
 
   //  kPrimHookBackward
-  bool hookback_flg = IsPrimitiveEquals(prim, prim::kPrimHookBackward);
+  bool hookback_flg =
+    IsPrimitiveEquals(prim, prim::kPrimHookBackward) || IsPrimitiveEquals(prim, prim::kPrimCellBackwardHook);
   if (hookback_flg || IsPrimitiveEquals(prim, prim::kPrimMakeTuple) || IsPrimitiveEquals(prim, prim::kPrimMakeList)) {
     return GenSpecOptBprop(bprop_fg, op_args, out, prim, hookback_flg);
   }

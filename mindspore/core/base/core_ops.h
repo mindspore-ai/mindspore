@@ -768,6 +768,7 @@ GVAR_DEF(PrimitivePtr, kPrimUpdateState, std::make_shared<Primitive>("UpdateStat
 GVAR_DEF(PrimitivePtr, kPrimPartial, std::make_shared<Primitive>("Partial", kSideEffectPropagate));
 GVAR_DEF(PrimitivePtr, kPrimIdentity, std::make_shared<Primitive>("identity", kSideEffectPropagate));
 GVAR_DEF(PrimitivePtr, kPrimHookBackward, std::make_shared<Primitive>("HookBackward"));
+GVAR_DEF(PrimitivePtr, kPrimCellBackwardHook, std::make_shared<Primitive>("CellBackwardHook"));
 GVAR_DEF(PrimitivePtr, kPrimPrintShapeType, std::make_shared<Primitive>("PrintShapeType"));
 GVAR_DEF(PrimitivePtr, kPrimSameTypeShape, std::make_shared<Primitive>("SameTypeShape"));
 GVAR_DEF(PrimitivePtr, kPrimPrint, std::make_shared<Primitive>("Print"));

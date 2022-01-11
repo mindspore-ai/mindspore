@@ -78,6 +78,8 @@ class TopCellInfo {
   void set_grad_order(size_t grad_order) { grad_order_ = grad_order; }
   bool is_dynamic() const { return is_dynamic_; }
   void set_is_dynamic(bool is_dynamic) { is_dynamic_ = is_dynamic; }
+  bool hook_changed() const { return hook_changed_; }
+  void set_hook_changed(bool hook_changed) { hook_changed_ = hook_changed; }
   bool vm_compiled() const { return vm_compiled_; }
   void set_vm_compiled(bool vm_compiled) { vm_compiled_ = vm_compiled; }
   bool ms_function_flag() const { return ms_function_flag_; }
@@ -123,6 +125,7 @@ class TopCellInfo {
   bool is_topest_{false};
   bool is_dynamic_{false};
   bool vm_compiled_{false};
+  bool hook_changed_{false};
   bool ms_function_flag_{false};
   bool is_init_kpynative_{false};
   bool forward_already_run_{false};
@@ -191,6 +194,7 @@ class GradExecutor {
   size_t GetHighOrderStackSize() const { return high_order_stack_.size(); }
   TopCellInfoPtr GetTopCell(const string &already_run_cell_id);
   void EnableOpGraphCache(bool is_enable);
+  void SetHookChanged(const py::object &cell);
   bool need_renormalize() const { return need_renormalize_; }
   bool enable_op_cache() const { return enable_op_cache_; }
   bool grad_is_running() const { return grad_is_running_; }
@@ -397,6 +401,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   void set_graph_phase(const std::string &graph_phase);
   void set_py_exe_path(const py::object &py_exe_path);
   void set_kernel_build_server_dir(const py::object &kernel_build_server_dir);
+  void SetHookChanged(const py::object &cell);
   void NewGraph(const py::object &cell, const py::args &args);
   void EndGraph(const py::object &cell, const py::object &out, const py::args &args);
   void GradNet(const prim::GradOperationPtr &grad, const py::object &cell, const py::object &weights,

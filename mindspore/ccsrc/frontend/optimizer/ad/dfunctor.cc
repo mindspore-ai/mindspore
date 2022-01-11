@@ -186,6 +186,52 @@ static bool HasSideEffectBackProp(const CNodePtr &cnode) {
   return false;
 }
 
+static AnfNodePtr SkipHookNodeInBackProp(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (IsPrimitiveCNode(node, prim::kPrimHookBackward) || IsPrimitiveCNode(node, prim::kPrimCellBackwardHook)) {
+    MS_LOG(WARNING)
+      << "Hook operation does not work in graph mode or ms_function, it will be eliminated during compilation.";
+    auto output_cnode = node->cast<CNodePtr>();
+    if (output_cnode->size() - 1 == 1) {
+      return output_cnode->input(1);
+    }
+    // Replace hook node with make tuple node.
+    abstract::AbstractBasePtrList multi_output_abs;
+    std::vector<AnfNodePtr> multi_output_nodes{NewValueNode(prim::kPrimMakeTuple)};
+    std::for_each(output_cnode->inputs().begin() + 1, output_cnode->inputs().end(),
+                  [&multi_output_nodes, &multi_output_abs](const AnfNodePtr &inp) {
+                    MS_EXCEPTION_IF_NULL(inp);
+                    multi_output_nodes.emplace_back(inp);
+                    multi_output_abs.emplace_back(inp->abstract());
+                  });
+    auto primal_graph = node->func_graph();
+    MS_EXCEPTION_IF_NULL(primal_graph);
+    auto make_tuple = primal_graph->NewCNode(std::move(multi_output_nodes));
+    make_tuple->set_abstract(std::make_shared<abstract::AbstractTuple>(multi_output_abs));
+    auto mng = primal_graph->manager();
+    MS_EXCEPTION_IF_NULL(mng);
+    if (!mng->Replace(node, make_tuple)) {
+      MS_LOG(EXCEPTION) << "Failed to replace old node: " << node->DebugString()
+                        << " with new node: " << make_tuple->DebugString();
+    }
+    return make_tuple;
+  }
+  if (IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
+    auto tuple_get_item = node->cast<CNodePtr>();
+    auto inp = tuple_get_item->input(1);
+    if (IsPrimitiveCNode(inp, prim::kPrimHookBackward) || IsPrimitiveCNode(inp, prim::kPrimCellBackwardHook)) {
+      MS_LOG(WARNING)
+        << "Hook operation does not work in graph mode or ms_function, it will be eliminated during compilation.";
+      constexpr size_t idx = 2;
+      auto v_node = tuple_get_item->input(idx)->cast<ValueNodePtr>();
+      MS_EXCEPTION_IF_NULL(v_node);
+      auto out_idx = GetValue<int64_t>(v_node->value());
+      return inp->cast<CNodePtr>()->input(out_idx + 1);
+    }
+  }
+  return node;
+}
+
 AnfNodePtr HandleRealToComplex(const AnfNodePtr &input, const CNodePtr &din, const FuncGraphPtr &fg) {
   MS_EXCEPTION_IF_NULL(input);
   TypePtr input_type = input->Type();
@@ -244,12 +290,7 @@ void DFunctor::BackPropagate(const CNodePtr &cnode_morph, const CNodePtr &k_app,
   }
   for (size_t i = 0; i < cnode_morph->size(); i++) {
     auto din = tape_->NewCNode({NewValueNode(prim::kPrimTupleGetItem), bprop_app, NewValueNode(SizeToLong(i))});
-    auto input = cnode_morph->input(i);
-    // Skip HookBackward op
-    if (IsPrimitiveCNode(input, prim::kPrimHookBackward)) {
-      auto inp_i = input->cast<CNodePtr>();
-      input = inp_i->input(1);
-    }
+    auto input = SkipHookNodeInBackProp(cnode_morph->input(i));
     auto din_with_real = HandleRealToComplex(input, din, tape_);
     MS_EXCEPTION_IF_NULL(din_with_real);
     din = din_with_real->cast<CNodePtr>();
@@ -299,14 +340,7 @@ AdjointPtr DFunctor::MapMorphism(const AnfNodePtr &morph) {
   std::vector<AnfNodePtr> inputs;
   std::vector<AdjointPtr> param_adjoints;
   for (size_t i = 0; i < cnode_morph->size(); i++) {
-    auto node = cnode_morph->input(i);
-    // Skip HookBackward op
-    if (IsPrimitiveCNode(node, prim::kPrimHookBackward)) {
-      auto input_i = node->cast<CNodePtr>();
-      MS_LOG(WARNING)
-        << "Hook operation does not work in graph mode or ms_function, it will be eliminated during compilation.";
-      node = input_i->input(1);
-    }
+    auto node = SkipHookNodeInBackProp(cnode_morph->input(i));
     AdjointPtr node_adjoint = nullptr;
     auto node_adjoint_iter = anfnode_to_adjoin_.find(node);
     if (node_adjoint_iter != anfnode_to_adjoin_.end()) {
@@ -457,14 +491,9 @@ void DFunctor::MapMorphism() {
 
   // Handle free morphism before output, because in some case, free morphism might depend on output's fv tangent
   MapFreeMorphism();
-  // Skip HookBackward when it is the output node.
+  // Skip HookBackward op and CellBackwardHook op when it is the output node.
   auto output_node = primal_graph_->output();
-  if (IsPrimitiveCNode(output_node, prim::kPrimHookBackward)) {
-    auto output_cnode = output_node->cast<CNodePtr>();
-    MS_LOG(WARNING)
-      << "Hook operation does not work in graph mode or ms_function, it will be eliminated during compilation.";
-    output_node = output_cnode->input(1);
-  }
+  output_node = SkipHookNodeInBackProp(output_node);
   // Handle morphism from output.
   (void)MapMorphism(output_node);
 
@@ -662,7 +691,9 @@ void DFunctor::MapValueObject() {
     if (IsValueNode<Primitive>(node)) {  // Primitive.
       auto prim = GetValueNode<PrimitivePtr>(node);
       if (GetValueNode<PrimitivePtr>(node) == prim::kPrimReturn ||
-          (prim->Hash() == prim::kPrimHookBackward->Hash() && prim->name() == prim::kPrimHookBackward->name())) {
+          (prim->Hash() == prim::kPrimHookBackward->Hash() && prim->name() == prim::kPrimHookBackward->name()) ||
+          (prim->Hash() == prim::kPrimCellBackwardHook->Hash() &&
+           prim->name() == prim::kPrimCellBackwardHook->name())) {
         continue;
       }
       MS_LOG(DEBUG) << "Map Primitive node " << node->DebugString() << ".";

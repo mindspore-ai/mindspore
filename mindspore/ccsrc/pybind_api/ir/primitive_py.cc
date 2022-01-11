@@ -55,6 +55,54 @@ void SyncData(const py::object &arg) {
     tensor->data_sync();
   }
 }
+
+void ConvertCTensorToPyTensor(const py::tuple &input_args, py::tuple *convert_args) {
+  MS_EXCEPTION_IF_NULL(convert_args);
+  if (input_args.size() != (*convert_args).size()) {
+    MS_LOG(EXCEPTION) << "The size of input_args: " << input_args.size()
+                      << " should be equal to the size of convert_args: " << (*convert_args).size();
+  }
+  for (size_t i = 0; i < input_args.size(); ++i) {
+    if (py::isinstance<tensor::Tensor>(input_args[i])) {
+      (*convert_args)[i] = parse::python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE,
+                                                           parse::PYTHON_MOD_CONVERT_TO_MS_TENSOR, input_args[i]);
+    } else if (py::isinstance<py::tuple>(input_args[i])) {
+      auto tuple_inp_arg = py::cast<py::tuple>(input_args[i]);
+      py::tuple convert_tuple_arg(tuple_inp_arg.size());
+      ConvertCTensorToPyTensor(tuple_inp_arg, &convert_tuple_arg);
+      (*convert_args)[i] = convert_tuple_arg;
+    } else {
+      (*convert_args)[i] = input_args[i];
+    }
+  }
+}
+
+py::tuple ConstructCellHookFnArgs(const std::string &cell_id, const py::object &grad_input,
+                                  const py::object &grad_output) {
+  constexpr size_t grad_input_index = 1;
+  constexpr size_t grad_output_index = 2;
+  constexpr size_t input_args_nums = 3;
+  // Convert c++ object to python object.
+  py::tuple c_grad_args(input_args_nums - 1);
+  c_grad_args[0] = grad_input;
+  c_grad_args[1] = grad_output;
+  py::tuple py_grad_args(input_args_nums - 1);
+  ConvertCTensorToPyTensor(c_grad_args, &py_grad_args);
+  // Get tuple args of cell hook function.
+  py::tuple hook_fn_args(input_args_nums);
+  hook_fn_args[0] = cell_id;
+  if (!py::isinstance<py::tuple>(py_grad_args[0])) {
+    hook_fn_args[grad_input_index] = py::make_tuple(py_grad_args[0]);
+  } else {
+    hook_fn_args[grad_input_index] = py_grad_args[0];
+  }
+  if (!py::isinstance<py::tuple>(py_grad_args[1])) {
+    hook_fn_args[grad_output_index] = py::make_tuple(py_grad_args[1]);
+  } else {
+    hook_fn_args[grad_output_index] = py_grad_args[1];
+  }
+  return hook_fn_args;
+}
 }  // namespace
 std::map<std::string, py::object> PrimitivePy::hook_grad_;
 
@@ -68,7 +116,9 @@ PrimitivePy::PrimitivePy(const py::object &python_obj, const PrimitivePyAdapterP
   Primitive::set_prim_type(adapter->prim_type_);
   Primitive::set_const_prim(adapter->is_const_prim_);
   Primitive::set_const_input_indexes(adapter->const_input_indexes_);
-  set_hook(adapter->hook_);
+  for (const auto &elem : adapter->backward_hook_fn_) {
+    AddBackwardHookFn(elem.first, elem.second);
+  }
   set_instance_name(adapter->instance_name_);
 }
 PrimitivePy::~PrimitivePy() {}
@@ -91,7 +141,9 @@ py::function PrimitivePy::GetBpropFunction() {
 
 py::tuple check_bprop_out(const py::object &grads_obj, const py::tuple &py_args, const std::string &bprop_cls_name) {
   py::tuple grads;
-  if (!py::isinstance<py::tuple>(grads_obj)) {
+  if (py::isinstance<py::none>(grads_obj)) {
+    MS_EXCEPTION(TypeError) << "The 'grads_obj' is none.";
+  } else if (!py::isinstance<py::tuple>(grads_obj)) {
     grads = py::make_tuple(grads_obj);
   } else {
     grads = py::cast<py::tuple>(grads_obj);
@@ -138,21 +190,37 @@ py::tuple check_bprop_out(const py::object &grads_obj, const py::tuple &py_args,
   return grads;
 }
 
-void PrimitivePy::ConvertCTensorToPyTensor(const py::tuple &input_args, py::tuple *convert_args) const {
-  MS_EXCEPTION_IF_NULL(convert_args);
-  if (input_args.size() != (*convert_args).size()) {
-    MS_LOG(EXCEPTION) << "The size of input_args: " << input_args.size()
-                      << " should be equal to the size of convert_args: " << (*convert_args).size();
-  }
-  for (size_t i = 0; i < input_args.size(); ++i) {
-    (*convert_args)[i] = py::isinstance<tensor::Tensor>(input_args[i])
-                           ? parse::python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE,
-                                                             parse::PYTHON_MOD_CONVERT_TO_MS_TENSOR, input_args[i])
-                           : input_args[i];
+void PrimitivePy::AddBpropCutPrim(const PrimitivePyPtr &bprop_cut_prim) {
+  MS_EXCEPTION_IF_NULL(bprop_cut_prim);
+  bprop_cut_prims_.emplace_back(bprop_cut_prim);
+}
+
+void PrimitivePy::AddBackwardHookFn(const int &key, const py::function &backward_hook_fn) {
+  backward_hook_fn_[key] = backward_hook_fn;
+  for (const auto &elem : bprop_cut_prims_) {
+    PrimitivePyPtr bprop_cut_prim = elem.lock();
+    if (bprop_cut_prim != nullptr) {
+      bprop_cut_prim->AddBackwardHookFn(key, backward_hook_fn);
+    }
   }
 }
 
-void PrimitivePy::CheckHookConsistency(const py::object &grad_out, const py::object &expected_grad_out) const {
+void PrimitivePy::RemoveBackwardHookFn(const int &key) {
+  auto iter = backward_hook_fn_.find(key);
+  if (iter != backward_hook_fn_.end()) {
+    backward_hook_fn_.erase(key);
+  }
+  // Remove hook_fn for bprop cut prim on grad graph.
+  for (const auto &elem : bprop_cut_prims_) {
+    PrimitivePyPtr bprop_cut_prim = elem.lock();
+    if (bprop_cut_prim != nullptr) {
+      bprop_cut_prim->RemoveBackwardHookFn(key);
+    }
+  }
+}
+
+void PrimitivePy::CheckHookConsistency(const py::object &grad_out, const py::object &expected_grad_out,
+                                       const py::object &code_obj, const py::object &co_name) const {
   if (py::isinstance<py::tuple>(expected_grad_out)) {
     if (!py::isinstance<py::tuple>(grad_out)) {
       hook_grad_.clear();
@@ -166,15 +234,13 @@ void PrimitivePy::CheckHookConsistency(const py::object &grad_out, const py::obj
                                << ", but it is " << actual_out_tuple.size();
     }
     for (size_t i = 0; i < expected_out_tuple.size(); ++i) {
-      CheckHookConsistency(actual_out_tuple[i], expected_out_tuple[i]);
+      CheckHookConsistency(actual_out_tuple[i], expected_out_tuple[i], code_obj, co_name);
     }
   }
 
   if (py::isinstance<tensor::Tensor>(expected_grad_out)) {
     if (!py::isinstance<tensor::Tensor>(grad_out)) {
       hook_grad_.clear();
-      py::object code_obj = py::getattr(hook_, "__code__");
-      py::object co_name = py::getattr(code_obj, "co_name");
       MS_EXCEPTION(TypeError) << "The output type of:" << py::str(co_name) << " should be a tensor but got "
                               << py::cast<std::string>(grad_out.attr("__class__").attr("__name__")) << ".";
     }
@@ -184,8 +250,6 @@ void PrimitivePy::CheckHookConsistency(const py::object &grad_out, const py::obj
     MS_EXCEPTION_IF_NULL(expected_out_tensor);
     if (actual_out_tensor->GetShapeAndDataTypeInfo() != expected_out_tensor->GetShapeAndDataTypeInfo()) {
       hook_grad_.clear();
-      py::object code_obj = py::getattr(hook_, "__code__");
-      py::object co_name = py::getattr(code_obj, "co_name");
       MS_EXCEPTION(ValueError) << "The output type of " << py::str(co_name)
                                << " is not consistent with the expected, it should be "
                                << expected_out_tensor->GetShapeAndDataTypeInfo() << ", but got "
@@ -195,24 +259,31 @@ void PrimitivePy::CheckHookConsistency(const py::object &grad_out, const py::obj
 }
 
 BaseRef PrimitivePy::RunCellBpropFunction(const py::tuple &py_args) const {
+  if (backward_hook_fn_.size() > 1) {
+    MS_LOG(EXCEPTION) << "Multiple registration of bprop function is not supported.";
+  }
   SyncData(py_args);
-  auto size = py_args.size();
-  constexpr size_t grad_param_nums = 2;
-  py::tuple input_args(size - grad_param_nums);
-  for (size_t i = 0; i < size - grad_param_nums; ++i) {
+  py::tuple converted_args(py_args.size());
+  ConvertCTensorToPyTensor(py_args, &converted_args);
+  constexpr size_t non_inp_args_size = 2;  // out and dout.
+  auto inp_args_size = py_args.size() - non_inp_args_size;
+  py::tuple input_args(inp_args_size);
+  for (size_t i = 0; i < inp_args_size; ++i) {
     input_args[i] = py_args[i];
   }
-  py::tuple convert_args(py_args.size());
-  ConvertCTensorToPyTensor(py_args, &convert_args);
+  // Run bprop function.
   auto inst = pynative::PynativeExecutor::GetInstance();
   MS_EXCEPTION_IF_NULL(inst);
   try {
-    MS_LOG(DEBUG) << "Run bprop function start";
-    inst->NewGraph(hook_, input_args.cast<py::args>());
-    py::object grads_obj = hook_(*convert_args);
-    py::tuple grads = check_bprop_out(grads_obj, py_args, bprop_cls_name_);
-    inst->EndGraph(hook_, grads_obj, input_args.cast<py::args>());
-    MS_LOG(DEBUG) << "Run bprop function end";
+    MS_LOG(DEBUG) << "Run bprop function start.";
+    py::tuple grads;
+    for (const auto &elem : backward_hook_fn_) {
+      inst->NewGraph(elem.second, input_args.cast<py::args>());
+      py::object grads_obj = elem.second(*converted_args);
+      grads = check_bprop_out(grads_obj, py_args, bprop_cls_name_);
+      inst->EndGraph(elem.second, grads_obj, input_args.cast<py::args>());
+    }
+    MS_LOG(DEBUG) << "Run bprop function end.";
     return std::make_shared<PyObjectRef>(grads);
   } catch (std::exception &bt) {
     inst->ClearRes();
@@ -221,62 +292,61 @@ BaseRef PrimitivePy::RunCellBpropFunction(const py::tuple &py_args) const {
 }
 
 BaseRef PrimitivePy::RunCellHookFunction(const py::tuple &py_args) const {
-  constexpr size_t grad_input_index = 1;
-  constexpr size_t grad_output_index = 2;
-  constexpr size_t input_param_nums = 3;
-  SyncData(py_args[grad_output_index]);
-
-  py::object obj;
+  // Get the gradient passed to current bprop cut op.
+  const auto args_size = py_args.size();
+  py::object grad_output = py_args[args_size - 1];
+  // Get the cell id.
   auto cell_id = GetValue<std::string>(this->GetAttr(kCellIDAttrName));
   auto iter = hook_grad_.find(cell_id);
   if (iter != hook_grad_.end()) {
-    py::object code_obj = py::getattr(hook_, "__code__");
-    py::object co_name = py::getattr(code_obj, "co_name");
-    if (std::string(py::str(co_name)) == "staging_specialize") {
-      py::object name_obj = py::getattr(hook_, "__name__");
-      MS_LOG(EXCEPTION) << "Decorating hook function " << py::str(name_obj) << " with '@ms_function' is not supported.";
+    // The second bprop_cut used to hook output gradient of cell.
+    for (const auto &elem : backward_hook_fn_) {
+      py::object code_obj = py::getattr(elem.second, "__code__");
+      py::object co_name = py::getattr(code_obj, "co_name");
+      if (std::string(py::str(co_name)) == "staging_specialize") {
+        py::object name_obj = py::getattr(elem.second, "__name__");
+        MS_LOG(EXCEPTION) << "Decorating hook function " << py::str(name_obj)
+                          << " with '@ms_function' is not supported.";
+      }
+      SyncData(grad_output);
+      py::tuple hook_fn_args = ConstructCellHookFnArgs(cell_id, iter->second, grad_output);
+      py::object ret = elem.second(*hook_fn_args);
+      if (!py::isinstance<py::none>(ret)) {
+        grad_output = ret;
+      }
+      CheckHookConsistency(grad_output, py_args[args_size - 1], code_obj, co_name);
     }
-
-    py::tuple convert_args(input_param_nums - 1);
-    py::tuple input_args(input_param_nums - 1);
-    input_args[0] = iter->second;
-    input_args[1] = py_args[grad_output_index];
-    ConvertCTensorToPyTensor(input_args, &convert_args);
-    auto hook_args = py::tuple(input_param_nums);
-    hook_args[0] = cell_id;
-    hook_args[grad_input_index] = py::make_tuple(convert_args[0]);
-    hook_args[grad_output_index] = py::make_tuple(convert_args[1]);
-    obj = hook_(*hook_args);
-    if (py::isinstance<py::none>(obj)) {
-      obj = py_args[grad_output_index];
-    }
-    CheckHookConsistency(obj, py_args[grad_output_index]);
     (void)hook_grad_.erase(cell_id);
   } else {
-    hook_grad_[cell_id] = py_args[grad_output_index];
-    obj = py_args[grad_output_index];
+    // The first bprop_cut used to hook input gradient of cell.
+    SyncData(grad_output);
+    hook_grad_[cell_id] = grad_output;
   }
-  obj = py::make_tuple(obj);
-  return std::make_shared<PyObjectRef>(obj);
+  if (!py::isinstance<py::tuple>(grad_output)) {
+    grad_output = py::make_tuple(grad_output);
+  }
+  return std::make_shared<PyObjectRef>(grad_output);
 }
 
 BaseRef PrimitivePy::RunVariableHookFunction(const py::tuple &py_args) const {
-  py::object code_obj = py::getattr(hook_, "__code__");
-  py::object co_name = py::getattr(code_obj, "co_name");
-  if (std::string(py::str(co_name)) == "staging_specialize") {
-    py::object name_obj = py::getattr(hook_, "__name__");
-    MS_LOG(EXCEPTION) << "Decorating hook function " << py::str(name_obj) << " with '@ms_function' is not supported.";
-  }
-
   constexpr size_t grad_output_index = 2;
-  SyncData(py_args[grad_output_index]);
-  py::object obj = hook_(py::make_tuple(py_args[grad_output_index]));
-  if (py::isinstance<py::none>(obj)) {
-    obj = py_args[grad_output_index];
+  py::object grad_output = py_args[grad_output_index];
+  for (const auto &elem : backward_hook_fn_) {
+    py::object code_obj = py::getattr(elem.second, "__code__");
+    py::object co_name = py::getattr(code_obj, "co_name");
+    if (std::string(py::str(co_name)) == "staging_specialize") {
+      py::object name_obj = py::getattr(elem.second, "__name__");
+      MS_LOG(EXCEPTION) << "Decorating hook function " << py::str(name_obj) << " with '@ms_function' is not supported.";
+    }
+    SyncData(grad_output);
+    py::object ret = elem.second(py::make_tuple(grad_output));
+    if (!py::isinstance<py::none>(ret)) {
+      grad_output = ret;
+    }
+    CheckHookConsistency(grad_output, py_args[grad_output_index], code_obj, co_name);
   }
-  CheckHookConsistency(obj, py_args[grad_output_index]);
-  obj = py::make_tuple(obj);
-  return std::make_shared<PyObjectRef>(obj);
+  grad_output = py::make_tuple(grad_output);
+  return std::make_shared<PyObjectRef>(grad_output);
 }
 
 BaseRef PrimitivePy::RunHookFunction(const VectorRef &args) const {
@@ -321,14 +391,12 @@ py::dict PrimitivePy::GetAttrDict() {
   return attr_dict;
 }
 
-void PrimitivePy::CopyHookFunction(const PrimitivePtr &primitive) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  if (!primitive->isa<PrimitivePy>()) {
-    MS_LOG(EXCEPTION) << "Cannot copy a primitive which is not python primitive hook function to python primitive!";
-  }
-  auto primitive_py = primitive->cast<PrimitivePyPtr>();
+void PrimitivePy::CopyHookFunction(const PrimitivePyPtr &primitive_py) {
   MS_EXCEPTION_IF_NULL(primitive_py);
-  this->set_hook(primitive_py->hook());
+  const auto &backward_hook_fn = primitive_py->backward_hook_fn();
+  for (const auto &elem : backward_hook_fn) {
+    AddBackwardHookFn(elem.first, elem.second);
+  }
   if (primitive_py->HasAttr(kBpropAttrName)) {
     set_bprop_cls_name(primitive_py->bprop_cls_name_);
     (void)this->AddAttr(kBpropAttrName, primitive_py->GetAttr(kBpropAttrName));
@@ -500,11 +568,24 @@ void PrimitivePyAdapter::set_signatures(const std::vector<Signature> &signatures
   }
 }
 
-void PrimitivePyAdapter::set_hook(const py::function &hook) {
-  hook_ = hook;
+int PrimitivePyAdapter::AddBackwardHookFn(const py::function &backward_hook_fn) {
+  ++backward_hook_fn_key_;
+  backward_hook_fn_[backward_hook_fn_key_] = backward_hook_fn;
   auto prim = attached_primitive_.lock();
   if (prim != nullptr) {
-    prim->set_hook(hook);
+    prim->AddBackwardHookFn(backward_hook_fn_key_, backward_hook_fn);
+  }
+  return backward_hook_fn_key_;
+}
+
+void PrimitivePyAdapter::RemoveBackwardHookFn(int key) {
+  auto iter = backward_hook_fn_.find(key);
+  if (iter != backward_hook_fn_.end()) {
+    backward_hook_fn_.erase(iter);
+  }
+  auto prim = attached_primitive_.lock();
+  if (prim != nullptr) {
+    prim->RemoveBackwardHookFn(key);
   }
 }
 
@@ -524,27 +605,28 @@ void PrimitivePyAdapter::set_attached_primitive(const PrimitivePyPtr &prim) {
   attached_primitive_ = prim;
 }
 
-REGISTER_PYBIND_DEFINE(Primitive_, ([](const py::module *m) {
-                         (void)py::enum_<PrimType>(*m, "prim_type", py::arithmetic())
-                           .value("unknown", PrimType::kPrimTypeUnknown)
-                           .value("builtin", PrimType::kPrimTypeBuiltIn)
-                           .value("py_infer_shape", PrimType::kPrimTypePyInfer)
-                           .value("user_custom", PrimType::kPrimTypeUserCustom)
-                           .value("py_infer_check", PrimType::kPrimTypePyCheck);
-                         (void)py::class_<PrimitivePyAdapter, std::shared_ptr<PrimitivePyAdapter>>(*m, "Primitive_")
-                           .def_readonly(PYTHON_PRIMITIVE_FLAG, &PrimitivePyAdapter::parse_info_)
-                           .def(py::init<py::str &>())
-                           .def("add_attr", &PrimitivePyAdapter::AddPyAttr, "add primitive attr")
-                           .def("del_attr", &PrimitivePyAdapter::DelPyAttr, "del primitive attr")
-                           .def("get_attr_dict", &PrimitivePyAdapter::GetAttrDict, "get primitive attr")
-                           .def("set_prim_type", &PrimitivePyAdapter::set_prim_type, "Set primitive type.")
-                           .def("set_const_prim", &PrimitivePyAdapter::set_const_prim, "Set primitive is const.")
-                           .def("set_const_input_indexes", &PrimitivePyAdapter::set_const_input_indexes,
-                                "Set primitive const input indexes.")
-                           .def("set_signatures", &PrimitivePyAdapter::set_signatures,
-                                "Set primitive inputs signature.")
-                           .def("register_hook", &PrimitivePyAdapter::set_hook, "Set primitive hook function.")
-                           .def("set_instance_name", &PrimitivePyAdapter::set_instance_name,
-                                "Set primitive instance name.");
-                       }));
+REGISTER_PYBIND_DEFINE(
+  Primitive_, ([](const py::module *m) {
+    (void)py::enum_<PrimType>(*m, "prim_type", py::arithmetic())
+      .value("unknown", PrimType::kPrimTypeUnknown)
+      .value("builtin", PrimType::kPrimTypeBuiltIn)
+      .value("py_infer_shape", PrimType::kPrimTypePyInfer)
+      .value("user_custom", PrimType::kPrimTypeUserCustom)
+      .value("py_infer_check", PrimType::kPrimTypePyCheck);
+    (void)py::class_<PrimitivePyAdapter, std::shared_ptr<PrimitivePyAdapter>>(*m, "Primitive_")
+      .def_readonly(PYTHON_PRIMITIVE_FLAG, &PrimitivePyAdapter::parse_info_)
+      .def(py::init<py::str &>())
+      .def("add_attr", &PrimitivePyAdapter::AddPyAttr, "add primitive attr")
+      .def("del_attr", &PrimitivePyAdapter::DelPyAttr, "del primitive attr")
+      .def("get_attr_dict", &PrimitivePyAdapter::GetAttrDict, "get primitive attr")
+      .def("set_prim_type", &PrimitivePyAdapter::set_prim_type, "Set primitive type.")
+      .def("set_const_prim", &PrimitivePyAdapter::set_const_prim, "Set primitive is const.")
+      .def("set_const_input_indexes", &PrimitivePyAdapter::set_const_input_indexes,
+           "Set primitive const input indexes.")
+      .def("set_signatures", &PrimitivePyAdapter::set_signatures, "Set primitive inputs signature.")
+      .def("add_backward_hook_fn", &PrimitivePyAdapter::AddBackwardHookFn, "Add primitive backward hook function.")
+      .def("remove_backward_hook_fn", &PrimitivePyAdapter::RemoveBackwardHookFn,
+           "Remove primitive backward hook function.")
+      .def("set_instance_name", &PrimitivePyAdapter::set_instance_name, "Set primitive instance name.");
+  }));
 }  // namespace mindspore

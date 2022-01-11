@@ -505,6 +505,9 @@ class _PynativeExecutor:
     def is_top_cell(self):
         return self._executor.is_top_cell()
 
+    def set_hook_changed(self, cell):
+        self._executor.set_hook_changed(cell)
+
     def __call__(self, obj, *args, **kwargs):
         args = args + tuple(kwargs.values())
         return self._executor(obj, args)

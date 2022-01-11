@@ -18,12 +18,13 @@ import inspect
 import os
 import time
 from collections import OrderedDict
-
+from types import FunctionType, MethodType
 import numpy
 
 from mindspore._checkparam import args_type_check
 from mindspore import log as logger
 from mindspore.common.parameter import PARAMETER_NAME_DEFAULT
+from mindspore.common.hook_handle import HookHandle
 from mindspore.context import ParallelMode
 from .. import context
 from .._c_expression import init_pipeline, update_func_graph_hyper_params, Cell_, FuncGraph, MixedPrecisionType
@@ -32,8 +33,9 @@ from ..common import dtype as mstype
 from ..common.api import _cell_graph_executor, _pynative_executor, _check_all_tensor, cells_compile_cache
 from ..common.parameter import Parameter, ParameterTuple
 from ..common.tensor import Tensor, CSRTensor
-from ..ops.operations import HookBackward, Cast
+from ..ops.operations import Cast
 from ..ops.primitive import Primitive
+from ..ops.operations import _inner_ops as inner
 from ..parallel._tensor import _load_tensor_by_layout
 
 
@@ -80,10 +82,10 @@ class Cell(Cell_):
 
     IGNORE_LIST = ['_scope', '_cell_init_args', '_auto_prefix', '_cells', '_params', '_construct_inputs_names',
                    '_construct_inputs_num', '_create_time', '_mindspore_flags', '_parallel_inputs_run',
-                   '_parameter_layout_dict', '_params_list', '_tensor_list', '_phase',
-                   '_auto_parallel_mode', '_backward_hook', '_bprop_debug', '_is_run', '_param_prefix',
-                   '_attr_synced', 'enable_hook', 'pynative', 'requires_grad',
-                   '_auto_parallel_compile_and_run', 'cell_type']
+                   '_parameter_layout_dict', '_params_list', '_tensor_list', '_phase', '_auto_parallel_mode',
+                   'forward_pre_hook', 'forward_hook', '_enable_forward_pre_hook', '_enable_forward_hook',
+                   '_bprop_debug', 'enable_backward_hook', 'cell_backward_hook', '_is_run', '_param_prefix',
+                   '_attr_synced', 'pynative', 'requires_grad', '_auto_parallel_compile_and_run', 'cell_type']
 
     def __init__(self, auto_prefix=True, flags=None):
         Cell_.__init__(self, self._cell_tag)
@@ -123,9 +125,13 @@ class Cell(Cell_):
         self._parallel_inputs_run = None
         if flags:
             self.add_flags(**flags)
-        self._backward_hook = None
-        self.enable_hook = False
         self._bprop_debug = False
+        self.forward_pre_hook = OrderedDict()
+        self.forward_hook = OrderedDict()
+        self._enable_forward_pre_hook = False
+        self._enable_forward_hook = False
+        self.enable_backward_hook = False
+        self.cell_backward_hook = None
         self.cell_type = None
         self._auto_parallel_compile_and_run = False
         self.cast = Cast()
@@ -374,10 +380,14 @@ class Cell(Cell_):
                 self.parameter_broadcast_done = True
 
     def run_construct(self, cast_inputs, kwargs):
-        if self.enable_hook:
-            output = self._hook_construct(*cast_inputs)
+        if self._enable_forward_pre_hook:
+            cast_inputs = self.run_forward_pre_hook(cast_inputs)
+        if self.enable_backward_hook:
+            output = self.run_backward_hook(*cast_inputs)
         else:
             output = self.construct(*cast_inputs, **kwargs)
+        if self._enable_forward_hook:
+            output = self.run_forward_hook(cast_inputs, output)
         return output
 
     def _check_construct_args(self, *inputs, **kwargs):
@@ -466,9 +476,9 @@ class Cell(Cell_):
         # Run in Graph mode.
         if context._get_mode() == context.GRAPH_MODE:
             self._check_construct_args(*args, **kwargs)
-            if self.enable_hook:
-                raise ValueError("For 'Cell', it's not support hook function in graph mode, please use "
-                                 "context.set_context to set pynative mode.")
+            if self._enable_forward_pre_hook or self._enable_forward_hook or self.enable_backward_hook:
+                logger.warning(f"For 'Cell', it's not support hook function in graph mode, please use "
+                               f"context.set_context to set pynative mode.")
             out = self.compile_and_run(*args)
             return out
 
@@ -1442,33 +1452,295 @@ class Cell(Cell_):
         self.add_flags(auto_parallel=True)
         self._get_construct_inputs_number_and_name()
 
-    def _hook_construct(self, *inputs):
-        """Hook construct method to replace original construct method when hook function enabled."""
-        inputs = self._backward_hook(*inputs)
-        inputs = self.construct(inputs)
-        outputs = self._backward_hook(inputs)
-        return outputs
-
-    def register_backward_hook(self, fn):
+    def run_forward_pre_hook(self, inputs):
         """
-        Set the cell backward hook function. Note that this function is only supported in pynative mode.
-
-        Note:
-            fn must be defined as the following code. `cell_name` is the name of registered cell.
-            `grad_input` is gradient passed to the cell. `grad_output` is the gradient computed and passed to the
-            next cell or primitive, which may be modified and returned.
-            hook_fn(cell_name, grad_input, grad_output) -> Tensor or None.
+        Running forward pre hook function registered in Cell object.
 
         Args:
-            fn (function): Specifies the hook function with grad as input.
+            inputs: The input objects of Cell object.
 
+        Returns:
+            - **outputs** - New input objects or none.
+
+        Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+        """
+        cell_id = self.cls_name + "(" + str(id(self)) + ")"
+        for fn in self.forward_pre_hook.values():
+            ret = fn(cell_id, inputs)
+            if ret is not None:
+                if not isinstance(ret, tuple):
+                    inputs = (ret,)
+                else:
+                    inputs = ret
+        return inputs
+
+    def register_forward_pre_hook(self, hook_fn):
+        """
+        Register forward pre hook function for Cell object. Note that this function is only supported in pynative mode.
+
+        Note:
+            'hook_fn' must be defined as the following code.
+            `cell_id` is the information of registered Cell object. `inputs` is the forward input objects passed to
+            the Cell. The 'hook_fn' can modify the forward input objects by returning new forward input objects.
+            It should have the following signature:
+            hook_fn(cell_id, inputs) -> new input objects or none.
+            In order to prevent running failed when switching to graph mode, it is not recommended to write in the
+            construct.
+
+        Args:
+            hook_fn (function): Python function. Forward pre hook function.
+
+        Returns:
+            - **handle** - The handle corresponding to the 'hook_fn'.
+
+        Raises:
+            TypeError: If the `hook_fn` is not a function of python.
+
+        Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import numpy as np
+            >>> import mindspore
+            >>> import mindspore.nn as nn
+            >>> from mindspore import Tensor
+            >>> from mindspore import context
+            >>> from mindspore.ops import GradOperation
+            >>> context.set_context(mode=context.PYNATIVE_MODE)
+            >>> def forward_pre_hook_fn(cell_id, inputs):
+            ...     print("forward inputs: ", inputs)
+            ...
+            >>> class Net(nn.Cell):
+            ...     def __init__(self):
+            ...         super(Net, self).__init__()
+            ...         self.mul = nn.MatMul()
+            ...         self.handle = self.mul.register_forward_pre_hook(forward_pre_hook_fn)
+            ...
+            ...     def construct(self, x, y):
+            ...         x = x + x
+            ...         x = self.mul(x, y)
+            ...         return x
+            >>> grad = GradOperation(get_all=True)
+            >>> net = Net()
+            >>> output = grad(net)(Tensor(np.ones([1]).astype(np.float32)), Tensor(np.ones([1]).astype(np.float32)))
+            forward inputs: (Tensor(shape=[1], dtype=Float32, value= [ 2.00000000e+00]), Tensor(shape=[1],
+                            dtype=Float32, value= [ 1.00000000e+00]))
+            >>> print(output)
+            (Tensor(shape=[1], dtype=Float32, value= [ 2.00000000e+00]), Tensor(shape=[1], dtype=Float32,
+            value= [ 2.00000000e+00]))
         """
         if context.get_context("mode") != context.PYNATIVE_MODE:
-            logger.warning("Hook function is only supported in pynative mode, you can use context.set_context to set "
-                           "pynative mode.")
+            logger.warning(f"'register_forward_pre_hook' function is only supported in pynative mode, you can use "
+                           f"context.set_context to set pynative mode.")
+            return HookHandle()
+
+        if not isinstance(hook_fn, (FunctionType, MethodType)):
+            raise TypeError(f"When using 'register_forward_pre_hook(hook_fn)', the type of 'hook_fn' should be python "
+                            f"function, but got {type(hook_fn)}.")
+        self._enable_forward_pre_hook = True
+        _pynative_executor.set_hook_changed(self)
+        if not hasattr(self, '_forward_pre_hook_key'):
+            self._forward_pre_hook_key = -1
+        self._forward_pre_hook_key += 1
+        self.forward_pre_hook[self._forward_pre_hook_key] = hook_fn
+        handle = HookHandle(self, self._forward_pre_hook_key, "forward_pre_hook")
+        return handle
+
+    def run_forward_hook(self, inputs, output):
+        """
+        Running forward hook function registered in Cell object.
+
+        Args:
+            inputs: The input objects of Cell object.
+            output: The output object of Cell object.
+
+        Returns:
+            - **output** - New output object or none.
+
+        Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+        """
+        cell_id = self.cls_name + "(" + str(id(self)) + ")"
+        for fn in self.forward_hook.values():
+            ret = fn(cell_id, inputs, output)
+            if ret is not None:
+                output = ret
+        return output
+
+    def register_forward_hook(self, hook_fn):
+        """
+        Set the cell forward hook function. Note that this function is only supported in pynative mode.
+
+        Note:
+            'hook_fn' must be defined as the following code.
+            `cell_id` is the information of registered Cell object. `inputs` is the forward input objects passed to
+            the Cell. `output` is the forward output object of the Cell. The 'hook_fn' can modify the forward output
+            object by returning new forward output object.
+            It should have the following signature:
+            hook_fn(cell_id, inputs, output) -> new output object or none.
+            In order to prevent running failed when switching to graph mode, it is not recommended to write in the
+            construct.
+
+        Args:
+            hook_fn (function): Python function. Forward hook function.
+
+        Returns:
+            - **handle** - The handle corresponding to the 'hook_fn'.
+
+        Raises:
+            TypeError: If the `hook_fn` is not a function of python.
+
+        Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import numpy as np
+            >>> import mindspore
+            >>> import mindspore.nn as nn
+            >>> from mindspore import Tensor
+            >>> from mindspore import context
+            >>> from mindspore.ops import GradOperation
+            >>> context.set_context(mode=context.PYNATIVE_MODE)
+            >>> def forward_hook_fn(cell_id, inputs, output):
+            ...     print("forward inputs: ", inputs)
+            ...     print("forward output: ", output)
+            ...
+            >>> class Net(nn.Cell):
+            ...     def __init__(self):
+            ...         super(Net, self).__init__()
+            ...         self.mul = nn.MatMul()
+            ...         self.handle = self.mul.register_forward_hook(forward_hook_fn)
+            ...
+            ...     def construct(self, x, y):
+            ...         x = x + x
+            ...         x = self.mul(x, y)
+            ...         return x
+            >>> grad = GradOperation(get_all=True)
+            >>> net = Net()
+            >>> output = grad(net)(Tensor(np.ones([1]).astype(np.float32)), Tensor(np.ones([1]).astype(np.float32)))
+            forward inputs: (Tensor(shape=[1], dtype=Float32, value= [ 2.00000000e+00]), Tensor(shape=[1],
+                            dtype=Float32, value= [ 1.00000000e+00]))
+            forward output: 2.0
+            >>> print(output)
+            (Tensor(shape=[1], dtype=Float32, value= [ 2.00000000e+00]), Tensor(shape=[1], dtype=Float32,
+            value= [ 2.00000000e+00]))
+        """
+        if context.get_context("mode") != context.PYNATIVE_MODE:
+            logger.warning(f"'register_forward_hook' function is only supported in pynative mode, you can use "
+                           f"context.set_context to set pynative mode.")
+            return HookHandle()
+
+        if not isinstance(hook_fn, (FunctionType, MethodType)):
+            raise TypeError(f"When using 'register_forward_hook(hook_fn)', the type of 'hook_fn' should be python "
+                            f"function, but got {type(hook_fn)}.")
+        self._enable_forward_hook = True
+        _pynative_executor.set_hook_changed(self)
+        if not hasattr(self, '_forward_hook_key'):
+            self._forward_hook_key = -1
+        self._forward_hook_key += 1
+        self.forward_hook[self._forward_hook_key] = hook_fn
+        handle = HookHandle(self, self._forward_hook_key, "forward_hook")
+        return handle
+
+    def run_backward_hook(self, *inputs):
+        """
+        Backward hook construct method to replace original construct method.
+
+        Args:
+            inputs: The input objects of Cell object.
+
+        Returns:
+            - **outputs** - The output objects of Cell object.
+
+        Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+        """
+        inputs = self.cell_backward_hook(*inputs)
+        if isinstance(inputs, tuple):
+            inputs = self.construct(*inputs)
         else:
-            self._backward_hook = HookBackward(fn, self.cls_name + "(" + str(id(self)) + ")")
-            self.enable_hook = True
+            inputs = self.construct(inputs)
+        if isinstance(inputs, tuple):
+            outputs = self.cell_backward_hook(*inputs)
+        else:
+            outputs = self.cell_backward_hook(inputs)
+        return outputs
+
+    def register_backward_hook(self, hook_fn):
+        """
+        Register the backward hook function. Note that this function is only supported in pynative mode.
+
+        Note:
+            The 'hook_fn' must be defined as the following code.
+            `cell_id` is the information of registered cell. `grad_input` is the gradient passed to the cell.
+            `grad_output` is the gradient computed and passed to the next cell or primitive, which may be modified by
+            returning a new output gradient.
+            The 'hook_fn' should have the following signature:
+            hook_fn(cell_id, grad_input, grad_output) -> New output gradient or none.
+            The 'hook_fn' is executed in the python environment.
+            In order to prevent running failed when switching to graph mode, it is not recommended to write in the
+            construct.
+
+        Args:
+            hook_fn (function): Python function. Backward hook function.
+
+        Returns:
+            - **handle** - The handle corresponding to the 'hook_fn'.
+
+        Raises:
+            TypeError: If the `hook_fn` is not a function of python.
+
+        Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import numpy as np
+            >>> import mindspore
+            >>> import mindspore.nn as nn
+            >>> from mindspore import Tensor
+            >>> from mindspore import context
+            >>> from mindspore.ops import GradOperation
+            >>> context.set_context(mode=context.PYNATIVE_MODE)
+            >>> def backward_hook_fn(cell_id, grad_input, grad_output):
+            ...     print("backward input: ", grad_input)
+            ...     print("backward output: ", grad_output)
+            ...
+            >>> class Net(nn.Cell):
+            ...     def __init__(self):
+            ...         super(Net, self).__init__()
+            ...         self.relu = nn.ReLU()
+            ...         self.handle = self.relu.register_backward_hook(backward_hook_fn)
+            ...
+            ...     def construct(self, x):
+            ...         x = x + x
+            ...         x = self.relu(x)
+            ...         return x
+            >>> grad = GradOperation(get_all=True)
+            >>> net = Net()
+            >>> output = grad(net)(Tensor(np.ones([1]).astype(np.float32)))
+            backward input: (Tensor(shape=[1], dtype=Float32, value= [ 1.00000000e+00]),)
+            backward output: (Tensor(shape=[1], dtype=Float32, value= [ 1.00000000e+00]),)
+            >>> print(output)
+            (Tensor(shape=[1], dtype=Float32, value= [ 2.00000000e+00]),)
+        """
+        if context.get_context("mode") != context.PYNATIVE_MODE:
+            logger.warning(f"'register_backward_hook' function is only supported in pynative mode, you can use "
+                           f"context.set_context to set pynative mode.")
+            return HookHandle()
+
+        if not isinstance(hook_fn, (FunctionType, MethodType)):
+            raise TypeError(f"When using 'register_backward_hook(hook_fn)', the type of 'hook_fn' should be python "
+                            f"function, but got {type(hook_fn)}.")
+        if self.cell_backward_hook is None:
+            self.enable_backward_hook = True
+            self.cell_backward_hook = inner.CellBackwardHook(self.cls_name + "(" + str(id(self)) + ")")
+            backward_hook_key = self.cell_backward_hook.register_backward_hook(hook_fn)
+            handle = HookHandle(self, backward_hook_key, "cell_backward_hook")
+        else:
+            backward_hook_key = self.cell_backward_hook.register_backward_hook(hook_fn)
+            handle = HookHandle(self, backward_hook_key, "cell_backward_hook")
+        return handle
 
     def set_param_ps(self, recurse=True, init_in_server=False):
         """

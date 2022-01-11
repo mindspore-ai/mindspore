@@ -14,7 +14,7 @@
 # ============================================================================
 
 """Inner operators."""
-
+from types import FunctionType, MethodType
 import numpy as np
 
 from mindspore.common import Tensor
@@ -1702,3 +1702,119 @@ class ParallelResizeBilinear(PrimitiveWithInfer):
         return {'shape': output_shape,
                 'dtype': x_dtype,
                 'value': None}
+
+
+class CellBackwardHook(PrimitiveWithInfer):
+    r"""
+    This operator is used to hook input gradient and output gradient of Cell object.
+
+    Note:
+        This operator is only used in backward hook function of Cell object in pynative mode.
+
+    Args:
+        cell_id (str): Used to identify which cell obj the hook function registered on. For example, 'nn.Add()' is a
+        cell object.
+
+    Inputs:
+        - **input** - The variable to hook.
+
+    Outputs:
+        - **output** - Returns `input` directly. `CellBackwardHook` does not affect the forward result.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor
+        >>> from mindspore import context
+        >>> from mindspore.ops import GradOperation
+        >>> from mindspore.ops.operations import _inner_ops as inner
+        >>> context.set_context(mode=context.PYNATIVE_MODE)
+        >>> def hook_fn(grad):
+        ...     print(grad)
+        ...
+        >>> hook = inner.CellBackwardHook()
+        >>> hook_fn_key = hook.register_backward_hook(hook_fn)
+        >>> def hook_test(x, y):
+        ...     z = x * y
+        ...     z = hook(z)
+        ...     z = z * y
+        ...     return z
+        ...
+        >>> grad_all = GradOperation(get_all=True)
+        >>> def backward(x, y):
+        ...     return grad_all(hook_test)(x, y)
+        ...
+        >>> output = backward(Tensor(1, mindspore.float32), Tensor(2, mindspore.float32))
+        (Tensor(shape=[], dtype=Float32, value= 2),)
+        >>> print(output)
+        (Tensor(shape=[], dtype=Float32, value= 4), Tensor(shape=[], dtype=Float32, value= 4))
+        >>> hook.remove_backward_hook(hook_fn_key)
+        >>> output = backward(Tensor(1, mindspore.float32), Tensor(2, mindspore.float32))
+        >>> print(output)
+        (Tensor(shape=[], dtype=Float32, value= 4), Tensor(shape=[], dtype=Float32, value= 4))
+    """
+
+    def __init__(self, cell_id=""):
+        """Initialize CellBackwardHook"""
+        super(CellBackwardHook, self).__init__(self.__class__.__name__)
+        self.cell_id = cell_id
+        self.add_prim_attr("cell_id", cell_id)
+        self.init_attrs["cell_id"] = cell_id
+
+    def infer_shape(self, *inputs_shape):
+        if len(inputs_shape) == 1:
+            return inputs_shape[0]
+        return inputs_shape
+
+    def infer_dtype(self, *inputs_type):
+        if len(inputs_type) == 1:
+            return inputs_type[0]
+        return inputs_type
+
+    def register_backward_hook(self, hook_fn):
+        r"""
+        This function is used to register backward hook function. Note that this function is only supported in pynative
+        mode.
+
+        Note:
+            The 'hook_fn' must be defined as the following code.
+            `cell_id` is the information of registered cell. `grad_input` is the gradient passed to the cell.
+            `grad_output` is the gradient computed and passed to the next cell or primitive, which may be modified by
+            returning a new output gradient.
+            The 'hook_fn' should have the following signature:
+            hook_fn(cell_id, grad_input, grad_output) -> New output gradient or none.
+            The 'hook_fn' is executed in the python environment.
+
+        Args:
+            hook_fn (Function): Python function. Backward hook function.
+
+        Returns:
+            - **key** (int) - The key of 'hook_fn'.
+
+        Raises:
+            TypeError: If the `hook_fn` is not a function of python.
+        """
+        if not isinstance(hook_fn, (FunctionType, MethodType)):
+            raise TypeError(f"When using 'register_backward_hook(hook_fn)', the type of 'hook_fn' should be python "
+                            f"function, but got {type(hook_fn)}.")
+        key = self.add_backward_hook_fn(hook_fn)
+        return key
+
+    def remove_backward_hook(self, key):
+        r"""
+        This function is used to remove backward hook function. Note that this operation is only supported in pynative
+        mode.
+
+        Note:
+            The 'key' is the object returned by 'register_backward_hook' function of the same CellBackwardHook
+            operator.
+
+        Args:
+            key (int): The key corresponding to the 'hook_fn'.
+
+        Returns:
+            None.
+        """
+        self.remove_backward_hook_fn(key)
