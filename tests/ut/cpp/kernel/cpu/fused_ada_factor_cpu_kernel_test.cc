@@ -57,7 +57,7 @@ class FusedAdaFactorCpuKernelTest : public UT::Common {
     grad_.resize(elem_num_);
     exp_avg_.resize(elem_num_);
     exp_avg_sq_.resize(elem_num_);
-    update_.resize(elem_num_);
+    update_.resize(elem_num_, 0.0f);
     for (size_t i = 0; i < elem_num_; ++i) {
       auto ptr = (float16 *)param_.data();
       ptr[i] = static_cast<float16>(1.0f);
@@ -67,8 +67,6 @@ class FusedAdaFactorCpuKernelTest : public UT::Common {
       ptr[i] = static_cast<float16>(0.0f);
       ptr = (float16 *)exp_avg_sq_.data();
       ptr[i] = static_cast<float16>(0.0f);
-      ptr = (float16 *)update_.data();
-      ptr[i] = static_cast<float16>(0.0f);
     }
 
     auto r_factor_num = elem_num_ / last_row_dim_size_;
@@ -77,8 +75,6 @@ class FusedAdaFactorCpuKernelTest : public UT::Common {
     for (size_t i = 0; i < r_factor_num; ++i) {
       auto ptr = (float16 *)exp_avg_sq_row_.data();
       ptr[i] = static_cast<float16>(0.0f);
-      ptr = (float16 *)r_factor_.data();
-      ptr[i] = static_cast<float16>(0.0f);
     }
 
     auto c_factor_num = elem_num_ / last_col_dim_size_;
@@ -86,8 +82,6 @@ class FusedAdaFactorCpuKernelTest : public UT::Common {
     c_factor_.resize(c_factor_num, 0.0f);
     for (size_t i = 0; i < c_factor_num; ++i) {
       auto ptr = (float16 *)exp_avg_sq_col_.data();
-      ptr[i] = static_cast<float16>(0.0f);
-      ptr = (float16 *)c_factor_.data();
       ptr[i] = static_cast<float16>(0.0f);
     }
   }
@@ -99,7 +93,7 @@ class FusedAdaFactorCpuKernelTest : public UT::Common {
     return kernel_addr;
   }
 
-  void CreateAddress() {
+  void CreateAddress(bool enable_global_norm) {
     constexpr size_t eps_num = 2;
     inputs_.push_back(CreateKernelAddress(epsilon_.data(), eps_num, kSizeFloat32));
     inputs_.push_back(CreateKernelAddress(&clip_threshold_, 1, kSizeFloat32));
@@ -113,36 +107,37 @@ class FusedAdaFactorCpuKernelTest : public UT::Common {
     inputs_.push_back(CreateKernelAddress(exp_avg_sq_row_.data(), elem_num_ / last_row_dim_size_, type_size_));
     inputs_.push_back(CreateKernelAddress(exp_avg_sq_col_.data(), elem_num_ / last_col_dim_size_, type_size_));
     inputs_.push_back(CreateKernelAddress(exp_avg_sq_.data(), elem_num_, type_size_));
-    workspace_.push_back(CreateKernelAddress(update_.data(), elem_num_, type_size_));
-    workspace_.push_back(CreateKernelAddress(r_factor_.data(), elem_num_ / last_row_dim_size_, type_size_));
-    workspace_.push_back(CreateKernelAddress(c_factor_.data(), elem_num_ / last_col_dim_size_, type_size_));
+    workspace_.push_back(CreateKernelAddress(update_.data(), elem_num_, kSizeFloat32));
+    workspace_.push_back(CreateKernelAddress(r_factor_.data(), elem_num_ / last_row_dim_size_, kSizeFloat32));
+    workspace_.push_back(CreateKernelAddress(c_factor_.data(), elem_num_ / last_col_dim_size_, kSizeFloat32));
+    if (enable_global_norm) {
+      inputs_.push_back(CreateKernelAddress(&global_norm_, 1, kSizeFloat32));
+    }
   }
 
-  void ComputeFp32() {
+  void ComputeFp32(bool enable_global_norm) {
     ada_factor_->param_dtype_ = kNumberTypeFloat32;
     type_size_ = sizeof(float);
     InitDataFp32();
 
-    CreateAddress();
+    CreateAddress(enable_global_norm);
     ada_factor_->Launch(inputs_, workspace_, outputs_);
 
-    constexpr float result = 0.97;
     for (size_t i = 0; i < elem_num_; ++i) {
-      EXPECT_TRUE(std::fabs(param_[i] - result) < 1e-6);
+      EXPECT_TRUE(std::fabs(param_[i] - result_) < 1e-6);
     }
   }
 
-  void ComputeFp16() {
+  void ComputeFp16(bool enable_global_norm) {
     ada_factor_->param_dtype_ = kNumberTypeFloat16;
     type_size_ = sizeof(float16);
     InitDataFp16();
 
-    CreateAddress();
+    CreateAddress(enable_global_norm);
     ada_factor_->Launch(inputs_, workspace_, outputs_);
-    constexpr float result = 0.97;
     auto ptr = (float16 *)param_.data();
     for (size_t i = 0; i < elem_num_; ++i) {
-      EXPECT_TRUE(std::fabs(static_cast<float>(ptr[i]) - result) < 1e-3);
+      EXPECT_TRUE(std::fabs(static_cast<float>(ptr[i]) - result_) < 1e-3);
     }
   }
 
@@ -152,6 +147,8 @@ class FusedAdaFactorCpuKernelTest : public UT::Common {
   float beta1_ = 0.9;
   float beta2t_ = 0.8;
   float weight_decay_ = 1e-2;
+  float global_norm_ = 10.0f;
+  float result_ = 0.97;
   std::vector<float> param_;
   std::vector<float> grad_;
   std::vector<float> exp_avg_;
@@ -179,7 +176,7 @@ class FusedAdaFactorCpuKernelTest : public UT::Common {
 /// Expectation: pass
 TEST_F(FusedAdaFactorCpuKernelTest, compute_fp32_factor) {
   ada_factor_->need_factor_ = true;
-  ComputeFp32();
+  ComputeFp32(false);
 }
 
 /// Feature: FusedAdaFactor
@@ -187,7 +184,23 @@ TEST_F(FusedAdaFactorCpuKernelTest, compute_fp32_factor) {
 /// Expectation: pass
 TEST_F(FusedAdaFactorCpuKernelTest, compute_fp32_no_factor) {
   ada_factor_->need_factor_ = false;
-  ComputeFp32();
+  ComputeFp32(false);
+}
+
+/// Feature: FusedAdaFactor
+/// Description: Run FusedAdaFactor that needs factor state with fp32 data inputs and global norm
+/// Expectation: pass
+TEST_F(FusedAdaFactorCpuKernelTest, compute_fp32_factor_global_norm) {
+  ada_factor_->need_factor_ = true;
+  ComputeFp32(true);
+}
+
+/// Feature: FusedAdaFactor
+/// Description: Run FusedAdaFactor that doesn't need factor state with fp32 data inputs and global norm
+/// Expectation: pass
+TEST_F(FusedAdaFactorCpuKernelTest, compute_fp32_no_factor_global_norm) {
+  ada_factor_->need_factor_ = false;
+  ComputeFp32(true);
 }
 
 /// Feature: FusedAdaFactor
@@ -195,7 +208,7 @@ TEST_F(FusedAdaFactorCpuKernelTest, compute_fp32_no_factor) {
 /// Expectation: pass
 TEST_F(FusedAdaFactorCpuKernelTest, compute_fp16_factor) {
   ada_factor_->need_factor_ = true;
-  ComputeFp16();
+  ComputeFp16(false);
 }
 
 /// Feature: FusedAdaFactor
@@ -203,7 +216,23 @@ TEST_F(FusedAdaFactorCpuKernelTest, compute_fp16_factor) {
 /// Expectation: pass
 TEST_F(FusedAdaFactorCpuKernelTest, compute_fp16_no_factor) {
   ada_factor_->need_factor_ = false;
-  ComputeFp16();
+  ComputeFp16(false);
+}
+
+/// Feature: FusedAdaFactor
+/// Description: Run FusedAdaFactor that needs factor state with fp16 data inputs and global norm
+/// Expectation: pass
+TEST_F(FusedAdaFactorCpuKernelTest, compute_fp16_factor_global_norm) {
+  ada_factor_->need_factor_ = true;
+  ComputeFp16(true);
+}
+
+/// Feature: FusedAdaFactor
+/// Description: Run FusedAdaFactor that doesn't need factor state with fp16 data inputs and global norm
+/// Expectation: pass
+TEST_F(FusedAdaFactorCpuKernelTest, compute_fp16_no_factor_global_norm) {
+  ada_factor_->need_factor_ = false;
+  ComputeFp16(true);
 }
 }  // namespace kernel
 }  // namespace mindspore

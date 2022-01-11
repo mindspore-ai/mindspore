@@ -33,8 +33,9 @@ class FusedAdaFactorCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  void CheckParam(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
-                  const std::vector<AddressPtr> &outputs) const;
+  void CheckInputAddresses(const std::vector<AddressPtr> &inputs) const;
+  void CheckWorkspaceAddresses(const std::vector<AddressPtr> &workspaces) const;
+
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
                     const std::vector<AddressPtr> &outputs);
@@ -43,7 +44,7 @@ class FusedAdaFactorCPUKernel : public CPUKernel {
   float CalcRMS(T *input, size_t elem_num);
 
   template <typename T>
-  void FactorUpdate(T *update, const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces);
+  void FactorUpdate(float *update, const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces);
 
   bool enable_scale_parameter_{false};
   bool enable_first_moment_{false};
@@ -53,6 +54,7 @@ class FusedAdaFactorCPUKernel : public CPUKernel {
   size_t last_row_dim_size_{1};
   size_t last_col_dim_size_{1};
   TypeId param_dtype_{kTypeUnknown};
+  float global_norm_reciprocal_{1.0f};
 
   enum InputEnum {
     EPSILON,
@@ -66,7 +68,8 @@ class FusedAdaFactorCPUKernel : public CPUKernel {
     EXP_AVG,
     EXP_AVG_SQ_ROW,
     EXP_AVG_SQ_COL,
-    EXP_AVG_SQ
+    EXP_AVG_SQ,
+    GLOBAL_NORM
   };
 
   enum WorkspaceEnum { UPDATE, R_FACTOR, C_FACTOR };
@@ -103,6 +106,42 @@ MS_REG_CPU_KERNEL(FusedAdaFactor,
                     .AddInputAttr(kNumberTypeFloat16)
                     .AddInputAttr(kNumberTypeFloat16)
                     .AddInputAttr(kNumberTypeFloat16)
+                    .AddOutputAttr(kNumberTypeFloat16),
+                  FusedAdaFactorCPUKernel)
+
+MS_REG_CPU_KERNEL(FusedAdaFactorWithGlobalNorm,
+                  KernelAttr()
+                    .AddInputAttr(kNumberTypeFloat32)
+                    .AddInputAttr(kNumberTypeFloat32)
+                    .AddInputAttr(kNumberTypeFloat32)
+                    .AddInputAttr(kNumberTypeFloat32)
+                    .AddInputAttr(kNumberTypeFloat32)
+                    .AddInputAttr(kNumberTypeFloat32)
+                    .AddInputAttr(kNumberTypeFloat32)
+                    .AddInputAttr(kNumberTypeFloat32)
+                    .AddInputAttr(kNumberTypeFloat32)
+                    .AddInputAttr(kNumberTypeFloat32)
+                    .AddInputAttr(kNumberTypeFloat32)
+                    .AddInputAttr(kNumberTypeFloat32)
+                    .AddInputAttr(kNumberTypeFloat32)
+                    .AddOutputAttr(kNumberTypeFloat32),
+                  FusedAdaFactorCPUKernel)
+
+MS_REG_CPU_KERNEL(FusedAdaFactorWithGlobalNorm,
+                  KernelAttr()
+                    .AddInputAttr(kNumberTypeFloat32)
+                    .AddInputAttr(kNumberTypeFloat32)
+                    .AddInputAttr(kNumberTypeFloat32)
+                    .AddInputAttr(kNumberTypeFloat32)
+                    .AddInputAttr(kNumberTypeFloat32)
+                    .AddInputAttr(kNumberTypeFloat32)
+                    .AddInputAttr(kNumberTypeFloat16)
+                    .AddInputAttr(kNumberTypeFloat16)
+                    .AddInputAttr(kNumberTypeFloat16)
+                    .AddInputAttr(kNumberTypeFloat16)
+                    .AddInputAttr(kNumberTypeFloat16)
+                    .AddInputAttr(kNumberTypeFloat16)
+                    .AddInputAttr(kNumberTypeFloat32)
                     .AddOutputAttr(kNumberTypeFloat16),
                   FusedAdaFactorCPUKernel)
 }  // namespace kernel

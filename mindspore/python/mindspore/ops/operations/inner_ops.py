@@ -689,3 +689,25 @@ class FusedAdaFactor(PrimitiveWithInfer):
                     learning_rate_type, grad_type, param_type, exp_avg_type, exp_avg_sq_row_type,
                     exp_avg_sq_col_type, exp_avg_sq_type):
         return param_type
+
+
+class FusedAdaFactorWithGlobalNorm(FusedAdaFactor):
+    r"""
+    Divide global norm for gradient in FusedAdaFactor, and refer to super class for FusedAdaFactor details
+    """
+
+    @prim_attr_register
+    def __init__(self, enable_scale_parameter=False, enable_first_moment=False, enable_weight_decay=False):
+        super(FusedAdaFactorWithGlobalNorm, self).__init__(enable_scale_parameter, enable_first_moment,
+                                                           enable_weight_decay)
+
+    def infer_shape(self, epsilon_shape, clip_threshold_shape, beta1_shape, beta2t_shape, weight_decay_shape,
+                    learning_rate_shape, grad_shape, param_shape, exp_avg_shape, exp_avg_sq_row_shape,
+                    exp_avg_sq_col_shape, exp_avg_sq_shape, global_norm_shape):
+        validator.check("grad_shape", grad_shape, "param_shape", param_shape, Rel.EQ, self.name)
+        return param_shape
+
+    def infer_dtype(self, epsilon_type, clip_threshold_type, beta1_type, beta2t_type, weight_decay_type,
+                    learning_rate_type, grad_type, param_type, exp_avg_type, exp_avg_sq_row_type,
+                    exp_avg_sq_col_type, exp_avg_sq_type, global_norm_type):
+        return param_type

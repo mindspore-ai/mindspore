@@ -216,6 +216,7 @@ constexpr auto kAdamWeightDecayName = "AdamWeightDecay";
 constexpr auto kFusedCastAdamWeightDecayName = "FusedCastAdamWeightDecay";
 constexpr auto kFusedAdamName = "FusedAdam";
 constexpr auto kFusedAdaFactorName = "FusedAdaFactor";
+constexpr auto kFusedAdaFactorWithGlobalNormName = "FusedAdaFactorWithGlobalNorm";
 constexpr auto kFusedSparseAdamName = "FusedSparseAdam";
 constexpr auto kFusedMatMulBiasAddName = "FusedMatMulBiasAdd";
 constexpr auto kDeadNodeName = "DeadNode";
@@ -691,6 +692,7 @@ const std::set<std::string> kOptOperatorSet = {kMomentumOpName,
                                                kFusedCastAdamWeightDecayName,
                                                kFusedAdamName,
                                                kFusedAdaFactorName,
+                                               kFusedAdaFactorWithGlobalNormName,
                                                kFusedSparseAdamName,
                                                kFusedMulApplyMomentumOpName,
                                                kFusedWeightScaleApplyMomentum,
