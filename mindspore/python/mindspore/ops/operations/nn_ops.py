@@ -2684,7 +2684,7 @@ class L2Loss(Primitive):
         """Initialize L2Loss"""
 
 
-class DataFormatDimMap(PrimitiveWithInfer):
+class DataFormatDimMap(Primitive):
     """
     Returns the dimension index in the destination data format given in the source data format.
 
@@ -2724,14 +2724,6 @@ class DataFormatDimMap(PrimitiveWithInfer):
         self.src_format = validator.check_string(src_format, valid_values, "src_format", self.name)
         self.dst_format = validator.check_string(dst_format, valid_values, "dst_format", self.name)
         self.init_prim_io_names(inputs=['input_x'], outputs=['output'])
-
-    def infer_shape(self, x_shape):
-        return x_shape
-
-    def infer_dtype(self, x_dtype):
-        valid_dtypes = [mstype.int32]
-        validator.check_tensor_dtype_valid("x", x_dtype, valid_dtypes, self.name)
-        return x_dtype
 
 
 class RNNTLoss(PrimitiveWithInfer):

@@ -369,6 +369,7 @@ inline const PrimitivePtr kPrimConv3DBackpropFilter = std::make_shared<Primitive
 inline const PrimitivePtr kPrimCustomNormalize = std::make_shared<Primitive>("CustomNormalize");
 inline const PrimitivePtr kPrimDepthwiseConv2dNative = std::make_shared<Primitive>("DepthwiseConv2dNative");
 inline const PrimitivePtr kPrimCTCGreedyDecoder = std::make_shared<Primitive>("CTCGreedyDecoder");
+inline const PrimitivePtr kPrimDataFormatDimMap = std::make_shared<Primitive>("DataFormatDimMap");
 inline const PrimitivePtr kPrimDynamicStitch = std::make_shared<Primitive>("DynamicStitch");
 inline const PrimitivePtr kPrimDepthwiseConv2dNativeBackpropFilter =
   std::make_shared<Primitive>("DepthwiseConv2dNativeBackpropFilter");
