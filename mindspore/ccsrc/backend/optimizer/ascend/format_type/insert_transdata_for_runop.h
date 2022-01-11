@@ -37,6 +37,7 @@ class RunOpInsertTransData : public Pass {
   bool Run(const FuncGraphPtr &graph) override;
 
  private:
+  bool InsertTransdataForOutput(const FuncGraphPtr &graph);
   KernelSelectPtr kernel_select_;
 };
 }  // namespace opt
