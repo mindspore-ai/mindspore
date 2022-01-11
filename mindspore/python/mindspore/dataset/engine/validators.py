@@ -790,8 +790,11 @@ def check_source_function(source):
     var = tuple()
     source_doc = ""
     if isinstance(source, FunctionType):
-        var = ins.getclosurevars(source)
-        source_doc = ins.getsource(source)
+        try:
+            var = ins.getclosurevars(source)
+            source_doc = ins.getsource(source)
+        except OSError:
+            return ""
     else:
         try:
             source_attr = source.__class__.__dict__.keys()
@@ -1085,14 +1088,17 @@ def check_map(method):
         # check used variable and function document whether contain computing operator
         from types import FunctionType
         if isinstance(operations, FunctionType):
-            var = ins.getclosurevars(operations)
-            operations_doc = ins.getsource(operations)
-            check_list = ['mindspore.nn', 'mindspore.ops', 'mindspore.numpy', 'mindspore.compression']
-            check_doc = str(var) + operations_doc
-            for item in check_list:
-                if item in check_doc:
-                    setattr(self, 'operator_mixed', True)
-                    break
+            try:
+                var = ins.getclosurevars(operations)
+                operations_doc = ins.getsource(operations)
+                check_list = ['mindspore.nn', 'mindspore.ops', 'mindspore.numpy', 'mindspore.compression']
+                check_doc = str(var) + operations_doc
+                for item in check_list:
+                    if item in check_doc:
+                        setattr(self, 'operator_mixed', True)
+                        break
+            except OSError:
+                pass
 
         nreq_param_columns = ['input_columns', 'output_columns', 'column_order']
 
