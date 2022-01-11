@@ -31,7 +31,7 @@ class GPUTensorArray : public TensorArray {
   GPUTensorArray(const string &name, const TypePtr &dtype, const std::vector<size_t> &shapes)
       : TensorArray(name, dtype, shapes) {}
   ~GPUTensorArray() override = default;
-  void ReleaseMemory(void *addr) override;
+  void ReleaseMemory(const DeviceMemPtr addr) override;
   void *CreateMemory(const size_t size) override;
   void ClearMemory(void *addr, const size_t size) override;
 };

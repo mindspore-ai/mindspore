@@ -99,7 +99,7 @@ void TensorArray::Free() {
   MS_LOG(DEBUG) << "Free device memory for " << name_;
   for (const auto &addr : tensors_) {
     if (addr != nullptr) {
-      ReleaseMemory(static_cast<void *>(addr->addr));
+      ReleaseMemory(static_cast<DeviceMemPtr>(addr->addr));
     }
   }
 }

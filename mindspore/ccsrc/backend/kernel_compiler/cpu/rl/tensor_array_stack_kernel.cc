@@ -45,7 +45,7 @@ void TensorArrayCPUStackKernel::InitKernel(const CNodePtr &kernel_node) {
   type_ = AnfAlgo::GetNodeAttr<TypePtr>(kernel_node, "dtype");
   ele_size_ = GetTypeByte(type_);
   for (auto i : shapes_) {
-    ele_size_ *= LongToSize(i);
+    ele_size_ *= i;
   }
   value_size_ = ele_size_ * LongToSize(max_element);
   output_size_list_.push_back(value_size_);
