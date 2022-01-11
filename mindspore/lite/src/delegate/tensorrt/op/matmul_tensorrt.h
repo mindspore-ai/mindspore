@@ -40,6 +40,7 @@ class MatMulTensorRT : public TensorRTOp {
   nvinfer1::MatrixOperation transpose_a_ = nvinfer1::MatrixOperation::kNONE;
   nvinfer1::MatrixOperation transpose_b_ = nvinfer1::MatrixOperation::kNONE;
   Format out_format_;
+  schema::ActivationType activation_{schema::ActivationType::ActivationType_NO_ACTIVATION};
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_OP_MATMUL_TENSORRT_H_

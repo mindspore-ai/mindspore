@@ -49,6 +49,9 @@ TensorRTDelegate::~TensorRTDelegate() {
   if (runtime_ != nullptr) {
     delete runtime_;
   }
+  if (stream_ != nullptr) {
+    cudaStreamDestroy(stream_);
+  }
 }
 bool IsHardwareSupport() {
   int driver_version = 0;
@@ -290,6 +293,7 @@ TensorRTSubGraph *TensorRTDelegate::CreateTensorRTGraph(const std::vector<Tensor
   auto ret = tensorrt_graph->Init(stream_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "TensorRTGraph init failed.";
+    delete tensorrt_graph;
     return nullptr;
   }
 
@@ -297,6 +301,7 @@ TensorRTSubGraph *TensorRTDelegate::CreateTensorRTGraph(const std::vector<Tensor
   ret = tensorrt_graph->BuildTensorRTGraph();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "TensorRTGraph build failed.";
+    delete tensorrt_graph;
     return nullptr;
   }
 
