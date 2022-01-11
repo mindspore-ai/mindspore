@@ -27,7 +27,7 @@ void *CPUTensorArray::CreateMemory(const size_t size) { return CPUMemoryPool::Ge
 
 void CPUTensorArray::ClearMemory(void *addr, const size_t size) { (void)memset_s(addr, size, 0, size); }
 
-void CPUTensorArray::ReleaseMemory(void *addr) { CPUMemoryPool::GetInstance().FreeTensorMem(addr); }
+void CPUTensorArray::ReleaseMemory(const DeviceMemPtr addr) { CPUMemoryPool::GetInstance().FreeTensorMem(addr); }
 }  // namespace cpu
 }  // namespace device
 }  // namespace mindspore

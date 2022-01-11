@@ -127,10 +127,21 @@ class DynamicBroadcastGradientArgsGpuKernel : public GpuKernel {
     grad_reduce_idx = GetGradIndex(reverse_shapes, max_rank);
     return grad_reduce_idx;
   }
+
+  void AddGradReduceIdx(std::vector<std::vector<T>> *grad_reduce_idx, std::vector<bool> cur_one, bool none_one,
+                        const size_t max_rank, size_t j) {
+    MS_EXCEPTION_IF_NULL(grad_reduce_idx);
+    for (size_t i = 0; i < kInputNum; i++) {
+      if (cur_one[i] && !none_one) {
+        (void)(*grad_reduce_idx)[i].emplace_back(SizeToLong(max_rank - 1 - j));
+      }
+    }
+  }
+
   std::vector<std::vector<T>> GetGradIndex(const std::vector<std::vector<T>> &revers_shapes, const size_t max_rank) {
     std::vector<std::vector<T>> grad_reduce_index(kInputNum);
-    bool pre_one[kInputNum];
-    bool cur_one[kInputNum];
+    std::vector<bool> pre_one(kInputNum);
+    std::vector<bool> cur_one(kInputNum);
     for (size_t i = 0; i < kInputNum; i++) {
       pre_one[i] = false;
       cur_one[i] = false;
@@ -159,18 +170,10 @@ class DynamicBroadcastGradientArgsGpuKernel : public GpuKernel {
           (void)grad_reduce_index[i].emplace_back(max_rank - 1 - j);
         }
         continue;
-      } else if (std::equal(cur_one, cur_one + kInputNum, pre_one) && set_one) {
-        for (size_t i = 0; i < kInputNum; i++) {
-          if (cur_one[i] && !none_one) {
-            (void)grad_reduce_index[i].emplace_back(max_rank - 1 - j);
-          }
-        }
+      } else if (std::equal(cur_one.begin(), cur_one.end(), pre_one.begin()) && set_one) {
+        AddGradReduceIdx(&grad_reduce_index, cur_one, none_one, max_rank, j);
       } else {
-        for (size_t i = 0; i < kInputNum; i++) {
-          if (cur_one[i] && !none_one) {
-            (void)grad_reduce_index[i].emplace_back(max_rank - 1 - j);
-          }
-        }
+        AddGradReduceIdx(&grad_reduce_index, cur_one, none_one, max_rank, j);
       }
       set_one = true;
       for (size_t i = 0; i < kInputNum; i++) {
