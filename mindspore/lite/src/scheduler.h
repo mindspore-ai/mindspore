@@ -132,9 +132,7 @@ class Scheduler {
   Model::Node *NodeInputIsSwitchType(const Model::Node *node);
   bool SubGraphHasScheduled(const int &index);
   void SubGraphMarkScheduled(const int &index);
-  void SetSubgraphForPartialNode();
   int ConstructControlFlowMainGraph(std::vector<kernel::LiteKernel *> *kernels);
-  int RecordControlFlowLinkInfo();
 #endif
 
 #ifndef DELEGATE_CLIP
