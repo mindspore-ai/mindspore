@@ -7,8 +7,14 @@ mindspore.dataset.RandomSampler
 
     **参数：**
 
-    - **replacement** (bool, optional): 如果为True，则将样本ID放回下一次采样（默认值为False）。
-    - **num_samples** (int, optional): 要采样的元素数量（默认值为None，采样所有元素）。
+    - **replacement** (bool, 可选): 是否将样本ID放回下一次采样，默认值：True，有放回采样。
+    - **num_samples** (int, 可选): 获取的样本数，可用于部分获取采样得到的样本。默认值：None，获取采样到的所有样本。
+
+    **异常：**
+
+    - **TypeError：** `replacement` 不是bool值。
+    - **TypeError：** `num_samples` 不是整数值。
+    - **ValueError：** `num_samples` 为负值。
 
     **样例：**
 
@@ -17,11 +23,5 @@ mindspore.dataset.RandomSampler
     >>> dataset = ds.ImageFolderDataset(image_folder_dataset_dir,
     ...                                 num_parallel_workers=8,
     ...                                 sampler=sampler)
-
-    **异常：**
-
-    - **TypeError：** `replacement` 不是bool值。
-    - **TypeError：** `num_samples` 不是整数值。
-    - **ValueError：** `num_samples` 为负值。
 
     .. include:: mindspore.dataset.BuiltinSampler.rst

@@ -3,22 +3,22 @@ mindspore.dataset.GraphData
 
 .. py:class:: mindspore.dataset.GraphData(dataset_file, num_parallel_workers=None, working_mode='local', hostname='127.0.0.1', port=50051, num_client=1, auto_shutdown=True)
 
-    从共享文件和数据库中读取用于GNN训练的图数据集。
+    从共享文件或数据库中读取用于GNN训练的图数据集。
 
     **参数：**
 
     - **dataset_file** (str) - 数据集文件路径。
-    - **num_parallel_workers** (int, 可选) - 读取数据的工作线程数（默认为None）。
-    - **working_mode** (str, 可选) - 设置工作模式，目前支持'local'/'client'/'server'（默认为'local'）。
+    - **num_parallel_workers** (int, 可选) - 读取数据的工作线程数，默认值：None，使用mindspore.dataset.config中配置的线程数。
+    - **working_mode** (str, 可选) - 设置工作模式，目前支持'local'/'client'/'server'，默认值：'local'。
 
       - **local**：用于非分布式训练场景。
       - **client**：用于分布式训练场景。客户端不加载数据，而是从服务器获取数据。
       - **server**：用于分布式训练场景。服务器加载数据并可供客户端使用。
 
-    - **hostname** (str, 可选) - 图数据集服务器的主机名。该参数仅在工作模式设置为 'client' 或 'server' 时有效（默认为'127.0.0.1'）。
-    - **port** (int, 可选) - 图数据服务器的端口，取值范围为1024-65535。此参数仅当工作模式设置为 'client' 或 'server' （默认为50051）时有效。
-    - **num_client** (int, 可选) - 期望连接到服务器的最大客户端数。服务器将根据该参数分配资源。该参数仅在工作模式设置为 'server' 时有效（默认为1）。
-    - **auto_shutdown** (bool, 可选) - 当工作模式设置为 'server' 时有效。当连接的客户端数量达到 `num_client` ，且没有客户端正在连接时，服务器将自动退出（默认为True）。
+    - **hostname** (str, 可选) - 图数据集服务器的主机名。该参数仅在工作模式设置为 'client' 或 'server' 时有效，默认值：'127.0.0.1'。
+    - **port** (int, 可选) - 图数据服务器的端口，取值范围为1024-65535。此参数仅当工作模式设置为 'client' 或 'server' 时有效，默认值：50051。
+    - **num_client** (int, 可选) - 期望连接到服务器的最大客户端数。服务器将根据该参数分配资源。该参数仅在工作模式设置为 'server' 时有效，默认值：1。
+    - **auto_shutdown** (bool, 可选) - 当工作模式设置为 'server' 时有效。当连接的客户端数量达到 `num_client` ，且没有客户端正在连接时，服务器将自动退出，默认值：True。
 
     **样例：**
 
@@ -34,21 +34,21 @@ mindspore.dataset.GraphData
 
         **参数：**
 
-        - **edge_type** (int) - 指定边的类型。
+        - **edge_type** (int) - 指定边的类型，在数据集转换为MindRecord格式时，需要指定`edge_type`的值，并在此API中对应使用。详见 `加载图数据集 <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/load_dataset_gnn.html>`_ 。
 
         **返回：**
 
         numpy.ndarray，包含边的数组。
 
-        **样例：**
-
-        >>> edges = graph_dataset.get_all_edges(edge_type=0)
-
         **异常：**
 
         **TypeError**：参数 `edge_type` 的类型不为整型。
 
-    .. py:method:: get_all_neighbors(node_list, neighbor_type, output_format=<OutputFormat.NORMAL: 0。
+        **样例：**
+
+        >>> edges = graph_dataset.get_all_edges(edge_type=0)
+
+    .. py:method:: get_all_neighbors(node_list, neighbor_type, output_format=<OutputFormat.NORMAL)
 
         获取 `node_list` 所有节点的相邻节点，以 `neighbor_type` 类型返回。格式的定义参见以下示例：1表示两个节点之间连接，0表示不连接。
 
@@ -140,11 +140,16 @@ mindspore.dataset.GraphData
 
         - **node_list** (Union[list, numpy.ndarray]) - 给定的节点列表。
         - **neighbor_type** (int) - 指定相邻节点的类型。
-        - **output_format** (OutputFormat, 可选) - 输出存储格式（默认为mindspore.dataset.engine.OutputFormat.NORMAL）取值范围：[OutputFormat.NORMAL, OutputFormat.COO, OutputFormat.CSR]。
+        - **output_format** (OutputFormat, 可选) - 输出存储格式，默认值：mindspore.dataset.OutputFormat.NORMAL，取值范围：[OutputFormat.NORMAL, OutputFormat.COO, OutputFormat.CSR]。
 
         **返回：**
 
         对于普通格式或COO格式，将返回numpy.ndarray类型的数组表示相邻节点。如果指定了CSR格式，将返回两个numpy.ndarray数组，第一个表示偏移表，第二个表示相邻节点。
+
+        **异常：**
+
+        - **TypeError** - 参数 `node_list` 的类型不为列表或numpy.ndarray。
+        - **TypeError** - 参数 `neighbor_type` 的类型不为整型。
 
         **样例：**
 
@@ -156,30 +161,25 @@ mindspore.dataset.GraphData
         >>> offset_table, neighbors_csr = graph_dataset.get_all_neighbors(node_list=nodes, neighbor_type=2,
         ...                                                               output_format=OutputFormat.CSR)
 
-        **异常：**
-
-        - **TypeError** - 参数 `node_list` 的类型不为列表或numpy.ndarray。
-        - **TypeError** - 参数 `neighbor_type` 的类型不为整型。
-
     .. py:method:: get_all_nodes(node_type)
 
         获取图中的所有节点。
 
         **参数：**
 
-        - **node_type** (int) - 指定节点的类型。
+        - **node_type** (int) - 指定节点的类型。在数据集转换为MindRecord格式时，需要指定`node_type`的值，并在此API中对应使用。详见 `加载图数据集 <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/load_dataset_gnn.html>`_ 。
 
         **返回：**
 
         numpy.ndarray，包含节点的数组。
+        
+        **异常：**
+
+        **TypeError**：参数 `node_type` 的类型不为整型。
 
         **样例：**
 
         >>> nodes = graph_dataset.get_all_nodes(node_type=1)
-
-        **异常：**
-
-        **TypeError**：参数 `node_type` 的类型不为整型。
 
     .. py:method:: get_edges_from_nodes(node_list)
 
@@ -193,13 +193,13 @@ mindspore.dataset.GraphData
 
         numpy.ndarray，含一个或多个边ID的数组。
 
-        **示例：**
-
-        >>> edges = graph_dataset.get_edges_from_nodes(node_list=[(101, 201), (103, 207)])
-
         **异常：**
 
         **TypeError**：参数 `edge_list` 的类型不为列表或numpy.ndarray。
+
+        **样例：**
+
+        >>> edges = graph_dataset.get_edges_from_nodes(node_list=[(101, 201), (103, 207)])
 
     .. py:method:: get_edge_feature(edge_list, feature_types)
 
@@ -214,15 +214,15 @@ mindspore.dataset.GraphData
 
         numpy.ndarray，包含特征的数组。
 
-        **样例：**
-
-        >>> edges = graph_dataset.get_all_edges(edge_type=0)
-        >>> features = graph_dataset.get_edge_feature(edge_list=edges, feature_types=[1])
-
         **异常：**
 
         - **TypeError** - 参数 `edge_list` 的类型不为列表或numpy.ndarray。
         - **TypeError** - 参数 `feature_types` 的类型不为列表或numpy.ndarray。
+
+        **样例：**
+
+        >>> edges = graph_dataset.get_all_edges(edge_type=0)
+        >>> features = graph_dataset.get_edge_feature(edge_list=edges, feature_types=[1])
 
 
     .. py:method:: get_neg_sampled_neighbors(node_list, neg_neighbor_num, neg_neighbor_type)
@@ -239,17 +239,17 @@ mindspore.dataset.GraphData
 
         numpy.ndarray，包含相邻节点的数组。
 
-        **样例：**
-
-        >>> nodes = graph_dataset.get_all_nodes(node_type=1)
-        >>> neg_neighbors = graph_dataset.get_neg_sampled_neighbors(node_list=nodes, neg_neighbor_num=5,
-        ...                                                         neg_neighbor_type=2)
-
         **异常：**
 
         - **TypeError** - 参数 `node_list` 的类型不为列表或numpy.ndarray。
         - **TypeError** - 参数 `neg_neighbor_num` 的类型不为整型。
         - **TypeError** - 参数 `neg_neighbor_type` 的类型不为整型。
+
+        **样例：**
+
+        >>> nodes = graph_dataset.get_all_nodes(node_type=1)
+        >>> neg_neighbors = graph_dataset.get_neg_sampled_neighbors(node_list=nodes, neg_neighbor_num=5,
+        ...                                                         neg_neighbor_type=2)
 
     .. py:method:: get_nodes_from_edges(edge_list)
 
@@ -267,6 +267,11 @@ mindspore.dataset.GraphData
 
         **TypeError：** 参数 `edge_list` 不为列表或ndarray。
 
+        **样例：**
+
+        >>> edge_list = graph_dataset.get_all_edges(node_type=1)
+        >>> nodes = graph_dataset.get_nodes_from_edges(edge_list)
+
     .. py:method:: get_node_feature(node_list, feature_types)
 
         获取 `node_list` 中节点的特征，以 `feature_types` 类型返回。
@@ -280,15 +285,15 @@ mindspore.dataset.GraphData
 
         numpy.ndarray，包含特征的数组。
 
-        **示例：**
-
-        >>> nodes = graph_dataset.get_all_nodes(node_type=1)
-        >>> features = graph_dataset.get_node_feature(node_list=nodes, feature_types=[2, 3])
-
         **异常：**
 
         - **TypeError** - 参数 `node_list` 的类型不为列表或numpy.ndarray。
         - **TypeError** - 参数 `feature_types` 的类型不为列表或numpy.ndarray。
+
+        **样例：**
+
+        >>> nodes = graph_dataset.get_all_nodes(node_type=1)
+        >>> features = graph_dataset.get_node_feature(node_list=nodes, feature_types=[2, 3])
 
     .. py:method:: get_sampled_neighbors(node_list, neighbor_nums, neighbor_types, strategy=<SamplingStrategy.RANDOM: 0>)
 
@@ -299,7 +304,7 @@ mindspore.dataset.GraphData
         - **node_list** (Union[list, numpy.ndarray]) - 包含节点的列表。
         - **neighbor_nums** (Union[list, numpy.ndarray]) - 每跳采样的相邻节点数。
         - **neighbor_types** (Union[list, numpy.ndarray]) - 每跳采样的相邻节点类型。
-        - **strategy** (SamplingStrategy, 可选) - 采样策略（默认为mindspore.dataset.engine.SamplingStrategy.RANDOM）。取值范围：[SamplingStrategy.RANDOM, SamplingStrategy.EDGE_WEIGHT]。
+        - **strategy** (SamplingStrategy, 可选) - 采样策略，默认值：mindspore.dataset.SamplingStrategy.RANDOM。取值范围：[SamplingStrategy.RANDOM, SamplingStrategy.EDGE_WEIGHT]。
 
         - **SamplingStrategy.RANDOM**：随机抽样，带放回采样。
         - **SamplingStrategy.EDGE_WEIGHT**：以边缘权重为概率进行采样。
@@ -308,17 +313,17 @@ mindspore.dataset.GraphData
 
         numpy.ndarray，包含相邻节点的数组。
 
-        *样例：**
-
-        >>> nodes = graph_dataset.get_all_nodes(node_type=1)
-        >>> neighbors = graph_dataset.get_sampled_neighbors(node_list=nodes, neighbor_nums=[2, 2],
-        ...                                                 neighbor_types=[2, 1])
-
         **异常：**
 
         - **TypeError** - 参数 `node_list` 的类型不为列表或numpy.ndarray。
         - **TypeError** - 参数 `neighbor_nums` 的类型不为列表或numpy.ndarray。
         - **TypeError** - 参数 `neighbor_types`  的类型不为列表或numpy.ndarray。
+
+        **样例：**
+
+        >>> nodes = graph_dataset.get_all_nodes(node_type=1)
+        >>> neighbors = graph_dataset.get_sampled_neighbors(node_list=nodes, neighbor_nums=[2, 2],
+        ...                                                 neighbor_types=[2, 1])
 
 
     .. py:method:: graph_info()
@@ -327,7 +332,11 @@ mindspore.dataset.GraphData
 
         **返回：**
 
-        dict，图的元信息。键为 `node_num` 、 `node_type` 、 `node_feature_type` 、 `edge_num` 、 `edge_type` 、和 `edge_feature_type` 。
+        dict，图的元信息。键为 `node_num` 、 `node_type` 、 `node_feature_type` 、 `edge_num` 、 `edge_type` 和 `edge_feature_type` 。
+
+        **样例：**
+
+        >>> graph_info = graph_dataset.graph_info()
 
 
     .. py:method:: random_walk(target_nodes, meta_path, step_home_param=1.0, step_away_param=1.0, default_node=-1)
@@ -338,20 +347,20 @@ mindspore.dataset.GraphData
 
         - **target_nodes** (list[int]) - 随机游走中的起始节点列表。
         - **meta_path** (list[int]) - 每个步长的节点类型。
-        - **step_home_param** (float, 可选) - 返回node2vec算法中的超参（默认为1.0）。
-        - **step_away_param** (float, 可选) - node2vec算法中的in和out超参（默认为1.0）。
-        - **default_node** (int, 可选) - 如果找不到更多相邻节点，则为默认节点（默认值为-1，表示不给定节点）。
+        - **step_home_param** (float, 可选) - 返回 `node2vec算法 <https://www.kdd.org/kdd2016/papers/files/rfp0218-groverA.pdf>`_ 中的超参，默认值：1.0。
+        - **step_away_param** (float, 可选) - `node2vec算法 <https://www.kdd.org/kdd2016/papers/files/rfp0218-groverA.pdf>`_ 中的in和out超参，默认值：1.0。
+        - **default_node** (int, 可选) - 如果找不到更多相邻节点，则为默认节点，默认值：-1，表示不给定节点。
 
         **返回：**
 
         numpy.ndarray，包含节点的数组。
 
-        **示例：**
-
-        >>> nodes = graph_dataset.get_all_nodes(node_type=1)
-        >>> walks = graph_dataset.random_walk(target_nodes=nodes, meta_path=[2, 1, 2])
-
         **异常：**
 
         - **TypeError** - 参数 `target_nodes` 的类型不为列表或numpy.ndarray。
         - **TypeError** - 参数 `meta_path` 的类型不为列表或numpy.ndarray。
+
+        **样例：**
+
+        >>> nodes = graph_dataset.get_all_nodes(node_type=1)
+        >>> walks = graph_dataset.random_walk(target_nodes=nodes, meta_path=[2, 1, 2])

@@ -3,11 +3,11 @@ mindspore.dataset.Schema
 
 .. py:class:: mindspore.dataset.Schema(schema_file=None)
 
-    代表一个解析和存储数据列属性的类。
+    用于解析和存储数据列属性的类。
 
     **参数：**
 
-    - **schema_file** (str): schema文件的路径（默认值为None）。
+    - **schema_file** (str): schema文件的路径，默认值：None。
 
     **返回：**
 
@@ -33,7 +33,7 @@ mindspore.dataset.Schema
 
         - **name** (str): 列的新名称。
         - **de_type** (str): 列的数据类型。
-        - **shape** (list[int], optional): 列shape（默认值为None，[-1]表示rank 1的未知shape）。
+        - **shape** (list[int], 可选): 列shape，默认值：None，-1表示该维度的shape是未知的。
 
         **异常：**
 
