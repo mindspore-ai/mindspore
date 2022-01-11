@@ -502,10 +502,8 @@ void SetClonedTensorShapeForOptimizer(const FuncGraphPtr &root) {
 // For adafactor optimizer, the relationship between parameter and state's shape as follows:
 // 1) parameter: [A, B, C, D] (shape_size > 2), exp_avg_sq_row: [A, B, C], exp_avg_sq_col: [A, B, D], exp_avg_sq: [1]
 //    If the parameter is opt shard, the exp_avg_sq_row and exp_avg_sq_col need to be shard accordingly.
-//
 // 2) parameter: [A, B] (shape_size = 2), exp_avg_sq_row: [A], exp_avg_sq_col: [B], exp_avg_sq: [1]
 //    If the parameter is opt shard, the exp_avg_sq_row needs to be shard accordingly.
-//
 // 3) parameter: [A] (shape_size = 1), exp_avg_sq_row: [1], exp_avg_sq_col: [1], exp_avg_sq: [A]
 //    If the parameter is opt shard, the exp_avg_sq needs to be shard accordingly.
 static bool AdafactorStateIsOptShard(const std::string &opt_shard_group, size_t shape_size,

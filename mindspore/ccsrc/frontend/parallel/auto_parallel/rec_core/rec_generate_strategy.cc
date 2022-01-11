@@ -182,7 +182,7 @@ Strategys PrepareOneHot(const std::vector<std::shared_ptr<OperatorInfo>> &ops, c
   size_t s_second = 1;
 
   if (s[0] != 0) {
-    s_second = g_device_manager->DeviceNum() / s[0];
+    s_second = g_device_manager->DeviceNum() / LongToSize(s[0]);
   }
 
   if (s.size() == 1) {
@@ -788,7 +788,7 @@ Dimensions PrepareReshapeOutputStrategy(const std::vector<std::shared_ptr<Operat
       mapping.push_back(-1);
       s.push_back(1);
     } else {
-      for (size_t j = tmp_index; j < input_shape.size(); j++) {
+      for (size_t j = LongToSize(tmp_index); j < input_shape.size(); j++) {
         tmp_prod *= strategy->GetInputDim()[0][j];
         tmp_index++;
         if (mapping[i] == (int64_t)j) {

@@ -93,16 +93,13 @@ Status AllreduceFusion::ProcessAllreduceFusion(const CNodePtr &ret) {
     MS_LOG(ERROR) << "AllreduceGraph set_head_cnode failed.";
     return FAILED;
   }
-  auto threshold = ParallelContext::GetInstance()->fusion_threshold_mb() * 1024 * 1024 / 4.0;
-  if (threshold > 0) {
-    if (SetFusionBySize(ret, threshold) != SUCCESS) {
-      MS_LOG(ERROR) << "SetFusionBySize failed.";
-      return FAILED;
-    }
-  } else {
+  int64_t threshold = ParallelContext::GetInstance()->fusion_threshold_mb() * 1024 * 1024 / 4;
+  if (threshold <= 0) {
     MS_LOG(ERROR) << "The threshold of SetFusionBySize must be larger than 0, but got " << threshold << ".";
     return FAILED;
   }
+
+  (void)SetFusionBySize(ret, threshold);
   return SUCCESS;
 }
 }  // namespace parallel

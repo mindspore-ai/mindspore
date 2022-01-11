@@ -183,6 +183,9 @@ class Edge {
   int64_t is_output_parameter_involve_ = -1;  // -1: unset; 0: not parameter_involved; 1: parameter_involved
   // In the inference phase, this is used to mark whether the output of the previous operator is critical.
   int64_t is_output_critical_ = 0;
+
+  // Returns whether two double variable are equal.
+  bool IsDoubleEqual(double x, double y) { return std::abs(x - y) < EPS; }
 };
 }  // namespace parallel
 }  // namespace mindspore
