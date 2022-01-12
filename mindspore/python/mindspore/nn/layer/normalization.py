@@ -703,6 +703,7 @@ class SyncBatchNorm(_BatchNorm):
     Examples:
         >>> # This example should be run with multiple processes.
         >>> # Please refer to the tutorial > Distributed Training on mindspore.cn.
+        >>> # Focus on the contents of these three parts: 配置分布式环境变量, 调用集合通信库, 运行脚本.
         >>> import numpy as np
         >>> from mindspore.communication import init
         >>> from mindspore import context

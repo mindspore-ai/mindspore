@@ -299,6 +299,7 @@ class DistributedGradReducer(Cell):
     Examples:
         >>> # This example should be run with multiple processes.
         >>> # Please refer to the tutorial > Distributed Training on mindspore.cn.
+        >>> # Focus on the contents of these three parts: 配置分布式环境变量, 调用集合通信库, 运行脚本.
         >>> import numpy as np
         >>> from mindspore.communication import init
         >>> from mindspore import ops
@@ -324,6 +325,7 @@ class DistributedGradReducer(Cell):
         ...         self.reducer_flag = False
         ...         self.grad_reducer = None
         ...         self.parallel_mode = context.get_auto_parallel_context("parallel_mode")
+        ...         self.depend = ops.Depend()
         ...         if self.parallel_mode in [ParallelMode.DATA_PARALLEL, ParallelMode.HYBRID_PARALLEL]:
         ...             self.reducer_flag = True
         ...         if self.reducer_flag:
@@ -339,7 +341,7 @@ class DistributedGradReducer(Cell):
         ...         if self.reducer_flag:
         ...             # apply grad reducer on grads
         ...             grads = self.grad_reducer(grads)
-        ...         return ops.Depend(loss, self.optimizer(grads))
+        ...         return self.depend(loss, self.optimizer(grads))
         >>>
         >>> class Net(nn.Cell):
         ...     def __init__(self, in_features, out_features):
