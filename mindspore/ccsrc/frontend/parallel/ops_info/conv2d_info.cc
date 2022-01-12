@@ -172,12 +172,6 @@ Status Conv2DInfo::CheckHWStrategySameModeByDimension(int64_t strategy, const st
                     << " when kernel_size > stride but slice shape is smaller than or equal to (k - s + 1) / 2";
       return FAILED;
     }
-
-    if (h_or_w_kernel_size - h_or_w_stride == 1) {
-      MS_LOG(ERROR) << name_ << ": The 'same' mode do not support to split " << dimension
-                    << " when kernel_size > stride but k - s == 1";
-      return FAILED;
-    }
   }
   return SUCCESS;
 }
