@@ -25,26 +25,12 @@ namespace mindspore {
 namespace ops {
 namespace {
 abstract::ShapePtr ErfinvInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
-  const int64_t input_num = 1;
-  (void)CheckAndConvertUtils::CheckInteger("input_x numbers", input_args.size(), kEqual, input_num, prim_name);
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto in_shape = shape_map[kShape];
   return std::make_shared<abstract::Shape>(in_shape);
 }
 
 TypePtr ErfinvInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(prim);
-  auto op_name = prim->name();
-  const int64_t input_num = 1;
-  (void)CheckAndConvertUtils::CheckInteger("input_x number", input_args.size(), kEqual, input_num, op_name);
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   auto infer_type = input_args[0]->BuildType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", infer_type, valid_types, prim->name());
@@ -53,6 +39,13 @@ TypePtr ErfinvInferType(const PrimitivePtr &prim, const std::vector<AbstractBase
 }  // namespace
 AbstractBasePtr ErfinvInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto op_name = primitive->name();
+  const int64_t input_num = 1;
+  (void)CheckAndConvertUtils::CheckInteger("input_x number", input_args.size(), kEqual, input_num, op_name);
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
   return abstract::MakeAbstract(ErfinvInferShape(primitive, input_args), ErfinvInferType(primitive, input_args));
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(Erfinv, prim::kPrimErfinv, ErfinvInfer, nullptr, true);
