@@ -22,7 +22,7 @@ import shutil
 import stat
 import threading
 from threading import Thread, Lock
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 
 import math
 import sys
@@ -252,7 +252,7 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
 
     if isinstance(save_obj, nn.Cell):
         save_obj.init_parameters_data()
-        param_dict = {}
+        param_dict = OrderedDict()
         for _, param in save_obj.parameters_and_names():
             param_dict[param.name] = param
         param_list = []
@@ -275,7 +275,7 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
             append_info_list.append({"name": k_name, "data": Tensor(value)})
             save_obj.extend(append_info_list)
 
-    data_list = {}
+    data_list = OrderedDict()
     with _ckpt_mutex:
         for param in save_obj:
             key = param["name"]
