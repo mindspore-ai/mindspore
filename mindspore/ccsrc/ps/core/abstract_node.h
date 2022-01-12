@@ -47,8 +47,8 @@ class AbstractNode : public Node {
         client_to_server_(nullptr),
         server_(nullptr),
         server_thread_(nullptr),
-        worker_num_(-1),
-        server_num_(-1),
+        worker_num_(0),
+        server_num_(0),
         is_connected_to_scheduler_(false),
         is_current_node_scale_in_(false),
         follower_scaler_(nullptr),
@@ -125,11 +125,11 @@ class AbstractNode : public Node {
   PersistentState persistent_state() const;
   void set_persistent_state(PersistentState persistent_state);
 
-  int32_t worker_num() const;
-  int32_t server_num() const;
+  uint32_t worker_num() const;
+  uint32_t server_num() const;
 
-  void set_worker_num(const int32_t &worker_num);
-  void set_server_num(const int32_t &server_num);
+  void set_worker_num(const uint32_t &worker_num);
+  void set_server_num(const uint32_t &server_num);
 
   std::string scheduler_ip() const;
   void set_scheduler_ip(const std::string &scheduler_ip);
@@ -264,8 +264,8 @@ class AbstractNode : public Node {
   std::shared_ptr<TcpServer> server_;
   std::unique_ptr<std::thread> server_thread_;
 
-  int32_t worker_num_;
-  int32_t server_num_;
+  uint32_t worker_num_;
+  uint32_t server_num_;
   std::atomic<bool> is_connected_to_scheduler_;
   // Identify whether the current node is a scale in node.
   std::atomic<bool> is_current_node_scale_in_;

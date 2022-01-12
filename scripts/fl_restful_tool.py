@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# coding=UTF-8
 # Copyright 2020 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,30 +22,34 @@ import argparse
 import json
 import os
 import warnings
+from enum import Enum
 import requests
 
 
-class Status:
-    success = "0"
-    failed = "1"
+class Status(Enum):
+    """
+    Response Status
+    """
+    SUCCESS = "0"
+    FAILED = "1"
 
 
-class Restful:
+class Restful(Enum):
     """
     Define restful interface constant
     """
+    SCALE = "scale"
+    SCALE_OUT = "scaleout"
+    SCALE_IN = "scalein"
+    NODES = "nodes"
+    GET_INSTANCE_DETAIL = "getInstanceDetail"
+    NEW_INSTANCE = "newInstance"
+    QUERY_INSTANCE = "queryInstance"
+    ENABLE_FLS = "enableFLS"
+    DISABLE_FLS = "disableFLS"
+    STATE = "state"
+    SCALE_OUT_ROLLBACK = "scaleoutRollback"
 
-    scale = "scale"
-    scaleout = "scaleout"
-    scalein = "scalein"
-    nodes = "nodes"
-    getInstanceDetail = "getInstanceDetail"
-    newInstance = "newInstance"
-    queryInstance = "queryInstance"
-    enableFLS = "enableFLS"
-    disableFLS = "disableFLS"
-    state = "state"
-    scaleoutRollback = "scaleoutRollback"
 
 warnings.filterwarnings('ignore')
 
@@ -55,11 +57,9 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--http_type", type=str, default="http", help="http or https")
 parser.add_argument("--ip", type=str, default="127.0.0.1")
 parser.add_argument("--port", type=int, default=6666)
-# scaleout scalein nodes
 parser.add_argument("--request_name", type=str, default="")
 
 parser.add_argument("--server_num", type=int, default=0)
-# "start_fl_job_threshold=20,start_fl_job_time_window=2000..."
 parser.add_argument("--instance_param", type=str, default="")
 parser.add_argument("--metrics_file_path", type=str, default="/opt/huawei/mindspore/hybrid_albert/metrics.json")
 
@@ -82,12 +82,12 @@ def call_scale():
     call cluster scale out or scale in
     """
     if server_num == 0:
-        return process_self_define_json(Status.failed, "error. server_num is 0")
+        return process_self_define_json(Status.FAILED.value, "error. server_num is 0")
 
     node_ids = json.loads(call_nodes())["result"]
     cluster_abstract_node_num = len(node_ids)
     if cluster_abstract_node_num == 0:
-        return process_self_define_json(Status.failed, "error. cluster abstract node num is 0")
+        return process_self_define_json(Status.FAILED.value, "error. cluster abstract node num is 0")
 
     cluster_server_node_num = 0
     cluster_worker_node_num = 0
@@ -103,7 +103,7 @@ def call_scale():
         else:
             pass
     if cluster_server_node_num == server_num:
-        return process_self_define_json(Status.failed, "error. cluster server num is same with server_num.")
+        return process_self_define_json(Status.FAILED.value, "error. cluster server num is same with server_num.")
     if cluster_server_node_num > server_num:
         scale_in_len = cluster_server_node_num - server_num
         scale_in_node_ids = []
@@ -115,56 +115,67 @@ def call_scale():
 
 
 def call_scaleout(scale_out_server_num, scale_out_worker_num=0):
-    url = base_url + "scaleout"
+    """
+    call scaleout
+    """
+    url = base_url + Restful.SCALE_OUT.value
     data = {"server_num": scale_out_server_num, "worker_num": scale_out_worker_num}
     res = session.post(url, headers=headers, verify=False, data=json.dumps(data))
     res_json = json.loads(res.text)
-    if res_json["code"] == Status.failed:
-        return process_self_define_json(Status.failed, res_json["error_message"])
+    if res_json["code"] == Status.FAILED.value:
+        return process_self_define_json(Status.FAILED.value, res_json["error_message"])
 
     result = "scale out server num is " + str(scale_out_server_num)
-    return process_result_json(Status.success, res_json["message"], result)
+    return process_result_json(Status.SUCCESS.value, res_json["message"], result)
+
 
 def call_scaleout_rollback():
-    url = base_url + Restful.scaleoutRollback
+    """
+    call scaleout rollback
+    """
+    url = base_url + Restful.SCALE_OUT_ROLLBACK.value
     res = session.get(url, verify=False)
     res_json = json.loads(res.text)
-    if res_json["code"] == Status.failed:
-        return process_self_define_json(Status.failed, res_json["error_message"])
-    return process_self_define_json(Status.success, res_json["message"])
+    if res_json["code"] == Status.FAILED.value:
+        return process_self_define_json(Status.FAILED.value, res_json["error_message"])
+    return process_self_define_json(Status.SUCCESS.value, res_json["message"])
+
 
 def call_scalein(scale_in_node_ids):
     """
     call cluster to scale in
     """
     if not scale_in_node_ids:
-        return process_self_define_json(Status.failed, "error. node ids is empty.")
+        return process_self_define_json(Status.FAILED.value, "error. node ids is empty.")
 
-    url = base_url + "scalein"
+    url = base_url + Restful.SCALE_IN.value
     data = {"node_ids": scale_in_node_ids}
     res = session.post(url, headers=headers, verify=False, data=json.dumps(data))
     res_json = json.loads(res.text)
-    if res_json["code"] == Status.failed:
-        return process_self_define_json(Status.failed, res_json["error_message"])
+    if res_json["code"] == Status.FAILED.value:
+        return process_self_define_json(Status.FAILED.value, res_json["error_message"])
     result = "scale in node ids is " + str(scale_in_node_ids)
-    return process_result_json(Status.success, res_json["message"], result)
+    return process_result_json(Status.SUCCESS.value, res_json["message"], result)
 
 
 def call_nodes():
-    url = base_url + Restful.nodes
+    """
+    get nodes info
+    """
+    url = base_url + Restful.NODES.value
     res = session.get(url, verify=False)
     res_json = json.loads(res.text)
-    if res_json["code"] == Status.failed:
-        return process_self_define_json(Status.failed, res_json["error_message"])
-    return process_result_json(Status.success, res_json["message"], res_json["nodeIds"])
+    if res_json["code"] == Status.FAILED.value:
+        return process_self_define_json(Status.FAILED.value, res_json["error_message"])
+    return process_result_json(Status.SUCCESS.value, res_json["message"], res_json["nodeIds"])
 
 
 def call_get_instance_detail():
     """
-    call cluster get instance detail
+    get cluster instance detail
     """
     if not os.path.exists(metrics_file_path):
-        return process_self_define_json(Status.failed, "error. metrics file is not existed.")
+        return process_self_define_json(Status.FAILED.value, "error. metrics file is not existed.")
 
     ans_json_obj = {}
     joined_client_num_list = []
@@ -177,7 +188,7 @@ def call_get_instance_detail():
         metrics_list = f.readlines()
 
     if not metrics_list:
-        return process_self_define_json(Status.failed, "error. metrics file has no content")
+        return process_self_define_json(Status.FAILED.value, "error. metrics file has no content")
 
     for metrics in metrics_list:
         json_obj = json.loads(metrics)
@@ -190,18 +201,19 @@ def call_get_instance_detail():
     last_metrics = metrics_list[len(metrics_list) - 1]
     last_metrics_obj = json.loads(last_metrics)
 
-    ans_json_obj["code"] = Status.success
+    ans_json_obj["code"] = Status.SUCCESS.value
     ans_json_obj["describe"] = "get instance metrics detail successful."
     ans_json_obj["result"] = {}
-    ans_json_obj["result"]['currentIteration'] = last_metrics_obj['currentIteration']
-    ans_json_obj["result"]['flIterationNum'] = last_metrics_obj['flIterationNum']
-    ans_json_obj["result"]['flName'] = last_metrics_obj['flName']
-    ans_json_obj["result"]['instanceStatus'] = last_metrics_obj['instanceStatus']
-    ans_json_obj["result"]['iterationExecutionTime'] = iteration_execution_time_list
-    ans_json_obj["result"]['joinedClientNum'] = joined_client_num_list
-    ans_json_obj["result"]['rejectedClientNum'] = rejected_client_num_list
-    ans_json_obj["result"]['metricsAuc'] = metrics_auc_list
-    ans_json_obj["result"]['metricsLoss'] = metrics_loss_list
+    ans_json_result = ans_json_obj.get("result")
+    ans_json_result['currentIteration'] = last_metrics_obj['currentIteration']
+    ans_json_result['flIterationNum'] = last_metrics_obj['flIterationNum']
+    ans_json_result['flName'] = last_metrics_obj['flName']
+    ans_json_result['instanceStatus'] = last_metrics_obj['instanceStatus']
+    ans_json_result['iterationExecutionTime'] = iteration_execution_time_list
+    ans_json_result['joinedClientNum'] = joined_client_num_list
+    ans_json_result['rejectedClientNum'] = rejected_client_num_list
+    ans_json_result['metricsAuc'] = metrics_auc_list
+    ans_json_result['metricsLoss'] = metrics_loss_list
 
     return json.dumps(ans_json_obj)
 
@@ -211,11 +223,11 @@ def call_new_instance():
     call cluster new instance
     """
     if instance_param == "":
-        return process_self_define_json(Status.failed, "error. instance_param is empty.")
+        return process_self_define_json(Status.FAILED.value, "error. instance_param is empty.")
     instance_param_list = instance_param.split(sep=",")
     instance_param_json_obj = {}
 
-    url = base_url + Restful.newInstance
+    url = base_url + Restful.NEW_INSTANCE.value
     for cur in instance_param_list:
         pair = cur.split(sep="=")
         instance_param_json_obj[pair[0]] = float(pair[1])
@@ -223,84 +235,102 @@ def call_new_instance():
     data = json.dumps(instance_param_json_obj)
     res = session.post(url, verify=False, data=data)
     res_json = json.loads(res.text)
-    if res_json["code"] == Status.failed:
-        return process_self_define_json(Status.failed, res_json["error_message"])
-    return process_self_define_json(Status.success, res_json["message"])
+    if res_json["code"] == Status.FAILED.value:
+        return process_self_define_json(Status.FAILED.value, res_json["error_message"])
+    return process_self_define_json(Status.SUCCESS.value, res_json["message"])
 
 
 def call_query_instance():
-    url = base_url + Restful.queryInstance
+    """
+    query cluster instance
+    """
+    url = base_url + Restful.QUERY_INSTANCE.value
     res = session.post(url, verify=False)
     res_json = json.loads(res.text)
-    if res_json["code"] == Status.failed:
-        return process_self_define_json(Status.failed, res_json["error_message"])
-    return process_result_json(Status.success, res_json["message"], res_json["result"])
+    if res_json["code"] == Status.FAILED.value:
+        return process_self_define_json(Status.FAILED.value, res_json["error_message"])
+    return process_result_json(Status.SUCCESS.value, res_json["message"], res_json["result"])
 
 
 def call_enable_fls():
-    url = base_url + Restful.enableFLS
+    """
+    enable cluster fls
+    """
+    url = base_url + Restful.ENABLE_FLS.value
     res = session.post(url, verify=False)
     res_json = json.loads(res.text)
-    if res_json["code"] == Status.failed:
-        return process_self_define_json(Status.failed, res_json["error_message"])
-    return process_self_define_json(Status.success, res_json["message"])
+    if res_json["code"] == Status.FAILED.value:
+        return process_self_define_json(Status.FAILED.value, res_json["error_message"])
+    return process_self_define_json(Status.SUCCESS.value, res_json["message"])
 
 
 def call_disable_fls():
-    url = base_url + Restful.disableFLS
+    """
+    disable cluster fls
+    """
+    url = base_url + Restful.DISABLE_FLS.value
     res = session.post(url, verify=False)
     res_json = json.loads(res.text)
-    if res_json["code"] == Status.failed:
-        return process_self_define_json(Status.failed, res_json["error_message"])
-    return process_self_define_json(Status.success, res_json["message"])
+    if res_json["code"] == Status.FAILED.value:
+        return process_self_define_json(Status.FAILED.value, res_json["error_message"])
+    return process_self_define_json(Status.SUCCESS.value, res_json["message"])
 
 
 def call_state():
-    url = base_url + Restful.state
+    """
+    get cluster state
+    """
+    url = base_url + Restful.STATE.value
     res = session.get(url, verify=False)
     res_json = json.loads(res.text)
-    if res_json["code"] == Status.failed:
-        return process_self_define_json(Status.failed, res_json["error_message"])
+    if res_json["code"] == Status.FAILED.value:
+        return process_self_define_json(Status.FAILED.value, res_json["error_message"])
     result = res_json['cluster_state']
-    return process_result_json(Status.success, res_json["message"], result)
+    return process_result_json(Status.SUCCESS.value, res_json["message"], result)
 
 
 def process_result_json(code, describe, result):
+    """
+    process result json
+    """
     result_dict = {"code": code, "describe": describe, "result": result}
     return json.dumps(result_dict)
 
 
 def process_self_define_json(code, describe):
+    """
+    process self define json
+    """
     result_dict = {"code": code, "describe": describe}
     return json.dumps(result_dict)
 
 
 if __name__ == '__main__':
-    if request_name == Restful.scale:
+    if request_name == Restful.SCALE.value:
         print(call_scale())
 
-    elif request_name == Restful.nodes:
+    elif request_name == Restful.NODES.value:
         print(call_nodes())
 
-    elif request_name == Restful.getInstanceDetail:
+    elif request_name == Restful.GET_INSTANCE_DETAIL.value:
         print(call_get_instance_detail())
 
-    elif request_name == Restful.newInstance:
+    elif request_name == Restful.NEW_INSTANCE.value:
         print(call_new_instance())
 
-    elif request_name == Restful.queryInstance:
+    elif request_name == Restful.QUERY_INSTANCE.value:
         print(call_query_instance())
 
-    elif request_name == Restful.enableFLS:
+    elif request_name == Restful.ENABLE_FLS.value:
         print(call_enable_fls())
 
-    elif request_name == Restful.disableFLS:
+    elif request_name == Restful.DISABLE_FLS.value:
         print(call_disable_fls())
 
-    elif request_name == Restful.state:
+    elif request_name == Restful.STATE.value:
         print(call_state())
 
-    elif request_name == Restful.scaleoutRollback:
+    elif request_name == Restful.SCALE_OUT_ROLLBACK.value:
         print(call_scaleout_rollback())
 
     else:
