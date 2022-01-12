@@ -5508,14 +5508,13 @@ class Real(PrimitiveWithInfer):
     If input is real, it is returned unchanged.
 
     Inputs:
-        -**input** (Tensor) - The input tensor to compute to, the type of the input should be complex64 or complex128.
+        -**input** (Tensor) - The input tensor to compute to.
 
     Outputs:
-        Tensor, the type is the same as the real part of input.
+        Tensor, the shape is the same as the input.
 
     Raises:
        TypeError: If the input is not a Tensor.
-       TypeError: If the type of the real part of input is not complex64 or complex128.
 
     Supported Platforms:
         ``GPU``
