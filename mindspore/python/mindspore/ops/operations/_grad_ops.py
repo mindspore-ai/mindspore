@@ -646,19 +646,13 @@ class UniqueGrad(Primitive):
         raise NotImplementedError
 
 
-class BNTrainingReduceGrad(PrimitiveWithInfer):
+class BNTrainingReduceGrad(Primitive):
     """Gradients of FusedBatchNorm operation."""
 
     @prim_attr_register
     def __init__(self, epsilon=0.0001):
         _inputs = ['grads', 'x', 'diff_scale', 'diff_offset', 'scale', 'batch_mean', 'batch_variance']
         self.init_prim_io_names(inputs=_inputs, outputs=['y'])
-
-    def infer_shape(self, grads, x, diff_scale, diff_offset, scale, batch_mean, batch_variance):
-        return grads
-
-    def infer_dtype(self, grads, x, diff_scale, diff_offset, scale, batch_mean, batch_variance):
-        return grads
 
 
 class BNTrainingUpdateGrad(PrimitiveWithInfer):

@@ -358,6 +358,7 @@ inline const PrimitivePtr kPrimBatchNorm = std::make_shared<Primitive>("BatchNor
 inline const PrimitivePtr kPrimBatchNormGrad = std::make_shared<Primitive>("BatchNormGrad");
 inline const PrimitivePtr kPrimSyncBatchNorm = std::make_shared<Primitive>("SyncBatchNorm");
 inline const PrimitivePtr kPrimSyncBatchNormGrad = std::make_shared<Primitive>("SyncBatchNormGrad");
+inline const PrimitivePtr kPrimBNTrainingReduce = std::make_shared<Primitive>("BNTrainingReduce");
 inline const PrimitivePtr kPrimBNTrainingReduceGrad = std::make_shared<Primitive>("BNTrainingReduceGrad");
 inline const PrimitivePtr kPrimReluGrad = std::make_shared<Primitive>(kReLUGrad);
 inline const PrimitivePtr kPrimReluGradV2 = std::make_shared<Primitive>("ReluGradV2");

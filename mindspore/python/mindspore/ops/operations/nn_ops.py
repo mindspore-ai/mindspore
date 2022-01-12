@@ -1059,7 +1059,7 @@ class InstanceNorm(PrimitiveWithInfer):
         return input_x, gamma, gamma
 
 
-class BNTrainingReduce(PrimitiveWithInfer):
+class BNTrainingReduce(Primitive):
     """
     The BNTrainingReduce interface is deprecated, please use the :class:`mindspore.ops.BatchNorm` instead.
 
@@ -1072,14 +1072,6 @@ class BNTrainingReduce(PrimitiveWithInfer):
     def __init__(self):
         """Initialize BNTrainingReduce."""
         self.init_prim_io_names(inputs=['x'], outputs=['sum', 'square_sum'])
-
-    def infer_shape(self, x_shape):
-        validator.check_equal_int(len(x_shape), 4, "x rank", self.name)
-        return [x_shape[1]], [x_shape[1]]
-
-    def infer_dtype(self, x_type):
-        validator.check_tensor_dtype_valid("x", x_type, [mstype.float16, mstype.float32], self.name)
-        return x_type, x_type
 
 
 class BNTrainingUpdate(PrimitiveWithInfer):

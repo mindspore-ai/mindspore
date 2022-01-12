@@ -163,7 +163,9 @@ from .gather_v2_ds import _gather_v2_ds_tbe
 from .gather_nd import _gather_nd_tbe
 from .gather_nd_ds import _gather_nd_ds_tbe
 from .bn_training_reduce import _bn_training_reduce_tbe
+from .bn_training_reduce_ds import _bn_training_reduce_ds_tbe
 from .bn_training_reduce_grad import _bn_training_reduce_grad_tbe
+from .bn_training_reduce_grad_ds import _bn_training_reduce_grad_ds_tbe
 from .bn_training_update import _bn_training_update_tbe
 from .bn_training_update_grad import _bn_training_update_grad_tbe
 from .bn_infer import _bn_infer_tbe
