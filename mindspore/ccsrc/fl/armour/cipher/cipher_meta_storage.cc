@@ -181,7 +181,6 @@ bool CipherMetaStorage::UpdateClientToServer(const char *list_name, const std::s
 }
 
 void CipherMetaStorage::RegisterPrime(const char *list_name, const std::string &prime) {
-  MS_LOG(INFO) << "register prime: " << prime;
   fl::Prime prime_id_pb;
   prime_id_pb.set_prime(prime);
   fl::PBMetadata prime_pb;

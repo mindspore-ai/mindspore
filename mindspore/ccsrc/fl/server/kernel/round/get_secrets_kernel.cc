@@ -36,7 +36,9 @@ void GetSecretsKernel::InitKernel(size_t) {
 bool GetSecretsKernel::CountForGetSecrets(const std::shared_ptr<FBBuilder> &fbb,
                                           const schema::GetShareSecrets *get_secrets_req, const size_t iter_num) {
   MS_ERROR_IF_NULL_W_RET_VAL(get_secrets_req, false);
-  if (!DistributedCountService::GetInstance().Count(name_, get_secrets_req->fl_id()->str())) {
+  auto fbs_fl_id = get_secrets_req->fl_id();
+  MS_ERROR_IF_NULL_W_RET_VAL(fbs_fl_id, false);
+  if (!DistributedCountService::GetInstance().Count(name_, fbs_fl_id->str())) {
     std::string reason = "Counting for get secrets kernel request failed. Please retry later.";
     cipher_share_->BuildGetSecretsRsp(fbb, schema::ResponseCode_OutOfTime, iter_num,
                                       std::to_string(CURRENT_TIME_MILLI.count()), nullptr);
