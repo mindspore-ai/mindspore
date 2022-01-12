@@ -2256,6 +2256,97 @@ class Exp(PrimitiveWithInfer):
             return Tensor(out)
         return None
 
+class Einsum(Primitive):
+    """
+    This operator uses equation to represent a tuple of tensors operations,
+    you can use this operator to perform diagonal/reducesum/transpose/matmul/mul/inner product operations, etc.
+
+    The inputs must be a tuple of tensors.
+    When the inputs are only one tensor, you can input (tensor, )
+    dtypes of them should be float16/float32/float64
+
+    Args:
+        equation (str): An attribute, represent the operation you want to do.
+        the value can contain only letters([a-z][A-Z]), commas(,), ellipsis(...), and arrow(->). the letters represent
+        inputs's tensor dimension, commas(,)represent separate tensors, ellipsis(...) indicates
+        the tensor dimension that you do not care about, the left of the arrow(->) indicates the input tensors,
+        and the right of it indicates the desired output dimension.
+
+    Inputs:
+        - **x** (Tuple) - input tensor used for calculation. the data type of the tensor must be the same.
+
+    Outputs:
+        Tensor, the shape of it can be obtained from the equation,
+        and the data type is the same as input tensors.
+
+    Raises:
+        TypeError: If equation itself is invalid, or the equation does not match the input tensor.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
+        >>> equation = "i->"
+        >>> einsum = ops.Einsum(equation)
+        >>> output = einsum(*[x])
+        >>> print(output)
+        [7.]
+        >>>
+        >>> x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
+        >>> y = Tensor(np.array([2.0, 4.0, 3.0]), mindspore.float32)
+        >>> equation = "i,i->i"
+        >>> einsum = ops.Einsum(equation)
+        >>> output = einsum((x, y))
+        >>> print(output)
+        [ 2. 8. 12.]
+        >>>
+        >>> x = Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]), mindspore.float32)
+        >>> y = Tensor(np.array([[2.0, 3.0], [1.0, 2.0], [4.0, 5.0]]), mindspore.float32)
+        >>> equation = "ij,jk->ik"
+        >>> einsum = ops.Einsum(equation)
+        >>> output = einsum((x, y))
+        >>> print(output)
+        [[16., 22.], [37., 52.]]
+        >>>
+        >>> x = Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]), mindspore.float32)
+        >>> equation = "ij->ji"
+        >>> einsum = ops.Einsum(equation)
+        >>> output = einsum((x))
+        >>> print(output)
+        [[1., 4.], [2., 5.], [3., 6.]]
+        >>>
+        >>> x = Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]), mindspore.float32)
+        >>> equation = "ij->j"
+        >>> einsum = ops.Einsum(equation)
+        >>> output = einsum((x))
+        >>> print(output)
+        [[5., 7., 9.]]
+        >>>
+        >>> x = Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]), mindspore.float32)
+        >>> equation = "...->"
+        >>> einsum = ops.Einsum(equation)
+        >>> output = einsum((x))
+        >>> print(output)
+        [21.]
+        >>>
+        >>> x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
+        >>> y = Tensor(np.array([2.0, 4.0, 1.0]), mindspore.float32)
+        >>> equation = "j,i->ji"
+        >>> einsum = ops.Einsum(equation)
+        >>> output = einsum((x, y))
+        >>> print(output)
+        [[2., 4., 1.], [4., 8., 2.], [6., 12., 3.]]
+    """
+    @prim_attr_register
+    def __init__(self, equation):
+        if not isinstance(equation, str):
+            raise TypeError("the equation must be str!")
+        seg_equation = equation.split("->")
+        if len(seg_equation) > 2:
+            raise TypeError("the equation can contain only one arrow !")
+        self.add_prim_attr('equation', equation)
+        self.init_prim_io_names(inputs=['inputs'], outputs=['output'])
 
 class Expm1(Primitive):
     r"""

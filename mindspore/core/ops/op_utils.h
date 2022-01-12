@@ -54,6 +54,7 @@ constexpr auto kCenterPointBox = "center_point_box";
 constexpr auto kClip = "clip";
 constexpr auto kCondition = "condition";
 constexpr auto kCrops = "crops";
+constexpr auto kEquation = "equation";
 constexpr auto kCustom = "custom";
 constexpr auto kDampening = "dampening";
 constexpr auto kDataType = "data_type";
