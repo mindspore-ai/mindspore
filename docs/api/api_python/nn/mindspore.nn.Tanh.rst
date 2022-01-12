@@ -16,7 +16,7 @@ mindspore.nn.Tanh
 
     **输入：**
     
-    - **x** (Tensor) - 数据类型为float16或float32的Tanh输入。shape为 :math:`(N,*)` ，其中 :math:`*` 表示任意的附加维度。
+    - **x** (Tensor) - 任意维度的Tensor，数据类型为float16或float32的输入。
 
     **输出：**
     
