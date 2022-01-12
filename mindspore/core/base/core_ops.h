@@ -421,6 +421,7 @@ inline const PrimitivePtr kPrimFastGeLU = std::make_shared<Primitive>(kFastGeLU)
 inline const PrimitivePtr kPrimFastGeLUGrad = std::make_shared<Primitive>(kFastGeLUGrad);
 inline const PrimitivePtr kPrimRelu = std::make_shared<Primitive>(kReLU);
 inline const PrimitivePtr kPrimElu = std::make_shared<Primitive>("Elu");
+inline const PrimitivePtr kPrimEluGrad = std::make_shared<Primitive>("EluGrad");
 inline const PrimitivePtr kPrimRelu6 = std::make_shared<Primitive>(kReLU6);
 inline const PrimitivePtr kPrimReluV2 = std::make_shared<Primitive>(kReLUV2);
 inline const PrimitivePtr kPrimPRelu = std::make_shared<Primitive>("PReLU");

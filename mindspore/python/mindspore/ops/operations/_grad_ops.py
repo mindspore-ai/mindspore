@@ -1646,20 +1646,13 @@ class ReluGradV2(Primitive):
         raise NotImplementedError
 
 
-class EluGrad(PrimitiveWithInfer):
+class EluGrad(Primitive):
     """Performs grad of Elu operation."""
 
     @prim_attr_register
     def __init__(self):
         """Initialize EluGrad"""
-
-    def infer_shape(self, y_grad_shape, x_shape):
-        return x_shape
-
-    def infer_dtype(self, y_grad_dtype, x_dtype):
-        args = {'y_grad': y_grad_dtype, 'x': x_dtype}
-        validator.check_tensors_dtypes_same_and_valid(args, mstype.float_type, self.name)
-        return x_dtype
+        self.init_prim_io_names(inputs=['y_backprop', 'x'], outputs=['output'])
 
 
 class GatherDGrad(PrimitiveWithInfer):
