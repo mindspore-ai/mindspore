@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,12 +27,11 @@
 namespace mindspore {
 namespace dataset {
 namespace audio {
-
 constexpr char kFadeOperation[] = "Fade";
 
 class FadeOperation : public TensorOperation {
  public:
-  explicit FadeOperation(int32_t fade_in_len, int32_t fade_out_len, FadeShape fade_shape);
+  FadeOperation(int32_t fade_in_len, int32_t fade_out_len, FadeShape fade_shape);
 
   ~FadeOperation() = default;
 
@@ -45,7 +44,7 @@ class FadeOperation : public TensorOperation {
   /// \brief Get the arguments of node
   /// \param[out] out_json JSON string of all attributes
   /// \return Status of the function
-  Status to_json(nlohmann::json *const out_json) override;
+  Status to_json(nlohmann::json *out_json) override;
 
  private:
   int32_t fade_in_len_;

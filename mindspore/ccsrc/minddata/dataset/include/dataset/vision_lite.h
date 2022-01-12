@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,16 +22,15 @@
 #include <string>
 #include <utility>
 #include <vector>
+
 #include "include/api/status.h"
 #include "include/dataset/constants.h"
 #include "include/dataset/transforms.h"
 
 namespace mindspore {
 namespace dataset {
-
 // Transform operations for performing computer vision.
 namespace vision {
-
 // Forward Declarations
 class RotateOperation;
 
@@ -96,7 +95,7 @@ class MS_API CenterCrop final : public TensorTransform {
   ///     dataset = dataset->Map({decode_op, crop_op},  // operations
   ///                            {"image"});            // input columns
   /// \endcode
-  explicit CenterCrop(std::vector<int32_t> size);
+  explicit CenterCrop(const std::vector<int32_t> &size);
 
   /// \brief Destructor.
   ~CenterCrop() = default;
@@ -131,7 +130,7 @@ class MS_API Crop final : public TensorTransform {
   ///     dataset = dataset->Map({decode_op, crop_op},  // operations
   ///                            {"image"});            // input columns
   /// \endcode
-  Crop(std::vector<int32_t> coordinates, std::vector<int32_t> size);
+  Crop(const std::vector<int32_t> &coordinates, const std::vector<int32_t> &size);
 
   /// \brief Destructor.
   ~Crop() = default;
@@ -194,7 +193,7 @@ class MS_API GaussianBlur final : public TensorTransform {
   ///     dataset = dataset->Map({decode_op, gaussian_op},  // operations
   ///                            {"image"});                // input columns
   /// \endcode
-  GaussianBlur(const std::vector<int32_t> &kernel_size, const std::vector<float> &sigma = {0., 0.});
+  explicit GaussianBlur(const std::vector<int32_t> &kernel_size, const std::vector<float> &sigma = {0., 0.});
 
   /// \brief Destructor.
   ~GaussianBlur() = default;
@@ -227,7 +226,7 @@ class MS_API Normalize final : public TensorTransform {
   ///     dataset = dataset->Map({decode_op, normalize_op},  // operations
   ///                            {"image"});                 // input columns
   /// \endcode
-  Normalize(std::vector<float> mean, std::vector<float> std);
+  Normalize(const std::vector<float> &mean, const std::vector<float> &std);
 
   /// \brief Destructor.
   ~Normalize() = default;
@@ -318,7 +317,7 @@ class MS_API Resize final : public TensorTransform {
   ///     dataset = dataset->Map({decode_op, resize_op},  // operations
   ///                            {"image"});              // input columns
   /// \endcode
-  explicit Resize(std::vector<int32_t> size, InterpolationMode interpolation = InterpolationMode::kLinear);
+  explicit Resize(const std::vector<int32_t> &size, InterpolationMode interpolation = InterpolationMode::kLinear);
 
   /// \brief Destructor.
   ~Resize() = default;
@@ -477,8 +476,8 @@ class MS_API Rotate final : public TensorTransform {
   ///     dataset = dataset->Map({decode_op, rotate_op},  // operations
   ///                            {"image"});              // input columns
   /// \endcode
-  Rotate(float degrees, InterpolationMode resample = InterpolationMode::kNearestNeighbour, bool expand = false,
-         std::vector<float> center = {}, std::vector<uint8_t> fill_value = {0, 0, 0});
+  explicit Rotate(float degrees, InterpolationMode resample = InterpolationMode::kNearestNeighbour, bool expand = false,
+                  const std::vector<float> &center = {}, const std::vector<uint8_t> &fill_value = {0, 0, 0});
 
   /// \brief Destructor.
   ~Rotate() = default;
@@ -493,7 +492,6 @@ class MS_API Rotate final : public TensorTransform {
   struct Data;
   std::shared_ptr<Data> data_;
 };
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

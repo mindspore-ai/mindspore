@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_AUDIO_IR_KERNELS_COMPLEX_NORM_IR_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_AUDIO_IR_KERNELS_COMPLEX_NORM_IR_H_
 
@@ -26,7 +27,6 @@
 namespace mindspore {
 namespace dataset {
 namespace audio {
-
 constexpr char kComplexNormOperation[] = "ComplexNorm";
 
 class ComplexNormOperation : public TensorOperation {
@@ -46,7 +46,6 @@ class ComplexNormOperation : public TensorOperation {
  private:
   float power_;
 };  // class ComplexNormOperation
-
 }  // namespace audio
 }  // namespace dataset
 }  // namespace mindspore

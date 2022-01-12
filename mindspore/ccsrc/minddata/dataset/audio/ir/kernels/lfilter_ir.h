@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace audio {
 // Char arrays storing name of corresponding classes (in alphabetical order)
 constexpr char kLFilterOperation[] = "LFilter";
@@ -53,7 +52,6 @@ class LFilterOperation : public TensorOperation {
   bool clamp_;
 };
 }  // namespace audio
-
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_AUDIO_IR_KERNELS_LFILTER_IR_H_

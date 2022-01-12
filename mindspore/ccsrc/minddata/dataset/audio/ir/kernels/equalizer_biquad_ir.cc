@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 #include "minddata/dataset/audio/ir/kernels/equalizer_biquad_ir.h"
 
 #include "minddata/dataset/audio/ir/validators.h"
-#include "minddata/dataset/audio/kernels/audio_utils.h"
 #include "minddata/dataset/audio/kernels/equalizer_biquad_op.h"
 
 namespace mindspore {

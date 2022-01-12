@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,12 +31,10 @@
 
 namespace mindspore {
 namespace dataset {
-
 class TensorOperation;
 
 // Transform operations for performing computer vision.
 namespace vision {
-
 /// \brief AdjustGamma TensorTransform.
 /// \note Apply gamma correction on input image.
 class MS_API AdjustGamma final : public TensorTransform {
@@ -49,10 +47,10 @@ class MS_API AdjustGamma final : public TensorTransform {
   /// \code
   ///     /* Define operations */
   ///     auto decode_op = vision::Decode();
-  ///     auto adjustgamma_op = vision::AdjustGamma(10.0);
+  ///     auto adjust_gamma_op = vision::AdjustGamma(10.0);
   ///
   ///     /* dataset is an instance of Dataset object */
-  ///     dataset = dataset->Map({decode_op, adjustgamma_op},  // operations
+  ///     dataset = dataset->Map({decode_op, adjust_gamma_op},  // operations
   ///                            {"image"});                   // input columns
   /// \endcode
   explicit AdjustGamma(float gamma, float gain = 1);
@@ -93,9 +91,9 @@ class MS_API AutoAugment final : public TensorTransform {
   ///     dataset = dataset->Map({decode_op, auto_augment_op}, // operations
   ///                            {"image"});                   // input columns
   /// \endcode
-  AutoAugment(AutoAugmentPolicy policy = AutoAugmentPolicy::kImageNet,
-              InterpolationMode interpolation = InterpolationMode::kNearestNeighbour,
-              const std::vector<uint8_t> &fill_value = {0, 0, 0});
+  explicit AutoAugment(AutoAugmentPolicy policy = AutoAugmentPolicy::kImageNet,
+                       InterpolationMode interpolation = InterpolationMode::kNearestNeighbour,
+                       const std::vector<uint8_t> &fill_value = {0, 0, 0});
 
   /// \brief Destructor.
   ~AutoAugment() = default;
@@ -126,7 +124,7 @@ class MS_API AutoContrast final : public TensorTransform {
   ///     dataset = dataset->Map({decode_op, autocontrast_op},  // operations
   ///                            {"image"});                    // input columns
   /// \endcode
-  explicit AutoContrast(float cutoff = 0.0, std::vector<uint32_t> ignore = {});
+  explicit AutoContrast(float cutoff = 0.0, const std::vector<uint32_t> &ignore = {});
 
   /// \brief Destructor.
   ~AutoContrast() = default;
@@ -188,7 +186,7 @@ class MS_API BoundingBoxAugment final : public TensorTransform {
   ///     dataset = dataset->Map({bbox_aug_op},       // operations
   ///                            {"image", "bbox"});  // input columns
   /// \endcode
-  explicit BoundingBoxAugment(const std::reference_wrapper<TensorTransform> transform, float ratio = 0.3);
+  explicit BoundingBoxAugment(const std::reference_wrapper<TensorTransform> &transform, float ratio = 0.3);
 
   /// \brief Destructor.
   ~BoundingBoxAugment() = default;
@@ -473,7 +471,7 @@ class MS_API Pad final : public TensorTransform {
   ///     dataset = dataset->Map({decode_op, pad_op},  // operations
   ///                            {"image"});           // input columns
   /// \endcode
-  explicit Pad(std::vector<int32_t> padding, std::vector<uint8_t> fill_value = {0},
+  explicit Pad(const std::vector<int32_t> &padding, const std::vector<uint8_t> &fill_value = {0},
                BorderType padding_mode = BorderType::kConstant);
 
   /// \brief Destructor.
@@ -509,7 +507,7 @@ class MS_API RandomAutoContrast final : public TensorTransform {
   ///     dataset = dataset->Map({decode_op, random_auto_contrast_op},  // operations
   ///                            {"image"});                            // input columns
   /// \endcode
-  explicit RandomAutoContrast(float cutoff = 0.0, std::vector<uint32_t> ignore = {}, float prob = 0.5);
+  explicit RandomAutoContrast(float cutoff = 0.0, const std::vector<uint32_t> &ignore = {}, float prob = 0.5);
 
   /// \brief Destructor.
   ~RandomAutoContrast() = default;
@@ -612,8 +610,10 @@ class MS_API RandomColorAdjust final : public TensorTransform {
   ///     dataset = dataset->Map({decode_op, random_color_adjust_op},  // operations
   ///                            {"image"});                           // input columns
   /// \endcode
-  explicit RandomColorAdjust(std::vector<float> brightness = {1.0, 1.0}, std::vector<float> contrast = {1.0, 1.0},
-                             std::vector<float> saturation = {1.0, 1.0}, std::vector<float> hue = {0.0, 0.0});
+  explicit RandomColorAdjust(const std::vector<float> &brightness = {1.0, 1.0},
+                             const std::vector<float> &contrast = {1.0, 1.0},
+                             const std::vector<float> &saturation = {1.0, 1.0},
+                             const std::vector<float> &hue = {0.0, 0.0});
 
   /// \brief Destructor.
   ~RandomColorAdjust() = default;
@@ -663,8 +663,8 @@ class MS_API RandomCrop final : public TensorTransform {
   ///     dataset = dataset->Map({decode_op, random_crop_op},  // operations
   ///                            {"image"});                   // input columns
   /// \endcode
-  explicit RandomCrop(std::vector<int32_t> size, std::vector<int32_t> padding = {0, 0, 0, 0},
-                      bool pad_if_needed = false, std::vector<uint8_t> fill_value = {0, 0, 0},
+  explicit RandomCrop(const std::vector<int32_t> &size, const std::vector<int32_t> &padding = {0, 0, 0, 0},
+                      bool pad_if_needed = false, const std::vector<uint8_t> &fill_value = {0, 0, 0},
                       BorderType padding_mode = BorderType::kConstant);
 
   /// \brief Destructor.
@@ -708,8 +708,8 @@ class MS_API RandomCropDecodeResize final : public TensorTransform {
   ///     dataset = dataset->Map({random_op},  // operations
   ///                            {"image"});              // input columns
   /// \endcode
-  explicit RandomCropDecodeResize(std::vector<int32_t> size, std::vector<float> scale = {0.08, 1.0},
-                                  std::vector<float> ratio = {3. / 4, 4. / 3},
+  explicit RandomCropDecodeResize(const std::vector<int32_t> &size, const std::vector<float> &scale = {0.08, 1.0},
+                                  const std::vector<float> &ratio = {3. / 4, 4. / 3},
                                   InterpolationMode interpolation = InterpolationMode::kLinear,
                                   int32_t max_attempts = 10);
 
@@ -760,8 +760,8 @@ class MS_API RandomCropWithBBox final : public TensorTransform {
   ///     dataset = dataset->Map({random_op},             // operations
   ///                            {"image", "bbox"});      // input columns
   /// \endcode
-  explicit RandomCropWithBBox(std::vector<int32_t> size, std::vector<int32_t> padding = {0, 0, 0, 0},
-                              bool pad_if_needed = false, std::vector<uint8_t> fill_value = {0, 0, 0},
+  explicit RandomCropWithBBox(const std::vector<int32_t> &size, const std::vector<int32_t> &padding = {0, 0, 0, 0},
+                              bool pad_if_needed = false, const std::vector<uint8_t> &fill_value = {0, 0, 0},
                               BorderType padding_mode = BorderType::kConstant);
 
   /// \brief Destructor.
@@ -976,7 +976,7 @@ class MS_API RandomResize final : public TensorTransform {
   ///     dataset = dataset->Map({decode_op, random_op},  // operations
   ///                            {"image"});              // input columns
   /// \endcode
-  explicit RandomResize(std::vector<int32_t> size);
+  explicit RandomResize(const std::vector<int32_t> &size);
 
   /// \brief Destructor.
   ~RandomResize() = default;
@@ -1008,7 +1008,7 @@ class MS_API RandomResizeWithBBox final : public TensorTransform {
   ///     dataset = dataset->Map({random_op},             // operations
   ///                            {"image", "bbox"});      // input columns
   /// \endcode
-  explicit RandomResizeWithBBox(std::vector<int32_t> size);
+  explicit RandomResizeWithBBox(const std::vector<int32_t> &size);
 
   /// \brief Destructor.
   ~RandomResizeWithBBox() = default;
@@ -1053,8 +1053,8 @@ class MS_API RandomResizedCrop final : public TensorTransform {
   ///     dataset = dataset->Map({decode_op, random_op},  // operations
   ///                            {"image"});              // input columns
   /// \endcode
-  explicit RandomResizedCrop(std::vector<int32_t> size, std::vector<float> scale = {0.08, 1.0},
-                             std::vector<float> ratio = {3. / 4., 4. / 3.},
+  explicit RandomResizedCrop(const std::vector<int32_t> &size, const std::vector<float> &scale = {0.08, 1.0},
+                             const std::vector<float> &ratio = {3. / 4., 4. / 3.},
                              InterpolationMode interpolation = InterpolationMode::kLinear, int32_t max_attempts = 10);
 
   /// \brief Destructor.
@@ -1100,9 +1100,10 @@ class MS_API RandomResizedCropWithBBox final : public TensorTransform {
   ///     dataset = dataset->Map({random_op},             // operations
   ///                            {"image", "bbox"});      // input columns
   /// \endcode
-  RandomResizedCropWithBBox(std::vector<int32_t> size, std::vector<float> scale = {0.08, 1.0},
-                            std::vector<float> ratio = {3. / 4., 4. / 3.},
-                            InterpolationMode interpolation = InterpolationMode::kLinear, int32_t max_attempts = 10);
+  explicit RandomResizedCropWithBBox(const std::vector<int32_t> &size, const std::vector<float> &scale = {0.08, 1.0},
+                                     const std::vector<float> &ratio = {3. / 4., 4. / 3.},
+                                     InterpolationMode interpolation = InterpolationMode::kLinear,
+                                     int32_t max_attempts = 10);
 
   /// \brief Destructor.
   ~RandomResizedCropWithBBox() = default;
@@ -1144,8 +1145,9 @@ class MS_API RandomRotation final : public TensorTransform {
   ///     dataset = dataset->Map({decode_op, random_op},  // operations
   ///                            {"image"});              // input columns
   /// \endcode
-  RandomRotation(std::vector<float> degrees, InterpolationMode resample = InterpolationMode::kNearestNeighbour,
-                 bool expand = false, std::vector<float> center = {}, std::vector<uint8_t> fill_value = {0, 0, 0});
+  explicit RandomRotation(const std::vector<float> &degrees,
+                          InterpolationMode resample = InterpolationMode::kNearestNeighbour, bool expand = false,
+                          const std::vector<float> &center = {}, const std::vector<uint8_t> &fill_value = {0, 0, 0});
 
   /// \brief Destructor.
   ~RandomRotation() = default;
@@ -1255,7 +1257,7 @@ class MS_API RandomSharpness final : public TensorTransform {
   ///     dataset = dataset->Map({decode_op, random_op},  // operations
   ///                            {"image"});              // input columns
   /// \endcode
-  explicit RandomSharpness(std::vector<float> degrees = {0.1, 1.9});
+  explicit RandomSharpness(const std::vector<float> &degrees = {0.1, 1.9});
 
   /// \brief Destructor.
   ~RandomSharpness() = default;
@@ -1287,7 +1289,7 @@ class MS_API RandomSolarize final : public TensorTransform {
   ///     dataset = dataset->Map({decode_op, random_op},  // operations
   ///                            {"image"});              // input columns
   /// \endcode
-  explicit RandomSolarize(std::vector<uint8_t> threshold = {0, 255});
+  explicit RandomSolarize(const std::vector<uint8_t> &threshold = {0, 255});
 
   /// \brief Destructor.
   ~RandomSolarize() = default;
@@ -1414,7 +1416,8 @@ class MS_API ResizeWithBBox final : public TensorTransform {
   ///     dataset = dataset->Map({random_op},             // operations
   ///                            {"image", "bbox"});      // input columns
   /// \endcode
-  explicit ResizeWithBBox(std::vector<int32_t> size, InterpolationMode interpolation = InterpolationMode::kLinear);
+  explicit ResizeWithBBox(const std::vector<int32_t> &size,
+                          InterpolationMode interpolation = InterpolationMode::kLinear);
 
   /// \brief Destructor.
   ~ResizeWithBBox() = default;
@@ -1500,8 +1503,8 @@ class MS_API SlicePatches final : public TensorTransform {
   ///     dataset = dataset->Map({decode_op, slice_patch_op},  // operations
   ///                            {"image"});                   // input columns
   /// \endcode
-  SlicePatches(int32_t num_height = 1, int32_t num_width = 1, SliceMode slice_mode = SliceMode::kPad,
-               uint8_t fill_value = 0);
+  explicit SlicePatches(int32_t num_height = 1, int32_t num_width = 1, SliceMode slice_mode = SliceMode::kPad,
+                        uint8_t fill_value = 0);
 
   /// \brief Destructor.
   ~SlicePatches() = default;
@@ -1542,8 +1545,10 @@ class MS_API SoftDvppDecodeRandomCropResizeJpeg final : public TensorTransform {
   ///     dataset = dataset->Map({dvpp_op},   // operations
   ///                            {"image"});  // input columns
   /// \endcode
-  SoftDvppDecodeRandomCropResizeJpeg(std::vector<int32_t> size, std::vector<float> scale = {0.08, 1.0},
-                                     std::vector<float> ratio = {3. / 4., 4. / 3.}, int32_t max_attempts = 10);
+  explicit SoftDvppDecodeRandomCropResizeJpeg(const std::vector<int32_t> &size,
+                                              const std::vector<float> &scale = {0.08, 1.0},
+                                              const std::vector<float> &ratio = {3. / 4., 4. / 3.},
+                                              int32_t max_attempts = 10);
 
   /// \brief Destructor.
   ~SoftDvppDecodeRandomCropResizeJpeg() = default;
@@ -1581,7 +1586,7 @@ class MS_API SoftDvppDecodeResizeJpeg final : public TensorTransform {
   ///     dataset = dataset->Map({dvpp_op},    // operations
   ///                            {"image"});   // input columns
   /// \endcode
-  explicit SoftDvppDecodeResizeJpeg(std::vector<int32_t> size);
+  explicit SoftDvppDecodeResizeJpeg(const std::vector<int32_t> &size);
 
   /// \brief Destructor.
   ~SoftDvppDecodeResizeJpeg() = default;
@@ -1712,7 +1717,6 @@ class MS_API VerticalFlip final : public TensorTransform {
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 };
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,12 +30,11 @@
 namespace mindspore {
 namespace dataset {
 namespace audio {
-
 constexpr char kBandrejectBiquadOperation[] = "BandrejectBiquad";
 
 class BandrejectBiquadOperation : public TensorOperation {
  public:
-  explicit BandrejectBiquadOperation(int32_t sample_rate, float central_freq, float Q);
+  BandrejectBiquadOperation(int32_t sample_rate, float central_freq, float Q);
 
   ~BandrejectBiquadOperation() = default;
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ BandBiquadOperation::BandBiquadOperation(int32_t sample_rate, float central_freq
 
 Status BandBiquadOperation::ValidateParams() {
   RETURN_IF_NOT_OK(ValidateScalar("BandBiquad", "Q", Q_, {0, 1.0}, true, false));
-  RETURN_IF_NOT_OK(ValidateScalarNotZero("BandBIquad", "sample_rate", sample_rate_));
+  RETURN_IF_NOT_OK(ValidateScalarNotZero("BandBiquad", "sample_rate", sample_rate_));
   return Status::OK();
 }
 
