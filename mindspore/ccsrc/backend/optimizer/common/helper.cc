@@ -330,7 +330,8 @@ bool IsNopNode(const AnfNodePtr &node) {
   if (nop_nodes.find(AnfAlgo::GetCNodeName(cnode)) == nop_nodes.end() && !is_nop_node) {
     return false;
   }
-  if (AnfAlgo::GetCNodeName(cnode) == prim::kPrimReshape->name() && AnfAlgo::IsNodeDynamicShape(cnode)) {
+  const size_t kNopNodeInputSize = 2;
+  if (cnode->size() != kNopNodeInputSize) {
     return false;
   }
   return true;

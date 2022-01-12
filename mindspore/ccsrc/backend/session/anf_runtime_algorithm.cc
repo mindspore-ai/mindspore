@@ -1022,7 +1022,7 @@ const DeviceAddress *AnfRuntimeAlgorithm::GetOutputAddr(const AnfNodePtr &node, 
   if (opt::IsNopNode(node) && (skip_nop_node || IsNeedSkipNopOpAddr(node))) {
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
-    if (cnode->size() == kNopNodeInputSize || AnfAlgo::GetCNodeName(cnode) == "Reshape") {
+    if (cnode->size() == kNopNodeInputSize) {
       return AnfRuntimeAlgorithm::GetPrevNodeOutputAddr(cnode, 0);
     } else {
       MS_LOG(EXCEPTION) << node->DebugString() << "Invalid nop node." << trace::DumpSourceLines(node);
