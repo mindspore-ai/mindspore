@@ -576,6 +576,17 @@ class Parameter(Tensor_):
         self.sliced = slice_shape
         return self
 
+    def _get_init_data_args(self, layout=None):
+        init_data_args = ()
+        if layout:
+            if not isinstance(layout, tuple):
+                raise TypeError("The argument 'layout' should be tuple, but got {}.".format(type(layout)))
+            if len(layout) < 6:
+                raise ValueError("The length of 'layout' must be larger than 5, but got {}.".format(len(layout)))
+            slice_index = int(_get_slice_index(layout[0], layout[1]))
+            init_data_args += (slice_index, layout[2], layout[5])
+        return init_data_args
+
     def init_data(self, layout=None, set_sliced=False):
         """
         Initialize the parameter's data.
@@ -614,14 +625,7 @@ class Parameter(Tensor_):
             global_seed, op_seed = _get_global_and_op_seed()
             _insert_weight_init_info(self.name, global_seed, op_seed)
 
-        init_data_args = ()
-        if layout is not None:
-            if not isinstance(layout, tuple):
-                raise TypeError("The argument 'layout' should be tuple, but got {}.".format(type(layout)))
-            if len(layout) < 6:
-                raise ValueError("The length of 'layout' must be larger than 5, but got {}.".format(len(layout)))
-            slice_index = int(_get_slice_index(layout[0], layout[1]))
-            init_data_args += (slice_index, layout[2], layout[5])
+        init_data_args = self._get_init_data_args(layout)
 
         if _is_role_pserver():
             return self
