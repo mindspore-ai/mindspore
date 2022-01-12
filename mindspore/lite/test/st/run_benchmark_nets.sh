@@ -153,11 +153,11 @@ if [[ $backend == "all" || $backend == "x86_gpu" ]]; then
     fi
 fi
 
-if [[ $backend == "all" || $backend == "Ascend310" || $backend == "Ascend710" ]]; then
+if [[ $backend == "all" || $backend == "x86_ascend310" || $backend == "x86_ascend710" ]]; then
     sh $cur_path/scripts/ascend/run_ascend.sh -r $release_path -m $models_path -d $device_id -e $backend
     ascend_status=$?
     if [[ ascend_status -ne 0 ]]; then
-      echo "Run ascend failed"
+      echo "Run ${backend} failed"
       exit 1
     fi
 fi

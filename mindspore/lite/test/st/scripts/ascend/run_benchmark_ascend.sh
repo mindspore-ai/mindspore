@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Example:sh run_remote_ascend.sh -v version -b backend
-while getopts "v:b:" opt; do
+while getopts "v:b:d:" opt; do
     case ${opt} in
         v)
             version=${OPTARG}
@@ -11,15 +11,21 @@ while getopts "v:b:" opt; do
             backend=${OPTARG}
             echo "backend is ${backend}"
             ;;
+        d)
+            device_id=${OPTARG}
+            echo "device id is ${device_id}"
+            ;;
         ?)
         echo "unknown para"
         exit 1;;
     esac
 done
 
+export ASCEND_DEVICE_ID=${device_id}
+
 # Run Benchmark in Ascend platform:
 function Run_Benchmark() {
-    cd ${x86_path}/mindspore-lite-${version}-linux-x64/ || exit 1
+    cd ${benchmark_test}/mindspore-lite-${version}-linux-x64 || exit 1
     cp tools/benchmark/benchmark ./ || exit 1
     export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./runtime/lib
 
@@ -51,7 +57,7 @@ function Run_Benchmark() {
         model_file=${ms_models_path}'/'${model_name}'.ms'
         input_files=""
         output_file=""
-        data_path=${basepath}'/data/'
+        data_path=${model_data_path}'/data/'
         if [[ ${input_num} == "" || ${input_num} == 1 ]]; then
             input_files=${data_path}'input/'${model_name}'.ms.bin'
         else
@@ -76,8 +82,8 @@ function Run_Benchmark() {
         fi
 
         # different tensorrt run mode use different cuda command
-        echo './benchmark --modelFile='${model_file}' --inputShapes='${input_shapes}' --inDataFile='${input_files}' --benchmarkDataFile='${output_file}' --enableFp16='${enableFp16}' --accuracyThreshold='${acc_limit}' --device='${backend} >> "${run_ascend_log_file}"
-        ./benchmark --modelFile=${model_file} --inputShapes=${input_shapes} --inDataFile=${input_files} --benchmarkDataFile=${output_file} --enableFp16=${enableFp16} --accuracyThreshold=${acc_limit} --device=${backend} >> ${run_ascend_log_file}
+        echo './benchmark --modelFile='${model_file}' --inputShapes='${input_shapes}' --inDataFile='${input_files}' --benchmarkDataFile='${output_file}' --enableFp16='${enableFp16}' --accuracyThreshold='${acc_limit}' --device='${ascend_device} >> "${run_ascend_log_file}"
+        ./benchmark --modelFile=${model_file} --inputShapes=${input_shapes} --inDataFile=${input_files} --benchmarkDataFile=${output_file} --enableFp16=${enableFp16} --accuracyThreshold=${acc_limit} --device=${ascend_device} >> ${run_ascend_log_file}
 
         if [ $? = 0 ]; then
             run_result=${backend}': '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
@@ -88,20 +94,29 @@ function Run_Benchmark() {
     done < ${models_ascend_config}
 }
 
-basepath=/home/ascend
-x86_path=${basepath}/release
-ms_models_path=${basepath}/ms_models
-models_ascend_config=${basepath}/config/models_ascend.cfg
-data_path=${basepath}/data
+user_name=${USER}
+benchmark_test=/home/${user_name}/benchmark_test/${device_id}
+ms_models_path=${benchmark_test}/ms_models
+models_ascend_config=${benchmark_test}/models_ascend.cfg
+model_data_path=/home/workspace/mindspore_dataset/mslite
+
 # Write benchmark result to temp file
-run_benchmark_result_file=${basepath}/scripts/log/run_benchmark_result.txt
+run_benchmark_result_file=${benchmark_test}/run_benchmark_result.txt
 echo ' ' > ${run_benchmark_result_file}
 
 ####################  run simple Ascend models
-run_ascend_log_file=${basepath}/scripts/log/run_benchmark_log.txt
+run_ascend_log_file=${benchmark_test}/run_benchmark_log.txt
 echo 'run Ascend logs: ' > ${run_ascend_log_file}
 
-echo "Start to run benchmark in ${backend} ..."
+echo "Start to run benchmark in ${backend}, device id ${device_id}..."
+if [[ ${backend} =~ "ascend310" ]]; then
+  ascend_device=Ascend310
+elif [[ ${backend} =~ "ascend710" ]]; then
+  ascend_device=Ascend710
+else
+  echo "${backend} is not support."
+  exit 1
+fi
 Run_Benchmark
 Run_benchmark_status=$?
 if [[ ${Run_benchmark_status} = 0 ]];then
