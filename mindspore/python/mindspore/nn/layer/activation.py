@@ -169,7 +169,7 @@ class LogSoftmax(Cell):
         - **x** (Tensor) - The input of LogSoftmax, with float16 or float32 data type.
 
     Outputs:
-        Tensor, which has the same type and shape as the input as `x` with values in the range[-inf,0).
+        Tensor, which has the same type and shape as `x` with output values in the range[-inf,0).
 
     Raises:
         TypeError: If `axis` is not an int.
@@ -409,8 +409,7 @@ class Tanh(Cell):
     where :math:`x_i` is an element of the input Tensor.
 
     Inputs:
-        - **x** (Tensor) - The input of Tanh with data type of float16 or float32.
-          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+        - **x** (Tensor) - Tensor of any dimension, input with data type of float16 or float32.
 
     Outputs:
         Tensor, with the same type and shape as the `x`.
@@ -582,8 +581,7 @@ class Sigmoid(Cell):
     Sigmoid_function#/media/File:Logistic-curve.svg>`_.
 
     Inputs:
-        - **x** (Tensor) - The input of Sigmoid with data type of float16 or float32.
-          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+        - **x** (Tensor) - The input of Sigmoid with data type of float16 or float32. Tensor of any dimension.
 
     Outputs:
         Tensor, with the same type and shape as the `x`.
@@ -752,9 +750,7 @@ class HSwish(Cell):
 
 class HSigmoid(Cell):
     r"""
-    Hard sigmoid activation function.
-
-    Applies hard sigmoid activation element-wise. The input is a Tensor with any valid shape.
+    Hard sigmoid activation function. Calculates the output according to the input elements.
 
     Hard sigmoid is defined as:
 
@@ -764,8 +760,7 @@ class HSigmoid(Cell):
     where :math:`x_{i}` is the :math:`i`-th slice in the given dimension of the input Tensor.
 
     Inputs:
-        - **input_x** (Tensor) - The input of HSigmoid. The shape is :math:`(N,*)` where :math:`*` means, any number of
-          additional dimensions.
+        - **input_x** (Tensor) - The input of HSigmoid. Tensor of any dimension.
 
     Outputs:
         Tensor, with the same type and shape as the `input_x`.
@@ -896,7 +891,9 @@ class SoftShrink(Cell):
 
 class HShrink(Cell):
     r"""
-    Applies the hard shrinkage function element-wise, each element complies the follow function:
+    Hard Shrink activation function. Calculates the output according to the input elements.
+
+    The formula is defined as follows:
 
     .. math::
         \text{HardShrink}(x) =
@@ -907,10 +904,10 @@ class HShrink(Cell):
         \end{cases}
 
     Args:
-        lambd (float): The value for the HardShrink formulation. Default: 0.5
+        lambd (float): The threshold :math:`\lambda` defined by the Hard Shrink formula. Default: 0.5.
 
     Inputs:
-        - **input_x** (Tensor) - The input of HardShrink with data type of float16 or float32.
+        - **input_x** (Tensor) - The input of Hard Shrink with data type of float16 or float32.
 
     Outputs:
         Tensor, the same shape and data type as the input.
