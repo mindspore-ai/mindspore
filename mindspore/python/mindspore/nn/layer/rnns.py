@@ -185,7 +185,7 @@ class _DynamicRNNBase(Cell):
         w_hh = w_hh.astype(x_dtype)
         if b_ih is not None:
             b_ih = b_ih.astype(x_dtype)
-            b_hh = b_ih.astype(x_dtype)
+            b_hh = b_hh.astype(x_dtype)
         if seq_length is None:
             return self.recurrent(x, h, w_ih, w_hh, b_ih, b_hh)
         return self.variable_recurrent(x, h, seq_length, w_ih, w_hh, b_ih, b_hh)
