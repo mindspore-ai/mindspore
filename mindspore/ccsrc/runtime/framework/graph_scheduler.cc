@@ -401,7 +401,7 @@ void GraphScheduler::Run(ActorSet *const actor_set, const std::vector<DeviceCont
     std::unique_lock<std::mutex> locker(mutex);
     std::condition_variable thread_blocker;
     const int64_t kTimeToWait = 2;
-    thread_blocker.wait_for(locker, std::chrono::seconds(kTimeToWait));
+    (void)thread_blocker.wait_for(locker, std::chrono::seconds(kTimeToWait));
     MS_LOG(EXCEPTION) << op_context.error_info_;
   }
 

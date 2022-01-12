@@ -215,8 +215,7 @@ KernelPackPtr SearchCache(const std::string &kernel_name, const std::string &pro
 KernelPackPtr InsertCache(const std::string &kernel_name, const std::string &processor) {
   MS_LOG(INFO) << "Insert cache for kernel:" << kernel_name << ", processr:" << processor;
   KernelMeta *bin_map = KernelMeta::GetInstance();
-  std::string kernel_json;
-  kernel_json = bin_map->kernel_meta_path();
+  std::string kernel_json = bin_map->kernel_meta_path();
   (void)kernel_json.append(kernel_name).append(kJsonSuffix);
   KernelPackPtr kernel_pack = std::make_shared<KernelPack>();
   if (!kernel_pack->ReadFromJsonFile(kernel_json, processor)) {

@@ -126,9 +126,12 @@ void LocalFile::WriteBlockFiles(const std::vector<InputData> &inputs) {
   size_t offset = 0;
   for (size_t block_index = 0; block_index < block_num; ++block_index) {
     // Create block meta.
-    auto block_meta_ptr =
-      std::make_shared<BlockMeta>(file_path_ + "/" + kBlockMetaFilePrefix + std::to_string(block_index) + kJsonSuffix);
-    block_meta_ptr->Initialize();
+    std::string block_meta_file_name =
+      file_path_ + "/" + kBlockMetaFilePrefix + std::to_string(block_index) + kJsonSuffix;
+    auto block_meta_ptr = std::make_shared<BlockMeta>(block_meta_file_name);
+    if (!block_meta_ptr->Initialize()) {
+      MS_LOG(EXCEPTION) << "Initialize block meta failed, file name [" << block_meta_file_name << "]";
+    }
 
     size_t cur_lower_bound = slice_size * block_index;
     block_meta_ptr->Insert(kShardRangeLowerBound, cur_lower_bound);
@@ -165,7 +168,7 @@ void LocalFile::WriteOneBlockFile(size_t block_index, const std::vector<InputDat
   for (size_t input_index = 0; input_index < inputs.size(); ++input_index) {
     const void *data_ptr = reinterpret_cast<const char *>(std::get<1>(inputs.at(input_index))) + offset;
     size_t data_size = field_size;
-    block_inputs_data.emplace_back(data_ptr, data_size);
+    (void)block_inputs_data.emplace_back(data_ptr, data_size);
   }
 
   const auto &block_ptr = block_list_.at(block_index);
@@ -205,7 +208,7 @@ void LocalFile::Read(const std::vector<OutputData> &outputs) {
     for (size_t output_index = 0; output_index < outputs.size(); ++output_index) {
       void *data_ptr = reinterpret_cast<char *>(std::get<0>(outputs[output_index])) + offset;
       size_t data_size = field_size;
-      block_output_data.emplace_back(data_ptr, data_size);
+      (void)block_output_data.emplace_back(data_ptr, data_size);
     }
 
     const auto &block_ptr = block_list_[block_index];
@@ -213,7 +216,10 @@ void LocalFile::Read(const std::vector<OutputData> &outputs) {
     if (!block_ptr->CheckSha256Seq()) {
       MS_LOG(EXCEPTION) << "CheckSha256 failed, file name [" << block_ptr->block_file_name() << "]";
     }
-    FileIOUtils::Read(block_ptr->block_file_name(), block_output_data);
+
+    if (!FileIOUtils::Read(block_ptr->block_file_name(), block_output_data)) {
+      MS_LOG(EXCEPTION) << "Read block file failed, file name [" << block_ptr->block_file_name() << "]";
+    }
   }
 }
 
@@ -254,7 +260,10 @@ bool LocalFile::LoadBlocksInfo() {
   sort(block_meta_file_name_list.begin(), block_meta_file_name_list.end());
   for (size_t i = 0; i < block_file_name_list.size(); i++) {
     auto block_meta_ptr = std::make_shared<BlockMeta>(block_meta_file_name_list[i]);
-    block_meta_ptr->Initialize();
+    if (!block_meta_ptr->Initialize()) {
+      MS_LOG(ERROR) << "Initialize block meta failed, file name [" << block_meta_file_name_list[i] << "]";
+      return false;
+    }
     block_meta_list_.push_back(block_meta_ptr);
 
     auto block_ptr = std::make_shared<Block>(block_file_name_list[i]);

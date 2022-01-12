@@ -372,7 +372,7 @@ bool NodeManager::IsNodePersisting(const std::string &node_id) const {
   return nodes_persisting_.find(node_id) != nodes_persisting_.end();
 }
 
-void NodeManager::AddPersistingNode(const std::string &node_id) { nodes_persisting_.insert(node_id); }
+void NodeManager::AddPersistingNode(const std::string &node_id) { (void)nodes_persisting_.insert(node_id); }
 
 bool NodeManager::IsAllNodeInPersisting() {
   // The worker role does not support disaster recovery currently.
