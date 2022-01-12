@@ -371,7 +371,7 @@ int MatmulFp32BaseCPUKernel::init_global_variable() {
   MS_CHECK_INT_MUL_NOT_OVERFLOW(a_batch_ * params_->row_align_, params_->deep_, RET_ERROR);
   MS_CHECK_INT_MUL_NOT_OVERFLOW(a_batch_, params_->col_align_, RET_ERROR);
   MS_CHECK_INT_MUL_NOT_OVERFLOW(a_batch_ * params_->col_align_, params_->deep_, RET_ERROR);
-  if (params_->col_ == 1 && params_->b_const_) {
+  if (params_->col_ == 1 && !params_->a_const_) {
     is_pack_ = false;
     matrix_a_pack_size_ = a_batch_ * params_->row_ * params_->deep_;
     matrix_b_pack_size_ = b_batch_ * params_->col_ * params_->deep_;
@@ -489,7 +489,7 @@ int MatmulFp32BaseCPUKernel::InitTmpOutBuffer() {
 }
 
 void MatmulFp32BaseCPUKernel::GetThreadCuttingPolicy() {
-  if (params_->batch >= op_parameter_->thread_num_ || (params_->col_ == 1 && params_->b_const_)) {
+  if (params_->batch >= op_parameter_->thread_num_ || (params_->col_ == 1 && !params_->a_const_)) {
     thread_count_ = op_parameter_->thread_num_;
     batch_stride_ = UP_DIV(params_->batch, thread_count_);
     batch_split_ = true;
@@ -504,7 +504,7 @@ void MatmulFp32BaseCPUKernel::GetThreadCuttingPolicy() {
     batch_split_ = false;
     parallel_fun_ = &MatmulFp32BaseCPUKernel::ParallelRunByOC;
   }
-  if (params_->col_ == 1 && params_->b_const_) {
+  if (params_->col_ == 1 && !params_->a_const_) {
     is_pack_ = false;
     parallel_fun_ = &MatmulFp32BaseCPUKernel::ParallelRunIsNotPackByBatch;
     if (params_->deep_ == 1) {
