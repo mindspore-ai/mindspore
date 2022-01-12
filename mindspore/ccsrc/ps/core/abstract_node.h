@@ -64,11 +64,7 @@ class AbstractNode : public Node {
                                               const std::shared_ptr<MessageMeta> &meta, const Protos &protos,
                                               const void *data, size_t size);
 
-#ifdef __APPLE__
   using DataPtr = std::shared_ptr<unsigned char>;
-#else
-  using DataPtr = std::shared_ptr<unsigned char[]>;
-#endif
   using VectorPtr = std::shared_ptr<std::vector<unsigned char>>;
   using RequestHandler =
     std::function<void(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
