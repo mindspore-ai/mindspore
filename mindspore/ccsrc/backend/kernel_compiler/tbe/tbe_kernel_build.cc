@@ -27,12 +27,11 @@
 #include "backend/kernel_compiler/tbe/tbe_json/tbe_json_utils.h"
 namespace mindspore {
 namespace kernel {
-
 void GetRealInputSize(const nlohmann::json &input_json, std::vector<size_t> *input_size_list, size_t *size_i) {
   if (input_json[kJShape].size() == 1 && input_json[kJShape][0] == -2) {
     auto input_max_shape = input_json[kJRange];
     for (auto &max_shape : input_max_shape) {
-      (*size_i) *= LongToSize(max_shape[1]);
+      (*size_i) = SizetMulWithOverflowCheck((*size_i), LongToSize(max_shape[1]));
     }
     MS_LOG(INFO) << "Dims is dynamic, change -2 Shape to Max Shape.";
   } else {
@@ -43,10 +42,10 @@ void GetRealInputSize(const nlohmann::json &input_json, std::vector<size_t> *inp
           MS_LOG(EXCEPTION) << "Invalid Dynamic Shape Max Shape";
         }
         MS_LOG(INFO) << "Change -1 Shape to Max Shape:" << input_max_shape[j][1];
-        (*size_i) *= LongToSize(input_max_shape[j][1]);
+        (*size_i) = SizetMulWithOverflowCheck((*size_i), LongToSize(input_max_shape[j][1]));
         continue;
       }
-      (*size_i) *= static_cast<size_t>(input_json[kJShape][j]);
+      (*size_i) = SizetMulWithOverflowCheck((*size_i), static_cast<size_t>(input_json[kJShape][j]));
     }
   }
   std::string dtype = input_json[kJDtype];

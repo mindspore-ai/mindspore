@@ -17,7 +17,7 @@
 
 #include <memory>
 #include <vector>
-
+#include <set>
 #include "backend/session/anf_runtime_algorithm.h"
 #include "ir/primitive.h"
 #include "utils/utils.h"

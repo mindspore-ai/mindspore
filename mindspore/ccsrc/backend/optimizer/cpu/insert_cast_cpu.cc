@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 #include <utility>
+#include <algorithm>
 #include "backend/optimizer/common/helper.h"
 #include "backend/kernel_compiler/kernel_build_info.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"

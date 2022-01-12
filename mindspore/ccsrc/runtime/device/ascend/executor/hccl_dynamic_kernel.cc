@@ -16,6 +16,7 @@
 
 #include "runtime/device/ascend/executor/hccl_dynamic_kernel.h"
 
+#include <vector>
 #include "hccl/hcom.h"
 #include "common/opskernel/ge_task_info.h"
 #include "utils/log_adapter.h"

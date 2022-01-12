@@ -285,6 +285,7 @@ AnfNodePtr RemoveNodeFromUpdateState(session::KernelGraph *kernel_graph, const A
   (void)std::copy_if(inputs.begin(), inputs.end(), std::back_inserter(new_inputs),
                      [node](const AnfNodePtr &input) { return node != input; });
   auto new_updatestate = kernel_graph->NewCNode(new_inputs);
+  MS_EXCEPTION_IF_NULL(new_updatestate);
   new_updatestate->set_scope(updatestate->scope());
   new_updatestate->set_abstract(updatestate->abstract());
   return new_updatestate;

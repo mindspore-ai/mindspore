@@ -20,6 +20,7 @@
 #include <memory>
 #include <functional>
 #include <string>
+#include <algorithm>
 
 #include "utils/utils.h"
 #include "utils/check_convert_utils.h"

@@ -85,7 +85,7 @@ std::vector<ValueNodePtr> ConvertAttrToValueNode(const std::shared_ptr<kernel::O
       MS_LOG(EXCEPTION) << "Create value node error, node: " << cnode->DebugString() << ", seed value: " << attr_value
                         << trace::DumpSourceLines(cnode);
     }
-    ret.emplace_back(value_node);
+    (void)ret.emplace_back(value_node);
   }
   if (ret.empty()) {
     MS_LOG(EXCEPTION) << "Node(" << cnode->DebugString() << ") doesn't have any matched attrs."
