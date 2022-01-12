@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,8 +38,8 @@
 
 namespace mindspore {
 namespace dataset {
-
 using json = nlohmann::json;
+
 struct Execute::ExtraInfo {
   std::multimap<std::string, std::vector<uint32_t>> aipp_cfg_;
   bool init_with_shared_ptr_ = true;  // Initial execute object with shared_ptr as default
@@ -70,14 +70,14 @@ Status Execute::InitResource(MapTargetDevice device_type, uint32_t device_id) {
   return Status::OK();
 }
 
-Execute::Execute(std::shared_ptr<TensorOperation> op, MapTargetDevice device_type, uint32_t device_id) {
-  ops_.emplace_back(std::move(op));
+Execute::Execute(const std::shared_ptr<TensorOperation> &op, MapTargetDevice device_type, uint32_t device_id) {
+  ops_.emplace_back(op);
   device_type_ = device_type;
   info_ = std::make_shared<ExtraInfo>();
   (void)InitResource(device_type, device_id);
 }
 
-Execute::Execute(std::shared_ptr<TensorTransform> op, MapTargetDevice device_type, uint32_t device_id) {
+Execute::Execute(const std::shared_ptr<TensorTransform> &op, MapTargetDevice device_type, uint32_t device_id) {
   // Initialize the op and other context
   transforms_.emplace_back(op);
 
@@ -86,7 +86,7 @@ Execute::Execute(std::shared_ptr<TensorTransform> op, MapTargetDevice device_typ
   (void)InitResource(device_type, device_id);
 }
 
-Execute::Execute(std::reference_wrapper<TensorTransform> op, MapTargetDevice device_type, uint32_t device_id) {
+Execute::Execute(const std::reference_wrapper<TensorTransform> &op, MapTargetDevice device_type, uint32_t device_id) {
   // Initialize the transforms_ and other context
   std::shared_ptr<TensorOperation> operation = op.get().Parse();
   ops_.emplace_back(std::move(operation));
@@ -108,13 +108,15 @@ Execute::Execute(TensorTransform *op, MapTargetDevice device_type, uint32_t devi
   (void)InitResource(device_type, device_id);
 }
 
-Execute::Execute(std::vector<std::shared_ptr<TensorOperation>> ops, MapTargetDevice device_type, uint32_t device_id)
-    : ops_(std::move(ops)), device_type_(device_type) {
+Execute::Execute(const std::vector<std::shared_ptr<TensorOperation>> &ops, MapTargetDevice device_type,
+                 uint32_t device_id)
+    : ops_(ops), device_type_(device_type) {
   info_ = std::make_shared<ExtraInfo>();
   (void)InitResource(device_type, device_id);
 }
 
-Execute::Execute(std::vector<std::shared_ptr<TensorTransform>> ops, MapTargetDevice device_type, uint32_t device_id) {
+Execute::Execute(const std::vector<std::shared_ptr<TensorTransform>> &ops, MapTargetDevice device_type,
+                 uint32_t device_id) {
   // Initialize the transforms_ and other context
   transforms_ = ops;
 
@@ -123,7 +125,7 @@ Execute::Execute(std::vector<std::shared_ptr<TensorTransform>> ops, MapTargetDev
   (void)InitResource(device_type, device_id);
 }
 
-Execute::Execute(const std::vector<std::reference_wrapper<TensorTransform>> ops, MapTargetDevice device_type,
+Execute::Execute(const std::vector<std::reference_wrapper<TensorTransform>> &ops, MapTargetDevice device_type,
                  uint32_t device_id) {
   // Initialize the transforms_ and other context
   if (device_type == MapTargetDevice::kCpu) {
@@ -174,7 +176,6 @@ Status Execute::operator()(const mindspore::MSTensor &input, mindspore::MSTensor
   // Validate input tensor
   RETURN_UNEXPECTED_IF_NULL(output);
   CHECK_FAIL_RETURN_UNEXPECTED(input.DataSize() > 0, "Input Tensor has no data.");
-  CHECK_FAIL_RETURN_UNEXPECTED(output != nullptr, "Output Tensor can not be nullptr.");
   CHECK_FAIL_RETURN_UNEXPECTED(ValidateDevice(), "Device Type should be 'Ascend310' or 'CPU'.");
 
   // Parse TensorTransform transforms_ into TensorOperation ops_
@@ -269,7 +270,6 @@ Status Execute::operator()(const std::vector<MSTensor> &input_tensor_list, std::
   // Validate input tensor
   RETURN_UNEXPECTED_IF_NULL(output_tensor_list);
   CHECK_FAIL_RETURN_UNEXPECTED(!input_tensor_list.empty(), "Input Tensor is not valid.");
-  CHECK_FAIL_RETURN_UNEXPECTED(output_tensor_list != nullptr, "Output Tensor can not be nullptr.");
   output_tensor_list->clear();
   for (auto &tensor : input_tensor_list) {
     CHECK_FAIL_RETURN_UNEXPECTED(tensor.DataSize() > 0, "Input Tensor has no data.");
@@ -374,16 +374,16 @@ std::vector<uint32_t> AippSizeFilter(const std::vector<uint32_t> &resize_para, c
   std::vector<uint32_t> aipp_size;
 
   // Special condition where (no Crop and no Resize) or (no Crop and resize with fixed ratio) will lead to dynamic input
-  if ((resize_para.size() == 0 || resize_para.size() == 1) && crop_para.size() == 0) {
+  if ((resize_para.empty() || resize_para.size() == 1) && crop_para.empty()) {
     aipp_size = {0, 0};
     MS_LOG(WARNING) << "Dynamic input shape is not supported, incomplete aipp config file will be generated. Please "
                        "checkout your TensorTransform input, both src_image_size_h and src_image_size will be 0.";
     return aipp_size;
   }
 
-  if (resize_para.size() == 0) {  // If only Crop operator exists
+  if (resize_para.empty()) {  // If only Crop operator exists
     aipp_size = crop_para;
-  } else if (crop_para.size() == 0) {  // If only Resize operator with 2 parameters exists
+  } else if (crop_para.empty()) {  // If only Resize operator with 2 parameters exists
     aipp_size = resize_para;
   } else {  // If both of them exist
     if (resize_para.size() == 1) {
@@ -437,6 +437,7 @@ std::vector<float> AippStdFilter(const std::vector<uint32_t> &normalize_para) {
 
 Status AippInfoCollection(std::map<std::string, std::string> *aipp_options, const std::vector<uint32_t> &aipp_size,
                           const std::vector<uint32_t> &aipp_mean, const std::vector<float> &aipp_std) {
+  RETURN_UNEXPECTED_IF_NULL(aipp_options);
   // Several aipp config parameters
   aipp_options->insert(std::make_pair("related_input_rank", "0"));
   aipp_options->insert(std::make_pair("src_image_size_w", std::to_string(aipp_size[1])));
@@ -446,7 +447,7 @@ Status AippInfoCollection(std::map<std::string, std::string> *aipp_options, cons
   aipp_options->insert(std::make_pair("aipp_mode", "static"));
   aipp_options->insert(std::make_pair("csc_switch", "true"));
   aipp_options->insert(std::make_pair("rbuv_swap_switch", "false"));
-  // Y = AX + b,  this part is A
+  // Y = AX + b, this part is A
   std::vector<int32_t> color_space_matrix = {256, 0, 359, 256, -88, -183, 256, 454, 0};
   int count = 0;
   for (int i = 0; i < 3; i++) {
@@ -489,10 +490,7 @@ std::string Execute::AippCfgGenerator() {
 #ifdef ENABLE_ACL
   if (info_->init_with_shared_ptr_) {
     auto rc = ParseTransforms();
-    if (rc.IsError()) {
-      MS_LOG(ERROR) << "Parse transforms failed, error msg is " << rc;
-      return "";
-    }
+    RETURN_SECOND_IF_ERROR(rc, "");
     info_->init_with_shared_ptr_ = false;
   }
   std::vector<uint32_t> paras;  // Record the parameters value of each Ascend operators
@@ -574,6 +572,7 @@ std::string Execute::AippCfgGenerator() {
     auto rc = AippInfoCollection(&aipp_options, aipp_size, aipp_mean, aipp_std);
     if (rc.IsError()) {
       MS_LOG(ERROR) << "Aipp information initialization failed, error msg is " << rc;
+      outfile.close();
       return "";
     }
 
@@ -594,7 +593,7 @@ std::string Execute::AippCfgGenerator() {
   return config_location;
 }
 
-bool IsEmptyPtr(std::shared_ptr<TensorTransform> api_ptr) { return api_ptr == nullptr; }
+bool IsEmptyPtr(const std::shared_ptr<TensorTransform> &api_ptr) { return api_ptr == nullptr; }
 
 Status Execute::ParseTransforms() {
   auto iter = std::find_if(transforms_.begin(), transforms_.end(), IsEmptyPtr);
@@ -606,7 +605,7 @@ Status Execute::ParseTransforms() {
 
   if (device_type_ == MapTargetDevice::kCpu) {
     (void)std::transform(transforms_.begin(), transforms_.end(), std::back_inserter(ops_),
-                         [](std::shared_ptr<TensorTransform> operation) -> std::shared_ptr<TensorOperation> {
+                         [](const std::shared_ptr<TensorTransform> &operation) -> std::shared_ptr<TensorOperation> {
                            return operation->Parse();
                          });
   } else if (device_type_ == MapTargetDevice::kAscend310) {
@@ -645,10 +644,11 @@ Status Execute::DeviceMemoryRelease() {
 
 Status Execute::Run(const std::vector<std::shared_ptr<dataset::Execute>> &data_graph,
                     const std::vector<mindspore::MSTensor> &inputs, std::vector<mindspore::MSTensor> *outputs) {
+  RETURN_UNEXPECTED_IF_NULL(outputs);
   std::vector<MSTensor> transform_inputs = inputs;
   std::vector<MSTensor> transform_outputs;
   if (!data_graph.empty()) {
-    for (auto exes : data_graph) {
+    for (const auto &exes : data_graph) {
       CHECK_FAIL_RETURN_UNEXPECTED(exes != nullptr, "Given execute object is null.");
       Status ret = exes->operator()(transform_inputs, &transform_outputs);
       if (ret != kSuccess) {
@@ -675,9 +675,11 @@ extern "C" {
 void ExecuteRun_C(const std::vector<std::shared_ptr<dataset::Execute>> &data_graph,
                   std::vector<mindspore::MSTensor> &inputs, std::vector<mindspore::MSTensor> *outputs, Status *s) {
   Status ret = Execute::Run(data_graph, inputs, outputs);
+  if (s == nullptr) {
+    return;
+  }
   *s = Status(ret);
 }
 }
-
 }  // namespace dataset
 }  // namespace mindspore

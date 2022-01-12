@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,17 +18,14 @@
 
 #include <algorithm>
 
-#include "mindspore/ccsrc/minddata/dataset/core/type_id.h"
-#include "mindspore/core/ir/dtype/type_id.h"
 #include "minddata/dataset/core/type_id.h"
 #include "minddata/dataset/kernels/ir/data/transforms_ir.h"
+#include "mindspore/core/ir/dtype/type_id.h"
 
 namespace mindspore {
 namespace dataset {
-
 // Transform operations for data.
 namespace transforms {
-
 // API CLASS FOR DATA TRANSFORM OPERATIONS
 // (In alphabetical order)
 
@@ -46,7 +43,7 @@ Compose::Compose(const std::vector<TensorTransform *> &transforms) : data_(std::
 
 Compose::Compose(const std::vector<std::shared_ptr<TensorTransform>> &transforms) : data_(std::make_shared<Data>()) {
   (void)std::transform(transforms.begin(), transforms.end(), std::back_inserter(data_->transforms_),
-                       [](std::shared_ptr<TensorTransform> op) -> std::shared_ptr<TensorOperation> {
+                       [](const std::shared_ptr<TensorTransform> &op) -> std::shared_ptr<TensorOperation> {
                          return op != nullptr ? op->Parse() : nullptr;
                        });
 }
@@ -92,7 +89,7 @@ std::shared_ptr<TensorOperation> Concatenate::Parse() {
 }
 
 // Constructor to Duplicate
-Duplicate::Duplicate() {}
+Duplicate::Duplicate() = default;
 
 std::shared_ptr<TensorOperation> Duplicate::Parse() { return std::make_shared<DuplicateOperation>(); }
 
@@ -202,7 +199,7 @@ RandomApply::RandomApply(const std::vector<TensorTransform *> &transforms, doubl
 RandomApply::RandomApply(const std::vector<std::shared_ptr<TensorTransform>> &transforms, double prob)
     : data_(std::make_shared<Data>()) {
   (void)std::transform(transforms.begin(), transforms.end(), std::back_inserter(data_->transforms_),
-                       [](std::shared_ptr<TensorTransform> op) -> std::shared_ptr<TensorOperation> {
+                       [](const std::shared_ptr<TensorTransform> &op) -> std::shared_ptr<TensorOperation> {
                          return op != nullptr ? op->Parse() : nullptr;
                        });
   data_->prob_ = prob;
@@ -234,7 +231,7 @@ RandomChoice::RandomChoice(const std::vector<TensorTransform *> &transforms) : d
 RandomChoice::RandomChoice(const std::vector<std::shared_ptr<TensorTransform>> &transforms)
     : data_(std::make_shared<Data>()) {
   (void)std::transform(transforms.begin(), transforms.end(), std::back_inserter(data_->transforms_),
-                       [](const std::shared_ptr<TensorTransform> op) -> std::shared_ptr<TensorOperation> {
+                       [](const std::shared_ptr<TensorTransform> &op) -> std::shared_ptr<TensorOperation> {
                          return op != nullptr ? op->Parse() : nullptr;
                        });
 }
@@ -278,7 +275,7 @@ TypeCast::TypeCast(mindspore::DataType data_type) : data_(std::make_shared<Data>
 std::shared_ptr<TensorOperation> TypeCast::Parse() { return std::make_shared<TypeCastOperation>(data_->data_type_); }
 
 // Constructor to Unique
-Unique::Unique() {}
+Unique::Unique() = default;
 
 #ifndef ENABLE_ANDROID
 std::shared_ptr<TensorOperation> Unique::Parse() { return std::make_shared<UniqueOperation>(); }

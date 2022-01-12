@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,9 +29,9 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace audio {
 constexpr char kBiquadOperation[] = "Biquad";
+
 class BiquadOperation : public TensorOperation {
  public:
   BiquadOperation(float b0, float b1, float b2, float a0, float a1, float a2);

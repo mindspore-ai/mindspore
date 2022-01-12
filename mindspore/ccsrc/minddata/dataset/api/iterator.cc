@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "minddata/dataset/include/dataset/iterator.h"
+
 #include "minddata/dataset/engine/consumers/pull_based_tree_consumer.h"
 #include "minddata/dataset/engine/consumers/tree_consumer.h"
 #include "minddata/dataset/engine/runtime_context.h"
@@ -75,7 +76,7 @@ void Iterator::Stop() {
 }
 
 // Function to build and launch the execution tree.
-Status Iterator::BuildAndLaunchTree(std::shared_ptr<Dataset> ds, int32_t num_epochs) {
+Status Iterator::BuildAndLaunchTree(const std::shared_ptr<Dataset> &ds, int32_t num_epochs) {
   RETURN_UNEXPECTED_IF_NULL(ds);
   runtime_context_ = std::make_unique<NativeRuntimeContext>();
   CHECK_FAIL_RETURN_UNEXPECTED(runtime_context_ != nullptr, "Create runtime_context_ failed.");
@@ -105,7 +106,7 @@ Status PullIterator::GetRows(int32_t num_rows, std::vector<MSTensorVec> *const r
     }
 
     MSTensorVec ms_row = {};
-    for (auto de_tensor : md_row) {
+    for (const auto &de_tensor : md_row) {
       CHECK_FAIL_RETURN_UNEXPECTED(de_tensor->HasData(), "Apply transform failed, output tensor has no data");
       ms_row.push_back(mindspore::MSTensor(std::make_shared<DETensor>(de_tensor)));
     }
@@ -125,7 +126,7 @@ Status PullIterator::GetNextRow(MSTensorVec *const row) {
     return rc;
   }
 
-  for (auto de_tensor : md_row) {
+  for (const auto &de_tensor : md_row) {
     CHECK_FAIL_RETURN_UNEXPECTED(de_tensor->HasData(), "Apply transform failed, output tensor has no data");
     row->push_back(mindspore::MSTensor(std::make_shared<DETensor>(de_tensor)));
   }
@@ -135,7 +136,7 @@ Status PullIterator::GetNextRow(MSTensorVec *const row) {
 // Function to build and launch the execution tree. This function kicks off a different type of consumer
 // for the tree, the reason why this is the case is due to the fact that PullBasedIterator does not need
 // to instantiate threads for each op. As such, the call to the consumer will by pass the execution tree.
-Status PullIterator::BuildAndLaunchTree(std::shared_ptr<Dataset> ds) {
+Status PullIterator::BuildAndLaunchTree(const std::shared_ptr<Dataset> &ds) {
   if (pull_consumer_ == nullptr) {
     pull_consumer_ = std::make_unique<PullBasedIteratorConsumer>();
   }
@@ -167,7 +168,7 @@ Iterator::_Iterator &Iterator::_Iterator::operator++() {
       cur_row_ = nullptr;
     }
   }
-  if (cur_row_ && cur_row_->size() == 0) {
+  if (cur_row_ && cur_row_->empty()) {
     delete cur_row_;
     cur_row_ = nullptr;
   }

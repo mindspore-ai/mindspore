@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 class Tensor;
 class TensorShape;
 class TreeAdapter;
@@ -152,7 +151,7 @@ class MS_API Dataset : public std::enable_shared_from_this<Dataset> {
   ///      std::unordered_map<std::string, mindspore::MSTensor> row;
   ///      iter->GetNextRow(&row);
   /// \endcode
-  std::shared_ptr<PullIterator> CreatePullBasedIterator(std::vector<std::vector<char>> columns = {});
+  std::shared_ptr<PullIterator> CreatePullBasedIterator(const std::vector<std::vector<char>> &columns = {});
 
   /// \brief Function to create an Iterator over the Dataset pipeline.
   /// \param[in] columns List of columns to be used to specify the order of columns.
@@ -166,7 +165,7 @@ class MS_API Dataset : public std::enable_shared_from_this<Dataset> {
   ///      std::unordered_map<std::string, mindspore::MSTensor> row;
   ///      iter->GetNextRow(&row);
   /// \endcode
-  std::shared_ptr<Iterator> CreateIterator(std::vector<std::string> columns = {}, int32_t num_epochs = -1) {
+  std::shared_ptr<Iterator> CreateIterator(const std::vector<std::string> &columns = {}, int32_t num_epochs = -1) {
     return CreateIteratorCharIF(VectorStringToChar(columns), num_epochs);
   }
 
@@ -182,7 +181,7 @@ class MS_API Dataset : public std::enable_shared_from_this<Dataset> {
   /// \param[in] create_data_info_queue Whether to create queue which stores types and shapes
   ///     of data or not (default=false).
   /// \return Returns true if no error encountered else false.
-  bool DeviceQueue(std::string queue_name = "", std::string device_type = "", int32_t device_id = 0,
+  bool DeviceQueue(const std::string &queue_name = "", const std::string &device_type = "", int32_t device_id = 0,
                    int32_t num_epochs = -1, bool send_epoch_end = true, int32_t total_batches = 0,
                    bool create_data_info_queue = false) {
     return DeviceQueueCharIF(StringToChar(queue_name), StringToChar(device_type), device_id, num_epochs, send_epoch_end,
@@ -209,7 +208,7 @@ class MS_API Dataset : public std::enable_shared_from_this<Dataset> {
   ///      std::string save_file = "Cifar10Data.mindrecord";
   ///      bool rc = ds->Save(save_file);
   /// \endcode
-  bool Save(std::string dataset_path, int32_t num_files = 1, std::string dataset_type = "mindrecord") {
+  bool Save(const std::string &dataset_path, int32_t num_files = 1, const std::string &dataset_type = "mindrecord") {
     return SaveCharIF(StringToChar(dataset_path), num_files, StringToChar(dataset_type));
   }
 
@@ -264,7 +263,7 @@ class MS_API Dataset : public std::enable_shared_from_this<Dataset> {
   std::shared_ptr<BucketBatchByLengthDataset> BucketBatchByLength(
     const std::vector<std::string> &column_names, const std::vector<int32_t> &bucket_boundaries,
     const std::vector<int32_t> &bucket_batch_sizes,
-    std::function<MSTensorVec(MSTensorVec)> element_length_function = nullptr,
+    const std::function<MSTensorVec(MSTensorVec)> &element_length_function = nullptr,
     const std::map<std::string, std::pair<std::vector<int64_t>, MSTensor>> &pad_info = {},
     bool pad_to_bucket_boundary = false, bool drop_remainder = false) {
     return std::make_shared<BucketBatchByLengthDataset>(
@@ -370,7 +369,7 @@ class MS_API Dataset : public std::enable_shared_from_this<Dataset> {
   ///      /* Apply predicate function for datase */
   ///      std::shared_ptr<Dataset> ds = ds->Filter(Predicate1, {"label"});
   /// \endcode
-  std::shared_ptr<FilterDataset> Filter(std::function<MSTensorVec(MSTensorVec)> predicate,
+  std::shared_ptr<FilterDataset> Filter(const std::function<MSTensorVec(MSTensorVec)> &predicate,
                                         const std::vector<std::string> &input_columns = {}) {
     return std::make_shared<FilterDataset>(shared_from_this(), predicate, VectorStringToChar(input_columns));
   }
@@ -426,12 +425,12 @@ class MS_API Dataset : public std::enable_shared_from_this<Dataset> {
   ///    // columns will remain the same.
   ///    dataset = dataset->Map({decode_op, random_jitter_op}, {"image"})
   /// \endcode
-  std::shared_ptr<MapDataset> Map(std::vector<TensorTransform *> operations,
+  std::shared_ptr<MapDataset> Map(const std::vector<TensorTransform *> &operations,
                                   const std::vector<std::string> &input_columns = {},
                                   const std::vector<std::string> &output_columns = {},
                                   const std::vector<std::string> &project_columns = {},
                                   const std::shared_ptr<DatasetCache> &cache = nullptr,
-                                  std::vector<std::shared_ptr<DSCallback>> callbacks = {}) {
+                                  const std::vector<std::shared_ptr<DSCallback>> &callbacks = {}) {
     std::vector<std::shared_ptr<TensorOperation>> transform_ops;
     (void)std::transform(
       operations.begin(), operations.end(), std::back_inserter(transform_ops),
@@ -458,15 +457,15 @@ class MS_API Dataset : public std::enable_shared_from_this<Dataset> {
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
   /// \param[in] callbacks List of Dataset callbacks to be called.
   /// \return Shared pointer to the current Dataset.
-  std::shared_ptr<MapDataset> Map(std::vector<std::shared_ptr<TensorTransform>> operations,
+  std::shared_ptr<MapDataset> Map(const std::vector<std::shared_ptr<TensorTransform>> &operations,
                                   const std::vector<std::string> &input_columns = {},
                                   const std::vector<std::string> &output_columns = {},
                                   const std::vector<std::string> &project_columns = {},
                                   const std::shared_ptr<DatasetCache> &cache = nullptr,
-                                  std::vector<std::shared_ptr<DSCallback>> callbacks = {}) {
+                                  const std::vector<std::shared_ptr<DSCallback>> &callbacks = {}) {
     std::vector<std::shared_ptr<TensorOperation>> transform_ops;
     (void)std::transform(operations.begin(), operations.end(), std::back_inserter(transform_ops),
-                         [](std::shared_ptr<TensorTransform> op) -> std::shared_ptr<TensorOperation> {
+                         [](const std::shared_ptr<TensorTransform> &op) -> std::shared_ptr<TensorOperation> {
                            return op != nullptr ? op->Parse() : nullptr;
                          });
     return std::make_shared<MapDataset>(shared_from_this(), transform_ops, VectorStringToChar(input_columns),
@@ -491,12 +490,12 @@ class MS_API Dataset : public std::enable_shared_from_this<Dataset> {
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
   /// \param[in] callbacks List of Dataset callbacks to be called.
   /// \return Shared pointer to the current Dataset.
-  std::shared_ptr<MapDataset> Map(const std::vector<std::reference_wrapper<TensorTransform>> operations,
+  std::shared_ptr<MapDataset> Map(const std::vector<std::reference_wrapper<TensorTransform>> &operations,
                                   const std::vector<std::string> &input_columns = {},
                                   const std::vector<std::string> &output_columns = {},
                                   const std::vector<std::string> &project_columns = {},
                                   const std::shared_ptr<DatasetCache> &cache = nullptr,
-                                  std::vector<std::shared_ptr<DSCallback>> callbacks = {}) {
+                                  const std::vector<std::shared_ptr<DSCallback>> &callbacks = {}) {
     std::vector<std::shared_ptr<TensorOperation>> transform_ops;
     (void)std::transform(operations.begin(), operations.end(), std::back_inserter(transform_ops),
                          [](TensorTransform &op) -> std::shared_ptr<TensorOperation> { return op.Parse(); });
@@ -619,7 +618,7 @@ class MS_API Dataset : public std::enable_shared_from_this<Dataset> {
   std::vector<std::pair<std::vector<char>, std::vector<int32_t>>> GetClassIndexingCharIF();
 
   // Char interface(CharIF) of CreateIterator
-  std::shared_ptr<Iterator> CreateIteratorCharIF(std::vector<std::vector<char>> columns, int32_t num_epochs);
+  std::shared_ptr<Iterator> CreateIteratorCharIF(const std::vector<std::vector<char>> &columns, int32_t num_epochs);
 
   // Char interface(CharIF) of DeviceQueue
   bool DeviceQueueCharIF(const std::vector<char> &queue_name, const std::vector<char> &device_type, int32_t device_id,
@@ -702,7 +701,7 @@ class MS_API SchemaObj {
 
   /// \brief Set a new value to dataset_type.
   /// \param[in] dataset_type Data type of the schema.
-  void set_dataset_type(std::string dataset_type);
+  void set_dataset_type(const std::string &dataset_type);
 
   /// \brief Set a new value to num_rows.
   /// \param[in] dataset_type Number of rows of the schema.
@@ -750,7 +749,7 @@ class MS_API SchemaObj {
                          const std::vector<int32_t> &shape);
 
   // Char interface of to_json
-  const std::vector<char> to_json_char();
+  std::vector<char> to_json_char();
 
   // Char interface of FromJSONString
   Status FromJSONStringCharIF(const std::vector<char> &json_string);
@@ -774,7 +773,7 @@ class MS_API BatchDataset : public Dataset {
   ///     batch. If true, and if there are less than batch_size rows
   ///     available to make the last batch, then those rows will
   ///     be dropped and not propagated to the next node.
-  BatchDataset(std::shared_ptr<Dataset> input, int32_t batch_size, bool drop_remainder = false);
+  BatchDataset(const std::shared_ptr<Dataset> &input, int32_t batch_size, bool drop_remainder = false);
 
   /// \brief Destructor of BatchDataset.
   ~BatchDataset() = default;
@@ -811,9 +810,9 @@ class MS_API BucketBatchByLengthDataset : public Dataset {
   /// \param[in] drop_remainder If true, will drop the last batch for each bucket if it is not a full batch
   ///    (default=false).
   BucketBatchByLengthDataset(
-    std::shared_ptr<Dataset> input, const std::vector<std::vector<char>> &column_names,
+    const std::shared_ptr<Dataset> &input, const std::vector<std::vector<char>> &column_names,
     const std::vector<int32_t> &bucket_boundaries, const std::vector<int32_t> &bucket_batch_sizes,
-    std::function<MSTensorVec(MSTensorVec)> element_length_function = nullptr,
+    const std::function<MSTensorVec(MSTensorVec)> &element_length_function = nullptr,
     const std::map<std::vector<char>, std::pair<std::vector<int64_t>, MSTensor>> &pad_info = {},
     bool pad_to_bucket_boundary = false, bool drop_remainder = false);
 
@@ -843,7 +842,7 @@ class MS_API FilterDataset : public Dataset {
   /// \param[in] input The dataset which need to apply filter operation.
   /// \param[in] predicate Function callable which returns a boolean value. If false then filter the element.
   /// \param[in] input_columns List of names of the input columns to filter.
-  FilterDataset(std::shared_ptr<Dataset> input, std::function<MSTensorVec(MSTensorVec)> predicate,
+  FilterDataset(const std::shared_ptr<Dataset> &input, const std::function<MSTensorVec(MSTensorVec)> &predicate,
                 const std::vector<std::vector<char>> &input_columns);
 
   /// \brief Destructor of FilterDataset.
@@ -871,10 +870,10 @@ class MS_API MapDataset : public Dataset {
   /// \param[in] project_columns A list of column names to project.
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
   /// \param[in] callbacks List of Dataset callbacks to be called.
-  MapDataset(std::shared_ptr<Dataset> input, std::vector<std::shared_ptr<TensorOperation>> operations,
+  MapDataset(const std::shared_ptr<Dataset> &input, const std::vector<std::shared_ptr<TensorOperation>> &operations,
              const std::vector<std::vector<char>> &input_columns, const std::vector<std::vector<char>> &output_columns,
              const std::vector<std::vector<char>> &project_columns, const std::shared_ptr<DatasetCache> &cache,
-             std::vector<std::shared_ptr<DSCallback>> callbacks);
+             const std::vector<std::shared_ptr<DSCallback>> &callbacks);
 
   /// \brief Destructor of MapDataset.
   ~MapDataset() = default;
@@ -888,7 +887,7 @@ class MS_API ProjectDataset : public Dataset {
   /// \note Applies project to the dataset.
   /// \param[in] input The dataset which need to apply project operation.
   /// \param[in] columns The name of columns to project.
-  ProjectDataset(std::shared_ptr<Dataset> input, const std::vector<std::vector<char>> &columns);
+  ProjectDataset(const std::shared_ptr<Dataset> &input, const std::vector<std::vector<char>> &columns);
 
   /// \brief Destructor of ProjectDataset.
   ~ProjectDataset() = default;
@@ -903,7 +902,7 @@ class MS_API RenameDataset : public Dataset {
   /// \param[in] input The dataset which need to apply rename operation.
   /// \param[in] input_columns List of the input columns to rename.
   /// \param[in] output_columns List of the output columns.
-  RenameDataset(std::shared_ptr<Dataset> input, const std::vector<std::vector<char>> &input_columns,
+  RenameDataset(const std::shared_ptr<Dataset> &input, const std::vector<std::vector<char>> &input_columns,
                 const std::vector<std::vector<char>> &output_columns);
 
   /// \brief Destructor of RenameDataset.
@@ -918,7 +917,7 @@ class MS_API RepeatDataset : public Dataset {
   /// \note Repeats this dataset count times. Repeat indefinitely if count is -1.
   /// \param[in] input The dataset which need to apply repeat operation.
   /// \param[in] count Number of times the dataset should be repeated.
-  RepeatDataset(std::shared_ptr<Dataset> input, int32_t count);
+  RepeatDataset(const std::shared_ptr<Dataset> &input, int32_t count);
 
   /// \brief Destructor of RepeatDataset.
   ~RepeatDataset() = default;
@@ -932,7 +931,7 @@ class MS_API ShuffleDataset : public Dataset {
   /// \note Randomly shuffles the rows of this dataset.
   /// \param[in] input The dataset which need to apply shuffle operation.
   /// \param[in] buffer_size The size of the buffer (must be larger than 1) for shuffling
-  ShuffleDataset(std::shared_ptr<Dataset> input, int32_t buffer_size);
+  ShuffleDataset(const std::shared_ptr<Dataset> &input, int32_t buffer_size);
 
   /// \brief Destructor of ShuffleDataset.
   ~ShuffleDataset() = default;
@@ -946,7 +945,7 @@ class MS_API SkipDataset : public Dataset {
   /// \note Skips count elements in this dataset.
   /// \param[in] input The dataset which need to apply skip operation.
   /// \param[in] count Number of elements the dataset to be skipped.
-  SkipDataset(std::shared_ptr<Dataset> input, int32_t count);
+  SkipDataset(const std::shared_ptr<Dataset> &input, int32_t count);
 
   /// \brief Destructor of SkipDataset.
   ~SkipDataset() = default;
@@ -960,7 +959,7 @@ class MS_API TakeDataset : public Dataset {
   /// \note Takes count elements in this dataset.
   /// \param[in] input The dataset which need to apply take operation.
   /// \param[in] count Number of elements the dataset to be taken.
-  TakeDataset(std::shared_ptr<Dataset> input, int32_t count);
+  TakeDataset(const std::shared_ptr<Dataset> &input, int32_t count);
 
   /// \brief Destructor of TakeDataset.
   ~TakeDataset() = default;
@@ -1080,7 +1079,7 @@ class MS_API AlbumDataset : public Dataset {
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
   AlbumDataset(const std::vector<char> &dataset_dir, const std::vector<char> &data_schema,
                const std::vector<std::vector<char>> &column_names, bool decode,
-               const std::reference_wrapper<Sampler> sampler, const std::shared_ptr<DatasetCache> &cache);
+               const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of AlbumDataset.
   ~AlbumDataset() = default;
@@ -1147,7 +1146,7 @@ inline std::shared_ptr<AlbumDataset> MS_API Album(const std::string &dataset_dir
 /// \return Shared pointer to the AlbumDataset.
 inline std::shared_ptr<AlbumDataset> MS_API Album(const std::string &dataset_dir, const std::string &data_schema,
                                                   const std::vector<std::string> &column_names, bool decode,
-                                                  const std::reference_wrapper<Sampler> sampler,
+                                                  const std::reference_wrapper<Sampler> &sampler,
                                                   const std::shared_ptr<DatasetCache> &cache = nullptr) {
   return std::make_shared<AlbumDataset>(StringToChar(dataset_dir), StringToChar(data_schema),
                                         VectorStringToChar(column_names), decode, sampler, cache);
@@ -1244,7 +1243,7 @@ class MS_API Caltech256Dataset : public Dataset {
   /// \param[in] decode Decode the images after reading.
   /// \param[in] sampler Sampler object used to choose samples from the dataset.
   /// \param[in] cache Tensor cache to use.
-  Caltech256Dataset(const std::vector<char> &dataset_dir, bool decode, const std::reference_wrapper<Sampler> sampler,
+  Caltech256Dataset(const std::vector<char> &dataset_dir, bool decode, const std::reference_wrapper<Sampler> &sampler,
                     const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of Caltech256Dataset.
@@ -1300,7 +1299,7 @@ inline std::shared_ptr<Caltech256Dataset> MS_API Caltech256(const std::string &d
 /// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
 /// \return Shared pointer to the Caltech256Dataset.
 inline std::shared_ptr<Caltech256Dataset> MS_API Caltech256(const std::string &dataset_dir,
-                                                            const std::reference_wrapper<Sampler> sampler,
+                                                            const std::reference_wrapper<Sampler> &sampler,
                                                             bool decode = false,
                                                             const std::shared_ptr<DatasetCache> &cache = nullptr) {
   return std::make_shared<Caltech256Dataset>(StringToChar(dataset_dir), decode, sampler, cache);
@@ -1340,7 +1339,7 @@ class MS_API CelebADataset : public Dataset {
   /// \param[in] extensions Set of file extensions to be included in the dataset (default={}).
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
   CelebADataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
-                const std::reference_wrapper<Sampler> sampler, bool decode,
+                const std::reference_wrapper<Sampler> &sampler, bool decode,
                 const std::set<std::vector<char>> &extensions, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of CelebADataset.
@@ -1409,7 +1408,7 @@ inline std::shared_ptr<CelebADataset> MS_API CelebA(const std::string &dataset_d
 /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
 /// \return Shared pointer to the CelebADataset.
 inline std::shared_ptr<CelebADataset> MS_API CelebA(const std::string &dataset_dir, const std::string &usage,
-                                                    const std::reference_wrapper<Sampler> sampler, bool decode = false,
+                                                    const std::reference_wrapper<Sampler> &sampler, bool decode = false,
                                                     const std::set<std::string> &extensions = {},
                                                     const std::shared_ptr<DatasetCache> &cache = nullptr) {
   return std::make_shared<CelebADataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, decode,
@@ -1443,7 +1442,7 @@ class MS_API Cifar10Dataset : public Dataset {
   /// \param[in] sampler Sampler object used to choose samples from the dataset.
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
   Cifar10Dataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
-                 const std::reference_wrapper<Sampler> sampler, const std::shared_ptr<DatasetCache> &cache);
+                 const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of Cifar10Dataset.
   ~Cifar10Dataset() = default;
@@ -1499,7 +1498,7 @@ inline std::shared_ptr<Cifar10Dataset> MS_API Cifar10(const std::string &dataset
 /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
 /// \return Shared pointer to the Cifar10Dataset.
 inline std::shared_ptr<Cifar10Dataset> MS_API Cifar10(const std::string &dataset_dir, const std::string &usage,
-                                                      const std::reference_wrapper<Sampler> sampler,
+                                                      const std::reference_wrapper<Sampler> &sampler,
                                                       const std::shared_ptr<DatasetCache> &cache = nullptr) {
   return std::make_shared<Cifar10Dataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, cache);
 }
@@ -1531,7 +1530,7 @@ class MS_API Cifar100Dataset : public Dataset {
   /// \param[in] sampler Sampler object used to choose samples from the dataset.
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
   Cifar100Dataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
-                  const std::reference_wrapper<Sampler> sampler, const std::shared_ptr<DatasetCache> &cache);
+                  const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of Cifar100Dataset.
   ~Cifar100Dataset() = default;
@@ -1587,7 +1586,7 @@ inline std::shared_ptr<Cifar100Dataset> MS_API Cifar100(const std::string &datas
 /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
 /// \return Shared pointer to the Cifar100Dataset.
 inline std::shared_ptr<Cifar100Dataset> MS_API Cifar100(const std::string &dataset_dir, const std::string &usage,
-                                                        const std::reference_wrapper<Sampler> sampler,
+                                                        const std::reference_wrapper<Sampler> &sampler,
                                                         const std::shared_ptr<DatasetCache> &cache = nullptr) {
   return std::make_shared<Cifar100Dataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, cache);
 }
@@ -1640,7 +1639,7 @@ class MS_API CityscapesDataset : public Dataset {
   /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
   CityscapesDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
                     const std::vector<char> &quality_mode, const std::vector<char> &task, bool decode,
-                    const std::reference_wrapper<Sampler> sampler, const std::shared_ptr<DatasetCache> &cache);
+                    const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of CityscapesDataset.
   ~CityscapesDataset() = default;
@@ -1718,7 +1717,7 @@ inline std::shared_ptr<CityscapesDataset> MS_API Cityscapes(const std::string &d
 /// \return Shared pointer to the current CityscapesDataset.
 inline std::shared_ptr<CityscapesDataset> MS_API Cityscapes(const std::string &dataset_dir, const std::string &usage,
                                                             const std::string &quality_mode, const std::string &task,
-                                                            bool decode, const std::reference_wrapper<Sampler> sampler,
+                                                            bool decode, const std::reference_wrapper<Sampler> &sampler,
                                                             const std::shared_ptr<DatasetCache> &cache = nullptr) {
   return std::make_shared<CityscapesDataset>(StringToChar(dataset_dir), StringToChar(usage), StringToChar(quality_mode),
                                              StringToChar(task), decode, sampler, cache);
@@ -1830,7 +1829,7 @@ class MS_API CocoDataset : public Dataset {
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
   /// \param[in] extra_metadata Flag to add extra meta-data to row. (default=false).
   CocoDataset(const std::vector<char> &dataset_dir, const std::vector<char> &annotation_file,
-              const std::vector<char> &task, const bool &decode, const std::reference_wrapper<Sampler> sampler,
+              const std::vector<char> &task, const bool &decode, const std::reference_wrapper<Sampler> &sampler,
               const std::shared_ptr<DatasetCache> &cache, const bool &extra_metadata);
 
   /// \brief Constructor of CocoDataset.
@@ -1922,7 +1921,7 @@ inline std::shared_ptr<CocoDataset> MS_API Coco(const std::string &dataset_dir, 
 /// \return Shared pointer to the CocoDataset.
 inline std::shared_ptr<CocoDataset> MS_API Coco(const std::string &dataset_dir, const std::string &annotation_file,
                                                 const std::string &task, const bool &decode,
-                                                const std::reference_wrapper<Sampler> sampler,
+                                                const std::reference_wrapper<Sampler> &sampler,
                                                 const std::shared_ptr<DatasetCache> &cache = nullptr,
                                                 const bool &extra_metadata = false) {
   return std::make_shared<CocoDataset>(StringToChar(dataset_dir), StringToChar(annotation_file), StringToChar(task),
@@ -2161,7 +2160,7 @@ class MS_API DIV2KDataset : public Dataset {
   /// \param[in] sampler Sampler object used to choose samples from the dataset.
   /// \param[in] cache Tensor cache to use.
   DIV2KDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, const std::vector<char> &downgrade,
-               int32_t scale, bool decode, const std::reference_wrapper<Sampler> sampler,
+               int32_t scale, bool decode, const std::reference_wrapper<Sampler> &sampler,
                const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of DIV2KDataset.
@@ -2234,7 +2233,7 @@ inline std::shared_ptr<DIV2KDataset> MS_API DIV2K(const std::string &dataset_dir
 /// \return Shared pointer to the current DIV2KDataset.
 inline std::shared_ptr<DIV2KDataset> MS_API DIV2K(const std::string &dataset_dir, const std::string &usage,
                                                   const std::string &downgrade, int32_t scale, bool decode,
-                                                  const std::reference_wrapper<Sampler> sampler,
+                                                  const std::reference_wrapper<Sampler> &sampler,
                                                   const std::shared_ptr<DatasetCache> &cache = nullptr) {
   return std::make_shared<DIV2KDataset>(StringToChar(dataset_dir), StringToChar(usage), StringToChar(downgrade), scale,
                                         decode, sampler, cache);
@@ -2252,9 +2251,8 @@ class MS_API EMnistDataset : public Dataset {
   /// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
   ///     given, a `RandomSampler` will be used to randomly iterate the entire dataset.
   /// \param[in] cache Tensor cache to use.
-  explicit EMnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &name,
-                         const std::vector<char> &usage, const std::shared_ptr<Sampler> &sampler,
-                         const std::shared_ptr<DatasetCache> &cache);
+  EMnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &name, const std::vector<char> &usage,
+                const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Constructor of EMnistDataset.
   /// \param[in] dataset_dir Path to the root directory that contains the dataset.
@@ -2263,9 +2261,8 @@ class MS_API EMnistDataset : public Dataset {
   /// \param[in] usage Part of dataset of EMNIST, can be "train", "test" or "all".
   /// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
   /// \param[in] cache Tensor cache to use.
-  explicit EMnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &name,
-                         const std::vector<char> &usage, const Sampler *sampler,
-                         const std::shared_ptr<DatasetCache> &cache);
+  EMnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &name, const std::vector<char> &usage,
+                const Sampler *sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Constructor of EMnistDataset.
   /// \param[in] dataset_dir Path to the root directory that contains the dataset.
@@ -2274,9 +2271,10 @@ class MS_API EMnistDataset : public Dataset {
   /// \param[in] usage Part of dataset of EMNIST, can be "train", "test" or "all".
   /// \param[in] sampler Sampler object used to choose samples from the dataset.
   /// \param[in] cache Tensor cache to use.
-  explicit EMnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &name,
-                         const std::vector<char> &usage, const std::reference_wrapper<Sampler> sampler,
-                         const std::shared_ptr<DatasetCache> &cache);
+  EMnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &name, const std::vector<char> &usage,
+                const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Destructor of EMnistDataset.
   ~EMnistDataset() = default;
 };
 
@@ -2336,7 +2334,7 @@ inline std::shared_ptr<EMnistDataset> MS_API EMnist(const std::string &dataset_d
 /// \return Shared pointer to the current EMnistDataset.
 inline std::shared_ptr<EMnistDataset> MS_API EMnist(const std::string &dataset_dir, const std::string &name,
                                                     const std::string &usage,
-                                                    const std::reference_wrapper<Sampler> sampler,
+                                                    const std::reference_wrapper<Sampler> &sampler,
                                                     const std::shared_ptr<DatasetCache> &cache = nullptr) {
   return std::make_shared<EMnistDataset>(StringToChar(dataset_dir), StringToChar(name), StringToChar(usage), sampler,
                                          cache);
@@ -2361,7 +2359,7 @@ class MS_API EnWik9Dataset : public Dataset {
   EnWik9Dataset(const std::vector<char> &dataset_dir, int64_t num_samples, ShuffleMode shuffle, int32_t num_shards,
                 int32_t shard_id, const std::shared_ptr<DatasetCache> &cache);
 
-  /// Destructor of EnWik9Dataset.
+  /// \brief Destructor of EnWik9Dataset.
   ~EnWik9Dataset() = default;
 };
 
@@ -2399,9 +2397,8 @@ class MS_API FakeImageDataset : public Dataset {
   /// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
   ///    given, a `RandomSampler` will be used to randomly iterate the entire dataset.
   /// \param[in] cache Tensor cache to use.
-  explicit FakeImageDataset(int32_t num_images, const std::vector<int32_t> &image_size, int32_t num_classes,
-                            int32_t base_seed, const std::shared_ptr<Sampler> &sampler,
-                            const std::shared_ptr<DatasetCache> &cache);
+  FakeImageDataset(int32_t num_images, const std::vector<int32_t> &image_size, int32_t num_classes, int32_t base_seed,
+                   const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Constructor of FakeImageDataset.
   /// \param[in] num_images The number of images to generate, which must be positive.
@@ -2410,8 +2407,8 @@ class MS_API FakeImageDataset : public Dataset {
   /// \param[in] base_seed The base seed to generate the images.
   /// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
   /// \param[in] cache Tensor cache to use.
-  explicit FakeImageDataset(int32_t num_images, const std::vector<int32_t> &image_size, int32_t num_classes,
-                            int32_t base_seed, const Sampler *sampler, const std::shared_ptr<DatasetCache> &cache);
+  FakeImageDataset(int32_t num_images, const std::vector<int32_t> &image_size, int32_t num_classes, int32_t base_seed,
+                   const Sampler *sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Constructor of FakeImageDataset.
   /// \param[in] num_images The number of images to generate, which must be positive.
@@ -2420,11 +2417,10 @@ class MS_API FakeImageDataset : public Dataset {
   /// \param[in] base_seed The base seed to generate the images.
   /// \param[in] sampler Sampler object used to choose samples from the dataset.
   /// \param[in] cache Tensor cache to use.
-  explicit FakeImageDataset(int32_t num_images, const std::vector<int32_t> &image_size, int32_t num_classes,
-                            int32_t base_seed, const std::reference_wrapper<Sampler> sampler,
-                            const std::shared_ptr<DatasetCache> &cache);
+  FakeImageDataset(int32_t num_images, const std::vector<int32_t> &image_size, int32_t num_classes, int32_t base_seed,
+                   const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
-  /// Destructor of FakeImageDataset.
+  /// \brief Destructor of FakeImageDataset.
   ~FakeImageDataset() = default;
 };
 
@@ -2473,7 +2469,7 @@ inline std::shared_ptr<FakeImageDataset> MS_API FakeImage(int32_t num_images, co
 /// \return Shared pointer to the current FakeImageDataset.
 inline std::shared_ptr<FakeImageDataset> MS_API FakeImage(int32_t num_images, const std::vector<int32_t> &image_size,
                                                           int32_t num_classes, int32_t base_seed,
-                                                          const std::reference_wrapper<Sampler> sampler,
+                                                          const std::reference_wrapper<Sampler> &sampler,
                                                           const std::shared_ptr<DatasetCache> &cache = nullptr) {
   return std::make_shared<FakeImageDataset>(num_images, image_size, num_classes, base_seed, sampler, cache);
 }
@@ -2488,27 +2484,26 @@ class MS_API FashionMnistDataset : public Dataset {
   /// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
   ///     given, a `RandomSampler` will be used to randomly iterate the entire dataset.
   /// \param[in] cache Tensor cache to use.
-  explicit FashionMnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
-                               const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
+  FashionMnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                      const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Constructor of FashionMnistDataset.
   /// \param[in] dataset_dir Path to the root directory that contains the dataset.
   /// \param[in] usage Usage of FASHION-MNIST, can be "train", "test" or "all".
   /// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
   /// \param[in] cache Tensor cache to use.
-  explicit FashionMnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
-                               const Sampler *sampler, const std::shared_ptr<DatasetCache> &cache);
+  FashionMnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, const Sampler *sampler,
+                      const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Constructor of FashionMnistDataset.
   /// \param[in] dataset_dir Path to the root directory that contains the dataset.
   /// \param[in] usage Usage of FASHION-MNIST, can be "train", "test" or "all".
   /// \param[in] sampler Sampler object used to choose samples from the dataset.
   /// \param[in] cache Tensor cache to use.
-  explicit FashionMnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
-                               const std::reference_wrapper<Sampler> sampler,
-                               const std::shared_ptr<DatasetCache> &cache);
+  FashionMnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                      const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
-  /// Destructor of FashionMnistDataset.
+  /// \brief Destructor of FashionMnistDataset.
   ~FashionMnistDataset() = default;
 };
 
@@ -2549,7 +2544,7 @@ inline std::shared_ptr<FashionMnistDataset> MS_API FashionMnist(const std::strin
 /// \return Shared pointer to the FashionMnistDataset.
 inline std::shared_ptr<FashionMnistDataset> MS_API FashionMnist(const std::string &dataset_dir,
                                                                 const std::string &usage,
-                                                                const std::reference_wrapper<Sampler> sampler,
+                                                                const std::reference_wrapper<Sampler> &sampler,
                                                                 const std::shared_ptr<DatasetCache> &cache = nullptr) {
   return std::make_shared<FashionMnistDataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, cache);
 }
@@ -2584,7 +2579,7 @@ class MS_API FlickrDataset : public Dataset {
   /// \param[in] sampler Sampler object used to choose samples from the dataset.
   /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
   FlickrDataset(const std::vector<char> &dataset_dir, const std::vector<char> &annotation_file, bool decode,
-                const std::reference_wrapper<Sampler> sampler, const std::shared_ptr<DatasetCache> &cache);
+                const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of FlickrDataset.
   ~FlickrDataset() = default;
@@ -2646,7 +2641,7 @@ inline std::shared_ptr<FlickrDataset> MS_API Flickr(const std::string &dataset_d
 /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
 /// \return Shared pointer to the current FlickrDataset
 inline std::shared_ptr<FlickrDataset> MS_API Flickr(const std::string &dataset_dir, const std::string &annotation_file,
-                                                    bool decode, const std::reference_wrapper<Sampler> sampler,
+                                                    bool decode, const std::reference_wrapper<Sampler> &sampler,
                                                     const std::shared_ptr<DatasetCache> &cache = nullptr) {
   return std::make_shared<FlickrDataset>(StringToChar(dataset_dir), StringToChar(annotation_file), decode, sampler,
                                          cache);
@@ -2688,7 +2683,7 @@ class MS_API ImageFolderDataset : public Dataset {
   /// \param[in] extensions File extensions to be read.
   /// \param[in] class_indexing a class name to label map.
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
-  ImageFolderDataset(const std::vector<char> &dataset_dir, bool decode, const std::reference_wrapper<Sampler> sampler,
+  ImageFolderDataset(const std::vector<char> &dataset_dir, bool decode, const std::reference_wrapper<Sampler> &sampler,
                      const std::set<std::vector<char>> &extensions,
                      const std::map<std::vector<char>, int32_t> &class_indexing,
                      const std::shared_ptr<DatasetCache> &cache);
@@ -2764,7 +2759,7 @@ inline std::shared_ptr<ImageFolderDataset> MS_API ImageFolder(const std::string 
 /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
 /// \return Shared pointer to the ImageFolderDataset.
 inline std::shared_ptr<ImageFolderDataset> MS_API ImageFolder(const std::string &dataset_dir, bool decode,
-                                                              const std::reference_wrapper<Sampler> sampler,
+                                                              const std::reference_wrapper<Sampler> &sampler,
                                                               const std::set<std::string> &extensions = {},
                                                               const std::map<std::string, int32_t> &class_indexing = {},
                                                               const std::shared_ptr<DatasetCache> &cache = nullptr) {
@@ -2798,7 +2793,7 @@ class MS_API IMDBDataset : public Dataset {
   /// \param[in] sampler Sampler object used to choose samples from the dataset.
   /// \param[in] cache Tensor cache to use.
   IMDBDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
-              const std::reference_wrapper<Sampler> sampler, const std::shared_ptr<DatasetCache> &cache);
+              const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of IMDBDataset.
   ~IMDBDataset() = default;
@@ -2855,7 +2850,7 @@ inline std::shared_ptr<IMDBDataset> MS_API IMDB(const std::string &dataset_dir, 
 /// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
 /// \return Shared pointer to the IMDBDataset.
 inline std::shared_ptr<IMDBDataset> MS_API IMDB(const std::string &dataset_dir, const std::string &usage,
-                                                const std::reference_wrapper<Sampler> sampler,
+                                                const std::reference_wrapper<Sampler> &sampler,
                                                 const std::shared_ptr<DatasetCache> &cache = nullptr) {
   return std::make_shared<IMDBDataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, cache);
 }
@@ -2987,8 +2982,8 @@ class MS_API KMnistDataset : public Dataset {
   ///     given, a `RandomSampler` will be used to randomly iterate the entire dataset.
   /// \param[in] cache Tensor cache to use.
   /// \return Shared pointer to the current KMnistDataset.
-  explicit KMnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
-                         const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
+  KMnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Function to create a KMnistDataset.
   /// \param[in] dataset_dir Path to the root directory that contains the dataset.
@@ -2996,8 +2991,8 @@ class MS_API KMnistDataset : public Dataset {
   /// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
   /// \param[in] cache Tensor cache to use.
   /// \return Shared pointer to the current KMnistDataset.
-  explicit KMnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, const Sampler *sampler,
-                         const std::shared_ptr<DatasetCache> &cache);
+  KMnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, const Sampler *sampler,
+                const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Function to create a KMnistDataset.
   /// \param[in] dataset_dir Path to the root directory that contains the dataset.
@@ -3005,8 +3000,8 @@ class MS_API KMnistDataset : public Dataset {
   /// \param[in] sampler Sampler object used to choose samples from the dataset.
   /// \param[in] cache Tensor cache to use.
   /// \return Shared pointer to the current KMnistDataset.
-  explicit KMnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
-                         const std::reference_wrapper<Sampler> sampler, const std::shared_ptr<DatasetCache> &cache);
+  KMnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of KMnistDataset.
   ~KMnistDataset() = default;
@@ -3048,7 +3043,7 @@ inline std::shared_ptr<KMnistDataset> MS_API KMnist(const std::string &dataset_d
 /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
 /// \return Shared pointer to the current KMnistDataset.
 inline std::shared_ptr<KMnistDataset> MS_API KMnist(const std::string &dataset_dir, const std::string &usage,
-                                                    const std::reference_wrapper<Sampler> sampler,
+                                                    const std::reference_wrapper<Sampler> &sampler,
                                                     const std::shared_ptr<DatasetCache> &cache = nullptr) {
   return std::make_shared<KMnistDataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, cache);
 }
@@ -3069,7 +3064,7 @@ class MS_API LJSpeechDataset : public Dataset {
   /// \param[in] dataset_file The dataset file to be read.
   /// \param[in] sampler Sampler object used to choose samples from the dataset.
   /// \param[in] cache Tensor cache to use.
-  LJSpeechDataset(const std::vector<char> &dataset_dir, const std::reference_wrapper<Sampler> sampler,
+  LJSpeechDataset(const std::vector<char> &dataset_dir, const std::reference_wrapper<Sampler> &sampler,
                   const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Constructor of LJSpeechDataset.
@@ -3117,7 +3112,7 @@ inline std::shared_ptr<LJSpeechDataset> MS_API LJSpeech(const std::string &datas
 /// \param[in] cache Tensor cache to use. (default=nullptr, which means no cache is used).
 /// \return Shared pointer to the current Dataset.
 inline std::shared_ptr<LJSpeechDataset> MS_API LJSpeech(const std::string &dataset_dir,
-                                                        const std::reference_wrapper<Sampler> sampler,
+                                                        const std::reference_wrapper<Sampler> &sampler,
                                                         const std::shared_ptr<DatasetCache> &cache = nullptr) {
   return std::make_shared<LJSpeechDataset>(StringToChar(dataset_dir), sampler, cache);
 }
@@ -3160,7 +3155,7 @@ class MS_API ManifestDataset : public Dataset {
   /// \param[in] decode Decode the images after reading (default=false).
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
   ManifestDataset(const std::vector<char> &dataset_file, const std::vector<char> &usage,
-                  const std::reference_wrapper<Sampler> sampler,
+                  const std::reference_wrapper<Sampler> &sampler,
                   const std::map<std::vector<char>, int32_t> &class_indexing, bool decode,
                   const std::shared_ptr<DatasetCache> &cache);
 
@@ -3232,7 +3227,7 @@ inline std::shared_ptr<ManifestDataset> MS_API Manifest(const std::string &datas
 /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
 /// \return Shared pointer to the ManifestDataset.
 inline std::shared_ptr<ManifestDataset> MS_API Manifest(const std::string &dataset_file, const std::string &usage,
-                                                        const std::reference_wrapper<Sampler> sampler,
+                                                        const std::reference_wrapper<Sampler> &sampler,
                                                         const std::map<std::string, int32_t> &class_indexing = {},
                                                         bool decode = false,
                                                         const std::shared_ptr<DatasetCache> &cache = nullptr) {
@@ -3301,7 +3296,7 @@ class MS_API MindDataDataset : public Dataset {
   ///    ShuffleMode::kInfile - Shuffle samples in file.
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
   MindDataDataset(const std::vector<char> &dataset_file, const std::vector<std::vector<char>> &columns_list,
-                  const std::reference_wrapper<Sampler> sampler, const nlohmann::json *padded_sample,
+                  const std::reference_wrapper<Sampler> &sampler, const nlohmann::json *padded_sample,
                   int64_t num_padded, ShuffleMode shuffle_mode = ShuffleMode::kGlobal,
                   const std::shared_ptr<DatasetCache> &cache = nullptr);
 
@@ -3360,7 +3355,7 @@ class MS_API MindDataDataset : public Dataset {
   ///    ShuffleMode::kInfile - Shuffle samples in file.
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
   MindDataDataset(const std::vector<std::vector<char>> &dataset_files,
-                  const std::vector<std::vector<char>> &columns_list, const std::reference_wrapper<Sampler> sampler,
+                  const std::vector<std::vector<char>> &columns_list, const std::reference_wrapper<Sampler> &sampler,
                   const nlohmann::json *padded_sample, int64_t num_padded,
                   ShuffleMode shuffle_mode = ShuffleMode::kGlobal,
                   const std::shared_ptr<DatasetCache> &cache = nullptr);
@@ -3453,7 +3448,7 @@ inline std::shared_ptr<MindDataDataset> MS_API MindData(const std::string &datas
 /// \return Shared pointer to the MindDataDataset.
 inline std::shared_ptr<MindDataDataset> MS_API MindData(const std::string &dataset_file,
                                                         const std::vector<std::string> &columns_list,
-                                                        const std::reference_wrapper<Sampler> sampler,
+                                                        const std::reference_wrapper<Sampler> &sampler,
                                                         nlohmann::json *padded_sample = nullptr, int64_t num_padded = 0,
                                                         ShuffleMode shuffle_mode = ShuffleMode::kGlobal,
                                                         const std::shared_ptr<DatasetCache> &cache = nullptr) {
@@ -3545,7 +3540,7 @@ inline std::shared_ptr<MindDataDataset> MS_API MindData(const std::vector<std::s
 /// \return Shared pointer to the MindDataDataset.
 inline std::shared_ptr<MindDataDataset> MS_API MindData(const std::vector<std::string> &dataset_files,
                                                         const std::vector<std::string> &columns_list,
-                                                        const std::reference_wrapper<Sampler> sampler,
+                                                        const std::reference_wrapper<Sampler> &sampler,
                                                         nlohmann::json *padded_sample = nullptr, int64_t num_padded = 0,
                                                         ShuffleMode shuffle_mode = ShuffleMode::kGlobal,
                                                         const std::shared_ptr<DatasetCache> &cache = nullptr) {
@@ -3580,9 +3575,9 @@ class MS_API MnistDataset : public Dataset {
   /// \param[in] sampler Sampler object used to choose samples from the dataset.
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
   MnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
-               const std::reference_wrapper<Sampler> sampler, const std::shared_ptr<DatasetCache> &cache);
+               const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
-  /// Destructor of MnistDataset.
+  /// \brief Destructor of MnistDataset.
   ~MnistDataset() = default;
 };
 
@@ -3636,7 +3631,7 @@ inline std::shared_ptr<MnistDataset> MS_API Mnist(const std::string &dataset_dir
 /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
 /// \return Shared pointer to the MnistDataset.
 inline std::shared_ptr<MnistDataset> MS_API Mnist(const std::string &dataset_dir, const std::string &usage,
-                                                  const std::reference_wrapper<Sampler> sampler,
+                                                  const std::reference_wrapper<Sampler> &sampler,
                                                   const std::shared_ptr<DatasetCache> &cache = nullptr) {
   return std::make_shared<MnistDataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, cache);
 }
@@ -3705,9 +3700,8 @@ class MS_API PhotoTourDataset : public Dataset {
   /// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
   ///     given, a `RandomSampler` will be used to randomly iterate the entire dataset.
   /// \param[in] cache Tensor cache to use.
-  explicit PhotoTourDataset(const std::vector<char> &dataset_dir, const std::vector<char> &name,
-                            const std::vector<char> &usage, const std::shared_ptr<Sampler> &sampler,
-                            const std::shared_ptr<DatasetCache> &cache);
+  PhotoTourDataset(const std::vector<char> &dataset_dir, const std::vector<char> &name, const std::vector<char> &usage,
+                   const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Constructor of PhotoTourDataset.
   /// \param[in] dataset_dir Path to the root directory that contains the dataset.
@@ -3716,9 +3710,8 @@ class MS_API PhotoTourDataset : public Dataset {
   /// \param[in] usage Part of dataset of PhotoTour, can be `train` or `test`.
   /// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
   /// \param[in] cache Tensor cache to use.
-  explicit PhotoTourDataset(const std::vector<char> &dataset_dir, const std::vector<char> &name,
-                            const std::vector<char> &usage, const Sampler *sampler,
-                            const std::shared_ptr<DatasetCache> &cache);
+  PhotoTourDataset(const std::vector<char> &dataset_dir, const std::vector<char> &name, const std::vector<char> &usage,
+                   const Sampler *sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Constructor of PhotoTourDataset.
   /// \param[in] dataset_dir Path to the root directory that contains the dataset.
@@ -3727,9 +3720,10 @@ class MS_API PhotoTourDataset : public Dataset {
   /// \param[in] usage Part of dataset of PhotoTour, can be `train` or `test`.
   /// \param[in] sampler Sampler object used to choose samples from the dataset.
   /// \param[in] cache Tensor cache to use.
-  explicit PhotoTourDataset(const std::vector<char> &dataset_dir, const std::vector<char> &name,
-                            const std::vector<char> &usage, const std::reference_wrapper<Sampler> sampler,
-                            const std::shared_ptr<DatasetCache> &cache);
+  PhotoTourDataset(const std::vector<char> &dataset_dir, const std::vector<char> &name, const std::vector<char> &usage,
+                   const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Destructor of PhotoTourDataset.
   ~PhotoTourDataset() = default;
 };
 
@@ -3782,7 +3776,7 @@ inline std::shared_ptr<PhotoTourDataset> MS_API PhotoTour(const std::string &dat
 /// \return Shared pointer to the current PhotoTourDataset.
 inline std::shared_ptr<PhotoTourDataset> MS_API PhotoTour(const std::string &dataset_dir, const std::string &name,
                                                           const std::string &usage,
-                                                          const std::reference_wrapper<Sampler> sampler,
+                                                          const std::reference_wrapper<Sampler> &sampler,
                                                           const std::shared_ptr<DatasetCache> &cache = nullptr) {
   return std::make_shared<PhotoTourDataset>(StringToChar(dataset_dir), StringToChar(name), StringToChar(usage), sampler,
                                             cache);
@@ -3800,9 +3794,8 @@ class MS_API Places365Dataset : public Dataset {
   /// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
   ///     given, a `RandomSampler` will be used to randomly iterate the entire dataset.
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
-  explicit Places365Dataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, const bool small,
-                            const bool decode, const std::shared_ptr<Sampler> &sampler,
-                            const std::shared_ptr<DatasetCache> &cache);
+  Places365Dataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, bool small, bool decode,
+                   const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Constructor of Places365Dataset.
   /// \param[in] dataset_dir Path to the root directory that contains the dataset.
@@ -3811,8 +3804,8 @@ class MS_API Places365Dataset : public Dataset {
   /// \param[in] decode Decode the images after reading.
   /// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
   /// \param[in] cache Tensor cache to use.
-  explicit Places365Dataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, const bool small,
-                            const bool decode, const Sampler *sampler, const std::shared_ptr<DatasetCache> &cache);
+  Places365Dataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, bool small, bool decode,
+                   const Sampler *sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Constructor of Places365Dataset.
   /// \param[in] dataset_dir Path to the root directory that contains the dataset.
@@ -3821,9 +3814,10 @@ class MS_API Places365Dataset : public Dataset {
   /// \param[in] decode Decode the images after reading.
   /// \param[in] sampler Sampler object used to choose samples from the dataset.
   /// \param[in] cache Tensor cache to use.
-  explicit Places365Dataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, const bool small,
-                            const bool decode, const std::reference_wrapper<Sampler> sampler,
-                            const std::shared_ptr<DatasetCache> &cache);
+  Places365Dataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, bool small, bool decode,
+                   const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Destructor of Places365Dataset.
   ~Places365Dataset() = default;
 };
 
@@ -3874,7 +3868,7 @@ inline std::shared_ptr<Places365Dataset> MS_API Places365(const std::string &dat
 /// \return Shared pointer to the current Places365Dataset.
 inline std::shared_ptr<Places365Dataset> MS_API Places365(const std::string &dataset_dir, const std::string &usage,
                                                           const bool small, const bool decode,
-                                                          const std::reference_wrapper<Sampler> sampler,
+                                                          const std::reference_wrapper<Sampler> &sampler,
                                                           const std::shared_ptr<DatasetCache> &cache = nullptr) {
   return std::make_shared<Places365Dataset>(StringToChar(dataset_dir), StringToChar(usage), small, decode, sampler,
                                             cache);
@@ -3892,8 +3886,8 @@ class MS_API QMnistDataset : public Dataset {
   /// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
   ///     given, a `RandomSampler` will be used to randomly iterate the entire dataset.
   /// \param[in] cache Tensor cache to use.
-  explicit QMnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, bool compat,
-                         const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
+  QMnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, bool compat,
+                const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Constructor of QMnistDataset.
   /// \param[in] dataset_dir Path to the root directory that contains the dataset.
@@ -3902,8 +3896,8 @@ class MS_API QMnistDataset : public Dataset {
   ///     or the full QMNIST information (compat=false).
   /// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
   /// \param[in] cache Tensor cache to use.
-  explicit QMnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, bool compat,
-                         const Sampler *sampler, const std::shared_ptr<DatasetCache> &cache);
+  QMnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, bool compat,
+                const Sampler *sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Constructor of QMnistDataset.
   /// \param[in] dataset_dir Path to the root directory that contains the dataset.
@@ -3912,10 +3906,10 @@ class MS_API QMnistDataset : public Dataset {
   ///     or the full QMNIST information (compat=false).
   /// \param[in] sampler Sampler object used to choose samples from the dataset.
   /// \param[in] cache Tensor cache to use.
-  explicit QMnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, bool compat,
-                         const std::reference_wrapper<Sampler> sampler, const std::shared_ptr<DatasetCache> &cache);
+  QMnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, bool compat,
+                const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
-  /// Destructor of QMnistDataset.
+  /// \brief Destructor of QMnistDataset.
   ~QMnistDataset() = default;
 };
 
@@ -3973,7 +3967,7 @@ inline std::shared_ptr<QMnistDataset> MS_API QMnist(const std::string &dataset_d
 /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
 /// \return Shared pointer to the QMnistDataset.
 inline std::shared_ptr<QMnistDataset> MS_API QMnist(const std::string &dataset_dir, const std::string &usage,
-                                                    bool compat, const std::reference_wrapper<Sampler> sampler,
+                                                    bool compat, const std::reference_wrapper<Sampler> &sampler,
                                                     const std::shared_ptr<DatasetCache> &cache = nullptr) {
   return std::make_shared<QMnistDataset>(StringToChar(dataset_dir), StringToChar(usage), compat, sampler, cache);
 }
@@ -3998,7 +3992,7 @@ class MS_API RandomDataDataset : public Dataset {
   /// \param[in] columns_list List of columns to be read (default={}, read all columns).
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
   RandomDataDataset(const int32_t &total_rows, std::shared_ptr<SchemaObj> schema,
-                    const std::vector<std::vector<char>> &columns_list, std::shared_ptr<DatasetCache> cache);
+                    const std::vector<std::vector<char>> &columns_list, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Constructor of RandomDataDataset.
   /// \param[in] total_rows Number of rows for the dataset to generate (default=0, number of rows is random).
@@ -4006,9 +4000,9 @@ class MS_API RandomDataDataset : public Dataset {
   /// \param[in] columns_list List of columns to be read (default={}, read all columns).
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
   RandomDataDataset(const int32_t &total_rows, const std::vector<char> &schema_path,
-                    const std::vector<std::vector<char>> &columns_list, std::shared_ptr<DatasetCache> cache);
+                    const std::vector<std::vector<char>> &columns_list, const std::shared_ptr<DatasetCache> &cache);
 
-  /// Destructor of RandomDataDataset.
+  /// \brief Destructor of RandomDataDataset.
   ~RandomDataDataset() = default;
 };
 
@@ -4075,10 +4069,10 @@ class MS_API SBUDataset : public Dataset {
   /// \param[in] decode Decode the images after reading.
   /// \param[in] sampler Sampler object used to choose samples from the dataset.
   /// \param[in] cache Tensor cache to use.
-  SBUDataset(const std::vector<char> &dataset_dir, bool decode, const std::reference_wrapper<Sampler> sampler,
+  SBUDataset(const std::vector<char> &dataset_dir, bool decode, const std::reference_wrapper<Sampler> &sampler,
              const std::shared_ptr<DatasetCache> &cache);
 
-  /// Destructor of SBUDataset.
+  /// \brief Destructor of SBUDataset.
   ~SBUDataset() = default;
 };
 
@@ -4131,7 +4125,7 @@ inline std::shared_ptr<SBUDataset> MS_API SBU(const std::string &dataset_dir, bo
 /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
 /// \return Shared pointer to the current SBUDataset.
 inline std::shared_ptr<SBUDataset> MS_API SBU(const std::string &dataset_dir, bool decode,
-                                              const std::reference_wrapper<Sampler> sampler,
+                                              const std::reference_wrapper<Sampler> &sampler,
                                               const std::shared_ptr<DatasetCache> &cache = nullptr) {
   return std::make_shared<SBUDataset>(StringToChar(dataset_dir), decode, sampler, cache);
 }
@@ -4199,7 +4193,7 @@ Semeion(const std::string &dataset_dir, const std::shared_ptr<Sampler> &sampler 
 /// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
 /// \return Shared pointer to the SemeionDataset.
 inline std::shared_ptr<SemeionDataset> MS_API Semeion(const std::string &dataset_dir,
-                                                      const std::reference_wrapper<Sampler> sampler,
+                                                      const std::reference_wrapper<Sampler> &sampler,
                                                       const std::shared_ptr<DatasetCache> &cache = nullptr) {
   return std::make_shared<SemeionDataset>(StringToChar(dataset_dir), sampler, cache);
 }
@@ -4235,7 +4229,8 @@ class MS_API SogouNewsDataset : public Dataset {
   SogouNewsDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, int64_t num_samples,
                    ShuffleMode shuffle, int32_t num_shards, int32_t shard_id,
                    const std::shared_ptr<DatasetCache> &cache);
-  /// Destructor of SogouNewsDataset.
+
+  /// \brief Destructor of SogouNewsDataset.
   ~SogouNewsDataset() = default;
 };
 
@@ -4291,9 +4286,9 @@ class MS_API SpeechCommandsDataset : public Dataset {
   /// \param[in] sampler Sampler object used to choose samples from the dataset.
   /// \param[in] cache Tensor cache to use.
   SpeechCommandsDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
-                        const std::reference_wrapper<Sampler> sampler, const std::shared_ptr<DatasetCache> &cache);
+                        const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
-  /// Destructor of SpeechCommandsDataset.
+  /// \brief Destructor of SpeechCommandsDataset.
   ~SpeechCommandsDataset() = default;
 };
 
@@ -4333,7 +4328,7 @@ SpeechCommands(const std::string &dataset_dir, const std::string &usage, const S
 /// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
 /// \return Shared pointer to the SpeechCommandsDataset.
 inline std::shared_ptr<SpeechCommandsDataset> MS_API
-SpeechCommands(const std::string &dataset_dir, const std::string &usage, const std::reference_wrapper<Sampler> sampler,
+SpeechCommands(const std::string &dataset_dir, const std::string &usage, const std::reference_wrapper<Sampler> &sampler,
                const std::shared_ptr<DatasetCache> &cache = nullptr) {
   return std::make_shared<SpeechCommandsDataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, cache);
 }
@@ -4368,7 +4363,7 @@ class MS_API STL10Dataset : public Dataset {
   /// \param[in] sampler Sampler object used to choose samples from the dataset.
   /// \param[in] cache Tensor cache to use.
   STL10Dataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
-               const std::reference_wrapper<Sampler> sampler, const std::shared_ptr<DatasetCache> &cache);
+               const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of STL10Dataset.
   ~STL10Dataset() = default;
@@ -4410,7 +4405,7 @@ inline std::shared_ptr<STL10Dataset> MS_API STL10(const std::string &dataset_dir
 /// \param[in] cache Tensor cache to use. (default=nullptr, which means no cache is used).
 /// \return Shared pointer to the current Dataset.
 inline std::shared_ptr<STL10Dataset> MS_API STL10(const std::string &dataset_dir, const std::string &usage,
-                                                  const std::reference_wrapper<Sampler> sampler,
+                                                  const std::reference_wrapper<Sampler> &sampler,
                                                   const std::shared_ptr<DatasetCache> &cache = nullptr) {
   return std::make_shared<STL10Dataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, cache);
 }
@@ -4493,7 +4488,7 @@ inline std::shared_ptr<TedliumDataset> MS_API Tedlium(
 /// \return Shared pointer to the TedliumDataset.
 inline std::shared_ptr<TedliumDataset> MS_API Tedlium(const std::string &dataset_dir, const std::string &release,
                                                       const std::string &usage, const std::string &extensions,
-                                                      const std::reference_wrapper<Sampler> sampler,
+                                                      const std::reference_wrapper<Sampler> &sampler,
                                                       const std::shared_ptr<DatasetCache> &cache = nullptr) {
   return std::make_shared<TedliumDataset>(StringToChar(dataset_dir), StringToChar(release), StringToChar(usage),
                                           StringToChar(extensions), sampler, cache);
@@ -4539,7 +4534,7 @@ class MS_API TextFileDataset : public Dataset {
   TextFileDataset(const std::vector<std::vector<char>> &dataset_files, int64_t num_samples, ShuffleMode shuffle,
                   int32_t num_shards, int32_t shard_id, const std::shared_ptr<DatasetCache> &cache);
 
-  /// Destructor of TextFileDataset.
+  /// \brief Destructor of TextFileDataset.
   ~TextFileDataset() = default;
 };
 
@@ -4609,7 +4604,8 @@ class MS_API TFRecordDataset : public Dataset {
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
   TFRecordDataset(const std::vector<std::vector<char>> &dataset_files, const std::vector<char> &schema,
                   const std::vector<std::vector<char>> &columns_list, int64_t num_samples, ShuffleMode shuffle,
-                  int32_t num_shards, int32_t shard_id, bool shard_equal_rows, std::shared_ptr<DatasetCache> cache);
+                  int32_t num_shards, int32_t shard_id, bool shard_equal_rows,
+                  const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Constructor of TFRecordDataset.
   /// \note Parameter 'schema' is shared pointer to Schema object
@@ -4633,11 +4629,12 @@ class MS_API TFRecordDataset : public Dataset {
   /// \param[in] shard_equal_rows Get equal rows for all shards (Default = False, number of rows of
   ///     each shard may be not equal).
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
-  TFRecordDataset(const std::vector<std::vector<char>> &dataset_files, std::shared_ptr<SchemaObj> schema,
+  TFRecordDataset(const std::vector<std::vector<char>> &dataset_files, const std::shared_ptr<SchemaObj> &schema,
                   const std::vector<std::vector<char>> &columns_list, int64_t num_samples, ShuffleMode shuffle,
-                  int32_t num_shards, int32_t shard_id, bool shard_equal_rows, std::shared_ptr<DatasetCache> cache);
+                  int32_t num_shards, int32_t shard_id, bool shard_equal_rows,
+                  const std::shared_ptr<DatasetCache> &cache);
 
-  /// Destructor of TFRecordDataset.
+  /// \brief Destructor of TFRecordDataset.
   ~TFRecordDataset() = default;
 };
 
@@ -4687,7 +4684,7 @@ std::shared_ptr<TFRecordDataset> MS_API TFRecord(const std::vector<std::string> 
                                                  int32_t num_shards = 1, int32_t shard_id = 0,
                                                  bool shard_equal_rows = false,
                                                  const std::shared_ptr<DatasetCache> &cache = nullptr) {
-  std::shared_ptr<TFRecordDataset> ds = nullptr;
+  std::shared_ptr<TFRecordDataset> ds;
   if constexpr (std::is_same<T, std::nullptr_t>::value || std::is_same<T, std::shared_ptr<SchemaObj>>::value) {
     std::shared_ptr<SchemaObj> schema_obj = schema;
     ds = std::make_shared<TFRecordDataset>(VectorStringToChar(dataset_files), std::move(schema_obj),
@@ -4791,7 +4788,7 @@ class MS_API USPSDataset : public Dataset {
   USPSDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, int64_t num_samples,
               ShuffleMode shuffle, int32_t num_shards, int32_t shard_id, const std::shared_ptr<DatasetCache> &cache);
 
-  /// Destructor of USPSDataset.
+  /// \brief Destructor of USPSDataset.
   ~USPSDataset() = default;
 };
 
@@ -4875,10 +4872,10 @@ class MS_API VOCDataset : public Dataset {
   /// \param[in] extra_metadata Flag to add extra meta-data to row (default=false).
   VOCDataset(const std::vector<char> &dataset_dir, const std::vector<char> &task, const std::vector<char> &usage,
              const std::map<std::vector<char>, int32_t> &class_indexing, bool decode,
-             const std::reference_wrapper<Sampler> sampler, const std::shared_ptr<DatasetCache> &cache,
+             const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache,
              bool extra_metadata);
 
-  /// Destructor of VOCDataset.
+  /// \brief Destructor of VOCDataset.
   ~VOCDataset() = default;
 };
 
@@ -4963,7 +4960,7 @@ inline std::shared_ptr<VOCDataset> MS_API VOC(const std::string &dataset_dir, co
 inline std::shared_ptr<VOCDataset> MS_API VOC(const std::string &dataset_dir, const std::string &task,
                                               const std::string &usage,
                                               const std::map<std::string, int32_t> &class_indexing, bool decode,
-                                              const std::reference_wrapper<Sampler> sampler,
+                                              const std::reference_wrapper<Sampler> &sampler,
                                               const std::shared_ptr<DatasetCache> &cache = nullptr,
                                               bool extra_metadata = false) {
   return std::make_shared<VOCDataset>(StringToChar(dataset_dir), StringToChar(task), StringToChar(usage),
@@ -5002,9 +4999,9 @@ class MS_API WIDERFaceDataset : public Dataset {
   /// \param[in] sampler Sampler object used to choose samples from the dataset.
   /// \param[in] cache Tensor cache to use.
   WIDERFaceDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, bool decode,
-                   const std::reference_wrapper<Sampler> sampler, const std::shared_ptr<DatasetCache> &cache);
+                   const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
-  /// Destructor of WIDERFaceDataset.
+  /// \brief Destructor of WIDERFaceDataset.
   ~WIDERFaceDataset() = default;
 };
 
@@ -5072,7 +5069,7 @@ inline std::shared_ptr<WIDERFaceDataset> MS_API WIDERFace(const std::string &dat
 /// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
 /// \return Shared pointer to the WIDERFaceDataset.
 inline std::shared_ptr<WIDERFaceDataset> MS_API WIDERFace(const std::string &dataset_dir, const std::string &usage,
-                                                          bool decode, const std::reference_wrapper<Sampler> sampler,
+                                                          bool decode, const std::reference_wrapper<Sampler> &sampler,
                                                           const std::shared_ptr<DatasetCache> &cache = nullptr) {
   return std::make_shared<WIDERFaceDataset>(StringToChar(dataset_dir), StringToChar(usage), decode, sampler, cache);
 }
@@ -5094,11 +5091,11 @@ class MS_API WikiTextDataset : public Dataset {
   /// \param[in] shard_id The shard ID within num_shards. This argument should be
   ///     specified only when num_shards is also specified.
   /// \param[in] cache Tensor cache to use.
-  explicit WikiTextDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, int64_t num_samples,
-                           ShuffleMode shuffle, int32_t num_shards, int32_t shard_id,
-                           const std::shared_ptr<DatasetCache> &cache);
+  WikiTextDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, int64_t num_samples,
+                  ShuffleMode shuffle, int32_t num_shards, int32_t shard_id,
+                  const std::shared_ptr<DatasetCache> &cache);
 
-  /// Destructor of WikiTextDataset.
+  /// \brief Destructor of WikiTextDataset.
   ~WikiTextDataset() = default;
 };
 
@@ -5226,7 +5223,7 @@ class MS_API YelpReviewDataset : public Dataset {
                     ShuffleMode shuffle, int32_t num_shards, int32_t shard_id,
                     const std::shared_ptr<DatasetCache> &cache);
 
-  /// Destructor of YelpReviewDataset.
+  /// \brief Destructor of YelpReviewDataset.
   ~YelpReviewDataset() = default;
 };
 
@@ -5279,10 +5276,10 @@ class MS_API YesNoDataset : public Dataset {
   /// \param[in] dataset_dir Path to the root directory that contains the dataset.
   /// \param[in] sampler Sampler object used to choose samples from the dataset.
   /// \param[in] cache Tensor cache to use.
-  YesNoDataset(const std::vector<char> &dataset_dir, const std::reference_wrapper<Sampler> sampler,
+  YesNoDataset(const std::vector<char> &dataset_dir, const std::reference_wrapper<Sampler> &sampler,
                const std::shared_ptr<DatasetCache> &cache);
 
-  /// Destructor of YesNoDataset.
+  /// \brief Destructor of YesNoDataset.
   ~YesNoDataset() = default;
 };
 
@@ -5317,7 +5314,7 @@ inline std::shared_ptr<YesNoDataset> MS_API YesNo(const std::string &dataset_dir
 /// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
 /// \return Shared pointer to the current Dataset.
 inline std::shared_ptr<YesNoDataset> MS_API YesNo(const std::string &dataset_dir,
-                                                  const std::reference_wrapper<Sampler> sampler,
+                                                  const std::reference_wrapper<Sampler> &sampler,
                                                   const std::shared_ptr<DatasetCache> &cache = nullptr) {
   return std::make_shared<YesNoDataset>(StringToChar(dataset_dir), sampler, cache);
 }
@@ -5334,11 +5331,10 @@ inline std::shared_ptr<YesNoDataset> MS_API YesNo(const std::string &dataset_dir
 /// \param[in] num_connections optional number of connections (default=12).
 /// \param[in] prefetch_sz optional prefetch size (default=20).
 /// \return Shared pointer to DatasetCache. If error, nullptr is returned.
-std::shared_ptr<DatasetCache> MS_API CreateDatasetCacheCharIF(session_id_type id, uint64_t mem_sz, bool spill,
-                                                              std::optional<std::vector<char>> hostname = std::nullopt,
-                                                              std::optional<int32_t> port = std::nullopt,
-                                                              std::optional<int32_t> num_connections = std::nullopt,
-                                                              std::optional<int32_t> prefetch_sz = std::nullopt);
+std::shared_ptr<DatasetCache> MS_API CreateDatasetCacheCharIF(
+  session_id_type id, uint64_t mem_sz, bool spill, const std::optional<std::vector<char>> &hostname = std::nullopt,
+  const std::optional<int32_t> &port = std::nullopt, const std::optional<int32_t> &num_connections = std::nullopt,
+  const std::optional<int32_t> &prefetch_sz = std::nullopt);
 
 /// \brief Function the create a cache to be attached to a dataset.
 /// \param[in] id A user assigned session id for the current pipeline.
@@ -5362,11 +5358,10 @@ std::shared_ptr<DatasetCache> MS_API CreateDatasetCacheCharIF(session_id_type id
 ///      /* Create iterator to read dataset */
 ///      std::shared_ptr<Iterator> iter = ds->CreateIterator();
 /// \endcode
-inline std::shared_ptr<DatasetCache> MS_API CreateDatasetCache(session_id_type id, uint64_t mem_sz, bool spill,
-                                                               std::optional<std::string> hostname = std::nullopt,
-                                                               std::optional<int32_t> port = std::nullopt,
-                                                               std::optional<int32_t> num_connections = std::nullopt,
-                                                               std::optional<int32_t> prefetch_sz = std::nullopt) {
+inline std::shared_ptr<DatasetCache> MS_API CreateDatasetCache(
+  session_id_type id, uint64_t mem_sz, bool spill, std::optional<std::string> hostname = std::nullopt,
+  const std::optional<int32_t> &port = std::nullopt, const std::optional<int32_t> &num_connections = std::nullopt,
+  const std::optional<int32_t> &prefetch_sz = std::nullopt) {
   std::optional<std::vector<char>> hostname_c = std::nullopt;
   if (hostname != std::nullopt) {
     hostname_c = std::vector<char>(hostname->begin(), hostname->end());
@@ -5383,5 +5378,4 @@ inline std::shared_ptr<ZipDataset> MS_API Zip(const std::vector<std::shared_ptr<
 }
 }  // namespace dataset
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_DATASETS_H_

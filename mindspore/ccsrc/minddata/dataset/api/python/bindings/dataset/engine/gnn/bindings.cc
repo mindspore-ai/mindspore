@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 PYBIND_REGISTER(
   Graph, 0, ([](const py::module *m) {
     (void)py::class_<gnn::GraphData, std::shared_ptr<gnn::GraphData>>(*m, "GraphDataClient")
@@ -51,7 +50,7 @@ PYBIND_REGISTER(
              return out;
            })
       .def("get_nodes_from_edges",
-           [](gnn::GraphData &g, std::vector<gnn::NodeIdType> edge_list) {
+           [](gnn::GraphData &g, const std::vector<gnn::NodeIdType> &edge_list) {
              std::shared_ptr<Tensor> out;
              THROW_IF_ERROR(g.GetNodesFromEdges(edge_list, &out));
              return out;
@@ -70,31 +69,34 @@ PYBIND_REGISTER(
              return out;
            })
       .def("get_sampled_neighbors",
-           [](gnn::GraphData &g, std::vector<gnn::NodeIdType> node_list, std::vector<gnn::NodeIdType> neighbor_nums,
-              std::vector<gnn::NodeType> neighbor_types, SamplingStrategy strategy) {
+           [](gnn::GraphData &g, const std::vector<gnn::NodeIdType> &node_list,
+              const std::vector<gnn::NodeIdType> &neighbor_nums, const std::vector<gnn::NodeType> &neighbor_types,
+              SamplingStrategy strategy) {
              std::shared_ptr<Tensor> out;
              THROW_IF_ERROR(g.GetSampledNeighbors(node_list, neighbor_nums, neighbor_types, strategy, &out));
              return out;
            })
       .def("get_neg_sampled_neighbors",
-           [](gnn::GraphData &g, std::vector<gnn::NodeIdType> node_list, gnn::NodeIdType neighbor_num,
+           [](gnn::GraphData &g, const std::vector<gnn::NodeIdType> &node_list, gnn::NodeIdType neighbor_num,
               gnn::NodeType neg_neighbor_type) {
              std::shared_ptr<Tensor> out;
              THROW_IF_ERROR(g.GetNegSampledNeighbors(node_list, neighbor_num, neg_neighbor_type, &out));
              return out;
            })
-      .def("get_node_feature",
-           [](gnn::GraphData &g, std::shared_ptr<Tensor> node_list, std::vector<gnn::FeatureType> feature_types) {
-             TensorRow out;
-             THROW_IF_ERROR(g.GetNodeFeature(node_list, feature_types, &out));
-             return out.getRow();
-           })
-      .def("get_edge_feature",
-           [](gnn::GraphData &g, std::shared_ptr<Tensor> edge_list, std::vector<gnn::FeatureType> feature_types) {
-             TensorRow out;
-             THROW_IF_ERROR(g.GetEdgeFeature(edge_list, feature_types, &out));
-             return out.getRow();
-           })
+      .def(
+        "get_node_feature",
+        [](gnn::GraphData &g, const std::shared_ptr<Tensor> &node_list, std::vector<gnn::FeatureType> feature_types) {
+          TensorRow out;
+          THROW_IF_ERROR(g.GetNodeFeature(node_list, feature_types, &out));
+          return out.getRow();
+        })
+      .def(
+        "get_edge_feature",
+        [](gnn::GraphData &g, const std::shared_ptr<Tensor> &edge_list, std::vector<gnn::FeatureType> feature_types) {
+          TensorRow out;
+          THROW_IF_ERROR(g.GetEdgeFeature(edge_list, feature_types, &out));
+          return out.getRow();
+        })
       .def("graph_info",
            [](gnn::GraphData &g) {
              py::dict out;
@@ -102,8 +104,9 @@ PYBIND_REGISTER(
              return out;
            })
       .def("random_walk",
-           [](gnn::GraphData &g, std::vector<gnn::NodeIdType> node_list, std::vector<gnn::NodeType> meta_path,
-              float step_home_param, float step_away_param, gnn::NodeIdType default_node) {
+           [](gnn::GraphData &g, const std::vector<gnn::NodeIdType> &node_list,
+              const std::vector<gnn::NodeType> &meta_path, float step_home_param, float step_away_param,
+              gnn::NodeIdType default_node) {
              std::shared_ptr<Tensor> out;
              THROW_IF_ERROR(g.RandomWalk(node_list, meta_path, step_home_param, step_away_param, default_node, &out));
              return out;
@@ -137,6 +140,5 @@ PYBIND_REGISTER(OutputFormat, 0, ([](const py::module *m) {
                     .value("DE_FORMAT_CSR", OutputFormat::kCsr)
                     .export_values();
                 }));
-
 }  // namespace dataset
 }  // namespace mindspore

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_DATASETS_H_
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_DATASETS_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_LITEAPI_INCLUDE_DATASETS_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_LITEAPI_INCLUDE_DATASETS_H_
 
 #include <sys/stat.h>
 #include <unistd.h>
@@ -38,7 +38,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 class Tensor;
 class TensorShape;
 class TreeAdapter;
@@ -132,7 +131,7 @@ class MS_API Dataset : public std::enable_shared_from_this<Dataset> {
   ///      std::unordered_map<std::string, mindspore::MSTensor> row;
   ///      iter->GetNextRow(&row);
   /// \endcode
-  std::shared_ptr<PullIterator> CreatePullBasedIterator(std::vector<std::vector<char>> columns = {});
+  std::shared_ptr<PullIterator> CreatePullBasedIterator(const std::vector<std::vector<char>> &columns = {});
 
   /// \brief Function to create an Iterator over the Dataset pipeline
   /// \param[in] columns List of columns to be used to specify the order of columns
@@ -146,7 +145,7 @@ class MS_API Dataset : public std::enable_shared_from_this<Dataset> {
   ///      std::unordered_map<std::string, mindspore::MSTensor> row;
   ///      iter->GetNextRow(&row);
   /// \endcode
-  std::shared_ptr<Iterator> CreateIterator(std::vector<std::string> columns = {}, int32_t num_epochs = -1) {
+  std::shared_ptr<Iterator> CreateIterator(const std::vector<std::string> &columns = {}, int32_t num_epochs = -1) {
     return CreateIteratorCharIF(VectorStringToChar(columns), num_epochs);
   }
 
@@ -162,7 +161,7 @@ class MS_API Dataset : public std::enable_shared_from_this<Dataset> {
   /// \param[in] create_data_info_queue Whether to create queue which stores types and shapes
   ///     of data or not(default=false).
   /// \return Returns true if no error encountered else false.
-  bool DeviceQueue(std::string queue_name = "", std::string device_type = "", int32_t device_id = 0,
+  bool DeviceQueue(const std::string &queue_name = "", const std::string &device_type = "", int32_t device_id = 0,
                    int32_t num_epochs = -1, bool send_epoch_end = true, int32_t total_batches = 0,
                    bool create_data_info_queue = false) {
     return DeviceQueueCharIF(StringToChar(queue_name), StringToChar(device_type), device_id, num_epochs, send_epoch_end,
@@ -189,7 +188,7 @@ class MS_API Dataset : public std::enable_shared_from_this<Dataset> {
   ///      std::string save_file = "Cifar10Data.mindrecord";
   ///      bool rc = ds->Save(save_file);
   /// \endcode
-  bool Save(std::string dataset_path, int32_t num_files = 1, std::string dataset_type = "mindrecord") {
+  bool Save(const std::string &dataset_path, int32_t num_files = 1, const std::string &dataset_type = "mindrecord") {
     return SaveCharIF(StringToChar(dataset_path), num_files, StringToChar(dataset_type));
   }
 
@@ -259,12 +258,12 @@ class MS_API Dataset : public std::enable_shared_from_this<Dataset> {
   ///    // columns will remain the same.
   ///    dataset = dataset->Map({decode_op, random_jitter_op}, {"image"})
   /// \endcode
-  std::shared_ptr<MapDataset> Map(std::vector<TensorTransform *> operations,
+  std::shared_ptr<MapDataset> Map(const std::vector<TensorTransform *> &operations,
                                   const std::vector<std::string> &input_columns = {},
                                   const std::vector<std::string> &output_columns = {},
                                   const std::vector<std::string> &project_columns = {},
                                   const std::shared_ptr<DatasetCache> &cache = nullptr,
-                                  std::vector<std::shared_ptr<DSCallback>> callbacks = {}) {
+                                  const std::vector<std::shared_ptr<DSCallback>> &callbacks = {}) {
     std::vector<std::shared_ptr<TensorOperation>> transform_ops;
     (void)std::transform(
       operations.begin(), operations.end(), std::back_inserter(transform_ops),
@@ -290,15 +289,15 @@ class MS_API Dataset : public std::enable_shared_from_this<Dataset> {
   /// \param[in] project_columns A list of column names to project
   /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
   /// \return Shared pointer to the current MapDataset
-  std::shared_ptr<MapDataset> Map(std::vector<std::shared_ptr<TensorTransform>> operations,
+  std::shared_ptr<MapDataset> Map(const std::vector<std::shared_ptr<TensorTransform>> &operations,
                                   const std::vector<std::string> &input_columns = {},
                                   const std::vector<std::string> &output_columns = {},
                                   const std::vector<std::string> &project_columns = {},
                                   const std::shared_ptr<DatasetCache> &cache = nullptr,
-                                  std::vector<std::shared_ptr<DSCallback>> callbacks = {}) {
+                                  const std::vector<std::shared_ptr<DSCallback>> &callbacks = {}) {
     std::vector<std::shared_ptr<TensorOperation>> transform_ops;
     (void)std::transform(operations.begin(), operations.end(), std::back_inserter(transform_ops),
-                         [](std::shared_ptr<TensorTransform> op) -> std::shared_ptr<TensorOperation> {
+                         [](const std::shared_ptr<TensorTransform> &op) -> std::shared_ptr<TensorOperation> {
                            return op != nullptr ? op->Parse() : nullptr;
                          });
     return std::make_shared<MapDataset>(shared_from_this(), transform_ops, VectorStringToChar(input_columns),
@@ -322,12 +321,12 @@ class MS_API Dataset : public std::enable_shared_from_this<Dataset> {
   /// \param[in] project_columns A list of column names to project
   /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
   /// \return Shared pointer to the current MapDataset
-  std::shared_ptr<MapDataset> Map(const std::vector<std::reference_wrapper<TensorTransform>> operations,
+  std::shared_ptr<MapDataset> Map(const std::vector<std::reference_wrapper<TensorTransform>> &operations,
                                   const std::vector<std::string> &input_columns = {},
                                   const std::vector<std::string> &output_columns = {},
                                   const std::vector<std::string> &project_columns = {},
                                   const std::shared_ptr<DatasetCache> &cache = nullptr,
-                                  std::vector<std::shared_ptr<DSCallback>> callbacks = {}) {
+                                  const std::vector<std::shared_ptr<DSCallback>> &callbacks = {}) {
     std::vector<std::shared_ptr<TensorOperation>> transform_ops;
     (void)std::transform(operations.begin(), operations.end(), std::back_inserter(transform_ops),
                          [](TensorTransform &op) -> std::shared_ptr<TensorOperation> { return op.Parse(); });
@@ -378,7 +377,7 @@ class MS_API Dataset : public std::enable_shared_from_this<Dataset> {
   std::vector<std::pair<std::vector<char>, std::vector<int32_t>>> GetClassIndexingCharIF();
 
   // Char interface(CharIF) of CreateIterator
-  std::shared_ptr<Iterator> CreateIteratorCharIF(std::vector<std::vector<char>> columns, int32_t num_epochs);
+  std::shared_ptr<Iterator> CreateIteratorCharIF(const std::vector<std::vector<char>> &columns, int32_t num_epochs);
 
   // Char interface(CharIF) of DeviceQueue
   bool DeviceQueueCharIF(const std::vector<char> &queue_name, const std::vector<char> &device_type, int32_t device_id,
@@ -443,7 +442,7 @@ class MS_API SchemaObj {
   std::string to_string() { return to_json(); }
 
   /// \brief Set a new value to dataset_type
-  void set_dataset_type(std::string dataset_type);
+  void set_dataset_type(const std::string &dataset_type);
 
   /// \brief Set a new value to num_rows
   void set_num_rows(int32_t num_rows);
@@ -492,28 +491,32 @@ class MS_API SchemaObj {
 
 class MS_API BatchDataset : public Dataset {
  public:
-  BatchDataset(std::shared_ptr<Dataset> input, int32_t batch_size, bool drop_remainder = false);
+  BatchDataset(const std::shared_ptr<Dataset> &input, int32_t batch_size, bool drop_remainder = false);
+
   ~BatchDataset() = default;
 };
 
 class MS_API MapDataset : public Dataset {
  public:
-  MapDataset(std::shared_ptr<Dataset> input, std::vector<std::shared_ptr<TensorOperation>> operations,
+  MapDataset(const std::shared_ptr<Dataset> &input, const std::vector<std::shared_ptr<TensorOperation>> &operations,
              const std::vector<std::vector<char>> &input_columns, const std::vector<std::vector<char>> &output_columns,
              const std::vector<std::vector<char>> &project_columns, const std::shared_ptr<DatasetCache> &cache,
-             std::vector<std::shared_ptr<DSCallback>> callbacks);
+             const std::vector<std::shared_ptr<DSCallback>> &callbacks);
+
   ~MapDataset() = default;
 };
 
 class MS_API ProjectDataset : public Dataset {
  public:
-  ProjectDataset(std::shared_ptr<Dataset> input, const std::vector<std::vector<char>> &columns);
+  ProjectDataset(const std::shared_ptr<Dataset> &input, const std::vector<std::vector<char>> &columns);
+
   ~ProjectDataset() = default;
 };
 
 class MS_API ShuffleDataset : public Dataset {
  public:
-  ShuffleDataset(std::shared_ptr<Dataset> input, int32_t buffer_size);
+  ShuffleDataset(const std::shared_ptr<Dataset> &input, int32_t buffer_size);
+
   ~ShuffleDataset() = default;
 };
 
@@ -566,7 +569,7 @@ class MS_API AlbumDataset : public Dataset {
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
   AlbumDataset(const std::vector<char> &dataset_dir, const std::vector<char> &data_schema,
                const std::vector<std::vector<char>> &column_names, bool decode,
-               const std::reference_wrapper<Sampler> sampler, const std::shared_ptr<DatasetCache> &cache);
+               const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of AlbumDataset.
   ~AlbumDataset() = default;
@@ -664,7 +667,7 @@ class MS_API MnistDataset : public Dataset {
   /// \param[in] sampler Sampler object used to choose samples from the dataset.
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
   MnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
-               const std::reference_wrapper<Sampler> sampler, const std::shared_ptr<DatasetCache> &cache);
+               const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// Destructor of MnistDataset.
   ~MnistDataset() = default;
@@ -726,5 +729,4 @@ inline std::shared_ptr<MnistDataset> MS_API Mnist(const std::string &dataset_dir
 }
 }  // namespace dataset
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_DATASETS_H_

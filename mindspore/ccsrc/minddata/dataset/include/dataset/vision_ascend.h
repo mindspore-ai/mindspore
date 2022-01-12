@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,16 +22,15 @@
 #include <string>
 #include <utility>
 #include <vector>
+
 #include "include/api/status.h"
 #include "include/dataset/constants.h"
 #include "include/dataset/transforms.h"
 
 namespace mindspore {
 namespace dataset {
-
 // Transform operations for performing computer vision.
 namespace vision {
-
 /* ##################################### API class ###########################################*/
 
 /// \brief Decode and resize JPEG image using the hardware algorithm of
@@ -49,7 +48,7 @@ class MS_API DvppDecodeResizeJpeg final : public TensorTransform {
   ///     dataset = dataset->Map({dvpp_op},   // operations
   ///                            {"image"});  // input columns
   /// \endcode
-  explicit DvppDecodeResizeJpeg(std::vector<uint32_t> resize);
+  explicit DvppDecodeResizeJpeg(const std::vector<uint32_t> &resize);
 
   /// \brief Destructor.
   ~DvppDecodeResizeJpeg() = default;
@@ -82,7 +81,7 @@ class MS_API DvppDecodeResizeCropJpeg final : public TensorTransform {
   ///     dataset = dataset->Map({dvpp_op},   // operations
   ///                            {"image"});  // input columns
   /// \endcode
-  DvppDecodeResizeCropJpeg(std::vector<uint32_t> crop, std::vector<uint32_t> resize);
+  DvppDecodeResizeCropJpeg(const std::vector<uint32_t> &crop, const std::vector<uint32_t> &resize);
 
   /// \brief Destructor.
   ~DvppDecodeResizeCropJpeg() = default;
@@ -125,7 +124,6 @@ class MS_API DvppDecodePng final : public TensorTransform {
 
   std::shared_ptr<TensorOperation> Parse(const MapTargetDevice &env) override;
 };
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore
