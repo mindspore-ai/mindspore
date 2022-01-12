@@ -19,7 +19,7 @@
 #include <string>
 #include <algorithm>
 #include "utils/ms_utils.h"
-#include "backend/kernel_compiler/cpu/mkldnn/mkl_kernel_engine.h"
+#include "utils/profile.h"
 
 namespace mindspore {
 namespace kernel {
@@ -139,7 +139,11 @@ dnnl::memory::desc MKLCPUKernel::GetDefaultMemDesc(const std::vector<size_t> &sh
 }
 
 void MKLCPUKernel::AddArgument(int arg_key, const dnnl::memory::desc &mem_desc, bool alloc) {
-  arguments_[arg_key] = MKLKernelEngine::Get().CreateMemory(mem_desc, alloc);
+  if (alloc) {
+    arguments_[arg_key] = dnnl::memory(mem_desc, engine_);
+  } else {
+    arguments_[arg_key] = dnnl::memory(mem_desc, engine_, nullptr);
+  }
 }
 
 void MKLCPUKernel::SetArgumentHandle(int arg_key, void *ptr) {
@@ -149,10 +153,47 @@ void MKLCPUKernel::SetArgumentHandle(int arg_key, void *ptr) {
   }
 }
 
-void MKLCPUKernel::ExecutePrimitive() { MKLKernelEngine::Get().Execute(primitive_, arguments_); }
+void MKLCPUKernel::ExecutePrimitive() {
+  MS_EXCEPTION_IF_NULL(primitive_);
+#ifdef USE_MS_THREADPOOL_FOR_DNNL
+  // add auto search
+  const size_t MAX_POW = 6;
+  const size_t AVG_COUNT = 5;
+  const size_t DIFF = 2;
+  size_t current_pow = parallel_search_info_.search_count / AVG_COUNT;
+  int current_thread_nums = static_cast<int>(std::pow(2.0f, current_pow));
+  auto mkl_pool = dynamic_cast<mkl_threadpool *>(mkl_threadpool_.get());
+  if (current_pow < MAX_POW) {
+    if (parallel_search_info_.search_count % AVG_COUNT == 0) {
+      parallel_search_info_.tmp_sum_cost_time = 0;
+    }
+    double start_time = GetTime();
+    mkl_pool->set_num_threads(current_thread_nums);
+    primitive_->execute(stream_, arguments_);
+    double cost_time = GetTime() - start_time;
+    parallel_search_info_.tmp_sum_cost_time += cost_time;
+    parallel_search_info_.search_count++;
+    if (parallel_search_info_.search_count % AVG_COUNT == 0) {
+      if (parallel_search_info_.min_cost_time > parallel_search_info_.tmp_sum_cost_time) {
+        parallel_search_info_.min_cost_time = parallel_search_info_.tmp_sum_cost_time;
+        parallel_search_info_.best_pow = current_pow;
+      } else if (current_pow - parallel_search_info_.best_pow >= DIFF) {
+        parallel_search_info_.search_count = AVG_COUNT * MAX_POW;
+      }
+    }
+  } else {
+    int best_thread_nums = static_cast<int>(std::pow(2.0f, parallel_search_info_.best_pow));
+    mkl_pool->set_num_threads(best_thread_nums);
+    primitive_->execute(stream_, arguments_);
+  }
+#else
+  primitive_->execute(stream_, arguments_);
+#endif
+  (void)stream_.wait();
+}
 
 void MKLCPUKernel::Reorder(dnnl::memory *src_mem, dnnl::memory *dst_mem) {
-  MKLKernelEngine::Get().Reorder(src_mem, dst_mem);
+  dnnl::reorder(*src_mem, *dst_mem).execute(stream_, *src_mem, *dst_mem);
 }
 }  // namespace kernel
 }  // namespace mindspore

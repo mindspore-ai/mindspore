@@ -18,7 +18,6 @@
 #include <string>
 #include <algorithm>
 #include "utils/ms_utils.h"
-#include "backend/kernel_compiler/cpu/mkldnn/mkl_kernel_engine.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 
 namespace mindspore {
@@ -107,7 +106,7 @@ void ConvCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     dnnl::convolution_forward::desc(dnnl::prop_kind::forward_training, dnnl::algorithm::convolution_auto, src_desc,
                                     weights_desc, dst_desc, strides, dilates, padding_l, padding_r);
 
-  auto prim_desc = dnnl::convolution_forward::primitive_desc(desc, MKLKernelEngine::Get().engine());
+  auto prim_desc = dnnl::convolution_forward::primitive_desc(desc, engine_);
   primitive_ = std::make_shared<dnnl::convolution_forward>(prim_desc);
   AddArgument(DNNL_ARG_SRC, src_desc);
   AddArgument(DNNL_ARG_WEIGHTS, weights_desc);

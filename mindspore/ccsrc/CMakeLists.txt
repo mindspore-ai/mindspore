@@ -18,6 +18,14 @@ if(ENABLE_D)
     add_subdirectory(backend/kernel_compiler/aicpu/aicpu_ops)
 endif()
 
+# add openmp
+find_package(OpenMP)
+if(OPENMP_FOUND)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+else()
+    message(FATAL_ERROR "OpenMP not found")
+endif()
+
 if(ENABLE_CPU)
     if(${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES "aarch64")
         set(PLATFORM_ARM64 "on")

@@ -18,7 +18,6 @@
 #include <cstring>
 #include <string>
 #include "utils/ms_utils.h"
-#include "backend/kernel_compiler/cpu/mkldnn/mkl_kernel_engine.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 
 namespace mindspore {
@@ -43,7 +42,7 @@ void LSTMGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   CheckParam(kernel_node);
-  auto eng = MKLKernelEngine::Get().engine();
+  auto eng = engine_;
   dnnl::rnn_direction direction = dnnl::rnn_direction::unidirectional;
   if (bidirectional_) {
     direction = dnnl::rnn_direction::bidirectional_concat;
@@ -178,7 +177,7 @@ bool LSTMGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, co
                                const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kLstmGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kLstmGradOutputsNum, kernel_name_);
-  auto eng = MKLKernelEngine::Get().engine();
+  auto eng = engine_;
   // construct fw memory
   auto user_weights_memory = dnnl::memory(dnnl::memory::desc{{weights_dims_}, dt::f32, tag::ldgoi}, eng);
   auto user_weights_h_memory = dnnl::memory(dnnl::memory::desc{{weights_h_dims_}, dt::f32, tag::ldgoi}, eng);

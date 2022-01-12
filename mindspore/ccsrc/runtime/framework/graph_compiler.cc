@@ -492,7 +492,7 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
   }
 #endif
 
-  device_context->EnableRuntimeCache(graph);
+  graph->EnableRuntimeCache();
   return graph->graph_id();
 }
 

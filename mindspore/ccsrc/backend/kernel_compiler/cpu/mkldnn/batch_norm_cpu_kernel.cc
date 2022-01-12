@@ -15,7 +15,6 @@
  */
 
 #include "backend/kernel_compiler/cpu/mkldnn/batch_norm_cpu_kernel.h"
-#include "backend/kernel_compiler/cpu/mkldnn/mkl_kernel_engine.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 #include "utils/ms_utils.h"
 
@@ -62,7 +61,7 @@ void BatchNormCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
   dnnl::batch_normalization_forward::desc desc =
     dnnl::batch_normalization_forward::desc(prop_kind, x_desc, epsilon, normalization_flags);
-  auto prim_desc = dnnl::batch_normalization_forward::primitive_desc(desc, MKLKernelEngine::Get().engine());
+  auto prim_desc = dnnl::batch_normalization_forward::primitive_desc(desc, engine_);
   primitive_ = std::make_shared<dnnl::batch_normalization_forward>(prim_desc);
   AddArgument(DNNL_ARG_SRC, x_desc);
   AddArgument(DNNL_ARG_MEAN, prim_desc.mean_desc());

@@ -40,19 +40,11 @@
 #ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
 #endif
-#ifdef PLATFORM_86
-#include <pmmintrin.h>
-#endif
 
 namespace mindspore {
 namespace device {
 namespace cpu {
 using mindspore::kernel::KernelBuildInfo;
-
-#ifdef PLATFORM_86
-// Whether need set the flush zero mode in the kernel launch.
-static bool flush_zero_mode_enable{false};
-#endif
 
 void CPUDeviceContext::Initialize() {
   if (initialized_) {
@@ -229,14 +221,6 @@ void CPUDeviceContext::CreateKernel(const std::vector<CNodePtr> &nodes) const {
       MS_LOG(EXCEPTION) << "Build cpu operator[" << node->fullname_with_scope() << "] failed";
     }
 
-#ifdef PLATFORM_86
-    // Some CPU kernels need set the flush zero mode to improve performance.
-    if (!flush_zero_mode_enable &&
-        (kOpNeedSetFlushZeroModeList.find(kernel_name) != kOpNeedSetFlushZeroModeList.end())) {
-      flush_zero_mode_enable = true;
-    }
-#endif
-
     cpu_kernel->Init(node);
     cpu_kernel->InitDynamicKernel(node);
     auto cpu_dynamic_kernel = cpu_kernel->DynamicKernel();
@@ -284,14 +268,6 @@ bool CPUDeviceContext::LaunchKernel(const CNodePtr &kernel, const std::vector<Ad
   MS_LOG(DEBUG) << "Launch kernel: " << kernel->fullname_with_scope();
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
   MS_EXCEPTION_IF_NULL(kernel_mod);
-
-#ifdef PLATFORM_86
-  // Some CPU kernels need set the flush zero mode to improve performance.
-  if (flush_zero_mode_enable) {
-    _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
-    _MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_ON);
-  }
-#endif
 
   // Some CPU kernels can't initialize kernel and launch kernel in different thread, so reinitialize the kernels before
   // launch.

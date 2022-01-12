@@ -19,17 +19,54 @@
 
 #include <string>
 #include <unordered_map>
+#include <algorithm>
 #include <memory>
 #include <vector>
 #include "dnnl.hpp"
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
+#ifdef USE_MS_THREADPOOL_FOR_DNNL
+#include "dnnl_threadpool.hpp"
+#include "dnnl_threadpool_iface.hpp"
+#endif
 
 namespace mindspore {
 namespace kernel {
+#ifdef USE_MS_THREADPOOL_FOR_DNNL
+class mkl_threadpool : public dnnl::threadpool_interop::threadpool_iface {
+ private:
+  ActorThreadPool *tp_;
+  int thread_num_{8};
+
+ public:
+  explicit mkl_threadpool(ActorThreadPool *tp) { tp_ = tp; }
+  void set_num_threads(int num) { thread_num_ = num; }
+  int get_num_threads() const override { return std::min(SizeToInt(tp_->GetKernelThreadNum()), thread_num_); }
+  bool get_in_parallel() const override { return false; }
+  uint64_t get_flags() const override { return 0; }
+  void parallel_for(int n, const std::function<void(int, int)> &fn) override {
+    int nthr = get_num_threads();
+    int n_jobs = std::min(n, nthr);
+    auto func = [&, n_jobs](void *, int i, float, float) {
+      fn(i, n_jobs);
+      return 0;
+    };
+    tp_->ParallelLaunch(func, nullptr, n_jobs);
+  }
+};
+#endif
+
 class MKLCPUKernel : public CPUKernel {
  public:
-  MKLCPUKernel() = default;
+#ifdef USE_MS_THREADPOOL_FOR_DNNL
+  MKLCPUKernel() : engine_(dnnl::engine::kind::cpu, 0) {
+    auto thread_pool = GetActorMgrInnerThreadPool();
+    mkl_threadpool_ = std::make_shared<mkl_threadpool>(thread_pool);
+    stream_ = dnnl::threadpool_interop::make_stream(engine_, mkl_threadpool_.get());
+  }
+#else
+  MKLCPUKernel() : engine_(dnnl::engine::kind::cpu, 0), stream_(engine_) {}
+#endif
   ~MKLCPUKernel() override = default;
 
  protected:
@@ -50,6 +87,11 @@ class MKLCPUKernel : public CPUKernel {
 
   std::unordered_map<int, dnnl::memory> arguments_;
   std::shared_ptr<dnnl::primitive> primitive_{nullptr};
+  dnnl::engine engine_;
+  dnnl::stream stream_;
+#ifdef USE_MS_THREADPOOL_FOR_DNNL
+  std::shared_ptr<dnnl::threadpool_interop::threadpool_iface> mkl_threadpool_{nullptr};
+#endif
 };
 }  // namespace kernel
 }  // namespace mindspore

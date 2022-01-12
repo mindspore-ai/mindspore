@@ -157,19 +157,6 @@ class DeviceContext {
   // Return collective communication object for caller to access
   CollectiveCommunicationLib *collective_comm_lib() const { return collective_comm_lib_; }
 
-  void EnableRuntimeCache(const KernelGraphPtr &graph) const {
-    auto node_list = graph->TopoSort(graph->get_return());
-    for (auto &node : node_list) {
-      auto kernel_info = node->kernel_info();
-      if (!kernel_info) {
-        continue;
-      }
-      MS_EXCEPTION_IF_NULL(kernel_info);
-      auto runtime_cache = kernel_info->runtime_cache();
-      runtime_cache.runtime_cache().set_valid();
-    }
-  }
-
  protected:
   DeviceContextKey device_context_key_;
 

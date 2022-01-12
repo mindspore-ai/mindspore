@@ -16,7 +16,6 @@
 
 #include "backend/kernel_compiler/cpu/mkldnn/softmax_cpu_kernel.h"
 #include <algorithm>
-#include "backend/kernel_compiler/cpu/mkldnn/mkl_kernel_engine.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 #include "utils/ms_utils.h"
 
@@ -47,7 +46,7 @@ void SoftmaxCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
   dnnl::memory::desc src_desc = GetDefaultMemDesc(src_shape);
   dnnl::softmax_forward::desc desc = dnnl::softmax_forward::desc(dnnl::prop_kind::forward_training, src_desc, axis);
-  auto prim_desc = dnnl::softmax_forward::primitive_desc(desc, MKLKernelEngine::Get().engine());
+  auto prim_desc = dnnl::softmax_forward::primitive_desc(desc, engine_);
   primitive_ = std::make_shared<dnnl::softmax_forward>(prim_desc);
   AddArgument(DNNL_ARG_SRC, src_desc);
   AddArgument(DNNL_ARG_DST, src_desc);

@@ -16,7 +16,6 @@
 
 #include "backend/kernel_compiler/cpu/mkldnn/log_softmax_grad_cpu_kernel.h"
 #include <algorithm>
-#include "backend/kernel_compiler/cpu/mkldnn/mkl_kernel_engine.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 #include "utils/ms_utils.h"
 
@@ -41,11 +40,10 @@ void LogSoftmaxGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   dnnl::memory::desc src_desc = GetDefaultMemDesc(src_shape);
   dnnl::logsoftmax_forward::desc desc =
     dnnl::logsoftmax_forward::desc(dnnl::prop_kind::forward_training, src_desc, axis);
-  auto prim_desc = dnnl::logsoftmax_forward::primitive_desc(desc, MKLKernelEngine::Get().engine());
+  auto prim_desc = dnnl::logsoftmax_forward::primitive_desc(desc, engine_);
   // backward description
   dnnl::logsoftmax_backward::desc backward_desc = dnnl::logsoftmax_backward::desc(src_desc, src_desc, axis);
-  auto backward_prim_desc =
-    dnnl::logsoftmax_backward::primitive_desc(backward_desc, MKLKernelEngine::Get().engine(), prim_desc);
+  auto backward_prim_desc = dnnl::logsoftmax_backward::primitive_desc(backward_desc, engine_, prim_desc);
   primitive_ = std::make_shared<dnnl::logsoftmax_backward>(backward_prim_desc);
   AddArgument(DNNL_ARG_DST, src_desc);
   AddArgument(DNNL_ARG_DIFF_SRC, src_desc);

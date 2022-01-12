@@ -17,7 +17,6 @@
 #include "backend/kernel_compiler/cpu/mkldnn/eltwise_cpu_kernel.h"
 #include <string>
 #include <unordered_map>
-#include "backend/kernel_compiler/cpu/mkldnn/mkl_kernel_engine.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 #include "utils/ms_utils.h"
 
@@ -65,7 +64,7 @@ void EltWiseCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   dnnl::memory::desc src_desc = GetDefaultMemDesc(src_shape);
 
   auto desc = GetForwardEltwiseDesc(src_desc);
-  auto prim_desc = dnnl::eltwise_forward::primitive_desc(desc, MKLKernelEngine::Get().engine());
+  auto prim_desc = dnnl::eltwise_forward::primitive_desc(desc, engine_);
   primitive_ = std::make_shared<dnnl::eltwise_forward>(prim_desc);
   AddArgument(DNNL_ARG_SRC, src_desc);
   AddArgument(DNNL_ARG_DST, src_desc);

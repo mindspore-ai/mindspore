@@ -87,6 +87,7 @@ REGISTER_PYBIND_DEFINE(MsContextPy, ([](const py::module *m) {
                            .value("mempool_block_size", MsCtxParam::MS_CTX_MEMPOOL_BLOCK_SIZE)
                            .value("mode", MsCtxParam::MS_CTX_EXECUTION_MODE)
                            .value("device_target", MsCtxParam::MS_CTX_DEVICE_TARGET)
+                           .value("runtime_num_threads", MsCtxParam::MS_CTX_RUNTIME_NUM_THREADS)
                            .value("_graph_memory_max_size", MsCtxParam::MS_CTX_GRAPH_MEMORY_MAX_SIZE)
                            .value("print_file_path", MsCtxParam::MS_CTX_PRINT_FILE_PATH)
                            .value("profiling_options", MsCtxParam::MS_CTX_PROFILING_OPTIONS)

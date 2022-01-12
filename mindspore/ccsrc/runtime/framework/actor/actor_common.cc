@@ -25,23 +25,27 @@ bool ActorDispatcher::is_multi_thread_execution_ = true;
 void ComputeThreadNums(size_t *actor_thread_num, size_t *actor_and_kernel_thread_num) {
   MS_EXCEPTION_IF_NULL(actor_thread_num);
   MS_EXCEPTION_IF_NULL(actor_and_kernel_thread_num);
-  const size_t cpu_core_num = std::thread::hardware_concurrency() - 1;
-  // Compute the actor thread num.
-  const size_t kActorThreadMaxNum = 5;
-  // The MemoryManagerActor binds single thread, and the other actors share one thread at least, so the min num is 2.
-  const size_t kActorThreadMinNum = 2;
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  *actor_thread_num = cpu_core_num < kActorThreadMinNum ? kActorThreadMinNum : cpu_core_num;
-  *actor_thread_num = *actor_thread_num > kActorThreadMaxNum ? kActorThreadMaxNum : *actor_thread_num;
+  const size_t cpu_core_num = std::thread::hardware_concurrency() - 1;
+  auto runtime_num_threads = static_cast<size_t>(context_ptr->get_param<uint32_t>(MS_CTX_RUNTIME_NUM_THREADS));
+  size_t runtime_num_threads_min = std::min(runtime_num_threads, cpu_core_num);
+  const float kActorUsage = 0.2;
+  const size_t kActorThreadMinNum = 2;
+  size_t actor_thread_max_num =
+    std::max(static_cast<size_t>(std::floor(runtime_num_threads_min * kActorUsage)), kActorThreadMinNum);
+  // Compute the actor thread num.
+  // The MemoryManagerActor binds single thread, and the other actors share one thread at least, so the min num is 2.
+  *actor_thread_num = runtime_num_threads_min < kActorThreadMinNum ? kActorThreadMinNum : runtime_num_threads_min;
+  *actor_thread_num = *actor_thread_num > actor_thread_max_num ? actor_thread_max_num : *actor_thread_num;
 
   // Compute the actor and kernel thread num.
-  const size_t kKernelThreadMaxNum = 23;
-  const size_t kActorAndKernelThreadMaxNum = kKernelThreadMaxNum + *actor_thread_num;
-  *actor_and_kernel_thread_num = cpu_core_num > *actor_thread_num ? cpu_core_num : (*actor_thread_num + 1);
-  *actor_and_kernel_thread_num = *actor_and_kernel_thread_num > kActorAndKernelThreadMaxNum
-                                   ? kActorAndKernelThreadMaxNum
-                                   : *actor_and_kernel_thread_num;
+  *actor_and_kernel_thread_num =
+    runtime_num_threads_min > *actor_thread_num ? runtime_num_threads_min : (*actor_thread_num + 1);
+  if (runtime_num_threads != *actor_and_kernel_thread_num) {
+    MS_LOG(WARNING) << "The runtime_num_threads is " << runtime_num_threads
+                    << ", but actually the num of threads in threadpool is " << *actor_and_kernel_thread_num;
+  }
 }
 
 bool IsDeviceQueueDSActor(const AnfNodePtr &node, GraphExecutionStrategy strategy) {

@@ -15,7 +15,6 @@
  */
 
 #include "backend/kernel_compiler/cpu/apply_momentum_cpu_kernel.h"
-#include "backend/kernel_compiler/cpu/mkldnn/mkl_kernel_engine.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 #include "utils/ms_utils.h"
 

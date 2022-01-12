@@ -1135,6 +1135,18 @@ void KernelGraph::ReplaceInternalOutput(const AnfNodePtr &node, const AnfNodePtr
   SetInternalOutputAttr(new_node);
 }
 
+void KernelGraph::EnableRuntimeCache() {
+  auto node_list = TopoSort(get_return());
+  for (auto &node : node_list) {
+    auto kernel_info = node->kernel_info();
+    if (!kernel_info) {
+      continue;
+    }
+    auto runtime_cache = kernel_info->runtime_cache();
+    runtime_cache.runtime_cache().set_valid();
+  }
+}
+
 void KernelGraph::ReplaceInternalOutput(const AnfNodePtr &node, const AnfNodePtr &new_node, size_t src_output_idx,
                                         size_t dst_output_idx) {
   if (new_node == nullptr || node == nullptr) {

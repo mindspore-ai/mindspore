@@ -17,7 +17,6 @@
 #include "backend/kernel_compiler/cpu/mkldnn/matmul_cpu_kernel.h"
 #include <utility>
 #include "common/thread_pool.h"
-#include "backend/kernel_compiler/cpu/mkldnn/mkl_kernel_engine.h"
 #include "backend/kernel_compiler/cpu/nnacl/op_base.h"
 #include "backend/kernel_compiler/cpu/nnacl/matmul_parameter.h"
 #include "backend/kernel_compiler/cpu/nnacl/fp32/matmul_fp32.h"
@@ -81,7 +80,7 @@ void MatMulCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   dnnl::memory::desc weights_md(weights_dims, dnnl::memory::data_type::f32, b_strides);
   dnnl::memory::desc dst_md(dst_dims, dnnl::memory::data_type::f32, o_strides);
   dnnl::matmul::desc matmul_desc(src_md, weights_md, dst_md);
-  dnnl::matmul::primitive_desc prim_desc(matmul_desc, MKLKernelEngine::Get().engine());
+  dnnl::matmul::primitive_desc prim_desc(matmul_desc, engine_);
   primitive_ = std::make_shared<dnnl::matmul>(prim_desc);
 
   AddArgument(DNNL_ARG_SRC, src_md);

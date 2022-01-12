@@ -26,6 +26,7 @@ constexpr size_t kUniformRealInputsNum = 1;
 constexpr size_t kUniformIntOutputsNum = 1;
 constexpr size_t kUniformRealOutputsNum = 1;
 constexpr size_t kStandardNormalOutputsNum = 1;
+constexpr float kRandomBlockSize = 128.0;
 constexpr char kKernelName[] = "Random";
 }  // namespace
 void StandardNormal(float *output, std::normal_distribution<float> distribution,
@@ -39,12 +40,12 @@ void LaunchStandardNormal(RandomCPUKernel *content, unsigned int seed, const std
   auto output = reinterpret_cast<float *>(outputs[0]->addr);
   // multithreading
   size_t lens = outputs[0]->size / sizeof(float);
-  auto task = [&seed, &output](size_t start, size_t end) {
+  std::default_random_engine random_generator(++seed);
+  auto task = [&seed, &output, &random_generator](size_t start, size_t end) {
     std::normal_distribution<float> distribution;
-    std::default_random_engine random_generator(++seed);
     StandardNormal(output, distribution, random_generator, start, end);
   };
-  ParallelLaunchAutoSearch(task, lens, content, &content->parallel_search_info_);
+  ParallelLaunch(task, lens, kRandomBlockSize, content);
 }
 
 void LaunchUniformInt(unsigned int seed, const std::vector<AddressPtr> &inputs,

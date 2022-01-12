@@ -15,7 +15,6 @@
  */
 
 #include "backend/kernel_compiler/cpu/mkldnn/addn_cpu_kernel.h"
-#include "backend/kernel_compiler/cpu/mkldnn/mkl_kernel_engine.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 #include "backend/kernel_compiler/cpu/nnacl/fp32/add_fp32.h"
 #include "backend/kernel_compiler/cpu/nnacl/errorcode.h"
@@ -65,7 +64,7 @@ void AddNCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   dnnl::memory::desc src1_mem_desc = GetDefaultMemDesc(src1_shape);
   dnnl::memory::desc dst_mem_desc = GetDefaultMemDesc(dst_shape);
   dnnl::binary::desc desc = dnnl::binary::desc(dnnl::algorithm::binary_add, src0_mem_desc, src1_mem_desc, dst_mem_desc);
-  auto prim_desc = dnnl::binary::primitive_desc(desc, MKLKernelEngine::Get().engine());
+  auto prim_desc = dnnl::binary::primitive_desc(desc, engine_);
   primitive_ = std::make_shared<dnnl::binary>(prim_desc);
   AddArgument(DNNL_ARG_SRC_0, src0_mem_desc);
   AddArgument(DNNL_ARG_SRC_1, src1_mem_desc);
