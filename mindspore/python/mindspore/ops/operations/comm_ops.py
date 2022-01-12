@@ -655,7 +655,7 @@ class NeighborExchange(Primitive):
         <https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.ops.html#communication-operators>`_.
 
         This operator requires a full-mesh network topology, each device has the same vlan id, and the ip & mask are
-        in the same subnet, please check the details on the official website of `MindSpore \
+        in the same subnet, please check the `details \
         <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/distributed_training_ops.html#id2>`_.
 
     Args:
@@ -731,7 +731,7 @@ class AlltoAll(PrimitiveWithInfer):
         <https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.ops.html#communication-operators>`_.
 
         This operator requires a full-mesh network topology, each device has the same vlan id, and the ip & mask are
-        in the same subnet, please check the details on the official website of `MindSpore \
+        in the same subnet, please check the `details \
         <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/distributed_training_ops.html#id2>`_.
 
     Args:
@@ -821,7 +821,7 @@ class NeighborExchangeV2(Primitive):
         <https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.ops.html#communication-operators>`_.
 
         This operator requires a full-mesh network topology, each device has the same vlan id, and the ip & mask are
-        in the same subnet, please check the details on the official website of `MindSpore \
+        in the same subnet, please check the `details \
         <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/distributed_training_ops.html#id2>`_.
 
     Args:
