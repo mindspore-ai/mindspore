@@ -33,7 +33,8 @@ void nnacl_gemm_avx512_@{row_block}x@{col_block}_kernel_nhwc_fp32(float *dst, co
     @col_split_num = col_block >> 4;
     asm volatile(
         // inc in depth
-        "and $0x1, %[inc_flag]\\n"
+        "movq %[inc_flag], %rax\\n"
+        "and $0x1, %rax\\n"
         "je 0f\\n"
         @for row in range(0, row_block):
             @src_addr = int(row / 3) * 3
@@ -196,15 +197,14 @@ void nnacl_gemm_avx512_@{row_block}x@{col_block}_kernel_nhwc_fp32(float *dst, co
         "2:\\n"
         "and $0x2, %[inc_flag]\\n"
         "je 3f\\n"
-        "movq %[act_flag], %rax\\n"
-        "and $0x3, %eax\\n"
+        "and $0x3, %[act_flag]\\n"
         "je 3f\\n"
         // relu
         "vxorps %zmm31, %zmm31, %zmm31\\n"
         @for col in range(0, col_split_num):
             @for row in range(0, row_block):
                 "vmaxps %%zmm@{row + col * row_block}, %%zmm31, %%zmm@{row + col * row_block}\\n"
-        "and $0x1, %eax\\n"
+        "and $0x1, %[act_flag]\\n"
         "je 3f\\n"
         // relu6
         "mov $0x40C00000, %eax\\n"
