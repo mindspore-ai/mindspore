@@ -100,7 +100,7 @@ bool IsForceInline(InlinerBase *, const FuncGraphPtr &fg, const AnfNodePtr &) {
 // {G, Xs}
 class InlinerBase : public AnfVisitor {
  public:
-  explicit InlinerBase(std::vector<std::vector<CriterionFuncType>> criterions, bool use_move = true)
+  explicit InlinerBase(const std::vector<std::vector<CriterionFuncType>> &criterions, bool use_move = true)
       : use_move_(use_move), criterions_(criterions) {}
   ~InlinerBase() override = default;
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
@@ -307,7 +307,7 @@ class InlinerBase : public AnfVisitor {
 
   // This is a try-best algorithm to find a graph which may generate branch call.
   // It does not handle high-order function call. For high-orderer call branch, it still may be inlined.
-  bool GraphHasBranch(FuncGraphPtr fg) {
+  bool GraphHasBranch(const FuncGraphPtr &fg) {
     if (graph_branch_cache_.find(fg) != graph_branch_cache_.end()) {
       return graph_branch_cache_[fg];
     }
