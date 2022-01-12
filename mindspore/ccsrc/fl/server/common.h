@@ -69,7 +69,7 @@ struct CipherConfig {
   size_t client_list_threshold = 0;
   size_t push_list_sign_threshold = 0;
   size_t get_list_sign_threshold = 0;
-  size_t reconstruct_secrets_threshold = 0;
+  size_t minimum_clients_for_reconstruct = 0;
 };
 
 // Every instance is one training loop that runs fl_iteration_num iterations of federated learning.
