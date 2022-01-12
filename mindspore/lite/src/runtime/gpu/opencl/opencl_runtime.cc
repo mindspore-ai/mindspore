@@ -288,7 +288,7 @@ int OpenCLRuntime::Init() {
   }
 
   // only support mali device.
-  if (gpu_info_.type == MALI || gpu_info_.type == MALI_T || gpu_info_.type == MALI_G) {
+  if (gpu_info_.type == MALI || gpu_info_.type == MALI_T || gpu_info_.type == MALI_G || gpu_info_.type == MALI_G78) {
     clImportMemoryARM = reinterpret_cast<clImportMemoryARMFunc>(dlsym(handle_, "clImportMemoryARM"));
     if (clImportMemoryARM == nullptr) {
       MS_LOG(ERROR) << "load func (clImportMemoryARM) failed!";
@@ -479,12 +479,20 @@ int OpenCLRuntime::RunKernel(const cl::Kernel &kernel, const cl::NDRange &global
   }
   static int cnt = 0;
   const int flush_period = 10;
-  if (cnt % flush_period == 0) {
+  if (MALI_G78 == gpu_info_.type) {
     auto flush_ret = command_queue->flush();
     if (flush_ret != CL_SUCCESS) {
       MS_LOG(WARNING) << "CL Flush failed:" << CLErrorCode(ret);
     }
+  } else {
+    if (cnt % flush_period == 0) {
+      auto flush_ret = command_queue->flush();
+      if (flush_ret != CL_SUCCESS) {
+        MS_LOG(WARNING) << "CL Flush failed:" << CLErrorCode(ret);
+      }
+    }
   }
+
   cnt++;
   MS_LOG(DEBUG) << "RunKernel success!";
   if (profiling_) {
@@ -503,6 +511,9 @@ GpuInfo OpenCLRuntime::ParseGpuInfo(std::string device_name, std::string device_
     // Mali type MALI-G or MALI_T
     if (device_name.find("Mali-G") != std::string::npos) {
       info.type = MALI_G;
+      if (device_name.find("Mali-G78") != std::string::npos) {
+        info.type = MALI_G78;
+      }
     } else if (device_name.find("Mali-T") != std::string::npos) {
       info.type = MALI_T;
     }
