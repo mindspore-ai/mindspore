@@ -5683,7 +5683,7 @@ class IsClose(Primitive):
         validator.check_value_type('rtol', rtol, [float], self.name)
         validator.check_value_type('atol', atol, [float], self.name)
         validator.check_value_type('equal_nan', equal_nan, [bool], self.name)
-        if equal_nan is not True:
+        if not equal_nan:
             raise ValueError("For IsClose, the `equal_nan` must be True, but got False.")
         validator.check_non_negative_float(rtol, 'rtol', self.name)
         validator.check_non_negative_float(atol, 'atol', self.name)

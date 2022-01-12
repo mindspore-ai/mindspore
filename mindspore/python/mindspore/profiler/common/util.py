@@ -55,7 +55,7 @@ def fwrite_format(output_data_path, data_source=None, is_print=False, is_start=F
          is_start (bool): Whether is the first line of the output file, will remove the old file if True."
     """
 
-    if is_start is True and os.path.exists(output_data_path):
+    if is_start and os.path.exists(output_data_path):
         os.remove(output_data_path)
 
     if isinstance(data_source, str) and data_source.startswith("title:"):

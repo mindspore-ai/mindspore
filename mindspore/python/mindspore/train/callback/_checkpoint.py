@@ -446,7 +446,7 @@ class ModelCheckpoint(Callback):
                 return True
         elif self._config.save_checkpoint_seconds and self._config.save_checkpoint_seconds > 0:
             self._cur_time = time.time()
-            if (self._cur_time - self._last_time) > self._config.save_checkpoint_seconds or force_to_save is True:
+            if (self._cur_time - self._last_time) > self._config.save_checkpoint_seconds or force_to_save:
                 self._last_time = self._cur_time
                 return True
 

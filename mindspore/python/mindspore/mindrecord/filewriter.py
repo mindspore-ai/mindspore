@@ -388,7 +388,7 @@ class FileWriter:
         if not self._writer.get_shard_header():
             self._writer.set_shard_header(self._header)
         ret = self._writer.commit()
-        if self._index_generator is True:
+        if self._index_generator:
             if self._append:
                 self._generator = ShardIndexGenerator(self._file_name, self._append)
             elif len(self._paths) >= 1:
@@ -470,7 +470,7 @@ class FileWriter:
                         return False, error
                 elif len(v) == 2 and 'type' in v:
                     res_1, res_2 = self._validate_array(k, v)
-                    if res_1 is not True:
+                    if not res_1:
                         return res_1, res_2
                 else:
                     error = "Field '{}' contains illegal attributes.".format(v)

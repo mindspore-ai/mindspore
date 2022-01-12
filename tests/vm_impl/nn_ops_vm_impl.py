@@ -346,7 +346,7 @@ def vm_impl_momentum(self):
         learning_rate = np.full(shape, learning_rate.asnumpy())
         momentum = np.full(shape, momentum.asnumpy())
         accumulation = accumulation * momentum + gradient
-        if use_nesterov is True:
+        if use_nesterov:
             variable -= gradient * learning_rate + accumulation * momentum * learning_rate
         else:
             variable -= accumulation * learning_rate

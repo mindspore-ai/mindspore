@@ -756,7 +756,7 @@ class Model:
             >>> model.train(2, dataset)
         """
         dataset_sink_mode = Validator.check_bool(dataset_sink_mode)
-        if isinstance(self._train_network, nn.GraphCell) and dataset_sink_mode is True:
+        if isinstance(self._train_network, nn.GraphCell) and dataset_sink_mode:
             raise ValueError("Dataset sink mode is currently not supported when training with a GraphCell.")
 
         if hasattr(train_dataset, '_warmup_epoch') and train_dataset._warmup_epoch != epoch:
@@ -942,7 +942,7 @@ class Model:
         if not self._metric_fns:
             raise ValueError("The model argument 'metrics' can not be None or empty, "
                              "you should set the argument 'metrics' for model.")
-        if isinstance(self._eval_network, nn.GraphCell) and dataset_sink_mode is True:
+        if isinstance(self._eval_network, nn.GraphCell) and dataset_sink_mode:
             raise ValueError("Sink mode is currently not supported when evaluating with a GraphCell.")
 
         cb_params = _InternalCallbackParam()
@@ -1019,7 +1019,7 @@ class Model:
         dataset_sink_mode = Validator.check_bool(dataset_sink_mode)
         if not dataset_sink_mode:
             raise ValueError("Only dataset sink mode is supported for now.")
-        if isinstance(self._train_network, nn.GraphCell) and dataset_sink_mode is True:
+        if isinstance(self._train_network, nn.GraphCell) and dataset_sink_mode:
             raise ValueError("Dataset sink mode is currently not supported when training with a GraphCell.")
         Validator.check_is_int(sink_size)
         dataset_size = train_dataset.get_dataset_size()
