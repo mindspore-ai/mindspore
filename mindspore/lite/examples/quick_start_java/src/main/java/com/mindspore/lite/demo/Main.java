@@ -1,12 +1,12 @@
 package com.mindspore.lite.demo;
 
-import com.mindspore.lite.LiteSession;
-import com.mindspore.lite.MSTensor;
-import com.mindspore.lite.Model;
-import com.mindspore.lite.DataType;
-import com.mindspore.lite.Version;
-import com.mindspore.lite.config.MSConfig;
-import com.mindspore.lite.config.DeviceType;
+import com.mindspore.MSTensor;
+import com.mindspore.Model;
+import com.mindspore.config.DataType;
+import com.mindspore.config.DeviceType;
+import com.mindspore.config.MSContext;
+import com.mindspore.config.ModelType;
+import com.mindspore.config.Version;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -15,7 +15,6 @@ import java.util.Random;
 
 public class Main {
     private static Model model;
-    private static LiteSession session;
 
     public static float[] generateArray(int len) {
         Random rand = new Random();
@@ -37,28 +36,20 @@ public class Main {
         return buffer;
     }
 
-    private static boolean compile() {
-        MSConfig msConfig = new MSConfig();
-        // You can set config through Init Api or use the default parameters directly.
-        // The default parameter is that the backend type is DeviceType.DT_CPU, and the number of threads is 2.
-        boolean ret = msConfig.init(DeviceType.DT_CPU, 2);
+    private static boolean compile(String modelPath) {
+        MSContext context = new MSContext();
+        // use default param init context
+        context.init();
+        boolean ret = context.addDeviceInfo(DeviceType.DT_CPU, false, 0);
         if (!ret) {
-            System.err.println("Init context failed");
+            System.err.println("Compile graph failed");
+            context.free();
             return false;
         }
-
         // Create the MindSpore lite session.
-        session = new LiteSession();
-        ret = session.init(msConfig);
-        msConfig.free();
-        if (!ret) {
-            System.err.println("Create session failed");
-            model.free();
-            return false;
-        }
-
+        model = new Model();
         // Compile graph.
-        ret = session.compileGraph(model);
+        ret = model.build(modelPath, ModelType.MT_MINDIR, context);
         if (!ret) {
             System.err.println("Compile graph failed");
             model.free();
@@ -68,7 +59,7 @@ public class Main {
     }
 
     private static boolean run() {
-        MSTensor inputTensor = session.getInputsByTensorName("graph_input-173");
+        MSTensor inputTensor = model.getInputByTensorName("graph_input-173");
         if (inputTensor.getDataType() != DataType.kNumberTypeFloat32) {
             System.err.println("Input tensor shape do not float, the data type is " + inputTensor.getDataType());
             return false;
@@ -82,14 +73,14 @@ public class Main {
         inputTensor.setData(inputData);
 
         // Run Inference.
-        boolean ret = session.runGraph();
+        boolean ret = model.predict();
         if (!ret) {
             System.err.println("MindSpore Lite run failed.");
             return false;
         }
 
         // Get Output Tensor Data.
-        MSTensor outTensor = session.getOutputByTensorName("Softmax-65");
+        MSTensor outTensor = model.getOutputByTensorName("Softmax-65");
 
         // Print out Tensor Data.
         StringBuilder msgSb = new StringBuilder();
@@ -117,7 +108,6 @@ public class Main {
     }
 
     private static void freeBuffer() {
-        session.free();
         model.free();
     }
 
@@ -128,14 +118,7 @@ public class Main {
             return;
         }
         String modelPath = args[0];
-        model = new Model();
-
-        boolean ret = model.loadModel(modelPath);
-        if (!ret) {
-            System.err.println("Load model failed, model path is " + modelPath);
-            return;
-        }
-        ret = compile();
+        boolean ret = compile(modelPath);
         if (!ret) {
             System.err.println("MindSpore Lite compile failed.");
             return;

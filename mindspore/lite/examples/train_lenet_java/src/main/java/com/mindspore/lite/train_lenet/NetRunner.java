@@ -16,29 +16,28 @@
 
 package com.mindspore.lite.train_lenet;
 
-import com.mindspore.lite.MSTensor;
-import com.mindspore.lite.LiteSession;
-import com.mindspore.lite.TrainSession;
-import com.mindspore.lite.config.MSConfig;
+import com.mindspore.Graph;
+import com.mindspore.Model;
+import com.mindspore.config.DeviceType;
+import com.mindspore.config.MSContext;
+import com.mindspore.config.TrainCfg;
+import com.mindspore.MSTensor;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Vector;
 
 public class NetRunner {
-    private int dataIndex = 0;
-    private int labelIndex = 1;
-    private LiteSession session;
+    private Model model;
     private int batchSize;
     private long dataSize; // one input data size, in byte
-    private DataSet ds = new DataSet();
+    private final DataSet ds = new DataSet();
     private long numOfClasses;
-    private long cycles = 2000;
+    private final long cycles = 2000;
     private int idx = 1;
     private int virtualBatch = 16;
-    private String trainedFilePath = "trained.ms";
     private ByteBuffer imageInputBuf;
     private ByteBuffer labelInputBuf;
     private int imageBatchElements;
@@ -46,37 +45,19 @@ public class NetRunner {
     private MSTensor labelTensor;
     private int[] targetLabels;
 
-    public void initAndFigureInputs(String modelPath, int virtualBatchSize) {
-        MSConfig msConfig = new MSConfig();
-        // arg 0: DeviceType:DT_CPU -> 0
-        // arg 1: ThreadNum -> 2
-        // arg 2: cpuBindMode:NO_BIND ->  0
-        // arg 3: enable_fp16 -> false
-        msConfig.init(0, 2, 0, false);
-        session = new LiteSession();
-        System.out.println("Model path is " + modelPath);
-        session = TrainSession.createTrainSession(modelPath, msConfig, false);
-        virtualBatch = virtualBatchSize;
-        session.setupVirtualBatch(virtualBatch, 0.01f, 1.00f);
-
-        List<MSTensor> inputs = session.getInputs();
+    private int initInputs() {
+        List<MSTensor> inputs = model.getInputs();
         if (inputs.size() <= 1) {
             System.err.println("model input size: " + inputs.size());
-            return;
+            return -1;
         }
 
-        dataIndex = 0;
-        labelIndex = 1;
+        int dataIndex = 0;
+        int labelIndex = 1;
         batchSize = inputs.get(dataIndex).getShape()[0];
         dataSize = inputs.get(dataIndex).size() / batchSize;
         System.out.println("batch_size: " + batchSize);
         System.out.println("virtual batch multiplier: " + virtualBatch);
-        int index = modelPath.lastIndexOf(".ms");
-        if (index == -1) {
-            System.out.println("The model " + modelPath + " should be named *.ms");
-            return;
-        }
-        trainedFilePath = modelPath.substring(0, index) + "_trained.ms";
 
         imageTensor = inputs.get(dataIndex);
         imageInputBuf = ByteBuffer.allocateDirect((int) imageTensor.size());
@@ -87,6 +68,46 @@ public class NetRunner {
         labelInputBuf = ByteBuffer.allocateDirect((int) labelTensor.size());
         labelInputBuf.order(ByteOrder.nativeOrder());
         targetLabels = new int[batchSize];
+        return 0;
+    }
+
+    public int initAndFigureInputs(String modelPath, int virtualBatchSize) {
+        System.out.println("Model path is " + modelPath);
+        MSContext context = new MSContext();
+        // use default param init context
+        context.init();
+        boolean isSuccess = context.addDeviceInfo(DeviceType.DT_CPU, false, 0);
+        if (!isSuccess) {
+            System.err.println("Load graph failed");
+            context.free();
+            return -1;
+        }
+        TrainCfg trainCfg = new TrainCfg();
+        isSuccess = trainCfg.init();
+        if (!isSuccess) {
+            System.err.println("Init train config failed");
+            context.free();
+            trainCfg.free();
+            return -1;
+        }
+        model = new Model();
+        Graph graph = new Graph();
+        isSuccess = graph.load(modelPath);
+        if (!isSuccess) {
+            System.err.println("Load graph failed");
+            graph.free();
+            context.free();
+            trainCfg.free();
+            return -1;
+        }
+        isSuccess = model.build(graph, context, trainCfg);
+        if (!isSuccess) {
+            System.err.println("Build model failed");
+            return -1;
+        }
+        virtualBatch = virtualBatchSize;
+        model.setupVirtualBatch(virtualBatch, 0.01f, 1.00f);
+        return initInputs();
     }
 
     public int initDB(String datasetPath) {
@@ -110,12 +131,16 @@ public class NetRunner {
 
     public float getLoss() {
         MSTensor tensor = searchOutputsForSize(1);
+        if (tensor == null) {
+            System.err.println("get loss tensor failed");
+            return Float.NaN;
+        }
         return tensor.getFloatData()[0];
     }
 
     private MSTensor searchOutputsForSize(int size) {
-        Map<String, MSTensor> outputs = session.getOutputMapByTensor();
-        for (MSTensor tensor : outputs.values()) {
+        List<MSTensor> outputs = model.getOutputs();
+        for (MSTensor tensor : outputs) {
             if (tensor.elementsNum() == size) {
                 return tensor;
             }
@@ -125,13 +150,23 @@ public class NetRunner {
     }
 
     public int trainLoop() {
-        session.train();
+        boolean isSuccess = model.setTrainMode(true);
+        if (!isSuccess) {
+            model.free();
+            System.err.println("set train mode failed");
+            return -1;
+        }
         float min_loss = 1000;
         float max_acc = 0;
         for (int i = 0; i < cycles; i++) {
             for (int b = 0; b < virtualBatch; b++) {
                 fillInputData(ds.getTrainData(), false);
-                session.runGraph();
+                isSuccess = model.runStep();
+                if (!isSuccess) {
+                    model.free();
+                    System.err.println("run step failed");
+                    return -1;
+                }
                 float loss = getLoss();
                 if (min_loss > loss) {
                     min_loss = loss;
@@ -156,13 +191,14 @@ public class NetRunner {
         if (maxTests != -1 && tests < maxTests) {
             tests = maxTests;
         }
-        session.eval();
+        model.setTrainMode(false);
         for (long i = 0; i < tests; i++) {
             int[] labels = fillInputData(test_set, (maxTests == -1));
-            session.runGraph();
+            model.predict();
             MSTensor outputsv = searchOutputsForSize((int) (batchSize * numOfClasses));
             if (outputsv == null) {
                 System.err.println("can not find output tensor with size: " + batchSize * numOfClasses);
+                model.free();
                 System.exit(1);
             }
             float[] scores = outputsv.getFloatData();
@@ -181,7 +217,7 @@ public class NetRunner {
                 }
             }
         }
-        session.train();
+        model.setTrainMode(true);
         accuracy /= (batchSize * tests);
         return accuracy;
     }
@@ -212,27 +248,48 @@ public class NetRunner {
     }
 
     public void trainModel(String modelPath, String datasetPath, int virtualBatch) {
+        int index = modelPath.lastIndexOf(".ms");
+        if (index == -1) {
+            System.err.println("The model " + modelPath + " should be named *.ms");
+            return;
+        }
         System.out.println("==========Loading Model, Create Train Session=============");
-        initAndFigureInputs(modelPath, virtualBatch);
+        int ret = initAndFigureInputs(modelPath, virtualBatch);
+        if (ret != 0) {
+            System.out.println("==========Init and figure inputs failed================");
+            model.free();
+            return;
+        }
         System.out.println("==========Initing DataSet================");
-        initDB(datasetPath);
+        ret = initDB(datasetPath);
+        if (ret != 0) {
+            System.out.println("==========Init dataset failed================");
+            return;
+        }
         System.out.println("==========Training Model===================");
-        trainLoop();
+        ret = trainLoop();
+        if (ret != 0) {
+            System.out.println("==========Init dataset failed================");
+            model.free();
+            return;
+        }
         System.out.println("==========Evaluating The Trained Model============");
         float acc = calculateAccuracy(-1);
         System.out.println("accuracy = " + acc);
 
         if (cycles > 0) {
             // arg 0: FileName
-            // arg 1: model type MT_TRAIN -> 0
-            // arg 2: quantization type QT_DEFAULT -> 0
-            if (session.export(trainedFilePath, 0, 0)) {
+            // arg 1: quantization type QT_DEFAULT -> 0
+            // arg 2: model type MT_TRAIN -> 0
+            // arg 3: use default output tensor names
+            String trainedFilePath = modelPath.substring(0, index) + "_trained.ms";
+            if (model.export(trainedFilePath, 0, false, new ArrayList<>())) {
                 System.out.println("Trained model successfully saved: " + trainedFilePath);
             } else {
                 System.err.println("Save model error.");
             }
         }
-        session.free();
+        model.free();
     }
 
 }
