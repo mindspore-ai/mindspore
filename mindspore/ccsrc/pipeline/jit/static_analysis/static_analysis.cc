@@ -18,6 +18,7 @@
 
 #include "pipeline/jit/static_analysis/static_analysis.h"
 #include <algorithm>
+#include <mutex>
 #include <set>
 #include "abstract/abstract_value.h"
 #include "pipeline/jit/static_analysis/prim.h"
@@ -95,6 +96,31 @@ AbstractBasePtr IntermediateJoin(const AbstractBasePtr &arg1, const AbstractBase
     return arg1->Join(arg2);
   }
   return nullptr;
+}
+
+EvalResultPtr PrimitiveEvalCache::Get(const PrimitivePtr &prim, const AbstractBasePtrList &args) const {
+  std::lock_guard<std::mutex> guard(mutex_);
+  auto cache_iter = prim_cache_.find(prim->name());
+  if (cache_iter == prim_cache_.end()) {
+    return nullptr;
+  }
+  auto &cache = cache_iter->second;
+  auto iter = cache.find(PrimitiveEvalCacheKey{prim->attrs(), args});
+  if (iter == cache.end()) {
+    return nullptr;
+  }
+  return iter->second;
+}
+
+void PrimitiveEvalCache::Put(const PrimitivePtr &prim, AttrValueMap &&attrs, const AbstractBasePtrList &args,
+                             const EvalResultPtr &result) {
+  std::lock_guard<std::mutex> guard(mutex_);
+  (void)prim_cache_[prim->name()].emplace(PrimitiveEvalCacheKey{std::move(attrs), args}, result);
+}
+
+void PrimitiveEvalCache::Clear() {
+  std::lock_guard<std::mutex> guard(mutex_);
+  prim_cache_.clear();
 }
 
 AnalysisResult AnalysisEngine::Run(const FuncGraphPtr &func_graph, const AbstractBasePtrList &args_spec_list) {

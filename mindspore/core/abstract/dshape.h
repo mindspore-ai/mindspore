@@ -26,6 +26,7 @@
 #include <memory>
 #include <algorithm>
 
+#include "utils/hashing.h"
 #include "utils/log_adapter.h"
 #include "base/base.h"
 #include "utils/shape_utils.h"
@@ -138,6 +139,17 @@ class MS_CORE_API Shape final : public BaseShape {
   /// \brief Destructor of Shape.
   ~Shape() override = default;
   MS_DECLARE_PARENT(Shape, BaseShape)
+
+  /// \brief Calculate the hash value for Shape.
+  ///
+  /// \return The hash value of Shape.
+  std::size_t hash() const override {
+    auto hash_code = static_cast<std::size_t>(tid());
+    for (auto dim : shape_) {
+      hash_code = hash_combine(hash_code, dim);
+    }
+    return hash_code;
+  }
 
   /// \brief Get the description string about the Shape object.
   ///

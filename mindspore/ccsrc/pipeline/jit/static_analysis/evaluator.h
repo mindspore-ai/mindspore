@@ -119,12 +119,16 @@ class PrimEvaluator : public Evaluator {
 
 class TrivialPrimEvaluator : public PrimEvaluator {
  public:
-  explicit TrivialPrimEvaluator(const std::string &id) : PrimEvaluator(id) {}
+  explicit TrivialPrimEvaluator(const std::string &id)
+      : PrimEvaluator(id), eval_cache_(AnalysisResultCacheMgr::GetInstance().prim_eval_cache()) {}
   ~TrivialPrimEvaluator() override = default;
   MS_DECLARE_PARENT(TrivialPrimEvaluator, PrimEvaluator);
   EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
                     const AnfNodeConfigPtr &out_conf) final;
   virtual EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list) = 0;
+
+ protected:
+  PrimitiveEvalCachePtr eval_cache_;
 };
 
 class TransitionPrimEvaluator : public PrimEvaluator {

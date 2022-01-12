@@ -1295,15 +1295,19 @@ ValuePtr AbstractKeywordArg::RealBuildValue() const {
 }
 
 std::size_t AbstractBasePtrListHash(const AbstractBasePtrList &args_spec_list) {
-  const size_t n_args = args_spec_list.size();
-  std::size_t hash_value = n_args;
   // Hashing all elements is costly, we only calculate hash from
   // the first few elements base on some experiments.
   constexpr size_t kMaxElementsNum = 4;
-  for (size_t i = 0; (i < n_args) && (i < kMaxElementsNum); ++i) {
+  const size_t n_args = args_spec_list.size();
+  const size_t num = std::min(n_args, kMaxElementsNum);
+  std::size_t hash_value = 0;
+  for (size_t i = 0; i < num; ++i) {
     const auto &arg = args_spec_list[i];
     MS_EXCEPTION_IF_NULL(arg);
     hash_value = hash_combine(hash_value, arg->hash());
+  }
+  if (n_args > kMaxElementsNum) {
+    hash_value = hash_combine(hash_value, n_args);
   }
   return hash_value;
 }

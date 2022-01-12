@@ -30,6 +30,7 @@
 #include <set>
 #include <fstream>
 #include <chrono>
+#include <mutex>
 
 #include "pipeline/jit/static_analysis/static_analysis.h"
 
@@ -418,6 +419,7 @@ class AnalysisResultCacheMgr {
   const_iterator begin() { return cache_.begin(); }
   const_iterator end() { return cache_.end(); }
   void CheckSwitchValueJoinable(const AnfNodeConfigPtr &conf, const AbstractBasePtr &vale);
+  const PrimitiveEvalCachePtr &prim_eval_cache() const { return prim_eval_cache_; }
 
  private:
   using AnalysisConfigAsyncResultMap =
@@ -431,6 +433,7 @@ class AnalysisResultCacheMgr {
   AnalysisConfigResultCache cache_;
   AnalysisConfigAsyncResultCache switch_cache_;
   AnalysisConfigAsyncResultCache switch_cache_for_check_;
+  PrimitiveEvalCachePtr prim_eval_cache_ = std::make_shared<PrimitiveEvalCache>();
 };
 
 std::string ArgsToString(const AbstractBasePtrList &args_spec_list);

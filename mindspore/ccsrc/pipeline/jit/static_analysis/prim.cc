@@ -24,12 +24,14 @@
 #include <string>
 #include <utility>
 
+#include "ir/anf.h"
 #include "utils/hash_set.h"
 #include "frontend/operator/cc_implementations.h"
 #include "frontend/operator/ops.h"
 #include "frontend/operator/composite/do_signature.h"
 #include "frontend/operator/prim_to_function.h"
 #include "abstract/utils.h"
+#include "utils/log_adapter.h"
 #include "utils/symbolic.h"
 #include "pipeline/jit/resource.h"
 #include "pipeline/jit/parse/resolve.h"
@@ -685,26 +687,45 @@ EvalResultPtr StandardPrimEvaluator::RunPyInferValue(const AnalysisEnginePtr &en
   return std::make_shared<EvalResult>(res_spec, std::make_shared<AttrValueMap>(added_attrs));
 }
 
+// Apply EvalResult from cached result for a given primitive.
+static inline void ApplyCacheEvalResult(const PrimitivePtr &prim, const EvalResultPtr &result) {
+  auto &attrs = result->attribute();
+  if (attrs != nullptr) {
+    prim->set_evaluate_added_attrs(*attrs);
+  }
+}
+
 EvalResultPtr StandardPrimEvaluator::EvalPyCheckPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args) {
+  // Try to get infer result from cache.
+  auto eval_result = eval_cache_->Get(prim_, args);
+  if (eval_result != nullptr) {
+    // Use cached infer result if it existed.
+    ApplyCacheEvalResult(prim_, eval_result);
+    return eval_result;
+  }
+  // PrimitivePy is expected for EvalPyCheckPrim.
   auto prim_py = dyn_cast<PrimitivePy>(prim_);
   if (prim_py == nullptr) {
     MS_LOG(EXCEPTION) << "The primitive with type 'kPrimTypePyCheck' should be a python primitive.";
   }
-  // Call checking method '__check__' for subclass of 'PrimitiveWithCheck'
-  MS_LOG(DEBUG) << "Begin input args checking for: " << prim_py->ToString();
+  // We should copy attributes before running check and infer,
+  // since they may be changed during check and infer.
+  auto input_attrs = prim_py->attrs();
+  prim_py->BeginRecordAddAttr();
   auto py_args = PreparePyInputs(prim_py, args);
+  // Call checking method '__check__' for subclass of 'PrimitiveWithCheck'.
   prim_py->RunCheck(py_args);
-
-  prim_->BeginRecordAddAttr();
-  AbstractBasePtr abs_base = eval_impl_.infer_shape_impl_(engine, prim_, args);
-  prim_->EndRecordAddAttr();
-  auto added_attrs = prim_->evaluate_added_attrs();
-
-  if (!py::hasattr(prim_py->GetPyObj(), PY_PRIM_METHOD_INFER_VALUE)) {
-    return std::make_shared<EvalResult>(abs_base, std::make_shared<AttrValueMap>(added_attrs));
+  auto abs = eval_impl_.infer_shape_impl_(engine, prim_py, args);
+  prim_py->EndRecordAddAttr();
+  auto &added_attrs = prim_py->evaluate_added_attrs();
+  eval_result = std::make_shared<EvalResult>(abs, std::make_shared<AttrValueMap>(added_attrs));
+  if (py::hasattr(prim_py->GetPyObj(), PY_PRIM_METHOD_INFER_VALUE)) {
+    // Call 'infer_value()' method if it is exsited, for constant propagation.
+    eval_result = RunPyInferValue(engine, eval_result->abstract(), args);
   }
-  // Call method 'infer_value' for primitive with this method for constant propagation
-  return RunPyInferValue(engine, abs_base, args);
+  // Save infer result to cache.
+  eval_cache_->Put(prim_py, std::move(input_attrs), args, eval_result);
+  return eval_result;
 }
 
 EvalResultPtr StandardPrimEvaluator::EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args) {
@@ -744,9 +765,8 @@ EvalResultPtr StandardPrimEvaluator::EvalPrim(const AnalysisEnginePtr &engine, c
   }
   abs_base = eval_impl_.infer_shape_impl_(engine, prim_, args);
   prim_->EndRecordAddAttr();
-  auto added_attrs = prim_->evaluate_added_attrs();
-  auto eval_result = std::make_shared<EvalResult>(abs_base, std::make_shared<AttrValueMap>(added_attrs));
-  return eval_result;
+  const auto &added_attrs = prim_->evaluate_added_attrs();
+  return std::make_shared<EvalResult>(abs_base, std::make_shared<AttrValueMap>(added_attrs));
 }
 
 EvalResultPtr PythonPrimEvaluator::EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args) {
@@ -755,13 +775,9 @@ EvalResultPtr PythonPrimEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abs
     MS_LOG(DEBUG) << "PythonPrimEvaluator eval Undetermined";
     return ret_abstract;
   }
-  MS_LOG(DEBUG) << "Eval for:" << prim_py_->ToString();
-
-  const auto eval_result = evaluator_cache_mgr_->GetValue(args);
+  // Try to get infer result from cache.
+  auto eval_result = eval_cache_->Get(prim_py_, args);
   if (eval_result != nullptr) {
-    auto abs = eval_result->abstract()->Clone();
-    auto attr = eval_result->attribute();
-
     // To check tuple/list operations with a white list of Python primitive.
     if (prim_py_->name() == prim::kPrimStack->name()) {
       // Set all used flags of tuple as true.
@@ -769,20 +785,24 @@ EvalResultPtr PythonPrimEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abs
         SetSequenceElementsUseFlags(arg, true);
       }
     }
-    return std::make_shared<EvalResult>(abs, attr);
+    // Apply cache result.
+    ApplyCacheEvalResult(prim_py_, eval_result);
+    return eval_result;
   }
-
+  // No cached result, run infer. We should copy attributes before
+  // running infer, since they may be changed during infer.
+  auto input_attrs = prim_py_->attrs();
   auto py_args = PreparePyInputs(prim_py_, args);
   prim_py_->BeginRecordAddAttr();
   py::dict output = prim_py_->RunInfer(py_args);
   prim_py_->EndRecordAddAttr();
-  auto added_attrs = prim_py_->evaluate_added_attrs();
+  const auto &added_attrs = prim_py_->evaluate_added_attrs();
   MS_LOG(DEBUG) << "Output type is " << (std::string)py::str(output);
   auto res_spec = PyInferRes2Abstract(prim_py_, output);
   MS_LOG(DEBUG) << "Python InferTensor result spec: " << res_spec->ToString() << ".";
-  auto infer_result = std::make_shared<EvalResult>(res_spec, std::make_shared<AttrValueMap>(added_attrs));
-  evaluator_cache_mgr_->SetValue(args, infer_result);
-
+  eval_result = std::make_shared<EvalResult>(res_spec, std::make_shared<AttrValueMap>(added_attrs));
+  // Save result to cache.
+  eval_cache_->Put(prim_py_, std::move(input_attrs), args, eval_result);
   // To check tuple/list operations with a white list of Python primitive.
   if (prim_py_->name() == prim::kPrimStack->name()) {
     // Set all used flags of tuple as true.
@@ -790,7 +810,7 @@ EvalResultPtr PythonPrimEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abs
       SetSequenceElementsUseFlags(arg, true);
     }
   }
-  return infer_result;
+  return eval_result;
 }
 
 EvalResultPtr UniformPrimEvaluator::EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args) {

@@ -215,6 +215,7 @@ std::string AsyncAbstractFuncAtom::ToString() const {
 }
 
 void AnalysisResultCacheMgr::Clear() {
+  prim_eval_cache_->Clear();
   std::lock_guard<std::mutex> lock(lock_);
   cache_.clear();
   switch_cache_.clear();

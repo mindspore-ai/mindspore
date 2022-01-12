@@ -54,12 +54,7 @@ std::ostream &operator<<(std::ostream &os, const std::shared_ptr<BaseShape> bs) 
   return os;
 }
 
-bool BaseShape::operator==(const BaseShape &other) const {
-  if (tid() != other.tid()) {
-    return false;
-  }
-  return true;
-}
+bool BaseShape::operator==(const BaseShape &other) const { return tid() == other.tid(); }
 
 bool BaseShape::operator!=(const BaseShape &other) const { return !(*this == other); }
 
@@ -98,14 +93,13 @@ bool Shape::operator==(const BaseShape &other) const {
     return false;
   }
   Shape other_shape = static_cast<const Shape &>(other);
-  bool shape_equal = shape_ == other_shape.shape_;
-
-  if (!IsDynamic() || !other_shape.IsDynamic()) {
-    return shape_equal;
+  if (shape_ != other_shape.shape_) {
+    return false;
   }
-  bool min_shape_equel = min_shape_ == other_shape.min_shape_;
-  bool max_shape_equel = max_shape_ == other_shape.max_shape_;
-  return shape_equal && min_shape_equel && max_shape_equel;
+  if (!IsDynamic() || !other_shape.IsDynamic()) {
+    return true;
+  }
+  return (min_shape_ == other_shape.min_shape_) && (max_shape_ == other_shape.max_shape_);
 }
 
 const int64_t Shape::SHP_ANY;
