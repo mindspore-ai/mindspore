@@ -33,6 +33,7 @@ using PredicateFuncType = mindspore::PredicateFuncType;
 class OptimizerCaller {
  public:
   virtual AnfNodePtr operator()(const opt::OptimizerPtr &, const AnfNodePtr &) { return nullptr; }
+  virtual ~OptimizerCaller() = default;
 };
 using OptimizerCallerPtr = std::shared_ptr<OptimizerCaller>;
 }  // namespace mindspore

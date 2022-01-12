@@ -247,7 +247,7 @@ FuncGraphPtr ShrinkUnsedOutput(const FuncGraphPtr &fg, const std::vector<TpCNode
       MS_LOG(EXCEPTION) << "New fg output is not MakeTuple or ValueTuple, but " << new_fg_output->DebugString();
     }
     ValuePtrList shrunk_inputs;
-    before_shrink_inputs_size = value_tuple->size();
+    before_shrink_inputs_size = SizeToLong(value_tuple->size());
     std::transform(tp_cnodes_and_index.cbegin(), tp_cnodes_and_index.cend(), std::back_inserter(shrunk_inputs),
                    [new_fg_output, value_tuple, before_shrink_inputs_size](const auto &node_and_index) {
                      if (node_and_index.index >= before_shrink_inputs_size) {
@@ -312,7 +312,7 @@ bool AlwaysTransformThisIndex(const AnfNodePtr &output, const int64_t index) {
       MS_LOG(EXCEPTION) << "Index of GetItem: " << index
                         << " exceeds size of MakeTuple: " << output_cnode->DebugString();
     }
-    if (IsPrimitiveCNode(output_cnode->input(index + 1), prim::kPrimZerosLike)) {
+    if (IsPrimitiveCNode(output_cnode->input(LongToSize(index + 1)), prim::kPrimZerosLike)) {
       return true;
     }
   }

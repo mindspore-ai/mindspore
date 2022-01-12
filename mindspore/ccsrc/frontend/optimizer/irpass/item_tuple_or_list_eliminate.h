@@ -76,7 +76,7 @@ class TupleListConvertItemIndexToPositive : public AnfVisitor {
         if (sequeue_abstract == nullptr) {
           return;
         }
-        id_ = idx + sequeue_abstract->size();
+        id_ = idx + SizeToLong(sequeue_abstract->size());
         is_match_ = true;
       }
     }
@@ -166,7 +166,7 @@ class TupleListGetitemEliminator : public AnfVisitor {
     if (tuple_ != nullptr && IsValueNode<Int64Imm>(vnode)) {
       auto idx = GetValue<int64_t>(vnode->value());
       if (idx < 0) {
-        idx = idx + tuple_->size() - 1;
+        idx = idx + SizeToLong(tuple_->size()) - 1;
       }
       id_ = LongToSize(idx + 1);
       if (tuple_->size() > id_) {
@@ -215,7 +215,7 @@ class TupleListGetitemConstEliminator : public AnfVisitor {
     if (tuple_ != nullptr && IsValueNode<Int64Imm>(vnode)) {
       auto idx = GetValue<int64_t>(vnode->value());
       if (idx < 0) {
-        idx = idx + tuple_->size();
+        idx = idx + SizeToLong(tuple_->size());
       }
       id_ = LongToSize(idx);
       if (id_ < tuple_->size()) {
@@ -314,7 +314,7 @@ class TupleListSetitemEliminator : public AnfVisitor {
     } else if (!args_.empty() && IsValueNode<Int64Imm>(vnode)) {
       auto idx = GetValue<int64_t>(vnode->value());
       if (idx < 0) {
-        idx = idx + args_.size() - 1;
+        idx = idx + SizeToLong(args_.size()) - 1;
       }
       id_ = LongToSize(idx + 1);
       if (id_ < args_.size()) {
@@ -381,7 +381,7 @@ class TupleListGetSetitemEliminator : public AnfVisitor {
         if (sequeue_abstract == nullptr) {
           return;
         }
-        key = key + sequeue_abstract->size();
+        key = key + SizeToLong(sequeue_abstract->size());
       }
       if (is_in_set_) {
         key1_ = key;
@@ -444,7 +444,7 @@ class TupleListGetitemDependReorder : public AnfVisitor {
     if (abs->isa<abstract::AbstractTuple>()) {
       auto abs_tuple = abs->cast<abstract::AbstractTuplePtr>();
       if (idx < 0) {
-        idx += abs_tuple->elements().size();
+        idx += SizeToLong(abs_tuple->elements().size());
       }
       if (idx < 0 || LongToSize(idx) >= abs_tuple->elements().size()) {
         MS_LOG(EXCEPTION) << "The idx value " << idx << " of tuple_getitem node " << c_->DebugString()
