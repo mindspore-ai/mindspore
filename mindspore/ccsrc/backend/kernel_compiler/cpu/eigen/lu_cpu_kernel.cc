@@ -38,19 +38,30 @@ constexpr int kZeroThreshold = INT32_MIN;
 template <typename T>
 void LUCPUKernel<T>::InitMatrixInfo(const std::vector<size_t> &shape, size_t *row, size_t *col) {
   constexpr size_t lu_min_dim = 1;
-  constexpr size_t lu_max_dim = 3;
-  if (shape.size() < lu_min_dim || shape.size() > lu_max_dim) {
+  if (shape.size() <= lu_min_dim) {
     MS_LOG_EXCEPTION << kernel_name_ << "shape is " << shape.size() << " which is invalid.";
   }
-  if (shape.size() == lu_max_dim) {
-    batch_ = shape.front();
-    *row = shape.at(lu_min_dim);
-    *col = shape.at(lu_max_dim - 1);
-    return;
+  constexpr size_t lu_reverse_row_dim = 2;
+  *row = shape.at(shape.size() - lu_reverse_row_dim);
+  *col = shape.at(shape.size() - 1);
+  batch_size_ = lu_min_dim;
+  for (int batch = 0; batch < static_cast<int>(shape.size() - lu_reverse_row_dim); ++batch) {
+    batch_size_ *= shape.at(batch);
   }
-  batch_ = 1;
-  *row = shape.front();
-  *col = shape.at(lu_min_dim);
+}
+
+template <typename T>
+void LUCPUKernel<T>::InitPivotVecInfo(const std::vector<size_t> &shape, size_t *row, size_t *col) {
+  constexpr size_t pivot_min_dim = 1;
+  if (shape.size() < pivot_min_dim) {
+    MS_LOG_EXCEPTION << kernel_name_ << "pivots shape is " << shape.size() << " which is invalid.";
+  }
+  *row = 1;
+  if (shape.size() == pivot_min_dim) {
+    *col = shape.front();
+  } else {
+    *col = shape.back();
+  }
 }
 
 template <typename T>
@@ -66,10 +77,10 @@ void LUCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   InitMatrixInfo(a_shape, &a_row_, &a_col_);
   auto lu_shape = AnfAlgo::GetOutputInferShape(kernel_node, kLuIndex);
   InitMatrixInfo(lu_shape, &lu_row_, &lu_col_);
-  auto pivots_shape = AnfAlgo::GetOutputInferShape(kernel_node, kPivotsIndex);
-  InitMatrixInfo(pivots_shape, &pivots_row_, &pivots_col_);
   auto permutation_shape = AnfAlgo::GetOutputInferShape(kernel_node, kPermutationIndex);
   InitMatrixInfo(permutation_shape, &permutation_row_, &permutation_col_);
+  auto pivots_shape = AnfAlgo::GetOutputInferShape(kernel_node, kPivotsIndex);
+  InitPivotVecInfo(pivots_shape, &pivots_row_, &pivots_col_);
 }
 
 template <typename T>
@@ -124,7 +135,7 @@ bool LUCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
   int *batch_permutation_value = reinterpret_cast<int *>(outputs[kPermutationIndex]->addr);
   T *lu_ori_wk = reinterpret_cast<T *>(workspace[kLuIndex]->addr);
   T *lu_trans_wk = reinterpret_cast<T *>(workspace[kPivotsIndex]->addr);
-  for (size_t batch = 0; batch < batch_; ++batch) {
+  for (size_t batch = 0; batch < batch_size_; ++batch) {
     T *a_value = batch_a_value + batch * a_row_ * a_col_;
     T *lu_value = batch_lu_value + batch * lu_row_ * lu_col_;
     // pivots permutation value
