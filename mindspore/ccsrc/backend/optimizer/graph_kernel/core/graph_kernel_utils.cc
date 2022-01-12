@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,8 +93,14 @@ std::vector<PrimitivePtr> GkUtils::GetValidOps(const std::vector<OpWithLevel> &o
 bool GkUtils::IsKeepBasicNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto prim = GetCNodePrimitive(node);
+  auto target = Callback::Instance()->GetTargetFromContext();
   if (prim == nullptr) return false;
-
+  // Heterogeneous computing is not support yet
+  // so if node's primitive_target is inconsistent with target from context
+  // the node cannot be added to the cluster list.
+  if (prim->HasAttr("primitive_target") && GetValue<std::string>(prim->GetAttr("primitive_target")) != target) {
+    return true;
+  }
   // dynamic shape nodes is not supported yet.
   // the "skip" is used by inplace node.
   // the kAttrIsInternalOutputNopNode is used by internal output of KernelGraph.
