@@ -23,9 +23,10 @@
 """
 import logging
 import numpy as np
+import pytest
 
 import mindspore.nn as nn
-from mindspore import context
+from mindspore import context, ops, dtype
 from mindspore.common.api import ms_function
 from mindspore.common import Tensor, Parameter
 from mindspore.ops import operations as P
@@ -140,9 +141,6 @@ def test_create_cell_object_on_construct_use_many_parameter():
 class NetD(nn.Cell):
     """ NetD definition """
 
-    def __init__(self):
-        super(NetD, self).__init__()
-
     def construct(self, x, y):
         concat = P.Concat(axis=1)
         return concat((x, y))
@@ -192,3 +190,31 @@ def test_create_primitive_object_on_construct_use_args_and_kwargs():
     net = NetE()
     net(inputs)
     log.debug("finished test_create_primitive_object_on_construct_use_args_and_kwargs")
+
+
+# Test: Create Cell instance in construct
+class SubCell(nn.Cell):
+    def __init__(self, t):
+        super(SubCell, self).__init__()
+        self.t = t
+
+    def construct(self):
+        return ops.typeof(self.t)
+
+
+class WrapCell(nn.Cell):
+    def construct(self, t):
+        type_0 = ops.typeof(t)
+        type_1 = SubCell(t)()
+        return type_0, type_1
+
+
+def test_create_cell_with_tensor():
+    """
+    Feature: Raise exception while create Cell(that init use tensor input) in construct.
+    Description: None
+    Expectation: TypeError.
+    """
+    t = Tensor(np.zeros((2, 2), np.float), dtype.float32)
+    with pytest.raises(TypeError):
+        print(WrapCell()(t))

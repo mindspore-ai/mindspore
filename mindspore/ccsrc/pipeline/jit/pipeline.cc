@@ -38,6 +38,7 @@
 #include "frontend/optimizer/ad/prim_bprop_optimizer.h"
 #include "frontend/parallel/context.h"
 #include "frontend/parallel/graph_util/get_parallel_info.h"
+#include "frontend/parallel/auto_parallel/graph_costmodel.h"
 #include "utils/config_manager.h"
 #include "utils/convert_utils.h"
 #include "utils/convert_utils_py.h"
@@ -728,13 +729,7 @@ void GraphExecutorPy::DelNetRes(const py::set &id) {
   ConfigManager::GetInstance().ResetIterNum();
 #endif
   for (auto item : id) {
-    if (py::isinstance<py::str>(item)) {
-      auto phase = py::cast<std::string>(item);
-      info_.erase(phase);
-      MS_LOG(DEBUG) << "Delete phase: " << phase << ", info size: " << info_.size();
-    } else {
-      MS_LOG(ERROR) << "Expect string phase, but got " << py::str(item);
-    }
+    DelOneNetRes(item);
   }
 #ifdef ENABLE_D
   if (backend == "ge" && !id.empty() && info_.size() == 0) {
@@ -744,6 +739,26 @@ void GraphExecutorPy::DelNetRes(const py::set &id) {
     transform::DfGraphManager::GetInstance().DeleteGeSession();
   }
 #endif
+}
+void GraphExecutorPy::DelOneNetRes(const py::handle &py_phase) {
+  if (!pybind11::isinstance<py::str>(py_phase)) {
+    MS_LOG(ERROR) << "Expect string phase, but got " << py::str(py_phase);
+    return;
+  }
+  auto phase = pybind11::cast<std::string>(py_phase);
+  auto iter = info_.find(phase);
+  if (iter == info_.end()) {
+    MS_LOG(ERROR) << "ExecutorInfo for phase:" << phase << " not exist.";
+    return;
+  }
+
+  auto res = iter->second->resource;
+  if (res->HasResult(kStepParallelGraph)) {
+    std::string layout_graph = phase + kStepParallelGraph;
+    info_.erase(layout_graph);
+  }
+  info_.erase(phase);
+  MS_LOG(DEBUG) << "Delete phase: " << phase << ", info size: " << info_.size();
 }
 
 void GraphExecutorPy::ClearRes() {
@@ -1057,12 +1072,6 @@ bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple
   abstract::AnalysisContext::ClearContext();
   // Reclaim all resource used by optimizer.
   ReclaimOptimizer();
-  // Clean cache used for parse. As static variable is released after
-  // Python threads is released.
-  parse::data_converter::ClearObjectCache();
-  parse::Parser::CleanParserResource();
-  parse::CleanDataClassToClassMap();
-  trace::ClearTraceStack();
   // Clean cache used while compile
   resource->Clean();
   MS_LOG(INFO) << "Finish compiling.";
@@ -1090,6 +1099,9 @@ void GraphExecutorPy::ReleaseResource(const py::object &phase) {
   ResourcePtr res = GetResource(py::cast<std::string>(phase));
   if (res != nullptr) {
     res->Clean();
+    // Because executor_info is used in EliminateForwardCNode, need cache executor_info before compile
+    // and delete while compile failed.
+    DelOneNetRes(phase);
   }
   // Clean cache used for parse. As static variable is released after
   // Python threads is released.
@@ -1884,6 +1896,10 @@ void ClearResAtexit() {
   MS_LOG(INFO) << "Start clear InterpretNodeRecorder...";
   InterpretNodeRecorder::GetInstance().Clear();
   MS_LOG(INFO) << "End clear InterpretNodeRecorder...";
+
+  MS_LOG(INFO) << "Start clear parallel::entire_costgraph...";
+  parallel::entire_costgraph.reset();
+  MS_LOG(INFO) << "End clear parallel::entire_costgraph...";
 }
 
 py::bytes PyEncrypt(char *plain_data, size_t plain_len, char *key, size_t key_len, const std::string &enc_mode) {

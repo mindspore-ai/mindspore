@@ -159,6 +159,7 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   py::list compile_cache_dep_files_;
   py::dict weights_;
   std::map<PyObject *, AbstractBasePtr> cur_convert_input_;
+  void DelOneNetRes(const py::handle &py_phase);
 };
 using GraphExecutorPyPtr = std::shared_ptr<GraphExecutorPy>;
 
