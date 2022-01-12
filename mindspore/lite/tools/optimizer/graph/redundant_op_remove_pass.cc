@@ -319,7 +319,7 @@ int RemoveRedundantOpPass::RemoveInvalidPadOp(const AnfNodePtr &anf_node, const 
   } else {
     auto pad_prim = utils::cast<std::shared_ptr<mindspore::ops::PadFusion>>(primitive);
     MS_ASSERT(pad_prim != nullptr);
-    MS_CHECK_TRUE_RET(pad_prim->GetAttr(ops::kPadding) != nullptr, lite::RET_ERROR);
+    MS_CHECK_TRUE_RET(pad_prim->GetAttr(ops::kPaddings) != nullptr, lite::RET_ERROR);
     auto pad_data = pad_prim->get_paddings();
     for (size_t i = 0; i < pad_data.size(); i++) {
       for (size_t j = 0; j < pad_data[i].size(); j++) {
