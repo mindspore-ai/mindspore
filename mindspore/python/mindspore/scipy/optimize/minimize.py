@@ -61,8 +61,11 @@ def minimize(func, x0, args=(), *, method, tol=None, options=None):
     - Optimization results may differ from SciPy due to differences in the line
       search implementation.
 
-    It does not yet support differentiation or arguments in the form of
-    multi-dimensional Tensor, but support for both is planned.
+    Note:
+        - `minimize` does not yet support differentiation or arguments in the form of
+          multi-dimensional Tensor, but support for both is planned.
+
+        - `minimize` is not supported on Windows platform yet.
 
     Args:
       func (Callable): the objective function to be minimized, :math:`fun(x, *args) -> float`,
