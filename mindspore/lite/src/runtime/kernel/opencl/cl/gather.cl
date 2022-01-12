@@ -22,7 +22,7 @@ __kernel void gather(__write_only image2d_t dst_data, __read_only image2d_t src_
     int offset[4] = {indices[Z * 4] / 4, indices[Z * 4 + 1] / 4, indices[Z * 4 + 2] / 4, indices[Z * 4 + 3] / 4};
     DTYPE tmp[4];
     DTYPE res_tmp[4];
-    for (int i = 0; i < indices_num; ++i) {
+    for (int i = 0; i < C4NUM; ++i) {
       DTYPE4 rd_data = (DTYPE4)(0, 0, 0, 0);
       rd_data = READ_IMAGE(src_data, smp_zero, (int2)(X * src_size.z + offset[i], batch * src_size.y + height));
       if (i >= 1 && offset[i] != offset[i - 1]) {

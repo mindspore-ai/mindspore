@@ -31,7 +31,7 @@
 #define EXT_ARM_IMPORT_MEMORY_HOST "cl_arm_import_memory_host"
 
 namespace mindspore::lite::opencl {
-enum GpuType { OTHER = 0, ADRENO = 1, MALI = 2, MALI_T = 3, MALI_G = 4 };
+enum GpuType { OTHER = 0, ADRENO = 1, MALI = 2, MALI_T = 3, MALI_G = 4, MALI_G78 = 5 };
 enum TuningMode { DEFAULT = 0, FAST = 1, EXTREME = 2 };
 enum InitState { UnInit = 0, InitSuccess = 1, InitFailed = 2 };
 
