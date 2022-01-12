@@ -492,6 +492,9 @@ ValueGetterPtr DirectValueGetter::Visit(int64_t index, const std::shared_ptr<Has
   return shared_from_this();
 }
 std::vector<FuncClosurePtr> DirectValueGetter::GetFuncGraphs() {
+  if (!IsValueNode<FuncGraph>(anf_node_)) {
+    MS_LOG(EXCEPTION) << "Expect a func graph value node, but got an illegal value node:" << anf_node_->DebugString();
+  }
   if (func_graphs_.empty()) {
     func_graphs_.emplace_back(std::make_shared<FuncClosure>(GetValueNode<FuncGraphPtr>(anf_node_),
                                                             std::vector<size_t>(), std::vector<CNodePtr>()));

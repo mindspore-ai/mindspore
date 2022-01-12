@@ -115,13 +115,13 @@ TypeId GetValueType(const CNodePtr &cnode) {
 
 AnfNodePtr GetTransformedKeyNode(const AnfNodePtr &old_key_node, SymbolicKeyConversionMap *para_symbol_map) {
   const auto &symbolic_key_inst = GetValueNode<SymbolicKeyInstancePtr>(old_key_node);
-  uint64_t transformed_key = 0;
+  int64_t transformed_key = 0;
   auto &symbolic_key_map = *para_symbol_map;
   auto iter = symbolic_key_map.find(symbolic_key_inst);
   if (iter != symbolic_key_map.end()) {
     transformed_key = iter->second;
   } else {
-    static uint64_t key_counter = 0;
+    static int64_t key_counter = 0;
     transformed_key = ++key_counter;
     symbolic_key_map.emplace(std::make_pair(symbolic_key_inst, transformed_key));
   }
@@ -163,12 +163,12 @@ bool EnvironConversion(const pipeline::ResourcePtr &resource) {
           prim = std::make_shared<Primitive>(prim::kEnvironGet);
         }
         MS_EXCEPTION_IF_NULL(prim);
-        prim->set_attr(attr_name, MakeValue(static_cast<int>(type_id)));
+        prim->set_attr(attr_name, MakeValue(static_cast<int64_t>(type_id)));
         transformed_prim_node = NewValueNode(prim);
         txn.SetEdge(node, kPrimitiveOffset, transformed_prim_node);
       }
     } else {
-      prim->set_attr(attr_name, MakeValue(static_cast<int>(type_id)));
+      prim->set_attr(attr_name, MakeValue(static_cast<int64_t>(type_id)));
     }
     // Abstract of Environ & Value will be set by previous TransformNodeAbstract function.
     // Key
