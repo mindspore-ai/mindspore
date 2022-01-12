@@ -408,7 +408,7 @@ class KernelGraph : public FuncGraph {
   void set_is_loop_count_sink(bool is_loop_count_sink) { is_loop_count_sink_ = is_loop_count_sink; }
   const mindspore::HashMap<AnfNodePtr, AnfNodePtr> &front_backend_anf_map() { return front_backend_anf_map_; }
 
-  AnfWithOutIndex GetElementInTupleBackendFrontIndexMap(const AnfNodePtr &back_node) {
+  AnfWithOutIndex GetElementInTupleBackendFrontIndexMap(const AnfNodePtr &back_node) const {
     auto iter = tuple_backend_front_anf_index_map_.find(back_node);
     if (iter == tuple_backend_front_anf_index_map_.end()) {
       return AnfWithOutIndex(nullptr, 0);

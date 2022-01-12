@@ -45,7 +45,7 @@ std::string GetStackActorNameByExitName(const std::string &exit_name) {
 }
 
 // Fetch the depend nodes according to the monad node.
-void FetchRealDependNodeByAutoMonad(const AnfNodePtr &node, std::set<AnfNodePtr> *depend_nodes) {
+void FetchRealDependNodeByAutoMonad(const AnfNodePtr &node, std::set<AnfNodePtr> *const depend_nodes) {
   // Find the real input node, include the monad node and make tuple node.
   const std::vector<PrimitivePtr> return_types = {prim::kPrimDepend, prim::kPrimUpdateState, prim::kPrimLoad,
                                                   prim::kPrimMakeTuple};
@@ -77,7 +77,7 @@ void FetchRealDependNodeByAutoMonad(const AnfNodePtr &node, std::set<AnfNodePtr>
       FetchRealDependNodeByAutoMonad(real_inputs[i], depend_nodes);
     }
   } else {
-    depend_nodes->emplace(real_node);
+    (void)depend_nodes->emplace(real_node);
   }
 }
 
@@ -131,7 +131,7 @@ std::vector<SwitchActorPtr> ControlNodeScheduler::BuildSwitchActor(const GraphCo
       const auto &parameters = FetchInputNodeByCNode(control_node);
       const auto &switch_actor =
         std::make_shared<SwitchActor>(actor_name, memory_manager_aid_, parameters, control_node);
-      switch_actors.emplace_back(switch_actor);
+      (void)switch_actors.emplace_back(switch_actor);
       InsertActor(switch_actor.get());
     }
   }
@@ -151,7 +151,7 @@ std::vector<GatherActorPtr> ControlNodeScheduler::BuildGatherActor(const GraphCo
       const auto &parameters = FetchInputNodeByCNode(control_node);
       const auto &gather_actor =
         std::make_shared<GatherActor>(actor_name, memory_manager_aid_, parameters, control_node);
-      gather_actors.emplace_back(gather_actor);
+      (void)gather_actors.emplace_back(gather_actor);
       InsertActor(gather_actor.get());
 
       // The gather actor corresponding to a call node needs to set the branch id.
@@ -178,7 +178,7 @@ std::vector<EntranceActorPtr> ControlNodeScheduler::BuildEntranceActor(const Gra
   for (const auto &call_node_to_func_graph : call_node_to_func_graphs) {
     const auto &node = call_node_to_func_graph.first;
     for (const auto &func_graph : call_node_to_func_graph.second) {
-      func_graph_to_call_nodes[func_graph].emplace(node, 0);
+      (void)func_graph_to_call_nodes[func_graph].emplace(node, 0);
     }
   }
 
@@ -201,7 +201,7 @@ std::vector<EntranceActorPtr> ControlNodeScheduler::BuildEntranceActor(const Gra
         MS_EXCEPTION_IF_NULL(abstract);
         size_t output_num = AnfAlgo::GetOutputNumByAbstract(abstract);
         for (size_t i = 0; i < output_num; ++i) {
-          formal_parameters.emplace_back(parameter, i);
+          (void)formal_parameters.emplace_back(parameter, i);
         }
       }
 
@@ -225,7 +225,7 @@ std::vector<EntranceActorPtr> ControlNodeScheduler::BuildEntranceActor(const Gra
       entrance_actor->device_contexts_.clear();
       entrance_actor->device_contexts_.insert(entrance_actor->device_contexts_.begin(), context_iter->second.begin(),
                                               context_iter->second.begin() + formal_parameters.size());
-      entrance_actors.emplace_back(entrance_actor);
+      (void)entrance_actors.emplace_back(entrance_actor);
       InsertActor(entrance_actor.get());
     }
   }
@@ -254,7 +254,7 @@ std::vector<ExitActorPtr> ControlNodeScheduler::BuildExitActor(const GraphCompil
         MS_LOG(EXCEPTION) << "Failed to get device contexts for funcgraph:" << func_graph->ToString();
       }
       exit_actor->device_contexts_ = context_iter->second;
-      exit_actors.emplace_back(exit_actor);
+      (void)exit_actors.emplace_back(exit_actor);
       InsertActor(exit_actor.get());
     }
   }
@@ -280,20 +280,20 @@ std::vector<ExitActorPtr> ControlNodeScheduler::BuildExitActor(const GraphCompil
         continue;
       }
       // Collect inputs of exit actor.
-      formal_parameters.emplace_back(node_with_context.first);
+      (void)formal_parameters.emplace_back(node_with_context.first);
       // Get the device contexts of the exit actor's cnode inputs.
       const AnfNodePtr &backend_node = node_with_context.second.first.first;
       MS_EXCEPTION_IF_NULL(backend_node);
-      is_need_copy_device_tensors.emplace_back(
+      (void)is_need_copy_device_tensors.emplace_back(
         is_need_copy_device_tensor(backend_node, node_with_context.second.first.second));
-      device_contexts.emplace_back(node_with_context.second.second);
+      (void)device_contexts.emplace_back(node_with_context.second.second);
     }
 
     const auto &actor_name = kernel_graph_group_info->group_name_ + kExitActorNameSuffix;
     const auto &exit_actor = std::make_shared<ExitActor>(actor_name, memory_manager_aid_, formal_parameters, nullptr);
     exit_actor->is_need_copy_device_tensors_.swap(is_need_copy_device_tensors);
     exit_actor->device_contexts_.swap(device_contexts);
-    exit_actors.emplace_back(exit_actor);
+    (void)exit_actors.emplace_back(exit_actor);
     InsertActor(exit_actor.get());
   }
 
@@ -326,8 +326,8 @@ std::vector<StackActorPtr> ControlNodeScheduler::BuildStackActor(const GraphComp
       }
       if (iter->second == kernel_graph_group_info->level_ &&
           (!(parser->IsRootGraphParameter(from_node) && IsPersistentDeviceTensor(from_node)))) {
-        formal_parameters.emplace_back(node_with_context.first);
-        device_contexts.emplace_back(node_with_context.second);
+        (void)formal_parameters.emplace_back(node_with_context.first);
+        (void)device_contexts.emplace_back(node_with_context.second);
       } else {
         formal_parameters.insert(formal_parameters.begin(), node_with_context.first);
         device_contexts.insert(device_contexts.begin(), node_with_context.second);
@@ -335,7 +335,7 @@ std::vector<StackActorPtr> ControlNodeScheduler::BuildStackActor(const GraphComp
       }
     }
     const auto &stack_actor = std::make_shared<StackActor>(actor_name, memory_manager_aid_, formal_parameters);
-    stack_actors.emplace_back(stack_actor);
+    (void)stack_actors.emplace_back(stack_actor);
     stack_actor->device_contexts_.swap(device_contexts);
     stack_actor->input_stack_data_num_ = input_parameter_data_num;
     InsertActor(stack_actor.get());
@@ -347,7 +347,7 @@ std::vector<StackActorPtr> ControlNodeScheduler::BuildStackActor(const GraphComp
 }
 
 void ControlNodeScheduler::BuildStackActorForControlNode(const GraphCompilerInfo &graph_compiler_info,
-                                                         std::vector<StackActorPtr> *stack_actors) {
+                                                         std::vector<StackActorPtr> *const stack_actors) {
   const auto &parser = graph_compiler_info.control_node_parser_;
   MS_EXCEPTION_IF_NULL(parser);
 
@@ -407,8 +407,8 @@ void ControlNodeScheduler::BuildStackActorForControlNode(const GraphCompilerInfo
 
       if (control_node_level == iter->second &&
           (!(parser->IsRootGraphParameter(parameter.first) && IsPersistentDeviceTensor(parameter.first)))) {
-        formal_parameters.emplace_back(parameter);
-        device_contexts.emplace_back(device_context);
+        (void)formal_parameters.emplace_back(parameter);
+        (void)device_contexts.emplace_back(device_context);
       } else {
         formal_parameters.insert(formal_parameters.begin(), parameter);
         device_contexts.insert(device_contexts.begin(), device_context);
@@ -431,11 +431,11 @@ void ControlNodeScheduler::BuildStackActorForControlNode(const GraphCompilerInfo
     stack_actor->input_stack_partials_num_ = input_parameter_partials_num;
 
     InsertActor(stack_actor.get());
-    stack_actors->emplace_back(stack_actor);
+    (void)stack_actors->emplace_back(stack_actor);
   }
 }
 
-void ControlNodeScheduler::Link(ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info) {
+void ControlNodeScheduler::Link(ActorSet *const actor_set, const GraphCompilerInfo &graph_compiler_info) {
   MS_EXCEPTION_IF_NULL(actor_set);
   MS_EXCEPTION_IF_NULL(actor_set->control_actors_);
 
@@ -572,7 +572,7 @@ void ControlNodeScheduler::LinkArrowForControlActor(ControlActorSet *const contr
   }
 }
 
-void ControlNodeScheduler::LinkArrowFromStackActor(StackActor *stack_actor, ControlActor *to_actor) {
+void ControlNodeScheduler::LinkArrowFromStackActor(StackActor *const stack_actor, ControlActor *const to_actor) {
   MS_EXCEPTION_IF_NULL(stack_actor);
   MS_EXCEPTION_IF_NULL(to_actor);
 
@@ -678,7 +678,7 @@ void ControlNodeScheduler::LinkArrowByParameter(const AnfNodePtr &parameter, Con
                                                 const KernelWithIndex &to_node_with_index,
                                                 const ControlNodeParserPtr &parser) {
   if (parser->IsRootGraphParameter(parameter) && IsPersistentDeviceTensor(parameter)) {
-    to_actor->device_tensor_store_keys_.emplace_back(to_node_with_index.second, parameter);
+    (void)to_actor->device_tensor_store_keys_.emplace_back(to_node_with_index.second, parameter);
     return;
   }
   // Link arrow from entrance actor.
@@ -1025,14 +1025,14 @@ void ControlNodeScheduler::LinkControlArrowByAutoMonad(ControlActor *to_actor, c
         auto exit_actor_name = func_graph->ToString() + kExitActorNameSuffix;
         from_actor = FetchActor(exit_actor_name);
         MS_EXCEPTION_IF_NULL(from_actor);
-        from_actors.emplace_back(from_actor);
+        (void)from_actors.emplace_back(from_actor);
         auto exit_actor = dynamic_cast<ExitActor *>(from_actor);
         MS_EXCEPTION_IF_NULL(exit_actor);
         LinkControlArrowForExitActor(exit_actor, to_actor, branch_id);
       }
       to_actor->input_controls_num_ -= (func_graphs.size() - 1);
     } else if (from_actor != nullptr) {
-      from_actors.emplace_back(from_actor);
+      (void)from_actors.emplace_back(from_actor);
       LinkControlArrow(from_actor, to_actor);
     } else {
       if (graph == nullptr) {
@@ -1046,7 +1046,7 @@ void ControlNodeScheduler::LinkControlArrowByAutoMonad(ControlActor *to_actor, c
                       << " to actor:" << to_actor->GetAID() << " is already exist.";
         continue;
       }
-      from_actors.emplace_back(from_actor);
+      (void)from_actors.emplace_back(from_actor);
       LinkControlArrow(from_actor, to_actor);
     }
     if (to_actor->type_ != KernelTransformType::kStackActor || parser->IsRecursionCallNode(depend_node) ||
@@ -1060,7 +1060,7 @@ void ControlNodeScheduler::LinkControlArrowByAutoMonad(ControlActor *to_actor, c
     stack_actor->input_controls_num_--;
     stack_actor->input_stack_controls_num_++;
     for (const auto &actor : from_actors) {
-      stack_actor->stack_control_aids_.emplace(actor->GetAID());
+      (void)stack_actor->stack_control_aids_.emplace(actor->GetAID());
     }
   }
 }
@@ -1316,7 +1316,7 @@ void ControlNodeScheduler::LinkDataArrow(AbstractActor *const from_actor, Abstra
   (void)to_actor->input_data_arrow_aids_.emplace_back(from_actor->GetAID());
 }
 
-void ControlNodeScheduler::LinkControlArrow(AbstractActor *from_actor, AbstractActor *to_actor) {
+void ControlNodeScheduler::LinkControlArrow(AbstractActor *const from_actor, AbstractActor *to_actor) {
   MS_EXCEPTION_IF_NULL(from_actor);
   MS_EXCEPTION_IF_NULL(to_actor);
   (void)from_actor->output_control_arrows_.emplace_back(to_actor->GetAID());
@@ -1373,16 +1373,16 @@ void ControlNodeScheduler::LinkPartialArrow(ControlActor *const from_actor, Cont
   MS_EXCEPTION_IF_NULL(from_actor);
   MS_EXCEPTION_IF_NULL(to_actor);
   auto op_arrow = std::make_shared<DataArrow>(from_index, to_actor->GetAID(), to_index);
-  from_actor->output_partial_arrows_.emplace_back(op_arrow);
+  (void)from_actor->output_partial_arrows_.emplace_back(op_arrow);
   to_actor->input_partials_num_++;
-  to_actor->input_partial_arrow_aids_.emplace_back(from_actor->GetAID());
+  (void)to_actor->input_partial_arrow_aids_.emplace_back(from_actor->GetAID());
 }
 
 void ControlNodeScheduler::LinkBranchIDArrow(ControlActor *const from_actor, ControlActor *const to_actor) {
   MS_EXCEPTION_IF_NULL(from_actor);
   MS_EXCEPTION_IF_NULL(to_actor);
-  from_actor->output_branch_id_arrows_.emplace_back(to_actor->GetAID());
-  to_actor->input_branch_id_arrow_aids_.emplace_back(from_actor->GetAID());
+  (void)from_actor->output_branch_id_arrows_.emplace_back(to_actor->GetAID());
+  (void)to_actor->input_branch_id_arrow_aids_.emplace_back(from_actor->GetAID());
   to_actor->input_branch_ids_num_++;
 }
 
