@@ -29,7 +29,8 @@ typedef struct ScatterNDParameter {
 #ifdef __cplusplus
 extern "C" {
 #endif
-int DoScatterND(void *output, const void *update, int *output_unit_offsets, ScatterNDParameter *param, int task_id);
+int DoScatterND(void *output, const void *update, int *output_unit_offsets, const ScatterNDParameter *param,
+                int task_id);
 #ifdef __cplusplus
 }
 #endif

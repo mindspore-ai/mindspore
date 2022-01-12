@@ -18,7 +18,8 @@
 #include <string.h>
 #include "nnacl/errorcode.h"
 
-int DoScatterND(void *output, const void *update, int *output_unit_offsets, ScatterNDParameter *param, int task_id) {
+int DoScatterND(void *output, const void *update, int *output_unit_offsets, const ScatterNDParameter *param,
+                int task_id) {
   if (param->op_parameter.thread_num_ == 0) {
     return NNACL_ERR;
   }
