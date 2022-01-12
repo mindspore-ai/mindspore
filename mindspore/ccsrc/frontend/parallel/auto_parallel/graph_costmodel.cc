@@ -187,7 +187,7 @@ void CostGraph::BFS(const OperatorInfoPtr &op, const StrategyPtr &op_stra,
     if (curr_op->IsReshape()) {
       curr_op->set_swc_index(configured_stra_index, curr_depth);
     } else {
-      curr_op->SetSelectedStrategy(configured_stra, curr_depth);
+      curr_op->SetSelectedStrategy(configured_stra, LongToSize(curr_depth));
     }
     for (auto &edge : curr_op->succ_edges()) {
       const auto &next_op = edge->next_operator();

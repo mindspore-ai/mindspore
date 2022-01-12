@@ -85,7 +85,7 @@ std::vector<SplitGraphSegment> GraphSplitter::GenerateSplitSegments() {
   MS_EXCEPTION_IF_NULL(func_graph_);
   auto return_node = func_graph_->get_return();
   MS_EXCEPTION_IF_NULL(return_node);
-  std::vector<AnfNodePtr> nodes = func_graph_->TopoSort(return_node);
+  std::vector<AnfNodePtr> nodes = FuncGraph::TopoSort(return_node);
 
   std::vector<SplitGraphSegment> results = {};
   SplitGraphSegment segment;
@@ -201,8 +201,7 @@ void GraphSplitter::SplitGraph(const std::vector<SplitGraphSegment> &segments,
   }
 }
 
-void GraphSplitter::DumpDistributedGraph(const std::vector<SplitGraphSegment> &segments,
-                                         const InterProcessOpEdgesInfo &comm_edges) {
+void GraphSplitter::DumpDistributedGraph(const InterProcessOpEdgesInfo &comm_edges) {
   // Traverse all the segments to add Depend for this process's graph.
   for (const auto &edge : comm_edges) {
     auto send_recv_pair = edge.second;
