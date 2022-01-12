@@ -172,7 +172,7 @@ static inline void simd_exp32(float src, float *dst) {
   float decimal = src - integer * param[0];
   fi int_exp;
   int_exp.i = (integer + 127) << 23;
-  float decimal_exp =
+  const float decimal_exp =
     1.0f + decimal * (1.0f + decimal * (0.5f + decimal * (param[3] + decimal * (param[2] + decimal * param[1]))));
   *dst = int_exp.f * decimal_exp;
 }

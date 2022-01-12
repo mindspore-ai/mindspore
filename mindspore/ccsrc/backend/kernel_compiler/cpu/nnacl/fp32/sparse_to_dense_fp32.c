@@ -16,7 +16,7 @@
 #include "nnacl/fp32/sparse_to_dense_fp32.h"
 #include "nnacl/errorcode.h"
 
-int SparseToDenseSetDefault(float *output, float default_value, SparseToDenseParameter *param, int task_id) {
+int SparseToDenseSetDefault(float *output, float default_value, const SparseToDenseParameter *param, int task_id) {
   if (param->op_parameter_.thread_num_ == 0) {
     return NNACL_ERR;
   }
