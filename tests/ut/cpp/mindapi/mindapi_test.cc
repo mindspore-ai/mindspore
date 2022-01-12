@@ -141,6 +141,15 @@ TEST_F(TestMindApi, test_values) {
   ASSERT_EQ(utils::cast<int64_t>(value_list[0]), 3);
   ASSERT_EQ(utils::cast<int64_t>(value_list[1]), 4);
   ASSERT_EQ(utils::cast<int64_t>(value_list[2]), 5);
+
+  std::vector<uint8_t> vec_uint8{5, 6, 7};
+  auto uint8_seq = MakeValue<std::vector<uint8_t>>(vec_uint8);
+  ASSERT_TRUE(uint8_seq->isa<ValueSequence>());
+  auto uint8_values = GetValue<std::vector<uint8_t>>(uint8_seq);
+  ASSERT_EQ(uint8_values.size(), 3);
+  ASSERT_EQ(uint8_values[0], 5);
+  ASSERT_EQ(uint8_values[1], 6);
+  ASSERT_EQ(uint8_values[2], 7);
 }
 
 /// Feature: MindAPI
