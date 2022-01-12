@@ -77,16 +77,12 @@ class Callback:
     """
     Abstract base class used to build a callback class. Callbacks are context managers
     which will be entered and exited when passing into the Model.
-    You can use this mechanism to initialize and release resources automatically.
+    You can use this mechanism to do some custom operations.
 
-    Callback function will execute some operations in the current step or epoch.
+    Callback function can perform some operations before and after step or epoch.
     To create a custom callback, subclass Callback and override the method associated
     with the stage of interest. For details of Callback fusion, please check
     `Callback <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/custom_debugging_info.html>`_.
-
-    It holds the information of the model. Such as `network`, `train_network`, `epoch_num`, `batch_num`,
-    `loss_fn`, `optimizer`, `parallel_mode`, `device_number`, `list_callback`, `cur_epoch_num`,
-    `cur_step_num`, `dataset_sink_mode`, `net_outputs` and so on.
 
     Examples:
         >>> from mindspore import Model, nn

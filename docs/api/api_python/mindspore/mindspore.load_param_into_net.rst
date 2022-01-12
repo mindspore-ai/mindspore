@@ -3,7 +3,7 @@ mindspore.load_param_into_net
 
 .. py:class:: mindspore.load_param_into_net(net, parameter_dict, strict_load=False)
 
-    将参数加载到网络中。
+    将参数加载到网络中，返回网络中没有被加载的参数列表。
 
     **参数：**
 

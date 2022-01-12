@@ -63,53 +63,97 @@
     .. py:method:: append_dict
         :property:
 
-        获取checkpoint中添加字典里面的值。
+        获取需要额外保存到checkpoint中的字典的值。
+
+        **返回：**
+
+        Dict: 字典中的值。
 
     .. py:method:: async_save
         :property:
 
         获取是否异步保存checkpoint。
 
+        **返回：**
+
+        Bool: 是否异步保存checkpoint。
+
     .. py:method:: enc_key
         :property:
 
         获取加密的key值。
+
+        **返回：**
+
+        (None, bytes): 加密的key值。
 
     .. py:method:: enc_mode
         :property:
 
         获取加密模式。
 
+        **返回：**
+
+        str: 加密模式。
+
     .. py:method:: get_checkpoint_policy()
 
         获取checkpoint的保存策略。
+
+        **返回：**
+
+        Dict: checkpoint的保存策略。
 
     .. py:method:: integrated_save
         :property:
 
         获取是否合并保存拆分后的Tensor。
 
+        **返回：**
+
+        Bool: 获取是否合并保存拆分后的Tensor。
+
     .. py:method:: keep_checkpoint_max
         :property:
 
         获取最多保存checkpoint文件的数量。
+
+        **返回：**
+
+        Int: 最多保存checkpoint文件的数量。
 
     .. py:method:: keep_checkpoint_per_n_minutes
         :property:
 
         获取每隔多少分钟保存一个checkpoint文件。
 
+        **返回：**
+
+        Int: 每隔多少分钟保存一个checkpoint文件。
+
     .. py:method:: saved_network
         :property:
 
-        获取保存的网络。
+        获取需要保存的网络。
+
+        **返回：**
+
+        Cell: 需要保存的网络。
 
     .. py:method:: save_checkpoint_seconds
         :property:
 
-        获取每隔多少秒保存一次checkpoint文件。。
+        获取每隔多少秒保存一次checkpoint文件。
+
+        **返回：**
+
+        Int: 每隔多少秒保存一次checkpoint文件。
 
     .. py:method:: save_checkpoint_steps
         :property:
 
         获取每隔多少个step保存一次checkpoint文件。
+
+        **返回：**
+
+        Int: 每隔多少个step保存一次checkpoint文件。

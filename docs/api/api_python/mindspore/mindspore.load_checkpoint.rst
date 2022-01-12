@@ -20,7 +20,7 @@ mindspore.load_checkpoint
 
     **异常：**
 
-    - **ValueError** – checkpoint文件格式正确。
+    - **ValueError** – checkpoint文件格式不正确。
 
     **样例：**
 
