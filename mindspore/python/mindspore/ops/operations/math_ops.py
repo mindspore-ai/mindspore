@@ -2899,7 +2899,7 @@ class FloorDiv(Primitive):
         """Initialize FloorDiv."""
         self.init_prim_io_names(inputs=['x', 'y'], outputs=['output'])
 
-class TruncateDiv(_MathBinaryOp):
+class TruncateDiv(Primitive):
     """
     Divides the first input tensor by the second input tensor element-wise for integer types, negative numbers will
     round fractional quantities towards zero.
@@ -2938,6 +2938,13 @@ class TruncateDiv(_MathBinaryOp):
         >>> print(output)
         [0 1 0]
     """
+
+    __mindspore_signature__ = (sig.sig_dtype.T, sig.sig_dtype.T)
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize TruncateDiv."""
+        self.init_prim_io_names(inputs=['x', 'y'], outputs=['output'])
 
 
 class TruncateMod(Primitive):
