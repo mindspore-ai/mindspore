@@ -19,7 +19,7 @@
       支持传入JSON文件路径或 mindspore.dataset.Schema 构造的对象。默认值：None，不指定。
       用户可以通过提供 `column_names` 或 `schema` 指定数据集的列名，但如果同时指定两者，则将优先从 `schema` 中获取列名信息。
     - **num_samples** (int，可选) - 指定从数据集中读取的样本数，默认值：None，读取全部样本。
-    - **num_parallel_workers** (int，可选) - 指定读取数据的工作线程数，默认值：1。
+    - **num_parallel_workers** (int，可选) - 指定读取数据的工作进程数/线程数（由参数 `python_multiprocessing` 决定当前为多进程模式或多线程模式），默认值：1。
     - **shuffle** (bool，可选) - 是否混洗数据集。只有输入的 `source` 参数带有可随机访问属性（`__getitem__`）时，才可以指定该参数。默认值：None，下表中会展示不同配置的预期行为。
     - **sampler** (Union[Sampler, Iterable]，可选) - 指定从数据集中选取样本的采样器。只有输入的 `source` 参数带有可随机访问属性（`__getitem__`）时，才可以指定该参数。默认值：None，下表中会展示不同配置的预期行为。
     - **num_shards** (int, 可选) - 指定分布式训练时将数据集进行划分的分片数，默认值：None。指定此参数后, `num_samples` 表示每个分片的最大样本数。
