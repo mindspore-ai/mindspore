@@ -137,14 +137,13 @@ void SchedulerNode::ProcessHeartbeat(const std::shared_ptr<TcpServer> &server,
   CHECK_RETURN_TYPE(heartbeat_message.ParseFromArray(data, SizeToInt(size)));
 
   std::string node_id = heartbeat_message.node_id();
-  node_manager_.UpdateHeartbeat(node_id);
   MS_LOG(DEBUG) << "The scheduler get a heartbeat from node id :" << heartbeat_message.node_id();
 
   HeartbeatRespMessage heartbeat_resp_message;
   heartbeat_resp_message.set_persistent_cmd(PersistentCommand::DEFAULT);
 
   NodeInfo nodeInfo = node_manager_.QueryNodeInfo(node_id);
-  if (nodeInfo.node_id_ != "") {
+  if (!nodeInfo.node_id_.empty()) {
     // The worker role does not support disaster recovery for the time being.
     NodeRole node_role = nodeInfo.node_role_;
     if (node_role == NodeRole::SERVER && persistent_cmd_ == PersistentCommand::BEGIN_PERSIST) {
@@ -156,6 +155,7 @@ void SchedulerNode::ProcessHeartbeat(const std::shared_ptr<TcpServer> &server,
         persistent_cmd_ = PersistentCommand::DEFAULT;
       }
     }
+    node_manager_.UpdateHeartbeat(node_id);
   }
 
   MS_LOG(DEBUG) << "The cluster state:" << CommUtil::ClusterStateToString(node_manager_.GetClusterState());
@@ -223,14 +223,13 @@ void SchedulerNode::CreateTcpServer() {
 
   const auto client_disconn = [&](const TcpServer &, const TcpConnection &conn) {
     int fd = conn.GetFd();
-    if (register_connection_fd_.count(fd) <= 0) {
-      return;
+    if (register_connection_fd_.count(fd) > 0) {
+      MS_LOG(WARNING) << "remove client fd:" << fd << ", remove client id:" << register_connection_fd_[fd];
+      (void)register_connection_fd_.erase(fd);
+      MS_LOG(INFO) << "Register node number is:" << register_connection_fd_.size()
+                   << ", total node num is:" << node_manager_.total_node_num()
+                   << ", scale in node size is: " << scale_in_node_ids_.size();
     }
-    MS_LOG(WARNING) << "remove client fd:" << fd << ", remove client id:" << register_connection_fd_[fd];
-    register_connection_fd_.erase(fd);
-    MS_LOG(WARNING) << "Register node number is:" << register_connection_fd_.size()
-                    << ", total node num is:" << node_manager_.total_node_num()
-                    << ", scale in node size is: " << scale_in_node_ids_.size();
   };
   server_->SetServerCallback(nullptr, client_disconn, nullptr);
   server_->Init();
@@ -320,7 +319,7 @@ void SchedulerNode::ProcessRegister(const std::shared_ptr<TcpServer> &server,
     auto node_infos = node_manager_.nodes_info();
     bool res = SendPrepareBuildingNetwork(node_infos);
     if (!res) {
-      MS_LOG(WARNING) << "Prepare for building network failed!";
+      MS_LOG(ERROR) << "Prepare for building network failed!";
       return;
     }
     MS_LOG(INFO) << "Prepare for building network success.";
@@ -475,23 +474,22 @@ void SchedulerNode::ProcessSendEvent(const std::shared_ptr<TcpServer> &server,
 }
 
 bool SchedulerNode::SendPrepareBuildingNetwork(const std::unordered_map<std::string, NodeInfo> &node_infos) {
-  std::string timeoutNodeId = "";
+  uint64_t request_id = AddMessageTrack(node_infos.size());
   for (const auto &kvs : node_infos) {
     auto client = GetOrCreateClient(kvs.second);
+    MS_ERROR_IF_NULL_W_RET_VAL(client, false);
     auto message_meta = std::make_shared<MessageMeta>();
     MS_EXCEPTION_IF_NULL(message_meta);
+    message_meta->set_request_id(request_id);
     message_meta->set_cmd(NodeCommand::PREPARE_BUILDING_NETWORK);
 
-    SendMetadataMessage send_metadata_message;
-    send_metadata_message.set_rank_id(kvs.second.rank_id_);
-    if (!SendMessageSync(client, message_meta, Protos::PROTOBUF, send_metadata_message.SerializeAsString().data(),
-                         send_metadata_message.ByteSizeLong(), kCommTimeoutInThreeSeconds)) {
+    std::string req_data;
+    if (!client->SendMessage(message_meta, Protos::RAW, req_data.data(), req_data.length())) {
       MS_LOG(ERROR) << "The node role:" << CommUtil::NodeRoleToString(kvs.second.node_role_)
                     << " the node id:" << kvs.second.node_id_ << " prepare building network timeout!";
-      timeoutNodeId += kvs.second.node_id_ + " ";
     }
   }
-  return timeoutNodeId.empty();
+  return Wait(request_id);
 }
 
 void SchedulerNode::SendMetadata(const std::shared_ptr<TcpClient> &client, uint32_t rank_id) {
@@ -602,7 +600,7 @@ void SchedulerNode::StartUpdateClusterStateTimer() {
       // 1. update cluster timeout
       if (!is_ready_ && (std::chrono::steady_clock::now() - start_time >
                          std::chrono::seconds(PSContext::instance()->cluster_config().cluster_available_timeout))) {
-        node_manager_.CheckClusterTimeout();
+        node_manager_.UpdateClusterState(ClusterState::CLUSTER_EXIT);
       }
       std::this_thread::sleep_for(std::chrono::seconds(PSContext::instance()->cluster_config().heartbeat_interval));
       node_manager_.UpdateCluster();
@@ -645,7 +643,7 @@ const std::shared_ptr<TcpClient> &SchedulerNode::GetOrCreateClient(const NodeInf
     }
     std::string ip = node_info.ip_;
     uint16_t port = node_info.port_;
-    MS_LOG(DEBUG) << "ip:" << ip << ", port:" << port << ", node id:" << node_info.node_id_;
+    MS_LOG(INFO) << "ip:" << ip << ", port:" << port << ", node id:" << node_info.node_id_;
     auto client = std::make_shared<TcpClient>(ip, port, config_.get());
     MS_EXCEPTION_IF_NULL(client);
     client->SetMessageCallback(
@@ -1358,7 +1356,7 @@ void SchedulerNode::PersistMetaData() {
 }
 
 bool SchedulerNode::CheckIfNodeDisconnected() const {
-  return UintToInt(register_connection_fd_.size()) != node_manager_.total_node_num();
+  return UlongToUint(register_connection_fd_.size()) != node_manager_.total_node_num();
 }
 
 void SchedulerNode::BroadcastTimeoutEvent() {

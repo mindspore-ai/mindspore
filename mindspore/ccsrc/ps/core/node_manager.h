@@ -45,10 +45,9 @@ class NodeManager {
  public:
   NodeManager()
       : initial_total_node_num_(0),
-        total_node_num_(-1),
-        current_node_num_(-1),
-        next_worker_rank_id_(-1),
-        next_server_rank_id_(-1),
+        total_node_num_(0),
+        next_worker_rank_id_(0),
+        next_server_rank_id_(0),
         meta_data_(nullptr),
         node_state_(NodeState::NODE_STARTING),
         cluster_state_(ClusterState::ClUSTER_STARTING) {}
@@ -57,7 +56,7 @@ class NodeManager {
   // When initializing nodes, the initial number of nodes will be assigned to the total number of nodes.
   void InitNode();
   uint32_t NextRankId(const RegisterMessage &register_message, const std::shared_ptr<MessageMeta> &meta);
-  uint32_t checkIfRankIdExist(const RegisterMessage &register_message, const std::shared_ptr<MessageMeta> &meta);
+  uint32_t checkIfRankIdExist(const RegisterMessage &register_message);
 
   void UpdateHeartbeat(const std::string &node_id);
   std::vector<ServersMeta> FetchServersMeta();
@@ -65,7 +64,6 @@ class NodeManager {
   std::vector<ServersMeta> FetchAllNodesMeta();
 
   void UpdateCluster();
-  void CheckClusterTimeout();
   void AddFinishNode(const std::string &finish_message);
 
   // After the scheduler receives the scale_out_done node, it will save this node.
@@ -92,15 +90,15 @@ class NodeManager {
   // After all the nodes are registered successfully, the nodes info can be updated.
   void UpdateNodesInfo();
 
-  void set_total_node_num(const int32_t &node_num);
-  const int32_t &total_node_num() const;
-  void set_worker_num(const int32_t &worker_num);
-  void set_server_num(const int32_t &server_num);
-  int32_t worker_num() const;
-  int32_t server_num() const;
+  void set_total_node_num(const uint32_t &node_num);
+  const uint32_t &total_node_num() const;
+  void set_worker_num(const uint32_t &worker_num);
+  void set_server_num(const uint32_t &server_num);
+  uint32_t worker_num() const;
+  uint32_t server_num() const;
 
-  int32_t next_worker_rank_id() const;
-  int32_t next_server_rank_id() const;
+  uint32_t next_worker_rank_id() const;
+  uint32_t next_server_rank_id() const;
 
   void UpdateNodeState(const NodeState &state);
   void UpdateClusterState(const ClusterState &state);
@@ -119,8 +117,8 @@ class NodeManager {
   bool IsNodeRegistered(const std::string &node_id);
 
   void set_registered_nodes_info(const std::unordered_map<std::string, NodeInfo> registered_nodes_info);
-  void set_next_worker_rank_id(const int32_t &next_worker_rank_id);
-  void set_next_server_rank_id(const int32_t &next_server_rank_id);
+  void set_next_worker_rank_id(const uint32_t &next_worker_rank_id);
+  void set_next_server_rank_id(const uint32_t &next_server_rank_id);
   void setPersistCallback(const OnPersist &onPersist);
 
   // Query node information by node id.
@@ -140,11 +138,11 @@ class NodeManager {
   std::mutex cluster_mutex_;
 
   uint32_t initial_total_node_num_;
-  int32_t total_node_num_;
-  int32_t current_node_num_;
+  uint32_t total_node_num_;
+  uint32_t current_node_num_;
 
-  std::atomic<int> next_worker_rank_id_;
-  std::atomic<int> next_server_rank_id_;
+  std::atomic<uint32_t> next_worker_rank_id_;
+  std::atomic<uint32_t> next_server_rank_id_;
 
   // Whenever a node is registered, it will be stored in this map.
   std::unordered_map<std::string, NodeInfo> registered_nodes_info_;

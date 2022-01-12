@@ -28,8 +28,7 @@ void NodeManager::InitNode() {
   total_node_num_ = initial_total_node_num_;
 }
 
-uint32_t NodeManager::checkIfRankIdExist(const RegisterMessage &register_message,
-                                         const std::shared_ptr<MessageMeta> &meta) {
+uint32_t NodeManager::checkIfRankIdExist(const RegisterMessage &register_message) {
   uint32_t rank_id = UINT_MAX;
   const std::string &node_id = register_message.node_id();
   if (registered_nodes_info_.find(node_id) != registered_nodes_info_.end()) {
@@ -70,11 +69,11 @@ uint32_t NodeManager::NextRankId(const RegisterMessage &register_message, const 
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(meta_data_);
   std::lock_guard<std::mutex> lock(assign_rank_id_mutex_);
-  uint32_t rank_id = checkIfRankIdExist(register_message, meta);
+  uint32_t rank_id = checkIfRankIdExist(register_message);
   if (rank_id != UINT_MAX) {
     return rank_id;
   }
-  if (total_node_num_ == SizeToInt(registered_nodes_info_.size())) {
+  if (total_node_num_ == SizeToUint(registered_nodes_info_.size())) {
     MS_LOG(WARNING) << "There are enough nodes registering to scheduler.";
     return UINT_MAX;
   }
@@ -94,11 +93,12 @@ uint32_t NodeManager::NextRankId(const RegisterMessage &register_message, const 
       return res;
     });
     if (rank_it == registered_nodes_info_.end()) {
-      if (meta->rank_id() != UINT32_MAX && UintToInt(meta->rank_id()) <= next_server_rank_id_) {
+      if (meta->rank_id() != UINT32_MAX && meta->rank_id() < next_server_rank_id_) {
         rank_id = meta->rank_id();
         MS_LOG(INFO) << "Use the old rank id:" << rank_id;
       } else {
-        rank_id = ++next_server_rank_id_;
+        rank_id = next_server_rank_id_;
+        ++next_server_rank_id_;
       }
     } else {
       registered_nodes_info_.erase((*rank_it).first);
@@ -134,11 +134,12 @@ uint32_t NodeManager::NextRankId(const RegisterMessage &register_message, const 
         return res;
       });
     if (worker_rank_it == registered_nodes_info_.end()) {
-      if (meta->rank_id() != UINT32_MAX && UintToInt(meta->rank_id()) <= next_worker_rank_id_) {
+      if (meta->rank_id() != UINT32_MAX && meta->rank_id() < next_worker_rank_id_) {
         rank_id = meta->rank_id();
         MS_LOG(INFO) << "Use the old rank id:" << rank_id;
       } else {
-        rank_id = ++next_worker_rank_id_;
+        rank_id = next_worker_rank_id_;
+        ++next_worker_rank_id_;
       }
     } else {
       registered_nodes_info_.erase((*worker_rank_it).first);
@@ -224,7 +225,7 @@ void NodeManager::UpdateCluster() {
     if (onPersist) {
       onPersist();
     }
-  } else if (SizeToInt(heartbeats_.size()) == total_node_num_) {
+  } else if (SizeToUint(heartbeats_.size()) == total_node_num_) {
     if (cluster_state_ == ClusterState::NODE_TIMEOUT) {
       for (auto it = registered_nodes_info_.begin(); it != registered_nodes_info_.end(); ++it) {
         if (registered_nodes_info_.count(it->first)) {
@@ -239,20 +240,8 @@ void NodeManager::UpdateCluster() {
   }
 
   // 2. update cluster finish state
-  if (SizeToInt(finish_nodes_id_.size()) == total_node_num_ ||
-      SizeToInt(finish_nodes_id_.size()) == current_node_num_) {
+  if (SizeToUint(finish_nodes_id_.size()) == total_node_num_) {
     UpdateClusterState(ClusterState::CLUSTER_EXIT);
-  }
-}
-
-void NodeManager::CheckClusterTimeout() {
-  if (total_node_num_ != SizeToInt(registered_nodes_info_.size())) {
-    MS_LOG(WARNING) << "The cluster is not ready after "
-                    << PSContext::instance()->cluster_config().cluster_available_timeout
-                    << " seconds,so finish the cluster, and change total node number from " << total_node_num_ << " to "
-                    << registered_nodes_info_.size();
-    current_node_num_ = SizeToInt(registered_nodes_info_.size());
-    UpdateClusterState(ClusterState::NODE_TIMEOUT);
   }
 }
 
@@ -263,18 +252,20 @@ void NodeManager::AddScaleOutDoneNode(const std::string &node_id) { scale_out_do
 void NodeManager::AddScaleInDoneNode(const std::string &node_id) { scale_in_done_nodes_id_.insert(node_id); }
 
 bool NodeManager::IsAllNodesRegistered() const {
-  int32_t num = std::count_if(registered_nodes_info_.begin(), registered_nodes_info_.end(),
-                              [](auto item) { return item.second.is_alive == true; });
+  uint32_t num = std::count_if(registered_nodes_info_.begin(), registered_nodes_info_.end(),
+                               [](auto item) { return item.second.is_alive == true; });
   return num == total_node_num_;
 }
 
-bool NodeManager::IsAllNodesFinished() const { return SizeToInt(finish_nodes_id_.size()) == total_node_num_; }
+bool NodeManager::IsAllNodesFinished() const { return SizeToUint(finish_nodes_id_.size()) == total_node_num_; }
 
 bool NodeManager::IsAllNodesScaleOutDone() const {
-  return SizeToInt(scale_out_done_nodes_id_.size()) == total_node_num_;
+  return SizeToUint(scale_out_done_nodes_id_.size()) == total_node_num_;
 }
 
-bool NodeManager::IsAllNodesScaleInDone() const { return SizeToInt(scale_in_done_nodes_id_.size()) == total_node_num_; }
+bool NodeManager::IsAllNodesScaleInDone() const {
+  return SizeToUint(scale_in_done_nodes_id_.size()) == total_node_num_;
+}
 
 const std::unordered_map<std::string, NodeInfo> &NodeManager::nodes_info() const { return nodes_info_; }
 
@@ -362,7 +353,6 @@ bool NodeManager::IsNodeRegistered(const std::string &node_id) {
 const NodeInfo NodeManager::QueryNodeInfo(const std::string &node_id) const {
   auto iter = registered_nodes_info_.find(node_id);
   if (iter == registered_nodes_info_.end()) {
-    MS_LOG(DEBUG) << "Cannot find node of id: " << node_id;
     return NodeInfo();
   }
   return iter->second;
@@ -376,33 +366,33 @@ void NodeManager::AddPersistingNode(const std::string &node_id) { (void)nodes_pe
 
 bool NodeManager::IsAllNodeInPersisting() {
   // The worker role does not support disaster recovery currently.
-  if (nodes_persisting_.size() == IntToSize(server_num())) {
+  if (SizeToUint(nodes_persisting_.size()) == server_num()) {
     nodes_persisting_.clear();
     return true;
   }
   return false;
 }
 
-void NodeManager::set_total_node_num(const int32_t &node_num) { total_node_num_ = node_num; }
+void NodeManager::set_total_node_num(const uint32_t &node_num) { total_node_num_ = node_num; }
 
-const int32_t &NodeManager::total_node_num() const { return total_node_num_; }
+const uint32_t &NodeManager::total_node_num() const { return total_node_num_; }
 
-void NodeManager::set_worker_num(const int32_t &worker_num) { meta_data_->worker_num = IntToUint(worker_num); }
+void NodeManager::set_worker_num(const uint32_t &worker_num) { meta_data_->worker_num = worker_num; }
 
-void NodeManager::set_server_num(const int32_t &server_num) { meta_data_->server_num = IntToUint(server_num); }
+void NodeManager::set_server_num(const uint32_t &server_num) { meta_data_->server_num = server_num; }
 
-int32_t NodeManager::worker_num() const { return UintToInt(meta_data_->worker_num); }
+uint32_t NodeManager::worker_num() const { return meta_data_->worker_num; }
 
-int32_t NodeManager::server_num() const { return UintToInt(meta_data_->server_num); }
+uint32_t NodeManager::server_num() const { return meta_data_->server_num; }
 
-int32_t NodeManager::next_worker_rank_id() const { return next_worker_rank_id_.load(); }
+uint32_t NodeManager::next_worker_rank_id() const { return next_worker_rank_id_.load(); }
 
-int32_t NodeManager::next_server_rank_id() const { return next_server_rank_id_.load(); }
+uint32_t NodeManager::next_server_rank_id() const { return next_server_rank_id_.load(); }
 
-void NodeManager::set_next_worker_rank_id(const int32_t &next_worker_rank_id) {
+void NodeManager::set_next_worker_rank_id(const uint32_t &next_worker_rank_id) {
   this->next_worker_rank_id_ = next_worker_rank_id;
 }
-void NodeManager::set_next_server_rank_id(const int32_t &next_server_rank_id) {
+void NodeManager::set_next_server_rank_id(const uint32_t &next_server_rank_id) {
   this->next_server_rank_id_ = next_server_rank_id;
 }
 void NodeManager::setPersistCallback(const OnPersist &onPersist) { this->onPersist = onPersist; }

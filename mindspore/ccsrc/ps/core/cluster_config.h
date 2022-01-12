@@ -61,7 +61,7 @@ struct ClusterConfig {
   uint16_t scheduler_port;
   // The timeout for worker node and server node sending heartbeat packets to scheduler node is 30 seconds.
   uint32_t heartbeat_timeout;
-  // Timeout period for cluster preparation is 300 seconds.
+  // Timeout period for cluster preparation is 900 seconds.
   uint32_t cluster_available_timeout;
   // The timeout period for the client to connect to the server is 3000ms.
   uint32_t connect_interval;

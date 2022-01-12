@@ -159,7 +159,7 @@ void TcpClient::Stop() {
 
 void TcpClient::SetTcpNoDelay(const evutil_socket_t &fd) {
   const int one = 1;
-  int ret = setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof(int));
+  int ret = setsockopt(fd, static_cast<int>(IPPROTO_TCP), static_cast<int>(TCP_NODELAY), &one, sizeof(int));
   if (ret < 0) {
     MS_LOG(EXCEPTION) << "Set socket no delay failed!";
   }
@@ -193,10 +193,10 @@ void TcpClient::ReadCallbackInner(struct bufferevent *bev, void *const ctx) {
   auto tcp_client = reinterpret_cast<TcpClient *>(ctx);
 
   char read_buffer[kMessageChunkLength];
-  int read = 0;
+  size_t read = 0;
 
-  while ((read = bufferevent_read(bev, &read_buffer, SizeToInt(sizeof(read_buffer)))) > 0) {
-    tcp_client->OnReadHandler(read_buffer, IntToSize(read));
+  while ((read = bufferevent_read(bev, &read_buffer, sizeof(read_buffer))) > 0) {
+    tcp_client->OnReadHandler(read_buffer, read);
   }
 }
 

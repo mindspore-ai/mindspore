@@ -21,7 +21,7 @@ namespace mindspore {
 namespace ps {
 namespace core {
 TcpMsgHandler::TcpMsgHandler(AbstractNode *abstract_node, const std::shared_ptr<core::TcpConnection> &conn,
-                             const std::shared_ptr<MessageMeta> &meta, DataPtr data, size_t size)
+                             const std::shared_ptr<MessageMeta> &meta, const DataPtr data, size_t size)
     : abstract_node_(abstract_node), tcp_conn_(conn), meta_(meta), data_ptr_(data), data_(nullptr), len_(size) {
   if (data_ptr_ != nullptr) {
     data_ = data_ptr_.get();
