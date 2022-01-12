@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,10 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """
-SummaryRecord.
-
-User can use SummaryRecord to dump the summary data, the summary is a series of operations
-to collect data for analysis and visualization.
+Summary related classes and functions. User can use SummaryRecord to dump the summary data, the summary is a series of
+operations to collect data for analysis and visualization.
 """
 
 from .summary_record import SummaryRecord
