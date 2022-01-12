@@ -41,6 +41,7 @@
 #include "frontend/operator/ops.h"
 #include "pipeline/jit/base.h"
 #include "debug/common.h"
+#include "debug/anf_dump_utils.h"
 
 using mindspore::tensor::TensorPy;
 
@@ -56,7 +57,6 @@ std::string GetKernelNodeName(const AnfNodePtr &anf_node) {
 }
 
 // ============================================= MindSpore IR Exporter =============================================
-
 std::string AnfExporter::GetNodeType(const AnfNodePtr &nd) {
   MS_EXCEPTION_IF_NULL(nd);
   ValuePtr tensor_value = nullptr;
@@ -492,10 +492,17 @@ void AnfExporter::OutputCNodeText(std::ofstream &ofs, const CNodePtr &cnode, con
     int apply_idx = (*idx)++;
     (*apply_map)[cnode] = apply_idx;
     std::string type_info = GetNodeType(cnode);
+    std::string func_str = GetNodeFuncStr(inputs[0]);
     if (type_info == "Undefined") {
-      ofs << "    %" << apply_idx << " = " << fv_text << op_text << "(";
+      ofs << "    %" << apply_idx << " = " << fv_text << op_text;
     } else {
-      ofs << "    %" << apply_idx << " : " << fv_text << type_info << " = " << op_text << "(";
+      ofs << "    %" << apply_idx << " : " << fv_text << type_info << " = " << op_text;
+    }
+    if (!func_str.empty()) {
+      ofs << "[" << func_str << "]"
+          << "(";
+    } else {
+      ofs << "(";
     }
   } else {
     ofs << "    " << fv_text << op_text << "(";

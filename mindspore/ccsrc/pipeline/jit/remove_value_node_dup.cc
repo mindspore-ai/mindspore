@@ -31,6 +31,10 @@ void TryToDoReplace(FuncGraphManager *const manager, const AnfNodePtr &node, Has
                     HashValue *const hash_value) {
   MS_EXCEPTION_IF_NULL(manager);
   MS_EXCEPTION_IF_NULL(hash_cache);
+
+  if (IsValueNode<FuncGraph>(node)) {
+    return;
+  }
   const auto &to_check_value = GetValueNode(node);
   MS_EXCEPTION_IF_NULL(to_check_value);
 

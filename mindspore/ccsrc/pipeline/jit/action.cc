@@ -303,6 +303,7 @@ FuncGraphPtr ProgramSpecialize(const ResourcePtr &res, const FuncGraphPtr &func_
   auto manager = res->manager();
   MS_EXCEPTION_IF_NULL(manager);
   manager->KeepRoots({result});
+  specializer.SpecializeCNodeInput0FuncGraph();
   MS_LOG(DEBUG) << "ProgramSpecialize end";
   return result;
 }

@@ -29,6 +29,7 @@
 #include "frontend/parallel/ops_info/operator_info.h"
 #include "pipeline/jit/base.h"
 #include "debug/trace.h"
+#include "debug/anf_dump_utils.h"
 #include "utils/trace_base.h"
 #include "utils/anf_utils.h"
 
@@ -266,12 +267,16 @@ void DumpOperator(const AnfNodePtr &node, const std::shared_ptr<SubGraphIRInfo> 
       gsub->buffer << "call @" << fg->ToString();
     }
   } else if (op->isa<CNode>()) {
+    std::string func_str = GetNodeFuncStr(op);
     if (gsub->local_var_map.find(op) != gsub->local_var_map.end()) {
       gsub->buffer << "%" << gsub->local_var_map[op];
     } else {
       auto input = op->cast<CNodePtr>();
       auto fg = input->func_graph();
       gsub->buffer << "$(@" << fg->ToString() << ":" << input->ToString() << ")";
+    }
+    if (!func_str.empty()) {
+      gsub->buffer << "[" << func_str << "]";
     }
   } else if (op->isa<ValueNode>()) {
     auto value = GetValueNode(op);
@@ -286,6 +291,10 @@ void DumpOperator(const AnfNodePtr &node, const std::shared_ptr<SubGraphIRInfo> 
     gsub->buffer << op->ToString();
     if (op->func_graph() != nullptr && op->func_graph() != node->func_graph()) {
       gsub->buffer << ")";
+    }
+    std::string func_str = GetNodeFuncStr(op);
+    if (!func_str.empty()) {
+      gsub->buffer << "[" << func_str << "]";
     }
   }
 }

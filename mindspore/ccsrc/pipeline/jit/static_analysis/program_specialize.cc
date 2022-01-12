@@ -56,6 +56,16 @@ bool IsVisible(FuncGraphPtr fg, const FuncGraphPtr &parent) {
   }
   return fg == parent;
 }
+
+const StringImmPtr kDeadNode = std::make_shared<StringImm>(kDeadNodeName);
+const StringImmPtr kPolyNode = std::make_shared<StringImm>(kPolyNodeName);
+
+inline bool CanSpecializeValueNode(const AnfNodePtr &node) {
+  if (IsValueNode<FuncGraph>(node) || IsValueNode<MetaFuncGraph>(node) || IsValueNode<Primitive>(node)) {
+    return true;
+  }
+  return false;
+}
 }  // namespace
 
 FuncGraphPtr ProgramSpecializer::Run(const FuncGraphPtr &fg, const AnalysisContextPtr &context) {
@@ -98,6 +108,129 @@ std::shared_ptr<FuncGraphSpecializer> ProgramSpecializer::GetFuncGraphSpecialize
     return iter->second;
   }
   return nullptr;
+}
+
+void ProgramSpecializer::PutSpecializedAbstract(const CNodePtr &cnode, const AnfNodePtr &func,
+                                                const AbstractFunctionPtr &old_abs_func,
+                                                const AbstractFunctionPtr &new_abs_func) {
+  auto iter = specialized_abs_map_.find(old_abs_func);
+  if (iter == specialized_abs_map_.end()) {
+    MS_LOG(DEBUG) << "Emplace cnode: " << cnode->DebugString() << ", func: " << func->ToString()
+                  << ", old_abstract: " << old_abs_func->ToString() << ", new_abs_func: " << new_abs_func->ToString();
+    specialized_abs_map_.emplace(old_abs_func, new_abs_func);
+  } else {
+    MS_LOG(DEBUG) << "Duplicate abstract from cnode: " << cnode->DebugString() << ", func: " << func->ToString()
+                  << ", old_abstract: " << old_abs_func->ToString() << ", new_abs_func: " << new_abs_func->ToString();
+    if (!(*iter->second == *new_abs_func)) {
+      MS_LOG(DEBUG) << "Duplicate abstract from cnode: " << cnode->DebugString() << ", func: " << func->ToString()
+                    << ", old_abstract: " << old_abs_func->ToString() << ", first: " << iter->second->ToString()
+                    << ", new_abs_func: " << new_abs_func->ToString();
+      // Cannot determined which one to use.
+      const auto poly_abstract = std::make_shared<AbstractError>(kPolyNode, func);
+      iter->second = poly_abstract;
+    }
+  }
+}
+
+AbstractBasePtr ProgramSpecializer::GetSpecializedAbstract(const AbstractFunctionPtr &old_abs_func) {
+  auto iter = specialized_abs_map_.find(old_abs_func);
+  if (iter != specialized_abs_map_.end()) {
+    MS_LOG(DEBUG) << "Find abstract for old_abstract: " << old_abs_func->ToString()
+                  << ", new_abs_func: " << iter->second->ToString();
+    if (iter->second->isa<AbstractFunction>()) {
+      return iter->second;
+    }
+    return nullptr;
+  }
+  MS_LOG(DEBUG) << "Cannot find abstract for old_abstract: " << old_abs_func->ToString();
+  return nullptr;
+}
+
+AbstractBasePtr ProgramSpecializer::SpecializeAbstractFuncRecursively(const AbstractFunctionPtr &old_abs_func) {
+  AbstractBasePtr new_abs = nullptr;
+  if (old_abs_func->isa<AbstractFuncUnion>()) {
+    AbstractFuncAtomPtrList func_atoms;
+    auto build_new_abs = [this, &func_atoms](const AbstractFuncAtomPtr &poss) {
+      auto resolved_atom = poss;
+      if (poss->isa<AsyncAbstractFuncAtom>()) {
+        const auto &async_abs_func = poss->cast<AsyncAbstractFuncAtomPtr>();
+        const auto &resolved_func = async_abs_func->GetUnique();
+        resolved_atom = resolved_func->cast<AbstractFuncAtomPtr>();
+        MS_EXCEPTION_IF_NULL(resolved_atom);
+        MS_LOG(DEBUG) << "Resolved AsyncAbstractFuncAtom is: " << resolved_atom->ToString();
+      }
+      auto specialized_abs = this->SpecializeAbstractFuncRecursively(resolved_atom);
+      AbstractFuncAtomPtr new_abs_atom = nullptr;
+      if (specialized_abs == nullptr) {
+        MS_LOG(DEBUG) << "Cannot resolve old_abs: " << resolved_atom->ToString()
+                      << " to specialized abstract, use old one";
+        new_abs_atom = resolved_atom;
+      } else if (specialized_abs->isa<AbstractFuncAtom>()) {
+        MS_LOG(DEBUG) << "Resolve old_abs: " << resolved_atom->ToString()
+                      << " to specialized abstract, specialized abstract: " << specialized_abs->ToString();
+        new_abs_atom = specialized_abs->cast<AbstractFuncAtomPtr>();
+      } else {
+        MS_LOG(DEBUG) << "Cannot resolve old_abs: " << resolved_atom->ToString()
+                      << " to AbstractFuncAtom, use old one. Specialized abstract: " << specialized_abs->ToString();
+        new_abs_atom = resolved_atom;
+      }
+      func_atoms.push_back(new_abs_atom);
+    };
+    old_abs_func->Visit(build_new_abs);
+    new_abs = std::make_shared<AbstractFuncUnion>(func_atoms);
+  } else if (old_abs_func->isa<FuncGraphAbstractClosure>() || old_abs_func->isa<MetaFuncGraphAbstractClosure>()) {
+    new_abs = GetSpecializedAbstract(old_abs_func);
+    if (new_abs != nullptr) {
+      MS_LOG(DEBUG) << "Find specialized abstract, old_abstract: " << old_abs_func->ToString()
+                    << ", specialized_abstract: " << new_abs->ToString();
+    } else {
+      MS_LOG(DEBUG) << "cannot find specialized abstract, old_abstract: " << old_abs_func->ToString();
+    }
+  } else if (old_abs_func->isa<PartialAbstractClosure>()) {
+    const auto &old_partial_abs = old_abs_func->cast<PartialAbstractClosurePtr>();
+    const auto &old_abs_fn = old_partial_abs->fn();
+    auto new_abs_fn = GetSpecializedAbstract(old_abs_fn);
+    if (new_abs_fn != nullptr && new_abs_fn->isa<AbstractFuncAtom>()) {
+      auto new_abs_fn_atom = new_abs_fn->cast<AbstractFuncAtomPtr>();
+      new_abs =
+        std::make_shared<PartialAbstractClosure>(new_abs_fn_atom, old_partial_abs->args(), old_partial_abs->node());
+      MS_LOG(DEBUG) << "Find specialized abstract, old_abstract: " << old_abs_func->ToString()
+                    << ", specialized_abstract: " << new_abs->ToString();
+    } else {
+      MS_LOG(DEBUG) << "cannot find specialized abstract, old_abstract: " << old_abs_func->ToString();
+    }
+  }
+  return new_abs;
+}
+
+void ProgramSpecializer::SpecializeCNodeInput0FuncGraph() {
+  const auto &all_nodes = mng_->all_nodes();
+  for (auto node : all_nodes) {
+    if (!node->isa<CNode>()) {
+      continue;
+    }
+    auto &input0 = node->cast<CNodePtr>()->input(0);
+    MS_EXCEPTION_IF_NULL(input0);
+    if (IsValueNode<FuncGraph>(input0)) {
+      continue;
+    }
+    const auto &old_abs = input0->abstract();
+    if (!(old_abs->isa<FuncGraphAbstractClosure>() || old_abs->isa<MetaFuncGraphAbstractClosure>() ||
+          old_abs->isa<AbstractFuncUnion>() || old_abs->isa<PartialAbstractClosure>())) {
+      continue;
+    }
+    auto old_abs_func = old_abs->cast<AbstractFunctionPtr>();
+    auto new_abs_func = SpecializeAbstractFuncRecursively(old_abs_func);
+    if (new_abs_func != nullptr) {
+      input0->set_abstract(new_abs_func);
+      MS_LOG(DEBUG) << "Find specialized abstract for node: " << input0->DebugString()
+                    << ", old_abstract: " << old_abs->ToString()
+                    << ", specialized_abstract: " << new_abs_func->ToString();
+    } else {
+      MS_LOG(DEBUG) << "cannot find specialized abstract for node: " << input0->DebugString()
+                    << ", old_abstract: " << old_abs_func->ToString();
+    }
+  }
 }
 
 static int64_t GetNextCounter() {
@@ -549,20 +682,8 @@ AnfNodePtr FuncGraphSpecializer::BuildReplacedNode(const AnfNodeConfigPtr &conf)
   return repl;
 }
 
-namespace {
-const StringImmPtr kDeadNode = std::make_shared<StringImm>(kDeadNodeName);
-const StringImmPtr kPolyNode = std::make_shared<StringImm>(kPolyNodeName);
-
-inline bool CanSpecializeValueNode(const AnfNodePtr &node) {
-  if (IsValueNode<FuncGraph>(node) || IsValueNode<MetaFuncGraph>(node) || IsValueNode<Primitive>(node)) {
-    return true;
-  }
-  return false;
-}
-}  // namespace
-
-AnfNodePtr FuncGraphSpecializer::BuildSpecializedNode(const AnfNodePtr &func, const AbstractBasePtr &abs,
-                                                      const AbstractBasePtrList &argvals) {
+AnfNodePtr FuncGraphSpecializer::BuildSpecializedNode(const CNodePtr &cnode, const AnfNodePtr &func,
+                                                      const AbstractBasePtr &abs, const AbstractBasePtrList &argvals) {
   MS_EXCEPTION_IF_NULL(abs);
   MS_EXCEPTION_IF_NULL(func);
   AbstractFunctionPtr real_a = dyn_cast<AbstractFunction>(abs);
@@ -571,7 +692,7 @@ AnfNodePtr FuncGraphSpecializer::BuildSpecializedNode(const AnfNodePtr &func, co
   AbstractFunctionPtr func_abs = real_a->GetUnique();
   SpecializeStatusCode errcode;
   ScopeGuard scope_guard(func->scope());
-  AnfNodePtr repl = BuildSpecializedNodeInner(func, abs, func_abs, argvals, &errcode);
+  AnfNodePtr repl = BuildSpecializedNodeInner(cnode, func, abs, func_abs, argvals, &errcode);
   if (repl == nullptr) {
     if (errcode == kSpecializeDead) {
       const auto error_dead_node = std::make_shared<AbstractError>(kDeadNode, func);
@@ -601,7 +722,8 @@ AnfNodePtr FuncGraphSpecializer::BuildSpecializedNode(const AnfNodePtr &func, co
   return repl;
 }
 
-AnfNodePtr FuncGraphSpecializer::BuildSpecializedNodeInner(const AnfNodePtr &func, const AbstractBasePtr &abs,
+AnfNodePtr FuncGraphSpecializer::BuildSpecializedNodeInner(const CNodePtr &cnode, const AnfNodePtr &func,
+                                                           const AbstractBasePtr &abs,
                                                            const AbstractFunctionPtr &func_abs,
                                                            const AbstractBasePtrList &args,
                                                            SpecializeStatusCode *errcode) {
@@ -657,7 +779,13 @@ AnfNodePtr FuncGraphSpecializer::BuildSpecializedNodeInner(const AnfNodePtr &fun
   FuncGraphPtr func_graph = specializer_->SpecializeFuncGraph(context->func_graph(), context);
   MS_EXCEPTION_IF_NULL(func_graph);
   func_graph->set_flag(kFuncGraphFlagUndetermined, false);
-  return BuildValueNode(func_graph, abs);
+  static auto dummy_context = AnalysisContext::DummyContext();
+  MS_EXCEPTION_IF_NULL(dummy_context);
+  // Build a map that map unspecialized abstract function to specialized function, later it can be used
+  // for specialize input0 of CNode in specialized func graph if input0 is not FuncGraph.
+  auto new_abs_func = std::make_shared<FuncGraphAbstractClosure>(func_graph, dummy_context, nullptr, true);
+  specializer_->PutSpecializedAbstract(cnode, func, func_abs, new_abs_func);
+  return BuildValueNode(func_graph, new_abs_func);
 }
 
 AnalysisContextPtr FuncGraphSpecializer::MakeContext(const AnalysisEnginePtr &engine,
@@ -670,9 +798,9 @@ AnalysisContextPtr FuncGraphSpecializer::MakeContext(const AnalysisEnginePtr &en
   return new_context;
 }
 
-AnfNodePtr FuncGraphSpecializer::BuildSpecializedParameterNode(const CNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  auto new_inputs = node->inputs();
+AnfNodePtr FuncGraphSpecializer::BuildSpecializedParameterNode(const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto new_inputs = cnode->inputs();
   if (new_inputs.empty()) {
     MS_LOG(EXCEPTION) << "inputs can't be empty.";
   }
@@ -690,8 +818,8 @@ AnfNodePtr FuncGraphSpecializer::BuildSpecializedParameterNode(const CNodePtr &n
   std::transform(new_inputs.cbegin() + 1, new_inputs.cend(), std::back_inserter(args),
                  [](const AnfNodePtr &inp) { return inp->abstract(); });
 
-  ScopeGuard scope_guard(node->scope());
-  auto specialized_node = BuildSpecializedNode(func, backed_fnval, args);
+  ScopeGuard scope_guard(cnode->scope());
+  auto specialized_node = BuildSpecializedNode(cnode, func, backed_fnval, args);
   auto wrapped_node = specialized_node;
   if (fnval->isa<PartialAbstractClosure>()) {
     auto partial_closure = dyn_cast<PartialAbstractClosure>(fnval);
@@ -701,14 +829,15 @@ AnfNodePtr FuncGraphSpecializer::BuildSpecializedParameterNode(const CNodePtr &n
     if (!anf_node->isa<CNode>()) {
       MS_LOG(EXCEPTION) << "Must be cnode, but " << anf_node->DebugString();
     }
-    auto cnode = anf_node->cast<CNodePtr>();
-    if (cnode->size() != partial_closure->args().size() + 2) {
-      MS_LOG(EXCEPTION) << "Size of cnode: " << cnode->DebugString()
+    auto partial_cnode = anf_node->cast<CNodePtr>();
+    constexpr auto extra_args_size = 2;
+    if (partial_cnode->size() != partial_closure->args().size() + extra_args_size) {
+      MS_LOG(EXCEPTION) << "Size of cnode: " << partial_cnode->DebugString()
                         << " is not equal to 2 added to size of args: " << mindspore::ToString(partial_closure->args());
     }
     auto attrs = std::make_shared<AttrValueMap>();
     for (size_t i = 0; i < partial_closure->args().size(); i++) {
-      auto old_node = cnode->input(i + 2);
+      auto old_node = partial_cnode->input(i + 2);
       auto possibile_value_node = BuildPossibleValueNode(old_node, partial_closure->args()[i], attrs);
       if (possibile_value_node != nullptr) {
         partial_node_list.push_back(possibile_value_node);
@@ -719,8 +848,8 @@ AnfNodePtr FuncGraphSpecializer::BuildSpecializedParameterNode(const CNodePtr &n
         partial_node_list.push_back(old_node);
       }
     }
-    MS_EXCEPTION_IF_NULL(node->func_graph());
-    wrapped_node = node->func_graph()->NewCNode(std::move(partial_node_list));
+    MS_EXCEPTION_IF_NULL(cnode->func_graph());
+    wrapped_node = cnode->func_graph()->NewCNode(std::move(partial_node_list));
     wrapped_node->set_abstract(partial_closure);
   }
   return wrapped_node;
@@ -805,7 +934,7 @@ void FuncGraphSpecializer::ProcessCNode(const CNodePtr &cnode) {
   AnfNodePtr func = new_inputs[0];
   MS_EXCEPTION_IF_NULL(func);
   constexpr auto recursive_level = 2;
-  MS_LOG(DEBUG) << "Handle node: " << cnode->DebugString(recursive_level);
+  MS_LOG(DEBUG) << "Handle CNode: " << cnode->DebugString(recursive_level);
 
   // First element is func so arg start from 1
   std::vector<AnfNodePtr> args(new_inputs.begin() + 1, new_inputs.end());
@@ -853,7 +982,7 @@ void FuncGraphSpecializer::ProcessCNode(const CNodePtr &cnode) {
       for (size_t i = 1; i < new_inputs.size(); ++i) {
         argvals.push_back(new_inputs[i]->abstract());
       }
-      new_inputs[0] = BuildSpecializedNode(func, fnval, argvals);
+      new_inputs[0] = BuildSpecializedNode(cnode, func, fnval, argvals);
       MS_LOG(DEBUG) << "Specalize func: " << func->type_name() << "/" << func->DebugString(recursive_level)
                     << ", new_func: " << new_inputs[0]->DebugString(recursive_level) << ", argvals: " << argvals;
     }
@@ -863,7 +992,7 @@ void FuncGraphSpecializer::ProcessCNode(const CNodePtr &cnode) {
   for (size_t i = 1; i < new_inputs.size(); ++i) {
     auto &old_node = new_inputs[i];
     if (CanSpecializeValueNode(old_node)) {
-      auto new_node = BuildSpecializedNode(old_node, old_node->abstract(), std::vector<AbstractBasePtr>{});
+      auto new_node = BuildSpecializedNode(cnode, old_node, old_node->abstract(), std::vector<AbstractBasePtr>{});
       MS_EXCEPTION_IF_NULL(new_node);
       MS_LOG(DEBUG) << "Specalize arg[" << i << "]: " << old_node->DebugString(recursive_level)
                     << ", new_node: " << new_node->DebugString(recursive_level);
