@@ -1291,7 +1291,7 @@ bool AscendStreamAssign::ExistStreamSendAfterLastHcomNode(const NotNull<KernelGr
              ((i < SizeToLong(cnodes.size() - 1)) && AnfAlgo::GetCNodeName(cnodes[i + 1]) == kSendOpName);
     }
   }
-  MS_LOG(WARNING) << "There is no hcom nodes of graph " << graph_id << " in the root graph " << graph_ptr->graph_id();
+  MS_LOG(INFO) << "There is no hcom nodes in graph " << graph_id << ", root graph: " << graph_ptr->graph_id();
   return true;
 }
 
