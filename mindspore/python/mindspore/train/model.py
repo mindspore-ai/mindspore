@@ -35,7 +35,6 @@ from ..parallel._utils import _get_parallel_mode, _get_device_num, _get_global_r
 from ..parallel._ps_context import _is_role_pserver, _is_role_sched
 from ..nn.metrics import Loss
 from .. import nn
-from ..nn.wrap.cell_wrapper import _VirtualDatasetCell
 from ..boost import AutoBoost
 from ..context import ParallelMode
 from ..parallel._cost_model_context import _set_multi_subgraphs
@@ -287,8 +286,6 @@ class Model:
                                                   boost_level=self._boost_level,
                                                   keep_batchnorm_fp32=self._keep_bn_fp32)
         elif self._loss_fn:
-            if self._parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):
-                network = _VirtualDatasetCell(network)
             network = nn.WithLossCell(network, self._loss_fn)
         # If need to check if loss_fn is not None, but optimizer is None
 
@@ -327,8 +324,6 @@ class Model:
             self._eval_indexes = [0, 1, 2]
 
         if self._parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):
-            if self._optimizer:
-                self._eval_network = _VirtualDatasetCell(self._eval_network)
             if self._optimizer is None:
                 # In this case, multiple optimizer(s) is supposed to be included in 'self._network'
                 _set_multi_subgraphs()
@@ -338,7 +333,6 @@ class Model:
         """Build the network for prediction."""
         self._predict_network = self._network
         if self._parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):
-            self._predict_network = _VirtualDatasetCell(self._network)
             # Unlike the cases in build_train_network() and build_eval_network(), 'multi_subgraphs' is not set
             self._predict_network.set_auto_parallel()
 

@@ -392,6 +392,7 @@ def test_matmul_minimum_auto_parallel():
             out = self.minimum(out, b)
             return out
 
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="auto_parallel")
     net = GradWrap(NetWithLoss(Net()))
 

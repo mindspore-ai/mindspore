@@ -319,7 +319,7 @@ def test_scalar_output_semi_auto():
         if re.search('VirtualOutput-op', k) is not None:
             assert v[0][0] == 8
             count += 1
-    assert count == 1
+    assert count == 2
 
 def test_scalar_output_auto():
     context.reset_auto_parallel_context()
@@ -336,4 +336,4 @@ def test_scalar_output_auto():
         if re.search('VirtualOutput-op', k) is not None:
             assert v[0][0] == 8
             count += 1
-    assert count == 1
+    assert count == 2

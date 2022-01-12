@@ -22,6 +22,7 @@
 
 namespace mindspore {
 namespace pipeline {
+constexpr size_t NODE_INPUT_NUM = 2;
 bool PipelineSplit(const ResourcePtr &res);
 std::string GetWorldGroup();
 }  // namespace pipeline

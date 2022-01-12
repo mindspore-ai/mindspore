@@ -147,6 +147,7 @@ def test_gatherv2_auto0():
     Description: gather net with strategy in semi auto parallel, gather axis is 1.
     Expectation: compile done without error.
     """
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
     net = GradWrap(NetWithLoss(Net(0)))
     compile_net(net, [64, 32], [64, 64, 32], parallel_mode="auto_parallel")
 
