@@ -92,7 +92,7 @@ void MemOffloadStrategy::CountMemUsage() {
   }
 }
 
-bool MemOffloadStrategy::IsHighPriorityMem(const void *key) {
+bool MemOffloadStrategy::IsHighPriorityMem(const void *key) const {
   auto iter = mem_priority_.find(key);
   if (iter != mem_priority_.end()) {
     return iter->second == kMemPriorityHigh;

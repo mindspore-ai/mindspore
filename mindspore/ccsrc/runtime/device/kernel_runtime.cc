@@ -1463,13 +1463,13 @@ void KernelRuntime::InitGraphInputTensors(const std::shared_ptr<MemScheduler> &m
     if (need_sync) {
       const auto &shape = trans::GetRuntimePaddingShape(input_node, 0);
       if (device_address->GetPtr() != nullptr) {
-        device_address->SyncHostToDevice(shape, tensor->data().nbytes(), tensor->data_type(), tensor->data_c(),
-                                         tensor->device_info().host_format_);
+        device_address->SyncHostToDevice(shape, LongToSize(tensor->data().nbytes()), tensor->data_type(),
+                                         tensor->data_c(), tensor->device_info().host_format_);
       } else {
         mem_scheduler->AddMemInitFunc(device_address.get(), [device_address, tensor, shape](void *device_ptr) -> void {
           device_address->set_ptr(device_ptr);
-          device_address->SyncHostToDevice(shape, tensor->data().nbytes(), tensor->data_type(), tensor->data_c(),
-                                           tensor->device_info().host_format_);
+          device_address->SyncHostToDevice(shape, LongToSize(tensor->data().nbytes()), tensor->data_type(),
+                                           tensor->data_c(), tensor->device_info().host_format_);
           device_address->set_ptr(nullptr);
         });
       }
