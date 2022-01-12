@@ -127,7 +127,7 @@ bool MemScheduler::PreCompute(void *stream) {
     if (event->type == kInit || event->type == kMalloc) {
       const auto &iter = mem_result_.find(event->key);
       const bool new_malloc = iter == mem_result_.end();
-      void *device_ptr;
+      void *device_ptr = nullptr;
       if (new_malloc) {
         device_ptr = mem_handler_->MallocDevice(event->mem_size);
         if (device_ptr == nullptr) {

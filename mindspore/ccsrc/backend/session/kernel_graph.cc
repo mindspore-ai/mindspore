@@ -642,7 +642,7 @@ ValueNodePtr KernelGraph::NewValueNode(const tensor::TensorPtr &input_tensor) {
   ValueNodePtr value_node = nullptr;
   if (input_tensor->data_type() == kObjectTypeString) {
     std::string value_string;
-    value_string.assign(reinterpret_cast<char *>(input_tensor->data_c()), input_tensor->data().size());
+    value_string.assign(reinterpret_cast<char *>(input_tensor->data_c()), LongToSize(input_tensor->data().size()));
     StringImmPtr string_imm_value = std::make_shared<StringImm>(value_string);
     value_node = std::make_shared<ValueNode>(string_imm_value);
   } else {
