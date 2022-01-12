@@ -425,12 +425,12 @@ Status AutoTune::Analyse() {
       MS_LOG(WARNING) << "Op (" << ops_[op_id]->NameWithID() << ") getting low average worker cpu utilization "
                       << (cpu_util / num_workers) << "% < " << MAP_OP_WORKER_LOW_THRESHOLD << "% threshold.";
       new_queue_capacity = queue_capacity + INCREMENT_QUEUE_SIZE;
+      if (requested_workers == 0) {
+        requested_workers = num_workers;
+      }
+      new_queue_capacity = std::max(new_queue_capacity, static_cast<int64_t>(requested_workers));
+      RETURN_IF_NOT_OK(RequestConnectorCapacityChange(op_id, queue_capacity, new_queue_capacity));
     }
-    if (requested_workers == 0) {
-      requested_workers = num_workers;
-    }
-    new_queue_capacity = std::max(new_queue_capacity, static_cast<int64_t>(requested_workers));
-    RETURN_IF_NOT_OK(RequestConnectorCapacityChange(op_id, queue_capacity, new_queue_capacity));
   }
   return Status::OK();
 }
