@@ -3,7 +3,7 @@ mindspore.nn.ProximalAdagrad
 
 .. py:class:: mindspore.nn.ProximalAdagrad(*args, **kwargs)
 
-    使用ApplyProximalAdagrad算子实现ProximalAdagrad算法。
+    ProximalAdagrad算法的实现。
 
     ProximalAdagrad用于在线学习和随机优化。
     请参阅论文 `Efficient Learning using Forward-Backward Splitting <http://papers.nips.cc//paper/3793-efficient-learning-using-forward-backward-splitting.pdf>`_。

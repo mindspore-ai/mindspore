@@ -3,7 +3,7 @@ mindspore.nn.Adagrad
 
 .. py:class:: mindspore.nn.Adagrad(*args, **kwargs)
 
-    使用ApplyAdagrad算子实现Adagrad算法。
+    Adagrad算法的实现。
 
     Adagrad用于在线学习和随机优化。
     请参阅论文 `Efficient Learning using Forward-Backward Splitting <https://proceedings.neurips.cc/paper/2009/file/621bf66ddb7c962aa0d22ac97d69b793-Paper.pdf>`_。
@@ -12,7 +12,7 @@ mindspore.nn.Adagrad
 
     .. math::
         \begin{array}{ll} \\
-            h_{t+1} = h_{t} + g\\
+            h_{t+1} = h_{t} + g*g\\
             w_{t+1} = w_{t} - lr*\frac{1}{\sqrt{h_{t+1}}}*g
         \end{array}
 
@@ -20,7 +20,7 @@ mindspore.nn.Adagrad
     :math:`lr` 代表 `learning_rate`，:math:`w` 代表 `params` 。
 
     .. note::
-        在参数未分组时，优化器配置的 `weight_decay` 应用于名称含有"beta"或"gamma"的网络参数，通过网络参数分组可调整权重衰减策略。分组时，每组网络参数均可配置 `weight_decay` ，若未配置，则该组网络参数使用优化器中配置的 `weight_decay` 。
+        .. include:: mindspore.nn.optim_note_weight_decay.rst
 
     **参数：**
 

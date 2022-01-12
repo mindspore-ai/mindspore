@@ -38,7 +38,7 @@ def _check_param_value(accum, update_slots, prim_name=None):
 
 class Adagrad(Optimizer):
     r"""
-    Implements the Adagrad algorithm with ApplyAdagrad Operator.
+    Implements the Adagrad algorithm.
 
     Adagrad is an online Learning and Stochastic Optimization.
     Refer to paper `Efficient Learning using Forward-Backward Splitting
@@ -49,7 +49,7 @@ class Adagrad(Optimizer):
 
     .. math::
         \begin{array}{ll} \\
-            h_{t+1} = h_{t} + g\\
+            h_{t+1} = h_{t} + g*g\\
             w_{t+1} = w_{t} - lr*\frac{1}{\sqrt{h_{t+1}}}*g
         \end{array}
 

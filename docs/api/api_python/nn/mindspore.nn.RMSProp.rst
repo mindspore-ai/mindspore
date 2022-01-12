@@ -3,7 +3,7 @@ mindspore.nn.RMSProp
 
 .. py:class:: mindspore.nn.RMSProp(*args, **kwargs)
 
-    实现均方根传播（RMSProp）算法。
+    均方根传播（RMSProp）算法的实现。
 
     根据RMSProp算法更新 `params`，算法详见 [http://www.cs.toronto.edu/~tijmen/csc321/slides/lecture_slides_lec6.pdf] 第29页。
 

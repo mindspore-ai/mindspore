@@ -3,7 +3,7 @@ mindspore.nn.AdamWeightDecay
 
 .. py:class:: mindspore.nn.AdamWeightDecay(params, learning_rate=1e-3, beta1=0.9, beta2=0.999, eps=1e-6, weight_decay=0.0)
 
-    实现权重衰减Adam算法。
+    权重衰减Adam算法的实现。
 
     .. math::
         \begin{array}{ll} \\

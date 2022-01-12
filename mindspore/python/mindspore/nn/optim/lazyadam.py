@@ -106,7 +106,7 @@ def _check_param_value(beta1, beta2, eps, weight_decay, prim_name):
 
 class LazyAdam(Optimizer):
     r"""
-    Updates gradients by the Adaptive Moment Estimation (Adam) algorithm. The Adam algorithm is proposed
+    Implements the Adaptive Moment Estimation (Adam) algorithm. The Adam algorithm is proposed
     in `Adam: A Method for Stochastic Optimization <https://arxiv.org/abs/1412.6980>`_.
 
     This optimizer will apply a lazy adam algorithm when gradient is sparse.

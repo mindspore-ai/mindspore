@@ -245,9 +245,9 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
     Outputs:
         Tuple of 3 Tensor, the loss, overflow flag and current loss scale value.
 
-        - **loss** (Tensor) -  Tensor with shape :math:`()`.
-        - **overflow** (Tensor) -  Tensor with shape :math:`()`, type is bool.
-        - **loss scale** (Tensor) -  Tensor with shape :math:`()`
+        - **loss** (Tensor) -  A scalar, the loss value.
+        - **overflow** (Tensor) -  A scalar, whether overflow occur or not, the type is bool.
+        - **loss scale** (Tensor) -  The loss scale value, the shape is :math:`()` or :math:`(1,)`.
 
     Raises:
         TypeError: If `scale_sense` is neither Cell nor Tensor.

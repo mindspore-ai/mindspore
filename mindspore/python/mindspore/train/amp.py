@@ -140,45 +140,46 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_leve
 
     Args:
         network (Cell): Definition of the network.
-        loss_fn (Union[None, Cell]): Definition of the loss_fn. If None, the `network` should have the loss inside.
+        loss_fn (Union[None, Cell]): Define the loss function. If None, the `network` should have the loss inside.
             Default: None.
-        optimizer (Optimizer): Optimizer to update the Parameter.
+        optimizer (Optimizer): Define the optimizer to update the Parameter.
         level (str): Supports ["O0", "O2", "O3", "auto"]. Default: "O0".
 
-            - O0: Do not change.
-            - O2: Cast network to float16, keep batchnorm and `loss_fn` (if set) run in float32,
+            - "O0": Do not change.
+            - "O2": Cast network to float16, keep batchnorm and `loss_fn` (if set) run in float32,
               using dynamic loss scale.
-            - O3: Cast network to float16, with additional property `keep_batchnorm_fp32=False` .
-            - auto: Set to level to recommended level in different devices. Set level to O2 on GPU, Set
-              level to O3 Ascend. The recommended level is chosen by the export experience, cannot
-              always general. User should specify the level for special network.
+            - "O3": Cast network to float16, with additional property `keep_batchnorm_fp32=False` .
+            - auto: Set to level to recommended level in different devices. Set level to "O2" on GPU, Set
+              level to "O3" Ascend. The recommended level is chosen by the export experience, not applicable to all
+              scenarios. User should specify the level for special network.
 
-            O2 is recommended on GPU, O3 is recommended on Ascend. Property of `keep_batchnorm_fp32`, `cast_model_type`
-            and `loss_scale_manager` determined by `level` setting may be overwritten by settings in `kwargs`.
+            "O2" is recommended on GPU, "O3" is recommended on Ascend. Property of `keep_batchnorm_fp32`,
+            `cast_model_type` and `loss_scale_manager` determined by `level` setting may be overwritten by settings in
+            `kwargs`.
 
         boost_level (str): Option for argument `level` in `mindspore.boost` , level for boost mode
             training. Supports ["O0", "O1", "O2"]. Default: "O0".
 
-            - O0: Do not change.
-            - O1: Enable the boost mode, the performance is improved by about 20%, and
+            - "O0": Do not change.
+            - "O1": Enable the boost mode, the performance is improved by about 20%, and
               the accuracy is the same as the original accuracy.
-            - O2: Enable the boost mode, the performance is improved by about 30%, and
+            - "O2": Enable the boost mode, the performance is improved by about 30%, and
               the accuracy is reduced by less than 3%.
 
-            If O1 or O2 mode is set, the boost related library will take effect automatically.
+            If "O1" or "O2" mode is set, the boost related library will take effect automatically.
 
         cast_model_type (:class:`mindspore.dtype`): Supports `mstype.float16` or `mstype.float32` . If set, the
             network will be casted to `cast_model_type` ( `mstype.float16` or `mstype.float32` ), but not to be casted
             to the type determined by `level` setting.
         keep_batchnorm_fp32 (bool): Keep Batchnorm run in `float32` when the network is set to cast to `float16` . If
             set, the `level` setting will take no effect on this property.
-        loss_scale_manager (Union[None, LossScaleManager]): If None, not scale the loss, otherwise scale the loss by
-            `LossScaleManager` . If set, the `level` setting will take no effect on this property.
+        loss_scale_manager (Union[None, LossScaleManager]): If not None, must be subclass of
+            :class:`mindspore.LossScaleManager` for scaling the loss. If set, the `level` setting will take no effect
+            on this property.
+
     Raises:
-        ValueError: Auto mixed precision only supported on device GPU and Ascend. If device is CPU, a `ValueError`
-            exception will be raised.
-        ValueError: If device is CPU, property `loss_scale_manager` only can be set as `None` or `FixedLossScaleManager`
-            (with property `drop_overflow_update=False` ), or a `ValueError` exception will be raised.
+        ValueError: If device is CPU, property `loss_scale_manager` is not `None` or `FixedLossScaleManager`
+            (with property `drop_overflow_update=False` ).
     """
     validator.check_value_type('network', network, nn.Cell)
     validator.check_value_type('optimizer', optimizer, (nn.Optimizer, boost.FreezeOpt))

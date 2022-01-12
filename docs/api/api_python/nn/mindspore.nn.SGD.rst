@@ -3,7 +3,7 @@ mindspore.nn.SGD
 
 .. py:class:: mindspore.nn.SGD(*args, **kwargs)
 
-    实现随机梯度下降。动量可选。
+    随机梯度下降的实现。动量可选。
 
     SGD相关介绍参见 `SGD <https://en.wikipedia.org/wiki/Stochastic_gradient_dencent>`_ 。
 

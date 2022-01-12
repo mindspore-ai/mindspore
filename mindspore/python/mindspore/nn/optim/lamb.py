@@ -172,7 +172,7 @@ def _check_param_value(beta1, beta2, eps, prim_name):
 
 class Lamb(Optimizer):
     r"""
-    An optimizer that implements the Lamb(Layer-wise Adaptive Moments optimizer for Batching training) algorithm.
+    Implements the Lamb(Layer-wise Adaptive Moments optimizer for Batching training) algorithm.
 
     LAMB is an optimization algorithm employing a layerwise adaptive large batch optimization technique.
     Refer to the paper `LARGE BATCH OPTIMIZATION FOR DEEP LEARNING: TRAINING BERT IN 76

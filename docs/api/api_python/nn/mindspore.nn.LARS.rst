@@ -3,7 +3,7 @@ mindspore.nn.LARS
 
 .. py:class:: mindspore.nn.LARS(*args, **kwargs)
 
-    使用LARSUpdate算子实现LARS算法。
+    LARS算法的实现。
 
     LARS算法采用大量的优化技术。详见论文 `LARGE BATCH TRAINING OF CONVOLUTIONAL NETWORKS <https://arxiv.org/abs/1708.03888>`_。
 

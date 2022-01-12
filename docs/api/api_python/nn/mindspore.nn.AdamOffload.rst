@@ -3,7 +3,7 @@ mindspore.nn.AdamOffload
 
 .. py:class:: mindspore.nn.AdamOffload(params, learning_rate=1e-3, beta1=0.9, beta2=0.999, eps=1e-8, use_locking=False, use_nesterov=False, weight_decay=0.0, loss_scale=1.0)
 
-    此优化器在主机CPU上运行Adam优化算法，设备上仅执行网络参数的更新，最大限度地降低内存成本。虽然会增加性能开销，但优化器可以运行更大的模型。
+    此优化器在主机CPU上运行Adam优化算法，设备上仅执行网络参数的更新，最大限度地降低内存成本。虽然会增加性能开销，但优化器可被用于运行更大的模型。
 
     Adam算法参见 `Adam: A Method for Stochastic Optimization <https://arxiv.org/abs/1412.6980>`_。
 

@@ -3,7 +3,7 @@ mindspore.FixedLossScaleManager
 
 .. py:class:: mindspore.FixedLossScaleManager(loss_scale=128.0, drop_overflow_update=True)
 
-    梯度放大系数不变的管理器，继承自 :class:`mindspore.LossScaleManager` 。
+    损失缩放系数不变的管理器，继承自 :class:`mindspore.LossScaleManager` 。
 
     **参数：**
 

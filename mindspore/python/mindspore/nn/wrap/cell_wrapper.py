@@ -73,7 +73,7 @@ class WithLossCell(Cell):
     the computed loss will be returned.
 
     Args:
-        backbone (Cell): The target network to wrap.
+        backbone (Cell): The backbone network to wrap.
         loss_fn (Cell): The loss function used to compute loss.
 
     Inputs:
