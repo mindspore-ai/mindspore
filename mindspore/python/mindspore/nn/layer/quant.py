@@ -888,7 +888,6 @@ class Conv2dBnFoldQuant(Cell):
         ValueError: If `in_channels`, `out_channels`, `kernel_size`, `stride` or `dilation` is less than 1.
         ValueError: If `padding` is less than 0.
         ValueError: If `pad_mode` is not one of 'same', 'valid', 'pad'.
-        ValueError: If `device_target` in context is neither `Ascend` nor `GPU`.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
