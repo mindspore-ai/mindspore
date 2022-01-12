@@ -22,6 +22,7 @@
 #include "schema/model_generated.h"
 #include "include/registry/register_kernel.h"
 #include "include/api/context.h"
+#include "src/custom_allocator.h"
 
 using mindspore::schema::PrimitiveType_Custom;
 constexpr int RET_OK = 0;        /**< No error occurs. */
@@ -76,6 +77,7 @@ int DetermineInputIndexInOm(const svp_acl_mdl_desc *model_desc, const std::strin
 
 size_t CustomCPUKernel::num_of_om_model_ = 0;
 dpico::CustomInterface CustomCPUKernel::custom_infershape_ = dpico::CustomInterface();
+std::shared_ptr<Allocator> CustomCPUKernel::custom_allocator_ = std::make_shared<dpico::CustomAllocator>();
 DpicoConfigParamExtractor CustomCPUKernel::dpico_config_param_extractor_ = DpicoConfigParamExtractor();
 DpicoContextManager CustomCPUKernel::dpico_context_manager_ = DpicoContextManager();
 DpicoAicpuThreadManager CustomCPUKernel::dpico_aicpu_thread_manager_ = DpicoAicpuThreadManager();
@@ -156,12 +158,97 @@ int CustomCPUKernel::LoadModelAndInitResource() {
   dpico_aicpu_thread_manager_.CreateAicpuThread(model_id_);
   return SUCCESS;
 }
+Result CustomCPUKernel::InitInputsLinkMap() {
+  for (size_t i = 0; i < inputs_.size() - 1; ++i) {
+    std::string tensor_name = inputs_[i].Name();
+    size_t index;
+    auto status = DetermineInputIndexInOm(model_desc_, tensor_name, &index);
+    if (status != SVP_ACL_SUCCESS) {
+      MS_LOG(WARNING) << "svp_acl_mdl_get_input_index_by_name fail! ret = " << status
+                      << "\ninput num except the last input om model is " << (inputs_.size() - 1)
+                      << "\ntensor name is below:";
+      for (size_t tensor_index = 0; tensor_index < inputs_.size() - 1; tensor_index++) {
+        std::string tensor_name_inner = inputs_[tensor_index].Name();
+        MS_LOG(INFO) << "    tensor index: " << tensor_index << ", tensor name: " << tensor_name_inner.c_str();
+      }
+      MS_LOG(INFO) << "om bottom name is below:";
+      auto om_inputs_num = svp_acl_mdl_get_num_inputs(model_desc_);
+      for (size_t j = 0; j < om_inputs_num; i++) {
+        std::string om_bottom_name = svp_acl_mdl_get_input_name_by_index(model_desc_, j);
+        MS_LOG(INFO) << "    om bottom index: " << static_cast<int>(j)
+                     << ", om bottom name: " << om_bottom_name.c_str();
+      }
+      index = i;
+      MS_LOG(WARNING) << "    can't find same node, use tensor index " << i;
+    }
+    MS_LOG(DEBUG) << "input tensor index: " << i << " input om index: " << index;
+    inputs_link_map_[i] = index;
+  }
+  return SUCCESS;
+}
 
+Result CustomCPUKernel::InitOutputsLinkMap() {
+  std::map<std::string, int> output_tensor_names;
+  for (size_t i = 0; i < outputs_.size(); i++) {
+    output_tensor_names[outputs_[i].Name()] = i;
+  }
+  for (size_t i = 0; i < outputs_.size(); ++i) {
+    std::string om_index_name = svp_acl_mdl_get_output_name_by_index(model_desc_, i);
+    std::string om_index_name_duplicate = om_index_name + "_duplicate";
+    if (output_tensor_names.find(om_index_name_duplicate) != output_tensor_names.end()) {
+      outputs_link_map_[output_tensor_names[om_index_name_duplicate]] = i;
+      MS_LOG(DEBUG) << "output tensor index: " << output_tensor_names[om_index_name_duplicate]
+                    << " output om index: " << i;
+    } else if (output_tensor_names.find(om_index_name) != output_tensor_names.end()) {
+      outputs_link_map_[output_tensor_names[om_index_name]] = i;
+      MS_LOG(DEBUG) << "output tensor index: " << output_tensor_names[om_index_name] << " output om index: " << i;
+    } else {
+      if (outputs_link_map_.find(i) == outputs_link_map_.end()) {
+        MS_LOG(WARNING) << "    can't find same node, use tensor index " << i;
+        outputs_link_map_[i] = i;
+      } else {
+        MS_LOG(ERROR) << "can't find correspond node. " << om_index_name;
+        return FAILED;
+      }
+    }
+  }
+  return SUCCESS;
+}
+
+Result CustomCPUKernel::FlushInputsData() {
+  for (size_t i = 0; i < inputs_.size() - 1; i++) {
+    if (!inputs_mem_aligned_flag_[i]) {
+      continue;
+    }
+    auto input = inputs_[i];
+    svp_acl_error ret = svp_acl_rt_mem_flush(input.MutableData(), input.DataSize());
+    if (ret != SUCCESS) {
+      MS_LOG(ERROR) << "svp acl rt mem flush input: " << input.Name() << " failed.";
+      return FAILED;
+    }
+  }
+  return SUCCESS;
+}
+
+Result CustomCPUKernel::InvalidateOutputsData() {
+  for (size_t i = 0; i < outputs_.size(); i++) {
+    if (!outputs_mem_aligned_flag_[i]) {
+      continue;
+    }
+    auto output = outputs_[i];
+    svp_acl_error ret = svp_acl_rt_mem_invalidate(output.MutableData(), output.DataSize());
+    if (ret != SUCCESS) {
+      MS_LOG(ERROR) << "svp acl rt mem invalidate output: " << output.Name() << " failed.";
+      return FAILED;
+    }
+  }
+  return SUCCESS;
+}
 int CustomCPUKernel::Prepare() {
   if (prepared_) {
     return RET_OK;
   }
-  MS_CHECK_FALSE_MSG(primitive_ == nullptr, RET_NULL_PTR, "primitive is nullptr");
+
   if (inputs_.size() < kMinInputSize || outputs_.size() < 1) {
     return RET_ERROR;
   }
@@ -196,18 +283,30 @@ int CustomCPUKernel::Prepare() {
     }
   }
 
-  int ret = CreateOutputs();
+  int ret = InitInputsLinkMap();
   if (ret != SUCCESS) {
-    MS_LOG(ERROR) << "execute CreateOutputs failed";
+    MS_LOG(ERROR) << "init inputs link map failed.";
+    return FAILED;
+  }
+
+  ret = InitOutputsLinkMap();
+  if (ret != SUCCESS) {
+    MS_LOG(ERROR) << "init outputs link map failed.";
     return FAILED;
   }
 
   ret = CreateInputs();
   if (ret != SUCCESS) {
-    MS_LOG(ERROR) << "create inputs failed, may memory not enough, please run it without dpico";
-    MS_LOG(ERROR) << "use cmd: cat /proc/umap/media-mem when program running to see memory";
+    MS_LOG(ERROR) << "execute CreateInputs failed";
     return RET_ERROR;
   }
+
+  ret = CreateOutputs();
+  if (ret != SUCCESS) {
+    MS_LOG(ERROR) << "execute CreateOutputs failed";
+    return RET_ERROR;
+  }
+
   prepared_ = true;
   return RET_OK;
 }
@@ -223,6 +322,54 @@ int CustomCPUKernel::ReSize() {
   return RET_OK;
 }
 
+Result CustomCPUKernel::MallocOutputsData() {
+  MS_CHECK_TRUE_MSG(custom_allocator_ != nullptr, FAILED, "custom_allocator_ is nullptr.");
+  for (auto output : outputs_) {
+    auto output_data = output.MutableData();
+    MS_CHECK_TRUE_MSG(output_data != nullptr, FAILED, "output_data is nullptr.");
+  }
+  return SUCCESS;
+}
+Result CustomCPUKernel::UpdateInputDataset() {
+  for (size_t i = 0; i < inputs_.size(); i++) {
+    if (inputs_mem_aligned_flag_[i]) {
+      svp_acl_data_buffer *data_buffer = svp_acl_mdl_get_dataset_buffer(input_dataset_, i);
+      if (data_buffer == nullptr) {
+        MS_LOG(ERROR) << "data_buffer is nullptr.";
+        return FAILED;
+      }
+      auto stride = svp_acl_mdl_get_input_default_stride(model_desc_, i);
+      svp_acl_error ret =
+        svp_acl_update_data_buffer(data_buffer, inputs_[i].MutableData(), inputs_[i].DataSize(), stride);
+      if (ret != SUCCESS) {
+        MS_LOG(ERROR) << "svp_acl_update_data_buffer input:" << inputs_[i].Name() << " failed.";
+        return FAILED;
+      }
+    }
+  }
+  return SUCCESS;
+}
+
+Result CustomCPUKernel::UpdateOutputDataset() {
+  for (size_t i = 0; i < outputs_.size(); i++) {
+    if (outputs_mem_aligned_flag_[i]) {
+      svp_acl_data_buffer *data_buffer = svp_acl_mdl_get_dataset_buffer(output_dataset_, i);
+      if (data_buffer == nullptr) {
+        MS_LOG(ERROR) << "data_buffer is nullptr.";
+        return FAILED;
+      }
+      auto stride = svp_acl_mdl_get_output_default_stride(model_desc_, i);
+      svp_acl_error ret =
+        svp_acl_update_data_buffer(data_buffer, outputs_[i].MutableData(), outputs_[i].DataSize(), stride);
+      if (ret != SUCCESS) {
+        MS_LOG(ERROR) << "svp_acl_update_data_buffer output:" << outputs_[i].Name() << " failed.";
+        return FAILED;
+      }
+    }
+  }
+  return SUCCESS;
+}
+
 Result CustomCPUKernel::PreExecute() {
   if (!InferDone(outputs_)) {
     if (custom_infershape_.Infer(&inputs_, &outputs_, primitive_, this) != kSuccess) {
@@ -234,10 +381,18 @@ Result CustomCPUKernel::PreExecute() {
       MS_LOG(ERROR) << "reSize fail.";
       return FAILED;
     }
-    for (auto output : outputs_) {
-      auto output_data = output.MutableData();
-      MS_CHECK_FALSE_MSG(output_data == nullptr, FAILED, "malloc data failed.");
-    }
+  }
+  if (MallocOutputsData() != SUCCESS) {
+    MS_LOG(ERROR) << "malloc output data fail.";
+    return FAILED;
+  }
+  if (UpdateInputDataset() != SUCCESS) {
+    MS_LOG(ERROR) << "update input dataset fail.";
+    return FAILED;
+  }
+  if (UpdateOutputDataset() != SUCCESS) {
+    MS_LOG(ERROR) << "update output dataset fail.";
+    return FAILED;
   }
   return SUCCESS;
 }
@@ -248,7 +403,17 @@ int CustomCPUKernel::Execute() {
     MS_LOG(ERROR) << "pre-execute failed.";
     return RET_ERROR;
   }
-  int ret = CopyTensorsToNpuWithStride();
+  int ret = FlushInputsData();
+  if (ret != SUCCESS) {
+    MS_LOG(ERROR) << "flush inputs data failed";
+    return RET_ERROR;
+  }
+  ret = InvalidateOutputsData();
+  if (ret != SUCCESS) {
+    MS_LOG(ERROR) << "invalidate outputs data failed";
+    return RET_ERROR;
+  }
+  ret = CopyTensorsToNpuWithStride();
   if (ret != SUCCESS) {
     MS_LOG(ERROR) << "CopyTensorsToNpuWithStride failed";
     return RET_ERROR;
@@ -257,9 +422,16 @@ int CustomCPUKernel::Execute() {
     UpdateDetParas();
   }
   svp_acl_rt_set_current_context(dpico_context_manager_.GetSvpContext());
+
   ret = DeviceExecute();
   if (ret != SUCCESS) {
     MS_LOG(ERROR) << "execute inference failed";
+    return RET_ERROR;
+  }
+
+  ret = InvalidateOutputsData();
+  if (ret != SUCCESS) {
+    MS_LOG(ERROR) << "invalidate outputs data failed";
     return RET_ERROR;
   }
 
@@ -351,7 +523,7 @@ Result CustomCPUKernel::CreateInput(void *inputDataBuffer, size_t bufferSize, in
   svp_acl_data_buffer *inputData = svp_acl_create_data_buffer(inputDataBuffer, bufferSize, stride);
   MS_CHECK_FALSE_MSG(inputData == nullptr, FAILED, "can't create data buffer, create input failed");
 
-  svp_acl_error ret = svp_acl_mdl_add_dataset_buffer(input_, inputData);
+  svp_acl_error ret = svp_acl_mdl_add_dataset_buffer(input_dataset_, inputData);
   if (ret != SVP_ACL_SUCCESS) {
     MS_LOG(ERROR) << "add input dataset buffer failed";
     svp_acl_destroy_data_buffer(inputData);
@@ -400,73 +572,107 @@ Result CustomCPUKernel::GetStrideParam(size_t *devSize, int index, size_t *strid
 }
 
 void CustomCPUKernel::DestroyInput() {
-  if (input_ == nullptr) {
+  if (input_dataset_ == nullptr) {
     return;
   }
-  for (size_t i = 0; i < svp_acl_mdl_get_dataset_num_buffers(input_); ++i) {
-    svp_acl_data_buffer *dataBuffer = svp_acl_mdl_get_dataset_buffer(input_, i);
-    void *tmp = svp_acl_get_data_buffer_addr(dataBuffer);
-    svp_acl_rt_free(tmp);
-    svp_acl_destroy_data_buffer(dataBuffer);
+  for (size_t i = 0; i < svp_acl_mdl_get_dataset_num_buffers(input_dataset_); ++i) {
+    svp_acl_data_buffer *dataBuffer = svp_acl_mdl_get_dataset_buffer(input_dataset_, i);
+    if (i < (inputs_.size() - 1) && !inputs_mem_aligned_flag_[i]) {
+      void *tmp = svp_acl_get_data_buffer_addr(dataBuffer);
+      if (tmp != nullptr) {
+        svp_acl_rt_free(tmp);
+        tmp = nullptr;
+      }
+    }
+    if (svp_acl_destroy_data_buffer(dataBuffer) != SVP_ACL_SUCCESS) {
+      MS_LOG(ERROR) << "svp acl destroy data buffer failed.";
+      return;
+    }
+    dataBuffer = nullptr;
   }
-  svp_acl_mdl_destroy_dataset(input_);
-  input_ = nullptr;
+  inputs_mem_aligned_flag_.clear();
+  if (svp_acl_mdl_destroy_dataset(input_dataset_) != SVP_ACL_SUCCESS) {
+    MS_LOG(ERROR) << "svp acl destroy input data dataset failed";
+    return;
+  }
+  input_dataset_ = nullptr;
 }
 
 void CustomCPUKernel::DestroyOutput() {
-  if (output_ == nullptr) {
+  if (output_dataset_ == nullptr) {
     return;
   }
-  for (size_t i = 0; i < svp_acl_mdl_get_dataset_num_buffers(output_); ++i) {
-    svp_acl_data_buffer *dataBuffer = svp_acl_mdl_get_dataset_buffer(output_, i);
-    void *data = svp_acl_get_data_buffer_addr(dataBuffer);
-    (void)svp_acl_rt_free(data);
-    (void)svp_acl_destroy_data_buffer(dataBuffer);
+  for (size_t i = 0; i < svp_acl_mdl_get_dataset_num_buffers(output_dataset_); ++i) {
+    svp_acl_data_buffer *dataBuffer = svp_acl_mdl_get_dataset_buffer(output_dataset_, i);
+    if (!outputs_mem_aligned_flag_[i]) {
+      void *data = svp_acl_get_data_buffer_addr(dataBuffer);
+      if (data != nullptr) {
+        svp_acl_rt_free(data);
+        data = nullptr;
+      }
+    }
+    if (svp_acl_destroy_data_buffer(dataBuffer) != SVP_ACL_SUCCESS) {
+      MS_LOG(ERROR) << "svp acl destroy data buffer failed.";
+      return;
+    }
+    dataBuffer = nullptr;
   }
-
-  (void)svp_acl_mdl_destroy_dataset(output_);
-  output_ = nullptr;
+  outputs_mem_aligned_flag_.clear();
+  if (svp_acl_mdl_destroy_dataset(output_dataset_) != SVP_ACL_SUCCESS) {
+    MS_LOG(ERROR) << "svp acl destroy output data dataset failed";
+    return;
+  }
+  output_dataset_ = nullptr;
 }
 
 Result CustomCPUKernel::CreateOutputs() {
-  MS_CHECK_FALSE_MSG(model_desc_ == nullptr, FAILED, "no model description, create output failed");
-
-  output_ = svp_acl_mdl_create_dataset();
-  if (output_ == nullptr) {
+  MS_CHECK_TRUE_MSG(model_desc_ != nullptr, FAILED, "no model description, create output failed");
+  MS_CHECK_TRUE_MSG(outputs_mem_aligned_flag_.empty(), FAILED, "outputs_mem_aligned_flag_ should be empty.");
+  output_dataset_ = svp_acl_mdl_create_dataset();
+  if (output_dataset_ == nullptr) {
     MS_LOG(ERROR) << "can't create dataset, create output failed";
     return FAILED;
   }
   size_t outputSize = svp_acl_mdl_get_num_outputs(model_desc_);
   for (size_t i = 0; i < outputSize; ++i) {
-    size_t stride = svp_acl_mdl_get_output_default_stride(model_desc_, i);
+    MS_CHECK_TRUE_MSG(outputs_link_map_.find(i) != outputs_link_map_.end(), FAILED,
+                      "can't find correspond output index");
+    MS_LOG(DEBUG) << "output tensor index: " << i << " output om index: " << outputs_link_map_[i];
+    size_t stride = svp_acl_mdl_get_output_default_stride(model_desc_, outputs_link_map_[i]);
     if (stride == 0) {
       MS_LOG(ERROR) << "output default stride is " << stride;
       return FAILED;
     }
-    size_t buffer_size = svp_acl_mdl_get_output_size_by_index(model_desc_, i);
+    size_t buffer_size = svp_acl_mdl_get_output_size_by_index(model_desc_, outputs_link_map_[i]);
     if (buffer_size == 0) {
       MS_LOG(ERROR) << "output size is " << buffer_size;
       return FAILED;
     }
 
+    svp_acl_data_buffer *outputData = nullptr;
     void *outputBuffer = nullptr;
-    svp_acl_error ret =
-      svp_acl_rt_malloc_cached(&outputBuffer, buffer_size * batch_size_, SVP_ACL_MEM_MALLOC_NORMAL_ONLY);
-    if (ret != SVP_ACL_SUCCESS) {
-      MS_LOG(ERROR) << "can't malloc buffer, size is " << buffer_size << ", create output failed";
-      return FAILED;
+    if (outputs_[i].DataSize() != buffer_size * batch_size_) {
+      MS_LOG(DEBUG) << "output tensor needs stride. " << outputs_[i].Name();
+      outputs_mem_aligned_flag_[i] = false;
+      svp_acl_error ret =
+        svp_acl_rt_malloc_cached(&outputBuffer, buffer_size * batch_size_, SVP_ACL_MEM_MALLOC_NORMAL_ONLY);
+      if (ret != SVP_ACL_SUCCESS) {
+        MS_LOG(ERROR) << "can't malloc buffer, size is " << buffer_size << ", create output failed";
+        return FAILED;
+      }
+      outputData = svp_acl_create_data_buffer(outputBuffer, buffer_size * batch_size_, stride);
+    } else {
+      outputs_mem_aligned_flag_[i] = true;
+      outputs_[i].SetAllocator(custom_allocator_);
+      outputData = svp_acl_create_data_buffer(outputs_[i].MutableData(), buffer_size * batch_size_, stride);
     }
-
-    svp_acl_data_buffer *outputData = svp_acl_create_data_buffer(outputBuffer, buffer_size * batch_size_, stride);
-    if (ret != SVP_ACL_SUCCESS) {
-      MS_LOG(ERROR) << "can't create data buffer, create output failed";
-      svp_acl_rt_free(outputBuffer);
-      return FAILED;
-    }
-    ret = svp_acl_mdl_add_dataset_buffer(output_, outputData);
+    MS_CHECK_FALSE_MSG(outputData == nullptr, FAILED, "create data buffer failed.");
+    svp_acl_error ret = svp_acl_mdl_add_dataset_buffer(output_dataset_, outputData);
     if (ret != SVP_ACL_SUCCESS) {
       MS_LOG(ERROR) << "can't add data buffer, create output failed";
-      svp_acl_rt_free(outputBuffer);
+      if (!outputs_mem_aligned_flag_[i]) {
+        svp_acl_rt_free(outputBuffer);
+      }
       svp_acl_destroy_data_buffer(outputData);
       return FAILED;
     }
@@ -541,7 +747,7 @@ void CustomCPUKernel::OutputModelResult() {
   svp_acl_mdl_io_dims aclDims;
   std::vector<int> validBoxNum;
   svp_acl_mdl_get_output_dims(model_desc_, OUTPUT_NUM_ID, &aclDims);
-  svp_acl_data_buffer *dataBuffer = svp_acl_mdl_get_dataset_buffer(output_, OUTPUT_NUM_ID);
+  svp_acl_data_buffer *dataBuffer = svp_acl_mdl_get_dataset_buffer(output_dataset_, OUTPUT_NUM_ID);
   auto outData = reinterpret_cast<float *>(svp_acl_get_data_buffer_addr(dataBuffer));
   for (uint32_t loop = 0; loop < static_cast<uint32_t>(aclDims.dims[aclDims.dim_count - 1]); loop++) {
     validBoxNum.push_back(*(outData + loop));
@@ -556,7 +762,7 @@ void CustomCPUKernel::OutputModelResult() {
   }
 
   // get x y score
-  svp_acl_data_buffer *dataBufferValue = svp_acl_mdl_get_dataset_buffer(output_, OUTPUT_BBOX_ID);
+  svp_acl_data_buffer *dataBufferValue = svp_acl_mdl_get_dataset_buffer(output_dataset_, OUTPUT_BBOX_ID);
   auto outDataValue = reinterpret_cast<float *>(svp_acl_get_data_buffer_addr(dataBufferValue));
   svp_acl_mdl_get_output_dims(model_desc_, OUTPUT_BBOX_ID, &aclDims);
   if (aclDims.dim_count <= 0) {
@@ -595,7 +801,7 @@ void CustomCPUKernel::OutputModelResult() {
 }
 
 void CustomCPUKernel::WriteOutputToTensor(size_t index, size_t output_tensor_index) {
-  svp_acl_data_buffer *dataBuffer = svp_acl_mdl_get_dataset_buffer(output_, index);
+  svp_acl_data_buffer *dataBuffer = svp_acl_mdl_get_dataset_buffer(output_dataset_, index);
   void *data = svp_acl_get_data_buffer_addr(dataBuffer);
   size_t stride = svp_acl_get_data_buffer_stride(dataBuffer);
   svp_acl_data_type dataType = svp_acl_mdl_get_output_data_type(model_desc_, index);
@@ -646,44 +852,26 @@ void CustomCPUKernel::WriteOutputToTensor(size_t index, size_t output_tensor_ind
 }
 
 void CustomCPUKernel::DumpModelOutputResultToTensor() {
-  size_t outputNum = svp_acl_mdl_get_dataset_num_buffers(output_);
-  std::map<std::string, int> output_tensor_name;
-  for (size_t i = 0; i < outputs_.size(); i++) {
-    output_tensor_name[outputs_[i].Name()] = i;
-  }
-  bool link_om_top_and_tensor_index = false;
-  for (size_t i = 0; i < outputNum; ++i) {
-    std::string om_index_name = svp_acl_mdl_get_output_name_by_index(model_desc_, i);
-    std::string om_index_name_duplicate = om_index_name + "_duplicate";
-    if (output_tensor_name.find(om_index_name_duplicate) != output_tensor_name.end()) {
-      WriteOutputToTensor(i, output_tensor_name[om_index_name_duplicate]);
-      link_om_top_and_tensor_index = true;
-    } else if (output_tensor_name.find(om_index_name) != output_tensor_name.end()) {
-      WriteOutputToTensor(i, output_tensor_name[om_index_name]);
-      link_om_top_and_tensor_index = true;
-    }
-  }
-  if (!link_om_top_and_tensor_index) {
-    MS_LOG(ERROR) << "the om top index and tensor index is not linked";
-    MS_LOG(INFO) << "the tensor value maybe nan or random value";
-    MS_LOG(INFO) << "the mindspore tensor name is:";
-    for (size_t i = 0; i < outputs_.size(); i++) {
-      std::string tensor_name = outputs_[i].Name();
-      MS_LOG(INFO) << "tensor index: " << i << ", tensor name: " << tensor_name.c_str();
-    }
-    MS_LOG(INFO) << "the om top name is below after adding duplicate to keep similar with tensor:";
-    for (size_t i = 0; i < outputNum; ++i) {
-      std::string om_top_name = svp_acl_mdl_get_output_name_by_index(model_desc_, i);
-      std::string om_top_name_add_duplicate = om_top_name + "_duplicate";
-      MS_LOG(INFO) << "om top index: " << i << ", om top name: " << om_top_name_add_duplicate.c_str();
-    }
+  size_t outputNum = svp_acl_mdl_get_dataset_num_buffers(output_dataset_);
+  if (outputs_mem_aligned_flag_.size() != outputNum) {
+    MS_LOG(ERROR) << "outputs_mem_aligned_flag_ should be equal to tensor output num.";
     return;
+  }
+  for (size_t i = 0; i < outputNum; ++i) {
+    if (outputs_link_map_.find(i) == outputs_link_map_.end()) {
+      MS_LOG(ERROR) << "can't find correspond output index";
+      return;
+    }
+    if (outputs_mem_aligned_flag_[i]) {
+      continue;
+    }
+    WriteOutputToTensor(outputs_link_map_[i], i);
   }
   MS_LOG(INFO) << "dump data success";
 }
 
 Result CustomCPUKernel::DeviceExecute() {
-  int ret = svp_acl_mdl_execute(model_id_, input_, output_);
+  int ret = svp_acl_mdl_execute(model_id_, input_dataset_, output_dataset_);
   if (ret != SVP_ACL_SUCCESS) {
     MS_LOG(ERROR) << "execute model failed, modelId is " << model_id_;
     return FAILED;
@@ -700,7 +888,7 @@ Result CustomCPUKernel::CreateBuf(int index) {
   svp_acl_mdl_io_dims inDims;
   svp_acl_error ret = GetStrideParam(&bufSize, index, &bufStride, &inDims);
   if (ret != SUCCESS) {
-    MS_LOG(ERROR) << "get stride param fialed";
+    MS_LOG(ERROR) << "get stride param failed";
     return FAILED;
   }
 
@@ -724,7 +912,7 @@ Result CustomCPUKernel::CreateTaskBufAndWorkBuf() {
     MS_LOG(ERROR) << "input dataset Num is error.";
     return FAILED;
   }
-  int datasetSize = svp_acl_mdl_get_dataset_num_buffers(input_);
+  int datasetSize = svp_acl_mdl_get_dataset_num_buffers(input_dataset_);
   if (datasetSize == 0) {
     MS_LOG(ERROR) << "input dataset Num is 0.";
     return FAILED;
@@ -763,6 +951,10 @@ void CustomCPUKernel::UnloadModel() {
 
 Result CustomCPUKernel::CopyTensorsToNpuWithStride() {
   for (size_t index = 0; index < inputs_.size() - 1; ++index) {
+    if (inputs_mem_aligned_flag_[index]) {
+      MS_LOG(DEBUG) << "`aligned input tensor no need to copy memory. ";
+      continue;
+    }
     auto tensor = inputs_[index];
     size_t devSize;
     size_t stride;
@@ -817,7 +1009,7 @@ Result CustomCPUKernel::CopyTensorsToNpuWithStride() {
   return SUCCESS;
 }
 
-void *CustomCPUKernel::GetDeviceBufferOfTensor(const svp_acl_mdl_io_dims &dims, const size_t &stride, size_t dataSize) {
+void *CustomCPUKernel::GetDeviceBufferOfTensor(const svp_acl_mdl_io_dims &dims, const size_t &stride) {
   void *input_buff = nullptr;
   svp_acl_error ret = SVP_ACL_SUCCESS;
   uint32_t loopTimes = dims.dims[0] * batch_size_;
@@ -864,46 +1056,33 @@ Result CustomCPUKernel::PrepareDevice() {
 }
 
 Result CustomCPUKernel::CreateInputs() {
-  input_ = svp_acl_mdl_create_dataset();
-  MS_CHECK_FALSE_MSG(input_ == nullptr, FAILED, "can't create dataset, create input failed");
+  input_dataset_ = svp_acl_mdl_create_dataset();
+  MS_CHECK_FALSE_MSG(input_dataset_ == nullptr, FAILED, "can't create dataset, create input failed");
   for (size_t loop = 0; loop < inputs_.size() - 1; ++loop) {
-    std::string tensor_name = inputs_[loop].Name();
-    size_t index;
-    auto status = DetermineInputIndexInOm(model_desc_, tensor_name, &index);
-    if (status != SVP_ACL_SUCCESS) {
-      MS_LOG(WARNING) << "svp_acl_mdl_get_input_index_by_name fail! ret = " << status
-                      << "\ninput num except the last input om model is " << (inputs_.size() - 1)
-                      << "\ntensor name is below:";
-      for (size_t tensor_index = 0; tensor_index < inputs_.size() - 1; tensor_index++) {
-        std::string tensor_name_inner = inputs_[tensor_index].Name();
-        MS_LOG(INFO) << "    tensor index: " << tensor_index << ", tensor name: " << tensor_name_inner.c_str();
-      }
-      MS_LOG(INFO) << "om bottom name is below:";
-      auto om_inputs_num = svp_acl_mdl_get_num_inputs(model_desc_);
-      for (size_t i = 0; i < om_inputs_num; i++) {
-        std::string om_bottom_name = svp_acl_mdl_get_input_name_by_index(model_desc_, i);
-        MS_LOG(INFO) << "    om bottom index: " << static_cast<int>(i)
-                     << ", om bottom name: " << om_bottom_name.c_str();
-      }
-      index = loop;
-      MS_LOG(WARNING) << "    can't find same node, use tensor index " << loop;
-    }
+    MS_CHECK_TRUE_MSG(inputs_link_map_.find(loop) != inputs_link_map_.end(), FAILED,
+                      "can't find correspond input index");
+    size_t index = inputs_link_map_[loop];
+    MS_LOG(DEBUG) << "input tensor index: " << loop << " input om index: " << index;
     MS_LOG(INFO) << "start to process inputs: " << loop;
     size_t devSize;
     size_t stride;
     svp_acl_mdl_io_dims inputDims;
     Result ret = GetStrideParam(&devSize, index, &stride, &inputDims);
     if (ret != SUCCESS) {
-      MS_LOG(ERROR) << "get stride param erro";
+      MS_LOG(ERROR) << "get stride param error";
       return ret;
     }
-    size_t dataSize = GetInputDataSize(index);
-    if (dataSize == 0) {
-      MS_LOG(ERROR) << "the input index" << index << " data type is not support";
-      return FAILED;
+    void *picDevBuffer = nullptr;
+    if (inputs_[loop].DataSize() != devSize * batch_size_) {
+      MS_LOG(DEBUG) << "input tensor needs stride. " << inputs_[index].Name();
+      inputs_mem_aligned_flag_[loop] = false;
+      picDevBuffer = GetDeviceBufferOfTensor(inputDims, stride);
+    } else {
+      inputs_mem_aligned_flag_[loop] = true;
+      inputs_[index].SetAllocator(custom_allocator_);
+      picDevBuffer = reinterpret_cast<void *>(inputs_[loop].MutableData());
     }
 
-    void *picDevBuffer = GetDeviceBufferOfTensor(inputDims, stride, dataSize);
     if (picDevBuffer == nullptr) {
       MS_LOG(ERROR) << "get pic device buffer failed,index is " << loop;
       return FAILED;
@@ -912,7 +1091,9 @@ Result CustomCPUKernel::CreateInputs() {
     ret = CreateInput(reinterpret_cast<uint8_t *>(picDevBuffer), devSize * batch_size_, stride);
     if (ret != SUCCESS) {
       MS_LOG(ERROR) << "execute CreateInput failed";
-      svp_acl_rt_free(picDevBuffer);
+      if (!inputs_mem_aligned_flag_[loop]) {
+        svp_acl_rt_free(picDevBuffer);
+      }
       return FAILED;
     }
   }
@@ -930,7 +1111,7 @@ Result CustomCPUKernel::CreateInputs() {
   }
 
   if (is_recurrent_net_) {
-    auto status = svp_acl_mdl_set_total_t(model_id_, input_, recurrent_total_t);
+    auto status = svp_acl_mdl_set_total_t(model_id_, input_dataset_, recurrent_total_t);
     if (status != SVP_ACL_SUCCESS) {
       MS_LOG(ERROR) << "svp_acl_mdl_set_total_t failed";
       return FAILED;
@@ -943,7 +1124,7 @@ Result CustomCPUKernel::CreateInputs() {
       MS_LOG(ERROR) << "svp_acl_mdl_get_input_index_by_name fail! ret = " << ret;
       return FAILED;
     }
-    status = svp_acl_mdl_set_dynamic_batch_size(model_id_, input_, index, batch_size_);
+    status = svp_acl_mdl_set_dynamic_batch_size(model_id_, input_dataset_, index, batch_size_);
     if (status != SVP_ACL_SUCCESS) {
       MS_LOG(ERROR) << "svp_acl_mdl_set_dynamic_batch_size fail! ret = " << ret;
       return FAILED;
@@ -998,7 +1179,7 @@ Result CustomCPUKernel::SetDetParas() {
     return FAILED;
   }
 
-  ret = svp_acl_mdl_add_dataset_buffer(input_, inputData);
+  ret = svp_acl_mdl_add_dataset_buffer(input_dataset_, inputData);
   if (ret != SVP_ACL_SUCCESS) {
     MS_LOG(ERROR) << "add input dataset buffer failed";
     (void)svp_acl_rt_free(bufPtr);

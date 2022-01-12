@@ -171,14 +171,18 @@ int CustomSubGraph::Prepare() {
     auto node = nodes_[i];
     for (auto tensor : node->out_tensors()) {
       MS_ASSERT(tensor != nullptr);
-      tensor->set_allocator(allocator);
+      if (tensor->allocator() == nullptr) {
+        tensor->set_allocator(allocator);
+      }
     }
   }
 
   auto node = nodes_[nodes_.size() - 1];
   for (auto tensor : node->out_tensors()) {
     MS_ASSERT(tensor != nullptr);
-    tensor->set_allocator(context->allocator);
+    if (tensor->allocator() == nullptr) {
+      tensor->set_allocator(context->allocator);
+    }
   }
   return RET_OK;
 }
@@ -204,11 +208,15 @@ int CpuSubGraph::Prepare() {
   for (auto node : nodes_) {
     for (auto tensor : node->out_tensors()) {
       MS_ASSERT(tensor != nullptr);
-      tensor->set_allocator(this->Context()->allocator);
+      if (tensor->allocator() == nullptr) {
+        tensor->set_allocator(this->Context()->allocator);
+      }
     }
   }
   for (auto &out : this->out_tensors()) {
-    out->set_allocator(this->Context()->allocator);
+    if (out->allocator() == nullptr) {
+      out->set_allocator(this->Context()->allocator);
+    }
   }
   return RET_OK;
 }

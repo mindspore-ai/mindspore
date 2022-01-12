@@ -43,6 +43,16 @@ typedef enum OmNetType : int { OmNetType_CNN = 0, OmNetType_ROI = 1, OmNetType_R
     }                                           \
   } while (0)
 
+// Check whether value is true, if not return 'errcode'
+// and print error string msg
+#define MS_CHECK_TRUE_MSG(value, errcode, msg) \
+  do {                                         \
+    if (!(value)) {                            \
+      MS_LOG(ERROR) << msg;                    \
+      return errcode;                          \
+    }                                          \
+  } while (0)
+
 inline bool IsValidUnsignedNum(const std::string &num_str) {
   return !num_str.empty() && std::all_of(num_str.begin(), num_str.end(), ::isdigit);
 }
@@ -55,6 +65,8 @@ void ExtractAttrsFromPrimitive(const mindspore::schema::Primitive *primitive,
 void *ReadBinFile(const std::string &fileName, uint32_t *fileSize);
 
 Result JudgeOmNetType(const schema::Primitive &primitive, OmNetType *net_type);
+
+size_t GetMaxMallocSize();
 
 class DpicoConfigParamExtractor {
  public:
