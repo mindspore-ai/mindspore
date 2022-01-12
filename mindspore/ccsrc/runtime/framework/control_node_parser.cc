@@ -945,7 +945,7 @@ void ControlNodeParser::Parse(const std::vector<AnfNodePtr> &control_nodes, cons
   ParseFirstControlNodeForFuncGraph(control_nodes);
 }
 
-bool ControlNodeParser::IsControlFlowDataArrow(const KernelGraphPtr &graph, const AnfNodePtr &node) {
+bool ControlNodeParser::IsControlFlowDataArrow(const KernelGraphPtr &graph, const AnfNodePtr &backend_node) {
   MS_EXCEPTION_IF_NULL(graph);
   // Has no control flow node.
   if (!IsInited()) {
@@ -956,26 +956,24 @@ bool ControlNodeParser::IsControlFlowDataArrow(const KernelGraphPtr &graph, cons
     return true;
   }
 
-  MS_EXCEPTION_IF_NULL(node);
-  if (!node->isa<Parameter>()) {
+  MS_EXCEPTION_IF_NULL(backend_node);
+  if (!backend_node->isa<Parameter>()) {
     return false;
   }
-  auto parameter_node = node->cast<ParameterPtr>();
+  auto parameter_node = backend_node->cast<ParameterPtr>();
   MS_EXCEPTION_IF_NULL(parameter_node);
 
   // Parameter input should be linked to its entrance actor.
-  auto front_node = graph->GetFrontAnfByBackendAnf(node);
-  auto internal_node_with_index = graph->GetFrontNodeByInternalParameter(node);
+  auto front_node = graph->GetFrontAnfByBackendAnf(backend_node);
+  auto internal_node_with_index = graph->GetFrontNodeByInternalParameter(backend_node);
   front_node = (front_node != nullptr ? front_node : internal_node_with_index.first);
   if (front_node == nullptr) {
-    auto front_node_with_index = graph->GetElementInTupleBackendFrontIndexMap(node);
+    auto front_node_with_index = graph->GetElementInTupleBackendFrontIndexMap(backend_node);
     front_node = front_node_with_index.first;
   }
-
-  // If parameter is a weight node, it should be set to kernel actor directly.
-  if (AnfAlgo::IsParameterWeight(node->cast<ParameterPtr>()) ||
-      (front_node != nullptr && front_node->isa<Parameter>() &&
-       AnfAlgo::IsParameterWeight(front_node->cast<ParameterPtr>()))) {
+  MS_EXCEPTION_IF_NULL(front_node);
+  // If parameter is a weight node in root funcgraph, it should be set to kernel actor directly.
+  if (IsRootGraphParameter(front_node) && AnfAlgo::IsParameterWeight(backend_node->cast<ParameterPtr>())) {
     return false;
   }
 

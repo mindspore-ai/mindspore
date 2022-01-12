@@ -90,17 +90,13 @@ class DataPrepareActor : public DebugAwareActor {
                                      const DeviceContext *device_context, OpContext<DeviceTensor> *const context);
 
   // The data prepare in the control flow scene.
-  void PrepareDeviceTensorStoreForControlNode(const ControlNodeParserPtr &control_node_parser,
-                                              const std::vector<TensorPtr> &tensors,
-                                              OpContext<DeviceTensor> *const context);
+  // If the parameters in the root graph are only used by the control node, these parameters will not be initialized
+  // by the kernel graph, and addresses need to be specially allocated for these parameters.
+  void PrepareDataForControlNode(const ControlNodeParserPtr &control_node_parser, const std::vector<TensorPtr> &tensors,
+                                 OpContext<DeviceTensor> *const context);
   void PrepareHostTensorQueueForControlNode(const std::vector<TensorPtr> &tensors,
                                             std::vector<TensorPtr> *const host_tensors,
                                             OpContext<DeviceTensor> *const context);
-  // In control flow, all weight nodes associated with the host weight parameter need to use the same device tensor.
-  void PrepareDataForControlWeightNode(const AnfNodePtr &node, const AnfNodePtr &front_node, const TensorPtr &tensor,
-                                       const DeviceContext *device_context,
-                                       const HostParameterToWeight &host_parameter_to_weights,
-                                       OpContext<DeviceTensor> *const context);
   void PrepareDataForControlValueNode(const KernelWithIndex &node_with_index, const DeviceContext *device_context,
                                       OpContext<DeviceTensor> *const context);
 
