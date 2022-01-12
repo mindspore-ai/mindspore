@@ -155,8 +155,8 @@ STATUS ToFormatBase::InsertPostTransNode(const FuncGraphPtr &func_graph, const C
           return lite::RET_ERROR;
         } else {
           tuple_get_item = opt::GenTupleGetItemNode(func_graph, cnode, 0);
+          manager_->Replace(cnode, tuple_get_item, post_node);
           post_node = tuple_get_item;
-          manager_->Replace(cnode, tuple_get_item);
         }
       }
       if (manager_->node_users()[post_node].empty()) {

@@ -299,6 +299,7 @@ class FuncGraphManager : public std::enable_shared_from_this<FuncGraphManager>,
   void InsertFrontParameter(const FuncGraphPtr &fg, const AnfNodePtr &parameter);
   void MaybeDropFuncGraphs(const FuncGraphSet &func_graphs, bool ignore_users = false);
   bool Replace(const AnfNodePtr &old_node, const AnfNodePtr &new_node) final;
+  bool Replace(const AnfNodePtr &old_node, const AnfNodePtr &new_node, const AnfNodePtr &mask_node);
   void SetEdge(const AnfNodePtr &node, int index, const AnfNodePtr &value) final;
   void AddEdge(const AnfNodePtr &node, const AnfNodePtr &value) final;
   void MoveAllCNodeDropGraph(const FuncGraphPtr &source, const FuncGraphPtr &target, const ScopePtr &scope);
@@ -394,6 +395,7 @@ class FuncGraphTransaction {
 
   // replace old_node with new_node
   bool Replace(const AnfNodePtr &old_node, const AnfNodePtr &new_node);
+  bool Replace(const AnfNodePtr &old_node, const AnfNodePtr &new_node, const AnfNodePtr &mask_node);
 
   // set edge, i.e., declare setting node.inputs[key] to value.
   void SetEdge(const AnfNodePtr &src_node, int k, const AnfNodePtr &v);

@@ -582,8 +582,9 @@ void NetTrain::CheckSum(mindspore::tensor::MSTensor *tensor, std::string node_ty
     case kNumberTypeFloat32:
       TensorNan(reinterpret_cast<float *>(data), tensor_size);
       std::cout << TensorSum<float>(data, tensor_size) << std::endl;
+      std::cout << "tensor name: " << tensor->tensor_name() << std::endl;
       std::cout << "data: ";
-      for (int i = 0; i <= kPrintOffset; i++) {
+      for (int i = 0; i <= kPrintOffset && i < tensor_size; i++) {
         std::cout << static_cast<float>(fdata[i]) << ", ";
       }
       std::cout << std::endl;
