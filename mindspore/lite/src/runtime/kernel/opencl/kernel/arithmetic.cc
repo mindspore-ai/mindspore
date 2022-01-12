@@ -85,12 +85,24 @@ void ArithmeticOpenCLKernel::SetGlobalLocal() {
   AlignGlobalLocal(global_size_, {});
 }
 
+void SwitchGpuTensorInfoNWDim(GpuTensorInfo *gpuTensorInfo) {
+  auto tmp = gpuTensorInfo->N;
+  gpuTensorInfo->N = gpuTensorInfo->W;
+  gpuTensorInfo->W = tmp;
+
+  gpuTensorInfo->width = gpuTensorInfo->W * gpuTensorInfo->Slice;
+  gpuTensorInfo->height = gpuTensorInfo->H * gpuTensorInfo->N;
+}
+
 int ArithmeticOpenCLKernel::InitWeights() {
   auto allocator = ocl_runtime_->GetAllocator();
   auto fp16_enable = ocl_runtime_->GetFp16Enable();
   for (size_t i = 0; i < in_tensors_.size(); ++i) {
     const auto &in_tensor = in_tensors_.at(i);
     GpuTensorInfo in_shape = GpuTensorInfo(in_tensor);
+    if (in1_shape_switch_flag_ && i == 1) {
+      SwitchGpuTensorInfoNWDim(&in_shape);
+    }
     if (in_tensor->IsConst()) {
       std::vector<char> weight(in_shape.Image2DSize, 0);
       bool src_is_fp16 = in_tensor->data_type() == kNumberTypeFloat16;
@@ -159,10 +171,23 @@ int ArithmeticOpenCLKernel::SetConstArgs() {
   return RET_OK;
 }
 
+void ArithmeticOpenCLKernel::InitGpuTensorInfoShape() {
+  auto shape0 = in_tensors_.at(0)->shape();
+  auto shape1 = in_tensors_.at(1)->shape();
+
+  in0_shape_ = GpuTensorInfo(in_tensors_.at(0));
+  in1_shape_ = GpuTensorInfo(in_tensors_.at(1));
+  out_shape_ = GpuTensorInfo(out_tensors_.at(0));
+  if (shape0.size() == DIMENSION_4D && shape1.size() == DIMENSION_2D) {
+    if (shape0.at(kNHWC_W) == shape1.at(kNHWC_N) && shape0.at(kNHWC_C) == shape1.at(kNHWC_H)) {
+      SwitchGpuTensorInfoNWDim(&in1_shape_);
+      in1_shape_switch_flag_ = true;
+    }
+  }
+}
+
 int ArithmeticOpenCLKernel::Prepare() {
-  in0_shape_ = GpuTensorInfo(in_tensors_[0]);
-  in1_shape_ = GpuTensorInfo(in_tensors_[1]);
-  out_shape_ = GpuTensorInfo(out_tensors_[0]);
+  InitGpuTensorInfoShape();
 
   auto *param = reinterpret_cast<const ArithmeticParameter *>(op_parameter_);
   if (type() == PrimitiveType_BiasAdd) {
