@@ -220,6 +220,34 @@ public class Model {
     }
 
     /**
+     * Get output tensors by node name.
+     *
+     * @param nodeName output node name
+     * @return output tensor
+     */
+    public List<MSTensor> getOutputsByNodeName(String nodeName) {
+        if (nodeName == null) {
+            return null;
+        }
+        List<Long> ret = this.getOutputsByNodeName(this.modelPtr, nodeName);
+        List<MSTensor> tensors = new ArrayList<>();
+        for (Long msTensorAddr : ret) {
+            MSTensor msTensor = new MSTensor(msTensorAddr);
+            tensors.add(msTensor);
+        }
+        return tensors;
+    }
+
+    /**
+     * Get output tensor names.
+     *
+     * @return output tensor name list.
+     */
+    public List<String> getOutputTensorNames() {
+        return this.getOutputTensorNames(this.modelPtr);
+    }
+
+    /**
      * Export the model.
      *
      * @param fileName          Name Model file name.
@@ -230,14 +258,17 @@ public class Model {
      */
     public boolean export(String fileName, int quantizationType, boolean isOnlyExportInfer,
                           List<String> outputTensorNames) {
-        if (fileName == null || outputTensorNames == null) {
+        if (fileName == null) {
             return false;
         }
-        String[] outputTensorArray = new String[outputTensorNames.size()];
-        for (int i = 0; i < outputTensorNames.size(); i++) {
-            outputTensorArray[i] = outputTensorNames.get(i);
+        if (outputTensorNames != null) {
+            String[] outputTensorArray = new String[outputTensorNames.size()];
+            for (int i = 0; i < outputTensorNames.size(); i++) {
+                outputTensorArray[i] = outputTensorNames.get(i);
+            }
+            return export(modelPtr, fileName, quantizationType, isOnlyExportInfer, outputTensorArray);
         }
-        return export(modelPtr, fileName, quantizationType, isOnlyExportInfer, outputTensorArray);
+        return export(modelPtr, fileName, quantizationType, isOnlyExportInfer, null);
     }
 
     /**
@@ -292,6 +323,28 @@ public class Model {
     }
 
     /**
+     * set learning rate.
+     *
+     * @param learning_rate learning rate.
+     * @return Whether the set learning rate is successful.
+     */
+    public boolean setLearningRate(float learning_rate) {
+        return this.setLearningRate(this.modelPtr, learning_rate);
+    }
+
+    /**
+     * Set the virtual batch.
+     *
+     * @param virtualBatchMultiplier virtual batch multuplier.
+     * @param learningRate           learning rate.
+     * @param momentum               monentum.
+     * @return Whether the virtual batch is successfully set.
+     */
+    public boolean setupVirtualBatch(int virtualBatchMultiplier, float learningRate, float momentum) {
+        return this.setupVirtualBatch(this.modelPtr, virtualBatchMultiplier, learningRate, momentum);
+    }
+
+    /**
      * Free model
      */
     public void free() {
@@ -317,6 +370,10 @@ public class Model {
 
     private native long getOutputByTensorName(long modelPtr, String tensorName);
 
+    private native List<String> getOutputTensorNames(long modelPtr);
+
+    private native List<Long> getOutputsByNodeName(long modelPtr, String nodeName);
+
     private native boolean setTrainMode(long modelPtr, boolean isTrain);
 
     private native boolean getTrainMode(long modelPtr);
@@ -329,4 +386,9 @@ public class Model {
     private native List<Long> getFeatureMaps(long modelPtr);
 
     private native boolean updateFeatureMaps(long modelPtr, long[] newFeatures);
+
+    private native boolean setLearningRate(long modelPtr, float learning_rate);
+
+    private native boolean setupVirtualBatch(long modelPtr, int virtualBatchMultiplier, float learningRate,
+                                             float momentum);
 }

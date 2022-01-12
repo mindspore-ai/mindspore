@@ -38,6 +38,10 @@ public class ModelTest {
         Model liteModel = new Model();
         boolean isSuccess = liteModel.build(g, context, cfg);
         assertTrue(isSuccess);
+        isSuccess = liteModel.setLearningRate(1.0f);
+        assertTrue(isSuccess);
+        isSuccess = liteModel.setupVirtualBatch(2,1.0f,0.5f);
+        assertTrue(isSuccess);
         liteModel.free();
     }
 
@@ -145,9 +149,8 @@ public class ModelTest {
         for (MSTensor output : outputs) {
             System.out.println("output-------" + output.tensorName());
         }
-        System.out.println("");
-        MSTensor output = liteModel.getOutputByTensorName("Default/network-WithLossCell/_backbone-LeNet5/fc3-Dense" +
-                "/BiasAdd-op121");
+        String outputTensorName = "Default/network-WithLossCell/_backbone-LeNet5/fc3-Dense/BiasAdd-op121";
+        MSTensor output = liteModel.getOutputByTensorName(outputTensorName);
         assertEquals(80, output.size());
         output = liteModel.getOutputByTensorName("Default/network-WithLossCell/_loss_fn-L1Loss/ReduceMean-op112");
         assertEquals(0, output.size());
@@ -155,6 +158,13 @@ public class ModelTest {
         for (MSTensor input : inputs) {
             System.out.println(input.tensorName());
         }
+        for (String name : liteModel.getOutputTensorNames()) {
+            System.out.println("output tensor name:" + name);
+        }
+        List<MSTensor> outputTensors = liteModel.getOutputsByNodeName("Default/network-WithLossCell/_backbone-LeNet5" +
+                "/fc3-Dense/MatMul-op118");
+        assertEquals(1, outputTensors.size());
+        assertEquals(outputTensorName, outputTensors.get(0).tensorName());
         liteModel.free();
     }
 
