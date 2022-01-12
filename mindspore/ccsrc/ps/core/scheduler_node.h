@@ -103,6 +103,10 @@ class SchedulerNode : public Node {
   void ProcessSendEvent(const std::shared_ptr<TcpServer> &server, const std::shared_ptr<TcpConnection> &conn,
                         const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size);
 
+  // Determine whether the registration request of the node should be rejected, the registration of the
+  // alive node should be rejected.
+  virtual bool NeedRejectRegister(const NodeInfo &node_info) { return false; }
+
   // After scheduler collects all registered message, it actively sends finish to the node connected by the client.
   void SendMetadata(const std::shared_ptr<TcpClient> &client, uint32_t rank_id);
   // After scheduler collects all finish message, it actively sends finish to the node connected by the client.

@@ -24,15 +24,15 @@ void Scheduler::Run() {
   PSContext::instance()->cluster_config().scheduler_port = PSContext::instance()->scheduler_port();
   PSContext::instance()->cluster_config().initial_worker_num = PSContext::instance()->initial_worker_num();
   PSContext::instance()->cluster_config().initial_server_num = PSContext::instance()->initial_server_num();
-  if (!scheduler_node_.Start()) {
+  if (!scheduler_node_->Start()) {
     MS_LOG(WARNING) << "Scheduler start failed.";
   }
 
-  if (!scheduler_node_.Finish()) {
+  if (!scheduler_node_->Finish()) {
     MS_LOG(WARNING) << "Scheduler finis failed.";
   }
 
-  if (!scheduler_node_.Stop()) {
+  if (!scheduler_node_->Stop()) {
     MS_LOG(WARNING) << "Scheduler stop failed.";
   }
   exit(1);
