@@ -21,7 +21,7 @@
 #include "acl/acl_rt.h"
 #include "runtime/dev.h"
 #include "backend/optimizer/ascend/ascend_backend_optimization.h"
-#include "backend/optimizer/graph_kernel/graph_kernel_optimization.h"
+#include "backend/optimizer/graph_kernel/adapter/graph_kernel_optimization.h"
 #include "utils/context/graph_kernel_flags.h"
 #include "utils/utils.h"
 #include "runtime/device/ascend/kernel_select_ascend.h"

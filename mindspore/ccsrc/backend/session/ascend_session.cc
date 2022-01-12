@@ -50,7 +50,7 @@
 #include "debug/debugger/debugger_utils.h"
 #endif
 #include "debug/anf_ir_utils.h"
-#include "backend/optimizer/graph_kernel/graph_kernel_optimization.h"
+#include "backend/optimizer/graph_kernel/adapter/graph_kernel_optimization.h"
 #include "backend/session/ascend_auto_monad.h"
 #include "debug/anf_ir_dump.h"
 #include "debug/dump_proto.h"

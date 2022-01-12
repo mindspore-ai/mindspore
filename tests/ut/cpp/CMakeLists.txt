@@ -218,6 +218,10 @@ list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/backend/optimizer/
 list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/backend/optimizer/graph_kernel/lite_adapter/akg_build.cc")
 list(REMOVE_ITEM MINDSPORE_SRC_LIST
   "../../../mindspore/ccsrc/backend/optimizer/graph_kernel/lite_adapter/callback_impl.cc")
+list(REMOVE_ITEM MINDSPORE_SRC_LIST
+  "../../../mindspore/ccsrc/backend/optimizer/graph_kernel/lite_adapter/graph_kernel_optimization.cc")
+list(REMOVE_ITEM MINDSPORE_SRC_LIST
+  "../../../mindspore/ccsrc/backend/optimizer/graph_kernel/lite_adapter/graph_kernel_pass_manager.cc")
 list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/backend/kernel_compiler/tbe/tbe_kernel_compile.cc")
 list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/backend/kernel_compiler/akg/cpu/akg_cpu_kernel_mod.cc")
 list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/backend/kernel_compiler/akg/cpu/akg_cpu_kernel_build.cc")

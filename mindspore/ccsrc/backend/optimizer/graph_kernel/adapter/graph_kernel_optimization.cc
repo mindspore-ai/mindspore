@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "backend/optimizer/graph_kernel/graph_kernel_optimization.h"
+#include "backend/optimizer/graph_kernel/adapter/graph_kernel_optimization.h"
 
 #include <vector>
 #include <string>
@@ -46,7 +46,7 @@
 #include "backend/optimizer/graph_kernel/tsa_atomic_add_to_first_tensor.h"
 #include "backend/optimizer/graph_kernel/uss_atomic_add.h"
 #include "backend/optimizer/pass/getitem_tuple.h"
-#include "backend/optimizer/graph_kernel/graph_kernel_pass_manager.h"
+#include "backend/optimizer/graph_kernel/adapter/graph_kernel_pass_manager.h"
 #include "backend/optimizer/graph_kernel/transform_op_optimizer.h"
 #include "backend/optimizer/graph_kernel/rewrite_output_shape.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_recompute.h"

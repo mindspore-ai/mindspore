@@ -31,7 +31,7 @@
 #include "backend/optimizer/cpu/insert_format_transform_op.h"
 #include "backend/optimizer/pass/replace_node_by_proxy.h"
 #include "backend/optimizer/pass/erase_visit_attr.h"
-#include "backend/optimizer/graph_kernel/graph_kernel_optimization.h"
+#include "backend/optimizer/graph_kernel/adapter/graph_kernel_optimization.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "profiler/device/cpu/cpu_profiling.h"
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
