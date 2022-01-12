@@ -265,6 +265,142 @@ if(PLATFORM_ARM64)
             install(TARGETS ${BENCHMARK_TRAIN_NAME} RUNTIME DESTINATION ${BENCHMARK_TRAIN_ROOT_DIR} COMPONENT
                     ${RUNTIME_COMPONENT_NAME})
         endif()
+        if(MSLITE_ENABLE_CONVERTER)
+            install(DIRECTORY ${TOP_DIR}/mindspore/lite/include/ DESTINATION ${CONVERTER_ROOT_DIR}/include
+                    COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h"
+                    PATTERN "train*" EXCLUDE PATTERN "delegate.h" EXCLUDE PATTERN "lite_session.h" EXCLUDE)
+            install(FILES ${API_HEADER}  DESTINATION ${CONVERTER_ROOT_DIR}/include/api
+                    COMPONENT ${RUNTIME_COMPONENT_NAME})
+            install(FILES ${MINDAPI_BASE_HEADER} DESTINATION ${CONVERTER_ROOT_DIR}/include/core/mindapi/base
+                    COMPONENT ${RUNTIME_COMPONENT_NAME})
+            install(FILES ${MINDAPI_IR_HEADER} DESTINATION ${CONVERTER_ROOT_DIR}/include/core/mindapi/ir
+                    COMPONENT ${RUNTIME_COMPONENT_NAME})
+            install(FILES ${ABSTRACT_HEADER} DESTINATION ${CONVERTER_ROOT_DIR}/include/core/abstract
+                    COMPONENT ${RUNTIME_COMPONENT_NAME})
+            install(FILES ${API_IR_HEADER} DESTINATION ${CONVERTER_ROOT_DIR}/include/core/api/ir
+                    COMPONENT ${RUNTIME_COMPONENT_NAME})
+            install(FILES ${BASE_HEADER} DESTINATION ${CONVERTER_ROOT_DIR}/include/core/base
+                    COMPONENT ${RUNTIME_COMPONENT_NAME})
+            install(FILES ${IR_DTYPE_HEADER} DESTINATION ${CONVERTER_ROOT_DIR}/include/core/ir/dtype
+                    COMPONENT ${RUNTIME_COMPONENT_NAME})
+            install(FILES ${IR_HEADER} DESTINATION ${CONVERTER_ROOT_DIR}/include/core/ir
+                    COMPONENT ${RUNTIME_COMPONENT_NAME})
+            install(DIRECTORY ${TOP_DIR}/mindspore/core/ops/ DESTINATION ${CONVERTER_ROOT_DIR}/include/core/ops
+                    COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
+            install(FILES ${UTILS_HEADER} DESTINATION ${CONVERTER_ROOT_DIR}/include/core/utils
+                    COMPONENT ${RUNTIME_COMPONENT_NAME})
+            install(DIRECTORY ${TOP_DIR}/mindspore/lite/build/schema/
+                    DESTINATION ${CONVERTER_ROOT_DIR}/include/schema
+                    COMPONENT ${RUNTIME_COMPONENT_NAME}
+                    FILES_MATCHING PATTERN "*.h" PATTERN "schema_generated.h" EXCLUDE)
+            install(DIRECTORY ${flatbuffers_INC}/ DESTINATION ${CONVERTER_ROOT_DIR}/include/third_party
+                    COMPONENT ${RUNTIME_COMPONENT_NAME})
+            install(DIRECTORY ${glog_LIBPATH}/../include/glog/
+                    DESTINATION ${CONVERTER_ROOT_DIR}/include/third_party/glog
+                    COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
+            install(DIRECTORY ${TOP_DIR}/third_party/securec/include/
+                    DESTINATION ${CONVERTER_ROOT_DIR}/include/third_party/securec
+                    COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
+            install(TARGETS converter_lite RUNTIME DESTINATION ${CONVERTER_ROOT_DIR}/converter
+                    COMPONENT ${RUNTIME_COMPONENT_NAME})
+            install(FILES ${TOP_DIR}/mindspore/lite/build/tools/converter/registry/libmslite_converter_plugin.so
+                    DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
+            install(FILES ${glog_LIBPATH}/libglog.so.0.4.0 DESTINATION ${CONVERTER_ROOT_DIR}/lib RENAME libglog.so.0
+                    COMPONENT ${RUNTIME_COMPONENT_NAME})
+
+            install(FILES ${opencv_LIBPATH}/libopencv_core.so.4.5.2
+                    DESTINATION ${CONVERTER_ROOT_DIR}/lib RENAME libopencv_core.so.4.5
+                    COMPONENT ${RUNTIME_COMPONENT_NAME})
+            install(FILES ${opencv_LIBPATH}/libopencv_imgcodecs.so.4.5.2
+                    DESTINATION ${CONVERTER_ROOT_DIR}/lib RENAME libopencv_imgcodecs.so.4.5
+                    COMPONENT ${RUNTIME_COMPONENT_NAME})
+            install(FILES ${opencv_LIBPATH}/libopencv_imgproc.so.4.5.2
+                    DESTINATION ${CONVERTER_ROOT_DIR}/lib RENAME libopencv_imgproc.so.4.5
+                    COMPONENT ${RUNTIME_COMPONENT_NAME})
+
+            if(MSLITE_ENABLE_ACL)
+                set(LITE_ACL_DIR ${TOP_DIR}/mindspore/lite/build/tools/converter/adapter/acl)
+                install(FILES ${LITE_ACL_DIR}/mindspore_shared_lib/libmindspore_shared_lib.so
+                        DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
+                if(MSLITE_ENABLE_RUNTIME_CONVERT)
+                    install(FILES ${LITE_ACL_DIR}/mindspore_shared_lib/libmindspore_shared_lib.so
+                            DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+                    install(FILES ${glog_LIBPATH}/libglog.so.0.4.0 DESTINATION ${RUNTIME_LIB_DIR} RENAME libglog.so.0
+                            COMPONENT ${RUNTIME_COMPONENT_NAME})
+                endif()
+                if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "cloud" AND MSLITE_ENABLE_RUNTIME_CONVERT)
+                    file(GLOB DATA_ENGINE_LIB_LIST ${LITE_ACL_DIR}/_c_dataengine/*.so)
+                    file(GLOB DATA_RECORD_LIB_LIST ${LITE_ACL_DIR}/_c_mindrecord/*.so)
+                    install(FILES ${DATA_ENGINE_LIB_LIST}
+                            DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+                    install(FILES ${DATA_RECORD_LIB_LIST}
+                            DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+                    install(FILES ${jpeg_turbo_LIBPATH}/libjpeg.so.62.3.0
+                            DESTINATION ${RUNTIME_LIB_DIR} RENAME libjpeg.so.62 COMPONENT ${RUNTIME_COMPONENT_NAME})
+                    install(FILES ${jpeg_turbo_LIBPATH}/libturbojpeg.so.0.2.0
+                            DESTINATION ${RUNTIME_LIB_DIR} RENAME libturbojpeg.so.0 COMPONENT ${RUNTIME_COMPONENT_NAME})
+                    install(FILES ${tinyxml2_LIBPATH}/libtinyxml2.so.8.0.0
+                            DESTINATION ${RUNTIME_LIB_DIR} RENAME libtinyxml2.so.8 COMPONENT ${RUNTIME_COMPONENT_NAME})
+                    install(FILES ${icu4c_LIBPATH}/libicuuc.so.67.1
+                            DESTINATION ${RUNTIME_LIB_DIR} RENAME libicuuc.so.67 COMPONENT ${RUNTIME_COMPONENT_NAME})
+                    install(FILES ${icu4c_LIBPATH}/libicudata.so.67.1
+                            DESTINATION ${RUNTIME_LIB_DIR} RENAME libicudata.so.67 COMPONENT ${RUNTIME_COMPONENT_NAME})
+                    install(FILES ${icu4c_LIBPATH}/libicui18n.so.67.1
+                            DESTINATION ${RUNTIME_LIB_DIR} RENAME libicui18n.so.67 COMPONENT ${RUNTIME_COMPONENT_NAME})
+                    install(FILES ${grpc_LIBPATH}/libmindspore_grpc++.so.1.36.1 DESTINATION ${RUNTIME_LIB_DIR}
+                            RENAME libmindspore_grpc++.so.1 COMPONENT ${RUNTIME_COMPONENT_NAME})
+                    install(FILES ${grpc_LIBPATH}/libmindspore_grpc.so.15.0.0 DESTINATION
+                            ${RUNTIME_LIB_DIR} RENAME libmindspore_grpc.so.15 COMPONENT ${RUNTIME_COMPONENT_NAME})
+                    install(FILES ${grpc_LIBPATH}/libmindspore_gpr.so.15.0.0 DESTINATION
+                            ${RUNTIME_LIB_DIR} RENAME libmindspore_gpr.so.15 COMPONENT ${RUNTIME_COMPONENT_NAME})
+                    install(FILES ${grpc_LIBPATH}/libmindspore_upb.so.15.0.0 DESTINATION
+                            ${RUNTIME_LIB_DIR} RENAME libmindspore_upb.so.15 COMPONENT ${RUNTIME_COMPONENT_NAME})
+                    install(FILES ${grpc_LIBPATH}/libmindspore_address_sorting.so.15.0.0 DESTINATION ${RUNTIME_LIB_DIR}
+                            RENAME libmindspore_address_sorting.so.15 COMPONENT ${RUNTIME_COMPONENT_NAME})
+                    ## Public header files for minddata
+                    install(
+                            FILES ${TOP_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/config.h
+                            ${TOP_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/constants.h
+                            ${TOP_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/execute.h
+                            ${TOP_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/text.h
+                            ${TOP_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/transforms.h
+                            ${TOP_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/vision.h
+                            ${TOP_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/vision_lite.h
+                            ${TOP_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/vision_ascend.h
+                            DESTINATION ${RUNTIME_INC_DIR}/dataset COMPONENT ${RUNTIME_COMPONENT_NAME})
+                endif()
+            endif()
+
+            if(MSLITE_ENABLE_DPICO_ATC_ADAPTER)
+                install(FILES ${TOP_DIR}/mindspore/lite/build/tools/converter/adapter/dpico/libdpico_atc_adapter.so
+                        DESTINATION ${CONVERTER_ROOT_DIR}/providers/SD3403 COMPONENT ${RUNTIME_COMPONENT_NAME})
+                if(MSLITE_ENABLE_TOOLS)
+                    install(TARGETS ${BECHCHMARK_NAME} RUNTIME DESTINATION ${BENCHMARK_ROOT_DIR}
+                            COMPONENT ${RUNTIME_COMPONENT_NAME})
+                endif()
+            endif()
+
+            if(MSLITE_ENABLE_RUNTIME_GLOG)
+                install(DIRECTORY ${glog_LIBPATH}/../include/glog/ DESTINATION ${RUNTIME_INC_DIR}/third_party/glog
+                        COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
+                install(FILES ${glog_LIBPATH}/libglog.so.0.4.0 DESTINATION ${GLOG_DIR} RENAME libglog.so.0
+                        COMPONENT ${RUNTIME_COMPONENT_NAME})
+            endif()
+            if(MSLITE_ENABLE_RUNTIME_CONVERT)
+                install(FILES ${TOP_DIR}/mindspore/lite/build/tools/converter/registry/libmslite_converter_plugin.so
+                        DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+
+                install(FILES ${opencv_LIBPATH}/libopencv_core.so.4.5.2
+                        DESTINATION ${RUNTIME_LIB_DIR} RENAME libopencv_core.so.4.5
+                        COMPONENT ${RUNTIME_COMPONENT_NAME})
+                install(FILES ${opencv_LIBPATH}/libopencv_imgcodecs.so.4.5.2
+                        DESTINATION ${RUNTIME_LIB_DIR} RENAME libopencv_imgcodecs.so.4.5
+                        COMPONENT ${RUNTIME_COMPONENT_NAME})
+                install(FILES ${opencv_LIBPATH}/libopencv_imgproc.so.4.5.2
+                        DESTINATION ${RUNTIME_LIB_DIR} RENAME libopencv_imgproc.so.4.5
+                        COMPONENT ${RUNTIME_COMPONENT_NAME})
+            endif()
+        endif()
     endif()
     if(MSLITE_ENABLE_TESTCASES)
         install(FILES ${TOP_DIR}/mindspore/lite/build/test/lite-test DESTINATION ${TEST_CASE_DIR}

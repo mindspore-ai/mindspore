@@ -233,6 +233,8 @@ build_lite() {
           LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DMSLITE_MINDDATA_IMPLEMENT=off"
           LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DMSLITE_ENABLE_TRAIN=off"
           LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DMSLITE_GPU_BACKEND=off"
+          LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DMSLITE_ENABLE_CONVERTER=off"
+          ARM64_COMPILE_CONVERTER=ON
         else
           checkndk
           CMAKE_TOOLCHAIN_FILE=${ANDROID_NDK}/build/cmake/android.toolchain.cmake
@@ -250,6 +252,10 @@ build_lite() {
          LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DMSLITE_ENABLE_TOOLS=off -DMSLITE_ENABLE_CONVERTER=off"
          LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -G Xcode .."
       else
+        if [[ "${machine}" == "aarch64" ]]; then
+          echo "Use the '-I arm64' command when compiling MindSpore Lite on an aarch64 architecture system."
+          exit 1
+        fi
         LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DMSLITE_MINDDATA_IMPLEMENT=lite_cv"
         LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DPLATFORM_X86_64=on"
       fi
@@ -289,6 +295,14 @@ build_lite() {
           cmake --build "${BASEPATH}/mindspore/lite/build" --target benchmark -j$THREAD_NUM
           make install
         fi
+      fi
+      if [[ "X$ARM64_COMPILE_CONVERTER" == "XON" ]]; then
+        LITE_CMAKE_ARGS=`echo $LITE_CMAKE_ARGS | sed 's/-DMSLITE_ENABLE_FP16=on/-DMSLITE_ENABLE_FP16=off/g'`
+        LITE_CMAKE_ARGS=`echo $LITE_CMAKE_ARGS | sed 's/-DMSLITE_ENABLE_CONVERTER=off/-DMSLITE_ENABLE_CONVERTER=on/g'`
+        echo "cmake ${LITE_CMAKE_ARGS} ${BASEPATH}/mindspore/lite"
+        cmake ${LITE_CMAKE_ARGS} "${BASEPATH}/mindspore/lite"
+        cmake --build "${BASEPATH}/mindspore/lite/build" --target converter_lite -j$THREAD_NUM
+        make install
       fi
       make package
       if [[ "${local_lite_platform}" == "x86_64" ]]; then
