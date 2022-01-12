@@ -429,7 +429,6 @@ TypePtr FindChildCastWithFP32ToFP16(const CNodePtr &cnode_ptr, const NodeUsersMa
   MS_LOG(INFO) << "Start to search the weight params:" << weight->DebugString();
 
   AnfNodePtr node = GetChildCastNode(weight, node_users_map);
-
   if (!node) {
     return nullptr;
   }
@@ -528,6 +527,5 @@ void SetCastForParamNotRecompute(const std::vector<AnfNodePtr> &all_nodes) {
     }
   }
 }
-
 }  // namespace parallel
 }  // namespace mindspore

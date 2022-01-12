@@ -105,7 +105,7 @@ class GraphSplitter {
   void SplitGraph(const std::vector<SplitGraphSegment> &segments, const InterProcessOpEdgesInfo &comm_edges);
 
   // Split the graph but don't eliminate the nodes so that a global graph ir could be exported.
-  void DumpDistributedGraph(const std::vector<SplitGraphSegment> &segments, const InterProcessOpEdgesInfo &comm_edges);
+  void DumpDistributedGraph(const InterProcessOpEdgesInfo &comm_edges);
 
   // Return the split label of this node. Only CNode is supported for now.
   // If the node has no split label, return the label of this process, which means this node should be in this process's
