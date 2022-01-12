@@ -3,7 +3,7 @@
 
 .. py:class:: mindspore.Parameter(default_input, name=None, requires_grad=True, layerwise_parallel=False, parallel_optimizer=True)
 
-    通常表示网络的参数（ `Parameter` 是 `Tensor` 的子类）。
+    `Parameter`是`Tensor`的子类，当它们被绑定为Cell的属性时，会自动添加到其参数列表中，并且可以通过Cell的某些方法获取，例如 `cell.get_parameters()` 。
 
     .. note::
         在"semi_auto_parallel"和"auto_parallel"的并行模式下，如果使用 `Initializer` 模块初始化参数，参数的类型将为 `Tensor` ，:class:`mindspore.ops.AllGather`，`Tensor` 仅保存张量的形状和类型信息，而不占用内存来保存实际数据。并行场景下存在参数的形状发生变化的情况，用户可以调用 `Parameter` 的 `init_data` 方法得到原始数据。如果网络中存在需要部分输入为 `Parameter` 的算子，则不允许这部分输入的 `Parameter` 进行转换。如果在 `Cell` 里初始化一个 `Parameter` 作为 `Cell` 的属性时，建议使用默认值None，否则 `Parameter` 的 `name` 可能与预期不一致。
@@ -91,7 +91,7 @@
           - **opt_shard_group** (str) - 该参数进行优化器切分时的group。
 
         - **set_sliced** (bool) - 参数初始化时被设定为分片，则为True。默认值：False。
-        
+
         **返回：**
 
         初始化数据后的 `Parameter` 。如果当前 `Parameter` 已初始化，则更新 `Parameter` 数据。

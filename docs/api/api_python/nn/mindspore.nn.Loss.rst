@@ -3,7 +3,7 @@ mindspore.nn.Loss
 
 .. py:class:: mindspore.nn.Loss
 
-    计算loss的平均值。如果每 :math:`n` 次迭代调用一次 `update` 方法，则评估结果为：
+    计算loss的平均值。如果每 :math:`n` 次迭代调用一次 `update` 方法，则计算结果为：
 
     .. math::
         loss = \frac{\sum_{k=1}^{n}loss_k}{n}

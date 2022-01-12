@@ -3,14 +3,14 @@ mindspore.nn.MAE
 
 .. py:class:: mindspore.nn.MAE
 
-    计算平均绝对误差（MAE）。
+    计算平均绝对误差MAE（Mean Absolute Error）。
 
-    创建了一个用于测量输入 :math:`x` 和目标 :math:`y` 各元素之间的平均绝对误差（MAE）的标准。
+    计算输入 :math:`x` 和目标 :math:`y` 各元素之间的平均绝对误差。
 
     .. math::
-        \text{MAE} = \frac{\sum_{i=1}^n \|y_i - x_i\|}{n}
+        \text{MAE} = \frac{\sum_{i=1}^n \|y_{pred}_i - y_i\|}{n}
 
-    这里， :math:`n` 是bach size。
+    这里， :math:`n` 是batch size。
 
     **样例：**
 
@@ -36,7 +36,7 @@ mindspore.nn.MAE
 
         **返回：**
 
-        numpy.float64，计算结果。
+        numpy.float64，计算的MAE的结果。
 
         **异常：**
 

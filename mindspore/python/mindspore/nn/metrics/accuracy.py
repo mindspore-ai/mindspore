@@ -21,9 +21,8 @@ class Accuracy(EvaluationBase):
     r"""
     Calculates the accuracy for classification and multilabel data.
 
-    The accuracy class has two local variables, the correct number and the total number of samples, that are used to
-    compute the frequency with which `y_pred` matches `y`. This frequency is ultimately returned as the accuracy: an
-    idempotent operation that simply divides the correct number by the total number.
+    The accuracy class creates two local variables, the correct number and the total number that are used to
+    compute the frequency with which y_pred matches y. This frequency is the accuracy.
 
     .. math::
         \text{accuracy} =\frac{\text{true_positive} + \text{true_negative}}
@@ -80,6 +79,8 @@ class Accuracy(EvaluationBase):
 
         Raises:
             ValueError: If the number of the inputs is not 2.
+            ValueError: class numbers of last input predicted data and current predicted data not match.
+
         """
         if len(inputs) != 2:
             raise ValueError("For 'Accuracy.update', it needs 2 inputs (predicted value, true value), "
@@ -115,7 +116,7 @@ class Accuracy(EvaluationBase):
         Computes the accuracy.
 
         Returns:
-            Float, the computed result.
+            np.float64, the computed result.
 
         Raises:
             RuntimeError: If the sample size is 0.

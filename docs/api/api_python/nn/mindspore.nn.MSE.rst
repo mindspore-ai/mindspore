@@ -3,12 +3,12 @@ mindspore.nn.MSE
 
 .. py:class:: mindspore.nn.MSE
 
-    测量均方差（MSE）。
+    测量均方差MSE（Mean Squared Error）。
 
-    创建用于计算输入 :math:`x` 和目标 :math:`y` 中的每个元素的均方差（L2范数平方）的标准。
+    计算输入 :math:`x` 和目标 :math:`y` 各元素之间的平均平方误差。
 
     .. math::
-        \text{MSE}(x,\ y) = \frac{\sum_{i=1}^n(y_i - x_i)^2}{n}
+        \text{MSE}(x,\ y) = \frac{\sum_{i=1}^n(y_{pred}_i - y_i)^2}{n}
 
     其中， :math:`n` 为batch size。
 
@@ -34,7 +34,7 @@ mindspore.nn.MSE
 
         **返回：**
 
-        numpy.float64，计算结果。
+        numpy.float64，计算的MSE的结果。
 
         **异常：**
 

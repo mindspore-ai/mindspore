@@ -3,16 +3,13 @@
 
 .. py:class:: mindspore.nn.Cell(auto_prefix=True, flags=None)
 
-    所有神经网络的基类。
+    MindSpore中神经网络的基本构成单元。模型或神经网络层应当继承该基类。
 
-    一个 `Cell` 可以是单一的神经网络单元，如 :class:`mindspore.nn.Conv2d`, :class:`mindspore.nn.ReLU`,  :class:`mindspore.nn.BatchNorm` 等，也可以是组成网络的 `Cell` 的结合体。
-
-    .. note::
-       一般情况下，自动微分 (AutoDiff) 算法会自动调用梯度函数，但是如果使用反向传播方法 (bprop method)，梯度函数将会被反向传播方法代替。反向传播函数会接收一个包含损失对输出的梯度张量 `dout` 和一个包含前向传播结果的张量 `out` 。反向传播过程需要计算损失对输入的梯度，损失对参数变量的梯度目前暂不支持。反向传播函数必须包含自身参数。
+    `mindspore.nn` 中神经网络层也是Cell的子类，如 :class:`mindspore.nn.Conv2d`、:class:`mindspore.nn.ReLU`、 :class:`mindspore.nn.BatchNorm` 等。Cell在GRAPH_MODE(静态图模式)下将编译为一张计算图，在PYNATIVE_MODE(动态图模式)下作为神经网络的基础模块。
 
     **参数：**
 
-    - **auto_prefix** (Cell) – 递归地生成作用域。默认值：True。
+    - **auto_prefix** (bool) – 是否自动为Cell及其子Cell生成NameSpace。`auto_prefix` 的设置影响网络参数的命名，如果设置为True，则自动给网络参数的名称添加前缀，否则不添加前缀。默认值：True。
     - **flags** (dict) - Cell的配置信息，目前用于绑定Cell和数据集。用户也通过该参数自定义Cell属性。默认值：None。
 
     **支持平台：**
@@ -83,7 +80,7 @@
 
         **参数：**
 
-        - **param** (Parameter) – Parameter类型，需要被转换类型的输入参数。
+        - **param** (Parameter) – 需要被转换类型的输入参数。
 
         **返回：**
 
@@ -124,7 +121,7 @@
 
     .. py:method:: compile(*inputs)
 
-        编译Cell。
+        编译Cell为计算图，输入需与construct中定义的输入一致。
 
         **参数：**
 
@@ -132,7 +129,9 @@
 
     .. py:method:: compile_and_run(*inputs)
 
-        编译并运行Cell。
+        编译并运行Cell，输入需与construct中定义的输入一致。
+
+        注：不推荐使用该函数，建议直接调用Cell实例
 
         **参数：**
 
@@ -156,13 +155,13 @@
 
     .. py:method:: extend_repr()
 
-        设置Cell的扩展表示形式。
+        在原有描述基础上扩展Cell的描述。
 
         若需要在print时输出个性化的扩展信息，请在您的网络中重新实现此方法。
 
     .. py:method:: generate_scope()
 
-        为网络中的每个Cell对象生成作用域。
+        为网络中的每个Cell对象生成NameSpace。
 
     .. py:method:: get_flags()
 
@@ -174,7 +173,7 @@
 
     .. py:method:: get_parameters(expand=True)
 
-        返回一个该Cell中parameter的迭代器。
+        返回Cell中parameter的迭代器。
 
         **参数：**
 

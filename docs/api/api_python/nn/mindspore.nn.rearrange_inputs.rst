@@ -9,6 +9,7 @@ mindspore.nn.rearrange_inputs
 
     **样例：**
 
+    >>> from mindspore.nn import rearrange_inputs
     >>> class RearrangeInputsExample:
     ...     def __init__(self):
     ...         self._indexes = None

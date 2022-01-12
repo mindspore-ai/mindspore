@@ -3,9 +3,9 @@ mindspore.nn.Recall
 
 .. py:class:: mindspore.nn.Recall(eval_type='classification')
 
-    计算'classification'单标签数据分类和'multilabel'多标签数据分类的召回率。
+    计算数据分类的召回率，包括单标签场景和多标签场景。
 
-    recall类创建两个局部变量 :math:`\text{true_positive}` 和 :math:`\text{false_negative}` 用于计算召回率。计算方式为 :math:`\text{true_positive}` 除以 :math:`\text{true_positive}` 与 :math:`\text{false_negative}` 的和，是一个幂等操作，此值最终作为召回返回。
+    Recall类创建两个局部变量 :math:`\text{true_positive}` 和 :math:`\text{false_negative}` 用于计算召回率。计算方式为：
 
     .. math::
         \text{recall} = \frac{\text{true_positive}}{\text{true_positive} + \text{false_negative}}

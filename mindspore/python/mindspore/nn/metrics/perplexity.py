@@ -29,7 +29,7 @@ class Perplexity(Metric):
 
     Args:
         ignore_label (Union[int, None]): Index of an invalid label to be ignored when counting. If set to `None`,
-        it will include all entries. Default: None.
+                it will include all entries. Default: None.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

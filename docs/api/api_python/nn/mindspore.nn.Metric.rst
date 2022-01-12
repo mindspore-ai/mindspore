@@ -11,7 +11,7 @@ mindspore.nn.Metric
     .. py:method:: clear()
         :abstractmethod:
 
-        描述了清除内部评估结果的行为。
+        清除内部评估结果。
 
         .. note::
             所有子类都必须重写此接口。
@@ -19,7 +19,7 @@ mindspore.nn.Metric
     .. py:method:: eval()
         :abstractmethod:
 
-        描述了计算最终评估结果的行为。
+        计算最终评估结果。
 
         .. note::
             所有子类都必须重写此接口。
@@ -27,7 +27,7 @@ mindspore.nn.Metric
     .. py:method:: indexes
         :property:
 
-        获取当前的 `indexes` 值。默认为None，调用 `set_indexes` 可修改 `indexes` 值。
+        获取当前的 `indexes` 值。默认为None，调用 `set_indexes` 方法可修改 `indexes` 值。
 
     .. py:method:: set_indexes(indexes)
 
@@ -46,6 +46,10 @@ mindspore.nn.Metric
         **输出：**
 
         :class:`Metric` ，类实例本身。
+
+        **异常：**
+
+        - **ValueError** - 如果输入的index类型不是list或其元素类型不全为int。
 
         **样例：**
 
@@ -66,7 +70,7 @@ mindspore.nn.Metric
     .. py:method:: update(*inputs)
         :abstractmethod:
 
-        描述了更新内部评估结果的行为。
+        更新内部评估结果。
 
         .. note::
             所有子类都必须重写此接口。
