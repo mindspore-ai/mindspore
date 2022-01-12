@@ -50,6 +50,10 @@ class Tensor(Tensor_):
             'init' interface to initialize Tensor in the other conditions. If 'init' interface is used to initialize
             Tensor, the `Tensor.init_data` API needs to be called to convert `Tensor` to the actual data.
             Default: None.
+        internal (bool): Whether it is the user's input.
+            'True' means that the tensor is created by framework.
+            'False' means that the tensor is created by user.
+            Default: False
 
     Outputs:
         Tensor.
@@ -105,45 +109,51 @@ class Tensor(Tensor_):
         Float32
     """
 
-    def __init__(self, input_data=None, dtype=None, shape=None, init=None):
+    def __init__(self, input_data=None, dtype=None, shape=None, init=None, internal=False):
         self.init_finished = False
-        # If input data is numpy number, convert it to np array
-        if isinstance(input_data, np_types):
-            input_data = np.array(input_data)
-
-        if isinstance(shape, numbers.Number):
-            shape = (shape,)
-
-        _check_tensor_input(input_data, dtype, shape, init)
-
-        # If input_data is tuple/list/numpy.ndarray, it's support in check_type method.
-        if init is None:
-            validator.check_value_type('input_data', input_data,
-                                       (Tensor_, np.ndarray, np.str_, list, tuple, float, int, bool, complex), 'Tensor')
-            valid_dtypes = (np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64,
-                            np.float16, np.float32, np.float64, np.bool_, np.str_, np.complex64, np.complex128)
-            if isinstance(input_data, np.ndarray) and input_data.dtype not in valid_dtypes and \
-                input_data.dtype.kind != 'U':  # Support dtype np.str_
-                raise TypeError(f"For Tensor, the input_data is a numpy array, "
-                                f"but it's data type: {input_data.dtype} is not in supported list: "
-                                f"{list(i.__name__ for i in valid_dtypes)}.")
-            if isinstance(input_data, (tuple, list)):
-                if np.array(input_data).dtype not in valid_dtypes:
-                    raise TypeError(f"For Tensor, the input_data is {input_data} that contain unsupported element.")
-
-            if dtype is not None:
-                validator.check_type_name('dtype', dtype, mstype.number_type + (mstype.bool_, mstype.string), "Tensor")
-            else:
-                dtype = self._set_default_dtype(input_data, dtype)
-
-            if isinstance(input_data, np.ndarray) and (not input_data.flags['FORC']):
-                input_data = np.ascontiguousarray(input_data)
-            if dtype is not None:
-                Tensor_.__init__(self, input_data, dtype)
-            else:
-                Tensor_.__init__(self, input_data)
+        if internal:
+            Tensor_.__init__(self, input_data)
         else:
-            Tensor_.__init__(self, dtype, shape)
+            # If input data is numpy number, convert it to np array
+            if isinstance(input_data, np_types):
+                input_data = np.array(input_data)
+
+            if isinstance(shape, numbers.Number):
+                shape = (shape,)
+
+            _check_tensor_input(input_data, dtype, shape, init)
+
+            # If input_data is tuple/list/numpy.ndarray, it's support in check_type method.
+            if init is None:
+                validator.check_value_type('input_data', input_data,
+                                           (Tensor_, np.ndarray, np.str_, list, tuple, float, int, bool, complex),
+                                           'Tensor')
+                valid_dtypes = (np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64,
+                                np.float16, np.float32, np.float64, np.bool_, np.str_, np.complex64, np.complex128)
+                if isinstance(input_data, np.ndarray) and input_data.dtype not in valid_dtypes and \
+                        input_data.dtype.kind != 'U':  # Support dtype np.str_
+                    raise TypeError(f"For Tensor, the input_data is a numpy array, "
+                                    f"but it's data type: {input_data.dtype} is not in supported list: "
+                                    f"{list(i.__name__ for i in valid_dtypes)}.")
+                if isinstance(input_data, (tuple, list)):
+                    if np.array(input_data).dtype not in valid_dtypes:
+                        raise TypeError(
+                            f"For Tensor, the input_data is {input_data} that contain unsupported element.")
+
+                if dtype is not None:
+                    validator.check_type_name(
+                        'dtype', dtype, mstype.number_type + (mstype.bool_, mstype.string), "Tensor")
+                else:
+                    dtype = self._set_default_dtype(input_data, dtype)
+
+                if isinstance(input_data, np.ndarray) and (not input_data.flags['FORC']):
+                    input_data = np.ascontiguousarray(input_data)
+                if dtype is not None:
+                    Tensor_.__init__(self, input_data, dtype)
+                else:
+                    Tensor_.__init__(self, input_data)
+            else:
+                Tensor_.__init__(self, dtype, shape)
 
         self.virtual_flag = False
         self.init = init
@@ -1974,8 +1984,7 @@ class Tensor(Tensor_):
         i = tensor_operator_registry.get('fill')(mstype.int32, shape, 0)
         j = tensor_operator_registry.get('fill')(mstype.int32, shape, a.size)
 
-        sort_range = tuple(range(validator.get_log2_size(
-            tensor_operator_registry.get('shape_mul')(a.shape) + 1)))
+        sort_range = tuple(range(validator.get_log2_size(tensor_operator_registry.get('shape_mul')(a.shape) + 1)))
         for _ in sort_range:
             mid = (i - -j)//2
             mask = less_op(v, tensor_operator_registry.get('gather_nd')(a, mid.reshape(mid.shape + (1,))))
@@ -2152,8 +2161,7 @@ class Tensor(Tensor_):
         else:
             axis = validator.check_and_canonicalize_axes(axis, self.ndim)
 
-        if not validator.check_type_support(input_x.dtype, 'GPU',
-                                            (mstype.float64, mstype.float32, mstype.float16)):
+        if not validator.check_type_support(input_x.dtype, 'GPU', (mstype.float64, mstype.float32, mstype.float16)):
             input_x = input_x.astype(mstype.float32)
         if 0 in self.shape:
             input_x = tensor_operator_registry.get('make_tensor')([0], self.dtype)
@@ -2505,6 +2513,7 @@ class CSRTensor(CSRTensor_):
         >>> print(indptr == csr_tensor.indptr)
         [ True  True  True]
     """
+
     def __init__(self, indptr=None, indices=None, values=None, shape=None, csr_tensor=None):
         self.init_finished = False
         # Case 1: directly init a CSRTensor from another CSRTensor

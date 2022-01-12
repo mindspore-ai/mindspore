@@ -63,7 +63,7 @@ def _wrap_func(fn):
 
         def _convert_data(data):
             if isinstance(data, Tensor) and not isinstance(data, MsTensor):
-                return MsTensor(data)
+                return MsTensor(data, internal=True)
             if isinstance(data, CSRTensor) and not isinstance(data, MsCSRTensor):
                 return MsCSRTensor(csr_tensor=data)
             if isinstance(data, COOTensor) and not isinstance(data, MsCOOTensor):
