@@ -97,7 +97,7 @@ void AllToAllvCalcParam::CalcMemOffset(const std::vector<size_t> &mem_sizes, con
   if (!IsInTheOrder(rank_ids)) {
     std::vector<size_t> mem_offset(mem_sizes.size(), 0);
     for (size_t i = 1; i < mem_sizes.size(); ++i) {
-      mem_offset[i] = mem_offset[i - 1] + mem_sizes[i];
+      mem_offset[i] = mem_offset[i - 1] + mem_sizes[i - 1];
     }
     for (size_t i = 0; i < rank_ids.size(); ++i) {
       if (rank_ids[i] < 0 || static_cast<size_t>(rank_ids[i]) >= rank_size_) {
