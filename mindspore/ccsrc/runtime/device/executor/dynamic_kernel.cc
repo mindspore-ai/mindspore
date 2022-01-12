@@ -119,7 +119,6 @@ void DynamicKernel::InferShapeForNopNode(AnfNodePtr *input_node) {
   std::stack<AnfNodePtr> nop_road;
   nop_road.push(*input_node);
 
-  /*lint -e716*/
   while (true) {
     auto input_node_with_idx = AnfAlgo::GetPrevNodeOutput(*input_node, 0);
     auto in_node = input_node_with_idx.first;
@@ -131,7 +130,6 @@ void DynamicKernel::InferShapeForNopNode(AnfNodePtr *input_node) {
       break;
     }
   }
-  /*lint +e716*/
 
   while (!nop_road.empty()) {
     auto nop_node = nop_road.top();
