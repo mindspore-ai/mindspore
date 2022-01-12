@@ -61,7 +61,7 @@ std::string OpTilingCalculateAdapter::GetRealOpType(const std::string &op_type) 
 
 std::string OpTilingCalculateAdapter::GetOutputName(const CNodePtr &node, size_t index) {
   MS_EXCEPTION_IF_NULL(node);
-  if (output_names_.size() < index) {
+  if (output_names_.size() <= index) {
     return "unknown_name";
   }
   return output_names_[index];
