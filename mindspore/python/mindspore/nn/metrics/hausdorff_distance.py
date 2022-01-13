@@ -44,7 +44,7 @@ class _ROISpatialData(metaclass=ABCMeta):
             self.roi_end = np.maximum(self.roi_start + roi_size, self.roi_start)
         else:
             if roi_start is None or roi_end is None:
-                raise ValueError("For '_ROISpatialData', When either 'roi_center' or 'roi_size' is None, "
+                raise ValueError("For 'HausdorffDistance.update', When either 'roi_center' or 'roi_size' is None, "
                                  "neither 'roi_start' nor 'roi_end' can be None.")
             self.roi_start = np.maximum(np.asarray(roi_start, dtype=np.int16), 0)
             self.roi_end = np.maximum(np.asarray(roi_end, dtype=np.int16), self.roi_start)
