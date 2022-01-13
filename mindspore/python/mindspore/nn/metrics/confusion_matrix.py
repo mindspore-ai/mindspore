@@ -239,7 +239,7 @@ class ConfusionMatrixMetric(Metric):
         y_pred = self._convert_data(inputs[0])
         y = self._convert_data(inputs[1])
 
-        if self.calculation_method is True:
+        if self.calculation_method:
             score, not_nans = self.confusion_matrix(y_pred, y)
             not_nans = int(not_nans.item())
             self._total_num += score.item() * not_nans
@@ -260,7 +260,7 @@ class ConfusionMatrixMetric(Metric):
             ndarray, the computed result.
         """
 
-        if self.calculation_method is True:
+        if self.calculation_method:
             if self._class_num == 0:
                 raise RuntimeError("The 'ConfusionMatrixMetric' can not be calculated, because the number of samples "
                                    "is 0, please check whether your inputs(predicted value, true value) are empty, or "

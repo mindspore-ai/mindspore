@@ -270,7 +270,7 @@ class Router(Cell):
 
     def construct(self, input_tensor):
         input_tensor = self.cast(input_tensor, mstype.float32)
-        if self.noisy_policy == "jitter" and self.training is True:
+        if self.noisy_policy == "jitter" and self.training:
             # Here, we temporarily implement the multiplicative jitter this way,
             # for the lack of UniforReal parallel operator.
             input_tensor = self.mul(input_tensor, self.noise)

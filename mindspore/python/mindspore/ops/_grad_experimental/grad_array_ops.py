@@ -37,7 +37,7 @@ def get_bprop_masked_select(self):
         dinput, dvalue = binop_grad_common(input_data, mask, dinput, dvalue)
         dvalue = sum_op(dvalue)
         dinput = F.cast(dinput, F.dtype(input_data))
-        if is_instance_op(value, mstype.number) is True:
+        if is_instance_op(value, mstype.number):
             dvalue = 0
         else:
             dvalue = F.cast(dvalue, F.dtype(value))

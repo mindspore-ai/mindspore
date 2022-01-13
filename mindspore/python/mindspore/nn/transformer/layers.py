@@ -376,7 +376,7 @@ class _Linear(Cell):
     def construct(self, x):
         out_shape = P.Shape()(x)[:-1] + (self.out_channels,)
         x = P.Reshape()(x, (-1, self.in_channels))
-        if self.expert_flag is True:
+        if self.expert_flag:
             x = P.Reshape()(x, (self.expert_num, -1, self.in_channels))
         weight = self.cast(self.weight, self.dtype)
         x = self.matmul(x, weight)

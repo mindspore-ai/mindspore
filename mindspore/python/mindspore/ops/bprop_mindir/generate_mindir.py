@@ -66,7 +66,7 @@ if __name__ == "__main__":
     # If the specified bprop source directory is not on the mindspore installed path,
     # copy the bprop source files to the installed path.
     backup_suffix = "_generate_bak"
-    if copy_flag is True:
+    if copy_flag:
         shutil.rmtree(bprop_installed_dir + backup_suffix, ignore_errors=True)
         os.rename(bprop_installed_dir, bprop_installed_dir + backup_suffix)
         os.mkdir(bprop_installed_dir)
@@ -81,7 +81,7 @@ if __name__ == "__main__":
 
     # If the specified bprop source directory is not on the mindspore installed path,
     # copy the generated mindir files to the mindir directory relative to the specified path.
-    if copy_flag is True:
+    if copy_flag:
         shutil.rmtree(bprop_installed_dir)
         os.rename(bprop_installed_dir + backup_suffix, bprop_installed_dir)
         ls = os.listdir(bprop_mindir_export_dir)

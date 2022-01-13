@@ -483,7 +483,7 @@ class Cell(Cell_):
                 item.init_data()
             elif isinstance(item, numpy.ndarray):
                 raise TypeError("For 'Cell', inputs should not be numpy array.")
-        if self.requires_grad is True:
+        if self.requires_grad:
             _pynative_executor.set_grad_flag(True)
         _pynative_executor.new_graph(self, *args, **kwargs)
         cast_inputs = self.auto_cast_inputs(args)
@@ -1518,7 +1518,7 @@ class Cell(Cell_):
 
     def _set_recompute_scope(self, mode):
         prefix = 'recompute_'
-        if mode is True:
+        if mode:
             if self._scope is None:
                 self._scope = prefix
             elif not self._scope.startswith(prefix):

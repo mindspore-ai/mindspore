@@ -70,7 +70,7 @@ def get_bprop_index_lerp(self):
         dend = mul_op(dout, weight)
         dweight = mul_op(dout, sub_op(end, start))
         dstart, dend = binop_grad_common(start, end, dstart, dend)
-        if is_instance_op(weight, mstype.number) is True:
+        if is_instance_op(weight, mstype.number):
             dweight = 0
         else:
             _, dweight = binop_grad_common(start, weight, dstart, dweight)

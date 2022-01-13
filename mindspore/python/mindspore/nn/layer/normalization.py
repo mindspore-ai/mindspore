@@ -221,7 +221,7 @@ class _BatchNorm(Cell):
                                      self.moving_mean,
                                      self.moving_variance)[0]
 
-        if self.use_batch_statistics is True:
+        if self.use_batch_statistics:
             return self.bn_train(x,
                                  self.gamma,
                                  self.beta,

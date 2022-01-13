@@ -1309,7 +1309,7 @@ class TransformerEncoderLayer(Cell):
                                             parallel_config=parallel_config)
         _check_moe_config(moe_config, parallel_config)
         self.use_moe = (moe_config.expert_num > 1)
-        if self.use_moe is True:
+        if self.use_moe:
             self.output = MoE(hidden_size=hidden_size,
                               dropout_rate=hidden_dropout_rate,
                               ffn_hidden_size=ffn_hidden_size,
@@ -1378,7 +1378,7 @@ class TransformerEncoderLayer(Cell):
         output_x = self.layernorm2(x)
         output_x = F.cast(output_x, self.dtype)
         aux_loss = None
-        if self.use_moe is True:
+        if self.use_moe:
             mlp_logit, aux_loss = self.output(output_x)
         else:
             mlp_logit = self.output(output_x)
@@ -1416,7 +1416,7 @@ class TransformerEncoderLayer(Cell):
                 output = self.add(x, mlp_logit)
             output = F.reshape(output, x_shape)
 
-        if self.use_moe is True:
+        if self.use_moe:
             return output, layer_present, aux_loss
         return output, layer_present
 
@@ -1588,7 +1588,7 @@ class TransformerDecoderLayer(Cell):
                              "divisibled by 'parallel_config.model_parallel', but got the ffn_hidden_size is {} "
                              "and parallel_config.model_parallel is {}."
                              .format(ffn_hidden_size, parallel_config.model_parallel))
-        if use_past is True:
+        if use_past:
             raise ValueError(f"The {self.cls_name} does not support use_past=True.")
         self.batch_size = batch_size
         self.use_past = use_past
@@ -1632,7 +1632,7 @@ class TransformerDecoderLayer(Cell):
         self.cross_attention_layernorm.shard(((parallel_config.data_parallel, 1),))
         _check_moe_config(moe_config, parallel_config)
         self.use_moe = (moe_config.expert_num > 1)
-        if self.use_moe is True:
+        if self.use_moe:
             self.output = MoE(hidden_size=hidden_size,
                               dropout_rate=hidden_dropout_rate,
                               ffn_hidden_size=ffn_hidden_size,
@@ -1718,7 +1718,7 @@ class TransformerDecoderLayer(Cell):
         output_x = self.layernorm2(x)
         output_x = F.cast(output_x, self.dtype)
         aux_loss = None
-        if self.use_moe is True:
+        if self.use_moe:
             mlp_logit, aux_loss = self.output(output_x)
         else:
             mlp_logit = self.output(output_x)
@@ -1756,7 +1756,7 @@ class TransformerDecoderLayer(Cell):
                 output = self.add(x, mlp_logit)
             output = F.reshape(output, hidden_shape)
 
-        if self.use_moe is True:
+        if self.use_moe:
             return output, layer_present, aux_loss
         return output, layer_present
 
@@ -2044,7 +2044,7 @@ class TransformerEncoder(Cell):
 
     def construct(self, hidden_states, attention_mask, init_reset=True, batch_valid_length=None):
         present_layer = ()
-        if self.use_moe is True:
+        if self.use_moe:
             accum_loss = self.aux_loss
             for i in range(self.num_layers):
                 hidden_states, present, aux_loss = self.blocks[i](hidden_states,
@@ -2242,7 +2242,7 @@ class TransformerDecoder(Cell):
     def construct(self, hidden_states, attention_mask, encoder_output=None, memory_mask=None,
                   init_reset=True, batch_valid_length=None):
         present_layer = ()
-        if self.use_moe is True:
+        if self.use_moe:
             accum_loss = self.aux_loss
             for i in range(self.num_layers):
                 hidden_states, present, aux_loss = self.blocks[i](hidden_states,
@@ -2433,7 +2433,7 @@ class Transformer(Cell):
         if encoder_layers <= 0 < decoder_layers:
             raise ValueError(f"Transformer doest support encoder layer {encoder_layers} and decoder"
                              f"layer {decoder_layers}, please use TransformerDecoder")
-        if encoder_layers > 0 and decoder_layers > 0 and use_past is True:
+        if encoder_layers > 0 and decoder_layers > 0 and use_past:
             raise ValueError(f"The {self.cls_name} with encoder and decoder does not support use_past=True.")
         if _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,):
             raise RuntimeError(f"The {self.cls_name} does not support auto parallel mode now.")
@@ -2503,7 +2503,7 @@ class Transformer(Cell):
         decoder_layer_present = None
         accum_loss = self.aux_loss
         if self.encoder is not None:
-            if self.use_moe is True:
+            if self.use_moe:
                 encoder_output, encoder_layer_present, encoder_aux_loss = self.encoder(encoder_inputs, encoder_masks,
                                                                                        init_reset, batch_valid_length)
                 accum_loss = self.add(accum_loss, encoder_aux_loss)
@@ -2514,7 +2514,7 @@ class Transformer(Cell):
 
         if self.decoder is not None:
             # decoder mask should be created outside of the model
-            if self.use_moe is True:
+            if self.use_moe:
                 decoder_output, decoder_layer_present, decoder_aux_loss = self.decoder(decoder_inputs, decoder_masks,
                                                                                        encoder_output, memory_mask,
                                                                                        init_reset, batch_valid_length)
@@ -2526,6 +2526,6 @@ class Transformer(Cell):
                                                                      memory_mask, init_reset,
                                                                      batch_valid_length)
             output = decoder_output
-        if self.use_moe is True:
+        if self.use_moe:
             return output, encoder_layer_present, decoder_layer_present, accum_loss
         return output, encoder_layer_present, decoder_layer_present

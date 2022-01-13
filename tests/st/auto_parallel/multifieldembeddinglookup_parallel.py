@@ -97,7 +97,7 @@ class FakeData:
         self.is_onehot = True
         self.fakedata_mode = fakedata_mode
 
-        if use_parallel is True:
+        if use_parallel:
             init(backend_name='nccl')
             self.rank_size = get_group_size()
             self.rank_id = get_rank()
