@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,6 +99,11 @@ class DataPrepareActor : public DebugAwareActor {
                                             OpContext<DeviceTensor> *const context);
   void PrepareDataForControlValueNode(const KernelWithIndex &node_with_index, const DeviceContext *device_context,
                                       OpContext<DeviceTensor> *const context);
+
+  // Extract this function in order to reduce the cyclomatic complexity
+  void CopyDataFromHostToOtherDevice(const AnfNodePtr &front_node, const AnfNodePtr &backend_node,
+                                     const device::DeviceAddressPtr &host_tensor_address,
+                                     const DeviceContext *device_context, OpContext<DeviceTensor> *context) const;
 
   const GraphCompilerInfo *graph_compiler_info_;
   GraphExecutionStrategy strategy_;
