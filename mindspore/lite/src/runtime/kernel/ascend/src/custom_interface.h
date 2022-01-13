@@ -17,6 +17,7 @@
 #define MINDSPORE_LITE_ACL_CUSTOM_INTERFACE_H_
 
 #include <vector>
+#include <string>
 #include "include/kernel_interface.h"
 
 namespace mindspore::kernel {
@@ -28,6 +29,9 @@ class CustomInterface : public mindspore::kernel::KernelInterface {
 
   Status Infer(std::vector<mindspore::MSTensor> *inputs, std::vector<mindspore::MSTensor> *outputs,
                const mindspore::schema::Primitive *primitive) override;
+
+ private:
+  Status GetCustomAttr(char *buf, uint32_t buf_size, const mindspore::schema::Custom *op, const std::string &attr_name);
 };
 }  // namespace acl
 }  // namespace mindspore::kernel
