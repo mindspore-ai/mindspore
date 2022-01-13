@@ -172,6 +172,29 @@ void AnalysisEngine::SaveEvalResultInCache(const AnfNodeConfigPtr &conf, const E
   MS_EXCEPTION_IF_NULL(conf);
   MS_EXCEPTION_IF_NULL(result);
   static AnalysisResultCacheMgr &cache_mgr = AnalysisResultCacheMgr::GetInstance();
+  auto iter = cache_mgr.GetCache().find(conf);
+  if (iter != cache_mgr.GetCache().end()) {
+    MS_LOG(DEBUG) << "Found previous result for NodeConfig: " << conf->ToString()
+                  << ", result: " << iter->second->abstract().get() << "/" << iter->second->abstract()->ToString();
+    // Update sequence nodes info, if matched in cache.
+    static const auto eliminate_unused_element = common::GetEnv("MS_DEV_ELIMINATE_SEQUENCE_UNUSED_ELEMENT");
+    static const auto enable_eliminate_unused_element = (eliminate_unused_element == "1");
+    if (enable_eliminate_unused_element) {
+      auto new_sequence = dyn_cast<AbstractTuple>(result->abstract());
+      auto old_sequence = dyn_cast<AbstractTuple>(iter->second->abstract());
+      if (old_sequence != nullptr && new_sequence != nullptr) {
+        MS_LOG(DEBUG) << "Before synchronize sequence nodes use flags for NodeConfig: " << conf->ToString()
+                      << ", old_sequence: " << old_sequence->ToString()
+                      << ", new_sequence: " << new_sequence->ToString();
+        SynchronizeSequenceNodesElementsUseFlags(old_sequence->sequence_nodes(), new_sequence->sequence_nodes());
+        MS_LOG(DEBUG) << "After synchronize sequence nodes use flags for NodeConfig: " << conf->ToString()
+                      << ", old_sequence: " << old_sequence->ToString()
+                      << ", new_sequence: " << new_sequence->ToString();
+      }
+    }
+  }
+  MS_LOG(DEBUG) << "Save result for NodeConfig: " << conf->ToString() << ", result: " << result->abstract().get() << "/"
+                << result->abstract()->ToString();
   cache_mgr.SetValue(conf, result);
 
   // Set intermediate abstract value.
@@ -195,6 +218,8 @@ EvalResultPtr AnalysisEngine::ObtainEvalResultWithCache(const AnfNodeConfigPtr &
   static AnalysisResultCacheMgr &cache_mgr = AnalysisResultCacheMgr::GetInstance();
   auto result = cache_mgr.GetValue(conf);
   if (result != nullptr) {
+    MS_LOG(DEBUG) << "Evaluate cache found for NodeConfig: " << conf->ToString()
+                  << ", result: " << result->abstract().get() << "/" << result->abstract()->ToString();
     return result;
   }
   MS_LOG(DEBUG) << "Evaluate cache miss for NodeConfig: " << conf->ToString();
@@ -202,8 +227,8 @@ EvalResultPtr AnalysisEngine::ObtainEvalResultWithCache(const AnfNodeConfigPtr &
   if (result == nullptr) {
     MS_LOG(EXCEPTION) << "Evaluate for NodeConfig " << conf->ToString() << " get nullptr";
   }
-  MS_LOG(DEBUG) << "Evaluate node on demond for NodeConfig: " << conf->ToString()
-                << ", result: " << result->abstract().get() << ", " << result->abstract()->ToString();
+  MS_LOG(DEBUG) << "Evaluate node on demand for NodeConfig: " << conf->ToString()
+                << ", result: " << result->abstract().get() << "/" << result->abstract()->ToString();
   SaveEvalResultInCache(conf, result);
   return result;
 }

@@ -616,7 +616,9 @@ void FuncGraphSpecializer::ProcessNode(const AnfNodePtr &node) {
     if (replace_node == nullptr) {
       replace_node = BuildReplacedNode(input_conf);
       replace_node->set_abstract(abs);
-      MS_LOG(DEBUG) << "Set replaced: " << replace_node->DebugString() << ", to abstract: " << abs->ToString();
+      MS_LOG(DEBUG) << "Set replaced input[" << i << "]: " << replace_node->DebugString()
+                    << ", NodeConfig: " << input_conf->ToString() << ", result: " << abs.get() << "/"
+                    << abs->ToString();
     } else {
       MS_LOG(DEBUG) << "Build possible value node for node: " << node_input->DebugString()
                     << ", abs: " << abs->ToString() << ", replace_node: " << replace_node->DebugString();
