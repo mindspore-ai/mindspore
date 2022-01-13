@@ -308,6 +308,9 @@ def line_search(f, xk, pk, gfk=None, old_fval=None, old_old_fval=None, c1=1e-4,
 
     Algorithm 3.5 from Wright and Nocedal, 'Numerical Optimization', 1999, pg. 59-61
 
+    Note:
+        `line_search` is not supported on Windows platform yet.
+
     Args:
         f (function): function of the form f(x) where x is a flat Tensor and returns a real
             scalar. The function should be composed of operations with vjp defined.

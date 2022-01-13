@@ -192,6 +192,8 @@ def gmres(A, b, x0=None, *, tol=1e-5, atol=0.0, restart=20, maxiter=None,
         In the future, MindSpore will report the number of iterations when convergence
         is not achieved, like SciPy. Currently it is None, as a Placeholder.
 
+        - `gmres` is not supported on Windows platform yet.
+
     Args:
         A (Union[Tensor, function]): 2D Tensor or function that calculates the linear
             map (matrix-vector product) :math:`Ax` when called like :math:`A(x)`.
@@ -329,10 +331,12 @@ def cg(A, b, x0=None, *, tol=1e-5, atol=0.0, maxiter=None, M=None):
     They will be accurate only if both solves converge.
 
     Note:
-        In the future, MindSpore will report the number of iterations when convergence
-        is not achieved, like SciPy. Currently it is None, as a Placeholder.
-        Input `A` must represent a hermitian, positive definite matrix. If not,
-        the output is wrong and inconsistent with scipy.
+        - In the future, MindSpore will report the number of iterations when convergence
+          is not achieved, like SciPy. Currently it is None, as a Placeholder.
+          Input `A` must represent a hermitian, positive definite matrix. If not,
+          the output is wrong and inconsistent with scipy.
+
+        - `cg` is not supported on Windows platform yet.
 
     Args:
         A (Union[Tensor, function]): 2D Tensor or function that calculates the linear

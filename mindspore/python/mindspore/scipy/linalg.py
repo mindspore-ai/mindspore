@@ -43,6 +43,9 @@ def block_diag(*arrs):
          [0, B, 0],
          [0, 0, C]]
 
+    Note:
+        `block_diag` is not supported on Windows platform yet.
+
     Args:
         arrs (list): up to 2-D Input Tensors.
             A 1-D Tensor or a 2-D Tensor with shape :math:`(1,n)`.
@@ -161,6 +164,9 @@ def solve_triangular(A, b, trans=0, lower=False, unit_diagonal=False,
 def inv(a, overwrite_a=False, check_finite=True):
     """
     Compute the inverse of a matrix.
+
+    Note:
+        `inv` is not supported on Windows platform yet.
 
     Args:
         a (Tensor): Square matrix to be inverted. Note that if the input tensor is not a `float`,
@@ -349,6 +355,9 @@ def eigh(a, b=None, lower=True, eigvals_only=False, overwrite_a=False,
 
     In the standard problem, `b` is assumed to be the identity matrix.
 
+    Note:
+        `eigh` is not supported on Windows platform yet.
+
     Args:
         a (Tensor): A :math:`(M, M)` complex Hermitian or real symmetric matrix whose eigenvalues and
             eigenvectors will be computed.
@@ -480,6 +489,9 @@ def lu_factor(a, overwrite_a=False, check_finite=True):
     where :math:`P` is a permutation matrix, :math:`L` lower triangular with unit diagonal elements,
     and :math:`U` upper triangular.
 
+    Note:
+        `lu_factor` is not supported on Windows platform yet.
+
     Args:
         a (Tensor): square matrix of :math:`(M, M)` to decompose. Note that if the input tensor is not a `float`,
             then it will be casted to :class:'mstype.float32'.
@@ -536,6 +548,9 @@ def lu(a, permute_l=False, overwrite_a=False, check_finite=True):
 
     where :math:`P` is a permutation matrix, :math:`L` lower triangular with unit
     diagonal elements, and :math:`U` upper triangular.
+
+    Note:
+        `lu` is not supported on Windows platform yet.
 
     Args:
         a (Tensor): a :math:`(M, N)` matrix to decompose. Note that if the input tensor is not a `float`,
