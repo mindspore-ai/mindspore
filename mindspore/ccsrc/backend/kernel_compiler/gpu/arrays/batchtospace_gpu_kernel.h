@@ -120,7 +120,8 @@ class BatchToSpaceGpuKernel : public GpuKernel {
     }
     for (size_t idx = 0; idx < SHAPE_SIZE; ++idx) {
       if (input_shape[idx] < 1) {
-        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of input cannot be less than 1, but got "
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                          << "', the element of shape of input cannot be less than 1, but got "
                           << CONVERT_VECTOR_TO_STRING(input_shape);
       }
     }
@@ -148,8 +149,8 @@ class BatchToSpaceGpuKernel : public GpuKernel {
         }
         auto tmp_shape = input_shape[idx_i + CROPS_SHAPE_1] * block_size_ - crops_[idx_i][0] - crops_[idx_i][1];
         if (tmp_shape <= 0) {
-          MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of output should be greater than 0, but got "
-                            << tmp_shape;
+          MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                            << "', the element of shape of output should be greater than 0, but got " << tmp_shape;
         }
       }
     }

@@ -66,8 +66,9 @@ class GatherGpuFwdKernel : public GpuKernel {
       return true;
     }
     if (input_shapes_.size() != index_shapes_.size() || input_shapes_.size() != output_shapes_.size()) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input and output should be the same "
-                        << index_shapes_.size() << ", but got the dimension of input: " << input_shapes_.size()
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input and output should be the equal to the "
+                        << "dimension of index: " << index_shapes_.size()
+                        << ", but got the dimension of input: " << input_shapes_.size()
                         << ", the dimension of output: " << output_shapes_.size();
     }
     int dims = SizeToInt(input_shapes_.size());
