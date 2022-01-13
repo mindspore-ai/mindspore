@@ -31,6 +31,9 @@ enum PRIM_INNER_TYPE : int {
 #ifdef ENABLE_OPENGL_TEXTURE
   PRIM_GLTEXTURE_TO_OPENCL = 10007,
 #endif
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
+  PRIM_IDENTITY = 10008,
+#endif
 };
 
 }  // namespace lite

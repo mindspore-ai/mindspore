@@ -50,6 +50,10 @@ class ControlFlowScheduler {
   int BuildBoundaryForMultipleCalledGraph(std::vector<kernel::LiteKernel *> *dst_kernels);
   // When graph output is switch call node, output tensors not fixed, we need output subgraph holds the output tensors.
   int IsolateOutputForCallOutputGraph(std::vector<kernel::LiteKernel *> *dst_kernels);
+  // Partial nodes which have same input, need isolate partial's input. For creating actor form this kind of
+  // graph, actor's input will be graph's input tensors, and actor's output will be partial's input tensors. So in this
+  // case, actor input will be same as output. And we can not link the actors in the right order in this situation.
+  int IsolateSameInputPartials(std::vector<kernel::LiteKernel *> *dst_kernels);
   int RecordAllTailCallLinkInfo(std::vector<kernel::LiteKernel *> *dst_kernels);
   int RecordControlFlowLinkInfo();
 

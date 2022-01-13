@@ -36,21 +36,23 @@ class IdentityKernel : public InnerKernel {
  public:
   IdentityKernel(OpParameter *param, const std::vector<lite::Tensor *> &inputs,
                  const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(param, inputs, outputs, ctx) {}
-
+      : InnerKernel(param, inputs, outputs, ctx) {
+#if defined(ENABLE_ARM) && defined(ENABLE_FP16)
+    lite::CpuInfo cpu_info;
+    support_fp16_ = cpu_info.ArmIsSupportFp16();
+#endif
+  }
   ~IdentityKernel() override = default;
-
   int PreProcess() override;
-
   int PostProcess() override;
-
+  int ReSize() override;
   int Run() override;
-
   static LiteKernel *Create(std::vector<lite::Tensor *> in_tensors, std::vector<lite::Tensor *> out_tensors,
                             const lite::InnerContext *ctx);
 
  protected:
   int schema_version_ = lite::SCHEMA_VERSION::SCHEMA_CUR;
+  bool support_fp16_ = false;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_IDENTITY_KERNEL_H_
