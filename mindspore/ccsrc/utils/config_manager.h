@@ -117,6 +117,10 @@ class ConfigManager {
 
   void set_gpu_loopsink_size(const int64_t size) { gpu_loopsink_size_ = size; }
 
+  bool training() const { return training_; }
+
+  void set_training(const bool training) { training_ = training; }
+
  private:
   ConfigManager() = default;
   ~ConfigManager() = default;
@@ -130,6 +134,7 @@ class ConfigManager {
   std::map<std::string, int16_t> queue_info_map;
   std::string dataset_phase_{""};
   int64_t gpu_loopsink_size_{1};
+  bool training_{false};
 };
 
 }  // namespace mindspore

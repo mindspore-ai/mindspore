@@ -35,9 +35,6 @@ build_mindspore()
     if [[ -n "$ENABLE_BACKEND" ]]; then
       CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_${ENABLE_BACKEND}=ON"
     fi
-    if [[ -n "$TRAIN_MODE" ]]; then
-        CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_${TRAIN_MODE}=ON"
-    fi
     if [[ "X$ENABLE_SYM_FILE" = "Xon" ]]; then
         CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_SYM_FILE=ON"
     fi

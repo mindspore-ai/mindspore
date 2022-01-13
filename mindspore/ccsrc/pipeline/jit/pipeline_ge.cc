@@ -21,6 +21,7 @@
 #include <cstdlib>
 #include <algorithm>
 
+#include "utils/config_manager.h"
 #include "utils/hash_map.h"
 #include "debug/anf_ir_dump.h"
 #include "ir/tensor.h"
@@ -129,13 +130,14 @@ bool InitExecDatasetGe(const std::string &queue_name, int64_t size, int64_t batc
     return false;
   }
 
-#if ENABLE_TRAIN
-  (void)setenv("GE_TRAIN", "1", 1);
-#else
-  (void)setenv("GE_TRAIN", "0", 1);
-#endif
+  auto training = ConfigManager::GetInstance().training();
+  if (training) {
+    (void)setenv("GE_TRAIN", "1", 1);
+  } else {
+    (void)setenv("GE_TRAIN", "0", 1);
+  }
 
-  if (CreateSessionAndGraphRunner(static_cast<bool>(ENABLE_TRAIN)) != Status::SUCCESS) {
+  if (CreateSessionAndGraphRunner(training) != Status::SUCCESS) {
     MS_LOG(ERROR) << "Create GE Session or GraphRunner failed.";
     return false;
   }
@@ -244,6 +246,7 @@ FuncGraphPtr BuildDFGraph(const std::map<std::string, ExecutorInfoPtr> &info, co
     MS_LOG(EXCEPTION) << "No phase in executor:" << GetPhasePrefix(phase);
   }
   FuncGraphPtr anf_graph = info.at(phase)->func_graph;
+  ConfigManager::GetInstance().set_training(anf_graph->has_flag("training"));
 #ifdef ENABLE_DUMP_IR
   if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
     draw::Draw("anf_graph.dot", anf_graph);  // for debug
@@ -256,13 +259,14 @@ FuncGraphPtr BuildDFGraph(const std::map<std::string, ExecutorInfoPtr> &info, co
     return nullptr;
   }
 
-#if ENABLE_TRAIN
-  (void)setenv("GE_TRAIN", "1", 1);
-#else
-  (void)setenv("GE_TRAIN", "0", 1);
-#endif
+  auto training = ConfigManager::GetInstance().training();
+  if (training) {
+    (void)setenv("GE_TRAIN", "1", 1);
+  } else {
+    (void)setenv("GE_TRAIN", "0", 1);
+  }
 
-  if (CreateSessionAndGraphRunner(static_cast<bool>(ENABLE_TRAIN)) != Status::SUCCESS) {
+  if (CreateSessionAndGraphRunner(training) != Status::SUCCESS) {
     MS_LOG(ERROR) << "Create GE Session or GraphRunner failed.";
     return nullptr;
   }
@@ -488,16 +492,6 @@ py::object ExecDFGraph(const std::map<std::string, ExecutorInfoPtr> &info, const
     MS_LOG(EXCEPTION) << "There is no phase:" << phase;
   }
   FuncGraphPtr anf_graph = info.at(phase)->func_graph;
-
-#ifdef ENABLE_INFER
-  // Now don't use the graph because the exec ge function don't take effect
-  MS_EXCEPTION_IF_NULL(info.at(phase)->func_graph);
-  if (ENABLE_TRAIN != info.at(phase)->func_graph->has_flag("training")) {
-    MS_LOG(ERROR) << "Graph training mode mismatch mode of libraries";
-    ConfigManager::GetInstance().ResetConfig();
-    return py::none();
-  }
-#endif
 
   std::shared_ptr<py::object> ret_val = std::make_shared<py::object>();
   // We will not execute graph when output is constant or just input itself.

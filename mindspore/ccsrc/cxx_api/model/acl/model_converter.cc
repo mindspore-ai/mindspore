@@ -49,11 +49,7 @@ bool CreateSessionAndGraphRunner() {
     options["ge.trainFlag"] = "0";
     options["ge.enablePrintOpPass"] = "0";
     sess = transform::GraphRunner::NewSession(options);
-    if (sess == nullptr) {
-      MS_LOG(WARNING) << "Init data graph failed, because of create Ge session failed";
-    } else {
-      transform::DfGraphManager::GetInstance().SetGeSession(sess);
-    }
+    transform::DfGraphManager::GetInstance().SetGeSession(sess);
   }
 
   transform::GraphRunnerOptions options;

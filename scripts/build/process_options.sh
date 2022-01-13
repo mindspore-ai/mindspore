@@ -20,7 +20,7 @@ set -e
 process_options()
 {
   # Process the options
-  while getopts 'drvj:c:t:hb:s:a:g:p:ie:m:l:I:RP:D:zM:V:K:B:En:A:S:k:W:F:H:L:y' opt
+  while getopts 'drvj:c:t:hb:s:a:g:p:ie:l:I:RP:D:zM:V:K:B:En:A:S:k:W:F:H:L:y' opt
   do
     CASE_SENSIVE_ARG=${OPTARG}
     OPTARG=$(echo ${OPTARG} | tr '[A-Z]' '[a-z]')
@@ -55,8 +55,6 @@ process_options()
         build_option_proc_l ;;
       i)
         export INC_BUILD="on" ;;
-      m)
-        build_option_proc_m ;;
       s)
         build_option_proc_s ;;
       R)

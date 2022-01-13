@@ -35,16 +35,6 @@ build_option_proc_l()
   export ENABLE_PYTHON="$OPTARG"
 }
 
-build_option_proc_m()
-{
-  if [[ "X$OPTARG" != "Xinfer" && "X$OPTARG" != "Xtrain" ]]; then
-    echo "Invalid value ${OPTARG} for option -m"
-    usage
-    exit 1
-  fi
-  export TRAIN_MODE=$(echo "$OPTARG" | tr '[a-z]' '[A-Z]')  
-}
-
 build_option_proc_s()
 {
   check_on_off $OPTARG s
