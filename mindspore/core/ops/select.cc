@@ -62,7 +62,7 @@ abstract::BaseShapePtr SelectInferShape(const PrimitivePtr &primitive, const std
     MS_LOG(ERROR) << " cond shape :" << input_args[kCondIndex]->BuildShape()->ToString();
     MS_LOG(ERROR) << " x shape :" << input_args[kXIndex]->BuildShape()->ToString();
     MS_LOG(ERROR) << " y shape :" << input_args[kYIndex]->BuildShape()->ToString();
-    MS_EXCEPTION(ValueError) << "The x_shape is not same as y_shape and cond_shape";
+    MS_EXCEPTION(ValueError) << "The shape of cond, x and y should be equal";
   }
   return input_args[1]->BuildShape();
 }
