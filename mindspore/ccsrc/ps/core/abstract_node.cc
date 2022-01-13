@@ -1059,15 +1059,14 @@ void AbstractNode::ProcessSendData(const std::shared_ptr<TcpConnection> &conn, c
   MS_EXCEPTION_IF_NULL(conn);
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
-#ifdef __APPLE__
-  std::shared_ptr<unsigned char> res(new unsigned char[size], std::default_delete<unsigned char[]>());
-#else
   if (size < 0) {
     MS_LOG(ERROR) << "size < 0";
     return;
   }
-  std::shared_ptr<unsigned char[]> res(new unsigned char[size]);
-#endif
+  auto res_addr = std::make_unique<unsigned char[]>(size);
+  MS_EXCEPTION_IF_NULL(res_addr);
+  std::shared_ptr<unsigned char> res(res_addr.release(), std::default_delete<unsigned char[]>());
+  MS_EXCEPTION_IF_NULL(res);
   if (size > 0) {
     size_t dest_size = size;
     size_t src_size = size;

@@ -19,7 +19,17 @@
 
 namespace mindspore {
 namespace ps {
+namespace {
 constexpr int kRetryDuration = 2000;
+
+std::shared_ptr<unsigned char> MakeDataArray(size_t size) {
+  auto res_addr = std::make_unique<unsigned char[]>(size);
+  MS_EXCEPTION_IF_NULL(res_addr);
+  std::shared_ptr<unsigned char> res(res_addr.release(), std::default_delete<unsigned char[]>());
+  MS_EXCEPTION_IF_NULL(res);
+  return res;
+}
+}  // namespace
 
 void Worker::Run() {
   std::lock_guard<std::mutex> lock(running_mutex_);
@@ -229,12 +239,8 @@ bool Worker::InitPSEmbeddingTable(const size_t &key, const std::vector<size_t> &
 
   std::string kv_data = embedding_table_meta.SerializeAsString();
 
-#ifdef __APPLE__
-  std::shared_ptr<unsigned char> res(new unsigned char[kv_data.length()], std::default_delete<unsigned char[]>());
-#else
-  std::shared_ptr<unsigned char[]> res(new unsigned char[kv_data.length()]);
-#endif
   size_t dest_size = kv_data.length();
+  auto res = MakeDataArray(dest_size);
   int ret = memcpy_s(res.get(), dest_size, kv_data.data(), kv_data.length());
   if (ret != 0) {
     MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
@@ -308,12 +314,8 @@ bool Worker::DoPSEmbeddingLookup(const Key &key, const std::vector<int> &lookup_
     if (messages.at(i).first) {
       rank_ids.push_back(i);
       std::string kv_data = messages.at(i).second.SerializeAsString();
-#ifdef __APPLE__
-      std::shared_ptr<unsigned char> res(new unsigned char[kv_data.length()], std::default_delete<unsigned char[]>());
-#else
-      std::shared_ptr<unsigned char[]> res(new unsigned char[kv_data.length()]);
-#endif
       size_t dest_size = kv_data.length();
+      auto res = MakeDataArray(dest_size);
       int ret = memcpy_s(res.get(), dest_size, kv_data.data(), kv_data.length());
       if (ret != 0) {
         MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
@@ -405,12 +407,8 @@ bool Worker::UpdateEmbeddingTable(const std::vector<Key> &keys, const std::vecto
       rank_ids.push_back(i);
       std::string kv_data = messages.at(i).second.SerializeAsString();
 
-#ifdef __APPLE__
-      std::shared_ptr<unsigned char> res(new unsigned char[kv_data.length()], std::default_delete<unsigned char[]>());
-#else
-      std::shared_ptr<unsigned char[]> res(new unsigned char[kv_data.length()]);
-#endif
       size_t dest_size = kv_data.length();
+      auto res = MakeDataArray(dest_size);
       int ret = memcpy_s(res.get(), dest_size, kv_data.data(), kv_data.length());
       if (ret != 0) {
         MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
@@ -440,12 +438,8 @@ void Worker::Finalize() {
     kvs.add_keys(0);
     kvs.add_values(0.0f);
     std::string kv_data = kvs.SerializeAsString();
-#ifdef __APPLE__
-    std::shared_ptr<unsigned char> res(new unsigned char[kv_data.length()], std::default_delete<unsigned char[]>());
-#else
-    std::shared_ptr<unsigned char[]> res(new unsigned char[kv_data.length()]);
-#endif
     size_t dest_size = kv_data.length();
+    auto res = MakeDataArray(dest_size);
     int ret = memcpy_s(res.get(), dest_size, kv_data.data(), kv_data.length());
     if (ret != 0) {
       MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
@@ -685,12 +679,8 @@ void Worker::PushData(const std::vector<Key> &keys, const std::vector<float> &va
       SendForPush(cmd, kvs, worker_init_embedding_partitioner_, {});
     } else {
       std::string kv_data = kvs.SerializeAsString();
-#ifdef __APPLE__
-      std::shared_ptr<unsigned char> res(new unsigned char[kv_data.length()], std::default_delete<unsigned char[]>());
-#else
-      std::shared_ptr<unsigned char[]> res(new unsigned char[kv_data.length()]);
-#endif
       size_t dest_size = kv_data.length();
+      auto res = MakeDataArray(dest_size);
       int ret = memcpy_s(res.get(), dest_size, kv_data.data(), kv_data.length());
       if (ret != 0) {
         MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
@@ -995,12 +985,8 @@ void Worker::SendForPush(int cmd, const KVMessage &send, const KVPartitioner &pa
       rank_ids.push_back(i);
       std::string kv_data = messages.at(i).second.SerializeAsString();
 
-#ifdef __APPLE__
-      std::shared_ptr<unsigned char> res(new unsigned char[kv_data.length()], std::default_delete<unsigned char[]>());
-#else
-      std::shared_ptr<unsigned char[]> res(new unsigned char[kv_data.length()]);
-#endif
       size_t dest_size = kv_data.length();
+      auto res = MakeDataArray(dest_size);
       int ret = memcpy_s(res.get(), dest_size, kv_data.data(), kv_data.length());
       if (ret != 0) {
         MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
@@ -1026,12 +1012,8 @@ void Worker::SendForPull(int cmd, const KVMessage &send, const KVPartitioner &pa
       rank_ids.push_back(i);
       std::string kv_data = messages.at(i).second.SerializeAsString();
 
-#ifdef __APPLE__
-      std::shared_ptr<unsigned char> res(new unsigned char[kv_data.length()], std::default_delete<unsigned char[]>());
-#else
-      std::shared_ptr<unsigned char[]> res(new unsigned char[kv_data.length()]);
-#endif
       size_t dest_size = kv_data.length();
+      auto res = MakeDataArray(dest_size);
       int ret = memcpy_s(res.get(), dest_size, kv_data.data(), kv_data.length());
       if (ret != 0) {
         MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
