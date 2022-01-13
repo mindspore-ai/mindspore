@@ -374,8 +374,8 @@ StrategyPtr Edge::GetNextOpStrategyByPrevOpStrategyWithMiniComm(const StrategyPt
     MS_LOG(WARNING) << "Inconsistency occurred at edge: " << edge_name();
     std::sort(next_stras.begin(), next_stras.end(),
               [this](const std::pair<StrategyPtr, double> &a, const std::pair<StrategyPtr, double> &b) {
-                return !IsDoubleEqual(a.second, b.second) < EPS ? a.second < b.second
-                                                                : a.first->PartitionNum() > b.first->PartitionNum();
+                return !IsDoubleEqual(a.second, b.second) ? a.second < b.second
+                                                          : a.first->PartitionNum() > b.first->PartitionNum();
               });
     return next_stras[0].first;
   }
@@ -385,8 +385,8 @@ StrategyPtr Edge::GetNextOpStrategyByPrevOpStrategyWithMiniComm(const StrategyPt
   }
   std::sort(next_op_stras.begin(), next_op_stras.end(),
             [this](const std::pair<StrategyPtr, double> &a, const std::pair<StrategyPtr, double> &b) {
-              return !IsDoubleEqual(a.second, b.second) < EPS ? a.second < b.second
-                                                              : a.first->PartitionNum() > b.first->PartitionNum();
+              return !IsDoubleEqual(a.second, b.second) ? a.second < b.second
+                                                        : a.first->PartitionNum() > b.first->PartitionNum();
             });
   return next_op_stras[0].first;
 }
@@ -416,8 +416,8 @@ StrategyPtr Edge::GetPrevOpStrategyByNextOpStrategyWithMiniComm(const StrategyPt
     MS_LOG(WARNING) << "Inconsistency occurred at edge: " << edge_name();
     std::sort(prev_stras.begin(), prev_stras.end(),
               [this](const std::pair<StrategyPtr, double> &a, const std::pair<StrategyPtr, double> &b) {
-                return !IsDoubleEqual(a.second, b.second) < EPS ? a.second < b.second
-                                                                : a.first->PartitionNum() > b.first->PartitionNum();
+                return !IsDoubleEqual(a.second, b.second) ? a.second < b.second
+                                                          : a.first->PartitionNum() > b.first->PartitionNum();
               });
     return prev_stras[0].first;
   }
@@ -427,8 +427,8 @@ StrategyPtr Edge::GetPrevOpStrategyByNextOpStrategyWithMiniComm(const StrategyPt
   }
   std::sort(prev_op_stras.begin(), prev_op_stras.end(),
             [this](const std::pair<StrategyPtr, double> &a, const std::pair<StrategyPtr, double> &b) {
-              return !IsDoubleEqual(a.second, b.second) < EPS ? a.second < b.second
-                                                              : a.first->PartitionNum() > b.first->PartitionNum();
+              return !IsDoubleEqual(a.second, b.second) ? a.second < b.second
+                                                        : a.first->PartitionNum() > b.first->PartitionNum();
             });
   return prev_op_stras[0].first;
 }
