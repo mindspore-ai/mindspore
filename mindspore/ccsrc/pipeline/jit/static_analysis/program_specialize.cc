@@ -1245,10 +1245,6 @@ AnfNodePtr FuncGraphSpecializer::BuildPossibleValueNode(const AnfNodePtr &origin
     if (val->isa<AnyValue>()) {
       return nullptr;
     }
-    // If node is an AutoMonad node, don't convert the node to value node `U` or `IO` to avoid side-effect op miss.
-    if (val->isa<Monad>()) {
-      return nullptr;
-    }
     // Keep primitive 'depend' not to be optimized
     if (IsPrimitiveCNode(origin_node, prim::kPrimDepend)) {
       return nullptr;
