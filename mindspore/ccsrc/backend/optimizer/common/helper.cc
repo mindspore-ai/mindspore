@@ -324,8 +324,8 @@ bool IsNopNode(const AnfNodePtr &node) {
     return false;
   }
   bool is_nop_node = false;
-  if (AnfAlgo::HasNodeAttr("nop_op", cnode)) {
-    is_nop_node = AnfAlgo::GetNodeAttr<bool>(cnode, "nop_op");
+  if (AnfAlgo::HasNodeAttr(kAttrNopOp, cnode)) {
+    is_nop_node = AnfAlgo::GetNodeAttr<bool>(cnode, kAttrNopOp);
   }
   if (nop_nodes.find(AnfAlgo::GetCNodeName(cnode)) == nop_nodes.end() && !is_nop_node) {
     return false;

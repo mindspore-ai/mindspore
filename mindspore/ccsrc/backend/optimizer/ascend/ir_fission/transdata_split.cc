@@ -85,7 +85,7 @@ CNodePtr TransDataSplit::DoSplit(const FuncGraphPtr &func_graph, const AnfNodePt
       NewTransOpNode(func_graph, AnfAlgo::GetInputNode(node->cast<CNodePtr>(), 0), node, kernel_select_, false,
                      prim::kPrimTranspose->name(), std::vector<int64_t>{2, 3, 1, 0});
     if (output_format == kOpFormat_FRACTAL_ZN_LSTM) {
-      AnfAlgo::SetNodeAttr("nop_op", MakeValue(true), new_transpose_node);
+      AnfAlgo::SetNodeAttr(kAttrNopOp, MakeValue(true), new_transpose_node);
     }
     RefreshKernelBuildInfo(input_format, kOpFormat_HWCN, new_transpose_node);
 

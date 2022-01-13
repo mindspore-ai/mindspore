@@ -2440,7 +2440,7 @@ void AnfRuntimeAlgorithm::CacheAddrForGraph(const KernelGraphPtr &kernel_graph) 
     // Skip transpose kernel with "nop_op" attr which is not hidden or removed in PyNative infer scenario. Transpose
     // kernel, which is not supposed to be executed, is generated in TransDataSplit to support specific Transdata.
     // And hard code here should be removed after new Transdata programme is implemented in the foreseeable future.
-    if (HasNodeAttr("nop_op", kernel)) {
+    if (HasNodeAttr(kAttrNopOp, kernel)) {
       for (size_t idx = 0; idx < GetOutputTensorNum(kernel); idx += 1) {
         auto real_input = GetRealInputIndex(kernel, idx);
         auto device_address = GetPrevNodeMutableOutputAddr(kernel, real_input);
