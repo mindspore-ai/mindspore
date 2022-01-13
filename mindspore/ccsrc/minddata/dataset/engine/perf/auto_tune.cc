@@ -33,6 +33,7 @@ AutoTune::AutoTune(TreeAdapter *tree_adap, ProfilingManager *profiling_mgr)
       profiling_manager_(profiling_mgr),
       leaf_op_id_(-1),
       cur_epoch_(1),
+      mode_(0),
       skip_bool_(true),
       last_step_profiled_(0) {
   tree_modifier_ = std::make_unique<TreeModifier>(tree_adapter_);

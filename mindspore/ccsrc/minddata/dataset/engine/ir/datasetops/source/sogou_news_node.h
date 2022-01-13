@@ -122,7 +122,6 @@ class SogouNewsNode : public NonMappableSourceNode {
  private:
   std::string dataset_dir_;
   std::string usage_;
-  char field_delim_;
   std::vector<std::shared_ptr<CsvBase>> column_defaults_;
   std::vector<std::string> column_names_;
   int64_t num_samples_;
