@@ -470,11 +470,11 @@ class GeneratorDataset(MappableDataset, UnionBaseDataset):
     Raises:
         RuntimeError: If source raises an exception during execution.
         RuntimeError: If len of column_names does not match output len of source.
-        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
-        RuntimeError: If sampler and shuffle are specified at the same time.
-        RuntimeError: If sampler and sharding are specified at the same time.
-        RuntimeError: If num_shards is specified but shard_id is None.
-        RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If num_parallel_workers exceeds the max thread numbers.
+        ValueError: If sampler and shuffle are specified at the same time.
+        ValueError: If sampler and sharding are specified at the same time.
+        ValueError: If num_shards is specified but shard_id is None.
+        ValueError: If shard_id is specified but num_shards is None.
         ValueError: If shard_id is invalid (< 0 or >= num_shards).
 
     Note:

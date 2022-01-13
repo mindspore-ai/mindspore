@@ -33,11 +33,11 @@ Common imported modules in corresponding API examples are as follows:
 
 Descriptions of common dataset terms are as follows:
 
-    - Dataset, the base class of all the datasets. It provides data processing methods to help preprocess the data.
-    - SourceDataset, an abstract class to represent the source of dataset pipeline which produces data from data
-      sources such as files and databases.
-    - MappableDataset, an abstract class to represent a source dataset which supports for random access.
-    - Iterator, the base class of dataset iterator for enumerating elements.
+- Dataset, the base class of all the datasets. It provides data processing methods to help preprocess the data.
+- SourceDataset, an abstract class to represent the source of dataset pipeline which produces data from data
+  sources such as files and databases.
+- MappableDataset, an abstract class to represent a source dataset which supports for random access.
+- Iterator, the base class of dataset iterator for enumerating elements.
 """
 
 from .core import config

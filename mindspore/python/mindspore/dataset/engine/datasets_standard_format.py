@@ -36,7 +36,8 @@ from . import samplers
 
 class CSVDataset(SourceDataset, UnionBaseDataset):
     """
-    A source dataset that reads and parses comma-separated values (CSV) datasets.
+    A source dataset that reads and parses comma-separated values
+    `(CSV) <http://en.volupedia.org/wiki/Comma-separated_values>`_ files as dataset.
     The columns of generated dataset depend on the source CSV files.
 
     Args:
@@ -54,11 +55,11 @@ class CSVDataset(SourceDataset, UnionBaseDataset):
             (default=None, number set in the config).
         shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
             (default=Shuffle.GLOBAL).
-            If shuffle is False, no shuffling will be performed;
-            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
-            Otherwise, there are two levels of shuffling:
+            If shuffle is False, no shuffling will be performed.
+            If shuffle is True, performs global shuffle.
+            There are three levels of shuffling, desired shuffle enum defined by mindspore.dataset.Shuffle.
 
-            - Shuffle.GLOBAL: Shuffle both the files and samples.
+            - Shuffle.GLOBAL: Shuffle both the files and samples, same as setting shuffle to True.
 
             - Shuffle.FILES: Shuffle files only.
 
@@ -71,9 +72,11 @@ class CSVDataset(SourceDataset, UnionBaseDataset):
 
     Raises:
         RuntimeError: If dataset_files are not valid or do not exist.
-        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        ValueError: If field_delim is invalid.
+        ValueError: If num_parallel_workers exceeds the max thread numbers.
         RuntimeError: If num_shards is specified but shard_id is None.
         RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
 
     Examples:
         >>> csv_dataset_dir = ["/path/to/csv_dataset_file"] # contains 1 or multiple csv files
@@ -111,11 +114,11 @@ class MindDataset(MappableDataset, UnionBaseDataset):
         num_parallel_workers (int, optional): The number of readers (default=None).
         shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
             (default=None, performs global shuffle).
-            If shuffle is False, no shuffling will be performed;
-            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
-            Otherwise, there are three levels of shuffling:
+            If shuffle is False, no shuffling will be performed.
+            If shuffle is True, performs global shuffle.
+            There are three levels of shuffling, desired shuffle enum defined by mindspore.dataset.Shuffle.
 
-            - Shuffle.GLOBAL: Global shuffle of all rows of data in dataset.
+            - Shuffle.GLOBAL: Global shuffle of all rows of data in dataset, same as setting shuffle to True.
 
             - Shuffle.FILES: Shuffle the file sequence but keep the order of data within each file.
 
@@ -139,8 +142,8 @@ class MindDataset(MappableDataset, UnionBaseDataset):
             (default=None, which means no cache is used).
 
     Raises:
-        RuntimeError: If dataset_files are not valid or do not exist.
-        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        ValueError: If dataset_files are not valid or do not exist.
+        ValueError: If num_parallel_workers exceeds the max thread numbers.
         RuntimeError: If num_shards is specified but shard_id is None.
         RuntimeError: If shard_id is specified but num_shards is None.
         ValueError: If shard_id is invalid (< 0 or >= num_shards).
@@ -245,11 +248,11 @@ class TFRecordDataset(SourceDataset, UnionBaseDataset):
             (default=None, number set in the config).
         shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
             (default=Shuffle.GLOBAL).
-            If shuffle is False, no shuffling will be performed;
-            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
-            Otherwise, there are two levels of shuffling:
+            If shuffle is False, no shuffling will be performed.
+            If shuffle is True, performs global shuffle.
+            There are three levels of shuffling, desired shuffle enum defined by mindspore.dataset.Shuffle.
 
-            - Shuffle.GLOBAL: Shuffle both the files and samples.
+            - Shuffle.GLOBAL: Shuffle both the files and samples, same as setting shuffle to True.
 
             - Shuffle.FILES: Shuffle files only.
 
@@ -266,8 +269,8 @@ class TFRecordDataset(SourceDataset, UnionBaseDataset):
             (default=None, which means no cache is used).
 
     Raises:
-        RuntimeError: If dataset_files are not valid or do not exist.
-        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        ValueError: If dataset_files are not valid or do not exist.
+        ValueError: If num_parallel_workers exceeds the max thread numbers.
         RuntimeError: If num_shards is specified but shard_id is None.
         RuntimeError: If shard_id is specified but num_shards is None.
         ValueError: If shard_id is invalid (< 0 or >= num_shards).

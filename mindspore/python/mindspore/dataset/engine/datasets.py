@@ -1865,7 +1865,8 @@ class TextBaseDataset(Dataset):
 
     def build_vocab(self, columns, freq_range, top_k, special_tokens, special_first):
         """
-        Function to create a Vocab from source dataset
+        Function to create a Vocab from source dataset.
+        Desired source dataset is a text type dataset.
 
         Build a vocab from a dataset. This would collect all the unique words in a dataset and return a vocab
         which contains top_k most frequent words (if top_k is specified)
@@ -1935,7 +1936,8 @@ class TextBaseDataset(Dataset):
 
     def build_sentencepiece_vocab(self, columns, vocab_size, character_coverage, model_type, params):
         """
-        Function to create a SentencePieceVocab from source dataset
+        Function to create a SentencePieceVocab from source dataset.
+        Desired source dataset is a text type dataset.
 
         Args:
 
@@ -1955,6 +1957,7 @@ class TextBaseDataset(Dataset):
         Examples:
             >>> from mindspore.dataset.text import SentencePieceModel
             >>>
+            >>> # You can construct any text dataset as source, take TextFileDataset as example.
             >>> dataset = ds.TextFileDataset("/path/to/sentence/piece/vocab/file", shuffle=False)
             >>> dataset = dataset.build_sentencepiece_vocab(["text"], 5000, 0.9995, SentencePieceModel.UNIGRAM, {})
         """

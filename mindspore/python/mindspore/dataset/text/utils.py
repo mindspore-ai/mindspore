@@ -192,12 +192,12 @@ class Vocab:
             >>> # cat,00
             >>> # --- end of file ---
             >>>
-            >>> # Read file through this API and specify "," as delimiter,
-            >>> # then the delimiter will break up each line in file, the first element is taken to be the word.
+            >>> # Read file through this API and specify "," as delimiter.
+            >>> # The delimiter will break up each line in file, then the first element is taken to be the word.
             >>> vocab = text.Vocab.from_file("/path/to/simple/vocab/file", ",", None, ["<pad>", "<unk>"], True)
             >>>
-            >>> # Finally, there are 5 words in the vocab: "<pad>", "<unk>", "apple", "banana", "cat"
-            >>> print(vocab.vocab())
+            >>> # Finally, there are 5 words in the vocab: "<pad>", "<unk>", "apple", "banana", "cat".
+            >>> vocabulary = vocab.vocab()
         """
         if vocab_size is None:
             vocab_size = -1
