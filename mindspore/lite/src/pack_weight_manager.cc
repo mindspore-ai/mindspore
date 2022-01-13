@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -121,6 +121,7 @@ void *PackWeightManager::GetTensorData(const LiteModel *model, size_t tensor_ind
 std::pair<PackStatus, void *> PackWeightManager::FindPackedTensor(PackedWeight *packed_weights,
                                                                   const OriginWeight &origin_weithts,
                                                                   const Tensor *tensor, const size_t size) {
+  std::unique_lock<std::mutex> weight_lock(mtx_weight_);
   MS_CHECK_TRUE_RET(packed_weights != nullptr, std::make_pair(MALLOC, nullptr));
   MS_CHECK_TRUE_RET(tensor != nullptr, std::make_pair(MALLOC, nullptr));
   if (size > MAX_MALLOC_SIZE) {
@@ -176,6 +177,7 @@ std::pair<PackStatus, void *> PackWeightManager::GetPackedTensor(const Tensor *t
 }
 
 void PackWeightManager::DeleteSavedModelPtr(LiteModel *delete_model) {
+  std::unique_lock<std::mutex> weight_lock(mtx_weight_);
   MS_CHECK_TRUE_RET_VOID(delete_model != nullptr);
   for (auto &item : path_model_weight_) {
     auto &weight = item.second;
@@ -194,6 +196,7 @@ void PackWeightManager::DeleteSavedModelPtr(LiteModel *delete_model) {
 }
 
 void PackWeightManager::DeleteSavedSessionPtr(LiteSession *delete_session) {
+  std::unique_lock<std::mutex> weight_lock(mtx_weight_);
   MS_CHECK_TRUE_RET_VOID(delete_session != nullptr);
   for (auto &item : path_model_weight_) {
     auto &weight = item.second;
@@ -228,12 +231,14 @@ void PackWeightManager::FreePackedWeight(ModelConstWeight *weight) {
 void PackWeightManager::FreeBufModelWeight() {
   for (auto &item : buf_model_weight_) {
     FreePackedWeight(item.second);
+    buf_model_weight_.erase(item.first);
   }
 }
 
 void PackWeightManager::FreePathModelWeight() {
   for (auto &item : path_model_weight_) {
     FreePackedWeight(item.second);
+    path_model_weight_.erase(item.first);
   }
 }
 
