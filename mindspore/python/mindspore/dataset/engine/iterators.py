@@ -93,8 +93,9 @@ class Iterator:
         # See if GetOffloadModel identified any operations set to be offloaded.
         if offload_model.transform_list != []:
             offload.check_concat_zip_dataset(self.__ori_dataset)
+            # Verify input columns on offload transforms exist in dataset
+            offload.check_map_offload_input_columns(self.get_col_names(), offload_model.transform_list)
             self.offload_model = offload_model
-
 
         ITERATORS_LIST.append(weakref.ref(self))
         _unset_iterator_cleanup()
@@ -191,7 +192,7 @@ class DictIterator(Iterator):
         try:
             return {k: self._transform_tensor(t) for k, t in self._iterator.GetNextAsMap().items()}
         except RuntimeError as err:
-            ## maybe "Out of memory" / "MemoryError" error
+            # maybe "Out of memory" / "MemoryError" error
             err_info = str(err)
             if err_info.find("Out of memory") >= 0 or err_info.find("MemoryError") >= 0:
                 logger.critical("Memory error occurred, process will exit.")

@@ -76,6 +76,25 @@ def test_auto_offload():
     ds.config.set_auto_offload(False)
 
 
+def test_offload_column_validation():
+    """
+    Feature: Test the column validation for offloaded map operations
+    Description: Input is an image dataset, but the input column is incorrect for the offloaded map operation.
+    Expectation: Should raise RuntimeError.
+    """
+    dataset = ds.ImageFolderDataset(DATA_DIR)
+    dataset = dataset.map(operations=[C.Decode()], input_columns="image")
+    # Use invalid input column name
+    dataset = dataset.map(operations=[C.HWC2CHW()], input_columns="fake_column", offload=True)
+    dataset = dataset.batch(8, drop_remainder=True)
+
+    error_msg = "The following input column(s) for an offloaded map operation do not exist: [\'fake_column\']"
+    with pytest.raises(RuntimeError) as excinfo:
+        for (_, _) in dataset.create_tuple_iterator(num_epochs=1, output_numpy=True):
+            continue
+    assert str(excinfo.value) == error_msg
+
+
 def test_offload_concat_dataset_1():
     """
     Feature: test map offload flag for concatenated dataset.
@@ -243,6 +262,7 @@ def test_offload_dim_check():
 if __name__ == "__main__":
     test_offload()
     test_auto_offload()
+    test_offload_column_validation()
     test_offload_concat_dataset_1()
     test_offload_concat_dataset_2()
     test_offload_normalize_op()

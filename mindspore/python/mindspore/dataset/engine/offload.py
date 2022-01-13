@@ -25,6 +25,28 @@ from mindspore.ops import operations as P
 from mindspore.ops.primitive import constexpr
 
 
+def check_add_offload_sink_mode(dataset, dataset_helper, network):
+    """
+    Check if any map operations were removed to be offloaded and apply the transforms if so.
+    """
+    if hasattr(dataset, '__no_send__'):
+        # Dataset was not sent to device. Skip adding offload.
+        return network
+    offload_model = dataset.__transfer_dataset__.get_offload_model()
+    # See if the offload pass identified any operations to be offloaded
+    if offload_model.transform_list != []:
+        check_concat_zip_dataset(dataset.__transfer_dataset__)
+        # A temporary solution to ensure there are two columns in dataset.
+        dataset_types, _ = dataset_helper.types_shapes()
+        if len(dataset_types) != 2:
+            raise RuntimeError("Offload can currently only use datasets with two columns.")
+        # Check if offloaded input columns exist in the dataset
+        ds_cols = dataset.__transfer_dataset__.get_col_names()
+        check_map_offload_input_columns(ds_cols, offload_model.transform_list)
+        network = ApplyPreTransform(offload_model, network)
+    return network
+
+
 def check_concat_zip_dataset(dataset):
     """
     Check if dataset is concatenated or zipped.
@@ -36,6 +58,23 @@ def check_concat_zip_dataset(dataset):
             dataset = dataset.children[0]
             continue
         dataset = dataset.children
+
+
+def check_map_offload_input_columns(ds_columns, transform_list):
+    """
+    Check if the input columns of the offloaded map ops exist in the dataset.
+    """
+    # Loop through each offloaded map node
+    for transform_model in transform_list:
+        non_exist_columns = []
+        input_columns = transform_model.input_cols
+        for column_name in input_columns:
+            if column_name not in ds_columns:
+                non_exist_columns.append(column_name)
+        if non_exist_columns:
+            raise RuntimeError(
+                ("The following input column(s) for an offloaded map operation "
+                 "do not exist: {}").format(non_exist_columns))
 
 
 def apply_offload_iterators(data, offload_model):
@@ -69,6 +108,7 @@ class ApplyPreTransform(nn.Cell):
     """
     Concatenates offload model with network.
     """
+
     def __init__(self, transform, model):
         super(ApplyPreTransform, self).__init__(auto_prefix=False, flags=model.get_flags())
         self.transform = transform
@@ -84,6 +124,7 @@ class IdentityCell(nn.Cell):
     """
     Applies identity transform on given input tensors.
     """
+
     def __init__(self):
         super(IdentityCell, self).__init__()
         self.identity = P.Identity()
@@ -96,6 +137,7 @@ class RandomHorizontalFlip(nn.Cell):
     """
     Applies Random Horizontal Flip transform on given input tensors.
     """
+
     def __init__(self, prob):
         super(RandomHorizontalFlip, self).__init__()
 
@@ -129,6 +171,7 @@ class RandomVerticalFlip(nn.Cell):
     """
     Applies Random Vertical Flip transform on given input tensors.
     """
+
     def __init__(self, prob):
         super(RandomVerticalFlip, self).__init__()
 
@@ -162,6 +205,7 @@ class RandomColorAdjust(nn.Cell):
     """
     Applies Random Color Adjust transform on given input tensors.
     """
+
     def __init__(self, brightness, saturation):
         super(RandomColorAdjust, self).__init__()
 
@@ -216,6 +260,7 @@ class RandomSharpness(nn.Cell):
     """
     Applies Random Sharpness transform on given input tensors.
     """
+
     def __init__(self, degrees):
         super(RandomSharpness, self).__init__()
 
@@ -264,6 +309,7 @@ class Rescale(nn.Cell):
     """
     Applies Rescale transform on given input tensors.
     """
+
     def __init__(self, rescale, shift):
         super(Rescale, self).__init__()
 
@@ -285,6 +331,7 @@ class HwcToChw(nn.Cell):
     """
     Applies Channel Swap transform on given input tensors.
     """
+
     def __init__(self):
         super(HwcToChw, self).__init__()
         self.trans = P.Transpose()
@@ -300,6 +347,7 @@ class Normalize(nn.Cell):
     """
     Applies Normalize transform on given input tensors.
     """
+
     def __init__(self, mean, std):
         super(Normalize, self).__init__()
         self.mean = Tensor(mean, mstype.float32)
@@ -338,11 +386,14 @@ class GetModelFromJson2Col(nn.Cell):
     """
     Generates offload ME model from offload JSON file for a single map op.
     """
+
     def __init__(self, json_offload):
         super(GetModelFromJson2Col, self).__init__()
         self.me_ops = []
+        self.input_cols = []
         if json_offload is not None:
             offload_ops = json_offload["operations"]
+            self.input_cols = json_offload["input_columns"]
             for op in offload_ops:
                 name = op["tensor_op_name"]
                 args = op["tensor_op_params"]
@@ -366,6 +417,7 @@ class GetOffloadModel(nn.Cell):
     """
     Generates offload ME model.
     """
+
     def __init__(self, dataset_consumer):
         super(GetOffloadModel, self).__init__()
         self.transform_list = []
