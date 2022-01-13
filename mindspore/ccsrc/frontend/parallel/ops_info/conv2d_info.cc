@@ -350,7 +350,7 @@ std::vector<int64_t> Conv2DInfo::GetAdjacentRankIdsAndBiases(int64_t rank_id, co
 
   MS_LOG(INFO) << name_ << ": The rank id is " << rank_id << ", the dimension is " << dimension;
 
-  uint64_t index_in_dev_matrix = -1;
+  uint64_t index_in_dev_matrix = 0;
   int64_t dimension_shard_num = 1;
   if (dimension == H_DIMENSION) {
     index_in_dev_matrix = 2;
