@@ -373,7 +373,6 @@ py::object GetSymbolObject(const NameSpacePtr &name_space, const SymbolPtr &symb
     MS_LOG(EXCEPTION) << "Node " << node->DebugString() << " graph is nullptr.";
   }
   SymbolResolver symbol_resolver(name_space, symbol, node);
-  symbol_resolver.Resolve();
   if (!symbol_resolver.Resolve()) {
     MS_LOG(EXCEPTION) << "Fail to resolve node, NodeInfo.";
   }
