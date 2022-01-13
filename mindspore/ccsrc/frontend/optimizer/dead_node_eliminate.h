@@ -38,10 +38,6 @@ class EliminateDeadNodePass {
     }
 
     auto change = EliminateDeadNode(func_graph);
-    if (change) {
-      // Enable renormalize.
-      optimizer->set_is_untyped_generated();
-    }
     return change;
   }
 };
