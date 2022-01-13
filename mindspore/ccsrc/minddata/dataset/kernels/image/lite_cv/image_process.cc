@@ -101,9 +101,11 @@ static bool ResizeBilinear3C(const unsigned char *src, int src_width, int src_he
   int16_t *y_weight = reinterpret_cast<int16_t *>(x_weight + dst_width);
 
   if (!InitBilinearWeight(x_offset, x_weight, scale_width, dst_width, src_width, 3)) {
+    delete[] data_buf;
     return false;
   }
   if (!InitBilinearWeight(y_offset, y_weight, scale_height, dst_height, src_height, 1)) {
+    delete[] data_buf;
     return false;
   }
 
@@ -192,9 +194,11 @@ static bool ResizeBilinear1C(const unsigned char *src, int src_width, int src_he
   int16_t *y_weight = reinterpret_cast<int16_t *>(x_weight + dst_width);
 
   if (!InitBilinearWeight(x_offset, x_weight, scale_width, dst_width, src_width, 1)) {
+    delete[] data_buf;
     return false;
   }
   if (!InitBilinearWeight(y_offset, y_weight, scale_height, dst_height, src_height, 1)) {
+    delete[] data_buf;
     return false;
   }
 

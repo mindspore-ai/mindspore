@@ -95,7 +95,6 @@ class TransferNode : public DatasetNode {
   std::string queue_name_;
   int32_t device_id_;
   std::string device_type_;
-  int32_t prefetch_size_;
   bool send_epoch_end_;
   int32_t total_batch_;
   bool create_data_info_queue_;
