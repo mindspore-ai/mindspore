@@ -272,6 +272,7 @@ class SpeechCommandsDataset(MappableDataset, AudioBaseDataset):
     Citation:
 
     .. code-block::
+
         @article{2018Speech,
         title={Speech Commands: A Dataset for Limited-Vocabulary Speech Recognition},
         author={Warden, P.},
@@ -311,7 +312,7 @@ class TedliumDataset(MappableDataset, AudioBaseDataset):
         dataset_dir (str): Path to the root directory that contains the dataset.
         release (str): Release of the dataset, can be "release1", "release2", "release3".
         usage (str, optional): Usage of this dataset.
-            For release1 or release2, can be `train`, `test`, ` dev` or `all`.
+            For release1 or release2, can be `train`, `test`, `dev` or `all`.
             `train` will read from train samples,
             `test` will read from test samples,
             `dev` will read from dev samples,
