@@ -223,8 +223,9 @@ std::vector<EntranceActorPtr> ControlNodeScheduler::BuildEntranceActor(const Gra
                                 : context_iter->second.size());
       }
       entrance_actor->device_contexts_.clear();
-      entrance_actor->device_contexts_.insert(entrance_actor->device_contexts_.begin(), context_iter->second.begin(),
-                                              context_iter->second.begin() + formal_parameters.size());
+      (void)entrance_actor->device_contexts_.insert(
+        entrance_actor->device_contexts_.begin(), context_iter->second.begin(),
+        context_iter->second.begin() + SizeToLong(formal_parameters.size()));
       (void)entrance_actors.emplace_back(entrance_actor);
       InsertActor(entrance_actor.get());
     }
@@ -329,8 +330,8 @@ std::vector<StackActorPtr> ControlNodeScheduler::BuildStackActor(const GraphComp
         (void)formal_parameters.emplace_back(node_with_context.first);
         (void)device_contexts.emplace_back(node_with_context.second);
       } else {
-        formal_parameters.insert(formal_parameters.begin(), node_with_context.first);
-        device_contexts.insert(device_contexts.begin(), node_with_context.second);
+        (void)formal_parameters.insert(formal_parameters.begin(), node_with_context.first);
+        (void)device_contexts.insert(device_contexts.begin(), node_with_context.second);
         input_parameter_data_num++;
       }
     }
@@ -410,8 +411,8 @@ void ControlNodeScheduler::BuildStackActorForControlNode(const GraphCompilerInfo
         (void)formal_parameters.emplace_back(parameter);
         (void)device_contexts.emplace_back(device_context);
       } else {
-        formal_parameters.insert(formal_parameters.begin(), parameter);
-        device_contexts.insert(device_contexts.begin(), device_context);
+        (void)formal_parameters.insert(formal_parameters.begin(), parameter);
+        (void)device_contexts.insert(device_contexts.begin(), device_context);
 
         const auto &abstract = parameter.first->abstract();
         MS_EXCEPTION_IF_NULL(abstract);
@@ -725,7 +726,7 @@ void ControlNodeScheduler::LinkArrowByCallNode(const AnfNodePtr &call_node, Cont
       auto actor = FetchActor(actor_name);
       MS_EXCEPTION_IF_NULL(actor);
       auto exit_actor = dynamic_cast<ExitActor *>(actor);
-      size_t branch_id = parser->FetchBranchIDByCallNode(from_node);
+      auto branch_id = parser->FetchBranchIDByCallNode(from_node);
       if (real_abstract->isa<abstract::AbstractFunction>()) {
         LinkPartialArrowForExitActor(exit_actor, to_actor, from_node_with_index.second, to_node_with_index.second,
                                      branch_id);
@@ -1365,7 +1366,7 @@ void ControlNodeScheduler::LinkDataWithBranchIDArrow(GatherActor *const gather_a
                                                      const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(gather_actor);
   MS_EXCEPTION_IF_NULL(entrance_actor);
-  gather_actor->output_data_with_branch_id_arrows_[func_graph.get()].emplace_back(entrance_actor->GetAID());
+  (void)gather_actor->output_data_with_branch_id_arrows_[func_graph.get()].emplace_back(entrance_actor->GetAID());
 }
 
 void ControlNodeScheduler::LinkPartialArrow(ControlActor *const from_actor, ControlActor *const to_actor,
@@ -1386,7 +1387,7 @@ void ControlNodeScheduler::LinkBranchIDArrow(ControlActor *const from_actor, Con
   to_actor->input_branch_ids_num_++;
 }
 
-bool ControlNodeScheduler::CheckActorValid(const ControlActorSetPtr &control_actor_set) {
+bool ControlNodeScheduler::CheckActorValid(const ControlActorSetPtr &control_actor_set) const {
   MS_EXCEPTION_IF_NULL(control_actor_set);
   for (const auto &gather_actor : control_actor_set->gather_actors_) {
     if (gather_actor->input_partials_num_ != 1) {
@@ -1397,7 +1398,7 @@ bool ControlNodeScheduler::CheckActorValid(const ControlActorSetPtr &control_act
   return true;
 }
 
-bool ControlNodeScheduler::IsNoInputActor(const ControlActor *control_actor) {
+bool ControlNodeScheduler::IsNoInputActor(const ControlActor *control_actor) const {
   return (control_actor->input_datas_num_ == 0 && control_actor->input_controls_num_ == 0 &&
           control_actor->input_partials_num_ == 0 && control_actor->input_branch_ids_num_ == 0);
 }
