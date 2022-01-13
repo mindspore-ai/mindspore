@@ -289,7 +289,7 @@ class EnvironGetSetEliminater : public AnfVisitor {
 // {prim::kPrimDepend, {prim::kPrimEnvironGet, X1, item, dflt}, X2}
 class EnvironGetDependSwap : public OptimizerCaller {
  public:
-  AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) override {
+  AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
     if (!node->isa<CNode>() || node->func_graph() == nullptr) {
       return nullptr;
     }

@@ -270,7 +270,7 @@ AnfNodePtr FunctionBlock::HandleBuiltinNamespaceInfo(const py::tuple &info) {
 AnfNodePtr FunctionBlock::MakeResolveSymbol(const std::string &value) {
   MS_LOG(DEBUG) << "value: " << value;
   // The prefix of value is "self.".
-  if (value.compare(0, strlen("self."), "self.") == 0) {
+  if (value.compare(0, strlen("self"), "self") == 0) {
     auto start = value.find_first_of('.') + 1;
     if (start >= value.size()) {
       MS_LOG(ERROR) << "Find invalid resolve symbol str: " << value;
