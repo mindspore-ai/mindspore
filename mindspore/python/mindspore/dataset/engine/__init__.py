@@ -36,69 +36,69 @@ from .iterators import *
 from .samplers import *
 from .serializer_deserializer import compare, deserialize, serialize, show
 
-__all__ = ["Caltech101Dataset",        # vision dataset
-           "Caltech256Dataset",        # vision dataset
-           "CelebADataset",            # vision dataset
-           "Cifar10Dataset",           # vision dataset
-           "Cifar100Dataset",          # vision dataset
-           "CityscapesDataset",        # vision dataset
-           "CocoDataset",              # vision dataset
-           "DIV2KDataset",             # vision dataset
-           "EMnistDataset",            # vision dataset
-           "FakeImageDataset",         # vision dataset
-           "FashionMnistDataset",      # vision dataset
-           "FlickrDataset",            # vision dataset
-           "Flowers102Dataset",        # vision dataset
-           "ImageFolderDataset",       # vision dataset
-           "KMnistDataset",            # vision dataset
-           "ManifestDataset",          # vision dataset
-           "MnistDataset",             # vision dataset
-           "PhotoTourDataset",         # vision dataset
-           "Places365Dataset",         # vision dataset
-           "QMnistDataset",            # vision dataset
-           "RandomDataset",            # vision dataset
-           "SBDataset",                # vision dataset
-           "SBUDataset",               # vision dataset
-           "SemeionDataset",           # vision dataset
-           "STL10Dataset",             # vision dataset
-           "SVHNDataset",              # vision dataset
-           "USPSDataset",              # vision dataset
-           "VOCDataset",               # vision dataset
-           "WIDERFaceDataset",         # vision dataset
-           "AGNewsDataset",            # text dataset
-           "AmazonReviewDataset",      # text dataset
-           "CLUEDataset",              # text dataset
-           "CoNLL2000Dataset",         # text dataset
-           "CSVDataset",               # text dataset
-           "DBpediaDataset",           # text dataset
-           "EnWik9Dataset",            # text dataset
-           "IMDBDataset",              # text dataset
-           "IWSLT2016Dataset",         # text dataset
-           "IWSLT2017Dataset",         # text dataset
-           "PennTreebankDataset",      # text dataset
-           "SogouNewsDataset",         # text dataset
-           "TextFileDataset",          # text dataset
-           "UDPOSDataset",             # text dataset
-           "WikiTextDataset",          # text dataset
-           "YahooAnswersDataset",      # text dataset
-           "YelpReviewDataset",        # text dataset
-           "LJSpeechDataset",          # audio dataset
-           "SpeechCommandsDataset",    # audio dataset
-           "TedliumDataset",           # audio dataset
-           "YesNoDataset",             # audio dataset
-           "MindDataset",              # standard format dataset
-           "TFRecordDataset",          # standard format dataset
-           "GeneratorDataset",         # user defined dataset
-           "NumpySlicesDataset",       # user defined dataset
-           "PaddedDataset",            # user defined dataset
-           "GraphData",                # graph data
-           "DistributedSampler",       # sampler
-           "RandomSampler",            # sampler
-           "SequentialSampler",        # sampler
-           "SubsetRandomSampler",      # sampler
-           "SubsetSampler",            # sampler
-           "PKSampler",                # sampler
-           "WeightedRandomSampler",    # sampler
+__all__ = ["Caltech101Dataset",        # Vision
+           "Caltech256Dataset",        # Vision
+           "CelebADataset",            # Vision
+           "Cifar10Dataset",           # Vision
+           "Cifar100Dataset",          # Vision
+           "CityscapesDataset",        # Vision
+           "CocoDataset",              # Vision
+           "DIV2KDataset",             # Vision
+           "EMnistDataset",            # Vision
+           "FakeImageDataset",         # Vision
+           "FashionMnistDataset",      # Vision
+           "FlickrDataset",            # Vision
+           "Flowers102Dataset",        # Vision
+           "ImageFolderDataset",       # Vision
+           "KMnistDataset",            # Vision
+           "ManifestDataset",          # Vision
+           "MnistDataset",             # Vision
+           "PhotoTourDataset",         # Vision
+           "Places365Dataset",         # Vision
+           "QMnistDataset",            # Vision
+           "RandomDataset",            # Vision
+           "SBDataset",                # Vision
+           "SBUDataset",               # Vision
+           "SemeionDataset",           # Vision
+           "STL10Dataset",             # Vision
+           "SVHNDataset",              # Vision
+           "USPSDataset",              # Vision
+           "VOCDataset",               # Vision
+           "WIDERFaceDataset",         # Vision
+           "AGNewsDataset",            # Text
+           "AmazonReviewDataset",      # Text
+           "CLUEDataset",              # Text
+           "CoNLL2000Dataset",         # Text
+           "DBpediaDataset",           # Text
+           "EnWik9Dataset",            # Text
+           "IMDBDataset",              # Text
+           "IWSLT2016Dataset",         # Text
+           "IWSLT2017Dataset",         # Text
+           "PennTreebankDataset",      # Text
+           "SogouNewsDataset",         # Text
+           "TextFileDataset",          # Text
+           "UDPOSDataset",             # Text
+           "WikiTextDataset",          # Text
+           "YahooAnswersDataset",      # Text
+           "YelpReviewDataset",        # Text
+           "LJSpeechDataset",          # Audio
+           "SpeechCommandsDataset",    # Audio
+           "TedliumDataset",           # Audio
+           "YesNoDataset",             # Audio
+           "CSVDataset",               # Standard Format
+           "MindDataset",              # Standard Format
+           "TFRecordDataset",          # Standard Format
+           "GeneratorDataset",         # User Defined
+           "NumpySlicesDataset",       # User Defined
+           "PaddedDataset",            # User Defined
+           "GraphData",                # Graph Data
+           "DistributedSampler",       # Sampler
+           "RandomSampler",            # Sampler
+           "SequentialSampler",        # Sampler
+           "SubsetRandomSampler",      # Sampler
+           "SubsetSampler",            # Sampler
+           "PKSampler",                # Sampler
+           "WeightedRandomSampler",    # Sampler
            "DatasetCache",
            "DSCallback",
            "WaitedDSCallback",

@@ -13,10 +13,15 @@
 # limitations under the License.
 # ==============================================================================
 """
-This dataset module supports various formats of datasets, including ImageNet, TFData,
-MNIST, Cifar10/100, Manifest, MindRecord, and more. This module loads data with
-high performance and parses data precisely. Some of the operations that are
-provided to users to preprocess data include shuffle, batch, repeat, map, and zip.
+This file contains specific vision dataset loading classes. You can easily use
+these classes to load the prepared dataset. For example:
+    ImageFolderDataset: which is about ImageNet dataset.
+    Cifar10Dataset: which is cifar10 binary version dataset.
+    Cifar100Dataset: which is cifar100 binary version dataset.
+    MnistDataset: which is mnist dataset.
+    ...
+After declaring the dataset object, you can further apply dataset operations
+(e.g. filter, skip, concat, map, batch) on it.
 """
 import os
 import numpy as np
@@ -25,7 +30,7 @@ from PIL import Image
 
 import mindspore._c_dataengine as cde
 
-from .datasets import MappableDataset, SourceDataset, Shuffle, Schema
+from .datasets import VisionBaseDataset, SourceDataset, MappableDataset, Shuffle, Schema
 from .datasets_user_defined import GeneratorDataset
 from .validators import check_imagefolderdataset, \
     check_mnist_cifar_dataset, check_manifestdataset, check_vocdataset, check_cocodataset, \
@@ -268,7 +273,7 @@ class Caltech101Dataset(GeneratorDataset):
         return class_dict
 
 
-class Caltech256Dataset(MappableDataset):
+class Caltech256Dataset(MappableDataset, VisionBaseDataset):
     """
     A source dataset that reads and parses Caltech256 dataset.
 
@@ -394,7 +399,7 @@ class Caltech256Dataset(MappableDataset):
         return cde.Caltech256Node(self.dataset_dir, self.decode, self.sampler)
 
 
-class CelebADataset(MappableDataset):
+class CelebADataset(MappableDataset, VisionBaseDataset):
     """
     A source dataset for reading and parsing CelebA dataset.
     Only support to read `list_attr_celeba.txt` currently, which is the attribute annotations of the dataset.
@@ -558,7 +563,7 @@ class CelebADataset(MappableDataset):
 
 
 
-class Cifar10Dataset(MappableDataset):
+class Cifar10Dataset(MappableDataset, VisionBaseDataset):
     """
     A source dataset for reading and parsing Cifar10 dataset.
     This api only supports parsing Cifar10 file in binary version now.
@@ -689,7 +694,7 @@ class Cifar10Dataset(MappableDataset):
         return cde.Cifar10Node(self.dataset_dir, self.usage, self.sampler)
 
 
-class Cifar100Dataset(MappableDataset):
+class Cifar100Dataset(MappableDataset, VisionBaseDataset):
     """
     A source dataset for reading and parsing Cifar100 dataset.
 
@@ -813,7 +818,7 @@ class Cifar100Dataset(MappableDataset):
         return cde.Cifar100Node(self.dataset_dir, self.usage, self.sampler)
 
 
-class CityscapesDataset(MappableDataset):
+class CityscapesDataset(MappableDataset, VisionBaseDataset):
     """
     A source dataset for reading and parsing Cityscapes dataset.
 
@@ -983,7 +988,7 @@ class CityscapesDataset(MappableDataset):
         return cde.CityscapesNode(self.dataset_dir, self.usage, self.quality_mode, self.task, self.decode, self.sampler)
 
 
-class CocoDataset(MappableDataset):
+class CocoDataset(MappableDataset, VisionBaseDataset):
     """
     A source dataset for reading and parsing COCO dataset.
 
@@ -1194,7 +1199,7 @@ class CocoDataset(MappableDataset):
         return self._class_indexing
 
 
-class DIV2KDataset(MappableDataset):
+class DIV2KDataset(MappableDataset, VisionBaseDataset):
     """
     A source dataset for reading and parsing DIV2KDataset dataset.
 
@@ -1381,7 +1386,7 @@ class DIV2KDataset(MappableDataset):
         return cde.DIV2KNode(self.dataset_dir, self.usage, self.downgrade, self.scale, self.decode, self.sampler)
 
 
-class EMnistDataset(MappableDataset):
+class EMnistDataset(MappableDataset, VisionBaseDataset):
     """
     A source dataset for reading and parsing the EMNIST dataset.
 
@@ -1513,7 +1518,7 @@ class EMnistDataset(MappableDataset):
         return cde.EMnistNode(self.dataset_dir, self.name, self.usage, self.sampler)
 
 
-class FakeImageDataset(MappableDataset):
+class FakeImageDataset(MappableDataset, VisionBaseDataset):
     """
     A source dataset for generating fake images.
 
@@ -1602,7 +1607,7 @@ class FakeImageDataset(MappableDataset):
         return cde.FakeImageNode(self.num_images, self.image_size, self.num_classes, self.base_seed, self.sampler)
 
 
-class FashionMnistDataset(MappableDataset):
+class FashionMnistDataset(MappableDataset, VisionBaseDataset):
     """
     A source dataset for reading and parsing the FASHION-MNIST dataset.
 
@@ -1723,7 +1728,7 @@ class FashionMnistDataset(MappableDataset):
         return cde.FashionMnistNode(self.dataset_dir, self.usage, self.sampler)
 
 
-class FlickrDataset(MappableDataset):
+class FlickrDataset(MappableDataset, VisionBaseDataset):
     """
     A source dataset for reading and parsing Flickr8k and Flickr30k dataset.
 
@@ -2128,7 +2133,7 @@ class Flowers102Dataset(GeneratorDataset):
         return class_dict
 
 
-class ImageFolderDataset(MappableDataset):
+class ImageFolderDataset(MappableDataset, VisionBaseDataset):
     """
     A source dataset that reads images from a tree of directories.
     All images within one folder have the same label.
@@ -2257,7 +2262,7 @@ class ImageFolderDataset(MappableDataset):
         return cde.ImageFolderNode(self.dataset_dir, self.decode, self.sampler, self.extensions, self.class_indexing)
 
 
-class KMnistDataset(MappableDataset):
+class KMnistDataset(MappableDataset, VisionBaseDataset):
     """
     A source dataset for reading and parsing the KMNIST dataset.
 
@@ -2378,7 +2383,7 @@ class KMnistDataset(MappableDataset):
         return cde.KMnistNode(self.dataset_dir, self.usage, self.sampler)
 
 
-class ManifestDataset(MappableDataset):
+class ManifestDataset(MappableDataset, VisionBaseDataset):
     """
     A source dataset for reading images from a Manifest file.
 
@@ -2497,7 +2502,7 @@ class ManifestDataset(MappableDataset):
         return self.class_indexing
 
 
-class MnistDataset(MappableDataset):
+class MnistDataset(MappableDataset, VisionBaseDataset):
     """
     A source dataset for reading and parsing the MNIST dataset.
 
@@ -2617,7 +2622,7 @@ class MnistDataset(MappableDataset):
         return cde.MnistNode(self.dataset_dir, self.usage, self.sampler)
 
 
-class PhotoTourDataset(MappableDataset):
+class PhotoTourDataset(MappableDataset, VisionBaseDataset):
     """
     A source dataset for reading and parsing the PhotoTour dataset.
 
@@ -2770,7 +2775,7 @@ class PhotoTourDataset(MappableDataset):
         return cde.PhotoTourNode(self.dataset_dir, self.name, self.usage, self.sampler)
 
 
-class Places365Dataset(MappableDataset):
+class Places365Dataset(MappableDataset, VisionBaseDataset):
     """
     A source dataset for reading and parsing the Places365 dataset.
 
@@ -2911,7 +2916,7 @@ class Places365Dataset(MappableDataset):
         return cde.Places365Node(self.dataset_dir, self.usage, self.small, self.decode, self.sampler)
 
 
-class QMnistDataset(MappableDataset):
+class QMnistDataset(MappableDataset, VisionBaseDataset):
     """
     A source dataset for reading and parsing the QMNIST dataset.
 
@@ -3036,7 +3041,7 @@ class QMnistDataset(MappableDataset):
         return cde.QMnistNode(self.dataset_dir, self.usage, self.compat, self.sampler)
 
 
-class RandomDataset(SourceDataset):
+class RandomDataset(SourceDataset, VisionBaseDataset):
     """
     A source dataset that generates random data.
 
@@ -3268,7 +3273,7 @@ class SBDataset(GeneratorDataset):
                          num_shards=num_shards, shard_id=shard_id)
 
 
-class SBUDataset(MappableDataset):
+class SBUDataset(MappableDataset, VisionBaseDataset):
     """
     A source dataset for reading and parsing the SBU dataset.
 
@@ -3382,7 +3387,7 @@ class SBUDataset(MappableDataset):
         return cde.SBUNode(self.dataset_dir, self.decode, self.sampler)
 
 
-class SemeionDataset(MappableDataset):
+class SemeionDataset(MappableDataset, VisionBaseDataset):
     """
     A source dataset for reading and parsing Semeion dataset.
 
@@ -3502,7 +3507,7 @@ class SemeionDataset(MappableDataset):
         return cde.SemeionNode(self.dataset_dir, self.sampler)
 
 
-class STL10Dataset(MappableDataset):
+class STL10Dataset(MappableDataset, VisionBaseDataset):
     """
     A source dataset for reading and parsing STL10 dataset.
 
@@ -3784,7 +3789,7 @@ class SVHNDataset(GeneratorDataset):
                          num_shards=num_shards, shard_id=shard_id)
 
 
-class USPSDataset(SourceDataset):
+class USPSDataset(SourceDataset, VisionBaseDataset):
     """
     A source dataset for reading and parsing the USPS dataset.
 
@@ -3881,7 +3886,7 @@ class USPSDataset(SourceDataset):
                             self.shard_id)
 
 
-class VOCDataset(MappableDataset):
+class VOCDataset(MappableDataset, VisionBaseDataset):
     """
     A source dataset for reading and parsing VOC dataset.
 
@@ -4083,7 +4088,7 @@ class VOCDataset(MappableDataset):
         return self.class_indexing
 
 
-class WIDERFaceDataset(MappableDataset):
+class WIDERFaceDataset(MappableDataset, VisionBaseDataset):
     """
     A source dataset for reading and parsing WIDERFace dataset.
 
