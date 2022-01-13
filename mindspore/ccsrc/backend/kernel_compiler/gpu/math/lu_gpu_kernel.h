@@ -26,16 +26,10 @@
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
 #include "backend/kernel_compiler/gpu/kernel_constants.h"
 #include "utils/convert_utils.h"
-#include "backend/kernel_compiler/gpu/cuda_impl/triangle_matrix_copy_impl.cuh"
+#include "backend/kernel_compiler/gpu/cuda_impl/transpose_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
-constexpr size_t kLuInputsNum = 1;
-constexpr size_t kInputIndex = 0;
-constexpr size_t kLuOutputsNum = 1;
-constexpr size_t kOutputIndex = 0;
-constexpr size_t kLuDefaultShape = 1;
-constexpr size_t kLuNormalShape = 2;
 
 template <typename T>
 class LUGpuKernel : public GpuKernel {
@@ -53,54 +47,111 @@ class LUGpuKernel : public GpuKernel {
     }
     CHECK_CUSOLVER_RET_WITH_ERROR(cusolverDnSetStream(handle_, reinterpret_cast<cudaStream_t>(stream_ptr)),
                                   "cusolverDnSetStream failed");
-    auto input_addr = GetDeviceAddress<T>(inputs, kDim0);
-    auto output_addr = GetDeviceAddress<T>(outputs, kDim0);
-    int *piv_output_addr = nullptr;
+    T *batch_input_addr = GetDeviceAddress<T>(inputs, kDim0);
+    T *batch_output_addr = GetDeviceAddress<T>(outputs, kDim0);
+    int *batch_piv_output_addr = nullptr;
     if (pivot_on_) {
-      piv_output_addr = GetDeviceAddress<int>(outputs, kDim1);
+      batch_piv_output_addr = GetDeviceAddress<int>(outputs, kDim1);
     }
+    int *batch_permutation_addr = GetDeviceAddress<int>(outputs, kDim2);
+    int *info_output_addr = GetDeviceAddress<int>(workspace, kDim0);
 
-    auto info_output_addr = GetDeviceAddress<int>(outputs, kDim2);
+    size_t *dev_transpose_shape = GetDeviceAddress<size_t>(workspace, kDim1);
+    size_t *dev_transpose_axis = GetDeviceAddress<size_t>(workspace, kDim2);
+    constexpr size_t shape_2d = 2;
+    size_t host_transpose_shape[shape_2d] = {m_, n_};
+    size_t host_transpose_axis[shape_2d] = {1, 0};
+    T *dev_transpose_work = GetDeviceAddress<T>(workspace, kDim3);
+    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
+                               cudaMemcpyAsync(dev_transpose_axis, host_transpose_axis, shape_2d * sizeof(size_t),
+                                               cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
+                               "malloc input shape workspace failed");
+
+    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
+                               cudaMemcpyAsync(batch_output_addr, batch_input_addr, batch_ * m_ * n_ * unit_size_,
+                                               cudaMemcpyDeviceToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
+                               "cudaMemcpyAsync failed in LUGpuKernel::Launch.");
 
     // 4. query working space of getrf
     if constexpr (std::is_same_v<T, float>) {
       CHECK_CUSOLVER_RET_WITH_EXCEPT(kernel_node_,
-                                     cusolverDnSgetrf_bufferSize(handle_, m_, m_, input_addr, lda_, &lwork_),
+                                     cusolverDnSgetrf_bufferSize(handle_, m_, n_, batch_output_addr, lda_, &lwork_),
                                      "cusolver query lu work size fail");
-
-      if (cudaMalloc(reinterpret_cast<void **>(&d_work_), unit_size_ * lwork_) != cudaSuccess) {
-        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', cusolver malloc work size fail";
-      }
-
-      CHECK_CUSOLVER_RET_WITH_EXCEPT(
-        kernel_node_, cusolverDnSgetrf(handle_, m_, m_, input_addr, lda_, d_work_, piv_output_addr, info_output_addr),
-        "cusolver lu fail");
 
     } else if constexpr (std::is_same_v<T, double>) {
       CHECK_CUSOLVER_RET_WITH_EXCEPT(kernel_node_,
-                                     cusolverDnDgetrf_bufferSize(handle_, m_, m_, input_addr, lda_, &lwork_),
+                                     cusolverDnDgetrf_bufferSize(handle_, m_, n_, batch_output_addr, lda_, &lwork_),
                                      "cusolver query lu work size fail");
-      // 5. malloc device working space of getrf
-
-      if (cudaMalloc(reinterpret_cast<void **>(&d_work_), unit_size_ * lwork_) != cudaSuccess) {
-        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', cusolver malloc work size fail";
-      }
-
-      // 6. solve to lu factorization according to cuSolver api, outputs have been written to input's matrix.
-      CHECK_CUSOLVER_RET_WITH_EXCEPT(
-        kernel_node_, cusolverDnDgetrf(handle_, m_, m_, input_addr, lda_, d_work_, piv_output_addr, info_output_addr),
-        "cusolver lu fail");
     } else {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the data type only should be float or double, right now.";
     }
-    // 7. copy results from written input's matrix to output's matrix.
-    //    if (cudaMemcpy(output_addr, input_addr, lda_ * m_ * unit_size_, cudaMemcpyDeviceToDevice) != cudaSuccess) {
-    //      MS_LOG(EXCEPTION) << "memcpy lu output fail.";
-    //    }
-    MatrixCopy(input_addr, output_addr, lda_ * m_, reinterpret_cast<cudaStream_t>(stream_ptr));
-    if (d_work_) {
-      cudaFree(d_work_);
+    // 5. malloc device working space of getrf
+    d_work_ = reinterpret_cast<T *>(device::gpu::GPUMemoryAllocator::GetInstance().AllocTensorMem(unit_size_ * lwork_));
+    for (size_t batch = 0; batch < batch_; ++batch) {
+      T *output_addr = batch_output_addr + batch * m_ * n_;
+      int *permutation_addr = batch_permutation_addr + batch * k_ * k_;
+      int *piv_output_addr = batch_piv_output_addr + batch * k_;
+      CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
+                                 cudaMemcpyAsync(dev_transpose_shape, host_transpose_shape, shape_2d * sizeof(size_t),
+                                                 cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
+                                 "malloc input shape workspace failed");
+
+      CalTranspose(m_ * n_, output_addr, dev_transpose_shape, dev_transpose_axis, shape_2d, dev_transpose_work,
+                   reinterpret_cast<cudaStream_t>(stream_ptr));
+
+      // 6.lu factorization according to cuSolver api, outputs have been written to input's matrix.
+      if constexpr (std::is_same_v<T, float>) {
+        CHECK_CUSOLVER_RET_WITH_EXCEPT(
+          kernel_node_,
+          cusolverDnSgetrf(handle_, m_, n_, dev_transpose_work, lda_, d_work_, piv_output_addr, info_output_addr),
+          "cusolver lu fail");
+      } else if constexpr (std::is_same_v<T, double>) {
+        // 6.lu factorization according to cuSolver api, outputs have been written to input's matrix.
+        CHECK_CUSOLVER_RET_WITH_EXCEPT(
+          kernel_node_,
+          cusolverDnDgetrf(handle_, m_, n_, dev_transpose_work, lda_, d_work_, piv_output_addr, info_output_addr),
+          "cusolver lu fail");
+      } else {
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the data type only should be float or double, right now.";
+      }
+
+      size_t host_wk_transpose_shape[shape_2d] = {n_, m_};
+      cudaMemcpyAsync(dev_transpose_shape, host_wk_transpose_shape, shape_2d * sizeof(size_t), cudaMemcpyHostToDevice,
+                      reinterpret_cast<cudaStream_t>(stream_ptr));
+      CalTranspose(m_ * n_, dev_transpose_work, dev_transpose_shape, dev_transpose_axis, shape_2d, output_addr,
+                   reinterpret_cast<cudaStream_t>(stream_ptr));
+      std::vector<int> host_permuted(k_, 0);
+      std::vector<int> host_pivots(k_, 0);
+      std::vector<int> host_permutation(k_ * k_, 0);
+      CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
+                                 cudaMemcpyAsync(host_pivots.data(), piv_output_addr, sizeof(int) * k_,
+                                                 cudaMemcpyDeviceToHost, reinterpret_cast<cudaStream_t>(stream_ptr)),
+                                 "cudaMemcpyAsync failed in LUGpuKernel::Launch copy pivots to host.");
+
+      // cal pivots && permutation major by row.
+      for (size_t i = 0; i < k_; ++i) {
+        host_pivots[i] -= 1;
+        host_permuted[i] = i;
+      }
+      for (size_t i = 0; i < k_; ++i) {
+        int tmp_value = host_permuted[i];
+        host_permuted[i] = host_permuted[host_pivots[i]];
+        host_permuted[host_pivots[i]] = tmp_value;
+      }
+      // gpu default is P.A = LU, so here is col swap.
+      for (size_t i = 0; i < k_; ++i) {
+        host_permutation[host_permuted[i] * k_ + i] = 1;
+      }
+      CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
+                                 cudaMemcpyAsync(permutation_addr, host_permutation.data(), sizeof(int) * k_ * k_,
+                                                 cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
+                                 "cudaMemcpyAsync failed in LUGpuKernel::Launch copy permutation matrix.");
+      CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
+                                 cudaMemcpyAsync(piv_output_addr, host_pivots.data(), sizeof(int) * k_,
+                                                 cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
+                                 "cudaMemcpyAsync failed in LUGpuKernel::Launch copy pivots array.");
     }
+    device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(d_work_);
     return true;
   }
 
@@ -125,48 +176,65 @@ class LUGpuKernel : public GpuKernel {
 
  private:
   bool InitInputSize(const std::vector<size_t> &in_shape) {
-    if (in_shape.size() == kLuDefaultShape) {
-      lu_row_ = in_shape.at(kDim0);
-      lu_col_ = lu_row_;
-    } else if (in_shape.size() == kLuNormalShape) {
-      lu_row_ = in_shape.at(kDim0);
-      lu_col_ = in_shape.at(kDim1);
-    } else {
-      MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of input only should be 1 or 2";
-      return false;
+    constexpr size_t lu_min_dim = 1;
+    constexpr size_t lu_max_dim = 3;
+    if (in_shape.size() < lu_min_dim || in_shape.size() > lu_max_dim) {
+      MS_LOG_EXCEPTION << kernel_name_ << "shape is " << in_shape.size() << " which is invalid.";
     }
-    if (lu_row_ != lu_col_) {
-      MS_LOG(ERROR) << "For '" << kernel_name_ << "', the shape of input should be square matrix";
-      return false;
+    if (in_shape.size() == lu_max_dim) {
+      batch_ = in_shape.front();
+      lu_row_ = in_shape.at(lu_min_dim);
+      lu_col_ = in_shape.at(lu_max_dim - 1);
+    } else {
+      batch_ = 1;
+      lu_row_ = in_shape.front();
+      lu_col_ = in_shape.at(lu_min_dim);
     }
     // set matrix row or col to be lead dimension
     m_ = SizeToInt(lu_row_);
+    n_ = SizeToInt(lu_col_);
+    k_ = std::min(lu_row_, lu_col_);
     lda_ = m_;
-    ldb_ = m_;
+    ldb_ = n_;
     InitSizeLists();
     return true;
   }
 
   void InitSizeLists() override {
-    size_t input_size = lda_ * m_ * unit_size_;
+    size_t input_size = batch_ * lu_row_ * lu_col_ * unit_size_;
     input_size_list_.push_back(input_size);
 
-    size_t output_size = lda_ * m_ * unit_size_;
+    size_t output_size = batch_ * lu_row_ * lu_col_ * unit_size_;
+
     size_t output_piv_size = 0;
-    size_t output_info_size = sizeof(int);
     if (pivot_on_) {
-      output_piv_size = m_ * sizeof(int);
+      output_piv_size = batch_ * k_ * sizeof(int);
     }
+    size_t output_permutation_size = batch_ * k_ * k_ * sizeof(int);
     output_size_list_.resize(kDim3);
     output_size_list_[kDim0] = output_size;
     output_size_list_[kDim1] = output_piv_size;
-    output_size_list_[kDim2] = output_info_size;
+    output_size_list_[kDim2] = output_permutation_size;
+
+    // a device addr to place lu factor return code
+    workspace_size_list_.push_back(sizeof(int));
+
+    // transpose 2d matrix scalar args workspace
+    constexpr size_t shape_2d = 2;
+    workspace_size_list_.push_back(shape_2d * sizeof(size_t));
+    workspace_size_list_.push_back(shape_2d * sizeof(size_t));
+
+    // transpose workspace
+    workspace_size_list_.push_back(m_ * n_ * unit_size_);
   }
 
   size_t unit_size_{sizeof(T)};
+  size_t batch_{1};
   size_t lu_row_{0};
   size_t lu_col_{0};
+  size_t k_{0};
   size_t m_{0};
+  size_t n_{0};
   size_t lda_{0};
   size_t ldb_{0};
   int lwork_{0};

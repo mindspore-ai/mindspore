@@ -514,7 +514,7 @@ def lu_factor(a, overwrite_a=False, check_finite=True):
          [ 7.14285714e-01,  1.20000000e-01, -1.04000000e+00,  3.08000000e+00],
          [ 7.14285714e-01, -4.40000000e-01, -4.61538462e-01,  7.46153846e+00]])
         >>> piv
-        Tensor(shape=[4], dtype=Int32, value= [2, 0, 3, 1])
+        Tensor(shape=[4], dtype=Int32, value= [2, 2, 3, 3])
     """
     if F.dtype(a) not in float_types:
         a = F.cast(a, mstype.float32)
@@ -592,9 +592,11 @@ def lu(a, permute_l=False, overwrite_a=False, check_finite=True):
     m_lu, _, p = msp_lu(a)
     m = a.shape[-2]
     n = a.shape[-1]
+    if m > n:
+        _raise_value_error("last two dimensions of LU decomposition must be row less or equal to col.")
     k = min(m, n)
     a_dtype = a.dtype
-    l = mnp.tril(m_lu, -1)[:, :k] + mnp.eye(m, k, dtype=a_dtype)
+    l = mnp.tril(m_lu, -1)[..., :k] + mnp.eye(m, k, dtype=a_dtype)
     u = mnp.triu(m_lu)[:k, :]
     if permute_l:
         return mnp.dot(p, l), u
@@ -642,7 +644,7 @@ def lu_solve(lu_and_piv, b, trans=0, overwrite_b=False, check_finite=True):
     check_lu_shape(m_lu, b)
     # here permutation array has been calculated, just use it.
     # 2. calculate permutation
-    permutation = lu_pivots_to_permutation(pivots, len(pivots))
+    permutation = lu_pivots_to_permutation(pivots, pivots.size)
     # 3. rhs_vector
     rhs_vector = m_lu.ndim == b.ndim + 1
     x = lu_solve_core(m_lu, permutation, b, trans)
