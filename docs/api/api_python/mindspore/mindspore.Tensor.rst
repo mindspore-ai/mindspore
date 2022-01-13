@@ -660,7 +660,7 @@ mindspore.Tensor
 
     .. py:method:: mean(axis=(), keep_dims=False)
 
-        计算指定维度上所有元素的均值，并降维。
+        返回指定维度上所有元素的均值，并降维。
 
         **参数：**
 
