@@ -694,11 +694,18 @@ static inline void ApplyCacheEvalResult(const PrimitivePtr &prim, const EvalResu
 }
 
 EvalResultPtr StandardPrimEvaluator::EvalPyCheckPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args) {
-  // Try to get infer result from cache.
-  auto eval_result = eval_cache_->Get(prim_, args);
+  // Try to get infer result from evaluator cache.
+  auto eval_result = evaluator_cache_mgr_->GetValue(args);
   if (eval_result != nullptr) {
-    // Use cached infer result if it existed.
+    // Evaluator cache hit.
+    return eval_result;
+  }
+  // Try to get infer result from global primitive evaluate cache.
+  eval_result = eval_cache_->Get(prim_, args);
+  if (eval_result != nullptr) {
+    // Global primitive evaluate cache hit.
     ApplyCacheEvalResult(prim_, eval_result);
+    evaluator_cache_mgr_->SetValue(args, eval_result);
     return eval_result;
   }
   // PrimitivePy is expected for EvalPyCheckPrim.
@@ -721,8 +728,9 @@ EvalResultPtr StandardPrimEvaluator::EvalPyCheckPrim(const AnalysisEnginePtr &en
     // Call 'infer_value()' method if it is exsited, for constant propagation.
     eval_result = RunPyInferValue(engine, eval_result->abstract(), args);
   }
-  // Save infer result to cache.
+  // Save infer result to caches (evaluator cache and global cache).
   eval_cache_->Put(prim_py, std::move(input_attrs), args, eval_result);
+  evaluator_cache_mgr_->SetValue(args, eval_result);
   return eval_result;
 }
 
@@ -768,39 +776,39 @@ EvalResultPtr StandardPrimEvaluator::EvalPrim(const AnalysisEnginePtr &engine, c
 }
 
 EvalResultPtr PythonPrimEvaluator::EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args) {
+  // Ensure input arguments are evaluated.
   auto ret_abstract = AbstractEval(args);
   if (ret_abstract != nullptr) {
     MS_LOG(DEBUG) << "PythonPrimEvaluator eval Undetermined";
     return ret_abstract;
   }
-  // Try to get infer result from cache.
-  auto eval_result = eval_cache_->Get(prim_py_, args);
-  if (eval_result != nullptr) {
-    // To check tuple/list operations with a white list of Python primitive.
-    if (prim_py_->name() == prim::kPrimStack->name()) {
-      // Set all used flags of tuple as true.
-      for (auto &arg : args) {
-        SetSequenceElementsUseFlags(arg, true);
-      }
+  // Try to get infer result from evaluator cache.
+  auto eval_result = evaluator_cache_mgr_->GetValue(args);
+  if (eval_result == nullptr) {
+    // Try to get infer result from global primitive eval cache.
+    eval_result = eval_cache_->Get(prim_py_, args);
+    if (eval_result != nullptr) {
+      // Apply global cache result.
+      ApplyCacheEvalResult(prim_py_, eval_result);
+    } else {
+      // Cache miss, run infer. We should copy attributes before
+      // running infer, since they may be changed during infer.
+      auto input_attrs = prim_py_->attrs();
+      auto py_args = PreparePyInputs(prim_py_, args);
+      prim_py_->BeginRecordAddAttr();
+      py::dict output = prim_py_->RunInfer(py_args);
+      prim_py_->EndRecordAddAttr();
+      const auto &added_attrs = prim_py_->evaluate_added_attrs();
+      MS_LOG(DEBUG) << "Output type is " << (std::string)py::str(output);
+      auto res_spec = PyInferRes2Abstract(prim_py_, output);
+      MS_LOG(DEBUG) << "Python InferTensor result spec: " << res_spec->ToString() << ".";
+      eval_result = std::make_shared<EvalResult>(res_spec, std::make_shared<AttrValueMap>(added_attrs));
+      // Save result to global primitive eval cache.
+      eval_cache_->Put(prim_py_, std::move(input_attrs), args, eval_result);
     }
-    // Apply cache result.
-    ApplyCacheEvalResult(prim_py_, eval_result);
-    return eval_result;
+    // Save result to evaluator cache.
+    evaluator_cache_mgr_->SetValue(args, eval_result);
   }
-  // No cached result, run infer. We should copy attributes before
-  // running infer, since they may be changed during infer.
-  auto input_attrs = prim_py_->attrs();
-  auto py_args = PreparePyInputs(prim_py_, args);
-  prim_py_->BeginRecordAddAttr();
-  py::dict output = prim_py_->RunInfer(py_args);
-  prim_py_->EndRecordAddAttr();
-  const auto &added_attrs = prim_py_->evaluate_added_attrs();
-  MS_LOG(DEBUG) << "Output type is " << (std::string)py::str(output);
-  auto res_spec = PyInferRes2Abstract(prim_py_, output);
-  MS_LOG(DEBUG) << "Python InferTensor result spec: " << res_spec->ToString() << ".";
-  eval_result = std::make_shared<EvalResult>(res_spec, std::make_shared<AttrValueMap>(added_attrs));
-  // Save result to cache.
-  eval_cache_->Put(prim_py_, std::move(input_attrs), args, eval_result);
   // To check tuple/list operations with a white list of Python primitive.
   if (prim_py_->name() == prim::kPrimStack->name()) {
     // Set all used flags of tuple as true.
