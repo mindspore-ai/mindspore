@@ -10,13 +10,27 @@
 
     - **ValueError** - `data_size` 不是正整数。
 
+    **样例：**
+
+    >>> from mindspore import Model, nn
+    >>>
+    >>> net = LeNet5()
+    >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
+    >>> optim = nn.Momentum(net.trainable_params(), 0.01, 0.9)
+    >>> model = Model(net, loss_fn=loss, optimizer=optim)
+    >>> data_path = './MNIST_Data'
+    >>> dataset = create_dataset(data_path)
+    >>> time_monitor = TimeMonitor()
+    >>> model.train(10, dataset, callbacks=time_monitor)
+
+
     .. py:method:: epoch_begin(run_context)
 
         在epoch开始时记录时间。
 
         **参数：**
 
-        - **run_context** (RunContext) - 包含模型的一些基本信息。
+        - **run_context** (RunContext) - 包含模型的相关信息。
 
     .. py:method:: epoch_end(run_context)
 
@@ -24,4 +38,4 @@
 
         **参数：**
 
-        - **run_context** (RunContext) - 包含模型的一些基本信息。
+        - **run_context** (RunContext) - 包含模型的相关信息。

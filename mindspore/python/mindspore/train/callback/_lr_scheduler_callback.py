@@ -62,7 +62,7 @@ class LearningRateScheduler(Callback):
         Change the learning_rate at the end of step.
 
         Args:
-            run_context (RunContext): Context of the train running.
+            run_context (RunContext): Include some information of the model.
         """
         cb_params = run_context.original_args()
         arr_lr = cb_params.optimizer.learning_rate.asnumpy()

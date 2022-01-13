@@ -28,8 +28,8 @@
     >>> from mindspore import Model, nn
     >>> from mindspore.train.callback import ModelCheckpoint, CheckpointConfig
     >>>
-    >>> class LeNet5(nn.Cell)：
-    ...     def __init__(self, num_class=10, num_channel=1)：
+    >>> class LeNet5(nn.Cell):
+    ...     def __init__(self):
     ...         super(LeNet5, self).__init__()
     ...         self.conv1 = nn.Conv2d(num_channel, 6, 5, pad_mode='valid')
     ...         self.conv2 = nn.Conv2d(6, 16, 5, pad_mode='valid')
@@ -40,7 +40,7 @@
     ...         self.max_pool2d = nn.MaxPool2d(kernel_size=2, stride=2)
     ...         self.flatten = nn.Flatten()
     ...
-    ...     def construct(self, x)：
+    ...     def construct(self, x):
     ...         x = self.max_pool2d(self.relu(self.conv1(x)))
     ...         x = self.max_pool2d(self.relu(self.conv2(x)))
     ...         x = self.flatten(x)

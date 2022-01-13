@@ -35,6 +35,18 @@ class LossMonitor(Callback):
 
     Raises:
         ValueError: If per_print_times is not an integer or less than zero.
+
+    Examples:
+        >>> from mindspore import Model, nn
+        >>>
+        >>> net = LeNet5()
+        >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
+        >>> optim = nn.Momentum(net.trainable_params(), 0.01, 0.9)
+        >>> model = Model(net, loss_fn=loss, optimizer=optim)
+        >>> data_path = './MNIST_Data'
+        >>> dataset = create_dataset(data_path)
+        >>> loss_monitor = LossMonitor()
+        >>> model.train(10, dataset, callbacks=loss_monitor)
     """
 
     def __init__(self, per_print_times=1):
@@ -50,7 +62,7 @@ class LossMonitor(Callback):
         Print training loss at the end of step.
 
         Args:
-            run_context (RunContext): Context of the train running.
+            run_context (RunContext): Include some information of the model.
         """
         cb_params = run_context.original_args()
         loss = cb_params.net_outputs
