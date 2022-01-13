@@ -24,7 +24,8 @@ void nnacl_gemm_avx512_2x64_kernel_nhwc_fp32(float *dst, const float *src, const
   size_t dst_stride_t = dst_stride << 2;
   asm volatile(
     // inc in depth
-    "and $0x1, %[inc_flag]\n"
+    "movq %[inc_flag], %%rax\n"
+    "and $0x1, %%rax\n"
     "je 0f\n"
     "vmovups 0(%[dst_0]), %%zmm0\n"
     "vmovups 64(%[dst_0]), %%zmm1\n"
@@ -341,8 +342,7 @@ void nnacl_gemm_avx512_2x64_kernel_nhwc_fp32(float *dst, const float *src, const
     "2:\n"
     "and $0x2, %[inc_flag]\n"
     "je 3f\n"
-    "movq %[act_flag], %%rax\n"
-    "and $0x3, %%eax\n"
+    "and $0x3, %[act_flag]\n"
     "je 3f\n"
     // relu
     "vxorps %%zmm31, %%zmm31, %%zmm31\n"
@@ -354,7 +354,7 @@ void nnacl_gemm_avx512_2x64_kernel_nhwc_fp32(float *dst, const float *src, const
     "vmaxps %%zmm5, %%zmm31, %%zmm5\n"
     "vmaxps %%zmm6, %%zmm31, %%zmm6\n"
     "vmaxps %%zmm7, %%zmm31, %%zmm7\n"
-    "and $0x1, %%eax\n"
+    "and $0x1, %[act_flag]\n"
     "je 3f\n"
     // relu6
     "mov $0x40C00000, %%eax\n"
