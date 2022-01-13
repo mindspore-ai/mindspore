@@ -177,6 +177,8 @@ class NormalCache {
     return nullptr;
   }
 
+  const_iterator find(const KeyType &key) const { return cache_.find(key); }
+
   void set(const KeyType &key, const ValueType &data) { cache_[key] = data; }
 
   void clear() { cache_.clear(); }

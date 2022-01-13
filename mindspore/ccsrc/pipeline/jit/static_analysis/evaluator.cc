@@ -374,10 +374,12 @@ EvalResultPtr Evaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args
   args_spec_list = BroadenUndeterminedArgs(args_spec_list);
 
   MS_LOG(DEBUG) << EvalEntryLogging(shared_from_base<Evaluator>(), args_spec_list, out_conf);
+  EvalResultPtr eval_result = nullptr;
   const std::string &evaluator_name = ToString();
   MS_EXCEPTION_IF_NULL(evaluator_cache_mgr_);
-  auto eval_result = evaluator_cache_mgr_->GetValue(args_spec_list);
-  if (eval_result == nullptr) {
+  auto &cache = evaluator_cache_mgr_->GetCache();
+  auto iter = cache.find(args_spec_list);
+  if (iter == cache.end()) {
     MS_LOG(DEBUG) << "[" << this << "/" << evaluator_name << "] cache miss, call Eval(), args: " << args_spec_list;
     eval_result = Eval(engine, args_spec_list, out_conf);
     MS_EXCEPTION_IF_NULL(eval_result);
@@ -389,9 +391,26 @@ EvalResultPtr Evaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args
                   << "] set cache. result: " << eval_result->abstract()->ToString();
     evaluator_cache_mgr_->SetValue(args_spec_list, eval_result);
   } else {
+    eval_result = iter->second;
     MS_EXCEPTION_IF_NULL(eval_result->abstract());
     MS_LOG(DEBUG) << "[" << this << "/" << evaluator_name
                   << "] cache hit. result: " << eval_result->abstract()->ToString() << ", args: " << args_spec_list;
+    // Update inputs sequence nodes info, if matched in cache.
+    static const auto eliminate_unused_element = common::GetEnv("MS_DEV_ELIMINATE_SEQUENCE_UNUSED_ELEMENT");
+    static const auto enable_eliminate_unused_element = (eliminate_unused_element == "1");
+    if (enable_eliminate_unused_element) {
+      for (size_t i = 0; i < args_spec_list.size(); ++i) {
+        auto new_sequence = dyn_cast<AbstractTuple>(args_spec_list[i]);
+        auto old_sequence = dyn_cast<AbstractTuple>(iter->first[i]);
+        if (old_sequence != nullptr && new_sequence != nullptr) {
+          MS_LOG(DEBUG) << "Before synchronize sequence nodes use flags, old_sequence: " << old_sequence->ToString()
+                        << ", new_sequence: " << new_sequence->ToString();
+          SynchronizeSequenceNodesElementsUseFlags(old_sequence->sequence_nodes(), new_sequence->sequence_nodes());
+          MS_LOG(DEBUG) << "After synchronize sequence nodes use flags, old_sequence: " << old_sequence->ToString()
+                        << ", new_sequence: " << new_sequence->ToString();
+        }
+      }
+    }
   }
   return eval_result;
 }

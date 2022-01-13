@@ -60,59 +60,57 @@ EvalResultPtr DoSignatureEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
   MS_EXCEPTION_IF_NULL(out_conf);
   AbstractBasePtrList args_spec_list;
   (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_spec_list),
-                       [](const ConfigPtr &ref) -> AbstractBasePtr {
-                         MS_EXCEPTION_IF_NULL(ref);
-                         MS_EXCEPTION_IF_NULL(ref->ObtainEvalResult());
-                         return ref->ObtainEvalResult()->abstract();
+                       [](const ConfigPtr &config) -> AbstractBasePtr {
+                         MS_EXCEPTION_IF_NULL(config);
+                         MS_EXCEPTION_IF_NULL(config->ObtainEvalResult());
+                         return config->ObtainEvalResult()->abstract();
                        });
+
+  // Do undetermined infer firstly.
   auto do_signature = prim_->cast<prim::DoSignaturePrimitivePtr>();
   MS_EXCEPTION_IF_NULL(do_signature);
   auto &func = do_signature->function();
-  if (func->isa<Primitive>()) {
-    auto sig_prim = func->cast<PrimitivePtr>();
-    if (prims_to_skip_undetermined_infer.find(sig_prim->name()) == prims_to_skip_undetermined_infer.end()) {
+  auto do_signature_func = dyn_cast<Primitive>(func);
+  if (do_signature_func != nullptr) {
+    if (prims_to_skip_undetermined_infer.find(do_signature_func->name()) == prims_to_skip_undetermined_infer.end()) {
       auto ret_abstract = AbstractEval(args_spec_list);
       if (ret_abstract != nullptr) {
-        MS_LOG(DEBUG) << "DoSignatureEvaluator eval Undetermined";
+        MS_LOG(DEBUG) << "DoSignatureEvaluator eval Undetermined for " << do_signature_func->name()
+                      << ", ret_abstract: " << ret_abstract->ToString();
         return ret_abstract;
       }
     }
   }
+
+  // Create new CNode with old CNode.
   if (out_conf->node() == nullptr || !out_conf->node()->isa<CNode>()) {
     MS_LOG(EXCEPTION) << "Node of out_conf should be CNode";
   }
-
-  auto out_node = dyn_cast<CNode>(out_conf->node());
-  MS_EXCEPTION_IF_NULL(out_node);
-  const auto &out_node_inputs = out_node->inputs();
-  if (out_node->inputs().size() == 0 || (out_node_inputs.size() - 1) != args_conf_list.size()) {
+  auto out_cnode = dyn_cast<CNode>(out_conf->node());
+  MS_EXCEPTION_IF_NULL(out_cnode);
+  const auto &out_node_inputs = out_cnode->inputs();
+  if (out_cnode->inputs().size() == 0 || (out_node_inputs.size() - 1) != args_conf_list.size()) {
     MS_LOG(EXCEPTION) << "Op: " << func->ToString() << " args size should equal to inputs size minus 1, but args size "
                       << args_conf_list.size() << ", inputs size " << out_node_inputs.size();
   }
   AnfNodePtrList args_inputs{out_node_inputs.begin() + 1, out_node_inputs.end()};
-
-  ScopePtr scope = kDefaultScope;
-  if (out_conf != nullptr) {
-    scope = out_conf->node()->scope();
-  }
-  ScopeGuard scope_guard(scope);
-
   AnfNodePtr new_node = nullptr;
+  ScopePtr scope = out_conf->node()->scope();
+  ScopeGuard scope_guard(scope);
   if (bound_node() != nullptr) {
     TraceGuard trace_guard(std::make_shared<TraceDoSignature>(bound_node()->debug_info()));
-    new_node = prim::GenerateCNode(out_node->func_graph(), prim_->ToString(), func, args_spec_list, args_inputs);
+    new_node = prim::GenerateCNode(out_cnode->func_graph(), prim_->ToString(), func, args_spec_list, args_inputs);
   } else {
-    new_node = prim::GenerateCNode(out_node->func_graph(), prim_->ToString(), func, args_spec_list, args_inputs);
+    new_node = prim::GenerateCNode(out_cnode->func_graph(), prim_->ToString(), func, args_spec_list, args_inputs);
   }
-  AnfNodeConfigPtr fn_conf = engine->MakeConfig(new_node, out_conf->context(), out_conf->func_graph());
+  // Update new CNode info.
+  auto new_cnode = dyn_cast<CNode>(new_node);
+  MS_EXCEPTION_IF_NULL(new_cnode);
+  new_cnode->CloneCNodeInfo(out_cnode);
 
-  if (out_node->isa<CNode>()) {
-    auto out_cnode = out_node->cast<CNodePtr>();
-    auto new_cnode = new_node->cast<CNodePtr>();
-    new_cnode->CloneCNodeInfo(out_cnode);
-  }
-
-  return engine->ForwardConfig(out_conf, fn_conf);
+  // Do forward with old config and new config.
+  AnfNodeConfigPtr new_conf = engine->MakeConfig(new_node, out_conf->context(), out_conf->func_graph());
+  return engine->ForwardConfig(out_conf, new_conf);
 }
 
 static AbstractBasePtrList GetUnpackGraphSpecArgsList(AbstractBasePtrList args_spec_list, bool need_unpack) {
@@ -1506,11 +1504,18 @@ class MakeTupleEvaluator : public TransitionPrimEvaluator {
   MS_DECLARE_PARENT(MakeTupleEvaluator, TransitionPrimEvaluator);
   EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list, const ConfigPtr &,
                          const AnfNodeConfigPtr &out_conf) override {
-    if (args_spec_list.empty()) {
-      MS_LOG(WARNING) << "For MakeTuple, the inputs should not be empty.";
-    }
     static const auto eliminate_unused_element = common::GetEnv("MS_DEV_ELIMINATE_SEQUENCE_UNUSED_ELEMENT");
     static const auto enable_eliminate_unused_element = (eliminate_unused_element == "1");
+    if (!args_spec_list.empty()) {
+      if (enable_eliminate_unused_element) {
+        for (auto &arg : args_spec_list) {
+          SetSequenceElementsUseFlags(arg, true);
+        }
+      }
+    } else {
+      MS_LOG(WARNING) << "For MakeTuple, the inputs should not be empty.";
+    }
+
     if (enable_eliminate_unused_element) {
       SetSequenceNodeElementsUseFlags(out_conf->node(), std::make_shared<std::vector<bool>>(args_spec_list.size()));
     }
@@ -1530,11 +1535,18 @@ class MakeListEvaluator : public TransitionPrimEvaluator {
   MS_DECLARE_PARENT(MakeListEvaluator, TransitionPrimEvaluator);
   EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list, const ConfigPtr &,
                          const AnfNodeConfigPtr &out_conf) override {
-    if (args_spec_list.empty()) {
-      MS_LOG(WARNING) << "For MakeList, the inputs should not be empty.";
-    }
     static const auto eliminate_unused_element = common::GetEnv("MS_DEV_ELIMINATE_SEQUENCE_UNUSED_ELEMENT");
     static const auto enable_eliminate_unused_element = (eliminate_unused_element == "1");
+    if (!args_spec_list.empty()) {
+      if (enable_eliminate_unused_element) {
+        for (auto &arg : args_spec_list) {
+          SetSequenceElementsUseFlags(arg, true);
+        }
+      }
+    } else {
+      MS_LOG(WARNING) << "For MakeList, the inputs should not be empty.";
+    }
+
     if (enable_eliminate_unused_element) {
       SetSequenceNodeElementsUseFlags(out_conf->node(), std::make_shared<std::vector<bool>>(args_spec_list.size()));
     }

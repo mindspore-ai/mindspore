@@ -79,8 +79,12 @@ FuncGraphPtr ProgramSpecializer::Run(const FuncGraphPtr &fg, const AnalysisConte
   }
   auto res = SpecializeFuncGraph(fg, context);
   // Call PurifyElements() to purify tuple/list elements.
-  for (auto &sequence_abs : sequence_abstract_list_) {
-    sequence_abs->PurifyElements();
+  static const auto only_mark_unused_element = common::GetEnv("MS_DEV_ONLY_MARK_SEQUENCE_UNUSED_ELEMENT");
+  static const auto enable_only_mark_unused_element = (only_mark_unused_element == "1");
+  if (!enable_only_mark_unused_element) {
+    for (auto &sequence_abs : sequence_abstract_list_) {
+      sequence_abs->PurifyElements();
+    }
   }
   return res;
 }
@@ -492,8 +496,8 @@ void PurifySequenceValueNode(const CNodePtr &cnode, size_t index) {
     if (!(*flags)[i]) {
       auto zero = MakeValue(0);
       elements.emplace_back(zero);
-      MS_LOG(INFO) << "Erase elements[" << i << "] as zero for " << old_input->DebugString() << ", which is inputs["
-                   << index << "] of " << cnode->DebugString();
+      MS_LOG(DEBUG) << "Erase elements[" << i << "] as zero for " << old_input->DebugString() << ", which is inputs["
+                    << index << "] of " << cnode->DebugString();
     } else {
       elements.emplace_back(sequence_value->value()[i]);
     }
@@ -536,7 +540,8 @@ void FuncGraphSpecializer::EliminateUnusedSequenceItem(const CNodePtr &cnode) {
           auto zero_value = NewValueNode(MakeValue(0));
           zero_value->set_abstract(std::make_shared<abstract::AbstractScalar>(std::make_shared<Int32Imm>(0)));
           inputs.emplace_back(zero_value);
-          MS_LOG(INFO) << "Erase inputs[" << i << "] as zero for " << cnode->DebugString();
+          constexpr int recursive_level = 2;
+          MS_LOG(DEBUG) << "Erase elements[" << i << "] as zero for " << cnode->DebugString(recursive_level);
         } else {
           inputs.emplace_back(cnode->input(i + 1));
         }
@@ -611,10 +616,10 @@ void FuncGraphSpecializer::ProcessNode(const AnfNodePtr &node) {
     if (replace_node == nullptr) {
       replace_node = BuildReplacedNode(input_conf);
       replace_node->set_abstract(abs);
-      MS_LOG(DEBUG) << "Set replaced: " << replace_node->ToString() << ", to abstract: " << abs->ToString();
+      MS_LOG(DEBUG) << "Set replaced: " << replace_node->DebugString() << ", to abstract: " << abs->ToString();
     } else {
       MS_LOG(DEBUG) << "Build possible value node for node: " << node_input->DebugString()
-                    << ", abs: " << abs->ToString() << ", replace_node: " << replace_node->ToString();
+                    << ", abs: " << abs->ToString() << ", replace_node: " << replace_node->DebugString();
     }
     if (enable_eliminate_unused_element) {
       UpdateSequenceNode(replace_node, node_input, abs);
@@ -1005,7 +1010,9 @@ void FuncGraphSpecializer::ProcessCNode(const CNodePtr &cnode) {
 
   static const auto eliminate_unused_element = common::GetEnv("MS_DEV_ELIMINATE_SEQUENCE_UNUSED_ELEMENT");
   static const auto enable_eliminate_unused_element = (eliminate_unused_element == "1");
-  if (enable_eliminate_unused_element) {
+  static const auto only_mark_unused_element = common::GetEnv("MS_DEV_ONLY_MARK_SEQUENCE_UNUSED_ELEMENT");
+  static const auto enable_only_mark_unused_element = (only_mark_unused_element == "1");
+  if (enable_eliminate_unused_element && !enable_only_mark_unused_element) {
     EliminateUnusedSequenceItem(cnode);
   }
 }
@@ -1178,7 +1185,7 @@ AnfNodePtr FuncGraphSpecializer::BuildPossibleValueNode(const AnfNodePtr &origin
 }
 
 AnfNodeConfigPtr FuncGraphSpecializer::MakeConfig(const AnfNodePtr &node) {
-  return engine_->MakeConfig(node, context_, func_graph_);  // `func_graph_` is dummy here.
+  return engine_->MakeConfig(node, context_, func_graph_);  // 'func_graph_' is dummy here.
 }
 }  // namespace abstract
 }  // namespace mindspore
