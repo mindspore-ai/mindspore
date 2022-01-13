@@ -47,11 +47,11 @@ class AGNewsDataset(SourceDataset, TextBaseDataset):
             (default=None, number set in the config).
         shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
             (default=Shuffle.GLOBAL).
-            If shuffle is False, no shuffling will be performed;
-            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
-            Otherwise, there are two levels of shuffling:
+            If shuffle is False, no shuffling will be performed.
+            If shuffle is True, performs global shuffle.
+            There are three levels of shuffling, desired shuffle enum defined by mindspore.dataset.Shuffle.
 
-            - Shuffle.GLOBAL: Shuffle both the files and samples.
+            - Shuffle.GLOBAL: Shuffle both the files and samples, same as setting shuffle to True.
 
             - Shuffle.FILES: Shuffle files only.
 
@@ -139,11 +139,11 @@ class AmazonReviewDataset(SourceDataset):
         num_samples (int, optional): Number of samples (rows) to be read (default=None, reads the full dataset).
         shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
             (default=Shuffle.GLOBAL).
-            If shuffle is False, no shuffling will be performed;
-            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
-            Otherwise, there are two levels of shuffling:
+            If shuffle is False, no shuffling will be performed.
+            If shuffle is True, performs global shuffle.
+            There are three levels of shuffling, desired shuffle enum defined by mindspore.dataset.Shuffle.
 
-            - Shuffle.GLOBAL: Shuffle both the files and samples.
+            - Shuffle.GLOBAL: Shuffle both the files and samples, same as setting shuffle to True.
 
             - Shuffle.FILES: Shuffle files only.
         num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
@@ -217,61 +217,6 @@ class CLUEDataset(SourceDataset, TextBaseDataset):
     A source dataset that reads and parses CLUE datasets.
     Supported CLUE classification tasks: `AFQMC`, `TNEWS`, `IFLYTEK`, `CMNLI`, `WSC` and `CSL`.
 
-    The generated dataset with different task setting has different output columns:
-
-    - task = :py:obj:`AFQMC`
-        - usage = :py:obj:`train`, output columns: :py:obj:`[sentence1, dtype=string]`, \
-            :py:obj:`[sentence2, dtype=string]`, :py:obj:`[label, dtype=string]`.
-        - usage = :py:obj:`test`, output columns: :py:obj:`[id, dtype=uint8]`, \
-            :py:obj:`[sentence1, dtype=string]`, :py:obj:`[sentence2, dtype=string]`.
-        - usage = :py:obj:`eval`, output columns: :py:obj:`[sentence1, dtype=string]`, \
-            :py:obj:`[sentence2, dtype=string]`, :py:obj:`[label, dtype=string]`.
-
-    - task = :py:obj:`TNEWS`
-        - usage = :py:obj:`train`, output columns: :py:obj:`[label, dtype=string]`, \
-            :py:obj:`[label_des, dtype=string]`, :py:obj:`[sentence, dtype=string]`, :py:obj:`[keywords, dtype=string]`.
-        - usage = :py:obj:`test`, output columns: :py:obj:`[label, dtype=string]`, \
-            :py:obj:`[label_des, dtype=string]`, :py:obj:`[sentence, dtype=string]`, :py:obj:`[keywords, dtype=string]`.
-        - usage = :py:obj:`eval`, output columns: :py:obj:`[label, dtype=string]`, \
-            :py:obj:`[label_des, dtype=string]`, :py:obj:`[sentence, dtype=string]`, :py:obj:`[keywords, dtype=string]`.
-
-    - task = :py:obj:`IFLYTEK`
-        - usage = :py:obj:`train`, output columns: :py:obj:`[label, dtype=string]`, \
-            :py:obj:`[label_des, dtype=string]`, :py:obj:`[sentence, dtype=string]`.
-        - usage = :py:obj:`test`, output columns: :py:obj:`[id, dtype=string]`, \
-            :py:obj:`[sentence, dtype=string]`.
-        - usage = :py:obj:`eval`, output columns: :py:obj:`[label, dtype=string]`, \
-            :py:obj:`[label_des, dtype=string]`, :py:obj:`[sentence, dtype=string]`.
-
-    - task = :py:obj:`CMNLI`
-        - usage = :py:obj:`train`, output columns: :py:obj:`[sentence1, dtype=string]`, \
-            :py:obj:`[sentence2, dtype=string]`, :py:obj:`[label, dtype=string]`.
-        - usage = :py:obj:`test`, output columns: :py:obj:`[id, dtype=uint8]`, \
-            :py:obj:`[sentence1, dtype=string]`, :py:obj:`[sentence2, dtype=string]`.
-        - usage = :py:obj:`eval`, output columns: :py:obj:`[sentence1, dtype=string]`, \
-            :py:obj:`[sentence2, dtype=string]`, :py:obj:`[label, dtype=string]`.
-
-    - task = :py:obj:`WSC`
-        - usage = :py:obj:`train`, output columns: :py:obj:`[span1_index, dtype=uint8]`, \
-            :py:obj:`[span2_index, dtype=uint8]`, :py:obj:`[span1_text, dtype=string]`, \
-            :py:obj:`[span2_text, dtype=string]`, :py:obj:`[idx, dtype=uint8]`, \
-            :py:obj:`[text, dtype=string]`, :py:obj:`[label, dtype=string]`.
-        - usage = :py:obj:`test`, output columns: :py:obj:`[span1_index, dtype=uint8]`, \
-            :py:obj:`[span2_index, dtype=uint8]`, :py:obj:`[span1_text, dtype=string]`, \
-            :py:obj:`[span2_text, dtype=string]`, :py:obj:`[idx, dtype=uint8]`, :py:obj:`[text, dtype=string]`.
-        - usage = :py:obj:`eval`, output columns: :py:obj:`[span1_index, dtype=uint8]`, \
-            :py:obj:`[span2_index, dtype=uint8]`, :py:obj:`[span1_text, dtype=string]`, \
-            :py:obj:`[span2_text, dtype=string]`, :py:obj:`[idx, dtype=uint8]`, \
-            :py:obj:`[text, dtype=string]`, :py:obj:`[label, dtype=string]`.
-
-    - task = :py:obj:`CSL`
-        - usage = :py:obj:`train`, output columns: :py:obj:`[id, dtype=uint8]`, \
-            :py:obj:`[abst, dtype=string]`, :py:obj:`[keyword, dtype=string]`, :py:obj:`[label, dtype=string]`.
-        - usage = :py:obj:`test`, output columns: :py:obj:`[id, dtype=uint8]`, \
-            :py:obj:`[abst, dtype=string]`, :py:obj:`[keyword, dtype=string]`.
-        - usage = :py:obj:`eval`, output columns: :py:obj:`[id, dtype=uint8]`, \
-            :py:obj:`[abst, dtype=string]`, :py:obj:`[keyword, dtype=string]`, :py:obj:`[label, dtype=string]`.
-
     Args:
         dataset_files (Union[str, list[str]]): String or list of files to be read or glob strings to search for
             a pattern of files. The list will be sorted in a lexicographical order.
@@ -284,11 +229,11 @@ class CLUEDataset(SourceDataset, TextBaseDataset):
             (default=None, number set in the config).
         shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
             (default=Shuffle.GLOBAL).
-            If shuffle is False, no shuffling will be performed;
-            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
-            Otherwise, there are two levels of shuffling:
+            If shuffle is False, no shuffling will be performed.
+            If shuffle is True, performs global shuffle.
+            There are three levels of shuffling, desired shuffle enum defined by mindspore.dataset.Shuffle.
 
-            - Shuffle.GLOBAL: Shuffle both the files and samples.
+            - Shuffle.GLOBAL: Shuffle both the files and samples, same as setting shuffle to True.
 
             - Shuffle.FILES: Shuffle files only.
 
@@ -299,11 +244,72 @@ class CLUEDataset(SourceDataset, TextBaseDataset):
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
             (default=None, which means no cache is used).
 
+    Note:
+        The generated dataset with different task setting has different output columns:
+
+        - task = :py:obj:`AFQMC`
+            - usage = :py:obj:`train`, output columns: :py:obj:`[sentence1, dtype=string]`, \
+                :py:obj:`[sentence2, dtype=string]`, :py:obj:`[label, dtype=string]`.
+            - usage = :py:obj:`test`, output columns: :py:obj:`[id, dtype=uint32]`, \
+                :py:obj:`[sentence1, dtype=string]`, :py:obj:`[sentence2, dtype=string]`.
+            - usage = :py:obj:`eval`, output columns: :py:obj:`[sentence1, dtype=string]`, \
+                :py:obj:`[sentence2, dtype=string]`, :py:obj:`[label, dtype=string]`.
+
+        - task = :py:obj:`TNEWS`
+            - usage = :py:obj:`train`, output columns: :py:obj:`[label, dtype=string]`, \
+                :py:obj:`[label_des, dtype=string]`, :py:obj:`[sentence, dtype=string]`, \
+                :py:obj:`[keywords, dtype=string]`.
+            - usage = :py:obj:`test`, output columns: :py:obj:`[id, dtype=uint32]`, \
+                :py:obj:`[keywords, dtype=string]`, :py:obj:`[sentence, dtype=string]`.
+            - usage = :py:obj:`eval`, output columns: :py:obj:`[label, dtype=string]`, \
+                :py:obj:`[label_desc, dtype=string]`, :py:obj:`[sentence, dtype=string]`,\
+                :py:obj:`[keywords, dtype=string]`.
+
+        - task = :py:obj:`IFLYTEK`
+            - usage = :py:obj:`train`, output columns: :py:obj:`[label, dtype=string]`, \
+                :py:obj:`[label_des, dtype=string]`, :py:obj:`[sentence, dtype=string]`.
+            - usage = :py:obj:`test`, output columns: :py:obj:`[id, dtype=uint32]`, \
+                :py:obj:`[sentence, dtype=string]`.
+            - usage = :py:obj:`eval`, output columns: :py:obj:`[label, dtype=string]`, \
+                :py:obj:`[label_des, dtype=string]`, :py:obj:`[sentence, dtype=string]`.
+
+        - task = :py:obj:`CMNLI`
+            - usage = :py:obj:`train`, output columns: :py:obj:`[sentence1, dtype=string]`, \
+                :py:obj:`[sentence2, dtype=string]`, :py:obj:`[label, dtype=string]`.
+            - usage = :py:obj:`test`, output columns: :py:obj:`[id, dtype=uint32]`, \
+                :py:obj:`[sentence1, dtype=string]`, :py:obj:`[sentence2, dtype=string]`.
+            - usage = :py:obj:`eval`, output columns: :py:obj:`[sentence1, dtype=string]`, \
+                :py:obj:`[sentence2, dtype=string]`, :py:obj:`[label, dtype=string]`.
+
+        - task = :py:obj:`WSC`
+            - usage = :py:obj:`train`, output columns: :py:obj:`[span1_index, dtype=uint32]`, \
+                :py:obj:`[span2_index, dtype=uint32]`, :py:obj:`[span1_text, dtype=string]`, \
+                :py:obj:`[span2_text, dtype=string]`, :py:obj:`[idx, dtype=uint32]`, \
+                :py:obj:`[text, dtype=string]`, :py:obj:`[label, dtype=string]`.
+            - usage = :py:obj:`test`, output columns: :py:obj:`[span1_index, dtype=uint32]`, \
+                :py:obj:`[span2_index, dtype=uint32]`, :py:obj:`[span1_text, dtype=string]`, \
+                :py:obj:`[span2_text, dtype=string]`, :py:obj:`[idx, dtype=uint32]`, :py:obj:`[text, dtype=string]`.
+            - usage = :py:obj:`eval`, output columns: :py:obj:`[span1_index, dtype=uint32]`, \
+                :py:obj:`[span2_index, dtype=uint32]`, :py:obj:`[span1_text, dtype=string]`, \
+                :py:obj:`[span2_text, dtype=string]`, :py:obj:`[idx, dtype=uint32]`, \
+                :py:obj:`[text, dtype=string]`, :py:obj:`[label, dtype=string]`.
+
+        - task = :py:obj:`CSL`
+            - usage = :py:obj:`train`, output columns: :py:obj:`[id, dtype=uint32]`, \
+                :py:obj:`[abst, dtype=string]`, :py:obj:`[keyword, dtype=string]`, :py:obj:`[label, dtype=string]`.
+            - usage = :py:obj:`test`, output columns: :py:obj:`[id, dtype=uint32]`, \
+                :py:obj:`[abst, dtype=string]`, :py:obj:`[keyword, dtype=string]`.
+            - usage = :py:obj:`eval`, output columns: :py:obj:`[id, dtype=uint32]`, \
+                :py:obj:`[abst, dtype=string]`, :py:obj:`[keyword, dtype=string]`, :py:obj:`[label, dtype=string]`.
+
     Raises:
-        RuntimeError: If dataset_files are not valid or do not exist.
-        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        ValueError: If dataset_files are not valid or do not exist.
+        ValueError: task is not in 'AFQMC', 'TNEWS', 'IFLYTEK', 'CMNLI', 'WSC' or 'CSL'.
+        ValueError: usage is not in 'train', 'test' or 'eval'.
+        ValueError: If num_parallel_workers exceeds the max thread numbers.
         RuntimeError: If num_shards is specified but shard_id is None.
         RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
 
     Examples:
         >>> clue_dataset_dir = ["/path/to/clue_dataset_file"] # contains 1 or multiple clue files
@@ -373,11 +379,11 @@ class CoNLL2000Dataset(SourceDataset):
         num_samples (int, optional): Number of samples (rows) to read (default=None, reads the full dataset).
         shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
             (default=Shuffle.GLOBAL).
-            If shuffle is False, no shuffling will be performed;
-            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
-            Otherwise, there are two levels of shuffling:
+            If shuffle is False, no shuffling will be performed.
+            If shuffle is True, performs global shuffle.
+            There are three levels of shuffling, desired shuffle enum defined by mindspore.dataset.Shuffle.
 
-            - Shuffle.GLOBAL: Shuffle both the files and samples.
+            - Shuffle.GLOBAL: Shuffle both the files and samples, same as setting shuffle to True.
 
             - Shuffle.FILES: Shuffle files only.
 
@@ -416,7 +422,8 @@ class CoNLL2000Dataset(SourceDataset):
 
 class CSVDataset(SourceDataset, TextBaseDataset):
     """
-    A source dataset that reads and parses comma-separated values (CSV) datasets.
+    A source dataset that reads and parses comma-separated values
+    `(CSV) <http://en.volupedia.org/wiki/Comma-separated_values>`_ files as dataset.
     The columns of generated dataset depend on the source CSV files.
 
     Args:
@@ -434,11 +441,11 @@ class CSVDataset(SourceDataset, TextBaseDataset):
             (default=None, number set in the config).
         shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
             (default=Shuffle.GLOBAL).
-            If shuffle is False, no shuffling will be performed;
-            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
-            Otherwise, there are two levels of shuffling:
+            If shuffle is False, no shuffling will be performed.
+            If shuffle is True, performs global shuffle.
+            There are three levels of shuffling, desired shuffle enum defined by mindspore.dataset.Shuffle.
 
-            - Shuffle.GLOBAL: Shuffle both the files and samples.
+            - Shuffle.GLOBAL: Shuffle both the files and samples, same as setting shuffle to True.
 
             - Shuffle.FILES: Shuffle files only.
 
@@ -451,9 +458,11 @@ class CSVDataset(SourceDataset, TextBaseDataset):
 
     Raises:
         RuntimeError: If dataset_files are not valid or do not exist.
-        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        ValueError: If field_delim is invalid.
+        ValueError: If num_parallel_workers exceeds the max thread numbers.
         RuntimeError: If num_shards is specified but shard_id is None.
         RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
 
     Examples:
         >>> csv_dataset_dir = ["/path/to/csv_dataset_file"] # contains 1 or multiple csv files
@@ -497,11 +506,11 @@ class DBpediaDataset(SourceDataset, TextBaseDataset):
             (default=None, number set in the config).
         shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
             (default=Shuffle.GLOBAL).
-            If shuffle is False, no shuffling will be performed;
-            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL;
-            Otherwise, there are two levels of shuffling:
+            If shuffle is False, no shuffling will be performed.
+            If shuffle is True, performs global shuffle.
+            There are three levels of shuffling, desired shuffle enum defined by mindspore.dataset.Shuffle.
 
-            - Shuffle.GLOBAL: Shuffle both the files and samples.
+            - Shuffle.GLOBAL: Shuffle both the files and samples, same as setting shuffle to True.
 
             - Shuffle.FILES: Shuffle files only.
 
@@ -586,11 +595,11 @@ class EnWik9Dataset(SourceDataset):
             (default=None, number set in the config).
         shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
             (default=True).
-            If shuffle is False, no shuffling will be performed;
-            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
-            Otherwise, there are two levels of shuffling:
+            If shuffle is False, no shuffling will be performed.
+            If shuffle is True, performs global shuffle.
+            There are three levels of shuffling, desired shuffle enum defined by mindspore.dataset.Shuffle.
 
-            - Shuffle.GLOBAL: Shuffle both the files and samples.
+            - Shuffle.GLOBAL: Shuffle both the files and samples, same as setting shuffle to True.
 
             - Shuffle.FILES: Shuffle files only.
 
@@ -812,11 +821,11 @@ class IWSLT2016Dataset(SourceDataset, TextBaseDataset):
         num_samples (int, optional): Number of samples (rows) to read (default=None, reads the full dataset).
         shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
             (default=Shuffle.GLOBAL).
-            If shuffle is False, no shuffling will be performed;
-            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
-            Otherwise, there are two levels of shuffling:
+            If shuffle is False, no shuffling will be performed.
+            If shuffle is True, performs global shuffle.
+            There are three levels of shuffling, desired shuffle enum defined by mindspore.dataset.Shuffle.
 
-            - Shuffle.GLOBAL: Shuffle both the files and samples.
+            - Shuffle.GLOBAL: Shuffle both the files and samples, same as setting shuffle to True.
 
             - Shuffle.FILES: Shuffle files only.
         num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
@@ -933,11 +942,11 @@ class IWSLT2017Dataset(SourceDataset, TextBaseDataset):
         num_samples (int, optional): Number of samples (rows) to read (default=None, reads the full dataset).
         shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
             (default=Shuffle.GLOBAL).
-            If shuffle is False, no shuffling will be performed;
-            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
-            Otherwise, there are two levels of shuffling:
+            If shuffle is False, no shuffling will be performed.
+            If shuffle is True, performs global shuffle.
+            There are three levels of shuffling, desired shuffle enum defined by mindspore.dataset.Shuffle.
 
-            - Shuffle.GLOBAL: Shuffle both the files and samples.
+            - Shuffle.GLOBAL: Shuffle both the files and samples, same as setting shuffle to True.
 
             - Shuffle.FILES: Shuffle files only.
         num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
@@ -1030,11 +1039,11 @@ class PennTreebankDataset(SourceDataset, TextBaseDataset):
             (default=None, number set in the config).
         shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
             (default=Shuffle.GLOBAL).
-            If shuffle is False, no shuffling will be performed;
-            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
-            Otherwise, there are two levels of shuffling:
+            If shuffle is False, no shuffling will be performed.
+            If shuffle is True, performs global shuffle.
+            There are three levels of shuffling, desired shuffle enum defined by mindspore.dataset.Shuffle.
 
-            - Shuffle.GLOBAL: Shuffle both the files and samples.
+            - Shuffle.GLOBAL: Shuffle both the files and samples, same as setting shuffle to True.
 
             - Shuffle.FILES: Shuffle files only.
 
@@ -1117,11 +1126,11 @@ class SogouNewsDataset(SourceDataset):
         num_samples (int, optional): Number of samples (rows) to read (default=None, read all samples).
         shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
             (default=Shuffle.GLOBAL).
-            If shuffle is False, no shuffling will be performed;
-            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
-            Otherwise, there are two levels of shuffling:
+            If shuffle is False, no shuffling will be performed.
+            If shuffle is True, performs global shuffle.
+            There are three levels of shuffling, desired shuffle enum defined by mindspore.dataset.Shuffle.
 
-            - Shuffle.GLOBAL: Shuffle both the files and samples.
+            - Shuffle.GLOBAL: Shuffle both the files and samples, same as setting shuffle to True.
 
             - Shuffle.FILES: Shuffle files only.
         num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
@@ -1201,11 +1210,11 @@ class TextFileDataset(SourceDataset, TextBaseDataset):
             (default=None, number set in the config).
         shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
             (default=Shuffle.GLOBAL).
-            If shuffle is False, no shuffling will be performed;
-            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
-            Otherwise, there are two levels of shuffling:
+            If shuffle is False, no shuffling will be performed.
+            If shuffle is True, performs global shuffle.
+            There are three levels of shuffling, desired shuffle enum defined by mindspore.dataset.Shuffle.
 
-            - Shuffle.GLOBAL: Shuffle both the files and samples.
+            - Shuffle.GLOBAL: Shuffle both the files and samples, same as setting shuffle to True.
 
             - Shuffle.FILES: Shuffle files only.
 
@@ -1217,10 +1226,11 @@ class TextFileDataset(SourceDataset, TextBaseDataset):
             (default=None, which means no cache is used).
 
     Raises:
-        RuntimeError: If dataset_files are not valid or do not exist.
-        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        ValueError: If dataset_files are not valid or do not exist.
+        ValueError: If num_parallel_workers exceeds the max thread numbers.
         RuntimeError: If num_shards is specified but shard_id is None.
         RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
 
     Examples:
         >>> text_file_dataset_dir = ["/path/to/text_file_dataset_file"] # contains 1 or multiple text files

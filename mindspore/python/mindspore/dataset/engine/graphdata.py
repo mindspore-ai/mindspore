@@ -72,6 +72,10 @@ DE_C_INTER_OUTPUT_FORMAT = {
 class GraphData:
     """
     Reads the graph dataset used for GNN training from the shared file and database.
+    Support reading graph datasets like Cora, Citeseer and PubMed.
+
+    About how to load raw graph dataset into MindSpore please
+    refer to `Loading Graph Dataset <https://mindspore.cn/docs/programming_guide/zh-CN/master/load_dataset_gnn.html>`_.
 
     Args:
         dataset_file (str): One of file names in the dataset.
@@ -97,6 +101,17 @@ class GraphData:
         auto_shutdown (bool, optional): Valid when working_mode is set to 'server',
             when the number of connected clients reaches num_client and no client is being connected,
             the server automatically exits (default=True).
+
+    Raises:
+        ValueError: If `dataset_file` does not exist or permission denied.
+        TypeError: If `num_parallel_workers` exceeds the max thread numbers.
+        ValueError: If `working_mode` is not 'local', 'client' or 'server'.
+        TypeError: If `hostname` is illegal.
+        ValueError: If `port` is not in range [1024, 65535].
+        ValueError: If `num_client` is not in range [1, 255].
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> graph_dataset_dir = "/path/to/graph_dataset_file"
