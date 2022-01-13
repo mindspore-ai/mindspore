@@ -2049,6 +2049,7 @@ class Flowers102Dataset(GeneratorDataset):
     You can unzip the dataset files into this directory structure and read by MindSpore's API.
 
     .. code-block::
+
         .
         └── flowes102_dataset_dir
              ├── imagelabels.mat
@@ -2636,7 +2637,7 @@ class PhotoTourDataset(MappableDataset):
         usage (str, optional): Usage of the dataset, can be `train` or `test` (Default=None, will be set to 'train').
             When usage is `train`, number of samples for each `name` is
             {'notredame': 468159, 'yosemite': 633587, 'liberty': 450092, 'liberty_harris': 379587,
-             'yosemite_harris': 450912, 'notredame_harris': 325295}.
+            'yosemite_harris': 450912, 'notredame_harris': 325295}.
             When usage is `test`, will read 100,000 samples for testing.
         num_samples (int, optional): The number of images to be included in the dataset
             (default=None, will read all images).
@@ -2721,6 +2722,7 @@ class PhotoTourDataset(MappableDataset):
     You can unzip the original PhotoTour dataset files into this directory structure and read by MindSpore's API.
 
     .. code-block::
+
         .
         └── photo_tour_dataset_directory
             ├── liberty/
@@ -2864,8 +2866,9 @@ class Places365Dataset(MappableDataset):
     You can unzip the original Places365 dataset files into this directory structure and read by MindSpore's API.
 
     .. code-block::
+
         .
-        └─├── categories_places365.txt
+        └── categories_places365
             ├── places365_train-standard.txt
             ├── places365_train-challenge.txt
             ├── val_large/
@@ -3157,6 +3160,7 @@ class SBDataset(GeneratorDataset):
             (default=None, number set in the config).
         shuffle (bool, optional): Whether to perform shuffle on the dataset (default=None, expected
             order behavior shown in the table).
+        decode (bool, optional): Decode the images after reading (default=None).
         sampler (Sampler, optional): Object used to choose samples from the
             dataset (default=None, expected order behavior shown in the table).
         num_shards (int, optional): Number of shards that the dataset will be divided
@@ -3599,6 +3603,7 @@ class STL10Dataset(MappableDataset):
     You can unzip the dataset files into this directory structure and read by MindSpore's API.
 
     .. code-block::
+
         .
         └── stl10_dataset_dir
              ├── train_X.bin
@@ -3752,6 +3757,7 @@ class SVHNDataset(GeneratorDataset):
     You can unzip the dataset files into this directory structure and read by MindSpore's API.
 
     .. code-block::
+
         .
         └── svhn_dataset_dir
              ├── train_32x32.mat
@@ -3847,6 +3853,7 @@ class USPSDataset(SourceDataset):
     You can download and unzip the dataset files into this directory structure and read by MindSpore's API.
 
     .. code-block::
+
         .
         └── usps_dataset_dir
              ├── usps

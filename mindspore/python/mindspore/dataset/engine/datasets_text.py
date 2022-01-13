@@ -133,7 +133,7 @@ class AmazonReviewDataset(SourceDataset):
             For Polarity dataset, `train` will read from 3,600,000 train samples,
             `test` will read from 400,000 test samples,
             `all` will read from all 4,000,000 samples.
-             For Full dataset, `train` will read from 3,000,000 train samples,
+            For Full dataset, `train` will read from 3,000,000 train samples,
             `test` will read from 650,000 test samples,
             `all` will read from all 3,650,000 samples (default=None, all samples).
         num_samples (int, optional): Number of samples (rows) to be read (default=None, reads the full dataset).
@@ -146,6 +146,7 @@ class AmazonReviewDataset(SourceDataset):
             - Shuffle.GLOBAL: Shuffle both the files and samples.
 
             - Shuffle.FILES: Shuffle files only.
+
         num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
             When this argument is specified, `num_samples` reflects the max sample number of per shard.
         shard_id (int, optional): The shard ID within num_shards (default=None). This
@@ -1060,6 +1061,7 @@ class PennTreebankDataset(SourceDataset, TextBaseDataset):
     You can unzip the dataset files into this directory structure and read by MindSpore's API.
 
     .. code-block::
+
         .
         └── PennTreebank_dataset_dir
              ├── ptb.test.txt
@@ -1101,7 +1103,7 @@ class PennTreebankDataset(SourceDataset, TextBaseDataset):
 
 
 class SogouNewsDataset(SourceDataset):
-    """
+    r"""
     A source dataset that reads and parses Sogou News dataset.
 
     The generated dataset has three columns: :py:obj:`[index, title, content]`.
@@ -1307,7 +1309,7 @@ class WikiTextDataset(SourceDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        usage (str, optional): Acceptable usages include `train`, `test`, 'valid' and `all`(default=None, all samples).
+        usage (str, optional): Acceptable usages include `train`, `test`, 'valid' and `all` (default=None, all samples).
         num_samples (int, optional): Number of samples (rows) to read (default=None, reads the full dataset).
         num_parallel_workers (int, optional): Number of workers to read the data
             (default=None, number set in the config).
