@@ -67,6 +67,7 @@ std::set<int64_t> GetDependsFormMap(const CNodePtr &cnode) {
   static const auto &kSlice = prim::kPrimSlice->name();
   static const auto &kSliceGrad = prim::kPrimSliceGrad->name();
   static const auto &kReshape = prim::kPrimReshape->name();
+  static const auto &kDynamicReshape = prim::kPrimDynamicReshape->name();
   // Common dynamic shape depends.
   static const PrimShapeDependMap dynamic_shape_depends{{kUnsortedSegmentSum, ShapeSet{2}},
                                                         {kUnsortedSegmentMin, ShapeSet{2}},
@@ -82,6 +83,7 @@ std::set<int64_t> GetDependsFormMap(const CNodePtr &cnode) {
                                                         {kStridedSliceGrad, ShapeSet{1, 2, 3, 4}},
                                                         {kTile, ShapeSet{1}},
                                                         {kReshape, ShapeSet{1}},
+                                                        {kDynamicReshape, ShapeSet{1}},
                                                         {kSlice, ShapeSet{1, 2}},
                                                         {kSliceGrad, ShapeSet{2, 3}},
                                                         {kDynamicBroadcastTo, ShapeSet{1}}};
@@ -157,6 +159,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimDynamicStitch, R{InferImplDynamicStitch, nullptr, true}},
     {prim::kPrimPadAndShift, R{InferImplPadAndShift, nullptr, true}},
     {prim::kPrimDynamicShape, R{InferImplDynamicShape, nullptr, true}},
+    {prim::kPrimDynamicReshape, R{InferImplReshape, nullptr, true}},
     {prim::kPrimMapUniform, R{InferImplMapUniform, nullptr, true}},
     {prim::kPrimSplit, R{InferImplSplit, nullptr, true}},
     {prim::kPrimSequenceMask, R{InferImplSequenceMask, nullptr, true}},
