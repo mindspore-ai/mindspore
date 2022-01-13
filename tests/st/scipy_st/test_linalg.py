@@ -217,9 +217,10 @@ def test_eigh_complex(n: int, dtype):
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('shape', [(4, 4), (4, 5), (10, 5), (20, 20)])
+@pytest.mark.parametrize('shape', [(4, 4), (4, 5), (5, 10), (20, 20)])
 @pytest.mark.parametrize('dtype', [onp.float32, onp.float64])
 def test_lu(shape: (int, int), dtype):
     """
@@ -236,6 +237,36 @@ def test_lu(shape: (int, int), dtype):
     assert onp.allclose(m_p.asnumpy(), s_p, rtol=rtol, atol=atol)
     assert onp.allclose(m_l.asnumpy(), s_l, rtol=rtol, atol=atol)
     assert onp.allclose(m_u.asnumpy(), s_u, rtol=rtol, atol=atol)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('shape', [(3, 4, 4), (3, 4, 5)])
+@pytest.mark.parametrize('dtype', [onp.float32, onp.float64])
+def test_batch_lu(shape: (int, int, int), dtype):
+    """
+    Feature: ALL To ALL
+    Description: test cases for lu decomposition test cases for A[N,N]x = b[N,1]
+    Expectation: the result match to scipy
+    """
+    b_a = create_random_rank_matrix(shape, dtype)
+    b_s_p = list()
+    b_s_l = list()
+    b_s_u = list()
+    for a in b_a:
+        s_p, s_l, s_u = osp.linalg.lu(a)
+        b_s_p.append(s_p)
+        b_s_l.append(s_l)
+        b_s_u.append(s_u)
+    tensor_b_a = Tensor(onp.array(b_a))
+    b_m_p, b_m_l, b_m_u = msp.linalg.lu(tensor_b_a)
+    rtol = 1.e-5
+    atol = 1.e-5
+    assert onp.allclose(b_m_p.asnumpy(), b_s_p, rtol=rtol, atol=atol)
+    assert onp.allclose(b_m_l.asnumpy(), b_s_l, rtol=rtol, atol=atol)
+    assert onp.allclose(b_m_u.asnumpy(), b_s_u, rtol=rtol, atol=atol)
 
 
 @pytest.mark.level0
