@@ -764,8 +764,10 @@ void ControlNodeScheduler::LinkArrowByKernel(const AnfNodePtr &kernel, ControlAc
   MS_EXCEPTION_IF_NULL(from_node);
   const auto &graph = parser->FetchKernelGraphByFrontNode(from_node);
   MS_EXCEPTION_IF_NULL(graph);
+  const auto &group_name = parser->FetchGroupNameByKernelGraph(graph);
 
-  if (to_actor->type_ == KernelTransformType::kExitActor && to_actor->node_ == nullptr) {
+  if (to_actor->type_ == KernelTransformType::kExitActor && to_actor->node_ == nullptr &&
+      to_actor->GetAID().Name().find(group_name) != std::string::npos) {
     // Link arrow from actor of output node to exit actor of kernel graph.
     const auto &kernel_with_index = parser->FetchBackendNodeByFrontNode(from_node_with_index);
     MS_EXCEPTION_IF_NULL(kernel_with_index.first);
@@ -1386,12 +1388,23 @@ void ControlNodeScheduler::LinkBranchIDArrow(ControlActor *const from_actor, Con
   to_actor->input_branch_ids_num_++;
 }
 
-bool ControlNodeScheduler::CheckActorValid(const ControlActorSetPtr &control_actor_set) {
-  MS_EXCEPTION_IF_NULL(control_actor_set);
-  for (const auto &gather_actor : control_actor_set->gather_actors_) {
-    if (gather_actor->input_partials_num_ != 1) {
-      MS_LOG(EXCEPTION) << "Invalid partial num:" << gather_actor->input_partials_num_
-                        << " for actor:" << gather_actor->GetAID();
+bool ControlNodeScheduler::CheckActorValid(const ActorSet *actor_set) const {
+  MS_EXCEPTION_IF_NULL(actor_set);
+  for (const auto &kernel_actor : actor_set->kernel_actors_) {
+    std::string exit_actor_name = "";
+    for (const auto arrow : kernel_actor->output_data_arrows_) {
+      MS_EXCEPTION_IF_NULL(arrow);
+      if (arrow->to_op_id_.Name().find(kExitActorNameSuffix) == std::string::npos) {
+        continue;
+      }
+      if (exit_actor_name == "") {
+        exit_actor_name = arrow->to_op_id_.Name();
+        continue;
+      }
+      if (exit_actor_name != arrow->to_op_id_.Name()) {
+        MS_LOG(EXCEPTION) << "Kernel actor:" << kernel_actor->GetAID() << " link to two exit actor:" << exit_actor_name
+                          << " and:" << arrow->to_op_id_.Name();
+      }
     }
   }
   return true;
