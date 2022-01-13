@@ -3278,7 +3278,7 @@ class ResizeBilinear(PrimitiveWithInfer):
             validator.check_positive_int(value, f'{i}th value of size', self.name)
 
     def infer_shape(self, input_shape):
-        validator.check("input shape rank", len(input_shape), "", 4, Rel.EQ, self.name)
+        validator.check("dimension of input", len(input_shape), "", 4, Rel.EQ, self.name)
         input_shape = list(input_shape)
         batch, channel, _, _ = input_shape
         out_shape = [batch, channel]
@@ -7789,7 +7789,7 @@ class Conv3D(PrimitiveWithInfer):
 
         self.mode = validator.check_equal_int(mode, 1, 'mode', self.name)
         self.add_prim_attr('mode', self.mode)
-        self.format = validator.check_string(data_format, ['NCDHW'], 'format', self.name)
+        self.format = validator.check_string(data_format, ['NCDHW'], 'data_format', self.name)
         self.add_prim_attr('data_format', self.format)
         self.out_channel = validator.check_positive_int(out_channel, 'out_channel', self.name)
         self.group = validator.check_equal_int(group, 1, 'group', self.name)
