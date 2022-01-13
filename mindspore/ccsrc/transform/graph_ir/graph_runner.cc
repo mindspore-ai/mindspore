@@ -72,9 +72,9 @@ GraphRunner::GraphRunner(const GraphRunnerOptions &options)
     }
   }
 
+#ifdef ENABLE_D
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-#ifdef ENABLE_D
   if (ms_context->backend_policy() == "ge") {
     // register the callback function
     if (sess_->RegisterCallBackFunc(callbacks::kCheckPoint, callbacks::CheckpointSaveCallback) != ge::GRAPH_SUCCESS) {
