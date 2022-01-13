@@ -16,6 +16,7 @@
 
 #include "backend/optimizer/somas/somas_tensor.h"
 
+#include <utility>
 #include "backend/optimizer/somas/somas_node.h"
 #include "backend/optimizer/somas/somas_stream.h"
 #include "backend/optimizer/somas/somas.h"

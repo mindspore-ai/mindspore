@@ -16,6 +16,7 @@
 #include "backend/optimizer/common/node_pass.h"
 
 #include <deque>
+#include <utility>
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "ir/manager.h"

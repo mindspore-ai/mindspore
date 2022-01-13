@@ -15,6 +15,7 @@
  */
 
 #include "backend/kernel_compiler/kernel_query.h"
+#include <algorithm>
 #include "backend/kernel_compiler/aicpu/aicpu_kernel_metadata.h"
 #include "backend/kernel_compiler/host/host_kernel_metadata.h"
 #include "backend/kernel_compiler/rts/rt_kernel_info.h"

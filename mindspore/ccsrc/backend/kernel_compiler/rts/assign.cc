@@ -15,6 +15,7 @@
  */
 
 #include "backend/kernel_compiler/rts/assign.h"
+#include <memory>
 #include "runtime/mem.h"
 #include "acl/acl_rt.h"
 
