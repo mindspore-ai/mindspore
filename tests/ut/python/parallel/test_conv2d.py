@@ -207,16 +207,15 @@ def test_conv2d_model_parallel4():
 
 def test_conv2d_left_and_right_no_need_to_send():
     """
-    Feature: same mode, k - s = 1, left pad is 0
-    Description: do not support that the left no need to send
-    Expectation: compile failed
+    Feature: same mode, k - s = 1, left pad is 0, single direction exchange
+    Description: support that the left no need to send
+    Expectation: compile success
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     strategy1 = ((2, 1, 1, 4), (1, 1, 1, 1))
     strategy2 = ((2, 1, 1, 4),)
     net = Net(_w2, out_channel=8, kernel_size=3, pad_mode="same", stride=2, strategy1=strategy1, strategy2=strategy2)
-    with pytest.raises(RuntimeError):
-        compile_net(net)
+    compile_net(net)
 
 
 def test_conv2d_kernel_size_larger_than_stride_and_split_h():
@@ -402,16 +401,15 @@ def test_conv2d_same_mode_overlap_size_equal_to_slice_shape():
 
 def test_kernel_size_larger_than_stride_and_left_pad_is_0():
     """
-    Feature: same mode, kernel_size > stride and left pad is 0
+    Feature: same mode, kernel_size > stride and left pad is 0, single direction exchange
     Description: split w
-    Expectation: compile failed
+    Expectation: compile success
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     strategy1 = ((1, 1, 1, 4), (1, 1, 1, 1))
     strategy2 = ((1, 1, 1, 8),)
     net = Net(_w1, out_channel=8, kernel_size=2, pad_mode="same", stride=1, strategy1=strategy1, strategy2=strategy2)
-    with pytest.raises(RuntimeError):
-        compile_net(net)
+    compile_net(net)
 
 
 def test_conv2d_kernel_size_larger_than_stride_and_split_nchw():
