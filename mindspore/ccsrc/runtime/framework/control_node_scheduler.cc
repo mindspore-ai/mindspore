@@ -138,6 +138,30 @@ std::vector<SwitchActorPtr> ControlNodeScheduler::BuildSwitchActor(const GraphCo
   return switch_actors;
 }
 
+namespace {
+bool IsValidPartialCNode(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto cnode = dyn_cast<CNode>(node);
+  if (cnode == nullptr) {
+    return false;
+  }
+  const auto &inputs = cnode->inputs();
+  if (inputs.size() <= kPartialFuncGraphPos) {
+    return false;
+  }
+  if (!IsPrimitive(inputs[kAnfPrimitiveIndex], prim::kPrimPartial)) {
+    return false;
+  }
+  // Ignore if the node is 'Partial(DeadNode,)'.
+  auto func_value = GetValueNode<StringImmPtr>(inputs[kPartialFuncGraphPos]);
+  if (func_value != nullptr && func_value->value() == kDeadNodeName) {
+    MS_LOG(DEBUG) << "Ignore partial dead node:" << cnode->DebugString();
+    return false;
+  }
+  return true;
+}
+}  // namespace
+
 std::vector<GatherActorPtr> ControlNodeScheduler::BuildGatherActor(const GraphCompilerInfo &graph_compiler_info) {
   std::vector<GatherActorPtr> gather_actors;
   const auto &control_nodes = graph_compiler_info.control_nodes_;
@@ -146,7 +170,7 @@ std::vector<GatherActorPtr> ControlNodeScheduler::BuildGatherActor(const GraphCo
 
   for (const auto &control_node : control_nodes) {
     // Partial node and call node will be converted to gather actor.
-    if (AnfAlgo::CheckPrimitiveType(control_node, prim::kPrimPartial) || AnfAlgo::IsCallNode(control_node)) {
+    if (IsValidPartialCNode(control_node) || AnfAlgo::IsCallNode(control_node)) {
       const auto &actor_name = GetActorName(control_node);
       const auto &parameters = FetchInputNodeByCNode(control_node);
       const auto &gather_actor =
@@ -633,7 +657,10 @@ void ControlNodeScheduler::LinkArrowbyFormalParameter(ControlActor *const to_act
     // Link arrow from gather actor
     const auto &actor_name = GetActorName(from_node);
     const auto &actor = FetchActor(actor_name);
-    MS_EXCEPTION_IF_NULL(actor);
+    if (actor == nullptr) {
+      MS_LOG(DEBUG) << "No actor of " << actor_name;
+      return;
+    }
     const auto &gather_actor = dynamic_cast<GatherActor *>(actor);
     MS_EXCEPTION_IF_NULL(gather_actor);
     LinkPartialArrow(gather_actor, to_actor, from_node_with_index.second, to_node_with_index.second);
