@@ -192,6 +192,7 @@ class TransformerRecomputeConfig(_Config):
 
 default_transformer_recompute_config = TransformerRecomputeConfig()
 
+
 class TransformerOpParallelConfig(_Config):
     r"""
     TransformerOpParallelConfig for the setting global data parallel, model parallel and fusion group.

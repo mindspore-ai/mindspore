@@ -22,7 +22,7 @@ import shutil
 import stat
 import threading
 from threading import Thread, Lock
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 
 import math
 import sys
@@ -252,7 +252,7 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
 
     if isinstance(save_obj, nn.Cell):
         save_obj.init_parameters_data()
-        param_dict = {}
+        param_dict = OrderedDict()
         for _, param in save_obj.parameters_and_names():
             param_dict[param.name] = param
         param_list = []
@@ -275,7 +275,7 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
             append_info_list.append({"name": k_name, "data": Tensor(value)})
             save_obj.extend(append_info_list)
 
-    data_list = {}
+    data_list = OrderedDict()
     with _ckpt_mutex:
         for param in save_obj:
             key = param["name"]
@@ -895,27 +895,28 @@ def _change_file(f, dirname, external_local, is_encrypt, kwargs):
 
 
 def _get_data_file(is_encrypt, kwargs, data_file_name):
-    '''
-        Get Data File to write parameter data
-    '''
+    """Get Data File to write parameter data."""
     # Reserves 64 bytes as spare information such as check data
     offset = 64
     if os.path.exists(data_file_name):
         os.chmod(data_file_name, stat.S_IWUSR)
-    f = open(data_file_name, "wb")
+
     place_holder_data = bytes(offset)
     if is_encrypt():
         place_holder_data = _encrypt(place_holder_data, len(place_holder_data), kwargs["enc_key"],
                                      len(kwargs["enc_key"]), kwargs["enc_mode"])
-    f.write(place_holder_data)
     parameter_size = (offset / 1024)
+    try:
+        f = open(data_file_name, "wb")
+        f.write(place_holder_data)
+    except IOError:
+        f.close()
+
     return f, parameter_size, offset
 
 
 def _spilt_save(net_dict, model, file_name, is_encrypt, **kwargs):
-    '''
-        The function to save parameter data
-    '''
+    """The function to save parameter data."""
     logger.warning("Parameters in the net capacity exceeds 1G, save MindIR model and parameters separately.")
     # save parameter
     file_prefix = file_name.split("/")[-1]
