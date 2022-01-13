@@ -105,7 +105,7 @@ int CoderGraph::ConvertTensors() {
         if (quant_param == nullptr) {
           quant_arg.inited = false;
         } else {
-          quant_arg.inited = true;
+          quant_arg.inited = quant_param->inited();
           quant_arg.bitNum = quant_param->numBits();
           quant_arg.scale = quant_param->scale();
           quant_arg.zeroPoint = quant_param->zeroPoint();
