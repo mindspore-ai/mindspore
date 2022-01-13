@@ -337,6 +337,10 @@ bool KernelMeta::ReadIndex(const std::string &bin_dir) {
       return false;
     }
     dir = opendir(bin_dir.c_str());
+    if (dir == nullptr) {
+      MS_LOG(INFO) << "Open dir failed. Dir:" << bin_dir;
+      return false;
+    }
   }
   struct dirent *entry;
   constexpr size_t SUFFIX_LENS = 5;
@@ -399,6 +403,9 @@ void TbeUtils::GetCompileInfo(const AnfNodePtr &node, std::string *compile_info,
   }
   nlohmann::json read_new_json;
   std::ifstream file(path.c_str());
+  if (!file.is_open()) {
+    MS_LOG(EXCEPTION) << "File is not open. File: " << path;
+  }
   std::string ori_file = std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
   if (!ParseJson(ori_file, &read_new_json)) {
     MS_LOG(EXCEPTION) << "Parse compile info error :" << ori_file;
@@ -425,6 +432,9 @@ void TbeUtils::SaveCompileInfo(const std::string &json_name, const std::string &
   }
   nlohmann::json save_new_json;
   std::ifstream file(path.c_str());
+  if (!file.is_open()) {
+    MS_LOG(EXCEPTION) << "File is not open. File: " << path;
+  }
   std::string ori_file = std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
   if (!ParseJson(ori_file, &save_new_json)) {
     MS_LOG(EXCEPTION) << "Parse compile info error.";
