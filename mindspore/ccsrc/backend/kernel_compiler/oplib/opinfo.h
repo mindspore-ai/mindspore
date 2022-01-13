@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -160,8 +160,8 @@ class OpInfo {
   bool is_ref() const { return !ref_infos_.empty(); }
   bool has_ref_index(size_t out_index) const { return ref_infos_.find(out_index) != ref_infos_.end(); }
   void add_ref_pair(size_t out_index, size_t in_index) { (void)ref_infos_.emplace(out_index, in_index); }
-  void ClearInputs() { (void)inputs_ptr_.clear(); }
-  void ClearOutputs() { (void)outputs_ptr_.clear(); }
+  void ClearInputs() { inputs_ptr_.clear(); }
+  void ClearOutputs() { outputs_ptr_.clear(); }
   bool equals_to(const std::shared_ptr<OpInfo> &other_info) const {
     return this->op_name_ == other_info->op_name_ && this->imply_type_ == other_info->imply_type_ &&
            this->processor_ == other_info->processor_ && this->op_pattern_ == other_info->op_pattern_ &&
