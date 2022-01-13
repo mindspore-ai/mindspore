@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -123,7 +123,7 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   environ_get_eliminate_ =
     MakeSubstitution(std::make_shared<EnvironGetEliminater>(), "environ_get_eliminate", prim::kPrimEnvironGet);
   environ_get_add_eliminate_ =
-    MakeSubstitution(std::make_shared<EnvironGetAddEliminater>(), "environ_get_add_eliminate_", prim::kPrimEnvironGet);
+    MakeSubstitution(std::make_shared<EnvironGetAddEliminater>(), "environ_get_add_eliminate", prim::kPrimEnvironGet);
   environ_get_set_eliminate_ =
     MakeSubstitution(std::make_shared<EnvironGetSetEliminater>(), "environ_get_set_eliminate", prim::kPrimEnvironGet);
   environ_get_depend_swap_ =
