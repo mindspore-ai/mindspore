@@ -48,7 +48,7 @@ get_version() {
 get_version
 MINDSPORE_FILE_NAME="mindspore-lite-${VERSION_STR}-linux-x64"
 MINDSPORE_FILE="${MINDSPORE_FILE_NAME}.tar.gz"
-MINDSPORE_LITE_DOWNLOAD_URL="https://ms-release.obs.cn-north-4.myhuaweicloud.com/${VERSION_STR}/MindSpore/lite/release/linux/${MINDSPORE_FILE}"
+MINDSPORE_LITE_DOWNLOAD_URL="https://ms-release.obs.cn-north-4.myhuaweicloud.com/${VERSION_STR}/MindSpore/lite/release/linux/x86_64/${MINDSPORE_FILE}"
 
 mkdir -p build/${MINDSPORE_FILE_NAME}
 mkdir -p lib
@@ -64,7 +64,7 @@ fi
 tar xzvf ${BASEPATH}/build/${MINDSPORE_FILE} -C ${BASEPATH}/build/${MINDSPORE_FILE_NAME} --strip-components=1
 
 cp -r ${BASEPATH}/build/${MINDSPORE_FILE_NAME}/runtime/lib/* ${BASEPATH}/lib
-cp ${BASEPATH}/build/${MINDSPORE_FILE_NAME}/runtime/third_party/libjpeg-turbo/lib/libjpeg.so.62 ${BASEPATH}/lib
+cp ${BASEPATH}/build/${MINDSPORE_FILE_NAME}/runtime/third_party/libjpeg-turbo/lib/*so.* ${BASEPATH}/lib
 cd ${BASEPATH}/ || exit
 
 mvn package
