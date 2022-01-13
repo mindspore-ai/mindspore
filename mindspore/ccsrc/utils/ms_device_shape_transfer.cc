@@ -1780,7 +1780,7 @@ RangePair ShapeRangeTransfer::GetRealRange(const RangePair &ori_range, const std
   }
   auto iter = format_range_map.find(format);
   if (iter == format_range_map.end()) {
-    MS_LOG(WARNING) << "Can not find a supported format: " << format << ", using default range";
+    MS_LOG(INFO) << "Can not find a supported format: " << format << ", using default range";
     return ori_range;
   }
   return iter->second(temp_range, type);

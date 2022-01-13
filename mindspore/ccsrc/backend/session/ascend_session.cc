@@ -1712,8 +1712,8 @@ void AscendSession::UpdateRefOutputMap(NotNull<KernelGraphPtr> graph,
     auto child_ref_map = child_graph_ptr->GetRefMap();
     for (auto &item : child_ref_map) {
       if (graph->IsInRefOutputMap(item.first)) {
-        MS_LOG(WARNING) << "The ref pair <" << item.first.first->DebugString() << ", " << item.first.second
-                        << "> is already in " << graph->ToString();
+        MS_LOG(DEBUG) << "The ref pair <" << item.first.first->DebugString() << ", " << item.first.second
+                      << "> is already in " << graph->ToString();
         continue;
       }
       graph->AddRefCorrespondPairs(item.first, item.second);
