@@ -27,9 +27,11 @@
 #include <functional>
 #include "thread/threadlog.h"
 #include "thread/core_affinity.h"
+#ifndef _WIN32
 #if defined(__x86_64__) || defined(__amd64__) || defined(_M_IX86) || defined(_M_X64)
 #define PLATFORM_86
 #include <pmmintrin.h>
+#endif
 #endif
 namespace mindspore {
 constexpr int kDefaultSpinCount = 300000;
