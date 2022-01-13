@@ -1004,6 +1004,7 @@ class MaximumGrad(Primitive):
     @prim_attr_register
     def __init__(self, grad_x=True, grad_y=True):
         """Initialize MaximumGrad"""
+        self.init_prim_io_names(inputs=['x1', 'x2', 'grads'], outputs=['y1', 'y2'])
 
     def __call__(self, x, y, dout):
         raise NotImplementedError
