@@ -81,10 +81,14 @@ class Iterator:
 
         self._transform_tensor = lambda t: t.as_array()
         if not output_numpy:
-            if do_copy:
-                self._transform_tensor = lambda t: Tensor(t.as_array())
-            else:
-                self._transform_tensor = lambda t: Tensor.from_numpy(t.as_array())
+            def _transform(t, do_copy):
+                array = t.as_array()
+                if array.dtype.type is np.bytes_:
+                    array = array.astype(np.str_)
+                if do_copy:
+                    return Tensor(array)
+                return Tensor.from_numpy(array)
+            self._transform_tensor = lambda t: _transform(t, do_copy)
         self.__index = 0
 
         self.offload_model = None

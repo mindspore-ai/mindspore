@@ -182,15 +182,55 @@ def test_textline_dataset_repeat():
     assert count == 9
 
 
+def test_textline_dataset_output_tensor():
+    """
+    Feature: Test text dataset output string and construct mindspore.Tensor.
+    Description: set output_numpy=False in create_dict_iterator.
+    Expectation: output tensor successfully
+    """
+    data = ds.TextFileDataset(DATA_FILE, shuffle=False)
+    expected_text = ["This is a text file.", "Be happy every day.", "Good luck to everyone."]
+
+    count = 0
+    for i in data.create_dict_iterator(num_epochs=1, output_numpy=False):
+        logger.info("{}".format(i["text"]))
+        assert expected_text[count] == str(i["text"])
+        count += 1
+    assert count == 3
+
+    count = 0
+    for i in data.create_tuple_iterator(num_epochs=1, output_numpy=False, do_copy=True):
+        logger.info("{}".format(i[0]))
+        assert expected_text[count] == str(i[0])
+        count += 1
+    assert count == 3
+
+    count = 0
+    for i in data.create_tuple_iterator(num_epochs=1, output_numpy=False, do_copy=False):
+        logger.info("{}".format(i[0]))
+        assert expected_text[count] == str(i[0])
+        count += 1
+    assert count == 3
+
+    count = 0
+    for i in data:
+        logger.info("{}".format(i[0]))
+        assert expected_text[count] == str(i[0])
+        count += 1
+    assert count == 3
+
+
 def test_textline_dataset_get_datasetsize():
     data = ds.TextFileDataset(DATA_FILE)
     size = data.get_dataset_size()
     assert size == 3
 
+
 def test_textline_dataset_to_device():
     data = ds.TextFileDataset(DATA_FILE, shuffle=False)
     data = data.to_device()
     data.send()
+
 
 def test_textline_dataset_exceptions():
     with pytest.raises(ValueError) as error_info:
