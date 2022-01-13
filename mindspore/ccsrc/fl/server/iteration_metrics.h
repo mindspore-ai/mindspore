@@ -34,15 +34,18 @@ constexpr auto kFLName = "flName";
 constexpr auto kInstanceStatus = "instanceStatus";
 constexpr auto kFLIterationNum = "flIterationNum";
 constexpr auto kCurIteration = "currentIteration";
-constexpr auto kJoinedClientNum = "joinedClientNum";
-constexpr auto kRejectedClientNum = "rejectedClientNum";
 constexpr auto kMetricsAuc = "metricsAuc";
 constexpr auto kMetricsLoss = "metricsLoss";
 constexpr auto kIterExecutionTime = "iterationExecutionTime";
 constexpr auto kMetrics = "metrics";
+constexpr auto kClientVisitedInfo = "clientVisitedInfo";
+constexpr auto kIterationResult = "iterationResult";
 
 const std::map<InstanceState, std::string> kInstanceStateName = {
   {InstanceState::kRunning, "running"}, {InstanceState::kDisable, "disable"}, {InstanceState::kFinish, "finish"}};
+
+const std::map<IterationResult, std::string> kIterationResultName = {{IterationResult::kSuccess, "success"},
+                                                                     {IterationResult::kTimeout, "timeout"}};
 
 class IterationMetrics {
  public:
@@ -55,9 +58,8 @@ class IterationMetrics {
         instance_state_(InstanceState::kFinish),
         loss_(0.0),
         accuracy_(0.0),
-        joined_client_num_(0),
-        rejected_client_num_(0),
-        iteration_time_cost_(0) {}
+        iteration_time_cost_(0),
+        iteration_result_(IterationResult::kSuccess) {}
   ~IterationMetrics() = default;
 
   bool Initialize();
@@ -75,9 +77,9 @@ class IterationMetrics {
   void set_instance_state(InstanceState state);
   void set_loss(float loss);
   void set_accuracy(float acc);
-  void set_joined_client_num(size_t joined_client_num);
-  void set_rejected_client_num(size_t rejected_client_num);
   void set_iteration_time_cost(uint64_t iteration_time_cost);
+  void set_round_client_num_map(const std::map<std::string, size_t> round_client_num_map);
+  void set_iteration_result(IterationResult iteration_result);
 
  private:
   // This is the main config file set by ps context.
@@ -112,14 +114,14 @@ class IterationMetrics {
   // The evaluation result after this federated learning iteration, passed by worker.
   float accuracy_;
 
-  // The number of clients which join the federated aggregation.
-  size_t joined_client_num_;
-
-  // The number of clients which are not involved in federated aggregation.
-  size_t rejected_client_num_;
+  // for example: "startFLJobTotalClientNum" -> startFLJob total client num
+  std::map<std::string, size_t> round_client_num_map_;
 
   // The time cost in millisecond for this completed iteration.
   uint64_t iteration_time_cost_;
+
+  // Current iteration running result.
+  IterationResult iteration_result_;
 };
 }  // namespace server
 }  // namespace fl

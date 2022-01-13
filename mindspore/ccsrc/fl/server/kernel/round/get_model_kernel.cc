@@ -30,7 +30,7 @@ void GetModelKernel::InitKernel(size_t) {
   if (LocalMetaStore::GetInstance().has_value(kCtxTotalTimeoutDuration)) {
     iteration_time_window_ = LocalMetaStore::GetInstance().value<size_t>(kCtxTotalTimeoutDuration);
   }
-
+  InitClientVisitedNum();
   executor_ = &Executor::GetInstance();
   MS_EXCEPTION_IF_NULL(executor_);
   if (!executor_->initialized()) {
@@ -119,7 +119,7 @@ void GetModelKernel::GetModel(const schema::RequestGetModel *get_model_req, cons
   } else {
     feature_maps = ModelStore::GetInstance().GetModelByIterNum(get_model_iter);
   }
-
+  IncreaseAcceptClientNum();
   MS_LOG(INFO) << "GetModel last iteratin is valid or not: " << Iteration::GetInstance().is_last_iteration_valid()
                << ", next request time is " << next_req_time << ", current iteration is " << current_iter;
   BuildGetModelRsp(fbb, schema::ResponseCode_SUCCEED, "Get model for iteration " + std::to_string(get_model_iter),

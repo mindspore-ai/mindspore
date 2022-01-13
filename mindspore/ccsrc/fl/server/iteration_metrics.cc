@@ -79,11 +79,12 @@ bool IterationMetrics::Summarize() {
   js_[kInstanceStatus] = kInstanceStateName.at(instance_state_);
   js_[kFLIterationNum] = fl_iteration_num_;
   js_[kCurIteration] = cur_iteration_num_;
-  js_[kJoinedClientNum] = joined_client_num_;
-  js_[kRejectedClientNum] = rejected_client_num_;
   js_[kMetricsAuc] = accuracy_;
   js_[kMetricsLoss] = loss_;
   js_[kIterExecutionTime] = iteration_time_cost_;
+  js_[kClientVisitedInfo] = round_client_num_map_;
+  js_[kIterationResult] = kIterationResultName.at(iteration_result_);
+
   metrics_file_ << js_ << "\n";
   (void)metrics_file_.flush();
   metrics_file_.close();
@@ -111,15 +112,15 @@ void IterationMetrics::set_loss(float loss) { loss_ = loss; }
 
 void IterationMetrics::set_accuracy(float acc) { accuracy_ = acc; }
 
-void IterationMetrics::set_joined_client_num(size_t joined_client_num) { joined_client_num_ = joined_client_num; }
-
-void IterationMetrics::set_rejected_client_num(size_t rejected_client_num) {
-  rejected_client_num_ = rejected_client_num;
-}
-
 void IterationMetrics::set_iteration_time_cost(uint64_t iteration_time_cost) {
   iteration_time_cost_ = iteration_time_cost;
 }
+
+void IterationMetrics::set_round_client_num_map(const std::map<std::string, size_t> round_client_num_map) {
+  round_client_num_map_ = round_client_num_map;
+}
+
+void IterationMetrics::set_iteration_result(IterationResult iteration_result) { iteration_result_ = iteration_result; }
 }  // namespace server
 }  // namespace fl
 }  // namespace mindspore

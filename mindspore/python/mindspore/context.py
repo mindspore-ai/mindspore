@@ -1100,7 +1100,10 @@ def set_fl_context(**kwargs):
             pki_verify is True. Default: "".
         replay_attack_time_diff (int): The maximum tolerable error of certificate timestamp verification (ms).
             Default: 600000.
-
+        http_url_prefix (string): The http url prefix for http server.
+            Default: "".
+        global_iteration_time_window (unsigned long): The global iteration time window for one iteration
+            with rounds(ms). Default: 21600000.
     Raises:
         ValueError: If input key is not the attribute in federated learning mode context.
 

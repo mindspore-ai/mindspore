@@ -89,6 +89,20 @@ class RoundKernel : virtual public CPUKernel {
   void set_stop_timer_cb(const StopTimerCb &timer_stopper);
   void set_finish_iteration_cb(const FinishIterCb &finish_iteration_cb);
 
+  void Summarize();
+
+  void IncreaseTotalClientNum();
+
+  void IncreaseAcceptClientNum();
+
+  size_t total_client_num() const;
+
+  size_t accept_client_num() const;
+
+  size_t reject_client_num() const;
+
+  void InitClientVisitedNum();
+
  protected:
   // Generating response data of this round. The data is allocated on the heap to ensure it's not released before sent
   // back to worker.
@@ -121,6 +135,9 @@ class RoundKernel : virtual public CPUKernel {
   std::queue<AddressPtr> heap_data_to_release_;
   std::mutex heap_data_mtx_;
   std::unordered_map<AddressPtr, std::unique_ptr<unsigned char[]>> heap_data_;
+
+  std::atomic<size_t> total_client_num_;
+  std::atomic<size_t> accept_client_num_;
 };
 }  // namespace kernel
 }  // namespace server

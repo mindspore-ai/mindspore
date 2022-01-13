@@ -475,8 +475,10 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("set_encrypt_type", &PSContext::set_encrypt_type,
          "Set encrypt type for federated learning secure aggregation.")
     .def("set_http_url_prefix", &PSContext::set_http_url_prefix, "Set http url prefix for http communication.")
-    .def("http_url_prefix", &PSContext::http_url_prefix, "http url prefix for http communication.");
-
+    .def("http_url_prefix", &PSContext::http_url_prefix, "http url prefix for http communication.")
+    .def("set_global_iteration_time_window", &PSContext::set_global_iteration_time_window,
+         "Set global iteration time window.")
+    .def("global_iteration_time_window", &PSContext::global_iteration_time_window, "Get global iteration time window.");
   (void)m.def("_encrypt", &mindspore::pipeline::PyEncrypt, "Encrypt the data.");
   (void)m.def("_decrypt", &mindspore::pipeline::PyDecrypt, "Decrypt the data.");
   (void)m.def("_is_cipher_file", &mindspore::pipeline::PyIsCipherFile, "Determine whether the file is encrypted");

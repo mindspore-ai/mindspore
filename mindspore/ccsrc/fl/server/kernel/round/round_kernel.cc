@@ -125,7 +125,31 @@ void RoundKernel::GenerateOutput(const std::vector<AddressPtr> &outputs, const v
 
   std::unique_lock<std::mutex> lock(heap_data_mtx_);
   (void)heap_data_.insert(std::make_pair(outputs[0], std::move(output_data)));
+  IncreaseTotalClientNum();
   return;
+}
+
+void RoundKernel::IncreaseTotalClientNum() { total_client_num_ += 1; }
+
+void RoundKernel::IncreaseAcceptClientNum() { accept_client_num_ += 1; }
+
+void RoundKernel::Summarize() {
+  if (name_ == "startFLJob" || name_ == "updateModel" || name_ == "getModel") {
+    MS_LOG(INFO) << "Round kernel " << name_ << " total client num is: " << total_client_num_
+                 << ", accept client num is: " << accept_client_num_
+                 << ", reject client num is: " << (total_client_num_ - accept_client_num_);
+  }
+}
+
+size_t RoundKernel::total_client_num() const { return total_client_num_; }
+
+size_t RoundKernel::accept_client_num() const { return accept_client_num_; }
+
+size_t RoundKernel::reject_client_num() const { return total_client_num_ - accept_client_num_; }
+
+void RoundKernel::InitClientVisitedNum() {
+  total_client_num_ = 0;
+  accept_client_num_ = 0;
 }
 }  // namespace kernel
 }  // namespace server
