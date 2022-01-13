@@ -355,7 +355,7 @@ bool InnerContext::device_and_pkg_support_fp16() const { return this->device_and
 
 std::set<void *> InnerContext::GetLinkInfo(void *pre) const {
   if (link_info_.find(pre) == link_info_.end()) {
-    MS_LOG(WARNING) << "Not found precursor in link information.";
+    MS_LOG(DEBUG) << "Not found precursor in link information.";
     return {};
   }
   return link_info_.at(pre);

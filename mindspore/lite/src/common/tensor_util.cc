@@ -298,9 +298,21 @@ void MoveTensorData(Tensor *dst_tensor, Tensor *src_tensor) {
   return;
 }
 
-void SetTensorData(Tensor *dst_tensor, Tensor *src_tensor) {
+void SetCommonTensorData(Tensor *dst_tensor, Tensor *src_tensor) {
   dst_tensor->set_data(src_tensor->data());
   dst_tensor->set_own_data(false);
+}
+
+void SetTensorData(Tensor *dst_tensor, Tensor *src_tensor) {
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
+  if (src_tensor->data_type() == kObjectTypeTensorType) {
+    SetTensorListTensorData(reinterpret_cast<TensorList *>(dst_tensor), reinterpret_cast<TensorList *>(src_tensor));
+  } else {
+    SetCommonTensorData(dst_tensor, src_tensor);
+  }
+#else
+  SetCommonTensorData(dst_tensor, src_tensor);
+#endif
 }
 
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
@@ -341,6 +353,12 @@ void MoveTensorListTensorData(TensorList *dst_tensorlist, TensorList *src_tensor
   } else {
     src_tensorlist->DecRefCount();
   }
+}
+
+void SetTensorListTensorData(TensorList *dst_tensor_list, TensorList *src_tensor_list) {
+  dst_tensor_list->FreeTensorListData();
+  dst_tensor_list->set_own_data(src_tensor_list->own_data());
+  dst_tensor_list->set_tensors(src_tensor_list->tensors());
 }
 #endif
 }  // namespace lite

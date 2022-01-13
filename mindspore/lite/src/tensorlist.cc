@@ -34,52 +34,6 @@ TensorList::~TensorList() {
   }
 }
 
-int TensorList::CopyTensorList(const TensorList &src, bool copy_data) {
-  this->data_type_ = src.data_type_;
-  this->tensors_data_type_ = src.tensors_data_type_;
-  this->shape_ = src.shape_;
-  this->element_shape_ = src.element_shape_;
-  this->max_elements_num_ = src.max_elements_num_;
-  if (copy_data) {
-    auto ret = CopyTensorData(src);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "CopyTensorData error";
-      return RET_ERROR;
-    }
-  } else {
-    for (auto tensor : this->tensors()) {
-      delete tensor;
-    }
-    this->tensors_.clear();
-    // each tensor in tensors_ will share the same memory space.
-    this->tensors_ = src.tensors_;
-  }
-  return RET_OK;
-}
-
-int TensorList::CopyTensorData(const TensorList &src) {
-  if (src.tensors_.empty()) {
-    return RET_OK;
-  }
-  for (auto tensor : this->tensors()) {
-    delete tensor;
-  }
-  this->tensors_.clear();
-  for (int i = 0; i < this->ElementsNum(); ++i) {
-    if (src.tensors_[i] == nullptr) {
-      MS_LOG(ERROR) << "src tensors_[" << i << "] is nullptr!";
-      return RET_ERROR;
-    }
-    auto dst_tensor = Tensor::CopyTensor(*src.tensors_[i]);
-    if (dst_tensor == nullptr) {
-      MS_LOG(ERROR) << "CopyTensorData: new tensor[" << i << "] is failed!";
-      return RET_ERROR;
-    }
-    this->tensors_.push_back(dst_tensor);
-  }
-  return RET_OK;
-}
-
 int TensorList::MallocTensorListData(TypeId dtype, const std::vector<std::vector<int> > &tensor_shape) {
   // This function will create a new tensors_
   // Your must to set shape(param2: tensor_shape) and data_type_(tensors_data_type_ = param1: dtype) of each tensor in
@@ -302,4 +256,41 @@ STATUS TensorList::Decode(const int *data) {
 }
 
 bool TensorList::IsConst() const { return this->category_ == CONST_TENSOR || this->category_ == CONST_SCALAR; }
+
+TensorList *TensorList::CopyTensorList(const TensorList &src, bool copy_data, AllocatorPtr allocator) {
+  auto *result = new TensorList;
+  if (result == nullptr) {
+    MS_LOG(ERROR) << "New tensor failed";
+    return nullptr;
+  }
+  result->data_type_ = src.data_type_;
+  result->shape_ = src.shape_;
+  result->category_ = src.category_;
+  result->format_ = src.format_;
+  result->set_allocator(allocator);
+  result->set_tensor_name(src.tensor_name() + "_duplicate");
+  auto src_tensor_dtype = src.tensors_data_type_;
+  std::vector<std::vector<int> > tensor_shape{};
+  std::transform(src.tensors_.begin(), src.tensors_.end(), std::back_inserter(tensor_shape),
+                 [](const Tensor *tensor_item) { return tensor_item->shape(); });
+  result->MallocTensorListData(src_tensor_dtype, tensor_shape);
+  if (copy_data) {
+    for (size_t i = 1; i < src.tensors_.size(); ++i) {
+      auto src_tensor = src.tensors_;
+      auto ret = Tensor::CopyTensorData(*(src.tensors_[i]), result->tensors_[i]);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "CopyTensorData error";
+        delete result;
+        return nullptr;
+      }
+    }
+    result->own_data_ = src.own_data_;
+  }
+
+  for (LiteQuantParam quant : src.quant_params()) {
+    result->AddQuantParam(quant);
+  }
+
+  return result;
+}
 }  // namespace mindspore::lite
