@@ -68,7 +68,7 @@ CNodePtr FuncGraph::get_return() const {
 
 void FuncGraph::set_output(const AnfNodePtr &value, bool force_new_ret) {
   auto output = ToImpl<AnfNodeImpl>(value);
-  ToRef<FuncGraphImpl>(impl_).set_output(output);
+  ToRef<FuncGraphImpl>(impl_).set_output(output, force_new_ret);
 }
 
 void FuncGraph::set_return(const CNodePtr &cnode) {
