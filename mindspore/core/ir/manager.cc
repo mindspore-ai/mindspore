@@ -636,6 +636,19 @@ bool FuncGraphManager::Replace(const AnfNodePtr &old_node, const AnfNodePtr &new
   return success;
 }
 
+bool FuncGraphManager::Replace(const AnfNodePtr &old_node, const AnfNodePtr &new_node, const AnfNodePtr &mask_node) {
+  auto func_graph = old_node->func_graph();
+  auto tr = Transact();
+  bool success = tr.Replace(old_node, new_node, mask_node);
+  if (success) {
+    tr.Commit();
+    if (func_graph != nullptr) {
+      func_graph->ReplaceInOrder(old_node, new_node);
+    }
+  }
+  return success;
+}
+
 void FuncGraphManager::SetEdge(const AnfNodePtr &node, int index, const AnfNodePtr &value) {
   auto tr = Transact();
   tr.SetEdge(node, index, value);
@@ -795,6 +808,26 @@ bool FuncGraphTransaction::Replace(const AnfNodePtr &old_node, const AnfNodePtr 
   auto &users = manager_->node_users()[old_node];
   for (auto &node : users) {
     SetEdge(node.first, node.second, new_node);
+  }
+  return true;
+}
+
+bool FuncGraphTransaction::Replace(const AnfNodePtr &old_node, const AnfNodePtr &new_node,
+                                   const AnfNodePtr &mask_node) {
+  MS_EXCEPTION_IF_NULL(old_node);
+  MS_EXCEPTION_IF_NULL(new_node);
+  FuncGraphPtr old_func_graph = old_node->func_graph();
+  if (old_func_graph != nullptr && old_func_graph->get_return() == old_node) {
+    MS_LOG(WARNING) << "Cannot replace the return node of a func graph " << old_func_graph->ToString();
+    return false;
+  }
+  auto &users = manager_->node_users()[old_node];
+  int counter = 0;
+  for (auto &node : users) {
+    if (node.first == mask_node) {
+      SetEdge(node.first, node.second, new_node);
+    }
+    counter++;
   }
   return true;
 }
