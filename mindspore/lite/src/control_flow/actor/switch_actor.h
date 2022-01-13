@@ -56,8 +56,8 @@ class LiteSwitchOpActor : public LiteOpActor {
   void AppendOutputTensors();
   int CompileArrowThroughSwitchCall(const std::unordered_map<void *, std::set<std::pair<AID, size_t>>> &receivers_map);
   int CreateSwitchTypeArrow(const std::unordered_map<void *, std::set<std::pair<AID, size_t>>> &receivers_map,
-                            const std::set<void *> &receiver_tensors, const std::set<void *> &subgraph_inputs_set,
-                            const Tensor *partial_in_tensor, std::vector<DataArrowPtr> *branch_output_data_arrows);
+                            const std::set<void *> &receiver_tensors, const Tensor *partial_in_tensor,
+                            std::vector<DataArrowPtr> *branch_output_data_arrows);
   int ModifySubgraphKernel();
   int SetSwitchPartialNodes();
   int SetSwitchLayerPartialNodes();

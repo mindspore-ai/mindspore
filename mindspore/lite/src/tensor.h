@@ -146,7 +146,7 @@ class Tensor : public mindspore::tensor::MSTensor {
     return;
   }
 
-  void set_init_ref_count(int ref_count) { this->init_ref_count_ = ref_count; }
+  virtual void set_init_ref_count(int ref_count) { this->init_ref_count_ = ref_count; }
 
   virtual void ResetRefCount() { set_ref_count(static_cast<int>(this->init_ref_count_)); }
 

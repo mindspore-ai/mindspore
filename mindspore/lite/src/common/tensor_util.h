@@ -52,6 +52,16 @@ void SetCommonTensorData(Tensor *dst_tensor, Tensor *src_tensor);
 void MoveTensorListTensorData(TensorList *dst_tensor, TensorList *src_tensor);
 void SetTensorListTensorData(TensorList *dst_tensor, TensorList *src_tensor);
 #endif
+void SetTensorShape(Tensor *dst, Tensor *src);
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
+void SetTensorListShape(Tensor *dst, Tensor *src);
+#endif
+bool NeedCastData(Tensor *dst_tensor, Tensor *src_tensor);
+int CastTensorData(Tensor *dst_tensor, Tensor *src_tensor, bool support_fp16);
+int CastCommonTensorData(Tensor *dst_tensor, Tensor *src_tensor, bool support_fp16);
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
+int CastTensorListTensorData(TensorList *dst_tensor, TensorList *src_tensor, bool support_fp16);
+#endif
 }  // namespace lite
 }  // namespace mindspore
 

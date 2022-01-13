@@ -18,12 +18,17 @@
 #include "src/tensor.h"
 #include "src/inner_kernel.h"
 #include "src/common/tensor_util.h"
+#include "src/common/prim_inner.h"
 
 namespace mindspore::kernel {
 int IdentityKernel::Run() {
   for (size_t i = 0; i < in_tensors().size(); ++i) {
     auto src_tensor = in_tensors()[i];
     auto dst_tensor = out_tensors()[i];
+    if (NeedCastData(dst_tensor, src_tensor)) {
+      CastTensorData(dst_tensor, src_tensor, support_fp16_);
+      continue;
+    }
     if (src_tensor->allocator() == nullptr || src_tensor->IsGraphInput()) {
       SetTensorData(dst_tensor, src_tensor);
     } else {
@@ -31,22 +36,6 @@ int IdentityKernel::Run() {
     }
   }
   return lite::RET_OK;
-}
-
-LiteKernel *IdentityKernel::Create(std::vector<lite::Tensor *> in_tensors, std::vector<lite::Tensor *> out_tensors,
-                                   const lite::InnerContext *ctx) {
-  auto *param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
-  if (param == nullptr) {
-    MS_LOG(ERROR) << "malloc OpParameter failed.";
-    return nullptr;
-  }
-  memset(param, 0, sizeof(OpParameter));
-  param->type_ = schema::PrimitiveType_NONE;
-  auto inner_kernel = new IdentityKernel(param, in_tensors, out_tensors, ctx);
-  MS_CHECK_TRUE_MSG(inner_kernel != nullptr, nullptr, "new inner kernel failed.");
-  std::shared_ptr<kernel::Kernel> shared_kernel(inner_kernel);
-  auto *lite_kernel = new LiteKernel(shared_kernel);
-  return lite_kernel;
 }
 
 int IdentityKernel::PreProcess() {
@@ -57,11 +46,33 @@ int IdentityKernel::PreProcess() {
   for (size_t i = 0; i < in_tensors().size(); ++i) {
     auto src_tensor = in_tensors()[i];
     auto dst_tensor = out_tensors()[i];
-    dst_tensor->set_shape(src_tensor->shape());
-    dst_tensor->set_format(src_tensor->format());
+    if (src_tensor->data_type() == kObjectTypeTensorType) {
+      SetTensorListShape(dst_tensor, src_tensor);
+    } else {
+      SetTensorShape(dst_tensor, src_tensor);
+    }
   }
   return lite::RET_OK;
 }
 
 int IdentityKernel::PostProcess() { return lite::RET_OK; }
+
+int IdentityKernel::ReSize() { return PreProcess(); }
+
+LiteKernel *IdentityKernel::Create(std::vector<lite::Tensor *> in_tensors, std::vector<lite::Tensor *> out_tensors,
+                                   const lite::InnerContext *ctx) {
+  auto *param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "malloc OpParameter failed.";
+    return nullptr;
+  }
+  memset(param, 0, sizeof(OpParameter));
+  param->type_ = lite::PRIM_IDENTITY;
+  auto inner_kernel = new IdentityKernel(param, in_tensors, out_tensors, ctx);
+  MS_CHECK_TRUE_MSG(inner_kernel != nullptr, nullptr, "new inner kernel failed.");
+  std::shared_ptr<kernel::Kernel> shared_kernel(inner_kernel);
+  auto *lite_kernel = new LiteKernel(shared_kernel);
+  lite_kernel->set_context(ctx);
+  return lite_kernel;
+}
 }  // namespace mindspore::kernel

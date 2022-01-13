@@ -85,23 +85,14 @@ class LiteOpActor : public OpActor<lite::Tensor> {
   virtual void InitInputData();
   void SetOutputData(OpContext<Tensor> *context);
   virtual void AsyncOutput(OpContext<Tensor> *context);
-  void SetTensorShape(Tensor *dst, Tensor *src);
 
   int CompileArrowThroughOutputTensors(
     const std::unordered_map<void *, std::set<std::pair<AID, size_t>>> &receivers_map);
-  std::set<void *> PartialSubgraphInputTensors(kernel::LiteKernel *partial_node);
   int IsolateInputData(std::vector<std::shared_ptr<LiteOpActor>> *actors,
                        std::unordered_map<Tensor *, Tensor *> *input_map);
   virtual int PrepareOutputData();
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
   virtual int UpdateActorOutput();
-  void SetTensorListShape(Tensor *dst, Tensor *src);
-#endif
-  int CastTensorData(Tensor *dst_tensor, Tensor *src_tensor);
-  bool NeedCastData(Tensor *dst_tensor, Tensor *src_tensor);
-  int CastCommonTensorData(Tensor *dst_tensor, Tensor *src_tensor);
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
-  int CastTensorListTensorData(TensorList *dst_tensor, TensorList *src_tensor);
 #endif
 
   kernel::LiteKernel *kernel_;
@@ -113,8 +104,8 @@ class LiteOpActor : public OpActor<lite::Tensor> {
 
  private:
   int CreateCommonArrow(const std::unordered_map<void *, std::set<std::pair<AID, size_t>>> &receivers_map,
-                        const std::set<void *> &subgraph_inputs_set, const std::set<void *> &receiver_tensors,
-                        const size_t &output_index, std::unordered_map<AID, std::set<size_t>> *receiver_index_set);
+                        const std::set<void *> &receiver_tensors, const size_t &output_index,
+                        std::unordered_map<AID, std::set<size_t>> *receiver_index_set);
   int CreateEmptyArrow(const size_t &output_index);
   bool ArrowHasCompiled(const AID &actor_name, const size_t &to_index,
                         const std::unordered_map<AID, std::set<size_t>> &receiver_index_set);
@@ -124,9 +115,7 @@ class LiteOpActor : public OpActor<lite::Tensor> {
  private:
   kernel::LiteKernel *partial_node_ = nullptr;
   kernel::LiteKernel *call_node_ = nullptr;
-#if defined(ENABLE_ARM) && defined(ENABLE_FP16)
   bool support_fp16_ = false;
-#endif
 };
 
 int MindrtInit();
