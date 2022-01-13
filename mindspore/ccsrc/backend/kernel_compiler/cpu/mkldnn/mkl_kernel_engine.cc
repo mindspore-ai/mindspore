@@ -23,20 +23,36 @@ namespace kernel {
 void MKLKernelEngine::Execute(const std::shared_ptr<dnnl::primitive> &primitive,
                               const std::unordered_map<int, dnnl::memory> &arguments) {
   MS_EXCEPTION_IF_NULL(primitive);
+  MS_LOG(DEBUG) << "begin to invoke primitive::execute";
   primitive->execute(stream_, arguments);
+  MS_LOG(DEBUG) << "end to invoke primitive::execute";
+
+  MS_LOG(DEBUG) << "begin to invoke dnnl::stream::wait";
   (void)stream_.wait();
+  MS_LOG(DEBUG) << "end to invoke dnnl::stream::wait";
 }
 
 dnnl::memory MKLKernelEngine::CreateMemory(const dnnl::memory::desc &mem_desc, bool alloc) {
   if (alloc) {
-    return dnnl::memory(mem_desc, engine_);
+    MS_LOG(DEBUG) << "begin to invoke constructor of dnnl::memory(const desc&, const engine&, void*)";
+    auto res = dnnl::memory(mem_desc, engine_);
+    MS_LOG(DEBUG) << "end to invoke constructor of dnnl::memory(const desc&, const engine&, void*)";
+    return res;
   } else {
-    return dnnl::memory(mem_desc, engine_, nullptr);
+    MS_LOG(DEBUG) << "begin to invoke constructor of dnnl::memory(const desc&, const engine&)";
+    auto res = dnnl::memory(mem_desc, engine_, nullptr);
+    MS_LOG(DEBUG) << "end to invoke constructor of dnnl::memory(const desc&, const engine&)";
+    return res;
   }
 }
 
 void MKLKernelEngine::Reorder(dnnl::memory *src_mem, dnnl::memory *dst_mem) {
-  dnnl::reorder(*src_mem, *dst_mem).execute(stream_, *src_mem, *dst_mem);
+  MS_LOG(DEBUG) << "begin to invoke constructor of dnnl::reorder";
+  auto desc = dnnl::reorder(*src_mem, *dst_mem);
+  MS_LOG(DEBUG) << "end to invoke constructor of dnnl::reorder";
+  MS_LOG(DEBUG) << "end to invoke primitive::execute";
+  desc.execute(stream_, *src_mem, *dst_mem);
+  MS_LOG(DEBUG) << "end to invoke primitive::execute";
 }
 }  // namespace kernel
 }  // namespace mindspore

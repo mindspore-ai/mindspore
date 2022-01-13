@@ -65,21 +65,24 @@ void BatchNormGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
 
   // fused Batch Normalization forward description
-  dnnl::batch_normalization_forward::desc desc =
-    dnnl::batch_normalization_forward::desc(prop_kind, x_desc, epsilon, normalization_flags);
-  auto forward_prim_desc = dnnl::batch_normalization_forward::primitive_desc(desc, MKLKernelEngine::Get().engine());
+  auto desc = CreateDesc<dnnl::batch_normalization_forward::desc>(prop_kind, x_desc, epsilon, normalization_flags);
+  auto forward_prim_desc =
+    CreateDesc<dnnl::batch_normalization_forward::primitive_desc>(desc, MKLKernelEngine::Get().engine());
 
   // fused Batch Normalization backward description
-  dnnl::batch_normalization_backward::desc backward_desc =
-    dnnl::batch_normalization_backward::desc(dnnl::prop_kind::backward, x_desc, x_desc, epsilon, normalization_flags);
-  auto backward_prim_desc = dnnl::batch_normalization_backward::primitive_desc(
+  auto backward_desc = CreateDesc<dnnl::batch_normalization_backward::desc>(dnnl::prop_kind::backward, x_desc, x_desc,
+                                                                            epsilon, normalization_flags);
+  auto backward_prim_desc = CreateDesc<dnnl::batch_normalization_backward::primitive_desc>(
     backward_desc, MKLKernelEngine::Get().engine(), forward_prim_desc);
-  primitive_ = std::make_shared<dnnl::batch_normalization_backward>(backward_prim_desc);
+  auto wksp_desc = GetWorkspaceDesc(forward_prim_desc);
+  auto mean = GetMeanDesc(forward_prim_desc);
+  auto variance = GetVarianceDesc(forward_prim_desc);
+  primitive_ = CreatePrimitive<dnnl::batch_normalization_backward>(backward_prim_desc);
   AddArgument(DNNL_ARG_SRC, x_desc);
-  AddArgument(DNNL_ARG_MEAN, forward_prim_desc.mean_desc());
-  AddArgument(DNNL_ARG_VARIANCE, forward_prim_desc.variance_desc());
+  AddArgument(DNNL_ARG_MEAN, mean);
+  AddArgument(DNNL_ARG_VARIANCE, variance);
   AddArgument(DNNL_ARG_SCALE_SHIFT, scale_bias_desc);
-  AddArgument(DNNL_ARG_WORKSPACE, forward_prim_desc.workspace_desc());
+  AddArgument(DNNL_ARG_WORKSPACE, wksp_desc);
   AddArgument(DNNL_ARG_DST, x_desc);
   AddArgument(DNNL_ARG_DIFF_DST, x_desc);
   AddArgument(DNNL_ARG_DIFF_SRC, x_desc);

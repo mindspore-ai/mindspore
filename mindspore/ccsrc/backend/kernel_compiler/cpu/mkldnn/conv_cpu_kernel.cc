@@ -103,12 +103,12 @@ void ConvCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     (void)padding_l.emplace_back(int_padding_l[i]);
     (void)padding_r.emplace_back(int_padding_r[i]);
   }
-  dnnl::convolution_forward::desc desc =
-    dnnl::convolution_forward::desc(dnnl::prop_kind::forward_training, dnnl::algorithm::convolution_auto, src_desc,
-                                    weights_desc, dst_desc, strides, dilates, padding_l, padding_r);
+  auto desc = CreateDesc<dnnl::convolution_forward::desc>(dnnl::prop_kind::forward_training,
+                                                          dnnl::algorithm::convolution_auto, src_desc, weights_desc,
+                                                          dst_desc, strides, dilates, padding_l, padding_r);
 
-  auto prim_desc = dnnl::convolution_forward::primitive_desc(desc, MKLKernelEngine::Get().engine());
-  primitive_ = std::make_shared<dnnl::convolution_forward>(prim_desc);
+  auto prim_desc = CreateDesc<dnnl::convolution_forward::primitive_desc>(desc, MKLKernelEngine::Get().engine());
+  primitive_ = CreatePrimitive<dnnl::convolution_forward>(prim_desc);
   AddArgument(DNNL_ARG_SRC, src_desc);
   AddArgument(DNNL_ARG_WEIGHTS, weights_desc);
   AddArgument(DNNL_ARG_DST, dst_desc);

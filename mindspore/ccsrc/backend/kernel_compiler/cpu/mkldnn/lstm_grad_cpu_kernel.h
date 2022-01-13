@@ -42,10 +42,7 @@ class LSTMGradCPUKernel : public MKLCPUKernel {
                      const dnnl::memory::desc &dst_desc, const dnnl::memory::desc &dst_h_desc,
                      const dnnl::memory::desc &dst_c_desc);
   void SetArgumentHandleOp(const std::vector<kernel::AddressPtr> &inputs,
-                           const std::vector<kernel::AddressPtr> &outputs, const dnnl::memory &weights_memory,
-                           const dnnl::memory &weights_h_memory, const dnnl::memory &bias_memory,
-                           const dnnl::memory &diff_weights_memory, const dnnl::memory &diff_weights_h_memory,
-                           const dnnl::memory &diff_bias_memory);
+                           const std::vector<kernel::AddressPtr> &outputs);
   void ResetMemory(const dnnl::memory &mem, const string name) const;
   void CheckParam(const CNodePtr &kernel_node);
 
@@ -65,6 +62,23 @@ class LSTMGradCPUKernel : public MKLCPUKernel {
   dnnl::memory::dims weights_h_dims_;
   dnnl::memory::dims bias_dims_;
   dnnl::lstm_backward::primitive_desc prim_backward_desc_;
+
+  dnnl::memory::desc weights_layer_desc_;
+  dnnl::memory::desc weights_iter_desc_;
+  dnnl::memory::desc bias_desc_;
+  dnnl::memory::desc diff_weights_layer_desc_;
+  dnnl::memory::desc diff_weights_iter_desc_;
+  dnnl::memory::desc diff_bias_desc_;
+  dnnl::memory user_weights_memory_;
+  dnnl::memory user_weights_h_memory_;
+  dnnl::memory weights_memory_;
+  dnnl::memory weights_h_memory_;
+  dnnl::memory bias_memory_;
+  dnnl::memory diff_weights_memory_;
+  dnnl::memory diff_weights_h_memory_;
+  dnnl::memory diff_bias_memory_;
+  dnnl::memory user_diff_weights_memory_;
+  dnnl::memory user_diff_weights_h_memory_;
 };
 
 MS_REG_CPU_KERNEL(LSTMGrad,

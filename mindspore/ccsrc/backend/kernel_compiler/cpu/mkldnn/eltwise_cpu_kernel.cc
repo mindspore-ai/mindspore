@@ -51,8 +51,9 @@ dnnl::eltwise_forward::desc EltWiseCPUKernel::GetForwardEltwiseDesc(const dnnl::
   if (desc_pair == eltWiseOpDescMap.end()) {
     MS_LOG(EXCEPTION) << "EltWiseCPUKernel does not support " << kernel_name_;
   }
-  return dnnl::eltwise_forward::desc(dnnl_forward_, desc_pair->second.algorithm, src_desc, desc_pair->second.alpha,
-                                     desc_pair->second.beta);
+  auto desc = CreateDesc<dnnl::eltwise_forward::desc>(dnnl_forward_, desc_pair->second.algorithm, src_desc,
+                                                      desc_pair->second.alpha, desc_pair->second.beta);
+  return desc;
 }
 
 void EltWiseCPUKernel::InitKernel(const CNodePtr &kernel_node) {
@@ -65,8 +66,8 @@ void EltWiseCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   dnnl::memory::desc src_desc = GetDefaultMemDesc(src_shape);
 
   auto desc = GetForwardEltwiseDesc(src_desc);
-  auto prim_desc = dnnl::eltwise_forward::primitive_desc(desc, MKLKernelEngine::Get().engine());
-  primitive_ = std::make_shared<dnnl::eltwise_forward>(prim_desc);
+  auto prim_desc = CreateDesc<dnnl::eltwise_forward::primitive_desc>(desc, MKLKernelEngine::Get().engine());
+  primitive_ = CreatePrimitive<dnnl::eltwise_forward>(prim_desc);
   AddArgument(DNNL_ARG_SRC, src_desc);
   AddArgument(DNNL_ARG_DST, src_desc);
 }

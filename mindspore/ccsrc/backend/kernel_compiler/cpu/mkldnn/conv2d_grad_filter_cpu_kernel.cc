@@ -82,18 +82,16 @@ void Conv2dGradFilterCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
   dnnl::memory::dims padding_l{int_padding_l[0], int_padding_l[1]};
   dnnl::memory::dims padding_r{int_padding_r[0], int_padding_r[1]};
-  dnnl::convolution_forward::desc forward_desc =
-    dnnl::convolution_forward::desc(dnnl::prop_kind::forward_training, dnnl::algorithm::convolution_auto, src_desc,
-                                    weights_desc, dst_desc, strides, dilates, padding_l, padding_r);
-
-  auto forward_prim_desc = dnnl::convolution_forward::primitive_desc(forward_desc, MKLKernelEngine::Get().engine());
-
-  dnnl::convolution_backward_weights::desc backward_desc = dnnl::convolution_backward_weights::desc(
+  auto forward_desc = CreateDesc<dnnl::convolution_forward::desc>(
+    dnnl::prop_kind::forward_training, dnnl::algorithm::convolution_auto, src_desc, weights_desc, dst_desc, strides,
+    dilates, padding_l, padding_r);
+  auto forward_prim_desc =
+    CreateDesc<dnnl::convolution_forward::primitive_desc>(forward_desc, MKLKernelEngine::Get().engine());
+  auto backward_desc = CreateDesc<dnnl::convolution_backward_weights::desc>(
     dnnl::algorithm::convolution_auto, src_desc, weights_desc, dst_desc, strides, dilates, padding_l, padding_r);
-
-  auto backward_prim_desc = dnnl::convolution_backward_weights::primitive_desc(
+  auto backward_prim_desc = CreateDesc<dnnl::convolution_backward_weights::primitive_desc>(
     backward_desc, MKLKernelEngine::Get().engine(), forward_prim_desc);
-  primitive_ = std::make_shared<dnnl::convolution_backward_weights>(backward_prim_desc);
+  primitive_ = CreatePrimitive<dnnl::convolution_backward_weights>(backward_prim_desc);
 
   AddArgument(DNNL_ARG_SRC, src_desc);
   AddArgument(DNNL_ARG_DIFF_DST, dst_desc);
