@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -6002,7 +6002,7 @@ class SparseApplyProximalAdagrad(PrimitiveWithCheck):
         validator.check_tensor_dtype_valid('indices', indices_dtype, valid_dtypes, self.name)
 
 
-class ApplyAddSign(PrimitiveWithInfer):
+class ApplyAddSign(Primitive):
     r"""
     Updates relevant entries according to the AddSign algorithm.
 
