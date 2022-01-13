@@ -145,6 +145,10 @@ int MatmulFp32BaseCPUKernel::InitBiasData() {
     MS_LOG(ERROR) << "bias_tensor invalid";
     return RET_ERROR;
   }
+  if (bias_tensor->data() == nullptr) {
+    MS_LOG(ERROR) << "bias_tensor data invalid";
+    return RET_ERROR;
+  }
   auto bias_num = static_cast<size_t>(bias_tensor->ElementsNum());
   MS_CHECK_TRUE_RET(bias_num > 0, RET_ERROR);
   if (bias_num == 1) {
