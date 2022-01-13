@@ -64,12 +64,14 @@ get_version() {
 download_inference() {
     if [[ "${LITE_PLATFORM}" == "arm64" ]]; then
         local ARM_NAME=aarch64
+        local DEVICE=gpu
     else
         local ARM_NAME=aarch32
+        local DEVICE=cpu
     fi
     MINDSPORE_FILE_NAME="mindspore-lite-${VERSION_STR}-android-${ARM_NAME}"
     local MINDSPORE_FILE="${MINDSPORE_FILE_NAME}.tar.gz"
-    local MINDSPORE_LITE_DOWNLOAD_URL="https://ms-release.obs.cn-north-4.myhuaweicloud.com/${VERSION_STR}/MindSpore/lite/release/android/${MINDSPORE_FILE}"
+    local MINDSPORE_LITE_DOWNLOAD_URL="https://ms-release.obs.cn-north-4.myhuaweicloud.com/${VERSION_STR}/MindSpore/lite/release/android/${DEVICE}/${MINDSPORE_FILE}"
 
     if [ ! -e ${BASEPATH}/build/${MINDSPORE_FILE} ]; then
       wget -c -O ${BASEPATH}/build/${MINDSPORE_FILE} --no-check-certificate ${MINDSPORE_LITE_DOWNLOAD_URL}
@@ -91,7 +93,7 @@ download_mobile() {
 gen_mobile() {
     local CODEGEN_FILE_NAME="mindspore-lite-${VERSION_STR}-linux-x64"
     local CODEGEN_FILE="${CODEGEN_FILE_NAME}.tar.gz"
-    local CODEGEN_LITE_DOWNLOAD_URL="https://ms-release.obs.cn-north-4.myhuaweicloud.com/${VERSION_STR}/MindSpore/lite/release/linux/${CODEGEN_FILE}"
+    local CODEGEN_LITE_DOWNLOAD_URL="https://ms-release.obs.cn-north-4.myhuaweicloud.com/${VERSION_STR}/MindSpore/lite/release/linux/x86_64/${CODEGEN_FILE}"
 
     if [ ! -e ${BASEPATH}/build/${CODEGEN_FILE} ]; then
       wget -c -O ${BASEPATH}/build/${CODEGEN_FILE} --no-check-certificate ${CODEGEN_LITE_DOWNLOAD_URL}
