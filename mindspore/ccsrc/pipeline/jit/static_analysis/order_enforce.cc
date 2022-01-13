@@ -433,7 +433,7 @@ class OrderEnforcer {
         auto input = load->input(1);
         auto refkey = GetRefKey(input);
         if (refkey == "") {
-          MS_LOG(WARNING) << "Load without ref key:" << load->DebugString();
+          MS_LOG(INFO) << "Load without ref key:" << load->DebugString();
           continue;
         }
         (void)refkey_loads[refkey].emplace_back(load);
@@ -457,7 +457,7 @@ class OrderEnforcer {
           auto load = input->cast<CNodePtr>();
           auto refkey = GetRefKey(load->input(1));
           if (refkey == "") {
-            MS_LOG(WARNING) << "Load without ref key:" << load->DebugString();
+            MS_LOG(INFO) << "Load without ref key:" << load->DebugString();
             continue;
           }
           if (refkey_loads[refkey].size() > 1) {
