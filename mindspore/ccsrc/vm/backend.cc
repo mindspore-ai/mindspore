@@ -565,9 +565,9 @@ void MindRTBackend::CompileGraph(const GraphSegmentPtr &segment, bool contain_mu
     const auto &func_graph = segment->nodes_[0]->func_graph();
     MS_EXCEPTION_IF_NULL(func_graph);
     if (func_graph_to_kernel_graph_ids_.find(func_graph) == func_graph_to_kernel_graph_ids_.end()) {
-      func_graph_to_kernel_graph_ids_[func_graph].emplace_back(std::vector<GraphId>{graph_id});
+      (void)func_graph_to_kernel_graph_ids_[func_graph].emplace_back(std::vector<GraphId>{graph_id});
     } else {
-      func_graph_to_kernel_graph_ids_[func_graph].back().emplace_back(graph_id);
+      (void)func_graph_to_kernel_graph_ids_[func_graph].back().emplace_back(graph_id);
     }
   } else {
     // Compile the cut node.
@@ -579,7 +579,7 @@ void MindRTBackend::CompileGraph(const GraphSegmentPtr &segment, bool contain_mu
         AnfAlgo::CheckPrimitiveType(cut_node, prim::kPrimSwitchLayer)) {
       const auto &func_graph = cut_node->func_graph();
       MS_EXCEPTION_IF_NULL(func_graph);
-      func_graph_to_kernel_graph_ids_[func_graph].emplace_back(std::vector<GraphId>());
+      (void)func_graph_to_kernel_graph_ids_[func_graph].emplace_back(std::vector<GraphId>());
     }
   }
 }
@@ -799,7 +799,7 @@ void PushTupleTensor(const VectorRef &args, const std::vector<AnfNodePtr> &param
   if (position >= args.size()) {
     MS_LOG(INFO) << "Position out of args range, position value is " << position << " and args size is " << args.size()
                  << ".";
-    input_tensor->push_back(nullptr);
+    (void)input_tensor->emplace_back(nullptr);
     return;
   }
   auto value_tuple = utils::cast<ValueTuplePtr>(args[position]);
@@ -1125,9 +1125,9 @@ std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(con
       for (const auto &graph_id : sub_kernel_graphs_ids) {
         const auto &kernel_graph = graph_compiler_->Fetch(graph_id);
         MS_EXCEPTION_IF_NULL(kernel_graph);
-        kernel_graphs.emplace_back(kernel_graph);
+        (void)kernel_graphs.emplace_back(kernel_graph);
       }
-      func_graph_to_kernel_graphs[func_graph].emplace_back(kernel_graphs);
+      (void)func_graph_to_kernel_graphs[func_graph].emplace_back(kernel_graphs);
     }
   }
 

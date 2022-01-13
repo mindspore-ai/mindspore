@@ -106,7 +106,7 @@ class ControlNodeScheduler {
                                  size_t to_index, int branch_id);
   void LinkPartialArrowForExitActor(ExitActor *const exit_actor, ControlActor *const to_actor, size_t from_index,
                                     size_t to_index, int branch_id);
-  bool IsNoInputActor(const ControlActor *control_actor);
+  bool IsNoInputActor(const ControlActor *control_actor) const;
 
   // Fill the device tensors of backend input nodes corresponding to ref formal parameters.
   void AddFormalParameterDeviceTensor(ControlActor *const from_actor, size_t from_index, const AnfNodePtr &input_node);
