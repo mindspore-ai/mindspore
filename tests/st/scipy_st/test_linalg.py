@@ -243,9 +243,9 @@ def test_lu(shape: (int, int), dtype):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('shape', [(3, 4, 4), (3, 4, 5)])
+@pytest.mark.parametrize('shape', [(3, 4, 4), (3, 4, 5), (2, 3, 4, 5)])
 @pytest.mark.parametrize('dtype', [onp.float32, onp.float64])
-def test_batch_lu(shape: (int, int, int), dtype):
+def test_batch_lu(shape, dtype):
     """
     Feature: ALL To ALL
     Description: test cases for lu decomposition test cases for A[N,N]x = b[N,1]
@@ -255,13 +255,18 @@ def test_batch_lu(shape: (int, int, int), dtype):
     b_s_p = list()
     b_s_l = list()
     b_s_u = list()
-    for a in b_a:
+    tmp = onp.zeros(b_a.shape[:-2])
+    for index, _ in onp.ndenumerate(tmp):
+        a = b_a[index]
         s_p, s_l, s_u = osp.linalg.lu(a)
         b_s_p.append(s_p)
         b_s_l.append(s_l)
         b_s_u.append(s_u)
     tensor_b_a = Tensor(onp.array(b_a))
     b_m_p, b_m_l, b_m_u = msp.linalg.lu(tensor_b_a)
+    b_s_p = onp.asarray(b_s_p).reshape(b_m_p.shape)
+    b_s_l = onp.asarray(b_s_l).reshape(b_m_l.shape)
+    b_s_u = onp.asarray(b_s_u).reshape(b_m_u.shape)
     rtol = 1.e-5
     atol = 1.e-5
     assert onp.allclose(b_m_p.asnumpy(), b_s_p, rtol=rtol, atol=atol)

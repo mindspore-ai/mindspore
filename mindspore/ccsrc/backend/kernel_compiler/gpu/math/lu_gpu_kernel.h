@@ -68,7 +68,7 @@ class LUGpuKernel : public GpuKernel {
                                "malloc input shape workspace failed");
 
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                               cudaMemcpyAsync(batch_output_addr, batch_input_addr, batch_ * m_ * n_ * unit_size_,
+                               cudaMemcpyAsync(batch_output_addr, batch_input_addr, batch_size_ * m_ * n_ * unit_size_,
                                                cudaMemcpyDeviceToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
                                "cudaMemcpyAsync failed in LUGpuKernel::Launch.");
 
@@ -87,7 +87,7 @@ class LUGpuKernel : public GpuKernel {
     }
     // 5. malloc device working space of getrf
     d_work_ = reinterpret_cast<T *>(device::gpu::GPUMemoryAllocator::GetInstance().AllocTensorMem(unit_size_ * lwork_));
-    for (size_t batch = 0; batch < batch_; ++batch) {
+    for (size_t batch = 0; batch < batch_size_; ++batch) {
       T *output_addr = batch_output_addr + batch * m_ * n_;
       int *permutation_addr = batch_permutation_addr + batch * k_ * k_;
       int *piv_output_addr = batch_piv_output_addr + batch * k_;
@@ -177,18 +177,15 @@ class LUGpuKernel : public GpuKernel {
  private:
   bool InitInputSize(const std::vector<size_t> &in_shape) {
     constexpr size_t lu_min_dim = 1;
-    constexpr size_t lu_max_dim = 3;
-    if (in_shape.size() < lu_min_dim || in_shape.size() > lu_max_dim) {
-      MS_LOG_EXCEPTION << kernel_name_ << "shape is " << in_shape.size() << " which is invalid.";
+    if (in_shape.size() <= lu_min_dim) {
+      MS_LOG_EXCEPTION << kernel_name_ << " input shape is " << in_shape.size() << " which is invalid.";
     }
-    if (in_shape.size() == lu_max_dim) {
-      batch_ = in_shape.front();
-      lu_row_ = in_shape.at(lu_min_dim);
-      lu_col_ = in_shape.at(lu_max_dim - 1);
-    } else {
-      batch_ = 1;
-      lu_row_ = in_shape.front();
-      lu_col_ = in_shape.at(lu_min_dim);
+    constexpr size_t lu_reverse_row_dim = 2;
+    lu_row_ = in_shape.at(in_shape.size() - lu_reverse_row_dim);
+    lu_col_ = in_shape.at(in_shape.size() - 1);
+    batch_size_ = lu_min_dim;
+    for (int batch = 0; batch < static_cast<int>(in_shape.size() - lu_reverse_row_dim); ++batch) {
+      batch_size_ *= in_shape.at(batch);
     }
     // set matrix row or col to be lead dimension
     m_ = SizeToInt(lu_row_);
@@ -201,16 +198,16 @@ class LUGpuKernel : public GpuKernel {
   }
 
   void InitSizeLists() override {
-    size_t input_size = batch_ * lu_row_ * lu_col_ * unit_size_;
+    size_t input_size = batch_size_ * lu_row_ * lu_col_ * unit_size_;
     input_size_list_.push_back(input_size);
 
-    size_t output_size = batch_ * lu_row_ * lu_col_ * unit_size_;
+    size_t output_size = batch_size_ * lu_row_ * lu_col_ * unit_size_;
 
     size_t output_piv_size = 0;
     if (pivot_on_) {
-      output_piv_size = batch_ * k_ * sizeof(int);
+      output_piv_size = batch_size_ * k_ * sizeof(int);
     }
-    size_t output_permutation_size = batch_ * k_ * k_ * sizeof(int);
+    size_t output_permutation_size = batch_size_ * k_ * k_ * sizeof(int);
     output_size_list_.resize(kDim3);
     output_size_list_[kDim0] = output_size;
     output_size_list_[kDim1] = output_piv_size;
@@ -229,7 +226,7 @@ class LUGpuKernel : public GpuKernel {
   }
 
   size_t unit_size_{sizeof(T)};
-  size_t batch_{1};
+  size_t batch_size_{1};
   size_t lu_row_{0};
   size_t lu_col_{0};
   size_t k_{0};
