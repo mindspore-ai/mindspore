@@ -42,7 +42,7 @@ class ControlNodeScheduler {
   // Link control actors.
   void Link(ActorSet *const actor_set, const GraphCompilerInfo &graph_compiler_info);
 
-  bool CheckActorValid(const ControlActorSetPtr &control_actor_set);
+  bool CheckActorValid(const ControlActorSetPtr &control_actor_set) const;
 
   // The control flow actor will generate some data in the loop body execution, so need clear on the end of execution.
   void ClearActorData(const ControlActorSet *control_actor_set);
@@ -106,7 +106,7 @@ class ControlNodeScheduler {
                                  size_t to_index, int branch_id);
   void LinkPartialArrowForExitActor(ExitActor *const exit_actor, ControlActor *const to_actor, size_t from_index,
                                     size_t to_index, int branch_id);
-  bool IsNoInputActor(const ControlActor *control_actor);
+  bool IsNoInputActor(const ControlActor *control_actor) const;
 
   // Fill the device tensors of backend input nodes corresponding to ref formal parameters.
   void AddFormalParameterDeviceTensor(ControlActor *const from_actor, size_t from_index, const AnfNodePtr &input_node);

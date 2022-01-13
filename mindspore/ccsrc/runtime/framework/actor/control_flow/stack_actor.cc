@@ -45,7 +45,7 @@ void StackActor::Init() {
   }
 
   // Fetch the total number of input partial.
-  int total_partials_num = 0;
+  size_t total_partials_num = 0;
   for (const auto &formal_parameter : formal_parameters_) {
     const auto &abstract = formal_parameter.first->abstract();
     MS_EXCEPTION_IF_NULL(abstract);
@@ -117,8 +117,8 @@ void StackActor::RunOpPartial(const OpPartialPtr &partial, size_t position, OpCo
   auto self_partial = std::make_shared<OpPartial>();
   *self_partial = *partial;
   // The parameters from the inside of the subgraph need to be put into the stack.
-  if (IntToSize(position) < input_stack_data_num_ + device_tensor_store_keys_.size() + input_stack_partials_num_ +
-                              local_device_tensors_.size()) {
+  if (position < input_stack_data_num_ + device_tensor_store_keys_.size() + input_stack_partials_num_ +
+                   local_device_tensors_.size()) {
     input_stack_partials_[context->sequential_num_][position].push(self_partial);
   } else {
     (void)input_op_partials_[context->sequential_num_].emplace_back(position, self_partial);

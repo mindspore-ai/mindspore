@@ -103,11 +103,11 @@ void ValueTupleToValue(const ValuePtr &value, std::vector<ValuePtr> *const value
       if (element->isa<ValueTuple>()) {
         ValueTupleToValue(element, values);
       } else {
-        values->emplace_back(element);
+        (void)values->emplace_back(element);
       }
     }
   } else {
-    values->emplace_back(value);
+    (void)values->emplace_back(value);
   }
 }
 
