@@ -2214,7 +2214,8 @@ class ImageFolderDataset(MappableDataset):
         >>> dataset = ds.ImageFolderDataset(dataset_dir=image_folder_dataset_dir,
         ...                                 class_indexing={"cat":0, "dog":1})
         >>>
-        >>> # 3) Read all samples (image files) in image_folder_dataset_dir with extensions .JPEG and .png (case sensitive)
+        >>> # 3) Read all samples (image files) in image_folder_dataset_dir with extensions .JPEG
+        >>> #    and .png (case sensitive)
         >>> dataset = ds.ImageFolderDataset(dataset_dir=image_folder_dataset_dir,
         ...                                 extensions=[".JPEG", ".png"])
 

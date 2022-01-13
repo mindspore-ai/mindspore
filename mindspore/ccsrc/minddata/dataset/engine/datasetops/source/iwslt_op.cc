@@ -306,10 +306,10 @@ Status IWSLTOp::CleanXmlFile(const std::string &src_file_path, const std::string
   std::ofstream new_file(new_file_path);
   CHECK_FAIL_RETURN_UNEXPECTED(new_file.is_open(), "Invalid file, failed to open file: " + new_file_path);
 
-  while (src_doc && target_doc) {
+  while (src_doc != nullptr && target_doc != nullptr) {
     XMLElement *src_seg = src_doc->FirstChildElement("seg");
     XMLElement *target_seg = target_doc->FirstChildElement("seg");
-    while (src_seg && target_seg) {
+    while (src_seg != nullptr && target_seg != nullptr) {
       src_content = src_seg->GetText();
       target_content = target_seg->GetText();
       RETURN_IF_NOT_OK(Trim(&src_content, " "));

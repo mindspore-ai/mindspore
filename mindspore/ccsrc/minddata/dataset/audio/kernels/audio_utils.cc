@@ -1175,9 +1175,9 @@ Status Blackman(std::shared_ptr<Tensor> *output, int len) {
   RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({len}), DataType(DataType::DE_FLOAT32), output));
   // Blackman window function.
   auto iter = (*output)->begin<float>();
-  float alpha = 0.42;
-  float half = 0.5;
-  float delta = 0.08;
+  const float alpha = 0.42;
+  const float half = 0.5;
+  const float delta = 0.08;
   for (ptrdiff_t i = 0; i < len; ++i) {
     *(iter + i) = alpha - half * std::cos(TWO * PI * i / len) + delta * std::cos(TWO * TWO * PI * i / len);
   }
@@ -1200,7 +1200,7 @@ Status Hann(std::shared_ptr<Tensor> *output, int len) {
   RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({len}), DataType(DataType::DE_FLOAT32), output));
   // Hann window function.
   auto iter = (*output)->begin<float>();
-  float half = 0.5;
+  const float half = 0.5;
   for (ptrdiff_t i = 0; i < len; ++i) {
     *(iter + i) = half - half * std::cos(TWO * PI * i / len);
   }
