@@ -38,8 +38,8 @@ class LiteKernelUtil {
   static bool IsTailCall(LiteKernel *node);
   static std::vector<LiteKernel *> GetCallInputPartials(LiteKernel *call_node);
   static LiteKernel *GetPartialOutputCall(LiteKernel *partial_node);
-  static bool IsNonTailCallSubGraph(kernel::LiteKernel *kernel);
-  static bool IsTailCallSubGraph(kernel::LiteKernel *kernel);
+  static bool IsNonTailCallSubGraph(LiteKernel *kernel);
+  static bool IsTailCallSubGraph(LiteKernel *kernel);
   static std::vector<LiteKernel *> GetCallInputPartialsCorrespondingOutputSubgraph(LiteKernel *call_node);
 #endif
   static LiteKernel *GetInputsSpecificNode(const LiteKernel *kernel, const schema::PrimitiveType &primitive_type);
@@ -51,11 +51,11 @@ class LiteKernelUtil {
                                               const std::vector<lite::Tensor *> *in_tensors,
                                               const std::vector<lite::Tensor *> *out_tensors, SubGraphType type,
                                               const lite::InnerContext &context, int schema_version);
-  static int ReplaceSubGraphNodesInTensor(kernel::LiteKernel *kernel, const lite::Tensor *old_tensor,
-                                          lite::Tensor *new_tensor);
-  static int ReplaceSubGraphNodesOutTensor(kernel::LiteKernel *kernel, const lite::Tensor *old_tensor,
+  static int ReplaceSubGraphNodesInTensor(LiteKernel *kernel, const lite::Tensor *old_tensor, lite::Tensor *new_tensor);
+  static int ReplaceSubGraphNodesOutTensor(LiteKernel *kernel, const lite::Tensor *old_tensor,
                                            lite::Tensor *new_tensor);
-  static bool IsOutputSubGraph(kernel::LiteKernel *subgraph_kernel);
+  static bool IsOutputSubGraph(LiteKernel *subgraph_kernel);
+  static SubGraphKernel *BelongToWhichSubGraph(const std::vector<LiteKernel *> &subgraphs, LiteKernel *kernel);
 
  private:
   static std::set<lite::Tensor *> AllOutTensor(const std::vector<LiteKernel *> &kernels);

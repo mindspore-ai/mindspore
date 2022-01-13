@@ -35,7 +35,7 @@ namespace mindspore::kernel {
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
-std::set<lite::Tensor *> LiteKernelUtil::AllOutTensor(const std::vector<kernel::LiteKernel *> &kernels) {
+std::set<lite::Tensor *> LiteKernelUtil::AllOutTensor(const std::vector<LiteKernel *> &kernels) {
   std::set<lite::Tensor *> all_out_tensors{};
   for (const auto &kernel_in_subgraph : kernels) {
     for (auto *tensor : kernel_in_subgraph->out_tensors()) {
@@ -45,8 +45,8 @@ std::set<lite::Tensor *> LiteKernelUtil::AllOutTensor(const std::vector<kernel::
   return all_out_tensors;
 }
 
-std::vector<kernel::LiteKernel *> LiteKernelUtil::SubgraphInputNodes(const std::vector<kernel::LiteKernel *> &kernels) {
-  std::vector<kernel::LiteKernel *> input_nodes;
+std::vector<LiteKernel *> LiteKernelUtil::SubgraphInputNodes(const std::vector<LiteKernel *> &kernels) {
+  std::vector<LiteKernel *> input_nodes;
   std::set<lite::Tensor *> all_out_tensors = AllOutTensor(kernels);
   for (const auto &kernel : kernels) {
     MS_ASSERT(kernel != nullptr);
@@ -69,13 +69,12 @@ std::vector<kernel::LiteKernel *> LiteKernelUtil::SubgraphInputNodes(const std::
   return input_nodes;
 }
 
-std::vector<kernel::LiteKernel *> LiteKernelUtil::SubgraphOutputNodes(
-  const std::vector<kernel::LiteKernel *> &kernels) {
-  std::set<kernel::LiteKernel *> all_kernels{};
+std::vector<LiteKernel *> LiteKernelUtil::SubgraphOutputNodes(const std::vector<LiteKernel *> &kernels) {
+  std::set<LiteKernel *> all_kernels{};
   for (const auto &kernel : kernels) {
     all_kernels.insert(kernel);
   }
-  std::vector<kernel::LiteKernel *> output_nodes;
+  std::vector<LiteKernel *> output_nodes;
   // if kernel has no post-kernel, kernel is a graph output, it must be a subgraph output
   for (const auto &kernel : kernels) {
     MS_ASSERT(kernel != nullptr);
@@ -86,7 +85,7 @@ std::vector<kernel::LiteKernel *> LiteKernelUtil::SubgraphOutputNodes(
       continue;
     }
     if (std::any_of(kernel->out_kernels().begin(), kernel->out_kernels().end(),
-                    [&all_kernels](kernel::LiteKernel *tmp) { return all_kernels.find(tmp) == all_kernels.end(); }) &&
+                    [&all_kernels](LiteKernel *tmp) { return all_kernels.find(tmp) == all_kernels.end(); }) &&
         !lite::IsContain(output_nodes, kernel)) {
       output_nodes.push_back(kernel);
     }
@@ -94,9 +93,9 @@ std::vector<kernel::LiteKernel *> LiteKernelUtil::SubgraphOutputNodes(
   return output_nodes;
 }
 
-std::vector<lite::Tensor *> LiteKernelUtil::SubgraphInputTensors(const std::vector<kernel::LiteKernel *> &kernels) {
+std::vector<lite::Tensor *> LiteKernelUtil::SubgraphInputTensors(const std::vector<LiteKernel *> &kernels) {
   std::vector<lite::Tensor *> input_tensors;
-  std::vector<kernel::LiteKernel *> input_nodes = SubgraphInputNodes(kernels);
+  std::vector<LiteKernel *> input_nodes = SubgraphInputNodes(kernels);
   for (const auto &input_node : input_nodes) {
     auto &in_node_in_kernels = input_node->in_kernels();
     auto &in_node_in_tensors = input_node->in_tensors();
@@ -127,9 +126,9 @@ std::vector<lite::Tensor *> LiteKernelUtil::SubgraphInputTensors(const std::vect
   return input_tensors;
 }
 
-std::vector<lite::Tensor *> LiteKernelUtil::SubgraphOutputTensors(const std::vector<kernel::LiteKernel *> &kernels) {
+std::vector<lite::Tensor *> LiteKernelUtil::SubgraphOutputTensors(const std::vector<LiteKernel *> &kernels) {
   std::vector<lite::Tensor *> output_tensors;
-  std::vector<kernel::LiteKernel *> output_nodes = SubgraphOutputNodes(kernels);
+  std::vector<LiteKernel *> output_nodes = SubgraphOutputNodes(kernels);
   for (const auto &output_kernel : output_nodes) {
     auto &outer_out_kernels = output_kernel->out_kernels();
     auto &out_kernel_out_tensors = output_kernel->out_tensors();
@@ -162,10 +161,10 @@ std::vector<lite::Tensor *> LiteKernelUtil::SubgraphOutputTensors(const std::vec
   return output_tensors;
 }
 
-int LiteKernelUtil::TopologicalSortKernels(std::vector<kernel::LiteKernel *> *kernels) {
+int LiteKernelUtil::TopologicalSortKernels(std::vector<LiteKernel *> *kernels) {
   auto old_kernels = *kernels;
   kernels->clear();
-  std::queue<kernel::LiteKernel *> kernel_queue;
+  std::queue<LiteKernel *> kernel_queue;
   for (auto kernel : old_kernels) {
     if (kernel->in_kernels().empty()) {
       kernel_queue.push(kernel);
@@ -179,12 +178,12 @@ int LiteKernelUtil::TopologicalSortKernels(std::vector<kernel::LiteKernel *> *ke
     auto next_kernels = cur_kernel->out_kernels();
     for (auto next_kernel : next_kernels) {
       auto in_kernels = next_kernel->in_kernels();
-      if (lite::IsContain(*kernels, const_cast<kernel::LiteKernel *>(next_kernel))) {
+      if (lite::IsContain(*kernels, const_cast<LiteKernel *>(next_kernel))) {
         MS_LOG(ERROR) << "TopologicalSortKernels failed, loop exist";
         return RET_ERROR;
       }
-      if (std::all_of(in_kernels.begin(), in_kernels.end(), [&](const kernel::LiteKernel *in_kernel) {
-            return lite::IsContain(*kernels, const_cast<kernel::LiteKernel *>(in_kernel));
+      if (std::all_of(in_kernels.begin(), in_kernels.end(), [&](const LiteKernel *in_kernel) {
+            return lite::IsContain(*kernels, const_cast<LiteKernel *>(in_kernel));
           })) {
         kernel_queue.push(next_kernel);
       }
@@ -198,20 +197,20 @@ int LiteKernelUtil::TopologicalSortKernels(std::vector<kernel::LiteKernel *> *ke
   return RET_OK;
 }
 
-void LiteKernelUtil::InitTensorInitRefCount(const std::vector<kernel::LiteKernel *> &kernels) {
+void LiteKernelUtil::InitTensorInitRefCount(const std::vector<LiteKernel *> &kernels) {
   for (auto *kernel : kernels) {
     kernel->InitOutTensorInitRefCount(&kernels);
   }
 }
 
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
-bool LiteKernelUtil::IsSwitchTypeCall(kernel::LiteKernel *kernel) {
+bool LiteKernelUtil::IsSwitchTypeCall(LiteKernel *kernel) {
 #ifndef DELEGATE_CLIP
-  if (kernel->desc().arch == kernel::kDelegate) {
+  if (kernel->desc().arch == kDelegate) {
     return false;
   }
 #endif
-  auto *subgraph_kernel = reinterpret_cast<kernel::SubGraphKernel *>(kernel);
+  auto *subgraph_kernel = reinterpret_cast<SubGraphKernel *>(kernel);
   if (subgraph_kernel == nullptr) {
     return false;
   }
@@ -226,28 +225,27 @@ bool LiteKernelUtil::IsSwitchTypeCall(kernel::LiteKernel *kernel) {
   return false;
 }
 
-bool LiteKernelUtil::IsNonTailCall(kernel::LiteKernel *node) {
+bool LiteKernelUtil::IsNonTailCall(LiteKernel *node) {
   return node->type() == schema::PrimitiveType_Call &&
          !(reinterpret_cast<CallParameter *>(node->op_parameter())->is_tail_call);
 }
 
-bool LiteKernelUtil::IsTailCall(kernel::LiteKernel *node) {
+bool LiteKernelUtil::IsTailCall(LiteKernel *node) {
   return node->type() == schema::PrimitiveType_Call &&
          (reinterpret_cast<CallParameter *>(node->op_parameter())->is_tail_call);
 }
 
-bool LiteKernelUtil::IsNonTailCallSubGraph(kernel::LiteKernel *kernel) {
-  auto subgraph_kernel = reinterpret_cast<kernel::SubGraphKernel *>(kernel);
+bool LiteKernelUtil::IsNonTailCallSubGraph(LiteKernel *kernel) {
+  auto subgraph_kernel = reinterpret_cast<SubGraphKernel *>(kernel);
   if (subgraph_kernel == nullptr) {
     return false;
   }
   auto nodes = subgraph_kernel->nodes();
-  return std::any_of(nodes.begin(), nodes.end(),
-                     [](kernel::LiteKernel *node) { return kernel::LiteKernelUtil::IsNonTailCall(node); });
+  return std::any_of(nodes.begin(), nodes.end(), [](LiteKernel *node) { return LiteKernelUtil::IsNonTailCall(node); });
 }
 
-bool LiteKernelUtil::IsTailCallSubGraph(kernel::LiteKernel *kernel) {
-  auto subgraph_kernel = reinterpret_cast<kernel::SubGraphKernel *>(kernel);
+bool LiteKernelUtil::IsTailCallSubGraph(LiteKernel *kernel) {
+  auto subgraph_kernel = reinterpret_cast<SubGraphKernel *>(kernel);
   if (subgraph_kernel == nullptr) {
     return false;
   }
@@ -255,8 +253,7 @@ bool LiteKernelUtil::IsTailCallSubGraph(kernel::LiteKernel *kernel) {
     return false;
   }
   auto output_nodes = subgraph_kernel->out_nodes();
-  if (std::any_of(output_nodes.begin(), output_nodes.end(),
-                  [](kernel::LiteKernel *node) { return IsTailCall(node); })) {
+  if (std::any_of(output_nodes.begin(), output_nodes.end(), [](LiteKernel *node) { return IsTailCall(node); })) {
     return true;
   }
   return false;
@@ -300,9 +297,9 @@ std::vector<LiteKernel *> LiteKernelUtil::GetCallInputPartials(LiteKernel *call_
 
 std::vector<LiteKernel *> LiteKernelUtil::GetCallInputPartialsCorrespondingOutputSubgraph(LiteKernel *call_node) {
   auto partial_nodes = GetCallInputPartials(call_node);
-  std::vector<kernel::LiteKernel *> all_subgraphs{};
+  std::vector<LiteKernel *> all_subgraphs{};
   for (auto partial_node : partial_nodes) {
-    auto partial_kernel = reinterpret_cast<kernel::PartialFusionKernel *>(partial_node->kernel());
+    auto partial_kernel = reinterpret_cast<PartialFusionKernel *>(partial_node->kernel());
     if (partial_kernel == nullptr) {
       MS_LOG(ERROR) << "cast to partial kernel failed.";
       return all_subgraphs;
@@ -362,8 +359,8 @@ LiteKernel *LiteKernelUtil::GetPartialOutputCall(LiteKernel *partial_node) {
 }
 #endif
 
-kernel::LiteKernel *LiteKernelUtil::GetInputsSpecificNode(const kernel::LiteKernel *kernel,
-                                                          const schema::PrimitiveType &primitive_type) {
+LiteKernel *LiteKernelUtil::GetInputsSpecificNode(const LiteKernel *kernel,
+                                                  const schema::PrimitiveType &primitive_type) {
   for (auto input : kernel->in_kernels()) {
     if (input->type() == primitive_type) {
       return input;
@@ -372,17 +369,16 @@ kernel::LiteKernel *LiteKernelUtil::GetInputsSpecificNode(const kernel::LiteKern
   return nullptr;
 }
 
-bool LiteKernelUtil::InputsContainsSpecificNode(const kernel::LiteKernel *kernel,
-                                                const schema::PrimitiveType &primitive_type) {
+bool LiteKernelUtil::InputsContainsSpecificNode(const LiteKernel *kernel, const schema::PrimitiveType &primitive_type) {
   if (GetInputsSpecificNode(kernel, primitive_type)) {
     return true;
   }
   return false;
 }
 
-void LiteKernelUtil::FindAllInoutKernels(const std::vector<kernel::LiteKernel *> &kernels) {
-  std::unordered_map<lite::Tensor *, kernel::LiteKernel *> tensor_pre_kernel;
-  std::unordered_map<lite::Tensor *, std::vector<kernel::LiteKernel *>> tensor_post_kernels;
+void LiteKernelUtil::FindAllInoutKernels(const std::vector<LiteKernel *> &kernels) {
+  std::unordered_map<lite::Tensor *, LiteKernel *> tensor_pre_kernel;
+  std::unordered_map<lite::Tensor *, std::vector<LiteKernel *>> tensor_post_kernels;
   for (auto *kernel : kernels) {
     for (auto *tensor : kernel->out_tensors()) {
       tensor_pre_kernel[tensor] = kernel;
@@ -416,34 +412,34 @@ void LiteKernelUtil::FindAllInoutKernels(const std::vector<kernel::LiteKernel *>
 }
 
 void LiteKernelUtil::FindAllInoutKernelsInSubgraphKernel(const std::vector<LiteKernel *> &kernels) {
-  std::vector<kernel::LiteKernel *> all_kernels;
+  std::vector<LiteKernel *> all_kernels;
   for (auto kernel : kernels) {
 #ifndef DELEGATE_CLIP
-    if (kernel->desc().arch == kernel::kDelegate) {
+    if (kernel->desc().arch == kDelegate) {
       all_kernels.push_back(kernel);
       continue;
     }
 #endif
-    auto sub_graph = reinterpret_cast<kernel::SubGraphKernel *>(kernel);
+    auto sub_graph = reinterpret_cast<SubGraphKernel *>(kernel);
     MS_ASSERT(sub_graph != nullptr);
     auto kernel_in_subgraph = sub_graph->nodes();
     all_kernels.insert(all_kernels.end(), kernel_in_subgraph.begin(), kernel_in_subgraph.end());
   }
 
-  kernel::LiteKernelUtil::FindAllInoutKernels(all_kernels);
+  LiteKernelUtil::FindAllInoutKernels(all_kernels);
 }
 
-bool LiteKernelUtil::IsOutputSubGraph(kernel::LiteKernel *subgraph_kernel) {
+bool LiteKernelUtil::IsOutputSubGraph(LiteKernel *subgraph_kernel) {
   return !subgraph_kernel->out_tensors().empty() &&
          std::all_of(subgraph_kernel->out_tensors().begin(), subgraph_kernel->out_tensors().end(),
                      [](lite::Tensor *tensor) { return tensor->IsGraphOutput(); });
 }
 
 namespace {
-kernel::SubGraphKernel *CreateCustomSubGraph(std::vector<kernel::LiteKernel *> &&input_kernels,
-                                             std::vector<kernel::LiteKernel *> &&output_kernels,
-                                             const std::vector<kernel::LiteKernel *> &kernels, kernel::Kernel *kernel) {
-  auto sub_kernel = new (std::nothrow) kernel::CustomSubGraph(input_kernels, output_kernels, kernels, kernel);
+SubGraphKernel *CreateCustomSubGraph(std::vector<LiteKernel *> &&input_kernels,
+                                     std::vector<LiteKernel *> &&output_kernels,
+                                     const std::vector<LiteKernel *> &kernels, Kernel *kernel) {
+  auto sub_kernel = new (std::nothrow) CustomSubGraph(input_kernels, output_kernels, kernels, kernel);
   if (sub_kernel == nullptr) {
     MS_LOG(ERROR) << "create custom subgraph failed!";
     return nullptr;
@@ -452,11 +448,10 @@ kernel::SubGraphKernel *CreateCustomSubGraph(std::vector<kernel::LiteKernel *> &
 }
 }  // namespace
 
-kernel::SubGraphKernel *LiteKernelUtil::CreateSubGraphKernel(const std::vector<kernel::LiteKernel *> &kernels,
-                                                             const std::vector<lite::Tensor *> *in_tensors,
-                                                             const std::vector<lite::Tensor *> *out_tensors,
-                                                             kernel::SubGraphType type,
-                                                             const lite::InnerContext &context, int schema_version) {
+SubGraphKernel *LiteKernelUtil::CreateSubGraphKernel(const std::vector<LiteKernel *> &kernels,
+                                                     const std::vector<lite::Tensor *> *in_tensors,
+                                                     const std::vector<lite::Tensor *> *out_tensors, SubGraphType type,
+                                                     const lite::InnerContext &context, int schema_version) {
   std::vector<lite::Tensor *> input_tensors;
   std::vector<lite::Tensor *> output_tensors;
   if (in_tensors != nullptr) {
@@ -469,20 +464,20 @@ kernel::SubGraphKernel *LiteKernelUtil::CreateSubGraphKernel(const std::vector<k
   } else {
     output_tensors = SubgraphOutputTensors(kernels);
   }
-  auto inner_kernel = new (std::nothrow) kernel::InnerKernel(nullptr, input_tensors, output_tensors, &context);
+  auto inner_kernel = new (std::nothrow) InnerKernel(nullptr, input_tensors, output_tensors, &context);
   if (inner_kernel == nullptr) {
     return nullptr;
   }
-  std::vector<kernel::LiteKernel *> input_kernels = SubgraphInputNodes(kernels);
-  std::vector<kernel::LiteKernel *> output_kernels = SubgraphOutputNodes(kernels);
-  kernel::SubGraphKernel *sub_graph = nullptr;
+  std::vector<LiteKernel *> input_kernels = SubgraphInputNodes(kernels);
+  std::vector<LiteKernel *> output_kernels = SubgraphOutputNodes(kernels);
+  SubGraphKernel *sub_graph = nullptr;
   switch (type) {
     case kCpuFP32SubGraph: {
-      sub_graph = new (std::nothrow) kernel::CpuFp32SubGraph(input_kernels, output_kernels, kernels, inner_kernel);
+      sub_graph = new (std::nothrow) CpuFp32SubGraph(input_kernels, output_kernels, kernels, inner_kernel);
     } break;
     case kCpuFP16SubGraph: {
 #ifdef ENABLE_FP16
-      sub_graph = new (std::nothrow) kernel::CpuFp16SubGraph(input_kernels, output_kernels, kernels, inner_kernel);
+      sub_graph = new (std::nothrow) CpuFp16SubGraph(input_kernels, output_kernels, kernels, inner_kernel);
       for (auto out_tensor : output_tensors) {
         if (out_tensor->data_type() == kNumberTypeFloat32) {
           out_tensor->set_data_type(kNumberTypeFloat16);
@@ -493,7 +488,7 @@ kernel::SubGraphKernel *LiteKernelUtil::CreateSubGraphKernel(const std::vector<k
     case kGpuFp32SubGraph:
     case kGpuFp16SubGraph: {
 #if GPU_OPENCL
-      sub_graph = new (std::nothrow) kernel::OpenCLSubGraph(input_kernels, output_kernels, kernels, inner_kernel);
+      sub_graph = new (std::nothrow) OpenCLSubGraph(input_kernels, output_kernels, kernels, inner_kernel);
 #endif
     } break;
     case kCustomSubGraph: {
@@ -523,21 +518,21 @@ kernel::SubGraphKernel *LiteKernelUtil::CreateSubGraphKernel(const std::vector<k
   return sub_graph;
 }
 
-int LiteKernelUtil::ReplaceSubGraphNodesInTensor(kernel::LiteKernel *kernel, const lite::Tensor *old_tensor,
+int LiteKernelUtil::ReplaceSubGraphNodesInTensor(LiteKernel *kernel, const lite::Tensor *old_tensor,
                                                  lite::Tensor *new_tensor) {
   int ref_count = 0;
 #ifndef DELEGATE_CLIP
   /* set op input for calculate */
-  if (kernel->desc().arch == kernel::kDelegate) {
+  if (kernel->desc().arch == kDelegate) {
     ref_count++;
   } else {
 #endif
-    auto subgraph_kernel = reinterpret_cast<kernel::SubGraphKernel *>(kernel);
+    auto subgraph_kernel = reinterpret_cast<SubGraphKernel *>(kernel);
     if (subgraph_kernel == nullptr) {
       MS_LOG(ERROR) << "cast to subgraph kernel failed.";
       return RET_ERROR;
     }
-    for (auto in_node : reinterpret_cast<kernel::SubGraphKernel *>(kernel)->in_nodes()) {
+    for (auto in_node : reinterpret_cast<SubGraphKernel *>(kernel)->in_nodes()) {
       for (size_t node_in_index = 0; node_in_index < in_node->in_tensors().size(); node_in_index++) {
         if (old_tensor == in_node->in_tensors()[node_in_index]) {
           in_node->set_in_tensor(new_tensor, node_in_index);
@@ -552,21 +547,21 @@ int LiteKernelUtil::ReplaceSubGraphNodesInTensor(kernel::LiteKernel *kernel, con
   return RET_OK;
 }
 
-int LiteKernelUtil::ReplaceSubGraphNodesOutTensor(kernel::LiteKernel *kernel, const lite::Tensor *old_tensor,
+int LiteKernelUtil::ReplaceSubGraphNodesOutTensor(LiteKernel *kernel, const lite::Tensor *old_tensor,
                                                   lite::Tensor *new_tensor) {
   int ref_count = 0;
 #ifndef DELEGATE_CLIP
   /* set op output for calculate */
-  if (kernel->desc().arch == kernel::kDelegate) {
+  if (kernel->desc().arch == kDelegate) {
     ref_count++;
   } else {
 #endif
-    auto subgraph_kernel = reinterpret_cast<kernel::SubGraphKernel *>(kernel);
+    auto subgraph_kernel = reinterpret_cast<SubGraphKernel *>(kernel);
     if (subgraph_kernel == nullptr) {
       MS_LOG(ERROR) << "cast to subgraph kernel failed.";
       return RET_ERROR;
     }
-    for (auto out_node : reinterpret_cast<kernel::SubGraphKernel *>(kernel)->out_nodes()) {
+    for (auto out_node : reinterpret_cast<SubGraphKernel *>(kernel)->out_nodes()) {
       for (size_t node_out_index = 0; node_out_index < out_node->out_tensors().size(); node_out_index++) {
         if (old_tensor == out_node->out_tensors()[node_out_index]) {
           out_node->set_out_tensor(new_tensor, node_out_index);
@@ -579,5 +574,22 @@ int LiteKernelUtil::ReplaceSubGraphNodesOutTensor(kernel::LiteKernel *kernel, co
 #endif
   new_tensor->set_init_ref_count(ref_count);
   return RET_OK;
+}
+
+SubGraphKernel *LiteKernelUtil::BelongToWhichSubGraph(const std::vector<LiteKernel *> &subgraphs, LiteKernel *kernel) {
+  for (auto &item : subgraphs) {
+    if (item->subgraph_type() == kernel::kNotSubGraph) {
+      continue;
+    }
+    auto subgraph = reinterpret_cast<kernel::SubGraphKernel *>(item);
+    if (subgraph == nullptr) {
+      continue;
+    }
+    if (std::any_of(subgraph->nodes().begin(), subgraph->nodes().end(),
+                    [&kernel](LiteKernel *node) { return node == kernel; })) {
+      return subgraph;
+    }
+  }
+  return nullptr;
 }
 }  // namespace mindspore::kernel

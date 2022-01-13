@@ -19,13 +19,26 @@
 #include <set>
 #include "src/lite_kernel_util.h"
 #include "src/runtime/kernel/arm/base/partial_fusion.h"
-#include "nnacl/partial_fusion_parameter.h"
 #include "nnacl/call_parameter.h"
-#include "src/control_flow/entrance_subgraph_kernel.h"
 #include "src/control_flow/exit_subgraph_kernel.h"
 #include "src/control_flow/identity_kernel.h"
+#include "src/tensorlist.h"
 
 namespace mindspore::lite {
+int ControlFlowScheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
+  auto ret = this->BuildBoundaryForMultipleCalledGraph(dst_kernels);
+  MS_CHECK_TRUE_MSG(ret == RET_OK, ret, "BuildBoundaryForMultipleCalledGraph failed.");
+  ret = this->RecordControlFlowLinkInfo();
+  MS_CHECK_TRUE_MSG(ret == RET_OK, ret, "RecordControlFlowLinkInfo failed.");
+  ret = this->RecordAllTailCallLinkInfo(dst_kernels);
+  MS_CHECK_TRUE_MSG(ret == RET_OK, ret, "SplitNonTailCallSubGraphs failed");
+  ret = this->IsolateOutputForCallOutputGraph(dst_kernels);
+  MS_CHECK_TRUE_MSG(ret == RET_OK, ret, "IsolateOutputForCallOutputGraph failed");
+  ret = this->SplitNonTailCallSubGraphs(dst_kernels);
+  MS_CHECK_TRUE_MSG(ret == RET_OK, ret, "SplitNonTailCallSubGraphs failed");
+  return ret;
+}
+
 int ControlFlowScheduler::SplitNonTailCallSubGraphs(std::vector<kernel::LiteKernel *> *dst_kernels) {
   std::set<kernel::LiteKernel *> all_non_tail_subgraphs = GetNonTailCallSubGraphs(dst_kernels);
   for (auto item : all_non_tail_subgraphs) {
@@ -446,6 +459,111 @@ int ControlFlowScheduler::RecordAllTailCallLinkInfo(std::vector<kernel::LiteKern
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "record tail call: " << tail_call->name() << " failed.";
       return ret;
+    }
+  }
+  return RET_OK;
+}
+
+kernel::SubGraphKernel *ControlFlowScheduler::IsolatePartialInputs(kernel::SubGraphKernel *subgraph,
+                                                                   kernel::LiteKernel *partial) {
+  auto inputs = subgraph->in_tensors();
+  auto outputs = subgraph->out_tensors();
+  auto nodes = subgraph->nodes();
+
+  auto old_partial_inputs = partial->in_tensors();
+
+  std::vector<Tensor *> new_partial_inputs{};
+  for (size_t i = 0; i < old_partial_inputs.size(); i++) {
+    Tensor *old_tensor = old_partial_inputs[i];
+    auto allocator = old_tensor->allocator();
+    bool copy_data = false;
+    if (old_tensor->IsConst()) {
+      copy_data = true;
+    }
+    Tensor *new_tensor = nullptr;
+    if (old_tensor->data_type() == kObjectTypeTensorType) {
+      auto old_tensor_list = reinterpret_cast<TensorList *>(old_tensor);
+      new_tensor = TensorList::CopyTensorList(*old_tensor_list, copy_data, allocator);
+    } else {
+      new_tensor = Tensor::CopyTensor(*old_tensor, copy_data, allocator);
+    }
+    if (new_tensor == nullptr) {
+      MS_LOG(ERROR) << "new Tensor failed.";
+      return nullptr;
+    }
+    partial->set_in_tensor(new_tensor, i);
+    src_tensors_->push_back(new_tensor);
+    new_partial_inputs.push_back(new_tensor);
+  }
+  auto identity_node = kernel::IdentityKernel::Create(old_partial_inputs, new_partial_inputs, this->context_);
+  identity_node->set_name(partial->name() + "_input_identity");
+  identity_node->AddOutKernel(partial);
+  partial->AddInKernel(identity_node);
+  nodes.push_back(identity_node);
+  auto subgraph_type = subgraph->subgraph_type();
+  auto new_subgraph =
+    kernel::LiteKernelUtil::CreateSubGraphKernel(nodes, &inputs, &outputs, subgraph_type, *context_, schema_version_);
+  return new_subgraph;
+}
+
+std::set<kernel::LiteKernel *> ControlFlowScheduler::GetSameInputPartials() {
+  std::unordered_map<Tensor *, std::set<kernel::LiteKernel *>> input_partial_pairs{};
+  for (auto item : *partial_kernel_subgraph_index_map_) {
+    for (auto input : item.first->in_tensors()) {
+      if (input_partial_pairs.find(input) == input_partial_pairs.end()) {
+        std::set<kernel::LiteKernel *> partials{};
+        partials.insert(item.first);
+        input_partial_pairs[input] = partials;
+      } else {
+        input_partial_pairs[input].insert(item.first);
+      }
+    }
+  }
+
+  std::set<kernel::LiteKernel *> same_input_partials{};
+  for (auto item : input_partial_pairs) {
+    if (item.second.size() > 1) {
+      for (auto partial : item.second) {
+        same_input_partials.insert(partial);
+      }
+    }
+  }
+  return same_input_partials;
+}
+
+void ControlFlowScheduler::SetSubgraphForPartialNode(
+  std::unordered_map<kernel::LiteKernel *, size_t> *partial_kernel_subgraph_index_map,
+  std::unordered_map<size_t, kernel::LiteKernel *> *subgraph_index_subgraph_kernel_map) {
+  partial_kernel_subgraph_index_map_ = partial_kernel_subgraph_index_map;
+  subgraph_index_subgraph_kernel_map_ = subgraph_index_subgraph_kernel_map;
+
+  for (auto &pair : *partial_kernel_subgraph_index_map) {
+    auto partial_kernel = static_cast<kernel::PartialFusionKernel *>((pair.first)->kernel());
+    auto &subgraph_index = pair.second;
+    partial_kernel->set_subgraph_kernels({subgraph_index_subgraph_kernel_map->at(subgraph_index)});
+  }
+}
+
+void ControlFlowScheduler::UpdateSubGraphMap(kernel::LiteKernel *new_subgraph, kernel::LiteKernel *old_subgraph) {
+  for (auto &item : *subgraph_index_subgraph_kernel_map_) {
+    if (item.second == old_subgraph) {
+      item.second = new_subgraph;
+    }
+  }
+  return;
+}
+
+int ControlFlowScheduler::RecordControlFlowLinkInfo() {
+  for (auto &pair : *partial_kernel_subgraph_index_map_) {
+    auto partial_kernel = reinterpret_cast<kernel::PartialFusionKernel *>((pair.first)->kernel());
+    MS_CHECK_TRUE_MSG(partial_kernel != nullptr, RET_ERROR, "cast to partial kernel failed.");
+    auto subgraph_kernels = partial_kernel->subgraph_kernels();
+    MS_CHECK_TRUE_MSG(!subgraph_kernels.empty(), RET_ERROR, "partial corresponding subgraph kernels empty.");
+    auto subgraph_kernel = subgraph_kernels.front();
+    MS_CHECK_TRUE_MSG(partial_kernel->in_tensors().size() == subgraph_kernel->in_tensors().size(), RET_ERROR,
+                      "partial inputs and corresponding subgraph inputs size not same.");
+    for (size_t i = 0; i < partial_kernel->in_tensors().size(); ++i) {
+      context_->SetLinkInfo(partial_kernel->in_tensors()[i], subgraph_kernel->in_tensors()[i]);
     }
   }
   return RET_OK;

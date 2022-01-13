@@ -75,6 +75,8 @@ class TensorList : public Tensor {
 
   int max_elements_num() const { return max_elements_num_; }
 
+  static TensorList *CopyTensorList(const TensorList &src, bool copy_data = false, AllocatorPtr allocator = nullptr);
+
   int MallocTensorListData(TypeId dtype, const std::vector<std::vector<int> > &tensor_shape);
 
   int MallocData(const AllocatorPtr allocator = nullptr) override;
@@ -82,10 +84,6 @@ class TensorList : public Tensor {
   int FreeTensorListData();
 
   void FreeData() override;
-
-  int CopyTensorList(const TensorList &src, bool copy_data);
-
-  int CopyTensorData(const TensorList &src);
 
   int SetTensor(int index, const Tensor *src_tensor);
 

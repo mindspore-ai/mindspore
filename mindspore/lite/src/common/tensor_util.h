@@ -47,8 +47,10 @@ std::vector<mindspore::MSTensor> LiteTensorsToMSTensors(const std::vector<lite::
 void MoveCommonTensorData(Tensor *dst_tensor, Tensor *src_tensor);
 void MoveTensorData(Tensor *dst_tensor, Tensor *src_tensor);
 void SetTensorData(Tensor *dst_tensor, Tensor *src_tensor);
+void SetCommonTensorData(Tensor *dst_tensor, Tensor *src_tensor);
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
 void MoveTensorListTensorData(TensorList *dst_tensor, TensorList *src_tensor);
+void SetTensorListTensorData(TensorList *dst_tensor, TensorList *src_tensor);
 #endif
 }  // namespace lite
 }  // namespace mindspore
