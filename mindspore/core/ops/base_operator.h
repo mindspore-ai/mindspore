@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,11 +30,6 @@ using AnalysisEnginePtr = std::shared_ptr<AnalysisEngine>;
 class AbstractBase;
 using AbstractBasePtr = std::shared_ptr<abstract::AbstractBase>;
 }  // namespace abstract
-
-namespace mindspore {
-class Primitive;
-using PrimitivePtr = std::shared_ptr<Primitive>;
-}  // namespace mindspore
 
 namespace mindspore {
 namespace ops {

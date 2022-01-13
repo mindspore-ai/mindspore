@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -252,7 +252,7 @@ FuncGraphPtr FuncGraph::GenerateGraph(const AbstractBasePtrList &args_spec_list)
   }
   FuncGraphPtr specialized_graph = BasicClone(shared_from_base<FuncGraph>());
   size_t kwarg_count = kwarg_list.size();
-  int pos_args_input_count = SizeToInt(arguments_count - kwarg_count - hyper_param_count_);
+  int pos_args_input_count = SizeToInt((arguments_count - kwarg_count) - hyper_param_count_);
   int pos_args_count = std::min(pos_args_input_count, this->GetPositionalArgsCount());
   int variable_args_count = pos_args_input_count - pos_args_count;
   std::vector<AnfNodePtr> specialized_parameter_list;

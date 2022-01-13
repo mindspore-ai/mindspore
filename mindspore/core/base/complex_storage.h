@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,7 @@ struct alignas(sizeof(T) * 2) ComplexStorage {
 
 template <typename T>
 inline bool operator==(const ComplexStorage<T> &lhs, const ComplexStorage<T> &rhs) {
-  return lhs.real_ == rhs.real_ && lhs.imag_ == rhs.imag_;
+  return (lhs.real_ - rhs.real_ == 0) && (lhs.imag_ - rhs.imag_ == 0);
 }
 
 template <typename T>
