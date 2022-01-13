@@ -832,7 +832,8 @@ def set_context(**kwargs):
             Through context.set_context(backend_policy="ms")
             Default: The value must be in ['ge', 'vm', 'ms'].
         runtime_num_threads(int): The thread pool number of cpu kernel and actor used in runtime,
-            which must bigger than 0.
+            which must bigger than 0. Default value if 0.6 times of the machine threads, if you run many processes at
+            the same time, you should set the value smaller to avoid thread contention.
     Raises:
         ValueError: If input key is not an attribute in context.
 
