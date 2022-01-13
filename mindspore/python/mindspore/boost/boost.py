@@ -246,7 +246,7 @@ class AutoBoost:
         if self.boost_config["dim_reduce"]:
             self.local_pca_mat_path = _get_local_pca_mat_path(self.weight_load_dir, self.pca_mat_path,
                                                               self.n_components, self.device_number)
-            optimizer = SGD(network.trainable_params(), learning_rate=1, loss_scale=optimizer.loss_scale)
+            optimizer = SGD(network.trainable_params(), learning_rate=1)
             setattr(optimizer, "dim_reduce", True)
             return network, optimizer
 
