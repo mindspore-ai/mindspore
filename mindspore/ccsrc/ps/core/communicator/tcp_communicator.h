@@ -67,12 +67,7 @@ const std::unordered_map<TcpUserCommand, std::string> kUserCommandToMsgType = {
 class TcpCommunicator : public CommunicatorBase {
  public:
   explicit TcpCommunicator(const std::shared_ptr<TaskExecutor> &task_executor, AbstractNode *node)
-      : task_executor_(task_executor),
-        server_num_(0),
-        worker_num_(0),
-        scheduler_ip_(""),
-        scheduler_port_(0),
-        abstrace_node_(node) {}
+      : task_executor_(task_executor), abstrace_node_(node) {}
   ~TcpCommunicator() = default;
 
   bool Start() override;
@@ -85,27 +80,9 @@ class TcpCommunicator : public CommunicatorBase {
   bool SendPbRequest(const T &pb_msg, const uint32_t &rank_id, TcpUserCommand command,
                      std::shared_ptr<std::vector<unsigned char>> *output = nullptr) {
     const std::string &msg_str = pb_msg.SerializeAsString();
-    auto msg_addr = std::make_unique<unsigned char[]>(msg_str.size());
-    MS_EXCEPTION_IF_NULL(msg_addr);
-    std::shared_ptr<unsigned char> msg(msg_addr.release(), std::default_delete<unsigned char[]>());
-    MS_ERROR_IF_NULL_W_RET_VAL(msg, false);
-    size_t dest_size = msg_str.size();
-    size_t src_size = msg_str.size();
-    auto ret = memcpy_s(msg.get(), dest_size, msg_str.c_str(), src_size);
-    if (ret != EOK) {
-      MS_LOG(EXCEPTION) << "memcpy_s error, error no " << ret;
-    }
-
-    if (output != nullptr) {
-      if (!abstrace_node_->Send(NodeRole::SERVER, rank_id, msg, msg_str.size(), static_cast<int>(command), output)) {
-        MS_LOG(ERROR) << "Sending protobuffer message to server " << rank_id << " failed.";
-        return false;
-      }
-    } else {
-      if (!abstrace_node_->Send(NodeRole::SERVER, rank_id, msg, msg_str.size(), static_cast<int>(command))) {
-        MS_LOG(ERROR) << "Sending protobuffer message to server " << rank_id << " failed.";
-        return false;
-      }
+    if (!abstrace_node_->Send(NodeRole::SERVER, rank_id, msg_str, static_cast<int>(command), output)) {
+      MS_LOG(ERROR) << "Sending protobuffer message to server " << rank_id << " failed.";
+      return false;
     }
     return true;
   }
@@ -115,12 +92,6 @@ class TcpCommunicator : public CommunicatorBase {
 
   TcpMsgCallback tcp_msg_callback_;
   OnNodeEventCallback event_callback_;
-
-  uint32_t server_num_;
-  uint32_t worker_num_;
-
-  std::string scheduler_ip_;
-  uint16_t scheduler_port_;
 
   AbstractNode *abstrace_node_;
 };

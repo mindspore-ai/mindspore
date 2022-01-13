@@ -29,7 +29,7 @@ void Scheduler::Run() {
   }
 
   if (!scheduler_node_->Finish()) {
-    MS_LOG(WARNING) << "Scheduler finis failed.";
+    MS_LOG(WARNING) << "Scheduler finish failed.";
   }
 
   if (!scheduler_node_->Stop()) {

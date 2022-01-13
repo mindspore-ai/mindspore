@@ -893,8 +893,9 @@ void ParameterServer::ServerHandler::Init() {
 }
 
 void ParameterServer::ServerHandler::operator()(const std::shared_ptr<core::TcpConnection> &conn,
-                                                const std::shared_ptr<core::MessageMeta> &meta, const DataPtr &data,
+                                                const std::shared_ptr<core::MessageMeta> &meta, const void *data,
                                                 size_t size) {
+  MS_EXCEPTION_IF_NULL(data);
   auto output = std::make_shared<std::vector<unsigned char>>();
   if (commands_.count(meta->user_cmd()) == 0) {
     MS_LOG(EXCEPTION) << "The command:" << meta->user_cmd() << " is not supported!";
@@ -919,10 +920,11 @@ void ParameterServer::ServerHandler::operator()(const std::shared_ptr<core::TcpC
                      .count();
 }
 
-void ParameterServer::ServerHandler::HandlePushReq(const DataPtr &data, size_t size, const VectorPtr &res) {
+void ParameterServer::ServerHandler::HandlePushReq(const void *data, size_t size, const VectorPtr &res) {
+  MS_EXCEPTION_IF_NULL(data);
   MS_EXCEPTION_IF_NULL(res);
   KVMessage input;
-  CHECK_RETURN_TYPE(input.ParseFromArray(data.get(), SizeToInt(size)));
+  CHECK_RETURN_TYPE(input.ParseFromArray(data, SizeToInt(size)));
   Keys keys = {input.keys().begin(), input.keys().end()};
   Values values = {input.values().begin(), input.values().end()};
   Lengths lens = {input.len().begin(), input.len().end()};
@@ -930,10 +932,11 @@ void ParameterServer::ServerHandler::HandlePushReq(const DataPtr &data, size_t s
   ps_->AccumGrad(keys, values, lens);
 }
 
-void ParameterServer::ServerHandler::HandlePullReq(const DataPtr &data, size_t size, const VectorPtr &res) {
+void ParameterServer::ServerHandler::HandlePullReq(const void *data, size_t size, const VectorPtr &res) {
+  MS_EXCEPTION_IF_NULL(data);
   MS_EXCEPTION_IF_NULL(res);
   KVMessage input;
-  CHECK_RETURN_TYPE(input.ParseFromArray(data.get(), SizeToInt(size)));
+  CHECK_RETURN_TYPE(input.ParseFromArray(data, SizeToInt(size)));
   KVMessage res_data;
   *res_data.mutable_keys() = input.keys();
   Key key = input.keys()[0];
@@ -950,11 +953,12 @@ void ParameterServer::ServerHandler::HandlePullReq(const DataPtr &data, size_t s
   }
 }
 
-void ParameterServer::ServerHandler::HandleInitWeights(const DataPtr &data, size_t size, const VectorPtr &res) {
+void ParameterServer::ServerHandler::HandleInitWeights(const void *data, size_t size, const VectorPtr &res) {
   std::unique_lock<std::mutex> lock(ps_->mutex());
+  MS_EXCEPTION_IF_NULL(data);
   MS_EXCEPTION_IF_NULL(res);
   KVMessage input;
-  CHECK_RETURN_TYPE(input.ParseFromArray(data.get(), SizeToInt(size)));
+  CHECK_RETURN_TYPE(input.ParseFromArray(data, SizeToInt(size)));
   int key_num = input.keys_size();
   const float *data_ptr = input.values().data();
   size_t pos = 0;
@@ -976,11 +980,12 @@ void ParameterServer::ServerHandler::HandleInitWeights(const DataPtr &data, size
   }
 }
 
-void ParameterServer::ServerHandler::HandleInitWeightToOptimId(const DataPtr &data, size_t size, const VectorPtr &res) {
+void ParameterServer::ServerHandler::HandleInitWeightToOptimId(const void *data, size_t size, const VectorPtr &res) {
   std::unique_lock<std::mutex> lock(ps_->mutex());
+  MS_EXCEPTION_IF_NULL(data);
   MS_EXCEPTION_IF_NULL(res);
   KVMessage input;
-  CHECK_RETURN_TYPE(input.ParseFromArray(data.get(), SizeToInt(size)));
+  CHECK_RETURN_TYPE(input.ParseFromArray(data, SizeToInt(size)));
   int key_num = input.keys_size();
   for (int i = 0; i < key_num; i++) {
     Key key = input.keys()[i];
@@ -994,11 +999,12 @@ void ParameterServer::ServerHandler::HandleInitWeightToOptimId(const DataPtr &da
   }
 }
 
-void ParameterServer::ServerHandler::HandleInitInputsShape(const DataPtr &data, size_t size, const VectorPtr &res) {
+void ParameterServer::ServerHandler::HandleInitInputsShape(const void *data, size_t size, const VectorPtr &res) {
   std::unique_lock<std::mutex> lock(ps_->mutex());
+  MS_EXCEPTION_IF_NULL(data);
   MS_EXCEPTION_IF_NULL(res);
   KVMessage input;
-  CHECK_RETURN_TYPE(input.ParseFromArray(data.get(), SizeToInt(size)));
+  CHECK_RETURN_TYPE(input.ParseFromArray(data, SizeToInt(size)));
   const Key &key = input.keys()[0];
   if (init_optim_info_[key]) {
     return;
@@ -1011,10 +1017,11 @@ void ParameterServer::ServerHandler::HandleInitInputsShape(const DataPtr &data, 
   ps_->InitOptimInputsShape(keys, values, lens);
 }
 
-void ParameterServer::ServerHandler::HandleInitEmbeddings(const DataPtr &data, size_t size, const VectorPtr &) {
+void ParameterServer::ServerHandler::HandleInitEmbeddings(const void *data, size_t size, const VectorPtr &) {
   std::unique_lock<std::mutex> lock(ps_->mutex());
+  MS_EXCEPTION_IF_NULL(data);
   EmbeddingTableMeta embedding_table_meta;
-  CHECK_RETURN_TYPE(embedding_table_meta.ParseFromArray(data.get(), SizeToInt(size)));
+  CHECK_RETURN_TYPE(embedding_table_meta.ParseFromArray(data, SizeToInt(size)));
   const Key &key = embedding_table_meta.key();
   MS_LOG(INFO) << "Initializing embedding table for key:" << key;
   std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> shapes =
@@ -1048,10 +1055,11 @@ void ParameterServer::ServerHandler::HandleInitEmbeddings(const DataPtr &data, s
   ps_->InitEmbeddingTable(key, shapes, param_init_info);
 }
 
-void ParameterServer::ServerHandler::HandleCheckReadyForPush(const DataPtr &data, size_t size, const VectorPtr &res) {
+void ParameterServer::ServerHandler::HandleCheckReadyForPush(const void *data, size_t size, const VectorPtr &res) {
+  MS_EXCEPTION_IF_NULL(data);
   MS_EXCEPTION_IF_NULL(res);
   KVMessage input;
-  CHECK_RETURN_TYPE(input.ParseFromArray(data.get(), SizeToInt(size)));
+  CHECK_RETURN_TYPE(input.ParseFromArray(data, SizeToInt(size)));
   const Key &key = input.keys()[0];
   bool ready = ps_->ReadyForPush(key);
   MS_LOG(INFO) << "The ready is:" << ready;
@@ -1067,10 +1075,11 @@ void ParameterServer::ServerHandler::HandleCheckReadyForPush(const DataPtr &data
   }
 }
 
-void ParameterServer::ServerHandler::HandleCheckReadyForPull(const DataPtr &data, size_t size, const VectorPtr &res) {
+void ParameterServer::ServerHandler::HandleCheckReadyForPull(const void *data, size_t size, const VectorPtr &res) {
+  MS_EXCEPTION_IF_NULL(data);
   MS_EXCEPTION_IF_NULL(res);
   KVMessage input;
-  CHECK_RETURN_TYPE(input.ParseFromArray(data.get(), SizeToInt(size)));
+  CHECK_RETURN_TYPE(input.ParseFromArray(data, SizeToInt(size)));
   const Key &key = input.keys()[0];
   bool ready = ps_->ReadyForPull(key);
   KVMessage res_data;
@@ -1085,10 +1094,11 @@ void ParameterServer::ServerHandler::HandleCheckReadyForPull(const DataPtr &data
   }
 }
 
-void ParameterServer::ServerHandler::HandleEmbeddingLookup(const DataPtr &data, size_t size, const VectorPtr &res) {
+void ParameterServer::ServerHandler::HandleEmbeddingLookup(const void *data, size_t size, const VectorPtr &res) {
+  MS_EXCEPTION_IF_NULL(data);
   MS_EXCEPTION_IF_NULL(res);
   EmbeddingTableLookup input;
-  CHECK_RETURN_TYPE(input.ParseFromArray(data.get(), SizeToInt(size)));
+  CHECK_RETURN_TYPE(input.ParseFromArray(data, SizeToInt(size)));
   const Key &key = input.key();
 
   KVMessage res_data;
@@ -1106,18 +1116,19 @@ void ParameterServer::ServerHandler::HandleEmbeddingLookup(const DataPtr &data, 
   }
 }
 
-void ParameterServer::ServerHandler::HandleUpdateEmbeddings(const DataPtr &data, size_t size, const VectorPtr &res) {
+void ParameterServer::ServerHandler::HandleUpdateEmbeddings(const void *data, size_t size, const VectorPtr &res) {
   std::unique_lock<std::mutex> lock(ps_->mutex());
+  MS_EXCEPTION_IF_NULL(data);
   MS_EXCEPTION_IF_NULL(res);
   KVMessage input;
-  CHECK_RETURN_TYPE(input.ParseFromArray(data.get(), SizeToInt(size)));
+  CHECK_RETURN_TYPE(input.ParseFromArray(data, SizeToInt(size)));
   const Key &key = input.keys()[0];
   const LookupIds &lookup_ids = {input.keys().begin() + 1, input.keys().end()};
   const Values &update_vals = {input.values().begin(), input.values().end()};
   ps_->UpdateEmbeddings(key, lookup_ids, update_vals);
 }
 
-void ParameterServer::ServerHandler::HandleFinalize(const DataPtr &, size_t, const VectorPtr &res) {
+void ParameterServer::ServerHandler::HandleFinalize(const void *, size_t, const VectorPtr &res) {
   MS_EXCEPTION_IF_NULL(res);
   ps_->Finalize();
 }

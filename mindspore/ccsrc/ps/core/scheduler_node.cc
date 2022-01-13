@@ -1211,7 +1211,7 @@ RequestProcessResult SchedulerNode::CheckIfClusterReady() {
 
 RequestProcessResult SchedulerNode::CheckIfNodeIdLegal(const std::vector<std::string> &node_ids) {
   RequestProcessResult result(RequestProcessResultCode::kSuccess);
-  if (node_ids.size() == 0) {
+  if (node_ids.empty()) {
     std::string message = "The node ids should not be empty.";
     ERROR_STATUS(result, RequestProcessResultCode::kInvalidInputs, message);
     return result;
@@ -1219,7 +1219,7 @@ RequestProcessResult SchedulerNode::CheckIfNodeIdLegal(const std::vector<std::st
 
   auto node_infos = node_manager_.nodes_info();
 
-  for (auto val : node_ids) {
+  for (const auto &val : node_ids) {
     if (!node_infos.count(val)) {
       std::string message = "The node id:" + val + " is illegal.";
       MS_LOG(ERROR) << message;

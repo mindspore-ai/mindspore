@@ -70,7 +70,7 @@ class CommunicatorBase {
   using HttpMsgCallback = std::function<void(std::shared_ptr<HttpMessageHandler>)>;
   using OnNodeEventCallback = std::function<void(const ClusterEvent &)>;
   using TcpMsgCallback = std::function<void(std::shared_ptr<core::TcpConnection> conn,
-                                            std::shared_ptr<core::MessageMeta> meta, DataPtr data, size_t size)>;
+                                            std::shared_ptr<core::MessageMeta> meta, const void *data, size_t size)>;
   CommunicatorBase() : running_(false) {}
 
   virtual ~CommunicatorBase();

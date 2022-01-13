@@ -74,9 +74,8 @@ void AbstractNode::ProcessRegisterResp(const std::shared_ptr<MessageMeta> &meta,
   MS_LOG(INFO) << "The node id is:" << node_info_.node_id_ << " registered scheduler success!";
 }
 
-bool AbstractNode::Broadcast(const NodeRole &node_role, const DataPtr &message, size_t size, int command,
+bool AbstractNode::Broadcast(const NodeRole &node_role, const std::string &message, int command,
                              const uint32_t &timeout) {
-  MS_EXCEPTION_IF_NULL(message);
   if (node_role != NodeRole::SERVER) {
     MS_LOG(EXCEPTION) << "Currently only supports broadcast to server nodes";
   }
@@ -102,7 +101,7 @@ bool AbstractNode::Broadcast(const NodeRole &node_role, const DataPtr &message, 
     message_meta->set_user_cmd(command);
 
     auto client = GetOrCreateTcpClient((*it).first.second);
-    if (!client->SendMessage(message_meta, Protos::RAW, message.get(), size)) {
+    if (!client->SendMessage(message_meta, Protos::RAW, message.data(), message.size())) {
       MS_LOG(WARNING) << "Client send message failed.";
     }
   }
@@ -200,77 +199,24 @@ void AbstractNode::RegisterCustomEventCallback(const uint32_t &event, const Even
   custom_event_to_callback_.try_emplace(event, event_cb);
 }
 
-bool AbstractNode::Send(const NodeRole &node_role, const uint32_t &rank_id, const DataPtr &data, size_t len,
-                        int command, const uint32_t &timeout) {
-  MS_EXCEPTION_IF_NULL(data);
-  if (!CommUtil::ValidateRankId(node_role, rank_id, worker_num_, server_num_)) {
-    MS_LOG(EXCEPTION) << "The node role or rank_id is illegal, the worker num:" << worker_num_
-                      << ", the server num:" << server_num_ << ", the rank id:" << rank_id;
-  }
-
-  auto message_meta = std::make_shared<MessageMeta>();
-  MS_EXCEPTION_IF_NULL(message_meta);
-  message_meta->set_cmd(NodeCommand::SEND_DATA);
-  message_meta->set_rank_id(node_info_.rank_id_);
-  message_meta->set_role(node_info_.node_role_);
-  message_meta->set_user_cmd(command);
-
-  auto client = GetOrCreateTcpClient(rank_id);
-  return SendMessageSync(client, message_meta, Protos::RAW, data.get(), len, timeout);
-}
-
-bool AbstractNode::Send(const NodeRole &node_role, const std::vector<uint32_t> &rank_ids,
-                        const std::vector<DataPtr> &data, const std::vector<size_t> &lens, int command,
-                        const uint32_t &timeout) {
-  uint64_t request_id = AddMessageTrack(data.size());
-
-  if (rank_ids.size() != data.size() || rank_ids.size() != lens.size()) {
-    MS_LOG(EXCEPTION) << "The number of rank ids, data and lens are not equal!";
-  }
-  for (size_t it = 0; it < rank_ids.size(); ++it) {
-    if (!CommUtil::ValidateRankId(node_role, rank_ids.at(it), worker_num_, server_num_)) {
-      MS_LOG(EXCEPTION) << "The node role or rank_id is illegal, the worker num:" << worker_num_
-                        << ", the server num:" << server_num_ << ", the rank id:" << rank_ids.at(it);
-    }
-
-    auto message_meta = std::make_shared<MessageMeta>();
-    MS_EXCEPTION_IF_NULL(message_meta);
-    message_meta->set_cmd(NodeCommand::SEND_DATA);
-    message_meta->set_request_id(request_id);
-    message_meta->set_rank_id(node_info_.rank_id_);
-    message_meta->set_role(node_info_.node_role_);
-    message_meta->set_user_cmd(command);
-
-    auto send = data.at(it);
-    auto len = lens.at(it);
-    auto client = GetOrCreateTcpClient(rank_ids.at(it));
-    MS_EXCEPTION_IF_NULL(client);
-    if (!client->SendMessage(message_meta, Protos::RAW, send.get(), len)) {
-      MS_LOG(WARNING) << "Client send message failed.";
-    }
-  }
-  MS_LOG(DEBUG) << "The node role is:" << CommUtil::NodeRoleToString(node_info_.node_role_)
-                << ", the node id is:" << node_info_.node_id_ << " send the request id is:" << request_id;
-  return Wait(request_id, timeout);
-}
-
-bool AbstractNode::Send(const NodeRole &node_role, const uint32_t &rank_id, const DataPtr &message, size_t len,
+bool AbstractNode::Send(const NodeRole &node_role, const uint32_t &rank_id, const void *message, size_t len,
                         int command, VectorPtr *output, const uint32_t &timeout) {
   MS_EXCEPTION_IF_NULL(message);
-  MS_EXCEPTION_IF_NULL(output);
   if (!CommUtil::ValidateRankId(node_role, rank_id, worker_num_, server_num_)) {
     MS_LOG(EXCEPTION) << "The node role or rank_id is illegal, the worker num:" << worker_num_
                       << ", the server num:" << server_num_ << ", the rank id:" << rank_id;
   }
 
   uint64_t request_id = AddMessageTrack(1);
-  set_message_callback(request_id, [&]() {
-    receive_messages_mutex_.lock();
-    auto res = receive_messages_[request_id];
-    *output = res[rank_id];
-    receive_messages_.erase(request_id);
-    receive_messages_mutex_.unlock();
-  });
+  if (output != nullptr) {
+    set_message_callback(request_id, [this, request_id, rank_id, output]() {
+      receive_messages_mutex_.lock();
+      auto res = receive_messages_[request_id];
+      *output = res[rank_id];
+      receive_messages_.erase(request_id);
+      receive_messages_mutex_.unlock();
+    });
+  }
 
   auto message_meta = std::make_shared<MessageMeta>();
   MS_EXCEPTION_IF_NULL(message_meta);
@@ -282,7 +228,7 @@ bool AbstractNode::Send(const NodeRole &node_role, const uint32_t &rank_id, cons
 
   auto client = GetOrCreateTcpClient(rank_id);
   MS_EXCEPTION_IF_NULL(client);
-  if (!client->SendMessage(message_meta, Protos::RAW, message.get(), len)) {
+  if (!client->SendMessage(message_meta, Protos::RAW, message, len)) {
     MS_LOG(WARNING) << "Client send message failed.";
   }
   MS_LOG(DEBUG) << "The node role is:" << CommUtil::NodeRoleToString(node_info_.node_role_)
@@ -290,28 +236,33 @@ bool AbstractNode::Send(const NodeRole &node_role, const uint32_t &rank_id, cons
   return Wait(request_id, timeout);
 }
 
-bool AbstractNode::Send(const NodeRole &node_role, const std::vector<uint32_t> &rank_ids,
-                        const std::vector<DataPtr> &data, const std::vector<size_t> &data_lens, int command,
-                        std::vector<VectorPtr> *output, const uint32_t &timeout) {
-  MS_EXCEPTION_IF_NULL(output);
-  uint64_t request_id = AddMessageTrack(data.size());
+bool AbstractNode::Send(const NodeRole &node_role, const uint32_t &rank_id, const std::string &msg, int command,
+                        VectorPtr *output, const uint32_t &timeout) {
+  return Send(node_role, rank_id, msg.data(), msg.length(), command, output, timeout);
+}
 
-  if (rank_ids.size() != data.size()) {
-    MS_LOG(EXCEPTION) << "The number of rank ids, data, comm_message_resp should be equal!";
+bool AbstractNode::Send(const NodeRole &node_role, const std::vector<uint32_t> &rank_ids,
+                        const std::vector<std::string> &msgs, int command, std::vector<VectorPtr> *output,
+                        const uint32_t &timeout) {
+  uint64_t request_id = AddMessageTrack(msgs.size());
+
+  if (rank_ids.size() != msgs.size()) {
+    MS_LOG(EXCEPTION) << "The number of rank ids and messages are not equal!";
   }
 
+  if (output != nullptr) {
+    set_message_callback(request_id, [this, request_id, &rank_ids, output]() {
+      receive_messages_mutex_.lock();
+      auto &res = receive_messages_[request_id];
+      for (auto &rank_id : rank_ids) {
+        auto &response = res[rank_id];
+        output->push_back(response);
+      }
+      receive_messages_.erase(request_id);
+      receive_messages_mutex_.unlock();
+    });
+  }
   size_t size = rank_ids.size();
-
-  set_message_callback(request_id, [&]() {
-    receive_messages_mutex_.lock();
-    auto res = receive_messages_[request_id];
-    for (size_t it = 0; it < size; ++it) {
-      (*output).push_back(res[rank_ids.at(it)]);
-    }
-    receive_messages_.erase(request_id);
-    receive_messages_mutex_.unlock();
-  });
-
   for (size_t it = 0; it < size; ++it) {
     if (!CommUtil::ValidateRankId(node_role, rank_ids.at(it), worker_num_, server_num_)) {
       MS_LOG(EXCEPTION) << "The node role or rank_id is illegal, the worker num:" << worker_num_
@@ -326,12 +277,11 @@ bool AbstractNode::Send(const NodeRole &node_role, const std::vector<uint32_t> &
     message_meta->set_role(node_info_.node_role_);
     message_meta->set_user_cmd(command);
 
-    auto send = data.at(it);
-    auto len = data_lens.at(it);
+    auto &msg = msgs.at(it);
 
     auto client = GetOrCreateTcpClient(rank_ids.at(it));
     MS_EXCEPTION_IF_NULL(client);
-    if (!client->SendMessage(message_meta, Protos::RAW, send.get(), len)) {
+    if (!client->SendMessage(message_meta, Protos::RAW, msg.data(), msg.size())) {
       MS_LOG(WARNING) << "Client send message failed.";
     }
   }
@@ -1063,25 +1013,13 @@ void AbstractNode::ProcessSendData(const std::shared_ptr<TcpConnection> &conn, c
     MS_LOG(ERROR) << "size < 0";
     return;
   }
-  auto res_addr = std::make_unique<unsigned char[]>(size);
-  MS_EXCEPTION_IF_NULL(res_addr);
-  std::shared_ptr<unsigned char> res(res_addr.release(), std::default_delete<unsigned char[]>());
-  MS_EXCEPTION_IF_NULL(res);
-  if (size > 0) {
-    size_t dest_size = size;
-    size_t src_size = size;
-    auto ret = memcpy_s(res.get(), dest_size, data, src_size);
-    if (ret != EOK) {
-      MS_LOG(EXCEPTION) << "The memcpy_s error, errorno(" << ret << ")";
-    }
-  }
   MS_LOG(DEBUG) << "The node role is:" << CommUtil::NodeRoleToString(node_info_.node_role_)
                 << ", the node id is:" << node_info_.node_id_ << " send the request id is:" << meta->request_id()
                 << " the current time is:"
                 << std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now())
                      .time_since_epoch()
                      .count();
-  request_handler_(conn, meta, res, size);
+  request_handler_(conn, meta, data, size);
 }
 
 void AbstractNode::NotifyMessageArrival(const std::shared_ptr<MessageMeta> &meta) {
