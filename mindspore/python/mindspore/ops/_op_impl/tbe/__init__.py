@@ -304,6 +304,7 @@ from .rsqrt_ds import _rsqrt_ds_tbe
 from .sigmoid import _sigmoid_tbe
 from .sigmoid_ds import _sigmoid_ds_tbe
 from .sigmoid_grad import _sigmoid_grad_tbe
+from .sigmoid_grad_ds import _sigmoid_grad_ds_tbe
 from .resize_nearest_neighbor import _resize_nearest_neighbor_tbe
 from .resize_nearest_neighbor_ds import _resize_nearest_neighbor_ds_tbe
 from .resize_nearest_neighbor_grad import _resize_nearest_neighbor_grad_tbe

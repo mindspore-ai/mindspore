@@ -1773,20 +1773,14 @@ class PsROIPoolingGrad(PrimitiveWithInfer):
     def infer_dtype(self, ydiff_type, rois_type, mapping_channel_type):
         return ydiff_type
 
-class SigmoidGrad(PrimitiveWithInfer):
+class SigmoidGrad(Primitive):
     """Gets the gradient of Sigmoid operation."""
 
     @prim_attr_register
     def __init__(self):
-        pass
+        """Initialize SigmoidGrad"""
+        self.init_prim_io_names(inputs=['y', 'dy'], outputs=['output'])
 
-    def infer_shape(self, out, dout):
-        return out
-
-    def infer_dtype(self, out, dout):
-        args = {'out': out, 'dout': dout}
-        validator.check_tensors_dtypes_same_and_valid(args, mstype.number_type, self.name)
-        return out
 
 
 class _ActivationGrad(PrimitiveWithInfer):
