@@ -127,7 +127,7 @@ class CropAndResizeGpuKernel : public GpuKernel {
                         << input_crop_size_shape_len;
     }
     if (input_crop_size_shape[0] != 2) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the first element in crop_size should be 2, but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the length of crop_size should be 2, but got "
                         << input_crop_size_shape[0];
     }
     input_crop_size_ = 1;
