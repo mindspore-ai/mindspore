@@ -36,14 +36,13 @@ void StartFLJobKernel::InitKernel(size_t) {
   }
   iter_next_req_timestamp_ = LongToUlong(CURRENT_TIME_MILLI.count()) + iteration_time_window_;
   LocalMetaStore::GetInstance().put_value(kCtxIterationNextRequestTimestamp, iter_next_req_timestamp_);
-
+  InitClientVisitedNum();
   executor_ = &Executor::GetInstance();
   MS_EXCEPTION_IF_NULL(executor_);
   if (!executor_->initialized()) {
     MS_LOG(EXCEPTION) << "Executor must be initialized in server pipeline.";
     return;
   }
-
   PBMetadata devices_metas;
   DistributedMetadataStore::GetInstance().RegisterMetadata(kCtxDeviceMetas, devices_metas);
 
@@ -132,6 +131,7 @@ bool StartFLJobKernel::Launch(const std::vector<AddressPtr> &inputs, const std::
     GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
     return ConvertResultCode(result_code);
   }
+  IncreaseAcceptClientNum();
   GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
   return true;
 }

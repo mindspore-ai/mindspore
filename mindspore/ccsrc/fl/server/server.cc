@@ -242,6 +242,8 @@ void Server::InitIteration() {
   FinishIterCb finish_iter_cb =
     std::bind(&Iteration::NotifyNext, iteration_, std::placeholders::_1, std::placeholders::_2);
   iteration_->InitRounds(communicators_with_worker_, time_out_cb, finish_iter_cb);
+
+  iteration_->InitGlobalIterTimer(time_out_cb);
   return;
 }
 

@@ -56,10 +56,23 @@ class Round {
   // Round needs to be reset after each iteration is finished or its timer expires.
   void Reset();
 
+  void KernelSummarize();
+
   const std::string &name() const;
+
   size_t threshold_count() const;
+
   bool check_timeout() const;
+
   size_t time_window() const;
+
+  size_t kernel_total_client_num() const;
+
+  size_t kernel_accept_client_num() const;
+
+  size_t kernel_reject_client_num() const;
+
+  void InitkernelClientVisitedNum();
 
  private:
   // The callbacks which will be set to DistributedCounterService.

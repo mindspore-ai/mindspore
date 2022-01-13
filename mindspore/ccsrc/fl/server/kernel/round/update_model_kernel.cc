@@ -29,7 +29,7 @@ void UpdateModelKernel::InitKernel(size_t threshold_count) {
   if (LocalMetaStore::GetInstance().has_value(kCtxTotalTimeoutDuration)) {
     iteration_time_window_ = LocalMetaStore::GetInstance().value<size_t>(kCtxTotalTimeoutDuration);
   }
-
+  InitClientVisitedNum();
   executor_ = &Executor::GetInstance();
   MS_EXCEPTION_IF_NULL(executor_);
   if (!executor_->initialized()) {
@@ -121,6 +121,7 @@ bool UpdateModelKernel::Launch(const std::vector<AddressPtr> &inputs, const std:
     GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
     return ConvertResultCode(result_code);
   }
+  IncreaseAcceptClientNum();
   GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
   return true;
 }

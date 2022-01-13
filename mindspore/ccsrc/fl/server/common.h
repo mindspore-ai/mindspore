@@ -86,6 +86,13 @@ enum class InstanceState {
   kFinish
 };
 
+enum class IterationResult {
+  // The iteration is timeout because of startfljob or updatemodel timeout.
+  kTimeout,
+  // The iteration is successful aggregation.
+  kSuccess
+};
+
 using mindspore::kernel::Address;
 using mindspore::kernel::AddressPtr;
 using mindspore::kernel::CPUKernel;
@@ -133,6 +140,15 @@ constexpr auto kFtrlLinear = "linear";
 constexpr auto kDataSize = "data_size";
 constexpr auto kNewDataSize = "new_data_size";
 constexpr auto kStat = "stat";
+constexpr auto kStartFLJobTotalClientNum = "startFLJobTotalClientNum";
+constexpr auto kStartFLJobAcceptClientNum = "startFLJobAcceptClientNum";
+constexpr auto kStartFLJobRejectClientNum = "startFLJobRejectClientNum";
+constexpr auto kUpdateModelTotalClientNum = "updateModelTotalClientNum";
+constexpr auto kUpdateModelAcceptClientNum = "updateModelAcceptClientNum";
+constexpr auto kUpdateModelRejectClientNum = "updateModelRejectClientNum";
+constexpr auto kGetModelTotalClientNum = "getModelTotalClientNum";
+constexpr auto kGetModelAcceptClientNum = "getModelAcceptClientNum";
+constexpr auto kGetModelRejectClientNum = "getModelRejectClientNum";
 
 // OptimParamNameToIndex represents every inputs/workspace/outputs parameter's offset when an optimizer kernel is
 // launched.
