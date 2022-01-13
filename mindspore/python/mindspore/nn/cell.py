@@ -765,7 +765,8 @@ class Cell(Cell_):
         self._construct_inputs_names = fn.__code__.co_varnames
 
         if self._construct_inputs_num <= 0:
-            raise ValueError(f"The number of inputs must be greater than 0, but got {self._construct_inputs_num}.")
+            raise ValueError(f"For 'set_auto_parallel', the number of inputs must be greater than 0,"
+                             f"but got {self._construct_inputs_num}.")
         if self._construct_inputs_names[0] != 'self':
             raise ValueError(f"First member of fn function must be self, but got {self._construct_inputs_names[0]}")
         if self._construct_inputs_num - 1 > len(self._construct_inputs_names):
@@ -855,7 +856,7 @@ class Cell(Cell_):
         if check_name_contain_dot and '.' in param_name:
             raise KeyError("For 'insert_param_to_cell', the argument 'param_name' should not contain \".\"")
         if '_params' not in self.__dict__:
-            raise AttributeError("Please call Cell.__init__() firstly.")
+            raise AttributeError("For 'insert_param_to_cell', please call Cell.__init__() firstly.")
         if hasattr(self, param_name) and param_name not in self._params:
             raise KeyError("For 'insert_param_to_cell', the {} parameter already exists in the network. Cannot "
                            "insert another parameter with the same name.".format(param_name))
