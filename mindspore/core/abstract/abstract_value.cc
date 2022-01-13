@@ -332,8 +332,8 @@ void SynchronizeSequenceNodesElementsUseFlagsInner(const AnfNodeWeakPtrList &seq
       unique_flags = current_flags;
     } else {
       if (current_count > 1 && latter_count > 1) {
-        MS_LOG(INFO) << "Allow only one side has more than one use count. count: " << current_count << ", "
-                     << latter_count;
+        MS_LOG(DEBUG) << "Allow only one side has more than one use count. count: " << current_count << ", "
+                      << latter_count;
       }
       if (current_count > latter_count) {
         unique_flags = current_flags;
