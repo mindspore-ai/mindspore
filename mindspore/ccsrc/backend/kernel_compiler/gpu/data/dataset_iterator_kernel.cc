@@ -49,6 +49,7 @@ const std::vector<size_t> &DatasetIteratorKernel::GetWorkspaceSizeList() const {
 bool DatasetIteratorKernel::Init(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_node_ = kernel_node;
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   queue_name_ = GetAttr<std::string>(kernel_node, "shared_name");
   std::vector<std::vector<int>> shapes;
   std::vector<TypePtr> types;
@@ -145,7 +146,8 @@ bool DatasetIteratorKernel::Launch(const std::vector<AddressPtr> &, const std::v
     return false;
   }
   if (total_bytes_ != len) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', dataset front error, read: " << len << ", expect: " << total_bytes_;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', dataset front error, read: " << len
+                  << " Bytes, expect: " << total_bytes_ << " Bytes.";
     return false;
   }
 

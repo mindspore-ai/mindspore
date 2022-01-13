@@ -62,11 +62,8 @@ class SqueezeGpuKernel : public GpuKernel {
       return true;
     }
     int64_t dims = SizeToLong(input_shape.size());
-    if (dims == 0) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input cannot be 0, but got " << dims;
-    }
     for (const auto i : axis) {
-      if (i < -dims || i >= dims) {
+      if (dims != 0 && (i < -dims || i >= dims)) {
         MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the 'axis' should be in the range [-" << dims << "," << dims
                           << "), but got " << i;
       }
