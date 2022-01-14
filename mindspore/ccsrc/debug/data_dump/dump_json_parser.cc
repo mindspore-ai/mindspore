@@ -65,8 +65,15 @@ std::string GetIfstreamString(const std::ifstream &ifstream) {
 }
 
 bool DumpJsonParser::IsDumpEnabled() {
+  auto single_op = common::GetEnv(kGraphOpRun);
   auto config_path = common::GetEnv(kMindsporeDumpConfig);
   if (config_path.empty()) {
+    return false;
+  }
+  // Dump is supported with Ascend kernel-by-kernel mode (mindRT) when kGraphOpRun is set.
+  if (!single_op.empty() && single_op == "1" && !MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
+    MS_LOG(WARNING) << "Dump is not supported when task is not sink. Please set env GRAPH_OP_RUN to 0 to enable task "
+                       "sink, so that the data can be dumped.";
     return false;
   }
   MS_LOG(INFO) << "Dump config path is " << config_path;
