@@ -13,25 +13,93 @@
 # limitations under the License.
 # ==============================================================================
 """
-This dataset module supports various formats of datasets, including ImageNet, TFData,
-MNIST, Cifar10/100, Manifest, MindRecord, and more. This module loads data with
-high performance and parses data precisely. Some of the operations that are
-provided to users to preprocess data include shuffle, batch, repeat, map, and zip.
+This file contains standard format dataset loading classes.
+You can convert a dataset to a standard format using the following steps:
+    1. Use mindspore.mindrecord.FileWriter / tf.io.TFRecordWriter api to
+       convert dataset to MindRecord / TFRecord.
+    2. Use MindDataset / TFRecordDataset to load MindRecord / TFRecrod files.
+After declaring the dataset object, you can further apply dataset operations
+(e.g. filter, skip, concat, map, batch) on it.
 """
 import numpy as np
 
 import mindspore._c_dataengine as cde
 
 from mindspore import log as logger
-from .datasets import MappableDataset, SourceDataset, TextBaseDataset, Shuffle, Schema, \
+from .datasets import UnionBaseDataset, SourceDataset, MappableDataset, Shuffle, Schema, \
     shuffle_to_shuffle_mode, shuffle_to_bool
-from .validators import check_minddataset, check_tfrecorddataset
+from .validators import check_minddataset, check_tfrecorddataset, check_csvdataset
 
 from ..core.validator_helpers import replace_none
 from . import samplers
 
 
-class MindDataset(MappableDataset, TextBaseDataset):
+class CSVDataset(SourceDataset, UnionBaseDataset):
+    """
+    A source dataset that reads and parses comma-separated values
+    `(CSV) <http://en.volupedia.org/wiki/Comma-separated_values>`_ files as dataset.
+    The columns of generated dataset depend on the source CSV files.
+
+    Args:
+        dataset_files (Union[str, list[str]]): String or list of files to be read or glob strings to search
+            for a pattern of files. The list will be sorted in a lexicographical order.
+        field_delim (str, optional): A string that indicates the char delimiter to separate fields (default=',').
+        column_defaults (list, optional): List of default values for the CSV field (default=None). Each item
+            in the list is either a valid type (float, int, or string). If this is not provided, treats all
+            columns as string type.
+        column_names (list[str], optional): List of column names of the dataset (default=None). If this
+            is not provided, infers the column_names from the first row of CSV file.
+        num_samples (int, optional): The number of samples to be included in the dataset
+            (default=None, will include all images).
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, number set in the config).
+        shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
+            (default=Shuffle.GLOBAL).
+            If shuffle is False, no shuffling will be performed.
+            If shuffle is True, performs global shuffle.
+            There are three levels of shuffling, desired shuffle enum defined by mindspore.dataset.Shuffle.
+
+            - Shuffle.GLOBAL: Shuffle both the files and samples, same as setting shuffle to True.
+
+            - Shuffle.FILES: Shuffle files only.
+
+        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument can only be specified when num_shards is also specified.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
+            (default=None, which means no cache is used).
+
+    Raises:
+        RuntimeError: If dataset_files are not valid or do not exist.
+        ValueError: If field_delim is invalid.
+        ValueError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+
+    Examples:
+        >>> csv_dataset_dir = ["/path/to/csv_dataset_file"] # contains 1 or multiple csv files
+        >>> dataset = ds.CSVDataset(dataset_files=csv_dataset_dir, column_names=['col1', 'col2', 'col3', 'col4'])
+    """
+
+    @check_csvdataset
+    def __init__(self, dataset_files, field_delim=',', column_defaults=None, column_names=None, num_samples=None,
+                 num_parallel_workers=None, shuffle=Shuffle.GLOBAL, num_shards=None, shard_id=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, num_samples=num_samples, shuffle=shuffle,
+                         num_shards=num_shards, shard_id=shard_id, cache=cache)
+        self.dataset_files = self._find_files(dataset_files)
+        self.dataset_files.sort()
+        self.field_delim = replace_none(field_delim, ',')
+        self.column_defaults = replace_none(column_defaults, [])
+        self.column_names = replace_none(column_names, [])
+
+    def parse(self, children=None):
+        return cde.CSVNode(self.dataset_files, self.field_delim, self.column_defaults, self.column_names,
+                           self.num_samples, self.shuffle_flag, self.num_shards, self.shard_id)
+
+
+class MindDataset(MappableDataset, UnionBaseDataset):
     """
     A source dataset for reading and parsing MindRecord dataset.
 
@@ -160,7 +228,7 @@ class MindDataset(MappableDataset, TextBaseDataset):
                     self.new_padded_sample[k] = v
 
 
-class TFRecordDataset(SourceDataset, TextBaseDataset):
+class TFRecordDataset(SourceDataset, UnionBaseDataset):
     """
     A source dataset for reading and parsing datasets stored on disk in TFData format.
 
