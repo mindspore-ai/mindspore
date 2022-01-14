@@ -220,6 +220,7 @@ union PrimitiveType {
     Affine,
     AllGather,
     ReduceScatter,
+    DynamicQuant,
 }
 
 table Abs {
@@ -1215,4 +1216,9 @@ table ReduceScatter {
     group: string;
     mode: ReduceMode;
     rank_size: int;
+}
+
+table DynamicQuant {
+    symmetric: bool = false;
+    dst_type: long = 32;
 }
