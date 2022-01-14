@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1375,17 +1375,16 @@ void Debugger::LoadParametersAndConst() {
 void Debugger::LoadParametersAndConst(const KernelGraphPtr &graph) {
   if (!(debugger_enabled_ || CheckDebuggerDumpEnabled())) return;
   MS_EXCEPTION_IF_NULL(graph);
-  MS_EXCEPTION_IF_NULL(graph_ptr_);
   // load parameters
   MS_LOG(INFO) << "Start to load Parameters for graph " << graph->graph_id() << ".";
-  const auto &parameters = graph_ptr_->inputs();
+  const auto &parameters = graph->inputs();
   for (auto &item : parameters) {
     LoadSingleAnfnode(item, PARAMETER_OUTPUT_INDEX);
   }
   // load value nodes
   // get all constant values from the graph
   MS_LOG(INFO) << "Start to load value nodes for graph " << graph->graph_id() << ".";
-  const auto value_nodes = graph_ptr_->graph_value_nodes();
+  const auto value_nodes = graph->graph_value_nodes();
   for (auto &item : value_nodes) {
     LoadSingleAnfnode(item, VALUE_NODE_OUTPUT_INDEX);
   }

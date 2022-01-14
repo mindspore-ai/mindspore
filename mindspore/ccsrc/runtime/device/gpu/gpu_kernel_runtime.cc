@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -149,7 +149,8 @@ void LoadKernelData(Debugger *debugger, const CNodePtr &kernel,
     if ((dump_mode == 0) || ((dump_mode == 1) && dump_json_parser.NeedDump(kernel_name))) {
       read_data = true;
     }
-  } else if (debugger->debugger_enabled()) {
+  }
+  if (debugger->debugger_enabled()) {
     read_data = debugger->ReadNodeDataRequired(kernel);
   }
   if (!read_data) {
