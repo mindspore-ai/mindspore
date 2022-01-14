@@ -21,7 +21,7 @@ typedef struct TensorArrayParameter {
   OpParameter op_parameter_;
   bool dynamic_size_;
   bool identical_element_shapes_;
-  int *element_shape_;
+  int element_shape_[MAX_SHAPE_SIZE];
   int element_shape_size_;
   int data_type_;
 } TensorArrayParameter;

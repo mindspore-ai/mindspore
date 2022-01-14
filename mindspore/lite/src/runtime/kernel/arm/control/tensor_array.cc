@@ -142,8 +142,4 @@ int TensorArrayWriteCPUKernel::Run() {
   lite::Tensor::CopyTensorData(*value, TensorArrayBaseCPUKernel::handle_);
   return RET_OK;
 }
-
-REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_TensorArray, LiteKernelCreator<TensorArrayCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_TensorArrayRead, LiteKernelCreator<TensorArrayReadCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_TensorArrayWrite, LiteKernelCreator<TensorArrayWriteCPUKernel>)
 }  // namespace mindspore::kernel
