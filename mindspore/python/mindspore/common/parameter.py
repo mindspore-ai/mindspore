@@ -66,7 +66,7 @@ def init_to_value(init):
 
 
 class Parameter(Tensor_):
-    r"""
+    """
     `Parameter` is a `Tensor` subclass, when they are assigned as Cell attributes they are automatically added to
      the list of its parameters, and will appear e.g. in `cell.get_parameters()` iterator.
 
@@ -94,7 +94,7 @@ class Parameter(Tensor_):
                 self.param_b = Parameter(Tensor([2], ms.float32))
 
             2) If parameter in list or tuple is not given a name, will give it a unique name. For example, the names of
-            parameters below are Parameter\$1 and Parameter\$2.
+            parameters below are **Parameter$1** and **Parameter$2**.
 
             .. code-block::
 
