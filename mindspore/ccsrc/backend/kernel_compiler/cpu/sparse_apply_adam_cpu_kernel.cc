@@ -111,7 +111,7 @@ void SparseApplyAdamCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   std::vector<size_t> indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 10);
   if (var_shape.empty()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dimension of 'var' should be at least 1-D, but got empty tensor.";
+                      << "', the dimension of 'var' should be at least 1-D, but got scalar or None.";
   }
   if (!IsSameShape(var_shape, m_shape)) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
