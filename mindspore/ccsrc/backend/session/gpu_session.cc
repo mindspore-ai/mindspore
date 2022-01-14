@@ -392,14 +392,14 @@ void GPUSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
 
 GraphId GPUSession::CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) {
   // Construct graph, if successfully, graph_sum_ + 1
-  auto graph = ConstructKernelGraph(lst, outputs);
+  auto graph = ConstructKernelGraph(lst, outputs, DeviceAddressType::kGPU);
   MS_EXCEPTION_IF_NULL(graph);
   return CompileGraphImpl(graph);
 }
 
 GraphId GPUSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
   std::vector<KernelGraphPtr> all_graphs;
-  auto root_graph = ConstructKernelGraph(func_graph, &all_graphs);
+  auto root_graph = ConstructKernelGraph(func_graph, &all_graphs, DeviceAddressType::kGPU);
   MS_EXCEPTION_IF_NULL(root_graph);
   if (all_graphs.size() != 1) {
     MS_LOG(EXCEPTION) << "Gpu backend does not support multi-graph schedule, graph num is " << all_graphs.size();
