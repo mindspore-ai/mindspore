@@ -365,6 +365,7 @@ MS_CORE_API inline const PrimitivePtr kPrimAudioSpectrogram = std::make_shared<P
 MS_CORE_API inline const PrimitivePtr kPrimFlatten = std::make_shared<Primitive>("Flatten");
 MS_CORE_API inline const PrimitivePtr kPrimCrop = std::make_shared<Primitive>("Crop");
 MS_CORE_API inline const PrimitivePtr kPrimFlattenGrad = std::make_shared<Primitive>("FlattenGrad");
+MS_CORE_API inline const PrimitivePtr kPrimSoftsign = std::make_shared<Primitive>("Softsign");
 MS_CORE_API inline const PrimitivePtr kPrimSoftmax = std::make_shared<Primitive>("Softmax");
 MS_CORE_API inline const PrimitivePtr kPrimSparseSoftmaxCrossEntropy =
   std::make_shared<Primitive>("SparseSoftmaxCrossEntropy");
