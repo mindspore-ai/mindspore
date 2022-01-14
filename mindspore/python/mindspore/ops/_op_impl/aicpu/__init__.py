@@ -50,6 +50,9 @@ from .log_uniform_candidate_sampler import _log_uniform_candidate_sampler_aicpu
 from .compute_accidental_hits import _compute_accidental_hits_aicpu
 from .ctcloss import _ctcloss_aicpu
 from .reverse_sequence import _reverse_sequence_aicpu
+from .matrix_inverse import _matrix_inverse_aicpu
+from .matrix_determinant import _matrix_determinant_aicpu
+from .log_matrix_determinant import _log_matrix_determinant_aicpu
 from .crop_and_resize import _crop_and_resize_aicpu
 from .rnnt_loss import _rnnt_loss_aicpu
 from .random_categorical import _random_categorical_aicpu
