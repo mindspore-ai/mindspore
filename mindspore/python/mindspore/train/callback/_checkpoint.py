@@ -355,7 +355,8 @@ class ModelCheckpoint(Callback):
         config (CheckpointConfig): Checkpoint strategy configuration. Default: None.
 
     Raises:
-        ValueError: If the prefix is invalid.
+        ValueError: If `prefix` is not str or contains the '/' character.
+        ValueError: If `directory` is not str.
         TypeError: If the config is not CheckpointConfig type.
     """
 

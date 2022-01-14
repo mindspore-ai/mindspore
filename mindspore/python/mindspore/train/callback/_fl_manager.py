@@ -237,7 +237,7 @@ class FederatedLearningManager(Callback):
         adaptively adjusted here.
 
         Args:
-            run_context (RunContext): Context of the train running.
+            run_context (RunContext): Include some information of the model.
         """
         self._global_step += 1
         cb_params = run_context.original_args()
