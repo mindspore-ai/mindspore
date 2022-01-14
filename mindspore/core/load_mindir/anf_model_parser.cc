@@ -40,9 +40,6 @@ namespace mindspore {
 std::map<std::string, tensor::TensorPtr> MSANFModelParser::load_tensor_map_;
 namespace {
 static constexpr char kConstantValueNode[] = "Constant";
-static constexpr char kCNodeShapeAttr[] = "shape";
-static constexpr char kCNodeShape1Attr[] = "shape1";
-static constexpr char kCNodeShape2Attr[] = "shape2";
 static constexpr char kDoSignaturePrimitivePrefix[] = "S-Prim-";
 static constexpr char kHyperMapPrefix[] = "hyper_map";
 
@@ -81,7 +78,7 @@ template <typename T, typename P>
 std::shared_ptr<T> ParserAttr(const std::string &str, const mindspore::HashMap<string, P> &kv) {
   std::stack<std::string> rules;
   std::stack<P> value;
-  int count = 0;
+  size_t count = 0;
   for (size_t i = 0; i < str.length(); i++) {
     if (str[i] == '[') {
       rules.push(std::string("["));
@@ -110,7 +107,7 @@ std::shared_ptr<T> ParserAttr(const std::string &str, const mindspore::HashMap<s
     } else {
       count++;
       if (str[i + 1] == '[' || str[i + 1] == ']' || str[i + 1] == ',') {
-        auto value_name = str.substr(static_cast<int>(i) - count + 1, count);
+        auto value_name = str.substr((i - count) + 1, count);
         if (kv.find(value_name) == kv.end()) {
           MS_LOG(ERROR) << "Node's attributes and shape do not match.";
           return nullptr;
@@ -128,7 +125,7 @@ template <typename T>
 std::shared_ptr<T> ParserScalarAttrValue(const std::string &attr_name, const mindspore::HashMap<string, ValuePtr> &kv) {
   std::string str = attr_name;
   auto replace = [&](const string &orgStr, const string &newStr) {
-    std::string::size_type pos(0);
+    std::string::size_type pos;
     while ((pos = str.find(orgStr)) != std::string::npos) {
       str.replace(pos, orgStr.length(), newStr);
     }
@@ -148,7 +145,7 @@ std::shared_ptr<abstract::AbstractTuple> ParserAttrShape(
   const std::string &attr_name, const mindspore::HashMap<string, abstract::AbstractBasePtr> &kv) {
   std::string str = attr_name;
   auto replace = [&](const string &orgStr, const string &newStr) {
-    std::string::size_type pos(0);
+    std::string::size_type pos;
     while ((pos = str.find(orgStr)) != std::string::npos) {
       str.replace(pos, orgStr.length(), newStr);
     }
@@ -167,7 +164,7 @@ std::shared_ptr<abstract::AbstractTuple> ParserAttrShape(
 
 std::string ParseParameterName(const string &name) {
   string delimiter = ":";
-  size_t pos(0);
+  size_t pos;
   if ((pos = name.find(delimiter)) != string::npos) {
     return name.substr(pos + 1, string::npos - (pos + 1));
   }
@@ -561,7 +558,7 @@ bool MSANFModelParser::ObtainCNodeAttrInTypeForm(const PrimitivePtr &prim, const
 }
 
 ValuePtr MSANFModelParser::ParseAttrInScalarForm(const mind_ir::AttributeProto &attr_proto, int index) {
-  const int attr_type = attr_proto.type();
+  const int attr_type = static_cast<int>(attr_proto.type());
   switch (attr_type) {
     case mind_ir::AttributeProto_AttributeType_STRING: {
       return ParseAttrInScalar_string_string(attr_proto, index);
@@ -631,7 +628,7 @@ void MSANFModelParser::ObtainCNodeAttrInScalarForm(const mind_ir::AttributeProto
 }
 
 ValuePtr MSANFModelParser::ObtainCNodeAttrInSingleScalarForm(const mind_ir::AttributeProto &attr_proto) {
-  const int attr_type = attr_proto.type();
+  const int attr_type = static_cast<int>(attr_proto.type());
   switch (attr_type) {
     case mind_ir::AttributeProto_AttributeType_STRING: {
       return ParseAttrInSingleScalar_string_string(attr_proto);
@@ -707,8 +704,7 @@ bool MSANFModelParser::GetAttrValueForCNode(const PrimitivePtr &prim, const mind
       break;
     }
     case FORM_PARSE_SCALAR: {
-      std::size_t value_pos(0);
-      if ((value_pos = ref_attr_name.find("value0")) != std::string::npos) {
+      if (ref_attr_name.find("value0") != std::string::npos) {
         ValuePtr res = ObtainCNodeAttrInSingleScalarForm(attr_proto);
         const std::string &op_type = prim->name();
         if (!IsLite()) {
@@ -855,7 +851,7 @@ bool MSANFModelParser::GetAttrValueForValueNode(const std::string &value_node_na
   }
   const std::string &ref_attr_name = attr_proto.ref_attr_name();
   string type = "";
-  std::size_t pos(0);
+  std::size_t pos;
   if ((pos = ref_attr_name.find("scalar:")) != std::string::npos) {
     type = ref_attr_name.substr(pos, string("scalar:").length() - 1);
   } else if ((pos = ref_attr_name.find("type:")) != std::string::npos) {
@@ -876,15 +872,14 @@ bool MSANFModelParser::GetAttrValueForValueNode(const std::string &value_node_na
       break;
     }
     case FORM_PARSE_SCALAR: {
-      std::size_t value_pos(0);
-      if ((value_pos = ref_attr_name.find("value0")) != std::string::npos) {
+      if (ref_attr_name.find("value0") != std::string::npos) {
         auto res = ObtainCNodeAttrInSingleScalarForm(attr_proto);
         new_value_node = NewValueNode(res);
         new_value_node->set_abstract(res->ToAbstract());
         anfnode_build_map_[value_node_name] = new_value_node;
         break;
       }
-      if ((value_pos = ref_attr_name.find("Tuple[]")) != std::string::npos) {
+      if (ref_attr_name.find("Tuple[]") != std::string::npos) {
         MS_LOG(INFO) << "Build Tuple() ValueNode for primitive.";
         ValuePtr res = MakeValue(std::vector<ValuePtr>{});
         new_value_node = NewValueNode(res);
@@ -892,7 +887,7 @@ bool MSANFModelParser::GetAttrValueForValueNode(const std::string &value_node_na
         anfnode_build_map_[value_node_name] = new_value_node;
         break;
       }
-      if ((value_pos = ref_attr_name.find("Tuple[value")) != std::string::npos && attr_proto.tensors_size() > 1) {
+      if (ref_attr_name.find("Tuple[value") != std::string::npos && attr_proto.tensors_size() > 1) {
         MS_LOG(INFO) << "Build TupleTensor ValueNode for primitive.";
         ObtainValueNodeInTupleTensorForm(value_node_name, attr_proto);
         break;
@@ -962,7 +957,7 @@ static std::string GetDoSignaturePrimitiveName(const std::string &node_type) {
   }
   // hyper_map[xxx] -> xxx
   constexpr auto offset = 2;
-  auto op_name = prim_name.substr(strlen(kHyperMapPrefix) + 1, prim_name.length() - strlen(kHyperMapPrefix) - offset);
+  auto op_name = prim_name.substr(strlen(kHyperMapPrefix) + 1, (prim_name.length() - strlen(kHyperMapPrefix)) - offset);
   return op_name;
 }
 
@@ -1004,7 +999,7 @@ AnfNodePtr MSANFModelParser::BuildOperatorNode(const mind_ir::NodeProto &node_pr
   return std::make_shared<ValueNode>(prim);
 }
 
-bool MSANFModelParser::CheckCNodePrim(CNodePtr cnode_ptr) {
+bool MSANFModelParser::CheckCNodePrim(const CNodePtr &cnode_ptr) {
   // Handle control flow operator.
   auto operatorPtr = cnode_ptr->input(0);
   // Set abstract of switch(c,f,t),switchLayer(c,tup) and

@@ -174,12 +174,12 @@ class MS_CORE_API MetaTensor : public Value {
   int ElementsNum() const;
 
   std::size_t hash() const override {
-    std::size_t hash_value = std::hash<int>{}(SizeToInt(data_type_));
+    std::size_t hash_value = std::hash<int>{}(static_cast<int>(data_type_));
     hash_value = hash_combine(hash_value, std::hash<size_t>{}(shape_.size()));
     // hash all elements may costly, so only take at most 4 elements into account based on
     // some experiments.
     for (size_t i = 0; (i < shape_.size()) && (i < 4); ++i) {
-      hash_value = hash_combine(hash_value, (std::hash<int>{}(shape_[i])));
+      hash_value = hash_combine(hash_value, (std::hash<int>{}(LongToInt(shape_[i]))));
     }
     return hash_value;
   }
