@@ -76,9 +76,11 @@ void ScatterNdCPUKernel<S, T>::InitKernel(const CNodePtr &kernel_node) {
   }
   if (updates_shape.size() != indices_shape.size() - 1 + shape.size() - indices_unit_rank) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dimension of 'update' and 'shape', 'indices' are not "
-                         "satisfy the equivalence relationship: "
-                         "'updates_shape.size() == indices_shape.size() - 1 + shape.size() - indices_unit_rank'";
+                      << "', the dimension of 'update' should be equal to the dimension of 'indices' minus 1 plus the "
+                         "dimension of 'shape' minus the value of last dimension of 'indices', but got "
+                      << "the dimension of 'update': " << updates_shape.size() << ", the dimension of 'indices' "
+                      << indices_shape.size() << ", the dimension of 'shape' " << shape.size()
+                      << ", the value of last dimension of 'indices' " << indices_unit_rank;
   }
   for (size_t i = 0; i < indices_shape.size() - 1; ++i) {
     if (updates_shape[i] != indices_shape[i]) {
