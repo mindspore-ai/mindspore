@@ -509,12 +509,10 @@ class _TrainPipelineWithLossScaleCell(TrainOneStepCell):
             if scale_sense.shape == (1,) or scale_sense.shape == ():
                 self.scale_sense = Parameter(scale_sense, name='scale_sense')
             else:
-                raise ValueError("For '_TrainPipelineWithLossScaleCell', "
-                                 "the shape of 'scale_sense' must be (1,) or (), but got {}"
+                raise ValueError("The shape of 'scale_sense' must be (1,) or (), but got {}"
                                  .format(scale_sense.shape))
         else:
-            raise TypeError("For '_TrainPipelineWithLossScaleCell', "
-                            "the 'scale_sense' must be Cell or Tensor, but got {}".format(type(scale_sense)))
+            raise TypeError("The 'scale_sense' must be Cell or Tensor, but got {}".format(type(scale_sense)))
         self.opt_shard = _get_enable_parallel_optimizer()
 
     def construct(self, *inputs):

@@ -227,7 +227,7 @@ class Optimizer(Cell):
         if self.use_parallel:
             if self.cls_name not in ["Lamb", "AdamWeightDecay", "AdaFactor"]:
                 raise RuntimeError("For 'Optimizer', parallel optimizer only support optimizer 'Lamb' and "
-                                   "'AdamWeightDecay', but got {}.".format(self.cls_name))
+                                   "'AdamWeightDecay' and 'AdaFactor', but got {}.".format(self.cls_name))
             self.dev_num = _get_device_num()
             if self.dev_num > self.param_length:
                 raise RuntimeError("Parallel optimizer can not be applied when the number of parameters {} is"
@@ -551,7 +551,8 @@ class Optimizer(Cell):
         """
         params_length = len(self.group_params)
         if len(ordered_parameters) != len(self.group_params):
-            raise ValueError(f"The length of order parameters should be the same as the length of group parameters, "
+            raise ValueError(f"For 'Optimizer',"
+                             f"the length of order parameters should be the same as the length of group parameters, "
                              f"but got order parameters' length {len(ordered_parameters)}, "
                              f"group parameters' length {len(self.group_params)}.")
 
