@@ -136,16 +136,11 @@ bool MemScheduler::PreCompute(void *stream) {
       } else {
         device_ptr = iter->second;
       }
-
-      if (event->type == kInit) {
-        const auto &init_func_iter = high_priority_mem_init_func_.find(event->key);
-        if (init_func_iter != high_priority_mem_init_func_.end()) {
-          init_func_iter->second(device_ptr);
-        } else if (new_malloc) {
-          auto host_ptr = init_host_ptr_[event->key];
-          MS_EXCEPTION_IF_NULL(host_ptr);
-          mem_handler_->SwapIn(host_ptr, device_ptr, event->mem_size, stream);
-        }
+      if (event->type == kInit && (new_malloc || high_priority_mem_need_init_.count(event->key) != 0)) {
+        MS_LOG(DEBUG) << "Init input data from host, key: " << event->key;
+        auto host_ptr = init_host_ptr_[event->key];
+        MS_EXCEPTION_IF_NULL(host_ptr);
+        mem_handler_->SwapIn(host_ptr, device_ptr, event->mem_size, stream);
       }
       mem_result_[event->key] = device_ptr;
     } else if (event->type == kSwapIn) {
