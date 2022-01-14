@@ -189,8 +189,7 @@ class ControlNodeParser {
                           const std::vector<KernelGraphPtr> &kernel_graphs,
                           const std::vector<DeviceContext *> &device_contexts,
                           const FuncGraphToKernelGraphGroup &func_graph_to_kernel_graphs);
-  void ParseDeviceContextForFuncGraph(const std::vector<AnfNodePtr> &control_nodes,
-                                      const std::vector<KernelGraphPtr> &kernel_graphs,
+  void ParseDeviceContextForFuncGraph(const std::vector<KernelGraphPtr> &kernel_graphs,
                                       const std::vector<DeviceContext *> &device_contexts,
                                       const FuncGraphToKernelGraphGroup &func_graph_to_kernel_graphs);
   void ParseDeviceContextForReturnNode(const DeviceContext *default_context);

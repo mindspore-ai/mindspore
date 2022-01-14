@@ -916,14 +916,13 @@ void ControlNodeParser::ParseDeviceContext(const std::vector<AnfNodePtr> &contro
     MS_LOG(EXCEPTION) << "Invalid device contexts.";
   }
 
-  ParseDeviceContextForFuncGraph(control_nodes, kernel_graphs, device_contexts, func_graph_to_kernel_graphs);
+  ParseDeviceContextForFuncGraph(kernel_graphs, device_contexts, func_graph_to_kernel_graphs);
   ParseDeviceContextForReturnNode(device_contexts[0]);
   ParseDeviceContextForCallNode(control_nodes);
   ParseDeviceContextForPartialNode(control_nodes);
 }
 
-void ControlNodeParser::ParseDeviceContextForFuncGraph(const std::vector<AnfNodePtr> &control_nodes,
-                                                       const std::vector<KernelGraphPtr> &kernel_graphs,
+void ControlNodeParser::ParseDeviceContextForFuncGraph(const std::vector<KernelGraphPtr> &kernel_graphs,
                                                        const std::vector<DeviceContext *> &device_contexts,
                                                        const FuncGraphToKernelGraphGroup &func_graph_to_kernel_graphs) {
   mindspore::HashMap<KernelGraphPtr, DeviceContext *> kernel_graph_to_device_context;
@@ -1312,7 +1311,7 @@ void ControlNodeParser::ParseFormalToRealParameter(const std::vector<AnfNodePtr>
       const auto &func_graphs = FetchFuncGraphbyCallNode(node);
       for (const auto func_graph : func_graphs) {
         const auto &parameters = func_graph->parameters();
-        for (int i = inputs.size() - 1, j = parameters.size() - 1; i >= 1 && j >= 0; --i, --j) {
+        for (int i = SizeToInt(inputs.size()) - 1, j = SizeToInt(parameters.size()) - 1; i >= 1 && j >= 0; --i, --j) {
           MS_EXCEPTION_IF_NULL(inputs[IntToSize(i)]);
           MS_EXCEPTION_IF_NULL(parameters[IntToSize(j)]);
           if (HasAbstractMonad(inputs[IntToSize(i)])) {
