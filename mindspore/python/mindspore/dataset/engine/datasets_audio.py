@@ -34,7 +34,7 @@ from ..core.validator_helpers import replace_none
 
 class LJSpeechDataset(MappableDataset, AudioBaseDataset):
     """
-    A source dataset for reading and parsing LJSpeech dataset.
+    A source dataset that reads and parses LJSpeech dataset.
 
     The generated dataset has four columns :py:obj:`[waveform, sample_rate, transcription, normalized_transcript]`.
     The tensor of column :py:obj:`waveform` is a tensor of the float32 type.
@@ -170,7 +170,7 @@ class LJSpeechDataset(MappableDataset, AudioBaseDataset):
 
 class SpeechCommandsDataset(MappableDataset, AudioBaseDataset):
     """
-    A source dataset for reading and parsing the SpeechCommands dataset.
+    A source dataset that reads and parses the SpeechCommands dataset.
 
     The generated dataset has five columns :py:obj:`[waveform, sample_rate, label, speaker_id, utterance_number]`.
     The tensor of column :py:obj:`waveform` is a vector of the float32 type.
@@ -295,7 +295,7 @@ class SpeechCommandsDataset(MappableDataset, AudioBaseDataset):
 
 class TedliumDataset(MappableDataset, AudioBaseDataset):
     """
-    A source dataset for reading and parsing Tedlium dataset.
+    A source dataset that reads and parses Tedlium dataset.
     The columns of generated dataset depend on the source SPH files and the corresponding STM files.
 
     The generated dataset has six columns :py:obj:`[waveform, sample_rate, transcript, talk_id, speaker_id,
@@ -507,7 +507,7 @@ class TedliumDataset(MappableDataset, AudioBaseDataset):
 
 class YesNoDataset(MappableDataset, AudioBaseDataset):
     """
-    A source dataset for reading and parsing the YesNo dataset.
+    A source dataset that reads and parses the YesNo dataset.
 
     The generated dataset has three columns :py:obj:`[waveform, sample_rate, labels]`.
     The tensor of column :py:obj:`waveform` is a vector of the float32 type.
