@@ -109,6 +109,8 @@ using TensorDataPtr = std::shared_ptr<TensorData>;
 
 class WaitEvent : public ExceptionListener {
  public:
+  ~WaitEvent() = default;
+
   void OnException() override { set_need_wait(false); }
 
   void Wait() const {
@@ -399,7 +401,7 @@ class MS_CORE_API Tensor final : public MetaTensor {
   /// \brief Set the cast dtype of this Tensor.
   ///
   /// \param[in] dtype The input cast dtype.
-  void set_cast_dtype(TypePtr dtype = nullptr) { cast_dtype_ = dtype; }
+  void set_cast_dtype(const TypePtr &dtype = nullptr) { cast_dtype_ = dtype; }
 
   /// \brief Used cache_enable to update the tensor from the cache to the host.
   ///
@@ -419,7 +421,7 @@ class MS_CORE_API Tensor final : public MetaTensor {
   /// \brief Set the pointer of hashmap tensor.
   ///
   /// \param[in] hashmap_tensor_ptr The input pointer of hashmap tensor.
-  void set_hashmap_tensor_ptr(std::shared_ptr<Tensor> hashmap_tensor_ptr = nullptr) {
+  void set_hashmap_tensor_ptr(const std::shared_ptr<Tensor> &hashmap_tensor_ptr = nullptr) {
     hashmap_tensor_ptr_ = hashmap_tensor_ptr;
   }
 
@@ -431,7 +433,7 @@ class MS_CORE_API Tensor final : public MetaTensor {
   /// \brief Set the pointer of cache tensor.
   ///
   /// \param[in] cache_tensor_ptr The input pointer of cache tensor.
-  void set_cache_tensor_ptr(std::shared_ptr<Tensor> cache_tensor_ptr = nullptr) {
+  void set_cache_tensor_ptr(const std::shared_ptr<Tensor> &cache_tensor_ptr = nullptr) {
     cache_tensor_ptr_ = cache_tensor_ptr;
   }
 
@@ -488,7 +490,7 @@ class MS_CORE_API Tensor final : public MetaTensor {
   /// \brief Set synchronization status.
   ///
   /// \param[in] sync_status The input synchronization status.
-  void set_sync_status(TensorSyncStatus sync_status) { sync_status_ = sync_status; }
+  void set_sync_status(TensorSyncStatus sync_status) const { sync_status_ = sync_status; }
 
   /// \brief Get synchronization status.
   ///
@@ -513,7 +515,7 @@ class MS_CORE_API Tensor final : public MetaTensor {
   /// \brief Check if this Tensor is the output of graph.
   ///
   /// \return Whether this Tensor is the output of graph
-  bool IsGraphOutput() { return graph_output_; }
+  bool IsGraphOutput() const { return graph_output_; }
 
   /// \brief Set whether this Tensor is the output of graph.
   void SetIsGraphOutput() { graph_output_ = true; }
@@ -521,7 +523,7 @@ class MS_CORE_API Tensor final : public MetaTensor {
   /// \brief Get whether this Tensor is updated by the device.
   ///
   /// \return Whether this Tensor is updated by the device.
-  bool IsUpdatedByDevice() { return updated_by_device_; }
+  bool IsUpdatedByDevice() const { return updated_by_device_; }
 
   /// \brief Set whether this Tensor is updated by the device.
   void SetIsUpdateByDevice() { updated_by_device_ = true; }

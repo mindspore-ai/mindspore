@@ -53,7 +53,7 @@ class PrimalDebugInfoGuard {
   explicit PrimalDebugInfoGuard(const std::vector<NodeDebugInfoPtr> &primal_debug_infos) {
     PrimalDebugInfoManager::GetInstance().SetPrimalDebugInfo(primal_debug_infos);
   }
-  ~PrimalDebugInfoGuard() { PrimalDebugInfoManager::GetInstance().ClearPrimalDebugInfo(); }
+  ~PrimalDebugInfoGuard() noexcept { PrimalDebugInfoManager::GetInstance().ClearPrimalDebugInfo(); }
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_IR_PRIMAL_DEBUG_INFO_H

@@ -99,7 +99,7 @@ std::string MetaTensor::ToString() const {
 
 std::string MetaTensor::DumpText() const {
   std::ostringstream oss;
-  oss << type_name() << "(" << SizeToInt(data_type_) << ")[";
+  oss << type_name() << "(" << static_cast<int>(data_type_) << ")[";
   for (size_t i = 0; i < shape_.size(); ++i) {
     oss << (i > 0 ? ", " : "") << shape_[i];
   }

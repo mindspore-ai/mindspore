@@ -409,7 +409,7 @@ class TensorDataImpl : public TensorData {
     ss << ']';
   }
 
-  std::string ProcessPlaceholder(std::ostringstream &ss, int max_width) const {
+  std::string ProcessPlaceholder(const std::ostringstream &ss, int max_width) const {
     std::string str = ss.str();
     if constexpr (std::is_same<T, bool>::value || std::is_same<T, float16>::value || std::is_same<T, float>::value ||
                   std::is_same<T, double>::value) {
