@@ -24,6 +24,15 @@ class TestAicpuParser:
     """Test the class of Aicpu Parser."""
     def setup_class(self):
         """Initialization before test case execution."""
+
+
+    def teardown_method(self) -> None:
+        """Clear output file."""
+        if os.path.exists(self.output_path):
+            shutil.rmtree(self.output_path)
+
+    def test_aicpu_parser_binary(self):
+        """Test the class of aicpu binary data Parser."""
         self.profiling_dir = os.path.realpath(os.path.join(os.path.dirname(__file__),
                                                            '../../../data/profiler_data/'
                                                            'JOB_AICPU/data'))
@@ -40,14 +49,27 @@ class TestAicpuParser:
                     "DropoutGenMask-op280"
         }
 
-    def teardown_method(self) -> None:
-        """Clear output file."""
-        if os.path.exists(self.output_path):
-            shutil.rmtree(self.output_path)
-
-    def test_aicpu_parser(self):
-        """Test the class of Aicpu Parser."""
         data = DataPreProcessParser(self.profiling_dir, self.output_file, self.op_task_dict)
+        data.execute()
+        with open(self.expect_file, 'r') as fp:
+            expect_result = fp.read()
+        with open(self.output_file, 'r') as fp:
+            result = fp.read()
+        assert expect_result == result
+
+    def test_aicpu_parser_txt(self):
+        """Test the class of aicpu txt data Parser."""
+        self.profiling_dir = os.path.realpath(os.path.join(os.path.dirname(__file__),
+                                                           '../../../data/profiler_data/'
+                                                           'JOB_AICPU/data_txt'))
+        self.expect_dir = os.path.realpath(os.path.join(os.path.dirname(__file__),
+                                                        '../../../data/profiler_data/'
+                                                        'JOB_AICPU/expect_txt'))
+        self.output_path = tempfile.mkdtemp(prefix='output_data_preprocess_aicpu_')
+        self.output_file = os.path.join(self.output_path, 'output_data_preprocess_aicpu_0.txt')
+        self.expect_file = os.path.join(self.expect_dir, 'output_data_preprocess_aicpu_0.txt')
+
+        data = DataPreProcessParser(self.profiling_dir, self.output_file, None)
         data.execute()
         with open(self.expect_file, 'r') as fp:
             expect_result = fp.read()
