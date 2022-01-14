@@ -238,10 +238,14 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
         >>> net = Net()
         >>> save_checkpoint(net, "lenet.ckpt")
     """
-
     if not isinstance(save_obj, nn.Cell) and not isinstance(save_obj, list):
         raise TypeError("For 'save_checkpoint', the argument 'save_obj' should be nn.Cell or list, "
                         "but got {}.".format(type(save_obj)))
+    if not isinstance(ckpt_file_name, str):
+        raise ValueError("The argument {} for checkpoint file name is invalid, 'ckpt_file_name' must be "
+                         "string, but got {}.".format(ckpt_file_name, type(ckpt_file_name)))
+    if not ckpt_file_name.endswith('.ckpt'):
+        ckpt_file_name += ".ckpt"
     integrated_save = Validator.check_bool(integrated_save)
     async_save = Validator.check_bool(async_save)
     append_dict = _check_append_dict(append_dict)
