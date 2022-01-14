@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -248,9 +248,9 @@ def test_sampler_chain():
     manifest_file = "../data/dataset/testManifestData/test5trainimgs.json"
     map_ = {(172876, 0): 0, (54214, 0): 1, (54214, 1): 2, (173673, 0): 3, (64631, 1): 4}
 
-    def test_config(num_shards, shard_id):
+    def test_config(num_shards, shard_id, start_index=0):
         sampler = ds.DistributedSampler(num_shards, shard_id, shuffle=False, num_samples=5)
-        child_sampler = ds.SequentialSampler()
+        child_sampler = ds.SequentialSampler(start_index)
         sampler.add_child(child_sampler)
 
         data1 = ds.ManifestDataset(manifest_file, sampler=sampler)
@@ -269,6 +269,13 @@ def test_sampler_chain():
     assert test_config(5, 2) == [2]
     assert test_config(5, 3) == [3]
     assert test_config(5, 4) == [4]
+    assert test_config(2, 0, 1) == [1, 3]
+    assert test_config(2, 1, 1) == [2, 4]
+    assert test_config(5, 0, 1) == [1]
+    assert test_config(5, 1, 1) == [2]
+    assert test_config(5, 2, 1) == [3]
+    assert test_config(5, 3, 1) == [4]
+    assert test_config(5, 4, 1) == [1]
 
 
 def test_add_sampler_invalid_input():
@@ -286,13 +293,13 @@ def test_add_sampler_invalid_input():
 
     sampler = ds.SequentialSampler()
     with pytest.raises(RuntimeError) as info:
-        data2 = ds.ManifestDataset(manifest_file, sampler=sampler, num_samples=20)
+        _ = ds.ManifestDataset(manifest_file, sampler=sampler, num_samples=20)
     assert "sampler and num_samples cannot be specified at the same time" in str(info.value)
 
 
 def test_distributed_sampler_invalid_offset():
     with pytest.raises(RuntimeError) as info:
-        sampler = ds.DistributedSampler(num_shards=4, shard_id=0, shuffle=False, num_samples=None, offset=5).parse()
+        _ = ds.DistributedSampler(num_shards=4, shard_id=0, shuffle=False, num_samples=None, offset=5).parse()
     assert "DistributedSampler: offset must be no more than num_shards(4)" in str(info.value)
 
 

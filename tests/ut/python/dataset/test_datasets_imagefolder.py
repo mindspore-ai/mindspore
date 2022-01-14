@@ -1,4 +1,4 @@
-# Copyright 2019-2021 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -421,6 +421,11 @@ def test_weighted_random_sampler_exception():
 
 
 def test_chained_sampler_01():
+    """
+    Feature: Chained Sampler
+    Description: Chained Samplers: Random and Sequential, with repeat
+    Expectation: Get correct number of data
+    """
     logger.info("Test Case Chained Sampler - Random and Sequential, with repeat")
 
     # Create chained sampler, random and sequential
@@ -450,6 +455,11 @@ def test_chained_sampler_01():
 
 
 def test_chained_sampler_02():
+    """
+    Feature: Chained Sampler
+    Description: Chained Samplers: Random and Sequential, with batch then repeat
+    Expectation: Get correct number of data
+    """
     logger.info("Test Case Chained Sampler - Random and Sequential, with batch then repeat")
 
     # Create chained sampler, random and sequential
@@ -480,6 +490,11 @@ def test_chained_sampler_02():
 
 
 def test_chained_sampler_03():
+    """
+    Feature: Chained Sampler
+    Description: Chained Samplers: Random and Sequential, with repeat then batch
+    Expectation: Get correct number of data
+    """
     logger.info("Test Case Chained Sampler - Random and Sequential, with repeat then batch")
 
     # Create chained sampler, random and sequential
@@ -510,6 +525,11 @@ def test_chained_sampler_03():
 
 
 def test_chained_sampler_04():
+    """
+    Feature: Chained Sampler
+    Description: Chained Samplers: Distributed and Random, with batch then repeat
+    Expectation: Get correct number of data
+    """
     logger.info("Test Case Chained Sampler - Distributed and Random, with batch then repeat")
 
     # Create chained sampler, distributed and random
@@ -541,13 +561,18 @@ def test_chained_sampler_04():
     assert num_iter == 6
 
 
-def skip_test_chained_sampler_05():
-    logger.info("Test Case Chained Sampler - PKSampler and WeightedRandom")
+def test_chained_sampler_05():
+    """
+    Feature: Chained Sampler
+    Description: Chained Samplers: Distributed and WeightedRandom
+    Expectation: Get correct number of data
+    """
+    logger.info("Test Case Chained Sampler - Distributed and WeightedRandom")
 
-    # Create chained sampler, PKSampler and WeightedRandom
-    sampler = ds.PKSampler(num_val=3)  # Number of elements per class is 3 (and there are 4 classes)
+    # Create chained sampler, Distributed and WeightedRandom
+    sampler = ds.DistributedSampler(num_shards=2, shard_id=1)
     weights = [1.0, 0.1, 0.02, 0.3, 0.4, 0.05, 1.2, 0.13, 0.14, 0.015, 0.16, 0.5]
-    child_sampler = ds.WeightedRandomSampler(weights, num_samples=12)
+    child_sampler = ds.WeightedRandomSampler(weights, num_samples=24)
     sampler.add_child(child_sampler)
     # Create ImageFolderDataset with sampler
     data1 = ds.ImageFolderDataset(DATA_DIR, sampler=sampler)
@@ -566,12 +591,17 @@ def skip_test_chained_sampler_05():
         num_iter += 1
 
     logger.info("Number of data in data1: {}".format(num_iter))
-    # Note: PKSampler produces 4x3=12 samples
-    # Note: Child WeightedRandomSampler produces 12 samples
+    # Note: Child WeightedRandomSampler produces 24 samples
+    # Note: DistributedSampler produces 24/2=12 samples
     assert num_iter == 12
 
 
 def test_chained_sampler_06():
+    """
+    Feature: Chained Sampler
+    Description: Chained Samplers: WeightedRandom and PKSampler
+    Expectation: Get correct number of data
+    """
     logger.info("Test Case Chained Sampler - WeightedRandom and PKSampler")
 
     # Create chained sampler, WeightedRandom and PKSampler
@@ -602,6 +632,11 @@ def test_chained_sampler_06():
 
 
 def test_chained_sampler_07():
+    """
+    Feature: Chained Sampler
+    Description: Chained Samplers: SubsetRandom and Distributed, 2 shards
+    Expectation: Get correct number of data
+    """
     logger.info("Test Case Chained Sampler - SubsetRandom and Distributed, 2 shards")
 
     # Create chained sampler, subset random and distributed
@@ -628,17 +663,20 @@ def test_chained_sampler_07():
 
     logger.info("Number of data in data1: {}".format(num_iter))
     # Note: SubsetRandomSampler produces 12 samples
-    # Note: Each of 2 shards has 6 samples
-    # FIXME: Uncomment the following assert when code issue is resolved; at runtime, number of samples is 12 not 6
-    # assert num_iter == 6
+    assert num_iter == 12
 
 
-def skip_test_chained_sampler_08():
+def test_chained_sampler_08():
+    """
+    Feature: Chained Sampler
+    Description: Chained Samplers: SubsetRandom and Distributed, 4 shards
+    Expectation: Get correct number of data
+    """
     logger.info("Test Case Chained Sampler - SubsetRandom and Distributed, 4 shards")
 
     # Create chained sampler, subset random and distributed
-    indices = [0, 1, 2, 3, 4, 5, 12, 13, 14, 15, 16, 11]
-    sampler = ds.SubsetRandomSampler(indices, num_samples=12)
+    indices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    sampler = ds.SubsetRandomSampler(indices, num_samples=11)
     child_sampler = ds.DistributedSampler(num_shards=4, shard_id=1)
     sampler.add_child(child_sampler)
     # Create ImageFolderDataset with sampler
@@ -647,7 +685,7 @@ def skip_test_chained_sampler_08():
     # Verify dataset size
     data1_size = data1.get_dataset_size()
     logger.info("dataset size is: {}".format(data1_size))
-    assert data1_size == 3
+    assert data1_size == 11
 
     # Verify number of iterations
     num_iter = 0
@@ -658,9 +696,8 @@ def skip_test_chained_sampler_08():
         num_iter += 1
 
     logger.info("Number of data in data1: {}".format(num_iter))
-    # Note: SubsetRandomSampler returns 12 samples
-    # Note: Each of 4 shards has 3 samples
-    assert num_iter == 3
+    # Note: SubsetRandomSampler returns 11 samples
+    assert num_iter == 11
 
 
 def test_imagefolder_rename():
@@ -809,8 +846,8 @@ if __name__ == '__main__':
     test_chained_sampler_04()
     logger.info('test_chained_sampler_04 Ended.\n')
 
-    # test_chained_sampler_05()
-    # logger.info('test_chained_sampler_05 Ended.\n')
+    test_chained_sampler_05()
+    logger.info('test_chained_sampler_05 Ended.\n')
 
     test_chained_sampler_06()
     logger.info('test_chained_sampler_06 Ended.\n')
@@ -818,8 +855,8 @@ if __name__ == '__main__':
     test_chained_sampler_07()
     logger.info('test_chained_sampler_07 Ended.\n')
 
-    # test_chained_sampler_08()
-    # logger.info('test_chained_sampler_07 Ended.\n')
+    test_chained_sampler_08()
+    logger.info('test_chained_sampler_08 Ended.\n')
 
     test_imagefolder_numshards()
     logger.info('test_imagefolder_numshards Ended.\n')

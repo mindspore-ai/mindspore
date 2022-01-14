@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import numpy as np
 import pytest
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as c_transforms
@@ -35,7 +36,9 @@ VOC_DATA_DIR = "../data/dataset/testVOC2012"
 
 def test_numpyslices_sampler_no_chain():
     """
-    Test NumpySlicesDataset with sampler, no chain
+    Feature: Chained Sampler
+    Description: NumpySlicesDataset with sampler, no chain
+    Expectation: Data verified to be correct
     """
     logger.info("test_numpyslices_sampler_no_chain")
 
@@ -59,10 +62,14 @@ def test_numpyslices_sampler_no_chain():
         res.append(item)
     logger.info("dataset: {}".format(res))
 
+    np.testing.assert_array_equal(res, [[2], [3]])
+
 
 def test_numpyslices_sampler_chain():
     """
-    Test NumpySlicesDataset sampler chain
+    Feature: Chained Sampler
+    Description: NumpySlicesDataset with sampler chain; add child sampler with 1 statement
+    Expectation: Data verified to be correct
     """
     logger.info("test_numpyslices_sampler_chain")
 
@@ -88,10 +95,14 @@ def test_numpyslices_sampler_chain():
         res.append(item)
     logger.info("dataset: {}".format(res))
 
+    np.testing.assert_array_equal(res, [[3]])
+
 
 def test_numpyslices_sampler_chain2():
     """
-    Test NumpySlicesDataset sampler chain
+    Feature: Chained Sampler
+    Description: NumpySlicesDataset with sampler chain; add child sampler with 2 statements
+    Expectation: Data verified to be correct
     """
     logger.info("test_numpyslices_sampler_chain2")
 
@@ -117,6 +128,50 @@ def test_numpyslices_sampler_chain2():
         logger.info("item: {}".format(item))
         res.append(item)
     logger.info("dataset: {}".format(res))
+
+    np.testing.assert_array_equal(res, [[3]])
+
+
+def test_numpyslices_sampler_chain_multi_add_child():
+    """
+    Feature: Chained Sampler
+    Description: NumpySlicesDataset with sampler chain with multiple add_child() invocations
+    Expectation: Data verified to be correct. Only last add_child() invocation is effective.
+    """
+    logger.info("test_numpyslices_sampler_chain_multi_add_child")
+
+    # Create NumpySlicesDataset with sampler chain
+    # Call add_child() multiple times in succession
+    # Note: A subsequent add_child() invocation replaces the prior child sampler (if any).
+    np_data = [1, 2, 3, 4, 5, 6, 7, 8]
+    sampler = ds.SequentialSampler(start_index=1, num_samples=None)
+    # 1st add_child invocation
+    sampler.add_child(ds.SequentialSampler(start_index=4, num_samples=1))
+    # 2nd add_child invocation
+    sampler.add_child(ds.SequentialSampler(start_index=4, num_samples=2))
+    # 3rd add_child invocation
+    sampler.add_child(ds.SequentialSampler(start_index=4, num_samples=3))
+    # 4th and last add_child invocation which is the effective child sampler
+    sampler.add_child(ds.SequentialSampler(start_index=1, num_samples=6))
+
+    data1 = ds.NumpySlicesDataset(np_data, sampler=sampler)
+
+    # Verify dataset size
+    data1_size = data1.get_dataset_size()
+    logger.info("dataset size is: {}".format(data1_size))
+    assert data1_size == 5
+
+    # Verify number of rows
+    assert sum([1 for _ in data1]) == 5
+
+    # Verify dataset contents
+    res = []
+    for item in data1.create_tuple_iterator(num_epochs=1, output_numpy=True):
+        logger.info("item: {}".format(item))
+        res.append(item)
+    logger.info("dataset: {}".format(res))
+
+    np.testing.assert_array_equal(res, [[3], [4], [5], [6], [7]])
 
 
 def test_imagefolder_sampler_chain():
@@ -287,10 +342,10 @@ def test_numpyslices_sampler_chain_batch():
 
     # Create NumpySlicesDataset with sampler chain
     np_data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-    sampler = ds.SequentialSampler(start_index=1, num_samples=3)
-    sampler = sampler.add_child(ds.SequentialSampler(start_index=1, num_samples=2))
+    sampler = ds.SequentialSampler(start_index=1, num_samples=8)
+    sampler.add_child(ds.SequentialSampler(start_index=1, num_samples=9))
     data1 = ds.NumpySlicesDataset(np_data, sampler=sampler)
-    data1 = data1.batch(batch_size=3, drop_remainder=False)
+    data1 = data1.batch(batch_size=2, drop_remainder=False)
 
     # Verify dataset size
     data1_size = data1.get_dataset_size()
@@ -307,6 +362,8 @@ def test_numpyslices_sampler_chain_batch():
         res.append(item)
     logger.info("dataset: {}".format(res))
 
+    np.testing.assert_array_equal(res, [[[3, 4]], [[5, 6]], [[7, 8]], [[9, 10]]])
+
 
 def test_sampler_chain_errors():
     """
@@ -321,19 +378,6 @@ def test_sampler_chain_errors():
     with pytest.raises(AttributeError, match=error_msg_1):
         sampler.add_child(ds.SequentialSampler(start_index=1, num_samples=2))
 
-    # error_msg_2 = "'NoneType' object has no attribute 'add_child'"
-    # Test add second and nested child sampler
-    sampler = ds.SequentialSampler(start_index=1, num_samples=2)
-    child_sampler = ds.SequentialSampler(start_index=1, num_samples=2)
-    sampler.add_child(child_sampler)
-    child_sampler2 = ds.SequentialSampler(start_index=1, num_samples=2)
-    sampler.add_child(child_sampler2)
-    # FIXME - no error is raised; uncomment after code issue is resolved
-    # with pytest.raises(AttributeError, match=error_msg_2):
-    #     sampler.add_child(child_sampler2)
-    #     np_data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-    #     data1 = ds.NumpySlicesDataset(np_data, sampler=sampler)
-
     error_msg_3 = "Conflicting arguments during sampler assignments."
     # Test conflicting arguments (sampler and shuffle=False) for sampler (no chain)
     np_data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
@@ -341,14 +385,13 @@ def test_sampler_chain_errors():
     with pytest.raises(ValueError, match=error_msg_3):
         ds.NumpySlicesDataset(np_data, shuffle=False, sampler=sampler)
 
-    # error_msg_4 = "Conflicting arguments during sampler assignments."
+    error_msg_4 = "Conflicting arguments during sampler assignments."
     # Test conflicting arguments (sampler and shuffle=False) for sampler chaining
     np_data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     sampler = ds.SequentialSampler(start_index=1, num_samples=3)
-    sampler = sampler.add_child(ds.SequentialSampler(start_index=1, num_samples=2))
-    # FIXME - no error is raised; uncomment after code issue is resolved
-    # with pytest.raises(ValueError, match=error_msg_4):
-    #     ds.NumpySlicesDataset(np_data, shuffle=False, sampler=sampler)
+    sampler.add_child(ds.SequentialSampler(start_index=1, num_samples=2))
+    with pytest.raises(ValueError, match=error_msg_4):
+        ds.NumpySlicesDataset(np_data, shuffle=False, sampler=sampler)
 
 
 def test_manifest_sampler_chain_repeat():
@@ -396,23 +439,23 @@ def test_manifest_sampler_chain_batch_repeat():
     data1 = ds.ManifestDataset(manifest_file, decode=True, sampler=sampler)
     one_hot_encode = c_transforms.OneHot(3)
     data1 = data1.map(operations=one_hot_encode, input_columns=["label"])
-    data1 = data1.batch(batch_size=5, drop_remainder=False)
+    data1 = data1.batch(batch_size=1, drop_remainder=False)
     data1 = data1.repeat(count=2)
 
     # Verify dataset size
     data1_size = data1.get_dataset_size()
     logger.info("dataset size is: {}".format(data1_size))
-    assert data1_size == 2
+    assert data1_size == 10
 
     # Verify number of rows
-    # FIXME: Uncomment the following assert when code issue is resolved
-    # assert sum([1 for _ in data1]) == 2
+    assert sum([1 for _ in data1]) == 10
 
 
 if __name__ == '__main__':
     test_numpyslices_sampler_no_chain()
     test_numpyslices_sampler_chain()
     test_numpyslices_sampler_chain2()
+    test_numpyslices_sampler_chain_multi_add_child()
     test_imagefolder_sampler_chain()
     test_mnist_sampler_chain()
     test_manifest_sampler_chain()
