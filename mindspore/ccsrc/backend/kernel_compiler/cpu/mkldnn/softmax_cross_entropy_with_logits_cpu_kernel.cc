@@ -52,11 +52,11 @@ void SoftmaxCrossEntropyWithLogitsCPUKernel::InitKernel(const CNodePtr &kernel_n
   if (batch_size_ == 0 || class_num_ == 0) {
     MS_LOG(EXCEPTION) << "Invalid batch size or class num input!";
   }
-  dnnl::memory::desc mem_desc(mem_dims, dnnl::memory::data_type::f32, dnnl::memory::format_tag::nc);
+  auto mem_desc = CreateDesc<dnnl::memory::desc>(mem_dims, dnnl::memory::data_type::f32, dnnl::memory::format_tag::nc);
 
-  dnnl::softmax_forward::desc desc = dnnl::softmax_forward::desc(dnnl::prop_kind::forward_training, mem_desc, 1);
-  auto prim_desc = dnnl::softmax_forward::primitive_desc(desc, engine_);
-  primitive_ = std::make_shared<dnnl::softmax_forward>(prim_desc);
+  auto desc = CreateDesc<dnnl::softmax_forward::desc>(dnnl::prop_kind::forward_training, mem_desc, 1);
+  auto prim_desc = CreateDesc<dnnl::softmax_forward::primitive_desc>(desc, engine_);
+  primitive_ = CreatePrimitive<dnnl::softmax_forward>(prim_desc);
 
   AddArgument(DNNL_ARG_SRC, mem_desc);
   AddArgument(DNNL_ARG_DST, mem_desc);

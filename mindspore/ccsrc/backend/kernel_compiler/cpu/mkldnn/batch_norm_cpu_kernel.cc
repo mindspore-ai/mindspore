@@ -59,15 +59,17 @@ void BatchNormCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     prop_kind = dnnl::prop_kind::forward_training;
     normalization_flags = dnnl::normalization_flags::use_scale_shift;
   }
-  dnnl::batch_normalization_forward::desc desc =
-    dnnl::batch_normalization_forward::desc(prop_kind, x_desc, epsilon, normalization_flags);
-  auto prim_desc = dnnl::batch_normalization_forward::primitive_desc(desc, engine_);
-  primitive_ = std::make_shared<dnnl::batch_normalization_forward>(prim_desc);
+  auto desc = CreateDesc<dnnl::batch_normalization_forward::desc>(prop_kind, x_desc, epsilon, normalization_flags);
+  auto prim_desc = CreateDesc<dnnl::batch_normalization_forward::primitive_desc>(desc, engine_);
+  auto wksp_desc = GetWorkspaceDesc(prim_desc);
+  auto mean = GetMeanDesc(prim_desc);
+  auto variance = GetVarianceDesc(prim_desc);
+  primitive_ = CreatePrimitive<dnnl::batch_normalization_forward>(prim_desc);
   AddArgument(DNNL_ARG_SRC, x_desc);
-  AddArgument(DNNL_ARG_MEAN, prim_desc.mean_desc());
-  AddArgument(DNNL_ARG_VARIANCE, prim_desc.variance_desc());
+  AddArgument(DNNL_ARG_MEAN, mean);
+  AddArgument(DNNL_ARG_VARIANCE, variance);
   AddArgument(DNNL_ARG_SCALE_SHIFT, scale_bias_desc);
-  AddArgument(DNNL_ARG_WORKSPACE, prim_desc.workspace_desc());
+  AddArgument(DNNL_ARG_WORKSPACE, wksp_desc);
   AddArgument(DNNL_ARG_DST, x_desc);
 }
 
