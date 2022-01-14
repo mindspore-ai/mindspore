@@ -1210,7 +1210,11 @@ inline void SetSequenceNodeElementsUseFlags(const AnfNodePtr &node, const std::s
   node->set_user_data(kElementsUseFlagsKey, flags);
 }
 
+// Set the sequence nodes' elements use flags to 'new_flag' at specific 'index' position.
+void SetSequenceElementsUseFlags(const AbstractBasePtr &abs, std::size_t index, bool new_flag);
+// Set the sequence nodes' elements use flags all to 'new_flag'.
 void SetSequenceElementsUseFlags(const AbstractBasePtr &abs, bool new_flag);
+// Set the sequence nodes' elements use flags all to 'new_flag' recursively.
 void SetSequenceElementsUseFlagsRecursively(const AbstractBasePtr &abs, bool new_flag);
 }  // namespace mindspore
 
