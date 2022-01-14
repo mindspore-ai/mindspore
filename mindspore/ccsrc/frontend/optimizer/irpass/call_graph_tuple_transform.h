@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,10 @@
 namespace mindspore {
 namespace opt {
 namespace irpass {
+constexpr int kInputZero = 0;
+constexpr int kInputOne = 1;
+constexpr int kInputTwo = 2;
+constexpr int kInputThree = 3;
 // {G, Xs}-->transform graph call tuple inputs to flat inputs.
 class GraphCallTupleTransform : public AnfVisitor {
  public:
@@ -48,7 +52,7 @@ class GraphCallTupleTransform : public AnfVisitor {
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     auto &inputs = cnode->inputs();
-    auto fg = GetValueNode<FuncGraphPtr>(inputs[0]);
+    auto fg = GetValueNode<FuncGraphPtr>(inputs[kInputZero]);
     if (fg == nullptr) {
       return nullptr;
     }
@@ -78,29 +82,29 @@ class SwitchCallTupleTransform : public AnfVisitor {
     if (call_inputs.size() < 1) {
       return nullptr;
     }
-    if (!IsPrimitiveCNode(call_inputs[0], prim::kPrimSwitch)) {
+    if (!IsPrimitiveCNode(call_inputs[kInputZero], prim::kPrimSwitch)) {
       return nullptr;
     }
-    auto swich_cnode = call_inputs[0]->cast<CNodePtr>();
-    auto switch_inputs = swich_cnode->inputs();
+    auto switch_cnode = call_inputs[kInputZero]->cast<CNodePtr>();
+    auto switch_inputs = switch_cnode->inputs();
     if (switch_inputs.size() != 4) {
       return nullptr;
     }
 
     AnfNodePtr transformed = nullptr;
-    bool true_br_changed = TransformBranchNode(switch_inputs[2], optimizer->manager(), &transformed);
+    bool true_br_changed = TransformBranchNode(switch_inputs[kInputTwo], optimizer->manager(), &transformed);
     if (true_br_changed) {
-      switch_inputs[2] = transformed;
+      switch_inputs[kInputTwo] = transformed;
     }
-    bool false_br_changed = TransformBranchNode(switch_inputs[3], optimizer->manager(), &transformed);
+    bool false_br_changed = TransformBranchNode(switch_inputs[kInputThree], optimizer->manager(), &transformed);
     if (false_br_changed) {
-      switch_inputs[3] = transformed;
+      switch_inputs[kInputThree] = transformed;
     }
     if (true_br_changed || false_br_changed) {
-      call_inputs[0] = swich_cnode->func_graph()->NewCNode(switch_inputs);
+      call_inputs[kInputZero] = switch_cnode->func_graph()->NewCNode(switch_inputs);
     }
     if (CNodeHasTupleInput(switch_call_cnode)) {
-      return TransformSwitchCall(call_inputs[0], switch_call_cnode);
+      return TransformSwitchCall(call_inputs[kInputZero], switch_call_cnode);
     }
     if (true_br_changed || false_br_changed) {
       return switch_call_cnode->func_graph()->NewCNode(call_inputs);
@@ -120,8 +124,8 @@ class SwitchCallTupleTransform : public AnfVisitor {
     }
     if (IsPrimitiveCNode(node, prim::kPrimPartial)) {
       auto partial_inputs = node->cast<CNodePtr>()->inputs();
-      if (IsValueNode<FuncGraph>(partial_inputs[1])) {
-        FuncGraphPtr fg = GetValueNode<FuncGraphPtr>(partial_inputs[1]);
+      if (IsValueNode<FuncGraph>(partial_inputs[kInputOne])) {
+        FuncGraphPtr fg = GetValueNode<FuncGraphPtr>(partial_inputs[kInputOne]);
         if (FuncGraphHasTupleInput(fg)) {
           fg = graph_transform_(fg, mng);
         }
@@ -156,23 +160,26 @@ class SwitchLayerCallTupleTransform : public AnfVisitor {
     if (call_inputs.size() < 1) {
       return nullptr;
     }
-    if (!IsPrimitiveCNode(call_inputs[0], prim::kPrimSwitchLayer)) {
+    if (!IsPrimitiveCNode(call_inputs[kInputZero], prim::kPrimSwitchLayer)) {
       return nullptr;
     }
-    auto swich_layer_cnode = call_inputs[0]->cast<CNodePtr>();
-    auto switch_layer_inputs = swich_layer_cnode->inputs();
+    auto switch_layer_cnode = call_inputs[kInputZero]->cast<CNodePtr>();
+    auto switch_layer_inputs = switch_layer_cnode->inputs();
     if (switch_layer_inputs.size() != 3) {
       return nullptr;
     }
 
     AnfNodePtr transformed = nullptr;
-    bool layer_changed = TransformLayerNode(switch_layer_inputs[2], optimizer->manager(), &transformed);
+    bool layer_changed = TransformLayerNode(switch_layer_inputs[kInputTwo], optimizer->manager(), &transformed);
     if (layer_changed) {
-      switch_layer_inputs[2] = transformed;
-      call_inputs[0] = switch_layer_call_cnode->func_graph()->NewCNode(switch_layer_inputs);
+      transformed->set_abstract(switch_layer_inputs[kInputTwo]->abstract());
+      switch_layer_inputs[kInputTwo] = transformed;
+      auto new_switch_layer = switch_layer_call_cnode->func_graph()->NewCNode(switch_layer_inputs);
+      new_switch_layer->set_abstract(switch_layer_cnode->abstract());
+      call_inputs[kInputZero] = new_switch_layer;
     }
     if (CNodeHasTupleInput(switch_layer_call_cnode)) {
-      return TransformSwitchCall(call_inputs[0], switch_layer_call_cnode);
+      return TransformSwitchCall(call_inputs[kInputZero], switch_layer_call_cnode);
     }
     if (layer_changed) {
       return switch_layer_call_cnode->func_graph()->NewCNode(call_inputs);
@@ -195,7 +202,9 @@ class SwitchLayerCallTupleTransform : public AnfVisitor {
       FuncGraphPtr fg = GetValueNode<FuncGraphPtr>(tuple_inputs[i]);
       if (FuncGraphHasTupleInput(fg)) {
         FuncGraphPtr transformed_fg = graph_transform_(fg, mng);
-        tuple_inputs[i] = NewValueNode(transformed_fg);
+        auto new_value_node = NewValueNode(transformed_fg);
+        new_value_node->set_abstract(tuple_inputs[i]->abstract());
+        tuple_inputs[i] = new_value_node;
         changed = true;
       }
     }

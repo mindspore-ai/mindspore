@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -424,8 +424,11 @@ void Cloner::AddInputs(const FuncGraphPtr &func_graph_user, const FuncGraphPtr &
   auto &repl_func_graph = repl_map_func_graph_[func_graph_user];
   auto [iter, inserted] = repl_func_graph.emplace(func_graph, nullptr);
   if (inserted) {
-    AnfNodePtrList cnode_inputs{BuildPrimitiveValueNode(prim::kPrimPartial), BuildFuncGraphValueNode(func_graph)};
-    iter->second = func_graph_user->NewCNode(std::move(cnode_inputs));
+    auto value_node = BuildPrimitiveValueNode(prim::kPrimPartial);
+    AnfNodePtrList cnode_inputs{value_node, BuildFuncGraphValueNode(func_graph)};
+    auto partial_node = func_graph_user->NewCNode(std::move(cnode_inputs));
+    partial_node->set_abstract(value_node->abstract());
+    iter->second = partial_node;
   }
   auto cnode = dyn_cast<CNode>(iter->second);
   if (cnode == nullptr) {
