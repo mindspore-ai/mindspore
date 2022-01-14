@@ -27,7 +27,6 @@
 namespace mindspore {
 namespace abstract {
 class StackFrame;
-using StackFramePtr = std::shared_ptr<StackFrame>;
 using EvaluatorWeakPtr = std::weak_ptr<Evaluator>;
 using BaseFuncGraphEvaluatorPtr = std::shared_ptr<BaseFuncGraphEvaluator>;
 
@@ -65,7 +64,7 @@ class StackFrame final : public Base {
   // Return back from branch func graph.
   void Back(const AnalysisEnginePtr &engine, const StackFramePtr &last_stack_frame, const EvalResultPtr &eval_result);
 
-  bool Done() { return done_; }
+  bool Done() const { return done_; }
 
   AnfNodePtr &CurrentNode() {
     if (slot_index_ >= node_slots_.size()) {
@@ -92,7 +91,7 @@ class StackFrame final : public Base {
   AnalysisContextPtr current_context() const { return current_context_; }
   AnalysisContextPtr parent_context() const { return parent_context_; }
 
-  const AbstractBasePtrList &args_abs_list() { return args_abs_list_; }
+  const AbstractBasePtrList &args_abs_list() const { return args_abs_list_; }
   void set_args_abs_list(const AbstractBasePtrList &&args_abs_list) { args_abs_list_ = args_abs_list; }
 
   std::string ToString() const override {

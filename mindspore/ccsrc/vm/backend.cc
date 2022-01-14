@@ -1135,7 +1135,7 @@ std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(con
   parser->Parse(control_nodes_, graphs, device_contexts, root_graph, func_graph_to_kernel_graphs);
 
   runtime::KernelMapPosition outputs_order;
-  size_t outputs_num = 0;
+  size_t outputs_num;
   const auto &root_output =
     AnfAlgo::VisitKernelWithReturnType(root_graph->output(), 0, false, {prim::kPrimTupleGetItem}).first;
   size_t position = 0;
