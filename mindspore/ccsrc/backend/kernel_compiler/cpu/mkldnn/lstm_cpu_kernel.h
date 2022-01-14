@@ -55,6 +55,12 @@ class LstmCPUKernel : public MKLCPUKernel {
   dnnl::memory::dims weights_h_dims_;
   dnnl::memory::dims bias_dims_;
   dnnl::lstm_forward::primitive_desc prim_desc_;
+  dnnl::memory::desc bias_desc_;
+  dnnl::memory user_weights_memory_;
+  dnnl::memory user_weights_h_memory_;
+  dnnl::memory weights_memory_;
+  dnnl::memory weights_h_memory_;
+  dnnl::memory bias_memory_;
 };
 
 MS_REG_CPU_KERNEL(LSTM,

@@ -77,12 +77,12 @@ void MatMulCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     o_strides = {dim_n, 1};
   }
 
-  dnnl::memory::desc src_md(src_dims, dnnl::memory::data_type::f32, a_strides);
-  dnnl::memory::desc weights_md(weights_dims, dnnl::memory::data_type::f32, b_strides);
-  dnnl::memory::desc dst_md(dst_dims, dnnl::memory::data_type::f32, o_strides);
-  dnnl::matmul::desc matmul_desc(src_md, weights_md, dst_md);
-  dnnl::matmul::primitive_desc prim_desc(matmul_desc, MKLKernelEngine::Get().engine());
-  primitive_ = std::make_shared<dnnl::matmul>(prim_desc);
+  auto src_md = CreateDesc<dnnl::memory::desc>(src_dims, dnnl::memory::data_type::f32, a_strides);
+  auto weights_md = CreateDesc<dnnl::memory::desc>(weights_dims, dnnl::memory::data_type::f32, b_strides);
+  auto dst_md = CreateDesc<dnnl::memory::desc>(dst_dims, dnnl::memory::data_type::f32, o_strides);
+  auto matmul_desc = CreateDesc<dnnl::matmul::desc>(src_md, weights_md, dst_md);
+  auto prim_desc = CreateDesc<dnnl::matmul::primitive_desc>(matmul_desc, MKLKernelEngine::Get().engine());
+  primitive_ = CreatePrimitive<dnnl::matmul>(prim_desc);
 
   AddArgument(DNNL_ARG_SRC, src_md);
   AddArgument(DNNL_ARG_WEIGHTS, weights_md);

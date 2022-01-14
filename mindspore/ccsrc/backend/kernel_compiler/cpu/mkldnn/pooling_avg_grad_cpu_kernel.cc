@@ -66,18 +66,18 @@ void AvgPoolingGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   dnnl::memory::dims padding_r{int_padding_r[0], int_padding_r[1]};
 
   // pooling_avg forward description
-  dnnl::pooling_forward::desc desc =
-    dnnl::pooling_forward::desc(dnnl::prop_kind::forward_training, dnnl::algorithm::pooling_avg, src_desc, dst_desc,
-                                strides_dims, kernels_dims, padding_l, padding_r);
-  auto prim_desc = dnnl::pooling_forward::primitive_desc(desc, MKLKernelEngine::Get().engine());
+  auto desc =
+    CreateDesc<dnnl::pooling_forward::desc>(dnnl::prop_kind::forward_training, dnnl::algorithm::pooling_avg, src_desc,
+                                            dst_desc, strides_dims, kernels_dims, padding_l, padding_r);
+  auto prim_desc = CreateDesc<dnnl::pooling_forward::primitive_desc>(desc, MKLKernelEngine::Get().engine());
 
   // pooling_avg backward description
-  dnnl::pooling_backward::desc backward_desc = dnnl::pooling_backward::desc(
-    dnnl::algorithm::pooling_avg, src_desc, dst_desc, strides_dims, kernels_dims, padding_l, padding_r);
+  auto backward_desc = CreateDesc<dnnl::pooling_backward::desc>(dnnl::algorithm::pooling_avg, src_desc, dst_desc,
+                                                                strides_dims, kernels_dims, padding_l, padding_r);
   auto backward_prim_desc =
-    dnnl::pooling_backward::primitive_desc(backward_desc, MKLKernelEngine::Get().engine(), prim_desc);
+    CreateDesc<dnnl::pooling_backward::primitive_desc>(backward_desc, MKLKernelEngine::Get().engine(), prim_desc);
 
-  primitive_ = std::make_shared<dnnl::pooling_backward>(backward_prim_desc);
+  primitive_ = CreatePrimitive<dnnl::pooling_backward>(backward_prim_desc);
   AddArgument(DNNL_ARG_SRC, src_desc);
   AddArgument(DNNL_ARG_DST, dst_desc);
   AddArgument(DNNL_ARG_DIFF_SRC, src_desc);

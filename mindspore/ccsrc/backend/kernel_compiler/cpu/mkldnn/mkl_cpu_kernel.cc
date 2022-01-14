@@ -134,7 +134,7 @@ dnnl::memory::desc MKLCPUKernel::GetDefaultMemDesc(const std::vector<size_t> &sh
     (void)dims.insert(dims.end(), shape.begin(), shape.end());
   }
   dnnl::memory::format_tag mem_tag = GetDefaultFormatTag(dims);
-  dnnl::memory::desc mem_desc(dims, dnnl::memory::data_type::f32, mem_tag);
+  auto mem_desc = CreateDesc<dnnl::memory::desc>(dims, dnnl::memory::data_type::f32, mem_tag);
   return mem_desc;
 }
 
@@ -145,8 +145,30 @@ void MKLCPUKernel::AddArgument(int arg_key, const dnnl::memory::desc &mem_desc, 
 void MKLCPUKernel::SetArgumentHandle(int arg_key, void *ptr) {
   auto arg_iter = arguments_.find(arg_key);
   if (arg_iter != arguments_.end()) {
+    MS_LOG(DEBUG) << "begin to invoke dnnl::memory::set_data_handle";
     arg_iter->second.set_data_handle(ptr);
+    MS_LOG(DEBUG) << "end to invoke dnnl::memory::set_data_handle";
   }
+}
+
+void MKLCPUKernel::SetDataHandle(dnnl::memory mem, void *ptr) {
+  MS_LOG(DEBUG) << "begin to invoke dnnl::memory::set_data_handle";
+  mem.set_data_handle(ptr);
+  MS_LOG(DEBUG) << "end to invoke dnnl::memory::set_data_handle";
+}
+
+void *MKLCPUKernel::GetDataHandle(const dnnl::memory &mem) const {
+  MS_LOG(DEBUG) << "begin to invoke dnnl::memory::get_data_handle";
+  auto ptr = mem.get_data_handle();
+  MS_LOG(DEBUG) << "end to invoke dnnl::memory::get_data_handle";
+  return ptr;
+}
+
+size_t MKLCPUKernel::GetSize(const dnnl::memory::desc &desc) const {
+  MS_LOG(DEBUG) << "begin to invoke dnnl::memory::desc::get_size()";
+  auto size = desc.get_size();
+  MS_LOG(DEBUG) << "end to invoke dnnl::memory::desc::get_size()";
+  return size;
 }
 
 void MKLCPUKernel::ExecutePrimitive() { MKLKernelEngine::Get().Execute(primitive_, arguments_); }

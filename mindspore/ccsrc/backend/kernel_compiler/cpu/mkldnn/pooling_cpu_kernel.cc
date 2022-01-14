@@ -77,19 +77,21 @@ void PoolingCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     (void)padding_l.emplace_back(int_padding_l[i]);
     (void)padding_r.emplace_back(int_padding_r[i]);
   }
-  dnnl::pooling_forward::desc desc =
-    dnnl::pooling_forward::desc(dnnl::prop_kind::forward_training, dnnl::algorithm::pooling_max, src_desc, dst_desc,
-                                strides_dims, kernels_dims, padding_l, padding_r);
+  auto desc =
+    CreateDesc<dnnl::pooling_forward::desc>(dnnl::prop_kind::forward_training, dnnl::algorithm::pooling_max, src_desc,
+                                            dst_desc, strides_dims, kernels_dims, padding_l, padding_r);
   if (kernel_name_ == prim::kPrimAvgPool->name()) {
-    desc = dnnl::pooling_forward::desc(dnnl::prop_kind::forward_training, dnnl::algorithm::pooling_avg, src_desc,
-                                       dst_desc, strides_dims, kernels_dims, padding_l, padding_r);
+    desc =
+      CreateDesc<dnnl::pooling_forward::desc>(dnnl::prop_kind::forward_training, dnnl::algorithm::pooling_avg, src_desc,
+                                              dst_desc, strides_dims, kernels_dims, padding_l, padding_r);
   }
-  auto prim_desc = dnnl::pooling_forward::primitive_desc(desc, MKLKernelEngine::Get().engine());
-  workspace_size_ = prim_desc.workspace_desc().get_size();
-  primitive_ = std::make_shared<dnnl::pooling_forward>(prim_desc);
+  auto prim_desc = CreateDesc<dnnl::pooling_forward::primitive_desc>(desc, MKLKernelEngine::Get().engine());
+  auto wksp_desc = GetWorkspaceDesc(prim_desc);
+  workspace_size_ = GetSize(wksp_desc);
+  primitive_ = CreatePrimitive<dnnl::pooling_forward>(prim_desc);
   AddArgument(DNNL_ARG_SRC, src_desc);
   AddArgument(DNNL_ARG_DST, dst_desc);
-  AddArgument(DNNL_ARG_WORKSPACE, prim_desc.workspace_desc());
+  AddArgument(DNNL_ARG_WORKSPACE, wksp_desc);
 }
 
 bool PoolingCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,

@@ -21,12 +21,109 @@
 #include <unordered_map>
 #include <memory>
 #include <vector>
+#include <utility>
 #include "dnnl.hpp"
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
 
 namespace mindspore {
 namespace kernel {
+template <class T, class... Args>
+auto CreateDesc(Args &&... args) {
+  MS_LOG(DEBUG) << "begin to invoke constructor of " << demangle(typeid(T).name());
+  auto desc = T(std::forward<Args>(args)...);
+  MS_LOG(DEBUG) << "end to invoke constructor of " << demangle(typeid(T).name());
+  return desc;
+}
+
+template <class T, class... Args>
+auto CreatePrimitive(Args &&... args) {
+  MS_LOG(DEBUG) << "begin to invoke constructor of " << demangle(typeid(T).name());
+  auto prim = std::make_shared<T>(std::forward<Args>(args)...);
+  MS_LOG(DEBUG) << "end to invoke constructor of " << demangle(typeid(T).name());
+  return prim;
+}
+
+template <class T>
+auto GetWorkspaceDesc(const T &prim_desc) {
+  MS_LOG(DEBUG) << "begin to invoke " << demangle(typeid(T).name()) << "::workspace_desc()";
+  auto desc = prim_desc.workspace_desc();
+  MS_LOG(DEBUG) << "end to invoke " << demangle(typeid(T).name()) << "::workspace_desc()";
+  return desc;
+}
+
+template <class T>
+auto GetMeanDesc(const T &prim_desc) {
+  MS_LOG(DEBUG) << "begin to invoke " << demangle(typeid(T).name()) << "::mean_desc()";
+  auto desc = prim_desc.mean_desc();
+  MS_LOG(DEBUG) << "end to invoke " << demangle(typeid(T).name()) << "::mean_desc()";
+  return desc;
+}
+
+template <class T>
+auto GetVarianceDesc(const T &prim_desc) {
+  MS_LOG(DEBUG) << "begin to invoke " << demangle(typeid(T).name()) << "::variance_desc()";
+  auto desc = prim_desc.variance_desc();
+  MS_LOG(DEBUG) << "end to invoke " << demangle(typeid(T).name()) << "::variance_desc()";
+  return desc;
+}
+
+template <class T>
+auto GetWeightsLayerDesc(const T &prim_desc) {
+  MS_LOG(DEBUG) << "begin to invoke " << demangle(typeid(T).name()) << "::weights_layer_desc()";
+  auto desc = prim_desc.weights_layer_desc();
+  MS_LOG(DEBUG) << "end to invoke " << demangle(typeid(T).name()) << "::weights_layer_desc()";
+  return desc;
+}
+
+template <class T>
+auto GetWeightsIterDesc(const T &prim_desc) {
+  MS_LOG(DEBUG) << "begin to invoke " << demangle(typeid(T).name()) << "::weights_iter_desc()";
+  auto desc = prim_desc.weights_iter_desc();
+  MS_LOG(DEBUG) << "end to invoke " << demangle(typeid(T).name()) << "::weights_iter_desc()";
+  return desc;
+}
+
+template <class T>
+auto GetBiasDesc(const T &prim_desc) {
+  MS_LOG(DEBUG) << "begin to invoke " << demangle(typeid(T).name()) << "::bias_desc()";
+  auto desc = prim_desc.bias_desc();
+  MS_LOG(DEBUG) << "end to invoke " << demangle(typeid(T).name()) << "::bias_desc()";
+  return desc;
+}
+
+template <class T>
+auto GetDiffWeightsLayerDesc(const T &prim_desc) {
+  MS_LOG(DEBUG) << "begin to invoke " << demangle(typeid(T).name()) << "::diff_weights_layer_desc()";
+  auto desc = prim_desc.diff_weights_layer_desc();
+  MS_LOG(DEBUG) << "end to invoke " << demangle(typeid(T).name()) << "::diff_weights_layer_desc()";
+  return desc;
+}
+
+template <class T>
+auto GetDiffWeightsIterDesc(const T &prim_desc) {
+  MS_LOG(DEBUG) << "begin to invoke " << demangle(typeid(T).name()) << "::diff_weights_iter_desc()";
+  auto desc = prim_desc.diff_weights_iter_desc();
+  MS_LOG(DEBUG) << "end to invoke " << demangle(typeid(T).name()) << "::diff_weights_iter_desc()";
+  return desc;
+}
+
+template <class T>
+auto GetDiffBiasDesc(const T &prim_desc) {
+  MS_LOG(DEBUG) << "begin to invoke " << demangle(typeid(T).name()) << "::diff_bias_desc()";
+  auto desc = prim_desc.diff_bias_desc();
+  MS_LOG(DEBUG) << "end to invoke " << demangle(typeid(T).name()) << "::diff_bias_desc()";
+  return desc;
+}
+
+template <class T>
+auto GetMemDesc(const T &prim_desc) {
+  MS_LOG(DEBUG) << "begin to invoke " << demangle(typeid(T).name()) << "::get_desc()";
+  auto desc = prim_desc.get_desc();
+  MS_LOG(DEBUG) << "end to invoke " << demangle(typeid(T).name()) << "::get_desc()";
+  return desc;
+}
+
 class MKLCPUKernel : public CPUKernel {
  public:
   MKLCPUKernel() = default;
@@ -44,9 +141,16 @@ class MKLCPUKernel : public CPUKernel {
   dnnl::memory::desc GetDefaultMemDesc(const std::vector<size_t> &shape) const;
   void ExecutePrimitive();
   inline dnnl::memory::desc formatted_md(const dnnl::memory::dims &dimensions, dnnl::memory::format_tag layout) {
-    return dnnl::memory::desc{{dimensions}, dnnl::memory::data_type::f32, layout};
+    MS_LOG(DEBUG) << "begin to invoke constructor of dnnl::memory::desc";
+    auto desc = dnnl::memory::desc{{dimensions}, dnnl::memory::data_type::f32, layout};
+    MS_LOG(DEBUG) << "end to invoke constructor of dnnl::memory::desc";
+    return desc;
   }
   void Reorder(dnnl::memory *src_mem, dnnl::memory *dst_mem);
+
+  size_t GetSize(const dnnl::memory::desc &desc) const;
+  void SetDataHandle(dnnl::memory mem, void *ptr);
+  void *GetDataHandle(const dnnl::memory &mem) const;
 
   std::unordered_map<int, dnnl::memory> arguments_;
   std::shared_ptr<dnnl::primitive> primitive_{nullptr};
