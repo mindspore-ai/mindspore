@@ -2205,6 +2205,7 @@ class TopK(PrimitiveWithInfer):
         validator.check_value_type('k', k_v, (int,), self.name)
         x_shape = list(input_x['shape'])
         ndim = len(x_shape) - 1
+        k_v = validator.check_int_range(k_v, 0, x_shape[ndim] + 1, Rel.INC_NEITHER, "k", int)
         x_shape[ndim] = k_v
         return {'shape': (x_shape, x_shape),
                 'dtype': (x_dtype, mstype.int32),

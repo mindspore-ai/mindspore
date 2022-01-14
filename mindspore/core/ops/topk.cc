@@ -48,8 +48,10 @@ AbstractBasePtr TopKInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto k_v = GetValue<int>(input_args[1]->BuildValue());
   auto ndims = x_shape.size() - 1;
+  std::pair<int64_t, int64_t> k_range(0, x_shape[ndims]);
+  CheckAndConvertUtils::CheckInRange<int64_t>("top_k_infer", static_cast<int64_t>(k_v), kIncludeRight, k_range,
+                                              prim_name);
   x_shape[ndims] = k_v;
-
   auto output0 = std::make_shared<abstract::AbstractTensor>(output0_type, x_shape);
   auto output1 = std::make_shared<abstract::AbstractTensor>(output1_type, x_shape);
   AbstractBasePtrList output = {output0, output1};
