@@ -3,11 +3,17 @@ mindspore.dataset.audio.transforms.Contrast
 
 .. py:class:: mindspore.dataset.audio.transforms.Contrast(enhancement_amount=75.0)
 
-    给形如(..., time)维度的音频波形施加对比度增强效果。实现方式类似于SoX库。与音频压缩相比，该效果通过修改音频信号使其听起来更响亮。
+    给音频波形施加对比度增强效果。
+
+    与音频压缩相比，该效果通过修改音频信号使其听起来更响亮。
+
+    接口实现方式类似于 `SoX库 <http://sox.sourceforge.net/sox.html>`_ 。
+
+    .. note:: 待处理音频维度需为(..., time)。
 
     **参数：**
 
-    - **enhancement_amount** (float) - 控制音频增益的量。取值范围为[0,100]（默认为75.0）。注意当 `enhancement_amount` 等于0时，对比度增强效果仍然会很显著。
+    - **enhancement_amount** (float, 可选) - 控制音频增益的量，取值范围为[0,100]，默认值：75.0。请注意当 `enhancement_amount` 等于0时，对比度增强效果仍然会很显著。
 
     **样例：**
 
