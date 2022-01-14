@@ -191,7 +191,7 @@ class AmazonReviewDataset(SourceDataset, TextBaseDataset):
              ├── test.csv
              └── readme.txt
 
-   Citation:
+    Citation:
 
     .. code-block::
 
@@ -600,7 +600,7 @@ class EnWik9Dataset(SourceDataset, TextBaseDataset):
 
 class IMDBDataset(MappableDataset, TextBaseDataset):
     """
-    A source dataset for reading and parsing Internet Movie Database (IMDb).
+    A source dataset that reads and parses Internet Movie Database (IMDb).
 
     The generated dataset has two columns: :py:obj:`[text, label]`.
     The tensor of column :py:obj:`text` is of the string type.
