@@ -118,7 +118,7 @@ inline bool operator>(const SharedPtr<T> &a, std::nullptr_t) noexcept {
 }
 
 template <typename T>
-inline bool operator>(std::nullptr_t, const SharedPtr<T> &a) noexcept {
+inline bool operator>(std::nullptr_t, const SharedPtr<T> &) noexcept {
   // 'nullptr > ptr' is always false.
   return false;
 }
@@ -134,7 +134,7 @@ inline bool operator<=(const SharedPtr<T> &a, std::nullptr_t) noexcept {
 }
 
 template <typename T>
-inline bool operator<=(std::nullptr_t, const SharedPtr<T> &a) noexcept {
+inline bool operator<=(std::nullptr_t, const SharedPtr<T> &) noexcept {
   // 'nullptr <= ptr' is always true.
   return true;
 }
