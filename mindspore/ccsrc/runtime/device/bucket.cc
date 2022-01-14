@@ -83,8 +83,13 @@ void Bucket::AllocateAllReduceMemory() {
     memcpy_input_addrs_.emplace_back(std::make_shared<kernel::Address>(
       static_cast<uint8_t *>(device_address->GetMutablePtr()), device_address->GetSize()));
 
-    ar_input_address_list_.emplace_back(CreateDeviceAddress(origin_size));
-    ar_output_address_list_.emplace_back(CreateDeviceAddress(origin_size));
+    auto tensor_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
+    MS_EXCEPTION_IF_NULL(tensor_address);
+
+    ar_input_address_list_.emplace_back(
+      CreateDeviceAddress(origin_size, tensor_address->type_id(), tensor_address->format()));
+    ar_output_address_list_.emplace_back(
+      CreateDeviceAddress(origin_size, tensor_address->type_id(), tensor_address->format()));
   }
 
   total_size_ = total_size;
