@@ -70,10 +70,10 @@ class SolveTriangular(PrimitiveWithInfer):
         >>> b = Tensor(onp.array([4, 2, 4, 2], onp.float64))
         >>> solve_triangular = SolveTriangular(lower=True, unit_diagonal=False, trans='N')
         >>> x = solve_triangular(A, b)
-        >>> x
-        Tensor(shape=[4], dtype=Float64, value= [ 1.33333333e+00, -6.66666667e-01,  2.66666667e+00, -1.33333333e+00])
-        >>> mnp.dot(A, x)  # Check the result
-        Tensor(shape=[4], dtype=Float64, value= [ 4.00000000e+00,  2.00000000e+00,  4.00000000e+00,  2.00000000e+00])
+        >>> print(x)
+        [ 1.33333333 -0.66666667  2.66666667 -1.33333333]
+        >>> print(mnp.dot(A, x))  # Check the result
+        [4. 2. 4. 2.]
     """
 
     @prim_attr_register
@@ -167,12 +167,13 @@ class CholeskySolver(PrimitiveWithInfer):
         >>> from mindspore.common import Tensor
         >>> from mindspore.scipy.ops import CholeskySolver
         >>> from mindspore.scipy.linalg import cho_factor
-
-        >>> A = Tensor(onp.array([[9, 3, 1, 5], [3, 7, 5, 1], [1, 5, 9, 2], [5, 1, 2, 6]]))
-        >>> b = Tensor(onp.array([1.0, 1.0, 1.0, 1.0], dtype=onp.dtype))
+        >>> A = Tensor(onp.array([[9, 3, 1, 5], [3, 7, 5, 1], [1, 5, 9, 2], [5, 1, 2, 6]], dtype=onp.float32))
+        >>> b = Tensor(onp.array([1.0, 1.0, 1.0, 1.0], dtype=onp.float32))
         >>> c, lower = cho_factor(A)
         >>> cholesky_solver = CholeskySolver(lower=lower)
         >>> x = cholesky_solver(c, b)
+        >>> print(x)
+        [-0.01749266  0.11953348  0.01166185  0.15743434]
     """
 
     @prim_attr_register
