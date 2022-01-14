@@ -334,6 +334,8 @@ constexpr auto kNPUAllocFloatStatusOpName = "NPUAllocFloatStatus";
 constexpr auto kNPUGetFloatStatusOpName = "NPUGetFloatStatus";
 constexpr auto kNPUClearFloatStatusOpName = "NPUClearFloatStatus";
 constexpr auto kAssignOpName = "Assign";
+constexpr auto kScatterAddOpName = "ScatterAdd";
+constexpr auto kScatterUpdateOpName = "ScatterUpdate";
 
 // Communication world group
 constexpr auto kNcclWorldGroup = "nccl_world_group";
@@ -710,6 +712,8 @@ const std::set<std::string> kOptOperatorSet = {kMomentumOpName,
                                                kLARSUpdateName,
                                                kCombineMomentumWeightOpName,
                                                kCombineMomentumOpName,
+                                               kScatterAddOpName,
+                                               kScatterUpdateOpName,
                                                kSparseApplyProximalAdagradOpName};
 
 const std::set<std::string> kNodeWithSeedOperators = {kGammaOpName,          kPoissonOpName,    kStandardLaplaceOpName,

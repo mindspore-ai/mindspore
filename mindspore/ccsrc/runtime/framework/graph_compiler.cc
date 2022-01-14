@@ -350,8 +350,9 @@ GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNod
   MS_EXCEPTION_IF_NULL(segment);
   MS_LOG(INFO) << "Status record: start compile graph.";
   auto nodes = segment->nodes_;
+  auto device_terget = device_context->GetDeviceAddressType();
   // Generate kernel graph.
-  KernelGraphPtr graph = session_->ConstructKernelGraph(nodes, outputs, true, device_context);
+  KernelGraphPtr graph = session_->ConstructKernelGraph(nodes, outputs, device_terget);
   MS_EXCEPTION_IF_NULL(graph);
   opt::EliminateIllegalDataTypePass(graph);
   SetGraphDependency(graph, segment);
@@ -397,7 +398,8 @@ GraphId GraphCompiler::CompileGraph(const FuncGraphPtr &func_graph, const Device
   MS_LOG(INFO) << "Status record: start compile graph.";
   // Generate kernel graph.
   std::vector<KernelGraphPtr> all_graphs;
-  KernelGraphPtr root_graph = session_->ConstructKernelGraph(func_graph, &all_graphs);
+  auto device_target = device_context->GetDeviceAddressType();
+  KernelGraphPtr root_graph = session_->ConstructKernelGraph(func_graph, &all_graphs, device_target);
   MS_EXCEPTION_IF_NULL(root_graph);
   for (const auto &graph : all_graphs) {
     MS_EXCEPTION_IF_NULL(graph);

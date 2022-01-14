@@ -123,15 +123,16 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   bool CreateCNodeOfKernelGraph(const AnfNodePtr &node, KernelGraph *graph);
 
   std::shared_ptr<KernelGraph> ConstructKernelGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs,
-                                                    bool common_opt = true,
-                                                    const device::DeviceContext *device_context = nullptr);
+                                                    DeviceAddressType device_target = DeviceAddressType::kUnknown,
+                                                    bool common_opt = true);
   std::shared_ptr<KernelGraph> ConstructKernelGraph(const FuncGraphPtr &func_graph,
-                                                    std::vector<KernelGraphPtr> *all_out_graph);
+                                                    std::vector<KernelGraphPtr> *all_out_graph,
+                                                    DeviceAddressType device_target);
 
   void SetInputNodeUsage(const KernelGraphPtr &graph, const FuncGraphManagerPtr &manager);
 
   CNodePtr CreateNewCNode(const CNodePtr &cnode, KernelGraph *graph,
-                          mindspore::HashMap<AnfNodePtr, AnfNodePtr> *other_graph_cnode, const std::string &target);
+                          mindspore::HashMap<AnfNodePtr, AnfNodePtr> *other_graph_cnode);
   CNodePtr CreateNewCNode(const CNodePtr &cnode, KernelGraph *graph);
 
   // get graph id in child graphs by ME front anf node pointer
@@ -183,7 +184,7 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   std::vector<AnfNodePtr> CreateCallSwitchInputs(const CNodePtr &cnode, KernelGraph *graph);
   void GetCNodeInfo(const CNodePtr &cnode, std::vector<AnfNodePtr> *cnode_inputs) const;
   void GetNewCNodeInputs(const CNodePtr &cnode, KernelGraph *graph, std::vector<AnfNodePtr> *cnode_inputs,
-                         mindspore::HashMap<AnfNodePtr, AnfNodePtr> *other_graph_cnode, const std::string &target);
+                         mindspore::HashMap<AnfNodePtr, AnfNodePtr> *other_graph_cnode);
   std::vector<AnfNodePtr> CreateCallSwitchLayerInputs(const CNodePtr &cnode, KernelGraph *graph);
   void ProcessNodeRetFunc(const CNodePtr &cnode, KernelGraph *graph, const std::vector<AnfNodePtr> &real_inputs);
   void HandleInternalOutput(const AnfNodePtr &input_front_node, const AnfNodePtr &backend_node,
@@ -307,8 +308,7 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   // create a new kernel graph and update the graph sum
   KernelGraphPtr NewKernelGraph();
   AnfNodePtr CreateParameterFromTuple(const AnfNodePtr &node, KernelGraph *graph);
-  virtual ParameterPtr CreateNewParameterFromParameter(const AnfNodePtr &anf, KernelGraph *graph,
-                                                       const std::string &target = "");
+  virtual ParameterPtr CreateNewParameterFromParameter(const AnfNodePtr &anf, KernelGraph *graph);
   ValueNodePtr CreateValueNodeKernelGraph(const AnfNodePtr &anf, KernelGraph *graph);
   ParameterPtr CreateNewParameter(const AnfNodePtr &anf, KernelGraph *graph);
   AnfNodePtr CreateNewParameterFromCNode(const AnfNodePtr &anf, KernelGraph *graph);
@@ -327,7 +327,6 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   void GetBatchElements(const AnfNodePtr &kernel_node) const;
   void InitPsWorker(const KernelGraphPtr &kernel_graph);
 #endif
-
   std::map<uint32_t, std::vector<std::shared_ptr<device::Bucket>>> bucket_map_;
   std::map<uint32_t, uint32_t> free_bucket_id_map_;
   mindspore::HashMap<GraphId, std::shared_ptr<KernelGraph>> graphs_;
@@ -335,6 +334,7 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   mindspore::HashMap<FuncGraph *, KernelGraphPtr> front_backend_graph_map_;
   mindspore::HashMap<AnfNodePtr, AnfNodePtr> partial_parameters_map_;
   mindspore::HashMap<AnfNodePtr, std::string> partial_target_map_;
+  mindspore::HashMap<AnfNodePtr, ParameterPtr> default_param_map_;
   std::shared_ptr<Context> context_;
   CallBackFunc summary_callback_;
   static GraphId graph_sum_;
