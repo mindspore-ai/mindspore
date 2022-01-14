@@ -154,8 +154,9 @@ class SortGpuKernel : public GpuKernel {
       axis_ += input_rank_;
     }
     if ((size_t)axis_ >= input_rank_) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the value of 'axis' should be less than " << input_rank_
-                        << ", but got " << (size_t)axis_;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the value of 'axis' should be less than the dimension of input"
+                        << ", but got the dimension of input: " << input_rank_
+                        << ", got the value of 'axis': " << (size_t)axis_;
     }
 
     perm_.resize(input_rank_);
