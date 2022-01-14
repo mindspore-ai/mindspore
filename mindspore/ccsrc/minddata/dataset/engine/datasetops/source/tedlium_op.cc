@@ -211,7 +211,7 @@ Status TedliumOp::ReadSph(const Path &file_sph_path, double start_time, double e
   for (int32_t i = 0; i < size; ++i) {
     char bh = temp[2 * i];
     char bl = temp[2 * i + 1];
-    // SPH aduio files is big-endian, so we should convert the two bytes of data into int16_t based
+    // SPH audio files is big-endian, so we should convert the two bytes of data into int16_t based
     // on the high 8 bits and the low 8 bits.
     int16_t s = static_cast<int16_t>(((bh & 0x00FF) << 8) | (bl & 0x00FF));
     // Data normalization: Convert the data from the interval [-32768,32767] to the interval [-1,1].
