@@ -588,6 +588,7 @@ BackendPtr CreateBackend() {
         auto single_op = common::GetEnv(kGraphOpRun);
         if (single_op == "1") {
           context_ptr->set_param<bool>(MS_CTX_ENABLE_TASK_SINK, false);
+          context_ptr->set_param<bool>(MS_CTX_ENABLE_MEM_SCHEDULER, true);
         }
       }
     }

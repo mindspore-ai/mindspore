@@ -2162,6 +2162,9 @@ std::string SessionBasic::AddPartialParametersMap(const AnfNodePtr &partial_node
 void SessionBasic::HandleInternalOutput(const AnfNodePtr &input_front_node, const AnfNodePtr &backend_node,
                                         const FuncGraphManagerPtr &front_func_graph_manager,
                                         const std::shared_ptr<KernelGraph> &backend_graph) {
+  if (device::KernelRuntime::UseMemScheduler()) {
+    return;
+  }
   auto front_node = GetSupportedInternalNode(input_front_node);
   if (front_node == nullptr) {
     return;

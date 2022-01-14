@@ -96,6 +96,7 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   set_param<bool>(MS_CTX_ALREADY_SET_ENABLE_MINDRT, false);
   set_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE, false);
   set_param<bool>(MS_CTX_ENABLE_PYNATIVE_OP_GRAPH_CACHE, true);
+  set_param<bool>(MS_CTX_ENABLE_MEM_SCHEDULER, false);
 
   backend_policy_ = policy_map_[policy];
 }

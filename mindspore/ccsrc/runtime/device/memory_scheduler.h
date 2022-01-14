@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_MEMORY_SCHEDULER_H_
 #define MINDSPORE_CCSRC_RUNTIME_DEVICE_MEMORY_SCHEDULER_H_
 #include <vector>
-#include <functional>
 #include <map>
 #include <set>
 #include <memory>
@@ -83,11 +82,9 @@ class MemScheduler {
 
   void SetOffload(const void *key) { (void)manual_offload_keys_.insert(key); }
 
-  void AddMemInitFunc(const void *key, const std::function<void(void *)> &func) {
-    high_priority_mem_init_func_.emplace(key, func);
-  }
+  void AddMemNeedInit(const void *key) { high_priority_mem_need_init_.insert(key); }
 
-  void ClearMemInitFunc() { high_priority_mem_init_func_.clear(); }
+  void ClearMemNeedInit() { high_priority_mem_need_init_.clear(); }
 
  private:
   void Record(const void *key, const MemEventType &event_type, size_t mem_size = 0);
@@ -106,7 +103,7 @@ class MemScheduler {
   std::map<const void *, void *> init_host_ptr_;
   std::map<const void *, void *> swap_host_ptr_;
   std::map<const void *, std::vector<size_t>> high_priority_updated_step_;
-  std::map<const void *, std::function<void(void *)>> high_priority_mem_init_func_;
+  std::set<const void *> high_priority_mem_need_init_;
   size_t total_step_{0};
   size_t current_step_{0};
   bool need_record_event_{true};
