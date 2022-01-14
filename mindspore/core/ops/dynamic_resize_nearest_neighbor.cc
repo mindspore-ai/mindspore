@@ -122,7 +122,14 @@ AbstractBasePtr DynamicResizeNearestNeighborInfer(const abstract::AnalysisEngine
   const int64_t input_num = 2;
   (void)CheckAndConvertUtils::CheckInteger("infer", SizeToLong(CheckAndConvertUtils::GetRemoveMonadAbsNum(input_args)),
                                            kEqual, input_num, prim_name);
-  return abstract::MakeAbstract(InferShape(primitive, input_args), InferType(primitive, input_args));
+  auto res = abstract::MakeAbstract(InferShape(primitive, input_args), InferType(primitive, input_args));
+  // Set all used flags of tuple as true.
+  for (size_t i = 0; i < input_args.size(); i++) {
+    if (input_args[i] != nullptr) {
+      SetSequenceElementsUseFlags(input_args[i], true);
+    }
+  }
+  return res;
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(DynamicResizeNearestNeighbor, prim::kPrimDynamicResizeNearestNeighbor,
                              DynamicResizeNearestNeighborInfer, nullptr, true);

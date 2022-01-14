@@ -97,7 +97,14 @@ AbstractBasePtr TransposeInfer(const abstract::AnalysisEnginePtr &, const Primit
                                            primitive->name());
   auto type = InferType(primitive, input_args);
   auto shape = InferShape(primitive, input_args);
-  return abstract::MakeAbstract(shape, type);
+  auto res = abstract::MakeAbstract(shape, type);
+  // Set all used flags of tuple as true.
+  for (size_t i = 0; i < input_args.size(); i++) {
+    if (input_args[i] != nullptr) {
+      SetSequenceElementsUseFlags(input_args[i], true);
+    }
+  }
+  return res;
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(Transpose, prim::kPrimTranspose, TransposeInfer, nullptr, true);
 }  // namespace ops

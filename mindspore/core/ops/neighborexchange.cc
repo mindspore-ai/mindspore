@@ -185,7 +185,13 @@ AbstractBasePtr NeighborExchangeInfer(const abstract::AnalysisEnginePtr &, const
   Check(primitive, input_args);
   auto type = InferType(primitive);
   auto shape = InferShape(primitive);
-  return abstract::MakeAbstract(shape, type);
+  auto res = abstract::MakeAbstract(shape, type);
+  for (size_t i = 0; i < input_args.size(); i++) {
+    if (input_args[i] != nullptr) {
+      SetSequenceElementsUseFlags(input_args[i], true);
+    }
+  }
+  return res;
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(NeighborExchange, prim::kPrimNeighborExchange, NeighborExchangeInfer, nullptr, true);
 }  // namespace ops

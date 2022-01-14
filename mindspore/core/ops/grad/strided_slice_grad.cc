@@ -120,8 +120,15 @@ AbstractBasePtr StridedSliceGradInfer(const abstract::AnalysisEnginePtr &, const
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 5;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
-  return abstract::MakeAbstract(StridedSliceGradInferShape(primitive, input_args),
-                                StridedSliceGradInferType(primitive, input_args));
+  auto res = abstract::MakeAbstract(StridedSliceGradInferShape(primitive, input_args),
+                                    StridedSliceGradInferType(primitive, input_args));
+  // Set all used flags of tuple as true.
+  for (size_t i = 0; i < input_args.size(); i++) {
+    if (input_args[i] != nullptr) {
+      SetSequenceElementsUseFlags(input_args[i], true);
+    }
+  }
+  return res;
 }
 
 void StridedSliceGrad::set_begin_mask(int64_t begin_mask) {
