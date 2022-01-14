@@ -50,7 +50,7 @@ class TensorArray {
   // These three func should by implied for different device due to the difference in memory usage.
   // Create/Release Memory is used for malloc/free a device memory, used in function Write().
   // ClearMemory is used to reset the input addr with zeros, used in function Free().
-  virtual void ReleaseMemory(void *addr) = 0;
+  virtual void ReleaseMemory(const DeviceMemPtr addr) = 0;
   virtual void *CreateMemory(const size_t size) = 0;
   virtual void ClearMemory(void *addr, const size_t size) = 0;
 
