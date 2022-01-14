@@ -19,12 +19,13 @@
 
 #include <memory>
 #include <vector>
+#include <string>
 #include "runtime/device/bucket.h"
 
 namespace mindspore::device::ascend {
 class AscendBucket : public Bucket {
  public:
-  AscendBucket(uint32_t id, uint32_t bucket_size) : Bucket(id, bucket_size, kHcclWorldGroup) {}
+  AscendBucket(uint32_t id, uint32_t bucket_size) : Bucket(id, bucket_size, kHcclWorldGroup, "Ascend") {}
   ~AscendBucket() override = default;
 
   void Init(const std::vector<void *> &compute_streams, const std::vector<void *> &communication_streams) override;
@@ -35,7 +36,7 @@ class AscendBucket : public Bucket {
   void LaunchAllReduce() override;
   std::shared_ptr<LaunchKernel> CreateLaunchAtomicClean();
   void CleanAllReduceInputAddr();
-  DeviceAddressPtr CreateDeviceAddress(size_t size) const override;
+  DeviceAddressPtr CreateDeviceAddress(size_t size, TypeId type_id, const std::string &format) const override;
   size_t GetAlignSize(size_t size) const override;
   void AllocateContinousMemory(const std::vector<DeviceAddressPtr> &to_allocate_address, size_t total_size,
                                const std::vector<size_t> &size_list) const override;

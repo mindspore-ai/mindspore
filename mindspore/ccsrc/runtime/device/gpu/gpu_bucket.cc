@@ -43,10 +43,10 @@ size_t AlignMemorySize(size_t size) {
 }  // namespace
 namespace mindspore::device::gpu {
 GPUBucket::GPUBucket(uint32_t id, uint32_t bucket_size)
-    : Bucket(id, bucket_size, kNcclWorldGroup), collective_handle_(nullptr), device_name_("GPU"), device_id_(0) {}
+    : Bucket(id, bucket_size, kNcclWorldGroup, "GPU"), collective_handle_(nullptr) {}
 
-DeviceAddressPtr GPUBucket::CreateDeviceAddress(size_t size) const {
-  return std::make_shared<GPUDeviceAddress>(nullptr, size);
+DeviceAddressPtr GPUBucket::CreateDeviceAddress(size_t size, TypeId type_id, const std::string &format) const {
+  return std::make_shared<GPUDeviceAddress>(nullptr, size, format, type_id, device_name_, device_id_);
 }
 
 size_t GPUBucket::GetAlignSize(size_t size) const { return AlignMemorySize(size); }

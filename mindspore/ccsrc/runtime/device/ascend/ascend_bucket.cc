@@ -29,8 +29,8 @@
 #include "utils/profile.h"
 
 namespace mindspore::device::ascend {
-DeviceAddressPtr AscendBucket::CreateDeviceAddress(size_t size) const {
-  return std::make_shared<AscendDeviceAddress>(nullptr, size);
+DeviceAddressPtr AscendBucket::CreateDeviceAddress(size_t size, TypeId type_id, const std::string &format) const {
+  return std::make_shared<AscendDeviceAddress>(nullptr, size, format, type_id, device_name_, device_id_);
 }
 
 size_t AscendBucket::GetAlignSize(size_t size) const { return MemoryManager::GetCommonAlignSize(size); }
