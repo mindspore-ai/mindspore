@@ -163,12 +163,12 @@ bool EnvironConversion(const pipeline::ResourcePtr &resource) {
           prim = std::make_shared<Primitive>(prim::kEnvironGet);
         }
         MS_EXCEPTION_IF_NULL(prim);
-        prim->set_attr(attr_name, MakeValue(static_cast<int64_t>(type_id)));
+        prim->set_attr(attr_name, MakeValue(static_cast<int>(type_id)));
         transformed_prim_node = NewValueNode(prim);
         txn.SetEdge(node, kPrimitiveOffset, transformed_prim_node);
       }
     } else {
-      prim->set_attr(attr_name, MakeValue(static_cast<int64_t>(type_id)));
+      prim->set_attr(attr_name, MakeValue(static_cast<int>(type_id)));
     }
     // Abstract of Environ & Value will be set by previous TransformNodeAbstract function.
     // Key
