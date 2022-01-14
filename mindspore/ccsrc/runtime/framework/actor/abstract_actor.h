@@ -25,6 +25,7 @@
 #include "mindrt/include/actor/op_actor.h"
 #include "runtime/framework/actor/actor_common.h"
 #include "runtime/framework/device_tensor_store.h"
+#include "runtime/framework/device_tensor_copy_store.h"
 #include "runtime/hardware/device_context.h"
 
 namespace mindspore {

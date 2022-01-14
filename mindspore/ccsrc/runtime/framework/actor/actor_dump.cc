@@ -149,6 +149,19 @@ void DumpKernelActor(const KernelActor *actor, std::ofstream &ofs) {
   }
 
   DumpAbstractActor(actor, ofs);
+
+  if (actor->modifiable_ref_input_indexes().size() != 0) {
+    ofs << "\t\tmodifiable_ref_input_indexes:" << actor->modifiable_ref_input_indexes().size() << "\n";
+    for (auto &ref_input_index : actor->modifiable_ref_input_indexes()) {
+      ofs << "\t\t\tmodifiable_ref_input_index:" << ref_input_index << "\n ";
+    }
+  }
+  if (actor->modifiable_ref_output_indexes().size() != 0) {
+    ofs << "\t\tmodifiable_ref_output_indexes:" << actor->modifiable_ref_output_indexes().size() << "\n";
+    for (auto &ref_output_index : actor->modifiable_ref_output_indexes()) {
+      ofs << "\t\t\tmodifiable_ref_output_index:" << ref_output_index << "\n ";
+    }
+  }
   ofs << "\n";
 }
 
@@ -215,10 +228,10 @@ void DumpControlActor(const ControlActor *actor, std::ofstream &ofs) {
   DumpAbstractActor(actor, ofs);
   const auto &local_partials = actor->local_partials();
   if (local_partials.size() > 0) {
-    ofs << "\t\t\tlocal partial num:" << local_partials.size() << "\n ";
+    ofs << "\t\tlocal partial num:" << local_partials.size() << "\n ";
     for (const auto &local_partial : local_partials) {
       MS_EXCEPTION_IF_NULL(local_partial.second->func_graph_);
-      ofs << "\t\t\t\tlocal partial index:" << local_partial.first
+      ofs << "\t\t\tlocal partial index:" << local_partial.first
           << "\tgraph:" << local_partial.second->func_graph_->ToString()
           << "\tparameter num:" << local_partial.second->device_tensors_.size() << "\n";
     }

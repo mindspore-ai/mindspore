@@ -15,6 +15,7 @@
  */
 
 #include "runtime/framework/actor/control_flow/control_actor.h"
+#include "runtime/hardware/device_context_manager.h"
 
 namespace mindspore {
 namespace runtime {
@@ -349,12 +350,12 @@ void ControlActor::UpdateOutputData(OpData<DeviceTensor> *const output_data, con
 
   if (data->GetMutablePtr() == nullptr) {
     std::string error_info =
-      "The address of the " + std::to_string(formal_parameter_position) + "position formal parameter is nullptr.";
+      "The address of the " + std::to_string(formal_parameter_position) + "position real parameter is nullptr.";
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
   }
   if (data->ref_count() != SIZE_MAX) {
     std::string error_info = "The ref count of the " + std::to_string(formal_parameter_position) +
-                             "position formal parameter is wrong:" + std::to_string(data->ref_count());
+                             "position real parameter is wrong:" + std::to_string(data->ref_count());
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
   }
 
@@ -364,19 +365,44 @@ void ControlActor::UpdateOutputData(OpData<DeviceTensor> *const output_data, con
     if ((device_tensor.get() == data) || (device_tensor->GetMutablePtr() == data->GetMutablePtr())) {
       continue;
     }
-    auto real_parameter = device_tensor->GetNodeIndex();
-    MS_EXCEPTION_IF_NULL(real_parameter.first);
-    if ((device_tensor->GetSize() != data->GetSize()) || (device_tensor->format() != data->format()) ||
-        (device_tensor->type_id() != data->type_id())) {
+    auto formal_parameter = device_tensor->GetNodeIndex();
+    MS_EXCEPTION_IF_NULL(formal_parameter.first);
+    if ((device_tensor->GetSize() != data->GetSize()) || (device_tensor->type_id() != data->type_id())) {
       std::string error_info =
-        "The address of the " + std::to_string(formal_parameter_position) +
-        "position formal parameter can not be set to real parameter:" + real_parameter.first->DebugString();
+        "The formal parameter: " + formal_parameter.first->DebugString() +
+        " position:" + std::to_string(formal_parameter_position) + "can not set from real parameter," +
+        " formal parameter size:" + std::to_string(device_tensor->GetSize()) +
+        " type id:" + std::to_string(device_tensor->type_id()) +
+        ", real parameter size:" + std::to_string(data->GetSize()) + " type id:" + std::to_string(data->type_id());
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+    }
+
+    // Copy from the real parameter to formal parameter and insert the device tensor copy store.
+    if ((device_tensor->format() != data->format()) || (device_tensor->DeviceType() != data->DeviceType())) {
+      MS_LOG(INFO) << "The formal parameter:" << formal_parameter.first->DebugString()
+                   << " input position:" << formal_parameter_position << " need copy from real parameter,"
+                   << " formal parameter format:" << device_tensor->format() << " type:" << device_tensor->DeviceType()
+                   << ", real parameter format:" << data->format() << " type:" << data->DeviceType();
+      const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+        {device_tensor->device_name(), device_tensor->device_id()});
+      MS_EXCEPTION_IF_NULL(device_context);
+      if ((device_tensor->GetPtr() == nullptr) &&
+          (!device_context->AllocateMemory(device_tensor.get(), device_tensor->GetSize()))) {
+        SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(GraphExecutionStrategy::kPipeline, *context, *device_context,
+                                                    formal_parameter.first->DebugString(), device_tensor->GetSize());
+      }
+      if (!Copy(device_tensor.get(), data)) {
+        std::string error_info = "The formal parameter: " + formal_parameter.first->DebugString() +
+                                 " position:" + std::to_string(formal_parameter_position) + " copy failed.";
+        SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+      }
+      output_data->data_ = device_tensor.get();
+      DeviceTensorCopyStore::GetInstance().Insert(device_tensor.get(), data);
     }
 
     device_tensor->set_ptr(data->GetMutablePtr());
     MS_LOG(DEBUG) << "Set the ptr: " << data->GetMutablePtr()
-                  << " for the ref real parameter: " << real_parameter.first->DebugString()
+                  << " for the ref formal parameter: " << formal_parameter.first->DebugString()
                   << " in the actor: " << GetAID().Name();
   }
 }

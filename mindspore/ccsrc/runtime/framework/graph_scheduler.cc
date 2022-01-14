@@ -224,6 +224,9 @@ void GraphScheduler::Clear() {
 void GraphScheduler::ClearActorData(const ActorSet *actor_set) {
   MS_EXCEPTION_IF_NULL(actor_set);
 
+  // Clear the member of DeviceTensorCopyStore.
+  DeviceTensorCopyStore::GetInstance().Clear();
+
   for (auto &super_kernel_actor : actor_set->super_kernel_actors_) {
     MS_EXCEPTION_IF_NULL(super_kernel_actor);
     super_kernel_actor->memory_free_lists_ = std::queue<std::vector<DeviceTensor *>>();
@@ -735,8 +738,11 @@ std::vector<KernelActorPtr> GraphScheduler::BuildKernelActor(const GraphCompiler
     for (auto &kernel : execution_order) {
       MS_EXCEPTION_IF_NULL(kernel);
       if (IsKernelActor(kernel, graph_compiler_info.strategy_) && (!IsSkippedKernelActor(kernel))) {
-        auto kernel_actor = std::make_shared<KernelActor>(kernel->fullname_with_scope(), kernel, device_context,
-                                                          memory_manager_aid_, debug_aid_, recorder_aid_, strategy);
+        auto ref_input_indexes = FetchModifiableRefInputIndex(kernel);
+        auto ref_output_indexes = FetchModifiableRefOutputIndex(kernel, graph);
+        auto kernel_actor =
+          std::make_shared<KernelActor>(kernel->fullname_with_scope(), kernel, device_context, memory_manager_aid_,
+                                        debug_aid_, recorder_aid_, strategy, ref_input_indexes, ref_output_indexes);
         MS_EXCEPTION_IF_NULL(kernel_actor);
         InsertActor(kernel_actor.get());
         (void)kernel_actors.emplace_back(kernel_actor);
