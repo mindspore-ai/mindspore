@@ -63,7 +63,7 @@ using AttrValueMapPtr = std::shared_ptr<AttrValueMap>;
 // the class to save evaluated result: abstract value and modified attribute
 class EvalResult : public Base {
  public:
-  EvalResult(AbstractBasePtr abs, AttrValueMapPtr attr) : abstract_(abs), attribute_(attr) {}
+  EvalResult(const AbstractBasePtr &abs, const AttrValueMapPtr &attr) : abstract_(abs), attribute_(attr) {}
   ~EvalResult() override = default;
   MS_DECLARE_PARENT(EvalResult, Base);
   AbstractBasePtr abstract() { return abstract_; }
@@ -261,7 +261,7 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
     forward_count_ = 0;
     enable_recursive_eval_ = (common::GetEnv("MS_DEV_RECURSIVE_EVAL") == "1");
   }
-  ~AnalysisEngine() = default;
+  virtual ~AnalysisEngine() = default;
 
   // func_graph: The func_graph to analyze.
   // args_spec_list: The abstracted arguments for the func_graph. Must be a tuple of AbstractBase.

@@ -268,14 +268,12 @@ class MS_CORE_API PartialAbstractClosure final : public AbstractFuncAtom {
   /// \brief Get the pre-provided arguments.
   ///
   /// \return The pre-provided arguments.
-  const AbstractBasePtrList &args() { return args_spec_list_; }
-
-  ValuePtr RealBuildValue() const override { return fn_->BuildValue(); }
+  const AbstractBasePtrList &args() const { return args_spec_list_; }
 
   /// \brief Get the CNode this PartialAbstractClosure evaluated from.
   ///
   /// \return The CNode this PartialAbstractClosure evaluated from.
-  AnfNodePtr node() { return node_.lock(); }
+  AnfNodePtr node() const { return node_.lock(); }
 
   /// \brief Set the CNode this PartialAbstractClosure evaluated from.
   ///
@@ -291,6 +289,9 @@ class MS_CORE_API PartialAbstractClosure final : public AbstractFuncAtom {
   std::size_t hash() const override;
 
   std::string ToString() const override;
+
+ protected:
+  ValuePtr RealBuildValue() const override { return fn_->BuildValue(); }
 
  private:
   AbstractFuncAtomPtr fn_;

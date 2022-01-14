@@ -89,7 +89,7 @@ class UniformPrimEvaluator final : public TrivialPrimEvaluator {
       }
     }
   }
-  ~UniformPrimEvaluator() override = default;
+  ~UniformPrimEvaluator() override { impl_ = nullptr; };
   MS_DECLARE_PARENT(UniformPrimEvaluator, TrivialPrimEvaluator);
 
   EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args) override;
@@ -122,7 +122,7 @@ class DoSignatureEvaluator final : public Evaluator {
   ~DoSignatureEvaluator() override = default;
   MS_DECLARE_PARENT(DoSignatureEvaluator, Evaluator);
   EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &argrefs,
-                    const AnfNodeConfigPtr &out_config = nullptr) override;
+                    const AnfNodeConfigPtr &out_config) override;
 
   EvalResultPtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &, const AnfNodeConfigPtr &) override {
     MS_LOG(EXCEPTION) << "Eval() should not be called, Run() method should be called";
@@ -138,7 +138,7 @@ class UnpackGraphEvaluator final : public Evaluator {
   ~UnpackGraphEvaluator() override = default;
   MS_DECLARE_PARENT(UnpackGraphEvaluator, Evaluator);
   EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &argrefs,
-                    const AnfNodeConfigPtr &out_config = nullptr) override;
+                    const AnfNodeConfigPtr &out_config) override;
 
   EvalResultPtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &, const AnfNodeConfigPtr &) override {
     MS_LOG(EXCEPTION) << "Eval() should not be called, Run() method should be called";
@@ -155,7 +155,7 @@ class MixedPrecisionCastEvaluator final : public Evaluator {
   ~MixedPrecisionCastEvaluator() override = default;
   MS_DECLARE_PARENT(MixedPrecisionCastEvaluator, Evaluator);
   EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &argrefs,
-                    const AnfNodeConfigPtr &out_config = nullptr) override;
+                    const AnfNodeConfigPtr &out_config) override;
 
   EvalResultPtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &, const AnfNodeConfigPtr &) override {
     MS_LOG(EXCEPTION) << "Eval() should not be called, Run() method should be called";
