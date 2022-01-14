@@ -34,7 +34,7 @@ namespace mindspore {
 namespace device {
 namespace ascend {
 using AscendAutoMonad = mindspore::session::AscendAutoMonad;
-
+AscendGraphOptimization GetAscendGraphOptimization() { return AscendGraphOptimization(); }
 void AscendGraphOptimization::OptimizeGraph(const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_LOG(INFO) << "Status record: start optimize graph. graph id: " << graph->graph_id();
