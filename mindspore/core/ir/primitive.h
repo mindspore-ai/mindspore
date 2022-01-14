@@ -31,7 +31,7 @@ namespace mindspore {
 // Supported meta type
 enum PrimType {
   kPrimTypeUnknown = 0,
-  kPrimTypeBegin = kTypeUnknown,
+  kPrimTypeBegin = kPrimTypeUnknown,
   kPrimTypeBuiltIn,     // Built-in primitive operator
   kPrimTypePyInfer,     // Primitive operator with python infer function
   kPrimTypeUserCustom,  // Primitive operator defined by custom
@@ -102,7 +102,7 @@ class MS_CORE_API Primitive : public Named {
   ///
   /// \param[in] args The arguments of primitive need to compute.
   /// \return The primitive's calculation result.
-  virtual BaseRef RunComputeFunction(const VectorRef &args) const { return nullptr; }
+  virtual BaseRef RunComputeFunction(const VectorRef &) const { return nullptr; }
   /// \brief Get Primitive's attribute.
   ///
   /// \param[in] attrName Primitive attribute name.
@@ -213,7 +213,7 @@ class MS_CORE_API Primitive : public Named {
   /// \brief Get const input index of the primitive.
   ///
   /// \return  Const input indexes of the primitive.
-  const std::vector<size_t> &get_const_input_indexes() { return const_input_indexes_; }
+  const std::vector<size_t> &get_const_input_indexes() const { return const_input_indexes_; }
   /// \brief Get Primitive's id.
   ///
   /// \return primitive's Id.
