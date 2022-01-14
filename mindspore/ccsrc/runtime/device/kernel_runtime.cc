@@ -1161,7 +1161,7 @@ void KernelRuntime::GenLaunchArgs(const mindspore::kernel::KernelMod &kernel_mod
 bool KernelRuntime::UseMemScheduler() {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  if (context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK)) {
+  if (!context_ptr->get_param<bool>(MS_CTX_ENABLE_MEM_SCHEDULER)) {
     return false;
   }
   // Not use MemScheduler when running single op
@@ -1439,7 +1439,7 @@ void KernelRuntime::InitGraphInputTensors(const std::shared_ptr<MemScheduler> &m
   if (input_tensors.size() != input_nodes.size()) {
     MS_LOG_EXCEPTION << "Invalid input tensor size:" << input_tensors.size() << " vs node size:" << input_nodes.size();
   }
-  mem_scheduler->ClearMemInitFunc();
+  mem_scheduler->ClearMemNeedInit();
   for (size_t i = 0; i < input_tensors.size(); ++i) {
     auto input_node = input_nodes[i];
     if (!input_node->isa<Parameter>() || !AnfAlgo::OutputAddrExist(input_node, 0)) {
@@ -1466,12 +1466,7 @@ void KernelRuntime::InitGraphInputTensors(const std::shared_ptr<MemScheduler> &m
         device_address->SyncHostToDevice(shape, LongToSize(tensor->data().nbytes()), tensor->data_type(),
                                          tensor->data_c(), tensor->device_info().host_format_);
       } else {
-        mem_scheduler->AddMemInitFunc(device_address.get(), [device_address, tensor, shape](void *device_ptr) -> void {
-          device_address->set_ptr(device_ptr);
-          device_address->SyncHostToDevice(shape, LongToSize(tensor->data().nbytes()), tensor->data_type(),
-                                           tensor->data_c(), tensor->device_info().host_format_);
-          device_address->set_ptr(nullptr);
-        });
+        mem_scheduler->AddMemNeedInit(device_address.get());
       }
     }
     MemPriority priority = kMemPriorityLow;
