@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,8 @@ class EffectInfoHolder {
 
   // Unset effect info.
   void UnsetEffectInfo() { effect_info_ = {EffectInfo::kUnknown, false, false}; }
+
+  ~EffectInfoHolder() {}
 
  protected:
   EffectInfo effect_info_;

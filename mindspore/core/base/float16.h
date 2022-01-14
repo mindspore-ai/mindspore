@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,8 +98,8 @@ class Float16 {
     return *this;
   }
 
-  static float ToFloat32(Float16 f16) {
-    constexpr Union32 magic = {113 << 23};
+  static float ToFloat32(const Float16 &f16) {
+    constexpr Union32 magic = {.u = 113 << 23};
     constexpr uint32_t exponent_adjust = ((127 - 15) << 23);
     constexpr uint32_t inf_extra_exp_adjust = ((128 - 16) << 23);
     constexpr uint32_t zero_extra_exp_adjust = (1 << 23);
@@ -130,9 +130,9 @@ class Float16 {
  private:
   static uint16_t FromFloat32(float f32) {
     constexpr uint32_t magic = {113 << 23};
-    constexpr Union32 f32infty = {255 << 23};
-    constexpr Union32 f16max = {(127 + 16) << 23};
-    constexpr Union32 denorm_magic = {((127 - 15) + (23 - 10) + 1) << 23};
+    constexpr Union32 f32infty = {.u = 255 << 23};
+    constexpr Union32 f16max = {.u = (127 + 16) << 23};
+    constexpr Union32 denorm_magic = {.u = ((127 - 15) + (23 - 10) + 1) << 23};
     constexpr unsigned int exponent_bits = 13;
     constexpr unsigned int sign_bit_shift = 16;
     constexpr unsigned int sign_mask = 0x80000000u;
@@ -275,11 +275,11 @@ struct numeric_limits<float16> {
 // std::numeric_limits<const volatile T>
 // https://stackoverflow.com/a/16519653/
 template <>
-struct numeric_limits<const mindspore::Float16> : numeric_limits<mindspore::Float16> {};
+struct numeric_limits<const mindspore::Float16> : private numeric_limits<mindspore::Float16> {};
 template <>
-struct numeric_limits<volatile mindspore::Float16> : numeric_limits<mindspore::Float16> {};
+struct numeric_limits<volatile mindspore::Float16> : private numeric_limits<mindspore::Float16> {};
 template <>
-struct numeric_limits<const volatile mindspore::Float16> : numeric_limits<mindspore::Float16> {};
+struct numeric_limits<const volatile mindspore::Float16> : private numeric_limits<mindspore::Float16> {};
 }  // namespace std
 
 // Implements standard math functions for float16.
@@ -306,6 +306,6 @@ inline float16 pow(const float16 &a, const float16 &b) {
 
 #endif  // ENABLE_ARM32 || ENABLE_ARM64
 
-inline float half_to_float(float16 h) { return static_cast<float>(h); }
+inline float half_to_float(const float16 &h) { return static_cast<float>(h); }
 
 #endif  // MINDSPORE_CORE_BASE_FLOAT16_H_

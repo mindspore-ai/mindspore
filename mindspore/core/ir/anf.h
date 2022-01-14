@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -168,7 +168,7 @@ class MS_CORE_API AnfNode : public Base {
   /// \brief Obtain the pointer of KernelInfoDevice.
   ///
   /// \return The pointer of KernelInfoDevice.
-  const KernelInfoDevicePtr &kernel_info_ptr() { return kernel_info_; }
+  const KernelInfoDevicePtr &kernel_info_ptr() const { return kernel_info_; }
 
   /// \brief Set device kernel program information.
   ///
@@ -340,7 +340,7 @@ class MS_CORE_API AnfNode : public Base {
   /// \brief Check if there is an interpret node.
   ///
   /// \return True if there is an interpret node, otherwise false.
-  bool interpret() { return interpret_; }
+  bool interpret() const { return interpret_; }
 
   /// \brief Whether to use interpretation
   ///
@@ -558,7 +558,7 @@ class MS_CORE_API CNode final : public AnfNode, public EffectInfoHolder {
   /// \brief Check if is_load_ is set.
   ///
   /// \return True if is_load_ is set, otherwise false.
-  bool get_load_flag() { return is_load_; }
+  bool get_load_flag() const { return is_load_; }
 
   /// \brief Get func_graph_as_var of this CNode.
   ///
@@ -805,7 +805,7 @@ class MS_CORE_API Parameter final : public ANode {
   /// \brief Set the default parameter.
   ///
   /// \param[in] param The default parameter.
-  void set_default_param(ValuePtr param) {
+  void set_default_param(const ValuePtr &param) {
     default_param_ = param;
     has_default_ = true;
   }
@@ -876,7 +876,7 @@ class MS_CORE_API Parameter final : public ANode {
   /// \brief Get groups attr in FracZ format.
   ///
   /// \return Groups attr in FracZ format.
-  int64_t fracz_group() { return format_attrs_.fracz_group; }
+  int64_t fracz_group() const { return format_attrs_.fracz_group; }
 
   /// \brief Set input_size attr in FracNZ_RNN or ND_RNN_Bias format.
   ///
@@ -886,7 +886,7 @@ class MS_CORE_API Parameter final : public ANode {
   /// \brief Get input_size attr in FracNZ_RNN or ND_RNN_Bias format.
   ///
   /// \return input_size attr in FracNZ_RNN or ND_RNN_Bias format.
-  int64_t input_size() { return format_attrs_.input_size; }
+  int64_t input_size() const { return format_attrs_.input_size; }
 
   /// \brief Set hidden_size attr in FracNZ_RNN or ND_RNN_Bias format.
   ///
@@ -896,7 +896,7 @@ class MS_CORE_API Parameter final : public ANode {
   /// \brief Get hidden_size attr in FracNZ_RNN or ND_RNN_Bias format.
   ///
   /// \return hidden_size attr in FracNZ_RNN or ND_RNN_Bias format.
-  int64_t hidden_size() { return format_attrs_.hidden_size; }
+  int64_t hidden_size() const { return format_attrs_.hidden_size; }
 
  private:
   struct FormatAttr {
@@ -946,11 +946,7 @@ class MS_CORE_API Value : public Base {
   /// \brief Get the abstract value of Value.
   ///
   /// \return Abstract value of Value.
-  virtual abstract::AbstractBasePtr ToAbstract() {
-    MS_LOG(EXCEPTION) << "ToAbstract error";
-    abstract::AbstractBasePtr result;
-    return result;
-  }
+  virtual abstract::AbstractBasePtr ToAbstract() { MS_LOG(EXCEPTION) << "ToAbstract error"; }
 
   /// \brief Check whether the input is the current Value object.
   ///
@@ -994,7 +990,7 @@ class MS_CORE_API ValueNode final : public ANode {
   ~ValueNode() override = default;
   MS_DECLARE_PARENT(ValueNode, ANode);
 
-  void set_func_graph(const FuncGraphPtr &func_graph) override {
+  void set_func_graph(const FuncGraphPtr &) override {
     MS_EXCEPTION(ValueError) << "ValueNode should not set its func_graph.";
   }
 
