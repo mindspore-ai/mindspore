@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,58 +63,6 @@ void GetFileKernelName(NotNull<std::string *> kernel_name) {
   while ((pos = kernel_name->find(strsrc, pos)) != std::string::npos) {
     kernel_name->replace(pos, srclen, strdst);
     pos += dstlen;
-  }
-}
-
-void SetConstNodeId(const AnfNodePtr &node, std::map<std::string, size_t> *const_map) {
-  MS_EXCEPTION_IF_NULL(node);
-  if (!node->isa<ValueNode>()) {
-    return;
-  }
-  std::string node_name = GetKernelNodeName(node);
-  MS_EXCEPTION_IF_NULL(const_map);
-  auto iter = const_map->find(node_name);
-  if (iter == const_map->end()) {
-    auto const_idx = const_map->size() + 1;
-    (*const_map)[node_name] = const_idx;
-  }
-}
-
-void GetCNodeConstantId(const CNodePtr &node, std::map<std::string, size_t> *const_map) {
-  MS_EXCEPTION_IF_NULL(node);
-  auto &inputs = node->inputs();
-  if (inputs.empty()) {
-    MS_LOG(EXCEPTION) << "Inputs of apply node is empty";
-  }
-  AnfNodePtr op = inputs[0];
-
-  // CNode/ConstGraph/Const/Parameter
-  MS_EXCEPTION_IF_NULL(op);
-  if (op->isa<CNode>() || IsValueNode<FuncGraph>(op) || op->isa<Parameter>()) {
-    MS_LOG(WARNING) << "Operator must be a primitive.";
-  } else {
-    // process OP inputs
-    for (size_t i = 1; i < inputs.size(); ++i) {
-      SetConstNodeId(inputs[i], const_map);
-    }
-  }
-}
-
-void GetConstantId(const session::KernelGraph *graph, std::map<std::string, size_t> *const_map) {
-  MS_EXCEPTION_IF_NULL(graph);
-  std::vector<AnfNodePtr> nodes = TopoSort(graph->get_return(), SuccIncoming, AlwaysInclude);
-  for (const AnfNodePtr &node : nodes) {
-    MS_EXCEPTION_IF_NULL(node);
-    if (!node->isa<CNode>()) {
-      continue;
-    }
-    auto cnode = node->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(cnode);
-    if (cnode != graph->get_return()) {
-      GetCNodeConstantId(cnode, const_map);
-    } else {
-      SetConstNodeId(cnode->input(1), const_map);
-    }
   }
 }
 

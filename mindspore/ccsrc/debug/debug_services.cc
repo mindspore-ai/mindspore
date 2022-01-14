@@ -799,22 +799,6 @@ std::string GetNodeNameWithoutScope(const std::string &dump_style_name) {
   return dump_style_name.substr(last_scope_marker + delim.size());
 }
 
-void ReplaceSrcFileName(std::string *dump_style_name) {
-  if (dump_style_name == nullptr) {
-    return;
-  }
-  const std::string strsrc = "/";
-  std::string strdst = "_";
-  std::string::size_type pos = 0;
-  std::string::size_type srclen = strsrc.size();
-  std::string::size_type dstlen = strdst.size();
-
-  while ((pos = dump_style_name->find(strsrc, pos)) != std::string::npos) {
-    (void)dump_style_name->replace(pos, srclen, strdst);
-    pos += dstlen;
-  }
-}
-
 void DebugServices::ConvertReadTensors(std::vector<std::string> backend_name, std::vector<size_t> slot,
                                        std::vector<unsigned int> device_id, std::vector<unsigned int> iteration,
                                        std::vector<unsigned int> root_graph_id, AsyncFilePool *const result_list) {
@@ -1000,8 +984,9 @@ std::vector<uint32_t> DebugServices::GetDumpRankIdList() {
     }
     if (S_ISDIR(st.st_mode)) {
       std::string rank_dir_name = dir->d_name;
-      if (GetRankOrGraphId("rank", rank_dir_name) != UINT32_MAX) {
-        rank_id_list.push_back(GetRankOrGraphId("rank", rank_dir_name));
+      uint32_t rank_id = GetRankOrGraphId("rank", rank_dir_name);
+      if (rank_id != UINT32_MAX) {
+        rank_id_list.push_back(rank_id);
       }
     }
   }
@@ -1035,8 +1020,8 @@ void DebugServices::CheckDumpGraphIdList(std::vector<uint32_t> rank_id_list) {
         if (graph_dir == "." || graph_dir == "..") {
           continue;
         }
-        if (GetRankOrGraphId("graph", graph_dir) != UINT32_MAX) {
-          uint32_t graph_id = GetRankOrGraphId("graph", graph_dir);
+        uint32_t graph_id = GetRankOrGraphId("graph", graph_dir);
+        if (graph_id != UINT32_MAX) {
           ReadGraphsHistory(rank_id, graph_id);
         }
       }

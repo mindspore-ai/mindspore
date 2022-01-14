@@ -103,8 +103,6 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 
   void DumpSingleNode(const CNodePtr &node, uint32_t graph_id);
 
-  void DumpSetup(const KernelGraphPtr &kernel_graph) const;
-
   void DumpInGraphCompiler(const KernelGraphPtr &kernel_graph);
 
   void PostExecuteGraphDebugger();

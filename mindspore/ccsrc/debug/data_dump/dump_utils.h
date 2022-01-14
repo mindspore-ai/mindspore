@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,8 +30,6 @@ static const size_t VALUE_NODE_OUTPUT_INDEX = 0;
 std::string GenerateDumpPath(uint32_t graph_id, uint32_t rank_id = 0, bool is_cst = false);
 
 void GetFileKernelName(NotNull<std::string *> kernel_name);
-
-void GetConstantId(const session::KernelGraph *graph, std::map<std::string, size_t> *const_map);
 
 void GetDumpIntShape(const AnfNodePtr &node, size_t index, NotNull<ShapeVector *> int_shapes, bool trans_flag = false);
 
