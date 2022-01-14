@@ -5129,7 +5129,7 @@ class KLDivLoss(PrimitiveWithInfer):
         return x_type
 
 
-class BinaryCrossEntropy(PrimitiveWithInfer):
+class BinaryCrossEntropy(Primitive):
     r"""
     Computes the binary cross entropy between the logits and the labels.
 
@@ -5201,24 +5201,6 @@ class BinaryCrossEntropy(PrimitiveWithInfer):
         """Initialize BinaryCrossEntropy."""
         self.reduction = validator.check_string(reduction, ['none', 'mean', 'sum'], 'reduction', self.name)
 
-    def infer_shape(self, x_shape, y_shape, weight_shape):
-        validator.check('x_shape', x_shape, 'y_shape', y_shape, Rel.EQ, self.name)
-        if weight_shape:
-            validator.check('y_shape', y_shape, 'weight_shape', weight_shape, Rel.EQ, self.name)
-        if self.reduction in ('mean', 'sum'):
-            shape = []
-        else:
-            shape = x_shape
-        return shape
-
-    def infer_dtype(self, x_type, y_type, weight_type):
-        args = {'x': x_type, 'y': y_type}
-        valid_dtypes = (mstype.float16, mstype.float32)
-        validator.check_tensors_dtypes_same_and_valid(args, valid_dtypes, self.name)
-        if weight_type:
-            validator.check_tensors_dtypes_same_and_valid({'x': x_type, 'weight': weight_type}, valid_dtypes,
-                                                          self.name)
-        return x_type
 
 
 class ApplyAdaMax(Primitive):

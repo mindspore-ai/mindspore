@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ constexpr auto kNameBinaryCrossEntropy = "BinaryCrossEntropy";
 class MS_CORE_API BinaryCrossEntropy : public PrimitiveC {
  public:
   /// \brief Constructor.
-  BinaryCrossEntropy() : PrimitiveC(kNameBinaryCrossEntropy) {}
+  BinaryCrossEntropy() : PrimitiveC(kNameBinaryCrossEntropy) { InitIOName({"x", "y", "weight"}, {"output"}); }
   /// \brief Destructor.
   ~BinaryCrossEntropy() = default;
   MS_DECLARE_PARENT(BinaryCrossEntropy, PrimitiveC);
@@ -48,6 +48,8 @@ class MS_CORE_API BinaryCrossEntropy : public PrimitiveC {
 };
 AbstractBasePtr BinaryCrossEntropyGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                             const std::vector<AbstractBasePtr> &input_args);
+
+using kPrimBinaryCrossEntropyPtr = std::shared_ptr<BinaryCrossEntropy>;
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_BINARY_CROSS_ENTROPY_H_

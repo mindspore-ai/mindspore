@@ -384,6 +384,7 @@ from .scatter_update import _scatter_update_tbe
 from .scatter_update_ds import _scatter_update_ds_tbe
 from .prelu import _prelu_tbe
 from .prelu_grad import _prelu_grad_tbe
+from .binary_cross_entropy_ds import _binary_cross_entropy_ds_tbe
 from .binary_cross_entropy import _binary_cross_entropy_tbe
 from .binary_cross_entropy_grad import _binary_cross_entropy_grad_tbe
 from .bce_with_logits_loss import _bce_with_logits_loss_op_tbe
