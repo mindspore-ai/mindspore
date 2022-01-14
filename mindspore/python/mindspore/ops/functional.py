@@ -399,7 +399,7 @@ def _raise_type_error():
 
 
 @constexpr
-def _check_select_type(scalar, tensor_type, scalar_name, tensor_name):
+def _check_select_type_match(scalar, tensor_type, scalar_name, tensor_name):
     if isinstance(scalar, int) and tensor_type != mstype.int32:
         raise TypeError(f"For functional operator[select], the input[{scalar_name}] is int, "
                         f"then the input[{tensor_name}] must be a Tensor of int32.")
@@ -409,13 +409,22 @@ def _check_select_type(scalar, tensor_type, scalar_name, tensor_name):
 
 
 @constexpr
-def _check_select_input(is_x_scalar, is_y_scalar, is_x_tensor, is_y_tensor):
+def _check_select_shape_match(input_shape, cond_shape, tensor_name):
+    if input_shape != cond_shape:
+        raise ValueError(f"For functional operator[select], the cond shape must be same as {tensor_name} shape.")
+
+
+@constexpr
+def _check_select_type(is_cond_tensor, is_x_scalar, is_y_scalar, is_x_tensor, is_y_tensor):
+    if not is_cond_tensor:
+        raise TypeError(f"For functional operator[select], the input[cond] must be a Tensor.")
     if is_x_scalar and not is_y_tensor:
         raise TypeError(f"For functional operator[select], the input[x] is int or float, "
                         f"then the input[y] must be a Tensor.")
     if is_y_scalar and not is_x_tensor:
         raise TypeError(f"For functional operator[select], the input[y] is int or float, "
                         f"then the input[x] must be a Tensor.")
+
 
 def select(cond, x, y):
     r"""
@@ -488,11 +497,13 @@ def select(cond, x, y):
     is_y_scalar = isinstance(y, (int, float))
     is_x_tensor = isinstance(x, Tensor)
     is_y_tensor = isinstance(y, Tensor)
-    _check_select_input(is_x_scalar, is_y_scalar, is_x_tensor, is_y_tensor)
+    is_cond_tensor = isinstance(cond, Tensor)
+    _check_select_type(is_cond_tensor, is_x_scalar, is_y_scalar, is_x_tensor, is_y_tensor)
     input_x = x
     input_y = y
     if is_x_scalar:
-        _check_select_type(x, y.dtype, "x", "y")
+        _check_select_shape_match(y.shape, cond.shape, "y")
+        _check_select_type_match(x, y.dtype, "x", "y")
         input_x = zeros_like(y) + x
         if isinstance(x, int):
             input_x = cast(input_x, mstype.int32)
@@ -500,7 +511,8 @@ def select(cond, x, y):
             input_x = cast(input_x, mstype.float32)
 
     if is_y_scalar:
-        _check_select_type(y, x.dtype, "y", "x")
+        _check_select_shape_match(x.shape, cond.shape, "x")
+        _check_select_type_match(y, x.dtype, "y", "x")
         input_y = zeros_like(x) + y
         if isinstance(y, int):
             input_y = cast(input_y, mstype.int32)
