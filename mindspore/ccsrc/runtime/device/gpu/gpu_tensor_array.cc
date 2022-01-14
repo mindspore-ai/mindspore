@@ -26,7 +26,9 @@ namespace mindspore {
 namespace device {
 namespace gpu {
 // ReleaseMemory() used in Free() in TensorArray.
-void GPUTensorArray::ReleaseMemory(void *addr) { device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(addr); }
+void GPUTensorArray::ReleaseMemory(const DeviceMemPtr addr) {
+  device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(addr);
+}
 
 void GPUTensorArray::ClearMemory(void *addr, const size_t size) {
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemsetAsync(addr, 0, size), "failed to set cuda memory with zeros.");
