@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ constexpr size_t kL2NormalizeOutputsNum = 1;
 }  // namespace
 
 template <typename T>
-void L2NormalizeCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
+void L2NormalizeCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   epsilon_ = static_cast<T>(AnfAlgo::GetNodeAttr<float>(kernel_node, EPSILON));
@@ -49,8 +49,8 @@ void L2NormalizeCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-void L2NormalizeCPUKernel<T>::CalcDenominator(const T *input_addr, const size_t reduce_size, const int dims,
-                                              std::unique_ptr<T[]> *denominator_addr) {
+void L2NormalizeCpuKernelMod<T>::CalcDenominator(const T *input_addr, const size_t reduce_size, const int dims,
+                                                 std::unique_ptr<T[]> *denominator_addr) {
   // Calculate transpose axes and stride
   size_t stride = 1;
   std::vector<size_t> axes(input_shape_.size());
@@ -95,9 +95,9 @@ void L2NormalizeCPUKernel<T>::CalcDenominator(const T *input_addr, const size_t 
 }
 
 template <typename T>
-void L2NormalizeCPUKernel<T>::CalcOutput(const T *input_addr, const std::vector<size_t> reduce_shape,
-                                         const size_t output_size, T *output_addr,
-                                         std::unique_ptr<T[]> const &denominator_addr) {
+void L2NormalizeCpuKernelMod<T>::CalcOutput(const T *input_addr, const std::vector<size_t> reduce_shape,
+                                            const size_t output_size, T *output_addr,
+                                            std::unique_ptr<T[]> const &denominator_addr) {
   BroadcastIterator broad_base_iter(input_shape_, reduce_shape, output_shape_);
   auto task = [&](size_t start, size_t end) {
     auto iter = broad_base_iter;
@@ -125,9 +125,9 @@ void L2NormalizeCPUKernel<T>::CalcOutput(const T *input_addr, const std::vector<
 }
 
 template <typename T>
-bool L2NormalizeCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> & /* workspace */,
-                                     const std::vector<kernel::AddressPtr> &outputs) {
+bool L2NormalizeCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                        const std::vector<kernel::AddressPtr> & /* workspace */,
+                                        const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kL2NormalizeInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kL2NormalizeOutputsNum, kernel_name_);
   auto input_addr = reinterpret_cast<T *>(inputs[0]->addr);
@@ -142,10 +142,10 @@ bool L2NormalizeCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inpu
   }
   auto denominator_addr = std::make_unique<T[]>(reduce_size);
 
-  L2NormalizeCPUKernel<T>::CalcDenominator(input_addr, reduce_size, dims, &denominator_addr);
+  L2NormalizeCpuKernelMod<T>::CalcDenominator(input_addr, reduce_size, dims, &denominator_addr);
 
   size_t output_size = outputs[0]->size / sizeof(T);
-  L2NormalizeCPUKernel<T>::CalcOutput(input_addr, reduce_shape, output_size, output_addr, denominator_addr);
+  L2NormalizeCpuKernelMod<T>::CalcOutput(input_addr, reduce_shape, output_size, output_addr, denominator_addr);
 
   return true;
 }

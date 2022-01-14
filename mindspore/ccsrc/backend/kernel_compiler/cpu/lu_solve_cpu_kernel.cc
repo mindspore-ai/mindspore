@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ size_t get_element_num(const std::vector<size_t> &shape) {
 }
 
 template <typename T1, typename T2>
-void LuSolveCPUKernel<T1, T2>::InitKernel(const CNodePtr &kernel_node) {
+void LuSolveCpuKernelMod<T1, T2>::InitKernel(const CNodePtr &kernel_node) {
   node_wpt_ = kernel_node;
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
   size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
@@ -97,9 +97,9 @@ void LuSolveCPUKernel<T1, T2>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T1, typename T2>
-void LuSolveCPUKernel<T1, T2>::LuSolve(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &outputs, T1 *b_working_ptr,
-                                       T1 *lu_working_ptr, int32_t *pivots_working_ptr, size_t b_stride, size_t a) {
+void LuSolveCpuKernelMod<T1, T2>::LuSolve(const std::vector<kernel::AddressPtr> &inputs,
+                                          const std::vector<kernel::AddressPtr> &outputs, T1 *b_working_ptr,
+                                          T1 *lu_working_ptr, int32_t *pivots_working_ptr, size_t b_stride, size_t a) {
   auto input_0_Shape = AnfAlgo::GetInputDeviceShape(node_wpt_, 0);
   auto input_1_Shape = AnfAlgo::GetInputDeviceShape(node_wpt_, 1);
   auto output_y = reinterpret_cast<T2 *>(outputs[0]->addr);
@@ -123,9 +123,9 @@ void LuSolveCPUKernel<T1, T2>::LuSolve(const std::vector<kernel::AddressPtr> &in
 }
 
 template <typename T1, typename T2>
-bool LuSolveCPUKernel<T1, T2>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> &,
-                                      const std::vector<kernel::AddressPtr> &outputs) {
+bool LuSolveCpuKernelMod<T1, T2>::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                         const std::vector<kernel::AddressPtr> &,
+                                         const std::vector<kernel::AddressPtr> &outputs) {
   auto input_x0 = reinterpret_cast<T2 *>(inputs[0]->addr);
   auto input_x1 = reinterpret_cast<T2 *>(inputs[1]->addr);
   auto input_x2 = reinterpret_cast<int32_t *>(inputs[2]->addr);

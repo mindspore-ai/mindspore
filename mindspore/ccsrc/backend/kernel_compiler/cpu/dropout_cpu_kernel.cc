@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ constexpr size_t kDropoutInputsNum = 1;
 constexpr size_t kDropoutOutputsNum = 2;
 }  // namespace
 
-void DropoutCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void DropoutCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   input_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
@@ -44,8 +44,8 @@ void DropoutCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
 }
 
-bool DropoutCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                              const std::vector<kernel::AddressPtr> &outputs) {
+bool DropoutCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
+                                 const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kDropoutInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kDropoutOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat16) {
@@ -61,8 +61,8 @@ bool DropoutCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, con
 }
 
 template <typename T>
-void DropoutCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                    const std::vector<AddressPtr> &outputs) const {
+void DropoutCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                       const std::vector<AddressPtr> &outputs) const {
   const auto *input_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
   auto mask_addr = reinterpret_cast<T *>(outputs[1]->addr);

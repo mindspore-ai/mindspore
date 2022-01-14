@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,11 +22,7 @@ constexpr auto kEnvTypeName = "name";
 constexpr auto kHandleAttrName = "handle";
 }  // namespace
 
-const std::vector<size_t> &EnvCreateKernel::GetInputSizeList() const { return input_size_list_; }
-const std::vector<size_t> &EnvCreateKernel::GetOutputSizeList() const { return output_size_list_; }
-const std::vector<size_t> &EnvCreateKernel::GetWorkspaceSizeList() const { return workspace_size_list_; }
-
-bool EnvCreateKernel::Init(const CNodePtr &cnode) {
+bool EnvCreateKernelMod::Init(const CNodePtr &cnode) {
   const auto &name = AnfAlgo::GetNodeAttr<std::string>(cnode, kEnvTypeName);
   std::tie(handle_, env_) = EnvironmentFactory::GetInstance().Create(name);
   MS_EXCEPTION_IF_NULL(env_);
@@ -35,10 +31,10 @@ bool EnvCreateKernel::Init(const CNodePtr &cnode) {
   return true;
 }
 
-void EnvCreateKernel::InitSizeLists() { output_size_list_.push_back(sizeof(handle_)); }
+void EnvCreateKernelMod::InitSizeLists() { output_size_list_.push_back(sizeof(handle_)); }
 
-bool EnvCreateKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                             const std::vector<AddressPtr> &outputs, void *stream) {
+bool EnvCreateKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                                const std::vector<AddressPtr> &outputs, void *stream) {
   auto handle = GetDeviceAddress<int64_t>(outputs, 0);
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(handle, &handle_, sizeof(handle_), cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream)),
@@ -46,11 +42,7 @@ bool EnvCreateKernel::Launch(const std::vector<AddressPtr> &inputs, const std::v
   return true;
 }
 
-const std::vector<size_t> &EnvResetKernel::GetInputSizeList() const { return input_size_list_; }
-const std::vector<size_t> &EnvResetKernel::GetOutputSizeList() const { return output_size_list_; }
-const std::vector<size_t> &EnvResetKernel::GetWorkspaceSizeList() const { return workspace_size_list_; }
-
-bool EnvResetKernel::Init(const CNodePtr &cnode) {
+bool EnvResetKernelMod::Init(const CNodePtr &cnode) {
   handle_ = AnfAlgo::GetNodeAttr<int64_t>(cnode, kHandleAttrName);
   env_ = EnvironmentFactory::GetInstance().GetByHandle(handle_);
   MS_EXCEPTION_IF_NULL(env_);
@@ -58,21 +50,17 @@ bool EnvResetKernel::Init(const CNodePtr &cnode) {
   return true;
 }
 
-void EnvResetKernel::InitSizeLists() {
+void EnvResetKernelMod::InitSizeLists() {
   output_size_list_.push_back(env_->StateSizeInBytes());
   workspace_size_list_.push_back(env_->WorkspaceSizeInBytes());
 }
 
-bool EnvResetKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                            const std::vector<AddressPtr> &outputs, void *stream) {
+bool EnvResetKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                               const std::vector<AddressPtr> &outputs, void *stream) {
   return env_->Reset(inputs, workspace, outputs, stream);
 }
 
-const std::vector<size_t> &EnvStepKernel::GetInputSizeList() const { return input_size_list_; }
-const std::vector<size_t> &EnvStepKernel::GetOutputSizeList() const { return output_size_list_; }
-const std::vector<size_t> &EnvStepKernel::GetWorkspaceSizeList() const { return workspace_size_list_; }
-
-bool EnvStepKernel::Init(const CNodePtr &cnode) {
+bool EnvStepKernelMod::Init(const CNodePtr &cnode) {
   handle_ = AnfAlgo::GetNodeAttr<int64_t>(cnode, kHandleAttrName);
   env_ = EnvironmentFactory::GetInstance().GetByHandle(handle_);
   MS_EXCEPTION_IF_NULL(env_);
@@ -80,7 +68,7 @@ bool EnvStepKernel::Init(const CNodePtr &cnode) {
   return true;
 }
 
-void EnvStepKernel::InitSizeLists() {
+void EnvStepKernelMod::InitSizeLists() {
   input_size_list_.push_back(env_->ActionSizeInBytes());
   output_size_list_.push_back(env_->StateSizeInBytes());
   output_size_list_.push_back(env_->RewardSizeInBytes());
@@ -88,8 +76,8 @@ void EnvStepKernel::InitSizeLists() {
   workspace_size_list_.push_back(env_->WorkspaceSizeInBytes());
 }
 
-bool EnvStepKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                           const std::vector<AddressPtr> &outputs, void *stream) {
+bool EnvStepKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                              const std::vector<AddressPtr> &outputs, void *stream) {
   return env_->Step(inputs, workspace, outputs, stream);
 }
 }  // namespace kernel

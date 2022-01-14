@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ namespace mindspore {
 namespace kernel {
 class SparseApplyAdamCpuKernelTest : public UT::Common {
  public:
-  SparseApplyAdamCpuKernelTest() : sparse_adam_(std::make_shared<SparseApplyAdamCPUKernel>()) {}
+  SparseApplyAdamCpuKernelTest() : sparse_adam_(std::make_shared<SparseApplyAdamCpuKernelMod>()) {}
 
   void SetUp() override {
     var_.clear();
@@ -75,7 +75,7 @@ class SparseApplyAdamCpuKernelTest : public UT::Common {
   std::vector<AddressPtr> inputs_;
   std::vector<AddressPtr> workspace_;
   std::vector<AddressPtr> outputs_;
-  std::shared_ptr<SparseApplyAdamCPUKernel> sparse_adam_;
+  std::shared_ptr<SparseApplyAdamCpuKernelMod> sparse_adam_;
   float beta1_power_ = 0.9;
   float beta2_power_ = 0.999;
   float lr_ = 0.001;

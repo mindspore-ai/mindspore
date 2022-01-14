@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,19 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr size_t kInputDimLowerLimit = 4;
+constexpr size_t kOutputDimLowerLimit = 4;
+constexpr size_t kInputIndexForN = 0;
+constexpr size_t kInputIndexForC = 1;
+constexpr size_t kInputIndexForH = 2;
+constexpr size_t kInputIndexForW = 3;
+constexpr size_t kOutputIndexForH = 2;
+constexpr size_t kOutputIndexForW = 3;
+
 template <typename T, typename S>
-class MaxPoolWithArgmaxGpuFwdKernel : public GpuKernel {
+class MaxPoolWithArgmaxFwdGpuKernelMod : public NativeGpuKernelMod {
  public:
-  MaxPoolWithArgmaxGpuFwdKernel()
+  MaxPoolWithArgmaxFwdGpuKernelMod()
       : n_(0),
         c_(0),
         input_height_(0),
@@ -48,11 +57,8 @@ class MaxPoolWithArgmaxGpuFwdKernel : public GpuKernel {
         is_null_input_(false),
         input_size_(0),
         output_size_(0) {}
-  ~MaxPoolWithArgmaxGpuFwdKernel() override = default;
+  ~MaxPoolWithArgmaxFwdGpuKernelMod() override = default;
 
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) {
     if (is_null_input_) {
@@ -93,17 +99,17 @@ class MaxPoolWithArgmaxGpuFwdKernel : public GpuKernel {
     for (auto x : output_shape) {
       output_size_ *= x;
     }
-    if (input_shape.size() < 4 || output_shape.size() < 4) {
+    if (input_shape.size() < kInputDimLowerLimit || output_shape.size() < kOutputDimLowerLimit) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input and output cannot be less than 4, but "
                         << "got the dimension of input: " << input_shape.size()
                         << ", the dimension of output: " << output_shape.size();
     }
-    n_ = SizeToInt(input_shape[0]);
-    c_ = SizeToInt(input_shape[1]);
-    input_height_ = SizeToInt(input_shape[2]);
-    input_width_ = SizeToInt(input_shape[3]);
-    output_height_ = SizeToInt(output_shape[2]);
-    output_width_ = SizeToInt(output_shape[3]);
+    n_ = SizeToInt(input_shape[kInputIndexForN]);
+    c_ = SizeToInt(input_shape[kInputIndexForC]);
+    input_height_ = SizeToInt(input_shape[kInputIndexForH]);
+    input_width_ = SizeToInt(input_shape[kInputIndexForW]);
+    output_height_ = SizeToInt(output_shape[kOutputIndexForH]);
+    output_width_ = SizeToInt(output_shape[kOutputIndexForW]);
     std::vector<int> window;
     auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
     MS_EXCEPTION_IF_NULL(prim);
@@ -161,9 +167,6 @@ class MaxPoolWithArgmaxGpuFwdKernel : public GpuKernel {
   }
 
   std::string pad_mode_;
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 
   int n_;
   int c_;

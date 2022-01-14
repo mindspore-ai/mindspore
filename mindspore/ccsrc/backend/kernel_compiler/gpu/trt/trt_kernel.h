@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,15 +26,12 @@
 
 namespace mindspore {
 namespace kernel {
-class TrtKernel : public GpuKernel {
+class TrtKernelMod : public NativeGpuKernelMod {
  public:
-  TrtKernel() : serialize_(""), runtime_(nullptr), engine_(nullptr), context_(nullptr) {}
-  ~TrtKernel() = default;
+  TrtKernelMod() : serialize_(""), runtime_(nullptr), engine_(nullptr), context_(nullptr) {}
+  ~TrtKernelMod() = default;
 
   bool Init(const CNodePtr &kernel_node) override;
-  const std::vector<size_t> &GetInputSizeList() const override;
-  const std::vector<size_t> &GetOutputSizeList() const override;
-  const std::vector<size_t> &GetWorkspaceSizeList() const override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
   void InitSizeLists() override{};
@@ -45,13 +42,9 @@ class TrtKernel : public GpuKernel {
   std::shared_ptr<nvinfer1::IRuntime> runtime_;
   std::shared_ptr<nvinfer1::ICudaEngine> engine_;
   std::shared_ptr<nvinfer1::IExecutionContext> context_;
-
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 };
 
-MS_REG_GPU_KERNEL(TrtNode, TrtKernel)
+MS_REG_GPU_KERNEL(TrtNode, TrtKernelMod)
 }  // namespace kernel
 }  // namespace mindspore
 

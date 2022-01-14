@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,10 @@
 
 namespace mindspore {
 namespace kernel {
-void MKLCPUKernel::GetPadding(const CNodePtr &kernel_node, const std::string &pad_mode,
-                              const std::vector<size_t> &src_shape, const std::vector<size_t> &kernel_size,
-                              const std::vector<int> &stride, std::vector<int> *padding_l, std::vector<int> *padding_r,
-                              const std::vector<int> &dilation) const {
+void MKLCpuKernelMod::GetPadding(const CNodePtr &kernel_node, const std::string &pad_mode,
+                                 const std::vector<size_t> &src_shape, const std::vector<size_t> &kernel_size,
+                                 const std::vector<int> &stride, std::vector<int> *padding_l,
+                                 std::vector<int> *padding_r, const std::vector<int> &dilation) const {
   MS_EXCEPTION_IF_NULL(kernel_node);
   MS_EXCEPTION_IF_NULL(padding_l);
   MS_EXCEPTION_IF_NULL(padding_r);
@@ -68,8 +68,8 @@ void MKLCPUKernel::GetPadding(const CNodePtr &kernel_node, const std::string &pa
   }
 }
 
-bool MKLCPUKernel::BinaryBroadCast(std::vector<size_t> *src0_shape, std::vector<size_t> *src1_shape,
-                                   std::vector<size_t> *dst_shape) const {
+bool MKLCpuKernelMod::BinaryBroadCast(std::vector<size_t> *src0_shape, std::vector<size_t> *src1_shape,
+                                      std::vector<size_t> *dst_shape) const {
   MS_EXCEPTION_IF_NULL(src0_shape);
   MS_EXCEPTION_IF_NULL(src1_shape);
   MS_EXCEPTION_IF_NULL(dst_shape);
@@ -114,7 +114,7 @@ bool MKLCPUKernel::BinaryBroadCast(std::vector<size_t> *src0_shape, std::vector<
   return need_swap;
 }
 
-dnnl::memory::format_tag MKLCPUKernel::GetDefaultFormatTag(const dnnl::memory::dims &dims) const {
+dnnl::memory::format_tag MKLCpuKernelMod::GetDefaultFormatTag(const dnnl::memory::dims &dims) const {
   static const std::vector<dnnl::memory::format_tag> tag_vec = {
     dnnl::memory::format_tag::a,      dnnl::memory::format_tag::ab,    dnnl::memory::format_tag::abc,
     dnnl::memory::format_tag::abcd,   dnnl::memory::format_tag::abcde, dnnl::memory::format_tag::abcdef,
@@ -126,7 +126,7 @@ dnnl::memory::format_tag MKLCPUKernel::GetDefaultFormatTag(const dnnl::memory::d
   return tag_vec[rank - 1];
 }
 
-dnnl::memory::desc MKLCPUKernel::GetDefaultMemDesc(const std::vector<size_t> &shape) const {
+dnnl::memory::desc MKLCpuKernelMod::GetDefaultMemDesc(const std::vector<size_t> &shape) const {
   dnnl::memory::dims dims;
   if (shape.empty()) {
     (void)dims.insert(dims.end(), 1);
@@ -138,7 +138,7 @@ dnnl::memory::desc MKLCPUKernel::GetDefaultMemDesc(const std::vector<size_t> &sh
   return mem_desc;
 }
 
-void MKLCPUKernel::AddArgument(int arg_key, const dnnl::memory::desc &mem_desc, bool alloc) {
+void MKLCpuKernelMod::AddArgument(int arg_key, const dnnl::memory::desc &mem_desc, bool alloc) {
   if (alloc) {
     arguments_[arg_key] = dnnl::memory(mem_desc, engine_);
   } else {
@@ -146,7 +146,7 @@ void MKLCPUKernel::AddArgument(int arg_key, const dnnl::memory::desc &mem_desc, 
   }
 }
 
-void MKLCPUKernel::SetArgumentHandle(int arg_key, void *ptr) {
+void MKLCpuKernelMod::SetArgumentHandle(int arg_key, void *ptr) {
   auto arg_iter = arguments_.find(arg_key);
   if (arg_iter != arguments_.end()) {
     MS_LOG(DEBUG) << "begin to invoke dnnl::memory::set_data_handle";
@@ -155,7 +155,7 @@ void MKLCPUKernel::SetArgumentHandle(int arg_key, void *ptr) {
   }
 }
 
-void MKLCPUKernel::ExecutePrimitive() {
+void MKLCpuKernelMod::ExecutePrimitive() {
   MS_EXCEPTION_IF_NULL(primitive_);
 #ifdef USE_MS_THREADPOOL_FOR_DNNL
   // add auto search
@@ -200,27 +200,27 @@ void MKLCPUKernel::ExecutePrimitive() {
   (void)stream_.wait();
 }
 
-void MKLCPUKernel::SetDataHandle(dnnl::memory mem, void *ptr) {
+void MKLCpuKernelMod::SetDataHandle(dnnl::memory mem, void *ptr) {
   MS_LOG(DEBUG) << "begin to invoke dnnl::memory::set_data_handle";
   mem.set_data_handle(ptr);
   MS_LOG(DEBUG) << "end to invoke dnnl::memory::set_data_handle";
 }
 
-void *MKLCPUKernel::GetDataHandle(const dnnl::memory &mem) const {
+void *MKLCpuKernelMod::GetDataHandle(const dnnl::memory &mem) const {
   MS_LOG(DEBUG) << "begin to invoke dnnl::memory::get_data_handle";
   auto ptr = mem.get_data_handle();
   MS_LOG(DEBUG) << "end to invoke dnnl::memory::get_data_handle";
   return ptr;
 }
 
-size_t MKLCPUKernel::GetSize(const dnnl::memory::desc &desc) const {
+size_t MKLCpuKernelMod::GetSize(const dnnl::memory::desc &desc) const {
   MS_LOG(DEBUG) << "begin to invoke dnnl::memory::desc::get_size()";
   auto size = desc.get_size();
   MS_LOG(DEBUG) << "end to invoke dnnl::memory::desc::get_size()";
   return size;
 }
 
-void MKLCPUKernel::Reorder(dnnl::memory *src_mem, dnnl::memory *dst_mem) {
+void MKLCpuKernelMod::Reorder(dnnl::memory *src_mem, dnnl::memory *dst_mem) {
   MS_LOG(DEBUG) << "begin to invoke constructor of dnnl::reorder";
   auto desc = dnnl::reorder(*src_mem, *dst_mem);
   MS_LOG(DEBUG) << "end to invoke constructor of dnnl::reorder";

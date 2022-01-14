@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@ namespace mindspore {
 namespace fl {
 namespace server {
 namespace kernel {
-using AggregationKernelCreator = std::function<std::shared_ptr<AggregationKernel>()>;
-class AggregationKernelFactory : public KernelFactory<std::shared_ptr<AggregationKernel>, AggregationKernelCreator> {
+using AggregationKernelCreator = std::function<std::shared_ptr<AggregationKernelMod>()>;
+class AggregationKernelFactory : public KernelFactory<std::shared_ptr<AggregationKernelMod>, AggregationKernelCreator> {
  public:
   static AggregationKernelFactory &GetInstance() {
     static AggregationKernelFactory instance;
@@ -55,15 +55,15 @@ class AggregationKernelRegister {
 };
 
 // Register aggregation kernel with one template type T.
-#define REG_AGGREGATION_KERNEL(NAME, PARAMS_INFO, CLASS, T)                                                 \
-  static_assert(std::is_base_of<AggregationKernel, CLASS<T>>::value, " must be base of AggregationKernel"); \
-  static const AggregationKernelRegister g_##NAME##_##T##_aggregation_kernel_reg(                           \
+#define REG_AGGREGATION_KERNEL(NAME, PARAMS_INFO, CLASS, T)                                                       \
+  static_assert(std::is_base_of<AggregationKernelMod, CLASS<T>>::value, " must be base of AggregationKernelMod"); \
+  static const AggregationKernelRegister g_##NAME##_##T##_aggregation_kernel_reg(                                 \
     #NAME, PARAMS_INFO, []() { return std::make_shared<CLASS<T>>(); });
 
 // Register aggregation kernel with two template types: T and S.
-#define REG_AGGREGATION_KERNEL_TWO(NAME, PARAMS_INFO, CLASS, T, S)                                             \
-  static_assert(std::is_base_of<AggregationKernel, CLASS<T, S>>::value, " must be base of AggregationKernel"); \
-  static const AggregationKernelRegister g_##NAME##_##T##_##S##_aggregation_kernel_reg(                        \
+#define REG_AGGREGATION_KERNEL_TWO(NAME, PARAMS_INFO, CLASS, T, S)                                                   \
+  static_assert(std::is_base_of<AggregationKernelMod, CLASS<T, S>>::value, " must be base of AggregationKernelMod"); \
+  static const AggregationKernelRegister g_##NAME##_##T##_##S##_aggregation_kernel_reg(                              \
     #NAME, PARAMS_INFO, []() { return std::make_shared<CLASS<T, S>>(); });
 }  // namespace kernel
 }  // namespace server

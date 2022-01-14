@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,12 +46,12 @@ using dim = dnnl::memory::dims;
 using dt = dnnl::memory::data_type;
 }  // namespace
 
-void LSTMGradCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
-  CPUKernel::InitInputOutputSize(kernel_node);
+void LSTMGradCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
+  NativeCpuKernelMod::InitInputOutputSize(kernel_node);
   input_size_list_[kInputWorkSpaceIndex] = reserve_size_;
 }
 
-void LSTMGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void LSTMGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   CheckParam(kernel_node);
@@ -117,10 +117,10 @@ void LSTMGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   user_diff_weights_h_memory_ = CreateDesc<dnnl::memory>(weights_h_mem_desc, eng);
 }
 
-void LSTMGradCPUKernel::AddArgumentOp(const dnnl::memory::desc &src_desc, const dnnl::memory::desc &src_h_desc,
-                                      const dnnl::memory::desc &src_c_desc, const dnnl::memory::desc &bias_desc,
-                                      const dnnl::memory::desc &dst_desc, const dnnl::memory::desc &dst_h_desc,
-                                      const dnnl::memory::desc &dst_c_desc) {
+void LSTMGradCpuKernelMod::AddArgumentOp(const dnnl::memory::desc &src_desc, const dnnl::memory::desc &src_h_desc,
+                                         const dnnl::memory::desc &src_c_desc, const dnnl::memory::desc &bias_desc,
+                                         const dnnl::memory::desc &dst_desc, const dnnl::memory::desc &dst_h_desc,
+                                         const dnnl::memory::desc &dst_c_desc) {
   AddArgument(DNNL_ARG_SRC_LAYER, src_desc);
   AddArgument(DNNL_ARG_SRC_ITER, src_h_desc);
   AddArgument(DNNL_ARG_SRC_ITER_C, src_c_desc);
@@ -141,7 +141,7 @@ void LSTMGradCPUKernel::AddArgumentOp(const dnnl::memory::desc &src_desc, const 
   AddArgument(DNNL_ARG_DIFF_DST_ITER_C, dst_c_desc);
 }
 
-void LSTMGradCPUKernel::CheckParam(const CNodePtr &kernel_node) {
+void LSTMGradCpuKernelMod::CheckParam(const CNodePtr &kernel_node) {
   std::vector<size_t> src_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   std::vector<size_t> src_h_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   std::vector<size_t> src_c_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 2);
@@ -177,8 +177,8 @@ void LSTMGradCPUKernel::CheckParam(const CNodePtr &kernel_node) {
   }
 }
 
-void LSTMGradCPUKernel::SetArgumentHandleOp(const std::vector<kernel::AddressPtr> &inputs,
-                                            const std::vector<kernel::AddressPtr> &outputs) {
+void LSTMGradCpuKernelMod::SetArgumentHandleOp(const std::vector<kernel::AddressPtr> &inputs,
+                                               const std::vector<kernel::AddressPtr> &outputs) {
   SetArgumentHandle(DNNL_ARG_SRC_LAYER, inputs[kSrcLayerIdx]->addr);
   SetArgumentHandle(DNNL_ARG_SRC_ITER, inputs[kSrcIterIdx]->addr);
   SetArgumentHandle(DNNL_ARG_SRC_ITER_C, inputs[kSrcIterCIdx]->addr);
@@ -200,7 +200,7 @@ void LSTMGradCPUKernel::SetArgumentHandleOp(const std::vector<kernel::AddressPtr
   SetArgumentHandle(DNNL_ARG_DIFF_DST_ITER_C, inputs[kDiffDstIterCIdx]->addr);
 }
 
-void LSTMGradCPUKernel::ResetMemory(const dnnl::memory &mem, const string name) const {
+void LSTMGradCpuKernelMod::ResetMemory(const dnnl::memory &mem, const string name) const {
   auto dst_ptr = GetDataHandle(mem);
   auto mem_desc = GetMemDesc(mem);
   auto size = GetSize(mem_desc);
@@ -209,8 +209,9 @@ void LSTMGradCPUKernel::ResetMemory(const dnnl::memory &mem, const string name) 
   }
 }
 
-bool LSTMGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                               const std::vector<kernel::AddressPtr> &outputs) {
+bool LSTMGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                  const std::vector<kernel::AddressPtr> &,
+                                  const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kLstmGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kLstmGradOutputsNum, kernel_name_);
   SetDataHandle(user_weights_memory_, inputs[kInputWeightIndex]->addr);

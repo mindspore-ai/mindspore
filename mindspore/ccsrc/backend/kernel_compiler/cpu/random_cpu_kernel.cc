@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ void StandardNormal(float *output, std::normal_distribution<float> distribution,
   }
 }
 
-void LaunchStandardNormal(RandomCPUKernel *content, unsigned int seed, const std::vector<AddressPtr> &outputs) {
+void LaunchStandardNormal(RandomCpuKernelMod *content, unsigned int seed, const std::vector<AddressPtr> &outputs) {
   auto output = reinterpret_cast<float *>(outputs[0]->addr);
   // multithreading
   size_t lens = outputs[0]->size / sizeof(float);
@@ -95,7 +95,7 @@ void LaunchUniformReal(unsigned int seed, const std::vector<AddressPtr> &, const
   }
 }
 
-void RandomCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void RandomCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   auto iter = kRandomOpTypeMap.find(kernel_name_);
@@ -113,8 +113,8 @@ void RandomCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   seed2_ = LongToInt(GetValue<int64_t>(prim->GetAttr("seed2")));
 }
 
-bool RandomCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                             const std::vector<kernel::AddressPtr> &outputs) {
+bool RandomCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
+                                const std::vector<kernel::AddressPtr> &outputs) {
   unsigned int RNG_seed = 0;
   std::random_device rd;
   if (seed2_ != 0) {

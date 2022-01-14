@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,26 +21,26 @@ namespace kernel {
 MS_REG_GPU_KERNEL_ONE(
   Assign,
   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-  AssignGpuKernel, double)
+  AssignGpuKernelMod, double)
 MS_REG_GPU_KERNEL_ONE(
   Assign,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  AssignGpuKernel, float)
+  AssignGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(
   Assign,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  AssignGpuKernel, half)
+  AssignGpuKernelMod, half)
 MS_REG_GPU_KERNEL_ONE(
   Assign, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  AssignGpuKernel, int)
+  AssignGpuKernelMod, int)
 MS_REG_GPU_KERNEL_ONE(
   Assign, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-  AssignGpuKernel, int64_t)
+  AssignGpuKernelMod, int64_t)
 MS_REG_GPU_KERNEL_ONE(
   Assign, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
-  AssignGpuKernel, unsigned int)
+  AssignGpuKernelMod, unsigned int)
 MS_REG_GPU_KERNEL_ONE(
   Assign, KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-  AssignGpuKernel, bool)
+  AssignGpuKernelMod, bool)
 }  // namespace kernel
 }  // namespace mindspore

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,11 +25,11 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class ScatterArithmeticCPUKernel : public CPUKernel {
+class ScatterArithmeticCpuKernelMod : public NativeCpuKernelMod {
  public:
-  ScatterArithmeticCPUKernel() = default;
+  ScatterArithmeticCpuKernelMod() = default;
 
-  ~ScatterArithmeticCPUKernel() override = default;
+  ~ScatterArithmeticCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -46,7 +46,7 @@ class ScatterArithmeticCPUKernel : public CPUKernel {
   void ScatterMin(T *input, const int *indices, const T *updates) const;
   void ScatterUpdate(T *input, const int *indices, const T *updates) const;
 
-  using TypeComputeFunc = std::function<void(ScatterArithmeticCPUKernel *, T *, const int *, const T *)>;
+  using TypeComputeFunc = std::function<void(ScatterArithmeticCpuKernelMod *, T *, const int *, const T *)>;
 
   TypeComputeFunc compute_func_;
   int input_shape_0{0};
@@ -65,147 +65,147 @@ MS_REG_CPU_KERNEL_T(ScatterAdd,
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt32)
                       .AddOutputAttr(kNumberTypeInt32),
-                    ScatterArithmeticCPUKernel, int32_t);
+                    ScatterArithmeticCpuKernelMod, int32_t);
 MS_REG_CPU_KERNEL_T(ScatterAdd,
                     KernelAttr()
                       .AddInputAttr(kNumberTypeFloat32)
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeFloat32)
                       .AddOutputAttr(kNumberTypeFloat32),
-                    ScatterArithmeticCPUKernel, float);
+                    ScatterArithmeticCpuKernelMod, float);
 MS_REG_CPU_KERNEL_T(ScatterAdd,
                     KernelAttr()
                       .AddInputAttr(kNumberTypeInt64)
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt64)
                       .AddOutputAttr(kNumberTypeInt64),
-                    ScatterArithmeticCPUKernel, int64_t);
+                    ScatterArithmeticCpuKernelMod, int64_t);
 MS_REG_CPU_KERNEL_T(ScatterSub,
                     KernelAttr()
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt32)
                       .AddOutputAttr(kNumberTypeInt32),
-                    ScatterArithmeticCPUKernel, int32_t);
+                    ScatterArithmeticCpuKernelMod, int32_t);
 MS_REG_CPU_KERNEL_T(ScatterSub,
                     KernelAttr()
                       .AddInputAttr(kNumberTypeFloat32)
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeFloat32)
                       .AddOutputAttr(kNumberTypeFloat32),
-                    ScatterArithmeticCPUKernel, float);
+                    ScatterArithmeticCpuKernelMod, float);
 MS_REG_CPU_KERNEL_T(ScatterSub,
                     KernelAttr()
                       .AddInputAttr(kNumberTypeInt64)
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt64)
                       .AddOutputAttr(kNumberTypeInt64),
-                    ScatterArithmeticCPUKernel, int64_t);
+                    ScatterArithmeticCpuKernelMod, int64_t);
 MS_REG_CPU_KERNEL_T(ScatterMul,
                     KernelAttr()
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt32)
                       .AddOutputAttr(kNumberTypeInt32),
-                    ScatterArithmeticCPUKernel, int32_t);
+                    ScatterArithmeticCpuKernelMod, int32_t);
 MS_REG_CPU_KERNEL_T(ScatterMul,
                     KernelAttr()
                       .AddInputAttr(kNumberTypeFloat32)
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeFloat32)
                       .AddOutputAttr(kNumberTypeFloat32),
-                    ScatterArithmeticCPUKernel, float);
+                    ScatterArithmeticCpuKernelMod, float);
 MS_REG_CPU_KERNEL_T(ScatterMul,
                     KernelAttr()
                       .AddInputAttr(kNumberTypeInt64)
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt64)
                       .AddOutputAttr(kNumberTypeInt64),
-                    ScatterArithmeticCPUKernel, int64_t);
+                    ScatterArithmeticCpuKernelMod, int64_t);
 MS_REG_CPU_KERNEL_T(ScatterDiv,
                     KernelAttr()
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt32)
                       .AddOutputAttr(kNumberTypeInt32),
-                    ScatterArithmeticCPUKernel, int32_t);
+                    ScatterArithmeticCpuKernelMod, int32_t);
 MS_REG_CPU_KERNEL_T(ScatterDiv,
                     KernelAttr()
                       .AddInputAttr(kNumberTypeFloat32)
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeFloat32)
                       .AddOutputAttr(kNumberTypeFloat32),
-                    ScatterArithmeticCPUKernel, float);
+                    ScatterArithmeticCpuKernelMod, float);
 MS_REG_CPU_KERNEL_T(ScatterDiv,
                     KernelAttr()
                       .AddInputAttr(kNumberTypeInt64)
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt64)
                       .AddOutputAttr(kNumberTypeInt64),
-                    ScatterArithmeticCPUKernel, int64_t);
+                    ScatterArithmeticCpuKernelMod, int64_t);
 MS_REG_CPU_KERNEL_T(ScatterMax,
                     KernelAttr()
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt32)
                       .AddOutputAttr(kNumberTypeInt32),
-                    ScatterArithmeticCPUKernel, int32_t);
+                    ScatterArithmeticCpuKernelMod, int32_t);
 MS_REG_CPU_KERNEL_T(ScatterMax,
                     KernelAttr()
                       .AddInputAttr(kNumberTypeFloat32)
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeFloat32)
                       .AddOutputAttr(kNumberTypeFloat32),
-                    ScatterArithmeticCPUKernel, float);
+                    ScatterArithmeticCpuKernelMod, float);
 MS_REG_CPU_KERNEL_T(ScatterMax,
                     KernelAttr()
                       .AddInputAttr(kNumberTypeInt64)
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt64)
                       .AddOutputAttr(kNumberTypeInt64),
-                    ScatterArithmeticCPUKernel, int64_t);
+                    ScatterArithmeticCpuKernelMod, int64_t);
 MS_REG_CPU_KERNEL_T(ScatterMin,
                     KernelAttr()
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt32)
                       .AddOutputAttr(kNumberTypeInt32),
-                    ScatterArithmeticCPUKernel, int32_t);
+                    ScatterArithmeticCpuKernelMod, int32_t);
 MS_REG_CPU_KERNEL_T(ScatterMin,
                     KernelAttr()
                       .AddInputAttr(kNumberTypeFloat32)
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeFloat32)
                       .AddOutputAttr(kNumberTypeFloat32),
-                    ScatterArithmeticCPUKernel, float);
+                    ScatterArithmeticCpuKernelMod, float);
 MS_REG_CPU_KERNEL_T(ScatterMin,
                     KernelAttr()
                       .AddInputAttr(kNumberTypeInt64)
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt64)
                       .AddOutputAttr(kNumberTypeInt64),
-                    ScatterArithmeticCPUKernel, int64_t);
+                    ScatterArithmeticCpuKernelMod, int64_t);
 MS_REG_CPU_KERNEL_T(ScatterUpdate,
                     KernelAttr()
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt32)
                       .AddOutputAttr(kNumberTypeInt32),
-                    ScatterArithmeticCPUKernel, int32_t);
+                    ScatterArithmeticCpuKernelMod, int32_t);
 MS_REG_CPU_KERNEL_T(ScatterUpdate,
                     KernelAttr()
                       .AddInputAttr(kNumberTypeFloat32)
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeFloat32)
                       .AddOutputAttr(kNumberTypeFloat32),
-                    ScatterArithmeticCPUKernel, float);
+                    ScatterArithmeticCpuKernelMod, float);
 MS_REG_CPU_KERNEL_T(ScatterUpdate,
                     KernelAttr()
                       .AddInputAttr(kNumberTypeInt64)
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt64)
                       .AddOutputAttr(kNumberTypeInt64),
-                    ScatterArithmeticCPUKernel, int64_t);
+                    ScatterArithmeticCpuKernelMod, int64_t);
 }  // namespace kernel
 }  // namespace mindspore
 

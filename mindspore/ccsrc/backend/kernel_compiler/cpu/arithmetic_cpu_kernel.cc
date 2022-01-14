@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,7 @@ void ElementRealDiv(const T *input1, const T *input2, T *out, size_t size, size_
 }  // namespace
 
 template <typename T>
-void ArithmeticCPUKernel<T>::AssignAdd(T *input1, const T *input2, T *out) {
+void ArithmeticCpuKernelMod<T>::AssignAdd(T *input1, const T *input2, T *out) {
   auto task = [&input1, &input2, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = input1[i] + input2[i];
@@ -73,7 +73,7 @@ void ArithmeticCPUKernel<T>::AssignAdd(T *input1, const T *input2, T *out) {
 }
 
 template <typename T>
-void ArithmeticCPUKernel<T>::Add(const T *input1, const T *input2, T *out) {
+void ArithmeticCpuKernelMod<T>::Add(const T *input1, const T *input2, T *out) {
   BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
     auto iter = base_iter;
@@ -87,7 +87,7 @@ void ArithmeticCPUKernel<T>::Add(const T *input1, const T *input2, T *out) {
 }
 
 template <typename T>
-void ArithmeticCPUKernel<T>::Sub(const T *input1, const T *input2, T *out) {
+void ArithmeticCpuKernelMod<T>::Sub(const T *input1, const T *input2, T *out) {
   if constexpr (std::is_same_v<T, float>) {
     if (input_shape1_ == input_shape2_) {
       auto task = [this, input1, input2, out](size_t start, size_t end) {
@@ -122,7 +122,7 @@ void ArithmeticCPUKernel<T>::Sub(const T *input1, const T *input2, T *out) {
 }
 
 template <typename T>
-void ArithmeticCPUKernel<T>::Mul(const T *input1, const T *input2, T *out) {
+void ArithmeticCpuKernelMod<T>::Mul(const T *input1, const T *input2, T *out) {
   if constexpr (std::is_same_v<T, float>) {
     if (input_shape1_ == input_shape2_) {
       auto task = [this, input1, input2, out](size_t start, size_t end) {
@@ -156,7 +156,7 @@ void ArithmeticCPUKernel<T>::Mul(const T *input1, const T *input2, T *out) {
 }
 
 template <typename T>
-void ArithmeticCPUKernel<T>::RealDiv(const T *input1, const T *input2, T *out) {
+void ArithmeticCpuKernelMod<T>::RealDiv(const T *input1, const T *input2, T *out) {
   if (input_shape1_ == input_shape2_) {
     auto task = [&](size_t start, size_t end) {
       ElementRealDiv<T>(input1 + start, input2 + start, out + start, end - start, 1, 1);
@@ -207,7 +207,7 @@ void ArithmeticCPUKernel<T>::RealDiv(const T *input1, const T *input2, T *out) {
 }
 
 template <typename T>
-void ArithmeticCPUKernel<T>::Div(const T *input1, const T *input2, T *out) {
+void ArithmeticCpuKernelMod<T>::Div(const T *input1, const T *input2, T *out) {
   BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
     auto iter = base_iter;
@@ -236,7 +236,7 @@ void ArithmeticCPUKernel<T>::Div(const T *input1, const T *input2, T *out) {
 }
 
 template <typename T>
-void ArithmeticCPUKernel<T>::FloorDiv(const T *input1, const T *input2, T *out) {
+void ArithmeticCpuKernelMod<T>::FloorDiv(const T *input1, const T *input2, T *out) {
   BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
     auto iter = base_iter;
@@ -265,7 +265,7 @@ void ArithmeticCPUKernel<T>::FloorDiv(const T *input1, const T *input2, T *out) 
 }
 
 template <typename T>
-void ArithmeticCPUKernel<T>::Mod(const T *input1, const T *input2, T *out) {
+void ArithmeticCpuKernelMod<T>::Mod(const T *input1, const T *input2, T *out) {
   BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
     auto iter = base_iter;
@@ -287,7 +287,7 @@ void ArithmeticCPUKernel<T>::Mod(const T *input1, const T *input2, T *out) {
 }
 
 template <typename T>
-void ArithmeticCPUKernel<T>::FloorMod(const T *input1, const T *input2, T *out) {
+void ArithmeticCpuKernelMod<T>::FloorMod(const T *input1, const T *input2, T *out) {
   BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
     auto iter = base_iter;
@@ -304,7 +304,7 @@ void ArithmeticCPUKernel<T>::FloorMod(const T *input1, const T *input2, T *out) 
 }
 
 template <typename T>
-void ArithmeticCPUKernel<T>::Pow(const T *input1, const T *input2, T *out) {
+void ArithmeticCpuKernelMod<T>::Pow(const T *input1, const T *input2, T *out) {
   if constexpr (std::is_same_v<T, float>) {
     auto is_power_single = [this]() {
       bool is_power_single = false;
@@ -361,7 +361,7 @@ void ArithmeticCPUKernel<T>::Pow(const T *input1, const T *input2, T *out) {
 }
 
 template <typename T>
-void ArithmeticCPUKernel<T>::SquaredDifference(const T *input1, const T *input2, T *out) {
+void ArithmeticCpuKernelMod<T>::SquaredDifference(const T *input1, const T *input2, T *out) {
   BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
     auto iter = base_iter;
@@ -376,7 +376,7 @@ void ArithmeticCPUKernel<T>::SquaredDifference(const T *input1, const T *input2,
 }
 
 template <typename T>
-void ArithmeticCPUKernel<T>::Atan2(const T *input1, const T *input2, T *out) {
+void ArithmeticCpuKernelMod<T>::Atan2(const T *input1, const T *input2, T *out) {
   BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
     auto iter = base_iter;
@@ -391,22 +391,22 @@ void ArithmeticCPUKernel<T>::Atan2(const T *input1, const T *input2, T *out) {
 }
 
 template <typename T>
-void ArithmeticCPUKernel<T>::InitComputeFunc() {
+void ArithmeticCpuKernelMod<T>::InitComputeFunc() {
   if (kernel_name_ == prim::kPrimAssignAdd->name()) {
     return;
   }
   static const std::unordered_map<std::string, TypeComputeFunc> arithmeticMathFuncMap{
-    {prim::kPrimAdd->name(), &ArithmeticCPUKernel<T>::Add},
-    {prim::kPrimSub->name(), &ArithmeticCPUKernel<T>::Sub},
-    {prim::kPrimMul->name(), &ArithmeticCPUKernel<T>::Mul},
-    {prim::kPrimDiv->name(), &ArithmeticCPUKernel<T>::Div},
-    {prim::kPrimMod->name(), &ArithmeticCPUKernel<T>::Mod},
-    {prim::kPrimFloorMod->name(), &ArithmeticCPUKernel<T>::FloorMod},
-    {prim::kPrimPow->name(), &ArithmeticCPUKernel<T>::Pow},
-    {prim::kPrimFloorDiv->name(), &ArithmeticCPUKernel<T>::FloorDiv},
-    {prim::kPrimAtan2->name(), &ArithmeticCPUKernel<T>::Atan2},
-    {prim::kPrimRealDiv->name(), &ArithmeticCPUKernel<T>::RealDiv},
-    {prim::kPrimSquaredDifference->name(), &ArithmeticCPUKernel<T>::SquaredDifference}};
+    {prim::kPrimAdd->name(), &ArithmeticCpuKernelMod<T>::Add},
+    {prim::kPrimSub->name(), &ArithmeticCpuKernelMod<T>::Sub},
+    {prim::kPrimMul->name(), &ArithmeticCpuKernelMod<T>::Mul},
+    {prim::kPrimDiv->name(), &ArithmeticCpuKernelMod<T>::Div},
+    {prim::kPrimMod->name(), &ArithmeticCpuKernelMod<T>::Mod},
+    {prim::kPrimFloorMod->name(), &ArithmeticCpuKernelMod<T>::FloorMod},
+    {prim::kPrimPow->name(), &ArithmeticCpuKernelMod<T>::Pow},
+    {prim::kPrimFloorDiv->name(), &ArithmeticCpuKernelMod<T>::FloorDiv},
+    {prim::kPrimAtan2->name(), &ArithmeticCpuKernelMod<T>::Atan2},
+    {prim::kPrimRealDiv->name(), &ArithmeticCpuKernelMod<T>::RealDiv},
+    {prim::kPrimSquaredDifference->name(), &ArithmeticCpuKernelMod<T>::SquaredDifference}};
   if (arithmeticMathFuncMap.find(kernel_name_) == arithmeticMathFuncMap.end()) {
     MS_LOG(EXCEPTION) << "For 'Arithmetic', only supports operators in " << Unorderedmap2Str(arithmeticMathFuncMap)
                       << ", but got " << kernel_name_;
@@ -415,7 +415,7 @@ void ArithmeticCPUKernel<T>::InitComputeFunc() {
 }
 
 template <typename T>
-void ArithmeticCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
+void ArithmeticCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   input_shape1_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
@@ -455,8 +455,8 @@ void ArithmeticCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-bool ArithmeticCPUKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                    const std::vector<AddressPtr> &outputs) {
+bool ArithmeticCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                                       const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
   auto *input1 = reinterpret_cast<T *>(inputs[0]->addr);

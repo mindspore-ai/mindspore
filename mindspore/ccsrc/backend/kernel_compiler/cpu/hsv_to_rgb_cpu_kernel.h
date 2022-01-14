@@ -23,10 +23,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class HSVToRGBCpuKernel : public CPUKernel {
+class HSVToRGBCpuKernelMod : public NativeCpuKernelMod {
  public:
-  HSVToRGBCpuKernel() = default;
-  ~HSVToRGBCpuKernel() override = default;
+  HSVToRGBCpuKernelMod() = default;
+  ~HSVToRGBCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -44,11 +44,11 @@ class HSVToRGBCpuKernel : public CPUKernel {
   const size_t kOutputNum = 1;
 };
 MS_REG_CPU_KERNEL_T(HSVToRGB, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-                    HSVToRGBCpuKernel, float16);
+                    HSVToRGBCpuKernelMod, float16);
 MS_REG_CPU_KERNEL_T(HSVToRGB, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                    HSVToRGBCpuKernel, float);
+                    HSVToRGBCpuKernelMod, float);
 MS_REG_CPU_KERNEL_T(HSVToRGB, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-                    HSVToRGBCpuKernel, double);
+                    HSVToRGBCpuKernelMod, double);
 }  // namespace kernel
 }  // namespace mindspore
 #endif

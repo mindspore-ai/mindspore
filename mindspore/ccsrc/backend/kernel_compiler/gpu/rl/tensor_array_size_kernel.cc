@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,27 +22,21 @@
 namespace mindspore {
 namespace kernel {
 using mindspore::device::TensorArrayMgr;
-TensorArraySizeKernel::TensorArraySizeKernel() {}
+TensorArraySizeKernelMod::TensorArraySizeKernelMod() {}
 
-const std::vector<size_t> &TensorArraySizeKernel::GetInputSizeList() const { return input_size_list_; }
-
-const std::vector<size_t> &TensorArraySizeKernel::GetOutputSizeList() const { return output_size_list_; }
-
-const std::vector<size_t> &TensorArraySizeKernel::GetWorkspaceSizeList() const { return workspace_size_list_; }
-
-bool TensorArraySizeKernel::Init(const CNodePtr &kernel_node) {
+bool TensorArraySizeKernelMod::Init(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   InitSizeLists();
   return true;
 }
 
-void TensorArraySizeKernel::InitSizeLists() {
+void TensorArraySizeKernelMod::InitSizeLists() {
   input_size_list_.push_back(sizeof(int64_t));
   output_size_list_.push_back(sizeof(int64_t));
 }
 
-bool TensorArraySizeKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                   const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool TensorArraySizeKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                                      const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   auto handle_addr = GetDeviceAddress<int64_t>(inputs, 0);
   auto out_addr = GetDeviceAddress<int64_t>(outputs, 0);
   MS_ERROR_IF_NULL(out_addr);

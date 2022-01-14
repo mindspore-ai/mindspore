@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,27 +24,27 @@ MS_REG_GPU_KERNEL_ONE(FusedAddReluGradV2,
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeUInt32)
                         .AddOutputAttr(kNumberTypeFloat32),
-                      FusedAddReluGradV2GpuKernel, float)
+                      FusedAddReluGradV2GpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(FusedAddReluGradV2,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddInputAttr(kNumberTypeUInt32)
                         .AddOutputAttr(kNumberTypeFloat16),
-                      FusedAddReluGradV2GpuKernel, half)
+                      FusedAddReluGradV2GpuKernelMod, half)
 MS_REG_GPU_KERNEL_ONE(FusedAddReluGradV2,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeUInt32)
                         .AddOutputAttr(kNumberTypeInt32),
-                      FusedAddReluGradV2GpuKernel, int32_t)
+                      FusedAddReluGradV2GpuKernelMod, int32_t)
 MS_REG_GPU_KERNEL_ONE(FusedAddReluGradV2,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeInt64)
                         .AddInputAttr(kNumberTypeInt64)
                         .AddInputAttr(kNumberTypeUInt32)
                         .AddOutputAttr(kNumberTypeInt64),
-                      FusedAddReluGradV2GpuKernel, int64_t)
+                      FusedAddReluGradV2GpuKernelMod, int64_t)
 }  // namespace kernel
 }  // namespace mindspore

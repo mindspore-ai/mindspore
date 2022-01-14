@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class SmoothL1LossCPUKernel : public CPUKernel {
+class SmoothL1LossCpuKernelMod : public NativeCpuKernelMod {
  public:
-  SmoothL1LossCPUKernel() = default;
-  ~SmoothL1LossCPUKernel() override = default;
+  SmoothL1LossCpuKernelMod() = default;
+  ~SmoothL1LossCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -45,12 +45,12 @@ class SmoothL1LossCPUKernel : public CPUKernel {
 MS_REG_CPU_KERNEL_T(
   SmoothL1Loss,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  SmoothL1LossCPUKernel, float16);
+  SmoothL1LossCpuKernelMod, float16);
 
 MS_REG_CPU_KERNEL_T(
   SmoothL1Loss,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  SmoothL1LossCPUKernel, float);
+  SmoothL1LossCpuKernelMod, float);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SMOOTH_L1_LOSS_CPU_KERNEL_H_

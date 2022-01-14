@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,27 +20,27 @@
 namespace mindspore {
 namespace kernel {
 MS_REG_GPU_KERNEL_TWO(DynamicShape, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                      DynamicShapeGpuKernel, int32_t, int32_t)
+                      DynamicShapeGpuKernelMod, int32_t, int32_t)
 
 MS_REG_GPU_KERNEL_TWO(DynamicShape, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt32),
-                      DynamicShapeGpuKernel, half, int32_t)
+                      DynamicShapeGpuKernelMod, half, int32_t)
 
 MS_REG_GPU_KERNEL_TWO(DynamicShape, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt32),
-                      DynamicShapeGpuKernel, float, int32_t)
+                      DynamicShapeGpuKernelMod, float, int32_t)
 
 MS_REG_GPU_KERNEL_TWO(DynamicShape, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeInt32),
-                      DynamicShapeGpuKernel, bool, int32_t)
+                      DynamicShapeGpuKernelMod, bool, int32_t)
 
 MS_REG_GPU_KERNEL_TWO(DynamicShape, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
-                      DynamicShapeGpuKernel, int32_t, int64_t)
+                      DynamicShapeGpuKernelMod, int32_t, int64_t)
 
 MS_REG_GPU_KERNEL_TWO(DynamicShape, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt64),
-                      DynamicShapeGpuKernel, half, int64_t)
+                      DynamicShapeGpuKernelMod, half, int64_t)
 
 MS_REG_GPU_KERNEL_TWO(DynamicShape, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt64),
-                      DynamicShapeGpuKernel, float, int64_t)
+                      DynamicShapeGpuKernelMod, float, int64_t)
 
 MS_REG_GPU_KERNEL_TWO(DynamicShape, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeInt64),
-                      DynamicShapeGpuKernel, bool, int64_t)
+                      DynamicShapeGpuKernelMod, bool, int64_t)
 }  // namespace kernel
 }  // namespace mindspore

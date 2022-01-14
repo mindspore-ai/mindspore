@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,10 @@
 
 namespace mindspore {
 namespace kernel {
-class ExchangeKeysKernel : public CPUKernel {
+class ExchangeKeysKernelMod : public NativeCpuKernelMod {
  public:
-  ExchangeKeysKernel() = default;
-  ~ExchangeKeysKernel() override = default;
+  ExchangeKeysKernelMod() = default;
+  ~ExchangeKeysKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &) override;

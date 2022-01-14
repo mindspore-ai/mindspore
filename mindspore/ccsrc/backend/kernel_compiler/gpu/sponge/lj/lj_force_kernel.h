@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename T1>
-class LJForceGpuKernel : public GpuKernel {
+class LJForceGpuKernelMod : public NativeGpuKernelMod {
  public:
-  LJForceGpuKernel() : ele_uint_crd(1) {}
-  ~LJForceGpuKernel() override = default;
+  LJForceGpuKernelMod() : ele_uint_crd(1) {}
+  ~LJForceGpuKernelMod() override = default;
 
   bool Init(const CNodePtr &kernel_node) override {
     kernel_node_ = kernel_node;
@@ -55,10 +55,6 @@ class LJForceGpuKernel : public GpuKernel {
     InitSizeLists();
     return true;
   }
-
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -105,9 +101,6 @@ class LJForceGpuKernel : public GpuKernel {
   size_t ele_d_LJ_a = 1;
   size_t ele_d_LJ_b = 1;
 
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
   int atom_numbers;
   float cutoff_square;
   int max_nl_numbers = 800;

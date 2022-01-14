@@ -24,7 +24,7 @@ MS_REG_GPU_KERNEL_ONE(EinsumGrad,
                         .AddInputAttr(kNumberTypeFloat64)
                         .AddAllSameAttr(true)
                         .AddOutputAttr(kNumberTypeFloat64),
-                      EinsumGradGpuKernel, double)
+                      EinsumGradGpuKernelMod, double)
 
 MS_REG_GPU_KERNEL_ONE(EinsumGrad,
                       KernelAttr()
@@ -32,13 +32,13 @@ MS_REG_GPU_KERNEL_ONE(EinsumGrad,
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddAllSameAttr(true)
                         .AddOutputAttr(kNumberTypeFloat32),
-                      EinsumGradGpuKernel, float)
+                      EinsumGradGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(EinsumGrad,
                       KernelAttr()
                         .AddAllSameAttr(true)
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddAllSameAttr(true)
                         .AddOutputAttr(kNumberTypeFloat16),
-                      EinsumGradGpuKernel, half)
+                      EinsumGradGpuKernelMod, half)
 }  // namespace kernel
 }  // namespace mindspore

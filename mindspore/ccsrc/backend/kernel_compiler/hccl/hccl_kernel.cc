@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,9 +80,9 @@ HcclKernel::~HcclKernel() {
   hccl_count_ = 0;
   op_type_ = ::HcclReduceOp::HCCL_REDUCE_SUM;
   root_id_ = 0;
-  input_size_list_.clear();
-  output_size_list_.clear();
-  workspace_size_list_.clear();
+  mutable_input_size_list_.clear();
+  mutable_output_size_list_.clear();
+  mutable_workspace_size_list_.clear();
 }
 
 bool HcclKernel::Init(const AnfNodePtr &anf_node) {
@@ -140,10 +140,16 @@ bool HcclKernel::Init(const AnfNodePtr &anf_node) {
   return true;
 }
 
+void HcclKernel::SetInputSizeList(const std::vector<size_t> &size_list) { mutable_input_size_list_ = size_list; }
+void HcclKernel::SetOutputSizeList(const std::vector<size_t> &size_list) { mutable_output_size_list_ = size_list; }
+void HcclKernel::SetWorkspaceSizeList(const std::vector<size_t> &size_list) {
+  mutable_workspace_size_list_ = size_list;
+}
+
 const std::vector<size_t> &HcclKernel::GetInputSizeList() const {
   size_t size = 0;
-  if (!input_size_list_.empty()) {
-    return input_size_list_;
+  if (!mutable_input_size_list_.empty()) {
+    return mutable_input_size_list_;
   }
   if (hccl_data_type_list_.size() != hccl_kernel_input_shape_list_.size()) {
     MS_LOG(EXCEPTION) << "Invalid data type size " << hccl_data_type_list_.size() << " diff shape size "
@@ -153,9 +159,9 @@ const std::vector<size_t> &HcclKernel::GetInputSizeList() const {
     if (!HcomUtil::GetHcclOpSize(hccl_data_type_list_[i], hccl_kernel_input_shape_list_[i], &size)) {
       MS_LOG(ERROR) << "GetHcclOpInputSize failed";
     }
-    input_size_list_.push_back(size);
+    mutable_input_size_list_.push_back(size);
   }
-  return input_size_list_;
+  return mutable_input_size_list_;
 }
 
 const std::vector<size_t> &HcclKernel::GetOutputSizeList() const {
@@ -164,8 +170,8 @@ const std::vector<size_t> &HcclKernel::GetOutputSizeList() const {
     MS_LOG(EXCEPTION) << "anf_node pointer is expired.";
   }
   size_t size = 0;
-  if (!output_size_list_.empty()) {
-    return output_size_list_;
+  if (!mutable_output_size_list_.empty()) {
+    return mutable_output_size_list_;
   }
   auto cnode = anf_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
@@ -193,9 +199,9 @@ const std::vector<size_t> &HcclKernel::GetOutputSizeList() const {
     if (!HcomUtil::GetHcclOpSize(hccl_data_type_list_[0], hccl_kernel_output_shape_list_[i], &size)) {
       MS_LOG(ERROR) << "GetHcclOpOutputSize failed";
     }
-    output_size_list_.push_back(size);
+    mutable_output_size_list_.push_back(size);
   }
-  return output_size_list_;
+  return mutable_output_size_list_;
 }
 
 const std::vector<size_t> &HcclKernel::GetWorkspaceSizeList() const {
@@ -203,13 +209,13 @@ const std::vector<size_t> &HcclKernel::GetWorkspaceSizeList() const {
   MS_EXCEPTION_IF_NULL(context_ptr);
   bool is_task_sink = context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
   auto mode = context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE);
-  if (!workspace_size_list_.empty() || hccl_data_type_list_.empty() || (!is_task_sink && mode == kGraphMode) ||
+  if (!mutable_workspace_size_list_.empty() || hccl_data_type_list_.empty() || (!is_task_sink && mode == kGraphMode) ||
       mode == kPynativeMode) {
-    return workspace_size_list_;
+    return mutable_workspace_size_list_;
   }
-  workspace_size_list_.emplace_back(
+  mutable_workspace_size_list_.emplace_back(
     hccl::HcclAdapter::GetInstance().CalcWorkspaceSize(anf_node_.lock(), hccl_data_type_list_[0]));
-  return workspace_size_list_;
+  return mutable_workspace_size_list_;
 }
 
 std::vector<TaskInfoPtr> HcclKernel::GenTask(const std::vector<AddressPtr> &inputs,

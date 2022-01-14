@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class LUSolverCPUKernel : public CPUKernel {
+class LUSolverCpuKernelMod : public NativeCpuKernelMod {
  public:
-  LUSolverCPUKernel() = default;
-  ~LUSolverCPUKernel() override = default;
+  LUSolverCpuKernelMod() = default;
+  ~LUSolverCpuKernelMod() override = default;
   void InitKernel(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
@@ -47,11 +47,11 @@ class LUSolverCPUKernel : public CPUKernel {
 MS_REG_CPU_KERNEL_T(
   LUSolver,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  LUSolverCPUKernel, float);
+  LUSolverCpuKernelMod, float);
 MS_REG_CPU_KERNEL_T(
   LUSolver,
   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-  LUSolverCPUKernel, double);
+  LUSolverCpuKernelMod, double);
 }  // namespace kernel
 }  // namespace mindspore
 

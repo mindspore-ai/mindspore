@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,10 @@
 
 namespace mindspore {
 namespace kernel {
-class UnsortedSegmentSumCPUKernel : public CPUKernel {
+class UnsortedSegmentSumCpuKernelMod : public NativeCpuKernelMod {
  public:
-  UnsortedSegmentSumCPUKernel() = default;
-  ~UnsortedSegmentSumCPUKernel() override = default;
+  UnsortedSegmentSumCpuKernelMod() = default;
+  ~UnsortedSegmentSumCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -48,19 +48,19 @@ class UnsortedSegmentSumCPUKernel : public CPUKernel {
 MS_REG_CPU_KERNEL(
   UnsortedSegmentSum,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-  UnsortedSegmentSumCPUKernel);
+  UnsortedSegmentSumCpuKernelMod);
 MS_REG_CPU_KERNEL(
   UnsortedSegmentSum,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
-  UnsortedSegmentSumCPUKernel);
+  UnsortedSegmentSumCpuKernelMod);
 MS_REG_CPU_KERNEL(
   UnsortedSegmentSum,
   KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  UnsortedSegmentSumCPUKernel);
+  UnsortedSegmentSumCpuKernelMod);
 MS_REG_CPU_KERNEL(
   UnsortedSegmentSum,
   KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
-  UnsortedSegmentSumCPUKernel);
+  UnsortedSegmentSumCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

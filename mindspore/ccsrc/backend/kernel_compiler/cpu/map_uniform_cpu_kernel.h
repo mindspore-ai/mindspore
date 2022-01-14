@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,10 @@
 
 namespace mindspore {
 namespace kernel {
-class MapUniformCPUKernel : public CPUKernel {
+class MapUniformCpuKernelMod : public NativeCpuKernelMod {
  public:
-  MapUniformCPUKernel() = default;
-  ~MapUniformCPUKernel() override = default;
+  MapUniformCpuKernelMod() = default;
+  ~MapUniformCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -51,7 +51,7 @@ MS_REG_CPU_KERNEL(MapUniform,
                     .AddInputAttr(kNumberTypeInt32)
                     .AddInputAttr(kNumberTypeInt32)
                     .AddOutputAttr(kNumberTypeInt32),
-                  MapUniformCPUKernel);
+                  MapUniformCpuKernelMod);
 
 MS_REG_CPU_KERNEL(MapUniform,
                   KernelAttr()
@@ -59,7 +59,7 @@ MS_REG_CPU_KERNEL(MapUniform,
                     .AddInputAttr(kNumberTypeInt64)
                     .AddInputAttr(kNumberTypeInt64)
                     .AddOutputAttr(kNumberTypeInt64),
-                  MapUniformCPUKernel);
+                  MapUniformCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

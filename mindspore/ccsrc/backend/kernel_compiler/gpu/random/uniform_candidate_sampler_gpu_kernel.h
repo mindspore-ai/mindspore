@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,9 +30,9 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename S>
-class UniformCandidateSamplerGpuKernel : public GpuKernel {
+class UniformCandidateSamplerGpuKernelMod : public NativeGpuKernelMod {
  public:
-  UniformCandidateSamplerGpuKernel()
+  UniformCandidateSamplerGpuKernelMod()
       : num_true_(0),
         num_sampled_(0),
         unique_(false),
@@ -40,11 +40,7 @@ class UniformCandidateSamplerGpuKernel : public GpuKernel {
         input_size_(0),
         remove_accidental_hits_(false),
         is_null_input_(false) {}
-  ~UniformCandidateSamplerGpuKernel() override = default;
-
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+  ~UniformCandidateSamplerGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -209,9 +205,7 @@ class UniformCandidateSamplerGpuKernel : public GpuKernel {
   std::set<T> set_input_;
   std::default_random_engine generator_;
   std::vector<T> sampled_candidates_;
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
+
   int64_t init_seed_{0};
   int64_t cur_seed_{0};
 };

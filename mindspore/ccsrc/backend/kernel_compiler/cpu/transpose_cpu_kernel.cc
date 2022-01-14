@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ constexpr size_t kTransposeOutputsNum = 1;
 constexpr size_t kMaxTransposeSerialSize = 50331648;
 }  // namespace
 
-void TransposeCPUFwdKernel::InitKernel(const CNodePtr &kernel_node) {
+void TransposeFwdCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
@@ -56,17 +56,17 @@ void TransposeCPUFwdKernel::InitKernel(const CNodePtr &kernel_node) {
     transpose_param_.strides_[i] = SizeToInt(input_shape_[i + 1]) * transpose_param_.strides_[i + 1];
     transpose_param_.out_strides_[i] = SizeToInt(output_shape_[i + 1]) * transpose_param_.out_strides_[i + 1];
   }
-  launch_map_[kNumberTypeInt8] = &TransposeCPUFwdKernel::LaunchKernel<int8_t>;
-  launch_map_[kNumberTypeInt16] = &TransposeCPUFwdKernel::LaunchKernel<int16_t>;
-  launch_map_[kNumberTypeInt32] = &TransposeCPUFwdKernel::LaunchKernel<int>;
-  launch_map_[kNumberTypeInt64] = &TransposeCPUFwdKernel::LaunchKernel<int64_t>;
-  launch_map_[kNumberTypeUInt8] = &TransposeCPUFwdKernel::LaunchKernel<uint8_t>;
-  launch_map_[kNumberTypeUInt16] = &TransposeCPUFwdKernel::LaunchKernel<uint16_t>;
-  launch_map_[kNumberTypeUInt32] = &TransposeCPUFwdKernel::LaunchKernel<uint32_t>;
-  launch_map_[kNumberTypeUInt64] = &TransposeCPUFwdKernel::LaunchKernel<uint64_t>;
-  launch_map_[kNumberTypeFloat32] = &TransposeCPUFwdKernel::LaunchKernel<float>;
-  launch_map_[kNumberTypeFloat64] = &TransposeCPUFwdKernel::LaunchKernel<double>;
-  launch_map_[kNumberTypeBool] = &TransposeCPUFwdKernel::LaunchKernel<bool>;
+  launch_map_[kNumberTypeInt8] = &TransposeFwdCpuKernelMod::LaunchKernel<int8_t>;
+  launch_map_[kNumberTypeInt16] = &TransposeFwdCpuKernelMod::LaunchKernel<int16_t>;
+  launch_map_[kNumberTypeInt32] = &TransposeFwdCpuKernelMod::LaunchKernel<int>;
+  launch_map_[kNumberTypeInt64] = &TransposeFwdCpuKernelMod::LaunchKernel<int64_t>;
+  launch_map_[kNumberTypeUInt8] = &TransposeFwdCpuKernelMod::LaunchKernel<uint8_t>;
+  launch_map_[kNumberTypeUInt16] = &TransposeFwdCpuKernelMod::LaunchKernel<uint16_t>;
+  launch_map_[kNumberTypeUInt32] = &TransposeFwdCpuKernelMod::LaunchKernel<uint32_t>;
+  launch_map_[kNumberTypeUInt64] = &TransposeFwdCpuKernelMod::LaunchKernel<uint64_t>;
+  launch_map_[kNumberTypeFloat32] = &TransposeFwdCpuKernelMod::LaunchKernel<float>;
+  launch_map_[kNumberTypeFloat64] = &TransposeFwdCpuKernelMod::LaunchKernel<double>;
+  launch_map_[kNumberTypeBool] = &TransposeFwdCpuKernelMod::LaunchKernel<bool>;
 
   auto iter = launch_map_.find(dtype_);
   if (iter != launch_map_.end()) {
@@ -77,16 +77,16 @@ void TransposeCPUFwdKernel::InitKernel(const CNodePtr &kernel_node) {
   }
 }
 
-bool TransposeCPUFwdKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                   const std::vector<kernel::AddressPtr> &,
-                                   const std::vector<kernel::AddressPtr> &outputs) {
+bool TransposeFwdCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                      const std::vector<kernel::AddressPtr> &,
+                                      const std::vector<kernel::AddressPtr> &outputs) {
   launch_func_(this, inputs, outputs);
   return true;
 }
 
 template <typename T>
-void TransposeCPUFwdKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &outputs) {
+void TransposeFwdCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                            const std::vector<AddressPtr> &outputs) {
   const auto *input_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
   transpose_param_.data_num_ = SizeToInt(inputs[0]->size / sizeof(T));
@@ -132,7 +132,7 @@ void TransposeCPUFwdKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
 }
 
 template <typename T>
-void TransposeCPUFwdKernel::ParallelRun(const T *input_addr, T *output_addr, const int *output_shape, size_t count) {
+void TransposeFwdCpuKernelMod::ParallelRun(const T *input_addr, T *output_addr, const int *output_shape, size_t count) {
   std::function<void(const T *, T *, const int *, TransposeParameter *, int, int)> TransposeDims;
   if constexpr (std::is_same_v<T, int8_t>) {
     TransposeDims = &TransposeDimsInt8;

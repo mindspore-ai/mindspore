@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,23 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr size_t kInputNum = 2;
+constexpr size_t kIndex1st = 1;
+constexpr size_t kIndex2nd = 2;
+constexpr size_t kIndex3rd = 3;
+constexpr size_t kDimNeedPadBatch = 3;
+constexpr size_t kDimNeedPadBatchAndChannel = 2;
+constexpr size_t kInputXDimLowerLimit = 4;
+constexpr size_t kOutputDimLowerLimit = 2;
+constexpr int kSymmetricCoef = 2;
+constexpr size_t kIndexForMaxWidth = 3;
+constexpr size_t kIndexForMaxHeight = 2;
+constexpr size_t kMaxIndexOffset = 2;
+
 template <typename T>
-class MirrorPadGpuBackKernel : public GpuKernel {
+class MirrorPadBackGpuKernelMod : public NativeGpuKernelMod {
  public:
-  MirrorPadGpuBackKernel()
+  MirrorPadBackGpuKernelMod()
       : num_input_(0),
         num_paddings_(0),
         mode_(0),
@@ -38,11 +51,7 @@ class MirrorPadGpuBackKernel : public GpuKernel {
         input_size_(1),
         output_size_(1),
         workspace_size_(0) {}
-  ~MirrorPadGpuBackKernel() override = default;
-
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+  ~MirrorPadBackGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -56,8 +65,9 @@ class MirrorPadGpuBackKernel : public GpuKernel {
 
     size_t dx_size = output_size_ / sizeof(T);
     size_t interim_dy_size = workspace_size_ / sizeof(T);
-    CalMirrorPadGrad(dx_size, interim_dy_size, input, interim, output_shape_[0], output_shape_[1], output_shape_[2],
-                     output_shape_[3], input_shape_[2], input_shape_[3], num_paddings_, paddings, mode_, output,
+    CalMirrorPadGrad(dx_size, interim_dy_size, input, interim, output_shape_[0], output_shape_[kIndex1st],
+                     output_shape_[kIndex2nd], output_shape_[kIndex3rd], input_shape_[kIndex2nd],
+                     input_shape_[kIndex3rd], num_paddings_, paddings, mode_, output,
                      reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
@@ -85,14 +95,14 @@ class MirrorPadGpuBackKernel : public GpuKernel {
       return true;
     }
     // shape adjustment -> from 2d/3d to 4d to standardize
-    if (input_shape.size() == 3) {
+    if (input_shape.size() == kDimNeedPadBatch) {
       auto it = input_shape.begin();
       (void)input_shape.insert(it, 1);  // batch padding
-    } else if (input_shape.size() == 2) {
+    } else if (input_shape.size() == kDimNeedPadBatchAndChannel) {
       auto it = input_shape.begin();
       (void)input_shape.insert(it, 2, 1);  // channel padding
     }
-    if (input_shape.size() < 4) {
+    if (input_shape.size() < kInputXDimLowerLimit) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input_x cannot be less than 4, but "
                         << "got the " << input_shape.size();
     }
@@ -106,17 +116,16 @@ class MirrorPadGpuBackKernel : public GpuKernel {
     // account for paddings in input size -> passed as int64_ts
 
     num_paddings_ = padding_shape[0];
-    input_size_ += (2 * num_paddings_ * sizeof(int64_t));
+    input_size_ += (IntToSize(kSymmetricCoef) * num_paddings_ * sizeof(int64_t));
 
-    if (output_shape.size() == 4) {
-    } else if (output_shape.size() == 3) {
+    if (output_shape.size() == kDimNeedPadBatch) {
       auto it = output_shape.begin();
       (void)output_shape.insert(it, 1);  // batch padding
-    } else if (output_shape.size() == 2) {
+    } else if (output_shape.size() == kDimNeedPadBatchAndChannel) {
       auto it = output_shape.begin();
       (void)output_shape.insert(it, 2, 1);  // channel padding
     }
-    if (output_shape.size() < 2) {
+    if (output_shape.size() < kOutputDimLowerLimit) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of output cannot be less than 2, but "
                         << "got the " << output_shape.size();
     }
@@ -129,23 +138,23 @@ class MirrorPadGpuBackKernel : public GpuKernel {
     // calc workspace size
     // store dy values with accumulation across batch and channel only
     workspace_size_ = sizeof(T);
-    for (int i = 0; i < 2; i++) {
-      workspace_size_ *= output_shape[i];     // BATCH, CHANNEL -> Output size
-      workspace_size_ *= input_shape[i + 2];  // WIDTH, HEIGHT -> Input Size
+    for (int i = 0; i < SizeToInt(kOutputDimLowerLimit); i++) {
+      workspace_size_ *= output_shape[i];                        // BATCH, CHANNEL -> Output size
+      workspace_size_ *= input_shape[i + kOutputDimLowerLimit];  // WIDTH, HEIGHT -> Input Size
     }
 
-    int max_width = input_shape_[3];
-    int max_height = input_shape_[2];
+    int max_width = input_shape_[kIndexForMaxWidth];
+    int max_height = input_shape_[kIndexForMaxHeight];
     // basic error check for padding value
     if (mode_ == 1) {  // symmetric
-      max_width = max_width + (2 * max_width);
-      max_height = max_height + (2 * max_height);
+      max_width = max_width + (kSymmetricCoef * max_width);
+      max_height = max_height + (kSymmetricCoef * max_height);
     } else {  // reflect
-      max_width = max_width + (2 * (max_width - 1));
-      max_height = max_height + (2 * (max_height - 1));
+      max_width = max_width + (kSymmetricCoef * (max_width - 1));
+      max_height = max_height + (kSymmetricCoef * (max_height - 1));
     }
-    if (output_shape_[(output_shape_.size() - 2) + 0] > max_width ||
-        output_shape_[(output_shape_.size() - 2) + 1] > max_width) {
+    if (output_shape_[(output_shape_.size() - kMaxIndexOffset) + 0] > max_width ||
+        output_shape_[(output_shape_.size() - kMaxIndexOffset) + 1] > max_width) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the output.shape[-1] and output.shape[-2] cannot be greater "
                         << "than input_x.shape[-1], but got output.shape: " << CONVERT_VECTOR_TO_STRING(output_shape_)
                         << ", input_x.shape: " << CONVERT_VECTOR_TO_STRING(input_shape_);
@@ -165,7 +174,7 @@ class MirrorPadGpuBackKernel : public GpuKernel {
  private:
   void CheckParam(const CNodePtr &kernel_node) {
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_num != 2) {
+    if (input_num != kInputNum) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 2, but got " << input_num;
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
@@ -184,9 +193,6 @@ class MirrorPadGpuBackKernel : public GpuKernel {
   size_t input_size_;
   size_t output_size_;
   size_t workspace_size_;
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,27 +23,27 @@ MS_REG_GPU_KERNEL_TWO(DynamicBroadcastGradientArgs,
                         .AddInputAttr(kNumberTypeInt64)
                         .AddOutputAttr(kNumberTypeInt64)
                         .AddOutputAttr(kNumberTypeInt64),
-                      DynamicBroadcastGradientArgsGpuKernel, int64_t, int64_t)
+                      DynamicBroadcastGradientArgsGpuKernelMod, int64_t, int64_t)
 MS_REG_GPU_KERNEL_TWO(DynamicBroadcastGradientArgs,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddOutputAttr(kNumberTypeInt64)
                         .AddOutputAttr(kNumberTypeInt64),
-                      DynamicBroadcastGradientArgsGpuKernel, int32_t, int64_t)
+                      DynamicBroadcastGradientArgsGpuKernelMod, int32_t, int64_t)
 MS_REG_GPU_KERNEL_TWO(DynamicBroadcastGradientArgs,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeUInt64)
                         .AddInputAttr(kNumberTypeUInt64)
                         .AddOutputAttr(kNumberTypeInt64)
                         .AddOutputAttr(kNumberTypeInt64),
-                      DynamicBroadcastGradientArgsGpuKernel, uint64_t, int64_t)
+                      DynamicBroadcastGradientArgsGpuKernelMod, uint64_t, int64_t)
 MS_REG_GPU_KERNEL_TWO(DynamicBroadcastGradientArgs,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeUInt32)
                         .AddInputAttr(kNumberTypeUInt32)
                         .AddOutputAttr(kNumberTypeInt64)
                         .AddOutputAttr(kNumberTypeInt64),
-                      DynamicBroadcastGradientArgsGpuKernel, uint32_t, int64_t)
+                      DynamicBroadcastGradientArgsGpuKernelMod, uint32_t, int64_t)
 }  // namespace kernel
 }  // namespace mindspore

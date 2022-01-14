@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ int NormalizeBeginPos(int begin_pos, int dim_len) {
   return std::min(begin_pos, dim_len - 1);
 }
 
-void SliceCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void SliceCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   cnode_ptr_ = kernel_node;
@@ -77,8 +77,8 @@ void SliceCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   data_size_ = size_pair->second;
 }
 
-void SliceCPUKernel::InitSliceParam(const std::vector<size_t> &input_shape, const std::vector<int64_t> &begin,
-                                    const std::vector<int64_t> &size) {
+void SliceCpuKernelMod::InitSliceParam(const std::vector<size_t> &input_shape, const std::vector<int64_t> &begin,
+                                       const std::vector<int64_t> &size) {
   origin_dim_size_ = input_shape.size();
   for (size_t i = 0; i < DIMENSION_8D; i++) {
     if (i < input_shape.size()) {
@@ -121,8 +121,8 @@ void SliceSimpleDim2(const int8_t *input, int8_t *output, const SliceParameter *
   }
 }
 
-bool SliceCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                            const std::vector<kernel::AddressPtr> &outputs) {
+bool SliceCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
+                               const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.size() != kSliceInputsNum && inputs.size() != kSliceDynamicInputNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be " << kSliceInputsNum << " or "
                       << kSliceDynamicInputNum << ", but got " << inputs.size() << " input(s).";

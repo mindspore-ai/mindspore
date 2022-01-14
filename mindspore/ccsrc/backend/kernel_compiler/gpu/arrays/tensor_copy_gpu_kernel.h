@@ -24,14 +24,11 @@
 
 namespace mindspore {
 namespace kernel {
-class TensorCopyGPUKernel : public GpuKernel {
+class TensorCopyGpuKernelMod : public NativeGpuKernelMod {
  public:
-  TensorCopyGPUKernel() : copy_size_(0) {}
-  ~TensorCopyGPUKernel() = default;
+  TensorCopyGpuKernelMod() : copy_size_(0) {}
+  ~TensorCopyGpuKernelMod() = default;
 
-  const std::vector<size_t> &GetInputSizeList() const override;
-  const std::vector<size_t> &GetOutputSizeList() const override;
-  const std::vector<size_t> &GetWorkspaceSizeList() const override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
   bool Init(const CNodePtr &kernel_node) override;
@@ -41,13 +38,9 @@ class TensorCopyGPUKernel : public GpuKernel {
 
  private:
   size_t copy_size_;
-
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 };
 
-MS_REG_GPU_KERNEL(TensorMove, TensorCopyGPUKernel)
+MS_REG_GPU_KERNEL(TensorMove, TensorCopyGpuKernelMod)
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_TENSOR_STRIDE_UPDATE_GPU_KERNEL_H_

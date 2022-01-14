@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,44 +21,44 @@ namespace kernel {
 MS_REG_GPU_KERNEL_TWO(
   ScatterNd,
   KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-  ScatterNdGpuFwdKernel, double, int)
+  ScatterNdFwdGpuKernelMod, double, int)
 MS_REG_GPU_KERNEL_TWO(
   ScatterNd,
   KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-  ScatterNdGpuFwdKernel, double, int64_t)
+  ScatterNdFwdGpuKernelMod, double, int64_t)
 MS_REG_GPU_KERNEL_TWO(
   ScatterNd,
   KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  ScatterNdGpuFwdKernel, float, int)
+  ScatterNdFwdGpuKernelMod, float, int)
 MS_REG_GPU_KERNEL_TWO(
   ScatterNd,
   KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  ScatterNdGpuFwdKernel, float, int64_t)
+  ScatterNdFwdGpuKernelMod, float, int64_t)
 MS_REG_GPU_KERNEL_TWO(
   ScatterNd,
   KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  ScatterNdGpuFwdKernel, half, int)
+  ScatterNdFwdGpuKernelMod, half, int)
 MS_REG_GPU_KERNEL_TWO(
   ScatterNd,
   KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  ScatterNdGpuFwdKernel, half, int64_t)
+  ScatterNdFwdGpuKernelMod, half, int64_t)
 MS_REG_GPU_KERNEL_TWO(
   ScatterNd, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  ScatterNdGpuFwdKernel, int, int)
+  ScatterNdFwdGpuKernelMod, int, int)
 MS_REG_GPU_KERNEL_TWO(
   ScatterNd, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  ScatterNdGpuFwdKernel, int, int64_t)
+  ScatterNdFwdGpuKernelMod, int, int64_t)
 MS_REG_GPU_KERNEL_TWO(
   ScatterNd, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-  ScatterNdGpuFwdKernel, short, int)  // NOLINT
+  ScatterNdFwdGpuKernelMod, short, int)  // NOLINT
 MS_REG_GPU_KERNEL_TWO(
   ScatterNd, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-  ScatterNdGpuFwdKernel, short, int64_t)  // NOLINT
+  ScatterNdFwdGpuKernelMod, short, int64_t)  // NOLINT
 MS_REG_GPU_KERNEL_TWO(
   ScatterNd, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-  ScatterNdGpuFwdKernel, uchar, int)
+  ScatterNdFwdGpuKernelMod, uchar, int)
 MS_REG_GPU_KERNEL_TWO(
   ScatterNd, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-  ScatterNdGpuFwdKernel, uchar, int64_t)
+  ScatterNdFwdGpuKernelMod, uchar, int64_t)
 }  // namespace kernel
 }  // namespace mindspore

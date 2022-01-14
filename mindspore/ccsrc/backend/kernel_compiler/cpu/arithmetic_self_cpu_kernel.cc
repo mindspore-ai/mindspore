@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ constexpr size_t kInputsNum = 1;
 constexpr size_t kOutputsNum = 1;
 
 template <typename T>
-void Square(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
+void Square(ArithmeticSelfCpuKernelMod *content, const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = in[i] * in[i];
@@ -43,7 +43,7 @@ void Square(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) 
 }
 
 template <typename T>
-void Sign(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
+void Sign(ArithmeticSelfCpuKernelMod *content, const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       if (in[i] < 0) {
@@ -59,7 +59,7 @@ void Sign(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
 }
 
 template <typename T>
-void Neg(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
+void Neg(ArithmeticSelfCpuKernelMod *content, const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = -in[i];
@@ -68,7 +68,7 @@ void Neg(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
   ParallelLaunch(task, size, kMaxNegSerialSize);
 }
 
-void LogicalNot(ArithmeticSelfCPUKernel *content, const bool *in, bool *out, size_t size) {
+void LogicalNot(ArithmeticSelfCpuKernelMod *content, const bool *in, bool *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = !in[i];
@@ -78,7 +78,7 @@ void LogicalNot(ArithmeticSelfCPUKernel *content, const bool *in, bool *out, siz
 }
 
 template <typename T>
-void OnesLike(ArithmeticSelfCPUKernel *content, const T *, T *out, size_t size) {
+void OnesLike(ArithmeticSelfCpuKernelMod *content, const T *, T *out, size_t size) {
   auto task = [&out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = static_cast<T>(1);
@@ -88,7 +88,7 @@ void OnesLike(ArithmeticSelfCPUKernel *content, const T *, T *out, size_t size) 
 }
 
 template <typename T>
-void ZerosLike(ArithmeticSelfCPUKernel *content, const T *, T *out, size_t size) {
+void ZerosLike(ArithmeticSelfCpuKernelMod *content, const T *, T *out, size_t size) {
   auto task = [&out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = static_cast<T>(0);
@@ -98,7 +98,7 @@ void ZerosLike(ArithmeticSelfCPUKernel *content, const T *, T *out, size_t size)
 }
 
 template <typename T>
-void Floor(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
+void Floor(ArithmeticSelfCpuKernelMod *content, const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = static_cast<T>(floor(in[i]));
@@ -108,7 +108,7 @@ void Floor(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
 }
 
 template <typename T>
-void Rint(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
+void Rint(ArithmeticSelfCpuKernelMod *content, const T *in, T *out, size_t size) {
   auto task = [&](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = static_cast<T>(rint(in[i]));
@@ -118,7 +118,7 @@ void Rint(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
 }
 
 template <typename T>
-void Round(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
+void Round(ArithmeticSelfCpuKernelMod *content, const T *in, T *out, size_t size) {
   auto task = [&](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = static_cast<T>(nearbyint(in[i]));
@@ -128,7 +128,7 @@ void Round(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
 }
 
 template <typename T>
-void Reciprocal(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
+void Reciprocal(ArithmeticSelfCpuKernelMod *content, const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = static_cast<T>(1.0 / in[i]);
@@ -138,7 +138,7 @@ void Reciprocal(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t si
 }
 
 template <typename T>
-void Gelu(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
+void Gelu(ArithmeticSelfCpuKernelMod *content, const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     auto factor_a = static_cast<T>(0.7978845608);
     auto factor_b = static_cast<T>(0.044715);
@@ -153,7 +153,7 @@ void Gelu(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
 }
 
 template <typename T>
-void Asin(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
+void Asin(ArithmeticSelfCpuKernelMod *content, const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = static_cast<T>(asin(static_cast<double>(in[i])));
@@ -163,7 +163,7 @@ void Asin(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
 }
 
 template <typename T>
-void ACos(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
+void ACos(ArithmeticSelfCpuKernelMod *content, const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = static_cast<T>(acos(static_cast<double>(in[i])));
@@ -173,7 +173,7 @@ void ACos(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
 }
 
 template <typename T>
-void Atan(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
+void Atan(ArithmeticSelfCpuKernelMod *content, const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = static_cast<T>(atan(static_cast<double>(in[i])));
@@ -183,7 +183,7 @@ void Atan(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
 }
 
 template <typename T>
-void Sin(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
+void Sin(ArithmeticSelfCpuKernelMod *content, const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = static_cast<T>(sin(static_cast<double>(in[i])));
@@ -193,7 +193,7 @@ void Sin(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
 }
 
 template <typename T>
-void Cos(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
+void Cos(ArithmeticSelfCpuKernelMod *content, const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = static_cast<T>(cos(static_cast<double>(in[i])));
@@ -203,7 +203,7 @@ void Cos(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
 }
 
 template <typename T>
-void Tan(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
+void Tan(ArithmeticSelfCpuKernelMod *content, const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = static_cast<T>(tan(static_cast<double>(in[i])));
@@ -213,7 +213,7 @@ void Tan(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
 }
 
 template <typename T>
-void Sinh(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
+void Sinh(ArithmeticSelfCpuKernelMod *content, const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = static_cast<T>(sinh(static_cast<double>(in[i])));
@@ -223,7 +223,7 @@ void Sinh(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
 }
 
 template <typename T>
-void Cosh(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
+void Cosh(ArithmeticSelfCpuKernelMod *content, const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = static_cast<T>(cosh(static_cast<double>(in[i])));
@@ -233,7 +233,7 @@ void Cosh(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
 }
 
 template <typename T>
-void Asinh(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
+void Asinh(ArithmeticSelfCpuKernelMod *content, const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = static_cast<T>(asinh(static_cast<double>(in[i])));
@@ -243,7 +243,7 @@ void Asinh(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
 }
 
 template <typename T>
-void ComplexAcosh(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
+void ComplexAcosh(ArithmeticSelfCpuKernelMod *content, const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = static_cast<T>(acosh(in[i]));
@@ -253,7 +253,7 @@ void ComplexAcosh(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t 
 }
 
 template <typename T>
-void Acosh(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
+void Acosh(ArithmeticSelfCpuKernelMod *content, const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = static_cast<T>(acosh(static_cast<double>(in[i])));
@@ -263,7 +263,7 @@ void Acosh(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
 }
 
 template <typename T>
-void Atanh(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
+void Atanh(ArithmeticSelfCpuKernelMod *content, const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = static_cast<T>(atanh(static_cast<double>(in[i])));
@@ -273,7 +273,7 @@ void Atanh(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
 }
 
 template <typename T>
-void Abs(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
+void Abs(ArithmeticSelfCpuKernelMod *content, const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = abs(in[i]);
@@ -283,7 +283,7 @@ void Abs(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
 }
 
 template <typename T>
-void Sqrt(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
+void Sqrt(ArithmeticSelfCpuKernelMod *content, const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = static_cast<T>(sqrt(in[i]));
@@ -298,15 +298,15 @@ void Identity(const T *in, T *out, size_t size) {
 }
 }  // namespace
 
-void ArithmeticSelfCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void ArithmeticSelfCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
 }
 
-bool ArithmeticSelfCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> &,
-                                     const std::vector<kernel::AddressPtr> &outputs) {
+bool ArithmeticSelfCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                        const std::vector<kernel::AddressPtr> &,
+                                        const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat32 || dtype_ == kNumberTypeFloat16) {
@@ -332,8 +332,8 @@ bool ArithmeticSelfCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inpu
   return true;
 }
 
-void ArithmeticSelfCPUKernel::LaunchLogicalNot(const std::vector<AddressPtr> &inputs,
-                                               const std::vector<AddressPtr> &outputs) {
+void ArithmeticSelfCpuKernelMod::LaunchLogicalNot(const std::vector<AddressPtr> &inputs,
+                                                  const std::vector<AddressPtr> &outputs) {
   auto *input = reinterpret_cast<bool *>(inputs[0]->addr);
   auto *output = reinterpret_cast<bool *>(outputs[0]->addr);
   size_t lens = outputs[0]->size / sizeof(bool);
@@ -341,12 +341,13 @@ void ArithmeticSelfCPUKernel::LaunchLogicalNot(const std::vector<AddressPtr> &in
 }
 
 template <typename T>
-void ArithmeticSelfCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                           const std::vector<AddressPtr> &outputs) {
+void ArithmeticSelfCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                              const std::vector<AddressPtr> &outputs) {
   const auto *input = reinterpret_cast<T *>(inputs[0]->addr);
   auto *output = reinterpret_cast<T *>(outputs[0]->addr);
   const size_t lens = outputs[0]->size / sizeof(T);
-  static const std::unordered_map<std::string, std::function<void(ArithmeticSelfCPUKernel *, const T *, T *, size_t)>>
+  static const std::unordered_map<std::string,
+                                  std::function<void(ArithmeticSelfCpuKernelMod *, const T *, T *, size_t)>>
     arithmeticSelfFuncMap{{prim::kPrimSquare->name(), Square<T>},
                           {prim::kPrimSign->name(), Sign<T>},
                           {prim::kPrimNeg->name(), Neg<T>},
@@ -380,24 +381,25 @@ void ArithmeticSelfCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs
 }
 
 template <typename T>
-void ArithmeticSelfCPUKernel::LaunchKernelComplex(const std::vector<AddressPtr> &inputs,
-                                                  const std::vector<AddressPtr> &outputs) {
+void ArithmeticSelfCpuKernelMod::LaunchKernelComplex(const std::vector<AddressPtr> &inputs,
+                                                     const std::vector<AddressPtr> &outputs) {
   const auto *input = reinterpret_cast<T *>(inputs[0]->addr);
   auto *output = reinterpret_cast<T *>(outputs[0]->addr);
   const size_t lens = outputs[0]->size / sizeof(T);
-  static const std::unordered_map<std::string, std::function<void(ArithmeticSelfCPUKernel *, const T *, T *, size_t)>>
+  static const std::unordered_map<std::string,
+                                  std::function<void(ArithmeticSelfCpuKernelMod *, const T *, T *, size_t)>>
     arithmeticSelfFuncMap{{prim::kPrimSquare->name(), Square<T>}, {prim::kPrimAcosh->name(), ComplexAcosh<T>}};
   const auto func_pair = arithmeticSelfFuncMap.find(kernel_name_);
   if (arithmeticSelfFuncMap.find(kernel_name_) == arithmeticSelfFuncMap.end()) {
-    MS_LOG(EXCEPTION) << "ArithmeticSelfCPUKernel does not support " << kernel_name_;
+    MS_LOG(EXCEPTION) << "ArithmeticSelfCpuKernelMod does not support " << kernel_name_;
   }
   func_pair->second(this, input, output, lens);
 }
 
 template <typename T>
-bool IdentityCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                  const std::vector<kernel::AddressPtr> &,
-                                  const std::vector<kernel::AddressPtr> &outputs) {
+bool IdentityCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                     const std::vector<kernel::AddressPtr> &,
+                                     const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
   T *input = reinterpret_cast<T *>(inputs[0]->addr);

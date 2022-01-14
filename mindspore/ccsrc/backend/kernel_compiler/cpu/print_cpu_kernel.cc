@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ using mindspore::tensor::Tensor;
 namespace mindspore {
 namespace kernel {
 template <typename T>
-void PrintCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
+void PrintCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   size_t input_tensor_num = AnfAlgo::GetInputTensorNum(kernel_node);
@@ -40,9 +40,9 @@ void PrintCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-bool PrintCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                               const std::vector<kernel::AddressPtr> & /* workspace */,
-                               const std::vector<kernel::AddressPtr> & /* outputs */) {
+bool PrintCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                  const std::vector<kernel::AddressPtr> & /* workspace */,
+                                  const std::vector<kernel::AddressPtr> & /* outputs */) {
   auto data_type = CheckType();
   if (data_type == kTypeUnknown) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
@@ -64,7 +64,7 @@ bool PrintCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
 }
 
 template <typename T>
-TypeId PrintCPUKernel<T>::CheckType() {
+TypeId PrintCpuKernelMod<T>::CheckType() {
   if constexpr (std::is_same_v<T, bool>) {
     return kNumberTypeBool;
   } else if constexpr (std::is_same_v<T, int8_t>) {

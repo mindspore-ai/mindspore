@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ void CreateGPUKernel(const std::vector<CNodePtr> &kernels) {
       }
       akg_nodes.push_back(kernel);
     } else if (!AnfAlgo::IsControlOpExecInBackend(kernel)) {
-      auto gpu_kernel_ptr = kernel::GpuKernelFactory::GetInstance().Create(kernel_name, kernel);
+      auto gpu_kernel_ptr = kernel::NativeGpuKernelModFactory::GetInstance().Create(kernel_name, kernel);
       if (!gpu_kernel_ptr) {
         MS_LOG(EXCEPTION) << "Build gpu kernel op[" << kernel->fullname_with_scope() << "] failed";
       }

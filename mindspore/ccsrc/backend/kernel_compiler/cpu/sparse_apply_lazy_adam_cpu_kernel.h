@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,10 @@
 
 namespace mindspore {
 namespace kernel {
-class SparseApplyLazyAdamCPUKernel : public SparseOptimizerCPUKernel {
+class SparseApplyLazyAdamCpuKernelMod : public SparseOptimizerCpuKernelMod {
  public:
-  SparseApplyLazyAdamCPUKernel() = default;
-  ~SparseApplyLazyAdamCPUKernel() override = default;
+  SparseApplyLazyAdamCpuKernelMod() = default;
+  ~SparseApplyLazyAdamCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -60,7 +60,7 @@ MS_REG_CPU_KERNEL(FusedSparseLazyAdam,
                     .AddOutputAttr(kNumberTypeFloat32)
                     .AddOutputAttr(kNumberTypeFloat32)
                     .AddOutputAttr(kNumberTypeFloat32),
-                  SparseApplyLazyAdamCPUKernel);
+                  SparseApplyLazyAdamCpuKernelMod);
 
 MS_REG_CPU_KERNEL(FusedSparseLazyAdam,
                   KernelAttr()
@@ -78,7 +78,7 @@ MS_REG_CPU_KERNEL(FusedSparseLazyAdam,
                     .AddOutputAttr(kNumberTypeFloat32)
                     .AddOutputAttr(kNumberTypeFloat32)
                     .AddOutputAttr(kNumberTypeFloat32),
-                  SparseApplyLazyAdamCPUKernel);
+                  SparseApplyLazyAdamCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

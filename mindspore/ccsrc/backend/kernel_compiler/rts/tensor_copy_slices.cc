@@ -122,13 +122,13 @@ void TensorCopySlices::GetInputOutputTotalCount(const AnfNodePtr &anf_node) {
   total_size *= abstract::TypeIdSize(input_type_id_);
   MS_LOG(INFO) << "TensorCopySlices size[" << total_size << "]";
   // Shape and DType of input0 and output0 are same.
-  input_size_list_.emplace_back(total_size);
-  output_size_list_.emplace_back(total_size);
+  mutable_input_size_list_.emplace_back(total_size);
+  mutable_output_size_list_.emplace_back(total_size);
 
   auto update_shape = AnfAlgo::GetInputDeviceShape(anf_node, 1);
   size_t update_size = std::accumulate(update_shape.begin(), update_shape.end(), (size_t)1, std::multiplies<>());
   update_size *= abstract::TypeIdSize(update_type_id_);
-  input_size_list_.emplace_back(update_size);
+  mutable_input_size_list_.emplace_back(update_size);
 }
 
 std::vector<TaskInfoPtr> TensorCopySlices::GenTask(const std::vector<AddressPtr> &inputs,

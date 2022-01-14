@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,9 +31,9 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class CholeskyTrsmGpuKernel : public GpuKernel {
+class CholeskyTrsmGpuKernelMod : public NativeGpuKernelMod {
  public:
-  CholeskyTrsmGpuKernel()
+  CholeskyTrsmGpuKernelMod()
       : batch_(0),
         m_(0),
         lda_(0),
@@ -46,10 +46,7 @@ class CholeskyTrsmGpuKernel : public GpuKernel {
         width_(0),
         handle_(nullptr),
         blas_handle_(nullptr) {}
-  ~CholeskyTrsmGpuKernel() = default;
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+  ~CholeskyTrsmGpuKernelMod() = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -296,9 +293,6 @@ class CholeskyTrsmGpuKernel : public GpuKernel {
   std::vector<T *> h_array_;
   std::vector<T *> h_identity_;
   std::vector<T> h_identity_data_;
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore

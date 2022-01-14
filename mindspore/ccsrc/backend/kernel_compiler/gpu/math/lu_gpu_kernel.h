@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,13 +32,10 @@ namespace mindspore {
 namespace kernel {
 
 template <typename T>
-class LUGpuKernel : public GpuKernel {
+class LUGpuKernelMod : public NativeGpuKernelMod {
  public:
-  LUGpuKernel() : is_null_input_(false) {}
-  ~LUGpuKernel() = default;
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+  LUGpuKernelMod() : is_null_input_(false) {}
+  ~LUGpuKernelMod() = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -70,7 +67,7 @@ class LUGpuKernel : public GpuKernel {
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
                                cudaMemcpyAsync(batch_output_addr, batch_input_addr, batch_size_ * m_ * n_ * unit_size_,
                                                cudaMemcpyDeviceToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                               "cudaMemcpyAsync failed in LUGpuKernel::Launch.");
+                               "cudaMemcpyAsync failed in LUGpuKernelMod::Launch.");
 
     // 4. query working space of getrf
     if constexpr (std::is_same_v<T, float>) {
@@ -126,7 +123,7 @@ class LUGpuKernel : public GpuKernel {
       CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
                                  cudaMemcpyAsync(host_pivots.data(), piv_output_addr, sizeof(int) * k_,
                                                  cudaMemcpyDeviceToHost, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                                 "cudaMemcpyAsync failed in LUGpuKernel::Launch copy pivots to host.");
+                                 "cudaMemcpyAsync failed in LUGpuKernelMod::Launch copy pivots to host.");
 
       // cal pivots && permutation major by row.
       for (size_t i = 0; i < k_; ++i) {
@@ -145,11 +142,11 @@ class LUGpuKernel : public GpuKernel {
       CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
                                  cudaMemcpyAsync(permutation_addr, host_permutation.data(), sizeof(int) * k_ * k_,
                                                  cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                                 "cudaMemcpyAsync failed in LUGpuKernel::Launch copy permutation matrix.");
+                                 "cudaMemcpyAsync failed in LUGpuKernelMod::Launch copy permutation matrix.");
       CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
                                  cudaMemcpyAsync(piv_output_addr, host_pivots.data(), sizeof(int) * k_,
                                                  cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                                 "cudaMemcpyAsync failed in LUGpuKernel::Launch copy pivots array.");
+                                 "cudaMemcpyAsync failed in LUGpuKernelMod::Launch copy pivots array.");
     }
     device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(d_work_);
     return true;
@@ -238,9 +235,6 @@ class LUGpuKernel : public GpuKernel {
   bool pivot_on_{true};
   T *d_work_{nullptr};
   cusolverDnHandle_t handle_{nullptr};
-  std::vector<size_t> input_size_list_{};
-  std::vector<size_t> output_size_list_{};
-  std::vector<size_t> workspace_size_list_{};
   bool is_null_input_;
 };
 }  // namespace kernel

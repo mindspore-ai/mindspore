@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,15 +24,9 @@ namespace kernel {
 using mindspore::device::TensorArrayMgr;
 using mindspore::device::gpu::GPUTensorArray;
 using mindspore::device::gpu::GPUTensorArrayPtr;
-TensorArrayCreateKernel::TensorArrayCreateKernel() : is_dynamic_(true), size_(0), type_(nullptr) {}
+TensorArrayCreateKernelMod::TensorArrayCreateKernelMod() : is_dynamic_(true), size_(0), type_(nullptr) {}
 
-const std::vector<size_t> &TensorArrayCreateKernel::GetInputSizeList() const { return input_size_list_; }
-
-const std::vector<size_t> &TensorArrayCreateKernel::GetOutputSizeList() const { return output_size_list_; }
-
-const std::vector<size_t> &TensorArrayCreateKernel::GetWorkspaceSizeList() const { return workspace_size_list_; }
-
-bool TensorArrayCreateKernel::Init(const CNodePtr &kernel_node) {
+bool TensorArrayCreateKernelMod::Init(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   auto shape = GetAttr<std::vector<int64_t>>(kernel_node, "element_shape");
   for (auto i : shape) {
@@ -46,10 +40,10 @@ bool TensorArrayCreateKernel::Init(const CNodePtr &kernel_node) {
   return true;
 }
 
-void TensorArrayCreateKernel::InitSizeLists() { output_size_list_.push_back(sizeof(int64_t)); }
+void TensorArrayCreateKernelMod::InitSizeLists() { output_size_list_.push_back(sizeof(int64_t)); }
 
-bool TensorArrayCreateKernel::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                                     const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool TensorArrayCreateKernelMod::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
+                                        const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   // Create a tensorarray, and generate an unique handle.
   int64_t tensor_array_handle = TensorArrayMgr::GetInstance().GetHandleCount();
   auto name = "GPUTensorArray_" + name_ + "_" + std::to_string(tensor_array_handle);

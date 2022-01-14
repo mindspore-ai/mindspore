@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ constexpr size_t kOneHotInputsNum = 3;
 constexpr size_t kOneHotOutputsNum = 1;
 }  // namespace
 
-void OneHotCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void OneHotCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
@@ -52,8 +52,8 @@ void OneHotCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
 }
 
-bool OneHotCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                             const std::vector<kernel::AddressPtr> &outputs) {
+bool OneHotCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
+                                const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kOneHotInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOneHotOutputsNum, kernel_name_);
   const auto *indices = reinterpret_cast<int *>(inputs[0]->addr);

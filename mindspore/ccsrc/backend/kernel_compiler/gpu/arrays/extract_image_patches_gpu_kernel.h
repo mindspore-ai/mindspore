@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,15 +28,12 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr int64_t kMidDividend = 2;
 template <typename T>
-class ExtractImagePatchesKernel : public GpuKernel {
+class ExtractImagePatchesKernelMod : public NativeGpuKernelMod {
  public:
-  ExtractImagePatchesKernel() { ResetResource(); }
-  ~ExtractImagePatchesKernel() override = default;
-
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+  ExtractImagePatchesKernelMod() { ResetResource(); }
+  ~ExtractImagePatchesKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -155,13 +152,15 @@ class ExtractImagePatchesKernel : public GpuKernel {
     if (padding == "VALID") {
       output_rows_ = std::ceil((input_row_size_ - patch_rows_eff + 1.f) / static_cast<float>(stride_row_));
       output_cols_ = std::ceil((input_col_size_ - patch_cols_eff + 1.f) / static_cast<float>(stride_col_));
-      row_padding_top_ = std::max(0l, ((output_rows_ - 1) * stride_row_ + patch_rows_eff - input_row_size_) / 2);
-      col_padding_left_ = std::max(0l, ((output_cols_ - 1) * stride_col_ + patch_cols_eff - input_col_size_) / 2);
+      row_padding_top_ =
+        std::max(0l, ((output_rows_ - 1) * stride_row_ + patch_rows_eff - input_row_size_) / kMidDividend);
+      col_padding_left_ =
+        std::max(0l, ((output_cols_ - 1) * stride_col_ + patch_cols_eff - input_col_size_) / kMidDividend);
     } else if (padding == "SAME") {
       output_rows_ = std::ceil(input_row_size_ / static_cast<float>(stride_row_));
       output_cols_ = std::ceil(input_col_size_ / static_cast<float>(stride_col_));
-      row_padding_top_ = ((output_rows_ - 1) * stride_row_ + patch_rows_eff - input_row_size_) / 2;
-      col_padding_left_ = ((output_cols_ - 1) * stride_col_ + patch_cols_eff - input_col_size_) / 2;
+      row_padding_top_ = ((output_rows_ - 1) * stride_row_ + patch_rows_eff - input_row_size_) / kMidDividend;
+      col_padding_left_ = ((output_cols_ - 1) * stride_col_ + patch_cols_eff - input_col_size_) / kMidDividend;
     } else {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the 'padding' should be 'VALID' or 'SAME', but got "
                         << padding;
@@ -250,9 +249,6 @@ class ExtractImagePatchesKernel : public GpuKernel {
   int64_t output_depth_;
   std::vector<size_t> input_shape_;
   std::vector<size_t> t_output_shape_;
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore

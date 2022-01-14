@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ int NormalizePos(int pos, int dim_len, PosType pos_type) {
   return std::max(pos + dim_len, min_pos);
 }
 
-void StridedSliceCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void StridedSliceCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   cnode_ptr_ = kernel_node;
@@ -70,7 +70,7 @@ void StridedSliceCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
 }
 
-bool StridedSliceCPUKernel::MatchParallelPattern() {
+bool StridedSliceCpuKernelMod::MatchParallelPattern() {
   // This function is seeking if that the number of only one dimension
   // is different between input and output. If so, we can do some trick.
   // Example 1:
@@ -94,7 +94,7 @@ bool StridedSliceCPUKernel::MatchParallelPattern() {
   return false;
 }
 
-void StridedSliceCPUKernel::InitParallelParam() {
+void StridedSliceCpuKernelMod::InitParallelParam() {
   outer_ = SizeToInt(
     std::accumulate(input_shape_.begin(), input_shape_.begin() + split_axis_, size_t(1), std::multiplies<size_t>()));
   inner_ = SizeToInt(
@@ -114,8 +114,8 @@ void StridedSliceCPUKernel::InitParallelParam() {
   slice_param_.op_parameter_.thread_num_ = thread_num;
 }
 
-void StridedSliceCPUKernel::InitSliceParam(const CNodePtr &kernel_node, std::vector<int64_t> *begin,
-                                           std::vector<int64_t> *end, std::vector<int64_t> *stride) {
+void StridedSliceCpuKernelMod::InitSliceParam(const CNodePtr &kernel_node, std::vector<int64_t> *begin,
+                                              std::vector<int64_t> *end, std::vector<int64_t> *stride) {
   static const std::unordered_map<TypeId, std::pair<LiteDataType, int>> type_convert_map = {
     {kNumberTypeBool, {kDataTypeBool, sizeof(bool)}},
     {kNumberTypeInt32, {kDataTypeInt, sizeof(int)}},
@@ -147,7 +147,7 @@ void StridedSliceCPUKernel::InitSliceParam(const CNodePtr &kernel_node, std::vec
   slice_param_.num_axes_ = DIMENSION_8D;
 }
 
-int StridedSliceCPUKernel::RunTaskOnOuter(const uint8_t *input_addr, uint8_t *output_addr, int start_pos) {
+int StridedSliceCpuKernelMod::RunTaskOnOuter(const uint8_t *input_addr, uint8_t *output_addr, int start_pos) {
   int begin_index = slice_param_.begins_[split_axis_];
   int inner_size = inner_ * data_size_;
   const uint8_t *cur_in_ptr = input_addr + (start_pos * input_shape_[split_axis_] + begin_index) * inner_size;
@@ -162,7 +162,7 @@ int StridedSliceCPUKernel::RunTaskOnOuter(const uint8_t *input_addr, uint8_t *ou
   return common::SUCCESS;
 }
 
-int StridedSliceCPUKernel::RunTaskOnSplitAxis(const uint8_t *input_addr, uint8_t *output_addr, int start_pos) {
+int StridedSliceCpuKernelMod::RunTaskOnSplitAxis(const uint8_t *input_addr, uint8_t *output_addr, int start_pos) {
   int begin_index = slice_param_.begins_[split_axis_];
   int inner_size = inner_ * data_size_;
   const uint8_t *cur_in_ptr = input_addr + (start_pos * slice_param_.strides_[split_axis_] + begin_index) * inner_size;
@@ -176,14 +176,14 @@ int StridedSliceCPUKernel::RunTaskOnSplitAxis(const uint8_t *input_addr, uint8_t
   return common::SUCCESS;
 }
 
-void StridedSliceCPUKernel::ParallelRun(const uint8_t *input_addr, uint8_t *output_addr, int thread_num) {
+void StridedSliceCpuKernelMod::ParallelRun(const uint8_t *input_addr, uint8_t *output_addr, int thread_num) {
   int thread_index = 0;
   std::vector<common::Task> tasks;
-  std::function<int(StridedSliceCPUKernel *, const uint8_t *, uint8_t *, int)> execute_func;
+  std::function<int(StridedSliceCpuKernelMod *, const uint8_t *, uint8_t *, int)> execute_func;
   if (parallel_strategy_ == kOnOuter) {
-    execute_func = &StridedSliceCPUKernel::RunTaskOnOuter;
+    execute_func = &StridedSliceCpuKernelMod::RunTaskOnOuter;
   } else if (parallel_strategy_ == kOnSplitAxis) {
-    execute_func = &StridedSliceCPUKernel::RunTaskOnSplitAxis;
+    execute_func = &StridedSliceCpuKernelMod::RunTaskOnSplitAxis;
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', not supports parallel execute strategy.";
   }
@@ -196,9 +196,9 @@ void StridedSliceCPUKernel::ParallelRun(const uint8_t *input_addr, uint8_t *outp
   ParallelLaunch(tasks);
 }
 
-bool StridedSliceCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                   const std::vector<kernel::AddressPtr> & /* workspace */,
-                                   const std::vector<kernel::AddressPtr> &outputs) {
+bool StridedSliceCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                      const std::vector<kernel::AddressPtr> & /* workspace */,
+                                      const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.size() != kStridedSliceInputsNum && inputs.size() != kStridedSliceDynamicInputsNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be " << kStridedSliceInputsNum
                       << " or " << kStridedSliceDynamicInputsNum << ", but got " << inputs.size();

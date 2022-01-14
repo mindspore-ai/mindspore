@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,14 +25,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class CorrectionMulGpuKernel : public GpuKernel {
+class CorrectionMulGpuKernelMod : public NativeGpuKernelMod {
  public:
-  CorrectionMulGpuKernel() : is_null_input_(false), batch_size_(0), channel_(0), height_(0), width_(0) {}
-  ~CorrectionMulGpuKernel() override { DestroyResource(); }
-
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+  CorrectionMulGpuKernelMod() : is_null_input_(false), batch_size_(0), channel_(0), height_(0), width_(0) {}
+  ~CorrectionMulGpuKernelMod() override { DestroyResource(); }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -94,9 +90,6 @@ class CorrectionMulGpuKernel : public GpuKernel {
   size_t channel_;
   size_t height_;
   size_t width_;
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ constexpr size_t kIndices2rdDimNum = 2;
 }  // namespace
 
 template <typename I, typename T>
-void SparseTensorDenseMatmulCPUKernel<I, T>::InitKernel(const CNodePtr &kernel_node) {
+void SparseTensorDenseMatmulCpuKernelMod<I, T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   adj_st_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, ADJ_ST);
@@ -62,9 +62,9 @@ void SparseTensorDenseMatmulCPUKernel<I, T>::InitKernel(const CNodePtr &kernel_n
 }
 
 template <typename I, typename T>
-bool SparseTensorDenseMatmulCPUKernel<I, T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                                    const std::vector<kernel::AddressPtr> & /* workspace */,
-                                                    const std::vector<kernel::AddressPtr> &outputs) {
+bool SparseTensorDenseMatmulCpuKernelMod<I, T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                                       const std::vector<kernel::AddressPtr> & /* workspace */,
+                                                       const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseTensorDenseMatmulInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseTensorDenseMatmulOutputsNum, kernel_name_);
   if (outputs[0]->size == 0) {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ TEST_F(CommonUtilTest, BucketReduceSparseGradient1) {
   param.output_grad_ = &unique_grad;
   param.max_index_ = 6;
   param.value_stride_ = 2;
-  SparseOptimizerCPUKernel::BucketReduceSparseGradient(param);
+  SparseOptimizerCpuKernelMod::BucketReduceSparseGradient(param);
 
   EXPECT_EQ(unique_grad.indices_size_, 3);
   std::vector<int> expect_indices({0, 1, 3});
@@ -113,7 +113,7 @@ TEST_F(CommonUtilTest, BucketReduceSparseGradient2) {
   param.output_grad_ = &unique_grad;
   param.max_index_ = 6;
   param.value_stride_ = 2;
-  SparseOptimizerCPUKernel::BucketReduceSparseGradient(param);
+  SparseOptimizerCpuKernelMod::BucketReduceSparseGradient(param);
 
   EXPECT_EQ(unique_grad.indices_size_, 2);
 

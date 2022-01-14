@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,22 +24,16 @@ namespace kernel {
 using mindspore::device::TensorArrayMgr;
 using mindspore::device::cpu::CPUTensorArray;
 using mindspore::device::cpu::CPUTensorArrayPtr;
-TensorArrayCPUCloseKernel::TensorArrayCPUCloseKernel() {}
+TensorArrayCloseCpuKernelMod::TensorArrayCloseCpuKernelMod() {}
 
-const std::vector<size_t> &TensorArrayCPUCloseKernel::GetInputSizeList() const { return input_size_list_; }
-
-const std::vector<size_t> &TensorArrayCPUCloseKernel::GetOutputSizeList() const { return output_size_list_; }
-
-const std::vector<size_t> &TensorArrayCPUCloseKernel::GetWorkspaceSizeList() const { return workspace_size_list_; }
-
-void TensorArrayCPUCloseKernel::InitKernel(const CNodePtr &kernel_node) {
+void TensorArrayCloseCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   input_size_list_.push_back(sizeof(int64_t));
   output_size_list_.push_back(sizeof(int64_t));
 }
 
-bool TensorArrayCPUCloseKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                       const std::vector<AddressPtr> &) {
+bool TensorArrayCloseCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                                          const std::vector<AddressPtr> &) {
   auto handle_addr = GetDeviceAddress<int64_t>(inputs, 0);
   MS_EXCEPTION_IF_NULL(handle_addr);
   CPUTensorArrayPtr tensors_ =

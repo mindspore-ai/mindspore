@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,48 +24,48 @@ MS_REG_GPU_KERNEL_ONE(IndexAdd,
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeFloat64)
                         .AddOutputAttr(kNumberTypeFloat64),
-                      IndexAddGpuKernel, double)
+                      IndexAddGpuKernelMod, double)
 MS_REG_GPU_KERNEL_ONE(IndexAdd,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
-                      IndexAddGpuKernel, float)
+                      IndexAddGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(IndexAdd,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddOutputAttr(kNumberTypeFloat16),
-                      IndexAddGpuKernel, half)
+                      IndexAddGpuKernelMod, half)
 MS_REG_GPU_KERNEL_ONE(IndexAdd,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddOutputAttr(kNumberTypeInt32),
-                      IndexAddGpuKernel, int)
+                      IndexAddGpuKernelMod, int)
 MS_REG_GPU_KERNEL_ONE(IndexAdd,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeInt16)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt16)
                         .AddOutputAttr(kNumberTypeInt16),
-                      IndexAddGpuKernel, int16_t)
+                      IndexAddGpuKernelMod, int16_t)
 MS_REG_GPU_KERNEL_ONE(IndexAdd,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeInt8)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt8)
                         .AddOutputAttr(kNumberTypeInt8),
-                      IndexAddGpuKernel, int8_t)
+                      IndexAddGpuKernelMod, int8_t)
 MS_REG_GPU_KERNEL_ONE(IndexAdd,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeUInt8)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeUInt8)
                         .AddOutputAttr(kNumberTypeUInt8),
-                      IndexAddGpuKernel, uint8_t)
+                      IndexAddGpuKernelMod, uint8_t)
 }  // namespace kernel
 }  // namespace mindspore

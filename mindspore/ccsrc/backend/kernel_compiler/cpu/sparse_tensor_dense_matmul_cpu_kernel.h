@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename I, typename T>
-class SparseTensorDenseMatmulCPUKernel : public CPUKernel {
+class SparseTensorDenseMatmulCpuKernelMod : public NativeCpuKernelMod {
  public:
-  SparseTensorDenseMatmulCPUKernel() = default;
-  ~SparseTensorDenseMatmulCPUKernel() override = default;
+  SparseTensorDenseMatmulCpuKernelMod() = default;
+  ~SparseTensorDenseMatmulCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -51,7 +51,7 @@ MS_REG_CPU_KERNEL_T_S(SparseTensorDenseMatmul,
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddOutputAttr(kNumberTypeInt32),
-                      SparseTensorDenseMatmulCPUKernel, int32_t, int32_t);
+                      SparseTensorDenseMatmulCpuKernelMod, int32_t, int32_t);
 
 MS_REG_CPU_KERNEL_T_S(SparseTensorDenseMatmul,
                       KernelAttr()
@@ -60,7 +60,7 @@ MS_REG_CPU_KERNEL_T_S(SparseTensorDenseMatmul,
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt64)
                         .AddOutputAttr(kNumberTypeInt64),
-                      SparseTensorDenseMatmulCPUKernel, int32_t, int64_t);
+                      SparseTensorDenseMatmulCpuKernelMod, int32_t, int64_t);
 
 MS_REG_CPU_KERNEL_T_S(SparseTensorDenseMatmul,
                       KernelAttr()
@@ -69,7 +69,7 @@ MS_REG_CPU_KERNEL_T_S(SparseTensorDenseMatmul,
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
-                      SparseTensorDenseMatmulCPUKernel, int32_t, float);
+                      SparseTensorDenseMatmulCpuKernelMod, int32_t, float);
 
 MS_REG_CPU_KERNEL_T_S(SparseTensorDenseMatmul,
                       KernelAttr()
@@ -78,7 +78,7 @@ MS_REG_CPU_KERNEL_T_S(SparseTensorDenseMatmul,
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeFloat64)
                         .AddOutputAttr(kNumberTypeFloat64),
-                      SparseTensorDenseMatmulCPUKernel, int32_t, double);
+                      SparseTensorDenseMatmulCpuKernelMod, int32_t, double);
 
 }  // namespace kernel
 }  // namespace mindspore

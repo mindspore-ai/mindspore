@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_UNARYOP_GPU_KERNEL_H_
 
 #include <cuda_runtime_api.h>
+#include <functional>
 #include <vector>
 #include <string>
 #include <map>
@@ -73,124 +74,45 @@ static const std::map<std::string, UnaryOptype> kUnaryOpTypeMap = {
   {"Sign", UNARY_OP_SIGN},     {"Conj", UNARY_OP_CONJ}};
 
 template <typename T>
-class UnaryOpGpuKernel : public GpuKernel {
+class UnaryOpGpuKernelMod : public NativeGpuKernelMod {
  public:
-  UnaryOpGpuKernel() { ResetResource(); }
-  ~UnaryOpGpuKernel() override = default;
-
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+  UnaryOpGpuKernelMod() { ResetResource(); }
+  ~UnaryOpGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
-    T *input_addr = GetDeviceAddress<T>(inputs, 0);
-    T *output_addr = GetDeviceAddress<T>(outputs, 0);
 
-    switch (unary_op_type_) {
-      case UNARY_OP_EXP: {
-        Exponential(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
-        break;
-      }
-      case UNARY_OP_EXPM1: {
-        Expm1(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
-        break;
-      }
-      case UNARY_OP_LOG: {
-        Logarithm(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
-        break;
-      }
-      case UNARY_OP_LOG1P: {
-        Log1p(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
-        break;
-      }
-      case UNARY_OP_ERF: {
-        Erf(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
-        break;
-      }
-      case UNARY_OP_ERFC: {
-        Erfc(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
-        break;
-      }
-      case UNARY_OP_NEG: {
-        Negative(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
-        break;
-      }
-      case UNARY_OP_RECIPROCAL: {
-        Reciprocal(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
-        break;
-      }
-      case UNARY_OP_SQUARE: {
-        Square(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
-        break;
-      }
-      case UNARY_OP_SQRT: {
-        Sqrt(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
-        break;
-      }
-      case UNARY_OP_RSQRT: {
-        Rsqrt(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
-        break;
-      }
-      case UNARY_OP_SIN: {
-        Sin(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
-        break;
-      }
-      case UNARY_OP_COS: {
-        Cos(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
-        break;
-      }
-      case UNARY_OP_ASIN: {
-        Asin(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
-        break;
-      }
-      case UNARY_OP_ACOS: {
-        ACos(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
-        break;
-      }
-      case UNARY_OP_ATAN: {
-        Atan(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
-        break;
-      }
-      case UNARY_OP_ASINH: {
-        Asinh(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
-        break;
-      }
-      case UNARY_OP_ACOSH: {
-        Acosh(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
-        break;
-      }
-      case UNARY_OP_ABS: {
-        Abs(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
-        break;
-      }
-      case UNARY_OP_FLOOR: {
-        Floor(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
-        break;
-      }
-      case UNARY_OP_RINT: {
-        Rint(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
-        break;
-      }
-      case UNARY_OP_ROUND: {
-        Round(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
-        break;
-      }
-      case UNARY_OP_SIGN: {
-        Sign(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
-        break;
-      }
-      default: {
-        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", only support these types: Exp, Expm1, Log, Log1p, Erf, Erfc,"
-                          << " Neg, Reciprocal, Square, Sqrt, Rsqrt, Sin, Cos, Asin, ACos, Atan, Asinh, Acosh, Abs, "
-                          << "Floor, Rint, Round, Real, Imag, Sign, Conj currently, but got " << unary_op_type_;
-      }
+    static std::map<UnaryOptype, std::function<void(const T *, T *, const size_t, cudaStream_t)>> func_map = {
+      {UNARY_OP_EXP, Exponential<T>}, {UNARY_OP_EXPM1, Expm1<T>},
+      {UNARY_OP_LOG, Logarithm<T>},   {UNARY_OP_LOG1P, Log1p<T>},
+      {UNARY_OP_ERF, Erf<T>},         {UNARY_OP_ERFC, Erfc<T>},
+      {UNARY_OP_NEG, Negative<T>},    {UNARY_OP_RECIPROCAL, Reciprocal<T>},
+      {UNARY_OP_SQUARE, Square<T>},   {UNARY_OP_SQRT, Sqrt<T>},
+      {UNARY_OP_RSQRT, Rsqrt<T>},     {UNARY_OP_SIN, Sin<T>},
+      {UNARY_OP_COS, Cos<T>},         {UNARY_OP_ASIN, Asin<T>},
+      {UNARY_OP_ACOS, ACos<T>},       {UNARY_OP_ATAN, Atan<T>},
+      {UNARY_OP_ASINH, Asinh<T>},     {UNARY_OP_ACOSH, Acosh<T>},
+      {UNARY_OP_ABS, Abs<T>},         {UNARY_OP_FLOOR, Floor<T>},
+      {UNARY_OP_RINT, Rint<T>},       {UNARY_OP_ROUND, Round<T>},
+      {UNARY_OP_SIGN, Sign<T>}};
+
+    auto iter = func_map.find(unary_op_type_);
+    if (iter != func_map.end()) {
+      T *input_addr = GetDeviceAddress<T>(inputs, 0);
+      T *output_addr = GetDeviceAddress<T>(outputs, 0);
+      iter->second(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
+    } else {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", only support these types: Exp, Expm1, Log, Log1p, Erf, Erfc,"
+                        << " Neg, Reciprocal, Square, Sqrt, Rsqrt, Sin, Cos, Asin, ACos, Atan, Asinh, Acosh, Abs, "
+                        << "Floor, Rint, Round, Real, Imag, Sign, Conj currently, but got " << unary_op_type_;
     }
+
     return true;
   }
+
   bool Init(const CNodePtr &kernel_node) override {
     std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     auto iter = kUnaryOpTypeMap.find(kernel_name);
@@ -244,9 +166,6 @@ class UnaryOpGpuKernel : public GpuKernel {
   size_t output_size_;
   size_t workspace_size_;
   bool is_null_input_;
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore

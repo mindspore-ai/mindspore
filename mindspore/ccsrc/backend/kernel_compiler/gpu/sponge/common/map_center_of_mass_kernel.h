@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,10 +29,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename T1>
-class MapCenterOfMassGpuKernel : public GpuKernel {
+class MapCenterOfMassGpuKernelMod : public NativeGpuKernelMod {
  public:
-  MapCenterOfMassGpuKernel() : ele_start(1) {}
-  ~MapCenterOfMassGpuKernel() override = default;
+  MapCenterOfMassGpuKernelMod() : ele_start(1) {}
+  ~MapCenterOfMassGpuKernelMod() override = default;
 
   bool Init(const CNodePtr &kernel_node) override {
     kernel_node_ = kernel_node;
@@ -55,10 +55,6 @@ class MapCenterOfMassGpuKernel : public GpuKernel {
     InitSizeLists();
     return true;
   }
-
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -95,9 +91,7 @@ class MapCenterOfMassGpuKernel : public GpuKernel {
   size_t ele_box_length = 1;
   size_t ele_no_wrap_crd = 1;
   size_t ele_crd = 1;
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
+
   int residue_numbers;
 };
 }  // namespace kernel

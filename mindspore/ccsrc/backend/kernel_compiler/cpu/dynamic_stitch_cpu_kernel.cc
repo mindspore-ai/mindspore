@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ constexpr size_t kDynamicStitchOutputNum = 1;
 }  // namespace
 
 template <typename T>
-void DynamicStitchCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
+void DynamicStitchCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   cnode_ptr_ = kernel_node;
 }
 
@@ -35,8 +35,8 @@ size_t GetShapeSize(const std::vector<size_t> &shape) {
 }
 
 template <typename T>
-void DynamicStitchCPUKernel<T>::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                             const std::vector<kernel::AddressPtr> &outputs) {
+void DynamicStitchCpuKernelMod<T>::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                                const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kDynamicStitchOutputNum, kernel_name_);
   auto node_ = cnode_ptr_.lock();
   int first_dim_size = 0;
@@ -87,9 +87,9 @@ void DynamicStitchCPUKernel<T>::LaunchKernel(const std::vector<kernel::AddressPt
 }
 
 template <typename T>
-bool DynamicStitchCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool DynamicStitchCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                          const std::vector<kernel::AddressPtr> &,
+                                          const std::vector<kernel::AddressPtr> &outputs) {
   LaunchKernel(inputs, outputs);
   return true;
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ constexpr size_t kSplitInputsNum = 1;
 }  // namespace
 
 template <typename T>
-void SplitCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
+void SplitCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   axis_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
@@ -45,15 +45,15 @@ void SplitCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-void SplitCPUKernel<T>::InitInputOutputSize(const CNodePtr &kernel_node) {
-  CPUKernel::InitInputOutputSize(kernel_node);
+void SplitCpuKernelMod<T>::InitInputOutputSize(const CNodePtr &kernel_node) {
+  NativeCpuKernelMod::InitInputOutputSize(kernel_node);
   (void)workspace_size_list_.emplace_back((sizeof(T *) * LongToSize(output_num_)));
 }
 
 template <typename T>
-bool SplitCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                               const std::vector<kernel::AddressPtr> &workspace,
-                               const std::vector<kernel::AddressPtr> &outputs) {
+bool SplitCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                  const std::vector<kernel::AddressPtr> &workspace,
+                                  const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSplitInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num_, kernel_name_);
   LaunchKernel(inputs, workspace, outputs);
@@ -61,7 +61,7 @@ bool SplitCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
 }
 
 template <typename T>
-void SplitCPUKernel<T>::LaunchSplit(T *input, T **output, size_t /* size */) {
+void SplitCpuKernelMod<T>::LaunchSplit(T *input, T **output, size_t /* size */) {
   SplitParameter param;
   param.num_split_ = SizeToInt(output_num_);
   param.split_dim_ = LongToInt(axis_);
@@ -88,9 +88,9 @@ void SplitCPUKernel<T>::LaunchSplit(T *input, T **output, size_t /* size */) {
 }
 
 template <typename T>
-void SplitCPUKernel<T>::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> &workspace,
-                                     const std::vector<AddressPtr> &outputs) {
+void SplitCpuKernelMod<T>::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                        const std::vector<kernel::AddressPtr> &workspace,
+                                        const std::vector<AddressPtr> &outputs) {
   T *input = reinterpret_cast<T *>(inputs[0]->addr);
   T **output = reinterpret_cast<T **>(workspace[0]->addr);
   for (size_t i = 0; i < outputs.size(); i++) {
@@ -102,7 +102,7 @@ void SplitCPUKernel<T>::LaunchKernel(const std::vector<AddressPtr> &inputs,
 }
 
 template <typename T>
-void SplitCPUKernel<T>::CheckParam(const CNodePtr &kernel_node) {
+void SplitCpuKernelMod<T>::CheckParam(const CNodePtr &kernel_node) {
   int64_t dims = SizeToLong(input_shape_.size());
   if (dims == 0 || dims > SPLIT_STRIDES_SIZE) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input tensor should be in range [1, "

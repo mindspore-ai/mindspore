@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class PackCpuFwdKernel : public CPUKernel {
+class PackFwdCpuKernelMod : public NativeCpuKernelMod {
  public:
-  PackCpuFwdKernel() = default;
-  ~PackCpuFwdKernel() override = default;
+  PackFwdCpuKernelMod() = default;
+  ~PackFwdCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -44,17 +44,17 @@ class PackCpuFwdKernel : public CPUKernel {
   std::unique_ptr<T *[]> inputs_host_ { nullptr };
 };
 
-MS_REG_CPU_KERNEL_T(Stack, KernelAttr(), PackCpuFwdKernel, int8_t)
-MS_REG_CPU_KERNEL_T(Stack, KernelAttr(), PackCpuFwdKernel, int16_t)
-MS_REG_CPU_KERNEL_T(Stack, KernelAttr(), PackCpuFwdKernel, int32_t)
-MS_REG_CPU_KERNEL_T(Stack, KernelAttr(), PackCpuFwdKernel, int64_t)
-MS_REG_CPU_KERNEL_T(Stack, KernelAttr(), PackCpuFwdKernel, uint8_t)
-MS_REG_CPU_KERNEL_T(Stack, KernelAttr(), PackCpuFwdKernel, uint16_t)
-MS_REG_CPU_KERNEL_T(Stack, KernelAttr(), PackCpuFwdKernel, uint32_t)
-MS_REG_CPU_KERNEL_T(Stack, KernelAttr(), PackCpuFwdKernel, uint64_t)
-MS_REG_CPU_KERNEL_T(Stack, KernelAttr(), PackCpuFwdKernel, float16)
-MS_REG_CPU_KERNEL_T(Stack, KernelAttr(), PackCpuFwdKernel, float)
-MS_REG_CPU_KERNEL_T(Stack, KernelAttr(), PackCpuFwdKernel, bool)
+MS_REG_CPU_KERNEL_T(Stack, KernelAttr(), PackFwdCpuKernelMod, int8_t)
+MS_REG_CPU_KERNEL_T(Stack, KernelAttr(), PackFwdCpuKernelMod, int16_t)
+MS_REG_CPU_KERNEL_T(Stack, KernelAttr(), PackFwdCpuKernelMod, int32_t)
+MS_REG_CPU_KERNEL_T(Stack, KernelAttr(), PackFwdCpuKernelMod, int64_t)
+MS_REG_CPU_KERNEL_T(Stack, KernelAttr(), PackFwdCpuKernelMod, uint8_t)
+MS_REG_CPU_KERNEL_T(Stack, KernelAttr(), PackFwdCpuKernelMod, uint16_t)
+MS_REG_CPU_KERNEL_T(Stack, KernelAttr(), PackFwdCpuKernelMod, uint32_t)
+MS_REG_CPU_KERNEL_T(Stack, KernelAttr(), PackFwdCpuKernelMod, uint64_t)
+MS_REG_CPU_KERNEL_T(Stack, KernelAttr(), PackFwdCpuKernelMod, float16)
+MS_REG_CPU_KERNEL_T(Stack, KernelAttr(), PackFwdCpuKernelMod, float)
+MS_REG_CPU_KERNEL_T(Stack, KernelAttr(), PackFwdCpuKernelMod, bool)
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_PACK_CPU_KERNEL_H_

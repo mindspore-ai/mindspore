@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ MS_REG_GPU_KERNEL_THREE(ApplyAdagrad,
                           .AddInputAttr(kNumberTypeFloat32)
                           .AddOutputAttr(kNumberTypeFloat32)
                           .AddOutputAttr(kNumberTypeFloat32),
-                        AdagradGpuKernel, float, float, float)
+                        AdagradGpuKernelMod, float, float, float)
 MS_REG_GPU_KERNEL_THREE(ApplyAdagrad,
                         KernelAttr()
                           .AddInputAttr(kNumberTypeFloat16)
@@ -35,7 +35,7 @@ MS_REG_GPU_KERNEL_THREE(ApplyAdagrad,
                           .AddInputAttr(kNumberTypeFloat16)
                           .AddOutputAttr(kNumberTypeFloat16)
                           .AddOutputAttr(kNumberTypeFloat16),
-                        AdagradGpuKernel, half, half, half)
+                        AdagradGpuKernelMod, half, half, half)
 MS_REG_GPU_KERNEL_THREE(ApplyAdagrad,
                         KernelAttr()
                           .AddInputAttr(kNumberTypeFloat16)
@@ -44,7 +44,7 @@ MS_REG_GPU_KERNEL_THREE(ApplyAdagrad,
                           .AddInputAttr(kNumberTypeFloat16)
                           .AddOutputAttr(kNumberTypeFloat16)
                           .AddOutputAttr(kNumberTypeFloat16),
-                        AdagradGpuKernel, half, float, half)
+                        AdagradGpuKernelMod, half, float, half)
 MS_REG_GPU_KERNEL_THREE(ApplyAdagrad,
                         KernelAttr()
                           .AddInputAttr(kNumberTypeFloat32)
@@ -53,7 +53,7 @@ MS_REG_GPU_KERNEL_THREE(ApplyAdagrad,
                           .AddInputAttr(kNumberTypeFloat16)
                           .AddOutputAttr(kNumberTypeFloat32)
                           .AddOutputAttr(kNumberTypeFloat32),
-                        AdagradGpuKernel, float, float, half)
+                        AdagradGpuKernelMod, float, float, half)
 MS_REG_GPU_KERNEL_THREE(ApplyAdagrad,
                         KernelAttr()
                           .AddInputAttr(kNumberTypeFloat32)
@@ -62,7 +62,7 @@ MS_REG_GPU_KERNEL_THREE(ApplyAdagrad,
                           .AddInputAttr(kNumberTypeFloat32)
                           .AddOutputAttr(kNumberTypeFloat32)
                           .AddOutputAttr(kNumberTypeFloat32),
-                        AdagradGpuKernel, float, half, float)
+                        AdagradGpuKernelMod, float, half, float)
 MS_REG_GPU_KERNEL_THREE(ApplyAdagrad,
                         KernelAttr()
                           .AddInputAttr(kNumberTypeFloat16)
@@ -71,6 +71,6 @@ MS_REG_GPU_KERNEL_THREE(ApplyAdagrad,
                           .AddInputAttr(kNumberTypeFloat32)
                           .AddOutputAttr(kNumberTypeFloat16)
                           .AddOutputAttr(kNumberTypeFloat16),
-                        AdagradGpuKernel, half, float, float)
+                        AdagradGpuKernelMod, half, float, float)
 }  // namespace kernel
 }  // namespace mindspore

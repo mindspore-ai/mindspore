@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,12 +48,6 @@ AicpuOpKernelMod::~AicpuOpKernelMod() {
   ext_info_.clear();
 }
 
-void AicpuOpKernelMod::SetInputSizeList(const std::vector<size_t> &size_list) { input_size_list_ = size_list; }
-const std::vector<size_t> &AicpuOpKernelMod::GetInputSizeList() const { return input_size_list_; }
-void AicpuOpKernelMod::SetOutputSizeList(const std::vector<size_t> &size_list) { output_size_list_ = size_list; }
-const std::vector<size_t> &AicpuOpKernelMod::GetOutputSizeList() const { return output_size_list_; }
-void AicpuOpKernelMod::SetWorkspaceSizeList(const std::vector<size_t> &size_list) { workspace_size_list_ = size_list; }
-const std::vector<size_t> &AicpuOpKernelMod::GetWorkspaceSizeList() const { return workspace_size_list_; }
 void AicpuOpKernelMod::SetInputList(const std::vector<int64_t> &input_list) { input_list_ = input_list; }
 void AicpuOpKernelMod::SetOutputList(const std::vector<int64_t> &output_list) { output_list_ = output_list; }
 void AicpuOpKernelMod::SetNodeDef(const std::string &node_def) { (void)node_def_str_.assign(node_def); }

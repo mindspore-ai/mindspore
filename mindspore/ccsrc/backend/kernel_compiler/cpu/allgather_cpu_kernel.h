@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,10 @@
 
 namespace mindspore {
 namespace kernel {
-class AllGatherCPUKernel : public CPUKernel {
+class AllGatherCpuKernelMod : public NativeCpuKernelMod {
  public:
-  AllGatherCPUKernel() = default;
-  ~AllGatherCPUKernel() override = default;
+  AllGatherCpuKernelMod() = default;
+  ~AllGatherCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -40,7 +40,7 @@ class AllGatherCPUKernel : public CPUKernel {
 };
 
 MS_REG_CPU_KERNEL(_HostAllGather, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  AllGatherCPUKernel);
+                  AllGatherCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

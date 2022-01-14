@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ constexpr size_t kUpdateCacheInputsNum = 4;
 constexpr size_t kMinUpdateShapeSize = 2;
 }  // namespace
 
-void UpdateCacheCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void UpdateCacheCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
@@ -44,9 +44,9 @@ void UpdateCacheCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
 }
 
-bool UpdateCacheCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                  const std::vector<kernel::AddressPtr> &,
-                                  const std::vector<kernel::AddressPtr> &outputs) {
+bool UpdateCacheCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                     const std::vector<kernel::AddressPtr> &,
+                                     const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kUpdateCacheInputsNum, kernel_name_);
   if (indices_dtype_ == kNumberTypeInt32) {
     LaunchKernel<int>(inputs, outputs);
@@ -60,8 +60,8 @@ bool UpdateCacheCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
 }
 
 template <typename T>
-void UpdateCacheCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                        const std::vector<kernel::AddressPtr> &outputs) {
+void UpdateCacheCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                           const std::vector<kernel::AddressPtr> &outputs) {
   auto node = node_wpt_.lock();
   MS_EXCEPTION_IF_NULL(node);
   auto indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(node, 1);

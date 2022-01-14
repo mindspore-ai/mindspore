@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,15 +26,12 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class DropoutGradGpuBwdKernel : public GpuKernel {
+class DropoutGradBwdGpuKernelMod : public NativeGpuKernelMod {
  public:
-  DropoutGradGpuBwdKernel()
+  DropoutGradBwdGpuKernelMod()
       : cudnn_handle_(nullptr), is_null_input_(false), kernel_name_("DropoutGrad"), num_count_(0), keep_prob_(0.0) {}
-  ~DropoutGradGpuBwdKernel() override = default;
+  ~DropoutGradBwdGpuKernelMod() override = default;
 
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
@@ -93,9 +90,6 @@ class DropoutGradGpuBwdKernel : public GpuKernel {
   std::string kernel_name_;
   size_t num_count_;
   float keep_prob_;
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore

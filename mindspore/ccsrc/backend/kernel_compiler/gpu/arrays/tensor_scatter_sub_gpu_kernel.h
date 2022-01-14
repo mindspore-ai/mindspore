@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,9 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename S>
-class TensorScatterSubGpuKernel : public GpuKernel {
+class TensorScatterSubGpuKernelMod : public NativeGpuKernelMod {
  public:
-  TensorScatterSubGpuKernel()
+  TensorScatterSubGpuKernelMod()
       : input_size_(1),
         update_size_(1),
         indices_size_(1),
@@ -40,7 +40,7 @@ class TensorScatterSubGpuKernel : public GpuKernel {
         indices_dim_0_(0),
         indices_dim_1_(0),
         memcpy_flag_(false) {}
-  ~TensorScatterSubGpuKernel() {
+  ~TensorScatterSubGpuKernelMod() {
     if (indices_stride_ != nullptr) {
       device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(static_cast<void *>(indices_stride_));
     }
@@ -48,10 +48,6 @@ class TensorScatterSubGpuKernel : public GpuKernel {
       device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(static_cast<void *>(work_shape_));
     }
   }
-
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -67,11 +63,11 @@ class TensorScatterSubGpuKernel : public GpuKernel {
       CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
                                  cudaMemcpyAsync(indices_stride_, &vec_indices_stride_[0], indices_len,
                                                  cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                                 "cudaMemcpy failed in TensorScatterSubGpuKernel::Launch.");
+                                 "cudaMemcpy failed in TensorScatterSubGpuKernelMod::Launch.");
       CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
                                  cudaMemcpyAsync(work_shape_, &vec_work_shape_[0], vec_work_len, cudaMemcpyHostToDevice,
                                                  reinterpret_cast<cudaStream_t>(stream_ptr)),
-                                 "cudaMemcpy failed in TensorScatterSubGpuKernel::Launch.");
+                                 "cudaMemcpy failed in TensorScatterSubGpuKernelMod::Launch.");
       memcpy_flag_ = true;
     }
 
@@ -189,10 +185,6 @@ class TensorScatterSubGpuKernel : public GpuKernel {
   std::vector<size_t> output_shapes_;
   std::vector<S> vec_indices_stride_;
   std::vector<S> vec_work_shape_;
-
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 
   size_t input_size_;
   size_t update_size_;

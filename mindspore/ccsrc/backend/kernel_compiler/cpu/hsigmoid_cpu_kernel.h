@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class HSigmoidCPUKernel : public CPUKernel {
+class HSigmoidCpuKernelMod : public NativeCpuKernelMod {
  public:
-  HSigmoidCPUKernel() = default;
-  ~HSigmoidCPUKernel() override = default;
+  HSigmoidCpuKernelMod() = default;
+  ~HSigmoidCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -41,15 +41,15 @@ class HSigmoidCPUKernel : public CPUKernel {
   uint64_t tensor_size_ = 1;
 };
 
-MS_REG_CPU_KERNEL_T(HSigmoid, KernelAttr(), HSigmoidCPUKernel, int8_t);
+MS_REG_CPU_KERNEL_T(HSigmoid, KernelAttr(), HSigmoidCpuKernelMod, int8_t);
 
-MS_REG_CPU_KERNEL_T(HSigmoid, KernelAttr(), HSigmoidCPUKernel, int16_t);
+MS_REG_CPU_KERNEL_T(HSigmoid, KernelAttr(), HSigmoidCpuKernelMod, int16_t);
 
-MS_REG_CPU_KERNEL_T(HSigmoid, KernelAttr(), HSigmoidCPUKernel, int32_t);
+MS_REG_CPU_KERNEL_T(HSigmoid, KernelAttr(), HSigmoidCpuKernelMod, int32_t);
 
-MS_REG_CPU_KERNEL_T(HSigmoid, KernelAttr(), HSigmoidCPUKernel, int64_t);
+MS_REG_CPU_KERNEL_T(HSigmoid, KernelAttr(), HSigmoidCpuKernelMod, int64_t);
 
-MS_REG_CPU_KERNEL_T(HSigmoid, KernelAttr(), HSigmoidCPUKernel, float);
+MS_REG_CPU_KERNEL_T(HSigmoid, KernelAttr(), HSigmoidCpuKernelMod, float);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_HSIGMOID_CPU_KERNEL_H_

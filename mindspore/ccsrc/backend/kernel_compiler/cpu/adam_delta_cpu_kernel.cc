@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,8 +32,8 @@ constexpr size_t kAdamDeltaOutputsNum = 1;
 }  // namespace
 
 template <typename T>
-void AdamDeltaCPUKernel::LaunchAdamDelta(T *delta, T *m, T *v, float lr, float beta1, float beta2, float epsilon,
-                                         const T *gradient, size_t size) {
+void AdamDeltaCpuKernelMod::LaunchAdamDelta(T *delta, T *m, T *v, float lr, float beta1, float beta2, float epsilon,
+                                            const T *gradient, size_t size) {
   std::function<void(size_t, size_t)> task;
   if (dtype_ == kNumberTypeFloat32) {
     task = [this, delta, m, v, lr, beta1, beta2, epsilon, gradient](size_t start, size_t end) {
@@ -57,7 +57,7 @@ void AdamDeltaCPUKernel::LaunchAdamDelta(T *delta, T *m, T *v, float lr, float b
   ParallelLaunchAutoSearch(task, size, this, &parallel_search_info_);
 }
 
-void AdamDeltaCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void AdamDeltaCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   std::vector<size_t> delta_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
@@ -96,8 +96,8 @@ void AdamDeltaCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
 }
 
-void AdamDeltaCPUKernel::CheckParams(const std::vector<kernel::AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> &outputs) const {
+void AdamDeltaCpuKernelMod::CheckParams(const std::vector<kernel::AddressPtr> &inputs,
+                                        const std::vector<kernel::AddressPtr> &outputs) const {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAdamDeltaInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kAdamDeltaOutputsNum, kernel_name_);
 
@@ -121,8 +121,9 @@ void AdamDeltaCPUKernel::CheckParams(const std::vector<kernel::AddressPtr> &inpu
   }
 }
 
-bool AdamDeltaCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                                const std::vector<kernel::AddressPtr> &outputs) {
+bool AdamDeltaCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                   const std::vector<kernel::AddressPtr> &,
+                                   const std::vector<kernel::AddressPtr> &outputs) {
   CheckParams(inputs, outputs);
   auto m = reinterpret_cast<float *>(inputs[0]->addr);
   auto v = reinterpret_cast<float *>(inputs[1]->addr);

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class MaximumCPUKernel : public CPUKernel {
+class MaximumCpuKernelMod : public NativeCpuKernelMod {
  public:
-  MaximumCPUKernel() = default;
-  ~MaximumCPUKernel() override = default;
+  MaximumCpuKernelMod() = default;
+  ~MaximumCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -74,12 +74,12 @@ class MaximumCPUKernel : public CPUKernel {
   const size_t max_dims_{7};
 };
 
-MS_REG_CPU_KERNEL_T(Maximum, KernelAttr(), MaximumCPUKernel, int32_t);
-MS_REG_CPU_KERNEL_T(Maximum, KernelAttr(), MaximumCPUKernel, int64_t);
-MS_REG_CPU_KERNEL_T(Maximum, KernelAttr(), MaximumCPUKernel, uint32_t);
-MS_REG_CPU_KERNEL_T(Maximum, KernelAttr(), MaximumCPUKernel, uint64_t);
-MS_REG_CPU_KERNEL_T(Maximum, KernelAttr(), MaximumCPUKernel, float);
-MS_REG_CPU_KERNEL_T(Maximum, KernelAttr(), MaximumCPUKernel, double);
+MS_REG_CPU_KERNEL_T(Maximum, KernelAttr(), MaximumCpuKernelMod, int32_t);
+MS_REG_CPU_KERNEL_T(Maximum, KernelAttr(), MaximumCpuKernelMod, int64_t);
+MS_REG_CPU_KERNEL_T(Maximum, KernelAttr(), MaximumCpuKernelMod, uint32_t);
+MS_REG_CPU_KERNEL_T(Maximum, KernelAttr(), MaximumCpuKernelMod, uint64_t);
+MS_REG_CPU_KERNEL_T(Maximum, KernelAttr(), MaximumCpuKernelMod, float);
+MS_REG_CPU_KERNEL_T(Maximum, KernelAttr(), MaximumCpuKernelMod, double);
 }  // namespace kernel
 }  // namespace mindspore
 

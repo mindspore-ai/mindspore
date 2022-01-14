@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,10 @@
 
 namespace mindspore {
 namespace kernel {
-class ApplyMomentumCPUKernel : public CPUKernel {
+class ApplyMomentumCpuKernelMod : public NativeCpuKernelMod {
  public:
-  ApplyMomentumCPUKernel() = default;
-  ~ApplyMomentumCPUKernel() override = default;
+  ApplyMomentumCpuKernelMod() = default;
+  ~ApplyMomentumCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -44,7 +44,7 @@ MS_REG_CPU_KERNEL(ApplyMomentum,
                     .AddInputAttr(kNumberTypeFloat32)
                     .AddInputAttr(kNumberTypeFloat32)
                     .AddOutputAttr(kNumberTypeFloat32),
-                  ApplyMomentumCPUKernel);
+                  ApplyMomentumCpuKernelMod);
 MS_REG_CPU_KERNEL(ApplyMomentum,
                   KernelAttr()
                     .AddInputAttr(kNumberTypeFloat32)
@@ -54,7 +54,7 @@ MS_REG_CPU_KERNEL(ApplyMomentum,
                     .AddInputAttr(kNumberTypeFloat32)
                     .AddOutputAttr(kNumberTypeFloat32)
                     .AddOutputAttr(kNumberTypeFloat32),
-                  ApplyMomentumCPUKernel);
+                  ApplyMomentumCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

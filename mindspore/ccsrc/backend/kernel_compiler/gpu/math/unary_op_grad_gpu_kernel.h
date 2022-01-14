@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,20 +45,16 @@ static const std::map<std::string, UnaryGradOptype> kUnaryGradOpTypeMap = {
   {"AcoshGrad", UNARY_OP_ACOSH_GRAD}, {"ReciprocalGrad", UNARY_OP_RECIPROCAL_GRAD}};
 
 template <typename T>
-class UnaryGradOpGpuKernel : public GpuKernel {
+class UnaryGradOpGpuKernelMod : public NativeGpuKernelMod {
  public:
-  UnaryGradOpGpuKernel()
+  UnaryGradOpGpuKernelMod()
       : unary_grad_op_type_(UNARY_OP_GRAD_INVALID_TYPE),
         input_size_(sizeof(T)),
         dx_size_(sizeof(T)),
         output_size_(sizeof(T)),
         workspace_size_(0),
         is_null_input_(false) {}
-  ~UnaryGradOpGpuKernel() override = default;
-
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+  ~UnaryGradOpGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -179,9 +175,6 @@ class UnaryGradOpGpuKernel : public GpuKernel {
   size_t output_size_;
   size_t workspace_size_;
   bool is_null_input_;
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore

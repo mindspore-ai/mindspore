@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,9 @@ namespace kernel {
 constexpr int iv_vec_len = 16;
 constexpr int salt_len = 32;
 
-bool ExchangeKeysKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                const std::vector<AddressPtr> &) {
-  MS_LOG(INFO) << "Launching client ExchangeKeysKernel";
+bool ExchangeKeysKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                                   const std::vector<AddressPtr> &) {
+  MS_LOG(INFO) << "Launching client ExchangeKeysKernelMod";
   if (!BuildExchangeKeysReq(fbb_)) {
     MS_LOG(EXCEPTION) << "Building request for ExchangeKeys failed.";
     return false;
@@ -58,7 +58,7 @@ bool ExchangeKeysKernel::Launch(const std::vector<AddressPtr> &inputs, const std
   return true;
 }
 
-void ExchangeKeysKernel::Init(const CNodePtr &kernel_node) {
+void ExchangeKeysKernelMod::Init(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   fl_id_ = fl::worker::FLWorker::GetInstance().fl_id();
   server_num_ = fl::worker::FLWorker::GetInstance().server_num();
@@ -84,9 +84,9 @@ void ExchangeKeysKernel::Init(const CNodePtr &kernel_node) {
   MS_LOG(INFO) << "Initialize ExchangeKeys kernel successfully.";
 }
 
-void ExchangeKeysKernel::InitKernel(const CNodePtr &kernel_node) { return; }
+void ExchangeKeysKernelMod::InitKernel(const CNodePtr &kernel_node) { return; }
 
-bool ExchangeKeysKernel::BuildExchangeKeysReq(const std::shared_ptr<fl::FBBuilder> &fbb) {
+bool ExchangeKeysKernelMod::BuildExchangeKeysReq(const std::shared_ptr<fl::FBBuilder> &fbb) {
   MS_EXCEPTION_IF_NULL(fbb);
   // generate initialization vector value used for generate pairwise noise
   std::vector<uint8_t> pw_iv_(iv_vec_len);
@@ -132,7 +132,7 @@ bool ExchangeKeysKernel::BuildExchangeKeysReq(const std::shared_ptr<fl::FBBuilde
   return true;
 }
 
-std::vector<uint8_t> ExchangeKeysKernel::GetPubicKeyBytes() {
+std::vector<uint8_t> ExchangeKeysKernelMod::GetPubicKeyBytes() {
   // generate private key of secret
   armour::PrivateKey *sPriKeyPtr = armour::KeyAgreement::GeneratePrivKey();
   fl::worker::FLWorker::GetInstance().set_secret_pk(sPriKeyPtr);
@@ -167,6 +167,6 @@ std::vector<uint8_t> ExchangeKeysKernel::GetPubicKeyBytes() {
   return pubkey_bytes;
 }
 
-MS_REG_CPU_KERNEL(ExchangeKeys, KernelAttr().AddOutputAttr(kNumberTypeFloat32), ExchangeKeysKernel);
+MS_REG_CPU_KERNEL(ExchangeKeys, KernelAttr().AddOutputAttr(kNumberTypeFloat32), ExchangeKeysKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

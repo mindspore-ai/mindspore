@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ constexpr size_t kMinIndiceRank = 2;
 constexpr char kKernelName[] = "ScatterNd";
 
 template <typename S, typename T>
-void Compute(ScatterNdCPUKernel<S, T> *content, const ComputeParams<S, T> *params, const size_t start,
+void Compute(ScatterNdCpuKernelMod<S, T> *content, const ComputeParams<S, T> *params, const size_t start,
              const size_t end) {
   T *target = params->target_;
   S *indices = params->indices_;
@@ -56,7 +56,7 @@ void Compute(ScatterNdCPUKernel<S, T> *content, const ComputeParams<S, T> *param
 }  // namespace
 
 template <typename S, typename T>
-void ScatterNdCPUKernel<S, T>::InitKernel(const CNodePtr &kernel_node) {
+void ScatterNdCpuKernelMod<S, T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   Check(kernel_node);
@@ -109,9 +109,9 @@ void ScatterNdCPUKernel<S, T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename S, typename T>
-bool ScatterNdCPUKernel<S, T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> &,
-                                      const std::vector<kernel::AddressPtr> &outputs) {
+bool ScatterNdCpuKernelMod<S, T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                         const std::vector<kernel::AddressPtr> &,
+                                         const std::vector<kernel::AddressPtr> &outputs) {
   auto target = reinterpret_cast<T *>(outputs[0]->addr);
   auto target_init = memset_s(target, outputs[0]->size, 0, outputs[0]->size);
   if (target_init != EOK) {
@@ -136,7 +136,7 @@ bool ScatterNdCPUKernel<S, T>::Launch(const std::vector<kernel::AddressPtr> &inp
 }
 
 template <typename S, typename T>
-void ScatterNdCPUKernel<S, T>::Check(const CNodePtr &kernel_node) {
+void ScatterNdCpuKernelMod<S, T>::Check(const CNodePtr &kernel_node) {
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_num != kScatterNdInputSize) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 2, but got " << input_num

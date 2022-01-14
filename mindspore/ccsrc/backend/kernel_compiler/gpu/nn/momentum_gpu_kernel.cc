@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ MS_REG_GPU_KERNEL_THREE(ApplyMomentum,
                           .AddInputAttr(kNumberTypeFloat32)
                           .AddInputAttr(kNumberTypeFloat32)
                           .AddOutputAttr(kNumberTypeFloat32),
-                        MomentumGpuKernel, float, float, float)
+                        MomentumGpuKernelMod, float, float, float)
 MS_REG_GPU_KERNEL_THREE(ApplyMomentum,
                         KernelAttr()
                           .AddInputAttr(kNumberTypeFloat16)
@@ -35,7 +35,7 @@ MS_REG_GPU_KERNEL_THREE(ApplyMomentum,
                           .AddInputAttr(kNumberTypeFloat16)
                           .AddInputAttr(kNumberTypeFloat16)
                           .AddOutputAttr(kNumberTypeFloat16),
-                        MomentumGpuKernel, half, half, half)
+                        MomentumGpuKernelMod, half, half, half)
 MS_REG_GPU_KERNEL_THREE(ApplyMomentum,
                         KernelAttr()
                           .AddInputAttr(kNumberTypeFloat16)
@@ -44,7 +44,7 @@ MS_REG_GPU_KERNEL_THREE(ApplyMomentum,
                           .AddInputAttr(kNumberTypeFloat16)
                           .AddInputAttr(kNumberTypeFloat32)
                           .AddOutputAttr(kNumberTypeFloat16),
-                        MomentumGpuKernel, half, float, half)
+                        MomentumGpuKernelMod, half, float, half)
 MS_REG_GPU_KERNEL_THREE(ApplyMomentum,
                         KernelAttr()
                           .AddInputAttr(kNumberTypeFloat32)
@@ -53,6 +53,6 @@ MS_REG_GPU_KERNEL_THREE(ApplyMomentum,
                           .AddInputAttr(kNumberTypeFloat16)
                           .AddInputAttr(kNumberTypeFloat32)
                           .AddOutputAttr(kNumberTypeFloat32),
-                        MomentumGpuKernel, float, float, half)
+                        MomentumGpuKernelMod, float, float, half)
 }  // namespace kernel
 }  // namespace mindspore

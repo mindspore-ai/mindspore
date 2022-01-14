@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ void AtomicAdd(T *const address, const T val) {
 }
 
 template <typename T>
-void ROIAlignGradCPUKernel<T>::CheckParam(const CNodePtr &kernel_node) {
+void ROIAlignGradCpuKernelMod<T>::CheckParam(const CNodePtr &kernel_node) {
   //  Get the number of the input args
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_num != INPUT_NUM) {
@@ -82,7 +82,7 @@ void ROIAlignGradCPUKernel<T>::CheckParam(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-void ROIAlignGradCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
+void ROIAlignGradCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   CheckParam(kernel_node);
@@ -107,9 +107,9 @@ void ROIAlignGradCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-bool ROIAlignGradCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> &,
-                                      const std::vector<kernel::AddressPtr> &outputs) {
+bool ROIAlignGradCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                         const std::vector<kernel::AddressPtr> &,
+                                         const std::vector<kernel::AddressPtr> &outputs) {
   const T *dy = reinterpret_cast<T *>(inputs[0]->addr);
   const T *rois = reinterpret_cast<T *>(inputs[1]->addr);
   T *dx = reinterpret_cast<T *>(outputs[0]->addr);
@@ -185,8 +185,9 @@ bool ROIAlignGradCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inp
 }
 
 template <typename T>
-void ROIAlignGradCPUKernel<T>::bilinear_interpolate(const int height, const int width, T y, T x, int *x_low, int *y_low,
-                                                    int *x_high, int *y_high, T *w1, T *w2, T *w3, T *w4) {
+void ROIAlignGradCpuKernelMod<T>::bilinear_interpolate(const int height, const int width, T y, T x, int *x_low,
+                                                       int *y_low, int *x_high, int *y_high, T *w1, T *w2, T *w3,
+                                                       T *w4) {
   constexpr float eps = 0.00007;
   const T ZERO = T(0.0);
   const T ONE = T(1.0);
@@ -231,11 +232,11 @@ void ROIAlignGradCPUKernel<T>::bilinear_interpolate(const int height, const int 
 }
 
 template <typename T>
-void ROIAlignGradCPUKernel<T>::bin_box(int thread_idx, const T *roi_boxes, int roi_cols, const T spatial_scale,
-                                       const int sample_num, int roi_end_mode, const int channels, const int height,
-                                       const int width, const int pooled_height, const int pooled_width, int *offset,
-                                       int *n, int *c, int *ph, int *pw, int *roi_bin_grid_h, int *roi_bin_grid_w,
-                                       T *bin_size_h, T *bin_size_w, T *roi_start_h, T *roi_start_w) {
+void ROIAlignGradCpuKernelMod<T>::bin_box(int thread_idx, const T *roi_boxes, int roi_cols, const T spatial_scale,
+                                          const int sample_num, int roi_end_mode, const int channels, const int height,
+                                          const int width, const int pooled_height, const int pooled_width, int *offset,
+                                          int *n, int *c, int *ph, int *pw, int *roi_bin_grid_h, int *roi_bin_grid_w,
+                                          T *bin_size_h, T *bin_size_w, T *roi_start_h, T *roi_start_w) {
   constexpr float eps = 0.00007;
   constexpr int START_W = 0;
   constexpr int START_H = 1;

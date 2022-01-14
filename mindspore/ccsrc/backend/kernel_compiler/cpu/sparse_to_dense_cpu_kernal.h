@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename I, typename T>
-class SparseToDenseCPUKernel : public CPUKernel {
+class SparseToDenseCpuKernelMod : public NativeCpuKernelMod {
  public:
-  SparseToDenseCPUKernel() = default;
-  ~SparseToDenseCPUKernel() override = default;
+  SparseToDenseCpuKernelMod() = default;
+  ~SparseToDenseCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -47,7 +47,7 @@ MS_REG_CPU_KERNEL_T_S(SparseToDense,
                         .AddInputAttr(kNumberTypeBool)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddOutputAttr(kNumberTypeBool),
-                      SparseToDenseCPUKernel, int32_t, bool);
+                      SparseToDenseCpuKernelMod, int32_t, bool);
 
 MS_REG_CPU_KERNEL_T_S(SparseToDense,
                       KernelAttr()
@@ -55,7 +55,7 @@ MS_REG_CPU_KERNEL_T_S(SparseToDense,
                         .AddInputAttr(kNumberTypeInt8)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddOutputAttr(kNumberTypeInt8),
-                      SparseToDenseCPUKernel, int32_t, int8_t);
+                      SparseToDenseCpuKernelMod, int32_t, int8_t);
 
 MS_REG_CPU_KERNEL_T_S(SparseToDense,
                       KernelAttr()
@@ -63,7 +63,7 @@ MS_REG_CPU_KERNEL_T_S(SparseToDense,
                         .AddInputAttr(kNumberTypeInt16)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddOutputAttr(kNumberTypeInt16),
-                      SparseToDenseCPUKernel, int32_t, int16_t);
+                      SparseToDenseCpuKernelMod, int32_t, int16_t);
 
 MS_REG_CPU_KERNEL_T_S(SparseToDense,
                       KernelAttr()
@@ -71,7 +71,7 @@ MS_REG_CPU_KERNEL_T_S(SparseToDense,
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddOutputAttr(kNumberTypeInt32),
-                      SparseToDenseCPUKernel, int32_t, int32_t);
+                      SparseToDenseCpuKernelMod, int32_t, int32_t);
 
 MS_REG_CPU_KERNEL_T_S(SparseToDense,
                       KernelAttr()
@@ -79,7 +79,7 @@ MS_REG_CPU_KERNEL_T_S(SparseToDense,
                         .AddInputAttr(kNumberTypeInt64)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddOutputAttr(kNumberTypeInt64),
-                      SparseToDenseCPUKernel, int32_t, int64_t);
+                      SparseToDenseCpuKernelMod, int32_t, int64_t);
 
 MS_REG_CPU_KERNEL_T_S(SparseToDense,
                       KernelAttr()
@@ -87,7 +87,7 @@ MS_REG_CPU_KERNEL_T_S(SparseToDense,
                         .AddInputAttr(kNumberTypeUInt8)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddOutputAttr(kNumberTypeUInt8),
-                      SparseToDenseCPUKernel, int32_t, uint8_t);
+                      SparseToDenseCpuKernelMod, int32_t, uint8_t);
 
 MS_REG_CPU_KERNEL_T_S(SparseToDense,
                       KernelAttr()
@@ -95,7 +95,7 @@ MS_REG_CPU_KERNEL_T_S(SparseToDense,
                         .AddInputAttr(kNumberTypeUInt16)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddOutputAttr(kNumberTypeUInt16),
-                      SparseToDenseCPUKernel, int32_t, uint16_t);
+                      SparseToDenseCpuKernelMod, int32_t, uint16_t);
 
 MS_REG_CPU_KERNEL_T_S(SparseToDense,
                       KernelAttr()
@@ -103,7 +103,7 @@ MS_REG_CPU_KERNEL_T_S(SparseToDense,
                         .AddInputAttr(kNumberTypeUInt32)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddOutputAttr(kNumberTypeUInt32),
-                      SparseToDenseCPUKernel, int32_t, uint32_t);
+                      SparseToDenseCpuKernelMod, int32_t, uint32_t);
 
 MS_REG_CPU_KERNEL_T_S(SparseToDense,
                       KernelAttr()
@@ -111,7 +111,7 @@ MS_REG_CPU_KERNEL_T_S(SparseToDense,
                         .AddInputAttr(kNumberTypeUInt64)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddOutputAttr(kNumberTypeUInt64),
-                      SparseToDenseCPUKernel, int32_t, uint64_t);
+                      SparseToDenseCpuKernelMod, int32_t, uint64_t);
 
 MS_REG_CPU_KERNEL_T_S(SparseToDense,
                       KernelAttr()
@@ -119,7 +119,7 @@ MS_REG_CPU_KERNEL_T_S(SparseToDense,
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddOutputAttr(kNumberTypeFloat16),
-                      SparseToDenseCPUKernel, int32_t, float16);
+                      SparseToDenseCpuKernelMod, int32_t, float16);
 
 MS_REG_CPU_KERNEL_T_S(SparseToDense,
                       KernelAttr()
@@ -127,7 +127,7 @@ MS_REG_CPU_KERNEL_T_S(SparseToDense,
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddOutputAttr(kNumberTypeFloat32),
-                      SparseToDenseCPUKernel, int32_t, float);
+                      SparseToDenseCpuKernelMod, int32_t, float);
 
 MS_REG_CPU_KERNEL_T_S(SparseToDense,
                       KernelAttr()
@@ -135,7 +135,7 @@ MS_REG_CPU_KERNEL_T_S(SparseToDense,
                         .AddInputAttr(kNumberTypeFloat64)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddOutputAttr(kNumberTypeFloat64),
-                      SparseToDenseCPUKernel, int32_t, double);
+                      SparseToDenseCpuKernelMod, int32_t, double);
 
 }  // namespace kernel
 }  // namespace mindspore

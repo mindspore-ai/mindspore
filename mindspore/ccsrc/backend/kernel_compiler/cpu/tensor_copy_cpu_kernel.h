@@ -24,45 +24,36 @@
 
 namespace mindspore {
 namespace kernel {
-class TensorCopyCPUKernel : public CPUKernel {
+class TensorCopyCpuKernelMod : public NativeCpuKernelMod {
  public:
-  TensorCopyCPUKernel() = default;
-  ~TensorCopyCPUKernel() override = default;
-
-  const std::vector<size_t> &GetInputSizeList() const override;
-  const std::vector<size_t> &GetOutputSizeList() const override;
-  const std::vector<size_t> &GetWorkspaceSizeList() const override;
+  TensorCopyCpuKernelMod() = default;
+  ~TensorCopyCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
-
- private:
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 };
 
 MS_REG_CPU_KERNEL(TensorMove, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-                  TensorCopyCPUKernel);
+                  TensorCopyCpuKernelMod);
 MS_REG_CPU_KERNEL(TensorMove, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                  TensorCopyCPUKernel);
+                  TensorCopyCpuKernelMod);
 MS_REG_CPU_KERNEL(TensorMove, KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-                  TensorCopyCPUKernel);
+                  TensorCopyCpuKernelMod);
 MS_REG_CPU_KERNEL(TensorMove, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
-                  TensorCopyCPUKernel);
+                  TensorCopyCpuKernelMod);
 MS_REG_CPU_KERNEL(TensorMove, KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
-                  TensorCopyCPUKernel);
+                  TensorCopyCpuKernelMod);
 MS_REG_CPU_KERNEL(TensorMove, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-                  TensorCopyCPUKernel);
+                  TensorCopyCpuKernelMod);
 MS_REG_CPU_KERNEL(TensorMove, KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
-                  TensorCopyCPUKernel);
+                  TensorCopyCpuKernelMod);
 MS_REG_CPU_KERNEL(TensorMove, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  TensorCopyCPUKernel);
+                  TensorCopyCpuKernelMod);
 MS_REG_CPU_KERNEL(TensorMove, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-                  TensorCopyCPUKernel);
+                  TensorCopyCpuKernelMod);
 MS_REG_CPU_KERNEL(TensorMove, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-                  TensorCopyCPUKernel);
+                  TensorCopyCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

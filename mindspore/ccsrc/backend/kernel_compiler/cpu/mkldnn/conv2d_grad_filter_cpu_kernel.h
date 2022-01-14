@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,10 @@
 
 namespace mindspore {
 namespace kernel {
-class Conv2dGradFilterCPUKernel : public MKLCPUKernel {
+class Conv2dGradFilterCpuKernelMod : public MKLCpuKernelMod {
  public:
-  Conv2dGradFilterCPUKernel() = default;
-  ~Conv2dGradFilterCPUKernel() override = default;
+  Conv2dGradFilterCpuKernelMod() = default;
+  ~Conv2dGradFilterCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -37,7 +37,7 @@ class Conv2dGradFilterCPUKernel : public MKLCPUKernel {
 MS_REG_CPU_KERNEL(
   Conv2DBackpropFilter,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  Conv2dGradFilterCPUKernel);
+  Conv2dGradFilterCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

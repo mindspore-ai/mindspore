@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,8 @@ constexpr size_t kBceOutputsNum = 1;
 }  // namespace
 
 template <typename T>
-void BinaryCrossEntropyCpuKernel::LaunchToScalar(const int &input_size, const int &reduction, T *loss,
-                                                 T *tmp_loss) const {
+void BinaryCrossEntropyCpuKernelMod::LaunchToScalar(const int &input_size, const int &reduction, T *loss,
+                                                    T *tmp_loss) const {
   if (input_size % 2 == 1) {
     tmp_loss[0] += tmp_loss[input_size - 1];
   }
@@ -46,8 +46,8 @@ void BinaryCrossEntropyCpuKernel::LaunchToScalar(const int &input_size, const in
 }
 
 template <typename T>
-void BinaryCrossEntropyCpuKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                               const std::vector<AddressPtr> &outputs) const {
+void BinaryCrossEntropyCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                                  const std::vector<AddressPtr> &outputs) const {
   const auto *input_x = reinterpret_cast<T *>(inputs[0]->addr);
   const auto *input_y = reinterpret_cast<T *>(inputs[1]->addr);
   const T *weight = weight_defined_ ? reinterpret_cast<T *>(inputs[2]->addr) : nullptr;
@@ -90,8 +90,8 @@ void BinaryCrossEntropyCpuKernel::LaunchKernel(const std::vector<AddressPtr> &in
   }
 }
 
-bool BinaryCrossEntropyCpuKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                         const std::vector<AddressPtr> &outputs) {
+bool BinaryCrossEntropyCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                                            const std::vector<AddressPtr> &outputs) {
   const size_t expect_inputs_num = weight_defined_ ? kBceInputsNumWithWeight : kBceInputsNumWithWeight - 1;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), expect_inputs_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kBceOutputsNum, kernel_name_);
@@ -106,7 +106,7 @@ bool BinaryCrossEntropyCpuKernel::Launch(const std::vector<AddressPtr> &inputs, 
   return true;
 }
 
-void BinaryCrossEntropyCpuKernel::InitKernel(const CNodePtr &kernel_node) {
+void BinaryCrossEntropyCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);

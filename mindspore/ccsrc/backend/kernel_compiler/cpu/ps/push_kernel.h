@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,15 +27,15 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class PushKernel : public CPUKernel {
+class PushKernelMod : public NativeCpuKernelMod {
  public:
-  PushKernel() : key_(UINT64_MAX) {}
-  ~PushKernel() override = default;
+  PushKernelMod() : key_(UINT64_MAX) {}
+  ~PushKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) {
     if (outputs.size() != 1) {
-      MS_LOG(EXCEPTION) << "Outputs size is " << outputs.size() << ", but PushKernel needs 1.";
+      MS_LOG(EXCEPTION) << "Outputs size is " << outputs.size() << ", but PushKernelMod needs 1.";
     }
     std::vector<size_t> keys;
     std::vector<uintptr_t> addrs;

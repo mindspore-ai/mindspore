@@ -25,10 +25,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class MatrixDiagPartCPUKernel : public CPUKernel {
+class MatrixDiagPartCpuKernelMod : public NativeCpuKernelMod {
  public:
-  MatrixDiagPartCPUKernel() = default;
-  ~MatrixDiagPartCPUKernel() override = default;
+  MatrixDiagPartCpuKernelMod() = default;
+  ~MatrixDiagPartCpuKernelMod() override = default;
   void InitKernel(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
@@ -51,7 +51,7 @@ MS_REG_CPU_KERNEL_T(MatrixDiagPart,
                       .AddInputAttr(kNumberTypeInt64)
                       .AddInputAttr(kNumberTypeInt32)
                       .AddOutputAttr(kNumberTypeInt32),
-                    MatrixDiagPartCPUKernel, int32_t);
+                    MatrixDiagPartCpuKernelMod, int32_t);
 
 MS_REG_CPU_KERNEL_T(MatrixDiagPart,
                     KernelAttr()
@@ -59,7 +59,7 @@ MS_REG_CPU_KERNEL_T(MatrixDiagPart,
                       .AddInputAttr(kNumberTypeInt64)
                       .AddInputAttr(kNumberTypeInt64)
                       .AddOutputAttr(kNumberTypeInt64),
-                    MatrixDiagPartCPUKernel, int64_t);
+                    MatrixDiagPartCpuKernelMod, int64_t);
 
 MS_REG_CPU_KERNEL_T(MatrixDiagPart,
                     KernelAttr()
@@ -68,7 +68,7 @@ MS_REG_CPU_KERNEL_T(MatrixDiagPart,
                       .AddInputAttr(kNumberTypeFloat32)
                       .AddOutputAttr(kNumberTypeFloat32),
 
-                    MatrixDiagPartCPUKernel, float);
+                    MatrixDiagPartCpuKernelMod, float);
 
 MS_REG_CPU_KERNEL_T(MatrixDiagPart,
                     KernelAttr()
@@ -76,7 +76,7 @@ MS_REG_CPU_KERNEL_T(MatrixDiagPart,
                       .AddInputAttr(kNumberTypeInt64)
                       .AddInputAttr(kNumberTypeFloat64)
                       .AddOutputAttr(kNumberTypeFloat64),
-                    MatrixDiagPartCPUKernel, double);
+                    MatrixDiagPartCpuKernelMod, double);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_MATRIX_DIAG_PART_H

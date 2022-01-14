@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class MinimumCPUKernel : public CPUKernel {
+class MinimumCpuKernelMod : public NativeCpuKernelMod {
  public:
-  MinimumCPUKernel() = default;
-  ~MinimumCPUKernel() override = default;
+  MinimumCpuKernelMod() = default;
+  ~MinimumCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -74,12 +74,12 @@ class MinimumCPUKernel : public CPUKernel {
   const size_t max_dims_{7};
 };
 
-MS_REG_CPU_KERNEL_T(Minimum, KernelAttr(), MinimumCPUKernel, int32_t);
-MS_REG_CPU_KERNEL_T(Minimum, KernelAttr(), MinimumCPUKernel, uint32_t);
-MS_REG_CPU_KERNEL_T(Minimum, KernelAttr(), MinimumCPUKernel, float);
-MS_REG_CPU_KERNEL_T(Minimum, KernelAttr(), MinimumCPUKernel, int64_t);
-MS_REG_CPU_KERNEL_T(Minimum, KernelAttr(), MinimumCPUKernel, uint64_t);
-MS_REG_CPU_KERNEL_T(Minimum, KernelAttr(), MinimumCPUKernel, double);
+MS_REG_CPU_KERNEL_T(Minimum, KernelAttr(), MinimumCpuKernelMod, int32_t);
+MS_REG_CPU_KERNEL_T(Minimum, KernelAttr(), MinimumCpuKernelMod, uint32_t);
+MS_REG_CPU_KERNEL_T(Minimum, KernelAttr(), MinimumCpuKernelMod, float);
+MS_REG_CPU_KERNEL_T(Minimum, KernelAttr(), MinimumCpuKernelMod, int64_t);
+MS_REG_CPU_KERNEL_T(Minimum, KernelAttr(), MinimumCpuKernelMod, uint64_t);
+MS_REG_CPU_KERNEL_T(Minimum, KernelAttr(), MinimumCpuKernelMod, double);
 }  // namespace kernel
 }  // namespace mindspore
 

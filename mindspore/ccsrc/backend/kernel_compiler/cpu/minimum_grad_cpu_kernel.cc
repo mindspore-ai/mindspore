@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ void CheckShape(std::vector<size_t> *shape) {
 }
 }  // namespace
 
-void MinimumGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void MinimumGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   x_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
@@ -74,9 +74,9 @@ void MinimumGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   CheckShape(&dout_shape);
 }
 
-bool MinimumGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                  const std::vector<kernel::AddressPtr> &,
-                                  const std::vector<kernel::AddressPtr> &outputs) {
+bool MinimumGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                     const std::vector<kernel::AddressPtr> &,
+                                     const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMinimumGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMinimumGradOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeInt32) {
@@ -120,7 +120,8 @@ void MinimumGradRecTask(const T *x, const T *y, const T *dout, T *dx, T *dy, con
 }
 
 template <typename T>
-void MinimumGradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
+void MinimumGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                           const std::vector<AddressPtr> &outputs) {
   auto *x_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto *y_addr = reinterpret_cast<T *>(inputs[1]->addr);
   auto *dout_addr = reinterpret_cast<T *>(inputs[2]->addr);

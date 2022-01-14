@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,15 +27,15 @@ constexpr size_t kScatterArithmeticOutputsNum = 1;
 }  // namespace
 
 template <typename T>
-void ScatterArithmeticCPUKernel<T>::InitComputeFunc() {
+void ScatterArithmeticCpuKernelMod<T>::InitComputeFunc() {
   static const std::map<std::string, TypeComputeFunc> scatterArithmeticFuncMap{
-    {prim::kPrimScatterAdd->name(), &ScatterArithmeticCPUKernel<T>::ScatterAdd},
-    {prim::kPrimScatterSub->name(), &ScatterArithmeticCPUKernel<T>::ScatterSub},
-    {prim::kPrimScatterMul->name(), &ScatterArithmeticCPUKernel<T>::ScatterMul},
-    {prim::kPrimScatterDiv->name(), &ScatterArithmeticCPUKernel<T>::ScatterDiv},
-    {prim::kPrimScatterMax->name(), &ScatterArithmeticCPUKernel<T>::ScatterMax},
-    {prim::kPrimScatterMin->name(), &ScatterArithmeticCPUKernel<T>::ScatterMin},
-    {prim::kPrimScatterUpdate->name(), &ScatterArithmeticCPUKernel<T>::ScatterUpdate}};
+    {prim::kPrimScatterAdd->name(), &ScatterArithmeticCpuKernelMod<T>::ScatterAdd},
+    {prim::kPrimScatterSub->name(), &ScatterArithmeticCpuKernelMod<T>::ScatterSub},
+    {prim::kPrimScatterMul->name(), &ScatterArithmeticCpuKernelMod<T>::ScatterMul},
+    {prim::kPrimScatterDiv->name(), &ScatterArithmeticCpuKernelMod<T>::ScatterDiv},
+    {prim::kPrimScatterMax->name(), &ScatterArithmeticCpuKernelMod<T>::ScatterMax},
+    {prim::kPrimScatterMin->name(), &ScatterArithmeticCpuKernelMod<T>::ScatterMin},
+    {prim::kPrimScatterUpdate->name(), &ScatterArithmeticCpuKernelMod<T>::ScatterUpdate}};
   if (scatterArithmeticFuncMap.find(kernel_name_) == scatterArithmeticFuncMap.end()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the current operator does not support this operation.";
   }
@@ -43,7 +43,7 @@ void ScatterArithmeticCPUKernel<T>::InitComputeFunc() {
 }
 
 template <typename T>
-void ScatterArithmeticCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
+void ScatterArithmeticCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
@@ -72,9 +72,9 @@ void ScatterArithmeticCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-bool ScatterArithmeticCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                           const std::vector<kernel::AddressPtr> &,
-                                           const std::vector<kernel::AddressPtr> &outputs) {
+bool ScatterArithmeticCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                              const std::vector<kernel::AddressPtr> &,
+                                              const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kScatterArithmeticInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kScatterArithmeticOutputsNum, kernel_name_);
   auto *input = reinterpret_cast<T *>(inputs[INPUT_INDEX_]->addr);
@@ -91,7 +91,7 @@ bool ScatterArithmeticCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr>
 }
 
 template <typename T>
-void ScatterArithmeticCPUKernel<T>::ScatterAdd(T *input, const int *indices, const T *updates) const {
+void ScatterArithmeticCpuKernelMod<T>::ScatterAdd(T *input, const int *indices, const T *updates) const {
   for (size_t i = 0; i < indices_size_; i++) {
     if (indices[i] >= input_shape_0) {
       continue;
@@ -105,7 +105,7 @@ void ScatterArithmeticCPUKernel<T>::ScatterAdd(T *input, const int *indices, con
 }
 
 template <typename T>
-void ScatterArithmeticCPUKernel<T>::ScatterSub(T *input, const int *indices, const T *updates) const {
+void ScatterArithmeticCpuKernelMod<T>::ScatterSub(T *input, const int *indices, const T *updates) const {
   for (size_t i = 0; i < indices_size_; i++) {
     if (indices[i] >= input_shape_0) {
       continue;
@@ -119,7 +119,7 @@ void ScatterArithmeticCPUKernel<T>::ScatterSub(T *input, const int *indices, con
 }
 
 template <typename T>
-void ScatterArithmeticCPUKernel<T>::ScatterMul(T *input, const int *indices, const T *updates) const {
+void ScatterArithmeticCpuKernelMod<T>::ScatterMul(T *input, const int *indices, const T *updates) const {
   for (size_t i = 0; i < indices_size_; i++) {
     auto base_index_updates = i * inner_size_;
     auto base_index_input = indices[i] * inner_size_;
@@ -130,7 +130,7 @@ void ScatterArithmeticCPUKernel<T>::ScatterMul(T *input, const int *indices, con
 }
 
 template <typename T>
-void ScatterArithmeticCPUKernel<T>::ScatterDiv(T *input, const int *indices, const T *updates) const {
+void ScatterArithmeticCpuKernelMod<T>::ScatterDiv(T *input, const int *indices, const T *updates) const {
   for (size_t i = 0; i < indices_size_; i++) {
     for (size_t j = 0; j < inner_size_; j++) {
       auto dividend = input[indices[i] * inner_size_ + j];
@@ -155,7 +155,7 @@ void ScatterArithmeticCPUKernel<T>::ScatterDiv(T *input, const int *indices, con
 }
 
 template <typename T>
-void ScatterArithmeticCPUKernel<T>::ScatterMax(T *input, const int *indices, const T *updates) const {
+void ScatterArithmeticCpuKernelMod<T>::ScatterMax(T *input, const int *indices, const T *updates) const {
   for (size_t i = 0; i < indices_size_; i++) {
     auto base_index_updates = i * inner_size_;
     auto base_index_input = indices[i] * inner_size_;
@@ -168,7 +168,7 @@ void ScatterArithmeticCPUKernel<T>::ScatterMax(T *input, const int *indices, con
 }
 
 template <typename T>
-void ScatterArithmeticCPUKernel<T>::ScatterMin(T *input, const int *indices, const T *updates) const {
+void ScatterArithmeticCpuKernelMod<T>::ScatterMin(T *input, const int *indices, const T *updates) const {
   for (size_t i = 0; i < indices_size_; i++) {
     auto base_index_updates = i * inner_size_;
     auto base_index_input = indices[i] * inner_size_;
@@ -181,7 +181,7 @@ void ScatterArithmeticCPUKernel<T>::ScatterMin(T *input, const int *indices, con
 }
 
 template <typename T>
-void ScatterArithmeticCPUKernel<T>::ScatterUpdate(T *input, const int *indices, const T *updates) const {
+void ScatterArithmeticCpuKernelMod<T>::ScatterUpdate(T *input, const int *indices, const T *updates) const {
   for (size_t i = 0; i < indices_size_; i++) {
     auto base_index_updates = i * inner_size_;
     auto base_index_input = indices[i] * inner_size_;

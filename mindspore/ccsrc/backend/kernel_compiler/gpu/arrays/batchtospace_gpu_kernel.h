@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,13 +29,10 @@ constexpr size_t SHAPE_SIZE = 4;
 constexpr size_t CROPS_SHAPE_0 = 2;
 constexpr size_t CROPS_SHAPE_1 = 2;
 template <typename T>
-class BatchToSpaceGpuKernel : public GpuKernel {
+class BatchToSpaceGpuKernelMod : public NativeGpuKernelMod {
  public:
-  BatchToSpaceGpuKernel() { ResetResource(); }
-  ~BatchToSpaceGpuKernel() = default;
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+  BatchToSpaceGpuKernelMod() { ResetResource(); }
+  ~BatchToSpaceGpuKernelMod() = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -157,10 +154,6 @@ class BatchToSpaceGpuKernel : public GpuKernel {
   }
 
  private:
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
-
   std::vector<std::vector<int64_t>> crops_;
   std::vector<size_t> input_shape_;
   size_t block_size_;

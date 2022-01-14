@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,14 +23,11 @@
 
 namespace mindspore {
 namespace kernel {
-class TensorArrayCPUCreateKernel : public CPUKernel {
+class TensorArrayCreateCpuKernelMod : public NativeCpuKernelMod {
  public:
-  TensorArrayCPUCreateKernel();
-  ~TensorArrayCPUCreateKernel() = default;
+  TensorArrayCreateCpuKernelMod();
+  ~TensorArrayCreateCpuKernelMod() = default;
 
-  const std::vector<size_t> &GetInputSizeList() const override;
-  const std::vector<size_t> &GetOutputSizeList() const override;
-  const std::vector<size_t> &GetWorkspaceSizeList() const override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
   void InitKernel(const CNodePtr &kernel_node) override;
@@ -41,12 +38,9 @@ class TensorArrayCPUCreateKernel : public CPUKernel {
   std::vector<size_t> shapes_;
   TypePtr type_;
   std::string name_;
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 };
 
-MS_REG_CPU_KERNEL(TensorArray, KernelAttr().AddOutputAttr(kNumberTypeInt64), TensorArrayCPUCreateKernel);
+MS_REG_CPU_KERNEL(TensorArray, KernelAttr().AddOutputAttr(kNumberTypeInt64), TensorArrayCreateCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

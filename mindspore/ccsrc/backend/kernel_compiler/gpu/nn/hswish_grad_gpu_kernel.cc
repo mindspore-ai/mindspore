@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,10 @@ namespace kernel {
 MS_REG_GPU_KERNEL_ONE(
   HSwishGrad,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  HSwishGradKernel, float)
+  HSwishGradKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(
   HSwishGrad,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  HSwishGradKernel, half)
+  HSwishGradKernelMod, half)
 }  // namespace kernel
 }  // namespace mindspore

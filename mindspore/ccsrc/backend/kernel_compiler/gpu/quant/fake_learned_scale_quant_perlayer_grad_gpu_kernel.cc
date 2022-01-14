@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,22 +18,10 @@
 
 namespace mindspore {
 namespace kernel {
-FakeLearnedScaleQuantPerLayerGradGpuKernel::FakeLearnedScaleQuantPerLayerGradGpuKernel()
+FakeLearnedScaleQuantPerLayerGradGpuKernelMod::FakeLearnedScaleQuantPerLayerGradGpuKernelMod()
     : input_size_(0), workspace_size_(0), quant_num_(1), quant_delay_(0), global_step_(0), neg_trunc_(false) {}
 
-const std::vector<size_t> &FakeLearnedScaleQuantPerLayerGradGpuKernel::GetInputSizeList() const {
-  return input_size_list_;
-}
-
-const std::vector<size_t> &FakeLearnedScaleQuantPerLayerGradGpuKernel::GetOutputSizeList() const {
-  return output_size_list_;
-}
-
-const std::vector<size_t> &FakeLearnedScaleQuantPerLayerGradGpuKernel::GetWorkspaceSizeList() const {
-  return workspace_size_list_;
-}
-
-bool FakeLearnedScaleQuantPerLayerGradGpuKernel::Init(const CNodePtr &kernel_node) {
+bool FakeLearnedScaleQuantPerLayerGradGpuKernelMod::Init(const CNodePtr &kernel_node) {
   auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
   kernel_node_ = kernel_node;
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
@@ -67,7 +55,7 @@ bool FakeLearnedScaleQuantPerLayerGradGpuKernel::Init(const CNodePtr &kernel_nod
   return true;
 }
 
-void FakeLearnedScaleQuantPerLayerGradGpuKernel::InitSizeLists() {
+void FakeLearnedScaleQuantPerLayerGradGpuKernelMod::InitSizeLists() {
   input_size_list_.push_back(input_size_);      // gradient
   input_size_list_.push_back(input_size_);      // input
   input_size_list_.push_back(sizeof(float));    // alpha
@@ -78,9 +66,9 @@ void FakeLearnedScaleQuantPerLayerGradGpuKernel::InitSizeLists() {
   workspace_size_list_.push_back(input_size_);  // input_quant
 }
 
-bool FakeLearnedScaleQuantPerLayerGradGpuKernel::Launch(const std::vector<AddressPtr> &inputs,
-                                                        const std::vector<AddressPtr> &workspace,
-                                                        const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool FakeLearnedScaleQuantPerLayerGradGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
+                                                           const std::vector<AddressPtr> &workspace,
+                                                           const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   float *grad_input = GetDeviceAddress<float>(outputs, 0);
   float *grad_alpha = GetDeviceAddress<float>(outputs, 1);
   float *gradient = GetDeviceAddress<float>(inputs, 0);
@@ -124,6 +112,6 @@ bool FakeLearnedScaleQuantPerLayerGradGpuKernel::Launch(const std::vector<Addres
   return true;
 }
 
-MS_REG_GPU_KERNEL(FakeLearnedScaleQuantPerLayerGrad, FakeLearnedScaleQuantPerLayerGradGpuKernel)
+MS_REG_GPU_KERNEL(FakeLearnedScaleQuantPerLayerGrad, FakeLearnedScaleQuantPerLayerGradGpuKernelMod)
 }  // namespace kernel
 }  // namespace mindspore

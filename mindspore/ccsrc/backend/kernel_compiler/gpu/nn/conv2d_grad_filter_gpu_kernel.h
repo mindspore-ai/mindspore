@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,10 +29,27 @@
 namespace mindspore {
 namespace kernel {
 constexpr int NBDIMS = 4;
+constexpr size_t kConv2dDimSize = 2;
+constexpr int kSymmetricCoef = 2;
+
+constexpr size_t k2DPadSize = 4;
+constexpr size_t kTop2DPadIndex = 0;
+constexpr size_t kBottom2DPadIndex = 1;
+constexpr size_t kLeft2DPadIndex = 2;
+constexpr size_t kRight2DPadIndex = 3;
+
+constexpr size_t k2DStrideSize = 2;
+constexpr size_t kHeight2DStrideIndex = 0;
+constexpr size_t kWidth2DStrideIndex = 1;
+
+constexpr size_t k2DDilationSize = 4;
+constexpr size_t kHeight2DDilationIndex = 2;
+constexpr size_t kWidth2DDilationIndex = 3;
+
 template <typename T>
-class ConvGradFilterGpuBkwKernel : public GpuKernel {
+class ConvGradFilterBkwGpuKernelMod : public NativeGpuKernelMod {
  public:
-  ConvGradFilterGpuBkwKernel()
+  ConvGradFilterBkwGpuKernelMod()
       : cudnn_handle_(nullptr),
         dw_desc_(nullptr),
         conv_desc_(nullptr),
@@ -59,11 +76,7 @@ class ConvGradFilterGpuBkwKernel : public GpuKernel {
         padded_size_(0),
         workspace_size_(0),
         use_pad_(true) {}
-  ~ConvGradFilterGpuBkwKernel() override { DestroyResource(); }
-
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+  ~ConvGradFilterBkwGpuKernelMod() override { DestroyResource(); }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -137,49 +150,48 @@ class ConvGradFilterGpuBkwKernel : public GpuKernel {
     std::vector<int64_t> pad_list_me = GetAttr<std::vector<int64_t>>(kernel_node, "pad_list");
     (void)std::transform(pad_list_me.begin(), pad_list_me.end(), std::back_inserter(pad_list),
                          [](const int64_t &value) { return static_cast<int>(value); });
-    if (pad_list.size() != 4) {
+    if (pad_list.size() != k2DPadSize) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'pad' should be 4, but got " << pad_list.size();
     }
-    pad_height_ = pad_list[0];
-    pad_width_ = pad_list[2];
-    use_pad_ = !((pad_height_ == pad_list[1]) && (pad_width_ == pad_list[3]));
+    pad_height_ = pad_list[kTop2DPadIndex];
+    pad_width_ = pad_list[kLeft2DPadIndex];
+    use_pad_ = !((pad_height_ == pad_list[kBottom2DPadIndex]) && (pad_width_ == pad_list[kRight2DPadIndex]));
     pad_mode_ = GetAttr<std::string>(kernel_node, "pad_mode");
     SetStrideAndDilation(kernel_node);
     cudnnTensorDescriptor_t x_desc_real = nullptr;
-    int padA[2];
-    int strideA[2] = {stride_[0], stride_[1]};
-    int dilaA[2] = {dilation_[2], dilation_[3]};
+    int padA[kConv2dDimSize];
+    int strideA[kConv2dDimSize] = {stride_[kHeight2DStrideIndex], stride_[kWidth2DStrideIndex]};
+    int dilaA[kConv2dDimSize] = {dilation_[kHeight2DDilationIndex], dilation_[kWidth2DDilationIndex]};
     if (use_pad_) {
-      pad_height_ = pad_list[0] + pad_list[1];
-      pad_width_ = pad_list[2] + pad_list[3];
-      pad_top_ = pad_list[0];
-      pad_left_ = pad_list[2];
-      if (pad_height_ % 2 == 0 && pad_width_ % 2 == 0) {
+      pad_height_ = pad_list[kTop2DPadIndex] + pad_list[kBottom2DPadIndex];
+      pad_width_ = pad_list[kLeft2DPadIndex] + pad_list[kRight2DPadIndex];
+      pad_top_ = pad_list[kTop2DPadIndex];
+      pad_left_ = pad_list[kLeft2DPadIndex];
+      if (pad_height_ % kSymmetricCoef == 0 && pad_width_ % kSymmetricCoef == 0) {
         use_pad_ = false;
       }
-      const int nbDims = 4;
       int dimA[NBDIMS];
       int strideApadded[NBDIMS];
       if (data_format_ == kOpFormat_NCHW || data_format_ == kOpFormat_DEFAULT) {
         auto padded_shape = {IntToSize(n_), IntToSize(c_), IntToSize(old_height_ + pad_height_),
                              IntToSize(old_width_ + pad_width_)};
-        SetDimA(padded_shape, dimA, nbDims, data_format_);
-        SetStrideA(padded_shape, strideApadded, nbDims, data_format_);
+        SetDimA(padded_shape, dimA, NBDIMS, data_format_);
+        SetStrideA(padded_shape, strideApadded, NBDIMS, data_format_);
       } else if (data_format_ == kOpFormat_NHWC) {
         auto padded_shape = {IntToSize(n_), IntToSize(old_height_ + pad_height_), IntToSize(old_width_ + pad_width_),
                              IntToSize(c_)};
-        SetDimA(padded_shape, dimA, nbDims, data_format_);
-        SetStrideA(padded_shape, strideApadded, nbDims, data_format_);
+        SetDimA(padded_shape, dimA, NBDIMS, data_format_);
+        SetStrideA(padded_shape, strideApadded, NBDIMS, data_format_);
       }
       CHECK_CUDNN_RET_WITH_EXCEPT(
-        kernel_node_, cudnnSetTensorNdDescriptor(padded_descriptor_, cudnn_data_type_, nbDims, dimA, strideApadded),
+        kernel_node_, cudnnSetTensorNdDescriptor(padded_descriptor_, cudnn_data_type_, NBDIMS, dimA, strideApadded),
         "cudnnSetTensor4dDescriptor failed");
       padA[0] = 0;
       padA[1] = 0;
-      CHECK_CUDNN_RET_WITH_EXCEPT(
-        kernel_node_,
-        cudnnSetConvolutionNdDescriptor(conv_desc_, 2, padA, strideA, dilaA, CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT),
-        "cudnnSetConvolutionNdDescriptor failed");
+      CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
+                                  cudnnSetConvolutionNdDescriptor(conv_desc_, kConv2dDimSize, padA, strideA, dilaA,
+                                                                  CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT),
+                                  "cudnnSetConvolutionNdDescriptor failed");
       x_desc_real = padded_descriptor_;
     } else {
       if (pad_mode_ == kValidPadModeUpperCase || pad_mode_ == kValidPadModeLowerCase) {
@@ -188,10 +200,10 @@ class ConvGradFilterGpuBkwKernel : public GpuKernel {
       }
       padA[0] = pad_height_;
       padA[1] = pad_width_;
-      CHECK_CUDNN_RET_WITH_EXCEPT(
-        kernel_node_,
-        cudnnSetConvolutionNdDescriptor(conv_desc_, 2, padA, strideA, dilaA, CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT),
-        "cudnnSetConvolution2dDescriptor failed");
+      CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
+                                  cudnnSetConvolutionNdDescriptor(conv_desc_, kConv2dDimSize, padA, strideA, dilaA,
+                                                                  CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT),
+                                  "cudnnSetConvolution2dDescriptor failed");
       x_desc_real = x_desc_;
     }
     if (cudnn_data_type_ == CUDNN_DATA_HALF) {
@@ -340,11 +352,11 @@ class ConvGradFilterGpuBkwKernel : public GpuKernel {
                          [](const int64_t &value) { return static_cast<int>(value); });
     (void)std::transform(dilation_me.begin(), dilation_me.end(), std::back_inserter(dilation_),
                          [](const int64_t &value) { return static_cast<int>(value); });
-    if (stride_.size() != 2) {
+    if (stride_.size() != k2DStrideSize) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'stride' should be 2, but got "
                         << stride_.size();
     }
-    if (dilation_.size() != 4) {
+    if (dilation_.size() != k2DDilationSize) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'dilation' should be 4, but got "
                         << dilation_.size();
     }
@@ -363,9 +375,7 @@ class ConvGradFilterGpuBkwKernel : public GpuKernel {
   std::string pad_mode_;
   std::string data_format_ = kOpFormat_NCHW;
   std::string format_attr_ = kOpFormat_NCHW;
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
+
   const float pad_value_ = 0.0;
   cudnnDataType_t cudnn_data_type_;
   cudnnTensorFormat_t compute_format_;

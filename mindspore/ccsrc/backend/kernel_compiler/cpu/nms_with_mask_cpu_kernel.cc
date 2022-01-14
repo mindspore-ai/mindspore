@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,8 +41,8 @@ void Swap(T *lhs, T *rhs) {
 
 // Sorting function based on BitonicSort from TopK kernel
 template <typename T>
-void NMSWithMaskCPUKernel<T>::NmsBitonicSortByKeyKernel(const int inner, const size_t ceil_power2, const T *input,
-                                                        T *data_buff, int *index_buff, int box_size) {
+void NMSWithMaskCpuKernelMod<T>::NmsBitonicSortByKeyKernel(const int inner, const size_t ceil_power2, const T *input,
+                                                           T *data_buff, int *index_buff, int box_size) {
   auto task1 = [this, &data_buff, &index_buff, &input, inner, box_size](int start, int end) {
     for (int i = start; i < end; i++) {
       data_buff[i] = (i < inner) ? input[(i * box_size) + 4] : std::numeric_limits<T>::max();
@@ -78,7 +78,7 @@ void NMSWithMaskCPUKernel<T>::NmsBitonicSortByKeyKernel(const int inner, const s
 
 // Initialize per row mask array to all true
 template <typename T>
-void NMSWithMaskCPUKernel<T>::MaskInit(size_t numSq, bool *row_mask) {
+void NMSWithMaskCpuKernelMod<T>::MaskInit(size_t numSq, bool *row_mask) {
   auto task = [this, &row_mask](int start, int end) {
     for (int mat_pos = start; mat_pos < end; mat_pos++) {
       row_mask[mat_pos] = true;
@@ -90,8 +90,8 @@ void NMSWithMaskCPUKernel<T>::MaskInit(size_t numSq, bool *row_mask) {
 // copy data from input to output array sorted by indices returned from bitonic sort
 // flips boxes if asked to,  default - false -> if (x1/y1 > x2/y2)
 template <typename T>
-void NMSWithMaskCPUKernel<T>::PopulateOutput(const T *data_in, T *data_out, const int *index_buff, const int num,
-                                             int box_size, bool flip_mode) {
+void NMSWithMaskCpuKernelMod<T>::PopulateOutput(const T *data_in, T *data_out, const int *index_buff, const int num,
+                                                int box_size, bool flip_mode) {
   auto task = [this, &index_buff, &data_in, &data_out, flip_mode, num, box_size](int start, int end) {
     for (int box_num = start; box_num < end; box_num++) {
       int correct_index = index_buff[(num - 1) - box_num];  // flip the array around
@@ -127,7 +127,7 @@ void NMSWithMaskCPUKernel<T>::PopulateOutput(const T *data_in, T *data_out, cons
 
 // populated return mask (init to all true) and return index array
 template <typename T>
-void NMSWithMaskCPUKernel<T>::Preprocess(const int num, int *sel_idx, bool *sel_boxes) {
+void NMSWithMaskCpuKernelMod<T>::Preprocess(const int num, int *sel_idx, bool *sel_boxes) {
   auto task = [this, &sel_idx, &sel_boxes](int start, int end) {
     for (int box_num = start; box_num < end; box_num++) {
       sel_idx[box_num] = box_num;
@@ -138,7 +138,7 @@ void NMSWithMaskCPUKernel<T>::Preprocess(const int num, int *sel_idx, bool *sel_
 }
 
 template <typename T>
-bool NMSWithMaskCPUKernel<T>::IouDecision(const T *output, int box_A_start, int box_B_start, float IOU_value) {
+bool NMSWithMaskCpuKernelMod<T>::IouDecision(const T *output, int box_A_start, int box_B_start, float IOU_value) {
   constexpr int X1_OFFSET = 0;
   constexpr int Y1_OFFSET = 1;
   constexpr int X2_OFFSET = 2;
@@ -162,8 +162,8 @@ bool NMSWithMaskCPUKernel<T>::IouDecision(const T *output, int box_A_start, int 
 // Run parallel NMS pass
 // Every position in the row_mask array is updated wit correct IOU decision after being init to all True
 template <typename T>
-void NMSWithMaskCPUKernel<T>::NmsPass(const int num, const float IOU_value, const T *output, int box_size,
-                                      bool *row_mask) {
+void NMSWithMaskCpuKernelMod<T>::NmsPass(const int num, const float IOU_value, const T *output, int box_size,
+                                         bool *row_mask) {
   auto task = [this, &row_mask, &output, num, box_size, IOU_value](int start, int end) {
     for (int mask_index = start; mask_index < end; mask_index++) {
       int box_i = mask_index / num;                // row in 2d row_mask array
@@ -180,7 +180,7 @@ void NMSWithMaskCPUKernel<T>::NmsPass(const int num, const float IOU_value, cons
 
 // Reduce pass runs on 1 block to allow thread sync
 template <typename T>
-void NMSWithMaskCPUKernel<T>::ReducePass(const int num, bool *sel_boxes, const bool *row_mask) {
+void NMSWithMaskCpuKernelMod<T>::ReducePass(const int num, bool *sel_boxes, const bool *row_mask) {
   // loop over every box in order of high to low confidence score
   for (int i = 0; i < num - 1; ++i) {
     if (!sel_boxes[i]) {
@@ -197,7 +197,7 @@ void NMSWithMaskCPUKernel<T>::ReducePass(const int num, bool *sel_boxes, const b
 }
 
 template <typename T>
-void NMSWithMaskCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
+void NMSWithMaskCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   iou_value_ = AnfAlgo::GetNodeAttr<float>(kernel_node, "iou_threshold");
@@ -215,8 +215,8 @@ void NMSWithMaskCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-void NMSWithMaskCPUKernel<T>::InitInputOutputSize(const CNodePtr &kernel_node) {
-  CPUKernel::InitInputOutputSize(kernel_node);
+void NMSWithMaskCpuKernelMod<T>::InitInputOutputSize(const CNodePtr &kernel_node) {
+  NativeCpuKernelMod::InitInputOutputSize(kernel_node);
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   num_input_ = SizeToInt(input_shape[0]);  //  Get N values in  [N, 5] data.
   ceil_power_2 = static_cast<size_t>(NmsRoundUpPower2(num_input_));
@@ -227,9 +227,9 @@ void NMSWithMaskCPUKernel<T>::InitInputOutputSize(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-bool NMSWithMaskCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> &workspace,
-                                     const std::vector<kernel::AddressPtr> &outputs) {
+bool NMSWithMaskCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                        const std::vector<kernel::AddressPtr> &workspace,
+                                        const std::vector<kernel::AddressPtr> &outputs) {
   auto input = reinterpret_cast<T *>(inputs[0]->addr);
   auto data_buff = reinterpret_cast<T *>(workspace[DATA_BUFF]->addr);
   auto index_buff = reinterpret_cast<int *>(workspace[INDEX_BUFF]->addr);

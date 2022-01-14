@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-void EltWiseGradCPUKernel<T>::ReluGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
+void EltWiseGradCpuKernelMod<T>::ReluGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
   if constexpr (!std::is_same<T, float>::value) {
     MS_LOG(EXCEPTION) << "For 'ReLUGrad', the dtype of input should be float.";
   }
@@ -38,7 +38,7 @@ void EltWiseGradCPUKernel<T>::ReluGrad(const T *input1, const T *input2, T *out,
 }
 
 template <typename T>
-void EltWiseGradCPUKernel<T>::ReLU6Grad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
+void EltWiseGradCpuKernelMod<T>::ReLU6Grad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
   if constexpr (!std::is_same<T, float>::value) {
     MS_LOG(EXCEPTION) << "For 'ReLU6Grad', the dtype of input should be float.";
   }
@@ -50,7 +50,7 @@ void EltWiseGradCPUKernel<T>::ReLU6Grad(const T *input1, const T *input2, T *out
 }
 
 template <typename T>
-void EltWiseGradCPUKernel<T>::AbsGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
+void EltWiseGradCpuKernelMod<T>::AbsGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
   if constexpr (std::is_same<T, float>::value) {
     int ret = ::ElementAbsGrad(input1 + start, input2 + start, out + start, end - start);
     if (ret == NNACL_ERR) {
@@ -64,7 +64,7 @@ void EltWiseGradCPUKernel<T>::AbsGrad(const T *input1, const T *input2, T *out, 
 }
 
 template <typename T>
-void EltWiseGradCPUKernel<T>::SigmoidGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
+void EltWiseGradCpuKernelMod<T>::SigmoidGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
   if constexpr (!std::is_same<T, float>::value) {
     MS_LOG(EXCEPTION) << "For 'SigmoidGrad', the dtype of input should be float.";
   }
@@ -76,14 +76,14 @@ void EltWiseGradCPUKernel<T>::SigmoidGrad(const T *input1, const T *input2, T *o
 }
 
 template <typename T>
-void EltWiseGradCPUKernel<T>::SqrtGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
+void EltWiseGradCpuKernelMod<T>::SqrtGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
   for (size_t i = start; i < end; i++) {
     out[i] = input2[i] / (input1[i] * 2);
   }
 }
 
 template <typename T>
-void EltWiseGradCPUKernel<T>::TanhGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
+void EltWiseGradCpuKernelMod<T>::TanhGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
   if constexpr (!std::is_same<T, float>::value) {
     MS_LOG(EXCEPTION) << "For 'TanhGrad', the dtype of input should be float.";
   }
@@ -95,7 +95,7 @@ void EltWiseGradCPUKernel<T>::TanhGrad(const T *input1, const T *input2, T *out,
 }
 
 template <typename T>
-void EltWiseGradCPUKernel<T>::GeluGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
+void EltWiseGradCpuKernelMod<T>::GeluGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
   for (size_t i = start; i < end; i++) {
     T x = input2[i];
     auto double_x = static_cast<T>(x);
@@ -107,7 +107,7 @@ void EltWiseGradCPUKernel<T>::GeluGrad(const T *input1, const T *input2, T *out,
 }
 
 template <typename T>
-void EltWiseGradCPUKernel<T>::AsinGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
+void EltWiseGradCpuKernelMod<T>::AsinGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
   for (size_t i = start; i < end; i++) {
     T dividend = input2[i];
     T divisor = sqrt(1 - input1[i] * input1[i]);
@@ -128,7 +128,7 @@ void EltWiseGradCPUKernel<T>::AsinGrad(const T *input1, const T *input2, T *out,
 }
 
 template <typename T>
-void EltWiseGradCPUKernel<T>::ACosGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
+void EltWiseGradCpuKernelMod<T>::ACosGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
   for (size_t i = start; i < end; i++) {
     T dividend = -input2[i];
     T divisor = sqrt(1 - input1[i] * input1[i]);
@@ -149,7 +149,7 @@ void EltWiseGradCPUKernel<T>::ACosGrad(const T *input1, const T *input2, T *out,
 }
 
 template <typename T>
-void EltWiseGradCPUKernel<T>::AtanGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
+void EltWiseGradCpuKernelMod<T>::AtanGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
   for (size_t i = start; i < end; i++) {
     T dividend = input2[i];
     T divisor = 1 + input1[i] * input1[i];
@@ -170,7 +170,7 @@ void EltWiseGradCPUKernel<T>::AtanGrad(const T *input1, const T *input2, T *out,
 }
 
 template <typename T>
-void EltWiseGradCPUKernel<T>::AsinhGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
+void EltWiseGradCpuKernelMod<T>::AsinhGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
   for (size_t i = start; i < end; i++) {
     T dividend = input2[i];
     T divisor = cosh(input1[i]);
@@ -191,7 +191,7 @@ void EltWiseGradCPUKernel<T>::AsinhGrad(const T *input1, const T *input2, T *out
 }
 
 template <typename T>
-void EltWiseGradCPUKernel<T>::AcoshGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
+void EltWiseGradCpuKernelMod<T>::AcoshGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
   for (size_t i = start; i < end; i++) {
     T dividend = input2[i];
     T divisor = sinh(input1[i]);
@@ -212,8 +212,8 @@ void EltWiseGradCPUKernel<T>::AcoshGrad(const T *input1, const T *input2, T *out
 }
 
 template <typename T>
-void EltWiseGradCPUKernel<T>::ComplexAcoshGrad(const T *input1, const T *input2, T *out, size_t start,
-                                               size_t end) const {
+void EltWiseGradCpuKernelMod<T>::ComplexAcoshGrad(const T *input1, const T *input2, T *out, size_t start,
+                                                  size_t end) const {
   for (size_t i = start; i < end; i++) {
     T dividend = input2[i];
     T divisor = std::conj(sinh(input1[i]));
@@ -226,7 +226,8 @@ void EltWiseGradCPUKernel<T>::ComplexAcoshGrad(const T *input1, const T *input2,
 }
 
 template <typename T>
-void EltWiseGradCPUKernel<T>::SoftplusGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
+void EltWiseGradCpuKernelMod<T>::SoftplusGrad(const T *input1, const T *input2, T *out, size_t start,
+                                              size_t end) const {
   if constexpr (!std::is_same<T, float>::value) {
     MS_LOG(EXCEPTION) << "For 'SoftplusGrad', the dtype of input should be float.";
   }
@@ -238,77 +239,77 @@ void EltWiseGradCPUKernel<T>::SoftplusGrad(const T *input1, const T *input2, T *
 }
 
 template <typename T>
-void EltWiseGradCPUKernel<T>::InitComputeFunc() {
+void EltWiseGradCpuKernelMod<T>::InitComputeFunc() {
   if constexpr (std::is_same_v<T, double>) {
     static const std::map<std::string,
-                          std::function<void(EltWiseGradCPUKernel *, const T *, const T *, T *, size_t, size_t)>>
-      elt_map{{prim::kPrimSqrtGrad->name(), &EltWiseGradCPUKernel<T>::SqrtGrad},
-              {prim::kPrimGeLUGrad->name(), &EltWiseGradCPUKernel<T>::GeluGrad},
-              {prim::kPrimAsinGrad->name(), &EltWiseGradCPUKernel<T>::AsinGrad},
-              {prim::kPrimACosGrad->name(), &EltWiseGradCPUKernel<T>::ACosGrad},
-              {prim::kPrimAtanGrad->name(), &EltWiseGradCPUKernel<T>::AtanGrad},
-              {prim::kPrimAsinhGrad->name(), &EltWiseGradCPUKernel<T>::AsinhGrad},
-              {prim::kPrimAcoshGrad->name(), &EltWiseGradCPUKernel<T>::AcoshGrad},
-              {prim::kPrimAbsGrad->name(), &EltWiseGradCPUKernel<T>::AbsGrad}};
+                          std::function<void(EltWiseGradCpuKernelMod *, const T *, const T *, T *, size_t, size_t)>>
+      elt_map{{prim::kPrimSqrtGrad->name(), &EltWiseGradCpuKernelMod<T>::SqrtGrad},
+              {prim::kPrimGeLUGrad->name(), &EltWiseGradCpuKernelMod<T>::GeluGrad},
+              {prim::kPrimAsinGrad->name(), &EltWiseGradCpuKernelMod<T>::AsinGrad},
+              {prim::kPrimACosGrad->name(), &EltWiseGradCpuKernelMod<T>::ACosGrad},
+              {prim::kPrimAtanGrad->name(), &EltWiseGradCpuKernelMod<T>::AtanGrad},
+              {prim::kPrimAsinhGrad->name(), &EltWiseGradCpuKernelMod<T>::AsinhGrad},
+              {prim::kPrimAcoshGrad->name(), &EltWiseGradCpuKernelMod<T>::AcoshGrad},
+              {prim::kPrimAbsGrad->name(), &EltWiseGradCpuKernelMod<T>::AbsGrad}};
     if (elt_map.find(kernel_name_) == elt_map.end()) {
-      MS_LOG(EXCEPTION) << "EltWiseGradCPUKernel does not support " << kernel_name_ << " with double as input.";
+      MS_LOG(EXCEPTION) << "EltWiseGradCpuKernelMod does not support " << kernel_name_ << " with double as input.";
     }
     compute_func_ = elt_map.at(kernel_name_);
     return;
   }
   if constexpr (std::is_same_v<T, float>) {
     static const std::map<std::string,
-                          std::function<void(EltWiseGradCPUKernel *, const T *, const T *, T *, size_t, size_t)>>
-      elt_map{{prim::kPrimReluGrad->name(), &EltWiseGradCPUKernel<T>::ReluGrad},
-              {prim::kPrimRelu6Grad->name(), &EltWiseGradCPUKernel<T>::ReLU6Grad},
-              {prim::kPrimSigmoidGrad->name(), &EltWiseGradCPUKernel<T>::SigmoidGrad},
-              {prim::kPrimAbsGrad->name(), &EltWiseGradCPUKernel<T>::AbsGrad},
-              {prim::kPrimTanhGrad->name(), &EltWiseGradCPUKernel<T>::TanhGrad},
-              {prim::kPrimSqrtGrad->name(), &EltWiseGradCPUKernel<T>::SqrtGrad},
-              {prim::kPrimGeLUGrad->name(), &EltWiseGradCPUKernel<T>::GeluGrad},
-              {prim::kPrimAsinGrad->name(), &EltWiseGradCPUKernel<T>::AsinGrad},
-              {prim::kPrimACosGrad->name(), &EltWiseGradCPUKernel<T>::ACosGrad},
-              {prim::kPrimAtanGrad->name(), &EltWiseGradCPUKernel<T>::AtanGrad},
-              {prim::kPrimAsinhGrad->name(), &EltWiseGradCPUKernel<T>::AsinhGrad},
-              {prim::kPrimAcoshGrad->name(), &EltWiseGradCPUKernel<T>::AcoshGrad},
-              {prim::kPrimSoftplusGrad->name(), &EltWiseGradCPUKernel<T>::SoftplusGrad}};
+                          std::function<void(EltWiseGradCpuKernelMod *, const T *, const T *, T *, size_t, size_t)>>
+      elt_map{{prim::kPrimReluGrad->name(), &EltWiseGradCpuKernelMod<T>::ReluGrad},
+              {prim::kPrimRelu6Grad->name(), &EltWiseGradCpuKernelMod<T>::ReLU6Grad},
+              {prim::kPrimSigmoidGrad->name(), &EltWiseGradCpuKernelMod<T>::SigmoidGrad},
+              {prim::kPrimAbsGrad->name(), &EltWiseGradCpuKernelMod<T>::AbsGrad},
+              {prim::kPrimTanhGrad->name(), &EltWiseGradCpuKernelMod<T>::TanhGrad},
+              {prim::kPrimSqrtGrad->name(), &EltWiseGradCpuKernelMod<T>::SqrtGrad},
+              {prim::kPrimGeLUGrad->name(), &EltWiseGradCpuKernelMod<T>::GeluGrad},
+              {prim::kPrimAsinGrad->name(), &EltWiseGradCpuKernelMod<T>::AsinGrad},
+              {prim::kPrimACosGrad->name(), &EltWiseGradCpuKernelMod<T>::ACosGrad},
+              {prim::kPrimAtanGrad->name(), &EltWiseGradCpuKernelMod<T>::AtanGrad},
+              {prim::kPrimAsinhGrad->name(), &EltWiseGradCpuKernelMod<T>::AsinhGrad},
+              {prim::kPrimAcoshGrad->name(), &EltWiseGradCpuKernelMod<T>::AcoshGrad},
+              {prim::kPrimSoftplusGrad->name(), &EltWiseGradCpuKernelMod<T>::SoftplusGrad}};
     if (elt_map.find(kernel_name_) == elt_map.end()) {
-      MS_LOG(EXCEPTION) << "EltWiseGradCPUKernel does not support " << kernel_name_ << " with float as input.";
+      MS_LOG(EXCEPTION) << "EltWiseGradCpuKernelMod does not support " << kernel_name_ << " with float as input.";
     }
     compute_func_ = elt_map.at(kernel_name_);
     return;
   }
   if constexpr (std::is_same_v<T, int>) {
     static const std::map<std::string,
-                          std::function<void(EltWiseGradCPUKernel *, const T *, const T *, T *, size_t, size_t)>>
-      elt_map{{prim::kPrimAbsGrad->name(), &EltWiseGradCPUKernel<T>::AbsGrad}};
+                          std::function<void(EltWiseGradCpuKernelMod *, const T *, const T *, T *, size_t, size_t)>>
+      elt_map{{prim::kPrimAbsGrad->name(), &EltWiseGradCpuKernelMod<T>::AbsGrad}};
     if (elt_map.find(kernel_name_) == elt_map.end()) {
-      MS_LOG(EXCEPTION) << "EltWiseGradCPUKernel does not support " << kernel_name_ << " with int as input.";
+      MS_LOG(EXCEPTION) << "EltWiseGradCpuKernelMod does not support " << kernel_name_ << " with int as input.";
     }
     compute_func_ = elt_map.at(kernel_name_);
   }
   if constexpr ((std::is_same_v<T, complex64>) || (std::is_same_v<T, complex128>)) {
     static const std::map<std::string,
-                          std::function<void(EltWiseGradCPUKernel *, const T *, const T *, T *, size_t, size_t)>>
-      elt_map{{prim::kPrimAcoshGrad->name(), &EltWiseGradCPUKernel<T>::ComplexAcoshGrad}};
+                          std::function<void(EltWiseGradCpuKernelMod *, const T *, const T *, T *, size_t, size_t)>>
+      elt_map{{prim::kPrimAcoshGrad->name(), &EltWiseGradCpuKernelMod<T>::ComplexAcoshGrad}};
     if (elt_map.find(kernel_name_) == elt_map.end()) {
-      MS_LOG(EXCEPTION) << "EltWiseGradCPUKernel does not support " << kernel_name_;
+      MS_LOG(EXCEPTION) << "EltWiseGradCpuKernelMod does not support " << kernel_name_;
     }
     compute_func_ = elt_map.at(kernel_name_);
   }
 }
 
 template <typename T>
-void EltWiseGradCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
+void EltWiseGradCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   InitComputeFunc();
 }
 
 template <typename T>
-bool EltWiseGradCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> &,
-                                     const std::vector<kernel::AddressPtr> &outputs) {
+bool EltWiseGradCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                        const std::vector<kernel::AddressPtr> &,
+                                        const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.size() < kInputMinNum || outputs.size() != kOutputNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it requires at least 2 inputs and 1 output, but got "
                   << inputs.size() << " input(s) and " << outputs.size() << " output(s).";

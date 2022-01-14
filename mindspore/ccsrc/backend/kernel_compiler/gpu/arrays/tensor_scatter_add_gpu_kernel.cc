@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,48 +24,48 @@ MS_REG_GPU_KERNEL_TWO(TensorScatterAdd,
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddOutputAttr(kNumberTypeFloat16),
-                      TensorScatterAddGpuFwdKernel, half, int)
+                      TensorScatterAddFwdGpuKernelMod, half, int)
 MS_REG_GPU_KERNEL_TWO(TensorScatterAdd,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
-                      TensorScatterAddGpuFwdKernel, float, int)
+                      TensorScatterAddFwdGpuKernelMod, float, int)
 MS_REG_GPU_KERNEL_TWO(TensorScatterAdd,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat64)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeFloat64)
                         .AddOutputAttr(kNumberTypeFloat64),
-                      TensorScatterAddGpuFwdKernel, double, int)
+                      TensorScatterAddFwdGpuKernelMod, double, int)
 MS_REG_GPU_KERNEL_TWO(TensorScatterAdd,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeInt8)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt8)
                         .AddOutputAttr(kNumberTypeInt8),
-                      TensorScatterAddGpuFwdKernel, char, int)
+                      TensorScatterAddFwdGpuKernelMod, char, int)
 MS_REG_GPU_KERNEL_TWO(TensorScatterAdd,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeUInt8)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeUInt8)
                         .AddOutputAttr(kNumberTypeUInt8),
-                      TensorScatterAddGpuFwdKernel, uchar, int)
+                      TensorScatterAddFwdGpuKernelMod, uchar, int)
 MS_REG_GPU_KERNEL_TWO(TensorScatterAdd,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddOutputAttr(kNumberTypeInt32),
-                      TensorScatterAddGpuFwdKernel, int, int)
+                      TensorScatterAddFwdGpuKernelMod, int, int)
 MS_REG_GPU_KERNEL_TWO(TensorScatterAdd,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat64)
                         .AddInputAttr(kNumberTypeInt64)
                         .AddInputAttr(kNumberTypeFloat64)
                         .AddOutputAttr(kNumberTypeFloat64),
-                      TensorScatterAddGpuFwdKernel, double, int64_t)
+                      TensorScatterAddFwdGpuKernelMod, double, int64_t)
 }  // namespace kernel
 }  // namespace mindspore

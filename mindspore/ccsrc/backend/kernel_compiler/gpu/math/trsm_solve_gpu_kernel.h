@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,13 +30,10 @@ namespace kernel {
 constexpr auto kAVectorxDimNum = 1;
 constexpr auto kAMatrixDimNum = 2;
 template <typename T>
-class TrsmGpuKernel : public GpuKernel {
+class TrsmGpuKernelMod : public NativeGpuKernelMod {
  public:
-  TrsmGpuKernel() = default;
-  ~TrsmGpuKernel() = default;
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+  TrsmGpuKernelMod() = default;
+  ~TrsmGpuKernelMod() = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -205,9 +202,6 @@ class TrsmGpuKernel : public GpuKernel {
   cublasFillMode_t uplo_{CUBLAS_FILL_MODE_UPPER};
   cublasOperation_t trans_{CUBLAS_OP_N};
   cublasDiagType_t unit_diagonal_{CUBLAS_DIAG_NON_UNIT};
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore

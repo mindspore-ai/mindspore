@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ const AnfNodePtr ConvertUnSupportNodeToAICPU::Process(const mindspore::FuncGraph
     MS_EXCEPTION_IF_NULL(builder);
     builder->SetKernelType(AICPU_KERNEL);
     AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), node.get());
-    AnfAlgo::SetNodeAttr(kAttrIsAICPUKernel, MakeValue(true), node);
+    AnfAlgo::SetNodeAttr(kAttrIsAiCpuKernel, MakeValue(true), node);
   } else {
     MS_LOG(EXCEPTION) << "Kernel " << kernel_builder_info->ToString() << "is not supported in AiCPU & AiCore : node ["
                       << node->DebugString() << "]" << trace::DumpSourceLines(node);

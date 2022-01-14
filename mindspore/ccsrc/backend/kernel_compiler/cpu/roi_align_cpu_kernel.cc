@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ constexpr size_t kOutputSize = 1;
 }  //  namespace
 
 template <typename T>
-void ROIAlignCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
+void ROIAlignCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   //  Get the input shapes
@@ -56,9 +56,9 @@ void ROIAlignCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-bool ROIAlignCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                  const std::vector<kernel::AddressPtr> &,
-                                  const std::vector<kernel::AddressPtr> &outputs) {
+bool ROIAlignCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                     const std::vector<kernel::AddressPtr> &,
+                                     const std::vector<kernel::AddressPtr> &outputs) {
   const T *input = reinterpret_cast<T *>(inputs[0]->addr);
   const T *rois = reinterpret_cast<T *>(inputs[1]->addr);
   auto out_data = reinterpret_cast<T *>(outputs[0]->addr);
@@ -119,8 +119,8 @@ bool ROIAlignCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
 }
 
 template <typename T>
-void ROIAlignCPUKernel<T>::CheckParam(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> &outputs) {
+void ROIAlignCpuKernelMod<T>::CheckParam(const std::vector<kernel::AddressPtr> &inputs,
+                                         const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.size() != kInputSize) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be " << kInputSize << ", but got "
                       << inputs.size() << " input(s).";
@@ -133,8 +133,8 @@ void ROIAlignCPUKernel<T>::CheckParam(const std::vector<kernel::AddressPtr> &inp
 }
 
 template <typename T>
-void ROIAlignCPUKernel<T>::bilinear_interpolate(const int height, const int width, T y, T x, int *x_low, int *y_low,
-                                                int *x_high, int *y_high, T *w1, T *w2, T *w3, T *w4) {
+void ROIAlignCpuKernelMod<T>::bilinear_interpolate(const int height, const int width, T y, T x, int *x_low, int *y_low,
+                                                   int *x_high, int *y_high, T *w1, T *w2, T *w3, T *w4) {
   constexpr float eps = 0.00007;
   const T ZERO = T(0.0);
   const T ONE = T(1.0);
@@ -179,11 +179,11 @@ void ROIAlignCPUKernel<T>::bilinear_interpolate(const int height, const int widt
 }
 
 template <typename T>
-void ROIAlignCPUKernel<T>::bin_box(int thread_idx, const T *roi_boxes, int roi_cols, const T spatial_scale,
-                                   const int sample_num, int roi_end_mode, const int channels, const int height,
-                                   const int width, const int pooled_height, const int pooled_width, int *offset,
-                                   int *n, int *c, int *ph, int *pw, int *roi_bin_grid_h, int *roi_bin_grid_w,
-                                   T *bin_size_h, T *bin_size_w, T *roi_start_h, T *roi_start_w) {
+void ROIAlignCpuKernelMod<T>::bin_box(int thread_idx, const T *roi_boxes, int roi_cols, const T spatial_scale,
+                                      const int sample_num, int roi_end_mode, const int channels, const int height,
+                                      const int width, const int pooled_height, const int pooled_width, int *offset,
+                                      int *n, int *c, int *ph, int *pw, int *roi_bin_grid_h, int *roi_bin_grid_w,
+                                      T *bin_size_h, T *bin_size_w, T *roi_start_h, T *roi_start_w) {
   constexpr int START_W = 0;
   constexpr int START_H = 1;
   constexpr int END_W = 2;

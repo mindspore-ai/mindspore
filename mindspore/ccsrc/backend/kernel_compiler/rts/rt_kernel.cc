@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,10 +42,12 @@ RtKernel::~RtKernel() {}
 
 bool RtKernel::Init(const mindspore::AnfNodePtr & /*anf_node*/) { return true; }
 
-const std::vector<size_t> &RtKernel::GetInputSizeList() const { return input_size_list_; }
+void RtKernel::SetInputSizeList(const std::vector<size_t> &size_list) { mutable_input_size_list_ = size_list; }
+void RtKernel::SetOutputSizeList(const std::vector<size_t> &size_list) { mutable_output_size_list_ = size_list; }
+void RtKernel::SetWorkspaceSizeList(const std::vector<size_t> &size_list) { mutable_workspace_size_list_ = size_list; }
 
-const std::vector<size_t> &RtKernel::GetOutputSizeList() const { return output_size_list_; }
-
-const std::vector<size_t> &RtKernel::GetWorkspaceSizeList() const { return workspace_size_list_; }
+const std::vector<size_t> &RtKernel::GetInputSizeList() const { return mutable_input_size_list_; }
+const std::vector<size_t> &RtKernel::GetOutputSizeList() const { return mutable_output_size_list_; }
+const std::vector<size_t> &RtKernel::GetWorkspaceSizeList() const { return mutable_workspace_size_list_; }
 }  // namespace kernel
 }  // namespace mindspore

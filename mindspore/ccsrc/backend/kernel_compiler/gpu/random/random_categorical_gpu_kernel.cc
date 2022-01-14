@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,125 +24,125 @@ MS_REG_GPU_KERNEL_THREE(RandomCategorical,
                           .AddInputAttr(kNumberTypeInt32)
                           .AddInputAttr(kNumberTypeInt32)
                           .AddOutputAttr(kNumberTypeInt16),
-                        RandomCategoricalGpuKernel, half, int, int16_t)
+                        RandomCategoricalGpuKernelMod, half, int, int16_t)
 MS_REG_GPU_KERNEL_THREE(RandomCategorical,
                         KernelAttr()
                           .AddInputAttr(kNumberTypeFloat16)
                           .AddInputAttr(kNumberTypeInt32)
                           .AddInputAttr(kNumberTypeInt32)
                           .AddOutputAttr(kNumberTypeInt32),
-                        RandomCategoricalGpuKernel, half, int, int32_t)
+                        RandomCategoricalGpuKernelMod, half, int, int32_t)
 MS_REG_GPU_KERNEL_THREE(RandomCategorical,
                         KernelAttr()
                           .AddInputAttr(kNumberTypeFloat16)
                           .AddInputAttr(kNumberTypeInt32)
                           .AddInputAttr(kNumberTypeInt32)
                           .AddOutputAttr(kNumberTypeInt64),
-                        RandomCategoricalGpuKernel, half, int, int64_t)
+                        RandomCategoricalGpuKernelMod, half, int, int64_t)
 MS_REG_GPU_KERNEL_THREE(RandomCategorical,
                         KernelAttr()
                           .AddInputAttr(kNumberTypeFloat32)
                           .AddInputAttr(kNumberTypeInt32)
                           .AddInputAttr(kNumberTypeInt32)
                           .AddOutputAttr(kNumberTypeInt16),
-                        RandomCategoricalGpuKernel, float, int, int16_t)
+                        RandomCategoricalGpuKernelMod, float, int, int16_t)
 MS_REG_GPU_KERNEL_THREE(RandomCategorical,
                         KernelAttr()
                           .AddInputAttr(kNumberTypeFloat32)
                           .AddInputAttr(kNumberTypeInt32)
                           .AddInputAttr(kNumberTypeInt32)
                           .AddOutputAttr(kNumberTypeInt32),
-                        RandomCategoricalGpuKernel, float, int, int32_t)
+                        RandomCategoricalGpuKernelMod, float, int, int32_t)
 MS_REG_GPU_KERNEL_THREE(RandomCategorical,
                         KernelAttr()
                           .AddInputAttr(kNumberTypeFloat32)
                           .AddInputAttr(kNumberTypeInt32)
                           .AddInputAttr(kNumberTypeInt32)
                           .AddOutputAttr(kNumberTypeInt64),
-                        RandomCategoricalGpuKernel, float, int, int64_t)
+                        RandomCategoricalGpuKernelMod, float, int, int64_t)
 MS_REG_GPU_KERNEL_THREE(RandomCategorical,
                         KernelAttr()
                           .AddInputAttr(kNumberTypeFloat64)
                           .AddInputAttr(kNumberTypeInt32)
                           .AddInputAttr(kNumberTypeInt32)
                           .AddOutputAttr(kNumberTypeInt16),
-                        RandomCategoricalGpuKernel, double, int, int16_t)
+                        RandomCategoricalGpuKernelMod, double, int, int16_t)
 MS_REG_GPU_KERNEL_THREE(RandomCategorical,
                         KernelAttr()
                           .AddInputAttr(kNumberTypeFloat64)
                           .AddInputAttr(kNumberTypeInt32)
                           .AddInputAttr(kNumberTypeInt32)
                           .AddOutputAttr(kNumberTypeInt32),
-                        RandomCategoricalGpuKernel, double, int, int32_t)
+                        RandomCategoricalGpuKernelMod, double, int, int32_t)
 MS_REG_GPU_KERNEL_THREE(RandomCategorical,
                         KernelAttr()
                           .AddInputAttr(kNumberTypeFloat64)
                           .AddInputAttr(kNumberTypeInt32)
                           .AddInputAttr(kNumberTypeInt32)
                           .AddOutputAttr(kNumberTypeInt64),
-                        RandomCategoricalGpuKernel, double, int, int64_t)
+                        RandomCategoricalGpuKernelMod, double, int, int64_t)
 MS_REG_GPU_KERNEL_THREE(RandomCategorical,
                         KernelAttr()
                           .AddInputAttr(kNumberTypeFloat16)
                           .AddInputAttr(kNumberTypeInt64)
                           .AddInputAttr(kNumberTypeInt64)
                           .AddOutputAttr(kNumberTypeInt16),
-                        RandomCategoricalGpuKernel, half, int64_t, int16_t)
+                        RandomCategoricalGpuKernelMod, half, int64_t, int16_t)
 MS_REG_GPU_KERNEL_THREE(RandomCategorical,
                         KernelAttr()
                           .AddInputAttr(kNumberTypeFloat16)
                           .AddInputAttr(kNumberTypeInt64)
                           .AddInputAttr(kNumberTypeInt64)
                           .AddOutputAttr(kNumberTypeInt32),
-                        RandomCategoricalGpuKernel, half, int64_t, int32_t)
+                        RandomCategoricalGpuKernelMod, half, int64_t, int32_t)
 MS_REG_GPU_KERNEL_THREE(RandomCategorical,
                         KernelAttr()
                           .AddInputAttr(kNumberTypeFloat16)
                           .AddInputAttr(kNumberTypeInt64)
                           .AddInputAttr(kNumberTypeInt64)
                           .AddOutputAttr(kNumberTypeInt64),
-                        RandomCategoricalGpuKernel, half, int64_t, int64_t)
+                        RandomCategoricalGpuKernelMod, half, int64_t, int64_t)
 MS_REG_GPU_KERNEL_THREE(RandomCategorical,
                         KernelAttr()
                           .AddInputAttr(kNumberTypeFloat32)
                           .AddInputAttr(kNumberTypeInt64)
                           .AddInputAttr(kNumberTypeInt64)
                           .AddOutputAttr(kNumberTypeInt16),
-                        RandomCategoricalGpuKernel, float, int64_t, int16_t)
+                        RandomCategoricalGpuKernelMod, float, int64_t, int16_t)
 MS_REG_GPU_KERNEL_THREE(RandomCategorical,
                         KernelAttr()
                           .AddInputAttr(kNumberTypeFloat32)
                           .AddInputAttr(kNumberTypeInt64)
                           .AddInputAttr(kNumberTypeInt64)
                           .AddOutputAttr(kNumberTypeInt32),
-                        RandomCategoricalGpuKernel, float, int64_t, int32_t)
+                        RandomCategoricalGpuKernelMod, float, int64_t, int32_t)
 MS_REG_GPU_KERNEL_THREE(RandomCategorical,
                         KernelAttr()
                           .AddInputAttr(kNumberTypeFloat32)
                           .AddInputAttr(kNumberTypeInt64)
                           .AddInputAttr(kNumberTypeInt64)
                           .AddOutputAttr(kNumberTypeInt64),
-                        RandomCategoricalGpuKernel, float, int64_t, int64_t)
+                        RandomCategoricalGpuKernelMod, float, int64_t, int64_t)
 MS_REG_GPU_KERNEL_THREE(RandomCategorical,
                         KernelAttr()
                           .AddInputAttr(kNumberTypeFloat64)
                           .AddInputAttr(kNumberTypeInt64)
                           .AddInputAttr(kNumberTypeInt64)
                           .AddOutputAttr(kNumberTypeInt16),
-                        RandomCategoricalGpuKernel, double, int64_t, int16_t)
+                        RandomCategoricalGpuKernelMod, double, int64_t, int16_t)
 MS_REG_GPU_KERNEL_THREE(RandomCategorical,
                         KernelAttr()
                           .AddInputAttr(kNumberTypeFloat64)
                           .AddInputAttr(kNumberTypeInt64)
                           .AddInputAttr(kNumberTypeInt64)
                           .AddOutputAttr(kNumberTypeInt32),
-                        RandomCategoricalGpuKernel, double, int64_t, int32_t)
+                        RandomCategoricalGpuKernelMod, double, int64_t, int32_t)
 MS_REG_GPU_KERNEL_THREE(RandomCategorical,
                         KernelAttr()
                           .AddInputAttr(kNumberTypeFloat64)
                           .AddInputAttr(kNumberTypeInt64)
                           .AddInputAttr(kNumberTypeInt64)
                           .AddOutputAttr(kNumberTypeInt64),
-                        RandomCategoricalGpuKernel, double, int64_t, int64_t)
+                        RandomCategoricalGpuKernelMod, double, int64_t, int64_t)
 }  // namespace kernel
 }  // namespace mindspore

@@ -21,7 +21,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-void MatrixDiagPartCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
+void MatrixDiagPartCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   shapes_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   out_shapes_ = shapes_;
   dim_size_ = shapes_.size();
@@ -40,8 +40,9 @@ void MatrixDiagPartCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-bool MatrixDiagPartCPUKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                        const std::vector<AddressPtr> &outputs) {
+bool MatrixDiagPartCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs,
+                                           const std::vector<AddressPtr> &workspace,
+                                           const std::vector<AddressPtr> &outputs) {
   T *in_value = reinterpret_cast<T *>(inputs[0]->addr);
   // K is 2 elements vector, k[0] is lower part, k[0]<0, k[1] is upper part,
   int64_t *k_range = reinterpret_cast<int64_t *>(inputs[1]->addr);

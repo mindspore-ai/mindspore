@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class SolveTriangularCPUKernel : public CPUKernel {
+class SolveTriangularCpuKernelMod : public NativeCpuKernelMod {
  public:
-  SolveTriangularCPUKernel() = default;
-  ~SolveTriangularCPUKernel() override = default;
+  SolveTriangularCpuKernelMod() = default;
+  ~SolveTriangularCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -44,11 +44,11 @@ class SolveTriangularCPUKernel : public CPUKernel {
 MS_REG_CPU_KERNEL_T(
   SolveTriangular,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  SolveTriangularCPUKernel, float)
+  SolveTriangularCpuKernelMod, float)
 MS_REG_CPU_KERNEL_T(
   SolveTriangular,
   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-  SolveTriangularCPUKernel, double)
+  SolveTriangularCpuKernelMod, double)
 }  // namespace kernel
 }  // namespace mindspore
 

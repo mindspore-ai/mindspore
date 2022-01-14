@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace kernel {
-FakeLearnedScaleQuantPerChannelGpuKernel::FakeLearnedScaleQuantPerChannelGpuKernel()
+FakeLearnedScaleQuantPerChannelGpuKernelMod::FakeLearnedScaleQuantPerChannelGpuKernelMod()
     : input_size_(0),
       quant_num_(1),
       global_step_(0),
@@ -32,19 +32,7 @@ FakeLearnedScaleQuantPerChannelGpuKernel::FakeLearnedScaleQuantPerChannelGpuKern
       neg_trunc_(false),
       num_channels_(0) {}
 
-const std::vector<size_t> &FakeLearnedScaleQuantPerChannelGpuKernel::GetInputSizeList() const {
-  return input_size_list_;
-}
-
-const std::vector<size_t> &FakeLearnedScaleQuantPerChannelGpuKernel::GetOutputSizeList() const {
-  return output_size_list_;
-}
-
-const std::vector<size_t> &FakeLearnedScaleQuantPerChannelGpuKernel::GetWorkspaceSizeList() const {
-  return workspace_size_list_;
-}
-
-bool FakeLearnedScaleQuantPerChannelGpuKernel::Init(const CNodePtr &kernel_node) {
+bool FakeLearnedScaleQuantPerChannelGpuKernelMod::Init(const CNodePtr &kernel_node) {
   auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
   kernel_node_ = kernel_node;
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
@@ -72,7 +60,7 @@ bool FakeLearnedScaleQuantPerChannelGpuKernel::Init(const CNodePtr &kernel_node)
   return true;
 }
 
-void FakeLearnedScaleQuantPerChannelGpuKernel::InitSizeLists() {
+void FakeLearnedScaleQuantPerChannelGpuKernelMod::InitSizeLists() {
   input_size_list_.push_back(input_size_);                    // x
   input_size_list_.push_back(sizeof(float) * num_channels_);  // alpha
   input_size_list_.push_back(sizeof(float));                  // quant_max
@@ -81,9 +69,9 @@ void FakeLearnedScaleQuantPerChannelGpuKernel::InitSizeLists() {
   workspace_size_list_.push_back(input_size_);                // input_quant
 }
 
-bool FakeLearnedScaleQuantPerChannelGpuKernel::Launch(const std::vector<AddressPtr> &inputs,
-                                                      const std::vector<AddressPtr> &workspace,
-                                                      const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool FakeLearnedScaleQuantPerChannelGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
+                                                         const std::vector<AddressPtr> &workspace,
+                                                         const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   float *input = GetDeviceAddress<float>(inputs, 0);
   float *input_alpha = GetDeviceAddress<float>(inputs, 1);
   float *input_quant_max = GetDeviceAddress<float>(inputs, 2);
@@ -124,6 +112,6 @@ bool FakeLearnedScaleQuantPerChannelGpuKernel::Launch(const std::vector<AddressP
   return true;
 }
 
-MS_REG_GPU_KERNEL(FakeLearnedScaleQuantPerChannel, FakeLearnedScaleQuantPerChannelGpuKernel)
+MS_REG_GPU_KERNEL(FakeLearnedScaleQuantPerChannel, FakeLearnedScaleQuantPerChannelGpuKernelMod)
 }  // namespace kernel
 }  // namespace mindspore

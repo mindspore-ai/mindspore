@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class SpaceToDepthCPUKernel : public CPUKernel {
+class SpaceToDepthCpuKernelMod : public NativeCpuKernelMod {
  public:
-  SpaceToDepthCPUKernel() = default;
-  ~SpaceToDepthCPUKernel() override = default;
+  SpaceToDepthCpuKernelMod() = default;
+  ~SpaceToDepthCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -41,43 +41,43 @@ class SpaceToDepthCPUKernel : public CPUKernel {
 
 MS_REG_CPU_KERNEL_T(
   SpaceToDepth, KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  SpaceToDepthCPUKernel, float);
+  SpaceToDepthCpuKernelMod, float);
 
 MS_REG_CPU_KERNEL_T(
   SpaceToDepth, KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  SpaceToDepthCPUKernel, float16);
+  SpaceToDepthCpuKernelMod, float16);
 
 MS_REG_CPU_KERNEL_T(SpaceToDepth,
                     KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
-                    SpaceToDepthCPUKernel, int8_t);
+                    SpaceToDepthCpuKernelMod, int8_t);
 
 MS_REG_CPU_KERNEL_T(SpaceToDepth,
                     KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-                    SpaceToDepthCPUKernel, int16_t);
+                    SpaceToDepthCpuKernelMod, int16_t);
 
 MS_REG_CPU_KERNEL_T(SpaceToDepth,
                     KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                    SpaceToDepthCPUKernel, int);
+                    SpaceToDepthCpuKernelMod, int);
 
 MS_REG_CPU_KERNEL_T(SpaceToDepth,
                     KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-                    SpaceToDepthCPUKernel, int64_t);
+                    SpaceToDepthCpuKernelMod, int64_t);
 
 MS_REG_CPU_KERNEL_T(SpaceToDepth,
                     KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-                    SpaceToDepthCPUKernel, uint8_t);
+                    SpaceToDepthCpuKernelMod, uint8_t);
 
 MS_REG_CPU_KERNEL_T(SpaceToDepth,
                     KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
-                    SpaceToDepthCPUKernel, uint16_t);
+                    SpaceToDepthCpuKernelMod, uint16_t);
 
 MS_REG_CPU_KERNEL_T(SpaceToDepth,
                     KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
-                    SpaceToDepthCPUKernel, uint32_t);
+                    SpaceToDepthCpuKernelMod, uint32_t);
 
 MS_REG_CPU_KERNEL_T(SpaceToDepth,
                     KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
-                    SpaceToDepthCPUKernel, uint64_t);
+                    SpaceToDepthCpuKernelMod, uint64_t);
 
 }  // namespace kernel
 }  // namespace mindspore

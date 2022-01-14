@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ constexpr size_t kExpm1InputsNum = 1;
 constexpr size_t kExpm1OutputsNum = 1;
 }  // namespace
 
-void Expm1CPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void Expm1CpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   input_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
@@ -35,8 +35,8 @@ void Expm1CPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
 }
 
-bool Expm1CPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                            const std::vector<kernel::AddressPtr> &outputs) {
+bool Expm1CpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
+                               const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kExpm1InputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kExpm1OutputsNum, kernel_name_);
   if (input_dtype_ == kNumberTypeFloat16) {
@@ -51,8 +51,8 @@ bool Expm1CPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const
 }
 
 template <typename T>
-void Expm1CPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                  const std::vector<kernel::AddressPtr> &outputs) {
+void Expm1CpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                     const std::vector<kernel::AddressPtr> &outputs) {
   const auto *input = reinterpret_cast<T *>(inputs[0]->addr);
   auto *output = reinterpret_cast<T *>(outputs[0]->addr);
   size_t elem_num = inputs[0]->size / sizeof(T);

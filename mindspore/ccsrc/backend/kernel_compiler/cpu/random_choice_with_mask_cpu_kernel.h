@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,10 @@ constexpr int MAX_INPUT_DIMS = 5;
 constexpr size_t INPUT_NUM = 1;
 constexpr size_t OUTPUT_NUM = 2;
 
-class RandomChoiceWithMaskCPUKernel : public CPUKernel {
+class RandomChoiceWithMaskCpuKernelMod : public NativeCpuKernelMod {
  public:
-  RandomChoiceWithMaskCPUKernel() = default;
-  ~RandomChoiceWithMaskCPUKernel() override = default;
+  RandomChoiceWithMaskCpuKernelMod() = default;
+  ~RandomChoiceWithMaskCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -53,7 +53,7 @@ class RandomChoiceWithMaskCPUKernel : public CPUKernel {
 MS_REG_CPU_KERNEL(
   RandomChoiceWithMask,
   KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
-  RandomChoiceWithMaskCPUKernel);
+  RandomChoiceWithMaskCpuKernelMod);
 
 }  // namespace kernel
 }  // namespace mindspore

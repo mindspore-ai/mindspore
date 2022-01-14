@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -184,13 +184,19 @@ class KernelMod {
  public:
   KernelMod() {}
   explicit KernelMod(const AnfNodePtr &anf_node_ptr) : anf_node_(anf_node_ptr) {}
-  virtual const std::vector<size_t> &GetInputSizeList() const = 0;
-  virtual const std::vector<size_t> &GetOutputSizeList() const = 0;
-  virtual const std::vector<size_t> &GetWorkspaceSizeList() const = 0;
+  virtual ~KernelMod() = default;
+
   bool Launch(const KernelLaunchInfo &kernel_launch_address, void *stream_ptr) {
     return Launch(kernel_launch_address.inputs_, kernel_launch_address.workspaces_, kernel_launch_address.outputs_,
                   stream_ptr);
   }
+
+  virtual void SetInputSizeList(const std::vector<size_t> &size_list) { input_size_list_ = size_list; }
+  virtual void SetOutputSizeList(const std::vector<size_t> &size_list) { output_size_list_ = size_list; }
+  virtual void SetWorkspaceSizeList(const std::vector<size_t> &size_list) { workspace_size_list_ = size_list; }
+  virtual const std::vector<size_t> &GetInputSizeList() const { return input_size_list_; }
+  virtual const std::vector<size_t> &GetOutputSizeList() const { return output_size_list_; }
+  virtual const std::vector<size_t> &GetWorkspaceSizeList() const { return workspace_size_list_; }
   virtual bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                       const std::vector<AddressPtr> &outputs, void *stream_ptr) = 0;
   virtual device::DynamicKernelPtr GenDynamicKernel(const CNodePtr &cnode_ptr, void *stream_ptr) { return nullptr; }
@@ -200,8 +206,6 @@ class KernelMod {
   virtual void InferOp() {}
   virtual void InitOp() {}
   virtual void UpdateOp() {}
-
-  virtual ~KernelMod() = default;
   void set_unique_name(const std::string &unique_name) { unique_name_ = unique_name; }
   void set_fullname(const std::string &fullname) { fullname_ = fullname; }
   void set_is_monad(bool is_monad) { is_monad_ = is_monad; }
@@ -226,6 +230,9 @@ class KernelMod {
   AnfNodeWeakPtr anf_node_;
   std::map<uint32_t, tensor::TensorPtr> depend_tensor_map_;
   std::vector<CNodePtr> atomic_clean_nodes_;
+  std::vector<size_t> input_size_list_;
+  std::vector<size_t> output_size_list_;
+  std::vector<size_t> workspace_size_list_;
 
  private:
   void InferShapeForNopNode(AnfNodePtr *input_node);

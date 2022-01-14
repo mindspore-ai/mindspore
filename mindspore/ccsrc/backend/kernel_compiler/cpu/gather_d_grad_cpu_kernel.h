@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename I, typename T>
-class GatherDGradCPUKernel : public CPUKernel {
+class GatherDGradCpuKernelMod : public NativeCpuKernelMod {
  public:
-  GatherDGradCPUKernel() = default;
-  ~GatherDGradCPUKernel() override = default;
+  GatherDGradCpuKernelMod() = default;
+  ~GatherDGradCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -42,16 +42,16 @@ class GatherDGradCPUKernel : public CPUKernel {
   int32_t axis_{1};
 };
 
-MS_REG_CPU_KERNEL_T_S(GatherDGrad, KernelAttr(), GatherDGradCPUKernel, int32_t, int32_t);
-MS_REG_CPU_KERNEL_T_S(GatherDGrad, KernelAttr(), GatherDGradCPUKernel, int32_t, int64_t);
-MS_REG_CPU_KERNEL_T_S(GatherDGrad, KernelAttr(), GatherDGradCPUKernel, int32_t, float);
-MS_REG_CPU_KERNEL_T_S(GatherDGrad, KernelAttr(), GatherDGradCPUKernel, int32_t, float16);
-MS_REG_CPU_KERNEL_T_S(GatherDGrad, KernelAttr(), GatherDGradCPUKernel, int32_t, bool);
-MS_REG_CPU_KERNEL_T_S(GatherDGrad, KernelAttr(), GatherDGradCPUKernel, int64_t, int32_t);
-MS_REG_CPU_KERNEL_T_S(GatherDGrad, KernelAttr(), GatherDGradCPUKernel, int64_t, int64_t);
-MS_REG_CPU_KERNEL_T_S(GatherDGrad, KernelAttr(), GatherDGradCPUKernel, int64_t, float);
-MS_REG_CPU_KERNEL_T_S(GatherDGrad, KernelAttr(), GatherDGradCPUKernel, int64_t, float16);
-MS_REG_CPU_KERNEL_T_S(GatherDGrad, KernelAttr(), GatherDGradCPUKernel, int64_t, bool);
+MS_REG_CPU_KERNEL_T_S(GatherDGrad, KernelAttr(), GatherDGradCpuKernelMod, int32_t, int32_t);
+MS_REG_CPU_KERNEL_T_S(GatherDGrad, KernelAttr(), GatherDGradCpuKernelMod, int32_t, int64_t);
+MS_REG_CPU_KERNEL_T_S(GatherDGrad, KernelAttr(), GatherDGradCpuKernelMod, int32_t, float);
+MS_REG_CPU_KERNEL_T_S(GatherDGrad, KernelAttr(), GatherDGradCpuKernelMod, int32_t, float16);
+MS_REG_CPU_KERNEL_T_S(GatherDGrad, KernelAttr(), GatherDGradCpuKernelMod, int32_t, bool);
+MS_REG_CPU_KERNEL_T_S(GatherDGrad, KernelAttr(), GatherDGradCpuKernelMod, int64_t, int32_t);
+MS_REG_CPU_KERNEL_T_S(GatherDGrad, KernelAttr(), GatherDGradCpuKernelMod, int64_t, int64_t);
+MS_REG_CPU_KERNEL_T_S(GatherDGrad, KernelAttr(), GatherDGradCpuKernelMod, int64_t, float);
+MS_REG_CPU_KERNEL_T_S(GatherDGrad, KernelAttr(), GatherDGradCpuKernelMod, int64_t, float16);
+MS_REG_CPU_KERNEL_T_S(GatherDGrad, KernelAttr(), GatherDGradCpuKernelMod, int64_t, bool);
 }  // namespace kernel
 }  // namespace mindspore
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ constexpr size_t kL2NormalizeGradOutputsNum = 1;
 }  // namespace
 
 template <typename T>
-void L2NormalizeGradCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
+void L2NormalizeGradCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   for (size_t i = 0; i < kL2NormalizeGradInputsNum; i++) {
@@ -46,9 +46,9 @@ void L2NormalizeGradCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-bool L2NormalizeGradCPUKernel<T>::Launch(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &workspace,
-                                         const std::vector<AddressPtr> &outputs) {
+bool L2NormalizeGradCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs,
+                                            const std::vector<AddressPtr> &workspace,
+                                            const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kL2NormalizeGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kL2NormalizeGradOutputsNum, kernel_name_);
   auto input_x = reinterpret_cast<T *>(inputs[0]->addr);
@@ -70,7 +70,7 @@ bool L2NormalizeGradCPUKernel<T>::Launch(const std::vector<AddressPtr> &inputs,
 }
 
 template <typename T>
-void L2NormalizeGradCPUKernel<T>::CheckInputShape(const std::vector<size_t> &output_shape) {
+void L2NormalizeGradCpuKernelMod<T>::CheckInputShape(const std::vector<size_t> &output_shape) {
   for (const auto &shape : input_shape_list_) {
     if (output_shape != shape) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
@@ -87,7 +87,7 @@ void L2NormalizeGradCPUKernel<T>::CheckInputShape(const std::vector<size_t> &out
 }
 
 template <typename T>
-std::vector<size_t> L2NormalizeGradCPUKernel<T>::OneDimIndexToHighDimIndex(size_t one_dim_index) {
+std::vector<size_t> L2NormalizeGradCpuKernelMod<T>::OneDimIndexToHighDimIndex(size_t one_dim_index) {
   std::vector<size_t> high_dim_index;
   high_dim_index.reserve(dim_elem_num_list_.size());
   for (const auto &item : dim_elem_num_list_) {
@@ -100,8 +100,8 @@ std::vector<size_t> L2NormalizeGradCPUKernel<T>::OneDimIndexToHighDimIndex(size_
 }
 
 template <typename T>
-void L2NormalizeGradCPUKernel<T>::HighDimIndexToOneDimIndex(size_t *one_dim_index,
-                                                            const std::vector<size_t> &high_dim_index) {
+void L2NormalizeGradCpuKernelMod<T>::HighDimIndexToOneDimIndex(size_t *one_dim_index,
+                                                               const std::vector<size_t> &high_dim_index) {
   *one_dim_index = 0;
   int len = high_dim_index.size();
   for (int i = 0; i < len; i++) {
@@ -110,7 +110,7 @@ void L2NormalizeGradCPUKernel<T>::HighDimIndexToOneDimIndex(size_t *one_dim_inde
 }
 
 template <typename T>
-std::vector<T> L2NormalizeGradCPUKernel<T>::GetVector(const std::vector<size_t> &high_dim_index, const T *x) {
+std::vector<T> L2NormalizeGradCpuKernelMod<T>::GetVector(const std::vector<size_t> &high_dim_index, const T *x) {
   auto x_shape = input_shape_list_[0];
   std::vector<T> x_vector;
   x_vector.reserve(x_shape[axis_]);
@@ -127,8 +127,8 @@ std::vector<T> L2NormalizeGradCPUKernel<T>::GetVector(const std::vector<size_t> 
 }
 
 template <typename T>
-void L2NormalizeGradCPUKernel<T>::GetSumOfProduct(const std::vector<T> &x_vector, const std::vector<T> &y_vector,
-                                                  T *ss) {
+void L2NormalizeGradCpuKernelMod<T>::GetSumOfProduct(const std::vector<T> &x_vector, const std::vector<T> &y_vector,
+                                                     T *ss) {
   size_t len = x_vector.size();
   std::vector<T> tmp_vector(len);
   for (size_t i = 0; i < len; i++) {
@@ -150,9 +150,9 @@ void L2NormalizeGradCPUKernel<T>::GetSumOfProduct(const std::vector<T> &x_vector
 }
 
 template <typename T>
-void L2NormalizeGradCPUKernel<T>::GetOutput(const std::vector<T> &input_x_vector, const std::vector<T> &y_vector,
-                                            const std::vector<T> &dout_vector,
-                                            const std::vector<size_t> &high_dim_index, T *output) {
+void L2NormalizeGradCpuKernelMod<T>::GetOutput(const std::vector<T> &input_x_vector, const std::vector<T> &y_vector,
+                                               const std::vector<T> &dout_vector,
+                                               const std::vector<size_t> &high_dim_index, T *output) {
   size_t axis_index = high_dim_index[axis_];
   T dout = dout_vector[axis_index];
   T y = y_vector[axis_index];

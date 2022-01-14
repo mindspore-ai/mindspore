@@ -24,10 +24,10 @@
 
 namespace mindspore {
 namespace kernel {
-class GridSampler3DCPUKernel : public CPUKernel {
+class GridSampler3DCpuKernelMod : public NativeCpuKernelMod {
  public:
-  GridSampler3DCPUKernel() = default;
-  ~GridSampler3DCPUKernel() override = default;
+  GridSampler3DCpuKernelMod() = default;
+  ~GridSampler3DCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -64,12 +64,12 @@ class GridSampler3DCPUKernel : public CPUKernel {
 MS_REG_CPU_KERNEL(
   GridSampler3D,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  GridSampler3DCPUKernel);
+  GridSampler3DCpuKernelMod);
 
 MS_REG_CPU_KERNEL(
   GridSampler3D,
   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-  GridSampler3DCPUKernel);
+  GridSampler3DCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -353,7 +353,7 @@ constexpr auto kHcomOpTypeReduceScatter = "HcomReduceScatter";
 // attr key name
 constexpr auto kAttrInputNames = "input_names";
 constexpr auto kAttrAttrNames = "attr_names";
-constexpr auto kAttrIsAICPUKernel = "is_AICPU_kernel";
+constexpr auto kAttrIsAiCpuKernel = "is_AICPU_kernel";
 constexpr auto kIsBackendCast = "is_backed_cast";
 constexpr auto kAttrOutputNames = "output_names";
 constexpr auto kAttrAsync = "async";

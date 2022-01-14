@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ constexpr size_t kMatrixInverseOutIndex = 0;
 }  // namespace
 
 template <typename T>
-void MatrixInverseCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
+void MatrixInverseCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
@@ -51,9 +51,9 @@ void MatrixInverseCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-bool MatrixInverseCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool MatrixInverseCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                          const std::vector<kernel::AddressPtr> &,
+                                          const std::vector<kernel::AddressPtr> &outputs) {
   auto input_addr = reinterpret_cast<T *>(inputs[kMatrixInverseInIndex]->addr);
   auto output_addr = reinterpret_cast<T *>(outputs[kMatrixInverseOutIndex]->addr);
 

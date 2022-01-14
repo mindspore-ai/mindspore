@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ namespace kernel {
 using rank::Method;
 using rank::NaOption;
 template <typename T>
-void RankCpuKernel<T>::InitKernel(const CNodePtr &kernel_node) {
+void RankCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
 
@@ -67,8 +67,8 @@ void RankCpuKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-void RankCpuKernel<T>::InitInputOutputSize(const CNodePtr &kernel_node) {
-  CPUKernel::InitInputOutputSize(kernel_node);
+void RankCpuKernelMod<T>::InitInputOutputSize(const CNodePtr &kernel_node) {
+  NativeCpuKernelMod::InitInputOutputSize(kernel_node);
   size_t element_size = axisIterator_.OuterSize() * axisIterator_.InnerSize() * axisIterator_.AxisSize();
   // id
   (void)workspace_size_list_.emplace_back((sizeof(size_t) * element_size));
@@ -81,7 +81,7 @@ void RankCpuKernel<T>::InitInputOutputSize(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-void RankCpuKernel<T>::SetFunc() {
+void RankCpuKernelMod<T>::SetFunc() {
   switch (method_) {
     case Method::Max: {
       func_ = [](size_t i, size_t duplicate_count, int culmutive_rank, const AxisIterator &axisIterator,
@@ -139,8 +139,8 @@ void RankCpuKernel<T>::SetFunc() {
 }
 
 template <typename T>
-void RankCpuKernel<T>::Launch1D(const T *input_addr, size_t *sort_idx, T *values, const AxisIterator &iter,
-                                float *output_addr) const {
+void RankCpuKernelMod<T>::Launch1D(const T *input_addr, size_t *sort_idx, T *values, const AxisIterator &iter,
+                                   float *output_addr) const {
   const size_t n = axisIterator_.AxisSize();
   for (size_t i = 0; i < n; ++i) {
     values[i] = input_addr[iter.GetPos(i)];
@@ -163,7 +163,7 @@ void RankCpuKernel<T>::Launch1D(const T *input_addr, size_t *sort_idx, T *values
 }
 
 template <typename T>
-void RankCpuKernel<T>::PctConvert(float *output_addr, const AxisIterator &iter, int culmutive_rank) const {
+void RankCpuKernelMod<T>::PctConvert(float *output_addr, const AxisIterator &iter, int culmutive_rank) const {
   const size_t n = iter.AxisSize();
   if (pct_) {
     // pct calculation
@@ -182,8 +182,8 @@ void RankCpuKernel<T>::PctConvert(float *output_addr, const AxisIterator &iter, 
 }
 
 template <typename T>
-void RankCpuKernel<T>::Launch1D(const T *input_addr, size_t *sort_idx, T *values, bool *is_nan,
-                                const AxisIterator &iter, float *output_addr) const {
+void RankCpuKernelMod<T>::Launch1D(const T *input_addr, size_t *sort_idx, T *values, bool *is_nan,
+                                   const AxisIterator &iter, float *output_addr) const {
   const size_t n = iter.AxisSize();
   T nan_padding_value = GetPaddingValue();
 
@@ -226,8 +226,8 @@ void RankCpuKernel<T>::Launch1D(const T *input_addr, size_t *sort_idx, T *values
 }
 
 template <typename T>
-void RankCpuKernel<T>::PctConvert(float *output_addr, const AxisIterator &iter, int culmutive_rank,
-                                  int nans_count) const {
+void RankCpuKernelMod<T>::PctConvert(float *output_addr, const AxisIterator &iter, int culmutive_rank,
+                                     int nans_count) const {
   const size_t n = iter.AxisSize();
   if (pct_) {
     // pct calculation
@@ -252,8 +252,8 @@ void RankCpuKernel<T>::PctConvert(float *output_addr, const AxisIterator &iter, 
 }
 
 template <typename T>
-bool RankCpuKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                              const std::vector<AddressPtr> &outputs) {
+bool RankCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                                 const std::vector<AddressPtr> &outputs) {
   if (inputs.size() != 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 1, but got " << inputs.size();
   }

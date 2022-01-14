@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename S, typename T>
-class SearchSortedCPUKernel : public CPUKernel {
+class SearchSortedCpuKernelMod : public NativeCpuKernelMod {
  public:
-  SearchSortedCPUKernel() = default;
-  ~SearchSortedCPUKernel() override = default;
+  SearchSortedCpuKernelMod() = default;
+  ~SearchSortedCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -48,62 +48,62 @@ class SearchSortedCPUKernel : public CPUKernel {
 MS_REG_CPU_KERNEL_T_S(
   SearchSorted,
   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeInt32),
-  SearchSortedCPUKernel, double, int32_t);
+  SearchSortedCpuKernelMod, double, int32_t);
 
 MS_REG_CPU_KERNEL_T_S(
   SearchSorted,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt32),
-  SearchSortedCPUKernel, float, int32_t);
+  SearchSortedCpuKernelMod, float, int32_t);
 
 MS_REG_CPU_KERNEL_T_S(
   SearchSorted,
   KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
-  SearchSortedCPUKernel, int64_t, int32_t);
+  SearchSortedCpuKernelMod, int64_t, int32_t);
 
 MS_REG_CPU_KERNEL_T_S(
   SearchSorted,
   KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  SearchSortedCPUKernel, int32_t, int32_t);
+  SearchSortedCpuKernelMod, int32_t, int32_t);
 
 MS_REG_CPU_KERNEL_T_S(
   SearchSorted,
   KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt32),
-  SearchSortedCPUKernel, int16_t, int32_t);
+  SearchSortedCpuKernelMod, int16_t, int32_t);
 
 MS_REG_CPU_KERNEL_T_S(
   SearchSorted,
   KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt32),
-  SearchSortedCPUKernel, int8_t, int32_t);
+  SearchSortedCpuKernelMod, int8_t, int32_t);
 
 MS_REG_CPU_KERNEL_T_S(
   SearchSorted,
   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeInt64),
-  SearchSortedCPUKernel, double, int64_t);
+  SearchSortedCpuKernelMod, double, int64_t);
 
 MS_REG_CPU_KERNEL_T_S(
   SearchSorted,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt64),
-  SearchSortedCPUKernel, float, int64_t);
+  SearchSortedCpuKernelMod, float, int64_t);
 
 MS_REG_CPU_KERNEL_T_S(
   SearchSorted,
   KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-  SearchSortedCPUKernel, int64_t, int64_t);
+  SearchSortedCpuKernelMod, int64_t, int64_t);
 
 MS_REG_CPU_KERNEL_T_S(
   SearchSorted,
   KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
-  SearchSortedCPUKernel, int32_t, int64_t);
+  SearchSortedCpuKernelMod, int32_t, int64_t);
 
 MS_REG_CPU_KERNEL_T_S(
   SearchSorted,
   KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt64),
-  SearchSortedCPUKernel, int16_t, int64_t);
+  SearchSortedCpuKernelMod, int16_t, int64_t);
 
 MS_REG_CPU_KERNEL_T_S(
   SearchSorted,
   KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt64),
-  SearchSortedCPUKernel, int8_t, int64_t);
+  SearchSortedCpuKernelMod, int8_t, int64_t);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SEARCHSORTED_CPU_KERNEL_H_

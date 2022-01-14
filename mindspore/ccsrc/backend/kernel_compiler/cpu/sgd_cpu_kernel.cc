@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ constexpr size_t kSGDInputsNum = 6;
 constexpr size_t kSGDOutputsNum = 1;
 }  // namespace
 template <typename T>
-void SGDCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
+void SGDCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   dampening_ = AnfAlgo::GetNodeAttr<float>(kernel_node, "dampening");
@@ -34,8 +34,8 @@ void SGDCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-bool SGDCPUKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                             const std::vector<AddressPtr> &outputs) {
+bool SGDCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                                const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSGDInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSGDOutputsNum, kernel_name_);
   auto param = reinterpret_cast<T *>(inputs[PARAM]->addr);

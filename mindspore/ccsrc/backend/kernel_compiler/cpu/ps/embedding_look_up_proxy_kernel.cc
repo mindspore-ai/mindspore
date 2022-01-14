@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ constexpr size_t kEmbeddingLookUpProxyOutputsNum = 1;
 
 void EmbeddingLookUpProxyKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  EmbeddingLookUpCPUKernel::InitKernel(kernel_node);
+  EmbeddingLookUpCpuKernelMod::InitKernel(kernel_node);
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   auto indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
   auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);

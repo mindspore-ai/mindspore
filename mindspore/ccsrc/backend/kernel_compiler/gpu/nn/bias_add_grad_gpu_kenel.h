@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,9 +29,9 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class BiasAddGradGpuKernel : public GpuKernel {
+class BiasAddGradGpuKernelMod : public NativeGpuKernelMod {
  public:
-  BiasAddGradGpuKernel()
+  BiasAddGradGpuKernelMod()
       : same_dims_(true),
         is_null_input_(false),
         kernel_name_("BiasAddGrad"),
@@ -45,11 +45,8 @@ class BiasAddGradGpuKernel : public GpuKernel {
         dy_desc_(nullptr),
         db_desc_(nullptr),
         op_desc_(nullptr) {}
-  ~BiasAddGradGpuKernel() override { DestroyResource(); }
+  ~BiasAddGradGpuKernelMod() override { DestroyResource(); }
 
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
@@ -234,9 +231,6 @@ class BiasAddGradGpuKernel : public GpuKernel {
   cudnnTensorDescriptor_t dy_desc_;
   cudnnTensorDescriptor_t db_desc_;
   cudnnReduceTensorDescriptor_t op_desc_;
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ REG_OPTIMIZER_KERNEL(SGD,
                        .AddInputNameType(kAccumulation, kNumberTypeFloat32)
                        .AddInputNameType(kMomentum, kNumberTypeFloat32)
                        .AddInputNameType(kStat, kNumberTypeFloat32),
-                     SGDKernel, float)
+                     SGDKernelMod, float)
 }  // namespace kernel
 }  // namespace server
 }  // namespace fl

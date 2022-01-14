@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class L2LossCPUKernel : public CPUKernel {
+class L2LossCpuKernelMod : public NativeCpuKernelMod {
  public:
-  L2LossCPUKernel() = default;
-  ~L2LossCPUKernel() override = default;
+  L2LossCpuKernelMod() = default;
+  ~L2LossCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -42,8 +42,8 @@ class L2LossCPUKernel : public CPUKernel {
   std::vector<size_t> input_shape_;
 };
 
-MS_REG_CPU_KERNEL_T(L2Loss, KernelAttr(), L2LossCPUKernel, float16);
-MS_REG_CPU_KERNEL_T(L2Loss, KernelAttr(), L2LossCPUKernel, float);
+MS_REG_CPU_KERNEL_T(L2Loss, KernelAttr(), L2LossCpuKernelMod, float16);
+MS_REG_CPU_KERNEL_T(L2Loss, KernelAttr(), L2LossCpuKernelMod, float);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_L2_LOSS_CPU_KERNEL_H_

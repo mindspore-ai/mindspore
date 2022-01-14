@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,10 @@
 
 namespace mindspore {
 namespace kernel {
-class LayerNormCPUKernel : public CPUKernel {
+class LayerNormCpuKernelMod : public NativeCpuKernelMod {
  public:
-  LayerNormCPUKernel() = default;
-  ~LayerNormCPUKernel() override = default;
+  LayerNormCpuKernelMod() = default;
+  ~LayerNormCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -46,7 +46,7 @@ class LayerNormCPUKernel : public CPUKernel {
   size_t param_num_{1};
 };
 
-MS_REG_CPU_KERNEL(LayerNorm, KernelAttr(), LayerNormCPUKernel);
+MS_REG_CPU_KERNEL(LayerNorm, KernelAttr(), LayerNormCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_LAYER_NORM_CPU_KERNEL_H_

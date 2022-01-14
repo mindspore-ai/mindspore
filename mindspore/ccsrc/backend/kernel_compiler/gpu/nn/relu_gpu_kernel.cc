@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,20 +19,20 @@
 namespace mindspore {
 namespace kernel {
 MS_REG_GPU_KERNEL_ONE(ReLU, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-                      ReLUGpuFwdKernel, double)
+                      ReLUFwdGpuKernelMod, double)
 MS_REG_GPU_KERNEL_ONE(ReLU, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                      ReLUGpuFwdKernel, float)
+                      ReLUFwdGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(ReLU, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-                      ReLUGpuFwdKernel, half)
+                      ReLUFwdGpuKernelMod, half)
 MS_REG_GPU_KERNEL_ONE(ReLU, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-                      ReLUGpuFwdKernel, int64_t)
+                      ReLUFwdGpuKernelMod, int64_t)
 MS_REG_GPU_KERNEL_ONE(ReLU, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                      ReLUGpuFwdKernel, int32_t)
+                      ReLUFwdGpuKernelMod, int32_t)
 MS_REG_GPU_KERNEL_ONE(ReLU, KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-                      ReLUGpuFwdKernel, int16_t)
-MS_REG_GPU_KERNEL_ONE(ReLU, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8), ReLUGpuFwdKernel,
-                      int8_t)
+                      ReLUFwdGpuKernelMod, int16_t)
+MS_REG_GPU_KERNEL_ONE(ReLU, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+                      ReLUFwdGpuKernelMod, int8_t)
 MS_REG_GPU_KERNEL_ONE(ReLU, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-                      ReLUGpuFwdKernel, uint8_t)
+                      ReLUFwdGpuKernelMod, uint8_t)
 }  // namespace kernel
 }  // namespace mindspore

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,15 +26,9 @@ namespace mindspore {
 namespace kernel {
 using mindspore::device::GpuBufferMgr;
 
-DatasetInitKernel::DatasetInitKernel() : total_bytes_(0) {}
+DatasetInitKernelMod::DatasetInitKernelMod() : total_bytes_(0) {}
 
-const std::vector<size_t> &DatasetInitKernel::GetInputSizeList() const { return input_size_list_; }
-
-const std::vector<size_t> &DatasetInitKernel::GetOutputSizeList() const { return output_size_list_; }
-
-const std::vector<size_t> &DatasetInitKernel::GetWorkspaceSizeList() const { return workspace_size_list_; }
-
-bool DatasetInitKernel::Init(const CNodePtr &kernel_node) {
+bool DatasetInitKernelMod::Init(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   queue_name_ = GetAttr<std::string>(kernel_node, "queue_name");
   std::vector<std::vector<int>> shapes;
@@ -53,10 +47,10 @@ bool DatasetInitKernel::Init(const CNodePtr &kernel_node) {
   return true;
 }
 
-void DatasetInitKernel::InitSizeLists() { return; }
+void DatasetInitKernelMod::InitSizeLists() { return; }
 
-bool DatasetInitKernel::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                               const std::vector<AddressPtr> &, void *) {
+bool DatasetInitKernelMod::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
+                                  const std::vector<AddressPtr> &, void *) {
   void *addr = nullptr;
   size_t len = total_bytes_ * buffer_q_capacity_;
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ constexpr size_t kMirrorPadOutputsNum = 1;
 constexpr size_t kPadMaxSupportDim = 4;
 }  // namespace
 
-void MirrorPadCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void MirrorPadCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   std::string mode = AnfAlgo::GetNodeAttr<std::string>(kernel_node, "mode");
@@ -98,8 +98,9 @@ void extract_paddings(const T *paddings_arg, int64_t padd_dim, int64_t *extracte
   }
 }
 
-bool MirrorPadCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                                const std::vector<kernel::AddressPtr> &outputs) {
+bool MirrorPadCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                   const std::vector<kernel::AddressPtr> &,
+                                   const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMirrorPadInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMirrorPadOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat16 && pad_dtype_ == kNumberTypeInt32) {
@@ -128,8 +129,8 @@ bool MirrorPadCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, c
 }
 
 template <typename T1, typename T2>
-void MirrorPadCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                      const std::vector<AddressPtr> &outputs) const {
+void MirrorPadCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                         const std::vector<AddressPtr> &outputs) const {
   auto inputs_addr = reinterpret_cast<T1 *>(inputs[0]->addr);
   auto *paddings_arg = reinterpret_cast<T2 *>(inputs[1]->addr);
   auto outputs_addr = reinterpret_cast<T1 *>(outputs[0]->addr);

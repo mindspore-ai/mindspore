@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,10 @@
 
 namespace mindspore {
 namespace kernel {
-class BiasAddGradCPUKernel : public CPUKernel {
+class BiasAddGradCpuKernelMod : public NativeCpuKernelMod {
  public:
-  BiasAddGradCPUKernel() = default;
-  ~BiasAddGradCPUKernel() override = default;
+  BiasAddGradCpuKernelMod() = default;
+  ~BiasAddGradCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -37,7 +37,7 @@ class BiasAddGradCPUKernel : public CPUKernel {
  private:
   std::vector<size_t> input_shape_;
 };
-MS_REG_CPU_KERNEL(BiasAddGrad, KernelAttr(), BiasAddGradCPUKernel);
+MS_REG_CPU_KERNEL(BiasAddGrad, KernelAttr(), BiasAddGradCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_BIAS_ADD_GRAD_CPU_KERNEL_H_

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,14 +27,14 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class PullKernel : public CPUKernel {
+class PullKernelMod : public NativeCpuKernelMod {
  public:
-  PullKernel() : key_(UINT64_MAX), keys_size_(sizeof(size_t)), var_size_(sizeof(size_t)) {}
-  ~PullKernel() override = default;
+  PullKernelMod() : key_(UINT64_MAX), keys_size_(sizeof(size_t)), var_size_(sizeof(size_t)) {}
+  ~PullKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &) {
     if (inputs.size() != 2) {
-      MS_LOG(EXCEPTION) << "Inputs size is " << inputs.size() << ", but PullKernel needs 2.";
+      MS_LOG(EXCEPTION) << "Inputs size is " << inputs.size() << ", but PullKernelMod needs 2.";
     }
     bool init_in_server = mindspore::ps::Worker::GetInstance().GetParamInitInServer(param_name_);
     // If init_in_server, forward kernel should run in server too.

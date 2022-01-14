@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,50 +20,50 @@ namespace kernel {
 MS_REG_GPU_KERNEL_TWO(
   DynamicBroadcastTo,
   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
-  DynamicBroadcastToGpuKernel, double, int64_t)
+  DynamicBroadcastToGpuKernelMod, double, int64_t)
 MS_REG_GPU_KERNEL_TWO(
   DynamicBroadcastTo,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
-  DynamicBroadcastToGpuKernel, float, int64_t)
+  DynamicBroadcastToGpuKernelMod, float, int64_t)
 MS_REG_GPU_KERNEL_TWO(
   DynamicBroadcastTo,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
-  DynamicBroadcastToGpuKernel, half, int64_t)
+  DynamicBroadcastToGpuKernelMod, half, int64_t)
 MS_REG_GPU_KERNEL_TWO(
   DynamicBroadcastTo,
   KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt16),
-  DynamicBroadcastToGpuKernel, int16_t, int64_t)
+  DynamicBroadcastToGpuKernelMod, int16_t, int64_t)
 MS_REG_GPU_KERNEL_TWO(
   DynamicBroadcastTo,
   KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
-  DynamicBroadcastToGpuKernel, int32_t, int64_t)
+  DynamicBroadcastToGpuKernelMod, int32_t, int64_t)
 MS_REG_GPU_KERNEL_TWO(
   DynamicBroadcastTo,
   KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-  DynamicBroadcastToGpuKernel, int64_t, int64_t)
+  DynamicBroadcastToGpuKernelMod, int64_t, int64_t)
 MS_REG_GPU_KERNEL_TWO(
   DynamicBroadcastTo,
   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
-  DynamicBroadcastToGpuKernel, double, int32_t)
+  DynamicBroadcastToGpuKernelMod, double, int32_t)
 MS_REG_GPU_KERNEL_TWO(
   DynamicBroadcastTo,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-  DynamicBroadcastToGpuKernel, float, int32_t)
+  DynamicBroadcastToGpuKernelMod, float, int32_t)
 MS_REG_GPU_KERNEL_TWO(
   DynamicBroadcastTo,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
-  DynamicBroadcastToGpuKernel, half, int32_t)
+  DynamicBroadcastToGpuKernelMod, half, int32_t)
 MS_REG_GPU_KERNEL_TWO(
   DynamicBroadcastTo,
   KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt16),
-  DynamicBroadcastToGpuKernel, int16_t, int32_t)
+  DynamicBroadcastToGpuKernelMod, int16_t, int32_t)
 MS_REG_GPU_KERNEL_TWO(
   DynamicBroadcastTo,
   KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  DynamicBroadcastToGpuKernel, int32_t, int32_t)
+  DynamicBroadcastToGpuKernelMod, int32_t, int32_t)
 MS_REG_GPU_KERNEL_TWO(
   DynamicBroadcastTo,
   KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
-  DynamicBroadcastToGpuKernel, int64_t, int32_t)
+  DynamicBroadcastToGpuKernelMod, int64_t, int32_t)
 }  // namespace kernel
 }  // namespace mindspore

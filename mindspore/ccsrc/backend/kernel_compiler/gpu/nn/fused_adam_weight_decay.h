@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class FusedAdamWeightDecayGpuKernel : public GpuKernel {
+class FusedAdamWeightDecayGpuKernelMod : public NativeGpuKernelMod {
  public:
-  FusedAdamWeightDecayGpuKernel() : element_nums_(0), weight_decay_(false), is_null_input_(false) {}
-  ~FusedAdamWeightDecayGpuKernel() override = default;
+  FusedAdamWeightDecayGpuKernelMod() : element_nums_(0), weight_decay_(false), is_null_input_(false) {}
+  ~FusedAdamWeightDecayGpuKernelMod() override = default;
 
   bool Init(const CNodePtr &kernel_node) override {
     auto node_name = AnfAlgo::GetCNodeName(kernel_node);
@@ -51,10 +51,6 @@ class FusedAdamWeightDecayGpuKernel : public GpuKernel {
     InitSizeLists();
     return true;
   }
-
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -95,10 +91,6 @@ class FusedAdamWeightDecayGpuKernel : public GpuKernel {
   }
 
  private:
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
-
   int element_nums_;
   bool weight_decay_;
   bool is_null_input_;

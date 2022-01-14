@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,18 +35,12 @@ namespace mindspore {
 namespace kernel {
 using mindspore::device::GpuBufferMgr;
 
-DatasetIteratorKernel::DatasetIteratorKernel()
+DatasetIteratorKernelMod::DatasetIteratorKernelMod()
     : handle_(GpuBufferMgr::INVALID_HANDLE), total_bytes_(0), profiling_enable_(false), profiling_op_(nullptr) {}
 
-DatasetIteratorKernel::~DatasetIteratorKernel() { GpuBufferMgr::GetInstance().Close(handle_); }
+DatasetIteratorKernelMod::~DatasetIteratorKernelMod() { GpuBufferMgr::GetInstance().Close(handle_); }
 
-const std::vector<size_t> &DatasetIteratorKernel::GetInputSizeList() const { return input_size_list_; }
-
-const std::vector<size_t> &DatasetIteratorKernel::GetOutputSizeList() const { return output_size_list_; }
-
-const std::vector<size_t> &DatasetIteratorKernel::GetWorkspaceSizeList() const { return workspace_size_list_; }
-
-bool DatasetIteratorKernel::Init(const CNodePtr &kernel_node) {
+bool DatasetIteratorKernelMod::Init(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_node_ = kernel_node;
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
@@ -78,9 +72,9 @@ bool DatasetIteratorKernel::Init(const CNodePtr &kernel_node) {
   return true;
 }
 
-void DatasetIteratorKernel::InitSizeLists() { return; }
+void DatasetIteratorKernelMod::InitSizeLists() { return; }
 
-bool DatasetIteratorKernel::ReadDevice(void **addr, size_t *len) {
+bool DatasetIteratorKernelMod::ReadDevice(void **addr, size_t *len) {
   uint64_t start_time_stamp = 0;
   uint32_t queue_size = 0;
 #ifndef ENABLE_SECURITY
@@ -131,8 +125,8 @@ bool DatasetIteratorKernel::ReadDevice(void **addr, size_t *len) {
   return true;
 }
 
-bool DatasetIteratorKernel::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                                   const std::vector<AddressPtr> &outputs, void *stream) {
+bool DatasetIteratorKernelMod::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
+                                      const std::vector<AddressPtr> &outputs, void *stream) {
   if (handle_ == GpuBufferMgr::INVALID_HANDLE) {
     handle_ = GpuBufferMgr::GetInstance().Open(0, queue_name_, output_size_list_);
     if (handle_ == GpuBufferMgr::INVALID_HANDLE) {

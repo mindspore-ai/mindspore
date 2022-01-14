@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,10 @@
 
 namespace mindspore {
 namespace kernel {
-class LstsqCPUKernel : public CPUKernel {
+class LstsqCpuKernelMod : public NativeCpuKernelMod {
  public:
-  LstsqCPUKernel() = default;
-  ~LstsqCPUKernel() override = default;
+  LstsqCpuKernelMod() = default;
+  ~LstsqCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -46,17 +46,17 @@ class LstsqCPUKernel : public CPUKernel {
 MS_REG_CPU_KERNEL(
   Lstsq,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  LstsqCPUKernel);
+  LstsqCpuKernelMod);
 
 MS_REG_CPU_KERNEL(
   Lstsq,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  LstsqCPUKernel);
+  LstsqCpuKernelMod);
 
 MS_REG_CPU_KERNEL(
   Lstsq,
   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-  LstsqCPUKernel);
+  LstsqCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

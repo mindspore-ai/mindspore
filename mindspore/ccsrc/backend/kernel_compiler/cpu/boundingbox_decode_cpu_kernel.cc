@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-void BoundingBoxDecodeCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
+void BoundingBoxDecodeCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
@@ -74,9 +74,9 @@ void BoundingBoxDecodeCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-bool BoundingBoxDecodeCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                           const std::vector<kernel::AddressPtr> &,
-                                           const std::vector<kernel::AddressPtr> &outputs) {
+bool BoundingBoxDecodeCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                              const std::vector<kernel::AddressPtr> &,
+                                              const std::vector<kernel::AddressPtr> &outputs) {
   auto anchor_box = reinterpret_cast<T *>(inputs[0]->addr);
   auto deltas = reinterpret_cast<T *>(inputs[1]->addr);
   auto bboxes = reinterpret_cast<T *>(outputs[0]->addr);

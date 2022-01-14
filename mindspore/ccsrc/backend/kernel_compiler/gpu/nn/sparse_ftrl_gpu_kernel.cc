@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ MS_REG_GPU_KERNEL_TWO(SparseApplyFtrl,
                         .AddOutputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
-                      SparseFtrlGpuKernel, float, int)
+                      SparseFtrlGpuKernelMod, float, int)
 MS_REG_GPU_KERNEL_TWO(SparseApplyFtrl,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat32)
@@ -39,7 +39,7 @@ MS_REG_GPU_KERNEL_TWO(SparseApplyFtrl,
                         .AddOutputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
-                      SparseFtrlGpuKernel, float, int64_t)
+                      SparseFtrlGpuKernelMod, float, int64_t)
 MS_REG_GPU_KERNEL_TWO(SparseApplyFtrl,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat16)
@@ -50,7 +50,7 @@ MS_REG_GPU_KERNEL_TWO(SparseApplyFtrl,
                         .AddOutputAttr(kNumberTypeFloat16)
                         .AddOutputAttr(kNumberTypeFloat16)
                         .AddOutputAttr(kNumberTypeFloat16),
-                      SparseFtrlGpuKernel, half, int)
+                      SparseFtrlGpuKernelMod, half, int)
 MS_REG_GPU_KERNEL_TWO(SparseApplyFtrl,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat16)
@@ -61,6 +61,6 @@ MS_REG_GPU_KERNEL_TWO(SparseApplyFtrl,
                         .AddOutputAttr(kNumberTypeFloat16)
                         .AddOutputAttr(kNumberTypeFloat16)
                         .AddOutputAttr(kNumberTypeFloat16),
-                      SparseFtrlGpuKernel, half, int64_t)
+                      SparseFtrlGpuKernelMod, half, int64_t)
 }  // namespace kernel
 }  // namespace mindspore

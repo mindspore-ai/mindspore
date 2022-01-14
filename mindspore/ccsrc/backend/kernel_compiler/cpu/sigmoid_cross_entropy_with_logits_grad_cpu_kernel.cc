@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ constexpr size_t kSigmoidCrossEntropyWithLogitsGradInputsNum = 3;
 constexpr size_t kSigmoidCrossEntropyWithLogitsGradOutputsNum = 1;
 }  // namespace
 
-void SigmoidCrossEntropyWithLogitsGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void SigmoidCrossEntropyWithLogitsGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
@@ -34,9 +34,9 @@ void SigmoidCrossEntropyWithLogitsGradCPUKernel::InitKernel(const CNodePtr &kern
   }
 }
 
-bool SigmoidCrossEntropyWithLogitsGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                                        const std::vector<kernel::AddressPtr> &,
-                                                        const std::vector<kernel::AddressPtr> &outputs) {
+bool SigmoidCrossEntropyWithLogitsGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                                           const std::vector<kernel::AddressPtr> &,
+                                                           const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSigmoidCrossEntropyWithLogitsGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSigmoidCrossEntropyWithLogitsGradOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat16) {
@@ -52,8 +52,8 @@ bool SigmoidCrossEntropyWithLogitsGradCPUKernel::Launch(const std::vector<kernel
 }
 
 template <typename T>
-void SigmoidCrossEntropyWithLogitsGradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                              const std::vector<AddressPtr> &outputs) {
+void SigmoidCrossEntropyWithLogitsGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                                                 const std::vector<AddressPtr> &outputs) {
   auto *logits_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto *labels_addr = reinterpret_cast<T *>(inputs[1]->addr);
   auto *dloss_addr = reinterpret_cast<T *>(inputs[2]->addr);

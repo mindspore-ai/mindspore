@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,6 @@ MS_REG_GPU_KERNEL_ONE(UpdateThorGradient,
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
-                      UpdateThorGradientGpuKernel, float)
+                      UpdateThorGradientGpuKernelMod, float)
 }  // namespace kernel
 }  // namespace mindspore

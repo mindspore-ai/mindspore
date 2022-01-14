@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace kernel {
-void StridedSliceGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void StridedSliceGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   param_ = (struct StridedSliceParameter *)malloc(sizeof(struct StridedSliceParameter));
@@ -70,7 +70,7 @@ void StridedSliceGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   std::copy(end_.begin(), end_.end(), param_->ends_);
 }
 
-void StridedSliceGradCPUKernel::ExpandAllMemberDims() {
+void StridedSliceGradCpuKernelMod::ExpandAllMemberDims() {
   auto input_len = input_shape_.size();
   if (input_len < DIMENSION_8D) {
     for (size_t i = 0; i < DIMENSION_8D - input_len; ++i) {
@@ -99,9 +99,9 @@ void StridedSliceGradCPUKernel::ExpandAllMemberDims() {
   }
 }
 
-bool StridedSliceGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> & /* workspace */,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool StridedSliceGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                          const std::vector<kernel::AddressPtr> & /* workspace */,
+                                          const std::vector<kernel::AddressPtr> &outputs) {
   bool ret{true};
   if (dtype_ == kNumberTypeFloat32) {
     ret = LaunchKernel<float>(inputs, outputs);
@@ -113,8 +113,8 @@ bool StridedSliceGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &in
 }
 
 template <typename T>
-bool StridedSliceGradCPUKernel::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                             const std::vector<kernel::AddressPtr> &outputs) {
+bool StridedSliceGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                                const std::vector<kernel::AddressPtr> &outputs) {
   T *input_addr = reinterpret_cast<T *>(inputs[0]->addr);
   T *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
 
@@ -134,7 +134,7 @@ bool StridedSliceGradCPUKernel::LaunchKernel(const std::vector<kernel::AddressPt
   return true;
 }
 
-StridedSliceGradCPUKernel::~StridedSliceGradCPUKernel() {
+StridedSliceGradCpuKernelMod::~StridedSliceGradCpuKernelMod() {
   if (param_ != nullptr) {
     free(param_);
     param_ = nullptr;

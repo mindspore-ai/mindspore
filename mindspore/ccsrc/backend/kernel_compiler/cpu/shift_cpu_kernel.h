@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class ShiftCpuKernel : public CPUKernel {
+class ShiftCpuKernelMod : public NativeCpuKernelMod {
  public:
-  ShiftCpuKernel() = default;
-  ~ShiftCpuKernel() override = default;
+  ShiftCpuKernelMod() = default;
+  ~ShiftCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -53,25 +53,25 @@ class ShiftCpuKernel : public CPUKernel {
 
 MS_REG_CPU_KERNEL_T(
   Shift, KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-  ShiftCpuKernel, bool)
+  ShiftCpuKernelMod, bool)
 
 MS_REG_CPU_KERNEL_T(
   Shift,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  ShiftCpuKernel, float)
+  ShiftCpuKernelMod, float)
 
 MS_REG_CPU_KERNEL_T(
   Shift,
   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-  ShiftCpuKernel, double)
+  ShiftCpuKernelMod, double)
 
 MS_REG_CPU_KERNEL_T(
   Shift, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  ShiftCpuKernel, int32_t)
+  ShiftCpuKernelMod, int32_t)
 
 MS_REG_CPU_KERNEL_T(
   Shift, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-  ShiftCpuKernel, int64_t)
+  ShiftCpuKernelMod, int64_t)
 
 }  // namespace kernel
 }  // namespace mindspore

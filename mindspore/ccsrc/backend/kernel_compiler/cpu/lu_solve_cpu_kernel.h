@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,10 @@ constexpr size_t kInputNum = 3;
 constexpr size_t kOutputNum = 1;
 namespace kernel {
 template <typename T1, typename T2>
-class LuSolveCPUKernel : public CPUKernel {
+class LuSolveCpuKernelMod : public NativeCpuKernelMod {
  public:
-  LuSolveCPUKernel() = default;
-  ~LuSolveCPUKernel() override = default;
+  LuSolveCpuKernelMod() = default;
+  ~LuSolveCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -51,14 +51,14 @@ MS_REG_CPU_KERNEL_T_S(LuSolve,
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddOutputAttr(kNumberTypeFloat16),
-                      LuSolveCPUKernel, float, float16);
+                      LuSolveCpuKernelMod, float, float16);
 MS_REG_CPU_KERNEL_T_S(LuSolve,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddOutputAttr(kNumberTypeFloat32),
-                      LuSolveCPUKernel, float, float);
+                      LuSolveCpuKernelMod, float, float);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_LUSOLVE_CPU_KERNEL_H_

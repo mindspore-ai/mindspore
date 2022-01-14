@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,10 @@
 
 namespace mindspore {
 namespace kernel {
-class TensorCopySlicesCPUKernel : public CPUKernel {
+class TensorCopySlicesCpuKernelMod : public NativeCpuKernelMod {
  public:
-  TensorCopySlicesCPUKernel() = default;
-  ~TensorCopySlicesCPUKernel() override = default;
+  TensorCopySlicesCpuKernelMod() = default;
+  ~TensorCopySlicesCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -43,7 +43,7 @@ class TensorCopySlicesCPUKernel : public CPUKernel {
   std::vector<int64_t> output_shape_;
 };
 
-MS_REG_CPU_KERNEL(TensorCopySlices, KernelAttr(), TensorCopySlicesCPUKernel);
+MS_REG_CPU_KERNEL(TensorCopySlices, KernelAttr(), TensorCopySlicesCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

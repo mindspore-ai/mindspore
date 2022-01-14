@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,10 @@
 
 namespace mindspore {
 namespace kernel {
-class TransposeCPUFwdKernel : public CPUKernel {
+class TransposeFwdCpuKernelMod : public NativeCpuKernelMod {
  public:
-  TransposeCPUFwdKernel() = default;
-  ~TransposeCPUFwdKernel() override = default;
+  TransposeFwdCpuKernelMod() = default;
+  ~TransposeFwdCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -50,12 +50,12 @@ class TransposeCPUFwdKernel : public CPUKernel {
   std::vector<size_t> axes_;
   TypeId dtype_{kTypeUnknown};
   using TypeKernel =
-    std::function<void(TransposeCPUFwdKernel *, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;
+    std::function<void(TransposeFwdCpuKernelMod *, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;
   std::unordered_map<TypeId, TypeKernel> launch_map_;
   TypeKernel launch_func_;
 };
 
-MS_REG_CPU_KERNEL(Transpose, KernelAttr(), TransposeCPUFwdKernel);
+MS_REG_CPU_KERNEL(Transpose, KernelAttr(), TransposeFwdCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_TRANSPOSE_CPU_KERNEL_H_

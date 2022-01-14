@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,70 +25,70 @@ MS_REG_GPU_KERNEL_TWO(ScatterUpdate,
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
-                      ScatterFunctorKernel, float, int)
+                      ScatterFunctorKernelMod, float, int)
 MS_REG_GPU_KERNEL_TWO(ScatterUpdate,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeInt64)
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
-                      ScatterFunctorKernel, float, int64_t)
+                      ScatterFunctorKernelMod, float, int64_t)
 MS_REG_GPU_KERNEL_TWO(ScatterUpdate,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddOutputAttr(kNumberTypeFloat16),
-                      ScatterFunctorKernel, half, int)
+                      ScatterFunctorKernelMod, half, int)
 MS_REG_GPU_KERNEL_TWO(ScatterUpdate,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddInputAttr(kNumberTypeInt64)
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddOutputAttr(kNumberTypeFloat16),
-                      ScatterFunctorKernel, half, int64_t)
+                      ScatterFunctorKernelMod, half, int64_t)
 MS_REG_GPU_KERNEL_TWO(ScatterUpdate,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddOutputAttr(kNumberTypeInt32),
-                      ScatterFunctorKernel, int, int)
+                      ScatterFunctorKernelMod, int, int)
 MS_REG_GPU_KERNEL_TWO(ScatterUpdate,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt64)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddOutputAttr(kNumberTypeInt32),
-                      ScatterFunctorKernel, int, int64_t)
+                      ScatterFunctorKernelMod, int, int64_t)
 MS_REG_GPU_KERNEL_TWO(ScatterUpdate,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeInt8)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt8)
                         .AddOutputAttr(kNumberTypeInt8),
-                      ScatterFunctorKernel, int8_t, int)
+                      ScatterFunctorKernelMod, int8_t, int)
 MS_REG_GPU_KERNEL_TWO(ScatterUpdate,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeInt8)
                         .AddInputAttr(kNumberTypeInt64)
                         .AddInputAttr(kNumberTypeInt8)
                         .AddOutputAttr(kNumberTypeInt8),
-                      ScatterFunctorKernel, int8_t, int64_t)
+                      ScatterFunctorKernelMod, int8_t, int64_t)
 MS_REG_GPU_KERNEL_TWO(ScatterUpdate,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeUInt8)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeUInt8)
                         .AddOutputAttr(kNumberTypeUInt8),
-                      ScatterFunctorKernel, uint8_t, int)
+                      ScatterFunctorKernelMod, uint8_t, int)
 MS_REG_GPU_KERNEL_TWO(ScatterUpdate,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeUInt8)
                         .AddInputAttr(kNumberTypeInt64)
                         .AddInputAttr(kNumberTypeUInt8)
                         .AddOutputAttr(kNumberTypeUInt8),
-                      ScatterFunctorKernel, uint8_t, int64_t)
+                      ScatterFunctorKernelMod, uint8_t, int64_t)
 
 // ScatterAdd
 MS_REG_GPU_KERNEL_TWO(ScatterAdd,
@@ -97,70 +97,70 @@ MS_REG_GPU_KERNEL_TWO(ScatterAdd,
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
-                      ScatterFunctorKernel, float, int)
+                      ScatterFunctorKernelMod, float, int)
 MS_REG_GPU_KERNEL_TWO(ScatterAdd,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeInt64)
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
-                      ScatterFunctorKernel, float, int64_t)
+                      ScatterFunctorKernelMod, float, int64_t)
 MS_REG_GPU_KERNEL_TWO(ScatterAdd,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddOutputAttr(kNumberTypeFloat16),
-                      ScatterFunctorKernel, half, int)
+                      ScatterFunctorKernelMod, half, int)
 MS_REG_GPU_KERNEL_TWO(ScatterAdd,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddInputAttr(kNumberTypeInt64)
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddOutputAttr(kNumberTypeFloat16),
-                      ScatterFunctorKernel, half, int64_t)
+                      ScatterFunctorKernelMod, half, int64_t)
 MS_REG_GPU_KERNEL_TWO(ScatterAdd,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddOutputAttr(kNumberTypeInt32),
-                      ScatterFunctorKernel, int, int)
+                      ScatterFunctorKernelMod, int, int)
 MS_REG_GPU_KERNEL_TWO(ScatterAdd,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt64)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddOutputAttr(kNumberTypeInt32),
-                      ScatterFunctorKernel, int, int64_t)
+                      ScatterFunctorKernelMod, int, int64_t)
 MS_REG_GPU_KERNEL_TWO(ScatterAdd,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeInt8)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt8)
                         .AddOutputAttr(kNumberTypeInt8),
-                      ScatterFunctorKernel, int8_t, int)
+                      ScatterFunctorKernelMod, int8_t, int)
 MS_REG_GPU_KERNEL_TWO(ScatterAdd,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeInt8)
                         .AddInputAttr(kNumberTypeInt64)
                         .AddInputAttr(kNumberTypeInt8)
                         .AddOutputAttr(kNumberTypeInt8),
-                      ScatterFunctorKernel, int8_t, int64_t)
+                      ScatterFunctorKernelMod, int8_t, int64_t)
 MS_REG_GPU_KERNEL_TWO(ScatterAdd,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeUInt8)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeUInt8)
                         .AddOutputAttr(kNumberTypeUInt8),
-                      ScatterFunctorKernel, uint8_t, int)
+                      ScatterFunctorKernelMod, uint8_t, int)
 MS_REG_GPU_KERNEL_TWO(ScatterAdd,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeUInt8)
                         .AddInputAttr(kNumberTypeInt64)
                         .AddInputAttr(kNumberTypeUInt8)
                         .AddOutputAttr(kNumberTypeUInt8),
-                      ScatterFunctorKernel, uint8_t, int64_t)
+                      ScatterFunctorKernelMod, uint8_t, int64_t)
 
 // ScatterSub
 MS_REG_GPU_KERNEL_TWO(ScatterSub,
@@ -169,69 +169,69 @@ MS_REG_GPU_KERNEL_TWO(ScatterSub,
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
-                      ScatterFunctorKernel, float, int)
+                      ScatterFunctorKernelMod, float, int)
 MS_REG_GPU_KERNEL_TWO(ScatterSub,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeInt64)
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
-                      ScatterFunctorKernel, float, int64_t)
+                      ScatterFunctorKernelMod, float, int64_t)
 MS_REG_GPU_KERNEL_TWO(ScatterSub,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddOutputAttr(kNumberTypeFloat16),
-                      ScatterFunctorKernel, half, int)
+                      ScatterFunctorKernelMod, half, int)
 MS_REG_GPU_KERNEL_TWO(ScatterSub,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddInputAttr(kNumberTypeInt64)
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddOutputAttr(kNumberTypeFloat16),
-                      ScatterFunctorKernel, half, int64_t)
+                      ScatterFunctorKernelMod, half, int64_t)
 MS_REG_GPU_KERNEL_TWO(ScatterSub,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddOutputAttr(kNumberTypeInt32),
-                      ScatterFunctorKernel, int, int)
+                      ScatterFunctorKernelMod, int, int)
 MS_REG_GPU_KERNEL_TWO(ScatterSub,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt64)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddOutputAttr(kNumberTypeInt32),
-                      ScatterFunctorKernel, int, int64_t)
+                      ScatterFunctorKernelMod, int, int64_t)
 MS_REG_GPU_KERNEL_TWO(ScatterSub,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeInt8)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt8)
                         .AddOutputAttr(kNumberTypeInt8),
-                      ScatterFunctorKernel, int8_t, int)
+                      ScatterFunctorKernelMod, int8_t, int)
 MS_REG_GPU_KERNEL_TWO(ScatterSub,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeInt8)
                         .AddInputAttr(kNumberTypeInt64)
                         .AddInputAttr(kNumberTypeInt8)
                         .AddOutputAttr(kNumberTypeInt8),
-                      ScatterFunctorKernel, int8_t, int64_t)
+                      ScatterFunctorKernelMod, int8_t, int64_t)
 MS_REG_GPU_KERNEL_TWO(ScatterSub,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeUInt8)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeUInt8)
                         .AddOutputAttr(kNumberTypeUInt8),
-                      ScatterFunctorKernel, uint8_t, int)
+                      ScatterFunctorKernelMod, uint8_t, int)
 MS_REG_GPU_KERNEL_TWO(ScatterSub,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeUInt8)
                         .AddInputAttr(kNumberTypeInt64)
                         .AddInputAttr(kNumberTypeUInt8)
                         .AddOutputAttr(kNumberTypeUInt8),
-                      ScatterFunctorKernel, uint8_t, int64_t)
+                      ScatterFunctorKernelMod, uint8_t, int64_t)
 }  // namespace kernel
 }  // namespace mindspore

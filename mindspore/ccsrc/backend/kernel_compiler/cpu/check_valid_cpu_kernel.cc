@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ constexpr size_t kIndex2 = 2;
 }  // namespace
 
 template <typename T>
-void CheckValidCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
+void CheckValidCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   anchor_box_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
@@ -39,9 +39,9 @@ void CheckValidCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-bool CheckValidCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                    const std::vector<kernel::AddressPtr> &,
-                                    const std::vector<kernel::AddressPtr> &outputs) {
+bool CheckValidCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                       const std::vector<kernel::AddressPtr> &,
+                                       const std::vector<kernel::AddressPtr> &outputs) {
   CheckParams(inputs, outputs);
   auto anchor_box = reinterpret_cast<T *>(inputs[0]->addr);
   auto img_metas = reinterpret_cast<T *>(inputs[1]->addr);
@@ -77,8 +77,8 @@ bool CheckValidCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &input
 }
 
 template <typename T>
-void CheckValidCPUKernel<T>::CheckParams(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &outputs) {
+void CheckValidCpuKernelMod<T>::CheckParams(const std::vector<AddressPtr> &inputs,
+                                            const std::vector<AddressPtr> &outputs) {
   //  inputs: anchor_box, img_metas
   if (inputs.size() != kInputSize) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be " << kInputSize << ", but got "

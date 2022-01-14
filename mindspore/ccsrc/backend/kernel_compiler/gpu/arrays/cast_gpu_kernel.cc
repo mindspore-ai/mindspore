@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,409 +18,409 @@
 
 namespace mindspore {
 namespace kernel {
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8), CastGpuKernel,
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8), CastGpuKernelMod,
                       int8_t, int8_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt16), CastGpuKernel,
-                      int8_t, int16_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt32), CastGpuKernel,
-                      int8_t, int32_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt64), CastGpuKernel,
-                      int8_t, int64_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeUInt8), CastGpuKernel,
-                      int8_t, uint8_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeUInt16), CastGpuKernel,
-                      int8_t, uint16_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeUInt32), CastGpuKernel,
-                      int8_t, uint32_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeUInt64), CastGpuKernel,
-                      int8_t, uint64_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeFloat32), CastGpuKernel,
-                      int8_t, float)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeFloat64), CastGpuKernel,
-                      int8_t, double)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeFloat16), CastGpuKernel,
-                      int8_t, half)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeBool), CastGpuKernel,
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt16),
+                      CastGpuKernelMod, int8_t, int16_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt32),
+                      CastGpuKernelMod, int8_t, int32_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt64),
+                      CastGpuKernelMod, int8_t, int64_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeUInt8),
+                      CastGpuKernelMod, int8_t, uint8_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeUInt16),
+                      CastGpuKernelMod, int8_t, uint16_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeUInt32),
+                      CastGpuKernelMod, int8_t, uint32_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeUInt64),
+                      CastGpuKernelMod, int8_t, uint64_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeFloat32),
+                      CastGpuKernelMod, int8_t, float)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeFloat64),
+                      CastGpuKernelMod, int8_t, double)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeFloat16),
+                      CastGpuKernelMod, int8_t, half)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeBool), CastGpuKernelMod,
                       int8_t, bool)
 template <typename T>
 using Complex = mindspore::utils::Complex<T>;
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeComplex64),
-                      CastGpuKernel, int8_t, Complex<float>)
+                      CastGpuKernelMod, int8_t, Complex<float>)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeComplex128),
-                      CastGpuKernel, int8_t, Complex<double>)
+                      CastGpuKernelMod, int8_t, Complex<double>)
 
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt8), CastGpuKernel,
-                      int16_t, int8_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16), CastGpuKernel,
-                      int16_t, int16_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt32), CastGpuKernel,
-                      int16_t, int32_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt64), CastGpuKernel,
-                      int16_t, int64_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeUInt8), CastGpuKernel,
-                      int16_t, uint8_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeUInt16), CastGpuKernel,
-                      int16_t, uint16_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeUInt32), CastGpuKernel,
-                      int16_t, uint32_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeUInt64), CastGpuKernel,
-                      int16_t, uint64_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt8),
+                      CastGpuKernelMod, int16_t, int8_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+                      CastGpuKernelMod, int16_t, int16_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt32),
+                      CastGpuKernelMod, int16_t, int32_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt64),
+                      CastGpuKernelMod, int16_t, int64_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeUInt8),
+                      CastGpuKernelMod, int16_t, uint8_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeUInt16),
+                      CastGpuKernelMod, int16_t, uint16_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeUInt32),
+                      CastGpuKernelMod, int16_t, uint32_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeUInt64),
+                      CastGpuKernelMod, int16_t, uint64_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeFloat32),
-                      CastGpuKernel, int16_t, float)
+                      CastGpuKernelMod, int16_t, float)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeFloat64),
-                      CastGpuKernel, int16_t, double)
+                      CastGpuKernelMod, int16_t, double)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeFloat16),
-                      CastGpuKernel, int16_t, half)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeBool), CastGpuKernel,
-                      int16_t, bool)
+                      CastGpuKernelMod, int16_t, half)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeBool),
+                      CastGpuKernelMod, int16_t, bool)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeComplex64),
-                      CastGpuKernel, int16_t, Complex<float>)
+                      CastGpuKernelMod, int16_t, Complex<float>)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeComplex128),
-                      CastGpuKernel, int16_t, Complex<double>)
+                      CastGpuKernelMod, int16_t, Complex<double>)
 
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt8), CastGpuKernel,
-                      int32_t, int8_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt16), CastGpuKernel,
-                      int32_t, int16_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), CastGpuKernel,
-                      int32_t, int32_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64), CastGpuKernel,
-                      int32_t, int64_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt8), CastGpuKernel,
-                      int32_t, uint8_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt16), CastGpuKernel,
-                      int32_t, uint16_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt32), CastGpuKernel,
-                      int32_t, uint32_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt64), CastGpuKernel,
-                      int32_t, uint64_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt8),
+                      CastGpuKernelMod, int32_t, int8_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt16),
+                      CastGpuKernelMod, int32_t, int16_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+                      CastGpuKernelMod, int32_t, int32_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
+                      CastGpuKernelMod, int32_t, int64_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt8),
+                      CastGpuKernelMod, int32_t, uint8_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt16),
+                      CastGpuKernelMod, int32_t, uint16_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt32),
+                      CastGpuKernelMod, int32_t, uint32_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt64),
+                      CastGpuKernelMod, int32_t, uint64_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-                      CastGpuKernel, int32_t, float)
+                      CastGpuKernelMod, int32_t, float)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
-                      CastGpuKernel, int32_t, double)
+                      CastGpuKernelMod, int32_t, double)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
-                      CastGpuKernel, int32_t, half)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool), CastGpuKernel,
-                      int32_t, bool)
+                      CastGpuKernelMod, int32_t, half)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
+                      CastGpuKernelMod, int32_t, bool)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeComplex64),
-                      CastGpuKernel, int32_t, Complex<float>)
+                      CastGpuKernelMod, int32_t, Complex<float>)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeComplex128),
-                      CastGpuKernel, int32_t, Complex<double>)
+                      CastGpuKernelMod, int32_t, Complex<double>)
 
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt8), CastGpuKernel,
-                      int64_t, int8_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt16), CastGpuKernel,
-                      int64_t, int16_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32), CastGpuKernel,
-                      int64_t, int32_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64), CastGpuKernel,
-                      int64_t, int64_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt8), CastGpuKernel,
-                      int64_t, uint8_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt16), CastGpuKernel,
-                      int64_t, uint16_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt32), CastGpuKernel,
-                      int64_t, uint32_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt64), CastGpuKernel,
-                      int64_t, uint64_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt8),
+                      CastGpuKernelMod, int64_t, int8_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt16),
+                      CastGpuKernelMod, int64_t, int16_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
+                      CastGpuKernelMod, int64_t, int32_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+                      CastGpuKernelMod, int64_t, int64_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt8),
+                      CastGpuKernelMod, int64_t, uint8_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt16),
+                      CastGpuKernelMod, int64_t, uint16_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt32),
+                      CastGpuKernelMod, int64_t, uint32_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt64),
+                      CastGpuKernelMod, int64_t, uint64_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
-                      CastGpuKernel, int64_t, float)
+                      CastGpuKernelMod, int64_t, float)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
-                      CastGpuKernel, int64_t, double)
+                      CastGpuKernelMod, int64_t, double)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
-                      CastGpuKernel, int64_t, half)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool), CastGpuKernel,
-                      int64_t, bool)
+                      CastGpuKernelMod, int64_t, half)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
+                      CastGpuKernelMod, int64_t, bool)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex64),
-                      CastGpuKernel, int64_t, Complex<float>)
+                      CastGpuKernelMod, int64_t, Complex<float>)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex128),
-                      CastGpuKernel, int64_t, Complex<double>)
+                      CastGpuKernelMod, int64_t, Complex<double>)
 
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeInt8), CastGpuKernel,
-                      uint8_t, int8_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeInt16), CastGpuKernel,
-                      uint8_t, int16_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeInt32), CastGpuKernel,
-                      uint8_t, int32_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeInt64), CastGpuKernel,
-                      uint8_t, int64_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8), CastGpuKernel,
-                      uint8_t, uint8_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt16), CastGpuKernel,
-                      uint8_t, uint16_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt32), CastGpuKernel,
-                      uint8_t, uint32_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt64), CastGpuKernel,
-                      uint8_t, uint64_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeInt8),
+                      CastGpuKernelMod, uint8_t, int8_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeInt16),
+                      CastGpuKernelMod, uint8_t, int16_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeInt32),
+                      CastGpuKernelMod, uint8_t, int32_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeInt64),
+                      CastGpuKernelMod, uint8_t, int64_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+                      CastGpuKernelMod, uint8_t, uint8_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt16),
+                      CastGpuKernelMod, uint8_t, uint16_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt32),
+                      CastGpuKernelMod, uint8_t, uint32_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt64),
+                      CastGpuKernelMod, uint8_t, uint64_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeFloat32),
-                      CastGpuKernel, uint8_t, float)
+                      CastGpuKernelMod, uint8_t, float)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeFloat64),
-                      CastGpuKernel, uint8_t, double)
+                      CastGpuKernelMod, uint8_t, double)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeFloat16),
-                      CastGpuKernel, uint8_t, half)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeBool), CastGpuKernel,
-                      uint8_t, bool)
+                      CastGpuKernelMod, uint8_t, half)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeBool),
+                      CastGpuKernelMod, uint8_t, bool)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeComplex64),
-                      CastGpuKernel, uint8_t, Complex<float>)
+                      CastGpuKernelMod, uint8_t, Complex<float>)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeComplex128),
-                      CastGpuKernel, uint8_t, Complex<double>)
+                      CastGpuKernelMod, uint8_t, Complex<double>)
 
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeInt8), CastGpuKernel,
-                      uint16_t, int8_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeInt16), CastGpuKernel,
-                      uint16_t, int16_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeInt32), CastGpuKernel,
-                      uint16_t, int32_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeInt64), CastGpuKernel,
-                      uint16_t, int64_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt8), CastGpuKernel,
-                      uint16_t, uint8_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeInt8),
+                      CastGpuKernelMod, uint16_t, int8_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeInt16),
+                      CastGpuKernelMod, uint16_t, int16_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeInt32),
+                      CastGpuKernelMod, uint16_t, int32_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeInt64),
+                      CastGpuKernelMod, uint16_t, int64_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt8),
+                      CastGpuKernelMod, uint16_t, uint8_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
-                      CastGpuKernel, uint16_t, uint16_t)
+                      CastGpuKernelMod, uint16_t, uint16_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt32),
-                      CastGpuKernel, uint16_t, uint32_t)
+                      CastGpuKernelMod, uint16_t, uint32_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt64),
-                      CastGpuKernel, uint16_t, uint64_t)
+                      CastGpuKernelMod, uint16_t, uint64_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeFloat32),
-                      CastGpuKernel, uint16_t, float)
+                      CastGpuKernelMod, uint16_t, float)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeFloat64),
-                      CastGpuKernel, uint16_t, double)
+                      CastGpuKernelMod, uint16_t, double)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeFloat16),
-                      CastGpuKernel, uint16_t, half)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeBool), CastGpuKernel,
-                      uint16_t, bool)
+                      CastGpuKernelMod, uint16_t, half)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeBool),
+                      CastGpuKernelMod, uint16_t, bool)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeComplex64),
-                      CastGpuKernel, uint16_t, Complex<float>)
+                      CastGpuKernelMod, uint16_t, Complex<float>)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeComplex128),
-                      CastGpuKernel, uint16_t, Complex<double>)
+                      CastGpuKernelMod, uint16_t, Complex<double>)
 
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeInt8), CastGpuKernel,
-                      uint32_t, int8_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeInt16), CastGpuKernel,
-                      uint32_t, int16_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeInt32), CastGpuKernel,
-                      uint32_t, int32_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeInt64), CastGpuKernel,
-                      uint32_t, int64_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt8), CastGpuKernel,
-                      uint32_t, uint8_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeInt8),
+                      CastGpuKernelMod, uint32_t, int8_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeInt16),
+                      CastGpuKernelMod, uint32_t, int16_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeInt32),
+                      CastGpuKernelMod, uint32_t, int32_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeInt64),
+                      CastGpuKernelMod, uint32_t, int64_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt8),
+                      CastGpuKernelMod, uint32_t, uint8_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt16),
-                      CastGpuKernel, uint32_t, uint16_t)
+                      CastGpuKernelMod, uint32_t, uint16_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
-                      CastGpuKernel, uint32_t, uint32_t)
+                      CastGpuKernelMod, uint32_t, uint32_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt64),
-                      CastGpuKernel, uint32_t, uint64_t)
+                      CastGpuKernelMod, uint32_t, uint64_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeFloat32),
-                      CastGpuKernel, uint32_t, float)
+                      CastGpuKernelMod, uint32_t, float)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeFloat64),
-                      CastGpuKernel, uint32_t, double)
+                      CastGpuKernelMod, uint32_t, double)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeFloat16),
-                      CastGpuKernel, uint32_t, half)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeBool), CastGpuKernel,
-                      uint32_t, bool)
+                      CastGpuKernelMod, uint32_t, half)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeBool),
+                      CastGpuKernelMod, uint32_t, bool)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeComplex64),
-                      CastGpuKernel, uint32_t, Complex<float>)
+                      CastGpuKernelMod, uint32_t, Complex<float>)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeComplex128),
-                      CastGpuKernel, uint32_t, Complex<double>)
+                      CastGpuKernelMod, uint32_t, Complex<double>)
 
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeInt8), CastGpuKernel,
-                      uint64_t, int8_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeInt16), CastGpuKernel,
-                      uint64_t, int16_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeInt32), CastGpuKernel,
-                      uint64_t, int32_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeInt64), CastGpuKernel,
-                      uint64_t, int64_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt8), CastGpuKernel,
-                      uint64_t, uint8_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeInt8),
+                      CastGpuKernelMod, uint64_t, int8_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeInt16),
+                      CastGpuKernelMod, uint64_t, int16_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeInt32),
+                      CastGpuKernelMod, uint64_t, int32_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeInt64),
+                      CastGpuKernelMod, uint64_t, int64_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt8),
+                      CastGpuKernelMod, uint64_t, uint8_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt16),
-                      CastGpuKernel, uint64_t, uint16_t)
+                      CastGpuKernelMod, uint64_t, uint16_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt32),
-                      CastGpuKernel, uint64_t, uint32_t)
+                      CastGpuKernelMod, uint64_t, uint32_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
-                      CastGpuKernel, uint64_t, uint64_t)
+                      CastGpuKernelMod, uint64_t, uint64_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeFloat32),
-                      CastGpuKernel, uint64_t, float)
+                      CastGpuKernelMod, uint64_t, float)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeFloat64),
-                      CastGpuKernel, uint64_t, double)
+                      CastGpuKernelMod, uint64_t, double)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeFloat16),
-                      CastGpuKernel, uint64_t, half)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeBool), CastGpuKernel,
-                      uint64_t, bool)
+                      CastGpuKernelMod, uint64_t, half)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeBool),
+                      CastGpuKernelMod, uint64_t, bool)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeComplex64),
-                      CastGpuKernel, uint64_t, Complex<float>)
+                      CastGpuKernelMod, uint64_t, Complex<float>)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeComplex128),
-                      CastGpuKernel, uint64_t, Complex<double>)
+                      CastGpuKernelMod, uint64_t, Complex<double>)
 
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt8), CastGpuKernel,
-                      half, int8_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt8),
+                      CastGpuKernelMod, half, int8_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt16),
-                      CastGpuKernel, half, int16_t)
+                      CastGpuKernelMod, half, int16_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt32),
-                      CastGpuKernel, half, int32_t)
+                      CastGpuKernelMod, half, int32_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt64),
-                      CastGpuKernel, half, int64_t)
+                      CastGpuKernelMod, half, int64_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeUInt8),
-                      CastGpuKernel, half, uint8_t)
+                      CastGpuKernelMod, half, uint8_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeUInt16),
-                      CastGpuKernel, half, uint16_t)
+                      CastGpuKernelMod, half, uint16_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeUInt32),
-                      CastGpuKernel, half, uint32_t)
+                      CastGpuKernelMod, half, uint32_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeUInt64),
-                      CastGpuKernel, half, uint64_t)
+                      CastGpuKernelMod, half, uint64_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat32),
-                      CastGpuKernel, half, float)
+                      CastGpuKernelMod, half, float)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat64),
-                      CastGpuKernel, half, double)
+                      CastGpuKernelMod, half, double)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-                      CastGpuKernel, half, half)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeBool), CastGpuKernel,
-                      half, bool)
+                      CastGpuKernelMod, half, half)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeBool),
+                      CastGpuKernelMod, half, bool)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeComplex64),
-                      CastGpuKernel, half, Complex<float>)
+                      CastGpuKernelMod, half, Complex<float>)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeComplex128),
-                      CastGpuKernel, half, Complex<double>)
+                      CastGpuKernelMod, half, Complex<double>)
 
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt8), CastGpuKernel,
-                      float, int8_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt8),
+                      CastGpuKernelMod, float, int8_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt16),
-                      CastGpuKernel, float, int16_t)
+                      CastGpuKernelMod, float, int16_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt32),
-                      CastGpuKernel, float, int32_t)
+                      CastGpuKernelMod, float, int32_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt64),
-                      CastGpuKernel, float, int64_t)
+                      CastGpuKernelMod, float, int64_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeUInt8),
-                      CastGpuKernel, float, uint8_t)
+                      CastGpuKernelMod, float, uint8_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeUInt16),
-                      CastGpuKernel, float, uint16_t)
+                      CastGpuKernelMod, float, uint16_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeUInt32),
-                      CastGpuKernel, float, uint32_t)
+                      CastGpuKernelMod, float, uint32_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeUInt64),
-                      CastGpuKernel, float, uint64_t)
+                      CastGpuKernelMod, float, uint64_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                      CastGpuKernel, float, float)
+                      CastGpuKernelMod, float, float)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat64),
-                      CastGpuKernel, float, double)
+                      CastGpuKernelMod, float, double)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat16),
-                      CastGpuKernel, float, half)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool), CastGpuKernel,
-                      float, bool)
+                      CastGpuKernelMod, float, half)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
+                      CastGpuKernelMod, float, bool)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeComplex64),
-                      CastGpuKernel, float, Complex<float>)
+                      CastGpuKernelMod, float, Complex<float>)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeComplex128),
-                      CastGpuKernel, float, Complex<double>)
+                      CastGpuKernelMod, float, Complex<double>)
 
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeInt8), CastGpuKernel,
-                      double, int8_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeInt8),
+                      CastGpuKernelMod, double, int8_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeInt16),
-                      CastGpuKernel, double, int16_t)
+                      CastGpuKernelMod, double, int16_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeInt32),
-                      CastGpuKernel, double, int32_t)
+                      CastGpuKernelMod, double, int32_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeInt64),
-                      CastGpuKernel, double, int64_t)
+                      CastGpuKernelMod, double, int64_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeUInt8),
-                      CastGpuKernel, double, uint8_t)
+                      CastGpuKernelMod, double, uint8_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeUInt16),
-                      CastGpuKernel, double, uint16_t)
+                      CastGpuKernelMod, double, uint16_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeUInt32),
-                      CastGpuKernel, double, uint32_t)
+                      CastGpuKernelMod, double, uint32_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeUInt64),
-                      CastGpuKernel, double, uint64_t)
+                      CastGpuKernelMod, double, uint64_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat32),
-                      CastGpuKernel, double, float)
+                      CastGpuKernelMod, double, float)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-                      CastGpuKernel, double, double)
+                      CastGpuKernelMod, double, double)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat16),
-                      CastGpuKernel, double, half)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeBool), CastGpuKernel,
-                      double, bool)
+                      CastGpuKernelMod, double, half)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeBool),
+                      CastGpuKernelMod, double, bool)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeComplex64),
-                      CastGpuKernel, double, Complex<float>)
+                      CastGpuKernelMod, double, Complex<float>)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeComplex128),
-                      CastGpuKernel, double, Complex<double>)
+                      CastGpuKernelMod, double, Complex<double>)
 
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeInt8), CastGpuKernel,
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeInt8), CastGpuKernelMod,
                       bool, int8_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeInt16), CastGpuKernel,
-                      bool, int16_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeInt32), CastGpuKernel,
-                      bool, int32_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeInt64), CastGpuKernel,
-                      bool, int64_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeUInt8), CastGpuKernel,
-                      bool, uint8_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeUInt16), CastGpuKernel,
-                      bool, uint16_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeUInt32), CastGpuKernel,
-                      bool, uint32_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeUInt64), CastGpuKernel,
-                      bool, uint64_t)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeFloat32), CastGpuKernel,
-                      bool, float)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeFloat64), CastGpuKernel,
-                      bool, double)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeFloat16), CastGpuKernel,
-                      bool, half)
-MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), CastGpuKernel,
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeInt16),
+                      CastGpuKernelMod, bool, int16_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeInt32),
+                      CastGpuKernelMod, bool, int32_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeInt64),
+                      CastGpuKernelMod, bool, int64_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeUInt8),
+                      CastGpuKernelMod, bool, uint8_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeUInt16),
+                      CastGpuKernelMod, bool, uint16_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeUInt32),
+                      CastGpuKernelMod, bool, uint32_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeUInt64),
+                      CastGpuKernelMod, bool, uint64_t)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeFloat32),
+                      CastGpuKernelMod, bool, float)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeFloat64),
+                      CastGpuKernelMod, bool, double)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeFloat16),
+                      CastGpuKernelMod, bool, half)
+MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), CastGpuKernelMod,
                       bool, bool)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeComplex64),
-                      CastGpuKernel, bool, Complex<float>)
+                      CastGpuKernelMod, bool, Complex<float>)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeComplex128),
-                      CastGpuKernel, bool, Complex<double>)
+                      CastGpuKernelMod, bool, Complex<double>)
 
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeInt8),
-                      CastGpuKernel, Complex<float>, int8_t)
+                      CastGpuKernelMod, Complex<float>, int8_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeInt16),
-                      CastGpuKernel, Complex<float>, int16_t)
+                      CastGpuKernelMod, Complex<float>, int16_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeInt32),
-                      CastGpuKernel, Complex<float>, int32_t)
+                      CastGpuKernelMod, Complex<float>, int32_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeInt64),
-                      CastGpuKernel, Complex<float>, int64_t)
+                      CastGpuKernelMod, Complex<float>, int64_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeUInt8),
-                      CastGpuKernel, Complex<float>, uint8_t)
+                      CastGpuKernelMod, Complex<float>, uint8_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeUInt16),
-                      CastGpuKernel, Complex<float>, uint16_t)
+                      CastGpuKernelMod, Complex<float>, uint16_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeUInt32),
-                      CastGpuKernel, Complex<float>, uint32_t)
+                      CastGpuKernelMod, Complex<float>, uint32_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeUInt64),
-                      CastGpuKernel, Complex<float>, uint64_t)
+                      CastGpuKernelMod, Complex<float>, uint64_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeFloat32),
-                      CastGpuKernel, Complex<float>, float)
+                      CastGpuKernelMod, Complex<float>, float)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeFloat64),
-                      CastGpuKernel, Complex<float>, double)
+                      CastGpuKernelMod, Complex<float>, double)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeFloat16),
-                      CastGpuKernel, Complex<float>, half)
+                      CastGpuKernelMod, Complex<float>, half)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeBool),
-                      CastGpuKernel, Complex<float>, bool)
+                      CastGpuKernelMod, Complex<float>, bool)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex128),
-                      CastGpuKernel, Complex<float>, Complex<double>)
+                      CastGpuKernelMod, Complex<float>, Complex<double>)
 
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeInt8),
-                      CastGpuKernel, Complex<double>, int8_t)
+                      CastGpuKernelMod, Complex<double>, int8_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeInt16),
-                      CastGpuKernel, Complex<double>, int16_t)
+                      CastGpuKernelMod, Complex<double>, int16_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeInt32),
-                      CastGpuKernel, Complex<double>, int32_t)
+                      CastGpuKernelMod, Complex<double>, int32_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeInt64),
-                      CastGpuKernel, Complex<double>, int64_t)
+                      CastGpuKernelMod, Complex<double>, int64_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeUInt8),
-                      CastGpuKernel, Complex<double>, uint8_t)
+                      CastGpuKernelMod, Complex<double>, uint8_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeUInt16),
-                      CastGpuKernel, Complex<double>, uint16_t)
+                      CastGpuKernelMod, Complex<double>, uint16_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeUInt32),
-                      CastGpuKernel, Complex<double>, uint32_t)
+                      CastGpuKernelMod, Complex<double>, uint32_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeUInt64),
-                      CastGpuKernel, Complex<double>, uint64_t)
+                      CastGpuKernelMod, Complex<double>, uint64_t)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeFloat32),
-                      CastGpuKernel, Complex<double>, float)
+                      CastGpuKernelMod, Complex<double>, float)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeFloat64),
-                      CastGpuKernel, Complex<double>, double)
+                      CastGpuKernelMod, Complex<double>, double)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeFloat16),
-                      CastGpuKernel, Complex<double>, half)
+                      CastGpuKernelMod, Complex<double>, half)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeBool),
-                      CastGpuKernel, Complex<double>, bool)
+                      CastGpuKernelMod, Complex<double>, bool)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex64),
-                      CastGpuKernel, Complex<double>, Complex<float>)
+                      CastGpuKernelMod, Complex<double>, Complex<float>)
 
 }  // namespace kernel
 }  // namespace mindspore

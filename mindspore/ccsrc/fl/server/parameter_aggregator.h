@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,7 +101,7 @@ class ParameterAggregator {
   bool InitAggregationKernels(const CNodePtr &cnode);
   bool InitOptimizerKernels(const CNodePtr &cnode);
 
-  // Assign memory for server kernel K(AggregationKernel/OptimizerKernel).
+  // Assign memory for server kernel K(AggregationKernelMod/OptimizerKernelMod).
   // The memory assigned can be accessed by MemoryRegister. The memory could be weights, gradients, learning_rate,
   // momentum, etc.
   template <typename K>
@@ -111,7 +111,7 @@ class ParameterAggregator {
 
   // Generate kernel parameters for aggregation/optimizer kernels. All the parameters is registered and stored in
   // memory_register.
-  bool GenerateAggregationKernelParams(const std::shared_ptr<kernel::AggregationKernel> &aggr_kernel,
+  bool GenerateAggregationKernelParams(const std::shared_ptr<kernel::AggregationKernelMod> &aggr_kernel,
                                        const std::shared_ptr<MemoryRegister> &memory_register);
 
   // The selection of the aggregation algorithm depends on multiple factors. For example, server mode, user
@@ -136,8 +136,8 @@ class ParameterAggregator {
 
   // Update could have multiple aggregation and optimizer server kernels.
   // Here stores multiple pairs of server kernels to parameters of their Launch function.
-  std::vector<std::pair<std::shared_ptr<kernel::AggregationKernel>, KernelParams>> aggregation_kernel_parameters_;
-  std::vector<std::pair<std::shared_ptr<kernel::OptimizerKernel>, KernelParams>> optimizer_kernel_parameters_;
+  std::vector<std::pair<std::shared_ptr<kernel::AggregationKernelMod>, KernelParams>> aggregation_kernel_parameters_;
+  std::vector<std::pair<std::shared_ptr<kernel::OptimizerKernelMod>, KernelParams>> optimizer_kernel_parameters_;
 
   // Whether this parameter needs to be aggregated.
   bool requires_aggr_;

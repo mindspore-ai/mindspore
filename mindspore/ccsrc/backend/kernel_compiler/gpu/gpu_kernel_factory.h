@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,16 +29,16 @@
 namespace mindspore {
 namespace kernel {
 using mindspore::device::gpu::KernelAttr;
-using GpuKernelCreater = std::function<GpuKernel *()>;
-class GpuKernelFactory {
+using NativeGpuKernelModCreater = std::function<NativeGpuKernelMod *()>;
+class NativeGpuKernelModFactory {
  public:
-  ~GpuKernelFactory() = default;
+  ~NativeGpuKernelModFactory() = default;
 
-  static GpuKernelFactory &GetInstance();
+  static NativeGpuKernelModFactory &GetInstance();
 
-  void Register(const std::string &kernel_name, const KernelAttr &kernel_attr, GpuKernelCreater &&creator);
+  void Register(const std::string &kernel_name, const KernelAttr &kernel_attr, NativeGpuKernelModCreater &&creator);
 
-  GpuKernel *Create(const std::string &kernel_name, const CNodePtr &apply_kernel);
+  NativeGpuKernelMod *Create(const std::string &kernel_name, const CNodePtr &apply_kernel);
 
   bool SearchRegistered(const std::string &kernel_name, const KernelBuildInfoPtr &kernel_info);
 
@@ -50,24 +50,25 @@ class GpuKernelFactory {
   std::pair<std::vector<size_t>, TypeId> reduce_flag_{{}, kNumberTypeInt64};
 
  private:
-  GpuKernelFactory() = default;
+  NativeGpuKernelModFactory() = default;
 
-  GpuKernelFactory(GpuKernelFactory const &);
+  NativeGpuKernelModFactory(NativeGpuKernelModFactory const &);
 
-  GpuKernelFactory &operator=(const GpuKernelFactory &);
+  NativeGpuKernelModFactory &operator=(const NativeGpuKernelModFactory &);
 
   std::pair<bool, size_t> GpuKernelAttrCheck(const std::string &kernel_name, const KernelBuildInfo *kernel_info);
   void CheckSM(const KernelBuildInfo *kernel_info, const size_t &input_index);
   bool CheckIOParam(const std::string &kernel_name, const KernelBuildInfo *kernel_info,
-                    std::vector<std::pair<KernelAttr, GpuKernelCreater>> *iter_second, size_t attr_index);
+                    std::vector<std::pair<KernelAttr, NativeGpuKernelModCreater>> *iter_second, size_t attr_index);
   // map to maintain kernel and creator, KernelAttr object and creator must be registered as a pair.
-  std::map<std::string, std::vector<std::pair<KernelAttr, GpuKernelCreater>>> map_kernel_name_to_creater_;
+  std::map<std::string, std::vector<std::pair<KernelAttr, NativeGpuKernelModCreater>>> map_kernel_name_to_creater_;
 };
 
 class GpuKernelRegister {
  public:
-  GpuKernelRegister(const std::string &kernel_name, const KernelAttr &kernel_attr, GpuKernelCreater &&creator) {
-    GpuKernelFactory::GetInstance().Register(kernel_name, kernel_attr, std::move(creator));
+  GpuKernelRegister(const std::string &kernel_name, const KernelAttr &kernel_attr,
+                    NativeGpuKernelModCreater &&creator) {
+    NativeGpuKernelModFactory::GetInstance().Register(kernel_name, kernel_attr, std::move(creator));
   }
   ~GpuKernelRegister() = default;
 };
@@ -84,33 +85,33 @@ class GpuKernelRegister {
 #define KERNEL_NAME(kernel, cnt) MERGE(kernel, cnt)
 #define MERGE(kernel, cnt) kernel##cnt
 
-#define MS_REG_GPU_KERNEL(OPNAME, OPCLASS)                                                 \
-  static_assert(std::is_base_of<GpuKernel, OPCLASS>::value, " must be base of GpuKernel"); \
+#define MS_REG_GPU_KERNEL(OPNAME, OPCLASS)                                                                   \
+  static_assert(std::is_base_of<NativeGpuKernelMod, OPCLASS>::value, " must be base of NativeGpuKernelMod"); \
   static const GpuKernelRegister UNIQUE_KERNEL_NAME(OPNAME)(#OPNAME, KernelAttr(), []() { return new OPCLASS(); });
 
 // regular register of fixed accuracy kernels
-#define MS_REG_GPU_KERNEL_REGULAR(OPNAME, ATTR, OPCLASS)                                   \
-  static_assert(std::is_base_of<GpuKernel, OPCLASS>::value, " must be base of GpuKernel"); \
+#define MS_REG_GPU_KERNEL_REGULAR(OPNAME, ATTR, OPCLASS)                                                     \
+  static_assert(std::is_base_of<NativeGpuKernelMod, OPCLASS>::value, " must be base of NativeGpuKernelMod"); \
   static const GpuKernelRegister UNIQUE_KERNEL_NAME(OPNAME)(#OPNAME, ATTR, []() { return new OPCLASS(); });
 
 // register of mixed accuracy kernels which use template and maintain one typename, ignore input num
-#define MS_REG_GPU_KERNEL_SAME(OPNAME, ATTR, OPCLASS, T)                                      \
-  static_assert(std::is_base_of<GpuKernel, OPCLASS<T>>::value, " must be base of GpuKernel"); \
+#define MS_REG_GPU_KERNEL_SAME(OPNAME, ATTR, OPCLASS, T)                                                        \
+  static_assert(std::is_base_of<NativeGpuKernelMod, OPCLASS<T>>::value, " must be base of NativeGpuKernelMod"); \
   static const GpuKernelRegister UNIQUE_KERNEL_NAME(OPNAME)(#OPNAME, ATTR, []() { return new OPCLASS<T>(); });
 
 // register of mixed accuracy kernels which use template and maintain one typename
-#define MS_REG_GPU_KERNEL_ONE(OPNAME, ATTR, OPCLASS, T)                                       \
-  static_assert(std::is_base_of<GpuKernel, OPCLASS<T>>::value, " must be base of GpuKernel"); \
+#define MS_REG_GPU_KERNEL_ONE(OPNAME, ATTR, OPCLASS, T)                                                         \
+  static_assert(std::is_base_of<NativeGpuKernelMod, OPCLASS<T>>::value, " must be base of NativeGpuKernelMod"); \
   static const GpuKernelRegister UNIQUE_KERNEL_NAME(OPNAME)(#OPNAME, ATTR, []() { return new OPCLASS<T>(); });
 
 // register of mixed accuracy kernels which use template and maintain two typename
-#define MS_REG_GPU_KERNEL_TWO(OPNAME, ATTR, OPCLASS, T, S)                                       \
-  static_assert(std::is_base_of<GpuKernel, OPCLASS<T, S>>::value, " must be base of GpuKernel"); \
+#define MS_REG_GPU_KERNEL_TWO(OPNAME, ATTR, OPCLASS, T, S)                                                         \
+  static_assert(std::is_base_of<NativeGpuKernelMod, OPCLASS<T, S>>::value, " must be base of NativeGpuKernelMod"); \
   static const GpuKernelRegister UNIQUE_KERNEL_NAME(OPNAME)(#OPNAME, ATTR, []() { return new OPCLASS<T, S>(); });
 
 // register of mixed accuracy kernels which use template and maintain three typename
-#define MS_REG_GPU_KERNEL_THREE(OPNAME, ATTR, OPCLASS, T, S, G)                                     \
-  static_assert(std::is_base_of<GpuKernel, OPCLASS<T, S, G>>::value, " must be base of GpuKernel"); \
+#define MS_REG_GPU_KERNEL_THREE(OPNAME, ATTR, OPCLASS, T, S, G)                                                       \
+  static_assert(std::is_base_of<NativeGpuKernelMod, OPCLASS<T, S, G>>::value, " must be base of NativeGpuKernelMod"); \
   static const GpuKernelRegister UNIQUE_KERNEL_NAME(OPNAME)(#OPNAME, ATTR, []() { return new OPCLASS<T, S, G>(); });
 }  // namespace kernel
 }  // namespace mindspore

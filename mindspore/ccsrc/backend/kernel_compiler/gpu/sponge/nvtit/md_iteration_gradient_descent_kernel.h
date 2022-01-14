@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,10 +30,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class MDIterationGradientDescentGpuKernel : public GpuKernel {
+class MDIterationGradientDescentGpuKernelMod : public NativeGpuKernelMod {
  public:
-  MDIterationGradientDescentGpuKernel() {}
-  ~MDIterationGradientDescentGpuKernel() override = default;
+  MDIterationGradientDescentGpuKernelMod() {}
+  ~MDIterationGradientDescentGpuKernelMod() override = default;
 
   bool Init(const CNodePtr &kernel_node) override {
     // get bond_numbers
@@ -43,10 +43,6 @@ class MDIterationGradientDescentGpuKernel : public GpuKernel {
     InitSizeLists();
     return true;
   }
-
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -66,9 +62,6 @@ class MDIterationGradientDescentGpuKernel : public GpuKernel {
   }
 
  private:
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
   int atom_numbers;
   float learning_rate;
 };

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ MS_REG_GPU_KERNEL_TWO(CombineMomentum,
                         .AddInputAttr(kNumberTypeFloat32)  // gradient
                         .AddInputAttr(kNumberTypeFloat32)  // momentum
                         .AddOutputAttr(kNumberTypeFloat32),
-                      CombineMomentumGpuKernel, float, float)
+                      CombineMomentumGpuKernelMod, float, float)
 MS_REG_GPU_KERNEL_TWO(CombineMomentum,
                       KernelAttr()
                         .AddAllSameAttr(true)
@@ -41,7 +41,7 @@ MS_REG_GPU_KERNEL_TWO(CombineMomentum,
                         .AddInputAttr(kNumberTypeFloat16)  // gradient
                         .AddInputAttr(kNumberTypeFloat32)  // momentum
                         .AddOutputAttr(kNumberTypeFloat32),
-                      CombineMomentumGpuKernel, float, half)
+                      CombineMomentumGpuKernelMod, float, half)
 MS_REG_GPU_KERNEL_TWO(CombineMomentumWeight,
                       KernelAttr()
                         .AddAllSameAttr(true)
@@ -53,7 +53,7 @@ MS_REG_GPU_KERNEL_TWO(CombineMomentumWeight,
                         .AddInputAttr(kNumberTypeFloat32)  // gradient
                         .AddInputAttr(kNumberTypeFloat32)  // momentum
                         .AddOutputAttr(kNumberTypeFloat32),
-                      CombineMomentumGpuKernel, float, float)
+                      CombineMomentumGpuKernelMod, float, float)
 MS_REG_GPU_KERNEL_TWO(CombineMomentumWeight,
                       KernelAttr()
                         .AddAllSameAttr(true)
@@ -65,6 +65,6 @@ MS_REG_GPU_KERNEL_TWO(CombineMomentumWeight,
                         .AddInputAttr(kNumberTypeFloat16)  // gradient
                         .AddInputAttr(kNumberTypeFloat32)  // momentum
                         .AddOutputAttr(kNumberTypeFloat32),
-                      CombineMomentumGpuKernel, float, half)
+                      CombineMomentumGpuKernelMod, float, half)
 }  // namespace kernel
 }  // namespace mindspore

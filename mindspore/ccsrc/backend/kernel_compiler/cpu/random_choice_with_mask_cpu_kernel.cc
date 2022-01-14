@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,7 +81,7 @@ void UpdateOutput(const std::vector<int32_t> &dims_, const int32_t &non_zero_num
   }
 }
 
-void RandomChoiceWithMaskCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void RandomChoiceWithMaskCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
@@ -123,8 +123,8 @@ void RandomChoiceWithMaskCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
 }
 
-void RandomChoiceWithMaskCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
-  CPUKernel::InitInputOutputSize(kernel_node);
+void RandomChoiceWithMaskCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
+  NativeCpuKernelMod::InitInputOutputSize(kernel_node);
 
   GetInputTotalCount(dims, &input_total_count, input_dim_size);
   int temp_output_length = count > 0 ? count : input_total_count;
@@ -135,9 +135,9 @@ void RandomChoiceWithMaskCPUKernel::InitInputOutputSize(const CNodePtr &kernel_n
   workspace_size_list_.push_back(IntToSize(temp_output_length) * IntToSize(input_dim_size) * sizeof(int));
 }
 
-bool RandomChoiceWithMaskCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                           const std::vector<kernel::AddressPtr> &workspace,
-                                           const std::vector<kernel::AddressPtr> &outputs) {
+bool RandomChoiceWithMaskCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                              const std::vector<kernel::AddressPtr> &workspace,
+                                              const std::vector<kernel::AddressPtr> &outputs) {
   auto *input = reinterpret_cast<bool *>(inputs[0]->addr);
   auto *input_dim = reinterpret_cast<int *>(workspace[0]->addr);
   auto *tmp_output = reinterpret_cast<int *>(workspace[1]->addr);

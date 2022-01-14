@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ constexpr size_t kDropoutGradInputsNum = 2;
 constexpr size_t kDropoutGradOutputsNum = 1;
 }  // namespace
 
-void DropoutGradCpuBwdKernel::InitKernel(const CNodePtr &kernel_node) {
+void DropoutGradBwdCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
@@ -50,8 +50,8 @@ void DropoutGradCpuBwdKernel::InitKernel(const CNodePtr &kernel_node) {
   }
 }
 
-void DropoutGradCpuBwdKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
-  CPUKernel::InitInputOutputSize(kernel_node);
+void DropoutGradBwdCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
+  NativeCpuKernelMod::InitInputOutputSize(kernel_node);
   if (dtype_ == kNumberTypeFloat16) {
     workspace_size_list_.emplace_back(num_count_ * sizeof(float));
     workspace_size_list_.emplace_back(num_count_ * sizeof(float));
@@ -59,8 +59,8 @@ void DropoutGradCpuBwdKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
   }
 }
 
-bool DropoutGradCpuBwdKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                     const std::vector<AddressPtr> &outputs) {
+bool DropoutGradBwdCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                                        const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kDropoutGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kDropoutGradOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat16) {
@@ -77,9 +77,9 @@ bool DropoutGradCpuBwdKernel::Launch(const std::vector<AddressPtr> &inputs, cons
 }
 
 template <typename T>
-void DropoutGradCpuBwdKernel::DropoutBackwardKernel(const std::vector<AddressPtr> &inputs,
-                                                    const std::vector<AddressPtr> &workspace,
-                                                    const std::vector<AddressPtr> &outputs, float keep_prob) {
+void DropoutGradBwdCpuKernelMod::DropoutBackwardKernel(const std::vector<AddressPtr> &inputs,
+                                                       const std::vector<AddressPtr> &workspace,
+                                                       const std::vector<AddressPtr> &outputs, float keep_prob) {
   auto *output = reinterpret_cast<T *>(outputs[0]->addr);
   const auto *input = reinterpret_cast<T *>(inputs[0]->addr);
   const auto *mask = reinterpret_cast<T *>(inputs[1]->addr);

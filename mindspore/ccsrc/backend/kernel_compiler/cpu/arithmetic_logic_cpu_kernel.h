@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class ArithmeticLogicCPUKernel : public CPUKernel {
+class ArithmeticLogicCpuKernelMod : public NativeCpuKernelMod {
  public:
-  ArithmeticLogicCPUKernel() = default;
-  ~ArithmeticLogicCPUKernel() override = default;
+  ArithmeticLogicCpuKernelMod() = default;
+  ~ArithmeticLogicCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -51,7 +51,7 @@ class ArithmeticLogicCPUKernel : public CPUKernel {
   void LogicalAnd(const T *input1, const T *input2, bool *out);
   void LogicalOr(const T *input1, const T *input2, bool *out);
 
-  using TypeComputeFunc = std::function<void(ArithmeticLogicCPUKernel *, const T *, const T *, bool *)>;
+  using TypeComputeFunc = std::function<void(ArithmeticLogicCpuKernelMod *, const T *, const T *, bool *)>;
   TypeComputeFunc compute_func_{nullptr};
   size_t output_size_{1};
   TypeId dtype_{kTypeUnknown};
@@ -66,135 +66,135 @@ class ArithmeticLogicCPUKernel : public CPUKernel {
 
 MS_REG_CPU_KERNEL_T(
   Less, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
-  ArithmeticLogicCPUKernel, int);
+  ArithmeticLogicCpuKernelMod, int);
 MS_REG_CPU_KERNEL_T(
   Less, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
-  ArithmeticLogicCPUKernel, float);
+  ArithmeticLogicCpuKernelMod, float);
 MS_REG_CPU_KERNEL_T(
   Less, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
-  ArithmeticLogicCPUKernel, int64_t);
+  ArithmeticLogicCpuKernelMod, int64_t);
 MS_REG_CPU_KERNEL_T(
   Less, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeBool),
-  ArithmeticLogicCPUKernel, double);
+  ArithmeticLogicCpuKernelMod, double);
 MS_REG_CPU_KERNEL_T(
   Equal, KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-  ArithmeticLogicCPUKernel, bool);
+  ArithmeticLogicCpuKernelMod, bool);
 MS_REG_CPU_KERNEL_T(
   Equal, KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeBool),
-  ArithmeticLogicCPUKernel, int8_t);
+  ArithmeticLogicCpuKernelMod, int8_t);
 MS_REG_CPU_KERNEL_T(
   Equal, KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeBool),
-  ArithmeticLogicCPUKernel, int16_t);
+  ArithmeticLogicCpuKernelMod, int16_t);
 MS_REG_CPU_KERNEL_T(
   Equal, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
-  ArithmeticLogicCPUKernel, int);
+  ArithmeticLogicCpuKernelMod, int);
 MS_REG_CPU_KERNEL_T(
   Equal, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
-  ArithmeticLogicCPUKernel, int64_t);
+  ArithmeticLogicCpuKernelMod, int64_t);
 MS_REG_CPU_KERNEL_T(
   Equal, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeBool),
-  ArithmeticLogicCPUKernel, uint8_t);
+  ArithmeticLogicCpuKernelMod, uint8_t);
 MS_REG_CPU_KERNEL_T(
   Equal, KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeBool),
-  ArithmeticLogicCPUKernel, uint16_t);
+  ArithmeticLogicCpuKernelMod, uint16_t);
 MS_REG_CPU_KERNEL_T(
   Equal, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeBool),
-  ArithmeticLogicCPUKernel, uint32_t);
+  ArithmeticLogicCpuKernelMod, uint32_t);
 MS_REG_CPU_KERNEL_T(
   Equal, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeBool),
-  ArithmeticLogicCPUKernel, float16);
+  ArithmeticLogicCpuKernelMod, float16);
 MS_REG_CPU_KERNEL_T(
   Equal, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
-  ArithmeticLogicCPUKernel, float);
+  ArithmeticLogicCpuKernelMod, float);
 MS_REG_CPU_KERNEL_T(
   Equal, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeBool),
-  ArithmeticLogicCPUKernel, double);
+  ArithmeticLogicCpuKernelMod, double);
 MS_REG_CPU_KERNEL_T(
   NotEqual, KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-  ArithmeticLogicCPUKernel, bool);
+  ArithmeticLogicCpuKernelMod, bool);
 MS_REG_CPU_KERNEL_T(
   NotEqual, KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeBool),
-  ArithmeticLogicCPUKernel, int8_t);
+  ArithmeticLogicCpuKernelMod, int8_t);
 MS_REG_CPU_KERNEL_T(
   NotEqual, KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeBool),
-  ArithmeticLogicCPUKernel, int16_t);
+  ArithmeticLogicCpuKernelMod, int16_t);
 MS_REG_CPU_KERNEL_T(
   NotEqual, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
-  ArithmeticLogicCPUKernel, int);
+  ArithmeticLogicCpuKernelMod, int);
 MS_REG_CPU_KERNEL_T(
   NotEqual, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
-  ArithmeticLogicCPUKernel, int64_t);
+  ArithmeticLogicCpuKernelMod, int64_t);
 MS_REG_CPU_KERNEL_T(
   NotEqual, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeBool),
-  ArithmeticLogicCPUKernel, uint8_t);
+  ArithmeticLogicCpuKernelMod, uint8_t);
 MS_REG_CPU_KERNEL_T(
   NotEqual, KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeBool),
-  ArithmeticLogicCPUKernel, uint16_t);
+  ArithmeticLogicCpuKernelMod, uint16_t);
 MS_REG_CPU_KERNEL_T(
   NotEqual, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeBool),
-  ArithmeticLogicCPUKernel, uint32_t);
+  ArithmeticLogicCpuKernelMod, uint32_t);
 MS_REG_CPU_KERNEL_T(
   NotEqual,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeBool),
-  ArithmeticLogicCPUKernel, float16);
+  ArithmeticLogicCpuKernelMod, float16);
 MS_REG_CPU_KERNEL_T(
   NotEqual,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
-  ArithmeticLogicCPUKernel, float);
+  ArithmeticLogicCpuKernelMod, float);
 MS_REG_CPU_KERNEL_T(
   NotEqual,
   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeBool),
-  ArithmeticLogicCPUKernel, double);
+  ArithmeticLogicCpuKernelMod, double);
 MS_REG_CPU_KERNEL_T(
   Greater, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
-  ArithmeticLogicCPUKernel, int);
+  ArithmeticLogicCpuKernelMod, int);
 MS_REG_CPU_KERNEL_T(
   Greater,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
-  ArithmeticLogicCPUKernel, float);
+  ArithmeticLogicCpuKernelMod, float);
 MS_REG_CPU_KERNEL_T(
   Greater,
   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeBool),
-  ArithmeticLogicCPUKernel, double);
+  ArithmeticLogicCpuKernelMod, double);
 MS_REG_CPU_KERNEL_T(
   Greater, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
-  ArithmeticLogicCPUKernel, int64_t);
+  ArithmeticLogicCpuKernelMod, int64_t);
 MS_REG_CPU_KERNEL_T(
   GreaterEqual,
   KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
-  ArithmeticLogicCPUKernel, int);
+  ArithmeticLogicCpuKernelMod, int);
 MS_REG_CPU_KERNEL_T(
   GreaterEqual,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
-  ArithmeticLogicCPUKernel, float);
+  ArithmeticLogicCpuKernelMod, float);
 MS_REG_CPU_KERNEL_T(
   GreaterEqual,
   KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
-  ArithmeticLogicCPUKernel, int64_t);
+  ArithmeticLogicCpuKernelMod, int64_t);
 MS_REG_CPU_KERNEL_T(
   GreaterEqual,
   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeBool),
-  ArithmeticLogicCPUKernel, double);
+  ArithmeticLogicCpuKernelMod, double);
 MS_REG_CPU_KERNEL_T(
   LessEqual, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
-  ArithmeticLogicCPUKernel, int);
+  ArithmeticLogicCpuKernelMod, int);
 MS_REG_CPU_KERNEL_T(
   LessEqual, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
-  ArithmeticLogicCPUKernel, int64_t);
+  ArithmeticLogicCpuKernelMod, int64_t);
 MS_REG_CPU_KERNEL_T(
   LessEqual,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
-  ArithmeticLogicCPUKernel, float);
+  ArithmeticLogicCpuKernelMod, float);
 MS_REG_CPU_KERNEL_T(
   LessEqual,
   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeBool),
-  ArithmeticLogicCPUKernel, double);
+  ArithmeticLogicCpuKernelMod, double);
 MS_REG_CPU_KERNEL_T(
   LogicalAnd, KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-  ArithmeticLogicCPUKernel, bool);
+  ArithmeticLogicCpuKernelMod, bool);
 MS_REG_CPU_KERNEL_T(
   LogicalOr, KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-  ArithmeticLogicCPUKernel, bool);
+  ArithmeticLogicCpuKernelMod, bool);
 }  // namespace kernel
 }  // namespace mindspore
 

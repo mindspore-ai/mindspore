@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,13 +28,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class ActivationGpuFwdKernel : public GpuKernel {
+class ActivationFwdGpuKernelMod : public NativeGpuKernelMod {
  public:
-  ActivationGpuFwdKernel() { ResetResource(); }
-  ~ActivationGpuFwdKernel() override { DestroyResource(); }
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+  ActivationFwdGpuKernelMod() { ResetResource(); }
+  ~ActivationFwdGpuKernelMod() override { DestroyResource(); }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -161,9 +158,7 @@ class ActivationGpuFwdKernel : public GpuKernel {
   cudnnActivationMode_t mode_;
   cudnnTensorDescriptor_t data_descriptor_;
   bool is_null_input_;
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
+
   cudnnDataType_t cudnn_data_type_;
   size_t input_size_;
   size_t output_size_;

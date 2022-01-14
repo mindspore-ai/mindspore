@@ -27,10 +27,10 @@
 #include "backend/kernel_compiler/common_utils.h"
 namespace mindspore {
 namespace kernel {
-class MatrixSetDiagCPUKernel : public CPUKernel {
+class MatrixSetDiagCpuKernelMod : public NativeCpuKernelMod {
  public:
-  MatrixSetDiagCPUKernel() = default;
-  ~MatrixSetDiagCPUKernel() override = default;
+  MatrixSetDiagCpuKernelMod() = default;
+  ~MatrixSetDiagCpuKernelMod() override = default;
   void InitKernel(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
               const std::vector<AddressPtr> &outputs) override;
@@ -60,7 +60,7 @@ MS_REG_CPU_KERNEL(MatrixSetDiag,
                     .AddInputAttr(kNumberTypeInt32)
                     .AddInputAttr(kNumberTypeInt32)
                     .AddOutputAttr(kNumberTypeInt32),
-                  MatrixSetDiagCPUKernel)
+                  MatrixSetDiagCpuKernelMod)
 
 MS_REG_CPU_KERNEL(MatrixSetDiag,
                   KernelAttr()
@@ -68,7 +68,7 @@ MS_REG_CPU_KERNEL(MatrixSetDiag,
                     .AddInputAttr(kNumberTypeFloat16)
                     .AddInputAttr(kNumberTypeInt32)
                     .AddOutputAttr(kNumberTypeFloat16),
-                  MatrixSetDiagCPUKernel)
+                  MatrixSetDiagCpuKernelMod)
 
 MS_REG_CPU_KERNEL(MatrixSetDiag,
                   KernelAttr()
@@ -76,7 +76,7 @@ MS_REG_CPU_KERNEL(MatrixSetDiag,
                     .AddInputAttr(kNumberTypeFloat32)
                     .AddInputAttr(kNumberTypeInt32)
                     .AddOutputAttr(kNumberTypeFloat32),
-                  MatrixSetDiagCPUKernel)
+                  MatrixSetDiagCpuKernelMod)
 
 MS_REG_CPU_KERNEL(MatrixSetDiag,
                   KernelAttr()
@@ -84,7 +84,7 @@ MS_REG_CPU_KERNEL(MatrixSetDiag,
                     .AddInputAttr(kNumberTypeFloat64)
                     .AddInputAttr(kNumberTypeInt32)
                     .AddOutputAttr(kNumberTypeFloat64),
-                  MatrixSetDiagCPUKernel)
+                  MatrixSetDiagCpuKernelMod)
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MATRIX_SET_DIAG_KERNEL_H_

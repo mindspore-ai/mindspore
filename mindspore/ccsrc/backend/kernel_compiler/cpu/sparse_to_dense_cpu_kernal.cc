@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ constexpr size_t kSparseToDenseOutputsNum = 1;
 }  // namespace
 
 template <typename I, typename T>
-void SparseToDenseCPUKernel<I, T>::InitKernel(const CNodePtr &kernel_node) {
+void SparseToDenseCpuKernelMod<I, T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   auto indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
@@ -47,9 +47,9 @@ void SparseToDenseCPUKernel<I, T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename I, typename T>
-bool SparseToDenseCPUKernel<I, T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                          const std::vector<kernel::AddressPtr> & /*workspace*/,
-                                          const std::vector<kernel::AddressPtr> &outputs) {
+bool SparseToDenseCpuKernelMod<I, T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                             const std::vector<kernel::AddressPtr> & /*workspace*/,
+                                             const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseToDenseInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseToDenseOutputsNum, kernel_name_);
   if (outputs[0]->size == 0) {

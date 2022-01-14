@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ constexpr size_t kAssignAddInputsNum = 2;
 constexpr size_t kAssignAddOutputsNum = 1;
 }  // namespace
 
-void AssignAddCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void AssignAddCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   std::vector<size_t> src0_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
@@ -53,8 +53,9 @@ void AssignAddCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   AddArgument(DNNL_ARG_DST, src0_desc);
 }
 
-bool AssignAddCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                                const std::vector<kernel::AddressPtr> &outputs) {
+bool AssignAddCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                   const std::vector<kernel::AddressPtr> &,
+                                   const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAssignAddInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kAssignAddOutputsNum, kernel_name_);
   SetArgumentHandle(DNNL_ARG_SRC_0, inputs[0]->addr);

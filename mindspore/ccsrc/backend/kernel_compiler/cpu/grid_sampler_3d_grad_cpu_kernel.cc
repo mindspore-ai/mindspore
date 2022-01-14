@@ -27,7 +27,7 @@ const size_t kFour = 4;
 
 namespace mindspore {
 namespace kernel {
-void GridSampler3DGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void GridSampler3DGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   grad_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kZero);
   x_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kOne);
   grid_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kTwo);
@@ -54,9 +54,9 @@ void GridSampler3DGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   align_corners = AnfAlgo::GetNodeAttr<bool>(kernel_node, "align_corners");
 }
 
-bool GridSampler3DGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                        const std::vector<kernel::AddressPtr> &,
-                                        const std::vector<kernel::AddressPtr> &outputs) {
+bool GridSampler3DGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                           const std::vector<kernel::AddressPtr> &,
+                                           const std::vector<kernel::AddressPtr> &outputs) {
   if (dtype_ == kNumberTypeFloat32) {
     LaunchKernel<float>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat64) {
@@ -68,8 +68,8 @@ bool GridSampler3DGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &i
 }
 
 template <typename T>
-void GridSampler3DGradCPUKernel::BilinearKernel(std::vector<T *> addr, std::vector<T> location, std::vector<T> mult,
-                                                std::vector<size_t> ptr) {
+void GridSampler3DGradCpuKernelMod::BilinearKernel(std::vector<T *> addr, std::vector<T> location, std::vector<T> mult,
+                                                   std::vector<size_t> ptr) {
   T x = location[kZero], y = location[kOne], z = location[kTwo];
   int64_t x_tnw = static_cast<int64_t>(std::floor(x));
   int64_t y_tnw = static_cast<int64_t>(std::floor(y));
@@ -168,8 +168,8 @@ void GridSampler3DGradCPUKernel::BilinearKernel(std::vector<T *> addr, std::vect
 }
 
 template <typename T>
-void GridSampler3DGradCPUKernel::ComputeTask(T *grad_addr, T *x_addr, T *grid_addr, T *dx_addr, T *dgrid_addr,
-                                             const size_t &n) {
+void GridSampler3DGradCpuKernelMod::ComputeTask(T *grad_addr, T *x_addr, T *grid_addr, T *dx_addr, T *dgrid_addr,
+                                                const size_t &n) {
   size_t grid_ptr_N = n * grid_stride_[kZero];
   size_t dgrid_ptr_NDHW = n * dgrid_stride_[kZero];
   for (size_t d = kZero; d < grid_shape_[kOne]; d++) {
@@ -215,8 +215,8 @@ void GridSampler3DGradCPUKernel::ComputeTask(T *grad_addr, T *x_addr, T *grid_ad
 }
 
 template <typename T>
-void GridSampler3DGradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                              const std::vector<AddressPtr> &outputs) {
+void GridSampler3DGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                                 const std::vector<AddressPtr> &outputs) {
   auto grad_data_addr = reinterpret_cast<T *>(inputs[kZero]->addr);
   auto x_data_addr = reinterpret_cast<T *>(inputs[kOne]->addr);
   auto grid_data_addr = reinterpret_cast<T *>(inputs[kTwo]->addr);
@@ -239,8 +239,9 @@ void GridSampler3DGradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inp
 }
 
 template <typename T>
-T GridSampler3DGradCPUKernel::grid_sampler_compute_source_index_set_grad(T coord, size_t size, std::string padding_mode,
-                                                                         bool align_corners, T *grad_x) {
+T GridSampler3DGradCpuKernelMod::grid_sampler_compute_source_index_set_grad(T coord, size_t size,
+                                                                            std::string padding_mode,
+                                                                            bool align_corners, T *grad_x) {
   T grad_clip, grad_refl;
   if (align_corners) {
     *grad_x = static_cast<T>(size - kOne) / kTwo;
@@ -265,7 +266,7 @@ T GridSampler3DGradCPUKernel::grid_sampler_compute_source_index_set_grad(T coord
 }
 
 template <typename T>
-T GridSampler3DGradCPUKernel::clip_coordinates_set_grad(T x, int64_t clip_limit, T *grad_x) {
+T GridSampler3DGradCpuKernelMod::clip_coordinates_set_grad(T x, int64_t clip_limit, T *grad_x) {
   if (x <= static_cast<T>(kZero)) {
     *grad_x = static_cast<T>(kZero);
     return static_cast<T>(kZero);
@@ -282,7 +283,7 @@ T GridSampler3DGradCPUKernel::clip_coordinates_set_grad(T x, int64_t clip_limit,
 }
 
 template <typename T>
-T GridSampler3DGradCPUKernel::reflect_coordinates_set_grad(T x, int64_t twice_low, int64_t twice_high, T *grad_x) {
+T GridSampler3DGradCpuKernelMod::reflect_coordinates_set_grad(T x, int64_t twice_low, int64_t twice_high, T *grad_x) {
   if (twice_low == twice_high) {
     *grad_x = static_cast<T>(kZero);
     return static_cast<T>(kZero);
@@ -309,14 +310,14 @@ T GridSampler3DGradCPUKernel::reflect_coordinates_set_grad(T x, int64_t twice_lo
 }
 
 template <typename T>
-void GridSampler3DGradCPUKernel::safe_add_3d(T *data, int64_t d, int64_t h, int64_t w, size_t sD, size_t sH, size_t sW,
-                                             size_t D, size_t H, size_t W, T delta) {
+void GridSampler3DGradCpuKernelMod::safe_add_3d(T *data, int64_t d, int64_t h, int64_t w, size_t sD, size_t sH,
+                                                size_t sW, size_t D, size_t H, size_t W, T delta) {
   if (within_bounds_3d(d, h, w, D, H, W)) {
     data[d * sD + h * sH + w * sW] += delta;
   }
 }
 
-bool GridSampler3DGradCPUKernel::within_bounds_3d(int64_t d, int64_t h, int64_t w, size_t D, size_t H, size_t W) {
+bool GridSampler3DGradCpuKernelMod::within_bounds_3d(int64_t d, int64_t h, int64_t w, size_t D, size_t H, size_t W) {
   int64_t iD = static_cast<int64_t>(D);
   int64_t iH = static_cast<int64_t>(H);
   int64_t iW = static_cast<int64_t>(W);

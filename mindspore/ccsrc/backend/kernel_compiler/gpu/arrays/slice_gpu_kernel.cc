@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,20 +19,20 @@
 namespace mindspore {
 namespace kernel {
 MS_REG_GPU_KERNEL_ONE(Slice, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-                      SliceGpuFwdKernel, double)
+                      SliceFwdGpuKernelMod, double)
 MS_REG_GPU_KERNEL_ONE(Slice, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                      SliceGpuFwdKernel, float)
+                      SliceFwdGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(Slice, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-                      SliceGpuFwdKernel, half)
+                      SliceFwdGpuKernelMod, half)
 MS_REG_GPU_KERNEL_ONE(Slice, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-                      SliceGpuFwdKernel, int64_t)
+                      SliceFwdGpuKernelMod, int64_t)
 MS_REG_GPU_KERNEL_ONE(Slice, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                      SliceGpuFwdKernel, int32_t)
+                      SliceFwdGpuKernelMod, int32_t)
 MS_REG_GPU_KERNEL_ONE(Slice, KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-                      SliceGpuFwdKernel, int16_t)
+                      SliceFwdGpuKernelMod, int16_t)
 MS_REG_GPU_KERNEL_ONE(Slice, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-                      SliceGpuFwdKernel, uchar)
+                      SliceFwdGpuKernelMod, uchar)
 MS_REG_GPU_KERNEL_ONE(Slice, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-                      SliceGpuFwdKernel, bool)
+                      SliceFwdGpuKernelMod, bool)
 }  // namespace kernel
 }  // namespace mindspore

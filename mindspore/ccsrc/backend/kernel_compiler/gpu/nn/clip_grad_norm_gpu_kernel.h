@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,9 +30,9 @@ namespace mindspore::kernel {
 constexpr size_t kArgMaxDim = 7;
 
 template <typename T>
-class ClipGradNormGpuKernel : public GpuKernel {
+class ClipGradNormGpuKernelMod : public NativeGpuKernelMod {
  public:
-  ClipGradNormGpuKernel()
+  ClipGradNormGpuKernelMod()
       : cudnn_handle_(nullptr),
         data_type_(CUDNN_DATA_FLOAT),
         nan_prop_(CUDNN_NOT_PROPAGATE_NAN),
@@ -48,11 +48,7 @@ class ClipGradNormGpuKernel : public GpuKernel {
         output_size_(0),
         workspace_size_(0) {}
 
-  ~ClipGradNormGpuKernel() override { DestroyResource(); }
-
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+  ~ClipGradNormGpuKernelMod() override { DestroyResource(); }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -86,14 +82,14 @@ class ClipGradNormGpuKernel : public GpuKernel {
         kernel_node_,
         cudaMemcpyAsync(reduce_out_addr, scaling_out_addr, workspace_size_list_[reduce_out_index],
                         cudaMemcpyDeviceToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-        "cudaMemcpyAsync for 'ClipGradNormGpuKernel' failed");
+        "cudaMemcpyAsync for 'ClipGradNormGpuKernelMod' failed");
     } else {
       CHECK_CUDNN_RET_WITH_EXCEPT(
         kernel_node_,
         cudnnReduceTensor(cudnn_handle_, reduce_tensor_descriptor_, nullptr, 0, reduce_workspace_addr,
                           workspace_size_list_[1], &alpha, input_descriptor_, scaling_out_addr, &beta,
                           output_descriptor_, reduce_out_addr),
-        "cudnnReduceTensor for 'ClipGradNormGpuKernel' failed");
+        "cudnnReduceTensor for 'ClipGradNormGpuKernelMod' failed");
     }
     // Update gradient tensor by argument 'clip_norm'
     ClipGradNormOp(output_size_ / sizeof(float), scaling_out_addr, clip_norm_addr, reduce_out_addr, output_addr,
@@ -201,7 +197,7 @@ class ClipGradNormGpuKernel : public GpuKernel {
                        size_t input_dim) {
     is_null_input_ = CHECK_NULL_INPUT(input_shape) || CHECK_NULL_INPUT(output_shape);
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'ClipGradNormGpuKernel', input or output is null.";
+      MS_LOG(WARNING) << "For 'ClipGradNormGpuKernelMod', input or output is null.";
       InitSizeLists();
       return false;
     }
@@ -243,7 +239,7 @@ class ClipGradNormGpuKernel : public GpuKernel {
     bool exceed_bound =
       std::any_of(axis_.begin(), axis_.end(), [&input_dim](const int &v) { return v < 0 || v >= input_dim; });
     if (exceed_bound) {
-      MS_LOG(EXCEPTION) << "For 'ClipGradNormGpuKernel', the value of axis should be in range of [-" << input_dim
+      MS_LOG(EXCEPTION) << "For 'ClipGradNormGpuKernelMod', the value of axis should be in range of [-" << input_dim
                         << ", " << (input_dim - 1) << "].";
     }
   }
@@ -318,9 +314,7 @@ class ClipGradNormGpuKernel : public GpuKernel {
   size_t output_size_;
   size_t workspace_size_;
   std::vector<int> axis_;
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
+
   // Used for broadcast operation.
   std::vector<size_t> input_shape_;
   std::vector<size_t> output_shape_;

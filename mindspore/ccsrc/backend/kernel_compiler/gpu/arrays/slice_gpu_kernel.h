@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,15 +27,26 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr auto kRank1 = 1;
+constexpr auto kRank2 = 2;
+constexpr auto kRank3 = 3;
+constexpr auto kRank4 = 4;
+constexpr auto kRank5 = 5;
+constexpr auto kRank6 = 6;
+constexpr auto kRank7 = 7;
+
+constexpr auto kIdx2 = 2;
+constexpr auto kIdx3 = 3;
+constexpr auto kIdx4 = 4;
+constexpr auto kIdx5 = 5;
+constexpr auto kIdx6 = 6;
+
 template <typename T>
-class SliceGpuFwdKernel : public GpuKernel {
+class SliceFwdGpuKernelMod : public NativeGpuKernelMod {
  public:
-  SliceGpuFwdKernel()
+  SliceFwdGpuKernelMod()
       : is_null_input_(false), input_size_(0), output_size_(0), workspace_size_(0), kernel_name_("Slice") {}
-  ~SliceGpuFwdKernel() override = default;
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+  ~SliceFwdGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -48,37 +59,40 @@ class SliceGpuFwdKernel : public GpuKernel {
 
     size_t input_rank = input_shape_.size();
     switch (input_rank) {
-      case 1:
+      case kRank1:
         Slice1DKernel(begin_[0], size_[0], input_shape_[0], input, output, reinterpret_cast<cudaStream_t>(stream_ptr));
         break;
-      case 2:
+      case kRank2:
         Slice2DKernel(begin_[0], begin_[1], size_[0], size_[1], input_shape_[0], input_shape_[1], input, output,
                       reinterpret_cast<cudaStream_t>(stream_ptr));
         break;
-      case 3:
-        Slice3DKernel(begin_[0], begin_[1], begin_[2], size_[0], size_[1], size_[2], input_shape_[0], input_shape_[1],
-                      input_shape_[2], input, output, reinterpret_cast<cudaStream_t>(stream_ptr));
+      case kRank3:
+        Slice3DKernel(begin_[0], begin_[1], begin_[kIdx2], size_[0], size_[1], size_[kIdx2], input_shape_[0],
+                      input_shape_[1], input_shape_[kIdx2], input, output, reinterpret_cast<cudaStream_t>(stream_ptr));
         break;
-      case 4:
-        Slice4DKernel(begin_[0], begin_[1], begin_[2], begin_[3], size_[0], size_[1], size_[2], size_[3],
-                      input_shape_[0], input_shape_[1], input_shape_[2], input_shape_[3], input, output,
+      case kRank4:
+        Slice4DKernel(begin_[0], begin_[1], begin_[kIdx2], begin_[kIdx3], size_[0], size_[1], size_[kIdx2],
+                      size_[kIdx3], input_shape_[0], input_shape_[1], input_shape_[kIdx2], input_shape_[kIdx3], input,
+                      output, reinterpret_cast<cudaStream_t>(stream_ptr));
+        break;
+      case kRank5:
+        Slice5DKernel(begin_[0], begin_[1], begin_[kIdx2], begin_[kIdx3], begin_[kIdx4], size_[0], size_[1],
+                      size_[kIdx2], size_[kIdx3], size_[kIdx4], input_shape_[0], input_shape_[1], input_shape_[kIdx2],
+                      input_shape_[kIdx3], input_shape_[kIdx4], input, output,
                       reinterpret_cast<cudaStream_t>(stream_ptr));
         break;
-      case 5:
-        Slice5DKernel(begin_[0], begin_[1], begin_[2], begin_[3], begin_[4], size_[0], size_[1], size_[2], size_[3],
-                      size_[4], input_shape_[0], input_shape_[1], input_shape_[2], input_shape_[3], input_shape_[4],
-                      input, output, reinterpret_cast<cudaStream_t>(stream_ptr));
+      case kRank6:
+        Slice6DKernel(begin_[0], begin_[1], begin_[kIdx2], begin_[kIdx3], begin_[kIdx4], begin_[kIdx5], size_[0],
+                      size_[1], size_[kIdx2], size_[kIdx3], size_[kIdx4], size_[kIdx5], input_shape_[0],
+                      input_shape_[1], input_shape_[kIdx2], input_shape_[kIdx3], input_shape_[kIdx4],
+                      input_shape_[kIdx5], input, output, reinterpret_cast<cudaStream_t>(stream_ptr));
         break;
-      case 6:
-        Slice6DKernel(begin_[0], begin_[1], begin_[2], begin_[3], begin_[4], begin_[5], size_[0], size_[1], size_[2],
-                      size_[3], size_[4], size_[5], input_shape_[0], input_shape_[1], input_shape_[2], input_shape_[3],
-                      input_shape_[4], input_shape_[5], input, output, reinterpret_cast<cudaStream_t>(stream_ptr));
-        break;
-      case 7:
-        Slice7DKernel(begin_[0], begin_[1], begin_[2], begin_[3], begin_[4], begin_[5], begin_[6], size_[0], size_[1],
-                      size_[2], size_[3], size_[4], size_[5], size_[6], input_shape_[0], input_shape_[1],
-                      input_shape_[2], input_shape_[3], input_shape_[4], input_shape_[5], input_shape_[6], input,
-                      output, reinterpret_cast<cudaStream_t>(stream_ptr));
+      case kRank7:
+        Slice7DKernel(begin_[0], begin_[1], begin_[kIdx2], begin_[kIdx3], begin_[kIdx4], begin_[kIdx5], begin_[kIdx6],
+                      size_[0], size_[1], size_[kIdx2], size_[kIdx3], size_[kIdx4], size_[kIdx5], size_[kIdx6],
+                      input_shape_[0], input_shape_[1], input_shape_[kIdx2], input_shape_[kIdx3], input_shape_[kIdx4],
+                      input_shape_[kIdx5], input_shape_[kIdx6], input, output,
+                      reinterpret_cast<cudaStream_t>(stream_ptr));
         break;
       default:
         MS_LOG(EXCEPTION) << "gpu Slice operator does not support inputs with rank >= " << input_rank << ".";
@@ -115,17 +129,17 @@ class SliceGpuFwdKernel : public GpuKernel {
     // transpose begin and size for NHWC data
     auto data_format = AnfAlgo::GetInputFormat(kernel_node, 0);
     if (data_format == "NHWC") {
-      std::swap(begin_[1], begin_[3]);
-      std::swap(begin_[1], begin_[2]);
-      std::swap(size_[1], size_[3]);
-      std::swap(size_[1], size_[2]);
+      std::swap(begin_[1], begin_[kIdx3]);
+      std::swap(begin_[1], begin_[kIdx2]);
+      std::swap(size_[1], size_[kIdx3]);
+      std::swap(size_[1], size_[kIdx2]);
     } else if (data_format == "NDHWC") {
-      std::swap(begin_[1], begin_[4]);
-      std::swap(begin_[1], begin_[3]);
-      std::swap(begin_[1], begin_[2]);
-      std::swap(size_[1], size_[4]);
-      std::swap(size_[1], size_[3]);
-      std::swap(size_[1], size_[2]);
+      std::swap(begin_[1], begin_[kIdx4]);
+      std::swap(begin_[1], begin_[kIdx3]);
+      std::swap(begin_[1], begin_[kIdx2]);
+      std::swap(size_[1], size_[kIdx4]);
+      std::swap(size_[1], size_[kIdx3]);
+      std::swap(size_[1], size_[kIdx2]);
     }
 
     InitSizeLists();
@@ -150,7 +164,8 @@ class SliceGpuFwdKernel : public GpuKernel {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
     }
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    if (input_shape.size() > 7) {
+    const size_t kInputNumUpperLimit = 7;
+    if (input_shape.size() > kInputNumUpperLimit) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input cannot be greater than 7, but got "
                         << input_shape.size();
     }
@@ -167,9 +182,9 @@ class SliceGpuFwdKernel : public GpuKernel {
                         << "of size: " << size.size() << ", the dimension of begin: " << begin.size()
                         << ", the dimension of input_x: " << input_shape.size();
     }
-
+    const int64_t kDynamicShape = -1;
     for (size_t i = 0; i < input_shape.size(); i++) {
-      if (size[i] == -1) {
+      if (size[i] == kDynamicShape) {
         size[i] = input_shape[i] - begin[i];
       }
       if (input_shape[i] <= 0 || size[i] <= 0) {
@@ -191,10 +206,6 @@ class SliceGpuFwdKernel : public GpuKernel {
   std::vector<int32_t> begin_;
   std::vector<int32_t> size_;
   std::vector<int32_t> input_shape_;
-
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 
   bool is_null_input_;
 

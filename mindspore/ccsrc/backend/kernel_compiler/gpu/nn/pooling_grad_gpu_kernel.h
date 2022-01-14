@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,9 +29,9 @@ namespace mindspore {
 namespace kernel {
 constexpr size_t INPUT_NUM = 3;
 template <typename T>
-class PoolingGradGpuKernel : public GpuKernel {
+class PoolingGradGpuKernelMod : public NativeGpuKernelMod {
  public:
-  PoolingGradGpuKernel()
+  PoolingGradGpuKernelMod()
       : cudnn_handle_(nullptr),
         pooling_descriptor_(nullptr),
         y_descriptor_(nullptr),
@@ -58,11 +58,8 @@ class PoolingGradGpuKernel : public GpuKernel {
         input_size_(0),
         output_size_(0),
         workspace_size_(0) {}
-  ~PoolingGradGpuKernel() override { DestroyResource(); }
+  ~PoolingGradGpuKernelMod() override { DestroyResource(); }
 
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
@@ -85,9 +82,10 @@ class PoolingGradGpuKernel : public GpuKernel {
 
   bool InitShape(const CNodePtr &kernel_node, int *dimA, int *strideAin, int *dimAy, int *strideAiny, int *dimAdy,
                  int *strideAdy, int *dimAout, int *strideAout, int nbDims) {
+    const size_t kDoutIdx = 2;
     auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
     auto input_mask = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-    auto dout_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 2);
+    auto dout_shape = AnfAlgo::GetInputDeviceShape(kernel_node, kDoutIdx);
     auto output_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
     auto data_format = AnfAlgo::GetInputFormat(kernel_node, 0);
     format_attr_ = GetAttr<std::string>(kernel_node, "format");
@@ -226,32 +224,39 @@ class PoolingGradGpuKernel : public GpuKernel {
                          [](const int64_t &value) { return static_cast<int>(value); });
     (void)std::transform(window_me.begin(), window_me.end(), std::back_inserter(window),
                          [](const int64_t &value) { return static_cast<int>(value); });
-    if (window.size() < 4) {
+    const size_t kSizeLowerLimit = 4;
+    const size_t kIdxH = 2;
+    const size_t kIdxW = 3;
+    if (window.size() < kSizeLowerLimit) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'kernel_size' cannot be less than 4, but got "
                         << window.size();
     }
-    int window_height = window[2];
-    int window_width = window[3];
-    if (stride_.size() < 4) {
+    int window_height = window[kIdxH];
+    int window_width = window[kIdxW];
+    if (stride_.size() < kSizeLowerLimit) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'strides' cannot be less than 4, but got "
                         << stride_.size();
     }
-    int stride_h = stride_[2];
-    int stride_w = stride_[3];
+    int stride_h = stride_[kIdxH];
+    int stride_w = stride_[kIdxW];
     if (format_attr_ == kOpFormat_NHWC) {
-      window_height = window[1];
-      window_width = window[2];
-      stride_h = stride_[1];
-      stride_w = stride_[2];
+      const size_t kNHWCIdxH = 1;
+      const size_t kNHWCIdxW = 2;
+      window_height = window[kNHWCIdxH];
+      window_width = window[kNHWCIdxW];
+      stride_h = stride_[kNHWCIdxH];
+      stride_w = stride_[kNHWCIdxW];
     }
-    int windowDimA[2] = {window_height, window_width};
-    int paddingA[2] = {0, 0};
-    int strideA[2] = {stride_h, stride_w};
+    const size_t k2dDim = 2;
+    int windowDimA[k2dDim] = {window_height, window_width};
+    int paddingA[k2dDim] = {0, 0};
+    int strideA[k2dDim] = {stride_h, stride_w};
     if (kSamePadModeUpperCase == pad_mode_ || kSamePadModeLowerCase == pad_mode_) {
       pad_height_ = GetPad(old_height_, window_height, stride_h);
       pad_width_ = GetPad(old_width_, window_width, stride_w);
-      pad_top_ = pad_height_ / 2;
-      pad_left_ = pad_width_ / 2;
+      const int kSymCoef = 2;
+      pad_top_ = pad_height_ / kSymCoef;
+      pad_left_ = pad_width_ / kSymCoef;
       paddingA[0] = pad_top_;
       paddingA[1] = pad_left_;
     } else {
@@ -275,41 +280,51 @@ class PoolingGradGpuKernel : public GpuKernel {
                          [](const int64_t &value) { return static_cast<int>(value); });
     (void)std::transform(window_me.begin(), window_me.end(), std::back_inserter(window),
                          [](const int64_t &value) { return static_cast<int>(value); });
-    if (window.size() < 5) {
+    const size_t k3dSizeLowerLimit = 5;
+    const size_t kIdxD = 2;
+    const size_t kIdxH = 3;
+    const size_t kIdxW = 4;
+    if (window.size() < k3dSizeLowerLimit) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'kernel_size' cannot be less than 5, but got "
                         << window.size();
     }
-    int window_depth = window[2];
-    int window_height = window[3];
-    int window_width = window[4];
-    if (stride_.size() < 5) {
+    int window_depth = window[kIdxD];
+    int window_height = window[kIdxH];
+    int window_width = window[kIdxW];
+    if (stride_.size() < k3dSizeLowerLimit) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'strides' cannot be less than 5, but got "
                         << stride_.size();
     }
-    int stride_d = stride_[2];
-    int stride_h = stride_[3];
-    int stride_w = stride_[4];
+    int stride_d = stride_[kIdxD];
+    int stride_h = stride_[kIdxH];
+    int stride_w = stride_[kIdxW];
     if (format_attr_ == kOpFormat_NDHWC) {
-      window_depth = window[1];
-      window_height = window[2];
-      window_width = window[3];
-      stride_d = stride_[1];
-      stride_h = stride_[2];
-      stride_w = stride_[3];
+      const size_t kNDHWCIdxD = 1;
+      const size_t kNDHWCIdxH = 2;
+      const size_t kNDHWCIdxW = 3;
+      window_depth = window[kNDHWCIdxD];
+      window_height = window[kNDHWCIdxH];
+      window_width = window[kNDHWCIdxW];
+      stride_d = stride_[kNDHWCIdxD];
+      stride_h = stride_[kNDHWCIdxH];
+      stride_w = stride_[kNDHWCIdxW];
     }
-    int windowDimA[3] = {window_depth, window_height, window_width};
-    int paddingA[3] = {0, 0, 0};
-    int strideA[3] = {stride_d, stride_h, stride_w};
+    const size_t k3dDimSize = 3;
+    int windowDimA[k3dDimSize] = {window_depth, window_height, window_width};
+    int paddingA[k3dDimSize] = {0, 0, 0};
+    int strideA[k3dDimSize] = {stride_d, stride_h, stride_w};
     if (kSamePadModeUpperCase == pad_mode_ || kSamePadModeLowerCase == pad_mode_) {
       pad_depth_ = GetPad(old_depth_, window_depth, stride_d);
       pad_height_ = GetPad(old_height_, window_height, stride_h);
       pad_width_ = GetPad(old_width_, window_width, stride_w);
-      pad_front_ = pad_depth_ / 2;
-      pad_top_ = pad_height_ / 2;
-      pad_left_ = pad_width_ / 2;
+      const int kSymCoef = 2;
+      pad_front_ = pad_depth_ / kSymCoef;
+      pad_top_ = pad_height_ / kSymCoef;
+      pad_left_ = pad_width_ / kSymCoef;
       paddingA[0] = pad_front_;
       paddingA[1] = pad_top_;
-      paddingA[2] = pad_left_;
+      const size_t kPadLeftIdx = 2;
+      paddingA[kPadLeftIdx] = pad_left_;
     } else {
       if (pad_mode_ == kValidPadModeUpperCase || pad_mode_ == kValidPadModeLowerCase) {
         pad_depth_ = 0;
@@ -343,9 +358,7 @@ class PoolingGradGpuKernel : public GpuKernel {
   cudnnTensorDescriptor_t dx_descriptor_;
   cudnnPoolingMode_t pooling_mode_ = CUDNN_POOLING_MAX;
   std::vector<int> stride_;
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
+
   std::string mode_;
   std::string pad_mode_;
   std::string format_attr_ = kOpFormat_NCHW;

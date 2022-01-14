@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,14 +23,11 @@
 
 namespace mindspore {
 namespace kernel {
-class TensorArrayCreateKernel : public GpuKernel {
+class TensorArrayCreateKernelMod : public NativeGpuKernelMod {
  public:
-  TensorArrayCreateKernel();
-  ~TensorArrayCreateKernel() = default;
+  TensorArrayCreateKernelMod();
+  ~TensorArrayCreateKernelMod() = default;
 
-  const std::vector<size_t> &GetInputSizeList() const override;
-  const std::vector<size_t> &GetOutputSizeList() const override;
-  const std::vector<size_t> &GetWorkspaceSizeList() const override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
   bool Init(const CNodePtr &kernel_node) override;
@@ -44,12 +41,9 @@ class TensorArrayCreateKernel : public GpuKernel {
   std::vector<size_t> shapes_;
   TypePtr type_;
   std::string name_;
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 };
 
-MS_REG_GPU_KERNEL(TensorArray, TensorArrayCreateKernel)
+MS_REG_GPU_KERNEL(TensorArray, TensorArrayCreateKernelMod)
 }  // namespace kernel
 }  // namespace mindspore
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ constexpr size_t kShapeSize4D = 4;
 const std::map<std::string, size_t> kFormatIndexMap = {{"NCHW", 2}, {"HWCN", 0}, {"NHWC", 1}};
 }  // namespace
 
-void Conv2dGradInputCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void Conv2dGradInputCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   std::vector<size_t> src_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
@@ -73,13 +73,13 @@ void Conv2dGradInputCPUKernel::InitKernel(const CNodePtr &kernel_node) {
                        [](const int64_t &value) { return static_cast<int>(value); });
 
   if (dilation_ori.size() != kShapeSize4D) {
-    MS_LOG(EXCEPTION) << "Conv2dGradInputCPUKernel dilation must be 4d!";
+    MS_LOG(EXCEPTION) << "Conv2dGradInputCpuKernelMod dilation must be 4d!";
   }
   if (dilation_ori[0] != 1 || dilation_ori[1] != 1) {
-    MS_LOG(EXCEPTION) << "Conv2dGradInputCPUKernel dilation only support 1 in N axis and C axis!";
+    MS_LOG(EXCEPTION) << "Conv2dGradInputCpuKernelMod dilation only support 1 in N axis and C axis!";
   }
   if (stride_ori.size() < kShapeSize2D) {
-    MS_LOG(EXCEPTION) << "Conv2dGradInputCPUKernel stride_ori should not be less than 2d!";
+    MS_LOG(EXCEPTION) << "Conv2dGradInputCpuKernelMod stride_ori should not be less than 2d!";
   }
   std::vector<int> stride{stride_ori[0], stride_ori[1]};
   std::vector<int> dilation{dilation_ori[2], dilation_ori[3]};
@@ -109,9 +109,9 @@ void Conv2dGradInputCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   AddArgument(DNNL_ARG_WEIGHTS, weights_desc);
 }
 
-bool Conv2dGradInputCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> &,
-                                      const std::vector<kernel::AddressPtr> &outputs) {
+bool Conv2dGradInputCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                         const std::vector<kernel::AddressPtr> &,
+                                         const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kConv2dGradInputInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kConv2dGradInputOutputsNum, kernel_name_);
   SetArgumentHandle(DNNL_ARG_DIFF_DST, inputs[0]->addr);

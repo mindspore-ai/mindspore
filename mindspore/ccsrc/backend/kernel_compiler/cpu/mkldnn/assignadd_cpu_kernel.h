@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,10 @@
 
 namespace mindspore {
 namespace kernel {
-class AssignAddCPUKernel : public MKLCPUKernel {
+class AssignAddCpuKernelMod : public MKLCpuKernelMod {
  public:
-  AssignAddCPUKernel() = default;
-  ~AssignAddCPUKernel() override = default;
+  AssignAddCpuKernelMod() = default;
+  ~AssignAddCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -36,7 +36,7 @@ class AssignAddCPUKernel : public MKLCPUKernel {
 MS_REG_CPU_KERNEL(
   AssignAdd,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  AssignAddCPUKernel);
+  AssignAddCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

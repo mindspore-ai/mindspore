@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,10 @@
 
 namespace mindspore {
 namespace kernel {
-class PadAndShiftCPUKernel : public CPUKernel {
+class PadAndShiftCpuKernelMod : public NativeCpuKernelMod {
  public:
-  PadAndShiftCPUKernel() = default;
-  ~PadAndShiftCPUKernel() override = default;
+  PadAndShiftCpuKernelMod() = default;
+  ~PadAndShiftCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -51,7 +51,7 @@ MS_REG_CPU_KERNEL(PadAndShift,
                     .AddInputAttr(kNumberTypeInt32)
                     .AddInputAttr(kNumberTypeInt32)
                     .AddOutputAttr(kNumberTypeInt32),
-                  PadAndShiftCPUKernel);
+                  PadAndShiftCpuKernelMod);
 
 MS_REG_CPU_KERNEL(PadAndShift,
                   KernelAttr()
@@ -59,7 +59,7 @@ MS_REG_CPU_KERNEL(PadAndShift,
                     .AddInputAttr(kNumberTypeInt64)
                     .AddInputAttr(kNumberTypeInt64)
                     .AddOutputAttr(kNumberTypeInt64),
-                  PadAndShiftCPUKernel);
+                  PadAndShiftCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

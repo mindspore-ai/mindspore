@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,16 +31,16 @@ namespace kernel {
 // The duration between two PushWeight requests when return code is ResponseCode_SucNotReady.
 constexpr int kRetryDurationOfPushWeights = 200;
 template <typename T>
-class FusedPushWeightKernel : public CPUKernel {
+class FusedPushWeightKernelMod : public NativeCpuKernelMod {
  public:
-  FusedPushWeightKernel()
+  FusedPushWeightKernelMod()
       : server_num_(0), indices_({}), weight_full_names_({}), fl_iteration_(0), total_iteration_(0) {}
-  ~FusedPushWeightKernel() override = default;
+  ~FusedPushWeightKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &) {
-    MS_LOG(DEBUG) << "Launch FusedPushWeightKernel.";
+    MS_LOG(DEBUG) << "Launch FusedPushWeightKernelMod.";
     if (inputs.size() != weight_full_names_.size()) {
-      MS_LOG(EXCEPTION) << "Input number is " << inputs.size() << ", but FusedPushWeightKernel needs "
+      MS_LOG(EXCEPTION) << "Input number is " << inputs.size() << ", but FusedPushWeightKernelMod needs "
                         << weight_full_names_.size() << " weights as inputs.";
     }
 
@@ -127,7 +127,7 @@ class FusedPushWeightKernel : public CPUKernel {
                  << ", server number is " << server_num_;
     if (server_num_ == 0 || weight_full_names_.empty() || indices_.empty()) {
       MS_LOG(EXCEPTION)
-        << "Attributes of FusedPushWeightKernel are invalid: server number is 0 or weight_full_names_ is "
+        << "Attributes of FusedPushWeightKernelMod are invalid: server number is 0 or weight_full_names_ is "
            "empty or indices_ is UINT32_MAX.";
     }
 

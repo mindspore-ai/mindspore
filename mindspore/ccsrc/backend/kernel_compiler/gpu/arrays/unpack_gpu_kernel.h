@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,14 +27,11 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class UnpackGpuFwdKernel : public GpuKernel {
+class UnpackFwdGpuKernelMod : public NativeGpuKernelMod {
  public:
-  UnpackGpuFwdKernel()
+  UnpackFwdGpuKernelMod()
       : axis_(0), is_null_input_(false), output_num_(0), input_size_(1), dims_after_axis_(1), outputs_host_(nullptr) {}
-  ~UnpackGpuFwdKernel() override = default;
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+  ~UnpackFwdGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -118,9 +115,6 @@ class UnpackGpuFwdKernel : public GpuKernel {
   size_t input_size_;
   size_t dims_after_axis_;
   std::unique_ptr<T *[]> outputs_host_;
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore

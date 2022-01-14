@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,10 @@
 
 namespace mindspore {
 namespace kernel {
-class ResizeNearestNeighborCPUKernel : public CPUKernel {
+class ResizeNearestNeighborCpuKernelMod : public NativeCpuKernelMod {
  public:
-  ResizeNearestNeighborCPUKernel() = default;
-  ~ResizeNearestNeighborCPUKernel() override = default;
+  ResizeNearestNeighborCpuKernelMod() = default;
+  ~ResizeNearestNeighborCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -55,21 +55,21 @@ class ResizeNearestNeighborCPUKernel : public CPUKernel {
 
 MS_REG_CPU_KERNEL(ResizeNearestNeighbor,
                   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-                  ResizeNearestNeighborCPUKernel);
+                  ResizeNearestNeighborCpuKernelMod);
 
 MS_REG_CPU_KERNEL(ResizeNearestNeighbor,
                   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  ResizeNearestNeighborCPUKernel);
+                  ResizeNearestNeighborCpuKernelMod);
 
 MS_REG_CPU_KERNEL(ResizeNearestNeighbor,
                   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-                  ResizeNearestNeighborCPUKernel);
+                  ResizeNearestNeighborCpuKernelMod);
 
 MS_REG_CPU_KERNEL(ResizeNearestNeighbor, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                  ResizeNearestNeighborCPUKernel);
+                  ResizeNearestNeighborCpuKernelMod);
 
 MS_REG_CPU_KERNEL(ResizeNearestNeighbor, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-                  ResizeNearestNeighborCPUKernel);
+                  ResizeNearestNeighborCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_RESIZE_NEAREST_NEIGHBOR_CPU_KERNEL_H_

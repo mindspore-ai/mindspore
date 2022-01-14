@@ -21,13 +21,7 @@
 
 namespace mindspore {
 namespace kernel {
-const std::vector<size_t> &TensorCopyCPUKernel::GetInputSizeList() const { return input_size_list_; }
-
-const std::vector<size_t> &TensorCopyCPUKernel::GetOutputSizeList() const { return output_size_list_; }
-
-const std::vector<size_t> &TensorCopyCPUKernel::GetWorkspaceSizeList() const { return workspace_size_list_; }
-
-void TensorCopyCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void TensorCopyCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
 
   auto input_type = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
@@ -45,9 +39,9 @@ void TensorCopyCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   output_size_list_.push_back(copy_size);
 }
 
-bool TensorCopyCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                 const std::vector<kernel::AddressPtr> & /* workspace */,
-                                 const std::vector<kernel::AddressPtr> &outputs) {
+bool TensorCopyCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                    const std::vector<kernel::AddressPtr> & /* workspace */,
+                                    const std::vector<kernel::AddressPtr> &outputs) {
   auto input = GetDeviceAddress<void>(inputs, 0);
   auto output = GetDeviceAddress<void>(outputs, 0);
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ MS_REG_GPU_KERNEL_ONE(Range,
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
-                      DynamicRangeGpuKernel, float)
+                      DynamicRangeGpuKernelMod, float)
 
 MS_REG_GPU_KERNEL_ONE(Range,
                       KernelAttr()
@@ -33,7 +33,7 @@ MS_REG_GPU_KERNEL_ONE(Range,
                         .AddInputAttr(kNumberTypeFloat64)
                         .AddInputAttr(kNumberTypeFloat64)
                         .AddOutputAttr(kNumberTypeFloat64),
-                      DynamicRangeGpuKernel, double)
+                      DynamicRangeGpuKernelMod, double)
 
 MS_REG_GPU_KERNEL_ONE(Range,
                       KernelAttr()
@@ -41,7 +41,7 @@ MS_REG_GPU_KERNEL_ONE(Range,
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddOutputAttr(kNumberTypeInt32),
-                      DynamicRangeGpuKernel, int32_t)
+                      DynamicRangeGpuKernelMod, int32_t)
 
 MS_REG_GPU_KERNEL_ONE(Range,
                       KernelAttr()
@@ -49,6 +49,6 @@ MS_REG_GPU_KERNEL_ONE(Range,
                         .AddInputAttr(kNumberTypeInt64)
                         .AddInputAttr(kNumberTypeInt64)
                         .AddOutputAttr(kNumberTypeInt64),
-                      DynamicRangeGpuKernel, int64_t)
+                      DynamicRangeGpuKernelMod, int64_t)
 }  // namespace kernel
 }  // namespace mindspore

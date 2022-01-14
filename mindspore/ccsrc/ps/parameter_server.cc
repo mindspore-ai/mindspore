@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -136,22 +136,22 @@ void ParameterServer::InitOptimInputsShape(const Keys &keys, const Values &value
       MS_EXCEPTION_IF_NULL(cnode);
       if (optim_name == kSparseAdam) {
         std::shared_ptr<PServerKernel> optimizer =
-          std::make_shared<kernel::ps::SparseApplyAdamPSKernel>(server_node_->rank_id(), pserver_num_, worker_num_);
+          std::make_shared<kernel::ps::SparseApplyAdamPSKernelMod>(server_node_->rank_id(), pserver_num_, worker_num_);
         optimizer->InitKernel(cnode, optim_inputs_shape_[key]);
         optimizers_[key] = optimizer;
       } else if (optim_name == kSparseLazyAdam) {
-        std::shared_ptr<PServerKernel> optimizer =
-          std::make_shared<kernel::ps::SparseApplyLazyAdamPSKernel>(server_node_->rank_id(), pserver_num_, worker_num_);
+        std::shared_ptr<PServerKernel> optimizer = std::make_shared<kernel::ps::SparseApplyLazyAdamPSKernelMod>(
+          server_node_->rank_id(), pserver_num_, worker_num_);
         optimizer->InitKernel(cnode, optim_inputs_shape_[key]);
         optimizers_[key] = optimizer;
       } else if (optim_name == kApplyMomentum) {
         std::shared_ptr<PServerKernel> optimizer =
-          std::make_shared<kernel::ps::ApplyMomentumPSKernel>(server_node_->rank_id(), pserver_num_, worker_num_);
+          std::make_shared<kernel::ps::ApplyMomentumPSKernelMod>(server_node_->rank_id(), pserver_num_, worker_num_);
         optimizer->InitKernel(cnode, optim_inputs_shape_[key]);
         optimizers_[key] = optimizer;
       } else if (optim_name == kSparseFtrl) {
         std::shared_ptr<PServerKernel> optimizer =
-          std::make_shared<kernel::ps::SparseApplyFtrlPSKernel>(server_node_->rank_id(), pserver_num_, worker_num_);
+          std::make_shared<kernel::ps::SparseApplyFtrlPSKernelMod>(server_node_->rank_id(), pserver_num_, worker_num_);
         optimizer->InitKernel(cnode, optim_inputs_shape_[key]);
         optimizers_[key] = optimizer;
       }
@@ -328,7 +328,7 @@ void ParameterServer::InitEmbeddingTable(
   MS_EXCEPTION_IF_NULL(shapes);
   if (weights_.count(key) == 0) {
     std::shared_ptr<PServerKernel> lookup =
-      std::make_shared<kernel::ps::EmbeddingLookUpPSKernel>(server_node_->rank_id(), pserver_num_, worker_num_);
+      std::make_shared<kernel::ps::EmbeddingLookUpPSKernelMod>(server_node_->rank_id(), pserver_num_, worker_num_);
     lookup->InitKernel(shapes);
     embedding_lookup_ops_[key] = lookup;
 
@@ -714,7 +714,7 @@ void ParameterServer::RecoverKernels(const std::vector<Key> &keys,
       }
 
       std::shared_ptr<PServerKernel> lookup =
-        std::make_shared<kernel::ps::EmbeddingLookUpPSKernel>(server_node_->rank_id(), pserver_num_, worker_num_);
+        std::make_shared<kernel::ps::EmbeddingLookUpPSKernelMod>(server_node_->rank_id(), pserver_num_, worker_num_);
       lookup->InitKernel(shapes_ptr);
       embedding_lookup_ops_[key] = lookup;
 

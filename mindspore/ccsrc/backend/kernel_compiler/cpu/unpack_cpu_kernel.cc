@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ constexpr size_t kUnpackWorkspaceMinNum = 1;
 }  // namespace
 
 template <typename T>
-void UnpackCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
+void UnpackCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   int64_t axis_tmp = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
@@ -53,15 +53,15 @@ void UnpackCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-void UnpackCPUKernel<T>::InitInputOutputSize(const CNodePtr &kernel_node) {
-  CPUKernel::InitInputOutputSize(kernel_node);
+void UnpackCpuKernelMod<T>::InitInputOutputSize(const CNodePtr &kernel_node) {
+  NativeCpuKernelMod::InitInputOutputSize(kernel_node);
   (void)workspace_size_list_.emplace_back(sizeof(T *) * output_num_);
 }
 
 template <typename T>
-bool UnpackCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                const std::vector<kernel::AddressPtr> &workspace,
-                                const std::vector<kernel::AddressPtr> &outputs) {
+bool UnpackCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                   const std::vector<kernel::AddressPtr> &workspace,
+                                   const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kUnpackInputsNum, kernel_name_);
   if (outputs.size() < kUnpackOutputsMinNum || workspace.size() < kUnpackWorkspaceMinNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
@@ -73,9 +73,9 @@ bool UnpackCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
 }
 
 template <typename T>
-void UnpackCPUKernel<T>::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> &workspace,
-                                      const std::vector<AddressPtr> &outputs) {
+void UnpackCpuKernelMod<T>::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                         const std::vector<kernel::AddressPtr> &workspace,
+                                         const std::vector<AddressPtr> &outputs) {
   const void *input = reinterpret_cast<void *>(inputs[0]->addr);
   void **outputs_host = reinterpret_cast<void **>(workspace[0]->addr);
   for (size_t i = 0; i < outputs.size(); i++) {

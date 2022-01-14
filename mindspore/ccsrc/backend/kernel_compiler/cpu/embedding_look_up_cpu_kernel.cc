@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ void LookUpTableTask(const float *input_addr, const T *indices_addr, float *outp
 }
 }  // namespace
 
-void EmbeddingLookUpCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void EmbeddingLookUpCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   node_wpt_ = kernel_node;
@@ -79,8 +79,8 @@ void EmbeddingLookUpCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-void EmbeddingLookUpCPUKernel::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                            const std::vector<kernel::AddressPtr> &outputs) {
+void EmbeddingLookUpCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                               const std::vector<kernel::AddressPtr> &outputs) {
   if (!node_wpt_.expired()) {
     auto node = node_wpt_.lock();
     if (!node) {
@@ -114,9 +114,9 @@ void EmbeddingLookUpCPUKernel::LaunchKernel(const std::vector<kernel::AddressPtr
   ParallelLaunchAutoSearch(task, indices_lens_, this, &parallel_search_info_);
 }
 
-bool EmbeddingLookUpCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> &,
-                                      const std::vector<kernel::AddressPtr> &outputs) {
+bool EmbeddingLookUpCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                         const std::vector<kernel::AddressPtr> &,
+                                         const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kEmbeddingLookupInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kEmbeddingLookupOutputsNum, kernel_name_);
   if (indices_data_type_ == kNumberTypeInt32) {

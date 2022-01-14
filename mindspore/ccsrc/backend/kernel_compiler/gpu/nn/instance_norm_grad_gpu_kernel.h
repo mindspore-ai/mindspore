@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,9 +29,9 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class InstanceNormGradGpuKernel : public GpuKernel {
+class InstanceNormGradGpuKernelMod : public NativeGpuKernelMod {
  public:
-  InstanceNormGradGpuKernel()
+  InstanceNormGradGpuKernelMod()
       : x_size_(0),
         para_size_(0),
         workspace_size_(0),
@@ -49,11 +49,7 @@ class InstanceNormGradGpuKernel : public GpuKernel {
         handle_(nullptr),
         cudnn_data_type_(CUDNN_DATA_FLOAT),
         beta_data_diff_(0) {}
-  ~InstanceNormGradGpuKernel() override { DestroyResource(); }
-
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+  ~InstanceNormGradGpuKernelMod() override { DestroyResource(); }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -221,9 +217,6 @@ class InstanceNormGradGpuKernel : public GpuKernel {
   cudnnDataType_t cudnn_data_type_;
   float beta_data_diff_;
   std::vector<size_t> input_shape_;
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore

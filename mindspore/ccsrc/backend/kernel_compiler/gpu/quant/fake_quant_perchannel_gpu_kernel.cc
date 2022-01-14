@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace kernel {
-FakeQuantPerChannelGpuKernel::FakeQuantPerChannelGpuKernel()
+FakeQuantPerChannelGpuKernelMod::FakeQuantPerChannelGpuKernelMod()
     : input_size_(0),
       num_channels_(0),
       num_bits_(0),
@@ -36,13 +36,7 @@ FakeQuantPerChannelGpuKernel::FakeQuantPerChannelGpuKernel()
       quant_max_(0),
       global_step_(0) {}
 
-const std::vector<size_t> &FakeQuantPerChannelGpuKernel::GetInputSizeList() const { return input_size_list_; }
-
-const std::vector<size_t> &FakeQuantPerChannelGpuKernel::GetOutputSizeList() const { return output_size_list_; }
-
-const std::vector<size_t> &FakeQuantPerChannelGpuKernel::GetWorkspaceSizeList() const { return workspace_size_list_; }
-
-bool FakeQuantPerChannelGpuKernel::Init(const CNodePtr &kernel_node) {
+bool FakeQuantPerChannelGpuKernelMod::Init(const CNodePtr &kernel_node) {
   auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
   kernel_node_ = kernel_node;
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
@@ -100,7 +94,7 @@ bool FakeQuantPerChannelGpuKernel::Init(const CNodePtr &kernel_node) {
   return true;
 }
 
-void FakeQuantPerChannelGpuKernel::InitSizeLists() {
+void FakeQuantPerChannelGpuKernelMod::InitSizeLists() {
   input_size_list_.push_back(input_size_);                        // input in tensor
   input_size_list_.push_back(sizeof(float) * num_channels_);      // min one scalar
   input_size_list_.push_back(sizeof(float) * num_channels_);      // max on scalar
@@ -110,18 +104,18 @@ void FakeQuantPerChannelGpuKernel::InitSizeLists() {
   workspace_size_list_.push_back(sizeof(float) * num_channels_);  // max in channel
 }
 
-void FakeQuantPerChannelGpuKernel::CalFakeQuantize(const float *input, float *output, float *input_min,
-                                                   float *input_max, float *nudge_min, float *nudge_max, float *scale,
-                                                   void *stream_ptr) {
+void FakeQuantPerChannelGpuKernelMod::CalFakeQuantize(const float *input, float *output, float *input_min,
+                                                      float *input_max, float *nudge_min, float *nudge_max,
+                                                      float *scale, void *stream_ptr) {
   CalNudgePerChannel(input_min, input_max, quant_min_, quant_max_, nudge_min, nudge_max, scale, num_channels_,
                      symmetric_, reinterpret_cast<cudaStream_t>(stream_ptr));
   CalFakeQuantPerChannel(input, output, input_size_ / sizeof(float), num_channels_, nudge_min, nudge_max, scale,
                          reinterpret_cast<cudaStream_t>(stream_ptr));
 }
 
-bool FakeQuantPerChannelGpuKernel::Launch(const std::vector<AddressPtr> &inputs,
-                                          const std::vector<AddressPtr> &workspace,
-                                          const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool FakeQuantPerChannelGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
+                                             const std::vector<AddressPtr> &workspace,
+                                             const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   if (is_null_input_) {
     return true;
   }
@@ -151,6 +145,6 @@ bool FakeQuantPerChannelGpuKernel::Launch(const std::vector<AddressPtr> &inputs,
   return true;
 }
 
-MS_REG_GPU_KERNEL(FakeQuantPerChannel, FakeQuantPerChannelGpuKernel)
+MS_REG_GPU_KERNEL(FakeQuantPerChannel, FakeQuantPerChannelGpuKernelMod)
 }  // namespace kernel
 }  // namespace mindspore

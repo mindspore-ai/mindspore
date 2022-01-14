@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ constexpr size_t kSigmoidCrossEntropyWithLogitsInputsNum = 2;
 constexpr size_t kSigmoidCrossEntropyWithLogitsOutputsNum = 1;
 }  // namespace
 
-void SigmoidCrossEntropyWithLogitsCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void SigmoidCrossEntropyWithLogitsCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
@@ -34,9 +34,9 @@ void SigmoidCrossEntropyWithLogitsCPUKernel::InitKernel(const CNodePtr &kernel_n
   }
 }
 
-bool SigmoidCrossEntropyWithLogitsCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                                    const std::vector<kernel::AddressPtr> &,
-                                                    const std::vector<kernel::AddressPtr> &outputs) {
+bool SigmoidCrossEntropyWithLogitsCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                                       const std::vector<kernel::AddressPtr> &,
+                                                       const std::vector<kernel::AddressPtr> &outputs) {
   if (dtype_ == kNumberTypeFloat16) {
     LaunchKernel<float16>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat32 || dtype_ == kNumberTypeFloat64) {
@@ -50,8 +50,8 @@ bool SigmoidCrossEntropyWithLogitsCPUKernel::Launch(const std::vector<kernel::Ad
 }
 
 template <typename T>
-void SigmoidCrossEntropyWithLogitsCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                          const std::vector<AddressPtr> &outputs) {
+void SigmoidCrossEntropyWithLogitsCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                                             const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSigmoidCrossEntropyWithLogitsInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSigmoidCrossEntropyWithLogitsOutputsNum, kernel_name_);
   auto *logits_addr = reinterpret_cast<T *>(inputs[0]->addr);

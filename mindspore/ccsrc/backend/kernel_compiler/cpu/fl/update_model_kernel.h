@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,16 +29,16 @@
 namespace mindspore {
 namespace kernel {
 constexpr int SECRET_MAX_LEN = 32;
-class UpdateModelKernel : public CPUKernel {
+class UpdateModelKernelMod : public NativeCpuKernelMod {
  public:
-  UpdateModelKernel() = default;
-  ~UpdateModelKernel() override = default;
+  UpdateModelKernelMod() = default;
+  ~UpdateModelKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &) {
-    MS_LOG(INFO) << "Launching client UpdateModelKernel";
+    MS_LOG(INFO) << "Launching client UpdateModelKernelMod";
     if (inputs.size() != weight_full_names_.size()) {
-      MS_LOG(EXCEPTION) << "Input number of UpdateModelKernel should be " << weight_full_names_.size() << ", but got "
-                        << inputs.size();
+      MS_LOG(EXCEPTION) << "Input number of UpdateModelKernelMod should be " << weight_full_names_.size()
+                        << ", but got " << inputs.size();
       return false;
     }
 

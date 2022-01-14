@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,27 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr size_t kImgDimSize = 4;
+constexpr size_t kImgHIndex = 1;
+constexpr size_t kImgWIndex = 2;
+
+constexpr size_t kBoxDimSize = 2;
+constexpr size_t kCropLengthSize = 2;
+constexpr size_t kOutputDimSize = 4;
+
+constexpr size_t kIndexForBatch = 0;
+constexpr size_t kIndexForHeight = 1;
+constexpr size_t kIndexForWidth = 2;
+constexpr size_t kIndexForChannel = 3;
+
+constexpr size_t kMethodBilinear = 1;
+constexpr size_t kMethodNearest = 2;
+constexpr size_t kMethodBilinearV2 = 3;
+
 template <typename T>
-class CropAndResizeGpuKernel : public GpuKernel {
+class CropAndResizeGpuKernelMod : public NativeGpuKernelMod {
  public:
-  CropAndResizeGpuKernel()
+  CropAndResizeGpuKernelMod()
       : method_(0),
         extrapolation_value_(0),
         input_image_size_(0),
@@ -43,10 +60,7 @@ class CropAndResizeGpuKernel : public GpuKernel {
         final_width_(0),
         channel_(0),
         is_null_input_(false) {}
-  ~CropAndResizeGpuKernel() override = default;
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+  ~CropAndResizeGpuKernelMod() override = default;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
@@ -89,7 +103,7 @@ class CropAndResizeGpuKernel : public GpuKernel {
       return true;
     }
     size_t input_image_shape_len = input_image_shape.size();
-    if (input_image_shape_len != 4) {
+    if (input_image_shape_len != kImgDimSize) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of x should be 4, but got "
                         << input_image_shape_len;
     }
@@ -98,11 +112,11 @@ class CropAndResizeGpuKernel : public GpuKernel {
       input_image_size_ *= input_image_shape[i];
     }
     input_image_size_ *= sizeof(T);
-    input_height_ = input_image_shape[1];
-    input_width_ = input_image_shape[2];
+    input_height_ = input_image_shape[kImgHIndex];
+    input_width_ = input_image_shape[kImgWIndex];
     // input boxes
     size_t input_boxes_shape_len = input_boxes_shape.size();
-    if (input_boxes_shape_len != 2) {
+    if (input_boxes_shape_len != kBoxDimSize) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of boxes should be 2, but got "
                         << input_boxes_shape_len;
     }
@@ -126,7 +140,7 @@ class CropAndResizeGpuKernel : public GpuKernel {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of crop_size should be 1, but got "
                         << input_crop_size_shape_len;
     }
-    if (input_crop_size_shape[0] != 2) {
+    if (input_crop_size_shape[0] != kCropLengthSize) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the length of crop_size should be 2, but got "
                         << input_crop_size_shape[0];
     }
@@ -135,7 +149,7 @@ class CropAndResizeGpuKernel : public GpuKernel {
     input_crop_size_ *= sizeof(int);
     // output
     auto output_shape_len = output_shape.size();
-    if (output_shape_len != 4) {
+    if (output_shape_len != kOutputDimSize) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of output should be 4, but got "
                         << output_shape_len;
     }
@@ -145,18 +159,18 @@ class CropAndResizeGpuKernel : public GpuKernel {
     }
     output_size_ *= sizeof(float);
     // set expected output params
-    batch_ = output_shape[0];
-    final_height_ = output_shape[1];
-    final_width_ = output_shape[2];
-    channel_ = output_shape[3];
+    batch_ = output_shape[kIndexForBatch];
+    final_height_ = output_shape[kIndexForHeight];
+    final_width_ = output_shape[kIndexForWidth];
+    channel_ = output_shape[kIndexForChannel];
     // get op parameters
     string method = GetAttr<string>(kernel_node, "method");
     if (method == "bilinear") {
-      method_ = 1;
+      method_ = kMethodBilinear;
     } else if (method == "nearest") {
-      method_ = 2;
+      method_ = kMethodNearest;
     } else {  // bilinear-v2
-      method_ = 3;
+      method_ = kMethodBilinearV2;
     }
     extrapolation_value_ = GetAttr<float>(kernel_node, "extrapolation_value");
     InitSizeLists();
@@ -187,9 +201,6 @@ class CropAndResizeGpuKernel : public GpuKernel {
   int final_width_;
   int channel_;
   bool is_null_input_;
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore

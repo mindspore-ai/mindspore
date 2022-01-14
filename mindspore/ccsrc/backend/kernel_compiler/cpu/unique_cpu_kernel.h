@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,10 +42,10 @@ struct UniqueParam {
   bool need_sort_{true};
 };
 
-class UniqueCPUKernel : public CPUKernel {
+class UniqueCpuKernelMod : public NativeCpuKernelMod {
  public:
-  UniqueCPUKernel() = default;
-  ~UniqueCPUKernel() override = default;
+  UniqueCpuKernelMod() = default;
+  ~UniqueCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
   void InitInputOutputSize(const CNodePtr &kernel_node) override;
@@ -378,16 +378,16 @@ class UniqueCPUKernel : public CPUKernel {
 
 MS_REG_CPU_KERNEL(
   Unique, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  UniqueCPUKernel);
+  UniqueCpuKernelMod);
 
 MS_REG_CPU_KERNEL(
   Unique, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-  UniqueCPUKernel);
+  UniqueCpuKernelMod);
 
 MS_REG_CPU_KERNEL(
   Unique,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt32),
-  UniqueCPUKernel);
+  UniqueCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_UNIQUE_CPU_KERNEL_H_

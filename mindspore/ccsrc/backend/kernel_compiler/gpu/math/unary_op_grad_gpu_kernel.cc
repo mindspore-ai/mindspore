@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,70 +21,70 @@ namespace kernel {
 MS_REG_GPU_KERNEL_ONE(
   SqrtGrad,
   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-  UnaryGradOpGpuKernel, double)
+  UnaryGradOpGpuKernelMod, double)
 MS_REG_GPU_KERNEL_ONE(
   SqrtGrad,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  UnaryGradOpGpuKernel, float)
+  UnaryGradOpGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(
   SqrtGrad,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  UnaryGradOpGpuKernel, half)
+  UnaryGradOpGpuKernelMod, half)
 MS_REG_GPU_KERNEL_ONE(
   RsqrtGrad,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  UnaryGradOpGpuKernel, float)
+  UnaryGradOpGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(
   RsqrtGrad,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  UnaryGradOpGpuKernel, half)
+  UnaryGradOpGpuKernelMod, half)
 MS_REG_GPU_KERNEL_ONE(
   AsinGrad,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  UnaryGradOpGpuKernel, float)
+  UnaryGradOpGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(
   AsinGrad,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  UnaryGradOpGpuKernel, half)
+  UnaryGradOpGpuKernelMod, half)
 MS_REG_GPU_KERNEL_ONE(
   ACosGrad,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  UnaryGradOpGpuKernel, float)
+  UnaryGradOpGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(
   ACosGrad,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  UnaryGradOpGpuKernel, half)
+  UnaryGradOpGpuKernelMod, half)
 MS_REG_GPU_KERNEL_ONE(
   AtanGrad,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  UnaryGradOpGpuKernel, float)
+  UnaryGradOpGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(
   AtanGrad,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  UnaryGradOpGpuKernel, half)
+  UnaryGradOpGpuKernelMod, half)
 MS_REG_GPU_KERNEL_ONE(
   AsinhGrad,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  UnaryGradOpGpuKernel, float)
+  UnaryGradOpGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(
   AsinhGrad,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  UnaryGradOpGpuKernel, half)
+  UnaryGradOpGpuKernelMod, half)
 MS_REG_GPU_KERNEL_ONE(
   AcoshGrad,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  UnaryGradOpGpuKernel, float)
+  UnaryGradOpGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(
   AcoshGrad,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  UnaryGradOpGpuKernel, half)
+  UnaryGradOpGpuKernelMod, half)
 MS_REG_GPU_KERNEL_ONE(
   ReciprocalGrad,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  UnaryGradOpGpuKernel, float)
+  UnaryGradOpGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(
   ReciprocalGrad,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  UnaryGradOpGpuKernel, half)
+  UnaryGradOpGpuKernelMod, half)
 }  // namespace kernel
 }  // namespace mindspore

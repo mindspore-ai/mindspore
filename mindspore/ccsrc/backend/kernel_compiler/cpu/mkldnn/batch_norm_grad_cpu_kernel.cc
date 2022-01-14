@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@ constexpr size_t kBatchNormGradInputShapeSize = 4;
 constexpr size_t kBatchNormGradInputShapeSize2 = 2;
 }  // namespace
 
-void BatchNormGradCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
-  CPUKernel::InitInputOutputSize(kernel_node);
+void BatchNormGradCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
+  NativeCpuKernelMod::InitInputOutputSize(kernel_node);
   size_t type_size = sizeof(float);
   std::vector<size_t> shape = AnfAlgo::GetInputDeviceShape(kernel_node, Y_BACKPROP);
   size_t tensor_size = shape[C] * SCALE_SHIFT_NUM * type_size;
@@ -39,7 +39,7 @@ void BatchNormGradCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
   (void)workspace_size_list_.emplace_back(tensor_size);
 }
 
-void BatchNormGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void BatchNormGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   std::vector<size_t> x_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
@@ -87,9 +87,9 @@ void BatchNormGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   AddArgument(DNNL_ARG_DIFF_SCALE_SHIFT, scale_bias_desc);
 }
 
-bool BatchNormGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                    const std::vector<kernel::AddressPtr> &workspace,
-                                    const std::vector<kernel::AddressPtr> &outputs) {
+bool BatchNormGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                       const std::vector<kernel::AddressPtr> &workspace,
+                                       const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kBatchNormGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kBatchNormGradOutputsNum, kernel_name_);
 

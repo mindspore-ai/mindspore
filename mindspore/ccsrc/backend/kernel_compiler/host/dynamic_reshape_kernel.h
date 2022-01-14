@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,10 @@
 using HostDynamicKernel = mindspore::device::ascend::HostDynamicKernel;
 namespace mindspore {
 namespace kernel {
-class DynamicReshapeKernel : public HostDynamicKernel {
+class DynamicReshapeKernelMod : public HostDynamicKernel {
  public:
-  DynamicReshapeKernel(void *stream, const CNodePtr &cnode_ptr) : HostDynamicKernel(stream, cnode_ptr) {}
-  ~DynamicReshapeKernel() override = default;
+  DynamicReshapeKernelMod(void *stream, const CNodePtr &cnode_ptr) : HostDynamicKernel(stream, cnode_ptr) {}
+  ~DynamicReshapeKernelMod() override = default;
   void Execute() override;
 };
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@
 namespace mindspore {
 namespace kernel {
 constexpr size_t kBucketSortThreshold = 100000;
-void UniqueCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void UniqueCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   node_wpt_ = kernel_node;
@@ -36,16 +36,16 @@ void UniqueCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
 }
 
-void UniqueCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
-  CPUKernel::InitInputOutputSize(kernel_node);
+void UniqueCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
+  NativeCpuKernelMod::InitInputOutputSize(kernel_node);
   (void)workspace_size_list_.emplace_back(input_size_ * sizeof(int64_t));
   (void)workspace_size_list_.emplace_back(input_size_ * sizeof(int64_t));
   (void)workspace_size_list_.emplace_back(input_size_ * sizeof(int64_t));
 }
 
-bool UniqueCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                             const std::vector<kernel::AddressPtr> &workspace,
-                             const std::vector<kernel::AddressPtr> &outputs) {
+bool UniqueCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                const std::vector<kernel::AddressPtr> &workspace,
+                                const std::vector<kernel::AddressPtr> &outputs) {
   if (dtype_ == kNumberTypeInt32) {
     LaunchKernel<int, int>(inputs, workspace, outputs);
   } else if (dtype_ == kNumberTypeInt64) {
@@ -75,8 +75,8 @@ bool UniqueCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
 }
 
 template <typename DataType, typename IndexType>
-void UniqueCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                   const std::vector<AddressPtr> &outputs) {
+void UniqueCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                                      const std::vector<AddressPtr> &outputs) {
   if (input_size_ == 0) {
     return;
   }

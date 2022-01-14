@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace kernel {
-void IsInfCPUKernel::InitKernel(const CNodePtr &kernelNode) {
+void IsInfCpuKernelMod::InitKernel(const CNodePtr &kernelNode) {
   MS_EXCEPTION_IF_NULL(kernelNode);
   kernel_name_ = AnfAlgo::GetCNodeName(kernelNode);
   size_t input_num = AnfAlgo::GetInputTensorNum(kernelNode);
@@ -39,8 +39,8 @@ void IsInfCPUKernel::InitKernel(const CNodePtr &kernelNode) {
   }
 }
 
-bool IsInfCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                            const std::vector<kernel::AddressPtr> &outputs) {
+bool IsInfCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
+                               const std::vector<kernel::AddressPtr> &outputs) {
   if (input_dtype_ == kNumberTypeFloat16) {
     LaunchKernelFloat16(inputs, outputs);
   } else if (input_dtype_ == kNumberTypeFloat32 || input_dtype_ == kNumberTypeFloat) {
@@ -54,8 +54,8 @@ bool IsInfCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const
   return true;
 }
 
-void IsInfCPUKernel::LaunchKernelFloat16(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<kernel::AddressPtr> &outputs) {
+void IsInfCpuKernelMod::LaunchKernelFloat16(const std::vector<AddressPtr> &inputs,
+                                            const std::vector<kernel::AddressPtr> &outputs) {
   float16 *input = reinterpret_cast<float16 *>(inputs[0]->addr);
   bool *output = reinterpret_cast<bool *>(outputs[0]->addr);
 
@@ -68,8 +68,8 @@ void IsInfCPUKernel::LaunchKernelFloat16(const std::vector<AddressPtr> &inputs,
 }
 
 template <typename T>
-void IsInfCPUKernel::LaunchKernelFloat(const std::vector<AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
+void IsInfCpuKernelMod::LaunchKernelFloat(const std::vector<AddressPtr> &inputs,
+                                          const std::vector<kernel::AddressPtr> &outputs) {
   T *input = reinterpret_cast<T *>(inputs[0]->addr);
   bool *output = reinterpret_cast<bool *>(outputs[0]->addr);
 

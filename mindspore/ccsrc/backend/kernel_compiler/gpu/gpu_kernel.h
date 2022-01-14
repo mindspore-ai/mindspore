@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_GPUKERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_GPUKERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_GPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_GPU_KERNEL_H_
 
 #include <cuda.h>
 #include <cudnn.h>
@@ -29,6 +29,7 @@
 #include <functional>
 #include <algorithm>
 #include "backend/kernel_compiler/kernel.h"
+#include "backend/kernel_compiler/gpu/gpu_kernel_mod.h"
 #include "backend/kernel_compiler/gpu/kernel_constants.h"
 #include "runtime/device/gpu/gpu_device_manager.h"
 #include "runtime/device/gpu/gpu_common.h"
@@ -41,6 +42,11 @@ using AnfAlgo = mindspore::session::AnfRuntimeAlgorithm;
 
 namespace mindspore {
 namespace kernel {
+constexpr size_t kShapeIndex1st = 1;
+constexpr size_t kShapeIndex2nd = 2;
+constexpr size_t kShapeIndex3rd = 3;
+constexpr size_t kShapeIndex4th = 4;
+
 constexpr size_t kDim2DShapeSize = 4;
 constexpr size_t kDim3DShapeSize = 5;
 constexpr size_t kPoolingNbDims = kDim3DShapeSize;
@@ -76,9 +82,9 @@ class GpuDynamicKernel : public device::DynamicKernel {
   void Execute() final { MS_LOG(EXCEPTION) << "`Execute()` should not invoked with gpu backend"; }
 };
 
-class GpuKernel : public KernelMod {
+class NativeGpuKernelMod : public GpuKernelMod {
  public:
-  virtual ~GpuKernel() = default;
+  virtual ~NativeGpuKernelMod() = default;
   virtual bool Init(const CNodePtr &kernel_node) = 0;
   virtual void ResetResource() noexcept {
     MS_LOG(ERROR) << "kernel must override the `ResetResource()` method when dynamic shape";
@@ -145,13 +151,15 @@ class GpuKernel : public KernelMod {
   }
   // expand Nd Shape to 4d (N in [0,4])
   void ShapeNdTo4d(const std::vector<size_t> &src, std::vector<size_t> *dst) {
-    if (src.size() > 4) {
+    const size_t nd_maximum_size = 4;
+    if (src.size() > nd_maximum_size) {
       MS_EXCEPTION(ValueError) << src.size() << "-D data is not supported!";
     }
-    dst->push_back(src.size() < 4 ? 1 : src[src.size() - 4]);
-    dst->push_back(src.size() < 3 ? 1 : src[src.size() - 3]);
-    dst->push_back(src.size() < 2 ? 1 : src[src.size() - 2]);
-    dst->push_back(src.size() == 0 ? 1 : src[src.size() - 1]);
+
+    dst->push_back(src.size() < kShapeIndex4th ? 1 : src[src.size() - kShapeIndex4th]);
+    dst->push_back(src.size() < kShapeIndex3rd ? 1 : src[src.size() - kShapeIndex3rd]);
+    dst->push_back(src.size() < kShapeIndex2nd ? 1 : src[src.size() - kShapeIndex2nd]);
+    dst->push_back(src.size() == 0 ? 1 : src[src.size() - kShapeIndex1st]);
   }
 
   int AxisTransform(const std::string &origin_data_format, const std::string &cal_format, int axis) {
@@ -168,15 +176,15 @@ class GpuKernel : public KernelMod {
 
   // transpose shape: NCHW To NHWC
   void ShapeNCHW2NHWC(std::vector<size_t> *shape) {
-    std::swap((*shape)[1], (*shape)[3]);
-    std::swap((*shape)[2], (*shape)[1]);
+    std::swap((*shape)[kShapeIndex1st], (*shape)[kShapeIndex3rd]);
+    std::swap((*shape)[kShapeIndex2nd], (*shape)[kShapeIndex1st]);
   }
 
   // transpose shape: NCDHW To NDHWC
   void ShapeNCDHW2NDHWC(std::vector<size_t> *shape) {
-    std::swap((*shape)[1], (*shape)[2]);
-    std::swap((*shape)[2], (*shape)[3]);
-    std::swap((*shape)[3], (*shape)[4]);
+    std::swap((*shape)[kShapeIndex1st], (*shape)[kShapeIndex2nd]);
+    std::swap((*shape)[kShapeIndex2nd], (*shape)[kShapeIndex3rd]);
+    std::swap((*shape)[kShapeIndex3rd], (*shape)[kShapeIndex4th]);
   }
 
   void SetDimA(const std::vector<size_t> &shape, int *dimA, size_t len, const std::string &format) {
@@ -189,9 +197,9 @@ class GpuKernel : public KernelMod {
       }
     } else if (format == "NHWC") {
       dimA[0] = SizeToInt(shape[0]);
-      dimA[1] = SizeToInt(shape[3]);
-      dimA[2] = SizeToInt(shape[1]);
-      dimA[3] = SizeToInt(shape[2]);
+      dimA[kShapeIndex1st] = SizeToInt(shape[kShapeIndex3rd]);
+      dimA[kShapeIndex2nd] = SizeToInt(shape[kShapeIndex1st]);
+      dimA[kShapeIndex3rd] = SizeToInt(shape[kShapeIndex2nd]);
     } else {
       MS_LOG(ERROR) << "Unsupported data format " << format;
     }
@@ -205,10 +213,10 @@ class GpuKernel : public KernelMod {
         strideA[i] = SizeToInt(accumulate(shape.begin() + i + 1, shape.end(), 1, std::multiplies<size_t>()));
       }
     } else if (format == "NHWC") {
-      strideA[0] = SizeToInt(shape[1] * shape[2] * shape[3]);
+      strideA[0] = SizeToInt(shape[kShapeIndex1st] * shape[kShapeIndex2nd] * shape[kShapeIndex3rd]);
       strideA[1] = 1;
-      strideA[2] = SizeToInt(shape[2] * shape[3]);
-      strideA[3] = SizeToInt(shape[3]);
+      strideA[kShapeIndex2nd] = SizeToInt(shape[kShapeIndex2nd] * shape[kShapeIndex3rd]);
+      strideA[kShapeIndex3rd] = SizeToInt(shape[kShapeIndex3rd]);
     } else {
       MS_LOG(ERROR) << "Unsupported data format " << format;
     }
@@ -217,14 +225,14 @@ class GpuKernel : public KernelMod {
   void SetNCHW(const std::vector<size_t> &shape, int *n, int *c, int *h, int *w, const std::string &format) {
     if (Anyone(format, "NCHW", "DefaultFormat")) {
       *n = SizeToInt(shape[0]);
-      *c = SizeToInt(shape[1]);
-      *h = SizeToInt(shape[2]);
-      *w = SizeToInt(shape[3]);
+      *c = SizeToInt(shape[kShapeIndex1st]);
+      *h = SizeToInt(shape[kShapeIndex2nd]);
+      *w = SizeToInt(shape[kShapeIndex3rd]);
     } else if (format == "NHWC") {
       *n = SizeToInt(shape[0]);
-      *c = SizeToInt(shape[3]);
-      *h = SizeToInt(shape[1]);
-      *w = SizeToInt(shape[2]);
+      *c = SizeToInt(shape[kShapeIndex3rd]);
+      *h = SizeToInt(shape[kShapeIndex1st]);
+      *w = SizeToInt(shape[kShapeIndex2nd]);
     } else {
       MS_LOG(ERROR) << "Unsupported data format " << format;
     }
@@ -233,16 +241,16 @@ class GpuKernel : public KernelMod {
   void SetNCDHW(const std::vector<size_t> &shape, int *n, int *c, int *d, int *h, int *w, const std::string &format) {
     if (Anyone(format, "NCDHW", "DefaultFormat")) {
       *n = SizeToInt(shape[0]);
-      *c = SizeToInt(shape[1]);
-      *d = SizeToInt(shape[2]);
-      *h = SizeToInt(shape[3]);
-      *w = SizeToInt(shape[4]);
+      *c = SizeToInt(shape[kShapeIndex1st]);
+      *d = SizeToInt(shape[kShapeIndex2nd]);
+      *h = SizeToInt(shape[kShapeIndex3rd]);
+      *w = SizeToInt(shape[kShapeIndex4th]);
     } else if (format == "NDHWC") {
       *n = SizeToInt(shape[0]);
-      *c = SizeToInt(shape[4]);
-      *d = SizeToInt(shape[1]);
-      *h = SizeToInt(shape[2]);
-      *w = SizeToInt(shape[3]);
+      *c = SizeToInt(shape[kShapeIndex4th]);
+      *d = SizeToInt(shape[kShapeIndex1st]);
+      *h = SizeToInt(shape[kShapeIndex2nd]);
+      *w = SizeToInt(shape[kShapeIndex3rd]);
     } else {
       MS_LOG(ERROR) << "Unsupported data format " << format;
     }
@@ -318,4 +326,4 @@ class GpuKernel : public KernelMod {
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_GPUKERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_GPU_KERNEL_H_

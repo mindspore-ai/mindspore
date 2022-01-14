@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,10 @@
 
 namespace mindspore {
 namespace kernel {
-class MapCacheIdxCPUKernel : public CPUKernel {
+class MapCacheIdxCpuKernelMod : public NativeCpuKernelMod {
  public:
-  MapCacheIdxCPUKernel() = default;
-  ~MapCacheIdxCPUKernel() override = default;
+  MapCacheIdxCpuKernelMod() = default;
+  ~MapCacheIdxCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -57,7 +57,7 @@ MS_REG_CPU_KERNEL(MapCacheIdx,
                     .AddOutputAttr(kNumberTypeInt32)
                     .AddOutputAttr(kNumberTypeInt32)
                     .AddOutputAttr(kNumberTypeInt32),
-                  MapCacheIdxCPUKernel);
+                  MapCacheIdxCpuKernelMod);
 
 MS_REG_CPU_KERNEL(MapCacheIdx,
                   KernelAttr()
@@ -70,7 +70,7 @@ MS_REG_CPU_KERNEL(MapCacheIdx,
                     .AddOutputAttr(kNumberTypeInt64)
                     .AddOutputAttr(kNumberTypeInt64)
                     .AddOutputAttr(kNumberTypeInt64),
-                  MapCacheIdxCPUKernel);
+                  MapCacheIdxCpuKernelMod);
 
 MS_REG_CPU_KERNEL(MapCacheIdx,
                   KernelAttr()
@@ -83,7 +83,7 @@ MS_REG_CPU_KERNEL(MapCacheIdx,
                     .AddOutputAttr(kNumberTypeInt64)
                     .AddOutputAttr(kNumberTypeInt64)
                     .AddOutputAttr(kNumberTypeInt64),
-                  MapCacheIdxCPUKernel);
+                  MapCacheIdxCpuKernelMod);
 
 MS_REG_CPU_KERNEL(MapCacheIdx,
                   KernelAttr()
@@ -96,7 +96,7 @@ MS_REG_CPU_KERNEL(MapCacheIdx,
                     .AddOutputAttr(kNumberTypeInt32)
                     .AddOutputAttr(kNumberTypeInt32)
                     .AddOutputAttr(kNumberTypeInt32),
-                  MapCacheIdxCPUKernel);
+                  MapCacheIdxCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

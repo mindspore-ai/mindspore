@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,7 +65,7 @@ void CopyTask(size_t cur, std::vector<size_t> *pos, T *input, const I *index, co
 }  // namespace
 
 template <typename T, typename I>
-void GatherDCPUKernel<T, I>::InitKernel(const CNodePtr &kernel_node) {
+void GatherDCpuKernelMod<T, I>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
@@ -79,9 +79,9 @@ void GatherDCPUKernel<T, I>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T, typename I>
-bool GatherDCPUKernel<T, I>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                    const std::vector<kernel::AddressPtr> &,
-                                    const std::vector<kernel::AddressPtr> &outputs) {
+bool GatherDCpuKernelMod<T, I>::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                       const std::vector<kernel::AddressPtr> &,
+                                       const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kGatherDInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kGatherDOutputsNum, kernel_name_);
   size_t input_size = get_element_num(input_shape_) * sizeof(T);

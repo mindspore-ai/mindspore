@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,20 +29,21 @@ namespace {
 const std::set<std::string> same_op_name = {"Concat", "Pack", "Stack",        "Split",        "Transpose",
                                             "Unpack", "AddN", "ConcatOffset", "DynamicStitch"};
 }
-CPUKernelFactory &CPUKernelFactory::GetInstance() {
-  static CPUKernelFactory instance;
+NativeCpuKernelModFactory &NativeCpuKernelModFactory::GetInstance() {
+  static NativeCpuKernelModFactory instance;
   return instance;
 }
 
-void CPUKernelFactory::Register(const std::string &kernel_name, const KernelAttr &kernel_attr,
-                                CPUKernelCreator &&kernel_creator) {
+void NativeCpuKernelModFactory::Register(const std::string &kernel_name, const KernelAttr &kernel_attr,
+                                         NativeCpuKernelModCreator &&kernel_creator) {
   (void)name_to_attr_creator_[kernel_name].emplace_back(kernel_attr, kernel_creator);
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
-  MS_LOG(DEBUG) << "CPUKernelFactory register operator: " << kernel_name;
+  MS_LOG(DEBUG) << "NativeCpuKernelModFactory register operator: " << kernel_name;
 #endif
 }
 
-std::shared_ptr<CPUKernel> CPUKernelFactory::Create(const std::string &kernel_name, const CNodePtr &apply_kernel) {
+std::shared_ptr<NativeCpuKernelMod> NativeCpuKernelModFactory::Create(const std::string &kernel_name,
+                                                                      const CNodePtr &apply_kernel) {
   MS_EXCEPTION_IF_NULL(apply_kernel);
   auto kernel_info = dynamic_cast<device::KernelInfo *>(apply_kernel->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
@@ -55,8 +56,8 @@ std::shared_ptr<CPUKernel> CPUKernelFactory::Create(const std::string &kernel_na
   return nullptr;
 }
 
-void CPUKernelFactory::SetKernelAttrs(const std::shared_ptr<kernel::OpInfo> op_info,
-                                      std::vector<KernelAttr> *kernel_attrs) {
+void NativeCpuKernelModFactory::SetKernelAttrs(const std::shared_ptr<kernel::OpInfo> op_info,
+                                               std::vector<KernelAttr> *kernel_attrs) {
   MS_EXCEPTION_IF_NULL(kernel_attrs);
   MS_EXCEPTION_IF_NULL(op_info);
   auto inputs_ptr = op_info->inputs_ptr();
@@ -85,9 +86,10 @@ void CPUKernelFactory::SetKernelAttrs(const std::shared_ptr<kernel::OpInfo> op_i
   }
 }
 
-void CPUKernelFactory::UpdateKernelAttrs(const std::string &kernel_name, const std::vector<KernelAttr> &kernel_attrs) {
+void NativeCpuKernelModFactory::UpdateKernelAttrs(const std::string &kernel_name,
+                                                  const std::vector<KernelAttr> &kernel_attrs) {
   size_t attr_size = kernel_attrs.size();
-  std::vector<std::pair<KernelAttr, CPUKernelCreator>> attr_creators(attr_size);
+  std::vector<std::pair<KernelAttr, NativeCpuKernelModCreator>> attr_creators(attr_size);
   auto iter = name_to_attr_creator_.find(kernel_name);
   if (iter == name_to_attr_creator_.end()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name
@@ -112,8 +114,8 @@ void CPUKernelFactory::UpdateKernelAttrs(const std::string &kernel_name, const s
   name_to_attr_creator_[kernel_name] = attr_creators;
 }
 
-std::pair<bool, size_t> CPUKernelFactory::CPUKernelAttrCheck(const std::string &kernel_name,
-                                                             const KernelBuildInfo &kernel_info) {
+std::pair<bool, size_t> NativeCpuKernelModFactory::CPUKernelAttrCheck(const std::string &kernel_name,
+                                                                      const KernelBuildInfo &kernel_info) {
   auto iter = name_to_attr_creator_.find(kernel_name);
   if (iter == name_to_attr_creator_.end()) {
     MS_LOG(INFO) << "Not registered CPU kernel: op[" << kernel_name << "]!";
@@ -133,7 +135,7 @@ std::pair<bool, size_t> CPUKernelFactory::CPUKernelAttrCheck(const std::string &
     }
     kernel_attrs.clear();
     SetKernelAttrs(op_info_ptr, &kernel_attrs);
-    kernel::CPUKernelFactory::GetInstance().UpdateKernelAttrs(kernel_name, kernel_attrs);
+    kernel::NativeCpuKernelModFactory::GetInstance().UpdateKernelAttrs(kernel_name, kernel_attrs);
   }
   for (size_t index = 0; index < kernel_attrs.size(); ++index) {
     if (CPUKernelSingleAttrCheck(kernel_attrs[index], kernel_info)) {
@@ -143,8 +145,8 @@ std::pair<bool, size_t> CPUKernelFactory::CPUKernelAttrCheck(const std::string &
   return std::make_pair(false, 0);
 }
 
-bool CPUKernelFactory::CPUKernelSingleAttrCheck(const KernelAttr &kernel_attr,
-                                                const KernelBuildInfo &kernel_info) const {
+bool NativeCpuKernelModFactory::CPUKernelSingleAttrCheck(const KernelAttr &kernel_attr,
+                                                         const KernelBuildInfo &kernel_info) const {
   for (size_t i = 0; i < kernel_info.GetInputNum(); ++i) {
     auto dtype = kernel_attr.GetAllSame() ? kernel_attr.GetInputAttr(0).first : kernel_attr.GetInputAttr(i).first;
     if (kernel_info.GetInputDeviceType(i) != dtype) {
@@ -164,7 +166,7 @@ bool CPUKernelFactory::CPUKernelSingleAttrCheck(const KernelAttr &kernel_attr,
   return true;
 }
 
-std::vector<KernelAttr> CPUKernelFactory::GetSupportedKernelAttrList(const std::string &kernel_name) {
+std::vector<KernelAttr> NativeCpuKernelModFactory::GetSupportedKernelAttrList(const std::string &kernel_name) {
   std::vector<KernelAttr> result;
   auto iter = name_to_attr_creator_.find(kernel_name);
   if (iter == name_to_attr_creator_.end()) {
@@ -182,7 +184,7 @@ std::vector<KernelAttr> CPUKernelFactory::GetSupportedKernelAttrList(const std::
   return result;
 }
 
-bool CPUKernelFactory::SearchRegisteredOp(const std::string &kernel_name) const {
+bool NativeCpuKernelModFactory::SearchRegisteredOp(const std::string &kernel_name) const {
   auto iter = name_to_attr_creator_.find(kernel_name);
   return iter != name_to_attr_creator_.end();
 }

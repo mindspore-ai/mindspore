@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,14 +25,11 @@
 
 namespace mindspore {
 namespace kernel {
-class TensorArrayCPUStackKernel : public CPUKernel {
+class TensorArrayStackCpuKernelMod : public NativeCpuKernelMod {
  public:
-  TensorArrayCPUStackKernel();
-  ~TensorArrayCPUStackKernel() = default;
+  TensorArrayStackCpuKernelMod();
+  ~TensorArrayStackCpuKernelMod() = default;
 
-  const std::vector<size_t> &GetInputSizeList() const override;
-  const std::vector<size_t> &GetOutputSizeList() const override;
-  const std::vector<size_t> &GetWorkspaceSizeList() const override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
   void InitKernel(const CNodePtr &kernel_node) override;
@@ -48,31 +45,28 @@ class TensorArrayCPUStackKernel : public CPUKernel {
   size_t ele_size_;
   std::vector<size_t> shapes_;
   TypePtr type_;
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 };
 
 MS_REG_CPU_KERNEL(TensorArrayStack, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-                  TensorArrayCPUStackKernel);
+                  TensorArrayStackCpuKernelMod);
 MS_REG_CPU_KERNEL(TensorArrayStack, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
-                  TensorArrayCPUStackKernel);
+                  TensorArrayStackCpuKernelMod);
 MS_REG_CPU_KERNEL(TensorArrayStack, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt16),
-                  TensorArrayCPUStackKernel);
+                  TensorArrayStackCpuKernelMod);
 MS_REG_CPU_KERNEL(TensorArrayStack, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt64),
-                  TensorArrayCPUStackKernel);
+                  TensorArrayStackCpuKernelMod);
 MS_REG_CPU_KERNEL(TensorArrayStack, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt32),
-                  TensorArrayCPUStackKernel);
+                  TensorArrayStackCpuKernelMod);
 MS_REG_CPU_KERNEL(TensorArrayStack, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt16),
-                  TensorArrayCPUStackKernel);
+                  TensorArrayStackCpuKernelMod);
 MS_REG_CPU_KERNEL(TensorArrayStack, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt8),
-                  TensorArrayCPUStackKernel);
+                  TensorArrayStackCpuKernelMod);
 MS_REG_CPU_KERNEL(TensorArrayStack, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
-                  TensorArrayCPUStackKernel);
+                  TensorArrayStackCpuKernelMod);
 MS_REG_CPU_KERNEL(TensorArrayStack, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
-                  TensorArrayCPUStackKernel);
+                  TensorArrayStackCpuKernelMod);
 MS_REG_CPU_KERNEL(TensorArrayStack, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
-                  TensorArrayCPUStackKernel);
+                  TensorArrayStackCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

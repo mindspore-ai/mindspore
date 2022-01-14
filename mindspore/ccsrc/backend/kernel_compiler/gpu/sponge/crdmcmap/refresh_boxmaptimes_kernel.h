@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,10 +31,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename T1>
-class RefreshBoxmaptimesGpuKernel : public GpuKernel {
+class RefreshBoxmaptimesGpuKernelMod : public NativeGpuKernelMod {
  public:
-  RefreshBoxmaptimesGpuKernel() : ele_crd(1) {}
-  ~RefreshBoxmaptimesGpuKernel() override = default;
+  RefreshBoxmaptimesGpuKernelMod() : ele_crd(1) {}
+  ~RefreshBoxmaptimesGpuKernelMod() override = default;
 
   bool Init(const CNodePtr &kernel_node) override {
     // get bond_numbers
@@ -53,10 +53,6 @@ class RefreshBoxmaptimesGpuKernel : public GpuKernel {
     InitSizeLists();
     return true;
   }
-
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -86,9 +82,6 @@ class RefreshBoxmaptimesGpuKernel : public GpuKernel {
   size_t ele_old_crd = 1;
   size_t ele_box_map_times = 1;
 
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
   int atom_numbers;
 };
 }  // namespace kernel

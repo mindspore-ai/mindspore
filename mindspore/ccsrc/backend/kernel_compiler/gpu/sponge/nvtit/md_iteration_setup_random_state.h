@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,10 +30,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename T1>
-class MDIterationSetupRandStateGpuKernel : public GpuKernel {
+class MDIterationSetupRandStateGpuKernelMod : public NativeGpuKernelMod {
  public:
-  MDIterationSetupRandStateGpuKernel() {}
-  ~MDIterationSetupRandStateGpuKernel() override = default;
+  MDIterationSetupRandStateGpuKernelMod() {}
+  ~MDIterationSetupRandStateGpuKernelMod() override = default;
 
   bool Init(const CNodePtr &kernel_node) override {
     // get bond_numbers
@@ -44,10 +44,6 @@ class MDIterationSetupRandStateGpuKernel : public GpuKernel {
     InitSizeLists();
     return true;
   }
-
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -62,9 +58,6 @@ class MDIterationSetupRandStateGpuKernel : public GpuKernel {
   void InitSizeLists() override { output_size_list_.push_back(sizeof(curandStatePhilox4_32_10_t) * float4_numbers); }
 
  private:
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
   int atom_numbers;
   int seed;
   int float4_numbers;

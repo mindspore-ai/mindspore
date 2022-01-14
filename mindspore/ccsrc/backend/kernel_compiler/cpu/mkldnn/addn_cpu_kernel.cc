@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ void AddDouble(const double *in0, const double *in1, double *out, int start, int
 }
 }  // namespace
 
-void AddNCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void AddNCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   input_num_ = AnfAlgo::GetInputTensorNum(kernel_node);
@@ -71,8 +71,8 @@ void AddNCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   AddArgument(DNNL_ARG_DST, dst_mem_desc);
 }
 
-bool AddNCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                           const std::vector<kernel::AddressPtr> &outputs) {
+bool AddNCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
+                              const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num_, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kAddNOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat32) {
@@ -97,8 +97,8 @@ bool AddNCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const 
 }
 
 template <typename T>
-void AddNCPUKernel::LaunchNnacl(const std::vector<kernel::AddressPtr> &inputs,
-                                const std::vector<kernel::AddressPtr> &outputs) {
+void AddNCpuKernelMod::LaunchNnacl(const std::vector<kernel::AddressPtr> &inputs,
+                                   const std::vector<kernel::AddressPtr> &outputs) {
   std::function<void(const T *, const T *, T *, int, int)> m_func;
   if constexpr (std::is_same<T, float>::value) {
     m_func = AddFloat;
@@ -124,7 +124,7 @@ void AddNCPUKernel::LaunchNnacl(const std::vector<kernel::AddressPtr> &inputs,
   }
 }
 
-void AddNCPUKernel::CheckParam(const CNodePtr &kernel_node) {
+void AddNCpuKernelMod::CheckParam(const CNodePtr &kernel_node) {
   auto src0_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   auto dst_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
   if (src0_shape != dst_shape) {

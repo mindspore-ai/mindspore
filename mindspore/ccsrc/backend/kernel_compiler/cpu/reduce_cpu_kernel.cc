@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ void UpdateAxis(const PrimitivePtr &prim, const CNodePtr &kernel_node, const std
 }
 
 template <typename T>
-void ReduceCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
+void ReduceCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   axis_.clear();
@@ -107,8 +107,9 @@ void ReduceCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-bool ReduceCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                                const std::vector<kernel::AddressPtr> &outputs) {
+bool ReduceCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                   const std::vector<kernel::AddressPtr> &,
+                                   const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kReduceInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kReduceOutputsNum, kernel_name_);
   size_t input_size = inputs[0]->size / sizeof(T);
@@ -190,7 +191,7 @@ bool ReduceCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, c
 }
 
 template <typename T>
-void ReduceCPUKernel<T>::AccelerateLongVector(T *input_addr, T *output_addr, size_t input_size) {
+void ReduceCpuKernelMod<T>::AccelerateLongVector(T *input_addr, T *output_addr, size_t input_size) {
   // init output_addr
   *output_addr = input_addr[0];
   std::mutex task_mutex;

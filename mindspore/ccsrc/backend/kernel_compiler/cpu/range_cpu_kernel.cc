@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,14 +24,14 @@ constexpr size_t kRangeInputsNum = 3;
 constexpr size_t kRangeOutputsNum = 1;
 }  // namespace
 
-void RangeCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void RangeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
 }
 
-bool RangeCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                            const std::vector<kernel::AddressPtr> &outputs) {
+bool RangeCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
+                               const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kRangeInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kRangeOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeInt32) {
@@ -45,7 +45,8 @@ bool RangeCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const
 }
 
 template <typename T>
-bool RangeCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const {
+bool RangeCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                     const std::vector<AddressPtr> &outputs) const {
   auto start = reinterpret_cast<T *>(inputs[0]->addr)[0];
   auto limit = reinterpret_cast<T *>(inputs[1]->addr)[0];
   auto delta = reinterpret_cast<T *>(inputs[2]->addr)[0];

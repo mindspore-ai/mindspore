@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,15 +27,15 @@ constexpr size_t kBatchNormInputShapeSize = 4;
 constexpr size_t kBatchNormInputShapeSize2 = 2;
 }  // namespace
 
-void BatchNormCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
-  CPUKernel::InitInputOutputSize(kernel_node);
+void BatchNormCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
+  NativeCpuKernelMod::InitInputOutputSize(kernel_node);
   size_t type_size = sizeof(float);
   std::vector<size_t> shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   size_t tensor_size = shape[1] * 2 * type_size;  // [2, c] to store scale and bias
   (void)workspace_size_list_.emplace_back(tensor_size);
 }
 
-void BatchNormCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void BatchNormCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   is_train = AnfAlgo::GetNodeAttr<bool>(kernel_node, "is_training");
@@ -73,9 +73,9 @@ void BatchNormCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   AddArgument(DNNL_ARG_DST, x_desc);
 }
 
-bool BatchNormCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                const std::vector<kernel::AddressPtr> &workspace,
-                                const std::vector<kernel::AddressPtr> &outputs) {
+bool BatchNormCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                   const std::vector<kernel::AddressPtr> &workspace,
+                                   const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kBatchNormInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kBatchNormOutputsNum, kernel_name_);
   auto wksp = reinterpret_cast<float *>(workspace[0]->addr);

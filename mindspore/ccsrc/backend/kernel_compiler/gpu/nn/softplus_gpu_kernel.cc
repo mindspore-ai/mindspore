@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,8 @@
 namespace mindspore {
 namespace kernel {
 MS_REG_GPU_KERNEL_ONE(Softplus, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                      SoftplusGpuKernel, float)
+                      SoftplusGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(Softplus, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-                      SoftplusGpuKernel, half)
+                      SoftplusGpuKernelMod, half)
 }  // namespace kernel
 }  // namespace mindspore

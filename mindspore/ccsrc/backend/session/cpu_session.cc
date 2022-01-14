@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -372,17 +372,17 @@ void CPUSession::BuildKernel(const KernelGraph *kernel_graph) {
       akg_nodes.push_back(kernel_node);
       continue;
     }
-    std::shared_ptr<kernel::CPUKernel> cpu_kernel =
-      kernel::CPUKernelFactory::GetInstance().Create(kernel_name, kernel_node);
-    if (cpu_kernel == nullptr) {
+    std::shared_ptr<kernel::NativeCpuKernelMod> cpu_kernel_mod =
+      kernel::NativeCpuKernelModFactory::GetInstance().Create(kernel_name, kernel_node);
+    if (cpu_kernel_mod == nullptr) {
       KernelNotSupportException(kernel_node);
     }
     try {
-      cpu_kernel->Init(kernel_node);
+      cpu_kernel_mod->Init(kernel_node);
     } catch (std::exception &e) {
       MS_LOG(EXCEPTION) << e.what() << trace::DumpSourceLines(kernel_node);
     }
-    AnfAlgo::SetKernelMod(cpu_kernel, kernel_node.get());
+    AnfAlgo::SetKernelMod(cpu_kernel_mod, kernel_node.get());
     MS_LOG(INFO) << "Cpu build success operator[" << kernel_name << "].";
   }
 #ifdef ENABLE_AKG

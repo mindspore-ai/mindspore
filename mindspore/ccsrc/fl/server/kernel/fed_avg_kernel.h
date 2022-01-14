@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ constexpr size_t kFedAvgInputsNum = 4;
 // Pay attention that this kernel is the distributed version of federated average, which means each server node in the
 // cluster in invalved in the aggragation process. So the DistributedCountService and CollectiveOpsImpl are called.
 template <typename T, typename S>
-class FedAvgKernel : public AggregationKernel {
+class FedAvgKernel : public AggregationKernelMod {
  public:
   FedAvgKernel()
       : cnode_weight_idx_(0),

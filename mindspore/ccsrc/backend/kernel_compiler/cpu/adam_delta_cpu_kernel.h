@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,10 @@
 
 namespace mindspore {
 namespace kernel {
-class AdamDeltaCPUKernel : public CPUKernel {
+class AdamDeltaCpuKernelMod : public NativeCpuKernelMod {
  public:
-  AdamDeltaCPUKernel() = default;
-  ~AdamDeltaCPUKernel() override = default;
+  AdamDeltaCpuKernelMod() = default;
+  ~AdamDeltaCpuKernelMod() override = default;
   void InitKernel(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
@@ -55,7 +55,7 @@ MS_REG_CPU_KERNEL(AdamNoUpdateParam,
                     .AddInputAttr(kNumberTypeFloat32)
                     .AddInputAttr(kNumberTypeFloat32)
                     .AddOutputAttr(kNumberTypeFloat32),
-                  AdamDeltaCPUKernel);
+                  AdamDeltaCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

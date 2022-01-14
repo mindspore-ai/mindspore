@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class DynamicShapeCPUKernel : public CPUKernel {
+class DynamicShapeCpuKernelMod : public NativeCpuKernelMod {
  public:
-  DynamicShapeCPUKernel() = default;
-  ~DynamicShapeCPUKernel() override = default;
+  DynamicShapeCpuKernelMod() = default;
+  ~DynamicShapeCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -36,16 +36,16 @@ class DynamicShapeCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 };
 
-MS_REG_CPU_KERNEL_T(DynamicShape, KernelAttr(), DynamicShapeCPUKernel, float);
-MS_REG_CPU_KERNEL_T(DynamicShape, KernelAttr(), DynamicShapeCPUKernel, int8_t)
-MS_REG_CPU_KERNEL_T(DynamicShape, KernelAttr(), DynamicShapeCPUKernel, int16_t)
-MS_REG_CPU_KERNEL_T(DynamicShape, KernelAttr(), DynamicShapeCPUKernel, int32_t)
-MS_REG_CPU_KERNEL_T(DynamicShape, KernelAttr(), DynamicShapeCPUKernel, int64_t)
-MS_REG_CPU_KERNEL_T(DynamicShape, KernelAttr(), DynamicShapeCPUKernel, uint8_t)
-MS_REG_CPU_KERNEL_T(DynamicShape, KernelAttr(), DynamicShapeCPUKernel, uint16_t)
-MS_REG_CPU_KERNEL_T(DynamicShape, KernelAttr(), DynamicShapeCPUKernel, uint32_t)
-MS_REG_CPU_KERNEL_T(DynamicShape, KernelAttr(), DynamicShapeCPUKernel, uint64_t)
-MS_REG_CPU_KERNEL_T(DynamicShape, KernelAttr(), DynamicShapeCPUKernel, bool)
+MS_REG_CPU_KERNEL_T(DynamicShape, KernelAttr(), DynamicShapeCpuKernelMod, float);
+MS_REG_CPU_KERNEL_T(DynamicShape, KernelAttr(), DynamicShapeCpuKernelMod, int8_t)
+MS_REG_CPU_KERNEL_T(DynamicShape, KernelAttr(), DynamicShapeCpuKernelMod, int16_t)
+MS_REG_CPU_KERNEL_T(DynamicShape, KernelAttr(), DynamicShapeCpuKernelMod, int32_t)
+MS_REG_CPU_KERNEL_T(DynamicShape, KernelAttr(), DynamicShapeCpuKernelMod, int64_t)
+MS_REG_CPU_KERNEL_T(DynamicShape, KernelAttr(), DynamicShapeCpuKernelMod, uint8_t)
+MS_REG_CPU_KERNEL_T(DynamicShape, KernelAttr(), DynamicShapeCpuKernelMod, uint16_t)
+MS_REG_CPU_KERNEL_T(DynamicShape, KernelAttr(), DynamicShapeCpuKernelMod, uint32_t)
+MS_REG_CPU_KERNEL_T(DynamicShape, KernelAttr(), DynamicShapeCpuKernelMod, uint64_t)
+MS_REG_CPU_KERNEL_T(DynamicShape, KernelAttr(), DynamicShapeCpuKernelMod, bool)
 }  // namespace kernel
 }  // namespace mindspore
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ constexpr size_t kCumSumInputsNum = 1;
 constexpr size_t kCumSumOutputsNum = 1;
 }  // namespace
 
-void CumSumCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void CumSumCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
@@ -48,7 +48,7 @@ void CumSumCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-void CumSumCPUKernel::InitWorkspaceSize() {
+void CumSumCpuKernelMod::InitWorkspaceSize() {
   input_size_0_ = sizeof(T);
   for (size_t i = 0; i < shape_.size(); i++) {
     input_size_0_ *= shape_[i];
@@ -56,8 +56,8 @@ void CumSumCPUKernel::InitWorkspaceSize() {
   (void)workspace_size_list_.emplace_back(input_size_0_);
 }
 
-void CumSumCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
-  CPUKernel::InitInputOutputSize(kernel_node);
+void CumSumCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
+  NativeCpuKernelMod::InitInputOutputSize(kernel_node);
   if (dtype_ == kNumberTypeFloat32) {
     InitWorkspaceSize<float_t>();
   } else if (dtype_ == kNumberTypeFloat16) {
@@ -75,9 +75,9 @@ void CumSumCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
   }
 }
 
-bool CumSumCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                             const std::vector<kernel::AddressPtr> &workspace,
-                             const std::vector<kernel::AddressPtr> &outputs) {
+bool CumSumCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                const std::vector<kernel::AddressPtr> &workspace,
+                                const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCumSumInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kCumSumOutputsNum, kernel_name_);
   Reshape();
@@ -99,7 +99,7 @@ bool CumSumCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
   return true;
 }
 
-void CumSumCPUKernel::Reshape() {
+void CumSumCpuKernelMod::Reshape() {
   dims_[0] = 1;
   dims_[1] = shape_[IntToSize(axis_)];
   dims_[2] = 1;
@@ -114,8 +114,8 @@ void CumSumCPUKernel::Reshape() {
 }
 
 template <typename T>
-void CumSumCPUKernel::LeftMove(const T *input, T *output, size_t dim0, size_t dim1, size_t dim2, size_t stride,
-                               size_t stride2, size_t start, size_t end) const {
+void CumSumCpuKernelMod::LeftMove(const T *input, T *output, size_t dim0, size_t dim1, size_t dim2, size_t stride,
+                                  size_t stride2, size_t start, size_t end) const {
   for (size_t i = start; i < end; i++) {
     size_t k1 = i / dim2 % dim0;
     size_t k2 = i % dim2;
@@ -133,8 +133,8 @@ void CumSumCPUKernel::LeftMove(const T *input, T *output, size_t dim0, size_t di
 }
 
 template <typename T>
-void CumSumCPUKernel::RightMove(const T *input, T *output, size_t dim0, size_t dim1, size_t dim2, size_t stride,
-                                size_t stride2, size_t start, size_t end) const {
+void CumSumCpuKernelMod::RightMove(const T *input, T *output, size_t dim0, size_t dim1, size_t dim2, size_t stride,
+                                   size_t stride2, size_t start, size_t end) const {
   for (size_t i = start; i < end; i++) {
     size_t k1 = i / dim2 % dim0;
     size_t k2 = i % dim2;
@@ -152,8 +152,8 @@ void CumSumCPUKernel::RightMove(const T *input, T *output, size_t dim0, size_t d
 }
 
 template <typename T>
-void CumSumCPUKernel::Copy(T *input, T *output, size_t dim0, size_t dim1, size_t dim2, size_t stride, size_t stride2,
-                           size_t start, size_t end) const {
+void CumSumCpuKernelMod::Copy(T *input, T *output, size_t dim0, size_t dim1, size_t dim2, size_t stride, size_t stride2,
+                              size_t start, size_t end) const {
   for (size_t i = start; i < end; i++) {
     size_t k1 = i / dim2 % dim0;
     size_t k2 = i % dim2;
@@ -166,8 +166,8 @@ void CumSumCPUKernel::Copy(T *input, T *output, size_t dim0, size_t dim1, size_t
 }
 
 template <typename T>
-void CumSumCPUKernel::CumSumKernelReverse(const T *input, T *output, size_t dim0, size_t dim1, size_t dim2,
-                                          size_t stride, size_t stride2, size_t start, size_t end) const {
+void CumSumCpuKernelMod::CumSumKernelReverse(const T *input, T *output, size_t dim0, size_t dim1, size_t dim2,
+                                             size_t stride, size_t stride2, size_t start, size_t end) const {
   for (size_t i = start; i < end; i++) {
     size_t k1 = i / dim2 % dim0;
     size_t k2 = i % dim2;
@@ -185,8 +185,8 @@ void CumSumCPUKernel::CumSumKernelReverse(const T *input, T *output, size_t dim0
 }
 
 template <typename T>
-void CumSumCPUKernel::CumSumKernel(const T *input, T *output, size_t dim0, size_t dim1, size_t dim2, size_t stride,
-                                   size_t stride2, size_t start, size_t end) const {
+void CumSumCpuKernelMod::CumSumKernel(const T *input, T *output, size_t dim0, size_t dim1, size_t dim2, size_t stride,
+                                      size_t stride2, size_t start, size_t end) const {
   for (size_t i = start; i < end; i++) {
     size_t k1 = i / dim2 % dim0;
     size_t k2 = i % dim2;
@@ -204,7 +204,7 @@ void CumSumCPUKernel::CumSumKernel(const T *input, T *output, size_t dim0, size_
 }
 
 template <typename T>
-void CumSumCPUKernel::LaunchCumSum(const T *input, T *output, T *workspace, size_t start, size_t end) const {
+void CumSumCpuKernelMod::LaunchCumSum(const T *input, T *output, T *workspace, size_t start, size_t end) const {
   start = start / dims_[1];
   end = end / dims_[1];
   if (exclusive_) {
@@ -227,9 +227,9 @@ void CumSumCPUKernel::LaunchCumSum(const T *input, T *output, T *workspace, size
 }
 
 template <typename T>
-void CumSumCPUKernel::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                   const std::vector<kernel::AddressPtr> &workspace,
-                                   const std::vector<kernel::AddressPtr> &outputs) {
+void CumSumCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                      const std::vector<kernel::AddressPtr> &workspace,
+                                      const std::vector<kernel::AddressPtr> &outputs) {
   const auto *input = reinterpret_cast<T *>(inputs[0]->addr);
   auto *ws = reinterpret_cast<T *>(workspace[0]->addr);
   auto output = reinterpret_cast<T *>(outputs[0]->addr);

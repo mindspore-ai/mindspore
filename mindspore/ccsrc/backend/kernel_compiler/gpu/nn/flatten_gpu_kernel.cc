@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,92 +20,92 @@ namespace mindspore {
 namespace kernel {
 // float64
 MS_REG_GPU_KERNEL_ONE(Flatten, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-                      FlattenGpuFwdKernel, double)
+                      FlattenFwdGpuKernelMod, double)
 MS_REG_GPU_KERNEL_ONE(Reshape, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-                      FlattenGpuFwdKernel, double)
+                      FlattenFwdGpuKernelMod, double)
 MS_REG_GPU_KERNEL_ONE(ExpandDims, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-                      FlattenGpuFwdKernel, double)
+                      FlattenFwdGpuKernelMod, double)
 // float32
 MS_REG_GPU_KERNEL_ONE(Flatten, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                      FlattenGpuFwdKernel, float)
+                      FlattenFwdGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(Reshape, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                      FlattenGpuFwdKernel, float)
+                      FlattenFwdGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(ExpandDims, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                      FlattenGpuFwdKernel, float)
+                      FlattenFwdGpuKernelMod, float)
 // float16
 MS_REG_GPU_KERNEL_ONE(Flatten, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-                      FlattenGpuFwdKernel, half)
+                      FlattenFwdGpuKernelMod, half)
 MS_REG_GPU_KERNEL_ONE(ExpandDims, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-                      FlattenGpuFwdKernel, half)
+                      FlattenFwdGpuKernelMod, half)
 MS_REG_GPU_KERNEL_ONE(Reshape, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-                      FlattenGpuFwdKernel, half)
+                      FlattenFwdGpuKernelMod, half)
 // int64
 MS_REG_GPU_KERNEL_ONE(Flatten, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-                      FlattenGpuFwdKernel, int64_t)
+                      FlattenFwdGpuKernelMod, int64_t)
 MS_REG_GPU_KERNEL_ONE(Reshape, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-                      FlattenGpuFwdKernel, int64_t)
+                      FlattenFwdGpuKernelMod, int64_t)
 MS_REG_GPU_KERNEL_ONE(ExpandDims, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-                      FlattenGpuFwdKernel, int64_t)
+                      FlattenFwdGpuKernelMod, int64_t)
 // int32
 MS_REG_GPU_KERNEL_ONE(Flatten, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                      FlattenGpuFwdKernel, int)
+                      FlattenFwdGpuKernelMod, int)
 MS_REG_GPU_KERNEL_ONE(Reshape, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                      FlattenGpuFwdKernel, int)
+                      FlattenFwdGpuKernelMod, int)
 MS_REG_GPU_KERNEL_ONE(ExpandDims, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                      FlattenGpuFwdKernel, int)
+                      FlattenFwdGpuKernelMod, int)
 // int16
 MS_REG_GPU_KERNEL_ONE(Flatten, KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-                      FlattenGpuFwdKernel, int16_t)
+                      FlattenFwdGpuKernelMod, int16_t)
 MS_REG_GPU_KERNEL_ONE(Reshape, KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-                      FlattenGpuFwdKernel, int16_t)
+                      FlattenFwdGpuKernelMod, int16_t)
 MS_REG_GPU_KERNEL_ONE(ExpandDims, KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-                      FlattenGpuFwdKernel, int16_t)
+                      FlattenFwdGpuKernelMod, int16_t)
 // int8
 MS_REG_GPU_KERNEL_ONE(Flatten, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
-                      FlattenGpuFwdKernel, char)
+                      FlattenFwdGpuKernelMod, char)
 MS_REG_GPU_KERNEL_ONE(Reshape, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
-                      FlattenGpuFwdKernel, char)
+                      FlattenFwdGpuKernelMod, char)
 MS_REG_GPU_KERNEL_ONE(ExpandDims, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
-                      FlattenGpuFwdKernel, char)
+                      FlattenFwdGpuKernelMod, char)
 
 // uint64
 MS_REG_GPU_KERNEL_ONE(Flatten, KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
-                      FlattenGpuFwdKernel, uint64_t)
+                      FlattenFwdGpuKernelMod, uint64_t)
 MS_REG_GPU_KERNEL_ONE(Reshape, KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
-                      FlattenGpuFwdKernel, uint64_t)
+                      FlattenFwdGpuKernelMod, uint64_t)
 MS_REG_GPU_KERNEL_ONE(ExpandDims, KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
-                      FlattenGpuFwdKernel, uint64_t)
+                      FlattenFwdGpuKernelMod, uint64_t)
 
 // uint32
 MS_REG_GPU_KERNEL_ONE(Flatten, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
-                      FlattenGpuFwdKernel, uint)
+                      FlattenFwdGpuKernelMod, uint)
 MS_REG_GPU_KERNEL_ONE(Reshape, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
-                      FlattenGpuFwdKernel, uint)
+                      FlattenFwdGpuKernelMod, uint)
 MS_REG_GPU_KERNEL_ONE(ExpandDims, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
-                      FlattenGpuFwdKernel, uint)
+                      FlattenFwdGpuKernelMod, uint)
 
 // uint16
 MS_REG_GPU_KERNEL_ONE(Flatten, KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
-                      FlattenGpuFwdKernel, uint16_t)
+                      FlattenFwdGpuKernelMod, uint16_t)
 MS_REG_GPU_KERNEL_ONE(Reshape, KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
-                      FlattenGpuFwdKernel, uint16_t)
+                      FlattenFwdGpuKernelMod, uint16_t)
 MS_REG_GPU_KERNEL_ONE(ExpandDims, KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
-                      FlattenGpuFwdKernel, uint16_t)
+                      FlattenFwdGpuKernelMod, uint16_t)
 
 // uint8
 MS_REG_GPU_KERNEL_ONE(Flatten, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-                      FlattenGpuFwdKernel, uchar)
+                      FlattenFwdGpuKernelMod, uchar)
 MS_REG_GPU_KERNEL_ONE(Reshape, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-                      FlattenGpuFwdKernel, uchar)
+                      FlattenFwdGpuKernelMod, uchar)
 MS_REG_GPU_KERNEL_ONE(ExpandDims, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-                      FlattenGpuFwdKernel, uchar)
+                      FlattenFwdGpuKernelMod, uchar)
 
 // bool
 MS_REG_GPU_KERNEL_ONE(Flatten, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-                      FlattenGpuFwdKernel, bool)
+                      FlattenFwdGpuKernelMod, bool)
 MS_REG_GPU_KERNEL_ONE(Reshape, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-                      FlattenGpuFwdKernel, bool)
+                      FlattenFwdGpuKernelMod, bool)
 MS_REG_GPU_KERNEL_ONE(ExpandDims, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-                      FlattenGpuFwdKernel, bool)
+                      FlattenFwdGpuKernelMod, bool)
 }  // namespace kernel
 }  // namespace mindspore

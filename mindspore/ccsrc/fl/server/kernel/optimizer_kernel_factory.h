@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@ namespace mindspore {
 namespace fl {
 namespace server {
 namespace kernel {
-using OptimizerKernelCreator = std::function<std::shared_ptr<OptimizerKernel>()>;
-class OptimizerKernelFactory : public KernelFactory<std::shared_ptr<OptimizerKernel>, OptimizerKernelCreator> {
+using OptimizerKernelCreator = std::function<std::shared_ptr<OptimizerKernelMod>()>;
+class OptimizerKernelFactory : public KernelFactory<std::shared_ptr<OptimizerKernelMod>, OptimizerKernelCreator> {
  public:
   static OptimizerKernelFactory &GetInstance() {
     static OptimizerKernelFactory instance;
@@ -54,9 +54,9 @@ class OptimizerKernelRegister {
 };
 
 // Register optimizer kernel with one template type T.
-#define REG_OPTIMIZER_KERNEL(NAME, PARAMS_INFO, CLASS, T)                                               \
-  static_assert(std::is_base_of<OptimizerKernel, CLASS<T>>::value, " must be base of OptimizerKernel"); \
-  static const OptimizerKernelRegister g_##NAME##_##T##_optimizer_kernel_reg(                           \
+#define REG_OPTIMIZER_KERNEL(NAME, PARAMS_INFO, CLASS, T)                                                     \
+  static_assert(std::is_base_of<OptimizerKernelMod, CLASS<T>>::value, " must be base of OptimizerKernelMod"); \
+  static const OptimizerKernelRegister g_##NAME##_##T##_optimizer_kernel_reg(                                 \
     #NAME, PARAMS_INFO, []() { return std::make_shared<CLASS<T>>(); });
 }  // namespace kernel
 }  // namespace server

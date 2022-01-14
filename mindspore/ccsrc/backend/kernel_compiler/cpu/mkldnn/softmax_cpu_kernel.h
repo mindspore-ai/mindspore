@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,10 @@
 
 namespace mindspore {
 namespace kernel {
-class SoftmaxCPUKernel : public MKLCPUKernel {
+class SoftmaxCpuKernelMod : public MKLCpuKernelMod {
  public:
-  SoftmaxCPUKernel() = default;
-  ~SoftmaxCPUKernel() override = default;
+  SoftmaxCpuKernelMod() = default;
+  ~SoftmaxCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -35,7 +35,7 @@ class SoftmaxCPUKernel : public MKLCPUKernel {
 };
 
 MS_REG_CPU_KERNEL(Softmax, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  SoftmaxCPUKernel);
+                  SoftmaxCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

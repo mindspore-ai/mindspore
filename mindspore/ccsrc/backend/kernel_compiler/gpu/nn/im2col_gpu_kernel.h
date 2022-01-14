@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,23 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr size_t kPadSize = 4;
+constexpr size_t kTopPadIndex = 0;
+constexpr size_t kBottomPadIndex = 1;
+constexpr size_t kLeftPadIndex = 2;
+constexpr size_t kRightPadIndex = 3;
+
+constexpr size_t kStrideSize = 4;
+constexpr size_t kHeightStrideIndex = 2;
+constexpr size_t kWidthStrideIndex = 3;
+
+constexpr size_t kDilationSize = 4;
+constexpr size_t kHeightDilationIndex = 2;
+constexpr size_t kWidthDilationIndex = 3;
 template <typename T>
-class Im2ColGpuFwdKernel : public GpuKernel {
+class Im2ColFwdGpuKernelMod : public NativeGpuKernelMod {
  public:
-  Im2ColGpuFwdKernel()
+  Im2ColFwdGpuKernelMod()
       : cudnn_handle_(nullptr),
         input_desc_(nullptr),
         output_desc_(nullptr),
@@ -54,10 +67,7 @@ class Im2ColGpuFwdKernel : public GpuKernel {
         padded_size_(0),
         workspace_size_(0),
         use_pad_(true) {}
-  ~Im2ColGpuFwdKernel() override { DestroyResource(); }
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+  ~Im2ColFwdGpuKernelMod() override { DestroyResource(); }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -95,7 +105,8 @@ class Im2ColGpuFwdKernel : public GpuKernel {
       InitSizeLists();
       return true;
     }
-    if (in_shape.size() != 4) {
+    const size_t kInputDimSize = 4;
+    if (in_shape.size() != kInputDimSize) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input should be 4, but got "
                         << in_shape.size();
     }
@@ -103,11 +114,13 @@ class Im2ColGpuFwdKernel : public GpuKernel {
     std::vector<int64_t> filter_shape_me = GetAttr<std::vector<int64_t>>(kernel_node, "kernel_size");
     (void)std::transform(filter_shape_me.begin(), filter_shape_me.end(), std::back_inserter(filter_shape),
                          [](const int64_t &value) { return static_cast<int>(value); });
-    if (filter_shape.size() < 2) {
+    const size_t kFilterDimSize = 2;
+    if (filter_shape.size() < kFilterDimSize) {
       MS_LOG(EXCEPTION) << "For 'Im2ColGpuKernel', the dimension of filter must be greater than or equal to 2, "
                         << "but got " << filter_shape.size();
     }
-    if (output_shape.size() < 6) {
+    const size_t kOutputDimSize = 6;
+    if (output_shape.size() < kOutputDimSize) {
       MS_LOG(EXCEPTION) << "For 'Im2ColGpuKernel', the dimension of output must be greater than or equal to 6, "
                         << "but got " << filter_shape.size();
     }
@@ -128,8 +141,9 @@ class Im2ColGpuFwdKernel : public GpuKernel {
       }
       CHECK_CUDNN_RET_WITH_EXCEPT(
         kernel_node_,
-        cudnnSetConvolution2dDescriptor(conv_desc_n, pad_height_, pad_width_n, stride_[2], stride_[3], dilation_[2],
-                                        dilation_[3], CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT),
+        cudnnSetConvolution2dDescriptor(conv_desc_n, pad_height_, pad_width_n, stride_[kHeightStrideIndex],
+                                        stride_[kWidthStrideIndex], dilation_[kHeightDilationIndex],
+                                        dilation_[kWidthDilationIndex], CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT),
         "cudnnSetConvolution2dDescriptor failed");
     }
     if (cudnn_data_type_ == CUDNN_DATA_HALF) {
@@ -206,22 +220,26 @@ class Im2ColGpuFwdKernel : public GpuKernel {
     std::vector<int64_t> pad_list_me = GetAttr<std::vector<int64_t>>(kernel_node, "pad_list");
     (void)std::transform(pad_list_me.begin(), pad_list_me.end(), std::back_inserter(pad_list),
                          [](const int64_t &value) { return static_cast<int>(value); });
+    const size_t kInIdxForN = 0;
+    const size_t kInIdxForC = 1;
+    const size_t kInIdxForH = 2;
+    const size_t kInIdxForW = 3;
+    n_ = SizeToInt(in_shape[kInIdxForN]);
+    c_ = SizeToInt(in_shape[kInIdxForC]);
+    old_height_ = SizeToInt(in_shape[kInIdxForH]);
+    old_width_ = SizeToInt(in_shape[kInIdxForW]);
 
-    n_ = SizeToInt(in_shape[0]);
-    c_ = SizeToInt(in_shape[1]);
-    old_height_ = SizeToInt(in_shape[2]);
-    old_width_ = SizeToInt(in_shape[3]);
-
-    if (pad_list.size() != 4) {
+    if (pad_list.size() != kPadSize) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'pad' should be 4, but got " << pad_list.size();
     }
-    pad_height_ = pad_list[0] + pad_list[1];
-    pad_width_n = pad_list[2] + pad_list[3];
-    pad_top_ = pad_list[0];
-    pad_left_ = pad_list[2];
+    pad_height_ = pad_list[kTopPadIndex] + pad_list[kBottomPadIndex];
+    pad_width_n = pad_list[kLeftPadIndex] + pad_list[kRightPadIndex];
+    pad_top_ = pad_list[kTopPadIndex];
+    pad_left_ = pad_list[kLeftPadIndex];
 
     // if use_pad_ == true, using zero padding in advance, else using the default cudnn pad.
-    if (pad_height_ % 2 == 0 && pad_width_n % 2 == 0) {
+    const int kSymmetricCoef = 2;
+    if (pad_height_ % kSymmetricCoef == 0 && pad_width_n % kSymmetricCoef == 0) {
       use_pad_ = false;
     }
 
@@ -229,19 +247,27 @@ class Im2ColGpuFwdKernel : public GpuKernel {
                                 cudnnSetTensor4dDescriptor(padded_desc_n, CUDNN_TENSOR_NCHW, cudnn_data_type_, n_, c_,
                                                            old_height_ + pad_height_, old_width_ + pad_width_n),
                                 "cudnnSetTensor4dDescriptor failed");
-    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
-                                cudnnSetConvolution2dDescriptor(
-                                  conv_desc_n, use_pad_ ? 0 : pad_top_, use_pad_ ? 0 : pad_left_, stride_[2],
-                                  stride_[3], dilation_[2], dilation_[3], CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT),
-                                "cudnnSetConvolution2dDescriptor failed");
+    CHECK_CUDNN_RET_WITH_EXCEPT(
+      kernel_node_,
+      cudnnSetConvolution2dDescriptor(conv_desc_n, use_pad_ ? 0 : pad_top_, use_pad_ ? 0 : pad_left_,
+                                      stride_[kHeightStrideIndex], stride_[kWidthStrideIndex],
+                                      dilation_[kHeightDilationIndex], dilation_[kWidthDilationIndex],
+                                      CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT),
+      "cudnnSetConvolution2dDescriptor failed");
   }
 
   void Set4DDesc(const std::vector<size_t> &in_shape, const std::vector<int> &filter_shape,
                  const std::vector<size_t> &output_shape) {
+    const size_t kIdx0 = 0;
+    const size_t kIdx1 = 1;
+    const size_t kIdx2 = 2;
+    const size_t kIdx3 = 3;
+    const size_t kIdx4 = 4;
+    const size_t kIdx5 = 5;
     CHECK_CUDNN_RET_WITH_EXCEPT(
       kernel_node_,
-      cudnnSetTensor4dDescriptor(input_desc_, CUDNN_TENSOR_NCHW, cudnn_data_type_, SizeToInt(in_shape[0]),
-                                 SizeToInt(in_shape[1]), SizeToInt(in_shape[2]), SizeToInt(in_shape[3])),
+      cudnnSetTensor4dDescriptor(input_desc_, CUDNN_TENSOR_NCHW, cudnn_data_type_, SizeToInt(in_shape[kIdx0]),
+                                 SizeToInt(in_shape[kIdx1]), SizeToInt(in_shape[kIdx2]), SizeToInt(in_shape[kIdx3])),
       "cudnnSetTensor4dDescriptor failed");
 
     CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
@@ -249,8 +275,8 @@ class Im2ColGpuFwdKernel : public GpuKernel {
                                                            SizeToInt(in_shape[1]), filter_shape[0], filter_shape[1]),
                                 "cudnnSetFilter4dDescriptor failed");
 
-    auto out_H = output_shape[0] * output_shape[1] * output_shape[2];
-    auto out_W = output_shape[3] * output_shape[4] * output_shape[5];
+    auto out_H = output_shape[kIdx0] * output_shape[kIdx1] * output_shape[kIdx2];
+    auto out_W = output_shape[kIdx3] * output_shape[kIdx4] * output_shape[kIdx5];
     CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
                                 cudnnSetTensor4dDescriptor(output_desc_, CUDNN_TENSOR_NCHW, cudnn_data_type_,
                                                            SizeToInt(out_H), SizeToInt(out_W), 1, 1),
@@ -264,7 +290,7 @@ class Im2ColGpuFwdKernel : public GpuKernel {
                          [](const int64_t &value) { return static_cast<int>(value); });
     (void)std::transform(dilation_me.begin(), dilation_me.end(), std::back_inserter(dilation_),
                          [](const int64_t &value) { return static_cast<int>(value); });
-    if (stride_.size() != 4) {
+    if (stride_.size() != kStrideSize) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'stride' should be 4, but got "
                         << stride_.size();
     }
@@ -272,7 +298,7 @@ class Im2ColGpuFwdKernel : public GpuKernel {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'stride' at 0 and 1 axis should be 1, but got "
                         << "stride[0]: " << stride_[0] << ", stride[1]: " << stride_[1];
     }
-    if (dilation_.size() != 4) {
+    if (dilation_.size() != kDilationSize) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'dilation' should be 4, but got "
                         << dilation_.size();
     }
@@ -290,9 +316,7 @@ class Im2ColGpuFwdKernel : public GpuKernel {
   cudnnConvolutionDescriptor_t conv_desc_n;
   cudnnTensorDescriptor_t padded_desc_n;
   std::string pad_mode_;
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
+
   const float pad_value_ = 0.0;
   cudnnDataType_t cudnn_data_type_;
   int old_height_;

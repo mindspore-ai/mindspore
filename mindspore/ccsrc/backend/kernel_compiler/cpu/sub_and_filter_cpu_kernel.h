@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,10 @@
 
 namespace mindspore {
 namespace kernel {
-class SubAndFilterCPUKernel : public CPUKernel {
+class SubAndFilterCpuKernelMod : public NativeCpuKernelMod {
  public:
-  SubAndFilterCPUKernel() = default;
-  ~SubAndFilterCPUKernel() override = default;
+  SubAndFilterCpuKernelMod() = default;
+  ~SubAndFilterCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -51,7 +51,7 @@ MS_REG_CPU_KERNEL(SubAndFilter,
                     .AddInputAttr(kNumberTypeInt32)
                     .AddOutputAttr(kNumberTypeInt32)
                     .AddOutputAttr(kNumberTypeInt32),
-                  SubAndFilterCPUKernel);
+                  SubAndFilterCpuKernelMod);
 
 MS_REG_CPU_KERNEL(SubAndFilter,
                   KernelAttr()
@@ -60,7 +60,7 @@ MS_REG_CPU_KERNEL(SubAndFilter,
                     .AddInputAttr(kNumberTypeInt64)
                     .AddOutputAttr(kNumberTypeInt64)
                     .AddOutputAttr(kNumberTypeInt64),
-                  SubAndFilterCPUKernel);
+                  SubAndFilterCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

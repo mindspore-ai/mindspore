@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,10 @@
 
 namespace mindspore {
 namespace kernel {
-class StridedSliceCPUKernel : public CPUKernel {
+class StridedSliceCpuKernelMod : public NativeCpuKernelMod {
  public:
-  StridedSliceCPUKernel() = default;
-  ~StridedSliceCPUKernel() override = default;
+  StridedSliceCpuKernelMod() = default;
+  ~StridedSliceCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -60,13 +60,13 @@ class StridedSliceCPUKernel : public CPUKernel {
 };
 
 MS_REG_CPU_KERNEL(StridedSlice, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-                  StridedSliceCPUKernel);
+                  StridedSliceCpuKernelMod);
 MS_REG_CPU_KERNEL(StridedSlice, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                  StridedSliceCPUKernel);
+                  StridedSliceCpuKernelMod);
 MS_REG_CPU_KERNEL(StridedSlice, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  StridedSliceCPUKernel);
+                  StridedSliceCpuKernelMod);
 MS_REG_CPU_KERNEL(StridedSlice, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-                  StridedSliceCPUKernel);
+                  StridedSliceCpuKernelMod);
 
 MS_REG_CPU_KERNEL(StridedSlice,
                   KernelAttr()
@@ -75,7 +75,7 @@ MS_REG_CPU_KERNEL(StridedSlice,
                     .AddInputAttr(kNumberTypeInt64)
                     .AddInputAttr(kNumberTypeInt64)
                     .AddOutputAttr(kNumberTypeBool),
-                  StridedSliceCPUKernel);
+                  StridedSliceCpuKernelMod);
 MS_REG_CPU_KERNEL(StridedSlice,
                   KernelAttr()
                     .AddInputAttr(kNumberTypeInt32)
@@ -83,7 +83,7 @@ MS_REG_CPU_KERNEL(StridedSlice,
                     .AddInputAttr(kNumberTypeInt64)
                     .AddInputAttr(kNumberTypeInt64)
                     .AddOutputAttr(kNumberTypeInt32),
-                  StridedSliceCPUKernel);
+                  StridedSliceCpuKernelMod);
 MS_REG_CPU_KERNEL(StridedSlice,
                   KernelAttr()
                     .AddInputAttr(kNumberTypeFloat32)
@@ -91,7 +91,7 @@ MS_REG_CPU_KERNEL(StridedSlice,
                     .AddInputAttr(kNumberTypeInt64)
                     .AddInputAttr(kNumberTypeInt64)
                     .AddOutputAttr(kNumberTypeFloat32),
-                  StridedSliceCPUKernel);
+                  StridedSliceCpuKernelMod);
 MS_REG_CPU_KERNEL(StridedSlice,
                   KernelAttr()
                     .AddInputAttr(kNumberTypeFloat64)
@@ -99,7 +99,7 @@ MS_REG_CPU_KERNEL(StridedSlice,
                     .AddInputAttr(kNumberTypeInt64)
                     .AddInputAttr(kNumberTypeInt64)
                     .AddOutputAttr(kNumberTypeFloat64),
-                  StridedSliceCPUKernel);
+                  StridedSliceCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

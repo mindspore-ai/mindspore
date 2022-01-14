@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,19 +28,16 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class SliceGradGpuKernel : public GpuKernel {
+class SliceGradGpuKernelMod : public NativeGpuKernelMod {
  public:
-  SliceGradGpuKernel()
+  SliceGradGpuKernelMod()
       : is_strided_slice_(false),
         is_null_input_(false),
         input_size_(0),
         output_size_(0),
         workspace_size_(0),
         kernel_name_("SliceGrad") {}
-  ~SliceGradGpuKernel() override = default;
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+  ~SliceGradGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -152,9 +149,6 @@ class SliceGradGpuKernel : public GpuKernel {
   std::vector<int64_t> strides_;
   std::vector<size_t> input_shape_;
   std::vector<size_t> dy_shape_;
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 
   bool is_strided_slice_;
   bool is_null_input_;

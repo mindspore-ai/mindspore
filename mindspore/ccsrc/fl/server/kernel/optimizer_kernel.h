@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,14 +34,15 @@ namespace kernel {
 using mindspore::kernel::IsSameShape;
 using mindspore::kernel::USE_NESTEROV;
 
-// OptimizerKernel is the kernel in server for weights' optimizing.
+// OptimizerKernelMod is the kernel in server for weights' optimizing.
 // Normally server's optimizer kernels should be inherited from CPU's optimzier kernels to reuse the implementation.
-class OptimizerKernel : public CPUKernel {
+class OptimizerKernelMod : public NativeCpuKernelMod {
  public:
-  OptimizerKernel() = default;
-  virtual ~OptimizerKernel() = default;
+  OptimizerKernelMod() = default;
+  virtual ~OptimizerKernelMod() = default;
 
-  // InitKernel and Launch methods are inherited from pure virtual function of CPUKernel so it must have implementation.
+  // InitKernel and Launch methods are inherited from pure virtual function of NativeCpuKernelMod so it must have
+  // implementation.
   virtual void InitKernel(const CNodePtr &kernel_node) {}
   virtual bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                       const std::vector<AddressPtr> &outputs) {

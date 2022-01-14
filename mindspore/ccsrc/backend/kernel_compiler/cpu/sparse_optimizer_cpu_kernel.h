@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,10 +87,10 @@ struct MultiThreadReduceSparseGradientParam {
   bool use_sort_reduce_{false};
 };
 
-class SparseOptimizerCPUKernel : public CPUKernel {
+class SparseOptimizerCpuKernelMod : public NativeCpuKernelMod {
  public:
-  SparseOptimizerCPUKernel() = default;
-  ~SparseOptimizerCPUKernel() override = default;
+  SparseOptimizerCpuKernelMod() = default;
+  ~SparseOptimizerCpuKernelMod() override = default;
 
   template <typename T>
   static void BucketReduceSparseGradient(const ReduceSparseGradientParam<T> &param) {

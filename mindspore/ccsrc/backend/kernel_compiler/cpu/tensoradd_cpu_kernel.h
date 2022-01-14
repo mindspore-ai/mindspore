@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class TensorAddCPUKernel : public CPUKernel {
+class TensorAddCpuKernelMod : public NativeCpuKernelMod {
  public:
-  TensorAddCPUKernel() = default;
-  ~TensorAddCPUKernel() override = default;
+  TensorAddCpuKernelMod() = default;
+  ~TensorAddCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -43,19 +43,19 @@ class TensorAddCPUKernel : public CPUKernel {
 
 MS_REG_CPU_KERNEL_T(
   Add, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-  TensorAddCPUKernel, int64_t);
+  TensorAddCpuKernelMod, int64_t);
 MS_REG_CPU_KERNEL_T(
   Add, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  TensorAddCPUKernel, int32_t);
+  TensorAddCpuKernelMod, int32_t);
 MS_REG_CPU_KERNEL_T(
   Add, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
-  TensorAddCPUKernel, uint32_t);
+  TensorAddCpuKernelMod, uint32_t);
 MS_REG_CPU_KERNEL_T(
   Add, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  TensorAddCPUKernel, float);
+  TensorAddCpuKernelMod, float);
 MS_REG_CPU_KERNEL_T(
   Add, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-  TensorAddCPUKernel, double);
+  TensorAddCpuKernelMod, double);
 }  // namespace kernel
 }  // namespace mindspore
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class L2NormalizeGradCPUKernel : public CPUKernel {
+class L2NormalizeGradCpuKernelMod : public NativeCpuKernelMod {
  public:
-  L2NormalizeGradCPUKernel() = default;
-  ~L2NormalizeGradCPUKernel() override = default;
+  L2NormalizeGradCpuKernelMod() = default;
+  ~L2NormalizeGradCpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
@@ -55,7 +55,7 @@ MS_REG_CPU_KERNEL_T(L2NormalizeGrad,
                       .AddInputAttr(kNumberTypeFloat32)
                       .AddInputAttr(kNumberTypeFloat32)
                       .AddOutputAttr(kNumberTypeFloat32),
-                    L2NormalizeGradCPUKernel, float);
+                    L2NormalizeGradCpuKernelMod, float);
 
 MS_REG_CPU_KERNEL_T(L2NormalizeGrad,
                     KernelAttr()
@@ -63,7 +63,7 @@ MS_REG_CPU_KERNEL_T(L2NormalizeGrad,
                       .AddInputAttr(kNumberTypeFloat16)
                       .AddInputAttr(kNumberTypeFloat16)
                       .AddOutputAttr(kNumberTypeFloat16),
-                    L2NormalizeGradCPUKernel, float16);
+                    L2NormalizeGradCpuKernelMod, float16);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_L2NORMALIZE_GRAD_CPU_KERNEL_H_

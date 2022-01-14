@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ constexpr size_t kADimNum_1 = 1;
 constexpr size_t kADimNum_2 = 2;
 }  // namespace
 
-void LstsqCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void LstsqCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   input_0_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   input_1_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
@@ -52,8 +52,8 @@ void LstsqCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
 }
 
-bool LstsqCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                            const std::vector<kernel::AddressPtr> &outputs) {
+bool LstsqCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
+                               const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kLstsqInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kLstsqOutputsNum, kernel_name_);
   if (dtype_0_ == kNumberTypeFloat16) {
@@ -69,7 +69,7 @@ bool LstsqCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const
 }
 
 template <typename T1, typename T2>
-void LstsqCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
+void LstsqCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
   auto input_0_addr = reinterpret_cast<T2 *>(inputs[0]->addr);
   auto input_1_addr = reinterpret_cast<T2 *>(inputs[1]->addr);
   auto output_addr = reinterpret_cast<T2 *>(outputs[0]->addr);

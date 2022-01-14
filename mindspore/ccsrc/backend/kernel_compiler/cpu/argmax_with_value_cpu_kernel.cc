@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ bool check_validation(const std::vector<size_t> &shape, const size_t num_before_
 }  // namespace
 
 template <typename T>
-void ArgMaxWithValueCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
+void ArgMaxWithValueCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
@@ -86,9 +86,9 @@ void ArgMaxWithValueCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-bool ArgMaxWithValueCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                         const std::vector<kernel::AddressPtr> &,
-                                         const std::vector<kernel::AddressPtr> &outputs) {
+bool ArgMaxWithValueCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                            const std::vector<kernel::AddressPtr> &,
+                                            const std::vector<kernel::AddressPtr> &outputs) {
   if (!check_validation<T>(shape_, num_before_axis_, num_after_axis_, inputs, outputs)) {
     return false;
   }

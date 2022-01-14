@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,8 @@ AnfNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr
   AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), cast.get());
   AnfAlgo::SetOutputTypeAndDetailShape({origin_type}, {origin_shape}, cast.get());
   AnfAlgo::SetNodeAttr(kIsBackendCast, MakeValue(true), cast);
-  std::shared_ptr<kernel::CPUKernel> cpu_kernel = kernel::CPUKernelFactory::GetInstance().Create(kCastOpName, cast);
+  std::shared_ptr<kernel::NativeCpuKernelMod> cpu_kernel =
+    kernel::NativeCpuKernelModFactory::GetInstance().Create(kCastOpName, cast);
   if (cpu_kernel == nullptr) {
     MS_LOG(EXCEPTION) << "Operator[Cast] " << cast->kernel_info() << " is not support.";
   }

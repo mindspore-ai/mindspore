@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,14 +31,10 @@ namespace mindspore {
 namespace kernel {
 constexpr int kMaxShapeSize = 4;
 template <typename T>
-class BroadcastOpGradGpuKernel : public GpuKernel {
+class BroadcastOpGradGpuKernelMod : public NativeGpuKernelMod {
  public:
-  BroadcastOpGradGpuKernel() { ResetResource(); }
-  ~BroadcastOpGradGpuKernel() override = default;
-
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+  BroadcastOpGradGpuKernelMod() { ResetResource(); }
+  ~BroadcastOpGradGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -184,10 +180,6 @@ class BroadcastOpGradGpuKernel : public GpuKernel {
   size_t dy_shape_[kMaxShapeSize] = {1, 1, 1, 1};
   bool grad_x_;
   bool grad_y_;
-
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,17 +24,12 @@ namespace mindspore {
 namespace kernel {
 using mindspore::device::TensorArrayMgr;
 using mindspore::device::TensorArrayPtr;
-TensorArrayCPUStackKernel::TensorArrayCPUStackKernel() : handle_(0), value_size_(0), ele_size_(0), type_(nullptr) {
+TensorArrayStackCpuKernelMod::TensorArrayStackCpuKernelMod()
+    : handle_(0), value_size_(0), ele_size_(0), type_(nullptr) {
   ResetResource();
 }
 
-const std::vector<size_t> &TensorArrayCPUStackKernel::GetInputSizeList() const { return input_size_list_; }
-
-const std::vector<size_t> &TensorArrayCPUStackKernel::GetOutputSizeList() const { return output_size_list_; }
-
-const std::vector<size_t> &TensorArrayCPUStackKernel::GetWorkspaceSizeList() const { return workspace_size_list_; }
-
-void TensorArrayCPUStackKernel::InitKernel(const CNodePtr &kernel_node) {
+void TensorArrayStackCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_node_ = kernel_node;
   auto shape = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "element_shape");
@@ -52,7 +47,7 @@ void TensorArrayCPUStackKernel::InitKernel(const CNodePtr &kernel_node) {
   input_size_list_.push_back(sizeof(int64_t));
 }
 
-void TensorArrayCPUStackKernel::PostExecute() {
+void TensorArrayStackCpuKernelMod::PostExecute() {
   TensorArrayPtr tensors_ = TensorArrayMgr::GetInstance().GetTensorArray(handle_);
   MS_EXCEPTION_IF_NULL(tensors_);
   size_t tensor_size = tensors_->GetValidSize();
@@ -62,7 +57,7 @@ void TensorArrayCPUStackKernel::PostExecute() {
   AnfAlgo::SetOutputInferTypeAndShape({type_->type_id()}, {shape}, kernel_node_.lock().get());
 }
 
-void TensorArrayCPUStackKernel::ResetResource() noexcept {
+void TensorArrayStackCpuKernelMod::ResetResource() noexcept {
   handle_ = 0;
   value_size_ = 0;
   ele_size_ = 0;
@@ -72,8 +67,8 @@ void TensorArrayCPUStackKernel::ResetResource() noexcept {
   workspace_size_list_.clear();
 }
 
-bool TensorArrayCPUStackKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                       const std::vector<AddressPtr> &outputs) {
+bool TensorArrayStackCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                                          const std::vector<AddressPtr> &outputs) {
   auto handle_addr = GetDeviceAddress<int64_t>(inputs, 0);
   auto out_value = GetDeviceAddress<unsigned char>(outputs, 0);
   MS_EXCEPTION_IF_NULL(out_value);

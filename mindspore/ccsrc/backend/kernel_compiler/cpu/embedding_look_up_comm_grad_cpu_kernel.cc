@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ constexpr size_t kEmbeddingLookupCommGradInputsNum = 1;
 constexpr size_t kEmbeddingLookupCommGradOutputsNum = 1;
 }  // namespace
 
-void EmbeddingLookUpCommGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void EmbeddingLookUpCommGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   split_num_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "split_num");
@@ -47,9 +47,9 @@ void EmbeddingLookUpCommGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
 }
 
-bool EmbeddingLookUpCommGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                              const std::vector<kernel::AddressPtr> &,
-                                              const std::vector<kernel::AddressPtr> &outputs) {
+bool EmbeddingLookUpCommGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                                 const std::vector<kernel::AddressPtr> &,
+                                                 const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kEmbeddingLookupCommGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kEmbeddingLookupCommGradOutputsNum, kernel_name_);
 #if defined(_WIN32) || defined(_WIN64)
@@ -78,12 +78,12 @@ bool EmbeddingLookUpCommGradCPUKernel::Launch(const std::vector<kernel::AddressP
 #if defined(_WIN32) || defined(_WIN64)
   auto end_time = std::chrono::steady_clock::now();
   std::chrono::duration<double, std::ratio<1, kUSecondInSecond>> cost = end_time - start_time;
-  MS_LOG(INFO) << "EmbeddingLookUpCommGradCPUKernel, used time: " << cost.count() << " us";
+  MS_LOG(INFO) << "EmbeddingLookUpCommGradCpuKernelMod, used time: " << cost.count() << " us";
 #else
   (void)gettimeofday(&end_time, nullptr);
   uint64_t time = kUSecondInSecond * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);
   time += static_cast<uint64_t>(end_time.tv_usec - start_time.tv_usec);
-  MS_LOG(INFO) << "EmbeddingLookUpCommGradCPUKernel, used time: " << time << " us";
+  MS_LOG(INFO) << "EmbeddingLookUpCommGradCpuKernelMod, used time: " << time << " us";
 #endif
   return true;
 }

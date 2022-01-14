@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,13 +26,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class SquareSumAllGpuFwdKernel : public GpuKernel {
+class SquareSumAllFwdGpuKernelMod : public NativeGpuKernelMod {
  public:
-  SquareSumAllGpuFwdKernel() : input_size_(1), is_null_input_(false) {}
-  ~SquareSumAllGpuFwdKernel() override {}
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+  SquareSumAllFwdGpuKernelMod() : input_size_(1), is_null_input_(false) {}
+  ~SquareSumAllFwdGpuKernelMod() override {}
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -76,10 +73,6 @@ class SquareSumAllGpuFwdKernel : public GpuKernel {
   }
 
  private:
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
-
   size_t input_size_;
   bool is_null_input_;
 };

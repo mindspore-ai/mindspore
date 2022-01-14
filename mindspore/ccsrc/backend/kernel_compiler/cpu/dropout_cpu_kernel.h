@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,10 @@
 
 namespace mindspore {
 namespace kernel {
-class DropoutCPUKernel : public CPUKernel {
+class DropoutCpuKernelMod : public NativeCpuKernelMod {
  public:
-  DropoutCPUKernel() = default;
-  ~DropoutCPUKernel() override = default;
+  DropoutCpuKernelMod() = default;
+  ~DropoutCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -47,7 +47,7 @@ class DropoutCPUKernel : public CPUKernel {
   uint64_t tensor_size_{1};
 };
 
-MS_REG_CPU_KERNEL(Dropout, KernelAttr(), DropoutCPUKernel);
+MS_REG_CPU_KERNEL(Dropout, KernelAttr(), DropoutCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_DROPOUT_CPU_KERNEL_H_

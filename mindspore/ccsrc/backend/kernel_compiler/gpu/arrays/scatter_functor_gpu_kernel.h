@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,14 +34,10 @@ static const std::map<std::string, ScatterFunctorType> kScatterFunctorTypeMap = 
 };
 
 template <typename T, typename S>
-class ScatterFunctorKernel : public GpuKernel {
+class ScatterFunctorKernelMod : public NativeGpuKernelMod {
  public:
-  ScatterFunctorKernel() { ResetResource(); }
-  ~ScatterFunctorKernel() override = default;
-
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+  ScatterFunctorKernelMod() { ResetResource(); }
+  ~ScatterFunctorKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -120,9 +116,6 @@ class ScatterFunctorKernel : public GpuKernel {
   size_t inner_size_;
   size_t indices_size_;
   size_t updates_size_;
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore

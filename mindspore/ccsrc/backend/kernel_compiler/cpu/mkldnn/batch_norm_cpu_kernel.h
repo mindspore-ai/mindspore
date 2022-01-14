@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,10 @@
 
 namespace mindspore {
 namespace kernel {
-class BatchNormCPUKernel : public MKLCPUKernel {
+class BatchNormCpuKernelMod : public MKLCpuKernelMod {
  public:
-  BatchNormCPUKernel() = default;
-  ~BatchNormCPUKernel() override = default;
+  BatchNormCpuKernelMod() = default;
+  ~BatchNormCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -55,7 +55,7 @@ MS_REG_CPU_KERNEL(BatchNorm,
                     .AddOutputAttr(kNumberTypeFloat32)
                     .AddOutputAttr(kNumberTypeFloat32)
                     .AddOutputAttr(kNumberTypeFloat32),
-                  BatchNormCPUKernel)
+                  BatchNormCpuKernelMod)
 }  // namespace kernel
 }  // namespace mindspore
 

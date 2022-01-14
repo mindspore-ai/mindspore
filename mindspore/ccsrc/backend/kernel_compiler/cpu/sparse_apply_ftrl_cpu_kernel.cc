@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,15 +67,15 @@ void ComputeFtrl(MultiThreadComputeParams<T> *input_params, size_t start, size_t
 }  // namespace
 
 template <typename T>
-void SparseApplyFtrlCPUKernel::InitWorkspaceSize() {
+void SparseApplyFtrlCpuKernelMod::InitWorkspaceSize() {
   (void)workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float));
   (void)workspace_size_list_.emplace_back(indices_size_ * sizeof(T));
   (void)workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float));
   (void)workspace_size_list_.emplace_back(indices_size_ * sizeof(T));
 }
 
-void SparseApplyFtrlCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
-  CPUKernel::InitInputOutputSize(kernel_node);
+void SparseApplyFtrlCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
+  NativeCpuKernelMod::InitInputOutputSize(kernel_node);
   if (indices_data_type_ == kNumberTypeInt32) {
     InitWorkspaceSize<int>();
   } else if (indices_data_type_ == kNumberTypeInt64) {
@@ -86,7 +86,7 @@ void SparseApplyFtrlCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) 
   }
 }
 
-void SparseApplyFtrlCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void SparseApplyFtrlCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   std::vector<size_t> var_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
@@ -157,8 +157,8 @@ void SparseApplyFtrlCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-void SparseApplyFtrlCPUKernel::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                            const std::vector<kernel::AddressPtr> &workspace) const {
+void SparseApplyFtrlCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                               const std::vector<kernel::AddressPtr> &workspace) const {
   auto *var = reinterpret_cast<float *>(inputs[0]->addr);
   auto *accum = reinterpret_cast<float *>(inputs[1]->addr);
   auto *linear = reinterpret_cast<float *>(inputs[2]->addr);
@@ -194,9 +194,9 @@ void SparseApplyFtrlCPUKernel::LaunchKernel(const std::vector<kernel::AddressPtr
   MultiThreadCompute<T>(ComputeFtrl<T>, &input_params, unique_sparse_grad.indices_size_);
 }
 
-bool SparseApplyFtrlCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> &workspace,
-                                      const std::vector<kernel::AddressPtr> &) {
+bool SparseApplyFtrlCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                         const std::vector<kernel::AddressPtr> &workspace,
+                                         const std::vector<kernel::AddressPtr> &) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseApplyFtrlInputsNum, kernel_name_);
   CHECK_KERNEL_WORKSPACE_SIZE(workspace.size(), kSparseApplyFtrlWorkspaceSize, kernel_name_);
   if (indices_data_type_ == kNumberTypeInt32) {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,16 +21,16 @@ namespace kernel {
 MS_REG_GPU_KERNEL_TWO(
   CheckValid,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
-  CheckValidGpuKernel, float, bool)
+  CheckValidGpuKernelMod, float, bool)
 MS_REG_GPU_KERNEL_TWO(
   CheckValid,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeBool),
-  CheckValidGpuKernel, half, bool)
+  CheckValidGpuKernelMod, half, bool)
 MS_REG_GPU_KERNEL_TWO(
   CheckValid, KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeBool),
-  CheckValidGpuKernel, short, bool)  // NOLINT
+  CheckValidGpuKernelMod, short, bool)  // NOLINT
 MS_REG_GPU_KERNEL_TWO(
   CheckValid, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeBool),
-  CheckValidGpuKernel, uchar, bool)
+  CheckValidGpuKernelMod, uchar, bool)
 }  // namespace kernel
 }  // namespace mindspore

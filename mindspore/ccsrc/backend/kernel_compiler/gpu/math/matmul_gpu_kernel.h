@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,14 +29,14 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr size_t kDimLowerLimit = 2;
+constexpr size_t kDimOffset2 = 2;
+
 template <typename T, typename S>
-class MatMulGpuKernel : public GpuKernel {
+class MatMulGpuKernelMod : public NativeGpuKernelMod {
  public:
-  MatMulGpuKernel() { ResetResource(); }
-  ~MatMulGpuKernel() = default;
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+  MatMulGpuKernelMod() { ResetResource(); }
+  ~MatMulGpuKernelMod() = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -118,23 +118,23 @@ class MatMulGpuKernel : public GpuKernel {
       return true;
     }
     auto dims = output_shape.size();
-    if (dims < 2) {
+    if (dims < kDimLowerLimit) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of output cannot be less than 2, but got "
                         << dims;
     }
 
-    m_ = output_shape[dims - 2];
+    m_ = output_shape[dims - kDimOffset2];
     n_ = output_shape[dims - 1];
     batch_ = 1;
-    for (size_t i = 0; i < dims - 2; i++) {
+    for (size_t i = 0; i < dims - kDimOffset2; i++) {
       batch_ *= output_shape[i];
     }
 
     bool transpose = GetAttr<bool>(kernel_node, "transpose_x1");
     transpose_x1_ = transpose ? CUBLAS_OP_T : CUBLAS_OP_N;
 
-    if (transpose && input1_shape.size() > (dims - 2)) {
-      k_ = input1_shape[dims - 2];
+    if (transpose && input1_shape.size() > (dims - kDimOffset2)) {
+      k_ = input1_shape[dims - kDimOffset2];
     } else if (!transpose && input1_shape.size() > (dims - 1)) {
       k_ = input1_shape[dims - 1];
     } else {
@@ -199,10 +199,6 @@ class MatMulGpuKernel : public GpuKernel {
   cudaDataType_t dtype_b_;
   cudaDataType_t dtype_c_;
   cublasGemmAlgo_t algo_;
-
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 
   bool is_fused_matmul_biasadd_;
 };

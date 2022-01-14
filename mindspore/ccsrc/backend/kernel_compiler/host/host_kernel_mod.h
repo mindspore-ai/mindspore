@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,6 @@ class HostKernelMod : public AscendKernelMod {
  public:
   HostKernelMod() = default;
   ~HostKernelMod() override = default;
-  const std::vector<size_t> &GetInputSizeList() const override;
-  const std::vector<size_t> &GetOutputSizeList() const override;
-  const std::vector<size_t> &GetWorkspaceSizeList() const override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
   std::vector<TaskInfoPtr> GenTask(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
@@ -41,9 +38,6 @@ class HostKernelMod : public AscendKernelMod {
 
  protected:
   std::string op_name_;
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 };
 
 using HostKernelModPtr = std::shared_ptr<HostKernelMod>;
@@ -71,7 +65,7 @@ class _HostKernelRegister {
   ~_HostKernelRegister() = default;
 };
 
-#define _MS_HOST_REG_KERNEL_REG(KNAME, clazz)                                                    \
+#define MS_HOST_REG_KERNEL_REG(KNAME, clazz)                                                     \
   static_assert(std::is_base_of<HostKernelMod, clazz>::value, " must be base of HostKernelMod"); \
   static const _HostKernelRegister g_##KNAME##_##_kernel_reg(#KNAME, []() {                      \
     std::shared_ptr<clazz> ptr = nullptr;                                                        \
@@ -80,7 +74,7 @@ class _HostKernelRegister {
     return ptr;                                                                                  \
   });
 
-#define MS_HOST_REG_KERNEL(KNAME, clazz) _MS_HOST_REG_KERNEL_REG(KNAME, clazz)
+#define MS_HOST_REG_KERNEL(KNAME, clazz) MS_HOST_REG_KERNEL_REG(KNAME, clazz)
 }  // namespace kernel
 }  // namespace mindspore
 

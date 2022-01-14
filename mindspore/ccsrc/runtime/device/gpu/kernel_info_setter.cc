@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,10 +83,10 @@ bool CheckKernelInfo(const std::shared_ptr<KernelBuildInfo> &alternative_kernel_
 
 std::string SupportedTypeList(const CNodePtr &kernel_node, KernelType kernel_type) {
   std::string supported_type_lists;
-  // Custom op gets reg info from OpLib instead of GpuKernelFactory.
+  // Custom op gets reg info from OpLib instead of NativeGpuKernelModFactory.
   if (!IsPrimitiveCNode(kernel_node, prim::kPrimCustom)) {
     supported_type_lists =
-      kernel::GpuKernelFactory::GetInstance().SupportedTypeList(AnfAlgo::GetCNodeName(kernel_node));
+      kernel::NativeGpuKernelModFactory::GetInstance().SupportedTypeList(AnfAlgo::GetCNodeName(kernel_node));
     if (!supported_type_lists.empty()) {
       return supported_type_lists;
     }
@@ -163,8 +163,8 @@ bool SelectCustomKernel(const CNodePtr &kernel_node, const std::shared_ptr<Kerne
   auto func_type = AnfAlgo::GetNodeAttr<std::string>(kernel_node, kAttrFuncType);
   if (func_type == kCustomTypeAOT) {
     *kernel_type = KernelType::GPU_KERNEL;
-    if (!kernel::GpuKernelFactory::GetInstance().SearchRegistered(op_name, selected_kernel_info)) {
-      kernel::GpuKernelRegister(op_name, KernelAttr(), []() { return new kernel::CustomAOTGpuKernel(); });
+    if (!kernel::NativeGpuKernelModFactory::GetInstance().SearchRegistered(op_name, selected_kernel_info)) {
+      kernel::GpuKernelRegister(op_name, KernelAttr(), []() { return new kernel::CustomAOTGpuKernelMod(); });
     }
   } else if (kCustomTypeAkg.find(func_type) != kCustomTypeAkg.end()) {
     *kernel_type = KernelType::AKG_KERNEL;
@@ -227,7 +227,7 @@ void SetTensorDeviceInfo(const kernel::KernelBuildInfo &selected_kernel_info, co
         (AnfAlgo::GetCNodeName(kernel_node) == "ApplyMomentum")) {
       std::vector<std::string> output_format = {selected_kernel_info.GetInputFormat(input_index)};
       builder->SetOutputsFormat(output_format);
-      auto reduce_flag = kernel::GpuKernelFactory::GetInstance().reduce_flag_;
+      auto reduce_flag = kernel::NativeGpuKernelModFactory::GetInstance().reduce_flag_;
       std::vector<TypeId> output_type;
       if (std::find(reduce_flag.first.begin(), reduce_flag.first.end(), input_index) != reduce_flag.first.end()) {
         output_type = {reduce_flag.second};
@@ -238,7 +238,7 @@ void SetTensorDeviceInfo(const kernel::KernelBuildInfo &selected_kernel_info, co
       AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), real_input_node.get());
     }
   }
-  kernel::GpuKernelFactory::GetInstance().reduce_flag_.first.clear();
+  kernel::NativeGpuKernelModFactory::GetInstance().reduce_flag_.first.clear();
 }
 
 void TransformFormatPosition(std::vector<size_t> *format_position, size_t position_num) {
@@ -489,10 +489,11 @@ void SetKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type) {
     // Custom op select kernel from OpLib
     result = SelectCustomKernel(kernel_node, builder->Build(), &kernel_type);
   } else if (kernel_type == UNKNOWN_KERNEL_TYPE) {
-    result =
-      kernel::GpuKernelFactory::GetInstance().SearchRegistered(AnfAlgo::GetCNodeName(kernel_node), builder->Build());
+    result = kernel::NativeGpuKernelModFactory::GetInstance().SearchRegistered(AnfAlgo::GetCNodeName(kernel_node),
+                                                                               builder->Build());
     if (!result) {
-      result = kernel::GpuKernelFactory::GetInstance().ReducePrecision(AnfAlgo::GetCNodeName(kernel_node), builder);
+      result =
+        kernel::NativeGpuKernelModFactory::GetInstance().ReducePrecision(AnfAlgo::GetCNodeName(kernel_node), builder);
     }
     if (!result && (!AnfAlgo::IsControlOpExecInBackend(kernel_node))) {
       result = SelectAkgKernel(kernel_node, builder->Build());

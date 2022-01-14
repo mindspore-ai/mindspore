@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ constexpr size_t kSmoothL1LossGradOutputsNum = 1;
 }  // namespace
 
 template <typename T>
-void SmoothL1LossGradCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
+void SmoothL1LossGradCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   beta_ = AnfAlgo::GetNodeAttr<float>(kernel_node, "beta");
@@ -39,9 +39,9 @@ void SmoothL1LossGradCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-bool SmoothL1LossGradCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                          const std::vector<kernel::AddressPtr> &,
-                                          const std::vector<kernel::AddressPtr> &outputs) {
+bool SmoothL1LossGradCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                             const std::vector<kernel::AddressPtr> &,
+                                             const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSmoothL1LossGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSmoothL1LossGradOutputsNum, kernel_name_);
   const auto *predict_addr = reinterpret_cast<T *>(inputs[0]->addr);

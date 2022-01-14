@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -216,7 +216,8 @@ void CPUDeviceContext::CreateKernel(const std::vector<CNodePtr> &nodes) const {
       continue;
     }
     std::string kernel_name = AnfAlgo::GetCNodeName(node);
-    std::shared_ptr<kernel::CPUKernel> cpu_kernel = kernel::CPUKernelFactory::GetInstance().Create(kernel_name, node);
+    std::shared_ptr<kernel::NativeCpuKernelMod> cpu_kernel =
+      kernel::NativeCpuKernelModFactory::GetInstance().Create(kernel_name, node);
     if (!cpu_kernel) {
       MS_LOG(EXCEPTION) << "Build cpu operator[" << node->fullname_with_scope() << "] failed";
     }
@@ -245,7 +246,7 @@ void CPUDeviceContext::UpdateDynamicShape(const CNodePtr &kernel) const {
     MS_LOG(EXCEPTION) << "Akg kernels do not support dynamic shape by now.";
   }
 
-  kernel::CPUKernel *cpu_kernel = dynamic_cast<kernel::CPUKernel *>(kernel_mod);
+  kernel::NativeCpuKernelMod *cpu_kernel = dynamic_cast<kernel::NativeCpuKernelMod *>(kernel_mod);
   MS_EXCEPTION_IF_NULL(cpu_kernel);
   device::DynamicKernelPtr dynamic_kernel = cpu_kernel->DynamicKernel();
   MS_EXCEPTION_IF_NULL(dynamic_kernel);
@@ -272,7 +273,7 @@ bool CPUDeviceContext::LaunchKernel(const CNodePtr &kernel, const std::vector<Ad
   // Some CPU kernels can't initialize kernel and launch kernel in different thread, so reinitialize the kernels before
   // launch.
   if (kOpNotSupportMultiThreadExecList.find(AnfAlgo::GetCNodeName(kernel)) != kOpNotSupportMultiThreadExecList.end()) {
-    auto cpu_kernel_mod = dynamic_cast<kernel::CPUKernel *>(kernel_mod);
+    auto cpu_kernel_mod = dynamic_cast<kernel::NativeCpuKernelMod *>(kernel_mod);
     MS_EXCEPTION_IF_NULL(cpu_kernel_mod);
     cpu_kernel_mod->InitKernel(kernel);
   }

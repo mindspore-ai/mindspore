@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,23 +19,23 @@
 namespace mindspore {
 namespace kernel {
 MS_REG_GPU_KERNEL_ONE(ReLU6, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                      ActivationGpuFwdKernel, float)
+                      ActivationFwdGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(ReLU6, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-                      ActivationGpuFwdKernel, half)
+                      ActivationFwdGpuKernelMod, half)
 
 MS_REG_GPU_KERNEL_ONE(Tanh, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                      ActivationGpuFwdKernel, float)
+                      ActivationFwdGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(Tanh, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-                      ActivationGpuFwdKernel, half)
+                      ActivationFwdGpuKernelMod, half)
 
 MS_REG_GPU_KERNEL_ONE(Elu, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                      ActivationGpuFwdKernel, float)
+                      ActivationFwdGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(Elu, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-                      ActivationGpuFwdKernel, half)
+                      ActivationFwdGpuKernelMod, half)
 
 MS_REG_GPU_KERNEL_ONE(Sigmoid, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                      ActivationGpuFwdKernel, float)
+                      ActivationFwdGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(Sigmoid, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-                      ActivationGpuFwdKernel, half)
+                      ActivationFwdGpuKernelMod, half)
 }  // namespace kernel
 }  // namespace mindspore

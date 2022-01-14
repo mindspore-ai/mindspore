@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +26,9 @@ namespace mindspore {
 namespace kernel {
 constexpr size_t INPUT_NUM = 6;
 template <typename T>
-class BatchNormFoldGradGpuKernel : public GpuKernel {
+class BatchNormFoldGradGpuKernelMod : public NativeGpuKernelMod {
  public:
-  BatchNormFoldGradGpuKernel()
+  BatchNormFoldGradGpuKernelMod()
       : input_size_(0),
         channel_size_(0),
         workspace_size_(0),
@@ -42,11 +42,7 @@ class BatchNormFoldGradGpuKernel : public GpuKernel {
         channel_(0),
         height_(0),
         width_(0) {}
-  ~BatchNormFoldGradGpuKernel() = default;
-
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+  ~BatchNormFoldGradGpuKernelMod() = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -136,9 +132,6 @@ class BatchNormFoldGradGpuKernel : public GpuKernel {
   size_t input_size_;
   size_t channel_size_;
   size_t workspace_size_;
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 
   T momentum_;
   T epsilon_;

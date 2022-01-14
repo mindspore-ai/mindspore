@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,10 @@
 
 namespace mindspore {
 namespace kernel {
-class MatmulDoubleCPUKernel : public CPUKernel {
+class MatmulDoubleCpuKernelMod : public NativeCpuKernelMod {
  public:
-  MatmulDoubleCPUKernel() = default;
-  ~MatmulDoubleCPUKernel() override = default;
+  MatmulDoubleCpuKernelMod() = default;
+  ~MatmulDoubleCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -46,7 +46,7 @@ class MatmulDoubleCPUKernel : public CPUKernel {
 MS_REG_CPU_KERNEL(
   MatMul,
   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-  MatmulDoubleCPUKernel);
+  MatmulDoubleCpuKernelMod);
 
 }  // namespace kernel
 }  // namespace mindspore

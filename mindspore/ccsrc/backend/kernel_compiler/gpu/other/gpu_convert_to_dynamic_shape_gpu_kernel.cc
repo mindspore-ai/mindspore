@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,50 +21,50 @@ namespace mindspore {
 namespace kernel {
 MS_REG_GPU_KERNEL_ONE(GpuConvertToDynamicShape,
                       KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-                      GpuConvertToDynamicShapeGpuKernel, bool)
+                      GpuConvertToDynamicShapeGpuKernelMod, bool)
 
 MS_REG_GPU_KERNEL_ONE(GpuConvertToDynamicShape,
                       KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-                      GpuConvertToDynamicShapeGpuKernel, half)
+                      GpuConvertToDynamicShapeGpuKernelMod, half)
 
 MS_REG_GPU_KERNEL_ONE(GpuConvertToDynamicShape,
                       KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                      GpuConvertToDynamicShapeGpuKernel, float)
+                      GpuConvertToDynamicShapeGpuKernelMod, float)
 
 MS_REG_GPU_KERNEL_ONE(GpuConvertToDynamicShape,
                       KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-                      GpuConvertToDynamicShapeGpuKernel, double)
+                      GpuConvertToDynamicShapeGpuKernelMod, double)
 
 MS_REG_GPU_KERNEL_ONE(GpuConvertToDynamicShape,
                       KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
-                      GpuConvertToDynamicShapeGpuKernel, int8_t)
+                      GpuConvertToDynamicShapeGpuKernelMod, int8_t)
 
 MS_REG_GPU_KERNEL_ONE(GpuConvertToDynamicShape,
                       KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-                      GpuConvertToDynamicShapeGpuKernel, int16_t)
+                      GpuConvertToDynamicShapeGpuKernelMod, int16_t)
 
 MS_REG_GPU_KERNEL_ONE(GpuConvertToDynamicShape,
                       KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                      GpuConvertToDynamicShapeGpuKernel, int32_t)
+                      GpuConvertToDynamicShapeGpuKernelMod, int32_t)
 
 MS_REG_GPU_KERNEL_ONE(GpuConvertToDynamicShape,
                       KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-                      GpuConvertToDynamicShapeGpuKernel, int64_t)
+                      GpuConvertToDynamicShapeGpuKernelMod, int64_t)
 
 MS_REG_GPU_KERNEL_ONE(GpuConvertToDynamicShape,
                       KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-                      GpuConvertToDynamicShapeGpuKernel, uint8_t)
+                      GpuConvertToDynamicShapeGpuKernelMod, uint8_t)
 
 MS_REG_GPU_KERNEL_ONE(GpuConvertToDynamicShape,
                       KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
-                      GpuConvertToDynamicShapeGpuKernel, uint16_t)
+                      GpuConvertToDynamicShapeGpuKernelMod, uint16_t)
 
 MS_REG_GPU_KERNEL_ONE(GpuConvertToDynamicShape,
                       KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
-                      GpuConvertToDynamicShapeGpuKernel, uint32_t)
+                      GpuConvertToDynamicShapeGpuKernelMod, uint32_t)
 
 MS_REG_GPU_KERNEL_ONE(GpuConvertToDynamicShape,
                       KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
-                      GpuConvertToDynamicShapeGpuKernel, uint64_t)
+                      GpuConvertToDynamicShapeGpuKernelMod, uint64_t)
 }  // namespace kernel
 }  // namespace mindspore

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ constexpr size_t kColIndex = 1;
 }  // namespace
 
 template <typename T>
-void CholeskySolverCPUKernel<T>::InitMatrixInfo(const std::vector<size_t> &shape, size_t *row, size_t *col) {
+void CholeskySolverCpuKernelMod<T>::InitMatrixInfo(const std::vector<size_t> &shape, size_t *row, size_t *col) {
   if (shape.empty()) {
     MS_LOG_EXCEPTION << kernel_name_ << "shape is invalid.";
   }
@@ -45,7 +45,7 @@ void CholeskySolverCPUKernel<T>::InitMatrixInfo(const std::vector<size_t> &shape
 }
 
 template <typename T>
-void CholeskySolverCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
+void CholeskySolverCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
@@ -67,8 +67,9 @@ void CholeskySolverCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-bool CholeskySolverCPUKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                        const std::vector<AddressPtr> &outputs) {
+bool CholeskySolverCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs,
+                                           const std::vector<AddressPtr> &workspace,
+                                           const std::vector<AddressPtr> &outputs) {
   T *input_value = reinterpret_cast<T *>(inputs[kInputAIndex]->addr);
   Map<Matrix<T, RowMajor>> input(input_value, input_a_row_, input_a_col_);
 

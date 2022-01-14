@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ constexpr auto kSolveTriangularOutputsNum = 1;
 constexpr auto kAVectorxDimNum = 1;
 constexpr auto kAMatrixDimNum = 2;
 template <typename T>
-void SolveTriangularCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
+void SolveTriangularCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   auto A_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   auto b_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
 
@@ -92,9 +92,9 @@ inline void solve(const MatrixBase<Derived_A> &A, const MatrixBase<Derived_b> &b
 }
 
 template <typename T>
-bool SolveTriangularCPUKernel<T>::Launch(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &workspace,
-                                         const std::vector<AddressPtr> &outputs) {
+bool SolveTriangularCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs,
+                                            const std::vector<AddressPtr> &workspace,
+                                            const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSolveTriangularInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSolveTriangularOutputsNum, kernel_name_);
 

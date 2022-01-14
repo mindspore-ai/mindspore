@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,10 @@
 
 namespace mindspore {
 namespace kernel {
-class RangeCPUKernel : public CPUKernel {
+class RangeCpuKernelMod : public NativeCpuKernelMod {
  public:
-  RangeCPUKernel() = default;
-  ~RangeCPUKernel() override = default;
+  RangeCpuKernelMod() = default;
+  ~RangeCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -41,7 +41,7 @@ class RangeCPUKernel : public CPUKernel {
   TypeId dtype_{kTypeUnknown};
 };
 
-MS_REG_CPU_KERNEL(Range, KernelAttr(), RangeCPUKernel);
+MS_REG_CPU_KERNEL(Range, KernelAttr(), RangeCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

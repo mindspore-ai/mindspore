@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ namespace {
 constexpr size_t kDimNum = 2;
 }
 template <typename T>
-void CholeskyInverseCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
+void CholeskyInverseCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   node_wpt_ = kernel_node;
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
   size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
@@ -42,9 +42,9 @@ void CholeskyInverseCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-bool CholeskyInverseCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                         const std::vector<kernel::AddressPtr> &,
-                                         const std::vector<kernel::AddressPtr> &outputs) {
+bool CholeskyInverseCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                            const std::vector<kernel::AddressPtr> &,
+                                            const std::vector<kernel::AddressPtr> &outputs) {
   auto input_x0 = reinterpret_cast<T *>(inputs[0]->addr);
   auto output_y = reinterpret_cast<T *>(outputs[0]->addr);
   auto inputShape = AnfAlgo::GetInputDeviceShape(node_wpt_, 0);

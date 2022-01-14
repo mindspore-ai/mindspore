@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-void SortCpuKernel<T>::InitKernel(const CNodePtr &kernel_node) {
+void SortCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   size_t input_count = AnfAlgo::GetInputTensorNum(kernel_node);
@@ -47,16 +47,16 @@ void SortCpuKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-void SortCpuKernel<T>::InitInputOutputSize(const CNodePtr &kernel_node) {
-  CPUKernel::InitInputOutputSize(kernel_node);
+void SortCpuKernelMod<T>::InitInputOutputSize(const CNodePtr &kernel_node) {
+  NativeCpuKernelMod::InitInputOutputSize(kernel_node);
   size_t element_size = axisIterator_.OuterSize() * axisIterator_.InnerSize() * axisIterator_.AxisSize();
   // id
   (void)workspace_size_list_.emplace_back((sizeof(size_t) * element_size));
 }
 
 template <typename T>
-bool SortCpuKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                              const std::vector<AddressPtr> &outputs) {
+bool SortCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                                 const std::vector<AddressPtr> &outputs) {
   if (inputs.size() != 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 1, but got " << inputs.size()
                       << " input(s).";

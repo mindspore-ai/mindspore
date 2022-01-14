@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,16 +19,16 @@
 namespace mindspore {
 namespace kernel {
 MS_REG_GPU_KERNEL_ONE(CumSum, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-                      CumSumGpuKernel, uint8_t)
+                      CumSumGpuKernelMod, uint8_t)
 MS_REG_GPU_KERNEL_ONE(CumSum, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
-                      CumSumGpuKernel, int8_t)
+                      CumSumGpuKernelMod, int8_t)
 MS_REG_GPU_KERNEL_ONE(CumSum, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                      CumSumGpuKernel, int32_t)
+                      CumSumGpuKernelMod, int32_t)
 MS_REG_GPU_KERNEL_ONE(CumSum, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-                      CumSumGpuKernel, double)
+                      CumSumGpuKernelMod, double)
 MS_REG_GPU_KERNEL_ONE(CumSum, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                      CumSumGpuKernel, float)
+                      CumSumGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(CumSum, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-                      CumSumGpuKernel, half)
+                      CumSumGpuKernelMod, half)
 }  // namespace kernel
 }  // namespace mindspore

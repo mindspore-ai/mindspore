@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,9 +44,9 @@ const std::map<std::string, RandomOptype> kRandomOpTypeMap = {{"StandardNormal",
                                                               {"CudnnUniformReal", RANDOM_OP_CUDNN_UNIFORM_REAL}};
 
 template <typename T>
-class RandomOpGpuKernel : public GpuKernel {
+class RandomOpGpuKernelMod : public NativeGpuKernelMod {
  public:
-  RandomOpGpuKernel()
+  RandomOpGpuKernelMod()
       : random_op_type_(RANDOM_OP_INVALID_TYPE),
         input_size_0_(sizeof(int32_t)),
         input_size_1_(sizeof(T)),
@@ -58,11 +58,7 @@ class RandomOpGpuKernel : public GpuKernel {
         mask_generator_(nullptr),
         states_init_(false),
         is_null_input_(false) {}
-  ~RandomOpGpuKernel() override = default;
-
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+  ~RandomOpGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -200,9 +196,7 @@ class RandomOpGpuKernel : public GpuKernel {
   size_t workspace_size_;
   int seed_;
   int seed2_;
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
+
   curandGenerator_t mask_generator_;
   bool states_init_;
   bool is_null_input_;

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,24 +29,18 @@
 
 namespace mindspore {
 namespace kernel {
-BufferSampleKernel::BufferSampleKernel()
+BufferSampleKernelMod::BufferSampleKernelMod()
     : element_nums_(0), capacity_(0), batch_size_(0), seed_(0), states_init_(false), unique_(false) {}
 
-BufferSampleKernel::~BufferSampleKernel() {
+BufferSampleKernelMod::~BufferSampleKernelMod() {
   if (devStates_ != nullptr) {
     device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(static_cast<void *>(devStates_));
   }
 }
 
-void BufferSampleKernel::ReleaseResource() {}
+void BufferSampleKernelMod::ReleaseResource() {}
 
-const std::vector<size_t> &BufferSampleKernel::GetInputSizeList() const { return input_size_list_; }
-
-const std::vector<size_t> &BufferSampleKernel::GetOutputSizeList() const { return output_size_list_; }
-
-const std::vector<size_t> &BufferSampleKernel::GetWorkspaceSizeList() const { return workspace_size_list_; }
-
-bool BufferSampleKernel::Init(const CNodePtr &kernel_node) {
+bool BufferSampleKernelMod::Init(const CNodePtr &kernel_node) {
   auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
   kernel_node_ = kernel_node;
   auto shapes = GetAttr<std::vector<int64_t>>(kernel_node, "buffer_elements");
@@ -87,10 +81,10 @@ bool BufferSampleKernel::Init(const CNodePtr &kernel_node) {
   return true;
 }
 
-void BufferSampleKernel::InitSizeLists() { return; }
+void BufferSampleKernelMod::InitSizeLists() { return; }
 
-bool BufferSampleKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
-                                const std::vector<AddressPtr> &outputs, void *stream) {
+bool BufferSampleKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
+                                   const std::vector<AddressPtr> &outputs, void *stream) {
   int *count_addr = GetDeviceAddress<int>(inputs, element_nums_);
   int *head_addr = GetDeviceAddress<int>(inputs, element_nums_ + 1);
   auto cuda_stream = reinterpret_cast<cudaStream_t>(stream);

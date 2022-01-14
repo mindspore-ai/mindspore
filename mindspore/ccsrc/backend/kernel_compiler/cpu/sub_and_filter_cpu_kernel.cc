@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,16 +25,16 @@ constexpr size_t kSubAndFilterInputsNum = 3;
 constexpr size_t kSubAndFilterOutputNum = 2;
 }  // namespace
 
-void SubAndFilterCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void SubAndFilterCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   node_wpt_ = kernel_node;
   input_x_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
 }
 
-bool SubAndFilterCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                   const std::vector<kernel::AddressPtr> &,
-                                   const std::vector<kernel::AddressPtr> &outputs) {
+bool SubAndFilterCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                      const std::vector<kernel::AddressPtr> &,
+                                      const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSubAndFilterInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSubAndFilterOutputNum, kernel_name_);
   if (input_x_dtype_ == kNumberTypeInt32) {
@@ -49,8 +49,8 @@ bool SubAndFilterCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs
 }
 
 template <typename T>
-void SubAndFilterCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<kernel::AddressPtr> &outputs) {
+void SubAndFilterCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                            const std::vector<kernel::AddressPtr> &outputs) {
   auto node = node_wpt_.lock();
   MS_EXCEPTION_IF_NULL(node);
   auto indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(node, 0);

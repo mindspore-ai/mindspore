@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ constexpr size_t kBiasAddGradInputsNum = 1;
 constexpr size_t kBiasAddGradOutputsNum = 1;
 }  // namespace
 
-void BiasAddGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void BiasAddGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
@@ -35,8 +35,8 @@ void BiasAddGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
 }
 
-bool BiasAddGradCPUKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                  const std::vector<AddressPtr> &outputs) {
+bool BiasAddGradCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                                     const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kBiasAddGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kBiasAddGradOutputsNum, kernel_name_);
   const auto *input_addr = reinterpret_cast<float *>(inputs[0]->addr);

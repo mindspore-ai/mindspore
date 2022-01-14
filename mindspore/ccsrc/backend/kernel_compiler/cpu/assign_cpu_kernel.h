@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,10 @@
 
 namespace mindspore {
 namespace kernel {
-class AssignCPUKernel : public CPUKernel {
+class AssignCpuKernelMod : public NativeCpuKernelMod {
  public:
-  AssignCPUKernel() = default;
-  ~AssignCPUKernel() override = default;
+  AssignCpuKernelMod() = default;
+  ~AssignCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -44,54 +44,54 @@ class AssignCPUKernel : public CPUKernel {
 
 MS_REG_CPU_KERNEL(
   Assign, KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-  AssignCPUKernel);
+  AssignCpuKernelMod);
 
 MS_REG_CPU_KERNEL(
   Assign, KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
-  AssignCPUKernel);
+  AssignCpuKernelMod);
 
 MS_REG_CPU_KERNEL(
   Assign, KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-  AssignCPUKernel);
+  AssignCpuKernelMod);
 
 MS_REG_CPU_KERNEL(
   Assign, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  AssignCPUKernel);
+  AssignCpuKernelMod);
 
 MS_REG_CPU_KERNEL(
   Assign, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-  AssignCPUKernel);
+  AssignCpuKernelMod);
 
 MS_REG_CPU_KERNEL(
   Assign, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-  AssignCPUKernel);
+  AssignCpuKernelMod);
 
 MS_REG_CPU_KERNEL(
   Assign, KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
-  AssignCPUKernel);
+  AssignCpuKernelMod);
 
 MS_REG_CPU_KERNEL(
   Assign, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
-  AssignCPUKernel);
+  AssignCpuKernelMod);
 
 MS_REG_CPU_KERNEL(
   Assign, KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
-  AssignCPUKernel);
+  AssignCpuKernelMod);
 
 MS_REG_CPU_KERNEL(
   Assign,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  AssignCPUKernel);
+  AssignCpuKernelMod);
 
 MS_REG_CPU_KERNEL(
   Assign,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  AssignCPUKernel);
+  AssignCpuKernelMod);
 
 MS_REG_CPU_KERNEL(
   Assign,
   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-  AssignCPUKernel);
+  AssignCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

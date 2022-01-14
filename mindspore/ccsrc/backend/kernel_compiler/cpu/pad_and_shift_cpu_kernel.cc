@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ constexpr size_t kPadAndShiftInputsNum = 3;
 constexpr size_t kPadAndShiftOutputsNum = 1;
 }  // namespace
 
-void PadAndShiftCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void PadAndShiftCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   node_wpt_ = kernel_node;
@@ -43,9 +43,9 @@ void PadAndShiftCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   cum_sum_size_ = cum_sum_arr_shape[0];
 }
 
-bool PadAndShiftCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                  const std::vector<kernel::AddressPtr> &,
-                                  const std::vector<kernel::AddressPtr> &outputs) {
+bool PadAndShiftCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                     const std::vector<kernel::AddressPtr> &,
+                                     const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kPadAndShiftInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kPadAndShiftOutputsNum, kernel_name_);
   if (input_x_dtype_ == kNumberTypeInt32) {
@@ -60,8 +60,8 @@ bool PadAndShiftCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
 }
 
 template <typename T>
-void PadAndShiftCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                        const std::vector<kernel::AddressPtr> &outputs) {
+void PadAndShiftCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                           const std::vector<kernel::AddressPtr> &outputs) {
   T *input_x = reinterpret_cast<T *>(inputs[0]->addr);
   T *cum_sum_arr = reinterpret_cast<T *>(inputs[1]->addr);
   T shift_idx = *reinterpret_cast<T *>(inputs[2]->addr);

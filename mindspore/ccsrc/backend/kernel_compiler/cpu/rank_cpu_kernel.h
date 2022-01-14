@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,10 +42,10 @@ enum NaOption : int {
 };
 }  // namespace rank
 template <typename T>
-class RankCpuKernel : public CPUKernel {
+class RankCpuKernelMod : public NativeCpuKernelMod {
  public:
-  RankCpuKernel() = default;
-  ~RankCpuKernel() override = default;
+  RankCpuKernelMod() = default;
+  ~RankCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -93,16 +93,16 @@ class RankCpuKernel : public CPUKernel {
 };
 
 MS_REG_CPU_KERNEL_T(Rank, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                    RankCpuKernel, float)
+                    RankCpuKernelMod, float)
 
 MS_REG_CPU_KERNEL_T(Rank, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat32),
-                    RankCpuKernel, double)
+                    RankCpuKernelMod, double)
 
-MS_REG_CPU_KERNEL_T(Rank, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32), RankCpuKernel,
-                    int32_t)
+MS_REG_CPU_KERNEL_T(Rank, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
+                    RankCpuKernelMod, int32_t)
 
-MS_REG_CPU_KERNEL_T(Rank, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32), RankCpuKernel,
-                    int64_t)
+MS_REG_CPU_KERNEL_T(Rank, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
+                    RankCpuKernelMod, int64_t)
 
 }  // namespace kernel
 }  // namespace mindspore

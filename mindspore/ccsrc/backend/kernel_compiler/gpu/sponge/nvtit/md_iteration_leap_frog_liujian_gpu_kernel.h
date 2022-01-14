@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,11 +29,18 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr size_t kIdx2 = 2;
+constexpr size_t kIdx3 = 3;
+constexpr size_t kIdx4 = 4;
+constexpr size_t kIdx5 = 5;
+constexpr size_t kIdx6 = 6;
+constexpr size_t kIdx7 = 7;
+
 template <typename T, typename T1>
-class MDIterationLeapFrogLiujianCudaGpuKernel : public GpuKernel {
+class MDIterationLeapFrogLiujianCudaGpuKernelMod : public NativeGpuKernelMod {
  public:
-  MDIterationLeapFrogLiujianCudaGpuKernel() {}
-  ~MDIterationLeapFrogLiujianCudaGpuKernel() override = default;
+  MDIterationLeapFrogLiujianCudaGpuKernelMod() {}
+  ~MDIterationLeapFrogLiujianCudaGpuKernelMod() override = default;
 
   bool Init(const CNodePtr &kernel_node) override {
     // get bond_numbers
@@ -42,25 +49,23 @@ class MDIterationLeapFrogLiujianCudaGpuKernel : public GpuKernel {
     half_dt = static_cast<float>(GetAttr<float>(kernel_node, "half_dt"));
     dt = static_cast<float>(GetAttr<float>(kernel_node, "dt"));
     exp_gamma = static_cast<float>(GetAttr<float>(kernel_node, "exp_gamma"));
-    float4_numbers = ceil(3. * static_cast<double>(atom_numbers) / 4.);
+    const double kCoef1 = 3.;
+    const double kCoef2 = 4.;
+    float4_numbers = ceil(kCoef1 * static_cast<double>(atom_numbers) / kCoef2);
     InitSizeLists();
     return true;
   }
-
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     auto inverse_mass = GetDeviceAddress<float>(inputs, 0);
     auto sqrt_mass_inverse = GetDeviceAddress<float>(inputs, 1);
-    auto vel = GetDeviceAddress<float>(inputs, 2);
-    auto crd = GetDeviceAddress<float>(inputs, 3);
-    auto frc = GetDeviceAddress<float>(inputs, 4);
-    auto acc = GetDeviceAddress<float>(inputs, 5);
-    auto rand_state = GetDeviceAddress<float>(inputs, 6);
-    auto rand_frc = GetDeviceAddress<float>(inputs, 7);
+    auto vel = GetDeviceAddress<float>(inputs, kIdx2);
+    auto crd = GetDeviceAddress<float>(inputs, kIdx3);
+    auto frc = GetDeviceAddress<float>(inputs, kIdx4);
+    auto acc = GetDeviceAddress<float>(inputs, kIdx5);
+    auto rand_state = GetDeviceAddress<float>(inputs, kIdx6);
+    auto rand_frc = GetDeviceAddress<float>(inputs, kIdx7);
 
     auto output = GetDeviceAddress<float>(outputs, 0);
 
@@ -73,22 +78,21 @@ class MDIterationLeapFrogLiujianCudaGpuKernel : public GpuKernel {
 
  protected:
   void InitSizeLists() override {
-    input_size_list_.push_back(atom_numbers * sizeof(float));
-    input_size_list_.push_back(atom_numbers * sizeof(float));
-    input_size_list_.push_back(atom_numbers * 3 * sizeof(float));
-    input_size_list_.push_back(atom_numbers * 3 * sizeof(float));
-    input_size_list_.push_back(atom_numbers * 3 * sizeof(float));
-    input_size_list_.push_back(atom_numbers * 3 * sizeof(float));
-    input_size_list_.push_back(float4_numbers * sizeof(curandStatePhilox4_32_10_t));
-    input_size_list_.push_back(atom_numbers * 3 * sizeof(float));
+    const int kAtomSize = 3;
 
-    output_size_list_.push_back(atom_numbers * 3 * sizeof(T));
+    input_size_list_.push_back(atom_numbers * sizeof(float));
+    input_size_list_.push_back(atom_numbers * sizeof(float));
+    input_size_list_.push_back(atom_numbers * kAtomSize * sizeof(float));
+    input_size_list_.push_back(atom_numbers * kAtomSize * sizeof(float));
+    input_size_list_.push_back(atom_numbers * kAtomSize * sizeof(float));
+    input_size_list_.push_back(atom_numbers * kAtomSize * sizeof(float));
+    input_size_list_.push_back(float4_numbers * sizeof(curandStatePhilox4_32_10_t));
+    input_size_list_.push_back(atom_numbers * kAtomSize * sizeof(float));
+
+    output_size_list_.push_back(atom_numbers * kAtomSize * sizeof(T));
   }
 
  private:
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
   int atom_numbers;
   float half_dt;
   float dt;

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,11 +25,11 @@
 
 namespace mindspore {
 namespace kernel {
-class BufferCPUGetKernel : public CPUKernel {
+class BufferGetCpuKernelMod : public NativeCpuKernelMod {
  public:
-  BufferCPUGetKernel() : element_nums_(0), capacity_(0) {}
+  BufferGetCpuKernelMod() : element_nums_(0), capacity_(0) {}
 
-  ~BufferCPUGetKernel() override = default;
+  ~BufferGetCpuKernelMod() override = default;
   void Init(const CNodePtr &kernel_node) {
     auto shapes = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "buffer_elements");
     auto types = AnfAlgo::GetNodeAttr<std::vector<TypePtr>>(kernel_node, "buffer_dtype");

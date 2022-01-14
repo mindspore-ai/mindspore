@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,16 +29,17 @@ namespace mindspore {
 namespace fl {
 namespace server {
 namespace kernel {
-// AggregationKernel is the kernel for weight, grad or other kinds of parameters' aggregation.
+// AggregationKernelMod is the kernel for weight, grad or other kinds of parameters' aggregation.
 // For example, dense gradients accumulation, federated average, etc.
-// Normally the aggregation process in AggregationKernel is like a finite-state machine:
+// Normally the aggregation process in AggregationKernelMod is like a finite-state machine:
 // Initial->Aggregating->Aggregation done->Initial.
-class AggregationKernel : public CPUKernel {
+class AggregationKernelMod : public NativeCpuKernelMod {
  public:
-  AggregationKernel() : name_(""), done_(false), done_count_(0), accum_count_(0) {}
-  virtual ~AggregationKernel() = default;
+  AggregationKernelMod() : name_(""), done_(false), done_count_(0), accum_count_(0) {}
+  virtual ~AggregationKernelMod() = default;
 
-  // InitKernel and Launch methods are inherited from pure virtual function of CPUKernel so it must have implementation.
+  // InitKernel and Launch methods are inherited from pure virtual function of NativeCpuKernelMod so it must have
+  // implementation.
   virtual void InitKernel(const CNodePtr &kernel_node) {}
   virtual bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                       const std::vector<AddressPtr> &outputs) {

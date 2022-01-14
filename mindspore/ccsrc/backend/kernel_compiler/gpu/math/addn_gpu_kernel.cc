@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,18 +20,18 @@ namespace mindspore {
 namespace kernel {
 MS_REG_GPU_KERNEL_ONE(
   AddN, KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-  AddNGpuFwdKernel, double)
+  AddNFwdGpuKernelMod, double)
 MS_REG_GPU_KERNEL_ONE(
   AddN, KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  AddNGpuFwdKernel, float)
+  AddNFwdGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(
   AddN, KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  AddNGpuFwdKernel, half)
+  AddNFwdGpuKernelMod, half)
 MS_REG_GPU_KERNEL_ONE(AddN,
                       KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                      AddNGpuFwdKernel, int)
+                      AddNFwdGpuKernelMod, int)
 MS_REG_GPU_KERNEL_ONE(AddN,
                       KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-                      AddNGpuFwdKernel, int64_t)
+                      AddNFwdGpuKernelMod, int64_t)
 }  // namespace kernel
 }  // namespace mindspore

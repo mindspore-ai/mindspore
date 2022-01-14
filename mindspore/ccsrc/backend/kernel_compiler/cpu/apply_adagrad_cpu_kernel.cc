@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,15 +28,15 @@ constexpr size_t kApplyAdagradInputsNum = 4;
 constexpr size_t kApplyAdagradOutputsNum = 2;
 }  // namespace
 
-void ApplyAdagradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void ApplyAdagradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   update_slots_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "update_slots");
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
 }
 
-bool ApplyAdagradCPUKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                   const std::vector<AddressPtr> &outputs) {
+bool ApplyAdagradCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                                      const std::vector<AddressPtr> &outputs) {
   CheckParam(inputs, outputs);
   if (dtype_ == kNumberTypeFloat16) {
     LaunchKernel<float16>(inputs, outputs);
@@ -49,8 +49,8 @@ bool ApplyAdagradCPUKernel::Launch(const std::vector<AddressPtr> &inputs, const 
   return true;
 }
 
-void ApplyAdagradCPUKernel::CheckParam(const std::vector<AddressPtr> &inputs,
-                                       const std::vector<AddressPtr> &outputs) const {
+void ApplyAdagradCpuKernelMod::CheckParam(const std::vector<AddressPtr> &inputs,
+                                          const std::vector<AddressPtr> &outputs) const {
   // inputs: var, accum, lr, gradient
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kApplyAdagradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kApplyAdagradOutputsNum, kernel_name_);
@@ -74,8 +74,8 @@ void ApplyAdagradCPUKernel::CheckParam(const std::vector<AddressPtr> &inputs,
 }
 
 template <typename T>
-void ApplyAdagradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &outputs) {
+void ApplyAdagradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                            const std::vector<AddressPtr> &outputs) {
   auto *var = reinterpret_cast<T *>(inputs[0]->addr);
   auto *accum = reinterpret_cast<T *>(inputs[1]->addr);
   const auto *lr = reinterpret_cast<T *>(inputs[2]->addr);
@@ -102,8 +102,8 @@ void ApplyAdagradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
 }
 
 template <typename T>
-void ApplyAdagradCPUKernel::LaunchApplyAdagrad(T *var, T *accum, const T *lr, const T *gradient, size_t start,
-                                               size_t end) const {
+void ApplyAdagradCpuKernelMod::LaunchApplyAdagrad(T *var, T *accum, const T *lr, const T *gradient, size_t start,
+                                                  size_t end) const {
   // DataType can only be float32 or float16, so eps will not be zero.
   auto one = static_cast<T>(1);
   auto eps = static_cast<T>(1e-6);

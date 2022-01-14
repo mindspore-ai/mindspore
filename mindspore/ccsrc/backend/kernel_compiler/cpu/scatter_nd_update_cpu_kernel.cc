@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ void Compute(const ComputeParams<T> *params, const size_t start, const size_t en
 }
 }  // namespace
 
-void ScatterUpdateCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void ScatterUpdateCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   auto shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
@@ -109,9 +109,9 @@ void ScatterUpdateCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
 }
 
-bool ScatterUpdateCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                    const std::vector<kernel::AddressPtr> &,
-                                    const std::vector<kernel::AddressPtr> &outputs) {
+bool ScatterUpdateCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                       const std::vector<kernel::AddressPtr> &,
+                                       const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kScatterNdUpdateInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kScatterNdUpdateOutputsNum, kernel_name_);
   switch (dtype_) {
@@ -139,8 +139,8 @@ bool ScatterUpdateCPUKernel::Launch(const std::vector<kernel::AddressPtr> &input
 }
 
 template <typename T>
-void ScatterUpdateCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                          const std::vector<kernel::AddressPtr> &outputs) {
+void ScatterUpdateCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                             const std::vector<kernel::AddressPtr> &outputs) {
   T *x = reinterpret_cast<T *>(ScatterUpdateRealData(inputs, outputs));
   ComputeParams<T> params;
   params.x_ = x;
@@ -168,13 +168,13 @@ void ScatterUpdateCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
   (void)memcpy_s(outputs[0]->addr, outputs[0]->size, x, inputs[0]->size);
 }
 
-void *ScatterNdUpdateCPUKernel::ScatterUpdateRealData(const std::vector<AddressPtr> &inputs,
-                                                      const std::vector<kernel::AddressPtr> &) {
+void *ScatterNdUpdateCpuKernelMod::ScatterUpdateRealData(const std::vector<AddressPtr> &inputs,
+                                                         const std::vector<kernel::AddressPtr> &) {
   return inputs[0]->addr;
 }
 
-void *TensorScatterUpdateCPUKernel::ScatterUpdateRealData(const std::vector<AddressPtr> &inputs,
-                                                          const std::vector<kernel::AddressPtr> &outputs) {
+void *TensorScatterUpdateCpuKernelMod::ScatterUpdateRealData(const std::vector<AddressPtr> &inputs,
+                                                             const std::vector<kernel::AddressPtr> &outputs) {
   void *x = outputs[0]->addr;
   auto ret = memcpy_s(x, outputs[0]->size, inputs[0]->addr, inputs[0]->size);
   if (ret != 0) {

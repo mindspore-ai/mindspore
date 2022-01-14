@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,27 +21,27 @@ namespace kernel {
 MS_REG_GPU_KERNEL_TWO(
   ArgMaxWithValue,
   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
-  ArgMaxAndMinWithValueGpuKernel, double, int)
+  ArgMaxAndMinWithValueGpuKernelMod, double, int)
 MS_REG_GPU_KERNEL_TWO(
   ArgMaxWithValue,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-  ArgMaxAndMinWithValueGpuKernel, float, int)
+  ArgMaxAndMinWithValueGpuKernelMod, float, int)
 MS_REG_GPU_KERNEL_TWO(
   ArgMaxWithValue,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
-  ArgMaxAndMinWithValueGpuKernel, half, int)
+  ArgMaxAndMinWithValueGpuKernelMod, half, int)
 
 MS_REG_GPU_KERNEL_TWO(
   ArgMinWithValue,
   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
-  ArgMaxAndMinWithValueGpuKernel, double, int)
+  ArgMaxAndMinWithValueGpuKernelMod, double, int)
 MS_REG_GPU_KERNEL_TWO(
   ArgMinWithValue,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-  ArgMaxAndMinWithValueGpuKernel, float, int)
+  ArgMaxAndMinWithValueGpuKernelMod, float, int)
 MS_REG_GPU_KERNEL_TWO(
   ArgMinWithValue,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
-  ArgMaxAndMinWithValueGpuKernel, half, int)
+  ArgMaxAndMinWithValueGpuKernelMod, half, int)
 }  // namespace kernel
 }  // namespace mindspore

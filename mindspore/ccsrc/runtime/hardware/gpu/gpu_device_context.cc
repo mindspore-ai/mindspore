@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License"){}
  * you may not use this file except in compliance with the License.
@@ -407,7 +407,7 @@ void GPUDeviceContext::UpdateDynamicShape(const CNodePtr &kernel) const {
     MS_LOG(EXCEPTION) << "Akg kernel do not support dynamic shape: " << kernel->fullname_with_scope();
   }
 
-  kernel::GpuKernel *gpu_kernel = dynamic_cast<kernel::GpuKernel *>(kernel_mod);
+  kernel::NativeGpuKernelMod *gpu_kernel = dynamic_cast<kernel::NativeGpuKernelMod *>(kernel_mod);
   MS_EXCEPTION_IF_NULL(gpu_kernel);
   device::DynamicKernelPtr dynamic_kernel = gpu_kernel->DynamicKernel();
   MS_EXCEPTION_IF_NULL(dynamic_kernel);
@@ -458,7 +458,7 @@ bool GPUDeviceContext::LaunchKernel(const CNodePtr &kernel, const std::vector<Ad
 
   // Processing after execution of dynamic kernel to update output shape.
   if (is_dynamic_shape) {
-    kernel::GpuKernel *gpu_kernel = dynamic_cast<kernel::GpuKernel *>(kernel_mod);
+    kernel::NativeGpuKernelMod *gpu_kernel = dynamic_cast<kernel::NativeGpuKernelMod *>(kernel_mod);
     MS_EXCEPTION_IF_NULL(gpu_kernel);
     gpu_kernel->PostExecute();
   }

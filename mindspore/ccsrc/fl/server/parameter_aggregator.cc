@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,7 +100,7 @@ bool ParameterAggregator::UpdateData(const std::map<std::string, Address> &new_d
 bool ParameterAggregator::LaunchAggregators() {
   for (auto &aggregator_with_params : aggregation_kernel_parameters_) {
     KernelParams &params = aggregator_with_params.second;
-    std::shared_ptr<kernel::AggregationKernel> aggr_kernel = aggregator_with_params.first;
+    std::shared_ptr<kernel::AggregationKernelMod> aggr_kernel = aggregator_with_params.first;
     MS_ERROR_IF_NULL_W_RET_VAL(aggr_kernel, false);
     bool ret = aggr_kernel->Launch(params.inputs, params.workspace, params.outputs);
     if (!ret) {
@@ -123,7 +123,7 @@ AddressPtr ParameterAggregator::GetWeight() {
 
 void ParameterAggregator::ResetAggregationStatus() {
   for (auto &aggregator_with_params : aggregation_kernel_parameters_) {
-    std::shared_ptr<kernel::AggregationKernel> aggr_kernel = aggregator_with_params.first;
+    std::shared_ptr<kernel::AggregationKernelMod> aggr_kernel = aggregator_with_params.first;
     if (aggr_kernel == nullptr) {
       MS_LOG(ERROR) << "The aggregation kernel is nullptr.";
       continue;
@@ -143,7 +143,7 @@ void ParameterAggregator::ResetPullingStatus() {
 bool ParameterAggregator::IsAggregationDone() const {
   // Only consider aggregation done after each aggregation kernel is done.
   for (auto &aggregator_with_params : aggregation_kernel_parameters_) {
-    std::shared_ptr<kernel::AggregationKernel> aggr_kernel = aggregator_with_params.first;
+    std::shared_ptr<kernel::AggregationKernelMod> aggr_kernel = aggregator_with_params.first;
     MS_ERROR_IF_NULL_W_RET_VAL(aggr_kernel, false);
     if (!aggr_kernel->IsAggregationDone()) {
       return false;
@@ -247,8 +247,9 @@ bool ParameterAggregator::AssignMemory(const K server_kernel, const CNodePtr &cn
   return true;
 }
 
-bool ParameterAggregator::GenerateAggregationKernelParams(const std::shared_ptr<kernel::AggregationKernel> &aggr_kernel,
-                                                          const std::shared_ptr<MemoryRegister> &memory_register) {
+bool ParameterAggregator::GenerateAggregationKernelParams(
+  const std::shared_ptr<kernel::AggregationKernelMod> &aggr_kernel,
+  const std::shared_ptr<MemoryRegister> &memory_register) {
   MS_ERROR_IF_NULL_W_RET_VAL(aggr_kernel, false);
   MS_ERROR_IF_NULL_W_RET_VAL(memory_register, false);
   KernelParams aggr_params = {};
@@ -308,12 +309,12 @@ bool ParameterAggregator::JudgeRequiredAggr(const CNodePtr &cnode) {
   return requires_aggr_;
 }
 
-template bool ParameterAggregator::AssignMemory(std::shared_ptr<kernel::OptimizerKernel> server_kernel,
+template bool ParameterAggregator::AssignMemory(std::shared_ptr<kernel::OptimizerKernelMod> server_kernel,
                                                 const CNodePtr &cnode,
                                                 const ReuseKernelNodeInfo &reuse_kernel_node_inputs_info,
                                                 const std::shared_ptr<MemoryRegister> &memory_register);
 
-template bool ParameterAggregator::AssignMemory(std::shared_ptr<kernel::AggregationKernel> server_kernel,
+template bool ParameterAggregator::AssignMemory(std::shared_ptr<kernel::AggregationKernelMod> server_kernel,
                                                 const CNodePtr &cnode,
                                                 const ReuseKernelNodeInfo &reuse_kernel_node_inputs_info,
                                                 const std::shared_ptr<MemoryRegister> &memory_register);

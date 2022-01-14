@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,9 +32,9 @@ constexpr size_t DimOfTensor = 3;
 constexpr size_t LeastWeightShape = 3;
 constexpr size_t LeastInputShapeSize = 3;
 template <typename T>
-class GruGpuKernel : public GpuKernel {
+class GruGpuKernelMod : public NativeGpuKernelMod {
  public:
-  GruGpuKernel()
+  GruGpuKernelMod()
       : batch_size_(0),
         seq_len_(0),
         input_size_(0),
@@ -58,11 +58,7 @@ class GruGpuKernel : public GpuKernel {
         rnn_desc_(nullptr),
         handle_(nullptr),
         cudnn_data_type_(CUDNN_DATA_FLOAT) {}
-  ~GruGpuKernel() override { DestroyResource(); }
-
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+  ~GruGpuKernelMod() override { DestroyResource(); }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -292,9 +288,6 @@ class GruGpuKernel : public GpuKernel {
 
   cudnnHandle_t handle_;
   cudnnDataType_t cudnn_data_type_;
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore

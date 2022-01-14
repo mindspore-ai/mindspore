@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ constexpr size_t kLayerNormInputsNum = 3;
 constexpr size_t kLayerNormOutputsNum = 3;
 }  // namespace
 
-void LayerNormCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void LayerNormCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
@@ -54,8 +54,9 @@ void LayerNormCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
 }
 
-bool LayerNormCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                                const std::vector<kernel::AddressPtr> &outputs) {
+bool LayerNormCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                   const std::vector<kernel::AddressPtr> &,
+                                   const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kLayerNormInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kLayerNormOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat16) {
@@ -70,7 +71,8 @@ bool LayerNormCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, c
 }
 
 template <typename T>
-void LayerNormCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
+void LayerNormCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                         const std::vector<AddressPtr> &outputs) {
   size_t f_size = sizeof(T);
   if (inputs[1]->size != f_size * param_num_ || inputs[2]->size != f_size * param_num_) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the product of gamma and beta's shape must be " << param_num_;

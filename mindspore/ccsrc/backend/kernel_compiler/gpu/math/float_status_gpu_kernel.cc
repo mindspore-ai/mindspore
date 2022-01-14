@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,28 +19,28 @@
 namespace mindspore {
 namespace kernel {
 MS_REG_GPU_KERNEL_ONE(FloatStatus, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                      FloatStatusGpuKernel, float)
+                      FloatStatusGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(FloatStatus, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat32),
-                      FloatStatusGpuKernel, half)
+                      FloatStatusGpuKernelMod, half)
 MS_REG_GPU_KERNEL_ONE(FloatStatus, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat32),
-                      FloatStatusGpuKernel, double)
+                      FloatStatusGpuKernelMod, double)
 MS_REG_GPU_KERNEL_ONE(IsInf, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
-                      FloatStatusGpuKernel, float)
+                      FloatStatusGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(IsInf, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeBool),
-                      FloatStatusGpuKernel, half)
+                      FloatStatusGpuKernelMod, half)
 MS_REG_GPU_KERNEL_ONE(IsInf, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeBool),
-                      FloatStatusGpuKernel, double)
+                      FloatStatusGpuKernelMod, double)
 MS_REG_GPU_KERNEL_ONE(IsNan, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
-                      FloatStatusGpuKernel, float)
+                      FloatStatusGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(IsNan, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeBool),
-                      FloatStatusGpuKernel, half)
+                      FloatStatusGpuKernelMod, half)
 MS_REG_GPU_KERNEL_ONE(IsNan, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeBool),
-                      FloatStatusGpuKernel, double)
+                      FloatStatusGpuKernelMod, double)
 MS_REG_GPU_KERNEL_ONE(IsFinite, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
-                      FloatStatusGpuKernel, float)
+                      FloatStatusGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(IsFinite, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeBool),
-                      FloatStatusGpuKernel, half)
+                      FloatStatusGpuKernelMod, half)
 MS_REG_GPU_KERNEL_ONE(IsFinite, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeBool),
-                      FloatStatusGpuKernel, double)
+                      FloatStatusGpuKernelMod, double)
 }  // namespace kernel
 }  // namespace mindspore
