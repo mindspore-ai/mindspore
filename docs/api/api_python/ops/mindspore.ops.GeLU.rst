@@ -5,7 +5,7 @@ mindspore.ops.GeLU
 
     高斯误差线性单元激活函数（Gaussian Error Linear Units activation function）。
 
-    `Gaussian Error Linear Units (GELUs) <https://arxiv.org/abs/1606.08415>`_ 描述了GeLU函数。
+    在 `Gaussian Error Linear Units (GELUs) <https://arxiv.org/abs/1606.08415>`_ 文章中对GeLU函数进行了介绍。
     此外，也可以参考 `BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding <https://arxiv.org/abs/1810.04805>`_ 。
 
     GeLU函数定义如下：
