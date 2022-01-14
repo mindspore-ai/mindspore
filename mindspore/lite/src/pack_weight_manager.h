@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <utility>
 #include <vector>
+#include <mutex>
 #include "src/tensor.h"
 #include "src/lite_session.h"
 namespace mindspore::lite {
@@ -34,7 +35,7 @@ struct ModelConstWeight {
   std::vector<const Model *> lite_models;
   std::vector<const LiteSession *> lite_sessions;
 };
-enum PackStatus { NOTPACK = 1, PACKED = 2, MALLOC = 3 };
+enum PackStatus : int8_t { NOTPACK = 1, PACKED = 2, MALLOC = 3 };
 
 class PackWeightManager {
  public:
@@ -64,6 +65,7 @@ class PackWeightManager {
   std::map<const std::string, std::vector<const void *>> path_model_buf_;
   // path: model_buf
   std::map<const std::string, ModelConstWeight *> path_model_weight_;
+  std::mutex mtx_weight_;
 };
 }  // namespace mindspore::lite
 #endif
