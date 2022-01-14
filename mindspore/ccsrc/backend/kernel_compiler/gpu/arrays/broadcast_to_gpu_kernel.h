@@ -66,8 +66,10 @@ class BroadcastToGpuKernel : public GpuKernel {
     }
 
     if (output_shapes.size() < input_shapes.size()) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of output cannot be less than "
-                        << input_shapes.size() << ", but got " << output_shapes.size();
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                        << "', the dimension of output cannot be less than the dimension of input "
+                        << ", but got the dimension of input: " << input_shapes.size()
+                        << ", the dimension of output: " << output_shapes.size();
     }
 
     size_t offset = output_shapes.size() - input_shapes.size();

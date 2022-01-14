@@ -91,7 +91,8 @@ class ScatterNdFunctorKernel : public GpuKernel {
     auto index_depth = indices_shape.back();
     if (index_depth > input_shape.size()) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the last dimension value of indices should be greater than "
-                        << input_shape.size() << ", but got " << index_depth;
+                        << "the dimension of input , but got the dimension of input " << input_shape.size()
+                        << ", got the last dimension value of indices " << index_depth;
     }
     if (indices_shape.size() < 2) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of indices cannot be greater than 2, but got "
