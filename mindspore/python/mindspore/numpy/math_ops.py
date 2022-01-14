@@ -4144,8 +4144,8 @@ def multi_dot(arrays):
         Numpy argument `out` is not supported.
 
     Args:
-        arrays (sequence of array_like): If the first argument is 1-D it is treated as row
-            vector. If the last argument is 1-D it is treated as column vector. The other
+        arrays (sequence of array_like): If the first argument is 1-D, it is treated as row
+            vector. If the last argument is 1-D, it is treated as column vector. The other
             arguments must be 2-D.
 
     Returns:
