@@ -220,12 +220,14 @@ const std::string &PSContext::server_mode() const { return server_mode_; }
 
 void PSContext::set_encrypt_type(const std::string &encrypt_type) {
   if (encrypt_type != kNotEncryptType && encrypt_type != kDPEncryptType && encrypt_type != kPWEncryptType &&
-      encrypt_type != kStablePWEncryptType) {
-    MS_LOG(EXCEPTION) << encrypt_type << " is invalid. Encrypt type must be " << kNotEncryptType << " or "
-                      << kDPEncryptType << " or " << kPWEncryptType << " or " << kStablePWEncryptType;
-    return;
+      encrypt_type != kStablePWEncryptType && encrypt_type != kDSEncryptType) {
+    MS_LOG(WARNING) << encrypt_type << " is invalid. Encrypt type must be " << kNotEncryptType << " or "
+                    << kDPEncryptType << " or " << kPWEncryptType << " or " << kStablePWEncryptType << " or "
+                    << kDSEncryptType << ", DP scheme is used by default.";
+    encrypt_type_ = kDPEncryptType;
+  } else {
+    encrypt_type_ = encrypt_type;
   }
-  encrypt_type_ = encrypt_type;
 }
 
 const std::string &PSContext::encrypt_type() const { return encrypt_type_; }
@@ -234,8 +236,9 @@ void PSContext::set_dp_eps(float dp_eps) {
   if (dp_eps > 0) {
     dp_eps_ = dp_eps;
   } else {
-    MS_LOG(EXCEPTION) << dp_eps << " is invalid, dp_eps must be larger than 0.";
-    return;
+    MS_LOG(WARNING) << dp_eps << " is invalid, dp_eps must be larger than 0, 50 is used by default.";
+    float dp_eps_default = 50;
+    dp_eps_ = dp_eps_default;
   }
 }
 
@@ -245,8 +248,9 @@ void PSContext::set_dp_delta(float dp_delta) {
   if (dp_delta > 0 && dp_delta < 1) {
     dp_delta_ = dp_delta;
   } else {
-    MS_LOG(EXCEPTION) << dp_delta << " is invalid, dp_delta must be in range of (0, 1).";
-    return;
+    MS_LOG(WARNING) << dp_delta << " is invalid, dp_delta must be in range of (0, 1), 0.01 is used by default.";
+    float dp_delta_default = 0.01;
+    dp_delta_ = dp_delta_default;
   }
 }
 float PSContext::dp_delta() const { return dp_delta_; }
@@ -255,11 +259,72 @@ void PSContext::set_dp_norm_clip(float dp_norm_clip) {
   if (dp_norm_clip > 0) {
     dp_norm_clip_ = dp_norm_clip;
   } else {
-    MS_LOG(EXCEPTION) << dp_norm_clip << " is invalid, dp_norm_clip must be larger than 0.";
-    return;
+    MS_LOG(WARNING) << dp_norm_clip << " is invalid, dp_norm_clip must be larger than 0, 1 is used by default.";
+    float dp_norm_clip_default = 1;
+    dp_norm_clip_ = dp_norm_clip_default;
   }
 }
 float PSContext::dp_norm_clip() const { return dp_norm_clip_; }
+
+void PSContext::set_sign_k(float sign_k) {
+  float sign_k_upper = 0.25;
+  if (sign_k > 0 && sign_k <= sign_k_upper) {
+    sign_k_ = sign_k;
+  } else {
+    MS_LOG(WARNING) << sign_k << " is invalid, sign_k must be in range of (0, 0.25], 0.01 is used by default.";
+    float sign_k_default = 0.01;
+    sign_k_ = sign_k_default;
+  }
+}
+float PSContext::sign_k() const { return sign_k_; }
+
+void PSContext::set_sign_eps(float sign_eps) {
+  float sign_eps_upper = 100;
+  if (sign_eps > 0 && sign_eps <= sign_eps_upper) {
+    sign_eps_ = sign_eps;
+  } else {
+    MS_LOG(WARNING) << sign_eps << " is invalid, sign_eps must be in range of (0, 100], 100 is used by default.";
+    float sign_eps_default = 100;
+    sign_eps_ = sign_eps_default;
+  }
+}
+float PSContext::sign_eps() const { return sign_eps_; }
+
+void PSContext::set_sign_thr_ratio(float sign_thr_ratio) {
+  float sign_thr_ratio_bound = 0.5;
+  if (sign_thr_ratio >= sign_thr_ratio_bound && sign_thr_ratio <= 1) {
+    sign_thr_ratio_ = sign_thr_ratio;
+  } else {
+    MS_LOG(WARNING) << sign_thr_ratio
+                    << " is invalid, sign_thr_ratio must be in range of [0.5, 1], 0.6 is used by default.";
+    float sign_thr_ratio_default = 0.6;
+    sign_thr_ratio_ = sign_thr_ratio_default;
+  }
+}
+float PSContext::sign_thr_ratio() const { return sign_thr_ratio_; }
+
+void PSContext::set_sign_global_lr(float sign_global_lr) {
+  if (sign_global_lr > 0) {
+    sign_global_lr_ = sign_global_lr;
+  } else {
+    MS_LOG(WARNING) << sign_global_lr << " is invalid, sign_global_lr must be larger than 0, 1 is used by default.";
+    float sign_global_lr_default = 1;
+    sign_global_lr_ = sign_global_lr_default;
+  }
+}
+float PSContext::sign_global_lr() const { return sign_global_lr_; }
+
+void PSContext::set_sign_dim_out(int sign_dim_out) {
+  int sign_dim_out_upper = 50;
+  if (sign_dim_out >= 0 && sign_dim_out <= sign_dim_out_upper) {
+    sign_dim_out_ = sign_dim_out;
+  } else {
+    MS_LOG(WARNING) << sign_dim_out << " is invalid, sign_dim_out must be in range of [0, 50], 0 is used by default.";
+    float sign_dim_out_default = 0;
+    sign_dim_out_ = sign_dim_out_default;
+  }
+}
+int PSContext::sign_dim_out() const { return sign_dim_out_; }
 
 void PSContext::set_ms_role(const std::string &role) {
   if (role != kEnvRoleOfWorker && role != kEnvRoleOfServer && role != kEnvRoleOfScheduler) {

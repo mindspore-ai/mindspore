@@ -163,9 +163,10 @@ public class LocalFLParameter {
         }
         if ((!EncryptLevel.DP_ENCRYPT.toString().equals(encryptLevel)) &&
                 (!EncryptLevel.NOT_ENCRYPT.toString().equals(encryptLevel)) &&
+                (!EncryptLevel.SIGNDS.toString().equals(encryptLevel)) &&
                 (!EncryptLevel.PW_ENCRYPT.toString().equals(encryptLevel))) {
             LOGGER.severe(Common.addTag("[localFLParameter] the parameter of <encryptLevel> is " + encryptLevel + " ," +
-                    " it must be DP_ENCRYPT or NOT_ENCRYPT or PW_ENCRYPT, please check it before setting"));
+                    " it must be DP_ENCRYPT or NOT_ENCRYPT or PW_ENCRYPT or SIGNDS, please check it before setting"));
             throw new IllegalArgumentException();
         }
         this.encryptLevel = encryptLevel;

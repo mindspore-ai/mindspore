@@ -258,6 +258,11 @@ void Server::InitCipher() {
   float dp_delta = ps::PSContext::instance()->dp_delta();
   float dp_norm_clip = ps::PSContext::instance()->dp_norm_clip();
   std::string encrypt_type = ps::PSContext::instance()->encrypt_type();
+  float sign_k = ps::PSContext::instance()->sign_k();
+  float sign_eps = ps::PSContext::instance()->sign_eps();
+  float sign_thr_ratio = ps::PSContext::instance()->sign_thr_ratio();
+  float sign_global_lr = ps::PSContext::instance()->sign_global_lr();
+  int sign_dim_out = ps::PSContext::instance()->sign_dim_out();
 
   mindspore::armour::CipherPublicPara param;
   param.g = cipher_g;
@@ -270,6 +275,11 @@ void Server::InitCipher() {
   param.dp_eps = dp_eps;
   param.dp_norm_clip = dp_norm_clip;
   param.encrypt_type = encrypt_type;
+  param.sign_k = sign_k;
+  param.sign_eps = sign_eps;
+  param.sign_thr_ratio = sign_thr_ratio;
+  param.sign_global_lr = sign_global_lr;
+  param.sign_dim_out = sign_dim_out;
 
   BIGNUM *prim = BN_new();
   if (prim == NULL) {

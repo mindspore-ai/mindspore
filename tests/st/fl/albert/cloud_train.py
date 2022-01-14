@@ -76,6 +76,12 @@ def parse_args():
     parser.add_argument("--root_second_ca_path", type=str, default="")
     parser.add_argument("--equip_crl_path", type=str, default="")
     parser.add_argument("--replay_attack_time_diff", type=int, default=600000)
+    # parameters for 'SIGNDS'
+    parser.add_argument("--sign_k", type=float, default=0.01)
+    parser.add_argument("--sign_eps", type=float, default=100)
+    parser.add_argument("--sign_thr_ratio", type=float, default=0.6)
+    parser.add_argument("--sign_global_lr", type=float, default=0.1)
+    parser.add_argument("--sign_dim_out", type=int, default=0)
     return parser.parse_args()
 
 
@@ -118,6 +124,11 @@ def server_train(args):
     root_second_ca_path = args.root_second_ca_path
     equip_crl_path = args.equip_crl_path
     replay_attack_time_diff = args.replay_attack_time_diff
+    sign_k = args.sign_k
+    sign_eps = args.sign_eps
+    sign_thr_ratio = args.sign_thr_ratio
+    sign_global_lr = args.sign_global_lr
+    sign_dim_out = args.sign_dim_out
 
     # Replace some parameters with federated learning parameters.
     train_cfg.max_global_epoch = fl_iteration_num
@@ -155,7 +166,12 @@ def server_train(args):
         "root_first_ca_path": root_first_ca_path,
         "root_second_ca_path": root_second_ca_path,
         "equip_crl_path": equip_crl_path,
-        "replay_attack_time_diff": replay_attack_time_diff
+        "replay_attack_time_diff": replay_attack_time_diff,
+        "sign_k": sign_k,
+        "sign_eps": sign_eps,
+        "sign_thr_ratio": sign_thr_ratio,
+        "sign_global_lr": sign_global_lr,
+        "sign_dim_out": sign_dim_out
     }
 
     if not os.path.exists(output_dir):
