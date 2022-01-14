@@ -353,7 +353,8 @@ class FuncGraph : public deprecated::api::FuncGraph, public FuncGraphBase, publi
   void set_switch_input(std::shared_ptr<bool> switch_input) { switch_input_ = switch_input; }
   std::shared_ptr<bool> switch_layer_input() const { return switch_layer_input_; }
   void set_switch_layer_input(std::shared_ptr<bool> switch_layer_input) { switch_layer_input_ = switch_layer_input; }
-  bool ContainMultiTarget() const;
+  bool ContainMultiTarget();
+  bool IsMultiTarget() const { return exist_multi_target_; }
   int64_t stage() { return stage_; }
   void set_stage(int64_t stage) { stage_ = stage; }
 
@@ -405,6 +406,7 @@ class FuncGraph : public deprecated::api::FuncGraph, public FuncGraphBase, publi
   // Whether there is a *args and **kwargs, and count kwonlyargs'number.
   bool has_vararg_;
   bool has_kwarg_;
+  bool exist_multi_target_;
   int kwonlyargs_count_;
   // Hyper param is placed on the top graph,
   // and positioned in the end of the param list, so we record the number to trace the position.

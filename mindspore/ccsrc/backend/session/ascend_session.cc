@@ -387,7 +387,7 @@ void AscendSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_gra
 GraphId AscendSession::CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) {
   MS_LOG(INFO) << "Status record: start compile graph.";
   // construct graph, if successfully, graph_sum_ + 1
-  auto graph = ConstructKernelGraph(lst, outputs);
+  auto graph = ConstructKernelGraph(lst, outputs, DeviceAddressType::kAscend);
   auto graph_id = graph->graph_id();
   InitAllBucket(graph);
   MS_LOG(INFO) << "Status record: end compile graph. graph id: " << graph_id;
@@ -397,7 +397,7 @@ GraphId AscendSession::CompileGraphImpl(const AnfNodePtrList &lst, const AnfNode
 GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
   MS_LOG(INFO) << "Status record: start compile graph.";
   std::vector<KernelGraphPtr> all_graphs;
-  auto root_graph = ConstructKernelGraph(func_graph, &all_graphs);
+  auto root_graph = ConstructKernelGraph(func_graph, &all_graphs, DeviceAddressType::kAscend);
   for (const auto &graph : all_graphs) {
     graph->set_root_graph_id(root_graph->graph_id());
   }

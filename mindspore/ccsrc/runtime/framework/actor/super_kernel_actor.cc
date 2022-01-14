@@ -167,14 +167,21 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context) {
     }
     auto input_node = input_nodes[device_tensor_store_key.first];
     MS_EXCEPTION_IF_NULL(input_node);
+
+    auto input_param = input_node->cast<ParameterPtr>();
+    if (!input_param->IsUsedByRealKernelInGraph(graph_->graph_id())) {
+      continue;
+    }
+
     auto device_address = AnfAlgo::GetMutableOutputAddr(input_node, 0, false);
     MS_EXCEPTION_IF_NULL(device_address);
     if (input_device_tensor->GetPtr() != device_address->GetPtr()) {
-      MS_LOG(WARNING) << "The input data of node:" << input_node->DebugString()
-                      << " device address:" << input_device_tensor->GetPtr()
-                      << ", type:" << input_device_tensor->DeviceType()
-                      << " is not equal to the graph node device address:" << device_address->GetPtr()
-                      << ", type:" << device_address->DeviceType() << ".";
+      MS_LOG(ERROR) << "The input data of node:" << input_node->DebugString()
+                    << " device address:" << input_device_tensor->GetPtr()
+                    << ", type:" << input_device_tensor->DeviceType()
+                    << " is not equal to the graph node device address:" << device_address->GetPtr()
+                    << ", type:" << device_address->DeviceType() << ".";
+      return false;
     }
   }
 
