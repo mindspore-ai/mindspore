@@ -1277,7 +1277,13 @@ bool IsContainUndetermined(const AbstractBasePtr &arg) {
     auto seq_arg = arg->cast<AbstractSequencePtr>();
     return std::any_of(seq_arg->elements().begin(), seq_arg->elements().end(), IsContainUndetermined);
   }
-  return arg->isa<AbstractUndetermined>();
+
+  if (arg->isa<AbstractKeywordArg>()) {
+    auto kw_arg = arg->cast<AbstractKeywordArgPtr>();
+    return IsContainUndetermined(kw_arg->get_arg());
+  }
+
+  return arg->isa<AbstractUndetermined>() && arg->IsBroaden();
 }
 
 class CreateInstanceEvaluator : public TransitionPrimEvaluator {
