@@ -246,9 +246,9 @@ def gmres(A, b, x0=None, *, tol=1e-5, atol=0.0, restart=20, maxiter=None,
         >>> A = Tensor(mnp.array([[3, 2, 0], [1, -1, 0], [0, 5, 1]], dtype=mnp.float32))
         >>> b = Tensor(mnp.array([2, 4, -1], dtype=mnp.float32))
         >>> x, exitCode = gmres(A, b)
-        >>> exitCode            # 0 indicates successful convergence
+        >>> print(exitCode)            # 0 indicates successful convergence
         0
-        >>> onp.allclose(mnp.dot(A,x).asnumpy(), b.asnumpy())
+        >>> print(onp.allclose(mnp.dot(A,x).asnumpy(), b.asnumpy()))
         True
     """
 
@@ -374,8 +374,8 @@ def cg(A, b, x0=None, *, tol=1e-5, atol=0.0, maxiter=None, M=None):
         >>> A = Tensor(onp.array([[1, 2], [2, 1]], dtype='float32'))
         >>> b = Tensor(onp.array([1, -1], dtype='float32'))
         >>> result, _ = cg(A, b)
-        >>> result
-        Tensor(shape=[2], dtype=Float32, value= [-1.00000000e+00,  1.00000000e+00])
+        >>> print(result)
+        [-1.  1.]
     """
     if x0 is None:
         x0 = mnp.zeros_like(b)

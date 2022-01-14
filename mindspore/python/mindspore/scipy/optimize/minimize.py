@@ -99,8 +99,8 @@ def minimize(func, x0, args=(), *, method, tol=None, options=None):
         >>>     x, y = p
         >>>     return (x ** 2 + y - 11.) ** 2 + (x + y ** 2 - 7.) ** 2
         >>> res = minimize(func, x0, method='BFGS', options=dict(maxiter=None, gtol=1e-6))
-        >>> res.x
-        Tensor(shape=[2], dtype=Float32, value= [ 3.00000000e+00,  2.00000000e+00])
+        >>> print(res.x)
+        [3. 2.]
     """
     if options is None:
         options = {}

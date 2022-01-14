@@ -338,7 +338,7 @@ def line_search(f, xk, pk, gfk=None, old_fval=None, old_old_fval=None, c1=1e-4,
         >>> def func(x):
         >>>     return x[0] ** 2 - x[1] ** 3
         >>> res = line_search(func, x0, p0)
-        >>> res.a_k
+        >>> print(res.a_k)
         1.0
     """
     state = LineSearch(f)(xk, pk, old_fval, old_old_fval, gfk, c1, c2, maxiter)

@@ -67,21 +67,19 @@ def block_diag(*arrs):
         >>> B = Tensor(onp.array([[3, 4, 5], [6, 7, 8]]))
         >>> C = Tensor(onp.array([[7]]))
         >>> P = Tensor(onp.zeros((2, ), dtype='int32'))
-        >>> block_diag(A, B, C)
-        Tensor(shape=[5, 6], dtype=Int64, value=
-        [[1, 0, 0, 0, 0, 0],
-         [0, 1, 0, 0, 0, 0],
-         [0, 0, 3, 4, 5, 0],
-         [0, 0, 6, 7, 8, 0],
-         [0, 0, 0, 0, 0, 7]])
-        >>> block_diag(A, P, B, C)
-        Tensor(shape=[6, 8], dtype=Int64, value=
-        [[1, 0, 0 ... 0, 0, 0],
-         [0, 1, 0 ... 0, 0, 0],
-         [0, 0, 0 ... 0, 0, 0],
-         [0, 0, 0 ... 4, 5, 0],
-         [0, 0, 0 ... 7, 8, 0],
-         [0, 0, 0 ... 0, 0, 7]])
+        >>> print(block_diag(A, B, C))
+        [[1 0 0 0 0 0]
+         [0 1 0 0 0 0]
+         [0 0 3 4 5 0]
+         [0 0 6 7 8 0]
+         [0 0 0 0 0 7]]
+        >>> print(block_diag(A, P, B, C))
+        [[1 0 0 0 0 0 0 0]
+         [0 1 0 0 0 0 0 0]
+         [0 0 0 0 0 0 0 0]
+         [0 0 0 0 3 4 5 0]
+         [0 0 0 0 6 7 8 0]
+         [0 0 0 0 0 0 0 7]]
     """
     if not arrs:
         return mnp.zeros((1, 0))
@@ -149,10 +147,10 @@ def solve_triangular(A, b, trans=0, lower=False, unit_diagonal=False,
         >>> A = Tensor(onp.array([[3, 0, 0, 0], [2, 1, 0, 0], [1, 0, 1, 0], [1, 1, 1, 1]], onp.float64))
         >>> b = Tensor(onp.array([4, 2, 4, 2], onp.float64))
         >>> x = solve_triangular(A, b, lower=True, unit_diagonal=False, trans='N')
-        >>> x
-        Tensor(shape=[4], dtype=Float32, value= [ 1.33333337e+00, -6.66666746e-01,  2.66666651e+00, -1.33333313e+00])
-        >>> mnp.dot(A, x)  # Check the result
-        Tensor(shape=[4], dtype=Float32, value= [ 4.00000000e+00,  2.00000000e+00,  4.00000000e+00,  2.00000000e+00])
+        >>> print(x)
+        [ 1.33333333 -0.66666667  2.66666667 -1.33333333]
+        >>> print(mnp.dot(A, x))  # Check the result
+        [4. 2. 4. 2.]
     """
     if isinstance(trans, int):
         trans_table = ['N', 'T', 'C']
@@ -192,14 +190,12 @@ def inv(a, overwrite_a=False, check_finite=True):
         >>> import mindspore.numpy as mnp
         >>> from mindspore.scipy.linalg import inv
         >>> a = Tensor(onp.array([[1., 2.], [3., 4.]]))
-        >>> inv(a)
-        Tensor(shape=[2, 2], dtype=Float64, value=
-        [[-2.00000000e+00,  1.00000000e+00],
-         [ 1.50000000e+00, -5.00000000e-01]])
-        >>> mnp.dot(a, inv(a))
-        Tensor(shape=[2, 2], dtype=Float64, value=
-        [[ 1.00000000e+00,  0.00000000e+00],
-         [ 8.88178420e-16,  1.00000000e+00]])
+        >>> print(inv(a))
+        [[-2.   1. ]
+         [ 1.5 -0.5]]
+        >>> print(mnp.dot(a, inv(a)))
+        [[1.0000000e+00 0.0000000e+00]
+         [8.8817842e-16 1.0000000e+00]]
     """
     if F.dtype(a) not in float_types:
         a = F.cast(a, mstype.float32)
@@ -248,12 +244,11 @@ def cho_factor(a, lower=False, overwrite_a=False, check_finite=True):
         >>> from mindspore.scipy.linalg import cho_factor
         >>> A = Tensor(onp.array([[9, 3, 1, 5], [3, 7, 5, 1], [1, 5, 9, 2], [5, 1, 2, 6]]).astype(onp.float32))
         >>> c, low = cho_factor(A)
-        >>> c
-        Tensor(shape=[4, 4], dtype=Float32, value=
-        [[ 3.00000000e+00,  1.00000000e+00,  3.33333343e-01,  1.66666663e+00],
-         [ 3.00000000e+00,  2.44948983e+00,  1.90515852e+00, -2.72165507e-01],
-         [ 1.00000000e+00,  5.00000000e+00,  2.29330778e+00,  8.55952621e-01],
-         [ 5.00000000e+00,  1.00000000e+00,  2.00000000e+00,  1.55418575e+00]])
+        >>> print(c)
+        [[ 3.          1.          0.33333334  1.6666666 ]
+         [ 3.          2.4494898   1.9051585  -0.2721655 ]
+         [ 1.          5.          2.2933078   0.8559526 ]
+         [ 5.          1.          2.          1.5541857 ]]
     """
     if F.dtype(a) not in float_types:
         a = F.cast(a, mstype.float32)
@@ -293,10 +288,9 @@ def cholesky(a, lower=False, overwrite_a=False, check_finite=True):
         >>> from mindspore.scipy.linalg import cholesky
         >>> a = Tensor(onp.array([[1, -2],[2, 5]]).astype(onp.float32))
         >>> L = cholesky(a, lower=True)
-        >>> L
-        Tensor(shape=[2, 2], dtype=Float32, value=
-        [[ 1.00000000e+00,  0.00000000e+00],
-         [ 2.00000000e+00,  1.00000000e+00]])
+        >>> print(L)
+        [[1. 0.]
+         [2. 1.]]
     """
     if F.dtype(a) not in float_types:
         a = F.cast(a, mstype.float32)
@@ -330,8 +324,8 @@ def cho_solve(c_and_lower, b, overwrite_b=False, check_finite=True):
         >>> b = Tensor(onp.array([1, 1, 1, 1]).astype(onp.float32))
         >>> c, low = cho_factor(A)
         >>> x = cho_solve((c, low), b)
-        >>> x
-        Tensor(shape=[4], dtype=Float32, value= [-1.74926575e-02,  1.19533479e-01,  1.16618462e-02,  1.57434344e-01])
+        >>> print(x)
+        [-0.01749266  0.11953348  0.01166185  0.15743434]
     """
     (c, lower) = c_and_lower
     cholesky_solver_net = CholeskySolver(lower=lower)
@@ -407,8 +401,8 @@ def eigh(a, b=None, lower=True, eigvals_only=False, overwrite_a=False,
         >>> from mindspore.scipy.linalg import eigh
         >>> A = Tensor([[6., 3., 1., 5.], [3., 0., 5., 1.], [1., 5., 6., 2.], [5., 1., 2., 2.]])
         >>> w, v = eigh(A)
-        >>> mnp.sum(mnp.dot(A, v) - mnp.dot(v, mnp.diag(w))) < 1e-10
-        Tensor(shape=[], dtype=Bool, value= True)
+        >>> print(mnp.sum(mnp.dot(A, v) - mnp.dot(v, mnp.diag(w))) < 1e-10)
+        True
     """
     eigh_net = EighNet(not eigvals_only, lower=True)
     return eigh_net(a)
@@ -519,14 +513,13 @@ def lu_factor(a, overwrite_a=False, check_finite=True):
         >>> from mindspore.scipy.linalg import lu_factor
         >>> A = Tensor(onp.array([[2, 5, 8, 7], [5, 2, 2, 8], [7, 5, 6, 6], [5, 4, 4, 8]]).astype(onp.float64))
         >>> lu, piv = lu_factor(A)
-        >>> lu
-        Tensor(shape=[4, 4], dtype=Float64, value=
-        [[ 7.00000000e+00,  5.00000000e+00,  6.00000000e+00,  6.00000000e+00],
-         [ 2.85714286e-01,  3.57142857e+00,  6.28571429e+00,  5.28571429e+00],
-         [ 7.14285714e-01,  1.20000000e-01, -1.04000000e+00,  3.08000000e+00],
-         [ 7.14285714e-01, -4.40000000e-01, -4.61538462e-01,  7.46153846e+00]])
-        >>> piv
-        Tensor(shape=[4], dtype=Int32, value= [2, 2, 3, 3])
+        >>> print(lu)
+        [[ 7.          5.          6.          6.        ]
+         [ 0.28571429  3.57142857  6.28571429  5.28571429]
+         [ 0.71428571  0.12       -1.04        3.08      ]
+         [ 0.71428571 -0.44       -0.46153846  7.46153846]]
+        >>> print(piv)
+        [2 2 3 3]
     """
     if F.dtype(a) not in float_types:
         a = F.cast(a, mstype.float32)
@@ -582,24 +575,21 @@ def lu(a, permute_l=False, overwrite_a=False, check_finite=True):
         >>> from mindspore.scipy.linalg import lu
         >>> A = Tensor(onp.array([[2, 5, 8, 7], [5, 2, 2, 8], [7, 5, 6, 6], [5, 4, 4, 8]]).astype(onp.float64))
         >>> p, l, u = lu(A)
-        >>> p
-        Tensor(shape=[4, 4], dtype=Int32, value=
-        [[0, 1, 0, 0],
-         [0, 0, 0, 1],
-         [1, 0, 0, 0],
-         [0, 0, 1, 0]])
-        >>> l
-        Tensor(shape=[4, 4], dtype=Float64, value=
-        [[ 1.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00],
-         [ 2.85714298e-01,  1.00000000e+00,  0.00000000e+00,  0.00000000e+00],
-         [ 7.14285731e-01,  1.19999997e-01,  1.00000000e+00,  0.00000000e+00],
-         [ 7.14285731e-01, -4.39999998e-01, -4.61538464e-01,  1.00000000e+00]])
-        >>> u
-        Tensor(shape=[4, 4], dtype=Float64, value=
-        [[ 7.00000000e+00,  5.00000000e+00,  6.00000000e+00,  6.00000000e+00],
-         [ 0.00000000e+00,  3.57142854e+00,  6.28571415e+00,  5.28571415e+00],
-         [ 0.00000000e+00,  0.00000000e+00, -1.03999996e+00,  3.07999992e+00],
-         [ 0.00000000e+00, -0.00000000e+00, -0.00000000e+00,  7.46153831e+00]])
+        >>> print(p)
+        [[0 1 0 0]
+         [0 0 0 1]
+         [1 0 0 0]
+         [0 0 1 0]]
+        >>> print(l)
+        [[ 1.          0.          0.          0.        ]
+         [ 0.2857143   1.          0.          0.        ]
+         [ 0.71428573  0.12        1.          0.        ]
+         [ 0.71428573 -0.44       -0.46153846  1.        ]]
+        >>> print(u)
+        [[ 7.          5.          6.          6.        ]
+         [ 0.          3.57142854  6.28571415  5.28571415]
+         [ 0.          0.         -1.03999996  3.07999992]
+         [ 0.         -0.         -0.          7.46153831]]
     """
     if F.dtype(a) not in float_types:
         a = F.cast(a, mstype.float32)
@@ -651,7 +641,7 @@ def lu_solve(lu_and_piv, b, trans=0, overwrite_b=False, check_finite=True):
         >>> A = Tensor(onp.array([[2, 5, 8, 7], [5, 2, 2, 8], [7, 5, 6, 6], [5, 4, 4, 8]]).astype(onp.float64))
         >>> b = Tensor(onp.array([1, 1, 1, 1]).astype(onp.float64))
         >>> lu, piv = lu_factor(A)
-        >>> lu_solve((lu, piv), b)
+        >>> print(lu_solve((lu, piv), b))
         [ 0.05154639, -0.08247423,  0.08247423,  0.09278351]
     """
     m_lu, pivots = lu_and_piv
@@ -715,7 +705,7 @@ def det(a, overwrite_a=False, check_finite=True):
         >>> from mindspore.common import Tensor
         >>> from mindspore.scipy.linalg import det
         >>> a = Tensor(onp.array([[0, 2, 3], [4, 5, 6], [7, 8, 9]])).astype(onp.float64)
-        >>> det(a)
+        >>> print(det(a))
         3.0
     """
     # special case
