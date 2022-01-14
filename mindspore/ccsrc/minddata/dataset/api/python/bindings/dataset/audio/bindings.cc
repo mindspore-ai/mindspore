@@ -30,6 +30,30 @@ PYBIND_REGISTER(CreateDct, 1, ([](py::module *m) {
                                }));
                 }));
 
+PYBIND_REGISTER(MelscaleFbanks, 1, ([](py::module *m) {
+                  (void)m->def(
+                    "MelscaleFbanks", ([](int32_t n_freqs, float f_min, float f_max, int32_t n_mels,
+                                          int32_t sample_rate, NormType norm, MelType mel_type) {
+                      std::shared_ptr<Tensor> fb;
+                      THROW_IF_ERROR(CreateFbanks(&fb, n_freqs, f_min, f_max, n_mels, sample_rate, norm, mel_type));
+                      return fb;
+                    }));
+                }));
+
+PYBIND_REGISTER(MelType, 0, ([](const py::module *m) {
+                  (void)py::enum_<MelType>(*m, "MelType", py::arithmetic())
+                    .value("DE_MELTYPE_HTK", MelType::kHtk)
+                    .value("DE_MELTYPE_SLANEY", MelType::kSlaney)
+                    .export_values();
+                }));
+
+PYBIND_REGISTER(NormType, 0, ([](const py::module *m) {
+                  (void)py::enum_<NormType>(*m, "NormType", py::arithmetic())
+                    .value("DE_NORMTYPE_NONE", NormType::kNone)
+                    .value("DE_NORMTYPE_SLANEY", NormType::kSlaney)
+                    .export_values();
+                }));
+
 PYBIND_REGISTER(NormMode, 0, ([](const py::module *m) {
                   (void)py::enum_<NormMode>(*m, "NormMode", py::arithmetic())
                     .value("DE_NORMMODE_NONE", NormMode::kNone)

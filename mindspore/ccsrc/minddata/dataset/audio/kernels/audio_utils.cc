@@ -222,6 +222,170 @@ Status Phase(const std::shared_ptr<Tensor> &angle_0, const std::shared_ptr<Tenso
   return Status::OK();
 }
 
+template <typename T>
+Status CreateTriangularFilterbank(std::shared_ptr<Tensor> *output, const std::shared_ptr<Tensor> &all_freqs,
+                                  const std::shared_ptr<Tensor> &f_pts) {
+  // calculate the difference between each mel point and each stft freq point in hertz.
+  std::vector<T> f_diff;
+  auto iter_fpts1 = f_pts->begin<T>();
+  auto iter_fpts2 = f_pts->begin<T>();
+  ++iter_fpts2;
+  for (size_t i = 1; i < f_pts->Size(); i++) {
+    f_diff.push_back(*iter_fpts2 - *iter_fpts1);
+    ++iter_fpts2;
+    ++iter_fpts1;
+  }
+
+  std::vector<T> slopes;
+  TensorShape slopes_shape({all_freqs->Size(), f_pts->Size()});
+  auto iter_all_freq = all_freqs->begin<T>();
+  for (; iter_all_freq != all_freqs->end<T>(); ++iter_all_freq) {
+    auto iter_f_pts = f_pts->begin<T>();
+    for (; iter_f_pts != f_pts->end<T>(); ++iter_f_pts) {
+      slopes.push_back(*iter_f_pts - *iter_all_freq);
+    }
+  }
+
+  // calculate up and down slopes for creating overlapping triangles.
+  std::vector<T> down_slopes;
+  TensorShape down_slopes_shape({all_freqs->Size(), f_pts->Size() - 2});
+  for (size_t row = 0; row < down_slopes_shape[0]; row++)
+    for (size_t col = 0; col < down_slopes_shape[1]; col++) {
+      down_slopes.push_back(-slopes[col + row * f_pts->Size()] / f_diff[col]);
+    }
+  std::vector<T> up_slopes;
+  TensorShape up_slopes_shape({all_freqs->Size(), f_pts->Size() - 2});
+  for (size_t row = 0; row < up_slopes_shape[0]; row++)
+    for (size_t col = 2; col < f_pts->Size(); col++) {
+      up_slopes.push_back(slopes[col + row * f_pts->Size()] / f_diff[col - 1]);
+    }
+
+  // clip the value of triangles and save into fb.
+  std::vector<T> fb;
+  TensorShape fb_shape({all_freqs->Size(), f_pts->Size() - 2});
+  for (size_t i = 0; i < down_slopes.size(); i++) {
+    fb.push_back(std::max(0.0f, std::min(down_slopes[i], up_slopes[i])));
+  }
+
+  std::shared_ptr<Tensor> fb_tensor;
+  RETURN_IF_NOT_OK(Tensor::CreateFromVector(fb, fb_shape, &fb_tensor));
+  *output = fb_tensor;
+  return Status::OK();
+}
+
+Status CreateFbanks(std::shared_ptr<Tensor> *output, int32_t n_freqs, float f_min, float f_max, int32_t n_mels,
+                    int32_t sample_rate, NormType norm, MelType mel_type) {
+  // min_log_hz, min_log_mel, logstep and f_sp are the const of the mel value equation.
+  const double min_log_hz = 1000.0;
+  const double min_log_mel = 1000 / (200.0 / 3);
+  const double logstep = log2(6.4) / 27.0;
+  const double f_sp = 200.0 / 3;
+
+  // hez_to_mel_c and mel_to_hz_c are the const coefficient of mel frequency cepstrum.
+  const double hz_to_mel_c = 2595.0;
+  const double mel_to_hz_c = 700.0;
+
+  // all_freqs is equivalent filterbank construction.
+  std::shared_ptr<Tensor> all_freqs;
+  // the sampling frequency is at least twice the highest frequency of the signal.
+  const double signal_times = 2;
+  RETURN_IF_NOT_OK(Linspace<float>(&all_freqs, 0, sample_rate / signal_times, n_freqs));
+
+  // calculate mel value by f_min and f_max.
+  double m_min = 0.0;
+  double m_max = 0.0;
+  if (mel_type == MelType::kHtk) {
+    m_min = hz_to_mel_c * log10(1.0 + (f_min / mel_to_hz_c));
+    m_max = hz_to_mel_c * log10(1.0 + (f_max / mel_to_hz_c));
+  } else {
+    m_min = (f_min - 0.0) / f_sp;
+    m_max = (f_max - 0.0) / f_sp;
+    if (m_min >= min_log_hz) {
+      m_min = min_log_mel + log2(f_min / min_log_hz) / logstep;
+    }
+    if (m_max >= min_log_hz) {
+      m_max = min_log_mel + log2(f_max / min_log_hz) / logstep;
+    }
+  }
+
+  // m_pts is mel value sequence in linspace of  (m_min, m_max).
+  std::shared_ptr<Tensor> m_pts;
+  const int32_t bias = 2;
+  RETURN_IF_NOT_OK(Linspace<float>(&m_pts, m_min, m_max, n_mels + bias));
+
+  // f_pts saves hertz(mel) though 700.0 * (10.0 **(mel/ 2595.0) - 1.).
+  std::shared_ptr<Tensor> f_pts;
+  const double htk_mel_c = 10.0;
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(m_pts->shape(), DataType(DataType::DE_FLOAT32), &f_pts));
+
+  if (mel_type == MelType::kHtk) {
+    auto iter_f = f_pts->begin<float>();
+    auto iter_m = m_pts->begin<float>();
+    for (; iter_m != m_pts->end<float>(); ++iter_m) {
+      *iter_f = mel_to_hz_c * (pow(htk_mel_c, *iter_m / hz_to_mel_c) - 1.0);
+      ++iter_f;
+    }
+  } else {
+    auto iter_f = f_pts->begin<float>();
+    auto iter_m = m_pts->begin<float>();
+    for (; iter_m != m_pts->end<float>(); iter_m++, iter_f++) {
+      *iter_f = f_sp * (*iter_m);
+    }
+    iter_f = f_pts->begin<float>();
+    iter_m = m_pts->begin<float>();
+    for (; iter_m != m_pts->end<float>(); iter_m++, iter_f++) {
+      if (*iter_m >= min_log_mel) {
+        *iter_f = min_log_hz * exp(logstep * (*iter_m - min_log_mel));
+      }
+    }
+  }
+
+  // create filterbank
+  TensorShape fb_shape({all_freqs->Size(), f_pts->Size() - 2});
+  std::shared_ptr<Tensor> fb;
+  RETURN_IF_NOT_OK(CreateTriangularFilterbank<float>(&fb, all_freqs, f_pts));
+
+  // normalize with Slaney
+  std::vector<float> enorm;
+  if (norm == NormType::kSlaney) {
+    auto iter_f_pts_0 = f_pts->begin<float>();
+    auto iter_f_pts_2 = f_pts->begin<float>();
+    iter_f_pts_2++;
+    iter_f_pts_2++;
+    for (; iter_f_pts_2 != f_pts->end<float>(); iter_f_pts_0++, iter_f_pts_2++) {
+      enorm.push_back(2.0f / (*iter_f_pts_2 - *iter_f_pts_0));
+    }
+    auto iter_fb = fb->begin<float>();
+    for (size_t row = 0; row < fb_shape[0]; row++) {
+      for (size_t col = 0; col < fb_shape[1]; col++) {
+        *iter_fb = (*iter_fb) * enorm[col];
+        iter_fb++;
+      }
+    }
+    enorm.clear();
+  }
+
+  // anomaly detection.
+  auto iter_fb = fb->begin<float>();
+  std::vector<float> max_val(fb_shape[1], 0);
+  for (size_t row = 0; row < fb_shape[0]; row++) {
+    for (size_t col = 0; col < fb_shape[1]; col++) {
+      max_val[col] = std::max(max_val[col], *iter_fb);
+      iter_fb++;
+    }
+  }
+  for (size_t col = 0; col < fb_shape[1]; col++) {
+    CHECK_FAIL_RETURN_UNEXPECTED(
+      max_val[col] >= 1e-8,
+      "MelscaleFbanks: at least one mel filterbank is all zeros, check if the value for 'n_mels' " +
+        std::to_string(n_mels) + " is set too high or the value for 'n_freqs' " + std::to_string(n_freqs) +
+        " is set too low.");
+  }
+
+  *output = fb;
+  return Status::OK();
+}
+
 /// \brief Calculate magnitude.
 /// \param[in] alphas - The alphas.
 /// \param[in] abs_0 - The norm.

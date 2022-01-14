@@ -464,6 +464,30 @@ Magphase::Magphase(float power) : data_(std::make_shared<Data>(power)) {}
 
 std::shared_ptr<TensorOperation> Magphase::Parse() { return std::make_shared<MagphaseOperation>(data_->power_); }
 
+// MelscaleFbanks Function.
+Status MelscaleFbanks(MSTensor *output, int32_t n_freqs, float f_min, float f_max, int32_t n_mels, int32_t sample_rate,
+                      NormType norm, MelType mel_type) {
+  RETURN_UNEXPECTED_IF_NULL(output);
+  CHECK_FAIL_RETURN_UNEXPECTED(n_freqs > 0,
+                               "MelscaleFbanks: n_freqs must be greater than 0, got: " + std::to_string(n_freqs));
+
+  CHECK_FAIL_RETURN_UNEXPECTED(f_min >= 0, "MelscaleFbanks: f_min must be non negative, got: " + std::to_string(f_min));
+  CHECK_FAIL_RETURN_UNEXPECTED(f_max > 0,
+                               "MelscaleFbanks: f_max must be greater than 0, got: " + std::to_string(f_max));
+  CHECK_FAIL_RETURN_UNEXPECTED(n_mels > 0,
+                               "MelscaleFbanks: n_mels must be greater than 0, got: " + std::to_string(n_mels));
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    sample_rate > 0, "MelscaleFbanks: sample_rate must be greater than 0, got: " + std::to_string(sample_rate));
+  CHECK_FAIL_RETURN_UNEXPECTED(f_max > f_min, "MelscaleFbanks: f_max must be greater than f_min, got: f_min = " +
+                                                std::to_string(f_min) + ", while f_max = " + std::to_string(f_max));
+  std::shared_ptr<dataset::Tensor> fb;
+  RETURN_IF_NOT_OK(CreateFbanks(&fb, n_freqs, f_min, f_max, n_mels, sample_rate, norm, mel_type));
+  CHECK_FAIL_RETURN_UNEXPECTED(fb->HasData(),
+                               "MelscaleFbanks: get an empty tensor with shape " + fb->shape().ToString());
+  *output = mindspore::MSTensor(std::make_shared<DETensor>(fb));
+  return Status::OK();
+}
+
 // MuLawDecoding Transform Operation.
 struct MuLawDecoding::Data {
   explicit Data(int32_t quantization_channels) : quantization_channels_(quantization_channels) {}

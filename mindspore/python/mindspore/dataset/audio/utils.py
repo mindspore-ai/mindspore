@@ -18,7 +18,8 @@ Enum for audio ops.
 from enum import Enum
 
 import mindspore._c_dataengine as cde
-
+from mindspore.dataset.core.validator_helpers import check_non_negative_float32, check_non_negative_int32, check_pos_float32, check_pos_int32, \
+    type_check
 
 class DensityFunction(str, Enum):
     """
@@ -108,6 +109,84 @@ class ScaleType(str, Enum):
     """
     POWER: str = "power"
     MAGNITUDE: str = "magnitude"
+
+
+class NormType(str, Enum):
+    """
+    Norm Types.
+
+    Possible enumeration values are: NormType.NONE, NormType.SLANEY.
+
+    - NormType.NONE: norm the input data with none.
+    - NormType.SLANEY: norm the input data with slaney.
+    """
+    NONE: str = "none"
+    SLANEY: str = "slaney"
+
+
+DE_C_NORMTYPE_TYPE = {NormType.NONE: cde.NormType.DE_NORMTYPE_NONE,
+                      NormType.SLANEY: cde.NormType.DE_NORMTYPE_SLANEY}
+
+
+class MelType(str, Enum):
+    """
+    Mel Types.
+
+    Possible enumeration values are: MelType.HTK, MelType.SLANEY.
+
+    - MelType.NONE: scale the input data with htk.
+    - MelType.ORTHO: scale the input data with slaney.
+    """
+    HTK: str = "htk"
+    SLANEY: str = "slaney"
+
+
+DE_C_MELTYPE_TYPE = {MelType.HTK: cde.MelType.DE_MELTYPE_HTK,
+                     MelType.SLANEY: cde.MelType.DE_MELTYPE_SLANEY}
+
+
+def melscale_fbanks(n_freqs, f_min, f_max, n_mels, sample_rate, norm=NormType.NONE, mel_type=MelType.HTK):
+    """
+    Create a frequency transformation matrix with shape (n_freqs, n_mels).
+
+    Args:
+        n_freqs (int): Number of frequency.
+        f_min (float): Minimum of frequency in Hz.
+        f_max (float): Maximum of frequency in Hz.
+        n_mels (int): Number of mel filterbanks.
+        sample_rate (int): Sample rate.
+        norm (NormType, optional): Norm to use, can be NormType.NONE or NormType.SLANEY (Default: NormType.NONE).
+        mel_type (MelType, optional): Scale to use, can be MelType.HTK or MelType.SLANEY (Default: NormType.SLANEY).
+
+    Returns:
+        numpy.ndarray, the frequency transformation matrix.
+
+    Examples:
+        >>> melscale_fbanks = audio.melscale_fbanks(n_freqs=4096, f_min=0, f_max=8000, n_mels=40, sample_rate=16000)
+    """
+
+    type_check(n_freqs, (int,), "n_freqs")
+    check_non_negative_int32(n_freqs, "n_freqs")
+
+    type_check(f_min, (int, float,), "f_min")
+    check_non_negative_float32(f_min, "f_min")
+
+    type_check(f_max, (int, float,), "f_max")
+    check_pos_float32(f_max, "f_max")
+    if f_min > f_max:
+        raise ValueError(
+            "Input f_min should be no more than f_max, but got f_min: {0} and f_max: {1}.".format(f_min, f_max))
+
+    type_check(n_mels, (int,), "n_mels")
+    check_pos_int32(n_mels, "n_mels")
+
+    type_check(sample_rate, (int,), "sample_rate")
+    check_pos_int32(sample_rate, "sample_rate")
+
+    type_check(norm, (NormType,), "norm")
+    type_check(mel_type, (MelType,), "mel_type")
+    return cde.MelscaleFbanks(n_freqs, f_min, f_max, n_mels, sample_rate, DE_C_NORMTYPE_TYPE[norm],
+                              DE_C_MELTYPE_TYPE[mel_type]).as_array()
 
 
 class NormMode(str, Enum):
