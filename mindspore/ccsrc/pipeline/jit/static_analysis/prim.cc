@@ -52,6 +52,22 @@ using mindspore::parse::PyObjectWrapper;
 mindspore::HashSet<std::string> prims_to_skip_undetermined_infer{
   "MakeTuple", "make_list", "Switch", "env_setitem", "env_getitem", "Load", "UpdateState"};
 
+// The Python primitives who use tuple/list elements.
+// We consider all tuple/list arguments are used by now.
+// Should check 'tuple argument index' and 'element use index' later.
+mindspore::HashSet<std::string> prims_use_sequence_elements{prim::kPrimStack->name(),
+                                                            prim::kPrimBroadcast->name(),
+                                                            prim::kPrimConcat->name(),
+                                                            prim::kPrimTupleToArray->name(),
+                                                            prim::kPrimPack->name(),
+                                                            prim::kPrimSlice->name(),
+                                                            prim::kPrimStridedSlice->name(),
+                                                            prim::kPrimScatterNd->name(),
+                                                            "InvertPermutation",
+                                                            "Meshgrid",
+                                                            "TransShape",
+                                                            "ParallelConcat"};
+
 EvalResultPtr DoSignatureEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
                                         const AnfNodeConfigPtr &out_conf) {
   MS_EXCEPTION_IF_NULL(engine);
@@ -782,7 +798,7 @@ EvalResultPtr PythonPrimEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abs
   evaluator_cache_mgr_->SetValue(args, infer_result);
 
   // To check tuple/list operations with a white list of Python primitive.
-  if (prim_py_->name() == prim::kPrimStack->name()) {
+  if (prims_use_sequence_elements.find(prim_py_->name()) != prims_use_sequence_elements.end()) {
     // Set all used flags of tuple as true.
     for (auto &arg : args) {
       SetSequenceElementsUseFlags(arg, true);
@@ -1493,7 +1509,7 @@ class MakeTupleEvaluator : public TransitionPrimEvaluator {
         }
       }
     } else {
-      MS_LOG(WARNING) << "For MakeTuple, the inputs should not be empty.";
+      MS_LOG(INFO) << "For MakeTuple, the inputs should not be empty. node: " << out_conf->node()->DebugString();
     }
 
     if (enable_eliminate_unused_element) {
@@ -1524,7 +1540,7 @@ class MakeListEvaluator : public TransitionPrimEvaluator {
         }
       }
     } else {
-      MS_LOG(WARNING) << "For MakeList, the inputs should not be empty.";
+      MS_LOG(INFO) << "For MakeList, the inputs should not be empty. node: " << out_conf->node()->DebugString();
     }
 
     if (enable_eliminate_unused_element) {
