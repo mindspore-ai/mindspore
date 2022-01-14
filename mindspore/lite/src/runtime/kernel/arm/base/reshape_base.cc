@@ -42,6 +42,13 @@ int ReshapeBaseCPUKernel::Run() {
   CHECK_NULL_RETURN(in_tensor);
   auto out_tensor = out_tensors().front();
   CHECK_NULL_RETURN(out_tensor);
+
+  if (in_tensor->data_type() != out_tensor->data_type() || in_tensor->data() == nullptr ||
+      in_tensor->Size() != out_tensor->Size()) {
+    MS_LOG(ERROR) << "Invalid param in reshape";
+    return RET_ERROR;
+  }
+
   if (in_tensor->allocator() == nullptr || in_tensor->allocator() != out_tensor->allocator() ||
       in_tensor->allocator() != ms_context_->allocator || /* runtime allocator */
       op_parameter_->is_train_session_) {

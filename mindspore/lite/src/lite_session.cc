@@ -15,6 +15,7 @@
  */
 
 #include "src/lite_session.h"
+#include <set>
 #ifndef RUNTIME_PASS_CLIP
 #include "src/runtime/runtime_pass.h"
 #endif
@@ -136,6 +137,20 @@ LiteSession::LiteSession() {
   mindspore::common_log_init();
 #endif
   this->is_running_.store(false);
+}
+
+int LiteSession::CheckTensorValid(lite::Tensor *dst_tensor) {
+  MS_ASSERT(dst_tensor != nullptr);
+  if (dst_tensor->data_type() == kObjectTypeTensorType) {
+    return RET_OK;
+  }
+  if (dst_tensor->IsGraphInput() || dst_tensor->IsGraphOutput()) {
+    return RET_OK;
+  }
+  if (dst_tensor->IsConst() == false && dst_tensor->data() != nullptr) {
+    return RET_ERROR;
+  }
+  return RET_OK;
 }
 
 void LiteSession::ConvertTensorsQuantParam(const schema::Tensor *src_tensor, lite::Tensor *dst_tensor) {
@@ -300,6 +315,13 @@ int LiteSession::ConvertTensors(const lite::Model *model) {
       if (!dst_tensor->IsGraphInput()) {
         dst_tensor->set_category(Category::GRAPH_OUTPUT);
       }
+    }
+
+    ret = CheckTensorValid(dst_tensor);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Check " << i << "th tensor failed";
+      delete dst_tensor;
+      return ret;
     }
 
     this->tensors_.emplace_back(dst_tensor);
@@ -1759,6 +1781,7 @@ int lite::LiteSession::LoadModelAndCompileByPath(const std::string &model_path, 
   auto *model = lite::ImportFromBuffer(model_buf, model_size, true);
   if (model == nullptr) {
     MS_LOG(ERROR) << "Import model failed";
+    delete[] model_buf;
     return RET_ERROR;
   }
 

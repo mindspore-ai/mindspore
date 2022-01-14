@@ -158,6 +158,11 @@ int MatmulFp32BaseCPUKernel::InitBiasData() {
 }
 
 int MatmulFp32BaseCPUKernel::InitMatrixA(const float *src_ptr) const {
+  if (in_tensors().at(FIRST_INPUT) == nullptr || in_tensors().at(FIRST_INPUT)->data_type() != kNumberTypeFloat32) {
+    MS_LOG(ERROR) << "Invalid param in matmul";
+    return RET_ERROR;
+  }
+
   CHECK_NULL_RETURN(src_ptr);
   if (vec_matmul_) {
     return RET_OK;
@@ -175,6 +180,11 @@ int MatmulFp32BaseCPUKernel::InitMatrixA(const float *src_ptr) const {
 }
 
 int MatmulFp32BaseCPUKernel::InitMatrixB(const float *src_ptr) const {
+  if (in_tensors().at(SECOND_INPUT) == nullptr || in_tensors().at(SECOND_INPUT)->data_type() != kNumberTypeFloat32) {
+    MS_LOG(ERROR) << "Invalid param in matmul";
+    return RET_ERROR;
+  }
+
   CHECK_NULL_RETURN(src_ptr);
   for (int i = 0; i < b_batch_; i++) {
     const float *src = src_ptr + i * params_->deep_ * params_->col_;
@@ -368,6 +378,7 @@ int MatmulFp32BaseCPUKernel::Prepare() {
     MS_LOG(ERROR) << "InitBiasData failed";
     return ret;
   }
+
   if (params_->a_const_) {
     auto a_tensor = in_tensors_[0];
     CHECK_NULL_RETURN(a_tensor);
