@@ -1,5 +1,5 @@
 
-0.1.0	MindSpore*1.6.0:”
+0.1.0	MindSpore*1.6.0.20220112:”
 ”
 bprop.13:dout
 
@@ -21,4 +21,4 @@ bprop.13:y*
 bprop.13:keep_prob*
 bprop.13:out*
 bprop.13:dout2
-bprop.13:[CNode]17:4:@eb722f0a05359151f2578b4ad7b0d067988045071352718c64ca6cf29bc5008aP
+bprop.13:[CNode]17:4:@bd5c2beacc0ba2eed5f983eeea340dcc433de735d4f8c434e57739a943fcd904P

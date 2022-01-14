@@ -1,5 +1,5 @@
 
-0.1.0	MindSpore*1.6.0:Î
+0.1.0	MindSpore*1.6.0.20220112:Î
 Ö
 bprop.1:dout
 bprop.1:outbprop.1:dx:1bprop.1:dx:1"S-Prim-ReluGrad*0
@@ -11,4 +11,4 @@ f
 	bprop.1:x*
 bprop.1:out*
 bprop.1:dout2
-bprop.1:[CNode]2:2:@eb722f0a05359151f2578b4ad7b0d067988045071352718c64ca6cf29bc5008aP
+bprop.1:[CNode]2:2:@bd5c2beacc0ba2eed5f983eeea340dcc433de735d4f8c434e57739a943fcd904P

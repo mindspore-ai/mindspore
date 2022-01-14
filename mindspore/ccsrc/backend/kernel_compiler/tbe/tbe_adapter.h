@@ -33,16 +33,26 @@ namespace mindspore {
 namespace kernel {
 enum kCreaterType : int { SINGLE_BUILD = 0, OP_SELECT_FORMAT, CHECK_SUPPORTED, OP_PRE_COMPILE };
 namespace tbe {
-const std::map<std::string, std::string> opTypeAdapter = {
-  {"ReLUV2", "ReluV2"},       {"ReLU6", "Relu6"},
-  {"ReLU6Grad", "Relu6Grad"}, {"ReLUGrad", "ReluGrad"},
-  {"ReLU", "Relu"},           {"Pad", "PadD"},
-  {"Gather", "GatherV2"},     {"SparseApplyFtrl", "SparseApplyFtrlD"},
-  {"Concat", "ConcatD"},      {"DepthwiseConv2dNative", "DepthwiseConv2D"},
-  {"FastGeLU", "FastGelu"},   {"FastGeLUGrad", "FastGeluGrad"},
-  {"GeLU", "Gelu"},           {"GeLUGrad", "GeluGrad"},
-  {"PReLU", "PRelu"},         {"PReLUGrad", "PReluGrad"},
-  {"SeLU", "Selu"},           {"TransposeNOD", "Transpose"}};
+const std::map<std::string, std::string> opTypeAdapter = {{"ReLUV2", "ReluV2"},
+                                                          {"ReLU6", "Relu6"},
+                                                          {"ReLU6Grad", "Relu6Grad"},
+                                                          {"ReLUGrad", "ReluGrad"},
+                                                          {"ReLU", "Relu"},
+                                                          {"Pad", "PadD"},
+                                                          {"Gather", "GatherV2"},
+                                                          {"SparseApplyFtrl", "SparseApplyFtrlD"},
+                                                          {"Concat", "ConcatD"},
+                                                          {"DepthwiseConv2dNative", "DepthwiseConv2D"},
+                                                          {"FastGeLU", "FastGelu"},
+                                                          {"FastGeLUGrad", "FastGeluGrad"},
+                                                          {"GeLU", "Gelu"},
+                                                          {"GeLUGrad", "GeluGrad"},
+                                                          {"PReLU", "PRelu"},
+                                                          {"PReLUGrad", "PReluGrad"},
+                                                          {"SeLU", "Selu"},
+                                                          {"TransposeNOD", "Transpose"},
+                                                          {"ParallelResizeBilinear", "SyncResizeBilinearV2"},
+                                                          {"ParallelResizeBilinearGrad", "SyncResizeBilinearV2Grad"}};
 
 enum FusionDataType { kFusionNormal = 0, kFusionAddN, kFusionReLUGradV2, kFusionAdd };
 using FAttrsPass = void (*)(const AnfNodePtr &anf_node, const std::vector<std::shared_ptr<OpAttr>> &op_info_attrs,

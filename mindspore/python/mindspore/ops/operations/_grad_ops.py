@@ -79,7 +79,6 @@ class ReciprocalGrad(Primitive):
         """Initialize ReciprocalGrad"""
 
 
-
 class RsqrtGrad(PrimitiveWithInfer):
     """Performs grad of Rsqrt operation."""
 
@@ -669,6 +668,7 @@ class BNTrainingUpdateGrad(PrimitiveWithInfer):
     def infer_dtype(self, grads, x, batch_mean, batch_variance):
         return (batch_mean, batch_variance)
 
+
 class NeighborExchangeV2Grad(PrimitiveWithInfer):
     """"Gradients of NeighborExchangeV2 operation."""
 
@@ -901,6 +901,7 @@ def _get_max_pool3d_grad_pads_by_pad_mode(input_shape, kernel_size, strides, pad
     """
     helper for get max pool3d grad pads by pad_mode
     """
+
     def get_pad(origin_shape, ksize, stride):
         tail = origin_shape % stride
         pad = (ksize - tail) if tail > 0 else (ksize - stride)
@@ -1739,6 +1740,7 @@ class ROIAlignGrad(PrimitiveWithInfer):
     def infer_dtype(self, ydiff_type, rois_type):
         return ydiff_type
 
+
 class PsROIPoolingGrad(PrimitiveWithInfer):
     """
     PsROIPoolingGrad operator.
@@ -1747,7 +1749,6 @@ class PsROIPoolingGrad(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, batch_size, channels, height, width, num_rois,
                  pooled_height, pooled_width, spatial_scale, out_dim):
-
         """Initialize PsROIPoolingGrad"""
         validator.check_value_type("batch_size", batch_size, [int], self.name)
         validator.check_value_type("channels", channels, [int], self.name)
@@ -1773,6 +1774,7 @@ class PsROIPoolingGrad(PrimitiveWithInfer):
 
     def infer_dtype(self, ydiff_type, rois_type, mapping_channel_type):
         return ydiff_type
+
 
 class SigmoidGrad(Primitive):
     """Gets the gradient of Sigmoid operation."""
@@ -2114,6 +2116,7 @@ class BasicLSTMCellCStateGrad(PrimitiveWithInfer):
 
 class BasicLSTMCellWeightGrad(PrimitiveWithInfer):
     """Computes the weight gradients of BasicLSTM."""
+
     @prim_attr_register
     def __init__(self):
         pass
@@ -2282,3 +2285,42 @@ class HShrinkGrad(Primitive):
         if lambd < 0.0:
             lambd = 0.0
             self.add_prim_attr('lambd', lambd)
+
+
+class ParallelResizeBilinearGrad(PrimitiveWithInfer):
+    """ParallelResizeBilinearGrad ops"""
+
+    @prim_attr_register
+    def __init__(self, ori_image_size, src_start_w, dst_start_w, align_corners):
+        """Initialize ParallelResizeBilinearGrad."""
+        self.init_prim_io_names(inputs=["grad", "x", "size"], outputs=['y'])
+        validator.check_value_type("ori_image_size", ori_image_size, [tuple, list], self.name)
+        validator.check_value_type("src_start_w", src_start_w, [int], self.name)
+        validator.check_value_type("dst_start_w", dst_start_w, [int], self.name)
+        validator.check_value_type("align_corners", align_corners, [bool], self.name)
+        self.ori_image_size = list(ori_image_size)
+        self.src_start_w = src_start_w
+        self.dst_start_w = dst_start_w
+        self.align_corners = align_corners
+        self.half_pixel_centers = False
+        self.add_prim_attr('ori_image_size', self.ori_image_size)
+        self.add_prim_attr('src_start_w', self.src_start_w)
+        self.add_prim_attr('dst_start_w', self.dst_start_w)
+        self.add_prim_attr('align_corners', self.align_corners)
+        self.add_prim_attr('half_pixel_centers', self.half_pixel_centers)
+
+    def __infer__(self, grad, x, size):
+        size_val = size['value']
+        grad_shape = grad['shape']
+        grad_dtype = grad['dtype']
+        x_shape = x['shape']
+        x_dtype = x['dtype']
+        validator.check_tensor_dtype_valid("grad_dtype", grad_dtype, [mstype.float16, mstype.float32], self.name)
+        validator.check_tensor_dtype_valid("x_dtype", x_dtype, [mstype.float16, mstype.float32], self.name)
+        if size_val is not None:
+            raise ValueError("size should be const input")
+        output_shape = [grad_shape[0], grad_shape[1], x_shape[2], x_shape[3]]
+
+        return {'shape': output_shape,
+                'dtype': x_dtype,
+                'value': None}

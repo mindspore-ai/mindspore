@@ -553,3 +553,5 @@ from .round_ds import _round_ds_tbe
 from .is_close import _is_close_tbe
 from .apply_adam_with_amsgrad import _apply_adam_with_amsgrad_tbe
 from .expm1_ds import _expm1_ds_tbe
+from .parallel_resize_bilinear import _parallel_resize_bilinear_op_info_tbe
+from .parallel_resize_bilinear_grad import _parallel_resize_bilinear_grad_op_info_tbe

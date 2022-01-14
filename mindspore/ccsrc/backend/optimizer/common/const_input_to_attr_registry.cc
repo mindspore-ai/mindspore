@@ -28,6 +28,7 @@ ConstInputToAttrInfoRegistry::ConstInputToAttrInfoRegistry() {
   Register(kConv2DTransposeOpName, {2});
   Register(prim::kPrimConv3DTranspose->name(), {2});
   Register(prim::kPrimConv2DBackpropInput->name(), {2});
+  Register(prim::kPrimParallelResizeBilinearGrad->name(), {2});
   Register(prim::kPrimConv2DBackpropFilter->name(), {2});
   Register(prim::kPrimConv3DBackpropInput->name(), {2});
   Register(prim::kPrimConv3DBackpropFilter->name(), {2});

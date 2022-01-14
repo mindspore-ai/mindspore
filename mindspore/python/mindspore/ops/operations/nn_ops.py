@@ -879,6 +879,7 @@ class HSigmoid(Primitive):
         >>> print(result)
         [0.3333 0.1666 0.5    0.8335 0.6665]
     """
+
     @prim_attr_register
     def __init__(self):
         """Initialize HSigmoid."""
@@ -5492,6 +5493,7 @@ class ApplyAdagrad(Primitive):
         validator.check_value_type("update_slots", update_slots, [bool], self.name)
         self.add_prim_attr('side_effect_mem', True)
 
+
 class ApplyAdagradV2(Primitive):
     r"""
     Updates relevant entries according to the adagradv2 scheme.
@@ -5576,7 +5578,6 @@ class ApplyAdagradV2(Primitive):
         validator.check_value_type("epsilon", epsilon, [float], self.name)
         validator.check_value_type("update_slots", update_slots, [bool], self.name)
         self.add_prim_attr('side_effect_mem', True)
-
 
 
 class SparseApplyAdagrad(PrimitiveWithInfer):
@@ -5873,6 +5874,7 @@ class ApplyProximalAdagrad(Primitive):
         self.add_prim_attr('side_effect_mem', True)
         self.use_locking = validator.check_value_type("use_locking", use_locking, [bool], self.name)
 
+
 class SparseApplyProximalAdagrad(PrimitiveWithCheck):
     r"""
     Updates relevant entries according to the proximal adagrad algorithm. Compared with ApplyProximalAdagrad,
@@ -6075,6 +6077,7 @@ class ApplyAddSign(Primitive):
         """Initialize ApplyAddSign."""
         self.add_prim_attr('side_effect_mem', True)
 
+
 class ApplyPowerSign(Primitive):
     r"""
     Updates relevant entries according to the AddSign algorithm.
@@ -6168,7 +6171,6 @@ class ApplyPowerSign(Primitive):
     def __init__(self):
         """Initialize ApplyPowerSign."""
         self.add_prim_attr('side_effect_mem', True)
-
 
 
 class ApplyGradientDescent(Primitive):
@@ -6304,7 +6306,6 @@ class ApplyProximalGradientDescent(Primitive):
     def __init__(self):
         """Initialize ApplyGradientDescent."""
         self.add_prim_attr('side_effect_mem', True)
-
 
 
 class LARSUpdate(PrimitiveWithInfer):
